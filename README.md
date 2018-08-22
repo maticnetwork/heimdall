@@ -1,0 +1,2 @@
+sudo go install -tags "netgo ledger" -ldflags "-X github.com/cosmos/cosmos-sdk/version.GitCommit=d5652d96" ./cmd/basecli
+sudo go install -tags "netgo ledger" -ldflags "-X github.com/cosmos/cosmos-sdk/version.GitCommit=d5652d96" ./cmd/basecoind

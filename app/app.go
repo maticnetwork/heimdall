@@ -15,6 +15,8 @@ import (
 	dbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
 	tmtypes "github.com/tendermint/tendermint/types"
+	"github.com/basecoin/sideblock"
+	"fmt"
 )
 
 const (
@@ -33,12 +35,16 @@ type BasecoinApp struct {
 	keyMain    *sdk.KVStoreKey
 	keyAccount *sdk.KVStoreKey
 	keyIBC     *sdk.KVStoreKey
+	keySideBlock *sdk.KVStoreKey
 
 	// manage getting and setting accounts
 	accountMapper       auth.AccountMapper
 	feeCollectionKeeper auth.FeeCollectionKeeper
 	coinKeeper          bank.Keeper
 	ibcMapper           ibc.Mapper
+	sideBlockKeeper     sideBlock.Keeper
+
+
 }
 
 // NewBasecoinApp returns a reference to a new BasecoinApp given a logger and
@@ -57,6 +63,7 @@ func NewBasecoinApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		keyMain:    sdk.NewKVStoreKey("main"),
 		keyAccount: sdk.NewKVStoreKey("acc"),
 		keyIBC:     sdk.NewKVStoreKey("ibc"),
+		keySideBlock:sdk.NewKVStoreKey("sideBlock"),
 	}
 
 	// define and attach the mappers and keepers
@@ -73,7 +80,8 @@ func NewBasecoinApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	// register message routes
 	app.Router().
 		AddRoute("bank", bank.NewHandler(app.coinKeeper)).
-		AddRoute("ibc", ibc.NewHandler(app.ibcMapper, app.coinKeeper))
+		AddRoute("ibc", ibc.NewHandler(app.ibcMapper, app.coinKeeper)).
+		AddRoute("sideBlock",sideBlock.NewHandler(app.sideBlockKeeper))
 
 	// perform initialization logic
 	app.SetInitChainer(app.initChainer)
@@ -82,7 +90,7 @@ func NewBasecoinApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.SetAnteHandler(auth.NewAnteHandler(app.accountMapper, app.feeCollectionKeeper))
 
 	// mount the multistore and load the latest state
-	app.MountStoresIAVL(app.keyMain, app.keyAccount, app.keyIBC)
+	app.MountStoresIAVL(app.keyMain, app.keyAccount, app.keyIBC,app.keySideBlock)
 	err := app.LoadLatestVersion(app.keyMain)
 	if err != nil {
 		cmn.Exit(err.Error())
@@ -103,7 +111,7 @@ func MakeCodec() *wire.Codec {
 	bank.RegisterWire(cdc)
 	ibc.RegisterWire(cdc)
 	auth.RegisterWire(cdc)
-
+	sideBlock.RegisterWire(cdc)
 	// register custom type
 	cdc.RegisterConcrete(&types.AppAccount{}, "basecoin/Account", nil)
 
@@ -120,7 +128,16 @@ func (app *BasecoinApp) BeginBlocker(_ sdk.Context, _ abci.RequestBeginBlock) ab
 
 // EndBlocker reflects logic to run after all TXs are processed by the
 // application.
-func (app *BasecoinApp) EndBlocker(_ sdk.Context, _ abci.RequestEndBlock) abci.ResponseEndBlock {
+func (app *BasecoinApp) EndBlocker(ctx sdk.Context, _ abci.RequestEndBlock) abci.ResponseEndBlock {
+	logger := ctx.Logger().With("module", "x/baseapp")
+	if ctx.BlockHeader().TotalTxs%10 == 0 && ctx.BlockHeader().TotalTxs>0 && ctx.BlockHeader().NumTxs==1	{
+		checkpointData:=sideBlock.GetBlocksAfterCheckpoint(ctx,app.sideBlockKeeper)
+		logger.Error("Checkpoint Created and pushed to Ethereum Chain ! ")
+		fmt.Printf("The blockdata to be pushed is %v",checkpointData)
+
+		sideBlock.FlushBlockHashesKey(ctx,app.sideBlockKeeper)
+
+	}
 	return abci.ResponseEndBlock{}
 }
 
@@ -149,6 +166,8 @@ func (app *BasecoinApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 		acc.AccountNumber = app.accountMapper.GetNextAccountNumber(ctx)
 		app.accountMapper.SetAccount(ctx, acc)
 	}
+	sideBlock.InitGenesis(ctx,app.sideBlockKeeper)
+
 
 	return abci.ResponseInitChain{}
 }
