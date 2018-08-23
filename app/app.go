@@ -130,7 +130,7 @@ func (app *BasecoinApp) BeginBlocker(_ sdk.Context, _ abci.RequestBeginBlock) ab
 // application.
 func (app *BasecoinApp) EndBlocker(ctx sdk.Context, _ abci.RequestEndBlock) abci.ResponseEndBlock {
 	logger := ctx.Logger().With("module", "x/baseapp")
-	if ctx.BlockHeader().TotalTxs%10 == 0 && ctx.BlockHeader().TotalTxs>0 && ctx.BlockHeader().NumTxs==1	{
+	if ctx.BlockHeader().TotalTxs%5 == 0 && ctx.BlockHeader().TotalTxs>0 && ctx.BlockHeader().NumTxs==1	{
 		checkpointData:=sideBlock.GetBlocksAfterCheckpoint(ctx,app.sideBlockKeeper)
 		logger.Error("Checkpoint Created and pushed to Ethereum Chain ! ")
 		fmt.Printf("The blockdata to be pushed is %v",checkpointData)
