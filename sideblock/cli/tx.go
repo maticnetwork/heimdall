@@ -12,6 +12,7 @@ import (
 
 
 	"os"
+	"fmt"
 )
 
 func GetSideBlockSetterCmd(cdc *wire.Codec) *cobra.Command {
@@ -66,7 +67,7 @@ func GetSideBlockSetterCmd(cdc *wire.Codec) *cobra.Command {
 			//	return err
 			//}
 
-			//fmt.Printf("Committed at block %d. Hash: %s\n", res.Height, res.Hash.String())
+			fmt.Printf("yoyoyo")
 			return utils.SendTx(txCtx,cliCtx,[]sdk.Msg{msg})
 		},
 	}
