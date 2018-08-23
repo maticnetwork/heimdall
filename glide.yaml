@@ -28,15 +28,17 @@ import:
   version: ^1.1.0
 - package: github.com/tendermint/tendermint
   version: ^0.23.0
-- package: github.com/tendermint/iavl
-  version: ^0.9.2
   subpackages:
-  - abci/types
-  - libs/cli
-  - libs/common
-  - libs/db
-  - libs/log
-  - types
+    - abci/types
+    - libs/cli
+    - libs/common
+    - libs/db
+    - libs/log
+    - types
+- package: github.com/tendermint/iavl
+  version: 0.9.2
+- package: github.com/gorilla/mux
+- package: github.com/ethereum/go-ethereum
 testImport:
 - package: github.com/stretchr/testify
   subpackages:
