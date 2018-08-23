@@ -1,5 +1,5 @@
-hash: af18bafc903c7b28cbf384ea1044155814ddcf5d0d8795641c5cfbbc18fd7013
-updated: 2018-08-22T23:07:53.101634+05:30
+hash: 6836aab1a0b2b63257335144c9dc2d8fb68e259a82612e1a007e287a13fd940a
+updated: 2018-08-23T22:55:00.980145+05:30
 imports:
 - name: github.com/bartekn/go-bip39
   version: a05967ea095d81c8fe4833776774cfaff8e5036c
@@ -12,7 +12,7 @@ imports:
 - name: github.com/brejski/hid
   version: 06112dcfcc50a7e0e4fd06e17f9791e788fdaafc
 - name: github.com/btcsuite/btcd
-  version: f899737d7f2764dc13e4d01ff00108ec58f766a9
+  version: d81d8877b8f327112e94e814937143a71d1692a7
   subpackages:
   - btcec
 - name: github.com/btcsuite/btcutil
@@ -20,7 +20,7 @@ imports:
   subpackages:
   - bech32
 - name: github.com/cosmos/cosmos-sdk
-  version: 2c6ed0fefc499410a7734ac93005f32a99b47b5b
+  version: 1c38c70468ec721e3a555ba2f3bf5f9da31f0cc9
   subpackages:
   - baseapp
   - client
@@ -30,7 +30,6 @@ imports:
   - client/rpc
   - client/tx
   - client/utils
-  - cmd/gaia/app
   - crypto
   - crypto/keys
   - crypto/keys/bcrypt
@@ -41,7 +40,6 @@ imports:
   - server
   - server/config
   - store
-  - tests
   - types
   - version
   - wire
@@ -73,12 +71,33 @@ imports:
   version: 8991bc29aa16c548c550c7ff78260e27b9ab7c73
   subpackages:
   - spew
+- name: github.com/deckarep/golang-set
+  version: 504e848d77ea4752b3057b8fb46da0e7f746ccf3
 - name: github.com/ebuchman/fail-test
   version: 95f809107225be108efcf10a3509e4ea6ceef3c4
+- name: github.com/ethereum/go-ethereum
+  version: c134e00e488bf4bfd88689ecf6b91ee351fb77e5
+  subpackages:
+  - common
+  - common/hexutil
+  - common/math
+  - core/types
+  - crypto
+  - crypto/secp256k1
+  - crypto/sha3
+  - ethclient
+  - ethdb
+  - log
+  - metrics
+  - p2p/netutil
+  - params
+  - rlp
+  - rpc
+  - trie
 - name: github.com/fsnotify/fsnotify
   version: c2828203cd70a50dcccfb2761f8b1f8ceef9a8e9
 - name: github.com/go-kit/kit
-  version: 9bf23341289dc5ecc1c4bb9dbad72265fbdfdd94
+  version: 4914a6960de6e1a81504d2b8a9dd9f207d20c757
   subpackages:
   - log
   - log/level
@@ -115,7 +134,7 @@ imports:
 - name: github.com/gorilla/mux
   version: e48e440e4c92e3251d812f8ce7858944dfa3331c
 - name: github.com/gorilla/websocket
-  version: 3ff3320c2a1756a3691521efc290b4701575147c
+  version: b378caee5b2a673abe3897c40fde529bff7b986e
 - name: github.com/hashicorp/hcl
   version: ef8a98b0bbce4a65b5aa4c368430a80ddc533168
   subpackages:
@@ -147,13 +166,13 @@ imports:
 - name: github.com/pelletier/go-toml
   version: c2dbbc24a97911339e01bda0b8cabdbd8f13b602
 - name: github.com/pkg/errors
-  version: 645ef00459ed84a119197bfb8d8205042c6df63d
+  version: 816c9085562cd7ee03e7f8188a1cfd942858cded
 - name: github.com/pmezard/go-difflib
   version: 792786c7400a136282c1664665ae0a8db921c6c2
   subpackages:
   - difflib
 - name: github.com/prometheus/client_golang
-  version: 29e6500a95d6ab373cae935d8615527ca38be74f
+  version: ebce7d0078c0109cbb4de5d50a2b799920b0f0d0
   subpackages:
   - prometheus
   - prometheus/promhttp
@@ -175,6 +194,8 @@ imports:
   - xfs
 - name: github.com/rcrowley/go-metrics
   version: e2704e165165ec55d062f5919b4b29494e9fa790
+- name: github.com/rs/cors
+  version: 15587285ef6b6e7a3f657e2e00f9f271883bcf22
 - name: github.com/spf13/afero
   version: 787d034dfe70e44075ccc060d346146ef53270ad
   subpackages:
@@ -215,9 +236,9 @@ imports:
   - edwards25519
   - extra25519
 - name: github.com/tendermint/go-amino
-  version: 8e8cd7628209a4fe2f5607c2b7eb9f9c7035141a
+  version: faa6e731944e2b7b6a46ad202902851e8ce85bee
 - name: github.com/tendermint/iavl
-  version: e5726c0066ccdd299a2ec9262f93c7896cdfcd87
+  version: 35f66e53d9b01e83b30de68b931f54b2477a94c9
 - name: github.com/tendermint/tendermint
   version: 013b9cef642f875634c614019ab13b17570778ad
   subpackages:
@@ -309,8 +330,9 @@ imports:
   - internal/timeseries
   - netutil
   - trace
+  - websocket
 - name: golang.org/x/sys
-  version: 3b58ed4ad3395d483fc92d5d14123ce2c3581fec
+  version: 11551d06cbcc94edc80a0facaccbda56473c19c1
   subpackages:
   - cpu
   - unix
@@ -353,6 +375,12 @@ imports:
   - stats
   - status
   - tap
+- name: gopkg.in/karalabe/cookiejar.v2
+  version: 8dcd6a7f4951f6ff3ee9cbb919a06d8925822e57
+  subpackages:
+  - collections/prque
+- name: gopkg.in/natefinch/npipe.v2
+  version: c1b8fa8bdccecb0b8db834ee0b92fdbcfa606dd6
 - name: gopkg.in/yaml.v2
   version: 5420a8b6744d3b0345ab293f6fcba19c978f1183
 testImports: []

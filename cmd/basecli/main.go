@@ -2,12 +2,12 @@ package main
 
 import (
 	"os"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/keys"
-	"github.com/cosmos/cosmos-sdk/client/lcd"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
+	restCmds "github.com/basecoin/rest_client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
+	"github.com/tendermint/tendermint/libs/cli"
 	"github.com/basecoin/app"
 	"github.com/basecoin/types"
 	"github.com/cosmos/cosmos-sdk/version"
@@ -17,7 +17,6 @@ import (
 	ibccmd "github.com/cosmos/cosmos-sdk/x/ibc/client/cli"
 	stakecmd "github.com/cosmos/cosmos-sdk/x/stake/client/cli"
 	"github.com/spf13/cobra"
-	"github.com/tendermint/tendermint/libs/cli"
 )
 
 // rootCmd is the entry point for this binary
@@ -71,7 +70,9 @@ func main() {
 	// add proxy, version and key info
 	rootCmd.AddCommand(
 		client.LineBreak,
-		lcd.ServeCommand(cdc),
+		//lcd.ServeCommand(cdc),
+		restCmds.ServeMaticCommands(cdc),
+		//TODO insert rest client
 		keys.Commands(),
 		client.LineBreak,
 		version.VersionCmd,
