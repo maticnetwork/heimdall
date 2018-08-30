@@ -21,7 +21,7 @@ func NewHandler(k Keeper) sdk.Handler {
 
 func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper) sdk.Result {
 	fmt.Printf("entered handler with message %v",msg)
-	k.addCheckpoint(ctx,msg.CheckpointData)
+	k.addCheckpoint(ctx,msg.StartBlock,msg.EndBlock,msg.rootHash)
 	//TODO add validation
 	// send tags
 	return sdk.Result{}

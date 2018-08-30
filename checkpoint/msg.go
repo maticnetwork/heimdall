@@ -13,19 +13,19 @@ var _ sdk.Msg = &MsgCheckpoint{}
 type MsgCheckpoint struct {
 	// TODO variable as we dont know who will call this
 	Proposer 		sdk.AccAddress 	`json:"address"` // address of the validator owner
-	CheckpointData []BlockHeader 	`json:"checkpointData"`
+	StartBlock 		int 	`json:"startBlock"`
+	EndBlock		int		`json:"endBlock"`
+	rootHash 		string	`json:"rootHash"`
 }
-type BlockHeader struct {
-	BlockHash string `json:"blockhash"`
-	TxRoot string `json:"tx_root"`
-	ReceiptRoot string `json:"receipt_root"`
-}
+
 //
 
-func NewMsgSideBlock(proposer sdk.AccAddress,checkpointdata []BlockHeader) MsgCheckpoint {
+func NewMsgSideBlock(proposer sdk.AccAddress,startBlock int,endBlock int,roothash string) MsgCheckpoint {
 	return MsgCheckpoint{
 		Proposer: proposer,
-		CheckpointData:checkpointdata,
+		StartBlock:startBlock,
+		EndBlock:endBlock,
+		rootHash:roothash,
 	}
 }
 
