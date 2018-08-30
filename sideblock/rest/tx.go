@@ -7,12 +7,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys"
 	"net/http"
 	"encoding/json"
-	"io/ioutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	authctx "github.com/cosmos/cosmos-sdk/x/auth/client/context"
 	"github.com/basecoin/sideblock"
 	"fmt"
+	"io/ioutil"
 )
 
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *wire.Codec, kb keys.Keybase) {
@@ -25,18 +25,19 @@ func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *wire.Codec,
 type SideBlockBody struct {
 	LocalAccountName string `json:"name"`
 	Password         string `json:"password"`
-	ChainID          string `json:"chain_id"`
-	AccountNumber    int64  `json:"account_number"`
+	ChainID          string `json:"chainid"`
+	AccountNumber    int64  `json:"accountnumber"`
 	Sequence         int64  `json:"sequence"`
 	Gas              int64  `json:"gas"`
-	VariableAddr    string `json:"validator_addr"`
+	VariableAddr    string `json:"validatoraddr"`
 	BlockHash 		string `json:"blockhash"`
-	TxRoot 			string `json:"tx_root"`
-	ReceiptRoot 	string `json:"receipt_root"`
+	TxRoot 			string `json:"txroot"`
+	ReceiptRoot 	string `json:"receiptroot"`
 }
 func sideblockRequestHandlerFn(cdc *wire.Codec, kb keys.Keybase, cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var m SideBlockBody
+
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
@@ -45,10 +46,12 @@ func sideblockRequestHandlerFn(cdc *wire.Codec, kb keys.Keybase, cliCtx context.
 		}
 		err = json.Unmarshal(body, &m)
 		if err != nil {
+			fmt.Printf("we have error")
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
 			return
 		}
+
 
 		//info, err := kb.Get(m.LocalAccountName)
 		//if err != nil {
@@ -56,6 +59,7 @@ func sideblockRequestHandlerFn(cdc *wire.Codec, kb keys.Keybase, cliCtx context.
 		//	w.Write([]byte(err.Error()))
 		//	return
 		//}
+		//fmt.Printf("info is %v",info)
 
 		txCtx := authctx.TxContext{
 			Codec:         cdc,
@@ -65,14 +69,15 @@ func sideblockRequestHandlerFn(cdc *wire.Codec, kb keys.Keybase, cliCtx context.
 			Gas:           m.Gas,
 		}
 
-		variableAddress, err := sdk.AccAddressFromBech32(m.VariableAddr)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("Couldn't decode address. Error: %s", err.Error())))
-			return
-		}
-
-		msg := sideBlock.NewMsgSideBlock(variableAddress,string(m.BlockHash),string(m.TxRoot),string(m.ReceiptRoot))
+		//variableAddress, err := sdk.AccAddressFromBech32(m.VariableAddr)
+		//if err != nil {
+		//	w.WriteHeader(http.StatusInternalServerError)
+		//	w.Write([]byte(fmt.Sprintf("Couldn't decode address. Error: %s", err.Error())))
+		//	return
+		//}
+		//fmt.Println(variableAddress)
+		//fmt.Println(txCtx)
+		msg := sideBlock.NewMsgSideBlock(sdk.AccAddress(m.VariableAddr),string(m.BlockHash),string(m.TxRoot),string(m.ReceiptRoot))
 
 		txBytes, err := txCtx.BuildAndSign(m.LocalAccountName, m.Password, []sdk.Msg{msg})
 		if err != nil {
