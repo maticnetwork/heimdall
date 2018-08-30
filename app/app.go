@@ -17,6 +17,7 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 	"github.com/basecoin/sideblock"
 	"fmt"
+	"github.com/basecoin/checkpoint"
 )
 
 const (
@@ -36,14 +37,14 @@ type BasecoinApp struct {
 	keyAccount *sdk.KVStoreKey
 	keyIBC     *sdk.KVStoreKey
 	keySideBlock *sdk.KVStoreKey
-
+	keyCheckpoint *sdk.KVStoreKey
 	// manage getting and setting accounts
 	accountMapper       auth.AccountMapper
 	feeCollectionKeeper auth.FeeCollectionKeeper
 	coinKeeper          bank.Keeper
 	ibcMapper           ibc.Mapper
 	sideBlockKeeper     sideBlock.Keeper
-
+	checkpointKeeper    checkpoint.Keeper
 
 }
 
@@ -64,6 +65,7 @@ func NewBasecoinApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		keyAccount: sdk.NewKVStoreKey("acc"),
 		keyIBC:     sdk.NewKVStoreKey("ibc"),
 		keySideBlock:sdk.NewKVStoreKey("sideBlock"),
+		keyCheckpoint:sdk.NewKVStoreKey("checkpoint"),
 	}
 
 	// define and attach the mappers and keepers
@@ -77,12 +79,14 @@ func NewBasecoinApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.coinKeeper = bank.NewKeeper(app.accountMapper)
 	app.ibcMapper = ibc.NewMapper(app.cdc, app.keyIBC, app.RegisterCodespace(ibc.DefaultCodespace))
 	app.sideBlockKeeper = sideBlock.NewKeeper(app.cdc,app.keySideBlock,app.RegisterCodespace(sideBlock.DefaultCodespace))
+	//TODO change to its own codespace
+	app.checkpointKeeper = checkpoint.NewKeeper(app.cdc,app.keyCheckpoint,app.RegisterCodespace(sideBlock.DefaultCodespace))
 	// register message routes
 	app.Router().
 		AddRoute("bank", bank.NewHandler(app.coinKeeper)).
 		AddRoute("ibc", ibc.NewHandler(app.ibcMapper, app.coinKeeper)).
-		AddRoute("sideBlock",sideBlock.NewHandler(app.sideBlockKeeper))
-
+		AddRoute("sideBlock",sideBlock.NewHandler(app.sideBlockKeeper)).
+		AddRoute("checkpoint",checkpoint.NewHandler(app.checkpointKeeper))
 	// perform initialization logic
 	app.SetInitChainer(app.initChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
@@ -90,7 +94,7 @@ func NewBasecoinApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.SetAnteHandler(auth.NewAnteHandler(app.accountMapper, app.feeCollectionKeeper))
 
 	// mount the multistore and load the latest state
-	app.MountStoresIAVL(app.keyMain, app.keyAccount, app.keyIBC,app.keySideBlock)
+	app.MountStoresIAVL(app.keyMain, app.keyAccount, app.keyIBC,app.keySideBlock,app.keyCheckpoint)
 	err := app.LoadLatestVersion(app.keyMain)
 	if err != nil {
 		cmn.Exit(err.Error())
@@ -112,6 +116,7 @@ func MakeCodec() *wire.Codec {
 	ibc.RegisterWire(cdc)
 	auth.RegisterWire(cdc)
 	sideBlock.RegisterWire(cdc)
+	checkpoint.RegisterWire(cdc)
 	// register custom type
 	cdc.RegisterConcrete(&types.AppAccount{}, "basecoin/Account", nil)
 

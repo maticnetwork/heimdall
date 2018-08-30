@@ -17,6 +17,7 @@ import (
 	ibccmd "github.com/cosmos/cosmos-sdk/x/ibc/client/cli"
 	stakecmd "github.com/cosmos/cosmos-sdk/x/stake/client/cli"
 	"github.com/spf13/cobra"
+	checkpointcmd "github.com/basecoin/checkpoint/cli"
 )
 
 // rootCmd is the entry point for this binary
@@ -63,6 +64,7 @@ func main() {
 			stakecmd.GetCmdCreateValidator(cdc),
 			stakecmd.GetCmdEditValidator(cdc),
 			sideblockcmd.GetSideBlockSetterCmd(cdc),
+			checkpointcmd.SubmitCheckpointCmd(cdc),
 			stakecmd.GetCmdDelegate(cdc),
 			stakecmd.GetCmdUnbond("stake", cdc),
 		)...)
