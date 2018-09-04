@@ -6,7 +6,8 @@ import (
 	"context"
 	"math/big"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/eth/go-ethereum/crypto/sha3"
+	"github.com/ethereum/go-ethereum/crypto/sha3"
+	"github.com/xsleonard/go-merkle"
 )
 
 func main()  {
@@ -49,7 +50,7 @@ func getHeaders(start int,end int,client *ethclient.Client)  {
 	//}
 	//TODO fetch block header by making a goroutine , when we get result take sha3 of information and put in array
 	current:=start
-	var result []([32]byte)
+	var result [][32]byte
 	for current <= end {
 		//TODO run this in different goroutines and use channels to fetch results(how to maintian order)
 		blockheader,err:=client.HeaderByNumber(context.Background(),big.NewInt(int64(current)))
@@ -61,16 +62,10 @@ func getHeaders(start int,end int,client *ethclient.Client)  {
 		fmt.Println(blockheader.Number)
 		fmt.Println(blockheader.Hash().Hex())
 		headerBytes:= blockheader.Number.Bytes()
-		fmt.Println(headerBytes)
 		headerBytes = append(headerBytes,blockheader.Time.Bytes()...)
-		fmt.Println(headerBytes)
-
 		headerBytes = append(headerBytes,blockheader.TxHash.Bytes()...)
-		fmt.Println(headerBytes)
-
 		headerBytes = append(headerBytes,blockheader.ReceiptHash.Bytes()...)
 
-		fmt.Println(headerBytes)
 
 
 		header:= sha3.Sum256(headerBytes)
@@ -82,9 +77,28 @@ func getHeaders(start int,end int,client *ethclient.Client)  {
 	}
 	fmt.Printf("loop ended ")
 	for _,number := range result{
-		// we get 32 bytes headers in a list 
+		// we get 32 bytes headers in a list
 		fmt.Println(len(number))
 	}
+	merkelData:=convert(result)
+	fmt.Printf("merkel data is %v",merkelData)
+	tree := merkle.NewTree()
+	//err := tree.Generate(result,sha3.New256())
+	//if err != nil {
+	//	fmt.Println(err)
+	//	return
+	//}
+	fmt.Printf("Root: %v\n", tree.Root())
 	//return "lol"
 
+}
+func convert(input [][32]byte) [][]byte {
+	var output [][]byte
+	for _,in := range input{
+		newInput:=in[:]
+		output:= append(output, newInput)
+		fmt.Printf("for loop output is %v",output)
+	}
+	fmt.Printf("the output is %v",output)
+	return output
 }
