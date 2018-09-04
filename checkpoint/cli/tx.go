@@ -13,7 +13,7 @@ import (
 
 	"github.com/basecoin/checkpoint"
 	"github.com/cosmos/cosmos-sdk/client/utils"
-	"encoding/json"
+	"strconv"
 )
 
 func SubmitCheckpointCmd(cdc *wire.Codec) *cobra.Command {
@@ -29,27 +29,20 @@ func SubmitCheckpointCmd(cdc *wire.Codec) *cobra.Command {
 				WithLogger(os.Stdout).
 				WithAccountDecoder(authcmd.GetAccountDecoder(cdc))
 
-			data:=args[0]
-			fmt.Printf("the data we recieved is %v",data)
-			out, err := json.Marshal(data)
-			if err != nil {
-				panic (err)
-			}
-			fmt.Printf("output is %v",out)
+			roothash:=args[0]
+			// TODO replace these with flags
+			start :=args[1]
+			end := args[2]
+			fmt.Printf("the data we recieved is %v",roothash)
 
 			from, err := cliCtx.GetFromAddress()
 			if err != nil {
 				return err
 			}
+			startInt,err:=strconv.Atoi(start)
+			endInt,err:=strconv.Atoi(end)
 			fmt.Printf("from address is %v with txctx as %v",from,txCtx)
-			//submit :=[
-			//	checkpoint.BlockHeader{BlockHash:"dsds",TxRoot:"dsdsdsds",ReceiptRoot:"dsdsdsdsdsdsdsdsd"},
-			//	checkpoint.BlockHeader{BlockHash:"dsds",TxRoot:"dsdsdsds",ReceiptRoot:"dsdsdsdsdsdsdsdsd"}
-			//]
-			submit:=[]checkpoint.BlockHeader{}
-			submit= append(submit, checkpoint.BlockHeader{BlockHash:"dsds",TxRoot:"dsdsdsds",ReceiptRoot:"dsdsdsdsdsdsdsdsd"})
-			submit= append(submit, checkpoint.BlockHeader{BlockHash:"dsds",TxRoot:"dsdsdsds",ReceiptRoot:"dsdsdsdsdsdsdsdsd"})
-			msg := checkpoint.NewMsgSideBlock(from,submit)
+			msg := checkpoint.NewMsgSideBlock(from,startInt,endInt,roothash)
 
 
 			return utils.SendTx(txCtx,cliCtx,[]sdk.Msg{msg})

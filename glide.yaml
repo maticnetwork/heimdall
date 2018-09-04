@@ -42,6 +42,7 @@ import:
   version: ^1.0.0
   subpackages:
   - difflib
+- package: github.com/xsleonard/go-merkle
 testImport:
 - package: github.com/stretchr/testify
   subpackages:

@@ -46,7 +46,6 @@ func (k Keeper) addCheckpoint(ctx sdk.Context, start int , end int, root string)
 		panic (err)
 	}
 	//TODO add block data validation
-
 	fmt.Printf("Block data to be inserted with key %v",[]byte(strconv.Itoa(int(ctx.BlockHeight()))))
 	fmt.Printf("Block data to be inserted is %v",out)
 	store.Set([]byte(strconv.Itoa(int(ctx.BlockHeight()))),[]byte(out))
