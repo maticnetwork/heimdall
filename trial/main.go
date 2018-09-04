@@ -43,7 +43,9 @@ func getHeaders(start int,end int,client *ethclient.Client) string {
 		fmt.Println(blockheader.Number)
 		fmt.Println(blockheader.Hash().Hex())
 		headerBytes:= blockheader.Number.Bytes()
-		fmt.Printf("blocknumber bytes %v,%v",blockheader.Number,blockheader.Number.Bytes()[:32],)
+		input,err:= convertTo32(blockheader.Number.Bytes())
+		fmt.Printf("blocknumber bytes %v,%v",blockheader.Number,input)
+		fmt.Println()
 		headerBytes = append(headerBytes,blockheader.Time.Bytes()...)
 		headerBytes = append(headerBytes,blockheader.TxHash.Bytes()...)
 		headerBytes = append(headerBytes,blockheader.ReceiptHash.Bytes()...)
@@ -84,4 +86,13 @@ func convert(input [][32]byte) [][]byte {
 	}
 	fmt.Printf("the output is %v",output)
 	return output
+}
+func convertTo32(input []byte) (output [32]byte, err error) {
+	l := len(input)
+	if l > 32 || l == 0 {
+		err = fmt.Errorf("input length is greater than 32")
+		return
+	}
+	copy(output[32-l:], input[:])
+	return
 }
