@@ -19,8 +19,9 @@ func main()  {
 	fmt.Println("we have a connection")
 	_ = client // we'll use this in the upcoming sections
 
-	getHeaders(4733028,4733033,client)
-	
+	root:=getHeaders(4733028,4733033,client)
+	fmt.Printf("the root hash is %v",root)
+
 }
 
 func getHeaders(start int,end int,client *ethclient.Client) string {
@@ -42,6 +43,7 @@ func getHeaders(start int,end int,client *ethclient.Client) string {
 		fmt.Println(blockheader.Number)
 		fmt.Println(blockheader.Hash().Hex())
 		headerBytes:= blockheader.Number.Bytes()
+		fmt.Printf("blocknumber bytes %v,%v",blockheader.Number,blockheader.Number.Bytes()[:32],)
 		headerBytes = append(headerBytes,blockheader.Time.Bytes()...)
 		headerBytes = append(headerBytes,blockheader.TxHash.Bytes()...)
 		headerBytes = append(headerBytes,blockheader.ReceiptHash.Bytes()...)
@@ -69,7 +71,7 @@ func getHeaders(start int,end int,client *ethclient.Client) string {
 		log.Fatal(err)
 	}
 	fmt.Printf("Root: %v\n", tree.Root())// return the hash of root
-
+	fmt.Println(tree.Root().Hash)
 	return string(tree.Root().Hash)
 }
 func convert(input [][32]byte) [][]byte {
