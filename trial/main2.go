@@ -10,8 +10,8 @@ hash := sha3.NewKeccak256()
 
 var buf []byte
 //hash.Write([]byte{0xcc})
-fmt.Printf("cc after decode %v",decodeHex("cc"))
-hash.Write(decodeHex("cc"))
+fmt.Printf("cc after decode %v",decodeHex("fee7e54bc2a409446588880ebbabd23a23f2d53c083ae07f60bb80407cb27360"))
+hash.Write(decodeHex("fee7e54bc2a409446588880ebbabd23a23f2d53c083ae07f60bb80407cb27360"))
 buf = hash.Sum(buf)
 
 fmt.Println(hex.EncodeToString(buf))
