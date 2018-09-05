@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto/sha3"
 	"github.com/xsleonard/go-merkle"
 	"encoding/hex"
+
 )
 
 func main()  {
@@ -43,38 +44,38 @@ func getHeaders(start int,end int,client *ethclient.Client) string {
 										blockheader.TxHash.Bytes(),
 										blockheader.ReceiptHash.Bytes() )
 
-		fmt.Printf("attention !!! %v \n",getsha3frombyte("abcd"))
-		header:= getsha3frombyte(hex.EncodeToString(headerBytes))
+		header:= getsha3frombyte(headerBytes)
 		var arr [32]byte
 		copy(arr[:], header)
 		result = append(result, arr)
 		current++
 	}
 	fmt.Println("------")
-	fmt.Printf(" the headers are ",result)
 	merkelData:=convert(result)
+	//fmt.Println("------")
+	fmt.Printf("merkel data is %v \n %v" ,merkelData,result)
 	fmt.Println("------")
-	fmt.Printf("merkel data is %v",merkelData)
-	fmt.Println("------")
-	tree := merkle.NewTree()
-	err := tree.Generate(merkelData,sha3.New256())
+	//tree := merkle.NewTree()
+	tree := merkle.NewTreeWithOpts(merkle.TreeOptions{EnableHashSorting:true,DisableHashLeaves:false})
+
+	err := tree.Generate(merkelData,sha3.NewKeccak256())
 	if err != nil {
 		fmt.Println("*********ERROR***********")
 		log.Fatal(err)
 	}
-	fmt.Printf("Root: %v\n", tree.Root())// return the hash of root
+	//fmt.Printf("Root: %v\n", tree.Root())// return the hash of root
 	fmt.Println(hex.EncodeToString(tree.Root().Hash))
 	return hex.EncodeToString(tree.Root().Hash)
 }
-func convert(input [][32]byte) [][]byte {
+func convert(input []([32]byte)) [][]byte {
 	var output [][]byte
 	for _,in := range input{
-		newInput:=in[:]
+		newInput := make([]byte, len(in[:]))
+		copy(newInput,in[:])
 		output = append(output, newInput)
-		//fmt.Printf("for loop output is %v",output)
+		//fmt.Printf("------- \n input is %v \n output is %v",newInput,output )
 
 	}
-	fmt.Printf("the output is %v",output)
 	return output
 }
 func convertTo32(input []byte) (output [32]byte, err error) {
@@ -97,20 +98,16 @@ func appendBytes32(data... []byte) []byte {
 	}
 	return result
 }
-func getsha3frombyte(input string) string{
+func getsha3frombyte(input []byte) []byte{
 	hash := sha3.NewKeccak256()
-	fmt.Println(input)
-	v,err:=hex.DecodeString(input)
-	if err!=nil{
-		fmt.Println("dsd")
-		log.Fatal(err)
-	}
-	fmt.Println("v is ")
-	fmt.Println(v)
+	//v,err:=hex.DecodeString(input)
+	//if err!=nil{
+	//	fmt.Println("Error occured in getsha3")
+	//	log.Fatal(err)
+	//}
 	var buf []byte
-	hash.Write(v)
+	hash.Write(input)
 	buf = hash.Sum(buf)
-	fmt.Printf("the input was %v and the output is %v",input,hex.EncodeToString(buf))
-	return hex.EncodeToString(buf)
+	return buf
 }
 
