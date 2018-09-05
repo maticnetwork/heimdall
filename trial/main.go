@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/crypto/sha3"
 	"github.com/xsleonard/go-merkle"
+	"encoding/hex"
 )
 
 func main()  {
@@ -25,11 +26,9 @@ func main()  {
 }
 
 func getHeaders(start int,end int,client *ethclient.Client) string {
-	fmt.Printf(" the start is %v and the end is %v and value is %v",start,end,start<end)
 	if start>end{
 		return ""
 	}
-	//TODO fetch block header by making a goroutine , when we get result take sha3 of information and put in array
 	current:=start
 	var result [][32]byte
 	for current <= end {
@@ -39,42 +38,33 @@ func getHeaders(start int,end int,client *ethclient.Client) string {
 			fmt.Printf("not found")
 			log.Fatal(err)
 		}
-		//fmt.Printf("the block number is %v",blockheader.Number)
-		fmt.Println(blockheader.Number)
-		fmt.Println(blockheader.Hash().Hex())
-		headerBytes:= blockheader.Number.Bytes()
-		input,err:= convertTo32(blockheader.Number.Bytes())
-		fmt.Printf("blocknumber bytes %v,%v",blockheader.Number,input)
-		fmt.Println()
-		headerBytes = append(headerBytes,blockheader.Time.Bytes()...)
-		headerBytes = append(headerBytes,blockheader.TxHash.Bytes()...)
-		headerBytes = append(headerBytes,blockheader.ReceiptHash.Bytes()...)
+		headerBytes := appendBytes32(	blockheader.Number.Bytes(),
+										blockheader.Time.Bytes(),
+										blockheader.TxHash.Bytes(),
+										blockheader.ReceiptHash.Bytes() )
 
-
-
-		header:= sha3.Sum256(headerBytes)
-		fmt.Printf("the header is %v",header)
-
-
-		result = append(result, header)
+		fmt.Printf("attention !!! %v \n",getsha3frombyte("abcd"))
+		header:= getsha3frombyte(hex.EncodeToString(headerBytes))
+		var arr [32]byte
+		copy(arr[:], header)
+		result = append(result, arr)
 		current++
 	}
-	fmt.Printf("loop ended ")
-	for _,number := range result{
-		// we get 32 bytes headers in a list
-		fmt.Println(len(number))
-	}
+	fmt.Println("------")
+	fmt.Printf(" the headers are ",result)
 	merkelData:=convert(result)
+	fmt.Println("------")
 	fmt.Printf("merkel data is %v",merkelData)
+	fmt.Println("------")
 	tree := merkle.NewTree()
 	err := tree.Generate(merkelData,sha3.New256())
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("*********ERROR***********")
 		log.Fatal(err)
 	}
 	fmt.Printf("Root: %v\n", tree.Root())// return the hash of root
-	fmt.Println(tree.Root().Hash)
-	return string(tree.Root().Hash)
+	fmt.Println(hex.EncodeToString(tree.Root().Hash))
+	return hex.EncodeToString(tree.Root().Hash)
 }
 func convert(input [][32]byte) [][]byte {
 	var output [][]byte
@@ -96,3 +86,31 @@ func convertTo32(input []byte) (output [32]byte, err error) {
 	copy(output[32-l:], input[:])
 	return
 }
+
+func appendBytes32(data... []byte) []byte {
+	var result []byte
+	for _, v := range data {
+		paddedV, err := convertTo32(v)
+		if err == nil {
+			result = append(result, paddedV[:]...)
+		}
+	}
+	return result
+}
+func getsha3frombyte(input string) string{
+	hash := sha3.NewKeccak256()
+	fmt.Println(input)
+	v,err:=hex.DecodeString(input)
+	if err!=nil{
+		fmt.Println("dsd")
+		log.Fatal(err)
+	}
+	fmt.Println("v is ")
+	fmt.Println(v)
+	var buf []byte
+	hash.Write(v)
+	buf = hash.Sum(buf)
+	fmt.Printf("the input was %v and the output is %v",input,hex.EncodeToString(buf))
+	return hex.EncodeToString(buf)
+}
+
