@@ -20,8 +20,8 @@ func main()  {
 
 	fmt.Println("we have a connection")
 	_ = client // we'll use this in the upcoming sections
-
-	root:=getHeaders(4733028,4733029,client)
+	//TODO reject transaction if the difference in numbers is not even
+	root:=getHeaders(4733028,4733032,client)
 	fmt.Printf("the root hash is %v",root)
 
 }
@@ -30,6 +30,7 @@ func getHeaders(start int,end int,client *ethclient.Client) string {
 	if start>end{
 		return ""
 	}
+	fmt.Printf("start from %v /n end to %v",start,end)
 	current:=start
 	var result [][32]byte
 	for current <= end {
@@ -53,7 +54,7 @@ func getHeaders(start int,end int,client *ethclient.Client) string {
 	fmt.Println("------")
 	merkelData:=convert(result)
 	//fmt.Println("------")
-	//fmt.Printf("merkel data is %v \n %v" ,len(merkelData),result)
+	fmt.Printf("merkel data is \n %v" ,len(merkelData))
 	fmt.Println("------")
 	//tree := merkle.NewTree()
 	tree := merkle.NewTreeWithOpts(merkle.TreeOptions{EnableHashSorting:false,DisableHashLeaves:true})
@@ -64,7 +65,7 @@ func getHeaders(start int,end int,client *ethclient.Client) string {
 		log.Fatal(err)
 	}
 	fmt.Println("------")
-	fmt.Printf("tree: %v\n", tree.Leaves())// return the hash of root
+	//fmt.Printf("tree: %v\n", tree.Leaves())// return the hash of root
 	fmt.Println("------")
 	fmt.Println(hex.EncodeToString(tree.Root().Hash))
 	return hex.EncodeToString(tree.Root().Hash)
