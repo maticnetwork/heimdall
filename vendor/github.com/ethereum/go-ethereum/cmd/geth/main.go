@@ -101,7 +101,6 @@ var (
 		utils.MinerNotifyFlag,
 		utils.MinerGasTargetFlag,
 		utils.MinerLegacyGasTargetFlag,
-		utils.MinerGasLimitFlag,
 		utils.MinerGasPriceFlag,
 		utils.MinerLegacyGasPriceFlag,
 		utils.MinerEtherbaseFlag,
@@ -109,7 +108,6 @@ var (
 		utils.MinerExtraDataFlag,
 		utils.MinerLegacyExtraDataFlag,
 		utils.MinerRecommitIntervalFlag,
-		utils.MinerNoVerfiyFlag,
 		utils.NATFlag,
 		utils.NoDiscoverFlag,
 		utils.DiscoveryV5Flag,
@@ -237,6 +235,7 @@ func init() {
 		// Start system runtime metrics collection
 		go metrics.CollectProcessMetrics(3 * time.Second)
 
+		utils.SetupNetwork(ctx)
 		return nil
 	}
 

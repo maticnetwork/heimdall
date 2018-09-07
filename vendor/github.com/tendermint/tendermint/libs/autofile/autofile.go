@@ -67,13 +67,11 @@ func (af *AutoFile) Close() error {
 }
 
 func (af *AutoFile) processTicks() {
-	for {
-		select {
-		case <-af.ticker.C:
-			af.closeFile()
-		case <-af.tickerStopped:
-			return
-		}
+	select {
+	case <-af.ticker.C:
+		af.closeFile()
+	case <-af.tickerStopped:
+		return
 	}
 }
 

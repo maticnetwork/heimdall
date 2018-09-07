@@ -5,7 +5,6 @@
 package wire
 
 import (
-	"errors"
 	"fmt"
 	"io"
 
@@ -16,16 +15,7 @@ const (
 	// CFCheckptInterval is the gap (in number of blocks) between each
 	// filter header checkpoint.
 	CFCheckptInterval = 1000
-
-	// maxCFHeadersLen is the max number of filter headers we will attempt
-	// to decode.
-	maxCFHeadersLen = 100000
 )
-
-// ErrInsaneCFHeaderCount signals that we were asked to decode an
-// unreasonable number of cfilter headers.
-var ErrInsaneCFHeaderCount = errors.New(
-	"refusing to decode unreasonable number of filter headers")
 
 // MsgCFCheckpt implements the Message interface and represents a bitcoin
 // cfcheckpt message.  It is used to deliver committed filter header information
@@ -68,11 +58,6 @@ func (msg *MsgCFCheckpt) BtcDecode(r io.Reader, pver uint32, _ MessageEncoding) 
 	count, err := ReadVarInt(r, pver)
 	if err != nil {
 		return err
-	}
-
-	// Refuse to decode an insane number of cfheaders.
-	if count > maxCFHeadersLen {
-		return ErrInsaneCFHeaderCount
 	}
 
 	// Create a contiguous slice of hashes to deserialize into in order to

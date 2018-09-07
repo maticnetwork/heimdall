@@ -199,14 +199,12 @@ func (g *Group) Flush() error {
 }
 
 func (g *Group) processTicks() {
-	for {
-		select {
-		case <-g.ticker.C:
-			g.checkHeadSizeLimit()
-			g.checkTotalSizeLimit()
-		case <-g.Quit():
-			return
-		}
+	select {
+	case <-g.ticker.C:
+		g.checkHeadSizeLimit()
+		g.checkTotalSizeLimit()
+	case <-g.Quit():
+		return
 	}
 }
 

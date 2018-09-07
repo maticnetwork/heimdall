@@ -19,6 +19,7 @@ package les
 
 import (
 	"crypto/ecdsa"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"math/big"
@@ -35,10 +36,9 @@ import (
 )
 
 var (
-	errClosed             = errors.New("peer set is closed")
-	errAlreadyRegistered  = errors.New("peer is already registered")
-	errNotRegistered      = errors.New("peer is not registered")
-	errInvalidHelpTrieReq = errors.New("invalid help trie request")
+	errClosed            = errors.New("peer set is closed")
+	errAlreadyRegistered = errors.New("peer is already registered")
+	errNotRegistered     = errors.New("peer is not registered")
 )
 
 const maxResponseErrors = 50 // number of invalid responses tolerated (makes the protocol less brittle but still avoids spam)
@@ -284,21 +284,21 @@ func (p *peer) RequestProofs(reqID, cost uint64, reqs []ProofReq) error {
 }
 
 // RequestHelperTrieProofs fetches a batch of HelperTrie merkle proofs from a remote node.
-func (p *peer) RequestHelperTrieProofs(reqID, cost uint64, data interface{}) error {
+func (p *peer) RequestHelperTrieProofs(reqID, cost uint64, reqs []HelperTrieReq) error {
+	p.Log().Debug("Fetching batch of HelperTrie proofs", "count", len(reqs))
 	switch p.version {
 	case lpv1:
-		reqs, ok := data.([]ChtReq)
-		if !ok {
-			return errInvalidHelpTrieReq
+		reqsV1 := make([]ChtReq, len(reqs))
+		for i, req := range reqs {
+			if req.Type != htCanonical || req.AuxReq != auxHeader || len(req.Key) != 8 {
+				return fmt.Errorf("Request invalid in LES/1 mode")
+			}
+			blockNum := binary.BigEndian.Uint64(req.Key)
+			// convert HelperTrie request to old CHT request
+			reqsV1[i] = ChtReq{ChtNum: (req.TrieIdx + 1) * (light.CHTFrequencyClient / light.CHTFrequencyServer), BlockNum: blockNum, FromLevel: req.FromLevel}
 		}
-		p.Log().Debug("Fetching batch of header proofs", "count", len(reqs))
-		return sendRequest(p.rw, GetHeaderProofsMsg, reqID, cost, reqs)
+		return sendRequest(p.rw, GetHeaderProofsMsg, reqID, cost, reqsV1)
 	case lpv2:
-		reqs, ok := data.([]HelperTrieReq)
-		if !ok {
-			return errInvalidHelpTrieReq
-		}
-		p.Log().Debug("Fetching batch of HelperTrie proofs", "count", len(reqs))
 		return sendRequest(p.rw, GetHelperTrieProofsMsg, reqID, cost, reqs)
 	default:
 		panic(nil)

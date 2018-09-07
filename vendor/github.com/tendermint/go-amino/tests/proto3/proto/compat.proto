@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package proto3tests;
+
+message TestInt32Varint {
+    sint32 Int32 = 1;
+}
+
+message TestInt32Fixed {
+    fixed32 Fixed32 = 1;
+}
+
+message Test32 {
+    fixed32 foo = 1;
+    sint32 bar = 2;
+}
+
+message TestFixedInt64 {
+    fixed64 Int64 = 1;
+}
+
+message TestSFixedSInt64 {
+    sfixed64 SInt64 = 1;
+}
+
+message EmbeddedStruct {
+    sfixed64 somethingFixedLen = 1;
+}
+
+message SomeStruct {
+    // proto3 autom. turns this into a pointer ...
+    EmbeddedStruct emb = 1;
+}

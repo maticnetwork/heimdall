@@ -20,7 +20,7 @@ type MsgCheckpoint struct {
 
 //
 
-func NewMsgSideBlock(proposer sdk.AccAddress,startBlock int,endBlock int,roothash string) MsgCheckpoint {
+func NewMsgCheckpointBlock(proposer sdk.AccAddress,startBlock int,endBlock int,roothash string) MsgCheckpoint {
 	return MsgCheckpoint{
 		Proposer: proposer,
 		StartBlock:startBlock,

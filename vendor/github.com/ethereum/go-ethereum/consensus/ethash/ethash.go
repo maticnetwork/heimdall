@@ -50,7 +50,7 @@ var (
 	two256 = new(big.Int).Exp(big.NewInt(2), big.NewInt(256), big.NewInt(0))
 
 	// sharedEthash is a full instance that can be shared between multiple users.
-	sharedEthash = New(Config{"", 3, 0, "", 1, 0, ModeNormal}, nil, false)
+	sharedEthash = New(Config{"", 3, 0, "", 1, 0, ModeNormal}, nil)
 
 	// algorithmRevision is the data structure version used for file naming.
 	algorithmRevision = 23
@@ -405,12 +405,6 @@ type Config struct {
 	PowMode        Mode
 }
 
-// sealTask wraps a seal block with relative result channel for remote sealer thread.
-type sealTask struct {
-	block   *types.Block
-	results chan<- *types.Block
-}
-
 // mineResult wraps the pow solution parameters for the specified block.
 type mineResult struct {
 	nonce     types.BlockNonce
@@ -450,11 +444,12 @@ type Ethash struct {
 	hashrate metrics.Meter // Meter tracking the average hashrate
 
 	// Remote sealer related fields
-	workCh       chan *sealTask   // Notification channel to push new work and relative result channel to remote sealer
-	fetchWorkCh  chan *sealWork   // Channel used for remote sealer to fetch mining work
-	submitWorkCh chan *mineResult // Channel used for remote sealer to submit their mining result
-	fetchRateCh  chan chan uint64 // Channel used to gather submitted hash rate for local or remote sealer.
-	submitRateCh chan *hashrate   // Channel used for remote sealer to submit their mining hashrate
+	workCh       chan *types.Block // Notification channel to push new work to remote sealer
+	resultCh     chan *types.Block // Channel used by mining threads to return result
+	fetchWorkCh  chan *sealWork    // Channel used for remote sealer to fetch mining work
+	submitWorkCh chan *mineResult  // Channel used for remote sealer to submit their mining result
+	fetchRateCh  chan chan uint64  // Channel used to gather submitted hash rate for local or remote sealer.
+	submitRateCh chan *hashrate    // Channel used for remote sealer to submit their mining hashrate
 
 	// The fields below are hooks for testing
 	shared    *Ethash       // Shared PoW verifier to avoid cache regeneration
@@ -469,7 +464,7 @@ type Ethash struct {
 // New creates a full sized ethash PoW scheme and starts a background thread for
 // remote mining, also optionally notifying a batch of remote services of new work
 // packages.
-func New(config Config, notify []string, noverify bool) *Ethash {
+func New(config Config, notify []string) *Ethash {
 	if config.CachesInMem <= 0 {
 		log.Warn("One ethash cache must always be in memory", "requested", config.CachesInMem)
 		config.CachesInMem = 1
@@ -486,34 +481,36 @@ func New(config Config, notify []string, noverify bool) *Ethash {
 		datasets:     newlru("dataset", config.DatasetsInMem, newDataset),
 		update:       make(chan struct{}),
 		hashrate:     metrics.NewMeter(),
-		workCh:       make(chan *sealTask),
+		workCh:       make(chan *types.Block),
+		resultCh:     make(chan *types.Block),
 		fetchWorkCh:  make(chan *sealWork),
 		submitWorkCh: make(chan *mineResult),
 		fetchRateCh:  make(chan chan uint64),
 		submitRateCh: make(chan *hashrate),
 		exitCh:       make(chan chan error),
 	}
-	go ethash.remote(notify, noverify)
+	go ethash.remote(notify)
 	return ethash
 }
 
 // NewTester creates a small sized ethash PoW scheme useful only for testing
 // purposes.
-func NewTester(notify []string, noverify bool) *Ethash {
+func NewTester(notify []string) *Ethash {
 	ethash := &Ethash{
 		config:       Config{PowMode: ModeTest},
 		caches:       newlru("cache", 1, newCache),
 		datasets:     newlru("dataset", 1, newDataset),
 		update:       make(chan struct{}),
 		hashrate:     metrics.NewMeter(),
-		workCh:       make(chan *sealTask),
+		workCh:       make(chan *types.Block),
+		resultCh:     make(chan *types.Block),
 		fetchWorkCh:  make(chan *sealWork),
 		submitWorkCh: make(chan *mineResult),
 		fetchRateCh:  make(chan chan uint64),
 		submitRateCh: make(chan *hashrate),
 		exitCh:       make(chan chan error),
 	}
-	go ethash.remote(notify, noverify)
+	go ethash.remote(notify)
 	return ethash
 }
 

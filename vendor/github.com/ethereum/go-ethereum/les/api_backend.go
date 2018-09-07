@@ -192,7 +192,7 @@ func (b *LesApiBackend) BloomStatus() (uint64, uint64) {
 		return 0, 0
 	}
 	sections, _, _ := b.eth.bloomIndexer.Sections()
-	return params.BloomBitsBlocksClient, sections
+	return light.BloomTrieFrequency, sections
 }
 
 func (b *LesApiBackend) ServiceFilter(ctx context.Context, session *bloombits.MatcherSession) {

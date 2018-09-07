@@ -94,7 +94,7 @@ func TestTxPool(t *testing.T) {
 		panic(err)
 	}
 
-	odr := &testOdr{sdb: sdb, ldb: ldb, indexerConfig: TestClientIndexerConfig}
+	odr := &testOdr{sdb: sdb, ldb: ldb}
 	relay := &testTxRelay{
 		send:    make(chan int, 1),
 		discard: make(chan int, 1),

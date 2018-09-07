@@ -53,10 +53,10 @@ func getHeaders(start int,end int,client *ethclient.Client) string {
 	fmt.Println("------")
 	merkelData:=convert(result)
 	//fmt.Println("------")
-	fmt.Printf("merkel data is %v \n %v" ,merkelData,result)
+	//fmt.Printf("merkel data is %v \n %v" ,merkelData,result)
 	fmt.Println("------")
-	//tree := merkle.NewTree()
-	tree := merkle.NewTreeWithOpts(merkle.TreeOptions{EnableHashSorting:true,DisableHashLeaves:false})
+	tree := merkle.NewTree()
+	//tree := merkle.NewTreeWithOpts(merkle.TreeOptions{EnableHashSorting:false,DisableHashLeaves:true})
 
 	err := tree.Generate(merkelData,sha3.NewKeccak256())
 	if err != nil {

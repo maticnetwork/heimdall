@@ -49,7 +49,7 @@ func TestSpec(t *testing.T) {
 		{
 			"NoConfig",
 			Options{
-				// Intentionally left blank.
+			// Intentionally left blank.
 			},
 			"GET",
 			map[string]string{},
@@ -158,33 +158,15 @@ func TestSpec(t *testing.T) {
 			},
 		},
 		{
-			"AllowOriginRequestFuncMatch",
+			"AllowedOriginFuncNotMatch",
 			Options{
-				AllowOriginRequestFunc: func(r *http.Request, o string) bool {
-					return regexp.MustCompile("^http://foo").MatchString(o) && r.Header.Get("Authorization") == "secret"
+				AllowOriginFunc: func(o string) bool {
+					return regexp.MustCompile("^http://foo").MatchString(o)
 				},
 			},
 			"GET",
 			map[string]string{
-				"Origin":        "http://foobar.com",
-				"Authorization": "secret",
-			},
-			map[string]string{
-				"Vary": "Origin",
-				"Access-Control-Allow-Origin": "http://foobar.com",
-			},
-		},
-		{
-			"AllowOriginRequestFuncNotMatch",
-			Options{
-				AllowOriginRequestFunc: func(r *http.Request, o string) bool {
-					return regexp.MustCompile("^http://foo").MatchString(o) && r.Header.Get("Authorization") == "secret"
-				},
-			},
-			"GET",
-			map[string]string{
-				"Origin":        "http://foobar.com",
-				"Authorization": "not-secret",
+				"Origin": "http://barfoo.com",
 			},
 			map[string]string{
 				"Vary": "Origin",
@@ -465,7 +447,7 @@ func TestHandlePreflightInvalidOriginAbortion(t *testing.T) {
 
 func TestHandlePreflightNoOptionsAbortion(t *testing.T) {
 	s := New(Options{
-		// Intentionally left blank.
+	// Intentionally left blank.
 	})
 	res := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "http://example.com/foo", nil)
@@ -521,7 +503,7 @@ func TestHandleActualRequestInvalidMethodAbortion(t *testing.T) {
 
 func TestIsMethodAllowedReturnsFalseWithNoMethods(t *testing.T) {
 	s := New(Options{
-		// Intentionally left blank.
+	// Intentionally left blank.
 	})
 	s.allowedMethods = []string{}
 	if s.isMethodAllowed("") {
@@ -531,7 +513,7 @@ func TestIsMethodAllowedReturnsFalseWithNoMethods(t *testing.T) {
 
 func TestIsMethodAllowedReturnsTrueWithOptions(t *testing.T) {
 	s := New(Options{
-		// Intentionally left blank.
+	// Intentionally left blank.
 	})
 	if !s.isMethodAllowed("OPTIONS") {
 		t.Error("IsMethodAllowed should return true when c.allowedMethods is nil.")

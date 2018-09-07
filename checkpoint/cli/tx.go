@@ -19,7 +19,7 @@ import (
 func SubmitCheckpointCmd(cdc *wire.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "submitCheckpoint",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.ExactArgs(3),
 		Short: "submit checkpoint from matic chain",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			//fmt.Printf("the account thingy is this %v",authcmd.GetAccountDecoder(cdc))
@@ -42,7 +42,7 @@ func SubmitCheckpointCmd(cdc *wire.Codec) *cobra.Command {
 			startInt,err:=strconv.Atoi(start)
 			endInt,err:=strconv.Atoi(end)
 			fmt.Printf("from address is %v with txctx as %v",from,txCtx)
-			msg := checkpoint.NewMsgSideBlock(from,startInt,endInt,roothash)
+			msg := checkpoint.NewMsgCheckpointBlock(from,startInt,endInt,roothash)
 
 
 			return utils.SendTx(txCtx,cliCtx,[]sdk.Msg{msg})
