@@ -19,6 +19,7 @@ import (
 	slashing "github.com/cosmos/cosmos-sdk/x/slashing/client/rest"
 	stake "github.com/cosmos/cosmos-sdk/x/stake/client/rest"
 	sideblock "github.com/basecoin/sideblock/rest"
+	checkpoint "github.com/basecoin/checkpoint/rest"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -96,5 +97,6 @@ func createHandler(cdc *wire.Codec) http.Handler {
 	gov.RegisterRoutes(cliCtx, r, cdc)
 	// Addded rest commands to adding transction !
 	sideblock.RegisterRoutes(cliCtx,r,cdc,kb)
+	checkpoint.RegisterRoutes(cliCtx,r,cdc,kb)
 	return r
 }
