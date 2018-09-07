@@ -7,9 +7,9 @@ import (
 	"math/big"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/crypto/sha3"
-	"github.com/xsleonard/go-merkle"
 	"encoding/hex"
 
+	"github.com/xsleonard/go-merkle"
 )
 
 func main()  {
@@ -21,7 +21,7 @@ func main()  {
 	fmt.Println("we have a connection")
 	_ = client // we'll use this in the upcoming sections
 
-	root:=getHeaders(4733028,4733033,client)
+	root:=getHeaders(4733028,4733029,client)
 	fmt.Printf("the root hash is %v",root)
 
 }
@@ -53,7 +53,7 @@ func getHeaders(start int,end int,client *ethclient.Client) string {
 	fmt.Println("------")
 	merkelData:=convert(result)
 	//fmt.Println("------")
-	//fmt.Printf("merkel data is %v \n %v" ,merkelData,result)
+	//fmt.Printf("merkel data is %v \n %v" ,len(merkelData),result)
 	fmt.Println("------")
 	tree := merkle.NewTree()
 	//tree := merkle.NewTreeWithOpts(merkle.TreeOptions{EnableHashSorting:false,DisableHashLeaves:true})
@@ -63,7 +63,9 @@ func getHeaders(start int,end int,client *ethclient.Client) string {
 		fmt.Println("*********ERROR***********")
 		log.Fatal(err)
 	}
-	//fmt.Printf("Root: %v\n", tree.Root())// return the hash of root
+	fmt.Println("------")
+	fmt.Printf("tree: %v\n", tree.Leaves())// return the hash of root
+	fmt.Println("------")
 	fmt.Println(hex.EncodeToString(tree.Root().Hash))
 	return hex.EncodeToString(tree.Root().Hash)
 }
