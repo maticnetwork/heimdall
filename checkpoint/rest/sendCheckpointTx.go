@@ -6,9 +6,13 @@ import (
 "github.com/cosmos/cosmos-sdk/wire"
 "github.com/cosmos/cosmos-sdk/crypto/keys"
 "net/http"
-"fmt"
+	authctx "github.com/cosmos/cosmos-sdk/x/auth/client/context"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"fmt"
 "io/ioutil"
 "encoding/json"
+	"github.com/basecoin/checkpoint"
 )
 
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *wire.Codec, kb keys.Keybase) {
@@ -49,61 +53,57 @@ func submitCheckpointRequestHandlerFn(cdc *wire.Codec, kb keys.Keybase, cliCtx c
 			return
 		}
 
-		fmt.Printf("account name is %v \n %v" ,m.LocalAccountName,m)
-		fmt.Println("--------")
-		fmt.Println(kb.List())
-		fmt.Println("--------")
-		fmt.Printf("the body is %v",r)
-		fmt.Println("--------")
-		info, err := kb.Get(m.LocalAccountName)
+		info, err := kb.Get("alice")
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte(err.Error()))
 			return
 		}
 
-		//txCtx := authctx.TxContext{
-		//	Codec:         cdc,
-		//	ChainID:       m.ChainID,
-		//	AccountNumber: m.AccountNumber,
-		//	Sequence:      m.Sequence,
-		//	Gas:           m.Gas,
-		//}
+		txCtx := authctx.TxContext{
+			Codec:         cdc,
+			ChainID:       "test-chain-ZLAVft",
+			AccountNumber: 0,
+			Sequence:      1,
+			Gas:           1000000,
+		}
 
-		//variableAddress, err := sdk.AccAddressFromBech32(m.VariableAddr)
-		//if err != nil {
-		//	w.WriteHeader(http.StatusInternalServerError)
-		//	w.Write([]byte(fmt.Sprintf("Couldn't decode address. Error: %s", err.Error())))
-		//	return
-		//}
-		//fmt.Println(variableAddress)
-		//fmt.Println(txCtx)
+		proposerAddress, err := sdk.AccAddressFromBech32("cosmosaccaddr15epdnu350uzfjau26scvazux4yj5mpag2ag6us")
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(fmt.Sprintf("Couldn't decode address. Error: %s", err.Error())))
+			return
+		}
+		fmt.Printf( "vairable address is %v  \n",proposerAddress)
+		fmt.Printf( "tx ctx is  is %v  \n",txCtx)
 
-		//msg := checkpoint.NewMsgCheckpointBlock	(sdk.AccAddress(m.ProposerAddress),int(m.StartBlock),int(m.EndBlock),string(m.RootHash))
-		//txBytes, err := txCtx.BuildAndSign(m.LocalAccountName, m.Password, []sdk.Msg{msg})
-		//if err != nil {
-		//	w.WriteHeader(http.StatusUnauthorized)
-		//	w.Write([]byte(err.Error()))
-		//	return
-		//}
+		msg := checkpoint.NewMsgCheckpointBlock	(sdk.AccAddress(proposerAddress),12,34,"vaibhavroothash")
+		txBytes, err := txCtx.BuildAndSign("alice", "password", []sdk.Msg{msg})
+		if err != nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		fmt.Printf("txbytes are %v \n",txBytes)
+		//
+		res, err := cliCtx.BroadcastTx(txBytes)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		fmt.Printf("response is are %v \n",res)
 
+		fmt.Printf("info is %v /n",info)
+		output, err := json.MarshalIndent(res, "", "  ")
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		fmt.Printf("yay output is %v",output)
 		//
-		//res, err := cliCtx.BroadcastTx(txBytes)
-		//if err != nil {
-		//	w.WriteHeader(http.StatusInternalServerError)
-		//	w.Write([]byte(err.Error()))
-		//	return
-		//}
-		//
-		//output, err := json.MarshalIndent(res, "", "  ")
-		fmt.Printf("info is %v%v%v%v%v\n%v\n%v",body,m,info)
-		//if err != nil {
-		//	w.WriteHeader(http.StatusInternalServerError)
-		//	w.Write([]byte(err.Error()))
-		//	return
-		//}
-		//
-		//w.Write(output)
+		w.Write(output)
 
 	}
 }
