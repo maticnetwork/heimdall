@@ -15,7 +15,7 @@ type MsgCheckpoint struct {
 	Proposer 		sdk.AccAddress 	`json:"address"` // address of the validator owner
 	StartBlock 		int 	`json:"startBlock"`
 	EndBlock		int		`json:"endBlock"`
-	rootHash 		string	`json:"rootHash"`
+	RootHash 		string	`json:"rootHash"`
 }
 
 //
@@ -25,7 +25,7 @@ func NewMsgCheckpointBlock(proposer sdk.AccAddress,startBlock int,endBlock int,r
 		Proposer: proposer,
 		StartBlock:startBlock,
 		EndBlock:endBlock,
-		rootHash:roothash,
+		RootHash:roothash,
 	}
 }
 

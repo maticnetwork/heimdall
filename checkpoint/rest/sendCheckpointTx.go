@@ -52,9 +52,6 @@ func submitCheckpointRequestHandlerFn(cdc *wire.Codec, kb keys.Keybase, cliCtx c
 			w.Write([]byte(err.Error()))
 			return
 		}
-		fmt.Println("--------")
-		fmt.Printf("the body is \n and %v",m)
-		fmt.Println("--------")
 
 		//info, err := kb.Get(m.Local_account_name)
 		//if err != nil {
@@ -87,7 +84,6 @@ func submitCheckpointRequestHandlerFn(cdc *wire.Codec, kb keys.Keybase, cliCtx c
 			w.Write([]byte(err.Error()))
 			return
 		}
-		fmt.Printf("txbytes are %v \n",txBytes)
 		//
 
 
