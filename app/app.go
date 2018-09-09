@@ -18,7 +18,7 @@ import (
 	"github.com/basecoin/sideblock"
 	"fmt"
 	"github.com/basecoin/checkpoint"
-	"github.com/cosmo/cosmos-sdk/x/stake"
+	"github.com/cosmos/cosmos-sdk/x/stake"
 )
 
 const (
@@ -85,7 +85,7 @@ func NewBasecoinApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.sideBlockKeeper = sideBlock.NewKeeper(app.cdc,app.keySideBlock,app.RegisterCodespace(sideBlock.DefaultCodespace))
 	//TODO change to its own codespace
 	app.checkpointKeeper = checkpoint.NewKeeper(app.cdc,app.keyCheckpoint,app.RegisterCodespace(sideBlock.DefaultCodespace))
-	app.sideBlockKeeper = sideBlock.NewKeeper(app.cdc,app.keyStake,app.RegisterCodespace(sideBlock.DefaultCodespace))
+	app.stakeKeeper = stake.NewKeeper(app.cdc,app.keyStake,app.coinKeeper,app.RegisterCodespace(stake.DefaultCodespace))
 	// register message routes
 	app.Router().
 		AddRoute("bank", bank.NewHandler(app.coinKeeper)).
