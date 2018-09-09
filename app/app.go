@@ -18,6 +18,7 @@ import (
 	"github.com/basecoin/sideblock"
 	"fmt"
 	"github.com/basecoin/checkpoint"
+	"github.com/cosmo/cosmos-sdk/x/stake"
 )
 
 const (
@@ -38,6 +39,7 @@ type BasecoinApp struct {
 	keyIBC     *sdk.KVStoreKey
 	keySideBlock *sdk.KVStoreKey
 	keyCheckpoint *sdk.KVStoreKey
+	keyStake 	*sdk.KVStoreKey
 	// manage getting and setting accounts
 	accountMapper       auth.AccountMapper
 	feeCollectionKeeper auth.FeeCollectionKeeper
@@ -45,6 +47,7 @@ type BasecoinApp struct {
 	ibcMapper           ibc.Mapper
 	sideBlockKeeper     sideBlock.Keeper
 	checkpointKeeper    checkpoint.Keeper
+	stakeKeeper  		stake.Keeper
 
 }
 
@@ -66,6 +69,7 @@ func NewBasecoinApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		keyIBC:     sdk.NewKVStoreKey("ibc"),
 		keySideBlock:sdk.NewKVStoreKey("sideBlock"),
 		keyCheckpoint:sdk.NewKVStoreKey("checkpoint"),
+		keyStake:sdk.NewKVStoreKey("stake"),
 	}
 
 	// define and attach the mappers and keepers
@@ -81,12 +85,14 @@ func NewBasecoinApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.sideBlockKeeper = sideBlock.NewKeeper(app.cdc,app.keySideBlock,app.RegisterCodespace(sideBlock.DefaultCodespace))
 	//TODO change to its own codespace
 	app.checkpointKeeper = checkpoint.NewKeeper(app.cdc,app.keyCheckpoint,app.RegisterCodespace(sideBlock.DefaultCodespace))
+	app.sideBlockKeeper = sideBlock.NewKeeper(app.cdc,app.keyStake,app.RegisterCodespace(sideBlock.DefaultCodespace))
 	// register message routes
 	app.Router().
 		AddRoute("bank", bank.NewHandler(app.coinKeeper)).
 		AddRoute("ibc", ibc.NewHandler(app.ibcMapper, app.coinKeeper)).
 		AddRoute("sideBlock",sideBlock.NewHandler(app.sideBlockKeeper)).
-		AddRoute("checkpoint",checkpoint.NewHandler(app.checkpointKeeper))
+		AddRoute("checkpoint",checkpoint.NewHandler(app.checkpointKeeper)).
+		AddRoute("stake",stake.NewHandler(app.stakeKeeper))
 	// perform initialization logic
 	app.SetInitChainer(app.initChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
@@ -94,7 +100,7 @@ func NewBasecoinApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.SetAnteHandler(auth.NewAnteHandler(app.accountMapper, app.feeCollectionKeeper))
 
 	// mount the multistore and load the latest state
-	app.MountStoresIAVL(app.keyMain, app.keyAccount, app.keyIBC,app.keySideBlock,app.keyCheckpoint)
+	app.MountStoresIAVL(app.keyMain, app.keyAccount, app.keyIBC,app.keySideBlock,app.keyCheckpoint,app.keyStake)
 	err := app.LoadLatestVersion(app.keyMain)
 	if err != nil {
 		cmn.Exit(err.Error())
@@ -117,6 +123,7 @@ func MakeCodec() *wire.Codec {
 	auth.RegisterWire(cdc)
 	sideBlock.RegisterWire(cdc)
 	checkpoint.RegisterWire(cdc)
+	stake.RegisterWire(cdc)
 	// register custom type
 	cdc.RegisterConcrete(&types.AppAccount{}, "basecoin/Account", nil)
 
