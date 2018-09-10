@@ -13,9 +13,7 @@ import (
 "io/ioutil"
 "encoding/json"
 	"github.com/basecoin/checkpoint"
-	"github.com/spf13/viper"
 	"github.com/cosmos/cosmos-sdk/x/stake"
-	"strconv"
 )
 
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *wire.Codec, kb keys.Keybase) {
@@ -87,8 +85,12 @@ func createNewValidatorRequestHandlerFn(cdc *wire.Codec, kb keys.Keybase, cliCtx
 		if err != nil {
 			fmt.Printf("Error decoding public key ")
 		}
+		amountInt, err := sdk.ParseCoin(m.Amount)
+		if err != nil {
+			fmt.Printf("Error decoding amount ")
+		}
 
-		msg := stake.NewMsgCreateValidator(validatorAddress, pk, int(strconv.ParseInt(m.Amount)), description)
+		msg := stake.NewMsgCreateValidator(validatorAddress, pk,amountInt, description)
 
 		txBytes, err := txCtx.BuildAndSign(m.Local_account_name, m.Password, []sdk.Msg{msg})
 		if err != nil {
