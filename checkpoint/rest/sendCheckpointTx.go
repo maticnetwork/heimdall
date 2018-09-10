@@ -13,6 +13,9 @@ import (
 "io/ioutil"
 "encoding/json"
 	"github.com/basecoin/checkpoint"
+	"github.com/spf13/viper"
+	"github.com/cosmos/cosmos-sdk/x/stake"
+	"strconv"
 )
 
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *wire.Codec, kb keys.Keybase) {
@@ -20,7 +23,98 @@ func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *wire.Codec,
 		"/checkpoint/submitCheckpoint",
 		submitCheckpointRequestHandlerFn(cdc, kb, cliCtx),
 	).Methods("POST")
+	r.HandleFunc("/stake/createValidator",
+		createNewValidatorRequestHandlerFn(cdc,kb,cliCtx),
+		).Methods("POST")
 
+
+}
+
+type AddValidatorBody struct {
+	Password string `json:"password"`
+	Local_account_name string `json:"local_account_name"`
+	Chain_id          string `json:"chain_id"`
+	Account_number    int64  `json:"account_number"`
+	Sequence         int64  `json:"sequence"`
+	Gas              int64  `json:"gas"`
+	Moniker			string `json:"moniker"`
+	Public_key		string `json:"public_key"`
+	Amount 			string	`json:"amount"`
+	Identity		string `json:"identity"`
+	Website 		string `json:"website"`
+	Details 		string	`json:"details"`
+	ValidatorAddress string `json:"validator_address"`
+}
+
+func createNewValidatorRequestHandlerFn(cdc *wire.Codec, kb keys.Keybase, cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var m AddValidatorBody
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		err = json.Unmarshal(body, &m)
+		if err != nil {
+			fmt.Printf("we have error")
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		txCtx := authctx.TxContext{
+			Codec:         cdc,
+			ChainID:       m.Chain_id,
+			AccountNumber: m.Account_number,
+			Sequence:      m.Sequence,
+			Gas:           m.Gas,
+		}
+
+		validatorAddress, err := sdk.AccAddressFromBech32(m.ValidatorAddress)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(fmt.Sprintf("Couldn't decode address. Error: %s", err.Error())))
+			return
+		}
+		description := stake.Description{
+			Moniker:  m.Moniker,
+			Identity: m.Identity,
+			Website:  m.Website,
+			Details:  m.Details,
+		}
+		pk, err := sdk.GetValPubKeyBech32(m.Public_key)
+		if err != nil {
+			fmt.Printf("Error decoding public key ")
+		}
+
+		msg := stake.NewMsgCreateValidator(validatorAddress, pk, int(strconv.ParseInt(m.Amount)), description)
+
+		txBytes, err := txCtx.BuildAndSign(m.Local_account_name, m.Password, []sdk.Msg{msg})
+		if err != nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		res, err := cliCtx.BroadcastTx(txBytes)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		output, err := json.MarshalIndent(res, "", "  ")
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		w.Write(output)
+
+
+
+
+
+	}
 }
 type CheckpointBody struct {
 	Password         string `json:"password"`
