@@ -24,6 +24,8 @@ func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *wire.Codec,
 	r.HandleFunc("/stake/createValidator",
 		createNewValidatorRequestHandlerFn(cdc,kb,cliCtx),
 		).Methods("POST")
+	// TODO add editValidator etc
+
 
 
 }
@@ -111,8 +113,6 @@ func createNewValidatorRequestHandlerFn(cdc *wire.Codec, kb keys.Keybase, cliCtx
 			return
 		}
 		w.Write(output)
-
-
 
 
 
