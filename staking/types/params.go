@@ -9,7 +9,9 @@ import (
 
 // defaultUnbondingTime reflects three weeks in seconds as the default
 // unbonding time.
-const defaultUnbondingTime time.Duration = 60 * 60 * 24 * 3 * time.Second
+
+//const defaultUnbondingTime time.Duration = 60 * 60 * 24 * 3 * time.Second
+const defaultUnbondingTime time.Duration = 0 * time.Second
 
 // Params defines the high level settings for staking
 type Params struct {
