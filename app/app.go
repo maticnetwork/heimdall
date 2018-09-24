@@ -18,7 +18,7 @@ import (
 	"github.com/basecoin/sideblock"
 	"fmt"
 	"github.com/basecoin/checkpoint"
-	"github.com/cosmos/cosmos-sdk/x/stake"
+	"github.com/basecoin/staking"
 )
 
 const (
