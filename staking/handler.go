@@ -4,9 +4,9 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/stake/keeper"
-	"github.com/cosmos/cosmos-sdk/x/stake/tags"
-	"github.com/cosmos/cosmos-sdk/x/stake/types"
+	"github.com/basecoin/staking/keeper"
+	"github.com/basecoin/staking/tags"
+	"github.com/basecoin/staking/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 

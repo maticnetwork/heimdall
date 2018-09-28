@@ -318,6 +318,15 @@ func (msg MsgCompleteRedelegate) ValidateBasic() sdk.Error {
 
 //______________________________________________________________________
 
+
+
+
+
+
+
+
+//______________________________________________________________________
+
 // MsgBeginUnbonding - struct for unbonding transactions
 type MsgBeginUnbonding struct {
 	DelegatorAddr sdk.AccAddress `json:"delegator_addr"`

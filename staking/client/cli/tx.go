@@ -11,8 +11,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/wire"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	authctx "github.com/cosmos/cosmos-sdk/x/auth/client/context"
-	"github.com/cosmos/cosmos-sdk/x/stake"
-	"github.com/cosmos/cosmos-sdk/x/stake/types"
+	"github.com/basecoin/staking"
+	"github.com/basecoin/staking/types"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"

@@ -24,7 +24,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper) sdk.Resul
 	//TODO check last block in last checkpoint (startBlock of new checkpoint == last block of prev endpoint)
 	// TODO insert checkpoint in state
 	logger := ctx.Logger().With("module", "x/baseapp")
-	valid :=validateCheckpoint(msg.StartBlock,msg.EndBlock,msg.RootHash)
+	valid := validateCheckpoint(msg.StartBlock,msg.EndBlock,msg.RootHash)
 	if valid {
 		logger.Error("root hash matched !! ")
 		k.addCheckpoint(ctx,msg.StartBlock,msg.EndBlock,msg.RootHash)
