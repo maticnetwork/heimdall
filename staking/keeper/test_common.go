@@ -19,7 +19,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
-	"github.com/cosmos/cosmos-sdk/x/stake/types"
+	"github.com/basecoin/staking/types"
 )
 
 // dummy addresses used for testing

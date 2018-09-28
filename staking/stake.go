@@ -2,9 +2,9 @@
 package stake
 
 import (
-	"github.com/cosmos/cosmos-sdk/x/stake/keeper"
-	"github.com/cosmos/cosmos-sdk/x/stake/tags"
-	"github.com/cosmos/cosmos-sdk/x/stake/types"
+	"github.com/basecoin/staking/keeper"
+	"github.com/basecoin/staking/tags"
+	"github.com/basecoin/staking/types"
 )
 
 type (
@@ -76,6 +76,7 @@ var (
 	NewMsgCompleteUnbonding         = types.NewMsgCompleteUnbonding
 	NewMsgBeginRedelegate           = types.NewMsgBeginRedelegate
 	NewMsgCompleteRedelegate        = types.NewMsgCompleteRedelegate
+	//NewMsgUnbond					= types.NewMsgUnbond
 )
 
 const (

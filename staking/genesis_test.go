@@ -9,8 +9,8 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	keep "github.com/cosmos/cosmos-sdk/x/stake/keeper"
-	"github.com/cosmos/cosmos-sdk/x/stake/types"
+	keep "github.com/basecoin/staking/keeper"
+	"github.com/basecoin/staking/types"
 )
 
 func TestInitGenesis(t *testing.T) {

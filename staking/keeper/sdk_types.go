@@ -6,7 +6,7 @@ import (
 	"github.com/tendermint/tendermint/crypto"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/stake/types"
+	"github.com/basecoin/staking/types"
 )
 
 // Implements ValidatorSet
