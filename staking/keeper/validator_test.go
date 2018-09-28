@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/stake/types"
+	"github.com/basecoin/staking/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/stretchr/testify/assert"

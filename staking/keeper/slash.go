@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	types "github.com/cosmos/cosmos-sdk/x/stake/types"
+	types "github.com/basecoin/staking/types"
 	"github.com/tendermint/tendermint/crypto"
 )
 
