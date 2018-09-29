@@ -1,5 +1,5 @@
-hash: 6836aab1a0b2b63257335144c9dc2d8fb68e259a82612e1a007e287a13fd940a
-updated: 2018-08-23T22:55:00.980145+05:30
+hash: 2e50085a0e0c80596997bd878965e9c012ff52fb235bcf01fcc6bb09f4202ec2
+updated: 2018-09-28T19:53:38.215701+05:30
 imports:
 - name: github.com/bartekn/go-bip39
   version: a05967ea095d81c8fe4833776774cfaff8e5036c
@@ -18,6 +18,7 @@ imports:
 - name: github.com/btcsuite/btcutil
   version: ab6388e0c60ae4834a1f57511e20c17b5f78be4b
   subpackages:
+  - base58
   - bech32
 - name: github.com/cosmos/cosmos-sdk
   version: 1c38c70468ec721e3a555ba2f3bf5f9da31f0cc9
@@ -26,7 +27,6 @@ imports:
   - client
   - client/context
   - client/keys
-  - client/lcd
   - client/rpc
   - client/tx
   - client/utils
@@ -35,7 +35,6 @@ imports:
   - crypto/keys/bcrypt
   - crypto/keys/bip39
   - crypto/keys/hd
-  - examples/basecoin/app
   - examples/basecoin/types
   - server
   - server/config
@@ -58,6 +57,7 @@ imports:
   - x/ibc/client/cli
   - x/ibc/client/rest
   - x/mock
+  - x/mock/simulation
   - x/params
   - x/slashing
   - x/slashing/client/rest
@@ -236,7 +236,7 @@ imports:
   - edwards25519
   - extra25519
 - name: github.com/tendermint/go-amino
-  version: faa6e731944e2b7b6a46ad202902851e8ce85bee
+  version: c344a05f4a36122a04508bee480ada33dc8be350
 - name: github.com/tendermint/iavl
   version: 35f66e53d9b01e83b30de68b931f54b2477a94c9
 - name: github.com/tendermint/tendermint
@@ -244,9 +244,13 @@ imports:
   subpackages:
   - abci/client
   - abci/example/code
+  - abci/example/counter
   - abci/example/kvstore
   - abci/server
+  - abci/tests/server
   - abci/types
+  - abci/version
+  - benchmarks/proto
   - blockchain
   - cmd/tendermint/commands
   - config
@@ -256,6 +260,7 @@ imports:
   - crypto/armor
   - crypto/ed25519
   - crypto/encoding/amino
+  - crypto/internal/benchmarking
   - crypto/merkle
   - crypto/secp256k1
   - crypto/tmhash
@@ -268,11 +273,15 @@ imports:
   - libs/clist
   - libs/common
   - libs/db
+  - libs/db/remotedb
+  - libs/db/remotedb/grpcdb
+  - libs/db/remotedb/proto
   - libs/events
   - libs/flowrate
   - libs/log
   - libs/pubsub
   - libs/pubsub/query
+  - libs/test
   - lite
   - lite/client
   - lite/errors
@@ -282,11 +291,13 @@ imports:
   - node
   - p2p
   - p2p/conn
+  - p2p/dummy
   - p2p/pex
   - p2p/upnp
   - privval
   - proxy
   - rpc/client
+  - rpc/client/mock
   - rpc/core
   - rpc/core/types
   - rpc/grpc
@@ -294,17 +305,25 @@ imports:
   - rpc/lib/client
   - rpc/lib/server
   - rpc/lib/types
+  - rpc/test
   - state
   - state/txindex
   - state/txindex/kv
   - state/txindex/null
+  - tools/tm-monitor/eventmeter
+  - tools/tm-monitor/mock
+  - tools/tm-monitor/monitor
   - types
+  - types/proto3
   - version
+- name: github.com/xsleonard/go-merkle
+  version: fbb7cafc5ae411e13e718172f5af7917ad6c3ed7
 - name: github.com/zondax/ledger-goclient
   version: 4296ee5701e945f9b3a7dbe51f402e0b9be57259
 - name: golang.org/x/crypto
   version: 614d502a4dac94afa3a6ce146bd1736da82514c6
   subpackages:
+  - bcrypt
   - blowfish
   - chacha20poly1305
   - curve25519
@@ -383,4 +402,6 @@ imports:
   version: c1b8fa8bdccecb0b8db834ee0b92fdbcfa606dd6
 - name: gopkg.in/yaml.v2
   version: 5420a8b6744d3b0345ab293f6fcba19c978f1183
-testImports: []
+testImports:
+- name: github.com/fortytw2/leaktest
+  version: b433bbd6d743c1854040b39062a3916ed5f78fe8
