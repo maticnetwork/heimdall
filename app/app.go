@@ -146,7 +146,6 @@ func (app *BasecoinApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 		checkpointData:=sideBlock.GetBlocksAfterCheckpoint(ctx,app.sideBlockKeeper)
 		logger.Error("Checkpoint Created and pushed to Ethereum Chain ! ")
 		fmt.Printf("The blockdata to be pushed is %v",checkpointData)
-		ctx.BlockHeader().
 		sideBlock.FlushBlockHashesKey(ctx,app.sideBlockKeeper)
 
 	}
