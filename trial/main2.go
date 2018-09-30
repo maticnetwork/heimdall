@@ -13,6 +13,9 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"math/big"
+	"github.com/ethereum/go-ethereum/crypto/sha3"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/core/types"
 )
 
 func main() {
@@ -76,15 +79,37 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	transferFnSignature := []byte("setHello(string)")
+	hash := sha3.NewKeccak256()
+	hash.Write(transferFnSignature)
+	methodID := hash.Sum(nil)[:4]
+	fmt.Printf("Method ID: %s\n", hexutil.Encode(methodID))
+
 	auth.Nonce=big.NewInt(int64(nonce))
 	auth.Value = big.NewInt(0)
-	auth.GasLimit = uint64(3000000)
+	auth.GasLimit = uint64(300000)
 	auth.GasPrice = gasprice
-	tx,err:=instance.SetHello(auth,"vaibhav")
-	if err!=nil {
-		fmt.Errorf(" Unable to send transaction ERROR %v",err)
+	var data []byte
+	hello:=[]byte("vaibhav")
+	paddedData := common.LeftPadBytes(hello, 32)
+	data = append(data, methodID...)
+	data = append(data, paddedData...)
+	tx := types.NewTransaction(nonce, contractAddress, big.NewInt(0), auth.GasLimit, auth.GasPrice, data)
+	signedTx, err := types.SignTx(tx, types.HomesteadSigner{}, privateKey)
+	if err != nil {
+		log.Fatal(err)
 	}
-	fmt.Printf("Transaction send successfully ! %v/n",tx)
+	err = client.SendTransaction(context.Background(), signedTx)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("Tokens sent at TX: %s", signedTx.Hash().Hex())
+	//tx,err:=instance.SetHello(auth,"vaibhav")
+	//if err!= nil {
+	//	fmt.Errorf(" Unable to send transaction ERROR %v",err)
+	//}
+	//fmt.Printf("Transaction send successfully ! %v",tx )
 
 
 	
