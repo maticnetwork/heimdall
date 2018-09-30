@@ -11,7 +11,6 @@ import (
 	"encoding/hex"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"context"
-	"crypto/ecdsa"
 	"math/big"
 	"github.com/ethereum/go-ethereum/crypto/sha3"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -38,23 +37,21 @@ func main() {
 
 	fmt.Printf("Public key is :%v\n",hex.EncodeToString(privValObj.PubKey.Address()))
 	fmt.Printf("Private key is : %v\n",hex.EncodeToString(pkBytes[len(pkBytes)-32:]))
-	privateKey,err:= crypto.HexToECDSA(string(hex.EncodeToString(pkBytes[len(pkBytes)-32:])))
+
+	privateKey, err := crypto.ToECDSA(pkBytes[len(pkBytes)-32:])
 	if err != nil {
 		panic(err)
 	}
-	publicKey:= privateKey.Public()
-	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
-	if !ok {
-		fmt.Errorf(" Unable to cast ")
-	}
 
-	fromaddress := crypto.PubkeyToAddress(*publicKeyECDSA)
+
+	fromAddress := common.BytesToAddress(privValObj.Address)
+
 	auth := bind.NewKeyedTransactor(privateKey)
 	gasprice ,err:= client.SuggestGasPrice(context.Background())
 	if err!=nil {
 		fmt.Errorf("Unable to estimate gas")
 	}
-	nonce,err:= client.PendingNonceAt(context.Background(),fromaddress)
+	nonce,err:= client.PendingNonceAt(context.Background(),fromAddress)
 	if err != nil {
 		panic(err)
 	}
