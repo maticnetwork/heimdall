@@ -6,7 +6,14 @@ import (
 	"log"
 	"github.com/ethereum/go-ethereum/common"
 	contracts "../contracts"
-	)
+	"github.com/tendermint/tendermint/privval"
+	"github.com/ethereum/go-ethereum/crypto"
+	"encoding/hex"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"context"
+	"crypto/ecdsa"
+	"math/big"
+)
 
 func main() {
 
@@ -26,11 +33,13 @@ func main() {
 
 	//TODO create raw transaction and sign using validator private key
 	// -----------------
-
-
-
-
-
+	// https://ethereum.stackexchange.com/questions/16472/signing-a-raw-transaction-in-go
+	//
+	//privValObj := privval.LoadFilePV("/Users/vc/.basecoind/config/priv_validator.json")
+	//ecdsaPk, _ := crypto.ToECDSA(privValObj.PrivKey.Bytes()[:])
+	//auth := bind.NewKeyedTransactor(ecdsaPk)
+	//fmt.Printf("prival is %v\n,%v\n,%v",privValObj,ecdsaPk,auth)
+	//
 
 
 	//------------------
@@ -40,11 +49,43 @@ func main() {
 	Connecting to priv_validator.json and signing using that private key
 	 */
 	//privVal := privval.LoadFilePV(config.DefaultBaseConfig().PrivValidatorFile())
-	//privValObj := privval.LoadFilePV("/Users/vc/.basecoind/config/priv_validator.json")
-	//sig,err:=privValObj.PrivKey.Sign(crypto.Keccak256([]byte("hello")))
-	//if err != nil {
-	//	fmt.Println(err)
-	//}
-	//fmt.Printf("Signature is %v",hex.EncodeToString(sig))
+
+
+	privValObj := privval.LoadFilePV("/Users/vc/.basecoind/config/priv_validator.json")
+	pkBytes := privValObj.PrivKey.Bytes()
+
+	fmt.Printf("Public key is :%v\n",hex.EncodeToString(privValObj.PubKey.Address()))
+	fmt.Printf("Private key is : %v\n",hex.EncodeToString(pkBytes[len(pkBytes)-32:]))
+	privateKey,err:= crypto.HexToECDSA(string(hex.EncodeToString(pkBytes[len(pkBytes)-32:])))
+	if err != nil {
+		panic(err)
+	}
+	publicKey:= privateKey.Public()
+	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+	if !ok {
+		fmt.Errorf(" Unable to cast ")
+	}
+
+	fromaddress := crypto.PubkeyToAddress(*publicKeyECDSA)
+	auth := bind.NewKeyedTransactor(privateKey)
+	gasprice ,err:= client.SuggestGasPrice(context.Background())
+	if err!=nil {
+		fmt.Errorf("Unable to estimate gas")
+	}
+	nonce,err:= client.PendingNonceAt(context.Background(),fromaddress)
+	if err != nil {
+		panic(err)
+	}
+	auth.Nonce=big.NewInt(int64(nonce))
+	auth.Value = big.NewInt(0)
+	auth.GasLimit = uint64(3000000)
+	auth.GasPrice = gasprice
+	tx,err:=instance.SetHello(auth,"vaibhav")
+	if err!=nil {
+		fmt.Errorf(" Unable to send transaction ERROR %v",err)
+	}
+	fmt.Printf("Transaction send successfully ! %v/n",tx)
+
+
 	
 	}
