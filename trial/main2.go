@@ -20,7 +20,6 @@ import (
 
 func main() {
 
-	// Connecting to contract and creating an instance
 
 	client, err := ethclient.Dial("https://kovan.infura.io/TJSJL5u9maRXnaZrSvnv")
 	if err != nil {
@@ -33,26 +32,6 @@ func main() {
 		fmt.Println("error error")
 	}
 	fmt.Println(instance)
-
-	//TODO create raw transaction and sign using validator private key
-	// -----------------
-	// https://ethereum.stackexchange.com/questions/16472/signing-a-raw-transaction-in-go
-	//
-	//privValObj := privval.LoadFilePV("/Users/vc/.basecoind/config/priv_validator.json")
-	//ecdsaPk, _ := crypto.ToECDSA(privValObj.PrivKey.Bytes()[:])
-	//auth := bind.NewKeyedTransactor(ecdsaPk)
-	//fmt.Printf("prival is %v\n,%v\n,%v",privValObj,ecdsaPk,auth)
-	//
-
-
-	//------------------
-
-
-	/*
-	Connecting to priv_validator.json and signing using that private key
-	 */
-	//privVal := privval.LoadFilePV(config.DefaultBaseConfig().PrivValidatorFile())
-
 
 	privValObj := privval.LoadFilePV("/Users/vc/.basecoind/config/priv_validator.json")
 	pkBytes := privValObj.PrivKey.Bytes()
@@ -104,13 +83,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Printf("Tokens sent at TX: %s", signedTx.Hash().Hex())
-	//tx,err:=instance.SetHello(auth,"vaibhav")
-	//if err!= nil {
-	//	fmt.Errorf(" Unable to send transaction ERROR %v",err)
-	//}
-	//fmt.Printf("Transaction send successfully ! %v",tx )
-
+	fmt.Printf("Transaction sent with Tx Hash : %s", signedTx.Hash().Hex())
 
 	
 	}
