@@ -89,6 +89,7 @@ import:
   - extra25519
 - package: github.com/tendermint/go-amino
 - package: github.com/tendermint/tendermint
+  repo: https://github.com/jdkanani/tendermint
   subpackages:
   - abci/client
   - abci/example/code
