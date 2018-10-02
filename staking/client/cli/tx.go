@@ -17,6 +17,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
+	"encoding/hex"
 )
 
 // GetCmdCreateValidator implements the create validator command handler.
@@ -50,11 +52,13 @@ func GetCmdCreateValidator(cdc *wire.Codec) *cobra.Command {
 				return fmt.Errorf("must use --pubkey flag")
 			}
 
-			pk, err := sdk.GetValPubKeyBech32(pkStr)
-			if err != nil {
-				return err
-			}
 
+			var x secp256k1.PubKeySecp256k1
+			k, _ := hex.DecodeString(pkStr)
+			copy(x[:], k[:])
+
+
+			//fmt.Println("%v%v",txCtx,cliCtx)
 			if viper.GetString(FlagMoniker) == "" {
 				return fmt.Errorf("please enter a moniker for the validator using --moniker")
 			}
@@ -73,12 +77,12 @@ func GetCmdCreateValidator(cdc *wire.Codec) *cobra.Command {
 					return err
 				}
 
-				msg = stake.NewMsgCreateValidatorOnBehalfOf(delegatorAddr, validatorAddr, pk, amount, description)
+				msg = stake.NewMsgCreateValidatorOnBehalfOf(delegatorAddr, validatorAddr, x, amount, description)
 			} else {
-				msg = stake.NewMsgCreateValidator(validatorAddr, pk, amount, description)
+				msg = stake.NewMsgCreateValidator(validatorAddr, x, amount, description)
 			}
 
-			// build and sign the transaction, then broadcast to Tendermint
+			//// build and sign the transaction, then broadcast to Tendermint
 			return utils.SendTx(txCtx, cliCtx, []sdk.Msg{msg})
 		},
 	}
