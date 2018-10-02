@@ -15,7 +15,7 @@ import (
 	bankcmd "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
 	sideblockcmd "github.com/basecoin/sideblock/cli"
 	ibccmd "github.com/cosmos/cosmos-sdk/x/ibc/client/cli"
-	stakecmd "github.com/cosmos/cosmos-sdk/x/stake/client/cli"
+	stakecmd "github.com/basecoin/staking/client/cli"
 	checkpointcmd "github.com/basecoin/checkpoint/cli"
 	"github.com/spf13/cobra"
 )
