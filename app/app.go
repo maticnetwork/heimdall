@@ -150,6 +150,8 @@ func (app *BasecoinApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 
 	}
 
+	logger.Info("------")
+
 
 
 
