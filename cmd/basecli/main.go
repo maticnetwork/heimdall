@@ -18,6 +18,7 @@ import (
 	stakecmd "github.com/basecoin/staking/client/cli"
 	checkpointcmd "github.com/basecoin/checkpoint/cli"
 	"github.com/spf13/cobra"
+	"github.com/basecoin/staker/client/cli"
 )
 
 // rootCmd is the entry point for this binary
@@ -63,6 +64,7 @@ func main() {
 			ibccmd.IBCRelayCmd(cdc),
 			stakecmd.GetCmdCreateValidator(cdc),
 			stakecmd.GetCmdEditValidator(cdc),
+			staker.GetCmdCreateMaticValidator(cdc),
 			sideblockcmd.GetSideBlockSetterCmd(cdc),
 			checkpointcmd.SubmitCheckpointCmd(cdc),
 			stakecmd.GetCmdDelegate(cdc),

@@ -33,7 +33,7 @@ func GetSideBlockSetterCmd(cdc *wire.Codec) *cobra.Command {
 			//}
 			//
 			//msg := slashing.NewMsgUnrevoke(validatorAddr)
-			//blockNumber := args[3]
+			//blockNumber` := args[3]
 			//blockNumberInt := new(big.Int)
 			//blockNumberInt, ok := blockNumberInt.SetString(blockNumber, 10)
 			//if !ok {

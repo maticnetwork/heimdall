@@ -48,7 +48,7 @@ func GetValidatorKey(address []byte) []byte {
 	return append(ValidatorsKey,address...)
 }
 
-func (k Keeper)GetAllValidators(ctx sdk.Context) (validators []abci.Validator){
+func (k Keeper) GetAllValidators(ctx sdk.Context) (validators []abci.Validator){
 	store := ctx.KVStore(k.storeKey)
 	iterator := sdk.KVStorePrefixIterator(store, ValidatorsKey)
 
