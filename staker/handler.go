@@ -18,6 +18,6 @@ func NewHandler(k Keeper) sdk.Handler {
 func handleMsgCreateMaticValidator(ctx sdk.Context, validator MsgCreateMaticValidator, keeper Keeper) sdk.Result {
 	fmt.Println("entered handler")
 	fmt.Printf("validator is %v",validator)
-	keeper.SetValidatorSet(ctx)
+	//keeper.SetValidatorSet(ctx)
 	return sdk.Result{}
 }

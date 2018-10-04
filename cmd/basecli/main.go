@@ -1,24 +1,24 @@
 package main
 
 import (
-	"os"
+	"github.com/basecoin/app"
+	checkpointcmd "github.com/basecoin/checkpoint/cli"
+	restCmds "github.com/basecoin/rest_client"
+	sideblockcmd "github.com/basecoin/sideblock/cli"
+	"github.com/basecoin/staker/client/cli"
+	stakecmd "github.com/basecoin/staking/client/cli"
+	"github.com/basecoin/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
-	restCmds "github.com/basecoin/rest_client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	"github.com/tendermint/tendermint/libs/cli"
-	"github.com/basecoin/app"
-	"github.com/basecoin/types"
 	"github.com/cosmos/cosmos-sdk/version"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	bankcmd "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
-	sideblockcmd "github.com/basecoin/sideblock/cli"
 	ibccmd "github.com/cosmos/cosmos-sdk/x/ibc/client/cli"
-	stakecmd "github.com/basecoin/staking/client/cli"
-	checkpointcmd "github.com/basecoin/checkpoint/cli"
 	"github.com/spf13/cobra"
-	"github.com/basecoin/staker/client/cli"
+	"github.com/tendermint/tendermint/libs/cli"
+	"os"
 )
 
 // rootCmd is the entry point for this binary
@@ -53,7 +53,7 @@ func main() {
 			stakecmd.GetCmdQueryValidators("stake", cdc),
 			stakecmd.GetCmdQueryDelegation("stake", cdc),
 			stakecmd.GetCmdQueryDelegations("stake", cdc),
-			sideblockcmd.GetSideBlockGetterCmd("sideBlock",cdc),
+			sideblockcmd.GetSideBlockGetterCmd("sideBlock", cdc),
 			authcmd.GetAccountCmd("acc", cdc, types.GetAccountDecoder(cdc)),
 		)...)
 
