@@ -159,11 +159,22 @@ func (app *BasecoinApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 	}
 
 	logger.Info("------")
-	fmt.Printf("all validators are %v",staker.Keeper.GetAllValidators(app.stakerKeeper,ctx))
-	staker.Keeper.SetValidatorSet(app.stakerKeeper,ctx)
+	val1 := abci.Validator{
+		Address:[]byte("dsd"),
+		Power:int64(1),
 
+	}
+	val2 := abci.Validator{
+		Address:[]byte("randomString"),
+		Power:int64(1),
 
-
+	}
+	validatorSet:=[]abci.Validator{val1,val2}
+	fmt.Printf("all validators are %v \n",staker.Keeper.GetAllValidators(app.stakerKeeper,ctx))
+	staker.Keeper.SetValidatorSet(app.stakerKeeper,ctx,validatorSet)
+	fmt.Printf("all validators are %v \n",staker.Keeper.GetAllValidators(app.stakerKeeper,ctx))
+	staker.Keeper.FlushValidatorSet(app.stakerKeeper,ctx)
+	fmt.Printf("all validators are %v \n",staker.Keeper.GetAllValidators(app.stakerKeeper,ctx))
 
 	return abci.ResponseEndBlock{}
 }

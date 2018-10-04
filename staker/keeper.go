@@ -30,18 +30,17 @@ func NewKeeper(cdc *wire.Codec, key sdk.StoreKey, codespace sdk.CodespaceType) K
 }
 
 //validator type will contain address, pubkey and power
-func (k Keeper) SetValidatorSet(ctx sdk.Context) {
+func (k Keeper) SetValidatorSet(ctx sdk.Context,validators []abci.Validator) {
 	store := ctx.KVStore(k.storeKey)
-	val := abci.Validator{
-		Address:[]byte("dsd"),
-		Power:int64(1),
+
+	for _, validator := range validators {
+		bz,err := k.cdc.MarshalBinary(validator)
+		if err!=nil {
+			fmt.Println("error %v",err)
+		}
+		store.Set(GetValidatorKey(validator.Address), bz)
 
 	}
-	bz,err := k.cdc.MarshalBinary(val)
-	if err!=nil {
-		fmt.Println("error %v",err)
-	}
-	store.Set(GetValidatorKey(val.Address), bz)
 
 }
 func GetValidatorKey(address []byte) []byte {
@@ -55,8 +54,10 @@ func (k Keeper) GetAllValidators(ctx sdk.Context) (validators []abci.Validator){
 	i := 0
 	for ; ; i++ {
 		if !iterator.Valid() {
+			fmt.Println("BREAK BREAK BREAK ")
 			break
 		}
+
 		addr := iterator.Key()[1:]
 		//validator := types.MustUnmarshalValidator(k.cdc, addr, iterator.Value())
 		var validator abci.Validator
