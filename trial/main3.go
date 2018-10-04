@@ -13,5 +13,6 @@ func main()  {
 	copy(x[:], k[:])
 
 	fmt.Println("%v", x)
+	fmt.Println("Address is :%v",x.Address())
 
 }
