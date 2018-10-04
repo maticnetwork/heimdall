@@ -20,6 +20,8 @@ import (
 	"github.com/basecoin/checkpoint"
 	"github.com/basecoin/staking"
 	"github.com/basecoin/staker"
+	"encoding/hex"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 )
 
 const (
@@ -159,24 +161,33 @@ func (app *BasecoinApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 	}
 
 	logger.Info("------")
+	//
+	//val2 := abci.Validator{
+	//	Address:[]byte("b19fc2aadd0a9b011972c2fe450c68b7b2b2603d"),
+	//	Power:int64(1),
+	//
+	//}
+	var _pubkey secp256k1.PubKeySecp256k1
+	k, _ := hex.DecodeString("041FE1CDE7D9D8C9182AC967EC8362262216FF8A10061F0DE0F1472F9E45F965D0909DE527E18C7BFB9FCD42335E60FB6E18367A4DC37F1A7FC3265C7241597973")
+	copy(_pubkey[:], k[:])
+	_address,_:= hex.DecodeString("F6CEBE8030E5F7F7ED4ADAD55040EE9FDA382EF1")
+
 	val1 := abci.Validator{
-		Address:[]byte("dsd"),
+		Address:_address,
 		Power:int64(1),
+		PubKey: tmtypes.TM2PB.PubKey(_pubkey),
 
 	}
-	val2 := abci.Validator{
-		Address:[]byte("randomString"),
-		Power:int64(1),
-
-	}
-	validatorSet:=[]abci.Validator{val1,val2}
+	validatorSet:=[]abci.Validator{val1}
 	fmt.Printf("all validators are %v \n",staker.Keeper.GetAllValidators(app.stakerKeeper,ctx))
 	staker.Keeper.SetValidatorSet(app.stakerKeeper,ctx,validatorSet)
 	fmt.Printf("all validators are %v \n",staker.Keeper.GetAllValidators(app.stakerKeeper,ctx))
 	staker.Keeper.FlushValidatorSet(app.stakerKeeper,ctx)
 	fmt.Printf("all validators are %v \n",staker.Keeper.GetAllValidators(app.stakerKeeper,ctx))
 
-	return abci.ResponseEndBlock{}
+	return abci.ResponseEndBlock{
+		ValidatorUpdates:validatorSet,
+	}
 }
 
 // initChainer implements the custom application logic that the BaseApp will
