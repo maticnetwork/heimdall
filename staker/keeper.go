@@ -72,3 +72,30 @@ func (k Keeper) GetAllValidators(ctx sdk.Context) (validators []abci.Validator){
 	iterator.Close()
 	return validators
 }
+
+func (k Keeper) FlushValidatorSet(ctx sdk.Context) {
+	store := ctx.KVStore(k.storeKey)
+	iterator := sdk.KVStorePrefixIterator(store, ValidatorsKey)
+	i := 0
+	for ; ; i++ {
+		if !iterator.Valid() {
+			break
+		}
+		addr := iterator.Key()[1:]
+		//validator := types.MustUnmarshalValidator(k.cdc, addr, iterator.Value())
+		var validator abci.Validator
+		err := k.cdc.UnmarshalBinary(iterator.Value(), &validator)
+		if err != nil {
+			return
+		}
+		validator.Address=addr
+		validator.Power=int64(0)
+		bz,err := k.cdc.MarshalBinary(validator)
+		if err!=nil {
+			fmt.Println("error %v",err)
+		}
+		store.Set(GetValidatorKey(validator.Address), bz)
+		iterator.Next()
+	}
+	iterator.Close()
+}
