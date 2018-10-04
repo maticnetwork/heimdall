@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"github.com/basecoin/checkpoint"
 	"github.com/basecoin/staking"
+	"github.com/basecoin/staker"
 )
 
 const (
@@ -40,6 +41,8 @@ type BasecoinApp struct {
 	keySideBlock *sdk.KVStoreKey
 	keyCheckpoint *sdk.KVStoreKey
 	keyStake 	*sdk.KVStoreKey
+
+	keyStaker 	*sdk.KVStoreKey
 	// manage getting and setting accounts
 	accountMapper       auth.AccountMapper
 	feeCollectionKeeper auth.FeeCollectionKeeper
@@ -48,6 +51,7 @@ type BasecoinApp struct {
 	sideBlockKeeper     sideBlock.Keeper
 	checkpointKeeper    checkpoint.Keeper
 	stakeKeeper  		stake.Keeper
+	stakerKeeper		staker.Keeper
 
 }
 
@@ -70,6 +74,7 @@ func NewBasecoinApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		keySideBlock:sdk.NewKVStoreKey("sideBlock"),
 		keyCheckpoint:sdk.NewKVStoreKey("checkpoint"),
 		keyStake:sdk.NewKVStoreKey("stake"),
+		keyStaker:sdk.NewKVStoreKey("staker"),
 	}
 
 	// define and attach the mappers and keepers
@@ -86,13 +91,15 @@ func NewBasecoinApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	//TODO change to its own codespace
 	app.checkpointKeeper = checkpoint.NewKeeper(app.cdc,app.keyCheckpoint,app.RegisterCodespace(sideBlock.DefaultCodespace))
 	app.stakeKeeper = stake.NewKeeper(app.cdc,app.keyStake,app.coinKeeper,app.RegisterCodespace(stake.DefaultCodespace))
+	app.stakerKeeper = staker.NewKeeper(app.cdc,app.keyStaker,app.RegisterCodespace(stake.DefaultCodespace))
 	// register message routes
 	app.Router().
 		AddRoute("bank", bank.NewHandler(app.coinKeeper)).
 		AddRoute("ibc", ibc.NewHandler(app.ibcMapper, app.coinKeeper)).
 		AddRoute("sideBlock",sideBlock.NewHandler(app.sideBlockKeeper)).
 		AddRoute("checkpoint",checkpoint.NewHandler(app.checkpointKeeper)).
-		AddRoute("stake",stake.NewHandler(app.stakeKeeper))
+		AddRoute("stake",stake.NewHandler(app.stakeKeeper)).
+		AddRoute("staker",staker.NewHandler(app.stakerKeeper))
 	// perform initialization logic
 	app.SetInitChainer(app.initChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
@@ -100,7 +107,7 @@ func NewBasecoinApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.SetAnteHandler(auth.NewAnteHandler(app.accountMapper, app.feeCollectionKeeper))
 
 	// mount the multistore and load the latest state
-	app.MountStoresIAVL(app.keyMain, app.keyAccount, app.keyIBC,app.keySideBlock,app.keyCheckpoint,app.keyStake)
+	app.MountStoresIAVL(app.keyMain, app.keyAccount, app.keyIBC,app.keySideBlock,app.keyCheckpoint,app.keyStake,app.keyStaker)
 	err := app.LoadLatestVersion(app.keyMain)
 	if err != nil {
 		cmn.Exit(err.Error())
@@ -124,6 +131,7 @@ func MakeCodec() *wire.Codec {
 	sideBlock.RegisterWire(cdc)
 	checkpoint.RegisterWire(cdc)
 	stake.RegisterWire(cdc)
+	staker.RegisterWire(cdc)
 	// register custom type
 	cdc.RegisterConcrete(&types.AppAccount{}, "basecoin/Account", nil)
 
@@ -151,8 +159,8 @@ func (app *BasecoinApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 	}
 
 	logger.Info("------")
-
-
+	fmt.Printf("all validators are %v",staker.Keeper.GetAllValidators(app.stakerKeeper,ctx))
+	staker.Keeper.SetValidatorSet(app.stakerKeeper,ctx)
 
 
 
