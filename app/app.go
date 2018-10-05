@@ -16,12 +16,9 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	tmtypes "github.com/tendermint/tendermint/types"
 	"github.com/basecoin/sideblock"
-	"fmt"
 	"github.com/basecoin/checkpoint"
 	"github.com/basecoin/staking"
 	"github.com/basecoin/staker"
-	"encoding/hex"
-	"github.com/tendermint/tendermint/crypto/secp256k1"
 )
 
 const (
@@ -152,38 +149,16 @@ func (app *BasecoinApp) BeginBlocker(_ sdk.Context, _ abci.RequestBeginBlock) ab
 // application.
 func (app *BasecoinApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci.ResponseEndBlock {
 	logger := ctx.Logger().With("module", "x/baseapp")
-	if ctx.BlockHeader().TotalTxs%5 == 0 && ctx.BlockHeader().TotalTxs>0 && ctx.BlockHeader().NumTxs==1	{
-		checkpointData:=sideBlock.GetBlocksAfterCheckpoint(ctx,app.sideBlockKeeper)
-		logger.Error("Checkpoint Created and pushed to Ethereum Chain ! ")
-		fmt.Printf("The blockdata to be pushed is %v",checkpointData)
-		sideBlock.FlushBlockHashesKey(ctx,app.sideBlockKeeper)
-
-	}
-
-	logger.Info("------")
-	//
-	//val2 := abci.Validator{
-	//	Address:[]byte("b19fc2aadd0a9b011972c2fe450c68b7b2b2603d"),
-	//	Power:int64(1),
+	// TO be used if sideblock module is used
+	//if ctx.BlockHeader().TotalTxs%5 == 0 && ctx.BlockHeader().TotalTxs>0 && ctx.BlockHeader().NumTxs==1	{
+	//	checkpointData:=sideBlock.GetBlocksAfterCheckpoint(ctx,app.sideBlockKeeper)
+	//	logger.Error("Checkpoint Created and pushed to Ethereum Chain ! ")
+	//	fmt.Printf("The blockdata to be pushed is %v",checkpointData)
+	//	sideBlock.FlushBlockHashesKey(ctx,app.sideBlockKeeper)
 	//
 	//}
-	var _pubkey secp256k1.PubKeySecp256k1
-	k, _ := hex.DecodeString("041FE1CDE7D9D8C9182AC967EC8362262216FF8A10061F0DE0F1472F9E45F965D0909DE527E18C7BFB9FCD42335E60FB6E18367A4DC37F1A7FC3265C7241597973")
-	copy(_pubkey[:], k[:])
-	_address,_:= hex.DecodeString("F6CEBE8030E5F7F7ED4ADAD55040EE9FDA382EF1")
-
-	val1 := abci.Validator{
-		Address:_address,
-		Power:int64(1),
-		PubKey: tmtypes.TM2PB.PubKey(_pubkey),
-
-	}
-	validatorSet:=[]abci.Validator{val1}
-	fmt.Printf("all validators are %v \n",staker.Keeper.GetAllValidators(app.stakerKeeper,ctx))
-	staker.Keeper.SetValidatorSet(app.stakerKeeper,ctx,validatorSet)
-	fmt.Printf("all validators are %v \n",staker.Keeper.GetAllValidators(app.stakerKeeper,ctx))
-	staker.Keeper.FlushValidatorSet(app.stakerKeeper,ctx)
-	fmt.Printf("all validators are %v \n",staker.Keeper.GetAllValidators(app.stakerKeeper,ctx))
+	logger.Info("****** Updating Validators *******")
+	validatorSet:=staker.EndBlocker(ctx,app.stakerKeeper)
 
 	return abci.ResponseEndBlock{
 		ValidatorUpdates:validatorSet,
