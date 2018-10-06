@@ -21,12 +21,16 @@ func main() {
 	fmt.Println("we have a connection")
 	_ = client // we'll use this in the upcoming sections
 	//TODO reject transaction if the difference in numbers is not even
-	root := getHeaders(4733028, 4733032, client)
+	root := getHeaders(4733028, 4733031, client)
+
 	fmt.Printf("the root hash is %v", root)
 
 }
 
 func getHeaders(start int, end int, client *ethclient.Client) string {
+	if (start-end+1)%2 != 0 {
+		return "Not Defined , make sure difference is even "
+	}
 	if start > end {
 		return ""
 	}
