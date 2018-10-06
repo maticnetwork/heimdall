@@ -6,6 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"log"
+	"math/big"
 )
 
 func main() {
@@ -20,4 +21,6 @@ func main() {
 	}
 	last, _ := stakeManagerInstance.LastValidatorIndex(nil)
 	fmt.Println("The last validator index is %v", last)
+	validator, _ := stakeManagerInstance.Validators(nil, big.NewInt(int64(0)))
+	fmt.Println("The validator is %v", validator)
 }
