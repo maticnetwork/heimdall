@@ -55,10 +55,9 @@ func main() {
 		panic(err)
 	}
 
-
 	// from address
 	fromAddress := common.BytesToAddress(privVal.Address)
-	fmt.Println("public key %v",privVal.PubKey)
+	fmt.Println("public key %v", privVal.PubKey)
 	// fetch gas price
 	gasprice, err := client.SuggestGasPrice(context.Background())
 	if err != nil {
