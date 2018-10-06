@@ -1,13 +1,23 @@
 package main
 
 import (
-	abci "github.com/tendermint/tendermint/abci/types"
+	"fmt"
+	"github.com/basecoin/contracts/StakeManager"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
+	"log"
 )
 
 func main() {
-
-}
-
-func getValidatorSet() (validators []abci.Validator) {
-
+	client, err := ethclient.Dial("https://kovan.infura.io")
+	if err != nil {
+		log.Fatal(err)
+	}
+	stakeManagerAddress := "0x8b28d78eb59c323867c43b4ab8d06e0f1efa1573"
+	stakeManagerInstance, err := StakeManager.NewContracts(common.HexToAddress(stakeManagerAddress), client)
+	if err != nil {
+		log.Fatal(err)
+	}
+	last, _ := stakeManagerInstance.LastValidatorIndex(nil)
+	fmt.Println("The last validator index is %v", last)
 }
