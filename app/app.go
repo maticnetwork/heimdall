@@ -173,7 +173,10 @@ func (app *BasecoinApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 	for _, vote := range votes {
 		sigs = append(sigs[:], vote.Signature[:]...)
 	}
+	txHelper.SendCheckpoint(4733028, 4733031, sigs)
+
 	//TODO hardcoding start and end for now , later to maintain data on node or query main chain
+	// TODO trigger only on checkpoint transaction
 	if ctx.BlockHeader().NumTxs == 1 {
 
 		txHelper.SendCheckpoint(4733028, 4733031, sigs)
