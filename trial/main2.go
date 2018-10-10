@@ -43,7 +43,7 @@ func main() {
 	}
 
 	// load default base config
-	privVal := privval.LoadFilePV("/Users/vc/.tendermint/config/priv_validator.json")
+	privVal := privval.LoadFilePV("/Users/vc/.basecoind/config/priv_validator.json")
 
 	// retrieve private key
 	var pkObject secp256k1.PrivKeySecp256k1
@@ -54,10 +54,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
 	// from address
 	fromAddress := common.BytesToAddress(privVal.Address)
-	fmt.Println("public key %v and from address %v", privVal.PubKey, privVal.Address)
+	fmt.Println("public key %v and from address %v", privVal.PubKey, fromAddress.String())
 	// fetch gas price
 	gasprice, err := client.SuggestGasPrice(context.Background())
 	if err != nil {
