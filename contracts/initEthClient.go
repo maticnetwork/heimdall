@@ -112,11 +112,13 @@ func SendCheckpoint(start int, end int, sigs []byte) {
 	// Calling contract method
 	var amount big.Int
 	amount.SetUint64(0)
-
-	tx, err := rootchainClient.SubmitHeaderBlock(auth, rootHash, start, end, sigs)
+	var rootHashArray [32]byte
+	copy(rootHashArray[:], rootHash)
+	tx, err := rootchainClient.SubmitHeaderBlock(auth, rootHashArray, big.NewInt(int64(start)), big.NewInt(int64(end)), sigs)
 	if err != nil {
-		fmt.Errorf("Transaction unable to send error %v", err)
+		fmt.Printf("Transaction unable to send error %v", err)
 	}
+	fmt.Printf("Checkpoint sent successfully %v", tx)
 
 	//send transaction
 
