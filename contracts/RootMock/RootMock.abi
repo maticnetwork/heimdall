@@ -1,5 +1,19 @@
 [
 	{
+		"constant": true,
+		"inputs": [],
+		"name": "headerBockSubmitted",
+		"outputs": [
+			{
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
 		"constant": false,
 		"inputs": [
 			{
@@ -20,7 +34,12 @@
 			}
 		],
 		"name": "submitHeaderBlock",
-		"outputs": [],
+		"outputs": [
+			{
+				"name": "",
+				"type": "bool"
+			}
+		],
 		"payable": false,
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -30,22 +49,22 @@
 		"inputs": [
 			{
 				"indexed": false,
-				"name": "",
+				"name": "root",
 				"type": "bytes32"
 			},
 			{
 				"indexed": false,
-				"name": "",
+				"name": "start",
 				"type": "uint256"
 			},
 			{
 				"indexed": false,
-				"name": "",
+				"name": "end",
 				"type": "uint256"
 			},
 			{
 				"indexed": false,
-				"name": "",
+				"name": "sigs",
 				"type": "bytes"
 			}
 		],

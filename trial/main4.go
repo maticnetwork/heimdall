@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"math/big"
+
 	"github.com/basecoin/contracts/StakeManager"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"log"
-	"math/big"
 )
 
 func main() {
@@ -14,7 +15,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	stakeManagerAddress := "0x8b28d78eb59c323867c43b4ab8d06e0f1efa1573"
+	stakeManagerAddress := "8b28d78eb59c323867c43b4ab8d06e0f1efa1573"
 	stakeManagerInstance, err := StakeManager.NewContracts(common.HexToAddress(stakeManagerAddress), client)
 	if err != nil {
 		log.Fatal(err)
