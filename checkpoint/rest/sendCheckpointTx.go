@@ -170,9 +170,6 @@ func submitCheckpointRequestHandlerFn(cdc *wire.Codec, kb keys.Keybase, cliCtx c
 			w.Write([]byte(fmt.Sprintf("Couldn't decode address. Error: %s", err.Error())))
 			return
 		}
-		//fmt.Printf( "vairable address is %v  \n",proposerAddress)
-		//fmt.Printf( "tx ctx is  is %v  \n",txCtx)
-
 		msg := checkpoint.NewMsgCheckpointBlock(sdk.AccAddress(proposerAddress), int(m.Start_block), int(m.End_block), m.Root_hash)
 		txBytes, err := txCtx.BuildAndSign(m.Local_account_name, m.Password, []sdk.Msg{msg})
 		if err != nil {
