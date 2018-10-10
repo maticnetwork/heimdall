@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/basecoin/checkpoint"
+	txHelper "github.com/basecoin/contracts"
 	"github.com/basecoin/sideblock"
 	"github.com/basecoin/staker"
 	"github.com/basecoin/staking"
@@ -159,16 +160,26 @@ func (app *BasecoinApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 	//}
 
 	logger.Info("****** Updating Validators *******")
-	validatorSet := staker.EndBlocker(ctx, app.stakerKeeper)
+
+	// validatorSet := staker.EndBlocker(ctx, app.stakerKeeper)
 	var votes []tmtypes.Vote
 	err := json.Unmarshal(ctx.BlockHeader().Votes, &votes)
 	if err != nil {
 		fmt.Printf("error %v", err)
 	}
 
-	// fmt.Printf("signature is %v", votes[0].Signature)
+	fmt.Printf("signature for first validator : %v", votes[0].Signature)
+	var sigs []byte
+	for _, vote := range votes {
+		sigs = append(sigs[:], vote.Signature[:]...)
+	}
+	//TODO hardcoding start and end for now , later to maintain data on node or query main chain
+	if ctx.BlockHeader().NumTxs == 1 {
+
+		txHelper.SendCheckpoint(4733028, 4733031, sigs)
+	}
 	return abci.ResponseEndBlock{
-		ValidatorUpdates: validatorSet,
+		// ValidatorUpdates: validatorSet,
 	}
 }
 
@@ -178,28 +189,28 @@ func (app *BasecoinApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 // should contain all the genesis accounts. These accounts will be added to the
 // application's account mapper.
 func (app *BasecoinApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
-	// stateJSON := req.AppStateBytes
+	stateJSON := req.AppStateBytes
 
-	// genesisState := new(types.GenesisState)
-	// fmt.Printf("app state bytes is %v", string(stateJSON))
+	genesisState := new(types.GenesisState)
+	fmt.Printf("app state bytes is %v", string(stateJSON))
 
-	// err := app.cdc.UnmarshalJSON(stateJSON, genesisState)
-	// if err != nil {
-	// 	// TODO: https://github.com/cosmos/cosmos-sdk/issues/468
+	err := app.cdc.UnmarshalJSON(stateJSON, genesisState)
+	if err != nil {
+		// TODO: https://github.com/cosmos/cosmos-sdk/issues/468
 
-	// 	panic(err)
-	// }
+		panic(err)
+	}
 
-	// for _, gacc := range genesisState.Accounts {
-	// 	acc, err := gacc.ToAppAccount()
-	// 	if err != nil {
-	// 		// TODO: https://github.com/cosmos/cosmos-sdk/issues/468
-	// 		panic(err)
-	// 	}
+	for _, gacc := range genesisState.Accounts {
+		acc, err := gacc.ToAppAccount()
+		if err != nil {
+			// TODO: https://github.com/cosmos/cosmos-sdk/issues/468
+			panic(err)
+		}
 
-	// 	acc.AccountNumber = app.accountMapper.GetNextAccountNumber(ctx)
-	// 	app.accountMapper.SetAccount(ctx, acc)
-	// }
+		acc.AccountNumber = app.accountMapper.GetNextAccountNumber(ctx)
+		app.accountMapper.SetAccount(ctx, acc)
+	}
 	sideBlock.InitGenesis(ctx, app.sideBlockKeeper)
 
 	return abci.ResponseInitChain{}

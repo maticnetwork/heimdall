@@ -58,7 +58,6 @@ func (k Keeper) GetAllValidators(ctx sdk.Context) (validators []abci.Validator) 
 	i := 0
 	for ; ; i++ {
 		if !iterator.Valid() {
-			fmt.Println("BREAK BREAK BREAK ")
 			break
 		}
 
@@ -81,7 +80,11 @@ func (k Keeper) GetAllValidators(ctx sdk.Context) (validators []abci.Validator) 
 // given the address returns validator info
 func (k Keeper) GetValidatorInfo(ctx sdk.Context, address []byte) (validator abci.Validator) {
 	store := ctx.KVStore(k.storeKey)
-	validator := store.Get(GetValidatorKey(address))
+	validatorBytes := store.Get(GetValidatorKey(address))
+	err := k.cdc.UnmarshalBinary(validatorBytes, &validator)
+	if err != nil {
+		return
+	}
 	return validator
 
 }
