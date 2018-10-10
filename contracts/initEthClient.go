@@ -4,17 +4,30 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	"github.com/basecoin/contracts/StakeManager"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto/sha3"
-	"github.com/ethereum/go-ethereum/ethclient"
-	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/crypto/secp256k1"
-	tmtypes "github.com/tendermint/tendermint/types"
-	"github.com/xsleonard/go-merkle"
 	"log"
 	"math/big"
+
+	"github.com/basecoin/contracts/StakeManager"
+	"github.com/basecoin/contracts/rootchain"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/crypto/sha3"
+	"github.com/ethereum/go-ethereum/ethclient"
+	amino "github.com/tender/go-amino"
+	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
+	"github.com/tendermint/tendermint/privval"
+	tmtypes "github.com/tendermint/tendermint/types"
+	"github.com/xsleonard/go-merkle"
 )
+
+var cdc = amino.NewCodec()
+
+func init() {
+	cdc.RegisterConcrete(secp256k1.PubKeySecp256k1{}, secp256k1.Secp256k1PubKeyAminoRoute, nil)
+	cdc.RegisterConcrete(secp256k1.PrivKeySecp256k1{}, secp256k1.Secp256k1PrivKeyAminoRoute, nil)
+}
 
 var (
 	stakeManagerAddress = "0x8b28d78eb59c323867c43b4ab8d06e0f1efa1573"
@@ -51,11 +64,61 @@ func getLastValidator() int64 {
 	return last.Int64()
 }
 
-func sendCheckpoint() {
-	//clientKovan := initKovan()
+// Sends transaction to main chain
+func SendCheckpoint(start int, end int, sigs []byte) {
+	clientKovan := initKovan()
 	clientMatic := initMatic()
-	rootHash := getHeaders(4733028, 4733031, clientMatic)
-	fmt.Printf("Root hash obtained for blocks from %v to %v is %v", 4733028, 4733031, rootHash)
+	rootHash := getHeaders(start, end, clientMatic)
+	fmt.Printf("Root hash obtained for blocks from %v to %v is %v", start, end, rootHash)
+	// TODO replace with mock rootchain
+	rootchainAddress := "24e01716a6ac34d5f2c4c082f553d86a557543a7"
+	rootchainClient, err := rootchain.NewRootchain(common.HexToAddress(rootchainAddress), clientKovan)
+	if err != nil {
+		panic(err)
+	}
+	//TODO make dynamic/ fetch from config
+	privVal := privval.LoadFilePV("/Users/vc/.basecoind/config/priv_validator.json")
+	var pkObject secp256k1.PrivKeySecp256k1
+	cdc.MustUnmarshalBinaryBare(privVal.PrivKey.Bytes(), &pkObject)
+
+	// create ecdsa private key
+	ecdsaPrivateKey, err := crypto.ToECDSA(pkObject[:])
+	if err != nil {
+		panic(err)
+	}
+
+	// from address
+	fromAddress := common.BytesToAddress(privVal.Address)
+	fmt.Println("public key %v and from address %v", privVal.PubKey, privVal.Address)
+	// fetch gas price
+	gasprice, err := clientKovan.SuggestGasPrice(context.Background())
+	if err != nil {
+		panic(err)
+	}
+
+	// fetch nonce
+	nonce, err := clientKovan.PendingNonceAt(context.Background(), fromAddress)
+	if err != nil {
+		panic(err)
+	}
+
+	// create auth
+	auth := bind.NewKeyedTransactor(ecdsaPrivateKey)
+	auth.GasPrice = gasprice
+	auth.Nonce = big.NewInt(int64(nonce))
+	auth.Value = big.NewInt(0)
+	auth.GasLimit = uint64(300000)
+
+	// Calling contract method
+	var amount big.Int
+	amount.SetUint64(0)
+
+	tx, err := rootchainClient.SubmitHeaderBlock(auth, rootHash, start, end, sigs)
+	if err != nil {
+		fmt.Errorf("Transaction unable to send error %v", err)
+	}
+
+	//send transaction
 
 }
 

@@ -1,17 +1,19 @@
 package rest
 
 import (
-"github.com/cosmos/cosmos-sdk/client/context"
-"github.com/gorilla/mux"
-"github.com/cosmos/cosmos-sdk/wire"
-"github.com/cosmos/cosmos-sdk/crypto/keys"
-"net/http"
-	authctx "github.com/cosmos/cosmos-sdk/x/auth/client/context"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"net/http"
 
+	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/crypto/keys"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/wire"
+	authctx "github.com/cosmos/cosmos-sdk/x/auth/client/context"
+	"github.com/gorilla/mux"
+
+	"encoding/json"
 	"fmt"
-"io/ioutil"
-"encoding/json"
+	"io/ioutil"
+
 	"github.com/basecoin/checkpoint"
 	"github.com/cosmos/cosmos-sdk/x/stake"
 )
@@ -22,28 +24,26 @@ func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *wire.Codec,
 		submitCheckpointRequestHandlerFn(cdc, kb, cliCtx),
 	).Methods("POST")
 	r.HandleFunc("/stake/createValidator",
-		createNewValidatorRequestHandlerFn(cdc,kb,cliCtx),
-		).Methods("POST")
+		createNewValidatorRequestHandlerFn(cdc, kb, cliCtx),
+	).Methods("POST")
 	// TODO add editValidator etc
-
-
 
 }
 
 type AddValidatorBody struct {
-	Password string `json:"password"`
+	Password           string `json:"password"`
 	Local_account_name string `json:"local_account_name"`
-	Chain_id          string `json:"chain_id"`
-	Account_number    int64  `json:"account_number"`
-	Sequence         int64  `json:"sequence"`
-	Gas              int64  `json:"gas"`
-	Moniker			string `json:"moniker"`
-	Public_key		string `json:"public_key"`
-	Amount 			string	`json:"amount"`
-	Identity		string `json:"identity"`
-	Website 		string `json:"website"`
-	Details 		string	`json:"details"`
-	ValidatorAddress string `json:"validator_address"`
+	Chain_id           string `json:"chain_id"`
+	Account_number     int64  `json:"account_number"`
+	Sequence           int64  `json:"sequence"`
+	Gas                int64  `json:"gas"`
+	Moniker            string `json:"moniker"`
+	Public_key         string `json:"public_key"`
+	Amount             string `json:"amount"`
+	Identity           string `json:"identity"`
+	Website            string `json:"website"`
+	Details            string `json:"details"`
+	ValidatorAddress   string `json:"validator_address"`
 }
 
 func createNewValidatorRequestHandlerFn(cdc *wire.Codec, kb keys.Keybase, cliCtx context.CLIContext) http.HandlerFunc {
@@ -92,7 +92,7 @@ func createNewValidatorRequestHandlerFn(cdc *wire.Codec, kb keys.Keybase, cliCtx
 			fmt.Printf("Error decoding amount ")
 		}
 
-		msg := stake.NewMsgCreateValidator(validatorAddress, pk,amountInt, description)
+		msg := stake.NewMsgCreateValidator(validatorAddress, pk, amountInt, description)
 
 		txBytes, err := txCtx.BuildAndSign(m.Local_account_name, m.Password, []sdk.Msg{msg})
 		if err != nil {
@@ -114,22 +114,22 @@ func createNewValidatorRequestHandlerFn(cdc *wire.Codec, kb keys.Keybase, cliCtx
 		}
 		w.Write(output)
 
-
-
 	}
 }
+
 type CheckpointBody struct {
-	Password         string `json:"password"`
+	Password           string `json:"password"`
 	Local_account_name string `json:"local_account_name"`
-	Chain_id          string `json:"chain_id"`
-	Account_number    int64  `json:"account_number"`
-	Sequence         int64  `json:"sequence"`
-	Gas              int64  `json:"gas"`
-	Root_hash    	 string `json:"root_hash"`
-	Start_block 		 int64 `json:"start_block"`
-	End_block 		 int64 `json:"end_block"`
-	Proposer_address  string `json:"proposer_address"`
+	Chain_id           string `json:"chain_id"`
+	Account_number     int64  `json:"account_number"`
+	Sequence           int64  `json:"sequence"`
+	Gas                int64  `json:"gas"`
+	Root_hash          string `json:"root_hash"`
+	Start_block        int64  `json:"start_block"`
+	End_block          int64  `json:"end_block"`
+	Proposer_address   string `json:"proposer_address"`
 }
+
 func submitCheckpointRequestHandlerFn(cdc *wire.Codec, kb keys.Keybase, cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -173,7 +173,7 @@ func submitCheckpointRequestHandlerFn(cdc *wire.Codec, kb keys.Keybase, cliCtx c
 		//fmt.Printf( "vairable address is %v  \n",proposerAddress)
 		//fmt.Printf( "tx ctx is  is %v  \n",txCtx)
 
-		msg := checkpoint.NewMsgCheckpointBlock	(sdk.AccAddress(proposerAddress),int(m.Start_block),int(m.End_block),m.Root_hash)
+		msg := checkpoint.NewMsgCheckpointBlock(sdk.AccAddress(proposerAddress), int(m.Start_block), int(m.End_block), m.Root_hash)
 		txBytes, err := txCtx.BuildAndSign(m.Local_account_name, m.Password, []sdk.Msg{msg})
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
@@ -182,7 +182,6 @@ func submitCheckpointRequestHandlerFn(cdc *wire.Codec, kb keys.Keybase, cliCtx c
 		}
 		//
 
-
 		//TODO uncomment to send transaction
 		res, err := cliCtx.BroadcastTx(txBytes)
 		if err != nil {
@@ -190,8 +189,6 @@ func submitCheckpointRequestHandlerFn(cdc *wire.Codec, kb keys.Keybase, cliCtx c
 			w.Write([]byte(err.Error()))
 			return
 		}
-
-
 
 		//fmt.Printf("response is are %v \n",res)
 
