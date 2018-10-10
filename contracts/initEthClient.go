@@ -7,8 +7,8 @@ import (
 	"log"
 	"math/big"
 
+	rootmock "github.com/basecoin/contracts/RootMock"
 	"github.com/basecoin/contracts/StakeManager"
-	"github.com/basecoin/contracts/rootchain"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -30,7 +30,8 @@ func init() {
 }
 
 var (
-	stakeManagerAddress = "0x8b28d78eb59c323867c43b4ab8d06e0f1efa1573"
+	stakeManagerAddress = "8b28d78eb59c323867c43b4ab8d06e0f1efa1573"
+	rootchainAddress    = "e022d867085b1617dc9fb04b474c4de580dccf1a"
 )
 
 func getValidatorByIndex(_index int64) abci.Validator {
@@ -70,9 +71,8 @@ func SendCheckpoint(start int, end int, sigs []byte) {
 	clientMatic := initMatic()
 	rootHash := getHeaders(start, end, clientMatic)
 	fmt.Printf("Root hash obtained for blocks from %v to %v is %v", start, end, rootHash)
-	// TODO replace with mock rootchain
-	rootchainAddress := "24e01716a6ac34d5f2c4c082f553d86a557543a7"
-	rootchainClient, err := rootchain.NewRootchain(common.HexToAddress(rootchainAddress), clientKovan)
+
+	rootchainClient, err := rootmock.NewContracts(common.HexToAddress(rootchainAddress), clientKovan)
 	if err != nil {
 		panic(err)
 	}
@@ -89,7 +89,6 @@ func SendCheckpoint(start int, end int, sigs []byte) {
 
 	// from address
 	fromAddress := common.BytesToAddress(privVal.Address)
-	fmt.Println("public key %v and from address %v", privVal.PubKey, privVal.Address)
 	// fetch gas price
 	gasprice, err := clientKovan.SuggestGasPrice(context.Background())
 	if err != nil {
