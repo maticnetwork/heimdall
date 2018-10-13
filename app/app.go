@@ -16,6 +16,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/ibc"
+	"github.com/ethereum/go-ethereum/rlp"
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	dbm "github.com/tendermint/tendermint/libs/db"
@@ -78,13 +79,15 @@ func NewBasecoinApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	}
 
 	// define and attach the mappers and keepers
-	app.accountMapper = auth.NewAccountMapper(
-		cdc,
-		app.keyAccount, // target store
-		func() auth.Account {
-			return &types.AppAccount{}
-		},
-	)
+	//app.accountMapper = auth.NewAccountMapper(
+	//	cdc,
+	//	app.keyAccount, // target store
+	//
+	//	func() auth.Account {
+	//		return &types.AppAccount{}
+	//	},
+	//)
+
 	app.coinKeeper = bank.NewKeeper(app.accountMapper)
 	app.ibcMapper = ibc.NewMapper(app.cdc, app.keyIBC, app.RegisterCodespace(ibc.DefaultCodespace))
 	app.sideBlockKeeper = sideBlock.NewKeeper(app.cdc, app.keySideBlock, app.RegisterCodespace(sideBlock.DefaultCodespace))
@@ -104,8 +107,10 @@ func NewBasecoinApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.SetInitChainer(app.initChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
 	app.SetEndBlocker(app.EndBlocker)
-	app.SetAnteHandler(auth.NewAnteHandler(app.accountMapper, app.feeCollectionKeeper))
-
+	//app.SetAnteHandler(auth.NewAnteHandler(app.accountMapper, app.feeCollectionKeeper))
+	app.SetTxDecoder(app.txDecoder)
+	//TODO check if correct
+	app.BaseApp.SetTxDecoder(app.txDecoder)
 	// mount the multistore and load the latest state
 	app.MountStoresIAVL(app.keyMain, app.keyAccount, app.keyIBC, app.keySideBlock, app.keyCheckpoint, app.keyStake, app.keyStaker)
 	err := app.LoadLatestVersion(app.keyMain)
@@ -160,7 +165,6 @@ func (app *BasecoinApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 	//}
 
 	logger.Info("****** Updating Validators *******")
-
 	// validatorSet := staker.EndBlocker(ctx, app.stakerKeeper)
 	var votes []tmtypes.Vote
 	err := json.Unmarshal(ctx.BlockHeader().Votes, &votes)
@@ -173,8 +177,7 @@ func (app *BasecoinApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 	for _, vote := range votes {
 		sigs = append(sigs[:], vote.Signature[:]...)
 	}
-	txHelper.SendCheckpoint(4733028, 4733031, sigs)
-
+	fmt.Printf("The proposer is : %v", ctx.BlockHeader().Proposer)
 	//TODO hardcoding start and end for now , later to maintain data on node or query main chain
 	// TODO trigger only on checkpoint transaction
 	if ctx.BlockHeader().NumTxs == 1 {
@@ -184,6 +187,17 @@ func (app *BasecoinApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 	return abci.ResponseEndBlock{
 		// ValidatorUpdates: validatorSet,
 	}
+}
+
+// RLP decodes the txBytes to a BaseTx
+func (app *BasecoinApp) txDecoder(txBytes []byte) (sdk.Tx, sdk.Error) {
+	var tx = checkpoint.BaseTx{}
+	fmt.Printf("Decoding Transaction from app.go")
+	err := rlp.DecodeBytes(txBytes, &tx)
+	if err != nil {
+		return nil, sdk.ErrTxDecode(err.Error())
+	}
+	return tx, nil
 }
 
 // initChainer implements the custom application logic that the BaseApp will

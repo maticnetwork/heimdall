@@ -16,6 +16,7 @@ import (
 
 	"github.com/basecoin/checkpoint"
 	"github.com/cosmos/cosmos-sdk/x/stake"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *wire.Codec, kb keys.Keybase) {
@@ -164,13 +165,13 @@ func submitCheckpointRequestHandlerFn(cdc *wire.Codec, kb keys.Keybase, cliCtx c
 			Gas:           m.Gas,
 		}
 
-		proposerAddress, err := sdk.AccAddressFromBech32(m.Proposer_address)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("Couldn't decode address. Error: %s", err.Error())))
-			return
-		}
-		msg := checkpoint.NewMsgCheckpointBlock(sdk.AccAddress(proposerAddress), int(m.Start_block), int(m.End_block), m.Root_hash)
+		//proposerAddress, err := sdk.AccAddressFromBech32(m.Proposer_address)
+		//if err != nil {
+		//	w.WriteHeader(http.StatusInternalServerError)
+		//	w.Write([]byte(fmt.Sprintf("Couldn't decode address. Error: %s", err.Error())))
+		//	return
+		//}
+		msg := checkpoint.NewMsgCheckpointBlock(uint64(m.Start_block), uint64(m.End_block), common.BytesToHash([]byte(m.Root_hash)))
 		txBytes, err := txCtx.BuildAndSign(m.Local_account_name, m.Password, []sdk.Msg{msg})
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
