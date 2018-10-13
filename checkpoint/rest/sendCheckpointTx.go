@@ -14,15 +14,17 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	"encoding/hex"
 	"github.com/basecoin/checkpoint"
 	"github.com/cosmos/cosmos-sdk/x/stake"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/rlp"
 )
 
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *wire.Codec, kb keys.Keybase) {
 	r.HandleFunc(
 		"/checkpoint/submitCheckpoint",
-		submitCheckpointRequestHandlerFn(cdc, kb, cliCtx),
+		submitCheckpointFromBridgeRequestHandlerFn(cdc, kb, cliCtx),
 	).Methods("POST")
 	r.HandleFunc("/stake/createValidator",
 		createNewValidatorRequestHandlerFn(cdc, kb, cliCtx),
@@ -202,6 +204,75 @@ func submitCheckpointRequestHandlerFn(cdc *wire.Codec, kb keys.Keybase, cliCtx c
 		//fmt.Printf("yay output is %v",output)
 		//TODO this too
 		w.Write(output)
+
+	}
+}
+
+type CheckpointFromBridge struct {
+	Root_hash        string `json:"root_hash"`
+	Start_block      int64  `json:"start_block"`
+	End_block        int64  `json:"end_block"`
+	Proposer_address string `json:"proposer_address"`
+}
+
+func submitCheckpointFromBridgeRequestHandlerFn(cdc *wire.Codec, kb keys.Keybase, cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		var m CheckpointFromBridge
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		err = json.Unmarshal(body, &m)
+		if err != nil {
+			fmt.Printf("we have error")
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		//TODO add proposer address
+		msg := checkpoint.NewMsgCheckpointBlock(uint64(m.Start_block), uint64(m.End_block), common.BytesToHash([]byte(m.Root_hash)))
+
+		tx := checkpoint.NewBaseTx(msg)
+		txBytes, err := rlp.EncodeToBytes(tx)
+		if err != nil {
+			fmt.Printf("Error generating TXBYtes %v", err)
+		}
+		fmt.Printf("The tx bytes are %v ", hex.EncodeToString(txBytes))
+
+		client := &http.Client{}
+		//TODO replace with our own AUTH context
+		req, _ := http.NewRequest("GET", "http://localhost:26657/broadcast_tx_commit?tx=0xf83df83b94fa9bf0cba703174b2717cfea0359f7e5e151983781c682036da000000000000000000000000000000000000000000000000000000000006c6f6c", nil)
+		q := req.URL.Query()
+		q.Add("tx", "0x"+hex.EncodeToString(txBytes))
+		resp, err := client.Do(req)
+		fmt.Printf("The result is %v", resp)
+		//TODO uncomment to send transaction
+		//res, err := cliCtx.BroadcastTx(txBytes)
+		//if err != nil {
+		//	w.WriteHeader(http.StatusInternalServerError)
+		//	w.Write([]byte(err.Error()))
+		//	return
+		//}
+
+		// TODO uncomment
+		//output, err := json.MarshalIndent(resp, "", "  ")
+		//if err != nil {
+		//	w.WriteHeader(http.StatusInternalServerError)
+		//	w.Write([]byte(err.Error()))
+		//	return
+		//}
+		//TODO this too
+		var bodyString string
+		if resp.StatusCode == http.StatusOK {
+			bodyBytes, _ := ioutil.ReadAll(resp.Body)
+			bodyString = string(bodyBytes)
+		}
+		w.Write([]byte(bodyString))
 
 	}
 }
