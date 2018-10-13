@@ -233,9 +233,8 @@ func submitCheckpointFromBridgeRequestHandlerFn(cdc *wire.Codec, kb keys.Keybase
 			w.Write([]byte(err.Error()))
 			return
 		}
-
 		//TODO add proposer address
-		msg := checkpoint.NewMsgCheckpointBlock(uint64(m.Start_block), uint64(m.End_block), common.BytesToHash([]byte(m.Root_hash)))
+		msg := checkpoint.NewMsgCheckpointBlock(uint64(m.Start_block), uint64(m.End_block), common.HexToHash(m.Root_hash))
 
 		tx := checkpoint.NewBaseTx(msg)
 		txBytes, err := rlp.EncodeToBytes(tx)
@@ -246,9 +245,11 @@ func submitCheckpointFromBridgeRequestHandlerFn(cdc *wire.Codec, kb keys.Keybase
 
 		client := &http.Client{}
 		//TODO replace with our own AUTH context
-		req, _ := http.NewRequest("GET", "http://localhost:26657/broadcast_tx_commit?tx=0xf83df83b94fa9bf0cba703174b2717cfea0359f7e5e151983781c682036da000000000000000000000000000000000000000000000000000000000006c6f6c", nil)
+		req, _ := http.NewRequest("GET", "http://localhost:26657/broadcast_tx_commit", nil)
 		q := req.URL.Query()
 		q.Add("tx", "0x"+hex.EncodeToString(txBytes))
+		req.URL.RawQuery = q.Encode()
+
 		resp, err := client.Do(req)
 		fmt.Printf("The result is %v", resp)
 		//TODO uncomment to send transaction

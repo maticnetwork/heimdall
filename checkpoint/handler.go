@@ -19,14 +19,13 @@ func NewHandler(k Keeper) sdk.Handler {
 }
 
 func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper) sdk.Result {
-	fmt.Printf("entered handler with message %v", msg)
+	fmt.Printf("entered handler with message %v and %v and %v", msg.StartBlock, msg.EndBlock, msg.RootHash.String())
 	//TODO check last block in last checkpoint (startBlock of new checkpoint == last block of prev endpoint)
 	// TODO insert checkpoint in state
 	logger := ctx.Logger().With("module", "x/baseapp")
-	//valid := validateCheckpoint(msg.StartBlock,msg.EndBlock,msg.RootHash)
+	valid := validateCheckpoint(int(msg.StartBlock), int(msg.EndBlock), msg.RootHash.String())
 
 	var res int64
-	valid := true
 	if valid {
 		logger.Error("root hash matched !! ")
 		res = k.addCheckpoint(ctx, msg.StartBlock, msg.EndBlock, msg.RootHash)
