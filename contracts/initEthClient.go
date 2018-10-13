@@ -18,6 +18,7 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"github.com/tendermint/tendermint/privval"
+
 	tmtypes "github.com/tendermint/tendermint/types"
 	"github.com/xsleonard/go-merkle"
 )
@@ -53,6 +54,7 @@ func getValidatorByIndex(_index int64) abci.Validator {
 	}
 	return abciValidator
 
+
 }
 
 func getLastValidator() int64 {
@@ -63,6 +65,7 @@ func getLastValidator() int64 {
 	}
 	last, _ := stakeManagerInstance.LastValidatorIndex(nil)
 	return last.Int64()
+
 }
 
 // Sends transaction to main chain
