@@ -7,7 +7,6 @@ import (
 	"encoding/hex"
 	"github.com/basecoin/checkpoint"
 	txHelper "github.com/basecoin/contracts"
-	"github.com/basecoin/sideblock"
 	"github.com/basecoin/staker"
 	"github.com/basecoin/staking"
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
@@ -50,7 +49,6 @@ type BasecoinApp struct {
 	feeCollectionKeeper auth.FeeCollectionKeeper
 	coinKeeper          bank.Keeper
 	ibcMapper           ibc.Mapper
-	sideBlockKeeper     sideBlock.Keeper
 	checkpointKeeper    checkpoint.Keeper
 	stakeKeeper         stake.Keeper
 	stakerKeeper        staker.Keeper
@@ -90,16 +88,14 @@ func NewBasecoinApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 
 	app.coinKeeper = bank.NewKeeper(app.accountMapper)
 	app.ibcMapper = ibc.NewMapper(app.cdc, app.keyIBC, app.RegisterCodespace(ibc.DefaultCodespace))
-	app.sideBlockKeeper = sideBlock.NewKeeper(app.cdc, app.keySideBlock, app.RegisterCodespace(sideBlock.DefaultCodespace))
 	//TODO change to its own codespace
-	app.checkpointKeeper = checkpoint.NewKeeper(app.cdc, app.keyCheckpoint, app.RegisterCodespace(sideBlock.DefaultCodespace))
+	app.checkpointKeeper = checkpoint.NewKeeper(app.cdc, app.keyCheckpoint, app.RegisterCodespace(stake.DefaultCodespace))
 	app.stakeKeeper = stake.NewKeeper(app.cdc, app.keyStake, app.coinKeeper, app.RegisterCodespace(stake.DefaultCodespace))
 	app.stakerKeeper = staker.NewKeeper(app.cdc, app.keyStaker, app.RegisterCodespace(stake.DefaultCodespace))
 	// register message routes
 	app.Router().
 		AddRoute("bank", bank.NewHandler(app.coinKeeper)).
 		AddRoute("ibc", ibc.NewHandler(app.ibcMapper, app.coinKeeper)).
-		AddRoute("sideBlock", sideBlock.NewHandler(app.sideBlockKeeper)).
 		AddRoute("checkpoint", checkpoint.NewHandler(app.checkpointKeeper)).
 		AddRoute("stake", stake.NewHandler(app.stakeKeeper)).
 		AddRoute("staker", staker.NewHandler(app.stakerKeeper))
@@ -133,7 +129,6 @@ func MakeCodec() *wire.Codec {
 	bank.RegisterWire(cdc)
 	ibc.RegisterWire(cdc)
 	auth.RegisterWire(cdc)
-	sideBlock.RegisterWire(cdc)
 	checkpoint.RegisterWire(cdc)
 	stake.RegisterWire(cdc)
 	staker.RegisterWire(cdc)
@@ -227,7 +222,6 @@ func (app *BasecoinApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 	//	acc.AccountNumber = app.accountMapper.GetNextAccountNumber(ctx)
 	//	app.accountMapper.SetAccount(ctx, acc)
 	//}
-	sideBlock.InitGenesis(ctx, app.sideBlockKeeper)
 
 	return abci.ResponseInitChain{}
 }
