@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"encoding/hex"
 	"github.com/basecoin/checkpoint"
 	txHelper "github.com/basecoin/contracts"
 	"github.com/basecoin/sideblock"
@@ -155,14 +156,6 @@ func (app *BasecoinApp) BeginBlocker(_ sdk.Context, _ abci.RequestBeginBlock) ab
 // application.
 func (app *BasecoinApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci.ResponseEndBlock {
 	logger := ctx.Logger().With("module", "x/baseapp")
-	// TO be used if sideblock module is used
-	//if ctx.BlockHeader().TotalTxs%5 == 0 && ctx.BlockHeader().TotalTxs>0 && ctx.BlockHeader().NumTxs==1	{
-	//	checkpointData:=sideBlock.GetBlocksAfterCheckpoint(ctx,app.sideBlockKeeper)
-	//	logger.Error("Checkpoint Created and pushed to Ethereum Chain ! ")
-	//	fmt.Printf("The blockdata to be pushed is %v",checkpointData)
-	//	sideBlock.FlushBlockHashesKey(ctx,app.sideBlockKeeper)
-	//
-	//}
 
 	logger.Info("****** Updating Validators *******")
 	// validatorSet := staker.EndBlocker(ctx, app.stakerKeeper)
@@ -172,17 +165,23 @@ func (app *BasecoinApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 		fmt.Printf("error %v", err)
 	}
 
-	fmt.Printf("signature for first validator : %v", votes[0].Signature)
+	fmt.Printf("signature for first validator : %v for data : %v", hex.EncodeToString(votes[0].Signature), hex.EncodeToString(votes[0].Data))
+
 	var sigs []byte
 	for _, vote := range votes {
 		sigs = append(sigs[:], vote.Signature[:]...)
 	}
+
+	// TODO check with mainchain contract
 	fmt.Printf("The proposer is : %v", ctx.BlockHeader().Proposer)
-	//TODO hardcoding start and end for now , later to maintain data on node or query main chain
+
 	// TODO trigger only on checkpoint transaction
 	if ctx.BlockHeader().NumTxs == 1 {
+		// Getting latest checkpoint data from store using height as key
+		var checkpoint checkpoint.CheckpointBlockHeader
+		json.Unmarshal(app.checkpointKeeper.GetCheckpoint(ctx, ctx.BlockHeight()), &checkpoint)
 
-		txHelper.SendCheckpoint(4733028, 4733031, sigs)
+		txHelper.SendCheckpoint(int(checkpoint.StartBlock), int(checkpoint.EndBlock), sigs)
 	}
 	return abci.ResponseEndBlock{
 		// ValidatorUpdates: validatorSet,

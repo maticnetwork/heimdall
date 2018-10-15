@@ -40,7 +40,7 @@ func createBlock(start uint64, end uint64, rootHash common.Hash) CheckpointBlock
 		rootHash:   rootHash,
 	}
 }
-func (k Keeper) addCheckpoint(ctx sdk.Context, start uint64, end uint64, root common.Hash) int64 {
+func (k Keeper) AddCheckpoint(ctx sdk.Context, start uint64, end uint64, root common.Hash) int64 {
 	store := ctx.KVStore(k.checkpointKey)
 	data := createBlock(start, end, root)
 	out, err := json.Marshal(data)
@@ -53,7 +53,7 @@ func (k Keeper) addCheckpoint(ctx sdk.Context, start uint64, end uint64, root co
 	store.Set([]byte(strconv.Itoa(int(ctx.BlockHeight()))), []byte(out))
 	return ctx.BlockHeight()
 }
-func (k Keeper) getCheckpoint(ctx sdk.Context, key int64) []byte {
+func (k Keeper) GetCheckpoint(ctx sdk.Context, key int64) []byte {
 	store := ctx.KVStore(k.checkpointKey)
 	getKey := []byte(strconv.Itoa(int(key)))
 	return store.Get(getKey)
