@@ -10,7 +10,6 @@ import (
 	"github.com/basecoin/staker"
 	"github.com/basecoin/staking"
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/examples/basecoin/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/cosmos/cosmos-sdk/x/auth"
@@ -138,7 +137,8 @@ func MakeCodec() *wire.Codec {
 	stake.RegisterWire(cdc)
 	staker.RegisterWire(cdc)
 	// register custom type
-	cdc.RegisterConcrete(&types.AppAccount{}, "basecoin/Account", nil)
+
+	//cdc.RegisterConcrete(&types.AppAccount{}, "basecoin/Account", nil)
 
 	cdc.Seal()
 
@@ -208,26 +208,26 @@ func (app *BasecoinApp) txDecoder(txBytes []byte) (sdk.Tx, sdk.Error) {
 func (app *BasecoinApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	stateJSON := req.AppStateBytes
 
-	genesisState := new(types.GenesisState)
+	//genesisState := new(types.GenesisState)
 	fmt.Printf("app state bytes is %v", string(stateJSON))
 
-	err := app.cdc.UnmarshalJSON(stateJSON, genesisState)
-	if err != nil {
-		// TODO: https://github.com/cosmos/cosmos-sdk/issues/468
+	//err := app.cdc.UnmarshalJSON(stateJSON, genesisState)
+	//if err != nil {
+	//	// TODO: https://github.com/cosmos/cosmos-sdk/issues/468
+	//
+	//	panic(err)
+	//}
 
-		panic(err)
-	}
-
-	for _, gacc := range genesisState.Accounts {
-		acc, err := gacc.ToAppAccount()
-		if err != nil {
-			// TODO: https://github.com/cosmos/cosmos-sdk/issues/468
-			panic(err)
-		}
-
-		acc.AccountNumber = app.accountMapper.GetNextAccountNumber(ctx)
-		app.accountMapper.SetAccount(ctx, acc)
-	}
+	//for _, gacc := range genesisState.Accounts {
+	//	acc, err := gacc.ToAppAccount()
+	//	if err != nil {
+	//		// TODO: https://github.com/cosmos/cosmos-sdk/issues/468
+	//		panic(err)
+	//	}
+	//
+	//	acc.AccountNumber = app.accountMapper.GetNextAccountNumber(ctx)
+	//	app.accountMapper.SetAccount(ctx, acc)
+	//}
 	sideBlock.InitGenesis(ctx, app.sideBlockKeeper)
 
 	return abci.ResponseInitChain{}
@@ -237,26 +237,26 @@ func (app *BasecoinApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 // various parts of the application's state and set of validators. An error is
 // returned if any step getting the state or set of validators fails.
 func (app *BasecoinApp) ExportAppStateAndValidators() (appState json.RawMessage, validators []tmtypes.GenesisValidator, err error) {
-	ctx := app.NewContext(true, abci.Header{})
-	accounts := []*types.GenesisAccount{}
-
-	appendAccountsFn := func(acc auth.Account) bool {
-		account := &types.GenesisAccount{
-			Address: acc.GetAddress(),
-			Coins:   acc.GetCoins(),
-		}
-
-		accounts = append(accounts, account)
-		return false
-	}
-
-	app.accountMapper.IterateAccounts(ctx, appendAccountsFn)
-
-	genState := types.GenesisState{Accounts: accounts}
-	appState, err = wire.MarshalJSONIndent(app.cdc, genState)
-	if err != nil {
-		return nil, nil, err
-	}
+	//ctx := app.NewContext(true, abci.Header{})
+	//accounts := []*types.GenesisAccount{}
+	//
+	//appendAccountsFn := func(acc auth.Account) bool {
+	//	account := &types.GenesisAccount{
+	//		Address: acc.GetAddress(),
+	//		Coins:   acc.GetCoins(),
+	//	}
+	//
+	//	accounts = append(accounts, account)
+	//	return false
+	//}
+	//
+	//app.accountMapper.IterateAccounts(ctx, appendAccountsFn)
+	//
+	//genState := types.GenesisState{Accounts: accounts}
+	//appState, err = wire.MarshalJSONIndent(app.cdc, genState)
+	//if err != nil {
+	//	return nil, nil, err
+	//}
 
 	return appState, validators, err
 }
