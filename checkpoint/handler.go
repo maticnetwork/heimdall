@@ -28,14 +28,14 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper) sdk.Resul
 	var res int64
 	if valid {
 		logger.Error("root hash matched !! ")
-		res = k.addCheckpoint(ctx, msg.StartBlock, msg.EndBlock, msg.RootHash)
+		res = k.AddCheckpoint(ctx, msg.StartBlock, msg.EndBlock, msg.RootHash)
 	} else {
 		logger.Error("Root hash no match ;(")
 		return ErrBadBlockDetails(k.codespace).Result()
 
 	}
 	var out CheckpointBlockHeader
-	json.Unmarshal(k.getCheckpoint(ctx, res), &out)
+	json.Unmarshal(k.GetCheckpoint(ctx, res), &out)
 	fmt.Printf("******* block end added is *******", out.EndBlock)
 
 	//TODO add validation
