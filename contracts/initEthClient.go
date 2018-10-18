@@ -9,6 +9,7 @@ import (
 
 	rootmock "github.com/basecoin/contracts/RootMock"
 	"github.com/basecoin/contracts/StakeManager"
+	"github.com/basecoin/contracts/validatorSet"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -33,6 +34,7 @@ func init() {
 var (
 	stakeManagerAddress = "8b28d78eb59c323867c43b4ab8d06e0f1efa1573"
 	rootchainAddress    = "e022d867085b1617dc9fb04b474c4de580dccf1a"
+	validatorSetAddress = "db51c1d1f1ee6d2b96ff1ae673540b731841a737"
 )
 
 func getValidatorByIndex(_index int64) abci.Validator {
@@ -54,7 +56,6 @@ func getValidatorByIndex(_index int64) abci.Validator {
 	}
 	return abciValidator
 
-
 }
 
 func getLastValidator() int64 {
@@ -74,42 +75,13 @@ func SendCheckpoint(start int, end int, sigs []byte) {
 	clientMatic := initMatic()
 	rootHash := getHeaders(start, end, clientMatic)
 	fmt.Printf("Root hash obtained for blocks from %v to %v is %v", start, end, rootHash)
-
 	rootchainClient, err := rootmock.NewContracts(common.HexToAddress(rootchainAddress), clientKovan)
 	if err != nil {
 		panic(err)
 	}
-	//TODO make dynamic/ fetch from config
-	privVal := privval.LoadFilePV("/Users/vc/.basecoind/config/priv_validator.json")
-	var pkObject secp256k1.PrivKeySecp256k1
-	cdc.MustUnmarshalBinaryBare(privVal.PrivKey.Bytes(), &pkObject)
 
-	// create ecdsa private key
-	ecdsaPrivateKey, err := crypto.ToECDSA(pkObject[:])
-	if err != nil {
-		panic(err)
-	}
-
-	// from address
-	fromAddress := common.BytesToAddress(privVal.Address)
-	// fetch gas price
-	gasprice, err := clientKovan.SuggestGasPrice(context.Background())
-	if err != nil {
-		panic(err)
-	}
-
-	// fetch nonce
-	nonce, err := clientKovan.PendingNonceAt(context.Background(), fromAddress)
-	if err != nil {
-		panic(err)
-	}
-
-	// create auth
-	auth := bind.NewKeyedTransactor(ecdsaPrivateKey)
-	auth.GasPrice = gasprice
-	auth.Nonce = big.NewInt(int64(nonce))
+	auth := GenerateAuthObj(clientKovan)
 	auth.Value = big.NewInt(0)
-	auth.GasLimit = uint64(300000)
 
 	// Calling contract method
 	var amount big.Int
@@ -122,8 +94,19 @@ func SendCheckpoint(start int, end int, sigs []byte) {
 	}
 	fmt.Printf("Checkpoint sent successfully %v", tx)
 
-	//send transaction
+}
 
+func SubmitProof(voteSignBytes []byte, sigs []byte, extradata []byte, start uint64, end uint64, rootHash common.Hash) {
+	clientKovan := initKovan()
+	fmt.Printf("Root hash obtained for blocks from %v to %v is %v", start, end, rootHash)
+	//auth := GenerateAuthObj(clientKovan)
+	//auth.Value = big.NewInt(0)
+	//todo change this to tx , right now its a call
+	validatorSetInstance := getValidatorSetInstance(clientKovan)
+	fmt.Printf("inputs , vote: %v , sigs: %v , extradata %v ", hex.EncodeToString(voteSignBytes), hex.EncodeToString(sigs), hex.EncodeToString(extradata))
+	res, proposer, error := validatorSetInstance.Validate(nil, voteSignBytes, sigs, extradata)
+
+	fmt.Printf("Submitted Proof Successfully %v %v %v ", res, proposer, error)
 }
 
 func initKovan() *ethclient.Client {
@@ -213,4 +196,64 @@ func getsha3frombyte(input []byte) []byte {
 	hash.Write(input)
 	buf = hash.Sum(buf)
 	return buf
+}
+func getValidatorSetInstance(client *ethclient.Client) *validatorSet.ValidatorSet {
+	validatorSetInstance, err := validatorSet.NewValidatorSet(common.HexToAddress(validatorSetAddress), client)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return validatorSetInstance
+}
+func GetProposer() common.Address {
+	client := initKovan()
+	validatorSetInstance := getValidatorSetInstance(client)
+	currentProposer, err := validatorSetInstance.Proposer(nil)
+	if err != nil {
+		fmt.Printf("error getting proposer")
+	}
+	return currentProposer
+}
+func SelectProposer() {
+	client := initKovan()
+	validatorSetInstance := getValidatorSetInstance(client)
+	auth := GenerateAuthObj(client)
+	tx, err := validatorSetInstance.SelectProposer(auth)
+	if err != nil {
+		fmt.Printf("Unable to send transaction for proposer selection ")
+	}
+	fmt.Printf("Checkpoint sent successfully %v", tx)
+
+	//proposer := t
+}
+func GenerateAuthObj(client *ethclient.Client) (auth *bind.TransactOpts) {
+	privVal := privval.LoadFilePV("/Users/vc/.basecoind/config/priv_validator.json")
+	var pkObject secp256k1.PrivKeySecp256k1
+	cdc.MustUnmarshalBinaryBare(privVal.PrivKey.Bytes(), &pkObject)
+
+	// create ecdsa private key
+	ecdsaPrivateKey, err := crypto.ToECDSA(pkObject[:])
+	if err != nil {
+		panic(err)
+	}
+
+	// from address
+	fromAddress := common.BytesToAddress(privVal.Address)
+	// fetch gas price
+	gasprice, err := client.SuggestGasPrice(context.Background())
+	if err != nil {
+		panic(err)
+	}
+
+	// fetch nonce
+	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
+	if err != nil {
+		panic(err)
+	}
+
+	// create auth
+	auth = bind.NewKeyedTransactor(ecdsaPrivateKey)
+	auth.GasPrice = gasprice
+	auth.Nonce = big.NewInt(int64(nonce))
+	auth.GasLimit = uint64(3000000)
+	return auth
 }
