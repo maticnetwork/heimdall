@@ -9,7 +9,6 @@ import (
 	"github.com/basecoin/checkpoint"
 	txHelper "github.com/basecoin/contracts"
 	"github.com/basecoin/staker"
-	"github.com/basecoin/staking"
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
@@ -51,7 +50,6 @@ type BasecoinApp struct {
 	coinKeeper          bank.Keeper
 	ibcMapper           ibc.Mapper
 	checkpointKeeper    checkpoint.Keeper
-	stakeKeeper         stake.Keeper
 	stakerKeeper        staker.Keeper
 }
 
@@ -90,15 +88,13 @@ func NewBasecoinApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.coinKeeper = bank.NewKeeper(app.accountMapper)
 	app.ibcMapper = ibc.NewMapper(app.cdc, app.keyIBC, app.RegisterCodespace(ibc.DefaultCodespace))
 	//TODO change to its own codespace
-	app.checkpointKeeper = checkpoint.NewKeeper(app.cdc, app.keyCheckpoint, app.RegisterCodespace(stake.DefaultCodespace))
-	app.stakeKeeper = stake.NewKeeper(app.cdc, app.keyStake, app.coinKeeper, app.RegisterCodespace(stake.DefaultCodespace))
-	app.stakerKeeper = staker.NewKeeper(app.cdc, app.keyStaker, app.RegisterCodespace(stake.DefaultCodespace))
+	app.checkpointKeeper = checkpoint.NewKeeper(app.cdc, app.keyCheckpoint, app.RegisterCodespace(ibc.DefaultCodespace))
+	app.stakerKeeper = staker.NewKeeper(app.cdc, app.keyStaker, app.RegisterCodespace(ibc.DefaultCodespace))
 	// register message routes
 	app.Router().
 		AddRoute("bank", bank.NewHandler(app.coinKeeper)).
 		AddRoute("ibc", ibc.NewHandler(app.ibcMapper, app.coinKeeper)).
 		AddRoute("checkpoint", checkpoint.NewHandler(app.checkpointKeeper)).
-		AddRoute("stake", stake.NewHandler(app.stakeKeeper)).
 		AddRoute("staker", staker.NewHandler(app.stakerKeeper))
 	// perform initialization logic
 	app.SetInitChainer(app.initChainer)
@@ -131,7 +127,6 @@ func MakeCodec() *wire.Codec {
 	ibc.RegisterWire(cdc)
 	auth.RegisterWire(cdc)
 	checkpoint.RegisterWire(cdc)
-	stake.RegisterWire(cdc)
 	staker.RegisterWire(cdc)
 	// register custom type
 
@@ -153,7 +148,7 @@ func (app *BasecoinApp) BeginBlocker(_ sdk.Context, _ abci.RequestBeginBlock) ab
 func (app *BasecoinApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci.ResponseEndBlock {
 	//logger := ctx.Logger().With("module", "x/baseapp")
 
-	//validatorSet := staker.EndBlocker(ctx, app.stakerKeeper)
+	validatorSet := staker.EndBlocker(ctx, app.stakerKeeper)
 
 	//logger.Info("New Validator Set : %v", validatorSet)
 
@@ -182,7 +177,7 @@ func (app *BasecoinApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 		//txHelper.SendCheckpoint(int(_checkpoint.StartBlock), int(_checkpoint.EndBlock), sigs)
 	}
 	return abci.ResponseEndBlock{
-		//ValidatorUpdates: validatorSet,
+		ValidatorUpdates: validatorSet,
 	}
 }
 
