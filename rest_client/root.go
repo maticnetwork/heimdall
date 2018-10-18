@@ -1,30 +1,28 @@
 package rest_client
 
 import (
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	"github.com/tendermint/tendermint/libs/log"
-	"os"
-	"net/http"
-	"github.com/gorilla/mux"
-	"github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/wire"
-	cmn "github.com/tendermint/tendermint/libs/common"
-	tmserver "github.com/tendermint/tendermint/rpc/lib/server"
+	checkpoint "github.com/basecoin/checkpoint/rest"
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client/keys"
+	"github.com/cosmos/cosmos-sdk/client/rpc"
+	"github.com/cosmos/cosmos-sdk/client/tx"
+	"github.com/cosmos/cosmos-sdk/wire"
 	auth "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/client/rest"
 	gov "github.com/cosmos/cosmos-sdk/x/gov/client/rest"
 	ibc "github.com/cosmos/cosmos-sdk/x/ibc/client/rest"
 	slashing "github.com/cosmos/cosmos-sdk/x/slashing/client/rest"
 	stake "github.com/cosmos/cosmos-sdk/x/stake/client/rest"
-	sideblock "github.com/basecoin/sideblock/rest"
-	checkpoint "github.com/basecoin/checkpoint/rest"
-	"github.com/cosmos/cosmos-sdk/client/keys"
-	"github.com/cosmos/cosmos-sdk/client/rpc"
-	"github.com/cosmos/cosmos-sdk/client/tx"
+	"github.com/gorilla/mux"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	cmn "github.com/tendermint/tendermint/libs/common"
+	"github.com/tendermint/tendermint/libs/log"
+	tmserver "github.com/tendermint/tendermint/rpc/lib/server"
+	"net/http"
+	"os"
 )
-
 
 // ServeCommand will generate a long-running rest server
 // (aka Light Client Daemon) that exposes functionality similar
@@ -96,7 +94,6 @@ func createHandler(cdc *wire.Codec) http.Handler {
 	slashing.RegisterRoutes(cliCtx, r, cdc, kb)
 	gov.RegisterRoutes(cliCtx, r, cdc)
 	// Addded rest commands to adding transction !
-	sideblock.RegisterRoutes(cliCtx,r,cdc,kb)
-	checkpoint.RegisterRoutes(cliCtx,r,cdc,kb)
+	checkpoint.RegisterRoutes(cliCtx, r, cdc, kb)
 	return r
 }

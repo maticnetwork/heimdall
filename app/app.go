@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"bytes"
 	"encoding/hex"
 	"github.com/basecoin/checkpoint"
 	txHelper "github.com/basecoin/contracts"
@@ -150,37 +151,59 @@ func (app *BasecoinApp) BeginBlocker(_ sdk.Context, _ abci.RequestBeginBlock) ab
 // EndBlocker reflects logic to run after all TXs are processed by the
 // application.
 func (app *BasecoinApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci.ResponseEndBlock {
-	logger := ctx.Logger().With("module", "x/baseapp")
+	//logger := ctx.Logger().With("module", "x/baseapp")
 
-	logger.Info("****** Updating Validators *******")
-	// validatorSet := staker.EndBlocker(ctx, app.stakerKeeper)
+	//validatorSet := staker.EndBlocker(ctx, app.stakerKeeper)
+
+	//logger.Info("New Validator Set : %v", validatorSet)
+
 	var votes []tmtypes.Vote
 	err := json.Unmarshal(ctx.BlockHeader().Votes, &votes)
 	if err != nil {
 		fmt.Printf("error %v", err)
 	}
 
-	fmt.Printf("signature for first validator : %v for data : %v", hex.EncodeToString(votes[0].Signature), hex.EncodeToString(votes[0].Data))
-
 	var sigs []byte
+	sigs = GetSigs(votes)
+	// TODO move this check to below check and validate checkpoint proposer
+	if bytes.Equal(ctx.BlockHeader().Proposer.Address, txHelper.GetProposer().Bytes()) {
+		fmt.Printf("Current Proposer and Block Proposer Matched ! ")
+	} else {
+		fmt.Printf("Current Proposer :%v , BlockProposer:  %v", txHelper.GetProposer().String(), ctx.BlockHeader().Proposer)
+	}
+
+	if ctx.BlockHeader().NumTxs == 1 {
+		// Getting latest checkpoint data from store using height as key
+		fmt.Printf(" Get Vote Bytes %v", hex.EncodeToString(GetVoteBytes(votes, ctx)))
+		var _checkpoint checkpoint.CheckpointBlockHeader
+		json.Unmarshal(app.checkpointKeeper.GetCheckpoint(ctx, ctx.BlockHeight()), &_checkpoint)
+		extraData := GetExtraData(_checkpoint)
+		txHelper.SubmitProof(GetVoteBytes(votes, ctx), sigs, extraData, _checkpoint.StartBlock, _checkpoint.EndBlock, _checkpoint.RootHash)
+		//txHelper.SendCheckpoint(int(_checkpoint.StartBlock), int(_checkpoint.EndBlock), sigs)
+	}
+	return abci.ResponseEndBlock{
+		//ValidatorUpdates: validatorSet,
+	}
+}
+
+func GetSigs(votes []tmtypes.Vote) (sigs []byte) {
 	for _, vote := range votes {
 		sigs = append(sigs[:], vote.Signature[:]...)
 	}
+	return
+}
+func GetVoteBytes(votes []tmtypes.Vote, ctx sdk.Context) []byte {
+	return votes[0].SignBytes(ctx.ChainID())
+}
+func GetExtraData(_checkpoint checkpoint.CheckpointBlockHeader) []byte {
+	msg := checkpoint.NewMsgCheckpointBlock(_checkpoint.StartBlock, _checkpoint.EndBlock, _checkpoint.RootHash, _checkpoint.Proposer.String())
 
-	// TODO check with mainchain contract
-	fmt.Printf("The proposer is : %v", ctx.BlockHeader().Proposer)
-
-	// TODO trigger only on checkpoint transaction
-	if ctx.BlockHeader().NumTxs == 1 {
-		// Getting latest checkpoint data from store using height as key
-		var checkpoint checkpoint.CheckpointBlockHeader
-		json.Unmarshal(app.checkpointKeeper.GetCheckpoint(ctx, ctx.BlockHeight()), &checkpoint)
-
-		txHelper.SendCheckpoint(int(checkpoint.StartBlock), int(checkpoint.EndBlock), sigs)
+	tx := checkpoint.NewBaseTx(msg)
+	txBytes, err := rlp.EncodeToBytes(tx)
+	if err != nil {
+		fmt.Printf("Error generating TXBYtes %v", err)
 	}
-	return abci.ResponseEndBlock{
-		// ValidatorUpdates: validatorSet,
-	}
+	return txBytes
 }
 
 // RLP decodes the txBytes to a BaseTx
