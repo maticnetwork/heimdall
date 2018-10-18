@@ -15,7 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/sha3"
 	"github.com/ethereum/go-ethereum/ethclient"
-	amino "github.com/tender/go-amino"
+	"github.com/tender/go-amino"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"github.com/tendermint/tendermint/privval"
@@ -34,7 +34,7 @@ func init() {
 var (
 	stakeManagerAddress = "8b28d78eb59c323867c43b4ab8d06e0f1efa1573"
 	rootchainAddress    = "e022d867085b1617dc9fb04b474c4de580dccf1a"
-	validatorSetAddress = "db51c1d1f1ee6d2b96ff1ae673540b731841a737"
+	validatorSetAddress = "295c050e82a39392799d31ecb3f7db921daa136c"
 )
 
 func getValidatorByIndex(_index int64) abci.Validator {
@@ -106,7 +106,7 @@ func SubmitProof(voteSignBytes []byte, sigs []byte, extradata []byte, start uint
 	fmt.Printf("inputs , vote: %v , sigs: %v , extradata %v ", hex.EncodeToString(voteSignBytes), hex.EncodeToString(sigs), hex.EncodeToString(extradata))
 	res, proposer, error := validatorSetInstance.Validate(nil, voteSignBytes, sigs, extradata)
 
-	fmt.Printf("Submitted Proof Successfully %v %v %v ", res, proposer, error)
+	fmt.Printf("Submitted Proof Successfully %v %v %v ", res, proposer.String(), error)
 }
 
 func initKovan() *ethclient.Client {
@@ -221,7 +221,7 @@ func SelectProposer() {
 	if err != nil {
 		fmt.Printf("Unable to send transaction for proposer selection ")
 	}
-	fmt.Printf("Checkpoint sent successfully %v", tx)
+	fmt.Printf("New Proposer Selected ! %v", tx)
 
 	//proposer := t
 }
@@ -256,4 +256,35 @@ func GenerateAuthObj(client *ethclient.Client) (auth *bind.TransactOpts) {
 	auth.Nonce = big.NewInt(int64(nonce))
 	auth.GasLimit = uint64(3000000)
 	return auth
+}
+
+func GetValidators() (validators []abci.Validator) {
+	clientKovan := initKovan()
+	validatorSetInstance := getValidatorSetInstance(clientKovan)
+	powers, ValidatorAddrs, err := validatorSetInstance.GetValidatorSet(nil)
+	if err != nil {
+		fmt.Printf(" The error is %v", err)
+	}
+
+	for index, _ := range powers {
+		pubkey, error := validatorSetInstance.GetPubkey(nil, big.NewInt(int64(index)))
+		if error != nil {
+			fmt.Errorf(" Error getting pubkey for index %v", error)
+		}
+
+		var pubkeyBytes secp256k1.PubKeySecp256k1
+		_pubkey, _ := hex.DecodeString(pubkey)
+		copy(pubkeyBytes[:], _pubkey)
+		// todo add a check to check pubkey corresponds to address
+		validator := abci.Validator{
+			Address: ValidatorAddrs[index].Bytes(),
+			Power:   powers[index].Int64(),
+			PubKey:  tmtypes.TM2PB.PubKey(pubkeyBytes),
+		}
+		fmt.Printf("New Validator is %v", validator)
+		validators = append(validators, validator)
+		//validatorPubKeys[index] = pubkey
+	}
+
+	return validators
 }

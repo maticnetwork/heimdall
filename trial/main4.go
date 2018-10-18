@@ -1,7 +1,10 @@
 package main
 
 import (
-	"github.com/basecoin/contracts"
+	"encoding/hex"
+	"fmt"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
+	"reflect"
 )
 
 func main() {
@@ -18,5 +21,12 @@ func main() {
 	//fmt.Println("The last validator index is %v", last)
 	//validator, _ := stakeManagerInstance.Validators(nil, big.NewInt(int64(0)))
 	//fmt.Println("The validator is %v", validator)
-	contract.SelectProposer()
+	//contract.SelectProposer()
+	pubkey := "04F551822EFD57CA7CCB3657EF22C54FB0349C1AF135D4AC56967D180555C6405139B60C6FCCE2081EBABD70557EB40574BA2866DDFE8284A61DC180FAAB5BCE2F"
+	var pubkeyBytes secp256k1.PubKeySecp256k1
+	lol, _ := hex.DecodeString(pubkey)
+	copy(pubkeyBytes[:], lol)
+
+	fmt.Printf("address obtained is %v", pubkeyBytes.Address().String())
+	fmt.Printf("type is %v", reflect.TypeOf(pubkeyBytes))
 }

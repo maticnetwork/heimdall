@@ -23,17 +23,21 @@ func main() {
 	//fmt.Printf("slice 1 %v  and 2 %v  ", x[:32], x[32:])
 	//fmt.Println("%v", x)
 	//fmt.Println("Address is :%v", x.Address())
-	privVal := privval.LoadFilePV("/Users/vc/.basecoind/config/priv_validator.json")
+	privVal1 := privval.LoadFilePV("/Users/vc/.tendermint/config/priv_validator.json")
 
 	// retrieve private key
 	var pkObject secp256k1.PrivKeySecp256k1
-	cdc.MustUnmarshalBinaryBare(privVal.PrivKey.Bytes(), &pkObject)
+	cdc.MustUnmarshalBinaryBare(privVal1.PrivKey.Bytes(), &pkObject)
+	privVal2 := privval.LoadFilePV("/Users/vc/.basecoind/config/priv_validator.json")
+	var pkObject2 secp256k1.PrivKeySecp256k1
+	cdc.MustUnmarshalBinaryBare(privVal2.PrivKey.Bytes(), &pkObject2)
+	fmt.Println("public key %v and from address %v", privVal2.PubKey, common.BytesToAddress(privVal2.Address).String())
 
 	// create ecdsa private key
 
 	// from address
-	fromAddress := common.BytesToAddress(privVal.Address)
-	fmt.Println("public key %v and from address %v", privVal.PubKey, fromAddress.String())
+	fromAddress := common.BytesToAddress(privVal1.Address)
+	fmt.Println("public key %v and from address %v", privVal1.PubKey, fromAddress.String())
 
-	fmt.Printf(" part 1 %v , part 2 %v", hex.EncodeToString(privVal.PubKey.Bytes()[:32]), hex.EncodeToString(privVal.PubKey.Bytes()[32:]))
+	fmt.Printf(" part 1 %v , part 2 %v", hex.EncodeToString(privVal1.PubKey.Bytes()[:32]), hex.EncodeToString(privVal1.PubKey.Bytes()[32:]))
 }
