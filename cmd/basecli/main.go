@@ -5,7 +5,7 @@ import (
 	checkpointcmd "github.com/basecoin/checkpoint/cli"
 	restCmds "github.com/basecoin/rest_client"
 	"github.com/basecoin/staker/client/cli"
-	stakecmd "github.com/basecoin/staking/client/cli"
+	//stakecmd "github.com/basecoin/staking/client/cli"
 	"github.com/basecoin/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/keys"
@@ -48,10 +48,10 @@ func main() {
 	// add query/post commands (custom to binary)
 	rootCmd.AddCommand(
 		client.GetCommands(
-			stakecmd.GetCmdQueryValidator("stake", cdc),
-			stakecmd.GetCmdQueryValidators("stake", cdc),
-			stakecmd.GetCmdQueryDelegation("stake", cdc),
-			stakecmd.GetCmdQueryDelegations("stake", cdc),
+			//stakecmd.GetCmdQueryValidator("stake", cdc),
+			//stakecmd.GetCmdQueryValidators("stake", cdc),
+			//stakecmd.GetCmdQueryDelegation("stake", cdc),
+			//stakecmd.GetCmdQueryDelegations("stake", cdc),
 			authcmd.GetAccountCmd("acc", cdc, types.GetAccountDecoder(cdc)),
 		)...)
 
@@ -60,12 +60,12 @@ func main() {
 			bankcmd.SendTxCmd(cdc),
 			ibccmd.IBCTransferCmd(cdc),
 			ibccmd.IBCRelayCmd(cdc),
-			stakecmd.GetCmdCreateValidator(cdc),
-			stakecmd.GetCmdEditValidator(cdc),
+			//stakecmd.GetCmdCreateValidator(cdc),
+			//stakecmd.GetCmdEditValidator(cdc),
 			staker.GetCmdCreateMaticValidator(cdc),
 			checkpointcmd.SubmitCheckpointCmd(cdc),
-			stakecmd.GetCmdDelegate(cdc),
-			stakecmd.GetCmdUnbond("stake", cdc),
+			//stakecmd.GetCmdDelegate(cdc),
+			//stakecmd.GetCmdUnbond("stake", cdc),
 		)...)
 
 	// add proxy, version and key info
