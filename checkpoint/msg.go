@@ -23,10 +23,10 @@ type MsgCheckpoint struct {
 
 //
 
-func NewMsgCheckpointBlock(startBlock uint64, endBlock uint64, roothash common.Hash) MsgCheckpoint {
+func NewMsgCheckpointBlock(startBlock uint64, endBlock uint64, roothash common.Hash, proposer string) MsgCheckpoint {
 	return MsgCheckpoint{
 		// TODO remove after testing
-		Proposer:   common.HexToAddress("fa9bf0cba703174b2717cfea0359f7e5e1519837"),
+		Proposer:   common.HexToAddress(proposer),
 		StartBlock: startBlock,
 		EndBlock:   endBlock,
 		RootHash:   roothash,

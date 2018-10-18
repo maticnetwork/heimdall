@@ -4,7 +4,6 @@ import (
 	"github.com/basecoin/app"
 	checkpointcmd "github.com/basecoin/checkpoint/cli"
 	restCmds "github.com/basecoin/rest_client"
-	sideblockcmd "github.com/basecoin/sideblock/cli"
 	"github.com/basecoin/staker/client/cli"
 	stakecmd "github.com/basecoin/staking/client/cli"
 	"github.com/basecoin/types"
@@ -53,7 +52,6 @@ func main() {
 			stakecmd.GetCmdQueryValidators("stake", cdc),
 			stakecmd.GetCmdQueryDelegation("stake", cdc),
 			stakecmd.GetCmdQueryDelegations("stake", cdc),
-			sideblockcmd.GetSideBlockGetterCmd("sideBlock", cdc),
 			authcmd.GetAccountCmd("acc", cdc, types.GetAccountDecoder(cdc)),
 		)...)
 
@@ -65,7 +63,6 @@ func main() {
 			stakecmd.GetCmdCreateValidator(cdc),
 			stakecmd.GetCmdEditValidator(cdc),
 			staker.GetCmdCreateMaticValidator(cdc),
-			sideblockcmd.GetSideBlockSetterCmd(cdc),
 			checkpointcmd.SubmitCheckpointCmd(cdc),
 			stakecmd.GetCmdDelegate(cdc),
 			stakecmd.GetCmdUnbond("stake", cdc),

@@ -28,21 +28,23 @@ func NewKeeper(cdc *wire.Codec, key sdk.StoreKey, codespace sdk.CodespaceType) K
 }
 
 type CheckpointBlockHeader struct {
+	Proposer   common.Address
 	StartBlock uint64
 	EndBlock   uint64
-	rootHash   common.Hash
+	RootHash   common.Hash
 }
 
-func createBlock(start uint64, end uint64, rootHash common.Hash) CheckpointBlockHeader {
+func createBlock(start uint64, end uint64, rootHash common.Hash, proposer common.Address) CheckpointBlockHeader {
 	return CheckpointBlockHeader{
 		StartBlock: start,
 		EndBlock:   end,
-		rootHash:   rootHash,
+		RootHash:   rootHash,
+		Proposer:   proposer,
 	}
 }
-func (k Keeper) AddCheckpoint(ctx sdk.Context, start uint64, end uint64, root common.Hash) int64 {
+func (k Keeper) AddCheckpoint(ctx sdk.Context, start uint64, end uint64, root common.Hash, proposer common.Address) int64 {
 	store := ctx.KVStore(k.checkpointKey)
-	data := createBlock(start, end, root)
+	data := createBlock(start, end, root, proposer)
 	out, err := json.Marshal(data)
 	if err != nil {
 		panic(err)

@@ -8,14 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/wire"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	authctx "github.com/cosmos/cosmos-sdk/x/auth/client/context"
-	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/spf13/cobra"
-
-	"strconv"
-
-	"github.com/basecoin/checkpoint"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/pkg/errors"
 )
 
 func SubmitCheckpointCmd(cdc *wire.Codec) *cobra.Command {
@@ -37,21 +30,21 @@ func SubmitCheckpointCmd(cdc *wire.Codec) *cobra.Command {
 
 			roothash := args[0]
 			// TODO replace these with flags
-			start := args[1]
-			end := args[2]
+			//start := args[1]
+			//end := args[2]
 			fmt.Printf("the data we recieved is %v", roothash)
 
 			from, err := cliCtx.GetFromAddress()
 			if err != nil {
 				return err
 			}
-			startInt, err := strconv.Atoi(start)
-			endInt, err := strconv.Atoi(end)
+			//startInt, err := strconv.Atoi(start)
+			//endInt, err := strconv.Atoi(end)
 			fmt.Printf("from address is %v with txctx as %v", from, txCtx)
-			msg := checkpoint.NewMsgCheckpointBlock(uint64(startInt), uint64(endInt), common.BytesToHash([]byte(roothash)))
-
-			tx := checkpoint.NewBaseTx(msg)
-
+			//msg := checkpoint.NewMsgCheckpointBlock(uint64(startInt), uint64(endInt), common.BytesToHash([]byte(roothash)))
+			//
+			//tx := checkpoint.NewBaseTx(msg)
+			//
 			//
 			////txBytes, err := rlp.EncodeToBytes(tx)
 			////if err != nil {
@@ -119,34 +112,34 @@ func SubmitCheckpointCmd(cdc *wire.Codec) *cobra.Command {
 			//	Signature:     sig,
 			//}}
 
-			txBytes, err := rlp.EncodeToBytes(tx)
-			if err != nil {
-				fmt.Printf("Error generating TXBYtes %v", err)
-			}
-			fmt.Println("The txbytes are %v", txBytes)
+			//txBytes, err := rlp.EncodeToBytes(tx)
+			//if err != nil {
+			//	fmt.Printf("Error generating TXBYtes %v", err)
+			//}
+			//fmt.Println("The txbytes are %v", txBytes)
+			//
+			////-------
+			//node, err := cliCtx.GetNode()
+			//if err != nil {
+			//	return err
+			//}
+			//
+			//res, err := node.BroadcastTxCommit(txBytes)
+			//if err != nil {
+			//	return err
+			//}
 
-			//-------
-			node, err := cliCtx.GetNode()
-			if err != nil {
-				return err
-			}
-
-			res, err := node.BroadcastTxCommit(txBytes)
-			if err != nil {
-				return err
-			}
-
-			if res.CheckTx.Code != uint32(0) {
-				return errors.Errorf("CheckTx failed: (%d) %s",
-					res.CheckTx.Code, res.CheckTx.Log)
-			}
-			if res.DeliverTx.Code != uint32(0) {
-				return errors.Errorf("DeliverTx failed: (%d) %s",
-					res.DeliverTx.Code, res.DeliverTx.Log)
-			}
-
-			//--
-			fmt.Printf("Res is %v", res)
+			//if res.CheckTx.Code != uint32(0) {
+			//	return errors.Errorf("CheckTx failed: (%d) %s",
+			//		res.CheckTx.Code, res.CheckTx.Log)
+			//}
+			//if res.DeliverTx.Code != uint32(0) {
+			//	return errors.Errorf("DeliverTx failed: (%d) %s",
+			//		res.DeliverTx.Code, res.DeliverTx.Log)
+			//}
+			//
+			////--
+			//fmt.Printf("Res is %v", res)
 
 			return nil
 

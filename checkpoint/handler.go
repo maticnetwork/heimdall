@@ -28,7 +28,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper) sdk.Resul
 	var res int64
 	if valid {
 		logger.Error("root hash matched !! ")
-		res = k.AddCheckpoint(ctx, msg.StartBlock, msg.EndBlock, msg.RootHash)
+		res = k.AddCheckpoint(ctx, msg.StartBlock, msg.EndBlock, msg.RootHash, msg.Proposer)
 	} else {
 		logger.Error("Root hash no match ;(")
 		return ErrBadBlockDetails(k.codespace).Result()
