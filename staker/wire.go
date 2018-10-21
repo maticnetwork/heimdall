@@ -1,7 +1,5 @@
 package staker
 
-
-
 import "github.com/cosmos/cosmos-sdk/wire"
 
 func RegisterWire(cdc *wire.Codec) {
@@ -10,9 +8,7 @@ func RegisterWire(cdc *wire.Codec) {
 
 var cdcEmpty = wire.NewCodec()
 
-
 func init() {
 	RegisterWire(cdcEmpty)
 	wire.RegisterCrypto(cdcEmpty)
 }
-
