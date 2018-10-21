@@ -16,7 +16,7 @@ import (
 
 	"github.com/maticnetwork/heimdall/app"
 	checkpointcmd "github.com/maticnetwork/heimdall/checkpoint/cli"
-	restCmds "github.com/maticnetwork/heimdall/rest_client"
+	restCmds "github.com/maticnetwork/heimdall/rest"
 	"github.com/maticnetwork/heimdall/staker/client/cli"
 	"github.com/maticnetwork/heimdall/types"
 	//stakecmd "github.com/maticnetwork/heimdall/staking/client/cli"

@@ -25,11 +25,11 @@ type MsgCreateMaticValidator struct {
 }
 
 func NewCreateMaticValidator(
-		trial sdk.AccAddress, 
-		valAddress crypto.Address, 
-		pubkey crypto.PubKey, 
-		power int64
-	) MsgCreateMaticValidator {
+	trial sdk.AccAddress,
+	valAddress crypto.Address,
+	pubkey crypto.PubKey,
+	power int64,
+) MsgCreateMaticValidator {
 	return MsgCreateMaticValidator{
 		trialAddress:     trial,
 		ValidatorAddress: valAddress,
@@ -38,15 +38,17 @@ func NewCreateMaticValidator(
 	}
 }
 
-func (msg MsgCreateMaticValidator) Type() string { 
+// Type returns msg type
+func (msg MsgCreateMaticValidator) Type() string {
 	return MsgType
 }
 
+// GetSigners returns signers' addresses
 func (msg MsgCreateMaticValidator) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.trialAddress}
 }
 
-// get the bytes for the message signer to sign on
+// GetSignBytes gets the bytes for the message signer to sign on
 func (msg MsgCreateMaticValidator) GetSignBytes() []byte {
 	b, err := cdc.MarshalJSON(msg)
 	if err != nil {
@@ -55,7 +57,7 @@ func (msg MsgCreateMaticValidator) GetSignBytes() []byte {
 	return sdk.MustSortJSON(b)
 }
 
-// quick validity check
+// ValidateBasic validates incoming msg
 func (msg MsgCreateMaticValidator) ValidateBasic() sdk.Error {
 	return nil
 }

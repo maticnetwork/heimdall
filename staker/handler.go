@@ -4,9 +4,8 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	contract "github.com/maticnetwork/heimdall/contracts"
 	abci "github.com/tendermint/tendermint/abci/types"
-
-	"github.com/maticnetwork/heimdall/contracts"
 )
 
 func NewHandler(k Keeper) sdk.Handler {
