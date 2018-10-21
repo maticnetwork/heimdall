@@ -1,4 +1,4 @@
-package contracts
+package contract
 
 import (
 	"context"
@@ -12,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/sha3"
 	"github.com/ethereum/go-ethereum/ethclient"
+	amino "github.com/tendermint/go-amino"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"github.com/tendermint/tendermint/privval"
@@ -54,21 +55,20 @@ func getValidatorByIndex(_index int64) abci.Validator {
 		PubKey:  tmtypes.TM2PB.PubKey(_pubkey),
 	}
 	return abciValidator
-
 }
 
 func getLastValidator() int64 {
 	client := initKovan()
-	stakeManagerInstance, err := StakeManager.NewContracts(common.HexToAddress(stakeManagerAddress), client)
+	stakeManagerInstance, err := stakemanager.NewContracts(common.HexToAddress(stakeManagerAddress), client)
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	last, _ := stakeManagerInstance.LastValidatorIndex(nil)
 	return last.Int64()
-
 }
 
-// Sends transaction to main chain
+// SendCheckpoint sends transaction to main chain
 func SendCheckpoint(start int, end int, sigs []byte) {
 	clientKovan := initKovan()
 	clientMatic := initMatic()
@@ -95,6 +95,7 @@ func SendCheckpoint(start int, end int, sigs []byte) {
 
 }
 
+// SubmitProof submit header
 func SubmitProof(voteSignBytes []byte, sigs []byte, extradata []byte, start uint64, end uint64, rootHash common.Hash) {
 	clientKovan := initKovan()
 	fmt.Printf("Root hash obtained for blocks from %v to %v is %v", start, end, rootHash)
@@ -115,6 +116,7 @@ func initKovan() *ethclient.Client {
 	}
 	return client
 }
+
 func initMatic() *ethclient.Client {
 	client, err := ethclient.Dial("https://testnet.matic.network")
 	if err != nil {
@@ -169,6 +171,7 @@ func convert(input []([32]byte)) [][]byte {
 	}
 	return output
 }
+
 func convertTo32(input []byte) (output [32]byte, err error) {
 	l := len(input)
 	if l > 32 || l == 0 {
@@ -196,13 +199,15 @@ func getsha3frombyte(input []byte) []byte {
 	buf = hash.Sum(buf)
 	return buf
 }
-func getValidatorSetInstance(client *ethclient.Client) *validatorSet.ValidatorSet {
+
+func getValidatorSetInstance(client *ethclient.Client) *validatorset.ValidatorSet {
 	validatorSetInstance, err := validatorset.NewValidatorSet(common.HexToAddress(validatorSetAddress), client)
 	if err != nil {
 		log.Fatal(err)
 	}
 	return validatorSetInstance
 }
+
 func GetProposer() common.Address {
 	client := initKovan()
 	validatorSetInstance := getValidatorSetInstance(client)
@@ -212,6 +217,7 @@ func GetProposer() common.Address {
 	}
 	return currentProposer
 }
+
 func SelectProposer() {
 	client := initKovan()
 	validatorSetInstance := getValidatorSetInstance(client)
@@ -221,9 +227,9 @@ func SelectProposer() {
 		fmt.Printf("Unable to send transaction for proposer selection ")
 	}
 	fmt.Printf("New Proposer Selected ! %v", tx)
-
 	//proposer := t
 }
+
 func GenerateAuthObj(client *ethclient.Client) (auth *bind.TransactOpts) {
 	privVal := privval.LoadFilePV("/Users/vc/.basecoind/config/priv_validator.json")
 	var pkObject secp256k1.PrivKeySecp256k1
