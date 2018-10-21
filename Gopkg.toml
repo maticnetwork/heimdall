@@ -24,19 +24,6 @@
 #   go-tests = true
 #   unused-packages = true
 
-#ignored = [
-#  "github.com/cosmos/cosmos-sdk/baseapp",
-#  "github.com/cosmos/cosmos-sdk/client",
-#  "github.com/cosmos/cosmos-sdk/client/keys",
-#  "github.com/cosmos/cosmos-sdk/client/rpc",
-#  "github.com/cosmos/cosmos-sdk/client/tx",
-#  "github.com/cosmos/cosmos-sdk/server",
-#  "github.com/cosmos/cosmos-sdk/version",
-#  "github.com/cosmos/cosmos-sdk/x/auth/client/cli",
-#  "github.com/cosmos/cosmos-sdk/x/bank/client/cli",
-#  "github.com/cosmos/cosmos-sdk/x/ibc/client/cli"
-#]
-
 [prune]
   go-tests = true
   unused-packages = true
