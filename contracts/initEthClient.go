@@ -7,21 +7,20 @@ import (
 	"log"
 	"math/big"
 
-	rootmock "github.com/basecoin/contracts/RootMock"
-	"github.com/basecoin/contracts/StakeManager"
-	"github.com/basecoin/contracts/validatorSet"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/sha3"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/tender/go-amino"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"github.com/tendermint/tendermint/privval"
-
 	tmtypes "github.com/tendermint/tendermint/types"
 	"github.com/xsleonard/go-merkle"
+
+	rootmock "github.com/maticnetwork/heimdall/contracts/RootMock"
+	"github.com/maticnetwork/heimdall/contracts/StakeManager"
+	"github.com/maticnetwork/heimdall/contracts/validatorSet"
 )
 
 var cdc = amino.NewCodec()

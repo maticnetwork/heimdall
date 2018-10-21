@@ -1,19 +1,20 @@
 package staker
 
 import (
+	"encoding/hex"
+	"fmt"
+	"os"
+
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client/utils"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/wire"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	authctx "github.com/cosmos/cosmos-sdk/x/auth/client/context"
 	"github.com/spf13/cobra"
-	"os"
-
-	"encoding/hex"
-	"fmt"
-	"github.com/basecoin/staker"
-	"github.com/cosmos/cosmos-sdk/client/utils"
-	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
+
+	"github.com/maticnetwork/heimdall/staker"
 )
 
 func GetCmdCreateMaticValidator(cdc *wire.Codec) *cobra.Command {
