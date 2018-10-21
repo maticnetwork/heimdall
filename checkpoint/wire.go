@@ -1,6 +1,8 @@
 package checkpoint
 
-import "github.com/cosmos/cosmos-sdk/wire"
+import (
+	"github.com/cosmos/cosmos-sdk/wire"
+)
 
 func RegisterWire(cdc *wire.Codec) {
 	cdc.RegisterConcrete(MsgCheckpoint{}, "checkpoint/MsgCheckpoint", nil)

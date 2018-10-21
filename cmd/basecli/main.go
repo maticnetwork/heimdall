@@ -1,12 +1,8 @@
 package main
 
 import (
-	"github.com/basecoin/app"
-	checkpointcmd "github.com/basecoin/checkpoint/cli"
-	restCmds "github.com/basecoin/rest_client"
-	"github.com/basecoin/staker/client/cli"
-	//stakecmd "github.com/basecoin/staking/client/cli"
-	"github.com/basecoin/types"
+	"os"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
@@ -17,7 +13,13 @@ import (
 	ibccmd "github.com/cosmos/cosmos-sdk/x/ibc/client/cli"
 	"github.com/spf13/cobra"
 	"github.com/tendermint/tendermint/libs/cli"
-	"os"
+
+	"github.com/maticnetwork/heimdall/app"
+	checkpointcmd "github.com/maticnetwork/heimdall/checkpoint/cli"
+	restCmds "github.com/maticnetwork/heimdall/rest_client"
+	"github.com/maticnetwork/heimdall/staker/client/cli"
+	"github.com/maticnetwork/heimdall/types"
+	//stakecmd "github.com/maticnetwork/heimdall/staking/client/cli"
 )
 
 // rootCmd is the entry point for this binary

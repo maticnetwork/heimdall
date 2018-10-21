@@ -1,6 +1,10 @@
 package rest
 
 import (
+	"encoding/hex"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -8,17 +12,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	authctx "github.com/cosmos/cosmos-sdk/x/auth/client/context"
-	"github.com/gorilla/mux"
-
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
-
-	"encoding/hex"
-	"github.com/basecoin/checkpoint"
 	"github.com/cosmos/cosmos-sdk/x/stake"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/rlp"
+	"github.com/gorilla/mux"
+
+	"github.com/maticnetwork/heimdall/checkpoint"
 )
 
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *wire.Codec, kb keys.Keybase) {

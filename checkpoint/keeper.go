@@ -3,10 +3,11 @@ package checkpoint
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/ethereum/go-ethereum/common"
-	"strconv"
 )
 
 type Keeper struct {

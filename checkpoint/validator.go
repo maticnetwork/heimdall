@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	"github.com/ethereum/go-ethereum/crypto/sha3"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"log"
 	"math/big"
-
-	"github.com/xsleonard/go-merkle"
 	"strings"
+
+	"github.com/ethereum/go-ethereum/crypto/sha3"
+	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/xsleonard/go-merkle"
 )
 
 func validateCheckpoint(start int, end int, rootHash string) bool {
