@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 
-	"github.com/basecoin/app"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/spf13/cobra"
@@ -15,6 +14,8 @@ import (
 	dbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
 	tmtypes "github.com/tendermint/tendermint/types"
+
+	"github.com/maticnetwork/heimdall/app"
 )
 
 func main() {

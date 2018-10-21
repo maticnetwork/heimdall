@@ -1,11 +1,11 @@
 package staker
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	abci "github.com/tendermint/tendermint/abci/types"
-
-	"fmt"
 )
 
 type Keeper struct {

@@ -1,14 +1,11 @@
 package app
 
 import (
+	"bytes"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 
-	"bytes"
-	"encoding/hex"
-	"github.com/basecoin/checkpoint"
-	txHelper "github.com/basecoin/contracts"
-	"github.com/basecoin/staker"
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
@@ -21,6 +18,10 @@ import (
 	dbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
 	tmtypes "github.com/tendermint/tendermint/types"
+
+	"github.com/maticnetwork/heimdall/checkpoint"
+	txHelper "github.com/maticnetwork/heimdall/contracts"
+	"github.com/maticnetwork/heimdall/staker"
 )
 
 const (

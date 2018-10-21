@@ -3,19 +3,18 @@ package staker
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
-
 	"github.com/tendermint/tendermint/crypto"
 )
 
 var cdc = wire.NewCodec()
 
-// name to identify transaction types
+// MsgType to identify transaction types
 const MsgType = "MsgCreateMaticValidator"
 
 // verify interface at compile time
 var _ sdk.Msg = &MsgCreateMaticValidator{}
 
-// MsgUnrevoke - struct for unrevoking revoked validator
+// MsgCreateMaticValidator - struct for unrevoking revoked validator
 type MsgCreateMaticValidator struct {
 	trialAddress sdk.AccAddress `json:"trialAddress"`
 	// TODO variable as we dont know who will call this
@@ -25,7 +24,12 @@ type MsgCreateMaticValidator struct {
 	Power  int64         `json:"power"`
 }
 
-func NewCreateMaticValidator(trial sdk.AccAddress, valAddress crypto.Address, pubkey crypto.PubKey, power int64) MsgCreateMaticValidator {
+func NewCreateMaticValidator(
+		trial sdk.AccAddress, 
+		valAddress crypto.Address, 
+		pubkey crypto.PubKey, 
+		power int64
+	) MsgCreateMaticValidator {
 	return MsgCreateMaticValidator{
 		trialAddress:     trial,
 		ValidatorAddress: valAddress,
@@ -34,8 +38,10 @@ func NewCreateMaticValidator(trial sdk.AccAddress, valAddress crypto.Address, pu
 	}
 }
 
-//nolint
-func (msg MsgCreateMaticValidator) Type() string { return MsgType }
+func (msg MsgCreateMaticValidator) Type() string { 
+	return MsgType
+}
+
 func (msg MsgCreateMaticValidator) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.trialAddress}
 }
@@ -51,6 +57,5 @@ func (msg MsgCreateMaticValidator) GetSignBytes() []byte {
 
 // quick validity check
 func (msg MsgCreateMaticValidator) ValidateBasic() sdk.Error {
-
 	return nil
 }

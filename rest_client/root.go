@@ -1,7 +1,9 @@
 package rest_client
 
 import (
-	checkpoint "github.com/basecoin/checkpoint/rest"
+	"net/http"
+	"os"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/keys"
@@ -20,11 +22,11 @@ import (
 	cmn "github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
 	tmserver "github.com/tendermint/tendermint/rpc/lib/server"
-	"net/http"
-	"os"
+
+	checkpoint "github.com/maticnetwork/heimdall/checkpoint/rest"
 )
 
-// ServeCommand will generate a long-running rest server
+// ServeMaticCommands will generate a long-running rest server
 // (aka Light Client Daemon) that exposes functionality similar
 // to the cli, but over rest
 func ServeMaticCommands(cdc *wire.Codec) *cobra.Command {
