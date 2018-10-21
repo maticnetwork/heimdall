@@ -1,4 +1,4 @@
-package contract
+package contracts
 
 import (
 	"context"
@@ -18,9 +18,9 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 	"github.com/xsleonard/go-merkle"
 
-	rootmock "github.com/maticnetwork/heimdall/contracts/RootMock"
-	"github.com/maticnetwork/heimdall/contracts/StakeManager"
-	"github.com/maticnetwork/heimdall/contracts/validatorSet"
+	rootmock "github.com/maticnetwork/heimdall/contracts/rootmock"
+	"github.com/maticnetwork/heimdall/contracts/stakemanager"
+	"github.com/maticnetwork/heimdall/contracts/validatorset"
 )
 
 var cdc = amino.NewCodec()
@@ -38,7 +38,7 @@ var (
 
 func getValidatorByIndex(_index int64) abci.Validator {
 	client := initKovan()
-	stakeManagerInstance, err := StakeManager.NewContracts(common.HexToAddress(stakeManagerAddress), client)
+	stakeManagerInstance, err := stakemanager.NewContracts(common.HexToAddress(stakeManagerAddress), client)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -197,7 +197,7 @@ func getsha3frombyte(input []byte) []byte {
 	return buf
 }
 func getValidatorSetInstance(client *ethclient.Client) *validatorSet.ValidatorSet {
-	validatorSetInstance, err := validatorSet.NewValidatorSet(common.HexToAddress(validatorSetAddress), client)
+	validatorSetInstance, err := validatorset.NewValidatorSet(common.HexToAddress(validatorSetAddress), client)
 	if err != nil {
 		log.Fatal(err)
 	}
