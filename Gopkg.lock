@@ -25,6 +25,14 @@
   revision = "3a771d992973f24aa725d07868b467d1ddfceafb"
 
 [[projects]]
+  digest = "1:1343a2963481a305ca4d051e84bc2abd16b601ee22ed324f8d605de1adb291b0"
+  name = "github.com/bgentry/speakeasy"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "4aabc24848ce5fd31929f7d1e4ea74d3709c14cd"
+  version = "v0.1.0"
+
+[[projects]]
   branch = "master"
   digest = "1:7736fc6da04620727f8f3aa2ced8d77be8e074a302820937aa5993848c769b27"
   name = "github.com/brejski/hid"
@@ -48,10 +56,15 @@
   revision = "d4cc87b860166d00d6b5b9e0d3b3d71d6088d4d4"
 
 [[projects]]
-  digest = "1:92991be3df1eba9d3abf3ba7b9c44d9dce3dbd8bb8ea9b1e4247a80e56d47eaf"
+  digest = "1:1808a9c52a5cb844937c559abae49d92e94c817b738863bfd51cb357683e35a6"
   name = "github.com/cosmos/cosmos-sdk"
   packages = [
+    "baseapp",
+    "client",
     "client/context",
+    "client/keys",
+    "client/rpc",
+    "client/tx",
     "client/utils",
     "crypto",
     "crypto/keys",
@@ -59,19 +72,25 @@
     "crypto/keys/bip39",
     "crypto/keys/hd",
     "examples/basecoin/types",
+    "server",
+    "server/config",
     "store",
     "types",
+    "version",
     "wire",
     "x/auth",
+    "x/auth/client/cli",
     "x/auth/client/context",
     "x/auth/client/rest",
     "x/bank",
     "x/bank/client",
+    "x/bank/client/cli",
     "x/bank/client/rest",
     "x/gov",
     "x/gov/client/rest",
     "x/gov/tags",
     "x/ibc",
+    "x/ibc/client/cli",
     "x/ibc/client/rest",
     "x/mock",
     "x/params",
@@ -253,13 +272,12 @@
   version = "v1.2.0"
 
 [[projects]]
-  digest = "1:c0d19ab64b32ce9fe5cf4ddceba78d5bc9807f0016db6b1183599da3dcc24d10"
+  digest = "1:ea40c24cdbacd054a6ae9de03e62c5f252479b96c716375aace5c120d68647c8"
   name = "github.com/hashicorp/hcl"
   packages = [
     ".",
     "hcl/ast",
     "hcl/parser",
-    "hcl/printer",
     "hcl/scanner",
     "hcl/strconv",
     "hcl/token",
@@ -302,6 +320,14 @@
   pruneopts = "UT"
   revision = "c2353362d570a7bfa228149c62842019201cfb71"
   version = "v1.8.0"
+
+[[projects]]
+  digest = "1:0981502f9816113c9c8c4ac301583841855c8cf4da8c72f696b3ebedf6d0e4e5"
+  name = "github.com/mattn/go-isatty"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "6ca4dbf54d38eea1a992b3c722a76a5d1c4cb25c"
+  version = "v0.0.4"
 
 [[projects]]
   digest = "1:ff5ebae34cfbf047d505ee150de27e60570e8c394b3b8fdbb720ff6ac71985fc"
@@ -532,12 +558,13 @@
   version = "v0.8.1"
 
 [[projects]]
-  digest = "1:cf6c1f8f82cdc352ae959ebe276a75f0785de80d333c33cc1755916ea6251b4d"
+  digest = "1:4f15e95fe3888cc75dd34f407d6394cbc7fd3ff24920851b92b295f6a8b556e6"
   name = "github.com/tendermint/tendermint"
   packages = [
     "abci/client",
     "abci/example/code",
     "abci/example/kvstore",
+    "abci/server",
     "abci/types",
     "blockchain",
     "cmd/tendermint/commands",
@@ -761,19 +788,29 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/cosmos/cosmos-sdk/baseapp",
+    "github.com/cosmos/cosmos-sdk/client",
     "github.com/cosmos/cosmos-sdk/client/context",
+    "github.com/cosmos/cosmos-sdk/client/keys",
+    "github.com/cosmos/cosmos-sdk/client/rpc",
+    "github.com/cosmos/cosmos-sdk/client/tx",
     "github.com/cosmos/cosmos-sdk/client/utils",
     "github.com/cosmos/cosmos-sdk/crypto/keys",
     "github.com/cosmos/cosmos-sdk/examples/basecoin/types",
+    "github.com/cosmos/cosmos-sdk/server",
     "github.com/cosmos/cosmos-sdk/types",
+    "github.com/cosmos/cosmos-sdk/version",
     "github.com/cosmos/cosmos-sdk/wire",
     "github.com/cosmos/cosmos-sdk/x/auth",
+    "github.com/cosmos/cosmos-sdk/x/auth/client/cli",
     "github.com/cosmos/cosmos-sdk/x/auth/client/context",
     "github.com/cosmos/cosmos-sdk/x/auth/client/rest",
     "github.com/cosmos/cosmos-sdk/x/bank",
+    "github.com/cosmos/cosmos-sdk/x/bank/client/cli",
     "github.com/cosmos/cosmos-sdk/x/bank/client/rest",
     "github.com/cosmos/cosmos-sdk/x/gov/client/rest",
     "github.com/cosmos/cosmos-sdk/x/ibc",
+    "github.com/cosmos/cosmos-sdk/x/ibc/client/cli",
     "github.com/cosmos/cosmos-sdk/x/ibc/client/rest",
     "github.com/cosmos/cosmos-sdk/x/slashing/client/rest",
     "github.com/cosmos/cosmos-sdk/x/stake",
