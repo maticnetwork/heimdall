@@ -1,10 +1,10 @@
 package rest
 
 import (
-"github.com/gorilla/mux"
-"github.com/cosmos/cosmos-sdk/crypto/keys"
-"github.com/cosmos/cosmos-sdk/client/context"
-"github.com/cosmos/cosmos-sdk/wire"
+	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/crypto/keys"
+	"github.com/cosmos/cosmos-sdk/wire"
+	"github.com/gorilla/mux"
 )
 
 // RegisterRoutes registers staking-related REST handlers to a router

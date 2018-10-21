@@ -266,7 +266,7 @@ func GetValidators() (validators []abci.Validator) {
 		fmt.Printf(" The error is %v", err)
 	}
 
-	for index, _ := range powers {
+	for index := range powers {
 		pubkey, error := validatorSetInstance.GetPubkey(nil, big.NewInt(int64(index)))
 		if error != nil {
 			fmt.Errorf(" Error getting pubkey for index %v", error)
