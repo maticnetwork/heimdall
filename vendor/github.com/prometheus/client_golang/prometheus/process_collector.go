@@ -20,8 +20,7 @@ type processCollector struct {
 	pidFn           func() (int, error)
 	cpuTotal        *Desc
 	openFDs, maxFDs *Desc
-	vsize, maxVsize *Desc
-	rss             *Desc
+	vsize, rss      *Desc
 	startTime       *Desc
 }
 
@@ -73,11 +72,6 @@ func NewProcessCollectorPIDFn(
 			"Virtual memory size in bytes.",
 			nil, nil,
 		),
-		maxVsize: NewDesc(
-			ns+"process_virtual_memory_max_bytes",
-			"Maximum amount of virtual memory available in bytes.",
-			nil, nil,
-		),
 		rss: NewDesc(
 			ns+"process_resident_memory_bytes",
 			"Resident memory size in bytes.",
@@ -104,7 +98,6 @@ func (c *processCollector) Describe(ch chan<- *Desc) {
 	ch <- c.openFDs
 	ch <- c.maxFDs
 	ch <- c.vsize
-	ch <- c.maxVsize
 	ch <- c.rss
 	ch <- c.startTime
 }
@@ -142,6 +135,5 @@ func (c *processCollector) processCollect(ch chan<- Metric) {
 
 	if limits, err := p.NewLimits(); err == nil {
 		ch <- MustNewConstMetric(c.maxFDs, GaugeValue, float64(limits.OpenFiles))
-		ch <- MustNewConstMetric(c.maxVsize, GaugeValue, float64(limits.AddressSpace))
 	}
 }

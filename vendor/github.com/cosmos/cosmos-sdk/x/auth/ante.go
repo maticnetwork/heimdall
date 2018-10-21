@@ -27,7 +27,6 @@ func NewAnteHandler(am AccountMapper, fck FeeCollectionKeeper) sdk.AnteHandler {
 		// This AnteHandler requires Txs to be StdTxs
 		stdTx, ok := tx.(StdTx)
 		if !ok {
-			fmt.Printf("bhenchod ")
 			return ctx, sdk.ErrInternal("tx must be StdTx").Result(), true
 		}
 

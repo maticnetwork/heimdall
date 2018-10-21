@@ -135,7 +135,7 @@ func (ctx TxContext) Sign(name, passphrase string, msg auth.StdSignMsg) ([]byte,
 		PubKey:        pubkey,
 		Signature:     sig,
 	}}
-	//return rlp.EncodeToBytes(auth.NewStdTx(msg.Msgs), msg.Fee ,sigs, msg.Memo)
+
 	return ctx.Codec.MarshalBinary(auth.NewStdTx(msg.Msgs, msg.Fee, sigs, msg.Memo))
 }
 

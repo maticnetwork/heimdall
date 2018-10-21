@@ -17,8 +17,8 @@
 package ledger_goclient
 
 import (
-	"encoding/binary"
 	"github.com/pkg/errors"
+	"encoding/binary"
 )
 
 var codec = binary.BigEndian
@@ -28,7 +28,7 @@ func SerializePacket(
 	command []byte,
 	packetSize int,
 	sequenceIdx uint16,
-	ble bool) (result []byte, offset int, err error) {
+	ble bool)	(result []byte, offset int, err error) {
 
 	if packetSize < 3 {
 		return nil, 0, errors.New("Packet size must be at least 3")
@@ -72,7 +72,7 @@ func DeserializePacket(
 	channel uint16,
 	buffer []byte,
 	sequenceIdx uint16,
-	ble bool) (result []byte, totalResponseLength uint16, err error) {
+	ble bool)	(result []byte, totalResponseLength uint16, err error) {
 
 	if (sequenceIdx == 0 && len(buffer) < 7) || (sequenceIdx > 0 && len(buffer) < 5) {
 		return nil, 0, errors.New("Cannot deserialize the packet. Header information is missing.")
@@ -101,7 +101,7 @@ func DeserializePacket(
 		headerOffset += 2
 	}
 
-	result = make([]byte, len(buffer)-int(headerOffset))
+	result = make([]byte, len(buffer) - int(headerOffset))
 	copy(result, buffer[headerOffset:])
 
 	return result, totalResponseLength, nil
@@ -130,7 +130,7 @@ func WrapCommandAPDU(
 }
 
 // UnwrapResponseAPDU parses a response of 64 byte packets into the real data
-func UnwrapResponseAPDU(channel uint16, pipe <-chan []byte, packetSize int, ble bool) ([]byte, error) {
+func UnwrapResponseAPDU(channel uint16, pipe <- chan []byte, packetSize int, ble bool) ([]byte, error) {
 	var sequenceIdx uint16
 
 	var totalResult []byte
@@ -139,7 +139,7 @@ func UnwrapResponseAPDU(channel uint16, pipe <-chan []byte, packetSize int, ble 
 	for !finished {
 
 		// Read next packet from the channel
-		buffer := <-pipe
+		buffer := <- pipe
 		result, responseSize, err := DeserializePacket(channel, buffer, sequenceIdx, ble)
 		if err != nil {
 			return nil, err

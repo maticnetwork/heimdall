@@ -18,8 +18,8 @@ package ledger_goclient
 
 import (
 	"encoding/binary"
-	"errors"
 	"fmt"
+	"errors"
 	"github.com/brejski/hid"
 	"math"
 )
