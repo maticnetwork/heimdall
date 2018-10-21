@@ -24,18 +24,18 @@
 #   go-tests = true
 #   unused-packages = true
 
-ignored = [
-  "github.com/cosmos/cosmos-sdk/baseapp",
-  "github.com/cosmos/cosmos-sdk/client",
-  "github.com/cosmos/cosmos-sdk/client/keys",
-  "github.com/cosmos/cosmos-sdk/client/rpc",
-  "github.com/cosmos/cosmos-sdk/client/tx",
-  "github.com/cosmos/cosmos-sdk/server",
-  "github.com/cosmos/cosmos-sdk/version",
-  "github.com/cosmos/cosmos-sdk/x/auth/client/cli",
-  "github.com/cosmos/cosmos-sdk/x/bank/client/cli",
-  "github.com/cosmos/cosmos-sdk/x/ibc/client/cli"
-]
+#ignored = [
+#  "github.com/cosmos/cosmos-sdk/baseapp",
+#  "github.com/cosmos/cosmos-sdk/client",
+#  "github.com/cosmos/cosmos-sdk/client/keys",
+#  "github.com/cosmos/cosmos-sdk/client/rpc",
+#  "github.com/cosmos/cosmos-sdk/client/tx",
+#  "github.com/cosmos/cosmos-sdk/server",
+#  "github.com/cosmos/cosmos-sdk/version",
+#  "github.com/cosmos/cosmos-sdk/x/auth/client/cli",
+#  "github.com/cosmos/cosmos-sdk/x/bank/client/cli",
+#  "github.com/cosmos/cosmos-sdk/x/ibc/client/cli"
+#]
 
 [prune]
   go-tests = true
@@ -45,3 +45,7 @@ ignored = [
   name = "github.com/tendermint/tendermint"
   source = "github.com/maticnetwork/tendermint"
   revision = "81df19e68ab1519399fccf0cab81cb75bf9d782e"
+
+[[constraint]]
+  name = "github.com/cosmos/cosmos-sdk"
+  version = "v0.24.2"
