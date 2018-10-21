@@ -80,7 +80,7 @@ func TestCheck(t *testing.T) {
 // be based on time after the test finishes rather than time after the test's
 // start.
 func TestSlowTest(t *testing.T) {
-	defer CheckTimeout(t, 1000 * time.Millisecond)()
+	defer CheckTimeout(t, 1000*time.Millisecond)()
 
 	go time.Sleep(1500 * time.Millisecond)
 	time.Sleep(750 * time.Millisecond)

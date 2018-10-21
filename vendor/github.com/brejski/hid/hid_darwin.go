@@ -2,7 +2,7 @@ package hid
 
 /*
 #cgo CFLAGS: -fconstant-cfstrings
-#cgo LDFLAGS: -L . -L/usr/local/lib -framework CoreFoundation -framework IOKit 
+#cgo LDFLAGS: -L . -L/usr/local/lib -framework CoreFoundation -framework IOKit
 #include <IOKit/hid/IOHIDManager.h>
 #include <CoreFoundation/CoreFoundation.h>
 
@@ -218,7 +218,7 @@ func iterateDevices(action func(device C.IOHIDDeviceRef) bool) cleanupDeviceMana
 
 	allDevicesSet := C.IOHIDManagerCopyDevices(mgr)
 	// Temporarily disabled
-    //defer C.CFRelease(C.CFTypeRef(allDevicesSet))
+	//defer C.CFRelease(C.CFTypeRef(allDevicesSet))
 	devCnt := C.CFSetGetCount(allDevicesSet)
 	allDevices := make([]unsafe.Pointer, uint64(devCnt))
 	C.CFSetGetValues(allDevicesSet, &allDevices[0])
@@ -231,7 +231,7 @@ func iterateDevices(action func(device C.IOHIDDeviceRef) bool) cleanupDeviceMana
 	return func() {
 		C.IOHIDManagerClose(mgr, C.kIOHIDOptionsTypeNone)
 		// Temporarily disabled
-        //C.CFRelease(C.CFTypeRef(mgr))
+		//C.CFRelease(C.CFTypeRef(mgr))
 	}
 }
 

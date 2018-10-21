@@ -281,7 +281,7 @@ func TestAddMultipleHeaders(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	expect := map[string]map[string]struct{}{"Vary": map[string]struct{}{"Origin": struct{}{}, "User-Agent": struct{}{}}}
+	expect := map[string]map[string]struct{}{"Vary": {"Origin": {}, "User-Agent": {}}}
 	for k, vls := range resp.Header {
 		for _, v := range vls {
 			delete((expect[k]), v)
@@ -318,7 +318,7 @@ func TestAddMultipleHeadersErrorEncoder(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	expect := map[string]map[string]struct{}{"Vary": map[string]struct{}{"Origin": struct{}{}, "User-Agent": struct{}{}}}
+	expect := map[string]map[string]struct{}{"Vary": {"Origin": {}, "User-Agent": {}}}
 	for k, vls := range resp.Header {
 		for _, v := range vls {
 			delete((expect[k]), v)
