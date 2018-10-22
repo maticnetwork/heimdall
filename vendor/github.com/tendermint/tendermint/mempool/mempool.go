@@ -3,6 +3,7 @@ package mempool
 import (
 	"bytes"
 	"container/list"
+	"crypto/sha256"
 	"fmt"
 	"sync"
 	"sync/atomic"
@@ -10,16 +11,26 @@ import (
 
 	"github.com/pkg/errors"
 
+	amino "github.com/tendermint/go-amino"
 	abci "github.com/tendermint/tendermint/abci/types"
+	cfg "github.com/tendermint/tendermint/config"
 	auto "github.com/tendermint/tendermint/libs/autofile"
 	"github.com/tendermint/tendermint/libs/clist"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
-
-	cfg "github.com/tendermint/tendermint/config"
 	"github.com/tendermint/tendermint/proxy"
 	"github.com/tendermint/tendermint/types"
 )
+
+// PreCheckFunc is an optional filter executed before CheckTx and rejects
+// transaction if false is returned. An example would be to ensure that a
+// transaction doesn't exceeded the block size.
+type PreCheckFunc func(types.Tx) bool
+
+// PostCheckFunc is an optional filter executed after CheckTx and rejects
+// transaction if false is returned. An example would be to ensure a
+// transaction doesn't require more gas than available for the block.
+type PostCheckFunc func(types.Tx, *abci.ResponseCheckTx) bool
 
 /*
 
@@ -57,6 +68,27 @@ var (
 	ErrMempoolIsFull = errors.New("Mempool is full")
 )
 
+// PreCheckAminoMaxBytes checks that the size of the transaction plus the amino
+// overhead is smaller or equal to the expected maxBytes.
+func PreCheckAminoMaxBytes(maxBytes int64) PreCheckFunc {
+	return func(tx types.Tx) bool {
+		// We have to account for the amino overhead in the tx size as well
+		aminoOverhead := amino.UvarintSize(uint64(len(tx)))
+		return int64(len(tx)+aminoOverhead) <= maxBytes
+	}
+}
+
+// PostCheckMaxGas checks that the wanted gas is smaller or equal to the passed
+// maxGas. Returns true if maxGas is -1.
+func PostCheckMaxGas(maxGas int64) PostCheckFunc {
+	return func(tx types.Tx, res *abci.ResponseCheckTx) bool {
+		if maxGas == -1 {
+			return true
+		}
+		return res.GasWanted <= maxGas
+	}
+}
+
 // TxID is the hex encoded hash of the bytes as a types.Tx.
 func TxID(tx []byte) string {
 	return fmt.Sprintf("%X", types.Tx(tx).Hash())
@@ -79,6 +111,8 @@ type Mempool struct {
 	recheckEnd           *clist.CElement // re-checking stops here
 	notifiedTxsAvailable bool
 	txsAvailable         chan struct{} // fires once for each height, when the mempool is not empty
+	preCheck             PreCheckFunc
+	postCheck            PostCheckFunc
 
 	// Keep a cache of already-seen txs.
 	// This reduces the pressure on the proxyApp.
@@ -136,6 +170,18 @@ func (mem *Mempool) EnableTxsAvailable() {
 // SetLogger sets the Logger.
 func (mem *Mempool) SetLogger(l log.Logger) {
 	mem.logger = l
+}
+
+// WithPreCheck sets a filter for the mempool to reject a tx if f(tx) returns
+// false. This is ran before CheckTx.
+func WithPreCheck(f PreCheckFunc) MempoolOption {
+	return func(mem *Mempool) { mem.preCheck = f }
+}
+
+// WithPostCheck sets a filter for the mempool to reject a tx if f(tx) returns
+// false. This is ran after CheckTx.
+func WithPostCheck(f PostCheckFunc) MempoolOption {
+	return func(mem *Mempool) { mem.postCheck = f }
 }
 
 // WithMetrics sets the metrics.
@@ -239,6 +285,10 @@ func (mem *Mempool) CheckTx(tx types.Tx, cb func(*abci.Response)) (err error) {
 		return ErrMempoolIsFull
 	}
 
+	if mem.preCheck != nil && !mem.preCheck(tx) {
+		return
+	}
+
 	// CACHE
 	if !mem.cache.Push(tx) {
 		return ErrTxInCache
@@ -285,12 +335,14 @@ func (mem *Mempool) resCbNormal(req *abci.Request, res *abci.Response) {
 	switch r := res.Value.(type) {
 	case *abci.Response_CheckTx:
 		tx := req.GetCheckTx().Tx
-		if r.CheckTx.Code == abci.CodeTypeOK {
+		if (r.CheckTx.Code == abci.CodeTypeOK) &&
+			mem.isPostCheckPass(tx, r.CheckTx) {
 			mem.counter++
 			memTx := &mempoolTx{
-				counter: mem.counter,
-				height:  mem.height,
-				tx:      tx,
+				counter:   mem.counter,
+				height:    mem.height,
+				gasWanted: r.CheckTx.GasWanted,
+				tx:        tx,
 			}
 			mem.txs.PushBack(memTx)
 			mem.logger.Info("Added good transaction", "tx", TxID(tx), "res", r, "total", mem.Size())
@@ -312,10 +364,15 @@ func (mem *Mempool) resCbRecheck(req *abci.Request, res *abci.Response) {
 	case *abci.Response_CheckTx:
 		memTx := mem.recheckCursor.Value.(*mempoolTx)
 		if !bytes.Equal(req.GetCheckTx().Tx, memTx.tx) {
-			cmn.PanicSanity(cmn.Fmt("Unexpected tx response from proxy during recheck\n"+
-				"Expected %X, got %X", r.CheckTx.Data, memTx.tx))
+			cmn.PanicSanity(
+				fmt.Sprintf(
+					"Unexpected tx response from proxy during recheck\nExpected %X, got %X",
+					r.CheckTx.Data,
+					memTx.tx,
+				),
+			)
 		}
-		if r.CheckTx.Code == abci.CodeTypeOK {
+		if (r.CheckTx.Code == abci.CodeTypeOK) && mem.isPostCheckPass(memTx.tx, r.CheckTx) {
 			// Good, nothing to do.
 		} else {
 			// Tx became invalidated due to newly committed block.
@@ -366,9 +423,11 @@ func (mem *Mempool) notifyTxsAvailable() {
 	}
 }
 
-// Reap returns a list of transactions currently in the mempool.
-// If maxTxs is -1, there is no cap on the number of returned transactions.
-func (mem *Mempool) Reap(maxTxs int) types.Txs {
+// ReapMaxBytesMaxGas reaps transactions from the mempool up to maxBytes bytes total
+// with the condition that the total gasWanted must be less than maxGas.
+// If both maxes are negative, there is no cap on the size of all returned
+// transactions (~ all available transactions).
+func (mem *Mempool) ReapMaxBytesMaxGas(maxBytes, maxGas int64) types.Txs {
 	mem.proxyMtx.Lock()
 	defer mem.proxyMtx.Unlock()
 
@@ -377,19 +436,48 @@ func (mem *Mempool) Reap(maxTxs int) types.Txs {
 		time.Sleep(time.Millisecond * 10)
 	}
 
-	txs := mem.collectTxs(maxTxs)
+	var totalBytes int64
+	var totalGas int64
+	// TODO: we will get a performance boost if we have a good estimate of avg
+	// size per tx, and set the initial capacity based off of that.
+	// txs := make([]types.Tx, 0, cmn.MinInt(mem.txs.Len(), max/mem.avgTxSize))
+	txs := make([]types.Tx, 0, mem.txs.Len())
+	for e := mem.txs.Front(); e != nil; e = e.Next() {
+		memTx := e.Value.(*mempoolTx)
+		// Check total size requirement
+		aminoOverhead := int64(amino.UvarintSize(uint64(len(memTx.tx))))
+		if maxBytes > -1 && totalBytes+int64(len(memTx.tx))+aminoOverhead > maxBytes {
+			return txs
+		}
+		totalBytes += int64(len(memTx.tx)) + aminoOverhead
+		// Check total gas requirement
+		if maxGas > -1 && totalGas+memTx.gasWanted > maxGas {
+			return txs
+		}
+		totalGas += memTx.gasWanted
+		txs = append(txs, memTx.tx)
+	}
 	return txs
 }
 
-// maxTxs: -1 means uncapped, 0 means none
-func (mem *Mempool) collectTxs(maxTxs int) types.Txs {
-	if maxTxs == 0 {
-		return []types.Tx{}
-	} else if maxTxs < 0 {
-		maxTxs = mem.txs.Len()
+// ReapMaxTxs reaps up to max transactions from the mempool.
+// If max is negative, there is no cap on the size of all returned
+// transactions (~ all available transactions).
+func (mem *Mempool) ReapMaxTxs(max int) types.Txs {
+	mem.proxyMtx.Lock()
+	defer mem.proxyMtx.Unlock()
+
+	if max < 0 {
+		max = mem.txs.Len()
 	}
-	txs := make([]types.Tx, 0, cmn.MinInt(mem.txs.Len(), maxTxs))
-	for e := mem.txs.Front(); e != nil && len(txs) < maxTxs; e = e.Next() {
+
+	for atomic.LoadInt32(&mem.rechecking) > 0 {
+		// TODO: Something better?
+		time.Sleep(time.Millisecond * 10)
+	}
+
+	txs := make([]types.Tx, 0, cmn.MinInt(mem.txs.Len(), max))
+	for e := mem.txs.Front(); e != nil && len(txs) <= max; e = e.Next() {
 		memTx := e.Value.(*mempoolTx)
 		txs = append(txs, memTx.tx)
 	}
@@ -399,9 +487,14 @@ func (mem *Mempool) collectTxs(maxTxs int) types.Txs {
 // Update informs the mempool that the given txs were committed and can be discarded.
 // NOTE: this should be called *after* block is committed by consensus.
 // NOTE: unsafe; Lock/Unlock must be managed by caller
-func (mem *Mempool) Update(height int64, txs types.Txs) error {
+func (mem *Mempool) Update(
+	height int64,
+	txs types.Txs,
+	preCheck PreCheckFunc,
+	postCheck PostCheckFunc,
+) error {
 	// First, create a lookup map of txns in new txs.
-	txsMap := make(map[string]struct{})
+	txsMap := make(map[string]struct{}, len(txs))
 	for _, tx := range txs {
 		txsMap[string(tx)] = struct{}{}
 	}
@@ -409,6 +502,13 @@ func (mem *Mempool) Update(height int64, txs types.Txs) error {
 	// Set height
 	mem.height = height
 	mem.notifiedTxsAvailable = false
+
+	if preCheck != nil {
+		mem.preCheck = preCheck
+	}
+	if postCheck != nil {
+		mem.postCheck = postCheck
+	}
 
 	// Remove transactions that are already in txs.
 	goodTxs := mem.filterTxs(txsMap)
@@ -422,7 +522,10 @@ func (mem *Mempool) Update(height int64, txs types.Txs) error {
 		// mem.recheckCursor re-scans mem.txs and possibly removes some txs.
 		// Before mem.Reap(), we should wait for mem.recheckCursor to be nil.
 	}
+
+	// Update metrics
 	mem.metrics.Size.Set(float64(mem.Size()))
+
 	return nil
 }
 
@@ -462,13 +565,18 @@ func (mem *Mempool) recheckTxs(goodTxs []types.Tx) {
 	mem.proxyAppConn.FlushAsync()
 }
 
+func (mem *Mempool) isPostCheckPass(tx types.Tx, r *abci.ResponseCheckTx) bool {
+	return mem.postCheck == nil || mem.postCheck(tx, r)
+}
+
 //--------------------------------------------------------------------------------
 
 // mempoolTx is a transaction that successfully ran
 type mempoolTx struct {
-	counter int64    // a simple incrementing counter
-	height  int64    // height that this tx had been validated in
-	tx      types.Tx //
+	counter   int64    // a simple incrementing counter
+	height    int64    // height that this tx had been validated in
+	gasWanted int64    // amount of gas this tx states it will require
+	tx        types.Tx //
 }
 
 // Height returns the height for this transaction
@@ -484,11 +592,12 @@ type txCache interface {
 	Remove(tx types.Tx)
 }
 
-// mapTxCache maintains a cache of transactions.
+// mapTxCache maintains a cache of transactions. This only stores
+// the hash of the tx, due to memory concerns.
 type mapTxCache struct {
 	mtx  sync.Mutex
 	size int
-	map_ map[string]struct{}
+	map_ map[[sha256.Size]byte]*list.Element
 	list *list.List // to remove oldest tx when cache gets too big
 }
 
@@ -498,7 +607,7 @@ var _ txCache = (*mapTxCache)(nil)
 func newMapTxCache(cacheSize int) *mapTxCache {
 	return &mapTxCache{
 		size: cacheSize,
-		map_: make(map[string]struct{}, cacheSize),
+		map_: make(map[[sha256.Size]byte]*list.Element, cacheSize),
 		list: list.New(),
 	}
 }
@@ -506,7 +615,7 @@ func newMapTxCache(cacheSize int) *mapTxCache {
 // Reset resets the cache to an empty state.
 func (cache *mapTxCache) Reset() {
 	cache.mtx.Lock()
-	cache.map_ = make(map[string]struct{}, cache.size)
+	cache.map_ = make(map[[sha256.Size]byte]*list.Element, cache.size)
 	cache.list.Init()
 	cache.mtx.Unlock()
 }
@@ -517,27 +626,36 @@ func (cache *mapTxCache) Push(tx types.Tx) bool {
 	cache.mtx.Lock()
 	defer cache.mtx.Unlock()
 
-	if _, exists := cache.map_[string(tx)]; exists {
+	// Use the tx hash in the cache
+	txHash := sha256.Sum256(tx)
+	if moved, exists := cache.map_[txHash]; exists {
+		cache.list.MoveToFront(moved)
 		return false
 	}
 
 	if cache.list.Len() >= cache.size {
 		popped := cache.list.Front()
-		poppedTx := popped.Value.(types.Tx)
-		// NOTE: the tx may have already been removed from the map
-		// but deleting a non-existent element is fine
-		delete(cache.map_, string(poppedTx))
-		cache.list.Remove(popped)
+		poppedTxHash := popped.Value.([sha256.Size]byte)
+		delete(cache.map_, poppedTxHash)
+		if popped != nil {
+			cache.list.Remove(popped)
+		}
 	}
-	cache.map_[string(tx)] = struct{}{}
-	cache.list.PushBack(tx)
+	cache.list.PushBack(txHash)
+	cache.map_[txHash] = cache.list.Back()
 	return true
 }
 
 // Remove removes the given tx from the cache.
 func (cache *mapTxCache) Remove(tx types.Tx) {
 	cache.mtx.Lock()
-	delete(cache.map_, string(tx))
+	txHash := sha256.Sum256(tx)
+	popped := cache.map_[txHash]
+	delete(cache.map_, txHash)
+	if popped != nil {
+		cache.list.Remove(popped)
+	}
+
 	cache.mtx.Unlock()
 }
 

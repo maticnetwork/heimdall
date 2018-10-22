@@ -4,6 +4,7 @@ import (
 	"time"
 
 	cmn "github.com/tendermint/tendermint/libs/common"
+	tmtime "github.com/tendermint/tendermint/types/time"
 )
 
 // Canonical json is amino's json for structs with fields in alphabetical order
@@ -30,6 +31,7 @@ type CanonicalJSONProposal struct {
 	POLRound         int                        `json:"pol_round"`
 	Round            int                        `json:"round"`
 	Timestamp        string                     `json:"timestamp"`
+	Data             cmn.HexBytes               `json:"data"`
 }
 
 type CanonicalJSONVote struct {
@@ -40,6 +42,16 @@ type CanonicalJSONVote struct {
 	Round     int                  `json:"round"`
 	Timestamp string               `json:"timestamp"`
 	VoteType  byte                 `json:"type"`
+	Data      cmn.HexBytes         `json:"data"`
+}
+
+type CanonicalRLPVote struct {
+	ChainID  string
+	Type     string
+	Height   uint
+	Round    uint
+	Data     []byte
+	VoteType []byte
 }
 
 type CanonicalJSONHeartbeat struct {
@@ -79,18 +91,29 @@ func CanonicalProposal(chainID string, proposal *Proposal) CanonicalJSONProposal
 		POLBlockID:       CanonicalBlockID(proposal.POLBlockID),
 		POLRound:         proposal.POLRound,
 		Round:            proposal.Round,
+		Data:             proposal.Data,
 	}
 }
 
-func CanonicalVote(chainID string, vote *Vote) CanonicalJSONVote {
-	return CanonicalJSONVote{
-		ChainID:   chainID,
-		Type:      "vote",
-		BlockID:   CanonicalBlockID(vote.BlockID),
-		Height:    vote.Height,
-		Round:     vote.Round,
-		Timestamp: CanonicalTime(vote.Timestamp),
-		VoteType:  vote.Type,
+func CanonicalVote(chainID string, vote *Vote) CanonicalRLPVote {
+	// return CanonicalJSONVote{
+	// 	ChainID:   chainID,
+	// 	Type:      "vote",
+	// 	BlockID:   CanonicalBlockID(vote.BlockID),
+	// 	Height:    vote.Height,
+	// 	Round:     vote.Round,
+	// 	Timestamp: CanonicalTime(vote.Timestamp),
+	// 	VoteType:  vote.Type,
+	// 	Data:      vote.Data,
+	// }
+
+	return CanonicalRLPVote{
+		ChainID:  chainID,
+		Type:     "vote",
+		Height:   uint(vote.Height),
+		Round:    uint(vote.Round),
+		Data:     vote.Data,
+		VoteType: []byte{vote.Type},
 	}
 }
 
@@ -110,5 +133,5 @@ func CanonicalTime(t time.Time) string {
 	// Note that sending time over amino resets it to
 	// local time, we need to force UTC here, so the
 	// signatures match
-	return t.UTC().Format(TimeFormat)
+	return tmtime.Canonical(t).Format(TimeFormat)
 }

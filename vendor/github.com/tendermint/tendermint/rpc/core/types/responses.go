@@ -2,7 +2,6 @@ package core_types
 
 import (
 	"encoding/json"
-	"strings"
 	"time"
 
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -33,10 +32,8 @@ type ResultBlock struct {
 
 // Commit and Header
 type ResultCommit struct {
-	// SignedHeader is header and commit, embedded so we only have
-	// one level in the json output
-	types.SignedHeader
-	CanonicalCommit bool `json:"canonical"`
+	types.SignedHeader `json:"signed_header"`
+	CanonicalCommit    bool `json:"canonical"`
 }
 
 // ABCI results from a block
@@ -87,13 +84,7 @@ func (s *ResultStatus) TxIndexEnabled() bool {
 	if s == nil {
 		return false
 	}
-	for _, s := range s.NodeInfo.Other {
-		info := strings.Split(s, "=")
-		if len(info) == 2 && info[0] == "tx_index" {
-			return info[1] == "on"
-		}
-	}
-	return false
+	return s.NodeInfo.Other.TxIndex == "on"
 }
 
 // Info about peer connections
@@ -125,6 +116,12 @@ type Peer struct {
 type ResultValidators struct {
 	BlockHeight int64              `json:"block_height"`
 	Validators  []*types.Validator `json:"validators"`
+}
+
+// ConsensusParams for given height
+type ResultConsensusParams struct {
+	BlockHeight     int64                 `json:"block_height"`
+	ConsensusParams types.ConsensusParams `json:"consensus_params"`
 }
 
 // Info about the consensus state.
@@ -160,6 +157,7 @@ type ResultBroadcastTxCommit struct {
 	DeliverTx abci.ResponseDeliverTx `json:"deliver_tx"`
 	Hash      cmn.HexBytes           `json:"hash"`
 	Height    int64                  `json:"height"`
+	Data      []byte                 `json:"data"`
 }
 
 // Result of querying for a tx

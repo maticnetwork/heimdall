@@ -4,7 +4,7 @@ import (
 	"context"
 
 	abci "github.com/tendermint/tendermint/abci/types"
-	core "github.com/tendermint/tendermint/rpc/core"
+	"github.com/tendermint/tendermint/rpc/core"
 )
 
 type broadcastAPI struct {

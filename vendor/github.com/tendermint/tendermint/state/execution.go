@@ -7,6 +7,7 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	dbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
+	"github.com/tendermint/tendermint/mempool"
 	"github.com/tendermint/tendermint/proxy"
 	"github.com/tendermint/tendermint/types"
 )
@@ -80,19 +81,19 @@ func (blockExec *BlockExecutor) ApplyBlock(state State, blockID types.BlockID, b
 
 	fail.Fail() // XXX
 
-	// save the results before we commit
+	// Save the results before we commit.
 	saveABCIResponses(blockExec.db, block.Height, abciResponses)
 
 	fail.Fail() // XXX
 
-	// update the state with the block and responses
+	// Update the state with the block and responses.
 	state, err = updateState(state, blockID, &block.Header, abciResponses)
 	if err != nil {
 		return state, fmt.Errorf("Commit failed for application: %v", err)
 	}
 
-	// lock mempool, commit app state, update mempoool
-	appHash, err := blockExec.Commit(block)
+	// Lock mempool, commit app state, update mempoool.
+	appHash, err := blockExec.Commit(state, block)
 	if err != nil {
 		return state, fmt.Errorf("Commit failed for application: %v", err)
 	}
@@ -102,24 +103,29 @@ func (blockExec *BlockExecutor) ApplyBlock(state State, blockID types.BlockID, b
 
 	fail.Fail() // XXX
 
-	// update the app hash and save the state
+	// Update the app hash and save the state.
 	state.AppHash = appHash
 	SaveState(blockExec.db, state)
 
 	fail.Fail() // XXX
 
-	// events are fired after everything else
+	// Events are fired after everything else.
 	// NOTE: if we crash between Commit and Save, events wont be fired during replay
 	fireEvents(blockExec.logger, blockExec.eventBus, block, abciResponses)
 
 	return state, nil
 }
 
-// Commit locks the mempool, runs the ABCI Commit message, and updates the mempool.
+// Commit locks the mempool, runs the ABCI Commit message, and updates the
+// mempool.
 // It returns the result of calling abci.Commit (the AppHash), and an error.
-// The Mempool must be locked during commit and update because state is typically reset on Commit and old txs must be replayed
-// against committed state before new txs are run in the mempool, lest they be invalid.
-func (blockExec *BlockExecutor) Commit(block *types.Block) ([]byte, error) {
+// The Mempool must be locked during commit and update because state is
+// typically reset on Commit and old txs must be replayed against committed
+// state before new txs are run in the mempool, lest they be invalid.
+func (blockExec *BlockExecutor) Commit(
+	state State,
+	block *types.Block,
+) ([]byte, error) {
 	blockExec.mempool.Lock()
 	defer blockExec.mempool.Unlock()
 
@@ -134,22 +140,35 @@ func (blockExec *BlockExecutor) Commit(block *types.Block) ([]byte, error) {
 	// Commit block, get hash back
 	res, err := blockExec.proxyApp.CommitSync()
 	if err != nil {
-		blockExec.logger.Error("Client error during proxyAppConn.CommitSync", "err", err)
+		blockExec.logger.Error(
+			"Client error during proxyAppConn.CommitSync",
+			"err", err,
+		)
 		return nil, err
 	}
 	// ResponseCommit has no error code - just data
 
-	blockExec.logger.Info("Committed state",
+	blockExec.logger.Info(
+		"Committed state",
 		"height", block.Height,
 		"txs", block.NumTxs,
-		"appHash", fmt.Sprintf("%X", res.Data))
+		"appHash", fmt.Sprintf("%X", res.Data),
+	)
 
 	// Update mempool.
-	if err := blockExec.mempool.Update(block.Height, block.Txs); err != nil {
-		return nil, err
-	}
+	err = blockExec.mempool.Update(
+		block.Height,
+		block.Txs,
+		mempool.PreCheckAminoMaxBytes(
+			types.MaxDataBytesUnknownEvidence(
+				state.ConsensusParams.BlockSize.MaxBytes,
+				state.Validators.Size(),
+			),
+		),
+		mempool.PostCheckMaxGas(state.ConsensusParams.MaxGas),
+	)
 
-	return res.Data, nil
+	return res.Data, err
 }
 
 //---------------------------------------------------------
@@ -164,7 +183,7 @@ func execBlockOnProxyApp(logger log.Logger, proxyAppConn proxy.AppConnConsensus,
 	txIndex := 0
 	abciResponses := NewABCIResponses(block)
 
-	// Execute transactions and get hash
+	// Execute transactions and get hash.
 	proxyCb := func(req *abci.Request, res *abci.Response) {
 		switch r := res.Value.(type) {
 		case *abci.Response_DeliverTx:
@@ -184,16 +203,13 @@ func execBlockOnProxyApp(logger log.Logger, proxyAppConn proxy.AppConnConsensus,
 	}
 	proxyAppConn.SetResponseCallback(proxyCb)
 
-	signVals, byzVals := getBeginBlockValidatorInfo(block, lastValSet, stateDB)
+	commitInfo, byzVals := getBeginBlockValidatorInfo(block, lastValSet, stateDB)
 
-	// Begin block
+	// Begin block.
 	_, err := proxyAppConn.BeginBlockSync(abci.RequestBeginBlock{
-		Hash:   block.Hash(),
-		Header: types.TM2PB.Header(&block.Header),
-		LastCommitInfo: abci.LastCommitInfo{
-			CommitRound: int32(block.LastCommit.Round()),
-			Validators:  signVals,
-		},
+		Hash:                block.Hash(),
+		Header:              types.TM2PB.Header(&block.Header),
+		LastCommitInfo:      commitInfo,
 		ByzantineValidators: byzVals,
 	})
 	if err != nil {
@@ -201,7 +217,7 @@ func execBlockOnProxyApp(logger log.Logger, proxyAppConn proxy.AppConnConsensus,
 		return nil, err
 	}
 
-	// Run txs of block
+	// Run txs of block.
 	for _, tx := range block.Txs {
 		proxyAppConn.DeliverTxAsync(tx)
 		if err := proxyAppConn.Error(); err != nil {
@@ -209,7 +225,7 @@ func execBlockOnProxyApp(logger log.Logger, proxyAppConn proxy.AppConnConsensus,
 		}
 	}
 
-	// End block
+	// End block.
 	abciResponses.EndBlock, err = proxyAppConn.EndBlockSync(abci.RequestEndBlock{Height: block.Height})
 	if err != nil {
 		logger.Error("Error in proxyAppConn.EndBlock", "err", err)
@@ -220,13 +236,14 @@ func execBlockOnProxyApp(logger log.Logger, proxyAppConn proxy.AppConnConsensus,
 
 	valUpdates := abciResponses.EndBlock.ValidatorUpdates
 	if len(valUpdates) > 0 {
-		logger.Info("Updates to validators", "updates", abci.ValidatorsString(valUpdates))
+		// TODO: cleanup the formatting
+		logger.Info("Updates to validators", "updates", valUpdates)
 	}
 
 	return abciResponses, nil
 }
 
-func getBeginBlockValidatorInfo(block *types.Block, lastValSet *types.ValidatorSet, stateDB dbm.DB) ([]abci.SigningValidator, []abci.Evidence) {
+func getBeginBlockValidatorInfo(block *types.Block, lastValSet *types.ValidatorSet, stateDB dbm.DB) (abci.LastCommitInfo, []abci.Evidence) {
 
 	// Sanity check that commit length matches validator set size -
 	// only applies after first block
@@ -240,18 +257,23 @@ func getBeginBlockValidatorInfo(block *types.Block, lastValSet *types.ValidatorS
 		}
 	}
 
-	// determine which validators did not sign last block.
-	signVals := make([]abci.SigningValidator, len(lastValSet.Validators))
+	// Collect the vote info (list of validators and whether or not they signed).
+	voteInfos := make([]abci.VoteInfo, len(lastValSet.Validators))
 	for i, val := range lastValSet.Validators {
 		var vote *types.Vote
 		if i < len(block.LastCommit.Precommits) {
 			vote = block.LastCommit.Precommits[i]
 		}
-		val := abci.SigningValidator{
-			Validator:       types.TM2PB.ValidatorWithoutPubKey(val),
+		voteInfo := abci.VoteInfo{
+			Validator:       types.TM2PB.Validator(val),
 			SignedLastBlock: vote != nil,
 		}
-		signVals[i] = val
+		voteInfos[i] = voteInfo
+	}
+
+	commitInfo := abci.LastCommitInfo{
+		Round: int32(block.LastCommit.Round()),
+		Votes: voteInfos,
 	}
 
 	byzVals := make([]abci.Evidence, len(block.Evidence.Evidence))
@@ -266,19 +288,19 @@ func getBeginBlockValidatorInfo(block *types.Block, lastValSet *types.ValidatorS
 		byzVals[i] = types.TM2PB.Evidence(ev, valset, block.Time)
 	}
 
-	return signVals, byzVals
+	return commitInfo, byzVals
 
 }
 
 // If more or equal than 1/3 of total voting power changed in one block, then
 // a light client could never prove the transition externally. See
 // ./lite/doc.go for details on how a light client tracks validators.
-func updateValidators(currentSet *types.ValidatorSet, abciUpdates []abci.Validator) error {
-	updates, err := types.PB2TM.Validators(abciUpdates)
+func updateValidators(currentSet *types.ValidatorSet, abciUpdates []abci.ValidatorUpdate) error {
+	updates, err := types.PB2TM.ValidatorUpdates(abciUpdates)
 	if err != nil {
+		fmt.Errorf("error in update validators ")
 		return err
 	}
-
 	// these are tendermint types now
 	for _, valUpdate := range updates {
 		if valUpdate.VotingPower < 0 {
@@ -314,26 +336,25 @@ func updateValidators(currentSet *types.ValidatorSet, abciUpdates []abci.Validat
 func updateState(state State, blockID types.BlockID, header *types.Header,
 	abciResponses *ABCIResponses) (State, error) {
 
-	// copy the valset so we can apply changes from EndBlock
-	// and update s.LastValidators and s.Validators
-	prevValSet := state.Validators.Copy()
-	nextValSet := prevValSet.Copy()
+	// Copy the valset so we can apply changes from EndBlock
+	// and update s.LastValidators and s.Validators.
+	nValSet := state.NextValidators.Copy()
 
-	// update the validator set with the latest abciResponses
+	// Update the validator set with the latest abciResponses.
 	lastHeightValsChanged := state.LastHeightValidatorsChanged
 	if len(abciResponses.EndBlock.ValidatorUpdates) > 0 {
-		err := updateValidators(nextValSet, abciResponses.EndBlock.ValidatorUpdates)
+		err := updateValidators(nValSet, abciResponses.EndBlock.ValidatorUpdates)
 		if err != nil {
 			return state, fmt.Errorf("Error changing validator set: %v", err)
 		}
-		// change results from this height but only applies to the next height
-		lastHeightValsChanged = header.Height + 1
+		// Change results from this height but only applies to the next next height.
+		lastHeightValsChanged = header.Height + 1 + 1
 	}
 
-	// Update validator accums and set state variables
-	nextValSet.IncrementAccum(1)
+	// Update validator accums and set state variables.
+	nValSet.IncrementAccum(1)
 
-	// update the params with the latest abciResponses
+	// Update the params with the latest abciResponses.
 	nextParams := state.ConsensusParams
 	lastHeightParamsChanged := state.LastHeightConsensusParamsChanged
 	if abciResponses.EndBlock.ConsensusParamUpdates != nil {
@@ -343,7 +364,7 @@ func updateState(state State, blockID types.BlockID, header *types.Header,
 		if err != nil {
 			return state, fmt.Errorf("Error updating consensus params: %v", err)
 		}
-		// change results from this height but only applies to the next height
+		// Change results from this height but only applies to the next height.
 		lastHeightParamsChanged = header.Height + 1
 	}
 
@@ -355,7 +376,8 @@ func updateState(state State, blockID types.BlockID, header *types.Header,
 		LastBlockTotalTx:                 state.LastBlockTotalTx + header.NumTxs,
 		LastBlockID:                      blockID,
 		LastBlockTime:                    header.Time,
-		Validators:                       nextValSet,
+		NextValidators:                   nValSet,
+		Validators:                       state.NextValidators.Copy(),
 		LastValidators:                   state.Validators.Copy(),
 		LastHeightValidatorsChanged:      lastHeightValsChanged,
 		ConsensusParams:                  nextParams,
@@ -379,6 +401,14 @@ func fireEvents(logger log.Logger, eventBus types.BlockEventPublisher, block *ty
 			Tx:     tx,
 			Result: *(abciResponses.DeliverTx[i]),
 		}})
+	}
+
+	abciValUpdates := abciResponses.EndBlock.ValidatorUpdates
+	if len(abciValUpdates) > 0 {
+		// if there were an error, we would've stopped in updateValidators
+		updates, _ := types.PB2TM.ValidatorUpdates(abciValUpdates)
+		eventBus.PublishEventValidatorSetUpdates(
+			types.EventDataValidatorSetUpdates{ValidatorUpdates: updates})
 	}
 }
 

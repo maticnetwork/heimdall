@@ -18,6 +18,7 @@ type Tx []byte
 
 // Hash computes the TMHASH hash of the wire encoded transaction.
 func (tx Tx) Hash() []byte {
+
 	return tmhash.Sum(tx)
 }
 

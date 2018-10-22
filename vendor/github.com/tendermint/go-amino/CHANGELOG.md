@@ -1,13 +1,35 @@
 # Changelog
 
+## 0.12.0 (August 4, 2018)
+
+BREAKING CHANGE:
+ - Write empty (non-nil) struct pointers, unless (is list element and empty_elements isn't set) #206
+
+## 0.11.1 (July 17, 2018)
+
+IMPROVEMENTS:
+ - Remove dependency on tmlibs/common
+
+## 0.11.0 (June 19, 2018)
+
+BREAKING CHANGE:
+
+ - Do not encode zero values in `EncodeTime`
+ (to match proto3's behaviour) (#178, #190)
+ - Do not encode empty structs, unless explicitly enforced
+ via `amino:"write_empty"` (to match proto3's behaviour) (#179)
+
+IMPROVEMENTS:
+ - DecodeInt{8, 16} negative limit checks (#125)
+
 ## 0.10.1 (June 15, 2018)
 
 FEATURE:
 
  - [aminoscan] aminoscan --color will print ASCII bytes in different colors
- 
+
 BUG FIXES:
- - do not err if prefix bytes are exactly 4 (for registered types) 
+ - do not err if prefix bytes are exactly 4 (for registered types)
 
 ## 0.10.0 (June 12, 2018)
 

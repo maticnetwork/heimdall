@@ -31,19 +31,11 @@
 [[constraint]]
   name = "github.com/tendermint/tendermint"
   source = "github.com/maticnetwork/tendermint"
-  revision = "8990ea189465d2659a6674a951a593205f6cd562"
+  revision = "f2846022b0a8b3527b6a4d40d963586136c56732"
 
-[[constraint]]
-  name = "github.com/tendermint/ed25519"
-  revision = "d8387025d2b9d158cf4efb07e7ebf814bcce2057"
-
-[[constraint]]
+[[override]]
   name = "github.com/tendermint/go-amino"
-  revision = "c344a05f4a36122a04508bee480ada33dc8be350"
-
-[[constraint]]
-  name = "github.com/tendermint/iavl"
-  revision = "35f66e53d9b01e83b30de68b931f54b2477a94c9"
+  revision = "v0.12.0"
 
 [[constraint]]
   name = "github.com/cosmos/cosmos-sdk"

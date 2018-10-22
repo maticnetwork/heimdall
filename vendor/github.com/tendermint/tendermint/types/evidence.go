@@ -10,6 +10,11 @@ import (
 	"github.com/tendermint/tendermint/crypto/merkle"
 )
 
+const (
+	// MaxEvidenceBytes is a maximum size of any evidence (including amino overhead).
+	MaxEvidenceBytes int64 = 440
+)
+
 // ErrEvidenceInvalid wraps a piece of evidence and the error denoting how or why it is invalid.
 type ErrEvidenceInvalid struct {
 	Evidence   Evidence
@@ -47,9 +52,16 @@ func RegisterEvidences(cdc *amino.Codec) {
 	cdc.RegisterConcrete(MockBadEvidence{}, "tendermint/MockBadEvidence", nil)
 }
 
+// MaxEvidenceBytesPerBlock returns the maximum evidence size per block -
+// 1/10th of the maximum block size.
+func MaxEvidenceBytesPerBlock(blockMaxBytes int64) int64 {
+	return blockMaxBytes / 10
+}
+
 //-------------------------------------------
 
-// DuplicateVoteEvidence contains evidence a validator signed two conflicting votes.
+// DuplicateVoteEvidence contains evidence a validator signed two conflicting
+// votes.
 type DuplicateVoteEvidence struct {
 	PubKey crypto.PubKey
 	VoteA  *Vote

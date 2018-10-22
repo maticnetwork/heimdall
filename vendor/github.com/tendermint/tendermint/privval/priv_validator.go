@@ -9,9 +9,11 @@ import (
 	"time"
 
 	"github.com/tendermint/tendermint/crypto"
-	"github.com/tendermint/tendermint/crypto/ed25519"
+	// "github.com/tendermint/tendermint/crypto/ed25519"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/types"
+	tmtime "github.com/tendermint/tendermint/types/time"
 )
 
 // TODO: type ?
@@ -68,7 +70,7 @@ func (pv *FilePV) GetPubKey() crypto.PubKey {
 // GenFilePV generates a new validator with randomly generated private key
 // and sets the filePath, but does not call Save().
 func GenFilePV(filePath string) *FilePV {
-	privKey := ed25519.GenPrivKey()
+	privKey := secp256k1.GenPrivKey()
 	return &FilePV{
 		Address:  privKey.PubKey().Address(),
 		PubKey:   privKey.PubKey(),
@@ -89,7 +91,7 @@ func LoadFilePV(filePath string) *FilePV {
 	pv := &FilePV{}
 	err = cdc.UnmarshalJSON(pvJSONBytes, &pv)
 	if err != nil {
-		cmn.Exit(cmn.Fmt("Error reading PrivValidator from %v: %v\n", filePath, err))
+		cmn.Exit(fmt.Sprintf("Error reading PrivValidator from %v: %v\n", filePath, err))
 	}
 
 	// overwrite pubkey and address for convenience
@@ -153,7 +155,7 @@ func (pv *FilePV) SignVote(chainID string, vote *types.Vote) error {
 	pv.mtx.Lock()
 	defer pv.mtx.Unlock()
 	if err := pv.signVote(chainID, vote); err != nil {
-		return errors.New(cmn.Fmt("Error signing vote: %v", err))
+		return fmt.Errorf("Error signing vote: %v", err)
 	}
 	return nil
 }
@@ -216,9 +218,6 @@ func (pv *FilePV) signVote(chainID string, vote *types.Vote) error {
 	// Otherwise, return error
 	if sameHRS {
 		if bytes.Equal(signBytes, pv.LastSignBytes) {
-			vote.Signature = pv.LastSignature
-		} else if timestamp, ok := checkVotesOnlyDifferByTimestamp(pv.LastSignBytes, signBytes); ok {
-			vote.Timestamp = timestamp
 			vote.Signature = pv.LastSignature
 		} else {
 			err = fmt.Errorf("Conflicting data")
@@ -309,29 +308,30 @@ func (pv *FilePV) String() string {
 
 // returns the timestamp from the lastSignBytes.
 // returns true if the only difference in the votes is their timestamp.
-func checkVotesOnlyDifferByTimestamp(lastSignBytes, newSignBytes []byte) (time.Time, bool) {
-	var lastVote, newVote types.CanonicalJSONVote
-	if err := cdc.UnmarshalJSON(lastSignBytes, &lastVote); err != nil {
-		panic(fmt.Sprintf("LastSignBytes cannot be unmarshalled into vote: %v", err))
-	}
-	if err := cdc.UnmarshalJSON(newSignBytes, &newVote); err != nil {
-		panic(fmt.Sprintf("signBytes cannot be unmarshalled into vote: %v", err))
-	}
-
-	lastTime, err := time.Parse(types.TimeFormat, lastVote.Timestamp)
-	if err != nil {
-		panic(err)
-	}
-
-	// set the times to the same value and check equality
-	now := types.CanonicalTime(time.Now())
-	lastVote.Timestamp = now
-	newVote.Timestamp = now
-	lastVoteBytes, _ := cdc.MarshalJSON(lastVote)
-	newVoteBytes, _ := cdc.MarshalJSON(newVote)
-
-	return lastTime, bytes.Equal(newVoteBytes, lastVoteBytes)
-}
+//
+//func checkVotesOnlyDifferByTimestamp(lastSignBytes, newSignBytes []byte) (time.Time, bool) {
+//	var lastVote, newVote types.CanonicalJSONVote
+//	if err := cdc.UnmarshalJSON(lastSignBytes, &lastVote); err != nil {
+//		panic(fmt.Sprintf("LastSignBytes cannot be unmarshalled into vote: %v", err))
+//	}
+//	if err := cdc.UnmarshalJSON(newSignBytes, &newVote); err != nil {
+//		panic(fmt.Sprintf("signBytes cannot be unmarshalled into vote: %v", err))
+//	}
+//
+//	lastTime, err := time.Parse(types.TimeFormat, lastVote.Timestamp)
+//	if err != nil {
+//		panic(err)
+//	}
+//
+//	// set the times to the same value and check equality
+//	now := types.CanonicalTime(tmtime.Now())
+//	lastVote.Timestamp = now
+//	newVote.Timestamp = now
+//	lastVoteBytes, _ := cdc.MarshalJSON(lastVote)
+//	newVoteBytes, _ := cdc.MarshalJSON(newVote)
+//
+//	return lastTime, bytes.Equal(newVoteBytes, lastVoteBytes)
+//}
 
 // returns the timestamp from the lastSignBytes.
 // returns true if the only difference in the proposals is their timestamp
@@ -350,7 +350,7 @@ func checkProposalsOnlyDifferByTimestamp(lastSignBytes, newSignBytes []byte) (ti
 	}
 
 	// set the times to the same value and check equality
-	now := types.CanonicalTime(time.Now())
+	now := types.CanonicalTime(tmtime.Now())
 	lastProposal.Timestamp = now
 	newProposal.Timestamp = now
 	lastProposalBytes, _ := cdc.MarshalJSON(lastProposal)

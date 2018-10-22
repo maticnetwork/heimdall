@@ -1,7 +1,7 @@
 package commands
 
 import (
-	"time"
+	"fmt"
 
 	"github.com/spf13/cobra"
 
@@ -10,6 +10,8 @@ import (
 	"github.com/tendermint/tendermint/p2p"
 	"github.com/tendermint/tendermint/privval"
 	"github.com/tendermint/tendermint/types"
+
+	tmtime "github.com/tendermint/tendermint/types/time"
 )
 
 // InitFilesCmd initialises a fresh Tendermint Core instance.
@@ -52,13 +54,14 @@ func initFilesWithConfig(config *cfg.Config) error {
 		logger.Info("Found genesis file", "path", genFile)
 	} else {
 		genDoc := types.GenesisDoc{
-			ChainID:         cmn.Fmt("test-chain-%v", cmn.RandStr(6)),
-			GenesisTime:     time.Now(),
+			ChainID:         fmt.Sprintf("test-chain-%v", cmn.RandStr(6)),
+			GenesisTime:     tmtime.Now(),
 			ConsensusParams: types.DefaultConsensusParams(),
 		}
 		genDoc.Validators = []types.GenesisValidator{{
-			PubKey: pv.GetPubKey(),
-			Power:  10,
+			Address: pv.GetPubKey().Address(),
+			PubKey:  pv.GetPubKey(),
+			Power:   10,
 		}}
 
 		if err := genDoc.SaveAs(genFile); err != nil {
