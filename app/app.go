@@ -87,7 +87,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	//TODO check if correct
 	app.BaseApp.SetTxDecoder(app.txDecoder)
 	// mount the multistore and load the latest state
-	app.MountStoresIAVL(app.keyMain, app.keyCheckpoint, app.keyStake, app.keyStaker)
+	app.MountStoresIAVL(app.keyMain, app.keyCheckpoint, app.keyStaker)
 	err := app.LoadLatestVersion(app.keyMain)
 	if err != nil {
 		cmn.Exit(err.Error())
