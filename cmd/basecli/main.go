@@ -9,15 +9,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/version"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
-	bankcmd "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
-	ibccmd "github.com/cosmos/cosmos-sdk/x/ibc/client/cli"
 	"github.com/spf13/cobra"
 	"github.com/tendermint/tendermint/libs/cli"
 
 	"github.com/maticnetwork/heimdall/app"
-	checkpointcmd "github.com/maticnetwork/heimdall/checkpoint/cli"
 	restCmds "github.com/maticnetwork/heimdall/rest"
-	"github.com/maticnetwork/heimdall/staker/client/cli"
 	"github.com/maticnetwork/heimdall/types"
 	//stakecmd "github.com/maticnetwork/heimdall/staking/client/cli"
 )
@@ -25,8 +21,8 @@ import (
 // rootCmd is the entry point for this binary
 var (
 	rootCmd = &cobra.Command{
-		Use:   "basecli",
-		Short: "Basecoin light-client",
+		Use:   "heimdallcli",
+		Short: "Heimdall light-client",
 	}
 )
 
@@ -50,25 +46,11 @@ func main() {
 	// add query/post commands (custom to binary)
 	rootCmd.AddCommand(
 		client.GetCommands(
-			//stakecmd.GetCmdQueryValidator("stake", cdc),
-			//stakecmd.GetCmdQueryValidators("stake", cdc),
-			//stakecmd.GetCmdQueryDelegation("stake", cdc),
-			//stakecmd.GetCmdQueryDelegations("stake", cdc),
 			authcmd.GetAccountCmd("acc", cdc, types.GetAccountDecoder(cdc)),
 		)...)
 
 	rootCmd.AddCommand(
-		client.PostCommands(
-			bankcmd.SendTxCmd(cdc),
-			ibccmd.IBCTransferCmd(cdc),
-			ibccmd.IBCRelayCmd(cdc),
-			//stakecmd.GetCmdCreateValidator(cdc),
-			//stakecmd.GetCmdEditValidator(cdc),
-			staker.GetCmdCreateMaticValidator(cdc),
-			checkpointcmd.SubmitCheckpointCmd(cdc),
-			//stakecmd.GetCmdDelegate(cdc),
-			//stakecmd.GetCmdUnbond("stake", cdc),
-		)...)
+		client.PostCommands()...)
 
 	// add proxy, version and key info
 	rootCmd.AddCommand(
@@ -82,7 +64,8 @@ func main() {
 	)
 
 	// prepare and add flags
-	executor := cli.PrepareMainCmd(rootCmd, "BC", os.ExpandEnv("$HOME/.basecli"))
+
+	executor := cli.PrepareMainCmd(rootCmd, "HC", os.ExpandEnv("$HOME/.heimdallcli"))
 	err := executor.Execute()
 	if err != nil {
 		// Note: Handle with #870

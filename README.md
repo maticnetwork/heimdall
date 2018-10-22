@@ -7,7 +7,8 @@ Build the main files in cmd/basecli and cmd/basecoind
 
 Run `./basecoind start` in one terminal and `./basecli rest-server` in another
 
-Send checkpoint via a POST request to `http://localhost:1317/checkpoint/submitCheckpoint` with following data
+Send checkpoint via a POST request to `http://localhost:1317/checkpoint/submitCheckpoint` with following data fields
+>>>>>>> master
 
 ```json
 {
