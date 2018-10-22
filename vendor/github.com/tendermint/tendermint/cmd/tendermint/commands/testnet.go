@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -14,8 +15,6 @@ import (
 	"github.com/tendermint/tendermint/p2p"
 	"github.com/tendermint/tendermint/privval"
 	"github.com/tendermint/tendermint/types"
-
-	tmtime "github.com/tendermint/tendermint/types/time"
 )
 
 var (
@@ -77,7 +76,7 @@ func testnetFiles(cmd *cobra.Command, args []string) error {
 	genVals := make([]types.GenesisValidator, nValidators)
 
 	for i := 0; i < nValidators; i++ {
-		nodeDirName := fmt.Sprintf("%s%d", nodeDirPrefix, i)
+		nodeDirName := cmn.Fmt("%s%d", nodeDirPrefix, i)
 		nodeDir := filepath.Join(outputDir, nodeDirName)
 		config.SetRoot(nodeDir)
 
@@ -92,15 +91,14 @@ func testnetFiles(cmd *cobra.Command, args []string) error {
 		pvFile := filepath.Join(nodeDir, config.BaseConfig.PrivValidator)
 		pv := privval.LoadFilePV(pvFile)
 		genVals[i] = types.GenesisValidator{
-			Address: pv.GetPubKey().Address(),
-			PubKey:  pv.GetPubKey(),
-			Power:   1,
-			Name:    nodeDirName,
+			PubKey: pv.GetPubKey(),
+			Power:  1,
+			Name:   nodeDirName,
 		}
 	}
 
 	for i := 0; i < nNonValidators; i++ {
-		nodeDir := filepath.Join(outputDir, fmt.Sprintf("%s%d", nodeDirPrefix, i+nValidators))
+		nodeDir := filepath.Join(outputDir, cmn.Fmt("%s%d", nodeDirPrefix, i+nValidators))
 		config.SetRoot(nodeDir)
 
 		err := os.MkdirAll(filepath.Join(nodeDir, "config"), nodeDirPerm)
@@ -114,14 +112,14 @@ func testnetFiles(cmd *cobra.Command, args []string) error {
 
 	// Generate genesis doc from generated validators
 	genDoc := &types.GenesisDoc{
-		GenesisTime: tmtime.Now(),
+		GenesisTime: time.Now(),
 		ChainID:     "chain-" + cmn.RandStr(6),
 		Validators:  genVals,
 	}
 
 	// Write genesis file.
 	for i := 0; i < nValidators+nNonValidators; i++ {
-		nodeDir := filepath.Join(outputDir, fmt.Sprintf("%s%d", nodeDirPrefix, i))
+		nodeDir := filepath.Join(outputDir, cmn.Fmt("%s%d", nodeDirPrefix, i))
 		if err := genDoc.SaveAs(filepath.Join(nodeDir, config.BaseConfig.Genesis)); err != nil {
 			_ = os.RemoveAll(outputDir)
 			return err
@@ -161,7 +159,7 @@ func hostnameOrIP(i int) string {
 func populatePersistentPeersInConfigAndWriteIt(config *cfg.Config) error {
 	persistentPeers := make([]string, nValidators+nNonValidators)
 	for i := 0; i < nValidators+nNonValidators; i++ {
-		nodeDir := filepath.Join(outputDir, fmt.Sprintf("%s%d", nodeDirPrefix, i))
+		nodeDir := filepath.Join(outputDir, cmn.Fmt("%s%d", nodeDirPrefix, i))
 		config.SetRoot(nodeDir)
 		nodeKey, err := p2p.LoadNodeKey(config.NodeKeyFile())
 		if err != nil {
@@ -172,7 +170,7 @@ func populatePersistentPeersInConfigAndWriteIt(config *cfg.Config) error {
 	persistentPeersList := strings.Join(persistentPeers, ",")
 
 	for i := 0; i < nValidators+nNonValidators; i++ {
-		nodeDir := filepath.Join(outputDir, fmt.Sprintf("%s%d", nodeDirPrefix, i))
+		nodeDir := filepath.Join(outputDir, cmn.Fmt("%s%d", nodeDirPrefix, i))
 		config.SetRoot(nodeDir)
 		config.P2P.PersistentPeers = persistentPeersList
 		config.P2P.AddrBookStrict = false

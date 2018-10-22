@@ -6,7 +6,6 @@ import (
 	"time"
 
 	cmn "github.com/tendermint/tendermint/libs/common"
-	"github.com/tendermint/tendermint/libs/errors"
 )
 
 /* AutoFile usage
@@ -31,10 +30,7 @@ if err != nil {
 }
 */
 
-const (
-	autoFileOpenDuration = 1000 * time.Millisecond
-	autoFilePerms        = os.FileMode(0600)
-)
+const autoFileOpenDuration = 1000 * time.Millisecond
 
 // Automatically closes and re-opens file for writing.
 // This is useful for using a log file with the logrotate tool.
@@ -120,16 +116,9 @@ func (af *AutoFile) Sync() error {
 }
 
 func (af *AutoFile) openFile() error {
-	file, err := os.OpenFile(af.Path, os.O_RDWR|os.O_CREATE|os.O_APPEND, autoFilePerms)
+	file, err := os.OpenFile(af.Path, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0600)
 	if err != nil {
 		return err
-	}
-	fileInfo, err := file.Stat()
-	if err != nil {
-		return err
-	}
-	if fileInfo.Mode() != autoFilePerms {
-		return errors.NewErrPermissionsChanged(file.Name(), fileInfo.Mode(), autoFilePerms)
 	}
 	af.file = file
 	return nil

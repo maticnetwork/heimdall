@@ -7,7 +7,6 @@ package pex
 import (
 	"crypto/sha256"
 	"encoding/binary"
-	"fmt"
 	"math"
 	"net"
 	"sync"
@@ -560,11 +559,11 @@ func (a *addrBook) addToNewBucket(ka *knownAddress, bucketIdx int) {
 func (a *addrBook) addToOldBucket(ka *knownAddress, bucketIdx int) bool {
 	// Sanity check
 	if ka.isNew() {
-		a.Logger.Error(fmt.Sprintf("Cannot add new address to old bucket: %v", ka))
+		a.Logger.Error(cmn.Fmt("Cannot add new address to old bucket: %v", ka))
 		return false
 	}
 	if len(ka.Buckets) != 0 {
-		a.Logger.Error(fmt.Sprintf("Cannot add already old address to another old bucket: %v", ka))
+		a.Logger.Error(cmn.Fmt("Cannot add already old address to another old bucket: %v", ka))
 		return false
 	}
 
@@ -595,7 +594,7 @@ func (a *addrBook) addToOldBucket(ka *knownAddress, bucketIdx int) bool {
 
 func (a *addrBook) removeFromBucket(ka *knownAddress, bucketType byte, bucketIdx int) {
 	if ka.BucketType != bucketType {
-		a.Logger.Error(fmt.Sprintf("Bucket type mismatch: %v", ka))
+		a.Logger.Error(cmn.Fmt("Bucket type mismatch: %v", ka))
 		return
 	}
 	bucket := a.getBucket(bucketType, bucketIdx)
@@ -691,7 +690,7 @@ func (a *addrBook) expireNew(bucketIdx int) {
 	for addrStr, ka := range a.bucketsNew[bucketIdx] {
 		// If an entry is bad, throw it away
 		if ka.isBad() {
-			a.Logger.Info(fmt.Sprintf("expiring bad address %v", addrStr))
+			a.Logger.Info(cmn.Fmt("expiring bad address %v", addrStr))
 			a.removeFromBucket(ka, bucketTypeNew, bucketIdx)
 			return
 		}
@@ -708,11 +707,11 @@ func (a *addrBook) expireNew(bucketIdx int) {
 func (a *addrBook) moveToOld(ka *knownAddress) {
 	// Sanity check
 	if ka.isOld() {
-		a.Logger.Error(fmt.Sprintf("Cannot promote address that is already old %v", ka))
+		a.Logger.Error(cmn.Fmt("Cannot promote address that is already old %v", ka))
 		return
 	}
 	if len(ka.Buckets) == 0 {
-		a.Logger.Error(fmt.Sprintf("Cannot promote address that isn't in any new buckets %v", ka))
+		a.Logger.Error(cmn.Fmt("Cannot promote address that isn't in any new buckets %v", ka))
 		return
 	}
 
@@ -734,7 +733,7 @@ func (a *addrBook) moveToOld(ka *knownAddress) {
 		// Finally, add our ka to old bucket again.
 		added = a.addToOldBucket(ka, oldBucketIdx)
 		if !added {
-			a.Logger.Error(fmt.Sprintf("Could not re-add ka %v to oldBucketIdx %v", ka, oldBucketIdx))
+			a.Logger.Error(cmn.Fmt("Could not re-add ka %v to oldBucketIdx %v", ka, oldBucketIdx))
 		}
 	}
 }

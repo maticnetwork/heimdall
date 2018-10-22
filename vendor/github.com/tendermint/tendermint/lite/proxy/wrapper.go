@@ -4,24 +4,25 @@ import (
 	cmn "github.com/tendermint/tendermint/libs/common"
 
 	"github.com/tendermint/tendermint/lite"
+	certclient "github.com/tendermint/tendermint/lite/client"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
 var _ rpcclient.Client = Wrapper{}
 
-// Wrapper wraps a rpcclient with a Verifier and double-checks any input that is
+// Wrapper wraps a rpcclient with a Certifier and double-checks any input that is
 // provable before passing it along. Allows you to make any rpcclient fully secure.
 type Wrapper struct {
 	rpcclient.Client
-	cert *lite.DynamicVerifier
+	cert *lite.InquiringCertifier
 }
 
-// SecureClient uses a given Verifier to wrap an connection to an untrusted
+// SecureClient uses a given certifier to wrap an connection to an untrusted
 // host and return a cryptographically secure rpc client.
 //
 // If it is wrapping an HTTP rpcclient, it will also wrap the websocket interface
-func SecureClient(c rpcclient.Client, cert *lite.DynamicVerifier) Wrapper {
+func SecureClient(c rpcclient.Client, cert *lite.InquiringCertifier) Wrapper {
 	wrap := Wrapper{c, cert}
 	// TODO: no longer possible as no more such interface exposed....
 	// if we wrap http client, then we can swap out the event switch to filter
@@ -52,11 +53,11 @@ func (w Wrapper) Tx(hash []byte, prove bool) (*ctypes.ResultTx, error) {
 		return res, err
 	}
 	h := int64(res.Height)
-	sh, err := GetCertifiedCommit(h, w.Client, w.cert)
+	check, err := GetCertifiedCommit(h, w.Client, w.cert)
 	if err != nil {
 		return res, err
 	}
-	err = res.Proof.Validate(sh.DataHash)
+	err = res.Proof.Validate(check.Header.DataHash)
 	return res, err
 }
 
@@ -73,12 +74,12 @@ func (w Wrapper) BlockchainInfo(minHeight, maxHeight int64) (*ctypes.ResultBlock
 	// go and verify every blockmeta in the result....
 	for _, meta := range r.BlockMetas {
 		// get a checkpoint to verify from
-		res, err := w.Commit(&meta.Header.Height)
+		c, err := w.Commit(&meta.Header.Height)
 		if err != nil {
 			return nil, err
 		}
-		sh := res.SignedHeader
-		err = ValidateBlockMeta(meta, sh)
+		check := certclient.CommitFromResult(c)
+		err = ValidateBlockMeta(meta, check)
 		if err != nil {
 			return nil, err
 		}
@@ -89,57 +90,41 @@ func (w Wrapper) BlockchainInfo(minHeight, maxHeight int64) (*ctypes.ResultBlock
 
 // Block returns an entire block and verifies all signatures
 func (w Wrapper) Block(height *int64) (*ctypes.ResultBlock, error) {
-	resBlock, err := w.Client.Block(height)
+	r, err := w.Client.Block(height)
 	if err != nil {
 		return nil, err
 	}
 	// get a checkpoint to verify from
-	resCommit, err := w.Commit(height)
+	c, err := w.Commit(height)
 	if err != nil {
 		return nil, err
 	}
-	sh := resCommit.SignedHeader
+	check := certclient.CommitFromResult(c)
 
 	// now verify
-	err = ValidateBlockMeta(resBlock.BlockMeta, sh)
+	err = ValidateBlockMeta(r.BlockMeta, check)
 	if err != nil {
 		return nil, err
 	}
-	err = ValidateBlock(resBlock.Block, sh)
+	err = ValidateBlock(r.Block, check)
 	if err != nil {
 		return nil, err
 	}
-	return resBlock, nil
+	return r, nil
 }
 
 // Commit downloads the Commit and certifies it with the lite.
 //
 // This is the foundation for all other verification in this module
 func (w Wrapper) Commit(height *int64) (*ctypes.ResultCommit, error) {
-	if height == nil {
-		resStatus, err := w.Client.Status()
-		if err != nil {
-			return nil, err
-		}
-		// NOTE: If resStatus.CatchingUp, there is a race
-		// condition where the validator set for the next height
-		// isn't available until some time after the blockstore
-		// has height h on the remote node.  This isn't an issue
-		// once the node has caught up, and a syncing node likely
-		// won't have this issue esp with the implementation we
-		// have here, but we may have to address this at some
-		// point.
-		height = new(int64)
-		*height = resStatus.SyncInfo.LatestBlockHeight
-	}
 	rpcclient.WaitForHeight(w.Client, *height, nil)
-	res, err := w.Client.Commit(height)
+	r, err := w.Client.Commit(height)
 	// if we got it, then certify it
 	if err == nil {
-		sh := res.SignedHeader
-		err = w.cert.Certify(sh)
+		check := certclient.CommitFromResult(r)
+		err = w.cert.Certify(check)
 	}
-	return res, err
+	return r, err
 }
 
 // // WrappedSwitch creates a websocket connection that auto-verifies any info

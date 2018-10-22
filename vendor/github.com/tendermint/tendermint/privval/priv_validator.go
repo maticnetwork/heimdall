@@ -13,7 +13,6 @@ import (
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/types"
-	tmtime "github.com/tendermint/tendermint/types/time"
 )
 
 // TODO: type ?
@@ -91,7 +90,7 @@ func LoadFilePV(filePath string) *FilePV {
 	pv := &FilePV{}
 	err = cdc.UnmarshalJSON(pvJSONBytes, &pv)
 	if err != nil {
-		cmn.Exit(fmt.Sprintf("Error reading PrivValidator from %v: %v\n", filePath, err))
+		cmn.Exit(cmn.Fmt("Error reading PrivValidator from %v: %v\n", filePath, err))
 	}
 
 	// overwrite pubkey and address for convenience
@@ -155,7 +154,7 @@ func (pv *FilePV) SignVote(chainID string, vote *types.Vote) error {
 	pv.mtx.Lock()
 	defer pv.mtx.Unlock()
 	if err := pv.signVote(chainID, vote); err != nil {
-		return fmt.Errorf("Error signing vote: %v", err)
+		return errors.New(cmn.Fmt("Error signing vote: %v", err))
 	}
 	return nil
 }
@@ -308,7 +307,6 @@ func (pv *FilePV) String() string {
 
 // returns the timestamp from the lastSignBytes.
 // returns true if the only difference in the votes is their timestamp.
-//
 //func checkVotesOnlyDifferByTimestamp(lastSignBytes, newSignBytes []byte) (time.Time, bool) {
 //	var lastVote, newVote types.CanonicalJSONVote
 //	if err := cdc.UnmarshalJSON(lastSignBytes, &lastVote); err != nil {
@@ -324,7 +322,7 @@ func (pv *FilePV) String() string {
 //	}
 //
 //	// set the times to the same value and check equality
-//	now := types.CanonicalTime(tmtime.Now())
+//	now := types.CanonicalTime(time.Now())
 //	lastVote.Timestamp = now
 //	newVote.Timestamp = now
 //	lastVoteBytes, _ := cdc.MarshalJSON(lastVote)
@@ -350,7 +348,7 @@ func checkProposalsOnlyDifferByTimestamp(lastSignBytes, newSignBytes []byte) (ti
 	}
 
 	// set the times to the same value and check equality
-	now := types.CanonicalTime(tmtime.Now())
+	now := types.CanonicalTime(time.Now())
 	lastProposal.Timestamp = now
 	newProposal.Timestamp = now
 	lastProposalBytes, _ := cdc.MarshalJSON(lastProposal)

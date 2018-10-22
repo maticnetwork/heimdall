@@ -12,14 +12,8 @@ to ensure garbage collection of removed elements.
 */
 
 import (
-	"fmt"
 	"sync"
 )
-
-// MaxLength is the max allowed number of elements a linked list is
-// allowed to contain.
-// If more elements are pushed to the list it will panic.
-const MaxLength = int(^uint(0) >> 1)
 
 /*
 
@@ -121,42 +115,43 @@ func (e *CElement) Next() *CElement {
 // Nonblocking, may return nil if at the end.
 func (e *CElement) Prev() *CElement {
 	e.mtx.RLock()
-	prev := e.prev
-	e.mtx.RUnlock()
-	return prev
+	defer e.mtx.RUnlock()
+
+	return e.prev
 }
 
 func (e *CElement) Removed() bool {
 	e.mtx.RLock()
-	isRemoved := e.removed
-	e.mtx.RUnlock()
-	return isRemoved
+	defer e.mtx.RUnlock()
+
+	return e.removed
 }
 
 func (e *CElement) DetachNext() {
-	e.mtx.Lock()
-	if !e.removed {
-		e.mtx.Unlock()
+	if !e.Removed() {
 		panic("DetachNext() must be called after Remove(e)")
 	}
+	e.mtx.Lock()
+	defer e.mtx.Unlock()
+
 	e.next = nil
-	e.mtx.Unlock()
 }
 
 func (e *CElement) DetachPrev() {
-	e.mtx.Lock()
-	if !e.removed {
-		e.mtx.Unlock()
+	if !e.Removed() {
 		panic("DetachPrev() must be called after Remove(e)")
 	}
+	e.mtx.Lock()
+	defer e.mtx.Unlock()
+
 	e.prev = nil
-	e.mtx.Unlock()
 }
 
 // NOTE: This function needs to be safe for
 // concurrent goroutines waiting on nextWg.
 func (e *CElement) SetNext(newNext *CElement) {
 	e.mtx.Lock()
+	defer e.mtx.Unlock()
 
 	oldNext := e.next
 	e.next = newNext
@@ -173,13 +168,13 @@ func (e *CElement) SetNext(newNext *CElement) {
 		e.nextWg.Done()
 		close(e.nextWaitCh)
 	}
-	e.mtx.Unlock()
 }
 
 // NOTE: This function needs to be safe for
 // concurrent goroutines waiting on prevWg
 func (e *CElement) SetPrev(newPrev *CElement) {
 	e.mtx.Lock()
+	defer e.mtx.Unlock()
 
 	oldPrev := e.prev
 	e.prev = newPrev
@@ -191,11 +186,11 @@ func (e *CElement) SetPrev(newPrev *CElement) {
 		e.prevWg.Done()
 		close(e.prevWaitCh)
 	}
-	e.mtx.Unlock()
 }
 
 func (e *CElement) SetRemoved() {
 	e.mtx.Lock()
+	defer e.mtx.Unlock()
 
 	e.removed = true
 
@@ -208,7 +203,6 @@ func (e *CElement) SetRemoved() {
 		e.nextWg.Done()
 		close(e.nextWaitCh)
 	}
-	e.mtx.Unlock()
 }
 
 //--------------------------------------------------------------------------------
@@ -216,7 +210,6 @@ func (e *CElement) SetRemoved() {
 // CList represents a linked list.
 // The zero value for CList is an empty list ready to use.
 // Operations are goroutine-safe.
-// Panics if length grows beyond the max.
 type CList struct {
 	mtx    sync.RWMutex
 	wg     *sync.WaitGroup
@@ -224,44 +217,34 @@ type CList struct {
 	head   *CElement // first element
 	tail   *CElement // last element
 	len    int       // list length
-	maxLen int       // max list length
 }
 
 func (l *CList) Init() *CList {
 	l.mtx.Lock()
+	defer l.mtx.Unlock()
 
 	l.wg = waitGroup1()
 	l.waitCh = make(chan struct{})
 	l.head = nil
 	l.tail = nil
 	l.len = 0
-	l.mtx.Unlock()
 	return l
 }
 
-// Return CList with MaxLength. CList will panic if it goes beyond MaxLength.
-func New() *CList { return newWithMax(MaxLength) }
-
-// Return CList with given maxLength.
-// Will panic if list exceeds given maxLength.
-func newWithMax(maxLength int) *CList {
-	l := new(CList)
-	l.maxLen = maxLength
-	return l.Init()
-}
+func New() *CList { return new(CList).Init() }
 
 func (l *CList) Len() int {
 	l.mtx.RLock()
-	len := l.len
-	l.mtx.RUnlock()
-	return len
+	defer l.mtx.RUnlock()
+
+	return l.len
 }
 
 func (l *CList) Front() *CElement {
 	l.mtx.RLock()
-	head := l.head
-	l.mtx.RUnlock()
-	return head
+	defer l.mtx.RUnlock()
+
+	return l.head
 }
 
 func (l *CList) FrontWait() *CElement {
@@ -282,9 +265,9 @@ func (l *CList) FrontWait() *CElement {
 
 func (l *CList) Back() *CElement {
 	l.mtx.RLock()
-	back := l.tail
-	l.mtx.RUnlock()
-	return back
+	defer l.mtx.RUnlock()
+
+	return l.tail
 }
 
 func (l *CList) BackWait() *CElement {
@@ -312,9 +295,9 @@ func (l *CList) WaitChan() <-chan struct{} {
 	return l.waitCh
 }
 
-// Panics if list grows beyond its max length.
 func (l *CList) PushBack(v interface{}) *CElement {
 	l.mtx.Lock()
+	defer l.mtx.Unlock()
 
 	// Construct a new element
 	e := &CElement{
@@ -333,9 +316,6 @@ func (l *CList) PushBack(v interface{}) *CElement {
 		l.wg.Done()
 		close(l.waitCh)
 	}
-	if l.len >= l.maxLen {
-		panic(fmt.Sprintf("clist: maximum length list reached %d", l.maxLen))
-	}
 	l.len++
 
 	// Modify the tail
@@ -347,7 +327,7 @@ func (l *CList) PushBack(v interface{}) *CElement {
 		l.tail.SetNext(e) // This will make e accessible.
 		l.tail = e        // Update the list.
 	}
-	l.mtx.Unlock()
+
 	return e
 }
 
@@ -355,20 +335,18 @@ func (l *CList) PushBack(v interface{}) *CElement {
 // NOTE: As per the contract of CList, removed elements cannot be added back.
 func (l *CList) Remove(e *CElement) interface{} {
 	l.mtx.Lock()
+	defer l.mtx.Unlock()
 
 	prev := e.Prev()
 	next := e.Next()
 
 	if l.head == nil || l.tail == nil {
-		l.mtx.Unlock()
 		panic("Remove(e) on empty CList")
 	}
 	if prev == nil && l.head != e {
-		l.mtx.Unlock()
 		panic("Remove(e) with false head")
 	}
 	if next == nil && l.tail != e {
-		l.mtx.Unlock()
 		panic("Remove(e) with false tail")
 	}
 
@@ -396,7 +374,6 @@ func (l *CList) Remove(e *CElement) interface{} {
 	// Set .Done() on e, otherwise waiters will wait forever.
 	e.SetRemoved()
 
-	l.mtx.Unlock()
 	return e.Value
 }
 

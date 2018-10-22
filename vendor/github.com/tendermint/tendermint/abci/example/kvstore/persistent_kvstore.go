@@ -9,6 +9,7 @@ import (
 
 	"github.com/tendermint/tendermint/abci/example/code"
 	"github.com/tendermint/tendermint/abci/types"
+	cmn "github.com/tendermint/tendermint/libs/common"
 	dbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
 )
@@ -25,7 +26,7 @@ type PersistentKVStoreApplication struct {
 	app *KVStoreApplication
 
 	// validator set
-	ValUpdates []types.ValidatorUpdate
+	ValUpdates []types.Validator
 
 	logger log.Logger
 }
@@ -101,7 +102,7 @@ func (app *PersistentKVStoreApplication) InitChain(req types.RequestInitChain) t
 // Track the block hash and header information
 func (app *PersistentKVStoreApplication) BeginBlock(req types.RequestBeginBlock) types.ResponseBeginBlock {
 	// reset valset changes
-	app.ValUpdates = make([]types.ValidatorUpdate, 0)
+	app.ValUpdates = make([]types.Validator, 0)
 	return types.ResponseBeginBlock{}
 }
 
@@ -113,11 +114,11 @@ func (app *PersistentKVStoreApplication) EndBlock(req types.RequestEndBlock) typ
 //---------------------------------------------
 // update validators
 
-func (app *PersistentKVStoreApplication) Validators() (validators []types.ValidatorUpdate) {
+func (app *PersistentKVStoreApplication) Validators() (validators []types.Validator) {
 	itr := app.app.state.db.Iterator(nil, nil)
 	for ; itr.Valid(); itr.Next() {
 		if isValidatorTx(itr.Key()) {
-			validator := new(types.ValidatorUpdate)
+			validator := new(types.Validator)
 			err := types.ReadMessage(bytes.NewBuffer(itr.Value()), validator)
 			if err != nil {
 				panic(err)
@@ -129,7 +130,7 @@ func (app *PersistentKVStoreApplication) Validators() (validators []types.Valida
 }
 
 func MakeValSetChangeTx(pubkey types.PubKey, power int64) []byte {
-	return []byte(fmt.Sprintf("val:%X/%d", pubkey.Data, power))
+	return []byte(cmn.Fmt("val:%X/%d", pubkey.Data, power))
 }
 
 func isValidatorTx(tx []byte) bool {
@@ -167,11 +168,11 @@ func (app *PersistentKVStoreApplication) execValidatorTx(tx []byte) types.Respon
 	}
 
 	// update
-	return app.updateValidator(types.Ed25519ValidatorUpdate(pubkey, int64(power)))
+	return app.updateValidator(types.Ed25519Validator(pubkey, int64(power)))
 }
 
 // add, update, or remove a validator
-func (app *PersistentKVStoreApplication) updateValidator(v types.ValidatorUpdate) types.ResponseDeliverTx {
+func (app *PersistentKVStoreApplication) updateValidator(v types.Validator) types.ResponseDeliverTx {
 	key := []byte("val:" + string(v.PubKey.Data))
 	if v.Power == 0 {
 		// remove validator

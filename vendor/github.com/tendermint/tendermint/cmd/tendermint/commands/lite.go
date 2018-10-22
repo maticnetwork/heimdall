@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 
 	cmn "github.com/tendermint/tendermint/libs/common"
+
 	"github.com/tendermint/tendermint/lite/proxy"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 )
@@ -65,21 +66,17 @@ func runProxy(cmd *cobra.Command, args []string) error {
 	}
 
 	// First, connect a client
-	logger.Info("Connecting to source HTTP client...")
 	node := rpcclient.NewHTTP(nodeAddr, "/websocket")
 
-	logger.Info("Constructing Verifier...")
-	cert, err := proxy.NewVerifier(chainID, home, node, logger)
+	cert, err := proxy.GetCertifier(chainID, home, nodeAddr)
 	if err != nil {
-		return cmn.ErrorWrap(err, "constructing Verifier")
+		return err
 	}
-	cert.SetLogger(logger)
 	sc := proxy.SecureClient(node, cert)
 
-	logger.Info("Starting proxy...")
 	err = proxy.StartProxy(sc, listenAddr, logger)
 	if err != nil {
-		return cmn.ErrorWrap(err, "starting proxy")
+		return err
 	}
 
 	cmn.TrapSignal(func() {

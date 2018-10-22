@@ -8,14 +8,14 @@ import (
 	"io"
 
 	ethCrypto "github.com/ethereum/go-ethereum/crypto"
-	amino "github.com/tendermint/go-amino"
+	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto"
 )
 
 //-------------------------------------
 const (
-	PrivKeyAminoRoute = "tendermint/PrivKeySecp256k1"
-	PubKeyAminoRoute  = "tendermint/PubKeySecp256k1"
+	Secp256k1PrivKeyAminoRoute = "tendermint/PrivKeySecp256k1"
+	Secp256k1PubKeyAminoRoute  = "tendermint/PubKeySecp256k1"
 )
 
 var cdc = amino.NewCodec()
@@ -23,11 +23,11 @@ var cdc = amino.NewCodec()
 func init() {
 	cdc.RegisterInterface((*crypto.PubKey)(nil), nil)
 	cdc.RegisterConcrete(PubKeySecp256k1{},
-		PubKeyAminoRoute, nil)
+		Secp256k1PubKeyAminoRoute, nil)
 
 	cdc.RegisterInterface((*crypto.PrivKey)(nil), nil)
 	cdc.RegisterConcrete(PrivKeySecp256k1{},
-		PrivKeyAminoRoute, nil)
+		Secp256k1PrivKeyAminoRoute, nil)
 }
 
 //-------------------------------------

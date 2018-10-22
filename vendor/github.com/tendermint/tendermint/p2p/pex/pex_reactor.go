@@ -31,7 +31,8 @@ const (
 	maxMsgSize = maxAddressSize * maxGetSelection
 
 	// ensure we have enough peers
-	defaultEnsurePeersPeriod = 30 * time.Second
+	defaultEnsurePeersPeriod   = 30 * time.Second
+	defaultMinNumOutboundPeers = p2p.DefaultMinNumOutboundPeers
 
 	// Seed/Crawler constants
 
@@ -361,7 +362,7 @@ func (r *PEXReactor) ensurePeersRoutine() {
 func (r *PEXReactor) ensurePeers() {
 	var (
 		out, in, dial = r.Switch.NumPeers()
-		numToDial     = r.Switch.MaxNumOutboundPeers() - (out + dial)
+		numToDial     = defaultMinNumOutboundPeers - (out + dial)
 	)
 	r.Logger.Info(
 		"Ensure peers",
@@ -392,7 +393,10 @@ func (r *PEXReactor) ensurePeers() {
 		if _, selected := toDial[try.ID]; selected {
 			continue
 		}
-		if r.Switch.IsDialingOrExistingAddress(try) {
+		if dialling := r.Switch.IsDialing(try.ID); dialling {
+			continue
+		}
+		if connected := r.Switch.Peers().Has(try.ID); connected {
 			continue
 		}
 		// TODO: consider moving some checks from toDial into here

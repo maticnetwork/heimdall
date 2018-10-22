@@ -61,7 +61,7 @@ func StartHTTPServer(
 			listener,
 			RecoverAndLogHandler(maxBytesHandler{h: handler, n: maxBodyBytes}, logger),
 		)
-		logger.Info("RPC HTTP server stopped", "err", err)
+		logger.Error("RPC HTTP server stopped", "err", err)
 	}()
 	return listener, nil
 }
@@ -102,16 +102,15 @@ func StartHTTPAndTLSServer(
 		listener = netutil.LimitListener(listener, config.MaxOpenConnections)
 	}
 
-	err = http.ServeTLS(
-		listener,
-		RecoverAndLogHandler(maxBytesHandler{h: handler, n: maxBodyBytes}, logger),
-		certFile,
-		keyFile,
-	)
-	if err != nil {
+	go func() {
+		err := http.ServeTLS(
+			listener,
+			RecoverAndLogHandler(maxBytesHandler{h: handler, n: maxBodyBytes}, logger),
+			certFile,
+			keyFile,
+		)
 		logger.Error("RPC HTTPS server stopped", "err", err)
-		return nil, err
-	}
+	}()
 	return listener, nil
 }
 

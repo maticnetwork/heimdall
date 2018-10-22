@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/tendermint/tendermint/types"
-	tmtime "github.com/tendermint/tendermint/types/time"
 )
 
 // database keys
@@ -25,7 +24,7 @@ var (
 // Instead, use state.Copy() or state.NextState(...).
 // NOTE: not goroutine-safe.
 type State struct {
-	// immutable
+	// Immutable
 	ChainID string
 
 	// LastBlockHeight=0 at genesis (ie. block(H=0) does not exist)
@@ -39,7 +38,6 @@ type State struct {
 	// so we can query for historical validator sets.
 	// Note that if s.LastBlockHeight causes a valset change,
 	// we set s.LastHeightValidatorsChanged = s.LastBlockHeight + 1
-	NextValidators              *types.ValidatorSet
 	Validators                  *types.ValidatorSet
 	LastValidators              *types.ValidatorSet
 	LastHeightValidatorsChanged int64
@@ -52,7 +50,7 @@ type State struct {
 	// Merkle root of the results from executing prev block
 	LastResultsHash []byte
 
-	// the latest AppHash we've received from calling abci.Commit()
+	// The latest AppHash we've received from calling abci.Commit()
 	AppHash []byte
 }
 
@@ -66,7 +64,6 @@ func (state State) Copy() State {
 		LastBlockID:      state.LastBlockID,
 		LastBlockTime:    state.LastBlockTime,
 
-		NextValidators:              state.NextValidators.Copy(),
 		Validators:                  state.Validators.Copy(),
 		LastValidators:              state.LastValidators.Copy(),
 		LastHeightValidatorsChanged: state.LastHeightValidatorsChanged,
@@ -96,18 +93,20 @@ func (state State) IsEmpty() bool {
 	return state.Validators == nil // XXX can't compare to Empty
 }
 
+// GetValidators returns the last and current validator sets.
+func (state State) GetValidators() (last *types.ValidatorSet, current *types.ValidatorSet) {
+	return state.LastValidators, state.Validators
+}
+
 //------------------------------------------------------------------------
 // Create a block from the latest state
 
-// MakeBlock builds a block from the current state with the given txs, commit,
-// and evidence. Note it also takes a proposerAddress because the state does not
-// track rounds, and hence doesn't know the correct proposer. TODO: alleviate this!
+// MakeBlock builds a block from the current state with the given txs, commit, and evidence.
 func (state State) MakeBlock(
 	height int64,
 	txs []types.Tx,
 	commit *types.Commit,
 	evidence []types.Evidence,
-	proposerAddress []byte,
 ) (*types.Block, *types.PartSet) {
 
 	// Build base block with block data.
@@ -116,50 +115,15 @@ func (state State) MakeBlock(
 	// Fill rest of header with state data.
 	block.ChainID = state.ChainID
 
-	// Set time
-	if height == 1 {
-		block.Time = tmtime.Now()
-		if block.Time.Before(state.LastBlockTime) {
-			block.Time = state.LastBlockTime // state.LastBlockTime for height == 1 is genesis time
-		}
-	} else {
-		block.Time = MedianTime(commit, state.LastValidators)
-	}
-
 	block.LastBlockID = state.LastBlockID
 	block.TotalTxs = state.LastBlockTotalTx + block.NumTxs
 
 	block.ValidatorsHash = state.Validators.Hash()
-	block.NextValidatorsHash = state.NextValidators.Hash()
 	block.ConsensusHash = state.ConsensusParams.Hash()
 	block.AppHash = state.AppHash
 	block.LastResultsHash = state.LastResultsHash
 
-	// NOTE: we can't use the state.Validators because we don't
-	// IncrementAccum for rounds there.
-	block.ProposerAddress = proposerAddress
-
-	return block, block.MakePartSet(types.BlockPartSizeBytes)
-}
-
-// MedianTime computes a median time for a given Commit (based on Timestamp field of votes messages) and the
-// corresponding validator set. The computed time is always between timestamps of
-// the votes sent by honest processes, i.e., a faulty processes can not arbitrarily increase or decrease the
-// computed value.
-func MedianTime(commit *types.Commit, validators *types.ValidatorSet) time.Time {
-
-	weightedTimes := make([]*tmtime.WeightedTime, len(commit.Precommits))
-	totalVotingPower := int64(0)
-
-	for i, vote := range commit.Precommits {
-		if vote != nil {
-			_, validator := validators.GetByIndex(vote.ValidatorIndex)
-			totalVotingPower += validator.VotingPower
-			weightedTimes[i] = tmtime.NewWeightedTime(vote.Timestamp, validator.VotingPower)
-		}
-	}
-
-	return tmtime.WeightedMedian(weightedTimes, totalVotingPower)
+	return block, block.MakePartSet(state.ConsensusParams.BlockGossip.BlockPartSizeBytes)
 }
 
 //------------------------------------------------------------------------
@@ -219,7 +183,6 @@ func MakeGenesisState(genDoc *types.GenesisDoc) (State, error) {
 		LastBlockID:     types.BlockID{},
 		LastBlockTime:   genDoc.GenesisTime,
 
-		NextValidators:              types.NewValidatorSet(validators).CopyIncrementAccum(1),
 		Validators:                  types.NewValidatorSet(validators),
 		LastValidators:              types.NewValidatorSet(nil),
 		LastHeightValidatorsChanged: 1,

@@ -3,110 +3,90 @@ package errors
 import (
 	"fmt"
 
-	cmn "github.com/tendermint/tendermint/libs/common"
+	"github.com/pkg/errors"
 )
 
-//----------------------------------------
-// Error types
+var (
+	errValidatorsChanged = fmt.Errorf("Validators differ between header and certifier")
+	errCommitNotFound    = fmt.Errorf("Commit not found by provider")
+	errTooMuchChange     = fmt.Errorf("Validators change too much to safely update")
+	errPastTime          = fmt.Errorf("Update older than certifier height")
+	errNoPathFound       = fmt.Errorf("Cannot find a path of validators")
+)
 
-type errCommitNotFound struct{}
-
-func (e errCommitNotFound) Error() string {
-	return "Commit not found by provider"
+// IsCommitNotFoundErr checks whether an error is due to missing data
+func IsCommitNotFoundErr(err error) bool {
+	return err != nil && (errors.Cause(err) == errCommitNotFound)
 }
-
-type errUnexpectedValidators struct {
-	got  []byte
-	want []byte
-}
-
-func (e errUnexpectedValidators) Error() string {
-	return fmt.Sprintf("Validator set is different. Got %X want %X",
-		e.got, e.want)
-}
-
-type errTooMuchChange struct{}
-
-func (e errTooMuchChange) Error() string {
-	return "Insufficient signatures to validate due to valset changes"
-}
-
-type errUnknownValidators struct {
-	chainID string
-	height  int64
-}
-
-func (e errUnknownValidators) Error() string {
-	return fmt.Sprintf("Validators are unknown or missing for chain %s and height %d",
-		e.chainID, e.height)
-}
-
-//----------------------------------------
-// Methods for above error types
-
-//-----------------
-// ErrCommitNotFound
 
 // ErrCommitNotFound indicates that a the requested commit was not found.
 func ErrCommitNotFound() error {
-	return cmn.ErrorWrap(errCommitNotFound{}, "")
+	return errors.WithStack(errCommitNotFound)
 }
 
-func IsErrCommitNotFound(err error) bool {
-	if err_, ok := err.(cmn.Error); ok {
-		_, ok := err_.Data().(errCommitNotFound)
-		return ok
-	}
-	return false
+// IsValidatorsChangedErr checks whether an error is due
+// to a differing validator set.
+func IsValidatorsChangedErr(err error) bool {
+	return err != nil && (errors.Cause(err) == errValidatorsChanged)
 }
 
-//-----------------
-// ErrUnexpectedValidators
-
-// ErrUnexpectedValidators indicates a validator set mismatch.
-func ErrUnexpectedValidators(got, want []byte) error {
-	return cmn.ErrorWrap(errUnexpectedValidators{
-		got:  got,
-		want: want,
-	}, "")
+// ErrValidatorsChanged indicates that the validator set was changed between two commits.
+func ErrValidatorsChanged() error {
+	return errors.WithStack(errValidatorsChanged)
 }
 
-func IsErrUnexpectedValidators(err error) bool {
-	if err_, ok := err.(cmn.Error); ok {
-		_, ok := err_.Data().(errUnexpectedValidators)
-		return ok
-	}
-	return false
+// IsTooMuchChangeErr checks whether an error is due to too much change
+// between these validators sets.
+func IsTooMuchChangeErr(err error) bool {
+	return err != nil && (errors.Cause(err) == errTooMuchChange)
 }
-
-//-----------------
-// ErrTooMuchChange
 
 // ErrTooMuchChange indicates that the underlying validator set was changed by >1/3.
 func ErrTooMuchChange() error {
-	return cmn.ErrorWrap(errTooMuchChange{}, "")
+	return errors.WithStack(errTooMuchChange)
 }
 
-func IsErrTooMuchChange(err error) bool {
-	if err_, ok := err.(cmn.Error); ok {
-		_, ok := err_.Data().(errTooMuchChange)
-		return ok
+// IsPastTimeErr ...
+func IsPastTimeErr(err error) bool {
+	return err != nil && (errors.Cause(err) == errPastTime)
+}
+
+// ErrPastTime ...
+func ErrPastTime() error {
+	return errors.WithStack(errPastTime)
+}
+
+// IsNoPathFoundErr checks whether an error is due to no path of
+// validators in provider from where we are to where we want to be
+func IsNoPathFoundErr(err error) bool {
+	return err != nil && (errors.Cause(err) == errNoPathFound)
+}
+
+// ErrNoPathFound ...
+func ErrNoPathFound() error {
+	return errors.WithStack(errNoPathFound)
+}
+
+//--------------------------------------------
+
+type errHeightMismatch struct {
+	h1, h2 int64
+}
+
+func (e errHeightMismatch) Error() string {
+	return fmt.Sprintf("Blocks don't match - %d vs %d", e.h1, e.h2)
+}
+
+// IsHeightMismatchErr checks whether an error is due to data from different blocks
+func IsHeightMismatchErr(err error) bool {
+	if err == nil {
+		return false
 	}
-	return false
+	_, ok := errors.Cause(err).(errHeightMismatch)
+	return ok
 }
 
-//-----------------
-// ErrUnknownValidators
-
-// ErrUnknownValidators indicates that some validator set was missing or unknown.
-func ErrUnknownValidators(chainID string, height int64) error {
-	return cmn.ErrorWrap(errUnknownValidators{chainID, height}, "")
-}
-
-func IsErrUnknownValidators(err error) bool {
-	if err_, ok := err.(cmn.Error); ok {
-		_, ok := err_.Data().(errUnknownValidators)
-		return ok
-	}
-	return false
+// ErrHeightMismatch returns an mismatch error with stack-trace
+func ErrHeightMismatch(h1, h2 int64) error {
+	return errors.WithStack(errHeightMismatch{h1, h2})
 }

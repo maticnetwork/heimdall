@@ -77,11 +77,11 @@ moniker = "{{ .BaseConfig.Moniker }}"
 # and verifying their commits
 fast_sync = {{ .BaseConfig.FastSync }}
 
-# Database backend: leveldb | memdb | cleveldb
+# Database backend: leveldb | memdb
 db_backend = "{{ .BaseConfig.DBBackend }}"
 
 # Database directory
-db_dir = "{{ js .BaseConfig.DBPath }}"
+db_path = "{{ js .BaseConfig.DBPath }}"
 
 # Output level for logging, including package level options
 log_level = "{{ .BaseConfig.LogLevel }}"
@@ -93,10 +93,6 @@ genesis_file = "{{ js .BaseConfig.Genesis }}"
 
 # Path to the JSON file containing the private key to use as a validator in the consensus protocol
 priv_validator_file = "{{ js .BaseConfig.PrivValidator }}"
-
-# TCP or UNIX socket address for Tendermint to listen on for
-# connections from an external PrivValidator process
-priv_validator_laddr = "{{ .BaseConfig.PrivValidatorListenAddr }}"
 
 # Path to the JSON file containing the private key to use for node authentication in the p2p protocol
 node_key_file = "{{ js .BaseConfig.NodeKey}}"
@@ -128,8 +124,6 @@ grpc_laddr = "{{ .RPC.GRPCListenAddress }}"
 # If you want to accept more significant number than the default, make sure
 # you increase your OS limits.
 # 0 - unlimited.
-# Should be < {ulimit -Sn} - {MaxNumInboundPeers} - {MaxNumOutboundPeers} - {N of wal, db and other open files}
-# 1024 - 40 - 10 - 50 = 924 = ~900
 grpc_max_open_connections = {{ .RPC.GRPCMaxOpenConnections }}
 
 # Activate unsafe RPC commands like /dial_seeds and /unsafe_flush_mempool
@@ -140,8 +134,6 @@ unsafe = {{ .RPC.Unsafe }}
 # If you want to accept more significant number than the default, make sure
 # you increase your OS limits.
 # 0 - unlimited.
-# Should be < {ulimit -Sn} - {MaxNumInboundPeers} - {MaxNumOutboundPeers} - {N of wal, db and other open files}
-# 1024 - 40 - 10 - 50 = 924 = ~900
 max_open_connections = {{ .RPC.MaxOpenConnections }}
 
 ##### peer to peer configuration options #####
@@ -169,17 +161,13 @@ upnp = {{ .P2P.UPNP }}
 addr_book_file = "{{ js .P2P.AddrBook }}"
 
 # Set true for strict address routability rules
-# Set false for private or local networks
 addr_book_strict = {{ .P2P.AddrBookStrict }}
 
 # Time to wait before flushing messages out on the connection, in ms
 flush_throttle_timeout = {{ .P2P.FlushThrottleTimeout }}
 
-# Maximum number of inbound peers
-max_num_inbound_peers = {{ .P2P.MaxNumInboundPeers }}
-
-# Maximum number of outbound peers to connect to, excluding persistent peers
-max_num_outbound_peers = {{ .P2P.MaxNumOutboundPeers }}
+# Maximum number of peers to connect to
+max_num_peers = {{ .P2P.MaxNumPeers }}
 
 # Maximum size of a message packet payload, in bytes
 max_packet_msg_payload_size = {{ .P2P.MaxPacketMsgPayloadSize }}
@@ -251,21 +239,16 @@ peer_query_maj23_sleep_duration = {{ .Consensus.PeerQueryMaj23SleepDuration }}
 #   2) "kv" - the simplest possible indexer, backed by key-value storage (defaults to levelDB; see DBBackend).
 indexer = "{{ .TxIndex.Indexer }}"
 
-# Comma-separated list of tags to index (by default the only tag is "tx.hash")
-#
-# You can also index transactions by height by adding "tx.height" tag here.
+# Comma-separated list of tags to index (by default the only tag is tx hash)
 #
 # It's recommended to index only a subset of tags due to possible memory
 # bloat. This is, of course, depends on the indexer's DB and the volume of
 # transactions.
 index_tags = "{{ .TxIndex.IndexTags }}"
 
-# When set to true, tells indexer to index all tags (predefined tags:
-# "tx.hash", "tx.height" and all tags from DeliverTx responses).
-#
-# Note this may be not desirable (see the comment above). IndexTags has a
-# precedence over IndexAllTags (i.e. when given both, IndexTags will be
-# indexed).
+# When set to true, tells indexer to index all tags. Note this may be not
+# desirable (see the comment above). IndexTags has a precedence over
+# IndexAllTags (i.e. when given both, IndexTags will be indexed).
 index_all_tags = {{ .TxIndex.IndexAllTags }}
 
 ##### instrumentation configuration options #####

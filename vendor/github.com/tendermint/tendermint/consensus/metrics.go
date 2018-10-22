@@ -30,7 +30,7 @@ type Metrics struct {
 	ByzantineValidatorsPower metrics.Gauge
 
 	// Time between this and the last block.
-	BlockIntervalSeconds metrics.Gauge
+	BlockIntervalSeconds metrics.Histogram
 
 	// Number of transactions.
 	NumTxs metrics.Gauge
@@ -85,10 +85,11 @@ func PrometheusMetrics() *Metrics {
 			Help:      "Total power of the byzantine validators.",
 		}, []string{}),
 
-		BlockIntervalSeconds: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+		BlockIntervalSeconds: prometheus.NewHistogramFrom(stdprometheus.HistogramOpts{
 			Subsystem: "consensus",
 			Name:      "block_interval_seconds",
 			Help:      "Time between this and the last block.",
+			Buckets:   []float64{1, 2.5, 5, 10, 60},
 		}, []string{}),
 
 		NumTxs: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
@@ -123,7 +124,7 @@ func NopMetrics() *Metrics {
 		ByzantineValidators:      discard.NewGauge(),
 		ByzantineValidatorsPower: discard.NewGauge(),
 
-		BlockIntervalSeconds: discard.NewGauge(),
+		BlockIntervalSeconds: discard.NewHistogram(),
 
 		NumTxs:         discard.NewGauge(),
 		BlockSizeBytes: discard.NewGauge(),

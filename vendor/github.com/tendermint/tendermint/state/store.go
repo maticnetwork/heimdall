@@ -12,15 +12,15 @@ import (
 //------------------------------------------------------------------------
 
 func calcValidatorsKey(height int64) []byte {
-	return []byte(fmt.Sprintf("validatorsKey:%v", height))
+	return []byte(cmn.Fmt("validatorsKey:%v", height))
 }
 
 func calcConsensusParamsKey(height int64) []byte {
-	return []byte(fmt.Sprintf("consensusParamsKey:%v", height))
+	return []byte(cmn.Fmt("consensusParamsKey:%v", height))
 }
 
 func calcABCIResponsesKey(height int64) []byte {
-	return []byte(fmt.Sprintf("abciResponsesKey:%v", height))
+	return []byte(cmn.Fmt("abciResponsesKey:%v", height))
 }
 
 // LoadStateFromDBOrGenesisFile loads the most recent state from the database,
@@ -71,7 +71,7 @@ func loadState(db dbm.DB, key []byte) (state State) {
 	err := cdc.UnmarshalBinaryBare(buf, &state)
 	if err != nil {
 		// DATA HAS BEEN CORRUPTED OR THE SPEC HAS CHANGED
-		cmn.Exit(fmt.Sprintf(`LoadState: Data has been corrupted or its spec has changed:
+		cmn.Exit(cmn.Fmt(`LoadState: Data has been corrupted or its spec has changed:
                 %v\n`, err))
 	}
 	// TODO: ensure that buf is completely read.
@@ -87,14 +87,7 @@ func SaveState(db dbm.DB, state State) {
 
 func saveState(db dbm.DB, state State, key []byte) {
 	nextHeight := state.LastBlockHeight + 1
-	// If first block, save validators for block 1.
-	if nextHeight == 1 {
-		lastHeightVoteChanged := int64(1) // Due to Tendermint validator set changes being delayed 1 block.
-		saveValidatorsInfo(db, nextHeight, lastHeightVoteChanged, state.Validators)
-	}
-	// Save next validators.
-	saveValidatorsInfo(db, nextHeight+1, state.LastHeightValidatorsChanged, state.NextValidators)
-	// Save next consensus params.
+	saveValidatorsInfo(db, nextHeight, state.LastHeightValidatorsChanged, state.Validators)
 	saveConsensusParamsInfo(db, nextHeight, state.LastHeightConsensusParamsChanged, state.ConsensusParams)
 	db.SetSync(stateKey, state.Bytes())
 }
@@ -144,7 +137,7 @@ func LoadABCIResponses(db dbm.DB, height int64) (*ABCIResponses, error) {
 	err := cdc.UnmarshalBinaryBare(buf, abciResponses)
 	if err != nil {
 		// DATA HAS BEEN CORRUPTED OR THE SPEC HAS CHANGED
-		cmn.Exit(fmt.Sprintf(`LoadABCIResponses: Data has been corrupted or its spec has
+		cmn.Exit(cmn.Fmt(`LoadABCIResponses: Data has been corrupted or its spec has
                 changed: %v\n`, err))
 	}
 	// TODO: ensure that buf is completely read.
@@ -207,7 +200,7 @@ func loadValidatorsInfo(db dbm.DB, height int64) *ValidatorsInfo {
 	err := cdc.UnmarshalBinaryBare(buf, v)
 	if err != nil {
 		// DATA HAS BEEN CORRUPTED OR THE SPEC HAS CHANGED
-		cmn.Exit(fmt.Sprintf(`LoadValidators: Data has been corrupted or its spec has changed:
+		cmn.Exit(cmn.Fmt(`LoadValidators: Data has been corrupted or its spec has changed:
                 %v\n`, err))
 	}
 	// TODO: ensure that buf is completely read.
@@ -278,7 +271,7 @@ func loadConsensusParamsInfo(db dbm.DB, height int64) *ConsensusParamsInfo {
 	err := cdc.UnmarshalBinaryBare(buf, paramsInfo)
 	if err != nil {
 		// DATA HAS BEEN CORRUPTED OR THE SPEC HAS CHANGED
-		cmn.Exit(fmt.Sprintf(`LoadConsensusParams: Data has been corrupted or its spec has changed:
+		cmn.Exit(cmn.Fmt(`LoadConsensusParams: Data has been corrupted or its spec has changed:
                 %v\n`, err))
 	}
 	// TODO: ensure that buf is completely read.

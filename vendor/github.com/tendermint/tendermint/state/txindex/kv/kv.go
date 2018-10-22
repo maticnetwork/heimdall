@@ -89,11 +89,6 @@ func (txi *TxIndex) AddBatch(b *txindex.Batch) error {
 			}
 		}
 
-		// index tx by height
-		if txi.indexAllTags || cmn.StringInSlice(types.TxHeightKey, txi.tagsToIndex) {
-			storeBatch.Set(keyForHeight(result), hash)
-		}
-
 		// index tx by hash
 		rawBytes, err := cdc.MarshalBinaryBare(result)
 		if err != nil {
@@ -117,11 +112,6 @@ func (txi *TxIndex) Index(result *types.TxResult) error {
 		if txi.indexAllTags || cmn.StringInSlice(string(tag.Key), txi.tagsToIndex) {
 			b.Set(keyForTag(tag, result), hash)
 		}
-	}
-
-	// index tx by height
-	if txi.indexAllTags || cmn.StringInSlice(types.TxHeightKey, txi.tagsToIndex) {
-		b.Set(keyForHeight(result), hash)
 	}
 
 	// index tx by hash
@@ -163,6 +153,12 @@ func (txi *TxIndex) Search(q *query.Query) ([]*types.TxResult, error) {
 	// conditions to skip because they're handled before "everything else"
 	skipIndexes := make([]int, 0)
 
+	// if there is a height condition ("tx.height=3"), extract it for faster lookups
+	height, heightIndex := lookForHeight(conditions)
+	if heightIndex >= 0 {
+		skipIndexes = append(skipIndexes, heightIndex)
+	}
+
 	// extract ranges
 	// if both upper and lower bounds exist, it's better to get them in order not
 	// no iterate over kvs that are not within range.
@@ -179,9 +175,6 @@ func (txi *TxIndex) Search(q *query.Query) ([]*types.TxResult, error) {
 			}
 		}
 	}
-
-	// if there is a height condition ("tx.height=3"), extract it
-	height := lookForHeight(conditions)
 
 	// for all other conditions
 	for i, c := range conditions {
@@ -225,13 +218,13 @@ func lookForHash(conditions []query.Condition) (hash []byte, err error, ok bool)
 	return
 }
 
-func lookForHeight(conditions []query.Condition) (height int64) {
-	for _, c := range conditions {
+func lookForHeight(conditions []query.Condition) (height int64, index int) {
+	for i, c := range conditions {
 		if c.Tag == types.TxHeightKey {
-			return c.Operand.(int64)
+			return c.Operand.(int64), i
 		}
 	}
-	return 0
+	return 0, -1
 }
 
 // special map to hold range conditions
@@ -426,10 +419,6 @@ func extractValueFromKey(key []byte) string {
 
 func keyForTag(tag cmn.KVPair, result *types.TxResult) []byte {
 	return []byte(fmt.Sprintf("%s/%s/%d/%d", tag.Key, tag.Value, result.Height, result.Index))
-}
-
-func keyForHeight(result *types.TxResult) []byte {
-	return []byte(fmt.Sprintf("%s/%d/%d/%d", types.TxHeightKey, result.Height, result.Height, result.Index))
 }
 
 ///////////////////////////////////////////////////////////////////////////////

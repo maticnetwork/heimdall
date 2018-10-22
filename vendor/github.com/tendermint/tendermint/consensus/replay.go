@@ -264,15 +264,15 @@ func (h *Handshaker) ReplayBlocks(state sm.State, appHash []byte, appBlockHeight
 	stateBlockHeight := state.LastBlockHeight
 	h.logger.Info("ABCI Replay Blocks", "appHeight", appBlockHeight, "storeHeight", storeBlockHeight, "stateHeight", stateBlockHeight)
 
-	// If appBlockHeight == 0 it means that we are at genesis and hence should send InitChain.
+	// If appBlockHeight == 0 it means that we are at genesis and hence should send InitChain
 	if appBlockHeight == 0 {
-		nextVals := types.TM2PB.ValidatorUpdates(state.NextValidators) // state.Validators would work too.
+		validators := types.TM2PB.Validators(state.Validators)
 		csParams := types.TM2PB.ConsensusParams(h.genDoc.ConsensusParams)
 		req := abci.RequestInitChain{
 			Time:            h.genDoc.GenesisTime,
 			ChainId:         h.genDoc.ChainID,
 			ConsensusParams: csParams,
-			Validators:      nextVals,
+			Validators:      validators,
 			AppStateBytes:   h.genDoc.AppState,
 		}
 		res, err := proxyApp.Consensus().InitChainSync(req)
@@ -280,9 +280,11 @@ func (h *Handshaker) ReplayBlocks(state sm.State, appHash []byte, appBlockHeight
 			return nil, err
 		}
 
-		// If the app returned validators or consensus params, update the state.
+		// if the app returned validators
+		// or consensus params, update the state
+		// with the them
 		if len(res.Validators) > 0 {
-			vals, err := types.PB2TM.ValidatorUpdates(res.Validators)
+			vals, err := types.PB2TM.Validators(res.Validators)
 			if err != nil {
 				return nil, err
 			}
@@ -294,7 +296,7 @@ func (h *Handshaker) ReplayBlocks(state sm.State, appHash []byte, appBlockHeight
 		sm.SaveState(h.stateDB, state)
 	}
 
-	// First handle edge cases and constraints on the storeBlockHeight.
+	// First handle edge cases and constraints on the storeBlockHeight
 	if storeBlockHeight == 0 {
 		return appHash, checkAppHash(state, appHash)
 
@@ -304,11 +306,11 @@ func (h *Handshaker) ReplayBlocks(state sm.State, appHash []byte, appBlockHeight
 
 	} else if storeBlockHeight < stateBlockHeight {
 		// the state should never be ahead of the store (this is under tendermint's control)
-		cmn.PanicSanity(fmt.Sprintf("StateBlockHeight (%d) > StoreBlockHeight (%d)", stateBlockHeight, storeBlockHeight))
+		cmn.PanicSanity(cmn.Fmt("StateBlockHeight (%d) > StoreBlockHeight (%d)", stateBlockHeight, storeBlockHeight))
 
 	} else if storeBlockHeight > stateBlockHeight+1 {
 		// store should be at most one ahead of the state (this is under tendermint's control)
-		cmn.PanicSanity(fmt.Sprintf("StoreBlockHeight (%d) > StateBlockHeight + 1 (%d)", storeBlockHeight, stateBlockHeight+1))
+		cmn.PanicSanity(cmn.Fmt("StoreBlockHeight (%d) > StateBlockHeight + 1 (%d)", storeBlockHeight, stateBlockHeight+1))
 	}
 
 	var err error

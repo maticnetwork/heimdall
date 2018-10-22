@@ -6,7 +6,6 @@ import (
 	"time"
 
 	cmn "github.com/tendermint/tendermint/libs/common"
-	tmtime "github.com/tendermint/tendermint/types/time"
 )
 
 var (
@@ -36,7 +35,7 @@ func NewProposal(height int64, round int, blockPartsHeader PartSetHeader, polRou
 	return &Proposal{
 		Height:           height,
 		Round:            round,
-		Timestamp:        tmtime.Now(),
+		Timestamp:        time.Now().UTC(),
 		BlockPartsHeader: blockPartsHeader,
 		POLRound:         polRound,
 		POLBlockID:       polBlockID,

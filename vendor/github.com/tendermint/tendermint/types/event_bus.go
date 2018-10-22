@@ -71,32 +71,34 @@ func (b *EventBus) Publish(eventType string, eventData TMEventData) error {
 	return nil
 }
 
-func (b *EventBus) PublishEventNewBlock(data EventDataNewBlock) error {
-	return b.Publish(EventNewBlock, data)
+//--- block, tx, and vote events
+
+func (b *EventBus) PublishEventNewBlock(event EventDataNewBlock) error {
+	return b.Publish(EventNewBlock, event)
 }
 
-func (b *EventBus) PublishEventNewBlockHeader(data EventDataNewBlockHeader) error {
-	return b.Publish(EventNewBlockHeader, data)
+func (b *EventBus) PublishEventNewBlockHeader(event EventDataNewBlockHeader) error {
+	return b.Publish(EventNewBlockHeader, event)
 }
 
-func (b *EventBus) PublishEventVote(data EventDataVote) error {
-	return b.Publish(EventVote, data)
+func (b *EventBus) PublishEventVote(event EventDataVote) error {
+	return b.Publish(EventVote, event)
 }
 
 // PublishEventTx publishes tx event with tags from Result. Note it will add
 // predefined tags (EventTypeKey, TxHashKey). Existing tags with the same names
 // will be overwritten.
-func (b *EventBus) PublishEventTx(data EventDataTx) error {
+func (b *EventBus) PublishEventTx(event EventDataTx) error {
 	// no explicit deadline for publishing events
 	ctx := context.Background()
 
 	tags := make(map[string]string)
 
 	// validate and fill tags from tx result
-	for _, tag := range data.Result.Tags {
+	for _, tag := range event.Result.Tags {
 		// basic validation
 		if len(tag.Key) == 0 {
-			b.Logger.Info("Got tag with an empty key (skipping)", "tag", tag, "tx", data.Tx)
+			b.Logger.Info("Got tag with an empty key (skipping)", "tag", tag, "tx", event.Tx)
 			continue
 		}
 		tags[string(tag.Key)] = string(tag.Value)
@@ -107,57 +109,55 @@ func (b *EventBus) PublishEventTx(data EventDataTx) error {
 	tags[EventTypeKey] = EventTx
 
 	logIfTagExists(TxHashKey, tags, b.Logger)
-	tags[TxHashKey] = fmt.Sprintf("%X", data.Tx.Hash())
+	tags[TxHashKey] = fmt.Sprintf("%X", event.Tx.Hash())
 
 	logIfTagExists(TxHeightKey, tags, b.Logger)
-	tags[TxHeightKey] = fmt.Sprintf("%d", data.Height)
+	tags[TxHeightKey] = fmt.Sprintf("%d", event.Height)
 
-	b.pubsub.PublishWithTags(ctx, data, tmpubsub.NewTagMap(tags))
+	b.pubsub.PublishWithTags(ctx, event, tmpubsub.NewTagMap(tags))
 	return nil
 }
 
-func (b *EventBus) PublishEventProposalHeartbeat(data EventDataProposalHeartbeat) error {
-	return b.Publish(EventProposalHeartbeat, data)
+func (b *EventBus) PublishEventProposalHeartbeat(event EventDataProposalHeartbeat) error {
+	return b.Publish(EventProposalHeartbeat, event)
 }
 
-func (b *EventBus) PublishEventNewRoundStep(data EventDataRoundState) error {
-	return b.Publish(EventNewRoundStep, data)
+//--- EventDataRoundState events
+
+func (b *EventBus) PublishEventNewRoundStep(event EventDataRoundState) error {
+	return b.Publish(EventNewRoundStep, event)
 }
 
-func (b *EventBus) PublishEventTimeoutPropose(data EventDataRoundState) error {
-	return b.Publish(EventTimeoutPropose, data)
+func (b *EventBus) PublishEventTimeoutPropose(event EventDataRoundState) error {
+	return b.Publish(EventTimeoutPropose, event)
 }
 
-func (b *EventBus) PublishEventTimeoutWait(data EventDataRoundState) error {
-	return b.Publish(EventTimeoutWait, data)
+func (b *EventBus) PublishEventTimeoutWait(event EventDataRoundState) error {
+	return b.Publish(EventTimeoutWait, event)
 }
 
-func (b *EventBus) PublishEventNewRound(data EventDataRoundState) error {
-	return b.Publish(EventNewRound, data)
+func (b *EventBus) PublishEventNewRound(event EventDataRoundState) error {
+	return b.Publish(EventNewRound, event)
 }
 
-func (b *EventBus) PublishEventCompleteProposal(data EventDataRoundState) error {
-	return b.Publish(EventCompleteProposal, data)
+func (b *EventBus) PublishEventCompleteProposal(event EventDataRoundState) error {
+	return b.Publish(EventCompleteProposal, event)
 }
 
-func (b *EventBus) PublishEventPolka(data EventDataRoundState) error {
-	return b.Publish(EventPolka, data)
+func (b *EventBus) PublishEventPolka(event EventDataRoundState) error {
+	return b.Publish(EventPolka, event)
 }
 
-func (b *EventBus) PublishEventUnlock(data EventDataRoundState) error {
-	return b.Publish(EventUnlock, data)
+func (b *EventBus) PublishEventUnlock(event EventDataRoundState) error {
+	return b.Publish(EventUnlock, event)
 }
 
-func (b *EventBus) PublishEventRelock(data EventDataRoundState) error {
-	return b.Publish(EventRelock, data)
+func (b *EventBus) PublishEventRelock(event EventDataRoundState) error {
+	return b.Publish(EventRelock, event)
 }
 
-func (b *EventBus) PublishEventLock(data EventDataRoundState) error {
-	return b.Publish(EventLock, data)
-}
-
-func (b *EventBus) PublishEventValidatorSetUpdates(data EventDataValidatorSetUpdates) error {
-	return b.Publish(EventValidatorSetUpdates, data)
+func (b *EventBus) PublishEventLock(event EventDataRoundState) error {
+	return b.Publish(EventLock, event)
 }
 
 func logIfTagExists(tag string, tags map[string]string, logger log.Logger) {

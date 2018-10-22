@@ -17,18 +17,25 @@ type AppConns interface {
 	Query() AppConnQuery
 }
 
-func NewAppConns(clientCreator ClientCreator) AppConns {
-	return NewMultiAppConn(clientCreator)
+func NewAppConns(clientCreator ClientCreator, handshaker Handshaker) AppConns {
+	return NewMultiAppConn(clientCreator, handshaker)
 }
 
 //-----------------------------
 // multiAppConn implements AppConns
 
+type Handshaker interface {
+	Handshake(AppConns) error
+}
+
 // a multiAppConn is made of a few appConns (mempool, consensus, query)
-// and manages their underlying abci clients
+// and manages their underlying abci clients, including the handshake
+// which ensures the app and tendermint are synced.
 // TODO: on app restart, clients must reboot together
 type multiAppConn struct {
 	cmn.BaseService
+
+	handshaker Handshaker
 
 	mempoolConn   *appConnMempool
 	consensusConn *appConnConsensus
@@ -38,8 +45,9 @@ type multiAppConn struct {
 }
 
 // Make all necessary abci connections to the application
-func NewMultiAppConn(clientCreator ClientCreator) *multiAppConn {
+func NewMultiAppConn(clientCreator ClientCreator, handshaker Handshaker) *multiAppConn {
 	multiAppConn := &multiAppConn{
+		handshaker:    handshaker,
 		clientCreator: clientCreator,
 	}
 	multiAppConn.BaseService = *cmn.NewBaseService(nil, "multiAppConn", multiAppConn)
@@ -94,6 +102,11 @@ func (app *multiAppConn) OnStart() error {
 		return errors.Wrap(err, "Error starting ABCI client (consensus connection)")
 	}
 	app.consensusConn = NewAppConnConsensus(concli)
+
+	// ensure app is synced to the latest state
+	if app.handshaker != nil {
+		return app.handshaker.Handshake(app)
+	}
 
 	return nil
 }
