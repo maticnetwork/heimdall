@@ -31,7 +31,7 @@
 [[constraint]]
   name = "github.com/tendermint/tendermint"
   source = "github.com/maticnetwork/tendermint"
-  revision = "81df19e68ab1519399fccf0cab81cb75bf9d782e"
+  revision = "8990ea189465d2659a6674a951a593205f6cd562"
 
 [[constraint]]
   name = "github.com/cosmos/cosmos-sdk"
