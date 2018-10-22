@@ -24,6 +24,8 @@
 #   go-tests = true
 #   unused-packages = true
 
+ignored = ["github.com/tendermint/iavl"]
+
 [prune]
   go-tests = true
   unused-packages = true
@@ -31,7 +33,7 @@
 [[constraint]]
   name = "github.com/tendermint/tendermint"
   source = "github.com/maticnetwork/tendermint"
-  revision = "f2846022b0a8b3527b6a4d40d963586136c56732"
+  revision = "755ce3220b94c61b1f21c4f6ef6131f8174cef9e"
 
 [[override]]
   name = "github.com/tendermint/go-amino"
