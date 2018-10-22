@@ -268,12 +268,13 @@
   version = "v1.2.0"
 
 [[projects]]
-  digest = "1:ea40c24cdbacd054a6ae9de03e62c5f252479b96c716375aace5c120d68647c8"
+  digest = "1:c0d19ab64b32ce9fe5cf4ddceba78d5bc9807f0016db6b1183599da3dcc24d10"
   name = "github.com/hashicorp/hcl"
   packages = [
     ".",
     "hcl/ast",
     "hcl/parser",
+    "hcl/printer",
     "hcl/scanner",
     "hcl/strconv",
     "hcl/token",
@@ -542,18 +543,7 @@
   revision = "v0.12.0"
 
 [[projects]]
-  digest = "1:00bbebb0ae0469e96c86698a5e8ba52c6014f836511af3b189e71b78989150d0"
-  name = "github.com/tendermint/iavl"
-  packages = [
-    ".",
-    "sha256truncated",
-  ]
-  pruneopts = "UT"
-  revision = "2de525d09cca7c45c3f43d178817947a6cfa242c"
-  version = "v0.8.1"
-
-[[projects]]
-  digest = "1:9ef6544031048fec760292719816ba455f9a419dd80033c2e60429fe3a1c8a91"
+  digest = "1:edeee3077bca7cecec95767929d1931b39b8445db9c4126472d0bae572f21bde"
   name = "github.com/tendermint/tendermint"
   packages = [
     "abci/client",
@@ -571,8 +561,6 @@
     "crypto/ed25519",
     "crypto/encoding/amino",
     "crypto/merkle",
-    "crypto/multisig",
-    "crypto/multisig/bitarray",
     "crypto/secp256k1",
     "crypto/tmhash",
     "crypto/xsalsa20symmetric",
@@ -584,7 +572,6 @@
     "libs/clist",
     "libs/common",
     "libs/db",
-    "libs/errors",
     "libs/events",
     "libs/flowrate",
     "libs/log",
@@ -593,6 +580,7 @@
     "lite",
     "lite/client",
     "lite/errors",
+    "lite/files",
     "lite/proxy",
     "mempool",
     "node",
@@ -615,24 +603,11 @@
     "state/txindex/kv",
     "state/txindex/null",
     "types",
-    "types/time",
     "version",
   ]
   pruneopts = "UT"
-  revision = "f2846022b0a8b3527b6a4d40d963586136c56732"
+  revision = "755ce3220b94c61b1f21c4f6ef6131f8174cef9e"
   source = "github.com/maticnetwork/tendermint"
-
-[[projects]]
-  digest = "1:f66f7a4940150cc63a6cf4c24adb9752ee9f713f9f43a279a04feb939531f216"
-  name = "github.com/tendermint/tmlibs"
-  packages = [
-    "common",
-    "db",
-    "log",
-  ]
-  pruneopts = "UT"
-  revision = "49596e0a1f48866603813df843c9409fc19805c6"
-  version = "v0.9.0"
 
 [[projects]]
   branch = "master"
@@ -692,14 +667,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:55b7ec6956da99f5320393de3ee9fa790a5106f7eddba5378b51c87e4b299693"
+  digest = "1:d1da39c9bac61327dbef1d8ef9f210425e99fd2924b6fb5f0bc587a193353637"
   name = "golang.org/x/sys"
   packages = [
     "cpu",
     "unix",
   ]
   pruneopts = "UT"
-  revision = "eda9bb28ed513021f3e6a2a361031adc3d8a6301"
+  revision = "8a28ead16f52c8aaeffbf79239b251dfdf6c4f96"
 
 [[projects]]
   digest = "1:a2ab62866c75542dd18d2b069fec854577a20211d7c0ea6ae746072a1dccdd18"
