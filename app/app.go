@@ -10,8 +10,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/bank"
-	"github.com/cosmos/cosmos-sdk/x/ibc"
 	"github.com/ethereum/go-ethereum/rlp"
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
@@ -25,7 +23,7 @@ import (
 )
 
 const (
-	appName = "BasecoinApp"
+	appName = "HeimdallApp"
 )
 
 // BasecoinApp implements an extended ABCI application. It contains a BaseApp,
@@ -38,20 +36,13 @@ type BasecoinApp struct {
 
 	// keys to access the multistore
 	keyMain       *sdk.KVStoreKey
-	keyAccount    *sdk.KVStoreKey
-	keyIBC        *sdk.KVStoreKey
-	keySideBlock  *sdk.KVStoreKey
 	keyCheckpoint *sdk.KVStoreKey
 	keyStake      *sdk.KVStoreKey
 
 	keyStaker *sdk.KVStoreKey
 	// manage getting and setting accounts
-	accountMapper       auth.AccountMapper
-	feeCollectionKeeper auth.FeeCollectionKeeper
-	coinKeeper          bank.Keeper
-	ibcMapper           ibc.Mapper
-	checkpointKeeper    checkpoint.Keeper
-	stakerKeeper        staker.Keeper
+	checkpointKeeper checkpoint.Keeper
+	stakerKeeper     staker.Keeper
 }
 
 // NewBasecoinApp returns a reference to a new BasecoinApp given a logger and
@@ -68,11 +59,7 @@ func NewBasecoinApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		cdc:           cdc,
 		BaseApp:       bam.NewBaseApp(appName, logger, db, auth.DefaultTxDecoder(cdc), baseAppOptions...),
 		keyMain:       sdk.NewKVStoreKey("main"),
-		keyAccount:    sdk.NewKVStoreKey("acc"),
-		keyIBC:        sdk.NewKVStoreKey("ibc"),
-		keySideBlock:  sdk.NewKVStoreKey("sideBlock"),
 		keyCheckpoint: sdk.NewKVStoreKey("checkpoint"),
-		keyStake:      sdk.NewKVStoreKey("stake"),
 		keyStaker:     sdk.NewKVStoreKey("staker"),
 	}
 
@@ -85,18 +72,12 @@ func NewBasecoinApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	//		return &types.AppAccount{}
 	//	},
 	//)
-
-	app.coinKeeper = bank.NewKeeper(app.accountMapper)
-	app.ibcMapper = ibc.NewMapper(app.cdc, app.keyIBC, app.RegisterCodespace(ibc.DefaultCodespace))
 	//TODO change to its own codespace
-	app.checkpointKeeper = checkpoint.NewKeeper(app.cdc, app.keyCheckpoint, app.RegisterCodespace(ibc.DefaultCodespace))
-	app.stakerKeeper = staker.NewKeeper(app.cdc, app.keyStaker, app.RegisterCodespace(ibc.DefaultCodespace))
+	app.checkpointKeeper = checkpoint.NewKeeper(app.cdc, app.keyCheckpoint, app.RegisterCodespace(checkpoint.DefaultCodespace))
+	app.stakerKeeper = staker.NewKeeper(app.cdc, app.keyStaker, app.RegisterCodespace(checkpoint.DefaultCodespace))
 	// register message routes
 	app.Router().
-		AddRoute("bank", bank.NewHandler(app.coinKeeper)).
-		AddRoute("ibc", ibc.NewHandler(app.ibcMapper, app.coinKeeper)).
-		AddRoute("checkpoint", checkpoint.NewHandler(app.checkpointKeeper)).
-		AddRoute("staker", staker.NewHandler(app.stakerKeeper))
+		AddRoute("checkpoint", checkpoint.NewHandler(app.checkpointKeeper))
 	// perform initialization logic
 	app.SetInitChainer(app.initChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
@@ -106,7 +87,7 @@ func NewBasecoinApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	//TODO check if correct
 	app.BaseApp.SetTxDecoder(app.txDecoder)
 	// mount the multistore and load the latest state
-	app.MountStoresIAVL(app.keyMain, app.keyAccount, app.keyIBC, app.keySideBlock, app.keyCheckpoint, app.keyStake, app.keyStaker)
+	app.MountStoresIAVL(app.keyMain, app.keyCheckpoint, app.keyStake, app.keyStaker)
 	err := app.LoadLatestVersion(app.keyMain)
 	if err != nil {
 		cmn.Exit(err.Error())
@@ -124,14 +105,8 @@ func MakeCodec() *wire.Codec {
 
 	wire.RegisterCrypto(cdc)
 	sdk.RegisterWire(cdc)
-	bank.RegisterWire(cdc)
-	ibc.RegisterWire(cdc)
-	auth.RegisterWire(cdc)
 	checkpoint.RegisterWire(cdc)
-	staker.RegisterWire(cdc)
 	// register custom type
-
-	//cdc.RegisterConcrete(&types.AppAccount{}, "basecoin/Account", nil)
 
 	cdc.Seal()
 
@@ -249,26 +224,6 @@ func (app *BasecoinApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 // various parts of the application's state and set of validators. An error is
 // returned if any step getting the state or set of validators fails.
 func (app *BasecoinApp) ExportAppStateAndValidators() (appState json.RawMessage, validators []tmtypes.GenesisValidator, err error) {
-	//ctx := app.NewContext(true, abci.Header{})
-	//accounts := []*types.GenesisAccount{}
-	//
-	//appendAccountsFn := func(acc auth.Account) bool {
-	//	account := &types.GenesisAccount{
-	//		Address: acc.GetAddress(),
-	//		Coins:   acc.GetCoins(),
-	//	}
-	//
-	//	accounts = append(accounts, account)
-	//	return false
-	//}
-	//
-	//app.accountMapper.IterateAccounts(ctx, appendAccountsFn)
-	//
-	//genState := types.GenesisState{Accounts: accounts}
-	//appState, err = wire.MarshalJSONIndent(app.cdc, genState)
-	//if err != nil {
-	//	return nil, nil, err
-	//}
 
 	return appState, validators, err
 }
