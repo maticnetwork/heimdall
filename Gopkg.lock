@@ -56,7 +56,7 @@
   revision = "d4cc87b860166d00d6b5b9e0d3b3d71d6088d4d4"
 
 [[projects]]
-  digest = "1:1808a9c52a5cb844937c559abae49d92e94c817b738863bfd51cb357683e35a6"
+  digest = "1:24a618840cc8c4619dbcc49210f6b5bb69307c19f39b026b1356ee4fc2ab1b42"
   name = "github.com/cosmos/cosmos-sdk"
   packages = [
     "baseapp",
@@ -65,13 +65,11 @@
     "client/keys",
     "client/rpc",
     "client/tx",
-    "client/utils",
     "crypto",
     "crypto/keys",
     "crypto/keys/bcrypt",
     "crypto/keys/bip39",
     "crypto/keys/hd",
-    "examples/basecoin/types",
     "server",
     "server/config",
     "store",
@@ -84,13 +82,11 @@
     "x/auth/client/rest",
     "x/bank",
     "x/bank/client",
-    "x/bank/client/cli",
     "x/bank/client/rest",
     "x/gov",
     "x/gov/client/rest",
     "x/gov/tags",
     "x/ibc",
-    "x/ibc/client/cli",
     "x/ibc/client/rest",
     "x/mock",
     "x/params",
@@ -539,12 +535,11 @@
   revision = "d8387025d2b9d158cf4efb07e7ebf814bcce2057"
 
 [[projects]]
-  digest = "1:e9113641c839c21d8eaeb2c907c7276af1eddeed988df8322168c56b7e06e0e1"
+  digest = "1:2c971a45c89ca2ccc735af50919cdee05fbdc54d4bf50625073693300e31ead8"
   name = "github.com/tendermint/go-amino"
   packages = ["."]
   pruneopts = "UT"
-  revision = "2106ca61d91029c931fd54968c2bb02dc96b1412"
-  version = "0.10.1"
+  revision = "v0.12.0"
 
 [[projects]]
   digest = "1:00bbebb0ae0469e96c86698a5e8ba52c6014f836511af3b189e71b78989150d0"
@@ -558,7 +553,7 @@
   version = "v0.8.1"
 
 [[projects]]
-  digest = "1:4f15e95fe3888cc75dd34f407d6394cbc7fd3ff24920851b92b295f6a8b556e6"
+  digest = "1:9ef6544031048fec760292719816ba455f9a419dd80033c2e60429fe3a1c8a91"
   name = "github.com/tendermint/tendermint"
   packages = [
     "abci/client",
@@ -576,6 +571,8 @@
     "crypto/ed25519",
     "crypto/encoding/amino",
     "crypto/merkle",
+    "crypto/multisig",
+    "crypto/multisig/bitarray",
     "crypto/secp256k1",
     "crypto/tmhash",
     "crypto/xsalsa20symmetric",
@@ -587,6 +584,7 @@
     "libs/clist",
     "libs/common",
     "libs/db",
+    "libs/errors",
     "libs/events",
     "libs/flowrate",
     "libs/log",
@@ -595,7 +593,6 @@
     "lite",
     "lite/client",
     "lite/errors",
-    "lite/files",
     "lite/proxy",
     "mempool",
     "node",
@@ -618,10 +615,11 @@
     "state/txindex/kv",
     "state/txindex/null",
     "types",
+    "types/time",
     "version",
   ]
   pruneopts = "UT"
-  revision = "81df19e68ab1519399fccf0cab81cb75bf9d782e"
+  revision = "f2846022b0a8b3527b6a4d40d963586136c56732"
   source = "github.com/maticnetwork/tendermint"
 
 [[projects]]
@@ -794,9 +792,7 @@
     "github.com/cosmos/cosmos-sdk/client/keys",
     "github.com/cosmos/cosmos-sdk/client/rpc",
     "github.com/cosmos/cosmos-sdk/client/tx",
-    "github.com/cosmos/cosmos-sdk/client/utils",
     "github.com/cosmos/cosmos-sdk/crypto/keys",
-    "github.com/cosmos/cosmos-sdk/examples/basecoin/types",
     "github.com/cosmos/cosmos-sdk/server",
     "github.com/cosmos/cosmos-sdk/types",
     "github.com/cosmos/cosmos-sdk/version",
@@ -805,12 +801,8 @@
     "github.com/cosmos/cosmos-sdk/x/auth/client/cli",
     "github.com/cosmos/cosmos-sdk/x/auth/client/context",
     "github.com/cosmos/cosmos-sdk/x/auth/client/rest",
-    "github.com/cosmos/cosmos-sdk/x/bank",
-    "github.com/cosmos/cosmos-sdk/x/bank/client/cli",
     "github.com/cosmos/cosmos-sdk/x/bank/client/rest",
     "github.com/cosmos/cosmos-sdk/x/gov/client/rest",
-    "github.com/cosmos/cosmos-sdk/x/ibc",
-    "github.com/cosmos/cosmos-sdk/x/ibc/client/cli",
     "github.com/cosmos/cosmos-sdk/x/ibc/client/rest",
     "github.com/cosmos/cosmos-sdk/x/slashing/client/rest",
     "github.com/cosmos/cosmos-sdk/x/stake",
@@ -828,11 +820,9 @@
     "github.com/gorilla/mux",
     "github.com/spf13/cobra",
     "github.com/spf13/viper",
-    "github.com/stretchr/testify/require",
     "github.com/tendermint/go-amino",
     "github.com/tendermint/tendermint/abci/types",
     "github.com/tendermint/tendermint/crypto",
-    "github.com/tendermint/tendermint/crypto/ed25519",
     "github.com/tendermint/tendermint/crypto/secp256k1",
     "github.com/tendermint/tendermint/libs/cli",
     "github.com/tendermint/tendermint/libs/common",
