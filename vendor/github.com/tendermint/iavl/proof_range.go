@@ -254,7 +254,7 @@ func (t *Tree) getRangeProof(keyStart, keyEnd []byte, limit int) (proof *RangePr
 		err = nil
 	}
 	values = append(values, left.value)
-	var leaves = []proofLeafNode{proofLeafNode{
+	var leaves = []proofLeafNode{{
 		Key:       left.key,
 		ValueHash: sha256truncated.Hash(left.value),
 		Version:   left.version,

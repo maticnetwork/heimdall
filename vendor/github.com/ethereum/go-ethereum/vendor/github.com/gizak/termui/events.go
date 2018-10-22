@@ -224,7 +224,7 @@ func findMatch(mux map[string]func(Event), path string) string {
 
 // Remove all existing defined Handlers from the map
 func (es *EvtStream) ResetHandlers() {
-	for Path, _ := range es.Handlers {
+	for Path := range es.Handlers {
 		delete(es.Handlers, Path)
 	}
 	return

@@ -76,7 +76,7 @@ func setInterval(c *Context) int {
 	}
 	go func(id float64) {
 		ticker := time.NewTicker(time.Duration(timeout) * time.Millisecond)
-		for _ = range ticker.C {
+		for range ticker.C {
 			c.Lock()
 			// check if duktape context exists
 			if c.duk_context == nil {

@@ -46,7 +46,7 @@ func (self *_runtime) cmpl_call_nodeFunction(function *_object, stash *_fnStash,
 		stash.arguments = arguments
 		// strict = false
 		self.scope.lexical.setValue("arguments", toValue_object(arguments), false)
-		for index, _ := range argumentList {
+		for index := range argumentList {
 			if index < len(node.parameterList) {
 				continue
 			}

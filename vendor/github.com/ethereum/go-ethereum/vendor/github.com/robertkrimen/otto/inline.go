@@ -33,7 +33,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -56,7 +56,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -79,7 +79,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -102,7 +102,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -125,7 +125,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -148,7 +148,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -165,49 +165,49 @@ func _newContext(runtime *_runtime) {
 			},
 		}
 		runtime.global.ObjectPrototype.property = map[string]_property{
-			"valueOf": _property{
+			"valueOf": {
 				mode: 0101,
 				value: Value{
 					kind:  valueObject,
 					value: valueOf_function,
 				},
 			},
-			"toString": _property{
+			"toString": {
 				mode: 0101,
 				value: Value{
 					kind:  valueObject,
 					value: toString_function,
 				},
 			},
-			"toLocaleString": _property{
+			"toLocaleString": {
 				mode: 0101,
 				value: Value{
 					kind:  valueObject,
 					value: toLocaleString_function,
 				},
 			},
-			"hasOwnProperty": _property{
+			"hasOwnProperty": {
 				mode: 0101,
 				value: Value{
 					kind:  valueObject,
 					value: hasOwnProperty_function,
 				},
 			},
-			"isPrototypeOf": _property{
+			"isPrototypeOf": {
 				mode: 0101,
 				value: Value{
 					kind:  valueObject,
 					value: isPrototypeOf_function,
 				},
 			},
-			"propertyIsEnumerable": _property{
+			"propertyIsEnumerable": {
 				mode: 0101,
 				value: Value{
 					kind:  valueObject,
 					value: propertyIsEnumerable_function,
 				},
 			},
-			"constructor": _property{
+			"constructor": {
 				mode:  0101,
 				value: Value{},
 			},
@@ -230,7 +230,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -253,7 +253,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -276,7 +276,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -299,7 +299,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -316,39 +316,39 @@ func _newContext(runtime *_runtime) {
 			},
 		}
 		runtime.global.FunctionPrototype.property = map[string]_property{
-			"toString": _property{
+			"toString": {
 				mode: 0101,
 				value: Value{
 					kind:  valueObject,
 					value: toString_function,
 				},
 			},
-			"apply": _property{
+			"apply": {
 				mode: 0101,
 				value: Value{
 					kind:  valueObject,
 					value: apply_function,
 				},
 			},
-			"call": _property{
+			"call": {
 				mode: 0101,
 				value: Value{
 					kind:  valueObject,
 					value: call_function,
 				},
 			},
-			"bind": _property{
+			"bind": {
 				mode: 0101,
 				value: Value{
 					kind:  valueObject,
 					value: bind_function,
 				},
 			},
-			"constructor": _property{
+			"constructor": {
 				mode:  0101,
 				value: Value{},
 			},
-			"length": _property{
+			"length": {
 				mode: 0,
 				value: Value{
 					kind:  valueNumber,
@@ -373,7 +373,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -396,7 +396,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -419,7 +419,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -442,7 +442,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -465,7 +465,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -488,7 +488,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -511,7 +511,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -534,7 +534,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -557,7 +557,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -580,7 +580,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -603,7 +603,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -626,7 +626,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -649,7 +649,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -677,105 +677,105 @@ func _newContext(runtime *_runtime) {
 				construct: builtinNewObject,
 			},
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
 						value: 1,
 					},
 				},
-				"prototype": _property{
+				"prototype": {
 					mode: 0,
 					value: Value{
 						kind:  valueObject,
 						value: runtime.global.ObjectPrototype,
 					},
 				},
-				"getPrototypeOf": _property{
+				"getPrototypeOf": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: getPrototypeOf_function,
 					},
 				},
-				"getOwnPropertyDescriptor": _property{
+				"getOwnPropertyDescriptor": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: getOwnPropertyDescriptor_function,
 					},
 				},
-				"defineProperty": _property{
+				"defineProperty": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: defineProperty_function,
 					},
 				},
-				"defineProperties": _property{
+				"defineProperties": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: defineProperties_function,
 					},
 				},
-				"create": _property{
+				"create": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: create_function,
 					},
 				},
-				"isExtensible": _property{
+				"isExtensible": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: isExtensible_function,
 					},
 				},
-				"preventExtensions": _property{
+				"preventExtensions": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: preventExtensions_function,
 					},
 				},
-				"isSealed": _property{
+				"isSealed": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: isSealed_function,
 					},
 				},
-				"seal": _property{
+				"seal": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: seal_function,
 					},
 				},
-				"isFrozen": _property{
+				"isFrozen": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: isFrozen_function,
 					},
 				},
-				"freeze": _property{
+				"freeze": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: freeze_function,
 					},
 				},
-				"keys": _property{
+				"keys": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: keys_function,
 					},
 				},
-				"getOwnPropertyNames": _property{
+				"getOwnPropertyNames": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
@@ -823,14 +823,14 @@ func _newContext(runtime *_runtime) {
 				construct: builtinNewFunction,
 			},
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
 						value: 1,
 					},
 				},
-				"prototype": _property{
+				"prototype": {
 					mode: 0,
 					value: Value{
 						kind:  valueObject,
@@ -861,7 +861,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -884,7 +884,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -907,7 +907,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -930,7 +930,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -953,7 +953,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -976,7 +976,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -999,7 +999,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -1022,7 +1022,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -1045,7 +1045,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -1068,7 +1068,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -1091,7 +1091,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -1114,7 +1114,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -1137,7 +1137,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -1160,7 +1160,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -1183,7 +1183,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -1206,7 +1206,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -1229,7 +1229,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -1252,7 +1252,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -1275,7 +1275,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -1298,7 +1298,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -1321,7 +1321,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -1344,7 +1344,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -1368,154 +1368,154 @@ func _newContext(runtime *_runtime) {
 			extensible:  true,
 			value:       nil,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0100,
 					value: Value{
 						kind:  valueNumber,
 						value: uint32(0),
 					},
 				},
-				"toString": _property{
+				"toString": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: toString_function,
 					},
 				},
-				"toLocaleString": _property{
+				"toLocaleString": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: toLocaleString_function,
 					},
 				},
-				"concat": _property{
+				"concat": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: concat_function,
 					},
 				},
-				"join": _property{
+				"join": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: join_function,
 					},
 				},
-				"splice": _property{
+				"splice": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: splice_function,
 					},
 				},
-				"shift": _property{
+				"shift": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: shift_function,
 					},
 				},
-				"pop": _property{
+				"pop": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: pop_function,
 					},
 				},
-				"push": _property{
+				"push": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: push_function,
 					},
 				},
-				"slice": _property{
+				"slice": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: slice_function,
 					},
 				},
-				"unshift": _property{
+				"unshift": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: unshift_function,
 					},
 				},
-				"reverse": _property{
+				"reverse": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: reverse_function,
 					},
 				},
-				"sort": _property{
+				"sort": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: sort_function,
 					},
 				},
-				"indexOf": _property{
+				"indexOf": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: indexOf_function,
 					},
 				},
-				"lastIndexOf": _property{
+				"lastIndexOf": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: lastIndexOf_function,
 					},
 				},
-				"every": _property{
+				"every": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: every_function,
 					},
 				},
-				"some": _property{
+				"some": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: some_function,
 					},
 				},
-				"forEach": _property{
+				"forEach": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: forEach_function,
 					},
 				},
-				"map": _property{
+				"map": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: map_function,
 					},
 				},
-				"filter": _property{
+				"filter": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: filter_function,
 					},
 				},
-				"reduce": _property{
+				"reduce": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: reduce_function,
 					},
 				},
-				"reduceRight": _property{
+				"reduceRight": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
@@ -1560,21 +1560,21 @@ func _newContext(runtime *_runtime) {
 				construct: builtinNewArray,
 			},
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
 						value: 1,
 					},
 				},
-				"prototype": _property{
+				"prototype": {
 					mode: 0,
 					value: Value{
 						kind:  valueObject,
 						value: runtime.global.ArrayPrototype,
 					},
 				},
-				"isArray": _property{
+				"isArray": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
@@ -1605,7 +1605,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -1628,7 +1628,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -1651,7 +1651,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -1674,7 +1674,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -1697,7 +1697,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -1720,7 +1720,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -1743,7 +1743,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -1766,7 +1766,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -1789,7 +1789,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -1812,7 +1812,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -1835,7 +1835,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -1858,7 +1858,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -1881,7 +1881,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -1904,7 +1904,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -1927,7 +1927,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -1950,7 +1950,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -1973,7 +1973,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -1996,7 +1996,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -2019,7 +2019,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -2042,7 +2042,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -2065,7 +2065,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -2088,7 +2088,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -2111,7 +2111,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -2135,161 +2135,161 @@ func _newContext(runtime *_runtime) {
 			extensible:  true,
 			value:       prototypeValueString,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
 						value: int(0),
 					},
 				},
-				"toString": _property{
+				"toString": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: toString_function,
 					},
 				},
-				"valueOf": _property{
+				"valueOf": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: valueOf_function,
 					},
 				},
-				"charAt": _property{
+				"charAt": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: charAt_function,
 					},
 				},
-				"charCodeAt": _property{
+				"charCodeAt": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: charCodeAt_function,
 					},
 				},
-				"concat": _property{
+				"concat": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: concat_function,
 					},
 				},
-				"indexOf": _property{
+				"indexOf": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: indexOf_function,
 					},
 				},
-				"lastIndexOf": _property{
+				"lastIndexOf": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: lastIndexOf_function,
 					},
 				},
-				"match": _property{
+				"match": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: match_function,
 					},
 				},
-				"replace": _property{
+				"replace": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: replace_function,
 					},
 				},
-				"search": _property{
+				"search": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: search_function,
 					},
 				},
-				"split": _property{
+				"split": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: split_function,
 					},
 				},
-				"slice": _property{
+				"slice": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: slice_function,
 					},
 				},
-				"substring": _property{
+				"substring": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: substring_function,
 					},
 				},
-				"toLowerCase": _property{
+				"toLowerCase": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: toLowerCase_function,
 					},
 				},
-				"toUpperCase": _property{
+				"toUpperCase": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: toUpperCase_function,
 					},
 				},
-				"substr": _property{
+				"substr": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: substr_function,
 					},
 				},
-				"trim": _property{
+				"trim": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: trim_function,
 					},
 				},
-				"trimLeft": _property{
+				"trimLeft": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: trimLeft_function,
 					},
 				},
-				"trimRight": _property{
+				"trimRight": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: trimRight_function,
 					},
 				},
-				"localeCompare": _property{
+				"localeCompare": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: localeCompare_function,
 					},
 				},
-				"toLocaleLowerCase": _property{
+				"toLocaleLowerCase": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: toLocaleLowerCase_function,
 					},
 				},
-				"toLocaleUpperCase": _property{
+				"toLocaleUpperCase": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
@@ -2335,21 +2335,21 @@ func _newContext(runtime *_runtime) {
 				construct: builtinNewString,
 			},
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
 						value: 1,
 					},
 				},
-				"prototype": _property{
+				"prototype": {
 					mode: 0,
 					value: Value{
 						kind:  valueObject,
 						value: runtime.global.StringPrototype,
 					},
 				},
-				"fromCharCode": _property{
+				"fromCharCode": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
@@ -2380,7 +2380,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -2403,7 +2403,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -2427,14 +2427,14 @@ func _newContext(runtime *_runtime) {
 			extensible:  true,
 			value:       prototypeValueBoolean,
 			property: map[string]_property{
-				"toString": _property{
+				"toString": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: toString_function,
 					},
 				},
-				"valueOf": _property{
+				"valueOf": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
@@ -2459,14 +2459,14 @@ func _newContext(runtime *_runtime) {
 				construct: builtinNewBoolean,
 			},
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
 						value: 1,
 					},
 				},
-				"prototype": _property{
+				"prototype": {
 					mode: 0,
 					value: Value{
 						kind:  valueObject,
@@ -2496,7 +2496,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -2519,7 +2519,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -2542,7 +2542,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -2565,7 +2565,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -2588,7 +2588,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -2611,7 +2611,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -2635,42 +2635,42 @@ func _newContext(runtime *_runtime) {
 			extensible:  true,
 			value:       prototypeValueNumber,
 			property: map[string]_property{
-				"toString": _property{
+				"toString": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: toString_function,
 					},
 				},
-				"valueOf": _property{
+				"valueOf": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: valueOf_function,
 					},
 				},
-				"toFixed": _property{
+				"toFixed": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: toFixed_function,
 					},
 				},
-				"toExponential": _property{
+				"toExponential": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: toExponential_function,
 					},
 				},
-				"toPrecision": _property{
+				"toPrecision": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: toPrecision_function,
 					},
 				},
-				"toLocaleString": _property{
+				"toLocaleString": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
@@ -2699,49 +2699,49 @@ func _newContext(runtime *_runtime) {
 				construct: builtinNewNumber,
 			},
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
 						value: 1,
 					},
 				},
-				"prototype": _property{
+				"prototype": {
 					mode: 0,
 					value: Value{
 						kind:  valueObject,
 						value: runtime.global.NumberPrototype,
 					},
 				},
-				"MAX_VALUE": _property{
+				"MAX_VALUE": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
 						value: math.MaxFloat64,
 					},
 				},
-				"MIN_VALUE": _property{
+				"MIN_VALUE": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
 						value: math.SmallestNonzeroFloat64,
 					},
 				},
-				"NaN": _property{
+				"NaN": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
 						value: math.NaN(),
 					},
 				},
-				"NEGATIVE_INFINITY": _property{
+				"NEGATIVE_INFINITY": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
 						value: math.Inf(-1),
 					},
 				},
-				"POSITIVE_INFINITY": _property{
+				"POSITIVE_INFINITY": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -2776,7 +2776,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -2799,7 +2799,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -2822,7 +2822,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -2845,7 +2845,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -2868,7 +2868,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -2891,7 +2891,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -2914,7 +2914,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -2937,7 +2937,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -2960,7 +2960,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -2983,7 +2983,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -3006,7 +3006,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -3029,7 +3029,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -3052,7 +3052,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -3075,7 +3075,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -3098,7 +3098,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -3121,7 +3121,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -3144,7 +3144,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -3167,7 +3167,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -3190,182 +3190,182 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.ObjectPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"abs": _property{
+				"abs": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: abs_function,
 					},
 				},
-				"acos": _property{
+				"acos": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: acos_function,
 					},
 				},
-				"asin": _property{
+				"asin": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: asin_function,
 					},
 				},
-				"atan": _property{
+				"atan": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: atan_function,
 					},
 				},
-				"atan2": _property{
+				"atan2": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: atan2_function,
 					},
 				},
-				"ceil": _property{
+				"ceil": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: ceil_function,
 					},
 				},
-				"cos": _property{
+				"cos": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: cos_function,
 					},
 				},
-				"exp": _property{
+				"exp": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: exp_function,
 					},
 				},
-				"floor": _property{
+				"floor": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: floor_function,
 					},
 				},
-				"log": _property{
+				"log": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: log_function,
 					},
 				},
-				"max": _property{
+				"max": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: max_function,
 					},
 				},
-				"min": _property{
+				"min": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: min_function,
 					},
 				},
-				"pow": _property{
+				"pow": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: pow_function,
 					},
 				},
-				"random": _property{
+				"random": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: random_function,
 					},
 				},
-				"round": _property{
+				"round": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: round_function,
 					},
 				},
-				"sin": _property{
+				"sin": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: sin_function,
 					},
 				},
-				"sqrt": _property{
+				"sqrt": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: sqrt_function,
 					},
 				},
-				"tan": _property{
+				"tan": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: tan_function,
 					},
 				},
-				"E": _property{
+				"E": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
 						value: math.E,
 					},
 				},
-				"LN10": _property{
+				"LN10": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
 						value: math.Ln10,
 					},
 				},
-				"LN2": _property{
+				"LN2": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
 						value: math.Ln2,
 					},
 				},
-				"LOG2E": _property{
+				"LOG2E": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
 						value: math.Log2E,
 					},
 				},
-				"LOG10E": _property{
+				"LOG10E": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
 						value: math.Log10E,
 					},
 				},
-				"PI": _property{
+				"PI": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
 						value: math.Pi,
 					},
 				},
-				"SQRT1_2": _property{
+				"SQRT1_2": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
 						value: sqrt1_2,
 					},
 				},
-				"SQRT2": _property{
+				"SQRT2": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -3411,7 +3411,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -3434,7 +3434,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -3457,7 +3457,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -3480,7 +3480,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -3503,7 +3503,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -3526,7 +3526,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -3549,7 +3549,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -3572,7 +3572,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -3595,7 +3595,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -3618,7 +3618,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -3641,7 +3641,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -3664,7 +3664,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -3687,7 +3687,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -3710,7 +3710,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -3733,7 +3733,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -3756,7 +3756,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -3779,7 +3779,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -3802,7 +3802,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -3825,7 +3825,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -3848,7 +3848,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -3871,7 +3871,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -3894,7 +3894,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -3917,7 +3917,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -3940,7 +3940,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -3963,7 +3963,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -3986,7 +3986,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -4009,7 +4009,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -4032,7 +4032,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -4055,7 +4055,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -4078,7 +4078,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -4101,7 +4101,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -4124,7 +4124,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -4147,7 +4147,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -4170,7 +4170,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -4193,7 +4193,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -4216,7 +4216,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -4239,7 +4239,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -4262,7 +4262,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -4285,7 +4285,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -4308,7 +4308,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -4331,7 +4331,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -4354,7 +4354,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -4377,7 +4377,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -4400,7 +4400,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -4423,7 +4423,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -4446,7 +4446,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -4469,7 +4469,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -4492,7 +4492,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -4515,7 +4515,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -4539,322 +4539,322 @@ func _newContext(runtime *_runtime) {
 			extensible:  true,
 			value:       prototypeValueDate,
 			property: map[string]_property{
-				"toString": _property{
+				"toString": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: toString_function,
 					},
 				},
-				"toDateString": _property{
+				"toDateString": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: toDateString_function,
 					},
 				},
-				"toTimeString": _property{
+				"toTimeString": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: toTimeString_function,
 					},
 				},
-				"toUTCString": _property{
+				"toUTCString": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: toUTCString_function,
 					},
 				},
-				"toISOString": _property{
+				"toISOString": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: toISOString_function,
 					},
 				},
-				"toJSON": _property{
+				"toJSON": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: toJSON_function,
 					},
 				},
-				"toGMTString": _property{
+				"toGMTString": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: toGMTString_function,
 					},
 				},
-				"toLocaleString": _property{
+				"toLocaleString": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: toLocaleString_function,
 					},
 				},
-				"toLocaleDateString": _property{
+				"toLocaleDateString": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: toLocaleDateString_function,
 					},
 				},
-				"toLocaleTimeString": _property{
+				"toLocaleTimeString": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: toLocaleTimeString_function,
 					},
 				},
-				"valueOf": _property{
+				"valueOf": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: valueOf_function,
 					},
 				},
-				"getTime": _property{
+				"getTime": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: getTime_function,
 					},
 				},
-				"getYear": _property{
+				"getYear": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: getYear_function,
 					},
 				},
-				"getFullYear": _property{
+				"getFullYear": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: getFullYear_function,
 					},
 				},
-				"getUTCFullYear": _property{
+				"getUTCFullYear": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: getUTCFullYear_function,
 					},
 				},
-				"getMonth": _property{
+				"getMonth": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: getMonth_function,
 					},
 				},
-				"getUTCMonth": _property{
+				"getUTCMonth": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: getUTCMonth_function,
 					},
 				},
-				"getDate": _property{
+				"getDate": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: getDate_function,
 					},
 				},
-				"getUTCDate": _property{
+				"getUTCDate": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: getUTCDate_function,
 					},
 				},
-				"getDay": _property{
+				"getDay": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: getDay_function,
 					},
 				},
-				"getUTCDay": _property{
+				"getUTCDay": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: getUTCDay_function,
 					},
 				},
-				"getHours": _property{
+				"getHours": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: getHours_function,
 					},
 				},
-				"getUTCHours": _property{
+				"getUTCHours": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: getUTCHours_function,
 					},
 				},
-				"getMinutes": _property{
+				"getMinutes": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: getMinutes_function,
 					},
 				},
-				"getUTCMinutes": _property{
+				"getUTCMinutes": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: getUTCMinutes_function,
 					},
 				},
-				"getSeconds": _property{
+				"getSeconds": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: getSeconds_function,
 					},
 				},
-				"getUTCSeconds": _property{
+				"getUTCSeconds": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: getUTCSeconds_function,
 					},
 				},
-				"getMilliseconds": _property{
+				"getMilliseconds": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: getMilliseconds_function,
 					},
 				},
-				"getUTCMilliseconds": _property{
+				"getUTCMilliseconds": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: getUTCMilliseconds_function,
 					},
 				},
-				"getTimezoneOffset": _property{
+				"getTimezoneOffset": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: getTimezoneOffset_function,
 					},
 				},
-				"setTime": _property{
+				"setTime": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: setTime_function,
 					},
 				},
-				"setMilliseconds": _property{
+				"setMilliseconds": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: setMilliseconds_function,
 					},
 				},
-				"setUTCMilliseconds": _property{
+				"setUTCMilliseconds": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: setUTCMilliseconds_function,
 					},
 				},
-				"setSeconds": _property{
+				"setSeconds": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: setSeconds_function,
 					},
 				},
-				"setUTCSeconds": _property{
+				"setUTCSeconds": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: setUTCSeconds_function,
 					},
 				},
-				"setMinutes": _property{
+				"setMinutes": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: setMinutes_function,
 					},
 				},
-				"setUTCMinutes": _property{
+				"setUTCMinutes": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: setUTCMinutes_function,
 					},
 				},
-				"setHours": _property{
+				"setHours": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: setHours_function,
 					},
 				},
-				"setUTCHours": _property{
+				"setUTCHours": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: setUTCHours_function,
 					},
 				},
-				"setDate": _property{
+				"setDate": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: setDate_function,
 					},
 				},
-				"setUTCDate": _property{
+				"setUTCDate": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: setUTCDate_function,
 					},
 				},
-				"setMonth": _property{
+				"setMonth": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: setMonth_function,
 					},
 				},
-				"setUTCMonth": _property{
+				"setUTCMonth": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: setUTCMonth_function,
 					},
 				},
-				"setYear": _property{
+				"setYear": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: setYear_function,
 					},
 				},
-				"setFullYear": _property{
+				"setFullYear": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: setFullYear_function,
 					},
 				},
-				"setUTCFullYear": _property{
+				"setUTCFullYear": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
@@ -4923,35 +4923,35 @@ func _newContext(runtime *_runtime) {
 				construct: builtinNewDate,
 			},
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
 						value: 7,
 					},
 				},
-				"prototype": _property{
+				"prototype": {
 					mode: 0,
 					value: Value{
 						kind:  valueObject,
 						value: runtime.global.DatePrototype,
 					},
 				},
-				"parse": _property{
+				"parse": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: parse_function,
 					},
 				},
-				"UTC": _property{
+				"UTC": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: UTC_function,
 					},
 				},
-				"now": _property{
+				"now": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
@@ -4984,7 +4984,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -5007,7 +5007,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -5030,7 +5030,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -5053,7 +5053,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -5077,28 +5077,28 @@ func _newContext(runtime *_runtime) {
 			extensible:  true,
 			value:       prototypeValueRegExp,
 			property: map[string]_property{
-				"toString": _property{
+				"toString": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: toString_function,
 					},
 				},
-				"exec": _property{
+				"exec": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: exec_function,
 					},
 				},
-				"test": _property{
+				"test": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: test_function,
 					},
 				},
-				"compile": _property{
+				"compile": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
@@ -5125,14 +5125,14 @@ func _newContext(runtime *_runtime) {
 				construct: builtinNewRegExp,
 			},
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
 						value: 2,
 					},
 				},
-				"prototype": _property{
+				"prototype": {
 					mode: 0,
 					value: Value{
 						kind:  valueObject,
@@ -5162,7 +5162,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -5186,21 +5186,21 @@ func _newContext(runtime *_runtime) {
 			extensible:  true,
 			value:       nil,
 			property: map[string]_property{
-				"toString": _property{
+				"toString": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: toString_function,
 					},
 				},
-				"name": _property{
+				"name": {
 					mode: 0101,
 					value: Value{
 						kind:  valueString,
 						value: "Error",
 					},
 				},
-				"message": _property{
+				"message": {
 					mode: 0101,
 					value: Value{
 						kind:  valueString,
@@ -5226,14 +5226,14 @@ func _newContext(runtime *_runtime) {
 				construct: builtinNewError,
 			},
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
 						value: 1,
 					},
 				},
-				"prototype": _property{
+				"prototype": {
 					mode: 0,
 					value: Value{
 						kind:  valueObject,
@@ -5264,7 +5264,7 @@ func _newContext(runtime *_runtime) {
 			extensible:  true,
 			value:       nil,
 			property: map[string]_property{
-				"name": _property{
+				"name": {
 					mode: 0101,
 					value: Value{
 						kind:  valueString,
@@ -5288,14 +5288,14 @@ func _newContext(runtime *_runtime) {
 				construct: builtinNewEvalError,
 			},
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
 						value: 1,
 					},
 				},
-				"prototype": _property{
+				"prototype": {
 					mode: 0,
 					value: Value{
 						kind:  valueObject,
@@ -5326,7 +5326,7 @@ func _newContext(runtime *_runtime) {
 			extensible:  true,
 			value:       nil,
 			property: map[string]_property{
-				"name": _property{
+				"name": {
 					mode: 0101,
 					value: Value{
 						kind:  valueString,
@@ -5350,14 +5350,14 @@ func _newContext(runtime *_runtime) {
 				construct: builtinNewTypeError,
 			},
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
 						value: 1,
 					},
 				},
-				"prototype": _property{
+				"prototype": {
 					mode: 0,
 					value: Value{
 						kind:  valueObject,
@@ -5388,7 +5388,7 @@ func _newContext(runtime *_runtime) {
 			extensible:  true,
 			value:       nil,
 			property: map[string]_property{
-				"name": _property{
+				"name": {
 					mode: 0101,
 					value: Value{
 						kind:  valueString,
@@ -5412,14 +5412,14 @@ func _newContext(runtime *_runtime) {
 				construct: builtinNewRangeError,
 			},
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
 						value: 1,
 					},
 				},
-				"prototype": _property{
+				"prototype": {
 					mode: 0,
 					value: Value{
 						kind:  valueObject,
@@ -5450,7 +5450,7 @@ func _newContext(runtime *_runtime) {
 			extensible:  true,
 			value:       nil,
 			property: map[string]_property{
-				"name": _property{
+				"name": {
 					mode: 0101,
 					value: Value{
 						kind:  valueString,
@@ -5474,14 +5474,14 @@ func _newContext(runtime *_runtime) {
 				construct: builtinNewReferenceError,
 			},
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
 						value: 1,
 					},
 				},
-				"prototype": _property{
+				"prototype": {
 					mode: 0,
 					value: Value{
 						kind:  valueObject,
@@ -5512,7 +5512,7 @@ func _newContext(runtime *_runtime) {
 			extensible:  true,
 			value:       nil,
 			property: map[string]_property{
-				"name": _property{
+				"name": {
 					mode: 0101,
 					value: Value{
 						kind:  valueString,
@@ -5536,14 +5536,14 @@ func _newContext(runtime *_runtime) {
 				construct: builtinNewSyntaxError,
 			},
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
 						value: 1,
 					},
 				},
-				"prototype": _property{
+				"prototype": {
 					mode: 0,
 					value: Value{
 						kind:  valueObject,
@@ -5574,7 +5574,7 @@ func _newContext(runtime *_runtime) {
 			extensible:  true,
 			value:       nil,
 			property: map[string]_property{
-				"name": _property{
+				"name": {
 					mode: 0101,
 					value: Value{
 						kind:  valueString,
@@ -5598,14 +5598,14 @@ func _newContext(runtime *_runtime) {
 				construct: builtinNewURIError,
 			},
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
 						value: 1,
 					},
 				},
-				"prototype": _property{
+				"prototype": {
 					mode: 0,
 					value: Value{
 						kind:  valueObject,
@@ -5635,7 +5635,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -5658,7 +5658,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -5681,14 +5681,14 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.ObjectPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"parse": _property{
+				"parse": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: parse_function,
 					},
 				},
-				"stringify": _property{
+				"stringify": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
@@ -5710,7 +5710,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -5733,7 +5733,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -5756,7 +5756,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -5779,7 +5779,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -5802,7 +5802,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -5825,7 +5825,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -5848,7 +5848,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -5871,7 +5871,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -5894,7 +5894,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -5917,7 +5917,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -5940,7 +5940,7 @@ func _newContext(runtime *_runtime) {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -5957,216 +5957,216 @@ func _newContext(runtime *_runtime) {
 			},
 		}
 		runtime.globalObject.property = map[string]_property{
-			"eval": _property{
+			"eval": {
 				mode: 0101,
 				value: Value{
 					kind:  valueObject,
 					value: eval_function,
 				},
 			},
-			"parseInt": _property{
+			"parseInt": {
 				mode: 0101,
 				value: Value{
 					kind:  valueObject,
 					value: parseInt_function,
 				},
 			},
-			"parseFloat": _property{
+			"parseFloat": {
 				mode: 0101,
 				value: Value{
 					kind:  valueObject,
 					value: parseFloat_function,
 				},
 			},
-			"isNaN": _property{
+			"isNaN": {
 				mode: 0101,
 				value: Value{
 					kind:  valueObject,
 					value: isNaN_function,
 				},
 			},
-			"isFinite": _property{
+			"isFinite": {
 				mode: 0101,
 				value: Value{
 					kind:  valueObject,
 					value: isFinite_function,
 				},
 			},
-			"decodeURI": _property{
+			"decodeURI": {
 				mode: 0101,
 				value: Value{
 					kind:  valueObject,
 					value: decodeURI_function,
 				},
 			},
-			"decodeURIComponent": _property{
+			"decodeURIComponent": {
 				mode: 0101,
 				value: Value{
 					kind:  valueObject,
 					value: decodeURIComponent_function,
 				},
 			},
-			"encodeURI": _property{
+			"encodeURI": {
 				mode: 0101,
 				value: Value{
 					kind:  valueObject,
 					value: encodeURI_function,
 				},
 			},
-			"encodeURIComponent": _property{
+			"encodeURIComponent": {
 				mode: 0101,
 				value: Value{
 					kind:  valueObject,
 					value: encodeURIComponent_function,
 				},
 			},
-			"escape": _property{
+			"escape": {
 				mode: 0101,
 				value: Value{
 					kind:  valueObject,
 					value: escape_function,
 				},
 			},
-			"unescape": _property{
+			"unescape": {
 				mode: 0101,
 				value: Value{
 					kind:  valueObject,
 					value: unescape_function,
 				},
 			},
-			"Object": _property{
+			"Object": {
 				mode: 0101,
 				value: Value{
 					kind:  valueObject,
 					value: runtime.global.Object,
 				},
 			},
-			"Function": _property{
+			"Function": {
 				mode: 0101,
 				value: Value{
 					kind:  valueObject,
 					value: runtime.global.Function,
 				},
 			},
-			"Array": _property{
+			"Array": {
 				mode: 0101,
 				value: Value{
 					kind:  valueObject,
 					value: runtime.global.Array,
 				},
 			},
-			"String": _property{
+			"String": {
 				mode: 0101,
 				value: Value{
 					kind:  valueObject,
 					value: runtime.global.String,
 				},
 			},
-			"Boolean": _property{
+			"Boolean": {
 				mode: 0101,
 				value: Value{
 					kind:  valueObject,
 					value: runtime.global.Boolean,
 				},
 			},
-			"Number": _property{
+			"Number": {
 				mode: 0101,
 				value: Value{
 					kind:  valueObject,
 					value: runtime.global.Number,
 				},
 			},
-			"Math": _property{
+			"Math": {
 				mode: 0101,
 				value: Value{
 					kind:  valueObject,
 					value: runtime.global.Math,
 				},
 			},
-			"Date": _property{
+			"Date": {
 				mode: 0101,
 				value: Value{
 					kind:  valueObject,
 					value: runtime.global.Date,
 				},
 			},
-			"RegExp": _property{
+			"RegExp": {
 				mode: 0101,
 				value: Value{
 					kind:  valueObject,
 					value: runtime.global.RegExp,
 				},
 			},
-			"Error": _property{
+			"Error": {
 				mode: 0101,
 				value: Value{
 					kind:  valueObject,
 					value: runtime.global.Error,
 				},
 			},
-			"EvalError": _property{
+			"EvalError": {
 				mode: 0101,
 				value: Value{
 					kind:  valueObject,
 					value: runtime.global.EvalError,
 				},
 			},
-			"TypeError": _property{
+			"TypeError": {
 				mode: 0101,
 				value: Value{
 					kind:  valueObject,
 					value: runtime.global.TypeError,
 				},
 			},
-			"RangeError": _property{
+			"RangeError": {
 				mode: 0101,
 				value: Value{
 					kind:  valueObject,
 					value: runtime.global.RangeError,
 				},
 			},
-			"ReferenceError": _property{
+			"ReferenceError": {
 				mode: 0101,
 				value: Value{
 					kind:  valueObject,
 					value: runtime.global.ReferenceError,
 				},
 			},
-			"SyntaxError": _property{
+			"SyntaxError": {
 				mode: 0101,
 				value: Value{
 					kind:  valueObject,
 					value: runtime.global.SyntaxError,
 				},
 			},
-			"URIError": _property{
+			"URIError": {
 				mode: 0101,
 				value: Value{
 					kind:  valueObject,
 					value: runtime.global.URIError,
 				},
 			},
-			"JSON": _property{
+			"JSON": {
 				mode: 0101,
 				value: Value{
 					kind:  valueObject,
 					value: runtime.global.JSON,
 				},
 			},
-			"undefined": _property{
+			"undefined": {
 				mode: 0,
 				value: Value{
 					kind: valueUndefined,
 				},
 			},
-			"NaN": _property{
+			"NaN": {
 				mode: 0,
 				value: Value{
 					kind:  valueNumber,
 					value: math.NaN(),
 				},
 			},
-			"Infinity": _property{
+			"Infinity": {
 				mode: 0,
 				value: Value{
 					kind:  valueNumber,
@@ -6219,7 +6219,7 @@ func newConsoleObject(runtime *_runtime) *_object {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -6242,7 +6242,7 @@ func newConsoleObject(runtime *_runtime) *_object {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -6265,7 +6265,7 @@ func newConsoleObject(runtime *_runtime) *_object {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -6288,7 +6288,7 @@ func newConsoleObject(runtime *_runtime) *_object {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -6311,7 +6311,7 @@ func newConsoleObject(runtime *_runtime) *_object {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -6334,7 +6334,7 @@ func newConsoleObject(runtime *_runtime) *_object {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -6357,7 +6357,7 @@ func newConsoleObject(runtime *_runtime) *_object {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -6380,7 +6380,7 @@ func newConsoleObject(runtime *_runtime) *_object {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -6403,7 +6403,7 @@ func newConsoleObject(runtime *_runtime) *_object {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -6426,7 +6426,7 @@ func newConsoleObject(runtime *_runtime) *_object {
 			prototype:   runtime.global.FunctionPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"length": _property{
+				"length": {
 					mode: 0,
 					value: Value{
 						kind:  valueNumber,
@@ -6449,70 +6449,70 @@ func newConsoleObject(runtime *_runtime) *_object {
 			prototype:   runtime.global.ObjectPrototype,
 			extensible:  true,
 			property: map[string]_property{
-				"log": _property{
+				"log": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: log_function,
 					},
 				},
-				"debug": _property{
+				"debug": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: debug_function,
 					},
 				},
-				"info": _property{
+				"info": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: info_function,
 					},
 				},
-				"error": _property{
+				"error": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: error_function,
 					},
 				},
-				"warn": _property{
+				"warn": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: warn_function,
 					},
 				},
-				"dir": _property{
+				"dir": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: dir_function,
 					},
 				},
-				"time": _property{
+				"time": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: time_function,
 					},
 				},
-				"timeEnd": _property{
+				"timeEnd": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: timeEnd_function,
 					},
 				},
-				"trace": _property{
+				"trace": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,
 						value: trace_function,
 					},
 				},
-				"assert": _property{
+				"assert": {
 					mode: 0101,
 					value: Value{
 						kind:  valueObject,

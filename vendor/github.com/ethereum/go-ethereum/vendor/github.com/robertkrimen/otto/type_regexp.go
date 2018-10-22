@@ -108,7 +108,7 @@ func execRegExp(this *_object, target string) (match bool, result []int) {
 	endIndex := int(lastIndex) + result[1]
 	// We do this shift here because the .FindStringSubmatchIndex above
 	// was done on a local subordinate slice of the string, not the whole string
-	for index, _ := range result {
+	for index := range result {
 		result[index] += int(startIndex)
 	}
 	if global {

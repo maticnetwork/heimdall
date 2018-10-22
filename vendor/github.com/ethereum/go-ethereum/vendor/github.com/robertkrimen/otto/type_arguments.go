@@ -7,7 +7,7 @@ import (
 func (runtime *_runtime) newArgumentsObject(indexOfParameterName []string, stash _stash, length int) *_object {
 	self := runtime.newClassObject("Arguments")
 
-	for index, _ := range indexOfParameterName {
+	for index := range indexOfParameterName {
 		name := strconv.FormatInt(int64(index), 10)
 		objectDefineOwnProperty(self, name, _property{Value{}, 0111}, false)
 	}

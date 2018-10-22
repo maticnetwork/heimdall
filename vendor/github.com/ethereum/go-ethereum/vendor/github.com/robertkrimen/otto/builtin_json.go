@@ -118,7 +118,7 @@ func builtinJSON_stringify(call FunctionCall) Value {
 			seen := map[string]bool{}
 			propertyList := make([]string, length)
 			length = 0
-			for index, _ := range propertyList {
+			for index := range propertyList {
 				value := replacer.get(arrayIndexToString(int64(index)))
 				switch value.kind {
 				case valueObject:
@@ -266,7 +266,7 @@ func builtinJSON_stringifyWalk(ctx _builtinJSON_stringifyContext, key string, ho
 				panic(ctx.call.runtime.panicTypeError(fmt.Sprintf("JSON.stringify: invalid length: %v (%[1]T)", value)))
 			}
 			array := make([]interface{}, length)
-			for index, _ := range array {
+			for index := range array {
 				name := arrayIndexToString(int64(index))
 				value, _ := builtinJSON_stringifyWalk(ctx, name, holder)
 				array[index] = value

@@ -291,7 +291,7 @@ func (i *functionIndex) delete(ptr unsafe.Pointer) {
 func (i *functionIndex) destroy() {
 	i.Lock()
 
-	for ptr, _ := range i.functions {
+	for ptr := range i.functions {
 		delete(i.functions, ptr)
 		C.free(ptr)
 	}
