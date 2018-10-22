@@ -12,14 +12,13 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/sha3"
 	"github.com/ethereum/go-ethereum/ethclient"
-	amino "github.com/tendermint/go-amino"
+	"github.com/tendermint/go-amino"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"github.com/tendermint/tendermint/privval"
 	tmtypes "github.com/tendermint/tendermint/types"
 	"github.com/xsleonard/go-merkle"
 
-	rootmock "github.com/maticnetwork/heimdall/contracts/rootmock"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 	"github.com/maticnetwork/heimdall/contracts/validatorset"
 )
@@ -68,32 +67,33 @@ func getLastValidator() int64 {
 	return last.Int64()
 }
 
-// SendCheckpoint sends transaction to main chain
-func SendCheckpoint(start int, end int, sigs []byte) {
-	clientKovan := initKovan()
-	clientMatic := initMatic()
-	rootHash := getHeaders(start, end, clientMatic)
-	fmt.Printf("Root hash obtained for blocks from %v to %v is %v", start, end, rootHash)
-	rootchainClient, err := rootmock.NewContracts(common.HexToAddress(rootchainAddress), clientKovan)
-	if err != nil {
-		panic(err)
-	}
-
-	auth := GenerateAuthObj(clientKovan)
-	auth.Value = big.NewInt(0)
-
-	// Calling contract method
-	var amount big.Int
-	amount.SetUint64(0)
-	var rootHashArray [32]byte
-	copy(rootHashArray[:], rootHash)
-	tx, err := rootchainClient.SubmitHeaderBlock(auth, rootHashArray, big.NewInt(int64(start)), big.NewInt(int64(end)), sigs)
-	if err != nil {
-		fmt.Printf("Transaction unable to send error %v", err)
-	}
-	fmt.Printf("Checkpoint sent successfully %v", tx)
-
-}
+//
+//// SendCheckpoint sends transaction to main chain
+//func SendCheckpoint(start int, end int, sigs []byte) {
+//	clientKovan := initKovan()
+//	clientMatic := initMatic()
+//	rootHash := getHeaders(start, end, clientMatic)
+//	fmt.Printf("Root hash obtained for blocks from %v to %v is %v", start, end, rootHash)
+//	rootchainClient, err := rootmock.NewContracts(common.HexToAddress(rootchainAddress), clientKovan)
+//	if err != nil {
+//		panic(err)
+//	}
+//
+//	auth := GenerateAuthObj(clientKovan)
+//	auth.Value = big.NewInt(0)
+//
+//	// Calling contract method
+//	var amount big.Int
+//	amount.SetUint64(0)
+//	var rootHashArray [32]byte
+//	copy(rootHashArray[:], rootHash)
+//	tx, err := rootchainClient.SubmitHeaderBlock(auth, rootHashArray, big.NewInt(int64(start)), big.NewInt(int64(end)), sigs)
+//	if err != nil {
+//		fmt.Printf("Transaction unable to send error %v", err)
+//	}
+//	fmt.Printf("Checkpoint sent successfully %v", tx)
+//
+//}
 
 // SubmitProof submit header
 func SubmitProof(voteSignBytes []byte, sigs []byte, extradata []byte, start uint64, end uint64, rootHash common.Hash) {

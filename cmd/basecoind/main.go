@@ -23,18 +23,19 @@ func main() {
 	ctx := server.NewDefaultContext()
 
 	rootCmd := &cobra.Command{
-		Use:               "basecoind",
-		Short:             "Basecoin Daemon (server)",
+		Use:               "heimdalld",
+		Short:             "Heimdalld Daemon (server)",
 		PersistentPreRunE: server.PersistentPreRunEFn(ctx),
 	}
 
 	server.AddCommands(ctx, cdc, rootCmd, server.DefaultAppInit,
-		server.ConstructAppCreator(newApp, "basecoin"),
-		server.ConstructAppExporter(exportAppStateAndTMValidators, "basecoin"))
+
+		server.ConstructAppCreator(newApp, "heimdall"),
+		server.ConstructAppExporter(exportAppStateAndTMValidators, "heimdall"))
 
 	// prepare and add flags
-	rootDir := os.ExpandEnv("$HOME/.basecoind")
-	executor := cli.PrepareBaseCmd(rootCmd, "BC", rootDir)
+	rootDir := os.ExpandEnv("$HOME/.heimdalld")
+	executor := cli.PrepareBaseCmd(rootCmd, "HC", rootDir)
 
 	err := executor.Execute()
 	if err != nil {
