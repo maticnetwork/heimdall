@@ -45,10 +45,10 @@ func main() {
 }
 
 func newApp(logger log.Logger, db dbm.DB, storeTracer io.Writer) abci.Application {
-	return app.NewBasecoinApp(logger, db, baseapp.SetPruning(viper.GetString("pruning")))
+	return app.NewHeimdallApp(logger, db, baseapp.SetPruning(viper.GetString("pruning")))
 }
 
 func exportAppStateAndTMValidators(logger log.Logger, db dbm.DB, storeTracer io.Writer) (json.RawMessage, []tmtypes.GenesisValidator, error) {
-	bapp := app.NewBasecoinApp(logger, db)
+	bapp := app.NewHeimdallApp(logger, db)
 	return bapp.ExportAppStateAndValidators()
 }

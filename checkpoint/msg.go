@@ -72,7 +72,7 @@ func NewBaseTx(msg MsgCheckpoint) BaseTx {
 func (tx BaseTx) GetMsgs() []sdk.Msg { return []sdk.Msg{tx.Msg} }
 
 //
-//func (app *BasecoinApp) txDecoder(txBytes []byte) (sdk.Tx, sdk.Error) {
+//func (app *HeimdallApp) txDecoder(txBytes []byte) (sdk.Tx, sdk.Error) {
 //	var tx = checkpoint.BaseTx{}
 //
 //	err := rlp.DecodeBytes(txBytes, &tx)
