@@ -35,10 +35,11 @@ var (
 	rootchainAddress    = "e022d867085b1617dc9fb04b474c4de580dccf1a"
 	validatorSetAddress = "295c050e82a39392799d31ecb3f7db921daa136c"
 )
+var kovanClient, _ = ethclient.Dial("https://kovan.infura.io")
+var maticClient, _ = ethclient.Dial("https://testnet.matic.network")
 
 func getValidatorByIndex(_index int64) abci.Validator {
-	client := initKovan()
-	stakeManagerInstance, err := stakemanager.NewContracts(common.HexToAddress(stakeManagerAddress), client)
+	stakeManagerInstance, err := stakemanager.NewContracts(common.HexToAddress(stakeManagerAddress), kovanClient)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -57,8 +58,7 @@ func getValidatorByIndex(_index int64) abci.Validator {
 }
 
 func getLastValidator() int64 {
-	client := initKovan()
-	stakeManagerInstance, err := stakemanager.NewContracts(common.HexToAddress(stakeManagerAddress), client)
+	stakeManagerInstance, err := stakemanager.NewContracts(common.HexToAddress(stakeManagerAddress), kovanClient)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -97,32 +97,15 @@ func getLastValidator() int64 {
 
 // SubmitProof submit header
 func SubmitProof(voteSignBytes []byte, sigs []byte, extradata []byte, start uint64, end uint64, rootHash common.Hash) {
-	clientKovan := initKovan()
 	fmt.Printf("Root hash obtained for blocks from %v to %v is %v", start, end, rootHash)
 	//auth := GenerateAuthObj(clientKovan)
 	//auth.Value = big.NewInt(0)
 	//todo change this to tx , right now its a call
-	validatorSetInstance := getValidatorSetInstance(clientKovan)
+	validatorSetInstance := getValidatorSetInstance(kovanClient)
 	fmt.Printf("inputs , vote: %v , sigs: %v , extradata %v ", hex.EncodeToString(voteSignBytes), hex.EncodeToString(sigs), hex.EncodeToString(extradata))
 	res, proposer, error := validatorSetInstance.Validate(nil, voteSignBytes, sigs, extradata)
 
 	fmt.Printf("Submitted Proof Successfully %v %v %v ", res, proposer.String(), error)
-}
-
-func initKovan() *ethclient.Client {
-	client, err := ethclient.Dial("https://kovan.infura.io")
-	if err != nil {
-		log.Fatal(err)
-	}
-	return client
-}
-
-func initMatic() *ethclient.Client {
-	client, err := ethclient.Dial("https://testnet.matic.network")
-	if err != nil {
-		log.Fatal(err)
-	}
-	return client
 }
 
 func getHeaders(start int, end int, client *ethclient.Client) string {
@@ -209,8 +192,7 @@ func getValidatorSetInstance(client *ethclient.Client) *validatorset.ValidatorSe
 }
 
 func GetProposer() common.Address {
-	client := initKovan()
-	validatorSetInstance := getValidatorSetInstance(client)
+	validatorSetInstance := getValidatorSetInstance(kovanClient)
 	currentProposer, err := validatorSetInstance.Proposer(nil)
 	if err != nil {
 		fmt.Printf("error getting proposer")
@@ -219,9 +201,8 @@ func GetProposer() common.Address {
 }
 
 func SelectProposer() {
-	client := initKovan()
-	validatorSetInstance := getValidatorSetInstance(client)
-	auth := GenerateAuthObj(client)
+	validatorSetInstance := getValidatorSetInstance(kovanClient)
+	auth := GenerateAuthObj(kovanClient)
 	tx, err := validatorSetInstance.SelectProposer(auth)
 	if err != nil {
 		fmt.Printf("Unable to send transaction for proposer selection ")
@@ -264,8 +245,7 @@ func GenerateAuthObj(client *ethclient.Client) (auth *bind.TransactOpts) {
 }
 
 func GetValidators() (validators []abci.Validator) {
-	clientKovan := initKovan()
-	validatorSetInstance := getValidatorSetInstance(clientKovan)
+	validatorSetInstance := getValidatorSetInstance(kovanClient)
 	powers, ValidatorAddrs, err := validatorSetInstance.GetValidatorSet(nil)
 	if err != nil {
 		fmt.Printf(" The error is %v", err)
