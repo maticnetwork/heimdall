@@ -16,7 +16,6 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"github.com/tendermint/tendermint/privval"
-	tmtypes "github.com/tendermint/tendermint/types"
 	"github.com/xsleonard/go-merkle"
 
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
@@ -26,8 +25,8 @@ import (
 var cdc = amino.NewCodec()
 
 func init() {
-	cdc.RegisterConcrete(secp256k1.PubKeySecp256k1{}, secp256k1.Secp256k1PubKeyAminoRoute, nil)
-	cdc.RegisterConcrete(secp256k1.PrivKeySecp256k1{}, secp256k1.Secp256k1PrivKeyAminoRoute, nil)
+	cdc.RegisterConcrete(secp256k1.PubKeySecp256k1{}, secp256k1.PubKeyAminoRoute, nil)
+	cdc.RegisterConcrete(secp256k1.PrivKeySecp256k1{}, secp256k1.PrivKeyAminoRoute, nil)
 }
 
 var (
@@ -51,7 +50,7 @@ func getValidatorByIndex(_index int64) abci.Validator {
 	abciValidator := abci.Validator{
 		Address: _address,
 		Power:   validator.Power.Int64(),
-		PubKey:  tmtypes.TM2PB.PubKey(_pubkey),
+		// PubKey:  tmtypes.TM2PB.PubKey(_pubkey),
 	}
 	return abciValidator
 }
@@ -284,7 +283,7 @@ func GetValidators() (validators []abci.Validator) {
 		validator := abci.Validator{
 			Address: ValidatorAddrs[index].Bytes(),
 			Power:   powers[index].Int64(),
-			PubKey:  tmtypes.TM2PB.PubKey(pubkeyBytes),
+			// PubKey:  tmtypes.TM2PB.PubKey(pubkeyBytes),
 		}
 		fmt.Printf("New Validator is %v", validator)
 		validators = append(validators, validator)

@@ -37,10 +37,6 @@
   name = "github.com/tendermint/go-amino"
   revision = "v0.12.0"
 
-# [[constraint]]
-#   name = "github.com/tendermint/iavl"
-#   revision = "35f66e53d9b01e83b30de68b931f54b2477a94c9"
-
 [[constraint]]
   name = "github.com/cosmos/cosmos-sdk"
   version = "v0.24.2"
