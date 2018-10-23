@@ -62,15 +62,6 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		keyStaker:     sdk.NewKVStoreKey("staker"),
 	}
 
-	// define and attach the mappers and keepers
-	//app.accountMapper = auth.NewAccountMapper(
-	//	cdc,
-	//	app.keyAccount, // target store
-	//
-	//	func() auth.Account {
-	//		return &types.AppAccount{}
-	//	},
-	//)
 	//TODO change to its own codespace
 	app.checkpointKeeper = checkpoint.NewKeeper(app.cdc, app.keyCheckpoint, app.RegisterCodespace(checkpoint.DefaultCodespace))
 	app.stakerKeeper = staking.NewKeeper(app.cdc, app.keyStaker, app.RegisterCodespace(checkpoint.DefaultCodespace))
@@ -192,28 +183,6 @@ func (app *HeimdallApp) txDecoder(txBytes []byte) (sdk.Tx, sdk.Error) {
 // should contain all the genesis accounts. These accounts will be added to the
 // application's account mapper.
 func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
-	//stateJSON := req.AppStateBytes
-
-	//genesisState := new(types.GenesisState)
-	//fmt.Printf("app state bytes is %v", string(stateJSON))
-
-	//err := app.cdc.UnmarshalJSON(stateJSON, genesisState)
-	//if err != nil {
-	//	// TODO: https://github.com/cosmos/cosmos-sdk/issues/468
-	//
-	//	panic(err)
-	//}
-
-	//for _, gacc := range genesisState.Accounts {
-	//	acc, err := gacc.ToAppAccount()
-	//	if err != nil {
-	//		// TODO: https://github.com/cosmos/cosmos-sdk/issues/468
-	//		panic(err)
-	//	}
-	//
-	//	acc.AccountNumber = app.accountMapper.GetNextAccountNumber(ctx)
-	//	app.accountMapper.SetAccount(ctx, acc)
-	//}
 
 	return abci.ResponseInitChain{}
 }
