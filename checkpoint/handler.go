@@ -23,6 +23,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper) sdk.Resul
 	logger := ctx.Logger().With("module", "x/baseapp")
 	valid := validateCheckpoint(int(msg.StartBlock), int(msg.EndBlock), msg.RootHash.String())
 
+	// check msg.proposer with tm proposer
 	var res int64
 	if valid {
 		logger.Debug("root hash matched !! ")
