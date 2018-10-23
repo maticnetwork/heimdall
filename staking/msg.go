@@ -1,4 +1,4 @@
-package staker
+package staking
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
