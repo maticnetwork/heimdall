@@ -1,24 +1,24 @@
 package helper
 
 import (
+	"context"
+	"fmt"
+	"math/big"
+
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"github.com/tendermint/tendermint/privval"
-	"math/big"
-
-	"context"
-	"fmt"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 )
 
 var cdc = amino.NewCodec()
 
 func GenerateAuthObj(client *ethclient.Client) (auth *bind.TransactOpts) {
 	config := GetConfig()
-	privVal := privval.LoadFilePV(config.validatorFilePVPath)
+	privVal := privval.LoadFilePV(config.ValidatorFilePVPath)
 	var pkObject secp256k1.PrivKeySecp256k1
 	cdc.MustUnmarshalBinaryBare(privVal.PrivKey.Bytes(), &pkObject)
 
@@ -51,8 +51,8 @@ func GenerateAuthObj(client *ethclient.Client) (auth *bind.TransactOpts) {
 }
 
 func SelectProposer() {
-	validatorSetInstance := getValidatorSetInstance(kovanClient)
-	auth := GenerateAuthObj(kovanClient)
+	validatorSetInstance := GetValidatorSetInstance(KovanClient)
+	auth := GenerateAuthObj(KovanClient)
 	tx, err := validatorSetInstance.SelectProposer(auth)
 	if err != nil {
 		fmt.Printf("Unable to send transaction for proposer selection ")

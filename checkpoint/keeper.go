@@ -43,6 +43,7 @@ func createBlock(start uint64, end uint64, rootHash common.Hash, proposer common
 		Proposer:   proposer,
 	}
 }
+
 func (k Keeper) AddCheckpoint(ctx sdk.Context, start uint64, end uint64, root common.Hash, proposer common.Address) int64 {
 	store := ctx.KVStore(k.checkpointKey)
 	data := createBlock(start, end, root, proposer)
@@ -56,9 +57,9 @@ func (k Keeper) AddCheckpoint(ctx sdk.Context, start uint64, end uint64, root co
 	store.Set([]byte(strconv.Itoa(int(ctx.BlockHeight()))), []byte(out))
 	return ctx.BlockHeight()
 }
+
 func (k Keeper) GetCheckpoint(ctx sdk.Context, key int64) []byte {
 	store := ctx.KVStore(k.checkpointKey)
 	getKey := []byte(strconv.Itoa(int(key)))
 	return store.Get(getKey)
-
 }

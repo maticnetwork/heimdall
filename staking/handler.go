@@ -9,7 +9,6 @@ import (
 )
 
 func EndBlocker(ctx sdk.Context, k Keeper) (validators []abci.Validator) {
-
 	// validator := k.GetValidatorInfo(ctx, _address)
 	fmt.Printf("prev validators are %v \n", k.GetAllValidators(ctx))
 
