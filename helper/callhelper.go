@@ -3,17 +3,19 @@ package helper
 import (
 	"encoding/hex"
 	"fmt"
+	"log"
+	"math/big"
+
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	tmtypes "github.com/tendermint/tendermint/types"
-	"log"
-	"math/big"
+
+	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 )
 
 func GetValidators() (validators []abci.Validator) {
-	validatorSetInstance := getValidatorSetInstance(kovanClient)
+	validatorSetInstance := GetValidatorSetInstance(KovanClient)
 	powers, ValidatorAddrs, err := validatorSetInstance.GetValidatorSet(nil)
 	if err != nil {
 		fmt.Printf(" The error is %v", err)
@@ -41,8 +43,10 @@ func GetValidators() (validators []abci.Validator) {
 
 	return validators
 }
+
 func GetProposer() common.Address {
-	validatorSetInstance := getValidatorSetInstance(kovanClient)
+	validatorSetInstance := GetValidatorSetInstance(KovanClient)
+	fmt.Printf("kovan client %v", KovanClient)
 	currentProposer, err := validatorSetInstance.Proposer(nil)
 	if err != nil {
 		fmt.Printf("error getting proposer")
@@ -56,15 +60,19 @@ func SubmitProof(voteSignBytes []byte, sigs []byte, extradata []byte, start uint
 	//auth := GenerateAuthObj(clientKovan)
 	//auth.Value = big.NewInt(0)
 	//todo change this to tx , right now its a call
-	validatorSetInstance := getValidatorSetInstance(kovanClient)
+
+	validatorSetInstance := GetValidatorSetInstance(KovanClient)
+	fmt.Printf("validatorset instance %v", validatorSetInstance)
 	fmt.Printf("inputs , vote: %v , sigs: %v , extradata %v ", hex.EncodeToString(voteSignBytes), hex.EncodeToString(sigs), hex.EncodeToString(extradata))
 	res, proposer, error := validatorSetInstance.Validate(nil, voteSignBytes, sigs, extradata)
-
+	if error != nil {
+		fmt.Errorf("Er	ror hua ")
+	}
 	fmt.Printf("Submitted Proof Successfully %v %v %v ", res, proposer.String(), error)
 }
 
 func getValidatorByIndex(_index int64) abci.Validator {
-	stakeManagerInstance, err := stakemanager.NewContracts(common.HexToAddress(GetConfig().stakeManagerAddress), kovanClient)
+	stakeManagerInstance, err := stakemanager.NewContracts(common.HexToAddress(GetConfig().StakeManagerAddress), KovanClient)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -25,12 +25,14 @@ func codeToDefaultMsg(code CodeType) string {
 		return sdk.CodeToDefaultMsg(code)
 	}
 }
+
 func msgOrDefaultMsg(msg string, code CodeType) string {
 	if msg != "" {
 		return msg
 	}
 	return codeToDefaultMsg(code)
 }
+
 func newError(codespace sdk.CodespaceType, code CodeType, msg string) sdk.Error {
 	msg = msgOrDefaultMsg(msg, code)
 	return sdk.NewError(codespace, code, msg)

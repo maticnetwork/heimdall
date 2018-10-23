@@ -3,8 +3,16 @@ dep:
 	mkdir -p vendor/github.com/tendermint
 	git clone -b v0.9.2 --single-branch --depth 1 https://github.com/tendermint/iavl vendor/github.com/tendermint/iavl
 
-build:
-	cd cmd/heimdalld && go build main.go && cd -
-	cd cmd/heimdallcli && go build main.go && cd -
+clean:
+	rm -rf build
 
-.PHONY: dep
+build: clean
+	mkdir -p build
+	go build -o build/heimdalld cmd/heimdalld/main.go
+	go build -o build/heimdallcli cmd/heimdallcli/main.go
+
+contracts:
+	# mkdir -p contracts/validatorset
+	# abigen --abi=contracts/validatorset/validatorset.abi --pkg=validatorset --out=contracts/validatorset/ValidatorSet.go
+
+.PHONY: dep clean build
