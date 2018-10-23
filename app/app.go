@@ -18,7 +18,7 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/maticnetwork/heimdall/checkpoint"
-	txHelper "github.com/maticnetwork/heimdall/contracts"
+	helper "github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staker"
 )
 
@@ -137,10 +137,10 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 	var sigs []byte
 	sigs = GetSigs(votes)
 	// TODO move this check to below check and validate checkpoint proposer
-	if bytes.Equal(ctx.BlockHeader().Proposer.Address, txHelper.GetProposer().Bytes()) {
+	if bytes.Equal(ctx.BlockHeader().Proposer.Address, helper.GetProposer().Bytes()) {
 		fmt.Printf("Current Proposer and Block Proposer Matched ! ")
 	} else {
-		fmt.Printf("Current Proposer :%v , BlockProposer:  %v", txHelper.GetProposer().String(), ctx.BlockHeader().Proposer)
+		fmt.Printf("Current Proposer :%v , BlockProposer:  %v", helper.GetProposer().String(), ctx.BlockHeader().Proposer)
 	}
 
 	if ctx.BlockHeader().NumTxs == 1 {
@@ -149,7 +149,7 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 		var _checkpoint checkpoint.CheckpointBlockHeader
 		json.Unmarshal(app.checkpointKeeper.GetCheckpoint(ctx, ctx.BlockHeight()), &_checkpoint)
 		extraData := GetExtraData(_checkpoint)
-		txHelper.SubmitProof(GetVoteBytes(votes, ctx), sigs, extraData, _checkpoint.StartBlock, _checkpoint.EndBlock, _checkpoint.RootHash)
+		helper.SubmitProof(GetVoteBytes(votes, ctx), sigs, extraData, _checkpoint.StartBlock, _checkpoint.EndBlock, _checkpoint.RootHash)
 		//txHelper.SendCheckpoint(int(_checkpoint.StartBlock), int(_checkpoint.EndBlock), sigs)
 	}
 	return abci.ResponseEndBlock{
