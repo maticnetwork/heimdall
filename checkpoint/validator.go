@@ -18,7 +18,9 @@ func validateCheckpoint(start int, end int, rootHash string) bool {
 	if err != nil {
 		log.Fatal(err)
 	}
-
+	if (start-end+1)%2 != 0 {
+		return false
+	}
 	fmt.Println("we have a connection")
 	_ = client // we'll use this in the upcoming sections
 	//TODO reject transaction if the difference in numbers is not even
