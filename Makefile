@@ -21,5 +21,6 @@ run-heimdall:
 rest-server:
 	./build/heimdallcli rest-server
 
+start: build run-heimdall
 
 .PHONY: dep clean build

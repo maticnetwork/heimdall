@@ -15,6 +15,8 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/maticnetwork/heimdall/checkpoint"
+	"github.com/spf13/viper"
+	"strings"
 )
 
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *wire.Codec, kb keys.Keybase) {
@@ -57,10 +59,10 @@ func newCheckpointHandler(cdc *wire.Codec, kb keys.Keybase, cliCtx context.CLICo
 			fmt.Printf("Error generating TXBYtes %v", err)
 		}
 		fmt.Printf("The tx bytes are %v ", hex.EncodeToString(txBytes))
-
+		url := getBroadcastURL()
+		fmt.Printf("the URL is %v", "http://"+url+"/broadcast_tx_commit")
 		client := &http.Client{}
-		// TODO replace with our own AUTH context
-		req, _ := http.NewRequest("GET", "http://localhost:26657/broadcast_tx_commit", nil)
+		req, _ := http.NewRequest("GET", "http://"+url+"/broadcast_tx_commit", nil)
 		q := req.URL.Query()
 		q.Add("tx", "0x"+hex.EncodeToString(txBytes))
 		req.URL.RawQuery = q.Encode()
@@ -74,4 +76,17 @@ func newCheckpointHandler(cdc *wire.Codec, kb keys.Keybase, cliCtx context.CLICo
 		}
 		w.Write([]byte(bodyString))
 	}
+}
+func getBroadcastURL() string {
+	viper.SetConfigName("config") // name of config file (without extension)
+	viper.AddConfigPath("/Users/vc/.heimdalld")
+	err := viper.ReadInConfig() // Find and read the config file
+	if err != nil {             // Handle errors reading the config file
+		panic(fmt.Errorf("Fatal error config file: %s \n", err))
+	}
+	laddr := viper.GetString("laddr")
+	fmt.Printf("laddr : %v", laddr)
+	url := strings.Split(laddr, "//")
+	fmt.Printf("%q\n", url)
+	return url[1]
 }
