@@ -60,9 +60,10 @@ func newCheckpointHandler(cdc *wire.Codec, kb keys.Keybase, cliCtx context.CLICo
 		}
 		fmt.Printf("The tx bytes are %v ", hex.EncodeToString(txBytes))
 		url := getBroadcastURL()
-		fmt.Printf("the URL is %v", "http://"+url+"/broadcast_tx_commit")
+		fmt.Printf("the URL is %v", "http://"+url+":26657broadcast_tx_commit")
 		client := &http.Client{}
-		req, _ := http.NewRequest("GET", "http://"+url+"/broadcast_tx_commit", nil)
+		//req, _ := http.NewRequest("GET", "http://"+url+":26657/broadcast_tx_commit", nil)
+		req, _ := http.NewRequest("GET", "http://"+url+":26657/broadcast_tx_commit", nil)
 		q := req.URL.Query()
 		q.Add("tx", "0x"+hex.EncodeToString(txBytes))
 		req.URL.RawQuery = q.Encode()
@@ -79,14 +80,16 @@ func newCheckpointHandler(cdc *wire.Codec, kb keys.Keybase, cliCtx context.CLICo
 }
 func getBroadcastURL() string {
 	viper.SetConfigName("config") // name of config file (without extension)
-	viper.AddConfigPath("/Users/vc/.heimdalld")
+	viper.AddConfigPath("/Users/vc/.heimdalld/config")
 	err := viper.ReadInConfig() // Find and read the config file
 	if err != nil {             // Handle errors reading the config file
 		panic(fmt.Errorf("Fatal error config file: %s \n", err))
 	}
+
 	laddr := viper.GetString("laddr")
-	fmt.Printf("laddr : %v", laddr)
+
 	url := strings.Split(laddr, "//")
-	fmt.Printf("%q\n", url)
-	return url[1]
+	urlWithoutPort := strings.Split(url[1], ":")
+
+	return urlWithoutPort[0]
 }
