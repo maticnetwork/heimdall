@@ -10,30 +10,26 @@ import (
 
 	"github.com/ethereum/go-ethereum/crypto/sha3"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/maticnetwork/heimdall/helper"
 	"github.com/xsleonard/go-merkle"
 )
 
 func validateCheckpoint(start int, end int, rootHash string) bool {
-	client, err := ethclient.Dial("https://testnet.matic.network")
+	client, err := ethclient.Dial(helper.GetConfig().DialMatic)
 	if err != nil {
 		log.Fatal(err)
 	}
 	if (start-end+1)%2 != 0 {
 		return false
 	}
-	fmt.Println("we have a connection")
 	_ = client // we'll use this in the upcoming sections
-	//TODO reject transaction if the difference in numbers is not even
 	root := getHeaders(start, end, client)
-	fmt.Printf("the root hash is %v", root)
 	root = "0x" + root
 	if strings.Compare(root, rootHash) == 0 {
 		fmt.Printf("root hash and root same %v AND %v ", rootHash, root)
 		return true
 	} else {
 		fmt.Printf("root hash and root not same %v AND %v ", rootHash, root)
-
-		fmt.Printf("not same root hash , :(")
 		return false
 	}
 
@@ -44,15 +40,11 @@ func getHeaders(start int, end int, client *ethclient.Client) string {
 		return ""
 	}
 
-	fmt.Printf("Starting from ")
-	fmt.Printf("start from %v /n end to %v", start, end)
 	current := start
 	var result [][32]byte
 	for current <= end {
-		//TODO run this in different goroutines and use channels to fetch results(how to maintian order)
 		blockheader, err := client.HeaderByNumber(context.Background(), big.NewInt(int64(current)))
 		if err != nil {
-			fmt.Printf("not found")
 			log.Fatal(err)
 		}
 		headerBytes := appendBytes32(blockheader.Number.Bytes(),
@@ -66,23 +58,13 @@ func getHeaders(start int, end int, client *ethclient.Client) string {
 		result = append(result, arr)
 		current++
 	}
-	fmt.Println("------")
 	merkelData := convert(result)
-	//fmt.Println("------")
-	fmt.Printf("merkel data is \n %v", len(merkelData))
-	fmt.Println("------")
-	//tree := merkle.NewTree()
 	tree := merkle.NewTreeWithOpts(merkle.TreeOptions{EnableHashSorting: false, DisableHashLeaves: true})
 
 	err := tree.Generate(merkelData, sha3.NewKeccak256())
 	if err != nil {
-		fmt.Println("*********ERROR***********")
 		log.Fatal(err)
 	}
-	fmt.Println("------")
-	//fmt.Printf("tree: %v\n", tree.Leaves())// return the hash of root
-	fmt.Println("------")
-	fmt.Println(hex.EncodeToString(tree.Root().Hash))
 	return hex.EncodeToString(tree.Root().Hash)
 }
 func convert(input []([32]byte)) [][]byte {
@@ -91,7 +73,6 @@ func convert(input []([32]byte)) [][]byte {
 		newInput := make([]byte, len(in[:]))
 		copy(newInput, in[:])
 		output = append(output, newInput)
-		//fmt.Printf("------- \n input is %v \n output is %v",newInput,output )
 
 	}
 	return output
@@ -118,11 +99,6 @@ func appendBytes32(data ...[]byte) []byte {
 }
 func getsha3frombyte(input []byte) []byte {
 	hash := sha3.NewKeccak256()
-	//v,err:=hex.DecodeString(input)
-	//if err!=nil{
-	//	fmt.Println("Error occured in getsha3")
-	//	log.Fatal(err)
-	//}
 	var buf []byte
 	hash.Write(input)
 	buf = hash.Sum(buf)
