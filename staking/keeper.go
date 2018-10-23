@@ -40,9 +40,7 @@ func (k Keeper) SetValidatorSet(ctx sdk.Context, validators []abci.Validator) {
 			fmt.Println("error %v", err)
 		}
 		store.Set(GetValidatorKey(validator.Address), bz)
-
 	}
-
 }
 
 // appends the validator key to address
@@ -86,7 +84,6 @@ func (k Keeper) GetValidatorInfo(ctx sdk.Context, address []byte) (validator abc
 		return
 	}
 	return validator
-
 }
 
 // flushes the whole validator set

@@ -4,3 +4,9 @@ vendor/github.com/tendermint/iavl/
 # ignore executable
 cmd/heimdallcli/main
 cmd/heimdalld/main
+
+# ignore build
+build
+
+# ignore config
+config/*.json

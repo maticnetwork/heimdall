@@ -1,8 +1,6 @@
 package app
 
 import (
-	"bytes"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 
@@ -17,6 +15,7 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	tmtypes "github.com/tendermint/tendermint/types"
 
+	"encoding/hex"
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
@@ -124,8 +123,8 @@ func (app *HeimdallApp) BeginBlocker(_ sdk.Context, _ abci.RequestBeginBlock) ab
 func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci.ResponseEndBlock {
 	//logger := ctx.Logger().With("module", "x/baseapp")
 
-	validatorSet := staking.EndBlocker(ctx, app.stakerKeeper)
-
+	//validatorSet := staking.EndBlocker(ctx, app.stakerKeeper)
+	//
 	//logger.Info("New Validator Set : %v", validatorSet)
 
 	var votes []tmtypes.Vote
@@ -136,12 +135,12 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 
 	var sigs []byte
 	sigs = GetSigs(votes)
-	// TODO move this check to below check and validate checkpoint proposer
-	if bytes.Equal(ctx.BlockHeader().Proposer.Address, helper.GetProposer().Bytes()) {
-		fmt.Printf("Current Proposer and Block Proposer Matched ! ")
-	} else {
-		fmt.Printf("Current Proposer :%v , BlockProposer:  %v", helper.GetProposer().String(), ctx.BlockHeader().Proposer)
-	}
+	//// TODO move this check to below check and validate checkpoint proposer
+	//if bytes.Equal(ctx.BlockHeader().Proposer, helper.GetProposer().Bytes()) {
+	//	fmt.Printf("Current Proposer and Block Proposer Matched ! ")
+	//} else {
+	//	fmt.Printf("Current Proposer :%v , BlockProposer:  %v", helper.GetProposer().String(), ctx.BlockHeader().Proposer)
+	//}
 
 	if ctx.BlockHeader().NumTxs == 1 {
 		// Getting latest checkpoint data from store using height as key
@@ -153,7 +152,7 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 		//txHelper.SendCheckpoint(int(_checkpoint.StartBlock), int(_checkpoint.EndBlock), sigs)
 	}
 	return abci.ResponseEndBlock{
-		ValidatorUpdates: validatorSet,
+		//ValidatorUpdates: validatorSet,
 	}
 }
 
@@ -194,10 +193,10 @@ func (app *HeimdallApp) txDecoder(txBytes []byte) (sdk.Tx, sdk.Error) {
 // should contain all the genesis accounts. These accounts will be added to the
 // application's account mapper.
 func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
-	stateJSON := req.AppStateBytes
+	//stateJSON := req.AppStateBytes
 
 	//genesisState := new(types.GenesisState)
-	fmt.Printf("app state bytes is %v", string(stateJSON))
+	//fmt.Printf("app state bytes is %v", string(stateJSON))
 
 	//err := app.cdc.UnmarshalJSON(stateJSON, genesisState)
 	//if err != nil {

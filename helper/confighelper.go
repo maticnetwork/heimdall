@@ -1,14 +1,14 @@
 package helper
 
 import (
-	"encoding/json"
-	"fmt"
+	"log"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/maticnetwork/heimdall/contracts/validatorset"
+	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
-	"log"
-	"os"
+
+	"github.com/maticnetwork/heimdall/contracts/validatorset"
 )
 
 func init() {
@@ -19,38 +19,48 @@ func init() {
 }
 
 type Configuration struct {
-	validatorFilePVPath string
-	stakeManagerAddress string
-	rootchainAddress    string
-	validatorSetAddress string
-	dialKovan           string
-	dialMatic           string
+	ValidatorFilePVPath string
+	StakeManagerAddress string
+	RootchainAddress    string
+	ValidatorSetAddress string
+	DialKovan           string
+	DialMatic           string
 }
 
-var configuration Configuration
+var conf Configuration
+
+var KovanClient *ethclient.Client
+var MaticClient *ethclient.Client
 
 func initHeimdall() {
-	file, _ := os.Open("../config.json")
-	defer file.Close()
-	decoder := json.NewDecoder(file)
-	configuration = Configuration{}
-	err := decoder.Decode(&configuration)
-	if err != nil {
-		fmt.Println("error:", err)
+	viper.SetConfigName("config")                // name of config file (without extension)
+	viper.AddConfigPath("config")                // call multiple times to add many search paths
+	if err := viper.ReadInConfig(); err != nil { // Handle errors reading the config file
+		log.Fatal(err)
+	}
+	if err := viper.Unmarshal(&conf); err != nil {
+		log.Fatal(err)
+	}
+
+	var err error
+	// setup eth client
+	if KovanClient, err = ethclient.Dial(GetConfig().DialKovan); err != nil {
+		log.Fatal(err)
+	}
+
+	if MaticClient, err = ethclient.Dial(GetConfig().DialKovan); err != nil {
+		log.Fatal(err)
 	}
 }
 
-func GetConfig() (configration Configuration) {
-	return configration
+func GetConfig() Configuration {
+	return conf
 }
 
-func getValidatorSetInstance(client *ethclient.Client) *validatorset.ValidatorSet {
-	validatorSetInstance, err := validatorset.NewValidatorSet(common.HexToAddress(GetConfig().validatorSetAddress), client)
+func GetValidatorSetInstance(client *ethclient.Client) *validatorSet.ValidatorSet {
+	validatorSetInstance, err := validatorSet.NewValidatorSet(common.HexToAddress(GetConfig().ValidatorSetAddress), client)
 	if err != nil {
 		log.Fatal(err)
 	}
 	return validatorSetInstance
 }
-
-var kovanClient, _ = ethclient.Dial(GetConfig().dialKovan)
-var maticClient, _ = ethclient.Dial(GetConfig().dialMatic)

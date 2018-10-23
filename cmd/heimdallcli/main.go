@@ -1,20 +1,17 @@
 package main
 
 import (
-	"os"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/version"
-	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	"github.com/spf13/cobra"
 	"github.com/tendermint/tendermint/libs/cli"
 
 	"github.com/maticnetwork/heimdall/app"
 	restCmds "github.com/maticnetwork/heimdall/rest"
-	"github.com/maticnetwork/heimdall/types"
+	"os"
 	//stakecmd "github.com/maticnetwork/heimdall/staking/client/cli"
 )
 
@@ -46,7 +43,7 @@ func main() {
 	// add query/post commands (custom to binary)
 	rootCmd.AddCommand(
 		client.GetCommands(
-			authcmd.GetAccountCmd("acc", cdc, types.GetAccountDecoder(cdc)),
+		//authcmd.GetAccountCmd("acc", cdc, types.GetAccountDecoder(cdc)),
 		)...)
 
 	rootCmd.AddCommand(
