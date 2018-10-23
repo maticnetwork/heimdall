@@ -20,6 +20,7 @@ import (
 
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 	"github.com/maticnetwork/heimdall/contracts/validatorset"
+	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 var cdc = amino.NewCodec()
@@ -263,7 +264,7 @@ func GetValidators() (validators []abci.Validator) {
 		validator := abci.Validator{
 			Address: ValidatorAddrs[index].Bytes(),
 			Power:   powers[index].Int64(),
-			// PubKey:  tmtypes.TM2PB.PubKey(pubkeyBytes),
+			PubKey:  tmtypes.TM2PB.PubKey(pubkeyBytes),
 		}
 		fmt.Printf("New Validator is %v", validator)
 		validators = append(validators, validator)
