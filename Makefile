@@ -15,4 +15,11 @@ contracts:
 	# mkdir -p contracts/validatorset
 	# abigen --abi=contracts/validatorset/validatorset.abi --pkg=validatorset --out=contracts/validatorset/ValidatorSet.go
 
+run-heimdall:
+	./build/heimdalld start
+
+rest-server:
+	./build/heimdallcli rest-server
+
+
 .PHONY: dep clean build
