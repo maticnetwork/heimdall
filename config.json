@@ -1,0 +1,8 @@
+{
+  "stakeManagerAddress":"8b28d78eb59c323867c43b4ab8d06e0f1efa1573",
+  "rootchainAddress":"e022d867085b1617dc9fb04b474c4de580dccf1a",
+  "validatorSetAddress":"295c050e82a39392799d31ecb3f7db921daa136c",
+  "validatorFilePVPath":"/Users/vc/.basecoind/config/priv_validator.json"
+  "dialKovan":"https://kovan.infura.io",
+  "dialMatic":"https://testnet.matic.network"
+}
