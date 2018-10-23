@@ -14,6 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/gorilla/mux"
 
+	"github.com/ethereum/go-ethereum/swarm/log"
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/spf13/viper"
 	"strings"
@@ -35,7 +36,9 @@ type CheckpointFromBridge struct {
 
 func newCheckpointHandler(cdc *wire.Codec, kb keys.Keybase, cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+
 		var m CheckpointFromBridge
+
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
@@ -50,26 +53,21 @@ func newCheckpointHandler(cdc *wire.Codec, kb keys.Keybase, cliCtx context.CLICo
 			w.Write([]byte(err.Error()))
 			return
 		}
-		//TODO add proposer address
+
 		msg := checkpoint.NewMsgCheckpointBlock(uint64(m.Start_block), uint64(m.End_block), common.HexToHash(m.Root_hash), m.Proposer_address)
 
 		tx := checkpoint.NewBaseTx(msg)
+
 		txBytes, err := rlp.EncodeToBytes(tx)
 		if err != nil {
 			fmt.Printf("Error generating TXBYtes %v", err)
 		}
 		fmt.Printf("The tx bytes are %v ", hex.EncodeToString(txBytes))
-		url := getBroadcastURL()
-		fmt.Printf("the URL is %v", "http://"+url+":26657broadcast_tx_commit")
-		client := &http.Client{}
-		//req, _ := http.NewRequest("GET", "http://"+url+":26657/broadcast_tx_commit", nil)
-		req, _ := http.NewRequest("GET", "http://"+url+":26657/broadcast_tx_commit", nil)
-		q := req.URL.Query()
-		q.Add("tx", "0x"+hex.EncodeToString(txBytes))
-		req.URL.RawQuery = q.Encode()
 
-		resp, err := client.Do(req)
-		fmt.Printf("The result is %v", resp)
+		url := getBroadcastURL()
+		resp := sendRequest(txBytes, url)
+		fmt.Printf("Response ---> %v", resp)
+
 		var bodyString string
 		if resp.StatusCode == http.StatusOK {
 			bodyBytes, _ := ioutil.ReadAll(resp.Body)
@@ -92,4 +90,20 @@ func getBroadcastURL() string {
 	urlWithoutPort := strings.Split(url[1], ":")
 
 	return urlWithoutPort[0]
+}
+func sendRequest(txBytes []byte, url string) *http.Response {
+
+	client := &http.Client{}
+	//req, _ := http.NewRequest("GET", "http://"+url+":26657/broadcast_tx_commit", nil)
+	req, _ := http.NewRequest("GET", "http://"+url+":26657/broadcast_tx_commit", nil)
+
+	q := req.URL.Query()
+	q.Add("tx", "0x"+hex.EncodeToString(txBytes))
+	req.URL.RawQuery = q.Encode()
+
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Error("Could not send transaction to TM . Error : %v", err)
+	}
+	return resp
 }
