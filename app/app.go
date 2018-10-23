@@ -18,8 +18,8 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/maticnetwork/heimdall/checkpoint"
-	helper "github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/staker"
+	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/staking"
 )
 
 const (
@@ -42,7 +42,7 @@ type HeimdallApp struct {
 	keyStaker *sdk.KVStoreKey
 	// manage getting and setting accounts
 	checkpointKeeper checkpoint.Keeper
-	stakerKeeper     staker.Keeper
+	stakerKeeper     staking.Keeper
 }
 
 // NewHeimdallApp returns a reference to a new HeimdallApp given a logger and
@@ -74,7 +74,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	//)
 	//TODO change to its own codespace
 	app.checkpointKeeper = checkpoint.NewKeeper(app.cdc, app.keyCheckpoint, app.RegisterCodespace(checkpoint.DefaultCodespace))
-	app.stakerKeeper = staker.NewKeeper(app.cdc, app.keyStaker, app.RegisterCodespace(checkpoint.DefaultCodespace))
+	app.stakerKeeper = staking.NewKeeper(app.cdc, app.keyStaker, app.RegisterCodespace(checkpoint.DefaultCodespace))
 	// register message routes
 	app.Router().
 		AddRoute("checkpoint", checkpoint.NewHandler(app.checkpointKeeper))
@@ -124,7 +124,7 @@ func (app *HeimdallApp) BeginBlocker(_ sdk.Context, _ abci.RequestBeginBlock) ab
 func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci.ResponseEndBlock {
 	//logger := ctx.Logger().With("module", "x/baseapp")
 
-	validatorSet := staker.EndBlocker(ctx, app.stakerKeeper)
+	validatorSet := staking.EndBlocker(ctx, app.stakerKeeper)
 
 	//logger.Info("New Validator Set : %v", validatorSet)
 
