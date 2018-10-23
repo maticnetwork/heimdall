@@ -179,7 +179,6 @@ func GetExtraData(_checkpoint checkpoint.CheckpointBlockHeader) []byte {
 // RLP decodes the txBytes to a BaseTx
 func (app *HeimdallApp) txDecoder(txBytes []byte) (sdk.Tx, sdk.Error) {
 	var tx = checkpoint.BaseTx{}
-	fmt.Printf("Decoding Transaction from app.go")
 	err := rlp.DecodeBytes(txBytes, &tx)
 	if err != nil {
 		return nil, sdk.ErrTxDecode(err.Error())
