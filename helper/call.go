@@ -16,14 +16,13 @@ func GetValidators() (validators []abci.Validator) {
 	validatorSetInstance := GetValidatorSetInstance(MainChainClient)
 	powers, ValidatorAddrs, err := validatorSetInstance.GetValidatorSet(nil)
 	if err != nil {
-		logger.Info(" The error is %v", err)
+		logger.Info("The error is %v", err)
 	}
 
 	for index := range powers {
-
 		pubkey, error := validatorSetInstance.GetPubkey(nil, big.NewInt(int64(index)))
 		if error != nil {
-			logger.Error(" Error getting pubkey for index %v", error)
+			logger.Error("Error getting pubkey for index %v", error)
 		}
 
 		var pubkeyBytes secp256k1.PubKeySecp256k1
@@ -47,30 +46,25 @@ func GetValidators() (validators []abci.Validator) {
 }
 
 func GetProposer() common.Address {
-
 	validatorSetInstance := GetValidatorSetInstance(MainChainClient)
-
 	currentProposer, err := validatorSetInstance.Proposer(nil)
 	if err != nil {
 		Logger.Error("error getting proposer : %v", err)
 	}
 
 	return currentProposer
-
 }
 
 // SubmitProof submit header
 func SubmitProof(voteSignBytes []byte, sigs []byte, extradata []byte, start uint64, end uint64, rootHash common.Hash) {
-
 	Logger.Info("Root hash obtained for blocks from %v to %v is %v", start, end, rootHash)
 
 	validatorSetInstance := GetValidatorSetInstance(MainChainClient)
-
-	Logger.Info("inputs , vote: %v , sigs: %v , extradata %v ", hex.EncodeToString(voteSignBytes), hex.EncodeToString(sigs), hex.EncodeToString(extradata))
+	Logger.Info("inputs, vote: %v  sigs: %v, extradata %v ", hex.EncodeToString(voteSignBytes), hex.EncodeToString(sigs), hex.EncodeToString(extradata))
 
 	res, proposer, error := validatorSetInstance.Validate(nil, voteSignBytes, sigs, extradata)
 	if error != nil {
-		Logger.Error("Error hua ")
+		Logger.Error("Error hua")
 	}
 
 	Logger.Info("Submitted Proof Successfully %v %v %v ", res, proposer.String(), error)
