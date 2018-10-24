@@ -4,20 +4,18 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
-	"strings"
-
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/crypto/keys"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/gorilla/mux"
+	"io/ioutil"
+	"net/http"
 
 	"github.com/ethereum/go-ethereum/swarm/log"
 	"github.com/maticnetwork/heimdall/checkpoint"
-	"github.com/spf13/viper"
+	"github.com/maticnetwork/heimdall/helper"
 )
 
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *wire.Codec, kb keys.Keybase) {
@@ -68,8 +66,7 @@ func newCheckpointHandler(cdc *wire.Codec, kb keys.Keybase, cliCtx context.CLICo
 		}
 		fmt.Printf("The tx bytes are %v ", hex.EncodeToString(txBytes))
 
-		url := getBroadcastURL()
-		resp := sendRequest(txBytes, url)
+		resp := sendRequest(txBytes, helper.GetConfig().RPCUrl)
 		fmt.Printf("Response ---> %v", resp)
 
 		var bodyString string
@@ -81,26 +78,9 @@ func newCheckpointHandler(cdc *wire.Codec, kb keys.Keybase, cliCtx context.CLICo
 	}
 }
 
-func getBroadcastURL() string {
-	viper.SetConfigName("config") // name of config file (without extension)
-	viper.AddConfigPath("/Users/vc/.heimdalld/config")
-	err := viper.ReadInConfig() // Find and read the config file
-	if err != nil {             // Handle errors reading the config file
-		panic(fmt.Errorf("Fatal error config file: %s \n", err))
-	}
-
-	laddr := viper.GetString("laddr")
-
-	url := strings.Split(laddr, "//")
-	urlWithoutPort := strings.Split(url[1], ":")
-
-	return urlWithoutPort[0]
-}
-
 func sendRequest(txBytes []byte, url string) *http.Response {
 	client := &http.Client{}
-	//req, _ := http.NewRequest("GET", "http://"+url+":26657/broadcast_tx_commit", nil)
-	req, err := http.NewRequest("GET", "http://"+url+":26657/broadcast_tx_commit", nil)
+	req, err := http.NewRequest("GET", url+"/broadcast_tx_commit", nil)
 	if err != nil {
 		log.Error("Error while drafting request for tendermint: %v", err)
 	}
