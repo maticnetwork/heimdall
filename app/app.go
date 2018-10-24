@@ -25,10 +25,6 @@ const (
 	appName = "HeimdallApp"
 )
 
-// HeimdallApp implements an extended ABCI application. It contains a BaseApp,
-// a codec for serialization, KVStore keys for multistore state management, and
-// various mappers and keepers to manage getting, setting, and serializing the
-// integral app types.
 type HeimdallApp struct {
 	*bam.BaseApp
 	cdc *wire.Codec
@@ -46,11 +42,6 @@ type HeimdallApp struct {
 
 var logger = heimlib.NewMainLogger(log.NewSyncWriter(os.Stdout)).With("module", "app")
 
-// NewHeimdallApp returns a reference to a new HeimdallApp given a logger and
-// database. Internally, a codec is created along with all the necessary keys.
-// In addition, all necessary mappers and keepers are created, routes
-// registered, and finally the stores being mounted along with any necessary
-// chain initialization.
 func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseApp)) *HeimdallApp {
 	// create and register app-level codec for TXs and accounts
 	cdc := MakeCodec()
@@ -90,8 +81,6 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	return app
 }
 
-// MakeCodec creates a new wire codec and registers all the necessary types
-// with the codec.
 func MakeCodec() *wire.Codec {
 	cdc := wire.NewCodec()
 
@@ -105,18 +94,14 @@ func MakeCodec() *wire.Codec {
 	return cdc
 }
 
-// BeginBlocker reflects logic to run before any TXs application are processed
-// by the application.
 func (app *HeimdallApp) BeginBlocker(_ sdk.Context, _ abci.RequestBeginBlock) abci.ResponseBeginBlock {
+	// todo add flushValidatorSet here
 	return abci.ResponseBeginBlock{}
 }
 
-// EndBlocker reflects logic to run after all TXs are processed by the
-// application.
 func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci.ResponseEndBlock {
 
 	//validatorSet := staking.EndBlocker(ctx, app.stakerKeeper)
-	//
 	//logger.Info("New Validator Set : %v", validatorSet)
 
 	// unmarshall votes from header
@@ -186,18 +171,9 @@ func (app *HeimdallApp) txDecoder(txBytes []byte) (sdk.Tx, sdk.Error) {
 	return tx, nil
 }
 
-// initChainer implements the custom application logic that the BaseApp will
-// invoke upon initialization. In this case, it will take the application's
-// state provided by 'req' and attempt to deserialize said state. The state
-// should contain all the genesis accounts. These accounts will be added to the
-// application's account mapper.
 func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	return abci.ResponseInitChain{}
 }
-
-// ExportAppStateAndValidators implements custom application logic that exposes
-// various parts of the application's state and set of validators. An error is
-// returned if any step getting the state or set of validators fails.
 func (app *HeimdallApp) ExportAppStateAndValidators() (appState json.RawMessage, validators []tmtypes.GenesisValidator, err error) {
 	return appState, validators, err
 }

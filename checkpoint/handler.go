@@ -1,7 +1,6 @@
 package checkpoint
 
 import (
-	"encoding/json"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	conf "github.com/maticnetwork/heimdall/helper"
 )
@@ -10,6 +9,7 @@ func NewHandler(k Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case MsgCheckpoint:
+			// redirect to handle msg checkpoint
 			return handleMsgCheckpoint(ctx, msg, k)
 		default:
 			return sdk.ErrTxDecode("Invalid message in checkpoint module ").Result()
@@ -18,20 +18,25 @@ func NewHandler(k Keeper) sdk.Handler {
 }
 
 func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper) sdk.Result {
-	valid := validateCheckpoint(int(msg.StartBlock), int(msg.EndBlock), msg.RootHash.String())
 	logger := conf.Logger.With("module", "checkpoint")
-	// check msg.proposer with tm proposer
-	var res int64
-	if valid {
-		logger.Debug("root hash matched !! ")
-		res = k.AddCheckpoint(ctx, msg.StartBlock, msg.EndBlock, msg.RootHash, msg.Proposer)
-	} else {
-		logger.Debug("Root hash no match ;(")
-		return ErrBadBlockDetails(k.codespace).Result()
 
+	// check if the roothash provided is valid for start and end
+	valid := validateCheckpoint(int(msg.StartBlock), int(msg.EndBlock), msg.RootHash.String())
+
+	// check msg.proposer with tm proposer
+	var key int64
+	if valid {
+
+		// add checkpoint to state if rootHash matches
+		key = k.AddCheckpoint(ctx, msg.StartBlock, msg.EndBlock, msg.RootHash, msg.Proposer)
+		logger.Debug("root hash matched , checkpoint stored with key %v !! ", key)
+
+	} else {
+
+		logger.Debug("Root hash no match ;(")
+		// return Bad Block Error
+		return ErrBadBlockDetails(k.codespace).Result()
 	}
-	var out CheckpointBlockHeader
-	json.Unmarshal(k.GetCheckpoint(ctx, res), &out)
 
 	//TODO add validation
 	// send tags
