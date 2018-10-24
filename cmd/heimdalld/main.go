@@ -24,19 +24,21 @@ func main() {
 
 	rootCmd := &cobra.Command{
 		Use:               "heimdalld",
-		Short:             "Heimdalld Daemon (server)",
+		Short:             "Heimdall Daemon (server)",
 		PersistentPreRunE: server.PersistentPreRunEFn(ctx),
 	}
 
-	server.AddCommands(ctx, cdc, rootCmd, server.DefaultAppInit,
-
+	server.AddCommands(
+		ctx,
+		cdc,
+		rootCmd,
+		server.DefaultAppInit,
 		server.ConstructAppCreator(newApp, "heimdall"),
-		server.ConstructAppExporter(exportAppStateAndTMValidators, "heimdall"))
+		server.ConstructAppExporter(exportAppStateAndTMValidators, "heimdall"),
+	)
 
 	// prepare and add flags
-	rootDir := os.ExpandEnv("$HOME/.heimdalld")
-	executor := cli.PrepareBaseCmd(rootCmd, "HC", rootDir)
-
+	executor := cli.PrepareBaseCmd(rootCmd, "HC", os.ExpandEnv("$HOME/.heimdalld"))
 	err := executor.Execute()
 	if err != nil {
 		// Note: Handle with #870

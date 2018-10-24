@@ -3,7 +3,6 @@ package staking
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
-	"github.com/ethereum/go-ethereum/log"
 	conf "github.com/maticnetwork/heimdall/helper"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
@@ -11,7 +10,6 @@ import (
 type Keeper struct {
 	storeKey sdk.StoreKey
 	cdc      *wire.Codec
-	//validatorSet sdk.ValidatorSet
 
 	// codespace
 	codespace sdk.CodespaceType
@@ -122,7 +120,7 @@ func (k Keeper) FlushValidatorSet(ctx sdk.Context) {
 		// marshall
 		bz, err := k.cdc.MarshalBinary(validator)
 		if err != nil {
-			log.Error("error %v", err)
+			StakingLogger.Error("Error Marshalling Validator  %v", err)
 		}
 
 		store.Set(GetValidatorKey(validator.Address), bz)

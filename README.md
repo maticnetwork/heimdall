@@ -22,6 +22,58 @@ Start heimdall process
 $ make run-heimdall
 ```
 
+### Installation with Docker
+
+**Run Docker container**
+
+Create and run docker container with mounted directory -
+
+```bash
+$ make run-docker-develop
+```
+
+**Initialize heimdall**
+
+Once docker container is created and running you will be on container.
+
+Run following command to initalize heimdall and create config files -
+
+```bash
+<docker-container>$ make init-heimdall
+```
+
+You can check your address and public key with following command (mounted in `~/.heimdalld` directory):
+
+```bash
+cat ~/.heimdalld/config/priv_validator.json
+```
+
+**Create heimdall-config.json**
+
+Create `~/.heimdalld/config/heimdall-config.json` directory with following content -
+
+```json
+{
+  "main_rpcurl": "https://kovan.infura.io",
+  "matic_rpcurl": "https://testnet.matic.network",
+
+  "stakemanager_address": "8b28d78eb59c323867c43b4ab8d06e0f1efa1573",
+  "rootchain_address": "e022d867085b1617dc9fb04b474c4de580dccf1a",
+  "stakemanager_address": "74aaffd9b2e6d1e9f9913fd1f6f93614d4a1108a",
+  "priv_validator_path": "/root/.heimdalld/config/priv_validator.json",
+
+  "tendermint_endpoint": "http://127.0.0.1:26657"
+}
+```
+
+**Start heimdall**
+
+Start heimdall from Docker container
+
+```bash
+<docker-container>$ $ make start
+```
+
 ### Propose new checkpoint
 
 ```
