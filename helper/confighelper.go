@@ -25,6 +25,7 @@ type Configuration struct {
 	ValidatorSetAddress string
 	DialKovan           string
 	DialMatic           string
+	RPCUrl              string
 }
 
 var conf Configuration
