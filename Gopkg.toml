@@ -33,7 +33,7 @@ ignored = ["github.com/tendermint/iavl"]
 [[constraint]]
   name = "github.com/tendermint/tendermint"
   source = "github.com/maticnetwork/tendermint"
-  revision = "755ce3220b94c61b1f21c4f6ef6131f8174cef9e"
+revision = "1dec17a548d4f1f807cb57b43c3e4580d5e272d1"
 
 [[override]]
   name = "github.com/tendermint/go-amino"

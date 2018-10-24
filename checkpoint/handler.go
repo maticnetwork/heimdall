@@ -7,7 +7,6 @@ import (
 
 func NewHandler(k Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
-		// NOTE msg already has validate basic run
 		switch msg := msg.(type) {
 		case MsgCheckpoint:
 			return handleMsgCheckpoint(ctx, msg, k)
@@ -18,9 +17,7 @@ func NewHandler(k Keeper) sdk.Handler {
 }
 
 func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper) sdk.Result {
-	//fmt.Printf("entered handler with message %v and %v and %v", msg.StartBlock, msg.EndBlock, msg.RootHash.String())
-	//TODO check last block in last checkpoint (startBlock of new checkpoint == last block of prev endpoint)
-	logger := ctx.Logger().With("module", "x/baseapp")
+	logger := ctx.Logger().With("module", "checkpoint")
 	valid := validateCheckpoint(int(msg.StartBlock), int(msg.EndBlock), msg.RootHash.String())
 
 	// check msg.proposer with tm proposer

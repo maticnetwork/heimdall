@@ -3,11 +3,11 @@ package checkpoint
 import (
 	"context"
 	"encoding/hex"
-	"fmt"
 	"log"
 	"math/big"
 	"strings"
 
+	"fmt"
 	"github.com/ethereum/go-ethereum/crypto/sha3"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/maticnetwork/heimdall/helper"
@@ -15,6 +15,7 @@ import (
 )
 
 func validateCheckpoint(start int, end int, rootHash string) bool {
+
 	client, err := ethclient.Dial(helper.GetConfig().DialMatic)
 	if err != nil {
 		log.Fatal(err)
@@ -26,10 +27,11 @@ func validateCheckpoint(start int, end int, rootHash string) bool {
 	root := getHeaders(start, end, client)
 	root = "0x" + root
 	if strings.Compare(root, rootHash) == 0 {
-		fmt.Printf("root hash and root same %v AND %v ", rootHash, root)
+
+		log.Print("root hash and root same %v AND %v ", rootHash, root)
 		return true
 	} else {
-		fmt.Printf("root hash and root not same %v AND %v ", rootHash, root)
+		log.Print("root hash and root not same %v AND %v ", rootHash, root)
 		return false
 	}
 
