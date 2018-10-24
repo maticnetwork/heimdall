@@ -1,12 +1,11 @@
 # ignore iavl for now in vendor
 vendor/github.com/tendermint/iavl/
-
-# ignore executable
-cmd/heimdallcli/main
-cmd/heimdalld/main
+vendor/github.com/ethereum/go-ethereum/
 
 # ignore build
 build
+log
+*.log
 
 # ignore config
 config/*.json

@@ -24,7 +24,10 @@
 #   go-tests = true
 #   unused-packages = true
 
-ignored = ["github.com/tendermint/iavl"]
+ignored = [
+  "github.com/tendermint/iavl", 
+  "github.com/ethereum/go-ethereum*"
+]
 
 [prune]
   go-tests = true
