@@ -1,6 +1,7 @@
 package app
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 
@@ -15,7 +16,6 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	tmtypes "github.com/tendermint/tendermint/types"
 
-	"encoding/hex"
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
@@ -153,9 +153,11 @@ func GetSigs(votes []tmtypes.Vote) (sigs []byte) {
 	}
 	return
 }
+
 func GetVoteBytes(votes []tmtypes.Vote, ctx sdk.Context) []byte {
 	return votes[0].SignBytes(ctx.ChainID())
 }
+
 func GetExtraData(_checkpoint checkpoint.CheckpointBlockHeader) []byte {
 	msg := checkpoint.NewMsgCheckpointBlock(_checkpoint.StartBlock, _checkpoint.EndBlock, _checkpoint.RootHash, _checkpoint.Proposer.String())
 
@@ -183,7 +185,6 @@ func (app *HeimdallApp) txDecoder(txBytes []byte) (sdk.Tx, sdk.Error) {
 // should contain all the genesis accounts. These accounts will be added to the
 // application's account mapper.
 func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
-
 	return abci.ResponseInitChain{}
 }
 
@@ -191,6 +192,5 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 // various parts of the application's state and set of validators. An error is
 // returned if any step getting the state or set of validators fails.
 func (app *HeimdallApp) ExportAppStateAndValidators() (appState json.RawMessage, validators []tmtypes.GenesisValidator, err error) {
-
 	return appState, validators, err
 }
