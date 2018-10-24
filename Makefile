@@ -22,7 +22,10 @@ run-heimdall:
 rest-server:
 	./build/heimdallcli rest-server
 
-start: build run-heimdall
+start:
+	mkdir -p logs
+	./build/heimdalld start > ./logs/heimdalld.log
+	./build/heimdallcli rest-server > ./logs/heimdallcli.log
 
 #
 # docker commands
