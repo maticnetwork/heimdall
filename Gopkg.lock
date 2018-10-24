@@ -126,7 +126,7 @@
   revision = "95f809107225be108efcf10a3509e4ea6ceef3c4"
 
 [[projects]]
-  digest = "1:157ad8964124f4baaaf6d4d8b6434bc3db1cb43936c7ad665bb73d2b2a0d2c2b"
+  digest = "1:06343989afb6c9ba300960d9693241f2b831502422a263f10d034a327b6e9aa7"
   name = "github.com/ethereum/go-ethereum"
   packages = [
     ".",
@@ -152,6 +152,7 @@
     "params",
     "rlp",
     "rpc",
+    "swarm/log",
     "trie",
   ]
   pruneopts = "UT"
@@ -268,13 +269,12 @@
   version = "v1.2.0"
 
 [[projects]]
-  digest = "1:c0d19ab64b32ce9fe5cf4ddceba78d5bc9807f0016db6b1183599da3dcc24d10"
+  digest = "1:ea40c24cdbacd054a6ae9de03e62c5f252479b96c716375aace5c120d68647c8"
   name = "github.com/hashicorp/hcl"
   packages = [
     ".",
     "hcl/ast",
     "hcl/parser",
-    "hcl/printer",
     "hcl/scanner",
     "hcl/strconv",
     "hcl/token",
@@ -773,14 +773,11 @@
     "github.com/cosmos/cosmos-sdk/version",
     "github.com/cosmos/cosmos-sdk/wire",
     "github.com/cosmos/cosmos-sdk/x/auth",
-    "github.com/cosmos/cosmos-sdk/x/auth/client/cli",
-    "github.com/cosmos/cosmos-sdk/x/auth/client/context",
     "github.com/cosmos/cosmos-sdk/x/auth/client/rest",
     "github.com/cosmos/cosmos-sdk/x/bank/client/rest",
     "github.com/cosmos/cosmos-sdk/x/gov/client/rest",
     "github.com/cosmos/cosmos-sdk/x/ibc/client/rest",
     "github.com/cosmos/cosmos-sdk/x/slashing/client/rest",
-    "github.com/cosmos/cosmos-sdk/x/stake",
     "github.com/cosmos/cosmos-sdk/x/stake/client/rest",
     "github.com/ethereum/go-ethereum",
     "github.com/ethereum/go-ethereum/accounts/abi",
@@ -792,6 +789,7 @@
     "github.com/ethereum/go-ethereum/ethclient",
     "github.com/ethereum/go-ethereum/event",
     "github.com/ethereum/go-ethereum/rlp",
+    "github.com/ethereum/go-ethereum/swarm/log",
     "github.com/gorilla/mux",
     "github.com/spf13/cobra",
     "github.com/spf13/viper",
