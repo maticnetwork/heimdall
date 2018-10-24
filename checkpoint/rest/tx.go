@@ -4,18 +4,20 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/crypto/keys"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/gorilla/mux"
-	"io/ioutil"
-	"net/http"
+
+	"log"
 
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/helper"
-	"log"
 )
 
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *wire.Codec, kb keys.Keybase) {
@@ -66,7 +68,7 @@ func newCheckpointHandler(cdc *wire.Codec, kb keys.Keybase, cliCtx context.CLICo
 		}
 		log.Print("The tx bytes are %v ", hex.EncodeToString(txBytes))
 
-		resp := sendRequest(txBytes, helper.GetConfig().RPCUrl)
+		resp := sendRequest(txBytes, helper.GetConfig().TendermintEndpoint)
 		log.Print("Response ---> %v", resp)
 
 		var bodyString string

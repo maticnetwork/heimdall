@@ -25,7 +25,7 @@ RUN make dep
 RUN make build
 
 # add volumes
-VOLUME ["./config", "./logs", "./build"]
+VOLUME ["/root/.heimdalld", "./logs", "./build"]
 
 # expose ports
 EXPOSE 1317

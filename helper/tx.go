@@ -2,7 +2,6 @@ package helper
 
 import (
 	"context"
-	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -46,16 +45,6 @@ func GenerateAuthObj(client *ethclient.Client) (auth *bind.TransactOpts) {
 	auth = bind.NewKeyedTransactor(ecdsaPrivateKey)
 	auth.GasPrice = gasprice
 	auth.Nonce = big.NewInt(int64(nonce))
-	auth.GasLimit = uint64(3000000)
+	auth.GasLimit = uint64(3000000) // TODO fix gas limit (estimate gas)
 	return auth
-}
-
-func SelectProposer() {
-	validatorSetInstance := GetValidatorSetInstance(KovanClient)
-	auth := GenerateAuthObj(KovanClient)
-	tx, err := validatorSetInstance.SelectProposer(auth)
-	if err != nil {
-		fmt.Printf("Unable to send transaction for proposer selection ")
-	}
-	fmt.Printf("New Proposer Selected ! %v", tx)
 }

@@ -15,7 +15,7 @@ import (
 )
 
 func GetValidators() (validators []abci.Validator) {
-	validatorSetInstance := GetValidatorSetInstance(KovanClient)
+	validatorSetInstance := GetValidatorSetInstance(MainChainClient)
 	powers, ValidatorAddrs, err := validatorSetInstance.GetValidatorSet(nil)
 	if err != nil {
 		fmt.Printf(" The error is %v", err)
@@ -45,8 +45,8 @@ func GetValidators() (validators []abci.Validator) {
 }
 
 func GetProposer() common.Address {
-	validatorSetInstance := GetValidatorSetInstance(KovanClient)
-	fmt.Printf("kovan client %v", KovanClient)
+	validatorSetInstance := GetValidatorSetInstance(MainChainClient)
+	fmt.Printf("kovan client %v", MainChainClient)
 	currentProposer, err := validatorSetInstance.Proposer(nil)
 	if err != nil {
 		fmt.Printf("error getting proposer")
@@ -61,7 +61,7 @@ func SubmitProof(voteSignBytes []byte, sigs []byte, extradata []byte, start uint
 	//auth.Value = big.NewInt(0)
 	//todo change this to tx , right now its a call
 
-	validatorSetInstance := GetValidatorSetInstance(KovanClient)
+	validatorSetInstance := GetValidatorSetInstance(MainChainClient)
 	fmt.Printf("validatorset instance %v", validatorSetInstance)
 	fmt.Printf("inputs , vote: %v , sigs: %v , extradata %v ", hex.EncodeToString(voteSignBytes), hex.EncodeToString(sigs), hex.EncodeToString(extradata))
 	res, proposer, error := validatorSetInstance.Validate(nil, voteSignBytes, sigs, extradata)
@@ -72,7 +72,7 @@ func SubmitProof(voteSignBytes []byte, sigs []byte, extradata []byte, start uint
 }
 
 func getValidatorByIndex(_index int64) abci.Validator {
-	stakeManagerInstance, err := stakemanager.NewContracts(common.HexToAddress(GetConfig().StakeManagerAddress), KovanClient)
+	stakeManagerInstance, err := stakemanager.NewContracts(common.HexToAddress(GetConfig().StakeManagerAddress), MainChainClient)
 	if err != nil {
 		log.Fatal(err)
 	}
