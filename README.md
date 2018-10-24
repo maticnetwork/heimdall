@@ -32,10 +32,10 @@ Accept-Language: en-us
 Connection: Keep-Alive
 
 {
-  "Root_hash": "0xd494377d4439a844214b565e1c211ea7154ca300b98e3c296f19fc9ada36db33",
-  "Start_block": 4733031,
-  "End_block": 4733034,
-  "Proposer_address": "0x84f8a67E4d16bb05aBCa3d154091566921e0B5e9"
+  "root_hash": "0xd494377d4439a844214b565e1c211ea7154ca300b98e3c296f19fc9ada36db33",
+  "start_block": 4733031,
+  "end_block": 4733034,
+  "proposer_address": "0x84f8a67E4d16bb05aBCa3d154091566921e0B5e9"
 }
 ```
 
@@ -54,3 +54,7 @@ $ make build-docker
 ```bash
 $ make build-docker-develop
 ```
+
+### License
+
+GNU General Public License v3.0

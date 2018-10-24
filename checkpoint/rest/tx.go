@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/crypto/keys"
@@ -17,7 +18,6 @@ import (
 	"github.com/ethereum/go-ethereum/swarm/log"
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/spf13/viper"
-	"strings"
 )
 
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *wire.Codec, kb keys.Keybase) {
@@ -27,17 +27,16 @@ func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *wire.Codec,
 	).Methods("POST")
 }
 
-type CheckpointFromBridge struct {
-	Root_hash        string `json:"root_hash"`
-	Start_block      int64  `json:"start_block"`
-	End_block        int64  `json:"end_block"`
-	Proposer_address string `json:"proposer_address"`
+type EpochCheckpoint struct {
+	RootHash        string `json:"root_hash"`
+	StartBlock      int64  `json:"start_block"`
+	EndBlock        int64  `json:"end_block"`
+	ProposerAddress string `json:"proposer_address"`
 }
 
 func newCheckpointHandler(cdc *wire.Codec, kb keys.Keybase, cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
-		var m CheckpointFromBridge
+		var m EpochCheckpoint
 
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
@@ -54,7 +53,12 @@ func newCheckpointHandler(cdc *wire.Codec, kb keys.Keybase, cliCtx context.CLICo
 			return
 		}
 
-		msg := checkpoint.NewMsgCheckpointBlock(uint64(m.Start_block), uint64(m.End_block), common.HexToHash(m.Root_hash), m.Proposer_address)
+		msg := checkpoint.NewMsgCheckpointBlock(
+			uint64(m.StartBlock),
+			uint64(m.EndBlock),
+			common.HexToHash(m.RootHash),
+			m.ProposerAddress,
+		)
 
 		tx := checkpoint.NewBaseTx(msg)
 
@@ -76,6 +80,7 @@ func newCheckpointHandler(cdc *wire.Codec, kb keys.Keybase, cliCtx context.CLICo
 		w.Write([]byte(bodyString))
 	}
 }
+
 func getBroadcastURL() string {
 	viper.SetConfigName("config") // name of config file (without extension)
 	viper.AddConfigPath("/Users/vc/.heimdalld/config")
@@ -91,19 +96,22 @@ func getBroadcastURL() string {
 
 	return urlWithoutPort[0]
 }
-func sendRequest(txBytes []byte, url string) *http.Response {
 
+func sendRequest(txBytes []byte, url string) *http.Response {
 	client := &http.Client{}
 	//req, _ := http.NewRequest("GET", "http://"+url+":26657/broadcast_tx_commit", nil)
-	req, _ := http.NewRequest("GET", "http://"+url+":26657/broadcast_tx_commit", nil)
+	req, err := http.NewRequest("GET", "http://"+url+":26657/broadcast_tx_commit", nil)
+	if err != nil {
+		log.Error("Error while drafting request for tendermint: %v", err)
+	}
 
-	q := req.URL.Query()
-	q.Add("tx", "0x"+hex.EncodeToString(txBytes))
-	req.URL.RawQuery = q.Encode()
+	queryParams := req.URL.Query()
+	queryParams.Add("tx", fmt.Sprintf("0x%s", hex.EncodeToString(txBytes)))
+	req.URL.RawQuery = queryParams.Encode()
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Error("Could not send transaction to TM . Error : %v", err)
+		log.Error("Error while sending request to tendermint: %v", err)
 	}
 	return resp
 }
