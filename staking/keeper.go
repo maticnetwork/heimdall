@@ -1,10 +1,9 @@
 package staking
 
 import (
-	"fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
+	"github.com/ethereum/go-ethereum/log"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 
@@ -37,7 +36,7 @@ func (k Keeper) SetValidatorSet(ctx sdk.Context, validators []abci.Validator) {
 	for _, validator := range validators {
 		bz, err := k.cdc.MarshalBinary(validator)
 		if err != nil {
-			fmt.Println("error %v", err)
+			log.Error("error %v", err)
 		}
 		store.Set(GetValidatorKey(validator.Address), bz)
 	}
@@ -106,7 +105,7 @@ func (k Keeper) FlushValidatorSet(ctx sdk.Context) {
 		validator.Power = int64(0)
 		bz, err := k.cdc.MarshalBinary(validator)
 		if err != nil {
-			fmt.Println("error %v", err)
+			log.Error("error %v", err)
 		}
 		store.Set(GetValidatorKey(validator.Address), bz)
 		iterator.Next()

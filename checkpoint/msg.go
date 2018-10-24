@@ -13,18 +13,14 @@ const MsgType = "checkpoint"
 var _ sdk.Msg = &MsgCheckpoint{}
 
 type MsgCheckpoint struct {
-	// TODO variable as we dont know who will call this
 	Proposer   common.Address `json:"address"` // address of the validator owner
 	StartBlock uint64         `json:"startBlock"`
 	EndBlock   uint64         `json:"endBlock"`
 	RootHash   common.Hash    `json:"rootHash"`
 }
 
-//
-
 func NewMsgCheckpointBlock(startBlock uint64, endBlock uint64, roothash common.Hash, proposer string) MsgCheckpoint {
 	return MsgCheckpoint{
-		// TODO remove after testing
 		Proposer:   common.HexToAddress(proposer),
 		StartBlock: startBlock,
 		EndBlock:   endBlock,
@@ -70,14 +66,3 @@ func NewBaseTx(msg MsgCheckpoint) BaseTx {
 }
 
 func (tx BaseTx) GetMsgs() []sdk.Msg { return []sdk.Msg{tx.Msg} }
-
-//
-//func (app *HeimdallApp) txDecoder(txBytes []byte) (sdk.Tx, sdk.Error) {
-//	var tx = checkpoint.BaseTx{}
-//
-//	err := rlp.DecodeBytes(txBytes, &tx)
-//	if err != nil {
-//		return nil, sdk.ErrTxDecode(err.Error())
-//	}
-//	return tx, nil
-//}

@@ -2,7 +2,6 @@ package checkpoint
 
 import (
 	"encoding/json"
-	"fmt"
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -13,7 +12,6 @@ import (
 type Keeper struct {
 	checkpointKey sdk.StoreKey
 	cdc           *wire.Codec
-	//validatorSet sdk.ValidatorSet
 
 	// codespace
 	codespace sdk.CodespaceType
@@ -45,21 +43,28 @@ func createBlock(start uint64, end uint64, rootHash common.Hash, proposer common
 }
 
 func (k Keeper) AddCheckpoint(ctx sdk.Context, start uint64, end uint64, root common.Hash, proposer common.Address) int64 {
+	logger := ctx.Logger().With("module", "app.go")
+
 	store := ctx.KVStore(k.checkpointKey)
+
 	data := createBlock(start, end, root, proposer)
 	out, err := json.Marshal(data)
 	if err != nil {
-		panic(err)
+		logger.Error("Error Marshalling checkpoint to json : %v", err)
 	}
+
 	//TODO add block data validation
-	fmt.Printf("Block data to be inserted with key %v", []byte(strconv.Itoa(int(ctx.BlockHeight()))))
-	fmt.Printf("Block data to be inserted is %v", out)
+	logger.Info("Block data inserted with key:  %v  and data : %v ", []byte(strconv.Itoa(int(ctx.BlockHeight()))), out)
+
 	store.Set([]byte(strconv.Itoa(int(ctx.BlockHeight()))), []byte(out))
+
 	return ctx.BlockHeight()
 }
 
 func (k Keeper) GetCheckpoint(ctx sdk.Context, key int64) []byte {
+
 	store := ctx.KVStore(k.checkpointKey)
 	getKey := []byte(strconv.Itoa(int(key)))
+
 	return store.Get(getKey)
 }
