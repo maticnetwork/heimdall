@@ -3,6 +3,7 @@ package checkpoint
 import (
 	"encoding/json"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	conf "github.com/maticnetwork/heimdall/helper"
 )
 
 func NewHandler(k Keeper) sdk.Handler {
@@ -17,9 +18,8 @@ func NewHandler(k Keeper) sdk.Handler {
 }
 
 func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper) sdk.Result {
-	logger := ctx.Logger().With("module", "checkpoint")
 	valid := validateCheckpoint(int(msg.StartBlock), int(msg.EndBlock), msg.RootHash.String())
-
+	logger := conf.Logger.With("module", "checkpoint")
 	// check msg.proposer with tm proposer
 	var res int64
 	if valid {

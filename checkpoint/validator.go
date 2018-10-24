@@ -3,22 +3,22 @@ package checkpoint
 import (
 	"context"
 	"encoding/hex"
-	"log"
 	"math/big"
 	"strings"
 
-	"fmt"
 	"github.com/ethereum/go-ethereum/crypto/sha3"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/xsleonard/go-merkle"
+
+	"fmt"
 )
 
 func validateCheckpoint(start int, end int, rootHash string) bool {
 
 	client, err := ethclient.Dial(helper.GetConfig().DialMatic)
 	if err != nil {
-		log.Fatal(err)
+		logger.Error("Error Dialing to matic : %v", err)
 	}
 	if (start-end+1)%2 != 0 {
 		return false
@@ -28,10 +28,10 @@ func validateCheckpoint(start int, end int, rootHash string) bool {
 	root = "0x" + root
 	if strings.Compare(root, rootHash) == 0 {
 
-		log.Print("root hash and root same %v AND %v ", rootHash, root)
+		logger.Info("root hash and root same %v AND %v ", rootHash, root)
 		return true
 	} else {
-		log.Print("root hash and root not same %v AND %v ", rootHash, root)
+		logger.Info("root hash and root not same %v AND %v ", rootHash, root)
 		return false
 	}
 
@@ -47,7 +47,7 @@ func getHeaders(start int, end int, client *ethclient.Client) string {
 	for current <= end {
 		blockheader, err := client.HeaderByNumber(context.Background(), big.NewInt(int64(current)))
 		if err != nil {
-			log.Fatal(err)
+			logger.Error("Error Getting Block : %v ", err)
 		}
 		headerBytes := appendBytes32(blockheader.Number.Bytes(),
 			blockheader.Time.Bytes(),
@@ -65,7 +65,7 @@ func getHeaders(start int, end int, client *ethclient.Client) string {
 
 	err := tree.Generate(merkelData, sha3.NewKeccak256())
 	if err != nil {
-		log.Fatal(err)
+		logger.Error("Error generating tree : %v", err)
 	}
 	return hex.EncodeToString(tree.Root().Hash)
 }

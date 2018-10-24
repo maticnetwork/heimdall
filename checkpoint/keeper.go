@@ -7,6 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/ethereum/go-ethereum/common"
+	conf "github.com/maticnetwork/heimdall/helper"
 )
 
 type Keeper struct {
@@ -43,7 +44,7 @@ func createBlock(start uint64, end uint64, rootHash common.Hash, proposer common
 }
 
 func (k Keeper) AddCheckpoint(ctx sdk.Context, start uint64, end uint64, root common.Hash, proposer common.Address) int64 {
-	logger := ctx.Logger().With("module", "app.go")
+	var logger = conf.Logger.With("module", "checkpoint")
 
 	store := ctx.KVStore(k.checkpointKey)
 

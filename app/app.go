@@ -11,12 +11,14 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	dbm "github.com/tendermint/tendermint/libs/db"
-	"github.com/tendermint/tendermint/libs/log"
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/helper"
+	heimlib "github.com/maticnetwork/heimdall/libs"
 	"github.com/maticnetwork/heimdall/staking"
+	"github.com/tendermint/tendermint/libs/log"
+	"os"
 )
 
 const (
@@ -41,6 +43,8 @@ type HeimdallApp struct {
 	checkpointKeeper checkpoint.Keeper
 	stakerKeeper     staking.Keeper
 }
+
+var logger = heimlib.NewMainLogger(log.NewSyncWriter(os.Stdout)).With("module", "app")
 
 // NewHeimdallApp returns a reference to a new HeimdallApp given a logger and
 // database. Internally, a codec is created along with all the necessary keys.
@@ -110,7 +114,6 @@ func (app *HeimdallApp) BeginBlocker(_ sdk.Context, _ abci.RequestBeginBlock) ab
 // EndBlocker reflects logic to run after all TXs are processed by the
 // application.
 func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci.ResponseEndBlock {
-	logger := ctx.Logger().With("module", "app.go")
 
 	//validatorSet := staking.EndBlocker(ctx, app.stakerKeeper)
 	//
@@ -160,7 +163,6 @@ func GetVoteBytes(votes []tmtypes.Vote, ctx sdk.Context) []byte {
 
 func GetExtraData(_checkpoint checkpoint.CheckpointBlockHeader, ctx sdk.Context) []byte {
 	msg := checkpoint.NewMsgCheckpointBlock(_checkpoint.StartBlock, _checkpoint.EndBlock, _checkpoint.RootHash, _checkpoint.Proposer.String())
-	logger := ctx.Logger().With("module", "app.go")
 
 	tx := checkpoint.NewBaseTx(msg)
 	txBytes, err := rlp.EncodeToBytes(tx)
