@@ -8,6 +8,8 @@ clean:
 
 build: clean
 	mkdir -p build
+	rm -rf vendor/github.com/ethereum/go-ethereum
+	git clone -b v1.8.17 --single-branch --depth 1 https://github.com/ethereum/go-ethereum vendor/github.com/ethereum/go-ethereum
 	go build -o build/heimdalld cmd/heimdalld/main.go
 	go build -o build/heimdallcli cmd/heimdallcli/main.go
 
