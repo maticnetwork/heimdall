@@ -1,6 +1,9 @@
 package helper
 
 import (
+	"log"
+	"os"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/spf13/viper"
@@ -8,8 +11,6 @@ import (
 
 	"github.com/maticnetwork/heimdall/contracts/validatorset"
 	logger "github.com/maticnetwork/heimdall/libs"
-	"log"
-	"os"
 )
 
 func init() {
@@ -24,10 +25,10 @@ func init() {
 type Configuration struct {
 	MainRPCUrl          string `mapstructure:"main_rpcurl"`
 	MaticRPCUrl         string `mapstructure:"matic_rpcurl"`
-	ValidatorFilePVPath string `mapstructure:"priv_validator_path"`
 	StakeManagerAddress string `mapstructure:"stakemanager_address"`
 	RootchainAddress    string `mapstructure:"rootchain_address"`
 	ValidatorSetAddress string `mapstructure:"validatorset_address"`
+	ValidatorFilePVPath string `mapstructure:"priv_validator_path"`
 
 	// Tendermint endpoint
 	TendermintEndpoint string `mapstructure:"tendermint_endpoint"`
@@ -41,10 +42,10 @@ var MainChainClient *ethclient.Client
 // MaticClient stores eth client for Matic Network
 var MaticClient *ethclient.Client
 
+// Logger stores global logger object
 var Logger logger.Logger
 
 func initHeimdall() {
-
 	heimdallViper := viper.New()
 	heimdallViper.SetConfigName("heimdall-config")         // name of config file (without extension)
 	heimdallViper.AddConfigPath("$HOME/.heimdalld/config") // call multiple times to add many search paths
@@ -67,7 +68,6 @@ func initHeimdall() {
 		log.Fatal(err)
 	}
 	Logger = logger.NewMainLogger(logger.NewSyncWriter(os.Stdout))
-
 }
 
 func GetConfig() Configuration {
@@ -75,7 +75,6 @@ func GetConfig() Configuration {
 }
 
 func GetValidatorSetInstance(client *ethclient.Client) *validatorset.ValidatorSet {
-
 	validatorSetInstance, err := validatorset.NewValidatorSet(common.HexToAddress(GetConfig().ValidatorSetAddress), client)
 	if err != nil {
 		log.Fatal(err)

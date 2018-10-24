@@ -31,7 +31,6 @@ func NewKeeper(cdc *wire.Codec, key sdk.StoreKey, codespace sdk.CodespaceType) K
 
 //validator type will contain address, pubkey and power
 func (k Keeper) SetValidatorSet(ctx sdk.Context, validators []abci.Validator) {
-
 	store := ctx.KVStore(k.storeKey)
 
 	for _, validator := range validators {
@@ -45,7 +44,6 @@ func (k Keeper) SetValidatorSet(ctx sdk.Context, validators []abci.Validator) {
 
 // appends the validator key to address
 func GetValidatorKey(address []byte) []byte {
-
 	return append(ValidatorsKey, address...)
 }
 
