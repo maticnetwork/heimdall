@@ -24,8 +24,8 @@ rest-server:
 
 start:
 	mkdir -p logs
-	./build/heimdalld start > ./logs/heimdalld.log
-	./build/heimdallcli rest-server > ./logs/heimdallcli.log
+	./build/heimdalld start > ./logs/heimdalld.log &
+	./build/heimdallcli rest-server > ./logs/heimdallcli.log &
 
 #
 # docker commands
