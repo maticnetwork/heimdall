@@ -23,4 +23,14 @@ rest-server:
 
 start: build run-heimdall
 
-.PHONY: dep clean build
+#
+# docker commands
+#
+
+build-docker:
+	cd docker; make build
+
+build-docker-develop:
+	cd docker; make build-develop
+
+.PHONY: dep build
