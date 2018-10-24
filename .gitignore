@@ -4,9 +4,5 @@ vendor/github.com/ethereum/go-ethereum/
 
 # ignore build
 build
-log
 logs
 *.log
-
-# ignore config
-config/*.json

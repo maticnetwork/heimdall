@@ -2,6 +2,7 @@ package checkpoint
 
 import (
 	"encoding/json"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -23,7 +24,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper) sdk.Resul
 	// check msg.proposer with tm proposer
 	var res int64
 	if valid {
-		logger.Debug("root hash matched !! ")
+		logger.Debug("root hash matched!!")
 		res = k.AddCheckpoint(ctx, msg.StartBlock, msg.EndBlock, msg.RootHash, msg.Proposer)
 	} else {
 		logger.Debug("Root hash no match ;(")
