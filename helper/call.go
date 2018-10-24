@@ -13,8 +13,7 @@ import (
 func GetValidators() (validators []abci.Validator) {
 	logger := Logger.With("module", "checkpoint")
 
-	validatorSetInstance := GetValidatorSetInstance(KovanClient)
-
+	validatorSetInstance := GetValidatorSetInstance(MainChainClient)
 	powers, ValidatorAddrs, err := validatorSetInstance.GetValidatorSet(nil)
 	if err != nil {
 		logger.Info(" The error is %v", err)
@@ -49,7 +48,7 @@ func GetValidators() (validators []abci.Validator) {
 
 func GetProposer() common.Address {
 
-	validatorSetInstance := GetValidatorSetInstance(KovanClient)
+	validatorSetInstance := GetValidatorSetInstance(MainChainClient)
 
 	currentProposer, err := validatorSetInstance.Proposer(nil)
 	if err != nil {
@@ -65,7 +64,7 @@ func SubmitProof(voteSignBytes []byte, sigs []byte, extradata []byte, start uint
 
 	Logger.Info("Root hash obtained for blocks from %v to %v is %v", start, end, rootHash)
 
-	validatorSetInstance := GetValidatorSetInstance(KovanClient)
+	validatorSetInstance := GetValidatorSetInstance(MainChainClient)
 
 	Logger.Info("inputs , vote: %v , sigs: %v , extradata %v ", hex.EncodeToString(voteSignBytes), hex.EncodeToString(sigs), hex.EncodeToString(extradata))
 

@@ -1,7 +1,8 @@
 dep:
 	dep ensure -v
-	mkdir -p vendor/github.com/tendermint
+	mkdir -p vendor/github.com/tendermint vendor/github.com/ethereum
 	git clone -b v0.9.2 --single-branch --depth 1 https://github.com/tendermint/iavl vendor/github.com/tendermint/iavl
+	git clone -b v1.8.17 --single-branch --depth 1 https://github.com/ethereum/go-ethereum vendor/github.com/ethereum/go-ethereum
 
 clean:
 	rm -rf build
@@ -13,7 +14,10 @@ build: clean
 
 contracts:
 	# mkdir -p contracts/validatorset
-	# abigen --abi=contracts/validatorset/validatorset.abi --pkg=validatorset --out=contracts/validatorset/ValidatorSet.go
+	# abigen --abi=contracts/validatorset/validatorset.abi --pkg=validatorset --out=contracts/validatorset/validatorset.go
+
+init-heimdall:
+	./build/heimdalld init
 
 run-heimdall:
 	./build/heimdalld start
@@ -21,7 +25,10 @@ run-heimdall:
 rest-server:
 	./build/heimdallcli rest-server
 
-start: build run-heimdall
+start:
+	mkdir -p logs
+	./build/heimdalld start > ./logs/heimdalld.log &
+	./build/heimdallcli rest-server > ./logs/heimdallcli.log &
 
 #
 # docker commands
@@ -32,5 +39,12 @@ build-docker:
 
 build-docker-develop:
 	cd docker; make build-develop
+
+run-docker-develop:
+	docker run --name hm -it \
+		-v /Users/jdkanani/.heimdalld:/root/.heimdalld \
+		-v `pwd`/logs:/go/src/github.com/maticnetwork/heimdall/logs \
+		-p 1317:1317 \
+		"maticnetwork/tendermint:develop"
 
 .PHONY: dep build

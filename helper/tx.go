@@ -54,9 +54,9 @@ func GenerateAuthObj(client *ethclient.Client) (auth *bind.TransactOpts) {
 
 func SelectProposer() {
 	// get ValidatorSet Instance
-	validatorSetInstance := GetValidatorSetInstance(KovanClient)
+	validatorSetInstance := GetValidatorSetInstance(MainChainClient)
 	// get auth Obj
-	auth := GenerateAuthObj(KovanClient)
+	auth := GenerateAuthObj(MainChainClient)
 	// send tx
 	tx, err := validatorSetInstance.SelectProposer(auth)
 	if err != nil {

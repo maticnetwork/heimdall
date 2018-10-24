@@ -20,3 +20,12 @@ WORKDIR /go/src/github.com/maticnetwork/heimdall
 
 # run dep
 RUN make dep
+
+# run build
+RUN make build
+
+# add volumes
+VOLUME ["/root/.heimdalld", "./logs", "./build"]
+
+# expose ports
+EXPOSE 1317

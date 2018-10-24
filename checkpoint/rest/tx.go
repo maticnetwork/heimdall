@@ -3,6 +3,10 @@ package rest
 import (
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/crypto/keys"
 	"github.com/cosmos/cosmos-sdk/wire"
@@ -10,14 +14,13 @@ import (
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/gorilla/mux"
 	conf "github.com/maticnetwork/heimdall/helper"
-	"io/ioutil"
-	"net/http"
+
+	libs "github.com/maticnetwork/heimdall/libs"
+
+	"log"
 
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/helper"
-	libs "github.com/maticnetwork/heimdall/libs"
-
-	"fmt"
 )
 
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *wire.Codec, kb keys.Keybase) {
@@ -70,8 +73,8 @@ func newCheckpointHandler(cdc *wire.Codec, kb keys.Keybase, cliCtx context.CLICo
 		}
 		logger.Info("The tx bytes are %v ", hex.EncodeToString(txBytes))
 
-		resp := sendRequest(txBytes, helper.GetConfig().RPCUrl, logger)
-		logger.Info("Response ---> %v", resp)
+		resp := sendRequest(txBytes, helper.GetConfig().TendermintEndpoint, logger)
+		log.Print("Response ---> %v", resp)
 
 		var bodyString string
 		if resp.StatusCode == http.StatusOK {
