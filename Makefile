@@ -16,6 +16,9 @@ contracts:
 	# mkdir -p contracts/validatorset
 	# abigen --abi=contracts/validatorset/validatorset.abi --pkg=validatorset --out=contracts/validatorset/validatorset.go
 
+init-heimdall:
+	./build/heimdalld init
+
 run-heimdall:
 	./build/heimdalld start
 
@@ -36,5 +39,12 @@ build-docker:
 
 build-docker-develop:
 	cd docker; make build-develop
+
+run-docker-develop:
+	docker run --name hm -it \
+		-v /Users/jdkanani/.heimdalld:/root/.heimdalld \
+		-v `pwd`/logs:/go/src/github.com/maticnetwork/heimdall/logs \
+		-p 1317:1317 \
+		"maticnetwork/tendermint:develop"
 
 .PHONY: dep build

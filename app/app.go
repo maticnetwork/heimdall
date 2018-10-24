@@ -64,8 +64,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.checkpointKeeper = checkpoint.NewKeeper(app.cdc, app.keyCheckpoint, app.RegisterCodespace(checkpoint.DefaultCodespace))
 	app.stakerKeeper = staking.NewKeeper(app.cdc, app.keyStaker, app.RegisterCodespace(checkpoint.DefaultCodespace))
 	// register message routes
-	app.Router().
-		AddRoute("checkpoint", checkpoint.NewHandler(app.checkpointKeeper))
+	app.Router().AddRoute("checkpoint", checkpoint.NewHandler(app.checkpointKeeper))
 	// perform initialization logic
 	app.SetInitChainer(app.initChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
@@ -97,7 +96,6 @@ func MakeCodec() *wire.Codec {
 	// register custom type
 
 	cdc.Seal()
-
 	return cdc
 }
 
