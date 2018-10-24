@@ -57,8 +57,8 @@ func GetConfig() Configuration {
 	return conf
 }
 
-func GetValidatorSetInstance(client *ethclient.Client) *validatorSet.ValidatorSet {
-	validatorSetInstance, err := validatorSet.NewValidatorSet(common.HexToAddress(GetConfig().ValidatorSetAddress), client)
+func GetValidatorSetInstance(client *ethclient.Client) *validatorset.ValidatorSet {
+	validatorSetInstance, err := validatorset.NewValidatorSet(common.HexToAddress(GetConfig().ValidatorSetAddress), client)
 	if err != nil {
 		log.Fatal(err)
 	}
