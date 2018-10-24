@@ -3,19 +3,21 @@ package rest
 import (
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/crypto/keys"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/gorilla/mux"
+	conf "github.com/maticnetwork/heimdall/helper"
 	"io/ioutil"
 	"net/http"
 
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/helper"
-	"log"
+	libs "github.com/maticnetwork/heimdall/libs"
+
+	"fmt"
 )
 
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *wire.Codec, kb keys.Keybase) {
@@ -34,6 +36,8 @@ type EpochCheckpoint struct {
 
 func newCheckpointHandler(cdc *wire.Codec, kb keys.Keybase, cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		var logger = conf.Logger.With("module", "checkpoint")
+
 		var m EpochCheckpoint
 
 		body, err := ioutil.ReadAll(r.Body)
@@ -45,7 +49,7 @@ func newCheckpointHandler(cdc *wire.Codec, kb keys.Keybase, cliCtx context.CLICo
 
 		err = json.Unmarshal(body, &m)
 		if err != nil {
-			fmt.Printf("we have error")
+			logger.Error("we have error")
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
 			return
@@ -62,12 +66,12 @@ func newCheckpointHandler(cdc *wire.Codec, kb keys.Keybase, cliCtx context.CLICo
 
 		txBytes, err := rlp.EncodeToBytes(tx)
 		if err != nil {
-			fmt.Printf("Error generating TXBYtes %v", err)
+			logger.Info("Error generating TXBYtes %v", err)
 		}
-		log.Print("The tx bytes are %v ", hex.EncodeToString(txBytes))
+		logger.Info("The tx bytes are %v ", hex.EncodeToString(txBytes))
 
-		resp := sendRequest(txBytes, helper.GetConfig().RPCUrl)
-		log.Print("Response ---> %v", resp)
+		resp := sendRequest(txBytes, helper.GetConfig().RPCUrl, logger)
+		logger.Info("Response ---> %v", resp)
 
 		var bodyString string
 		if resp.StatusCode == http.StatusOK {
@@ -78,11 +82,11 @@ func newCheckpointHandler(cdc *wire.Codec, kb keys.Keybase, cliCtx context.CLICo
 	}
 }
 
-func sendRequest(txBytes []byte, url string) *http.Response {
+func sendRequest(txBytes []byte, url string, logger libs.Logger) *http.Response {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url+"/broadcast_tx_commit", nil)
 	if err != nil {
-		log.Fatalf("Error while drafting request for tendermint: %v", err)
+		logger.Error("Error while drafting request for tendermint: %v", err)
 	}
 
 	queryParams := req.URL.Query()
@@ -91,7 +95,7 @@ func sendRequest(txBytes []byte, url string) *http.Response {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatalf("Error while sending request to tendermint: %v", err)
+		logger.Error("Error while sending request to tendermint: %v", err)
 	}
 	return resp
 }

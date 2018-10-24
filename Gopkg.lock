@@ -126,7 +126,7 @@
   revision = "95f809107225be108efcf10a3509e4ea6ceef3c4"
 
 [[projects]]
-  digest = "1:06343989afb6c9ba300960d9693241f2b831502422a263f10d034a327b6e9aa7"
+  digest = "1:157ad8964124f4baaaf6d4d8b6434bc3db1cb43936c7ad665bb73d2b2a0d2c2b"
   name = "github.com/ethereum/go-ethereum"
   packages = [
     ".",
@@ -152,7 +152,6 @@
     "params",
     "rlp",
     "rpc",
-    "swarm/log",
     "trie",
   ]
   pruneopts = "UT"
@@ -788,14 +787,15 @@
     "github.com/ethereum/go-ethereum/crypto/sha3",
     "github.com/ethereum/go-ethereum/ethclient",
     "github.com/ethereum/go-ethereum/event",
+    "github.com/ethereum/go-ethereum/log",
     "github.com/ethereum/go-ethereum/rlp",
-    "github.com/ethereum/go-ethereum/swarm/log",
+    "github.com/go-kit/kit/log",
+    "github.com/go-kit/kit/log/level",
     "github.com/gorilla/mux",
     "github.com/spf13/cobra",
     "github.com/spf13/viper",
     "github.com/tendermint/go-amino",
     "github.com/tendermint/tendermint/abci/types",
-    "github.com/tendermint/tendermint/crypto",
     "github.com/tendermint/tendermint/crypto/secp256k1",
     "github.com/tendermint/tendermint/libs/cli",
     "github.com/tendermint/tendermint/libs/common",
