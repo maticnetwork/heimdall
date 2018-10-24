@@ -1,6 +1,7 @@
 package app
 
 import (
+	"os"
 	"encoding/json"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
@@ -18,7 +19,6 @@ import (
 	heimlib "github.com/maticnetwork/heimdall/libs"
 	"github.com/maticnetwork/heimdall/staking"
 	"github.com/tendermint/tendermint/libs/log"
-	"os"
 )
 
 const (
