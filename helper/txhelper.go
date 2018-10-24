@@ -2,7 +2,6 @@ package helper
 
 import (
 	"context"
-	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -17,7 +16,9 @@ import (
 var cdc = amino.NewCodec()
 
 func GenerateAuthObj(client *ethclient.Client) (auth *bind.TransactOpts) {
+	// get config
 	config := GetConfig()
+	// load file and unmarshall
 	privVal := privval.LoadFilePV(config.ValidatorFilePVPath)
 	var pkObject secp256k1.PrivKeySecp256k1
 	cdc.MustUnmarshalBinaryBare(privVal.PrivKey.Bytes(), &pkObject)
@@ -47,15 +48,21 @@ func GenerateAuthObj(client *ethclient.Client) (auth *bind.TransactOpts) {
 	auth.GasPrice = gasprice
 	auth.Nonce = big.NewInt(int64(nonce))
 	auth.GasLimit = uint64(3000000)
+
 	return auth
 }
 
 func SelectProposer() {
+	// get ValidatorSet Instance
 	validatorSetInstance := GetValidatorSetInstance(KovanClient)
+	// get auth Obj
 	auth := GenerateAuthObj(KovanClient)
+	// send tx
 	tx, err := validatorSetInstance.SelectProposer(auth)
 	if err != nil {
-		fmt.Printf("Unable to send transaction for proposer selection ")
+		Logger.Error("Unable to send transaction for proposer selection ")
+	} else {
+		Logger.Info("New Proposer Selected ! TxHash :  %v", tx.Hash().String())
 	}
-	fmt.Printf("New Proposer Selected ! %v", tx)
+
 }
