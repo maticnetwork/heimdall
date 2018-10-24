@@ -1,0 +1,9 @@
+{
+  "StakeManagerAddress": "8b28d78eb59c323867c43b4ab8d06e0f1efa1573",
+  "RootchainAddress": "e022d867085b1617dc9fb04b474c4de580dccf1a",
+  "ValidatorSetAddress": "74aaffd9b2e6d1e9f9913fd1f6f93614d4a1108a",
+  "ValidatorFilePVPath": "/Users/vc/.heimdalld/config/priv_validator.json",
+  "DialKovan": "https://kovan.infura.io",
+  "DialMatic": "https://testnet.matic.network",
+  "RPCUrl":"http://127.0.0.1:26657"
+}

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"os"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
@@ -11,7 +13,6 @@ import (
 
 	"github.com/maticnetwork/heimdall/app"
 	restCmds "github.com/maticnetwork/heimdall/rest"
-	"os"
 	//stakecmd "github.com/maticnetwork/heimdall/staking/client/cli"
 )
 
@@ -44,10 +45,12 @@ func main() {
 	rootCmd.AddCommand(
 		client.GetCommands(
 		//authcmd.GetAccountCmd("acc", cdc, types.GetAccountDecoder(cdc)),
-		)...)
+		)...,
+	)
 
 	rootCmd.AddCommand(
-		client.PostCommands()...)
+		client.PostCommands()...,
+	)
 
 	// add proxy, version and key info
 	rootCmd.AddCommand(
@@ -61,7 +64,6 @@ func main() {
 	)
 
 	// prepare and add flags
-
 	executor := cli.PrepareMainCmd(rootCmd, "HC", os.ExpandEnv("$HOME/.heimdallcli"))
 	err := executor.Execute()
 	if err != nil {

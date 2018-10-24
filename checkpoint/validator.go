@@ -3,6 +3,8 @@ package checkpoint
 import (
 	"context"
 	"encoding/hex"
+	"fmt"
+	"log"
 	"math/big"
 	"strings"
 
@@ -10,34 +12,33 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/xsleonard/go-merkle"
-
-	"fmt"
 )
 
 func validateCheckpoint(start int, end int, rootHash string) bool {
+	var logger = helper.Logger.With("module", "checkpoint")
 
-	client, err := ethclient.Dial(helper.GetConfig().DialMatic)
+	client, err := ethclient.Dial(helper.GetConfig().MaticRPCUrl)
 	if err != nil {
 		logger.Error("Error Dialing to matic : %v", err)
 	}
+
 	if (start-end+1)%2 != 0 {
 		return false
 	}
-	_ = client // we'll use this in the upcoming sections
-	root := getHeaders(start, end, client)
-	root = "0x" + root
-	if strings.Compare(root, rootHash) == 0 {
 
-		logger.Info("root hash and root same %v AND %v ", rootHash, root)
+	root := "0x" + getHeaders(start, end, client)
+	if strings.Compare(root, rootHash) == 0 {
+		log.Print("root hash and root same %v AND %v ", rootHash, root)
 		return true
 	} else {
 		logger.Info("root hash and root not same %v AND %v ", rootHash, root)
 		return false
 	}
-
 }
 
 func getHeaders(start int, end int, client *ethclient.Client) string {
+	var logger = helper.Logger.With("module", "checkpoint")
+
 	if start > end {
 		return ""
 	}
@@ -69,6 +70,7 @@ func getHeaders(start int, end int, client *ethclient.Client) string {
 	}
 	return hex.EncodeToString(tree.Root().Hash)
 }
+
 func convert(input []([32]byte)) [][]byte {
 	var output [][]byte
 	for _, in := range input {
@@ -79,6 +81,7 @@ func convert(input []([32]byte)) [][]byte {
 	}
 	return output
 }
+
 func convertTo32(input []byte) (output [32]byte, err error) {
 	l := len(input)
 	if l > 32 || l == 0 {
@@ -99,6 +102,7 @@ func appendBytes32(data ...[]byte) []byte {
 	}
 	return result
 }
+
 func getsha3frombyte(input []byte) []byte {
 	hash := sha3.NewKeccak256()
 	var buf []byte
