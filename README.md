@@ -1,16 +1,36 @@
 # Heimdall
 
-### Installation
+Validator node for Matic Network. It uses peppermint, customized [Tendermint](https://github.com/tendermint/tendermint).
 
-Build the main files in cmd/basecli and cmd/basecoind
-`cd cmd/basecli; go build; cd ../basecoind; go build;cd ../../`
+### Installation for development
 
-Run `./basecoind start` in one terminal and `./basecli rest-server` in another
+Install all dependencies and tools
 
-Send checkpoint via a POST request to `http://localhost:1317/checkpoint/submitCheckpoint` with following data fields
->>>>>>> master
+```bash
+$ make dep
+```
 
-```json
+Build heimdall
+
+```bash
+$ make build
+```
+
+Start heimdall process
+
+```bash
+$ make run-heimdall
+```
+
+### Propose new checkpoint
+
+```
+POST http://localhost:1317/checkpoint/new
+Content-Type: application/json
+Content-Length: length
+Accept-Language: en-us
+Connection: Keep-Alive
+
 {
   "Root_hash": "0xd494377d4439a844214b565e1c211ea7154ca300b98e3c296f19fc9ada36db33",
   "Start_block": 4733031,
@@ -19,4 +39,18 @@ Send checkpoint via a POST request to `http://localhost:1317/checkpoint/submitCh
 }
 ```
 
-Your transaction to mainchain contract should go through if you have kovan-ether in address given in proposer field.
+**Note: You must have Ethers in your account while submitting checkpoint.**
+
+### Docker
+
+**Build docker**
+
+```bash
+$ make build-docker
+```
+
+**Build docker for develop branch**
+
+```bash
+$ make build-docker-develop
+```

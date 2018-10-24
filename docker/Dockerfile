@@ -19,7 +19,4 @@ ADD . /go/src/github.com/maticnetwork/heimdall/
 WORKDIR /go/src/github.com/maticnetwork/heimdall
 
 # run dep
-# RUN dep ensure -v
-
-# run ether
-RUN cd /go/src/github.com/maticnetwork/heimdall/vendor/github.com/ethereum/go-ethereum && make geth-linux-amd64
+RUN make dep
