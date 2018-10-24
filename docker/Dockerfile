@@ -23,3 +23,9 @@ RUN make dep
 
 # run build
 RUN make build
+
+# add volumes
+VOLUME ["./config", "./logs", "./build"]
+
+# expose ports
+EXPOSE 1317
