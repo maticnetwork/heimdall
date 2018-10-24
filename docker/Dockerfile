@@ -20,3 +20,6 @@ WORKDIR /go/src/github.com/maticnetwork/heimdall
 
 # run dep
 RUN make dep
+
+# run build
+RUN make build
