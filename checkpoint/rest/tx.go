@@ -13,9 +13,9 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/ethereum/go-ethereum/swarm/log"
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/helper"
+	"log"
 )
 
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *wire.Codec, kb keys.Keybase) {
@@ -64,10 +64,10 @@ func newCheckpointHandler(cdc *wire.Codec, kb keys.Keybase, cliCtx context.CLICo
 		if err != nil {
 			fmt.Printf("Error generating TXBYtes %v", err)
 		}
-		fmt.Printf("The tx bytes are %v ", hex.EncodeToString(txBytes))
+		log.Print("The tx bytes are %v ", hex.EncodeToString(txBytes))
 
 		resp := sendRequest(txBytes, helper.GetConfig().RPCUrl)
-		fmt.Printf("Response ---> %v", resp)
+		log.Print("Response ---> %v", resp)
 
 		var bodyString string
 		if resp.StatusCode == http.StatusOK {
@@ -82,7 +82,7 @@ func sendRequest(txBytes []byte, url string) *http.Response {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url+"/broadcast_tx_commit", nil)
 	if err != nil {
-		log.Error("Error while drafting request for tendermint: %v", err)
+		log.Fatalf("Error while drafting request for tendermint: %v", err)
 	}
 
 	queryParams := req.URL.Query()
@@ -91,7 +91,7 @@ func sendRequest(txBytes []byte, url string) *http.Response {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Error("Error while sending request to tendermint: %v", err)
+		log.Fatalf("Error while sending request to tendermint: %v", err)
 	}
 	return resp
 }

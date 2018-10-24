@@ -49,8 +49,9 @@ type CanonicalRLPVote struct {
 	Type     string
 	Height   uint
 	Round    uint
-	Data     []byte
 	VoteType []byte
+	Proposer []byte
+	Data     []byte
 }
 
 type CanonicalJSONHeartbeat struct {
@@ -111,8 +112,9 @@ func CanonicalVote(chainID string, vote *Vote) CanonicalRLPVote {
 		Type:     "vote",
 		Height:   uint(vote.Height),
 		Round:    uint(vote.Round),
-		Data:     vote.Data,
 		VoteType: []byte{vote.Type},
+		Proposer: vote.Proposer, // [peppermint] current proposer
+		Data:     vote.Data,     // [peppermint] tx data hash
 	}
 }
 

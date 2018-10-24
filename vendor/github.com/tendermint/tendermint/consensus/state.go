@@ -1663,8 +1663,11 @@ func (cs *ConsensusState) signVote(type_ byte, hash []byte, header types.PartSet
 		BlockID:          types.BlockID{hash, header},
 	}
 
+	// [peppermint] add extra data to vote
 	if cs.LockedBlock != nil {
-		vote.Data = cs.LockedBlock.DataHash
+		vote.Data = cs.LockedBlock.DataHash                 // tx data hash
+		vote.Proposer = cs.Validators.GetProposer().Address // current proposer
+		cs.Logger.Debug("[peppermint] signing vote with proposer", "vote", vote)
 	}
 
 	err := cs.privValidator.SignVote(cs.state.ChainID, vote)
