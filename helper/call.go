@@ -2,7 +2,6 @@ package helper
 
 import (
 	"encoding/hex"
-	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -12,18 +11,18 @@ import (
 
 func GetValidators() (validators []abci.Validator) {
 	Logger.With("module", "helper/call")
-	validatorSetInstance := GetValidatorSetInstance(MainChainClient)
-	powers, ValidatorAddrs, err := validatorSetInstance.GetValidatorSet(nil)
+	stakeManagerInstance := GetStakeManagerInstance(MainChainClient)
+	ValidatorAddrs, err := stakeManagerInstance.GetCurrentValidatorSet(nil)
 	if err != nil {
 		Logger.Info("Error getting Validator Set ", "Error", err)
 	}
 
-	for index := range powers {
-		pubkey, error := validatorSetInstance.GetPubkey(nil, big.NewInt(int64(index)))
+	for index := range ValidatorAddrs {
+		validatorStruct, error := stakeManagerInstance.Stakers(nil, ValidatorAddrs[index])
 		if error != nil {
 			Logger.Error("Error getting pubkey ", "Error", error, "Index", index)
 		}
-
+		pubkey := validatorStruct.Pubkey
 		var pubkeyBytes secp256k1.PubKeySecp256k1
 		_pubkey, _ := hex.DecodeString(pubkey)
 		copy(pubkeyBytes[:], _pubkey)
@@ -31,7 +30,7 @@ func GetValidators() (validators []abci.Validator) {
 		// todo add a check to check pubkey corresponds to address
 		validator := abci.Validator{
 			Address: ValidatorAddrs[index].Bytes(),
-			Power:   powers[index].Int64(),
+			Power:   validatorStruct.Amount.Int64(),
 			PubKey:  tmtypes.TM2PB.PubKey(pubkeyBytes),
 		}
 
