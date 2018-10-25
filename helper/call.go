@@ -11,18 +11,17 @@ import (
 )
 
 func GetValidators() (validators []abci.Validator) {
-	logger := Logger.With("module", "checkpoint")
 
 	validatorSetInstance := GetValidatorSetInstance(MainChainClient)
 	powers, ValidatorAddrs, err := validatorSetInstance.GetValidatorSet(nil)
 	if err != nil {
-		logger.Info("The error is %v", err)
+		Logger.Info("The error is %v", err)
 	}
 
 	for index := range powers {
 		pubkey, error := validatorSetInstance.GetPubkey(nil, big.NewInt(int64(index)))
 		if error != nil {
-			logger.Error("Error getting pubkey for index %v", error)
+			Logger.Error("Error getting pubkey for index %v", error)
 		}
 
 		var pubkeyBytes secp256k1.PubKeySecp256k1
@@ -36,7 +35,7 @@ func GetValidators() (validators []abci.Validator) {
 			PubKey:  tmtypes.TM2PB.PubKey(pubkeyBytes),
 		}
 
-		logger.Info("New Validator is %v", validator)
+		Logger.Info("New Validator is %v", validator)
 
 		validators = append(validators, validator)
 		//validatorPubKeys[index] = pubkey
@@ -49,7 +48,7 @@ func GetProposer() common.Address {
 	validatorSetInstance := GetValidatorSetInstance(MainChainClient)
 	currentProposer, err := validatorSetInstance.Proposer(nil)
 	if err != nil {
-		Logger.Error("error getting proposer : %v", err)
+		Logger.Error("Unable to get proposer : %v", err)
 	}
 
 	return currentProposer
@@ -57,17 +56,16 @@ func GetProposer() common.Address {
 
 // SubmitProof submit header
 func SubmitProof(voteSignBytes []byte, sigs []byte, extradata []byte, start uint64, end uint64, rootHash common.Hash) {
-	Logger.Info("Root hash obtained for blocks from %v to %v is %v", start, end, rootHash)
-
+	Logger.Info("Root Hash Generated ", start, "Start ", end, "End ", rootHash, "RootHash ")
 	validatorSetInstance := GetValidatorSetInstance(MainChainClient)
-	Logger.Info("inputs, vote: %v  sigs: %v, extradata %v ", hex.EncodeToString(voteSignBytes), hex.EncodeToString(sigs), hex.EncodeToString(extradata))
-
-	res, proposer, error := validatorSetInstance.Validate(nil, voteSignBytes, sigs, extradata)
+	Logger.Info("Inputs to submitProof", hex.EncodeToString(voteSignBytes), " Vote", hex.EncodeToString(sigs), "Signatures", hex.EncodeToString(extradata), "Tx Data ")
+	result, proposer, error := validatorSetInstance.Validate(nil, voteSignBytes, sigs, extradata)
 	if error != nil {
-		Logger.Error("Error hua")
+		Logger.Error("Checkpoint Submission Errored : %v", error)
+	} else {
+		Logger.Info("Submitted Proof Successfully ", result, "Status", proposer, "Proposer")
 	}
 
-	Logger.Info("Submitted Proof Successfully %v %v %v ", res, proposer.String(), error)
 }
 
 // To be used later

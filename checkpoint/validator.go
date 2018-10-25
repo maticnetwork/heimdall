@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	"log"
 	"math/big"
 	"strings"
 
@@ -15,11 +14,11 @@ import (
 )
 
 func validateCheckpoint(start int, end int, rootHash string) bool {
-	var logger = helper.Logger.With("module", "checkpoint")
+	var logger = helper.Logger.With("module", "checkpoint/validate")
 
 	client, err := ethclient.Dial(helper.GetConfig().MaticRPCUrl)
 	if err != nil {
-		logger.Error("Error Dialing to matic : %v", err)
+		logger.Error("Error Dialing to matic via RPC", err,"Error")
 	}
 
 	if (start-end+1)%2 != 0 {
@@ -28,27 +27,28 @@ func validateCheckpoint(start int, end int, rootHash string) bool {
 
 	root := "0x" + getHeaders(start, end, client)
 	if strings.Compare(root, rootHash) == 0 {
-		log.Print("root hash and root same %v AND %v ", rootHash, root)
+		logger.Info("root hash matched ! ")
 		return true
 	} else {
-		logger.Info("root hash and root not same %v AND %v ", rootHash, root)
+		logger.Info("root hash does not match ", rootHash,"Root Hash From Message", root,"Root Hash Generated")
 		return false
 	}
 }
 
 func getHeaders(start int, end int, client *ethclient.Client) string {
-	var logger = helper.Logger.With("module", "checkpoint")
+	var logger = helper.Logger.With("module", "checkpoint/validate")
 
 	if start > end {
 		return ""
 	}
+	//todo add check for even difference
 
 	current := start
 	var result [][32]byte
 	for current <= end {
 		blockheader, err := client.HeaderByNumber(context.Background(), big.NewInt(int64(current)))
 		if err != nil {
-			logger.Error("Error Getting Block : %v ", err)
+			logger.Error("Error Getting Block from Matic  ", err,"Error")
 		}
 		headerBytes := appendBytes32(blockheader.Number.Bytes(),
 			blockheader.Time.Bytes(),
