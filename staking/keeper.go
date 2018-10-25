@@ -37,7 +37,7 @@ func (k Keeper) SetValidatorSet(ctx sdk.Context, validators []abci.Validator) {
 	for _, validator := range validators {
 		bz, err := k.cdc.MarshalBinary(validator)
 		if err != nil {
-			StakingLogger.Error("Error Marshalling Validator", err, "Error ")
+			StakingLogger.Error("Error Marshalling Validator", "Error", err)
 		}
 		store.Set(GetValidatorKey(validator.Address), bz)
 	}
@@ -121,7 +121,7 @@ func (k Keeper) FlushValidatorSet(ctx sdk.Context) {
 		// marshall
 		bz, err := k.cdc.MarshalBinary(validator)
 		if err != nil {
-			StakingLogger.Error("Error Marshalling Validator while Flushing ", err, "Error")
+			StakingLogger.Error("Error Marshalling Validator while Flushing ", "Error", err)
 		}
 
 		store.Set(GetValidatorKey(validator.Address), bz)

@@ -67,14 +67,14 @@ func newCheckpointHandler(cdc *wire.Codec, kb keys.Keybase, cliCtx context.CLICo
 
 		txBytes, err := rlp.EncodeToBytes(tx)
 		if err != nil {
-			logger.Error("Error generating TX Bytes ", err, "Error")
+			logger.Error("Error generating TX Bytes ", "Error", err)
 		}
-		logger.Info("The tx bytes are ", hex.EncodeToString(txBytes), "Transaction: ")
+		logger.Info("The tx bytes are ", "Transaction: ", hex.EncodeToString(txBytes))
 
-		logger.Info("URL to broadcast tx ", helper.GetConfig().TendermintEndpoint, "URL")
+		logger.Info("URL to broadcast tx ", "URL", helper.GetConfig().TendermintEndpoint)
 
 		resp := sendRequest(txBytes, helper.GetConfig().TendermintEndpoint, logger)
-		logger.Info("Transaction Sent !  ", resp, "Response ")
+		logger.Info("Transaction Sent !  ", "Response ", resp)
 
 		var bodyString string
 		if resp.StatusCode == http.StatusOK {
@@ -89,7 +89,7 @@ func sendRequest(txBytes []byte, url string, logger libs.Logger) *http.Response 
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url+"/broadcast_tx_commit", nil)
 	if err != nil {
-		logger.Error("Error while drafting request for tendermint", err, "Error")
+		logger.Error("Error while drafting request for tendermint", "Error", err)
 	}
 
 	queryParams := req.URL.Query()
@@ -98,7 +98,7 @@ func sendRequest(txBytes []byte, url string, logger libs.Logger) *http.Response 
 
 	resp, err := client.Do(req)
 	if err != nil {
-		logger.Error("Error while sending request to tendermint", err, "Error")
+		logger.Error("Error while sending request to tendermint", "Error", err)
 	}
 	return resp
 }

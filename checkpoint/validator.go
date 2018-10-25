@@ -18,7 +18,7 @@ func validateCheckpoint(start int, end int, rootHash string) bool {
 
 	client, err := ethclient.Dial(helper.GetConfig().MaticRPCUrl)
 	if err != nil {
-		logger.Error("Error Dialing to matic via RPC", err, "Error")
+		logger.Error("Error Dialing to matic via RPC", "Error", err)
 	}
 
 	if (start-end+1)%2 != 0 {
@@ -30,7 +30,7 @@ func validateCheckpoint(start int, end int, rootHash string) bool {
 		logger.Info("root hash matched ! ")
 		return true
 	} else {
-		logger.Info("root hash does not match ", rootHash, "Root Hash From Message", root, "Root Hash Generated")
+		logger.Info("root hash does not match ", "Root Hash From Message", rootHash, "Root Hash Generated", root)
 		return false
 	}
 }
@@ -48,7 +48,7 @@ func getHeaders(start int, end int, client *ethclient.Client) string {
 	for current <= end {
 		blockheader, err := client.HeaderByNumber(context.Background(), big.NewInt(int64(current)))
 		if err != nil {
-			logger.Error(" Error Getting Block from Matic ", err, " Error ")
+			logger.Error(" Error Getting Block from Matic ", " Error ", err)
 		}
 		headerBytes := appendBytes32(blockheader.Number.Bytes(),
 			blockheader.Time.Bytes(),
@@ -66,7 +66,7 @@ func getHeaders(start int, end int, client *ethclient.Client) string {
 
 	err := tree.Generate(merkelData, sha3.NewKeccak256())
 	if err != nil {
-		logger.Error(" Error generating tree ", err, " Error ")
+		logger.Error(" Error generating tree ", " Error ", err)
 	}
 	return hex.EncodeToString(tree.Root().Hash)
 }

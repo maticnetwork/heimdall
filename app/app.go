@@ -106,7 +106,7 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 	var votes []tmtypes.Vote
 	err := json.Unmarshal(ctx.BlockHeader().Votes, &votes)
 	if err != nil {
-		logger.Error("Unmarshalling Vote Errored", err, "Error")
+		logger.Error("Unmarshalling Vote Errored", "Error", err)
 	}
 
 	// get sigs from votes
@@ -150,7 +150,7 @@ func GetExtraData(_checkpoint checkpoint.CheckpointBlockHeader, ctx sdk.Context)
 	tx := checkpoint.NewBaseTx(msg)
 	txBytes, err := rlp.EncodeToBytes(tx)
 	if err != nil {
-		logger.Error("Error decoding transaction data ", err, "Error")
+		logger.Error("Error decoding transaction data ", "Error", err)
 	}
 
 	return txBytes
