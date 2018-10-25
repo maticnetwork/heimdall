@@ -55,7 +55,7 @@ func (k Keeper) AddCheckpoint(ctx sdk.Context, start uint64, end uint64, root co
 	}
 
 	//TODO add block data validation
-	logger.Info("Block data inserted ! ", out, "BlockData ")
+	logger.Info("Block data inserted ! ", data.RootHash, "Roothash", data.StartBlock, "StartBlock", data.EndBlock, "EndBlock")
 
 	store.Set([]byte(strconv.Itoa(int(ctx.BlockHeight()))), []byte(out))
 
