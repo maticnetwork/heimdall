@@ -1,24 +1,23 @@
 package helper
 
 import (
-	"log"
-	"os"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
+	"log"
 
 	"github.com/maticnetwork/heimdall/contracts/validatorset"
 	logger "github.com/maticnetwork/heimdall/libs"
+	"os"
+	"strings"
 )
 
 func init() {
 	cdc.RegisterConcrete(secp256k1.PubKeySecp256k1{}, secp256k1.Secp256k1PubKeyAminoRoute, nil)
 	cdc.RegisterConcrete(secp256k1.PrivKeySecp256k1{}, secp256k1.Secp256k1PrivKeyAminoRoute, nil)
 
-	// initialize heimdall
-	initHeimdall()
+	Logger = logger.NewMainLogger(logger.NewSyncWriter(os.Stdout))
 }
 
 // Configuration represents heimdall config
@@ -45,8 +44,7 @@ var MaticClient *ethclient.Client
 // Logger stores global logger object
 var Logger logger.Logger
 
-func initHeimdall() {
-
+func InitHeimdallConfig() {
 	heimdallViper := viper.New()
 	heimdallViper.SetConfigName("heimdall-config")         // name of config file (without extension)
 	heimdallViper.AddConfigPath("$HOME/.heimdalld/config") // call multiple times to add many search paths
@@ -68,10 +66,14 @@ func initHeimdall() {
 	if MaticClient, err = ethclient.Dial(GetConfig().MaticRPCUrl); err != nil {
 		log.Fatal(err)
 	}
-	Logger = logger.NewMainLogger(logger.NewSyncWriter(os.Stdout))
 }
 
 func GetConfig() Configuration {
+	if strings.Compare(conf.MaticRPCUrl, "") == 0 {
+		Logger.Info("GetConfig called ")
+		InitHeimdallConfig()
+	}
+
 	return conf
 }
 

@@ -42,7 +42,7 @@ build-docker-develop:
 
 run-docker-develop:
 	docker run --name hm -it \
-		-v /Users/jdkanani/.heimdalld:/root/.heimdalld \
+		-v ~/.heimdalld:/root/.heimdalld \
 		-v `pwd`/logs:/go/src/github.com/maticnetwork/heimdall/logs \
 		-p 1317:1317 \
 		"maticnetwork/tendermint:develop"
