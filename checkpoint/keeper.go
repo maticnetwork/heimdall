@@ -51,11 +51,11 @@ func (k Keeper) AddCheckpoint(ctx sdk.Context, start uint64, end uint64, root co
 	data := createBlock(start, end, root, proposer)
 	out, err := json.Marshal(data)
 	if err != nil {
-		logger.Error("Error Marshalling checkpoint to json : %v", err)
+		logger.Error("Error Marshalling checkpoint to json ", err,"Error")
 	}
 
 	//TODO add block data validation
-	logger.Info("Block data inserted with key:  %v  and data : %v ", []byte(strconv.Itoa(int(ctx.BlockHeight()))), out)
+	logger.Info("Block data inserted ! ", []byte(strconv.Itoa(int(ctx.BlockHeight()))),"Key ", out, "BlockData ")
 
 	store.Set([]byte(strconv.Itoa(int(ctx.BlockHeight()))), []byte(out))
 
