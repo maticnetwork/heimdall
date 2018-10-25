@@ -18,7 +18,6 @@ type Keeper struct {
 var (
 	ValidatorsKey = []byte{0x02} // prefix for each key to a validator
 )
-var StakingLogger = conf.Logger.With("module", "staking")
 
 func NewKeeper(cdc *wire.Codec, key sdk.StoreKey, codespace sdk.CodespaceType) Keeper {
 	keeper := Keeper{
@@ -31,6 +30,8 @@ func NewKeeper(cdc *wire.Codec, key sdk.StoreKey, codespace sdk.CodespaceType) K
 
 //validator type will contain address, pubkey and power
 func (k Keeper) SetValidatorSet(ctx sdk.Context, validators []abci.Validator) {
+	var StakingLogger = conf.Logger.With("module", "staking")
+
 	store := ctx.KVStore(k.storeKey)
 
 	for _, validator := range validators {
@@ -95,6 +96,8 @@ func (k Keeper) GetValidatorInfo(ctx sdk.Context, address []byte) (validator abc
 
 // flushes the whole validator set
 func (k Keeper) FlushValidatorSet(ctx sdk.Context) {
+	var StakingLogger = conf.Logger.With("module", "staking")
+
 	// get key
 	store := ctx.KVStore(k.storeKey)
 	// create iterator
