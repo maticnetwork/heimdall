@@ -30,13 +30,13 @@ func validateCheckpoint(start int, end int, rootHash string) bool {
 		logger.Info("root hash matched ! ")
 		return true
 	} else {
-		logger.Info("root hash does not match ", "Root Hash From Message", rootHash, "Root Hash Generated", root)
+		logger.Info("root hash does not match ", "roothash_tx", rootHash, "roothash_gen", root)
 		return false
 	}
 }
 
 func getHeaders(start int, end int, client *ethclient.Client) string {
-	var logger = helper.Logger.With("module", "checkpoint/validate")
+	logger := helper.Logger.With("module", "checkpoint/validate")
 
 	if start > end {
 		return ""
@@ -48,7 +48,7 @@ func getHeaders(start int, end int, client *ethclient.Client) string {
 	for current <= end {
 		blockheader, err := client.HeaderByNumber(context.Background(), big.NewInt(int64(current)))
 		if err != nil {
-			logger.Error(" Error Getting Block from Matic ", " Error ", err)
+			logger.Error(" Error Getting Block from Matic ", "Error", err)
 		}
 		headerBytes := appendBytes32(blockheader.Number.Bytes(),
 			blockheader.Time.Bytes(),
@@ -66,7 +66,7 @@ func getHeaders(start int, end int, client *ethclient.Client) string {
 
 	err := tree.Generate(merkelData, sha3.NewKeccak256())
 	if err != nil {
-		logger.Error(" Error generating tree ", " Error ", err)
+		logger.Error(" Error generating tree ", "Error", err)
 	}
 	return hex.EncodeToString(tree.Root().Hash)
 }
@@ -83,9 +83,12 @@ func convert(input []([32]byte)) [][]byte {
 }
 
 func convertTo32(input []byte) (output [32]byte, err error) {
+	logger := helper.Logger.With("module", "checkpoint/validate")
+
 	l := len(input)
 	if l > 32 || l == 0 {
 		err = fmt.Errorf("input length is greater than 32")
+		logger.Error("input length is greater than 32 while converting", "Error", err)
 		return
 	}
 	copy(output[32-l:], input[:])

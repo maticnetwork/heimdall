@@ -69,12 +69,12 @@ func newCheckpointHandler(cdc *wire.Codec, kb keys.Keybase, cliCtx context.CLICo
 		if err != nil {
 			logger.Error("Error generating TX Bytes ", "Error", err)
 		}
-		logger.Info("The tx bytes are ", "Transaction: ", hex.EncodeToString(txBytes))
+		logger.Info("The tx bytes are ", "Transaction", hex.EncodeToString(txBytes))
 
 		logger.Info("URL to broadcast tx ", "URL", helper.GetConfig().TendermintEndpoint)
 
 		resp := sendRequest(txBytes, helper.GetConfig().TendermintEndpoint, logger)
-		logger.Info("Transaction Sent !  ", "Response ", resp)
+		logger.Info("Transaction Sent !  ", "Response", resp)
 
 		var bodyString string
 		if resp.StatusCode == http.StatusOK {
