@@ -64,7 +64,7 @@ func initHeimdall() {
 		log.Fatal(err)
 	}
 
-	if MaticClient, err = ethclient.Dial(GetConfig().MainRPCUrl); err != nil {
+	if MaticClient, err = ethclient.Dial(GetConfig().MaticRPCUrl); err != nil {
 		log.Fatal(err)
 	}
 	Logger = logger.NewMainLogger(logger.NewSyncWriter(os.Stdout))
