@@ -1,8 +1,8 @@
 package app
 
 import (
-	"os"
 	"encoding/json"
+	"os"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
