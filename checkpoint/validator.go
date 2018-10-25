@@ -18,7 +18,7 @@ func validateCheckpoint(start int, end int, rootHash string) bool {
 
 	client, err := ethclient.Dial(helper.GetConfig().MaticRPCUrl)
 	if err != nil {
-		logger.Error("Error Dialing to matic via RPC", err,"Error")
+		logger.Error("Error Dialing to matic via RPC", err, "Error")
 	}
 
 	if (start-end+1)%2 != 0 {
@@ -30,7 +30,7 @@ func validateCheckpoint(start int, end int, rootHash string) bool {
 		logger.Info("root hash matched ! ")
 		return true
 	} else {
-		logger.Info("root hash does not match ", rootHash,"Root Hash From Message", root,"Root Hash Generated")
+		logger.Info("root hash does not match ", rootHash, "Root Hash From Message", root, "Root Hash Generated")
 		return false
 	}
 }
@@ -48,7 +48,7 @@ func getHeaders(start int, end int, client *ethclient.Client) string {
 	for current <= end {
 		blockheader, err := client.HeaderByNumber(context.Background(), big.NewInt(int64(current)))
 		if err != nil {
-			logger.Error("Error Getting Block from Matic  ", err,"Error")
+			logger.Error("Error Getting Block from Matic  ", err, "Error")
 		}
 		headerBytes := appendBytes32(blockheader.Number.Bytes(),
 			blockheader.Time.Bytes(),
