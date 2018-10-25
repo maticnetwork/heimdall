@@ -48,7 +48,7 @@ func getHeaders(start int, end int, client *ethclient.Client) string {
 	for current <= end {
 		blockheader, err := client.HeaderByNumber(context.Background(), big.NewInt(int64(current)))
 		if err != nil {
-			logger.Error("Error Getting Block from Matic  ", err, "Error")
+			logger.Error(" Error Getting Block from Matic ", err, " Error ")
 		}
 		headerBytes := appendBytes32(blockheader.Number.Bytes(),
 			blockheader.Time.Bytes(),
@@ -66,7 +66,7 @@ func getHeaders(start int, end int, client *ethclient.Client) string {
 
 	err := tree.Generate(merkelData, sha3.NewKeccak256())
 	if err != nil {
-		logger.Error("Error generating tree : %v", err)
+		logger.Error(" Error generating tree ", err, " Error ")
 	}
 	return hex.EncodeToString(tree.Root().Hash)
 }
