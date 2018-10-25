@@ -46,6 +46,7 @@ var MaticClient *ethclient.Client
 var Logger logger.Logger
 
 func initHeimdall() {
+
 	heimdallViper := viper.New()
 	heimdallViper.SetConfigName("heimdall-config")         // name of config file (without extension)
 	heimdallViper.AddConfigPath("$HOME/.heimdalld/config") // call multiple times to add many search paths
