@@ -60,9 +60,9 @@ func SelectProposer() {
 	// send tx
 	tx, err := validatorSetInstance.SelectProposer(auth)
 	if err != nil {
-		Logger.Error("Unable to send transaction for proposer selection ", err, "Error")
+		Logger.Error("Unable to send transaction for proposer selection ", "Error", err)
 	} else {
-		Logger.Info("New Proposer Selected ! ", tx.Hash().String(), "Tx Hash ")
+		Logger.Info("New Proposer Selected ! ", "Tx Hash ", tx.Hash().String())
 	}
 
 }

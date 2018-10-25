@@ -70,7 +70,6 @@ func InitHeimdallConfig() {
 
 func GetConfig() Configuration {
 	if strings.Compare(conf.MaticRPCUrl, "") == 0 {
-		Logger.Info("GetConfig called ")
 		InitHeimdallConfig()
 	}
 

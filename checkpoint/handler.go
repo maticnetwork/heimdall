@@ -29,7 +29,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper) sdk.Resul
 
 		// add checkpoint to state if rootHash matches
 		key = k.AddCheckpoint(ctx, msg.StartBlock, msg.EndBlock, msg.RootHash, msg.Proposer)
-		logger.Info("root hash matched ! ", key, "Key")
+		logger.Info("root hash matched ! ", "Key", key)
 
 	} else {
 
