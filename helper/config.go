@@ -7,6 +7,7 @@ import (
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"log"
 
+	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 	"github.com/maticnetwork/heimdall/contracts/validatorset"
 	logger "github.com/maticnetwork/heimdall/libs"
 	"os"
@@ -83,4 +84,12 @@ func GetValidatorSetInstance(client *ethclient.Client) *validatorset.ValidatorSe
 	}
 
 	return validatorSetInstance
+}
+
+func GetStakeManagerInstance(client *ethclient.Client) *stakemanager.Stakemanager {
+	stakeManagerInstance, err := stakemanager.NewStakemanager(common.HexToAddress(GetConfig().ValidatorSetAddress), client)
+	if err != nil {
+		Logger.Error("Unable to create stakemanager instance", "Error", err, "Client", client)
+	}
+	return stakeManagerInstance
 }
