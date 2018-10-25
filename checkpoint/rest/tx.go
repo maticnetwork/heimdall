@@ -39,7 +39,7 @@ type EpochCheckpoint struct {
 
 func newCheckpointHandler(cdc *wire.Codec, kb keys.Keybase, cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var logger = conf.Logger.With("module", "checkpoint")
+		var logger = conf.Logger.With("module", "checkpoint/rest/tx")
 
 		var m EpochCheckpoint
 
@@ -52,7 +52,7 @@ func newCheckpointHandler(cdc *wire.Codec, kb keys.Keybase, cliCtx context.CLICo
 
 		err = json.Unmarshal(body, &m)
 		if err != nil {
-			logger.Error("we have error")
+			logger.Error("Error Unmarshalling json Epoch Checkpoint", err,"Error")
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
 			return
@@ -69,12 +69,12 @@ func newCheckpointHandler(cdc *wire.Codec, kb keys.Keybase, cliCtx context.CLICo
 
 		txBytes, err := rlp.EncodeToBytes(tx)
 		if err != nil {
-			logger.Info("Error generating TXBYtes %v", err)
+			logger.Info("Error generating TX Bytes ", err ,"Error")
 		}
-		logger.Info("The tx bytes are %v ", hex.EncodeToString(txBytes))
+		logger.Info("The tx bytes are ", hex.EncodeToString(txBytes), "Transaction: ")
 
 		resp := sendRequest(txBytes, helper.GetConfig().TendermintEndpoint, logger)
-		log.Print("Response ---> %v", resp)
+		log.Print("Transaction Sent !  ", resp , "Response ")
 
 		var bodyString string
 		if resp.StatusCode == http.StatusOK {
@@ -89,7 +89,7 @@ func sendRequest(txBytes []byte, url string, logger libs.Logger) *http.Response 
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url+"/broadcast_tx_commit", nil)
 	if err != nil {
-		logger.Error("Error while drafting request for tendermint: %v", err)
+		logger.Error("Error while drafting request for tendermint", err,"Error")
 	}
 
 	queryParams := req.URL.Query()
@@ -98,7 +98,7 @@ func sendRequest(txBytes []byte, url string, logger libs.Logger) *http.Response 
 
 	resp, err := client.Do(req)
 	if err != nil {
-		logger.Error("Error while sending request to tendermint: %v", err)
+		logger.Error("Error while sending request to tendermint", err, "Error")
 	}
 	return resp
 }
