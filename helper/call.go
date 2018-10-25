@@ -59,15 +59,15 @@ func GetProposer() common.Address {
 // SubmitProof submit header
 func SubmitProof(voteSignBytes []byte, sigs []byte, extradata []byte, start uint64, end uint64, rootHash common.Hash) {
 
-	Logger.Info("Root Hash Generated ", "Start ", start, "End ", end, "RootHash ", rootHash)
+	Logger.Info("Root Hash Generated ", "Start", start, "End", end, "RootHash", rootHash)
 	// get validator set instance from config
 	validatorSetInstance := GetValidatorSetInstance(MainChainClient)
 
-	Logger.Info("Inputs to submitProof", " Vote", hex.EncodeToString(voteSignBytes), "Signatures", hex.EncodeToString(sigs), "Tx Data ", hex.EncodeToString(extradata))
+	Logger.Info("Inputs to submitProof", " Vote", hex.EncodeToString(voteSignBytes), "Signatures", hex.EncodeToString(sigs), "Tx_Data", hex.EncodeToString(extradata))
 	// submit proof
 	result, proposer, error := validatorSetInstance.Validate(nil, voteSignBytes, sigs, extradata)
 	if error != nil {
-		Logger.Error("Checkpoint Submission Errored : %v", error)
+		Logger.Error("Checkpoint Submission Errored", "Error", error)
 	} else {
 		Logger.Info("Submitted Proof Successfully ", "Status", result, "Proposer", proposer)
 	}

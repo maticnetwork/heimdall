@@ -62,7 +62,7 @@ func SelectProposer() {
 	if err != nil {
 		Logger.Error("Unable to send transaction for proposer selection ", "Error", err)
 	} else {
-		Logger.Info("New Proposer Selected ! ", "Tx Hash ", tx.Hash().String())
+		Logger.Info("New Proposer Selected ! ", "Tx_Hash", tx.Hash().String())
 	}
 
 }
