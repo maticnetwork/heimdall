@@ -99,8 +99,8 @@ func (app *HeimdallApp) BeginBlocker(_ sdk.Context, _ abci.RequestBeginBlock) ab
 
 func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci.ResponseEndBlock {
 
-	//validatorSet := staking.EndBlocker(ctx, app.stakerKeeper)
-	//logger.Info("New Validator Set : %v", validatorSet)
+	validatorSet := staking.EndBlocker(ctx, app.stakerKeeper)
+	logger.Info("New Validator Set : %v", validatorSet)
 
 	// unmarshall votes from header
 	var votes []tmtypes.Vote
@@ -126,7 +126,7 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 
 	// send validator updates to peppermint
 	return abci.ResponseEndBlock{
-		//ValidatorUpdates: validatorSet,
+		ValidatorUpdates: validatorSet,
 	}
 }
 
