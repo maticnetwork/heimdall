@@ -9,14 +9,16 @@ import (
 
 func EndBlocker(ctx sdk.Context, k Keeper) (validators []abci.Validator) {
 	var StakingLogger = conf.Logger.With("module", "staking")
+	StakingLogger.Info("Current Validators Fetched ", "Validators", abci.ValidatorsString(k.GetAllValidators(ctx)))
 
-	// validator := k.GetValidatorInfo(ctx, _address)
-	StakingLogger.Info("Current Validators Fetched ", "Validators", k.GetAllValidators(ctx))
-
-	validatorSet := helper.GetValidators()
+	// flush exiting validator set
 	k.FlushValidatorSet(ctx)
+	// fetch current validator set
+	validatorSet := helper.GetValidators()
+	// update
 	k.SetValidatorSet(ctx, validatorSet)
-	StakingLogger.Info("New Validators ", "Validators", k.GetAllValidators(ctx))
+
+	StakingLogger.Info("New Validators ", "Validators", abci.ValidatorsString(k.GetAllValidators(ctx)))
 
 	return validatorSet
 }

@@ -19,6 +19,7 @@ func init() {
 	cdc.RegisterConcrete(secp256k1.PrivKeySecp256k1{}, secp256k1.Secp256k1PrivKeyAminoRoute, nil)
 
 	Logger = logger.NewMainLogger(logger.NewSyncWriter(os.Stdout))
+
 }
 
 // Configuration represents heimdall config
@@ -46,6 +47,11 @@ var MaticClient *ethclient.Client
 var Logger logger.Logger
 
 func InitHeimdallConfig() {
+	if strings.Compare(conf.MaticRPCUrl, "") != 0 {
+		Logger.Debug("Initializing heimdall config")
+		return
+	}
+
 	heimdallViper := viper.New()
 	heimdallViper.SetConfigName("heimdall-config")         // name of config file (without extension)
 	heimdallViper.AddConfigPath("$HOME/.heimdalld/config") // call multiple times to add many search paths
@@ -70,14 +76,13 @@ func InitHeimdallConfig() {
 }
 
 func GetConfig() Configuration {
-	if strings.Compare(conf.MaticRPCUrl, "") == 0 {
-		InitHeimdallConfig()
-	}
-
+	InitHeimdallConfig()
 	return conf
 }
 
+// to remove
 func GetValidatorSetInstance(client *ethclient.Client) *validatorset.ValidatorSet {
+	InitHeimdallConfig()
 	validatorSetInstance, err := validatorset.NewValidatorSet(common.HexToAddress(GetConfig().ValidatorSetAddress), client)
 	if err != nil {
 		Logger.Error("Unable to create validator set instance", "Error", err, "Client", client)
@@ -86,10 +91,11 @@ func GetValidatorSetInstance(client *ethclient.Client) *validatorset.ValidatorSe
 	return validatorSetInstance
 }
 
-func GetStakeManagerInstance(client *ethclient.Client) *stakemanager.Stakemanager {
-	stakeManagerInstance, err := stakemanager.NewStakemanager(common.HexToAddress(GetConfig().ValidatorSetAddress), client)
+func GetStakeManagerInstance() *stakemanager.Stakemanager {
+	InitHeimdallConfig()
+	stakeManagerInstance, err := stakemanager.NewStakemanager(common.HexToAddress(GetConfig().StakeManagerAddress), MainChainClient)
 	if err != nil {
-		Logger.Error("Unable to create stakemanager instance", "Error", err, "Client", client)
+		Logger.Error("Unable to create stakemanager instance", "Error", err, "Client", MainChainClient)
 	}
 
 	return stakeManagerInstance

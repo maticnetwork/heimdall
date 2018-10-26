@@ -11,33 +11,39 @@ import (
 
 func GetValidators() (validators []abci.Validator) {
 	Logger.With("module", "helper/call")
-	stakeManagerInstance := GetStakeManagerInstance(MainChainClient)
+
+	stakeManagerInstance := GetStakeManagerInstance()
+
 	ValidatorAddrs, err := stakeManagerInstance.GetCurrentValidatorSet(nil)
 	if err != nil {
 		Logger.Info("Error getting Validator Set ", "Error", err)
 	}
 
 	for index := range ValidatorAddrs {
-		validatorStruct, error := stakeManagerInstance.Stakers(nil, ValidatorAddrs[index])
-		if error != nil {
-			Logger.Error("Error getting pubkey ", "Error", error, "Index", index)
+		if ValidatorAddrs[index].String() != "" {
+			validatorStruct, error := stakeManagerInstance.Stakers(nil, ValidatorAddrs[index])
+			if error != nil {
+				Logger.Error("Error Fetching Staker", "Error", error, "Index", index)
+			}
+			pubkey := validatorStruct.Pubkey
+			var pubkeyBytes secp256k1.PubKeySecp256k1
+			_pubkey, _ := hex.DecodeString(pubkey)
+			copy(pubkeyBytes[:], _pubkey)
+
+			// todo add a check to check pubkey corresponds to address
+			validator := abci.Validator{
+				Address: ValidatorAddrs[index].Bytes(),
+				Power:   validatorStruct.Amount.Int64(),
+				PubKey:  tmtypes.TM2PB.PubKey(pubkeyBytes),
+			}
+
+			Logger.Info("New Validator Generated ", "Validator", validator)
+
+			validators = append(validators, validator)
+		} else {
+			Logger.Info("Validator Empty", "Index", index)
 		}
-		pubkey := validatorStruct.Pubkey
-		var pubkeyBytes secp256k1.PubKeySecp256k1
-		_pubkey, _ := hex.DecodeString(pubkey)
-		copy(pubkeyBytes[:], _pubkey)
 
-		// todo add a check to check pubkey corresponds to address
-		validator := abci.Validator{
-			Address: ValidatorAddrs[index].Bytes(),
-			Power:   validatorStruct.Amount.Int64(),
-			PubKey:  tmtypes.TM2PB.PubKey(pubkeyBytes),
-		}
-
-		Logger.Info("New Validator Generated ", "Validator", validator)
-
-		validators = append(validators, validator)
-		//validatorPubKeys[index] = pubkey
 	}
 
 	return validators
