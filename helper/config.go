@@ -8,7 +8,7 @@ import (
 	"log"
 
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
-	"github.com/maticnetwork/heimdall/contracts/validatorset"
+	"github.com/maticnetwork/heimdall/contracts/validatorSet"
 	logger "github.com/maticnetwork/heimdall/libs"
 	"os"
 	"strings"
@@ -80,7 +80,7 @@ func GetConfig() Configuration {
 func GetValidatorSetInstance(client *ethclient.Client) *validatorset.ValidatorSet {
 	validatorSetInstance, err := validatorset.NewValidatorSet(common.HexToAddress(GetConfig().ValidatorSetAddress), client)
 	if err != nil {
-		log.Fatal(err)
+		Logger.Error("Unable to create validator set instance", "Error", err, "Client", client)
 	}
 
 	return validatorSetInstance
@@ -91,5 +91,6 @@ func GetStakeManagerInstance(client *ethclient.Client) *stakemanager.Stakemanage
 	if err != nil {
 		Logger.Error("Unable to create stakemanager instance", "Error", err, "Client", client)
 	}
+
 	return stakeManagerInstance
 }
