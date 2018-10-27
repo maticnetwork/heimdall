@@ -69,7 +69,7 @@ func SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte) {
 	if err != nil {
 		return
 	}
-	data, err := validatorSetABI.Pack("validate")
+	data, err := validatorSetABI.Pack("validate", voteSignBytes, sigs, txData)
 	if err != nil {
 		Logger.Error("Unable to pack tx for validate", "error", err)
 		return
