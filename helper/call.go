@@ -3,7 +3,6 @@ package helper
 import (
 	"encoding/hex"
 
-	"github.com/ethereum/go-ethereum/common"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	tmtypes "github.com/tendermint/tendermint/types"
@@ -35,7 +34,7 @@ func GetValidators() (validators []abci.Validator) {
 				PubKey:  tmtypes.TM2PB.PubKey(pubkeyBytes),
 			}
 
-			Logger.Info("New Validator Generated ", "Validator", validator)
+			Logger.Info("New Validator Generated", "Validator", validator)
 
 			validators = append(validators, validator)
 		} else {
@@ -46,51 +45,18 @@ func GetValidators() (validators []abci.Validator) {
 	return validators
 }
 
-func GetProposer() common.Address {
-	validatorSetInstance, err := GetValidatorSetInstance()
-	currentProposer, err := validatorSetInstance.Proposer(nil)
-	if err != nil {
-		Logger.Error("Unable to get proposer", "error", err)
-	}
-
-	return currentProposer
-}
-
 // SubmitProof submit header
-func SubmitProof(voteSignBytes []byte, sigs []byte, extradata []byte, start uint64, end uint64, rootHash common.Hash) {
-	Logger.Info("Root Hash Generated ", "Start", start, "End", end, "RootHash", rootHash)
-	// get validator set instance from config
-	validatorSetInstance, err := GetValidatorSetInstance()
-
-	Logger.Info("Inputs to submitProof", " Vote", hex.EncodeToString(voteSignBytes), "Signatures", hex.EncodeToString(sigs), "Tx_Data", hex.EncodeToString(extradata))
-	// submit proof
-	result, proposer, err := validatorSetInstance.Validate(nil, voteSignBytes, sigs, extradata)
-	if err != nil {
-		Logger.Error("Checkpoint Submission Errored", "Error", err)
-	} else {
-		Logger.Info("Submitted Proof Successfully ", "Status", result, "Proposer", proposer)
-	}
-}
-
-// To be used later
+//func SubmitProof(voteSignBytes []byte, sigs []byte, extradata []byte, start uint64, end uint64, rootHash common.Hash) {
+//	Logger.Info("Root Hash Generated ", "Start", start, "End", end, "RootHash", rootHash)
+//	// get validator set instance from config
+//	validatorSetInstance, err := GetValidatorSetInstance()
 //
-//func getValidatorByIndex(_index int64) abci.Validator {
-//
-//	stakeManagerInstance, err := stakemanager.NewContracts(common.HexToAddress(GetConfig().StakeManagerAddress), KovanClient)
+//	Logger.Info("Inputs to submitProof", " Vote", hex.EncodeToString(voteSignBytes), "Signatures", hex.EncodeToString(sigs), "Tx_Data", hex.EncodeToString(extradata))
+//	// submit proof
+//	result, proposer, err := validatorSetInstance.Validate(nil, voteSignBytes, sigs, extradata)
 //	if err != nil {
-//		log.Fatal(err)
+//		Logger.Error("Checkpoint Submission Errored", "Error", err)
+//	} else {
+//		Logger.Info("Submitted Proof Successfully ", "Status", result, "Proposer", proposer)
 //	}
-//
-//	validator, _ := stakeManagerInstance.Validators(nil, big.NewInt(_index))
-//	var _pubkey secp256k1.PubKeySecp256k1
-//	_pub, _ := hex.DecodeString(validator.Pubkey)
-//	copy(_pubkey[:], _pub[:])
-//	_address, _ := hex.DecodeString(_pubkey.Address().String())
-//
-//	abciValidator := abci.Validator{
-//		Address: _address,
-//		Power:   validator.Power.Int64(),
-//		PubKey:  tmtypes.TM2PB.PubKey(_pubkey),
-//	}
-//	return abciValidator
 //}

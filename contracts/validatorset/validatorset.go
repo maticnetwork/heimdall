@@ -1,7 +1,7 @@
 // Code generated - DO NOT EDIT.
 // This file is a generated binding and any manual changes will be lost.
 
-package validatorset
+package validatorSet
 
 import (
 	"math/big"
@@ -16,7 +16,7 @@ import (
 )
 
 // ValidatorSetABI is the input ABI used to generate the binding from.
-const ValidatorSetABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"validator\",\"type\":\"address\"},{\"name\":\"votingPower\",\"type\":\"uint256\"},{\"name\":\"_pubkey\",\"type\":\"string\"}],\"name\":\"addValidator\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"input\",\"type\":\"bytes\"}],\"name\":\"getSha256\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes20\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"user\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"NewProposer\",\"type\":\"event\"},{\"constant\":false,\"inputs\":[],\"name\":\"selectProposer\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_chainID\",\"type\":\"string\"}],\"name\":\"setChainId\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"constant\":true,\"inputs\":[],\"name\":\"chainID\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"hash\",\"type\":\"bytes32\"},{\"name\":\"v\",\"type\":\"uint8\"},{\"name\":\"r\",\"type\":\"bytes32\"},{\"name\":\"s\",\"type\":\"bytes32\"}],\"name\":\"ecrecovery\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"pure\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"hash\",\"type\":\"bytes32\"},{\"name\":\"sig\",\"type\":\"bytes\"}],\"name\":\"ecrecovery\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"pure\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"data\",\"type\":\"bytes\"},{\"name\":\"sig\",\"type\":\"bytes\"}],\"name\":\"ecrecoveryFromData\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"pure\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"hash\",\"type\":\"bytes32\"},{\"name\":\"sig\",\"type\":\"bytes\"},{\"name\":\"signer\",\"type\":\"address\"}],\"name\":\"ecverify\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"pure\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"index\",\"type\":\"uint256\"}],\"name\":\"getPubkey\",\"outputs\":[{\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getValidatorSet\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256[]\"},{\"name\":\"\",\"type\":\"address[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"lowestPower\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"proposer\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"roundType\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"totalVotingPower\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"vote\",\"type\":\"bytes\"},{\"name\":\"sigs\",\"type\":\"bytes\"},{\"name\":\"extradata\",\"type\":\"bytes\"}],\"name\":\"validate\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"},{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"validators\",\"outputs\":[{\"name\":\"votingPower\",\"type\":\"uint256\"},{\"name\":\"accumulator\",\"type\":\"int256\"},{\"name\":\"validator\",\"type\":\"address\"},{\"name\":\"pubkey\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"voteType\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}]"
+const ValidatorSetABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"validator\",\"type\":\"address\"},{\"name\":\"votingPower\",\"type\":\"uint256\"},{\"name\":\"_pubkey\",\"type\":\"string\"}],\"name\":\"addValidator\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"roundType\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"vote\",\"type\":\"bytes\"},{\"name\":\"sigs\",\"type\":\"bytes\"},{\"name\":\"extradata\",\"type\":\"bytes\"}],\"name\":\"validate\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"},{\"name\":\"\",\"type\":\"address\"},{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"validators\",\"outputs\":[{\"name\":\"votingPower\",\"type\":\"uint256\"},{\"name\":\"validator\",\"type\":\"address\"},{\"name\":\"pubkey\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"hash\",\"type\":\"bytes32\"},{\"name\":\"sig\",\"type\":\"bytes\"},{\"name\":\"signer\",\"type\":\"address\"}],\"name\":\"ecverify\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"pure\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"lowestPower\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"totalVotingPower\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"hash\",\"type\":\"bytes32\"},{\"name\":\"sig\",\"type\":\"bytes\"}],\"name\":\"ecrecovery\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"pure\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_chainID\",\"type\":\"string\"}],\"name\":\"setChainId\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"voteType\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"input\",\"type\":\"bytes\"}],\"name\":\"getSha256\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes20\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"hash\",\"type\":\"bytes32\"},{\"name\":\"v\",\"type\":\"uint8\"},{\"name\":\"r\",\"type\":\"bytes32\"},{\"name\":\"s\",\"type\":\"bytes32\"}],\"name\":\"ecrecovery\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"pure\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"proposer\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"chainID\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"data\",\"type\":\"bytes\"},{\"name\":\"sig\",\"type\":\"bytes\"}],\"name\":\"ecrecoveryFromData\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"pure\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getValidatorSet\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256[]\"},{\"name\":\"\",\"type\":\"address[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"index\",\"type\":\"uint256\"}],\"name\":\"getPubkey\",\"outputs\":[{\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_index\",\"type\":\"uint256\"}],\"name\":\"removeValidator\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"user\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"NewProposer\",\"type\":\"event\"}]"
 
 // ValidatorSet is an auto generated Go binding around an Ethereum contract.
 type ValidatorSet struct {
@@ -186,30 +186,30 @@ func (_ValidatorSet *ValidatorSetCallerSession) ChainID() ([]byte, error) {
 	return _ValidatorSet.Contract.ChainID(&_ValidatorSet.CallOpts)
 }
 
-// Ecrecovery is a free data retrieval call binding the contract method 0x77d32e94.
+// Ecrecovery is a free data retrieval call binding the contract method 0x98ea1c51.
 //
-// Solidity: function ecrecovery(hash bytes32, sig bytes) constant returns(address)
-func (_ValidatorSet *ValidatorSetCaller) Ecrecovery(opts *bind.CallOpts, hash [32]byte, sig []byte) (common.Address, error) {
+// Solidity: function ecrecovery(hash bytes32, v uint8, r bytes32, s bytes32) constant returns(address)
+func (_ValidatorSet *ValidatorSetCaller) Ecrecovery(opts *bind.CallOpts, hash [32]byte, v uint8, r [32]byte, s [32]byte) (common.Address, error) {
 	var (
 		ret0 = new(common.Address)
 	)
 	out := ret0
-	err := _ValidatorSet.contract.Call(opts, out, "ecrecovery", hash, sig)
+	err := _ValidatorSet.contract.Call(opts, out, "ecrecovery", hash, v, r, s)
 	return *ret0, err
 }
 
-// Ecrecovery is a free data retrieval call binding the contract method 0x77d32e94.
+// Ecrecovery is a free data retrieval call binding the contract method 0x98ea1c51.
 //
-// Solidity: function ecrecovery(hash bytes32, sig bytes) constant returns(address)
-func (_ValidatorSet *ValidatorSetSession) Ecrecovery(hash [32]byte, sig []byte) (common.Address, error) {
-	return _ValidatorSet.Contract.Ecrecovery(&_ValidatorSet.CallOpts, hash, sig)
+// Solidity: function ecrecovery(hash bytes32, v uint8, r bytes32, s bytes32) constant returns(address)
+func (_ValidatorSet *ValidatorSetSession) Ecrecovery(hash [32]byte, v uint8, r [32]byte, s [32]byte) (common.Address, error) {
+	return _ValidatorSet.Contract.Ecrecovery(&_ValidatorSet.CallOpts, hash, v, r, s)
 }
 
-// Ecrecovery is a free data retrieval call binding the contract method 0x77d32e94.
+// Ecrecovery is a free data retrieval call binding the contract method 0x98ea1c51.
 //
-// Solidity: function ecrecovery(hash bytes32, sig bytes) constant returns(address)
-func (_ValidatorSet *ValidatorSetCallerSession) Ecrecovery(hash [32]byte, sig []byte) (common.Address, error) {
-	return _ValidatorSet.Contract.Ecrecovery(&_ValidatorSet.CallOpts, hash, sig)
+// Solidity: function ecrecovery(hash bytes32, v uint8, r bytes32, s bytes32) constant returns(address)
+func (_ValidatorSet *ValidatorSetCallerSession) Ecrecovery(hash [32]byte, v uint8, r [32]byte, s [32]byte) (common.Address, error) {
+	return _ValidatorSet.Contract.Ecrecovery(&_ValidatorSet.CallOpts, hash, v, r, s)
 }
 
 // EcrecoveryFromData is a free data retrieval call binding the contract method 0xba0e7252.
@@ -424,48 +424,16 @@ func (_ValidatorSet *ValidatorSetCallerSession) TotalVotingPower() (*big.Int, er
 	return _ValidatorSet.Contract.TotalVotingPower(&_ValidatorSet.CallOpts)
 }
 
-// Validate is a free data retrieval call binding the contract method 0x2d16c59c.
-//
-// Solidity: function validate(vote bytes, sigs bytes, extradata bytes) constant returns(bool, address)
-func (_ValidatorSet *ValidatorSetCaller) Validate(opts *bind.CallOpts, vote []byte, sigs []byte, extradata []byte) (bool, common.Address, error) {
-	var (
-		ret0 = new(bool)
-		ret1 = new(common.Address)
-	)
-	out := &[]interface{}{
-		ret0,
-		ret1,
-	}
-	err := _ValidatorSet.contract.Call(opts, out, "validate", vote, sigs, extradata)
-	return *ret0, *ret1, err
-}
-
-// Validate is a free data retrieval call binding the contract method 0x2d16c59c.
-//
-// Solidity: function validate(vote bytes, sigs bytes, extradata bytes) constant returns(bool, address)
-func (_ValidatorSet *ValidatorSetSession) Validate(vote []byte, sigs []byte, extradata []byte) (bool, common.Address, error) {
-	return _ValidatorSet.Contract.Validate(&_ValidatorSet.CallOpts, vote, sigs, extradata)
-}
-
-// Validate is a free data retrieval call binding the contract method 0x2d16c59c.
-//
-// Solidity: function validate(vote bytes, sigs bytes, extradata bytes) constant returns(bool, address)
-func (_ValidatorSet *ValidatorSetCallerSession) Validate(vote []byte, sigs []byte, extradata []byte) (bool, common.Address, error) {
-	return _ValidatorSet.Contract.Validate(&_ValidatorSet.CallOpts, vote, sigs, extradata)
-}
-
 // Validators is a free data retrieval call binding the contract method 0x35aa2e44.
 //
-// Solidity: function validators( uint256) constant returns(votingPower uint256, accumulator int256, validator address, pubkey string)
+// Solidity: function validators( uint256) constant returns(votingPower uint256, validator address, pubkey string)
 func (_ValidatorSet *ValidatorSetCaller) Validators(opts *bind.CallOpts, arg0 *big.Int) (struct {
 	VotingPower *big.Int
-	Accumulator *big.Int
 	Validator   common.Address
 	Pubkey      string
 }, error) {
 	ret := new(struct {
 		VotingPower *big.Int
-		Accumulator *big.Int
 		Validator   common.Address
 		Pubkey      string
 	})
@@ -476,10 +444,9 @@ func (_ValidatorSet *ValidatorSetCaller) Validators(opts *bind.CallOpts, arg0 *b
 
 // Validators is a free data retrieval call binding the contract method 0x35aa2e44.
 //
-// Solidity: function validators( uint256) constant returns(votingPower uint256, accumulator int256, validator address, pubkey string)
+// Solidity: function validators( uint256) constant returns(votingPower uint256, validator address, pubkey string)
 func (_ValidatorSet *ValidatorSetSession) Validators(arg0 *big.Int) (struct {
 	VotingPower *big.Int
-	Accumulator *big.Int
 	Validator   common.Address
 	Pubkey      string
 }, error) {
@@ -488,10 +455,9 @@ func (_ValidatorSet *ValidatorSetSession) Validators(arg0 *big.Int) (struct {
 
 // Validators is a free data retrieval call binding the contract method 0x35aa2e44.
 //
-// Solidity: function validators( uint256) constant returns(votingPower uint256, accumulator int256, validator address, pubkey string)
+// Solidity: function validators( uint256) constant returns(votingPower uint256, validator address, pubkey string)
 func (_ValidatorSet *ValidatorSetCallerSession) Validators(arg0 *big.Int) (struct {
 	VotingPower *big.Int
-	Accumulator *big.Int
 	Validator   common.Address
 	Pubkey      string
 }, error) {
@@ -566,25 +532,25 @@ func (_ValidatorSet *ValidatorSetTransactorSession) GetSha256(input []byte) (*ty
 	return _ValidatorSet.Contract.GetSha256(&_ValidatorSet.TransactOpts, input)
 }
 
-// SelectProposer is a paid mutator transaction binding the contract method 0x2c942e86.
+// RemoveValidator is a paid mutator transaction binding the contract method 0xf94e1867.
 //
-// Solidity: function selectProposer() returns(address)
-func (_ValidatorSet *ValidatorSetTransactor) SelectProposer(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _ValidatorSet.contract.Transact(opts, "selectProposer")
+// Solidity: function removeValidator(_index uint256) returns()
+func (_ValidatorSet *ValidatorSetTransactor) RemoveValidator(opts *bind.TransactOpts, _index *big.Int) (*types.Transaction, error) {
+	return _ValidatorSet.contract.Transact(opts, "removeValidator", _index)
 }
 
-// SelectProposer is a paid mutator transaction binding the contract method 0x2c942e86.
+// RemoveValidator is a paid mutator transaction binding the contract method 0xf94e1867.
 //
-// Solidity: function selectProposer() returns(address)
-func (_ValidatorSet *ValidatorSetSession) SelectProposer() (*types.Transaction, error) {
-	return _ValidatorSet.Contract.SelectProposer(&_ValidatorSet.TransactOpts)
+// Solidity: function removeValidator(_index uint256) returns()
+func (_ValidatorSet *ValidatorSetSession) RemoveValidator(_index *big.Int) (*types.Transaction, error) {
+	return _ValidatorSet.Contract.RemoveValidator(&_ValidatorSet.TransactOpts, _index)
 }
 
-// SelectProposer is a paid mutator transaction binding the contract method 0x2c942e86.
+// RemoveValidator is a paid mutator transaction binding the contract method 0xf94e1867.
 //
-// Solidity: function selectProposer() returns(address)
-func (_ValidatorSet *ValidatorSetTransactorSession) SelectProposer() (*types.Transaction, error) {
-	return _ValidatorSet.Contract.SelectProposer(&_ValidatorSet.TransactOpts)
+// Solidity: function removeValidator(_index uint256) returns()
+func (_ValidatorSet *ValidatorSetTransactorSession) RemoveValidator(_index *big.Int) (*types.Transaction, error) {
+	return _ValidatorSet.Contract.RemoveValidator(&_ValidatorSet.TransactOpts, _index)
 }
 
 // SetChainId is a paid mutator transaction binding the contract method 0x7973be07.
@@ -606,6 +572,27 @@ func (_ValidatorSet *ValidatorSetSession) SetChainId(_chainID string) (*types.Tr
 // Solidity: function setChainId(_chainID string) returns()
 func (_ValidatorSet *ValidatorSetTransactorSession) SetChainId(_chainID string) (*types.Transaction, error) {
 	return _ValidatorSet.Contract.SetChainId(&_ValidatorSet.TransactOpts, _chainID)
+}
+
+// Validate is a paid mutator transaction binding the contract method 0x2d16c59c.
+//
+// Solidity: function validate(vote bytes, sigs bytes, extradata bytes) returns(address, address, uint256)
+func (_ValidatorSet *ValidatorSetTransactor) Validate(opts *bind.TransactOpts, vote []byte, sigs []byte, extradata []byte) (*types.Transaction, error) {
+	return _ValidatorSet.contract.Transact(opts, "validate", vote, sigs, extradata)
+}
+
+// Validate is a paid mutator transaction binding the contract method 0x2d16c59c.
+//
+// Solidity: function validate(vote bytes, sigs bytes, extradata bytes) returns(address, address, uint256)
+func (_ValidatorSet *ValidatorSetSession) Validate(vote []byte, sigs []byte, extradata []byte) (*types.Transaction, error) {
+	return _ValidatorSet.Contract.Validate(&_ValidatorSet.TransactOpts, vote, sigs, extradata)
+}
+
+// Validate is a paid mutator transaction binding the contract method 0x2d16c59c.
+//
+// Solidity: function validate(vote bytes, sigs bytes, extradata bytes) returns(address, address, uint256)
+func (_ValidatorSet *ValidatorSetTransactorSession) Validate(vote []byte, sigs []byte, extradata []byte) (*types.Transaction, error) {
+	return _ValidatorSet.Contract.Validate(&_ValidatorSet.TransactOpts, vote, sigs, extradata)
 }
 
 // ValidatorSetNewProposerIterator is returned from FilterNewProposer and is used to iterate over the raw logs and unpacked data for NewProposer events raised by the ValidatorSet contract.

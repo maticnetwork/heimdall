@@ -57,8 +57,8 @@ func GenerateAuthObj(client *ethclient.Client, callMsg ethereum.CallMsg) (auth *
 	return
 }
 
-func SelectProposer() {
-	// get ValidatorSet Instance
+func SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte) {
+
 	validatorSetInstance, err := GetValidatorSetInstance()
 	if err != nil {
 		return
@@ -69,31 +69,23 @@ func SelectProposer() {
 	if err != nil {
 		return
 	}
-
-	data, err := validatorSetABI.Pack("selectProposer")
+	data, err := validatorSetABI.Pack("validate")
 	if err != nil {
-		Logger.Error("Unable to pack tx for SelectProposer", "error", err)
+		Logger.Error("Unable to pack tx for validate", "error", err)
 		return
 	}
 
 	validatorAddress := GetValidatorSetAddress()
-
-	// get auth Obj
 	auth, err := GenerateAuthObj(GetMainClient(), ethereum.CallMsg{
 		To:   &validatorAddress,
 		Data: data,
 	})
 
+	tx, err := validatorSetInstance.Validate(auth, voteSignBytes, sigs, txData)
 	if err != nil {
-		Logger.Error("Unable to draft auth for proposer selection", "error", err)
-		return
+		Logger.Error("Checkpoint Submission Errored", "Error", err)
+	} else {
+		Logger.Info("Submitted Proof Successfully ", "txHash", tx.Hash().String())
 	}
 
-	// send tx
-	tx, err := validatorSetInstance.SelectProposer(auth)
-	if err != nil {
-		Logger.Error("Unable to send transaction for proposer selection", "error", err)
-	} else {
-		Logger.Info("Transaction hash for proposing transaction", "txHash", tx.Hash().String())
-	}
 }
