@@ -2,7 +2,6 @@ package helper
 
 import (
 	"log"
-	"os"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -14,15 +13,14 @@ import (
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 	"github.com/maticnetwork/heimdall/contracts/validatorSet"
-	logger "github.com/maticnetwork/heimdall/log"
+	logger "github.com/tendermint/tendermint/libs/log"
+	"os"
 )
 
 func init() {
 	cdc.RegisterConcrete(secp256k1.PubKeySecp256k1{}, secp256k1.Secp256k1PubKeyAminoRoute, nil)
 	cdc.RegisterConcrete(secp256k1.PrivKeySecp256k1{}, secp256k1.Secp256k1PrivKeyAminoRoute, nil)
-
-	Logger = logger.NewMainLogger(logger.NewSyncWriter(os.Stdout))
-
+	Logger = logger.NewTMLogger(logger.NewSyncWriter(os.Stdout))
 }
 
 // Configuration represents heimdall config
@@ -51,7 +49,6 @@ var Logger logger.Logger
 
 func InitHeimdallConfig() {
 	if strings.Compare(conf.MaticRPCUrl, "") != 0 {
-		Logger.Debug("Initializing heimdall config")
 		return
 	}
 
