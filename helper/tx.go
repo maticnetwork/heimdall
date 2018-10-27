@@ -36,12 +36,13 @@ func GenerateAuthObj(client *ethclient.Client) (auth *bind.TransactOpts) {
 	if err != nil {
 		panic(err)
 	}
-
 	// fetch nonce
 	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
 	if err != nil {
 		panic(err)
 	}
+	// fetch gas limit
+	// gasLimit, err := client.EstimateGas(context.Background(), )
 
 	// create auth
 	auth = bind.NewKeyedTransactor(ecdsaPrivateKey)
@@ -54,15 +55,14 @@ func GenerateAuthObj(client *ethclient.Client) (auth *bind.TransactOpts) {
 
 func SelectProposer() {
 	// get ValidatorSet Instance
-	validatorSetInstance := GetValidatorSetInstance(MainChainClient)
+	validatorSetInstance := GetValidatorSetInstance()
 	// get auth Obj
-	auth := GenerateAuthObj(MainChainClient)
+	auth := GenerateAuthObj(GetMainClient())
 	// send tx
 	tx, err := validatorSetInstance.SelectProposer(auth)
 	if err != nil {
-		Logger.Error("Unable to send transaction for proposer selection ", "Error", err)
+		Logger.Error("Unable to send transaction for proposer selection", "error", err)
 	} else {
-		Logger.Info("New Proposer Selected ! ", "Tx_Hash", tx.Hash().String())
+		Logger.Info("Transaction hash", "txHash", tx.Hash().String())
 	}
-
 }

@@ -1,17 +1,18 @@
 package helper
 
 import (
+	"log"
+	"os"
+	"strings"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
-	"log"
 
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 	"github.com/maticnetwork/heimdall/contracts/validatorSet"
-	logger "github.com/maticnetwork/heimdall/libs"
-	"os"
-	"strings"
+	logger "github.com/maticnetwork/heimdall/log"
 )
 
 func init() {
@@ -38,10 +39,10 @@ type Configuration struct {
 var conf Configuration
 
 // MainChainClient stores eth client for Main chain Network
-var MainChainClient *ethclient.Client
+var mainChainClient *ethclient.Client
 
 // MaticClient stores eth client for Matic Network
-var MaticClient *ethclient.Client
+var maticClient *ethclient.Client
 
 // Logger stores global logger object
 var Logger logger.Logger
@@ -66,11 +67,13 @@ func InitHeimdallConfig() {
 	}
 
 	// setup eth client
-	if MainChainClient, err = ethclient.Dial(GetConfig().MainRPCUrl); err != nil {
+	if mainChainClient, err = ethclient.Dial(GetConfig().MainRPCUrl); err != nil {
+		Logger.Error("Error while creating main chain client", "error", err)
 		log.Fatal(err)
 	}
 
-	if MaticClient, err = ethclient.Dial(GetConfig().MaticRPCUrl); err != nil {
+	if maticClient, err = ethclient.Dial(GetConfig().MaticRPCUrl); err != nil {
+		Logger.Error("Error while creating matic chain client", "error", err)
 		log.Fatal(err)
 	}
 }
@@ -81,11 +84,11 @@ func GetConfig() Configuration {
 }
 
 // to remove
-func GetValidatorSetInstance(client *ethclient.Client) *validatorset.ValidatorSet {
+func GetValidatorSetInstance() *validatorset.ValidatorSet {
 	InitHeimdallConfig()
-	validatorSetInstance, err := validatorset.NewValidatorSet(common.HexToAddress(GetConfig().ValidatorSetAddress), client)
+	validatorSetInstance, err := validatorset.NewValidatorSet(common.HexToAddress(GetConfig().ValidatorSetAddress), mainChainClient)
 	if err != nil {
-		Logger.Error("Unable to create validator set instance", "Error", err, "Client", client)
+		Logger.Error("Unable to create validator set instance", "rrror", err)
 	}
 
 	return validatorSetInstance
@@ -93,9 +96,9 @@ func GetValidatorSetInstance(client *ethclient.Client) *validatorset.ValidatorSe
 
 func GetStakeManagerInstance() *stakemanager.Stakemanager {
 	InitHeimdallConfig()
-	stakeManagerInstance, err := stakemanager.NewStakemanager(common.HexToAddress(GetConfig().StakeManagerAddress), MainChainClient)
+	stakeManagerInstance, err := stakemanager.NewStakemanager(common.HexToAddress(GetConfig().StakeManagerAddress), mainChainClient)
 	if err != nil {
-		Logger.Error("Unable to create stakemanager instance", "Error", err, "Client", MainChainClient)
+		Logger.Error("Unable to create stakemanager instance", "error", err)
 	}
 
 	return stakeManagerInstance
@@ -103,4 +106,14 @@ func GetStakeManagerInstance() *stakemanager.Stakemanager {
 
 func GetValidatorDetails() {
 
+}
+
+func GetMainClient() *ethclient.Client {
+	InitHeimdallConfig()
+	return mainChainClient
+}
+
+func GetMaticClient() *ethclient.Client {
+	InitHeimdallConfig()
+	return maticClient
 }
