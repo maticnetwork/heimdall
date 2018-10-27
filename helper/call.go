@@ -34,7 +34,7 @@ func GetValidators() (validators []abci.Validator) {
 				PubKey:  tmtypes.TM2PB.PubKey(pubkeyBytes),
 			}
 
-			Logger.Info("New Validator Generated", "Validator", validator)
+			Logger.Info("New Validator Generated", "Validator", validator.String())
 
 			validators = append(validators, validator)
 		} else {
