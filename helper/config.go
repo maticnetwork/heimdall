@@ -7,14 +7,16 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
+
+	"os"
 
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 	"github.com/maticnetwork/heimdall/contracts/validatorSet"
 	logger "github.com/tendermint/tendermint/libs/log"
-	"os"
 )
 
 func init() {
@@ -41,8 +43,9 @@ var conf Configuration
 // MainChainClient stores eth client for Main chain Network
 var mainChainClient *ethclient.Client
 
-// MaticClient stores eth client for Matic Network
+// MaticClient stores eth/rpc client for Matic Network
 var maticClient *ethclient.Client
+var maticRPCClient *rpc.Client
 
 // Logger stores global logger object
 var Logger logger.Logger
@@ -65,16 +68,19 @@ func InitHeimdallConfig() {
 		log.Fatal(err)
 	}
 
+	rpc.Dial(GetConfig().MainRPCUrl)
+
 	// setup eth client
 	if mainChainClient, err = ethclient.Dial(GetConfig().MainRPCUrl); err != nil {
 		Logger.Error("Error while creating main chain client", "error", err)
 		log.Fatal(err)
 	}
 
-	if maticClient, err = ethclient.Dial(GetConfig().MaticRPCUrl); err != nil {
-		Logger.Error("Error while creating matic chain client", "error", err)
+	if maticRPCClient, err = rpc.Dial(GetConfig().MaticRPCUrl); err != nil {
+		Logger.Error("Error while creating matic chain RPC client", "error", err)
 		log.Fatal(err)
 	}
+	maticClient = ethclient.NewClient(maticRPCClient)
 }
 
 func GetConfig() Configuration {
@@ -86,7 +92,7 @@ func GetConfig() Configuration {
 
 func GetRootChainAddress() common.Address {
 	InitHeimdallConfig()
-	return common.HexToAddress(GetConfig().ValidatorSetAddress)
+	return common.HexToAddress(GetConfig().RootchainAddress)
 }
 
 func GetRootChainInstance() (*rootchain.Rootchain, error) {
@@ -158,4 +164,9 @@ func GetMainClient() *ethclient.Client {
 func GetMaticClient() *ethclient.Client {
 	InitHeimdallConfig()
 	return maticClient
+}
+
+func GetMaticRPCClient() *rpc.Client {
+	InitHeimdallConfig()
+	return maticRPCClient
 }

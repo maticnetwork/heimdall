@@ -10,6 +10,7 @@ import (
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -36,7 +37,9 @@ type Bridge struct {
 	common.BaseService
 
 	// ETH client
-	Client *ethclient.Client
+	MaticClient *ethclient.Client
+	// ETH RPC client
+	MaticRPCClient *rpc.Client
 	// Mainchain client
 	MainClient *ethclient.Client
 	// Rootchain instance
@@ -61,9 +64,15 @@ func NewBridge() *Bridge {
 		panic(err)
 	}
 
+	maticRPCClient, err := rpc.Dial(helper.GetConfig().MaticRPCUrl)
+	if err != nil {
+		return nil
+	}
+
 	// creating bridge object
 	bridge := &Bridge{
-		Client:            helper.GetMaticClient(),
+		MaticClient:       ethclient.NewClient(maticRPCClient),
+		MaticRPCClient:    maticRPCClient,
 		MainClient:        helper.GetMainClient(),
 		RootChainInstance: rootchainInstance,
 		HeaderChannel:     make(chan *types.Header),
@@ -107,7 +116,7 @@ func (bridge *Bridge) sendRequest(newHeader *types.Header) {
 	// process if diff > 0 (positive)
 	if diff.Sign() > 0 {
 		if diff.Uint64() >= defaultCheckpointLength {
-			end = end.Add(start, big.NewInt(defaultCheckpointLength))
+			end = end.Add(start, big.NewInt(defaultCheckpointLength-1))
 			bridge.Logger.Debug("start - end >= defaultCheckpointLength", "latest", newHeader.Number, "start", start, "end", end, "defaultCheckpointLength", defaultCheckpointLength)
 		} else {
 			bridge.Logger.Debug("start - end < defaultCheckpointLength", "latest", newHeader.Number, "start", start, "defaultCheckpointLength", defaultCheckpointLength)
@@ -115,13 +124,12 @@ func (bridge *Bridge) sendRequest(newHeader *types.Header) {
 		}
 	}
 
-	if end.Sign() <= 0 {
+	if end.Sign() < 0 {
 		return
 	}
 
 	// Get root hash
-	// root := checkpoint.GetHeaders(start.Uint64(), end.Uint64(), bridge.Client)
-	root := checkpoint.GetHeaders(9429470, 9429480, bridge.Client)
+	root := checkpoint.GetHeaders(start.Uint64(), end.Uint64())
 	bridge.Logger.Info("New checkpoint header created", "start", start, "end", end, "root", root)
 
 	// TODO submit checkcoint
@@ -162,7 +170,7 @@ func (bridge *Bridge) OnStart() error {
 	go bridge.StartHeaderProcess(headerCtx)
 
 	// subscribe to new head
-	subscription, err := bridge.Client.SubscribeNewHead(ctx, bridge.HeaderChannel)
+	subscription, err := bridge.MaticClient.SubscribeNewHead(ctx, bridge.HeaderChannel)
 	if err != nil {
 		// start go routine to poll for new header using client object
 		go bridge.StartPolling(ctx, defaultPollInterval)
@@ -200,7 +208,7 @@ func (bridge *Bridge) StartPolling(ctx context.Context, pollInterval int) {
 	for {
 		select {
 		case <-ticker.C:
-			header, err := bridge.Client.HeaderByNumber(ctx, nil)
+			header, err := bridge.MaticClient.HeaderByNumber(ctx, nil)
 			if err == nil && header != nil {
 				// send data to channel
 				bridge.HeaderChannel <- header
