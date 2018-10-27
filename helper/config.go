@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
+	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 	"github.com/maticnetwork/heimdall/contracts/validatorSet"
 	logger "github.com/maticnetwork/heimdall/log"
@@ -84,6 +85,29 @@ func GetConfig() Configuration {
 	return conf
 }
 
+// -----------
+
+func GetRootChainAddress() common.Address {
+	InitHeimdallConfig()
+	return common.HexToAddress(GetConfig().ValidatorSetAddress)
+}
+
+func GetRootChainInstance() (*rootchain.Rootchain, error) {
+	InitHeimdallConfig()
+	rootChainInstance, err := rootchain.NewRootchain(common.HexToAddress(GetConfig().RootchainAddress), mainChainClient)
+	if err != nil {
+		Logger.Error("Unable to create root chain instance", "error", err)
+	}
+
+	return rootChainInstance, err
+}
+
+func GetRootChainABI() (abi.ABI, error) {
+	return abi.JSON(strings.NewReader(rootchain.RootchainABI))
+}
+
+//---------
+
 func GetValidatorSetAddress() common.Address {
 	InitHeimdallConfig()
 	return common.HexToAddress(GetConfig().ValidatorSetAddress)
@@ -103,6 +127,7 @@ func GetValidatorSetABI() (abi.ABI, error) {
 	return abi.JSON(strings.NewReader(validatorset.ValidatorSetABI))
 }
 
+//--------
 func GetStakeManagerAddress() common.Address {
 	InitHeimdallConfig()
 	return common.HexToAddress(GetConfig().StakeManagerAddress)
@@ -121,6 +146,8 @@ func GetStakeManagerInstance() (*stakemanager.Stakemanager, error) {
 func GetStakeManagerABI() (abi.ABI, error) {
 	return abi.JSON(strings.NewReader(stakemanager.StakemanagerABI))
 }
+
+// ---------
 
 func GetValidatorDetails() {
 
