@@ -28,4 +28,4 @@ RUN make build
 VOLUME ["/root/.heimdalld", "./logs", "./build"]
 
 # expose ports
-EXPOSE 1317
+EXPOSE 1317 26656 26657
