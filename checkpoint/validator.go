@@ -1,26 +1,25 @@
 package checkpoint
 
 import (
-	"context"
 	"encoding/hex"
 	"fmt"
 	"math/big"
 	"strings"
 
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto/sha3"
-	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/xsleonard/go-merkle"
+	merkle "github.com/xsleonard/go-merkle"
 )
 
 func ValidateCheckpoint(start uint64, end uint64, rootHash string) bool {
-	client := helper.GetMaticClient()
-
 	if (start-end+1)%2 != 0 {
 		return false
 	}
 
-	root := "0x" + GetHeaders(start, end, client)
+	root := "0x" + GetHeaders(start, end)
 	if strings.Compare(root, rootHash) == 0 {
 		CheckpointLogger.Info("RootHash matched!")
 		return true
@@ -30,40 +29,62 @@ func ValidateCheckpoint(start uint64, end uint64, rootHash string) bool {
 	}
 }
 
-func GetHeaders(start uint64, end uint64, client *ethclient.Client) string {
+func GetHeaders(start uint64, end uint64) string {
+	// client := helper.GetMaticClient()
+	rpcClient := helper.GetMaticRPCClient()
+
 	if start > end {
 		return ""
 	}
 
-	// TODO add check for even difference
-	current := start
-	var result [][32]byte
-	for current <= end {
-		blockheader, err := client.HeaderByNumber(context.Background(), big.NewInt(int64(current)))
-		if err != nil {
-			CheckpointLogger.Error("Error getting block from Matic", "error", err, "start", start, "end", end, "current", current)
+	batchElements := make([]rpc.BatchElem, end-start+1)
+	for i := range batchElements {
+		param := new(big.Int)
+		param.SetUint64(uint64(i) + start)
+
+		batchElements[i] = rpc.BatchElem{
+			Method: "eth_getBlockByNumber",
+			Args:   []interface{}{hexutil.EncodeBig(param), true},
+			Result: &types.Header{},
+		}
+	}
+
+	CheckpointLogger.Debug("Drafting batch elements to get all headers", "totalHeaders", len(batchElements))
+
+	// Batch call
+	err := rpcClient.BatchCall(batchElements)
+	if err != nil {
+		CheckpointLogger.Error("Error while executing getHeaders batch call", "error", err)
+		return ""
+	}
+
+	// Fetch result and draft header and add into tree
+	expectedLength := nextPowerOfTwo(end - start + 1)
+	headers := make([][32]byte, expectedLength)
+	for i, batchElement := range batchElements {
+		if batchElement.Error != nil {
+			CheckpointLogger.Error("Error while fetching header", "current", uint64(i)+start, "error", batchElement.Error)
 			return ""
 		}
 
-		headerBytes := appendBytes32(
-			blockheader.Number.Bytes(),
-			blockheader.Time.Bytes(),
-			blockheader.TxHash.Bytes(),
-			blockheader.ReceiptHash.Bytes(),
-		)
+		blockHeader := batchElement.Result.(*types.Header)
+		header := getSha3FromByte(appendBytes32(
+			blockHeader.Number.Bytes(),
+			blockHeader.Time.Bytes(),
+			blockHeader.TxHash.Bytes(),
+			blockHeader.ReceiptHash.Bytes(),
+		))
 
-		header := getsha3frombyte(headerBytes)
 		var arr [32]byte
 		copy(arr[:], header)
-		result = append(result, arr)
-		current++
-	}
-	merkelData := convert(result)
-	tree := merkle.NewTreeWithOpts(merkle.TreeOptions{EnableHashSorting: false, DisableHashLeaves: true})
 
-	err := tree.Generate(merkelData, sha3.NewKeccak256())
-	if err != nil {
-		CheckpointLogger.Error("Error generating tree", "error", err)
+		// set header
+		headers[i] = arr
+	}
+
+	tree := merkle.NewTreeWithOpts(merkle.TreeOptions{EnableHashSorting: false, DisableHashLeaves: true})
+	if err := tree.Generate(convert(headers), sha3.NewKeccak256()); err != nil {
+		CheckpointLogger.Error("Error generating merkle tree", "error", err)
 		return ""
 	}
 
@@ -103,10 +124,26 @@ func appendBytes32(data ...[]byte) []byte {
 	return result
 }
 
-func getsha3frombyte(input []byte) []byte {
+func getSha3FromByte(input []byte) []byte {
 	hash := sha3.NewKeccak256()
 	var buf []byte
 	hash.Write(input)
 	buf = hash.Sum(buf)
 	return buf
+}
+
+func nextPowerOfTwo(n uint64) uint64 {
+	if n == 0 {
+		return 1
+	}
+	// http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
+	n--
+	n |= n >> 1
+	n |= n >> 2
+	n |= n >> 4
+	n |= n >> 8
+	n |= n >> 16
+	n |= n >> 32
+	n++
+	return n
 }
