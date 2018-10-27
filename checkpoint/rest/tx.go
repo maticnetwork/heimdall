@@ -27,8 +27,8 @@ func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *wire.Codec,
 
 type EpochCheckpoint struct {
 	RootHash        string `json:"root_hash"`
-	StartBlock      int64  `json:"start_block"`
-	EndBlock        int64  `json:"end_block"`
+	StartBlock      uint64 `json:"start_block"`
+	EndBlock        uint64 `json:"end_block"`
 	ProposerAddress string `json:"proposer_address"`
 }
 
@@ -50,14 +50,15 @@ func newCheckpointHandler() http.HandlerFunc {
 			w.Write([]byte(err.Error()))
 			return
 		}
-		txBytes, err := createtxbytes(m)
+
+		txBytes, err := CreateTxBytes(m)
 		if err != nil {
 			RestLogger.Error("Unable to create txBytes", "EndBlock", m.EndBlock, "StartBlock", m.StartBlock, "RootHash", m.RootHash)
 		}
 
 		RestLogger.Info("Sending request to Tendermint", "txBytes", hex.EncodeToString(txBytes), "url", helper.GetConfig().TendermintEndpoint)
 
-		resp, err := sendRequest(txBytes, helper.GetConfig().TendermintEndpoint)
+		resp, err := SendTendermintRequest(txBytes)
 		if err != nil {
 			RestLogger.Error("Error while sending request to Tendermint", "error", err)
 			w.WriteHeader(http.StatusBadRequest)
@@ -74,9 +75,9 @@ func newCheckpointHandler() http.HandlerFunc {
 	}
 }
 
-func sendRequest(txBytes []byte, url string) (*http.Response, error) {
+func SendTendermintRequest(txBytes []byte) (*http.Response, error) {
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", url+"/broadcast_tx_commit", nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/%s", helper.GetConfig().TendermintEndpoint, "broadcast_tx_commit"), nil)
 	if err != nil {
 		RestLogger.Error("Error while drafting request for tendermint", "Error", err)
 		return nil, err
@@ -89,10 +90,10 @@ func sendRequest(txBytes []byte, url string) (*http.Response, error) {
 	return client.Do(req)
 }
 
-func createtxbytes(m EpochCheckpoint) ([]byte, error) {
+func CreateTxBytes(m EpochCheckpoint) ([]byte, error) {
 	msg := checkpoint.NewMsgCheckpointBlock(
-		uint64(m.StartBlock),
-		uint64(m.EndBlock),
+		m.StartBlock,
+		m.EndBlock,
 		common.HexToHash(m.RootHash),
 		m.ProposerAddress,
 	)
@@ -106,5 +107,4 @@ func createtxbytes(m EpochCheckpoint) ([]byte, error) {
 		return []byte(""), err
 	}
 	return txBytes, nil
-
 }

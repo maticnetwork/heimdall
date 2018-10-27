@@ -34,8 +34,8 @@ func GetHeaders(start uint64, end uint64, client *ethclient.Client) string {
 	if start > end {
 		return ""
 	}
-	//todo add check for even difference
 
+	// TODO add check for even difference
 	current := start
 	var result [][32]byte
 	for current <= end {
@@ -45,10 +45,12 @@ func GetHeaders(start uint64, end uint64, client *ethclient.Client) string {
 			return ""
 		}
 
-		headerBytes := appendBytes32(blockheader.Number.Bytes(),
+		headerBytes := appendBytes32(
+			blockheader.Number.Bytes(),
 			blockheader.Time.Bytes(),
 			blockheader.TxHash.Bytes(),
-			blockheader.ReceiptHash.Bytes())
+			blockheader.ReceiptHash.Bytes(),
+		)
 
 		header := getsha3frombyte(headerBytes)
 		var arr [32]byte
