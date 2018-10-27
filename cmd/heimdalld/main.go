@@ -33,12 +33,12 @@ func main() {
 		cdc,
 		rootCmd,
 		server.DefaultAppInit,
-		server.ConstructAppCreator(newApp, "heimdall"),
-		server.ConstructAppExporter(exportAppStateAndTMValidators, "heimdall"),
+		server.ConstructAppCreator(newApp, app.AppName),
+		server.ConstructAppExporter(exportAppStateAndTMValidators, app.AppName),
 	)
 
 	// prepare and add flags
-	executor := cli.PrepareBaseCmd(rootCmd, "HC", os.ExpandEnv("$HOME/.heimdalld"))
+	executor := cli.PrepareBaseCmd(rootCmd, "HD", os.ExpandEnv("$HOME/.heimdalld"))
 	err := executor.Execute()
 	if err != nil {
 		// Note: Handle with #870

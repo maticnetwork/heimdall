@@ -13,9 +13,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/gorilla/mux"
-	conf "github.com/maticnetwork/heimdall/helper"
-
-	libs "github.com/maticnetwork/heimdall/libs"
 
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/helper"
@@ -36,8 +33,6 @@ type EpochCheckpoint struct {
 }
 
 func newCheckpointHandler(cdc *wire.Codec, kb keys.Keybase, cliCtx context.CLIContext) http.HandlerFunc {
-	logger := conf.Logger.With("module", "checkpoint/rest/tx")
-
 	return func(w http.ResponseWriter, r *http.Request) {
 		var m EpochCheckpoint
 
@@ -50,7 +45,7 @@ func newCheckpointHandler(cdc *wire.Codec, kb keys.Keybase, cliCtx context.CLICo
 
 		err = json.Unmarshal(body, &m)
 		if err != nil {
-			logger.Error("Error Unmarshalling json Epoch Checkpoint", "Error", err)
+			RestLogger.Error("Error unmarshalling json epoch checkpoint", "error", err)
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
 			return
@@ -67,14 +62,21 @@ func newCheckpointHandler(cdc *wire.Codec, kb keys.Keybase, cliCtx context.CLICo
 
 		txBytes, err := rlp.EncodeToBytes(tx)
 		if err != nil {
-			logger.Error("Error generating TX Bytes ", "Error", err)
+			RestLogger.Error("Error generating TX Bytes", "error", err)
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
 		}
-		logger.Info("The tx bytes are ", "Transaction", hex.EncodeToString(txBytes))
 
-		logger.Info("URL to broadcast tx ", "URL", helper.GetConfig().TendermintEndpoint)
+		RestLogger.Info("Sending request to Tendermint", "txBytes", hex.EncodeToString(txBytes), "url", helper.GetConfig().TendermintEndpoint)
 
-		resp := sendRequest(txBytes, helper.GetConfig().TendermintEndpoint, logger)
-		logger.Info("Transaction Sent !  ", "Response", resp)
+		resp, err := sendRequest(txBytes, helper.GetConfig().TendermintEndpoint)
+		if err != nil {
+			RestLogger.Error("Error while sending request to Tendermint", "error", err)
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
 
 		var bodyString string
 		if resp.StatusCode == http.StatusOK {
@@ -85,20 +87,17 @@ func newCheckpointHandler(cdc *wire.Codec, kb keys.Keybase, cliCtx context.CLICo
 	}
 }
 
-func sendRequest(txBytes []byte, url string, logger libs.Logger) *http.Response {
+func sendRequest(txBytes []byte, url string) (*http.Response, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url+"/broadcast_tx_commit", nil)
 	if err != nil {
-		logger.Error("Error while drafting request for tendermint", "Error", err)
+		RestLogger.Error("Error while drafting request for tendermint", "Error", err)
+		return nil, err
 	}
 
 	queryParams := req.URL.Query()
 	queryParams.Add("tx", fmt.Sprintf("0x%s", hex.EncodeToString(txBytes)))
 	req.URL.RawQuery = queryParams.Encode()
 
-	resp, err := client.Do(req)
-	if err != nil {
-		logger.Error("Error while sending request to tendermint", "Error", err)
-	}
-	return resp
+	return client.Do(req)
 }

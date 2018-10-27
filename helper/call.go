@@ -10,13 +10,11 @@ import (
 )
 
 func GetValidators() (validators []abci.Validator) {
-	Logger.With("module", "helper/call")
-
 	stakeManagerInstance := GetStakeManagerInstance()
 
 	ValidatorAddrs, err := stakeManagerInstance.GetCurrentValidatorSet(nil)
 	if err != nil {
-		Logger.Info("Error getting Validator Set ", "Error", err)
+		Logger.Info("Error getting validator set", "Error", err)
 	}
 
 	for index := range ValidatorAddrs {
@@ -43,19 +41,16 @@ func GetValidators() (validators []abci.Validator) {
 		} else {
 			Logger.Info("Validator Empty", "Index", index)
 		}
-
 	}
 
 	return validators
 }
 
 func GetProposer() common.Address {
-
-	validatorSetInstance := GetValidatorSetInstance(MainChainClient)
-
+	validatorSetInstance := GetValidatorSetInstance()
 	currentProposer, err := validatorSetInstance.Proposer(nil)
 	if err != nil {
-		Logger.Error("Unable to get proposer ", "Error", err)
+		Logger.Error("Unable to get proposer", "error", err)
 	}
 
 	return currentProposer
@@ -63,10 +58,9 @@ func GetProposer() common.Address {
 
 // SubmitProof submit header
 func SubmitProof(voteSignBytes []byte, sigs []byte, extradata []byte, start uint64, end uint64, rootHash common.Hash) {
-
 	Logger.Info("Root Hash Generated ", "Start", start, "End", end, "RootHash", rootHash)
 	// get validator set instance from config
-	validatorSetInstance := GetValidatorSetInstance(MainChainClient)
+	validatorSetInstance := GetValidatorSetInstance()
 
 	Logger.Info("Inputs to submitProof", " Vote", hex.EncodeToString(voteSignBytes), "Signatures", hex.EncodeToString(sigs), "Tx_Data", hex.EncodeToString(extradata))
 	// submit proof
@@ -76,7 +70,6 @@ func SubmitProof(voteSignBytes []byte, sigs []byte, extradata []byte, start uint
 	} else {
 		Logger.Info("Submitted Proof Successfully ", "Status", result, "Proposer", proposer)
 	}
-
 }
 
 // To be used later

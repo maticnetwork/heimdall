@@ -14,12 +14,7 @@ import (
 )
 
 func validateCheckpoint(start int, end int, rootHash string) bool {
-	var logger = helper.Logger.With("module", "checkpoint/validate")
-
-	client, err := ethclient.Dial(helper.GetConfig().MaticRPCUrl)
-	if err != nil {
-		logger.Error("Error Dialing to matic via RPC", "Error", err)
-	}
+	client := helper.GetMaticClient()
 
 	if (start-end+1)%2 != 0 {
 		return false
@@ -27,17 +22,15 @@ func validateCheckpoint(start int, end int, rootHash string) bool {
 
 	root := "0x" + getHeaders(start, end, client)
 	if strings.Compare(root, rootHash) == 0 {
-		logger.Info("root hash matched ! ")
+		CheckpointLogger.Info("RootHash matched!")
 		return true
 	} else {
-		logger.Info("root hash does not match ", "roothash_tx", rootHash, "roothash_gen", root)
+		CheckpointLogger.Error("RootHash does not match", "rootHashTx", rootHash, "rootHash", root)
 		return false
 	}
 }
 
 func getHeaders(start int, end int, client *ethclient.Client) string {
-	logger := helper.Logger.With("module", "checkpoint/validate")
-
 	if start > end {
 		return ""
 	}
@@ -48,8 +41,10 @@ func getHeaders(start int, end int, client *ethclient.Client) string {
 	for current <= end {
 		blockheader, err := client.HeaderByNumber(context.Background(), big.NewInt(int64(current)))
 		if err != nil {
-			logger.Error(" Error Getting Block from Matic ", "Error", err)
+			CheckpointLogger.Error("Error getting block from Matic", "error", err)
+			return ""
 		}
+
 		headerBytes := appendBytes32(blockheader.Number.Bytes(),
 			blockheader.Time.Bytes(),
 			blockheader.TxHash.Bytes(),
@@ -66,8 +61,10 @@ func getHeaders(start int, end int, client *ethclient.Client) string {
 
 	err := tree.Generate(merkelData, sha3.NewKeccak256())
 	if err != nil {
-		logger.Error(" Error generating tree ", "Error", err)
+		CheckpointLogger.Error("Error generating tree", "error", err)
+		return ""
 	}
+
 	return hex.EncodeToString(tree.Root().Hash)
 }
 
@@ -83,12 +80,10 @@ func convert(input []([32]byte)) [][]byte {
 }
 
 func convertTo32(input []byte) (output [32]byte, err error) {
-	logger := helper.Logger.With("module", "checkpoint/validate")
-
 	l := len(input)
 	if l > 32 || l == 0 {
-		err = fmt.Errorf("input length is greater than 32")
-		logger.Error("input length is greater than 32 while converting", "Error", err)
+		err = fmt.Errorf("Input length is greater than 32")
+		CheckpointLogger.Error("Input length is greater than 32 while converting", "error", err)
 		return
 	}
 	copy(output[32-l:], input[:])

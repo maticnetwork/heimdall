@@ -41,7 +41,6 @@ func (msg MsgCheckpoint) GetSigners() []sdk.AccAddress {
 	addrs := make([]sdk.AccAddress, 1)
 	addrs[0] = sdk.AccAddress(msg.Proposer.Bytes())
 	return addrs
-
 }
 
 // GetSignBytes returns the bytes for the message signer to sign on
