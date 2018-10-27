@@ -26,6 +26,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper) sdk.Resul
 	// check msg.proposer with tm proposer
 	var key int64
 	if valid {
+
 		// add checkpoint to state if rootHash matches
 		key = k.AddCheckpoint(ctx, msg.StartBlock, msg.EndBlock, msg.RootHash, msg.Proposer)
 		CheckpointLogger.Debug("RootHash matched!", "key", key)

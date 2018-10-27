@@ -1,13 +1,13 @@
 package staking
 
 import (
-	conf "github.com/maticnetwork/heimdall/helper"
-	log "github.com/maticnetwork/heimdall/log"
+	"github.com/maticnetwork/heimdall/helper"
+	tmlog "github.com/tendermint/tendermint/libs/log"
 )
 
 // StakingLogger for staking module logger
-var StakingLogger log.Logger
+var StakingLogger tmlog.Logger
 
 func init() {
-	StakingLogger = conf.Logger.With("module", "staking")
+	StakingLogger = helper.Logger.With("module", "staking")
 }
