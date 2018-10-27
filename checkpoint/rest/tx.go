@@ -50,22 +50,9 @@ func newCheckpointHandler() http.HandlerFunc {
 			w.Write([]byte(err.Error()))
 			return
 		}
-
-		msg := checkpoint.NewMsgCheckpointBlock(
-			uint64(m.StartBlock),
-			uint64(m.EndBlock),
-			common.HexToHash(m.RootHash),
-			m.ProposerAddress,
-		)
-
-		tx := checkpoint.NewBaseTx(msg)
-
-		txBytes, err := rlp.EncodeToBytes(tx)
+		txBytes, err := createtxbytes(m)
 		if err != nil {
-			RestLogger.Error("Error generating TX Bytes", "error", err)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
-			return
+			RestLogger.Error("Unable to create txBytes", "EndBlock", m.EndBlock, "StartBlock", m.StartBlock, "RootHash", m.RootHash)
 		}
 
 		RestLogger.Info("Sending request to Tendermint", "txBytes", hex.EncodeToString(txBytes), "url", helper.GetConfig().TendermintEndpoint)
@@ -100,4 +87,24 @@ func sendRequest(txBytes []byte, url string) (*http.Response, error) {
 	req.URL.RawQuery = queryParams.Encode()
 
 	return client.Do(req)
+}
+
+func createtxbytes(m EpochCheckpoint) ([]byte, error) {
+	msg := checkpoint.NewMsgCheckpointBlock(
+		uint64(m.StartBlock),
+		uint64(m.EndBlock),
+		common.HexToHash(m.RootHash),
+		m.ProposerAddress,
+	)
+
+	tx := checkpoint.NewBaseTx(msg)
+
+	txBytes, err := rlp.EncodeToBytes(tx)
+	if err != nil {
+		RestLogger.Error("Error generating TX Bytes", "error", err)
+
+		return []byte(""), err
+	}
+	return txBytes, nil
+
 }
