@@ -100,3 +100,7 @@ func GetStakeManagerInstance() *stakemanager.Stakemanager {
 
 	return stakeManagerInstance
 }
+
+func GetValidatorDetails() {
+
+}
