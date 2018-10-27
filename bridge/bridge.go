@@ -14,6 +14,7 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/maticnetwork/heimdall/checkpoint"
+	checkpointTx "github.com/maticnetwork/heimdall/checkpoint/rest"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/helper"
 )
@@ -77,43 +78,72 @@ func (bridge *Bridge) StartHeaderProcess(ctx context.Context) {
 	for {
 		select {
 		case newHeader := <-bridge.HeaderChannel:
-			bridge.Logger.Debug("New block detected", "blockNumber", newHeader.Number)
-			lastCheckpointEnd, err := bridge.RootChainInstance.CurrentChildBlock(nil)
-			if err != nil {
-				bridge.Logger.Error("Error while fetching current child block from rootchain", "error", err)
-			} else {
-				start := big.NewInt(0)
-				end := big.NewInt(0)
-
-				// add 1 if lastCheckpointEnd > 0
-				if lastCheckpointEnd.Sign() > 0 {
-					start = start.Add(lastCheckpointEnd, big.NewInt(1))
-				}
-
-				diff := big.NewInt(0)
-				diff = diff.Sub(newHeader.Number, start)
-
-				// process if diff > 0 (positive)
-				if diff.Sign() > 0 {
-					if diff.Uint64() >= defaultCheckpointLength {
-						end = end.Add(start, big.NewInt(defaultCheckpointLength))
-					} else {
-						// TODO wait for last checkpoiint. If checkpoint time > 10 min create checkpoint with remaining b
-					}
-				}
-
-				if end.Sign() > 0 {
-					// TODO send checkpoint request
-					root := checkpoint.GetHeaders(start.Uint64(), end.Uint64(), bridge.Client)
-					bridge.Logger.Info("Checkpoint header", "start", start, "end", end, "diff", diff, "root", root)
-
-					// TODO submit checkcoint
-				}
-			}
+			bridge.sendRequest(newHeader)
 		case <-ctx.Done():
 			return
 		}
 	}
+}
+
+func (bridge *Bridge) sendRequest(newHeader *types.Header) {
+	bridge.Logger.Debug("New block detected", "blockNumber", newHeader.Number)
+	lastCheckpointEnd, err := bridge.RootChainInstance.CurrentChildBlock(nil)
+	if err != nil {
+		bridge.Logger.Error("Error while fetching current child block from rootchain", "error", err)
+		return
+	}
+
+	start := big.NewInt(0)
+	end := big.NewInt(0)
+
+	// add 1 if lastCheckpointEnd > 0
+	if lastCheckpointEnd.Sign() > 0 {
+		start = start.Add(lastCheckpointEnd, big.NewInt(1))
+	}
+
+	diff := big.NewInt(0)
+	diff = diff.Sub(newHeader.Number, start)
+
+	// process if diff > 0 (positive)
+	if diff.Sign() > 0 {
+		if diff.Uint64() >= defaultCheckpointLength {
+			end = end.Add(start, big.NewInt(defaultCheckpointLength))
+			bridge.Logger.Debug("start - end >= defaultCheckpointLength", "latest", newHeader.Number, "start", start, "end", end, "defaultCheckpointLength", defaultCheckpointLength)
+		} else {
+			bridge.Logger.Debug("start - end < defaultCheckpointLength", "latest", newHeader.Number, "start", start, "defaultCheckpointLength", defaultCheckpointLength)
+			// TODO wait for last checkpoint. If checkpoint time > 10 min create checkpoint with remaining blocks
+		}
+	}
+
+	if end.Sign() <= 0 {
+		return
+	}
+
+	// Get root hash
+	// root := checkpoint.GetHeaders(start.Uint64(), end.Uint64(), bridge.Client)
+	root := checkpoint.GetHeaders(9429470, 9429480, bridge.Client)
+	bridge.Logger.Info("New checkpoint header created", "start", start, "end", end, "root", root)
+
+	// TODO submit checkcoint
+	txBytes, err := checkpointTx.CreateTxBytes(checkpointTx.EpochCheckpoint{
+		RootHash:        root,
+		StartBlock:      start.Uint64(),
+		EndBlock:        end.Uint64(),
+		ProposerAddress: "0x0", // proposer set to 0 for now
+	})
+
+	if err != nil {
+		bridge.Logger.Error("Error while creating tx bytes", "error", err)
+		return
+	}
+
+	resp, err := checkpointTx.SendTendermintRequest(txBytes)
+	if err != nil {
+		bridge.Logger.Error("Error while sending request to Tendermint", "error", err)
+		return
+	}
+
+	bridge.Logger.Error("Checkpoint sent successfully", "status", resp.Status, "start", start, "end", end, "root", root)
 }
 
 // OnStart starts new block subscription
