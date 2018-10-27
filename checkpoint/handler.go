@@ -21,12 +21,11 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper) sdk.Resul
 	// if err := msg.ValidateBasic(); err != nil { // return failed  }
 
 	// check if the roothash provided is valid for start and end
-	valid := validateCheckpoint(int(msg.StartBlock), int(msg.EndBlock), msg.RootHash.String())
+	valid := ValidateCheckpoint(msg.StartBlock, msg.EndBlock, msg.RootHash.String())
 
 	// check msg.proposer with tm proposer
 	var key int64
 	if valid {
-
 		// add checkpoint to state if rootHash matches
 		key = k.AddCheckpoint(ctx, msg.StartBlock, msg.EndBlock, msg.RootHash, msg.Proposer)
 		CheckpointLogger.Debug("RootHash matched!", "key", key)
