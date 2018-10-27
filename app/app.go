@@ -2,8 +2,6 @@ package app
 
 import (
 	"encoding/json"
-	"os"
-
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
@@ -17,7 +15,6 @@ import (
 
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/helper"
-	heimdallLog "github.com/maticnetwork/heimdall/log"
 	"github.com/maticnetwork/heimdall/staking"
 )
 
@@ -40,7 +37,7 @@ type HeimdallApp struct {
 	stakerKeeper     staking.Keeper
 }
 
-var logger = heimdallLog.NewMainLogger(log.NewSyncWriter(os.Stdout)).With("module", "app")
+var logger = helper.Logger.With("module", "app")
 
 func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseApp)) *HeimdallApp {
 	// create and register app-level codec for TXs and accounts
@@ -55,7 +52,6 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		keyStaker:     sdk.NewKVStoreKey("staker"),
 	}
 
-	//TODO change to its own codespace
 	app.checkpointKeeper = checkpoint.NewKeeper(app.cdc, app.keyCheckpoint, app.RegisterCodespace(checkpoint.DefaultCodespace))
 	app.stakerKeeper = staking.NewKeeper(app.cdc, app.keyStaker, app.RegisterCodespace(checkpoint.DefaultCodespace))
 	// register message routes
@@ -66,7 +62,6 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.SetEndBlocker(app.EndBlocker)
 	//app.SetAnteHandler(auth.NewAnteHandler(app.accountMapper, app.feeCollectionKeeper))
 	app.SetTxDecoder(app.txDecoder)
-	//TODO check if correct
 	app.BaseApp.SetTxDecoder(app.txDecoder)
 	// mount the multistore and load the latest state
 	app.MountStoresIAVL(app.keyMain, app.keyCheckpoint, app.keyStaker)
@@ -92,7 +87,6 @@ func MakeCodec() *wire.Codec {
 }
 
 func (app *HeimdallApp) BeginBlocker(_ sdk.Context, _ abci.RequestBeginBlock) abci.ResponseBeginBlock {
-	// TODO add flushValidatorSet here
 	return abci.ResponseBeginBlock{}
 }
 

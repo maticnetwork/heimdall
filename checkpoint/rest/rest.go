@@ -24,15 +24,15 @@ import (
 	tmLog "github.com/tendermint/tendermint/libs/log"
 	tmserver "github.com/tendermint/tendermint/rpc/lib/server"
 
-	conf "github.com/maticnetwork/heimdall/helper"
-	log "github.com/maticnetwork/heimdall/log"
+	"github.com/go-kit/kit/log"
+	"github.com/maticnetwork/heimdall/helper"
 )
 
 // RestLogger for staking module logger
-var RestLogger log.Logger
+var RestLogger tmLog.Logger
 
 func init() {
-	RestLogger = conf.Logger.With("module", "rest")
+	RestLogger = helper.Logger.With("module", "rest")
 }
 
 // RegisterRoutes registers staking-related REST handlers to a router

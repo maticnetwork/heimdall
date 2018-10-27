@@ -1,13 +1,13 @@
 package checkpoint
 
 import (
-	conf "github.com/maticnetwork/heimdall/helper"
-	log "github.com/maticnetwork/heimdall/log"
+	"github.com/maticnetwork/heimdall/helper"
+	tmlog "github.com/tendermint/tendermint/libs/log"
 )
 
 // CheckpointLogger for staking module logger
-var CheckpointLogger log.Logger
+var CheckpointLogger tmlog.Logger
 
 func init() {
-	CheckpointLogger = conf.Logger.With("module", "checkpoint")
+	CheckpointLogger = helper.Logger.With("module", "checkpoint")
 }
