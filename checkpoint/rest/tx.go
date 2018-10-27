@@ -21,7 +21,7 @@ import (
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *wire.Codec, kb keys.Keybase) {
 	r.HandleFunc(
 		"/checkpoint/new",
-		newCheckpointHandler(cdc, kb, cliCtx),
+		newCheckpointHandler(),
 	).Methods("POST")
 }
 
@@ -32,7 +32,7 @@ type EpochCheckpoint struct {
 	ProposerAddress string `json:"proposer_address"`
 }
 
-func newCheckpointHandler(cdc *wire.Codec, kb keys.Keybase, cliCtx context.CLIContext) http.HandlerFunc {
+func newCheckpointHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var m EpochCheckpoint
 
