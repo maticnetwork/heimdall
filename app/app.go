@@ -116,7 +116,7 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 
 		extraData := GetExtraData(_checkpoint, ctx)
 
-		helper.SubmitProof(GetVoteBytes(votes, ctx), sigs, extraData, _checkpoint.StartBlock, _checkpoint.EndBlock, _checkpoint.RootHash)
+		helper.SendCheckpoint(GetVoteBytes(votes, ctx), sigs, extraData)
 	}
 
 	// send validator updates to peppermint

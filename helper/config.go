@@ -113,9 +113,9 @@ func GetValidatorSetAddress() common.Address {
 	return common.HexToAddress(GetConfig().ValidatorSetAddress)
 }
 
-func GetValidatorSetInstance() (*validatorset.ValidatorSet, error) {
+func GetValidatorSetInstance() (*validatorSet.ValidatorSet, error) {
 	InitHeimdallConfig()
-	validatorSetInstance, err := validatorset.NewValidatorSet(common.HexToAddress(GetConfig().ValidatorSetAddress), mainChainClient)
+	validatorSetInstance, err := validatorSet.NewValidatorSet(common.HexToAddress(GetConfig().ValidatorSetAddress), mainChainClient)
 	if err != nil {
 		Logger.Error("Unable to create validator set instance", "error", err)
 	}
@@ -124,7 +124,7 @@ func GetValidatorSetInstance() (*validatorset.ValidatorSet, error) {
 }
 
 func GetValidatorSetABI() (abi.ABI, error) {
-	return abi.JSON(strings.NewReader(validatorset.ValidatorSetABI))
+	return abi.JSON(strings.NewReader(validatorSet.ValidatorSetABI))
 }
 
 //--------

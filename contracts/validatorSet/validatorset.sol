@@ -18,10 +18,7 @@ contract ValidatorSet is ECVerify {
 
   struct Validator {
     uint256 votingPower;
-    int256 accumulator;
     address validator;
-    // bytes32 pubkey1;
-    // bytes32 pubkey2;
     string pubkey;
   }
 
@@ -30,25 +27,15 @@ contract ValidatorSet is ECVerify {
   uint256 public lowestPower;
   Validator[] public validators;
 
-
-  constructor() public {
-    totalVotingPower = 0;
-    lowestPower =  UINT256_MAX;
-  }
-
   function addValidator(address validator, uint256 votingPower, string _pubkey) public {
-    require(votingPower > 0);
-    validators.push(Validator(votingPower, 0, validator,_pubkey)); //use index instead
-
-    if (lowestPower > votingPower ) {
-      lowestPower = votingPower;
-    }
-
-    totalVotingPower = totalVotingPower.add(votingPower);
+    validators.push(Validator(votingPower, validator,_pubkey)); //use index instead
   }
   function getPubkey(uint256 index) public view returns(string){
     //  return BytesLib.concat(abi.encodePacked(validators[index].pubkey1), abi.encodePacked(validators[index].pubkey2));
     return validators[index].pubkey;
+  }
+  function removeValidator(uint256 _index){
+    delete validators[_index];
   }
 
     function getValidatorSet() public view returns (uint256[] ,address[]){
@@ -57,56 +44,22 @@ contract ValidatorSet is ECVerify {
         for (uint8 i = 0; i < validators.length; i++) {
             validatorAddresses[i]=validators[i].validator;
             powers[i]=validators[i].votingPower;
-
         }
-
         return (powers,validatorAddresses);
     }
-
-
-  function selectProposer() public returns(address) {
-    require(validators.length > 0);
-
-    for (uint8 i = 0; i < validators.length; i++) {
-      validators[i].accumulator += int(validators[i].votingPower);
-    }
-
-    int256 max = INT256_MIN;
-    uint8 index = 0;
-
-    for (i = 0; i < validators.length; i++) {
-      if (max < validators[i].accumulator){
-        max = validators[i].accumulator;
-        index = i;
-      }
-    }
-
-    validators[index].accumulator -= int(totalVotingPower);
-    proposer = validators[index].validator;
-
-    emit NewProposer(proposer, "0");
-
-    return proposer;
-  }
-   // Inputs: start,end,roothash,vote bytes,signatures of validators ,tx(extradata)
+    // Inputs: start,end,roothash,vote bytes,signatures of validators ,tx(extradata)
     // Constants: chainid,type,votetype
     // extradata => start,end ,proposer etc rlp encoded hash
     //
     //
     // todo : check proposer verify signatures  for validators
-    bytes public chainID = "test-chain-5w6Ce4";
+    bytes public chainID = "test-chain-E5igIA";
     bytes public roundType = "vote";
     bytes public voteType = "0x02";
 
-    // constructor (bytes _chainID, bytes _rountType , bytes _voteType ){
-    //     chainID=_chainID;
-    //     roundType=_rountType;
-    //     voteType=_voteType;
-    // }
-
     // @params start-> startBlock , end-> EndBlock , roothash-> merkelRoot
-    function validate(bytes vote,bytes sigs,bytes extradata)public view returns(bool,address) {
-        // add require to check msg,sender == proposer
+    function validate(bytes vote,bytes sigs,bytes extradata)public returns(address,address,uint) {
+
         RLP.RLPItem[] memory dataList = vote.toRLPItem().toList();
         require(keccak256(dataList[0].toData())==keccak256(chainID),"Chain ID not same");
         require(keccak256(dataList[1].toData())==keccak256(roundType),"Round Type Not Same ");
@@ -114,25 +67,23 @@ contract ValidatorSet is ECVerify {
         // require(keccak256(dataList[5].toData())==keccak256(_voteType),"Vote Type Not Same");
 
         // validate extra data using getSha256(extradata)
-        require(keccak256(dataList[4].toData())==keccak256(getSha256(extradata)));
-
+        require(keccak256(dataList[6].toData())==keccak256(getSha256(extradata)));
+        // check proposer
+        // require(msg.sender==dataList[5].toAddress());
         // decode extra data and validate start,end etc
         RLP.RLPItem[] memory txDataList;
         txDataList=extradata.toRLPItem().toList()[0].toList();
 
-        // require(txDataList[1].toUint() == start,"Start Block Does Not Match");
+        // extract end and assign to current child
         // require(txDataList[2].toUint() == end, "End Block Does Not Match");
 
-        // validate with get proposer from stake manager
-         require(txDataList[0].toAddress()==proposer,"Message Sender!=Proposer in extra data");
-
         //slice sigs and do ecrecover from validator set
-        bytes32 hash = keccak256(vote);
-        // TODO change this as sigs would be concat of all sigs
-        address validator;
-        validator = ecrecovery(hash,sigs);
-
-        return (true,validator);
+        for (uint64 i = 0; i < sigs.length; i += 65) {
+          bytes memory sigElement = BytesLib.slice(sigs, i, 65);
+          address signer = ECVerify.ecrecoveryFromData(vote,sigElement);
+        }
+        // signer address , proposer address , end block
+        return (signer,dataList[5].toAddress(),txDataList[2].toUint());
 
     }
     function setChainId(string _chainID) public {
