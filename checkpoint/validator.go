@@ -13,14 +13,14 @@ import (
 	"github.com/xsleonard/go-merkle"
 )
 
-func validateCheckpoint(start int, end int, rootHash string) bool {
+func ValidateCheckpoint(start uint64, end uint64, rootHash string) bool {
 	client := helper.GetMaticClient()
 
 	if (start-end+1)%2 != 0 {
 		return false
 	}
 
-	root := "0x" + getHeaders(start, end, client)
+	root := "0x" + GetHeaders(start, end, client)
 	if strings.Compare(root, rootHash) == 0 {
 		CheckpointLogger.Info("RootHash matched!")
 		return true
@@ -30,7 +30,7 @@ func validateCheckpoint(start int, end int, rootHash string) bool {
 	}
 }
 
-func getHeaders(start int, end int, client *ethclient.Client) string {
+func GetHeaders(start uint64, end uint64, client *ethclient.Client) string {
 	if start > end {
 		return ""
 	}
@@ -41,7 +41,7 @@ func getHeaders(start int, end int, client *ethclient.Client) string {
 	for current <= end {
 		blockheader, err := client.HeaderByNumber(context.Background(), big.NewInt(int64(current)))
 		if err != nil {
-			CheckpointLogger.Error("Error getting block from Matic", "error", err)
+			CheckpointLogger.Error("Error getting block from Matic", "error", err, "start", start, "end", end, "current", current)
 			return ""
 		}
 
