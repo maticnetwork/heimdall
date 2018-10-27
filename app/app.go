@@ -12,17 +12,17 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	dbm "github.com/tendermint/tendermint/libs/db"
+	"github.com/tendermint/tendermint/libs/log"
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/helper"
-	heimlib "github.com/maticnetwork/heimdall/libs"
+	heimdallLog "github.com/maticnetwork/heimdall/log"
 	"github.com/maticnetwork/heimdall/staking"
-	"github.com/tendermint/tendermint/libs/log"
 )
 
 const (
-	appName = "HeimdallApp"
+	AppName = "Heimdall"
 )
 
 type HeimdallApp struct {
@@ -40,7 +40,7 @@ type HeimdallApp struct {
 	stakerKeeper     staking.Keeper
 }
 
-var logger = heimlib.NewMainLogger(log.NewSyncWriter(os.Stdout)).With("module", "app")
+var logger = heimdallLog.NewMainLogger(log.NewSyncWriter(os.Stdout)).With("module", "app")
 
 func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseApp)) *HeimdallApp {
 	// create and register app-level codec for TXs and accounts
@@ -49,7 +49,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	// create your application type
 	var app = &HeimdallApp{
 		cdc:           cdc,
-		BaseApp:       bam.NewBaseApp(appName, logger, db, auth.DefaultTxDecoder(cdc), baseAppOptions...),
+		BaseApp:       bam.NewBaseApp(AppName, logger, db, auth.DefaultTxDecoder(cdc), baseAppOptions...),
 		keyMain:       sdk.NewKVStoreKey("main"),
 		keyCheckpoint: sdk.NewKVStoreKey("checkpoint"),
 		keyStaker:     sdk.NewKVStoreKey("staker"),
@@ -76,7 +76,6 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	}
 
 	app.Seal()
-
 	return app
 }
 
@@ -93,14 +92,12 @@ func MakeCodec() *wire.Codec {
 }
 
 func (app *HeimdallApp) BeginBlocker(_ sdk.Context, _ abci.RequestBeginBlock) abci.ResponseBeginBlock {
-	// todo add flushValidatorSet here
+	// TODO add flushValidatorSet here
 	return abci.ResponseBeginBlock{}
 }
 
 func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci.ResponseEndBlock {
-
 	validatorSet := staking.EndBlocker(ctx, app.stakerKeeper)
-	logger.Info("New Validator Set : %v", validatorSet)
 
 	// unmarshall votes from header
 	var votes []tmtypes.Vote
@@ -114,7 +111,6 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 	sigs = GetSigs(votes)
 
 	if ctx.BlockHeader().NumTxs == 1 {
-
 		// Getting latest checkpoint data from store using height as key and unmarshall
 		var _checkpoint checkpoint.CheckpointBlockHeader
 		json.Unmarshal(app.checkpointKeeper.GetCheckpoint(ctx, ctx.BlockHeight()), &_checkpoint)

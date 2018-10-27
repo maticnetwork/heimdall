@@ -12,8 +12,7 @@ import (
 	"github.com/tendermint/tendermint/libs/cli"
 
 	"github.com/maticnetwork/heimdall/app"
-	restCmds "github.com/maticnetwork/heimdall/rest"
-	//stakecmd "github.com/maticnetwork/heimdall/staking/client/cli"
+	checkpointRestCmds "github.com/maticnetwork/heimdall/checkpoint/rest"
 )
 
 // rootCmd is the entry point for this binary
@@ -55,16 +54,15 @@ func main() {
 	// add proxy, version and key info
 	rootCmd.AddCommand(
 		client.LineBreak,
-		//lcd.ServeCommand(cdc),
-		restCmds.ServeMaticCommands(cdc),
-		//TODO insert rest client
+		checkpointRestCmds.ServeCommands(cdc),
+		// TODO insert rest client
 		keys.Commands(),
 		client.LineBreak,
 		version.VersionCmd,
 	)
 
 	// prepare and add flags
-	executor := cli.PrepareMainCmd(rootCmd, "HC", os.ExpandEnv("$HOME/.heimdallcli"))
+	executor := cli.PrepareMainCmd(rootCmd, "HD", os.ExpandEnv("$HOME/.heimdallcli"))
 	err := executor.Execute()
 	if err != nil {
 		// Note: Handle with #870

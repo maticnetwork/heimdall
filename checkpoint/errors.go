@@ -12,7 +12,7 @@ const (
 )
 
 func ErrBadBlockDetails(codespace sdk.CodespaceType) sdk.Error {
-	return newError(codespace, CodeInvalidBlockinput, "Root Hash Does Not Match !")
+	return newError(codespace, CodeInvalidBlockinput, "RootHash does not match!")
 }
 
 func codeToDefaultMsg(code CodeType) string {

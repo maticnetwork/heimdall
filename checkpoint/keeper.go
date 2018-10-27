@@ -7,7 +7,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/ethereum/go-ethereum/common"
-	conf "github.com/maticnetwork/heimdall/helper"
 )
 
 type Keeper struct {
@@ -44,26 +43,22 @@ func createBlock(start uint64, end uint64, rootHash common.Hash, proposer common
 }
 
 func (k Keeper) AddCheckpoint(ctx sdk.Context, start uint64, end uint64, root common.Hash, proposer common.Address) int64 {
-	var logger = conf.Logger.With("module", "checkpoint")
-
 	store := ctx.KVStore(k.checkpointKey)
-
 	data := createBlock(start, end, root, proposer)
 	out, err := json.Marshal(data)
 	if err != nil {
-		logger.Error("Error Marshalling checkpoint to json ", "Error", err)
+		CheckpointLogger.Error("Error marshalling checkpoint to json", "error", err)
 	}
-
-	//TODO add block data validation
-	logger.Info("Block data inserted ! ", data.RootHash, "Roothash", data.StartBlock, "StartBlock", data.EndBlock, "EndBlock")
-
 	store.Set([]byte(strconv.Itoa(int(ctx.BlockHeight()))), []byte(out))
 
+	// TODO add block data validation
+	CheckpointLogger.Debug("Checkpoint block saved!", "roothash", data.RootHash, "startBlock", data.StartBlock, "endBlock", data.EndBlock)
+
+	// return new block
 	return ctx.BlockHeight()
 }
 
 func (k Keeper) GetCheckpoint(ctx sdk.Context, key int64) []byte {
-
 	store := ctx.KVStore(k.checkpointKey)
 	getKey := []byte(strconv.Itoa(int(key)))
 
