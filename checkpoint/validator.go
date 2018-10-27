@@ -15,10 +15,6 @@ import (
 )
 
 func ValidateCheckpoint(start uint64, end uint64, rootHash string) bool {
-	if (start-end+1)%2 != 0 {
-		return false
-	}
-
 	root := "0x" + GetHeaders(start, end)
 	if strings.Compare(root, rootHash) == 0 {
 		CheckpointLogger.Info("RootHash matched!")
