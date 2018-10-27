@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/spf13/viper"
@@ -83,25 +84,42 @@ func GetConfig() Configuration {
 	return conf
 }
 
-// to remove
-func GetValidatorSetInstance() *validatorset.ValidatorSet {
+func GetValidatorSetAddress() common.Address {
+	InitHeimdallConfig()
+	return common.HexToAddress(GetConfig().ValidatorSetAddress)
+}
+
+func GetValidatorSetInstance() (*validatorset.ValidatorSet, error) {
 	InitHeimdallConfig()
 	validatorSetInstance, err := validatorset.NewValidatorSet(common.HexToAddress(GetConfig().ValidatorSetAddress), mainChainClient)
 	if err != nil {
-		Logger.Error("Unable to create validator set instance", "rrror", err)
+		Logger.Error("Unable to create validator set instance", "error", err)
 	}
 
-	return validatorSetInstance
+	return validatorSetInstance, err
 }
 
-func GetStakeManagerInstance() *stakemanager.Stakemanager {
+func GetValidatorSetABI() (abi.ABI, error) {
+	return abi.JSON(strings.NewReader(validatorset.ValidatorSetABI))
+}
+
+func GetStakeManagerAddress() common.Address {
+	InitHeimdallConfig()
+	return common.HexToAddress(GetConfig().StakeManagerAddress)
+}
+
+func GetStakeManagerInstance() (*stakemanager.Stakemanager, error) {
 	InitHeimdallConfig()
 	stakeManagerInstance, err := stakemanager.NewStakemanager(common.HexToAddress(GetConfig().StakeManagerAddress), mainChainClient)
 	if err != nil {
 		Logger.Error("Unable to create stakemanager instance", "error", err)
 	}
 
-	return stakeManagerInstance
+	return stakeManagerInstance, err
+}
+
+func GetStakeManagerABI() (abi.ABI, error) {
+	return abi.JSON(strings.NewReader(stakemanager.StakemanagerABI))
 }
 
 func GetValidatorDetails() {

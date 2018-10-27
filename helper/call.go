@@ -10,7 +10,7 @@ import (
 )
 
 func GetValidators() (validators []abci.Validator) {
-	stakeManagerInstance := GetStakeManagerInstance()
+	stakeManagerInstance, err := GetStakeManagerInstance()
 
 	ValidatorAddrs, err := stakeManagerInstance.GetCurrentValidatorSet(nil)
 	if err != nil {
@@ -47,7 +47,7 @@ func GetValidators() (validators []abci.Validator) {
 }
 
 func GetProposer() common.Address {
-	validatorSetInstance := GetValidatorSetInstance()
+	validatorSetInstance, err := GetValidatorSetInstance()
 	currentProposer, err := validatorSetInstance.Proposer(nil)
 	if err != nil {
 		Logger.Error("Unable to get proposer", "error", err)
@@ -60,13 +60,13 @@ func GetProposer() common.Address {
 func SubmitProof(voteSignBytes []byte, sigs []byte, extradata []byte, start uint64, end uint64, rootHash common.Hash) {
 	Logger.Info("Root Hash Generated ", "Start", start, "End", end, "RootHash", rootHash)
 	// get validator set instance from config
-	validatorSetInstance := GetValidatorSetInstance()
+	validatorSetInstance, err := GetValidatorSetInstance()
 
 	Logger.Info("Inputs to submitProof", " Vote", hex.EncodeToString(voteSignBytes), "Signatures", hex.EncodeToString(sigs), "Tx_Data", hex.EncodeToString(extradata))
 	// submit proof
-	result, proposer, error := validatorSetInstance.Validate(nil, voteSignBytes, sigs, extradata)
-	if error != nil {
-		Logger.Error("Checkpoint Submission Errored", "Error", error)
+	result, proposer, err := validatorSetInstance.Validate(nil, voteSignBytes, sigs, extradata)
+	if err != nil {
+		Logger.Error("Checkpoint Submission Errored", "Error", err)
 	} else {
 		Logger.Info("Submitted Proof Successfully ", "Status", result, "Proposer", proposer)
 	}
