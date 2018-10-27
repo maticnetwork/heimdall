@@ -3,8 +3,7 @@ docker run --name hm100 -it -d   \
 		-v ~/mytestnet/logs0:/go/src/github.com/maticnetwork/heimdall/logs \
 		-p 1307:1317 \
 		"maticnetwork/tendermint:develop"
-
-  docker run --name hm111 -it -d -P \
+docker run --name hm111 -it -d -P \
       -v ~/mytestnet/node1:/root/.heimdalld \
       -v ~/mytestnet/logs1:/go/src/github.com/maticnetwork/heimdall/logs \
       -p 1317:1317 \
