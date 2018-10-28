@@ -1,0 +1,8 @@
+# ignore iavl for now in vendor
+vendor/github.com/tendermint/iavl/
+vendor/github.com/ethereum/go-ethereum/
+
+# ignore build
+build
+logs
+*.log
