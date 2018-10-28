@@ -1,0 +1,47 @@
+# Gopkg.toml example
+#
+# Refer to https://golang.github.io/dep/docs/Gopkg.toml.html
+# for detailed Gopkg.toml documentation.
+#
+# required = ["github.com/user/thing/cmd/thing"]
+# ignored = ["github.com/user/project/pkgX", "bitbucket.org/user/project/pkgA/pkgY"]
+#
+# [[constraint]]
+#   name = "github.com/user/project"
+#   version = "1.0.0"
+#
+# [[constraint]]
+#   name = "github.com/user/project2"
+#   branch = "dev"
+#   source = "github.com/myfork/project2"
+#
+# [[override]]
+#   name = "github.com/x/y"
+#   version = "2.4.0"
+#
+# [prune]
+#   non-go = false
+#   go-tests = true
+#   unused-packages = true
+
+ignored = [
+  "github.com/tendermint/iavl", 
+  "github.com/ethereum/go-ethereum*"
+]
+
+[prune]
+  go-tests = true
+  unused-packages = true
+
+[[constraint]]
+  name = "github.com/tendermint/tendermint"
+  source = "github.com/maticnetwork/tendermint"
+revision = "1dec17a548d4f1f807cb57b43c3e4580d5e272d1"
+
+[[override]]
+  name = "github.com/tendermint/go-amino"
+  revision = "v0.12.0"
+
+[[constraint]]
+  name = "github.com/cosmos/cosmos-sdk"
+  version = "v0.24.2"
