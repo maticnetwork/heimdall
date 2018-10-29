@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
+	"github.com/tendermint/tendermint/privval"
 
 	"os"
 
@@ -47,6 +48,9 @@ var mainChainClient *ethclient.Client
 var maticClient *ethclient.Client
 var maticRPCClient *rpc.Client
 
+// private key object
+var pkObject secp256k1.PrivKeySecp256k1
+
 // Logger stores global logger object
 var Logger logger.Logger
 
@@ -68,19 +72,23 @@ func InitHeimdallConfig() {
 		log.Fatal(err)
 	}
 
-	rpc.Dial(GetConfig().MainRPCUrl)
+	rpc.Dial(conf.MainRPCUrl)
 
 	// setup eth client
-	if mainChainClient, err = ethclient.Dial(GetConfig().MainRPCUrl); err != nil {
+	if mainChainClient, err = ethclient.Dial(conf.MainRPCUrl); err != nil {
 		Logger.Error("Error while creating main chain client", "error", err)
 		log.Fatal(err)
 	}
 
-	if maticRPCClient, err = rpc.Dial(GetConfig().MaticRPCUrl); err != nil {
+	if maticRPCClient, err = rpc.Dial(conf.MaticRPCUrl); err != nil {
 		Logger.Error("Error while creating matic chain RPC client", "error", err)
 		log.Fatal(err)
 	}
 	maticClient = ethclient.NewClient(maticRPCClient)
+
+	// load pv file, unmarshall and set to pkObject
+	privVal := privval.LoadFilePV(conf.ValidatorFilePVPath)
+	cdc.MustUnmarshalBinaryBare(privVal.PrivKey.Bytes(), &pkObject)
 }
 
 func GetConfig() Configuration {
@@ -169,4 +177,9 @@ func GetMaticClient() *ethclient.Client {
 func GetMaticRPCClient() *rpc.Client {
 	InitHeimdallConfig()
 	return maticRPCClient
+}
+
+func GetPrivKey() secp256k1.PrivKeySecp256k1 {
+	InitHeimdallConfig()
+	return pkObject
 }
