@@ -11,19 +11,13 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/tendermint/go-amino"
-	"github.com/tendermint/tendermint/crypto/secp256k1"
-	"github.com/tendermint/tendermint/privval"
 )
 
 var cdc = amino.NewCodec()
 
 func GenerateAuthObj(client *ethclient.Client, callMsg ethereum.CallMsg) (auth *bind.TransactOpts, err error) {
-	// get config
-	config := GetConfig()
-	// load file and unmarshall
-	privVal := privval.LoadFilePV(config.ValidatorFilePVPath)
-	var pkObject secp256k1.PrivKeySecp256k1
-	cdc.MustUnmarshalBinaryBare(privVal.PrivKey.Bytes(), &pkObject)
+	// get priv key
+	pkObject := GetPrivKey()
 
 	// create ecdsa private key
 	ecdsaPrivateKey, err := crypto.ToECDSA(pkObject[:])
@@ -32,7 +26,7 @@ func GenerateAuthObj(client *ethclient.Client, callMsg ethereum.CallMsg) (auth *
 	}
 
 	// from address
-	fromAddress := common.BytesToAddress(privVal.Address)
+	fromAddress := common.BytesToAddress(pkObject.PubKey().Address().Bytes())
 	// fetch gas price
 	gasprice, err := client.SuggestGasPrice(context.Background())
 	if err != nil {
@@ -58,6 +52,7 @@ func GenerateAuthObj(client *ethclient.Client, callMsg ethereum.CallMsg) (auth *
 }
 
 func SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte) {
+	// TODO check proposer address from voteSignBytes (have to unmarshall RLP to get address bytes)
 
 	validatorSetInstance, err := GetValidatorSetInstance()
 	if err != nil {
@@ -83,9 +78,8 @@ func SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte) {
 
 	tx, err := validatorSetInstance.Validate(auth, voteSignBytes, sigs, txData)
 	if err != nil {
-		Logger.Error("Checkpoint Submission Errored", "Error", err)
+		Logger.Error("Error while submitting checkpoint", "Error", err)
 	} else {
-		Logger.Info("Submitted Proof Successfully ", "txHash", tx.Hash().String())
+		Logger.Info("Submitted new header successfully ", "txHash", tx.Hash().String())
 	}
-
 }
