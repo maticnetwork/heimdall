@@ -33,9 +33,7 @@ func GetValidators() (validators []abci.Validator) {
 				Power:   validatorStruct.Amount.Int64(),
 				PubKey:  tmtypes.TM2PB.PubKey(pubkeyBytes),
 			}
-
-			Logger.Info("New Validator Generated", "Validator", validator.String())
-
+			
 			validators = append(validators, validator)
 		} else {
 			Logger.Info("Validator Empty", "Index", index)
