@@ -11,6 +11,9 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/tendermint/go-amino"
+	"github.com/tendermint/tendermint/types"
+	"github.com/ethereum/go-ethereum/rlp"
+	"bytes"
 )
 
 var cdc = amino.NewCodec()
@@ -52,7 +55,13 @@ func GenerateAuthObj(client *ethclient.Client, callMsg ethereum.CallMsg) (auth *
 }
 
 func SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte) {
-	// TODO check proposer address from voteSignBytes (have to unmarshall RLP to get address bytes)
+	var vote types.CanonicalRLPVote
+	err := rlp.DecodeBytes(voteSignBytes, &vote)
+	if err != nil {
+		Logger.Error("Unable to decode vote while sending checkpoint","vote",string(voteSignBytes))
+	}
+
+
 
 	validatorSetInstance, err := GetValidatorSetInstance()
 	if err != nil {
@@ -76,10 +85,23 @@ func SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte) {
 		Data: data,
 	})
 
-	tx, err := validatorSetInstance.Validate(auth, voteSignBytes, sigs, txData)
-	if err != nil {
-		Logger.Error("Error while submitting checkpoint", "Error", err)
-	} else {
-		Logger.Info("Submitted new header successfully ", "txHash", tx.Hash().String())
+	if !bytes.Equal(pkObject.PubKey().Address().Bytes(),vote.Proposer){
+		Logger.Info("You are not proposer","Proposer",vote.Proposer,"Validator",pkObject.PubKey().Address().Bytes())
+
+	}else{
+
+		Logger.Info("We are proposer , sending checkpoint")
+
+		tx, err := validatorSetInstance.Validate(auth, voteSignBytes, sigs, txData)
+		if err != nil {
+			Logger.Error("Error while submitting checkpoint", "Error", err)
+
+		} else {
+			Logger.Info("Submitted new header successfully ", "txHash", tx.Hash().String())
+
+		}
+
 	}
+
+
 }
