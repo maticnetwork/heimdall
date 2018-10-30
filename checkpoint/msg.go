@@ -55,7 +55,9 @@ func (msg MsgCheckpoint) GetSignBytes() []byte {
 // ValidateBasic checks quick validation
 func (msg MsgCheckpoint) ValidateBasic() sdk.Error {
 	// TODO add checks
-	// check for validator sig
+	if helper.GetLastBlock()!=int64(msg.StartBlock)	{
+		return ErrBadBlockDetails(DefaultCodespace)
+	}
 	return nil
 }
 
