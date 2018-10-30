@@ -23,7 +23,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper) sdk.Resul
 
 	// check if the roothash provided is valid for start and end
 	valid := ValidateCheckpoint(msg.StartBlock, msg.EndBlock, msg.RootHash.String())
-
+	CheckpointLogger.Debug("Validating Last Block from Main Chain","LastBlock",helper.GetLastBlock(),"StartBlock",msg.StartBlock)
 	var key int64
 	if valid && helper.GetLastBlock()==int64(msg.StartBlock){
 		// add checkpoint to state if rootHash matches
