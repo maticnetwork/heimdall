@@ -89,7 +89,7 @@ func SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte) {
 
 	}else{
 
-		Logger.Info("We are proposer , sending checkpoint")
+		Logger.Info("We are proposer , sending checkpoint","Vote",string(voteSignBytes),"Sigs",string(sigs),"TxData",string(txData))
 
 		tx, err := stakeManagerInstance.Validate(auth, voteSignBytes, sigs, txData)
 		if err != nil {
