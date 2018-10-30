@@ -13,7 +13,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) (validators []abci.Validator) {
 	// flush exiting validator set
 	k.FlushValidatorSet(ctx)
 	// fetch current validator set
-	validatorSet := helper.GetValidators()
+	validatorSet := helper.GetValidatorsFromMock()
 	// update
 	k.SetValidatorSet(ctx, validatorSet)
 
