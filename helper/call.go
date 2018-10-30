@@ -86,14 +86,12 @@ func GetLastBlock() uint64 {
 	stakeManagerInstance, err := GetStakeManagerInstance()
 	if err != nil {
 		Logger.Error("Error creating validatorSetInstance", "error", err)
-	} else {
 		return 0
 	}
 
 	lastBlock, err := stakeManagerInstance.StartBlock(nil)
 	if err != nil {
 		Logger.Error("Unable to fetch last block from mainchain", "error", err)
-	} else {
 		return 0
 	}
 
