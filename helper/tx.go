@@ -61,8 +61,6 @@ func SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte) {
 		Logger.Error("Unable to decode vote while sending checkpoint","vote",string(voteSignBytes))
 	}
 
-
-
 	validatorSetInstance, err := GetValidatorSetInstance()
 	if err != nil {
 		return
@@ -73,6 +71,7 @@ func SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte) {
 	if err != nil {
 		return
 	}
+
 	data, err := validatorSetABI.Pack("validate", voteSignBytes, sigs, txData)
 	if err != nil {
 		Logger.Error("Unable to pack tx for validate", "error", err)
@@ -85,7 +84,7 @@ func SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte) {
 		Data: data,
 	})
 
-	if !bytes.Equal(pkObject.PubKey().Address().Bytes(),vote.Proposer){
+	if !bytes.Equal(GetPrivKey().PubKey().Address().Bytes(),vote.Proposer){
 		Logger.Info("You are not proposer","Proposer",vote.Proposer,"Validator",pkObject.PubKey().Address().Bytes())
 
 	}else{

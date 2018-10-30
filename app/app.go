@@ -134,7 +134,7 @@ func GetVoteBytes(votes []tmtypes.Vote, ctx sdk.Context) []byte {
 }
 
 func GetExtraData(_checkpoint checkpoint.CheckpointBlockHeader, ctx sdk.Context) []byte {
-	msg := checkpoint.NewMsgCheckpointBlock(_checkpoint.StartBlock, _checkpoint.EndBlock, _checkpoint.RootHash, _checkpoint.Proposer.String())
+	msg := checkpoint.NewMsgCheckpointBlock(_checkpoint.StartBlock, _checkpoint.EndBlock, _checkpoint.RootHash)
 
 	tx := checkpoint.NewBaseTx(msg)
 	txBytes, err := rlp.EncodeToBytes(tx)
