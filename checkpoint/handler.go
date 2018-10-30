@@ -2,6 +2,7 @@ package checkpoint
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/maticnetwork/heimdall/helper"
 )
 
 func NewHandler(k Keeper) sdk.Handler {
@@ -23,14 +24,13 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper) sdk.Resul
 	// check if the roothash provided is valid for start and end
 	valid := ValidateCheckpoint(msg.StartBlock, msg.EndBlock, msg.RootHash.String())
 
-	// check msg.proposer with tm proposer
 	var key int64
-	if valid {
+	if valid && helper.GetLastBlock()==int64(msg.StartBlock){
 		// add checkpoint to state if rootHash matches
 		key = k.AddCheckpoint(ctx, msg.StartBlock, msg.EndBlock, msg.RootHash)
 		CheckpointLogger.Debug("RootHash matched!", "key", key)
 	} else {
-		CheckpointLogger.Debug("Root hash doesn't match ;(")
+		CheckpointLogger.Debug("Invalid Checkpoint ;(")
 		// return Bad Block Error
 		return ErrBadBlockDetails(k.codespace).Result()
 	}

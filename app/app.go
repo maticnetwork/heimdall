@@ -110,7 +110,12 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 
 		extraData := GetExtraData(_checkpoint, ctx)
 
-		helper.SendCheckpoint(GetVoteBytes(votes, ctx), sigs, extraData)
+		if helper.GetLastBlock()==int64(_checkpoint.StartBlock) {
+			helper.SendCheckpoint(GetVoteBytes(votes, ctx), sigs, extraData)
+		}else{
+			logger.Error("Start block does not match","LastBlock",helper.GetLastBlock(),"StartBlock",_checkpoint.StartBlock)
+			//todo panic ?
+		}
 	}
 
 	// send validator updates to peppermint
