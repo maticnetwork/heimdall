@@ -6,10 +6,14 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	tmtypes "github.com/tendermint/tendermint/types"
+	"math/big"
 )
 
 func GetValidators() (validators []abci.Validator) {
 	stakeManagerInstance, err := GetStakeManagerInstance()
+	if err!=nil{
+		Logger.Error("Error creating stakeManagerInstance","Error",err)
+	}
 
 	ValidatorAddrs, err := stakeManagerInstance.GetCurrentValidatorSet(nil)
 	if err != nil {
@@ -44,8 +48,48 @@ func GetValidators() (validators []abci.Validator) {
 	return validators
 }
 
+func GetValidatorsFromMock() (validators []abci.Validator){
+	validatorSetInstance, err := GetValidatorSetInstance()
+	if err!=nil{
+		Logger.Error("Error creating validatorSetInstance","Error",err)
+	}
+
+	powers,ValidatorAddrs,err := validatorSetInstance.GetValidatorSet(nil)
+	if err!=nil{
+		Logger.Error("Error getting validator set","Error",err)
+	}
+
+	for index := range powers {
+		pubkey, error := validatorSetInstance.GetPubkey(nil, big.NewInt(int64(index)))
+		if error != nil {
+			Logger.Error("Error getting pubkey for index %v", error)
+		}
+
+		var pubkeyBytes secp256k1.PubKeySecp256k1
+		_pubkey, _ := hex.DecodeString(pubkey)
+		copy(pubkeyBytes[:], _pubkey)
+
+		validator := abci.Validator{
+			Address: ValidatorAddrs[index].Bytes(),
+			Power:   powers[index].Int64(),
+			PubKey:  tmtypes.TM2PB.PubKey(pubkeyBytes),
+		}
+
+		Logger.Info("New Validator is %v", validator)
+
+		validators = append(validators, validator)
+	}
+
+	return validators
+}
 
 func GetLastBlock(){
+	validatorSetInstance, err := GetValidatorSetInstance()
+	if err!=nil{
+		Logger.Error("Error creating validatorSetInstance","Error",err)
+	}
+
+	
 
 }
 // SubmitProof submit header
