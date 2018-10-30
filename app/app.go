@@ -106,7 +106,10 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 	if ctx.BlockHeader().NumTxs == 1 {
 		// Getting latest checkpoint data from store using height as key and unmarshall
 		var _checkpoint checkpoint.CheckpointBlockHeader
-		json.Unmarshal(app.checkpointKeeper.GetCheckpoint(ctx, ctx.BlockHeight()), &_checkpoint)
+		err:=json.Unmarshal(app.checkpointKeeper.GetCheckpoint(ctx, ctx.BlockHeight()), &_checkpoint)
+		if err!=nil{
+			logger.Error("Unable to unmarshall checkpoint","Error"	,err)
+		}
 
 		extraData := GetExtraData(_checkpoint, ctx)
 
