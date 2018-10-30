@@ -26,9 +26,9 @@ func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *wire.Codec,
 }
 
 type EpochCheckpoint struct {
-	RootHash        string `json:"root_hash"`
-	StartBlock      uint64 `json:"start_block"`
-	EndBlock        uint64 `json:"end_block"`
+	RootHash   string `json:"root_hash"`
+	StartBlock uint64 `json:"start_block"`
+	EndBlock   uint64 `json:"end_block"`
 }
 
 func newCheckpointHandler() http.HandlerFunc {
@@ -52,7 +52,7 @@ func newCheckpointHandler() http.HandlerFunc {
 
 		txBytes, err := CreateTxBytes(m)
 		if err != nil {
-			RestLogger.Error("Unable to create txBytes", "EndBlock", m.EndBlock, "StartBlock", m.StartBlock, "RootHash", m.RootHash)
+			RestLogger.Error("Unable to create txBytes", "endBlock", m.EndBlock, "startBlock", m.StartBlock, "rootHash", m.RootHash)
 		}
 
 		RestLogger.Info("Sending request to Tendermint", "txBytes", hex.EncodeToString(txBytes), "url", helper.GetConfig().TendermintEndpoint)

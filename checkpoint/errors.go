@@ -12,7 +12,7 @@ const (
 )
 
 func ErrBadBlockDetails(codespace sdk.CodespaceType) sdk.Error {
-	return newError(codespace, CodeInvalidBlockinput, "Checkpoint Not Valid!")
+	return newError(codespace, CodeInvalidBlockinput, "Checkpoint is not valid!")
 }
 
 func codeToDefaultMsg(code CodeType) string {
