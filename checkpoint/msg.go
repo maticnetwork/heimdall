@@ -4,6 +4,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/maticnetwork/heimdall/helper"
 )
 
 var cdc = wire.NewCodec()
@@ -15,16 +16,14 @@ var _ sdk.Msg = &MsgCheckpoint{}
 
 // MsgCheckpoint represents incoming checkpoint format
 type MsgCheckpoint struct {
-	Proposer   common.Address `json:"address"` // address of the validator owner
 	StartBlock uint64         `json:"start_block"`
 	EndBlock   uint64         `json:"end_block"`
 	RootHash   common.Hash    `json:"root_hash"`
 }
 
 // NewMsgCheckpointBlock creates new checkpoint message using mentioned arguments
-func NewMsgCheckpointBlock(startBlock uint64, endBlock uint64, roothash common.Hash, proposer string) MsgCheckpoint {
+func NewMsgCheckpointBlock(startBlock uint64, endBlock uint64, roothash common.Hash) MsgCheckpoint {
 	return MsgCheckpoint{
-		Proposer:   common.HexToAddress(proposer),
 		StartBlock: startBlock,
 		EndBlock:   endBlock,
 		RootHash:   roothash,
@@ -39,7 +38,8 @@ func (msg MsgCheckpoint) Type() string {
 // GetSigners returns address of the signer
 func (msg MsgCheckpoint) GetSigners() []sdk.AccAddress {
 	addrs := make([]sdk.AccAddress, 1)
-	addrs[0] = sdk.AccAddress(msg.Proposer.Bytes())
+	pkObj:=helper.GetPrivKey()
+	addrs[0] = sdk.AccAddress(pkObj.PubKey().Address().Bytes())
 	return addrs
 }
 
