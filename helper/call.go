@@ -3,10 +3,11 @@ package helper
 import (
 	"encoding/hex"
 
+	"math/big"
+
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	tmtypes "github.com/tendermint/tendermint/types"
-	"math/big"
 )
 
 //func GetValidators() (validators []abci.Validator) {
@@ -48,21 +49,21 @@ import (
 //	return validators
 //}
 
-func GetValidatorsFromMock() (validators []abci.Validator){
+func GetValidatorsFromMock() (validators []abci.Validator) {
 	stakeManagerInstance, err := GetStakeManagerInstance()
-	if err!=nil{
-		Logger.Error("Error creating validatorSetInstance","Error",err)
+	if err != nil {
+		Logger.Error("Error creating validatorSetInstance", "error", err)
 	}
 
-	powers,ValidatorAddrs,err := stakeManagerInstance.GetValidatorSet(nil)
-	if err!=nil{
-		Logger.Error("Error getting validator set","Error",err)
+	powers, ValidatorAddrs, err := stakeManagerInstance.GetValidatorSet(nil)
+	if err != nil {
+		Logger.Error("Error getting validator set", "error", err)
 	}
 
 	for index := range powers {
-		pubkey, error := stakeManagerInstance.GetPubkey(nil, big.NewInt(int64(index)))
-		if error != nil {
-			Logger.Error("Error getting pubkey for index %v", error)
+		pubkey, err := stakeManagerInstance.GetPubkey(nil, big.NewInt(int64(index)))
+		if err != nil {
+			Logger.Error("Error getting pubkey for index", "error", err)
 		}
 
 		var pubkeyBytes secp256k1.PubKeySecp256k1
@@ -81,18 +82,16 @@ func GetValidatorsFromMock() (validators []abci.Validator){
 	return validators
 }
 
-func GetLastBlock()(int64){
+func GetLastBlock() int64 {
 	stakeManagerInstance, err := GetStakeManagerInstance()
-	if err!=nil{
-		Logger.Error("Error creating validatorSetInstance","Error",err)
+	if err != nil {
+		Logger.Error("Error creating validatorSetInstance", "error", err)
 	}
 
-	lastBlock,err:=stakeManagerInstance.StartBlock(nil)
-	if err!=nil{
-		Logger.Error("Unable to fetch last block from mainchain")
+	lastBlock, err := stakeManagerInstance.StartBlock(nil)
+	if err != nil {
+		Logger.Error("Unable to fetch last block from mainchain", "error", err)
 	}
 
 	return lastBlock.Int64()
-
 }
-

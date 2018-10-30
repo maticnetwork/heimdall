@@ -16,9 +16,9 @@ var _ sdk.Msg = &MsgCheckpoint{}
 
 // MsgCheckpoint represents incoming checkpoint format
 type MsgCheckpoint struct {
-	StartBlock uint64         `json:"start_block"`
-	EndBlock   uint64         `json:"end_block"`
-	RootHash   common.Hash    `json:"root_hash"`
+	StartBlock uint64      `json:"start_block"`
+	EndBlock   uint64      `json:"end_block"`
+	RootHash   common.Hash `json:"root_hash"`
 }
 
 // NewMsgCheckpointBlock creates new checkpoint message using mentioned arguments
@@ -38,7 +38,7 @@ func (msg MsgCheckpoint) Type() string {
 // GetSigners returns address of the signer
 func (msg MsgCheckpoint) GetSigners() []sdk.AccAddress {
 	addrs := make([]sdk.AccAddress, 1)
-	pkObj:=helper.GetPrivKey()
+	pkObj := helper.GetPrivKey()
 	addrs[0] = sdk.AccAddress(pkObj.PubKey().Address().Bytes())
 	return addrs
 }
@@ -55,9 +55,8 @@ func (msg MsgCheckpoint) GetSignBytes() []byte {
 // ValidateBasic checks quick validation
 func (msg MsgCheckpoint) ValidateBasic() sdk.Error {
 	// TODO add checks
-
-	if helper.GetLastBlock()!=int64(msg.StartBlock)	{
-		CheckpointLogger.Debug("Validating Last Block from Main Chain","LastBlock",helper.GetLastBlock(),"StartBlock",msg.StartBlock)
+	if helper.GetLastBlock() != int64(msg.StartBlock) {
+		CheckpointLogger.Debug("Validating last block from main chain", "lastBlock", helper.GetLastBlock(), "startBlock", msg.StartBlock)
 		return ErrBadBlockDetails(DefaultCodespace)
 	}
 	return nil

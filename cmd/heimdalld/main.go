@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 
@@ -16,6 +18,7 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/maticnetwork/heimdall/app"
+	"github.com/maticnetwork/heimdall/helper"
 )
 
 func main() {
@@ -27,7 +30,10 @@ func main() {
 		Short:             "Heimdall Daemon (server)",
 		PersistentPreRunE: server.PersistentPreRunEFn(ctx),
 	}
+	// add custom root command
+	rootCmd.AddCommand(newAccountCmd())
 
+	// cosmos server commands
 	server.AddCommands(
 		ctx,
 		cdc,
@@ -53,4 +59,18 @@ func newApp(logger log.Logger, db dbm.DB, storeTracer io.Writer) abci.Applicatio
 func exportAppStateAndTMValidators(logger log.Logger, db dbm.DB, storeTracer io.Writer) (json.RawMessage, []tmtypes.GenesisValidator, error) {
 	bapp := app.NewHeimdallApp(logger, db)
 	return bapp.ExportAppStateAndValidators()
+}
+
+func newAccountCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "show-account",
+		Short: "Print the account's private key and public key",
+		Run: func(cmd *cobra.Command, args []string) {
+			privObject := helper.GetPrivKey()
+			pubObject := helper.GetPubKey()
+			fmt.Printf("Address: 0x%v", hex.EncodeToString(pubObject.Address().Bytes()))
+			fmt.Printf("\nPrivate key: 0x%v", hex.EncodeToString(privObject[:]))
+			fmt.Printf("\nPublic key: 0x%v", hex.EncodeToString(pubObject[:]))
+		},
+	}
 }

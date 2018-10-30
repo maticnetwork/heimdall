@@ -2,18 +2,20 @@ package helper
 
 import (
 	"context"
+	"encoding/hex"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum"
+
+	"bytes"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/types"
-	"github.com/ethereum/go-ethereum/rlp"
-	"bytes"
 )
 
 var cdc = amino.NewCodec()
@@ -58,7 +60,7 @@ func SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte) {
 	var vote types.CanonicalRLPVote
 	err := rlp.DecodeBytes(voteSignBytes, &vote)
 	if err != nil {
-		Logger.Error("Unable to decode vote while sending checkpoint","vote",string(voteSignBytes))
+		Logger.Error("Unable to decode vote while sending checkpoint", "vote", hex.EncodeToString(voteSignBytes), "sigs", hex.EncodeToString(sigs), "txData", hex.EncodeToString(txData))
 	}
 
 	stakeManagerInstance, err := GetStakeManagerInstance()
@@ -84,23 +86,19 @@ func SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte) {
 		Data: data,
 	})
 
-	if !bytes.Equal(GetPrivKey().PubKey().Address().Bytes(),vote.Proposer){
-		Logger.Info("You are not proposer","Proposer",vote.Proposer,"Validator",pkObject.PubKey().Address().Bytes())
+	// get validator address
+	validatorAddress := GetPubKey().Address().Bytes()
 
-	}else{
-
-		Logger.Info("We are proposer , sending checkpoint","Vote",string(voteSignBytes),"Sigs",string(sigs),"TxData",string(txData))
+	if !bytes.Equal(validatorAddress, vote.Proposer) {
+		Logger.Info("You are not proposer", "proposer", hex.EncodeToString(vote.Proposer), "validator", hex.EncodeToString(validatorAddress))
+	} else {
+		Logger.Info("We are proposer. Sending new checkpoint", "vote", hex.EncodeToString(voteSignBytes), "sigs", hex.EncodeToString(sigs), "txData", hex.EncodeToString(txData))
 
 		tx, err := stakeManagerInstance.Validate(auth, voteSignBytes, sigs, txData)
 		if err != nil {
 			Logger.Error("Error while submitting checkpoint", "Error", err)
-
 		} else {
 			Logger.Info("Submitted new header successfully ", "txHash", tx.Hash().String())
-
 		}
-
 	}
-
-
 }

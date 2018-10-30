@@ -16,7 +16,6 @@ import (
 
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
-	"github.com/maticnetwork/heimdall/contracts/validatorSet"
 	logger "github.com/tendermint/tendermint/libs/log"
 )
 
@@ -32,7 +31,6 @@ type Configuration struct {
 	MaticRPCUrl         string `mapstructure:"matic_rpcurl"`
 	StakeManagerAddress string `mapstructure:"stakemanager_address"`
 	RootchainAddress    string `mapstructure:"rootchain_address"`
-	ValidatorSetAddress string `mapstructure:"validatorset_address"`
 	ValidatorFilePVPath string `mapstructure:"priv_validator_path"`
 
 	// Tendermint endpoint
@@ -49,7 +47,8 @@ var maticClient *ethclient.Client
 var maticRPCClient *rpc.Client
 
 // private key object
-var pkObject secp256k1.PrivKeySecp256k1
+var privObject secp256k1.PrivKeySecp256k1
+var pubObject secp256k1.PubKeySecp256k1
 
 // Logger stores global logger object
 var Logger logger.Logger
@@ -86,9 +85,10 @@ func InitHeimdallConfig() {
 	}
 	maticClient = ethclient.NewClient(maticRPCClient)
 
-	// load pv file, unmarshall and set to pkObject
+	// load pv file, unmarshall and set to privObject
 	privVal := privval.LoadFilePV(conf.ValidatorFilePVPath)
-	cdc.MustUnmarshalBinaryBare(privVal.PrivKey.Bytes(), &pkObject)
+	cdc.MustUnmarshalBinaryBare(privVal.PrivKey.Bytes(), &privObject)
+	cdc.MustUnmarshalBinaryBare(privObject.PubKey().Bytes(), &pubObject)
 }
 
 func GetConfig() Configuration {
@@ -96,7 +96,9 @@ func GetConfig() Configuration {
 	return conf
 }
 
-// -----------
+//
+// Root chain
+//
 
 func GetRootChainAddress() common.Address {
 	InitHeimdallConfig()
@@ -117,28 +119,10 @@ func GetRootChainABI() (abi.ABI, error) {
 	return abi.JSON(strings.NewReader(rootchain.RootchainABI))
 }
 
-//---------
+//
+// Stake manager
+//
 
-func GetValidatorSetAddress() common.Address {
-	InitHeimdallConfig()
-	return common.HexToAddress(GetConfig().ValidatorSetAddress)
-}
-
-func GetValidatorSetInstance() (*validatorSet.ValidatorSet, error) {
-	InitHeimdallConfig()
-	validatorSetInstance, err := validatorSet.NewValidatorSet(common.HexToAddress(GetConfig().ValidatorSetAddress), mainChainClient)
-	if err != nil {
-		Logger.Error("Unable to create validator set instance", "error", err)
-	}
-
-	return validatorSetInstance, err
-}
-
-func GetValidatorSetABI() (abi.ABI, error) {
-	return abi.JSON(strings.NewReader(validatorSet.ValidatorSetABI))
-}
-
-//--------
 func GetStakeManagerAddress() common.Address {
 	InitHeimdallConfig()
 	return common.HexToAddress(GetConfig().StakeManagerAddress)
@@ -158,11 +142,9 @@ func GetStakeManagerABI() (abi.ABI, error) {
 	return abi.JSON(strings.NewReader(stakemanager.StakemanagerABI))
 }
 
-// ---------
-
-func GetValidatorDetails() {
-
-}
+//
+// Get main/matic clients
+//
 
 func GetMainClient() *ethclient.Client {
 	InitHeimdallConfig()
@@ -181,5 +163,10 @@ func GetMaticRPCClient() *rpc.Client {
 
 func GetPrivKey() secp256k1.PrivKeySecp256k1 {
 	InitHeimdallConfig()
-	return pkObject
+	return privObject
+}
+
+func GetPubKey() secp256k1.PubKeySecp256k1 {
+	InitHeimdallConfig()
+	return pubObject
 }
