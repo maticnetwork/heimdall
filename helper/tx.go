@@ -96,7 +96,7 @@ func SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte) {
 
 		tx, err := stakeManagerInstance.Validate(auth, voteSignBytes, sigs, txData)
 		if err != nil {
-			Logger.Error("Error while submitting checkpoint", "Error", err)
+			Logger.Error("Error while submitting checkpoint", "error", err)
 		} else {
 			Logger.Info("Submitted new header successfully ", "txHash", tx.Hash().String())
 		}

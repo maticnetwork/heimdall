@@ -97,26 +97,24 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 	var votes []tmtypes.Vote
 	err := json.Unmarshal(ctx.BlockHeader().Votes, &votes)
 	if err != nil {
-		logger.Error("Unmarshalling Vote Errored", "Error", err)
+		logger.Error("Unmarshalling vote errored", "error", err)
 	}
 
 	// get sigs from votes
-	var sigs []byte
-	sigs = GetSigs(votes)
-
+	sigs := getSigs(votes)
 	if ctx.BlockHeader().NumTxs == 1 {
 		// Getting latest checkpoint data from store using height as key and unmarshall
 		var _checkpoint checkpoint.CheckpointBlockHeader
 		err := json.Unmarshal(app.checkpointKeeper.GetCheckpoint(ctx, ctx.BlockHeight()), &_checkpoint)
 		if err != nil {
-			logger.Error("Unable to unmarshall checkpoint", "Error", err)
+			logger.Error("Unable to unmarshall checkpoint", "error", err)
 		}
 
 		// Get extra data
-		extraData := GetExtraData(_checkpoint, ctx)
+		extraData := getExtraData(_checkpoint, ctx)
 
 		logger.Debug("Validating last block from main chain", "lastBlock", helper.GetLastBlock(), "startBlock", _checkpoint.StartBlock)
-		if helper.GetLastBlock() == int64(_checkpoint.StartBlock) {
+		if helper.GetLastBlock() == _checkpoint.StartBlock {
 			logger.Info("Valid checkpoint")
 			helper.SendCheckpoint(GetVoteBytes(votes, ctx), sigs, extraData)
 		} else {
@@ -131,7 +129,7 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 	}
 }
 
-func GetSigs(votes []tmtypes.Vote) (sigs []byte) {
+func getSigs(votes []tmtypes.Vote) (sigs []byte) {
 	// loop votes and append to sig to sigs
 	for _, vote := range votes {
 		sigs = append(sigs[:], vote.Signature[:]...)
@@ -145,14 +143,14 @@ func GetVoteBytes(votes []tmtypes.Vote, ctx sdk.Context) []byte {
 	return votes[0].SignBytes(ctx.ChainID())
 }
 
-func GetExtraData(_checkpoint checkpoint.CheckpointBlockHeader, ctx sdk.Context) []byte {
-	logger.Debug("Creating extra data", "StartBlock", _checkpoint.StartBlock, "EndBlock", _checkpoint.EndBlock, "Roothash", _checkpoint.RootHash)
+func getExtraData(_checkpoint checkpoint.CheckpointBlockHeader, ctx sdk.Context) []byte {
+	logger.Debug("Creating extra data", "startBlock", _checkpoint.StartBlock, "endBlock", _checkpoint.EndBlock, "roothash", _checkpoint.RootHash)
 	msg := checkpoint.NewMsgCheckpointBlock(_checkpoint.StartBlock, _checkpoint.EndBlock, _checkpoint.RootHash)
 
 	tx := checkpoint.NewBaseTx(msg)
 	txBytes, err := rlp.EncodeToBytes(tx)
 	if err != nil {
-		logger.Error("Error decoding transaction data", "Error", err)
+		logger.Error("Error decoding transaction data", "error", err)
 	}
 
 	return txBytes

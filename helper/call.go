@@ -82,16 +82,20 @@ func GetValidatorsFromMock() (validators []abci.Validator) {
 	return validators
 }
 
-func GetLastBlock() int64 {
+func GetLastBlock() uint64 {
 	stakeManagerInstance, err := GetStakeManagerInstance()
 	if err != nil {
 		Logger.Error("Error creating validatorSetInstance", "error", err)
+	} else {
+		return 0
 	}
 
 	lastBlock, err := stakeManagerInstance.StartBlock(nil)
 	if err != nil {
 		Logger.Error("Unable to fetch last block from mainchain", "error", err)
+	} else {
+		return 0
 	}
 
-	return lastBlock.Int64()
+	return lastBlock.Uint64()
 }
