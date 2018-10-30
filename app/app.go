@@ -110,7 +110,9 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 
 		extraData := GetExtraData(_checkpoint, ctx)
 
+		logger.Debug("Validating Last Block from Main Chain","LastBlock",helper.GetLastBlock(),"StartBlock",_checkpoint.StartBlock)
 		if helper.GetLastBlock()==int64(_checkpoint.StartBlock) {
+			logger.Info("Checkpoint Valid")
 			helper.SendCheckpoint(GetVoteBytes(votes, ctx), sigs, extraData)
 		}else{
 			logger.Error("Start block does not match","LastBlock",helper.GetLastBlock(),"StartBlock",_checkpoint.StartBlock)
@@ -139,6 +141,7 @@ func GetVoteBytes(votes []tmtypes.Vote, ctx sdk.Context) []byte {
 }
 
 func GetExtraData(_checkpoint checkpoint.CheckpointBlockHeader, ctx sdk.Context) []byte {
+	logger.Debug("Creating extra data","StartBlock",_checkpoint.StartBlock,"EndBlock",_checkpoint.EndBlock,"Roothash",_checkpoint.RootHash)
 	msg := checkpoint.NewMsgCheckpointBlock(_checkpoint.StartBlock, _checkpoint.EndBlock, _checkpoint.RootHash)
 
 	tx := checkpoint.NewBaseTx(msg)
