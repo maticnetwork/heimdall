@@ -9,58 +9,58 @@ import (
 	"math/big"
 )
 
-func GetValidators() (validators []abci.Validator) {
-	stakeManagerInstance, err := GetStakeManagerInstance()
-	if err!=nil{
-		Logger.Error("Error creating stakeManagerInstance","Error",err)
-	}
-
-	ValidatorAddrs, err := stakeManagerInstance.GetCurrentValidatorSet(nil)
-	if err != nil {
-		Logger.Info("Error getting validator set", "Error", err)
-	}
-
-	for index := range ValidatorAddrs {
-		if ValidatorAddrs[index].String() != "" {
-			validatorStruct, error := stakeManagerInstance.Stakers(nil, ValidatorAddrs[index])
-			if error != nil {
-				Logger.Error("Error Fetching Staker", "Error", error, "Index", index)
-			}
-			pubkey := validatorStruct.Pubkey
-			var pubkeyBytes secp256k1.PubKeySecp256k1
-			_pubkey, _ := hex.DecodeString(pubkey)
-			copy(pubkeyBytes[:], _pubkey)
-
-			// todo add a check to check pubkey corresponds to address
-			validator := abci.Validator{
-				Address: ValidatorAddrs[index].Bytes(),
-				Power:   validatorStruct.Amount.Int64(),
-				PubKey:  tmtypes.TM2PB.PubKey(pubkeyBytes),
-			}
-
-
-			validators = append(validators, validator)
-		} else {
-			Logger.Info("Validator Empty", "Index", index)
-		}
-	}
-
-	return validators
-}
+//func GetValidators() (validators []abci.Validator) {
+//	stakeManagerInstance, err := GetStakeManagerInstance()
+//	if err!=nil{
+//		Logger.Error("Error creating stakeManagerInstance","Error",err)
+//	}
+//
+//	ValidatorAddrs, err := stakeManagerInstance.GetCurrentValidatorSet(nil)
+//	if err != nil {
+//		Logger.Info("Error getting validator set", "Error", err)
+//	}
+//
+//	for index := range ValidatorAddrs {
+//		if ValidatorAddrs[index].String() != "" {
+//			validatorStruct, error := stakeManagerInstance.Stakers(nil, ValidatorAddrs[index])
+//			if error != nil {
+//				Logger.Error("Error Fetching Staker", "Error", error, "Index", index)
+//			}
+//			pubkey := validatorStruct.Pubkey
+//			var pubkeyBytes secp256k1.PubKeySecp256k1
+//			_pubkey, _ := hex.DecodeString(pubkey)
+//			copy(pubkeyBytes[:], _pubkey)
+//
+//			// todo add a check to check pubkey corresponds to address
+//			validator := abci.Validator{
+//				Address: ValidatorAddrs[index].Bytes(),
+//				Power:   validatorStruct.Amount.Int64(),
+//				PubKey:  tmtypes.TM2PB.PubKey(pubkeyBytes),
+//			}
+//
+//
+//			validators = append(validators, validator)
+//		} else {
+//			Logger.Info("Validator Empty", "Index", index)
+//		}
+//	}
+//
+//	return validators
+//}
 
 func GetValidatorsFromMock() (validators []abci.Validator){
-	validatorSetInstance, err := GetValidatorSetInstance()
+	stakeManagerInstance, err := GetStakeManagerInstance()
 	if err!=nil{
 		Logger.Error("Error creating validatorSetInstance","Error",err)
 	}
 
-	powers,ValidatorAddrs,err := validatorSetInstance.GetValidatorSet(nil)
+	powers,ValidatorAddrs,err := stakeManagerInstance.GetValidatorSet(nil)
 	if err!=nil{
 		Logger.Error("Error getting validator set","Error",err)
 	}
 
 	for index := range powers {
-		pubkey, error := validatorSetInstance.GetPubkey(nil, big.NewInt(int64(index)))
+		pubkey, error := stakeManagerInstance.GetPubkey(nil, big.NewInt(int64(index)))
 		if error != nil {
 			Logger.Error("Error getting pubkey for index %v", error)
 		}
@@ -83,27 +83,18 @@ func GetValidatorsFromMock() (validators []abci.Validator){
 	return validators
 }
 
-func GetLastBlock(){
-	validatorSetInstance, err := GetValidatorSetInstance()
+func GetLastBlock()(int64){
+	stakeManagerInstance, err := GetStakeManagerInstance()
 	if err!=nil{
 		Logger.Error("Error creating validatorSetInstance","Error",err)
 	}
 
-	
+	lastBlock,err:=stakeManagerInstance.StartBlock(nil)
+	if err!=nil{
+		Logger.Error("Unable to fetch last block from mainchain")
+	}
+
+	return lastBlock.Int64()
 
 }
-// SubmitProof submit header
-//func SubmitProof(voteSignBytes []byte, sigs []byte, extradata []byte, start uint64, end uint64, rootHash common.Hash) {
-//	Logger.Info("Root Hash Generated ", "Start", start, "End", end, "RootHash", rootHash)
-//	// get validator set instance from config
-//	validatorSetInstance, err := GetValidatorSetInstance()
-//
-//	Logger.Info("Inputs to submitProof", " Vote", hex.EncodeToString(voteSignBytes), "Signatures", hex.EncodeToString(sigs), "Tx_Data", hex.EncodeToString(extradata))
-//	// submit proof
-//	result, proposer, err := validatorSetInstance.Validate(nil, voteSignBytes, sigs, extradata)
-//	if err != nil {
-//		Logger.Error("Checkpoint Submission Errored", "Error", err)
-//	} else {
-//		Logger.Info("Submitted Proof Successfully ", "Status", result, "Proposer", proposer)
-//	}
-//}
+
