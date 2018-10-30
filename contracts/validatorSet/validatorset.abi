@@ -22,17 +22,53 @@
 		"type": "function"
 	},
 	{
-		"constant": true,
-		"inputs": [],
-		"name": "roundType",
-		"outputs": [
+		"constant": false,
+		"inputs": [
 			{
-				"name": "",
+				"name": "input",
 				"type": "bytes"
 			}
 		],
+		"name": "getSha256",
+		"outputs": [
+			{
+				"name": "",
+				"type": "bytes20"
+			}
+		],
 		"payable": false,
-		"stateMutability": "view",
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"name": "user",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"name": "data",
+				"type": "bytes"
+			}
+		],
+		"name": "NewProposer",
+		"type": "event"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "_index",
+				"type": "uint256"
+			}
+		],
+		"name": "removeValidator",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -72,154 +108,16 @@
 	},
 	{
 		"constant": true,
-		"inputs": [
-			{
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"name": "validators",
+		"inputs": [],
+		"name": "chain",
 		"outputs": [
 			{
-				"name": "votingPower",
-				"type": "uint256"
-			},
-			{
-				"name": "validator",
-				"type": "address"
-			},
-			{
-				"name": "pubkey",
-				"type": "string"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [
-			{
-				"name": "hash",
+				"name": "",
 				"type": "bytes32"
-			},
-			{
-				"name": "sig",
-				"type": "bytes"
-			},
-			{
-				"name": "signer",
-				"type": "address"
-			}
-		],
-		"name": "ecverify",
-		"outputs": [
-			{
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"payable": false,
-		"stateMutability": "pure",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [],
-		"name": "lowestPower",
-		"outputs": [
-			{
-				"name": "",
-				"type": "uint256"
 			}
 		],
 		"payable": false,
 		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [],
-		"name": "totalVotingPower",
-		"outputs": [
-			{
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [
-			{
-				"name": "hash",
-				"type": "bytes32"
-			},
-			{
-				"name": "sig",
-				"type": "bytes"
-			}
-		],
-		"name": "ecrecovery",
-		"outputs": [
-			{
-				"name": "",
-				"type": "address"
-			}
-		],
-		"payable": false,
-		"stateMutability": "pure",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [
-			{
-				"name": "_chainID",
-				"type": "string"
-			}
-		],
-		"name": "setChainId",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [],
-		"name": "voteType",
-		"outputs": [
-			{
-				"name": "",
-				"type": "bytes"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [
-			{
-				"name": "input",
-				"type": "bytes"
-			}
-		],
-		"name": "getSha256",
-		"outputs": [
-			{
-				"name": "",
-				"type": "bytes20"
-			}
-		],
-		"payable": false,
-		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -255,8 +153,17 @@
 	},
 	{
 		"constant": true,
-		"inputs": [],
-		"name": "proposer",
+		"inputs": [
+			{
+				"name": "hash",
+				"type": "bytes32"
+			},
+			{
+				"name": "sig",
+				"type": "bytes"
+			}
+		],
+		"name": "ecrecovery",
 		"outputs": [
 			{
 				"name": "",
@@ -264,21 +171,7 @@
 			}
 		],
 		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [],
-		"name": "chainID",
-		"outputs": [
-			{
-				"name": "",
-				"type": "bytes"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
+		"stateMutability": "pure",
 		"type": "function"
 	},
 	{
@@ -306,20 +199,29 @@
 	},
 	{
 		"constant": true,
-		"inputs": [],
-		"name": "getValidatorSet",
+		"inputs": [
+			{
+				"name": "hash",
+				"type": "bytes32"
+			},
+			{
+				"name": "sig",
+				"type": "bytes"
+			},
+			{
+				"name": "signer",
+				"type": "address"
+			}
+		],
+		"name": "ecverify",
 		"outputs": [
 			{
 				"name": "",
-				"type": "uint256[]"
-			},
-			{
-				"name": "",
-				"type": "address[]"
+				"type": "bool"
 			}
 		],
 		"payable": false,
-		"stateMutability": "view",
+		"stateMutability": "pure",
 		"type": "function"
 	},
 	{
@@ -342,34 +244,132 @@
 		"type": "function"
 	},
 	{
-		"constant": false,
-		"inputs": [
+		"constant": true,
+		"inputs": [],
+		"name": "getValidatorSet",
+		"outputs": [
 			{
-				"name": "_index",
-				"type": "uint256"
+				"name": "",
+				"type": "uint256[]"
+			},
+			{
+				"name": "",
+				"type": "address[]"
 			}
 		],
-		"name": "removeValidator",
-		"outputs": [],
 		"payable": false,
-		"stateMutability": "nonpayable",
+		"stateMutability": "view",
 		"type": "function"
 	},
 	{
-		"anonymous": false,
+		"constant": true,
+		"inputs": [],
+		"name": "lowestPower",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "proposer",
+		"outputs": [
+			{
+				"name": "",
+				"type": "address"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "roundType",
+		"outputs": [
+			{
+				"name": "",
+				"type": "bytes32"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "startBlock",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "totalVotingPower",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
 		"inputs": [
 			{
-				"indexed": true,
-				"name": "user",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "validators",
+		"outputs": [
+			{
+				"name": "votingPower",
+				"type": "uint256"
+			},
+			{
+				"name": "validator",
 				"type": "address"
 			},
 			{
-				"indexed": false,
-				"name": "data",
-				"type": "bytes"
+				"name": "pubkey",
+				"type": "string"
 			}
 		],
-		"name": "NewProposer",
-		"type": "event"
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "voteType",
+		"outputs": [
+			{
+				"name": "",
+				"type": "bytes1"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
 	}
 ]
