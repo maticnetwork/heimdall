@@ -61,26 +61,26 @@ func SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte) {
 		Logger.Error("Unable to decode vote while sending checkpoint","vote",string(voteSignBytes))
 	}
 
-	validatorSetInstance, err := GetValidatorSetInstance()
+	stakeManagerInstance, err := GetStakeManagerInstance()
 	if err != nil {
 		return
 	}
 
-	// get ValidatorSet Instance
-	validatorSetABI, err := GetValidatorSetABI()
+	// get stakeManager Instance
+	stakeManagerABI, err := GetStakeManagerABI()
 	if err != nil {
 		return
 	}
 
-	data, err := validatorSetABI.Pack("validate", voteSignBytes, sigs, txData)
+	data, err := stakeManagerABI.Pack("validate", voteSignBytes, sigs, txData)
 	if err != nil {
 		Logger.Error("Unable to pack tx for validate", "error", err)
 		return
 	}
 
-	validatorAddress := GetValidatorSetAddress()
+	stakeManagerAddress := GetStakeManagerAddress()
 	auth, err := GenerateAuthObj(GetMainClient(), ethereum.CallMsg{
-		To:   &validatorAddress,
+		To:   &stakeManagerAddress,
 		Data: data,
 	})
 
@@ -91,7 +91,7 @@ func SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte) {
 
 		Logger.Info("We are proposer , sending checkpoint")
 
-		tx, err := validatorSetInstance.Validate(auth, voteSignBytes, sigs, txData)
+		tx, err := stakeManagerInstance.Validate(auth, voteSignBytes, sigs, txData)
 		if err != nil {
 			Logger.Error("Error while submitting checkpoint", "Error", err)
 
