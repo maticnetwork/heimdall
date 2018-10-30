@@ -33,7 +33,8 @@ func GetValidators() (validators []abci.Validator) {
 				Power:   validatorStruct.Amount.Int64(),
 				PubKey:  tmtypes.TM2PB.PubKey(pubkeyBytes),
 			}
-			
+
+
 			validators = append(validators, validator)
 		} else {
 			Logger.Info("Validator Empty", "Index", index)
@@ -43,6 +44,10 @@ func GetValidators() (validators []abci.Validator) {
 	return validators
 }
 
+
+func GetLastBlock(){
+
+}
 // SubmitProof submit header
 //func SubmitProof(voteSignBytes []byte, sigs []byte, extradata []byte, start uint64, end uint64, rootHash common.Hash) {
 //	Logger.Info("Root Hash Generated ", "Start", start, "End", end, "RootHash", rootHash)

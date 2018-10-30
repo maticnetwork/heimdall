@@ -29,7 +29,6 @@ type EpochCheckpoint struct {
 	RootHash        string `json:"root_hash"`
 	StartBlock      uint64 `json:"start_block"`
 	EndBlock        uint64 `json:"end_block"`
-	ProposerAddress string `json:"proposer_address"`
 }
 
 func newCheckpointHandler() http.HandlerFunc {
@@ -94,9 +93,7 @@ func CreateTxBytes(m EpochCheckpoint) ([]byte, error) {
 	msg := checkpoint.NewMsgCheckpointBlock(
 		m.StartBlock,
 		m.EndBlock,
-		common.HexToHash(m.RootHash),
-		m.ProposerAddress,
-	)
+		common.HexToHash(m.RootHash))
 
 	tx := checkpoint.NewBaseTx(msg)
 
