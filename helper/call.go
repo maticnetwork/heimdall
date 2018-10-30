@@ -74,9 +74,7 @@ func GetValidatorsFromMock() (validators []abci.Validator){
 			Power:   powers[index].Int64(),
 			PubKey:  tmtypes.TM2PB.PubKey(pubkeyBytes),
 		}
-
-		Logger.Info("New Validator is %v", validator.String())
-
+		
 		validators = append(validators, validator)
 	}
 
