@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 	"os"
 	"os/signal"
@@ -11,6 +12,8 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -26,9 +29,9 @@ const (
 	defaultCheckpointLength  = 256
 )
 
-func init() {
-	// initialize heimdall config
-	helper.InitHeimdallConfig()
+var rootCmd = &cobra.Command{
+	Use:   "heimdall-bridge",
+	Short: "Heimdall bridge deamon",
 }
 
 // Bridge to propose
@@ -134,10 +137,9 @@ func (bridge *Bridge) sendRequest(newHeader *types.Header) {
 
 	// TODO submit checkcoint
 	txBytes, err := checkpointTx.CreateTxBytes(checkpointTx.EpochCheckpoint{
-		RootHash:        root,
-		StartBlock:      start.Uint64(),
-		EndBlock:        end.Uint64(),
-		ProposerAddress: "0x0", // proposer set to 0 for now
+		RootHash:   root,
+		StartBlock: start.Uint64(),
+		EndBlock:   end.Uint64(),
 	})
 
 	if err != nil {
@@ -237,7 +239,7 @@ func (bridge *Bridge) StartSubscription(ctx context.Context, subscription ethere
 	}
 }
 
-func main() {
+func startBridge() {
 	bridge := NewBridge()
 	bridge.Start()
 
@@ -260,4 +262,44 @@ func main() {
 
 	// wait for bridge to quiet
 	bridge.Wait()
+}
+
+func main() {
+	// add new persistent flag for home
+	rootCmd.PersistentFlags().String(helper.HomeFlag, os.ExpandEnv("$HOME/.heimdalld"), "directory for config and data")
+
+	// add new persistent flag for heimdall-config
+	rootCmd.PersistentFlags().String(
+		helper.WithHeimdallConfigFlag,
+		"",
+		"Heimdall config file path (default <home>/config/heimdall-config.json)",
+	)
+
+	// bind all flags with viper
+	viper.BindPFlags(rootCmd.Flags())
+
+	// add start command
+	rootCmd.AddCommand(&cobra.Command{
+		Use:   "start",
+		Short: "Start bridge server",
+		Run: func(cmd *cobra.Command, args []string) {
+			homeValue, _ := cmd.Flags().GetString(helper.HomeFlag)
+			withHeimdallConfigValue, _ := cmd.Flags().GetString(helper.WithHeimdallConfigFlag)
+
+			// set to viper
+			viper.Set(helper.HomeFlag, homeValue)
+			viper.Set(helper.WithHeimdallConfigFlag, withHeimdallConfigValue)
+
+			// start heimdall config
+			helper.InitHeimdallConfig()
+
+			// start bridge
+			startBridge()
+		},
+	})
+
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
+	}
 }
