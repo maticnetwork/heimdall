@@ -80,6 +80,12 @@ func exportAppStateAndTMValidators(logger log.Logger, db dbm.DB, storeTracer io.
 }
 
 func newAccountCmd() *cobra.Command {
+	type Account struct {
+		Address string `json:"address"`
+		PrivKey string `json:"private_key"`
+		PubKey  string `json:"public_key"`
+	}
+
 	return &cobra.Command{
 		Use:   "show-account",
 		Short: "Print the account's private key and public key",
@@ -91,9 +97,19 @@ func newAccountCmd() *cobra.Command {
 			privObject := helper.GetPrivKey()
 			pubObject := helper.GetPubKey()
 
-			fmt.Printf("Address: 0x%v", hex.EncodeToString(pubObject.Address().Bytes()))
-			fmt.Printf("\nPrivate key: 0x%v", hex.EncodeToString(privObject[:]))
-			fmt.Printf("\nPublic key: 0x%v", hex.EncodeToString(pubObject[:]))
+			account := &Account{
+				Address: hex.EncodeToString(pubObject.Address().Bytes()),
+				PrivKey: hex.EncodeToString(privObject[:]),
+				PubKey:  hex.EncodeToString(pubObject[:]),
+			}
+
+			b, err := json.Marshal(&account)
+			if err != nil {
+				panic(err)
+			}
+
+			// prints json info
+			fmt.Printf("%s", string(b))
 		},
 	}
 }
