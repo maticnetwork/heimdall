@@ -31,6 +31,7 @@ rest-server:
 start:
 	./build/heimdalld start > ./logs/heimdalld.log &
 	./build/heimdallcli rest-server > ./logs/heimdallcli.log &
+	tail -f ./logs/heimdalld.log ./logs/heimdallcli.log
 
 #
 # docker commands

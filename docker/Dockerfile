@@ -29,3 +29,5 @@ VOLUME ["/root/.heimdalld", "./logs", "./build"]
 
 # expose ports
 EXPOSE 1317 26656 26657
+
+ENTRYPOINT [ "make", "start" ]
