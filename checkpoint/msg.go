@@ -55,7 +55,11 @@ func (msg MsgCheckpoint) GetSignBytes() []byte {
 // ValidateBasic checks quick validation
 func (msg MsgCheckpoint) ValidateBasic() sdk.Error {
 	if helper.GetLastBlock() != msg.StartBlock {
-		CheckpointLogger.Debug("Validating last block from main chain", "lastBlock", helper.GetLastBlock(), "startBlock", msg.StartBlock)
+		CheckpointLogger.Error("Start block doesnt match", "lastBlock", helper.GetLastBlock(), "startBlock", msg.StartBlock)
+		return ErrBadBlockDetails(DefaultCodespace)
+	}
+	if !ValidateCheckpoint(msg.StartBlock, msg.EndBlock, msg.RootHash.String()){
+		CheckpointLogger.Error("RootHash Not Valid","StartBlock",msg.StartBlock,"EndBlock",msg.EndBlock,"RootHash",msg.RootHash)
 		return ErrBadBlockDetails(DefaultCodespace)
 	}
 
