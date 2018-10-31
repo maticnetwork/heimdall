@@ -2,6 +2,7 @@ package helper
 
 import (
 	"log"
+	"path/filepath"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -19,6 +20,11 @@ import (
 	logger "github.com/tendermint/tendermint/libs/log"
 )
 
+const (
+	WithHeimdallConfigFlag = "with-heimdall-config"
+	HomeFlag               = "home"
+)
+
 func init() {
 	cdc.RegisterConcrete(secp256k1.PubKeySecp256k1{}, secp256k1.Secp256k1PubKeyAminoRoute, nil)
 	cdc.RegisterConcrete(secp256k1.PrivKeySecp256k1{}, secp256k1.Secp256k1PrivKeyAminoRoute, nil)
@@ -31,7 +37,6 @@ type Configuration struct {
 	MaticRPCUrl         string `mapstructure:"matic_rpcurl"`
 	StakeManagerAddress string `mapstructure:"stakemanager_address"`
 	RootchainAddress    string `mapstructure:"rootchain_address"`
-	ValidatorFilePVPath string `mapstructure:"priv_validator_path"`
 
 	// Tendermint endpoint
 	TendermintEndpoint string `mapstructure:"tendermint_endpoint"`
@@ -53,15 +58,40 @@ var pubObject secp256k1.PubKeySecp256k1
 // Logger stores global logger object
 var Logger logger.Logger
 
+// InitHeimdallConfig initializes with viper config (from heimdall configuration)
 func InitHeimdallConfig() {
+	// get home dir from viper
+	homeDir := viper.GetString(HomeFlag)
+
+	// get heimdall config filepath from viper/cobra flag
+	heimdallConfigFilePath := viper.GetString(WithHeimdallConfigFlag)
+
+	// init heimdall with changed config files
+	InitHeimdallConfigWith(homeDir, heimdallConfigFilePath)
+}
+
+// InitHeimdallConfigWith initializes passed heimdall/tendermint config files
+func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
+	if homeDir == "" {
+		return
+	}
+
 	if strings.Compare(conf.MaticRPCUrl, "") != 0 {
 		return
 	}
 
+	configDir := filepath.Join(homeDir, "config")
+	Logger.Info("Initializing tendermint configurations", "configDir", configDir)
+
 	heimdallViper := viper.New()
-	heimdallViper.SetConfigName("heimdall-config")         // name of config file (without extension)
-	heimdallViper.AddConfigPath("$HOME/.heimdalld/config") // call multiple times to add many search paths
-	heimdallViper.AddConfigPath("$HOME/.heimdalld")        // call multiple times to add many search paths
+	if heimdallConfigFilePath == "" {
+		heimdallViper.SetConfigName("heimdall-config") // name of config file (without extension)
+		heimdallViper.AddConfigPath(configDir)         // call multiple times to add many search paths
+		Logger.Info("Loading heimdall configurations", "file", filepath.Join(configDir, "heimdall-config.json"))
+	} else {
+		heimdallViper.SetConfigFile(heimdallConfigFilePath) // set config file explicitly
+		Logger.Info("Loading heimdall configurations", "file", heimdallConfigFilePath)
+	}
 
 	err := heimdallViper.ReadInConfig()
 	if err != nil { // Handle errors reading the config file
@@ -86,13 +116,13 @@ func InitHeimdallConfig() {
 	maticClient = ethclient.NewClient(maticRPCClient)
 
 	// load pv file, unmarshall and set to privObject
-	privVal := privval.LoadFilePV(conf.ValidatorFilePVPath)
+	privVal := privval.LoadFilePV(filepath.Join(configDir, "priv_validator.json"))
 	cdc.MustUnmarshalBinaryBare(privVal.PrivKey.Bytes(), &privObject)
 	cdc.MustUnmarshalBinaryBare(privObject.PubKey().Bytes(), &pubObject)
 }
 
+// GetConfig returns cached configuration object
 func GetConfig() Configuration {
-	InitHeimdallConfig()
 	return conf
 }
 
@@ -101,12 +131,10 @@ func GetConfig() Configuration {
 //
 
 func GetRootChainAddress() common.Address {
-	InitHeimdallConfig()
 	return common.HexToAddress(GetConfig().RootchainAddress)
 }
 
 func GetRootChainInstance() (*rootchain.Rootchain, error) {
-	InitHeimdallConfig()
 	rootChainInstance, err := rootchain.NewRootchain(common.HexToAddress(GetConfig().RootchainAddress), mainChainClient)
 	if err != nil {
 		Logger.Error("Unable to create root chain instance", "error", err)
@@ -124,12 +152,10 @@ func GetRootChainABI() (abi.ABI, error) {
 //
 
 func GetStakeManagerAddress() common.Address {
-	InitHeimdallConfig()
 	return common.HexToAddress(GetConfig().StakeManagerAddress)
 }
 
 func GetStakeManagerInstance() (*stakemanager.Stakemanager, error) {
-	InitHeimdallConfig()
 	stakeManagerInstance, err := stakemanager.NewStakemanager(common.HexToAddress(GetConfig().StakeManagerAddress), mainChainClient)
 	if err != nil {
 		Logger.Error("Unable to create stakemanager instance", "error", err)
@@ -146,27 +172,27 @@ func GetStakeManagerABI() (abi.ABI, error) {
 // Get main/matic clients
 //
 
+// GetMainClient returns main chain's eth client
 func GetMainClient() *ethclient.Client {
-	InitHeimdallConfig()
 	return mainChainClient
 }
 
+// GetMaticClient returns matic's eth client
 func GetMaticClient() *ethclient.Client {
-	InitHeimdallConfig()
 	return maticClient
 }
 
+// GetMaticRPCClient returns matic's RPC client
 func GetMaticRPCClient() *rpc.Client {
-	InitHeimdallConfig()
 	return maticRPCClient
 }
 
+// GetPrivKey returns priv key object
 func GetPrivKey() secp256k1.PrivKeySecp256k1 {
-	InitHeimdallConfig()
 	return privObject
 }
 
+// GetPubKey returns pub key object
 func GetPubKey() secp256k1.PubKeySecp256k1 {
-	InitHeimdallConfig()
 	return pubObject
 }
