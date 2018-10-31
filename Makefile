@@ -22,6 +22,9 @@ init-heimdall:
 run-heimdall:
 	./build/heimdalld start
 
+reset-heimdalld:
+	./build/heimdalld unsafe_reset_all
+
 rest-server:
 	./build/heimdallcli rest-server
 
