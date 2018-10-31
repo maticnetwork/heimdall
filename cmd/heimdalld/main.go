@@ -98,9 +98,9 @@ func newAccountCmd() *cobra.Command {
 			pubObject := helper.GetPubKey()
 
 			account := &Account{
-				Address: hex.EncodeToString(pubObject.Address().Bytes()),
-				PrivKey: hex.EncodeToString(privObject[:]),
-				PubKey:  hex.EncodeToString(pubObject[:]),
+				Address: "0x" + hex.EncodeToString(pubObject.Address().Bytes()),
+				PrivKey: "0x" + hex.EncodeToString(privObject[:]),
+				PubKey:  "0x" + hex.EncodeToString(pubObject[:]),
 			}
 
 			b, err := json.Marshal(&account)
