@@ -18,8 +18,7 @@ func NewHandler(k Keeper) sdk.Handler {
 }
 
 func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper) sdk.Result {
-	// TODO add validation
-	// if err := msg.ValidateBasic(); err != nil { // return failed  }
+	if err := msg.ValidateBasic(); err != nil { return ErrBadBlockDetails(k.codespace).Result() }
 
 	// check if the roothash provided is valid for start and end
 	valid := ValidateCheckpoint(msg.StartBlock, msg.EndBlock, msg.RootHash.String())
