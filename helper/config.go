@@ -21,6 +21,7 @@ import (
 )
 
 const (
+	NodeFlag               = "node"
 	WithHeimdallConfigFlag = "with-heimdall-config"
 	HomeFlag               = "home"
 )
