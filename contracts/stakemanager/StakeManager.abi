@@ -1,44 +1,21 @@
 [
 	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"name": "user",
-				"type": "address"
-			},
-			{
-				"indexed": false,
-				"name": "amount",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"name": "total",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"name": "data",
-				"type": "bytes"
-			}
-		],
-		"name": "Unstaked",
-		"type": "event"
-	},
-	{
 		"constant": false,
 		"inputs": [
 			{
-				"name": "user",
+				"name": "validator",
 				"type": "address"
+			},
+			{
+				"name": "votingPower",
+				"type": "uint256"
 			},
 			{
 				"name": "_pubkey",
 				"type": "string"
 			}
 		],
-		"name": "addPubkey",
+		"name": "addValidator",
 		"outputs": [],
 		"payable": false,
 		"stateMutability": "nonpayable",
@@ -54,162 +31,28 @@
 			},
 			{
 				"indexed": false,
-				"name": "amount",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"name": "total",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
 				"name": "data",
 				"type": "bytes"
 			}
 		],
-		"name": "Staked",
+		"name": "NewProposer",
 		"type": "event"
 	},
 	{
-		"anonymous": false,
+		"constant": false,
 		"inputs": [
 			{
-				"indexed": false,
-				"name": "newThreshold",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"name": "oldThreshold",
-				"type": "uint256"
-			}
-		],
-		"name": "ThresholdChange",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": false,
-				"name": "newDynasty",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"name": "oldDynasty",
-				"type": "uint256"
-			}
-		],
-		"name": "DynastyValueChange",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"name": "user",
-				"type": "address"
-			},
-			{
-				"indexed": true,
-				"name": "amount",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"name": "data",
+				"name": "input",
 				"type": "bytes"
 			}
 		],
-		"name": "UnstakeInit",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
+		"name": "getSha256",
+		"outputs": [
 			{
-				"indexed": true,
-				"name": "previousRootChain",
-				"type": "address"
-			},
-			{
-				"indexed": true,
-				"name": "newRootChain",
-				"type": "address"
+				"name": "",
+				"type": "bytes20"
 			}
 		],
-		"name": "RootChainChanged",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"name": "previousOwner",
-				"type": "address"
-			}
-		],
-		"name": "OwnershipRenounced",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"name": "previousOwner",
-				"type": "address"
-			},
-			{
-				"indexed": true,
-				"name": "newOwner",
-				"type": "address"
-			}
-		],
-		"name": "OwnershipTransferred",
-		"type": "event"
-	},
-	{
-		"constant": false,
-		"inputs": [
-			{
-				"name": "newRootChain",
-				"type": "address"
-			}
-		],
-		"name": "changeRootChain",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [],
-		"name": "finalizeCommit",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [],
-		"name": "lock",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [],
-		"name": "renounceOwnership",
-		"outputs": [],
 		"payable": false,
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -218,170 +61,159 @@
 		"constant": false,
 		"inputs": [
 			{
-				"name": "amount",
+				"name": "_index",
 				"type": "uint256"
+			}
+		],
+		"name": "removeValidator",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "vote",
+				"type": "bytes"
 			},
 			{
-				"name": "data",
+				"name": "sigs",
+				"type": "bytes"
+			},
+			{
+				"name": "extradata",
 				"type": "bytes"
 			}
 		],
-		"name": "stake",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [
+		"name": "validate",
+		"outputs": [
 			{
-				"name": "user",
+				"name": "",
 				"type": "address"
 			},
 			{
-				"name": "amount",
-				"type": "uint256"
+				"name": "",
+				"type": "address"
 			},
 			{
-				"name": "data",
-				"type": "bytes"
-			}
-		],
-		"name": "stakeFor",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [
-			{
-				"name": "_newOwner",
-				"type": "address"
-			}
-		],
-		"name": "transferOwnership",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [],
-		"name": "unlock",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [
-			{
-				"name": "amount",
-				"type": "uint256"
-			},
-			{
-				"name": "data",
-				"type": "bytes"
-			}
-		],
-		"name": "unstake",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"name": "_token",
-				"type": "address"
-			}
-		],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "constructor"
-	},
-	{
-		"constant": false,
-		"inputs": [],
-		"name": "unstakeClaim",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [
-			{
-				"name": "newDynasty",
+				"name": "",
 				"type": "uint256"
 			}
 		],
-		"name": "updateDynastyValue",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [
-			{
-				"name": "epochs",
-				"type": "uint256"
-			}
-		],
-		"name": "updateMinLockInPeriod",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [
-			{
-				"name": "newThreshold",
-				"type": "uint256"
-			}
-		],
-		"name": "updateValidatorThreshold",
-		"outputs": [],
 		"payable": false,
 		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
 		"constant": true,
+		"inputs": [],
+		"name": "chain",
+		"outputs": [
+			{
+				"name": "",
+				"type": "bytes32"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
 		"inputs": [
 			{
-				"name": "root",
+				"name": "hash",
 				"type": "bytes32"
 			},
 			{
-				"name": "start",
-				"type": "uint256"
+				"name": "v",
+				"type": "uint8"
 			},
 			{
-				"name": "end",
-				"type": "uint256"
+				"name": "r",
+				"type": "bytes32"
 			},
 			{
-				"name": "proposer",
+				"name": "s",
+				"type": "bytes32"
+			}
+		],
+		"name": "ecrecovery",
+		"outputs": [
+			{
+				"name": "",
 				"type": "address"
+			}
+		],
+		"payable": false,
+		"stateMutability": "pure",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "hash",
+				"type": "bytes32"
 			},
 			{
-				"name": "sigs",
+				"name": "sig",
 				"type": "bytes"
 			}
 		],
-		"name": "checkSignatures",
+		"name": "ecrecovery",
+		"outputs": [
+			{
+				"name": "",
+				"type": "address"
+			}
+		],
+		"payable": false,
+		"stateMutability": "pure",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "data",
+				"type": "bytes"
+			},
+			{
+				"name": "sig",
+				"type": "bytes"
+			}
+		],
+		"name": "ecrecoveryFromData",
+		"outputs": [
+			{
+				"name": "",
+				"type": "address"
+			}
+		],
+		"payable": false,
+		"stateMutability": "pure",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "hash",
+				"type": "bytes32"
+			},
+			{
+				"name": "sig",
+				"type": "bytes"
+			},
+			{
+				"name": "signer",
+				"type": "address"
+			}
+		],
+		"name": "ecverify",
 		"outputs": [
 			{
 				"name": "",
@@ -389,17 +221,22 @@
 			}
 		],
 		"payable": false,
-		"stateMutability": "view",
+		"stateMutability": "pure",
 		"type": "function"
 	},
 	{
 		"constant": true,
-		"inputs": [],
-		"name": "currentEpoch",
+		"inputs": [
+			{
+				"name": "index",
+				"type": "uint256"
+			}
+		],
+		"name": "getPubkey",
 		"outputs": [
 			{
 				"name": "",
-				"type": "uint256"
+				"type": "string"
 			}
 		],
 		"payable": false,
@@ -409,64 +246,12 @@
 	{
 		"constant": true,
 		"inputs": [],
-		"name": "currentValidatorSetSize",
+		"name": "getValidatorSet",
 		"outputs": [
 			{
 				"name": "",
-				"type": "uint256"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [],
-		"name": "currentValidatorSetTotalStake",
-		"outputs": [
-			{
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [],
-		"name": "DYNASTY",
-		"outputs": [
-			{
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [],
-		"name": "EPOCH_LENGTH",
-		"outputs": [
-			{
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [],
-		"name": "getCurrentValidatorSet",
-		"outputs": [
+				"type": "uint256[]"
+			},
 			{
 				"name": "",
 				"type": "address[]"
@@ -478,105 +263,26 @@
 	},
 	{
 		"constant": true,
-		"inputs": [
+		"inputs": [],
+		"name": "roundType",
+		"outputs": [
 			{
-				"name": "user",
-				"type": "address"
+				"name": "",
+				"type": "bytes32"
 			}
 		],
-		"name": "getDetails",
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "startBlock",
 		"outputs": [
 			{
 				"name": "",
 				"type": "uint256"
-			},
-			{
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [],
-		"name": "locked",
-		"outputs": [
-			{
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [],
-		"name": "maxStakeDrop",
-		"outputs": [
-			{
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [],
-		"name": "MIN_DEPOSIT_SIZE",
-		"outputs": [
-			{
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [],
-		"name": "minLockInPeriod",
-		"outputs": [
-			{
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [],
-		"name": "owner",
-		"outputs": [
-			{
-				"name": "",
-				"type": "address"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [],
-		"name": "rootChain",
-		"outputs": [
-			{
-				"name": "",
-				"type": "address"
 			}
 		],
 		"payable": false,
@@ -588,30 +294,18 @@
 		"inputs": [
 			{
 				"name": "",
-				"type": "address"
+				"type": "uint256"
 			}
 		],
-		"name": "stakers",
+		"name": "validators",
 		"outputs": [
 			{
-				"name": "epoch",
+				"name": "votingPower",
 				"type": "uint256"
 			},
 			{
-				"name": "amount",
-				"type": "uint256"
-			},
-			{
-				"name": "data",
-				"type": "bytes"
-			},
-			{
-				"name": "activationEpoch",
-				"type": "uint256"
-			},
-			{
-				"name": "deactivationEpoch",
-				"type": "uint256"
+				"name": "validator",
+				"type": "address"
 			},
 			{
 				"name": "pubkey",
@@ -625,137 +319,11 @@
 	{
 		"constant": true,
 		"inputs": [],
-		"name": "supportsHistory",
+		"name": "voteType",
 		"outputs": [
 			{
 				"name": "",
-				"type": "bool"
-			}
-		],
-		"payable": false,
-		"stateMutability": "pure",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [],
-		"name": "token",
-		"outputs": [
-			{
-				"name": "",
-				"type": "address"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [],
-		"name": "tokenObj",
-		"outputs": [
-			{
-				"name": "",
-				"type": "address"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [],
-		"name": "totalStake",
-		"outputs": [
-			{
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [],
-		"name": "totalStaked",
-		"outputs": [
-			{
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [
-			{
-				"name": "addr",
-				"type": "address"
-			}
-		],
-		"name": "totalStakedFor",
-		"outputs": [
-			{
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [
-			{
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"name": "validatorState",
-		"outputs": [
-			{
-				"name": "amount",
-				"type": "int256"
-			},
-			{
-				"name": "stakerCount",
-				"type": "int256"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [],
-		"name": "validatorThreshold",
-		"outputs": [
-			{
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [],
-		"name": "WITHDRAWAL_DELAY",
-		"outputs": [
-			{
-				"name": "",
-				"type": "uint256"
+				"type": "bytes1"
 			}
 		],
 		"payable": false,

@@ -22,13 +22,16 @@ init-heimdall:
 run-heimdall:
 	./build/heimdalld start
 
+reset-heimdalld:
+	./build/heimdalld unsafe_reset_all
+
 rest-server:
 	./build/heimdallcli rest-server
 
 start:
-	mkdir -p logs
 	./build/heimdalld start > ./logs/heimdalld.log &
 	./build/heimdallcli rest-server > ./logs/heimdallcli.log &
+	tail -f ./logs/heimdalld.log ./logs/heimdallcli.log
 
 #
 # docker commands
@@ -41,10 +44,10 @@ build-docker-develop:
 	cd docker; make build-develop
 
 run-docker-develop:
-	docker run --name hm -it \
+	docker run --name node0 -it \
 		-v ~/.heimdalld:/root/.heimdalld \
 		-v `pwd`/logs:/go/src/github.com/maticnetwork/heimdall/logs \
 		-p 1317:1317 \
-		"maticnetwork/tendermint:develop"
+		"maticnetwork/heimdall:develop"
 
 .PHONY: dep build
