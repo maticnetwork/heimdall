@@ -2,15 +2,20 @@ package main
 
 import (
 	"context"
+	"encoding/hex"
+	"fmt"
 	"math/big"
 	"os"
 	"os/signal"
 	"time"
 
+	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -26,9 +31,9 @@ const (
 	defaultCheckpointLength  = 256
 )
 
-func init() {
-	// initialize heimdall config
-	helper.InitHeimdallConfig()
+var rootCmd = &cobra.Command{
+	Use:   "heimdall-bridge",
+	Short: "Heimdall bridge deamon",
 }
 
 // Bridge to propose
@@ -64,15 +69,10 @@ func NewBridge() *Bridge {
 		panic(err)
 	}
 
-	maticRPCClient, err := rpc.Dial(helper.GetConfig().MaticRPCUrl)
-	if err != nil {
-		return nil
-	}
-
 	// creating bridge object
 	bridge := &Bridge{
-		MaticClient:       ethclient.NewClient(maticRPCClient),
-		MaticRPCClient:    maticRPCClient,
+		MaticClient:       helper.GetMaticClient(),
+		MaticRPCClient:    helper.GetMaticRPCClient(),
 		MainClient:        helper.GetMainClient(),
 		RootChainInstance: rootchainInstance,
 		HeaderChannel:     make(chan *types.Header),
@@ -134,10 +134,9 @@ func (bridge *Bridge) sendRequest(newHeader *types.Header) {
 
 	// TODO submit checkcoint
 	txBytes, err := checkpointTx.CreateTxBytes(checkpointTx.EpochCheckpoint{
-		RootHash:        root,
-		StartBlock:      start.Uint64(),
-		EndBlock:        end.Uint64(),
-		ProposerAddress: "0x0", // proposer set to 0 for now
+		RootHash:   root,
+		StartBlock: start.Uint64(),
+		EndBlock:   end.Uint64(),
 	})
 
 	if err != nil {
@@ -145,13 +144,13 @@ func (bridge *Bridge) sendRequest(newHeader *types.Header) {
 		return
 	}
 
-	resp, err := checkpointTx.SendTendermintRequest(txBytes)
+	resp, err := checkpointTx.SendTendermintRequest(cliContext.NewCLIContext(), txBytes)
 	if err != nil {
 		bridge.Logger.Error("Error while sending request to Tendermint", "error", err)
 		return
 	}
 
-	bridge.Logger.Error("Checkpoint sent successfully", "status", resp.Status, "start", start, "end", end, "root", root)
+	bridge.Logger.Error("Checkpoint sent successfully", "hash", hex.EncodeToString(resp.Hash), "start", start, "end", end, "root", root)
 }
 
 // OnStart starts new block subscription
@@ -237,7 +236,7 @@ func (bridge *Bridge) StartSubscription(ctx context.Context, subscription ethere
 	}
 }
 
-func main() {
+func startBridge() {
 	bridge := NewBridge()
 	bridge.Start()
 
@@ -260,4 +259,44 @@ func main() {
 
 	// wait for bridge to quiet
 	bridge.Wait()
+}
+
+func main() {
+	rootCmd.PersistentFlags().StringP(helper.NodeFlag, "n", "tcp://localhost:26657", "Node to connect to")
+	rootCmd.PersistentFlags().String(helper.HomeFlag, os.ExpandEnv("$HOME/.heimdalld"), "directory for config and data")
+	rootCmd.PersistentFlags().String(
+		helper.WithHeimdallConfigFlag,
+		"",
+		"Heimdall config file path (default <home>/config/heimdall-config.json)",
+	)
+
+	// bind all flags with viper
+	viper.BindPFlags(rootCmd.Flags())
+
+	// add start command
+	rootCmd.AddCommand(&cobra.Command{
+		Use:   "start",
+		Short: "Start bridge server",
+		Run: func(cmd *cobra.Command, args []string) {
+			tendermintNode, _ := cmd.Flags().GetString(helper.NodeFlag)
+			homeValue, _ := cmd.Flags().GetString(helper.HomeFlag)
+			withHeimdallConfigValue, _ := cmd.Flags().GetString(helper.WithHeimdallConfigFlag)
+
+			// set to viper
+			viper.Set(helper.NodeFlag, tendermintNode)
+			viper.Set(helper.HomeFlag, homeValue)
+			viper.Set(helper.WithHeimdallConfigFlag, withHeimdallConfigValue)
+
+			// start heimdall config
+			helper.InitHeimdallConfig()
+
+			// start bridge
+			startBridge()
+		},
+	})
+
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
+	}
 }
