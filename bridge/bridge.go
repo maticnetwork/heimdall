@@ -2,12 +2,14 @@ package main
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 	"os"
 	"os/signal"
 	"time"
 
+	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -67,15 +69,10 @@ func NewBridge() *Bridge {
 		panic(err)
 	}
 
-	maticRPCClient, err := rpc.Dial(helper.GetConfig().MaticRPCUrl)
-	if err != nil {
-		return nil
-	}
-
 	// creating bridge object
 	bridge := &Bridge{
-		MaticClient:       ethclient.NewClient(maticRPCClient),
-		MaticRPCClient:    maticRPCClient,
+		MaticClient:       helper.GetMaticClient(),
+		MaticRPCClient:    helper.GetMaticRPCClient(),
 		MainClient:        helper.GetMainClient(),
 		RootChainInstance: rootchainInstance,
 		HeaderChannel:     make(chan *types.Header),
@@ -147,13 +144,13 @@ func (bridge *Bridge) sendRequest(newHeader *types.Header) {
 		return
 	}
 
-	resp, err := checkpointTx.SendTendermintRequest(txBytes)
+	resp, err := checkpointTx.SendTendermintRequest(cliContext.NewCLIContext(), txBytes)
 	if err != nil {
 		bridge.Logger.Error("Error while sending request to Tendermint", "error", err)
 		return
 	}
 
-	bridge.Logger.Error("Checkpoint sent successfully", "status", resp.Status, "start", start, "end", end, "root", root)
+	bridge.Logger.Error("Checkpoint sent successfully", "hash", hex.EncodeToString(resp.Hash), "start", start, "end", end, "root", root)
 }
 
 // OnStart starts new block subscription
@@ -265,10 +262,8 @@ func startBridge() {
 }
 
 func main() {
-	// add new persistent flag for home
+	rootCmd.PersistentFlags().StringP(helper.NodeFlag, "n", "tcp://localhost:26657", "Node to connect to")
 	rootCmd.PersistentFlags().String(helper.HomeFlag, os.ExpandEnv("$HOME/.heimdalld"), "directory for config and data")
-
-	// add new persistent flag for heimdall-config
 	rootCmd.PersistentFlags().String(
 		helper.WithHeimdallConfigFlag,
 		"",
@@ -283,10 +278,12 @@ func main() {
 		Use:   "start",
 		Short: "Start bridge server",
 		Run: func(cmd *cobra.Command, args []string) {
+			tendermintNode, _ := cmd.Flags().GetString(helper.NodeFlag)
 			homeValue, _ := cmd.Flags().GetString(helper.HomeFlag)
 			withHeimdallConfigValue, _ := cmd.Flags().GetString(helper.WithHeimdallConfigFlag)
 
 			// set to viper
+			viper.Set(helper.NodeFlag, tendermintNode)
 			viper.Set(helper.HomeFlag, homeValue)
 			viper.Set(helper.WithHeimdallConfigFlag, withHeimdallConfigValue)
 
