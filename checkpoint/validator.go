@@ -19,10 +19,10 @@ func ValidateCheckpoint(start uint64, end uint64, rootHash string) bool {
 	if strings.Compare(root, rootHash) == 0 {
 		CheckpointLogger.Info("RootHash matched!")
 		return true
-	} else {
-		CheckpointLogger.Error("RootHash does not match", "rootHashTx", rootHash, "rootHash", root)
-		return false
 	}
+
+	CheckpointLogger.Error("RootHash does not match", "rootHashTx", rootHash, "rootHash", root)
+	return false
 }
 
 func GetHeaders(start uint64, end uint64) string {

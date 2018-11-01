@@ -6,3 +6,6 @@ vendor/github.com/ethereum/go-ethereum/
 build
 logs
 *.log
+
+.idea
+mytestnet

@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
@@ -96,21 +97,30 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 	var votes []tmtypes.Vote
 	err := json.Unmarshal(ctx.BlockHeader().Votes, &votes)
 	if err != nil {
-		logger.Error("Unmarshalling Vote Errored", "Error", err)
+		logger.Error("Unmarshalling vote errored", "error", err)
 	}
 
 	// get sigs from votes
-	var sigs []byte
-	sigs = GetSigs(votes)
-
+	sigs := getSigs(votes)
 	if ctx.BlockHeader().NumTxs == 1 {
 		// Getting latest checkpoint data from store using height as key and unmarshall
 		var _checkpoint checkpoint.CheckpointBlockHeader
-		json.Unmarshal(app.checkpointKeeper.GetCheckpoint(ctx, ctx.BlockHeight()), &_checkpoint)
+		err := json.Unmarshal(app.checkpointKeeper.GetCheckpoint(ctx, ctx.BlockHeight()), &_checkpoint)
+		if err != nil {
+			logger.Error("Unable to unmarshall checkpoint", "error", err)
+		}
 
-		extraData := GetExtraData(_checkpoint, ctx)
+		// Get extra data
+		extraData := getExtraData(_checkpoint, ctx)
 
-		helper.SendCheckpoint(GetVoteBytes(votes, ctx), sigs, extraData)
+		logger.Debug("Validating last block from main chain", "lastBlock", helper.GetLastBlock(), "startBlock", _checkpoint.StartBlock)
+		if helper.GetLastBlock() == _checkpoint.StartBlock {
+			logger.Info("Valid checkpoint")
+			helper.SendCheckpoint(GetVoteBytes(votes, ctx), sigs, extraData)
+		} else {
+			logger.Error("Start block does not match", "lastBlock", helper.GetLastBlock(), "startBlock", _checkpoint.StartBlock)
+			// TODO panic ?
+		}
 	}
 
 	// send validator updates to peppermint
@@ -119,7 +129,7 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 	}
 }
 
-func GetSigs(votes []tmtypes.Vote) (sigs []byte) {
+func getSigs(votes []tmtypes.Vote) (sigs []byte) {
 	// loop votes and append to sig to sigs
 	for _, vote := range votes {
 		sigs = append(sigs[:], vote.Signature[:]...)
@@ -133,13 +143,14 @@ func GetVoteBytes(votes []tmtypes.Vote, ctx sdk.Context) []byte {
 	return votes[0].SignBytes(ctx.ChainID())
 }
 
-func GetExtraData(_checkpoint checkpoint.CheckpointBlockHeader, ctx sdk.Context) []byte {
-	msg := checkpoint.NewMsgCheckpointBlock(_checkpoint.StartBlock, _checkpoint.EndBlock, _checkpoint.RootHash, _checkpoint.Proposer.String())
+func getExtraData(_checkpoint checkpoint.CheckpointBlockHeader, ctx sdk.Context) []byte {
+	logger.Debug("Creating extra data", "startBlock", _checkpoint.StartBlock, "endBlock", _checkpoint.EndBlock, "roothash", _checkpoint.RootHash)
+	msg := checkpoint.NewMsgCheckpointBlock(_checkpoint.StartBlock, _checkpoint.EndBlock, _checkpoint.RootHash)
 
 	tx := checkpoint.NewBaseTx(msg)
 	txBytes, err := rlp.EncodeToBytes(tx)
 	if err != nil {
-		logger.Error("Error decoding transaction data ", "Error", err)
+		logger.Error("Error decoding transaction data", "error", err)
 	}
 
 	return txBytes
@@ -147,7 +158,6 @@ func GetExtraData(_checkpoint checkpoint.CheckpointBlockHeader, ctx sdk.Context)
 
 // RLP decodes the txBytes to a BaseTx
 func (app *HeimdallApp) txDecoder(txBytes []byte) (sdk.Tx, sdk.Error) {
-
 	var tx = checkpoint.BaseTx{}
 	err := rlp.DecodeBytes(txBytes, &tx)
 	if err != nil {
@@ -161,6 +171,7 @@ func (app *HeimdallApp) txDecoder(txBytes []byte) (sdk.Tx, sdk.Error) {
 func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	return abci.ResponseInitChain{}
 }
+
 func (app *HeimdallApp) ExportAppStateAndValidators() (appState json.RawMessage, validators []tmtypes.GenesisValidator, err error) {
 	return appState, validators, err
 }

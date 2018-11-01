@@ -3,7 +3,6 @@ package rest
 import (
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -13,26 +12,25 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/gorilla/mux"
+	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 
 	"github.com/maticnetwork/heimdall/checkpoint"
-	"github.com/maticnetwork/heimdall/helper"
 )
 
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *wire.Codec, kb keys.Keybase) {
 	r.HandleFunc(
 		"/checkpoint/new",
-		newCheckpointHandler(),
+		newCheckpointHandler(cliCtx),
 	).Methods("POST")
 }
 
 type EpochCheckpoint struct {
-	RootHash        string `json:"root_hash"`
-	StartBlock      uint64 `json:"start_block"`
-	EndBlock        uint64 `json:"end_block"`
-	ProposerAddress string `json:"proposer_address"`
+	RootHash   string `json:"root_hash"`
+	StartBlock uint64 `json:"start_block"`
+	EndBlock   uint64 `json:"end_block"`
 }
 
-func newCheckpointHandler() http.HandlerFunc {
+func newCheckpointHandler(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var m EpochCheckpoint
 
@@ -53,12 +51,10 @@ func newCheckpointHandler() http.HandlerFunc {
 
 		txBytes, err := CreateTxBytes(m)
 		if err != nil {
-			RestLogger.Error("Unable to create txBytes", "EndBlock", m.EndBlock, "StartBlock", m.StartBlock, "RootHash", m.RootHash)
+			RestLogger.Error("Unable to create txBytes", "endBlock", m.EndBlock, "startBlock", m.StartBlock, "rootHash", m.RootHash)
 		}
 
-		RestLogger.Info("Sending request to Tendermint", "txBytes", hex.EncodeToString(txBytes), "url", helper.GetConfig().TendermintEndpoint)
-
-		resp, err := SendTendermintRequest(txBytes)
+		resp, err := SendTendermintRequest(cliCtx, txBytes)
 		if err != nil {
 			RestLogger.Error("Error while sending request to Tendermint", "error", err)
 			w.WriteHeader(http.StatusBadRequest)
@@ -66,37 +62,27 @@ func newCheckpointHandler() http.HandlerFunc {
 			return
 		}
 
-		var bodyString string
-		if resp.StatusCode == http.StatusOK {
-			bodyBytes, _ := ioutil.ReadAll(resp.Body)
-			bodyString = string(bodyBytes)
+		result, err := json.Marshal(&resp)
+		if err != nil {
+			RestLogger.Error("Error while marshalling tendermint response", "error", err)
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
 		}
-		w.Write([]byte(bodyString))
+		w.Write(result)
 	}
 }
 
-func SendTendermintRequest(txBytes []byte) (*http.Response, error) {
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/%s", helper.GetConfig().TendermintEndpoint, "broadcast_tx_commit"), nil)
-	if err != nil {
-		RestLogger.Error("Error while drafting request for tendermint", "Error", err)
-		return nil, err
-	}
-
-	queryParams := req.URL.Query()
-	queryParams.Add("tx", fmt.Sprintf("0x%s", hex.EncodeToString(txBytes)))
-	req.URL.RawQuery = queryParams.Encode()
-
-	return client.Do(req)
+func SendTendermintRequest(cliCtx context.CLIContext, txBytes []byte) (*ctypes.ResultBroadcastTxCommit, error) {
+	RestLogger.Info("Broadcasting tx bytes to Tendermint", "txBytes", hex.EncodeToString(txBytes))
+	return cliCtx.BroadcastTx(txBytes)
 }
 
 func CreateTxBytes(m EpochCheckpoint) ([]byte, error) {
 	msg := checkpoint.NewMsgCheckpointBlock(
 		m.StartBlock,
 		m.EndBlock,
-		common.HexToHash(m.RootHash),
-		m.ProposerAddress,
-	)
+		common.HexToHash(m.RootHash))
 
 	tx := checkpoint.NewBaseTx(msg)
 

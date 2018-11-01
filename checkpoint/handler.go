@@ -17,23 +17,9 @@ func NewHandler(k Keeper) sdk.Handler {
 }
 
 func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper) sdk.Result {
-	// TODO add validation
-	// if err := msg.ValidateBasic(); err != nil { // return failed  }
-
-	// check if the roothash provided is valid for start and end
-	valid := ValidateCheckpoint(msg.StartBlock, msg.EndBlock, msg.RootHash.String())
-
-	// check msg.proposer with tm proposer
-	var key int64
-	if valid {
-		// add checkpoint to state if rootHash matches
-		key = k.AddCheckpoint(ctx, msg.StartBlock, msg.EndBlock, msg.RootHash, msg.Proposer)
-		CheckpointLogger.Debug("RootHash matched!", "key", key)
-	} else {
-		CheckpointLogger.Debug("Root hash doesn't match ;(")
-		// return Bad Block Error
-		return ErrBadBlockDetails(k.codespace).Result()
-	}
+	if err := msg.ValidateBasic(); err != nil { return ErrBadBlockDetails(k.codespace).Result() }
+	key := k.AddCheckpoint(ctx, msg.StartBlock, msg.EndBlock, msg.RootHash)
+	CheckpointLogger.Debug("Checkpoint added in state", "key", key)
 
 	// send tags
 	return sdk.Result{}
