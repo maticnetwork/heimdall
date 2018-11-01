@@ -37,9 +37,6 @@ type Configuration struct {
 	MaticRPCUrl         string `mapstructure:"matic_rpcurl"`
 	StakeManagerAddress string `mapstructure:"stakemanager_address"`
 	RootchainAddress    string `mapstructure:"rootchain_address"`
-
-	// Tendermint endpoint
-	TendermintEndpoint string `mapstructure:"tendermint_endpoint"`
 }
 
 var conf Configuration
