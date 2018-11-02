@@ -2,13 +2,14 @@ package staking
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/wire"
+	"github.com/cosmos/cosmos-sdk/codec"
 	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/types"
 )
 
 type Keeper struct {
 	storeKey sdk.StoreKey
-	cdc      *wire.Codec
+	cdc      *codec.Codec
 
 	// codespace
 	codespace sdk.CodespaceType
@@ -19,7 +20,7 @@ var (
 )
 
 // NewKeeper creates new keeper for staking
-func NewKeeper(cdc *wire.Codec, key sdk.StoreKey, codespace sdk.CodespaceType) Keeper {
+func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, codespace sdk.CodespaceType) Keeper {
 	keeper := Keeper{
 		storeKey:  key,
 		cdc:       cdc,
@@ -29,7 +30,7 @@ func NewKeeper(cdc *wire.Codec, key sdk.StoreKey, codespace sdk.CodespaceType) K
 }
 
 // SetValidatorSet validator type will contain address, pubkey and power
-func (k Keeper) SetValidatorSet(ctx sdk.Context, validators []abci.Validator) {
+func (k Keeper) SetValidatorSet(ctx sdk.Context, validators []abci.ValidatorUpdate) {
 	store := ctx.KVStore(k.storeKey)
 
 	for _, validator := range validators {
@@ -38,7 +39,11 @@ func (k Keeper) SetValidatorSet(ctx sdk.Context, validators []abci.Validator) {
 			StakingLogger.Error("Error marshalling validator", "error", err)
 			panic(err)
 		}
-		store.Set(getValidatorKey(validator.Address), bz)
+		pubkey,err := types.PB2TM.PubKey(validator.GetPubKey())
+		if err!=nil{
+			StakingLogger.Error("Error converting to cryptoPubkey","ValidatorPubkey",validator.GetPubKey(),"ValidatorPower",validator.Power )
+		}
+		store.Set(getValidatorKey(pubkey.Address().Bytes()), bz)
 	}
 }
 

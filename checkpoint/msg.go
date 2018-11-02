@@ -2,12 +2,12 @@ package checkpoint
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/wire"
+	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/maticnetwork/heimdall/helper"
 )
 
-var cdc = wire.NewCodec()
+var cdc = codec.New()
 
 // MsgType represents string for message type
 const MsgType = "checkpoint"
@@ -34,6 +34,9 @@ func NewMsgCheckpointBlock(startBlock uint64, endBlock uint64, roothash common.H
 func (msg MsgCheckpoint) Type() string {
 	return MsgType
 }
+
+func (msg MsgCheckpoint) Route() string { return MsgType }
+
 
 // GetSigners returns address of the signer
 func (msg MsgCheckpoint) GetSigners() []sdk.AccAddress {
