@@ -10,7 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	cryptoKeys "github.com/cosmos/cosmos-sdk/crypto/keys"
-	"github.com/cosmos/cosmos-sdk/wire"
+	"github.com/cosmos/cosmos-sdk/codec"
 	auth "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/client/rest"
 	gov "github.com/cosmos/cosmos-sdk/x/gov/client/rest"
@@ -36,7 +36,7 @@ func init() {
 }
 
 // RegisterRoutes registers staking-related REST handlers to a router
-func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *wire.Codec, kb cryptoKeys.Keybase) {
+func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec, kb cryptoKeys.Keybase) {
 	//registerQueryRoutes(cliCtx, r, cdc)
 	registerTxRoutes(cliCtx, r, cdc, kb)
 }
@@ -44,7 +44,7 @@ func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *wire.Codec, k
 // ServeCommands will generate a long-running rest server
 // (aka Light Client Daemon) that exposes functionality similar
 // to the cli, but over rest
-func ServeCommands(cdc *wire.Codec) *cobra.Command {
+func ServeCommands(cdc *codec.Codec) *cobra.Command {
 	flagListenAddr := "laddr"
 	flagCORS := "cors"
 	flagMaxOpenConnections := "max-open"
@@ -87,7 +87,7 @@ func ServeCommands(cdc *wire.Codec) *cobra.Command {
 	return cmd
 }
 
-func createHandler(cdc *wire.Codec) http.Handler {
+func createHandler(cdc *codec.Codec) http.Handler {
 	r := mux.NewRouter()
 
 	kb, err := keys.GetKeyBase() //XXX
@@ -95,13 +95,13 @@ func createHandler(cdc *wire.Codec) http.Handler {
 		panic(err)
 	}
 
-	cliCtx := context.NewCLIContext().WithCodec(cdc).WithLogger(os.Stdout)
+	cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 	// TODO: make more functional? aka r = keys.RegisterRoutes(r)
 	//r.HandleFunc("/version", CLIVersionRequestHandler).Methods("GET")
 	//r.HandleFunc("/node_version", NodeVersionRequestHandler(cliCtx)).Methods("GET")
 
-	keys.RegisterRoutes(r)
+	keys.RegisterRoutes(r,true)
 	rpc.RegisterRoutes(cliCtx, r)
 	tx.RegisterRoutes(cliCtx, r, cdc)
 	auth.RegisterRoutes(cliCtx, r, cdc, "acc")

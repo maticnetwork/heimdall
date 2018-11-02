@@ -1,22 +1,20 @@
 package helper
 
 import (
-	"encoding/hex"
-
-	"math/big"
-
 	abci "github.com/tendermint/tendermint/abci/types"
+	"math/big"
+	"encoding/hex"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
-func GetValidators() (validators []abci.Validator) {
+func GetValidators() (validators []abci.ValidatorUpdate) {
 	stakeManagerInstance, err := GetStakeManagerInstance()
 	if err != nil {
 		Logger.Error("Error creating validatorSetInstance", "error", err)
 	}
 
-	powers, ValidatorAddrs, err := stakeManagerInstance.GetValidatorSet(nil)
+	powers, _, err := stakeManagerInstance.GetValidatorSet(nil)
 	if err != nil {
 		Logger.Error("Error getting validator set", "error", err)
 	}
@@ -27,12 +25,12 @@ func GetValidators() (validators []abci.Validator) {
 			Logger.Error("Error getting pubkey for index", "error", err)
 		}
 
+
 		var pubkeyBytes secp256k1.PubKeySecp256k1
 		_pubkey, _ := hex.DecodeString(pubkey)
 		copy(pubkeyBytes[:], _pubkey)
-
-		validator := abci.Validator{
-			Address: ValidatorAddrs[index].Bytes(),
+		// todo use new valiator update here
+		validator := abci.ValidatorUpdate{
 			Power:   powers[index].Int64(),
 			PubKey:  tmtypes.TM2PB.PubKey(pubkeyBytes),
 		}

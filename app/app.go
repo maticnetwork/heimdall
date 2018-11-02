@@ -5,8 +5,7 @@ import (
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/wire"
-	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/ethereum/go-ethereum/rlp"
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
@@ -25,7 +24,7 @@ const (
 
 type HeimdallApp struct {
 	*bam.BaseApp
-	cdc *wire.Codec
+	cdc *codec.Codec
 
 	// keys to access the multistore
 	keyMain       *sdk.KVStoreKey
@@ -47,7 +46,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	// create your application type
 	var app = &HeimdallApp{
 		cdc:           cdc,
-		BaseApp:       bam.NewBaseApp(AppName, logger, db, auth.DefaultTxDecoder(cdc), baseAppOptions...),
+		BaseApp:       bam.NewBaseApp(AppName, logger, db, RLPTxDecoder(), baseAppOptions...),
 		keyMain:       sdk.NewKVStoreKey("main"),
 		keyCheckpoint: sdk.NewKVStoreKey("checkpoint"),
 		keyStaker:     sdk.NewKVStoreKey("staker"),
@@ -61,9 +60,8 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.SetInitChainer(app.initChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
 	app.SetEndBlocker(app.EndBlocker)
-	//app.SetAnteHandler(auth.NewAnteHandler(app.accountMapper, app.feeCollectionKeeper))
-	app.SetTxDecoder(app.txDecoder)
-	app.BaseApp.SetTxDecoder(app.txDecoder)
+
+
 	// mount the multistore and load the latest state
 	app.MountStoresIAVL(app.keyMain, app.keyCheckpoint, app.keyStaker)
 	err := app.LoadLatestVersion(app.keyMain)
@@ -75,11 +73,11 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	return app
 }
 
-func MakeCodec() *wire.Codec {
-	cdc := wire.NewCodec()
+func MakeCodec() *codec.Codec {
+	cdc := codec.New()
 
-	wire.RegisterCrypto(cdc)
-	sdk.RegisterWire(cdc)
+	codec.RegisterCrypto(cdc)
+	sdk.RegisterCodec(cdc)
 	checkpoint.RegisterWire(cdc)
 	// register custom type
 
@@ -156,17 +154,6 @@ func getExtraData(_checkpoint checkpoint.CheckpointBlockHeader, ctx sdk.Context)
 	return txBytes
 }
 
-// RLP decodes the txBytes to a BaseTx
-func (app *HeimdallApp) txDecoder(txBytes []byte) (sdk.Tx, sdk.Error) {
-	var tx = checkpoint.BaseTx{}
-	err := rlp.DecodeBytes(txBytes, &tx)
-	if err != nil {
-		//todo create own error
-		return nil, sdk.ErrTxDecode(err.Error())
-	}
-
-	return tx, nil
-}
 
 func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	return abci.ResponseInitChain{}
@@ -174,4 +161,21 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 
 func (app *HeimdallApp) ExportAppStateAndValidators() (appState json.RawMessage, validators []tmtypes.GenesisValidator, err error) {
 	return appState, validators, err
+}
+
+
+// RLP decodes the txBytes to a BaseTx
+func RLPTxDecoder() sdk.TxDecoder {
+	return func(txBytes []byte) (sdk.Tx, sdk.Error) {
+		var tx = checkpoint.BaseTx{}
+		err := rlp.DecodeBytes(txBytes, &tx)
+		if err != nil {
+			//todo create own error
+			return nil, sdk.ErrTxDecode(err.Error())
+		}
+
+		return tx, nil
+
+
+	}
 }
