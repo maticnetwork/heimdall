@@ -53,9 +53,10 @@ func main() {
 		cdc,
 		rootCmd,
 		server.DefaultAppInit,
-		server.ConstructAppCreator(newApp, app.AppName),
-		server.ConstructAppExporter(exportAppStateAndTMValidators, app.AppName),
+		server.AppCreator(newApp),
+		server.AppExporter(exportAppStateAndTMValidators),
 	)
+
 
 	// prepare and add flags
 	executor := cli.PrepareBaseCmd(rootCmd, "HD", os.ExpandEnv("$HOME/.heimdalld"))

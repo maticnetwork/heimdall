@@ -25,8 +25,8 @@
 #   unused-packages = true
 
 ignored = [
-  "github.com/tendermint/iavl", 
-  "github.com/ethereum/go-ethereum*"
+  "github.com/ethereum/go-ethereum*",
+  "github.com/tendermint/iavl"
 ]
 
 [prune]
@@ -36,7 +36,12 @@ ignored = [
 [[constraint]]
   name = "github.com/tendermint/tendermint"
   source = "github.com/maticnetwork/tendermint"
-revision = "1dec17a548d4f1f807cb57b43c3e4580d5e272d1"
+  revision = "1897d3c0ab6d59437d13029855ace4869d3a0df7"
+
+[[override]]
+  name = "golang.org/x/crypto"
+  source = "https://github.com/tendermint/crypto"
+  revision = "3764759f34a542a3aef74d6b02e35be7ab893bba"
 
 [[override]]
   name = "github.com/tendermint/go-amino"
@@ -44,4 +49,4 @@ revision = "1dec17a548d4f1f807cb57b43c3e4580d5e272d1"
 
 [[constraint]]
   name = "github.com/cosmos/cosmos-sdk"
-  version = "v0.24.2"
+  version = "=v0.25.0"
