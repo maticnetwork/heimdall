@@ -38,6 +38,10 @@ ignored = [
   source = "github.com/maticnetwork/tendermint"
   revision = "1897d3c0ab6d59437d13029855ace4869d3a0df7"
 
+[[override]]
+  name = "golang.org/x/crypto"
+  source = "https://github.com/tendermint/crypto"
+  revision = "3764759f34a542a3aef74d6b02e35be7ab893bba"
 
 [[override]]
   name = "github.com/tendermint/go-amino"
