@@ -17,9 +17,9 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	tmtypes "github.com/tendermint/tendermint/types"
 
+	gaiaApp "github.com/cosmos/cosmos-sdk/cmd/gaia/init"
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/tendermint/tendermint/cmd/tendermint/commands"
 )
 
 func main() {
@@ -57,7 +57,7 @@ func main() {
 		server.AppExporter(exportAppStateAndTMValidators),
 	)
 
-	rootCmd.AddCommand(commands.InitFilesCmd)
+	rootCmd.AddCommand(gaiaApp.InitCmd(ctx, cdc, server.DefaultAppInit))
 
 	// prepare and add flags
 	executor := cli.PrepareBaseCmd(rootCmd, "HD", os.ExpandEnv("$HOME/.heimdalld"))
