@@ -19,6 +19,7 @@ import (
 
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/tendermint/tendermint/cmd/tendermint/commands"
 )
 
 func main() {
@@ -46,7 +47,6 @@ func main() {
 
 	// add custom root command
 	rootCmd.AddCommand(newAccountCmd())
-
 	// cosmos server commands
 	server.AddCommands(
 		ctx,
@@ -57,6 +57,7 @@ func main() {
 		server.AppExporter(exportAppStateAndTMValidators),
 	)
 
+	rootCmd.AddCommand(commands.InitFilesCmd)
 
 	// prepare and add flags
 	executor := cli.PrepareBaseCmd(rootCmd, "HD", os.ExpandEnv("$HOME/.heimdalld"))
