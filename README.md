@@ -29,12 +29,14 @@ $ make run-heimdall
 Create and run docker container with mounted directory -
 
 ```bash
-$ docker run --name matic-heimdall -it -P \
-		-v ~/.heimdalld:/root/.heimdalld \
-		-v `pwd`/logs:/go/src/github.com/maticnetwork/heimdall/logs \
-    -d \
-		"maticnetwork/heimdall"
+$ docker run --name matic-heimdall -P -it \
+    -v ~/.heimdalld:/root/.heimdalld \
+    -v (pwd)/logs:/go/src/github.com/maticnetwork/heimdall/logs \
+    "maticnetwork/heimdall:<tag-name>" \
+    bash
 ```
+
+Note: Do not forget to replace `<tag-name>` with actual tag-name.
 
 **Initialize heimdall**
 
@@ -65,7 +67,7 @@ Create `~/.heimdalld/config/heimdall-config.json` directory with following conte
 You can check your address and public key with following command:
 
 ```bash
-<docker-container>$ make show-account-heimdall
+$ docker exec -it matic-heimdall sh -c "make show-account-heimdall"
 ```
 
 **Start heimdall**
@@ -73,7 +75,7 @@ You can check your address and public key with following command:
 Start heimdall from Docker container
 
 ```bash
-<docker-container>$ $ make start-all
+$ docker exec -it matic-heimdall sh -c "make start-all"
 ```
 
 ### Propose new checkpoint
