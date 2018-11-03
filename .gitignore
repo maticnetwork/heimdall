@@ -1,5 +1,7 @@
 # ignore vendor
 vendor/
+vendor/github.com/ethereum/go-ethereum
+vendor/github.com/tendermint/iavl
 
 # ignore build
 build
@@ -7,3 +9,4 @@ logs
 *.log
 
 .idea
+.vscode
