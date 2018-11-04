@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/rlp"
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
@@ -16,10 +16,16 @@ import (
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
+	"os"
 )
 
 const (
 	AppName = "Heimdall"
+)
+
+var (
+	DefaultCLIHome  = os.ExpandEnv("$HOME/.gaiacli")
+	DefaultNodeHome = os.ExpandEnv("$HOME/.gaiad")
 )
 
 type HeimdallApp struct {
@@ -60,7 +66,6 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.SetInitChainer(app.initChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
 	app.SetEndBlocker(app.EndBlocker)
-
 
 	// mount the multistore and load the latest state
 	app.MountStoresIAVL(app.keyMain, app.keyCheckpoint, app.keyStaker)
@@ -154,7 +159,6 @@ func getExtraData(_checkpoint checkpoint.CheckpointBlockHeader, ctx sdk.Context)
 	return txBytes
 }
 
-
 func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	return abci.ResponseInitChain{}
 }
@@ -162,7 +166,6 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 func (app *HeimdallApp) ExportAppStateAndValidators() (appState json.RawMessage, validators []tmtypes.GenesisValidator, err error) {
 	return appState, validators, err
 }
-
 
 // RLP decodes the txBytes to a BaseTx
 func RLPTxDecoder() sdk.TxDecoder {
@@ -175,7 +178,6 @@ func RLPTxDecoder() sdk.TxDecoder {
 		}
 
 		return tx, nil
-
 
 	}
 }

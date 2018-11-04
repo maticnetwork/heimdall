@@ -17,9 +17,34 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	tmtypes "github.com/tendermint/tendermint/types"
 
-	gaiaApp "github.com/cosmos/cosmos-sdk/cmd/gaia/init"
+	//"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/helper"
+	cfg "github.com/tendermint/tendermint/config"
+	//tmcli "github.com/tendermint/tendermint/libs/cli"
+	//"github.com/tendermint/tendermint/p2p"
+	//"path/filepath"
+
+	//"github.com/cosmos/cosmos-sdk/cmd/gaia/init"
+	gaiaAppInit "github.com/cosmos/cosmos-sdk/cmd/gaia/init"
+	//"github.com/cosmos/cosmos-sdk/x/auth"
+	//"github.com/tendermint/tendermint/crypto"
+	//cmn "github.com/tendermint/tendermint/libs/common"
+	//"io/ioutil"
+	//"path"
+	//"sort"
+	"github.com/cosmos/cosmos-sdk/client"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"path/filepath"
+
+	"errors"
+	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/libs/common"
+	"io/ioutil"
+	"sort"
+	"strings"
 )
 
 func main() {
@@ -57,7 +82,7 @@ func main() {
 		server.AppExporter(exportAppStateAndTMValidators),
 	)
 
-	rootCmd.AddCommand(gaiaApp.InitCmd(ctx, cdc, server.DefaultAppInit))
+	rootCmd.AddCommand(InitCmd(ctx, cdc, DefaultAppInit))
 
 	// prepare and add flags
 	executor := cli.PrepareBaseCmd(rootCmd, "HD", os.ExpandEnv("$HOME/.heimdalld"))
@@ -114,4 +139,321 @@ func newAccountCmd() *cobra.Command {
 			fmt.Printf("%s", string(b))
 		},
 	}
+}
+
+const (
+	flagWithTxs      = "with-txs"
+	flagOverwrite    = "overwrite"
+	flagClientHome   = "home-client"
+	flagOverwriteKey = "overwrite-key"
+	flagSkipGenesis  = "skip-genesis"
+	flagMoniker      = "moniker"
+)
+
+type initConfig struct {
+	ChainID      string
+	GenTxsDir    string
+	Name         string
+	NodeID       string
+	ClientHome   string
+	WithTxs      bool
+	Overwrite    bool
+	OverwriteKey bool
+	ValPubKey    crypto.PubKey
+}
+
+type printInfo struct {
+	Moniker    string          `json:"moniker"`
+	ChainID    string          `json:"chain_id"`
+	NodeID     string          `json:"node_id"`
+	AppMessage json.RawMessage `json:"app_message"`
+}
+
+func displayInfo(cdc *codec.Codec, info printInfo) error {
+	out, err := codec.MarshalJSONIndent(cdc, info)
+	if err != nil {
+		return err
+	}
+	fmt.Fprintf(os.Stderr, "%s\n", string(out))
+	return nil
+}
+
+// get cmd to initialize all files for tendermint and application
+// nolint
+func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit AppInit) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "init",
+		Short: "Initialize private validator, p2p, genesis, and application configuration files",
+		Long: `Initialize validators's and node's configuration files.
+
+Note that only node's configuration files will be written if the flag --skip-genesis is
+enabled, and the genesis file will not be generated.
+`,
+		Args: cobra.NoArgs,
+		RunE: func(_ *cobra.Command, _ []string) error {
+			config := ctx.Config
+			config.SetRoot(viper.GetString(cli.HomeFlag))
+
+			name := viper.GetString(client.FlagName)
+			chainID := viper.GetString(client.FlagChainID)
+			if chainID == "" {
+				chainID = fmt.Sprintf("test-chain-%v", common.RandStr(6))
+			}
+			nodeID, valPubKey, err := gaiaAppInit.InitializeNodeValidatorFiles(config)
+			if err != nil {
+				return err
+			}
+
+			if viper.GetString(flagMoniker) != "" {
+				config.Moniker = viper.GetString(flagMoniker)
+			}
+			if config.Moniker == "" && name != "" {
+				config.Moniker = name
+			}
+			toPrint := printInfo{
+				ChainID: chainID,
+				Moniker: config.Moniker,
+				NodeID:  nodeID,
+			}
+			if viper.GetBool(flagSkipGenesis) {
+				cfg.WriteConfigFile(filepath.Join(config.RootDir, "config", "config.toml"), config)
+				return displayInfo(cdc, toPrint)
+			}
+
+			initCfg := initConfig{
+				ChainID:      chainID,
+				GenTxsDir:    filepath.Join(config.RootDir, "config", "gentx"),
+				Name:         name,
+				NodeID:       nodeID,
+				ClientHome:   viper.GetString(flagClientHome),
+				WithTxs:      viper.GetBool(flagWithTxs),
+				Overwrite:    viper.GetBool(flagOverwrite),
+				OverwriteKey: viper.GetBool(flagOverwriteKey),
+				ValPubKey:    valPubKey,
+			}
+			appMessage, err := initWithConfig(cdc, config, initCfg, appInit)
+			// print out some key information
+			if err != nil {
+				return err
+			}
+
+			toPrint.AppMessage = appMessage
+			return displayInfo(cdc, toPrint)
+		},
+	}
+
+	cmd.Flags().String(cli.HomeFlag, app.DefaultNodeHome, "node's home directory")
+	cmd.Flags().BoolP(flagOverwrite, "o", false, "overwrite the genesis.json file")
+	cmd.Flags().String(client.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
+	cmd.Flags().Bool(flagWithTxs, false, "apply existing genesis transactions from [--home]/config/gentx/")
+	cmd.Flags().String(client.FlagName, "", "name of private key with which to sign the gentx")
+	cmd.Flags().String(flagMoniker, "", "overrides --name flag and set the validator's moniker to a different value; ignored if it runs without the --with-txs flag")
+	cmd.Flags().String(flagClientHome, app.DefaultCLIHome, "client's home directory")
+	cmd.Flags().Bool(flagOverwriteKey, false, "overwrite client's key")
+	cmd.Flags().Bool(flagSkipGenesis, false, "do not create genesis.json")
+	return cmd
+}
+
+func initWithConfig(cdc *codec.Codec, config *cfg.Config, initCfg initConfig, appInit AppInit) (
+	appMessage json.RawMessage, err error) {
+	genFile := config.GenesisFile()
+	if !initCfg.Overwrite && common.FileExists(genFile) {
+		err = fmt.Errorf("genesis.json file already exists: %v", genFile)
+		return
+	}
+
+	// process genesis transactions, else create default genesis.json
+	var appGenTxs []auth.StdTx
+	var persistentPeers string
+	var genTxs []json.RawMessage
+	var appState json.RawMessage
+	var jsonRawTx json.RawMessage
+	chainID := initCfg.ChainID
+
+	if initCfg.WithTxs {
+		_, appGenTxs, persistentPeers, err = CollectStdTxs(config.Moniker, initCfg.GenTxsDir, cdc)
+		if err != nil {
+			return
+		}
+		genTxs = make([]json.RawMessage, len(appGenTxs))
+		config.P2P.PersistentPeers = persistentPeers
+		for i, stdTx := range appGenTxs {
+			jsonRawTx, err = cdc.MarshalJSON(stdTx)
+			if err != nil {
+				return
+			}
+			genTxs[i] = jsonRawTx
+		}
+	} else {
+		var keyPass, secret string
+		//var addr sdk.AccAddress
+		//var signedTx auth.StdTx
+		//var ip string
+
+		if initCfg.Name == "" {
+			err = errors.New("must specify validator's moniker (--name)")
+			return
+		}
+
+		config.Moniker = initCfg.Name
+		//ip, err = server.ExternalIP()
+		//if err != nil {
+		//	return
+		//}
+		//memo := fmt.Sprintf("%s@%s:26656", initCfg.NodeID, ip)
+		buf := client.BufferStdin()
+		prompt := fmt.Sprintf("Password for account %q (default: %q):", initCfg.Name, "12345678")
+		keyPass, err = client.GetPassword(prompt, buf)
+		if err != nil && keyPass != "" {
+			// An error was returned that either failed to read the password from
+			// STDIN or the given password is not empty but failed to meet minimum
+			// length requirements.
+			return
+		}
+		if keyPass == "" {
+			keyPass = "12345678"
+		}
+
+		_, secret, err = server.GenerateSaveCoinKey(initCfg.ClientHome, initCfg.Name, keyPass, initCfg.OverwriteKey)
+		if err != nil {
+			return
+		}
+		appMessage, err = json.Marshal(map[string]string{"secret": secret})
+		if err != nil {
+			return
+		}
+		// add to matic validator set
+		//msg := stake.NewMsgCreateValidator(
+		//	sdk.ValAddress(addr),
+		//	initCfg.ValPubKey,
+		//	sdk.NewInt64Coin("steak", 100),
+		//	stake.NewDescription(config.Moniker, "", "", ""),
+		//	stake.NewCommissionMsg(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
+		//)
+
+		//txBldr := authtx.NewTxBuilderFromCLI().WithCodec(cdc).WithMemo(memo).WithChainID(chainID)
+		//signedTx, err = txBldr.SignStdTx(
+		//	initCfg.Name, keyPass, auth.NewStdTx([]sdk.Msg{msg}, auth.StdFee{}, []auth.StdSignature{}, memo), false,
+		//)
+		//if err != nil {
+		//	return
+		//}
+		//jsonRawTx, err = cdc.MarshalJSON(signedTx)
+		//if err != nil {
+		//	return
+		//}
+		//genTxs = []json.RawMessage{jsonRawTx}
+
+	}
+
+	cfg.WriteConfigFile(filepath.Join(config.RootDir, "config", "config.toml"), config)
+	appState, err = appInit.AppGenState(cdc, genTxs)
+	if err != nil {
+		return
+	}
+
+	err = gaiaAppInit.WriteGenesisFile(genFile, chainID, nil, appState)
+
+	return
+}
+
+// CollectStdTxs processes and validates application's genesis StdTxs and returns the list of validators,
+// appGenTxs, and persistent peers required to generate genesis.json.
+func CollectStdTxs(moniker string, genTxsDir string, cdc *codec.Codec) (
+	validators []tmtypes.GenesisValidator, appGenTxs []auth.StdTx, persistentPeers string, err error) {
+	var fos []os.FileInfo
+	fos, err = ioutil.ReadDir(genTxsDir)
+	if err != nil {
+		return
+	}
+
+	var addresses []string
+	for _, fo := range fos {
+		filename := filepath.Join(genTxsDir, fo.Name())
+		if !fo.IsDir() && (filepath.Ext(filename) != ".json") {
+			continue
+		}
+
+		// get the genStdTx
+		var jsonRawTx []byte
+		jsonRawTx, err = ioutil.ReadFile(filename)
+		if err != nil {
+			return
+		}
+		var genStdTx auth.StdTx
+		err = cdc.UnmarshalJSON(jsonRawTx, &genStdTx)
+		if err != nil {
+			return
+		}
+		appGenTxs = append(appGenTxs, genStdTx)
+
+		nodeAddr := genStdTx.GetMemo()
+		if len(nodeAddr) == 0 {
+			err = fmt.Errorf("couldn't find node's address in %s", fo.Name())
+			return
+		}
+
+		msgs := genStdTx.GetMsgs()
+		if len(msgs) != 1 {
+			err = errors.New("each genesis transaction must provide a single genesis message")
+			return
+		}
+
+		// TODO: this could be decoupled from stake.MsgCreateValidator
+		// TODO: and we likely want to do it for real world Gaia
+		//msg := msgs[0].(stake.MsgCreateValidator)
+		//validators = append(validators, tmtypes.GenesisValidator{
+		//	PubKey: msg.PubKey,
+		//	Power:  freeFermionVal,
+		//	Name:   msg.Description.Moniker,
+		//})
+		//
+		//// exclude itself from persistent peers
+		//if msg.Description.Moniker != moniker {
+		//	addresses = append(addresses, nodeAddr)
+		//}
+	}
+
+	sort.Strings(addresses)
+	persistentPeers = strings.Join(addresses, ",")
+
+	return
+}
+
+// SimpleGenTx is a simple genesis tx
+type SimpleGenTx struct {
+	Addr sdk.AccAddress `json:"addr"`
+}
+
+// create the genesis app state
+func SimpleAppGenState(cdc *codec.Codec, appGenTxs []json.RawMessage) (appState json.RawMessage, err error) {
+
+	var tx SimpleGenTx
+	//err = cdc.UnmarshalJSON(appGenTxs[0], &tx)
+	//if err != nil {
+	//	return
+	//}
+
+	appState = json.RawMessage(fmt.Sprintf(`{
+  "accounts": [{
+    "address": "%s",
+    "coins": [
+      {
+        "denom": "mycoin",
+        "amount": "9007199254740992"
+      }
+    ]
+  }]
+}`, tx.Addr))
+	return
+}
+
+var DefaultAppInit = AppInit{
+	AppGenState: SimpleAppGenState,
+}
+
+type AppInit struct {
+	// AppGenState creates the core parameters initialization. It takes in a
+	// pubkey meant to represent the pubkey of the validator of this machine.
+	AppGenState func(cdc *codec.Codec, appGenTx []json.RawMessage) (appState json.RawMessage, err error)
 }
