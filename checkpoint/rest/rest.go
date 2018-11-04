@@ -9,8 +9,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	cryptoKeys "github.com/cosmos/cosmos-sdk/crypto/keys"
 	"github.com/cosmos/cosmos-sdk/codec"
+	cryptoKeys "github.com/cosmos/cosmos-sdk/crypto/keys"
 	auth "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/client/rest"
 	gov "github.com/cosmos/cosmos-sdk/x/gov/client/rest"
@@ -101,7 +101,7 @@ func createHandler(cdc *codec.Codec) http.Handler {
 	//r.HandleFunc("/version", CLIVersionRequestHandler).Methods("GET")
 	//r.HandleFunc("/node_version", NodeVersionRequestHandler(cliCtx)).Methods("GET")
 
-	keys.RegisterRoutes(r,true)
+	keys.RegisterRoutes(r, true)
 	rpc.RegisterRoutes(cliCtx, r)
 	tx.RegisterRoutes(cliCtx, r, cdc)
 	auth.RegisterRoutes(cliCtx, r, cdc, "acc")

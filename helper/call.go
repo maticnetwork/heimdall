@@ -1,11 +1,11 @@
 package helper
 
 import (
-	abci "github.com/tendermint/tendermint/abci/types"
-	"math/big"
 	"encoding/hex"
+	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	tmtypes "github.com/tendermint/tendermint/types"
+	"math/big"
 )
 
 func GetValidators() (validators []abci.ValidatorUpdate) {
@@ -25,14 +25,13 @@ func GetValidators() (validators []abci.ValidatorUpdate) {
 			Logger.Error("Error getting pubkey for index", "error", err)
 		}
 
-
 		var pubkeyBytes secp256k1.PubKeySecp256k1
 		_pubkey, _ := hex.DecodeString(pubkey)
 		copy(pubkeyBytes[:], _pubkey)
 		// todo use new valiator update here
 		validator := abci.ValidatorUpdate{
-			Power:   powers[index].Int64(),
-			PubKey:  tmtypes.TM2PB.PubKey(pubkeyBytes),
+			Power:  powers[index].Int64(),
+			PubKey: tmtypes.TM2PB.PubKey(pubkeyBytes),
 		}
 
 		validators = append(validators, validator)
