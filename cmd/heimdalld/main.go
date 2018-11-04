@@ -231,24 +231,24 @@ enabled, and the genesis file will not be generated.
 				OverwriteKey: viper.GetBool(flagOverwriteKey),
 				ValPubKey:    valPubKey,
 			}
-			appMessage, err := initWithConfig(cdc, config, initCfg, appInit)
+			_, err = initWithConfig(cdc, config, initCfg, appInit)
 			// print out some key information
 			if err != nil {
 				return err
 			}
 
-			toPrint.AppMessage = appMessage
+			//toPrint.AppMessage = json.Marshal("")
 			return displayInfo(cdc, toPrint)
 		},
 	}
 
-	cmd.Flags().String(cli.HomeFlag, app.DefaultNodeHome, "node's home directory")
+	cmd.Flags().String(cli.HomeFlag, helper.DefaultNodeHome, "node's home directory")
 	cmd.Flags().BoolP(flagOverwrite, "o", false, "overwrite the genesis.json file")
 	cmd.Flags().String(client.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
 	cmd.Flags().Bool(flagWithTxs, false, "apply existing genesis transactions from [--home]/config/gentx/")
 	cmd.Flags().String(client.FlagName, "", "name of private key with which to sign the gentx")
 	cmd.Flags().String(flagMoniker, "", "overrides --name flag and set the validator's moniker to a different value; ignored if it runs without the --with-txs flag")
-	cmd.Flags().String(flagClientHome, app.DefaultCLIHome, "client's home directory")
+	cmd.Flags().String(flagClientHome, helper.DefaultCLIHome, "client's home directory")
 	cmd.Flags().Bool(flagOverwriteKey, false, "overwrite client's key")
 	cmd.Flags().Bool(flagSkipGenesis, false, "do not create genesis.json")
 	return cmd
@@ -285,7 +285,7 @@ func initWithConfig(cdc *codec.Codec, config *cfg.Config, initCfg initConfig, ap
 			genTxs[i] = jsonRawTx
 		}
 	} else {
-		var keyPass, secret string
+		//var keyPass, secret string
 		//var addr sdk.AccAddress
 		//var signedTx auth.StdTx
 		//var ip string
@@ -301,27 +301,29 @@ func initWithConfig(cdc *codec.Codec, config *cfg.Config, initCfg initConfig, ap
 		//	return
 		//}
 		//memo := fmt.Sprintf("%s@%s:26656", initCfg.NodeID, ip)
-		buf := client.BufferStdin()
-		prompt := fmt.Sprintf("Password for account %q (default: %q):", initCfg.Name, "12345678")
-		keyPass, err = client.GetPassword(prompt, buf)
-		if err != nil && keyPass != "" {
-			// An error was returned that either failed to read the password from
-			// STDIN or the given password is not empty but failed to meet minimum
-			// length requirements.
-			return
-		}
-		if keyPass == "" {
-			keyPass = "12345678"
-		}
 
-		_, secret, err = server.GenerateSaveCoinKey(initCfg.ClientHome, initCfg.Name, keyPass, initCfg.OverwriteKey)
-		if err != nil {
-			return
-		}
-		appMessage, err = json.Marshal(map[string]string{"secret": secret})
-		if err != nil {
-			return
-		}
+		//buf := client.BufferStdin()
+		//prompt := fmt.Sprintf("Password for account %q (default: %q):", initCfg.Name, "12345678")
+		//keyPass, err = client.GetPassword(prompt, buf)
+		//if err != nil && keyPass != "" {
+		//	// An error was returned that either failed to read the password from
+		//	// STDIN or the given password is not empty but failed to meet minimum
+		//	// length requirements.
+		//	return
+		//}
+		//if keyPass == "" {
+		//	keyPass = "12345678"
+		//}
+		//
+		//_, secret, err = server.GenerateSaveCoinKey(initCfg.ClientHome, initCfg.Name, keyPass, initCfg.OverwriteKey)
+		//if err != nil {
+		//	return
+		//}
+		//appMessage, err = json.Marshal(map[string]string{"secret": secret})
+		//if err != nil {
+		//	return
+		//}
+
 		// add to matic validator set
 		//msg := stake.NewMsgCreateValidator(
 		//	sdk.ValAddress(addr),
@@ -439,8 +441,7 @@ func SimpleAppGenState(cdc *codec.Codec, appGenTxs []json.RawMessage) (appState 
     "address": "%s",
     "coins": [
       {
-        "denom": "mycoin",
-        "amount": "9007199254740992"
+        
       }
     ]
   }]

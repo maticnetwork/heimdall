@@ -26,6 +26,11 @@ const (
 	HomeFlag               = "home"
 )
 
+var (
+	DefaultCLIHome  = os.ExpandEnv("$HOME/.heimdallcli")
+	DefaultNodeHome = os.ExpandEnv("$HOME/.heimdalld")
+)
+
 func init() {
 	cdc.RegisterConcrete(secp256k1.PubKeySecp256k1{}, secp256k1.PubKeyAminoRoute, nil)
 	cdc.RegisterConcrete(secp256k1.PrivKeySecp256k1{}, secp256k1.PrivKeyAminoRoute, nil)

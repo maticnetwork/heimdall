@@ -16,16 +16,10 @@ import (
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
-	"os"
 )
 
 const (
 	AppName = "Heimdall"
-)
-
-var (
-	DefaultCLIHome  = os.ExpandEnv("$HOME/.gaiacli")
-	DefaultNodeHome = os.ExpandEnv("$HOME/.gaiad")
 )
 
 type HeimdallApp struct {
