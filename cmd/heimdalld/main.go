@@ -296,55 +296,6 @@ func initWithConfig(cdc *codec.Codec, config *cfg.Config, initCfg initConfig, ap
 		}
 
 		config.Moniker = initCfg.Name
-		//ip, err = server.ExternalIP()
-		//if err != nil {
-		//	return
-		//}
-		//memo := fmt.Sprintf("%s@%s:26656", initCfg.NodeID, ip)
-
-		//buf := client.BufferStdin()
-		//prompt := fmt.Sprintf("Password for account %q (default: %q):", initCfg.Name, "12345678")
-		//keyPass, err = client.GetPassword(prompt, buf)
-		//if err != nil && keyPass != "" {
-		//	// An error was returned that either failed to read the password from
-		//	// STDIN or the given password is not empty but failed to meet minimum
-		//	// length requirements.
-		//	return
-		//}
-		//if keyPass == "" {
-		//	keyPass = "12345678"
-		//}
-		//
-		//_, secret, err = server.GenerateSaveCoinKey(initCfg.ClientHome, initCfg.Name, keyPass, initCfg.OverwriteKey)
-		//if err != nil {
-		//	return
-		//}
-		//appMessage, err = json.Marshal(map[string]string{"secret": secret})
-		//if err != nil {
-		//	return
-		//}
-
-		// add to matic validator set
-		//msg := stake.NewMsgCreateValidator(
-		//	sdk.ValAddress(addr),
-		//	initCfg.ValPubKey,
-		//	sdk.NewInt64Coin("steak", 100),
-		//	stake.NewDescription(config.Moniker, "", "", ""),
-		//	stake.NewCommissionMsg(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
-		//)
-
-		//txBldr := authtx.NewTxBuilderFromCLI().WithCodec(cdc).WithMemo(memo).WithChainID(chainID)
-		//signedTx, err = txBldr.SignStdTx(
-		//	initCfg.Name, keyPass, auth.NewStdTx([]sdk.Msg{msg}, auth.StdFee{}, []auth.StdSignature{}, memo), false,
-		//)
-		//if err != nil {
-		//	return
-		//}
-		//jsonRawTx, err = cdc.MarshalJSON(signedTx)
-		//if err != nil {
-		//	return
-		//}
-		//genTxs = []json.RawMessage{jsonRawTx}
 
 	}
 
@@ -401,8 +352,6 @@ func CollectStdTxs(moniker string, genTxsDir string, cdc *codec.Codec) (
 			return
 		}
 
-		// TODO: this could be decoupled from stake.MsgCreateValidator
-		// TODO: and we likely want to do it for real world Gaia
 		//msg := msgs[0].(stake.MsgCreateValidator)
 		//validators = append(validators, tmtypes.GenesisValidator{
 		//	PubKey: msg.PubKey,
