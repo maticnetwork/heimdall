@@ -85,7 +85,6 @@ func createHandler(cdc *codec.Codec) http.Handler {
 
 	cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-
 	keys.RegisterRoutes(r, true)
 	rpc.RegisterRoutes(cliCtx, r)
 	tx.RegisterRoutes(cliCtx, r, cdc)

@@ -4,39 +4,24 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"io"
-	"os"
-
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/client"
+	gaiaInit "github.com/cosmos/cosmos-sdk/cmd/gaia/init"
+	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
+	"github.com/maticnetwork/heimdall/app"
+	"github.com/maticnetwork/heimdall/helper"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/cli"
+	"github.com/tendermint/tendermint/libs/common"
 	dbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
-	tmtypes "github.com/tendermint/tendermint/types"
-
-	//"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/maticnetwork/heimdall/app"
-	"github.com/maticnetwork/heimdall/helper"
-	//tmcli "github.com/tendermint/tendermint/libs/cli"
-	//"github.com/tendermint/tendermint/p2p"
-	//"path/filepath"
-
-
-	//"github.com/cosmos/cosmos-sdk/x/auth"
-	//"github.com/tendermint/tendermint/crypto"
-	//cmn "github.com/tendermint/tendermint/libs/common"
-	//"io/ioutil"
-	//"path"
-	//"sort"
-	"github.com/cosmos/cosmos-sdk/client"
-	gaiaInit "github.com/cosmos/cosmos-sdk/cmd/gaia/init"
-
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/p2p"
+	tmtypes "github.com/tendermint/tendermint/types"
+	"io"
+	"os"
 )
 
 func main() {
@@ -133,8 +118,9 @@ func newAccountCmd() *cobra.Command {
 }
 
 const (
-	flagClientHome   = "home-client"
+	flagClientHome = "home-client"
 )
+
 // get cmd to initialize all files for tendermint and application
 // nolint: errcheck
 func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cobra.Command {
@@ -197,4 +183,3 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cob
 	cmd.MarkFlagRequired(client.FlagName)
 	return cmd
 }
-
