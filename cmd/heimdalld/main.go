@@ -173,7 +173,6 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cob
 				fmt.Errorf("Error writing heimdall-config %s\n", err)
 			}
 
-			//common.WriteFile(filepath.Join(config.RootDir,"config/heimdall-config.json"), heimdallConfBytes, 0644)
 			toPrint := struct {
 				ChainID    string          `json:"chain_id"`
 				NodeID     string          `json:"node_id"`
