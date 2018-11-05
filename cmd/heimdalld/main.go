@@ -118,8 +118,6 @@ func newAccountCmd() *cobra.Command {
 	}
 }
 
-
-
 // get cmd to initialize all files for tendermint and application
 // nolint: errcheck
 func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cobra.Command {
@@ -144,7 +142,6 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cob
 
 			pk := gaiaInit.ReadOrCreatePrivValidator(config.PrivValidatorFile())
 
-
 			// TODO pull validator from main chain and add to genesis
 			genTx, appMessage, validator, err := server.SimpleAppGenTx(cdc, pk)
 			if err != nil {
@@ -160,20 +157,20 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cob
 				return err
 			}
 
-			heimdallConf :=helper.Configuration{
-				MainRPCUrl: "https://kovan.infura.io",
-				MaticRPCUrl: "https://testnet.matic.network",
+			heimdallConf := helper.Configuration{
+				MainRPCUrl:  helper.MainRPCUrl,
+				MaticRPCUrl: helper.MaticRPCUrl,
 
 				StakeManagerAddress: "",
-				RootchainAddress: "",
+				RootchainAddress:    "",
 			}
 
 			heimdallConfBytes, err := cdc.MarshalJSONIndent(heimdallConf, "", "  ")
 			if err != nil {
 				return err
 			}
-			if err:=common.WriteFile(filepath.Join(config.RootDir,"config/heimdall-config.json"), heimdallConfBytes, 0644); err!=nil{
-				fmt.Errorf("Error writing heimdall-config %s\n",err)
+			if err := common.WriteFile(filepath.Join(config.RootDir, "config/heimdall-config.json"), heimdallConfBytes, 0644); err != nil {
+				fmt.Errorf("Error writing heimdall-config %s\n", err)
 			}
 
 			//common.WriteFile(filepath.Join(config.RootDir,"config/heimdall-config.json"), heimdallConfBytes, 0644)

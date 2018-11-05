@@ -24,7 +24,9 @@ const (
 	NodeFlag               = "node"
 	WithHeimdallConfigFlag = "with-heimdall-config"
 	HomeFlag               = "home"
-	FlagClientHome = "home-client"
+	FlagClientHome         = "home-client"
+	MainRPCUrl             = "https://kovan.infura.io"
+	MaticRPCUrl            = "https://testnet.matic.network"
 )
 
 var (
