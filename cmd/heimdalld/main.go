@@ -117,9 +117,7 @@ func newAccountCmd() *cobra.Command {
 	}
 }
 
-const (
-	flagClientHome = "home-client"
-)
+
 
 // get cmd to initialize all files for tendermint and application
 // nolint: errcheck
@@ -134,7 +132,7 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cob
 			config.SetRoot(viper.GetString(cli.HomeFlag))
 			chainID := viper.GetString(client.FlagChainID)
 			if chainID == "" {
-				chainID = fmt.Sprintf("test-chain-%v", common.RandStr(6))
+				chainID = fmt.Sprintf("heimdall-%v", common.RandStr(6))
 			}
 
 			nodeKey, err := p2p.LoadOrGenNodeKey(config.NodeKeyFile())
@@ -144,6 +142,8 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cob
 			nodeID := string(nodeKey.ID())
 
 			pk := gaiaInit.ReadOrCreatePrivValidator(config.PrivValidatorFile())
+
+			// TODO pull validator from main chain and add to genesis
 			genTx, appMessage, validator, err := server.SimpleAppGenTx(cdc, pk)
 			if err != nil {
 				return err
@@ -177,9 +177,8 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cob
 	}
 
 	cmd.Flags().String(cli.HomeFlag, helper.DefaultNodeHome, "node's home directory")
-	cmd.Flags().String(flagClientHome, helper.DefaultCLIHome, "client's home directory")
+	cmd.Flags().String(helper.FlagClientHome, helper.DefaultCLIHome, "client's home directory")
 	cmd.Flags().String(client.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
 	cmd.Flags().String(client.FlagName, "", "validator's moniker")
-	cmd.MarkFlagRequired(client.FlagName)
 	return cmd
 }

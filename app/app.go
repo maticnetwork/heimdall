@@ -107,7 +107,7 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 			logger.Error("Unable to unmarshall checkpoint", "error", err)
 		}
 
-		// Get extra data
+		// Get extra data3
 		extraData := getExtraData(_checkpoint, ctx)
 
 		logger.Debug("Validating last block from main chain", "lastBlock", helper.GetLastBlock(), "startBlock", _checkpoint.StartBlock)
