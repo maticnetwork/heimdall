@@ -34,6 +34,8 @@ import (
 	//"path"
 	//"sort"
 	"github.com/cosmos/cosmos-sdk/client"
+	gaiaInit "github.com/cosmos/cosmos-sdk/cmd/gaia/init"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"path/filepath"
 
@@ -45,6 +47,7 @@ import (
 	"io/ioutil"
 	"sort"
 	"strings"
+	"github.com/tendermint/tendermint/p2p"
 )
 
 func main() {
@@ -82,8 +85,8 @@ func main() {
 		server.AppExporter(exportAppStateAndTMValidators),
 	)
 
-	rootCmd.AddCommand(InitCmd(ctx, cdc, DefaultAppInit))
-
+	//rootCmd.AddCommand(InitCmd(ctx, cdc, DefaultAppInit))
+	rootCmd.AddCommand(InitBasecoinCmd(ctx, cdc, server.DefaultAppInit))
 	// prepare and add flags
 	executor := cli.PrepareBaseCmd(rootCmd, "HD", os.ExpandEnv("$HOME/.heimdalld"))
 	err := executor.Execute()
@@ -253,6 +256,71 @@ enabled, and the genesis file will not be generated.
 	cmd.Flags().Bool(flagSkipGenesis, false, "do not create genesis.json")
 	return cmd
 }
+
+
+// get cmd to initialize all files for tendermint and application
+// nolint: errcheck
+func InitBasecoinCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "init",
+		Short: "Initialize genesis config, priv-validator file, and p2p-node file",
+		Args:  cobra.NoArgs,
+		RunE: func(_ *cobra.Command, _ []string) error {
+
+			config := ctx.Config
+			config.SetRoot(viper.GetString(cli.HomeFlag))
+			chainID := viper.GetString(client.FlagChainID)
+			if chainID == "" {
+				chainID = fmt.Sprintf("test-chain-%v", common.RandStr(6))
+			}
+
+			nodeKey, err := p2p.LoadOrGenNodeKey(config.NodeKeyFile())
+			if err != nil {
+				return err
+			}
+			nodeID := string(nodeKey.ID())
+
+			pk := gaiaInit.ReadOrCreatePrivValidator(config.PrivValidatorFile())
+			genTx, appMessage, validator, err := server.SimpleAppGenTx(cdc, pk)
+			if err != nil {
+				return err
+			}
+
+			appState, err := appInit.AppGenState(cdc, []json.RawMessage{genTx})
+			if err != nil {
+				return err
+			}
+			appStateJSON, err := cdc.MarshalJSON(appState)
+			if err != nil {
+				return err
+			}
+
+			toPrint := struct {
+				ChainID    string          `json:"chain_id"`
+				NodeID     string          `json:"node_id"`
+				AppMessage json.RawMessage `json:"app_message"`
+			}{
+				chainID,
+				nodeID,
+				appMessage,
+			}
+			out, err := codec.MarshalJSONIndent(cdc, toPrint)
+			if err != nil {
+				return err
+			}
+			fmt.Fprintf(os.Stderr, "%s\n", string(out))
+			return gaiaInit.WriteGenesisFile(config.GenesisFile(), chainID, []tmtypes.GenesisValidator{validator}, appStateJSON)
+		},
+	}
+
+	cmd.Flags().String(cli.HomeFlag, helper.DefaultNodeHome, "node's home directory")
+	cmd.Flags().String(flagClientHome, helper.DefaultCLIHome, "client's home directory")
+	cmd.Flags().String(client.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
+	cmd.Flags().String(client.FlagName, "", "validator's moniker")
+	cmd.MarkFlagRequired(client.FlagName)
+	return cmd
+}
+
 
 func initWithConfig(cdc *codec.Codec, config *cfg.Config, initCfg initConfig, appInit AppInit) (
 	appMessage json.RawMessage, err error) {
