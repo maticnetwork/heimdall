@@ -22,6 +22,7 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 	"io"
 	"os"
+	"path/filepath"
 )
 
 func main() {
@@ -143,6 +144,7 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cob
 
 			pk := gaiaInit.ReadOrCreatePrivValidator(config.PrivValidatorFile())
 
+
 			// TODO pull validator from main chain and add to genesis
 			genTx, appMessage, validator, err := server.SimpleAppGenTx(cdc, pk)
 			if err != nil {
@@ -158,6 +160,23 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cob
 				return err
 			}
 
+			heimdallConf :=helper.Configuration{
+				MainRPCUrl: "https://kovan.infura.io",
+				MaticRPCUrl: "https://testnet.matic.network",
+
+				StakeManagerAddress: "",
+				RootchainAddress: "",
+			}
+
+			heimdallConfBytes, err := cdc.MarshalJSONIndent(heimdallConf, "", "  ")
+			if err != nil {
+				return err
+			}
+			//if err:=common.WriteFile(config.RootDir+"config/heimdall-config.json", heimdallConfBytes, 0644); err!=nil{
+			//	fmt.Errorf("Error writing heimdall-config %s\n",err)
+			//}
+
+			common.WriteFile(filepath.Join(config.RootDir,"config/heimdall-config.json"), heimdallConfBytes, 0644)
 			toPrint := struct {
 				ChainID    string          `json:"chain_id"`
 				NodeID     string          `json:"node_id"`
