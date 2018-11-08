@@ -42,10 +42,10 @@ func init() {
 
 // Configuration represents heimdall config
 type Configuration struct {
-	MainRPCUrl          string `mapstructure:"main_rpcurl"`
-	MaticRPCUrl         string `mapstructure:"matic_rpcurl"`
-	StakeManagerAddress string `mapstructure:"stakemanager_address"`
-	RootchainAddress    string `mapstructure:"rootchain_address"`
+	MainRPCUrl          string `mapstructure:"MainRPCUrl"`
+	MaticRPCUrl         string `mapstructure:"MaticRPCUrl"`
+	StakeManagerAddress string `mapstructure:"StakeManagerAddress"`
+	RootchainAddress    string `mapstructure:"RootchainAddress"`
 }
 
 var conf Configuration
@@ -108,7 +108,6 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 	}
 
 	rpc.Dial(conf.MainRPCUrl)
-
 	// setup eth client
 	if mainChainClient, err = ethclient.Dial(conf.MainRPCUrl); err != nil {
 		Logger.Error("Error while creating main chain client", "error", err)

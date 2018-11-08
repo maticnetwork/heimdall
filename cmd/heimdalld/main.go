@@ -157,6 +157,7 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cob
 				return err
 			}
 
+
 			heimdallConf := helper.Configuration{
 				MainRPCUrl:  helper.MainRPCUrl,
 				MaticRPCUrl: helper.MaticRPCUrl,
