@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -48,8 +47,7 @@ func main() {
 		rootCmd.Flags().Lookup(helper.WithHeimdallConfigFlag),
 	)
 
-	// add custom root command
-	rootCmd.AddCommand(newAccountCmd())
+
 	// cosmos server commands
 	server.AddCommands(
 		ctx,
@@ -81,41 +79,6 @@ func newApp(logger log.Logger, db dbm.DB, storeTracer io.Writer) abci.Applicatio
 func exportAppStateAndTMValidators(logger log.Logger, db dbm.DB, storeTracer io.Writer) (json.RawMessage, []tmtypes.GenesisValidator, error) {
 	bapp := app.NewHeimdallApp(logger, db)
 	return bapp.ExportAppStateAndValidators()
-}
-
-func newAccountCmd() *cobra.Command {
-	type Account struct {
-		Address string `json:"address"`
-		PrivKey string `json:"private_key"`
-		PubKey  string `json:"public_key"`
-	}
-
-	return &cobra.Command{
-		Use:   "show-account",
-		Short: "Print the account's private key and public key",
-		Run: func(cmd *cobra.Command, args []string) {
-			// init heimdall config
-			helper.InitHeimdallConfig()
-
-			// get private and public keys
-			privObject := helper.GetPrivKey()
-			pubObject := helper.GetPubKey()
-
-			account := &Account{
-				Address: "0x" + hex.EncodeToString(pubObject.Address().Bytes()),
-				PrivKey: "0x" + hex.EncodeToString(privObject[:]),
-				PubKey:  "0x" + hex.EncodeToString(pubObject[:]),
-			}
-
-			b, err := json.Marshal(&account)
-			if err != nil {
-				panic(err)
-			}
-
-			// prints json info
-			fmt.Printf("%s", string(b))
-		},
-	}
 }
 
 // get cmd to initialize all files for tendermint and application
