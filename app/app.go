@@ -118,7 +118,7 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 			logger.Error("Start block does not match", "lastBlock", helper.GetLastBlock(), "startBlock", _checkpoint.StartBlock)
 			// TODO panic ?
 		}
-		validators = staking.EndBlocker(ctx,app.stakerKeeper)
+		validators = staking.EndBlocker(ctx, app.stakerKeeper)
 	}
 	// TODO move this to above ie execute when checkpoint
 	//if ctx.BlockHeight()%10 ==0 {
@@ -167,7 +167,7 @@ func (app *HeimdallApp) ExportAppStateAndValidators() (appState json.RawMessage,
 	return appState, validators, err
 }
 
-// RLP decodes the txBytes to a BaseTx
+// RLPTxDecoder decodes the txBytes to a BaseTx
 func RLPTxDecoder() sdk.TxDecoder {
 	return func(txBytes []byte) (sdk.Tx, sdk.Error) {
 		var tx = checkpoint.BaseTx{}
