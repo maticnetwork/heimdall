@@ -22,6 +22,9 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"encoding/hex"
+	checkpointRestCmds "github.com/maticnetwork/heimdall/checkpoint/rest"
+
 )
 
 func main() {
@@ -58,6 +61,9 @@ func main() {
 		server.AppExporter(exportAppStateAndTMValidators),
 	)
 
+	rootCmd.AddCommand(newAccountCmd())
+
+	rootCmd.AddCommand(checkpointRestCmds.ServeCommands(cdc))
 	rootCmd.AddCommand(InitCmd(ctx, cdc, server.DefaultAppInit))
 	// prepare and add flags
 	executor := cli.PrepareBaseCmd(rootCmd, "HD", os.ExpandEnv("$HOME/.heimdalld"))
@@ -120,21 +126,19 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cob
 				return err
 			}
 
-
 			heimdallConf := helper.Configuration{
 				MainRPCUrl:  helper.MainRPCUrl,
 				MaticRPCUrl: helper.MaticRPCUrl,
-
 				StakeManagerAddress: "",
 				RootchainAddress:    "",
 			}
-
 			heimdallConfBytes, err := cdc.MarshalJSONIndent(heimdallConf, "", "  ")
 			if err != nil {
 				return err
 			}
-			if err := common.WriteFile(filepath.Join(config.RootDir, "config/heimdall-config.json"), heimdallConfBytes, 0644); err != nil {
+			if err := common.WriteFileAtomic(filepath.Join(config.RootDir, "config/heimdall-config.json"), heimdallConfBytes, 0600); err != nil {
 				fmt.Errorf("Error writing heimdall-config %s\n", err)
+				return err
 			}
 
 			toPrint := struct {
@@ -146,10 +150,12 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cob
 				nodeID,
 				appMessage,
 			}
+
 			out, err := codec.MarshalJSONIndent(cdc, toPrint)
 			if err != nil {
 				return err
 			}
+
 			fmt.Fprintf(os.Stderr, "%s\n", string(out))
 			return gaiaInit.WriteGenesisFile(config.GenesisFile(), chainID, []tmtypes.GenesisValidator{validator}, appStateJSON)
 		},
@@ -160,4 +166,40 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cob
 	cmd.Flags().String(client.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
 	cmd.Flags().String(client.FlagName, "", "validator's moniker")
 	return cmd
+}
+
+
+func newAccountCmd() *cobra.Command {
+	type Account struct {
+		Address string `json:"address"`
+		PrivKey string `json:"private_key"`
+		PubKey  string `json:"public_key"`
+	}
+
+	return &cobra.Command{
+		Use:   "show-account",
+		Short: "Print the account's private key and public key",
+		Run: func(cmd *cobra.Command, args []string) {
+			// init heimdall config
+			helper.InitHeimdallConfig()
+
+			// get private and public keys
+			privObject := helper.GetPrivKey()
+			pubObject := helper.GetPubKey()
+
+			account := &Account{
+				Address: "0x" + hex.EncodeToString(pubObject.Address().Bytes()),
+				PrivKey: "0x" + hex.EncodeToString(privObject[:]),
+				PubKey:  "0x" + hex.EncodeToString(pubObject[:]),
+			}
+
+			b, err := json.Marshal(&account)
+			if err != nil {
+				panic(err)
+			}
+
+			// prints json info
+			fmt.Printf("%s", string(b))
+		},
+	}
 }

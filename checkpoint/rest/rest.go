@@ -28,7 +28,7 @@ func init() {
 	RestLogger = helper.Logger.With("module", "rest")
 }
 
-// RegisterRoutes registers staking-related REST handlers to a router
+// RegisterRoutes registers checkpoint-related REST handlers to a router
 func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
 	//registerQueryRoutes(cliCtx, r, cdc)
 	registerTxRoutes(cliCtx, r, cdc)
@@ -59,7 +59,7 @@ func ServeCommands(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			logger.Info("REST server started")
+			logger.Info("REST server started from here ")
 
 			// wait forever and cleanup
 			cmn.TrapSignal(func() {

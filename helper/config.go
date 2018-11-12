@@ -42,10 +42,10 @@ func init() {
 
 // Configuration represents heimdall config
 type Configuration struct {
-	MainRPCUrl          string `mapstructure:"mainRPCUrl"`
-	MaticRPCUrl         string `mapstructure:"maticRPCUrl"`
-	StakeManagerAddress string `mapstructure:"stakeManagerAddress"`
-	RootchainAddress    string `mapstructure:"rootchainAddress"`
+	MainRPCUrl          string `json:"mainRPCUrl"`
+	MaticRPCUrl         string `json:"maticRPCUrl"`
+	StakeManagerAddress string `json:"stakeManagerAddress"`
+	RootchainAddress    string `json:"rootchainAddress"`
 }
 
 var conf Configuration

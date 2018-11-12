@@ -89,7 +89,7 @@ func (app *HeimdallApp) BeginBlocker(_ sdk.Context, _ abci.RequestBeginBlock) ab
 }
 
 func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci.ResponseEndBlock {
-	validatorSet := staking.EndBlocker(ctx, app.stakerKeeper)
+	var validators []abci.ValidatorUpdate
 	// unmarshall votes from header
 	var votes []tmtypes.Vote
 	err := json.Unmarshal(ctx.BlockHeader().Votes, &votes)
@@ -118,11 +118,17 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 			logger.Error("Start block does not match", "lastBlock", helper.GetLastBlock(), "startBlock", _checkpoint.StartBlock)
 			// TODO panic ?
 		}
+		validators = staking.EndBlocker(ctx,app.stakerKeeper)
 	}
+	// TODO move this to above ie execute when checkpoint
+	//if ctx.BlockHeight()%10 ==0 {
+	//	logger.Error("Changing Validator set","Height",ctx.BlockHeight())
+	//	validators = staking.EndBlocker(ctx,app.stakerKeeper)
+	//}
 
 	// send validator updates to peppermint
 	return abci.ResponseEndBlock{
-		ValidatorUpdates: validatorSet,
+		ValidatorUpdates: validators,
 	}
 }
 
