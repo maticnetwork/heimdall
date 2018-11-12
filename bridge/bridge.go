@@ -27,8 +27,10 @@ import (
 
 const (
 	tendermintProposerBridge = "TendermintProposerBridge"
-	defaultPollInterval      = 5000
-	defaultCheckpointLength  = 256
+	defaultPollInterval      = 5 * 1000                // in milliseconds
+	defaultCheckpointLength  = 256                     // checkpoint number starts with 0, so length = defaultCheckpointLength -1
+	maxCheckpointLength      = 4096                    // max blocks in one checkpoint
+	defaultForcePushInterval = maxCheckpointLength * 2 // in seconds (4096 * 2 seconds)
 )
 
 var rootCmd = &cobra.Command{
@@ -102,41 +104,72 @@ func (bridge *Bridge) sendRequest(newHeader *types.Header) {
 		return
 	}
 
-	start := big.NewInt(0)
-	end := big.NewInt(0)
+	latest := newHeader.Number.Uint64()
+	start := lastCheckpointEnd.Uint64()
+	var end uint64
 
-	// add 1 if lastCheckpointEnd > 0
-	if lastCheckpointEnd.Sign() > 0 {
-		start = start.Add(lastCheckpointEnd, big.NewInt(1))
+	// add 1 if start > 0
+	if start > 0 {
+		start = start + 1
 	}
 
-	diff := big.NewInt(0)
-	diff = diff.Sub(newHeader.Number, start)
+	// get diff
+	diff := latest - start + 1
 
 	// process if diff > 0 (positive)
-	if diff.Sign() > 0 {
-		if diff.Uint64() >= defaultCheckpointLength {
-			end = end.Add(start, big.NewInt(defaultCheckpointLength-1))
-			bridge.Logger.Debug("start - end >= defaultCheckpointLength", "latest", newHeader.Number, "start", start, "end", end, "defaultCheckpointLength", defaultCheckpointLength)
-		} else {
-			bridge.Logger.Debug("start - end < defaultCheckpointLength", "latest", newHeader.Number, "start", start, "defaultCheckpointLength", defaultCheckpointLength)
-			// TODO wait for last checkpoint. If checkpoint time > 10 min create checkpoint with remaining blocks
+	if diff > 0 {
+		expectedDiff := diff - diff%defaultCheckpointLength
+		if expectedDiff > 0 {
+			expectedDiff = expectedDiff - 1
+		}
+
+		// cap with max checkpoint length
+		if expectedDiff > maxCheckpointLength-1 {
+			expectedDiff = maxCheckpointLength - 1
+		}
+
+		// get end result
+		end = expectedDiff + start
+
+		bridge.Logger.Debug("Calculating checkpoint eligibility", "latest", latest, "start", start, "end", end)
+	}
+
+	// Handle when block producers go down
+	if end == 0 || end == start || (0 < diff && diff < defaultCheckpointLength) {
+		currentHeaderBlockNumber, err := bridge.RootChainInstance.CurrentHeaderBlock(nil)
+		if err != nil {
+			bridge.Logger.Error("Error while fetching current header block number from rootchain", "error", err)
+			return
+		}
+
+		// fetch current header block
+		currentHeaderBlock, err := bridge.RootChainInstance.GetHeaderBlock(nil, currentHeaderBlockNumber.Sub(currentHeaderBlockNumber, big.NewInt(1)))
+		if err != nil {
+			bridge.Logger.Error("Error while fetching current header block object from rootchain", "error", err)
+			return
+		}
+
+		lastCheckpointTime := currentHeaderBlock.CreatedAt.Int64()
+		currentTime := time.Now().Unix()
+		if currentTime-lastCheckpointTime > defaultForcePushInterval {
+			bridge.Logger.Info("Force push checkpoint", "currentTime", currentTime, "lastCheckpointTime", lastCheckpointTime, "defaultForcePushInterval", defaultForcePushInterval)
+			end = latest
 		}
 	}
 
-	if end.Sign() < 0 {
+	if end == 0 || start <= end {
 		return
 	}
 
 	// Get root hash
-	root := checkpoint.GetHeaders(start.Uint64(), end.Uint64())
-	bridge.Logger.Info("New checkpoint header created", "start", start, "end", end, "root", root)
+	root := checkpoint.GetHeaders(start, end)
+	bridge.Logger.Info("New checkpoint header created", "latest", latest, "start", start, "end", end, "root", root)
 
 	// TODO submit checkcoint
 	txBytes, err := checkpointTx.CreateTxBytes(checkpointTx.EpochCheckpoint{
 		RootHash:   root,
-		StartBlock: start.Uint64(),
-		EndBlock:   end.Uint64(),
+		StartBlock: start,
+		EndBlock:   end,
 	})
 
 	if err != nil {

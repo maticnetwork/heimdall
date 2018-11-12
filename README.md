@@ -29,8 +29,14 @@ $ make run-heimdall
 Create and run docker container with mounted directory -
 
 ```bash
-$ make run-docker-develop
+$ docker run --name matic-heimdall -P -it \
+    -v ~/.heimdalld:/root/.heimdalld \
+    -v (pwd)/logs:/go/src/github.com/maticnetwork/heimdall/logs \
+    "maticnetwork/heimdall:<tag-name>" \
+    bash
 ```
+
+Note: Do not forget to replace `<tag-name>` with actual tag-name.
 
 **Initialize heimdall**
 
@@ -39,13 +45,9 @@ Once docker container is created and running you will be on container.
 Run following command to initalize heimdall and create config files -
 
 ```bash
+$ docker exec -it matic-heimdall bash
+<docker-container>$ cd /go/src/github.com/maticnetwork/heimdall
 <docker-container>$ make init-heimdall
-```
-
-You can check your address and public key with following command (mounted in `~/.heimdalld` directory):
-
-```bash
-cat ~/.heimdalld/config/priv_validator.json
 ```
 
 **Create heimdall-config.json**
@@ -58,9 +60,14 @@ Create `~/.heimdalld/config/heimdall-config.json` directory with following conte
   "matic_rpcurl": "https://testnet.matic.network",
 
   "stakemanager_address": "8b28d78eb59c323867c43b4ab8d06e0f1efa1573",
-  "rootchain_address": "e022d867085b1617dc9fb04b474c4de580dccf1a",
-  "tendermint_endpoint": "http://127.0.0.1:26657"
+  "rootchain_address": "e022d867085b1617dc9fb04b474c4de580dccf1a"
 }
+```
+
+You can check your address and public key with following command:
+
+```bash
+$ docker exec -it matic-heimdall sh -c "make show-account-heimdall"
 ```
 
 **Start heimdall**
@@ -68,7 +75,7 @@ Create `~/.heimdalld/config/heimdall-config.json` directory with following conte
 Start heimdall from Docker container
 
 ```bash
-<docker-container>$ $ make start
+$ docker exec -it matic-heimdall sh -c "make start-all"
 ```
 
 ### Propose new checkpoint
@@ -89,18 +96,24 @@ Connection: Keep-Alive
 
 **Note: You must have Ethers in your account while submitting checkpoint.**
 
-### Docker
+### Docker (Only for developers)
 
-**Build docker**
+#### For develop
+
+```bash
+$ make build-docker-develop
+```
+
+#### For releases
 
 ```bash
 $ make build-docker
 ```
 
-**Build docker for develop branch**
+**Push docker image to docker hub (Only for internal team)**
 
 ```bash
-$ make build-docker-develop
+$ make push-docker
 ```
 
 ### License
