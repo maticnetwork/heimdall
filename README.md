@@ -56,11 +56,11 @@ Create `~/.heimdalld/config/heimdall-config.json` directory with following conte
 
 ```json
 {
-  "main_rpcurl": "https://kovan.infura.io",
-  "matic_rpcurl": "https://testnet.matic.network",
+  "mainRPCUrl": "https://kovan.infura.io",
+  "maticRPCUrl": "https://testnet.matic.network",
 
-  "stakemanager_address": "8b28d78eb59c323867c43b4ab8d06e0f1efa1573",
-  "rootchain_address": "e022d867085b1617dc9fb04b474c4de580dccf1a"
+  "stakeManagerAddress": "8b28d78eb59c323867c43b4ab8d06e0f1efa1573",
+  "rootchainAddress": "e022d867085b1617dc9fb04b474c4de580dccf1a"
 }
 ```
 

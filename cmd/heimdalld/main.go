@@ -1,15 +1,18 @@
 package main
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	gaiaInit "github.com/cosmos/cosmos-sdk/cmd/gaia/init"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
-	"github.com/maticnetwork/heimdall/app"
-	"github.com/maticnetwork/heimdall/helper"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -19,12 +22,10 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/p2p"
 	tmtypes "github.com/tendermint/tendermint/types"
-	"io"
-	"os"
-	"path/filepath"
-	"encoding/hex"
-	checkpointRestCmds "github.com/maticnetwork/heimdall/checkpoint/rest"
 
+	"github.com/maticnetwork/heimdall/app"
+	checkpointRestCmds "github.com/maticnetwork/heimdall/checkpoint/rest"
+	"github.com/maticnetwork/heimdall/helper"
 )
 
 func main() {
@@ -49,7 +50,6 @@ func main() {
 		helper.WithHeimdallConfigFlag,
 		rootCmd.Flags().Lookup(helper.WithHeimdallConfigFlag),
 	)
-
 
 	// cosmos server commands
 	server.AddCommands(
@@ -87,7 +87,7 @@ func exportAppStateAndTMValidators(logger log.Logger, db dbm.DB, storeTracer io.
 	return bapp.ExportAppStateAndValidators()
 }
 
-// get cmd to initialize all files for tendermint and application
+// InitCmd get cmd to initialize all files for tendermint and application
 // nolint: errcheck
 func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cobra.Command {
 	cmd := &cobra.Command{
@@ -127,8 +127,8 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cob
 			}
 
 			heimdallConf := helper.Configuration{
-				MainRPCUrl:  helper.MainRPCUrl,
-				MaticRPCUrl: helper.MaticRPCUrl,
+				MainRPCUrl:          helper.MainRPCUrl,
+				MaticRPCUrl:         helper.MaticRPCUrl,
 				StakeManagerAddress: "",
 				RootchainAddress:    "",
 			}
@@ -136,6 +136,7 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cob
 			if err != nil {
 				return err
 			}
+
 			if err := common.WriteFileAtomic(filepath.Join(config.RootDir, "config/heimdall-config.json"), heimdallConfBytes, 0600); err != nil {
 				fmt.Errorf("Error writing heimdall-config %s\n", err)
 				return err
@@ -167,7 +168,6 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cob
 	cmd.Flags().String(client.FlagName, "", "validator's moniker")
 	return cmd
 }
-
 
 func newAccountCmd() *cobra.Command {
 	type Account struct {

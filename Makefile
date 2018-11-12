@@ -13,7 +13,6 @@ clean:
 build: clean
 	mkdir -p build
 	go build -o build/heimdalld cmd/heimdalld/main.go
-	go build -o build/heimdallcli cmd/heimdallcli/main.go
 	go build -o build/bridge bridge/bridge.go
 
 contracts:
@@ -33,12 +32,12 @@ reset-heimdalld:
 	./build/heimdalld unsafe-reset-all
 
 rest-server:
-	./build/heimdallcli rest-server
+	./build/heimdalld rest-server
 
 start:
 	mkdir -p ./logs
 	./build/heimdalld start > ./logs/heimdalld.log &
-	./build/heimdallcli rest-server > ./logs/heimdallcli.log &
+	./build/heimdalld rest-server > ./logs/heimdalld-rest-server.log &
 
 start-bridge:
 	mkdir -p ./logs
@@ -46,7 +45,7 @@ start-bridge:
 
 start-all: start-bridge start
 	mkdir -p ./logs
-	tail -f ./logs/heimdalld.log ./logs/heimdallcli.log ./logs/bridge.log
+	tail -f ./logs/heimdalld.log ./logs/heimdalld-rest-server.log ./logs/bridge.log
 
 #
 # docker commands

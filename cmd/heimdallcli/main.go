@@ -41,8 +41,7 @@ func main() {
 
 	// add query/post commands (custom to binary)
 	rootCmd.AddCommand(
-		client.GetCommands(
-		)...,
+		client.GetCommands()...,
 	)
 	rootCmd.AddCommand(
 		client.PostCommands()...,
@@ -65,4 +64,3 @@ func main() {
 		panic(err)
 	}
 }
-
