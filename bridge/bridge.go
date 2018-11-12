@@ -157,7 +157,7 @@ func (bridge *Bridge) sendRequest(newHeader *types.Header) {
 		}
 	}
 
-	if end == 0 || start <= end {
+	if end == 0 || start >= end {
 		return
 	}
 
