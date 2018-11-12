@@ -16,9 +16,9 @@ var _ sdk.Msg = &MsgCheckpoint{}
 
 // MsgCheckpoint represents incoming checkpoint format
 type MsgCheckpoint struct {
-	StartBlock uint64      `json:"start_block"`
-	EndBlock   uint64      `json:"end_block"`
-	RootHash   common.Hash `json:"root_hash"`
+	StartBlock uint64      `json:"startBlock"`
+	EndBlock   uint64      `json:"endBlock"`
+	RootHash   common.Hash `json:"rootHash"`
 }
 
 // NewMsgCheckpointBlock creates new checkpoint message using mentioned arguments

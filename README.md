@@ -88,10 +88,24 @@ Accept-Language: en-us
 Connection: Keep-Alive
 
 {
-  "root_hash": "0xd494377d4439a844214b565e1c211ea7154ca300b98e3c296f19fc9ada36db33",
-  "start_block": 4733031,
-  "end_block": 4733034
+  "rootHash": "0xd494377d4439a844214b565e1c211ea7154ca300b98e3c296f19fc9ada36db33",
+  "startBlock": 4733031,
+  "endBlock": 4733034
 }
+```
+
+**CURL command**
+
+```bash
+$ curl -X POST \
+  http://localhost:1317/checkpoint/new \
+  -H 'Content-Type: application/json' \
+  -H 'cache-control: no-cache' \
+  -d '{
+    "rootHash": "0x5ba1680c5f5d5da8c7e3c08ba5d168c69da7a7104cf4beab94f7c0c955551f35",
+    "startBlock": 4733040,
+    "endBlock": 4733050
+  }'
 ```
 
 **Note: You must have Ethers in your account while submitting checkpoint.**
