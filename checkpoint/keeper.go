@@ -56,9 +56,11 @@ func (k Keeper) AddCheckpoint(ctx sdk.Context, start uint64, end uint64, root co
 	return ctx.BlockHeight()
 }
 
-func (k Keeper) GetCheckpoint(ctx sdk.Context, key int64) []byte {
+func (k Keeper) GetCheckpoint(ctx sdk.Context, key int64) (CheckpointBlockHeader, error) {
 	store := ctx.KVStore(k.checkpointKey)
 	getKey := []byte(strconv.Itoa(int(key)))
 
-	return store.Get(getKey)
+	var checkpoint CheckpointBlockHeader
+	err := json.Unmarshal(store.Get(getKey), &checkpoint)
+	return checkpoint, err
 }
