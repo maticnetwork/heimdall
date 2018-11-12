@@ -24,6 +24,14 @@ const (
 	NodeFlag               = "node"
 	WithHeimdallConfigFlag = "with-heimdall-config"
 	HomeFlag               = "home"
+	FlagClientHome         = "home-client"
+	MainRPCUrl             = "https://kovan.infura.io"
+	MaticRPCUrl            = "https://testnet.matic.network"
+)
+
+var (
+	DefaultCLIHome  = os.ExpandEnv("$HOME/.heimdallcli")
+	DefaultNodeHome = os.ExpandEnv("$HOME/.heimdalld")
 )
 
 func init() {
@@ -34,10 +42,10 @@ func init() {
 
 // Configuration represents heimdall config
 type Configuration struct {
-	MainRPCUrl          string `mapstructure:"main_rpcurl"`
-	MaticRPCUrl         string `mapstructure:"matic_rpcurl"`
-	StakeManagerAddress string `mapstructure:"stakemanager_address"`
-	RootchainAddress    string `mapstructure:"rootchain_address"`
+	MainRPCUrl          string `mapstructure:"mainRPCUrl"`
+	MaticRPCUrl         string `mapstructure:"maticRPCUrl"`
+	StakeManagerAddress string `mapstructure:"stakeManagerAddress"`
+	RootchainAddress    string `mapstructure:"rootchainAddress"`
 }
 
 var conf Configuration
@@ -100,7 +108,6 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 	}
 
 	rpc.Dial(conf.MainRPCUrl)
-
 	// setup eth client
 	if mainChainClient, err = ethclient.Dial(conf.MainRPCUrl); err != nil {
 		Logger.Error("Error while creating main chain client", "error", err)

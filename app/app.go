@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/rlp"
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
@@ -61,7 +61,6 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.SetBeginBlocker(app.BeginBlocker)
 	app.SetEndBlocker(app.EndBlocker)
 
-
 	// mount the multistore and load the latest state
 	app.MountStoresIAVL(app.keyMain, app.keyCheckpoint, app.keyStaker)
 	err := app.LoadLatestVersion(app.keyMain)
@@ -108,7 +107,7 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 			logger.Error("Unable to unmarshall checkpoint", "error", err)
 		}
 
-		// Get extra data
+		// Get extra data3
 		extraData := getExtraData(_checkpoint, ctx)
 
 		logger.Debug("Validating last block from main chain", "lastBlock", helper.GetLastBlock(), "startBlock", _checkpoint.StartBlock)
@@ -154,7 +153,6 @@ func getExtraData(_checkpoint checkpoint.CheckpointBlockHeader, ctx sdk.Context)
 	return txBytes
 }
 
-
 func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	return abci.ResponseInitChain{}
 }
@@ -162,7 +160,6 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 func (app *HeimdallApp) ExportAppStateAndValidators() (appState json.RawMessage, validators []tmtypes.GenesisValidator, err error) {
 	return appState, validators, err
 }
-
 
 // RLP decodes the txBytes to a BaseTx
 func RLPTxDecoder() sdk.TxDecoder {
@@ -175,7 +172,6 @@ func RLPTxDecoder() sdk.TxDecoder {
 		}
 
 		return tx, nil
-
 
 	}
 }

@@ -8,7 +8,7 @@ import (
 
 // EndBlocker refreshes validator set after block commit
 func EndBlocker(ctx sdk.Context, k Keeper) (validators []abci.ValidatorUpdate) {
-	StakingLogger.Info("Current validators fetched", "validators", (k.GetAllValidators(ctx)))
+	StakingLogger.Info("Current validators fetched", "validators", helper.ValidatorsToString(k.GetAllValidators(ctx)))
 
 	// flush exiting validator set
 	k.FlushValidatorSet(ctx)
@@ -17,6 +17,6 @@ func EndBlocker(ctx sdk.Context, k Keeper) (validators []abci.ValidatorUpdate) {
 	// update
 	k.SetValidatorSet(ctx, validatorSet)
 
-	StakingLogger.Info("New validators set", "validators", (k.GetAllValidators(ctx)))
+	StakingLogger.Info("New validators set", "validators", helper.ValidatorsToString(k.GetAllValidators(ctx)))
 	return validatorSet
 }

@@ -1,8 +1,8 @@
 package staking
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/types"
 )
@@ -39,9 +39,9 @@ func (k Keeper) SetValidatorSet(ctx sdk.Context, validators []abci.ValidatorUpda
 			StakingLogger.Error("Error marshalling validator", "error", err)
 			panic(err)
 		}
-		pubkey,err := types.PB2TM.PubKey(validator.GetPubKey())
-		if err!=nil{
-			StakingLogger.Error("Error converting to cryptoPubkey","ValidatorPubkey",validator.GetPubKey(),"ValidatorPower",validator.Power )
+		pubkey, err := types.PB2TM.PubKey(validator.GetPubKey())
+		if err != nil {
+			StakingLogger.Error("Error converting to cryptoPubkey", "ValidatorPubkey", validator.GetPubKey(), "ValidatorPower", validator.Power)
 		}
 		store.Set(getValidatorKey(pubkey.Address().Bytes()), bz)
 	}

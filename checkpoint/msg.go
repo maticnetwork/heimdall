@@ -1,8 +1,8 @@
 package checkpoint
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/maticnetwork/heimdall/helper"
 )
@@ -37,7 +37,6 @@ func (msg MsgCheckpoint) Type() string {
 
 func (msg MsgCheckpoint) Route() string { return MsgType }
 
-
 // GetSigners returns address of the signer
 func (msg MsgCheckpoint) GetSigners() []sdk.AccAddress {
 	addrs := make([]sdk.AccAddress, 1)
@@ -61,8 +60,8 @@ func (msg MsgCheckpoint) ValidateBasic() sdk.Error {
 		CheckpointLogger.Error("Start block doesnt match", "lastBlock", helper.GetLastBlock(), "startBlock", msg.StartBlock)
 		return ErrBadBlockDetails(DefaultCodespace)
 	}
-	if !ValidateCheckpoint(msg.StartBlock, msg.EndBlock, msg.RootHash.String()){
-		CheckpointLogger.Error("RootHash Not Valid","StartBlock",msg.StartBlock,"EndBlock",msg.EndBlock,"RootHash",msg.RootHash)
+	if !ValidateCheckpoint(msg.StartBlock, msg.EndBlock, msg.RootHash.String()) {
+		CheckpointLogger.Error("RootHash Not Valid", "StartBlock", msg.StartBlock, "EndBlock", msg.EndBlock, "RootHash", msg.RootHash)
 		return ErrBadBlockDetails(DefaultCodespace)
 	}
 

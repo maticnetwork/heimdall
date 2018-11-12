@@ -9,14 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	cryptoKeys "github.com/cosmos/cosmos-sdk/crypto/keys"
 	"github.com/cosmos/cosmos-sdk/codec"
-	auth "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
-	bank "github.com/cosmos/cosmos-sdk/x/bank/client/rest"
-	gov "github.com/cosmos/cosmos-sdk/x/gov/client/rest"
-	ibc "github.com/cosmos/cosmos-sdk/x/ibc/client/rest"
-	slashing "github.com/cosmos/cosmos-sdk/x/slashing/client/rest"
-	stake "github.com/cosmos/cosmos-sdk/x/stake/client/rest"
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -36,9 +29,9 @@ func init() {
 }
 
 // RegisterRoutes registers staking-related REST handlers to a router
-func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec, kb cryptoKeys.Keybase) {
+func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
 	//registerQueryRoutes(cliCtx, r, cdc)
-	registerTxRoutes(cliCtx, r, cdc, kb)
+	registerTxRoutes(cliCtx, r, cdc)
 }
 
 // ServeCommands will generate a long-running rest server
@@ -90,28 +83,13 @@ func ServeCommands(cdc *codec.Codec) *cobra.Command {
 func createHandler(cdc *codec.Codec) http.Handler {
 	r := mux.NewRouter()
 
-	kb, err := keys.GetKeyBase() //XXX
-	if err != nil {
-		panic(err)
-	}
-
 	cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-	// TODO: make more functional? aka r = keys.RegisterRoutes(r)
-	//r.HandleFunc("/version", CLIVersionRequestHandler).Methods("GET")
-	//r.HandleFunc("/node_version", NodeVersionRequestHandler(cliCtx)).Methods("GET")
-
-	keys.RegisterRoutes(r,true)
+	keys.RegisterRoutes(r, true)
 	rpc.RegisterRoutes(cliCtx, r)
 	tx.RegisterRoutes(cliCtx, r, cdc)
-	auth.RegisterRoutes(cliCtx, r, cdc, "acc")
-	bank.RegisterRoutes(cliCtx, r, cdc, kb)
-	ibc.RegisterRoutes(cliCtx, r, cdc, kb)
-	stake.RegisterRoutes(cliCtx, r, cdc, kb)
-	slashing.RegisterRoutes(cliCtx, r, cdc, kb)
-	gov.RegisterRoutes(cliCtx, r, cdc)
 
 	// Addded rest commands to adding transction !
-	RegisterRoutes(cliCtx, r, cdc, kb)
+	RegisterRoutes(cliCtx, r, cdc)
 	return r
 }

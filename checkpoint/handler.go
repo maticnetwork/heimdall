@@ -17,7 +17,9 @@ func NewHandler(k Keeper) sdk.Handler {
 }
 
 func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper) sdk.Result {
-	if err := msg.ValidateBasic(); err != nil { return ErrBadBlockDetails(k.codespace).Result() }
+	if err := msg.ValidateBasic(); err != nil {
+		return ErrBadBlockDetails(k.codespace).Result()
+	}
 	key := k.AddCheckpoint(ctx, msg.StartBlock, msg.EndBlock, msg.RootHash)
 	CheckpointLogger.Debug("Checkpoint added in state", "key", key)
 
