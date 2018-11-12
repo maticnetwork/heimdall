@@ -24,9 +24,9 @@ func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec
 }
 
 type EpochCheckpoint struct {
-	RootHash   string `json:"root_hash"`
-	StartBlock uint64 `json:"start_block"`
-	EndBlock   uint64 `json:"end_block"`
+	RootHash   string `json:"rootHash"`
+	StartBlock uint64 `json:"startBlock"`
+	EndBlock   uint64 `json:"endBlock"`
 }
 
 func newCheckpointHandler(cliCtx context.CLIContext) http.HandlerFunc {
