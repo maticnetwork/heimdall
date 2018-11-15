@@ -168,18 +168,3 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 func (app *HeimdallApp) ExportAppStateAndValidators() (appState json.RawMessage, validators []tmtypes.GenesisValidator, err error) {
 	return appState, validators, err
 }
-
-// RLPTxDecoder decodes the txBytes to a BaseTx
-func RLPTxDecoder() sdk.TxDecoder {
-	return func(txBytes []byte) (sdk.Tx, sdk.Error) {
-		var tx = checkpoint.BaseTx{}
-		err := rlp.DecodeBytes(txBytes, &tx)
-		if err != nil {
-			//todo create own error
-			return nil, sdk.ErrTxDecode(err.Error())
-		}
-
-		return tx, nil
-
-	}
-}
