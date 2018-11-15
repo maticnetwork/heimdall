@@ -73,7 +73,7 @@ var _ sdk.Tx = BaseTx{}
 
 // BaseTx represents base tx tendermint needs
 type BaseTx struct {
-	Msg MsgCheckpoint
+	Msg sdk.Msg
 }
 
 // NewBaseTx drafts BaseTx with messages
