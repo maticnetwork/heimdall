@@ -4,26 +4,30 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/maticnetwork/heimdall/helper"
 )
 
 var cdc = codec.New()
 
-// MsgType represents string for message type
-const MsgType = "checkpoint"
+//
+// Checkpoint Msg
+//
+
+const Checkpoint = "checkpoint"
 
 var _ sdk.Msg = &MsgCheckpoint{}
 
 // MsgCheckpoint represents incoming checkpoint format
 type MsgCheckpoint struct {
-	StartBlock uint64      `json:"startBlock"`
-	EndBlock   uint64      `json:"endBlock"`
-	RootHash   common.Hash `json:"rootHash"`
+	Proposer   common.Address `json:"proposer"`
+	StartBlock uint64         `json:"startBlock"`
+	EndBlock   uint64         `json:"endBlock"`
+	RootHash   common.Hash    `json:"rootHash"`
 }
 
 // NewMsgCheckpointBlock creates new checkpoint message using mentioned arguments
-func NewMsgCheckpointBlock(startBlock uint64, endBlock uint64, roothash common.Hash) MsgCheckpoint {
+func NewMsgCheckpointBlock(proposer common.Address, startBlock uint64, endBlock uint64, roothash common.Hash) MsgCheckpoint {
 	return MsgCheckpoint{
+		Proposer:   proposer,
 		StartBlock: startBlock,
 		EndBlock:   endBlock,
 		RootHash:   roothash,
@@ -32,17 +36,17 @@ func NewMsgCheckpointBlock(startBlock uint64, endBlock uint64, roothash common.H
 
 // Type returns message type
 func (msg MsgCheckpoint) Type() string {
-	return MsgType
+	return Checkpoint
 }
 
-func (msg MsgCheckpoint) Route() string { return MsgType }
+func (msg MsgCheckpoint) Route() string { return Checkpoint }
 
 // GetSigners returns address of the signer
 func (msg MsgCheckpoint) GetSigners() []sdk.AccAddress {
 	addrs := make([]sdk.AccAddress, 1)
-	pkObj := helper.GetPrivKey()
-	addrs[0] = sdk.AccAddress(pkObj.PubKey().Address().Bytes())
+	addrs[0] = sdk.AccAddress(msg.Proposer.Bytes())
 	return addrs
+
 }
 
 // GetSignBytes returns the bytes for the message signer to sign on
@@ -56,14 +60,52 @@ func (msg MsgCheckpoint) GetSignBytes() []byte {
 
 // ValidateBasic checks quick validation
 func (msg MsgCheckpoint) ValidateBasic() sdk.Error {
-	if helper.GetLastBlock() != msg.StartBlock {
-		CheckpointLogger.Error("Start block doesnt match", "lastBlock", helper.GetLastBlock(), "startBlock", msg.StartBlock)
-		return ErrBadBlockDetails(DefaultCodespace)
+
+	return nil
+}
+
+//
+// Msg Checkpoint Ack
+//
+
+// MsgType represents string for message type
+const CheckpointACK = "checkpointACK"
+
+var _ sdk.Msg = &MsgCheckpointAck{}
+
+type MsgCheckpointAck struct {
+	HeaderBlock uint64 `json:"headerBlock"`
+}
+
+func NewMsgCheckpointAck(headerBlock uint64) MsgCheckpointAck {
+	return MsgCheckpointAck{
+		HeaderBlock: headerBlock,
 	}
-	if !ValidateCheckpoint(msg.StartBlock, msg.EndBlock, msg.RootHash.String()) {
-		CheckpointLogger.Error("RootHash Not Valid", "StartBlock", msg.StartBlock, "EndBlock", msg.EndBlock, "RootHash", msg.RootHash)
-		return ErrBadBlockDetails(DefaultCodespace)
+}
+
+func (msg MsgCheckpointAck) Type() string {
+	return CheckpointACK
+}
+
+func (msg MsgCheckpointAck) Route() string { return CheckpointACK }
+
+// GetSigners returns address of the signer
+func (msg MsgCheckpointAck) GetSigners() []sdk.AccAddress {
+	addrs := make([]sdk.AccAddress, 0)
+	return addrs
+}
+
+// GetSignBytes returns the bytes for the message signer to sign on
+func (msg MsgCheckpointAck) GetSignBytes() []byte {
+	b, err := cdc.MarshalJSON(msg)
+	if err != nil {
+		panic(err)
 	}
+	return sdk.MustSortJSON(b)
+}
+
+// ValidateBasic checks quick validation
+func (msg MsgCheckpointAck) ValidateBasic() sdk.Error {
 
 	return nil
 }
