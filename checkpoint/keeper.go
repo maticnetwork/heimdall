@@ -64,3 +64,5 @@ func (k Keeper) GetCheckpoint(ctx sdk.Context, key int64) (CheckpointBlockHeader
 	err := json.Unmarshal(store.Get(getKey), &checkpoint)
 	return checkpoint, err
 }
+
+// count ACKS
