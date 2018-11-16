@@ -9,10 +9,17 @@ func NewHandler(k Keeper) sdk.Handler {
 		switch msg := msg.(type) {
 		case MsgCheckpoint:
 			return handleMsgCheckpoint(ctx, msg, k)
+		case MsgCheckpointAck:
+			return handleMsgCheckpointAck(ctx, msg, k)
 		default:
 			return sdk.ErrTxDecode("Invalid message in checkpoint module").Result()
 		}
 	}
+}
+func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k Keeper) sdk.Result {
+	// make call to headerBlock with header number
+	// validate via checking details with lastCheckpoint on TM
+	return sdk.Result{}
 }
 
 func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper) sdk.Result {
