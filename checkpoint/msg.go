@@ -16,7 +16,6 @@ const Checkpoint = "checkpoint"
 
 var _ sdk.Msg = &MsgCheckpoint{}
 
-// MsgCheckpoint represents incoming checkpoint format
 type MsgCheckpoint struct {
 	Proposer   common.Address `json:"proposer"`
 	StartBlock uint64         `json:"startBlock"`
@@ -49,7 +48,6 @@ func (msg MsgCheckpoint) GetSigners() []sdk.AccAddress {
 
 }
 
-// GetSignBytes returns the bytes for the message signer to sign on
 func (msg MsgCheckpoint) GetSignBytes() []byte {
 	b, err := cdc.MarshalJSON(msg)
 	if err != nil {
@@ -58,7 +56,6 @@ func (msg MsgCheckpoint) GetSignBytes() []byte {
 	return sdk.MustSortJSON(b)
 }
 
-// ValidateBasic checks quick validation
 func (msg MsgCheckpoint) ValidateBasic() sdk.Error {
 
 	return nil
@@ -68,7 +65,6 @@ func (msg MsgCheckpoint) ValidateBasic() sdk.Error {
 // Msg Checkpoint Ack
 //
 
-// MsgType represents string for message type
 const CheckpointACK = "checkpointACK"
 
 var _ sdk.Msg = &MsgCheckpointAck{}
@@ -89,13 +85,11 @@ func (msg MsgCheckpointAck) Type() string {
 
 func (msg MsgCheckpointAck) Route() string { return CheckpointACK }
 
-// GetSigners returns address of the signer
 func (msg MsgCheckpointAck) GetSigners() []sdk.AccAddress {
 	addrs := make([]sdk.AccAddress, 0)
 	return addrs
 }
 
-// GetSignBytes returns the bytes for the message signer to sign on
 func (msg MsgCheckpointAck) GetSignBytes() []byte {
 	b, err := cdc.MarshalJSON(msg)
 	if err != nil {
@@ -104,7 +98,6 @@ func (msg MsgCheckpointAck) GetSignBytes() []byte {
 	return sdk.MustSortJSON(b)
 }
 
-// ValidateBasic checks quick validation
 func (msg MsgCheckpointAck) ValidateBasic() sdk.Error {
 
 	return nil

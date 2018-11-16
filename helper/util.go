@@ -1,10 +1,9 @@
 package helper
 
 import (
-	abci "github.com/tendermint/tendermint/abci/types"
 	"encoding/json"
+	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
-
 )
 
 type validatorPretty struct {
@@ -26,4 +25,3 @@ func ValidatorsToString(vs []abci.Validator) string {
 	}
 	return string(b)
 }
-

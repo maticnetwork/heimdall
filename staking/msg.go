@@ -8,7 +8,10 @@ import (
 
 var cdc = codec.New()
 
-// MsgType represents string for message type
+//
+// Validator Join
+//
+
 const ValidatorJoin = "validatorJoin"
 
 var _ sdk.Msg = &MsgValidatorJoin{}
@@ -33,13 +36,11 @@ func (msg MsgValidatorJoin) Type() string {
 
 func (msg MsgValidatorJoin) Route() string { return ValidatorJoin }
 
-// GetSigners returns address of the signer
 func (msg MsgValidatorJoin) GetSigners() []sdk.AccAddress {
 	addrs := make([]sdk.AccAddress, 0)
 	return addrs
 }
 
-// GetSignBytes returns the bytes for the message signer to sign on
 func (msg MsgValidatorJoin) GetSignBytes() []byte {
 	b, err := cdc.MarshalJSON(msg)
 	if err != nil {
@@ -48,7 +49,6 @@ func (msg MsgValidatorJoin) GetSignBytes() []byte {
 	return sdk.MustSortJSON(b)
 }
 
-// ValidateBasic checks quick validation
 func (msg MsgValidatorJoin) ValidateBasic() sdk.Error {
 
 	return nil
@@ -58,7 +58,6 @@ func (msg MsgValidatorJoin) ValidateBasic() sdk.Error {
 // validator update
 //
 
-// MsgType represents string for message type
 const ValidatorUpdateSigner = "validatorUpdateSigner"
 
 var _ sdk.Msg = &MsgValidatorUpdate{}
@@ -81,13 +80,11 @@ func (msg MsgValidatorUpdate) Type() string {
 
 func (msg MsgValidatorUpdate) Route() string { return ValidatorUpdateSigner }
 
-// GetSigners returns address of the signer
 func (msg MsgValidatorUpdate) GetSigners() []sdk.AccAddress {
 	addrs := make([]sdk.AccAddress, 0)
 	return addrs
 }
 
-// GetSignBytes returns the bytes for the message signer to sign on
 func (msg MsgValidatorUpdate) GetSignBytes() []byte {
 	b, err := cdc.MarshalJSON(msg)
 	if err != nil {
@@ -96,7 +93,6 @@ func (msg MsgValidatorUpdate) GetSignBytes() []byte {
 	return sdk.MustSortJSON(b)
 }
 
-// ValidateBasic checks quick validation
 func (msg MsgValidatorUpdate) ValidateBasic() sdk.Error {
 
 	return nil
