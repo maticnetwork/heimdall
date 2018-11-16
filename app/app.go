@@ -16,6 +16,7 @@ import (
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
+	hmtypes "github.com/maticnetwork/heimdall/types"
 )
 
 const (
@@ -46,7 +47,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	// create your application type
 	var app = &HeimdallApp{
 		cdc:           cdc,
-		BaseApp:       bam.NewBaseApp(AppName, logger, db, RLPTxDecoder(), baseAppOptions...),
+		BaseApp:       bam.NewBaseApp(AppName, logger, db, hmtypes.RLPTxDecoder(), baseAppOptions...),
 		keyMain:       sdk.NewKVStoreKey("main"),
 		keyCheckpoint: sdk.NewKVStoreKey("checkpoint"),
 		keyStaker:     sdk.NewKVStoreKey("staker"),

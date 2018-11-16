@@ -67,23 +67,3 @@ func (msg MsgCheckpoint) ValidateBasic() sdk.Error {
 
 	return nil
 }
-
-// assertion
-var _ sdk.Tx = BaseTx{}
-
-// BaseTx represents base tx tendermint needs
-type BaseTx struct {
-	Msg sdk.Msg
-}
-
-// NewBaseTx drafts BaseTx with messages
-func NewBaseTx(msg MsgCheckpoint) BaseTx {
-	return BaseTx{
-		Msg: msg,
-	}
-}
-
-// GetMsgs returns array of messages
-func (tx BaseTx) GetMsgs() []sdk.Msg {
-	return []sdk.Msg{tx.Msg}
-}
