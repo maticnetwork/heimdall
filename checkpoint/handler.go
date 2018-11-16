@@ -2,6 +2,7 @@ package checkpoint
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/maticnetwork/heimdall/helper"
 )
 
 func NewHandler(k Keeper) sdk.Handler {
@@ -18,7 +19,19 @@ func NewHandler(k Keeper) sdk.Handler {
 }
 func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k Keeper) sdk.Result {
 	// make call to headerBlock with header number
-	// validate via checking details with lastCheckpoint on TM
+	root, start, end, _ := helper.GetHeaderInfo(msg.HeaderBlock)
+	key := k.GetLastCheckpointKey(ctx)
+	headerBlock, err := k.GetCheckpoint(ctx, key)
+	if err != nil {
+		CheckpointLogger.Error("Unable to get checkpoint", "error", err, "key", key)
+	}
+	// TODO add roothash validation
+	if start != headerBlock.StartBlock || end != headerBlock.EndBlock {
+		CheckpointLogger.Error("Invalid ACK", "Start", headerBlock.StartBlock, start, "End", headerBlock.EndBlock, end)
+		return ErrBadAck(k.codespace).Result()
+	}
+	CheckpointLogger.Debug("Valid ACK , updating count")
+
 	return sdk.Result{}
 }
 

@@ -14,6 +14,7 @@ import (
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 
 	"github.com/maticnetwork/heimdall/checkpoint"
+	"github.com/maticnetwork/heimdall/types"
 )
 
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
@@ -24,6 +25,7 @@ func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec
 }
 
 type EpochCheckpoint struct {
+	Proposer   string `json:"proposer"`
 	RootHash   string `json:"rootHash"`
 	StartBlock uint64 `json:"startBlock"`
 	EndBlock   uint64 `json:"endBlock"`
@@ -79,11 +81,12 @@ func SendTendermintRequest(cliCtx context.CLIContext, txBytes []byte) (*ctypes.R
 
 func CreateTxBytes(m EpochCheckpoint) ([]byte, error) {
 	msg := checkpoint.NewMsgCheckpointBlock(
+		common.HexToAddress(m.Proposer),
 		m.StartBlock,
 		m.EndBlock,
 		common.HexToHash(m.RootHash))
 
-	tx := checkpoint.NewBaseTx(msg)
+	tx := types.NewBaseTx(msg)
 
 	txBytes, err := rlp.EncodeToBytes(tx)
 	if err != nil {

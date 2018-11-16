@@ -2,6 +2,7 @@ package helper
 
 import (
 	"encoding/hex"
+	"github.com/eth/go-ethereum/common"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	tmtypes "github.com/tendermint/tendermint/types"
@@ -54,4 +55,9 @@ func GetLastBlock() uint64 {
 	}
 
 	return lastBlock.Uint64()
+}
+
+func GetHeaderInfo(headerId uint64) (root common.Hash, start uint64, end uint64, timestamp uint64) {
+	// call rootchain and get header
+	return
 }

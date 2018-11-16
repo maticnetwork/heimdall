@@ -9,10 +9,15 @@ type CodeType = sdk.CodeType
 const (
 	DefaultCodespace      sdk.CodespaceType = 1
 	CodeInvalidBlockinput CodeType          = 1500
+	CodeInvalidACK        CodeType          = 1600
 )
 
 func ErrBadBlockDetails(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeInvalidBlockinput, "Checkpoint is not valid!")
+}
+
+func ErrBadAck(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeInvalidACK, "Ack Not Valid")
 }
 
 func codeToDefaultMsg(code CodeType) string {

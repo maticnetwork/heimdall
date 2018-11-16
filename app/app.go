@@ -106,7 +106,7 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 		// Getting latest checkpoint data from store using height as key and unmarshall
 		_checkpoint, err := app.checkpointKeeper.GetCheckpoint(ctx, ctx.BlockHeight())
 		if err != nil {
-			logger.Error("Unable to unmarshall checkpoint", "error", err)
+			logger.Error("Unable to unmarshall checkpoint", "error", err, "key", ctx.BlockHeight())
 		} else {
 			// Get extra data3
 			extraData := getExtraData(_checkpoint, ctx)
@@ -151,9 +151,9 @@ func GetVoteBytes(votes []tmtypes.Vote, ctx sdk.Context) []byte {
 
 func getExtraData(_checkpoint checkpoint.CheckpointBlockHeader, ctx sdk.Context) []byte {
 	logger.Debug("Creating extra data", "startBlock", _checkpoint.StartBlock, "endBlock", _checkpoint.EndBlock, "roothash", _checkpoint.RootHash)
-	msg := checkpoint.NewMsgCheckpointBlock(_checkpoint.StartBlock, _checkpoint.EndBlock, _checkpoint.RootHash)
+	msg := checkpoint.NewMsgCheckpointBlock(_checkpoint.Proposer.,_checkpoint.StartBlock, _checkpoint.EndBlock, _checkpoint.RootHash)
 
-	tx := checkpoint.NewBaseTx(msg)
+	tx := hmtypes.NewBaseTx(msg)
 	txBytes, err := rlp.EncodeToBytes(tx)
 	if err != nil {
 		logger.Error("Error decoding transaction data", "error", err)
@@ -163,6 +163,9 @@ func getExtraData(_checkpoint checkpoint.CheckpointBlockHeader, ctx sdk.Context)
 }
 
 func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
+	// set last checkpoint block number to 0
+	app.checkpointKeeper.SetLastCheckpointKey(ctx,0)
+	app.checkpointKeeper.InitACKCount(ctx)
 	return abci.ResponseInitChain{}
 }
 
