@@ -92,37 +92,37 @@ func (app *HeimdallApp) BeginBlocker(_ sdk.Context, _ abci.RequestBeginBlock) ab
 func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci.ResponseEndBlock {
 	var validators []abci.ValidatorUpdate
 
-	if ctx.BlockHeader().NumTxs == 1 {
-		// unmarshall votes from header
-		var votes []tmtypes.Vote
-		err := json.Unmarshal(ctx.BlockHeader().Votes, &votes)
-		if err != nil {
-			logger.Error("Error while unmarshalling vote", "error", err)
-		}
-
-		// get sigs from votes
-		sigs := getSigs(votes)
-
-		// Getting latest checkpoint data from store using height as key and unmarshall
-		_checkpoint, err := app.checkpointKeeper.GetCheckpoint(ctx, ctx.BlockHeight())
-		if err != nil {
-			logger.Error("Unable to unmarshall checkpoint", "error", err, "key", ctx.BlockHeight())
-		} else {
-			// Get extra data
-			extraData := getExtraData(_checkpoint, ctx)
-
-			logger.Debug("Validating last block from main chain", "lastBlock", helper.GetLastBlock(), "startBlock", _checkpoint.StartBlock)
-
-			if helper.GetLastBlock() == _checkpoint.StartBlock {
-				logger.Info("Valid checkpoint")
-				helper.SendCheckpoint(GetVoteBytes(votes, ctx), sigs, extraData)
-			} else {
-				logger.Error("Start block does not match", "lastBlock", helper.GetLastBlock(), "startBlock", _checkpoint.StartBlock)
-				// TODO panic ?
-			}
-			validators = staking.EndBlocker(ctx, app.stakerKeeper)
-		}
-	}
+	//if ctx.BlockHeader().NumTxs == 1 {
+	//	// unmarshall votes from header
+	//	var votes []tmtypes.Vote
+	//	err := json.Unmarshal(ctx.BlockHeader().Votes, &votes)
+	//	if err != nil {
+	//		logger.Error("Error while unmarshalling vote", "error", err)
+	//	}
+	//
+	//	// get sigs from votes
+	//	sigs := getSigs(votes)
+	//
+	//	// Getting latest checkpoint data from store using height as key and unmarshall
+	//	_checkpoint, err := app.checkpointKeeper.GetCheckpoint(ctx, ctx.BlockHeight())
+	//	if err != nil {
+	//		logger.Error("Unable to unmarshall checkpoint", "error", err, "key", ctx.BlockHeight())
+	//	} else {
+	//		// Get extra data
+	//		extraData := getExtraData(_checkpoint, ctx)
+	//
+	//		logger.Debug("Validating last block from main chain", "lastBlock", helper.GetLastBlock(), "startBlock", _checkpoint.StartBlock)
+	//
+	//		if helper.GetLastBlock() == _checkpoint.StartBlock {
+	//			logger.Info("Valid checkpoint")
+	//			helper.SendCheckpoint(GetVoteBytes(votes, ctx), sigs, extraData)
+	//		} else {
+	//			logger.Error("Start block does not match", "lastBlock", helper.GetLastBlock(), "startBlock", _checkpoint.StartBlock)
+	//			// TODO panic ?
+	//		}
+	//		validators = staking.EndBlocker(ctx, app.stakerKeeper)
+	//	}
+	//}
 
 	// TODO move this to above ie execute when checkpoint
 	//if ctx.BlockHeight()%10 ==0 {

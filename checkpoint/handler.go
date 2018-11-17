@@ -25,7 +25,7 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k Keeper) sdk
 	// get last checkpoint from buffer
 	headerBlock, err := k.GetCheckpointFromBuffer(ctx)
 	if err != nil {
-		CheckpointLogger.Error("Unable to get checkpoint", "error", err, "key", LastCheckpointKey)
+		CheckpointLogger.Error("Unable to get checkpoint", "error", err, "key", BufferCheckpointKey)
 	}
 
 	// match header block and checkpoint
@@ -59,7 +59,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper) sdk.Resul
 	}
 
 	// add checkpoint to buffer
-	k.AddCheckpointToKey(ctx, msg.StartBlock, msg.EndBlock, msg.RootHash, msg.Proposer, LastCheckpointKey)
+	k.AddCheckpointToKey(ctx, msg.StartBlock, msg.EndBlock, msg.RootHash, msg.Proposer, BufferCheckpointKey)
 	CheckpointLogger.Debug("Checkpoint added in buffer!", "roothash", msg.RootHash, "startBlock",
 		msg.StartBlock, "endBlock", msg.EndBlock, "proposer", msg.Proposer)
 

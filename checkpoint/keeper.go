@@ -20,9 +20,8 @@ type Keeper struct {
 
 var (
 	ACKCountKey         = []byte{0x01}
-	LastCheckpointKey   = []byte{0x02}
-	BufferCheckpointKey = []byte{0x03}
-	HeaderBlockKey      = []byte{0x04}
+	BufferCheckpointKey = []byte{0x02}
+	HeaderBlockKey      = []byte{0x03}
 )
 
 func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, codespace sdk.CodespaceType) Keeper {
@@ -49,11 +48,13 @@ func createBlock(start uint64, end uint64, rootHash common.Hash, proposer common
 		Proposer:   proposer,
 	}
 }
+
+// Add checkpoint to buffer or final headerBlocks
 func (k Keeper) AddCheckpointToKey(ctx sdk.Context, start uint64, end uint64, root common.Hash, proposer common.Address, key []byte) sdk.Error {
 	store := ctx.KVStore(k.checkpointKey)
 
 	// Reject new checkpoint if checkpoint exists in buffer
-	if bytes.Equal(key, LastCheckpointKey) && !bytes.Equal(store.Get(LastCheckpointKey), []byte("")) {
+	if bytes.Equal(key, BufferCheckpointKey) && !bytes.Equal(store.Get(BufferCheckpointKey), []byte("")) {
 		return ErrNoACK(k.codespace)
 	}
 
@@ -71,11 +72,13 @@ func (k Keeper) AddCheckpointToKey(ctx sdk.Context, start uint64, end uint64, ro
 
 }
 
+// Flush Checkpoint Buffer
 func (k Keeper) FlushCheckpointBuffer(ctx sdk.Context) {
 	store := ctx.KVStore(k.checkpointKey)
-	store.Set(LastCheckpointKey, []byte(""))
+	store.Set(BufferCheckpointKey, []byte(""))
 }
 
+// Get checkpoint in buffer
 func (k Keeper) GetCheckpointFromBuffer(ctx sdk.Context) (CheckpointBlockHeader, error) {
 	store := ctx.KVStore(k.checkpointKey)
 
@@ -122,6 +125,7 @@ func (k Keeper) InitACKCount(ctx sdk.Context) {
 	store.Set(ACKCountKey, key)
 }
 
+// appends prefix to headerNumber
 func GetHeaderKey(headerNumber int) []byte {
 	headerNumberBytes := strconv.Itoa(headerNumber)
 	return append(HeaderBlockKey, headerNumberBytes...)
