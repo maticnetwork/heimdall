@@ -168,9 +168,6 @@ func getExtraData(_checkpoint checkpoint.CheckpointBlockHeader, ctx sdk.Context)
 }
 
 func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
-	// set last checkpoint block number to 0
-	app.checkpointKeeper.SetLastCheckpointKey(ctx, 0)
-
 	// set ACK count to 0
 	app.checkpointKeeper.InitACKCount(ctx)
 

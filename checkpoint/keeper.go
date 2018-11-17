@@ -17,6 +17,13 @@ type Keeper struct {
 	codespace sdk.CodespaceType
 }
 
+var (
+	ACKCountKey         = []byte{0x01}
+	LastCheckpointKey   = []byte{0x02}
+	BufferCheckpointKey = []byte{0x03}
+	HeaderBlockKey      = []byte{0x04}
+)
+
 func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, codespace sdk.CodespaceType) Keeper {
 	keeper := Keeper{
 		checkpointKey: key,
@@ -41,71 +48,94 @@ func createBlock(start uint64, end uint64, rootHash common.Hash, proposer common
 		Proposer:   proposer,
 	}
 }
-
-func (k Keeper) AddCheckpoint(ctx sdk.Context, start uint64, end uint64, root common.Hash, proposer common.Address) int64 {
+func (k Keeper) AddCheckpointToKey(ctx sdk.Context, start uint64, end uint64, root common.Hash, proposer common.Address, key []byte) {
 	store := ctx.KVStore(k.checkpointKey)
+
+	// create Checkpoint block and marshall
 	data := createBlock(start, end, root, proposer)
 	out, err := json.Marshal(data)
 	if err != nil {
 		CheckpointLogger.Error("Error marshalling checkpoint to json", "error", err)
 	}
 
-	Key := []byte(strconv.Itoa(int(ctx.BlockHeight())))
-	store.Set([]byte("LastCheckpointKey"), Key)
-	store.Set(Key, []byte(out))
+	// store in key provided
+	store.Set(key, []byte(out))
 
-	// TODO add block data validation
-	CheckpointLogger.Debug("Checkpoint block saved!", "roothash", data.RootHash, "startBlock", data.StartBlock, "endBlock", data.EndBlock)
-
-	// return new block
-	return ctx.BlockHeight()
 }
 
-func (k Keeper) GetCheckpoint(ctx sdk.Context, key int64) (CheckpointBlockHeader, error) {
+func (k Keeper) FlushCheckpointBuffer(ctx sdk.Context) {
 	store := ctx.KVStore(k.checkpointKey)
-	Key := []byte(strconv.Itoa(int(key)))
+	store.Set(LastCheckpointKey, []byte(""))
+}
 
+func (k Keeper) GetCheckpointFromBuffer(ctx sdk.Context) (CheckpointBlockHeader, error) {
+	store := ctx.KVStore(k.checkpointKey)
+
+	// Get checkpoint and unmarshall
 	var checkpoint CheckpointBlockHeader
-	err := json.Unmarshal(store.Get(Key), &checkpoint)
+	err := json.Unmarshal(store.Get(BufferCheckpointKey), &checkpoint)
+
 	return checkpoint, err
 }
 
+// sets last header block
+// we can eliminate this by having CHILD_BLOCK_INTERVAL*(TotalACKS+1)
 func (k Keeper) SetLastCheckpointKey(ctx sdk.Context, _key int64) {
 	store := ctx.KVStore(k.checkpointKey)
 
+	// set last checkpoint key
 	key := []byte(strconv.Itoa(int(_key)))
-	store.Set([]byte("LastCheckpointKey"), key)
+	store.Set(LastCheckpointKey, key)
 }
 
 func (k Keeper) GetLastCheckpointKey(ctx sdk.Context) (key int64) {
 	store := ctx.KVStore(k.checkpointKey)
-	keyInt, err := strconv.Atoi(string(store.Get([]byte("LastCheckpointKey"))))
+
+	// get last checkpoint
+	keyInt, err := strconv.Atoi(string(store.Get(LastCheckpointKey)))
 	if err != nil {
 		CheckpointLogger.Error("Unable to convert key to int")
 	}
 	return int64(keyInt)
 }
 
-// count ACKS
+// update ACK count by 1
 func (k Keeper) UpdateACKCount(ctx sdk.Context) {
 	store := ctx.KVStore(k.checkpointKey)
-	ACKCount := k.GetACKCount(ctx)
-	ACKs := []byte(strconv.Itoa(ACKCount + 1))
-	store.Set([]byte("TotalACK"), ACKs)
 
+	// get current ACK Count
+	ACKCount := k.GetACKCount(ctx)
+
+	// increment by 1
+	ACKs := []byte(strconv.Itoa(ACKCount + 1))
+
+	// update
+	store.Set(ACKCountKey, ACKs)
 }
+
+// Get current ACK count
 func (k Keeper) GetACKCount(ctx sdk.Context) int {
 	store := ctx.KVStore(k.checkpointKey)
-	ACKs, err := strconv.Atoi(string(store.Get([]byte("TotalACK"))))
+
+	// get current ACK count
+	ACKs, err := strconv.Atoi(string(store.Get(ACKCountKey)))
 	if err != nil {
 		CheckpointLogger.Error("Unable to convert key to int")
 	}
+
 	return ACKs
 }
 
+// Set ACK Count to 0
 func (k Keeper) InitACKCount(ctx sdk.Context) {
 	store := ctx.KVStore(k.checkpointKey)
-	key := []byte(strconv.Itoa(int(0)))
-	store.Set([]byte("TotalACK"), key)
 
+	// set to 0
+	key := []byte(strconv.Itoa(int(0)))
+	store.Set(ACKCountKey, key)
+}
+
+func GetHeaderKey(headerNumber int) []byte {
+	headerNumberBytes := strconv.Itoa(headerNumber)
+	return append(HeaderBlockKey, headerNumberBytes...)
 }
