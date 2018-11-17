@@ -28,10 +28,7 @@ func ValidatorsToString(vs []abci.Validator) string {
 	return string(b)
 }
 
-// If more or equal than 1/3 of total voting power changed in one block, then
-// a light client could never prove the transition externally. See
-// ./lite/doc.go for details on how a light client tracks validators.
-func updateValidators(currentSet *types.ValidatorSet, abciUpdates []abci.ValidatorUpdate) error {
+func UpdateValidators(currentSet *types.ValidatorSet, abciUpdates []abci.ValidatorUpdate) error {
 	updates, err := types.PB2TM.ValidatorUpdates(abciUpdates)
 	if err != nil {
 		return err
