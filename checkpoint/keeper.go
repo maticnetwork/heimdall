@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"strconv"
 
+	"bytes"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -48,8 +49,13 @@ func createBlock(start uint64, end uint64, rootHash common.Hash, proposer common
 		Proposer:   proposer,
 	}
 }
-func (k Keeper) AddCheckpointToKey(ctx sdk.Context, start uint64, end uint64, root common.Hash, proposer common.Address, key []byte) {
+func (k Keeper) AddCheckpointToKey(ctx sdk.Context, start uint64, end uint64, root common.Hash, proposer common.Address, key []byte) sdk.Error {
 	store := ctx.KVStore(k.checkpointKey)
+
+	// Reject new checkpoint if checkpoint exists in buffer
+	if bytes.Equal(key, LastCheckpointKey) && !bytes.Equal(store.Get(LastCheckpointKey), []byte("")) {
+		return ErrNoACK(k.codespace)
+	}
 
 	// create Checkpoint block and marshall
 	data := createBlock(start, end, root, proposer)
@@ -60,6 +66,8 @@ func (k Keeper) AddCheckpointToKey(ctx sdk.Context, start uint64, end uint64, ro
 
 	// store in key provided
 	store.Set(key, []byte(out))
+
+	return nil
 
 }
 
@@ -76,27 +84,6 @@ func (k Keeper) GetCheckpointFromBuffer(ctx sdk.Context) (CheckpointBlockHeader,
 	err := json.Unmarshal(store.Get(BufferCheckpointKey), &checkpoint)
 
 	return checkpoint, err
-}
-
-// sets last header block
-// we can eliminate this by having CHILD_BLOCK_INTERVAL*(TotalACKS+1)
-func (k Keeper) SetLastCheckpointKey(ctx sdk.Context, _key int64) {
-	store := ctx.KVStore(k.checkpointKey)
-
-	// set last checkpoint key
-	key := []byte(strconv.Itoa(int(_key)))
-	store.Set(LastCheckpointKey, key)
-}
-
-func (k Keeper) GetLastCheckpointKey(ctx sdk.Context) (key int64) {
-	store := ctx.KVStore(k.checkpointKey)
-
-	// get last checkpoint
-	keyInt, err := strconv.Atoi(string(store.Get(LastCheckpointKey)))
-	if err != nil {
-		CheckpointLogger.Error("Unable to convert key to int")
-	}
-	return int64(keyInt)
 }
 
 // update ACK count by 1

@@ -146,7 +146,6 @@ func getSigs(votes []tmtypes.Vote) (sigs []byte) {
 }
 
 func GetVoteBytes(votes []tmtypes.Vote, ctx sdk.Context) []byte {
-
 	// sign bytes for vote
 	return votes[0].SignBytes(ctx.ChainID())
 }
