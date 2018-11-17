@@ -108,10 +108,11 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 		if err != nil {
 			logger.Error("Unable to unmarshall checkpoint", "error", err, "key", ctx.BlockHeight())
 		} else {
-			// Get extra data3
+			// Get extra data
 			extraData := getExtraData(_checkpoint, ctx)
 
 			logger.Debug("Validating last block from main chain", "lastBlock", helper.GetLastBlock(), "startBlock", _checkpoint.StartBlock)
+
 			if helper.GetLastBlock() == _checkpoint.StartBlock {
 				logger.Info("Valid checkpoint")
 				helper.SendCheckpoint(GetVoteBytes(votes, ctx), sigs, extraData)
@@ -136,23 +137,27 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 }
 
 func getSigs(votes []tmtypes.Vote) (sigs []byte) {
+
 	// loop votes and append to sig to sigs
 	for _, vote := range votes {
 		sigs = append(sigs[:], vote.Signature[:]...)
 	}
-
 	return
 }
 
 func GetVoteBytes(votes []tmtypes.Vote, ctx sdk.Context) []byte {
+
 	// sign bytes for vote
 	return votes[0].SignBytes(ctx.ChainID())
 }
 
 func getExtraData(_checkpoint checkpoint.CheckpointBlockHeader, ctx sdk.Context) []byte {
 	logger.Debug("Creating extra data", "startBlock", _checkpoint.StartBlock, "endBlock", _checkpoint.EndBlock, "roothash", _checkpoint.RootHash)
-	msg := checkpoint.NewMsgCheckpointBlock(_checkpoint.Proposer.,_checkpoint.StartBlock, _checkpoint.EndBlock, _checkpoint.RootHash)
 
+	// craft a message
+	msg := checkpoint.NewMsgCheckpointBlock(_checkpoint.Proposer, _checkpoint.StartBlock, _checkpoint.EndBlock, _checkpoint.RootHash)
+
+	// decoding transaction
 	tx := hmtypes.NewBaseTx(msg)
 	txBytes, err := rlp.EncodeToBytes(tx)
 	if err != nil {
@@ -164,8 +169,11 @@ func getExtraData(_checkpoint checkpoint.CheckpointBlockHeader, ctx sdk.Context)
 
 func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	// set last checkpoint block number to 0
-	app.checkpointKeeper.SetLastCheckpointKey(ctx,0)
+	app.checkpointKeeper.SetLastCheckpointKey(ctx, 0)
+
+	// set ACK count to 0
 	app.checkpointKeeper.InitACKCount(ctx)
+
 	return abci.ResponseInitChain{}
 }
 
