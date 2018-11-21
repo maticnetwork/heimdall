@@ -46,6 +46,7 @@ type Configuration struct {
 	MaticRPCUrl         string `json:"maticRPCUrl"`
 	StakeManagerAddress string `json:"stakeManagerAddress"`
 	RootchainAddress    string `json:"rootchainAddress"`
+	ChildBlockInterval  int    `json:"childBlockInterval"`
 }
 
 var conf Configuration
@@ -124,6 +125,7 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 	privVal := privval.LoadFilePV(filepath.Join(configDir, "priv_validator.json"))
 	cdc.MustUnmarshalBinaryBare(privVal.PrivKey.Bytes(), &privObject)
 	cdc.MustUnmarshalBinaryBare(privObject.PubKey().Bytes(), &pubObject)
+
 }
 
 // GetConfig returns cached configuration object

@@ -2,7 +2,7 @@ package helper
 
 import (
 	"encoding/hex"
-	"github.com/eth/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	tmtypes "github.com/tendermint/tendermint/types"
@@ -57,7 +57,19 @@ func GetLastBlock() uint64 {
 	return lastBlock.Uint64()
 }
 
-func GetHeaderInfo(headerId uint64) (root common.Hash, start uint64, end uint64, timestamp uint64) {
-	// call rootchain and get header
-	return
+func GetHeaderInfo(headerId uint64) (root common.Hash, start uint64, end uint64, err error) {
+	// get rootchain instance
+	rootChainInstance, err := GetRootChainInstance()
+	if err != nil {
+		Logger.Error("Error creating rootchain instance while fetching headerBlock", "error", err, "headerBlockIndex", headerId)
+		return common.HexToHash(""), 0, 0, err
+	}
+
+	// get header from rootchain
+	headerBlock, err := rootChainInstance.HeaderBlock(nil, big.NewInt(int64(headerId)))
+	if err != nil {
+		Logger.Error("Unable to fetch header block from rootchain", "headerBlockIndex", headerId)
+	}
+
+	return headerBlock.Root, headerBlock.Start.Uint64(), headerBlock.End.Uint64(), nil
 }

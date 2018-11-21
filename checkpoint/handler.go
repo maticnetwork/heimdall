@@ -20,7 +20,13 @@ func NewHandler(k Keeper) sdk.Handler {
 }
 func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k Keeper) sdk.Result {
 	// make call to headerBlock with header number
-	root, start, end, _ := helper.GetHeaderInfo(msg.HeaderBlock)
+	root, start, end, err := helper.GetHeaderInfo(msg.HeaderBlock)
+	if err != nil {
+		CheckpointLogger.Error("Unable to fetch header from rootchain contract", "Error", err, "HeaderBlockIndex", msg.HeaderBlock)
+		return ErrBadAck(k.codespace).Result()
+	}
+
+	CheckpointLogger.Debug("HeaderBlock Fetched", "start", start, "end", end, "Roothash", root)
 
 	// get last checkpoint from buffer
 	headerBlock, err := k.GetCheckpointFromBuffer(ctx)

@@ -131,6 +131,7 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cob
 				MaticRPCUrl:         helper.MaticRPCUrl,
 				StakeManagerAddress: "",
 				RootchainAddress:    "",
+				ChildBlockInterval:  10000,
 			}
 			heimdallConfBytes, err := cdc.MarshalJSONIndent(heimdallConf, "", "  ")
 			if err != nil {
