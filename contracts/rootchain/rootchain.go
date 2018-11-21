@@ -7,16 +7,16 @@ import (
 	"math/big"
 	"strings"
 
-	ethereum "github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/event"
+	ethereum "github.com/eth/go-ethereum"
+	"github.com/eth/go-ethereum/accounts/abi"
+	"github.com/eth/go-ethereum/accounts/abi/bind"
+	"github.com/eth/go-ethereum/common"
+	"github.com/eth/go-ethereum/core/types"
+	"github.com/prysm/shared/event"
 )
 
 // RootchainABI is the input ABI used to generate the binding from.
-const RootchainABI = "[{\"constant\":true,\"inputs\":[],\"name\":\"childChainContract\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"depositCount\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"address\"}],\"name\":\"reverseTokens\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"headerBlocks\",\"outputs\":[{\"name\":\"root\",\"type\":\"bytes32\"},{\"name\":\"start\",\"type\":\"uint256\"},{\"name\":\"end\",\"type\":\"uint256\"},{\"name\":\"createdAt\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"wethToken\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"stakeManager\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"withdrawSignature\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes4\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"networkId\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"address\"}],\"name\":\"validatorContracts\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"deposits\",\"outputs\":[{\"name\":\"header\",\"type\":\"uint256\"},{\"name\":\"owner\",\"type\":\"address\"},{\"name\":\"token\",\"type\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"chain\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"withdraws\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"withdrawEventSignature\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"address\"}],\"name\":\"tokens\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"currentHeaderBlock\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"name\":\"_stakeManager\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"fallback\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"previousChildChain\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"newChildChain\",\"type\":\"address\"}],\"name\":\"ChildChainChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"rootToken\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"childToken\",\"type\":\"address\"}],\"name\":\"TokenMapped\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"validator\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"from\",\"type\":\"address\"}],\"name\":\"ValidatorAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"validator\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"from\",\"type\":\"address\"}],\"name\":\"ValidatorRemoved\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"user\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"token\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"depositCount\",\"type\":\"uint256\"}],\"name\":\"Deposit\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"user\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"token\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"Withdraw\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"proposer\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"number\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"start\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"end\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"root\",\"type\":\"bytes32\"}],\"name\":\"NewHeaderBlock\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"constant\":false,\"inputs\":[{\"name\":\"newChildChain\",\"type\":\"address\"}],\"name\":\"setChildContract\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"rootToken\",\"type\":\"address\"},{\"name\":\"childToken\",\"type\":\"address\"}],\"name\":\"mapToken\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_token\",\"type\":\"address\"}],\"name\":\"setWETHToken\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_validator\",\"type\":\"address\"}],\"name\":\"addValidator\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_validator\",\"type\":\"address\"}],\"name\":\"removeValidator\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_stakeManager\",\"type\":\"address\"}],\"name\":\"setStakeManager\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"root\",\"type\":\"bytes32\"},{\"name\":\"start\",\"type\":\"uint256\"},{\"name\":\"end\",\"type\":\"uint256\"},{\"name\":\"sigs\",\"type\":\"bytes\"}],\"name\":\"submitHeaderBlock\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"currentChildBlock\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"headerNumber\",\"type\":\"uint256\"}],\"name\":\"getHeaderBlock\",\"outputs\":[{\"name\":\"root\",\"type\":\"bytes32\"},{\"name\":\"start\",\"type\":\"uint256\"},{\"name\":\"end\",\"type\":\"uint256\"},{\"name\":\"createdAt\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"depositCount\",\"type\":\"uint256\"}],\"name\":\"getDepositBlock\",\"outputs\":[{\"name\":\"header\",\"type\":\"uint256\"},{\"name\":\"owner\",\"type\":\"address\"},{\"name\":\"token\",\"type\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_sender\",\"type\":\"address\"},{\"name\":\"_value\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"bytes\"}],\"name\":\"tokenFallback\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"user\",\"type\":\"address\"}],\"name\":\"depositEthers\",\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"depositEthers\",\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"},{\"name\":\"user\",\"type\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"deposit\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"headerNumber\",\"type\":\"uint256\"},{\"name\":\"headerProof\",\"type\":\"bytes\"},{\"name\":\"blockNumber\",\"type\":\"uint256\"},{\"name\":\"blockTime\",\"type\":\"uint256\"},{\"name\":\"txRoot\",\"type\":\"bytes32\"},{\"name\":\"receiptRoot\",\"type\":\"bytes32\"},{\"name\":\"path\",\"type\":\"bytes\"},{\"name\":\"txBytes\",\"type\":\"bytes\"},{\"name\":\"txProof\",\"type\":\"bytes\"},{\"name\":\"receiptBytes\",\"type\":\"bytes\"},{\"name\":\"receiptProof\",\"type\":\"bytes\"}],\"name\":\"withdraw\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"slash\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
+const RootchainABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"_stakeManager\",\"type\":\"address\"}],\"name\":\"setStakeManager\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_withdrawManager\",\"type\":\"address\"}],\"name\":\"setWithdrawManager\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_depositManager\",\"type\":\"address\"}],\"name\":\"setDepositManager\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"childChainContract\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"roundType\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"slash\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_depositCount\",\"type\":\"uint256\"}],\"name\":\"depositBlock\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"address\"},{\"name\":\"\",\"type\":\"address\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_token\",\"type\":\"address\"},{\"name\":\"_user\",\"type\":\"address\"},{\"name\":\"_amount\",\"type\":\"uint256\"},{\"name\":\"isWeth\",\"type\":\"bool\"}],\"name\":\"transferAmount\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"headerBlocks\",\"outputs\":[{\"name\":\"root\",\"type\":\"bytes32\"},{\"name\":\"start\",\"type\":\"uint256\"},{\"name\":\"end\",\"type\":\"uint256\"},{\"name\":\"createdAt\",\"type\":\"uint256\"},{\"name\":\"proposer\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_nftContract\",\"type\":\"address\"}],\"name\":\"setExitNFTContract\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_rootToken\",\"type\":\"address\"},{\"name\":\"_childToken\",\"type\":\"address\"}],\"name\":\"mapToken\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"exitId\",\"type\":\"uint256\"}],\"name\":\"deleteExit\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_validator\",\"type\":\"address\"}],\"name\":\"removeProofValidator\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_headerNumber\",\"type\":\"uint256\"}],\"name\":\"headerBlock\",\"outputs\":[{\"name\":\"_root\",\"type\":\"bytes32\"},{\"name\":\"_start\",\"type\":\"uint256\"},{\"name\":\"_end\",\"type\":\"uint256\"},{\"name\":\"_createdAt\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"depositManager\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_c\",\"type\":\"uint256\"}],\"name\":\"setCurrentChildBlock\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"stakeManager\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"currentChildBlock\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"voteType\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes1\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_token\",\"type\":\"address\"},{\"name\":\"_user\",\"type\":\"address\"},{\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"deposit\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_c\",\"type\":\"uint256\"}],\"name\":\"setCurrentHeaderBlock\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"networkId\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_headerNumber\",\"type\":\"uint256\"},{\"name\":\"root\",\"type\":\"bytes32\"},{\"name\":\"start\",\"type\":\"uint256\"},{\"name\":\"end\",\"type\":\"uint256\"},{\"name\":\"createdAt\",\"type\":\"uint256\"}],\"name\":\"setHeaderBlock\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"CHILD_BLOCK_INTERVAL\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_token\",\"type\":\"address\"}],\"name\":\"setWETHToken\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_user\",\"type\":\"address\"},{\"name\":\"_amount\",\"type\":\"uint256\"},{\"name\":\"_data\",\"type\":\"bytes\"}],\"name\":\"tokenFallback\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"address\"}],\"name\":\"proofValidatorContracts\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"chain\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_validator\",\"type\":\"address\"}],\"name\":\"addProofValidator\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"withdrawManager\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"currentHeaderBlock\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"vote\",\"type\":\"bytes\"},{\"name\":\"sigs\",\"type\":\"bytes\"},{\"name\":\"extradata\",\"type\":\"bytes\"}],\"name\":\"submitHeaderBlock\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"depositEthers\",\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newChildChain\",\"type\":\"address\"}],\"name\":\"setChildContract\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"finalizeCommit\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"name\":\"_stakeManager\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"fallback\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"previousChildChain\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"newChildChain\",\"type\":\"address\"}],\"name\":\"ChildChainChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"validator\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"from\",\"type\":\"address\"}],\"name\":\"ProofValidatorAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"validator\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"from\",\"type\":\"address\"}],\"name\":\"ProofValidatorRemoved\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"proposer\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"number\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"start\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"end\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"root\",\"type\":\"bytes32\"}],\"name\":\"NewHeaderBlock\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"previousOwner\",\"type\":\"address\"}],\"name\":\"OwnershipRenounced\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"}]"
 
 // Rootchain is an auto generated Go binding around an Ethereum contract.
 type Rootchain struct {
@@ -160,6 +160,32 @@ func (_Rootchain *RootchainTransactorRaw) Transact(opts *bind.TransactOpts, meth
 	return _Rootchain.Contract.contract.Transact(opts, method, params...)
 }
 
+// CHILDBLOCKINTERVAL is a free data retrieval call binding the contract method 0xa831fa07.
+//
+// Solidity: function CHILD_BLOCK_INTERVAL() constant returns(uint256)
+func (_Rootchain *RootchainCaller) CHILDBLOCKINTERVAL(opts *bind.CallOpts) (*big.Int, error) {
+	var (
+		ret0 = new(*big.Int)
+	)
+	out := ret0
+	err := _Rootchain.contract.Call(opts, out, "CHILD_BLOCK_INTERVAL")
+	return *ret0, err
+}
+
+// CHILDBLOCKINTERVAL is a free data retrieval call binding the contract method 0xa831fa07.
+//
+// Solidity: function CHILD_BLOCK_INTERVAL() constant returns(uint256)
+func (_Rootchain *RootchainSession) CHILDBLOCKINTERVAL() (*big.Int, error) {
+	return _Rootchain.Contract.CHILDBLOCKINTERVAL(&_Rootchain.CallOpts)
+}
+
+// CHILDBLOCKINTERVAL is a free data retrieval call binding the contract method 0xa831fa07.
+//
+// Solidity: function CHILD_BLOCK_INTERVAL() constant returns(uint256)
+func (_Rootchain *RootchainCallerSession) CHILDBLOCKINTERVAL() (*big.Int, error) {
+	return _Rootchain.Contract.CHILDBLOCKINTERVAL(&_Rootchain.CallOpts)
+}
+
 // Chain is a free data retrieval call binding the contract method 0xc763e5a1.
 //
 // Solidity: function chain() constant returns(bytes32)
@@ -264,124 +290,72 @@ func (_Rootchain *RootchainCallerSession) CurrentHeaderBlock() (*big.Int, error)
 	return _Rootchain.Contract.CurrentHeaderBlock(&_Rootchain.CallOpts)
 }
 
-// DepositCount is a free data retrieval call binding the contract method 0x2dfdf0b5.
+// DepositBlock is a free data retrieval call binding the contract method 0x32590654.
 //
-// Solidity: function depositCount() constant returns(uint256)
-func (_Rootchain *RootchainCaller) DepositCount(opts *bind.CallOpts) (*big.Int, error) {
+// Solidity: function depositBlock(_depositCount uint256) constant returns(uint256, address, address, uint256, uint256)
+func (_Rootchain *RootchainCaller) DepositBlock(opts *bind.CallOpts, _depositCount *big.Int) (*big.Int, common.Address, common.Address, *big.Int, *big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
+		ret1 = new(common.Address)
+		ret2 = new(common.Address)
+		ret3 = new(*big.Int)
+		ret4 = new(*big.Int)
+	)
+	out := &[]interface{}{
+		ret0,
+		ret1,
+		ret2,
+		ret3,
+		ret4,
+	}
+	err := _Rootchain.contract.Call(opts, out, "depositBlock", _depositCount)
+	return *ret0, *ret1, *ret2, *ret3, *ret4, err
+}
+
+// DepositBlock is a free data retrieval call binding the contract method 0x32590654.
+//
+// Solidity: function depositBlock(_depositCount uint256) constant returns(uint256, address, address, uint256, uint256)
+func (_Rootchain *RootchainSession) DepositBlock(_depositCount *big.Int) (*big.Int, common.Address, common.Address, *big.Int, *big.Int, error) {
+	return _Rootchain.Contract.DepositBlock(&_Rootchain.CallOpts, _depositCount)
+}
+
+// DepositBlock is a free data retrieval call binding the contract method 0x32590654.
+//
+// Solidity: function depositBlock(_depositCount uint256) constant returns(uint256, address, address, uint256, uint256)
+func (_Rootchain *RootchainCallerSession) DepositBlock(_depositCount *big.Int) (*big.Int, common.Address, common.Address, *big.Int, *big.Int, error) {
+	return _Rootchain.Contract.DepositBlock(&_Rootchain.CallOpts, _depositCount)
+}
+
+// DepositManager is a free data retrieval call binding the contract method 0x6c7ac9d8.
+//
+// Solidity: function depositManager() constant returns(address)
+func (_Rootchain *RootchainCaller) DepositManager(opts *bind.CallOpts) (common.Address, error) {
+	var (
+		ret0 = new(common.Address)
 	)
 	out := ret0
-	err := _Rootchain.contract.Call(opts, out, "depositCount")
+	err := _Rootchain.contract.Call(opts, out, "depositManager")
 	return *ret0, err
 }
 
-// DepositCount is a free data retrieval call binding the contract method 0x2dfdf0b5.
+// DepositManager is a free data retrieval call binding the contract method 0x6c7ac9d8.
 //
-// Solidity: function depositCount() constant returns(uint256)
-func (_Rootchain *RootchainSession) DepositCount() (*big.Int, error) {
-	return _Rootchain.Contract.DepositCount(&_Rootchain.CallOpts)
+// Solidity: function depositManager() constant returns(address)
+func (_Rootchain *RootchainSession) DepositManager() (common.Address, error) {
+	return _Rootchain.Contract.DepositManager(&_Rootchain.CallOpts)
 }
 
-// DepositCount is a free data retrieval call binding the contract method 0x2dfdf0b5.
+// DepositManager is a free data retrieval call binding the contract method 0x6c7ac9d8.
 //
-// Solidity: function depositCount() constant returns(uint256)
-func (_Rootchain *RootchainCallerSession) DepositCount() (*big.Int, error) {
-	return _Rootchain.Contract.DepositCount(&_Rootchain.CallOpts)
+// Solidity: function depositManager() constant returns(address)
+func (_Rootchain *RootchainCallerSession) DepositManager() (common.Address, error) {
+	return _Rootchain.Contract.DepositManager(&_Rootchain.CallOpts)
 }
 
-// Deposits is a free data retrieval call binding the contract method 0xb02c43d0.
+// HeaderBlock is a free data retrieval call binding the contract method 0x61bbd461.
 //
-// Solidity: function deposits( uint256) constant returns(header uint256, owner address, token address, amount uint256)
-func (_Rootchain *RootchainCaller) Deposits(opts *bind.CallOpts, arg0 *big.Int) (struct {
-	Header *big.Int
-	Owner  common.Address
-	Token  common.Address
-	Amount *big.Int
-}, error) {
-	ret := new(struct {
-		Header *big.Int
-		Owner  common.Address
-		Token  common.Address
-		Amount *big.Int
-	})
-	out := ret
-	err := _Rootchain.contract.Call(opts, out, "deposits", arg0)
-	return *ret, err
-}
-
-// Deposits is a free data retrieval call binding the contract method 0xb02c43d0.
-//
-// Solidity: function deposits( uint256) constant returns(header uint256, owner address, token address, amount uint256)
-func (_Rootchain *RootchainSession) Deposits(arg0 *big.Int) (struct {
-	Header *big.Int
-	Owner  common.Address
-	Token  common.Address
-	Amount *big.Int
-}, error) {
-	return _Rootchain.Contract.Deposits(&_Rootchain.CallOpts, arg0)
-}
-
-// Deposits is a free data retrieval call binding the contract method 0xb02c43d0.
-//
-// Solidity: function deposits( uint256) constant returns(header uint256, owner address, token address, amount uint256)
-func (_Rootchain *RootchainCallerSession) Deposits(arg0 *big.Int) (struct {
-	Header *big.Int
-	Owner  common.Address
-	Token  common.Address
-	Amount *big.Int
-}, error) {
-	return _Rootchain.Contract.Deposits(&_Rootchain.CallOpts, arg0)
-}
-
-// GetDepositBlock is a free data retrieval call binding the contract method 0x9a52d6ea.
-//
-// Solidity: function getDepositBlock(depositCount uint256) constant returns(header uint256, owner address, token address, amount uint256)
-func (_Rootchain *RootchainCaller) GetDepositBlock(opts *bind.CallOpts, depositCount *big.Int) (struct {
-	Header *big.Int
-	Owner  common.Address
-	Token  common.Address
-	Amount *big.Int
-}, error) {
-	ret := new(struct {
-		Header *big.Int
-		Owner  common.Address
-		Token  common.Address
-		Amount *big.Int
-	})
-	out := ret
-	err := _Rootchain.contract.Call(opts, out, "getDepositBlock", depositCount)
-	return *ret, err
-}
-
-// GetDepositBlock is a free data retrieval call binding the contract method 0x9a52d6ea.
-//
-// Solidity: function getDepositBlock(depositCount uint256) constant returns(header uint256, owner address, token address, amount uint256)
-func (_Rootchain *RootchainSession) GetDepositBlock(depositCount *big.Int) (struct {
-	Header *big.Int
-	Owner  common.Address
-	Token  common.Address
-	Amount *big.Int
-}, error) {
-	return _Rootchain.Contract.GetDepositBlock(&_Rootchain.CallOpts, depositCount)
-}
-
-// GetDepositBlock is a free data retrieval call binding the contract method 0x9a52d6ea.
-//
-// Solidity: function getDepositBlock(depositCount uint256) constant returns(header uint256, owner address, token address, amount uint256)
-func (_Rootchain *RootchainCallerSession) GetDepositBlock(depositCount *big.Int) (struct {
-	Header *big.Int
-	Owner  common.Address
-	Token  common.Address
-	Amount *big.Int
-}, error) {
-	return _Rootchain.Contract.GetDepositBlock(&_Rootchain.CallOpts, depositCount)
-}
-
-// GetHeaderBlock is a free data retrieval call binding the contract method 0x313224a7.
-//
-// Solidity: function getHeaderBlock(headerNumber uint256) constant returns(root bytes32, start uint256, end uint256, createdAt uint256)
-func (_Rootchain *RootchainCaller) GetHeaderBlock(opts *bind.CallOpts, headerNumber *big.Int) (struct {
+// Solidity: function headerBlock(_headerNumber uint256) constant returns(_root bytes32, _start uint256, _end uint256, _createdAt uint256)
+func (_Rootchain *RootchainCaller) HeaderBlock(opts *bind.CallOpts, _headerNumber *big.Int) (struct {
 	Root      [32]byte
 	Start     *big.Int
 	End       *big.Int
@@ -394,48 +368,50 @@ func (_Rootchain *RootchainCaller) GetHeaderBlock(opts *bind.CallOpts, headerNum
 		CreatedAt *big.Int
 	})
 	out := ret
-	err := _Rootchain.contract.Call(opts, out, "getHeaderBlock", headerNumber)
+	err := _Rootchain.contract.Call(opts, out, "headerBlock", _headerNumber)
 	return *ret, err
 }
 
-// GetHeaderBlock is a free data retrieval call binding the contract method 0x313224a7.
+// HeaderBlock is a free data retrieval call binding the contract method 0x61bbd461.
 //
-// Solidity: function getHeaderBlock(headerNumber uint256) constant returns(root bytes32, start uint256, end uint256, createdAt uint256)
-func (_Rootchain *RootchainSession) GetHeaderBlock(headerNumber *big.Int) (struct {
+// Solidity: function headerBlock(_headerNumber uint256) constant returns(_root bytes32, _start uint256, _end uint256, _createdAt uint256)
+func (_Rootchain *RootchainSession) HeaderBlock(_headerNumber *big.Int) (struct {
 	Root      [32]byte
 	Start     *big.Int
 	End       *big.Int
 	CreatedAt *big.Int
 }, error) {
-	return _Rootchain.Contract.GetHeaderBlock(&_Rootchain.CallOpts, headerNumber)
+	return _Rootchain.Contract.HeaderBlock(&_Rootchain.CallOpts, _headerNumber)
 }
 
-// GetHeaderBlock is a free data retrieval call binding the contract method 0x313224a7.
+// HeaderBlock is a free data retrieval call binding the contract method 0x61bbd461.
 //
-// Solidity: function getHeaderBlock(headerNumber uint256) constant returns(root bytes32, start uint256, end uint256, createdAt uint256)
-func (_Rootchain *RootchainCallerSession) GetHeaderBlock(headerNumber *big.Int) (struct {
+// Solidity: function headerBlock(_headerNumber uint256) constant returns(_root bytes32, _start uint256, _end uint256, _createdAt uint256)
+func (_Rootchain *RootchainCallerSession) HeaderBlock(_headerNumber *big.Int) (struct {
 	Root      [32]byte
 	Start     *big.Int
 	End       *big.Int
 	CreatedAt *big.Int
 }, error) {
-	return _Rootchain.Contract.GetHeaderBlock(&_Rootchain.CallOpts, headerNumber)
+	return _Rootchain.Contract.HeaderBlock(&_Rootchain.CallOpts, _headerNumber)
 }
 
 // HeaderBlocks is a free data retrieval call binding the contract method 0x41539d4a.
 //
-// Solidity: function headerBlocks( uint256) constant returns(root bytes32, start uint256, end uint256, createdAt uint256)
+// Solidity: function headerBlocks( uint256) constant returns(root bytes32, start uint256, end uint256, createdAt uint256, proposer address)
 func (_Rootchain *RootchainCaller) HeaderBlocks(opts *bind.CallOpts, arg0 *big.Int) (struct {
 	Root      [32]byte
 	Start     *big.Int
 	End       *big.Int
 	CreatedAt *big.Int
+	Proposer  common.Address
 }, error) {
 	ret := new(struct {
 		Root      [32]byte
 		Start     *big.Int
 		End       *big.Int
 		CreatedAt *big.Int
+		Proposer  common.Address
 	})
 	out := ret
 	err := _Rootchain.contract.Call(opts, out, "headerBlocks", arg0)
@@ -444,24 +420,26 @@ func (_Rootchain *RootchainCaller) HeaderBlocks(opts *bind.CallOpts, arg0 *big.I
 
 // HeaderBlocks is a free data retrieval call binding the contract method 0x41539d4a.
 //
-// Solidity: function headerBlocks( uint256) constant returns(root bytes32, start uint256, end uint256, createdAt uint256)
+// Solidity: function headerBlocks( uint256) constant returns(root bytes32, start uint256, end uint256, createdAt uint256, proposer address)
 func (_Rootchain *RootchainSession) HeaderBlocks(arg0 *big.Int) (struct {
 	Root      [32]byte
 	Start     *big.Int
 	End       *big.Int
 	CreatedAt *big.Int
+	Proposer  common.Address
 }, error) {
 	return _Rootchain.Contract.HeaderBlocks(&_Rootchain.CallOpts, arg0)
 }
 
 // HeaderBlocks is a free data retrieval call binding the contract method 0x41539d4a.
 //
-// Solidity: function headerBlocks( uint256) constant returns(root bytes32, start uint256, end uint256, createdAt uint256)
+// Solidity: function headerBlocks( uint256) constant returns(root bytes32, start uint256, end uint256, createdAt uint256, proposer address)
 func (_Rootchain *RootchainCallerSession) HeaderBlocks(arg0 *big.Int) (struct {
 	Root      [32]byte
 	Start     *big.Int
 	End       *big.Int
 	CreatedAt *big.Int
+	Proposer  common.Address
 }, error) {
 	return _Rootchain.Contract.HeaderBlocks(&_Rootchain.CallOpts, arg0)
 }
@@ -518,30 +496,56 @@ func (_Rootchain *RootchainCallerSession) Owner() (common.Address, error) {
 	return _Rootchain.Contract.Owner(&_Rootchain.CallOpts)
 }
 
-// ReverseTokens is a free data retrieval call binding the contract method 0x40828ebf.
+// ProofValidatorContracts is a free data retrieval call binding the contract method 0xc4b875d3.
 //
-// Solidity: function reverseTokens( address) constant returns(address)
-func (_Rootchain *RootchainCaller) ReverseTokens(opts *bind.CallOpts, arg0 common.Address) (common.Address, error) {
+// Solidity: function proofValidatorContracts( address) constant returns(bool)
+func (_Rootchain *RootchainCaller) ProofValidatorContracts(opts *bind.CallOpts, arg0 common.Address) (bool, error) {
 	var (
-		ret0 = new(common.Address)
+		ret0 = new(bool)
 	)
 	out := ret0
-	err := _Rootchain.contract.Call(opts, out, "reverseTokens", arg0)
+	err := _Rootchain.contract.Call(opts, out, "proofValidatorContracts", arg0)
 	return *ret0, err
 }
 
-// ReverseTokens is a free data retrieval call binding the contract method 0x40828ebf.
+// ProofValidatorContracts is a free data retrieval call binding the contract method 0xc4b875d3.
 //
-// Solidity: function reverseTokens( address) constant returns(address)
-func (_Rootchain *RootchainSession) ReverseTokens(arg0 common.Address) (common.Address, error) {
-	return _Rootchain.Contract.ReverseTokens(&_Rootchain.CallOpts, arg0)
+// Solidity: function proofValidatorContracts( address) constant returns(bool)
+func (_Rootchain *RootchainSession) ProofValidatorContracts(arg0 common.Address) (bool, error) {
+	return _Rootchain.Contract.ProofValidatorContracts(&_Rootchain.CallOpts, arg0)
 }
 
-// ReverseTokens is a free data retrieval call binding the contract method 0x40828ebf.
+// ProofValidatorContracts is a free data retrieval call binding the contract method 0xc4b875d3.
 //
-// Solidity: function reverseTokens( address) constant returns(address)
-func (_Rootchain *RootchainCallerSession) ReverseTokens(arg0 common.Address) (common.Address, error) {
-	return _Rootchain.Contract.ReverseTokens(&_Rootchain.CallOpts, arg0)
+// Solidity: function proofValidatorContracts( address) constant returns(bool)
+func (_Rootchain *RootchainCallerSession) ProofValidatorContracts(arg0 common.Address) (bool, error) {
+	return _Rootchain.Contract.ProofValidatorContracts(&_Rootchain.CallOpts, arg0)
+}
+
+// RoundType is a free data retrieval call binding the contract method 0x2c2d1a3b.
+//
+// Solidity: function roundType() constant returns(bytes32)
+func (_Rootchain *RootchainCaller) RoundType(opts *bind.CallOpts) ([32]byte, error) {
+	var (
+		ret0 = new([32]byte)
+	)
+	out := ret0
+	err := _Rootchain.contract.Call(opts, out, "roundType")
+	return *ret0, err
+}
+
+// RoundType is a free data retrieval call binding the contract method 0x2c2d1a3b.
+//
+// Solidity: function roundType() constant returns(bytes32)
+func (_Rootchain *RootchainSession) RoundType() ([32]byte, error) {
+	return _Rootchain.Contract.RoundType(&_Rootchain.CallOpts)
+}
+
+// RoundType is a free data retrieval call binding the contract method 0x2c2d1a3b.
+//
+// Solidity: function roundType() constant returns(bytes32)
+func (_Rootchain *RootchainCallerSession) RoundType() ([32]byte, error) {
+	return _Rootchain.Contract.RoundType(&_Rootchain.CallOpts)
 }
 
 // StakeManager is a free data retrieval call binding the contract method 0x7542ff95.
@@ -570,202 +574,119 @@ func (_Rootchain *RootchainCallerSession) StakeManager() (common.Address, error)
 	return _Rootchain.Contract.StakeManager(&_Rootchain.CallOpts)
 }
 
-// Tokens is a free data retrieval call binding the contract method 0xe4860339.
+// VoteType is a free data retrieval call binding the contract method 0x7d1a3d37.
 //
-// Solidity: function tokens( address) constant returns(address)
-func (_Rootchain *RootchainCaller) Tokens(opts *bind.CallOpts, arg0 common.Address) (common.Address, error) {
+// Solidity: function voteType() constant returns(bytes1)
+func (_Rootchain *RootchainCaller) VoteType(opts *bind.CallOpts) ([1]byte, error) {
+	var (
+		ret0 = new([1]byte)
+	)
+	out := ret0
+	err := _Rootchain.contract.Call(opts, out, "voteType")
+	return *ret0, err
+}
+
+// VoteType is a free data retrieval call binding the contract method 0x7d1a3d37.
+//
+// Solidity: function voteType() constant returns(bytes1)
+func (_Rootchain *RootchainSession) VoteType() ([1]byte, error) {
+	return _Rootchain.Contract.VoteType(&_Rootchain.CallOpts)
+}
+
+// VoteType is a free data retrieval call binding the contract method 0x7d1a3d37.
+//
+// Solidity: function voteType() constant returns(bytes1)
+func (_Rootchain *RootchainCallerSession) VoteType() ([1]byte, error) {
+	return _Rootchain.Contract.VoteType(&_Rootchain.CallOpts)
+}
+
+// WithdrawManager is a free data retrieval call binding the contract method 0xec3e9da5.
+//
+// Solidity: function withdrawManager() constant returns(address)
+func (_Rootchain *RootchainCaller) WithdrawManager(opts *bind.CallOpts) (common.Address, error) {
 	var (
 		ret0 = new(common.Address)
 	)
 	out := ret0
-	err := _Rootchain.contract.Call(opts, out, "tokens", arg0)
+	err := _Rootchain.contract.Call(opts, out, "withdrawManager")
 	return *ret0, err
 }
 
-// Tokens is a free data retrieval call binding the contract method 0xe4860339.
+// WithdrawManager is a free data retrieval call binding the contract method 0xec3e9da5.
 //
-// Solidity: function tokens( address) constant returns(address)
-func (_Rootchain *RootchainSession) Tokens(arg0 common.Address) (common.Address, error) {
-	return _Rootchain.Contract.Tokens(&_Rootchain.CallOpts, arg0)
+// Solidity: function withdrawManager() constant returns(address)
+func (_Rootchain *RootchainSession) WithdrawManager() (common.Address, error) {
+	return _Rootchain.Contract.WithdrawManager(&_Rootchain.CallOpts)
 }
 
-// Tokens is a free data retrieval call binding the contract method 0xe4860339.
+// WithdrawManager is a free data retrieval call binding the contract method 0xec3e9da5.
 //
-// Solidity: function tokens( address) constant returns(address)
-func (_Rootchain *RootchainCallerSession) Tokens(arg0 common.Address) (common.Address, error) {
-	return _Rootchain.Contract.Tokens(&_Rootchain.CallOpts, arg0)
+// Solidity: function withdrawManager() constant returns(address)
+func (_Rootchain *RootchainCallerSession) WithdrawManager() (common.Address, error) {
+	return _Rootchain.Contract.WithdrawManager(&_Rootchain.CallOpts)
 }
 
-// ValidatorContracts is a free data retrieval call binding the contract method 0x93d26c1a.
+// AddProofValidator is a paid mutator transaction binding the contract method 0xd060828b.
 //
-// Solidity: function validatorContracts( address) constant returns(bool)
-func (_Rootchain *RootchainCaller) ValidatorContracts(opts *bind.CallOpts, arg0 common.Address) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _Rootchain.contract.Call(opts, out, "validatorContracts", arg0)
-	return *ret0, err
+// Solidity: function addProofValidator(_validator address) returns()
+func (_Rootchain *RootchainTransactor) AddProofValidator(opts *bind.TransactOpts, _validator common.Address) (*types.Transaction, error) {
+	return _Rootchain.contract.Transact(opts, "addProofValidator", _validator)
 }
 
-// ValidatorContracts is a free data retrieval call binding the contract method 0x93d26c1a.
+// AddProofValidator is a paid mutator transaction binding the contract method 0xd060828b.
 //
-// Solidity: function validatorContracts( address) constant returns(bool)
-func (_Rootchain *RootchainSession) ValidatorContracts(arg0 common.Address) (bool, error) {
-	return _Rootchain.Contract.ValidatorContracts(&_Rootchain.CallOpts, arg0)
+// Solidity: function addProofValidator(_validator address) returns()
+func (_Rootchain *RootchainSession) AddProofValidator(_validator common.Address) (*types.Transaction, error) {
+	return _Rootchain.Contract.AddProofValidator(&_Rootchain.TransactOpts, _validator)
 }
 
-// ValidatorContracts is a free data retrieval call binding the contract method 0x93d26c1a.
+// AddProofValidator is a paid mutator transaction binding the contract method 0xd060828b.
 //
-// Solidity: function validatorContracts( address) constant returns(bool)
-func (_Rootchain *RootchainCallerSession) ValidatorContracts(arg0 common.Address) (bool, error) {
-	return _Rootchain.Contract.ValidatorContracts(&_Rootchain.CallOpts, arg0)
+// Solidity: function addProofValidator(_validator address) returns()
+func (_Rootchain *RootchainTransactorSession) AddProofValidator(_validator common.Address) (*types.Transaction, error) {
+	return _Rootchain.Contract.AddProofValidator(&_Rootchain.TransactOpts, _validator)
 }
 
-// WethToken is a free data retrieval call binding the contract method 0x4b57b0be.
+// DeleteExit is a paid mutator transaction binding the contract method 0x50c30308.
 //
-// Solidity: function wethToken() constant returns(address)
-func (_Rootchain *RootchainCaller) WethToken(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _Rootchain.contract.Call(opts, out, "wethToken")
-	return *ret0, err
+// Solidity: function deleteExit(exitId uint256) returns()
+func (_Rootchain *RootchainTransactor) DeleteExit(opts *bind.TransactOpts, exitId *big.Int) (*types.Transaction, error) {
+	return _Rootchain.contract.Transact(opts, "deleteExit", exitId)
 }
 
-// WethToken is a free data retrieval call binding the contract method 0x4b57b0be.
+// DeleteExit is a paid mutator transaction binding the contract method 0x50c30308.
 //
-// Solidity: function wethToken() constant returns(address)
-func (_Rootchain *RootchainSession) WethToken() (common.Address, error) {
-	return _Rootchain.Contract.WethToken(&_Rootchain.CallOpts)
+// Solidity: function deleteExit(exitId uint256) returns()
+func (_Rootchain *RootchainSession) DeleteExit(exitId *big.Int) (*types.Transaction, error) {
+	return _Rootchain.Contract.DeleteExit(&_Rootchain.TransactOpts, exitId)
 }
 
-// WethToken is a free data retrieval call binding the contract method 0x4b57b0be.
+// DeleteExit is a paid mutator transaction binding the contract method 0x50c30308.
 //
-// Solidity: function wethToken() constant returns(address)
-func (_Rootchain *RootchainCallerSession) WethToken() (common.Address, error) {
-	return _Rootchain.Contract.WethToken(&_Rootchain.CallOpts)
-}
-
-// WithdrawEventSignature is a free data retrieval call binding the contract method 0xe40b2775.
-//
-// Solidity: function withdrawEventSignature() constant returns(bytes32)
-func (_Rootchain *RootchainCaller) WithdrawEventSignature(opts *bind.CallOpts) ([32]byte, error) {
-	var (
-		ret0 = new([32]byte)
-	)
-	out := ret0
-	err := _Rootchain.contract.Call(opts, out, "withdrawEventSignature")
-	return *ret0, err
-}
-
-// WithdrawEventSignature is a free data retrieval call binding the contract method 0xe40b2775.
-//
-// Solidity: function withdrawEventSignature() constant returns(bytes32)
-func (_Rootchain *RootchainSession) WithdrawEventSignature() ([32]byte, error) {
-	return _Rootchain.Contract.WithdrawEventSignature(&_Rootchain.CallOpts)
-}
-
-// WithdrawEventSignature is a free data retrieval call binding the contract method 0xe40b2775.
-//
-// Solidity: function withdrawEventSignature() constant returns(bytes32)
-func (_Rootchain *RootchainCallerSession) WithdrawEventSignature() ([32]byte, error) {
-	return _Rootchain.Contract.WithdrawEventSignature(&_Rootchain.CallOpts)
-}
-
-// WithdrawSignature is a free data retrieval call binding the contract method 0x7a59a6f3.
-//
-// Solidity: function withdrawSignature() constant returns(bytes4)
-func (_Rootchain *RootchainCaller) WithdrawSignature(opts *bind.CallOpts) ([4]byte, error) {
-	var (
-		ret0 = new([4]byte)
-	)
-	out := ret0
-	err := _Rootchain.contract.Call(opts, out, "withdrawSignature")
-	return *ret0, err
-}
-
-// WithdrawSignature is a free data retrieval call binding the contract method 0x7a59a6f3.
-//
-// Solidity: function withdrawSignature() constant returns(bytes4)
-func (_Rootchain *RootchainSession) WithdrawSignature() ([4]byte, error) {
-	return _Rootchain.Contract.WithdrawSignature(&_Rootchain.CallOpts)
-}
-
-// WithdrawSignature is a free data retrieval call binding the contract method 0x7a59a6f3.
-//
-// Solidity: function withdrawSignature() constant returns(bytes4)
-func (_Rootchain *RootchainCallerSession) WithdrawSignature() ([4]byte, error) {
-	return _Rootchain.Contract.WithdrawSignature(&_Rootchain.CallOpts)
-}
-
-// Withdraws is a free data retrieval call binding the contract method 0xe09ab428.
-//
-// Solidity: function withdraws( bytes32) constant returns(bool)
-func (_Rootchain *RootchainCaller) Withdraws(opts *bind.CallOpts, arg0 [32]byte) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _Rootchain.contract.Call(opts, out, "withdraws", arg0)
-	return *ret0, err
-}
-
-// Withdraws is a free data retrieval call binding the contract method 0xe09ab428.
-//
-// Solidity: function withdraws( bytes32) constant returns(bool)
-func (_Rootchain *RootchainSession) Withdraws(arg0 [32]byte) (bool, error) {
-	return _Rootchain.Contract.Withdraws(&_Rootchain.CallOpts, arg0)
-}
-
-// Withdraws is a free data retrieval call binding the contract method 0xe09ab428.
-//
-// Solidity: function withdraws( bytes32) constant returns(bool)
-func (_Rootchain *RootchainCallerSession) Withdraws(arg0 [32]byte) (bool, error) {
-	return _Rootchain.Contract.Withdraws(&_Rootchain.CallOpts, arg0)
-}
-
-// AddValidator is a paid mutator transaction binding the contract method 0x4d238c8e.
-//
-// Solidity: function addValidator(_validator address) returns()
-func (_Rootchain *RootchainTransactor) AddValidator(opts *bind.TransactOpts, _validator common.Address) (*types.Transaction, error) {
-	return _Rootchain.contract.Transact(opts, "addValidator", _validator)
-}
-
-// AddValidator is a paid mutator transaction binding the contract method 0x4d238c8e.
-//
-// Solidity: function addValidator(_validator address) returns()
-func (_Rootchain *RootchainSession) AddValidator(_validator common.Address) (*types.Transaction, error) {
-	return _Rootchain.Contract.AddValidator(&_Rootchain.TransactOpts, _validator)
-}
-
-// AddValidator is a paid mutator transaction binding the contract method 0x4d238c8e.
-//
-// Solidity: function addValidator(_validator address) returns()
-func (_Rootchain *RootchainTransactorSession) AddValidator(_validator common.Address) (*types.Transaction, error) {
-	return _Rootchain.Contract.AddValidator(&_Rootchain.TransactOpts, _validator)
+// Solidity: function deleteExit(exitId uint256) returns()
+func (_Rootchain *RootchainTransactorSession) DeleteExit(exitId *big.Int) (*types.Transaction, error) {
+	return _Rootchain.Contract.DeleteExit(&_Rootchain.TransactOpts, exitId)
 }
 
 // Deposit is a paid mutator transaction binding the contract method 0x8340f549.
 //
-// Solidity: function deposit(token address, user address, amount uint256) returns()
-func (_Rootchain *RootchainTransactor) Deposit(opts *bind.TransactOpts, token common.Address, user common.Address, amount *big.Int) (*types.Transaction, error) {
-	return _Rootchain.contract.Transact(opts, "deposit", token, user, amount)
+// Solidity: function deposit(_token address, _user address, _amount uint256) returns()
+func (_Rootchain *RootchainTransactor) Deposit(opts *bind.TransactOpts, _token common.Address, _user common.Address, _amount *big.Int) (*types.Transaction, error) {
+	return _Rootchain.contract.Transact(opts, "deposit", _token, _user, _amount)
 }
 
 // Deposit is a paid mutator transaction binding the contract method 0x8340f549.
 //
-// Solidity: function deposit(token address, user address, amount uint256) returns()
-func (_Rootchain *RootchainSession) Deposit(token common.Address, user common.Address, amount *big.Int) (*types.Transaction, error) {
-	return _Rootchain.Contract.Deposit(&_Rootchain.TransactOpts, token, user, amount)
+// Solidity: function deposit(_token address, _user address, _amount uint256) returns()
+func (_Rootchain *RootchainSession) Deposit(_token common.Address, _user common.Address, _amount *big.Int) (*types.Transaction, error) {
+	return _Rootchain.Contract.Deposit(&_Rootchain.TransactOpts, _token, _user, _amount)
 }
 
 // Deposit is a paid mutator transaction binding the contract method 0x8340f549.
 //
-// Solidity: function deposit(token address, user address, amount uint256) returns()
-func (_Rootchain *RootchainTransactorSession) Deposit(token common.Address, user common.Address, amount *big.Int) (*types.Transaction, error) {
-	return _Rootchain.Contract.Deposit(&_Rootchain.TransactOpts, token, user, amount)
+// Solidity: function deposit(_token address, _user address, _amount uint256) returns()
+func (_Rootchain *RootchainTransactorSession) Deposit(_token common.Address, _user common.Address, _amount *big.Int) (*types.Transaction, error) {
+	return _Rootchain.Contract.Deposit(&_Rootchain.TransactOpts, _token, _user, _amount)
 }
 
 // DepositEthers is a paid mutator transaction binding the contract method 0xf477a6b7.
@@ -789,46 +710,88 @@ func (_Rootchain *RootchainTransactorSession) DepositEthers() (*types.Transactio
 	return _Rootchain.Contract.DepositEthers(&_Rootchain.TransactOpts)
 }
 
-// MapToken is a paid mutator transaction binding the contract method 0x47400269.
+// FinalizeCommit is a paid mutator transaction binding the contract method 0xfb0df30f.
 //
-// Solidity: function mapToken(rootToken address, childToken address) returns()
-func (_Rootchain *RootchainTransactor) MapToken(opts *bind.TransactOpts, rootToken common.Address, childToken common.Address) (*types.Transaction, error) {
-	return _Rootchain.contract.Transact(opts, "mapToken", rootToken, childToken)
+// Solidity: function finalizeCommit( uint256) returns()
+func (_Rootchain *RootchainTransactor) FinalizeCommit(opts *bind.TransactOpts, arg0 *big.Int) (*types.Transaction, error) {
+	return _Rootchain.contract.Transact(opts, "finalizeCommit", arg0)
+}
+
+// FinalizeCommit is a paid mutator transaction binding the contract method 0xfb0df30f.
+//
+// Solidity: function finalizeCommit( uint256) returns()
+func (_Rootchain *RootchainSession) FinalizeCommit(arg0 *big.Int) (*types.Transaction, error) {
+	return _Rootchain.Contract.FinalizeCommit(&_Rootchain.TransactOpts, arg0)
+}
+
+// FinalizeCommit is a paid mutator transaction binding the contract method 0xfb0df30f.
+//
+// Solidity: function finalizeCommit( uint256) returns()
+func (_Rootchain *RootchainTransactorSession) FinalizeCommit(arg0 *big.Int) (*types.Transaction, error) {
+	return _Rootchain.Contract.FinalizeCommit(&_Rootchain.TransactOpts, arg0)
 }
 
 // MapToken is a paid mutator transaction binding the contract method 0x47400269.
 //
-// Solidity: function mapToken(rootToken address, childToken address) returns()
-func (_Rootchain *RootchainSession) MapToken(rootToken common.Address, childToken common.Address) (*types.Transaction, error) {
-	return _Rootchain.Contract.MapToken(&_Rootchain.TransactOpts, rootToken, childToken)
+// Solidity: function mapToken(_rootToken address, _childToken address) returns()
+func (_Rootchain *RootchainTransactor) MapToken(opts *bind.TransactOpts, _rootToken common.Address, _childToken common.Address) (*types.Transaction, error) {
+	return _Rootchain.contract.Transact(opts, "mapToken", _rootToken, _childToken)
 }
 
 // MapToken is a paid mutator transaction binding the contract method 0x47400269.
 //
-// Solidity: function mapToken(rootToken address, childToken address) returns()
-func (_Rootchain *RootchainTransactorSession) MapToken(rootToken common.Address, childToken common.Address) (*types.Transaction, error) {
-	return _Rootchain.Contract.MapToken(&_Rootchain.TransactOpts, rootToken, childToken)
+// Solidity: function mapToken(_rootToken address, _childToken address) returns()
+func (_Rootchain *RootchainSession) MapToken(_rootToken common.Address, _childToken common.Address) (*types.Transaction, error) {
+	return _Rootchain.Contract.MapToken(&_Rootchain.TransactOpts, _rootToken, _childToken)
 }
 
-// RemoveValidator is a paid mutator transaction binding the contract method 0x40a141ff.
+// MapToken is a paid mutator transaction binding the contract method 0x47400269.
 //
-// Solidity: function removeValidator(_validator address) returns()
-func (_Rootchain *RootchainTransactor) RemoveValidator(opts *bind.TransactOpts, _validator common.Address) (*types.Transaction, error) {
-	return _Rootchain.contract.Transact(opts, "removeValidator", _validator)
+// Solidity: function mapToken(_rootToken address, _childToken address) returns()
+func (_Rootchain *RootchainTransactorSession) MapToken(_rootToken common.Address, _childToken common.Address) (*types.Transaction, error) {
+	return _Rootchain.Contract.MapToken(&_Rootchain.TransactOpts, _rootToken, _childToken)
 }
 
-// RemoveValidator is a paid mutator transaction binding the contract method 0x40a141ff.
+// RemoveProofValidator is a paid mutator transaction binding the contract method 0x609dc55a.
 //
-// Solidity: function removeValidator(_validator address) returns()
-func (_Rootchain *RootchainSession) RemoveValidator(_validator common.Address) (*types.Transaction, error) {
-	return _Rootchain.Contract.RemoveValidator(&_Rootchain.TransactOpts, _validator)
+// Solidity: function removeProofValidator(_validator address) returns()
+func (_Rootchain *RootchainTransactor) RemoveProofValidator(opts *bind.TransactOpts, _validator common.Address) (*types.Transaction, error) {
+	return _Rootchain.contract.Transact(opts, "removeProofValidator", _validator)
 }
 
-// RemoveValidator is a paid mutator transaction binding the contract method 0x40a141ff.
+// RemoveProofValidator is a paid mutator transaction binding the contract method 0x609dc55a.
 //
-// Solidity: function removeValidator(_validator address) returns()
-func (_Rootchain *RootchainTransactorSession) RemoveValidator(_validator common.Address) (*types.Transaction, error) {
-	return _Rootchain.Contract.RemoveValidator(&_Rootchain.TransactOpts, _validator)
+// Solidity: function removeProofValidator(_validator address) returns()
+func (_Rootchain *RootchainSession) RemoveProofValidator(_validator common.Address) (*types.Transaction, error) {
+	return _Rootchain.Contract.RemoveProofValidator(&_Rootchain.TransactOpts, _validator)
+}
+
+// RemoveProofValidator is a paid mutator transaction binding the contract method 0x609dc55a.
+//
+// Solidity: function removeProofValidator(_validator address) returns()
+func (_Rootchain *RootchainTransactorSession) RemoveProofValidator(_validator common.Address) (*types.Transaction, error) {
+	return _Rootchain.Contract.RemoveProofValidator(&_Rootchain.TransactOpts, _validator)
+}
+
+// RenounceOwnership is a paid mutator transaction binding the contract method 0x715018a6.
+//
+// Solidity: function renounceOwnership() returns()
+func (_Rootchain *RootchainTransactor) RenounceOwnership(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _Rootchain.contract.Transact(opts, "renounceOwnership")
+}
+
+// RenounceOwnership is a paid mutator transaction binding the contract method 0x715018a6.
+//
+// Solidity: function renounceOwnership() returns()
+func (_Rootchain *RootchainSession) RenounceOwnership() (*types.Transaction, error) {
+	return _Rootchain.Contract.RenounceOwnership(&_Rootchain.TransactOpts)
+}
+
+// RenounceOwnership is a paid mutator transaction binding the contract method 0x715018a6.
+//
+// Solidity: function renounceOwnership() returns()
+func (_Rootchain *RootchainTransactorSession) RenounceOwnership() (*types.Transaction, error) {
+	return _Rootchain.Contract.RenounceOwnership(&_Rootchain.TransactOpts)
 }
 
 // SetChildContract is a paid mutator transaction binding the contract method 0xf8d86e18.
@@ -850,6 +813,111 @@ func (_Rootchain *RootchainSession) SetChildContract(newChildChain common.Addres
 // Solidity: function setChildContract(newChildChain address) returns()
 func (_Rootchain *RootchainTransactorSession) SetChildContract(newChildChain common.Address) (*types.Transaction, error) {
 	return _Rootchain.Contract.SetChildContract(&_Rootchain.TransactOpts, newChildChain)
+}
+
+// SetCurrentChildBlock is a paid mutator transaction binding the contract method 0x6fe176d5.
+//
+// Solidity: function setCurrentChildBlock(_c uint256) returns()
+func (_Rootchain *RootchainTransactor) SetCurrentChildBlock(opts *bind.TransactOpts, _c *big.Int) (*types.Transaction, error) {
+	return _Rootchain.contract.Transact(opts, "setCurrentChildBlock", _c)
+}
+
+// SetCurrentChildBlock is a paid mutator transaction binding the contract method 0x6fe176d5.
+//
+// Solidity: function setCurrentChildBlock(_c uint256) returns()
+func (_Rootchain *RootchainSession) SetCurrentChildBlock(_c *big.Int) (*types.Transaction, error) {
+	return _Rootchain.Contract.SetCurrentChildBlock(&_Rootchain.TransactOpts, _c)
+}
+
+// SetCurrentChildBlock is a paid mutator transaction binding the contract method 0x6fe176d5.
+//
+// Solidity: function setCurrentChildBlock(_c uint256) returns()
+func (_Rootchain *RootchainTransactorSession) SetCurrentChildBlock(_c *big.Int) (*types.Transaction, error) {
+	return _Rootchain.Contract.SetCurrentChildBlock(&_Rootchain.TransactOpts, _c)
+}
+
+// SetCurrentHeaderBlock is a paid mutator transaction binding the contract method 0x8ef56857.
+//
+// Solidity: function setCurrentHeaderBlock(_c uint256) returns()
+func (_Rootchain *RootchainTransactor) SetCurrentHeaderBlock(opts *bind.TransactOpts, _c *big.Int) (*types.Transaction, error) {
+	return _Rootchain.contract.Transact(opts, "setCurrentHeaderBlock", _c)
+}
+
+// SetCurrentHeaderBlock is a paid mutator transaction binding the contract method 0x8ef56857.
+//
+// Solidity: function setCurrentHeaderBlock(_c uint256) returns()
+func (_Rootchain *RootchainSession) SetCurrentHeaderBlock(_c *big.Int) (*types.Transaction, error) {
+	return _Rootchain.Contract.SetCurrentHeaderBlock(&_Rootchain.TransactOpts, _c)
+}
+
+// SetCurrentHeaderBlock is a paid mutator transaction binding the contract method 0x8ef56857.
+//
+// Solidity: function setCurrentHeaderBlock(_c uint256) returns()
+func (_Rootchain *RootchainTransactorSession) SetCurrentHeaderBlock(_c *big.Int) (*types.Transaction, error) {
+	return _Rootchain.Contract.SetCurrentHeaderBlock(&_Rootchain.TransactOpts, _c)
+}
+
+// SetDepositManager is a paid mutator transaction binding the contract method 0x228d71a9.
+//
+// Solidity: function setDepositManager(_depositManager address) returns()
+func (_Rootchain *RootchainTransactor) SetDepositManager(opts *bind.TransactOpts, _depositManager common.Address) (*types.Transaction, error) {
+	return _Rootchain.contract.Transact(opts, "setDepositManager", _depositManager)
+}
+
+// SetDepositManager is a paid mutator transaction binding the contract method 0x228d71a9.
+//
+// Solidity: function setDepositManager(_depositManager address) returns()
+func (_Rootchain *RootchainSession) SetDepositManager(_depositManager common.Address) (*types.Transaction, error) {
+	return _Rootchain.Contract.SetDepositManager(&_Rootchain.TransactOpts, _depositManager)
+}
+
+// SetDepositManager is a paid mutator transaction binding the contract method 0x228d71a9.
+//
+// Solidity: function setDepositManager(_depositManager address) returns()
+func (_Rootchain *RootchainTransactorSession) SetDepositManager(_depositManager common.Address) (*types.Transaction, error) {
+	return _Rootchain.Contract.SetDepositManager(&_Rootchain.TransactOpts, _depositManager)
+}
+
+// SetExitNFTContract is a paid mutator transaction binding the contract method 0x46e11a8d.
+//
+// Solidity: function setExitNFTContract(_nftContract address) returns()
+func (_Rootchain *RootchainTransactor) SetExitNFTContract(opts *bind.TransactOpts, _nftContract common.Address) (*types.Transaction, error) {
+	return _Rootchain.contract.Transact(opts, "setExitNFTContract", _nftContract)
+}
+
+// SetExitNFTContract is a paid mutator transaction binding the contract method 0x46e11a8d.
+//
+// Solidity: function setExitNFTContract(_nftContract address) returns()
+func (_Rootchain *RootchainSession) SetExitNFTContract(_nftContract common.Address) (*types.Transaction, error) {
+	return _Rootchain.Contract.SetExitNFTContract(&_Rootchain.TransactOpts, _nftContract)
+}
+
+// SetExitNFTContract is a paid mutator transaction binding the contract method 0x46e11a8d.
+//
+// Solidity: function setExitNFTContract(_nftContract address) returns()
+func (_Rootchain *RootchainTransactorSession) SetExitNFTContract(_nftContract common.Address) (*types.Transaction, error) {
+	return _Rootchain.Contract.SetExitNFTContract(&_Rootchain.TransactOpts, _nftContract)
+}
+
+// SetHeaderBlock is a paid mutator transaction binding the contract method 0x91c425f0.
+//
+// Solidity: function setHeaderBlock(_headerNumber uint256, root bytes32, start uint256, end uint256, createdAt uint256) returns()
+func (_Rootchain *RootchainTransactor) SetHeaderBlock(opts *bind.TransactOpts, _headerNumber *big.Int, root [32]byte, start *big.Int, end *big.Int, createdAt *big.Int) (*types.Transaction, error) {
+	return _Rootchain.contract.Transact(opts, "setHeaderBlock", _headerNumber, root, start, end, createdAt)
+}
+
+// SetHeaderBlock is a paid mutator transaction binding the contract method 0x91c425f0.
+//
+// Solidity: function setHeaderBlock(_headerNumber uint256, root bytes32, start uint256, end uint256, createdAt uint256) returns()
+func (_Rootchain *RootchainSession) SetHeaderBlock(_headerNumber *big.Int, root [32]byte, start *big.Int, end *big.Int, createdAt *big.Int) (*types.Transaction, error) {
+	return _Rootchain.Contract.SetHeaderBlock(&_Rootchain.TransactOpts, _headerNumber, root, start, end, createdAt)
+}
+
+// SetHeaderBlock is a paid mutator transaction binding the contract method 0x91c425f0.
+//
+// Solidity: function setHeaderBlock(_headerNumber uint256, root bytes32, start uint256, end uint256, createdAt uint256) returns()
+func (_Rootchain *RootchainTransactorSession) SetHeaderBlock(_headerNumber *big.Int, root [32]byte, start *big.Int, end *big.Int, createdAt *big.Int) (*types.Transaction, error) {
+	return _Rootchain.Contract.SetHeaderBlock(&_Rootchain.TransactOpts, _headerNumber, root, start, end, createdAt)
 }
 
 // SetStakeManager is a paid mutator transaction binding the contract method 0x0e7c67fc.
@@ -894,6 +962,27 @@ func (_Rootchain *RootchainTransactorSession) SetWETHToken(_token common.Address
 	return _Rootchain.Contract.SetWETHToken(&_Rootchain.TransactOpts, _token)
 }
 
+// SetWithdrawManager is a paid mutator transaction binding the contract method 0x17e3e2e8.
+//
+// Solidity: function setWithdrawManager(_withdrawManager address) returns()
+func (_Rootchain *RootchainTransactor) SetWithdrawManager(opts *bind.TransactOpts, _withdrawManager common.Address) (*types.Transaction, error) {
+	return _Rootchain.contract.Transact(opts, "setWithdrawManager", _withdrawManager)
+}
+
+// SetWithdrawManager is a paid mutator transaction binding the contract method 0x17e3e2e8.
+//
+// Solidity: function setWithdrawManager(_withdrawManager address) returns()
+func (_Rootchain *RootchainSession) SetWithdrawManager(_withdrawManager common.Address) (*types.Transaction, error) {
+	return _Rootchain.Contract.SetWithdrawManager(&_Rootchain.TransactOpts, _withdrawManager)
+}
+
+// SetWithdrawManager is a paid mutator transaction binding the contract method 0x17e3e2e8.
+//
+// Solidity: function setWithdrawManager(_withdrawManager address) returns()
+func (_Rootchain *RootchainTransactorSession) SetWithdrawManager(_withdrawManager common.Address) (*types.Transaction, error) {
+	return _Rootchain.Contract.SetWithdrawManager(&_Rootchain.TransactOpts, _withdrawManager)
+}
+
 // Slash is a paid mutator transaction binding the contract method 0x2da25de3.
 //
 // Solidity: function slash() returns()
@@ -915,88 +1004,88 @@ func (_Rootchain *RootchainTransactorSession) Slash() (*types.Transaction, error
 	return _Rootchain.Contract.Slash(&_Rootchain.TransactOpts)
 }
 
-// SubmitHeaderBlock is a paid mutator transaction binding the contract method 0xa0ee0f19.
+// SubmitHeaderBlock is a paid mutator transaction binding the contract method 0xec83d3ba.
 //
-// Solidity: function submitHeaderBlock(root bytes32, start uint256, end uint256, sigs bytes) returns()
-func (_Rootchain *RootchainTransactor) SubmitHeaderBlock(opts *bind.TransactOpts, root [32]byte, start *big.Int, end *big.Int, sigs []byte) (*types.Transaction, error) {
-	return _Rootchain.contract.Transact(opts, "submitHeaderBlock", root, start, end, sigs)
+// Solidity: function submitHeaderBlock(vote bytes, sigs bytes, extradata bytes) returns()
+func (_Rootchain *RootchainTransactor) SubmitHeaderBlock(opts *bind.TransactOpts, vote []byte, sigs []byte, extradata []byte) (*types.Transaction, error) {
+	return _Rootchain.contract.Transact(opts, "submitHeaderBlock", vote, sigs, extradata)
 }
 
-// SubmitHeaderBlock is a paid mutator transaction binding the contract method 0xa0ee0f19.
+// SubmitHeaderBlock is a paid mutator transaction binding the contract method 0xec83d3ba.
 //
-// Solidity: function submitHeaderBlock(root bytes32, start uint256, end uint256, sigs bytes) returns()
-func (_Rootchain *RootchainSession) SubmitHeaderBlock(root [32]byte, start *big.Int, end *big.Int, sigs []byte) (*types.Transaction, error) {
-	return _Rootchain.Contract.SubmitHeaderBlock(&_Rootchain.TransactOpts, root, start, end, sigs)
+// Solidity: function submitHeaderBlock(vote bytes, sigs bytes, extradata bytes) returns()
+func (_Rootchain *RootchainSession) SubmitHeaderBlock(vote []byte, sigs []byte, extradata []byte) (*types.Transaction, error) {
+	return _Rootchain.Contract.SubmitHeaderBlock(&_Rootchain.TransactOpts, vote, sigs, extradata)
 }
 
-// SubmitHeaderBlock is a paid mutator transaction binding the contract method 0xa0ee0f19.
+// SubmitHeaderBlock is a paid mutator transaction binding the contract method 0xec83d3ba.
 //
-// Solidity: function submitHeaderBlock(root bytes32, start uint256, end uint256, sigs bytes) returns()
-func (_Rootchain *RootchainTransactorSession) SubmitHeaderBlock(root [32]byte, start *big.Int, end *big.Int, sigs []byte) (*types.Transaction, error) {
-	return _Rootchain.Contract.SubmitHeaderBlock(&_Rootchain.TransactOpts, root, start, end, sigs)
-}
-
-// TokenFallback is a paid mutator transaction binding the contract method 0xc0ee0b8a.
-//
-// Solidity: function tokenFallback(_sender address, _value uint256,  bytes) returns()
-func (_Rootchain *RootchainTransactor) TokenFallback(opts *bind.TransactOpts, _sender common.Address, _value *big.Int, arg2 []byte) (*types.Transaction, error) {
-	return _Rootchain.contract.Transact(opts, "tokenFallback", _sender, _value, arg2)
+// Solidity: function submitHeaderBlock(vote bytes, sigs bytes, extradata bytes) returns()
+func (_Rootchain *RootchainTransactorSession) SubmitHeaderBlock(vote []byte, sigs []byte, extradata []byte) (*types.Transaction, error) {
+	return _Rootchain.Contract.SubmitHeaderBlock(&_Rootchain.TransactOpts, vote, sigs, extradata)
 }
 
 // TokenFallback is a paid mutator transaction binding the contract method 0xc0ee0b8a.
 //
-// Solidity: function tokenFallback(_sender address, _value uint256,  bytes) returns()
-func (_Rootchain *RootchainSession) TokenFallback(_sender common.Address, _value *big.Int, arg2 []byte) (*types.Transaction, error) {
-	return _Rootchain.Contract.TokenFallback(&_Rootchain.TransactOpts, _sender, _value, arg2)
+// Solidity: function tokenFallback(_user address, _amount uint256, _data bytes) returns()
+func (_Rootchain *RootchainTransactor) TokenFallback(opts *bind.TransactOpts, _user common.Address, _amount *big.Int, _data []byte) (*types.Transaction, error) {
+	return _Rootchain.contract.Transact(opts, "tokenFallback", _user, _amount, _data)
 }
 
 // TokenFallback is a paid mutator transaction binding the contract method 0xc0ee0b8a.
 //
-// Solidity: function tokenFallback(_sender address, _value uint256,  bytes) returns()
-func (_Rootchain *RootchainTransactorSession) TokenFallback(_sender common.Address, _value *big.Int, arg2 []byte) (*types.Transaction, error) {
-	return _Rootchain.Contract.TokenFallback(&_Rootchain.TransactOpts, _sender, _value, arg2)
+// Solidity: function tokenFallback(_user address, _amount uint256, _data bytes) returns()
+func (_Rootchain *RootchainSession) TokenFallback(_user common.Address, _amount *big.Int, _data []byte) (*types.Transaction, error) {
+	return _Rootchain.Contract.TokenFallback(&_Rootchain.TransactOpts, _user, _amount, _data)
+}
+
+// TokenFallback is a paid mutator transaction binding the contract method 0xc0ee0b8a.
+//
+// Solidity: function tokenFallback(_user address, _amount uint256, _data bytes) returns()
+func (_Rootchain *RootchainTransactorSession) TokenFallback(_user common.Address, _amount *big.Int, _data []byte) (*types.Transaction, error) {
+	return _Rootchain.Contract.TokenFallback(&_Rootchain.TransactOpts, _user, _amount, _data)
+}
+
+// TransferAmount is a paid mutator transaction binding the contract method 0x3e2196ca.
+//
+// Solidity: function transferAmount(_token address, _user address, _amount uint256, isWeth bool) returns(bool)
+func (_Rootchain *RootchainTransactor) TransferAmount(opts *bind.TransactOpts, _token common.Address, _user common.Address, _amount *big.Int, isWeth bool) (*types.Transaction, error) {
+	return _Rootchain.contract.Transact(opts, "transferAmount", _token, _user, _amount, isWeth)
+}
+
+// TransferAmount is a paid mutator transaction binding the contract method 0x3e2196ca.
+//
+// Solidity: function transferAmount(_token address, _user address, _amount uint256, isWeth bool) returns(bool)
+func (_Rootchain *RootchainSession) TransferAmount(_token common.Address, _user common.Address, _amount *big.Int, isWeth bool) (*types.Transaction, error) {
+	return _Rootchain.Contract.TransferAmount(&_Rootchain.TransactOpts, _token, _user, _amount, isWeth)
+}
+
+// TransferAmount is a paid mutator transaction binding the contract method 0x3e2196ca.
+//
+// Solidity: function transferAmount(_token address, _user address, _amount uint256, isWeth bool) returns(bool)
+func (_Rootchain *RootchainTransactorSession) TransferAmount(_token common.Address, _user common.Address, _amount *big.Int, isWeth bool) (*types.Transaction, error) {
+	return _Rootchain.Contract.TransferAmount(&_Rootchain.TransactOpts, _token, _user, _amount, isWeth)
 }
 
 // TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
 //
-// Solidity: function transferOwnership(newOwner address) returns()
-func (_Rootchain *RootchainTransactor) TransferOwnership(opts *bind.TransactOpts, newOwner common.Address) (*types.Transaction, error) {
-	return _Rootchain.contract.Transact(opts, "transferOwnership", newOwner)
+// Solidity: function transferOwnership(_newOwner address) returns()
+func (_Rootchain *RootchainTransactor) TransferOwnership(opts *bind.TransactOpts, _newOwner common.Address) (*types.Transaction, error) {
+	return _Rootchain.contract.Transact(opts, "transferOwnership", _newOwner)
 }
 
 // TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
 //
-// Solidity: function transferOwnership(newOwner address) returns()
-func (_Rootchain *RootchainSession) TransferOwnership(newOwner common.Address) (*types.Transaction, error) {
-	return _Rootchain.Contract.TransferOwnership(&_Rootchain.TransactOpts, newOwner)
+// Solidity: function transferOwnership(_newOwner address) returns()
+func (_Rootchain *RootchainSession) TransferOwnership(_newOwner common.Address) (*types.Transaction, error) {
+	return _Rootchain.Contract.TransferOwnership(&_Rootchain.TransactOpts, _newOwner)
 }
 
 // TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
 //
-// Solidity: function transferOwnership(newOwner address) returns()
-func (_Rootchain *RootchainTransactorSession) TransferOwnership(newOwner common.Address) (*types.Transaction, error) {
-	return _Rootchain.Contract.TransferOwnership(&_Rootchain.TransactOpts, newOwner)
-}
-
-// Withdraw is a paid mutator transaction binding the contract method 0xfce5ff2e.
-//
-// Solidity: function withdraw(headerNumber uint256, headerProof bytes, blockNumber uint256, blockTime uint256, txRoot bytes32, receiptRoot bytes32, path bytes, txBytes bytes, txProof bytes, receiptBytes bytes, receiptProof bytes) returns()
-func (_Rootchain *RootchainTransactor) Withdraw(opts *bind.TransactOpts, headerNumber *big.Int, headerProof []byte, blockNumber *big.Int, blockTime *big.Int, txRoot [32]byte, receiptRoot [32]byte, path []byte, txBytes []byte, txProof []byte, receiptBytes []byte, receiptProof []byte) (*types.Transaction, error) {
-	return _Rootchain.contract.Transact(opts, "withdraw", headerNumber, headerProof, blockNumber, blockTime, txRoot, receiptRoot, path, txBytes, txProof, receiptBytes, receiptProof)
-}
-
-// Withdraw is a paid mutator transaction binding the contract method 0xfce5ff2e.
-//
-// Solidity: function withdraw(headerNumber uint256, headerProof bytes, blockNumber uint256, blockTime uint256, txRoot bytes32, receiptRoot bytes32, path bytes, txBytes bytes, txProof bytes, receiptBytes bytes, receiptProof bytes) returns()
-func (_Rootchain *RootchainSession) Withdraw(headerNumber *big.Int, headerProof []byte, blockNumber *big.Int, blockTime *big.Int, txRoot [32]byte, receiptRoot [32]byte, path []byte, txBytes []byte, txProof []byte, receiptBytes []byte, receiptProof []byte) (*types.Transaction, error) {
-	return _Rootchain.Contract.Withdraw(&_Rootchain.TransactOpts, headerNumber, headerProof, blockNumber, blockTime, txRoot, receiptRoot, path, txBytes, txProof, receiptBytes, receiptProof)
-}
-
-// Withdraw is a paid mutator transaction binding the contract method 0xfce5ff2e.
-//
-// Solidity: function withdraw(headerNumber uint256, headerProof bytes, blockNumber uint256, blockTime uint256, txRoot bytes32, receiptRoot bytes32, path bytes, txBytes bytes, txProof bytes, receiptBytes bytes, receiptProof bytes) returns()
-func (_Rootchain *RootchainTransactorSession) Withdraw(headerNumber *big.Int, headerProof []byte, blockNumber *big.Int, blockTime *big.Int, txRoot [32]byte, receiptRoot [32]byte, path []byte, txBytes []byte, txProof []byte, receiptBytes []byte, receiptProof []byte) (*types.Transaction, error) {
-	return _Rootchain.Contract.Withdraw(&_Rootchain.TransactOpts, headerNumber, headerProof, blockNumber, blockTime, txRoot, receiptRoot, path, txBytes, txProof, receiptBytes, receiptProof)
+// Solidity: function transferOwnership(_newOwner address) returns()
+func (_Rootchain *RootchainTransactorSession) TransferOwnership(_newOwner common.Address) (*types.Transaction, error) {
+	return _Rootchain.Contract.TransferOwnership(&_Rootchain.TransactOpts, _newOwner)
 }
 
 // RootchainChildChainChangedIterator is returned from FilterChildChainChanged and is used to iterate over the raw logs and unpacked data for ChildChainChanged events raised by the Rootchain contract.
@@ -1140,149 +1229,6 @@ func (_Rootchain *RootchainFilterer) WatchChildChainChanged(opts *bind.WatchOpts
 	}), nil
 }
 
-// RootchainDepositIterator is returned from FilterDeposit and is used to iterate over the raw logs and unpacked data for Deposit events raised by the Rootchain contract.
-type RootchainDepositIterator struct {
-	Event *RootchainDeposit // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *RootchainDepositIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(RootchainDeposit)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(RootchainDeposit)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *RootchainDepositIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *RootchainDepositIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// RootchainDeposit represents a Deposit event raised by the Rootchain contract.
-type RootchainDeposit struct {
-	User         common.Address
-	Token        common.Address
-	Amount       *big.Int
-	DepositCount *big.Int
-	Raw          types.Log // Blockchain specific contextual infos
-}
-
-// FilterDeposit is a free log retrieval operation binding the contract event 0xdcbc1c05240f31ff3ad067ef1ee35ce4997762752e3a095284754544f4c709d7.
-//
-// Solidity: e Deposit(user indexed address, token indexed address, amount uint256, depositCount uint256)
-func (_Rootchain *RootchainFilterer) FilterDeposit(opts *bind.FilterOpts, user []common.Address, token []common.Address) (*RootchainDepositIterator, error) {
-
-	var userRule []interface{}
-	for _, userItem := range user {
-		userRule = append(userRule, userItem)
-	}
-	var tokenRule []interface{}
-	for _, tokenItem := range token {
-		tokenRule = append(tokenRule, tokenItem)
-	}
-
-	logs, sub, err := _Rootchain.contract.FilterLogs(opts, "Deposit", userRule, tokenRule)
-	if err != nil {
-		return nil, err
-	}
-	return &RootchainDepositIterator{contract: _Rootchain.contract, event: "Deposit", logs: logs, sub: sub}, nil
-}
-
-// WatchDeposit is a free log subscription operation binding the contract event 0xdcbc1c05240f31ff3ad067ef1ee35ce4997762752e3a095284754544f4c709d7.
-//
-// Solidity: e Deposit(user indexed address, token indexed address, amount uint256, depositCount uint256)
-func (_Rootchain *RootchainFilterer) WatchDeposit(opts *bind.WatchOpts, sink chan<- *RootchainDeposit, user []common.Address, token []common.Address) (event.Subscription, error) {
-
-	var userRule []interface{}
-	for _, userItem := range user {
-		userRule = append(userRule, userItem)
-	}
-	var tokenRule []interface{}
-	for _, tokenItem := range token {
-		tokenRule = append(tokenRule, tokenItem)
-	}
-
-	logs, sub, err := _Rootchain.contract.WatchLogs(opts, "Deposit", userRule, tokenRule)
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(RootchainDeposit)
-				if err := _Rootchain.contract.UnpackLog(event, "Deposit", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
 // RootchainNewHeaderBlockIterator is returned from FilterNewHeaderBlock and is used to iterate over the raw logs and unpacked data for NewHeaderBlock events raised by the Rootchain contract.
 type RootchainNewHeaderBlockIterator struct {
 	Event *RootchainNewHeaderBlock // Event containing the contract specifics and raw log
@@ -1362,15 +1308,19 @@ type RootchainNewHeaderBlock struct {
 
 // FilterNewHeaderBlock is a free log retrieval operation binding the contract event 0xf146921b854b787ba7d6045e8a8054731dc62430ae16c4bf08147539b1b6ef8f.
 //
-// Solidity: e NewHeaderBlock(proposer indexed address, number uint256, start uint256, end uint256, root bytes32)
-func (_Rootchain *RootchainFilterer) FilterNewHeaderBlock(opts *bind.FilterOpts, proposer []common.Address) (*RootchainNewHeaderBlockIterator, error) {
+// Solidity: e NewHeaderBlock(proposer indexed address, number indexed uint256, start uint256, end uint256, root bytes32)
+func (_Rootchain *RootchainFilterer) FilterNewHeaderBlock(opts *bind.FilterOpts, proposer []common.Address, number []*big.Int) (*RootchainNewHeaderBlockIterator, error) {
 
 	var proposerRule []interface{}
 	for _, proposerItem := range proposer {
 		proposerRule = append(proposerRule, proposerItem)
 	}
+	var numberRule []interface{}
+	for _, numberItem := range number {
+		numberRule = append(numberRule, numberItem)
+	}
 
-	logs, sub, err := _Rootchain.contract.FilterLogs(opts, "NewHeaderBlock", proposerRule)
+	logs, sub, err := _Rootchain.contract.FilterLogs(opts, "NewHeaderBlock", proposerRule, numberRule)
 	if err != nil {
 		return nil, err
 	}
@@ -1379,15 +1329,19 @@ func (_Rootchain *RootchainFilterer) FilterNewHeaderBlock(opts *bind.FilterOpts,
 
 // WatchNewHeaderBlock is a free log subscription operation binding the contract event 0xf146921b854b787ba7d6045e8a8054731dc62430ae16c4bf08147539b1b6ef8f.
 //
-// Solidity: e NewHeaderBlock(proposer indexed address, number uint256, start uint256, end uint256, root bytes32)
-func (_Rootchain *RootchainFilterer) WatchNewHeaderBlock(opts *bind.WatchOpts, sink chan<- *RootchainNewHeaderBlock, proposer []common.Address) (event.Subscription, error) {
+// Solidity: e NewHeaderBlock(proposer indexed address, number indexed uint256, start uint256, end uint256, root bytes32)
+func (_Rootchain *RootchainFilterer) WatchNewHeaderBlock(opts *bind.WatchOpts, sink chan<- *RootchainNewHeaderBlock, proposer []common.Address, number []*big.Int) (event.Subscription, error) {
 
 	var proposerRule []interface{}
 	for _, proposerItem := range proposer {
 		proposerRule = append(proposerRule, proposerItem)
 	}
+	var numberRule []interface{}
+	for _, numberItem := range number {
+		numberRule = append(numberRule, numberItem)
+	}
 
-	logs, sub, err := _Rootchain.contract.WatchLogs(opts, "NewHeaderBlock", proposerRule)
+	logs, sub, err := _Rootchain.contract.WatchLogs(opts, "NewHeaderBlock", proposerRule, numberRule)
 	if err != nil {
 		return nil, err
 	}
@@ -1399,6 +1353,138 @@ func (_Rootchain *RootchainFilterer) WatchNewHeaderBlock(opts *bind.WatchOpts, s
 				// New log arrived, parse the event and forward to the user
 				event := new(RootchainNewHeaderBlock)
 				if err := _Rootchain.contract.UnpackLog(event, "NewHeaderBlock", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// RootchainOwnershipRenouncedIterator is returned from FilterOwnershipRenounced and is used to iterate over the raw logs and unpacked data for OwnershipRenounced events raised by the Rootchain contract.
+type RootchainOwnershipRenouncedIterator struct {
+	Event *RootchainOwnershipRenounced // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *RootchainOwnershipRenouncedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(RootchainOwnershipRenounced)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(RootchainOwnershipRenounced)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *RootchainOwnershipRenouncedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *RootchainOwnershipRenouncedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// RootchainOwnershipRenounced represents a OwnershipRenounced event raised by the Rootchain contract.
+type RootchainOwnershipRenounced struct {
+	PreviousOwner common.Address
+	Raw           types.Log // Blockchain specific contextual infos
+}
+
+// FilterOwnershipRenounced is a free log retrieval operation binding the contract event 0xf8df31144d9c2f0f6b59d69b8b98abd5459d07f2742c4df920b25aae33c64820.
+//
+// Solidity: e OwnershipRenounced(previousOwner indexed address)
+func (_Rootchain *RootchainFilterer) FilterOwnershipRenounced(opts *bind.FilterOpts, previousOwner []common.Address) (*RootchainOwnershipRenouncedIterator, error) {
+
+	var previousOwnerRule []interface{}
+	for _, previousOwnerItem := range previousOwner {
+		previousOwnerRule = append(previousOwnerRule, previousOwnerItem)
+	}
+
+	logs, sub, err := _Rootchain.contract.FilterLogs(opts, "OwnershipRenounced", previousOwnerRule)
+	if err != nil {
+		return nil, err
+	}
+	return &RootchainOwnershipRenouncedIterator{contract: _Rootchain.contract, event: "OwnershipRenounced", logs: logs, sub: sub}, nil
+}
+
+// WatchOwnershipRenounced is a free log subscription operation binding the contract event 0xf8df31144d9c2f0f6b59d69b8b98abd5459d07f2742c4df920b25aae33c64820.
+//
+// Solidity: e OwnershipRenounced(previousOwner indexed address)
+func (_Rootchain *RootchainFilterer) WatchOwnershipRenounced(opts *bind.WatchOpts, sink chan<- *RootchainOwnershipRenounced, previousOwner []common.Address) (event.Subscription, error) {
+
+	var previousOwnerRule []interface{}
+	for _, previousOwnerItem := range previousOwner {
+		previousOwnerRule = append(previousOwnerRule, previousOwnerItem)
+	}
+
+	logs, sub, err := _Rootchain.contract.WatchLogs(opts, "OwnershipRenounced", previousOwnerRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(RootchainOwnershipRenounced)
+				if err := _Rootchain.contract.UnpackLog(event, "OwnershipRenounced", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -1560,9 +1646,9 @@ func (_Rootchain *RootchainFilterer) WatchOwnershipTransferred(opts *bind.WatchO
 	}), nil
 }
 
-// RootchainTokenMappedIterator is returned from FilterTokenMapped and is used to iterate over the raw logs and unpacked data for TokenMapped events raised by the Rootchain contract.
-type RootchainTokenMappedIterator struct {
-	Event *RootchainTokenMapped // Event containing the contract specifics and raw log
+// RootchainProofValidatorAddedIterator is returned from FilterProofValidatorAdded and is used to iterate over the raw logs and unpacked data for ProofValidatorAdded events raised by the Rootchain contract.
+type RootchainProofValidatorAddedIterator struct {
+	Event *RootchainProofValidatorAdded // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -1576,7 +1662,7 @@ type RootchainTokenMappedIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *RootchainTokenMappedIterator) Next() bool {
+func (it *RootchainProofValidatorAddedIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -1585,7 +1671,7 @@ func (it *RootchainTokenMappedIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(RootchainTokenMapped)
+			it.Event = new(RootchainProofValidatorAdded)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -1600,7 +1686,7 @@ func (it *RootchainTokenMappedIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(RootchainTokenMapped)
+		it.Event = new(RootchainProofValidatorAdded)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -1616,169 +1702,28 @@ func (it *RootchainTokenMappedIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *RootchainTokenMappedIterator) Error() error {
+func (it *RootchainProofValidatorAddedIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *RootchainTokenMappedIterator) Close() error {
+func (it *RootchainProofValidatorAddedIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// RootchainTokenMapped represents a TokenMapped event raised by the Rootchain contract.
-type RootchainTokenMapped struct {
-	RootToken  common.Address
-	ChildToken common.Address
-	Raw        types.Log // Blockchain specific contextual infos
-}
-
-// FilterTokenMapped is a free log retrieval operation binding the contract event 0x85920d35e6c72f6b2affffa04298b0cecfeba86e4a9f407df661f1cb8ab5e617.
-//
-// Solidity: e TokenMapped(rootToken indexed address, childToken indexed address)
-func (_Rootchain *RootchainFilterer) FilterTokenMapped(opts *bind.FilterOpts, rootToken []common.Address, childToken []common.Address) (*RootchainTokenMappedIterator, error) {
-
-	var rootTokenRule []interface{}
-	for _, rootTokenItem := range rootToken {
-		rootTokenRule = append(rootTokenRule, rootTokenItem)
-	}
-	var childTokenRule []interface{}
-	for _, childTokenItem := range childToken {
-		childTokenRule = append(childTokenRule, childTokenItem)
-	}
-
-	logs, sub, err := _Rootchain.contract.FilterLogs(opts, "TokenMapped", rootTokenRule, childTokenRule)
-	if err != nil {
-		return nil, err
-	}
-	return &RootchainTokenMappedIterator{contract: _Rootchain.contract, event: "TokenMapped", logs: logs, sub: sub}, nil
-}
-
-// WatchTokenMapped is a free log subscription operation binding the contract event 0x85920d35e6c72f6b2affffa04298b0cecfeba86e4a9f407df661f1cb8ab5e617.
-//
-// Solidity: e TokenMapped(rootToken indexed address, childToken indexed address)
-func (_Rootchain *RootchainFilterer) WatchTokenMapped(opts *bind.WatchOpts, sink chan<- *RootchainTokenMapped, rootToken []common.Address, childToken []common.Address) (event.Subscription, error) {
-
-	var rootTokenRule []interface{}
-	for _, rootTokenItem := range rootToken {
-		rootTokenRule = append(rootTokenRule, rootTokenItem)
-	}
-	var childTokenRule []interface{}
-	for _, childTokenItem := range childToken {
-		childTokenRule = append(childTokenRule, childTokenItem)
-	}
-
-	logs, sub, err := _Rootchain.contract.WatchLogs(opts, "TokenMapped", rootTokenRule, childTokenRule)
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(RootchainTokenMapped)
-				if err := _Rootchain.contract.UnpackLog(event, "TokenMapped", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// RootchainValidatorAddedIterator is returned from FilterValidatorAdded and is used to iterate over the raw logs and unpacked data for ValidatorAdded events raised by the Rootchain contract.
-type RootchainValidatorAddedIterator struct {
-	Event *RootchainValidatorAdded // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *RootchainValidatorAddedIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(RootchainValidatorAdded)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(RootchainValidatorAdded)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *RootchainValidatorAddedIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *RootchainValidatorAddedIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// RootchainValidatorAdded represents a ValidatorAdded event raised by the Rootchain contract.
-type RootchainValidatorAdded struct {
+// RootchainProofValidatorAdded represents a ProofValidatorAdded event raised by the Rootchain contract.
+type RootchainProofValidatorAdded struct {
 	Validator common.Address
 	From      common.Address
 	Raw       types.Log // Blockchain specific contextual infos
 }
 
-// FilterValidatorAdded is a free log retrieval operation binding the contract event 0x8064a302796c89446a96d63470b5b036212da26bd2debe5bec73e0170a9a5e83.
+// FilterProofValidatorAdded is a free log retrieval operation binding the contract event 0x3dc12d30280bcd33917d2b84141129635923441ba7e6b388b946b41f5ace697d.
 //
-// Solidity: e ValidatorAdded(validator indexed address, from indexed address)
-func (_Rootchain *RootchainFilterer) FilterValidatorAdded(opts *bind.FilterOpts, validator []common.Address, from []common.Address) (*RootchainValidatorAddedIterator, error) {
+// Solidity: e ProofValidatorAdded(validator indexed address, from indexed address)
+func (_Rootchain *RootchainFilterer) FilterProofValidatorAdded(opts *bind.FilterOpts, validator []common.Address, from []common.Address) (*RootchainProofValidatorAddedIterator, error) {
 
 	var validatorRule []interface{}
 	for _, validatorItem := range validator {
@@ -1789,17 +1734,17 @@ func (_Rootchain *RootchainFilterer) FilterValidatorAdded(opts *bind.FilterOpts,
 		fromRule = append(fromRule, fromItem)
 	}
 
-	logs, sub, err := _Rootchain.contract.FilterLogs(opts, "ValidatorAdded", validatorRule, fromRule)
+	logs, sub, err := _Rootchain.contract.FilterLogs(opts, "ProofValidatorAdded", validatorRule, fromRule)
 	if err != nil {
 		return nil, err
 	}
-	return &RootchainValidatorAddedIterator{contract: _Rootchain.contract, event: "ValidatorAdded", logs: logs, sub: sub}, nil
+	return &RootchainProofValidatorAddedIterator{contract: _Rootchain.contract, event: "ProofValidatorAdded", logs: logs, sub: sub}, nil
 }
 
-// WatchValidatorAdded is a free log subscription operation binding the contract event 0x8064a302796c89446a96d63470b5b036212da26bd2debe5bec73e0170a9a5e83.
+// WatchProofValidatorAdded is a free log subscription operation binding the contract event 0x3dc12d30280bcd33917d2b84141129635923441ba7e6b388b946b41f5ace697d.
 //
-// Solidity: e ValidatorAdded(validator indexed address, from indexed address)
-func (_Rootchain *RootchainFilterer) WatchValidatorAdded(opts *bind.WatchOpts, sink chan<- *RootchainValidatorAdded, validator []common.Address, from []common.Address) (event.Subscription, error) {
+// Solidity: e ProofValidatorAdded(validator indexed address, from indexed address)
+func (_Rootchain *RootchainFilterer) WatchProofValidatorAdded(opts *bind.WatchOpts, sink chan<- *RootchainProofValidatorAdded, validator []common.Address, from []common.Address) (event.Subscription, error) {
 
 	var validatorRule []interface{}
 	for _, validatorItem := range validator {
@@ -1810,7 +1755,7 @@ func (_Rootchain *RootchainFilterer) WatchValidatorAdded(opts *bind.WatchOpts, s
 		fromRule = append(fromRule, fromItem)
 	}
 
-	logs, sub, err := _Rootchain.contract.WatchLogs(opts, "ValidatorAdded", validatorRule, fromRule)
+	logs, sub, err := _Rootchain.contract.WatchLogs(opts, "ProofValidatorAdded", validatorRule, fromRule)
 	if err != nil {
 		return nil, err
 	}
@@ -1820,8 +1765,8 @@ func (_Rootchain *RootchainFilterer) WatchValidatorAdded(opts *bind.WatchOpts, s
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(RootchainValidatorAdded)
-				if err := _Rootchain.contract.UnpackLog(event, "ValidatorAdded", log); err != nil {
+				event := new(RootchainProofValidatorAdded)
+				if err := _Rootchain.contract.UnpackLog(event, "ProofValidatorAdded", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -1842,9 +1787,9 @@ func (_Rootchain *RootchainFilterer) WatchValidatorAdded(opts *bind.WatchOpts, s
 	}), nil
 }
 
-// RootchainValidatorRemovedIterator is returned from FilterValidatorRemoved and is used to iterate over the raw logs and unpacked data for ValidatorRemoved events raised by the Rootchain contract.
-type RootchainValidatorRemovedIterator struct {
-	Event *RootchainValidatorRemoved // Event containing the contract specifics and raw log
+// RootchainProofValidatorRemovedIterator is returned from FilterProofValidatorRemoved and is used to iterate over the raw logs and unpacked data for ProofValidatorRemoved events raised by the Rootchain contract.
+type RootchainProofValidatorRemovedIterator struct {
+	Event *RootchainProofValidatorRemoved // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -1858,7 +1803,7 @@ type RootchainValidatorRemovedIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *RootchainValidatorRemovedIterator) Next() bool {
+func (it *RootchainProofValidatorRemovedIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -1867,7 +1812,7 @@ func (it *RootchainValidatorRemovedIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(RootchainValidatorRemoved)
+			it.Event = new(RootchainProofValidatorRemoved)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -1882,7 +1827,7 @@ func (it *RootchainValidatorRemovedIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(RootchainValidatorRemoved)
+		it.Event = new(RootchainProofValidatorRemoved)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -1898,28 +1843,28 @@ func (it *RootchainValidatorRemovedIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *RootchainValidatorRemovedIterator) Error() error {
+func (it *RootchainProofValidatorRemovedIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *RootchainValidatorRemovedIterator) Close() error {
+func (it *RootchainProofValidatorRemovedIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// RootchainValidatorRemoved represents a ValidatorRemoved event raised by the Rootchain contract.
-type RootchainValidatorRemoved struct {
+// RootchainProofValidatorRemoved represents a ProofValidatorRemoved event raised by the Rootchain contract.
+type RootchainProofValidatorRemoved struct {
 	Validator common.Address
 	From      common.Address
 	Raw       types.Log // Blockchain specific contextual infos
 }
 
-// FilterValidatorRemoved is a free log retrieval operation binding the contract event 0x05fc5214912b853ccaaaeaf238daf240b8c6ae70c0f18ec215d5088f8f49d781.
+// FilterProofValidatorRemoved is a free log retrieval operation binding the contract event 0x96bedef125d36a85bf369db1f6ac9d7487d9daf6d4c22539249f1bf94a11e119.
 //
-// Solidity: e ValidatorRemoved(validator indexed address, from indexed address)
-func (_Rootchain *RootchainFilterer) FilterValidatorRemoved(opts *bind.FilterOpts, validator []common.Address, from []common.Address) (*RootchainValidatorRemovedIterator, error) {
+// Solidity: e ProofValidatorRemoved(validator indexed address, from indexed address)
+func (_Rootchain *RootchainFilterer) FilterProofValidatorRemoved(opts *bind.FilterOpts, validator []common.Address, from []common.Address) (*RootchainProofValidatorRemovedIterator, error) {
 
 	var validatorRule []interface{}
 	for _, validatorItem := range validator {
@@ -1930,17 +1875,17 @@ func (_Rootchain *RootchainFilterer) FilterValidatorRemoved(opts *bind.FilterOpt
 		fromRule = append(fromRule, fromItem)
 	}
 
-	logs, sub, err := _Rootchain.contract.FilterLogs(opts, "ValidatorRemoved", validatorRule, fromRule)
+	logs, sub, err := _Rootchain.contract.FilterLogs(opts, "ProofValidatorRemoved", validatorRule, fromRule)
 	if err != nil {
 		return nil, err
 	}
-	return &RootchainValidatorRemovedIterator{contract: _Rootchain.contract, event: "ValidatorRemoved", logs: logs, sub: sub}, nil
+	return &RootchainProofValidatorRemovedIterator{contract: _Rootchain.contract, event: "ProofValidatorRemoved", logs: logs, sub: sub}, nil
 }
 
-// WatchValidatorRemoved is a free log subscription operation binding the contract event 0x05fc5214912b853ccaaaeaf238daf240b8c6ae70c0f18ec215d5088f8f49d781.
+// WatchProofValidatorRemoved is a free log subscription operation binding the contract event 0x96bedef125d36a85bf369db1f6ac9d7487d9daf6d4c22539249f1bf94a11e119.
 //
-// Solidity: e ValidatorRemoved(validator indexed address, from indexed address)
-func (_Rootchain *RootchainFilterer) WatchValidatorRemoved(opts *bind.WatchOpts, sink chan<- *RootchainValidatorRemoved, validator []common.Address, from []common.Address) (event.Subscription, error) {
+// Solidity: e ProofValidatorRemoved(validator indexed address, from indexed address)
+func (_Rootchain *RootchainFilterer) WatchProofValidatorRemoved(opts *bind.WatchOpts, sink chan<- *RootchainProofValidatorRemoved, validator []common.Address, from []common.Address) (event.Subscription, error) {
 
 	var validatorRule []interface{}
 	for _, validatorItem := range validator {
@@ -1951,7 +1896,7 @@ func (_Rootchain *RootchainFilterer) WatchValidatorRemoved(opts *bind.WatchOpts,
 		fromRule = append(fromRule, fromItem)
 	}
 
-	logs, sub, err := _Rootchain.contract.WatchLogs(opts, "ValidatorRemoved", validatorRule, fromRule)
+	logs, sub, err := _Rootchain.contract.WatchLogs(opts, "ProofValidatorRemoved", validatorRule, fromRule)
 	if err != nil {
 		return nil, err
 	}
@@ -1961,150 +1906,8 @@ func (_Rootchain *RootchainFilterer) WatchValidatorRemoved(opts *bind.WatchOpts,
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(RootchainValidatorRemoved)
-				if err := _Rootchain.contract.UnpackLog(event, "ValidatorRemoved", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// RootchainWithdrawIterator is returned from FilterWithdraw and is used to iterate over the raw logs and unpacked data for Withdraw events raised by the Rootchain contract.
-type RootchainWithdrawIterator struct {
-	Event *RootchainWithdraw // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *RootchainWithdrawIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(RootchainWithdraw)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(RootchainWithdraw)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *RootchainWithdrawIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *RootchainWithdrawIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// RootchainWithdraw represents a Withdraw event raised by the Rootchain contract.
-type RootchainWithdraw struct {
-	User   common.Address
-	Token  common.Address
-	Amount *big.Int
-	Raw    types.Log // Blockchain specific contextual infos
-}
-
-// FilterWithdraw is a free log retrieval operation binding the contract event 0x9b1bfa7fa9ee420a16e124f794c35ac9f90472acc99140eb2f6447c714cad8eb.
-//
-// Solidity: e Withdraw(user indexed address, token indexed address, amount uint256)
-func (_Rootchain *RootchainFilterer) FilterWithdraw(opts *bind.FilterOpts, user []common.Address, token []common.Address) (*RootchainWithdrawIterator, error) {
-
-	var userRule []interface{}
-	for _, userItem := range user {
-		userRule = append(userRule, userItem)
-	}
-	var tokenRule []interface{}
-	for _, tokenItem := range token {
-		tokenRule = append(tokenRule, tokenItem)
-	}
-
-	logs, sub, err := _Rootchain.contract.FilterLogs(opts, "Withdraw", userRule, tokenRule)
-	if err != nil {
-		return nil, err
-	}
-	return &RootchainWithdrawIterator{contract: _Rootchain.contract, event: "Withdraw", logs: logs, sub: sub}, nil
-}
-
-// WatchWithdraw is a free log subscription operation binding the contract event 0x9b1bfa7fa9ee420a16e124f794c35ac9f90472acc99140eb2f6447c714cad8eb.
-//
-// Solidity: e Withdraw(user indexed address, token indexed address, amount uint256)
-func (_Rootchain *RootchainFilterer) WatchWithdraw(opts *bind.WatchOpts, sink chan<- *RootchainWithdraw, user []common.Address, token []common.Address) (event.Subscription, error) {
-
-	var userRule []interface{}
-	for _, userItem := range user {
-		userRule = append(userRule, userItem)
-	}
-	var tokenRule []interface{}
-	for _, tokenItem := range token {
-		tokenRule = append(tokenRule, tokenItem)
-	}
-
-	logs, sub, err := _Rootchain.contract.WatchLogs(opts, "Withdraw", userRule, tokenRule)
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(RootchainWithdraw)
-				if err := _Rootchain.contract.UnpackLog(event, "Withdraw", log); err != nil {
+				event := new(RootchainProofValidatorRemoved)
+				if err := _Rootchain.contract.UnpackLog(event, "ProofValidatorRemoved", log); err != nil {
 					return err
 				}
 				event.Raw = log
