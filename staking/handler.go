@@ -9,10 +9,22 @@ func NewHandler(k Keeper) sdk.Handler {
 		switch msg := msg.(type) {
 		case MsgValidatorJoin:
 			return handleMsgValidatorJoin(ctx, msg, k)
+		case MsgValidatorExit:
+			return handleMsgValidatorExit(ctx, msg, k)
+		case MsgValidatorUpdate:
+			return handleMsgValidatorUpdate(ctx, msg, k)
 		default:
 			return sdk.ErrTxDecode("Invalid message in checkpoint module").Result()
 		}
 	}
+}
+func handleMsgValidatorUpdate(context sdk.Context, update MsgValidatorUpdate, keeper Keeper) sdk.Result {
+	// verify from mainchain
+	return sdk.Result{}
+}
+func handleMsgValidatorExit(context sdk.Context, exit MsgValidatorExit, keeper Keeper) sdk.Result {
+	// verify deactivation from ACK count
+	return sdk.Result{}
 }
 func handleMsgValidatorJoin(context sdk.Context, join MsgValidatorJoin, keeper Keeper) sdk.Result {
 	// fetch all validator details and store
