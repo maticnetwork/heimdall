@@ -61,7 +61,16 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper) sdk.Resul
 	// validate checkpoint
 	if !ValidateCheckpoint(msg.StartBlock, msg.EndBlock, msg.RootHash.String()) {
 		CheckpointLogger.Error("RootHash Not Valid", "StartBlock", msg.StartBlock, "EndBlock", msg.EndBlock, "RootHash", msg.RootHash)
-		return ErrBadBlockDetails(DefaultCodespace).Result()
+		return ErrBadBlockDetails(k.codespace).Result()
+	}
+
+	// fetch last checkpoint from store
+	lastCheckpoint := k.GetLastCheckpoint(ctx)
+
+	// make sure new checkpoint is after tip
+	if lastCheckpoint.EndBlock > msg.StartBlock {
+		CheckpointLogger.Error("Checkpoint already exists", "CurrentTip", lastCheckpoint.EndBlock, "MsgStartBlock", msg.StartBlock)
+		return ErrBadBlockDetails(k.codespace).Result()
 	}
 
 	// add checkpoint to buffer

@@ -8,6 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/maticnetwork/heimdall/helper"
 )
 
 type Keeper struct {
@@ -129,4 +130,23 @@ func (k Keeper) InitACKCount(ctx sdk.Context) {
 func GetHeaderKey(headerNumber int) []byte {
 	headerNumberBytes := strconv.Itoa(headerNumber)
 	return append(HeaderBlockKey, headerNumberBytes...)
+}
+
+func (k Keeper) GetLastCheckpoint(ctx sdk.Context) CheckpointBlockHeader {
+	store := ctx.KVStore(k.checkpointKey)
+
+	ACKs := k.GetACKCount(ctx)
+
+	// fetch last checkpoint key (NumberOfACKs*ChildBlockInterval)
+	lastCheckpointKey := (helper.GetConfig().ChildBlockInterval) * (ACKs)
+
+	// fetch checkpoint and unmarshall
+	var checkpoint CheckpointBlockHeader
+	err := json.Unmarshal(store.Get(GetHeaderKey(lastCheckpointKey)), &checkpoint)
+	if err != nil {
+		CheckpointLogger.Error("Unable to fetch last checkpoint from store", "Key", lastCheckpointKey, "ACKCount", ACKs)
+	}
+
+	// return checkpoint
+	return checkpoint
 }
