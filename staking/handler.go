@@ -15,5 +15,6 @@ func NewHandler(k Keeper) sdk.Handler {
 	}
 }
 func handleMsgValidatorJoin(context sdk.Context, join MsgValidatorJoin, keeper Keeper) sdk.Result {
+	// fetch all validator details and store
 	return sdk.Result{}
 }

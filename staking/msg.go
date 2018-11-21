@@ -97,3 +97,45 @@ func (msg MsgValidatorUpdate) ValidateBasic() sdk.Error {
 
 	return nil
 }
+
+//
+// validator exit
+//
+
+const ValidatorExit = "validatorExit"
+
+var _ sdk.Msg = &MsgValidatorExit{}
+
+type MsgValidatorExit struct {
+	ValidatorAddr common.Address
+}
+
+func NewMsgValidatorExit(_valAddr common.Address) MsgValidatorExit {
+	return MsgValidatorExit{
+		ValidatorAddr: _valAddr,
+	}
+}
+
+func (msg MsgValidatorExit) Type() string {
+	return ValidatorExit
+}
+
+func (msg MsgValidatorExit) Route() string { return ValidatorExit }
+
+func (msg MsgValidatorExit) GetSigners() []sdk.AccAddress {
+	addrs := make([]sdk.AccAddress, 0)
+	return addrs
+}
+
+func (msg MsgValidatorExit) GetSignBytes() []byte {
+	b, err := cdc.MarshalJSON(msg)
+	if err != nil {
+		panic(err)
+	}
+	return sdk.MustSortJSON(b)
+}
+
+func (msg MsgValidatorExit) ValidateBasic() sdk.Error {
+
+	return nil
+}
