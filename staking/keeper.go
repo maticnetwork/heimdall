@@ -5,7 +5,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/maticnetwork/heimdall/checkpoint"
-	"github.com/tendermint/tendermint/crypto"
+	"github.com/maticnetwork/heimdall/types"
 )
 
 type Keeper struct {
@@ -26,18 +26,9 @@ func getValidatorKey(address []byte) []byte {
 	return append(ValidatorsKey, address...)
 }
 
-type Validator struct {
-	Address    common.Address
-	StartEpoch int64
-	EndEpoch   int64
-	Pubkey     crypto.PubKey
-	Power      int64 // aka Amount
-	Signer     common.Address
-}
-
 // create empty validator without pubkey
-func CreateEmptyValidator() Validator {
-	validator := Validator{
+func CreateEmptyValidator() types.Validator {
+	validator := types.Validator{
 		Address:    common.HexToAddress(""),
 		StartEpoch: int64(0),
 		EndEpoch:   int64(0),
@@ -58,7 +49,7 @@ func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, codespace sdk.CodespaceType) 
 }
 
 // Add validator indexed with address
-func (k Keeper) AddValidator(ctx sdk.Context, validator Validator) {
+func (k Keeper) AddValidator(ctx sdk.Context, validator types.Validator) {
 	store := ctx.KVStore(k.storeKey)
 
 	// marshall validator
@@ -73,15 +64,15 @@ func (k Keeper) AddValidator(ctx sdk.Context, validator Validator) {
 }
 
 // GetAllValidators returns all validators added for a specific validator key
-func (k Keeper) GetAllCurrentValidators(ctx sdk.Context) (validators []Validator) {
+func (k Keeper) GetAllCurrentValidators(ctx sdk.Context) (validators []types.Validator) {
 	store := ctx.KVStore(k.storeKey)
+
+	// get ACK count
+	ACKs := k.checkpointKeeper.GetACKCount(ctx)
 
 	// create iterator to iterate with Validator Key prefix
 	iterator := sdk.KVStorePrefixIterator(store, ValidatorsKey)
 	defer iterator.Close()
-
-	// get current ACK Count aka epoch
-	ACKs := k.checkpointKeeper.GetACKCount(ctx)
 
 	// loop through validators to get valid validators
 	for i := 0; ; i++ {
@@ -90,15 +81,15 @@ func (k Keeper) GetAllCurrentValidators(ctx sdk.Context) (validators []Validator
 		}
 
 		// unmarshall validator
-		var validator Validator
+		var validator types.Validator
 		err := k.cdc.UnmarshalBinary(iterator.Value(), &validator)
 		if err != nil {
 			return
 		}
 
 		// check if validator is valid for current epoch
-		if validator.StartEpoch >= int64(ACKs) && validator.EndEpoch <= int64(ACKs) {
-			// add validator to validators
+		if validator.IsCurrentValidator(ACKs){
+			// append if validator is current valdiator
 			validators = append(validators, validator)
 		}
 

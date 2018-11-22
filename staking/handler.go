@@ -20,14 +20,17 @@ func NewHandler(k Keeper) sdk.Handler {
 		}
 	}
 }
-func handleMsgValidatorUpdate(context sdk.Context, update MsgValidatorUpdate, keeper Keeper) sdk.Result {
+func handleMsgValidatorUpdate(ctx sdk.Context, msg MsgValidatorUpdate, k Keeper) sdk.Result {
+
 	// verify from mainchain
 	return sdk.Result{}
 }
+
 func handleMsgValidatorExit(context sdk.Context, exit MsgValidatorExit, keeper Keeper) sdk.Result {
 	// verify deactivation from ACK count
 	return sdk.Result{}
 }
+
 func handleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k Keeper) sdk.Result {
 	// fetch validator from mainchain
 	validator, err := helper.GetValidatorInfo(msg.ValidatorAddr)
