@@ -10,14 +10,17 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 )
 
+const (
+	redisURL = "redis-url"
+)
+
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "heimdall-bridge",
 	Short: "Heimdall bridge deamon",
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	Run: func(cmd *cobra.Command, args []string) {
-
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		// initialize tendermint viper config
+		InitTendermintViperConfig(cmd)
 	},
 }
 
@@ -26,11 +29,13 @@ func InitTendermintViperConfig(cmd *cobra.Command) {
 	tendermintNode, _ := cmd.Flags().GetString(helper.NodeFlag)
 	homeValue, _ := cmd.Flags().GetString(helper.HomeFlag)
 	withHeimdallConfigValue, _ := cmd.Flags().GetString(helper.WithHeimdallConfigFlag)
+	redisURLValue, _ := cmd.Flags().GetString(redisURL)
 
 	// set to viper
 	viper.Set(helper.NodeFlag, tendermintNode)
 	viper.Set(helper.HomeFlag, homeValue)
 	viper.Set(helper.WithHeimdallConfigFlag, withHeimdallConfigValue)
+	viper.Set(redisURL, redisURLValue)
 
 	// start heimdall config
 	helper.InitHeimdallConfig()
@@ -52,6 +57,12 @@ func init() {
 		helper.WithHeimdallConfigFlag,
 		"",
 		"Heimdall config file path (default <home>/config/heimdall-config.json)",
+	)
+	// redis url
+	rootCmd.PersistentFlags().String(
+		redisURL,
+		"redis://localhost:6379/0",
+		"Redis URL",
 	)
 
 	// bind all flags with viper
