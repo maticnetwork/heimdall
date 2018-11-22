@@ -3,7 +3,7 @@ package staking
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/eth/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 var cdc = codec.New()
