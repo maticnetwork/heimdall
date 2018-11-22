@@ -18,14 +18,12 @@ var _ sdk.Msg = &MsgValidatorJoin{}
 
 type MsgValidatorJoin struct {
 	ValidatorAddr common.Address `json:"validatorAddr"`
-	StartEpoch    uint64         `json:"startEpoch"`
 	Pubkey        string         `json:"pubkey"`
 }
 
-func NewMsgValidatorJoin(validatorAddr common.Address, startEpoch uint64, pubkey string) MsgValidatorJoin {
+func NewMsgValidatorJoin(validatorAddr common.Address, pubkey string) MsgValidatorJoin {
 	return MsgValidatorJoin{
 		ValidatorAddr: validatorAddr,
-		StartEpoch:    startEpoch,
 		Pubkey:        pubkey,
 	}
 }

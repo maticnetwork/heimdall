@@ -28,7 +28,7 @@ func ErrNoACK(codespace sdk.CodespaceType) sdk.Error {
 func codeToDefaultMsg(code CodeType) string {
 	switch code {
 	case CodeInvalidBlockinput:
-		return "Invalid Validator"
+		return "Invalid Block Input"
 	default:
 		return sdk.CodeToDefaultMsg(code)
 	}

@@ -4,12 +4,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/tendermint/tendermint/crypto"
 )
 
 type Keeper struct {
-	storeKey sdk.StoreKey
-	cdc      *codec.Codec
+	storeKey         sdk.StoreKey
+	cdc              *codec.Codec
+	checkpointKeeper checkpoint.Keeper
 
 	// codespace
 	codespace sdk.CodespaceType
@@ -21,10 +23,10 @@ var (
 
 type Validator struct {
 	ValidatorAddress common.Address
-	StartEpoch       int
-	EndEpoch         int
+	StartEpoch       int64
+	EndEpoch         int64
 	Pubkey           crypto.PubKey
-	Power            int // aka Amount
+	Power            int64 // aka Amount
 	Signer           common.Address
 }
 
