@@ -43,9 +43,9 @@ func handleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k Keeper) sdk
 	}
 
 	// create crypto.pubkey from pubkey(string)
-	pubkey,err:=helper.StringToPubkey(msg.Pubkey)
-	if err!=nil{
-		StakingLogger.Error("Invalid Pubkey","Error",err,"PubkeyString", msg.Pubkey)
+	pubkey, err := helper.StringToPubkey(msg.Pubkey)
+	if err != nil {
+		StakingLogger.Error("Invalid Pubkey", "Error", err, "PubkeyString", msg.Pubkey)
 		return ErrValSignerMismatch(k.codespace).Result()
 	}
 
