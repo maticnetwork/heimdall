@@ -36,13 +36,13 @@ type Validator struct {
 }
 
 // create empty validator without pubkey
-func CreateEmptyValidator()(Validator){
-	validator:=Validator{
-		Address:common.HexToAddress(""),
-		StartEpoch:int64(0),
-		EndEpoch:int64(0),
-		Power:int64(0),
-		Signer:common.HexToAddress(""),
+func CreateEmptyValidator() Validator {
+	validator := Validator{
+		Address:    common.HexToAddress(""),
+		StartEpoch: int64(0),
+		EndEpoch:   int64(0),
+		Power:      int64(0),
+		Signer:     common.HexToAddress(""),
 	}
 	return validator
 }

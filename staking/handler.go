@@ -62,6 +62,7 @@ func handleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k Keeper) sdk
 	validator.Pubkey = pubkeyBytes
 
 	// add validator to store
+	k.AddValidator(ctx, validator)
 
 	return sdk.Result{}
 }
