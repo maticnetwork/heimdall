@@ -70,11 +70,11 @@ func GetValidatorInfo(addr common.Address) (validator staking.Validator, err err
 		return
 	}
 	validator = staking.Validator{
-		ValidatorAddress: addr,
-		Power:            amount.Int64(),
-		StartEpoch:       startEpoch.Int64(),
-		EndEpoch:         endEpoch.Int64(),
-		Signer:           signer,
+		Address:    addr,
+		Power:      amount.Int64(),
+		StartEpoch: startEpoch.Int64(),
+		EndEpoch:   endEpoch.Int64(),
+		Signer:     signer,
 	}
 
 	return validator, nil

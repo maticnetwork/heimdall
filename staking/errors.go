@@ -6,10 +6,12 @@ import (
 
 type CodeType = sdk.CodeType
 
+// TODO come up with better status numbers
 const (
-	DefaultCodespace sdk.CodespaceType = 2
-	CodeOldValidator CodeType          = 2500
-	CodeNoValidator  CodeType          = 2500
+	DefaultCodespace      sdk.CodespaceType = 2
+	CodeOldValidator      CodeType          = 2500
+	CodeNoValidator       CodeType          = 3500
+	CodeValSignerMismatch CodeType          = 4500
 )
 
 func ErrOldValidator(codespace sdk.CodespaceType) sdk.Error {
@@ -18,6 +20,10 @@ func ErrOldValidator(codespace sdk.CodespaceType) sdk.Error {
 
 func ErrNoValidator(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeNoValidator, "Valdiator information not found")
+}
+
+func ErrValSignerMismatch(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeValSignerMismatch, "Signer Address doesnt match pubkey address")
 }
 
 func codeToDefaultMsg(code CodeType) string {

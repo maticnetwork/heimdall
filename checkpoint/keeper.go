@@ -70,7 +70,6 @@ func (k Keeper) AddCheckpointToKey(ctx sdk.Context, start uint64, end uint64, ro
 	store.Set(key, []byte(out))
 
 	return nil
-
 }
 
 // Flush Checkpoint Buffer
@@ -132,6 +131,7 @@ func GetHeaderKey(headerNumber int) []byte {
 	return append(HeaderBlockKey, headerNumberBytes...)
 }
 
+// gets last checkpoint , headerIndex = TotalACKs * ChildBlockInterval
 func (k Keeper) GetLastCheckpoint(ctx sdk.Context) CheckpointBlockHeader {
 	store := ctx.KVStore(k.checkpointKey)
 
