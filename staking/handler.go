@@ -2,10 +2,8 @@ package staking
 
 import (
 	"bytes"
-	"encoding/hex"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/tendermint/tendermint/crypto/secp256k1"
 )
 
 func NewHandler(k Keeper) sdk.Handler {
@@ -45,21 +43,20 @@ func handleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k Keeper) sdk
 	}
 
 	// create crypto.pubkey from pubkey(string)
-	var pubkeyBytes secp256k1.PubKeySecp256k1
-	_pubkey, err := hex.DecodeString(msg.Pubkey)
-	if err != nil {
-		StakingLogger.Error("Decoding of pubkey(string) to pubkey failed", "Error", err, "PubkeyString", msg.Pubkey)
+	pubkey,err:=helper.StringToPubkey(msg.Pubkey)
+	if err!=nil{
+		StakingLogger.Error("Invalid Pubkey","Error",err,"PubkeyString", msg.Pubkey)
+		return ErrValSignerMismatch(k.codespace).Result()
 	}
-	copy(pubkeyBytes[:], _pubkey)
 
 	// check if the address of signer matches address from pubkey
-	if !bytes.Equal(pubkeyBytes.Address().Bytes(), validator.Signer.Bytes()) {
+	if !bytes.Equal(pubkey.Address().Bytes(), validator.Signer.Bytes()) {
 		// TODO add log
 		return ErrValSignerMismatch(k.codespace).Result()
 	}
 
 	// add pubkey generated to validator
-	validator.Pubkey = pubkeyBytes
+	validator.Pubkey = pubkey
 
 	// add validator to store
 	k.AddValidator(ctx, validator)

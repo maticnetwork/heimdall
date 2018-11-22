@@ -1,9 +1,12 @@
 package helper
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/types"
 )
@@ -63,4 +66,19 @@ func UpdateValidators(currentSet *types.ValidatorSet, abciUpdates []abci.Validat
 		}
 	}
 	return nil
+}
+
+// convert string to Pubkey
+func StringToPubkey(pubkeyStr string) (crypto.PubKey, error) {
+
+	var pubkeyBytes secp256k1.PubKeySecp256k1
+	_pubkey, err := hex.DecodeString(pubkeyStr)
+	if err != nil {
+		Logger.Error("Decoding of pubkey(string) to pubkey failed", "Error", err, "PubkeyString", pubkeyStr)
+		return nil, err
+	}
+	// copy
+	copy(pubkeyBytes[:], _pubkey)
+
+	return pubkeyBytes, nil
 }
