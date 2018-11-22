@@ -3,7 +3,6 @@ package pier
 import (
 	"context"
 	"encoding/hex"
-	"fmt"
 	"math/big"
 	"os"
 	"time"
@@ -22,15 +21,6 @@ import (
 	checkpointTx "github.com/maticnetwork/heimdall/checkpoint/rest"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/helper"
-)
-
-const (
-	redisURL                 = "redis-url"
-	maticCheckpointer        = "MaticCheckpointer"
-	defaultPollInterval      = 5 * 1000                // in milliseconds
-	defaultCheckpointLength  = 256                     // checkpoint number starts with 0, so length = defaultCheckpointLength -1
-	maxCheckpointLength      = 4096                    // max blocks in one checkpoint
-	defaultForcePushInterval = maxCheckpointLength * 2 // in seconds (4096 * 2 seconds)
 )
 
 // MaticCheckpointer to propose
@@ -70,8 +60,7 @@ func NewMaticCheckpointer() *MaticCheckpointer {
 	}
 
 	redisOptions, err := redis.ParseURL(viper.GetString(redisURL))
-	fmt.Println("redisOptions", redisOptions, "viper.GetString(redisURL)", viper.GetString(redisURL))
-	if err == nil {
+	if err != nil {
 		logger.Error("Error while redis instance", "error", err)
 		panic(err)
 	}
@@ -96,6 +85,89 @@ func (checkpointer *MaticCheckpointer) StartHeaderProcess(ctx context.Context) {
 		select {
 		case newHeader := <-checkpointer.HeaderChannel:
 			checkpointer.sendRequest(newHeader)
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+// OnStart starts new block subscription
+func (checkpointer *MaticCheckpointer) OnStart() error {
+	checkpointer.BaseService.OnStart() // Always call the overridden method.
+
+	// create cancellable context
+	ctx, cancelSubscription := context.WithCancel(context.Background())
+	checkpointer.cancelSubscription = cancelSubscription
+
+	// create cancellable context
+	headerCtx, cancelHeaderProcess := context.WithCancel(context.Background())
+	checkpointer.cancelHeaderProcess = cancelHeaderProcess
+
+	// start header process
+	go checkpointer.StartHeaderProcess(headerCtx)
+
+	// subscribe to new head
+	subscription, err := checkpointer.MaticClient.SubscribeNewHead(ctx, checkpointer.HeaderChannel)
+	if err != nil {
+		// start go routine to poll for new header using client object
+		go checkpointer.StartPolling(ctx, defaultPollInterval)
+	} else {
+		// start go routine to listen new header using subscription
+		go checkpointer.StartSubscription(ctx, subscription)
+	}
+
+	// subscribed to new head
+	checkpointer.Logger.Debug("Subscribed to new head")
+
+	return nil
+}
+
+// OnStop stops all necessary go routines
+func (checkpointer *MaticCheckpointer) OnStop() {
+	checkpointer.BaseService.OnStop() // Always call the overridden method.
+
+	// cancel subscription if any
+	checkpointer.cancelSubscription()
+
+	// cancel header process
+	checkpointer.cancelHeaderProcess()
+}
+
+func (checkpointer *MaticCheckpointer) StartPolling(ctx context.Context, pollInterval int) {
+	// How often to fire the passed in function in second
+	interval := time.Duration(pollInterval) * time.Millisecond
+
+	// Setup the ticket and the channel to signal
+	// the ending of the interval
+	ticker := time.NewTicker(interval)
+
+	// start listening
+	for {
+		select {
+		case <-ticker.C:
+			header, err := checkpointer.MaticClient.HeaderByNumber(ctx, nil)
+			if err == nil && header != nil {
+				// send data to channel
+				checkpointer.HeaderChannel <- header
+			}
+		case <-ctx.Done():
+			ticker.Stop()
+			return
+		}
+	}
+}
+
+func (checkpointer *MaticCheckpointer) StartSubscription(ctx context.Context, subscription ethereum.Subscription) {
+	for {
+		select {
+		case err := <-subscription.Err():
+			// stop service
+			checkpointer.Logger.Error("Error while subscribing new blocks", "error", err)
+			checkpointer.Stop()
+
+			// cancel subscription
+			checkpointer.cancelSubscription()
+			return
 		case <-ctx.Done():
 			return
 		}
@@ -190,87 +262,4 @@ func (checkpointer *MaticCheckpointer) sendRequest(newHeader *types.Header) {
 	}
 
 	checkpointer.Logger.Error("Checkpoint sent successfully", "hash", hex.EncodeToString(resp.Hash), "start", start, "end", end, "root", root)
-}
-
-// OnStart starts new block subscription
-func (checkpointer *MaticCheckpointer) OnStart() error {
-	checkpointer.BaseService.OnStart() // Always call the overridden method.
-
-	// create cancellable context
-	ctx, cancelSubscription := context.WithCancel(context.Background())
-	checkpointer.cancelSubscription = cancelSubscription
-
-	// create cancellable context
-	headerCtx, cancelHeaderProcess := context.WithCancel(context.Background())
-	checkpointer.cancelHeaderProcess = cancelHeaderProcess
-
-	// start header process
-	go checkpointer.StartHeaderProcess(headerCtx)
-
-	// subscribe to new head
-	subscription, err := checkpointer.MaticClient.SubscribeNewHead(ctx, checkpointer.HeaderChannel)
-	if err != nil {
-		// start go routine to poll for new header using client object
-		go checkpointer.StartPolling(ctx, defaultPollInterval)
-	} else {
-		// start go routine to listen new header using subscription
-		go checkpointer.StartSubscription(ctx, subscription)
-	}
-
-	// subscribed to new head
-	checkpointer.Logger.Debug("Subscribed to new head")
-
-	return nil
-}
-
-// OnStop stops all necessary go routines
-func (checkpointer *MaticCheckpointer) OnStop() {
-	checkpointer.BaseService.OnStop() // Always call the overridden method.
-
-	// cancel subscription if any
-	checkpointer.cancelSubscription()
-
-	// cancel header process
-	checkpointer.cancelHeaderProcess()
-}
-
-func (checkpointer *MaticCheckpointer) StartPolling(ctx context.Context, pollInterval int) {
-	// How often to fire the passed in function in second
-	interval := time.Duration(pollInterval) * time.Millisecond
-
-	// Setup the ticket and the channel to signal
-	// the ending of the interval
-	ticker := time.NewTicker(interval)
-
-	// start listening
-	for {
-		select {
-		case <-ticker.C:
-			header, err := checkpointer.MaticClient.HeaderByNumber(ctx, nil)
-			if err == nil && header != nil {
-				// send data to channel
-				checkpointer.HeaderChannel <- header
-			}
-		case <-ctx.Done():
-			ticker.Stop()
-			return
-		}
-	}
-}
-
-func (checkpointer *MaticCheckpointer) StartSubscription(ctx context.Context, subscription ethereum.Subscription) {
-	for {
-		select {
-		case err := <-subscription.Err():
-			// stop service
-			checkpointer.Logger.Error("Error while subscribing new blocks", "error", err)
-			checkpointer.Stop()
-
-			// cancel subscription
-			checkpointer.cancelSubscription()
-			return
-		case <-ctx.Done():
-			return
-		}
-	}
 }
