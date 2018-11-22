@@ -1,4 +1,4 @@
-package syncer
+package pier
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"math/big"
 	"os"
-	"os/signal"
 	"time"
 
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
@@ -58,7 +57,7 @@ type MaticCheckpointer struct {
 	cancelHeaderProcess context.CancelFunc
 }
 
-// MaticCheckpointer returns new service object
+// NewMaticCheckpointer returns new service object
 func NewMaticCheckpointer() *MaticCheckpointer {
 	// create logger
 	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", maticCheckpointer)
@@ -274,29 +273,4 @@ func (checkpointer *MaticCheckpointer) StartSubscription(ctx context.Context, su
 			return
 		}
 	}
-}
-
-func StartCheckpointPusher() {
-	checkpointer := NewMaticCheckpointer()
-	checkpointer.Start()
-
-	// go routine to catch signal
-	catchSignal := make(chan os.Signal, 1)
-	signal.Notify(catchSignal, os.Interrupt)
-	go func() {
-		// sig is a ^C, handle it
-		for sig := range catchSignal {
-			// print sig
-			checkpointer.Logger.Debug("Captured and topping profiler and exiting", "sig", sig)
-
-			// stop
-			checkpointer.Stop()
-
-			// exit
-			os.Exit(1)
-		}
-	}()
-
-	// wait for checkpointer to quiet
-	checkpointer.Wait()
 }
