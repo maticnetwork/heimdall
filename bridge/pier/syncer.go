@@ -37,7 +37,7 @@ type ChainSyncer struct {
 	// Rootchain instance
 	RootChainInstance *rootchain.Rootchain
 	// Stake manager instance
-	StakeManagerInstance *stakemanager.StakeManager
+	StakeManagerInstance *stakemanager.Stakemanager
 	// header channel
 	HeaderChannel chan *types.Header
 	// cancel function for poll/subscription
