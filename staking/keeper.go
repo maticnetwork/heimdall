@@ -88,7 +88,7 @@ func (k Keeper) GetAllCurrentValidators(ctx sdk.Context) (validators []types.Val
 		}
 
 		// check if validator is valid for current epoch
-		if validator.IsCurrentValidator(ACKs){
+		if validator.IsCurrentValidator(ACKs) {
 			// append if validator is current valdiator
 			validators = append(validators, validator)
 		}
