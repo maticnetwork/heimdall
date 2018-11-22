@@ -26,18 +26,6 @@ func getValidatorKey(address []byte) []byte {
 	return append(ValidatorsKey, address...)
 }
 
-// create empty validator without pubkey
-func CreateEmptyValidator() types.Validator {
-	validator := types.Validator{
-		Address:    common.HexToAddress(""),
-		StartEpoch: int64(0),
-		EndEpoch:   int64(0),
-		Power:      int64(0),
-		Signer:     common.HexToAddress(""),
-	}
-	return validator
-}
-
 // NewKeeper creates new keeper for staking
 func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, codespace sdk.CodespaceType) Keeper {
 	keeper := Keeper{
@@ -53,11 +41,7 @@ func (k Keeper) AddValidator(ctx sdk.Context, validator types.Validator) {
 	store := ctx.KVStore(k.storeKey)
 
 	// marshall validator
-	bz, err := k.cdc.MarshalBinary(validator)
-	if err != nil {
-		StakingLogger.Error("Error marshalling validator", "error", err, "ValidatorAddress", validator.Address)
-		panic(err)
-	}
+	bz := k.cdc.MustMarshalBinary(validator)
 
 	// store validator with address prefixed with validator key as index
 	store.Set(getValidatorKey(validator.Pubkey.Address().Bytes()), bz)
@@ -97,4 +81,19 @@ func (k Keeper) GetAllCurrentValidators(ctx sdk.Context) (validators []types.Val
 		iterator.Next()
 	}
 	return
+}
+
+// GetValidatorInfo returns validator info for given the address
+func (k Keeper) GetValidatorInfo(ctx sdk.Context, valAddr common.Address) (validator types.Validator, error error) {
+	store := ctx.KVStore(k.storeKey)
+
+	// get validator and unmarshall
+	validatorBytes := store.Get(getValidatorKey(valAddr.Bytes()))
+	err := k.cdc.UnmarshalBinary(validatorBytes, &validator)
+	if err != nil {
+		StakingLogger.Error("Error unmarshalling validator while fetching validator from store", "Error", err, "ValidatorAddress", valAddr)
+		return types.CreateEmptyValidator(), err
+	}
+
+	return validator, nil
 }

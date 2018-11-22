@@ -26,7 +26,11 @@ func handleMsgValidatorUpdate(ctx sdk.Context, msg MsgValidatorUpdate, k Keeper)
 	return sdk.Result{}
 }
 
-func handleMsgValidatorExit(context sdk.Context, exit MsgValidatorExit, keeper Keeper) sdk.Result {
+func handleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k Keeper) sdk.Result {
+	// fetch validator from store
+	validator, err := k.GetValidatorInfo(ctx, msg.ValidatorAddr)
+	// check if its post endEpoch
+
 	// verify deactivation from ACK count
 	return sdk.Result{}
 }

@@ -2,7 +2,7 @@ package helper
 
 import (
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/maticnetwork/heimdall/staking"
+	"github.com/maticnetwork/heimdall/types"
 	"math/big"
 )
 
@@ -56,7 +56,7 @@ func GetHeaderInfo(headerId uint64) (root common.Hash, start uint64, end uint64,
 	return headerBlock.Root, headerBlock.Start.Uint64(), headerBlock.End.Uint64(), nil
 }
 
-func GetValidatorInfo(addr common.Address) (validator staking.Validator, err error) {
+func GetValidatorInfo(addr common.Address) (validator types.Validator, err error) {
 	// get stakemanager intance
 	stakeManagerInstance, err := GetStakeManagerInstance()
 	if err != nil {
@@ -69,7 +69,7 @@ func GetValidatorInfo(addr common.Address) (validator staking.Validator, err err
 		Logger.Error("Error fetching validator information from stakemanager", "Error", err, "ValidatorAddress", addr)
 		return
 	}
-	validator = staking.Validator{
+	validator = types.Validator{
 		Address:    addr,
 		Power:      amount.Int64(),
 		StartEpoch: startEpoch.Int64(),
