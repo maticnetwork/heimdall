@@ -61,14 +61,14 @@ const ValidatorUpdateSigner = "validatorUpdateSigner"
 var _ sdk.Msg = &MsgValidatorUpdate{}
 
 type MsgValidatorUpdate struct {
-	CurrentValPubkey string
-	NewValPubkey     string
+	CurrentValAddress common.Address
+	NewValPubkey      string
 }
 
-func NewMsgValidatorUpdate(currentValPubKey string, newValPubkey string) MsgValidatorUpdate {
+func NewMsgValidatorUpdate(currentValAddres common.Address, newValPubkey string) MsgValidatorUpdate {
 	return MsgValidatorUpdate{
-		CurrentValPubkey: currentValPubKey,
-		NewValPubkey:     newValPubkey,
+		CurrentValAddress: currentValAddres,
+		NewValPubkey:      newValPubkey,
 	}
 }
 

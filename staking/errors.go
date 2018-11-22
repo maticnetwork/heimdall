@@ -14,6 +14,7 @@ const (
 	CodeValSignerMismatch  CodeType          = 4500
 	CodeValidatorExitDeny  CodeType          = 5500
 	CodeValAlreadyUnbonded CodeType          = 6500
+	CodeSignerSynced       CodeType          = 7500
 )
 
 func ErrOldValidator(codespace sdk.CodespaceType) sdk.Error {
@@ -34,6 +35,10 @@ func ErrValIsCurrentVal(codespace sdk.CodespaceType) sdk.Error {
 
 func ErrValUnbonded(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeValAlreadyUnbonded, "Validator already unbonded , cannot exit")
+}
+
+func ErrSignerAlreadySynced(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeSignerSynced, "No signer update found, invalid message")
 }
 
 func codeToDefaultMsg(code CodeType) string {

@@ -34,6 +34,17 @@ func CreateEmptyValidator() Validator {
 	return validator
 }
 
+func CreateValidatorWithAddr(addr common.Address) Validator {
+	validator := Validator{
+		Address:    addr,
+		StartEpoch: int64(0),
+		EndEpoch:   int64(0),
+		Power:      int64(0),
+		Signer:     addr,
+	}
+	return validator
+}
+
 // todo add marshall and unmarshall methods here
 
 // todo add human readable string
