@@ -66,10 +66,7 @@ func (k Keeper) GetAllCurrentValidators(ctx sdk.Context) (validators []types.Val
 
 		// unmarshall validator
 		var validator types.Validator
-		err := k.cdc.UnmarshalBinary(iterator.Value(), &validator)
-		if err != nil {
-			return
-		}
+		k.cdc.MustUnmarshalBinary(iterator.Value(), &validator)
 
 		// check if validator is valid for current epoch
 		if validator.IsCurrentValidator(ACKs) {
@@ -89,6 +86,8 @@ func (k Keeper) GetValidatorInfo(ctx sdk.Context, valAddr common.Address) (valid
 
 	// get validator and unmarshall
 	validatorBytes := store.Get(getValidatorKey(valAddr.Bytes()))
+
+	// unmarshall validator (TODO: we might want to shift to mustUnmarshallBinary)
 	err := k.cdc.UnmarshalBinary(validatorBytes, &validator)
 	if err != nil {
 		StakingLogger.Error("Error unmarshalling validator while fetching validator from store", "Error", err, "ValidatorAddress", valAddr)
