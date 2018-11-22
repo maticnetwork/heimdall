@@ -29,7 +29,22 @@ func handleMsgValidatorUpdate(ctx sdk.Context, msg MsgValidatorUpdate, k Keeper)
 func handleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k Keeper) sdk.Result {
 	// fetch validator from store
 	validator, err := k.GetValidatorInfo(ctx, msg.ValidatorAddr)
-	// check if its post endEpoch
+	if err != nil {
+		StakingLogger.Error("Fetching of validator from store failed", "Error", err, "ValidatorAddress", msg.ValidatorAddr)
+		return ErrNoValidator(k.codespace).Result()
+	}
+
+	// check if its validator exits in validator set
+	if validator.IsCurrentValidator(k.checkpointKeeper.GetACKCount(ctx)) {
+		StakingLogger.Error("Validator is locked in till deactivation period , exit denied")
+		return ErrValIsCurrentVal(k.codespace).Result()
+	}
+
+	// check if validator is bonded
+	if validator.Power == int64(0) {
+		StakingLogger.Error("Validator already unbonded")
+		return ErrValUnbonded(k.codespace).Result()
+	}
 
 	// verify deactivation from ACK count
 	return sdk.Result{}

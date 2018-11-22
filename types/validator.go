@@ -33,3 +33,7 @@ func CreateEmptyValidator() Validator {
 	}
 	return validator
 }
+
+// todo add marshall and unmarshall methods here
+
+// todo add human readable string

@@ -1,6 +1,7 @@
 package staking
 
 import (
+	"fmt"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -86,13 +87,37 @@ func (k Keeper) GetValidatorInfo(ctx sdk.Context, valAddr common.Address) (valid
 
 	// get validator and unmarshall
 	validatorBytes := store.Get(getValidatorKey(valAddr.Bytes()))
+	if validatorBytes == nil {
+		error = fmt.Errorf("Validator Not Found")
+		return
+	}
 
 	// unmarshall validator (TODO: we might want to shift to mustUnmarshallBinary)
-	err := k.cdc.UnmarshalBinary(validatorBytes, &validator)
-	if err != nil {
-		StakingLogger.Error("Error unmarshalling validator while fetching validator from store", "Error", err, "ValidatorAddress", valAddr)
-		return types.CreateEmptyValidator(), err
+	error = k.cdc.UnmarshalBinary(validatorBytes, &validator)
+	if error != nil {
+		StakingLogger.Error("Error unmarshalling validator while fetching validator from store", "Error", error, "ValidatorAddress", valAddr)
+		return
 	}
 
 	return validator, nil
+}
+
+func (k Keeper) RemoveValidator(ctx sdk.Context, valAddr common.Address) error {
+	store := ctx.KVStore(k.storeKey)
+
+	var validator types.Validator
+
+	// get validator and unmarshall
+	validatorBytes := store.Get(getValidatorKey(valAddr.Bytes()))
+	if validatorBytes == nil {
+		err := fmt.Errorf("Validator Not Found")
+		return err
+	}
+
+	err := k.cdc.UnmarshalBinary(validatorBytes, &validator)
+	if err != nil {
+		StakingLogger.Error("Error unmarshalling validator while fetching validator from store", "Error", err, "ValidatorAddress", valAddr)
+		return err
+	}
+
 }
