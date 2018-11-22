@@ -3,7 +3,7 @@ package staking
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/eth/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 var cdc = codec.New()
@@ -19,14 +19,14 @@ var _ sdk.Msg = &MsgValidatorJoin{}
 type MsgValidatorJoin struct {
 	ValidatorAddr common.Address `json:"validatorAddr"`
 	StartEpoch    uint64         `json:"startEpoch"`
-	EndEpoch      uint64         `json:"endEpoch"`
+	Pubkey        string         `json:"pubkey"`
 }
 
-func NewMsgValidatorJoin(validatorAddr common.Address, startEpoch uint64, endEpoch uint64) MsgValidatorJoin {
+func NewMsgValidatorJoin(validatorAddr common.Address, startEpoch uint64, pubkey string) MsgValidatorJoin {
 	return MsgValidatorJoin{
 		ValidatorAddr: validatorAddr,
 		StartEpoch:    startEpoch,
-		EndEpoch:      endEpoch,
+		Pubkey:        pubkey,
 	}
 }
 

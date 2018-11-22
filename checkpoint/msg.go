@@ -99,6 +99,5 @@ func (msg MsgCheckpointAck) GetSignBytes() []byte {
 }
 
 func (msg MsgCheckpointAck) ValidateBasic() sdk.Error {
-
 	return nil
 }

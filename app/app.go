@@ -57,6 +57,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.stakerKeeper = staking.NewKeeper(app.cdc, app.keyStaker, app.RegisterCodespace(checkpoint.DefaultCodespace))
 	// register message routes
 	app.Router().AddRoute("checkpoint", checkpoint.NewHandler(app.checkpointKeeper))
+	app.Router().AddRoute("staking", staking.NewHandler(app.stakerKeeper, che))
 	// perform initialization logic
 	app.SetInitChainer(app.initChainer)
 	app.SetBeginBlocker(app.BeginBlocker)

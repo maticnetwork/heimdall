@@ -52,7 +52,7 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k Keeper) sdk
 
 	// update ack count
 	k.UpdateACKCount(ctx)
-	CheckpointLogger.Debug("Valid ACK", "CurrentACKCount", k.GetACKCount(ctx)-1, "UpdatedACKCount", k.GetACKCount(ctx))
+	CheckpointLogger.Debug("Valid ACK Received", "CurrentACKCount", k.GetACKCount(ctx)-1, "UpdatedACKCount", k.GetACKCount(ctx))
 
 	return sdk.Result{}
 }

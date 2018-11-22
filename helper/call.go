@@ -41,22 +41,6 @@ func GetValidators() (validators []abci.ValidatorUpdate) {
 	return validators
 }
 
-func GetLastBlock() uint64 {
-	stakeManagerInstance, err := GetStakeManagerInstance()
-	if err != nil {
-		Logger.Error("Error creating validatorSetInstance", "error", err)
-		return 0
-	}
-
-	lastBlock, err := stakeManagerInstance.StartBlock(nil)
-	if err != nil {
-		Logger.Error("Unable to fetch last block from mainchain", "error", err)
-		return 0
-	}
-
-	return lastBlock.Uint64()
-}
-
 func GetHeaderInfo(headerId uint64) (root common.Hash, start uint64, end uint64, err error) {
 	// get rootchain instance
 	rootChainInstance, err := GetRootChainInstance()
