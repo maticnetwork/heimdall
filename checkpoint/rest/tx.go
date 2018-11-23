@@ -24,7 +24,7 @@ func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec
 	).Methods("POST")
 }
 
-type EpochCheckpoint struct {
+type HeaderBlock struct {
 	Proposer   string `json:"proposer"`
 	RootHash   string `json:"rootHash"`
 	StartBlock uint64 `json:"startBlock"`
@@ -33,7 +33,7 @@ type EpochCheckpoint struct {
 
 func newCheckpointHandler(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var m EpochCheckpoint
+		var m HeaderBlock
 
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
@@ -79,7 +79,7 @@ func SendTendermintRequest(cliCtx context.CLIContext, txBytes []byte) (*ctypes.R
 	return cliCtx.BroadcastTx(txBytes)
 }
 
-func CreateTxBytes(m EpochCheckpoint) ([]byte, error) {
+func CreateTxBytes(m HeaderBlock) ([]byte, error) {
 	msg := checkpoint.NewMsgCheckpointBlock(
 		common.HexToAddress(m.Proposer),
 		m.StartBlock,
