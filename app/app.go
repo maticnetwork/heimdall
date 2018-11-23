@@ -187,5 +187,7 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 }
 
 func (app *HeimdallApp) ExportAppStateAndValidators() (appState json.RawMessage, validators []tmtypes.GenesisValidator, err error) {
+	ctx := app.NewContext(true, abci.Header{})
+
 	return appState, validators, err
 }
