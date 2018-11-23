@@ -79,6 +79,6 @@ func createHandler(cdc *codec.Codec) http.Handler {
 
 	// Addded rest commands to adding transction !
 	checkpoint.RegisterRoutes(cliCtx, r, cdc)
-	staking.RegisterRoutes(cliCtx,r,cdc)
+	staking.RegisterRoutes(cliCtx, r, cdc)
 	return r
 }

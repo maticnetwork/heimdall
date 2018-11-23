@@ -19,7 +19,7 @@ func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec
 		newValdatorJoinHandler(cliCtx),
 	).Methods("POST")
 	r.HandleFunc("staking/RemoveValidator", newValidatorExitHandler(cliCtx)).Methods("POST")
-	r.HandleFunc("staking/UpdateValidator",newValidatorUpdateHandler(cliCtx)).Methods("POST")
+	r.HandleFunc("staking/UpdateValidator", newValidatorUpdateHandler(cliCtx)).Methods("POST")
 }
 
 type addValidator struct {
@@ -127,11 +127,10 @@ func newValidatorExitHandler(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-type updateValidator struct{
+type updateValidator struct {
 	CurrentValAddr string `json:"current_val_addr"`
-	NewValPubkey string `json:"new_valpubkey"`
+	NewValPubkey   string `json:"new_valpubkey"`
 }
-
 
 func newValidatorUpdateHandler(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -152,11 +151,11 @@ func newValidatorUpdateHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		msg := staking.NewMsgValidatorUpdate(common.HexToAddress(m.CurrentValAddr),m.NewValPubkey)
+		msg := staking.NewMsgValidatorUpdate(common.HexToAddress(m.CurrentValAddr), m.NewValPubkey)
 
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {
-			RestLogger.Error("Unable to create txBytes", "CurrentValidatorAddr",m.CurrentValAddr,"NewValPubkey",m.NewValPubkey)
+			RestLogger.Error("Unable to create txBytes", "CurrentValidatorAddr", m.CurrentValAddr, "NewValPubkey", m.NewValPubkey)
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
 			return
@@ -164,7 +163,7 @@ func newValidatorUpdateHandler(cliCtx context.CLIContext) http.HandlerFunc {
 
 		resp, err := helper.SendTendermintRequest(cliCtx, txBytes)
 		if err != nil {
-			RestLogger.Error("Error while sending request to Tendermint", "error", err,"CurrentValidatorAddr",m.CurrentValAddr,"NewValPubkey",m.NewValPubkey,"TxBytes",txBytes)
+			RestLogger.Error("Error while sending request to Tendermint", "error", err, "CurrentValidatorAddr", m.CurrentValAddr, "NewValPubkey", m.NewValPubkey, "TxBytes", txBytes)
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
 			return
