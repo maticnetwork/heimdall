@@ -5,15 +5,6 @@ FROM golang:latest
 # update available packages
 RUN apt-get update -y && apt-get upgrade -y && apt install build-essential -y
 
-# redis installation
-RUN mkdir -p /tmp && \
-  cd /tmp && \
-  curl -O http://download.redis.io/redis-stable.tar.gz && \
-  tar xzvf redis-stable.tar.gz && \
-  cd redis-stable && \
-  make && \
-  make install
-
 # setup dep
 RUN curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
 
@@ -33,9 +24,9 @@ RUN make dep
 RUN make build
 
 # add volumes
-VOLUME ["/redis-data", "/root/.heimdalld", "./logs", "./build"]
+VOLUME ["/root/.heimdalld", "./logs", "./build"]
 
 # expose ports
-EXPOSE 6379 1317 26656 26657
+EXPOSE 1317 26656 26657
 
 ENTRYPOINT [ "bash", "docker/start-heimdall.sh" ]

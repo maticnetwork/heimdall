@@ -12,8 +12,8 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
-	"github.com/go-redis/redis"
 	"github.com/spf13/viper"
+	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -28,8 +28,8 @@ type MaticCheckpointer struct {
 	// Base service
 	common.BaseService
 
-	// Redis client
-	redisClient *redis.Client
+	// storage client
+	storageClient *leveldb.DB
 
 	// ETH client
 	MaticClient *ethclient.Client
@@ -59,15 +59,9 @@ func NewMaticCheckpointer() *MaticCheckpointer {
 		panic(err)
 	}
 
-	redisOptions, err := redis.ParseURL(viper.GetString(redisURL))
-	if err != nil {
-		logger.Error("Error while redis instance", "error", err)
-		panic(err)
-	}
-
 	// creating checkpointer object
 	checkpointer := &MaticCheckpointer{
-		redisClient:       redis.NewClient(redisOptions),
+		storageClient:     getBridgeDBInstance(viper.GetString(bridgeDBFlag)),
 		MaticClient:       helper.GetMaticClient(),
 		MaticRPCClient:    helper.GetMaticRPCClient(),
 		MainClient:        helper.GetMainClient(),
@@ -125,6 +119,9 @@ func (checkpointer *MaticCheckpointer) OnStart() error {
 // OnStop stops all necessary go routines
 func (checkpointer *MaticCheckpointer) OnStop() {
 	checkpointer.BaseService.OnStop() // Always call the overridden method.
+
+	// close bridge db instance
+	closeBridgeDBInstance()
 
 	// cancel subscription if any
 	checkpointer.cancelSubscription()

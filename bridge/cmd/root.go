@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -11,7 +12,7 @@ import (
 )
 
 const (
-	redisURL = "redis-url"
+	bridgeDBFlag = "bridge-db"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -29,13 +30,18 @@ func InitTendermintViperConfig(cmd *cobra.Command) {
 	tendermintNode, _ := cmd.Flags().GetString(helper.NodeFlag)
 	homeValue, _ := cmd.Flags().GetString(helper.HomeFlag)
 	withHeimdallConfigValue, _ := cmd.Flags().GetString(helper.WithHeimdallConfigFlag)
-	redisURLValue, _ := cmd.Flags().GetString(redisURL)
+	bridgeDBValue, _ := cmd.Flags().GetString(bridgeDBFlag)
+
+	// bridge-db directory (default storage)
+	if bridgeDBValue == "" {
+		bridgeDBValue = filepath.Join(homeValue, "bridge", "storage")
+	}
 
 	// set to viper
 	viper.Set(helper.NodeFlag, tendermintNode)
 	viper.Set(helper.HomeFlag, homeValue)
 	viper.Set(helper.WithHeimdallConfigFlag, withHeimdallConfigValue)
-	viper.Set(redisURL, redisURLValue)
+	viper.Set(bridgeDBFlag, bridgeDBValue)
 
 	// start heimdall config
 	helper.InitHeimdallConfig()
@@ -58,11 +64,11 @@ func init() {
 		"",
 		"Heimdall config file path (default <home>/config/heimdall-config.json)",
 	)
-	// redis url
+	// bridge storage db
 	rootCmd.PersistentFlags().String(
-		redisURL,
-		"redis://localhost:6379/0",
-		"Redis URL",
+		bridgeDBFlag,
+		"",
+		"Bridge db path (default <home>/bridge/storage)",
 	)
 
 	// bind all flags with viper
