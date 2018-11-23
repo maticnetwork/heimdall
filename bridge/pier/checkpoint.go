@@ -9,6 +9,7 @@ import (
 
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	ethereum "github.com/ethereum/go-ethereum"
+	ethCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
@@ -18,7 +19,6 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/maticnetwork/heimdall/checkpoint"
-	checkpointTx "github.com/maticnetwork/heimdall/checkpoint/rest"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/helper"
 )
@@ -241,18 +241,21 @@ func (checkpointer *MaticCheckpointer) sendRequest(newHeader *types.Header) {
 	checkpointer.Logger.Info("New checkpoint header created", "latest", latest, "start", start, "end", end, "root", root)
 
 	// TODO submit checkcoint
-	txBytes, err := checkpointTx.CreateTxBytes(checkpointTx.HeaderBlock{
-		RootHash:   root,
-		StartBlock: start,
-		EndBlock:   end,
-	})
+	txBytes, err := helper.CreateTxBytes(
+		checkpoint.NewMsgCheckpointBlock(
+			ethCommon.BytesToAddress(helper.GetPubKey().Address().Bytes()),
+			start,
+			end,
+			ethCommon.HexToHash(root),
+		),
+	)
 
 	if err != nil {
 		checkpointer.Logger.Error("Error while creating tx bytes", "error", err)
 		return
 	}
 
-	resp, err := checkpointTx.SendTendermintRequest(cliContext.NewCLIContext(), txBytes)
+	resp, err := helper.SendTendermintRequest(cliContext.NewCLIContext(), txBytes)
 	if err != nil {
 		checkpointer.Logger.Error("Error while sending request to Tendermint", "error", err)
 		return
