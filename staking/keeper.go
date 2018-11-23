@@ -7,6 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/types"
+	"github.com/tendermint/tendermint/crypto"
 )
 
 type Keeper struct {
@@ -120,4 +121,39 @@ func (k Keeper) RemoveValidator(ctx sdk.Context, valAddr common.Address) error {
 		return err
 	}
 
+	// generate empty validator
+	validator = types.CreateValidatorWithAddr(validator.Address)
+
+	// add updated validator to store with same key
+	k.AddValidator(ctx, validator)
+
+	return nil
+}
+
+// update validator with signer and pubkey
+func (k Keeper) UpdateSigner(ctx sdk.Context, signer common.Address, pubkey crypto.PubKey, valAddr common.Address) error {
+	store := ctx.KVStore(k.storeKey)
+
+	var validator types.Validator
+
+	// get validator and unmarshall
+	validatorBytes := store.Get(getValidatorKey(valAddr.Bytes()))
+	if validatorBytes == nil {
+		err := fmt.Errorf("Validator Not Found")
+		return err
+	}
+
+	err := k.cdc.UnmarshalBinary(validatorBytes, &validator)
+	if err != nil {
+		StakingLogger.Error("Error unmarshalling validator while fetching validator from store", "Error", err, "ValidatorAddress", valAddr)
+		return err
+	}
+	//update validator
+	validator.Signer = signer
+	validator.Pubkey = pubkey
+
+	// add updated validator to store with same key
+	k.AddValidator(ctx, validator)
+
+	return nil
 }

@@ -21,8 +21,37 @@ func NewHandler(k Keeper) sdk.Handler {
 	}
 }
 func handleMsgValidatorUpdate(ctx sdk.Context, msg MsgValidatorUpdate, k Keeper) sdk.Result {
+	// pull val from store
+	validator, err := k.GetValidatorInfo(ctx, msg.CurrentValAddress)
+	if err != nil {
+		StakingLogger.Error("Fetching of validator from store failed", "Error", err, "ValidatorAddress", msg.CurrentValAddress)
+		return ErrNoValidator(k.codespace).Result()
+	}
 
-	// verify from mainchain
+	// pull val from mainchain
+	newValidator, err := helper.GetValidatorInfo(msg.CurrentValAddress)
+	if err != nil {
+		StakingLogger.Error("Unable to fetch validator from stakemanager", "Error", err, "CurrentValidatorAddress", msg.CurrentValAddress)
+	}
+
+	pubkey, err := helper.StringToPubkey(msg.NewValPubkey)
+	if err != nil {
+		StakingLogger.Error("Invalid Pubkey", "Error", err, "PubkeyString", msg.NewValPubkey)
+		return ErrValSignerMismatch(k.codespace).Result()
+	}
+
+	if !bytes.Equal(newValidator.Signer.Bytes(), validator.Signer.Bytes()) {
+		StakingLogger.Error("No signer update on stakemanager found or signer already updated", "Error", err, "CurrentSigner", validator.Signer.String(), "SignerFromMsg", pubkey.Address().String())
+		return ErrSignerAlreadySynced(k.codespace).Result()
+	}
+
+	// update
+	err = k.UpdateSigner(ctx, newValidator.Signer, pubkey, msg.CurrentValAddress)
+	if err != nil {
+		StakingLogger.Error("Unable to update signer", "Error", err, "CurrentSigner", validator.Signer.String(), "SignerFromMsg", pubkey.Address().String())
+		panic(err)
+	}
+
 	return sdk.Result{}
 }
 
