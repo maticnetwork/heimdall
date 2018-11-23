@@ -24,8 +24,8 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/maticnetwork/heimdall/app"
-	checkpointRestCmds "github.com/maticnetwork/heimdall/checkpoint/rest"
 	"github.com/maticnetwork/heimdall/helper"
+	hmserver "github.com/maticnetwork/heimdall/server"
 )
 
 func main() {
@@ -63,7 +63,7 @@ func main() {
 
 	rootCmd.AddCommand(newAccountCmd())
 
-	rootCmd.AddCommand(checkpointRestCmds.ServeCommands(cdc))
+	rootCmd.AddCommand(hmserver.ServeCommands(cdc))
 	rootCmd.AddCommand(InitCmd(ctx, cdc, server.DefaultAppInit))
 	// prepare and add flags
 	executor := cli.PrepareBaseCmd(rootCmd, "HD", os.ExpandEnv("$HOME/.heimdalld"))
