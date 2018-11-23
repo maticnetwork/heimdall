@@ -278,13 +278,13 @@ func (syncer *ChainSyncer) processHeader(newHeader *types.Header) {
 						// TOOD validator staked
 					}
 
-				// Unstaked
-				case "Unstaked":
-					event := new(stakemanager.StakemanagerUnstaked)
+				// UnstakeInit
+				case "UnstakeInit":
+					event := new(stakemanager.StakemanagerUnstakeInit)
 					if err := stakemanagerABI.Unpack(event, selectedEvent.Name, vLog.Data); err != nil {
 						logEventParseError(syncer.Logger, selectedEvent.Name, err)
 					} else {
-						// TOOD validator unstaked
+						// TOOD validator unstaked initialize
 					}
 
 				// SignerChange
