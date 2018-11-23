@@ -3,6 +3,7 @@ package types
 import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/types"
 )
 
 type Validator struct {
@@ -48,3 +49,12 @@ func CreateValidatorWithAddr(addr common.Address) Validator {
 // todo add marshall and unmarshall methods here
 
 // todo add human readable string
+
+// convert heimdall validator to Tendermint validator
+func (validator Validator) ToTmValidator() types.Validator {
+	return types.Validator{
+		Address:     validator.Address.Bytes(),
+		PubKey:      validator.Pubkey,
+		VotingPower: validator.Power,
+	}
+}
