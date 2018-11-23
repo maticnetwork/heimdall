@@ -14,8 +14,8 @@ import (
 	ethCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/go-redis/redis"
 	"github.com/spf13/viper"
+	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -43,8 +43,8 @@ type ChainSyncer struct {
 	// Base service
 	common.BaseService
 
-	// Redis client
-	redisClient *redis.Client
+	// storage client
+	storageClient *leveldb.DB
 
 	// Mainchain client
 	MainClient *ethclient.Client
@@ -79,15 +79,9 @@ func NewChainSyncer() *ChainSyncer {
 		panic(err)
 	}
 
-	redisOptions, err := redis.ParseURL(viper.GetString(redisURL))
-	if err != nil {
-		logger.Error("Error while redis instance", "error", err)
-		panic(err)
-	}
-
 	// creating syncer object
 	syncer := &ChainSyncer{
-		redisClient:          redis.NewClient(redisOptions),
+		storageClient:        getBridgeDBInstance(viper.GetString(bridgeDBFlag)),
 		MainClient:           helper.GetMainClient(),
 		RootChainInstance:    rootchainInstance,
 		StakeManagerInstance: stakeManagerInstance,
@@ -145,6 +139,9 @@ func (syncer *ChainSyncer) OnStart() error {
 func (syncer *ChainSyncer) OnStop() {
 	syncer.BaseService.OnStop() // Always call the overridden method.
 
+	// close db
+	closeBridgeDBInstance()
+
 	// cancel subscription if any
 	syncer.cancelSubscription()
 
@@ -196,16 +193,20 @@ func (syncer *ChainSyncer) StartSubscription(ctx context.Context, subscription e
 func (syncer *ChainSyncer) processHeader(newHeader *types.Header) {
 	syncer.Logger.Info("New block detected", "blockNumber", newHeader.Number)
 
-	// get last block from redis
-	lastBlockString, err := syncer.redisClient.Get(lastBlockKey).Result()
+	// default fromBlock
 	fromBlock := newHeader.Number.Int64()
-	if err != nil {
-		if err != redis.Nil {
-			syncer.Logger.Error("Error while fetching last block from redis", "error", err)
+
+	// get last block from storage
+	hasLastBlock, _ := syncer.storageClient.Has([]byte(lastBlockKey), nil)
+	if hasLastBlock {
+		lastBlockBytes, err := syncer.storageClient.Get([]byte(lastBlockKey), nil)
+		if err != nil {
+			syncer.Logger.Info("Error while fetching last block bytes from storage", "error", err)
+			return
 		}
-	} else {
-		syncer.Logger.Info("Got last block from redis", "lastBlock", lastBlockString)
-		if result, ierr := strconv.Atoi(lastBlockString); ierr == nil {
+
+		syncer.Logger.Info("Got last block from bridge storage", "lastBlock", string(lastBlockBytes))
+		if result, ierr := strconv.Atoi(string(lastBlockBytes)); ierr == nil {
 			if int64(result) >= newHeader.Number.Int64() {
 				return
 			}
@@ -214,8 +215,8 @@ func (syncer *ChainSyncer) processHeader(newHeader *types.Header) {
 		}
 	}
 
-	// set last block to redis
-	syncer.redisClient.Set(lastBlockKey, newHeader.Number.String(), 0)
+	// set last block to storage
+	syncer.storageClient.Put([]byte(lastBlockKey), []byte(newHeader.Number.String()), nil)
 
 	// debug log
 	syncer.Logger.Debug("Processing header", "fromBlock", fromBlock, "toBlock", newHeader.Number)
