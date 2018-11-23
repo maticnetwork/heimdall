@@ -93,6 +93,16 @@ func (app *HeimdallApp) BeginBlocker(_ sdk.Context, _ abci.RequestBeginBlock) ab
 func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci.ResponseEndBlock {
 	var validators []abci.ValidatorUpdate
 
+	// check if tx in block is ACK messgage
+
+	// if yes send whole validator set with all changes via ResponseEndBlock using
+	//app.stakerKeeper.RemoveDeactivatedValidators(ctx)
+	//validators:=app.stakerKeeper.GetAllValidators(ctx)
+
+	//check if tx in block is Checkpoint
+
+	// send transaction to rootchain
+
 	//if ctx.BlockHeader().NumTxs == 1 {
 	//	// unmarshall votes from header
 	//	var votes []tmtypes.Vote
@@ -170,6 +180,8 @@ func getExtraData(_checkpoint checkpoint.CheckpointBlockHeader, ctx sdk.Context)
 func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	// set ACK count to 0
 	app.checkpointKeeper.InitACKCount(ctx)
+
+	// init validator set from store
 
 	return abci.ResponseInitChain{}
 }

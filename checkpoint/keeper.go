@@ -9,11 +9,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/staking"
 )
 
 type Keeper struct {
 	checkpointKey sdk.StoreKey
 	cdc           *codec.Codec
+	stakingkeeper staking.Keeper
 
 	// codespace
 	codespace sdk.CodespaceType
@@ -120,6 +122,7 @@ func (k Keeper) GetACKCount(ctx sdk.Context) int {
 func (k Keeper) InitACKCount(ctx sdk.Context) {
 	store := ctx.KVStore(k.checkpointKey)
 
+	// TODO maybe this needs to be set to 1
 	// set to 0
 	key := []byte(strconv.Itoa(int(0)))
 	store.Set(ACKCountKey, key)

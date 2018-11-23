@@ -8,7 +8,9 @@ import (
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
+	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
+	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 type Keeper struct {
@@ -89,6 +91,38 @@ func (k Keeper) GetCurrentValidators(ctx sdk.Context) (validators []types.Valida
 	return
 }
 
+func (k Keeper) GetAllValidators(ctx sdk.Context) (validators []abci.ValidatorUpdate) {
+	store := ctx.KVStore(k.storeKey)
+
+	// create iterator to iterate with Validator Key prefix
+	iterator := sdk.KVStorePrefixIterator(store, ValidatorsKey)
+	defer iterator.Close()
+
+	// loop through validators to get valid validators
+	for i := 0; ; i++ {
+		if !iterator.Valid() {
+			break
+		}
+
+		// unmarshall validator
+		var validator types.Validator
+		k.cdc.MustUnmarshalBinary(iterator.Value(), &validator)
+
+		// convert to Validator Update
+		updateVal := abci.ValidatorUpdate{
+			Power:  validator.Power,
+			PubKey: tmtypes.TM2PB.PubKey(validator.Pubkey),
+		}
+
+		// append to list of validatorUpdates
+		validators = append(validators, updateVal)
+
+		// increment iterator
+		iterator.Next()
+	}
+	return
+}
+
 // performs deactivation of validatowrs wrt Tendermint to pass via EndBlock
 func (k Keeper) RemoveDeactivatedValidators(ctx sdk.Context) {
 	store := ctx.KVStore(k.storeKey)
@@ -142,7 +176,7 @@ func (k Keeper) GetValidatorInfo(ctx sdk.Context, valAddr common.Address) (valid
 	return validator, nil
 }
 
-func (k Keeper) RemoveValidator(ctx sdk.Context, valAddr common.Address, validator types.Validator) error {
+func (k Keeper) AddDeactivationEpoch(ctx sdk.Context, valAddr common.Address, validator types.Validator) error {
 
 	// set deactivation period
 	updatedVal, err := helper.GetValidatorInfo(valAddr)
@@ -189,3 +223,5 @@ func (k Keeper) UpdateSigner(ctx sdk.Context, signer common.Address, pubkey cryp
 
 	return nil
 }
+
+//todo add bool for validator updated or not

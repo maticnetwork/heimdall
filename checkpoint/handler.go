@@ -54,6 +54,13 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k Keeper) sdk
 	k.UpdateACKCount(ctx)
 	CheckpointLogger.Debug("Valid ACK Received", "CurrentACKCount", k.GetACKCount(ctx)-1, "UpdatedACKCount", k.GetACKCount(ctx))
 
+	// remove deactivated validators
+	k.stakingkeeper.RemoveDeactivatedValidators(ctx)
+
+	// check for validator updates
+
+	// if found create new validator set and replace
+
 	return sdk.Result{}
 }
 

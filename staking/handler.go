@@ -69,7 +69,7 @@ func handleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k Keeper) sdk
 		return ErrValUnbonded(k.codespace).Result()
 	}
 
-	// check if its validator exits in validator set
+	// allow only validators to exit from validator set
 	if !validator.IsCurrentValidator(k.checkpointKeeper.GetACKCount(ctx)) {
 		StakingLogger.Error("Validator is not in validator set, exit not possible")
 		return ErrValIsNotCurrentVal(k.codespace).Result()
@@ -81,9 +81,9 @@ func handleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k Keeper) sdk
 		return ErrValUnbonded(k.codespace).Result()
 	}
 
-	k.RemoveValidator(ctx, msg.ValidatorAddr, validator)
+	// Add deactivation time for validator
+	k.AddDeactivationEpoch(ctx, msg.ValidatorAddr, validator)
 
-	// verify deactivation from ACK count
 	return sdk.Result{}
 }
 
