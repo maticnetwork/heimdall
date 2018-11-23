@@ -16,10 +16,16 @@ type Validator struct {
 }
 
 func (validator Validator) IsCurrentValidator(ACKCount int) bool {
-	// check if validator is current validator
+	// validator hasnt initialised unstake
+	if validator.StartEpoch >= int64(ACKCount) && validator.EndEpoch == int64(0) {
+		return true
+	}
+
+	// validator has initialised unstake but is unbonding period
 	if validator.StartEpoch >= int64(ACKCount) && validator.EndEpoch <= int64(ACKCount) {
 		return true
 	}
+
 	return false
 }
 

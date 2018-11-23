@@ -42,7 +42,7 @@ func handleMsgValidatorUpdate(ctx sdk.Context, msg MsgValidatorUpdate, k Keeper)
 
 	if !bytes.Equal(newValidator.Signer.Bytes(), validator.Signer.Bytes()) {
 		StakingLogger.Error("No signer update on stakemanager found or signer already updated", "Error", err, "CurrentSigner", validator.Signer.String(), "SignerFromMsg", pubkey.Address().String())
-		return ErrSignerAlreadySynced(k.codespace).Result()
+		return ErrValidatorAlreadySynced(k.codespace).Result()
 	}
 
 	// update
@@ -63,17 +63,25 @@ func handleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k Keeper) sdk
 		return ErrNoValidator(k.codespace).Result()
 	}
 
-	// check if its validator exits in validator set
-	if validator.IsCurrentValidator(k.checkpointKeeper.GetACKCount(ctx)) {
-		StakingLogger.Error("Validator is locked in till deactivation period , exit denied")
-		return ErrValIsCurrentVal(k.codespace).Result()
-	}
-
-	// check if validator is bonded
-	if validator.Power == int64(0) {
+	// check if validator deactivation period is set
+	if validator.EndEpoch != 0 {
 		StakingLogger.Error("Validator already unbonded")
 		return ErrValUnbonded(k.codespace).Result()
 	}
+
+	// check if its validator exits in validator set
+	if !validator.IsCurrentValidator(k.checkpointKeeper.GetACKCount(ctx)) {
+		StakingLogger.Error("Validator is not in validator set, exit not possible")
+		return ErrValIsNotCurrentVal(k.codespace).Result()
+	}
+
+	// means exit has been processed but validator in unbonding period
+	if validator.Power != int64(0) {
+		StakingLogger.Error("Validator already unbonded")
+		return ErrValUnbonded(k.codespace).Result()
+	}
+
+	k.RemoveValidator(ctx, msg.ValidatorAddr, validator)
 
 	// verify deactivation from ACK count
 	return sdk.Result{}

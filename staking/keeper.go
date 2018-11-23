@@ -6,6 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/maticnetwork/heimdall/checkpoint"
+	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
 	"github.com/tendermint/tendermint/crypto"
 )
@@ -49,8 +50,8 @@ func (k Keeper) AddValidator(ctx sdk.Context, validator types.Validator) {
 	store.Set(getValidatorKey(validator.Pubkey.Address().Bytes()), bz)
 }
 
-// GetAllValidators returns all validators added for a specific validator key
-func (k Keeper) GetAllCurrentValidators(ctx sdk.Context) (validators []types.Validator) {
+// GetAllValidators returns all validators who are in validator set and removes deactivated validators
+func (k Keeper) GetCurrentValidators(ctx sdk.Context) (validators []types.Validator) {
 	store := ctx.KVStore(k.storeKey)
 
 	// get ACK count
@@ -70,10 +71,48 @@ func (k Keeper) GetAllCurrentValidators(ctx sdk.Context) (validators []types.Val
 		var validator types.Validator
 		k.cdc.MustUnmarshalBinary(iterator.Value(), &validator)
 
+		// if you encounter a deactivated validator make power 0
+		if validator.EndEpoch != 0 && validator.EndEpoch > int64(ACKs) && validator.Power != 0 {
+			validator.Power = 0
+			k.AddValidator(ctx, validator)
+		}
+
 		// check if validator is valid for current epoch
 		if validator.IsCurrentValidator(ACKs) {
 			// append if validator is current valdiator
 			validators = append(validators, validator)
+		}
+
+		// increment iterator
+		iterator.Next()
+	}
+	return
+}
+
+// performs deactivation of validatowrs wrt Tendermint to pass via EndBlock
+func (k Keeper) RemoveDeactivatedValidators(ctx sdk.Context) {
+	store := ctx.KVStore(k.storeKey)
+
+	// get ACK count
+	ACKs := k.checkpointKeeper.GetACKCount(ctx)
+
+	iterator := sdk.KVStorePrefixIterator(store, ValidatorsKey)
+	defer iterator.Close()
+
+	// loop through validators to get valid validators
+	for i := 0; ; i++ {
+		if !iterator.Valid() {
+			break
+		}
+
+		// unmarshall validator
+		var validator types.Validator
+		k.cdc.MustUnmarshalBinary(iterator.Value(), &validator)
+
+		// if you encounter a deactivated validator make power 0
+		if validator.EndEpoch != 0 && validator.EndEpoch > int64(ACKs) && validator.Power != 0 {
+			validator.Power = 0
+			k.AddValidator(ctx, validator)
 		}
 
 		// increment iterator
@@ -103,31 +142,24 @@ func (k Keeper) GetValidatorInfo(ctx sdk.Context, valAddr common.Address) (valid
 	return validator, nil
 }
 
-func (k Keeper) RemoveValidator(ctx sdk.Context, valAddr common.Address) error {
-	store := ctx.KVStore(k.storeKey)
+func (k Keeper) RemoveValidator(ctx sdk.Context, valAddr common.Address, validator types.Validator) error {
 
-	var validator types.Validator
-
-	// get validator and unmarshall
-	validatorBytes := store.Get(getValidatorKey(valAddr.Bytes()))
-	if validatorBytes == nil {
-		err := fmt.Errorf("Validator Not Found")
-		return err
-	}
-
-	err := k.cdc.UnmarshalBinary(validatorBytes, &validator)
+	// set deactivation period
+	updatedVal, err := helper.GetValidatorInfo(valAddr)
 	if err != nil {
-		StakingLogger.Error("Error unmarshalling validator while fetching validator from store", "Error", err, "ValidatorAddress", valAddr)
-		return err
+		StakingLogger.Error("Cannot fetch validator info while unstaking", "Error", err, "ValidatorAddress", valAddr)
 	}
 
-	// generate empty validator
-	validator = types.CreateValidatorWithAddr(validator.Address)
+	// check if validator has unstaked
+	if updatedVal.EndEpoch != 0 {
+		validator.EndEpoch = updatedVal.EndEpoch
+		k.AddValidator(ctx, validator)
+		return nil
+	} else {
+		StakingLogger.Debug("Deactivation period not set")
+		return ErrValidatorAlreadySynced(k.codespace)
+	}
 
-	// add updated validator to store with same key
-	k.AddValidator(ctx, validator)
-
-	return nil
 }
 
 // update validator with signer and pubkey

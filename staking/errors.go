@@ -29,15 +29,15 @@ func ErrValSignerMismatch(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeValSignerMismatch, "Signer Address doesnt match pubkey address")
 }
 
-func ErrValIsCurrentVal(codespace sdk.CodespaceType) sdk.Error {
-	return newError(codespace, CodeValidatorExitDeny, "Validator is locked in till deactivation epoch, exit denied")
+func ErrValIsNotCurrentVal(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeValidatorExitDeny, "Validator is not in validator set, exit not possible")
 }
 
 func ErrValUnbonded(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeValAlreadyUnbonded, "Validator already unbonded , cannot exit")
 }
 
-func ErrSignerAlreadySynced(codespace sdk.CodespaceType) sdk.Error {
+func ErrValidatorAlreadySynced(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeSignerSynced, "No signer update found, invalid message")
 }
 
