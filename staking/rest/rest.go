@@ -12,10 +12,10 @@ import (
 var RestLogger tmLog.Logger
 
 func init() {
-	RestLogger = helper.Logger.With("module", "checkpoint/rest")
+	RestLogger = helper.Logger.With("module", "staking/rest")
 }
 
-// RegisterRoutes registers staking-related REST handlers to a router
+// RegisterRoutes registers checkpoint-related REST handlers to a router
 func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
 	//registerQueryRoutes(cliCtx, r, cdc)
 	registerTxRoutes(cliCtx, r, cdc)
