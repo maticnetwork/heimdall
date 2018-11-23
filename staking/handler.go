@@ -80,6 +80,8 @@ func handleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k Keeper) sdk
 }
 
 func handleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k Keeper) sdk.Result {
+	// TODO check if valdiator already exits
+
 	// fetch validator from mainchain
 	validator, err := helper.GetValidatorInfo(msg.ValidatorAddr)
 	if err != nil {

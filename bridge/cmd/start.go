@@ -28,7 +28,7 @@ var startCmd = &cobra.Command{
 		signal.Notify(catchSignal, os.Interrupt)
 		go func() {
 			// sig is a ^C, handle it
-			for _ = range catchSignal {
+			for range catchSignal {
 				// stop processes
 				for _, service := range services {
 					service.Stop()

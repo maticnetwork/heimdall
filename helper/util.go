@@ -12,6 +12,8 @@ import (
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	cmn "github.com/tendermint/tendermint/libs/common"
 
+	"github.com/cosmos/cosmos-sdk/client/context"
+	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	"github.com/tendermint/tendermint/types"
 )
 
@@ -97,4 +99,9 @@ func CreateTxBytes(msg sdk.Msg) ([]byte, error) {
 		return []byte(""), err
 	}
 	return txBytes, nil
+}
+
+func SendTendermintRequest(cliCtx context.CLIContext, txBytes []byte) (*ctypes.ResultBroadcastTxCommit, error) {
+	Logger.Info("Broadcasting tx bytes to Tendermint", "txBytes", hex.EncodeToString(txBytes))
+	return cliCtx.BroadcastTx(txBytes)
 }

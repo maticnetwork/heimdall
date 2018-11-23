@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -10,8 +9,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gorilla/mux"
-	ctypes "github.com/tendermint/tendermint/rpc/core/types"
-
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/helper"
 )
@@ -58,9 +55,12 @@ func newCheckpointHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {
 			RestLogger.Error("Unable to create txBytes", "endBlock", m.EndBlock, "startBlock", m.StartBlock, "rootHash", m.RootHash)
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
 		}
 
-		resp, err := SendTendermintRequest(cliCtx, txBytes)
+		resp, err := helper.SendTendermintRequest(cliCtx, txBytes)
 		if err != nil {
 			RestLogger.Error("Error while sending request to Tendermint", "error", err)
 			w.WriteHeader(http.StatusBadRequest)
@@ -109,7 +109,7 @@ func NewCheckpointACKHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			RestLogger.Error("Unable to create txBytes", "Error", err, "HeaderIndex", m.HeaderIndex)
 		}
 
-		resp, err := SendTendermintRequest(cliCtx, txBytes)
+		resp, err := helper.SendTendermintRequest(cliCtx, txBytes)
 		if err != nil {
 			RestLogger.Error("Error while sending request to Tendermint", "error", err)
 			w.WriteHeader(http.StatusBadRequest)
@@ -126,9 +126,4 @@ func NewCheckpointACKHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 		w.Write(result)
 	}
-}
-
-func SendTendermintRequest(cliCtx context.CLIContext, txBytes []byte) (*ctypes.ResultBroadcastTxCommit, error) {
-	RestLogger.Info("Broadcasting tx bytes to Tendermint", "txBytes", hex.EncodeToString(txBytes))
-	return cliCtx.BroadcastTx(txBytes)
 }
