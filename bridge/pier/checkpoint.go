@@ -244,7 +244,7 @@ func (checkpointer *MaticCheckpointer) sendRequest(newHeader *types.Header) {
 	checkpointer.Logger.Info("New checkpoint header created", "latest", latest, "start", start, "end", end, "root", root)
 
 	// TODO submit checkcoint
-	txBytes, err := checkpointTx.CreateTxBytes(checkpointTx.EpochCheckpoint{
+	txBytes, err := checkpointTx.CreateTxBytes(checkpointTx.HeaderBlock{
 		RootHash:   root,
 		StartBlock: start,
 		EndBlock:   end,

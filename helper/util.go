@@ -4,10 +4,14 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/rlp"
+	hmtypes "github.com/maticnetwork/heimdall/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	cmn "github.com/tendermint/tendermint/libs/common"
+
 	"github.com/tendermint/tendermint/types"
 )
 
@@ -81,4 +85,16 @@ func StringToPubkey(pubkeyStr string) (crypto.PubKey, error) {
 	copy(pubkeyBytes[:], _pubkey)
 
 	return pubkeyBytes, nil
+}
+
+func CreateTxBytes(msg sdk.Msg) ([]byte, error) {
+	tx := hmtypes.NewBaseTx(msg)
+
+	txBytes, err := rlp.EncodeToBytes(tx)
+	if err != nil {
+		Logger.Error("Error generating TX Bytes", "error", err)
+
+		return []byte(""), err
+	}
+	return txBytes, nil
 }
