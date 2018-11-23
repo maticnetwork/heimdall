@@ -19,6 +19,7 @@ import (
 
 	"github.com/go-kit/kit/log"
 	checkpoint "github.com/maticnetwork/heimdall/checkpoint/rest"
+	staking "github.com/maticnetwork/heimdall/staking/rest"
 )
 
 // ServeCommands will generate a long-running rest server
@@ -78,5 +79,6 @@ func createHandler(cdc *codec.Codec) http.Handler {
 
 	// Addded rest commands to adding transction !
 	checkpoint.RegisterRoutes(cliCtx, r, cdc)
+	staking.RegisterRoutes(cliCtx,r,cdc)
 	return r
 }
