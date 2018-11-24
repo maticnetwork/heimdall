@@ -426,11 +426,11 @@ func (k Keeper) GetNextProposer(ctx sdk.Context) string {
 
 // TODO expose via API
 // returns current proposer
-func (k Keeper) GetCurrentProposer(ctx sdk.Context) string {
+func (k Keeper) GetCurrentProposerAddress(ctx sdk.Context) []byte {
 	// get validator set
 	validatorSet := k.GetValidatorSet(ctx)
 
-	return validatorSet.Proposer.String()
+	return validatorSet.Proposer.Address.Bytes()
 }
 
 // returns true if validator set has changed false otherwise

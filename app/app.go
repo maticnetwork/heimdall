@@ -192,7 +192,7 @@ func PrepareAndSendCheckpoint(ctx sdk.Context, keeper common.Keeper) {
 		validatorAddress := helper.GetPubKey().Address()
 
 		// check if we are proposer
-		if bytes.Equal(keeper.GetValidatorSet(ctx).Proposer.Address.Bytes(), validatorAddress.Bytes()) {
+		if bytes.Equal(keeper.GetCurrentProposerAddress(ctx), validatorAddress.Bytes()) {
 			logger.Info("You are proposer ! Validating if checkpoint needs to be pushed")
 
 			// check if we need to send checkpoint or not

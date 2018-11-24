@@ -6,7 +6,6 @@ import (
 
 	"github.com/ethereum/go-ethereum"
 
-	"bytes"
 	"encoding/hex"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -86,21 +85,14 @@ func SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte) {
 		To:   &rootChainAddress,
 		Data: data,
 	})
+	
+	Logger.Info("We are proposer. Sending new checkpoint", "vote", hex.EncodeToString(voteSignBytes), "sigs", hex.EncodeToString(sigs), "txData", hex.EncodeToString(txData))
 
-	// get validator address
-	validatorAddress := GetPubKey().Address().Bytes()
-
-	// todo replace proposer check here with proposer check from store
-	if !bytes.Equal(validatorAddress, vote.Proposer) {
-		Logger.Info("You are not proposer", "proposer", hex.EncodeToString(vote.Proposer), "validator", hex.EncodeToString(validatorAddress))
+	tx, err := rootchainInstance.SubmitHeaderBlock(auth, voteSignBytes, sigs, txData)
+	if err != nil {
+		Logger.Error("Error while submitting checkpoint", "error", err)
 	} else {
-		Logger.Info("We are proposer. Sending new checkpoint", "vote", hex.EncodeToString(voteSignBytes), "sigs", hex.EncodeToString(sigs), "txData", hex.EncodeToString(txData))
-
-		tx, err := rootchainInstance.SubmitHeaderBlock(auth, voteSignBytes, sigs, txData)
-		if err != nil {
-			Logger.Error("Error while submitting checkpoint", "error", err)
-		} else {
-			Logger.Info("Submitted new header successfully", "txHash", tx.Hash().String())
-		}
+		Logger.Info("Submitted new header successfully", "txHash", tx.Hash().String())
 	}
+
 }
