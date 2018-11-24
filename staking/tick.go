@@ -2,11 +2,12 @@ package staking
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/maticnetwork/heimdall/common"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 // EndBlocker refreshes validator set after block commit
-func EndBlocker(ctx sdk.Context, k Keeper) (validators []abci.ValidatorUpdate) {
+func EndBlocker(ctx sdk.Context, k common.Keeper) (validators []abci.ValidatorUpdate) {
 	// todo revive this when we get ACK in endBlock
 	//StakingLogger.Info("Current validators fetched", "validators", helper.ValidatorsToString(k.GetAllValidators(ctx)))
 	//

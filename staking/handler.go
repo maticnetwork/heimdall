@@ -3,10 +3,11 @@ package staking
 import (
 	"bytes"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	hmcmn "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 )
 
-func NewHandler(k Keeper) sdk.Handler {
+func NewHandler(k hmcmn.Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case MsgValidatorJoin:
@@ -20,65 +21,65 @@ func NewHandler(k Keeper) sdk.Handler {
 		}
 	}
 }
-func handleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k Keeper) sdk.Result {
+func handleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k hmcmn.Keeper) sdk.Result {
 	// pull val from store
 	validator, err := k.GetValidatorInfo(ctx, msg.CurrentValAddress)
 	if err != nil {
-		StakingLogger.Error("Fetching of validator from store failed", "Error", err, "ValidatorAddress", msg.CurrentValAddress)
-		return ErrNoValidator(k.codespace).Result()
+		hmcmn.StakingLogger.Error("Fetching of validator from store failed", "Error", err, "ValidatorAddress", msg.CurrentValAddress)
+		return hmcmn.ErrNoValidator(k.Codespace).Result()
 	}
 
 	// pull val from mainchain
 	newValidator, err := helper.GetValidatorInfo(msg.CurrentValAddress)
 	if err != nil {
-		StakingLogger.Error("Unable to fetch validator from stakemanager", "Error", err, "CurrentValidatorAddress", msg.CurrentValAddress)
+		hmcmn.StakingLogger.Error("Unable to fetch validator from stakemanager", "Error", err, "CurrentValidatorAddress", msg.CurrentValAddress)
 	}
 
 	pubkey, err := helper.StringToPubkey(msg.NewValPubkey)
 	if err != nil {
-		StakingLogger.Error("Invalid Pubkey", "Error", err, "PubkeyString", msg.NewValPubkey)
-		return ErrValSignerMismatch(k.codespace).Result()
+		hmcmn.StakingLogger.Error("Invalid Pubkey", "Error", err, "PubkeyString", msg.NewValPubkey)
+		return hmcmn.ErrValSignerMismatch(k.Codespace).Result()
 	}
 
 	if !bytes.Equal(newValidator.Signer.Bytes(), validator.Signer.Bytes()) {
-		StakingLogger.Error("No signer update on stakemanager found or signer already updated", "Error", err, "CurrentSigner", validator.Signer.String(), "SignerFromMsg", pubkey.Address().String())
-		return ErrValidatorAlreadySynced(k.codespace).Result()
+		hmcmn.StakingLogger.Error("No signer update on stakemanager found or signer already updated", "Error", err, "CurrentSigner", validator.Signer.String(), "SignerFromMsg", pubkey.Address().String())
+		return hmcmn.ErrValidatorAlreadySynced(k.Codespace).Result()
 	}
 
 	// update
 	err = k.UpdateSigner(ctx, newValidator.Signer, pubkey, msg.CurrentValAddress)
 	if err != nil {
-		StakingLogger.Error("Unable to update signer", "Error", err, "CurrentSigner", validator.Signer.String(), "SignerFromMsg", pubkey.Address().String())
+		hmcmn.StakingLogger.Error("Unable to update signer", "Error", err, "CurrentSigner", validator.Signer.String(), "SignerFromMsg", pubkey.Address().String())
 		panic(err)
 	}
 
 	return sdk.Result{}
 }
 
-func handleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k Keeper) sdk.Result {
+func handleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k hmcmn.Keeper) sdk.Result {
 	// fetch validator from store
 	validator, err := k.GetValidatorInfo(ctx, msg.ValidatorAddr)
 	if err != nil {
-		StakingLogger.Error("Fetching of validator from store failed", "Error", err, "ValidatorAddress", msg.ValidatorAddr)
-		return ErrNoValidator(k.codespace).Result()
+		hmcmn.StakingLogger.Error("Fetching of validator from store failed", "Error", err, "ValidatorAddress", msg.ValidatorAddr)
+		return hmcmn.ErrNoValidator(k.Codespace).Result()
 	}
 
 	// check if validator deactivation period is set
 	if validator.EndEpoch != 0 {
-		StakingLogger.Error("Validator already unbonded")
-		return ErrValUnbonded(k.codespace).Result()
+		hmcmn.StakingLogger.Error("Validator already unbonded")
+		return hmcmn.ErrValUnbonded(k.Codespace).Result()
 	}
 
 	// allow only validators to exit from validator set
-	if !validator.IsCurrentValidator(k.checkpointKeeper.GetACKCount(ctx)) {
-		StakingLogger.Error("Validator is not in validator set, exit not possible")
-		return ErrValIsNotCurrentVal(k.codespace).Result()
+	if !validator.IsCurrentValidator(k.GetACKCount(ctx)) {
+		hmcmn.StakingLogger.Error("Validator is not in validator set, exit not possible")
+		return hmcmn.ErrValIsNotCurrentVal(k.Codespace).Result()
 	}
 
 	// means exit has been processed but validator in unbonding period
 	if validator.Power != int64(0) {
-		StakingLogger.Error("Validator already unbonded")
-		return ErrValUnbonded(k.codespace).Result()
+		hmcmn.StakingLogger.Error("Validator already unbonded")
+		return hmcmn.ErrValUnbonded(k.Codespace).Result()
 	}
 
 	// Add deactivation time for validator
@@ -87,33 +88,33 @@ func handleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k Keeper) sdk
 	return sdk.Result{}
 }
 
-func handleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k Keeper) sdk.Result {
+func handleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k hmcmn.Keeper) sdk.Result {
 	// TODO check if valdiator already exits
 
 	// fetch validator from mainchain
 	validator, err := helper.GetValidatorInfo(msg.ValidatorAddr)
 	if err != nil {
-		return ErrNoValidator(k.codespace).Result()
+		return hmcmn.ErrNoValidator(k.Codespace).Result()
 	}
 
 	// validate if start epoch is after current tip
-	ACKs := k.checkpointKeeper.GetACKCount(ctx)
+	ACKs := k.GetACKCount(ctx)
 	if int(validator.StartEpoch) < ACKs {
 		// TODO add log
-		return ErrOldValidator(k.codespace).Result()
+		return hmcmn.ErrOldValidator(k.Codespace).Result()
 	}
 
 	// create crypto.pubkey from pubkey(string)
 	pubkey, err := helper.StringToPubkey(msg.Pubkey)
 	if err != nil {
-		StakingLogger.Error("Invalid Pubkey", "Error", err, "PubkeyString", msg.Pubkey)
-		return ErrValSignerMismatch(k.codespace).Result()
+		hmcmn.StakingLogger.Error("Invalid Pubkey", "Error", err, "PubkeyString", msg.Pubkey)
+		return hmcmn.ErrValSignerMismatch(k.Codespace).Result()
 	}
 
 	// check if the address of signer matches address from pubkey
 	if !bytes.Equal(pubkey.Address().Bytes(), validator.Signer.Bytes()) {
 		// TODO add log
-		return ErrValSignerMismatch(k.codespace).Result()
+		return hmcmn.ErrValSignerMismatch(k.Codespace).Result()
 	}
 
 	// add pubkey generated to validator

@@ -1,24 +1,23 @@
 package app
 
 import (
+	"bytes"
 	"encoding/json"
-
+	"fmt"
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/rlp"
+	"github.com/maticnetwork/heimdall/checkpoint"
+	"github.com/maticnetwork/heimdall/common"
+	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/staking"
+	hmtypes "github.com/maticnetwork/heimdall/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	dbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
 	tmtypes "github.com/tendermint/tendermint/types"
-
-	"bytes"
-	"fmt"
-	"github.com/ethereum/go-ethereum/rlp"
-	"github.com/maticnetwork/heimdall/checkpoint"
-	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/staking"
-	hmtypes "github.com/maticnetwork/heimdall/types"
 )
 
 const (
@@ -33,11 +32,13 @@ type HeimdallApp struct {
 	keyMain       *sdk.KVStoreKey
 	keyCheckpoint *sdk.KVStoreKey
 	keyStake      *sdk.KVStoreKey
+	keyMaster     *sdk.KVStoreKey
 
 	keyStaker *sdk.KVStoreKey
 	// manage getting and setting accounts
-	checkpointKeeper checkpoint.Keeper
-	stakerKeeper     staking.Keeper
+	//checkpointKeeper checkpoint.Keeper
+	//stakerKeeper     staking.Keeper
+	masterKeeper common.Keeper
 }
 
 var logger = helper.Logger.With("module", "app")
@@ -53,13 +54,14 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		keyMain:       sdk.NewKVStoreKey("main"),
 		keyCheckpoint: sdk.NewKVStoreKey("checkpoint"),
 		keyStaker:     sdk.NewKVStoreKey("staker"),
+		keyMaster:     sdk.NewKVStoreKey("master"),
 	}
 
-	app.checkpointKeeper = checkpoint.NewKeeper(app.cdc, app.keyCheckpoint, app.RegisterCodespace(checkpoint.DefaultCodespace))
-	app.stakerKeeper = staking.NewKeeper(app.cdc, app.keyStaker, app.RegisterCodespace(checkpoint.DefaultCodespace))
+	// todo give every keeper its own codespace
+	app.masterKeeper = common.NewKeeper(app.cdc, app.keyMaster, app.keyStaker, app.keyCheckpoint, app.RegisterCodespace(common.DefaultCodespace))
 	// register message routes
-	app.Router().AddRoute("checkpoint", checkpoint.NewHandler(app.checkpointKeeper))
-	app.Router().AddRoute("staking", staking.NewHandler(app.stakerKeeper))
+	app.Router().AddRoute("checkpoint", checkpoint.NewHandler(app.masterKeeper))
+	app.Router().AddRoute("staking", staking.NewHandler(app.masterKeeper))
 	// perform initialization logic
 	app.SetInitChainer(app.initChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
@@ -96,9 +98,9 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 	var validators []abci.ValidatorUpdate
 
 	if ctx.BlockHeader().NumTxs > 0 {
-		if app.checkpointKeeper.GetCheckpointCache(ctx, checkpoint.CheckpointACKCacheKey) {
+		if app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointACKCacheKey) {
 			// remove matured Validators
-			app.stakerKeeper.RemoveDeactivatedValidators(ctx)
+			app.masterKeeper.RemoveDeactivatedValidators(ctx)
 
 			// fetch validators from store
 			//validators:=app.stakerKeeper.GetAllValidators(ctx)
@@ -106,14 +108,14 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 			// todo populate validators and send to TM
 
 			// clear ACK cache
-			app.checkpointKeeper.SetCheckpointAckCache(ctx, checkpoint.EmptyBufferValue)
+			app.masterKeeper.SetCheckpointAckCache(ctx, common.EmptyBufferValue)
 		}
-		if app.checkpointKeeper.GetCheckpointCache(ctx, checkpoint.CheckpointCacheKey) {
+		if app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointCacheKey) {
 			// Send Checkpoint to Rootchain
-			PrepareAndSendCheckpoint(ctx, app.checkpointKeeper, app.stakerKeeper)
+			PrepareAndSendCheckpoint(ctx, app.masterKeeper)
 
 			// clear Checkpoint cache
-			app.checkpointKeeper.SetCheckpointCache(ctx, checkpoint.EmptyBufferValue)
+			app.masterKeeper.SetCheckpointCache(ctx, common.EmptyBufferValue)
 		}
 	}
 
@@ -125,7 +127,7 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 
 func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	// set ACK count to 0
-	app.checkpointKeeper.InitACKCount(ctx)
+	app.masterKeeper.InitACKCount(ctx)
 
 	// todo init validator set from store
 	//app.stakerKeeper.UpdateValidatorSetInStore()
@@ -158,7 +160,7 @@ func GetExtraData(_checkpoint hmtypes.CheckpointBlockHeader, ctx sdk.Context) []
 
 // todo try to move this to helper
 // prepares all the data required for sending checkpoint and sends tx to rootchain
-func PrepareAndSendCheckpoint(ctx sdk.Context, checkpointKeeper checkpoint.Keeper, stakingKeeper staking.Keeper) {
+func PrepareAndSendCheckpoint(ctx sdk.Context, keeper common.Keeper) {
 	// fetch votes from block header
 	var votes []tmtypes.Vote
 	err := json.Unmarshal(ctx.BlockHeader().Votes, &votes)
@@ -171,7 +173,7 @@ func PrepareAndSendCheckpoint(ctx sdk.Context, checkpointKeeper checkpoint.Keepe
 	sigs := helper.GetSigs(votes)
 
 	// Getting latest checkpoint data from store using height as key and unmarshall
-	_checkpoint, err := checkpointKeeper.GetCheckpointFromBuffer(ctx)
+	_checkpoint, err := keeper.GetCheckpointFromBuffer(ctx)
 	if err != nil {
 		logger.Error("Unable to unmarshall checkpoint while fetching from buffer while preparing checkpoint tx for rootchain", "error", err, "height", ctx.BlockHeight())
 		panic(err)
@@ -190,7 +192,7 @@ func PrepareAndSendCheckpoint(ctx sdk.Context, checkpointKeeper checkpoint.Keepe
 		validatorAddress := helper.GetPubKey().Address()
 
 		// check if we are proposer
-		if bytes.Equal(stakingKeeper.GetValidatorSet(ctx).Proposer.Address.Bytes(), validatorAddress.Bytes()) {
+		if bytes.Equal(keeper.GetValidatorSet(ctx).Proposer.Address.Bytes(), validatorAddress.Bytes()) {
 			logger.Info("You are proposer ! Validating if checkpoint needs to be pushed")
 
 			// check if we need to send checkpoint or not
@@ -204,7 +206,7 @@ func PrepareAndSendCheckpoint(ctx sdk.Context, checkpointKeeper checkpoint.Keepe
 				panic(fmt.Errorf("Ethereum Chain and Heimdall out of sync :("))
 			}
 		} else {
-			logger.Info("You are not proposer", "Proposer", stakingKeeper.GetValidatorSet(ctx).Proposer.Address.String(), "Validator", validatorAddress.String())
+			logger.Info("You are not proposer", "Proposer", keeper.GetValidatorSet(ctx).Proposer.Address.String(), "Validator", validatorAddress.String())
 		}
 
 	}

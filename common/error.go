@@ -1,4 +1,4 @@
-package staking
+package common
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -6,16 +6,35 @@ import (
 
 type CodeType = sdk.CodeType
 
-// TODO come up with better status numbers
 const (
-	DefaultCodespace       sdk.CodespaceType = 2
-	CodeOldValidator       CodeType          = 2500
-	CodeNoValidator        CodeType          = 3500
-	CodeValSignerMismatch  CodeType          = 4500
-	CodeValidatorExitDeny  CodeType          = 5500
-	CodeValAlreadyUnbonded CodeType          = 6500
-	CodeSignerSynced       CodeType          = 7500
+	DefaultCodespace      sdk.CodespaceType = 1
+	CodeInvalidBlockinput CodeType          = 1500
+	CodeInvalidACK        CodeType          = 1600
+	CodeNoACK             CodeType          = 1700
+
+	CodeOldValidator       CodeType = 2500
+	CodeNoValidator        CodeType = 3500
+	CodeValSignerMismatch  CodeType = 4500
+	CodeValidatorExitDeny  CodeType = 5500
+	CodeValAlreadyUnbonded CodeType = 6500
+	CodeSignerSynced       CodeType = 7500
 )
+
+// -------- Checkpoint Errors
+
+func ErrBadBlockDetails(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeInvalidBlockinput, "Checkpoint is not valid!")
+}
+
+func ErrBadAck(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeInvalidACK, "Ack Not Valid")
+}
+
+func ErrNoACK(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeNoACK, "Checkpoint Already Exists In Buffer, ACK expected")
+}
+
+// ----------- Staking Errors
 
 func ErrOldValidator(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeOldValidator, "Start Epoch behind Current Epoch")
@@ -43,8 +62,8 @@ func ErrValidatorAlreadySynced(codespace sdk.CodespaceType) sdk.Error {
 
 func codeToDefaultMsg(code CodeType) string {
 	switch code {
-	case CodeOldValidator:
-		return "Old validator"
+	case CodeInvalidBlockinput:
+		return "Invalid Block Input"
 	default:
 		return sdk.CodeToDefaultMsg(code)
 	}
