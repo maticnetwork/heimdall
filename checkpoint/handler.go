@@ -57,6 +57,8 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k Keeper) sdk
 
 	// check for validator updates
 
+	// if no updates found increment accum
+
 	// if found create new validator set and replace
 
 	// indicate ACK received by adding in cache , cache cleared in endblock
@@ -78,6 +80,13 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper) sdk.Resul
 	// make sure new checkpoint is after tip
 	if lastCheckpoint.EndBlock > msg.StartBlock {
 		CheckpointLogger.Error("Checkpoint already exists", "CurrentTip", lastCheckpoint.EndBlock, "MsgStartBlock", msg.StartBlock)
+		return ErrBadBlockDetails(k.codespace).Result()
+	}
+
+	// check proposer in message
+	if msg.Proposer.String() != k.staking.GetValidatorSet(ctx).Proposer.Address.String() {
+		CheckpointLogger.Error("Invalid proposer in message", "CurrentProposer", k.staking.GetValidatorSet(ctx).Proposer.Address.String(),
+			"CheckpointProposer", msg.Proposer.String())
 		return ErrBadBlockDetails(k.codespace).Result()
 	}
 

@@ -110,7 +110,7 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 		}
 		if app.checkpointKeeper.GetCheckpointCache(ctx, checkpoint.CheckpointCacheKey) {
 			// Send Checkpoint to Rootchain
-			PrepareAndSendCheckpoint(ctx, app.checkpointKeeper,app.stakerKeeper)
+			PrepareAndSendCheckpoint(ctx, app.checkpointKeeper, app.stakerKeeper)
 
 			// clear Checkpoint cache
 			app.checkpointKeeper.SetCheckpointCache(ctx, checkpoint.EmptyBufferValue)

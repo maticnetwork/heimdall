@@ -48,7 +48,7 @@ func (msg MsgValidatorJoin) GetSignBytes() []byte {
 }
 
 func (msg MsgValidatorJoin) ValidateBasic() sdk.Error {
-
+	// add length checks
 	return nil
 }
 
@@ -92,6 +92,7 @@ func (msg MsgSignerUpdate) GetSignBytes() []byte {
 }
 
 func (msg MsgSignerUpdate) ValidateBasic() sdk.Error {
+	// add length checks
 
 	return nil
 }
