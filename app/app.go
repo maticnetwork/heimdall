@@ -125,7 +125,7 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 	// set ACK count to 0
 	app.checkpointKeeper.InitACKCount(ctx)
 
-	// init validator set from store
+	// todo init validator set from store
 
 	return abci.ResponseInitChain{}
 }
@@ -155,7 +155,7 @@ func GetExtraData(_checkpoint hmtypes.CheckpointBlockHeader, ctx sdk.Context) []
 
 // todo try to move this to helper
 // prepares all the data required for sending checkpoint and sends tx to rootchain
-func PrepareAndSendCheckpoint(ctx sdk.Context, checkpointKeeper *checkpoint.Keeper) {
+func PrepareAndSendCheckpoint(ctx sdk.Context, checkpointKeeper checkpoint.Keeper) {
 	// fetch votes from block header
 	var votes []tmtypes.Vote
 	err := json.Unmarshal(ctx.BlockHeader().Votes, &votes)
