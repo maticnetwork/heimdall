@@ -12,6 +12,8 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	tmtypes "github.com/tendermint/tendermint/types"
 
+	"bytes"
+	"fmt"
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/helper"
@@ -156,7 +158,7 @@ func GetExtraData(_checkpoint hmtypes.CheckpointBlockHeader, ctx sdk.Context) []
 
 // todo try to move this to helper
 // prepares all the data required for sending checkpoint and sends tx to rootchain
-func PrepareAndSendCheckpoint(ctx sdk.Context, checkpointKeeper checkpoint.Keeper) {
+func PrepareAndSendCheckpoint(ctx sdk.Context, checkpointKeeper checkpoint.Keeper, stakingKeeper staking.Keeper) {
 	// fetch votes from block header
 	var votes []tmtypes.Vote
 	err := json.Unmarshal(ctx.BlockHeader().Votes, &votes)
@@ -184,12 +186,26 @@ func PrepareAndSendCheckpoint(ctx sdk.Context, checkpointKeeper checkpoint.Keepe
 			panic(err)
 		}
 
-		if lastblock == _checkpoint.StartBlock {
-			logger.Info("Sending Valid Checkpoint ...")
-			helper.SendCheckpoint(helper.GetVoteBytes(votes, ctx), sigs, extraData)
+		// get validator address
+		validatorAddress := helper.GetPubKey().Address()
+
+		// check if we are proposer
+		if bytes.Equal(stakingKeeper.GetValidatorSet(ctx).Proposer.Address.Bytes(), validatorAddress.Bytes()) {
+			logger.Info("You are proposer ! Validating if checkpoint needs to be pushed")
+
+			// check if we need to send checkpoint or not
+			if lastblock == _checkpoint.StartBlock {
+				logger.Info("Sending Valid Checkpoint ...")
+				helper.SendCheckpoint(helper.GetVoteBytes(votes, ctx), sigs, extraData)
+			} else if lastblock > _checkpoint.StartBlock {
+				logger.Info("Start block does not match,checkpoint already sent", "lastBlock", lastblock, "startBlock", _checkpoint.StartBlock)
+			} else {
+				logger.Error("Start Block Ahead of Rootchain header, chains out of sync , time to panic", "lastBlock", lastblock, "startBlock", _checkpoint.StartBlock)
+				panic(fmt.Errorf("Ethereum Chain and Heimdall out of sync :("))
+			}
 		} else {
-			logger.Error("Start block does not match", "lastBlock", lastblock, "startBlock", _checkpoint.StartBlock)
-			// TODO panic ?
+			logger.Info("You are not proposer", "Proposer", stakingKeeper.GetValidatorSet(ctx).Proposer.Address.String(), "Validator", validatorAddress.String())
 		}
+
 	}
 }
