@@ -13,7 +13,6 @@ import (
 	cmn "github.com/tendermint/tendermint/libs/common"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/maticnetwork/heimdall/checkpoint"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	"github.com/tendermint/tendermint/types"
 	tmtypes "github.com/tendermint/tendermint/types"
@@ -108,7 +107,7 @@ func SendTendermintRequest(cliCtx context.CLIContext, txBytes []byte) (*ctypes.R
 	return cliCtx.BroadcastTx(txBytes)
 }
 
-func getSigs(votes []tmtypes.Vote) (sigs []byte) {
+func GetSigs(votes []tmtypes.Vote) (sigs []byte) {
 
 	// loop votes and append to sig to sigs
 	for _, vote := range votes {
@@ -117,60 +116,7 @@ func getSigs(votes []tmtypes.Vote) (sigs []byte) {
 	return
 }
 
-func getVoteBytes(votes []tmtypes.Vote, ctx sdk.Context) []byte {
+func GetVoteBytes(votes []tmtypes.Vote, ctx sdk.Context) []byte {
 	// sign bytes for vote
 	return votes[0].SignBytes(ctx.ChainID())
-}
-
-func getExtraData(_checkpoint checkpoint.CheckpointBlockHeader, ctx sdk.Context) []byte {
-	Logger.Debug("Creating extra data", "startBlock", _checkpoint.StartBlock, "endBlock", _checkpoint.EndBlock, "roothash", _checkpoint.RootHash)
-
-	// craft a message
-	msg := checkpoint.NewMsgCheckpointBlock(_checkpoint.Proposer, _checkpoint.StartBlock, _checkpoint.EndBlock, _checkpoint.RootHash)
-
-	// decoding transaction
-	tx := hmtypes.NewBaseTx(msg)
-	txBytes, err := rlp.EncodeToBytes(tx)
-	if err != nil {
-		Logger.Error("Error decoding transaction data", "error", err)
-	}
-
-	return txBytes
-}
-
-func PrepareAndSendCheckpoint(ctx sdk.Context, checkpointKeeper checkpoint.Keeper) {
-	// fetch votes from block header
-	var votes []tmtypes.Vote
-	err := json.Unmarshal(ctx.BlockHeader().Votes, &votes)
-	if err != nil {
-		Logger.Error("Error while unmarshalling vote", "error", err)
-	}
-
-	// get sigs from votes
-	sigs := getSigs(votes)
-
-	// Getting latest checkpoint data from store using height as key and unmarshall
-	_checkpoint, err := checkpointKeeper.GetCheckpointFromBuffer(ctx)
-	if err != nil {
-		Logger.Error("Unable to unmarshall checkpoint while fetching from buffer while preparing checkpoint tx for rootchain", "error", err, "height", ctx.BlockHeight())
-		panic(err)
-	} else {
-		// Get extra data
-		extraData := getExtraData(_checkpoint, ctx)
-
-		//fetch current child block from rootchain contract
-		lastblock, err := CurrentChildBlock()
-		if err != nil {
-			Logger.Error("Could not fetch last block from mainchain", "Error", err)
-			panic(err)
-		}
-
-		if lastblock == _checkpoint.StartBlock {
-			Logger.Info("Sending Valid Checkpoint ...")
-			//SendCheckpoint(getVoteBytes(votes, ctx), sigs, extraData)
-		} else {
-			Logger.Error("Start block does not match", "lastBlock", lastblock, "startBlock", _checkpoint.StartBlock)
-			// TODO panic ?
-		}
-	}
 }

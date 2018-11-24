@@ -12,6 +12,7 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	tmtypes "github.com/tendermint/tendermint/types"
 
+	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
@@ -99,6 +100,7 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 
 			// fetch validators from store
 			//validators:=app.stakerKeeper.GetAllValidators(ctx)
+
 			// todo populate validators and send to TM
 
 			// clear ACK cache
@@ -106,7 +108,7 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 		}
 		if app.checkpointKeeper.GetCheckpointCache(ctx, checkpoint.CheckpointCacheKey) {
 			// Send Checkpoint to Rootchain
-			helper.PrepareAndSendCheckpoint(ctx, app.checkpointKeeper)
+			PrepareAndSendCheckpoint(ctx, app)
 
 			// clear Checkpoint cache
 			app.checkpointKeeper.SetCheckpointCache(ctx, checkpoint.EmptyBufferValue)
@@ -132,4 +134,61 @@ func (app *HeimdallApp) ExportAppStateAndValidators() (appState json.RawMessage,
 	//ctx := app.NewContext(true, abci.Header{})
 
 	return appState, validators, err
+}
+
+// todo try to move this to helper , since it uses checkpoint it causes cycle import error RN
+func GetExtraData(_checkpoint hmtypes.CheckpointBlockHeader, ctx sdk.Context) []byte {
+	logger.Debug("Creating extra data", "startBlock", _checkpoint.StartBlock, "endBlock", _checkpoint.EndBlock, "roothash", _checkpoint.RootHash)
+
+	// craft a message
+	msg := checkpoint.NewMsgCheckpointBlock(_checkpoint.Proposer, _checkpoint.StartBlock, _checkpoint.EndBlock, _checkpoint.RootHash)
+
+	// decoding transaction
+	tx := hmtypes.NewBaseTx(msg)
+	txBytes, err := rlp.EncodeToBytes(tx)
+	if err != nil {
+		logger.Error("Error decoding transaction data", "error", err)
+	}
+
+	return txBytes
+}
+
+// todo try to move this to helper
+// prepares all the data required for sending checkpoint and sends tx to rootchain
+func PrepareAndSendCheckpoint(ctx sdk.Context, checkpointKeeper checkpoint.Keeper) {
+	// fetch votes from block header
+	var votes []tmtypes.Vote
+	err := json.Unmarshal(ctx.BlockHeader().Votes, &votes)
+	if err != nil {
+		logger.Error("Error while unmarshalling vote", "error", err)
+	}
+
+	// todo sort sigs before sending
+	// get sigs from votes
+	sigs := helper.GetSigs(votes)
+
+	// Getting latest checkpoint data from store using height as key and unmarshall
+	_checkpoint, err := checkpointKeeper.GetCheckpointFromBuffer(ctx)
+	if err != nil {
+		logger.Error("Unable to unmarshall checkpoint while fetching from buffer while preparing checkpoint tx for rootchain", "error", err, "height", ctx.BlockHeight())
+		panic(err)
+	} else {
+		// Get extra data
+		extraData := GetExtraData(_checkpoint, ctx)
+
+		//fetch current child block from rootchain contract
+		lastblock, err := helper.CurrentChildBlock()
+		if err != nil {
+			logger.Error("Could not fetch last block from mainchain", "Error", err)
+			panic(err)
+		}
+
+		if lastblock == _checkpoint.StartBlock {
+			logger.Info("Sending Valid Checkpoint ...")
+			helper.SendCheckpoint(helper.GetVoteBytes(votes, ctx), sigs, extraData)
+		} else {
+			logger.Error("Start block does not match", "lastBlock", lastblock, "startBlock", _checkpoint.StartBlock)
+			// TODO panic ?
+		}
+	}
 }

@@ -9,6 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/types"
 	"time"
 )
 
@@ -40,24 +41,6 @@ func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, codespace sdk.CodespaceType) 
 	return keeper
 }
 
-type CheckpointBlockHeader struct {
-	Proposer   common.Address
-	StartBlock uint64
-	EndBlock   uint64
-	RootHash   common.Hash
-	TimeStamp  time.Time
-}
-
-func createBlock(start uint64, end uint64, rootHash common.Hash, proposer common.Address) CheckpointBlockHeader {
-	return CheckpointBlockHeader{
-		StartBlock: start,
-		EndBlock:   end,
-		RootHash:   rootHash,
-		Proposer:   proposer,
-		TimeStamp:  time.Now().UTC(),
-	}
-}
-
 // Add checkpoint to buffer or final headerBlocks
 func (k Keeper) AddCheckpointToKey(ctx sdk.Context, start uint64, end uint64, root common.Hash, proposer common.Address, key []byte) sdk.Error {
 	store := ctx.KVStore(k.checkpointKey)
@@ -75,7 +58,7 @@ func (k Keeper) AddCheckpointToKey(ctx sdk.Context, start uint64, end uint64, ro
 	}
 
 	// create Checkpoint block and marshall
-	data := createBlock(start, end, root, proposer)
+	data := types.CreateBlock(start, end, root, proposer)
 	out, err := json.Marshal(data)
 	if err != nil {
 		CheckpointLogger.Error("Error marshalling checkpoint to json", "error", err)
@@ -94,11 +77,11 @@ func (k Keeper) FlushCheckpointBuffer(ctx sdk.Context) {
 }
 
 // Get checkpoint in buffer
-func (k Keeper) GetCheckpointFromBuffer(ctx sdk.Context) (CheckpointBlockHeader, error) {
+func (k Keeper) GetCheckpointFromBuffer(ctx sdk.Context) (types.CheckpointBlockHeader, error) {
 	store := ctx.KVStore(k.checkpointKey)
 
 	// Get checkpoint and unmarshall
-	var checkpoint CheckpointBlockHeader
+	var checkpoint types.CheckpointBlockHeader
 	err := json.Unmarshal(store.Get(BufferCheckpointKey), &checkpoint)
 
 	return checkpoint, err
@@ -148,7 +131,7 @@ func GetHeaderKey(headerNumber int) []byte {
 }
 
 // gets last checkpoint , headerIndex = TotalACKs * ChildBlockInterval
-func (k Keeper) GetLastCheckpoint(ctx sdk.Context) CheckpointBlockHeader {
+func (k Keeper) GetLastCheckpoint(ctx sdk.Context) types.CheckpointBlockHeader {
 	store := ctx.KVStore(k.checkpointKey)
 
 	ACKs := k.GetACKCount(ctx)
@@ -157,7 +140,7 @@ func (k Keeper) GetLastCheckpoint(ctx sdk.Context) CheckpointBlockHeader {
 	lastCheckpointKey := (helper.GetConfig().ChildBlockInterval) * (ACKs)
 
 	// fetch checkpoint and unmarshall
-	var checkpoint CheckpointBlockHeader
+	var checkpoint types.CheckpointBlockHeader
 	err := json.Unmarshal(store.Get(GetHeaderKey(lastCheckpointKey)), &checkpoint)
 	if err != nil {
 		CheckpointLogger.Error("Unable to fetch last checkpoint from store", "Key", lastCheckpointKey, "ACKCount", ACKs)
@@ -188,3 +171,5 @@ func (k Keeper) GetCheckpointCache(ctx sdk.Context, key []byte) bool {
 	}
 	return true
 }
+
+// set validator set

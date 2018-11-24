@@ -13,14 +13,14 @@ func NewHandler(k Keeper) sdk.Handler {
 			return handleMsgValidatorJoin(ctx, msg, k)
 		case MsgValidatorExit:
 			return handleMsgValidatorExit(ctx, msg, k)
-		case MsgValidatorUpdate:
-			return handleMsgValidatorUpdate(ctx, msg, k)
+		case MsgSignerUpdate:
+			return handleMsgSignerUpdate(ctx, msg, k)
 		default:
 			return sdk.ErrTxDecode("Invalid message in checkpoint module").Result()
 		}
 	}
 }
-func handleMsgValidatorUpdate(ctx sdk.Context, msg MsgValidatorUpdate, k Keeper) sdk.Result {
+func handleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k Keeper) sdk.Result {
 	// pull val from store
 	validator, err := k.GetValidatorInfo(ctx, msg.CurrentValAddress)
 	if err != nil {

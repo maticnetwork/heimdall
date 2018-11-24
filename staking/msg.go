@@ -58,32 +58,32 @@ func (msg MsgValidatorJoin) ValidateBasic() sdk.Error {
 
 const ValidatorUpdateSigner = "validatorUpdateSigner"
 
-var _ sdk.Msg = &MsgValidatorUpdate{}
+var _ sdk.Msg = &MsgSignerUpdate{}
 
-type MsgValidatorUpdate struct {
+type MsgSignerUpdate struct {
 	CurrentValAddress common.Address
 	NewValPubkey      string
 }
 
-func NewMsgValidatorUpdate(currentValAddres common.Address, newValPubkey string) MsgValidatorUpdate {
-	return MsgValidatorUpdate{
+func NewMsgValidatorUpdate(currentValAddres common.Address, newValPubkey string) MsgSignerUpdate {
+	return MsgSignerUpdate{
 		CurrentValAddress: currentValAddres,
 		NewValPubkey:      newValPubkey,
 	}
 }
 
-func (msg MsgValidatorUpdate) Type() string {
+func (msg MsgSignerUpdate) Type() string {
 	return ValidatorUpdateSigner
 }
 
-func (msg MsgValidatorUpdate) Route() string { return ValidatorUpdateSigner }
+func (msg MsgSignerUpdate) Route() string { return ValidatorUpdateSigner }
 
-func (msg MsgValidatorUpdate) GetSigners() []sdk.AccAddress {
+func (msg MsgSignerUpdate) GetSigners() []sdk.AccAddress {
 	addrs := make([]sdk.AccAddress, 0)
 	return addrs
 }
 
-func (msg MsgValidatorUpdate) GetSignBytes() []byte {
+func (msg MsgSignerUpdate) GetSignBytes() []byte {
 	b, err := cdc.MarshalJSON(msg)
 	if err != nil {
 		panic(err)
@@ -91,7 +91,7 @@ func (msg MsgValidatorUpdate) GetSignBytes() []byte {
 	return sdk.MustSortJSON(b)
 }
 
-func (msg MsgValidatorUpdate) ValidateBasic() sdk.Error {
+func (msg MsgSignerUpdate) ValidateBasic() sdk.Error {
 
 	return nil
 }
