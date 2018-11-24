@@ -26,6 +26,7 @@ var (
 	ACKCountKey         = []byte{0x01}
 	BufferCheckpointKey = []byte{0x02}
 	HeaderBlockKey      = []byte{0x03}
+	EmptyBufferValue    = []byte{0x04}
 )
 
 func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, codespace sdk.CodespaceType) Keeper {
@@ -62,12 +63,12 @@ func (k Keeper) AddCheckpointToKey(ctx sdk.Context, start uint64, end uint64, ro
 	checkpointBuffer, _ := k.GetCheckpointFromBuffer(ctx)
 
 	// Reject new checkpoint if checkpoint exists in buffer and 5 minutes have not passed
-	if bytes.Equal(key, BufferCheckpointKey) && !bytes.Equal(store.Get(BufferCheckpointKey), []byte("")) && time.Now().UTC().Before(checkpointBuffer.TimeStamp.Add(helper.CheckpointBufferTime)) {
+	if bytes.Equal(key, BufferCheckpointKey) && !bytes.Equal(store.Get(BufferCheckpointKey), EmptyBufferValue) && time.Now().UTC().Before(checkpointBuffer.TimeStamp.Add(helper.CheckpointBufferTime)) {
 		return ErrNoACK(k.codespace)
 	}
 
 	// Flush Checkpoint If 5 minutes have passed since it was added to buffer and NoAck received
-	if bytes.Equal(key, BufferCheckpointKey) && !bytes.Equal(store.Get(BufferCheckpointKey), []byte("")) && time.Now().UTC().After(checkpointBuffer.TimeStamp.Add(helper.CheckpointBufferTime)) {
+	if bytes.Equal(key, BufferCheckpointKey) && !bytes.Equal(store.Get(BufferCheckpointKey), EmptyBufferValue) && time.Now().UTC().After(checkpointBuffer.TimeStamp.Add(helper.CheckpointBufferTime)) {
 		k.FlushCheckpointBuffer(ctx)
 	}
 
@@ -87,7 +88,7 @@ func (k Keeper) AddCheckpointToKey(ctx sdk.Context, start uint64, end uint64, ro
 // Flush Checkpoint Buffer
 func (k Keeper) FlushCheckpointBuffer(ctx sdk.Context) {
 	store := ctx.KVStore(k.checkpointKey)
-	store.Set(BufferCheckpointKey, []byte(""))
+	store.Set(BufferCheckpointKey, EmptyBufferValue)
 }
 
 // Get checkpoint in buffer
