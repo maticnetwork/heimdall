@@ -23,7 +23,8 @@ type Keeper struct {
 }
 
 var (
-	ValidatorsKey = []byte{0x01} // prefix for each key to a validator
+	ValidatorsKey          = []byte{0x01} // prefix for each key to a validator
+	CurrentValidatorSetKey = []byte{0x02}
 )
 
 // getValidatorKey drafts the validator key for addresses
@@ -166,12 +167,8 @@ func (k Keeper) GetValidatorInfo(ctx sdk.Context, valAddr common.Address) (valid
 		return
 	}
 
-	// unmarshall validator (TODO: we might want to shift to mustUnmarshallBinary)
-	error = k.cdc.UnmarshalBinary(validatorBytes, &validator)
-	if error != nil {
-		StakingLogger.Error("Error unmarshalling validator while fetching validator from store", "Error", error, "ValidatorAddress", valAddr)
-		return
-	}
+	// unmarshall validator
+	k.cdc.MustUnmarshalBinary(validatorBytes, &validator)
 
 	return validator, nil
 }
@@ -209,12 +206,9 @@ func (k Keeper) UpdateSigner(ctx sdk.Context, signer common.Address, pubkey cryp
 		return err
 	}
 
-	err := k.cdc.UnmarshalBinary(validatorBytes, &validator)
-	if err != nil {
-		StakingLogger.Error("Error unmarshalling validator while fetching validator from store", "Error", err, "ValidatorAddress", valAddr)
-		return err
-	}
-	//update validator
+	k.cdc.MustUnmarshalBinary(validatorBytes, &validator)
+
+	//update signer
 	validator.Signer = signer
 	validator.Pubkey = pubkey
 
@@ -224,4 +218,38 @@ func (k Keeper) UpdateSigner(ctx sdk.Context, signer common.Address, pubkey cryp
 	return nil
 }
 
-//todo add bool for validator updated or not
+// Add validator set to store
+func (k Keeper) UpdateValidatorSetInStore(ctx sdk.Context, newValidatorSet types.ValidatorSet) {
+	store := ctx.KVStore(k.storeKey)
+
+	// marshall validator set
+	bz := k.cdc.MustMarshalBinary(newValidatorSet)
+
+	// set validator set with CurrentValidatorSetKey as key in store
+	store.Set(CurrentValidatorSetKey, bz)
+}
+
+// Get current Validator Set from store
+func (k Keeper) GetValidatorSet(ctx sdk.Context) (validatorSet types.ValidatorSet) {
+	store := ctx.KVStore(k.storeKey)
+
+	// get current validator set from store
+	bz := store.Get(CurrentValidatorSetKey)
+
+	// unmarhsall
+	k.cdc.MustUnmarshalBinary(bz,&validatorSet)
+
+	return validatorSet
+}
+
+// increment accum for validator set by n times
+func (k Keeper) IncreamentAccum(ctx sdk.Context,times int) {
+	// get validator set
+	validatorSet:=k.GetValidatorSet(ctx)
+
+	// increment accum
+	validatorSet.IncrementAccum(times)
+
+	// replace
+	k.UpdateValidatorSetInStore(ctx,validatorSet)
+}

@@ -126,6 +126,7 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 	app.checkpointKeeper.InitACKCount(ctx)
 
 	// todo init validator set from store
+	//app.stakerKeeper.UpdateValidatorSetInStore()
 
 	return abci.ResponseInitChain{}
 }
