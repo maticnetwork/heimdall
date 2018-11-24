@@ -391,7 +391,7 @@ func (k Keeper) UpdateValidatorSetInStore(ctx sdk.Context, newValidatorSet types
 	store.Set(CurrentValidatorSetKey, bz)
 
 	// increment Accum to select proposer
-	k.IncreamentAccum(ctx,1)
+	k.IncreamentAccum(ctx, 1)
 }
 
 // Get current Validator Set from store

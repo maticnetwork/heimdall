@@ -28,7 +28,8 @@ const (
 	FlagClientHome         = "home-client"
 	MainRPCUrl             = "https://kovan.infura.io"
 	MaticRPCUrl            = "https://testnet.matic.network"
-	CheckpointBufferTime   = time.Minute * 5 // aka 5 minutes
+	// TODO maybe this should be stored in state ?
+	CheckpointBufferTime = time.Minute * 5 // aka 5 minutes
 )
 
 var (
