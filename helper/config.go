@@ -18,6 +18,7 @@ import (
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 	logger "github.com/tendermint/tendermint/libs/log"
+	"time"
 )
 
 const (
@@ -27,6 +28,7 @@ const (
 	FlagClientHome         = "home-client"
 	MainRPCUrl             = "https://kovan.infura.io"
 	MaticRPCUrl            = "https://testnet.matic.network"
+	CheckpointBufferTime   = time.Minute * 5 // aka 5 minutes
 )
 
 var (
