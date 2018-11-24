@@ -237,19 +237,19 @@ func (k Keeper) GetValidatorSet(ctx sdk.Context) (validatorSet types.ValidatorSe
 	bz := store.Get(CurrentValidatorSetKey)
 
 	// unmarhsall
-	k.cdc.MustUnmarshalBinary(bz,&validatorSet)
+	k.cdc.MustUnmarshalBinary(bz, &validatorSet)
 
 	return validatorSet
 }
 
 // increment accum for validator set by n times
-func (k Keeper) IncreamentAccum(ctx sdk.Context,times int) {
+func (k Keeper) IncreamentAccum(ctx sdk.Context, times int) {
 	// get validator set
-	validatorSet:=k.GetValidatorSet(ctx)
+	validatorSet := k.GetValidatorSet(ctx)
 
 	// increment accum
 	validatorSet.IncrementAccum(times)
 
 	// replace
-	k.UpdateValidatorSetInStore(ctx,validatorSet)
+	k.UpdateValidatorSetInStore(ctx, validatorSet)
 }
