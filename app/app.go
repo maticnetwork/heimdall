@@ -108,7 +108,7 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 		}
 		if app.checkpointKeeper.GetCheckpointCache(ctx, checkpoint.CheckpointCacheKey) {
 			// Send Checkpoint to Rootchain
-			PrepareAndSendCheckpoint(ctx, app)
+			PrepareAndSendCheckpoint(ctx, app.checkpointKeeper)
 
 			// clear Checkpoint cache
 			app.checkpointKeeper.SetCheckpointCache(ctx, checkpoint.EmptyBufferValue)
@@ -155,7 +155,7 @@ func GetExtraData(_checkpoint hmtypes.CheckpointBlockHeader, ctx sdk.Context) []
 
 // todo try to move this to helper
 // prepares all the data required for sending checkpoint and sends tx to rootchain
-func PrepareAndSendCheckpoint(ctx sdk.Context, checkpointKeeper checkpoint.Keeper) {
+func PrepareAndSendCheckpoint(ctx sdk.Context, checkpointKeeper *checkpoint.Keeper) {
 	// fetch votes from block header
 	var votes []tmtypes.Vote
 	err := json.Unmarshal(ctx.BlockHeader().Votes, &votes)
