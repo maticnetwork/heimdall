@@ -57,11 +57,25 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 	common.CheckpointLogger.Debug("Valid ACK Received", "CurrentACKCount", k.GetACKCount(ctx)-1, "UpdatedACKCount", k.GetACKCount(ctx))
 
 	// check for validator updates
+	if k.ValidatorSetChanged(ctx) {
+		// GetAllValidators from store , not current , ALL !
+		updatedValidators := k.GetAllValidators(ctx)
 
-	// if no updates found increment accum
-	k.IncreamentAccum(ctx, 1)
+		// get current running validator set
+		currentValidatorSet := k.GetValidatorSet(ctx)
 
-	// if found create new validator set and replace
+		// apply updates
+		helper.UpdateValidators(&currentValidatorSet, updatedValidators)
+
+		// update validator set in store
+		k.UpdateValidatorSetInStore(ctx, currentValidatorSet)
+
+		// indicate validator set changes in state have been done
+		k.SetValidatorSetChangedFlag(ctx, false)
+	} else {
+		// if no updates found increment accum
+		k.IncreamentAccum(ctx, 1)
+	}
 
 	// indicate ACK received by adding in cache , cache cleared in endblock
 	k.SetCheckpointAckCache(ctx, common.DefaultValue)

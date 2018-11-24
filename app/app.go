@@ -206,7 +206,7 @@ func PrepareAndSendCheckpoint(ctx sdk.Context, keeper common.Keeper) {
 				panic(fmt.Errorf("Ethereum Chain and Heimdall out of sync :("))
 			}
 		} else {
-			logger.Info("You are not proposer", "Proposer", keeper.GetValidatorSet(ctx).Proposer.Address.String(), "Validator", validatorAddress.String())
+			logger.Info("You are not proposer", "Proposer", keeper.GetValidatorSet(ctx).Proposer.Address.String(), "You", validatorAddress.String())
 		}
 
 	}

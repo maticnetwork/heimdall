@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/rlp"
 	hmtypes "github.com/maticnetwork/heimdall/types"
@@ -11,10 +12,7 @@ import (
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	cmn "github.com/tendermint/tendermint/libs/common"
-
-	"github.com/cosmos/cosmos-sdk/client/context"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
-	"github.com/tendermint/tendermint/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
@@ -38,8 +36,8 @@ func ValidatorsToString(vs []abci.Validator) string {
 	return string(b)
 }
 
-func UpdateValidators(currentSet *types.ValidatorSet, abciUpdates []abci.ValidatorUpdate) error {
-	updates, err := types.PB2TM.ValidatorUpdates(abciUpdates)
+func UpdateValidators(currentSet *hmtypes.ValidatorSet, abciUpdates []abci.ValidatorUpdate) error {
+	updates, err := tmtypes.PB2TM.ValidatorUpdates(abciUpdates)
 	if err != nil {
 		return err
 	}

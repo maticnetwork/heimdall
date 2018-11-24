@@ -21,6 +21,7 @@ func NewHandler(k hmcmn.Keeper) sdk.Handler {
 		}
 	}
 }
+
 func handleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k hmcmn.Keeper) sdk.Result {
 	// pull val from store
 	validator, err := k.GetValidatorInfo(ctx, msg.CurrentValAddress)
@@ -52,6 +53,8 @@ func handleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k hmcmn.Keeper)
 		hmcmn.StakingLogger.Error("Unable to update signer", "Error", err, "CurrentSigner", validator.Signer.String(), "SignerFromMsg", pubkey.Address().String())
 		panic(err)
 	}
+
+	// TODO: Not sure how to communicate signer changes to TM
 
 	return sdk.Result{}
 }
@@ -122,6 +125,9 @@ func handleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k hmcmn.Keepe
 
 	// add validator to store
 	k.AddValidator(ctx, validator)
+
+	// validator set changed
+	k.SetValidatorSetChangedFlag(ctx, true)
 
 	return sdk.Result{}
 }

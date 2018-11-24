@@ -219,6 +219,9 @@ func (k Keeper) GetCurrentValidators(ctx sdk.Context) (validators []types.Valida
 	// get ACK count
 	ACKs := k.GetACKCount(ctx)
 
+	// remove matured validators
+	k.RemoveDeactivatedValidators(ctx)
+
 	// create iterator to iterate with Validator Key prefix
 	iterator := sdk.KVStorePrefixIterator(store, ValidatorsKey)
 	defer iterator.Close()
@@ -232,12 +235,6 @@ func (k Keeper) GetCurrentValidators(ctx sdk.Context) (validators []types.Valida
 		// unmarshall validator
 		var validator types.Validator
 		k.cdc.MustUnmarshalBinary(iterator.Value(), &validator)
-
-		// if you encounter a deactivated validator make power 0
-		if validator.EndEpoch != 0 && validator.EndEpoch > int64(ACKs) && validator.Power != 0 {
-			validator.Power = 0
-			k.AddValidator(ctx, validator)
-		}
 
 		// check if validator is valid for current epoch
 		if validator.IsCurrentValidator(ACKs) {
@@ -306,7 +303,12 @@ func (k Keeper) RemoveDeactivatedValidators(ctx sdk.Context) {
 		// if you encounter a deactivated validator make power 0
 		if validator.EndEpoch != 0 && validator.EndEpoch > int64(ACKs) && validator.Power != 0 {
 			validator.Power = 0
+
+			// update validator in validator list
 			k.AddValidator(ctx, validator)
+
+			// indicate change in validator set
+			k.SetValidatorSetChangedFlag(ctx, true)
 		}
 
 		// increment iterator
@@ -434,7 +436,7 @@ func (k Keeper) GetCurrentProposerAddress(ctx sdk.Context) []byte {
 }
 
 // returns true if validator set has changed false otherwise
-func (k Keeper) GetValidatorSetChangeFlag(ctx sdk.Context) bool {
+func (k Keeper) ValidatorSetChanged(ctx sdk.Context) bool {
 	store := ctx.KVStore(k.StakingKey)
 
 	// check if validator set change flag has value
@@ -446,14 +448,27 @@ func (k Keeper) GetValidatorSetChangeFlag(ctx sdk.Context) bool {
 	return false
 }
 
-// inverts flag value for validator update
-func (k Keeper) InvertValidatorSetChangeFlag(ctx sdk.Context) {
+//// inverts flag value for validator update
+//func (k Keeper) InvertValidatorSetChangeFlag(ctx sdk.Context) {
+//	store := ctx.KVStore(k.StakingKey)
+//
+//	// Check if flag has value or not
+//	if bytes.Equal(store.Get(ValidatorSetChangeKey), DefaultValue) {
+//		store.Set(ValidatorSetChangeKey, EmptyBufferValue)
+//	} else {
+//		store.Set(ValidatorSetChangeKey, DefaultValue)
+//	}
+//}
+
+// set validator update flag depending on value
+func (k Keeper) SetValidatorSetChangedFlag(ctx sdk.Context, value bool) {
 	store := ctx.KVStore(k.StakingKey)
 
-	// Check if flag has value or not
-	if bytes.Equal(store.Get(ValidatorSetChangeKey), DefaultValue) {
+	// check if validator set change flag has value
+	if bytes.Equal(store.Get(ValidatorSetChangeKey), DefaultValue) && !value {
 		store.Set(ValidatorSetChangeKey, EmptyBufferValue)
-	} else {
-		store.Set(ValidatorSetChangeKey, DefaultValue)
+		return
 	}
+
+	store.Set(ValidatorSetChangeKey, DefaultValue)
 }
