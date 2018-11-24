@@ -62,6 +62,9 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k Keeper) sdk
 
 	// if found create new validator set and replace
 
+	// indicate ACK received by adding in cache , cache cleared in endblock
+	k.SetCheckpointAckCache(ctx, CacheExistsValue)
+
 	return sdk.Result{}
 }
 
@@ -85,6 +88,9 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper) sdk.Resul
 	k.AddCheckpointToKey(ctx, msg.StartBlock, msg.EndBlock, msg.RootHash, msg.Proposer, BufferCheckpointKey)
 	CheckpointLogger.Debug("Checkpoint added in buffer!", "roothash", msg.RootHash, "startBlock",
 		msg.StartBlock, "endBlock", msg.EndBlock, "proposer", msg.Proposer)
+
+	// indicate Checkpoint received by adding in cache , cache cleared in endblock
+	k.SetCheckpointCache(ctx, CacheExistsValue)
 
 	// send tags
 	return sdk.Result{}

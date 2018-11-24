@@ -93,6 +93,20 @@ func (app *HeimdallApp) BeginBlocker(_ sdk.Context, _ abci.RequestBeginBlock) ab
 func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci.ResponseEndBlock {
 	var validators []abci.ValidatorUpdate
 
+	if ctx.BlockHeader().NumTxs > 0 {
+		if app.checkpointKeeper.GetCheckpointCache(ctx, checkpoint.CheckpointACKCacheKey) {
+			// todo populate validators and send to TM
+
+			// clear ACK cache
+			app.checkpointKeeper.SetCheckpointAckCache(ctx, checkpoint.EmptyBufferValue)
+		}
+		if app.checkpointKeeper.GetCheckpointCache(ctx, checkpoint.CheckpointCacheKey) {
+
+			// clear Checkpoint cache
+			app.checkpointKeeper.SetCheckpointCache(ctx, checkpoint.EmptyBufferValue)
+		}
+	}
+
 	// check if tx in block is ACK messgage
 
 	// if yes send whole validator set with all changes via ResponseEndBlock using

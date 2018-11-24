@@ -27,6 +27,10 @@ var (
 	BufferCheckpointKey = []byte{0x02}
 	HeaderBlockKey      = []byte{0x03}
 	EmptyBufferValue    = []byte{0x04}
+
+	CheckpointCacheKey    = []byte{0x05}
+	CheckpointACKCacheKey = []byte{0x06}
+	CacheExistsValue      = []byte{0x07}
 )
 
 func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, codespace sdk.CodespaceType) Keeper {
@@ -163,4 +167,26 @@ func (k Keeper) GetLastCheckpoint(ctx sdk.Context) CheckpointBlockHeader {
 
 	// return checkpoint
 	return checkpoint
+}
+
+// sets value in cache for checkpoint ACK
+func (k Keeper) SetCheckpointAckCache(ctx sdk.Context, value []byte) {
+	store := ctx.KVStore(k.checkpointKey)
+	store.Set(CheckpointACKCacheKey, value)
+}
+
+// sets value in cache for checkpoint
+func (k Keeper) SetCheckpointCache(ctx sdk.Context, value []byte) {
+	store := ctx.KVStore(k.checkpointKey)
+	store.Set(CheckpointCacheKey, value)
+}
+
+// check if value exists in cache or not
+func (k Keeper) GetCheckpointCache(ctx sdk.Context, key []byte) bool {
+	store := ctx.KVStore(k.checkpointKey)
+	value := store.Get(key)
+	if bytes.Equal(value, EmptyBufferValue) {
+		return false
+	}
+	return true
 }
