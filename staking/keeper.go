@@ -32,6 +32,7 @@ func getValidatorKey(address []byte) []byte {
 	return append(ValidatorsKey, address...)
 }
 
+// todo add checkpoint keys here
 // NewKeeper creates new keeper for staking
 func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, codespace sdk.CodespaceType) Keeper {
 	keeper := Keeper{
@@ -242,7 +243,7 @@ func (k Keeper) GetValidatorSet(ctx sdk.Context) (validatorSet types.ValidatorSe
 	return validatorSet
 }
 
-// increment accum for validator set by n times
+// increment accum for validator set by n times and replace validator set in store
 func (k Keeper) IncreamentAccum(ctx sdk.Context, times int) {
 	// get validator set
 	validatorSet := k.GetValidatorSet(ctx)
@@ -252,4 +253,15 @@ func (k Keeper) IncreamentAccum(ctx sdk.Context, times int) {
 
 	// replace
 	k.UpdateValidatorSetInStore(ctx, validatorSet)
+}
+
+// returns next proposer
+func (k Keeper) GetNextProposer(ctx sdk.Context) string {
+	// get validator set
+	validatorSet := k.GetValidatorSet(ctx)
+
+	// increment accum
+	validatorSet.IncrementAccum(1)
+
+	return validatorSet.Proposer.String()
 }

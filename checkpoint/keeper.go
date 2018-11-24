@@ -34,6 +34,7 @@ var (
 	CacheExistsValue      = []byte{0x07}
 )
 
+// todo add staking keys here
 func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, codespace sdk.CodespaceType) Keeper {
 	keeper := Keeper{
 		checkpointKey: key,
