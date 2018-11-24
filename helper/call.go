@@ -79,3 +79,19 @@ func GetValidatorInfo(addr common.Address) (validator types.Validator, err error
 
 	return validator, nil
 }
+
+func CurrentChildBlock() (uint64, error) {
+	rootChainInstance, err := GetRootChainInstance()
+	if err != nil {
+		Logger.Error("Error creating rootchain instance while fetching current child block", "error", err)
+		return 0, err
+	}
+
+	currentChildBlock, err := rootChainInstance.CurrentChildBlock(nil)
+	if err != nil {
+		Logger.Error("Could not fetch current child block from rootchain contract", "Error", err)
+		return 0, err
+	}
+
+	return currentChildBlock.Uint64(), nil
+}
