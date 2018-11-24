@@ -95,6 +95,11 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 
 	if ctx.BlockHeader().NumTxs > 0 {
 		if app.checkpointKeeper.GetCheckpointCache(ctx, checkpoint.CheckpointACKCacheKey) {
+			// remove matured Validators
+			app.stakerKeeper.RemoveDeactivatedValidators(ctx)
+
+			// fetch validators from store
+			//validators:=app.stakerKeeper.GetAllValidators(ctx)
 			// todo populate validators and send to TM
 
 			// clear ACK cache
@@ -106,16 +111,6 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 			app.checkpointKeeper.SetCheckpointCache(ctx, checkpoint.EmptyBufferValue)
 		}
 	}
-
-	// check if tx in block is ACK messgage
-
-	// if yes send whole validator set with all changes via ResponseEndBlock using
-	//app.stakerKeeper.RemoveDeactivatedValidators(ctx)
-	//validators:=app.stakerKeeper.GetAllValidators(ctx)
-
-	//check if tx in block is Checkpoint
-
-	// send transaction to rootchain
 
 	//if ctx.BlockHeader().NumTxs == 1 {
 	//	// unmarshall votes from header
@@ -201,7 +196,7 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 }
 
 func (app *HeimdallApp) ExportAppStateAndValidators() (appState json.RawMessage, validators []tmtypes.GenesisValidator, err error) {
-	ctx := app.NewContext(true, abci.Header{})
+	//ctx := app.NewContext(true, abci.Header{})
 
 	return appState, validators, err
 }

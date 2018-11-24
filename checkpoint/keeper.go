@@ -9,14 +9,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/staking"
 	"time"
 )
 
 type Keeper struct {
 	checkpointKey sdk.StoreKey
 	cdc           *codec.Codec
-	stakingkeeper staking.Keeper
 
 	// codespace
 	codespace sdk.CodespaceType
