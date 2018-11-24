@@ -48,17 +48,17 @@ var (
 	BufferCheckpointKey = []byte{0x02} // Key to store checkpoint in buffer
 	HeaderBlockKey      = []byte{0x03} // prefix key for when storing header after ACk
 
-	EmptyBufferValue    = []byte{0x04} // denotes EMPTY
+	EmptyBufferValue = []byte{0x04} // denotes EMPTY
 
-	CheckpointCacheKey     = []byte{0x05} // key to store Cache for checkpoint
-	CheckpointACKCacheKey  = []byte{0x06} // key to store Cache for checkpointACK
+	CheckpointCacheKey    = []byte{0x05} // key to store Cache for checkpoint
+	CheckpointACKCacheKey = []byte{0x06} // key to store Cache for checkpointACK
 
-	DefaultValue       = []byte{0x07} // Value to store in CacheCheckpoint and CacheCheckpointACK & ValidatorSetChange Flag
+	DefaultValue = []byte{0x07} // Value to store in CacheCheckpoint and CacheCheckpointACK & ValidatorSetChange Flag
 
 	ValidatorsKey          = []byte{0x08} // prefix for each key to a validator
 	CurrentValidatorSetKey = []byte{0x09} // Key to store current validator set
 
-	ValidatorSetChangeKey =  []byte{0x010} // key to store flag for validator set update
+	ValidatorSetChangeKey = []byte{0x010} // key to store flag for validator set update
 )
 
 //--------------- Checkpoint Related Keepers
@@ -426,7 +426,7 @@ func (k Keeper) GetNextProposer(ctx sdk.Context) string {
 
 // TODO expose via API
 // returns current proposer
-func (k Keeper) GetCurrentProposer(ctx sdk.Context) string{
+func (k Keeper) GetCurrentProposer(ctx sdk.Context) string {
 	// get validator set
 	validatorSet := k.GetValidatorSet(ctx)
 
@@ -434,26 +434,26 @@ func (k Keeper) GetCurrentProposer(ctx sdk.Context) string{
 }
 
 // returns true if validator set has changed false otherwise
-func (k Keeper) GetValidatorSetChangeFlag(ctx sdk.Context)(bool){
+func (k Keeper) GetValidatorSetChangeFlag(ctx sdk.Context) bool {
 	store := ctx.KVStore(k.StakingKey)
 
 	// check if validator set change flag has value
-	if bytes.Equal(store.Get(ValidatorSetChangeKey),DefaultValue){
+	if bytes.Equal(store.Get(ValidatorSetChangeKey), DefaultValue) {
 		return true
 	}
-	
+
 	// validator set change flag is  empty
 	return false
 }
 
 // inverts flag value for validator update
-func (k Keeper) InvertValidatorSetChangeFlag(ctx sdk.Context){
+func (k Keeper) InvertValidatorSetChangeFlag(ctx sdk.Context) {
 	store := ctx.KVStore(k.StakingKey)
 
 	// Check if flag has value or not
-	if bytes.Equal(store.Get(ValidatorSetChangeKey),DefaultValue){
-		store.Set(ValidatorSetChangeKey,EmptyBufferValue)
-	}else{
-		store.Set(ValidatorSetChangeKey,DefaultValue)
+	if bytes.Equal(store.Get(ValidatorSetChangeKey), DefaultValue) {
+		store.Set(ValidatorSetChangeKey, EmptyBufferValue)
+	} else {
+		store.Set(ValidatorSetChangeKey, DefaultValue)
 	}
 }
