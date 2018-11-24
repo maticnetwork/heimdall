@@ -59,11 +59,12 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 	// check for validator updates
 
 	// if no updates found increment accum
+	k.IncreamentAccum(ctx, 1)
 
 	// if found create new validator set and replace
 
 	// indicate ACK received by adding in cache , cache cleared in endblock
-	k.SetCheckpointAckCache(ctx, common.CacheExistsValue)
+	k.SetCheckpointAckCache(ctx, common.DefaultValue)
 
 	return sdk.Result{}
 }
@@ -97,7 +98,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper) sd
 		msg.StartBlock, "endBlock", msg.EndBlock, "proposer", msg.Proposer)
 
 	// indicate Checkpoint received by adding in cache , cache cleared in endblock
-	k.SetCheckpointCache(ctx, common.CacheExistsValue)
+	k.SetCheckpointCache(ctx, common.DefaultValue)
 
 	// send tags
 	return sdk.Result{}
