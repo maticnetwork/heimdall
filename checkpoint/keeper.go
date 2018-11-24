@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
+	"time"
 )
 
 type Keeper struct {
@@ -41,6 +42,7 @@ type CheckpointBlockHeader struct {
 	StartBlock uint64
 	EndBlock   uint64
 	RootHash   common.Hash
+	TimeStamp  time.Time
 }
 
 func createBlock(start uint64, end uint64, rootHash common.Hash, proposer common.Address) CheckpointBlockHeader {
@@ -49,6 +51,7 @@ func createBlock(start uint64, end uint64, rootHash common.Hash, proposer common
 		EndBlock:   end,
 		RootHash:   rootHash,
 		Proposer:   proposer,
+		TimeStamp:  time.Now().UTC(),
 	}
 }
 
@@ -56,9 +59,16 @@ func createBlock(start uint64, end uint64, rootHash common.Hash, proposer common
 func (k Keeper) AddCheckpointToKey(ctx sdk.Context, start uint64, end uint64, root common.Hash, proposer common.Address, key []byte) sdk.Error {
 	store := ctx.KVStore(k.checkpointKey)
 
+	checkpointBuffer, _ := k.GetCheckpointFromBuffer(ctx)
+
 	// Reject new checkpoint if checkpoint exists in buffer
-	if bytes.Equal(key, BufferCheckpointKey) && !bytes.Equal(store.Get(BufferCheckpointKey), []byte("")) {
+	if bytes.Equal(key, BufferCheckpointKey) && !bytes.Equal(store.Get(BufferCheckpointKey), []byte("")) && time.Now().UTC().Before(checkpointBuffer.TimeStamp.Add(time.Minute*5)) {
 		return ErrNoACK(k.codespace)
+	}
+
+	// Flush Checkpoint If 5 minutes have passed since it was added to buffer and NoAck received
+	if bytes.Equal(key, BufferCheckpointKey) && !bytes.Equal(store.Get(BufferCheckpointKey), []byte("")) && time.Now().UTC().After(checkpointBuffer.TimeStamp.Add(time.Minute*5)) {
+		k.FlushCheckpointBuffer(ctx)
 	}
 
 	// create Checkpoint block and marshall

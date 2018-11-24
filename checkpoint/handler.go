@@ -18,6 +18,7 @@ func NewHandler(k Keeper) sdk.Handler {
 		}
 	}
 }
+
 func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k Keeper) sdk.Result {
 	// make call to headerBlock with header number
 	root, start, end, err := helper.GetHeaderInfo(msg.HeaderBlock)

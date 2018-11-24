@@ -101,3 +101,46 @@ func (msg MsgCheckpointAck) GetSignBytes() []byte {
 func (msg MsgCheckpointAck) ValidateBasic() sdk.Error {
 	return nil
 }
+
+//
+////
+//// Checkpoint Flush And Retry
+////
+//
+//
+//const CheckpointRetry = "checkpointRetry"
+//
+//var _ sdk.Msg = &MsgCheckpointAck{}
+//
+//type MsgCheckpointRetry struct {
+//	HeaderBlock uint64 `json:"headerBlock"`
+//}
+//
+//func NewMsgcheckpoitRetry(headerBlock uint64) MsgCheckpointAck {
+//	return MsgCheckpointAck{
+//		HeaderBlock: headerBlock,
+//	}
+//}
+//
+//func (msg MsgCheckpointAck) Type() string {
+//	return CheckpointACK
+//}
+//
+//func (msg MsgCheckpointAck) Route() string { return CheckpointACK }
+//
+//func (msg MsgCheckpointAck) GetSigners() []sdk.AccAddress {
+//	addrs := make([]sdk.AccAddress, 0)
+//	return addrs
+//}
+//
+//func (msg MsgCheckpointAck) GetSignBytes() []byte {
+//	b, err := cdc.MarshalJSON(msg)
+//	if err != nil {
+//		panic(err)
+//	}
+//	return sdk.MustSortJSON(b)
+//}
+//
+//func (msg MsgCheckpointAck) ValidateBasic() sdk.Error {
+//	return nil
+//}
