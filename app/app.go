@@ -95,21 +95,27 @@ func (app *HeimdallApp) BeginBlocker(_ sdk.Context, _ abci.RequestBeginBlock) ab
 }
 
 func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci.ResponseEndBlock {
-	var validators []abci.ValidatorUpdate
+	var valUpdates []abci.ValidatorUpdate
 
 	if ctx.BlockHeader().NumTxs > 0 {
+		// check if ACK is present in cache 
 		if app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointACKCacheKey) {
 			// remove matured Validators
 			app.masterKeeper.RemoveDeactivatedValidators(ctx)
 
-			// fetch validators from store
-			//validators:=app.stakerKeeper.GetAllValidators(ctx)
-
-			// todo populate validators and send to TM
-
+			// check if validator set has changed 
+			if app.masterKeeper.ValidatorSetChanged(ctx) {
+				// GetAllValidators from store (includes previous validator set + updates)
+				valUpdates = app.masterKeeper.GetAllValidators(ctx)
+				
+				// mark validator set changes have been sent to TM 
+				app.masterKeeper.SetValidatorSetChangedFlag(ctx,false)
+			}
+			
 			// clear ACK cache
 			app.masterKeeper.SetCheckpointAckCache(ctx, common.EmptyBufferValue)
 		}
+		// check if checkpoint is present in cache 
 		if app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointCacheKey) {
 			// Send Checkpoint to Rootchain
 			PrepareAndSendCheckpoint(ctx, app.masterKeeper)
@@ -121,7 +127,7 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 
 	// send validator updates to peppermint
 	return abci.ResponseEndBlock{
-		ValidatorUpdates: validators,
+		ValidatorUpdates: valUpdates,
 	}
 }
 

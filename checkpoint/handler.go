@@ -70,8 +70,7 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 		// update validator set in store
 		k.UpdateValidatorSetInStore(ctx, currentValidatorSet)
 
-		// indicate validator set changes in state have been done
-		k.SetValidatorSetChangedFlag(ctx, false)
+		// dont change validator change update flag , that is changed when updates are passes to TM in endblock
 	} else {
 		// if no updates found increment accum
 		k.IncreamentAccum(ctx, 1)

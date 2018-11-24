@@ -379,6 +379,7 @@ func (k Keeper) UpdateSigner(ctx sdk.Context, signer common.Address, pubkey cryp
 	return nil
 }
 
+// TODO check if we may have to delay this by 1 height to sync with tendermint validator updates
 // Add validator set to store
 func (k Keeper) UpdateValidatorSetInStore(ctx sdk.Context, newValidatorSet types.ValidatorSet) {
 	store := ctx.KVStore(k.StakingKey)
@@ -388,6 +389,9 @@ func (k Keeper) UpdateValidatorSetInStore(ctx sdk.Context, newValidatorSet types
 
 	// set validator set with CurrentValidatorSetKey as key in store
 	store.Set(CurrentValidatorSetKey, bz)
+
+	// increment Accum to select proposer
+	k.IncreamentAccum(ctx,1)
 }
 
 // Get current Validator Set from store
