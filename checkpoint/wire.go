@@ -6,6 +6,7 @@ import (
 
 func RegisterWire(cdc *codec.Codec) {
 	cdc.RegisterConcrete(MsgCheckpoint{}, "checkpoint/MsgCheckpoint", nil)
+	cdc.RegisterConcrete(MsgCheckpointAck{}, "checkpoint/MsgCheckpointACK", nil)
 }
 
 var cdcEmpty = codec.New()
