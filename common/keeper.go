@@ -317,6 +317,12 @@ func (k Keeper) RemoveDeactivatedValidators(ctx sdk.Context) {
 	return
 }
 
+// TODO add remove and getter for validator list here
+// interate validators and apply the given function
+func (k Keeper) IterateValidatorsAndApplyFn(ctx sdk.Context, f func()) {
+	f()
+}
+
 // GetValidatorInfo returns validator info for given the address
 func (k Keeper) GetValidatorInfo(ctx sdk.Context, valAddr common.Address) (validator types.Validator, error error) {
 	store := ctx.KVStore(k.StakingKey)
