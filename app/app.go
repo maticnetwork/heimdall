@@ -121,7 +121,6 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 			if app.masterKeeper.ValidatorSetChanged(ctx) {
 				// GetAllValidators from store (includes previous validator set + updates)
 				valUpdates = app.masterKeeper.GetAllValidators(ctx)
-
 				// mark validator set changes have been sent to TM
 				app.masterKeeper.SetValidatorSetChangedFlag(ctx, false)
 			}
@@ -133,12 +132,10 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 		if app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointCacheKey) {
 			// Send Checkpoint to Rootchain
 			PrepareAndSendCheckpoint(ctx, app.masterKeeper)
-
 			// clear Checkpoint cache
 			app.masterKeeper.SetCheckpointCache(ctx, common.EmptyBufferValue)
 		}
 	}
-
 	// send validator updates to peppermint
 	return abci.ResponseEndBlock{
 		ValidatorUpdates: valUpdates,
@@ -195,8 +192,9 @@ func PrepareAndSendCheckpoint(ctx sdk.Context, keeper common.Keeper) {
 	// Getting latest checkpoint data from store using height as key and unmarshall
 	_checkpoint, err := keeper.GetCheckpointFromBuffer(ctx)
 	if err != nil {
-		logger.Error("Unable to unmarshall checkpoint while fetching from buffer while preparing checkpoint tx for rootchain", "error", err, "height", ctx.BlockHeight())
-		panic(err)
+		logger.Error("Unable to unmarshall checkpoint from buffer while preparing checkpoint tx", "error", err, "height", ctx.BlockHeight())
+		//panic(err)
+		return
 	} else {
 		// Get extra data
 		extraData := GetExtraData(_checkpoint, ctx)

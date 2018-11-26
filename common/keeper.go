@@ -86,6 +86,12 @@ func (k Keeper) AddCheckpointToKey(ctx sdk.Context, start uint64, end uint64, ro
 		CheckpointLogger.Error("Error marshalling checkpoint to json", "error", err)
 	}
 
+	if bytes.Equal(key, BufferCheckpointKey) {
+		CheckpointLogger.Info("Adding good checkpoint to buffer to await ACK", "Checkpoint", data.HumanReadableString())
+	} else {
+		CheckpointLogger.Info("Adding good checkpoint to state", "Checkpoint", data.HumanReadableString())
+	}
+
 	// store in key provided
 	store.Set(key, []byte(out))
 
@@ -103,6 +109,11 @@ func (k Keeper) GetLastCheckpoint(ctx sdk.Context) types.CheckpointBlockHeader {
 
 	// fetch checkpoint and unmarshall
 	var _checkpoint types.CheckpointBlockHeader
+
+	// no checkpoint received
+	if ACKs == 0 {
+		return types.GenEmptyCheckpointBlockHeader()
+	}
 	err := json.Unmarshal(store.Get(GetHeaderKey(lastCheckpointKey)), &_checkpoint)
 	if err != nil {
 		CheckpointLogger.Error("Unable to fetch last checkpoint from store", "Key", lastCheckpointKey, "ACKCount", ACKs)
