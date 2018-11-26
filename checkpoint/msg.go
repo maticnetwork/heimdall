@@ -45,7 +45,6 @@ func (msg MsgCheckpoint) GetSigners() []sdk.AccAddress {
 	addrs := make([]sdk.AccAddress, 1)
 	addrs[0] = sdk.AccAddress(msg.Proposer.Bytes())
 	return addrs
-
 }
 
 func (msg MsgCheckpoint) GetSignBytes() []byte {
@@ -57,7 +56,6 @@ func (msg MsgCheckpoint) GetSignBytes() []byte {
 }
 
 func (msg MsgCheckpoint) ValidateBasic() sdk.Error {
-
 	return nil
 }
 

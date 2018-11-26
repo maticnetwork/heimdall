@@ -9,6 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gorilla/mux"
+
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/helper"
 )
@@ -46,11 +47,13 @@ func newCheckpointHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			w.Write([]byte(err.Error()))
 			return
 		}
+
 		msg := checkpoint.NewMsgCheckpointBlock(
 			common.HexToAddress(m.Proposer),
 			m.StartBlock,
 			m.EndBlock,
-			common.HexToHash(m.RootHash))
+			common.HexToHash(m.RootHash),
+		)
 
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {
@@ -80,7 +83,7 @@ func newCheckpointHandler(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 type HeaderACK struct {
-	HeaderIndex uint64 `json:"header_index"`
+	HeaderIndex uint64 `json:"headerIndex"`
 }
 
 func NewCheckpointACKHandler(cliCtx context.CLIContext) http.HandlerFunc {

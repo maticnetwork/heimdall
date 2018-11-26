@@ -4,16 +4,17 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/rlp"
-	hmtypes "github.com/maticnetwork/heimdall/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmtypes "github.com/tendermint/tendermint/types"
+
+	hmtypes "github.com/maticnetwork/heimdall/types"
 )
 
 type validatorPretty struct {
@@ -75,7 +76,6 @@ func UpdateValidators(currentSet *hmtypes.ValidatorSet, abciUpdates []abci.Valid
 
 // convert string to Pubkey
 func StringToPubkey(pubkeyStr string) (crypto.PubKey, error) {
-
 	var pubkeyBytes secp256k1.PubKeySecp256k1
 	_pubkey, err := hex.DecodeString(pubkeyStr)
 	if err != nil {
@@ -89,12 +89,11 @@ func StringToPubkey(pubkeyStr string) (crypto.PubKey, error) {
 }
 
 func CreateTxBytes(msg sdk.Msg) ([]byte, error) {
-	tx := hmtypes.NewBaseTx(msg)
-
-	txBytes, err := rlp.EncodeToBytes(tx)
+	// tx := hmtypes.NewBaseTx(msg)
+	pulp := hmtypes.GetPulpInstance()
+	txBytes, err := pulp.EncodeToBytes(msg)
 	if err != nil {
 		Logger.Error("Error generating TX Bytes", "error", err)
-
 		return []byte(""), err
 	}
 	return txBytes, nil
@@ -106,7 +105,6 @@ func SendTendermintRequest(cliCtx context.CLIContext, txBytes []byte) (*ctypes.R
 }
 
 func GetSigs(votes []tmtypes.Vote) (sigs []byte) {
-
 	// loop votes and append to sig to sigs
 	for _, vote := range votes {
 		sigs = append(sigs[:], vote.Signature[:]...)

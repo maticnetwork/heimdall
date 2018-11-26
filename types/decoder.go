@@ -2,18 +2,19 @@ package types
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/rlp"
 )
 
 // RLPTxDecoder decodes the txBytes to a BaseTx
-func RLPTxDecoder() sdk.TxDecoder {
+func RLPTxDecoder(pulp *Pulp) sdk.TxDecoder {
 	return func(txBytes []byte) (sdk.Tx, sdk.Error) {
-		var tx = BaseTx{}
-		err := rlp.DecodeBytes(txBytes, &tx)
+		msg := pulp.GetMsgTxInstance(txBytes)
+		err := pulp.DecodeBytes(txBytes, msg)
 		if err != nil {
 			return nil, sdk.ErrTxDecode(err.Error())
 		}
-		return tx, nil
 
+		return &BaseTx{
+			Msg: msg,
+		}, nil
 	}
 }

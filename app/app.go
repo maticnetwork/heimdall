@@ -4,20 +4,22 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/rlp"
-	"github.com/maticnetwork/heimdall/checkpoint"
-	"github.com/maticnetwork/heimdall/common"
-	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/staking"
-	hmtypes "github.com/maticnetwork/heimdall/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	dbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
 	tmtypes "github.com/tendermint/tendermint/types"
+
+	"github.com/maticnetwork/heimdall/checkpoint"
+	"github.com/maticnetwork/heimdall/common"
+	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/staking"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 const (
@@ -47,10 +49,13 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	// create and register app-level codec for TXs and accounts
 	cdc := MakeCodec()
 
+	// create and register pulp codec
+	pulp := hmTypes.GetPulpInstance()
+
 	// create your application type
 	var app = &HeimdallApp{
 		cdc:           cdc,
-		BaseApp:       bam.NewBaseApp(AppName, logger, db, hmtypes.RLPTxDecoder(), baseAppOptions...),
+		BaseApp:       bam.NewBaseApp(AppName, logger, db, hmTypes.RLPTxDecoder(pulp), baseAppOptions...),
 		keyMain:       sdk.NewKVStoreKey("main"),
 		keyCheckpoint: sdk.NewKVStoreKey("checkpoint"),
 		keyStaker:     sdk.NewKVStoreKey("staker"),
@@ -90,6 +95,15 @@ func MakeCodec() *codec.Codec {
 	return cdc
 }
 
+func MakePulp() *hmTypes.Pulp {
+	pulp := hmTypes.GetPulpInstance()
+
+	checkpoint.RegisterPulp(pulp)
+	// register custom type
+
+	return pulp
+}
+
 func (app *HeimdallApp) BeginBlocker(_ sdk.Context, _ abci.RequestBeginBlock) abci.ResponseBeginBlock {
 	return abci.ResponseBeginBlock{}
 }
@@ -98,24 +112,24 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 	var valUpdates []abci.ValidatorUpdate
 
 	if ctx.BlockHeader().NumTxs > 0 {
-		// check if ACK is present in cache 
+		// check if ACK is present in cache
 		if app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointACKCacheKey) {
 			// remove matured Validators
 			app.masterKeeper.RemoveDeactivatedValidators(ctx)
 
-			// check if validator set has changed 
+			// check if validator set has changed
 			if app.masterKeeper.ValidatorSetChanged(ctx) {
 				// GetAllValidators from store (includes previous validator set + updates)
 				valUpdates = app.masterKeeper.GetAllValidators(ctx)
-				
-				// mark validator set changes have been sent to TM 
-				app.masterKeeper.SetValidatorSetChangedFlag(ctx,false)
+
+				// mark validator set changes have been sent to TM
+				app.masterKeeper.SetValidatorSetChangedFlag(ctx, false)
 			}
-			
+
 			// clear ACK cache
 			app.masterKeeper.SetCheckpointAckCache(ctx, common.EmptyBufferValue)
 		}
-		// check if checkpoint is present in cache 
+		// check if checkpoint is present in cache
 		if app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointCacheKey) {
 			// Send Checkpoint to Rootchain
 			PrepareAndSendCheckpoint(ctx, app.masterKeeper)
@@ -148,14 +162,14 @@ func (app *HeimdallApp) ExportAppStateAndValidators() (appState json.RawMessage,
 }
 
 // todo try to move this to helper , since it uses checkpoint it causes cycle import error RN
-func GetExtraData(_checkpoint hmtypes.CheckpointBlockHeader, ctx sdk.Context) []byte {
+func GetExtraData(_checkpoint hmTypes.CheckpointBlockHeader, ctx sdk.Context) []byte {
 	logger.Debug("Creating extra data", "startBlock", _checkpoint.StartBlock, "endBlock", _checkpoint.EndBlock, "roothash", _checkpoint.RootHash)
 
 	// craft a message
 	msg := checkpoint.NewMsgCheckpointBlock(_checkpoint.Proposer, _checkpoint.StartBlock, _checkpoint.EndBlock, _checkpoint.RootHash)
 
 	// decoding transaction
-	tx := hmtypes.NewBaseTx(msg)
+	tx := hmTypes.NewBaseTx(msg)
 	txBytes, err := rlp.EncodeToBytes(tx)
 	if err != nil {
 		logger.Error("Error decoding transaction data", "error", err)
@@ -214,6 +228,5 @@ func PrepareAndSendCheckpoint(ctx sdk.Context, keeper common.Keeper) {
 		} else {
 			logger.Info("You are not proposer", "Proposer", keeper.GetValidatorSet(ctx).Proposer.Address.String(), "You", validatorAddress.String())
 		}
-
 	}
 }

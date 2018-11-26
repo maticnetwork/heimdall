@@ -1,10 +1,11 @@
 package checkpoint
 
 import (
+	"strings"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
-	"strings"
 )
 
 func NewHandler(k common.Keeper) sdk.Handler {
