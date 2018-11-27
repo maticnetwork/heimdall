@@ -72,13 +72,14 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 		// update validator set in store
 		k.UpdateValidatorSetInStore(ctx, currentValidatorSet)
 
-		// dont change validator change update flag , that is changed when updates are passes to TM in endblock
-	} else {
-		// if no updates found increment accum
-		k.IncreamentAccum(ctx, 1)
+		// Dont change validator change update flag
+		// that is changed when updates are passes to TM in endblock
 	}
 
-	// indicate ACK received by adding in cache , cache cleared in endblock
+	// if no updates found increment accum
+	k.IncreamentAccum(ctx, 1)
+
+	// indicate ACK received by adding in cache, cache cleared in endblock
 	k.SetCheckpointAckCache(ctx, common.DefaultValue)
 
 	return sdk.Result{}

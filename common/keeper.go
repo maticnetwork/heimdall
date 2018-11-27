@@ -416,9 +416,6 @@ func (k *Keeper) UpdateValidatorSetInStore(ctx sdk.Context, newValidatorSet tmTy
 
 	// set validator set with CurrentValidatorSetKey as key in store
 	store.Set(CurrentValidatorSetKey, bz)
-
-	// increment Accum to select proposer
-	// k.IncreamentAccum(ctx, 1)
 }
 
 // GetValidatorSet returns current Validator Set from store
@@ -449,10 +446,10 @@ func (k *Keeper) GetNextProposer(ctx sdk.Context) string {
 	// get validator set
 	validatorSet := k.GetValidatorSet(ctx)
 
-	// increment accum
-	validatorSet.IncrementAccum(1)
+	// Increment accum in copy
+	copiedValidatorSet := validatorSet.CopyIncrementAccum(1)
 
-	return validatorSet.Proposer.String()
+	return copiedValidatorSet.Proposer.String()
 }
 
 // GetCurrentProposerAddress returns current proposer

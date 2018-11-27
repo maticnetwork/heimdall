@@ -181,7 +181,6 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cob
 			if err != nil {
 				return err
 			}
-			fmt.Println("appStateJSON", string(appStateJSON))
 
 			toPrint := struct {
 				ChainID string `json:"chain_id"`

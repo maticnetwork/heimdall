@@ -178,7 +178,9 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 			validatorUpdates[i] = updateVal
 		}
 	}
-	logger.Info("Initial validator set", "size", newValidatorSet.Size(), "validatorUpdates", len(validatorUpdates))
+
+	// Initial validator set log
+	logger.Info("Initial validator set", "size", newValidatorSet.Size())
 
 	// update validator set in store
 	app.masterKeeper.UpdateValidatorSetInStore(ctx, newValidatorSet)
