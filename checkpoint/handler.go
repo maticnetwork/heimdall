@@ -1,6 +1,7 @@
 package checkpoint
 
 import (
+	"bytes"
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -102,7 +103,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper) sd
 	}
 
 	// check proposer in message
-	if msg.Proposer.String() != k.GetValidatorSet(ctx).Proposer.Address.String() {
+	if !bytes.Equal(msg.Proposer.Bytes(), k.GetValidatorSet(ctx).Proposer.Address) {
 		common.CheckpointLogger.Error("Invalid proposer in message", "currentProposer", k.GetValidatorSet(ctx).Proposer.Address.String(), "checkpointProposer", msg.Proposer.String())
 		return common.ErrBadProposerDetails(k.Codespace).Result()
 	}

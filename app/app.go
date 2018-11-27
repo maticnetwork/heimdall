@@ -185,6 +185,9 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 	// update validator set in store
 	app.masterKeeper.UpdateValidatorSetInStore(ctx, newValidatorSet)
 
+	// increment accumulator
+	app.masterKeeper.IncreamentAccum(ctx, 1)
+
 	// udpate validators
 	return abci.ResponseInitChain{
 		Validators: validatorUpdates,

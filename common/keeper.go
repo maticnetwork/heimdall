@@ -194,14 +194,18 @@ func (k *Keeper) UpdateACKCount(ctx sdk.Context) {
 // GetACKCount returns current ACK count
 func (k *Keeper) GetACKCount(ctx sdk.Context) int {
 	store := ctx.KVStore(k.CheckpointKey)
-
-	// get current ACK count
-	ACKs, err := strconv.Atoi(string(store.Get(ACKCountKey)))
-	if err != nil {
-		CheckpointLogger.Error("Unable to convert key to int")
+	// check if ack count is there
+	if store.Has(ACKCountKey) {
+		// get current ACK count
+		ackCount, err := strconv.Atoi(string(store.Get(ACKCountKey)))
+		if err != nil {
+			CheckpointLogger.Error("Unable to convert key to int")
+		} else {
+			return ackCount
+		}
 	}
 
-	return ACKs
+	return 0
 }
 
 // InitACKCount sets ACK Count to 0
