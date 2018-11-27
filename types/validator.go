@@ -10,8 +10,8 @@ type Validator struct {
 	Address    common.Address
 	StartEpoch int64
 	EndEpoch   int64
-	Pubkey     crypto.PubKey
 	Power      int64 // aka Amount
+	Pubkey     crypto.PubKey
 	Signer     common.Address
 }
 

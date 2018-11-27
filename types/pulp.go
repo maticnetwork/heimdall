@@ -5,10 +5,9 @@ import (
 	"reflect"
 	"sync"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/rlp"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 const (

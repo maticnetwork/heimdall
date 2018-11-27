@@ -2,8 +2,9 @@ package staking
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/maticnetwork/heimdall/common"
 	abci "github.com/tendermint/tendermint/abci/types"
+
+	"github.com/maticnetwork/heimdall/common"
 )
 
 // EndBlocker refreshes validator set after block commit

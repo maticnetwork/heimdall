@@ -10,18 +10,19 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
-	gaiaInit "github.com/cosmos/cosmos-sdk/cmd/gaia/init"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/common"
 	dbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/p2p"
-	tmtypes "github.com/tendermint/tendermint/types"
+	"github.com/tendermint/tendermint/privval"
+	tmTypes "github.com/tendermint/tendermint/types"
 
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/helper"
@@ -85,7 +86,7 @@ func newApp(logger log.Logger, db dbm.DB, storeTracer io.Writer) abci.Applicatio
 	return app.NewHeimdallApp(logger, db, baseapp.SetPruning(viper.GetString("pruning")))
 }
 
-func exportAppStateAndTMValidators(logger log.Logger, db dbm.DB, storeTracer io.Writer) (json.RawMessage, []tmtypes.GenesisValidator, error) {
+func exportAppStateAndTMValidators(logger log.Logger, db dbm.DB, storeTracer io.Writer) (json.RawMessage, []tmTypes.GenesisValidator, error) {
 	bapp := app.NewHeimdallApp(logger, db)
 	return bapp.ExportAppStateAndValidators()
 }
@@ -98,9 +99,10 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cob
 		Short: "Initialize genesis config, priv-validator file, and p2p-node file",
 		Args:  cobra.NoArgs,
 		RunE: func(_ *cobra.Command, _ []string) error {
-
 			config := ctx.Config
 			config.SetRoot(viper.GetString(cli.HomeFlag))
+
+			// create chain id
 			chainID := viper.GetString(client.FlagChainID)
 			if chainID == "" {
 				chainID = fmt.Sprintf("heimdall-%v", common.RandStr(6))
@@ -112,7 +114,8 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cob
 			}
 			nodeID := string(nodeKey.ID())
 
-			pk := gaiaInit.ReadOrCreatePrivValidator(config.PrivValidatorFile())
+			// read private key
+			pk := ReadOrCreatePrivValidator(config.PrivValidatorFile())
 
 			// TODO pull validator from main chain and add to genesis
 			genTx, appMessage, validator, err := server.SimpleAppGenTx(cdc, pk)
@@ -124,6 +127,7 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cob
 			if err != nil {
 				return err
 			}
+
 			appStateJSON, err := cdc.MarshalJSON(appState)
 			if err != nil {
 				return err
@@ -162,7 +166,7 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cob
 			}
 
 			fmt.Fprintf(os.Stderr, "%s\n", string(out))
-			return gaiaInit.WriteGenesisFile(config.GenesisFile(), chainID, []tmtypes.GenesisValidator{validator}, appStateJSON)
+			return WriteGenesisFile(config.GenesisFile(), chainID, []tmTypes.GenesisValidator{validator}, appStateJSON)
 		},
 	}
 
@@ -206,4 +210,34 @@ func newAccountCmd() *cobra.Command {
 			fmt.Printf("%s", string(b))
 		},
 	}
+}
+
+// WriteGenesisFile creates and writes the genesis configuration to disk. An
+// error is returned if building or writing the configuration to file fails.
+// nolint: unparam
+func WriteGenesisFile(genesisFile, chainID string, validators []tmTypes.GenesisValidator, appState json.RawMessage) error {
+	genDoc := tmTypes.GenesisDoc{
+		ChainID:    chainID,
+		Validators: validators,
+		AppState:   appState,
+	}
+
+	if err := genDoc.ValidateAndComplete(); err != nil {
+		return err
+	}
+
+	return genDoc.SaveAs(genesisFile)
+}
+
+// ReadOrCreatePrivValidator reads or creates the private key file for this config
+func ReadOrCreatePrivValidator(privValFile string) crypto.PubKey {
+	// private validator
+	var privValidator *privval.FilePV
+	if common.FileExists(privValFile) {
+		privValidator = privval.LoadFilePV(privValFile)
+	} else {
+		privValidator = privval.GenFilePV(privValFile)
+		privValidator.Save()
+	}
+	return privValidator.GetPubKey()
 }

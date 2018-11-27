@@ -2,7 +2,9 @@ package staking
 
 import (
 	"bytes"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	hmcmn "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 )

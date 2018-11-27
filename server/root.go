@@ -10,6 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/go-kit/kit/log"
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -17,7 +18,6 @@ import (
 	tmLog "github.com/tendermint/tendermint/libs/log"
 	tmserver "github.com/tendermint/tendermint/rpc/lib/server"
 
-	"github.com/go-kit/kit/log"
 	checkpoint "github.com/maticnetwork/heimdall/checkpoint/rest"
 	staking "github.com/maticnetwork/heimdall/staking/rest"
 )

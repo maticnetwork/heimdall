@@ -3,15 +3,17 @@ package checkpoint
 import (
 	"encoding/hex"
 	"fmt"
+	"math/big"
+	"strings"
+
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto/sha3"
 	"github.com/ethereum/go-ethereum/rpc"
+	merkle "github.com/xsleonard/go-merkle"
+
 	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
-	merkle "github.com/xsleonard/go-merkle"
-	"math/big"
-	"strings"
 )
 
 func ValidateCheckpoint(start uint64, end uint64, rootHash string) bool {

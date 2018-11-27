@@ -13,7 +13,7 @@ import (
 	cmn "github.com/tendermint/tendermint/libs/common"
 	dbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
-	tmtypes "github.com/tendermint/tendermint/types"
+	tmTypes "github.com/tendermint/tendermint/types"
 
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/common"
@@ -83,31 +83,36 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	return app
 }
 
+// MakeCodec create codec
 func MakeCodec() *codec.Codec {
 	cdc := codec.New()
 
 	codec.RegisterCrypto(cdc)
 	sdk.RegisterCodec(cdc)
+
+	// custom types
 	checkpoint.RegisterWire(cdc)
-	// register custom type
 
 	cdc.Seal()
 	return cdc
 }
 
+// MakePulp creates pulp codec and registers custom types for decoder
 func MakePulp() *hmTypes.Pulp {
 	pulp := hmTypes.GetPulpInstance()
 
-	checkpoint.RegisterPulp(pulp)
 	// register custom type
+	checkpoint.RegisterPulp(pulp)
 
 	return pulp
 }
 
+// BeginBlocker executes before each block
 func (app *HeimdallApp) BeginBlocker(_ sdk.Context, _ abci.RequestBeginBlock) abci.ResponseBeginBlock {
 	return abci.ResponseBeginBlock{}
 }
 
+// EndBlocker executes on each end block
 func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci.ResponseEndBlock {
 	var valUpdates []abci.ValidatorUpdate
 
@@ -128,6 +133,7 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 			// clear ACK cache
 			app.masterKeeper.SetCheckpointAckCache(ctx, common.EmptyBufferValue)
 		}
+
 		// check if checkpoint is present in cache
 		if app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointCacheKey) {
 			// Send Checkpoint to Rootchain
@@ -136,6 +142,7 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 			app.masterKeeper.SetCheckpointCache(ctx, common.EmptyBufferValue)
 		}
 	}
+
 	// send validator updates to peppermint
 	return abci.ResponseEndBlock{
 		ValidatorUpdates: valUpdates,
@@ -143,18 +150,32 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 }
 
 func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
+	var genesisState GenesisState
+	err := app.cdc.UnmarshalJSON(req.AppStateBytes, &genesisState)
+	if err != nil {
+		panic(err)
+	}
+
 	// set ACK count to 0
 	app.masterKeeper.InitACKCount(ctx)
 
-	// todo init validator set from store
-	//app.stakerKeeper.UpdateValidatorSetInStore()
+	// // initialize validator set
+	// newValidatorSet := tmTypes.ValidatorSet{}
+	// // these are tendermint types now
+	// for _, valUpdate := range req.Validators {
+	// 	// add val
+	// 	added := newValidatorSet.Add(valUpdate)
+	// 	if !added {
+	// 		return fmt.Errorf("Failed to add new validator %v", valUpdate)
+	// 	}
+	// }
+	// app.masterKeeper.UpdateValidatorSetInStore(ctx, newValidatorSet)
 
 	return abci.ResponseInitChain{}
 }
 
-func (app *HeimdallApp) ExportAppStateAndValidators() (appState json.RawMessage, validators []tmtypes.GenesisValidator, err error) {
+func (app *HeimdallApp) ExportAppStateAndValidators() (appState json.RawMessage, validators []tmTypes.GenesisValidator, err error) {
 	//ctx := app.NewContext(true, abci.Header{})
-
 	return appState, validators, err
 }
 
@@ -175,17 +196,16 @@ func GetExtraData(_checkpoint hmTypes.CheckpointBlockHeader, ctx sdk.Context) []
 	return txBytes
 }
 
-// todo try to move this to helper
-// prepares all the data required for sending checkpoint and sends tx to rootchain
+// PrepareAndSendCheckpoint prepares all the data required for sending checkpoint and sends tx to rootchain
 func PrepareAndSendCheckpoint(ctx sdk.Context, keeper common.Keeper) {
 	// fetch votes from block header
-	var votes []tmtypes.Vote
+	var votes []tmTypes.Vote
 	err := json.Unmarshal(ctx.BlockHeader().Votes, &votes)
 	if err != nil {
 		logger.Error("Error while unmarshalling vote", "error", err)
 	}
 
-	// todo sort sigs before sending
+	// TODO sort sigs before sending
 	// get sigs from votes
 	sigs := helper.GetSigs(votes)
 
@@ -193,38 +213,37 @@ func PrepareAndSendCheckpoint(ctx sdk.Context, keeper common.Keeper) {
 	_checkpoint, err := keeper.GetCheckpointFromBuffer(ctx)
 	if err != nil {
 		logger.Error("Unable to unmarshall checkpoint from buffer while preparing checkpoint tx", "error", err, "height", ctx.BlockHeight())
-		//panic(err)
 		return
-	} else {
-		// Get extra data
-		extraData := GetExtraData(_checkpoint, ctx)
+	}
 
-		//fetch current child block from rootchain contract
-		lastblock, err := helper.CurrentChildBlock()
-		if err != nil {
-			logger.Error("Could not fetch last block from mainchain", "Error", err)
-			panic(err)
-		}
+	// Get extra data
+	extraData := GetExtraData(_checkpoint, ctx)
 
-		// get validator address
-		validatorAddress := helper.GetPubKey().Address()
+	//fetch current child block from rootchain contract
+	lastblock, err := helper.CurrentChildBlock()
+	if err != nil {
+		logger.Error("Could not fetch last block from mainchain", "Error", err)
+		panic(err)
+	}
 
-		// check if we are proposer
-		if bytes.Equal(keeper.GetCurrentProposerAddress(ctx), validatorAddress.Bytes()) {
-			logger.Info("You are proposer ! Validating if checkpoint needs to be pushed")
+	// get validator address
+	validatorAddress := helper.GetPubKey().Address()
 
-			// check if we need to send checkpoint or not
-			if lastblock == _checkpoint.StartBlock {
-				logger.Info("Sending Valid Checkpoint ...")
-				helper.SendCheckpoint(helper.GetVoteBytes(votes, ctx), sigs, extraData)
-			} else if lastblock > _checkpoint.StartBlock {
-				logger.Info("Start block does not match,checkpoint already sent", "lastBlock", lastblock, "startBlock", _checkpoint.StartBlock)
-			} else {
-				logger.Error("Start Block Ahead of Rootchain header, chains out of sync , time to panic", "lastBlock", lastblock, "startBlock", _checkpoint.StartBlock)
-				panic(fmt.Errorf("Ethereum Chain and Heimdall out of sync :("))
-			}
+	// check if we are proposer
+	if bytes.Equal(keeper.GetCurrentProposerAddress(ctx), validatorAddress.Bytes()) {
+		logger.Info("You are proposer ! Validating if checkpoint needs to be pushed")
+
+		// check if we need to send checkpoint or not
+		if lastblock == _checkpoint.StartBlock {
+			logger.Info("Sending Valid Checkpoint...")
+			helper.SendCheckpoint(helper.GetVoteBytes(votes, ctx), sigs, extraData)
+		} else if lastblock > _checkpoint.StartBlock {
+			logger.Info("Start block does not match,checkpoint already sent", "lastBlock", lastblock, "startBlock", _checkpoint.StartBlock)
 		} else {
-			logger.Info("You are not proposer", "Proposer", keeper.GetValidatorSet(ctx).Proposer.Address.String(), "You", validatorAddress.String())
+			logger.Error("Start Block Ahead of Rootchain header, chains out of sync , time to panic", "lastBlock", lastblock, "startBlock", _checkpoint.StartBlock)
+			panic(fmt.Errorf("Ethereum Chain and Heimdall out of sync :("))
 		}
+	} else {
+		logger.Info("You are not proposer", "Proposer", keeper.GetValidatorSet(ctx).Proposer.Address.String(), "You", validatorAddress.String())
 	}
 }

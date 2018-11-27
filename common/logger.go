@@ -1,8 +1,9 @@
 package common
 
 import (
-	"github.com/maticnetwork/heimdall/helper"
 	tmlog "github.com/tendermint/tendermint/libs/log"
+
+	"github.com/maticnetwork/heimdall/helper"
 )
 
 // CheckpointLogger for checkpoint module logger

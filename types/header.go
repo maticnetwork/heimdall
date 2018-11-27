@@ -2,10 +2,12 @@ package types
 
 import (
 	"fmt"
-	"github.com/ethereum/go-ethereum/common"
 	"time"
+
+	"github.com/ethereum/go-ethereum/common"
 )
 
+// CheckpointBlockHeader block header struct
 type CheckpointBlockHeader struct {
 	Proposer   common.Address
 	StartBlock uint64
@@ -14,6 +16,7 @@ type CheckpointBlockHeader struct {
 	TimeStamp  time.Time
 }
 
+// CreateBlock generate new block
 func CreateBlock(start uint64, end uint64, rootHash common.Hash, proposer common.Address) CheckpointBlockHeader {
 	return CheckpointBlockHeader{
 		StartBlock: start,
@@ -24,16 +27,8 @@ func CreateBlock(start uint64, end uint64, rootHash common.Hash, proposer common
 	}
 }
 
-func GenEmptyCheckpointBlockHeader() CheckpointBlockHeader {
-	return CheckpointBlockHeader{
-		StartBlock: 0,
-		EndBlock:   0,
-	}
-}
-
-// add JSON marshaller and Unmarshaller here
-
-func (m CheckpointBlockHeader) HumanReadableString() string {
+// String returns human redable string
+func (m CheckpointBlockHeader) String() string {
 	resp := "Checkpoint \n"
 
 	resp += fmt.Sprintf("Proposer : %s\n", m.Proposer.String())

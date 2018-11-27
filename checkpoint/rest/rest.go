@@ -4,8 +4,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/gorilla/mux"
-	"github.com/maticnetwork/heimdall/helper"
 	tmLog "github.com/tendermint/tendermint/libs/log"
+
+	"github.com/maticnetwork/heimdall/helper"
 )
 
 // RestLogger for staking module logger

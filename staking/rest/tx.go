@@ -9,6 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gorilla/mux"
+
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
 )

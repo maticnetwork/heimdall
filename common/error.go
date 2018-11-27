@@ -7,10 +7,12 @@ import (
 type CodeType = sdk.CodeType
 
 const (
-	DefaultCodespace      sdk.CodespaceType = 1
-	CodeInvalidBlockinput CodeType          = 1500
-	CodeInvalidACK        CodeType          = 1600
-	CodeNoACK             CodeType          = 1700
+	DefaultCodespace sdk.CodespaceType = 1
+
+	CodeInvalidProposerInput CodeType = 1500
+	CodeInvalidBlockInput    CodeType = 1501
+	CodeInvalidACK           CodeType = 1502
+	CodeNoACK                CodeType = 1503
 
 	CodeOldValidator       CodeType = 2500
 	CodeNoValidator        CodeType = 3500
@@ -22,8 +24,12 @@ const (
 
 // -------- Checkpoint Errors
 
+func ErrBadProposerDetails(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeInvalidProposerInput, "Proposer is not valid")
+}
+
 func ErrBadBlockDetails(codespace sdk.CodespaceType) sdk.Error {
-	return newError(codespace, CodeInvalidBlockinput, "Checkpoint is not valid!")
+	return newError(codespace, CodeInvalidBlockInput, "Checkpoint is not valid")
 }
 
 func ErrBadAck(codespace sdk.CodespaceType) sdk.Error {
@@ -62,7 +68,7 @@ func ErrValidatorAlreadySynced(codespace sdk.CodespaceType) sdk.Error {
 
 func codeToDefaultMsg(code CodeType) string {
 	switch code {
-	case CodeInvalidBlockinput:
+	case CodeInvalidBlockInput:
 		return "Invalid Block Input"
 	default:
 		return sdk.CodeToDefaultMsg(code)
