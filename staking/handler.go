@@ -110,9 +110,9 @@ func handleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k hmcmn.Keepe
 	}
 
 	// create crypto.pubkey from pubkey(string)
-	pubkey, err := helper.StringToPubkey(msg.Pubkey)
+	pubkey, err := helper.StringToPubkey(msg.PubKey)
 	if err != nil {
-		hmcmn.StakingLogger.Error("Invalid Pubkey", "Error", err, "PubkeyString", msg.Pubkey)
+		hmcmn.StakingLogger.Error("Invalid Pubkey", "Error", err, "PubkeyString", msg.PubKey)
 		return hmcmn.ErrValSignerMismatch(k.Codespace).Result()
 	}
 
@@ -123,7 +123,7 @@ func handleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k hmcmn.Keepe
 	}
 
 	// add pubkey generated to validator
-	validator.Pubkey = pubkey
+	validator.PubKey = pubkey
 
 	// add validator to store
 	k.AddValidator(ctx, validator)

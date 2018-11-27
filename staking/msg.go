@@ -18,13 +18,13 @@ var _ sdk.Msg = &MsgValidatorJoin{}
 
 type MsgValidatorJoin struct {
 	ValidatorAddr common.Address `json:"validatorAddr"`
-	Pubkey        string         `json:"pubkey"`
+	PubKey        string         `json:"pubKey"`
 }
 
 func NewMsgValidatorJoin(validatorAddr common.Address, pubkey string) MsgValidatorJoin {
 	return MsgValidatorJoin{
 		ValidatorAddr: validatorAddr,
-		Pubkey:        pubkey,
+		PubKey:        pubkey,
 	}
 }
 

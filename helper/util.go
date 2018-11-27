@@ -53,6 +53,16 @@ func UpdateValidators(currentSet *tmTypes.ValidatorSet, abciUpdates []abci.Valid
 	return nil
 }
 
+// GetPkObjects from crypto priv key
+func GetPkObjects(privKey crypto.PrivKey) (secp256k1.PrivKeySecp256k1, secp256k1.PubKeySecp256k1) {
+	var privObject secp256k1.PrivKeySecp256k1
+	var pubObject secp256k1.PubKeySecp256k1
+	cdc.MustUnmarshalBinaryBare(privKey.Bytes(), &privObject)
+	cdc.MustUnmarshalBinaryBare(privObject.PubKey().Bytes(), &pubObject)
+
+	return privObject, pubObject
+}
+
 // StringToPubkey converts string to Pubkey
 func StringToPubkey(pubkeyStr string) (crypto.PubKey, error) {
 	var pubkeyBytes secp256k1.PubKeySecp256k1

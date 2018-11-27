@@ -229,7 +229,7 @@ func (k *Keeper) AddValidator(ctx sdk.Context, validator types.Validator) {
 	bz := k.cdc.MustMarshalBinary(validator)
 
 	// store validator with address prefixed with validator key as index
-	store.Set(getValidatorKey(validator.Pubkey.Address().Bytes()), bz)
+	store.Set(getValidatorKey(validator.PubKey.Address().Bytes()), bz)
 }
 
 // GetCurrentValidators returns all validators who are in validator set and removes deactivated validators
@@ -289,7 +289,7 @@ func (k *Keeper) GetAllValidators(ctx sdk.Context) (validators []abci.ValidatorU
 		// convert to Validator Update
 		updateVal := abci.ValidatorUpdate{
 			Power:  validator.Power,
-			PubKey: tmTypes.TM2PB.PubKey(validator.Pubkey),
+			PubKey: tmTypes.TM2PB.PubKey(validator.PubKey),
 		}
 
 		// append to list of validatorUpdates
@@ -398,7 +398,7 @@ func (k *Keeper) UpdateSigner(ctx sdk.Context, signer common.Address, pubkey cry
 
 	//update signer
 	validator.Signer = signer
-	validator.Pubkey = pubkey
+	validator.PubKey = pubkey
 
 	// add updated validator to store with same key
 	k.AddValidator(ctx, validator)
@@ -418,7 +418,7 @@ func (k *Keeper) UpdateValidatorSetInStore(ctx sdk.Context, newValidatorSet tmTy
 	store.Set(CurrentValidatorSetKey, bz)
 
 	// increment Accum to select proposer
-	k.IncreamentAccum(ctx, 1)
+	// k.IncreamentAccum(ctx, 1)
 }
 
 // GetValidatorSet returns current Validator Set from store

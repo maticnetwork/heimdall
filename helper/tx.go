@@ -11,11 +11,8 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rlp"
-	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/types"
 )
-
-var cdc = amino.NewCodec()
 
 func GenerateAuthObj(client *ethclient.Client, callMsg ethereum.CallMsg) (auth *bind.TransactOpts, err error) {
 	// get priv key

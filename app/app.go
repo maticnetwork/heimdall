@@ -3,6 +3,7 @@ package app
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
@@ -151,27 +152,41 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 
 func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	var genesisState GenesisState
-	err := app.cdc.UnmarshalJSON(req.AppStateBytes, &genesisState)
+	err := json.Unmarshal(req.AppStateBytes, &genesisState)
 	if err != nil {
 		panic(err)
 	}
 
 	// set ACK count to 0
-	app.masterKeeper.InitACKCount(ctx)
+	// app.masterKeeper.InitACKCount(ctx)
 
-	// // initialize validator set
-	// newValidatorSet := tmTypes.ValidatorSet{}
-	// // these are tendermint types now
-	// for _, valUpdate := range req.Validators {
-	// 	// add val
-	// 	added := newValidatorSet.Add(valUpdate)
-	// 	if !added {
-	// 		return fmt.Errorf("Failed to add new validator %v", valUpdate)
-	// 	}
-	// }
-	// app.masterKeeper.UpdateValidatorSetInStore(ctx, newValidatorSet)
+	// initialize validator set
+	newValidatorSet := tmTypes.ValidatorSet{}
+	validatorUpdates := make([]abci.ValidatorUpdate, 1)
 
-	return abci.ResponseInitChain{}
+	for i, validator := range genesisState.Validators {
+		// add val
+		tmValidator := validator.ToTmValidator()
+		if ok := newValidatorSet.Add(&tmValidator); !ok {
+			panic(errors.New("Error while adding new validator"))
+		} else {
+			// convert to Validator Update
+			updateVal := abci.ValidatorUpdate{
+				Power:  tmValidator.VotingPower,
+				PubKey: tmTypes.TM2PB.PubKey(tmValidator.PubKey),
+			}
+			validatorUpdates[i] = updateVal
+		}
+	}
+	logger.Info("Initial validator set", "size", newValidatorSet.Size(), "validatorUpdates", len(validatorUpdates))
+
+	// update validator set in store
+	app.masterKeeper.UpdateValidatorSetInStore(ctx, newValidatorSet)
+
+	// udpate validators
+	return abci.ResponseInitChain{
+		Validators: validatorUpdates,
+	}
 }
 
 func (app *HeimdallApp) ExportAppStateAndValidators() (appState json.RawMessage, validators []tmTypes.GenesisValidator, err error) {
