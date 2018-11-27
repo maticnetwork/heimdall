@@ -2,7 +2,6 @@ package checkpoint
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
@@ -15,8 +14,8 @@ func RegisterWire(cdc *codec.Codec) {
 }
 
 func RegisterPulp(pulp *hmTypes.Pulp) {
-	pulp.RegisterConcrete(func() sdk.Msg { return &MsgCheckpoint{} })
-	pulp.RegisterConcrete(func() sdk.Msg { return &MsgCheckpointAck{} })
+	pulp.RegisterConcrete(MsgCheckpoint{})
+	pulp.RegisterConcrete(MsgCheckpointAck{})
 }
 
 var cdcEmpty = codec.New()

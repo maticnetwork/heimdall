@@ -17,7 +17,7 @@ const (
 
 // Pulp codec for RLP
 type Pulp struct {
-	typeInfos map[string]func() sdk.Msg
+	typeInfos map[string]reflect.Type
 }
 
 var once sync.Once
@@ -34,7 +34,7 @@ func GetPulpInstance() *Pulp {
 // NewPulp creates new pulp codec
 func NewPulp() *Pulp {
 	p := &Pulp{}
-	p.typeInfos = make(map[string]func() sdk.Msg)
+	p.typeInfos = make(map[string]reflect.Type)
 	return p
 }
 
@@ -45,14 +45,16 @@ func GetPulpHash(name string) []byte {
 
 // RegisterConcrete should be used to register concrete types that will appear in
 // interface fields/elements to be encoded/decoded by pulp.
-func (p *Pulp) RegisterConcrete(val func() sdk.Msg) {
-	name := reflect.TypeOf(val()).String()
-	p.typeInfos[hex.EncodeToString(GetPulpHash(name))] = val
+func (p *Pulp) RegisterConcrete(msg sdk.Msg) {
+	rtype := reflect.TypeOf(msg)
+	name := rtype.String()
+	p.typeInfos[hex.EncodeToString(GetPulpHash(name))] = rtype
 }
 
 // GetMsgTxInstance get new instance associated with base tx
-func (p *Pulp) GetMsgTxInstance(hash []byte) sdk.Msg {
-	return p.typeInfos[hex.EncodeToString(hash[:PulpHashLength])]()
+func (p *Pulp) GetMsgTxInstance(hash []byte) interface{} {
+	rtype := p.typeInfos[hex.EncodeToString(hash[:PulpHashLength])]
+	return reflect.New(rtype).Elem().Interface().(sdk.Msg)
 }
 
 // EncodeToBytes encodes msg to bytes
@@ -63,15 +65,20 @@ func (p *Pulp) EncodeToBytes(msg sdk.Msg) ([]byte, error) {
 		return nil, err
 	}
 
-	return append(GetPulpHash("*"+name), txBytes[:]...), nil
+	return append(GetPulpHash(name), txBytes[:]...), nil
 }
 
 // DecodeBytes decodes bytes to msg
-func (p *Pulp) DecodeBytes(data []byte, msg sdk.Msg) error {
+func (p *Pulp) DecodeBytes(data []byte) (interface{}, error) {
+	rtype := p.typeInfos[hex.EncodeToString(data[:PulpHashLength])]
+	msg := reflect.New(rtype).Interface()
 	err := rlp.DecodeBytes(data[PulpHashLength:], msg)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	// change pointer to non-pointer
+	vptr := reflect.New(reflect.TypeOf(msg).Elem()).Elem()
+	vptr.Set(reflect.ValueOf(msg).Elem())
+	return vptr.Interface(), nil
 }
