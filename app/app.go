@@ -214,7 +214,7 @@ func GetExtraData(_checkpoint hmTypes.CheckpointBlockHeader, ctx sdk.Context) []
 		logger.Error("Error decoding transaction data", "error", err)
 	}
 
-	return txBytes
+	return txBytes[hmTypes.PulpHashLength:]
 }
 
 // PrepareAndSendCheckpoint prepares all the data required for sending checkpoint and sends tx to rootchain

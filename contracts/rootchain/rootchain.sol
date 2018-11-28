@@ -70,12 +70,12 @@ contract RootChain is IRootChain, IManager {
 
   function submitHeaderBlock(bytes vote, bytes sigs, bytes extradata) external {
     RLP.RLPItem[] memory dataList = vote.toRLPItem().toList();
-    // require(keccak256(dataList[0].toData()) == chain, "Chain ID not same");
+    require(keccak256(dataList[0].toData()) == chain, "Chain ID not same");
     require(keccak256(dataList[1].toData()) == roundType, "Round type not same ");
-    // require(dataList[4].toByte() == voteType, "Vote type not same");
+    require(dataList[4].toByte() == voteType, "Vote type not same");
 
     // validate extra data using getSha256(extradata)
-    require(keccak256(dataList[6].toData()) == keccak256(bytes20(sha256(extradata))), "Extra data is invalid");
+    require(keccak256(dataList[5].toData()) == keccak256(bytes20(sha256(extradata))), "Extra data is invalid");
 
     // extract end and assign to current child
     dataList = extradata.toRLPItem().toList();
@@ -118,10 +118,11 @@ contract RootChain is IRootChain, IManager {
     _currentHeaderBlock = _currentHeaderBlock.add(CHILD_BLOCK_INTERVAL);
 
     // finalize commit
-    stakeManager.finalizeCommit();
+    // stakeManager.finalizeCommit();
 
     // TODO add rewards
   }
+  
 
   function setChain(string c) public {
     chain = keccak256(c);
