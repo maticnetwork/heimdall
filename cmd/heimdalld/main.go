@@ -131,8 +131,8 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cob
 			heimdallConf := helper.Configuration{
 				MainRPCUrl:          helper.MainRPCUrl,
 				MaticRPCUrl:         helper.MaticRPCUrl,
-				StakeManagerAddress: ethCommon.Address{},
-				RootchainAddress:    ethCommon.Address{},
+				StakeManagerAddress: (ethCommon.Address{}).Hex(),
+				RootchainAddress:    (ethCommon.Address{}).Hex(),
 				ChildBlockInterval:  10000,
 			}
 

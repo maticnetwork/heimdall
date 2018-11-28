@@ -47,11 +47,11 @@ func init() {
 
 // Configuration represents heimdall config
 type Configuration struct {
-	MainRPCUrl          string         `json:"mainRPCUrl"`
-	MaticRPCUrl         string         `json:"maticRPCUrl"`
-	StakeManagerAddress common.Address `json:"stakeManagerAddress"`
-	RootchainAddress    common.Address `json:"rootchainAddress"`
-	ChildBlockInterval  int            `json:"childBlockInterval"`
+	MainRPCUrl          string `json:"mainRPCUrl"`
+	MaticRPCUrl         string `json:"maticRPCUrl"`
+	StakeManagerAddress string `json:"stakeManagerAddress"`
+	RootchainAddress    string `json:"rootchainAddress"`
+	ChildBlockInterval  int    `json:"childBlockInterval"`
 }
 
 var conf Configuration
@@ -109,11 +109,11 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 	if err != nil { // Handle errors reading the config file
 		log.Fatal(err)
 	}
+
 	if err = heimdallViper.Unmarshal(&conf); err != nil {
 		log.Fatal(err)
 	}
 
-	rpc.Dial(conf.MainRPCUrl)
 	// setup eth client
 	if mainChainClient, err = ethclient.Dial(conf.MainRPCUrl); err != nil {
 		Logger.Error("Error while creating main chain client", "error", err)
@@ -142,11 +142,11 @@ func GetConfig() Configuration {
 //
 
 func GetRootChainAddress() common.Address {
-	return GetConfig().RootchainAddress
+	return common.HexToAddress(GetConfig().RootchainAddress)
 }
 
 func GetRootChainInstance() (*rootchain.Rootchain, error) {
-	rootChainInstance, err := rootchain.NewRootchain(GetConfig().RootchainAddress, mainChainClient)
+	rootChainInstance, err := rootchain.NewRootchain(GetRootChainAddress(), mainChainClient)
 	if err != nil {
 		Logger.Error("Unable to create root chain instance", "error", err)
 	}
@@ -163,11 +163,11 @@ func GetRootChainABI() (abi.ABI, error) {
 //
 
 func GetStakeManagerAddress() common.Address {
-	return GetConfig().StakeManagerAddress
+	return common.HexToAddress(GetConfig().StakeManagerAddress)
 }
 
 func GetStakeManagerInstance() (*stakemanager.Stakemanager, error) {
-	stakeManagerInstance, err := stakemanager.NewStakemanager(GetConfig().StakeManagerAddress, mainChainClient)
+	stakeManagerInstance, err := stakemanager.NewStakemanager(GetStakeManagerAddress(), mainChainClient)
 	if err != nil {
 		Logger.Error("Unable to create stakemanager instance", "error", err)
 	}
