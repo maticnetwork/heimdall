@@ -1,9 +1,10 @@
 package helper
 
 import (
+	"math/big"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/maticnetwork/heimdall/types"
-	"math/big"
 )
 
 //
