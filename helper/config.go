@@ -47,11 +47,11 @@ func init() {
 
 // Configuration represents heimdall config
 type Configuration struct {
-	MainRPCUrl          string `json:"mainRPCUrl"`
-	MaticRPCUrl         string `json:"maticRPCUrl"`
-	StakeManagerAddress string `json:"stakeManagerAddress"`
-	RootchainAddress    string `json:"rootchainAddress"`
-	ChildBlockInterval  int    `json:"childBlockInterval"`
+	MainRPCUrl          string         `json:"mainRPCUrl"`
+	MaticRPCUrl         string         `json:"maticRPCUrl"`
+	StakeManagerAddress common.Address `json:"stakeManagerAddress"`
+	RootchainAddress    common.Address `json:"rootchainAddress"`
+	ChildBlockInterval  int            `json:"childBlockInterval"`
 }
 
 var conf Configuration
@@ -142,11 +142,11 @@ func GetConfig() Configuration {
 //
 
 func GetRootChainAddress() common.Address {
-	return common.HexToAddress(GetConfig().RootchainAddress)
+	return GetConfig().RootchainAddress
 }
 
 func GetRootChainInstance() (*rootchain.Rootchain, error) {
-	rootChainInstance, err := rootchain.NewRootchain(common.HexToAddress(GetConfig().RootchainAddress), mainChainClient)
+	rootChainInstance, err := rootchain.NewRootchain(GetConfig().RootchainAddress, mainChainClient)
 	if err != nil {
 		Logger.Error("Unable to create root chain instance", "error", err)
 	}
@@ -163,11 +163,11 @@ func GetRootChainABI() (abi.ABI, error) {
 //
 
 func GetStakeManagerAddress() common.Address {
-	return common.HexToAddress(GetConfig().StakeManagerAddress)
+	return GetConfig().StakeManagerAddress
 }
 
 func GetStakeManagerInstance() (*stakemanager.Stakemanager, error) {
-	stakeManagerInstance, err := stakemanager.NewStakemanager(common.HexToAddress(GetConfig().StakeManagerAddress), mainChainClient)
+	stakeManagerInstance, err := stakemanager.NewStakemanager(GetConfig().StakeManagerAddress, mainChainClient)
 	if err != nil {
 		Logger.Error("Unable to create stakemanager instance", "error", err)
 	}

@@ -152,6 +152,21 @@ contract RootChain is IRootChain, IManager {
     _createdAt = _headerBlock.createdAt;
   }
   
+  // get flat deposit block
+  function depositBlock(uint256 _depositCount)
+    public
+    view
+    returns
+  (
+    uint256 _header,
+    address _owner,
+    address _token,
+    uint256 _amount,
+    uint256 _createdAt
+  ) {
+
+  }
+  
   // set stake manager
   function setStakeManager(address _stakeManager) public {
     require(_stakeManager != address(0));
@@ -164,5 +179,14 @@ contract RootChain is IRootChain, IManager {
   // slash stakers if fraud is detected
   function slash() public {
     // TODO pass block/proposer
+  }
+  
+  function transferAmount(
+    address _token,
+    address _user,
+    uint256 _amount,
+    bool isWeth
+  ) public returns(bool) {
+      return true;
   }
 }

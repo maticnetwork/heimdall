@@ -65,7 +65,7 @@ func GetValidatorInfo(addr common.Address) (validator types.Validator, err error
 		return
 	}
 
-	amount, startEpoch, endEpoch, signer, _, err := stakeManagerInstance.GetStakerDetails(nil, addr)
+	amount, startEpoch, endEpoch, signer, err := stakeManagerInstance.GetStakerDetails(nil, addr)
 	if err != nil {
 		Logger.Error("Error fetching validator information from stakemanager", "Error", err, "ValidatorAddress", addr)
 		return
