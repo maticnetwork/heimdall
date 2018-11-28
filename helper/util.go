@@ -1,8 +1,10 @@
 package helper
 
 import (
+	"bytes"
 	"encoding/hex"
 	"fmt"
+	"sort"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -77,6 +79,7 @@ func StringToPubkey(pubkeyStr string) (crypto.PubKey, error) {
 	return pubkeyBytes, nil
 }
 
+// CreateTxBytes creates tx bytes from Msg
 func CreateTxBytes(msg sdk.Msg) ([]byte, error) {
 	// tx := hmTypes.NewBaseTx(msg)
 	pulp := hmTypes.GetPulpInstance()
@@ -88,19 +91,26 @@ func CreateTxBytes(msg sdk.Msg) ([]byte, error) {
 	return txBytes, nil
 }
 
+// SendTendermintRequest sends request to tendermint
 func SendTendermintRequest(cliCtx context.CLIContext, txBytes []byte) (*ctypes.ResultBroadcastTxCommit, error) {
 	Logger.Info("Broadcasting tx bytes to Tendermint", "txBytes", hex.EncodeToString(txBytes))
 	return cliCtx.BroadcastTx(txBytes)
 }
 
+// GetSigs returns sigs bytes from vote
 func GetSigs(votes []tmTypes.Vote) (sigs []byte) {
+	sort.Slice(votes, func(i, j int) bool {
+		return bytes.Compare(votes[i].ValidatorAddress.Bytes(), votes[j].ValidatorAddress.Bytes()) < 0
+	})
+
 	// loop votes and append to sig to sigs
 	for _, vote := range votes {
-		sigs = append(sigs[:], vote.Signature[:]...)
+		sigs = append(sigs, vote.Signature...)
 	}
 	return
 }
 
+// GetVoteBytes returns vote bytes
 func GetVoteBytes(votes []tmTypes.Vote, ctx sdk.Context) []byte {
 	// sign bytes for vote
 	return votes[0].SignBytes(ctx.ChainID())
