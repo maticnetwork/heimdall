@@ -50,7 +50,7 @@ func GenerateAuthObj(client *ethclient.Client, callMsg ethereum.CallMsg) (auth *
 	return
 }
 
-// send checkpoint to rootchain contract
+// SendCheckpoint sends checkpoint to rootchain contract
 // todo return err
 func SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte) {
 	var vote types.CanonicalRLPVote
@@ -82,7 +82,7 @@ func SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte) {
 		Data: data,
 	})
 
-	Logger.Info("We are proposer. Sending new checkpoint", "vote", hex.EncodeToString(voteSignBytes), "sigs", hex.EncodeToString(sigs), "txData", hex.EncodeToString(txData))
+	Logger.Info("Sending new checkpoint", "vote", hex.EncodeToString(voteSignBytes), "sigs", hex.EncodeToString(sigs), "txData", hex.EncodeToString(txData))
 
 	tx, err := rootchainInstance.SubmitHeaderBlock(auth, voteSignBytes, sigs, txData)
 	if err != nil {

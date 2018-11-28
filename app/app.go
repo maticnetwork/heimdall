@@ -8,7 +8,6 @@ import (
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/rlp"
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	dbm "github.com/tendermint/tendermint/libs/db"
@@ -203,11 +202,14 @@ func GetExtraData(_checkpoint hmTypes.CheckpointBlockHeader, ctx sdk.Context) []
 	logger.Debug("Creating extra data", "startBlock", _checkpoint.StartBlock, "endBlock", _checkpoint.EndBlock, "roothash", _checkpoint.RootHash)
 
 	// craft a message
-	msg := checkpoint.NewMsgCheckpointBlock(_checkpoint.Proposer, _checkpoint.StartBlock, _checkpoint.EndBlock, _checkpoint.RootHash)
-
-	// decoding transaction
-	tx := hmTypes.NewBaseTx(msg)
-	txBytes, err := rlp.EncodeToBytes(tx)
+	txBytes, err := helper.CreateTxBytes(
+		checkpoint.NewMsgCheckpointBlock(
+			_checkpoint.Proposer,
+			_checkpoint.StartBlock,
+			_checkpoint.EndBlock,
+			_checkpoint.RootHash,
+		),
+	)
 	if err != nil {
 		logger.Error("Error decoding transaction data", "error", err)
 	}

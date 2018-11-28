@@ -70,38 +70,34 @@ contract RootChain is IRootChain, IManager {
 
   function submitHeaderBlock(bytes vote, bytes sigs, bytes extradata) external {
     RLP.RLPItem[] memory dataList = vote.toRLPItem().toList();
-    require(keccak256(dataList[0].toData()) == chain, "Chain ID not same");
+    // require(keccak256(dataList[0].toData()) == chain, "Chain ID not same");
     require(keccak256(dataList[1].toData()) == roundType, "Round type not same ");
-    require(dataList[4].toByte() == voteType, "Vote type not same");
-
-    // check proposer
-    require(msg.sender == dataList[5].toAddress());
+    // require(dataList[4].toByte() == voteType, "Vote type not same");
 
     // validate extra data using getSha256(extradata)
-    require(keccak256(dataList[6].toData()) == keccak256(bytes20(sha256(extradata))));
+    require(keccak256(dataList[6].toData()) == keccak256(bytes20(sha256(extradata))), "Extra data is invalid");
 
     // extract end and assign to current child
-    dataList = extradata.toRLPItem().toList()[0].toList();
-    uint256 start = currentChildBlock();
-    uint256 end = dataList[2].toUint();
-    bytes32 root = dataList[3].toBytes32();
+    dataList = extradata.toRLPItem().toList();
 
+    // fetch start and end
+    uint256 start = currentChildBlock();
     if (start > 0) {
       start = start.add(1);
     }
-
+    uint256 end = dataList[2].toUint();
     // Start on mainchain and matic chain must be same
-    require(start == dataList[1].toUint());
-
+    require(start == dataList[1].toUint(), "Start block doesn't match");
     // Make sure we are adding blocks
-    require(end > start);
-
+    require(end > start, "Not adding blocks");
+    // check proposer
+    require(msg.sender == dataList[0].toAddress(), "Invalid proposer");
     // Make sure enough validators sign off on the proposed header root
-    require(stakeManager.checkSignatures(keccak256(vote), sigs));
+    require(stakeManager.checkSignatures(keccak256(vote), sigs), "Sigs are invalid");
 
     // Add the header root
     HeaderBlock memory headerBlock = HeaderBlock({
-      root: root,
+      root: dataList[3].toBytes32(),
       start: start,
       end: end,
       createdAt: block.timestamp,
@@ -115,7 +111,7 @@ contract RootChain is IRootChain, IManager {
       _currentHeaderBlock,
       headerBlock.start,
       headerBlock.end,
-      root
+      dataList[3].toBytes32()
     );
 
     // update current header block

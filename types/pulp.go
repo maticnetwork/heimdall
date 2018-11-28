@@ -46,7 +46,7 @@ func GetPulpHash(name string) []byte {
 // interface fields/elements to be encoded/decoded by pulp.
 func (p *Pulp) RegisterConcrete(msg sdk.Msg) {
 	rtype := reflect.TypeOf(msg)
-	name := rtype.String()
+	name := msg.Route()
 	p.typeInfos[hex.EncodeToString(GetPulpHash(name))] = rtype
 }
 
@@ -58,7 +58,7 @@ func (p *Pulp) GetMsgTxInstance(hash []byte) interface{} {
 
 // EncodeToBytes encodes msg to bytes
 func (p *Pulp) EncodeToBytes(msg sdk.Msg) ([]byte, error) {
-	name := reflect.TypeOf(msg).String()
+	name := msg.Route()
 	txBytes, err := rlp.EncodeToBytes(msg)
 	if err != nil {
 		return nil, err
