@@ -60,7 +60,7 @@ Create `~/.heimdalld/config/heimdall-config.json` directory with following conte
   "maticRPCUrl": "https://testnet.matic.network",
 
   "stakeManagerAddress": "0x80ba36d3cb159f0f489d844c56b1fc9c9b90600f",
-  "rootchainAddress": "0xb1add49f9456a866e9e10c471901c6c02d2d2281",
+  "rootchainAddress": "0x168ea52f1fafe28d584f94357383d4f6fa8a749a",
   "childBlockInterval": 1000
 }
 ```

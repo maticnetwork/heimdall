@@ -40,6 +40,7 @@ import (
 //	return validators
 //}
 
+// GetHeaderInfo get header info
 func GetHeaderInfo(headerId uint64) (root common.Hash, start uint64, end uint64, err error) {
 	// get rootchain instance
 	rootChainInstance, err := GetRootChainInstance()
@@ -57,6 +58,7 @@ func GetHeaderInfo(headerId uint64) (root common.Hash, start uint64, end uint64,
 	return headerBlock.Root, headerBlock.Start.Uint64(), headerBlock.End.Uint64(), nil
 }
 
+// GetValidatorInfo get validator info
 func GetValidatorInfo(addr common.Address) (validator types.Validator, err error) {
 	// get stakemanager intance
 	stakeManagerInstance, err := GetStakeManagerInstance()
@@ -81,6 +83,7 @@ func GetValidatorInfo(addr common.Address) (validator types.Validator, err error
 	return validator, nil
 }
 
+// CurrentChildBlock fetch current child block
 func CurrentChildBlock() (uint64, error) {
 	rootChainInstance, err := GetRootChainInstance()
 	if err != nil {

@@ -242,7 +242,7 @@ func PrepareAndSendCheckpoint(ctx sdk.Context, keeper common.Keeper) {
 	//fetch current child block from rootchain contract
 	lastblock, err := helper.CurrentChildBlock()
 	if err != nil {
-		logger.Error("Could not fetch last block from mainchain", "Error", err)
+		logger.Error("Could not fetch last block from mainchain", "error", err)
 		panic(err)
 	}
 
@@ -251,19 +251,18 @@ func PrepareAndSendCheckpoint(ctx sdk.Context, keeper common.Keeper) {
 
 	// check if we are proposer
 	if bytes.Equal(keeper.GetCurrentProposerAddress(ctx), validatorAddress.Bytes()) {
-		logger.Info("You are proposer ! Validating if checkpoint needs to be pushed")
+		logger.Info("We are proposer! Validating if checkpoint needs to be pushed", "commitedLastBlock", lastblock, "startBlock", _checkpoint.StartBlock)
 
 		// check if we need to send checkpoint or not
-		if lastblock == _checkpoint.StartBlock {
-			logger.Info("Sending Valid Checkpoint...")
+		if (lastblock + 1) == _checkpoint.StartBlock {
+			logger.Info("Sending valid checkpoint", "startBlock", _checkpoint.StartBlock)
 			helper.SendCheckpoint(helper.GetVoteBytes(votes, ctx), sigs, extraData)
 		} else if lastblock > _checkpoint.StartBlock {
-			logger.Info("Start block does not match,checkpoint already sent", "lastBlock", lastblock, "startBlock", _checkpoint.StartBlock)
-		} else {
-			logger.Error("Start Block Ahead of Rootchain header, chains out of sync , time to panic", "lastBlock", lastblock, "startBlock", _checkpoint.StartBlock)
-			panic(fmt.Errorf("Ethereum Chain and Heimdall out of sync :("))
+			logger.Debug("Start block does not match, checkpoint already sent", "commitedLastBlock", lastblock, "startBlock", _checkpoint.StartBlock)
+		} else if lastblock > _checkpoint.EndBlock {
+			logger.Error("Checkpoint already sent", "commitedLastBlock", lastblock, "startBlock", _checkpoint.StartBlock)
 		}
 	} else {
-		logger.Info("You are not proposer", "Proposer", keeper.GetValidatorSet(ctx).Proposer.Address.String(), "You", validatorAddress.String())
+		logger.Info("We are not proposer", "proposer", keeper.GetValidatorSet(ctx).Proposer.Address.String(), "validator", validatorAddress.String())
 	}
 }

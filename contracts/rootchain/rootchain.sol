@@ -12,7 +12,7 @@ import { StakeManager } from "./StakeManager.sol";
 
 contract IManager {
   // chain identifier
-  bytes32 public constant chain = keccak256("test-chain-E5igIA");
+  bytes32 public chain = keccak256("heimdall-A7lVlP");
   // round type
   bytes32 public constant roundType = keccak256("vote");
   // vote type
@@ -49,6 +49,7 @@ contract RootChain is IRootChain, IManager {
 
   constructor (address _stakeManager) public {
     setStakeManager(_stakeManager);
+    _currentHeaderBlock = CHILD_BLOCK_INTERVAL;
   }
 
   //
@@ -126,6 +127,10 @@ contract RootChain is IRootChain, IManager {
     // TODO add rewards
   }
 
+  function setChain(string c) public {
+    chain = keccak256(c);
+  }
+
   function currentChildBlock() public view returns(uint256) {
     if (_currentHeaderBlock != CHILD_BLOCK_INTERVAL) {
       return headerBlocks[_currentHeaderBlock.sub(CHILD_BLOCK_INTERVAL)].end;
@@ -136,6 +141,21 @@ contract RootChain is IRootChain, IManager {
 
   function currentHeaderBlock() public view returns (uint256) {
     return _currentHeaderBlock;
+  }
+
+  function setFakeHeaderBlock(uint256 start, uint256 end) public {
+      // Add the header root
+    HeaderBlock memory headerBlock = HeaderBlock({
+      root: keccak256(abi.encodePacked(start, end)),
+      start: start,
+      end: end,
+      createdAt: block.timestamp,
+      proposer: msg.sender
+    });
+    headerBlocks[_currentHeaderBlock] = headerBlock;
+
+    // update current header block
+    _currentHeaderBlock = _currentHeaderBlock.add(CHILD_BLOCK_INTERVAL);
   }
 
   function headerBlock(uint256 _headerNumber) public view returns (
@@ -151,22 +171,20 @@ contract RootChain is IRootChain, IManager {
     _end = _headerBlock.end;
     _createdAt = _headerBlock.createdAt;
   }
-  
+
   // get flat deposit block
   function depositBlock(uint256 _depositCount)
-    public
-    view
-    returns
-  (
-    uint256 _header,
-    address _owner,
-    address _token,
-    uint256 _amount,
-    uint256 _createdAt
-  ) {
+      public
+      view
+      returns
+    (
+      uint256 _header,
+      address _owner,
+      address _token,
+      uint256 _amount,
+      uint256 _createdAt
+    ) {}
 
-  }
-  
   // set stake manager
   function setStakeManager(address _stakeManager) public {
     require(_stakeManager != address(0));
@@ -180,7 +198,7 @@ contract RootChain is IRootChain, IManager {
   function slash() public {
     // TODO pass block/proposer
   }
-  
+
   function transferAmount(
     address _token,
     address _user,

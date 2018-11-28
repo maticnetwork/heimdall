@@ -29,12 +29,12 @@ func CreateBlock(start uint64, end uint64, rootHash common.Hash, proposer common
 
 // String returns human redable string
 func (m CheckpointBlockHeader) String() string {
-	resp := "Checkpoint \n"
-
-	resp += fmt.Sprintf("Proposer : %s\n", m.Proposer.String())
-	resp += fmt.Sprintf("StartBlock: %d\n", m.StartBlock)
-	resp += fmt.Sprintf("EndBlock: %d\n", m.EndBlock)
-	resp += fmt.Sprintf("RootHash: %v\n", m.RootHash)
-	resp += fmt.Sprintf("CreationTime: %v", m.TimeStamp.String())
-	return resp
+	return fmt.Sprintf(
+		"CheckpointBlockHeader {%v (%d:%d) %v %v}",
+		m.Proposer.Hex(),
+		m.StartBlock,
+		m.EndBlock,
+		m.RootHash.Hex(),
+		m.TimeStamp.String(),
+	)
 }
