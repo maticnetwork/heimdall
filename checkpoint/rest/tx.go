@@ -56,8 +56,6 @@ func newCheckpointHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			m.RootHash,
 		)
 
-		RestLogger.Error("Unable to create txBytes", "proposer", m.Proposer.Hex(), "endBlock", m.EndBlock, "startBlock", m.StartBlock, "rootHash", m.RootHash.Hex())
-
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {
 			RestLogger.Error("Unable to create txBytes", "proposer", m.Proposer.Hex(), "endBlock", m.EndBlock, "startBlock", m.StartBlock, "rootHash", m.RootHash.Hex())
@@ -86,13 +84,11 @@ func newCheckpointHandler(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 type HeaderACK struct {
-	HeaderIndex uint64 `json:"headerIndex"`
+	HeaderBlock uint64 `json:"headerBlock"`
 }
 
 func NewCheckpointACKHandler(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var m HeaderACK
-
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
@@ -100,19 +96,21 @@ func NewCheckpointACKHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		var m HeaderACK
 		err = json.Unmarshal(body, &m)
 		if err != nil {
-			RestLogger.Error("Error unmarshalling Header ACk", "error", err)
+			RestLogger.Error("Error unmarshalling Header ACK", "error", err)
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
 			return
 		}
 
-		msg := checkpoint.NewMsgCheckpointAck(m.HeaderIndex)
+		// create new msg checkpoint ack
+		msg := checkpoint.NewMsgCheckpointAck(m.HeaderBlock)
 
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {
-			RestLogger.Error("Unable to create txBytes", "Error", err, "HeaderIndex", m.HeaderIndex)
+			RestLogger.Error("Unable to create txBytes", "error", err, "headerBlock", m.HeaderBlock)
 		}
 
 		resp, err := helper.SendTendermintRequest(cliCtx, txBytes)

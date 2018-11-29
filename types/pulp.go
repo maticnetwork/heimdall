@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/hex"
+	"fmt"
 	"reflect"
 	"sync"
 
@@ -46,7 +47,7 @@ func GetPulpHash(name string) []byte {
 // interface fields/elements to be encoded/decoded by pulp.
 func (p *Pulp) RegisterConcrete(msg sdk.Msg) {
 	rtype := reflect.TypeOf(msg)
-	name := msg.Route()
+	name := fmt.Sprintf("%s::%s", msg.Route(), msg.Type())
 	p.typeInfos[hex.EncodeToString(GetPulpHash(name))] = rtype
 }
 
@@ -58,7 +59,7 @@ func (p *Pulp) GetMsgTxInstance(hash []byte) interface{} {
 
 // EncodeToBytes encodes msg to bytes
 func (p *Pulp) EncodeToBytes(msg sdk.Msg) ([]byte, error) {
-	name := msg.Route()
+	name := fmt.Sprintf("%s::%s", msg.Route(), msg.Type())
 	txBytes, err := rlp.EncodeToBytes(msg)
 	if err != nil {
 		return nil, err

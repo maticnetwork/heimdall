@@ -8,11 +8,11 @@ import (
 
 var cdc = codec.New()
 
+const StakingRoute = "staking"
+
 //
 // Validator Join
 //
-
-const ValidatorJoin = "validatorJoin"
 
 var _ sdk.Msg = &MsgValidatorJoin{}
 
@@ -29,10 +29,12 @@ func NewMsgValidatorJoin(Address common.Address, pubKey []byte) MsgValidatorJoin
 }
 
 func (msg MsgValidatorJoin) Type() string {
-	return ValidatorJoin
+	return "validator-join"
 }
 
-func (msg MsgValidatorJoin) Route() string { return ValidatorJoin }
+func (msg MsgValidatorJoin) Route() string {
+	return StakingRoute
+}
 
 func (msg MsgValidatorJoin) GetSigners() []sdk.AccAddress {
 	addrs := make([]sdk.AccAddress, 0)
@@ -56,8 +58,6 @@ func (msg MsgValidatorJoin) ValidateBasic() sdk.Error {
 // validator update
 //
 
-const ValidatorUpdateSigner = "validatorUpdateSigner"
-
 var _ sdk.Msg = &MsgSignerUpdate{}
 
 // MsgSignerUpdate signer update struct
@@ -74,10 +74,12 @@ func NewMsgValidatorUpdate(address common.Address, pubKey []byte) MsgSignerUpdat
 }
 
 func (msg MsgSignerUpdate) Type() string {
-	return ValidatorUpdateSigner
+	return "validator-update"
 }
 
-func (msg MsgSignerUpdate) Route() string { return ValidatorUpdateSigner }
+func (msg MsgSignerUpdate) Route() string {
+	return StakingRoute
+}
 
 func (msg MsgSignerUpdate) GetSigners() []sdk.AccAddress {
 	addrs := make([]sdk.AccAddress, 0)
@@ -101,25 +103,25 @@ func (msg MsgSignerUpdate) ValidateBasic() sdk.Error {
 // validator exit
 //
 
-const ValidatorExit = "validatorExit"
-
 var _ sdk.Msg = &MsgValidatorExit{}
 
 type MsgValidatorExit struct {
-	ValidatorAddr common.Address
+	ValidatorAddress common.Address
 }
 
-func NewMsgValidatorExit(_valAddr common.Address) MsgValidatorExit {
+func NewMsgValidatorExit(address common.Address) MsgValidatorExit {
 	return MsgValidatorExit{
-		ValidatorAddr: _valAddr,
+		ValidatorAddress: address,
 	}
 }
 
 func (msg MsgValidatorExit) Type() string {
-	return ValidatorExit
+	return "validator-exit"
 }
 
-func (msg MsgValidatorExit) Route() string { return ValidatorExit }
+func (msg MsgValidatorExit) Route() string {
+	return StakingRoute
+}
 
 func (msg MsgValidatorExit) GetSigners() []sdk.AccAddress {
 	addrs := make([]sdk.AccAddress, 0)

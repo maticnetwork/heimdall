@@ -8,11 +8,12 @@ import (
 
 var cdc = codec.New()
 
+// CheckpointRoute represents rount in app
+const CheckpointRoute = "checkpoint"
+
 //
 // Checkpoint Msg
 //
-
-const Checkpoint = "checkpoint"
 
 var _ sdk.Msg = &MsgCheckpoint{}
 
@@ -35,10 +36,12 @@ func NewMsgCheckpointBlock(proposer common.Address, startBlock uint64, endBlock 
 
 // Type returns message type
 func (msg MsgCheckpoint) Type() string {
-	return Checkpoint
+	return "checkpoint"
 }
 
-func (msg MsgCheckpoint) Route() string { return Checkpoint }
+func (msg MsgCheckpoint) Route() string {
+	return CheckpointRoute
+}
 
 // GetSigners returns address of the signer
 func (msg MsgCheckpoint) GetSigners() []sdk.AccAddress {
@@ -63,8 +66,6 @@ func (msg MsgCheckpoint) ValidateBasic() sdk.Error {
 // Msg Checkpoint Ack
 //
 
-const CheckpointACK = "checkpointACK"
-
 var _ sdk.Msg = &MsgCheckpointAck{}
 
 type MsgCheckpointAck struct {
@@ -78,10 +79,12 @@ func NewMsgCheckpointAck(headerBlock uint64) MsgCheckpointAck {
 }
 
 func (msg MsgCheckpointAck) Type() string {
-	return CheckpointACK
+	return "checkpoint-ack"
 }
 
-func (msg MsgCheckpointAck) Route() string { return CheckpointACK }
+func (msg MsgCheckpointAck) Route() string {
+	return CheckpointRoute
+}
 
 func (msg MsgCheckpointAck) GetSigners() []sdk.AccAddress {
 	addrs := make([]sdk.AccAddress, 0)

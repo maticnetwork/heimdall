@@ -98,9 +98,9 @@ func handleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k hmcmn.Keeper)
 
 func handleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k hmcmn.Keeper) sdk.Result {
 	// fetch validator from store
-	validator, err := k.GetValidatorInfo(ctx, msg.ValidatorAddr)
+	validator, err := k.GetValidatorInfo(ctx, msg.ValidatorAddress)
 	if err != nil {
-		hmcmn.StakingLogger.Error("Fetching of validator from store failed", "Error", err, "ValidatorAddress", msg.ValidatorAddr)
+		hmcmn.StakingLogger.Error("Fetching of validator from store failed", "error", err, "validatorAddress", msg.ValidatorAddress)
 		return hmcmn.ErrNoValidator(k.Codespace).Result()
 	}
 
@@ -123,7 +123,7 @@ func handleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k hmcmn.Keepe
 	}
 
 	// Add deactivation time for validator
-	k.AddDeactivationEpoch(ctx, msg.ValidatorAddr, validator)
+	k.AddDeactivationEpoch(ctx, msg.ValidatorAddress, validator)
 
 	return sdk.Result{}
 }

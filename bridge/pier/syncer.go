@@ -9,9 +9,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/ethereum/go-ethereum/accounts/abi"
-
+	cliContext "github.com/cosmos/cosmos-sdk/client/context"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethereum "github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	ethCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -20,13 +21,15 @@ import (
 	"github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
 
+	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/staking"
 )
 
-// EventById looks up a event by the topic id
-func EventById(abiObject *abi.ABI, sigdata []byte) *abi.Event {
+// EventByID looks up a event by the topic id
+func EventByID(abiObject *abi.ABI, sigdata []byte) *abi.Event {
 	for _, event := range abiObject.Events {
 		if bytes.Equal(event.Id().Bytes(), sigdata) {
 			return &event
@@ -39,6 +42,14 @@ func logEventParseError(logger log.Logger, name string, err error) {
 	logger.Error("Error while parsing event", "name", name, "error", err)
 }
 
+func logEventTxBytesError(logger log.Logger, name string, err error) {
+	logger.Error("Error while createing tx bytes", "name", name, "error", err)
+}
+
+func logEventBroadcastTxError(logger log.Logger, name string, err error) {
+	logger.Error("Error while broadcasting tx bytes", "name", name, "error", err)
+}
+
 // ChainSyncer syncs validators and checkpoints
 type ChainSyncer struct {
 	// Base service
@@ -46,6 +57,12 @@ type ChainSyncer struct {
 
 	// storage client
 	storageClient *leveldb.DB
+
+	// cli context for tendermint request
+	cliContext cliContext.CLIContext
+
+	// ABIs
+	abis []*abi.ABI
 
 	// Mainchain client
 	MainClient *ethclient.Client
@@ -80,9 +97,19 @@ func NewChainSyncer() *ChainSyncer {
 		panic(err)
 	}
 
+	rootchainABI, _ := helper.GetRootChainABI()
+	stakemanagerABI, _ := helper.GetStakeManagerABI()
+	abis := []*abi.ABI{
+		&rootchainABI,
+		&stakemanagerABI,
+	}
+
 	// creating syncer object
 	syncer := &ChainSyncer{
-		storageClient:        getBridgeDBInstance(viper.GetString(bridgeDBFlag)),
+		storageClient: getBridgeDBInstance(viper.GetString(bridgeDBFlag)),
+		cliContext:    cliContext.NewCLIContext(),
+		abis:          abis,
+
 		MainClient:           helper.GetMainClient(),
 		RootChainInstance:    rootchainInstance,
 		StakeManagerInstance: stakeManagerInstance,
@@ -150,6 +177,7 @@ func (syncer *ChainSyncer) OnStop() {
 	syncer.cancelHeaderProcess()
 }
 
+// StartPolling starts polling
 func (syncer *ChainSyncer) StartPolling(ctx context.Context, pollInterval int) {
 	// How often to fire the passed in function in second
 	interval := time.Duration(pollInterval) * time.Millisecond
@@ -192,7 +220,7 @@ func (syncer *ChainSyncer) StartSubscription(ctx context.Context, subscription e
 }
 
 func (syncer *ChainSyncer) processHeader(newHeader *types.Header) {
-	syncer.Logger.Info("New block detected", "blockNumber", newHeader.Number)
+	syncer.Logger.Debug("New block detected", "blockNumber", newHeader.Number)
 
 	// default fromBlock
 	fromBlock := newHeader.Number.Int64()
@@ -206,7 +234,7 @@ func (syncer *ChainSyncer) processHeader(newHeader *types.Header) {
 			return
 		}
 
-		syncer.Logger.Info("Got last block from bridge storage", "lastBlock", string(lastBlockBytes))
+		syncer.Logger.Debug("Got last block from bridge storage", "lastBlock", string(lastBlockBytes))
 		if result, ierr := strconv.Atoi(string(lastBlockBytes)); ierr == nil {
 			if int64(result) >= newHeader.Number.Int64() {
 				return
@@ -240,13 +268,6 @@ func (syncer *ChainSyncer) processHeader(newHeader *types.Header) {
 		},
 	}
 
-	rootchainABI, _ := helper.GetRootChainABI()
-	stakemanagerABI, _ := helper.GetStakeManagerABI()
-	abis := []*abi.ABI{
-		&rootchainABI,
-		&stakemanagerABI,
-	}
-
 	// get all logs
 	logs, err := syncer.MainClient.FilterLogs(context.Background(), query)
 	if err != nil {
@@ -259,78 +280,109 @@ func (syncer *ChainSyncer) processHeader(newHeader *types.Header) {
 	// log
 	for _, vLog := range logs {
 		topic := vLog.Topics[0].Bytes()
-		for _, abiObject := range abis {
-			selectedEvent := EventById(abiObject, topic)
+		for _, abiObject := range syncer.abis {
+			selectedEvent := EventByID(abiObject, topic)
 			if selectedEvent != nil {
 				switch selectedEvent.Name {
-				// New header block
 				case "NewHeaderBlock":
-					event := new(rootchain.RootchainNewHeaderBlock)
-					if err := UnpackLog(rootchainABI, event, selectedEvent.Name, vLog); err != nil {
-						logEventParseError(syncer.Logger, selectedEvent.Name, err)
-					} else {
-						syncer.Logger.Info(
-							"New event found",
-							"event", selectedEvent.Name,
-							"start", event.Start,
-							"end", event.End,
-							"root", "0x"+hex.EncodeToString(event.Root[:]),
-							"proposer", event.Proposer.Hex(),
-							"headerNumber", event.Number,
-						)
-					}
-
-				// Staked
-				case "Staked":
-					event := new(stakemanager.StakemanagerStaked)
-					if err := UnpackLog(stakemanagerABI, event, selectedEvent.Name, vLog); err != nil {
-						logEventParseError(syncer.Logger, selectedEvent.Name, err)
-					} else {
-						// TOOD validator staked
-						syncer.Logger.Info(
-							"New event found",
-							"event", selectedEvent.Name,
-							"validator", event.User.Hex(),
-							"signer", event.Signer.Hex(),
-							"activatonEpoch", event.ActivatonEpoch,
-							"amount", event.Amount,
-						)
-					}
-
-				// UnstakeInit
+					syncer.processCheckpointEvent(selectedEvent.Name, abiObject, &vLog)
+				// case "Staked":
+				// 	syncer.processStakedEvent(selectedEvent.Name, abiObject, &vLog)
 				case "UnstakeInit":
-					event := new(stakemanager.StakemanagerUnstakeInit)
-					if err := UnpackLog(stakemanagerABI, event, selectedEvent.Name, vLog); err != nil {
-						logEventParseError(syncer.Logger, selectedEvent.Name, err)
-					} else {
-						// TOOD validator staked
-						syncer.Logger.Info(
-							"New event found",
-							"event", selectedEvent.Name,
-							"validator", event.User.Hex(),
-							"deactivatonEpoch", event.DeactivationEpoch,
-							"amount", event.Amount,
-						)
-					}
-
-				// SignerChange
-				case "SignerChange":
-					event := new(stakemanager.StakemanagerSignerChange)
-					if err := UnpackLog(stakemanagerABI, event, selectedEvent.Name, vLog); err != nil {
-						logEventParseError(syncer.Logger, selectedEvent.Name, err)
-					} else {
-						// TOOD validator signer changed
-						// TOOD validator staked
-						syncer.Logger.Info(
-							"New event found",
-							"event", selectedEvent.Name,
-							"validator", event.Validator.Hex(),
-							"newSigner", event.NewSigner.Hex(),
-							"oldSigner", event.OldSigner.Hex(),
-						)
-					}
+					syncer.processUnstakeInitEvent(selectedEvent.Name, abiObject, &vLog)
+					// case "SignerChange":
+					// 	syncer.processSignerChangeEvent(selectedEvent.Name, abiObject, &vLog)
 				}
 			}
 		}
+	}
+}
+
+func (syncer *ChainSyncer) sendTx(eventName string, msg sdk.Msg) {
+	txBytes, err := helper.CreateTxBytes(msg)
+	if err != nil {
+		logEventTxBytesError(syncer.Logger, eventName, err)
+		return
+	}
+
+	// send tendermint request
+	_, err = helper.SendTendermintRequest(syncer.cliContext, txBytes)
+	if err != nil {
+		logEventBroadcastTxError(syncer.Logger, eventName, err)
+		return
+	}
+}
+
+func (syncer *ChainSyncer) processCheckpointEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
+	event := new(rootchain.RootchainNewHeaderBlock)
+	if err := UnpackLog(abiObject, event, eventName, vLog); err != nil {
+		logEventParseError(syncer.Logger, eventName, err)
+	} else {
+		syncer.Logger.Info(
+			"New event found",
+			"event", eventName,
+			"start", event.Start,
+			"end", event.End,
+			"root", "0x"+hex.EncodeToString(event.Root[:]),
+			"proposer", event.Proposer.Hex(),
+			"headerNumber", event.Number,
+		)
+
+		// create msg checkpoint ack message
+		msg := checkpoint.NewMsgCheckpointAck(event.Number.Uint64())
+		syncer.sendTx(eventName, msg)
+	}
+}
+
+func (syncer *ChainSyncer) processStakedEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
+	event := new(stakemanager.StakemanagerStaked)
+	if err := UnpackLog(abiObject, event, eventName, vLog); err != nil {
+		logEventParseError(syncer.Logger, eventName, err)
+	} else {
+		// TOOD validator staked
+		syncer.Logger.Debug(
+			"New event found",
+			"event", eventName,
+			"validator", event.User.Hex(),
+			"signer", event.Signer.Hex(),
+			"activatonEpoch", event.ActivatonEpoch,
+			"amount", event.Amount,
+		)
+	}
+}
+
+func (syncer *ChainSyncer) processUnstakeInitEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
+	event := new(stakemanager.StakemanagerUnstakeInit)
+	if err := UnpackLog(abiObject, event, eventName, vLog); err != nil {
+		logEventParseError(syncer.Logger, eventName, err)
+	} else {
+		// TOOD validator staked
+		syncer.Logger.Debug(
+			"New event found",
+			"event", eventName,
+			"validator", event.User.Hex(),
+			"deactivatonEpoch", event.DeactivationEpoch,
+			"amount", event.Amount,
+		)
+
+		// send validator exit message
+		msg := staking.NewMsgValidatorExit(event.User)
+		syncer.sendTx(eventName, msg)
+	}
+}
+
+func (syncer *ChainSyncer) processSignerChangeEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
+	event := new(stakemanager.StakemanagerSignerChange)
+	if err := UnpackLog(abiObject, event, eventName, vLog); err != nil {
+		logEventParseError(syncer.Logger, eventName, err)
+	} else {
+		// TOOD validator signer changed
+		syncer.Logger.Debug(
+			"New event found",
+			"event", eventName,
+			"validator", event.Validator.Hex(),
+			"newSigner", event.NewSigner.Hex(),
+			"oldSigner", event.OldSigner.Hex(),
+		)
 	}
 }
