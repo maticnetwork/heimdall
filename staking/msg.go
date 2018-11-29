@@ -17,14 +17,14 @@ const ValidatorJoin = "validatorJoin"
 var _ sdk.Msg = &MsgValidatorJoin{}
 
 type MsgValidatorJoin struct {
-	ValidatorAddr common.Address `json:"validatorAddr"`
-	PubKey        string         `json:"pubKey"`
+	ValidatorAddress common.Address `json:"address"`
+	ValidatorPubKey  []byte         `json:"pubKey"`
 }
 
-func NewMsgValidatorJoin(validatorAddr common.Address, pubkey string) MsgValidatorJoin {
+func NewMsgValidatorJoin(Address common.Address, pubKey []byte) MsgValidatorJoin {
 	return MsgValidatorJoin{
-		ValidatorAddr: validatorAddr,
-		PubKey:        pubkey,
+		ValidatorAddress: Address,
+		ValidatorPubKey:  pubKey,
 	}
 }
 
@@ -60,15 +60,16 @@ const ValidatorUpdateSigner = "validatorUpdateSigner"
 
 var _ sdk.Msg = &MsgSignerUpdate{}
 
+// MsgSignerUpdate signer update struct
 type MsgSignerUpdate struct {
-	CurrentValAddress common.Address
-	NewValPubkey      string
+	ValidatorAddress   common.Address `json:"address"`
+	NewValidatorPubKey []byte         `json:"pubKey"`
 }
 
-func NewMsgValidatorUpdate(currentValAddres common.Address, newValPubkey string) MsgSignerUpdate {
+func NewMsgValidatorUpdate(address common.Address, pubKey []byte) MsgSignerUpdate {
 	return MsgSignerUpdate{
-		CurrentValAddress: currentValAddres,
-		NewValPubkey:      newValPubkey,
+		ValidatorAddress:   address,
+		NewValidatorPubKey: pubKey,
 	}
 }
 
@@ -93,7 +94,6 @@ func (msg MsgSignerUpdate) GetSignBytes() []byte {
 
 func (msg MsgSignerUpdate) ValidateBasic() sdk.Error {
 	// add length checks
-
 	return nil
 }
 
@@ -135,6 +135,5 @@ func (msg MsgValidatorExit) GetSignBytes() []byte {
 }
 
 func (msg MsgValidatorExit) ValidateBasic() sdk.Error {
-
 	return nil
 }

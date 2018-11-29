@@ -5,9 +5,10 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	tmTypes "github.com/tendermint/tendermint/types"
+
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 // GenesisAccount genesis account
@@ -18,33 +19,13 @@ type GenesisAccount struct {
 	AccountNumber int64          `json:"account_number"`
 }
 
-// GenesisPubKey pubkey
-type GenesisPubKey [65]byte
-
-// NewGenesisPubKey from byte array
-func NewGenesisPubKey(data []byte) GenesisPubKey {
-	var key GenesisPubKey
-	copy(key[:], data[:])
-	return key
-}
-
-// MarshalText returns the hex representation of a.
-func (a GenesisPubKey) MarshalText() ([]byte, error) {
-	return hexutil.Bytes(a[:]).MarshalText()
-}
-
-// UnmarshalText parses a hash in hex syntax.
-func (a *GenesisPubKey) UnmarshalText(input []byte) error {
-	return hexutil.UnmarshalFixedText("GenesisPubKey", input, a[:])
-}
-
 // GenesisValidator genesis validator
 type GenesisValidator struct {
 	Address    common.Address `json:"address"`
 	StartEpoch int64          `json:"start_epoch"`
 	EndEpoch   int64          `json:"end_epoch"`
 	Power      int64          `json:"power"` // aka Amount
-	PubKey     GenesisPubKey  `json:"pub_key"`
+	PubKey     hmTypes.PubKey `json:"pub_key"`
 	Signer     common.Address `json:"signer"`
 }
 

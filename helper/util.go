@@ -79,6 +79,13 @@ func StringToPubkey(pubkeyStr string) (crypto.PubKey, error) {
 	return pubkeyBytes, nil
 }
 
+// BytesToPubkey converts bytes to Pubkey
+func BytesToPubkey(pubKey []byte) crypto.PubKey {
+	var pubkeyBytes secp256k1.PubKeySecp256k1
+	copy(pubkeyBytes[:], pubKey)
+	return pubkeyBytes
+}
+
 // CreateTxBytes creates tx bytes from Msg
 func CreateTxBytes(msg sdk.Msg) ([]byte, error) {
 	// tx := hmTypes.NewBaseTx(msg)

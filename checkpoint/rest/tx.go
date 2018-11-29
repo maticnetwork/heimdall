@@ -22,11 +22,12 @@ func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec
 	r.HandleFunc("/checkpoint/ack", NewCheckpointACKHandler(cliCtx)).Methods("POST")
 }
 
+// HeaderBlock struct for incoming checkpoint
 type HeaderBlock struct {
-	Proposer   string `json:"proposer"`
-	RootHash   string `json:"rootHash"`
-	StartBlock uint64 `json:"startBlock"`
-	EndBlock   uint64 `json:"endBlock"`
+	Proposer   common.Address `json:"proposer"`
+	RootHash   common.Hash    `json:"rootHash"`
+	StartBlock uint64         `json:"startBlock"`
+	EndBlock   uint64         `json:"endBlock"`
 }
 
 func newCheckpointHandler(cliCtx context.CLIContext) http.HandlerFunc {
@@ -49,15 +50,17 @@ func newCheckpointHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		msg := checkpoint.NewMsgCheckpointBlock(
-			common.HexToAddress(m.Proposer),
+			m.Proposer,
 			m.StartBlock,
 			m.EndBlock,
-			common.HexToHash(m.RootHash),
+			m.RootHash,
 		)
+
+		RestLogger.Error("Unable to create txBytes", "proposer", m.Proposer.Hex(), "endBlock", m.EndBlock, "startBlock", m.StartBlock, "rootHash", m.RootHash.Hex())
 
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {
-			RestLogger.Error("Unable to create txBytes", "endBlock", m.EndBlock, "startBlock", m.StartBlock, "rootHash", m.RootHash)
+			RestLogger.Error("Unable to create txBytes", "proposer", m.Proposer.Hex(), "endBlock", m.EndBlock, "startBlock", m.StartBlock, "rootHash", m.RootHash.Hex())
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
 			return

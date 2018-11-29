@@ -27,6 +27,7 @@ import (
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/helper"
 	hmserver "github.com/maticnetwork/heimdall/server"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 // ValidatorAccountFormatter helps to print local validator account information
@@ -166,7 +167,7 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cob
 			_, pubKey := helper.GetPkObjects(pval.PrivKey)
 			validator := app.GenesisValidator{
 				Address:    ethCommon.BytesToAddress(pval.Address),
-				PubKey:     app.NewGenesisPubKey(pubKey[:]),
+				PubKey:     hmTypes.NewPubKey(pubKey[:]),
 				StartEpoch: 0,
 				Signer:     ethCommon.BytesToAddress(pval.Address),
 				Power:      10,
