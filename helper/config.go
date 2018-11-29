@@ -51,7 +51,7 @@ type Configuration struct {
 	MaticRPCUrl         string `json:"maticRPCUrl"`
 	StakeManagerAddress string `json:"stakeManagerAddress"`
 	RootchainAddress    string `json:"rootchainAddress"`
-	ChildBlockInterval  int    `json:"childBlockInterval"`
+	ChildBlockInterval  uint64 `json:"childBlockInterval"`
 }
 
 var conf Configuration

@@ -74,9 +74,9 @@ func GetValidatorInfo(addr common.Address) (validator types.Validator, err error
 	}
 	validator = types.Validator{
 		Address:    addr,
-		Power:      amount.Int64(),
-		StartEpoch: startEpoch.Int64(),
-		EndEpoch:   endEpoch.Int64(),
+		Power:      amount.Uint64(),
+		StartEpoch: startEpoch.Uint64(),
+		EndEpoch:   endEpoch.Uint64(),
 		Signer:     signer,
 	}
 

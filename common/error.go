@@ -15,11 +15,13 @@ const (
 	CodeNoACK                CodeType = 1503
 
 	CodeOldValidator       CodeType = 2500
-	CodeNoValidator        CodeType = 3500
-	CodeValSignerMismatch  CodeType = 4500
-	CodeValidatorExitDeny  CodeType = 5500
-	CodeValAlreadyUnbonded CodeType = 6500
-	CodeSignerSynced       CodeType = 7500
+	CodeNoValidator        CodeType = 2501
+	CodeValSignerMismatch  CodeType = 2502
+	CodeValidatorExitDeny  CodeType = 2503
+	CodeValAlreadyUnbonded CodeType = 2504
+	CodeSignerSynced       CodeType = 2505
+	CodeValSave            CodeType = 2506
+	CodeValAlreadyJoined   CodeType = 2507
 )
 
 // -------- Checkpoint Errors
@@ -64,6 +66,14 @@ func ErrValUnbonded(codespace sdk.CodespaceType) sdk.Error {
 
 func ErrValidatorAlreadySynced(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeSignerSynced, "No signer update found, invalid message")
+}
+
+func ErrValidatorSave(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeValSave, "Cannot save validator")
+}
+
+func ErrValidatorAlreadyJoined(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeValAlreadyJoined, "Validator already joined")
 }
 
 func codeToDefaultMsg(code CodeType) string {

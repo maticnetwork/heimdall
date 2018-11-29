@@ -14,22 +14,22 @@ var _ crypto.PubKey = secp256k1.PubKeySecp256k1{}
 // Validator heimdall validator
 type Validator struct {
 	Address    common.Address
-	StartEpoch int64
-	EndEpoch   int64
-	Power      int64 // aka Amount
+	StartEpoch uint64
+	EndEpoch   uint64
+	Power      uint64 // aka Amount
 	PubKey     crypto.PubKey
 	Signer     common.Address
 }
 
 // IsCurrentValidator checks if validator is in current validator set
-func (v *Validator) IsCurrentValidator(ackCount int) bool {
+func (v *Validator) IsCurrentValidator(ackCount uint64) bool {
 	// validator hasnt initialised unstake
-	if v.StartEpoch >= int64(ackCount) && v.EndEpoch == int64(0) {
+	if v.StartEpoch >= ackCount && v.EndEpoch == 0 {
 		return true
 	}
 
 	// validator has initialised unstake but is unbonding period
-	if v.StartEpoch >= int64(ackCount) && v.EndEpoch <= int64(ackCount) {
+	if v.StartEpoch >= ackCount && v.EndEpoch <= ackCount {
 		return true
 	}
 
@@ -54,7 +54,7 @@ func (v *Validator) ToTmValidator() types.Validator {
 	return types.Validator{
 		Address:     v.Signer.Bytes(),
 		PubKey:      v.PubKey,
-		VotingPower: v.Power,
+		VotingPower: int64(v.Power),
 	}
 }
 

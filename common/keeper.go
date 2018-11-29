@@ -133,8 +133,8 @@ func (k *Keeper) GetLastCheckpoint(ctx sdk.Context) (types.CheckpointBlockHeader
 }
 
 // GetHeaderKey appends prefix to headerNumber
-func GetHeaderKey(headerNumber int) []byte {
-	headerNumberBytes := strconv.Itoa(headerNumber)
+func GetHeaderKey(headerNumber uint64) []byte {
+	headerNumberBytes := strconv.FormatUint(headerNumber, 10)
 	return append(HeaderBlockKey, headerNumberBytes...)
 }
 
@@ -185,14 +185,14 @@ func (k *Keeper) UpdateACKCount(ctx sdk.Context) {
 	ACKCount := k.GetACKCount(ctx)
 
 	// increment by 1
-	ACKs := []byte(strconv.Itoa(ACKCount + 1))
+	ACKs := []byte(strconv.FormatUint(ACKCount+1, 10))
 
 	// update
 	store.Set(ACKCountKey, ACKs)
 }
 
 // GetACKCount returns current ACK count
-func (k *Keeper) GetACKCount(ctx sdk.Context) int {
+func (k *Keeper) GetACKCount(ctx sdk.Context) uint64 {
 	store := ctx.KVStore(k.CheckpointKey)
 	// check if ack count is there
 	if store.Has(ACKCountKey) {
@@ -201,7 +201,7 @@ func (k *Keeper) GetACKCount(ctx sdk.Context) int {
 		if err != nil {
 			CheckpointLogger.Error("Unable to convert key to int")
 		} else {
-			return ackCount
+			return uint64(ackCount)
 		}
 	}
 
@@ -226,14 +226,33 @@ func getValidatorKey(address []byte) []byte {
 }
 
 // AddValidator adds validator indexed with address
-func (k *Keeper) AddValidator(ctx sdk.Context, validator types.Validator) {
+func (k *Keeper) AddValidator(ctx sdk.Context, validator types.Validator) error {
 	store := ctx.KVStore(k.StakingKey)
 
 	// marshall validator
-	bz := k.cdc.MustMarshalBinary(validator)
+	bz, err := k.cdc.MarshalBinary(validator)
+	if err != nil {
+		return err
+	}
 
 	// store validator with address prefixed with validator key as index
-	store.Set(getValidatorKey(validator.PubKey.Address().Bytes()), bz)
+	store.Set(getValidatorKey(validator.Address.Bytes()), bz)
+
+	return nil
+}
+
+// GetValidator returns validator
+func (k *Keeper) GetValidator(ctx sdk.Context, address []byte, validator *types.Validator) error {
+	store := ctx.KVStore(k.StakingKey)
+
+	// store validator with address prefixed with validator key as index
+	key := getValidatorKey(address)
+	if !store.Has(key) {
+		return errors.New("Validator not found")
+	}
+
+	// unmarshall validator and return
+	return k.cdc.UnmarshalBinary(store.Get(key), validator)
 }
 
 // GetCurrentValidators returns all validators who are in validator set and removes deactivated validators
@@ -292,7 +311,7 @@ func (k *Keeper) GetAllValidators(ctx sdk.Context) (validators []abci.ValidatorU
 
 		// convert to Validator Update
 		updateVal := abci.ValidatorUpdate{
-			Power:  validator.Power,
+			Power:  int64(validator.Power),
 			PubKey: tmTypes.TM2PB.PubKey(validator.PubKey),
 		}
 
@@ -326,7 +345,7 @@ func (k *Keeper) RemoveDeactivatedValidators(ctx sdk.Context) {
 		k.cdc.MustUnmarshalBinary(iterator.Value(), &validator)
 
 		// if you encounter a deactivated validator make power 0
-		if validator.EndEpoch != 0 && validator.EndEpoch > int64(ACKs) && validator.Power != 0 {
+		if validator.EndEpoch != 0 && validator.EndEpoch > ACKs && validator.Power != 0 {
 			validator.Power = 0
 
 			// update validator in validator list

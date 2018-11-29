@@ -20,13 +20,15 @@ func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec
 		"/staking/validators",
 		newValdatorJoinHandler(cliCtx),
 	).Methods("POST")
-	r.HandleFunc("/staking/validators", newValidatorExitHandler(cliCtx)).Methods("DELETE")
 	r.HandleFunc("/staking/validators", newValidatorUpdateHandler(cliCtx)).Methods("PUT")
+	r.HandleFunc("/staking/validators", newValidatorExitHandler(cliCtx)).Methods("DELETE")
 }
 
 type addValidator struct {
 	ValidatorAddress common.Address `json:"address"`
 	ValidatorPubKey  hmType.PubKey  `json:"pubKey"`
+	Amount           uint64         `json:"amount"`
+	StartEpoch       uint64         `json:"startEpoch"`
 }
 
 func newValdatorJoinHandler(cliCtx context.CLIContext) http.HandlerFunc {
@@ -48,7 +50,7 @@ func newValdatorJoinHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		msg := staking.NewMsgValidatorJoin(m.ValidatorAddress, m.ValidatorPubKey[:])
+		msg := staking.NewMsgValidatorJoin(m.ValidatorAddress, m.ValidatorPubKey[:], m.Amount, m.StartEpoch)
 
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {
@@ -73,6 +75,7 @@ func newValdatorJoinHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			w.Write([]byte(err.Error()))
 			return
 		}
+
 		w.Write(result)
 	}
 }
@@ -132,6 +135,7 @@ func newValidatorExitHandler(cliCtx context.CLIContext) http.HandlerFunc {
 type updateValidator struct {
 	ValidatorAddress   common.Address `json:"address"`
 	NewValidatorPubKey hmType.PubKey  `json:"newPubKey"`
+	EndEpoch           uint64         `json:"endEpoch"`
 }
 
 func newValidatorUpdateHandler(cliCtx context.CLIContext) http.HandlerFunc {
@@ -153,7 +157,7 @@ func newValidatorUpdateHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		msg := staking.NewMsgValidatorUpdate(m.ValidatorAddress, m.NewValidatorPubKey[:])
+		msg := staking.NewMsgValidatorUpdate(m.ValidatorAddress, m.NewValidatorPubKey[:], m.EndEpoch)
 
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {

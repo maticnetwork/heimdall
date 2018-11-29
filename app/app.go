@@ -91,6 +91,7 @@ func MakeCodec() *codec.Codec {
 
 	// custom types
 	checkpoint.RegisterWire(cdc)
+	staking.RegisterWire(cdc)
 
 	cdc.Seal()
 	return cdc
@@ -102,6 +103,7 @@ func MakePulp() *hmTypes.Pulp {
 
 	// register custom type
 	checkpoint.RegisterPulp(pulp)
+	staking.RegisterPulp(pulp)
 
 	return pulp
 }
