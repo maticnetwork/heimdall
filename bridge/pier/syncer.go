@@ -3,6 +3,7 @@ package pier
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"math/big"
 	"os"
 	"strconv"
@@ -251,6 +252,8 @@ func (syncer *ChainSyncer) processHeader(newHeader *types.Header) {
 	if err != nil {
 		syncer.Logger.Error("Error while filtering logs from syncer", "error", err)
 		return
+	} else if len(logs) > 0 {
+		syncer.Logger.Debug("New logs found", "numberOfLogs", len(logs))
 	}
 
 	// log
@@ -263,37 +266,68 @@ func (syncer *ChainSyncer) processHeader(newHeader *types.Header) {
 				// New header block
 				case "NewHeaderBlock":
 					event := new(rootchain.RootchainNewHeaderBlock)
-					if err := rootchainABI.Unpack(event, selectedEvent.Name, vLog.Data); err != nil {
+					if err := UnpackLog(rootchainABI, event, selectedEvent.Name, vLog); err != nil {
 						logEventParseError(syncer.Logger, selectedEvent.Name, err)
 					} else {
-						// TOOD new header block
+						syncer.Logger.Info(
+							"New event found",
+							"event", selectedEvent.Name,
+							"start", event.Start,
+							"end", event.End,
+							"root", "0x"+hex.EncodeToString(event.Root[:]),
+							"proposer", event.Proposer.Hex(),
+							"headerNumber", event.Number,
+						)
 					}
 
 				// Staked
 				case "Staked":
 					event := new(stakemanager.StakemanagerStaked)
-					if err := stakemanagerABI.Unpack(event, selectedEvent.Name, vLog.Data); err != nil {
+					if err := UnpackLog(stakemanagerABI, event, selectedEvent.Name, vLog); err != nil {
 						logEventParseError(syncer.Logger, selectedEvent.Name, err)
 					} else {
 						// TOOD validator staked
+						syncer.Logger.Info(
+							"New event found",
+							"event", selectedEvent.Name,
+							"validator", event.User.Hex(),
+							"signer", event.Signer.Hex(),
+							"activatonEpoch", event.ActivatonEpoch,
+							"amount", event.Amount,
+						)
 					}
 
 				// UnstakeInit
 				case "UnstakeInit":
 					event := new(stakemanager.StakemanagerUnstakeInit)
-					if err := stakemanagerABI.Unpack(event, selectedEvent.Name, vLog.Data); err != nil {
+					if err := UnpackLog(stakemanagerABI, event, selectedEvent.Name, vLog); err != nil {
 						logEventParseError(syncer.Logger, selectedEvent.Name, err)
 					} else {
-						// TOOD validator unstaked initialize
+						// TOOD validator staked
+						syncer.Logger.Info(
+							"New event found",
+							"event", selectedEvent.Name,
+							"validator", event.User.Hex(),
+							"deactivatonEpoch", event.DeactivationEpoch,
+							"amount", event.Amount,
+						)
 					}
 
 				// SignerChange
 				case "SignerChange":
 					event := new(stakemanager.StakemanagerSignerChange)
-					if err := stakemanagerABI.Unpack(event, selectedEvent.Name, vLog.Data); err != nil {
+					if err := UnpackLog(stakemanagerABI, event, selectedEvent.Name, vLog); err != nil {
 						logEventParseError(syncer.Logger, selectedEvent.Name, err)
 					} else {
 						// TOOD validator signer changed
+						// TOOD validator staked
+						syncer.Logger.Info(
+							"New event found",
+							"event", selectedEvent.Name,
+							"validator", event.Validator.Hex(),
+							"newSigner", event.NewSigner.Hex(),
+							"oldSigner", event.OldSigner.Hex(),
+						)
 					}
 				}
 			}
