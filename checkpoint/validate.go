@@ -1,11 +1,12 @@
 package checkpoint
 
 import (
-	"encoding/hex"
+	"bytes"
+	"errors"
 	"fmt"
 	"math/big"
-	"strings"
 
+	ethCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto/sha3"
@@ -16,9 +17,13 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 )
 
-func ValidateCheckpoint(start uint64, end uint64, rootHash string) bool {
-	root := "0x" + GetHeaders(start, end)
-	if strings.Compare(root, rootHash) == 0 {
+func ValidateCheckpoint(start uint64, end uint64, rootHash ethCommon.Hash) bool {
+	root, err := GetHeaders(start, end)
+	if err != nil {
+		return false
+	}
+
+	if bytes.Equal(root, rootHash[:]) {
 		common.CheckpointLogger.Info("RootHash matched!")
 		return true
 	}
@@ -27,12 +32,12 @@ func ValidateCheckpoint(start uint64, end uint64, rootHash string) bool {
 	return false
 }
 
-func GetHeaders(start uint64, end uint64) string {
+func GetHeaders(start uint64, end uint64) ([]byte, error) {
 	// client := helper.GetMaticClient()
 	rpcClient := helper.GetMaticRPCClient()
 
 	if start > end {
-		return ""
+		return nil, errors.New("start is greater than end")
 	}
 
 	batchElements := make([]rpc.BatchElem, end-start+1)
@@ -53,7 +58,7 @@ func GetHeaders(start uint64, end uint64) string {
 	err := rpcClient.BatchCall(batchElements)
 	if err != nil {
 		common.CheckpointLogger.Error("Error while executing getHeaders batch call", "error", err)
-		return ""
+		return nil, err
 	}
 
 	// Fetch result and draft header and add into tree
@@ -62,7 +67,7 @@ func GetHeaders(start uint64, end uint64) string {
 	for i, batchElement := range batchElements {
 		if batchElement.Error != nil {
 			common.CheckpointLogger.Error("Error while fetching header", "current", uint64(i)+start, "error", batchElement.Error)
-			return ""
+			return nil, batchElement.Error
 		}
 
 		blockHeader := batchElement.Result.(*types.Header)
@@ -83,10 +88,10 @@ func GetHeaders(start uint64, end uint64) string {
 	tree := merkle.NewTreeWithOpts(merkle.TreeOptions{EnableHashSorting: false, DisableHashLeaves: true})
 	if err := tree.Generate(convert(headers), sha3.NewKeccak256()); err != nil {
 		common.CheckpointLogger.Error("Error generating merkle tree", "error", err)
-		return ""
+		return nil, err
 	}
 
-	return hex.EncodeToString(tree.Root().Hash)
+	return tree.Root().Hash, nil
 }
 
 func convert(input []([32]byte)) [][]byte {

@@ -87,7 +87,7 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 
 func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper) sdk.Result {
 	// validate checkpoint
-	if !ValidateCheckpoint(msg.StartBlock, msg.EndBlock, msg.RootHash.String()) {
+	if !ValidateCheckpoint(msg.StartBlock, msg.EndBlock, msg.RootHash) {
 		common.CheckpointLogger.Error("RootHash is not valid", "StartBlock", msg.StartBlock, "EndBlock", msg.EndBlock, "RootHash", msg.RootHash)
 		return common.ErrBadBlockDetails(k.Codespace).Result()
 	}
@@ -116,7 +116,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper) sd
 	})
 	common.CheckpointLogger.Debug("Checkpoint added in buffer!", "roothash", msg.RootHash, "startBlock", msg.StartBlock, "endBlock", msg.EndBlock, "proposer", msg.Proposer)
 
-	// indicate Checkpoint received by adding in cache , cache cleared in endblock
+	// indicate Checkpoint received by adding in cache, cache cleared in endblock
 	k.SetCheckpointCache(ctx, common.DefaultValue)
 
 	// send tags

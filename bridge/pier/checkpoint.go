@@ -237,7 +237,11 @@ func (checkpointer *MaticCheckpointer) sendRequest(newHeader *types.Header) {
 	}
 
 	// Get root hash
-	root := checkpoint.GetHeaders(start, end)
+	root, err := checkpoint.GetHeaders(start, end)
+	if err != nil {
+		return
+	}
+
 	checkpointer.Logger.Info("New checkpoint header created", "latest", latest, "start", start, "end", end, "root", root)
 
 	// TODO submit checkcoint
@@ -246,7 +250,7 @@ func (checkpointer *MaticCheckpointer) sendRequest(newHeader *types.Header) {
 			ethCommon.BytesToAddress(helper.GetPubKey().Address().Bytes()),
 			start,
 			end,
-			ethCommon.HexToHash(root),
+			ethCommon.BytesToHash(root),
 		),
 	)
 
