@@ -19,16 +19,12 @@ var _ sdk.Msg = &MsgValidatorJoin{}
 type MsgValidatorJoin struct {
 	ValidatorAddress common.Address `json:"address"`
 	ValidatorPubKey  []byte         `json:"pubKey"`
-	Amount           uint64         `json:"amount"`
-	StartEpoch       uint64         `json:"startEpoch"`
 }
 
 func NewMsgValidatorJoin(Address common.Address, pubKey []byte, amount uint64, startEpoch uint64) MsgValidatorJoin {
 	return MsgValidatorJoin{
 		ValidatorAddress: Address,
 		ValidatorPubKey:  pubKey,
-		Amount:           amount,
-		StartEpoch:       startEpoch,
 	}
 }
 
@@ -68,14 +64,12 @@ var _ sdk.Msg = &MsgSignerUpdate{}
 type MsgSignerUpdate struct {
 	ValidatorAddress   common.Address `json:"address"`
 	NewValidatorPubKey []byte         `json:"pubKey"`
-	EndEpoch           uint64         `json:"endEpoch"`
 }
 
 func NewMsgValidatorUpdate(address common.Address, pubKey []byte, endEpoch uint64) MsgSignerUpdate {
 	return MsgSignerUpdate{
 		ValidatorAddress:   address,
 		NewValidatorPubKey: pubKey,
-		EndEpoch:           endEpoch,
 	}
 }
 

@@ -241,8 +241,9 @@ func (k *Keeper) AddValidator(ctx sdk.Context, validator types.Validator) error 
 	return nil
 }
 
+//TODO remove
 // GetValidator returns validator
-func (k *Keeper) GetValidator(ctx sdk.Context, address []byte, validator *types.Validator) error {
+func (k *Keeper) GetValidatorInfo(ctx sdk.Context, address []byte, validator *types.Validator) error {
 	store := ctx.KVStore(k.StakingKey)
 
 	// store validator with address prefixed with validator key as index
@@ -365,23 +366,6 @@ func (k *Keeper) RemoveDeactivatedValidators(ctx sdk.Context) {
 func (k *Keeper) IterateValidatorsAndApplyFn(ctx sdk.Context, f func()) {
 	// TODO add remove and getter for validator list here
 	f()
-}
-
-// GetValidatorInfo returns validator info for given the address
-func (k *Keeper) GetValidatorInfo(ctx sdk.Context, valAddr common.Address) (validator types.Validator, error error) {
-	store := ctx.KVStore(k.StakingKey)
-
-	// get validator and unmarshall
-	validatorBytes := store.Get(getValidatorKey(valAddr.Bytes()))
-	if validatorBytes == nil {
-		error = fmt.Errorf("Validator Not Found")
-		return
-	}
-
-	// unmarshall validator
-	k.cdc.MustUnmarshalBinary(validatorBytes, &validator)
-
-	return validator, nil
 }
 
 // AddDeactivationEpoch adds deactivation epoch
