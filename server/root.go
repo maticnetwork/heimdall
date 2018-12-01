@@ -72,7 +72,7 @@ func createHandler(cdc *codec.Codec) http.Handler {
 	r := mux.NewRouter()
 
 	cliCtx := context.NewCLIContext().WithCodec(cdc)
-
+	cliCtx.TrustNode = true
 	keys.RegisterRoutes(r, true)
 	rpc.RegisterRoutes(cliCtx, r)
 	tx.RegisterRoutes(cliCtx, r, cdc)
