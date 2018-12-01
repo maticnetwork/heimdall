@@ -2,14 +2,16 @@ package rest
 
 import (
 	"encoding/json"
+	"net/http"
+	"strconv"
+
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/utils"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/gorilla/mux"
+
 	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/types"
-	"net/http"
-	"strconv"
 )
 
 func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
@@ -25,7 +27,7 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Co
 	).Methods("GET")
 }
 
-// query accountREST Handler
+// CheckpointBufferHandlerFn query accountREST Handler
 func CheckpointBufferHandlerFn(
 	cdc *codec.Codec,
 	cliCtx context.CLIContext,
@@ -99,6 +101,5 @@ func CheckpointHandlerFb(
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(result)
-
 	}
 }
