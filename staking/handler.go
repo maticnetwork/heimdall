@@ -28,11 +28,11 @@ func NewHandler(k hmCommon.Keeper) sdk.Handler {
 }
 
 func handleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k hmCommon.Keeper) sdk.Result {
-	// fetch validator from mainchain
-	// validator, err := helper.GetValidatorInfo(msg.ValidatorAddress)
-	// if err != nil {
-	// 	return hmCommon.ErrNoValidator(k.Codespace).Result()
-	// }
+	//fetch validator from mainchain
+	validator, err := helper.GetValidatorInfo(msg.ValidatorAddress)
+	if err != nil {
+		return hmCommon.ErrNoValidator(k.Codespace).Result()
+	}
 
 	// validate if start epoch is after current tip
 	// ackCount := k.GetACKCount(ctx)
@@ -52,19 +52,20 @@ func handleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k hmCommon.Ke
 	// add pubkey generated to validator
 	// validator.PubKey = pubKey
 
-	// if false {
-	// 	if !bytes.Equal(validator.Address.Bytes(), msg.ValidatorAddress.Bytes()) ||
-	// 		validator.Power != msg.Amount ||
-	// 		validator.StartEpoch != msg.StartEpoch {
-	//      // TODO revert if mainchain doesn't match with incoming data
-	// 	}
-	// }
+	if false {
+		if !bytes.Equal(validator.Address.Bytes(), msg.ValidatorAddress.Bytes()) ||
+			validator.Power != msg.Amount ||
+			validator.StartEpoch != msg.StartEpoch {
+			// TODO revert if mainchain doesn't match with incoming data
+		}
+	}
 
 	var savedValidator hmTypes.Validator
 	err := k.GetValidator(ctx, msg.ValidatorAddress.Bytes(), &savedValidator)
 	if err != nil {
+		//
 		// Ignore if not present
-	} else {
+	} else if savedValidator.Power != 0 {
 		return hmCommon.ErrValidatorAlreadyJoined(k.Codespace).Result()
 	}
 

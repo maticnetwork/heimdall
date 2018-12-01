@@ -9,11 +9,11 @@ import (
 
 // CheckpointBlockHeader block header struct
 type CheckpointBlockHeader struct {
-	Proposer   common.Address
-	StartBlock uint64
-	EndBlock   uint64
-	RootHash   common.Hash
-	TimeStamp  time.Time
+	Proposer   common.Address `json:"proposer"`
+	StartBlock uint64         `json:"startBlock"`
+	EndBlock   uint64         `json:"endBlock"`
+	RootHash   common.Hash    `json:"rootHash"`
+	TimeStamp  time.Time      `json:"timestamp"`
 }
 
 // CreateBlock generate new block
