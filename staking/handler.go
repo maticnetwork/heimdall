@@ -34,14 +34,14 @@ func handleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k hmCommon.Ke
 		return hmCommon.ErrNoValidator(k.Codespace).Result()
 	}
 
-	pubKey := helper.BytesToPubkey(msg.ValidatorPubKey)
+	pubkey := helper.BytesToPubkey(msg.ValidatorPubKey)
 
 	if !bytes.Equal(validator.Address.Bytes(), msg.ValidatorAddress.Bytes()) {
 		// TODO revert if mainchain doesn't match with incoming data
 	}
 
-	if !bytes.Equal(pubKey.Address().Bytes(), validator.Signer.Bytes()) {
-		hmCommon.StakingLogger.Error("Signer Does Not Match", "error", err, "currentSigner", validator.Signer.String(), "signerFromMsg", pubKey.Address().String())
+	if !bytes.Equal(pubkey.Address().Bytes(), validator.Signer.Bytes()) {
+		hmCommon.StakingLogger.Error("Signer Does Not Match", "error", err, "currentSigner", validator.Signer.String(), "signerFromMsg", pubkey.Address().String())
 		return hmCommon.ErrValSignerMismatch(k.Codespace).Result()
 	}
 
@@ -50,7 +50,7 @@ func handleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k hmCommon.Ke
 	if err == nil {
 		return hmCommon.ErrValidatorAlreadyJoined(k.Codespace).Result()
 	}
-	validator.PubKey = pubKey
+	validator.PubKey = pubkey
 
 	// add validator to store
 	err = k.AddValidator(ctx, validator)

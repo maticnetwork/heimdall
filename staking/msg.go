@@ -21,10 +21,10 @@ type MsgValidatorJoin struct {
 	ValidatorPubKey  []byte         `json:"pubKey"`
 }
 
-func NewMsgValidatorJoin(Address common.Address, pubKey []byte, amount uint64, startEpoch uint64) MsgValidatorJoin {
+func NewMsgValidatorJoin(address common.Address, pubkey []byte) MsgValidatorJoin {
 	return MsgValidatorJoin{
-		ValidatorAddress: Address,
-		ValidatorPubKey:  pubKey,
+		ValidatorAddress: address,
+		ValidatorPubKey:  pubkey,
 	}
 }
 
@@ -66,7 +66,7 @@ type MsgSignerUpdate struct {
 	NewValidatorPubKey []byte         `json:"pubKey"`
 }
 
-func NewMsgValidatorUpdate(address common.Address, pubKey []byte, endEpoch uint64) MsgSignerUpdate {
+func NewMsgValidatorUpdate(address common.Address, pubKey []byte) MsgSignerUpdate {
 	return MsgSignerUpdate{
 		ValidatorAddress:   address,
 		NewValidatorPubKey: pubKey,

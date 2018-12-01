@@ -223,7 +223,7 @@ func newAccountCmd() *cobra.Command {
 			account := &ValidatorAccountFormatter{
 				Address: "0x" + hex.EncodeToString(pubObject.Address().Bytes()),
 				PrivKey: "0x" + hex.EncodeToString(privObject[:]),
-				PubKey:  "0x" + hex.EncodeToString(pubObject[:]),
+				PubKey:  hex.EncodeToString(pubObject[:]),
 			}
 
 			b, err := json.Marshal(&account)

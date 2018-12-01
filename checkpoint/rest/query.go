@@ -10,9 +10,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/gorilla/mux"
 
+	"fmt"
 	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/types"
-	"fmt"
 )
 
 func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
@@ -27,7 +27,7 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Co
 		CheckpointHandlerFb(cdc, cliCtx),
 	).Methods("GET")
 
-	r.HandleFunc("checkpoint/checkpointCount",
+	r.HandleFunc("checkpoint/count",
 		CheckpointCountHandlerFn(cdc, cliCtx),
 	).Methods("GET")
 
@@ -113,7 +113,8 @@ func CheckpointCountHandlerFn(
 	cliCtx context.CLIContext,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
+		w.Write([]byte("hello"))
+		return
 		fmt.Errorf("here")
 		res, err := cliCtx.QueryStore(common.ACKCountKey, "checkpoint")
 		if err != nil {
@@ -121,7 +122,7 @@ func CheckpointCountHandlerFn(
 			return
 		}
 		ackCount, err := strconv.Atoi(string(res))
-
+		fmt.Errorf("ack dount si %v", ackCount)
 		// the query will return empty if there is no data
 		//if len(ackCount) == 0 {
 		//	w.WriteHeader(http.StatusNoContent)

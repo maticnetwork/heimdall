@@ -18,20 +18,18 @@ import (
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
 	r.HandleFunc(
 		"/staking/validators",
-		newValdatorJoinHandler(cliCtx),
+		newValidatorJoinHandler(cliCtx),
 	).Methods("POST")
 	r.HandleFunc("/staking/validators", newValidatorUpdateHandler(cliCtx)).Methods("PUT")
 	r.HandleFunc("/staking/validators", newValidatorExitHandler(cliCtx)).Methods("DELETE")
 }
 
 type addValidator struct {
-	ValidatorAddress common.Address `json:"address"`
-	ValidatorPubKey  hmType.PubKey  `json:"pubKey"`
-	Amount           uint64         `json:"amount"`
-	StartEpoch       uint64         `json:"startEpoch"`
+	ValidatorAddress string `json:"address"`
+	ValidatorPubKey  string `json:"pubKey"`
 }
 
-func newValdatorJoinHandler(cliCtx context.CLIContext) http.HandlerFunc {
+func newValidatorJoinHandler(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var m addValidator
 
@@ -44,17 +42,21 @@ func newValdatorJoinHandler(cliCtx context.CLIContext) http.HandlerFunc {
 
 		err = json.Unmarshal(body, &m)
 		if err != nil {
-			RestLogger.Error("Error unmarshalling json epoch checkpoint", "error", err)
+			RestLogger.Error("Error unmarshalling json while adding validator", "error", err)
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
 			return
 		}
 
-		msg := staking.NewMsgValidatorJoin(m.ValidatorAddress, m.ValidatorPubKey[:], m.Amount, m.StartEpoch)
+		validatorAddr := common.HexToAddress(m.ValidatorAddress)
+		crytoPubKey := helper.BytesToPubkey(common.Hex2Bytes(m.ValidatorPubKey))
+		RestLogger.Debug("Address", "ValidatorAddress", crytoPubKey.Address().String())
+
+		msg := staking.NewMsgValidatorJoin(validatorAddr, common.Hex2Bytes(m.ValidatorPubKey))
 
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {
-			RestLogger.Error("Unable to create txBytes", "ValidatorAddressess", m.ValidatorAddress.Hex(), "ValidatorPubKey", m.ValidatorPubKey)
+			RestLogger.Error("Unable to create txBytes", "ValidatorAddress", validatorAddr.String(), "ValidatorPubKey", helper.BytesToPubkey(crytoPubKey.Bytes()))
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
 			return
@@ -157,7 +159,7 @@ func newValidatorUpdateHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		msg := staking.NewMsgValidatorUpdate(m.ValidatorAddress, m.NewValidatorPubKey[:], m.EndEpoch)
+		msg := staking.NewMsgValidatorUpdate(m.ValidatorAddress, m.NewValidatorPubKey[:])
 
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {
