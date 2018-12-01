@@ -36,21 +36,15 @@ func handleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k hmCommon.Ke
 
 	pubkey := helper.BytesToPubkey(msg.ValidatorPubKey)
 
-	if !bytes.Equal(validator.Address.Bytes(), msg.ValidatorAddress.Bytes()) {
-		// TODO revert if mainchain doesn't match with incoming data
-	}
-
-	if !bytes.Equal(pubkey.Address().Bytes(), validator.Signer.Bytes()) {
-		hmCommon.StakingLogger.Error("Signer Does Not Match", "error", err, "currentSigner", validator.Signer.String(), "signerFromMsg", pubkey.Address().String())
-		return hmCommon.ErrValSignerMismatch(k.Codespace).Result()
-	}
-
 	var savedValidator hmTypes.Validator
 	err = k.GetValidatorInfo(ctx, msg.ValidatorAddress.Bytes(), &savedValidator)
 	if err == nil {
 		return hmCommon.ErrValidatorAlreadyJoined(k.Codespace).Result()
 	}
+
+	// add pubkey and override signer in validator
 	validator.PubKey = pubkey
+	validator.Signer = common.HexToAddress(pubkey.Address().String())
 
 	// add validator to store
 	err = k.AddValidator(ctx, validator)

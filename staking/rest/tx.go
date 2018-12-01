@@ -50,7 +50,6 @@ func newValidatorJoinHandler(cliCtx context.CLIContext) http.HandlerFunc {
 
 		validatorAddr := common.HexToAddress(m.ValidatorAddress)
 		crytoPubKey := helper.BytesToPubkey(common.Hex2Bytes(m.ValidatorPubKey))
-		RestLogger.Debug("Address", "ValidatorAddress", crytoPubKey.Address().String())
 
 		msg := staking.NewMsgValidatorJoin(validatorAddr, common.Hex2Bytes(m.ValidatorPubKey))
 
