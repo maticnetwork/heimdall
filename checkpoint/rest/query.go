@@ -12,6 +12,7 @@ import (
 
 	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/types"
+	"fmt"
 )
 
 func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
@@ -113,19 +114,21 @@ func CheckpointCountHandlerFn(
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
+		fmt.Errorf("here")
 		res, err := cliCtx.QueryStore(common.ACKCountKey, "checkpoint")
 		if err != nil {
 			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
+		ackCount, err := strconv.Atoi(string(res))
 
 		// the query will return empty if there is no data
-		if len(res) == 0 {
-			w.WriteHeader(http.StatusNoContent)
-			return
-		}
+		//if len(ackCount) == 0 {
+		//	w.WriteHeader(http.StatusNoContent)
+		//	return
+		//}
 
-		result, err := json.Marshal(&res)
+		result, err := json.Marshal(&ackCount)
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
 			w.WriteHeader(http.StatusBadRequest)
