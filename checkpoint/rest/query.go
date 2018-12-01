@@ -9,6 +9,7 @@ import (
 	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/types"
 	"net/http"
+	"strconv"
 )
 
 func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
@@ -16,6 +17,11 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Co
 	r.HandleFunc(
 		"/checkpoint/buffer",
 		CheckpointBufferHandlerFn(cdc, cliCtx),
+	).Methods("GET")
+
+	r.HandleFunc(
+		"/checkpoint/{headerBlockIndex}",
+		CheckpointHandlerFb(cdc, cliCtx),
 	).Methods("GET")
 }
 
@@ -33,33 +39,66 @@ func CheckpointBufferHandlerFn(
 			return
 		}
 
-		// the query will return empty if there is no data for this account
+		// the query will return empty if there is no data in buffer
 		if len(res) == 0 {
 			w.WriteHeader(http.StatusNoContent)
 			return
 		}
 
-		// decode the value
-		//account, err := decoder(res)
-		//if err != nil {
-		//	utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-		//	return
-		//}
-
-		//utils.PostProcessResponse(w, cdc, res, cliCtx.Indent)
 		var _checkpoint types.CheckpointBlockHeader
-
 		err = json.Unmarshal(res, &_checkpoint)
 		if err != nil {
 			RestLogger.Info("Unable to marshall")
 		}
+
 		result, err := json.Marshal(&_checkpoint)
 		if err != nil {
-			RestLogger.Error("Error while marshalling tendermint response", "error", err)
+			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
 			return
 		}
+		w.Header().Set("Content-Type", "application/json")
 		w.Write(result)
+	}
+}
+
+func CheckpointHandlerFb(
+	cdc *codec.Codec,
+	cliCtx context.CLIContext,
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		vars := mux.Vars(r)
+		headerBlockIndex := vars["headerBlockIndex"]
+		headerint, err := strconv.Atoi(headerBlockIndex)
+
+		res, err := cliCtx.QueryStore(common.GetHeaderKey(uint64(headerint)), "checkpoint")
+		if err != nil {
+			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		// the query will return empty if there is no data in buffer
+		if len(res) == 0 {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		var _checkpoint types.CheckpointBlockHeader
+		err = json.Unmarshal(res, &_checkpoint)
+		if err != nil {
+			RestLogger.Info("Unable to marshall")
+		}
+
+		result, err := json.Marshal(&_checkpoint)
+		if err != nil {
+			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(result)
+
 	}
 }
