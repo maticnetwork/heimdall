@@ -386,7 +386,7 @@ func (k *Keeper) AddDeactivationEpoch(ctx sdk.Context, valAddr common.Address, v
 		return nil
 	} else {
 		StakingLogger.Debug("Deactivation period not set")
-		return ErrValidatorAlreadySynced(k.Codespace)
+		return errors.New("Deactivation period not set")
 	}
 
 }

@@ -39,6 +39,7 @@ func handleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k hmCommon.Ke
 	// Generate PubKey from Pubkey in message
 	pubkey := helper.BytesToPubkey(msg.ValidatorPubKey)
 
+	// check validator address in message corresponds
 	if !bytes.Equal(msg.ValidatorAddress.Bytes(), validator.Address.Bytes()) {
 		hmCommon.StakingLogger.Error("Validator Address Doesnt match", "MsgValidator", msg.ValidatorAddress.String(), "MainchainValidator", validator.Address.String())
 		return hmCommon.ErrNoValidator(k.Codespace).Result()
@@ -117,15 +118,18 @@ func handleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k hmCommon.Ke
 		return hmCommon.ErrValUnbonded(k.Codespace).Result()
 	}
 
-	// TODO make sure this isnt needed
-	// means exit has been processed but validator in unbonding period
-	//if validator.Power != 0 {
-	//	hmCommon.StakingLogger.Error("Validator already unbonded")
-	//	return hmCommon.ErrValUnbonded(k.Codespace).Result()
-	//}
+	//means exit has been processed but validator in unbonding period
+	if validator.Power != 0 {
+		hmCommon.StakingLogger.Error("Validator already unbonded")
+		return hmCommon.ErrValUnbonded(k.Codespace).Result()
+	}
 
 	// Add deactivation time for validator
-	k.AddDeactivationEpoch(ctx, msg.ValidatorAddress, validator)
+	err = k.AddDeactivationEpoch(ctx, msg.ValidatorAddress, validator)
+	if err != nil {
+		hmCommon.StakingLogger.Error("Deactivation Period Not Set,Invalid exit", "Error", err)
+		return hmCommon.ErrValidatorNotDeactivated(k.Codespace).Result()
+	}
 
 	return sdk.Result{}
 }
