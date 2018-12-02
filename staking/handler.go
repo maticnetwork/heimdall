@@ -53,16 +53,16 @@ func handleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k hmCommon.Ke
 	validator.Signer = common.HexToAddress(pubkey.Address().String())
 
 	// add validator to store
-	hmCommon.StakingLogger.Info("Adding new validator to state","Validator",validator.String())
+	hmCommon.StakingLogger.Info("Adding new validator to state", "Validator", validator.String())
 	err = k.AddValidator(ctx, validator)
 	if err != nil {
-		hmCommon.StakingLogger.Error("Unable to add validator to state","Error",err,"Validator",validator.String())
+		hmCommon.StakingLogger.Error("Unable to add validator to state", "Error", err, "Validator", validator.String())
 		return hmCommon.ErrValidatorSave(k.Codespace).Result()
 	}
 
 	// validator set changed
 	k.SetValidatorSetChangedFlag(ctx, true)
-	hmCommon.StakingLogger.Info("Changing validator set update flag","ValidatorsUpdated",k.ValidatorSetChanged(ctx))
+	hmCommon.StakingLogger.Info("Changing validator set update flag", "ValidatorsUpdated", k.ValidatorSetChanged(ctx))
 
 	return sdk.Result{}
 }

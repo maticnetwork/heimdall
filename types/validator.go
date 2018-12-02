@@ -42,10 +42,9 @@ func (v *Validator) String() string {
 		return "nil-Validator"
 	}
 
-	return fmt.Sprintf("Validator{%v :: %v %v P:%v}",
-		v.Address,
-		v.Signer,
-		v.PubKey,
+	return fmt.Sprintf("Validator{%v :: %v P:%v}",
+		v.Address.String(),
+		v.Signer.String(),
 		v.Power,
 	)
 }

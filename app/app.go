@@ -120,6 +120,8 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 	if ctx.BlockHeader().NumTxs > 0 {
 		// check if ACK is present in cache
 		if app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointACKCacheKey) {
+			logger.Info("Checkpoint ACK processed in block", "CheckpointACKProcessed", app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointCacheKey))
+
 			// remove matured Validators
 			app.masterKeeper.RemoveDeactivatedValidators(ctx)
 
@@ -137,6 +139,7 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 
 		// check if checkpoint is present in cache
 		if app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointCacheKey) {
+			logger.Info("Checkpoint processed in block", "CheckpointProcessed", app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointCacheKey))
 			// Send Checkpoint to Rootchain
 			PrepareAndSendCheckpoint(ctx, app.masterKeeper)
 			// clear Checkpoint cache
