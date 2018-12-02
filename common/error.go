@@ -72,6 +72,10 @@ func ErrValidatorSave(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeValSave, "Cannot save validator")
 }
 
+func ErrValidatorNotDeactivated(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeValSave, "Validator Not Deactivated")
+}
+
 func ErrValidatorAlreadyJoined(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeValAlreadyJoined, "Validator already joined")
 }
