@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/mux"
 	hmcommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/types"
+	tmTypes "github.com/tendermint/tendermint/types"
 	"net/http"
 )
 
@@ -17,6 +18,10 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Co
 	r.HandleFunc(
 		"/staking/validator/{address}",
 		ValidatorByAddressHandlerFn(cdc, cliCtx),
+	).Methods("GET")
+	r.HandleFunc(
+		"/staking/validatorSet",
+		ValidatorSetHandlerFn(cdc, cliCtx),
 	).Methods("GET")
 
 }
@@ -46,6 +51,42 @@ func ValidatorByAddressHandlerFn(
 		cdc.UnmarshalBinary(res, &_validator)
 
 		result, err := json.Marshal((&_validator).ValMinusPubkey())
+		if err != nil {
+			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(result)
+
+	}
+}
+
+// get current validator set
+func ValidatorSetHandlerFn(
+	cdc *codec.Codec,
+	cliCtx context.CLIContext,
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		res, err := cliCtx.QueryStore(hmcommon.CurrentValidatorSetKey, "staker")
+		if err != nil {
+			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		// the query will return empty if there is no data
+		if len(res) == 0 {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
+		var _validatorSet tmTypes.ValidatorSet
+		cdc.UnmarshalBinary(res, &_validatorSet)
+
+		result, err := json.Marshal(&_validatorSet)
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
 			w.WriteHeader(http.StatusBadRequest)

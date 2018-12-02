@@ -16,7 +16,7 @@ type Validator struct {
 	Address    common.Address
 	StartEpoch uint64
 	EndEpoch   uint64
-	// TODO add 10^-18 here
+	// TODO add 10^-18 here so that we dont overflow easily
 	Power  uint64 // aka Amount
 	PubKey crypto.PubKey
 	Signer common.Address
