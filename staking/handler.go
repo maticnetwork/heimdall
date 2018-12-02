@@ -31,14 +31,20 @@ func handleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k hmCommon.Ke
 	//fetch validator from mainchain
 	validator, err := helper.GetValidatorInfo(msg.ValidatorAddress)
 	if err != nil {
+		hmCommon.StakingLogger.Error("Unable to fetch validator from rootchain", "Error", err, "ValidatorAddress", msg.ValidatorAddress)
 		return hmCommon.ErrNoValidator(k.Codespace).Result()
 	}
 
+	hmCommon.StakingLogger.Debug("Fetched validator from rootchain successfully", "Validator", validator.String())
+
+	// Generate PubKey from Pubkey in message
 	pubkey := helper.BytesToPubkey(msg.ValidatorPubKey)
 
+	// Check if validator has been validator before
 	var savedValidator hmTypes.Validator
 	err = k.GetValidatorInfo(ctx, msg.ValidatorAddress.Bytes(), &savedValidator)
 	if err == nil {
+		hmCommon.StakingLogger.Error("Validator has been validator before ,cannot join with same address")
 		return hmCommon.ErrValidatorAlreadyJoined(k.Codespace).Result()
 	}
 
@@ -47,13 +53,16 @@ func handleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k hmCommon.Ke
 	validator.Signer = common.HexToAddress(pubkey.Address().String())
 
 	// add validator to store
+	hmCommon.StakingLogger.Info("Adding new validator to state","Validator",validator.String())
 	err = k.AddValidator(ctx, validator)
 	if err != nil {
+		hmCommon.StakingLogger.Error("Unable to add validator to state","Error",err,"Validator",validator.String())
 		return hmCommon.ErrValidatorSave(k.Codespace).Result()
 	}
 
 	// validator set changed
 	k.SetValidatorSetChangedFlag(ctx, true)
+	hmCommon.StakingLogger.Info("Changing validator set update flag","ValidatorsUpdated",k.ValidatorSetChanged(ctx))
 
 	return sdk.Result{}
 }

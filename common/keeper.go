@@ -15,6 +15,7 @@ import (
 	"github.com/tendermint/tendermint/crypto"
 	tmTypes "github.com/tendermint/tendermint/types"
 
+	"encoding/hex"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
 )
@@ -222,6 +223,7 @@ func (k *Keeper) InitACKCount(ctx sdk.Context) {
 
 // getValidatorKey drafts the validator key for addresses
 func getValidatorKey(address []byte) []byte {
+	CheckpointLogger.Debug("Generated Validator key", "ValidatorAddress", hex.EncodeToString(address), "key", hex.EncodeToString(append(ValidatorsKey, address...)))
 	return append(ValidatorsKey, address...)
 }
 
@@ -241,7 +243,6 @@ func (k *Keeper) AddValidator(ctx sdk.Context, validator types.Validator) error 
 	return nil
 }
 
-//TODO remove
 // GetValidator returns validator
 func (k *Keeper) GetValidatorInfo(ctx sdk.Context, address []byte, validator *types.Validator) error {
 	store := ctx.KVStore(k.StakingKey)
@@ -249,6 +250,7 @@ func (k *Keeper) GetValidatorInfo(ctx sdk.Context, address []byte, validator *ty
 	// store validator with address prefixed with validator key as index
 	key := getValidatorKey(address)
 	if !store.Has(key) {
+		StakingLogger.Info("Validator Not Found")
 		return errors.New("Validator not found")
 	}
 
