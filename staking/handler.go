@@ -106,9 +106,9 @@ func handleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k hmCommon.Ke
 	var validator hmTypes.Validator
 
 	// fetch validator from store
-	err := k.GetValidatorInfo(ctx, msg.ValidatorAddress.Bytes(), &validator)
+	err := k.GetValidatorInfo(ctx, msg.SignerAddress.Bytes(), &validator)
 	if err != nil {
-		hmCommon.StakingLogger.Error("Fetching of validator from store failed", "error", err, "validatorAddress", msg.ValidatorAddress)
+		hmCommon.StakingLogger.Error("Fetching of validator from store failed", "error", err, "validatorAddress", msg.SignerAddress)
 		return hmCommon.ErrNoValidator(k.Codespace).Result()
 	}
 
@@ -125,7 +125,7 @@ func handleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k hmCommon.Ke
 	}
 
 	// Add deactivation time for validator
-	err = k.AddDeactivationEpoch(ctx, msg.ValidatorAddress, validator)
+	err = k.AddDeactivationEpoch(ctx, validator)
 	if err != nil {
 		hmCommon.StakingLogger.Error("Deactivation Period Not Set,Invalid exit", "Error", err)
 		return hmCommon.ErrValidatorNotDeactivated(k.Codespace).Result()

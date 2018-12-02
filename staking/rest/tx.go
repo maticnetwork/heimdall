@@ -82,7 +82,7 @@ func newValidatorJoinHandler(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 type remoteValidator struct {
-	ValidatorAddress common.Address `json:"address"`
+	SignerAddress common.Address `json:"address"`
 }
 
 func newValidatorExitHandler(cliCtx context.CLIContext) http.HandlerFunc {
@@ -104,11 +104,11 @@ func newValidatorExitHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		msg := staking.NewMsgValidatorExit(m.ValidatorAddress)
+		msg := staking.NewMsgValidatorExit(m.SignerAddress)
 
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {
-			RestLogger.Error("Unable to create txBytes", "validatorAddress", m.ValidatorAddress)
+			RestLogger.Error("Unable to create txBytes", "validatorAddress", m.SignerAddress)
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
 			return

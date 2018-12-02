@@ -372,11 +372,11 @@ func (k *Keeper) IterateValidatorsAndApplyFn(ctx sdk.Context, f func()) {
 }
 
 // AddDeactivationEpoch adds deactivation epoch
-func (k *Keeper) AddDeactivationEpoch(ctx sdk.Context, valAddr common.Address, validator types.Validator) error {
+func (k *Keeper) AddDeactivationEpoch(ctx sdk.Context, validator types.Validator) error {
 	// set deactivation period
-	updatedVal, err := helper.GetValidatorInfo(valAddr)
+	updatedVal, err := helper.GetValidatorInfo(validator.Address)
 	if err != nil {
-		StakingLogger.Error("Cannot fetch validator info while unstaking", "Error", err, "ValidatorAddress", valAddr)
+		StakingLogger.Error("Cannot fetch validator info while unstaking", "Error", err, "ValidatorAddress", validator.Address)
 	}
 
 	// check if validator has unstaked
@@ -384,10 +384,9 @@ func (k *Keeper) AddDeactivationEpoch(ctx sdk.Context, valAddr common.Address, v
 		validator.EndEpoch = updatedVal.EndEpoch
 		k.AddValidator(ctx, validator)
 		return nil
-	} else {
-		StakingLogger.Debug("Deactivation period not set")
-		return errors.New("Deactivation period not set")
 	}
+	StakingLogger.Debug("Deactivation period not set")
+	return errors.New("Deactivation period not set")
 
 }
 
