@@ -96,11 +96,11 @@ func handleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k hmCommon.Keep
 		hmCommon.StakingLogger.Error("Unable to update signer", "Error", err, "currentSigner", validator.Signer.String(), "signerFromMsg", pubKey.Address().String())
 		panic(err)
 	}
-	
+
 	// validator set changed
 	k.SetValidatorSetChangedFlag(ctx, true)
 	hmCommon.StakingLogger.Info("Changing validator set update flag", "ValidatorsUpdated", k.ValidatorSetChanged(ctx))
-	
+
 	return sdk.Result{}
 }
 

@@ -396,10 +396,10 @@ func (k *Keeper) UpdateSigner(ctx sdk.Context, newSigner common.Address, pubkey 
 
 	// get old validator from state and remove
 	var validator types.Validator
-	k.GetValidatorInfo(ctx,prevSigner.Bytes(),&validator)
+	k.GetValidatorInfo(ctx, prevSigner.Bytes(), &validator)
 	valPower := validator.Power
-	validator.Power=0
-	k.AddValidator(ctx,validator)
+	validator.Power = 0
+	k.AddValidator(ctx, validator)
 
 	//update signer in prev Validator
 	validator.Signer = newSigner
