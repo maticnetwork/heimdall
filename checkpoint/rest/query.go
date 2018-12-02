@@ -10,7 +10,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/gorilla/mux"
 
-	"fmt"
 	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/types"
 )
@@ -113,21 +112,18 @@ func CheckpointCountHandlerFn(
 	cliCtx context.CLIContext,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("hello"))
-		return
-		fmt.Errorf("here")
+
 		res, err := cliCtx.QueryStore(common.ACKCountKey, "checkpoint")
 		if err != nil {
 			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 		ackCount, err := strconv.Atoi(string(res))
-		fmt.Errorf("ack dount si %v", ackCount)
-		// the query will return empty if there is no data
-		//if len(ackCount) == 0 {
-		//	w.WriteHeader(http.StatusNoContent)
-		//	return
-		//}
+		//the query will return empty if there is no data
+		if len(res) == 0 {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
 
 		result, err := json.Marshal(&ackCount)
 		if err != nil {

@@ -222,7 +222,7 @@ func (k *Keeper) InitACKCount(ctx sdk.Context) {
 // ----------------- Staking Related Keepers
 
 // getValidatorKey drafts the validator key for addresses
-func getValidatorKey(address []byte) []byte {
+func GetValidatorKey(address []byte) []byte {
 	CheckpointLogger.Debug("Generated Validator key", "ValidatorAddress", hex.EncodeToString(address), "key", hex.EncodeToString(append(ValidatorsKey, address...)))
 	return append(ValidatorsKey, address...)
 }
@@ -238,7 +238,8 @@ func (k *Keeper) AddValidator(ctx sdk.Context, validator types.Validator) error 
 	}
 
 	// store validator with address prefixed with validator key as index
-	store.Set(getValidatorKey(validator.Address.Bytes()), bz)
+	store.Set(GetValidatorKey(validator.Address.Bytes()), bz)
+	StakingLogger.Info("Validator Stored", "key", hex.EncodeToString(GetValidatorKey(validator.Address.Bytes())), "validator", validator.String())
 
 	return nil
 }
@@ -248,7 +249,7 @@ func (k *Keeper) GetValidatorInfo(ctx sdk.Context, address []byte, validator *ty
 	store := ctx.KVStore(k.StakingKey)
 
 	// store validator with address prefixed with validator key as index
-	key := getValidatorKey(address)
+	key := GetValidatorKey(address)
 	if !store.Has(key) {
 		StakingLogger.Info("Validator Not Found")
 		return errors.New("Validator not found")
@@ -397,7 +398,7 @@ func (k *Keeper) UpdateSigner(ctx sdk.Context, signer common.Address, pubkey cry
 	var validator types.Validator
 
 	// get validator and unmarshall
-	validatorBytes := store.Get(getValidatorKey(valAddr.Bytes()))
+	validatorBytes := store.Get(GetValidatorKey(valAddr.Bytes()))
 	if validatorBytes == nil {
 		err := fmt.Errorf("Validator Not Found")
 		return err

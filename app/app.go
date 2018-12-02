@@ -154,14 +154,12 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 }
 
 func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
+	logger.Info("Loading validators from genesis and setting defaults")
 	var genesisState GenesisState
 	err := json.Unmarshal(req.AppStateBytes, &genesisState)
 	if err != nil {
 		panic(err)
 	}
-
-	// set ACK count to 0
-	// app.masterKeeper.InitACKCount(ctx)
 
 	// initialize validator set
 	newValidatorSet := tmTypes.ValidatorSet{}
@@ -191,6 +189,17 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 	// increment accumulator
 	app.masterKeeper.IncreamentAccum(ctx, 1)
 
+	// set empty values in cache by default
+	app.masterKeeper.SetCheckpointAckCache(ctx, common.EmptyBufferValue)
+	app.masterKeeper.SetCheckpointCache(ctx, common.EmptyBufferValue)
+	app.masterKeeper.SetValidatorSetChangedFlag(ctx, false)
+	logger.Info("Cache's and flags set to false", "CheckpointACKCache",
+		app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointACKCacheKey),
+		"CheckpointCache",
+		app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointCacheKey),
+		"ValidatorUpdatesFlag",
+		app.masterKeeper.ValidatorSetChanged(ctx))
+
 	// udpate validators
 	return abci.ResponseInitChain{
 		Validators: validatorUpdates,
@@ -202,7 +211,6 @@ func (app *HeimdallApp) ExportAppStateAndValidators() (appState json.RawMessage,
 	return appState, validators, err
 }
 
-// todo try to move this to helper , since it uses checkpoint it causes cycle import error RN
 func GetExtraData(_checkpoint hmTypes.CheckpointBlockHeader, ctx sdk.Context) []byte {
 	logger.Debug("Creating extra data", "startBlock", _checkpoint.StartBlock, "endBlock", _checkpoint.EndBlock, "roothash", _checkpoint.RootHash)
 
