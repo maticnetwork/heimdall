@@ -74,9 +74,9 @@ func main() {
 	)
 
 	rootCmd.AddCommand(newAccountCmd())
-
 	rootCmd.AddCommand(hmserver.ServeCommands(cdc))
 	rootCmd.AddCommand(InitCmd(ctx, cdc, server.DefaultAppInit))
+
 	// prepare and add flags
 	executor := cli.PrepareBaseCmd(rootCmd, "HD", os.ExpandEnv("$HOME/.heimdalld"))
 	err := executor.Execute()
@@ -123,7 +123,7 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cob
 			nodeID := string(nodeKey.ID())
 
 			// read or create private key
-			pval := ReadOrCreatePrivValidator(config.PrivValidatorFile())
+			pval := readOrCreatePrivValidator(config.PrivValidatorFile())
 
 			//
 			// Heimdall config file
@@ -150,17 +150,6 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cob
 			//
 			// Genesis file
 			//
-
-			// // TODO pull validator from main chain and add to genesis
-			// genTx, appMessage, _, err := server.SimpleAppGenTx(cdc, pk)
-			// if err != nil {
-			// 	return err
-			// }
-
-			// appState, err := appInit.AppGenState(cdc, []json.RawMessage{genTx})
-			// if err != nil {
-			// 	return err
-			// }
 
 			// create validator
 
@@ -197,7 +186,7 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cob
 			}
 
 			fmt.Fprintf(os.Stderr, "%s\n", string(out))
-			return WriteGenesisFile(config.GenesisFile(), chainID, appStateJSON)
+			return writeGenesisFile(config.GenesisFile(), chainID, appStateJSON)
 		},
 	}
 
@@ -240,7 +229,7 @@ func newAccountCmd() *cobra.Command {
 // WriteGenesisFile creates and writes the genesis configuration to disk. An
 // error is returned if building or writing the configuration to file fails.
 // nolint: unparam
-func WriteGenesisFile(genesisFile, chainID string, appState json.RawMessage) error {
+func writeGenesisFile(genesisFile, chainID string, appState json.RawMessage) error {
 	genDoc := tmTypes.GenesisDoc{
 		ChainID:  chainID,
 		AppState: appState,
@@ -253,8 +242,7 @@ func WriteGenesisFile(genesisFile, chainID string, appState json.RawMessage) err
 	return genDoc.SaveAs(genesisFile)
 }
 
-// ReadOrCreatePrivValidator reads or creates the private key file for this config
-func ReadOrCreatePrivValidator(privValFile string) *privval.FilePV {
+func readOrCreatePrivValidator(privValFile string) *privval.FilePV {
 	// private validator
 	var privValidator *privval.FilePV
 	if common.FileExists(privValFile) {
