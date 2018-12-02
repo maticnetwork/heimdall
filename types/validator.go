@@ -49,6 +49,18 @@ func (v *Validator) String() string {
 	)
 }
 
+// for JSON friendly response
+func (v *Validator) ValMinusPubkey() Validator {
+	return Validator{
+		Address:    v.Address,
+		StartEpoch: v.StartEpoch,
+		EndEpoch:   v.EndEpoch,
+		Signer:     v.Signer,
+		Power:      v.Power,
+	}
+
+}
+
 // ToTmValidator converts heimdall validator to Tendermint validator
 func (v *Validator) ToTmValidator() types.Validator {
 	return types.Validator{
