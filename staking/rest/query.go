@@ -11,6 +11,7 @@ import (
 	"github.com/maticnetwork/heimdall/types"
 	tmTypes "github.com/tendermint/tendermint/types"
 	"net/http"
+	"strconv"
 )
 
 func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
@@ -112,7 +113,11 @@ func ProposerHandlerFn(
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		times := common.HexToAddress(vars["times"])
+		times, err := strconv.Atoi(vars["times"])
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
 
 		res, err := cliCtx.QueryStore(hmcommon.CurrentValidatorSetKey, "staker")
 		if err != nil {
@@ -131,8 +136,9 @@ func ProposerHandlerFn(
 
 		var proposers []tmTypes.Validator
 
-		for index := range times {
-			proposers[index] = *_validatorSet.Proposer
+		for index := 0; index < times; index++ {
+			RestLogger.Info("Getting proposer for current validator set", "Index", index, "TotalProposers", times)
+			proposers = append(proposers, *_validatorSet.Proposer)
 			_validatorSet.IncrementAccum(1)
 		}
 

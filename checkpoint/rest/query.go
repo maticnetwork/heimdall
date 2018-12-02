@@ -74,8 +74,7 @@ func CheckpointHandlerFb(
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		headerBlockIndex := vars["headerBlockIndex"]
-		headerint, err := strconv.Atoi(headerBlockIndex)
+		headerint, err := strconv.Atoi(vars["headerBlockIndex"])
 
 		res, err := cliCtx.QueryStore(common.GetHeaderKey(uint64(headerint)), "checkpoint")
 		if err != nil {
