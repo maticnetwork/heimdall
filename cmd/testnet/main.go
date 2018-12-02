@@ -179,7 +179,7 @@ func initTestnet(config *cfg.Config, cdc *codec.Codec) error {
 		populatePersistentPeersInConfigAndWriteIt(config)
 	}
 
-	if err := initGenFiles(chainID, validators, genFiles); err != nil {
+	if err := initGenFiles(chainID, validators[:numValidators], genFiles); err != nil {
 		fmt.Println(err)
 		return err
 	}
