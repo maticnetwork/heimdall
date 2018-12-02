@@ -16,9 +16,10 @@ type Validator struct {
 	Address    common.Address
 	StartEpoch uint64
 	EndEpoch   uint64
-	Power      uint64 // aka Amount
-	PubKey     crypto.PubKey
-	Signer     common.Address
+	// TODO add 10^-18 here
+	Power  uint64 // aka Amount
+	PubKey crypto.PubKey
+	Signer common.Address
 }
 
 // IsCurrentValidator checks if validator is in current validator set
