@@ -30,21 +30,25 @@ func NewHandler(k hmCommon.Keeper) sdk.Handler {
 func handleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k hmCommon.Keeper) sdk.Result {
 	//fetch validator from mainchain
 	validator, err := helper.GetValidatorInfo(msg.ValidatorAddress)
-	if err != nil {
-		hmCommon.StakingLogger.Error("Unable to fetch validator from rootchain", "Error", err, "ValidatorAddress", msg.ValidatorAddress)
+	if err != nil || bytes.Equal(validator.Address.Bytes(), []byte("0x0000000000000000000000000000000000000000")) {
+		hmCommon.StakingLogger.Error("Unable to fetch validator from rootchain", "Error", err, "MsgValidator", msg.ValidatorAddress.String(), "MainchainValidator", validator.Address.String())
 		return hmCommon.ErrNoValidator(k.Codespace).Result()
 	}
-
 	hmCommon.StakingLogger.Debug("Fetched validator from rootchain successfully", "Validator", validator.String())
 
 	// Generate PubKey from Pubkey in message
 	pubkey := helper.BytesToPubkey(msg.ValidatorPubKey)
 
+	if !bytes.Equal(msg.ValidatorAddress.Bytes(), validator.Address.Bytes()) {
+		hmCommon.StakingLogger.Error("Validator Address Doesnt match", "MsgValidator", msg.ValidatorAddress.String(), "MainchainValidator", validator.Address.String())
+		return hmCommon.ErrNoValidator(k.Codespace).Result()
+	}
+
 	// Check if validator has been validator before
 	var savedValidator hmTypes.Validator
 	err = k.GetValidatorInfo(ctx, msg.ValidatorAddress.Bytes(), &savedValidator)
 	if err == nil {
-		hmCommon.StakingLogger.Error("Validator has been validator before ,cannot join with same address")
+		hmCommon.StakingLogger.Error("Validator has been validator before ,cannot join with same address", "PresentValidator", savedValidator.String())
 		return hmCommon.ErrValidatorAlreadyJoined(k.Codespace).Result()
 	}
 
