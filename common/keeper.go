@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -373,7 +372,7 @@ func (k *Keeper) IterateValidatorsAndApplyFn(ctx sdk.Context, f func()) {
 
 // AddDeactivationEpoch adds deactivation epoch
 func (k *Keeper) AddDeactivationEpoch(ctx sdk.Context, validator types.Validator) error {
-	// set deactivation period
+	// get validator from mainchain
 	updatedVal, err := helper.GetValidatorInfo(validator.Address)
 	if err != nil {
 		StakingLogger.Error("Cannot fetch validator info while unstaking", "Error", err, "ValidatorAddress", validator.Address)
@@ -382,32 +381,30 @@ func (k *Keeper) AddDeactivationEpoch(ctx sdk.Context, validator types.Validator
 	// check if validator has unstaked
 	if updatedVal.EndEpoch != 0 {
 		validator.EndEpoch = updatedVal.EndEpoch
+		// update validator in store
 		k.AddValidator(ctx, validator)
 		return nil
 	}
+
 	StakingLogger.Debug("Deactivation period not set")
 	return errors.New("Deactivation period not set")
 
 }
 
 // UpdateSigner updates validator with signer and pubkey
-func (k *Keeper) UpdateSigner(ctx sdk.Context, signer common.Address, pubkey crypto.PubKey, valAddr common.Address) error {
-	store := ctx.KVStore(k.StakingKey)
+func (k *Keeper) UpdateSigner(ctx sdk.Context, newSigner common.Address, pubkey crypto.PubKey, prevSigner common.Address) error {
 
+	// get old validator from state and remove
 	var validator types.Validator
+	k.GetValidatorInfo(ctx,prevSigner.Bytes(),&validator)
+	valPower := validator.Power
+	validator.Power=0
+	k.AddValidator(ctx,validator)
 
-	// get validator and unmarshall
-	validatorBytes := store.Get(GetValidatorKey(valAddr.Bytes()))
-	if validatorBytes == nil {
-		err := fmt.Errorf("Validator Not Found")
-		return err
-	}
-
-	k.cdc.MustUnmarshalBinary(validatorBytes, &validator)
-
-	//update signer
-	validator.Signer = signer
+	//update signer in prev Validator
+	validator.Signer = newSigner
 	validator.PubKey = pubkey
+	validator.Power = valPower
 
 	// add updated validator to store with same key
 	k.AddValidator(ctx, validator)
