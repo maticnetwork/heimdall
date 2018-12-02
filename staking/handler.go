@@ -37,7 +37,7 @@ func handleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k hmCommon.Ke
 	hmCommon.StakingLogger.Debug("Fetched validator from rootchain successfully", "Validator", validator.String())
 
 	// Generate PubKey from Pubkey in message
-	pubkey := helper.BytesToPubkey(msg.ValidatorPubKey)
+	pubkey := helper.BytesToPubkey(msg.SignerPubKey)
 
 	// check validator address in message corresponds
 	if !bytes.Equal(msg.ValidatorAddress.Bytes(), validator.Address.Bytes()) {
@@ -47,7 +47,7 @@ func handleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k hmCommon.Ke
 
 	// Check if validator has been validator before
 	var savedValidator hmTypes.Validator
-	err = k.GetValidatorInfo(ctx, msg.ValidatorAddress.Bytes(), &savedValidator)
+	err = k.GetValidatorInfo(ctx, pubkey.Address().Bytes(), &savedValidator)
 	if err == nil {
 		hmCommon.StakingLogger.Error("Validator has been validator before ,cannot join with same address", "PresentValidator", savedValidator.String())
 		return hmCommon.ErrValidatorAlreadyJoined(k.Codespace).Result()

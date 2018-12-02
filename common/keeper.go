@@ -238,8 +238,8 @@ func (k *Keeper) AddValidator(ctx sdk.Context, validator types.Validator) error 
 	}
 
 	// store validator with address prefixed with validator key as index
-	store.Set(GetValidatorKey(validator.Address.Bytes()), bz)
-	StakingLogger.Info("Validator Stored", "key", hex.EncodeToString(GetValidatorKey(validator.Address.Bytes())), "validator", validator.String())
+	store.Set(GetValidatorKey(validator.Signer.Bytes()), bz)
+	StakingLogger.Info("Validator Stored", "key", hex.EncodeToString(GetValidatorKey(validator.Signer.Bytes())), "validator", validator.String())
 
 	return nil
 }

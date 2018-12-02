@@ -26,7 +26,7 @@ func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec
 
 type addValidator struct {
 	ValidatorAddress string `json:"address"`
-	ValidatorPubKey  string `json:"pubKey"`
+	SignerPubKey     string `json:"pubKey"`
 }
 
 func newValidatorJoinHandler(cliCtx context.CLIContext) http.HandlerFunc {
@@ -49,9 +49,9 @@ func newValidatorJoinHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		validatorAddr := common.HexToAddress(m.ValidatorAddress)
-		crytoPubKey := helper.BytesToPubkey(common.Hex2Bytes(m.ValidatorPubKey))
+		crytoPubKey := helper.BytesToPubkey(common.Hex2Bytes(m.SignerPubKey))
 
-		msg := staking.NewMsgValidatorJoin(validatorAddr, common.Hex2Bytes(m.ValidatorPubKey))
+		msg := staking.NewMsgValidatorJoin(validatorAddr, common.Hex2Bytes(m.SignerPubKey))
 
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {
