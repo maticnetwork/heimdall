@@ -15,6 +15,9 @@ build: clean
 	go build -o build/heimdalld cmd/heimdalld/main.go
 	go build -o build/bridge bridge/bridge.go
 
+build-testnet:
+	go build -o build/testnet cmd/testnet/main.go
+
 contracts:
 	abigen --abi=contracts/rootchain/rootchain.abi --pkg=rootchain --out=contracts/rootchain/rootchain.go
 	abigen --abi=contracts/stakemanager/stakemanager.abi --pkg=stakemanager --out=contracts/stakemanager/stakemanager.go
