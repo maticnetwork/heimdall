@@ -1,4 +1,4 @@
-package checkpoint
+package staking
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -9,13 +9,15 @@ import (
 // TODO we most likely dont need to register to amino as we are using RLP to encode
 
 func RegisterWire(cdc *codec.Codec) {
-	cdc.RegisterConcrete(MsgCheckpoint{}, "checkpoint/MsgCheckpoint", nil)
-	cdc.RegisterConcrete(MsgCheckpointAck{}, "checkpoint/MsgCheckpointACK", nil)
+	cdc.RegisterConcrete(MsgValidatorJoin{}, "staking/MsgValidatorJoin", nil)
+	cdc.RegisterConcrete(MsgSignerUpdate{}, "staking/MsgSignerUpdate", nil)
+	cdc.RegisterConcrete(MsgValidatorExit{}, "staking/MsgValidatorExit", nil)
 }
 
 func RegisterPulp(pulp *hmTypes.Pulp) {
-	pulp.RegisterConcrete(MsgCheckpoint{})
-	pulp.RegisterConcrete(MsgCheckpointAck{})
+	pulp.RegisterConcrete(MsgValidatorJoin{})
+	pulp.RegisterConcrete(MsgSignerUpdate{})
+	pulp.RegisterConcrete(MsgValidatorExit{})
 }
 
 var cdcEmpty = codec.New()

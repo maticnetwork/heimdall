@@ -36,7 +36,7 @@ ignored = [
 [[constraint]]
   name = "github.com/tendermint/tendermint"
   source = "github.com/maticnetwork/tendermint"
-  revision = "1897d3c0ab6d59437d13029855ace4869d3a0df7"
+  revision = "86ae22642bc7ef865681ca036a1527de8f323d53"
 
 [[override]]
   name = "golang.org/x/crypto"

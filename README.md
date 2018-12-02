@@ -59,8 +59,9 @@ Create `~/.heimdalld/config/heimdall-config.json` directory with following conte
   "mainRPCUrl": "https://kovan.infura.io",
   "maticRPCUrl": "https://testnet.matic.network",
 
-  "stakeManagerAddress": "8b28d78eb59c323867c43b4ab8d06e0f1efa1573",
-  "rootchainAddress": "e022d867085b1617dc9fb04b474c4de580dccf1a"
+  "stakeManagerAddress": "0xb4ee6879ba231824651991c8f0a34af4d6bfca6a",
+  "rootchainAddress": "0x168ea52f1fafe28d584f94357383d4f6fa8a749a",
+  "childBlockInterval": 1000
 }
 ```
 

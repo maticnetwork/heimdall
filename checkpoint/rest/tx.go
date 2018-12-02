@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -9,11 +8,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/gorilla/mux"
-	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 
 	"github.com/maticnetwork/heimdall/checkpoint"
+	"github.com/maticnetwork/heimdall/helper"
 )
 
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
@@ -21,17 +19,20 @@ func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec
 		"/checkpoint/new",
 		newCheckpointHandler(cliCtx),
 	).Methods("POST")
+	r.HandleFunc("/checkpoint/ack", NewCheckpointACKHandler(cliCtx)).Methods("POST")
 }
 
-type EpochCheckpoint struct {
-	RootHash   string `json:"rootHash"`
-	StartBlock uint64 `json:"startBlock"`
-	EndBlock   uint64 `json:"endBlock"`
+// HeaderBlock struct for incoming checkpoint
+type HeaderBlock struct {
+	Proposer   common.Address `json:"proposer"`
+	RootHash   common.Hash    `json:"rootHash"`
+	StartBlock uint64         `json:"startBlock"`
+	EndBlock   uint64         `json:"endBlock"`
 }
 
 func newCheckpointHandler(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var m EpochCheckpoint
+		var m HeaderBlock
 
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
@@ -48,12 +49,22 @@ func newCheckpointHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		txBytes, err := CreateTxBytes(m)
+		msg := checkpoint.NewMsgCheckpointBlock(
+			m.Proposer,
+			m.StartBlock,
+			m.EndBlock,
+			m.RootHash,
+		)
+
+		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {
-			RestLogger.Error("Unable to create txBytes", "endBlock", m.EndBlock, "startBlock", m.StartBlock, "rootHash", m.RootHash)
+			RestLogger.Error("Unable to create txBytes", "proposer", m.Proposer.Hex(), "endBlock", m.EndBlock, "startBlock", m.StartBlock, "rootHash", m.RootHash.Hex())
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
 		}
 
-		resp, err := SendTendermintRequest(cliCtx, txBytes)
+		resp, err := helper.SendTendermintRequest(cliCtx, txBytes)
 		if err != nil {
 			RestLogger.Error("Error while sending request to Tendermint", "error", err)
 			w.WriteHeader(http.StatusBadRequest)
@@ -72,24 +83,51 @@ func newCheckpointHandler(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func SendTendermintRequest(cliCtx context.CLIContext, txBytes []byte) (*ctypes.ResultBroadcastTxCommit, error) {
-	RestLogger.Info("Broadcasting tx bytes to Tendermint", "txBytes", hex.EncodeToString(txBytes))
-	return cliCtx.BroadcastTx(txBytes)
+type HeaderACK struct {
+	HeaderBlock uint64 `json:"headerBlock"`
 }
 
-func CreateTxBytes(m EpochCheckpoint) ([]byte, error) {
-	msg := checkpoint.NewMsgCheckpointBlock(
-		m.StartBlock,
-		m.EndBlock,
-		common.HexToHash(m.RootHash))
+func NewCheckpointACKHandler(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
 
-	tx := checkpoint.NewBaseTx(msg)
+		var m HeaderACK
+		err = json.Unmarshal(body, &m)
+		if err != nil {
+			RestLogger.Error("Error unmarshalling Header ACK", "error", err)
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
 
-	txBytes, err := rlp.EncodeToBytes(tx)
-	if err != nil {
-		RestLogger.Error("Error generating TX Bytes", "error", err)
+		// create new msg checkpoint ack
+		msg := checkpoint.NewMsgCheckpointAck(m.HeaderBlock)
 
-		return []byte(""), err
+		txBytes, err := helper.CreateTxBytes(msg)
+		if err != nil {
+			RestLogger.Error("Unable to create txBytes", "error", err, "headerBlock", m.HeaderBlock)
+		}
+
+		resp, err := helper.SendTendermintRequest(cliCtx, txBytes)
+		if err != nil {
+			RestLogger.Error("Error while sending request to Tendermint", "error", err)
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		result, err := json.Marshal(&resp)
+		if err != nil {
+			RestLogger.Error("Error while marshalling tendermint response", "error", err)
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		w.Write(result)
 	}
-	return txBytes, nil
 }

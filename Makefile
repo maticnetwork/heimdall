@@ -15,9 +15,12 @@ build: clean
 	go build -o build/heimdalld cmd/heimdalld/main.go
 	go build -o build/bridge bridge/bridge.go
 
+build-testnet:
+	go build -o build/testnet cmd/testnet/main.go
+
 contracts:
-	# mkdir -p contracts/validatorset
-	# abigen --abi=contracts/validatorset/validatorset.abi --pkg=validatorset --out=contracts/validatorset/validatorset.go
+	abigen --abi=contracts/rootchain/rootchain.abi --pkg=rootchain --out=contracts/rootchain/rootchain.go
+	abigen --abi=contracts/stakemanager/stakemanager.abi --pkg=stakemanager --out=contracts/stakemanager/stakemanager.go
 
 init-heimdall:
 	./build/heimdalld init
@@ -63,4 +66,4 @@ push-docker:
 build-docker-develop:
 	docker build -t "maticnetwork/heimdall:develop" -f docker/Dockerfile.develop .
 
-.PHONY: dep build
+.PHONY: contracts dep build

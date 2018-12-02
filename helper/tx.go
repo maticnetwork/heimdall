@@ -6,19 +6,13 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum"
-
-	"bytes"
-
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rlp"
-	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/types"
 )
-
-var cdc = amino.NewCodec()
 
 func GenerateAuthObj(client *ethclient.Client, callMsg ethereum.CallMsg) (auth *bind.TransactOpts, err error) {
 	// get priv key
@@ -56,6 +50,8 @@ func GenerateAuthObj(client *ethclient.Client, callMsg ethereum.CallMsg) (auth *
 	return
 }
 
+// SendCheckpoint sends checkpoint to rootchain contract
+// todo return err
 func SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte) {
 	var vote types.CanonicalRLPVote
 	err := rlp.DecodeBytes(voteSignBytes, &vote)
@@ -63,42 +59,36 @@ func SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte) {
 		Logger.Error("Unable to decode vote while sending checkpoint", "vote", hex.EncodeToString(voteSignBytes), "sigs", hex.EncodeToString(sigs), "txData", hex.EncodeToString(txData))
 	}
 
-	stakeManagerInstance, err := GetStakeManagerInstance()
+	rootchainInstance, err := GetRootChainInstance()
 	if err != nil {
 		return
 	}
 
 	// get stakeManager Instance
-	stakeManagerABI, err := GetStakeManagerABI()
+	rootchainABI, err := GetRootChainABI()
 	if err != nil {
 		return
 	}
 
-	data, err := stakeManagerABI.Pack("validate", voteSignBytes, sigs, txData)
+	data, err := rootchainABI.Pack("submitHeaderBlock", voteSignBytes, sigs, txData)
 	if err != nil {
-		Logger.Error("Unable to pack tx for validate", "error", err)
+		Logger.Error("Unable to pack tx for submitHeaderBlock", "error", err)
 		return
 	}
 
-	stakeManagerAddress := GetStakeManagerAddress()
+	rootChainAddress := GetRootChainAddress()
 	auth, err := GenerateAuthObj(GetMainClient(), ethereum.CallMsg{
-		To:   &stakeManagerAddress,
+		To:   &rootChainAddress,
 		Data: data,
 	})
 
-	// get validator address
-	validatorAddress := GetPubKey().Address().Bytes()
+	Logger.Info("Sending new checkpoint", "vote", hex.EncodeToString(voteSignBytes), "sigs", hex.EncodeToString(sigs), "txData", hex.EncodeToString(txData))
 
-	if !bytes.Equal(validatorAddress, vote.Proposer) {
-		Logger.Info("You are not proposer", "proposer", hex.EncodeToString(vote.Proposer), "validator", hex.EncodeToString(validatorAddress))
+	tx, err := rootchainInstance.SubmitHeaderBlock(auth, voteSignBytes, sigs, txData)
+	if err != nil {
+		Logger.Error("Error while submitting checkpoint", "error", err)
 	} else {
-		Logger.Info("We are proposer. Sending new checkpoint", "vote", hex.EncodeToString(voteSignBytes), "sigs", hex.EncodeToString(sigs), "txData", hex.EncodeToString(txData))
-
-		tx, err := stakeManagerInstance.Validate(auth, voteSignBytes, sigs, txData)
-		if err != nil {
-			Logger.Error("Error while submitting checkpoint", "error", err)
-		} else {
-			Logger.Info("Submitted new header successfully ", "txHash", tx.Hash().String())
-		}
+		Logger.Info("Submitted new header successfully", "txHash", tx.Hash().String())
 	}
+
 }

@@ -2,22 +2,23 @@ package helper
 
 import (
 	"log"
+	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/spf13/viper"
+	amino "github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
+	logger "github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/privval"
-
-	"os"
 
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
-	logger "github.com/tendermint/tendermint/libs/log"
 )
 
 const (
@@ -27,12 +28,16 @@ const (
 	FlagClientHome         = "home-client"
 	MainRPCUrl             = "https://kovan.infura.io"
 	MaticRPCUrl            = "https://testnet.matic.network"
+	// TODO maybe this should be stored in state ?
+	CheckpointBufferTime = time.Minute * 5 // aka 5 minutes
 )
 
 var (
 	DefaultCLIHome  = os.ExpandEnv("$HOME/.heimdallcli")
 	DefaultNodeHome = os.ExpandEnv("$HOME/.heimdalld")
 )
+
+var cdc = amino.NewCodec()
 
 func init() {
 	cdc.RegisterConcrete(secp256k1.PubKeySecp256k1{}, secp256k1.PubKeyAminoRoute, nil)
@@ -46,6 +51,7 @@ type Configuration struct {
 	MaticRPCUrl         string `json:"maticRPCUrl"`
 	StakeManagerAddress string `json:"stakeManagerAddress"`
 	RootchainAddress    string `json:"rootchainAddress"`
+	ChildBlockInterval  uint64 `json:"childBlockInterval"`
 }
 
 var conf Configuration
@@ -103,11 +109,11 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 	if err != nil { // Handle errors reading the config file
 		log.Fatal(err)
 	}
+
 	if err = heimdallViper.Unmarshal(&conf); err != nil {
 		log.Fatal(err)
 	}
 
-	rpc.Dial(conf.MainRPCUrl)
 	// setup eth client
 	if mainChainClient, err = ethclient.Dial(conf.MainRPCUrl); err != nil {
 		Logger.Error("Error while creating main chain client", "error", err)
@@ -140,7 +146,7 @@ func GetRootChainAddress() common.Address {
 }
 
 func GetRootChainInstance() (*rootchain.Rootchain, error) {
-	rootChainInstance, err := rootchain.NewRootchain(common.HexToAddress(GetConfig().RootchainAddress), mainChainClient)
+	rootChainInstance, err := rootchain.NewRootchain(GetRootChainAddress(), mainChainClient)
 	if err != nil {
 		Logger.Error("Unable to create root chain instance", "error", err)
 	}
@@ -161,7 +167,7 @@ func GetStakeManagerAddress() common.Address {
 }
 
 func GetStakeManagerInstance() (*stakemanager.Stakemanager, error) {
-	stakeManagerInstance, err := stakemanager.NewStakemanager(common.HexToAddress(GetConfig().StakeManagerAddress), mainChainClient)
+	stakeManagerInstance, err := stakemanager.NewStakemanager(GetStakeManagerAddress(), mainChainClient)
 	if err != nil {
 		Logger.Error("Unable to create stakemanager instance", "error", err)
 	}
