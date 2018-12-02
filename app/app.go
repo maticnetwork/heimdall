@@ -176,6 +176,9 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 				Power:  tmValidator.VotingPower,
 				PubKey: tmTypes.TM2PB.PubKey(tmValidator.PubKey),
 			}
+			// Add individual validator to state
+			app.masterKeeper.AddValidator(ctx, validator.ToHeimdallValidator())
+			// Add validator to validator updated to be processed below
 			validatorUpdates[i] = updateVal
 		}
 	}

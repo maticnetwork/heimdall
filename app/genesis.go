@@ -8,6 +8,7 @@ import (
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	tmTypes "github.com/tendermint/tendermint/types"
 
+	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -19,6 +20,7 @@ type GenesisAccount struct {
 	AccountNumber int64          `json:"account_number"`
 }
 
+// TODO not sure why int64 is used , if no specific reason , convert to uint64 can hold larger values
 // GenesisValidator genesis validator
 type GenesisValidator struct {
 	Address    common.Address `json:"address"`
@@ -38,6 +40,18 @@ func (v *GenesisValidator) ToTmValidator() tmTypes.Validator {
 		Address:     v.Signer.Bytes(),
 		PubKey:      pubkeyBytes,
 		VotingPower: v.Power,
+	}
+}
+
+// ToTmValidator converts genesis validator validator to Heimdall validator
+func (v *GenesisValidator) ToHeimdallValidator() hmTypes.Validator {
+	return hmTypes.Validator{
+		Address:    v.Address,
+		PubKey:     helper.BytesToPubkey(v.PubKey[:]),
+		Power:      uint64(v.Power),
+		StartEpoch: uint64(v.StartEpoch),
+		EndEpoch:   uint64(v.EndEpoch),
+		Signer:     v.Address,
 	}
 }
 
