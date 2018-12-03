@@ -58,8 +58,12 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 	k.UpdateACKCount(ctx)
 	common.CheckpointLogger.Debug("Valid ACK Received", "CurrentACKCount", k.GetACKCount(ctx)-1, "UpdatedACKCount", k.GetACKCount(ctx))
 
+	// remove matured Validators
+	k.RemoveDeactivatedValidators(ctx)
+
 	// check for validator updates
 	if k.ValidatorSetChanged(ctx) {
+
 		// GetAllValidators from store , not current , ALL !
 		updatedValidators := k.GetAllValidators(ctx)
 
