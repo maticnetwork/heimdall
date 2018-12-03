@@ -493,26 +493,25 @@ func (k *Keeper) SetValidatorSetChangedFlag(ctx sdk.Context, value bool) {
 	store.Set(ValidatorSetChangeKey, DefaultValue)
 }
 
-
 // mapping for validator address to signer address
-func (k *Keeper) SetValidatorAddrToSignerAddr(ctx sdk.Context, validatorAddr common.Address,signerAddr common.Address) {
+func (k *Keeper) SetValidatorAddrToSignerAddr(ctx sdk.Context, validatorAddr common.Address, signerAddr common.Address) {
 	store := ctx.KVStore(k.StakingKey)
-	store.Set(validatorAddr.Bytes(),signerAddr.Bytes())
+	store.Set(validatorAddr.Bytes(), signerAddr.Bytes())
 }
 
 // Get signer from validator address
-func (k Keeper) GetValidatorFromValAddr(ctx sdk.Context,validatorAddr common.Address) (types.Validator,error) {
+func (k Keeper) GetValidatorFromValAddr(ctx sdk.Context, validatorAddr common.Address) (types.Validator, error) {
 	store := ctx.KVStore(k.StakingKey)
 
 	// check if validator address has been mapped
 	if !store.Has(validatorAddr.Bytes()) {
 		StakingLogger.Info("Validator Not Found")
-		return types.Validator{},errors.New("Validator not found")
+		return types.Validator{}, errors.New("Validator not found")
 	}
 
 	var val types.Validator
 	// query for validator using ValidatorAddress => SignerAddress map
-	k.GetValidatorInfo(ctx,store.Get(validatorAddr.Bytes()),&val)
-	
-	return val,nil
+	k.GetValidatorInfo(ctx, store.Get(validatorAddr.Bytes()), &val)
+
+	return val, nil
 }
