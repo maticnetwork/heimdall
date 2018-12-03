@@ -40,7 +40,7 @@ func ValidatorByAddressHandlerFn(
 		vars := mux.Vars(r)
 		validatorAddress := common.HexToAddress(vars["address"])
 
-		res, err := cliCtx.QueryStore(hmcommon.GetValidatorKey(validatorAddress.Bytes()), "staker")
+		res, err := cliCtx.QueryStore(validatorAddress.Bytes(), "staker")
 		if err != nil {
 			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return

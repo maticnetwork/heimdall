@@ -135,7 +135,7 @@ func newValidatorExitHandler(cliCtx context.CLIContext) http.HandlerFunc {
 
 type updateValidator struct {
 	ValidatorAddress   common.Address `json:"address"`
-	NewValidatorPubKey hmType.PubKey  `json:"newPubKey"`
+	NewSignerPubKey hmType.PubKey  `json:"newPubKey"`
 }
 
 func newValidatorUpdateHandler(cliCtx context.CLIContext) http.HandlerFunc {
@@ -157,7 +157,7 @@ func newValidatorUpdateHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		msg := staking.NewMsgValidatorUpdate(m.ValidatorAddress, m.NewValidatorPubKey[:])
+		msg := staking.NewMsgValidatorUpdate(m.ValidatorAddress, m.NewSignerPubKey[:])
 
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {

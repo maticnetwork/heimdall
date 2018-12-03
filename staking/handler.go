@@ -79,9 +79,9 @@ func handleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k hmCommon.Keep
 	var validator hmTypes.Validator
 
 	// pull val from store
-	err := k.GetValidatorInfo(ctx, msg.SignerAddress.Bytes(), &validator)
+	err := k.GetValidatorFromValAddr(ctx, msg.ValidatorAddress, &validator)
 	if err != nil {
-		hmCommon.StakingLogger.Error("Fetching of validator from store failed", "error", err, "validatorAddress", msg.SignerAddress)
+		hmCommon.StakingLogger.Error("Fetching of validator from store failed", "error", err, "validatorAddress", msg.ValidatorAddress)
 		return hmCommon.ErrNoValidator(k.Codespace).Result()
 	}
 
@@ -94,14 +94,14 @@ func handleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k hmCommon.Keep
 	}
 
 	// update
-	err = k.UpdateSigner(ctx, common.HexToAddress(pubKey.Address().String()), pubKey, msg.SignerAddress)
+	err = k.UpdateSigner(ctx, common.HexToAddress(pubKey.Address().String()), pubKey, validator.Signer)
 	if err != nil {
 		hmCommon.StakingLogger.Error("Unable to update signer", "Error", err, "currentSigner", validator.Signer.String(), "signerFromMsg", pubKey.Address().String())
 		panic(err)
 	}
 
 	// update ValidatorAddress to SignerAddress Map
-	k.SetValidatorAddrToSignerAddr(ctx, validator.Address, msg.SignerAddress)
+	k.SetValidatorAddrToSignerAddr(ctx, validator.Address, common.BytesToAddress(pubKey.Address().Bytes()))
 
 	// validator set changed
 	k.SetValidatorSetChangedFlag(ctx, true)
