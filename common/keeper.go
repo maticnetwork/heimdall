@@ -502,16 +502,20 @@ func (k *Keeper) SetValidatorAddrToSignerAddr(ctx sdk.Context, validatorAddr com
 // Get signer from validator address
 func (k Keeper) GetValidatorFromValAddr(ctx sdk.Context, validatorAddr common.Address) (types.Validator, error) {
 	store := ctx.KVStore(k.StakingKey)
+	var val types.Validator
 
 	// check if validator address has been mapped
 	if !store.Has(validatorAddr.Bytes()) {
 		StakingLogger.Info("Validator Not Found")
-		return types.Validator{}, errors.New("Validator not found")
+		return val, errors.New("Validator not found")
 	}
 
-	var val types.Validator
 	// query for validator using ValidatorAddress => SignerAddress map
-	k.GetValidatorInfo(ctx, store.Get(validatorAddr.Bytes()), &val)
+	err := k.GetValidatorInfo(ctx, store.Get(validatorAddr.Bytes()), &val)
+	if err != nil {
+		StakingLogger.Error("Unable to fetch validator from store", "ValidatorAddress", validatorAddr, "SignerAddress", hex.EncodeToString(store.Get(validatorAddr.Bytes())))
+		return val, errors.New("Unable to fetch validator")
+	}
 
 	return val, nil
 }
