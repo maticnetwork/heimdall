@@ -106,12 +106,12 @@ func (msg MsgSignerUpdate) ValidateBasic() sdk.Error {
 var _ sdk.Msg = &MsgValidatorExit{}
 
 type MsgValidatorExit struct {
-	SignerAddress common.Address
+	ValidatorAddress common.Address
 }
 
 func NewMsgValidatorExit(address common.Address) MsgValidatorExit {
 	return MsgValidatorExit{
-		SignerAddress: address,
+		ValidatorAddress: address,
 	}
 }
 

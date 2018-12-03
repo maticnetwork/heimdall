@@ -394,11 +394,13 @@ func (k *Keeper) AddDeactivationEpoch(ctx sdk.Context, validator types.Validator
 // UpdateSigner updates validator with signer and pubkey
 func (k *Keeper) UpdateSigner(ctx sdk.Context, newSigner common.Address, pubkey crypto.PubKey, prevSigner common.Address) error {
 
-	// get old validator from state and remove
+	// get old validator from state and make power 0
 	var validator types.Validator
 	k.GetValidatorInfo(ctx, prevSigner.Bytes(), &validator)
+	// copy power to reassign below
 	valPower := validator.Power
 	validator.Power = 0
+	// update validator
 	k.AddValidator(ctx, validator)
 
 	//update signer in prev Validator
@@ -500,22 +502,21 @@ func (k *Keeper) SetValidatorAddrToSignerAddr(ctx sdk.Context, validatorAddr com
 }
 
 // Get signer from validator address
-func (k Keeper) GetValidatorFromValAddr(ctx sdk.Context, validatorAddr common.Address) (types.Validator, error) {
+func (k Keeper) GetValidatorFromValAddr(ctx sdk.Context, validatorAddr common.Address, val *types.Validator) error {
 	store := ctx.KVStore(k.StakingKey)
-	var val types.Validator
 
 	// check if validator address has been mapped
 	if !store.Has(validatorAddr.Bytes()) {
 		StakingLogger.Info("Validator Not Found")
-		return val, errors.New("Validator not found")
+		return errors.New("Validator not found")
 	}
 
 	// query for validator using ValidatorAddress => SignerAddress map
-	err := k.GetValidatorInfo(ctx, store.Get(validatorAddr.Bytes()), &val)
+	err := k.GetValidatorInfo(ctx, store.Get(validatorAddr.Bytes()), val)
 	if err != nil {
 		StakingLogger.Error("Unable to fetch validator from store", "ValidatorAddress", validatorAddr, "SignerAddress", hex.EncodeToString(store.Get(validatorAddr.Bytes())))
-		return val, errors.New("Unable to fetch validator")
+		return errors.New("Unable to fetch validator")
 	}
 
-	return val, nil
+	return nil
 }
