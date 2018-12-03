@@ -62,14 +62,14 @@ var _ sdk.Msg = &MsgSignerUpdate{}
 
 // MsgSignerUpdate signer update struct
 type MsgSignerUpdate struct {
-	ValidatorAddress   common.Address `json:"address"`
-	NewSignerPubKey []byte         `json:"pubKey"`
+	ValidatorAddress common.Address `json:"address"`
+	NewSignerPubKey  []byte         `json:"pubKey"`
 }
 
 func NewMsgValidatorUpdate(address common.Address, pubKey []byte) MsgSignerUpdate {
 	return MsgSignerUpdate{
-		ValidatorAddress:   address,
-		NewSignerPubKey: pubKey,
+		ValidatorAddress: address,
+		NewSignerPubKey:  pubKey,
 	}
 }
 

@@ -134,8 +134,8 @@ func newValidatorExitHandler(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 type updateValidator struct {
-	ValidatorAddress   common.Address `json:"address"`
-	NewSignerPubKey hmType.PubKey  `json:"newPubKey"`
+	ValidatorAddress common.Address `json:"address"`
+	NewSignerPubKey  hmType.PubKey  `json:"newPubKey"`
 }
 
 func newValidatorUpdateHandler(cliCtx context.CLIContext) http.HandlerFunc {
