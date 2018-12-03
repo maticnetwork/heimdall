@@ -125,12 +125,14 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 			// remove matured Validators
 			app.masterKeeper.RemoveDeactivatedValidators(ctx)
 
-			// check if validator set has changed
-			if app.masterKeeper.ValidatorSetChanged(ctx) {
-				// GetAllValidators from store (includes previous validator set + updates)
-				valUpdates = app.masterKeeper.GetAllValidators(ctx)
-				// mark validator set changes have been sent to TM
-				app.masterKeeper.SetValidatorSetChangedFlag(ctx, false)
+			// GetAllValidators from store (includes previous validator set + updates)
+			validators := app.masterKeeper.GetAllValidators(ctx)
+			for _, validator := range validators {
+				val := abci.ValidatorUpdate{
+					Power:  int64(validator.Power),
+					PubKey: tmTypes.TM2PB.PubKey(validator.PubKey),
+				}
+				valUpdates = append(valUpdates, val)
 			}
 
 			// clear ACK cache
@@ -215,7 +217,7 @@ func (app *HeimdallApp) ExportAppStateAndValidators() (appState json.RawMessage,
 }
 
 func GetExtraData(_checkpoint hmTypes.CheckpointBlockHeader, ctx sdk.Context) []byte {
-	logger.Debug("Creating extra data", "startBlock", _checkpoint.StartBlock, "endBlock", _checkpoint.EndBlock, "roothash", _checkpoint.RootHash)
+	logger.Debug("Creating extra data", "startBlock", _checkpoint.StartBlock, "endBlock", _checkpoint.EndBlock, "roothash", _checkpoint.RootHash, "timestamp", _checkpoint.TimeStamp)
 
 	// craft a message
 	txBytes, err := helper.CreateTxBytes(
@@ -224,6 +226,7 @@ func GetExtraData(_checkpoint hmTypes.CheckpointBlockHeader, ctx sdk.Context) []
 			_checkpoint.StartBlock,
 			_checkpoint.EndBlock,
 			_checkpoint.RootHash,
+			_checkpoint.TimeStamp,
 		),
 	)
 	if err != nil {

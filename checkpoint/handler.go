@@ -31,7 +31,7 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 		return common.ErrBadAck(k.Codespace).Result()
 	}
 
-	common.CheckpointLogger.Debug("HeaderBlock Fetched", "start", start, "end", end, "Roothash", root)
+	common.CheckpointLogger.Debug("HeaderBlock fetched", "headerBlock", msg.HeaderBlock, "start", start, "end", end, "Roothash", root)
 
 	// get last checkpoint from buffer
 	headerBlock, err := k.GetCheckpointFromBuffer(ctx)
@@ -46,42 +46,38 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 	}
 
 	// add checkpoint to headerBlocks
-	k.AddCheckpointToBuffer(ctx, common.GetHeaderKey(msg.HeaderBlock), headerBlock)
-	common.CheckpointLogger.Info("Checkpoint Added to Store", "roothash", headerBlock.RootHash, "startBlock",
-		headerBlock.StartBlock, "endBlock", headerBlock.EndBlock, "proposer", headerBlock.Proposer)
+	k.AddCheckpoint(ctx, msg.HeaderBlock, headerBlock)
+	common.CheckpointLogger.Info("Checkpoint added to store", "roothash", headerBlock.RootHash, "startBlock", headerBlock.StartBlock, "endBlock", headerBlock.EndBlock, "proposer", headerBlock.Proposer)
 
 	// flush checkpoint in buffer
 	k.FlushCheckpointBuffer(ctx)
-	common.CheckpointLogger.Debug("Checkpoint Buffer Flushed", "Checkpoint", headerBlock)
+	common.CheckpointLogger.Debug("Checkpoint buffer flushed after receiving checkpoint ack", "checkpoint", headerBlock)
 
 	// update ack count
 	k.UpdateACKCount(ctx)
-	common.CheckpointLogger.Debug("Valid ACK Received", "CurrentACKCount", k.GetACKCount(ctx)-1, "UpdatedACKCount", k.GetACKCount(ctx))
+	common.CheckpointLogger.Debug("Valid ack received", "CurrentACKCount", k.GetACKCount(ctx)-1, "UpdatedACKCount", k.GetACKCount(ctx))
+
+	// --- Update to new validator
 
 	// remove matured Validators
 	k.RemoveDeactivatedValidators(ctx)
 
-	// check for validator updates
-	if k.ValidatorSetChanged(ctx) {
+	// GetAllValidators from store, not current, ALL!
+	updatedValidators := k.GetAllValidators(ctx)
 
-		// GetAllValidators from store , not current , ALL !
-		updatedValidators := k.GetAllValidators(ctx)
+	// get current running validator set
+	currentValidatorSet := k.GetValidatorSet(ctx)
 
-		// get current running validator set
-		currentValidatorSet := k.GetValidatorSet(ctx)
+	// apply updates
+	helper.UpdateValidators(&currentValidatorSet, updatedValidators)
 
-		// apply updates
-		helper.UpdateValidators(&currentValidatorSet, updatedValidators)
+	// update validator set in store
+	k.UpdateValidatorSetInStore(ctx, currentValidatorSet)
 
-		// update validator set in store
-		k.UpdateValidatorSetInStore(ctx, currentValidatorSet)
-
-		// Dont change validator change update flag
-		// that is changed when updates are passes to TM in endblock
-	}
-
-	// if no updates found increment accum
+	// increment accum
 	k.IncreamentAccum(ctx, 1)
+
+	// --- End
 
 	// indicate ACK received by adding in cache, cache cleared in endblock
 	k.SetCheckpointAckCache(ctx, common.DefaultValue)
@@ -112,13 +108,13 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper) sd
 	}
 
 	// add checkpoint to buffer
-	k.AddCheckpointToBuffer(ctx, common.BufferCheckpointKey, hmTypes.CheckpointBlockHeader{
+	k.SetCheckpointBuffer(ctx, hmTypes.CheckpointBlockHeader{
 		StartBlock: msg.StartBlock,
 		EndBlock:   msg.EndBlock,
 		RootHash:   msg.RootHash,
 		Proposer:   msg.Proposer,
+		TimeStamp:  msg.TimeStamp,
 	})
-	common.CheckpointLogger.Debug("Checkpoint added in buffer!", "roothash", msg.RootHash, "startBlock", msg.StartBlock, "endBlock", msg.EndBlock, "proposer", msg.Proposer)
 
 	// indicate Checkpoint received by adding in cache, cache cleared in endblock
 	k.SetCheckpointCache(ctx, common.DefaultValue)

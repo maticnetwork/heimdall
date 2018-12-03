@@ -8,7 +8,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
@@ -18,19 +17,17 @@ import (
 )
 
 // UpdateValidators updates validators in validator set
-func UpdateValidators(currentSet *tmTypes.ValidatorSet, abciUpdates []abci.ValidatorUpdate) error {
-	updates, err := tmTypes.PB2TM.ValidatorUpdates(abciUpdates)
-	if err != nil {
-		return err
+func UpdateValidators(currentSet *tmTypes.ValidatorSet, validators []hmTypes.Validator) error {
+	for _, validator := range validators {
+
 	}
 
-	// these are tendermint types now
-	for _, valUpdate := range updates {
-		if valUpdate.VotingPower < 0 {
-			return fmt.Errorf("Voting power can't be negative %v", valUpdate)
+	for _, validator := range validators {
+		if validator.Power < 0 {
+			return fmt.Errorf("Voting power can't be negative %v", validator)
 		}
 
-		address := valUpdate.Address
+		address := validator.Address
 		_, val := currentSet.GetByAddress(address)
 		if valUpdate.VotingPower == 0 {
 			// remove val

@@ -161,7 +161,7 @@ func newValidatorUpdateHandler(cliCtx context.CLIContext) http.HandlerFunc {
 
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {
-			RestLogger.Error("Unable to create txBytes", "currentValidatorAddress", m.ValidatorAddress.Hex(), "newValidatorPubKey", m.NewValidatorPubKey)
+			RestLogger.Error("Unable to create txBytes", "currentValidatorAddress", m.ValidatorAddress.Hex(), "newSignerPubKey", m.NewSignerPubKey)
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
 			return
@@ -169,7 +169,7 @@ func newValidatorUpdateHandler(cliCtx context.CLIContext) http.HandlerFunc {
 
 		resp, err := helper.SendTendermintRequest(cliCtx, txBytes)
 		if err != nil {
-			RestLogger.Error("Error while sending request to Tendermint", "error", err, "ValidatorAddress", m.ValidatorAddress.Hex(), "newValidatorPubKey", m.NewValidatorPubKey, "txBytes", txBytes)
+			RestLogger.Error("Error while sending request to Tendermint", "error", err, "ValidatorAddress", m.ValidatorAddress.Hex(), "newSignerPubKey", m.NewSignerPubKey, "txBytes", txBytes)
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
 			return

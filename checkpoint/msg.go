@@ -22,15 +22,17 @@ type MsgCheckpoint struct {
 	StartBlock uint64         `json:"startBlock"`
 	EndBlock   uint64         `json:"endBlock"`
 	RootHash   common.Hash    `json:"rootHash"`
+	TimeStamp  uint64         `json:"timestamp"`
 }
 
 // NewMsgCheckpointBlock creates new checkpoint message using mentioned arguments
-func NewMsgCheckpointBlock(proposer common.Address, startBlock uint64, endBlock uint64, roothash common.Hash) MsgCheckpoint {
+func NewMsgCheckpointBlock(proposer common.Address, startBlock uint64, endBlock uint64, roothash common.Hash, timestamp uint64) MsgCheckpoint {
 	return MsgCheckpoint{
 		Proposer:   proposer,
 		StartBlock: startBlock,
 		EndBlock:   endBlock,
 		RootHash:   roothash,
+		TimeStamp:  timestamp,
 	}
 }
 

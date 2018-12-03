@@ -2,7 +2,6 @@ package types
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -13,17 +12,17 @@ type CheckpointBlockHeader struct {
 	StartBlock uint64         `json:"startBlock"`
 	EndBlock   uint64         `json:"endBlock"`
 	RootHash   common.Hash    `json:"rootHash"`
-	TimeStamp  time.Time      `json:"timestamp"`
+	TimeStamp  uint64         `json:"timestamp"`
 }
 
 // CreateBlock generate new block
-func CreateBlock(start uint64, end uint64, rootHash common.Hash, proposer common.Address) CheckpointBlockHeader {
+func CreateBlock(start uint64, end uint64, rootHash common.Hash, proposer common.Address, timestamp uint64) CheckpointBlockHeader {
 	return CheckpointBlockHeader{
 		StartBlock: start,
 		EndBlock:   end,
 		RootHash:   rootHash,
 		Proposer:   proposer,
-		TimeStamp:  time.Now().UTC(),
+		TimeStamp:  timestamp,
 	}
 }
 
@@ -35,6 +34,6 @@ func (m CheckpointBlockHeader) String() string {
 		m.StartBlock,
 		m.EndBlock,
 		m.RootHash.Hex(),
-		m.TimeStamp.String(),
+		m.TimeStamp,
 	)
 }

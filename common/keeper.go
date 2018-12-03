@@ -2,19 +2,17 @@ package common
 
 import (
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"strconv"
-	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
-	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
 	tmTypes "github.com/tendermint/tendermint/types"
 
-	"encoding/hex"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
 )
@@ -67,38 +65,45 @@ var (
 
 //--------------- Checkpoint Related Keepers
 
-// AddCheckpointToBuffer adds checkpoint to buffer or final headerBlocks
-func (k *Keeper) AddCheckpointToBuffer(ctx sdk.Context, key []byte, headerBlock types.CheckpointBlockHeader) sdk.Error {
+func (k *Keeper) _addCheckpoint(ctx sdk.Context, key []byte, headerBlock types.CheckpointBlockHeader) error {
 	store := ctx.KVStore(k.CheckpointKey)
 
-	checkpointBuffer, _ := k.GetCheckpointFromBuffer(ctx)
+	// checkpointBuffer, err := k.GetCheckpointFromBuffer(ctx)
+	// if err != nil {
+	// 	return err
+	// }
 
-	// Reject new checkpoint if checkpoint exists in buffer and 5 minutes have not passed
-	if bytes.Equal(key, BufferCheckpointKey) && !bytes.Equal(store.Get(BufferCheckpointKey), EmptyBufferValue) && time.Now().UTC().Before(checkpointBuffer.TimeStamp.Add(helper.CheckpointBufferTime)) {
-		return ErrNoACK(k.Codespace)
-	}
+	// // Reject new checkpoint if checkpoint exists in buffer and 5 minutes have not passed
+	// if bytes.Equal(key, BufferCheckpointKey) && !bytes.Equal(store.Get(BufferCheckpointKey), EmptyBufferValue) && time.Now().UTC().Before(checkpointBuffer.TimeStamp.Add(helper.CheckpointBufferTime)) {
+	// 	return ErrNoACK(k.Codespace)
+	// }
 
-	// Flush Checkpoint If 5 minutes have passed since it was added to buffer and NoAck received
-	if bytes.Equal(key, BufferCheckpointKey) && !bytes.Equal(store.Get(BufferCheckpointKey), EmptyBufferValue) && time.Now().UTC().After(checkpointBuffer.TimeStamp.Add(helper.CheckpointBufferTime)) {
-		k.FlushCheckpointBuffer(ctx)
-	}
+	// // Flush Checkpoint If 5 minutes have passed since it was added to buffer and NoAck received
+	// if bytes.Equal(key, BufferCheckpointKey) && !bytes.Equal(store.Get(BufferCheckpointKey), EmptyBufferValue) && time.Now().UTC().After(checkpointBuffer.TimeStamp.Add(helper.CheckpointBufferTime)) {
+	// 	k.FlushCheckpointBuffer(ctx)
+	// }
 
 	// create Checkpoint block and marshall
-	// data := types.CreateBlock(start, end, root, proposer)
 	out, err := json.Marshal(headerBlock)
 	if err != nil {
 		CheckpointLogger.Error("Error marshalling checkpoint to json", "error", err)
-	}
-
-	if bytes.Equal(key, BufferCheckpointKey) {
-		CheckpointLogger.Info("Adding good checkpoint to buffer to await ACK", "checkpoint", headerBlock)
-	} else {
-		CheckpointLogger.Info("Adding good checkpoint to state", "checkpoint", headerBlock)
+		return err
 	}
 
 	// store in key provided
-	store.Set(key, []byte(out))
+	store.Set(key, out)
 
+	return nil
+}
+
+// AddCheckpoint adds checkpoint into final blocks
+func (k *Keeper) AddCheckpoint(ctx sdk.Context, headerBlockNumber uint64, headerBlock types.CheckpointBlockHeader) error {
+	key := GetHeaderKey(headerBlockNumber)
+	err := k._addCheckpoint(ctx, key, headerBlock)
+	if err != nil {
+		return err
+	}
+	CheckpointLogger.Info("Adding good checkpoint to state", "checkpoint", headerBlock)
 	return nil
 }
 
@@ -166,15 +171,30 @@ func (k *Keeper) FlushCheckpointBuffer(ctx sdk.Context) {
 	store.Set(BufferCheckpointKey, EmptyBufferValue)
 }
 
+// SetCheckpointBuffer flushes Checkpoint Buffer
+func (k *Keeper) SetCheckpointBuffer(ctx sdk.Context, headerBlock types.CheckpointBlockHeader) error {
+	err := k._addCheckpoint(ctx, BufferCheckpointKey, headerBlock)
+	if err != nil {
+		return err
+	}
+	CheckpointLogger.Debug("Adding good checkpoint to buffer to await ACK", "checkpoint", headerBlock)
+	return nil
+}
+
 // GetCheckpointFromBuffer gets checkpoint in buffer
 func (k *Keeper) GetCheckpointFromBuffer(ctx sdk.Context) (types.CheckpointBlockHeader, error) {
 	store := ctx.KVStore(k.CheckpointKey)
 
-	// Get checkpoint and unmarshall
+	// checkpoint block header
 	var checkpoint types.CheckpointBlockHeader
-	err := json.Unmarshal(store.Get(BufferCheckpointKey), &checkpoint)
 
-	return checkpoint, err
+	if store.Has(BufferCheckpointKey) {
+		// Get checkpoint and unmarshall
+		err := json.Unmarshal(store.Get(BufferCheckpointKey), &checkpoint)
+		return checkpoint, err
+	}
+
+	return checkpoint, errors.New("No checkpoint found in buffer")
 }
 
 // UpdateACKCount updates ACK count by 1
@@ -220,7 +240,7 @@ func (k *Keeper) InitACKCount(ctx sdk.Context) {
 
 // ----------------- Staking Related Keepers
 
-// getValidatorKey drafts the validator key for addresses
+// GetValidatorKey drafts the validator key for addresses
 func GetValidatorKey(address []byte) []byte {
 	CheckpointLogger.Debug("Generated Validator key", "ValidatorAddress", hex.EncodeToString(address), "key", hex.EncodeToString(append(ValidatorsKey, address...)))
 	return append(ValidatorsKey, address...)
@@ -238,19 +258,18 @@ func (k *Keeper) AddValidator(ctx sdk.Context, validator types.Validator) error 
 
 	// store validator with address prefixed with validator key as index
 	store.Set(GetValidatorKey(validator.Signer.Bytes()), bz)
-	StakingLogger.Info("Validator Stored", "key", hex.EncodeToString(GetValidatorKey(validator.Signer.Bytes())), "validator", validator.String())
+	StakingLogger.Debug("Validator stored", "key", hex.EncodeToString(GetValidatorKey(validator.Signer.Bytes())), "validator", validator.String())
 
 	return nil
 }
 
-// GetValidator returns validator
+// GetValidatorInfo returns validator
 func (k *Keeper) GetValidatorInfo(ctx sdk.Context, address []byte, validator *types.Validator) error {
 	store := ctx.KVStore(k.StakingKey)
 
 	// store validator with address prefixed with validator key as index
 	key := GetValidatorKey(address)
 	if !store.Has(key) {
-		StakingLogger.Info("Validator Not Found")
 		return errors.New("Validator not found")
 	}
 
@@ -260,114 +279,83 @@ func (k *Keeper) GetValidatorInfo(ctx sdk.Context, address []byte, validator *ty
 
 // GetCurrentValidators returns all validators who are in validator set and removes deactivated validators
 func (k *Keeper) GetCurrentValidators(ctx sdk.Context) (validators []types.Validator) {
-	store := ctx.KVStore(k.StakingKey)
-
 	// get ACK count
-	ACKs := k.GetACKCount(ctx)
+	ackCount := k.GetACKCount(ctx)
 
 	// remove matured validators
 	k.RemoveDeactivatedValidators(ctx)
 
-	// create iterator to iterate with Validator Key prefix
-	iterator := sdk.KVStorePrefixIterator(store, ValidatorsKey)
-	defer iterator.Close()
-
-	// loop through validators to get valid validators
-	for i := 0; ; i++ {
-		if !iterator.Valid() {
-			break
-		}
-
-		// unmarshall validator
-		var validator types.Validator
-		k.cdc.MustUnmarshalBinary(iterator.Value(), &validator)
-
+	// iterate through validator list
+	k.IterateValidatorsAndApplyFn(ctx, func(validator types.Validator) error {
 		// check if validator is valid for current epoch
-		if validator.IsCurrentValidator(ACKs) {
+		if validator.IsCurrentValidator(ackCount) {
 			// append if validator is current valdiator
 			validators = append(validators, validator)
 		}
+		return nil
+	})
 
-		// increment iterator
-		iterator.Next()
-	}
 	return
 }
 
 // GetAllValidators returns all validators
-func (k *Keeper) GetAllValidators(ctx sdk.Context) (validators []abci.ValidatorUpdate) {
-	store := ctx.KVStore(k.StakingKey)
-
-	// create iterator to iterate with Validator Key prefix
-	iterator := sdk.KVStorePrefixIterator(store, ValidatorsKey)
-	defer iterator.Close()
-
-	// loop through validators to get valid validators
-	for i := 0; ; i++ {
-		if !iterator.Valid() {
-			break
-		}
-
-		// unmarshall validator
-		var validator types.Validator
-		k.cdc.MustUnmarshalBinary(iterator.Value(), &validator)
-
-		// convert to Validator Update
-		updateVal := abci.ValidatorUpdate{
-			Power:  int64(validator.Power),
-			PubKey: tmTypes.TM2PB.PubKey(validator.PubKey),
-		}
-
+func (k *Keeper) GetAllValidators(ctx sdk.Context) (validators []types.Validator) {
+	// iterate through validators and create validator update array
+	k.IterateValidatorsAndApplyFn(ctx, func(validator types.Validator) error {
 		// append to list of validatorUpdates
-		validators = append(validators, updateVal)
+		validators = append(validators, validator)
+		return nil
+	})
 
-		// increment iterator
-		iterator.Next()
-	}
 	return
 }
 
 // RemoveDeactivatedValidators performs deactivation of validatowrs wrt Tendermint to pass via EndBlock
 func (k *Keeper) RemoveDeactivatedValidators(ctx sdk.Context) {
+	// get ACK count
+	ackCount := k.GetACKCount(ctx)
+
+	// modified validator array
+	var modifiedValidators []types.Validator
+
+	// iterate through
+	k.IterateValidatorsAndApplyFn(ctx, func(validator types.Validator) error {
+		// if you encounter a deactivated validator make power 0
+		if !validator.IsCurrentValidator(ackCount) {
+			validator.Power = 0
+
+			// append them in modified array
+			modifiedValidators = append(modifiedValidators, validator)
+		}
+		return nil
+	})
+
+	// iterate through modified validators and save them
+	for _, validator := range modifiedValidators {
+		k.AddValidator(ctx, validator)
+	}
+}
+
+// IterateValidatorsAndApplyFn interate validators and apply the given function.
+// Please do not modify validator store while iterating
+func (k *Keeper) IterateValidatorsAndApplyFn(ctx sdk.Context, f func(validator types.Validator) error) {
 	store := ctx.KVStore(k.StakingKey)
 
-	// get ACK count
-	ACKs := k.GetACKCount(ctx)
-
+	// get validator iterator
 	iterator := sdk.KVStorePrefixIterator(store, ValidatorsKey)
 	defer iterator.Close()
 
 	// loop through validators to get valid validators
-	for i := 0; ; i++ {
-		if !iterator.Valid() {
-			break
-		}
-
+	for ; iterator.Valid(); iterator.Next() {
 		// unmarshall validator
 		var validator types.Validator
 		k.cdc.MustUnmarshalBinary(iterator.Value(), &validator)
 
-		// if you encounter a deactivated validator make power 0
-		if validator.EndEpoch != 0 && validator.EndEpoch > ACKs && validator.Power != 0 {
-			validator.Power = 0
-
-			// update validator in validator list
-			k.AddValidator(ctx, validator)
-
-			// indicate change in validator set
-			k.SetValidatorSetChangedFlag(ctx, true)
+		// call function and return if required
+		if err := f(validator); err != nil {
+			return
 		}
-
-		// increment iterator
-		iterator.Next()
 	}
-	return
-}
-
-// IterateValidatorsAndApplyFn interate validators and apply the given function
-func (k *Keeper) IterateValidatorsAndApplyFn(ctx sdk.Context, f func()) {
-	// TODO add remove and getter for validator list here
-	f()
 }
 
 // AddDeactivationEpoch adds deactivation epoch
@@ -386,29 +374,27 @@ func (k *Keeper) AddDeactivationEpoch(ctx sdk.Context, validator types.Validator
 		return nil
 	}
 
-	StakingLogger.Debug("Deactivation period not set")
 	return errors.New("Deactivation period not set")
-
 }
 
 // UpdateSigner updates validator with signer and pubkey
-func (k *Keeper) UpdateSigner(ctx sdk.Context, newSigner common.Address, pubkey crypto.PubKey, prevSigner common.Address) error {
-
+func (k *Keeper) UpdateSigner(ctx sdk.Context, newSigner common.Address, newPubkey crypto.PubKey, prevSigner common.Address) error {
 	// get old validator from state and make power 0
 	var validator types.Validator
 	k.GetValidatorInfo(ctx, prevSigner.Bytes(), &validator)
+
 	// copy power to reassign below
-	valPower := validator.Power
+	validatorPower := validator.Power
 	validator.Power = 0
 	// update validator
 	k.AddValidator(ctx, validator)
 
 	//update signer in prev Validator
 	validator.Signer = newSigner
-	validator.PubKey = pubkey
-	validator.Power = valPower
+	validator.PubKey = newPubkey
+	validator.Power = validatorPower
 
-	// add updated validator to store with same key
+	// add updated validator to store with new key
 	k.AddValidator(ctx, validator)
 
 	return nil
@@ -469,45 +455,18 @@ func (k *Keeper) GetCurrentProposerAddress(ctx sdk.Context) []byte {
 	return validatorSet.Proposer.Address.Bytes()
 }
 
-// ValidatorSetChanged returns true if validator set has changed false otherwise
-func (k *Keeper) ValidatorSetChanged(ctx sdk.Context) bool {
-	store := ctx.KVStore(k.StakingKey)
-
-	// check if validator set change flag has value
-	if bytes.Equal(store.Get(ValidatorSetChangeKey), DefaultValue) {
-		return true
-	}
-
-	// validator set change flag is  empty
-	return false
-}
-
-// SetValidatorSetChangedFlag sets validator update flag depending on value
-func (k *Keeper) SetValidatorSetChangedFlag(ctx sdk.Context, value bool) {
-	store := ctx.KVStore(k.StakingKey)
-
-	// check if validator set change flag has value
-	if bytes.Equal(store.Get(ValidatorSetChangeKey), DefaultValue) && !value {
-		store.Set(ValidatorSetChangeKey, EmptyBufferValue)
-		return
-	}
-
-	store.Set(ValidatorSetChangeKey, DefaultValue)
-}
-
-// mapping for validator address to signer address
+// SetValidatorAddrToSignerAddr set mapping for validator address to signer address
 func (k *Keeper) SetValidatorAddrToSignerAddr(ctx sdk.Context, validatorAddr common.Address, signerAddr common.Address) {
 	store := ctx.KVStore(k.StakingKey)
 	store.Set(validatorAddr.Bytes(), signerAddr.Bytes())
 }
 
-// Get signer from validator address
+// GetValidatorFromValAddr returns signer from validator address
 func (k Keeper) GetValidatorFromValAddr(ctx sdk.Context, validatorAddr common.Address, val *types.Validator) error {
 	store := ctx.KVStore(k.StakingKey)
 
 	// check if validator address has been mapped
 	if !store.Has(validatorAddr.Bytes()) {
-		StakingLogger.Info("Validator Not Found")
 		return errors.New("Validator not found")
 	}
 

@@ -24,9 +24,9 @@ type GenesisAccount struct {
 // GenesisValidator genesis validator
 type GenesisValidator struct {
 	Address    common.Address `json:"address"`
-	StartEpoch int64          `json:"start_epoch"`
-	EndEpoch   int64          `json:"end_epoch"`
-	Power      int64          `json:"power"` // aka Amount
+	StartEpoch uint64         `json:"start_epoch"`
+	EndEpoch   uint64         `json:"end_epoch"`
+	Power      uint64         `json:"power"` // aka Amount
 	PubKey     hmTypes.PubKey `json:"pub_key"`
 	Signer     common.Address `json:"signer"`
 }
@@ -39,18 +39,18 @@ func (v *GenesisValidator) ToTmValidator() tmTypes.Validator {
 	return tmTypes.Validator{
 		Address:     v.Signer.Bytes(),
 		PubKey:      pubkeyBytes,
-		VotingPower: v.Power,
+		VotingPower: int64(v.Power),
 	}
 }
 
-// ToTmValidator converts genesis validator validator to Heimdall validator
+// ToHeimdallValidator converts genesis validator validator to Heimdall validator
 func (v *GenesisValidator) ToHeimdallValidator() hmTypes.Validator {
 	return hmTypes.Validator{
 		Address:    v.Address,
 		PubKey:     helper.BytesToPubkey(v.PubKey[:]),
-		Power:      uint64(v.Power),
-		StartEpoch: uint64(v.StartEpoch),
-		EndEpoch:   uint64(v.EndEpoch),
+		Power:      v.Power,
+		StartEpoch: v.StartEpoch,
+		EndEpoch:   v.EndEpoch,
 		Signer:     v.Address,
 	}
 }

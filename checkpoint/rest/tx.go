@@ -28,6 +28,7 @@ type HeaderBlock struct {
 	RootHash   common.Hash    `json:"rootHash"`
 	StartBlock uint64         `json:"startBlock"`
 	EndBlock   uint64         `json:"endBlock"`
+	TimeStamp  uint64         `json:"timestamp"`
 }
 
 func newCheckpointHandler(cliCtx context.CLIContext) http.HandlerFunc {
@@ -54,6 +55,7 @@ func newCheckpointHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			m.StartBlock,
 			m.EndBlock,
 			m.RootHash,
+			m.TimeStamp,
 		)
 
 		txBytes, err := helper.CreateTxBytes(msg)
