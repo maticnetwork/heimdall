@@ -15,6 +15,7 @@ const (
 	CodeInvalidBlockInput    CodeType = 1501
 	CodeInvalidACK           CodeType = 1502
 	CodeNoACK                CodeType = 1503
+	CodeBadTimeStamp         CodeType = 1504
 
 	CodeOldValidator       CodeType = 2500
 	CodeNoValidator        CodeType = 2501
@@ -49,6 +50,10 @@ func ErrBadAck(codespace sdk.CodespaceType) sdk.Error {
 
 func ErrNoACK(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeNoACK, "Checkpoint Already Exists In Buffer, ACK expected")
+}
+
+func ErrBadTimeStamp(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeBadTimeStamp, "Invalid time stamp. It must be in near past.")
 }
 
 // ----------- Staking Errors

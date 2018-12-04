@@ -2,6 +2,7 @@ package checkpoint
 
 import (
 	"bytes"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -98,20 +99,18 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 }
 
 func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper) sdk.Result {
-	// checkpointBuffer, err := k.GetCheckpointFromBuffer(ctx)
-	// if err != nil {
-	// 	return err
-	// }
+	if msg.TimeStamp == 0 || msg.TimeStamp > uint64(time.Now().Unix()) {
+		return common.ErrBadTimeStamp(k.Codespace).Result()
+	}
 
-	// // Reject new checkpoint if checkpoint exists in buffer and 5 minutes have not passed
-	// if bytes.Equal(key, BufferCheckpointKey) && !bytes.Equal(store.Get(BufferCheckpointKey), EmptyBufferValue) && time.Now().UTC().Before(checkpointBuffer.TimeStamp.Add(helper.CheckpointBufferTime)) {
-	// 	return ErrNoACK(k.Codespace)
-	// }
-
-	// // Flush Checkpoint If 5 minutes have passed since it was added to buffer and NoAck received
-	// if bytes.Equal(key, BufferCheckpointKey) && !bytes.Equal(store.Get(BufferCheckpointKey), EmptyBufferValue) && time.Now().UTC().After(checkpointBuffer.TimeStamp.Add(helper.CheckpointBufferTime)) {
-	// 	k.FlushCheckpointBuffer(ctx)
-	// }
+	checkpointBuffer, err := k.GetCheckpointFromBuffer(ctx)
+	if err == nil {
+		if msg.TimeStamp == 0 || checkpointBuffer.TimeStamp == 0 || ((msg.TimeStamp > checkpointBuffer.TimeStamp) && msg.TimeStamp-checkpointBuffer.TimeStamp > uint64(helper.CheckpointBufferTime.Seconds())) {
+			k.FlushCheckpointBuffer(ctx)
+		} else {
+			return common.ErrNoACK(k.Codespace).Result()
+		}
+	}
 
 	// validate checkpoint
 	if !ValidateCheckpoint(msg.StartBlock, msg.EndBlock, msg.RootHash) {
