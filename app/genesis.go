@@ -35,7 +35,7 @@ func (v *GenesisValidator) ToHeimdallValidator() hmTypes.Validator {
 		Power:      v.Power,
 		StartEpoch: v.StartEpoch,
 		EndEpoch:   v.EndEpoch,
-		Signer:     v.Address,
+		Signer:     v.Signer,
 	}
 }
 

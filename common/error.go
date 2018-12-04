@@ -22,6 +22,7 @@ const (
 	CodeSignerSynced       CodeType = 2505
 	CodeValSave            CodeType = 2506
 	CodeValAlreadyJoined   CodeType = 2507
+	CodeSignerUpdateError  CodeType = 2508
 )
 
 // -------- Checkpoint Errors
@@ -62,6 +63,10 @@ func ErrValIsNotCurrentVal(codespace sdk.CodespaceType) sdk.Error {
 
 func ErrValUnbonded(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeValAlreadyUnbonded, "Validator already unbonded , cannot exit")
+}
+
+func ErrSignerUpdateError(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeSignerUpdateError, "Signer update error")
 }
 
 func ErrValidatorAlreadySynced(codespace sdk.CodespaceType) sdk.Error {

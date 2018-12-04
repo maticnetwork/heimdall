@@ -262,17 +262,23 @@ func (k *Keeper) AddValidator(ctx sdk.Context, validator types.Validator) error 
 }
 
 // GetValidatorInfo returns validator
-func (k *Keeper) GetValidatorInfo(ctx sdk.Context, address []byte, validator *types.Validator) error {
+func (k *Keeper) GetValidatorInfo(ctx sdk.Context, address []byte, validator *types.Validator) bool {
 	store := ctx.KVStore(k.StakingKey)
 
 	// store validator with address prefixed with validator key as index
 	key := GetValidatorKey(address)
 	if !store.Has(key) {
-		return errors.New("Validator not found")
+		return false
 	}
 
 	// unmarshall validator and return
-	return k.cdc.UnmarshalBinary(store.Get(key), validator)
+	err := k.cdc.UnmarshalBinary(store.Get(key), validator)
+	if err != nil {
+		return false
+	}
+
+	// return true if validator
+	return true
 }
 
 // GetCurrentValidators returns all validators who are in validator set and removes deactivated validators
@@ -434,23 +440,24 @@ func (k *Keeper) IncreamentAccum(ctx sdk.Context, times int) {
 }
 
 // GetNextProposer returns next proposer
-func (k *Keeper) GetNextProposer(ctx sdk.Context) string {
+func (k *Keeper) GetNextProposer(ctx sdk.Context) *types.Validator {
 	// get validator set
 	validatorSet := k.GetValidatorSet(ctx)
 
 	// Increment accum in copy
 	copiedValidatorSet := validatorSet.CopyIncrementAccum(1)
 
-	return copiedValidatorSet.Proposer.String()
+	// get signer address for next signer
+	return copiedValidatorSet.GetProposer()
 }
 
-// GetCurrentProposerAddress returns current proposer
-func (k *Keeper) GetCurrentProposerAddress(ctx sdk.Context) []byte {
-	// TODO expose via API
+// GetCurrentProposer returns current proposer
+func (k *Keeper) GetCurrentProposer(ctx sdk.Context) *types.Validator {
 	// get validator set
 	validatorSet := k.GetValidatorSet(ctx)
 
-	return validatorSet.Proposer.Address.Bytes()
+	// return get proposer
+	return validatorSet.GetProposer()
 }
 
 // SetValidatorAddrToSignerAddr set mapping for validator address to signer address
@@ -459,21 +466,26 @@ func (k *Keeper) SetValidatorAddrToSignerAddr(ctx sdk.Context, validatorAddr com
 	store.Set(validatorAddr.Bytes(), signerAddr.Bytes())
 }
 
+// GetSignerFromValidator get signer address from validator
+func (k *Keeper) GetSignerFromValidator(ctx sdk.Context, validatorAddr common.Address) (common.Address, bool) {
+	store := ctx.KVStore(k.StakingKey)
+	if !store.Has(validatorAddr.Bytes()) {
+		return common.Address{}, false
+	}
+
+	// return address from bytes
+	return common.BytesToAddress(store.Get(validatorAddr.Bytes())), true
+}
+
 // GetValidatorFromValAddr returns signer from validator address
-func (k Keeper) GetValidatorFromValAddr(ctx sdk.Context, validatorAddr common.Address, val *types.Validator) error {
+func (k Keeper) GetValidatorFromValAddr(ctx sdk.Context, validatorAddr common.Address, val *types.Validator) bool {
 	store := ctx.KVStore(k.StakingKey)
 
 	// check if validator address has been mapped
 	if !store.Has(validatorAddr.Bytes()) {
-		return errors.New("Validator not found")
+		return false
 	}
 
 	// query for validator using ValidatorAddress => SignerAddress map
-	err := k.GetValidatorInfo(ctx, store.Get(validatorAddr.Bytes()), val)
-	if err != nil {
-		StakingLogger.Error("Unable to fetch validator from store", "ValidatorAddress", validatorAddr, "SignerAddress", hex.EncodeToString(store.Get(validatorAddr.Bytes())))
-		return errors.New("Unable to fetch validator")
-	}
-
-	return nil
+	return k.GetValidatorInfo(ctx, store.Get(validatorAddr.Bytes()), val)
 }

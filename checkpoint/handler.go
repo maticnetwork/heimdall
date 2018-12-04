@@ -103,7 +103,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper) sd
 
 	// check proposer in message
 	if !bytes.Equal(msg.Proposer.Bytes(), k.GetValidatorSet(ctx).Proposer.Signer.Bytes()) {
-		common.CheckpointLogger.Error("Invalid proposer in message", "currentProposer", k.GetValidatorSet(ctx).Proposer.Address.String(), "checkpointProposer", msg.Proposer.String())
+		common.CheckpointLogger.Error("Invalid proposer in message", "currentProposer", k.GetValidatorSet(ctx).Proposer.Signer.String(), "checkpointProposer", msg.Proposer.String())
 		return common.ErrBadProposerDetails(k.Codespace).Result()
 	}
 

@@ -27,6 +27,9 @@ func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec
 type addValidator struct {
 	ValidatorAddress common.Address `json:"address"`
 	SignerPubKey     hmType.PubKey  `json:"pubKey"`
+	StartEpoch       uint64         `json:"startEpoch"`
+	EndEpoch         uint64         `json:"endEpoch"`
+	Amount           uint64         `json:"Amount"`
 }
 
 func newValidatorJoinHandler(cliCtx context.CLIContext) http.HandlerFunc {
@@ -49,7 +52,7 @@ func newValidatorJoinHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		// create new msg
-		msg := staking.NewMsgValidatorJoin(m.ValidatorAddress, m.SignerPubKey)
+		msg := staking.NewMsgValidatorJoin(m.ValidatorAddress, m.SignerPubKey, m.StartEpoch, m.EndEpoch, m.Amount)
 
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {
@@ -134,6 +137,7 @@ func newValidatorExitHandler(cliCtx context.CLIContext) http.HandlerFunc {
 type updateValidator struct {
 	ValidatorAddress common.Address `json:"address"`
 	NewSignerPubKey  hmType.PubKey  `json:"newPubKey"`
+	NewAmount        uint64         `json:"newAmount"`
 }
 
 func newValidatorUpdateHandler(cliCtx context.CLIContext) http.HandlerFunc {
@@ -156,7 +160,7 @@ func newValidatorUpdateHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		// create msg validator update
-		msg := staking.NewMsgValidatorUpdate(m.ValidatorAddress, m.NewSignerPubKey)
+		msg := staking.NewMsgValidatorUpdate(m.ValidatorAddress, m.NewSignerPubKey, m.NewAmount)
 
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {

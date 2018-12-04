@@ -21,12 +21,24 @@ var _ sdk.Msg = &MsgValidatorJoin{}
 type MsgValidatorJoin struct {
 	ValidatorAddress common.Address `json:"address"`
 	SignerPubKey     types.PubKey   `json:"pubKey"`
+	StartEpoch       uint64         `json:"startEpoch"`
+	EndEpoch         uint64         `json:"endEpoch"`
+	Amount           uint64         `json:"Amount"`
 }
 
-func NewMsgValidatorJoin(address common.Address, pubkey types.PubKey) MsgValidatorJoin {
+func NewMsgValidatorJoin(
+	address common.Address,
+	pubkey types.PubKey,
+	startEpoch uint64,
+	endEpoch uint64,
+	amount uint64,
+) MsgValidatorJoin {
 	return MsgValidatorJoin{
 		ValidatorAddress: address,
 		SignerPubKey:     pubkey,
+		StartEpoch:       startEpoch,
+		EndEpoch:         endEpoch,
+		Amount:           amount,
 	}
 }
 
@@ -56,6 +68,11 @@ func (msg MsgValidatorJoin) ValidateBasic() sdk.Error {
 	return nil
 }
 
+func (msg MsgValidatorJoin) GetPower() uint64 {
+	// add length checks
+	return msg.Amount // TODO  Get power out of amount. Add 10^-18 here so that we dont overflow easily
+}
+
 //
 // validator update
 //
@@ -66,13 +83,14 @@ var _ sdk.Msg = &MsgSignerUpdate{}
 type MsgSignerUpdate struct {
 	ValidatorAddress common.Address `json:"address"`
 	NewSignerPubKey  types.PubKey   `json:"pubKey"`
-	NewPower         uint64         `json:"power"`
+	NewAmount        uint64         `json:"amount"`
 }
 
-func NewMsgValidatorUpdate(address common.Address, pubKey types.PubKey) MsgSignerUpdate {
+func NewMsgValidatorUpdate(address common.Address, pubKey types.PubKey, amount uint64) MsgSignerUpdate {
 	return MsgSignerUpdate{
 		ValidatorAddress: address,
 		NewSignerPubKey:  pubKey,
+		NewAmount:        amount,
 	}
 }
 

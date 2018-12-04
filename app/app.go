@@ -176,6 +176,9 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 			// Add individual validator to state
 			app.masterKeeper.AddValidator(ctx, hmValidator)
 
+			// add validator to validatorAddress => SignerAddress map
+			app.masterKeeper.SetValidatorAddrToSignerAddr(ctx, hmValidator.Address, hmValidator.Signer)
+
 			// convert to Validator Update
 			updateVal := abci.ValidatorUpdate{
 				Power:  int64(validator.Power),
@@ -274,7 +277,7 @@ func PrepareAndSendCheckpoint(ctx sdk.Context, keeper common.Keeper) {
 	validatorAddress := helper.GetPubKey().Address()
 
 	// check if we are proposer
-	if bytes.Equal(keeper.GetCurrentProposerAddress(ctx), validatorAddress.Bytes()) {
+	if bytes.Equal(keeper.GetCurrentProposer(ctx).Signer.Bytes(), validatorAddress.Bytes()) {
 		logger.Info("We are proposer! Validating if checkpoint needs to be pushed", "commitedLastBlock", lastblock, "startBlock", _checkpoint.StartBlock)
 
 		// check if we need to send checkpoint or not
@@ -287,6 +290,6 @@ func PrepareAndSendCheckpoint(ctx sdk.Context, keeper common.Keeper) {
 			logger.Error("Checkpoint already sent", "commitedLastBlock", lastblock, "startBlock", _checkpoint.StartBlock)
 		}
 	} else {
-		logger.Info("We are not proposer", "proposer", keeper.GetValidatorSet(ctx).Proposer.Address.String(), "validator", validatorAddress.String())
+		logger.Info("We are not proposer", "proposer", keeper.GetValidatorSet(ctx).Proposer.Signer.String(), "validator", validatorAddress.String())
 	}
 }

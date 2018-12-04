@@ -10,30 +10,32 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gorilla/mux"
-	hmcommon "github.com/maticnetwork/heimdall/common"
-	"github.com/maticnetwork/heimdall/types"
 	tmTypes "github.com/tendermint/tendermint/types"
+
+	hmCommon "github.com/maticnetwork/heimdall/common"
+	"github.com/maticnetwork/heimdall/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
 	// Get all delegations from a delegator
 	r.HandleFunc(
 		"/staking/validator/{address}",
-		ValidatorByAddressHandlerFn(cdc, cliCtx),
+		validatorByAddressHandlerFn(cdc, cliCtx),
 	).Methods("GET")
 	r.HandleFunc(
-		"/staking/validatorSet",
-		ValidatorSetHandlerFn(cdc, cliCtx),
+		"/staking/validator-set",
+		validatorSetHandlerFn(cdc, cliCtx),
 	).Methods("GET")
 	r.HandleFunc(
 		"/staking/proposer/{times}",
-		ProposerHandlerFn(cdc, cliCtx),
+		proposerHandlerFn(cdc, cliCtx),
 	).Methods("GET")
 
 }
 
 // Returns validator information by address
-func ValidatorByAddressHandlerFn(
+func validatorByAddressHandlerFn(
 	cdc *codec.Codec,
 	cliCtx context.CLIContext,
 ) http.HandlerFunc {
@@ -41,7 +43,7 @@ func ValidatorByAddressHandlerFn(
 		vars := mux.Vars(r)
 		validatorAddress := common.HexToAddress(vars["address"])
 
-		res, err := cliCtx.QueryStore(validatorAddress.Bytes(), "staker")
+		res, err := cliCtx.QueryStore(hmCommon.GetValidatorKey(validatorAddress.Bytes()), "staker")
 		if err != nil {
 			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
@@ -71,13 +73,13 @@ func ValidatorByAddressHandlerFn(
 }
 
 // get current validator set
-func ValidatorSetHandlerFn(
+func validatorSetHandlerFn(
 	cdc *codec.Codec,
 	cliCtx context.CLIContext,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		res, err := cliCtx.QueryStore(hmcommon.CurrentValidatorSetKey, "staker")
+		res, err := cliCtx.QueryStore(hmCommon.CurrentValidatorSetKey, "staker")
 		if err != nil {
 			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
@@ -89,7 +91,7 @@ func ValidatorSetHandlerFn(
 			return
 		}
 
-		var _validatorSet tmTypes.ValidatorSet
+		var _validatorSet hmTypes.ValidatorSet
 		cdc.UnmarshalBinary(res, &_validatorSet)
 
 		// todo format validator set to remove pubkey like we did for validator
@@ -108,7 +110,7 @@ func ValidatorSetHandlerFn(
 }
 
 // get proposer for current validator set
-func ProposerHandlerFn(
+func proposerHandlerFn(
 	cdc *codec.Codec,
 	cliCtx context.CLIContext,
 ) http.HandlerFunc {
@@ -120,7 +122,7 @@ func ProposerHandlerFn(
 			return
 		}
 
-		res, err := cliCtx.QueryStore(hmcommon.CurrentValidatorSetKey, "staker")
+		res, err := cliCtx.QueryStore(hmCommon.CurrentValidatorSetKey, "staker")
 		if err != nil {
 			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
@@ -154,6 +156,5 @@ func ProposerHandlerFn(
 
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(result)
-
 	}
 }
