@@ -2,6 +2,9 @@ package rest
 
 import (
 	"encoding/json"
+	"net/http"
+	"strconv"
+
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/utils"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -10,8 +13,6 @@ import (
 	hmcommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/types"
 	tmTypes "github.com/tendermint/tendermint/types"
-	"net/http"
-	"strconv"
 )
 
 func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
@@ -55,7 +56,7 @@ func ValidatorByAddressHandlerFn(
 		var _validator types.Validator
 		cdc.UnmarshalBinary(res, &_validator)
 
-		result, err := json.Marshal((&_validator).ValMinusPubkey())
+		result, err := json.Marshal(_validator)
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
 			w.WriteHeader(http.StatusBadRequest)

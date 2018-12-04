@@ -39,7 +39,7 @@ func handleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k hmCommon.Ke
 	hmCommon.StakingLogger.Debug("Fetched validator from rootchain successfully", "Validator", validator.String())
 
 	// Generate PubKey from Pubkey in message
-	pubkey := helper.BytesToPubkey(msg.SignerPubKey)
+	pubkey := msg.SignerPubKey
 
 	// check validator address in message corresponds
 	if !bytes.Equal(msg.ValidatorAddress.Bytes(), validator.Address.Bytes()) {
@@ -83,7 +83,7 @@ func handleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k hmCommon.Keep
 		return hmCommon.ErrNoValidator(k.Codespace).Result()
 	}
 
-	pubKey := helper.BytesToPubkey(msg.NewSignerPubKey)
+	pubKey := msg.NewSignerPubKey
 
 	// check for already updated
 	if bytes.Equal(pubKey.Address().Bytes(), validator.Signer.Bytes()) {

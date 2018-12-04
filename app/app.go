@@ -130,7 +130,7 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 			for _, validator := range validators {
 				val := abci.ValidatorUpdate{
 					Power:  int64(validator.Power),
-					PubKey: tmTypes.TM2PB.PubKey(validator.PubKey),
+					PubKey: validator.PubKey.ABCIPubKey(),
 				}
 				valUpdates = append(valUpdates, val)
 			}
@@ -164,22 +164,24 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 	}
 
 	// initialize validator set
-	newValidatorSet := tmTypes.ValidatorSet{}
+	newValidatorSet := hmTypes.ValidatorSet{}
 	validatorUpdates := make([]abci.ValidatorUpdate, 1)
 
 	for i, validator := range genesisState.Validators {
-		// add val
-		tmValidator := validator.ToTmValidator()
-		if ok := newValidatorSet.Add(&tmValidator); !ok {
+		hmValidator := validator.ToHeimdallValidator()
+
+		if ok := newValidatorSet.Add(&hmValidator); !ok {
 			panic(errors.New("Error while adding new validator"))
 		} else {
+			// Add individual validator to state
+			app.masterKeeper.AddValidator(ctx, hmValidator)
+
 			// convert to Validator Update
 			updateVal := abci.ValidatorUpdate{
-				Power:  tmValidator.VotingPower,
-				PubKey: tmTypes.TM2PB.PubKey(tmValidator.PubKey),
+				Power:  int64(validator.Power),
+				PubKey: validator.PubKey.ABCIPubKey(),
 			}
-			// Add individual validator to state
-			app.masterKeeper.AddValidator(ctx, validator.ToHeimdallValidator())
+
 			// Add validator to validator updated to be processed below
 			validatorUpdates[i] = updateVal
 		}
@@ -197,13 +199,13 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 	// set empty values in cache by default
 	app.masterKeeper.SetCheckpointAckCache(ctx, common.EmptyBufferValue)
 	app.masterKeeper.SetCheckpointCache(ctx, common.EmptyBufferValue)
-	app.masterKeeper.SetValidatorSetChangedFlag(ctx, false)
-	logger.Info("Cache's and flags set to false", "CheckpointACKCache",
+	logger.Info(
+		"Cache's and flags set to false",
+		"checkpointACKCache",
 		app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointACKCacheKey),
-		"CheckpointCache",
+		"checkpointCache",
 		app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointCacheKey),
-		"ValidatorUpdatesFlag",
-		app.masterKeeper.ValidatorSetChanged(ctx))
+	)
 
 	// udpate validators
 	return abci.ResponseInitChain{
@@ -211,11 +213,13 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 	}
 }
 
+// ExportAppStateAndValidators export app state and validators
 func (app *HeimdallApp) ExportAppStateAndValidators() (appState json.RawMessage, validators []tmTypes.GenesisValidator, err error) {
 	//ctx := app.NewContext(true, abci.Header{})
 	return appState, validators, err
 }
 
+// GetExtraData get extra data for checkpoint
 func GetExtraData(_checkpoint hmTypes.CheckpointBlockHeader, ctx sdk.Context) []byte {
 	logger.Debug("Creating extra data", "startBlock", _checkpoint.StartBlock, "endBlock", _checkpoint.EndBlock, "roothash", _checkpoint.RootHash, "timestamp", _checkpoint.TimeStamp)
 

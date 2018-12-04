@@ -4,6 +4,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+
+	"github.com/maticnetwork/heimdall/types"
 )
 
 var cdc = codec.New()
@@ -18,10 +20,10 @@ var _ sdk.Msg = &MsgValidatorJoin{}
 
 type MsgValidatorJoin struct {
 	ValidatorAddress common.Address `json:"address"`
-	SignerPubKey     []byte         `json:"pubKey"`
+	SignerPubKey     types.PubKey   `json:"pubKey"`
 }
 
-func NewMsgValidatorJoin(address common.Address, pubkey []byte) MsgValidatorJoin {
+func NewMsgValidatorJoin(address common.Address, pubkey types.PubKey) MsgValidatorJoin {
 	return MsgValidatorJoin{
 		ValidatorAddress: address,
 		SignerPubKey:     pubkey,
@@ -63,11 +65,11 @@ var _ sdk.Msg = &MsgSignerUpdate{}
 // MsgSignerUpdate signer update struct
 type MsgSignerUpdate struct {
 	ValidatorAddress common.Address `json:"address"`
-	NewSignerPubKey  []byte         `json:"pubKey"`
+	NewSignerPubKey  types.PubKey   `json:"pubKey"`
 	NewPower         uint64         `json:"power"`
 }
 
-func NewMsgValidatorUpdate(address common.Address, pubKey []byte) MsgSignerUpdate {
+func NewMsgValidatorUpdate(address common.Address, pubKey types.PubKey) MsgSignerUpdate {
 	return MsgSignerUpdate{
 		ValidatorAddress: address,
 		NewSignerPubKey:  pubKey,

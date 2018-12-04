@@ -3,7 +3,6 @@ package helper
 import (
 	"bytes"
 	"encoding/hex"
-	"fmt"
 	"sort"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -17,38 +16,38 @@ import (
 )
 
 // UpdateValidators updates validators in validator set
-func UpdateValidators(currentSet *tmTypes.ValidatorSet, validators []hmTypes.Validator) error {
-	for _, validator := range validators {
+func UpdateValidators(currentSet *hmTypes.ValidatorSet, validators []hmTypes.Validator) error {
+	// for _, validator := range validators {
 
-	}
+	// }
 
-	for _, validator := range validators {
-		if validator.Power < 0 {
-			return fmt.Errorf("Voting power can't be negative %v", validator)
-		}
+	// for _, validator := range validators {
+	// 	if validator.Power < 0 {
+	// 		return fmt.Errorf("Voting power can't be negative %v", validator)
+	// 	}
 
-		address := validator.Address
-		_, val := currentSet.GetByAddress(address)
-		if valUpdate.VotingPower == 0 {
-			// remove val
-			_, removed := currentSet.Remove(address)
-			if !removed {
-				return fmt.Errorf("Failed to remove validator %X", address)
-			}
-		} else if val == nil {
-			// add val
-			added := currentSet.Add(valUpdate)
-			if !added {
-				return fmt.Errorf("Failed to add new validator %v", valUpdate)
-			}
-		} else {
-			// update val
-			updated := currentSet.Update(valUpdate)
-			if !updated {
-				return fmt.Errorf("Failed to update validator %X to %v", address, valUpdate)
-			}
-		}
-	}
+	// 	address := validator.Address
+	// 	_, val := currentSet.GetByAddress(address)
+	// 	if valUpdate.VotingPower == 0 {
+	// 		// remove val
+	// 		_, removed := currentSet.Remove(address)
+	// 		if !removed {
+	// 			return fmt.Errorf("Failed to remove validator %X", address)
+	// 		}
+	// 	} else if val == nil {
+	// 		// add val
+	// 		added := currentSet.Add(valUpdate)
+	// 		if !added {
+	// 			return fmt.Errorf("Failed to add new validator %v", valUpdate)
+	// 		}
+	// 	} else {
+	// 		// update val
+	// 		updated := currentSet.Update(valUpdate)
+	// 		if !updated {
+	// 			return fmt.Errorf("Failed to update validator %X to %v", address, valUpdate)
+	// 		}
+	// 	}
+	// }
 	return nil
 }
 

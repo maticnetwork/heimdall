@@ -1,25 +1,22 @@
 package types
 
 import (
+	"bytes"
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/tendermint/tendermint/crypto"
-	"github.com/tendermint/tendermint/crypto/secp256k1"
-	"github.com/tendermint/tendermint/types"
 )
-
-var _ crypto.PubKey = secp256k1.PubKeySecp256k1{}
 
 // Validator heimdall validator
 type Validator struct {
-	Address    common.Address
-	StartEpoch uint64
-	EndEpoch   uint64
-	// TODO add 10^-18 here so that we dont overflow easily
-	Power  uint64 // aka Amount
-	PubKey crypto.PubKey
-	Signer common.Address
+	Address    common.Address `json:"address"`
+	StartEpoch uint64         `json:"startEpoch"`
+	EndEpoch   uint64         `json:"endEpoch"`
+	Power      uint64         `json:"power"` // TODO add 10^-18 here so that we dont overflow easily
+	PubKey     PubKey         `json:"pubKey"`
+	Signer     common.Address `json:"signer"`
+
+	Accum int64 `json:"accum"`
 }
 
 // IsCurrentValidator checks if validator is in current validator set
@@ -32,60 +29,42 @@ func (v *Validator) IsCurrentValidator(ackCount uint64) bool {
 	return false
 }
 
+// Copy creates a new copy of the validator so we can mutate accum.
+// Panics if the validator is nil.
+func (v *Validator) Copy() *Validator {
+	vCopy := *v
+	return &vCopy
+}
+
+// CompareAccum returns the one with higher Accum.
+func (v *Validator) CompareAccum(other *Validator) *Validator {
+	if v == nil {
+		return other
+	}
+	if v.Accum > other.Accum {
+		return v
+	} else if v.Accum < other.Accum {
+		return other
+	} else {
+		result := bytes.Compare(v.Address.Bytes(), other.Address.Bytes())
+		if result < 0 {
+			return v
+		} else if result > 0 {
+			return other
+		} else {
+			return nil
+		}
+	}
+}
+
 func (v *Validator) String() string {
 	if v == nil {
 		return "nil-Validator"
 	}
 
-	return fmt.Sprintf("Validator{%v ::%v P:%v}",
+	return fmt.Sprintf("Validator{%v::%v P:%v}",
 		v.Address.String(),
 		v.Signer.String(),
 		v.Power,
 	)
 }
-
-// for JSON friendly response
-func (v *Validator) ValMinusPubkey() Validator {
-	return Validator{
-		Address:    v.Address,
-		StartEpoch: v.StartEpoch,
-		EndEpoch:   v.EndEpoch,
-		Signer:     v.Signer,
-		Power:      v.Power,
-	}
-
-}
-
-// ToTmValidator converts heimdall validator to Tendermint validator
-func (v *Validator) ToTmValidator() types.Validator {
-	return types.Validator{
-		Address:     v.Signer.Bytes(),
-		PubKey:      v.PubKey,
-		VotingPower: int64(v.Power),
-	}
-}
-
-// // create empty validator without pubkey
-// func CreateEmptyValidator() Validator {
-// 	validator := Validator{
-// 		Address:    common.HexToAddress(""),
-// 		StartEpoch: int64(0),
-// 		EndEpoch:   int64(0),
-// 		Power:      int64(0),
-// 		Signer:     common.HexToAddress(""),
-// 	}
-// 	return validator
-// }
-
-// func CreateValidatorWithAddr(addr common.Address) Validator {
-// 	validator := Validator{
-// 		Address:    addr,
-// 		StartEpoch: int64(0),
-// 		EndEpoch:   int64(0),
-// 		Power:      int64(0),
-// 		Signer:     addr,
-// 	}
-// 	return validator
-// }
-
-// todo add marshall and unmarshall methods here

@@ -10,8 +10,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/tendermint/tendermint/crypto"
-	tmTypes "github.com/tendermint/tendermint/types"
 
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
@@ -378,7 +376,7 @@ func (k *Keeper) AddDeactivationEpoch(ctx sdk.Context, validator types.Validator
 }
 
 // UpdateSigner updates validator with signer and pubkey
-func (k *Keeper) UpdateSigner(ctx sdk.Context, newSigner common.Address, newPubkey crypto.PubKey, prevSigner common.Address) error {
+func (k *Keeper) UpdateSigner(ctx sdk.Context, newSigner common.Address, newPubkey types.PubKey, prevSigner common.Address) error {
 	// get old validator from state and make power 0
 	var validator types.Validator
 	k.GetValidatorInfo(ctx, prevSigner.Bytes(), &validator)
@@ -401,7 +399,7 @@ func (k *Keeper) UpdateSigner(ctx sdk.Context, newSigner common.Address, newPubk
 }
 
 // UpdateValidatorSetInStore adds validator set to store
-func (k *Keeper) UpdateValidatorSetInStore(ctx sdk.Context, newValidatorSet tmTypes.ValidatorSet) {
+func (k *Keeper) UpdateValidatorSetInStore(ctx sdk.Context, newValidatorSet types.ValidatorSet) {
 	// TODO check if we may have to delay this by 1 height to sync with tendermint validator updates
 	store := ctx.KVStore(k.StakingKey)
 
@@ -413,7 +411,7 @@ func (k *Keeper) UpdateValidatorSetInStore(ctx sdk.Context, newValidatorSet tmTy
 }
 
 // GetValidatorSet returns current Validator Set from store
-func (k *Keeper) GetValidatorSet(ctx sdk.Context) (validatorSet tmTypes.ValidatorSet) {
+func (k *Keeper) GetValidatorSet(ctx sdk.Context) (validatorSet types.ValidatorSet) {
 	store := ctx.KVStore(k.StakingKey)
 	// get current validator set from store
 	bz := store.Get(CurrentValidatorSetKey)

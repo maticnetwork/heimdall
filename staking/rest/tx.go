@@ -25,8 +25,8 @@ func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec
 }
 
 type addValidator struct {
-	ValidatorAddress string `json:"address"`
-	SignerPubKey     string `json:"pubKey"`
+	ValidatorAddress common.Address `json:"address"`
+	SignerPubKey     hmType.PubKey  `json:"pubKey"`
 }
 
 func newValidatorJoinHandler(cliCtx context.CLIContext) http.HandlerFunc {
@@ -48,14 +48,12 @@ func newValidatorJoinHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		validatorAddr := common.HexToAddress(m.ValidatorAddress)
-		crytoPubKey := helper.BytesToPubkey(common.Hex2Bytes(m.SignerPubKey))
-
-		msg := staking.NewMsgValidatorJoin(validatorAddr, common.Hex2Bytes(m.SignerPubKey))
+		// create new msg
+		msg := staking.NewMsgValidatorJoin(m.ValidatorAddress, m.SignerPubKey)
 
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {
-			RestLogger.Error("Unable to create txBytes", "ValidatorAddress", validatorAddr.String(), "ValidatorPubKey", helper.BytesToPubkey(crytoPubKey.Bytes()))
+			RestLogger.Error("Unable to create txBytes", "ValidatorAddress", m.ValidatorAddress.String(), "ValidatorPubKey", m.SignerPubKey)
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
 			return
@@ -157,7 +155,8 @@ func newValidatorUpdateHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		msg := staking.NewMsgValidatorUpdate(m.ValidatorAddress, m.NewSignerPubKey[:])
+		// create msg validator update
+		msg := staking.NewMsgValidatorUpdate(m.ValidatorAddress, m.NewSignerPubKey)
 
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {
