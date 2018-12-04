@@ -1,9 +1,14 @@
 package checkpoint
 
 import (
+	"bytes"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+
+	hmCommon "github.com/maticnetwork/heimdall/common"
+	"github.com/maticnetwork/heimdall/helper"
 )
 
 var cdc = codec.New()
@@ -61,6 +66,22 @@ func (msg MsgCheckpoint) GetSignBytes() []byte {
 }
 
 func (msg MsgCheckpoint) ValidateBasic() sdk.Error {
+	if bytes.Equal(msg.RootHash.Bytes(), helper.ZeroHash.Bytes()) {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid rootHash %v", msg.RootHash.String())
+	}
+
+	if bytes.Equal(msg.Proposer.Bytes(), helper.ZeroAddress.Bytes()) {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.Proposer.String())
+	}
+
+	if msg.TimeStamp == 0 {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid timestamp %d", msg.TimeStamp)
+	}
+
+	if msg.StartBlock >= msg.EndBlock || msg.EndBlock == 0 {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid startBlock %v or/and endBlock %v", msg.StartBlock, msg.EndBlock)
+	}
+
 	return nil
 }
 

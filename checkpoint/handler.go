@@ -36,7 +36,8 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 	// get last checkpoint from buffer
 	headerBlock, err := k.GetCheckpointFromBuffer(ctx)
 	if err != nil {
-		common.CheckpointLogger.Error("Unable to get checkpoint", "error", err, "key", common.BufferCheckpointKey)
+		common.CheckpointLogger.Error("Unable to get checkpoint", "error", err)
+		return common.ErrBadAck(k.Codespace).Result()
 	}
 
 	// match header block and checkpoint
@@ -62,20 +63,31 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 	// remove matured Validators
 	k.RemoveDeactivatedValidators(ctx)
 
-	// GetAllValidators from store, not current, ALL!
-	updatedValidators := k.GetAllValidators(ctx)
-
 	// get current running validator set
 	currentValidatorSet := k.GetValidatorSet(ctx)
 
 	// apply updates
-	helper.UpdateValidators(&currentValidatorSet, updatedValidators)
+	helper.UpdateValidators(
+		&currentValidatorSet,           // pointer to current validator set -- UpdateValidators will modify it
+		k.GetAllValidators(ctx),        // All validators
+		k.GetValidatorToSignerMap(ctx), // validator to signer map
+	)
 
 	// update validator set in store
 	k.UpdateValidatorSetInStore(ctx, currentValidatorSet)
 
 	// increment accum
 	k.IncreamentAccum(ctx, 1)
+
+	//log new proposer
+	vs := k.GetValidatorSet(ctx)
+	newProposer := vs.GetProposer()
+	common.CheckpointLogger.Debug(
+		"New proposer selected",
+		"validator", newProposer.Signer.String(),
+		"signer", newProposer.Signer.String(),
+		"power", newProposer.Power,
+	)
 
 	// --- End
 

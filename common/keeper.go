@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -44,21 +45,19 @@ func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, stakingKey sdk.StoreKey, chec
 // -------------- KEYS/CONSTANTS
 
 var (
-	ACKCountKey         = []byte{0x01} // key to store ACK count
-	BufferCheckpointKey = []byte{0x02} // Key to store checkpoint in buffer
-	HeaderBlockKey      = []byte{0x03} // prefix key for when storing header after ACk
+	EmptyBufferValue = []byte{0x0000} // denotes EMPTY
+	DefaultValue     = []byte{0x0001} // Value to store in CacheCheckpoint and CacheCheckpointACK & ValidatorSetChange Flag
 
-	EmptyBufferValue = []byte{0x04} // denotes EMPTY
+	ACKCountKey         = []byte{0x0011} // key to store ACK count
+	BufferCheckpointKey = []byte{0x0012} // Key to store checkpoint in buffer
+	HeaderBlockKey      = []byte{0x0013} // prefix key for when storing header after ACk
 
-	CheckpointCacheKey    = []byte{0x05} // key to store Cache for checkpoint
-	CheckpointACKCacheKey = []byte{0x06} // key to store Cache for checkpointACK
+	CheckpointCacheKey    = []byte{0x0014} // key to store Cache for checkpoint
+	CheckpointACKCacheKey = []byte{0x0015} // key to store Cache for checkpointACK
 
-	DefaultValue = []byte{0x07} // Value to store in CacheCheckpoint and CacheCheckpointACK & ValidatorSetChange Flag
-
-	ValidatorsKey          = []byte{0x08} // prefix for each key to a validator
-	CurrentValidatorSetKey = []byte{0x09} // Key to store current validator set
-
-	ValidatorSetChangeKey = []byte{0x010} // key to store flag for validator set update
+	ValidatorsKey          = []byte{0x0016} // prefix for each key to a validator
+	ValidatorMapKey        = []byte{0x0017} // prefix for each key for validator map
+	CurrentValidatorSetKey = []byte{0x0018} // Key to store current validator set
 )
 
 //--------------- Checkpoint Related Keepers
@@ -240,8 +239,12 @@ func (k *Keeper) InitACKCount(ctx sdk.Context) {
 
 // GetValidatorKey drafts the validator key for addresses
 func GetValidatorKey(address []byte) []byte {
-	CheckpointLogger.Debug("Generated Validator key", "ValidatorAddress", hex.EncodeToString(address), "key", hex.EncodeToString(append(ValidatorsKey, address...)))
 	return append(ValidatorsKey, address...)
+}
+
+// GetValidatorMapKey returns validator map
+func GetValidatorMapKey(address []byte) []byte {
+	return append(ValidatorMapKey, address...)
 }
 
 // AddValidator adds validator indexed with address
@@ -303,11 +306,11 @@ func (k *Keeper) GetCurrentValidators(ctx sdk.Context) (validators []types.Valid
 }
 
 // GetAllValidators returns all validators
-func (k *Keeper) GetAllValidators(ctx sdk.Context) (validators []types.Validator) {
+func (k *Keeper) GetAllValidators(ctx sdk.Context) (validators []*types.Validator) {
 	// iterate through validators and create validator update array
 	k.IterateValidatorsAndApplyFn(ctx, func(validator types.Validator) error {
 		// append to list of validatorUpdates
-		validators = append(validators, validator)
+		validators = append(validators, &validator)
 		return nil
 	})
 
@@ -324,6 +327,7 @@ func (k *Keeper) RemoveDeactivatedValidators(ctx sdk.Context) {
 
 	// iterate through
 	k.IterateValidatorsAndApplyFn(ctx, func(validator types.Validator) error {
+		fmt.Println("RemoveDeactivatedValidators", "ackCount", ackCount, "validator", validator, "isValidator", validator.IsCurrentValidator(ackCount), "power", validator.Power)
 		// if you encounter a deactivated validator make power 0
 		if !validator.IsCurrentValidator(ackCount) {
 			validator.Power = 0
@@ -336,6 +340,7 @@ func (k *Keeper) RemoveDeactivatedValidators(ctx sdk.Context) {
 
 	// iterate through modified validators and save them
 	for _, validator := range modifiedValidators {
+		fmt.Println("RemoveDeactivatedValidators", "validator", validator)
 		k.AddValidator(ctx, validator)
 	}
 }
@@ -463,29 +468,51 @@ func (k *Keeper) GetCurrentProposer(ctx sdk.Context) *types.Validator {
 // SetValidatorAddrToSignerAddr set mapping for validator address to signer address
 func (k *Keeper) SetValidatorAddrToSignerAddr(ctx sdk.Context, validatorAddr common.Address, signerAddr common.Address) {
 	store := ctx.KVStore(k.StakingKey)
-	store.Set(validatorAddr.Bytes(), signerAddr.Bytes())
+	store.Set(GetValidatorMapKey(validatorAddr.Bytes()), signerAddr.Bytes())
 }
 
 // GetSignerFromValidator get signer address from validator
 func (k *Keeper) GetSignerFromValidator(ctx sdk.Context, validatorAddr common.Address) (common.Address, bool) {
 	store := ctx.KVStore(k.StakingKey)
-	if !store.Has(validatorAddr.Bytes()) {
+	key := GetValidatorMapKey(validatorAddr.Bytes())
+	// check if validator address has been mapped
+	if !store.Has(key) {
 		return common.Address{}, false
 	}
 
 	// return address from bytes
-	return common.BytesToAddress(store.Get(validatorAddr.Bytes())), true
+	return common.BytesToAddress(store.Get(key)), true
 }
 
 // GetValidatorFromValAddr returns signer from validator address
-func (k Keeper) GetValidatorFromValAddr(ctx sdk.Context, validatorAddr common.Address, val *types.Validator) bool {
+func (k *Keeper) GetValidatorFromValAddr(ctx sdk.Context, validatorAddr common.Address, val *types.Validator) bool {
 	store := ctx.KVStore(k.StakingKey)
-
+	key := GetValidatorMapKey(validatorAddr.Bytes())
 	// check if validator address has been mapped
-	if !store.Has(validatorAddr.Bytes()) {
+	if !store.Has(key) {
 		return false
 	}
 
 	// query for validator using ValidatorAddress => SignerAddress map
-	return k.GetValidatorInfo(ctx, store.Get(validatorAddr.Bytes()), val)
+	return k.GetValidatorInfo(ctx, store.Get(key), val)
+}
+
+// GetValidatorToSignerMap returns validator to signer map
+func (k *Keeper) GetValidatorToSignerMap(ctx sdk.Context) map[string]common.Address {
+	store := ctx.KVStore(k.StakingKey)
+
+	// get validator iterator
+	iterator := sdk.KVStorePrefixIterator(store, ValidatorMapKey)
+	defer iterator.Close()
+
+	// initialize result map
+	result := make(map[string]common.Address)
+
+	// loop through validators to get valid validators
+	for ; iterator.Valid(); iterator.Next() {
+		key := hex.EncodeToString(iterator.Key())
+		result[key] = common.BytesToAddress(iterator.Value())
+	}
+
+	return result
 }

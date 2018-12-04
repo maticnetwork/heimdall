@@ -9,6 +9,8 @@ type CodeType = sdk.CodeType
 const (
 	DefaultCodespace sdk.CodespaceType = 1
 
+	CodeInvalidMsg CodeType = 1400
+
 	CodeInvalidProposerInput CodeType = 1500
 	CodeInvalidBlockInput    CodeType = 1501
 	CodeInvalidACK           CodeType = 1502
@@ -24,6 +26,12 @@ const (
 	CodeValAlreadyJoined   CodeType = 2507
 	CodeSignerUpdateError  CodeType = 2508
 )
+
+// -------- Invalid msg
+
+func ErrInvalidMsg(codespace sdk.CodespaceType, format string, args ...interface{}) sdk.Error {
+	return sdk.NewError(codespace, CodeInvalidMsg, format, args...)
+}
 
 // -------- Checkpoint Errors
 

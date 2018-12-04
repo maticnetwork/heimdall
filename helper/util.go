@@ -3,10 +3,12 @@ package helper
 import (
 	"bytes"
 	"encoding/hex"
+	"fmt"
 	"sort"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
@@ -15,39 +17,46 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
+// Zero address
+var ZeroHash = common.Hash{}
+var ZeroAddress = common.Address{}
+var ZeroPubKey = hmTypes.PubKey{}
+
 // UpdateValidators updates validators in validator set
-func UpdateValidators(currentSet *hmTypes.ValidatorSet, validators []hmTypes.Validator) error {
-	// for _, validator := range validators {
+func UpdateValidators(currentSet *hmTypes.ValidatorSet, validators []*hmTypes.Validator, validatorToSigner map[string]common.Address) error {
+	var filteredValidators []*hmTypes.Validator
+	for _, v := range validators {
+		key := hex.EncodeToString(v.Address.Bytes())
+		s, exists := validatorToSigner[key]
+		if exists && bytes.Equal(v.Signer.Bytes(), s.Bytes()) {
+			filteredValidators = append(filteredValidators, v)
+		}
+	}
 
-	// }
+	for _, validator := range filteredValidators {
+		address := validator.Address.Bytes()
+		_, val := currentSet.GetByAddress(address)
+		if validator.Power == 0 {
+			// remove val
+			_, removed := currentSet.Remove(address)
+			if !removed {
+				return fmt.Errorf("Failed to remove validator %X", address)
+			}
+		} else if val == nil {
+			// add val
+			added := currentSet.Add(validator)
+			if !added {
+				return fmt.Errorf("Failed to add new validator %v", validator)
+			}
+		} else {
+			// update val
+			updated := currentSet.Update(validator)
+			if !updated {
+				return fmt.Errorf("Failed to update validator %X to %v", address, validator)
+			}
+		}
+	}
 
-	// for _, validator := range validators {
-	// 	if validator.Power < 0 {
-	// 		return fmt.Errorf("Voting power can't be negative %v", validator)
-	// 	}
-
-	// 	address := validator.Address
-	// 	_, val := currentSet.GetByAddress(address)
-	// 	if valUpdate.VotingPower == 0 {
-	// 		// remove val
-	// 		_, removed := currentSet.Remove(address)
-	// 		if !removed {
-	// 			return fmt.Errorf("Failed to remove validator %X", address)
-	// 		}
-	// 	} else if val == nil {
-	// 		// add val
-	// 		added := currentSet.Add(valUpdate)
-	// 		if !added {
-	// 			return fmt.Errorf("Failed to add new validator %v", valUpdate)
-	// 		}
-	// 	} else {
-	// 		// update val
-	// 		updated := currentSet.Update(valUpdate)
-	// 		if !updated {
-	// 			return fmt.Errorf("Failed to update validator %X to %v", address, valUpdate)
-	// 		}
-	// 	}
-	// }
 	return nil
 }
 
