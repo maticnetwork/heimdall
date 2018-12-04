@@ -45,19 +45,19 @@ func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, stakingKey sdk.StoreKey, chec
 // -------------- KEYS/CONSTANTS
 
 var (
-	EmptyBufferValue = []byte{0x0000} // denotes EMPTY
-	DefaultValue     = []byte{0x0001} // Value to store in CacheCheckpoint and CacheCheckpointACK & ValidatorSetChange Flag
+	EmptyBufferValue = []byte{0x00} // denotes EMPTY
+	DefaultValue     = []byte{0x01} // Value to store in CacheCheckpoint and CacheCheckpointACK & ValidatorSetChange Flag
 
-	ACKCountKey         = []byte{0x0011} // key to store ACK count
-	BufferCheckpointKey = []byte{0x0012} // Key to store checkpoint in buffer
-	HeaderBlockKey      = []byte{0x0013} // prefix key for when storing header after ACk
+	ACKCountKey         = []byte{0x11} // key to store ACK count
+	BufferCheckpointKey = []byte{0x12} // Key to store checkpoint in buffer
+	HeaderBlockKey      = []byte{0x13} // prefix key for when storing header after ACk
 
-	CheckpointCacheKey    = []byte{0x0014} // key to store Cache for checkpoint
-	CheckpointACKCacheKey = []byte{0x0015} // key to store Cache for checkpointACK
+	CheckpointCacheKey    = []byte{0x14} // key to store Cache for checkpoint
+	CheckpointACKCacheKey = []byte{0x15} // key to store Cache for checkpointACK
 
-	ValidatorsKey          = []byte{0x0016} // prefix for each key to a validator
-	ValidatorMapKey        = []byte{0x0017} // prefix for each key for validator map
-	CurrentValidatorSetKey = []byte{0x0018} // Key to store current validator set
+	ValidatorsKey          = []byte{0x16} // prefix for each key to a validator
+	ValidatorMapKey        = []byte{0x17} // prefix for each key for validator map
+	CurrentValidatorSetKey = []byte{0x18} // Key to store current validator set
 )
 
 //--------------- Checkpoint Related Keepers
@@ -509,10 +509,10 @@ func (k *Keeper) GetValidatorToSignerMap(ctx sdk.Context) map[string]common.Addr
 	result := make(map[string]common.Address)
 
 	// loop through validators to get valid validators
+	prefixLength := len(ValidatorMapKey)
 	for ; iterator.Valid(); iterator.Next() {
-		key := hex.EncodeToString(iterator.Key())
+		key := hex.EncodeToString(iterator.Key()[prefixLength:])
 		result[key] = common.BytesToAddress(iterator.Value())
 	}
-
 	return result
 }
