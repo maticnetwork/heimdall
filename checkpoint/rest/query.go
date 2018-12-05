@@ -18,21 +18,21 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Co
 	// Get all delegations from a delegator
 	r.HandleFunc(
 		"/checkpoint/buffer",
-		CheckpointBufferHandlerFn(cdc, cliCtx),
+		checkpointBufferHandlerFn(cdc, cliCtx),
 	).Methods("GET")
 
 	r.HandleFunc(
 		"/checkpoint/{headerBlockIndex}",
-		CheckpointHandlerFb(cdc, cliCtx),
+		checkpointHandlerFb(cdc, cliCtx),
 	).Methods("GET")
 
 	r.HandleFunc("checkpoint/count",
-		CheckpointCountHandlerFn(cdc, cliCtx),
+		checkpointCountHandlerFn(cdc, cliCtx),
 	).Methods("GET")
 
 }
 
-func CheckpointBufferHandlerFn(
+func checkpointBufferHandlerFn(
 	cdc *codec.Codec,
 	cliCtx context.CLIContext,
 ) http.HandlerFunc {
@@ -68,7 +68,7 @@ func CheckpointBufferHandlerFn(
 	}
 }
 
-func CheckpointHandlerFb(
+func checkpointHandlerFb(
 	cdc *codec.Codec,
 	cliCtx context.CLIContext,
 ) http.HandlerFunc {
@@ -106,17 +106,17 @@ func CheckpointHandlerFb(
 	}
 }
 
-func CheckpointCountHandlerFn(
+func checkpointCountHandlerFn(
 	cdc *codec.Codec,
 	cliCtx context.CLIContext,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		res, err := cliCtx.QueryStore(common.ACKCountKey, "checkpoint")
 		if err != nil {
 			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
+
 		ackCount, err := strconv.Atoi(string(res))
 		//the query will return empty if there is no data
 		if len(res) == 0 {

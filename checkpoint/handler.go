@@ -171,7 +171,6 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k common.
 
 	// set last no ack
 	k.SetLastNoAck(ctx, currentTime)
-	afterLastAckTime := k.GetLastNoAck(ctx)
 
 	// --- Update to new proposer
 
