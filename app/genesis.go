@@ -41,7 +41,8 @@ func (v *GenesisValidator) ToHeimdallValidator() hmTypes.Validator {
 
 // GenesisState to Unmarshal
 type GenesisState struct {
-	Accounts   []GenesisAccount   `json:"accounts"`
-	Validators []GenesisValidator `json:"validators"`
-	GenTxs     []json.RawMessage  `json:"gentxs"`
+	Accounts        []GenesisAccount   `json:"accounts"`
+	Validators      []GenesisValidator `json:"validators"`
+	GenTxs          []json.RawMessage  `json:"gentxs"`
+	InitialAckCount uint64             `json:"ack_count"`
 }

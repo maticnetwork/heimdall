@@ -214,6 +214,11 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 		app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointCacheKey),
 	)
 
+	//
+	// Set initial ack count
+	//
+	app.masterKeeper.UpdateACKCountWithValue(ctx, genesisState.InitialAckCount)
+
 	// udpate validators
 	return abci.ResponseInitChain{
 		Validators: validatorUpdates,

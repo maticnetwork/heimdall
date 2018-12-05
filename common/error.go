@@ -16,6 +16,7 @@ const (
 	CodeInvalidACK           CodeType = 1502
 	CodeNoACK                CodeType = 1503
 	CodeBadTimeStamp         CodeType = 1504
+	CodeInvalidNoACK         CodeType = 1505
 
 	CodeOldValidator       CodeType = 2500
 	CodeNoValidator        CodeType = 2501
@@ -50,6 +51,10 @@ func ErrBadAck(codespace sdk.CodespaceType) sdk.Error {
 
 func ErrNoACK(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeNoACK, "Checkpoint Already Exists In Buffer, ACK expected")
+}
+
+func ErrInvalidNoACK(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeInvalidNoACK, "Invalid no-ack")
 }
 
 func ErrBadTimeStamp(codespace sdk.CodespaceType) sdk.Error {

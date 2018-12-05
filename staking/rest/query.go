@@ -10,7 +10,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gorilla/mux"
-	tmTypes "github.com/tendermint/tendermint/types"
 
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/types"
@@ -134,14 +133,15 @@ func proposerHandlerFn(
 			return
 		}
 
-		var _validatorSet tmTypes.ValidatorSet
+		var _validatorSet hmTypes.ValidatorSet
 		cdc.UnmarshalBinary(res, &_validatorSet)
 
-		var proposers []tmTypes.Validator
+		// proposers
+		var proposers []hmTypes.Validator
 
 		for index := 0; index < times; index++ {
 			RestLogger.Info("Getting proposer for current validator set", "Index", index, "TotalProposers", times)
-			proposers = append(proposers, *_validatorSet.Proposer)
+			proposers = append(proposers, *(_validatorSet.GetProposer()))
 			_validatorSet.IncrementAccum(1)
 		}
 

@@ -20,6 +20,7 @@ func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec
 		newCheckpointHandler(cliCtx),
 	).Methods("POST")
 	r.HandleFunc("/checkpoint/ack", NewCheckpointACKHandler(cliCtx)).Methods("POST")
+	r.HandleFunc("/checkpoint/no-ack", NewCheckpointNoACKHandler(cliCtx)).Methods("POST")
 }
 
 // HeaderBlock struct for incoming checkpoint
@@ -113,6 +114,61 @@ func NewCheckpointACKHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {
 			RestLogger.Error("Unable to create txBytes", "error", err, "headerBlock", m.HeaderBlock)
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		resp, err := helper.SendTendermintRequest(cliCtx, txBytes)
+		if err != nil {
+			RestLogger.Error("Error while sending request to Tendermint", "error", err)
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		result, err := json.Marshal(&resp)
+		if err != nil {
+			RestLogger.Error("Error while marshalling tendermint response", "error", err)
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		w.Write(result)
+	}
+}
+
+type HeaderNoACK struct {
+	TimeStamp uint64 `json:"timestamp"`
+}
+
+func NewCheckpointNoACKHandler(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		var m HeaderNoACK
+		err = json.Unmarshal(body, &m)
+		if err != nil {
+			RestLogger.Error("Error unmarshalling Header No-ACK", "error", err)
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		// create new msg checkpoint ack
+		msg := checkpoint.NewMsgCheckpointNoAck(m.TimeStamp)
+
+		txBytes, err := helper.CreateTxBytes(msg)
+		if err != nil {
+			RestLogger.Error("Unable to create txBytes", "error", err, "timestamp", m.TimeStamp)
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
 		}
 
 		resp, err := helper.SendTendermintRequest(cliCtx, txBytes)

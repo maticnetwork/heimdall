@@ -18,6 +18,8 @@ func NewHandler(k common.Keeper) sdk.Handler {
 			return handleMsgCheckpoint(ctx, msg, k)
 		case MsgCheckpointAck:
 			return handleMsgCheckpointAck(ctx, msg, k)
+		case MsgCheckpointNoAck:
+			return handleMsgCheckpointNoAck(ctx, msg, k)
 		default:
 			return sdk.ErrTxDecode("Invalid message in checkpoint module").Result()
 		}
@@ -144,5 +146,37 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper) sd
 	k.SetCheckpointCache(ctx, common.DefaultValue)
 
 	// send tags
+	return sdk.Result{}
+}
+
+func handleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k common.Keeper) sdk.Result {
+	// current time
+	currentTime := msg.TimeStamp
+
+	// fetch last checkpoint from store
+	lastCheckpoint, err := k.GetLastCheckpoint(ctx)
+
+	// if last checkpoint is not present or last checkpoint happends before checkpoint buffer time -- thrown an error
+	if err != nil || currentTime < lastCheckpoint.TimeStamp || (currentTime-lastCheckpoint.TimeStamp < uint64(2*helper.CheckpointBufferTime.Seconds())) {
+		return common.ErrInvalidNoACK(k.Codespace).Result()
+	}
+
+	// --- Update to new proposer
+
+	// increment accum
+	k.IncreamentAccum(ctx, 1)
+
+	//log new proposer
+	vs := k.GetValidatorSet(ctx)
+	newProposer := vs.GetProposer()
+	common.CheckpointLogger.Debug(
+		"New proposer selected",
+		"validator", newProposer.Signer.String(),
+		"signer", newProposer.Signer.String(),
+		"power", newProposer.Power,
+	)
+
+	// --- End
+
 	return sdk.Result{}
 }

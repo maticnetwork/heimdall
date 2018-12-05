@@ -131,3 +131,48 @@ func (msg MsgCheckpointAck) ValidateBasic() sdk.Error {
 
 	return nil
 }
+
+//
+// Msg Checkpoint No Ack
+//
+
+var _ sdk.Msg = &MsgCheckpointNoAck{}
+
+type MsgCheckpointNoAck struct {
+	TimeStamp uint64 `json:"timestamp"`
+}
+
+func NewMsgCheckpointNoAck(timestamp uint64) MsgCheckpointNoAck {
+	return MsgCheckpointNoAck{
+		TimeStamp: timestamp,
+	}
+}
+
+func (msg MsgCheckpointNoAck) Type() string {
+	return "checkpoint-no-ack"
+}
+
+func (msg MsgCheckpointNoAck) Route() string {
+	return CheckpointRoute
+}
+
+func (msg MsgCheckpointNoAck) GetSigners() []sdk.AccAddress {
+	addrs := make([]sdk.AccAddress, 0)
+	return addrs
+}
+
+func (msg MsgCheckpointNoAck) GetSignBytes() []byte {
+	b, err := cdc.MarshalJSON(msg)
+	if err != nil {
+		panic(err)
+	}
+	return sdk.MustSortJSON(b)
+}
+
+func (msg MsgCheckpointNoAck) ValidateBasic() sdk.Error {
+	if msg.TimeStamp == 0 || msg.TimeStamp > uint64(time.Now().Unix()) {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid timestamp %d", msg.TimeStamp)
+	}
+
+	return nil
+}
