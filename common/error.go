@@ -17,6 +17,7 @@ const (
 	CodeNoACK                CodeType = 1503
 	CodeBadTimeStamp         CodeType = 1504
 	CodeInvalidNoACK         CodeType = 1505
+	CodeTooManyNoAck         CodeType = 1506
 
 	CodeOldValidator       CodeType = 2500
 	CodeNoValidator        CodeType = 2501
@@ -55,6 +56,10 @@ func ErrNoACK(codespace sdk.CodespaceType) sdk.Error {
 
 func ErrInvalidNoACK(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeInvalidNoACK, "Invalid no-ack")
+}
+
+func ErrTooManyNoACK(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeTooManyNoAck, "Too many no-acks")
 }
 
 func ErrBadTimeStamp(codespace sdk.CodespaceType) sdk.Error {
