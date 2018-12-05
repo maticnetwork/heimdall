@@ -127,7 +127,7 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 			ackCount := app.masterKeeper.GetACKCount(ctx)
 			for _, validator := range validators {
 				power := int64(validator.Power)
-				if validator.StartEpoch < ackCount || validator.EndEpoch > ackCount {
+				if validator.StartEpoch > ackCount || (validator.EndEpoch != 0 && validator.EndEpoch < ackCount) {
 					power = 0
 				}
 
