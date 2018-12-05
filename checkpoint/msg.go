@@ -124,5 +124,10 @@ func (msg MsgCheckpointAck) GetSignBytes() []byte {
 }
 
 func (msg MsgCheckpointAck) ValidateBasic() sdk.Error {
+	childBlockInterval := helper.GetConfig().ChildBlockInterval
+	if msg.HeaderBlock > 0 && msg.HeaderBlock%childBlockInterval != 0 {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid header block %d", msg.HeaderBlock)
+	}
+
 	return nil
 }
