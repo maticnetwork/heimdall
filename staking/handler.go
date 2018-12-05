@@ -10,8 +10,6 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
-var ZeroBytes []byte = []byte("0x0000000000000000000000000000000000000000")
-
 func NewHandler(k hmCommon.Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
@@ -30,7 +28,7 @@ func NewHandler(k hmCommon.Keeper) sdk.Handler {
 func handleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k hmCommon.Keeper) sdk.Result {
 	//fetch validator from mainchain
 	validator, err := helper.GetValidatorInfo(msg.ValidatorAddress)
-	if err != nil || bytes.Equal(validator.Address.Bytes(), ZeroBytes) {
+	if err != nil || bytes.Equal(validator.Address.Bytes(), helper.ZeroAddress.Bytes()) {
 		hmCommon.StakingLogger.Error(
 			"Unable to fetch validator from rootchain",
 			"error", err,
