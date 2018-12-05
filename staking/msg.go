@@ -27,7 +27,7 @@ type MsgValidatorJoin struct {
 	SignerPubKey     types.PubKey   `json:"pubKey"`
 	StartEpoch       uint64         `json:"startEpoch"`
 	EndEpoch         uint64         `json:"endEpoch"`
-	Amount           uint64         `json:"Amount"`
+	Amount           uint64         `json:"amount"`
 }
 
 func NewMsgValidatorJoin(
