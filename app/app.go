@@ -122,14 +122,18 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 		if app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointACKCacheKey) {
 			logger.Info("Checkpoint ACK processed in block", "CheckpointACKProcessed", app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointACKCacheKey))
 
-			// remove matured Validators
-			app.masterKeeper.RemoveDeactivatedValidators(ctx)
-
 			// GetAllValidators from store (includes previous validator set + updates)
 			validators := app.masterKeeper.GetAllValidators(ctx)
+			ackCount := app.masterKeeper.GetACKCount(ctx)
 			for _, validator := range validators {
+				power := int64(validator.Power)
+				if validator.StartEpoch < ackCount || validator.EndEpoch > ackCount {
+					power = 0
+				}
+
+				// validator update
 				val := abci.ValidatorUpdate{
-					Power:  int64(validator.Power),
+					Power:  power,
 					PubKey: validator.PubKey.ABCIPubKey(),
 				}
 				valUpdates = append(valUpdates, val)

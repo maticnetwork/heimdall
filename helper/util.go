@@ -17,13 +17,22 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
-// Zero address
+// ZeroHash represents empty hash
 var ZeroHash = common.Hash{}
+
+// ZeroAddress represents empty address
 var ZeroAddress = common.Address{}
+
+// ZeroPubKey represents empty pub key
 var ZeroPubKey = hmTypes.PubKey{}
 
 // UpdateValidators updates validators in validator set
-func UpdateValidators(currentSet *hmTypes.ValidatorSet, validators []*hmTypes.Validator, validatorToSigner map[string]common.Address) error {
+func UpdateValidators(
+	currentSet *hmTypes.ValidatorSet,
+	validators []*hmTypes.Validator,
+	validatorToSigner map[string]common.Address,
+	ackCount uint64,
+) error {
 	var filteredValidators []*hmTypes.Validator
 	for _, v := range validators {
 		key := hex.EncodeToString(v.Address.Bytes())
@@ -36,7 +45,7 @@ func UpdateValidators(currentSet *hmTypes.ValidatorSet, validators []*hmTypes.Va
 	for _, validator := range filteredValidators {
 		address := validator.Address.Bytes()
 		_, val := currentSet.GetByAddress(address)
-		if validator.Power == 0 {
+		if !validator.IsCurrentValidator(ackCount) {
 			// remove val
 			_, removed := currentSet.Remove(address)
 			if !removed {

@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -284,13 +283,10 @@ func (k *Keeper) GetValidatorInfo(ctx sdk.Context, address []byte, validator *ty
 	return true
 }
 
-// GetCurrentValidators returns all validators who are in validator set and removes deactivated validators
+// GetCurrentValidators returns all validators who are in validator set
 func (k *Keeper) GetCurrentValidators(ctx sdk.Context) (validators []types.Validator) {
 	// get ACK count
 	ackCount := k.GetACKCount(ctx)
-
-	// remove matured validators
-	k.RemoveDeactivatedValidators(ctx)
 
 	// iterate through validator list
 	k.IterateValidatorsAndApplyFn(ctx, func(validator types.Validator) error {
@@ -315,34 +311,6 @@ func (k *Keeper) GetAllValidators(ctx sdk.Context) (validators []*types.Validato
 	})
 
 	return
-}
-
-// RemoveDeactivatedValidators performs deactivation of validatowrs wrt Tendermint to pass via EndBlock
-func (k *Keeper) RemoveDeactivatedValidators(ctx sdk.Context) {
-	// get ACK count
-	ackCount := k.GetACKCount(ctx)
-
-	// modified validator array
-	var modifiedValidators []types.Validator
-
-	// iterate through
-	k.IterateValidatorsAndApplyFn(ctx, func(validator types.Validator) error {
-		fmt.Println("RemoveDeactivatedValidators", "ackCount", ackCount, "validator", validator, "isValidator", validator.IsCurrentValidator(ackCount), "power", validator.Power)
-		// if you encounter a deactivated validator make power 0
-		if !validator.IsCurrentValidator(ackCount) {
-			validator.Power = 0
-
-			// append them in modified array
-			modifiedValidators = append(modifiedValidators, validator)
-		}
-		return nil
-	})
-
-	// iterate through modified validators and save them
-	for _, validator := range modifiedValidators {
-		fmt.Println("RemoveDeactivatedValidators", "validator", validator)
-		k.AddValidator(ctx, validator)
-	}
 }
 
 // IterateValidatorsAndApplyFn interate validators and apply the given function.

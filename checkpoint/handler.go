@@ -61,9 +61,6 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 
 	// --- Update to new validator
 
-	// remove matured Validators
-	k.RemoveDeactivatedValidators(ctx)
-
 	// get current running validator set
 	currentValidatorSet := k.GetValidatorSet(ctx)
 
@@ -72,6 +69,7 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 		&currentValidatorSet,           // pointer to current validator set -- UpdateValidators will modify it
 		k.GetAllValidators(ctx),        // All validators
 		k.GetValidatorToSignerMap(ctx), // validator to signer map
+		k.GetACKCount(ctx),             // ack count
 	)
 
 	// update validator set in store
