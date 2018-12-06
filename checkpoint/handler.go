@@ -2,6 +2,7 @@ package checkpoint
 
 import (
 	"bytes"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -17,6 +18,8 @@ func NewHandler(k common.Keeper) sdk.Handler {
 			return handleMsgCheckpoint(ctx, msg, k)
 		case MsgCheckpointAck:
 			return handleMsgCheckpointAck(ctx, msg, k)
+		case MsgCheckpointNoAck:
+			return handleMsgCheckpointNoAck(ctx, msg, k)
 		default:
 			return sdk.ErrTxDecode("Invalid message in checkpoint module").Result()
 		}
@@ -31,53 +34,63 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 		return common.ErrBadAck(k.Codespace).Result()
 	}
 
-	common.CheckpointLogger.Debug("HeaderBlock Fetched", "start", start, "end", end, "Roothash", root)
+	common.CheckpointLogger.Debug("HeaderBlock fetched", "headerBlock", msg.HeaderBlock, "start", start, "end", end, "Roothash", root)
 
 	// get last checkpoint from buffer
 	headerBlock, err := k.GetCheckpointFromBuffer(ctx)
 	if err != nil {
-		common.CheckpointLogger.Error("Unable to get checkpoint", "error", err, "key", common.BufferCheckpointKey)
+		common.CheckpointLogger.Error("Unable to get checkpoint", "error", err)
+		return common.ErrBadAck(k.Codespace).Result()
 	}
 
 	// match header block and checkpoint
-	if start != headerBlock.StartBlock || end != headerBlock.EndBlock || !bytes.Equal(root[:], headerBlock.RootHash[:]) {
+	if start != headerBlock.StartBlock || end != headerBlock.EndBlock || !bytes.Equal(root.Bytes(), headerBlock.RootHash.Bytes()) {
 		common.CheckpointLogger.Error("Invalid ACK", "startExpected", headerBlock.StartBlock, "startReceived", start, "endExpected", headerBlock.EndBlock, "endReceived", end, "rootExpected", root.String(), "rootRecieved", headerBlock.RootHash.String())
 		return common.ErrBadAck(k.Codespace).Result()
 	}
 
 	// add checkpoint to headerBlocks
-	k.AddCheckpointToBuffer(ctx, common.GetHeaderKey(msg.HeaderBlock), headerBlock)
-	common.CheckpointLogger.Info("Checkpoint Added to Store", "roothash", headerBlock.RootHash, "startBlock",
-		headerBlock.StartBlock, "endBlock", headerBlock.EndBlock, "proposer", headerBlock.Proposer)
+	k.AddCheckpoint(ctx, msg.HeaderBlock, headerBlock)
+	common.CheckpointLogger.Info("Checkpoint added to store", "roothash", headerBlock.RootHash, "startBlock", headerBlock.StartBlock, "endBlock", headerBlock.EndBlock, "proposer", headerBlock.Proposer)
 
 	// flush checkpoint in buffer
 	k.FlushCheckpointBuffer(ctx)
-	common.CheckpointLogger.Debug("Checkpoint Buffer Flushed", "Checkpoint", headerBlock)
+	common.CheckpointLogger.Debug("Checkpoint buffer flushed after receiving checkpoint ack", "checkpoint", headerBlock)
 
 	// update ack count
 	k.UpdateACKCount(ctx)
-	common.CheckpointLogger.Debug("Valid ACK Received", "CurrentACKCount", k.GetACKCount(ctx)-1, "UpdatedACKCount", k.GetACKCount(ctx))
+	common.CheckpointLogger.Debug("Valid ack received", "CurrentACKCount", k.GetACKCount(ctx)-1, "UpdatedACKCount", k.GetACKCount(ctx))
 
-	// check for validator updates
-	if k.ValidatorSetChanged(ctx) {
-		// GetAllValidators from store , not current , ALL !
-		updatedValidators := k.GetAllValidators(ctx)
+	// --- Update to new validator
 
-		// get current running validator set
-		currentValidatorSet := k.GetValidatorSet(ctx)
+	// get current running validator set
+	currentValidatorSet := k.GetValidatorSet(ctx)
 
-		// apply updates
-		helper.UpdateValidators(&currentValidatorSet, updatedValidators)
+	// apply updates
+	helper.UpdateValidators(
+		&currentValidatorSet,           // pointer to current validator set -- UpdateValidators will modify it
+		k.GetAllValidators(ctx),        // All validators
+		k.GetValidatorToSignerMap(ctx), // validator to signer map
+		k.GetACKCount(ctx),             // ack count
+	)
 
-		// update validator set in store
-		k.UpdateValidatorSetInStore(ctx, currentValidatorSet)
+	// update validator set in store
+	k.UpdateValidatorSetInStore(ctx, currentValidatorSet)
 
-		// Dont change validator change update flag
-		// that is changed when updates are passes to TM in endblock
-	}
-
-	// if no updates found increment accum
+	// increment accum
 	k.IncreamentAccum(ctx, 1)
+
+	//log new proposer
+	vs := k.GetValidatorSet(ctx)
+	newProposer := vs.GetProposer()
+	common.CheckpointLogger.Debug(
+		"New proposer selected",
+		"validator", newProposer.Signer.String(),
+		"signer", newProposer.Signer.String(),
+		"power", newProposer.Power,
+	)
+
+	// --- End
 
 	// indicate ACK received by adding in cache, cache cleared in endblock
 	k.SetCheckpointAckCache(ctx, common.DefaultValue)
@@ -86,6 +99,19 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 }
 
 func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper) sdk.Result {
+	if msg.TimeStamp == 0 || msg.TimeStamp > uint64(time.Now().Unix()) {
+		return common.ErrBadTimeStamp(k.Codespace).Result()
+	}
+
+	checkpointBuffer, err := k.GetCheckpointFromBuffer(ctx)
+	if err == nil {
+		if msg.TimeStamp == 0 || checkpointBuffer.TimeStamp == 0 || ((msg.TimeStamp > checkpointBuffer.TimeStamp) && msg.TimeStamp-checkpointBuffer.TimeStamp > uint64(helper.CheckpointBufferTime.Seconds())) {
+			k.FlushCheckpointBuffer(ctx)
+		} else {
+			return common.ErrNoACK(k.Codespace).Result()
+		}
+	}
+
 	// validate checkpoint
 	if !ValidateCheckpoint(msg.StartBlock, msg.EndBlock, msg.RootHash) {
 		common.CheckpointLogger.Error("RootHash is not valid", "StartBlock", msg.StartBlock, "EndBlock", msg.EndBlock, "RootHash", msg.RootHash)
@@ -102,23 +128,66 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper) sd
 	}
 
 	// check proposer in message
-	if !bytes.Equal(msg.Proposer.Bytes(), k.GetValidatorSet(ctx).Proposer.Address) {
-		common.CheckpointLogger.Error("Invalid proposer in message", "currentProposer", k.GetValidatorSet(ctx).Proposer.Address.String(), "checkpointProposer", msg.Proposer.String())
+	if !bytes.Equal(msg.Proposer.Bytes(), k.GetValidatorSet(ctx).Proposer.Signer.Bytes()) {
+		common.CheckpointLogger.Error("Invalid proposer in message", "currentProposer", k.GetValidatorSet(ctx).Proposer.Signer.String(), "checkpointProposer", msg.Proposer.String())
 		return common.ErrBadProposerDetails(k.Codespace).Result()
 	}
 
 	// add checkpoint to buffer
-	k.AddCheckpointToBuffer(ctx, common.BufferCheckpointKey, hmTypes.CheckpointBlockHeader{
+	k.SetCheckpointBuffer(ctx, hmTypes.CheckpointBlockHeader{
 		StartBlock: msg.StartBlock,
 		EndBlock:   msg.EndBlock,
 		RootHash:   msg.RootHash,
 		Proposer:   msg.Proposer,
+		TimeStamp:  msg.TimeStamp,
 	})
-	common.CheckpointLogger.Debug("Checkpoint added in buffer!", "roothash", msg.RootHash, "startBlock", msg.StartBlock, "endBlock", msg.EndBlock, "proposer", msg.Proposer)
 
 	// indicate Checkpoint received by adding in cache, cache cleared in endblock
 	k.SetCheckpointCache(ctx, common.DefaultValue)
 
 	// send tags
+	return sdk.Result{}
+}
+
+func handleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k common.Keeper) sdk.Result {
+	// current time
+	currentTime := msg.TimeStamp
+	// buffer time
+	bufferTime := uint64(2 * helper.CheckpointBufferTime.Seconds())
+
+	// fetch last checkpoint from store
+	lastCheckpoint, err := k.GetLastCheckpoint(ctx)
+
+	// if last checkpoint is not present or last checkpoint happens before checkpoint buffer time -- thrown an error
+	if err != nil || currentTime < lastCheckpoint.TimeStamp || (currentTime-lastCheckpoint.TimeStamp < bufferTime) {
+		return common.ErrInvalidNoACK(k.Codespace).Result()
+	}
+
+	// check last no ack - prevents repetitive no-ack
+	lastAckTime := k.GetLastNoAck(ctx)
+	if currentTime < lastAckTime || (currentTime-lastAckTime < bufferTime) {
+		return common.ErrTooManyNoACK(k.Codespace).Result()
+	}
+
+	// set last no ack
+	k.SetLastNoAck(ctx, currentTime)
+
+	// --- Update to new proposer
+
+	// increment accum
+	k.IncreamentAccum(ctx, 1)
+
+	//log new proposer
+	vs := k.GetValidatorSet(ctx)
+	newProposer := vs.GetProposer()
+	common.CheckpointLogger.Debug(
+		"New proposer selected",
+		"validator", newProposer.Signer.String(),
+		"signer", newProposer.Signer.String(),
+		"power", newProposer.Power,
+	)
+
+	// --- End
+
 	return sdk.Result{}
 }

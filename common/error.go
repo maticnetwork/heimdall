@@ -9,10 +9,15 @@ type CodeType = sdk.CodeType
 const (
 	DefaultCodespace sdk.CodespaceType = 1
 
+	CodeInvalidMsg CodeType = 1400
+
 	CodeInvalidProposerInput CodeType = 1500
 	CodeInvalidBlockInput    CodeType = 1501
 	CodeInvalidACK           CodeType = 1502
 	CodeNoACK                CodeType = 1503
+	CodeBadTimeStamp         CodeType = 1504
+	CodeInvalidNoACK         CodeType = 1505
+	CodeTooManyNoAck         CodeType = 1506
 
 	CodeOldValidator       CodeType = 2500
 	CodeNoValidator        CodeType = 2501
@@ -22,7 +27,14 @@ const (
 	CodeSignerSynced       CodeType = 2505
 	CodeValSave            CodeType = 2506
 	CodeValAlreadyJoined   CodeType = 2507
+	CodeSignerUpdateError  CodeType = 2508
 )
+
+// -------- Invalid msg
+
+func ErrInvalidMsg(codespace sdk.CodespaceType, format string, args ...interface{}) sdk.Error {
+	return sdk.NewError(codespace, CodeInvalidMsg, format, args...)
+}
 
 // -------- Checkpoint Errors
 
@@ -40,6 +52,18 @@ func ErrBadAck(codespace sdk.CodespaceType) sdk.Error {
 
 func ErrNoACK(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeNoACK, "Checkpoint Already Exists In Buffer, ACK expected")
+}
+
+func ErrInvalidNoACK(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeInvalidNoACK, "Invalid no-ack")
+}
+
+func ErrTooManyNoACK(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeTooManyNoAck, "Too many no-acks")
+}
+
+func ErrBadTimeStamp(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeBadTimeStamp, "Invalid time stamp. It must be in near past.")
 }
 
 // ----------- Staking Errors
@@ -62,6 +86,10 @@ func ErrValIsNotCurrentVal(codespace sdk.CodespaceType) sdk.Error {
 
 func ErrValUnbonded(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeValAlreadyUnbonded, "Validator already unbonded , cannot exit")
+}
+
+func ErrSignerUpdateError(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeSignerUpdateError, "Signer update error")
 }
 
 func ErrValidatorAlreadySynced(codespace sdk.CodespaceType) sdk.Error {

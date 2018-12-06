@@ -25,8 +25,11 @@ func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec
 }
 
 type addValidator struct {
-	ValidatorAddress string `json:"address"`
-	ValidatorPubKey  string `json:"pubKey"`
+	ValidatorAddress common.Address `json:"address"`
+	SignerPubKey     hmType.PubKey  `json:"pubKey"`
+	StartEpoch       uint64         `json:"startEpoch"`
+	EndEpoch         uint64         `json:"endEpoch"`
+	Amount           uint64         `json:"Amount"`
 }
 
 func newValidatorJoinHandler(cliCtx context.CLIContext) http.HandlerFunc {
@@ -48,14 +51,12 @@ func newValidatorJoinHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		validatorAddr := common.HexToAddress(m.ValidatorAddress)
-		crytoPubKey := helper.BytesToPubkey(common.Hex2Bytes(m.ValidatorPubKey))
-
-		msg := staking.NewMsgValidatorJoin(validatorAddr, common.Hex2Bytes(m.ValidatorPubKey))
+		// create new msg
+		msg := staking.NewMsgValidatorJoin(m.ValidatorAddress, m.SignerPubKey, m.StartEpoch, m.EndEpoch, m.Amount)
 
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {
-			RestLogger.Error("Unable to create txBytes", "ValidatorAddress", validatorAddr.String(), "ValidatorPubKey", helper.BytesToPubkey(crytoPubKey.Bytes()))
+			RestLogger.Error("Unable to create txBytes", "ValidatorAddress", m.ValidatorAddress.String(), "ValidatorPubKey", m.SignerPubKey)
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
 			return
@@ -81,13 +82,13 @@ func newValidatorJoinHandler(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-type remoteValidator struct {
+type removeValidator struct {
 	ValidatorAddress common.Address `json:"address"`
 }
 
 func newValidatorExitHandler(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var m remoteValidator
+		var m removeValidator
 
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
@@ -134,8 +135,9 @@ func newValidatorExitHandler(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 type updateValidator struct {
-	ValidatorAddress   common.Address `json:"address"`
-	NewValidatorPubKey hmType.PubKey  `json:"newPubKey"`
+	ValidatorAddress common.Address `json:"address"`
+	NewSignerPubKey  hmType.PubKey  `json:"pubKey"`
+	NewAmount        uint64         `json:"amount"`
 }
 
 func newValidatorUpdateHandler(cliCtx context.CLIContext) http.HandlerFunc {
@@ -157,11 +159,12 @@ func newValidatorUpdateHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		msg := staking.NewMsgValidatorUpdate(m.ValidatorAddress, m.NewValidatorPubKey[:])
+		// create msg validator update
+		msg := staking.NewMsgValidatorUpdate(m.ValidatorAddress, m.NewSignerPubKey, m.NewAmount)
 
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {
-			RestLogger.Error("Unable to create txBytes", "currentValidatorAddress", m.ValidatorAddress.Hex(), "newValidatorPubKey", m.NewValidatorPubKey)
+			RestLogger.Error("Unable to create txBytes", "currentValidatorAddress", m.ValidatorAddress.Hex(), "newSignerPubKey", m.NewSignerPubKey)
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
 			return
@@ -169,7 +172,7 @@ func newValidatorUpdateHandler(cliCtx context.CLIContext) http.HandlerFunc {
 
 		resp, err := helper.SendTendermintRequest(cliCtx, txBytes)
 		if err != nil {
-			RestLogger.Error("Error while sending request to Tendermint", "error", err, "ValidatorAddress", m.ValidatorAddress.Hex(), "newValidatorPubKey", m.NewValidatorPubKey, "txBytes", txBytes)
+			RestLogger.Error("Error while sending request to Tendermint", "error", err, "ValidatorAddress", m.ValidatorAddress.Hex(), "newSignerPubKey", m.NewSignerPubKey, "txBytes", txBytes)
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
 			return

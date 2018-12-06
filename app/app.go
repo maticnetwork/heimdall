@@ -120,17 +120,23 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 	if ctx.BlockHeader().NumTxs > 0 {
 		// check if ACK is present in cache
 		if app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointACKCacheKey) {
-			logger.Info("Checkpoint ACK processed in block", "CheckpointACKProcessed", app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointCacheKey))
+			logger.Info("Checkpoint ACK processed in block", "CheckpointACKProcessed", app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointACKCacheKey))
 
-			// remove matured Validators
-			app.masterKeeper.RemoveDeactivatedValidators(ctx)
+			// GetAllValidators from store (includes previous validator set + updates)
+			validators := app.masterKeeper.GetAllValidators(ctx)
+			ackCount := app.masterKeeper.GetACKCount(ctx)
+			for _, validator := range validators {
+				power := int64(validator.Power)
+				if validator.StartEpoch > ackCount || (validator.EndEpoch != 0 && validator.EndEpoch < ackCount) {
+					power = 0
+				}
 
-			// check if validator set has changed
-			if app.masterKeeper.ValidatorSetChanged(ctx) {
-				// GetAllValidators from store (includes previous validator set + updates)
-				valUpdates = app.masterKeeper.GetAllValidators(ctx)
-				// mark validator set changes have been sent to TM
-				app.masterKeeper.SetValidatorSetChangedFlag(ctx, false)
+				// validator update
+				val := abci.ValidatorUpdate{
+					Power:  power,
+					PubKey: validator.PubKey.ABCIPubKey(),
+				}
+				valUpdates = append(valUpdates, val)
 			}
 
 			// clear ACK cache
@@ -162,20 +168,28 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 	}
 
 	// initialize validator set
-	newValidatorSet := tmTypes.ValidatorSet{}
+	newValidatorSet := hmTypes.ValidatorSet{}
 	validatorUpdates := make([]abci.ValidatorUpdate, 1)
 
 	for i, validator := range genesisState.Validators {
-		// add val
-		tmValidator := validator.ToTmValidator()
-		if ok := newValidatorSet.Add(&tmValidator); !ok {
+		hmValidator := validator.ToHeimdallValidator()
+
+		if ok := newValidatorSet.Add(&hmValidator); !ok {
 			panic(errors.New("Error while adding new validator"))
 		} else {
+			// Add individual validator to state
+			app.masterKeeper.AddValidator(ctx, hmValidator)
+
+			// add validator to validatorAddress => SignerAddress map
+			app.masterKeeper.SetValidatorAddrToSignerAddr(ctx, hmValidator.Address, hmValidator.Signer)
+
 			// convert to Validator Update
 			updateVal := abci.ValidatorUpdate{
-				Power:  tmValidator.VotingPower,
-				PubKey: tmTypes.TM2PB.PubKey(tmValidator.PubKey),
+				Power:  int64(validator.Power),
+				PubKey: validator.PubKey.ABCIPubKey(),
 			}
+
+			// Add validator to validator updated to be processed below
 			validatorUpdates[i] = updateVal
 		}
 	}
@@ -192,13 +206,18 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 	// set empty values in cache by default
 	app.masterKeeper.SetCheckpointAckCache(ctx, common.EmptyBufferValue)
 	app.masterKeeper.SetCheckpointCache(ctx, common.EmptyBufferValue)
-	app.masterKeeper.SetValidatorSetChangedFlag(ctx, false)
-	logger.Info("Cache's and flags set to false", "CheckpointACKCache",
+	logger.Info(
+		"Cache's and flags set to false",
+		"checkpointACKCache",
 		app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointACKCacheKey),
-		"CheckpointCache",
+		"checkpointCache",
 		app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointCacheKey),
-		"ValidatorUpdatesFlag",
-		app.masterKeeper.ValidatorSetChanged(ctx))
+	)
+
+	//
+	// Set initial ack count
+	//
+	app.masterKeeper.UpdateACKCountWithValue(ctx, genesisState.InitialAckCount)
 
 	// udpate validators
 	return abci.ResponseInitChain{
@@ -206,13 +225,15 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 	}
 }
 
+// ExportAppStateAndValidators export app state and validators
 func (app *HeimdallApp) ExportAppStateAndValidators() (appState json.RawMessage, validators []tmTypes.GenesisValidator, err error) {
 	//ctx := app.NewContext(true, abci.Header{})
 	return appState, validators, err
 }
 
+// GetExtraData get extra data for checkpoint
 func GetExtraData(_checkpoint hmTypes.CheckpointBlockHeader, ctx sdk.Context) []byte {
-	logger.Debug("Creating extra data", "startBlock", _checkpoint.StartBlock, "endBlock", _checkpoint.EndBlock, "roothash", _checkpoint.RootHash)
+	logger.Debug("Creating extra data", "startBlock", _checkpoint.StartBlock, "endBlock", _checkpoint.EndBlock, "roothash", _checkpoint.RootHash, "timestamp", _checkpoint.TimeStamp)
 
 	// craft a message
 	txBytes, err := helper.CreateTxBytes(
@@ -221,6 +242,7 @@ func GetExtraData(_checkpoint hmTypes.CheckpointBlockHeader, ctx sdk.Context) []
 			_checkpoint.StartBlock,
 			_checkpoint.EndBlock,
 			_checkpoint.RootHash,
+			_checkpoint.TimeStamp,
 		),
 	)
 	if err != nil {
@@ -264,7 +286,7 @@ func PrepareAndSendCheckpoint(ctx sdk.Context, keeper common.Keeper) {
 	validatorAddress := helper.GetPubKey().Address()
 
 	// check if we are proposer
-	if bytes.Equal(keeper.GetCurrentProposerAddress(ctx), validatorAddress.Bytes()) {
+	if bytes.Equal(keeper.GetCurrentProposer(ctx).Signer.Bytes(), validatorAddress.Bytes()) {
 		logger.Info("We are proposer! Validating if checkpoint needs to be pushed", "commitedLastBlock", lastblock, "startBlock", _checkpoint.StartBlock)
 
 		// check if we need to send checkpoint or not
@@ -277,6 +299,6 @@ func PrepareAndSendCheckpoint(ctx sdk.Context, keeper common.Keeper) {
 			logger.Error("Checkpoint already sent", "commitedLastBlock", lastblock, "startBlock", _checkpoint.StartBlock)
 		}
 	} else {
-		logger.Info("We are not proposer", "proposer", keeper.GetValidatorSet(ctx).Proposer.Address.String(), "validator", validatorAddress.String())
+		logger.Info("We are not proposer", "proposer", keeper.GetValidatorSet(ctx).Proposer.Signer.String(), "validator", validatorAddress.String())
 	}
 }

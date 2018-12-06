@@ -8,7 +8,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
@@ -17,22 +17,35 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
+// ZeroHash represents empty hash
+var ZeroHash = common.Hash{}
+
+// ZeroAddress represents empty address
+var ZeroAddress = common.Address{}
+
+// ZeroPubKey represents empty pub key
+var ZeroPubKey = hmTypes.PubKey{}
+
 // UpdateValidators updates validators in validator set
-func UpdateValidators(currentSet *tmTypes.ValidatorSet, abciUpdates []abci.ValidatorUpdate) error {
-	updates, err := tmTypes.PB2TM.ValidatorUpdates(abciUpdates)
-	if err != nil {
-		return err
+func UpdateValidators(
+	currentSet *hmTypes.ValidatorSet,
+	validators []*hmTypes.Validator,
+	validatorToSigner map[string]common.Address,
+	ackCount uint64,
+) error {
+	var filteredValidators []*hmTypes.Validator
+	for _, v := range validators {
+		key := hex.EncodeToString(v.Address.Bytes())
+		s, exists := validatorToSigner[key]
+		if exists && bytes.Equal(v.Signer.Bytes(), s.Bytes()) {
+			filteredValidators = append(filteredValidators, v)
+		}
 	}
 
-	// these are tendermint types now
-	for _, valUpdate := range updates {
-		if valUpdate.VotingPower < 0 {
-			return fmt.Errorf("Voting power can't be negative %v", valUpdate)
-		}
-
-		address := valUpdate.Address
+	for _, validator := range filteredValidators {
+		address := validator.Address.Bytes()
 		_, val := currentSet.GetByAddress(address)
-		if valUpdate.VotingPower == 0 {
+		if !validator.IsCurrentValidator(ackCount) {
 			// remove val
 			_, removed := currentSet.Remove(address)
 			if !removed {
@@ -40,18 +53,19 @@ func UpdateValidators(currentSet *tmTypes.ValidatorSet, abciUpdates []abci.Valid
 			}
 		} else if val == nil {
 			// add val
-			added := currentSet.Add(valUpdate)
+			added := currentSet.Add(validator)
 			if !added {
-				return fmt.Errorf("Failed to add new validator %v", valUpdate)
+				return fmt.Errorf("Failed to add new validator %v", validator)
 			}
 		} else {
 			// update val
-			updated := currentSet.Update(valUpdate)
+			updated := currentSet.Update(validator)
 			if !updated {
-				return fmt.Errorf("Failed to update validator %X to %v", address, valUpdate)
+				return fmt.Errorf("Failed to update validator %X to %v", address, validator)
 			}
 		}
 	}
+
 	return nil
 }
 
