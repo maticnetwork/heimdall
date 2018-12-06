@@ -61,7 +61,7 @@ var (
 
 //--------------- Checkpoint Related Keepers
 
-func (k *Keeper) _addCheckpoint(ctx sdk.Context, key []byte, headerBlock types.CheckpointBlockHeader) error {
+func (k *Keeper) addCheckpoint(ctx sdk.Context, key []byte, headerBlock types.CheckpointBlockHeader) error {
 	store := ctx.KVStore(k.CheckpointKey)
 
 	// create Checkpoint block and marshall
@@ -80,7 +80,7 @@ func (k *Keeper) _addCheckpoint(ctx sdk.Context, key []byte, headerBlock types.C
 // AddCheckpoint adds checkpoint into final blocks
 func (k *Keeper) AddCheckpoint(ctx sdk.Context, headerBlockNumber uint64, headerBlock types.CheckpointBlockHeader) error {
 	key := GetHeaderKey(headerBlockNumber)
-	err := k._addCheckpoint(ctx, key, headerBlock)
+	err := k.addCheckpoint(ctx, key, headerBlock)
 	if err != nil {
 		return err
 	}
@@ -154,7 +154,7 @@ func (k *Keeper) FlushCheckpointBuffer(ctx sdk.Context) {
 
 // SetCheckpointBuffer flushes Checkpoint Buffer
 func (k *Keeper) SetCheckpointBuffer(ctx sdk.Context, headerBlock types.CheckpointBlockHeader) error {
-	err := k._addCheckpoint(ctx, BufferCheckpointKey, headerBlock)
+	err := k.addCheckpoint(ctx, BufferCheckpointKey, headerBlock)
 	if err != nil {
 		return err
 	}
@@ -415,7 +415,7 @@ func (k *Keeper) GetValidatorSet(ctx sdk.Context) (validatorSet types.ValidatorS
 	// get current validator set from store
 	bz := store.Get(CurrentValidatorSetKey)
 	// unmarhsall
-	_ = k.cdc.UnmarshalBinary(bz, &validatorSet)
+	k.cdc.MustUnmarshalBinary(bz, &validatorSet)
 	// return validator set
 	return validatorSet
 }
@@ -474,15 +474,12 @@ func (k *Keeper) GetSignerFromValidator(ctx sdk.Context, validatorAddr common.Ad
 
 // GetValidatorFromValAddr returns signer from validator address
 func (k *Keeper) GetValidatorFromValAddr(ctx sdk.Context, validatorAddr common.Address, val *types.Validator) bool {
-	store := ctx.KVStore(k.StakingKey)
-	key := GetValidatorMapKey(validatorAddr.Bytes())
-	// check if validator address has been mapped
-	if !store.Has(key) {
-		return false
+	if signerAddr, ok := k.GetSignerFromValidator(ctx, validatorAddr); !ok {
+		return ok
+	} else {
+		// query for validator using ValidatorAddress => SignerAddress map
+		return k.GetValidatorInfo(ctx, signerAddr.Bytes(), val)
 	}
-
-	// query for validator using ValidatorAddress => SignerAddress map
-	return k.GetValidatorInfo(ctx, store.Get(key), val)
 }
 
 // GetValidatorToSignerMap returns validator to signer map
