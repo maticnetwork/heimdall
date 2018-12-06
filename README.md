@@ -61,7 +61,7 @@ Create `~/.heimdalld/config/heimdall-config.json` directory with following conte
 
   "stakeManagerAddress": "0xb4ee6879ba231824651991c8f0a34af4d6bfca6a",
   "rootchainAddress": "0x168ea52f1fafe28d584f94357383d4f6fa8a749a",
-  "childBlockInterval": 1000
+  "childBlockInterval": 10000
 }
 ```
 

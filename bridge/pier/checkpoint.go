@@ -251,6 +251,7 @@ func (checkpointer *MaticCheckpointer) sendRequest(newHeader *types.Header) {
 			start,
 			end,
 			ethCommon.BytesToHash(root),
+			uint64(time.Now().Unix()),
 		),
 	)
 

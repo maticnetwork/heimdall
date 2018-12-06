@@ -1,9 +1,15 @@
 package staking
 
 import (
+	"bytes"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+
+	hmCommon "github.com/maticnetwork/heimdall/common"
+	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/types"
 )
 
 var cdc = codec.New()
@@ -18,13 +24,25 @@ var _ sdk.Msg = &MsgValidatorJoin{}
 
 type MsgValidatorJoin struct {
 	ValidatorAddress common.Address `json:"address"`
-	SignerPubKey     []byte         `json:"pubKey"`
+	SignerPubKey     types.PubKey   `json:"pubKey"`
+	StartEpoch       uint64         `json:"startEpoch"`
+	EndEpoch         uint64         `json:"endEpoch"`
+	Amount           uint64         `json:"amount"`
 }
 
-func NewMsgValidatorJoin(address common.Address, pubkey []byte) MsgValidatorJoin {
+func NewMsgValidatorJoin(
+	address common.Address,
+	pubkey types.PubKey,
+	startEpoch uint64,
+	endEpoch uint64,
+	amount uint64,
+) MsgValidatorJoin {
 	return MsgValidatorJoin{
 		ValidatorAddress: address,
 		SignerPubKey:     pubkey,
+		StartEpoch:       startEpoch,
+		EndEpoch:         endEpoch,
+		Amount:           amount,
 	}
 }
 
@@ -50,8 +68,20 @@ func (msg MsgValidatorJoin) GetSignBytes() []byte {
 }
 
 func (msg MsgValidatorJoin) ValidateBasic() sdk.Error {
-	// add length checks
+	if bytes.Equal(msg.ValidatorAddress.Bytes(), helper.ZeroAddress.Bytes()) {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator address %v", msg.ValidatorAddress.String())
+	}
+
+	if bytes.Equal(msg.SignerPubKey.Bytes(), helper.ZeroPubKey.Bytes()) {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid pub key %v", msg.SignerPubKey.String())
+	}
+
 	return nil
+}
+
+func (msg MsgValidatorJoin) GetPower() uint64 {
+	// add length checks
+	return msg.Amount // TODO  Get power out of amount. Add 10^-18 here so that we dont overflow easily
 }
 
 //
@@ -63,13 +93,15 @@ var _ sdk.Msg = &MsgSignerUpdate{}
 // MsgSignerUpdate signer update struct
 type MsgSignerUpdate struct {
 	ValidatorAddress common.Address `json:"address"`
-	NewSignerPubKey  []byte         `json:"pubKey"`
+	NewSignerPubKey  types.PubKey   `json:"pubKey"`
+	NewAmount        uint64         `json:"amount"`
 }
 
-func NewMsgValidatorUpdate(address common.Address, pubKey []byte) MsgSignerUpdate {
+func NewMsgValidatorUpdate(address common.Address, pubKey types.PubKey, amount uint64) MsgSignerUpdate {
 	return MsgSignerUpdate{
 		ValidatorAddress: address,
 		NewSignerPubKey:  pubKey,
+		NewAmount:        amount,
 	}
 }
 
@@ -95,7 +127,14 @@ func (msg MsgSignerUpdate) GetSignBytes() []byte {
 }
 
 func (msg MsgSignerUpdate) ValidateBasic() sdk.Error {
-	// add length checks
+	if bytes.Equal(msg.ValidatorAddress.Bytes(), helper.ZeroAddress.Bytes()) {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator address %v", msg.ValidatorAddress.String())
+	}
+
+	if bytes.Equal(msg.NewSignerPubKey.Bytes(), helper.ZeroPubKey.Bytes()) {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid pub key %v", msg.NewSignerPubKey.String())
+	}
+
 	return nil
 }
 
@@ -137,5 +176,9 @@ func (msg MsgValidatorExit) GetSignBytes() []byte {
 }
 
 func (msg MsgValidatorExit) ValidateBasic() sdk.Error {
+	if bytes.Equal(msg.ValidatorAddress.Bytes(), helper.ZeroAddress.Bytes()) {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator address %v", msg.ValidatorAddress.String())
+	}
+
 	return nil
 }

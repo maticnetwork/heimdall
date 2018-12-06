@@ -11,11 +11,13 @@ import (
 func RegisterWire(cdc *codec.Codec) {
 	cdc.RegisterConcrete(MsgCheckpoint{}, "checkpoint/MsgCheckpoint", nil)
 	cdc.RegisterConcrete(MsgCheckpointAck{}, "checkpoint/MsgCheckpointACK", nil)
+	cdc.RegisterConcrete(MsgCheckpointNoAck{}, "checkpoint/MsgCheckpointNoACK", nil)
 }
 
 func RegisterPulp(pulp *hmTypes.Pulp) {
 	pulp.RegisterConcrete(MsgCheckpoint{})
 	pulp.RegisterConcrete(MsgCheckpointAck{})
+	pulp.RegisterConcrete(MsgCheckpointNoAck{})
 }
 
 var cdcEmpty = codec.New()

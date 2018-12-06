@@ -40,19 +40,21 @@ import (
 //	return validators
 //}
 
-// GetHeaderInfo get header info
-func GetHeaderInfo(headerId uint64) (root common.Hash, start uint64, end uint64, err error) {
+// GetHeaderInfo get header info from header id
+func GetHeaderInfo(headerID uint64) (root common.Hash, start uint64, end uint64, err error) {
 	// get rootchain instance
 	rootChainInstance, err := GetRootChainInstance()
 	if err != nil {
-		Logger.Error("Error creating rootchain instance while fetching headerBlock", "error", err, "headerBlockIndex", headerId)
-		return common.HexToHash(""), 0, 0, err
+		Logger.Error("Error creating rootchain instance while fetching headerBlock", "error", err, "headerBlockIndex", headerID)
+		return common.Hash{}, 0, 0, err
 	}
 
 	// get header from rootchain
-	headerBlock, err := rootChainInstance.HeaderBlock(nil, big.NewInt(int64(headerId)))
+	headerIDInt := big.NewInt(0)
+	headerIDInt.SetUint64(headerID)
+	headerBlock, err := rootChainInstance.HeaderBlock(nil, headerIDInt)
 	if err != nil {
-		Logger.Error("Unable to fetch header block from rootchain", "headerBlockIndex", headerId)
+		Logger.Error("Unable to fetch header block from rootchain", "headerBlockIndex", headerID)
 	}
 
 	return headerBlock.Root, headerBlock.Start.Uint64(), headerBlock.End.Uint64(), nil
