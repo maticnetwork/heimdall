@@ -95,13 +95,15 @@ type MsgSignerUpdate struct {
 	ValidatorAddress common.Address `json:"address"`
 	NewSignerPubKey  types.PubKey   `json:"pubKey"`
 	NewAmount        uint64         `json:"amount"`
+	Signature		[]byte			`json:"signature"`
 }
 
-func NewMsgValidatorUpdate(address common.Address, pubKey types.PubKey, amount uint64) MsgSignerUpdate {
+func NewMsgValidatorUpdate(address common.Address, pubKey types.PubKey, amount uint64,signature []byte) MsgSignerUpdate {
 	return MsgSignerUpdate{
 		ValidatorAddress: address,
 		NewSignerPubKey:  pubKey,
 		NewAmount:        amount,
+		Signature:signature,
 	}
 }
 
@@ -134,7 +136,7 @@ func (msg MsgSignerUpdate) ValidateBasic() sdk.Error {
 	if bytes.Equal(msg.NewSignerPubKey.Bytes(), helper.ZeroPubKey.Bytes()) {
 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid pub key %v", msg.NewSignerPubKey.String())
 	}
-
+	
 	return nil
 }
 
