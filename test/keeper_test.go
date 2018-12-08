@@ -1,7 +1,6 @@
 package test
 
 import (
-	"github.com/maticnetwork/heimdall/types"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
@@ -15,7 +14,29 @@ func TestUpdateAck(t *testing.T) {
 
 func TestCheckpointBuffer(t *testing.T) {
 	ctx, keeper := CreateTestInput(t, false)
-	checkpoint := types.CheckpointBlockHeader{
-		Proposer: "0x17cde2546df29E2bbE66a98Ae95A6Ed8604D6B2b",
-	}
+
+	// create random header block
+	headerBlock, err := GenRandCheckpointHeader()
+	require.Empty(t, err, "Unable to create random header block, Error:%v", err)
+
+	// set checkpoint
+	err = keeper.SetCheckpointBuffer(ctx, headerBlock)
+	require.Empty(t, err, "Unable to store checkpoint, Error: %v", err)
+
+	// check if we are able to get checkpoint after set
+	storedHeader, err := keeper.GetCheckpointFromBuffer(ctx)
+	require.Empty(t, err, "Unable to retrieve checkpoint, Error: %v", err)
+	require.Equal(t, headerBlock, storedHeader, "Header Blocks dont match")
+
+	// flush and check if its flushed
+	keeper.FlushCheckpointBuffer(ctx)
+	storedHeader, err = keeper.GetCheckpointFromBuffer(ctx)
+	require.NotEmpty(t, err, "HeaderBlock should not exist after flush")
+
+	//TODO add this check for handler test
+	//err = keeper.SetCheckpointBuffer(ctx, headerBlock)
+	//if err == nil {
+	//	require.Fail(t, "Checkpoint should not be stored if checkpoint already exists in buffer")
+	//}
+
 }
