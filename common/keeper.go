@@ -97,6 +97,25 @@ func (k *Keeper) AddCheckpoint(ctx sdk.Context, headerBlockNumber uint64, header
 	return nil
 }
 
+// To get checkpoint by header block index 10,000 ,20,000 and so on
+func (k Keeper) GetCheckpointByIndex(ctx sdk.Context, headerIndex uint64) (types.CheckpointBlockHeader, error) {
+	store := ctx.KVStore(k.CheckpointKey)
+	headerKey := GetHeaderKey(headerIndex)
+	var _checkpoint types.CheckpointBlockHeader
+
+	if store.Has(headerKey) {
+		err := json.Unmarshal(store.Get(headerKey), &_checkpoint)
+		if err != nil {
+			CheckpointLogger.Error("Unable to fetch checkpoint from store", "key", headerIndex)
+			return _checkpoint, err
+		} else {
+			return _checkpoint, nil
+		}
+	} else {
+		return _checkpoint, errors.New("Invalid header Index")
+	}
+}
+
 // GetLastCheckpoint gets last checkpoint, headerIndex = TotalACKs * ChildBlockInterval
 func (k *Keeper) GetLastCheckpoint(ctx sdk.Context) (types.CheckpointBlockHeader, error) {
 	store := ctx.KVStore(k.CheckpointKey)

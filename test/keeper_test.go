@@ -49,10 +49,17 @@ func TestCheckpointACK(t *testing.T) {
 	headerBlock, err := GenRandCheckpointHeader()
 	require.Empty(t, err, "Unable to create random header block, Error:%v", err)
 
-	keeper.AddCheckpoint(ctx, 12, headerBlock)
+	keeper.AddCheckpoint(ctx, 20000, headerBlock)
 	require.Empty(t, err, "Unable to store checkpoint, Error: %v", err)
 
-	storedHeader, err := keeper.GetLastCheckpoint(ctx)
+	acksCount := keeper.GetACKCount(ctx)
+
+	// fetch last checkpoint key (NumberOfACKs * ChildBlockInterval)
+	lastCheckpointKey := 10000 * acksCount
+
+	storedHeader, err := keeper.GetCheckpointByIndex(ctx, lastCheckpointKey)
+	// TODO uncomment when config is loading properly
+	//storedHeader, err := keeper.GetLastCheckpoint(ctx)
 	require.Empty(t, err, "Unable to retrieve checkpoint, Error: %v", err)
 	require.Equal(t, headerBlock, storedHeader, "Header Blocks dont match")
 
