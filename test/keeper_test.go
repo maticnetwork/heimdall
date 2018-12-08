@@ -43,6 +43,8 @@ func TestCheckpointBuffer(t *testing.T) {
 func TestCheckpointACK(t *testing.T) {
 	ctx, keeper := CreateTestInput(t, false)
 
+	prevACK := keeper.GetACKCount(ctx)
+
 	// create random header block
 	headerBlock, err := GenRandCheckpointHeader()
 	require.Empty(t, err, "Unable to create random header block, Error:%v", err)
@@ -53,5 +55,13 @@ func TestCheckpointACK(t *testing.T) {
 	storedHeader, err := keeper.GetLastCheckpoint(ctx)
 	require.Empty(t, err, "Unable to retrieve checkpoint, Error: %v", err)
 	require.Equal(t, headerBlock, storedHeader, "Header Blocks dont match")
+
+	currentACK := keeper.GetACKCount(ctx)
+	require.Equal(t, prevACK+1, currentACK, "ACK count should have been incremented by 1")
+
+	// flush and check if its flushed
+	keeper.FlushCheckpointBuffer(ctx)
+	storedHeader, err = keeper.GetCheckpointFromBuffer(ctx)
+	require.NotEmpty(t, err, "HeaderBlock should not exist after flush")
 
 }
