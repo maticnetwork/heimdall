@@ -56,7 +56,7 @@ func CreateTestInput(t *testing.T, isCheckTx bool) (sdk.Context, common.Keeper) 
 	// set empty values in cache by default
 	masterKeeper.SetCheckpointAckCache(ctx, common.EmptyBufferValue)
 	masterKeeper.SetCheckpointCache(ctx, common.EmptyBufferValue)
-	masterKeeper.UpdateACKCountWithValue(ctx, 0)
+	masterKeeper.UpdateACKCountWithValue(ctx, 1)
 
 	return ctx, masterKeeper
 }
