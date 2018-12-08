@@ -29,16 +29,18 @@ type MsgCheckpoint struct {
 	EndBlock   uint64         `json:"endBlock"`
 	RootHash   common.Hash    `json:"rootHash"`
 	TimeStamp  uint64         `json:"timestamp"`
+	Sequence   uint64         `json:"sequence"`
 }
 
 // NewMsgCheckpointBlock creates new checkpoint message using mentioned arguments
-func NewMsgCheckpointBlock(proposer common.Address, startBlock uint64, endBlock uint64, roothash common.Hash, timestamp uint64) MsgCheckpoint {
+func NewMsgCheckpointBlock(proposer common.Address, startBlock uint64, endBlock uint64, roothash common.Hash, timestamp uint64, sequence uint64) MsgCheckpoint {
 	return MsgCheckpoint{
 		Proposer:   proposer,
 		StartBlock: startBlock,
 		EndBlock:   endBlock,
 		RootHash:   roothash,
 		TimeStamp:  timestamp,
+		Sequence:   sequence,
 	}
 }
 
@@ -94,6 +96,7 @@ var _ sdk.Msg = &MsgCheckpointAck{}
 
 type MsgCheckpointAck struct {
 	HeaderBlock uint64 `json:"headerBlock"`
+	Sequence    uint64 `json:"sequence"`
 }
 
 func NewMsgCheckpointAck(headerBlock uint64) MsgCheckpointAck {
@@ -140,11 +143,13 @@ var _ sdk.Msg = &MsgCheckpointNoAck{}
 
 type MsgCheckpointNoAck struct {
 	TimeStamp uint64 `json:"timestamp"`
+	Sequence  uint64 `json:"sequence"`
 }
 
-func NewMsgCheckpointNoAck(timestamp uint64) MsgCheckpointNoAck {
+func NewMsgCheckpointNoAck(timestamp uint64, sequence uint64) MsgCheckpointNoAck {
 	return MsgCheckpointNoAck{
 		TimeStamp: timestamp,
+		Sequence:  sequence,
 	}
 }
 
