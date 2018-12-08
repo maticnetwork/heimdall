@@ -4,16 +4,23 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	ethcmn "github.com/ethereum/go-ethereum/common"
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/common"
+	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
+	"github.com/maticnetwork/heimdall/types"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 	dbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
+	"math/rand"
 	"testing"
 )
 
+func init() {
+	helper.InitHeimdallConfig()
+}
 func MakeTestCodec() *codec.Codec {
 	cdc := codec.New()
 
@@ -29,6 +36,7 @@ func MakeTestCodec() *codec.Codec {
 }
 
 func CreateTestInput(t *testing.T, isCheckTx bool) (sdk.Context, common.Keeper) {
+	helper.InitHeimdallConfig()
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
 	keyCheckpoint := sdk.NewKVStoreKey("checkpoint")
@@ -53,6 +61,15 @@ func CreateTestInput(t *testing.T, isCheckTx bool) (sdk.Context, common.Keeper) 
 	return ctx, masterKeeper
 }
 
-func GenRandCheckpointHeader() {
-
+func GenRandCheckpointHeader() (headerBlock types.CheckpointBlockHeader, err error) {
+	//start := rand.Intn(100) + 10
+	//end := start + 256
+	//var headerBlock types.CheckpointBlockHeader
+	//roothash, err := checkpoint.GetHeaders(uint64(start), uint64(end))
+	//if err != nil {
+	//	return headerBlock, err
+	//}
+	proposer := ethcmn.Address{}
+	headerBlock = types.CreateBlock(uint64(4733040), uint64(4733050), ethcmn.HexToHash("0x5ba1680c5f5d5da8c7e3c08ba5d168c69da7a7104cf4beab94f7c0c955551f35"), proposer, rand.Uint64())
+	return headerBlock, nil
 }
