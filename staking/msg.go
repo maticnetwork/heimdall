@@ -28,6 +28,7 @@ type MsgValidatorJoin struct {
 	StartEpoch       uint64         `json:"startEpoch"`
 	EndEpoch         uint64         `json:"endEpoch"`
 	Amount           uint64         `json:"amount"`
+	Sequence         uint64         `json:"sequence"`
 }
 
 func NewMsgValidatorJoin(
@@ -36,6 +37,7 @@ func NewMsgValidatorJoin(
 	startEpoch uint64,
 	endEpoch uint64,
 	amount uint64,
+	sequence uint64,
 ) MsgValidatorJoin {
 	return MsgValidatorJoin{
 		ValidatorAddress: address,
@@ -43,6 +45,7 @@ func NewMsgValidatorJoin(
 		StartEpoch:       startEpoch,
 		EndEpoch:         endEpoch,
 		Amount:           amount,
+		Sequence:         sequence,
 	}
 }
 
@@ -95,13 +98,15 @@ type MsgSignerUpdate struct {
 	ValidatorAddress common.Address `json:"address"`
 	NewSignerPubKey  types.PubKey   `json:"pubKey"`
 	NewAmount        uint64         `json:"amount"`
+	Sequence         uint64         `json:"sequence"`
 }
 
-func NewMsgValidatorUpdate(address common.Address, pubKey types.PubKey, amount uint64) MsgSignerUpdate {
+func NewMsgValidatorUpdate(address common.Address, pubKey types.PubKey, amount uint64, sequence uint64) MsgSignerUpdate {
 	return MsgSignerUpdate{
 		ValidatorAddress: address,
 		NewSignerPubKey:  pubKey,
 		NewAmount:        amount,
+		Sequence:         sequence,
 	}
 }
 
@@ -146,11 +151,13 @@ var _ sdk.Msg = &MsgValidatorExit{}
 
 type MsgValidatorExit struct {
 	ValidatorAddress common.Address
+	Sequence         uint64 `json:"sequence"`
 }
 
-func NewMsgValidatorExit(address common.Address) MsgValidatorExit {
+func NewMsgValidatorExit(address common.Address, sequence uint64) MsgValidatorExit {
 	return MsgValidatorExit{
 		ValidatorAddress: address,
+		Sequence:         sequence,
 	}
 }
 
