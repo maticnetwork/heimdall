@@ -38,5 +38,20 @@ func TestCheckpointBuffer(t *testing.T) {
 	//if err == nil {
 	//	require.Fail(t, "Checkpoint should not be stored if checkpoint already exists in buffer")
 	//}
+}
+
+func TestCheckpointACK(t *testing.T) {
+	ctx, keeper := CreateTestInput(t, false)
+
+	// create random header block
+	headerBlock, err := GenRandCheckpointHeader()
+	require.Empty(t, err, "Unable to create random header block, Error:%v", err)
+
+	keeper.AddCheckpoint(ctx, 12, headerBlock)
+	require.Empty(t, err, "Unable to store checkpoint, Error: %v", err)
+
+	storedHeader, err := keeper.GetLastCheckpoint(ctx)
+	require.Empty(t, err, "Unable to retrieve checkpoint, Error: %v", err)
+	require.Equal(t, headerBlock, storedHeader, "Header Blocks dont match")
 
 }
