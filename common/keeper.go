@@ -346,7 +346,7 @@ func (k *Keeper) IterateValidatorsAndApplyFn(ctx sdk.Context, f func(validator t
 	for ; iterator.Valid(); iterator.Next() {
 		// unmarshall validator
 		var validator types.Validator
-		k.cdc.MustUnmarshalBinary(iterator.Value(), &validator)
+		k.cdc.UnmarshalBinary(iterator.Value(), &validator)
 
 		// call function and return if required
 		if err := f(validator); err != nil {

@@ -32,8 +32,8 @@ func handleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k hmCommon.Ke
 		hmCommon.StakingLogger.Error(
 			"Unable to fetch validator from rootchain",
 			"error", err,
-			"msgValidator", msg.ValidatorAddress.String(),
-			"mainchainValidator", validator.Address.String(),
+			"msgValidatorAddr", msg.ValidatorAddress.String(),
+			"mainchainValidator", validator.String(),
 		)
 		return hmCommon.ErrNoValidator(k.Codespace).Result()
 	}
@@ -57,7 +57,7 @@ func handleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k hmCommon.Ke
 
 	// Check if validator has been validator before
 	if _, ok := k.GetSignerFromValidator(ctx, msg.ValidatorAddress); ok {
-		hmCommon.StakingLogger.Error("Validator has been validator before, cannot join with same address", "presentValidator", msg.ValidatorAddress.String())
+		hmCommon.StakingLogger.Error("Validator has been validator before, cannot join with same address", "ValidatorAddress", msg.ValidatorAddress.String())
 		return hmCommon.ErrValidatorAlreadyJoined(k.Codespace).Result()
 	}
 
@@ -88,7 +88,7 @@ func handleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k hmCommon.Ke
 func handleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k hmCommon.Keeper) sdk.Result {
 	var validator hmTypes.Validator
 
-	// pull val from store
+	// pull validator from store
 	if ok := k.GetValidatorFromValAddr(ctx, msg.ValidatorAddress, &validator); !ok {
 		hmCommon.StakingLogger.Error("Fetching of validator from store failed", "validatorAddress", msg.ValidatorAddress)
 		return hmCommon.ErrNoValidator(k.Codespace).Result()
