@@ -12,6 +12,7 @@ import (
 
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/helper"
+	"math/rand"
 )
 
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
@@ -57,6 +58,7 @@ func newCheckpointHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			m.EndBlock,
 			m.RootHash,
 			m.TimeStamp,
+			uint64(rand.Int()),
 		)
 
 		txBytes, err := helper.CreateTxBytes(msg)
@@ -109,7 +111,7 @@ func NewCheckpointACKHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		// create new msg checkpoint ack
-		msg := checkpoint.NewMsgCheckpointAck(m.HeaderBlock)
+		msg := checkpoint.NewMsgCheckpointAck(m.HeaderBlock, uint64(rand.Int()))
 
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {
@@ -161,7 +163,7 @@ func NewCheckpointNoACKHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		// create new msg checkpoint ack
-		msg := checkpoint.NewMsgCheckpointNoAck(m.TimeStamp)
+		msg := checkpoint.NewMsgCheckpointNoAck(m.TimeStamp, uint64(rand.Int()))
 
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {

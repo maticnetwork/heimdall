@@ -13,6 +13,7 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
 	hmType "github.com/maticnetwork/heimdall/types"
+	"math/rand"
 )
 
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
@@ -52,7 +53,7 @@ func newValidatorJoinHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		// create new msg
-		msg := staking.NewMsgValidatorJoin(m.ValidatorAddress, m.SignerPubKey, m.StartEpoch, m.EndEpoch, m.Amount)
+		msg := staking.NewMsgValidatorJoin(m.ValidatorAddress, m.SignerPubKey, m.StartEpoch, m.EndEpoch, m.Amount, uint64(rand.Int()))
 
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {
@@ -105,7 +106,7 @@ func newValidatorExitHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		msg := staking.NewMsgValidatorExit(m.ValidatorAddress)
+		msg := staking.NewMsgValidatorExit(m.ValidatorAddress, uint64(rand.Int()))
 
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {
@@ -160,7 +161,7 @@ func newValidatorUpdateHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		// create msg validator update
-		msg := staking.NewMsgValidatorUpdate(m.ValidatorAddress, m.NewSignerPubKey, m.NewAmount)
+		msg := staking.NewMsgValidatorUpdate(m.ValidatorAddress, m.NewSignerPubKey, m.NewAmount, uint64(rand.Int()))
 
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {

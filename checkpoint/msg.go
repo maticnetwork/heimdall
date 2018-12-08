@@ -99,9 +99,10 @@ type MsgCheckpointAck struct {
 	Sequence    uint64 `json:"sequence"`
 }
 
-func NewMsgCheckpointAck(headerBlock uint64) MsgCheckpointAck {
+func NewMsgCheckpointAck(headerBlock uint64, sequence uint64) MsgCheckpointAck {
 	return MsgCheckpointAck{
 		HeaderBlock: headerBlock,
+		Sequence:    sequence,
 	}
 }
 

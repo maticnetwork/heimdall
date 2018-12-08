@@ -21,6 +21,7 @@ import (
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/helper"
+	"math/rand"
 )
 
 // MaticCheckpointer to propose
@@ -252,6 +253,7 @@ func (checkpointer *MaticCheckpointer) sendRequest(newHeader *types.Header) {
 			end,
 			ethCommon.BytesToHash(root),
 			uint64(time.Now().Unix()),
+			uint64(rand.Int()),
 		),
 	)
 

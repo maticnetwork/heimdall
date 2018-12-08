@@ -26,6 +26,7 @@ import (
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
+	"math/rand"
 )
 
 // EventByID looks up a event by the topic id
@@ -329,7 +330,7 @@ func (syncer *ChainSyncer) processCheckpointEvent(eventName string, abiObject *a
 		)
 
 		// create msg checkpoint ack message
-		msg := checkpoint.NewMsgCheckpointAck(event.Number.Uint64())
+		msg := checkpoint.NewMsgCheckpointAck(event.Number.Uint64(), uint64(rand.Int()))
 		syncer.sendTx(eventName, msg)
 	}
 }
@@ -366,7 +367,7 @@ func (syncer *ChainSyncer) processUnstakeInitEvent(eventName string, abiObject *
 		)
 
 		// send validator exit message
-		msg := staking.NewMsgValidatorExit(event.User)
+		msg := staking.NewMsgValidatorExit(event.User, uint64(rand.Int()))
 		syncer.sendTx(eventName, msg)
 	}
 }

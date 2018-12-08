@@ -19,6 +19,7 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
 	hmTypes "github.com/maticnetwork/heimdall/types"
+	"math/rand"
 )
 
 const (
@@ -243,6 +244,7 @@ func GetExtraData(_checkpoint hmTypes.CheckpointBlockHeader, ctx sdk.Context) []
 			_checkpoint.EndBlock,
 			_checkpoint.RootHash,
 			_checkpoint.TimeStamp,
+			uint64(rand.Int()),
 		),
 	)
 	if err != nil {
