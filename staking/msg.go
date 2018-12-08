@@ -7,6 +7,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 
+	"encoding/hex"
+	"github.com/ethereum/go-ethereum/crypto/secp256k1"
+	"github.com/ethereum/go-ethereum/rlp"
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
@@ -121,11 +124,11 @@ func (msg MsgSignerUpdate) GetSigners() []sdk.AccAddress {
 }
 
 func (msg MsgSignerUpdate) GetSignBytes() []byte {
-	b, err := cdc.MarshalJSON(msg)
+	b, err := rlp.EncodeToBytes(msg)
 	if err != nil {
 		panic(err)
 	}
-	return sdk.MustSortJSON(b)
+	return b
 }
 
 func (msg MsgSignerUpdate) ValidateBasic() sdk.Error {
@@ -135,6 +138,18 @@ func (msg MsgSignerUpdate) ValidateBasic() sdk.Error {
 
 	if bytes.Equal(msg.NewSignerPubKey.Bytes(), helper.ZeroPubKey.Bytes()) {
 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid pub key %v", msg.NewSignerPubKey.String())
+	}
+	// get pubkey from signature
+	validatorPubkeyBytes, err := secp256k1.RecoverPubkey(msg.GetSignBytes(), msg.Signature)
+	if err != nil {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Unable to recover pubkey from signature:%v SignBytes:", hex.EncodeToString(msg.Signature), hex.EncodeToString(msg.GetSignBytes()))
+	}
+	validatorPubkey := types.NewPubKey(validatorPubkeyBytes).CryptoPubKey()
+	if !validatorPubkey.VerifyBytes(msg.GetSignBytes(), msg.Signature) {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Signature Not Valid", "ValidatorAddress", validatorPubkey.Address())
+	}
+	if !bytes.Equal(msg.ValidatorAddress.Bytes(), validatorPubkey.Address().Bytes()) {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Validator should sign the message", "ValidatorAddress", msg.ValidatorAddress.String(), "ValidatorFromSig", validatorPubkey.Address().String())
 	}
 
 	return nil

@@ -82,7 +82,6 @@ func (msg MsgCheckpoint) ValidateBasic() sdk.Error {
 	if msg.StartBlock >= msg.EndBlock || msg.EndBlock == 0 {
 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid startBlock %v or/and endBlock %v", msg.StartBlock, msg.EndBlock)
 	}
-
 	return nil
 }
 

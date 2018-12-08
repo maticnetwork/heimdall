@@ -92,6 +92,10 @@ func ErrSignerUpdateError(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeSignerUpdateError, "Signer update error")
 }
 
+func ErrSigMatch(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeSignerUpdateError, "Sigature not signed by Validator")
+}
+
 func ErrValidatorAlreadySynced(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeSignerSynced, "No signer update found, invalid message")
 }
