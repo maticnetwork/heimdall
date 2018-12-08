@@ -220,16 +220,6 @@ func (k *Keeper) GetACKCount(ctx sdk.Context) uint64 {
 	return 0
 }
 
-// InitACKCount sets ACK Count to 0
-func (k *Keeper) InitACKCount(ctx sdk.Context) {
-	store := ctx.KVStore(k.CheckpointKey)
-
-	// TODO maybe this needs to be set to 1
-	// set to 0
-	key := []byte(strconv.Itoa(0))
-	store.Set(ACKCountKey, key)
-}
-
 // SetLastNoAck set last no-ack object
 func (k *Keeper) SetLastNoAck(ctx sdk.Context, timestamp uint64) {
 	store := ctx.KVStore(k.CheckpointKey)
