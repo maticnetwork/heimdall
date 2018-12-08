@@ -53,6 +53,6 @@ func CreateTestInput(t *testing.T, isCheckTx bool) (sdk.Context, common.Keeper) 
 	return ctx, masterKeeper
 }
 
-func GenRandCheckpointHeader(){
+func GenRandCheckpointHeader() {
 
 }
