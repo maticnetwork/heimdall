@@ -18,9 +18,6 @@ import (
 	"testing"
 )
 
-func init() {
-	helper.InitHeimdallConfig()
-}
 func MakeTestCodec() *codec.Codec {
 	cdc := codec.New()
 
