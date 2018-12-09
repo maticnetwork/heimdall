@@ -101,3 +101,6 @@ func TestValidatorAdd(t *testing.T) {
 	//require.Equal(t, validator.Signer, mappedSigner, "GetValidatorToSignerMap doesnt give right signer")
 
 }
+
+//TODO add tests for validator set changes on update/signer
+// TODO add mocks for contract calls/tx to test
