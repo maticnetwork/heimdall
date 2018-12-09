@@ -298,6 +298,8 @@ func (k *Keeper) AddValidator(ctx sdk.Context, validator types.Validator) error 
 	store.Set(GetValidatorKey(validator.Signer.Bytes()), bz)
 	StakingLogger.Debug("Validator stored", "key", hex.EncodeToString(GetValidatorKey(validator.Signer.Bytes())), "validator", validator.String())
 
+	// add validator to validatorAddress => SignerAddress map
+	k.SetValidatorAddrToSignerAddr(ctx, validator.Address, validator.Signer)
 	return nil
 }
 
@@ -392,7 +394,7 @@ func (k *Keeper) AddDeactivationEpoch(ctx sdk.Context, validator types.Validator
 	return errors.New("Deactivation period not set")
 }
 
-// UpdateSigner updates validator with signer and pubkey
+// UpdateSigner updates validator with signer and pubkey + validator => signer map
 func (k *Keeper) UpdateSigner(ctx sdk.Context, newSigner common.Address, newPubkey types.PubKey, prevSigner common.Address) error {
 	// get old validator from state and make power 0
 	var validator types.Validator
