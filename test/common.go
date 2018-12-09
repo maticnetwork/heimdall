@@ -74,12 +74,13 @@ func GenRandCheckpointHeader() (headerBlock types.CheckpointBlockHeader, err err
 }
 
 func GenRandomVal() types.Validator {
+	//pubkey, _ := hex.DecodeString("0x5ba1680c5f5d5da8c7e3c08ba5d168c69da7a7104cf4beab94f7c0c955551f35")
 	return types.Validator{
-		Address:    helper.ZeroAddress,
-		StartEpoch: 1,
-		EndEpoch:   0,
+		Address:    ethcmn.HexToAddress("0x660b992672675153ed263424E5dD48c2cD2DBf4f"),
+		StartEpoch: 2,
+		EndEpoch:   1,
 		Power:      10,
-		Signer:     helper.ZeroAddress,
-		PubKey:     types.PubKey{},
+		Signer:     ethcmn.HexToAddress("0x17cde2546df29E2bbE66a98Ae95A6Ed8604D6B2b"),
+		PubKey:     types.NewPubKey([]byte("0x5ba1680c5f5d5da8c7e3c08ba5d168c69da7a7104cf4beab94f7c0c955551f35")),
 	}
 }
