@@ -1,6 +1,7 @@
 package test
 
 import (
+	"github.com/maticnetwork/heimdall/types"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
@@ -75,8 +76,28 @@ func TestCheckpointACK(t *testing.T) {
 
 func TestValidatorAdd(t *testing.T) {
 	ctx, keeper := CreateTestInput(t, false)
+
 	validator := GenRandomVal()
+
 	err := keeper.AddValidator(ctx, validator)
 	require.Empty(t, err, "Unable to set validator, Error: %v", err)
+
+	var storedVal *types.Validator
+	ok := keeper.GetValidatorInfo(ctx, validator.Signer.Bytes(), storedVal)
+	require.Equal(t, true, ok, "Validator<=>Signer not mapped")
+	require.Equal(t, validator, storedVal, "Unable to fetch validator from val address")
+
+	//storedSigner, ok := keeper.GetSignerFromValidator(ctx, validator.Address)
+	//require.Equal(t, true, ok, "Validator<=>Signer not mapped")
+	//require.Equal(t, validator.Signer, storedSigner, "Signer doesnt match")
+	//
+	//var storedVal *types.Validator
+	//ok = keeper.GetValidatorFromValAddr(ctx, validator.Address, storedVal)
+	//require.Equal(t, true, ok, "Validator<=>Signer not mapped")
+	//require.Equal(t, validator, storedVal, "Unable to fetch validator from val address")
+	//
+	//valToSignerMap := keeper.GetValidatorToSignerMap(ctx)
+	//mappedSigner := valToSignerMap[hex.EncodeToString(validator.Address.Bytes())]
+	//require.Equal(t, validator.Signer, mappedSigner, "GetValidatorToSignerMap doesnt give right signer")
 
 }
