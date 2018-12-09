@@ -180,9 +180,6 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 			// Add individual validator to state
 			app.masterKeeper.AddValidator(ctx, hmValidator)
 
-			// add validator to validatorAddress => SignerAddress map
-			app.masterKeeper.SetValidatorAddrToSignerAddr(ctx, hmValidator.Address, hmValidator.Signer)
-
 			// convert to Validator Update
 			updateVal := abci.ValidatorUpdate{
 				Power:  int64(validator.Power),

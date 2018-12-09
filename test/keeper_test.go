@@ -72,3 +72,11 @@ func TestCheckpointACK(t *testing.T) {
 	require.NotEmpty(t, err, "HeaderBlock should not exist after flush")
 
 }
+
+func TestValidatorAdd(t *testing.T) {
+	ctx, keeper := CreateTestInput(t, false)
+	validator := GenRandomVal()
+	err := keeper.AddValidator(ctx, validator)
+	require.Empty(t, err, "Unable to set validator, Error: %v", err)
+
+}
