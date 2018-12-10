@@ -79,9 +79,6 @@ func handleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k hmCommon.Ke
 		return hmCommon.ErrValidatorSave(k.Codespace).Result()
 	}
 
-	// add validator to validatorAddress => SignerAddress map
-	k.SetValidatorAddrToSignerAddr(ctx, newValidator.Address, newValidator.Signer)
-
 	return sdk.Result{}
 }
 
@@ -106,9 +103,6 @@ func handleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k hmCommon.Keep
 			hmCommon.StakingLogger.Error("Unable to update signer", "error", err, "currentSigner", validator.Signer.String(), "signerFromMsg", pubKey.Address().String())
 			return hmCommon.ErrSignerUpdateError(k.Codespace).Result()
 		}
-
-		// update ValidatorAddress to SignerAddress Map
-		k.SetValidatorAddrToSignerAddr(ctx, validator.Address, newSigner)
 	}
 
 	// set new power

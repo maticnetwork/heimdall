@@ -85,7 +85,35 @@ func (k *Keeper) AddCheckpoint(ctx sdk.Context, headerBlockNumber uint64, header
 		return err
 	}
 	CheckpointLogger.Info("Adding good checkpoint to state", "checkpoint", headerBlock, "headerBlockNumber", headerBlockNumber)
+
+	// flush buffer
+	k.FlushCheckpointBuffer(ctx)
+	CheckpointLogger.Debug("Checkpoint buffer flushed after receiving checkpoint ack", "checkpoint", headerBlock)
+
+	// update ack count
+	k.UpdateACKCount(ctx)
+	CheckpointLogger.Debug("Valid ack received", "CurrentACKCount", k.GetACKCount(ctx)-1, "UpdatedACKCount", k.GetACKCount(ctx))
+
 	return nil
+}
+
+// To get checkpoint by header block index 10,000 ,20,000 and so on
+func (k Keeper) GetCheckpointByIndex(ctx sdk.Context, headerIndex uint64) (types.CheckpointBlockHeader, error) {
+	store := ctx.KVStore(k.CheckpointKey)
+	headerKey := GetHeaderKey(headerIndex)
+	var _checkpoint types.CheckpointBlockHeader
+
+	if store.Has(headerKey) {
+		err := json.Unmarshal(store.Get(headerKey), &_checkpoint)
+		if err != nil {
+			CheckpointLogger.Error("Unable to fetch checkpoint from store", "key", headerIndex)
+			return _checkpoint, err
+		} else {
+			return _checkpoint, nil
+		}
+	} else {
+		return _checkpoint, errors.New("Invalid header Index")
+	}
 }
 
 // GetLastCheckpoint gets last checkpoint, headerIndex = TotalACKs * ChildBlockInterval
@@ -220,16 +248,6 @@ func (k *Keeper) GetACKCount(ctx sdk.Context) uint64 {
 	return 0
 }
 
-// InitACKCount sets ACK Count to 0
-func (k *Keeper) InitACKCount(ctx sdk.Context) {
-	store := ctx.KVStore(k.CheckpointKey)
-
-	// TODO maybe this needs to be set to 1
-	// set to 0
-	key := []byte(strconv.Itoa(0))
-	store.Set(ACKCountKey, key)
-}
-
 // SetLastNoAck set last no-ack object
 func (k *Keeper) SetLastNoAck(ctx sdk.Context, timestamp uint64) {
 	store := ctx.KVStore(k.CheckpointKey)
@@ -280,6 +298,8 @@ func (k *Keeper) AddValidator(ctx sdk.Context, validator types.Validator) error 
 	store.Set(GetValidatorKey(validator.Signer.Bytes()), bz)
 	StakingLogger.Debug("Validator stored", "key", hex.EncodeToString(GetValidatorKey(validator.Signer.Bytes())), "validator", validator.String())
 
+	// add validator to validatorAddress => SignerAddress map
+	k.SetValidatorAddrToSignerAddr(ctx, validator.Address, validator.Signer)
 	return nil
 }
 
@@ -374,7 +394,7 @@ func (k *Keeper) AddDeactivationEpoch(ctx sdk.Context, validator types.Validator
 	return errors.New("Deactivation period not set")
 }
 
-// UpdateSigner updates validator with signer and pubkey
+// UpdateSigner updates validator with signer and pubkey + validator => signer map
 func (k *Keeper) UpdateSigner(ctx sdk.Context, newSigner common.Address, newPubkey types.PubKey, prevSigner common.Address) error {
 	// get old validator from state and make power 0
 	var validator types.Validator
