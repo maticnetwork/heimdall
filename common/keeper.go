@@ -297,6 +297,9 @@ func (k *Keeper) AddValidator(ctx sdk.Context, validator types.Validator) error 
 	// store validator with address prefixed with validator key as index
 	store.Set(GetValidatorKey(validator.Signer.Bytes()), bz)
 	StakingLogger.Debug("Validator stored", "key", hex.EncodeToString(GetValidatorKey(validator.Signer.Bytes())), "validator", validator.String())
+	var storedVal *types.Validator
+	k.cdc.MustUnmarshalBinary(store.Get(GetValidatorKey(validator.Signer.Bytes())), storedVal)
+	StakingLogger.Debug("Validator stored", "key", hex.EncodeToString(GetValidatorKey(validator.Signer.Bytes())), "validator", storedVal.String())
 
 	// add validator to validatorAddress => SignerAddress map
 	k.SetValidatorAddrToSignerAddr(ctx, validator.Address, validator.Signer)
@@ -435,7 +438,8 @@ func (k *Keeper) GetValidatorSet(ctx sdk.Context) (validatorSet types.ValidatorS
 	// get current validator set from store
 	bz := store.Get(CurrentValidatorSetKey)
 	// unmarhsall
-	k.cdc.MustUnmarshalBinary(bz, &validatorSet)
+	k.cdc.UnmarshalBinary(bz, &validatorSet)
+
 	// return validator set
 	return validatorSet
 }
