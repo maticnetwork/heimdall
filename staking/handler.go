@@ -96,7 +96,7 @@ func handleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k hmCommon.Keep
 
 	// check if updating signer
 	if !bytes.Equal(newSigner.Bytes(), validator.Signer.Bytes()) {
-		hmCommon.StakingLogger.Error("Updating new signer", "signer", newSigner.String(), "validatorAddress", msg.ValidatorAddress.String())
+		hmCommon.StakingLogger.Debug("Updating new signer", "signer", newSigner.String(), "validatorAddress", msg.ValidatorAddress.String())
 
 		// update
 		if err := k.UpdateSigner(ctx, newSigner, pubKey, validator.Signer); err != nil {

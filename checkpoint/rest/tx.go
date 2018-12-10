@@ -138,7 +138,6 @@ func NewCheckpointACKHandler(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-
 func NewCheckpointNoACKHandler(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// create new msg checkpoint ack

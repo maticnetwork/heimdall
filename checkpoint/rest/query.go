@@ -10,7 +10,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/gorilla/mux"
 
+	"encoding/hex"
+	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/common"
+	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
 )
 
@@ -27,8 +30,9 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Co
 
 	r.HandleFunc(
 		"/checkpoint/headers/{headerBlockIndex}",
-		checkpointHandlerFb(cdc, cliCtx),
+		checkpointHeaderHandlerFn(cdc, cliCtx),
 	).Methods("GET")
+	r.HandleFunc("/checkpoint/{start}/{end}", checkpointHandlerFn()).Methods("GET")
 }
 
 func checkpointBufferHandlerFn(
@@ -98,7 +102,7 @@ func checkpointCountHandlerFn(
 	}
 }
 
-func checkpointHandlerFb(
+func checkpointHeaderHandlerFn(
 	cdc *codec.Codec,
 	cliCtx context.CLIContext,
 ) http.HandlerFunc {
@@ -125,6 +129,45 @@ func checkpointHandlerFb(
 		}
 
 		result, err := json.Marshal(&_checkpoint)
+		if err != nil {
+			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(result)
+	}
+}
+
+func checkpointHandlerFn() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		helper.InitHeimdallConfig()
+		start, err := strconv.Atoi(vars["start"])
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		end, err := strconv.Atoi(vars["end"])
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		roothash, err := checkpoint.GetHeaders(uint64(start), uint64(end))
+		if err != nil {
+			RestLogger.Error("Unable to get header", "Start", start, "End", end, "Error", err)
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		result, err := json.Marshal(hex.EncodeToString(roothash))
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
 			w.WriteHeader(http.StatusBadRequest)
