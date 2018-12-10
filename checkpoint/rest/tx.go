@@ -138,29 +138,9 @@ func NewCheckpointACKHandler(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-//
-//type HeaderNoACK struct {
-//	TimeStamp uint64 `json:"timestamp"`
-//}
 
 func NewCheckpointNoACKHandler(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		//body, err := ioutil.ReadAll(r.Body)
-		//if err != nil {
-		//	w.WriteHeader(http.StatusBadRequest)
-		//	w.Write([]byte(err.Error()))
-		//	return
-		//}
-
-		//var m HeaderNoACK
-		//err = json.Unmarshal(body, &m)
-		//if err != nil {
-		//	RestLogger.Error("Error unmarshalling Header No-ACK", "error", err)
-		//	w.WriteHeader(http.StatusBadRequest)
-		//	w.Write([]byte(err.Error()))
-		//	return
-		//}
-
 		// create new msg checkpoint ack
 		msg := checkpoint.NewMsgCheckpointNoAck(uint64(time.Now().Unix()))
 
