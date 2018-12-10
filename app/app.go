@@ -290,13 +290,15 @@ func PrepareAndSendCheckpoint(ctx sdk.Context, keeper common.Keeper) {
 		logger.Info("We are proposer! Validating if checkpoint needs to be pushed", "commitedLastBlock", lastblock, "startBlock", _checkpoint.StartBlock)
 
 		// check if we need to send checkpoint or not
-		if (lastblock + 1) == _checkpoint.StartBlock {
+		if ((lastblock + 1) == _checkpoint.StartBlock) || (lastblock == 0 && _checkpoint.StartBlock == 0) {
 			logger.Info("Sending valid checkpoint", "startBlock", _checkpoint.StartBlock)
 			helper.SendCheckpoint(helper.GetVoteBytes(votes, ctx), sigs, extraData)
 		} else if lastblock > _checkpoint.StartBlock {
-			logger.Debug("Start block does not match, checkpoint already sent", "commitedLastBlock", lastblock, "startBlock", _checkpoint.StartBlock)
+			logger.Info("Start block does not match, checkpoint already sent", "commitedLastBlock", lastblock, "startBlock", _checkpoint.StartBlock)
 		} else if lastblock > _checkpoint.EndBlock {
-			logger.Error("Checkpoint already sent", "commitedLastBlock", lastblock, "startBlock", _checkpoint.StartBlock)
+			logger.Info("Checkpoint already sent", "commitedLastBlock", lastblock, "startBlock", _checkpoint.StartBlock)
+		} else {
+			logger.Info("No need to send checkpoint")
 		}
 	} else {
 		logger.Info("We are not proposer", "proposer", keeper.GetValidatorSet(ctx).Proposer.Signer.String(), "validator", validatorAddress.String())

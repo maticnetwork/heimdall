@@ -28,7 +28,7 @@ func ValidateCheckpoint(start uint64, end uint64, rootHash ethCommon.Hash) bool 
 		return true
 	}
 
-	common.CheckpointLogger.Error("RootHash does not match", "rootHashTx", rootHash, "rootHash", root)
+	common.CheckpointLogger.Error("RootHash does not match", "rootHashTx", rootHash, "rootHash", hexutil.Encode(root))
 	return false
 }
 
