@@ -7,39 +7,6 @@ import (
 	"github.com/maticnetwork/heimdall/types"
 )
 
-//
-//func GetValidators() (validators []abci.ValidatorUpdate) {
-//	stakeManagerInstance, err := GetStakeManagerInstance()
-//	if err != nil {
-//		Logger.Error("Error creating validatorSetInstance", "error", err)
-//	}
-//
-//	powers, _, err := stakeManagerInstance.GetValidatorSet(nil)
-//	if err != nil {
-//		Logger.Error("Error getting validator set", "error", err)
-//	}
-//
-//	for index := range powers {
-//		pubkey, err := stakeManagerInstance.GetPubkey(nil, big.NewInt(int64(index)))
-//		if err != nil {
-//			Logger.Error("Error getting pubkey for index", "error", err)
-//		}
-//
-//		var pubkeyBytes secp256k1.PubKeySecp256k1
-//		_pubkey, _ := hex.DecodeString(pubkey)
-//		copy(pubkeyBytes[:], _pubkey)
-//		// todo use new valiator update here
-//		validator := abci.ValidatorUpdate{
-//			Power:  powers[index].Int64(),
-//			PubKey: tmtypes.TM2PB.PubKey(pubkeyBytes),
-//		}
-//
-//		validators = append(validators, validator)
-//	}
-//
-//	return validators
-//}
-
 // GetHeaderInfo get header info from header id
 func GetHeaderInfo(headerID uint64) (root common.Hash, start uint64, end uint64, err error) {
 	// get rootchain instance
