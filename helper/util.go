@@ -136,7 +136,3 @@ func GetVoteBytes(votes []tmTypes.Vote, ctx sdk.Context) []byte {
 	// sign bytes for vote
 	return votes[0].SignBytes(ctx.ChainID())
 }
-
-func RandomAddress() {
-
-}
