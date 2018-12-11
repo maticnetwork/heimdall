@@ -74,7 +74,8 @@ func TestCheckpointACK(t *testing.T) {
 
 }
 
-func TestValidatorAdd(t *testing.T) {
+// tests setter/getters for validatorSignerMaps , validator set/get
+func TestValidator(t *testing.T) {
 	ctx, keeper := CreateTestInput(t, false)
 
 	validator := GenRandomVal()
@@ -97,6 +98,11 @@ func TestValidatorAdd(t *testing.T) {
 	valToSignerMap := keeper.GetValidatorToSignerMap(ctx)
 	mappedSigner := valToSignerMap[hex.EncodeToString(validator.Address.Bytes())]
 	require.Equal(t, validator.Signer, mappedSigner, "GetValidatorToSignerMap doesnt give right signer")
+}
+
+func TestValidatorSet(t testing.T) {
+	ctx, keeper := CreateTestInput(t, false)
+	validator := GenRandomVal()
 
 }
 
