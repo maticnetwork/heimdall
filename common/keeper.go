@@ -288,8 +288,7 @@ func GetValidatorMapKey(address []byte) []byte {
 func (k Keeper) AddValidator(ctx sdk.Context, validator types.Validator) error {
 	store := ctx.KVStore(k.StakingKey)
 
-	// marshall validator
-	bz, err := k.cdc.MarshalJSON(validator)
+	bz, err := types.MarshallValidator(k.cdc, validator)
 	if err != nil {
 		return err
 	}
