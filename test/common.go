@@ -82,5 +82,6 @@ func GenRandomVal() types.Validator {
 		Power:      10,
 		Signer:     ethcmn.HexToAddress("0x17cde2546df29E2bbE66a98Ae95A6Ed8604D6B2b"),
 		PubKey:     types.NewPubKey([]byte("0x5ba1680c5f5d5da8c7e3c08ba5d168c69da7a7104cf4beab94f7c0c955551f35")),
+		Accum:      0,
 	}
 }
