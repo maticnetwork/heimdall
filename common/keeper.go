@@ -304,25 +304,23 @@ func (k Keeper) AddValidator(ctx sdk.Context, validator types.Validator) error {
 }
 
 // GetValidatorInfo returns validator
-func (k Keeper) GetValidatorInfo(ctx sdk.Context, address []byte, validator *types.Validator) bool {
+func (k Keeper) GetValidatorInfo(ctx sdk.Context, address []byte) (validator types.Validator, err error) {
 	store := ctx.KVStore(k.StakingKey)
 
 	// store validator with address prefixed with validator key as index
 	key := GetValidatorKey(address)
 	if !store.Has(key) {
-		return false
+		return validator, errors.New("Validator not found")
 	}
 
 	// unmarshall validator and return
-	val,err := types.UnmarshallValidator(k.cdc,store.Get(key))
+	validator, err = types.UnmarshallValidator(k.cdc, store.Get(key))
 	if err != nil {
-		return false
+		return validator, err
 	}
 
-	validator=&val
-
 	// return true if validator
-	return true
+	return validator, nil
 }
 
 // GetCurrentValidators returns all validators who are in validator set
@@ -399,8 +397,11 @@ func (k Keeper) AddDeactivationEpoch(ctx sdk.Context, validator types.Validator)
 // UpdateSigner updates validator with signer and pubkey + validator => signer map
 func (k Keeper) UpdateSigner(ctx sdk.Context, newSigner common.Address, newPubkey types.PubKey, prevSigner common.Address) error {
 	// get old validator from state and make power 0
-	var validator types.Validator
-	k.GetValidatorInfo(ctx, prevSigner.Bytes(), &validator)
+	validator, err := k.GetValidatorInfo(ctx, prevSigner.Bytes())
+	if err != nil {
+		StakingLogger.Error("Unable to fetch valiator from store")
+		return err
+	}
 
 	// copy power to reassign below
 	validatorPower := validator.Power
@@ -496,12 +497,16 @@ func (k Keeper) GetSignerFromValidator(ctx sdk.Context, validatorAddr common.Add
 }
 
 // GetValidatorFromValAddr returns signer from validator address
-func (k Keeper) GetValidatorFromValAddr(ctx sdk.Context, validatorAddr common.Address, val *types.Validator) bool {
+func (k Keeper) GetValidatorFromValAddr(ctx sdk.Context, validatorAddr common.Address) (validator types.Validator, ok bool) {
 	if signerAddr, ok := k.GetSignerFromValidator(ctx, validatorAddr); !ok {
-		return ok
+		return validator, ok
 	} else {
 		// query for validator using ValidatorAddress => SignerAddress map
-		return k.GetValidatorInfo(ctx, signerAddr.Bytes(), val)
+		validator, err := k.GetValidatorInfo(ctx, signerAddr.Bytes())
+		if err != nil {
+			return validator, !ok
+		}
+		return validator, ok
 	}
 }
 
