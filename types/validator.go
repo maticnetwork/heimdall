@@ -30,12 +30,12 @@ func (v *Validator) IsCurrentValidator(ackCount uint64) bool {
 	return false
 }
 
-func MarshallValidator(cdc *codec.Codec,validator Validator) ([]byte,error ){
-	bz, err := cdc.MarshalBinary(validator)
+func MarshallValidator(cdc *codec.Codec, validator Validator) (bz []byte, err error) {
+	bz, err = cdc.MarshalBinary(validator)
 	if err != nil {
-		return []byte,err
+		return bz, err
 	}
-	return bz,nil
+	return bz, nil
 }
 
 func UnmarshallValidator(cdc *codec.Codec, value []byte) (Validator, error) {
