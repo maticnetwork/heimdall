@@ -418,15 +418,19 @@ func (k *Keeper) UpdateSigner(ctx sdk.Context, newSigner common.Address, newPubk
 }
 
 // UpdateValidatorSetInStore adds validator set to store
-func (k *Keeper) UpdateValidatorSetInStore(ctx sdk.Context, newValidatorSet types.ValidatorSet) {
+func (k *Keeper) UpdateValidatorSetInStore(ctx sdk.Context, newValidatorSet types.ValidatorSet) error {
 	// TODO check if we may have to delay this by 1 height to sync with tendermint validator updates
 	store := ctx.KVStore(k.StakingKey)
 
 	// marshall validator set
-	bz := k.cdc.MustMarshalBinary(newValidatorSet)
+	bz, err := k.cdc.MarshalBinary(newValidatorSet)
+	if err != nil {
+		return err
+	}
 
 	// set validator set with CurrentValidatorSetKey as key in store
 	store.Set(CurrentValidatorSetKey, bz)
+	return nil
 }
 
 // GetValidatorSet returns current Validator Set from store
@@ -451,6 +455,7 @@ func (k *Keeper) IncreamentAccum(ctx sdk.Context, times int) {
 
 	// replace
 	k.UpdateValidatorSetInStore(ctx, validatorSet)
+
 }
 
 // GetNextProposer returns next proposer

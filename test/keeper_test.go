@@ -2,6 +2,7 @@ package test
 
 import (
 	"encoding/hex"
+	"github.com/maticnetwork/heimdall/types"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
@@ -78,7 +79,8 @@ func TestCheckpointACK(t *testing.T) {
 func TestValidator(t *testing.T) {
 	ctx, keeper := CreateTestInput(t, false)
 
-	validator := GenRandomVal()
+	vals := GenRandomVal(1)
+	validator := vals[0]
 
 	err := keeper.AddValidator(ctx, validator)
 	require.Empty(t, err, "Unable to set validator, Error: %v", err)
@@ -100,9 +102,28 @@ func TestValidator(t *testing.T) {
 	require.Equal(t, validator.Signer, mappedSigner, "GetValidatorToSignerMap doesnt give right signer")
 }
 
-func TestValidatorSet(t testing.T) {
+func TestValidatorSet(t *testing.T) {
 	ctx, keeper := CreateTestInput(t, false)
-	validator := GenRandomVal()
+	// create 4 validators
+	validators := GenRandomVal(4)
+
+	var valSet types.ValidatorSet
+
+	// add validators to new Validator set and state
+	for _, validator := range validators {
+		err := keeper.AddValidator(ctx, validator)
+		require.Empty(t, err, "Unable to set validator, Error: %v", err)
+		// add validator to validator set
+		valSet.Add(&validator)
+	}
+
+	err := keeper.UpdateValidatorSetInStore(ctx, valSet)
+	require.Empty(t, err, "Unable to update validator set")
+
+	storedValSet := keeper.GetValidatorSet(ctx)
+	require.Equal(t, valSet, storedValSet, "Validator Set in state doesnt match ")
+
+	storedValSet.IncrementAccum(1)
 
 }
 

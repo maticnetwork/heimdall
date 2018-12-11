@@ -12,6 +12,7 @@ import (
 	"github.com/maticnetwork/heimdall/types"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 	dbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
 	"math/rand"
@@ -74,15 +75,21 @@ func GenRandCheckpointHeader() (headerBlock types.CheckpointBlockHeader, err err
 }
 
 // TODO autogenerate validator instead of
-func GenRandomVal() types.Validator {
-	pubkey := types.NewPubKey([]byte("0x5ba1680c5f5d5da8c7e3c08ba5d168c69da7a7104cf4beab94f7c0c955551f35"))
-	return types.Validator{
-		Address:    ethcmn.HexToAddress("0x660b992672675153ed263424E5dD48c2cD2DBf4f"),
-		StartEpoch: 2,
-		EndEpoch:   1,
-		Power:      10,
-		Signer:     pubkey.Address(),
-		PubKey:     pubkey,
-		Accum:      0,
+func GenRandomVal(count int) (validators []types.Validator) {
+	for i := 0; i < count; i++ {
+		privKey1 := secp256k1.GenPrivKey()
+		privKey2 := secp256k1.GenPrivKey()
+		pubkey := types.NewPubKey(privKey1.PubKey().Bytes())
+		newVal := types.Validator{
+			Address:    ethcmn.BytesToAddress(privKey2.PubKey().Address().Bytes()),
+			StartEpoch: 2,
+			EndEpoch:   1,
+			Power:      10,
+			Signer:     pubkey.Address(),
+			PubKey:     pubkey,
+			Accum:      0,
+		}
+		validators = append(validators, newVal)
 	}
+	return
 }
