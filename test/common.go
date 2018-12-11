@@ -80,11 +80,12 @@ func GenRandomVal(count int) (validators []types.Validator) {
 		privKey1 := secp256k1.GenPrivKey()
 		privKey2 := secp256k1.GenPrivKey()
 		pubkey := types.NewPubKey(privKey1.PubKey().Bytes())
+		startBlock := uint64(rand.Intn(10))
 		newVal := types.Validator{
 			Address:    ethcmn.BytesToAddress(privKey2.PubKey().Address().Bytes()),
-			StartEpoch: 2,
-			EndEpoch:   1,
-			Power:      10,
+			StartEpoch: startBlock,
+			EndEpoch:   startBlock + 10,
+			Power:      rand.Uint64(),
 			Signer:     pubkey.Address(),
 			PubKey:     pubkey,
 			Accum:      0,

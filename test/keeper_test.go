@@ -2,6 +2,7 @@ package test
 
 import (
 	"encoding/hex"
+	"fmt"
 	"github.com/maticnetwork/heimdall/types"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -124,6 +125,11 @@ func TestValidatorSet(t *testing.T) {
 	require.Equal(t, valSet, storedValSet, "Validator Set in state doesnt match ")
 
 	storedValSet.IncrementAccum(1)
+	initialProposer := keeper.GetCurrentProposer(ctx)
+
+	storedValSet.IncrementAccum(1)
+	newProposer := keeper.GetCurrentProposer(ctx)
+	fmt.Printf("Prev :%#v  , New : %v", initialProposer.Accum, newProposer.Accum)
 
 }
 
