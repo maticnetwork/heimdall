@@ -1,7 +1,7 @@
 package test
 
 import (
-	"fmt"
+	"encoding/hex"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
@@ -83,22 +83,20 @@ func TestValidatorAdd(t *testing.T) {
 	require.Empty(t, err, "Unable to set validator, Error: %v", err)
 
 	storedVal, err := keeper.GetValidatorInfo(ctx, validator.Signer.Bytes())
-	fmt.Printf("validator %v", storedVal.String())
 	require.Empty(t, err, "Unable to fetch validator")
 	require.Equal(t, validator, storedVal, "Unable to fetch validator from val address")
 
-	//storedSigner, ok := keeper.GetSignerFromValidator(ctx, validator.Address)
-	//require.Equal(t, true, ok, "Validator<=>Signer not mapped")
-	//require.Equal(t, validator.Signer, storedSigner, "Signer doesnt match")
-	//
-	//var storedVal *types.Validator
-	//ok = keeper.GetValidatorFromValAddr(ctx, validator.Address, storedVal)
-	//require.Equal(t, true, ok, "Validator<=>Signer not mapped")
-	//require.Equal(t, validator, storedVal, "Unable to fetch validator from val address")
-	//
-	//valToSignerMap := keeper.GetValidatorToSignerMap(ctx)
-	//mappedSigner := valToSignerMap[hex.EncodeToString(validator.Address.Bytes())]
-	//require.Equal(t, validator.Signer, mappedSigner, "GetValidatorToSignerMap doesnt give right signer")
+	storedSigner, ok := keeper.GetSignerFromValidator(ctx, validator.Address)
+	require.Equal(t, true, ok, "Validator<=>Signer not mapped")
+	require.Equal(t, validator.Signer, storedSigner, "Signer doesnt match")
+
+	storedValidator, ok := keeper.GetValidatorFromValAddr(ctx, validator.Address)
+	require.Equal(t, true, ok, "Validator<=>Signer not mapped")
+	require.Equal(t, validator, storedValidator, "Unable to fetch validator from val address")
+
+	valToSignerMap := keeper.GetValidatorToSignerMap(ctx)
+	mappedSigner := valToSignerMap[hex.EncodeToString(validator.Address.Bytes())]
+	require.Equal(t, validator.Signer, mappedSigner, "GetValidatorToSignerMap doesnt give right signer")
 
 }
 
