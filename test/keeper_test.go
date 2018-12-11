@@ -82,9 +82,9 @@ func TestValidatorAdd(t *testing.T) {
 	err := keeper.AddValidator(ctx, validator)
 	require.Empty(t, err, "Unable to set validator, Error: %v", err)
 
-	storedVal, ok := keeper.GetValidatorInfo(ctx, validator.Signer.Bytes())
+	storedVal, err := keeper.GetValidatorInfo(ctx, validator.Signer.Bytes())
 	fmt.Printf("validator %v", storedVal.String())
-	require.Equal(t, true, ok, "Validator<=>Signer not mapped")
+	require.Empty(t, err, "Unable to fetch validator")
 	require.Equal(t, validator, storedVal, "Unable to fetch validator from val address")
 
 	//storedSigner, ok := keeper.GetSignerFromValidator(ctx, validator.Address)
