@@ -85,7 +85,7 @@ func GenRandomVal(count int) (validators []types.Validator) {
 			Address:    ethcmn.BytesToAddress(privKey2.PubKey().Address().Bytes()),
 			StartEpoch: startBlock,
 			EndEpoch:   startBlock + 10,
-			Power:      rand.Uint64(),
+			Power:      uint64(rand.Intn(100)),
 			Signer:     pubkey.Address(),
 			PubKey:     pubkey,
 			Accum:      0,

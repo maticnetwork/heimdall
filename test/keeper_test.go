@@ -124,12 +124,12 @@ func TestValidatorSet(t *testing.T) {
 	storedValSet := keeper.GetValidatorSet(ctx)
 	require.Equal(t, valSet, storedValSet, "Validator Set in state doesnt match ")
 
-	storedValSet.IncrementAccum(1)
+	keeper.IncreamentAccum(ctx, 1)
 	initialProposer := keeper.GetCurrentProposer(ctx)
 
-	storedValSet.IncrementAccum(1)
+	keeper.IncreamentAccum(ctx, 1)
 	newProposer := keeper.GetCurrentProposer(ctx)
-	fmt.Printf("Prev :%#v  , New : %v", initialProposer.Accum, newProposer.Accum)
+	fmt.Printf("Prev :%#v  , New : %#v", initialProposer, newProposer)
 
 }
 

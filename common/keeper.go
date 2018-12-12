@@ -65,7 +65,7 @@ func (k *Keeper) addCheckpoint(ctx sdk.Context, key []byte, headerBlock types.Ch
 	store := ctx.KVStore(k.CheckpointKey)
 
 	// create Checkpoint block and marshall
-	out, err := json.Marshal(headerBlock)
+	out, err := k.cdc.MarshalBinary(headerBlock)
 	if err != nil {
 		CheckpointLogger.Error("Error marshalling checkpoint to json", "error", err)
 		return err
@@ -104,9 +104,8 @@ func (k *Keeper) GetCheckpointByIndex(ctx sdk.Context, headerIndex uint64) (type
 	var _checkpoint types.CheckpointBlockHeader
 
 	if store.Has(headerKey) {
-		err := json.Unmarshal(store.Get(headerKey), &_checkpoint)
+		err := k.cdc.UnmarshalBinary(store.Get(headerKey), &_checkpoint)
 		if err != nil {
-			CheckpointLogger.Error("Unable to fetch checkpoint from store", "key", headerIndex)
 			return _checkpoint, err
 		} else {
 			return _checkpoint, nil
