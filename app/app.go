@@ -169,7 +169,7 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 
 	// initialize validator set
 	newValidatorSet := hmTypes.ValidatorSet{}
-	validatorUpdates := make([]abci.ValidatorUpdate, 1)
+	validatorUpdates := make([]abci.ValidatorUpdate, len(genesisState.Validators))
 
 	for i, validator := range genesisState.Validators {
 		hmValidator := validator.ToHeimdallValidator()
