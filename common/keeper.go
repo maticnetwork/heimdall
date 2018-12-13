@@ -3,7 +3,6 @@ package common
 import (
 	"bytes"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"strconv"
 
@@ -67,7 +66,7 @@ func (k *Keeper) addCheckpoint(ctx sdk.Context, key []byte, headerBlock types.Ch
 	// create Checkpoint block and marshall
 	out, err := k.cdc.MarshalBinary(headerBlock)
 	if err != nil {
-		CheckpointLogger.Error("Error marshalling checkpoint to json", "error", err)
+		CheckpointLogger.Error("Error marshalling checkpoint", "error", err)
 		return err
 	}
 
@@ -132,7 +131,7 @@ func (k *Keeper) GetLastCheckpoint(ctx sdk.Context) (types.CheckpointBlockHeader
 		// header key
 		headerKey := GetHeaderKey(lastCheckpointKey)
 		if store.Has(headerKey) {
-			err := json.Unmarshal(store.Get(headerKey), &_checkpoint)
+			err := k.cdc.UnmarshalBinary(store.Get(headerKey), &_checkpoint)
 			if err != nil {
 				CheckpointLogger.Error("Unable to fetch last checkpoint from store", "key", lastCheckpointKey, "acksCount", acksCount)
 				return _checkpoint, err
@@ -198,7 +197,7 @@ func (k *Keeper) GetCheckpointFromBuffer(ctx sdk.Context) (types.CheckpointBlock
 
 	if store.Has(BufferCheckpointKey) {
 		// Get checkpoint and unmarshall
-		err := json.Unmarshal(store.Get(BufferCheckpointKey), &checkpoint)
+		err := k.cdc.UnmarshalBinary(store.Get(BufferCheckpointKey), &checkpoint)
 		return checkpoint, err
 	}
 
