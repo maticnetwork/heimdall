@@ -1,7 +1,6 @@
 package common
 
 import (
-	"bytes"
 	"encoding/hex"
 	"errors"
 	"strconv"
@@ -43,8 +42,8 @@ func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, stakingKey sdk.StoreKey, chec
 // -------------- KEYS/CONSTANTS
 
 var (
-	EmptyBufferValue = []byte{0x00} // denotes EMPTY
-	DefaultValue     = []byte{0x01} // Value to store in CacheCheckpoint and CacheCheckpointACK & ValidatorSetChange Flag
+	//EmptyBufferValue = []byte{0x00} // denotes EMPTY
+	DefaultValue = []byte{0x01} // Value to store in CacheCheckpoint and CacheCheckpointACK & ValidatorSetChange Flag
 
 	ACKCountKey             = []byte{0x11} // key to store ACK count
 	BufferCheckpointKey     = []byte{0x12} // Key to store checkpoint in buffer
@@ -156,6 +155,16 @@ func (k *Keeper) SetCheckpointAckCache(ctx sdk.Context, value []byte) {
 	store.Set(CheckpointACKCacheKey, value)
 }
 
+func (k *Keeper) FlushACKCache(ctx sdk.Context) {
+	store := ctx.KVStore(k.CheckpointKey)
+	store.Delete(CheckpointACKCacheKey)
+}
+
+func (k *Keeper) FlushCheckpointCache(ctx sdk.Context) {
+	store := ctx.KVStore(k.CheckpointKey)
+	store.Delete(CheckpointCacheKey)
+}
+
 // SetCheckpointCache sets value in cache for checkpoint
 func (k *Keeper) SetCheckpointCache(ctx sdk.Context, value []byte) {
 	store := ctx.KVStore(k.CheckpointKey)
@@ -165,11 +174,10 @@ func (k *Keeper) SetCheckpointCache(ctx sdk.Context, value []byte) {
 // GetCheckpointCache check if value exists in cache or not
 func (k *Keeper) GetCheckpointCache(ctx sdk.Context, key []byte) bool {
 	store := ctx.KVStore(k.CheckpointKey)
-	value := store.Get(key)
-	if bytes.Equal(value, EmptyBufferValue) {
-		return false
+	if store.Has(key) {
+		return true
 	}
-	return true
+	return false
 }
 
 // FlushCheckpointBuffer flushes Checkpoint Buffer

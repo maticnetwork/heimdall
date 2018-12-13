@@ -141,7 +141,7 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 			}
 
 			// clear ACK cache
-			app.masterKeeper.SetCheckpointAckCache(ctx, common.EmptyBufferValue)
+			app.masterKeeper.FlushACKCache(ctx)
 		}
 
 		// check if checkpoint is present in cache
@@ -150,7 +150,7 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 			// Send Checkpoint to Rootchain
 			PrepareAndSendCheckpoint(ctx, app.masterKeeper)
 			// clear Checkpoint cache
-			app.masterKeeper.SetCheckpointCache(ctx, common.EmptyBufferValue)
+			app.masterKeeper.FlushCheckpointCache(ctx)
 		}
 	}
 
@@ -204,17 +204,6 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 
 	// increment accumulator
 	app.masterKeeper.IncreamentAccum(ctx, 1)
-
-	// set empty values in cache by default
-	app.masterKeeper.SetCheckpointAckCache(ctx, common.EmptyBufferValue)
-	app.masterKeeper.SetCheckpointCache(ctx, common.EmptyBufferValue)
-	logger.Info(
-		"Cache's and flags set to false",
-		"checkpointACKCache",
-		app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointACKCacheKey),
-		"checkpointCache",
-		app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointCacheKey),
-	)
 
 	//
 	// Set initial ack count
