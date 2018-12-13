@@ -53,10 +53,11 @@ func checkpointBufferHandlerFn(
 			return
 		}
 
+		RestLogger.Debug("Checkpoint fetched", "Checkpoint", res)
 		var _checkpoint types.CheckpointBlockHeader
-		err = json.Unmarshal(res, &_checkpoint)
+		err = cdc.UnmarshalBinary(res, &_checkpoint)
 		if err != nil {
-			RestLogger.Info("Unable to marshall")
+			RestLogger.Error("Unable to unmarshall", "Error", err)
 		}
 
 		result, err := json.Marshal(&_checkpoint)
@@ -122,7 +123,7 @@ func checkpointHeaderHandlerFn(
 		}
 
 		var _checkpoint types.CheckpointBlockHeader
-		err = json.Unmarshal(res, &_checkpoint)
+		err = cdc.UnmarshalBinary(res, &_checkpoint)
 		if err != nil {
 			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
