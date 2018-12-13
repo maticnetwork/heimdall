@@ -77,6 +77,7 @@ func checkpointCountHandlerFn(
 	cliCtx context.CLIContext,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		RestLogger.Debug("Fetching number of checkpoints from state")
 		res, err := cliCtx.QueryStore(common.ACKCountKey, "checkpoint")
 		if err != nil {
 			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
@@ -89,7 +90,13 @@ func checkpointCountHandlerFn(
 			return
 		}
 
-		ackCount, err := strconv.ParseUint(string(res), 10, 64)
+		ackCount, err := strconv.ParseInt(string(res), 10, 64)
+		if err != nil {
+			RestLogger.Error("Unable to parse int", "Response", res, "Error", err)
+			w.Write([]byte(err.Error()))
+			return
+
+		}
 		result, err := json.Marshal(map[string]interface{}{"result": ackCount})
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
