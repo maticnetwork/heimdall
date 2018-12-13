@@ -214,13 +214,9 @@ func TestValUpdates(t *testing.T) {
 		require.Equal(t, newSigner[0].PubKey, val.PubKey, "Signer pubkey should change")
 		require.Equal(t, valToUpdate.Accum, val.Accum, "Validator accum should not change")
 		require.Equal(t, initValSet.TotalVotingPower(), currentValSet.TotalVotingPower(), "Total power should not change")
+		// TODO not sure if proposer check is needed
+		//require.Equal(t, &initValSet.Proposer.Address, &currentValSet.Proposer.Address, "Proposer should not change")
 	})
-
-	//newProposer := keeper.GetCurrentProposer(ctx)
-	//newValSet := keeper.GetValidatorSet(ctx)
-	//for _, v := range newValSet.Validators {
-	//	t.Logf("===>>>>>>", v.Address.Hex())
-	//}
 
 }
 
