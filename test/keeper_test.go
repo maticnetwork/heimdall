@@ -187,6 +187,35 @@ func TestValUpdates(t *testing.T) {
 		require.Equal(t, initValSet.TotalVotingPower()+int64(valToBeAdded.Power), currentValSet.TotalVotingPower(), "Total power should be increased")
 	})
 
+	t.Run("update", func(t *testing.T) {
+		keeper.IncreamentAccum(ctx, 2)
+		currentValSet := keeper.GetValidatorSet(ctx)
+		valToUpdate := currentValSet.Validators[0]
+		newSigner := GenRandomVal(1)
+		t.Log("Validators in old validator set")
+		for _, v := range currentValSet.Validators {
+			t.Log("-->", "Address", v.Address.String(), "StartEpoch", "Accum", v.Accum, "Signer", v.Signer.String(), "Total power", currentValSet.TotalVotingPower())
+		}
+		keeper.UpdateSigner(ctx, newSigner[0].Signer, newSigner[0].PubKey, valToUpdate.Signer)
+		helper.UpdateValidators(
+			&currentValSet,                      // pointer to current validator set -- UpdateValidators will modify it
+			keeper.GetAllValidators(ctx),        // All validators
+			keeper.GetValidatorToSignerMap(ctx), // validator to signer map
+			10, // ack count
+		)
+		t.Log("Validators in updated validator set")
+		for _, v := range currentValSet.Validators {
+			t.Log("-->", "Address", v.Address.String(), "Accum", v.Accum, "Signer", v.Signer.String(), "Total power", currentValSet.TotalVotingPower())
+		}
+
+		require.Equal(t, len(initValSet.Validators), len(currentValSet.Validators), "Number of validators should remain same")
+		_, val := currentValSet.GetByAddress(valToUpdate.Address.Bytes())
+		require.Equal(t, newSigner[0].Signer, val.Signer, "Signer address should change")
+		require.Equal(t, newSigner[0].PubKey, val.PubKey, "Signer pubkey should change")
+		require.Equal(t, valToUpdate.Accum, val.Accum, "Validator accum should not change")
+		require.Equal(t, initValSet.TotalVotingPower(), currentValSet.TotalVotingPower(), "Total power should not change")
+	})
+
 	//newProposer := keeper.GetCurrentProposer(ctx)
 	//newValSet := keeper.GetValidatorSet(ctx)
 	//for _, v := range newValSet.Validators {
