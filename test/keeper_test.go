@@ -3,6 +3,7 @@ package test
 import (
 	"encoding/hex"
 	"fmt"
+	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -125,6 +126,55 @@ func TestValidatorSet(t *testing.T) {
 	keeper.IncreamentAccum(ctx, 1)
 	newProposer := keeper.GetCurrentProposer(ctx)
 	fmt.Printf("Prev :%#v  , New : %#v", initialProposer, newProposer)
+
+}
+
+func TestValUpdates(t *testing.T) {
+	ctx, keeper := CreateTestInput(t, false)
+	validators := GenRandomVal(4)
+	var valSet types.ValidatorSet
+
+	// add validators to new Validator set and state
+	for _, validator := range validators {
+		err := keeper.AddValidator(ctx, validator)
+		require.Empty(t, err, "Unable to set validator, Error: %v", err)
+		// add validator to validator set
+		valSet.Add(&validator)
+	}
+
+	err := keeper.UpdateValidatorSetInStore(ctx, valSet)
+	require.Empty(t, err, "Unable to update validator set")
+	keeper.IncreamentAccum(ctx, 1)
+
+	initialProposer := keeper.GetCurrentProposer(ctx)
+	currentValidatorSet := keeper.GetValidatorSet(ctx)
+
+	for _, v := range currentValidatorSet.Validators {
+		t.Logf("===>>>>>>", v.Address.Hex())
+	}
+
+	// remove first validator
+	currentValidatorSet.Validators[0].StartEpoch = keeper.GetACKCount(ctx) + 10
+	err = keeper.UpdateValidatorSetInStore(ctx, valSet)
+	require.Empty(t, err, "Unable to update validator set")
+
+	// apply updates
+	helper.UpdateValidators(
+		&currentValidatorSet,                // pointer to current validator set -- UpdateValidators will modify it
+		keeper.GetAllValidators(ctx),        // All validators
+		keeper.GetValidatorToSignerMap(ctx), // validator to signer map
+		keeper.GetACKCount(ctx),             // ack count
+	)
+
+	keeper.IncreamentAccum(ctx, 1)
+	newProposer := keeper.GetCurrentProposer(ctx)
+	newValSet := keeper.GetValidatorSet(ctx)
+	for _, v := range newValSet.Validators {
+		t.Logf("===>>>>>>", v.Address.Hex())
+	}
+	t.Log("Proposer changes", "initial", initialProposer.String(), "final", newProposer.String())
+	require.Equal(t, initialProposer.Address, validators[0].Address, "Initial validator should match")
+	require.Equal(t, newProposer.Address, validators[1].Address, "Next validator should match")
 
 }
 
