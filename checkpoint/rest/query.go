@@ -95,7 +95,6 @@ func checkpointCountHandlerFn(
 			RestLogger.Error("Unable to parse int", "Response", res, "Error", err)
 			w.Write([]byte(err.Error()))
 			return
-
 		}
 		result, err := json.Marshal(map[string]interface{}{"result": ackCount})
 		if err != nil {

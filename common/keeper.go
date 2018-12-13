@@ -175,7 +175,7 @@ func (k *Keeper) GetCheckpointCache(ctx sdk.Context, key []byte) bool {
 // FlushCheckpointBuffer flushes Checkpoint Buffer
 func (k *Keeper) FlushCheckpointBuffer(ctx sdk.Context) {
 	store := ctx.KVStore(k.CheckpointKey)
-	store.Set(BufferCheckpointKey, EmptyBufferValue)
+	store.Delete(BufferCheckpointKey)
 }
 
 // SetCheckpointBuffer flushes Checkpoint Buffer
@@ -195,7 +195,7 @@ func (k *Keeper) GetCheckpointFromBuffer(ctx sdk.Context) (types.CheckpointBlock
 	// checkpoint block header
 	var checkpoint types.CheckpointBlockHeader
 
-	if store.Has(BufferCheckpointKey) && !bytes.Equal(store.Get(BufferCheckpointKey), EmptyBufferValue) {
+	if store.Has(BufferCheckpointKey) {
 		// Get checkpoint and unmarshall
 		err := k.cdc.UnmarshalBinary(store.Get(BufferCheckpointKey), &checkpoint)
 		return checkpoint, err
