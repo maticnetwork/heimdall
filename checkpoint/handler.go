@@ -53,10 +53,6 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 	k.AddCheckpoint(ctx, msg.HeaderBlock, headerBlock)
 	common.CheckpointLogger.Info("Checkpoint added to store", "roothash", headerBlock.RootHash, "startBlock", headerBlock.StartBlock, "endBlock", headerBlock.EndBlock, "proposer", headerBlock.Proposer)
 
-	// flush checkpoint in buffer
-	k.FlushCheckpointBuffer(ctx)
-	common.CheckpointLogger.Debug("Checkpoint buffer flushed after receiving checkpoint ack", "checkpoint", headerBlock)
-
 	// --- Update to new validator
 
 	// get current running validator set
