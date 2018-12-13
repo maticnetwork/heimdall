@@ -3,7 +3,6 @@ package common
 import (
 	"bytes"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"strconv"
 
@@ -65,9 +64,9 @@ func (k *Keeper) addCheckpoint(ctx sdk.Context, key []byte, headerBlock types.Ch
 	store := ctx.KVStore(k.CheckpointKey)
 
 	// create Checkpoint block and marshall
-	out, err := json.Marshal(headerBlock)
+	out, err := k.cdc.MarshalBinary(headerBlock)
 	if err != nil {
-		CheckpointLogger.Error("Error marshalling checkpoint to json", "error", err)
+		CheckpointLogger.Error("Error marshalling checkpoint", "error", err)
 		return err
 	}
 
@@ -98,15 +97,14 @@ func (k *Keeper) AddCheckpoint(ctx sdk.Context, headerBlockNumber uint64, header
 }
 
 // To get checkpoint by header block index 10,000 ,20,000 and so on
-func (k Keeper) GetCheckpointByIndex(ctx sdk.Context, headerIndex uint64) (types.CheckpointBlockHeader, error) {
+func (k *Keeper) GetCheckpointByIndex(ctx sdk.Context, headerIndex uint64) (types.CheckpointBlockHeader, error) {
 	store := ctx.KVStore(k.CheckpointKey)
 	headerKey := GetHeaderKey(headerIndex)
 	var _checkpoint types.CheckpointBlockHeader
 
 	if store.Has(headerKey) {
-		err := json.Unmarshal(store.Get(headerKey), &_checkpoint)
+		err := k.cdc.UnmarshalBinary(store.Get(headerKey), &_checkpoint)
 		if err != nil {
-			CheckpointLogger.Error("Unable to fetch checkpoint from store", "key", headerIndex)
 			return _checkpoint, err
 		} else {
 			return _checkpoint, nil
@@ -133,7 +131,7 @@ func (k *Keeper) GetLastCheckpoint(ctx sdk.Context) (types.CheckpointBlockHeader
 		// header key
 		headerKey := GetHeaderKey(lastCheckpointKey)
 		if store.Has(headerKey) {
-			err := json.Unmarshal(store.Get(headerKey), &_checkpoint)
+			err := k.cdc.UnmarshalBinary(store.Get(headerKey), &_checkpoint)
 			if err != nil {
 				CheckpointLogger.Error("Unable to fetch last checkpoint from store", "key", lastCheckpointKey, "acksCount", acksCount)
 				return _checkpoint, err
@@ -199,7 +197,7 @@ func (k *Keeper) GetCheckpointFromBuffer(ctx sdk.Context) (types.CheckpointBlock
 
 	if store.Has(BufferCheckpointKey) {
 		// Get checkpoint and unmarshall
-		err := json.Unmarshal(store.Get(BufferCheckpointKey), &checkpoint)
+		err := k.cdc.UnmarshalBinary(store.Get(BufferCheckpointKey), &checkpoint)
 		return checkpoint, err
 	}
 
@@ -288,8 +286,7 @@ func GetValidatorMapKey(address []byte) []byte {
 func (k *Keeper) AddValidator(ctx sdk.Context, validator types.Validator) error {
 	store := ctx.KVStore(k.StakingKey)
 
-	// marshall validator
-	bz, err := k.cdc.MarshalBinary(validator)
+	bz, err := types.MarshallValidator(k.cdc, validator)
 	if err != nil {
 		return err
 	}
@@ -304,23 +301,23 @@ func (k *Keeper) AddValidator(ctx sdk.Context, validator types.Validator) error 
 }
 
 // GetValidatorInfo returns validator
-func (k *Keeper) GetValidatorInfo(ctx sdk.Context, address []byte, validator *types.Validator) bool {
+func (k *Keeper) GetValidatorInfo(ctx sdk.Context, address []byte) (validator types.Validator, err error) {
 	store := ctx.KVStore(k.StakingKey)
 
 	// store validator with address prefixed with validator key as index
 	key := GetValidatorKey(address)
 	if !store.Has(key) {
-		return false
+		return validator, errors.New("Validator not found")
 	}
 
 	// unmarshall validator and return
-	err := k.cdc.UnmarshalBinary(store.Get(key), validator)
+	validator, err = types.UnmarshallValidator(k.cdc, store.Get(key))
 	if err != nil {
-		return false
+		return validator, err
 	}
 
 	// return true if validator
-	return true
+	return validator, nil
 }
 
 // GetCurrentValidators returns all validators who are in validator set
@@ -365,9 +362,7 @@ func (k *Keeper) IterateValidatorsAndApplyFn(ctx sdk.Context, f func(validator t
 	// loop through validators to get valid validators
 	for ; iterator.Valid(); iterator.Next() {
 		// unmarshall validator
-		var validator types.Validator
-		k.cdc.MustUnmarshalBinary(iterator.Value(), &validator)
-
+		validator, _ := types.UnmarshallValidator(k.cdc, iterator.Value())
 		// call function and return if required
 		if err := f(validator); err != nil {
 			return
@@ -397,8 +392,11 @@ func (k *Keeper) AddDeactivationEpoch(ctx sdk.Context, validator types.Validator
 // UpdateSigner updates validator with signer and pubkey + validator => signer map
 func (k *Keeper) UpdateSigner(ctx sdk.Context, newSigner common.Address, newPubkey types.PubKey, prevSigner common.Address) error {
 	// get old validator from state and make power 0
-	var validator types.Validator
-	k.GetValidatorInfo(ctx, prevSigner.Bytes(), &validator)
+	validator, err := k.GetValidatorInfo(ctx, prevSigner.Bytes())
+	if err != nil {
+		StakingLogger.Error("Unable to fetch valiator from store")
+		return err
+	}
 
 	// copy power to reassign below
 	validatorPower := validator.Power
@@ -418,15 +416,19 @@ func (k *Keeper) UpdateSigner(ctx sdk.Context, newSigner common.Address, newPubk
 }
 
 // UpdateValidatorSetInStore adds validator set to store
-func (k *Keeper) UpdateValidatorSetInStore(ctx sdk.Context, newValidatorSet types.ValidatorSet) {
+func (k *Keeper) UpdateValidatorSetInStore(ctx sdk.Context, newValidatorSet types.ValidatorSet) error {
 	// TODO check if we may have to delay this by 1 height to sync with tendermint validator updates
 	store := ctx.KVStore(k.StakingKey)
 
 	// marshall validator set
-	bz := k.cdc.MustMarshalBinary(newValidatorSet)
+	bz, err := k.cdc.MarshalBinary(newValidatorSet)
+	if err != nil {
+		return err
+	}
 
 	// set validator set with CurrentValidatorSetKey as key in store
 	store.Set(CurrentValidatorSetKey, bz)
+	return nil
 }
 
 // GetValidatorSet returns current Validator Set from store
@@ -435,7 +437,8 @@ func (k *Keeper) GetValidatorSet(ctx sdk.Context) (validatorSet types.ValidatorS
 	// get current validator set from store
 	bz := store.Get(CurrentValidatorSetKey)
 	// unmarhsall
-	k.cdc.MustUnmarshalBinary(bz, &validatorSet)
+	k.cdc.UnmarshalBinary(bz, &validatorSet)
+
 	// return validator set
 	return validatorSet
 }
@@ -450,6 +453,7 @@ func (k *Keeper) IncreamentAccum(ctx sdk.Context, times int) {
 
 	// replace
 	k.UpdateValidatorSetInStore(ctx, validatorSet)
+
 }
 
 // GetNextProposer returns next proposer
@@ -493,12 +497,16 @@ func (k *Keeper) GetSignerFromValidator(ctx sdk.Context, validatorAddr common.Ad
 }
 
 // GetValidatorFromValAddr returns signer from validator address
-func (k *Keeper) GetValidatorFromValAddr(ctx sdk.Context, validatorAddr common.Address, val *types.Validator) bool {
+func (k *Keeper) GetValidatorFromValAddr(ctx sdk.Context, validatorAddr common.Address) (validator types.Validator, ok bool) {
 	if signerAddr, ok := k.GetSignerFromValidator(ctx, validatorAddr); !ok {
-		return ok
+		return validator, ok
 	} else {
 		// query for validator using ValidatorAddress => SignerAddress map
-		return k.GetValidatorInfo(ctx, signerAddr.Bytes(), val)
+		validator, err := k.GetValidatorInfo(ctx, signerAddr.Bytes())
+		if err != nil {
+			return validator, !ok
+		}
+		return validator, ok
 	}
 }
 

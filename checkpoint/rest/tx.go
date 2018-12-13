@@ -12,6 +12,7 @@ import (
 
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/helper"
+	"time"
 )
 
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
@@ -29,7 +30,6 @@ type HeaderBlock struct {
 	RootHash   common.Hash    `json:"rootHash"`
 	StartBlock uint64         `json:"startBlock"`
 	EndBlock   uint64         `json:"endBlock"`
-	TimeStamp  uint64         `json:"timestamp"`
 }
 
 func newCheckpointHandler(cliCtx context.CLIContext) http.HandlerFunc {
@@ -56,7 +56,7 @@ func newCheckpointHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			m.StartBlock,
 			m.EndBlock,
 			m.RootHash,
-			m.TimeStamp,
+			uint64(time.Now().Unix()),
 		)
 
 		txBytes, err := helper.CreateTxBytes(msg)
@@ -138,34 +138,14 @@ func NewCheckpointACKHandler(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-type HeaderNoACK struct {
-	TimeStamp uint64 `json:"timestamp"`
-}
-
 func NewCheckpointNoACKHandler(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		body, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
-			return
-		}
-
-		var m HeaderNoACK
-		err = json.Unmarshal(body, &m)
-		if err != nil {
-			RestLogger.Error("Error unmarshalling Header No-ACK", "error", err)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
-			return
-		}
-
 		// create new msg checkpoint ack
-		msg := checkpoint.NewMsgCheckpointNoAck(m.TimeStamp)
+		msg := checkpoint.NewMsgCheckpointNoAck(uint64(time.Now().Unix()))
 
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {
-			RestLogger.Error("Unable to create txBytes", "error", err, "timestamp", m.TimeStamp)
+			RestLogger.Error("Unable to create txBytes", "error", err, "timestamp", time.Now().Unix())
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
 			return

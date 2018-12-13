@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
+	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -27,6 +28,24 @@ func (v *Validator) IsCurrentValidator(ackCount uint64) bool {
 	}
 
 	return false
+}
+
+func MarshallValidator(cdc *codec.Codec, validator Validator) (bz []byte, err error) {
+	bz, err = cdc.MarshalBinary(validator)
+	if err != nil {
+		return bz, err
+	}
+	return bz, nil
+}
+
+func UnmarshallValidator(cdc *codec.Codec, value []byte) (Validator, error) {
+	var validator Validator
+	// unmarshall validator and return
+	err := cdc.UnmarshalBinary(value, &validator)
+	if err != nil {
+		return validator, err
+	}
+	return validator, nil
 }
 
 // Copy creates a new copy of the validator so we can mutate accum.

@@ -83,10 +83,9 @@ func handleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k hmCommon.Ke
 }
 
 func handleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k hmCommon.Keeper) sdk.Result {
-	var validator hmTypes.Validator
-
 	// pull val from store
-	if ok := k.GetValidatorFromValAddr(ctx, msg.ValidatorAddress, &validator); !ok {
+	validator, ok := k.GetValidatorFromValAddr(ctx, msg.ValidatorAddress)
+	if !ok {
 		hmCommon.StakingLogger.Error("Fetching of validator from store failed", "validatorAddress", msg.ValidatorAddress)
 		return hmCommon.ErrNoValidator(k.Codespace).Result()
 	}
@@ -96,7 +95,7 @@ func handleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k hmCommon.Keep
 
 	// check if updating signer
 	if !bytes.Equal(newSigner.Bytes(), validator.Signer.Bytes()) {
-		hmCommon.StakingLogger.Error("Updating new signer", "signer", newSigner.String(), "validatorAddress", msg.ValidatorAddress.String())
+		hmCommon.StakingLogger.Debug("Updating new signer", "signer", newSigner.String(), "validatorAddress", msg.ValidatorAddress.String())
 
 		// update
 		if err := k.UpdateSigner(ctx, newSigner, pubKey, validator.Signer); err != nil {
@@ -114,10 +113,8 @@ func handleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k hmCommon.Keep
 }
 
 func handleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k hmCommon.Keeper) sdk.Result {
-	var validator hmTypes.Validator
-
-	// fetch validator from store
-	if ok := k.GetValidatorFromValAddr(ctx, msg.ValidatorAddress, &validator); !ok {
+	validator, ok := k.GetValidatorFromValAddr(ctx, msg.ValidatorAddress)
+	if !ok {
 		hmCommon.StakingLogger.Error("Fetching of validator from store failed", "validatorAddress", msg.ValidatorAddress)
 		return hmCommon.ErrNoValidator(k.Codespace).Result()
 	}

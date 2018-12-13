@@ -1,6 +1,8 @@
 package test
 
 import (
+	"encoding/hex"
+	"fmt"
 	"github.com/maticnetwork/heimdall/types"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -74,31 +76,60 @@ func TestCheckpointACK(t *testing.T) {
 
 }
 
-func TestValidatorAdd(t *testing.T) {
+// tests setter/getters for validatorSignerMaps , validator set/get
+func TestValidator(t *testing.T) {
 	ctx, keeper := CreateTestInput(t, false)
 
-	validator := GenRandomVal()
+	vals := GenRandomVal(1)
+	validator := vals[0]
 
 	err := keeper.AddValidator(ctx, validator)
 	require.Empty(t, err, "Unable to set validator, Error: %v", err)
 
-	var storedVal *types.Validator
-	ok := keeper.GetValidatorInfo(ctx, validator.Signer.Bytes(), storedVal)
-	require.Equal(t, true, ok, "Validator<=>Signer not mapped")
+	storedVal, err := keeper.GetValidatorInfo(ctx, validator.Signer.Bytes())
+	require.Empty(t, err, "Unable to fetch validator")
 	require.Equal(t, validator, storedVal, "Unable to fetch validator from val address")
 
-	//storedSigner, ok := keeper.GetSignerFromValidator(ctx, validator.Address)
-	//require.Equal(t, true, ok, "Validator<=>Signer not mapped")
-	//require.Equal(t, validator.Signer, storedSigner, "Signer doesnt match")
-	//
-	//var storedVal *types.Validator
-	//ok = keeper.GetValidatorFromValAddr(ctx, validator.Address, storedVal)
-	//require.Equal(t, true, ok, "Validator<=>Signer not mapped")
-	//require.Equal(t, validator, storedVal, "Unable to fetch validator from val address")
-	//
-	//valToSignerMap := keeper.GetValidatorToSignerMap(ctx)
-	//mappedSigner := valToSignerMap[hex.EncodeToString(validator.Address.Bytes())]
-	//require.Equal(t, validator.Signer, mappedSigner, "GetValidatorToSignerMap doesnt give right signer")
+	storedSigner, ok := keeper.GetSignerFromValidator(ctx, validator.Address)
+	require.Equal(t, true, ok, "Validator<=>Signer not mapped")
+	require.Equal(t, validator.Signer, storedSigner, "Signer doesnt match")
+
+	storedValidator, ok := keeper.GetValidatorFromValAddr(ctx, validator.Address)
+	require.Equal(t, true, ok, "Validator<=>Signer not mapped")
+	require.Equal(t, validator, storedValidator, "Unable to fetch validator from val address")
+
+	valToSignerMap := keeper.GetValidatorToSignerMap(ctx)
+	mappedSigner := valToSignerMap[hex.EncodeToString(validator.Address.Bytes())]
+	require.Equal(t, validator.Signer, mappedSigner, "GetValidatorToSignerMap doesnt give right signer")
+}
+
+func TestValidatorSet(t *testing.T) {
+	ctx, keeper := CreateTestInput(t, false)
+	// create 4 validators
+	validators := GenRandomVal(4)
+
+	var valSet types.ValidatorSet
+
+	// add validators to new Validator set and state
+	for _, validator := range validators {
+		err := keeper.AddValidator(ctx, validator)
+		require.Empty(t, err, "Unable to set validator, Error: %v", err)
+		// add validator to validator set
+		valSet.Add(&validator)
+	}
+
+	err := keeper.UpdateValidatorSetInStore(ctx, valSet)
+	require.Empty(t, err, "Unable to update validator set")
+
+	storedValSet := keeper.GetValidatorSet(ctx)
+	require.Equal(t, valSet, storedValSet, "Validator Set in state doesnt match ")
+
+	keeper.IncreamentAccum(ctx, 1)
+	initialProposer := keeper.GetCurrentProposer(ctx)
+
+	keeper.IncreamentAccum(ctx, 1)
+	newProposer := keeper.GetCurrentProposer(ctx)
+	fmt.Printf("Prev :%#v  , New : %#v", initialProposer, newProposer)
 
 }
 

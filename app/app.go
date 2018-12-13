@@ -196,7 +196,11 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 	logger.Info("Initial validator set", "size", newValidatorSet.Size())
 
 	// update validator set in store
-	app.masterKeeper.UpdateValidatorSetInStore(ctx, newValidatorSet)
+	err = app.masterKeeper.UpdateValidatorSetInStore(ctx, newValidatorSet)
+	if err != nil {
+		logger.Error("Unable to marshall validator set while adding in store", "Error", err)
+		panic(err)
+	}
 
 	// increment accumulator
 	app.masterKeeper.IncreamentAccum(ctx, 1)
