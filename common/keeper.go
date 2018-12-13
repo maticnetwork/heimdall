@@ -83,15 +83,6 @@ func (k *Keeper) AddCheckpoint(ctx sdk.Context, headerBlockNumber uint64, header
 		return err
 	}
 	CheckpointLogger.Info("Adding good checkpoint to state", "checkpoint", headerBlock, "headerBlockNumber", headerBlockNumber)
-
-	// flush buffer
-	k.FlushCheckpointBuffer(ctx)
-	CheckpointLogger.Debug("Checkpoint buffer flushed after receiving checkpoint ack", "checkpoint", headerBlock)
-
-	// update ack count
-	k.UpdateACKCount(ctx)
-	CheckpointLogger.Debug("Valid ack received", "CurrentACKCount", k.GetACKCount(ctx)-1, "UpdatedACKCount", k.GetACKCount(ctx))
-
 	return nil
 }
 
@@ -460,7 +451,6 @@ func (k *Keeper) IncreamentAccum(ctx sdk.Context, times int) {
 
 	// replace
 	k.UpdateValidatorSetInStore(ctx, validatorSet)
-
 }
 
 // GetNextProposer returns next proposer
