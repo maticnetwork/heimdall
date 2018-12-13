@@ -195,7 +195,7 @@ func (k *Keeper) GetCheckpointFromBuffer(ctx sdk.Context) (types.CheckpointBlock
 	// checkpoint block header
 	var checkpoint types.CheckpointBlockHeader
 
-	if store.Has(BufferCheckpointKey) {
+	if store.Has(BufferCheckpointKey) && !bytes.Equal(store.Get(BufferCheckpointKey), EmptyBufferValue) {
 		// Get checkpoint and unmarshall
 		err := k.cdc.UnmarshalBinary(store.Get(BufferCheckpointKey), &checkpoint)
 		return checkpoint, err
@@ -242,7 +242,6 @@ func (k *Keeper) GetACKCount(ctx sdk.Context) uint64 {
 			return uint64(ackCount)
 		}
 	}
-
 	return 0
 }
 
