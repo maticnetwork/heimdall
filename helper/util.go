@@ -46,6 +46,7 @@ func UpdateValidators(
 		address := validator.Address.Bytes()
 		_, val := currentSet.GetByAddress(address)
 		if !validator.IsCurrentValidator(ackCount) {
+			fmt.Printf("removing validator %#v", val)
 			// remove val
 			_, removed := currentSet.Remove(address)
 			if !removed {
