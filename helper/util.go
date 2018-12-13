@@ -45,7 +45,6 @@ func UpdateValidators(
 	for _, validator := range filteredValidators {
 		address := validator.Address.Bytes()
 		_, val := currentSet.GetByAddress(address)
-		fmt.Printf(" validator %#v with start", validator.Address.String(), validator.StartEpoch)
 		if !validator.IsCurrentValidator(ackCount) {
 			fmt.Printf("removing validator %#v", val.Address.String())
 			// remove val

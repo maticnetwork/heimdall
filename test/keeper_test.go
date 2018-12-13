@@ -138,18 +138,13 @@ func TestValUpdates(t *testing.T) {
 			t.Log("-->", "Address", v.Address.String(), "StartEpoch", v.StartEpoch, "EndEpoch", v.EndEpoch, "Power", v.Power)
 		}
 
-		err := keeper.UpdateValidatorSetInStore(ctx, *prevValidatorSet)
+		err := keeper.AddValidator(ctx, *prevValidatorSet.Validators[0])
 		require.Empty(t, err, "Unable to update validator set")
-
-		t.Log("Validators in current validator set")
-		for _, v := range initValSet.Validators {
-			t.Log("-->", "Address", v.Address.String(), "StartEpoch", v.StartEpoch, "EndEpoch", v.EndEpoch, "Power", v.Power)
-		}
 
 		// apply updates
 		helper.UpdateValidators(
 			currentValSet,                       // pointer to current validator set -- UpdateValidators will modify it
-			prevValidatorSet.Validators,         // All validators
+			keeper.GetAllValidators(ctx),        // All validators
 			keeper.GetValidatorToSignerMap(ctx), // validator to signer map
 			10, // ack count
 		)
