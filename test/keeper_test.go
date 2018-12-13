@@ -2,7 +2,6 @@ package test
 
 import (
 	"encoding/hex"
-	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	hmcmn "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
@@ -53,6 +52,8 @@ func TestCheckpointACK(t *testing.T) {
 	keeper.AddCheckpoint(ctx, 20000, headerBlock)
 	require.Empty(t, err, "Unable to store checkpoint, Error: %v", err)
 
+	keeper.UpdateACKCount(ctx)
+	keeper.FlushCheckpointBuffer(ctx)
 	acksCount := keeper.GetACKCount(ctx)
 
 	// fetch last checkpoint key (NumberOfACKs * ChildBlockInterval)
@@ -108,13 +109,12 @@ func TestValidatorSet(t *testing.T) {
 	storedValSet := keeper.GetValidatorSet(ctx)
 	require.Equal(t, valSet, storedValSet, "Validator Set in state doesnt match ")
 
-	keeper.IncreamentAccum(ctx, 1)
-	initialProposer := keeper.GetCurrentProposer(ctx)
-
-	keeper.IncreamentAccum(ctx, 1)
-	newProposer := keeper.GetCurrentProposer(ctx)
-	fmt.Printf("Prev :%#v  , New : %#v", initialProposer, newProposer)
-
+	//keeper.IncreamentAccum(ctx, 1)
+	//initialProposer := keeper.GetCurrentProposer(ctx)
+	//
+	//keeper.IncreamentAccum(ctx, 1)
+	//newProposer := keeper.GetCurrentProposer(ctx)
+	//fmt.Printf("Prev :%#v  , New : %#v", initialProposer, newProposer)
 }
 
 func TestValUpdates(t *testing.T) {
