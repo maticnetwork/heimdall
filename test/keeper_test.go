@@ -127,28 +127,34 @@ func TestValUpdates(t *testing.T) {
 
 	// create sub test to check if validator remove
 	t.Run("remove", func(t *testing.T) {
-		currentValSet := initValSet
-		prevValidatorSet := initValSet
+		currentValSet := initValSet.Copy()
+		prevValidatorSet := initValSet.Copy()
 
 		// remove validator (making IsCurrentValidator return false)
 		prevValidatorSet.Validators[0].StartEpoch = 20
 
-		t.Log("Old Validators")
+		t.Log("Updated Validators in state")
 		for _, v := range prevValidatorSet.Validators {
 			t.Log("-->", "Address", v.Address.String(), "StartEpoch", v.StartEpoch, "EndEpoch", v.EndEpoch, "Power", v.Power)
 		}
-		err := keeper.UpdateValidatorSetInStore(ctx, prevValidatorSet)
+
+		err := keeper.UpdateValidatorSetInStore(ctx, *prevValidatorSet)
 		require.Empty(t, err, "Unable to update validator set")
+
+		t.Log("Validators in current validator set")
+		for _, v := range initValSet.Validators {
+			t.Log("-->", "Address", v.Address.String(), "StartEpoch", v.StartEpoch, "EndEpoch", v.EndEpoch, "Power", v.Power)
+		}
 
 		// apply updates
 		helper.UpdateValidators(
-			&currentValSet,                      // pointer to current validator set -- UpdateValidators will modify it
-			keeper.GetAllValidators(ctx),        // All validators
+			currentValSet,                       // pointer to current validator set -- UpdateValidators will modify it
+			prevValidatorSet.Validators,         // All validators
 			keeper.GetValidatorToSignerMap(ctx), // validator to signer map
-			15, // ack count
+			10, // ack count
 		)
 		updatedValSet := currentValSet
-		t.Log("New Validators")
+		t.Log("Validators in updated validator set")
 		for _, v := range updatedValSet.Validators {
 			t.Log("-->", "Address", v.Address.String(), "StartEpoch", v.StartEpoch, "EndEpoch", v.EndEpoch, "Power", v.Power)
 		}
