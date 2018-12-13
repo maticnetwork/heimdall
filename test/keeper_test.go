@@ -12,7 +12,7 @@ func TestUpdateAck(t *testing.T) {
 	ctx, keeper := CreateTestInput(t, false)
 	keeper.UpdateACKCount(ctx)
 	ack := keeper.GetACKCount(ctx)
-	require.Equal(t, uint64(1), ack, "Ack Count Not Equal")
+	require.Equal(t, uint64(2), ack, "Ack Count Not Equal")
 }
 
 func TestCheckpointBuffer(t *testing.T) {
@@ -28,6 +28,7 @@ func TestCheckpointBuffer(t *testing.T) {
 
 	// check if we are able to get checkpoint after set
 	storedHeader, err := keeper.GetCheckpointFromBuffer(ctx)
+	t.Log("Checkpoint", storedHeader)
 	require.Empty(t, err, "Unable to retrieve checkpoint, Error: %v", err)
 	require.Equal(t, headerBlock, storedHeader, "Header Blocks dont match")
 
@@ -35,12 +36,6 @@ func TestCheckpointBuffer(t *testing.T) {
 	keeper.FlushCheckpointBuffer(ctx)
 	storedHeader, err = keeper.GetCheckpointFromBuffer(ctx)
 	require.NotEmpty(t, err, "HeaderBlock should not exist after flush")
-
-	//TODO add this check for handler test
-	//err = keeper.SetCheckpointBuffer(ctx, headerBlock)
-	//if err == nil {
-	//	require.Fail(t, "Checkpoint should not be stored if checkpoint already exists in buffer")
-	//}
 }
 
 func TestCheckpointACK(t *testing.T) {
