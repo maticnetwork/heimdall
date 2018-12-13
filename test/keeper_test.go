@@ -126,29 +126,29 @@ func TestValUpdates(t *testing.T) {
 	// load 4 validators to state
 	LoadValidatorSet(4, t, keeper, ctx, &valSet)
 
-	// select proposer
-	keeper.IncreamentAccum(ctx, 1)
-
 	currentValidatorSet := keeper.GetValidatorSet(ctx)
 
-	for _, v := range currentValidatorSet.Validators {
-		t.Logf("===>>>>>>", v.Address.Hex())
-	}
+	// create sub test to check if validator remove
+	t.Run("remove", func(t *testing.T) {
+		prevValidatorSet := currentValidatorSet
+		// remove validator (making IsCurrentValidator return false)
+		currentValidatorSet.Validators[0].StartEpoch = keeper.GetACKCount(ctx) + 10
 
-	// remove first validator
-	currentValidatorSet.Validators[0].StartEpoch = keeper.GetACKCount(ctx) + 10
-	err := keeper.UpdateValidatorSetInStore(ctx, valSet)
-	require.Empty(t, err, "Unable to update validator set")
+		// apply updates
+		helper.UpdateValidators(
+			&currentValidatorSet,                // pointer to current validator set -- UpdateValidators will modify it
+			keeper.GetAllValidators(ctx),        // All validators
+			keeper.GetValidatorToSignerMap(ctx), // validator to signer map
+			keeper.GetACKCount(ctx),             // ack count
+		)
 
-	// apply updates
-	helper.UpdateValidators(
-		&currentValidatorSet,                // pointer to current validator set -- UpdateValidators will modify it
-		keeper.GetAllValidators(ctx),        // All validators
-		keeper.GetValidatorToSignerMap(ctx), // validator to signer map
-		keeper.GetACKCount(ctx),             // ack count
-	)
+		updatedValSet := currentValidatorSet
+		// check if 1 validator is removed
+		require.Equal(t, len(prevValidatorSet.Validators)-1, len(updatedValSet.Validators), "Validator set should be reduced by one ")
+		require.Equal(t, append(prevValidatorSet.Validators[:0], prevValidatorSet.Validators[1:]...), updatedValSet.Validators, "Validator at 0 index should be deleted")
 
-	keeper.IncreamentAccum(ctx, 1)
+	})
+
 	newProposer := keeper.GetCurrentProposer(ctx)
 	newValSet := keeper.GetValidatorSet(ctx)
 	for _, v := range newValSet.Validators {
