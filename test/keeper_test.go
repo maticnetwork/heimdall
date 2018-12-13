@@ -155,7 +155,36 @@ func TestValUpdates(t *testing.T) {
 		}
 		// check if 1 validator is removed
 		require.Equal(t, len(prevValidatorSet.Validators)-1, len(updatedValSet.Validators), "Validator set should be reduced by one ")
+		// remove first validator from initial validator set and equate with new
 		require.Equal(t, append(prevValidatorSet.Validators[:0], prevValidatorSet.Validators[1:]...), updatedValSet.Validators, "Validator at 0 index should be deleted")
+	})
+
+	t.Run("add", func(t *testing.T) {
+		validators := GenRandomVal(1)
+		valToBeAdded := validators[0]
+		currentValSet := initValSet.Copy()
+		//prevValidatorSet := initValSet.Copy()
+		keeper.AddValidator(ctx, valToBeAdded)
+
+		t.Log("Validators in old validator set")
+		for _, v := range currentValSet.Validators {
+			t.Log("-->", "Address", v.Address.String(), "StartEpoch", v.StartEpoch, "EndEpoch", v.EndEpoch, "Power", v.Power)
+		}
+
+		helper.UpdateValidators(
+			currentValSet,                       // pointer to current validator set -- UpdateValidators will modify it
+			keeper.GetAllValidators(ctx),        // All validators
+			keeper.GetValidatorToSignerMap(ctx), // validator to signer map
+			10, // ack count
+		)
+		t.Log("Validators in updated validator set")
+		for _, v := range currentValSet.Validators {
+			t.Log("-->", "Address", v.Address.String(), "StartEpoch", v.StartEpoch, "EndEpoch", v.EndEpoch, "Power", v.Power)
+		}
+
+		require.Equal(t, len(initValSet.Validators)+1, len(currentValSet.Validators), "Number of validators should be increased by 1")
+		require.Equal(t, true, currentValSet.HasAddress(valToBeAdded.Address.Bytes()), "New Validator should be added")
+		require.Equal(t, initValSet.TotalVotingPower()+int64(valToBeAdded.Power), currentValSet.TotalVotingPower(), "Total power should be increased")
 	})
 
 	//newProposer := keeper.GetCurrentProposer(ctx)
