@@ -459,7 +459,7 @@
   revision = "v0.12.0"
 
 [[projects]]
-  digest = "1:147052ee750ee170ead671e3edb8b954aa58f3f4b67ad345847d33d9a4703fd5"
+  digest = "1:a0dc6becaa4ac650c08f0f2c4595cfbbfe0833cdbf06a2ba422cfef651aea73b"
   name = "github.com/tendermint/tendermint"
   packages = [
     "abci/client",
@@ -525,7 +525,7 @@
     "version",
   ]
   pruneopts = "UT"
-  revision = "86ae22642bc7ef865681ca036a1527de8f323d53"
+  revision = "ea48d83e9d9120821c98415bd44b78ceb500a402"
   source = "github.com/maticnetwork/tendermint"
 
 [[projects]]
@@ -681,12 +681,14 @@
     "github.com/cosmos/cosmos-sdk/client/utils",
     "github.com/cosmos/cosmos-sdk/codec",
     "github.com/cosmos/cosmos-sdk/server",
+    "github.com/cosmos/cosmos-sdk/store",
     "github.com/cosmos/cosmos-sdk/types",
     "github.com/cosmos/cosmos-sdk/version",
     "github.com/go-kit/kit/log",
     "github.com/gorilla/mux",
     "github.com/spf13/cobra",
     "github.com/spf13/viper",
+    "github.com/stretchr/testify/require",
     "github.com/syndtr/goleveldb/leveldb",
     "github.com/tendermint/go-amino",
     "github.com/tendermint/tendermint/abci/types",
