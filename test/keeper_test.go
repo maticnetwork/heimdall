@@ -3,6 +3,9 @@ package test
 import (
 	"encoding/hex"
 	"fmt"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common"
+	hmcmn "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
 	"github.com/stretchr/testify/require"
@@ -101,21 +104,8 @@ func TestValidator(t *testing.T) {
 
 func TestValidatorSet(t *testing.T) {
 	ctx, keeper := CreateTestInput(t, false)
-	// create 4 validators
-	validators := GenRandomVal(4)
-
 	var valSet types.ValidatorSet
-
-	// add validators to new Validator set and state
-	for _, validator := range validators {
-		err := keeper.AddValidator(ctx, validator)
-		require.Empty(t, err, "Unable to set validator, Error: %v", err)
-		// add validator to validator set
-		valSet.Add(&validator)
-	}
-
-	err := keeper.UpdateValidatorSetInStore(ctx, valSet)
-	require.Empty(t, err, "Unable to update validator set")
+	LoadValidatorSet(4, t, keeper, ctx, &valSet)
 
 	storedValSet := keeper.GetValidatorSet(ctx)
 	require.Equal(t, valSet, storedValSet, "Validator Set in state doesnt match ")
@@ -131,22 +121,14 @@ func TestValidatorSet(t *testing.T) {
 
 func TestValUpdates(t *testing.T) {
 	ctx, keeper := CreateTestInput(t, false)
-	validators := GenRandomVal(4)
+
 	var valSet types.ValidatorSet
+	// load 4 validators to state
+	LoadValidatorSet(4, t, keeper, ctx, &valSet)
 
-	// add validators to new Validator set and state
-	for _, validator := range validators {
-		err := keeper.AddValidator(ctx, validator)
-		require.Empty(t, err, "Unable to set validator, Error: %v", err)
-		// add validator to validator set
-		valSet.Add(&validator)
-	}
-
-	err := keeper.UpdateValidatorSetInStore(ctx, valSet)
-	require.Empty(t, err, "Unable to update validator set")
+	// select proposer
 	keeper.IncreamentAccum(ctx, 1)
 
-	initialProposer := keeper.GetCurrentProposer(ctx)
 	currentValidatorSet := keeper.GetValidatorSet(ctx)
 
 	for _, v := range currentValidatorSet.Validators {
@@ -155,7 +137,7 @@ func TestValUpdates(t *testing.T) {
 
 	// remove first validator
 	currentValidatorSet.Validators[0].StartEpoch = keeper.GetACKCount(ctx) + 10
-	err = keeper.UpdateValidatorSetInStore(ctx, valSet)
+	err := keeper.UpdateValidatorSetInStore(ctx, valSet)
 	require.Empty(t, err, "Unable to update validator set")
 
 	// apply updates
@@ -172,10 +154,25 @@ func TestValUpdates(t *testing.T) {
 	for _, v := range newValSet.Validators {
 		t.Logf("===>>>>>>", v.Address.Hex())
 	}
-	t.Log("Proposer changes", "initial", initialProposer.String(), "final", newProposer.String())
-	require.Equal(t, initialProposer.Address, validators[0].Address, "Initial validator should match")
-	require.Equal(t, newProposer.Address, validators[1].Address, "Next validator should match")
 
+}
+
+func LoadValidatorSet(count int, t *testing.T, keeper hmcmn.Keeper, ctx sdk.Context, validatorSet *types.ValidatorSet) {
+	// create 4 validators
+	validators := GenRandomVal(4)
+
+	var valSet types.ValidatorSet
+
+	// add validators to new Validator set and state
+	for _, validator := range validators {
+		err := keeper.AddValidator(ctx, validator)
+		require.Empty(t, err, "Unable to set validator, Error: %v", err)
+		// add validator to validator set
+		valSet.Add(&validator)
+	}
+
+	err := keeper.UpdateValidatorSetInStore(ctx, valSet)
+	require.Empty(t, err, "Unable to update validator set")
 }
 
 //TODO add tests for validator set changes on update/signer

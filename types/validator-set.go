@@ -51,6 +51,11 @@ func (vals *ValidatorSet) IsNilOrEmpty() bool {
 	return vals == nil || len(vals.Validators) == 0
 }
 
+// return string representation of validator set
+func (vals *ValidatorSet) String() {
+	//
+}
+
 // Increment Accum and update the proposer on a copy, and return it.
 func (vals *ValidatorSet) CopyIncrementAccum(times int) *ValidatorSet {
 	copy := vals.Copy()
