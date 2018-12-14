@@ -22,6 +22,12 @@ Start heimdall process
 $ make run-heimdall
 ```
 
+Start rest-server
+
+```$bash
+$ make rest-server
+```
+
 ### Installation with Docker
 
 **Run Docker container**
@@ -78,35 +84,41 @@ Start heimdall from Docker container
 ```bash
 $ docker exec -it matic-heimdall sh -c "make start-all"
 ```
-
-### Propose new checkpoint
-
-```
-POST http://localhost:1317/checkpoint/new
-Content-Type: application/json
-Content-Length: length
-Accept-Language: en-us
-Connection: Keep-Alive
-
-{
-  "rootHash": "0xd494377d4439a844214b565e1c211ea7154ca300b98e3c296f19fc9ada36db33",
-  "startBlock": 4733031,
-  "endBlock": 4733034
-}
-```
-
-**CURL command**
-
-```bash
-$ curl -X POST \
-  http://localhost:1317/checkpoint/new \
-  -H 'Content-Type: application/json' \
+#### Generate new checkpoint
+```$bash 
+curl -X GET \
+  http://localhost:1317/checkpoint/<startBlock>/<endBlock> \
   -H 'cache-control: no-cache' \
+  -H 'postman-token: 9b98abc0-bdaa-772a-38d4-7c29351b87a4'
+```
+
+#### Propose new checkpoint
+
+```
+curl -X POST \
+  http://localhost:1317/checkpoint/new \
+  -H 'cache-control: no-cache' \
+  -H 'content-type: application/json' \
+  -H 'postman-token: ccb714f8-7197-3f72-d4a3-97c6d654f53b' \
   -d '{
-    "rootHash": "0x5ba1680c5f5d5da8c7e3c08ba5d168c69da7a7104cf4beab94f7c0c955551f35",
-    "startBlock": 4733040,
-    "endBlock": 4733050
-  }'
+	"proposer":"0x0cdf0edd304a8e1715d5043d0afe3d3322cc6e3b",
+	"rootHash":"0xb2160bdf78e2dd513763b7767d510cad84eba764b9ec0e00a0110fadaf14b179",
+	"startBlock":201,
+	"endBlock":204
+}'
+```
+
+#### Submit ACK for checkpoint
+```$bash 
+curl -X POST \
+  http://localhost:1317/checkpoint/ack \
+  -H 'cache-control: no-cache' \
+  -H 'content-type: application/json' \
+  -H 'postman-token: b800a79b-158b-8590-ba2f-aedb1fd1942a' \
+  -d '{
+	"HeaderBlock" : 20000
+}'
+
 ```
 
 **Note: You must have Ethers in your account while submitting checkpoint.**
