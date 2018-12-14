@@ -10,7 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/gorilla/mux"
 
-	common2 "github.com/ethereum/go-ethereum/common"
+	ethcmn "github.com/ethereum/go-ethereum/common"
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
@@ -177,7 +177,7 @@ func checkpointHandlerFn() http.HandlerFunc {
 			Proposer:   helper.ZeroAddress,
 			StartBlock: uint64(start),
 			EndBlock:   uint64(end),
-			RootHash:   common2.BytesToHash(roothash),
+			RootHash:   ethcmn.BytesToHash(roothash),
 		}
 		result, err := json.Marshal(checkpoint)
 		if err != nil {
