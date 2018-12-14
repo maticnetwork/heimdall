@@ -79,7 +79,7 @@ func TestCheckpointACK(t *testing.T) {
 func TestValidator(t *testing.T) {
 	ctx, keeper := CreateTestInput(t, false)
 
-	vals := GenRandomVal(1)
+	vals := GenRandomVal(1, 0, 0, 10, true)
 	validator := vals[0]
 
 	err := keeper.AddValidator(ctx, validator)
@@ -104,7 +104,7 @@ func TestValidator(t *testing.T) {
 
 func TestValidatorSet(t *testing.T) {
 	ctx, keeper := CreateTestInput(t, false)
-	valSet := LoadValidatorSet(4, t, keeper, ctx)
+	valSet := LoadValidatorSet(4, t, keeper, ctx, true)
 
 	storedValSet := keeper.GetValidatorSet(ctx)
 	require.Equal(t, valSet, storedValSet, "Validator Set in state doesnt match ")
@@ -121,9 +121,9 @@ func TestValUpdates(t *testing.T) {
 	ctx, keeper := CreateTestInput(t, false)
 
 	// load 4 validators to state
-	LoadValidatorSet(4, t, keeper, ctx)
-
+	LoadValidatorSet(4, t, keeper, ctx, false)
 	initValSet := keeper.GetValidatorSet(ctx)
+	valToSignerMap := keeper.GetValidatorToSignerMap(ctx)
 
 	// create sub test to check if validator remove
 	t.Run("remove", func(t *testing.T) {
@@ -137,16 +137,12 @@ func TestValUpdates(t *testing.T) {
 		for _, v := range prevValidatorSet.Validators {
 			t.Log("-->", "Address", v.Address.String(), "StartEpoch", v.StartEpoch, "EndEpoch", v.EndEpoch, "Power", v.Power)
 		}
-
-		err := keeper.AddValidator(ctx, *prevValidatorSet.Validators[0])
-		require.Empty(t, err, "Unable to update validator set")
-
 		// apply updates
 		helper.UpdateValidators(
-			currentValSet,                       // pointer to current validator set -- UpdateValidators will modify it
-			keeper.GetAllValidators(ctx),        // All validators
-			keeper.GetValidatorToSignerMap(ctx), // validator to signer map
-			10, // ack count
+			currentValSet,               // pointer to current validator set -- UpdateValidators will modify it
+			prevValidatorSet.Validators, // All validators
+			valToSignerMap,              // validator to signer map
+			5,                           // ack count
 		)
 		updatedValSet := currentValSet
 		t.Log("Validators in updated validator set")
@@ -158,14 +154,15 @@ func TestValUpdates(t *testing.T) {
 		// remove first validator from initial validator set and equate with new
 		require.Equal(t, append(prevValidatorSet.Validators[:0], prevValidatorSet.Validators[1:]...), updatedValSet.Validators, "Validator at 0 index should be deleted")
 	})
-
+	//
 	t.Run("add", func(t *testing.T) {
-		validators := GenRandomVal(1)
+		validators := GenRandomVal(1, 0, 10, 10, false)
 		prevValSet := initValSet.Copy()
 		valToBeAdded := validators[0]
 		currentValSet := initValSet.Copy()
-		//prevValidatorSet := initValSet.Copy()
-		keeper.AddValidator(ctx, valToBeAdded)
+		newValidators := append(prevValSet.Validators, &valToBeAdded)
+		newValToSignerMap := valToSignerMap
+		newValToSignerMap[hex.EncodeToString(valToBeAdded.Address.Bytes())] = valToBeAdded.Signer
 
 		t.Log("Validators in old validator set")
 		for _, v := range currentValSet.Validators {
@@ -175,10 +172,10 @@ func TestValUpdates(t *testing.T) {
 		t.Log("-->", "Address", valToBeAdded.Address.String(), "StartEpoch", valToBeAdded.StartEpoch, "EndEpoch", valToBeAdded.EndEpoch, "Power", valToBeAdded.Power)
 
 		helper.UpdateValidators(
-			currentValSet,                       // pointer to current validator set -- UpdateValidators will modify it
-			keeper.GetAllValidators(ctx),        // All validators
-			keeper.GetValidatorToSignerMap(ctx), // validator to signer map
-			10, // ack count
+			currentValSet,     // pointer to current validator set -- UpdateValidators will modify it
+			newValidators,     // All validators
+			newValToSignerMap, // validator to signer map
+			5,                 // ack count
 		)
 		t.Log("Validators in updated validator set")
 		for _, v := range currentValSet.Validators {
@@ -191,18 +188,31 @@ func TestValUpdates(t *testing.T) {
 	})
 
 	t.Run("update", func(t *testing.T) {
-		keeper.IncreamentAccum(ctx, 2)
+
 		prevValSet := initValSet.Copy()
-		currentValSet := keeper.GetValidatorSet(ctx)
-		valToUpdate := currentValSet.Validators[0]
-		newSigner := GenRandomVal(1)
+		prevValSet.IncrementAccum(2)
+
+		currentValSet := prevValSet.Copy()
+
+		valToUpdate := prevValSet.Validators[0]
+
+		newValToSignerMap := valToSignerMap
+
+		newSigner := GenRandomVal(1, 0, 10, 10, false)
+		prevValSet.Validators[0].Power = 0
+		newValToSignerMap[hex.EncodeToString(valToUpdate.Address.Bytes())] = newSigner[0].Signer
+		valToUpdate.Signer = newSigner[0].Signer
+		valToUpdate.PubKey = newSigner[0].PubKey
+
 		t.Log("Validators in old validator set")
 		for _, v := range currentValSet.Validators {
 			t.Log("-->", "Address", v.Address.String(), "Accum", v.Accum, "Signer", v.Signer.String(), "Total power", currentValSet.TotalVotingPower())
 		}
+
 		keeper.UpdateSigner(ctx, newSigner[0].Signer, newSigner[0].PubKey, valToUpdate.Signer)
+
 		helper.UpdateValidators(
-			&currentValSet,                      // pointer to current validator set -- UpdateValidators will modify it
+			currentValSet,                       // pointer to current validator set -- UpdateValidators will modify it
 			keeper.GetAllValidators(ctx),        // All validators
 			keeper.GetValidatorToSignerMap(ctx), // validator to signer map
 			10, // ack count
@@ -224,9 +234,9 @@ func TestValUpdates(t *testing.T) {
 
 }
 
-func LoadValidatorSet(count int, t *testing.T, keeper hmcmn.Keeper, ctx sdk.Context) types.ValidatorSet {
+func LoadValidatorSet(count int, t *testing.T, keeper hmcmn.Keeper, ctx sdk.Context, randomise bool) types.ValidatorSet {
 	// create 4 validators
-	validators := GenRandomVal(4)
+	validators := GenRandomVal(4, 0, 10, 10, randomise)
 
 	var valSet types.ValidatorSet
 

@@ -73,24 +73,27 @@ func GenRandCheckpointHeader() (headerBlock types.CheckpointBlockHeader, err err
 }
 
 // TODO autogenerate validator instead of
-func GenRandomVal(count int) (validators []types.Validator) {
+func GenRandomVal(count int, startBlock uint64, power uint64, timeAlive uint64, randomise bool) (validators []types.Validator) {
 	for i := 0; i < count; i++ {
 		privKey1 := secp256k1.GenPrivKey()
 		privKey2 := secp256k1.GenPrivKey()
 		pubkey := types.NewPubKey(privKey1.PubKey().Bytes())
-		startBlock := uint64(rand.Intn(10))
-		// todo find a way to genrate non zero random number
-		if startBlock == 0 {
-			startBlock = 1
+		if randomise {
+			startBlock := uint64(rand.Intn(10))
+			// todo find a way to genrate non zero random number
+			if startBlock == 0 {
+				startBlock = 1
+			}
+			power := uint64(rand.Intn(100))
+			if power == 0 {
+				power = 1
+			}
 		}
-		power := uint64(rand.Intn(100))
-		if power == 0 {
-			power = 1
-		}
+
 		newVal := types.Validator{
 			Address:    ethcmn.BytesToAddress(privKey2.PubKey().Address().Bytes()),
 			StartEpoch: startBlock,
-			EndEpoch:   startBlock + 10,
+			EndEpoch:   startBlock + timeAlive,
 			Power:      power,
 			Signer:     pubkey.Address(),
 			PubKey:     pubkey,
