@@ -55,8 +55,11 @@ func validatorByAddressHandlerFn(
 		}
 
 		var _validator types.Validator
-		cdc.UnmarshalBinary(res, &_validator)
-
+		err = cdc.UnmarshalBinary(res, &_validator)
+		if err != nil {
+			w.Write([]byte(err.Error()))
+			return
+		}
 		result, err := json.Marshal(_validator)
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
@@ -101,7 +104,6 @@ func validatorSetHandlerFn(
 			w.Write([]byte(err.Error()))
 			return
 		}
-
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(result)
 

@@ -161,6 +161,7 @@ func TestValUpdates(t *testing.T) {
 
 	t.Run("add", func(t *testing.T) {
 		validators := GenRandomVal(1)
+		prevValSet := initValSet.Copy()
 		valToBeAdded := validators[0]
 		currentValSet := initValSet.Copy()
 		//prevValidatorSet := initValSet.Copy()
@@ -170,6 +171,8 @@ func TestValUpdates(t *testing.T) {
 		for _, v := range currentValSet.Validators {
 			t.Log("-->", "Address", v.Address.String(), "StartEpoch", v.StartEpoch, "EndEpoch", v.EndEpoch, "Power", v.Power)
 		}
+		t.Log("Val to be Added")
+		t.Log("-->", "Address", valToBeAdded.Address.String(), "StartEpoch", valToBeAdded.StartEpoch, "EndEpoch", valToBeAdded.EndEpoch, "Power", valToBeAdded.Power)
 
 		helper.UpdateValidators(
 			currentValSet,                       // pointer to current validator set -- UpdateValidators will modify it
@@ -182,19 +185,20 @@ func TestValUpdates(t *testing.T) {
 			t.Log("-->", "Address", v.Address.String(), "StartEpoch", v.StartEpoch, "EndEpoch", v.EndEpoch, "Power", v.Power)
 		}
 
-		require.Equal(t, len(initValSet.Validators)+1, len(currentValSet.Validators), "Number of validators should be increased by 1")
+		require.Equal(t, len(prevValSet.Validators)+1, len(currentValSet.Validators), "Number of validators should be increased by 1")
 		require.Equal(t, true, currentValSet.HasAddress(valToBeAdded.Address.Bytes()), "New Validator should be added")
-		require.Equal(t, initValSet.TotalVotingPower()+int64(valToBeAdded.Power), currentValSet.TotalVotingPower(), "Total power should be increased")
+		require.Equal(t, prevValSet.TotalVotingPower()+int64(valToBeAdded.Power), currentValSet.TotalVotingPower(), "Total power should be increased")
 	})
 
 	t.Run("update", func(t *testing.T) {
 		keeper.IncreamentAccum(ctx, 2)
+		prevValSet := initValSet.Copy()
 		currentValSet := keeper.GetValidatorSet(ctx)
 		valToUpdate := currentValSet.Validators[0]
 		newSigner := GenRandomVal(1)
 		t.Log("Validators in old validator set")
 		for _, v := range currentValSet.Validators {
-			t.Log("-->", "Address", v.Address.String(), "StartEpoch", "Accum", v.Accum, "Signer", v.Signer.String(), "Total power", currentValSet.TotalVotingPower())
+			t.Log("-->", "Address", v.Address.String(), "Accum", v.Accum, "Signer", v.Signer.String(), "Total power", currentValSet.TotalVotingPower())
 		}
 		keeper.UpdateSigner(ctx, newSigner[0].Signer, newSigner[0].PubKey, valToUpdate.Signer)
 		helper.UpdateValidators(
@@ -208,12 +212,12 @@ func TestValUpdates(t *testing.T) {
 			t.Log("-->", "Address", v.Address.String(), "Accum", v.Accum, "Signer", v.Signer.String(), "Total power", currentValSet.TotalVotingPower())
 		}
 
-		require.Equal(t, len(initValSet.Validators), len(currentValSet.Validators), "Number of validators should remain same")
+		require.Equal(t, len(prevValSet.Validators), len(currentValSet.Validators), "Number of validators should remain same")
 		_, val := currentValSet.GetByAddress(valToUpdate.Address.Bytes())
 		require.Equal(t, newSigner[0].Signer, val.Signer, "Signer address should change")
 		require.Equal(t, newSigner[0].PubKey, val.PubKey, "Signer pubkey should change")
 		require.Equal(t, valToUpdate.Accum, val.Accum, "Validator accum should not change")
-		require.Equal(t, initValSet.TotalVotingPower(), currentValSet.TotalVotingPower(), "Total power should not change")
+		require.Equal(t, prevValSet.TotalVotingPower(), currentValSet.TotalVotingPower(), "Total power should not change")
 		// TODO not sure if proposer check is needed
 		//require.Equal(t, &initValSet.Proposer.Address, &currentValSet.Proposer.Address, "Proposer should not change")
 	})
