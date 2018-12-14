@@ -80,6 +80,7 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 		common.CheckpointLogger.Error("Unable to update validator set in state", "Error", err)
 		return common.ErrInvalidMsg(common.DefaultCodespace, "Unable to update validator set in state %v", err).Result()
 	}
+
 	// increment accum
 	k.IncreamentAccum(ctx, 1)
 

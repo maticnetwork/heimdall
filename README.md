@@ -111,6 +111,25 @@ $ curl -X POST \
 
 **Note: You must have Ethers in your account while submitting checkpoint.**
 
+### Run Tests 
+
+You can run tests found in tests directory to make sure everything is working as expected after making changes
+
+  
+```$bash 
+$ go test -run <TestCaseName>/<SubTestName> 
+```
+
+> Please add -v flag to see test logs 
+
+##### Example
+  
+```$bash 
+$ go test -v -run TestValUpdates/add
+$ go test -v -run TestValidator
+```
+
+
 ### Docker (Only for developers)
 
 #### For develop

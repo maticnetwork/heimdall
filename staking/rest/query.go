@@ -51,6 +51,8 @@ func validatorByAddressHandlerFn(
 		// the query will return empty if there is no data
 		if len(res) == 0 {
 			w.WriteHeader(http.StatusNoContent)
+			result, _ := json.Marshal("Validator Not found")
+			w.Write(result)
 			return
 		}
 
@@ -60,6 +62,7 @@ func validatorByAddressHandlerFn(
 			w.Write([]byte(err.Error()))
 			return
 		}
+
 		result, err := json.Marshal(_validator)
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
