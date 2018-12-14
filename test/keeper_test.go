@@ -199,10 +199,12 @@ func TestValUpdates(t *testing.T) {
 		newValToSignerMap := valToSignerMap
 
 		newSigner := GenRandomVal(1, 0, 10, 10, false)
+		// remove previous validator
 		prevValSet.Validators[0].Power = 0
-		newValToSignerMap[hex.EncodeToString(valToUpdate.Address.Bytes())] = newSigner[0].Signer
 		valToUpdate.Signer = newSigner[0].Signer
 		valToUpdate.PubKey = newSigner[0].PubKey
+		newValidators := append(prevValSet.Validators, valToUpdate)
+		newValToSignerMap[hex.EncodeToString(valToUpdate.Address.Bytes())] = newSigner[0].Signer
 
 		t.Log("Validators in old validator set")
 		for _, v := range currentValSet.Validators {
@@ -212,10 +214,10 @@ func TestValUpdates(t *testing.T) {
 		keeper.UpdateSigner(ctx, newSigner[0].Signer, newSigner[0].PubKey, valToUpdate.Signer)
 
 		helper.UpdateValidators(
-			currentValSet,                       // pointer to current validator set -- UpdateValidators will modify it
-			keeper.GetAllValidators(ctx),        // All validators
-			keeper.GetValidatorToSignerMap(ctx), // validator to signer map
-			10, // ack count
+			currentValSet,     // pointer to current validator set -- UpdateValidators will modify it
+			newValidators,     // All validators
+			newValToSignerMap, // validator to signer map
+			10,                // ack count
 		)
 		t.Log("Validators in updated validator set")
 		for _, v := range currentValSet.Validators {
