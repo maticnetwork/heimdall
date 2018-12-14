@@ -10,7 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/gorilla/mux"
 
-	"encoding/hex"
+	common2 "github.com/ethereum/go-ethereum/common"
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
@@ -173,8 +173,13 @@ func checkpointHandlerFn() http.HandlerFunc {
 			w.Write([]byte(err.Error()))
 			return
 		}
-
-		result, err := json.Marshal(hex.EncodeToString(roothash))
+		checkpoint := HeaderBlock{
+			Proposer:   helper.ZeroAddress,
+			StartBlock: uint64(start),
+			EndBlock:   uint64(end),
+			RootHash:   common2.BytesToHash(roothash),
+		}
+		result, err := json.Marshal(checkpoint)
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
 			w.WriteHeader(http.StatusBadRequest)
