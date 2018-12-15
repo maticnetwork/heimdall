@@ -51,11 +51,16 @@ func validatorByAddressHandlerFn(
 		// the query will return empty if there is no data
 		if len(res) == 0 {
 			w.WriteHeader(http.StatusNoContent)
+			w.Write([]byte("Validator not found"))
 			return
 		}
 
 		var _validator types.Validator
-		cdc.UnmarshalBinary(res, &_validator)
+		err = cdc.UnmarshalBinary(res, &_validator)
+		if err != nil {
+			w.Write([]byte(err.Error()))
+			return
+		}
 
 		result, err := json.Marshal(_validator)
 		if err != nil {
@@ -83,13 +88,11 @@ func validatorSetHandlerFn(
 			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-
 		// the query will return empty if there is no data
 		if len(res) == 0 {
 			w.WriteHeader(http.StatusNoContent)
 			return
 		}
-
 		var _validatorSet hmTypes.ValidatorSet
 		cdc.UnmarshalBinary(res, &_validatorSet)
 
@@ -101,7 +104,6 @@ func validatorSetHandlerFn(
 			w.Write([]byte(err.Error()))
 			return
 		}
-
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(result)
 

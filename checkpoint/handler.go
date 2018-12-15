@@ -53,7 +53,7 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 	k.AddCheckpoint(ctx, msg.HeaderBlock, headerBlock)
 	common.CheckpointLogger.Info("Checkpoint added to store", "roothash", headerBlock.RootHash, "startBlock", headerBlock.StartBlock, "endBlock", headerBlock.EndBlock, "proposer", headerBlock.Proposer)
 
-	// flush checkpoint in buffer
+	// flush buffer
 	k.FlushCheckpointBuffer(ctx)
 	common.CheckpointLogger.Debug("Checkpoint buffer flushed after receiving checkpoint ack", "checkpoint", headerBlock)
 
@@ -80,6 +80,7 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 		common.CheckpointLogger.Error("Unable to update validator set in state", "Error", err)
 		return common.ErrInvalidMsg(common.DefaultCodespace, "Unable to update validator set in state %v", err).Result()
 	}
+
 	// increment accum
 	k.IncreamentAccum(ctx, 1)
 
@@ -133,7 +134,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper) sd
 	// check proposer in message
 	if !bytes.Equal(msg.Proposer.Bytes(), k.GetValidatorSet(ctx).Proposer.Signer.Bytes()) {
 		common.CheckpointLogger.Error("Invalid proposer in message", "currentProposer", k.GetValidatorSet(ctx).Proposer.Signer.String(), "checkpointProposer", msg.Proposer.String())
-		return common.ErrBadProposerDetails(k.Codespace).Result()
+		return common.ErrBadProposerDetails(k.Codespace, k.GetValidatorSet(ctx).Proposer.Signer).Result()
 	}
 
 	// add checkpoint to buffer

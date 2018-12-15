@@ -1,22 +1,24 @@
 package test
 
 import (
+	"math/rand"
+	"testing"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethcmn "github.com/ethereum/go-ethereum/common"
-	"github.com/maticnetwork/heimdall/checkpoint"
-	"github.com/maticnetwork/heimdall/common"
-	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/staking"
-	"github.com/maticnetwork/heimdall/types"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	dbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
-	"math/rand"
-	"testing"
+
+	"github.com/maticnetwork/heimdall/checkpoint"
+	"github.com/maticnetwork/heimdall/common"
+	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/staking"
+	"github.com/maticnetwork/heimdall/types"
 )
 
 func MakeTestCodec() *codec.Codec {
@@ -52,8 +54,6 @@ func CreateTestInput(t *testing.T, isCheckTx bool) (sdk.Context, common.Keeper) 
 
 	masterKeeper := common.NewKeeper(cdc, keyMaster, keyStaker, keyCheckpoint, common.DefaultCodespace)
 	// set empty values in cache by default
-	masterKeeper.SetCheckpointAckCache(ctx, common.EmptyBufferValue)
-	masterKeeper.SetCheckpointCache(ctx, common.EmptyBufferValue)
 	masterKeeper.UpdateACKCountWithValue(ctx, 1)
 
 	return ctx, masterKeeper
@@ -75,17 +75,28 @@ func GenRandCheckpointHeader() (headerBlock types.CheckpointBlockHeader, err err
 }
 
 // TODO autogenerate validator instead of
-func GenRandomVal(count int) (validators []types.Validator) {
+func GenRandomVal(count int, startBlock uint64, power uint64, timeAlive uint64, randomise bool) (validators []types.Validator) {
 	for i := 0; i < count; i++ {
 		privKey1 := secp256k1.GenPrivKey()
 		privKey2 := secp256k1.GenPrivKey()
 		pubkey := types.NewPubKey(privKey1.PubKey().Bytes())
-		startBlock := uint64(rand.Intn(10))
+		if randomise {
+			startBlock := uint64(rand.Intn(10))
+			// todo find a way to genrate non zero random number
+			if startBlock == 0 {
+				startBlock = 1
+			}
+			power := uint64(rand.Intn(100))
+			if power == 0 {
+				power = 1
+			}
+		}
+
 		newVal := types.Validator{
 			Address:    ethcmn.BytesToAddress(privKey2.PubKey().Address().Bytes()),
 			StartEpoch: startBlock,
-			EndEpoch:   startBlock + 10,
-			Power:      uint64(rand.Intn(100)),
+			EndEpoch:   startBlock + timeAlive,
+			Power:      power,
 			Signer:     pubkey.Address(),
 			PubKey:     pubkey,
 			Accum:      0,

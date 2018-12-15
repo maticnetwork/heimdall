@@ -2,6 +2,7 @@ package common
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 type CodeType = sdk.CodeType
@@ -38,8 +39,8 @@ func ErrInvalidMsg(codespace sdk.CodespaceType, format string, args ...interface
 
 // -------- Checkpoint Errors
 
-func ErrBadProposerDetails(codespace sdk.CodespaceType) sdk.Error {
-	return newError(codespace, CodeInvalidProposerInput, "Proposer is not valid")
+func ErrBadProposerDetails(codespace sdk.CodespaceType, proposer common.Address) sdk.Error {
+	return newError(codespace, CodeInvalidProposerInput, "Proposer is not valid , current proposer is"+proposer.String())
 }
 
 func ErrBadBlockDetails(codespace sdk.CodespaceType) sdk.Error {
