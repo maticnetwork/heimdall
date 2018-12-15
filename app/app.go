@@ -2,6 +2,7 @@ package app
 
 import (
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 
@@ -118,16 +119,36 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 	var valUpdates []abci.ValidatorUpdate
 
 	if ctx.BlockHeader().NumTxs > 0 {
-		// check if ACK is present in cache
-		if app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointACKCacheKey) {
-			logger.Info("Checkpoint ACK processed in block", "CheckpointACKProcessed", app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointACKCacheKey))
 
+		// --- Start update to new validators
+
+		currentValidatorSet := app.masterKeeper.GetValidatorSet(ctx)
+		allValidators := app.masterKeeper.GetAllValidators(ctx)
+		validatorToSignerMap := app.masterKeeper.GetValidatorToSignerMap(ctx)
+		ackCount := app.masterKeeper.GetACKCount(ctx)
+
+		// apply updates
+		helper.UpdateValidators(
+			&currentValidatorSet, // pointer to current validator set -- UpdateValidators will modify it
+			allValidators,        // All validators
+			validatorToSignerMap, // validator to signer map
+			ackCount,             // ack count
+		)
+
+		// update validator set in store
+		err := app.masterKeeper.UpdateValidatorSetInStore(ctx, currentValidatorSet)
+		if err != nil {
+			logger.Error("Unable to update validator set in state", "Error", err)
+		} else {
 			// GetAllValidators from store (includes previous validator set + updates)
-			validators := app.masterKeeper.GetAllValidators(ctx)
-			ackCount := app.masterKeeper.GetACKCount(ctx)
-			for _, validator := range validators {
+			for _, validator := range allValidators {
 				power := int64(validator.Power)
-				if validator.StartEpoch > ackCount || (validator.EndEpoch != 0 && validator.EndEpoch < ackCount) {
+
+				key := hex.EncodeToString(validator.Address.Bytes()) // get validator address string
+				s, exists := validatorToSignerMap[key]               // validator to signer
+				if !exists ||                                        // check if validator to signer key exists
+					!bytes.Equal(validator.Signer.Bytes(), s.Bytes()) || // check if old signer
+					!validator.IsCurrentValidator(ackCount) { // check if not current validator
 					power = 0
 				}
 
@@ -138,6 +159,30 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 				}
 				valUpdates = append(valUpdates, val)
 			}
+		}
+
+		// --- End update validators
+
+		// check if ACK is present in cache
+		if app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointACKCacheKey) {
+			logger.Info("Checkpoint ACK processed in block", "CheckpointACKProcessed", app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointACKCacheKey))
+
+			// --- Start update proposer
+
+			// increment accum
+			app.masterKeeper.IncreamentAccum(ctx, 1)
+
+			// log new proposer
+			vs := app.masterKeeper.GetValidatorSet(ctx)
+			newProposer := vs.GetProposer()
+			logger.Debug(
+				"New proposer selected",
+				"validator", newProposer.Address.String(),
+				"signer", newProposer.Signer.String(),
+				"power", newProposer.Power,
+			)
+
+			// --- End update proposer
 
 			// clear ACK cache
 			app.masterKeeper.FlushACKCache(ctx)
@@ -290,6 +335,6 @@ func PrepareAndSendCheckpoint(ctx sdk.Context, keeper common.Keeper) {
 			logger.Info("No need to send checkpoint")
 		}
 	} else {
-		logger.Info("We are not proposer", "proposer", keeper.GetValidatorSet(ctx).Proposer.Signer.String(), "validator", validatorAddress.String())
+		logger.Info("We are not proposer", "proposer", keeper.GetCurrentProposer(ctx), "validator", validatorAddress.String())
 	}
 }

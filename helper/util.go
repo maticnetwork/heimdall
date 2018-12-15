@@ -58,13 +58,12 @@ func UpdateValidators(
 				return fmt.Errorf("Failed to add new validator %v", validator)
 			}
 		} else {
-			validator.Accum = val.Accum
-			// update val
-			updated := currentSet.Update(validator)
+			validator.Accum = val.Accum             // use last accum
+			updated := currentSet.Update(validator) // update validator
+			validator.Accum = 0                     // reset accum
 			if !updated {
 				return fmt.Errorf("Failed to update validator %X to %v", address, validator)
 			}
-			validator.Accum = 0
 		}
 	}
 

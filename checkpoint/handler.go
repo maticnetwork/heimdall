@@ -45,7 +45,7 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 
 	// match header block and checkpoint
 	if start != headerBlock.StartBlock || end != headerBlock.EndBlock || !bytes.Equal(root.Bytes(), headerBlock.RootHash.Bytes()) {
-		common.CheckpointLogger.Error("Invalid ACK", "startExpected", headerBlock.StartBlock, "startReceived", start, "endExpected", headerBlock.EndBlock, "endReceived", end, "rootExpected", root.String(), "rootRecieved", headerBlock.RootHash.String())
+		common.CheckpointLogger.Error("Invalid ACK", "startExpected", headerBlock.StartBlock, "startReceived", start, "endExpected", headerBlock.EndBlock, "endReceived", end, "rootExpected", headerBlock.RootHash.String(), "rootReceived", root.String())
 		return common.ErrBadAck(k.Codespace).Result()
 	}
 
@@ -60,41 +60,6 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 	// update ack count
 	k.UpdateACKCount(ctx)
 	common.CheckpointLogger.Debug("Valid ack received", "CurrentACKCount", k.GetACKCount(ctx)-1, "UpdatedACKCount", k.GetACKCount(ctx))
-
-	// --- Update to new validator
-
-	// get current running validator set
-	currentValidatorSet := k.GetValidatorSet(ctx)
-
-	// apply updates
-	helper.UpdateValidators(
-		&currentValidatorSet,           // pointer to current validator set -- UpdateValidators will modify it
-		k.GetAllValidators(ctx),        // All validators
-		k.GetValidatorToSignerMap(ctx), // validator to signer map
-		k.GetACKCount(ctx),             // ack count
-	)
-
-	// update validator set in store
-	err = k.UpdateValidatorSetInStore(ctx, currentValidatorSet)
-	if err != nil {
-		common.CheckpointLogger.Error("Unable to update validator set in state", "Error", err)
-		return common.ErrInvalidMsg(common.DefaultCodespace, "Unable to update validator set in state %v", err).Result()
-	}
-
-	// increment accum
-	k.IncreamentAccum(ctx, 1)
-
-	//log new proposer
-	vs := k.GetValidatorSet(ctx)
-	newProposer := vs.GetProposer()
-	common.CheckpointLogger.Debug(
-		"New proposer selected",
-		"validator", newProposer.Signer.String(),
-		"signer", newProposer.Signer.String(),
-		"power", newProposer.Power,
-	)
-
-	// --- End
 
 	// indicate ACK received by adding in cache, cache cleared in endblock
 	k.SetCheckpointAckCache(ctx, common.DefaultValue)
