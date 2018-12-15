@@ -62,7 +62,6 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		keyMaster:     sdk.NewKVStoreKey("master"),
 	}
 
-	// todo give every keeper its own codespace
 	app.masterKeeper = common.NewKeeper(app.cdc, app.keyMaster, app.keyStaker, app.keyCheckpoint, app.RegisterCodespace(common.DefaultCodespace))
 	// register message routes
 	app.Router().AddRoute("checkpoint", checkpoint.NewHandler(app.masterKeeper))
@@ -252,7 +251,6 @@ func PrepareAndSendCheckpoint(ctx sdk.Context, keeper common.Keeper) {
 		logger.Error("Error while unmarshalling vote", "error", err)
 	}
 
-	// TODO sort sigs before sending
 	// get sigs from votes
 	sigs := helper.GetSigs(votes)
 
