@@ -1,22 +1,24 @@
 package test
 
 import (
+	"math/rand"
+	"testing"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethcmn "github.com/ethereum/go-ethereum/common"
-	"github.com/maticnetwork/heimdall/checkpoint"
-	"github.com/maticnetwork/heimdall/common"
-	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/staking"
-	"github.com/maticnetwork/heimdall/types"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	dbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
-	"math/rand"
-	"testing"
+
+	"github.com/maticnetwork/heimdall/checkpoint"
+	"github.com/maticnetwork/heimdall/common"
+	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/staking"
+	"github.com/maticnetwork/heimdall/types"
 )
 
 func MakeTestCodec() *codec.Codec {

@@ -2,12 +2,14 @@ package test
 
 import (
 	"encoding/hex"
+	"testing"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
+
 	hmcmn "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
-	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestUpdateAck(t *testing.T) {
@@ -146,7 +148,7 @@ func TestValUpdates(t *testing.T) {
 			currentValSet,                       // pointer to current validator set -- UpdateValidators will modify it
 			keeper.GetAllValidators(ctx),        // All validators
 			keeper.GetValidatorToSignerMap(ctx), // validator to signer map
-			5, // ack count
+			5,                                   // ack count
 		)
 		updatedValSet := currentValSet
 		t.Log("Validators in updated validator set")
@@ -184,7 +186,7 @@ func TestValUpdates(t *testing.T) {
 			currentValSet,                       // pointer to current validator set -- UpdateValidators will modify it
 			keeper.GetAllValidators(ctx),        // All validators
 			keeper.GetValidatorToSignerMap(ctx), // validator to signer map
-			10, // ack count
+			10,                                  // ack count
 		)
 		t.Log("Validators in updated validator set")
 		for _, v := range currentValSet.Validators {
@@ -216,7 +218,7 @@ func TestValUpdates(t *testing.T) {
 			&currentValSet,                      // pointer to current validator set -- UpdateValidators will modify it
 			keeper.GetAllValidators(ctx),        // All validators
 			keeper.GetValidatorToSignerMap(ctx), // validator to signer map
-			10, // ack count
+			10,                                  // ack count
 		)
 		t.Log("Validators in updated validator set")
 		for _, v := range currentValSet.Validators {
