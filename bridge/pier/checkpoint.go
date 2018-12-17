@@ -8,7 +8,7 @@ import (
 	"time"
 
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
-	ethereum "github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum"
 	ethCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -99,6 +99,9 @@ func (checkpointer *MaticCheckpointer) OnStart() error {
 
 	// start header process
 	go checkpointer.StartHeaderProcess(headerCtx)
+
+	// start polling for checkpoint in buffer
+	go checkpointer.StartPollingCheckpoint(defaultCheckpointPollInterval)
 
 	// subscribe to new head
 	subscription, err := checkpointer.MaticClient.SubscribeNewHead(ctx, checkpointer.HeaderChannel)
@@ -242,7 +245,7 @@ func (checkpointer *MaticCheckpointer) sendRequest(newHeader *types.Header) {
 		return
 	}
 
-	checkpointer.Logger.Info("New checkpoint header created", "latest", latest, "start", start, "end", end, "root", root)
+	checkpointer.Logger.Info("New checkpoint header created", "latest", latest, "start", start, "end", end, "root", hex.EncodeToString(root))
 
 	// TODO submit checkcoint
 	txBytes, err := helper.CreateTxBytes(
@@ -267,4 +270,29 @@ func (checkpointer *MaticCheckpointer) sendRequest(newHeader *types.Header) {
 	}
 
 	checkpointer.Logger.Error("Checkpoint sent successfully", "hash", hex.EncodeToString(resp.Hash), "start", start, "end", end, "root", root)
+}
+
+func(checkpointer *MaticCheckpointer) StartPollingCheckpoint(interval time.Duration){
+	// poll for new checkpoint every 15 secs
+	// when found start 5 min timer
+	// if checkpoint still in buffer after 5 mins (make sure its the same checkpoint)
+	// send no ack
+	// restart step 1
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+	found := make(chan bool)
+	go func() {
+		time.Sleep(2 * time.Second)
+		found <- true
+	}()
+	for {
+		select {
+		case <-found:
+			checkpointer.Logger.Error("Found Checkpoint in buffer!")
+			return
+		case t := <-ticker.C:
+			checkpointer.Logger.Debug("Awaiting Checkpoint...", t)
+		}
+	}
+	return
 }

@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/syndtr/goleveldb/leveldb"
+	"time"
 )
 
 const (
@@ -15,6 +16,7 @@ const (
 
 	defaultPollInterval      = 5 * 1000                // in milliseconds
 	defaultMainPollInterval  = 5 * 1000                // in milliseconds
+	defaultCheckpointPollInterval = 15 * time.Second
 	defaultCheckpointLength  = 256                     // checkpoint number starts with 0, so length = defaultCheckpointLength -1
 	maxCheckpointLength      = 4096                    // max blocks in one checkpoint
 	defaultForcePushInterval = maxCheckpointLength * 2 // in seconds (4096 * 2 seconds)
