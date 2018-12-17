@@ -21,6 +21,7 @@ import (
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/helper"
+	"net/http"
 )
 
 // MaticCheckpointer to propose
@@ -281,10 +282,8 @@ func(checkpointer *MaticCheckpointer) StartPollingCheckpoint(interval time.Durat
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 	found := make(chan bool)
-	go func() {
-		time.Sleep(2 * time.Second)
-		found <- true
-	}()
+
+
 	for {
 		select {
 		case <-found:
@@ -292,6 +291,23 @@ func(checkpointer *MaticCheckpointer) StartPollingCheckpoint(interval time.Durat
 			return
 		case t := <-ticker.C:
 			checkpointer.Logger.Debug("Awaiting Checkpoint...", t)
+			go func() {
+				// TODO add request for checkpoint buffer and check status when !204
+				resp,err:=http.Get(checkpointBufferURL)
+				if err!=nil{
+					checkpointer.Logger.Error("Could not ")
+				}
+				if resp.StatusCode!=204{
+					checkpointer.Logger.Info("Checkpoint found in buffer")
+					found <-true
+				}else if resp.StatusCode==204{
+					checkpointer.Logger.Debug("Checkpoint not found in buffer")
+				}else{
+					checkpointer.Logger.Debug("No condition satisfied","StatusCode",resp.StatusCode)
+				}
+
+				defer resp.Body.Close()
+			}()
 		}
 	}
 	return
