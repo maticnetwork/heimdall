@@ -280,11 +280,6 @@ func (checkpointer *MaticCheckpointer) sendRequest(newHeader *types.Header) {
 }
 
 func(checkpointer *MaticCheckpointer) StartPollingCheckpoint(interval time.Duration){
-	// poll for new checkpoint every 15 secs
-	// when found start 5 min timer
-	// if checkpoint still in buffer after 5 mins (make sure its the same checkpoint)
-	// send no ack
-	// restart step 1
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 	found := make(chan []byte)
@@ -302,15 +297,13 @@ func(checkpointer *MaticCheckpointer) StartPollingCheckpoint(interval time.Durat
 
 			// sleep for timestamp+5 minutes
 			checkpointCreationTime:= time.Unix(int64(headerBlock.TimeStamp),0)
-			//timeToWait := checkpointCreationTime.Add(5*time.Minute)
+			timeToWait := checkpointCreationTime.Add(2*time.Minute)
 			timeDiff:=time.Now().Sub(checkpointCreationTime)
 			var index float64
-			if timeDiff >= 5*time.Minute {
-				index = math.Round(timeDiff.Minutes()/5)
+			if timeDiff >= 2*time.Minute {
+				index = math.Round(timeDiff.Minutes()/2)
 			} else{
-				checkpointer.Logger.Error("starting",time.Now().UTC())
-				time.Sleep(timeDiff)
-				checkpointer.Logger.Error("finished",time.Now().UTC())
+				time.Sleep(timeToWait.Sub(time.Now()))
 				index = 1
 			}
 
@@ -323,7 +316,24 @@ func(checkpointer *MaticCheckpointer) StartPollingCheckpoint(interval time.Durat
 
 			// if same checkpoint still exists
 			if bytes.Compare(data,body)==0 && getValidProposers(checkpointer,int(index),helper.GetPubKey().Address().Bytes()){
-				//TODO send no ack
+				checkpointer.Logger.Debug("Sending NO ACK message","ACK-ETA",timeToWait.String(),"CurrentTime",time.Now().String(),"ProposerCount",index)
+				// send NO ACK
+				txBytes, err := helper.CreateTxBytes(
+					checkpoint.NewMsgCheckpointNoAck(
+						uint64(time.Now().Unix()),
+					),
+				)
+				if err != nil {
+					checkpointer.Logger.Error("Error while creating tx bytes", "error", err)
+					return
+				}
+
+				resp, err := helper.SendTendermintRequest(cliContext.NewCLIContext(), txBytes)
+				if err != nil {
+					checkpointer.Logger.Error("Error while sending request to Tendermint", "error", err)
+					return
+				}
+				checkpointer.Logger.Error("No ACK transaction sent","TxHash",resp.Hash,"Checkpoint",headerBlock.String())
 			}
 			return
 		case t := <-ticker.C:
@@ -363,19 +373,22 @@ func getValidProposers(checkpointer *MaticCheckpointer,count int,address []byte)
 	resp,err:=http.Get(proposersURL+"/"+strconv.Itoa(count))
 	if err!=nil{
 		checkpointer.Logger.Error("Unable to send request for next proposers","Error",err)
+		return false
 	}
 
 	body,err:=ioutil.ReadAll(resp.Body)
 	if err!=nil{
 		checkpointer.Logger.Error("Unable to read data from response","Error",err)
+		return false
 	}
 
 	// unmarshall data from buffer
 	var proposers []hmtypes.Validator
 	if err:=json.Unmarshal(body,&proposers); err!=nil{
 		checkpointer.Logger.Error("Error unmarshalling checkpoint data ","Error",err)
+		return false
 	}
-	
+
 	checkpointer.Logger.Debug("Fetched proposers list from heimdall","Index",count,"Proposers",proposers)
 
 	for _,proposer:=range proposers {

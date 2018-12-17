@@ -157,13 +157,16 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k common.
 	// current time
 	currentTime := msg.TimeStamp
 	// buffer time
-	bufferTime := uint64(2 * helper.CheckpointBufferTime.Seconds())
+	//bufferTime := uint64(helper.CheckpointBufferTime.Seconds())
+	bufferTime := uint64(2*time.Second)
 
 	// fetch last checkpoint from store
-	lastCheckpoint, err := k.GetLastCheckpoint(ctx)
+	// TODO figure out how to handle this error
+	lastCheckpoint, _ := k.GetLastCheckpoint(ctx)
 
 	// if last checkpoint is not present or last checkpoint happens before checkpoint buffer time -- thrown an error
-	if err != nil || currentTime < lastCheckpoint.TimeStamp || (currentTime-lastCheckpoint.TimeStamp < bufferTime) {
+	if currentTime < lastCheckpoint.TimeStamp|| (currentTime-lastCheckpoint.TimeStamp < bufferTime) {
+		common.CheckpointLogger.Debug("log","condition",currentTime-lastCheckpoint.TimeStamp,"buffer",bufferTime,"lsat",lastCheckpoint.TimeStamp)
 		return common.ErrInvalidNoACK(k.Codespace).Result()
 	}
 
