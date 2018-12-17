@@ -2,7 +2,6 @@ package app
 
 import (
 	"bytes"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 
@@ -123,6 +122,7 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 		// --- Start update to new validators
 
 		currentValidatorSet := app.masterKeeper.GetValidatorSet(ctx)
+		currentValidatorSetCopy := currentValidatorSet.Copy()
 		allValidators := app.masterKeeper.GetAllValidators(ctx)
 		validatorToSignerMap := app.masterKeeper.GetValidatorToSignerMap(ctx)
 		ackCount := app.masterKeeper.GetACKCount(ctx)
@@ -140,21 +140,22 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 		if err != nil {
 			logger.Error("Unable to update validator set in state", "Error", err)
 		} else {
-			// GetAllValidators from store (includes previous validator set + updates)
-			for _, validator := range allValidators {
-				power := int64(validator.Power)
-
-				key := hex.EncodeToString(validator.Address.Bytes()) // get validator address string
-				s, exists := validatorToSignerMap[key]               // validator to signer
-				if !exists ||                                        // check if validator to signer key exists
-					!bytes.Equal(validator.Signer.Bytes(), s.Bytes()) || // check if old signer
-					!validator.IsCurrentValidator(ackCount) { // check if not current validator
-					power = 0
-				}
-
+			// remove all stale validators
+			for _, validator := range currentValidatorSetCopy.Validators {
 				// validator update
 				val := abci.ValidatorUpdate{
-					Power:  power,
+					Power:  0,
+					PubKey: validator.PubKey.ABCIPubKey(),
+				}
+				valUpdates = append(valUpdates, val)
+			}
+
+			// add new validators
+			currentValidatorSet := app.masterKeeper.GetValidatorSet(ctx)
+			for _, validator := range currentValidatorSet.Validators {
+				// validator update
+				val := abci.ValidatorUpdate{
+					Power:  int64(validator.Power),
 					PubKey: validator.PubKey.ABCIPubKey(),
 				}
 				valUpdates = append(valUpdates, val)
