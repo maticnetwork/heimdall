@@ -13,6 +13,7 @@ const (
 
 	// TODO fetch port from config
 	checkpointBufferURL = "http://localhost:1317/checkpoint/buffer"
+	proposersURL = "http://localhost:1317/staking/proposer"
 
 	bridgeDBFlag = "bridge-db"
 	lastBlockKey = "last-block" // storage key

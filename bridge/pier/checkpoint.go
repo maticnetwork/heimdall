@@ -26,6 +26,8 @@ import (
 	"encoding/json"
 	hmtypes "github.com/maticnetwork/heimdall/types"
 	"bytes"
+	"strconv"
+	"math"
 )
 
 // MaticCheckpointer to propose
@@ -299,20 +301,35 @@ func(checkpointer *MaticCheckpointer) StartPollingCheckpoint(interval time.Durat
 			checkpointer.Logger.Info("Found Checkpoint in buffer!","Checkpoint",headerBlock.String())
 
 			// sleep for timestamp+5 minutes
-			timeToSleep:=time.Unix(int64(headerBlock.TimeStamp),0).Add(5*time.Minute).Second()
-			time.Sleep(time.Duration(timeToSleep))
-			//startTimerForNoACK(data)
-			resp:=sendBufferRequest(checkpointer)
+			checkpointCreationTime:= time.Unix(int64(headerBlock.TimeStamp),0)
+			//timeToWait := checkpointCreationTime.Add(5*time.Minute)
+			timeDiff:=time.Now().Sub(checkpointCreationTime)
+			var index float64
+			if timeDiff >= 5*time.Minute {
+				index = math.Round(timeDiff.Minutes()/5)
+			} else{
+				checkpointer.Logger.Error("starting",time.Now().UTC())
+				time.Sleep(timeDiff)
+				checkpointer.Logger.Error("finished",time.Now().UTC())
+				index = 1
+			}
+
+			// check if checkpoint still exists in buffer
+			resp:=getCheckpointBuffer(checkpointer)
 			body,err:=ioutil.ReadAll(resp.Body)
 			if err!=nil{
 				checkpointer.Logger.Error("Unable to read data from response","Error",err)
 			}
-			bytes.Compare(data,body)
+
+			// if same checkpoint still exists
+			if bytes.Compare(data,body)==0 && getValidProposers(checkpointer,int(index),helper.GetPubKey().Address().Bytes()){
+				//TODO send no ack
+			}
 			return
 		case t := <-ticker.C:
 			checkpointer.Logger.Debug("Awaiting Checkpoint...", t)
 			go func() {
-				resp:=sendBufferRequest(checkpointer)
+				resp:=getCheckpointBuffer(checkpointer)
 
 				if resp.StatusCode!=204{
 					checkpointer.Logger.Info("Checkpoint found in buffer")
@@ -333,10 +350,38 @@ func(checkpointer *MaticCheckpointer) StartPollingCheckpoint(interval time.Durat
 	return
 }
 
-func sendBufferRequest(checkpointer *MaticCheckpointer) (resp *http.Response) {
+func getCheckpointBuffer(checkpointer *MaticCheckpointer) (resp *http.Response) {
 	resp,err:=http.Get(checkpointBufferURL)
 	if err!=nil{
 		checkpointer.Logger.Error("Unable to send request for checkpoint buffer","Error",err)
 	}
 	return resp
+}
+
+func getValidProposers(checkpointer *MaticCheckpointer,count int,address []byte)(bool){
+	checkpointer.Logger.Debug("Fetching next proposers","Count",strconv.Itoa(count))
+	resp,err:=http.Get(proposersURL+"/"+strconv.Itoa(count))
+	if err!=nil{
+		checkpointer.Logger.Error("Unable to send request for next proposers","Error",err)
+	}
+
+	body,err:=ioutil.ReadAll(resp.Body)
+	if err!=nil{
+		checkpointer.Logger.Error("Unable to read data from response","Error",err)
+	}
+
+	// unmarshall data from buffer
+	var proposers []hmtypes.Validator
+	if err:=json.Unmarshal(body,&proposers); err!=nil{
+		checkpointer.Logger.Error("Error unmarshalling checkpoint data ","Error",err)
+	}
+	
+	checkpointer.Logger.Debug("Fetched proposers list from heimdall","Index",count,"Proposers",proposers)
+
+	for _,proposer:=range proposers {
+		if bytes.Compare(proposer.Address.Bytes(),address)==0{
+			return true
+		}
+	}
+	return false
 }
