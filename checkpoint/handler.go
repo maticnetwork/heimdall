@@ -156,7 +156,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper) sd
 func handleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k common.Keeper) sdk.Result {
 	// current time
 	currentTime := time.Unix(int64(msg.TimeStamp),0)	// buffer time
-	//bufferTime := uint64(helper.CheckpointBufferTime.Seconds())
+	//bufferTime := helper.CheckpointBufferTime.Seconds()
 	bufferTime := 2*time.Minute
 
 	// fetch last checkpoint from store
@@ -178,6 +178,10 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k common.
 
 	// set last no ack
 	k.SetLastNoAck(ctx, uint64(currentTime.Unix()))
+
+	// flush buffer
+	k.FlushCheckpointBuffer(ctx)
+	common.CheckpointLogger.Debug("Checkpoint buffer flushed after receiving no-ack")
 
 	// --- Update to new proposer
 
