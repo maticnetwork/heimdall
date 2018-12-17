@@ -292,10 +292,9 @@ func(checkpointer *MaticCheckpointer) StartPollingCheckpoint(interval time.Durat
 		case t := <-ticker.C:
 			checkpointer.Logger.Debug("Awaiting Checkpoint...", t)
 			go func() {
-				// TODO add request for checkpoint buffer and check status when !204
 				resp,err:=http.Get(checkpointBufferURL)
 				if err!=nil{
-					checkpointer.Logger.Error("Could not ")
+					checkpointer.Logger.Error("Unable to send request for checkpoint buffer")
 				}
 				if resp.StatusCode!=204{
 					checkpointer.Logger.Info("Checkpoint found in buffer")
