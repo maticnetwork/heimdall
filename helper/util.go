@@ -45,19 +45,19 @@ func UpdateValidators(
 	for _, validator := range filteredValidators {
 		address := validator.Address.Bytes()
 		_, val := currentSet.GetByAddress(address)
-		if !validator.IsCurrentValidator(ackCount) {
+		if val != nil && !validator.IsCurrentValidator(ackCount) {
 			// remove val
 			_, removed := currentSet.Remove(address)
 			if !removed {
 				return fmt.Errorf("Failed to remove validator %X", address)
 			}
-		} else if val == nil {
+		} else if val == nil && validator.IsCurrentValidator(ackCount) {
 			// add val
 			added := currentSet.Add(validator)
 			if !added {
 				return fmt.Errorf("Failed to add new validator %v", validator)
 			}
-		} else {
+		} else if val != nil {
 			validator.Accum = val.Accum             // use last accum
 			updated := currentSet.Update(validator) // update validator
 			validator.Accum = 0                     // reset accum
