@@ -22,6 +22,10 @@ import (
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/helper"
 	"net/http"
+	"io/ioutil"
+	"encoding/json"
+	hmtypes "github.com/maticnetwork/heimdall/types"
+	"bytes"
 )
 
 // MaticCheckpointer to propose
@@ -281,28 +285,45 @@ func(checkpointer *MaticCheckpointer) StartPollingCheckpoint(interval time.Durat
 	// restart step 1
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
-	found := make(chan bool)
-
-
+	found := make(chan []byte)
 	for {
 		select {
-		case <-found:
-			checkpointer.Logger.Error("Found Checkpoint in buffer!")
+		case data:=<-found:
+
+			// unmarshall data from buffer
+			var headerBlock hmtypes.CheckpointBlockHeader
+			if  err:=json.Unmarshal(data,&headerBlock); err!=nil{
+				checkpointer.Logger.Error("Error unmarshalling checkpoint data ","Error",err)
+			}
+
+			checkpointer.Logger.Info("Found Checkpoint in buffer!","Checkpoint",headerBlock.String())
+
+			// sleep for timestamp+5 minutes
+			timeToSleep:=time.Unix(int64(headerBlock.TimeStamp),0).Add(5*time.Minute).Second()
+			time.Sleep(time.Duration(timeToSleep))
+			//startTimerForNoACK(data)
+			resp:=sendBufferRequest(checkpointer)
+			body,err:=ioutil.ReadAll(resp.Body)
+			if err!=nil{
+				checkpointer.Logger.Error("Unable to read data from response","Error",err)
+			}
+			bytes.Compare(data,body)
 			return
 		case t := <-ticker.C:
 			checkpointer.Logger.Debug("Awaiting Checkpoint...", t)
 			go func() {
-				resp,err:=http.Get(checkpointBufferURL)
-				if err!=nil{
-					checkpointer.Logger.Error("Unable to send request for checkpoint buffer")
-				}
+				resp:=sendBufferRequest(checkpointer)
+
 				if resp.StatusCode!=204{
 					checkpointer.Logger.Info("Checkpoint found in buffer")
-					found <-true
+					data,err:=ioutil.ReadAll(resp.Body)
+					if err!=nil{
+						checkpointer.Logger.Error("Unable to read data from response","Error",err)
+					}
+					found <-data
+
 				}else if resp.StatusCode==204{
-					checkpointer.Logger.Debug("Checkpoint not found in buffer")
-				}else{
-					checkpointer.Logger.Debug("No condition satisfied","StatusCode",resp.StatusCode)
+					checkpointer.Logger.Debug("Checkpoint not found in buffer","Status",resp.StatusCode)
 				}
 
 				defer resp.Body.Close()
@@ -310,4 +331,12 @@ func(checkpointer *MaticCheckpointer) StartPollingCheckpoint(interval time.Durat
 		}
 	}
 	return
+}
+
+func sendBufferRequest(checkpointer *MaticCheckpointer) (resp *http.Response) {
+	resp,err:=http.Get(checkpointBufferURL)
+	if err!=nil{
+		checkpointer.Logger.Error("Unable to send request for checkpoint buffer","Error",err)
+	}
+	return resp
 }
