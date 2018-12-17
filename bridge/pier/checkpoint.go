@@ -284,8 +284,8 @@ func(checkpointer *MaticCheckpointer) StartPollingCheckpoint(interval time.Durat
 	// stop ticker when everything done
 	defer ticker.Stop()
 	// write to channel when we receive checkpoint
-
 	found := make(chan []byte)
+
 	for {
 		select {
 		case data:=<-found:
@@ -342,23 +342,25 @@ func(checkpointer *MaticCheckpointer) StartPollingCheckpoint(interval time.Durat
 			return
 		case t := <-ticker.C:
 			checkpointer.Logger.Debug("Awaiting Checkpoint...", t)
-			go func() {
-				resp:=getCheckpointBuffer(checkpointer)
-				if resp.StatusCode!=204{
-					checkpointer.Logger.Info("Checkpoint found in buffer")
-					data,err:=ioutil.ReadAll(resp.Body)
-					if err!=nil{
-						checkpointer.Logger.Error("Unable to read data from response","Error",err)
-					}
-					found <-data
-				}else if resp.StatusCode==204{
-					checkpointer.Logger.Debug("Checkpoint not found in buffer","Status",resp.StatusCode)
-				}
-				defer resp.Body.Close()
-			}()
+			go readCheckpointBuffer(checkpointer,found)
 		}
 	}
 	return
+}
+
+func readCheckpointBuffer(checkpointer *MaticCheckpointer,found chan<- []byte)  {
+	resp:=getCheckpointBuffer(checkpointer)
+	if resp.StatusCode!=204{
+		checkpointer.Logger.Info("Checkpoint found in buffer")
+		data,err:=ioutil.ReadAll(resp.Body)
+		if err!=nil{
+			checkpointer.Logger.Error("Unable to read data from response","Error",err)
+		}
+		found <-data
+	}else if resp.StatusCode==204{
+		checkpointer.Logger.Debug("Checkpoint not found in buffer","Status",resp.StatusCode)
+	}
+	defer resp.Body.Close()
 }
 
 func getCheckpointBuffer(checkpointer *MaticCheckpointer) (resp *http.Response) {
