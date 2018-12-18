@@ -10,21 +10,21 @@ import (
 const (
 	chainSyncer       = "chain-syncer"
 	maticCheckpointer = "matic-checkpointer"
-	ackService = "ack-service"
+	ackService        = "ack-service"
 
 	// TODO fetch port from config
 	checkpointBufferURL = "http://localhost:1317/checkpoint/buffer"
-	proposersURL = "http://localhost:1317/staking/proposer"
+	proposersURL        = "http://localhost:1317/staking/proposer"
 
 	bridgeDBFlag = "bridge-db"
 	lastBlockKey = "last-block" // storage key
 
-	defaultPollInterval      = 5 * 1000                // in milliseconds
-	defaultMainPollInterval  = 5 * 1000                // in milliseconds
+	defaultPollInterval           = 5 * 1000 // in milliseconds
+	defaultMainPollInterval       = 5 * 1000 // in milliseconds
 	defaultCheckpointPollInterval = 5 * time.Second
-	defaultCheckpointLength  = 256                     // checkpoint number starts with 0, so length = defaultCheckpointLength -1
+	defaultCheckpointLength       = 256 // checkpoint number starts with 0, so length = defaultCheckpointLength -1
 	//maxCheckpointLength      = 4096                    // max blocks in one checkpoint
-	maxCheckpointLength      = 256                    // max blocks in one checkpoint
+	maxCheckpointLength      = 256                     // max blocks in one checkpoint
 	defaultForcePushInterval = maxCheckpointLength * 2 // in seconds (4096 * 2 seconds)
 )
 
