@@ -34,7 +34,11 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 		return common.ErrBadAck(k.Codespace).Result()
 	}
 
-	common.CheckpointLogger.Debug("HeaderBlock fetched", "headerBlock", msg.HeaderBlock, "start", start, "end", end, "Roothash", root)
+	common.CheckpointLogger.Debug("HeaderBlock fetched",
+		"headerBlock", msg.HeaderBlock,
+		"start", start,
+		"end", end,
+		"Roothash", root)
 
 	// get last checkpoint from buffer
 	headerBlock, err := k.GetCheckpointFromBuffer(ctx)
@@ -45,13 +49,19 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 
 	// match header block and checkpoint
 	if start != headerBlock.StartBlock || end != headerBlock.EndBlock || !bytes.Equal(root.Bytes(), headerBlock.RootHash.Bytes()) {
-		common.CheckpointLogger.Error("Invalid ACK", "startExpected", headerBlock.StartBlock, "startReceived", start, "endExpected", headerBlock.EndBlock, "endReceived", end, "rootExpected", root.String(), "rootRecieved", headerBlock.RootHash.String())
+		common.CheckpointLogger.Error("Invalid ACK",
+			"startExpected", headerBlock.StartBlock,
+			"startReceived", start,
+			"endExpected", headerBlock.EndBlock,
+			"endReceived", end,
+			"rootExpected", root.String(),
+			"rootRecieved", headerBlock.RootHash.String())
 		return common.ErrBadAck(k.Codespace).Result()
 	}
 
 	// add checkpoint to headerBlocks
 	k.AddCheckpoint(ctx, msg.HeaderBlock, headerBlock)
-	common.CheckpointLogger.Info("Checkpoint added to store", "roothash", headerBlock.RootHash, "startBlock", headerBlock.StartBlock, "endBlock", headerBlock.EndBlock, "proposer", headerBlock.Proposer)
+	common.CheckpointLogger.Info("Checkpoint added to store", "headerBlock", headerBlock.String())
 
 	// flush buffer
 	k.FlushCheckpointBuffer(ctx)
@@ -118,7 +128,10 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper) sd
 
 	// validate checkpoint
 	if !ValidateCheckpoint(msg.StartBlock, msg.EndBlock, msg.RootHash) {
-		common.CheckpointLogger.Error("RootHash is not valid", "StartBlock", msg.StartBlock, "EndBlock", msg.EndBlock, "RootHash", msg.RootHash)
+		common.CheckpointLogger.Error("RootHash is not valid",
+			"StartBlock", msg.StartBlock,
+			"EndBlock", msg.EndBlock,
+			"RootHash", msg.RootHash)
 		return common.ErrBadBlockDetails(k.Codespace).Result()
 	}
 
@@ -126,14 +139,18 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper) sd
 	if lastCheckpoint, err := k.GetLastCheckpoint(ctx); err == nil {
 		// make sure new checkpoint is after tip
 		if lastCheckpoint.EndBlock > msg.StartBlock {
-			common.CheckpointLogger.Error("Checkpoint already exists", "currentTip", lastCheckpoint.EndBlock, "startBlock", msg.StartBlock)
+			common.CheckpointLogger.Error("Checkpoint already exists",
+				"currentTip", lastCheckpoint.EndBlock,
+				"startBlock", msg.StartBlock)
 			return common.ErrBadBlockDetails(k.Codespace).Result()
 		}
 	}
 
 	// check proposer in message
 	if !bytes.Equal(msg.Proposer.Bytes(), k.GetValidatorSet(ctx).Proposer.Signer.Bytes()) {
-		common.CheckpointLogger.Error("Invalid proposer in message", "currentProposer", k.GetValidatorSet(ctx).Proposer.Signer.String(), "checkpointProposer", msg.Proposer.String())
+		common.CheckpointLogger.Error("Invalid proposer in message",
+			"currentProposer", k.GetValidatorSet(ctx).Proposer.Signer.String(),
+			"checkpointProposer", msg.Proposer.String())
 		return common.ErrBadProposerDetails(k.Codespace, k.GetValidatorSet(ctx).Proposer.Signer).Result()
 	}
 

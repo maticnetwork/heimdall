@@ -180,7 +180,10 @@ func (ackService *AckService) processCheckpoint(data []byte) {
 
 	// if same checkpoint still exists
 	if bytes.Compare(data, body) == 0 && ackService.getValidProposers(int(index), helper.GetPubKey().Address().Bytes()) {
-		ackService.Logger.Debug("Sending NO ACK message", "ACK-ETA", timeToWait.String(), "CurrentTime", time.Now().String(), "ProposerCount", index)
+		ackService.Logger.Debug("Sending NO ACK message",
+			"ACK-ETA", timeToWait.String(),
+			"CurrentTime", time.Now().String(),
+			"ProposerCount", index)
 		// send NO ACK
 		txBytes, err := helper.CreateTxBytes(
 			checkpoint.NewMsgCheckpointNoAck(
