@@ -10,6 +10,7 @@ import (
 const (
 	chainSyncer       = "chain-syncer"
 	maticCheckpointer = "matic-checkpointer"
+	ackService = "ack-service"
 
 	// TODO fetch port from config
 	checkpointBufferURL = "http://localhost:1317/checkpoint/buffer"

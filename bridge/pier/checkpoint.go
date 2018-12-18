@@ -21,13 +21,6 @@ import (
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/helper"
-	"net/http"
-	"io/ioutil"
-	"encoding/json"
-	hmtypes "github.com/maticnetwork/heimdall/types"
-	"bytes"
-	"strconv"
-	"math"
 )
 
 // MaticCheckpointer to propose
@@ -106,9 +99,6 @@ func (checkpointer *MaticCheckpointer) OnStart() error {
 
 	// start header process
 	go checkpointer.StartHeaderProcess(headerCtx)
-
-	// start polling for checkpoint in buffer
-	go checkpointer.StartPollingCheckpoint(defaultCheckpointPollInterval)
 
 	// subscribe to new head
 	subscription, err := checkpointer.MaticClient.SubscribeNewHead(ctx, checkpointer.HeaderChannel)
@@ -277,127 +267,4 @@ func (checkpointer *MaticCheckpointer) sendRequest(newHeader *types.Header) {
 	}
 
 	checkpointer.Logger.Error("Checkpoint sent successfully", "hash", hex.EncodeToString(resp.Hash), "start", start, "end", end, "root", root)
-}
-
-func(checkpointer *MaticCheckpointer) StartPollingCheckpoint(interval time.Duration){
-	ticker := time.NewTicker(interval)
-	// stop ticker when everything done
-	defer ticker.Stop()
-	// write to channel when we receive checkpoint
-	found := make(chan []byte)
-
-	for {
-		select {
-		case data:=<-found:
-
-			// unmarshall data from buffer
-			var headerBlock hmtypes.CheckpointBlockHeader
-			if  err:=json.Unmarshal(data,&headerBlock); err!=nil{
-				checkpointer.Logger.Error("Error unmarshalling checkpoint data ","Error",err)
-			}
-
-			checkpointer.Logger.Info("Found Checkpoint in buffer!","Checkpoint",headerBlock.String())
-
-			// sleep for timestamp+5 minutes
-			checkpointCreationTime:= time.Unix(int64(headerBlock.TimeStamp),0)
-			timeToWait := checkpointCreationTime.Add(helper.CheckpointBufferTime)
-			timeDiff:=time.Now().Sub(checkpointCreationTime)
-
-			var index float64
-			if timeDiff >= helper.CheckpointBufferTime {
-				index = math.Round(timeDiff.Minutes()/helper.MinutesAliveForBuffer)
-			} else{
-				time.Sleep(timeToWait.Sub(time.Now()))
-				index = 1
-			}
-
-			// check if checkpoint still exists in buffer
-			resp:=getCheckpointBuffer(checkpointer)
-			body,err:=ioutil.ReadAll(resp.Body)
-			if err!=nil{
-				checkpointer.Logger.Error("Unable to read data from response","Error",err)
-			}
-
-			// if same checkpoint still exists
-			if bytes.Compare(data,body)==0 && getValidProposers(checkpointer,int(index),helper.GetPubKey().Address().Bytes()){
-				checkpointer.Logger.Debug("Sending NO ACK message","ACK-ETA",timeToWait.String(),"CurrentTime",time.Now().String(),"ProposerCount",index)
-				// send NO ACK
-				txBytes, err := helper.CreateTxBytes(
-					checkpoint.NewMsgCheckpointNoAck(
-						uint64(time.Now().Unix()),
-					),
-				)
-				if err != nil {
-					checkpointer.Logger.Error("Error while creating tx bytes", "error", err)
-					return
-				}
-
-				resp, err := helper.SendTendermintRequest(cliContext.NewCLIContext(), txBytes)
-				if err != nil {
-					checkpointer.Logger.Error("Error while sending request to Tendermint", "error", err)
-					return
-				}
-				checkpointer.Logger.Error("No ACK transaction sent","TxHash",resp.Hash,"Checkpoint",headerBlock.String())
-			}
-			return
-		case t := <-ticker.C:
-			checkpointer.Logger.Debug("Awaiting Checkpoint...", t)
-			go readCheckpointBuffer(checkpointer,found)
-		}
-	}
-	return
-}
-
-func readCheckpointBuffer(checkpointer *MaticCheckpointer,found chan<- []byte)  {
-	resp:=getCheckpointBuffer(checkpointer)
-	if resp.StatusCode!=204{
-		checkpointer.Logger.Info("Checkpoint found in buffer")
-		data,err:=ioutil.ReadAll(resp.Body)
-		if err!=nil{
-			checkpointer.Logger.Error("Unable to read data from response","Error",err)
-		}
-		found <-data
-	}else if resp.StatusCode==204{
-		checkpointer.Logger.Debug("Checkpoint not found in buffer","Status",resp.StatusCode)
-	}
-	defer resp.Body.Close()
-}
-
-func getCheckpointBuffer(checkpointer *MaticCheckpointer) (resp *http.Response) {
-	resp,err:=http.Get(checkpointBufferURL)
-	if err!=nil{
-		checkpointer.Logger.Error("Unable to send request for checkpoint buffer","Error",err)
-	}
-	return resp
-}
-
-func getValidProposers(checkpointer *MaticCheckpointer,count int,address []byte)(bool){
-	checkpointer.Logger.Debug("Fetching next proposers","Count",strconv.Itoa(count))
-	resp,err:=http.Get(proposersURL+"/"+strconv.Itoa(count))
-	if err!=nil{
-		checkpointer.Logger.Error("Unable to send request for next proposers","Error",err)
-		return false
-	}
-
-	body,err:=ioutil.ReadAll(resp.Body)
-	if err!=nil{
-		checkpointer.Logger.Error("Unable to read data from response","Error",err)
-		return false
-	}
-
-	// unmarshall data from buffer
-	var proposers []hmtypes.Validator
-	if err:=json.Unmarshal(body,&proposers); err!=nil{
-		checkpointer.Logger.Error("Error unmarshalling checkpoint data ","Error",err)
-		return false
-	}
-
-	checkpointer.Logger.Debug("Fetched proposers list from heimdall","Index",count,"Proposers",proposers)
-
-	for _,proposer:=range proposers {
-		if bytes.Compare(proposer.Address.Bytes(),address)==0{
-			return true
-		}
-	}
-	return false
 }
