@@ -90,24 +90,33 @@ func handleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k hmCommon.Keep
 		return hmCommon.ErrNoValidator(k.Codespace).Result()
 	}
 
-	pubKey := msg.NewSignerPubKey
-	newSigner := pubKey.Address()
+	newPubKey := msg.NewSignerPubKey
+	newSigner := newPubKey.Address()
 
 	// check if updating signer
 	if !bytes.Equal(newSigner.Bytes(), validator.Signer.Bytes()) {
-		hmCommon.StakingLogger.Debug("Updating new signer", "signer", newSigner.String(), "validatorAddress", msg.ValidatorAddress.String())
+		// Update signer in prev Validator
+		oldSigner := validator.Signer
+		validator.Signer = newSigner
+		validator.PubKey = newPubKey
 
-		// update
-		if err := k.UpdateSigner(ctx, newSigner, pubKey, validator.Signer); err != nil {
-			hmCommon.StakingLogger.Error("Unable to update signer", "error", err, "currentSigner", validator.Signer.String(), "signerFromMsg", pubKey.Address().String())
-			return hmCommon.ErrSignerUpdateError(k.Codespace).Result()
-		}
+		hmCommon.StakingLogger.Debug("Updating new signer", "signer", newSigner.String(), "oldSigner", oldSigner.String(), "validatorAddress", msg.ValidatorAddress.String())
 	}
 
-	// set new power
-	validator.Power = msg.NewAmount // TODO change new amount to validator power
-	// update validator to store with new power
-	k.AddValidator(ctx, validator)
+	// power change
+	if validator.Power != msg.NewAmount {
+		// set new power
+		validator.Power = msg.NewAmount // TODO change new amount to validator power
+
+		hmCommon.StakingLogger.Debug("Updating power", "newPower", validator.Power, "validatorAddress", msg.ValidatorAddress.String())
+	}
+
+	// save validator
+	err := k.AddValidator(ctx, validator)
+	if err != nil {
+		hmCommon.StakingLogger.Error("Unable to update signer", "error", err, "validatorAddress", validator.Address.String())
+		return hmCommon.ErrSignerUpdateError(k.Codespace).Result()
+	}
 
 	return sdk.Result{}
 }

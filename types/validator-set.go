@@ -210,6 +210,9 @@ func (vals *ValidatorSet) Update(val *Validator) (updated bool) {
 	vals.Validators[index] = val.Copy()
 	// Invalidate cache
 	// vals.Proposer = nil
+	if vals.Proposer != nil && bytes.Equal(vals.Proposer.Address.Bytes(), val.Address.Bytes()) {
+		vals.Proposer = val.Copy()
+	}
 	vals.totalVotingPower = 0
 	return true
 }
