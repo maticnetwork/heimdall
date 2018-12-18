@@ -18,7 +18,7 @@ var startCmd = &cobra.Command{
 		services := [...]common.Service{
 			pier.NewMaticCheckpointer(),
 			pier.NewChainSyncer(),
-			pier.NewAckService(),	
+			pier.NewAckService(),
 		}
 
 		// sync group

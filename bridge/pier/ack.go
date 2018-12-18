@@ -27,12 +27,11 @@ type AckService struct {
 	// storage client
 	storageClient *leveldb.DB
 
+	// checkpoint header channel
 	CheckpointChannel chan *hmtypes.CheckpointBlockHeader
-	// cancel function for poll/subscription
-	// cancel function for poll/subscription
-	cancelSubscription context.CancelFunc
+
 	// header listener subscription
-	cancelHeaderProcess context.CancelFunc
+	cancelACKProcess context.CancelFunc
 }
 
 // NewMaticCheckpointer returns new service object
@@ -55,8 +54,11 @@ func NewAckService() *AckService {
 func (ackService *AckService) OnStart() error {
 	ackService.BaseService.OnStart() // Always call the overridden method.
 
+	// create cancellable context
+	ackCtx, cancelACKProcess := context.WithCancel(context.Background())
+	ackService.cancelACKProcess = cancelACKProcess
 	// start polling for checkpoint in buffer
-	go ackService.StartPollingCheckpoint(defaultCheckpointPollInterval)
+	go ackService.StartPollingCheckpoint(defaultCheckpointPollInterval,ackCtx)
 
 	// subscribed to new head
 	ackService.Logger.Debug("Subscribed to new head")
@@ -65,7 +67,18 @@ func (ackService *AckService) OnStart() error {
 }
 
 
-func(ackService *AckService) StartPollingCheckpoint(interval time.Duration){
+// OnStop stops all necessary go routines
+func (ackService *AckService) OnStop() {
+	ackService.BaseService.OnStop() // Always call the overridden method.
+
+	// cancel ack process
+	ackService.cancelACKProcess()
+	// close bridge db instance
+	closeBridgeDBInstance()
+}
+
+
+func(ackService *AckService) StartPollingCheckpoint(interval time.Duration,ackCtx context.Context){
 	ticker := time.NewTicker(interval)
 	// stop ticker when everything done
 	defer ticker.Stop()
@@ -75,67 +88,19 @@ func(ackService *AckService) StartPollingCheckpoint(interval time.Duration){
 	for {
 		select {
 		case data:=<-found:
-
-			// unmarshall data from buffer
-			var headerBlock hmtypes.CheckpointBlockHeader
-			if  err:=json.Unmarshal(data,&headerBlock); err!=nil{
-				ackService.Logger.Error("Error unmarshalling checkpoint data ","Error",err)
-			}
-
-			ackService.Logger.Info("Found Checkpoint in buffer!","Checkpoint",headerBlock.String())
-
-			// sleep for timestamp+5 minutes
-			checkpointCreationTime:= time.Unix(int64(headerBlock.TimeStamp),0)
-			timeToWait := checkpointCreationTime.Add(helper.CheckpointBufferTime)
-			timeDiff:=time.Now().Sub(checkpointCreationTime)
-
-			var index float64
-			if timeDiff >= helper.CheckpointBufferTime {
-				index = math.Round(timeDiff.Minutes()/helper.MinutesAliveForBuffer)
-			} else{
-				time.Sleep(timeToWait.Sub(time.Now()))
-				index = 1
-			}
-
-			// check if checkpoint still exists in buffer
-			resp:=getCheckpointBuffer(ackService)
-			body,err:=ioutil.ReadAll(resp.Body)
-			if err!=nil{
-				ackService.Logger.Error("Unable to read data from response","Error",err)
-			}
-
-			// if same checkpoint still exists
-			if bytes.Compare(data,body)==0 && getValidProposers(ackService,int(index),helper.GetPubKey().Address().Bytes()){
-				ackService.Logger.Debug("Sending NO ACK message","ACK-ETA",timeToWait.String(),"CurrentTime",time.Now().String(),"ProposerCount",index)
-				// send NO ACK
-				txBytes, err := helper.CreateTxBytes(
-					checkpoint.NewMsgCheckpointNoAck(
-						uint64(time.Now().Unix()),
-					),
-				)
-				if err != nil {
-					ackService.Logger.Error("Error while creating tx bytes", "error", err)
-					return
-				}
-
-				resp, err := helper.SendTendermintRequest(cliContext.NewCLIContext(), txBytes)
-				if err != nil {
-					ackService.Logger.Error("Error while sending request to Tendermint", "error", err)
-					return
-				}
-				ackService.Logger.Error("No ACK transaction sent","TxHash",resp.Hash,"Checkpoint",headerBlock.String())
-			}
-			return
+			ackService.processCheckpoint(data)
 		case t := <-ticker.C:
 			ackService.Logger.Debug("Awaiting Checkpoint...", t)
-			go readCheckpointBuffer(ackService,found)
+			go ackService.readCheckpointBuffer(found)
+		case <-ackCtx.Done():
+			return
 		}
 	}
 	return
 }
 
-func readCheckpointBuffer(ackService *AckService,found chan<- []byte)  {
-	resp:=getCheckpointBuffer(ackService)
+func (ackService *AckService)readCheckpointBuffer(found chan<- []byte)  {
+	resp:=ackService.getCheckpointBuffer()
 	if resp.StatusCode!=204{
 		ackService.Logger.Info("Checkpoint found in buffer")
 		data,err:=ioutil.ReadAll(resp.Body)
@@ -149,7 +114,7 @@ func readCheckpointBuffer(ackService *AckService,found chan<- []byte)  {
 	defer resp.Body.Close()
 }
 
-func getCheckpointBuffer(ackService *AckService) (resp *http.Response) {
+func (ackService *AckService) getCheckpointBuffer() (resp *http.Response) {
 	resp,err:=http.Get(checkpointBufferURL)
 	if err!=nil{
 		ackService.Logger.Error("Unable to send request for checkpoint buffer","Error",err)
@@ -157,7 +122,7 @@ func getCheckpointBuffer(ackService *AckService) (resp *http.Response) {
 	return resp
 }
 
-func getValidProposers(ackService *AckService,count int,address []byte)(bool){
+func (ackService *AckService) getValidProposers(count int,address []byte)(bool){
 	ackService.Logger.Debug("Fetching next proposers","Count",strconv.Itoa(count))
 	resp,err:=http.Get(proposersURL+"/"+strconv.Itoa(count))
 	if err!=nil{
@@ -186,5 +151,56 @@ func getValidProposers(ackService *AckService,count int,address []byte)(bool){
 		}
 	}
 	return false
+}
+
+func (ackService *AckService)processCheckpoint(data []byte){
+	var headerBlock hmtypes.CheckpointBlockHeader
+	if  err:=json.Unmarshal(data,&headerBlock); err!=nil{
+		ackService.Logger.Error("Error unmarshalling checkpoint data ","Error",err)
+	}
+
+	ackService.Logger.Info("Found Checkpoint in buffer!","Checkpoint",headerBlock.String())
+
+	// sleep for timestamp+5 minutes
+	checkpointCreationTime:= time.Unix(int64(headerBlock.TimeStamp),0)
+	timeToWait := checkpointCreationTime.Add(helper.CheckpointBufferTime)
+	timeDiff:=time.Now().Sub(checkpointCreationTime)
+
+	var index float64
+	if timeDiff >= helper.CheckpointBufferTime {
+		index = math.Round(timeDiff.Minutes()/helper.MinutesAliveForBuffer)
+	} else{
+		time.Sleep(timeToWait.Sub(time.Now()))
+		index = 1
+	}
+
+	// check if checkpoint still exists in buffer
+	resp:=ackService.getCheckpointBuffer()
+	body,err:=ioutil.ReadAll(resp.Body)
+	if err!=nil{
+		ackService.Logger.Error("Unable to read data from response","Error",err)
+	}
+
+	// if same checkpoint still exists
+	if bytes.Compare(data,body)==0 && ackService.getValidProposers(int(index),helper.GetPubKey().Address().Bytes()){
+		ackService.Logger.Debug("Sending NO ACK message","ACK-ETA",timeToWait.String(),"CurrentTime",time.Now().String(),"ProposerCount",index)
+		// send NO ACK
+		txBytes, err := helper.CreateTxBytes(
+			checkpoint.NewMsgCheckpointNoAck(
+				uint64(time.Now().Unix()),
+			),
+		)
+		if err != nil {
+			ackService.Logger.Error("Error while creating tx bytes", "error", err)
+			return
+		}
+
+		resp, err := helper.SendTendermintRequest(cliContext.NewCLIContext(), txBytes)
+		if err != nil {
+			ackService.Logger.Error("Error while sending request to Tendermint", "error", err)
+			return
+		}
+		ackService.Logger.Error("No ACK transaction sent","TxHash",resp.Hash,"Checkpoint",headerBlock.String())
+	}
 }
 
