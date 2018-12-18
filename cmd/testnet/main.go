@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -15,7 +14,6 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	amino "github.com/tendermint/go-amino"
 	cfg "github.com/tendermint/tendermint/config"
 	tmCommon "github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/p2p"
@@ -258,18 +256,18 @@ func initializeNodeValidatorFiles(
 	return nodeID, pval
 }
 
-func loadGenesisDoc(cdc *amino.Codec, genFile string) (genDoc types.GenesisDoc, err error) {
-	genContents, err := ioutil.ReadFile(genFile)
-	if err != nil {
-		return genDoc, err
-	}
-
-	if err := cdc.UnmarshalJSON(genContents, &genDoc); err != nil {
-		return genDoc, err
-	}
-
-	return genDoc, err
-}
+//func loadGenesisDoc(cdc *amino.Codec, genFile string) (genDoc types.GenesisDoc, err error) {
+//	genContents, err := ioutil.ReadFile(genFile)
+//	if err != nil {
+//		return genDoc, err
+//	}
+//
+//	if err := cdc.UnmarshalJSON(genContents, &genDoc); err != nil {
+//		return genDoc, err
+//	}
+//
+//	return genDoc, err
+//}
 
 func hostnameOrIP(i int) string {
 	return fmt.Sprintf("%s%d", viper.GetString(flagNodeHostPrefix), i)

@@ -201,5 +201,7 @@ func (ackService *AckService) processCheckpoint(data []byte) {
 			return
 		}
 		ackService.Logger.Error("No ACK transaction sent", "TxHash", resp.Hash, "Checkpoint", headerBlock.String())
+		// TODO try to remove this
+		time.Sleep(15*time.Second)
 	}
 }
