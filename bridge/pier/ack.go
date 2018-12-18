@@ -37,7 +37,7 @@ type AckService struct {
 // NewMaticCheckpointer returns new service object
 func NewAckService() *AckService {
 	// create logger
-	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", ackService)
+	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", ACKService)
 
 	// creating checkpointer object
 	ackservice := &AckService{
@@ -45,7 +45,7 @@ func NewAckService() *AckService {
 		CheckpointChannel: make(chan *hmtypes.CheckpointBlockHeader),
 	}
 
-	ackservice.BaseService = *common.NewBaseService(logger, ackService, ackservice)
+	ackservice.BaseService = *common.NewBaseService(logger, ACKService, ackservice)
 	return ackservice
 }
 
@@ -178,7 +178,7 @@ func (ackService *AckService) processCheckpoint(data []byte) {
 		ackService.Logger.Error("Unable to read data from response", "Error", err)
 	}
 
-	// if same checkpoint still exists
+	// check if same checkpoint still exists
 	if bytes.Compare(data, body) == 0 && ackService.getValidProposers(int(index), helper.GetPubKey().Address().Bytes()) {
 		ackService.Logger.Debug("Sending NO ACK message",
 			"ACK-ETA", timeToWait.String(),
@@ -201,7 +201,9 @@ func (ackService *AckService) processCheckpoint(data []byte) {
 			return
 		}
 		ackService.Logger.Error("No ACK transaction sent", "TxHash", resp.Hash, "Checkpoint", headerBlock.String())
-		// TODO try to remove this
+
+		// TODO try to remove
+		// reason for addition:no ack transaction is being sent while previous one is being processed)
 		time.Sleep(15 * time.Second)
 	}
 }
