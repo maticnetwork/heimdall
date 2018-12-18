@@ -182,7 +182,7 @@ func (vals *ValidatorSet) Add(val *Validator) (added bool) {
 	if idx >= len(vals.Validators) {
 		vals.Validators = append(vals.Validators, val)
 		// Invalidate cache
-		vals.Proposer = nil
+		// vals.Proposer = nil
 		vals.totalVotingPower = 0
 		return true
 	} else if bytes.Equal(vals.Validators[idx].Address.Bytes(), val.Address.Bytes()) {
@@ -194,7 +194,7 @@ func (vals *ValidatorSet) Add(val *Validator) (added bool) {
 		copy(newValidators[idx+1:], vals.Validators[idx:])
 		vals.Validators = newValidators
 		// Invalidate cache
-		vals.Proposer = nil
+		// vals.Proposer = nil
 		vals.totalVotingPower = 0
 		return true
 	}
@@ -209,7 +209,10 @@ func (vals *ValidatorSet) Update(val *Validator) (updated bool) {
 	}
 	vals.Validators[index] = val.Copy()
 	// Invalidate cache
-	vals.Proposer = nil
+	// vals.Proposer = nil
+	if vals.Proposer != nil && bytes.Equal(vals.Proposer.Address.Bytes(), val.Address.Bytes()) {
+		vals.Proposer = val.Copy()
+	}
 	vals.totalVotingPower = 0
 	return true
 }
@@ -230,7 +233,9 @@ func (vals *ValidatorSet) Remove(address []byte) (val *Validator, removed bool) 
 	}
 	vals.Validators = newValidators
 	// Invalidate cache
-	vals.Proposer = nil
+	if removedVal != nil && bytes.Equal(address, removedVal.Address.Bytes()) {
+		vals.Proposer = nil
+	}
 	vals.totalVotingPower = 0
 	return removedVal, true
 }

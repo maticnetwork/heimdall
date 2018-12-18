@@ -40,7 +40,7 @@ func ErrInvalidMsg(codespace sdk.CodespaceType, format string, args ...interface
 // -------- Checkpoint Errors
 
 func ErrBadProposerDetails(codespace sdk.CodespaceType, proposer common.Address) sdk.Error {
-	return newError(codespace, CodeInvalidProposerInput, "Proposer is not valid , current proposer is"+proposer.String())
+	return newError(codespace, CodeInvalidProposerInput, "Proposer is not valid, current proposer is "+proposer.String())
 }
 
 func ErrBadBlockDetails(codespace sdk.CodespaceType) sdk.Error {

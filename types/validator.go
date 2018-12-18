@@ -22,8 +22,11 @@ type Validator struct {
 
 // IsCurrentValidator checks if validator is in current validator set
 func (v *Validator) IsCurrentValidator(ackCount uint64) bool {
+	// current epoch will be ack count + 1
+	currentEpoch := ackCount + 1
+
 	// validator hasnt initialised unstake
-	if v.StartEpoch <= ackCount && (v.EndEpoch == 0 || v.EndEpoch >= ackCount) && v.Power > 0 {
+	if v.StartEpoch <= currentEpoch && (v.EndEpoch == 0 || v.EndEpoch >= currentEpoch) && v.Power > 0 {
 		return true
 	}
 
