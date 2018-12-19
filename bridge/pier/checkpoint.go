@@ -266,5 +266,5 @@ func (checkpointer *MaticCheckpointer) sendRequest(newHeader *types.Header) {
 		return
 	}
 
-	checkpointer.Logger.Error("Checkpoint sent successfully", "hash", hex.EncodeToString(resp.Hash), "start", start, "end", end, "root", root)
+	checkpointer.Logger.Info("Checkpoint sent successfully", "hash", resp.Hash.String(), "start", start, "end", end, "root", hex.EncodeToString(root))
 }
