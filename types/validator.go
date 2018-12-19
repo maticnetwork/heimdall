@@ -3,6 +3,7 @@ package types
 import (
 	"bytes"
 	"fmt"
+	"math/big"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/ethereum/go-ethereum/common"
@@ -89,4 +90,15 @@ func (v *Validator) String() string {
 		v.Signer.String(),
 		v.Power,
 	)
+}
+
+// GetValidatorPower converts amount to power
+func GetValidatorPower(amount string) uint64 {
+	result := big.NewInt(0)
+	result.SetString(amount, 10)
+	if len(amount) >= 18 {
+		t, _ := big.NewInt(0).SetString("1000000000000000000", 10)
+		result.Div(result, t)
+	}
+	return result.Uint64()
 }
