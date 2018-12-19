@@ -34,7 +34,11 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 		return common.ErrBadAck(k.Codespace).Result()
 	}
 
-	common.CheckpointLogger.Debug("HeaderBlock fetched", "headerBlock", msg.HeaderBlock, "start", start, "end", end, "Roothash", root)
+	common.CheckpointLogger.Debug("HeaderBlock fetched",
+		"headerBlock", msg.HeaderBlock,
+		"start", start,
+		"end", end,
+		"Roothash", root)
 
 	// get last checkpoint from buffer
 	headerBlock, err := k.GetCheckpointFromBuffer(ctx)
@@ -45,13 +49,20 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 
 	// match header block and checkpoint
 	if start != headerBlock.StartBlock || end != headerBlock.EndBlock || !bytes.Equal(root.Bytes(), headerBlock.RootHash.Bytes()) {
-		common.CheckpointLogger.Error("Invalid ACK", "startExpected", headerBlock.StartBlock, "startReceived", start, "endExpected", headerBlock.EndBlock, "endReceived", end, "rootExpected", headerBlock.RootHash.String(), "rootReceived", root.String())
+		common.CheckpointLogger.Error("Invalid ACK",
+			"startExpected", headerBlock.StartBlock,
+			"startReceived", start,
+			"endExpected", headerBlock.EndBlock,
+			"endReceived", end,
+			"rootExpected", root.String(),
+			"rootRecieved", headerBlock.RootHash.String())
+
 		return common.ErrBadAck(k.Codespace).Result()
 	}
 
 	// add checkpoint to headerBlocks
 	k.AddCheckpoint(ctx, msg.HeaderBlock, headerBlock)
-	common.CheckpointLogger.Info("Checkpoint added to store", "roothash", headerBlock.RootHash, "startBlock", headerBlock.StartBlock, "endBlock", headerBlock.EndBlock, "proposer", headerBlock.Proposer)
+	common.CheckpointLogger.Info("Checkpoint added to store", "headerBlock", headerBlock.String())
 
 	// flush buffer
 	k.FlushCheckpointBuffer(ctx)
@@ -83,7 +94,10 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper) sd
 
 	// validate checkpoint
 	if !ValidateCheckpoint(msg.StartBlock, msg.EndBlock, msg.RootHash) {
-		common.CheckpointLogger.Error("RootHash is not valid", "StartBlock", msg.StartBlock, "EndBlock", msg.EndBlock, "RootHash", msg.RootHash)
+		common.CheckpointLogger.Error("RootHash is not valid",
+			"StartBlock", msg.StartBlock,
+			"EndBlock", msg.EndBlock,
+			"RootHash", msg.RootHash)
 		return common.ErrBadBlockDetails(k.Codespace).Result()
 	}
 
@@ -91,14 +105,18 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper) sd
 	if lastCheckpoint, err := k.GetLastCheckpoint(ctx); err == nil {
 		// make sure new checkpoint is after tip
 		if lastCheckpoint.EndBlock > msg.StartBlock {
-			common.CheckpointLogger.Error("Checkpoint already exists", "currentTip", lastCheckpoint.EndBlock, "startBlock", msg.StartBlock)
+			common.CheckpointLogger.Error("Checkpoint already exists",
+				"currentTip", lastCheckpoint.EndBlock,
+				"startBlock", msg.StartBlock)
 			return common.ErrBadBlockDetails(k.Codespace).Result()
 		}
 	}
 
 	// check proposer in message
 	if !bytes.Equal(msg.Proposer.Bytes(), k.GetValidatorSet(ctx).Proposer.Signer.Bytes()) {
-		common.CheckpointLogger.Error("Invalid proposer in message", "currentProposer", k.GetValidatorSet(ctx).Proposer.Signer.String(), "checkpointProposer", msg.Proposer.String())
+		common.CheckpointLogger.Error("Invalid proposer in message",
+			"currentProposer", k.GetValidatorSet(ctx).Proposer.Signer.String(),
+			"checkpointProposer", msg.Proposer.String())
 		return common.ErrBadProposerDetails(k.Codespace, k.GetValidatorSet(ctx).Proposer.Signer).Result()
 	}
 
@@ -120,26 +138,33 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper) sd
 
 func handleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k common.Keeper) sdk.Result {
 	// current time
-	currentTime := msg.TimeStamp
-	// buffer time
-	bufferTime := uint64(2 * helper.CheckpointBufferTime.Seconds())
+	currentTime := time.Unix(int64(msg.TimeStamp), 0) // buffer time
+	bufferTime := helper.CheckpointBufferTime
 
 	// fetch last checkpoint from store
-	lastCheckpoint, err := k.GetLastCheckpoint(ctx)
+	// TODO figure out how to handle this error
+	lastCheckpoint, _ := k.GetLastCheckpoint(ctx)
+	lastCheckpointTime := time.Unix(int64(lastCheckpoint.TimeStamp), 0)
 
 	// if last checkpoint is not present or last checkpoint happens before checkpoint buffer time -- thrown an error
-	if err != nil || currentTime < lastCheckpoint.TimeStamp || (currentTime-lastCheckpoint.TimeStamp < bufferTime) {
+	if lastCheckpointTime.After(currentTime) || (currentTime.Sub(lastCheckpointTime) < bufferTime) {
 		return common.ErrInvalidNoACK(k.Codespace).Result()
 	}
 
 	// check last no ack - prevents repetitive no-ack
-	lastAckTime := k.GetLastNoAck(ctx)
-	if currentTime < lastAckTime || (currentTime-lastAckTime < bufferTime) {
+	lastAck := k.GetLastNoAck(ctx)
+	lastAckTime := time.Unix(int64(lastAck), 0)
+
+	if lastAckTime.After(currentTime) || (currentTime.Sub(lastAckTime) < bufferTime) {
 		return common.ErrTooManyNoACK(k.Codespace).Result()
 	}
 
 	// set last no ack
-	k.SetLastNoAck(ctx, currentTime)
+	k.SetLastNoAck(ctx, uint64(currentTime.Unix()))
+
+	// flush buffer
+	k.FlushCheckpointBuffer(ctx)
+	common.CheckpointLogger.Debug("Checkpoint buffer flushed after receiving no-ack")
 
 	// --- Update to new proposer
 

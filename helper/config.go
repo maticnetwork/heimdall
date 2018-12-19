@@ -28,7 +28,7 @@ const (
 	FlagClientHome         = "home-client"
 	MainRPCUrl             = "https://kovan.infura.io"
 	MaticRPCUrl            = "https://testnet.matic.network"
-	CheckpointBufferTime   = time.Minute * 5 // aka 5 minutes
+	CheckpointBufferTime   = time.Second * 256 // aka 256 seconds
 )
 
 var (
