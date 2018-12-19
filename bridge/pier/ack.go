@@ -76,7 +76,7 @@ func (ackService *AckService) OnStart() error {
 	go ackService.startPollingCheckpoint(ackCtx, defaultCheckpointPollInterval)
 
 	// subscribed to new head
-	ackService.Logger.Debug("Subscribed to new head")
+	ackService.Logger.Debug("Started ACK service")
 
 	return nil
 }
