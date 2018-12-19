@@ -29,7 +29,7 @@ type addValidator struct {
 	SignerPubKey     hmType.PubKey  `json:"pubKey"`
 	StartEpoch       uint64         `json:"startEpoch"`
 	EndEpoch         uint64         `json:"endEpoch"`
-	Amount           uint64         `json:"Amount"`
+	Amount           json.Number    `json:"Amount"`
 }
 
 func newValidatorJoinHandler(cliCtx context.CLIContext) http.HandlerFunc {
@@ -137,7 +137,7 @@ func newValidatorExitHandler(cliCtx context.CLIContext) http.HandlerFunc {
 type updateValidator struct {
 	ValidatorAddress common.Address `json:"address"`
 	NewSignerPubKey  hmType.PubKey  `json:"pubKey"`
-	NewAmount        uint64         `json:"amount"`
+	NewAmount        json.Number    `json:"amount"`
 }
 
 func newValidatorUpdateHandler(cliCtx context.CLIContext) http.HandlerFunc {

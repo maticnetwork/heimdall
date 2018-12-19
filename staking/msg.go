@@ -2,6 +2,8 @@ package staking
 
 import (
 	"bytes"
+	"encoding/json"
+	"regexp"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -27,7 +29,7 @@ type MsgValidatorJoin struct {
 	SignerPubKey     types.PubKey   `json:"pubKey"`
 	StartEpoch       uint64         `json:"startEpoch"`
 	EndEpoch         uint64         `json:"endEpoch"`
-	Amount           uint64         `json:"amount"`
+	Amount           json.Number    `json:"amount"`
 }
 
 func NewMsgValidatorJoin(
@@ -35,7 +37,7 @@ func NewMsgValidatorJoin(
 	pubkey types.PubKey,
 	startEpoch uint64,
 	endEpoch uint64,
-	amount uint64,
+	amount json.Number,
 ) MsgValidatorJoin {
 	return MsgValidatorJoin{
 		ValidatorAddress: address,
@@ -76,12 +78,16 @@ func (msg MsgValidatorJoin) ValidateBasic() sdk.Error {
 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid pub key %v", msg.SignerPubKey.String())
 	}
 
+	r, _ := regexp.Compile("[0-9]+")
+	if msg.Amount == "" || !r.MatchString(msg.Amount.String()) {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid new amount %v", msg.Amount.String())
+	}
+
 	return nil
 }
 
 func (msg MsgValidatorJoin) GetPower() uint64 {
-	// add length checks
-	return msg.Amount // TODO  Get power out of amount. Add 10^-18 here so that we dont overflow easily
+	return types.GetValidatorPower(msg.Amount.String())
 }
 
 //
@@ -94,10 +100,10 @@ var _ sdk.Msg = &MsgSignerUpdate{}
 type MsgSignerUpdate struct {
 	ValidatorAddress common.Address `json:"address"`
 	NewSignerPubKey  types.PubKey   `json:"pubKey"`
-	NewAmount        uint64         `json:"amount"`
+	NewAmount        json.Number    `json:"amount"`
 }
 
-func NewMsgValidatorUpdate(address common.Address, pubKey types.PubKey, amount uint64) MsgSignerUpdate {
+func NewMsgValidatorUpdate(address common.Address, pubKey types.PubKey, amount json.Number) MsgSignerUpdate {
 	return MsgSignerUpdate{
 		ValidatorAddress: address,
 		NewSignerPubKey:  pubKey,
@@ -135,7 +141,16 @@ func (msg MsgSignerUpdate) ValidateBasic() sdk.Error {
 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid pub key %v", msg.NewSignerPubKey.String())
 	}
 
+	r, _ := regexp.Compile("[0-9]+")
+	if msg.NewAmount != "" && !r.MatchString(msg.NewAmount.String()) {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid new amount %v", msg.NewAmount.String())
+	}
+
 	return nil
+}
+
+func (msg MsgSignerUpdate) GetNewPower() uint64 {
+	return types.GetValidatorPower(msg.NewAmount.String())
 }
 
 //
