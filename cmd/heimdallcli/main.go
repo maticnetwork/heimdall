@@ -12,6 +12,7 @@ import (
 	"github.com/tendermint/tendermint/libs/cli"
 
 	"github.com/maticnetwork/heimdall/app"
+	checkpoint "github.com/maticnetwork/heimdall/checkpoint/cli"
 )
 
 // rootCmd is the entry point for this binary
@@ -44,7 +45,11 @@ func main() {
 		client.GetCommands()...,
 	)
 	rootCmd.AddCommand(
-		client.PostCommands()...,
+		client.PostCommands(
+			checkpoint.GetSendCheckpointTx(cdc),
+			checkpoint.GetSendCheckpointACK(cdc),
+			checkpoint.GetSendCheckpointNoACK(cdc),
+		)...,
 	)
 
 	// add proxy, version and key info
