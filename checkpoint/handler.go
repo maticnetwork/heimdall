@@ -102,6 +102,13 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper) sd
 		return common.ErrBadProposerDetails(k.Codespace, k.GetValidatorSet(ctx).Proposer.Signer).Result()
 	}
 
+	// check if proposer has min ether
+	balance,_:=helper.GetBalance(msg.Proposer)
+	if balance < helper.MinBalance{
+		common.CheckpointLogger.Error("Proposer doesnt have enough ether to send checkpoint tx","Balance",balance,"RequiredBalance",helper.MinBalance)
+		return common.ErrLowBalance(k.Codespace,msg.Proposer.String()).Result()
+	}
+
 	// add checkpoint to buffer
 	k.SetCheckpointBuffer(ctx, hmTypes.CheckpointBlockHeader{
 		StartBlock: msg.StartBlock,

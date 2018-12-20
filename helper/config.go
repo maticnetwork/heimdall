@@ -29,6 +29,7 @@ const (
 	MainRPCUrl             = "https://kovan.infura.io"
 	MaticRPCUrl            = "https://testnet.matic.network"
 	CheckpointBufferTime   = time.Minute * 5 // aka 5 minutes
+	MinBalance				= uint64(1)
 )
 
 var (

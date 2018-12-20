@@ -5,6 +5,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/maticnetwork/heimdall/types"
+	"context"
 )
 
 // GetHeaderInfo get header info from header id
@@ -67,4 +68,15 @@ func CurrentChildBlock() (uint64, error) {
 	}
 
 	return currentChildBlock.Uint64(), nil
+}
+
+// get balance of account
+func GetBalance(address common.Address)(uint64,error) {
+	balance,err:=GetMainClient().BalanceAt(context.Background(),address,nil)
+	if err!=nil{
+		Logger.Error("Unable to fetch balance of account from root chain","Error",err,"Address",address.String())
+		return 0,err
+	}
+
+	return balance.Uint64(),nil
 }
