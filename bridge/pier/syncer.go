@@ -120,8 +120,8 @@ func NewChainSyncer() *ChainSyncer {
 	return syncer
 }
 
-// StartHeaderProcess starts header process when they get new header
-func (syncer *ChainSyncer) StartHeaderProcess(ctx context.Context) {
+// startHeaderProcess starts header process when they get new header
+func (syncer *ChainSyncer) startHeaderProcess(ctx context.Context) {
 	for {
 		select {
 		case newHeader := <-syncer.HeaderChannel:
@@ -145,16 +145,16 @@ func (syncer *ChainSyncer) OnStart() error {
 	syncer.cancelHeaderProcess = cancelHeaderProcess
 
 	// start header process
-	go syncer.StartHeaderProcess(headerCtx)
+	go syncer.startHeaderProcess(headerCtx)
 
 	// subscribe to new head
 	subscription, err := syncer.MainClient.SubscribeNewHead(ctx, syncer.HeaderChannel)
 	if err != nil {
 		// start go routine to poll for new header using client object
-		go syncer.StartPolling(ctx, defaultMainPollInterval)
+		go syncer.startPolling(ctx, defaultMainPollInterval)
 	} else {
 		// start go routine to listen new header using subscription
-		go syncer.StartSubscription(ctx, subscription)
+		go syncer.startSubscription(ctx, subscription)
 	}
 
 	// subscribed to new head
@@ -177,8 +177,8 @@ func (syncer *ChainSyncer) OnStop() {
 	syncer.cancelHeaderProcess()
 }
 
-// StartPolling starts polling
-func (syncer *ChainSyncer) StartPolling(ctx context.Context, pollInterval int) {
+// startPolling starts polling
+func (syncer *ChainSyncer) startPolling(ctx context.Context, pollInterval int) {
 	// How often to fire the passed in function in second
 	interval := time.Duration(pollInterval) * time.Millisecond
 
@@ -202,7 +202,7 @@ func (syncer *ChainSyncer) StartPolling(ctx context.Context, pollInterval int) {
 	}
 }
 
-func (syncer *ChainSyncer) StartSubscription(ctx context.Context, subscription ethereum.Subscription) {
+func (syncer *ChainSyncer) startSubscription(ctx context.Context, subscription ethereum.Subscription) {
 	for {
 		select {
 		case err := <-subscription.Err():
