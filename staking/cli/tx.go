@@ -4,7 +4,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/maticnetwork/heimdall/helper"
-	"fmt"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/maticnetwork/heimdall/staking"
@@ -37,17 +36,7 @@ func GetSendValidatorJoinTx(cdc *codec.Codec) *cobra.Command  {
 
 			msg := staking.NewMsgValidatorJoin(validatorAddr,pubkey,uint64(startEpoch),uint64(endEpoch),json.Number(amountStr))
 
-			txBytes, err := helper.CreateTxBytes(msg)
-			if err != nil {
-				return err
-			}
-
-			resp, err := helper.SendTendermintRequest(cliCtx, txBytes)
-			if err != nil {
-				return err
-			}
-			fmt.Printf("Transaction sent %v",resp.Hash)
-			return err
+			return helper.CreateAndSendTx(msg,cliCtx)
 		},
 	}
 	return cmd
@@ -65,17 +54,7 @@ func GetSendValidatorExitTx(cdc *codec.Codec) *cobra.Command  {
 
 			msg := staking.NewMsgValidatorExit(validatorAddr)
 
-			txBytes, err := helper.CreateTxBytes(msg)
-			if err != nil {
-				return err
-			}
-
-			resp, err := helper.SendTendermintRequest(cliCtx, txBytes)
-			if err != nil {
-				return err
-			}
-			fmt.Printf("Transaction sent %v",resp.Hash)
-			return err
+			return helper.CreateAndSendTx(msg,cliCtx)
 		},
 	}
 	return cmd
@@ -102,17 +81,7 @@ func GetSendValidatorUpdateTx(cdc *codec.Codec) *cobra.Command  {
 
 			msg := staking.NewMsgValidatorUpdate(validatorAddr,pubkey,json.Number(amountStr))
 
-			txBytes, err := helper.CreateTxBytes(msg)
-			if err != nil {
-				return err
-			}
-
-			resp, err := helper.SendTendermintRequest(cliCtx, txBytes)
-			if err != nil {
-				return err
-			}
-			fmt.Printf("Transaction sent %v",resp.Hash)
-			return err
+			return helper.CreateAndSendTx(msg,cliCtx)
 		},
 	}
 	return cmd

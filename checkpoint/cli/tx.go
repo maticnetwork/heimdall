@@ -10,7 +10,6 @@ import (
 	"github.com/spf13/viper"
 	"github.com/ethereum/go-ethereum/common"
 	"strconv"
-	"fmt"
 )
 
 func GetSendCheckpointTx(cdc *codec.Codec) *cobra.Command  {
@@ -19,7 +18,6 @@ func GetSendCheckpointTx(cdc *codec.Codec) *cobra.Command  {
 		Short: "send checkpoint to tendermint and ethereum chain ",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
 
 			ProposerStr := viper.GetString(FlagProposerAddress)
 			StartBlockStr := viper.GetString(FlagStartBlock)
@@ -47,17 +45,7 @@ func GetSendCheckpointTx(cdc *codec.Codec) *cobra.Command  {
 				uint64(time.Now().Unix()),
 			)
 
-			txBytes, err := helper.CreateTxBytes(msg)
-			if err != nil {
-				return err
-			}
-
-			resp, err := helper.SendTendermintRequest(cliCtx, txBytes)
-			if err != nil {
-				return err
-			}
-			fmt.Printf("Transaction sent %v",resp.Hash)
-			return err
+			return helper.CreateAndSendTx(msg,cliCtx)
 		},
 	}
 	return cmd
@@ -79,17 +67,8 @@ func GetSendCheckpointACK(cdc *codec.Codec) *cobra.Command  {
 
 			msg := checkpoint.NewMsgCheckpointAck(HeaderBlock)
 
-			txBytes, err := helper.CreateTxBytes(msg)
-			if err != nil {
-				return err
-			}
+			return helper.CreateAndSendTx(msg,cliCtx)
 
-			resp, err := helper.SendTendermintRequest(cliCtx, txBytes)
-			if err != nil {
-				return err
-			}
-			fmt.Printf("Transaction sent %v",resp.Hash)
-			return err
 		},
 	}
 	return cmd
@@ -104,17 +83,7 @@ func GetSendCheckpointNoACK(cdc *codec.Codec) *cobra.Command{
 
 			msg := checkpoint.NewMsgCheckpointNoAck(uint64(time.Now().Unix()))
 
-			txBytes, err := helper.CreateTxBytes(msg)
-			if err != nil {
-				return err
-			}
-
-			resp, err := helper.SendTendermintRequest(cliCtx, txBytes)
-			if err != nil {
-				return err
-			}
-			fmt.Printf("Transaction sent %v",resp.Hash)
-			return err
+			return helper.CreateAndSendTx(msg,cliCtx)
 		},
 	}
 	return cmd
