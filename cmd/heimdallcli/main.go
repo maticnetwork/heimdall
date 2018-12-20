@@ -13,6 +13,7 @@ import (
 
 	"github.com/maticnetwork/heimdall/app"
 	checkpoint "github.com/maticnetwork/heimdall/checkpoint/cli"
+	staking "github.com/maticnetwork/heimdall/staking/cli"
 )
 
 // rootCmd is the entry point for this binary
@@ -49,13 +50,15 @@ func main() {
 			checkpoint.GetSendCheckpointTx(cdc),
 			checkpoint.GetSendCheckpointACK(cdc),
 			checkpoint.GetSendCheckpointNoACK(cdc),
+			staking.GetSendValidatorExitTx(cdc),
+			staking.GetSendValidatorJoinTx(cdc),
+			staking.GetSendValidatorUpdateTx(cdc),
 		)...,
 	)
 
 	// add proxy, version and key info
 	rootCmd.AddCommand(
 		client.LineBreak,
-		//checkpointRestCmds.ServeCommands(cdc),
 		keys.Commands(),
 		client.LineBreak,
 		version.VersionCmd,

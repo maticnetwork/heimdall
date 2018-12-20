@@ -98,7 +98,7 @@ func GetSendCheckpointACK(cdc *codec.Codec) *cobra.Command  {
 func GetSendCheckpointNoACK(cdc *codec.Codec) *cobra.Command{
 	cmd:=&cobra.Command{
 		Use:   "send-NoACK",
-		Short: "send no-acknowledgement for last proposer transaction",
+		Short: "send no-acknowledgement for last proposer",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
