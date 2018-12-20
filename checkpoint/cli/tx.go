@@ -12,6 +12,7 @@ import (
 	"strconv"
 )
 
+// send checkpoint transaction
 func GetSendCheckpointTx(cdc *codec.Codec) *cobra.Command  {
 	cmd:=&cobra.Command{
 		Use:   "send-checkpoint",
@@ -51,6 +52,8 @@ func GetSendCheckpointTx(cdc *codec.Codec) *cobra.Command  {
 	return cmd
 }
 
+
+// send checkpoint ack transaction
 func GetSendCheckpointACK(cdc *codec.Codec) *cobra.Command  {
 	cmd:=&cobra.Command{
 		Use:   "send-ack",
@@ -68,12 +71,12 @@ func GetSendCheckpointACK(cdc *codec.Codec) *cobra.Command  {
 			msg := checkpoint.NewMsgCheckpointAck(HeaderBlock)
 
 			return helper.CreateAndSendTx(msg,cliCtx)
-
 		},
 	}
 	return cmd
 }
 
+// send no-ack transaction
 func GetSendCheckpointNoACK(cdc *codec.Codec) *cobra.Command{
 	cmd:=&cobra.Command{
 		Use:   "send-NoACK",

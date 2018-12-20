@@ -13,6 +13,7 @@ import (
 	"encoding/json"
 )
 
+// send validator join transaction
 func GetSendValidatorJoinTx(cdc *codec.Codec) *cobra.Command  {
 	cmd:=&cobra.Command{
 		Use:   "validator-join",
@@ -42,6 +43,7 @@ func GetSendValidatorJoinTx(cdc *codec.Codec) *cobra.Command  {
 	return cmd
 }
 
+// send validator exit transaction
 func GetSendValidatorExitTx(cdc *codec.Codec) *cobra.Command  {
 	cmd:=&cobra.Command{
 		Use:   "validator-exit",
@@ -60,6 +62,7 @@ func GetSendValidatorExitTx(cdc *codec.Codec) *cobra.Command  {
 	return cmd
 }
 
+// send validator update transaction
 func GetSendValidatorUpdateTx(cdc *codec.Codec) *cobra.Command  {
 	cmd:=&cobra.Command{
 		Use:   "signer-update",
