@@ -29,7 +29,7 @@ const (
 	FlagClientHome         = "home-client"
 	MainRPCUrl             = "https://kovan.infura.io"
 	MaticRPCUrl            = "https://testnet.matic.network"
-	CheckpointBufferTime   = time.Minute * 5 // aka 5 minutes
+	CheckpointBufferTime   = time.Second * 256 // aka 256 seconds
 )
 
 var (
@@ -207,4 +207,9 @@ func GetPrivKey() secp256k1.PrivKeySecp256k1 {
 // GetPubKey returns pub key object
 func GetPubKey() secp256k1.PubKeySecp256k1 {
 	return pubObject
+}
+
+// GetAddress returns address object
+func GetAddress() []byte {
+	return GetPubKey().Address().Bytes()
 }

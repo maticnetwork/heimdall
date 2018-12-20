@@ -8,7 +8,7 @@ import (
 	"time"
 
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
-	ethereum "github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum"
 	ethCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -73,8 +73,8 @@ func NewMaticCheckpointer() *MaticCheckpointer {
 	return checkpointer
 }
 
-// StartHeaderProcess starts header process when they get new header
-func (checkpointer *MaticCheckpointer) StartHeaderProcess(ctx context.Context) {
+// startHeaderProcess starts header process when they get new header
+func (checkpointer *MaticCheckpointer) startHeaderProcess(ctx context.Context) {
 	for {
 		select {
 		case newHeader := <-checkpointer.HeaderChannel:
@@ -98,16 +98,16 @@ func (checkpointer *MaticCheckpointer) OnStart() error {
 	checkpointer.cancelHeaderProcess = cancelHeaderProcess
 
 	// start header process
-	go checkpointer.StartHeaderProcess(headerCtx)
+	go checkpointer.startHeaderProcess(headerCtx)
 
 	// subscribe to new head
 	subscription, err := checkpointer.MaticClient.SubscribeNewHead(ctx, checkpointer.HeaderChannel)
 	if err != nil {
 		// start go routine to poll for new header using client object
-		go checkpointer.StartPolling(ctx, defaultPollInterval)
+		go checkpointer.startPolling(ctx, defaultPollInterval)
 	} else {
 		// start go routine to listen new header using subscription
-		go checkpointer.StartSubscription(ctx, subscription)
+		go checkpointer.startSubscription(ctx, subscription)
 	}
 
 	// subscribed to new head
@@ -130,7 +130,7 @@ func (checkpointer *MaticCheckpointer) OnStop() {
 	checkpointer.cancelHeaderProcess()
 }
 
-func (checkpointer *MaticCheckpointer) StartPolling(ctx context.Context, pollInterval int) {
+func (checkpointer *MaticCheckpointer) startPolling(ctx context.Context, pollInterval int) {
 	// How often to fire the passed in function in second
 	interval := time.Duration(pollInterval) * time.Millisecond
 
@@ -142,10 +142,12 @@ func (checkpointer *MaticCheckpointer) StartPolling(ctx context.Context, pollInt
 	for {
 		select {
 		case <-ticker.C:
-			header, err := checkpointer.MaticClient.HeaderByNumber(ctx, nil)
-			if err == nil && header != nil {
-				// send data to channel
-				checkpointer.HeaderChannel <- header
+			if isProposer() {
+				header, err := checkpointer.MaticClient.HeaderByNumber(ctx, nil)
+				if err == nil && header != nil {
+					// send data to channel
+					checkpointer.HeaderChannel <- header
+				}
 			}
 		case <-ctx.Done():
 			ticker.Stop()
@@ -154,7 +156,7 @@ func (checkpointer *MaticCheckpointer) StartPolling(ctx context.Context, pollInt
 	}
 }
 
-func (checkpointer *MaticCheckpointer) StartSubscription(ctx context.Context, subscription ethereum.Subscription) {
+func (checkpointer *MaticCheckpointer) startSubscription(ctx context.Context, subscription ethereum.Subscription) {
 	for {
 		select {
 		case err := <-subscription.Err():
@@ -242,12 +244,12 @@ func (checkpointer *MaticCheckpointer) sendRequest(newHeader *types.Header) {
 		return
 	}
 
-	checkpointer.Logger.Info("New checkpoint header created", "latest", latest, "start", start, "end", end, "root", root)
+	checkpointer.Logger.Info("New checkpoint header created", "latest", latest, "start", start, "end", end, "root", hex.EncodeToString(root))
 
 	// TODO submit checkcoint
 	txBytes, err := helper.CreateTxBytes(
 		checkpoint.NewMsgCheckpointBlock(
-			ethCommon.BytesToAddress(helper.GetPubKey().Address().Bytes()),
+			ethCommon.BytesToAddress(helper.GetAddress()),
 			start,
 			end,
 			ethCommon.BytesToHash(root),

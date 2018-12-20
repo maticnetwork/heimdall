@@ -186,7 +186,11 @@ func TestValUpdates(t *testing.T) {
 			currentValSet,                       // pointer to current validator set -- UpdateValidators will modify it
 			keeper.GetAllValidators(ctx),        // All validators
 			keeper.GetValidatorToSignerMap(ctx), // validator to signer map
+<<<<<<< HEAD
 			10, 						 // ack count
+=======
+			10, // ack count
+>>>>>>> 504554fc036254998c34e0fdd5793b263394d7a1
 		)
 		t.Log("Validators in updated validator set")
 		for _, v := range currentValSet.Validators {
