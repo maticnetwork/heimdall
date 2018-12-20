@@ -73,8 +73,8 @@ func NewMaticCheckpointer() *MaticCheckpointer {
 	return checkpointer
 }
 
-// StartHeaderProcess starts header process when they get new header
-func (checkpointer *MaticCheckpointer) StartHeaderProcess(ctx context.Context) {
+// startHeaderProcess starts header process when they get new header
+func (checkpointer *MaticCheckpointer) startHeaderProcess(ctx context.Context) {
 	for {
 		select {
 		case newHeader := <-checkpointer.HeaderChannel:
@@ -98,7 +98,7 @@ func (checkpointer *MaticCheckpointer) OnStart() error {
 	checkpointer.cancelHeaderProcess = cancelHeaderProcess
 
 	// start header process
-	go checkpointer.StartHeaderProcess(headerCtx)
+	go checkpointer.startHeaderProcess(headerCtx)
 
 	// subscribe to new head
 	subscription, err := checkpointer.MaticClient.SubscribeNewHead(ctx, checkpointer.HeaderChannel)
@@ -142,10 +142,12 @@ func (checkpointer *MaticCheckpointer) startPolling(ctx context.Context, pollInt
 	for {
 		select {
 		case <-ticker.C:
-			header, err := checkpointer.MaticClient.HeaderByNumber(ctx, nil)
-			if err == nil && header != nil {
-				// send data to channel
-				checkpointer.HeaderChannel <- header
+			if isProposer() {
+				header, err := checkpointer.MaticClient.HeaderByNumber(ctx, nil)
+				if err == nil && header != nil {
+					// send data to channel
+					checkpointer.HeaderChannel <- header
+				}
 			}
 		case <-ctx.Done():
 			ticker.Stop()
@@ -247,7 +249,7 @@ func (checkpointer *MaticCheckpointer) sendRequest(newHeader *types.Header) {
 	// TODO submit checkcoint
 	txBytes, err := helper.CreateTxBytes(
 		checkpoint.NewMsgCheckpointBlock(
-			ethCommon.BytesToAddress(helper.GetPubKey().Address().Bytes()),
+			ethCommon.BytesToAddress(helper.GetAddress()),
 			start,
 			end,
 			ethCommon.BytesToHash(root),

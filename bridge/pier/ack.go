@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"math"
 	"math/big"
@@ -46,7 +47,7 @@ type AckService struct {
 // NewAckService returns new service object
 func NewAckService() *AckService {
 	// create logger
-	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", ACKService)
+	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", noackService)
 
 	// root chain instance
 	rootchainInstance, err := helper.GetRootChainInstance()
@@ -61,7 +62,7 @@ func NewAckService() *AckService {
 		rootChainInstance: rootchainInstance,
 	}
 
-	ackservice.BaseService = *common.NewBaseService(logger, ACKService, ackservice)
+	ackservice.BaseService = *common.NewBaseService(logger, noackService, ackservice)
 	return ackservice
 }
 
@@ -215,7 +216,7 @@ func (ackService *AckService) getLastNoAckTime() uint64 {
 
 func (ackService *AckService) isValidProposer(count uint64, address []byte) bool {
 	ackService.Logger.Debug("Skipping proposers", "count", strconv.FormatUint(count, 10))
-	resp, err := http.Get(proposersURL + "/" + strconv.FormatUint(count, 10))
+	resp, err := http.Get(fmt.Sprintf(proposersURL, strconv.FormatUint(count, 10)))
 	if err != nil {
 		ackService.Logger.Error("Unable to send request for next proposers", "Error", err)
 		return false
