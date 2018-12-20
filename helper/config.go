@@ -19,6 +19,7 @@ import (
 
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
+	"math/big"
 )
 
 const (
@@ -29,12 +30,12 @@ const (
 	MainRPCUrl             = "https://kovan.infura.io"
 	MaticRPCUrl            = "https://testnet.matic.network"
 	CheckpointBufferTime   = time.Minute * 5 // aka 5 minutes
-	MinBalance				= uint64(1)
 )
 
 var (
 	DefaultCLIHome  = os.ExpandEnv("$HOME/.heimdallcli")
 	DefaultNodeHome = os.ExpandEnv("$HOME/.heimdalld")
+	MinBalance      = big.NewInt(1000000000000000000) // aka 1 Ether
 )
 
 var cdc = amino.NewCodec()

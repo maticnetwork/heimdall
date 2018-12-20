@@ -1,9 +1,9 @@
 package common
 
 import (
+	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
-	"fmt"
 	"github.com/maticnetwork/heimdall/helper"
 )
 
@@ -21,7 +21,7 @@ const (
 	CodeBadTimeStamp         CodeType = 1504
 	CodeInvalidNoACK         CodeType = 1505
 	CodeTooManyNoAck         CodeType = 1506
-	CodeLowBal 				CodeType = 1507
+	CodeLowBal               CodeType = 1507
 
 	CodeOldValidator       CodeType = 2500
 	CodeNoValidator        CodeType = 2501
@@ -43,7 +43,7 @@ func ErrInvalidMsg(codespace sdk.CodespaceType, format string, args ...interface
 // -------- Checkpoint Errors
 
 func ErrBadProposerDetails(codespace sdk.CodespaceType, proposer common.Address) sdk.Error {
-	return newError(codespace, CodeInvalidProposerInput, fmt.Sprintf("Proposer is not valid, current proposer is %v",proposer.String()))
+	return newError(codespace, CodeInvalidProposerInput, fmt.Sprintf("Proposer is not valid, current proposer is %v", proposer.String()))
 }
 
 func ErrBadBlockDetails(codespace sdk.CodespaceType) sdk.Error {
@@ -70,8 +70,8 @@ func ErrBadTimeStamp(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeBadTimeStamp, "Invalid time stamp. It must be in near past.")
 }
 
-func ErrLowBalance(codespace sdk.CodespaceType,address string) sdk.Error{
-	return newError(codespace, CodeLowBal ,fmt.Sprintf("Min bal %v required for sending checkpoint TX for address %v",helper.MinBalance,address))
+func ErrLowBalance(codespace sdk.CodespaceType, address string) sdk.Error {
+	return newError(codespace, CodeLowBal, fmt.Sprintf("Min bal %v required for sending checkpoint TX for address %v", helper.MinBalance, address))
 }
 
 // ----------- Staking Errors
