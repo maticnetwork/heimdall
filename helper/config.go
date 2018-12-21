@@ -19,6 +19,7 @@ import (
 
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
+	"math/big"
 )
 
 const (
@@ -28,12 +29,13 @@ const (
 	FlagClientHome         = "home-client"
 	MainRPCUrl             = "https://kovan.infura.io"
 	MaticRPCUrl            = "https://testnet.matic.network"
-	CheckpointBufferTime   = time.Minute * 5 // aka 5 minutes
+	CheckpointBufferTime   = time.Second * 256 // aka 256 seconds
 )
 
 var (
 	DefaultCLIHome  = os.ExpandEnv("$HOME/.heimdallcli")
 	DefaultNodeHome = os.ExpandEnv("$HOME/.heimdalld")
+	MinBalance      = big.NewInt(1000000000000000000) // aka 1 Ether
 )
 
 var cdc = amino.NewCodec()
@@ -205,4 +207,9 @@ func GetPrivKey() secp256k1.PrivKeySecp256k1 {
 // GetPubKey returns pub key object
 func GetPubKey() secp256k1.PubKeySecp256k1 {
 	return pubObject
+}
+
+// GetAddress returns address object
+func GetAddress() []byte {
+	return GetPubKey().Address().Bytes()
 }

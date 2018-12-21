@@ -32,7 +32,10 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Co
 		"/checkpoint/headers/{headerBlockIndex}",
 		checkpointHeaderHandlerFn(cdc, cliCtx),
 	).Methods("GET")
-	r.HandleFunc("/checkpoint/{start}/{end}", checkpointHandlerFn()).Methods("GET")
+
+	r.HandleFunc("/checkpoint/{start}/{end}", checkpointHandlerFn(cdc, cliCtx)).Methods("GET")
+
+	r.HandleFunc("/checkpoint/last-no-ack", noackHandlerFn(cdc, cliCtx)).Methods("GET")
 }
 
 func checkpointBufferHandlerFn(
@@ -53,12 +56,12 @@ func checkpointBufferHandlerFn(
 			return
 		}
 
-		RestLogger.Debug("Checkpoint fetched", "Checkpoint", res)
 		var _checkpoint types.CheckpointBlockHeader
 		err = cdc.UnmarshalBinary(res, &_checkpoint)
 		if err != nil {
 			RestLogger.Error("Unable to unmarshall", "Error", err)
 		}
+		RestLogger.Debug("Checkpoint fetched", "Checkpoint", _checkpoint.String())
 
 		result, err := json.Marshal(&_checkpoint)
 		if err != nil {
@@ -148,7 +151,10 @@ func checkpointHeaderHandlerFn(
 	}
 }
 
-func checkpointHandlerFn() http.HandlerFunc {
+func checkpointHandlerFn(
+	cdc *codec.Codec,
+	cliCtx context.CLIContext,
+) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		helper.InitHeimdallConfig()
@@ -180,6 +186,43 @@ func checkpointHandlerFn() http.HandlerFunc {
 			RootHash:   ethcmn.BytesToHash(roothash),
 		}
 		result, err := json.Marshal(checkpoint)
+		if err != nil {
+			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(result)
+	}
+}
+
+func noackHandlerFn(
+	cdc *codec.Codec,
+	cliCtx context.CLIContext,
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		res, err := cliCtx.QueryStore(common.CheckpointNoACKCacheKey, "checkpoint")
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		if len(res) == 0 {
+			w.WriteHeader(http.StatusNoContent)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		lastAckTime, err := strconv.ParseInt(string(res), 10, 64)
+		if err != nil {
+			RestLogger.Error("Unable to parse int", "Response", res, "Error", err)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		result, err := json.Marshal(map[string]interface{}{"result": lastAckTime})
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
 			w.WriteHeader(http.StatusBadRequest)

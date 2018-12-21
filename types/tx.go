@@ -23,3 +23,9 @@ func NewBaseTx(msg sdk.Msg) BaseTx {
 func (tx BaseTx) GetMsgs() []sdk.Msg {
 	return []sdk.Msg{tx.Msg}
 }
+
+// ValidateBasic does a simple and lightweight validation check that doesn't
+// require access to any other information.
+func (tx BaseTx) ValidateBasic() sdk.Error {
+	return nil
+}
