@@ -49,6 +49,12 @@ func GetSendCheckpointTx(cdc *codec.Codec) *cobra.Command  {
 			return helper.CreateAndSendTx(msg,cliCtx)
 		},
 	}
+
+	cmd.MarkFlagRequired(FlagProposerAddress)
+	cmd.MarkFlagRequired(FlagStartBlock)
+	cmd.MarkFlagRequired(FlagEndBlock)
+	cmd.MarkFlagRequired(FlagRootHash)
+
 	return cmd
 }
 
@@ -73,6 +79,8 @@ func GetCheckpointACKTx(cdc *codec.Codec) *cobra.Command  {
 			return helper.CreateAndSendTx(msg,cliCtx)
 		},
 	}
+
+	cmd.MarkFlagRequired(FlagHeaderNumber)
 	return cmd
 }
 

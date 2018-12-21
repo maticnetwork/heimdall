@@ -40,6 +40,12 @@ func GetValidatorJoinTx(cdc *codec.Codec) *cobra.Command  {
 			return helper.CreateAndSendTx(msg,cliCtx)
 		},
 	}
+
+	cmd.MarkFlagRequired(FlagValidatorAddress)
+	cmd.MarkFlagRequired(FlagSignerPubkey)
+	cmd.MarkFlagRequired(FlagStartEpoch)
+	cmd.MarkFlagRequired(FlagEndEpoch)
+	cmd.MarkFlagRequired(FlagAmount)
 	return cmd
 }
 
@@ -59,6 +65,8 @@ func GetValidatorExitTx(cdc *codec.Codec) *cobra.Command  {
 			return helper.CreateAndSendTx(msg,cliCtx)
 		},
 	}
+
+	cmd.MarkFlagRequired(FlagValidatorAddress)
 	return cmd
 }
 
@@ -87,5 +95,10 @@ func GetValidatorUpdateTx(cdc *codec.Codec) *cobra.Command  {
 			return helper.CreateAndSendTx(msg,cliCtx)
 		},
 	}
+
+	cmd.MarkFlagRequired(FlagValidatorAddress)
+	cmd.MarkFlagRequired(FlagNewSignerPubkey)
+	cmd.MarkFlagRequired(FlagAmount)
+
 	return cmd
 }
