@@ -3,6 +3,7 @@ package helper
 import (
 	"math/big"
 
+	"context"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/maticnetwork/heimdall/types"
 )
@@ -67,4 +68,15 @@ func CurrentChildBlock() (uint64, error) {
 	}
 
 	return currentChildBlock.Uint64(), nil
+}
+
+// get balance of account (returns big.Int balance wont fit in uint64)
+func GetBalance(address common.Address) (*big.Int, error) {
+	balance, err := GetMainClient().BalanceAt(context.Background(), address, nil)
+	if err != nil {
+		Logger.Error("Unable to fetch balance of account from root chain", "Error", err, "Address", address.String())
+		return big.NewInt(0), err
+	}
+
+	return balance, nil
 }
