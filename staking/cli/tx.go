@@ -14,7 +14,7 @@ import (
 )
 
 // send validator join transaction
-func GetSendValidatorJoinTx(cdc *codec.Codec) *cobra.Command  {
+func GetValidatorJoinTx(cdc *codec.Codec) *cobra.Command  {
 	cmd:=&cobra.Command{
 		Use:   "validator-join",
 		Short: "Join Heimdall as a validator",
@@ -44,7 +44,7 @@ func GetSendValidatorJoinTx(cdc *codec.Codec) *cobra.Command  {
 }
 
 // send validator exit transaction
-func GetSendValidatorExitTx(cdc *codec.Codec) *cobra.Command  {
+func GetValidatorExitTx(cdc *codec.Codec) *cobra.Command  {
 	cmd:=&cobra.Command{
 		Use:   "validator-exit",
 		Short: "Exit heimdall as a valdiator ",
@@ -63,7 +63,7 @@ func GetSendValidatorExitTx(cdc *codec.Codec) *cobra.Command  {
 }
 
 // send validator update transaction
-func GetSendValidatorUpdateTx(cdc *codec.Codec) *cobra.Command  {
+func GetValidatorUpdateTx(cdc *codec.Codec) *cobra.Command  {
 	cmd:=&cobra.Command{
 		Use:   "signer-update",
 		Short: "Update signer for a validator",

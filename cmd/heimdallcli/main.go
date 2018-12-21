@@ -48,11 +48,11 @@ func main() {
 	rootCmd.AddCommand(
 		client.PostCommands(
 			checkpoint.GetSendCheckpointTx(cdc),
-			checkpoint.GetSendCheckpointACK(cdc),
-			checkpoint.GetSendCheckpointNoACK(cdc),
-			staking.GetSendValidatorExitTx(cdc),
-			staking.GetSendValidatorJoinTx(cdc),
-			staking.GetSendValidatorUpdateTx(cdc),
+			checkpoint.GetCheckpointACKTx(cdc),
+			checkpoint.GetCheckpointNoACKTx(cdc),
+			staking.GetValidatorExitTx(cdc),
+			staking.GetValidatorJoinTx(cdc),
+			staking.GetValidatorUpdateTx(cdc),
 		)...,
 	)
 

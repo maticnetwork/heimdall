@@ -54,7 +54,7 @@ func GetSendCheckpointTx(cdc *codec.Codec) *cobra.Command  {
 
 
 // send checkpoint ack transaction
-func GetSendCheckpointACK(cdc *codec.Codec) *cobra.Command  {
+func GetCheckpointACKTx(cdc *codec.Codec) *cobra.Command  {
 	cmd:=&cobra.Command{
 		Use:   "send-ack",
 		Short: "send acknowledgement for checkpoint in buffer",
@@ -77,7 +77,7 @@ func GetSendCheckpointACK(cdc *codec.Codec) *cobra.Command  {
 }
 
 // send no-ack transaction
-func GetSendCheckpointNoACK(cdc *codec.Codec) *cobra.Command{
+func GetCheckpointNoACKTx(cdc *codec.Codec) *cobra.Command{
 	cmd:=&cobra.Command{
 		Use:   "send-NoACK",
 		Short: "send no-acknowledgement for last proposer",
