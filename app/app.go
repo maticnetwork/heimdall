@@ -15,6 +15,7 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	tmTypes "github.com/tendermint/tendermint/types"
 
+	"github.com/maticnetwork/heimdall/auth"
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
@@ -24,6 +25,10 @@ import (
 
 const (
 	AppName = "Heimdall"
+
+	// internals
+	maxGasPerBlock   sdk.Gas = 1000000  // 1 Million
+	maxBytesPerBlock sdk.Gas = 22020096 // 21 MB
 )
 
 type HeimdallApp struct {
@@ -45,6 +50,7 @@ type HeimdallApp struct {
 
 var logger = helper.Logger.With("module", "app")
 
+// NewHeimdallApp creates heimdall app
 func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseApp)) *HeimdallApp {
 	// create and register app-level codec for TXs and accounts
 	cdc := MakeCodec()
@@ -68,8 +74,9 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.Router().AddRoute("staking", staking.NewHandler(app.masterKeeper))
 	// perform initialization logic
 	app.SetInitChainer(app.initChainer)
-	app.SetBeginBlocker(app.BeginBlocker)
-	app.SetEndBlocker(app.EndBlocker)
+	app.SetBeginBlocker(app.beginBlocker)
+	app.SetEndBlocker(app.endBlocker)
+	app.SetAnteHandler(auth.NewAnteHandler())
 
 	// mount the multistore and load the latest state
 	app.MountStoresIAVL(app.keyMain, app.keyCheckpoint, app.keyStaker)
@@ -109,12 +116,12 @@ func MakePulp() *hmTypes.Pulp {
 }
 
 // BeginBlocker executes before each block
-func (app *HeimdallApp) BeginBlocker(_ sdk.Context, _ abci.RequestBeginBlock) abci.ResponseBeginBlock {
+func (app *HeimdallApp) beginBlocker(_ sdk.Context, _ abci.RequestBeginBlock) abci.ResponseBeginBlock {
 	return abci.ResponseBeginBlock{}
 }
 
 // EndBlocker executes on each end block
-func (app *HeimdallApp) EndBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci.ResponseEndBlock {
+func (app *HeimdallApp) endBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci.ResponseEndBlock {
 	var valUpdates []abci.ValidatorUpdate
 
 	if ctx.BlockHeader().NumTxs > 0 {
@@ -257,7 +264,17 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 
 	// udpate validators
 	return abci.ResponseInitChain{
+		// validator updates
 		Validators: validatorUpdates,
+
+		// consensus params
+		ConsensusParams: &abci.ConsensusParams{
+			BlockSize: &abci.BlockSize{
+				MaxBytes: maxBytesPerBlock,
+				MaxGas:   maxGasPerBlock,
+			},
+			EvidenceParams: &abci.EvidenceParams{},
+		},
 	}
 }
 
