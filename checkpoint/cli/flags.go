@@ -1,7 +1,7 @@
 package cli
 
 const (
-	FlagProposerAddress = "proposer-address"
+	FlagProposerAddress = "proposer"
 	FlagStartBlock = "start-block"
 	FlagEndBlock = "end-block"
 	FlagRootHash = "root-hash"

@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/ethereum/go-ethereum/common"
 	"strconv"
+	"fmt"
 )
 
 // send checkpoint transaction
@@ -21,11 +22,26 @@ func GetSendCheckpointTx(cdc *codec.Codec) *cobra.Command  {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			ProposerStr := viper.GetString(FlagProposerAddress)
+			if viper.GetString(FlagProposerAddress) ==""{
+				 return fmt.Errorf("Proposer address cannot be empty")
+			}
 			StartBlockStr := viper.GetString(FlagStartBlock)
-			EndBlockStr:= viper.GetString(FlagEndBlock)
+			if StartBlockStr == "" {
+				return fmt.Errorf("Start block cannot be empty")
+			}
+
+			EndBlockStr := viper.GetString(FlagEndBlock)
+			if EndBlockStr == ""{
+				return fmt.Errorf("End block cannot be empty")
+			}
+
 			RootHashStr := viper.GetString(FlagRootHash)
+			if RootHashStr == ""{
+				return fmt.Errorf("Root Hash cannot be empty")
+			}
 
 			Proposer:= common.HexToAddress(ProposerStr)
+
 			StartBlock,err := strconv.ParseUint(StartBlockStr,10,64)
 			if err!=nil{
 				return err
@@ -49,8 +65,10 @@ func GetSendCheckpointTx(cdc *codec.Codec) *cobra.Command  {
 			return helper.CreateAndSendTx(msg,cliCtx)
 		},
 	}
-
-	cmd.MarkFlagRequired(FlagProposerAddress)
+	cmd.Flags().StringP(FlagProposerAddress,"p",helper.GetPubKey().Address().String(),"--proposer=0xAddress")
+	cmd.Flags().StringP(FlagStartBlock,"s","start nlocl","proposer address")
+	cmd.Flags().StringP(FlagEndBlock,"e","start nlocl","proposer address")
+	cmd.Flags().StringP(FlagRootHash,"r","start nlocl","proposer address")
 	cmd.MarkFlagRequired(FlagStartBlock)
 	cmd.MarkFlagRequired(FlagEndBlock)
 	cmd.MarkFlagRequired(FlagRootHash)
