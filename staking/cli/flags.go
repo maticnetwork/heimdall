@@ -1,11 +1,11 @@
 package cli
 
 const (
-	FlagValidatorAddress = "validator-address"
-	FlagSignerAddress = "signer-address"
+	FlagValidatorAddress = "validator"
+	FlagSignerAddress = "signer"
 	FlagSignerPubkey = "signer-pubkey"
-	FlagNewSignerPubkey = "new-signer-pubkey"
-	FlagAmount = "validator-amount"
+	FlagNewSignerPubkey = "new-pubkey"
+	FlagAmount = "staked-amount"
 
 	FlagStartEpoch = "start-epoch"
 	FlagEndEpoch = "end-epoch"

@@ -4,7 +4,6 @@ import (
 	"os"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/version"
@@ -61,10 +60,10 @@ func main() {
 	// add proxy, version and key info
 	rootCmd.AddCommand(
 		client.LineBreak,
-		keys.Commands(),
 		client.LineBreak,
 		version.VersionCmd,
 	)
+
 	// bind with-heimdall-config config with root cmd
 	viper.BindPFlag(
 		helper.WithHeimdallConfigFlag,

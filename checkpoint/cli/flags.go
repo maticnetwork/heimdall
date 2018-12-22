@@ -6,5 +6,5 @@ const (
 	FlagEndBlock = "end-block"
 	FlagRootHash = "root-hash"
 
-	FlagHeaderNumber = "header-index"
+	FlagHeaderNumber = "header"
 )

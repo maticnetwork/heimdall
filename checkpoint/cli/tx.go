@@ -23,21 +23,25 @@ func GetSendCheckpointTx(cdc *codec.Codec) *cobra.Command  {
 
 			ProposerStr := viper.GetString(FlagProposerAddress)
 			if viper.GetString(FlagProposerAddress) ==""{
-				 return fmt.Errorf("Proposer address cannot be empty")
+				 return fmt.Errorf("proposer address cannot be empty")
 			}
+			if common.IsHexAddress(ProposerStr){
+				return fmt.Errorf("Not valid address")
+			}
+
 			StartBlockStr := viper.GetString(FlagStartBlock)
 			if StartBlockStr == "" {
-				return fmt.Errorf("Start block cannot be empty")
+				return fmt.Errorf("start block cannot be empty")
 			}
 
 			EndBlockStr := viper.GetString(FlagEndBlock)
 			if EndBlockStr == ""{
-				return fmt.Errorf("End block cannot be empty")
+				return fmt.Errorf("end block cannot be empty")
 			}
 
 			RootHashStr := viper.GetString(FlagRootHash)
 			if RootHashStr == ""{
-				return fmt.Errorf("Root Hash cannot be empty")
+				return fmt.Errorf("root hash cannot be empty")
 			}
 
 			Proposer:= common.HexToAddress(ProposerStr)
@@ -65,10 +69,10 @@ func GetSendCheckpointTx(cdc *codec.Codec) *cobra.Command  {
 			return helper.CreateAndSendTx(msg,cliCtx)
 		},
 	}
-	cmd.Flags().StringP(FlagProposerAddress,"p",helper.GetPubKey().Address().String(),"--proposer=0xAddress")
-	cmd.Flags().StringP(FlagStartBlock,"s","start nlocl","proposer address")
-	cmd.Flags().StringP(FlagEndBlock,"e","start nlocl","proposer address")
-	cmd.Flags().StringP(FlagRootHash,"r","start nlocl","proposer address")
+	cmd.Flags().StringP(FlagProposerAddress,"p",helper.GetPubKey().Address().String(),"--proposer=<proposer-address>")
+	cmd.Flags().String(FlagStartBlock,"","--start-block=<start-block-number>")
+	cmd.Flags().String(FlagEndBlock,"","--end-block=<end-block-number>")
+	cmd.Flags().StringP(FlagRootHash,"r","","--root-hash=<root-hash>")
 	cmd.MarkFlagRequired(FlagStartBlock)
 	cmd.MarkFlagRequired(FlagEndBlock)
 	cmd.MarkFlagRequired(FlagRootHash)
@@ -86,6 +90,9 @@ func GetCheckpointACKTx(cdc *codec.Codec) *cobra.Command  {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			HeaderBlockStr:= viper.GetString(FlagHeaderNumber)
+			if HeaderBlockStr!=""{
+				return fmt.Errorf("header number cannot be empty")
+			}
 
 			HeaderBlock,err := strconv.ParseUint(HeaderBlockStr,10,64)
 			if err!=nil{
@@ -98,6 +105,7 @@ func GetCheckpointACKTx(cdc *codec.Codec) *cobra.Command  {
 		},
 	}
 
+	cmd.Flags().String(FlagHeaderNumber,"","--header=<header-index>")
 	cmd.MarkFlagRequired(FlagHeaderNumber)
 	return cmd
 }
@@ -105,7 +113,7 @@ func GetCheckpointACKTx(cdc *codec.Codec) *cobra.Command  {
 // send no-ack transaction
 func GetCheckpointNoACKTx(cdc *codec.Codec) *cobra.Command{
 	cmd:=&cobra.Command{
-		Use:   "send-NoACK",
+		Use:   "send-noack",
 		Short: "send no-acknowledgement for last proposer",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
