@@ -138,7 +138,7 @@ func GetVoteBytes(votes []tmTypes.Vote, ctx sdk.Context) []byte {
 	return votes[0].SignBytes(ctx.ChainID())
 }
 
-func CreateAndSendTx(msg sdk.Msg,cliCtx context.CLIContext)( err error){
+func CreateAndSendTx(msg sdk.Msg, cliCtx context.CLIContext) (err error) {
 	txBytes, err := CreateTxBytes(msg)
 	if err != nil {
 		return err
@@ -148,7 +148,7 @@ func CreateAndSendTx(msg sdk.Msg,cliCtx context.CLIContext)( err error){
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Transaction sent %v",resp.Hash)
+	fmt.Printf("Transaction sent %v", resp.Hash)
 
 	return nil
 }

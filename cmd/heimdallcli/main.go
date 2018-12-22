@@ -12,9 +12,9 @@ import (
 
 	"github.com/maticnetwork/heimdall/app"
 	checkpoint "github.com/maticnetwork/heimdall/checkpoint/cli"
+	"github.com/maticnetwork/heimdall/helper"
 	staking "github.com/maticnetwork/heimdall/staking/cli"
 	"github.com/spf13/viper"
-	"github.com/maticnetwork/heimdall/helper"
 )
 
 // rootCmd is the entry point for this binary
