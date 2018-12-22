@@ -25,9 +25,10 @@ func GetSendCheckpointTx(cdc *codec.Codec) *cobra.Command {
 			if viper.GetString(FlagProposerAddress) == "" {
 				return fmt.Errorf("proposer address cannot be empty")
 			}
-			if common.IsHexAddress(ProposerStr) {
-				return fmt.Errorf("Not valid address")
-			}
+
+			//if common.IsHexAddress(ProposerStr) {
+			//	return fmt.Errorf("Not valid validator address")
+			//}
 
 			StartBlockStr := viper.GetString(FlagStartBlock)
 			if StartBlockStr == "" {
