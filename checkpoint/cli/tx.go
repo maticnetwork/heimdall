@@ -90,7 +90,7 @@ func GetCheckpointACKTx(cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			HeaderBlockStr := viper.GetString(FlagHeaderNumber)
-			if HeaderBlockStr != "" {
+			if HeaderBlockStr == "" {
 				return fmt.Errorf("header number cannot be empty")
 			}
 

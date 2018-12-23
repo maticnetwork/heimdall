@@ -23,15 +23,12 @@ func GetValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			validatorStr := viper.GetString(FlagValidatorAddress)
-			if validatorStr != "" {
+			if validatorStr == "" {
 				return fmt.Errorf("Validator address has to be supplied")
 			}
-			//if common.IsHexAddress(validatorStr) {
-			//	return fmt.Errorf("Invalid validator address")
-			//}
 
 			pubkeyStr := viper.GetString(FlagSignerPubkey)
-			if pubkeyStr != "" {
+			if pubkeyStr == "" {
 				return fmt.Errorf("Pubkey has to be supplied")
 			}
 
@@ -77,12 +74,9 @@ func GetValidatorExitTx(cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			validatorStr := viper.GetString(FlagValidatorAddress)
-			if validatorStr != "" {
+			if validatorStr == "" {
 				return fmt.Errorf("Validator address has to be supplied")
 			}
-			//if common.IsHexAddress(validatorStr) {
-			//	return fmt.Errorf("Invalid validator address")
-			//}
 			validatorAddr := common.HexToAddress(validatorStr)
 			msg := staking.NewMsgValidatorExit(validatorAddr)
 
@@ -103,14 +97,11 @@ func GetValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			validatorStr := viper.GetString(FlagValidatorAddress)
-			if validatorStr != "" {
+			if validatorStr == "" {
 				return fmt.Errorf("Validator address has to be supplied")
 			}
-			//if common.IsHexAddress(validatorStr) {
-			//	return fmt.Errorf("Invalid validator address")
-			//}
 			pubkeyStr := viper.GetString(FlagNewSignerPubkey)
-			if pubkeyStr != "" {
+			if pubkeyStr == "" {
 				return fmt.Errorf("Pubkey has to be supplied")
 			}
 
