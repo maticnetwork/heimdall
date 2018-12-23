@@ -137,3 +137,18 @@ func GetVoteBytes(votes []tmTypes.Vote, ctx sdk.Context) []byte {
 	// sign bytes for vote
 	return votes[0].SignBytes(ctx.ChainID())
 }
+
+func CreateAndSendTx(msg sdk.Msg, cliCtx context.CLIContext) (err error) {
+	txBytes, err := CreateTxBytes(msg)
+	if err != nil {
+		return err
+	}
+
+	resp, err := SendTendermintRequest(cliCtx, txBytes)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Transaction sent %v", resp.Hash)
+
+	return nil
+}

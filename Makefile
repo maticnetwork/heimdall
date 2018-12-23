@@ -13,6 +13,7 @@ clean:
 build: clean
 	mkdir -p build
 	go build -o build/heimdalld cmd/heimdalld/main.go
+	go build -o build/heimdallcli cmd/heimdallcli/main.go
 	go build -o build/bridge bridge/bridge.go
 
 build-testnet:
