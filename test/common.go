@@ -36,6 +36,7 @@ func MakeTestCodec() *codec.Codec {
 }
 
 func CreateTestInput(t *testing.T, isCheckTx bool) (sdk.Context, common.Keeper) {
+	//t.Parallel()
 	helper.InitHeimdallConfig()
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
