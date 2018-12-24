@@ -10,6 +10,7 @@ import (
 	hmcmn "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 func TestUpdateAck(t *testing.T) {
@@ -258,3 +259,11 @@ func LoadValidatorSet(count int, t *testing.T, keeper hmcmn.Keeper, ctx sdk.Cont
 
 //TODO add tests for validator set changes on update/signer
 // TODO add mocks for contract calls/tx to test
+type MockHeimdallCaller interface {
+	MockGetHeaderInfo(headerID uint64) (root common.Hash, start uint64, end uint64, err error)
+	//GetValidatorInfo(addr common.Address) (validator types.Validator, err error)
+	//CurrentChildBlock() (uint64, error)
+	//GetBalance(address common.Address) (*big.Int, error)
+}
+
+

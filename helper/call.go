@@ -8,13 +8,20 @@ import (
 	"github.com/maticnetwork/heimdall/types"
 )
 
+type HeimdallCaller interface {
+	GetHeaderInfo(headerID uint64) (root common.Hash, start uint64, end uint64, err error)
+	GetValidatorInfo(addr common.Address) (validator types.Validator, err error)
+	CurrentChildBlock() (uint64, error)
+	GetBalance(address common.Address) (*big.Int, error)
+}
+
 // GetHeaderInfo get header info from header id
 func GetHeaderInfo(headerID uint64) (root common.Hash, start uint64, end uint64, err error) {
 	// get rootchain instance
 	rootChainInstance, err := GetRootChainInstance()
 	if err != nil {
 		Logger.Error("Error creating rootchain instance while fetching headerBlock", "error", err, "headerBlockIndex", headerID)
-		return common.Hash{}, 0, 0, err
+		return root, 0, 0, err
 	}
 
 	// get header from rootchain
