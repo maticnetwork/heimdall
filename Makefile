@@ -10,6 +10,9 @@ dep:
 clean:
 	rm -rf build
 
+tests:
+	go test  -v ./...
+
 build: clean
 	mkdir -p build
 	go build -o build/heimdalld cmd/heimdalld/main.go
