@@ -74,7 +74,6 @@ func GenRandCheckpointHeader() (headerBlock types.CheckpointBlockHeader, err err
 	return headerBlock, nil
 }
 
-// TODO autogenerate validator instead of
 func GenRandomVal(count int, startBlock uint64, power uint64, timeAlive uint64, randomise bool) (validators []types.Validator) {
 	for i := 0; i < count; i++ {
 		privKey1 := secp256k1.GenPrivKey()
