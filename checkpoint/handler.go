@@ -15,7 +15,7 @@ func NewHandler(k common.Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case MsgCheckpoint:
-			return handleMsgCheckpoint(ctx, msg, k)
+			return HandleMsgCheckpoint(ctx, msg, k)
 		case MsgCheckpointAck:
 			return handleMsgCheckpointAck(ctx, msg, k)
 		case MsgCheckpointNoAck:
@@ -78,7 +78,7 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 	return sdk.Result{}
 }
 
-func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper) sdk.Result {
+func HandleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper) sdk.Result {
 	if msg.TimeStamp == 0 || msg.TimeStamp > uint64(time.Now().Unix()) {
 		return common.ErrBadTimeStamp(k.Codespace).Result()
 	}
