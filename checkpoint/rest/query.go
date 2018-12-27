@@ -157,7 +157,7 @@ func checkpointHandlerFn(
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		helper.InitHeimdallConfig()
+		helper.InitHeimdallConfig("")
 		start, err := strconv.Atoi(vars["start"])
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)

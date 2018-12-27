@@ -88,7 +88,7 @@ func main() {
 
 func newApp(logger log.Logger, db dbm.DB, storeTracer io.Writer) abci.Application {
 	// init heimdall config
-	helper.InitHeimdallConfig()
+	helper.InitHeimdallConfig("")
 
 	// create new heimdall app
 	return app.NewHeimdallApp(logger, db, baseapp.SetPruning(viper.GetString("pruning")))
@@ -203,7 +203,7 @@ func newAccountCmd() *cobra.Command {
 		Short: "Print the account's private key and public key",
 		Run: func(cmd *cobra.Command, args []string) {
 			// init heimdall config
-			helper.InitHeimdallConfig()
+			helper.InitHeimdallConfig("")
 
 			// get private and public keys
 			privObject := helper.GetPrivKey()
