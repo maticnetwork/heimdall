@@ -63,7 +63,6 @@ func CreateTestInput(t *testing.T, isCheckTx bool) (sdk.Context, common.Keeper) 
 	return ctx, masterKeeper
 }
 
-// TODO check why initHeimdall not working here
 // create random header block
 func GenRandCheckpointHeader(headerSize int) (headerBlock types.CheckpointBlockHeader, err error) {
 	start := rand.Intn(100) + 1
