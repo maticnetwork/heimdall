@@ -20,6 +20,7 @@ import (
 	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/types"
 	"encoding/hex"
+	"os"
 )
 
 func MakeTestCodec() *codec.Codec {
@@ -38,7 +39,7 @@ func MakeTestCodec() *codec.Codec {
 
 func CreateTestInput(t *testing.T, isCheckTx bool) (sdk.Context, common.Keeper) {
 	//t.Parallel()
-	helper.InitHeimdallConfig("/Users/vc/.heimdalld")
+	helper.InitHeimdallConfig(os.ExpandEnv("$HOME/.heimdalld"))
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
 	keyCheckpoint := sdk.NewKVStoreKey("checkpoint")
@@ -57,6 +58,7 @@ func CreateTestInput(t *testing.T, isCheckTx bool) (sdk.Context, common.Keeper) 
 	masterKeeper := common.NewKeeper(cdc, keyMaster, keyStaker, keyCheckpoint, common.DefaultCodespace)
 	// set empty values in cache by default
 	masterKeeper.UpdateACKCountWithValue(ctx, 1)
+
 
 	return ctx, masterKeeper
 }
