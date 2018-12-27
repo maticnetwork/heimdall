@@ -73,7 +73,7 @@ var Logger logger.Logger
 
 // InitHeimdallConfig initializes with viper config (from heimdall configuration)
 func InitHeimdallConfig(homeDir string) {
-	if strings.Compare(homeDir,"") == 0{
+	if strings.Compare(homeDir, "") == 0 {
 		// get home dir from viper
 		homeDir = viper.GetString(HomeFlag)
 	}
@@ -88,10 +88,9 @@ func InitHeimdallConfig(homeDir string) {
 
 // InitHeimdallConfigWith initializes passed heimdall/tendermint config files
 func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
-	if strings.Compare(homeDir,"") == 0 {
+	if strings.Compare(homeDir, "") == 0 {
 		return
 	}
-
 
 	if strings.Compare(conf.MaticRPCUrl, "") != 0 {
 		return

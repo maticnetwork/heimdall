@@ -14,12 +14,12 @@ import (
 	dbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
 
+	"encoding/hex"
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/types"
-	"encoding/hex"
 	"os"
 )
 
@@ -59,7 +59,6 @@ func CreateTestInput(t *testing.T, isCheckTx bool) (sdk.Context, common.Keeper) 
 	// set empty values in cache by default
 	masterKeeper.UpdateACKCountWithValue(ctx, 1)
 
-
 	return ctx, masterKeeper
 }
 
@@ -72,7 +71,7 @@ func GenRandCheckpointHeader(headerSize int) (headerBlock types.CheckpointBlockH
 		return headerBlock, err
 	}
 	proposer := ethcmn.Address{}
-	headerBlock = types.CreateBlock(uint64(start), uint64(end),ethcmn.HexToHash(hex.EncodeToString(roothash)), proposer, rand.Uint64())
+	headerBlock = types.CreateBlock(uint64(start), uint64(end), ethcmn.HexToHash(hex.EncodeToString(roothash)), proposer, rand.Uint64())
 
 	return headerBlock, nil
 }

@@ -30,7 +30,7 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Co
 		"/staking/proposer/{times}",
 		proposerHandlerFn(cdc, cliCtx),
 	).Methods("GET")
-	r.HandleFunc("/heimdall/state-dump",stateDumpHandlerFunc(cdc,cliCtx))
+	r.HandleFunc("/heimdall/state-dump", stateDumpHandlerFunc(cdc, cliCtx))
 
 }
 
@@ -151,7 +151,7 @@ func proposerHandlerFn(
 		// todo format validator set to remove pubkey like we did for validator
 		result, err := json.Marshal(&proposers)
 		if err != nil {
-			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
+			RestLogger.Error("Error while marshalling response to Json", "error", err)
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
 			return
@@ -161,20 +161,22 @@ func proposerHandlerFn(
 		w.Write(result)
 	}
 }
-type cacheData struct{
+
+type cacheData struct {
 	CheckpointACK bool `json:"checkpoint_ack_cache"`
-	Checkpoint bool `json:"checkpoint_cache"`
+	Checkpoint    bool `json:"checkpoint_cache"`
 }
-type stateDump struct{
-	ValidatorSet hmTypes.ValidatorSet `json:"validator_set"`
-	ACKCount int64 `json:"ack_count"`
-	CheckpointBuffer hmTypes.CheckpointBlockHeader`json:"checkpoint_buffer"`
-	CheckpointList []hmTypes.CheckpointBlockHeader `json:"checkpoint_list"`
-	Cache  cacheData `json:"cache"`
-	LastNoAck uint64 `json:"last_no_ack"`
-	ValidatorToSignerMap map[string]common.Address `json:"validator_to_signer_map"`
-	Validators []hmTypes.Validator `json:"validators"`
+type stateDump struct {
+	ValidatorSet         hmTypes.ValidatorSet            `json:"validator_set"`
+	ACKCount             int64                           `json:"ack_count"`
+	CheckpointBuffer     hmTypes.CheckpointBlockHeader   `json:"checkpoint_buffer"`
+	CheckpointList       []hmTypes.CheckpointBlockHeader `json:"checkpoint_list"`
+	Cache                cacheData                       `json:"cache"`
+	LastNoAck            uint64                          `json:"last_no_ack"`
+	ValidatorToSignerMap map[string]common.Address       `json:"validator_to_signer_map"`
+	Validators           []hmTypes.Validator             `json:"validators"`
 }
+
 func stateDumpHandlerFunc(
 	cdc *codec.Codec,
 	cliCtx context.CLIContext,
@@ -234,14 +236,9 @@ func stateDumpHandlerFunc(
 			RestLogger.Error("Unable to unmarshall", "Error", err)
 		}
 
-
-
-
-		state.CheckpointBuffer=_checkpoint
-		state.ACKCount=ackCount
-		state.ValidatorSet=_validatorSet
-
-
+		state.CheckpointBuffer = _checkpoint
+		state.ACKCount = ackCount
+		state.ValidatorSet = _validatorSet
 
 	}
 }
