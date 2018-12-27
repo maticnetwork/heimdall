@@ -526,3 +526,6 @@ func (k *Keeper) GetValidatorToSignerMap(ctx sdk.Context) map[string]common.Addr
 	}
 	return result
 }
+
+
+// get all checkpoints
