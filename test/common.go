@@ -65,15 +65,15 @@ func CreateTestInput(t *testing.T, isCheckTx bool) (sdk.Context, common.Keeper) 
 
 // TODO check why initHeimdall not working here
 // create random header block
-func GenRandCheckpointHeader() (headerBlock types.CheckpointBlockHeader, err error) {
-	start := rand.Intn(100) + 10
-	end := start + 256
+func GenRandCheckpointHeader(headerSize int) (headerBlock types.CheckpointBlockHeader, err error) {
+	start := rand.Intn(100) + 1
+	end := start + headerSize
 	roothash, err := checkpoint.GetHeaders(uint64(start), uint64(end))
 	if err != nil {
 		return headerBlock, err
 	}
 	proposer := ethcmn.Address{}
-	headerBlock = types.CreateBlock(uint64(4733040), uint64(4733050),ethcmn.HexToHash(hex.EncodeToString(roothash)), proposer, rand.Uint64())
+	headerBlock = types.CreateBlock(uint64(start), uint64(end),ethcmn.HexToHash(hex.EncodeToString(roothash)), proposer, rand.Uint64())
 
 	return headerBlock, nil
 }
