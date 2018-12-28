@@ -59,7 +59,7 @@ func ServeCommands(cdc *codec.Codec) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String(flagListenAddr, "tcp://localhost:1317", "The address for the server to listen on")
+	cmd.Flags().String(flagListenAddr, "tcp://0.0.0.0:1317", "The address for the server to listen on")
 	cmd.Flags().String(flagCORS, "", "Set the domains that can make CORS requests (* for all)")
 	cmd.Flags().String(client.FlagChainID, "", "The chain ID to connect to")
 	cmd.Flags().String(client.FlagNode, "tcp://localhost:26657", "Address of the node to connect to")
