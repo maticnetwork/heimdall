@@ -35,7 +35,7 @@ const (
 var (
 	DefaultCLIHome  = os.ExpandEnv("$HOME/.heimdallcli")
 	DefaultNodeHome = os.ExpandEnv("$HOME/.heimdalld")
-	MinBalance      = big.NewInt(1000000000000000000) // aka 1 Ether
+	MinBalance      = big.NewInt(100000000000000000) // aka 1 Ether
 )
 
 var cdc = amino.NewCodec()
