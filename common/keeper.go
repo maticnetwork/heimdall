@@ -264,7 +264,6 @@ func (k *Keeper) GetLastNoAck(ctx sdk.Context) uint64 {
 			return uint64(result)
 		}
 	}
-
 	return 0
 }
 

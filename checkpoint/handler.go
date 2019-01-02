@@ -27,6 +27,7 @@ func NewHandler(k common.Keeper) sdk.Handler {
 }
 
 func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keeper) sdk.Result {
+	common.CheckpointLogger.Debug("Handling ACK transaction","HeaderBlock",msg.HeaderBlock)
 	// make call to headerBlock with header number
 	root, start, end, err := helper.GetHeaderInfo(msg.HeaderBlock)
 	if err != nil {
@@ -79,6 +80,7 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 }
 
 func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper) sdk.Result {
+	common.CheckpointLogger.Debug("Handling checkpoint transaction","Start",msg.StartBlock,"End",msg.EndBlock)
 	if msg.TimeStamp == 0 || msg.TimeStamp > uint64(time.Now().Unix()) {
 		return common.ErrBadTimeStamp(k.Codespace).Result()
 	}
@@ -144,6 +146,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper) sd
 }
 
 func handleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k common.Keeper) sdk.Result {
+	common.CheckpointLogger.Debug("Handling No-ACK transaction","Timestamp",time.Unix(int64(msg.TimeStamp), 0))
 	// current time
 	currentTime := time.Unix(int64(msg.TimeStamp), 0) // buffer time
 	bufferTime := helper.CheckpointBufferTime
