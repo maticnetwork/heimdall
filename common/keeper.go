@@ -183,7 +183,6 @@ func (k *Keeper) SetCheckpointBuffer(ctx sdk.Context, headerBlock types.Checkpoi
 	if err != nil {
 		return err
 	}
-	CheckpointLogger.Debug("Adding good checkpoint to buffer to await ACK", "checkpoint", headerBlock)
 	return nil
 }
 
