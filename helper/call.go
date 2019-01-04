@@ -5,10 +5,10 @@ import (
 
 	"context"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/maticnetwork/heimdall/types"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
-	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/maticnetwork/heimdall/types"
 )
 
 type ContractCaller interface {
@@ -19,28 +19,28 @@ type ContractCaller interface {
 }
 
 type ContractCallerObj struct {
-	rootChainInstance rootchain.Rootchain
+	rootChainInstance    rootchain.Rootchain
 	stakeManagerInstance stakemanager.Stakemanager
-	mainChainClient *ethclient.Client
+	mainChainClient      *ethclient.Client
 }
 
-func NewContractCallerObj()  (contractCaller ContractCaller,err error) {
+func NewContractCallerObj() (contractCaller ContractCaller, err error) {
 	var contractCallerObj ContractCallerObj
 	rootChainInstance, err := GetRootChainInstance()
 	if err != nil {
 		Logger.Error("Error creating rootchain instance ", "error", err)
-		return contractCaller,err
+		return contractCaller, err
 	}
 	stakeManagerInstance, err := GetStakeManagerInstance()
 	if err != nil {
 		Logger.Error("Error creating stakeManagerInstance while getting validator info", "error", err)
-		return contractCaller,err
+		return contractCaller, err
 	}
 	contractCallerObj.mainChainClient = GetMainClient()
 	contractCallerObj.stakeManagerInstance = *stakeManagerInstance
 	contractCallerObj.rootChainInstance = *rootChainInstance
 
-	return contractCaller,nil
+	return contractCaller, nil
 }
 
 // GetHeaderInfo get header info from header id
@@ -86,7 +86,7 @@ func (c *ContractCallerObj) CurrentChildBlock() (uint64, error) {
 }
 
 // get balance of account (returns big.Int balance wont fit in uint64)
-func (c *ContractCallerObj)GetBalance(address common.Address) (*big.Int, error) {
+func (c *ContractCallerObj) GetBalance(address common.Address) (*big.Int, error) {
 	balance, err := c.mainChainClient.BalanceAt(context.Background(), address, nil)
 	if err != nil {
 		Logger.Error("Unable to fetch balance of account from root chain", "Error", err, "Address", address.String())
