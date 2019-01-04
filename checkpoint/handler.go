@@ -11,24 +11,25 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
-func NewHandler(k common.Keeper) sdk.Handler {
+func NewHandler(k common.Keeper,contractCallerObj helper.ContractCallerObj) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case MsgCheckpoint:
-			return HandleMsgCheckpoint(ctx, msg, k)
+			return HandleMsgCheckpoint(ctx, msg, k,contractCallerObj)
 		case MsgCheckpointAck:
-			return handleMsgCheckpointAck(ctx, msg, k)
+			return handleMsgCheckpointAck(ctx, msg, k,contractCallerObj)
 		case MsgCheckpointNoAck:
-			return handleMsgCheckpointNoAck(ctx, msg, k)
+			return handleMsgCheckpointNoAck(ctx, msg, k,contractCallerObj)
 		default:
 			return sdk.ErrTxDecode("Invalid message in checkpoint module").Result()
 		}
 	}
 }
 
-func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keeper) sdk.Result {
+func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keeper,contractCaller helper.ContractCallerObj) sdk.Result {
+
 	// make call to headerBlock with header number
-	root, start, end, err := helper.GetHeaderInfo(msg.HeaderBlock)
+	root, start, end, err := contractCaller.GetHeaderInfo(msg.HeaderBlock)
 	if err != nil {
 		common.CheckpointLogger.Error("Unable to fetch header from rootchain contract", "Error", err, "HeaderBlockIndex", msg.HeaderBlock)
 		return common.ErrBadAck(k.Codespace).Result()
@@ -78,7 +79,7 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 	return sdk.Result{}
 }
 
-func HandleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper) sdk.Result {
+func HandleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper,contractCaller helper.ContractCallerObj) sdk.Result {
 	if msg.TimeStamp == 0 || msg.TimeStamp > uint64(time.Now().Unix()) {
 		return common.ErrBadTimeStamp(k.Codespace).Result()
 	}
@@ -121,7 +122,7 @@ func HandleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper) sd
 	}
 
 	// check if proposer has min ether
-	balance, _ := helper.GetBalance(msg.Proposer)
+	balance, _ := contractCaller.GetBalance(msg.Proposer)
 	if balance.Cmp(helper.MinBalance) == -1 {
 		common.CheckpointLogger.Error("Proposer doesnt have enough ether to send checkpoint tx", "Balance", balance, "RequiredBalance", helper.MinBalance)
 		return common.ErrLowBalance(k.Codespace, msg.Proposer.String()).Result()
@@ -143,7 +144,7 @@ func HandleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper) sd
 	return sdk.Result{}
 }
 
-func handleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k common.Keeper) sdk.Result {
+func handleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k common.Keeper,contractCaller helper.ContractCallerObj) sdk.Result {
 	// current time
 	currentTime := time.Unix(int64(msg.TimeStamp), 0) // buffer time
 	bufferTime := helper.CheckpointBufferTime

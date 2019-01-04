@@ -21,6 +21,7 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
 	hmTypes "github.com/maticnetwork/heimdall/types"
+	"github.com/ethereum/go-ethereum/core/vm"
 )
 
 const (
@@ -69,9 +70,13 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	}
 
 	app.masterKeeper = common.NewKeeper(app.cdc, app.keyMaster, app.keyStaker, app.keyCheckpoint, app.RegisterCodespace(common.DefaultCodespace))
+	contractCallerObj,err:=helper.NewContractCallerObj()
+	if err != nil {
+		cmn.Exit(err.Error())
+	}
 	// register message routes
-	app.Router().AddRoute("checkpoint", checkpoint.NewHandler(app.masterKeeper))
-	app.Router().AddRoute("staking", staking.NewHandler(app.masterKeeper))
+	app.Router().AddRoute("checkpoint", checkpoint.NewHandler(app.masterKeeper,contractCallerObj))
+	app.Router().AddRoute("staking", staking.NewHandler(app.masterKeeper,contractCallerObj))
 	// perform initialization logic
 	app.SetInitChainer(app.initChainer)
 	app.SetBeginBlocker(app.beginBlocker)
