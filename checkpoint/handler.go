@@ -11,22 +11,22 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
-func NewHandler(k common.Keeper, contractCallerObj helper.ContractCallerObj) sdk.Handler {
+func NewHandler(k common.Keeper, contractCaller helper.ContractCaller) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case MsgCheckpoint:
-			return HandleMsgCheckpoint(ctx, msg, k, contractCallerObj)
+			return HandleMsgCheckpoint(ctx, msg, k, contractCaller)
 		case MsgCheckpointAck:
-			return handleMsgCheckpointAck(ctx, msg, k, contractCallerObj)
+			return handleMsgCheckpointAck(ctx, msg, k, contractCaller)
 		case MsgCheckpointNoAck:
-			return handleMsgCheckpointNoAck(ctx, msg, k, contractCallerObj)
+			return handleMsgCheckpointNoAck(ctx, msg, k)
 		default:
 			return sdk.ErrTxDecode("Invalid message in checkpoint module").Result()
 		}
 	}
 }
 
-func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keeper, contractCaller helper.ContractCallerObj) sdk.Result {
+func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keeper, contractCaller helper.ContractCaller) sdk.Result {
 
 	// make call to headerBlock with header number
 	root, start, end, err := contractCaller.GetHeaderInfo(msg.HeaderBlock)
@@ -79,7 +79,7 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 	return sdk.Result{}
 }
 
-func HandleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper, contractCaller helper.ContractCallerObj) sdk.Result {
+func HandleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper,contractCaller helper.ContractCaller) sdk.Result {
 	if msg.TimeStamp == 0 || msg.TimeStamp > uint64(time.Now().Unix()) {
 		return common.ErrBadTimeStamp(k.Codespace).Result()
 	}
@@ -144,7 +144,7 @@ func HandleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper, co
 	return sdk.Result{}
 }
 
-func handleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k common.Keeper, contractCaller helper.ContractCallerObj) sdk.Result {
+func handleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k common.Keeper) sdk.Result {
 	// current time
 	currentTime := time.Unix(int64(msg.TimeStamp), 0) // buffer time
 	bufferTime := helper.CheckpointBufferTime

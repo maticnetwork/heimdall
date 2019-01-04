@@ -10,11 +10,11 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
-func NewHandler(k hmCommon.Keeper) sdk.Handler {
+func NewHandler(k hmCommon.Keeper,contractCaller helper.ContractCaller) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case MsgValidatorJoin:
-			return handleMsgValidatorJoin(ctx, msg, k)
+			return handleMsgValidatorJoin(ctx, msg, k,contractCaller)
 		case MsgValidatorExit:
 			return handleMsgValidatorExit(ctx, msg, k)
 		case MsgSignerUpdate:
@@ -25,9 +25,9 @@ func NewHandler(k hmCommon.Keeper) sdk.Handler {
 	}
 }
 
-func handleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k hmCommon.Keeper) sdk.Result {
+func handleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k hmCommon.Keeper,contractCaller helper.ContractCaller) sdk.Result {
 	//fetch validator from mainchain
-	validator, err := helper.GetValidatorInfo(msg.ValidatorAddress)
+	validator, err := contractCaller.GetValidatorInfo(msg.ValidatorAddress)
 	if err != nil || bytes.Equal(validator.Address.Bytes(), helper.ZeroAddress.Bytes()) {
 		hmCommon.StakingLogger.Error(
 			"Unable to fetch validator from rootchain",
