@@ -76,7 +76,7 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 	// indicate ACK received by adding in cache, cache cleared in endblock
 	k.SetCheckpointAckCache(ctx, common.DefaultValue)
 	common.CheckpointLogger.Debug("Checkpoint ACK cache set","CacheValue",k.GetCheckpointCache(ctx,common.CheckpointACKCacheKey))
-	
+
 	return sdk.Result{}
 }
 
@@ -172,7 +172,7 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k common.
 
 	// if last checkpoint is not present or last checkpoint happens before checkpoint buffer time -- thrown an error
 	if lastCheckpointTime.After(currentTime) || (currentTime.Sub(lastCheckpointTime) < bufferTime) {
-		common.CheckpointLogger.Error("Invalid NO ACK",)
+		common.CheckpointLogger.Error("Invalid NO ACK")
 		return common.ErrInvalidNoACK(k.Codespace).Result()
 	}
 
