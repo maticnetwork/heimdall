@@ -7,10 +7,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/ethereum/go-ethereum/common"
 	hmcmn "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
+	"github.com/maticnetwork/heimdall/helper/mocks"
+	"github.com/maticnetwork/heimdall/checkpoint"
+	"time"
 )
 
 func TestUpdateAck(t *testing.T) {
@@ -258,28 +260,35 @@ func LoadValidatorSet(count int, t *testing.T, keeper hmcmn.Keeper, ctx sdk.Cont
 }
 
 //TODO add tests for validator set changes on update/signer
-// TODO add mocks for contract calls/tx to test
-type MockHeimdallCaller interface {
-	MockGetHeaderInfo(headerID uint64) (root common.Hash, start uint64, end uint64, err error)
-	//GetValidatorInfo(addr common.Address) (validator types.Validator, err error)
-	//CurrentChildBlock() (uint64, error)
-	//GetBalance(address common.Address) (*big.Int, error)
-}
 
 func TestHandleMsgCheckpoint(t *testing.T) {
-	//ctx, keeper := CreateTestInput(t, false)
-	//header, err := GenRandCheckpointHeader(10)
-	//require.Empty(t, err, "Unable to create random header block, Error:%v", err)
-	//
-	//msgCheckpoint := checkpoint.NewMsgCheckpointBlock(header.Proposer, header.StartBlock, header.EndBlock, header.RootHash, uint64(time.Now().Unix()))
-	//got := checkpoint.HandleMsgCheckpoint(ctx, msgCheckpoint, keeper)
-	//require.True(t, got.IsOK(), "expected send-checkpoint to be ok, got %v", got)
-	//
-	//// check if cache is set
-	//found := keeper.GetCheckpointCache(ctx, hmcmn.CheckpointCacheKey)
-	//require.Equal(t, true, found, "Checkpoint cache should exist")
-	//
-	//// check if checkpoint matches
-	//storedHeader, err := keeper.GetLastCheckpoint(ctx)
-	//require.Equal(t, header, storedHeader, "Header stored is not same")
+
+	contractCallerObj := mocks.ContractCaller{}
+	ctx, keeper := CreateTestInput(t, false)
+	LoadValidatorSet(4, t, keeper, ctx, false)
+	keeper.IncreamentAccum(ctx, 1)
+	// create random checkpoint header
+	header, err := GenRandCheckpointHeader(10)
+	require.Empty(t, err, "Unable to create random header block, Error:%v", err)
+
+	// add current proposer to 
+	header.Proposer=keeper.GetValidatorSet(ctx).Proposer.Signer
+	contractCallerObj.On("GetBalance",header.Proposer).Return(helper.MinBalance,nil)
+
+	// create checkpoint msg
+	msgCheckpoint := checkpoint.NewMsgCheckpointBlock(header.Proposer, header.StartBlock, header.EndBlock, header.RootHash, uint64(time.Now().Unix()))
+
+	// send checkpoint to handler
+	got := checkpoint.HandleMsgCheckpoint(ctx, msgCheckpoint, keeper,&contractCallerObj)
+	require.True(t, got.IsOK(), "expected send-checkpoint to be ok, got %v", got)
+
+	// check if cache is set
+	found := keeper.GetCheckpointCache(ctx, hmcmn.CheckpointCacheKey)
+	require.Equal(t, true, found, "Checkpoint cache should exist")
+
+	// check if checkpoint matches
+	storedHeader, err := keeper.GetCheckpointFromBuffer(ctx)
+	// ignoring time difference
+	header.TimeStamp=storedHeader.TimeStamp
+	require.Equal(t, header, storedHeader, "Start Block Doesnt Match")
 }
