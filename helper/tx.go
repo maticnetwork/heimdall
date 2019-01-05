@@ -14,6 +14,7 @@ import (
 	"github.com/tendermint/tendermint/types"
 )
 
+
 func GenerateAuthObj(client *ethclient.Client, callMsg ethereum.CallMsg) (auth *bind.TransactOpts, err error) {
 	// get priv key
 	pkObject := GetPrivKey()
@@ -52,18 +53,12 @@ func GenerateAuthObj(client *ethclient.Client, callMsg ethereum.CallMsg) (auth *
 
 // SendCheckpoint sends checkpoint to rootchain contract
 // todo return err
-func SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte) {
+func (c *ContractCallerObj) SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte) {
 	var vote types.CanonicalRLPVote
 	err := rlp.DecodeBytes(voteSignBytes, &vote)
 	if err != nil {
 		Logger.Error("Unable to decode vote while sending checkpoint", "vote", hex.EncodeToString(voteSignBytes), "sigs", hex.EncodeToString(sigs), "txData", hex.EncodeToString(txData))
 	}
-
-	rootchainInstance, err := GetRootChainInstance()
-	if err != nil {
-		return
-	}
-
 	// get stakeManager Instance
 	rootchainABI, err := GetRootChainABI()
 	if err != nil {
@@ -84,11 +79,10 @@ func SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte) {
 
 	Logger.Info("Sending new checkpoint", "vote", hex.EncodeToString(voteSignBytes), "sigs", hex.EncodeToString(sigs), "txData", hex.EncodeToString(txData))
 
-	tx, err := rootchainInstance.SubmitHeaderBlock(auth, voteSignBytes, sigs, txData)
+	tx, err := c.rootChainInstance.SubmitHeaderBlock(auth, voteSignBytes, sigs, txData)
 	if err != nil {
 		Logger.Error("Error while submitting checkpoint", "error", err)
 	} else {
 		Logger.Info("Submitted new header successfully", "txHash", tx.Hash().String())
 	}
-
 }

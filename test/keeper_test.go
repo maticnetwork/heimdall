@@ -7,11 +7,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
+	"github.com/maticnetwork/heimdall/checkpoint"
 	hmcmn "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/helper/mocks"
-	"github.com/maticnetwork/heimdall/checkpoint"
+	"github.com/maticnetwork/heimdall/types"
 	"time"
 )
 
@@ -271,15 +271,15 @@ func TestHandleMsgCheckpoint(t *testing.T) {
 	header, err := GenRandCheckpointHeader(10)
 	require.Empty(t, err, "Unable to create random header block, Error:%v", err)
 
-	// add current proposer to 
-	header.Proposer=keeper.GetValidatorSet(ctx).Proposer.Signer
-	contractCallerObj.On("GetBalance",header.Proposer).Return(helper.MinBalance,nil)
+	// add current proposer to
+	header.Proposer = keeper.GetValidatorSet(ctx).Proposer.Signer
+	contractCallerObj.On("GetBalance", header.Proposer).Return(helper.MinBalance, nil)
 
 	// create checkpoint msg
 	msgCheckpoint := checkpoint.NewMsgCheckpointBlock(header.Proposer, header.StartBlock, header.EndBlock, header.RootHash, uint64(time.Now().Unix()))
 
 	// send checkpoint to handler
-	got := checkpoint.HandleMsgCheckpoint(ctx, msgCheckpoint, keeper,&contractCallerObj)
+	got := checkpoint.HandleMsgCheckpoint(ctx, msgCheckpoint, keeper, &contractCallerObj)
 	require.True(t, got.IsOK(), "expected send-checkpoint to be ok, got %v", got)
 
 	// check if cache is set
@@ -289,6 +289,6 @@ func TestHandleMsgCheckpoint(t *testing.T) {
 	// check if checkpoint matches
 	storedHeader, err := keeper.GetCheckpointFromBuffer(ctx)
 	// ignoring time difference
-	header.TimeStamp=storedHeader.TimeStamp
+	header.TimeStamp = storedHeader.TimeStamp
 	require.Equal(t, header, storedHeader, "Start Block Doesnt Match")
 }

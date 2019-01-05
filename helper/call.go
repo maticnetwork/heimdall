@@ -16,6 +16,7 @@ type ContractCaller interface {
 	GetValidatorInfo(addr common.Address) (validator types.Validator, err error)
 	CurrentChildBlock() (uint64, error)
 	GetBalance(address common.Address) (*big.Int, error)
+	SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte)
 }
 
 type ContractCallerObj struct {

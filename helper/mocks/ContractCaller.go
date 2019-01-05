@@ -114,3 +114,8 @@ func (_m *ContractCaller) GetValidatorInfo(addr common.Address) (types.Validator
 
 	return r0, r1
 }
+
+// SendCheckpoint provides a mock function with given fields: voteSignBytes, sigs, txData
+func (_m *ContractCaller) SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte) {
+	_m.Called(voteSignBytes, sigs, txData)
+}
