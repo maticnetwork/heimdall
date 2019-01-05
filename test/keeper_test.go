@@ -259,19 +259,20 @@ func LoadValidatorSet(count int, t *testing.T, keeper hmcmn.Keeper, ctx sdk.Cont
 	return valSet
 }
 
-//TODO add tests for validator set changes on update/signer
-
+// test handler for message
 func TestHandleMsgCheckpoint(t *testing.T) {
-
 	contractCallerObj := mocks.ContractCaller{}
 	ctx, keeper := CreateTestInput(t, false)
+
+	// generate proposer for validator set
 	LoadValidatorSet(4, t, keeper, ctx, false)
 	keeper.IncreamentAccum(ctx, 1)
+
 	// create random checkpoint header
 	header, err := GenRandCheckpointHeader(10)
 	require.Empty(t, err, "Unable to create random header block, Error:%v", err)
 
-	// add current proposer to
+	// add current proposer to header
 	header.Proposer = keeper.GetValidatorSet(ctx).Proposer.Signer
 	contractCallerObj.On("GetBalance", header.Proposer).Return(helper.MinBalance, nil)
 
@@ -288,6 +289,7 @@ func TestHandleMsgCheckpoint(t *testing.T) {
 
 	// check if checkpoint matches
 	storedHeader, err := keeper.GetCheckpointFromBuffer(ctx)
+
 	// ignoring time difference
 	header.TimeStamp = storedHeader.TimeStamp
 	require.Equal(t, header, storedHeader, "Start Block Doesnt Match")

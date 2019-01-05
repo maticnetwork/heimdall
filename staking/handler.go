@@ -121,7 +121,7 @@ func handleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k hmCommon.Keep
 	return sdk.Result{}
 }
 
-func handleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k hmCommon.Keeper,contractCaller helper.ContractCaller) sdk.Result {
+func handleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k hmCommon.Keeper, contractCaller helper.ContractCaller) sdk.Result {
 	validator, ok := k.GetValidatorFromValAddr(ctx, msg.ValidatorAddress)
 	if !ok {
 		hmCommon.StakingLogger.Error("Fetching of validator from store failed", "validatorAddress", msg.ValidatorAddress)
@@ -140,7 +140,7 @@ func handleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k hmCommon.Ke
 	}
 
 	// Add deactivation time for validator
-	if err := k.AddDeactivationEpoch(ctx, validator,updatedVal); err != nil {
+	if err := k.AddDeactivationEpoch(ctx, validator, updatedVal); err != nil {
 		hmCommon.StakingLogger.Error("Error while setting deactivation epoch to validator", "error", err, "validatorAddress", validator.Address.String())
 		return hmCommon.ErrValidatorNotDeactivated(k.Codespace).Result()
 	}

@@ -14,7 +14,6 @@ import (
 	"github.com/tendermint/tendermint/types"
 )
 
-
 func GenerateAuthObj(client *ethclient.Client, callMsg ethereum.CallMsg) (auth *bind.TransactOpts, err error) {
 	// get priv key
 	pkObject := GetPrivKey()

@@ -46,7 +46,7 @@ type HeimdallApp struct {
 	//checkpointKeeper checkpoint.Keeper
 	//stakerKeeper     staking.Keeper
 	masterKeeper common.Keeper
-	caller helper.ContractCallerObj
+	caller       helper.ContractCallerObj
 }
 
 var logger = helper.Logger.With("module", "app")
@@ -73,7 +73,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 
 	contractCallerObj, err := helper.NewContractCallerObj()
 	if err != nil {
-		logger.Error("we got error","Error",err)
+		logger.Error("we got error", "Error", err)
 		cmn.Exit(err.Error())
 	}
 	app.caller = contractCallerObj
@@ -209,7 +209,7 @@ func (app *HeimdallApp) endBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 		if app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointCacheKey) {
 			logger.Info("Checkpoint processed in block", "CheckpointProcessed", app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointCacheKey))
 			// Send Checkpoint to Rootchain
-			PrepareAndSendCheckpoint(ctx, app.masterKeeper,&app.caller)
+			PrepareAndSendCheckpoint(ctx, app.masterKeeper, &app.caller)
 			// clear Checkpoint cache
 			app.masterKeeper.FlushCheckpointCache(ctx)
 		}
@@ -315,7 +315,7 @@ func GetExtraData(_checkpoint hmTypes.CheckpointBlockHeader, ctx sdk.Context) []
 }
 
 // PrepareAndSendCheckpoint prepares all the data required for sending checkpoint and sends tx to rootchain
-func PrepareAndSendCheckpoint(ctx sdk.Context, keeper common.Keeper,caller helper.ContractCaller) {
+func PrepareAndSendCheckpoint(ctx sdk.Context, keeper common.Keeper, caller helper.ContractCaller) {
 	// fetch votes from block header
 	var votes []tmTypes.Vote
 	err := json.Unmarshal(ctx.BlockHeader().Votes, &votes)

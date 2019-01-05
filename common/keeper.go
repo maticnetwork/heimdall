@@ -369,7 +369,7 @@ func (k *Keeper) IterateValidatorsAndApplyFn(ctx sdk.Context, f func(validator t
 }
 
 // AddDeactivationEpoch adds deactivation epoch
-func (k *Keeper) AddDeactivationEpoch(ctx sdk.Context, validator types.Validator,updatedVal types.Validator) error {
+func (k *Keeper) AddDeactivationEpoch(ctx sdk.Context, validator types.Validator, updatedVal types.Validator) error {
 	// check if validator has unstaked
 	if updatedVal.EndEpoch != 0 {
 		validator.EndEpoch = updatedVal.EndEpoch
