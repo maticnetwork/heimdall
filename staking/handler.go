@@ -10,13 +10,13 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
-func NewHandler(k hmCommon.Keeper,contractCaller helper.ContractCaller) sdk.Handler {
+func NewHandler(k hmCommon.Keeper, contractCaller helper.ContractCaller) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case MsgValidatorJoin:
-			return handleMsgValidatorJoin(ctx, msg, k,contractCaller)
+			return handleMsgValidatorJoin(ctx, msg, k, contractCaller)
 		case MsgValidatorExit:
-			return handleMsgValidatorExit(ctx, msg, k)
+			return handleMsgValidatorExit(ctx, msg, k, contractCaller)
 		case MsgSignerUpdate:
 			return handleMsgSignerUpdate(ctx, msg, k)
 		default:
@@ -25,7 +25,7 @@ func NewHandler(k hmCommon.Keeper,contractCaller helper.ContractCaller) sdk.Hand
 	}
 }
 
-func handleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k hmCommon.Keeper,contractCaller helper.ContractCaller) sdk.Result {
+func handleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k hmCommon.Keeper, contractCaller helper.ContractCaller) sdk.Result {
 	//fetch validator from mainchain
 	validator, err := contractCaller.GetValidatorInfo(msg.ValidatorAddress)
 	if err != nil || bytes.Equal(validator.Address.Bytes(), helper.ZeroAddress.Bytes()) {
@@ -121,7 +121,7 @@ func handleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k hmCommon.Keep
 	return sdk.Result{}
 }
 
-func handleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k hmCommon.Keeper) sdk.Result {
+func handleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k hmCommon.Keeper,contractCaller helper.ContractCaller) sdk.Result {
 	validator, ok := k.GetValidatorFromValAddr(ctx, msg.ValidatorAddress)
 	if !ok {
 		hmCommon.StakingLogger.Error("Fetching of validator from store failed", "validatorAddress", msg.ValidatorAddress)
@@ -133,9 +133,14 @@ func handleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k hmCommon.Ke
 		hmCommon.StakingLogger.Error("Validator already unbonded")
 		return hmCommon.ErrValUnbonded(k.Codespace).Result()
 	}
+	// get validator from mainchain
+	updatedVal, err := contractCaller.GetValidatorInfo(validator.Address)
+	if err != nil {
+		hmCommon.StakingLogger.Error("Cannot fetch validator info while unstaking", "Error", err, "ValidatorAddress", validator.Address)
+	}
 
 	// Add deactivation time for validator
-	if err := k.AddDeactivationEpoch(ctx, validator); err != nil {
+	if err := k.AddDeactivationEpoch(ctx, validator,updatedVal); err != nil {
 		hmCommon.StakingLogger.Error("Error while setting deactivation epoch to validator", "error", err, "validatorAddress", validator.Address.String())
 		return hmCommon.ErrValidatorNotDeactivated(k.Codespace).Result()
 	}

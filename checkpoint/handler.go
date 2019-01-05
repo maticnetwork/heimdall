@@ -27,7 +27,6 @@ func NewHandler(k common.Keeper, contractCaller helper.ContractCaller) sdk.Handl
 }
 
 func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keeper, contractCaller helper.ContractCaller) sdk.Result {
-
 	// make call to headerBlock with header number
 	root, start, end, err := contractCaller.GetHeaderInfo(msg.HeaderBlock)
 	if err != nil {
@@ -79,7 +78,7 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 	return sdk.Result{}
 }
 
-func HandleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper,contractCaller helper.ContractCaller) sdk.Result {
+func HandleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper, contractCaller helper.ContractCaller) sdk.Result {
 	if msg.TimeStamp == 0 || msg.TimeStamp > uint64(time.Now().Unix()) {
 		return common.ErrBadTimeStamp(k.Codespace).Result()
 	}
@@ -170,9 +169,9 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k common.
 	// set last no ack
 	k.SetLastNoAck(ctx, uint64(currentTime.Unix()))
 
-	// flush buffer
-	k.FlushCheckpointBuffer(ctx)
-	common.CheckpointLogger.Debug("Checkpoint buffer flushed after receiving no-ack")
+	//// flush buffer
+	//k.FlushCheckpointBuffer(ctx)
+	//common.CheckpointLogger.Debug("Checkpoint buffer flushed after receiving no-ack")
 
 	// --- Update to new proposer
 

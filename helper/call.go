@@ -19,28 +19,26 @@ type ContractCaller interface {
 }
 
 type ContractCallerObj struct {
-	rootChainInstance    rootchain.Rootchain
-	stakeManagerInstance stakemanager.Stakemanager
+	rootChainInstance    *rootchain.Rootchain
+	stakeManagerInstance *stakemanager.Stakemanager
 	mainChainClient      *ethclient.Client
 }
 
-func NewContractCallerObj() (contractCaller ContractCaller, err error) {
-	var contractCallerObj ContractCallerObj
+func NewContractCallerObj() (contractCallerObj ContractCallerObj, err error) {
 	rootChainInstance, err := GetRootChainInstance()
 	if err != nil {
 		Logger.Error("Error creating rootchain instance ", "error", err)
-		return contractCaller, err
+		return contractCallerObj, err
 	}
 	stakeManagerInstance, err := GetStakeManagerInstance()
 	if err != nil {
 		Logger.Error("Error creating stakeManagerInstance while getting validator info", "error", err)
-		return contractCaller, err
+		return contractCallerObj, err
 	}
 	contractCallerObj.mainChainClient = GetMainClient()
-	contractCallerObj.stakeManagerInstance = *stakeManagerInstance
-	contractCallerObj.rootChainInstance = *rootChainInstance
-
-	return contractCaller, nil
+	contractCallerObj.stakeManagerInstance = stakeManagerInstance
+	contractCallerObj.rootChainInstance = rootChainInstance
+	return contractCallerObj, nil
 }
 
 // GetHeaderInfo get header info from header id
@@ -60,7 +58,7 @@ func (c *ContractCallerObj) GetHeaderInfo(headerID uint64) (root common.Hash, st
 func (c *ContractCallerObj) GetValidatorInfo(addr common.Address) (validator types.Validator, err error) {
 	amount, startEpoch, endEpoch, signer, err := c.stakeManagerInstance.GetStakerDetails(nil, addr)
 	if err != nil {
-		Logger.Error("Error fetching validator information from stakemanager", "Error", err, "ValidatorAddress", addr)
+		Logger.Error("Error fetching validator information from stake manager", "Error", err, "ValidatorAddress", addr)
 		return
 	}
 	validator = types.Validator{
@@ -81,7 +79,6 @@ func (c *ContractCallerObj) CurrentChildBlock() (uint64, error) {
 		Logger.Error("Could not fetch current child block from rootchain contract", "Error", err)
 		return 0, err
 	}
-
 	return currentChildBlock.Uint64(), nil
 }
 
