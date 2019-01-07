@@ -266,7 +266,7 @@ func TestHandleMsgCheckpoint(t *testing.T) {
 	contractCallerObj := mocks.ContractCaller{}
 
 	// check valid checkpoint
-	t.Run("validCheckpoint",func(t *testing.T) {
+	t.Run("validCheckpoint", func(t *testing.T) {
 		ctx, keeper := CreateTestInput(t, false)
 		// generate proposer for validator set
 		LoadValidatorSet(4, t, keeper, ctx, false)
@@ -275,7 +275,7 @@ func TestHandleMsgCheckpoint(t *testing.T) {
 		require.Empty(t, err, "Unable to create random header block, Error:%v", err)
 		// make sure proposer has min ether
 		contractCallerObj.On("GetBalance", keeper.GetValidatorSet(ctx).Proposer.Signer).Return(helper.MinBalance, nil)
-		SentValidCheckpoint(header,keeper,ctx,contractCallerObj,t)
+		SentValidCheckpoint(header, keeper, ctx, contractCallerObj, t)
 	})
 
 	// check invalid proposer
@@ -314,12 +314,12 @@ func TestHandleMsgCheckpoint(t *testing.T) {
 			// make sure proposer has min ether
 			contractCallerObj.On("GetBalance", header.Proposer).Return(helper.MinBalance, nil)
 			// create checkpoint 257 seconds prev to current time
-			header.TimeStamp=uint64(time.Now().Add(-(helper.CheckpointBufferTime+time.Second)).Unix())
-			t.Log("Sending checkpoint with timestamp","Timestamp",header.TimeStamp,"Current",time.Now().Unix())
+			header.TimeStamp = uint64(time.Now().Add(-(helper.CheckpointBufferTime + time.Second)).Unix())
+			t.Log("Sending checkpoint with timestamp", "Timestamp", header.TimeStamp, "Current", time.Now().Unix())
 			// send old checkpoint
-			SentValidCheckpoint(header,keeper,ctx,contractCallerObj,t)
+			SentValidCheckpoint(header, keeper, ctx, contractCallerObj, t)
 			// create new checkpoint with current time
-			header.TimeStamp =uint64(time.Now().Unix())
+			header.TimeStamp = uint64(time.Now().Unix())
 			msgCheckpoint := checkpoint.NewMsgCheckpointBlock(header.Proposer, header.StartBlock, header.EndBlock, header.RootHash, header.TimeStamp)
 			// send new checkpoint which should replace old one
 			got := checkpoint.HandleMsgCheckpoint(ctx, msgCheckpoint, keeper, &contractCallerObj)
@@ -339,7 +339,7 @@ func TestHandleMsgCheckpoint(t *testing.T) {
 			contractCallerObj.On("GetBalance", header.Proposer).Return(helper.MinBalance, nil)
 			// add current proposer to header
 			header.Proposer = keeper.GetValidatorSet(ctx).Proposer.Signer
-			SentValidCheckpoint(header,keeper,ctx,contractCallerObj,t)
+			SentValidCheckpoint(header, keeper, ctx, contractCallerObj, t)
 			// create checkpoint msg
 			msgCheckpoint := checkpoint.NewMsgCheckpointBlock(header.Proposer, header.StartBlock, header.EndBlock, header.RootHash, uint64(time.Now().Unix()))
 			// send checkpoint to handler
@@ -350,7 +350,7 @@ func TestHandleMsgCheckpoint(t *testing.T) {
 
 }
 
-func SentValidCheckpoint(header types.CheckpointBlockHeader,keeper hmcmn.Keeper,ctx sdk.Context,contractCallerObj mocks.ContractCaller,t *testing.T)  {
+func SentValidCheckpoint(header types.CheckpointBlockHeader, keeper hmcmn.Keeper, ctx sdk.Context, contractCallerObj mocks.ContractCaller, t *testing.T) {
 	// add current proposer to header
 	header.Proposer = keeper.GetValidatorSet(ctx).Proposer.Signer
 
@@ -374,9 +374,8 @@ func SentValidCheckpoint(header types.CheckpointBlockHeader,keeper hmcmn.Keeper,
 	require.Equal(t, header, storedHeader, "Header block Doesnt Match")
 }
 
-
 // test condition where checkpoint on mainchain gets confirmed after someone send no-ack on heimdall
-func TestACKAfterNoACK(t *testing.T)  {
+func TestACKAfterNoACK(t *testing.T) {
 	contractCallerObj := mocks.ContractCaller{}
 	ctx, keeper := CreateTestInput(t, false)
 	// generate proposer for validator set
@@ -385,16 +384,15 @@ func TestACKAfterNoACK(t *testing.T)  {
 	header, err := GenRandCheckpointHeader(10)
 	require.Empty(t, err, "Unable to create random header block, Error:%v", err)
 	contractCallerObj.On("GetBalance", keeper.GetValidatorSet(ctx).Proposer.Signer).Return(helper.MinBalance, nil)
-	SentValidCheckpoint(header,keeper,ctx,contractCallerObj,t)
-	msgNoACK := checkpoint.NewMsgCheckpointNoAck(uint64(time.Now().Add(-(helper.CheckpointBufferTime+time.Second)).Unix()))
+	SentValidCheckpoint(header, keeper, ctx, contractCallerObj, t)
+	msgNoACK := checkpoint.NewMsgCheckpointNoAck(uint64(time.Now().Add(-(helper.CheckpointBufferTime + time.Second)).Unix()))
 	got := checkpoint.HandleMsgCheckpointNoAck(ctx, msgNoACK, keeper)
 	require.True(t, got.IsOK(), "expected send-no-ack to be ok, got %v", got)
 
-	contractCallerObj.On("GetHeaderInfo",uint64(10000)).Return(header.RootHash, header.StartBlock,header.EndBlock,nil)
+	contractCallerObj.On("GetHeaderInfo", uint64(10000)).Return(header.RootHash, header.StartBlock, header.EndBlock, nil)
 	// create ack msg
 	msgACK := checkpoint.NewMsgCheckpointAck(uint64(10000))
 	// send ack to handler
 	got = checkpoint.HandleMsgCheckpointAck(ctx, msgACK, keeper, &contractCallerObj)
 	require.True(t, got.IsOK(), "expected send-ack to be ok, got %v", got)
 }
-

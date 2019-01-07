@@ -80,14 +80,14 @@ func HandleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 
 func HandleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	if msg.TimeStamp == 0 || msg.TimeStamp > uint64(time.Now().Unix()) {
-		common.CheckpointLogger.Error("Checkpoint timestamp must be in near past","CurrentTime",time.Now().Unix(),"CheckpointTime",msg.TimeStamp,"Condition",msg.TimeStamp >= uint64(time.Now().Unix()))
+		common.CheckpointLogger.Error("Checkpoint timestamp must be in near past", "CurrentTime", time.Now().Unix(), "CheckpointTime", msg.TimeStamp, "Condition", msg.TimeStamp >= uint64(time.Now().Unix()))
 		return common.ErrBadTimeStamp(k.Codespace).Result()
 	}
 
 	checkpointBuffer, err := k.GetCheckpointFromBuffer(ctx)
 	if err == nil {
 		if msg.TimeStamp == 0 || checkpointBuffer.TimeStamp == 0 || ((msg.TimeStamp > checkpointBuffer.TimeStamp) && msg.TimeStamp-checkpointBuffer.TimeStamp > uint64(helper.CheckpointBufferTime.Seconds())) {
-			common.CheckpointLogger.Debug("Checkpoint has been timed out, flushing buffer","CheckpointTimestamp",msg.TimeStamp,"PrevCheckpointTimestamp",checkpointBuffer.TimeStamp)
+			common.CheckpointLogger.Debug("Checkpoint has been timed out, flushing buffer", "CheckpointTimestamp", msg.TimeStamp, "PrevCheckpointTimestamp", checkpointBuffer.TimeStamp)
 			k.FlushCheckpointBuffer(ctx)
 		} else {
 			return common.ErrNoACK(k.Codespace).Result()
