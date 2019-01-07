@@ -268,21 +268,19 @@ func TestHandleMsgCheckpoint(t *testing.T) {
 	// check valid checkpoint
 	t.Run("validCheckpoint",func(t *testing.T) {
 		ctx, keeper := CreateTestInput(t, false)
-
 		// generate proposer for validator set
 		LoadValidatorSet(4, t, keeper, ctx, false)
 		keeper.IncreamentAccum(ctx, 1)
-
 		header, err := GenRandCheckpointHeader(10)
 		require.Empty(t, err, "Unable to create random header block, Error:%v", err)
-		header.TimeStamp = uint64(time.Now().Unix())
+		// make sure proposer has min ether
+		contractCallerObj.On("GetBalance", keeper.GetValidatorSet(ctx).Proposer.Signer).Return(helper.MinBalance, nil)
 		SentValidCheckpoint(header,keeper,ctx,contractCallerObj,t)
 	})
 
 	// check invalid proposer
 	t.Run("invalidProposer", func(t *testing.T) {
 		ctx, keeper := CreateTestInput(t, false)
-
 		// generate proposer for validator set
 		LoadValidatorSet(4, t, keeper, ctx, false)
 		keeper.IncreamentAccum(ctx, 1)
@@ -303,7 +301,6 @@ func TestHandleMsgCheckpoint(t *testing.T) {
 	})
 
 	t.Run("multipleCheckpoint", func(t *testing.T) {
-
 		t.Run("afterTimeout", func(t *testing.T) {
 			ctx, keeper := CreateTestInput(t, false)
 			// generate proposer for validator set
@@ -342,16 +339,13 @@ func TestHandleMsgCheckpoint(t *testing.T) {
 			contractCallerObj.On("GetBalance", header.Proposer).Return(helper.MinBalance, nil)
 			// add current proposer to header
 			header.Proposer = keeper.GetValidatorSet(ctx).Proposer.Signer
-
 			SentValidCheckpoint(header,keeper,ctx,contractCallerObj,t)
-
 			// create checkpoint msg
 			msgCheckpoint := checkpoint.NewMsgCheckpointBlock(header.Proposer, header.StartBlock, header.EndBlock, header.RootHash, uint64(time.Now().Unix()))
 			// send checkpoint to handler
 			got := checkpoint.HandleMsgCheckpoint(ctx, msgCheckpoint, keeper, &contractCallerObj)
 			require.True(t, !got.IsOK(), "expected send-checkpoint to be not ok, got %v", got)
 		})
-
 	})
 
 }
@@ -378,5 +372,19 @@ func SentValidCheckpoint(header types.CheckpointBlockHeader,keeper hmcmn.Keeper,
 	// ignoring time difference
 	header.TimeStamp = storedHeader.TimeStamp
 	require.Equal(t, header, storedHeader, "Header block Doesnt Match")
+}
+
+func TestACKAfterNoACK(t *testing.T)  {
+	contractCallerObj := mocks.ContractCaller{}
+	ctx, keeper := CreateTestInput(t, false)
+	// generate proposer for validator set
+	LoadValidatorSet(4, t, keeper, ctx, false)
+	keeper.IncreamentAccum(ctx, 1)
+	header, err := GenRandCheckpointHeader(10)
+	require.Empty(t, err, "Unable to create random header block, Error:%v", err)
+	contractCallerObj.On("GetBalance", header.Proposer).Return(helper.MinBalance, nil)
+	SentValidCheckpoint(header,keeper,ctx,contractCallerObj,t)
+	contractCallerObj.On("GetHeaderInfo",)
 
 }
+
