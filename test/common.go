@@ -21,6 +21,7 @@ import (
 	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/types"
 	"os"
+	"time"
 )
 
 func MakeTestCodec() *codec.Codec {
@@ -71,7 +72,7 @@ func GenRandCheckpointHeader(headerSize int) (headerBlock types.CheckpointBlockH
 		return headerBlock, err
 	}
 	proposer := ethcmn.Address{}
-	headerBlock = types.CreateBlock(uint64(start), uint64(end), ethcmn.HexToHash(hex.EncodeToString(roothash)), proposer, rand.Uint64())
+	headerBlock = types.CreateBlock(uint64(start), uint64(end), ethcmn.HexToHash(hex.EncodeToString(roothash)), proposer, uint64(time.Now().Unix()))
 
 	return headerBlock, nil
 }
