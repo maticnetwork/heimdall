@@ -12,7 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/spf13/viper"
-	amino "github.com/tendermint/go-amino"
+	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	logger "github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/privval"
@@ -44,6 +44,21 @@ func init() {
 	cdc.RegisterConcrete(secp256k1.PubKeySecp256k1{}, secp256k1.PubKeyAminoRoute, nil)
 	cdc.RegisterConcrete(secp256k1.PrivKeySecp256k1{}, secp256k1.PrivKeyAminoRoute, nil)
 	Logger = logger.NewTMLogger(logger.NewSyncWriter(os.Stdout))
+
+	//contractCallerObj, err := NewContractCallerObj()
+	//if err != nil {
+	//	fmt.Errorf("we got error","Error",err)
+	//	log.Fatal(err.Error())
+	//}
+	//
+	////app.caller = contractCallerObj
+	////caller:= app.caller
+	//Logger.Error("contrct","caller",contractCallerObj)
+	//value,err:= contractCallerObj.CurrentChildBlock()
+	//if err!=nil{
+	//	log.Fatal(err.Error())
+	//}
+	//fmt.Printf("current block",value)
 }
 
 // Configuration represents heimdall config
@@ -72,9 +87,11 @@ var pubObject secp256k1.PubKeySecp256k1
 var Logger logger.Logger
 
 // InitHeimdallConfig initializes with viper config (from heimdall configuration)
-func InitHeimdallConfig() {
-	// get home dir from viper
-	homeDir := viper.GetString(HomeFlag)
+func InitHeimdallConfig(homeDir string) {
+	if strings.Compare(homeDir, "") == 0 {
+		// get home dir from viper
+		homeDir = viper.GetString(HomeFlag)
+	}
 
 	// get heimdall config filepath from viper/cobra flag
 	heimdallConfigFilePath := viper.GetString(WithHeimdallConfigFlag)
@@ -85,7 +102,7 @@ func InitHeimdallConfig() {
 
 // InitHeimdallConfigWith initializes passed heimdall/tendermint config files
 func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
-	if homeDir == "" {
+	if strings.Compare(homeDir, "") == 0 {
 		return
 	}
 
@@ -131,6 +148,7 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 	privVal := privval.LoadFilePV(filepath.Join(configDir, "priv_validator.json"))
 	cdc.MustUnmarshalBinaryBare(privVal.PrivKey.Bytes(), &privObject)
 	cdc.MustUnmarshalBinaryBare(privObject.PubKey().Bytes(), &pubObject)
+
 }
 
 // GetConfig returns cached configuration object

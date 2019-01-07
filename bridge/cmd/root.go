@@ -44,7 +44,7 @@ func InitTendermintViperConfig(cmd *cobra.Command) {
 	viper.Set(bridgeDBFlag, bridgeDBValue)
 
 	// start heimdall config
-	helper.InitHeimdallConfig()
+	helper.InitHeimdallConfig("")
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

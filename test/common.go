@@ -14,11 +14,14 @@ import (
 	dbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
 
+	"encoding/hex"
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/types"
+	"os"
+	"time"
 )
 
 func MakeTestCodec() *codec.Codec {
@@ -36,7 +39,8 @@ func MakeTestCodec() *codec.Codec {
 }
 
 func CreateTestInput(t *testing.T, isCheckTx bool) (sdk.Context, common.Keeper) {
-	helper.InitHeimdallConfig()
+	//t.Parallel()
+	helper.InitHeimdallConfig(os.ExpandEnv("$HOME/.heimdalld"))
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
 	keyCheckpoint := sdk.NewKVStoreKey("checkpoint")
@@ -59,22 +63,20 @@ func CreateTestInput(t *testing.T, isCheckTx bool) (sdk.Context, common.Keeper) 
 	return ctx, masterKeeper
 }
 
-// TODO check why initHeimdall not working here
 // create random header block
-func GenRandCheckpointHeader() (headerBlock types.CheckpointBlockHeader, err error) {
-	//start := rand.Intn(100) + 10
-	//end := start + 256
-	//var headerBlock types.CheckpointBlockHeader
-	//roothash, err := checkpoint.GetHeaders(uint64(start), uint64(end))
-	//if err != nil {
-	//	return headerBlock, err
-	//}
+func GenRandCheckpointHeader(headerSize int) (headerBlock types.CheckpointBlockHeader, err error) {
+	start := rand.Intn(100) + 1
+	end := start + headerSize
+	roothash, err := checkpoint.GetHeaders(uint64(start), uint64(end))
+	if err != nil {
+		return headerBlock, err
+	}
 	proposer := ethcmn.Address{}
-	headerBlock = types.CreateBlock(uint64(4733040), uint64(4733050), ethcmn.HexToHash("0x5ba1680c5f5d5da8c7e3c08ba5d168c69da7a7104cf4beab94f7c0c955551f35"), proposer, rand.Uint64())
+	headerBlock = types.CreateBlock(uint64(start), uint64(end), ethcmn.HexToHash(hex.EncodeToString(roothash)), proposer, uint64(time.Now().Unix()))
+
 	return headerBlock, nil
 }
 
-// TODO autogenerate validator instead of
 func GenRandomVal(count int, startBlock uint64, power uint64, timeAlive uint64, randomise bool) (validators []types.Validator) {
 	for i := 0; i < count; i++ {
 		privKey1 := secp256k1.GenPrivKey()
