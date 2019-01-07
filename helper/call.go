@@ -25,7 +25,7 @@ type ContractCaller struct {
 	mainChainClient      *ethclient.Client
 }
 
-func NewContractCallerObj() (contractCallerObj ContractCaller, err error) {
+func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 	rootChainInstance, err := GetRootChainInstance()
 	if err != nil {
 		Logger.Error("Error creating rootchain instance", "error", err)
