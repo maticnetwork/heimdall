@@ -171,10 +171,6 @@ func HandleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k common.
 	// set last no ack
 	k.SetLastNoAck(ctx, uint64(currentTime.Unix()))
 
-	//// flush buffer
-	//k.FlushCheckpointBuffer(ctx)
-	//common.CheckpointLogger.Debug("Checkpoint buffer flushed after receiving no-ack")
-
 	// --- Update to new proposer
 
 	// increment accum

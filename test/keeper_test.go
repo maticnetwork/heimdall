@@ -374,6 +374,8 @@ func SentValidCheckpoint(header types.CheckpointBlockHeader,keeper hmcmn.Keeper,
 	require.Equal(t, header, storedHeader, "Header block Doesnt Match")
 }
 
+
+// test condition where checkpoint on mainchain gets confirmed after someone send no-ack on heimdall
 func TestACKAfterNoACK(t *testing.T)  {
 	contractCallerObj := mocks.ContractCaller{}
 	ctx, keeper := CreateTestInput(t, false)
@@ -382,10 +384,17 @@ func TestACKAfterNoACK(t *testing.T)  {
 	keeper.IncreamentAccum(ctx, 1)
 	header, err := GenRandCheckpointHeader(10)
 	require.Empty(t, err, "Unable to create random header block, Error:%v", err)
-	contractCallerObj.On("GetBalance", header.Proposer).Return(helper.MinBalance, nil)
+	contractCallerObj.On("GetBalance", keeper.GetValidatorSet(ctx).Proposer.Signer).Return(helper.MinBalance, nil)
 	SentValidCheckpoint(header,keeper,ctx,contractCallerObj,t)
-	contractCallerObj.On("GetHeaderInfo","10000").Return(header.RootHash, header.StartBlock,header.EndBlock,nil)
+	msgNoACK := checkpoint.NewMsgCheckpointNoAck(uint64(time.Now().Add(-(helper.CheckpointBufferTime+time.Second)).Unix()))
+	got := checkpoint.HandleMsgCheckpointNoAck(ctx, msgNoACK, keeper)
+	require.True(t, got.IsOK(), "expected send-no-ack to be ok, got %v", got)
 
-
+	contractCallerObj.On("GetHeaderInfo",uint64(10000)).Return(header.RootHash, header.StartBlock,header.EndBlock,nil)
+	// create ack msg
+	msgACK := checkpoint.NewMsgCheckpointAck(uint64(10000))
+	// send ack to handler
+	got = checkpoint.HandleMsgCheckpointAck(ctx, msgACK, keeper, &contractCallerObj)
+	require.True(t, got.IsOK(), "expected send-ack to be ok, got %v", got)
 }
 
