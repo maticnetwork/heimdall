@@ -11,22 +11,22 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
-func NewHandler(k common.Keeper, contractCaller helper.ContractCaller) sdk.Handler {
+func NewHandler(k common.Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case MsgCheckpoint:
 			return HandleMsgCheckpoint(ctx, msg, k, contractCaller)
 		case MsgCheckpointAck:
-			return handleMsgCheckpointAck(ctx, msg, k, contractCaller)
+			return HandleMsgCheckpointAck(ctx, msg, k, contractCaller)
 		case MsgCheckpointNoAck:
-			return handleMsgCheckpointNoAck(ctx, msg, k)
+			return HandleMsgCheckpointNoAck(ctx, msg, k)
 		default:
 			return sdk.ErrTxDecode("Invalid message in checkpoint module").Result()
 		}
 	}
 }
 
-func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keeper, contractCaller helper.ContractCaller) sdk.Result {
+func HandleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	// make call to headerBlock with header number
 	root, start, end, err := contractCaller.GetHeaderInfo(msg.HeaderBlock)
 	if err != nil {
@@ -78,14 +78,16 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 	return sdk.Result{}
 }
 
-func HandleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper, contractCaller helper.ContractCaller) sdk.Result {
+func HandleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	if msg.TimeStamp == 0 || msg.TimeStamp > uint64(time.Now().Unix()) {
+		common.CheckpointLogger.Error("Checkpoint timestamp must be in near past","CurrentTime",time.Now().Unix(),"CheckpointTime",msg.TimeStamp,"Condition",msg.TimeStamp >= uint64(time.Now().Unix()))
 		return common.ErrBadTimeStamp(k.Codespace).Result()
 	}
 
 	checkpointBuffer, err := k.GetCheckpointFromBuffer(ctx)
 	if err == nil {
 		if msg.TimeStamp == 0 || checkpointBuffer.TimeStamp == 0 || ((msg.TimeStamp > checkpointBuffer.TimeStamp) && msg.TimeStamp-checkpointBuffer.TimeStamp > uint64(helper.CheckpointBufferTime.Seconds())) {
+			common.CheckpointLogger.Debug("Checkpoint has been timed out, flushing buffer","CheckpointTimestamp",msg.TimeStamp,"PrevCheckpointTimestamp",checkpointBuffer.TimeStamp)
 			k.FlushCheckpointBuffer(ctx)
 		} else {
 			return common.ErrNoACK(k.Codespace).Result()
@@ -143,7 +145,7 @@ func HandleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper, co
 	return sdk.Result{}
 }
 
-func handleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k common.Keeper) sdk.Result {
+func HandleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k common.Keeper) sdk.Result {
 	// current time
 	currentTime := time.Unix(int64(msg.TimeStamp), 0) // buffer time
 	bufferTime := helper.CheckpointBufferTime

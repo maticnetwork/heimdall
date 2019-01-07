@@ -46,7 +46,7 @@ type HeimdallApp struct {
 	//checkpointKeeper checkpoint.Keeper
 	//stakerKeeper     staking.Keeper
 	masterKeeper common.Keeper
-	caller       helper.ContractCallerObj
+	caller       helper.ContractCaller
 }
 
 var logger = helper.Logger.With("module", "app")
@@ -209,7 +209,7 @@ func (app *HeimdallApp) endBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 		if app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointCacheKey) {
 			logger.Info("Checkpoint processed in block", "CheckpointProcessed", app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointCacheKey))
 			// Send Checkpoint to Rootchain
-			PrepareAndSendCheckpoint(ctx, app.masterKeeper, &app.caller)
+			PrepareAndSendCheckpoint(ctx, app.masterKeeper, app.caller)
 			// clear Checkpoint cache
 			app.masterKeeper.FlushCheckpointCache(ctx)
 		}
@@ -353,7 +353,7 @@ func PrepareAndSendCheckpoint(ctx sdk.Context, keeper common.Keeper, caller help
 		// check if we need to send checkpoint or not
 		if ((lastblock + 1) == _checkpoint.StartBlock) || (lastblock == 0 && _checkpoint.StartBlock == 0) {
 			logger.Info("Sending valid checkpoint", "startBlock", _checkpoint.StartBlock)
-			helper.SendCheckpoint(helper.GetVoteBytes(votes, ctx), sigs, extraData)
+			caller.SendCheckpoint(helper.GetVoteBytes(votes, ctx), sigs, extraData)
 		} else if lastblock > _checkpoint.StartBlock {
 			logger.Info("Start block does not match, checkpoint already sent", "commitedLastBlock", lastblock, "startBlock", _checkpoint.StartBlock)
 		} else if lastblock > _checkpoint.EndBlock {

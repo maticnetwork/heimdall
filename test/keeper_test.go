@@ -384,7 +384,8 @@ func TestACKAfterNoACK(t *testing.T)  {
 	require.Empty(t, err, "Unable to create random header block, Error:%v", err)
 	contractCallerObj.On("GetBalance", header.Proposer).Return(helper.MinBalance, nil)
 	SentValidCheckpoint(header,keeper,ctx,contractCallerObj,t)
-	contractCallerObj.On("GetHeaderInfo",)
+	contractCallerObj.On("GetHeaderInfo","10000").Return(header.RootHash, header.StartBlock,header.EndBlock,nil)
+
 
 }
 

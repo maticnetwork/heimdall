@@ -52,7 +52,7 @@ func GenerateAuthObj(client *ethclient.Client, callMsg ethereum.CallMsg) (auth *
 
 // SendCheckpoint sends checkpoint to rootchain contract
 // todo return err
-func (c *ContractCallerObj) SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte) {
+func (c *ContractCaller) SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte) {
 	var vote types.CanonicalRLPVote
 	err := rlp.DecodeBytes(voteSignBytes, &vote)
 	if err != nil {

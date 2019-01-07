@@ -10,7 +10,7 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
-func NewHandler(k hmCommon.Keeper, contractCaller helper.ContractCaller) sdk.Handler {
+func NewHandler(k hmCommon.Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case MsgValidatorJoin:
@@ -25,7 +25,7 @@ func NewHandler(k hmCommon.Keeper, contractCaller helper.ContractCaller) sdk.Han
 	}
 }
 
-func handleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k hmCommon.Keeper, contractCaller helper.ContractCaller) sdk.Result {
+func handleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k hmCommon.Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	//fetch validator from mainchain
 	validator, err := contractCaller.GetValidatorInfo(msg.ValidatorAddress)
 	if err != nil || bytes.Equal(validator.Address.Bytes(), helper.ZeroAddress.Bytes()) {
@@ -121,7 +121,7 @@ func handleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k hmCommon.Keep
 	return sdk.Result{}
 }
 
-func handleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k hmCommon.Keeper, contractCaller helper.ContractCaller) sdk.Result {
+func handleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k hmCommon.Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	validator, ok := k.GetValidatorFromValAddr(ctx, msg.ValidatorAddress)
 	if !ok {
 		hmCommon.StakingLogger.Error("Fetching of validator from store failed", "validatorAddress", msg.ValidatorAddress)
