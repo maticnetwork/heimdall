@@ -4,7 +4,6 @@ import (
 	"os"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/version"
@@ -12,6 +11,10 @@ import (
 	"github.com/tendermint/tendermint/libs/cli"
 
 	"github.com/maticnetwork/heimdall/app"
+	checkpoint "github.com/maticnetwork/heimdall/checkpoint/cli"
+	"github.com/maticnetwork/heimdall/helper"
+	staking "github.com/maticnetwork/heimdall/staking/cli"
+	"github.com/spf13/viper"
 )
 
 // rootCmd is the entry point for this binary
@@ -44,16 +47,27 @@ func main() {
 		client.GetCommands()...,
 	)
 	rootCmd.AddCommand(
-		client.PostCommands()...,
+		client.PostCommands(
+			checkpoint.GetSendCheckpointTx(cdc),
+			checkpoint.GetCheckpointACKTx(cdc),
+			checkpoint.GetCheckpointNoACKTx(cdc),
+			staking.GetValidatorExitTx(cdc),
+			staking.GetValidatorJoinTx(cdc),
+			staking.GetValidatorUpdateTx(cdc),
+		)...,
 	)
 
 	// add proxy, version and key info
 	rootCmd.AddCommand(
 		client.LineBreak,
-		//checkpointRestCmds.ServeCommands(cdc),
-		keys.Commands(),
 		client.LineBreak,
 		version.VersionCmd,
+	)
+
+	// bind with-heimdall-config config with root cmd
+	viper.BindPFlag(
+		helper.WithHeimdallConfigFlag,
+		rootCmd.Flags().Lookup(helper.WithHeimdallConfigFlag),
 	)
 
 	// prepare and add flags
