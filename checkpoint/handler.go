@@ -157,6 +157,7 @@ func HandleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k common.
 
 	// if last checkpoint is not present or last checkpoint happens before checkpoint buffer time -- thrown an error
 	if lastCheckpointTime.After(currentTime) || (currentTime.Sub(lastCheckpointTime) < bufferTime) {
+		common.CheckpointLogger.Debug("Invalid No ACK -- ongoing buffer period")
 		return common.ErrInvalidNoACK(k.Codespace).Result()
 	}
 
@@ -165,6 +166,7 @@ func HandleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k common.
 	lastAckTime := time.Unix(int64(lastAck), 0)
 
 	if lastAckTime.After(currentTime) || (currentTime.Sub(lastAckTime) < bufferTime) {
+		common.CheckpointLogger.Debug("Too many no-ack")
 		return common.ErrTooManyNoACK(k.Codespace).Result()
 	}
 
@@ -185,8 +187,6 @@ func HandleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k common.
 		"signer", newProposer.Signer.String(),
 		"power", newProposer.Power,
 	)
-
 	// --- End
-
 	return sdk.Result{}
 }

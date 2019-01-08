@@ -396,3 +396,5 @@ func TestACKAfterNoACK(t *testing.T) {
 	got = checkpoint.HandleMsgCheckpointAck(ctx, msgACK, keeper, &contractCallerObj)
 	require.True(t, got.IsOK(), "expected send-ack to be ok, got %v", got)
 }
+
+
