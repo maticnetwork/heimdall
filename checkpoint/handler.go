@@ -27,6 +27,7 @@ func NewHandler(k common.Keeper, contractCaller helper.IContractCaller) sdk.Hand
 }
 
 func HandleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keeper, contractCaller helper.IContractCaller) sdk.Result {
+	common.CheckpointLogger.Debug("handling ack message","Msg",msg)
 	// make call to headerBlock with header number
 	root, start, end, err := contractCaller.GetHeaderInfo(msg.HeaderBlock)
 	if err != nil {
@@ -79,6 +80,7 @@ func HandleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 }
 
 func HandleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper, contractCaller helper.IContractCaller) sdk.Result {
+	common.CheckpointLogger.Debug("Handling checkpoint msg","Msg",msg)
 	if msg.TimeStamp == 0 || msg.TimeStamp > uint64(time.Now().Unix()) {
 		common.CheckpointLogger.Error("Checkpoint timestamp must be in near past", "CurrentTime", time.Now().Unix(), "CheckpointTime", msg.TimeStamp, "Condition", msg.TimeStamp >= uint64(time.Now().Unix()))
 		return common.ErrBadTimeStamp(k.Codespace).Result()
@@ -146,6 +148,7 @@ func HandleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper, co
 }
 
 func HandleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k common.Keeper) sdk.Result {
+	common.CheckpointLogger.Debug("handling no-ack","Msg",msg)
 	// current time
 	currentTime := time.Unix(int64(msg.TimeStamp), 0) // buffer time
 	bufferTime := helper.CheckpointBufferTime
