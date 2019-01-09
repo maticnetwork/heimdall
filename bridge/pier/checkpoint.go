@@ -45,6 +45,8 @@ type MaticCheckpointer struct {
 	cancelSubscription context.CancelFunc
 	// header listener subscription
 	cancelHeaderProcess context.CancelFunc
+
+	cliCtx cliContext.CLIContext
 }
 
 // NewMaticCheckpointer returns new service object
@@ -59,6 +61,9 @@ func NewMaticCheckpointer() *MaticCheckpointer {
 		panic(err)
 	}
 
+	cliCtx:=cliContext.NewCLIContext()
+	cliCtx.Async = true
+
 	// creating checkpointer object
 	checkpointer := &MaticCheckpointer{
 		storageClient:     getBridgeDBInstance(viper.GetString(bridgeDBFlag)),
@@ -67,6 +72,7 @@ func NewMaticCheckpointer() *MaticCheckpointer {
 		MainClient:        helper.GetMainClient(),
 		RootChainInstance: rootchainInstance,
 		HeaderChannel:     make(chan *types.Header),
+		cliCtx:cliCtx,
 	}
 
 	checkpointer.BaseService = *common.NewBaseService(logger, maticCheckpointer, checkpointer)
@@ -257,12 +263,12 @@ func (checkpointer *MaticCheckpointer) sendRequest(newHeader *types.Header) {
 		),
 	)
 
-	if err != nil {
+	if err != nil {	
 		checkpointer.Logger.Error("Error while creating tx bytes", "error", err)
 		return
 	}
 
-	resp, err := helper.SendTendermintRequest(cliContext.NewCLIContext(), txBytes)
+	resp, err := helper.SendTendermintRequest(checkpointer.cliCtx, txBytes)
 	if err != nil {
 		checkpointer.Logger.Error("Error while sending request to Tendermint", "error", err)
 		return
