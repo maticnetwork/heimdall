@@ -46,6 +46,7 @@ type HeimdallApp struct {
 	//checkpointKeeper checkpoint.Keeper
 	//stakerKeeper     staking.Keeper
 	masterKeeper common.Keeper
+	caller       helper.ContractCaller
 }
 
 var logger = helper.Logger.With("module", "app")
@@ -69,9 +70,17 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	}
 
 	app.masterKeeper = common.NewKeeper(app.cdc, app.keyMaster, app.keyStaker, app.keyCheckpoint, app.RegisterCodespace(common.DefaultCodespace))
+
+	contractCallerObj, err := helper.NewContractCaller()
+	if err != nil {
+		logger.Error("we got error", "Error", err)
+		cmn.Exit(err.Error())
+	}
+	app.caller = contractCallerObj
+
 	// register message routes
-	app.Router().AddRoute("checkpoint", checkpoint.NewHandler(app.masterKeeper))
-	app.Router().AddRoute("staking", staking.NewHandler(app.masterKeeper))
+	app.Router().AddRoute("checkpoint", checkpoint.NewHandler(app.masterKeeper, &app.caller))
+	app.Router().AddRoute("staking", staking.NewHandler(app.masterKeeper, &app.caller))
 	// perform initialization logic
 	app.SetInitChainer(app.initChainer)
 	app.SetBeginBlocker(app.beginBlocker)
@@ -80,7 +89,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 
 	// mount the multistore and load the latest state
 	app.MountStoresIAVL(app.keyMain, app.keyCheckpoint, app.keyStaker)
-	err := app.LoadLatestVersion(app.keyMain)
+	err = app.LoadLatestVersion(app.keyMain)
 	if err != nil {
 		cmn.Exit(err.Error())
 	}
@@ -200,7 +209,7 @@ func (app *HeimdallApp) endBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 		if app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointCacheKey) {
 			logger.Info("Checkpoint processed in block", "CheckpointProcessed", app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointCacheKey))
 			// Send Checkpoint to Rootchain
-			PrepareAndSendCheckpoint(ctx, app.masterKeeper)
+			PrepareAndSendCheckpoint(ctx, app.masterKeeper, app.caller)
 			// clear Checkpoint cache
 			app.masterKeeper.FlushCheckpointCache(ctx)
 		}
@@ -306,7 +315,7 @@ func GetExtraData(_checkpoint hmTypes.CheckpointBlockHeader, ctx sdk.Context) []
 }
 
 // PrepareAndSendCheckpoint prepares all the data required for sending checkpoint and sends tx to rootchain
-func PrepareAndSendCheckpoint(ctx sdk.Context, keeper common.Keeper) {
+func PrepareAndSendCheckpoint(ctx sdk.Context, keeper common.Keeper, caller helper.ContractCaller) {
 	// fetch votes from block header
 	var votes []tmTypes.Vote
 	err := json.Unmarshal(ctx.BlockHeader().Votes, &votes)
@@ -328,7 +337,7 @@ func PrepareAndSendCheckpoint(ctx sdk.Context, keeper common.Keeper) {
 	extraData := GetExtraData(_checkpoint, ctx)
 
 	//fetch current child block from rootchain contract
-	lastblock, err := helper.CurrentChildBlock()
+	lastblock, err := caller.CurrentChildBlock()
 	if err != nil {
 		logger.Error("Could not fetch last block from mainchain", "error", err)
 		panic(err)
@@ -344,7 +353,7 @@ func PrepareAndSendCheckpoint(ctx sdk.Context, keeper common.Keeper) {
 		// check if we need to send checkpoint or not
 		if ((lastblock + 1) == _checkpoint.StartBlock) || (lastblock == 0 && _checkpoint.StartBlock == 0) {
 			logger.Info("Sending valid checkpoint", "startBlock", _checkpoint.StartBlock)
-			helper.SendCheckpoint(helper.GetVoteBytes(votes, ctx), sigs, extraData)
+			caller.SendCheckpoint(helper.GetVoteBytes(votes, ctx), sigs, extraData)
 		} else if lastblock > _checkpoint.StartBlock {
 			logger.Info("Start block does not match, checkpoint already sent", "commitedLastBlock", lastblock, "startBlock", _checkpoint.StartBlock)
 		} else if lastblock > _checkpoint.EndBlock {

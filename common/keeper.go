@@ -367,13 +367,7 @@ func (k *Keeper) IterateValidatorsAndApplyFn(ctx sdk.Context, f func(validator t
 }
 
 // AddDeactivationEpoch adds deactivation epoch
-func (k *Keeper) AddDeactivationEpoch(ctx sdk.Context, validator types.Validator) error {
-	// get validator from mainchain
-	updatedVal, err := helper.GetValidatorInfo(validator.Address)
-	if err != nil {
-		StakingLogger.Error("Cannot fetch validator info while unstaking", "Error", err, "ValidatorAddress", validator.Address)
-	}
-
+func (k *Keeper) AddDeactivationEpoch(ctx sdk.Context, validator types.Validator, updatedVal types.Validator) error {
 	// check if validator has unstaked
 	if updatedVal.EndEpoch != 0 {
 		validator.EndEpoch = updatedVal.EndEpoch
@@ -524,3 +518,5 @@ func (k *Keeper) GetValidatorToSignerMap(ctx sdk.Context) map[string]common.Addr
 	}
 	return result
 }
+
+// get all checkpoints

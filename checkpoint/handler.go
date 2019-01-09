@@ -11,25 +11,25 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
-func NewHandler(k common.Keeper) sdk.Handler {
+func NewHandler(k common.Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case MsgCheckpoint:
-			return handleMsgCheckpoint(ctx, msg, k)
+			return HandleMsgCheckpoint(ctx, msg, k, contractCaller)
 		case MsgCheckpointAck:
-			return handleMsgCheckpointAck(ctx, msg, k)
+			return HandleMsgCheckpointAck(ctx, msg, k, contractCaller)
 		case MsgCheckpointNoAck:
-			return handleMsgCheckpointNoAck(ctx, msg, k)
+			return HandleMsgCheckpointNoAck(ctx, msg, k)
 		default:
 			return sdk.ErrTxDecode("Invalid message in checkpoint module").Result()
 		}
 	}
 }
 
-func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keeper) sdk.Result {
-	common.CheckpointLogger.Debug("Handling ACK transaction","HeaderBlock",msg.HeaderBlock)
+func HandleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keeper, contractCaller helper.IContractCaller) sdk.Result {
+	common.CheckpointLogger.Debug("handling ack message","Msg",msg)
 	// make call to headerBlock with header number
-	root, start, end, err := helper.GetHeaderInfo(msg.HeaderBlock)
+	root, start, end, err := contractCaller.GetHeaderInfo(msg.HeaderBlock)
 	if err != nil {
 		common.CheckpointLogger.Error("Unable to fetch header from rootchain contract", "Error", err, "HeaderBlockIndex", msg.HeaderBlock)
 		return common.ErrBadAck(k.Codespace).Result()
@@ -80,18 +80,18 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 	return sdk.Result{}
 }
 
-func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper) sdk.Result {
-	common.CheckpointLogger.Debug("Handling checkpoint transaction","Start",msg.StartBlock,"End",msg.EndBlock)
-	if msg.TimeStamp == 0 || msg.TimeStamp >= uint64(time.Now().Unix()) {
-		common.CheckpointLogger.Error("Bad timestamp","MsgTimestamp",msg.TimeStamp,"CurrentTime",time.Now().Unix())
+func HandleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper, contractCaller helper.IContractCaller) sdk.Result {
+	common.CheckpointLogger.Debug("Handling checkpoint msg","Msg",msg)
+	if msg.TimeStamp == 0 || msg.TimeStamp > uint64(time.Now().Unix()) {
+		common.CheckpointLogger.Error("Checkpoint timestamp must be in near past", "CurrentTime", time.Now().Unix(), "CheckpointTime", msg.TimeStamp, "Condition", msg.TimeStamp >= uint64(time.Now().Unix()))
 		return common.ErrBadTimeStamp(k.Codespace).Result()
 	}
 	common.CheckpointLogger.Debug("Valid Timestamp")
 
 	checkpointBuffer, err := k.GetCheckpointFromBuffer(ctx)
 	if err == nil {
-		if msg.TimeStamp == 0 || checkpointBuffer.TimeStamp == 0 || ((msg.TimeStamp > checkpointBuffer.TimeStamp) && msg.TimeStamp-checkpointBuffer.TimeStamp > uint64(helper.CheckpointBufferTime.Seconds())) {
-			common.CheckpointLogger.Debug("Flushing checkpoint in buffer")
+		if msg.TimeStamp == 0 || checkpointBuffer.TimeStamp == 0 || ((msg.TimeStamp > checkpointBuffer.TimeStamp) && msg.TimeStamp-checkpointBuffer.TimeStamp >= uint64(helper.CheckpointBufferTime.Seconds())) {
+			common.CheckpointLogger.Debug("Checkpoint has been timed out, flushing buffer", "CheckpointTimestamp", msg.TimeStamp, "PrevCheckpointTimestamp", checkpointBuffer.TimeStamp)
 			k.FlushCheckpointBuffer(ctx)
 		} else {
 			common.CheckpointLogger.Error("Checkpoint already exits in buffer",checkpointBuffer.String())
@@ -132,7 +132,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper) sd
 	common.CheckpointLogger.Debug("Valid proposer in checkpoint")
 
 	// check if proposer has min ether
-	balance, _ := helper.GetBalance(msg.Proposer)
+	balance, _ := contractCaller.GetBalance(msg.Proposer)
 	if balance.Cmp(helper.MinBalance) == -1 {
 		common.CheckpointLogger.Error("Proposer doesnt have enough ether to send checkpoint tx", "Balance", balance, "RequiredBalance", helper.MinBalance)
 		return common.ErrLowBalance(k.Codespace, msg.Proposer.String()).Result()
@@ -158,9 +158,8 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper) sd
 	// send tags
 	return sdk.Result{}
 }
-
-func handleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k common.Keeper) sdk.Result {
-	common.CheckpointLogger.Debug("Handling No-ACK transaction","Timestamp",time.Unix(int64(msg.TimeStamp), 0))
+func HandleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k common.Keeper) sdk.Result {
+	common.CheckpointLogger.Debug("handling no-ack","Msg",msg)
 	// current time
 	currentTime := time.Unix(int64(msg.TimeStamp), 0) // buffer time
 	bufferTime := helper.CheckpointBufferTime
@@ -172,7 +171,7 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k common.
 
 	// if last checkpoint is not present or last checkpoint happens before checkpoint buffer time -- thrown an error
 	if lastCheckpointTime.After(currentTime) || (currentTime.Sub(lastCheckpointTime) < bufferTime) {
-		common.CheckpointLogger.Error("Invalid NO ACK")
+		common.CheckpointLogger.Debug("Invalid No ACK -- ongoing buffer period")
 		return common.ErrInvalidNoACK(k.Codespace).Result()
 	}
 
@@ -181,17 +180,13 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k common.
 	lastAckTime := time.Unix(int64(lastAck), 0)
 
 	if lastAckTime.After(currentTime) || (currentTime.Sub(lastAckTime) < bufferTime) {
-		common.CheckpointLogger.Error("NO-ACK already received for checkpoint","LastNoACK",lastAckTime.String())
+		common.CheckpointLogger.Debug("Too many no-ack")
 		return common.ErrTooManyNoACK(k.Codespace).Result()
 	}
 
 	// set last no ack
 	k.SetLastNoAck(ctx, uint64(currentTime.Unix()))
 	common.CheckpointLogger.Debug("Last No-ACK time set","LastNoAck",k.GetLastNoAck(ctx))
-
-	// flush buffer
-	k.FlushCheckpointBuffer(ctx)
-	common.CheckpointLogger.Debug("Checkpoint buffer flushed after receiving no-ack")
 
 	// --- Update to new proposer
 
@@ -207,8 +202,6 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k common.
 		"signer", newProposer.Signer.String(),
 		"power", newProposer.Power,
 	)
-
 	// --- End
-
 	return sdk.Result{}
 }
