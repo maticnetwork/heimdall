@@ -17,9 +17,10 @@ import (
 	logger "github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/privval"
 
+	"math/big"
+
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
-	"math/big"
 )
 
 const (
@@ -30,8 +31,6 @@ const (
 	MainRPCUrl             = "https://kovan.infura.io"
 	MaticRPCUrl            = "https://testnet.matic.network"
 	CheckpointBufferTime   = time.Second * 256 // aka 256 seconds
-	CheckpointBufferTimeForService   = time.Second * 256 // aka 256 seconds
-
 )
 
 var (
