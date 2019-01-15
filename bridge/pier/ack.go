@@ -57,14 +57,14 @@ func NewAckService() *AckService {
 		logger.Error("Error while getting root chain instance", "error", err)
 		panic(err)
 	}
-	cliCtx:=cliContext.NewCLIContext()
+	cliCtx := cliContext.NewCLIContext()
 	cliCtx.Async = true
 
 	// creating checkpointer object
 	ackservice := &AckService{
 		storageClient:     getBridgeDBInstance(viper.GetString(bridgeDBFlag)),
 		rootChainInstance: rootchainInstance,
-		cliCtx:cliCtx,
+		cliCtx:            cliCtx,
 	}
 
 	ackservice.BaseService = *common.NewBaseService(logger, noackService, ackservice)

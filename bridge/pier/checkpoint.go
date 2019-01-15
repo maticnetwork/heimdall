@@ -61,7 +61,7 @@ func NewMaticCheckpointer() *MaticCheckpointer {
 		panic(err)
 	}
 
-	cliCtx:=cliContext.NewCLIContext()
+	cliCtx := cliContext.NewCLIContext()
 	cliCtx.Async = true
 
 	// creating checkpointer object
@@ -72,7 +72,7 @@ func NewMaticCheckpointer() *MaticCheckpointer {
 		MainClient:        helper.GetMainClient(),
 		RootChainInstance: rootchainInstance,
 		HeaderChannel:     make(chan *types.Header),
-		cliCtx: cliCtx,
+		cliCtx:            cliCtx,
 	}
 
 	checkpointer.BaseService = *common.NewBaseService(logger, maticCheckpointer, checkpointer)
