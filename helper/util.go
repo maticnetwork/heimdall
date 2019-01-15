@@ -15,6 +15,7 @@ import (
 	tmTypes "github.com/tendermint/tendermint/types"
 
 	hmTypes "github.com/maticnetwork/heimdall/types"
+	"github.com/tendermint/tendermint/crypto/tmhash"
 )
 
 // ZeroHash represents empty hash
@@ -115,7 +116,7 @@ func CreateTxBytes(msg sdk.Msg) ([]byte, error) {
 
 // SendTendermintRequest sends request to tendermint
 func SendTendermintRequest(cliCtx context.CLIContext, txBytes []byte) (*ctypes.ResultBroadcastTxCommit, error) {
-	Logger.Info("Broadcasting tx bytes to Tendermint", "txBytes", hex.EncodeToString(txBytes))
+	Logger.Info("Broadcasting tx bytes to Tendermint", "txBytes", hex.EncodeToString(txBytes), "txHash", hex.EncodeToString(tmhash.Sum(txBytes[4:])))
 	return cliCtx.BroadcastTx(txBytes)
 }
 

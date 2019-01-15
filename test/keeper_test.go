@@ -7,12 +7,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
+	"time"
+
 	"github.com/maticnetwork/heimdall/checkpoint"
 	hmcmn "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/helper/mocks"
 	"github.com/maticnetwork/heimdall/types"
-	"time"
 )
 
 // TODO use table testing as much as possible
@@ -22,29 +23,6 @@ func TestUpdateAck(t *testing.T) {
 	keeper.UpdateACKCount(ctx)
 	ack := keeper.GetACKCount(ctx)
 	require.Equal(t, uint64(2), ack, "Ack Count Not Equal")
-}
-
-func TestCheckpointBuffer(t *testing.T) {
-	ctx, keeper := CreateTestInput(t, false)
-
-	// create random header block
-	headerBlock, err := GenRandCheckpointHeader(265)
-	require.Empty(t, err, "Unable to create random header block, Error:%v", err)
-
-	// set checkpoint
-	err = keeper.SetCheckpointBuffer(ctx, headerBlock)
-	require.Empty(t, err, "Unable to store checkpoint, Error: %v", err)
-
-	// check if we are able to get checkpoint after set
-	storedHeader, err := keeper.GetCheckpointFromBuffer(ctx)
-	t.Log("Checkpoint", storedHeader)
-	require.Empty(t, err, "Unable to retrieve checkpoint, Error: %v", err)
-	require.Equal(t, headerBlock, storedHeader, "Header Blocks dont match")
-
-	// flush and check if its flushed
-	keeper.FlushCheckpointBuffer(ctx)
-	storedHeader, err = keeper.GetCheckpointFromBuffer(ctx)
-	require.NotEmpty(t, err, "HeaderBlock should not exist after flush")
 }
 
 func TestCheckpointACK(t *testing.T) {

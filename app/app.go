@@ -71,7 +71,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 
 	app.masterKeeper = common.NewKeeper(app.cdc, app.keyMaster, app.keyStaker, app.keyCheckpoint, app.RegisterCodespace(common.DefaultCodespace))
 
-	contractCallerObj, err := helper.NewContractCallerObj()
+	contractCallerObj, err := helper.NewContractCaller()
 	if err != nil {
 		logger.Error("we got error", "Error", err)
 		cmn.Exit(err.Error())

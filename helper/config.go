@@ -17,9 +17,10 @@ import (
 	logger "github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/privval"
 
+	"math/big"
+
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
-	"math/big"
 )
 
 const (
@@ -44,21 +45,6 @@ func init() {
 	cdc.RegisterConcrete(secp256k1.PubKeySecp256k1{}, secp256k1.PubKeyAminoRoute, nil)
 	cdc.RegisterConcrete(secp256k1.PrivKeySecp256k1{}, secp256k1.PrivKeyAminoRoute, nil)
 	Logger = logger.NewTMLogger(logger.NewSyncWriter(os.Stdout))
-
-	//contractCallerObj, err := NewContractCallerObj()
-	//if err != nil {
-	//	fmt.Errorf("we got error","Error",err)
-	//	log.Fatal(err.Error())
-	//}
-	//
-	////app.caller = contractCallerObj
-	////caller:= app.caller
-	//Logger.Error("contrct","caller",contractCallerObj)
-	//value,err:= contractCallerObj.CurrentChildBlock()
-	//if err!=nil{
-	//	log.Fatal(err.Error())
-	//}
-	//fmt.Printf("current block",value)
 }
 
 // Configuration represents heimdall config

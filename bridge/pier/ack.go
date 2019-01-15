@@ -42,6 +42,8 @@ type AckService struct {
 
 	// header listener subscription
 	cancelACKProcess context.CancelFunc
+
+	cliCtx cliContext.CLIContext
 }
 
 // NewAckService returns new service object
@@ -55,11 +57,14 @@ func NewAckService() *AckService {
 		logger.Error("Error while getting root chain instance", "error", err)
 		panic(err)
 	}
+	cliCtx := cliContext.NewCLIContext()
+	cliCtx.Async = true
 
 	// creating checkpointer object
 	ackservice := &AckService{
 		storageClient:     getBridgeDBInstance(viper.GetString(bridgeDBFlag)),
 		rootChainInstance: rootchainInstance,
+		cliCtx:            cliCtx,
 	}
 
 	ackservice.BaseService = *common.NewBaseService(logger, noackService, ackservice)
@@ -179,7 +184,7 @@ func (ackService *AckService) processCheckpoint(lastCreatedAt int64) {
 			return
 		}
 
-		resp, err := helper.SendTendermintRequest(cliContext.NewCLIContext(), txBytes)
+		resp, err := helper.SendTendermintRequest(ackService.cliCtx, txBytes)
 		if err != nil {
 			ackService.Logger.Error("Error while sending request to Tendermint", "error", err)
 			return
