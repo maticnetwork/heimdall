@@ -72,7 +72,7 @@ func NewMaticCheckpointer() *MaticCheckpointer {
 		MainClient:        helper.GetMainClient(),
 		RootChainInstance: rootchainInstance,
 		HeaderChannel:     make(chan *types.Header),
-		cliCtx:cliCtx,
+		cliCtx: cliCtx,
 	}
 
 	checkpointer.BaseService = *common.NewBaseService(logger, maticCheckpointer, checkpointer)
@@ -263,7 +263,7 @@ func (checkpointer *MaticCheckpointer) sendRequest(newHeader *types.Header) {
 		),
 	)
 
-	if err != nil {	
+	if err != nil {
 		checkpointer.Logger.Error("Error while creating tx bytes", "error", err)
 		return
 	}
