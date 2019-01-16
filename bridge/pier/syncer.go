@@ -104,10 +104,13 @@ func NewChainSyncer() *ChainSyncer {
 		&stakemanagerABI,
 	}
 
+	cliCtx := cliContext.NewCLIContext()
+	cliCtx.Async = true
+
 	// creating syncer object
 	syncer := &ChainSyncer{
 		storageClient: getBridgeDBInstance(viper.GetString(bridgeDBFlag)),
-		cliContext:    cliContext.NewCLIContext(),
+		cliContext:    cliCtx,
 		abis:          abis,
 
 		MainClient:           helper.GetMainClient(),

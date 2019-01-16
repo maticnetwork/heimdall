@@ -94,7 +94,7 @@ func HandleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper, co
 			common.CheckpointLogger.Debug("Checkpoint has been timed out, flushing buffer", "CheckpointTimestamp", msg.TimeStamp, "PrevCheckpointTimestamp", checkpointBuffer.TimeStamp)
 			k.FlushCheckpointBuffer(ctx)
 		} else {
-			common.CheckpointLogger.Error("Checkpoint already exits in buffer", checkpointBuffer.String())
+			common.CheckpointLogger.Error("Checkpoint already exits in buffer", "Checkpoint", checkpointBuffer.String())
 			return common.ErrNoACK(k.Codespace).Result()
 		}
 	}
