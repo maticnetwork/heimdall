@@ -14,18 +14,18 @@ func NewHandler(k hmCommon.Keeper, contractCaller helper.IContractCaller) sdk.Ha
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case MsgValidatorJoin:
-			return handleMsgValidatorJoin(ctx, msg, k, contractCaller)
+			return HandleMsgValidatorJoin(ctx, msg, k, contractCaller)
 		case MsgValidatorExit:
-			return handleMsgValidatorExit(ctx, msg, k, contractCaller)
+			return HandleMsgValidatorExit(ctx, msg, k, contractCaller)
 		case MsgSignerUpdate:
-			return handleMsgSignerUpdate(ctx, msg, k)
+			return HandleMsgSignerUpdate(ctx, msg, k)
 		default:
 			return sdk.ErrTxDecode("Invalid message in checkpoint module").Result()
 		}
 	}
 }
 
-func handleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k hmCommon.Keeper, contractCaller helper.IContractCaller) sdk.Result {
+func HandleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k hmCommon.Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	//fetch validator from mainchain
 	validator, err := contractCaller.GetValidatorInfo(msg.ValidatorAddress)
 	if err != nil || bytes.Equal(validator.Address.Bytes(), helper.ZeroAddress.Bytes()) {
@@ -82,7 +82,7 @@ func handleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k hmCommon.Ke
 	return sdk.Result{}
 }
 
-func handleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k hmCommon.Keeper) sdk.Result {
+func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k hmCommon.Keeper) sdk.Result {
 	// pull val from store
 	validator, ok := k.GetValidatorFromValAddr(ctx, msg.ValidatorAddress)
 	if !ok {
@@ -121,7 +121,7 @@ func handleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k hmCommon.Keep
 	return sdk.Result{}
 }
 
-func handleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k hmCommon.Keeper, contractCaller helper.IContractCaller) sdk.Result {
+func HandleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k hmCommon.Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	validator, ok := k.GetValidatorFromValAddr(ctx, msg.ValidatorAddress)
 	if !ok {
 		hmCommon.StakingLogger.Error("Fetching of validator from store failed", "validatorAddress", msg.ValidatorAddress)

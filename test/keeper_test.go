@@ -2,9 +2,14 @@ package test
 
 import (
 	"encoding/hex"
+	"encoding/json"
+	"strconv"
 	"testing"
 
+	"github.com/maticnetwork/heimdall/staking"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"time"
@@ -241,7 +246,7 @@ func LoadValidatorSet(count int, t *testing.T, keeper hmcmn.Keeper, ctx sdk.Cont
 
 // test handler for message
 func TestHandleMsgCheckpoint(t *testing.T) {
-	contractCallerObj := mocks.ContractCaller{}
+	contractCallerObj := mocks.IContractCaller{}
 
 	// check valid checkpoint
 	t.Run("validCheckpoint", func(t *testing.T) {
@@ -328,7 +333,7 @@ func TestHandleMsgCheckpoint(t *testing.T) {
 
 }
 
-func SentValidCheckpoint(header types.CheckpointBlockHeader, keeper hmcmn.Keeper, ctx sdk.Context, contractCallerObj mocks.ContractCaller, t *testing.T) {
+func SentValidCheckpoint(header types.CheckpointBlockHeader, keeper hmcmn.Keeper, ctx sdk.Context, contractCallerObj mocks.IContractCaller, t *testing.T) {
 	// add current proposer to header
 	header.Proposer = keeper.GetValidatorSet(ctx).Proposer.Signer
 
@@ -354,7 +359,7 @@ func SentValidCheckpoint(header types.CheckpointBlockHeader, keeper hmcmn.Keeper
 
 // test condition where checkpoint on mainchain gets confirmed after someone send no-ack on heimdall
 func TestACKAfterNoACK(t *testing.T) {
-	contractCallerObj := mocks.ContractCaller{}
+	contractCallerObj := mocks.IContractCaller{}
 	ctx, keeper := CreateTestInput(t, false)
 	// generate proposer for validator set
 	LoadValidatorSet(4, t, keeper, ctx, false)
@@ -374,3 +379,26 @@ func TestACKAfterNoACK(t *testing.T) {
 	got = checkpoint.HandleMsgCheckpointAck(ctx, msgACK, keeper, &contractCallerObj)
 	require.True(t, got.IsOK(), "expected send-ack to be ok, got %v", got)
 }
+
+// Test Staking handlers
+// ------
+
+func TestHandleMsgValidatorJoin(t *testing.T) {
+	contractCallerObj := mocks.IContractCaller{}
+	ctx, keeper := CreateTestInput(t, false)
+	mockVals := GenRandomVal(1, 0, 10, 10, false)
+	mockVal := mockVals[0]
+	t.Log("Mock validator generated", "Validator", mockVal.Address.String())
+	contractCallerObj.On("GetValidatorInfo", mock.Anything).Return(mockVal, nil)
+	msgValJoin := staking.NewMsgValidatorJoin(mockVal.Address, mockVal.PubKey, mockVal.StartEpoch, mockVal.EndEpoch, json.Number(strconv.Itoa(int(mockVal.Accum))))
+	got := staking.HandleMsgValidatorJoin(ctx, msgValJoin, keeper, &contractCallerObj)
+	require.True(t, got.IsOK(), "expected validator join to be ok, got %v", got)
+	storedVal, err := keeper.GetValidatorInfo(ctx, mockVal.Signer.Bytes())
+	require.Empty(t, err, "Unable to get validator info from val address,ValAddr:%v Error:%v ", mockVal.Address.String(), err)
+	require.Equal(t, mockVal.PubKey.Address(), storedVal.Signer, "Signer address should match")
+	storedSigner, found := keeper.GetSignerFromValidator(ctx, mockVal.Address)
+	require.True(t, found, "signer and validator address should be mapped, got %v", found)
+	require.Equal(t, mockVal.Signer.Bytes(), storedSigner.Bytes(), "Signer address in signer=>validator map should be same")
+}
+
+// ------
