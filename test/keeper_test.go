@@ -94,7 +94,7 @@ func TestValidator(t *testing.T) {
 
 func TestValidatorSet(t *testing.T) {
 	ctx, keeper := CreateTestInput(t, false)
-	valSet := LoadValidatorSet(4, t, keeper, ctx, true)
+	valSet := LoadValidatorSet(4, t, keeper, ctx, true, 10)
 
 	storedValSet := keeper.GetValidatorSet(ctx)
 	require.Equal(t, valSet, storedValSet, "Validator Set in state doesnt match ")
@@ -114,7 +114,7 @@ func TestValUpdates(t *testing.T) {
 		ctx, keeper := CreateTestInput(t, false)
 
 		// load 4 validators to state
-		LoadValidatorSet(4, t, keeper, ctx, false)
+		LoadValidatorSet(4, t, keeper, ctx, false, 10)
 		initValSet := keeper.GetValidatorSet(ctx)
 
 		currentValSet := initValSet.Copy()
@@ -153,7 +153,7 @@ func TestValUpdates(t *testing.T) {
 		ctx, keeper := CreateTestInput(t, false)
 
 		// load 4 validators to state
-		LoadValidatorSet(4, t, keeper, ctx, false)
+		LoadValidatorSet(4, t, keeper, ctx, false, 10)
 		initValSet := keeper.GetValidatorSet(ctx)
 
 		validators := GenRandomVal(1, 0, 10, 10, false)
@@ -190,7 +190,7 @@ func TestValUpdates(t *testing.T) {
 		ctx, keeper := CreateTestInput(t, false)
 
 		// load 4 validators to state
-		LoadValidatorSet(4, t, keeper, ctx, false)
+		LoadValidatorSet(4, t, keeper, ctx, false, 10)
 		initValSet := keeper.GetValidatorSet(ctx)
 		keeper.IncreamentAccum(ctx, 2)
 		prevValSet := initValSet.Copy()
@@ -225,9 +225,9 @@ func TestValUpdates(t *testing.T) {
 
 }
 
-func LoadValidatorSet(count int, t *testing.T, keeper hmcmn.Keeper, ctx sdk.Context, randomise bool) types.ValidatorSet {
+func LoadValidatorSet(count int, t *testing.T, keeper hmcmn.Keeper, ctx sdk.Context, randomise bool, timeAlive int) types.ValidatorSet {
 	// create 4 validators
-	validators := GenRandomVal(4, 0, 10, 10, randomise)
+	validators := GenRandomVal(4, 0, 10, uint64(timeAlive), randomise)
 
 	var valSet types.ValidatorSet
 
@@ -252,7 +252,7 @@ func TestHandleMsgCheckpoint(t *testing.T) {
 	t.Run("validCheckpoint", func(t *testing.T) {
 		ctx, keeper := CreateTestInput(t, false)
 		// generate proposer for validator set
-		LoadValidatorSet(4, t, keeper, ctx, false)
+		LoadValidatorSet(4, t, keeper, ctx, false, 10)
 		keeper.IncreamentAccum(ctx, 1)
 		header, err := GenRandCheckpointHeader(10)
 		require.Empty(t, err, "Unable to create random header block, Error:%v", err)
@@ -265,7 +265,7 @@ func TestHandleMsgCheckpoint(t *testing.T) {
 	t.Run("invalidProposer", func(t *testing.T) {
 		ctx, keeper := CreateTestInput(t, false)
 		// generate proposer for validator set
-		LoadValidatorSet(4, t, keeper, ctx, false)
+		LoadValidatorSet(4, t, keeper, ctx, false, 10)
 		keeper.IncreamentAccum(ctx, 1)
 		header, err := GenRandCheckpointHeader(10)
 		require.Empty(t, err, "Unable to create random header block, Error:%v", err)
@@ -287,7 +287,7 @@ func TestHandleMsgCheckpoint(t *testing.T) {
 		t.Run("afterTimeout", func(t *testing.T) {
 			ctx, keeper := CreateTestInput(t, false)
 			// generate proposer for validator set
-			LoadValidatorSet(4, t, keeper, ctx, false)
+			LoadValidatorSet(4, t, keeper, ctx, false, 10)
 			keeper.IncreamentAccum(ctx, 1)
 			// gen random checkpoint
 			header, err := GenRandCheckpointHeader(10)
@@ -312,7 +312,7 @@ func TestHandleMsgCheckpoint(t *testing.T) {
 		t.Run("beforeTimeout", func(t *testing.T) {
 			ctx, keeper := CreateTestInput(t, false)
 			// generate proposer for validator set
-			LoadValidatorSet(4, t, keeper, ctx, false)
+			LoadValidatorSet(4, t, keeper, ctx, false, 10)
 			keeper.IncreamentAccum(ctx, 1)
 			header, err := GenRandCheckpointHeader(10)
 			require.Empty(t, err, "Unable to create random header block, Error:%v", err)
@@ -362,7 +362,7 @@ func TestACKAfterNoACK(t *testing.T) {
 	contractCallerObj := mocks.IContractCaller{}
 	ctx, keeper := CreateTestInput(t, false)
 	// generate proposer for validator set
-	LoadValidatorSet(4, t, keeper, ctx, false)
+	LoadValidatorSet(4, t, keeper, ctx, false, 10)
 	keeper.IncreamentAccum(ctx, 1)
 	header, err := GenRandCheckpointHeader(10)
 	require.Empty(t, err, "Unable to create random header block, Error:%v", err)
@@ -387,18 +387,45 @@ func TestHandleMsgValidatorJoin(t *testing.T) {
 	contractCallerObj := mocks.IContractCaller{}
 	ctx, keeper := CreateTestInput(t, false)
 	mockVals := GenRandomVal(1, 0, 10, 10, false)
+	// select first validator from slice
 	mockVal := mockVals[0]
 	t.Log("Mock validator generated", "Validator", mockVal.Address.String())
 	contractCallerObj.On("GetValidatorInfo", mock.Anything).Return(mockVal, nil)
+
+	// insert new validator
 	msgValJoin := staking.NewMsgValidatorJoin(mockVal.Address, mockVal.PubKey, mockVal.StartEpoch, mockVal.EndEpoch, json.Number(strconv.Itoa(int(mockVal.Accum))))
 	got := staking.HandleMsgValidatorJoin(ctx, msgValJoin, keeper, &contractCallerObj)
 	require.True(t, got.IsOK(), "expected validator join to be ok, got %v", got)
+	// validator is stored properly and signer is created properly
 	storedVal, err := keeper.GetValidatorInfo(ctx, mockVal.Signer.Bytes())
 	require.Empty(t, err, "Unable to get validator info from val address,ValAddr:%v Error:%v ", mockVal.Address.String(), err)
 	require.Equal(t, mockVal.PubKey.Address(), storedVal.Signer, "Signer address should match")
+	// signer to validator mapping should exist properly
 	storedSigner, found := keeper.GetSignerFromValidator(ctx, mockVal.Address)
 	require.True(t, found, "signer and validator address should be mapped, got %v", found)
 	require.Equal(t, mockVal.Signer.Bytes(), storedSigner.Bytes(), "Signer address in signer=>validator map should be same")
+	// insert validator again
+	got = staking.HandleMsgValidatorJoin(ctx, msgValJoin, keeper, &contractCallerObj)
+	require.True(t, !got.IsOK(), "expected validator join to be not-ok, got %v", got)
+
+}
+
+func TestHandleMsgValidatorExit(t *testing.T) {
+	contractCallerObj := mocks.IContractCaller{}
+	ctx, keeper := CreateTestInput(t, false)
+	// pass 0 as time alive to generate non de-activated validators
+	LoadValidatorSet(4, t, keeper, ctx, false, 0)
+	validators := keeper.GetCurrentValidators(ctx)
+	validators[0].EndEpoch = 10
+	msg := staking.NewMsgValidatorExit(validators[0].Address)
+	contractCallerObj.On("GetValidatorInfo", validators[0].Address).Return(validators[0], nil)
+
+	got := staking.HandleMsgValidatorExit(ctx, msg, keeper, &contractCallerObj)
+	require.True(t, got.IsOK(), "expected validator exit to be ok, got %v", got)
+
+	got = staking.HandleMsgValidatorExit(ctx, msg, keeper, &contractCallerObj)
+	require.True(t, !got.IsOK(), "expected validator exit to be ok, got %v", got)
+
 }
 
 // ------

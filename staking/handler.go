@@ -127,7 +127,7 @@ func HandleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k hmCommon.Ke
 		hmCommon.StakingLogger.Error("Fetching of validator from store failed", "validatorAddress", msg.ValidatorAddress)
 		return hmCommon.ErrNoValidator(k.Codespace).Result()
 	}
-
+	hmCommon.StakingLogger.Debug("validator in store", "validator", validator)
 	// check if validator deactivation period is set
 	if validator.EndEpoch != 0 {
 		hmCommon.StakingLogger.Error("Validator already unbonded")
