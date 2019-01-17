@@ -1,11 +1,13 @@
 package test
 
 import (
+	"bytes"
 	"encoding/hex"
 	"encoding/json"
 	"strconv"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/maticnetwork/heimdall/staking"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -425,7 +427,38 @@ func TestHandleMsgValidatorExit(t *testing.T) {
 
 	got = staking.HandleMsgValidatorExit(ctx, msg, keeper, &contractCallerObj)
 	require.True(t, !got.IsOK(), "expected validator exit to be ok, got %v", got)
+	validator, found := keeper.GetValidatorFromValAddr(ctx, validators[0].Address)
 
+	require.True(t, found, "Validator should be present even after deactivation")
+	require.Equal(t, 10, int(validator.EndEpoch), "end epoch should be set to 10")
+
+	keeper.UpdateACKCountWithValue(ctx, 20)
+	currentVals := keeper.GetCurrentValidators(ctx)
+	require.Equal(t, 3, len(currentVals), "No validators should exist after epoch passes")
+
+	found = FindSigner(validators[0].Signer, currentVals)
+	require.True(t, !found, "Validator should not exist in current val set")
+}
+
+func TestHandleMsgValidatorUpdate(t *testing.T) {
+	ctx, keeper := CreateTestInput(t, false)
+	// pass 0 as time alive to generate non de-activated validators
+	LoadValidatorSet(4, t, keeper, ctx, false, 0)
+	validators := keeper.GetCurrentValidators(ctx)
+	newSigner := GenRandomVal(1, 0, 10, 10, false)
+	msg := staking.NewMsgValidatorUpdate(validators[0].Address, newSigner[0].PubKey, json.Number(int(newSigner[0].Accum)))
+	got := staking.HandleMsgSignerUpdate(ctx, msg, keeper)
+	require.True(t, got.IsOK(), "expected validator update to be ok, got %v", got)
 }
 
 // ------
+
+// finds address in give validator slice
+func FindSigner(signer common.Address, vals []types.Validator) bool {
+	for _, val := range vals {
+		if bytes.Compare(signer.Bytes(), val.Signer.Bytes()) == 0 {
+			return true
+		}
+	}
+	return false
+}

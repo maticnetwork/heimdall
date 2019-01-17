@@ -107,7 +107,6 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k hmCommon.Keep
 	if msg.NewAmount != "" && validator.Power != msg.GetNewPower() {
 		// set new power
 		validator.Power = msg.GetNewPower()
-
 		hmCommon.StakingLogger.Debug("Updating power", "newPower", validator.Power, "validatorAddress", msg.ValidatorAddress.String())
 	}
 
