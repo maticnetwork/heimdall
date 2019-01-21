@@ -62,7 +62,7 @@ func NewMaticCheckpointer() *MaticCheckpointer {
 	}
 
 	cliCtx := cliContext.NewCLIContext()
-	cliCtx.Async = true
+	// cliCtx.Async = true
 
 	// creating checkpointer object
 	checkpointer := &MaticCheckpointer{

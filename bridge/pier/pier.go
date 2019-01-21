@@ -72,33 +72,29 @@ func isProposer() bool {
 		pierLogger.Error("Unable to send request to get proposer", "Error", err)
 		return false
 	}
+	pierLogger.Debug("Request for proposer was successfull", "Count", count, "Status", resp.Status)
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		pierLogger.Error("Unable to read data from response", "Error", err)
+		return false
+	}
 
-	if resp.StatusCode == 200 {
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			pierLogger.Error("Unable to read data from response", "Error", err)
-			return false
-		}
+	// unmarshall data from buffer
+	var proposers []hmtypes.Validator
+	if err := json.Unmarshal(body, &proposers); err != nil {
+		pierLogger.Error("Error unmarshalling validator data ", "error", err)
+		return false
+	}
 
-		// unmarshall data from buffer
-		var proposers []hmtypes.Validator
-		if err := json.Unmarshal(body, &proposers); err != nil {
-			pierLogger.Error("Error unmarshalling validator data ", "error", err)
-			return false
-		}
+	// no proposer found
+	if len(proposers) == 0 {
+		return false
+	}
 
-		// no proposer found
-		if len(proposers) == 0 {
-			return false
-		}
-
-		// get first proposer
-		proposer := proposers[0]
-		if bytes.Equal(proposer.Address.Bytes(), helper.GetAddress()) {
-			return true
-		}
-	} else {
-		pierLogger.Error("Error while fetching proposer", "status", resp.StatusCode)
+	// get first proposer
+	proposer := proposers[0]
+	if bytes.Equal(proposer.Address.Bytes(), helper.GetAddress()) {
+		return true
 	}
 
 	return false

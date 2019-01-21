@@ -123,6 +123,7 @@ func proposerHandlerFn(
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
+		RestLogger.Debug("Calculating proposers", "Count", times)
 
 		res, err := cliCtx.QueryStore(hmCommon.CurrentValidatorSetKey, "staker")
 		if err != nil {
@@ -137,7 +138,13 @@ func proposerHandlerFn(
 		}
 
 		var _validatorSet hmTypes.ValidatorSet
-		cdc.UnmarshalBinary(res, &_validatorSet)
+		err = cdc.UnmarshalBinary(res, &_validatorSet)
+		if err != nil {
+			RestLogger.Error("Error while marshalling validator set", "error", err)
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
 
 		// proposers
 		var proposers []hmTypes.Validator

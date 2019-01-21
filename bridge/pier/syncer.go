@@ -110,7 +110,7 @@ func NewChainSyncer() *ChainSyncer {
 	// creating syncer object
 	syncer := &ChainSyncer{
 		storageClient: getBridgeDBInstance(viper.GetString(bridgeDBFlag)),
-		cliContext:    cliContext.NewCLIContext(),
+		cliContext:    cliCtx,
 		abis:          abis,
 
 		MainClient:           helper.GetMainClient(),

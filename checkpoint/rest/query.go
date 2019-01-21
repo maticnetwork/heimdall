@@ -212,7 +212,6 @@ func noackHandlerFn(
 
 		if len(res) == 0 {
 			w.WriteHeader(http.StatusNoContent)
-			w.Write([]byte(err.Error()))
 			return
 		}
 
@@ -222,6 +221,7 @@ func noackHandlerFn(
 			w.Write([]byte(err.Error()))
 			return
 		}
+
 		result, err := json.Marshal(map[string]interface{}{"result": lastAckTime})
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
