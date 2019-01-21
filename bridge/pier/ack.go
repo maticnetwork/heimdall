@@ -164,15 +164,14 @@ func (ackService *AckService) processCheckpoint(lastCreatedAt int64) {
 
 	// check if difference between no-ack time and current time
 	lastNoAck := ackService.getLastNoAckTime()
+
+	lastNoAckTime := time.Unix(int64(lastNoAck), 0)
+	timeDiff = currentTime.Sub(lastNoAckTime)
+	ackService.Logger.Debug("created time diff", "TimeDiff", timeDiff, "lasttime", lastNoAckTime)
 	// if last no ack == 0 , first no-ack to be sent
-	if lastNoAck != 0 {
-		lastNoAckTime := time.Unix(int64(ackService.getLastNoAckTime()), 0)
-		timeDiff = currentTime.Sub(lastNoAckTime)
-		ackService.Logger.Debug("created time diff", "TimeDiff", timeDiff, "lasttime", lastNoAckTime)
-		if currentTime.Sub(lastNoAckTime).Seconds() < helper.CheckpointBufferTime.Seconds() {
-			ackService.Logger.Debug("Cannot send multiple no-ack in short time", "timeDiff", currentTime.Sub(lastNoAckTime).Seconds(), "ExpectedDiff", helper.CheckpointBufferTime.Seconds())
-			return
-		}
+	if currentTime.Sub(lastNoAckTime).Seconds() < helper.CheckpointBufferTime.Seconds() && lastNoAck != 0 {
+		ackService.Logger.Debug("Cannot send multiple no-ack in short time", "timeDiff", currentTime.Sub(lastNoAckTime).Seconds(), "ExpectedDiff", helper.CheckpointBufferTime.Seconds())
+		return
 	}
 
 	ackService.Logger.Debug("Fetching next proposers", "Count", index)
