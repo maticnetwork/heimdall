@@ -26,6 +26,7 @@ func NewHandler(k hmCommon.Keeper, contractCaller helper.IContractCaller) sdk.Ha
 }
 
 func handleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k hmCommon.Keeper, contractCaller helper.IContractCaller) sdk.Result {
+	hmCommon.StakingLogger.Debug("Handing new validator join", "Msg", msg)
 	//fetch validator from mainchain
 	validator, err := contractCaller.GetValidatorInfo(msg.ValidatorAddress)
 	if err != nil || bytes.Equal(validator.Address.Bytes(), helper.ZeroAddress.Bytes()) {
@@ -83,6 +84,7 @@ func handleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k hmCommon.Ke
 }
 
 func handleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k hmCommon.Keeper) sdk.Result {
+	hmCommon.StakingLogger.Debug("Handling signer update", "Validator", msg.ValidatorAddress, "Signer", msg.NewSignerPubKey.Address)
 	// pull val from store
 	validator, ok := k.GetValidatorFromValAddr(ctx, msg.ValidatorAddress)
 	if !ok {
@@ -122,6 +124,7 @@ func handleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k hmCommon.Keep
 }
 
 func handleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k hmCommon.Keeper, contractCaller helper.IContractCaller) sdk.Result {
+	hmCommon.StakingLogger.Info("Handling validator exit", "Validator", msg.ValidatorAddress)
 	validator, ok := k.GetValidatorFromValAddr(ctx, msg.ValidatorAddress)
 	if !ok {
 		hmCommon.StakingLogger.Error("Fetching of validator from store failed", "validatorAddress", msg.ValidatorAddress)
@@ -137,6 +140,7 @@ func handleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k hmCommon.Ke
 	updatedVal, err := contractCaller.GetValidatorInfo(validator.Address)
 	if err != nil {
 		hmCommon.StakingLogger.Error("Cannot fetch validator info while unstaking", "Error", err, "ValidatorAddress", validator.Address)
+		return hmCommon.ErrNoValidator(k.Codespace).Result()
 	}
 
 	// Add deactivation time for validator
