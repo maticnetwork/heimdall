@@ -32,14 +32,17 @@ init-heimdall:
 show-account-heimdall:
 	./build/heimdalld show-account
 
+show-node-id:
+	./build/heimdalld tendermint show-node-id
+
 run-heimdall:
-	./build/heimdalld start
+	./build/heimdalld start 
 
 reset-heimdalld:
-	./build/heimdalld unsafe-reset-all
+	./build/heimdalld unsafe-reset-all 
 
 rest-server:
-	./build/heimdalld rest-server
+	./build/heimdalld rest-server 
 
 start:
 	mkdir -p ./logs
@@ -47,12 +50,13 @@ start:
 	./build/heimdalld rest-server > ./logs/heimdalld-rest-server.log &
 
 start-bridge:
-	mkdir -p ./logs
-	./build/bridge start > ./logs/bridge.log &
+	./build/bridge start
 
-start-all: start-bridge start
+start-all: 
 	mkdir -p ./logs
-	tail -f ./logs/heimdalld.log ./logs/heimdalld-rest-server.log ./logs/bridge.log
+	./build/heimdalld start > ./logs/heimdalld.log &
+	./build/heimdalld rest-server > ./logs/heimdalld-rest-server.log &
+	./build/bridge start > ./logs/bridge.log &
 
 #
 # docker commands
