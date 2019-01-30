@@ -54,9 +54,7 @@ start-bridge:
 
 start-all: 
 	mkdir -p ./logs
-	./build/heimdalld start > ./logs/heimdalld.log &
-	./build/heimdalld rest-server > ./logs/heimdalld-rest-server.log &
-	./build/bridge start > ./logs/bridge.log &
+	bash ./docker/start-heimdall.sh
 
 #
 # docker commands
