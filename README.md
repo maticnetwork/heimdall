@@ -49,7 +49,9 @@ Note: Do not forget to replace `<tag-name>` with actual tag-name.
 Once docker container is created and running you will be on container.<br>
 You can run make commands directly on the container.
 
-Run following command from host to initalize heimdall and create config files -
+`OR`
+
+Run following commands from host to initalize heimdall and create config files -
 
 ```bash
 $ docker exec -it matic-heimdall sh -c "make init-heimdall"
