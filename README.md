@@ -35,7 +35,7 @@ $ make rest-server
 Create and run docker container with mounted directory -
 
 ```bash
-$ docker run --name heimdall -p 1317:1317 -p 26656:26656 -p 26657:26657 -it \
+$ docker run --name matic-heimdall -p 1317:1317 -p 26656:26656 -p 26657:26657 -it \
     -v ~/.heimdalld:/root/.heimdalld \
     -v $(pwd)/logs:/go/src/github.com/maticnetwork/heimdall/logs \
     "maticnetwork/heimdall:<tag-name>" \
@@ -51,7 +51,7 @@ You can run make commands directly on the container.
 
 `OR`
 
-Run following commands from host to initalize heimdall and create config files -
+Run following command from host to initalize heimdall and create config files -
 
 ```bash
 $ docker exec -it matic-heimdall sh -c "make init-heimdall"
