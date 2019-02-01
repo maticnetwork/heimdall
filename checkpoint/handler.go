@@ -119,6 +119,13 @@ func HandleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper, co
 				"startBlock", msg.StartBlock)
 			return common.ErrBadBlockDetails(k.Codespace).Result()
 		}
+		if lastCheckpoint.EndBlock+1 != msg.StartBlock {
+			common.CheckpointLogger.Error("Checkpoint not in countinuity",
+				"currentTip", lastCheckpoint.EndBlock,
+				"startBlock", msg.StartBlock)
+			return common.ErrBadBlockDetails(k.Codespace).Result()
+
+		}
 	}
 	common.CheckpointLogger.Debug("Valid checkpoint tip")
 
