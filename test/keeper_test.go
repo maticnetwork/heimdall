@@ -303,8 +303,11 @@ func TestHandleMsgCheckpoint(t *testing.T) {
 			t.Log("Sending checkpoint with timestamp", "Timestamp", header.TimeStamp, "Current", time.Now().Unix())
 			// send old checkpoint
 			SentValidCheckpoint(header, keeper, ctx, contractCallerObj, t)
+			header, err = GenRandCheckpointHeader(10)
+			header.Proposer = keeper.GetValidatorSet(ctx).Proposer.Signer
 			// create new checkpoint with current time
 			header.TimeStamp = uint64(time.Now().Unix())
+
 			msgCheckpoint := checkpoint.NewMsgCheckpointBlock(header.Proposer, header.StartBlock, header.EndBlock, header.RootHash, header.TimeStamp)
 			// send new checkpoint which should replace old one
 			got := checkpoint.HandleMsgCheckpoint(ctx, msgCheckpoint, keeper, &contractCallerObj)
