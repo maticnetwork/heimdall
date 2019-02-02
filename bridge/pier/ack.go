@@ -238,25 +238,31 @@ func (ackService *AckService) isValidProposer(count uint64, address []byte) bool
 		ackService.Logger.Error("Unable to send request for next proposers", "Error", err)
 		return false
 	}
+	defer resp.Body.Close()
 	ackService.Logger.Debug("Request for proposer was successfull", "Count", count, "Status", resp.Status)
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		ackService.Logger.Error("Unable to read data from response", "Error", err)
-		return false
-	}
 
-	// unmarshall data from buffer
-	var proposers []hmtypes.Validator
-	if err := json.Unmarshal(body, &proposers); err != nil {
-		ackService.Logger.Error("Error unmarshalling validator data ", "error", err)
-		return false
-	}
-
-	ackService.Logger.Debug("Fetched proposers list from heimdall", "numberOfProposers", count)
-	for _, proposer := range proposers {
-		if bytes.Equal(proposer.Address.Bytes(), address) {
-			return true
+	if resp.StatusCode == 200 {
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			ackService.Logger.Error("Unable to read data from response", "Error", err)
+			return false
 		}
+
+		// unmarshall data from buffer
+		var proposers []hmtypes.Validator
+		if err := json.Unmarshal(body, &proposers); err != nil {
+			ackService.Logger.Error("Error unmarshalling validator data ", "error", err)
+			return false
+		}
+
+		ackService.Logger.Debug("Fetched proposers list from heimdall", "numberOfProposers", count)
+		for _, proposer := range proposers {
+			if bytes.Equal(proposer.Address.Bytes(), address) {
+				return true
+			}
+		}
+	} else {
+		ackService.Logger.Error("Error while fetching validator data", "status", resp.StatusCode)
 	}
 
 	return false
