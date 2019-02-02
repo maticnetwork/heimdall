@@ -126,6 +126,9 @@ func HandleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper, co
 			return common.ErrBadBlockDetails(k.Codespace).Result()
 
 		}
+	} else if err.Error() == common.ErrNoCheckpointFound(k.Codespace).Error() && msg.StartBlock != 1 {
+		common.CheckpointLogger.Error("First checkpoint to start from block 1", "Error", err)
+		return common.ErrBadBlockDetails(k.Codespace).Result()
 	}
 	common.CheckpointLogger.Debug("Valid checkpoint tip")
 
@@ -181,6 +184,10 @@ func HandleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k common.
 		common.CheckpointLogger.Debug("Invalid No ACK -- ongoing buffer period")
 		return common.ErrInvalidNoACK(k.Codespace).Result()
 	}
+
+	common.CheckpointLogger.Info("Logs", "Condition1", lastCheckpointTime.After(currentTime), "Condition2", (currentTime.Sub(lastCheckpointTime) < bufferTime),
+		"CurrentTimeSub", currentTime.Sub(lastCheckpointTime),
+		"buffer", bufferTime)
 
 	// check last no ack - prevents repetitive no-ack
 	lastAck := k.GetLastNoAck(ctx)

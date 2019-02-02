@@ -2,6 +2,7 @@ package common
 
 import (
 	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/maticnetwork/heimdall/helper"
@@ -22,6 +23,7 @@ const (
 	CodeInvalidNoACK         CodeType = 1505
 	CodeTooManyNoAck         CodeType = 1506
 	CodeLowBal               CodeType = 1507
+	CodeNoCheckpoint         CodeType = 1508
 
 	CodeOldValidator       CodeType = 2500
 	CodeNoValidator        CodeType = 2501
@@ -56,6 +58,10 @@ func ErrBadAck(codespace sdk.CodespaceType) sdk.Error {
 
 func ErrNoACK(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeNoACK, "Checkpoint Already Exists In Buffer, ACK expected")
+}
+
+func ErrNoCheckpointFound(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeNoCheckpoint, "Checkpoint Not Found")
 }
 
 func ErrInvalidNoACK(codespace sdk.CodespaceType) sdk.Error {

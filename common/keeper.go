@@ -131,7 +131,7 @@ func (k *Keeper) GetLastCheckpoint(ctx sdk.Context) (types.CheckpointBlockHeader
 		}
 	}
 
-	return _checkpoint, errors.New("No checkpoint found")
+	return _checkpoint, ErrNoCheckpointFound(k.Codespace)
 }
 
 // GetHeaderKey appends prefix to headerNumber
