@@ -94,8 +94,11 @@ func HandleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper, co
 			common.CheckpointLogger.Debug("Checkpoint has been timed out, flushing buffer", "CheckpointTimestamp", msg.TimeStamp, "PrevCheckpointTimestamp", checkpointBuffer.TimeStamp)
 			k.FlushCheckpointBuffer(ctx)
 		} else {
+			checkpointTime := time.Unix(int64(checkpointBuffer.TimeStamp), 0)
+			expiryTime := checkpointTime.Add(helper.CheckpointBufferTime)
+			diff := expiryTime.Sub(time.Now()).Minutes
 			common.CheckpointLogger.Error("Checkpoint already exits in buffer", "Checkpoint", checkpointBuffer.String())
-			return common.ErrNoACK(k.Codespace).Result()
+			return common.ErrNoACK(k.Codespace, diff).Result()
 		}
 	}
 	common.CheckpointLogger.Debug("Received checkpoint from buffer", "Checkpoint", checkpointBuffer.String())
@@ -184,10 +187,6 @@ func HandleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k common.
 		common.CheckpointLogger.Debug("Invalid No ACK -- ongoing buffer period")
 		return common.ErrInvalidNoACK(k.Codespace).Result()
 	}
-
-	common.CheckpointLogger.Info("Logs", "Condition1", lastCheckpointTime.After(currentTime), "Condition2", (currentTime.Sub(lastCheckpointTime) < bufferTime),
-		"CurrentTimeSub", currentTime.Sub(lastCheckpointTime),
-		"buffer", bufferTime)
 
 	// check last no ack - prevents repetitive no-ack
 	lastAck := k.GetLastNoAck(ctx)

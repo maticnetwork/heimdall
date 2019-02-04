@@ -56,8 +56,8 @@ func ErrBadAck(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeInvalidACK, "Ack Not Valid")
 }
 
-func ErrNoACK(codespace sdk.CodespaceType) sdk.Error {
-	return newError(codespace, CodeNoACK, "Checkpoint Already Exists In Buffer, ACK expected")
+func ErrNoACK(codespace sdk.CodespaceType, timeRemaining float64) sdk.Error {
+	return newError(codespace, CodeNoACK, fmt.Sprintf("Checkpoint Already Exists In Buffer, ACK expected ,expires %v", timeRemaining))
 }
 
 func ErrNoCheckpointFound(codespace sdk.CodespaceType) sdk.Error {
