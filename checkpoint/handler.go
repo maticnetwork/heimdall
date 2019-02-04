@@ -94,10 +94,13 @@ func HandleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper, co
 			common.CheckpointLogger.Debug("Checkpoint has been timed out, flushing buffer", "CheckpointTimestamp", msg.TimeStamp, "PrevCheckpointTimestamp", checkpointBuffer.TimeStamp)
 			k.FlushCheckpointBuffer(ctx)
 		} else {
+			// calulates remaining time for buffer to be flushed
 			checkpointTime := time.Unix(int64(checkpointBuffer.TimeStamp), 0)
 			expiryTime := checkpointTime.Add(helper.CheckpointBufferTime)
-			diff := expiryTime.Sub(time.Now()).Minutes
-			common.CheckpointLogger.Error("Checkpoint already exits in buffer", "Checkpoint", checkpointBuffer.String())
+			diff := expiryTime.Sub(time.Now()).Seconds()
+
+			common.CheckpointLogger.Error("Checkpoint already exits in buffer", "Checkpoint", checkpointBuffer.String(), "Expires", expiryTime)
+
 			return common.ErrNoACK(k.Codespace, diff).Result()
 		}
 	}

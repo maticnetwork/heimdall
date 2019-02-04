@@ -10,6 +10,7 @@ import (
 	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/types"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // get checkpoint present in buffer
@@ -45,7 +46,6 @@ func GetLastNoACK(cdc *codec.Codec) *cobra.Command {
 		Short: "get last no ack received time",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			cliCtx.TrustNode = true
 			res, err := cliCtx.QueryStore(common.CheckpointNoACKCacheKey, "checkpoint")
 			if err != nil {
 				return err
@@ -55,6 +55,33 @@ func GetLastNoACK(cdc *codec.Codec) *cobra.Command {
 			return nil
 		},
 	}
+
+	return cmd
+}
+
+// get checkpoint given header index
+func GetHeaderFromIndex(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "get-last-noack",
+		Short: "get last no ack received time",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			headerNumber := viper.GetInt(FlagHeaderNumber)
+			res, err := cliCtx.QueryStore(common.GetHeaderKey(uint64(headerNumber)), "checkpoint")
+			if err != nil {
+				fmt.Printf("Unable to fetch header block , Error:%v HeaderIndex:%v", err, headerNumber)
+				return err
+			}
+			var _checkpoint types.CheckpointBlockHeader
+			err = cdc.UnmarshalBinary(res, &_checkpoint)
+			if err != nil {
+				fmt.Printf("Unable to unmarshall header block , Error:%v HeaderIndex:%v", err, headerNumber)
+				return err
+			}
+			return nil
+		},
+	}
+	cmd.MarkFlagRequired(FlagHeaderNumber)
 
 	return cmd
 }

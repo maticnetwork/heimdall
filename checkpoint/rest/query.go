@@ -128,7 +128,6 @@ func checkpointHeaderHandlerFn(
 			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-
 		// the query will return empty if there is no data
 		if len(res) == 0 {
 			w.WriteHeader(http.StatusNotFound)
@@ -240,11 +239,11 @@ func noackHandlerFn(
 }
 
 type stateDump struct {
-	ACKCount         int64                       `json:ackCount`
-	CheckpointBuffer types.CheckpointBlockHeader `json:headerBlock`
-	ValidatorCount   int                         `json:validatorCount`
-	ValidatorSet     types.ValidatorSet          `json:validatorSet`
-	LastNoACK        time.Time                   `json:lastNoACKTime`
+	ACKCount         int64                       `json:AckCount`
+	CheckpointBuffer types.CheckpointBlockHeader `json:HeaderBlock`
+	ValidatorCount   int                         `json:ValidatorCount`
+	ValidatorSet     types.ValidatorSet          `json:ValidatorSet`
+	LastNoACK        time.Time                   `json:LastNoACKTime`
 }
 
 // get all state-dump of heimdall
