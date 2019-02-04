@@ -216,6 +216,7 @@ func HandleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k common.
 		"signer", newProposer.Signer.String(),
 		"power", newProposer.Power,
 	)
+
 	// --- End
 	return sdk.Result{}
 }

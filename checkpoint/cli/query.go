@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// send checkpoint transaction
+// get checkpoint present in buffer
 func GetCheckpointBuffer(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "show-checkpoint-buffer",
@@ -27,7 +27,7 @@ func GetCheckpointBuffer(cdc *codec.Codec) *cobra.Command {
 			var _checkpoint types.CheckpointBlockHeader
 			err = cdc.UnmarshalBinary(res, &_checkpoint)
 			if err != nil {
-				fmt.Errorf("Unable to unmarshall Error: %v", err)
+				fmt.Printf("Unable to unmarshall Error: %v", err)
 				return err
 			}
 			fmt.Printf("Proposer: %v , StartBlock: %v , EndBlock: %v, Roothash: %v", _checkpoint.Proposer.String(), _checkpoint.StartBlock, _checkpoint.EndBlock, _checkpoint.RootHash.String())

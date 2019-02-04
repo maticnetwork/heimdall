@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/utils"
@@ -36,6 +37,7 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Co
 	r.HandleFunc("/checkpoint/{start}/{end}", checkpointHandlerFn(cdc, cliCtx)).Methods("GET")
 
 	r.HandleFunc("/checkpoint/last-no-ack", noackHandlerFn(cdc, cliCtx)).Methods("GET")
+	r.HandleFunc("/state-dump", stateDumpHandlerFunc(cdc, cliCtx)).Methods("GET")
 }
 
 func checkpointBufferHandlerFn(
@@ -43,7 +45,6 @@ func checkpointBufferHandlerFn(
 	cliCtx context.CLIContext,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		//cliCtx.TrustNode = true
 		res, err := cliCtx.QueryStore(common.BufferCheckpointKey, "checkpoint")
 		if err != nil {
 			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
@@ -60,6 +61,9 @@ func checkpointBufferHandlerFn(
 		err = cdc.UnmarshalBinary(res, &_checkpoint)
 		if err != nil {
 			RestLogger.Error("Unable to unmarshall", "Error", err)
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
 		}
 		RestLogger.Debug("Checkpoint fetched", "Checkpoint", _checkpoint.String())
 
@@ -223,6 +227,82 @@ func noackHandlerFn(
 		}
 
 		result, err := json.Marshal(map[string]interface{}{"result": lastAckTime})
+		if err != nil {
+			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(result)
+	}
+}
+
+type stateDump struct {
+	ACKCount         int64                       `json:ackCount`
+	CheckpointBuffer types.CheckpointBlockHeader `json:headerBlock`
+	ValidatorCount   int                         `json:validatorCount`
+	ValidatorSet     types.ValidatorSet          `json:validatorSet`
+	LastNoACK        time.Time                   `json:lastNoACKTime`
+}
+
+// get all state-dump of heimdall
+func stateDumpHandlerFunc(
+	cdc *codec.Codec,
+	cliCtx context.CLIContext,
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		// ACk count
+		var ackCountInt int64
+		ackcount, err := cliCtx.QueryStore(common.ACKCountKey, "checkpoint")
+		if err == nil {
+			ackCountInt, err = strconv.ParseInt(string(ackcount), 10, 64)
+			if err != nil {
+				RestLogger.Error("Unable to parse int for getting ack count", "Response", ackcount, "Error", err)
+			}
+		} else {
+			RestLogger.Error("Unable to fetch ack count from store", "Error", err)
+		}
+
+		// checkpoint buffer
+		var _checkpoint types.CheckpointBlockHeader
+		_checkpointBufferBytes, err := cliCtx.QueryStore(common.BufferCheckpointKey, "checkpoint")
+		if err == nil {
+			err = cdc.UnmarshalBinary(_checkpointBufferBytes, &_checkpoint)
+			if err != nil {
+				RestLogger.Error("Unable to unmarshall checkpoint present in buffer", "Error", err, "CheckpointBuffer", _checkpointBufferBytes)
+			}
+		} else {
+			RestLogger.Error("Unable to fetch checkpoint from buffer", "Error", err)
+		}
+
+		// validator count
+		var validatorCount int
+		var validatorSet types.ValidatorSet
+
+		_validatorSet, err := cliCtx.QueryStore(common.CurrentValidatorSetKey, "staker")
+		if err == nil {
+			cdc.UnmarshalBinary(_validatorSet, &validatorSet)
+		}
+		validatorCount = len(validatorSet.Validators)
+
+		// last no ack
+		var lastACKTime int64
+		lastNoACK, err := cliCtx.QueryStore(common.CheckpointNoACKCacheKey, "checkpoint")
+		if err == nil {
+			lastACKTime, err = strconv.ParseInt(string(lastNoACK), 10, 64)
+		}
+
+		state := stateDump{
+			ACKCount:         ackCountInt,
+			CheckpointBuffer: _checkpoint,
+			ValidatorCount:   validatorCount,
+			ValidatorSet:     validatorSet,
+			LastNoACK:        time.Unix(lastACKTime, 0),
+		}
+		result, err := json.Marshal(map[string]interface{}{"result": state})
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
 			w.WriteHeader(http.StatusBadRequest)
