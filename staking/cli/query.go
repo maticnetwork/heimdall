@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-// get checkpoint present in buffer
+// get validator information via address
 func GetValidatorInfo(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "get-validator-info",
@@ -37,5 +37,29 @@ func GetValidatorInfo(cdc *codec.Codec) *cobra.Command {
 	}
 
 	cmd.MarkFlagRequired(FlagValidatorAddress)
+	return cmd
+}
+
+// get validator information via address
+func GetCurrentValSet(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "get-current-valset",
+		Short: "show current validator set",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			res, err := cliCtx.QueryStore(common.CurrentValidatorSetKey, "staker")
+			if err != nil {
+				return err
+			}
+			var _validatorSet types.ValidatorSet
+			err = cdc.UnmarshalBinary(res, &_validatorSet)
+			if err != nil {
+				return err
+			}
+			fmt.Printf("Current validator set : %v", _validatorSet)
+			return nil
+		},
+	}
+
 	return cmd
 }
