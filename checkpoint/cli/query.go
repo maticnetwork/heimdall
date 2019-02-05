@@ -3,6 +3,7 @@ package cli
 import (
 	"encoding/binary"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -78,10 +79,37 @@ func GetHeaderFromIndex(cdc *codec.Codec) *cobra.Command {
 				fmt.Printf("Unable to unmarshall header block , Error:%v HeaderIndex:%v", err, headerNumber)
 				return err
 			}
+			fmt.Printf("Proposer: %v , StartBlock: %v , EndBlock: %v, Roothash: %v", _checkpoint.Proposer.String(), _checkpoint.StartBlock, _checkpoint.EndBlock, _checkpoint.RootHash.String())
+
 			return nil
 		},
 	}
 	cmd.MarkFlagRequired(FlagHeaderNumber)
+
+	return cmd
+}
+
+// get number of checkpoint received count
+func GetCheckpointCount(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "get-last-noack",
+		Short: "get last no ack received time",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			res, err := cliCtx.QueryStore(common.ACKCountKey, "checkpoint")
+			if err != nil {
+				return err
+			}
+
+			ackCount, err := strconv.ParseInt(string(res), 10, 64)
+			if err != nil {
+				return err
+			}
+			fmt.Printf("Total number of checkpoint so far : %v", ackCount)
+			return nil
+		},
+	}
 
 	return cmd
 }
