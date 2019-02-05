@@ -2,6 +2,9 @@ package cli
 
 import (
 	"fmt"
+	"strconv"
+	"time"
+
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/ethereum/go-ethereum/common"
@@ -9,8 +12,6 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"strconv"
-	"time"
 )
 
 // send checkpoint transaction
@@ -99,7 +100,7 @@ func GetCheckpointACKTx(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			msg := checkpoint.NewMsgCheckpointAck(HeaderBlock)
+			msg := checkpoint.NewMsgCheckpointAck(HeaderBlock, uint64(time.Now().Unix()))
 
 			return helper.CreateAndSendTx(msg, cliCtx)
 		},

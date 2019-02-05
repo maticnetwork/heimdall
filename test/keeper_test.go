@@ -379,7 +379,7 @@ func TestACKAfterNoACK(t *testing.T) {
 
 	contractCallerObj.On("GetHeaderInfo", uint64(10000)).Return(header.RootHash, header.StartBlock, header.EndBlock, nil)
 	// create ack msg
-	msgACK := checkpoint.NewMsgCheckpointAck(uint64(10000))
+	msgACK := checkpoint.NewMsgCheckpointAck(uint64(10000), uint64(time.Now().Unix()))
 	// send ack to handler
 	got = checkpoint.HandleMsgCheckpointAck(ctx, msgACK, keeper, &contractCallerObj)
 	require.True(t, got.IsOK(), "expected send-ack to be ok, got %v", got)

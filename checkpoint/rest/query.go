@@ -38,6 +38,7 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Co
 
 	r.HandleFunc("/checkpoint/last-no-ack", noackHandlerFn(cdc, cliCtx)).Methods("GET")
 	r.HandleFunc("/state-dump", stateDumpHandlerFunc(cdc, cliCtx)).Methods("GET")
+	r.HandleFunc("/lastest-checkpoint", latestCheckpointHandlerFunc(cdc, cliCtx)).Methods("GET")
 }
 
 func checkpointBufferHandlerFn(
@@ -309,6 +310,53 @@ func stateDumpHandlerFunc(
 			return
 		}
 
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(result)
+	}
+}
+
+// get last checkpoint from store
+func latestCheckpointHandlerFunc(
+	cdc *codec.Codec,
+	cliCtx context.CLIContext,
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ackCount, err := cliCtx.QueryStore(common.ACKCountKey, "checkpoint")
+		if err != nil {
+			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		ackCountInt, err := strconv.ParseInt(string(ackCount), 10, 64)
+		if err != nil {
+			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		lastCheckpointKey := helper.GetConfig().ChildBlockInterval * uint64(ackCountInt)
+		res, err := cliCtx.QueryStore(common.GetHeaderKey(lastCheckpointKey), "checkpoint")
+		if err != nil {
+			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		// the query will return empty if there is no data
+		if len(res) == 0 {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		var _checkpoint types.CheckpointBlockHeader
+		err = cdc.UnmarshalBinary(res, &_checkpoint)
+		if err != nil {
+			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		result, err := json.Marshal(&_checkpoint)
+		if err != nil {
+			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(result)
 	}

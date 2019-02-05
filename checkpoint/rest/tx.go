@@ -109,8 +109,7 @@ func NewCheckpointACKHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		// create new msg checkpoint ack
-		msg := checkpoint.NewMsgCheckpointAck(m.HeaderBlock)
-
+		msg := checkpoint.NewMsgCheckpointAck(m.HeaderBlock, uint64(time.Now().Unix()))
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {
 			RestLogger.Error("Unable to create txBytes", "error", err, "headerBlock", m.HeaderBlock)

@@ -94,11 +94,13 @@ var _ sdk.Msg = &MsgCheckpointAck{}
 
 type MsgCheckpointAck struct {
 	HeaderBlock uint64 `json:"headerBlock"`
+	Timestamp   uint64 `json:"timestamp"`
 }
 
-func NewMsgCheckpointAck(headerBlock uint64) MsgCheckpointAck {
+func NewMsgCheckpointAck(headerBlock uint64, timestamp uint64) MsgCheckpointAck {
 	return MsgCheckpointAck{
 		HeaderBlock: headerBlock,
+		Timestamp:   timestamp,
 	}
 }
 
