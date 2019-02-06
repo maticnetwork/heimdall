@@ -47,7 +47,7 @@ func ServeCommands(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			logger.Info("REST server started from here ")
+			logger.Info("REST server started")
 
 			// wait forever and cleanup
 			cmn.TrapSignal(func() {
