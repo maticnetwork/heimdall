@@ -152,9 +152,9 @@ func (ackService *AckService) processCheckpoint(lastCreatedAt int64) {
 	checkpointCreationTime := time.Unix(lastCreatedAt, 0)
 	currentTime := time.Now()
 	timeDiff := currentTime.Sub(checkpointCreationTime)
-	// check if last checkpoint was < checkpointBufferTime
-	if timeDiff.Seconds() >= helper.CheckpointBufferTime.Seconds() && index == 0 {
-		index = math.Floor(timeDiff.Seconds() / helper.CheckpointBufferTime.Seconds())
+	// check if last checkpoint was < NoACK wait time
+	if timeDiff.Seconds() >= helper.NoACKWaitTime.Seconds() && index == 0 {
+		index = math.Floor(timeDiff.Seconds() / helper.NoACKWaitTime.Seconds())
 		ackService.Logger.Info("index set", "Index", index)
 	}
 
