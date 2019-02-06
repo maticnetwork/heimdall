@@ -332,7 +332,7 @@ func (syncer *ChainSyncer) processCheckpointEvent(eventName string, abiObject *a
 		)
 
 		// create msg checkpoint ack message
-		msg := checkpoint.NewMsgCheckpointAck(event.Number.Uint64())
+		msg := checkpoint.NewMsgCheckpointAck(event.Number.Uint64(), uint64(time.Now().Unix()))
 		syncer.sendTx(eventName, msg)
 	}
 }

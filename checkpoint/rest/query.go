@@ -38,7 +38,7 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Co
 
 	r.HandleFunc("/checkpoint/last-no-ack", noackHandlerFn(cdc, cliCtx)).Methods("GET")
 	r.HandleFunc("/state-dump", stateDumpHandlerFunc(cdc, cliCtx)).Methods("GET")
-	r.HandleFunc("/lastest-checkpoint", latestCheckpointHandlerFunc(cdc, cliCtx)).Methods("GET")
+	r.HandleFunc("checkpoint/latest-checkpoint", latestCheckpointHandlerFunc(cdc, cliCtx)).Methods("GET")
 }
 
 func checkpointBufferHandlerFn(

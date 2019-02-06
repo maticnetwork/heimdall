@@ -239,6 +239,7 @@ func (ackService *AckService) isValidProposer(count uint64, address []byte) bool
 		return false
 	}
 	defer resp.Body.Close()
+
 	ackService.Logger.Debug("Request for proposer was successfull", "Count", count, "Status", resp.Status)
 
 	if resp.StatusCode == 200 {

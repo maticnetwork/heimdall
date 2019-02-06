@@ -387,7 +387,6 @@ func TestACKAfterNoACK(t *testing.T) {
 
 func TestFirstNoACK(t *testing.T) {
 	ctx, keeper := CreateTestInput(t, false)
-
 	LoadValidatorSet(4, t, keeper, ctx, false, 10)
 	keeper.IncreamentAccum(ctx, 1)
 	msgNoACK := checkpoint.NewMsgCheckpointNoAck(uint64(time.Now().Unix()))
