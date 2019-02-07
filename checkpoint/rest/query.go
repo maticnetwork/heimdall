@@ -33,12 +33,12 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Co
 		"/checkpoint/headers/{headerBlockIndex}",
 		checkpointHeaderHandlerFn(cdc, cliCtx),
 	).Methods("GET")
-
+	r.HandleFunc("/checkpoint/latest-checkpoint", latestCheckpointHandlerFunc(cdc, cliCtx)).Methods("GET")
 	r.HandleFunc("/checkpoint/{start}/{end}", checkpointHandlerFn(cdc, cliCtx)).Methods("GET")
 
 	r.HandleFunc("/checkpoint/last-no-ack", noackHandlerFn(cdc, cliCtx)).Methods("GET")
 	r.HandleFunc("/state-dump", stateDumpHandlerFunc(cdc, cliCtx)).Methods("GET")
-	r.HandleFunc("checkpoint/latest-checkpoint", latestCheckpointHandlerFunc(cdc, cliCtx)).Methods("GET")
+	helper.InitHeimdallConfig("")
 }
 
 func checkpointBufferHandlerFn(
@@ -161,7 +161,6 @@ func checkpointHandlerFn(
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		helper.InitHeimdallConfig("")
 		start, err := strconv.Atoi(vars["start"])
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
@@ -331,8 +330,10 @@ func latestCheckpointHandlerFunc(
 			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
+		RestLogger.Debug("ACK Count fetched", "ACKCount", ackCountInt)
 
 		lastCheckpointKey := helper.GetConfig().ChildBlockInterval * uint64(ackCountInt)
+		RestLogger.Debug("Last checkpoint key generated", "LastCheckpointKey", lastCheckpointKey, "min", helper.GetConfig().ChildBlockInterval)
 		res, err := cliCtx.QueryStore(common.GetHeaderKey(lastCheckpointKey), "checkpoint")
 		if err != nil {
 			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
@@ -350,6 +351,7 @@ func latestCheckpointHandlerFunc(
 			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
+		RestLogger.Debug("Fetched last checkpoint", "Checkpoint", _checkpoint)
 		result, err := json.Marshal(&_checkpoint)
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)

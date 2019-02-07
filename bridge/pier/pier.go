@@ -26,7 +26,7 @@ const (
 	// TODO fetch port from config
 	lastNoAckURL      = "http://localhost:1317/checkpoint/last-no-ack"
 	proposersURL      = "http://localhost:1317/staking/proposer/%v"
-	lastCheckpointURL = "http://localhost:1317/checkpoint/latest-checkpoint"
+	lastCheckpointURL = "http://localhost:1317/checkpoint/buffer"
 
 	bridgeDBFlag = "bridge-db"
 	lastBlockKey = "last-block" // storage key
@@ -103,27 +103,4 @@ func isProposer() bool {
 		pierLogger.Error("Error while fetching proposer", "status", resp.StatusCode)
 	}
 	return false
-}
-
-func getLastCheckpoint() (_checkpoint hmtypes.CheckpointBlockHeader, found bool) {
-	resp, err := http.Get(lastCheckpointURL)
-	if err != nil {
-		pierLogger.Error("Unable to send request to get proposer", "Error", err)
-		return _checkpoint, false
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode == 200 {
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			pierLogger.Error("Unable to read data from response", "Error", err)
-			return _checkpoint, false
-		}
-		if err := json.Unmarshal(body, &_checkpoint); err != nil {
-			pierLogger.Error("Error unmarshalling checkpoint", "error", err)
-			return _checkpoint, false
-		}
-		return _checkpoint, true
-
-	}
-	return _checkpoint, false
 }

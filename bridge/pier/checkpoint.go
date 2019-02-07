@@ -3,7 +3,11 @@ package pier
 import (
 	"context"
 	"encoding/hex"
+	"encoding/json"
+	"errors"
+	"io/ioutil"
 	"math/big"
+	"net/http"
 	"os"
 	"time"
 
@@ -21,6 +25,7 @@ import (
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/helper"
+	hmtypes "github.com/maticnetwork/heimdall/types"
 )
 
 // MaticCheckpointer to propose
@@ -181,15 +186,81 @@ func (checkpointer *MaticCheckpointer) startSubscription(ctx context.Context, su
 
 func (checkpointer *MaticCheckpointer) sendRequest(newHeader *types.Header) {
 	checkpointer.Logger.Debug("New block detected", "blockNumber", newHeader.Number)
+	contractStart, contractEnd, currentHeaderBlock, err := checkpointer.GenHeaderDetailContract(newHeader.Number.Uint64())
+	if err != nil {
+		checkpointer.Logger.Error("Error fetching details from contract ", "Error", err)
+		return
+	}
+	checkpointer.Logger.Debug("Contract Details fetched", "Start", contractStart, "End", contractEnd, "Currentheader", currentHeaderBlock.String())
+	hmStart, hmEnd, found := getLastCheckpointStore()
+	if !found {
+		checkpointer.Logger.Error("Buffer not found , sending new checkpoint", "Bool", found)
+	} else {
+		checkpointer.Logger.Debug("Checkpoint found in buffer", "Start", hmStart, "End", hmEnd)
+	}
+	// ACK needs to be sent
+	if hmEnd+1 == contractStart {
+		checkpointer.Logger.Debug("Detected mainchain checkpoint,sending ACK", "HeimdallStart", hmStart, "HeimdallEnd", hmEnd, "ContractEnd", contractEnd)
+		headerNumber := currentHeaderBlock.Sub(currentHeaderBlock, big.NewInt(10000))
+		msg := checkpoint.NewMsgCheckpointAck(headerNumber.Uint64(), uint64(time.Now().Unix()))
+		txBytes, err := helper.CreateTxBytes(msg)
+		if err != nil {
+			checkpointer.Logger.Error("Error while creating tx bytes", "error", err)
+			return
+		}
+
+		// send tendermint request
+		_, err = helper.SendTendermintRequest(checkpointer.cliCtx, txBytes)
+		if err != nil {
+			checkpointer.Logger.Error("Error while sending request to Tendermint", "error", err)
+			return
+		}
+		return
+	}
+	start := contractStart
+	end := contractEnd
+
+	// Get root hash
+	root, err := checkpoint.GetHeaders(start, end)
+	if err != nil {
+		return
+	}
+
+	checkpointer.Logger.Info("New checkpoint header created", "start", start, "end", end, "root", hex.EncodeToString(root))
+
+	// TODO submit checkcoint
+	txBytes, err := helper.CreateTxBytes(
+		checkpoint.NewMsgCheckpointBlock(
+			ethCommon.BytesToAddress(helper.GetAddress()),
+			start,
+			end,
+			ethCommon.BytesToHash(root),
+			uint64(time.Now().Unix()),
+		),
+	)
+
+	if err != nil {
+		checkpointer.Logger.Error("Error while creating tx bytes", "error", err)
+		return
+	}
+
+	resp, err := helper.SendTendermintRequest(checkpointer.cliCtx, txBytes)
+	if err != nil {
+		checkpointer.Logger.Error("Error while sending request to Tendermint", "error", err)
+		return
+	}
+
+	checkpointer.Logger.Info("Checkpoint sent successfully", "hash", resp.Hash.String(), "start", start, "end", end, "root", hex.EncodeToString(root))
+}
+
+func (checkpointer *MaticCheckpointer) GenHeaderDetailContract(latest uint64) (start, end uint64, currentHeaderNum *big.Int, err error) {
 	lastCheckpointEnd, err := checkpointer.RootChainInstance.CurrentChildBlock(nil)
 	if err != nil {
 		checkpointer.Logger.Error("Error while fetching current child block from rootchain", "error", err)
 		return
 	}
 
-	latest := newHeader.Number.Uint64()
-	start := lastCheckpointEnd.Uint64()
-	var end uint64
+	start = lastCheckpointEnd.Uint64()
 
 	// add 1 if start > 0
 	if start > 0 {
@@ -216,22 +287,21 @@ func (checkpointer *MaticCheckpointer) sendRequest(newHeader *types.Header) {
 
 		checkpointer.Logger.Debug("Calculating checkpoint eligibility", "latest", latest, "start", start, "end", end)
 	}
+	currentHeaderBlockNumber, err := checkpointer.RootChainInstance.CurrentHeaderBlock(nil)
+	if err != nil {
+		checkpointer.Logger.Error("Error while fetching current header block number from rootchain", "error", err)
+		return 0, 0, currentHeaderBlockNumber, err
+	}
+	currentHeaderNum = currentHeaderBlockNumber
 
 	// Handle when block producers go down
 	if end == 0 || end == start || (0 < diff && diff < defaultCheckpointLength) {
-		currentHeaderBlockNumber, err := checkpointer.RootChainInstance.CurrentHeaderBlock(nil)
-		if err != nil {
-			checkpointer.Logger.Error("Error while fetching current header block number from rootchain", "error", err)
-			return
-		}
-
 		// fetch current header block
 		currentHeaderBlock, err := checkpointer.RootChainInstance.HeaderBlock(nil, currentHeaderBlockNumber.Sub(currentHeaderBlockNumber, big.NewInt(1)))
 		if err != nil {
 			checkpointer.Logger.Error("Error while fetching current header block object from rootchain", "error", err)
-			return
+			return 0, 0, currentHeaderBlockNumber, err
 		}
-
 		lastCheckpointTime := currentHeaderBlock.CreatedAt.Int64()
 		currentTime := time.Now().Unix()
 		if currentTime-lastCheckpointTime > defaultForcePushInterval {
@@ -241,38 +311,32 @@ func (checkpointer *MaticCheckpointer) sendRequest(newHeader *types.Header) {
 	}
 
 	if end == 0 || start >= end {
-		return
+		checkpointer.Logger.Error("Invalid start end formation", "Start", start, "End", end)
+		return 0, 0, currentHeaderBlockNumber, errors.New("Invalid start end formation")
 	}
+	return
+}
 
-	// Get root hash
-	root, err := checkpoint.GetHeaders(start, end)
+func getLastCheckpointStore() (uint64, uint64, bool) {
+	var _checkpoint hmtypes.CheckpointBlockHeader
+	resp, err := http.Get(lastCheckpointURL)
 	if err != nil {
-		return
+		pierLogger.Error("Unable to send request to get proposer", "Error", err)
+		return _checkpoint.StartBlock, _checkpoint.EndBlock, false
 	}
+	defer resp.Body.Close()
+	if resp.StatusCode == 200 {
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			pierLogger.Error("Unable to read data from response", "Error", err)
+			return _checkpoint.StartBlock, _checkpoint.EndBlock, false
+		}
+		if err := json.Unmarshal(body, &_checkpoint); err != nil {
+			pierLogger.Error("Error unmarshalling checkpoint", "error", err)
+			return _checkpoint.StartBlock, _checkpoint.EndBlock, false
+		}
+		return _checkpoint.StartBlock, _checkpoint.EndBlock, true
 
-	checkpointer.Logger.Info("New checkpoint header created", "latest", latest, "start", start, "end", end, "root", hex.EncodeToString(root))
-
-	// TODO submit checkcoint
-	txBytes, err := helper.CreateTxBytes(
-		checkpoint.NewMsgCheckpointBlock(
-			ethCommon.BytesToAddress(helper.GetAddress()),
-			start,
-			end,
-			ethCommon.BytesToHash(root),
-			uint64(time.Now().Unix()),
-		),
-	)
-
-	if err != nil {
-		checkpointer.Logger.Error("Error while creating tx bytes", "error", err)
-		return
 	}
-
-	resp, err := helper.SendTendermintRequest(checkpointer.cliCtx, txBytes)
-	if err != nil {
-		checkpointer.Logger.Error("Error while sending request to Tendermint", "error", err)
-		return
-	}
-
-	checkpointer.Logger.Info("Checkpoint sent successfully", "hash", resp.Hash.String(), "start", start, "end", end, "root", hex.EncodeToString(root))
+	return _checkpoint.StartBlock, _checkpoint.EndBlock, false
 }
