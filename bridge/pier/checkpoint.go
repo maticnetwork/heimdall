@@ -225,12 +225,12 @@ func (checkpointer *MaticCheckpointer) sendRequest(newHeader *types.Header) {
 
 	var wg sync.WaitGroup
 	wg.Add(2)
-
+	checkpointer.Logger.Debug("Sending go routines")
 	go checkpointer.GenHeaderDetailContract(newHeader.Number.Uint64(), &wg, contractState)
 	go getLastCheckpointStore(&wg, heimdallState)
 
 	wg.Wait()
-
+	checkpointer.Logger.Info("Done waiting", "contract", contractState, "heimdall", heimdallState)
 	lastContractCheckpoint = <-contractState
 	if lastContractCheckpoint.err != nil {
 		checkpointer.Logger.Error("Error fetching details from contract ", "Error", lastContractCheckpoint.err)
@@ -240,14 +240,14 @@ func (checkpointer *MaticCheckpointer) sendRequest(newHeader *types.Header) {
 
 	lastHeimdallCheckpoint = <-heimdallState
 	if !lastHeimdallCheckpoint.found {
-		checkpointer.Logger.Error("Buffer not found , sending new checkpoint", "Bool", lastHeimdallCheckpoint.found)
+		checkpointer.Logger.Info("Buffer not found , sending new checkpoint", "Bool", lastHeimdallCheckpoint.found)
 	} else {
 		checkpointer.Logger.Debug("Checkpoint found in buffer", "Start", lastHeimdallCheckpoint.start, "End", lastHeimdallCheckpoint.end)
 	}
 
 	// ACK needs to be sent
 	if lastHeimdallCheckpoint.end+1 == lastContractCheckpoint.start {
-		checkpointer.Logger.Debug("Detected mainchain checkpoint,sending ACK", "HeimdallEnd", lastHeimdallCheckpoint.end, "ContractStart", contractState.start)
+		checkpointer.Logger.Debug("Detected mainchain checkpoint,sending ACK", "HeimdallEnd", lastHeimdallCheckpoint.end, "ContractStart", lastHeimdallCheckpoint.start)
 		headerNumber := lastContractCheckpoint.currentHeaderBlock.Sub(lastContractCheckpoint.currentHeaderBlock, big.NewInt(10000))
 		msg := checkpoint.NewMsgCheckpointAck(headerNumber.Uint64(), uint64(time.Now().Unix()))
 		txBytes, err := helper.CreateTxBytes(msg)
@@ -339,6 +339,7 @@ func (checkpointer *MaticCheckpointer) GenHeaderDetailContract(latest uint64, wg
 	if err != nil {
 		checkpointer.Logger.Error("Error while fetching current header block number from rootchain", "error", err)
 		contractState <- NewContractCheckpoint(0, 0, currentHeaderBlockNumber, err)
+		return
 	}
 	currentHeaderNum := currentHeaderBlockNumber
 
@@ -349,6 +350,7 @@ func (checkpointer *MaticCheckpointer) GenHeaderDetailContract(latest uint64, wg
 		if err != nil {
 			checkpointer.Logger.Error("Error while fetching current header block object from rootchain", "error", err)
 			contractState <- NewContractCheckpoint(0, 0, currentHeaderBlockNumber, err)
+			return
 		}
 		lastCheckpointTime := currentHeaderBlock.CreatedAt.Int64()
 		currentTime := time.Now().Unix()
@@ -361,19 +363,22 @@ func (checkpointer *MaticCheckpointer) GenHeaderDetailContract(latest uint64, wg
 	if end == 0 || start >= end {
 		checkpointer.Logger.Error("Invalid start end formation", "Start", start, "End", end)
 		contractState <- NewContractCheckpoint(0, 0, currentHeaderBlockNumber, errors.New("Invalid start end formation"))
+		return
 	}
 	contractCheckpointData := NewContractCheckpoint(start, end, currentHeaderNum, nil)
 	contractState <- contractCheckpointData
+	return
 }
 
 func getLastCheckpointStore(wg *sync.WaitGroup, heimdallState chan<- HeimdallCheckpoint) {
 	defer wg.Done()
-
+	pierLogger.Info("Fetching checkpoint in buffer")
 	var _checkpoint hmtypes.CheckpointBlockHeader
 	resp, err := http.Get(lastCheckpointURL)
 	if err != nil {
 		pierLogger.Error("Unable to send request to get proposer", "Error", err)
 		heimdallState <- NewHeimdallCheckpoint(_checkpoint.StartBlock, _checkpoint.EndBlock, false)
+		return
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode == 200 {
@@ -381,13 +386,18 @@ func getLastCheckpointStore(wg *sync.WaitGroup, heimdallState chan<- HeimdallChe
 		if err != nil {
 			pierLogger.Error("Unable to read data from response", "Error", err)
 			heimdallState <- NewHeimdallCheckpoint(_checkpoint.StartBlock, _checkpoint.EndBlock, false)
+			return
 		}
 		if err := json.Unmarshal(body, &_checkpoint); err != nil {
 			pierLogger.Error("Error unmarshalling checkpoint", "error", err)
 			heimdallState <- NewHeimdallCheckpoint(_checkpoint.StartBlock, _checkpoint.EndBlock, false)
+			return
 		}
+		pierLogger.Info("Found checkpoint data", "start", _checkpoint.StartBlock, "end", _checkpoint.EndBlock)
 		heimdallState <- NewHeimdallCheckpoint(_checkpoint.StartBlock, _checkpoint.EndBlock, true)
-
+		return
 	}
+	pierLogger.Debug("Response not 200", "Found", false)
 	heimdallState <- NewHeimdallCheckpoint(_checkpoint.StartBlock, _checkpoint.EndBlock, false)
+	return
 }
