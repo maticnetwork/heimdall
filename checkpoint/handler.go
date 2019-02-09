@@ -55,8 +55,8 @@ func HandleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 			"startReceived", start,
 			"endExpected", headerBlock.EndBlock,
 			"endReceived", end,
-			"rootExpected", root.String(),
-			"rootRecieved", headerBlock.RootHash.String())
+			"rootExpected", headerBlock.RootHash.String(),
+			"rootRecieved", root.String())
 
 		return common.ErrBadAck(k.Codespace).Result()
 	}

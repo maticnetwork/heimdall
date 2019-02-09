@@ -269,9 +269,13 @@ func stateDumpHandlerFunc(
 		var _checkpoint types.CheckpointBlockHeader
 		_checkpointBufferBytes, err := cliCtx.QueryStore(common.BufferCheckpointKey, "checkpoint")
 		if err == nil {
-			err = cdc.UnmarshalBinary(_checkpointBufferBytes, &_checkpoint)
-			if err != nil {
-				RestLogger.Error("Unable to unmarshall checkpoint present in buffer", "Error", err, "CheckpointBuffer", _checkpointBufferBytes)
+			if len(_checkpointBufferBytes) != 0 {
+				err = cdc.UnmarshalBinary(_checkpointBufferBytes, &_checkpoint)
+				if err != nil {
+					RestLogger.Error("Unable to unmarshall checkpoint present in buffer", "Error", err, "CheckpointBuffer", _checkpointBufferBytes)
+				}
+			} else {
+				RestLogger.Error("No checkpoint present in buffer")
 			}
 		} else {
 			RestLogger.Error("Unable to fetch checkpoint from buffer", "Error", err)

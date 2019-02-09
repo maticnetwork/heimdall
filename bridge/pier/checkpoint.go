@@ -240,7 +240,7 @@ func (checkpointer *MaticCheckpointer) sendRequest(newHeader *types.Header) {
 
 	lastHeimdallCheckpoint = <-heimdallState
 	if !lastHeimdallCheckpoint.found {
-		checkpointer.Logger.Info("Buffer not found , sending new checkpoint", "Bool", lastHeimdallCheckpoint.found)
+		checkpointer.Logger.Info("Buffer not found , sending new checkpoint", "Found", lastHeimdallCheckpoint.found)
 	} else {
 		checkpointer.Logger.Debug("Checkpoint found in buffer", "Start", lastHeimdallCheckpoint.start, "End", lastHeimdallCheckpoint.end)
 	}

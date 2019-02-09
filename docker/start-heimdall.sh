@@ -6,4 +6,4 @@
 ./build/bridge start > ./logs/bridge.log &
 
 # tail logs
-# tail ./logs/heimdalld.log ./logs/heimdalld-rest-server.log ./logs/bridge.log
+tail -f ./logs/heimdalld.log ./logs/heimdalld-rest-server.log ./logs/bridge.log
