@@ -37,7 +37,7 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Co
 	r.HandleFunc("/checkpoint/{start}/{end}", checkpointHandlerFn(cdc, cliCtx)).Methods("GET")
 
 	r.HandleFunc("/checkpoint/last-no-ack", noackHandlerFn(cdc, cliCtx)).Methods("GET")
-	r.HandleFunc("/state-dump", stateDumpHandlerFunc(cdc, cliCtx)).Methods("GET")
+	r.HandleFunc("/overview", overviewHandlerFunc(cdc, cliCtx)).Methods("GET")
 	helper.InitHeimdallConfig("")
 }
 
@@ -247,7 +247,7 @@ type stateDump struct {
 }
 
 // get all state-dump of heimdall
-func stateDumpHandlerFunc(
+func overviewHandlerFunc(
 	cdc *codec.Codec,
 	cliCtx context.CLIContext,
 ) http.HandlerFunc {
