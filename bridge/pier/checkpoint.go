@@ -217,7 +217,6 @@ func (checkpointer *MaticCheckpointer) startSubscription(ctx context.Context, su
 
 func (checkpointer *MaticCheckpointer) sendRequest(newHeader *types.Header) {
 	checkpointer.Logger.Debug("New block detected", "blockNumber", newHeader.Number)
-
 	contractState := make(chan ContractCheckpoint, 1)
 	var lastContractCheckpoint ContractCheckpoint
 	heimdallState := make(chan HeimdallCheckpoint, 1)
@@ -226,10 +225,12 @@ func (checkpointer *MaticCheckpointer) sendRequest(newHeader *types.Header) {
 	var wg sync.WaitGroup
 	wg.Add(2)
 
+	checkpointer.Logger.Debug("Collecting all required data")
 	go checkpointer.genHeaderDetailContract(newHeader.Number.Uint64(), &wg, contractState)
 	go checkpointer.getLastCheckpointStore(&wg, heimdallState)
 
 	wg.Wait()
+
 	checkpointer.Logger.Info("Done waiting", "contract", contractState, "heimdall", heimdallState)
 	lastContractCheckpoint = <-contractState
 	if lastContractCheckpoint.err != nil {
@@ -345,6 +346,7 @@ func (checkpointer *MaticCheckpointer) genHeaderDetailContract(latest uint64, wg
 
 	// Handle when block producers go down
 	if end == 0 || end == start || (0 < diff && diff < defaultCheckpointLength) {
+		checkpointer.Logger.Debug("Fetching last header block to calculate time")
 		// fetch current header block
 		currentHeaderBlock, err := checkpointer.RootChainInstance.HeaderBlock(nil, currentHeaderBlockNumber.Sub(currentHeaderBlockNumber, big.NewInt(int64(helper.GetConfig().ChildBlockInterval))))
 		if err != nil {
