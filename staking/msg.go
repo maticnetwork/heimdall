@@ -7,7 +7,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/common"
 
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
@@ -25,26 +24,26 @@ const StakingRoute = "staking"
 var _ sdk.Msg = &MsgValidatorJoin{}
 
 type MsgValidatorJoin struct {
-	ValidatorAddress common.Address `json:"address"`
-	SignerPubKey     types.PubKey   `json:"pubKey"`
-	StartEpoch       uint64         `json:"startEpoch"`
-	EndEpoch         uint64         `json:"endEpoch"`
-	Amount           json.Number    `json:"amount"`
+	ID           uint64       `json:"ID"`
+	SignerPubKey types.PubKey `json:"pubKey"`
+	StartEpoch   uint64       `json:"startEpoch"`
+	EndEpoch     uint64       `json:"endEpoch"`
+	Amount       json.Number  `json:"amount"`
 }
 
 func NewMsgValidatorJoin(
-	address common.Address,
-	pubkey types.PubKey,
-	startEpoch uint64,
-	endEpoch uint64,
-	amount json.Number,
+	_id uint64,
+	_pubkey types.PubKey,
+	_startEpoch uint64,
+	_endEpoch uint64,
+	_amount json.Number,
 ) MsgValidatorJoin {
 	return MsgValidatorJoin{
-		ValidatorAddress: address,
-		SignerPubKey:     pubkey,
-		StartEpoch:       startEpoch,
-		EndEpoch:         endEpoch,
-		Amount:           amount,
+		ID:           _id,
+		SignerPubKey: _pubkey,
+		StartEpoch:   _startEpoch,
+		EndEpoch:     _endEpoch,
+		Amount:       _amount,
 	}
 }
 
@@ -70,8 +69,8 @@ func (msg MsgValidatorJoin) GetSignBytes() []byte {
 }
 
 func (msg MsgValidatorJoin) ValidateBasic() sdk.Error {
-	if bytes.Equal(msg.ValidatorAddress.Bytes(), helper.ZeroAddress.Bytes()) {
-		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator address %v", msg.ValidatorAddress.String())
+	if msg.ID <= 0 {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator ID %v", msg.ID)
 	}
 
 	if bytes.Equal(msg.SignerPubKey.Bytes(), helper.ZeroPubKey.Bytes()) {
@@ -98,16 +97,16 @@ var _ sdk.Msg = &MsgSignerUpdate{}
 
 // MsgSignerUpdate signer update struct
 type MsgSignerUpdate struct {
-	ValidatorAddress common.Address `json:"address"`
-	NewSignerPubKey  types.PubKey   `json:"pubKey"`
-	NewAmount        json.Number    `json:"amount"`
+	ID              uint64       `json:"ID"`
+	NewSignerPubKey types.PubKey `json:"pubKey"`
+	NewAmount       json.Number  `json:"amount"`
 }
 
-func NewMsgValidatorUpdate(address common.Address, pubKey types.PubKey, amount json.Number) MsgSignerUpdate {
+func NewMsgValidatorUpdate(_id uint64, pubKey types.PubKey, amount json.Number) MsgSignerUpdate {
 	return MsgSignerUpdate{
-		ValidatorAddress: address,
-		NewSignerPubKey:  pubKey,
-		NewAmount:        amount,
+		ID:              _id,
+		NewSignerPubKey: pubKey,
+		NewAmount:       amount,
 	}
 }
 
@@ -133,8 +132,8 @@ func (msg MsgSignerUpdate) GetSignBytes() []byte {
 }
 
 func (msg MsgSignerUpdate) ValidateBasic() sdk.Error {
-	if bytes.Equal(msg.ValidatorAddress.Bytes(), helper.ZeroAddress.Bytes()) {
-		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator address %v", msg.ValidatorAddress.String())
+	if msg.ID <= 0 {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator ID %v", msg.ID)
 	}
 
 	if bytes.Equal(msg.NewSignerPubKey.Bytes(), helper.ZeroPubKey.Bytes()) {
@@ -160,12 +159,12 @@ func (msg MsgSignerUpdate) GetNewPower() uint64 {
 var _ sdk.Msg = &MsgValidatorExit{}
 
 type MsgValidatorExit struct {
-	ValidatorAddress common.Address
+	ID uint64 `json:"ID"`
 }
 
-func NewMsgValidatorExit(address common.Address) MsgValidatorExit {
+func NewMsgValidatorExit(_id uint64) MsgValidatorExit {
 	return MsgValidatorExit{
-		ValidatorAddress: address,
+		ID: _id,
 	}
 }
 
@@ -191,8 +190,8 @@ func (msg MsgValidatorExit) GetSignBytes() []byte {
 }
 
 func (msg MsgValidatorExit) ValidateBasic() sdk.Error {
-	if bytes.Equal(msg.ValidatorAddress.Bytes(), helper.ZeroAddress.Bytes()) {
-		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator address %v", msg.ValidatorAddress.String())
+	if msg.ID <= 0 {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator ID %v", msg.ID)
 	}
 
 	return nil
