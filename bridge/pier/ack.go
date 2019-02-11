@@ -57,6 +57,7 @@ func NewAckService() *AckService {
 		logger.Error("Error while getting root chain instance", "error", err)
 		panic(err)
 	}
+
 	cliCtx := cliContext.NewCLIContext()
 	cliCtx.Async = true
 
@@ -142,14 +143,19 @@ func (ackService *AckService) checkForCheckpoint() {
 }
 
 func (ackService *AckService) processCheckpoint(lastCreatedAt int64) {
+	var index float64
+	// if last created at ==0 , no checkpoint yet
+	if lastCreatedAt == 0 {
+		index = 1
+	}
+
 	checkpointCreationTime := time.Unix(lastCreatedAt, 0)
 	currentTime := time.Now()
 	timeDiff := currentTime.Sub(checkpointCreationTime)
-
-	var index float64
-	// check if last checkpoint was < checkpointBufferTime
-	if timeDiff.Seconds() >= helper.CheckpointBufferTime.Seconds() {
-		index = math.Floor(timeDiff.Seconds() / helper.CheckpointBufferTime.Seconds())
+	// check if last checkpoint was < NoACK wait time
+	if timeDiff.Seconds() >= helper.NoACKWaitTime.Seconds() && index == 0 {
+		index = math.Floor(timeDiff.Seconds() / helper.NoACKWaitTime.Seconds())
+		ackService.Logger.Info("index set", "Index", index)
 	}
 
 	if index == 0 {
@@ -157,12 +163,18 @@ func (ackService *AckService) processCheckpoint(lastCreatedAt int64) {
 	}
 
 	// check if difference between no-ack time and current time
-	lastNoAckTime := time.Unix(int64(ackService.getLastNoAckTime()), 0)
+	lastNoAck := ackService.getLastNoAckTime()
+
+	lastNoAckTime := time.Unix(int64(lastNoAck), 0)
 	timeDiff = currentTime.Sub(lastNoAckTime)
-	if currentTime.Sub(lastNoAckTime).Seconds() < helper.CheckpointBufferTime.Seconds() {
-		// ackService.Logger.Debug("Cannot send multiple no-ack in short time", "timeDiff", currentTime.Sub(lastNoAckTime).Seconds())
+	ackService.Logger.Debug("created time diff", "TimeDiff", timeDiff, "lasttime", lastNoAckTime)
+	// if last no ack == 0 , first no-ack to be sent
+	if currentTime.Sub(lastNoAckTime).Seconds() < helper.CheckpointBufferTime.Seconds() && lastNoAck != 0 {
+		ackService.Logger.Debug("Cannot send multiple no-ack in short time", "timeDiff", currentTime.Sub(lastNoAckTime).Seconds(), "ExpectedDiff", helper.CheckpointBufferTime.Seconds())
 		return
 	}
+
+	ackService.Logger.Debug("Fetching next proposers", "Count", index)
 
 	// check if same checkpoint still exists
 	if ackService.isValidProposer(uint64(index), helper.GetPubKey().Address().Bytes()) {
@@ -226,6 +238,9 @@ func (ackService *AckService) isValidProposer(count uint64, address []byte) bool
 		ackService.Logger.Error("Unable to send request for next proposers", "Error", err)
 		return false
 	}
+	defer resp.Body.Close()
+
+	ackService.Logger.Debug("Request for proposer was successfull", "Count", count, "Status", resp.Status)
 
 	if resp.StatusCode == 200 {
 		body, err := ioutil.ReadAll(resp.Body)
@@ -250,5 +265,6 @@ func (ackService *AckService) isValidProposer(count uint64, address []byte) bool
 	} else {
 		ackService.Logger.Error("Error while fetching validator data", "status", resp.StatusCode)
 	}
+
 	return false
 }

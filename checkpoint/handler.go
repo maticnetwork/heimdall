@@ -55,8 +55,8 @@ func HandleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 			"startReceived", start,
 			"endExpected", headerBlock.EndBlock,
 			"endReceived", end,
-			"rootExpected", root.String(),
-			"rootRecieved", headerBlock.RootHash.String())
+			"rootExpected", headerBlock.RootHash.String(),
+			"rootRecieved", root.String())
 
 		return common.ErrBadAck(k.Codespace).Result()
 	}
@@ -94,8 +94,14 @@ func HandleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper, co
 			common.CheckpointLogger.Debug("Checkpoint has been timed out, flushing buffer", "CheckpointTimestamp", msg.TimeStamp, "PrevCheckpointTimestamp", checkpointBuffer.TimeStamp)
 			k.FlushCheckpointBuffer(ctx)
 		} else {
-			common.CheckpointLogger.Error("Checkpoint already exits in buffer", checkpointBuffer.String())
-			return common.ErrNoACK(k.Codespace).Result()
+			// calulates remaining time for buffer to be flushed
+			checkpointTime := time.Unix(int64(checkpointBuffer.TimeStamp), 0)
+			expiryTime := checkpointTime.Add(helper.CheckpointBufferTime)
+			diff := expiryTime.Sub(time.Now()).Seconds()
+
+			common.CheckpointLogger.Error("Checkpoint already exits in buffer", "Checkpoint", checkpointBuffer.String(), "Expires", expiryTime)
+
+			return common.ErrNoACK(k.Codespace, diff).Result()
 		}
 	}
 	common.CheckpointLogger.Debug("Received checkpoint from buffer", "Checkpoint", checkpointBuffer.String())
@@ -119,6 +125,16 @@ func HandleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper, co
 				"startBlock", msg.StartBlock)
 			return common.ErrBadBlockDetails(k.Codespace).Result()
 		}
+		if lastCheckpoint.EndBlock+1 != msg.StartBlock {
+			common.CheckpointLogger.Error("Checkpoint not in countinuity",
+				"currentTip", lastCheckpoint.EndBlock,
+				"startBlock", msg.StartBlock)
+			return common.ErrBadBlockDetails(k.Codespace).Result()
+
+		}
+	} else if err.Error() == common.ErrNoCheckpointFound(k.Codespace).Error() && msg.StartBlock != 0 {
+		common.CheckpointLogger.Error("First checkpoint to start from block 1", "Error", err)
+		return common.ErrBadBlockDetails(k.Codespace).Result()
 	}
 	common.CheckpointLogger.Debug("Valid checkpoint tip")
 
@@ -202,6 +218,7 @@ func HandleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k common.
 		"signer", newProposer.Signer.String(),
 		"power", newProposer.Power,
 	)
+
 	// --- End
 	return sdk.Result{}
 }

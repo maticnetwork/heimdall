@@ -4,6 +4,7 @@ import (
 	"math/big"
 
 	"context"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
@@ -46,7 +47,7 @@ func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 func (c *ContractCaller) GetHeaderInfo(headerID uint64) (root common.Hash, start uint64, end uint64, err error) {
 	// get header from rootchain
 	headerIDInt := big.NewInt(0)
-	headerIDInt.SetUint64(headerID)
+	headerIDInt = headerIDInt.SetUint64(headerID)
 	headerBlock, err := c.rootChainInstance.HeaderBlock(nil, headerIDInt)
 	if err != nil {
 		Logger.Error("Unable to fetch header block from rootchain", "headerBlockIndex", headerID)

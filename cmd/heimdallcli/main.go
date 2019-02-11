@@ -44,7 +44,10 @@ func main() {
 
 	// add query/post commands (custom to binary)
 	rootCmd.AddCommand(
-		client.GetCommands()...,
+		client.GetCommands(
+			checkpoint.GetCheckpointBuffer(cdc),
+			checkpoint.GetLastNoACK(cdc),
+		)...,
 	)
 	rootCmd.AddCommand(
 		client.PostCommands(
