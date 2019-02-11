@@ -7,16 +7,16 @@ import (
 	"math/big"
 	"strings"
 
-	ethereum "github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/event"
+	ethereum "github.com/go-ethereum"
+	"github.com/go-ethereum/accounts/abi"
+	"github.com/go-ethereum/accounts/abi/bind"
+	"github.com/go-ethereum/common"
+	"github.com/go-ethereum/core/types"
+	"github.com/go-ethereum/event"
 )
 
 // RootchainABI is the input ABI used to generate the binding from.
-const RootchainABI = "[{\"constant\":true,\"inputs\":[],\"name\":\"childChainContract\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"roundType\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"headerBlocks\",\"outputs\":[{\"name\":\"root\",\"type\":\"bytes32\"},{\"name\":\"start\",\"type\":\"uint256\"},{\"name\":\"end\",\"type\":\"uint256\"},{\"name\":\"createdAt\",\"type\":\"uint256\"},{\"name\":\"proposer\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"depositManager\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"stakeManager\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"voteType\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes1\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"networkId\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"CHILD_BLOCK_INTERVAL\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"address\"}],\"name\":\"proofValidatorContracts\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"chain\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"withdrawManager\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"name\":\"_stakeManager\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"fallback\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"previousChildChain\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"newChildChain\",\"type\":\"address\"}],\"name\":\"ChildChainChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"validator\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"from\",\"type\":\"address\"}],\"name\":\"ProofValidatorAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"validator\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"from\",\"type\":\"address\"}],\"name\":\"ProofValidatorRemoved\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"proposer\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"number\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"start\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"end\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"root\",\"type\":\"bytes32\"}],\"name\":\"NewHeaderBlock\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"previousOwner\",\"type\":\"address\"}],\"name\":\"OwnershipRenounced\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"constant\":false,\"inputs\":[{\"name\":\"vote\",\"type\":\"bytes\"},{\"name\":\"sigs\",\"type\":\"bytes\"},{\"name\":\"extradata\",\"type\":\"bytes\"}],\"name\":\"submitHeaderBlock\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"exitId\",\"type\":\"uint256\"}],\"name\":\"deleteExit\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_nftContract\",\"type\":\"address\"}],\"name\":\"setExitNFTContract\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_token\",\"type\":\"address\"}],\"name\":\"setWETHToken\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_rootToken\",\"type\":\"address\"},{\"name\":\"_childToken\",\"type\":\"address\"}],\"name\":\"mapToken\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newChildChain\",\"type\":\"address\"}],\"name\":\"setChildContract\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_validator\",\"type\":\"address\"}],\"name\":\"addProofValidator\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_validator\",\"type\":\"address\"}],\"name\":\"removeProofValidator\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"currentChildBlock\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"currentHeaderBlock\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_headerNumber\",\"type\":\"uint256\"}],\"name\":\"headerBlock\",\"outputs\":[{\"name\":\"_root\",\"type\":\"bytes32\"},{\"name\":\"_start\",\"type\":\"uint256\"},{\"name\":\"_end\",\"type\":\"uint256\"},{\"name\":\"_createdAt\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_depositCount\",\"type\":\"uint256\"}],\"name\":\"depositBlock\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"address\"},{\"name\":\"\",\"type\":\"address\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_stakeManager\",\"type\":\"address\"}],\"name\":\"setStakeManager\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_depositManager\",\"type\":\"address\"}],\"name\":\"setDepositManager\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_withdrawManager\",\"type\":\"address\"}],\"name\":\"setWithdrawManager\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"depositEthers\",\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_token\",\"type\":\"address\"},{\"name\":\"_user\",\"type\":\"address\"},{\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"deposit\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_token\",\"type\":\"address\"},{\"name\":\"_user\",\"type\":\"address\"},{\"name\":\"_amount\",\"type\":\"uint256\"},{\"name\":\"isWeth\",\"type\":\"bool\"}],\"name\":\"transferAmount\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_user\",\"type\":\"address\"},{\"name\":\"_amount\",\"type\":\"uint256\"},{\"name\":\"_data\",\"type\":\"bytes\"}],\"name\":\"tokenFallback\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"finalizeCommit\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"slash\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
+const RootchainABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"_token\",\"type\":\"address\"},{\"name\":\"_user\",\"type\":\"address\"},{\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"transferAmount\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_stakeManager\",\"type\":\"address\"}],\"name\":\"setStakeManager\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_withdrawManager\",\"type\":\"address\"}],\"name\":\"setWithdrawManager\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_depositManager\",\"type\":\"address\"}],\"name\":\"setDepositManager\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"childChainContract\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"roundType\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"slash\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_depositCount\",\"type\":\"uint256\"}],\"name\":\"depositBlock\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"address\"},{\"name\":\"\",\"type\":\"address\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_token\",\"type\":\"address\"},{\"name\":\"_user\",\"type\":\"address\"},{\"name\":\"_tokenId\",\"type\":\"uint256\"}],\"name\":\"depositERC721\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"headerBlocks\",\"outputs\":[{\"name\":\"root\",\"type\":\"bytes32\"},{\"name\":\"start\",\"type\":\"uint256\"},{\"name\":\"end\",\"type\":\"uint256\"},{\"name\":\"createdAt\",\"type\":\"uint256\"},{\"name\":\"proposer\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_nftContract\",\"type\":\"address\"}],\"name\":\"setExitNFTContract\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"exitId\",\"type\":\"uint256\"}],\"name\":\"deleteExit\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_validator\",\"type\":\"address\"}],\"name\":\"removeProofValidator\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_headerNumber\",\"type\":\"uint256\"}],\"name\":\"headerBlock\",\"outputs\":[{\"name\":\"_root\",\"type\":\"bytes32\"},{\"name\":\"_start\",\"type\":\"uint256\"},{\"name\":\"_end\",\"type\":\"uint256\"},{\"name\":\"_createdAt\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"depositManager\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"stakeManager\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"currentChildBlock\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"voteType\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes1\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_token\",\"type\":\"address\"},{\"name\":\"_user\",\"type\":\"address\"},{\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"deposit\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"isOwner\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"networkId\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"CHILD_BLOCK_INTERVAL\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_token\",\"type\":\"address\"}],\"name\":\"setWETHToken\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_user\",\"type\":\"address\"},{\"name\":\"_amount\",\"type\":\"uint256\"},{\"name\":\"_data\",\"type\":\"bytes\"}],\"name\":\"tokenFallback\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"address\"}],\"name\":\"proofValidatorContracts\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"chain\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_validator\",\"type\":\"address\"}],\"name\":\"addProofValidator\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_rootToken\",\"type\":\"address\"},{\"name\":\"_childToken\",\"type\":\"address\"},{\"name\":\"_isERC721\",\"type\":\"bool\"}],\"name\":\"mapToken\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"withdrawManager\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"currentHeaderBlock\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"vote\",\"type\":\"bytes\"},{\"name\":\"sigs\",\"type\":\"bytes\"},{\"name\":\"extradata\",\"type\":\"bytes\"}],\"name\":\"submitHeaderBlock\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"depositEthers\",\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newChildChain\",\"type\":\"address\"}],\"name\":\"setChildContract\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"finalizeCommit\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"fallback\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"previousChildChain\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"newChildChain\",\"type\":\"address\"}],\"name\":\"ChildChainChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"validator\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"from\",\"type\":\"address\"}],\"name\":\"ProofValidatorAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"validator\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"from\",\"type\":\"address\"}],\"name\":\"ProofValidatorRemoved\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"proposer\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"number\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"start\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"end\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"root\",\"type\":\"bytes32\"}],\"name\":\"NewHeaderBlock\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"}]"
 
 // Rootchain is an auto generated Go binding around an Ethereum contract.
 type Rootchain struct {
@@ -444,6 +444,32 @@ func (_Rootchain *RootchainCallerSession) HeaderBlocks(arg0 *big.Int) (struct {
 	return _Rootchain.Contract.HeaderBlocks(&_Rootchain.CallOpts, arg0)
 }
 
+// IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
+//
+// Solidity: function isOwner() constant returns(bool)
+func (_Rootchain *RootchainCaller) IsOwner(opts *bind.CallOpts) (bool, error) {
+	var (
+		ret0 = new(bool)
+	)
+	out := ret0
+	err := _Rootchain.contract.Call(opts, out, "isOwner")
+	return *ret0, err
+}
+
+// IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
+//
+// Solidity: function isOwner() constant returns(bool)
+func (_Rootchain *RootchainSession) IsOwner() (bool, error) {
+	return _Rootchain.Contract.IsOwner(&_Rootchain.CallOpts)
+}
+
+// IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
+//
+// Solidity: function isOwner() constant returns(bool)
+func (_Rootchain *RootchainCallerSession) IsOwner() (bool, error) {
+	return _Rootchain.Contract.IsOwner(&_Rootchain.CallOpts)
+}
+
 // NetworkId is a free data retrieval call binding the contract method 0x9025e64c.
 //
 // Solidity: function networkId() constant returns(bytes)
@@ -689,6 +715,27 @@ func (_Rootchain *RootchainTransactorSession) Deposit(_token common.Address, _us
 	return _Rootchain.Contract.Deposit(&_Rootchain.TransactOpts, _token, _user, _amount)
 }
 
+// DepositERC721 is a paid mutator transaction binding the contract method 0x331ded1a.
+//
+// Solidity: function depositERC721(_token address, _user address, _tokenId uint256) returns()
+func (_Rootchain *RootchainTransactor) DepositERC721(opts *bind.TransactOpts, _token common.Address, _user common.Address, _tokenId *big.Int) (*types.Transaction, error) {
+	return _Rootchain.contract.Transact(opts, "depositERC721", _token, _user, _tokenId)
+}
+
+// DepositERC721 is a paid mutator transaction binding the contract method 0x331ded1a.
+//
+// Solidity: function depositERC721(_token address, _user address, _tokenId uint256) returns()
+func (_Rootchain *RootchainSession) DepositERC721(_token common.Address, _user common.Address, _tokenId *big.Int) (*types.Transaction, error) {
+	return _Rootchain.Contract.DepositERC721(&_Rootchain.TransactOpts, _token, _user, _tokenId)
+}
+
+// DepositERC721 is a paid mutator transaction binding the contract method 0x331ded1a.
+//
+// Solidity: function depositERC721(_token address, _user address, _tokenId uint256) returns()
+func (_Rootchain *RootchainTransactorSession) DepositERC721(_token common.Address, _user common.Address, _tokenId *big.Int) (*types.Transaction, error) {
+	return _Rootchain.Contract.DepositERC721(&_Rootchain.TransactOpts, _token, _user, _tokenId)
+}
+
 // DepositEthers is a paid mutator transaction binding the contract method 0xf477a6b7.
 //
 // Solidity: function depositEthers() returns()
@@ -731,25 +778,25 @@ func (_Rootchain *RootchainTransactorSession) FinalizeCommit(arg0 *big.Int) (*ty
 	return _Rootchain.Contract.FinalizeCommit(&_Rootchain.TransactOpts, arg0)
 }
 
-// MapToken is a paid mutator transaction binding the contract method 0x47400269.
+// MapToken is a paid mutator transaction binding the contract method 0xe117694b.
 //
-// Solidity: function mapToken(_rootToken address, _childToken address) returns()
-func (_Rootchain *RootchainTransactor) MapToken(opts *bind.TransactOpts, _rootToken common.Address, _childToken common.Address) (*types.Transaction, error) {
-	return _Rootchain.contract.Transact(opts, "mapToken", _rootToken, _childToken)
+// Solidity: function mapToken(_rootToken address, _childToken address, _isERC721 bool) returns()
+func (_Rootchain *RootchainTransactor) MapToken(opts *bind.TransactOpts, _rootToken common.Address, _childToken common.Address, _isERC721 bool) (*types.Transaction, error) {
+	return _Rootchain.contract.Transact(opts, "mapToken", _rootToken, _childToken, _isERC721)
 }
 
-// MapToken is a paid mutator transaction binding the contract method 0x47400269.
+// MapToken is a paid mutator transaction binding the contract method 0xe117694b.
 //
-// Solidity: function mapToken(_rootToken address, _childToken address) returns()
-func (_Rootchain *RootchainSession) MapToken(_rootToken common.Address, _childToken common.Address) (*types.Transaction, error) {
-	return _Rootchain.Contract.MapToken(&_Rootchain.TransactOpts, _rootToken, _childToken)
+// Solidity: function mapToken(_rootToken address, _childToken address, _isERC721 bool) returns()
+func (_Rootchain *RootchainSession) MapToken(_rootToken common.Address, _childToken common.Address, _isERC721 bool) (*types.Transaction, error) {
+	return _Rootchain.Contract.MapToken(&_Rootchain.TransactOpts, _rootToken, _childToken, _isERC721)
 }
 
-// MapToken is a paid mutator transaction binding the contract method 0x47400269.
+// MapToken is a paid mutator transaction binding the contract method 0xe117694b.
 //
-// Solidity: function mapToken(_rootToken address, _childToken address) returns()
-func (_Rootchain *RootchainTransactorSession) MapToken(_rootToken common.Address, _childToken common.Address) (*types.Transaction, error) {
-	return _Rootchain.Contract.MapToken(&_Rootchain.TransactOpts, _rootToken, _childToken)
+// Solidity: function mapToken(_rootToken address, _childToken address, _isERC721 bool) returns()
+func (_Rootchain *RootchainTransactorSession) MapToken(_rootToken common.Address, _childToken common.Address, _isERC721 bool) (*types.Transaction, error) {
+	return _Rootchain.Contract.MapToken(&_Rootchain.TransactOpts, _rootToken, _childToken, _isERC721)
 }
 
 // RemoveProofValidator is a paid mutator transaction binding the contract method 0x609dc55a.
@@ -983,46 +1030,46 @@ func (_Rootchain *RootchainTransactorSession) TokenFallback(_user common.Address
 	return _Rootchain.Contract.TokenFallback(&_Rootchain.TransactOpts, _user, _amount, _data)
 }
 
-// TransferAmount is a paid mutator transaction binding the contract method 0x3e2196ca.
+// TransferAmount is a paid mutator transaction binding the contract method 0x01f47471.
 //
-// Solidity: function transferAmount(_token address, _user address, _amount uint256, isWeth bool) returns(bool)
-func (_Rootchain *RootchainTransactor) TransferAmount(opts *bind.TransactOpts, _token common.Address, _user common.Address, _amount *big.Int, isWeth bool) (*types.Transaction, error) {
-	return _Rootchain.contract.Transact(opts, "transferAmount", _token, _user, _amount, isWeth)
+// Solidity: function transferAmount(_token address, _user address, _amount uint256) returns(bool)
+func (_Rootchain *RootchainTransactor) TransferAmount(opts *bind.TransactOpts, _token common.Address, _user common.Address, _amount *big.Int) (*types.Transaction, error) {
+	return _Rootchain.contract.Transact(opts, "transferAmount", _token, _user, _amount)
 }
 
-// TransferAmount is a paid mutator transaction binding the contract method 0x3e2196ca.
+// TransferAmount is a paid mutator transaction binding the contract method 0x01f47471.
 //
-// Solidity: function transferAmount(_token address, _user address, _amount uint256, isWeth bool) returns(bool)
-func (_Rootchain *RootchainSession) TransferAmount(_token common.Address, _user common.Address, _amount *big.Int, isWeth bool) (*types.Transaction, error) {
-	return _Rootchain.Contract.TransferAmount(&_Rootchain.TransactOpts, _token, _user, _amount, isWeth)
+// Solidity: function transferAmount(_token address, _user address, _amount uint256) returns(bool)
+func (_Rootchain *RootchainSession) TransferAmount(_token common.Address, _user common.Address, _amount *big.Int) (*types.Transaction, error) {
+	return _Rootchain.Contract.TransferAmount(&_Rootchain.TransactOpts, _token, _user, _amount)
 }
 
-// TransferAmount is a paid mutator transaction binding the contract method 0x3e2196ca.
+// TransferAmount is a paid mutator transaction binding the contract method 0x01f47471.
 //
-// Solidity: function transferAmount(_token address, _user address, _amount uint256, isWeth bool) returns(bool)
-func (_Rootchain *RootchainTransactorSession) TransferAmount(_token common.Address, _user common.Address, _amount *big.Int, isWeth bool) (*types.Transaction, error) {
-	return _Rootchain.Contract.TransferAmount(&_Rootchain.TransactOpts, _token, _user, _amount, isWeth)
-}
-
-// TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
-//
-// Solidity: function transferOwnership(_newOwner address) returns()
-func (_Rootchain *RootchainTransactor) TransferOwnership(opts *bind.TransactOpts, _newOwner common.Address) (*types.Transaction, error) {
-	return _Rootchain.contract.Transact(opts, "transferOwnership", _newOwner)
+// Solidity: function transferAmount(_token address, _user address, _amount uint256) returns(bool)
+func (_Rootchain *RootchainTransactorSession) TransferAmount(_token common.Address, _user common.Address, _amount *big.Int) (*types.Transaction, error) {
+	return _Rootchain.Contract.TransferAmount(&_Rootchain.TransactOpts, _token, _user, _amount)
 }
 
 // TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
 //
-// Solidity: function transferOwnership(_newOwner address) returns()
-func (_Rootchain *RootchainSession) TransferOwnership(_newOwner common.Address) (*types.Transaction, error) {
-	return _Rootchain.Contract.TransferOwnership(&_Rootchain.TransactOpts, _newOwner)
+// Solidity: function transferOwnership(newOwner address) returns()
+func (_Rootchain *RootchainTransactor) TransferOwnership(opts *bind.TransactOpts, newOwner common.Address) (*types.Transaction, error) {
+	return _Rootchain.contract.Transact(opts, "transferOwnership", newOwner)
 }
 
 // TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
 //
-// Solidity: function transferOwnership(_newOwner address) returns()
-func (_Rootchain *RootchainTransactorSession) TransferOwnership(_newOwner common.Address) (*types.Transaction, error) {
-	return _Rootchain.Contract.TransferOwnership(&_Rootchain.TransactOpts, _newOwner)
+// Solidity: function transferOwnership(newOwner address) returns()
+func (_Rootchain *RootchainSession) TransferOwnership(newOwner common.Address) (*types.Transaction, error) {
+	return _Rootchain.Contract.TransferOwnership(&_Rootchain.TransactOpts, newOwner)
+}
+
+// TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
+//
+// Solidity: function transferOwnership(newOwner address) returns()
+func (_Rootchain *RootchainTransactorSession) TransferOwnership(newOwner common.Address) (*types.Transaction, error) {
+	return _Rootchain.Contract.TransferOwnership(&_Rootchain.TransactOpts, newOwner)
 }
 
 // RootchainChildChainChangedIterator is returned from FilterChildChainChanged and is used to iterate over the raw logs and unpacked data for ChildChainChanged events raised by the Rootchain contract.
@@ -1290,138 +1337,6 @@ func (_Rootchain *RootchainFilterer) WatchNewHeaderBlock(opts *bind.WatchOpts, s
 				// New log arrived, parse the event and forward to the user
 				event := new(RootchainNewHeaderBlock)
 				if err := _Rootchain.contract.UnpackLog(event, "NewHeaderBlock", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// RootchainOwnershipRenouncedIterator is returned from FilterOwnershipRenounced and is used to iterate over the raw logs and unpacked data for OwnershipRenounced events raised by the Rootchain contract.
-type RootchainOwnershipRenouncedIterator struct {
-	Event *RootchainOwnershipRenounced // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *RootchainOwnershipRenouncedIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(RootchainOwnershipRenounced)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(RootchainOwnershipRenounced)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *RootchainOwnershipRenouncedIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *RootchainOwnershipRenouncedIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// RootchainOwnershipRenounced represents a OwnershipRenounced event raised by the Rootchain contract.
-type RootchainOwnershipRenounced struct {
-	PreviousOwner common.Address
-	Raw           types.Log // Blockchain specific contextual infos
-}
-
-// FilterOwnershipRenounced is a free log retrieval operation binding the contract event 0xf8df31144d9c2f0f6b59d69b8b98abd5459d07f2742c4df920b25aae33c64820.
-//
-// Solidity: e OwnershipRenounced(previousOwner indexed address)
-func (_Rootchain *RootchainFilterer) FilterOwnershipRenounced(opts *bind.FilterOpts, previousOwner []common.Address) (*RootchainOwnershipRenouncedIterator, error) {
-
-	var previousOwnerRule []interface{}
-	for _, previousOwnerItem := range previousOwner {
-		previousOwnerRule = append(previousOwnerRule, previousOwnerItem)
-	}
-
-	logs, sub, err := _Rootchain.contract.FilterLogs(opts, "OwnershipRenounced", previousOwnerRule)
-	if err != nil {
-		return nil, err
-	}
-	return &RootchainOwnershipRenouncedIterator{contract: _Rootchain.contract, event: "OwnershipRenounced", logs: logs, sub: sub}, nil
-}
-
-// WatchOwnershipRenounced is a free log subscription operation binding the contract event 0xf8df31144d9c2f0f6b59d69b8b98abd5459d07f2742c4df920b25aae33c64820.
-//
-// Solidity: e OwnershipRenounced(previousOwner indexed address)
-func (_Rootchain *RootchainFilterer) WatchOwnershipRenounced(opts *bind.WatchOpts, sink chan<- *RootchainOwnershipRenounced, previousOwner []common.Address) (event.Subscription, error) {
-
-	var previousOwnerRule []interface{}
-	for _, previousOwnerItem := range previousOwner {
-		previousOwnerRule = append(previousOwnerRule, previousOwnerItem)
-	}
-
-	logs, sub, err := _Rootchain.contract.WatchLogs(opts, "OwnershipRenounced", previousOwnerRule)
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(RootchainOwnershipRenounced)
-				if err := _Rootchain.contract.UnpackLog(event, "OwnershipRenounced", log); err != nil {
 					return err
 				}
 				event.Raw = log
