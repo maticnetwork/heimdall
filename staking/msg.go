@@ -24,11 +24,11 @@ const StakingRoute = "staking"
 var _ sdk.Msg = &MsgValidatorJoin{}
 
 type MsgValidatorJoin struct {
-	ID           types.ValidatorID       `json:"ID"`
-	SignerPubKey types.PubKey `json:"pubKey"`
-	StartEpoch   uint64       `json:"startEpoch"`
-	EndEpoch     uint64       `json:"endEpoch"`
-	Amount       json.Number  `json:"amount"`
+	ID           types.ValidatorID `json:"ID"`
+	SignerPubKey types.PubKey      `json:"pubKey"`
+	StartEpoch   uint64            `json:"startEpoch"`
+	EndEpoch     uint64            `json:"endEpoch"`
+	Amount       json.Number       `json:"amount"`
 }
 
 func NewMsgValidatorJoin(
@@ -98,9 +98,9 @@ var _ sdk.Msg = &MsgSignerUpdate{}
 // MsgSignerUpdate signer update struct
 // TODO add old signer sig check
 type MsgSignerUpdate struct {
-	ID              types.ValidatorID       `json:"ID"`
-	NewSignerPubKey types.PubKey `json:"pubKey"`
-	NewAmount       json.Number  `json:"amount"`
+	ID              types.ValidatorID `json:"ID"`
+	NewSignerPubKey types.PubKey      `json:"pubKey"`
+	NewAmount       json.Number       `json:"amount"`
 }
 
 func NewMsgValidatorUpdate(_id uint64, pubKey types.PubKey, amount json.Number) MsgSignerUpdate {

@@ -64,7 +64,7 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k hmCommon.Ke
 
 	// create new validator
 	newValidator := hmTypes.Validator{
-		ID:    msg.ID,
+		ID:         msg.ID,
 		StartEpoch: msg.StartEpoch,
 		EndEpoch:   msg.EndEpoch,
 		Power:      msg.GetPower(),

@@ -24,12 +24,12 @@ import (
 	"github.com/tendermint/tendermint/privval"
 	tmTypes "github.com/tendermint/tendermint/types"
 
+	"errors"
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/helper"
 	hmserver "github.com/maticnetwork/heimdall/server"
-	hmTypes "github.com/maticnetwork/heimdall/types"
 	cli2 "github.com/maticnetwork/heimdall/staking/cli"
-	"errors"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 // ValidatorAccountFormatter helps to print local validator account information
@@ -118,7 +118,7 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cob
 				chainID = fmt.Sprintf("heimdall-%v", common.RandStr(6))
 			}
 
-			validatorID:= viper.GetInt64(cli2.FlagValidatorID)
+			validatorID := viper.GetInt64(cli2.FlagValidatorID)
 			if validatorID == 0 {
 				fmt.Printf("Validator ID cannot be 0")
 				return errors.New("Validator ID cannot be 0")
@@ -163,7 +163,7 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cob
 
 			_, pubKey := helper.GetPkObjects(pval.PrivKey)
 			validator := app.GenesisValidator{
-				ID:    hmTypes.NewValidatorID(uint64(validatorID)),
+				ID:         hmTypes.NewValidatorID(uint64(validatorID)),
 				PubKey:     hmTypes.NewPubKey(pubKey[:]),
 				StartEpoch: 0,
 				Signer:     ethCommon.BytesToAddress(pval.Address),

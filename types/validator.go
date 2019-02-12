@@ -118,8 +118,6 @@ func (valID ValidatorID) Bytes() []byte {
 }
 
 // convert validator ID to int
-func (valID ValidatorID) Int() int  {
+func (valID ValidatorID) Int() int {
 	return int(valID)
 }
-
-

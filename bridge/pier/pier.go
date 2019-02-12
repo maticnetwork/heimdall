@@ -31,12 +31,12 @@ const (
 	bridgeDBFlag = "bridge-db"
 	lastBlockKey = "last-block" // storage key
 
-	defaultPollInterval           = 60 * 1000 // 60 seconds in milliseconds
-	defaultMainPollInterval       = 5 * 1000  // 5 seconds in milliseconds
+	defaultPollInterval           = 60 * 1000 // 1 minute in milliseconds
+	defaultMainPollInterval       = 30 * 1000 // 0.5 seconds in milliseconds
 	defaultCheckpointPollInterval = 15 * time.Second
 	defaultCheckpointLength       = 256                     // checkpoint number starts with 0, so length = defaultCheckpointLength -1
 	maxCheckpointLength           = 1024                    // max blocks in one checkpoint
-	defaultForcePushInterval      = maxCheckpointLength * 2 // in seconds (4096 * 2 seconds)
+	defaultForcePushInterval      = maxCheckpointLength * 2 // in seconds (1024 * 2 seconds)
 )
 
 var bridgeDB *leveldb.DB

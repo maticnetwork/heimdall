@@ -71,7 +71,7 @@ func TestCheckpointACK(t *testing.T) {
 func TestValidator(t *testing.T) {
 	ctx, keeper := CreateTestInput(t, false)
 
-	vals := GenRandomVal(1, 0, 0, 10, true)
+	vals := GenRandomVal(1, 0, 0, 10, true, 1)
 	validator := vals[0]
 
 	err := keeper.AddValidator(ctx, validator)
@@ -81,17 +81,17 @@ func TestValidator(t *testing.T) {
 	require.Empty(t, err, "Unable to fetch validator")
 	require.Equal(t, validator, storedVal, "Unable to fetch validator from val address")
 
-	storedSigner, ok := keeper.GetSignerFromValidator(ctx, validator.Address)
+	storedSigner, ok := keeper.GetSignerFromValidatorID(ctx, validator.ID)
 	require.Equal(t, true, ok, "Validator<=>Signer not mapped")
 	require.Equal(t, validator.Signer, storedSigner, "Signer doesnt match")
 
-	storedValidator, ok := keeper.GetValidatorFromValAddr(ctx, validator.Address)
+	storedValidator, ok := keeper.GetValidatorFromValID(ctx, validator.ID)
 	require.Equal(t, true, ok, "Validator<=>Signer not mapped")
 	require.Equal(t, validator, storedValidator, "Unable to fetch validator from val address")
 
-	valToSignerMap := keeper.GetValidatorToSignerMap(ctx)
-	mappedSigner := valToSignerMap[hex.EncodeToString(validator.Address.Bytes())]
-	require.Equal(t, validator.Signer, mappedSigner, "GetValidatorToSignerMap doesnt give right signer")
+	//valToSignerMap := keeper.GetSignerFromValidatorID(ctx)
+	//mappedSigner := valToSignerMap[hex.EncodeToString(validator.Signer.Bytes())]
+	//require.Equal(t, validator.Signer, mappedSigner, "GetValidatorToSignerMap doesnt give right signer")
 }
 
 func TestValidatorSet(t *testing.T) {
@@ -127,7 +127,7 @@ func TestValUpdates(t *testing.T) {
 
 		t.Log("Updated Validators in state")
 		for _, v := range prevValidatorSet.Validators {
-			t.Log("-->", "Address", v.Address.String(), "StartEpoch", v.StartEpoch, "EndEpoch", v.EndEpoch, "Power", v.Power)
+			t.Log("-->", "Address", v.Signer.String(), "StartEpoch", v.StartEpoch, "EndEpoch", v.EndEpoch, "Power", v.Power)
 		}
 
 		err := keeper.AddValidator(ctx, *prevValidatorSet.Validators[0])
@@ -135,15 +135,14 @@ func TestValUpdates(t *testing.T) {
 
 		// apply updates
 		helper.UpdateValidators(
-			currentValSet,                       // pointer to current validator set -- UpdateValidators will modify it
-			keeper.GetAllValidators(ctx),        // All validators
-			keeper.GetValidatorToSignerMap(ctx), // validator to signer map
+			currentValSet,                // pointer to current validator set -- UpdateValidators will modify it
+			keeper.GetAllValidators(ctx), // All validators
 			5, // ack count
 		)
 		updatedValSet := currentValSet
 		t.Log("Validators in updated validator set")
 		for _, v := range updatedValSet.Validators {
-			t.Log("-->", "Address", v.Address.String(), "StartEpoch", v.StartEpoch, "EndEpoch", v.EndEpoch, "Power", v.Power)
+			t.Log("-->", "Address", v.Signer.String(), "StartEpoch", v.StartEpoch, "EndEpoch", v.EndEpoch, "Power", v.Power)
 		}
 		// check if 1 validator is removed
 		require.Equal(t, len(prevValidatorSet.Validators)-1, len(updatedValSet.Validators), "Validator set should be reduced by one ")
@@ -158,7 +157,7 @@ func TestValUpdates(t *testing.T) {
 		LoadValidatorSet(4, t, keeper, ctx, false, 10)
 		initValSet := keeper.GetValidatorSet(ctx)
 
-		validators := GenRandomVal(1, 0, 10, 10, false)
+		validators := GenRandomVal(1, 0, 10, 10, false, 1)
 		prevValSet := initValSet.Copy()
 		valToBeAdded := validators[0]
 		currentValSet := initValSet.Copy()
@@ -167,24 +166,23 @@ func TestValUpdates(t *testing.T) {
 
 		t.Log("Validators in old validator set")
 		for _, v := range currentValSet.Validators {
-			t.Log("-->", "Address", v.Address.String(), "StartEpoch", v.StartEpoch, "EndEpoch", v.EndEpoch, "Power", v.Power)
+			t.Log("-->", "Address", v.Signer.String(), "StartEpoch", v.StartEpoch, "EndEpoch", v.EndEpoch, "Power", v.Power)
 		}
 		t.Log("Val to be Added")
-		t.Log("-->", "Address", valToBeAdded.Address.String(), "StartEpoch", valToBeAdded.StartEpoch, "EndEpoch", valToBeAdded.EndEpoch, "Power", valToBeAdded.Power)
+		t.Log("-->", "Address", valToBeAdded.Signer.String(), "StartEpoch", valToBeAdded.StartEpoch, "EndEpoch", valToBeAdded.EndEpoch, "Power", valToBeAdded.Power)
 
 		helper.UpdateValidators(
-			currentValSet,                       // pointer to current validator set -- UpdateValidators will modify it
-			keeper.GetAllValidators(ctx),        // All validators
-			keeper.GetValidatorToSignerMap(ctx), // validator to signer map
+			currentValSet,                // pointer to current validator set -- UpdateValidators will modify it
+			keeper.GetAllValidators(ctx), // All validators
 			5, // ack count
 		)
 		t.Log("Validators in updated validator set")
 		for _, v := range currentValSet.Validators {
-			t.Log("-->", "Address", v.Address.String(), "StartEpoch", v.StartEpoch, "EndEpoch", v.EndEpoch, "Power", v.Power)
+			t.Log("-->", "Address", v.Signer.String(), "StartEpoch", v.StartEpoch, "EndEpoch", v.EndEpoch, "Power", v.Power)
 		}
 
 		require.Equal(t, len(prevValSet.Validators)+1, len(currentValSet.Validators), "Number of validators should be increased by 1")
-		require.Equal(t, true, currentValSet.HasAddress(valToBeAdded.Address.Bytes()), "New Validator should be added")
+		require.Equal(t, true, currentValSet.HasAddress(valToBeAdded.Signer.Bytes()), "New Validator should be added")
 		require.Equal(t, prevValSet.TotalVotingPower()+int64(valToBeAdded.Power), currentValSet.TotalVotingPower(), "Total power should be increased")
 	})
 
@@ -198,25 +196,24 @@ func TestValUpdates(t *testing.T) {
 		prevValSet := initValSet.Copy()
 		currentValSet := keeper.GetValidatorSet(ctx)
 		valToUpdate := currentValSet.Validators[0]
-		newSigner := GenRandomVal(1, 0, 10, 10, false)
+		newSigner := GenRandomVal(1, 0, 10, 10, false, 1)
 		t.Log("Validators in old validator set")
 		for _, v := range currentValSet.Validators {
-			t.Log("-->", "Address", v.Address.String(), "Accum", v.Accum, "Signer", v.Signer.String(), "Total power", currentValSet.TotalVotingPower())
+			t.Log("-->", "Address", v.Signer.String(), "Accum", v.Accum, "Signer", v.Signer.String(), "Total power", currentValSet.TotalVotingPower())
 		}
 		keeper.UpdateSigner(ctx, newSigner[0].Signer, newSigner[0].PubKey, valToUpdate.Signer)
 		helper.UpdateValidators(
-			&currentValSet,                      // pointer to current validator set -- UpdateValidators will modify it
-			keeper.GetAllValidators(ctx),        // All validators
-			keeper.GetValidatorToSignerMap(ctx), // validator to signer map
+			&currentValSet,               // pointer to current validator set -- UpdateValidators will modify it
+			keeper.GetAllValidators(ctx), // All validators
 			5, // ack count
 		)
 		t.Log("Validators in updated validator set")
 		for _, v := range currentValSet.Validators {
-			t.Log("-->", "Address", v.Address.String(), "Accum", v.Accum, "Signer", v.Signer.String(), "Total power", currentValSet.TotalVotingPower())
+			t.Log("-->", "Address", v.Signer.String(), "Accum", v.Accum, "Signer", v.Signer.String(), "Total power", currentValSet.TotalVotingPower())
 		}
 
 		require.Equal(t, len(prevValSet.Validators), len(currentValSet.Validators), "Number of validators should remain same")
-		_, val := currentValSet.GetByAddress(valToUpdate.Address.Bytes())
+		_, val := currentValSet.GetByAddress(valToUpdate.Signer.Bytes())
 		require.Equal(t, newSigner[0].Signer, val.Signer, "Signer address should change")
 		require.Equal(t, newSigner[0].PubKey, val.PubKey, "Signer pubkey should change")
 		require.Equal(t, valToUpdate.Accum, val.Accum, "Validator accum should not change")
@@ -229,7 +226,7 @@ func TestValUpdates(t *testing.T) {
 
 func LoadValidatorSet(count int, t *testing.T, keeper hmcmn.Keeper, ctx sdk.Context, randomise bool, timeAlive int) types.ValidatorSet {
 	// create 4 validators
-	validators := GenRandomVal(4, 0, 10, uint64(timeAlive), randomise)
+	validators := GenRandomVal(4, 0, 10, uint64(timeAlive), randomise, 1)
 
 	var valSet types.ValidatorSet
 
@@ -273,7 +270,7 @@ func TestHandleMsgCheckpoint(t *testing.T) {
 		require.Empty(t, err, "Unable to create random header block, Error:%v", err)
 
 		// add wrong proposer to header
-		header.Proposer = keeper.GetValidatorSet(ctx).Validators[2].Address
+		header.Proposer = keeper.GetValidatorSet(ctx).Validators[2].Signer
 		// make sure proposer has min ether
 		contractCallerObj.On("GetBalance", header.Proposer).Return(helper.MinBalance, nil)
 
@@ -331,7 +328,7 @@ func TestHandleMsgCheckpoint(t *testing.T) {
 			// create checkpoint msg
 			msgCheckpoint := checkpoint.NewMsgCheckpointBlock(header.Proposer, header.StartBlock, header.EndBlock, header.RootHash, uint64(time.Now().Unix()))
 			// send checkpoint to handler
-			got := checkpoint.HandleMsgCheckpoint(ctx, msgCheckpoint, keeper, &contractCallerObj)
+			got := checkpoint.HandleMsgCheckpoint(ctx, msgCheckpoint, keeper, contractCallerObj)
 			require.True(t, !got.IsOK(), "expected send-checkpoint to be not ok, got %v", got)
 		})
 	})
@@ -401,22 +398,22 @@ func TestFirstNoACK(t *testing.T) {
 func TestHandleMsgValidatorJoin(t *testing.T) {
 	contractCallerObj := mocks.IContractCaller{}
 	ctx, keeper := CreateTestInput(t, false)
-	mockVals := GenRandomVal(1, 0, 10, 10, false)
+	mockVals := GenRandomVal(1, 0, 10, 10, false, 1)
 	// select first validator from slice
 	mockVal := mockVals[0]
-	t.Log("Mock validator generated", "Validator", mockVal.Address.String())
+	t.Log("Mock validator generated", "Validator", mockVal.Signer.String())
 	contractCallerObj.On("GetValidatorInfo", mock.Anything).Return(mockVal, nil)
 
 	// insert new validator
-	msgValJoin := staking.NewMsgValidatorJoin(mockVal.Address, mockVal.PubKey, mockVal.StartEpoch, mockVal.EndEpoch, json.Number(strconv.Itoa(int(mockVal.Accum))))
+	msgValJoin := staking.NewMsgValidatorJoin(uint64(mockVal.ID), mockVal.PubKey, mockVal.StartEpoch, mockVal.EndEpoch, json.Number(strconv.Itoa(int(mockVal.Accum))))
 	got := staking.HandleMsgValidatorJoin(ctx, msgValJoin, keeper, &contractCallerObj)
 	require.True(t, got.IsOK(), "expected validator join to be ok, got %v", got)
 	// validator is stored properly and signer is created properly
 	storedVal, err := keeper.GetValidatorInfo(ctx, mockVal.Signer.Bytes())
-	require.Empty(t, err, "Unable to get validator info from val address,ValAddr:%v Error:%v ", mockVal.Address.String(), err)
+	require.Empty(t, err, "Unable to get validator info from val address,ValAddr:%v Error:%v ", mockVal.Signer.String(), err)
 	require.Equal(t, mockVal.PubKey.Address(), storedVal.Signer, "Signer address should match")
 	// signer to validator mapping should exist properly
-	storedSigner, found := keeper.GetSignerFromValidator(ctx, mockVal.Address)
+	storedSigner, found := keeper.GetSignerFromValidatorID(ctx, mockVal.ID)
 	require.True(t, found, "signer and validator address should be mapped, got %v", found)
 	require.Equal(t, mockVal.Signer.Bytes(), storedSigner.Bytes(), "Signer address in signer=>validator map should be same")
 	// insert validator again
@@ -432,15 +429,15 @@ func TestHandleMsgValidatorExit(t *testing.T) {
 	LoadValidatorSet(4, t, keeper, ctx, false, 0)
 	validators := keeper.GetCurrentValidators(ctx)
 	validators[0].EndEpoch = 10
-	msg := staking.NewMsgValidatorExit(validators[0].Address)
-	contractCallerObj.On("GetValidatorInfo", validators[0].Address).Return(validators[0], nil)
+	msg := staking.NewMsgValidatorExit(uint64(validators[0].ID))
+	contractCallerObj.On("GetValidatorInfo", validators[0].Signer).Return(validators[0], nil)
 
 	got := staking.HandleMsgValidatorExit(ctx, msg, keeper, &contractCallerObj)
 	require.True(t, got.IsOK(), "expected validator exit to be ok, got %v", got)
 
 	got = staking.HandleMsgValidatorExit(ctx, msg, keeper, &contractCallerObj)
 	require.True(t, !got.IsOK(), "expected validator exit to be ok, got %v", got)
-	validator, found := keeper.GetValidatorFromValAddr(ctx, validators[0].Address)
+	validator, found := keeper.GetValidatorFromValID(ctx, validators[0].ID)
 
 	require.True(t, found, "Validator should be present even after deactivation")
 	require.Equal(t, 10, int(validator.EndEpoch), "end epoch should be set to 10")
@@ -458,8 +455,8 @@ func TestHandleMsgValidatorUpdate(t *testing.T) {
 	// pass 0 as time alive to generate non de-activated validators
 	LoadValidatorSet(4, t, keeper, ctx, false, 0)
 	validators := keeper.GetCurrentValidators(ctx)
-	newSigner := GenRandomVal(1, 0, 10, 10, false)
-	msg := staking.NewMsgValidatorUpdate(validators[0].Address, newSigner[0].PubKey, json.Number(int(newSigner[0].Accum)))
+	newSigner := GenRandomVal(1, 0, 10, 10, false, 1)
+	msg := staking.NewMsgValidatorUpdate(uint64(validators[0].ID), newSigner[0].PubKey, json.Number(int(newSigner[0].Accum)))
 	got := staking.HandleMsgSignerUpdate(ctx, msg, keeper)
 	require.True(t, got.IsOK(), "expected validator update to be ok, got %v", got)
 }

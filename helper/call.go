@@ -3,12 +3,12 @@ package helper
 import (
 	"math/big"
 
+	"context"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 	"github.com/maticnetwork/heimdall/types"
-	"context"
 )
 
 type IContractCaller interface {
@@ -65,7 +65,6 @@ func (c *ContractCaller) CurrentChildBlock() (uint64, error) {
 	return currentChildBlock.Uint64(), nil
 }
 
-
 // get balance of account (returns big.Int balance wont fit in uint64)
 func (c *ContractCaller) GetBalance(address common.Address) (*big.Int, error) {
 	balance, err := c.mainChainClient.BalanceAt(context.Background(), address, nil)
@@ -76,7 +75,6 @@ func (c *ContractCaller) GetBalance(address common.Address) (*big.Int, error) {
 
 	return balance, nil
 }
-
 
 // GetValidatorInfo get validator info
 func (c *ContractCaller) GetValidatorInfo(valID types.ValidatorID) (validator types.Validator, err error) {

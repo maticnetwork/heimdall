@@ -155,7 +155,7 @@ func (ackService *AckService) processCheckpoint(lastCreatedAt int64) {
 	// check if last checkpoint was < NoACK wait time
 	if timeDiff.Seconds() >= helper.NoACKWaitTime.Seconds() && index == 0 {
 		index = math.Floor(timeDiff.Seconds() / helper.NoACKWaitTime.Seconds())
-		ackService.Logger.Info("Index set", "Index", index)
+		ackService.Logger.Debug("Index set", "Index", index)
 	}
 
 	if index == 0 {
@@ -214,7 +214,7 @@ func (ackService *AckService) getLastNoAckTime() uint64 {
 	}
 
 	if resp.StatusCode == 200 {
-		ackService.Logger.Info("Found last no-ack")
+		ackService.Logger.Debug("Found last no-ack")
 		data, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			ackService.Logger.Error("Unable to parse no-ack body", "error", err)

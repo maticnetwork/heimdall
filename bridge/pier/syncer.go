@@ -21,11 +21,11 @@ import (
 	"github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
 
+	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
-	"github.com/maticnetwork/heimdall/checkpoint"
 )
 
 // EventByID looks up a event by the topic id
@@ -364,7 +364,7 @@ func (syncer *ChainSyncer) processUnstakeInitEvent(eventName string, abiObject *
 			"New event found",
 			"event", eventName,
 			"validator", event.User.Hex(),
-			"validatorID",event.ValidatorId,
+			"validatorID", event.ValidatorId,
 			"deactivatonEpoch", event.DeactivationEpoch,
 			"amount", event.Amount,
 		)
@@ -387,7 +387,6 @@ func (syncer *ChainSyncer) processSignerChangeEvent(eventName string, abiObject 
 			"validator", event.Validator.Hex(),
 			"newSigner", event.NewSigner.Hex(),
 			"oldSigner", event.OldSigner.Hex(),
-
 		)
 	}
 }

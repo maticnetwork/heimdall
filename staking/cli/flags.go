@@ -2,7 +2,7 @@ package cli
 
 const (
 	FlagValidatorAddress = "validator"
-	FlagValidatorID = "id"
+	FlagValidatorID      = "id"
 	FlagSignerAddress    = "signer"
 	FlagSignerPubkey     = "signer-pubkey"
 	FlagNewSignerPubkey  = "new-pubkey"

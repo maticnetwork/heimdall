@@ -37,7 +37,6 @@ func GetValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 
 			amountStr := viper.GetString(FlagAmount)
 
-
 			pubkeyBytes, err := hex.DecodeString(pubkeyStr)
 			if err != nil {
 				return err

@@ -38,6 +38,7 @@ func MakeTestCodec() *codec.Codec {
 	return cdc
 }
 
+// init for test cases
 func CreateTestInput(t *testing.T, isCheckTx bool) (sdk.Context, common.Keeper) {
 	//t.Parallel()
 	helper.InitHeimdallConfig(os.ExpandEnv("$HOME/.heimdalld"))
@@ -77,10 +78,10 @@ func GenRandCheckpointHeader(headerSize int) (headerBlock types.CheckpointBlockH
 	return headerBlock, nil
 }
 
-func GenRandomVal(count int, startBlock uint64, power uint64, timeAlive uint64, randomise bool) (validators []types.Validator) {
+// Generate random validators
+func GenRandomVal(count int, startBlock uint64, power uint64, timeAlive uint64, randomise bool, startID uint64) (validators []types.Validator) {
 	for i := 0; i < count; i++ {
 		privKey1 := secp256k1.GenPrivKey()
-		privKey2 := secp256k1.GenPrivKey()
 		pubkey := types.NewPubKey(privKey1.PubKey().Bytes())
 		if randomise {
 			startBlock := uint64(rand.Intn(10))
@@ -95,7 +96,7 @@ func GenRandomVal(count int, startBlock uint64, power uint64, timeAlive uint64, 
 		}
 
 		newVal := types.Validator{
-			Address:    ethcmn.BytesToAddress(privKey2.PubKey().Address().Bytes()),
+			ID:         types.NewValidatorID(startID + uint64(i)),
 			StartEpoch: startBlock,
 			EndEpoch:   startBlock + timeAlive,
 			Power:      power,

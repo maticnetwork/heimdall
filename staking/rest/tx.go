@@ -24,11 +24,11 @@ func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec
 }
 
 type addValidator struct {
-	ID uint64 `json:"ID"`
-	SignerPubKey     hmType.PubKey  `json:"pubKey"`
-	StartEpoch       uint64         `json:"startEpoch"`
-	EndEpoch         uint64         `json:"endEpoch"`
-	Amount           json.Number    `json:"Amount"`
+	ID           uint64        `json:"ID"`
+	SignerPubKey hmType.PubKey `json:"pubKey"`
+	StartEpoch   uint64        `json:"startEpoch"`
+	EndEpoch     uint64        `json:"endEpoch"`
+	Amount       json.Number   `json:"Amount"`
 }
 
 func newValidatorJoinHandler(cliCtx context.CLIContext) http.HandlerFunc {
@@ -134,9 +134,9 @@ func newValidatorExitHandler(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 type updateValidator struct {
-	ID uint64 `json:"ID"`
-	NewSignerPubKey  hmType.PubKey  `json:"pubKey"`
-	NewAmount        json.Number    `json:"amount"`
+	ID              uint64        `json:"ID"`
+	NewSignerPubKey hmType.PubKey `json:"pubKey"`
+	NewAmount       json.Number   `json:"amount"`
 }
 
 func newValidatorUpdateHandler(cliCtx context.CLIContext) http.HandlerFunc {

@@ -113,7 +113,7 @@ func initTestnet(config *cfg.Config, cdc *codec.Codec) error {
 		chainID = "heimdall-" + tmCommon.RandStr(6)
 	}
 	startID := viper.GetInt64(cli.FlagValidatorID)
-	if startID == 0{
+	if startID == 0 {
 		startID = 1
 	}
 
@@ -170,7 +170,7 @@ func initTestnet(config *cfg.Config, cdc *codec.Codec) error {
 		// read or create private key
 		_, pubKey := helper.GetPkObjects(valPubKeys[i].PrivKey)
 		validators[i] = app.GenesisValidator{
-			ID:    hmTypes.NewValidatorID(uint64(startID+int64(i))),
+			ID:         hmTypes.NewValidatorID(uint64(startID + int64(i))),
 			PubKey:     hmTypes.NewPubKey(pubKey[:]),
 			StartEpoch: 0,
 			Signer:     ethCommon.BytesToAddress(valPubKeys[i].Address),

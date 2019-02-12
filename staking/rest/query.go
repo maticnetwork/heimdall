@@ -87,7 +87,7 @@ func validatorByIDHandlerFn(
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		idStr := vars["id"]
-		id,err:=strconv.ParseUint(idStr,10,64)
+		id, err := strconv.ParseUint(idStr, 10, 64)
 		if err != nil {
 			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
