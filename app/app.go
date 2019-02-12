@@ -140,14 +140,13 @@ func (app *HeimdallApp) endBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 		currentValidatorSet := app.masterKeeper.GetValidatorSet(ctx)
 		currentValidatorSetCopy := currentValidatorSet.Copy()
 		allValidators := app.masterKeeper.GetAllValidators(ctx)
-		validatorToSignerMap := app.masterKeeper.GetValidatorToSignerMap(ctx)
+		//validatorToSignerMap := app.masterKeeper.GetValidatorToSignerMap(ctx)
 		ackCount := app.masterKeeper.GetACKCount(ctx)
 
 		// apply updates
 		helper.UpdateValidators(
 			&currentValidatorSet, // pointer to current validator set -- UpdateValidators will modify it
 			allValidators,        // All validators
-			validatorToSignerMap, // validator to signer map
 			ackCount,             // ack count
 		)
 
@@ -194,7 +193,7 @@ func (app *HeimdallApp) endBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 			newProposer := vs.GetProposer()
 			logger.Debug(
 				"New proposer selected",
-				"validator", newProposer.Address.String(),
+				"validator", newProposer.ID,
 				"signer", newProposer.Signer.String(),
 				"power", newProposer.Power,
 			)

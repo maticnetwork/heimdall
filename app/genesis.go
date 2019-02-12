@@ -18,8 +18,8 @@ type GenesisAccount struct {
 }
 
 // GenesisValidator genesis validator
-type GenesisValidator struct {
-	Address    common.Address `json:"address"`
+type GenesisValidator	 struct {
+	ID    hmTypes.ValidatorID `json:"id"`
 	StartEpoch uint64         `json:"start_epoch"`
 	EndEpoch   uint64         `json:"end_epoch"`
 	Power      uint64         `json:"power"` // aka Amount
@@ -30,7 +30,7 @@ type GenesisValidator struct {
 // ToHeimdallValidator converts genesis validator validator to Heimdall validator
 func (v *GenesisValidator) ToHeimdallValidator() hmTypes.Validator {
 	return hmTypes.Validator{
-		Address:    v.Address,
+		ID:    		v.ID,
 		PubKey:     v.PubKey,
 		Power:      v.Power,
 		StartEpoch: v.StartEpoch,

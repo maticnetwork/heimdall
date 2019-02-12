@@ -7,7 +7,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/gorilla/mux"
 
 	"github.com/maticnetwork/heimdall/helper"
@@ -25,7 +24,7 @@ func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec
 }
 
 type addValidator struct {
-	ValidatorAddress common.Address `json:"address"`
+	ID uint64 `json:"ID"`
 	SignerPubKey     hmType.PubKey  `json:"pubKey"`
 	StartEpoch       uint64         `json:"startEpoch"`
 	EndEpoch         uint64         `json:"endEpoch"`
@@ -52,11 +51,11 @@ func newValidatorJoinHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		// create new msg
-		msg := staking.NewMsgValidatorJoin(m.ValidatorAddress, m.SignerPubKey, m.StartEpoch, m.EndEpoch, m.Amount)
+		msg := staking.NewMsgValidatorJoin(m.ID, m.SignerPubKey, m.StartEpoch, m.EndEpoch, m.Amount)
 
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {
-			RestLogger.Error("Unable to create txBytes", "ValidatorAddress", m.ValidatorAddress.String(), "ValidatorPubKey", m.SignerPubKey)
+			RestLogger.Error("Unable to create txBytes", "ValidatorID", m.ID, "ValidatorPubKey", m.SignerPubKey)
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
 			return
@@ -83,7 +82,7 @@ func newValidatorJoinHandler(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 type removeValidator struct {
-	ValidatorAddress common.Address `json:"address"`
+	ID uint64 `json:"ID"`
 }
 
 func newValidatorExitHandler(cliCtx context.CLIContext) http.HandlerFunc {
@@ -105,11 +104,11 @@ func newValidatorExitHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		msg := staking.NewMsgValidatorExit(m.ValidatorAddress)
+		msg := staking.NewMsgValidatorExit(m.ID)
 
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {
-			RestLogger.Error("Unable to create txBytes", "validatorAddress", m.ValidatorAddress)
+			RestLogger.Error("Unable to create txBytes", "validatorID", m.ID)
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
 			return
@@ -135,7 +134,7 @@ func newValidatorExitHandler(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 type updateValidator struct {
-	ValidatorAddress common.Address `json:"address"`
+	ID uint64 `json:"ID"`
 	NewSignerPubKey  hmType.PubKey  `json:"pubKey"`
 	NewAmount        json.Number    `json:"amount"`
 }
@@ -160,11 +159,11 @@ func newValidatorUpdateHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		// create msg validator update
-		msg := staking.NewMsgValidatorUpdate(m.ValidatorAddress, m.NewSignerPubKey, m.NewAmount)
+		msg := staking.NewMsgValidatorUpdate(m.ID, m.NewSignerPubKey, m.NewAmount)
 
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {
-			RestLogger.Error("Unable to create txBytes", "currentValidatorAddress", m.ValidatorAddress.Hex(), "newSignerPubKey", m.NewSignerPubKey)
+			RestLogger.Error("Unable to create txBytes", "validatorID", m.ID, "newSignerPubKey", m.NewSignerPubKey)
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
 			return
@@ -172,7 +171,7 @@ func newValidatorUpdateHandler(cliCtx context.CLIContext) http.HandlerFunc {
 
 		resp, err := helper.SendTendermintRequest(cliCtx, txBytes)
 		if err != nil {
-			RestLogger.Error("Error while sending request to Tendermint", "error", err, "ValidatorAddress", m.ValidatorAddress.Hex(), "newSignerPubKey", m.NewSignerPubKey, "txBytes", txBytes)
+			RestLogger.Error("Error while sending request to Tendermint", "error", err, "validatorID", m.ID, "newSignerPubKey", m.NewSignerPubKey, "txBytes", txBytes)
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
 			return

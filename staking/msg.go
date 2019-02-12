@@ -24,7 +24,7 @@ const StakingRoute = "staking"
 var _ sdk.Msg = &MsgValidatorJoin{}
 
 type MsgValidatorJoin struct {
-	ID           uint64       `json:"ID"`
+	ID           types.ValidatorID       `json:"ID"`
 	SignerPubKey types.PubKey `json:"pubKey"`
 	StartEpoch   uint64       `json:"startEpoch"`
 	EndEpoch     uint64       `json:"endEpoch"`
@@ -39,7 +39,7 @@ func NewMsgValidatorJoin(
 	_amount json.Number,
 ) MsgValidatorJoin {
 	return MsgValidatorJoin{
-		ID:           _id,
+		ID:           types.NewValidatorID(_id),
 		SignerPubKey: _pubkey,
 		StartEpoch:   _startEpoch,
 		EndEpoch:     _endEpoch,
@@ -96,15 +96,16 @@ func (msg MsgValidatorJoin) GetPower() uint64 {
 var _ sdk.Msg = &MsgSignerUpdate{}
 
 // MsgSignerUpdate signer update struct
+// TODO add old signer sig check
 type MsgSignerUpdate struct {
-	ID              uint64       `json:"ID"`
+	ID              types.ValidatorID       `json:"ID"`
 	NewSignerPubKey types.PubKey `json:"pubKey"`
 	NewAmount       json.Number  `json:"amount"`
 }
 
 func NewMsgValidatorUpdate(_id uint64, pubKey types.PubKey, amount json.Number) MsgSignerUpdate {
 	return MsgSignerUpdate{
-		ID:              _id,
+		ID:              types.NewValidatorID(_id),
 		NewSignerPubKey: pubKey,
 		NewAmount:       amount,
 	}
@@ -159,12 +160,12 @@ func (msg MsgSignerUpdate) GetNewPower() uint64 {
 var _ sdk.Msg = &MsgValidatorExit{}
 
 type MsgValidatorExit struct {
-	ID uint64 `json:"ID"`
+	ID types.ValidatorID `json:"ID"`
 }
 
 func NewMsgValidatorExit(_id uint64) MsgValidatorExit {
 	return MsgValidatorExit{
-		ID: _id,
+		ID: types.NewValidatorID(_id),
 	}
 }
 

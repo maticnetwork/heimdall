@@ -18,11 +18,18 @@ func GetValidatorInfo(cdc *codec.Codec) *cobra.Command {
 		Short: "show validator information via validator address",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			validatorAddress := viper.GetString(FlagValidatorAddress)
-
-			res, err := cliCtx.QueryStore(common.GetValidatorKey([]byte(validatorAddress)), "staker")
+			validatorID := viper.GetInt64(FlagValidatorID)
+			if validatorID == 0 {
+				return fmt.Errorf("validator ID cannot be 0")
+			}
+			signerAddr, err := cliCtx.QueryStore(common.GetValidatorMapKey(types.NewValidatorID(uint64(validatorID)).Bytes()), "staker")
 			if err != nil {
-				fmt.Printf("Error fetching validator information from store, Error: %v ValidatorAddr: %v", err, validatorAddress)
+				fmt.Printf("Error fetching signer address from validator ID")
+				return err
+			}
+			res, err := cliCtx.QueryStore(common.GetValidatorKey(signerAddr), "staker")
+			if err != nil {
+				fmt.Printf("Error fetching validator information from store, Error: %v ValidatorID: %v", err, validatorID)
 				return err
 			}
 
@@ -35,8 +42,8 @@ func GetValidatorInfo(cdc *codec.Codec) *cobra.Command {
 			return nil
 		},
 	}
-
-	cmd.MarkFlagRequired(FlagValidatorAddress)
+	cmd.Flags().Int(FlagValidatorID, 0, "--id=<validator ID here>")
+	cmd.MarkFlagRequired(FlagValidatorID)
 	return cmd
 }
 

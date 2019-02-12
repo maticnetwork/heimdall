@@ -28,6 +28,8 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 	hmserver "github.com/maticnetwork/heimdall/server"
 	hmTypes "github.com/maticnetwork/heimdall/types"
+	cli2 "github.com/maticnetwork/heimdall/staking/cli"
+	"errors"
 )
 
 // ValidatorAccountFormatter helps to print local validator account information
@@ -116,6 +118,12 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cob
 				chainID = fmt.Sprintf("heimdall-%v", common.RandStr(6))
 			}
 
+			validatorID:= viper.GetInt64(cli2.FlagValidatorID)
+			if validatorID == 0 {
+				fmt.Printf("Validator ID cannot be 0")
+				return errors.New("Validator ID cannot be 0")
+			}
+
 			nodeKey, err := p2p.LoadOrGenNodeKey(config.NodeKeyFile())
 			if err != nil {
 				return err
@@ -155,11 +163,11 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cob
 
 			_, pubKey := helper.GetPkObjects(pval.PrivKey)
 			validator := app.GenesisValidator{
-				Address:    ethCommon.BytesToAddress(pval.Address),
+				ID:    hmTypes.NewValidatorID(uint64(validatorID)),
 				PubKey:     hmTypes.NewPubKey(pubKey[:]),
 				StartEpoch: 0,
 				Signer:     ethCommon.BytesToAddress(pval.Address),
-				Power:      10,
+				Power:      1,
 			}
 
 			// create genesis state
@@ -194,6 +202,9 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cob
 	cmd.Flags().String(helper.FlagClientHome, helper.DefaultCLIHome, "client's home directory")
 	cmd.Flags().String(client.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
 	cmd.Flags().String(client.FlagName, "", "validator's moniker")
+	cmd.Flags().Int(cli2.FlagValidatorID, 0, "--id=<validator ID here>")
+
+	cmd.MarkFlagRequired(cli2.FlagValidatorID)
 	return cmd
 }
 

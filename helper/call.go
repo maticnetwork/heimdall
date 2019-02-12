@@ -3,18 +3,17 @@ package helper
 import (
 	"math/big"
 
-	"context"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 	"github.com/maticnetwork/heimdall/types"
+	"context"
 )
 
 type IContractCaller interface {
 	GetHeaderInfo(headerID uint64) (root common.Hash, start uint64, end uint64, err error)
-	GetValidatorInfo(addr common.Address) (validator types.Validator, err error)
+	GetValidatorInfo(valID types.ValidatorID) (validator types.Validator, err error)
 	CurrentChildBlock() (uint64, error)
 	GetBalance(address common.Address) (*big.Int, error)
 	SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte)
@@ -56,24 +55,6 @@ func (c *ContractCaller) GetHeaderInfo(headerID uint64) (root common.Hash, start
 	return headerBlock.Root, headerBlock.Start.Uint64(), headerBlock.End.Uint64(), nil
 }
 
-// GetValidatorInfo get validator info
-func (c *ContractCaller) GetValidatorInfo(addr common.Address) (validator types.Validator, err error) {
-	amount, startEpoch, endEpoch, signer, err := c.stakeManagerInstance.GetStakerDetails(nil, addr)
-	if err != nil {
-		Logger.Error("Error fetching validator information from stake manager", "Error", err, "ValidatorAddress", addr)
-		return
-	}
-	validator = types.Validator{
-		Address:    addr,
-		Power:      amount.Uint64(),
-		StartEpoch: startEpoch.Uint64(),
-		EndEpoch:   endEpoch.Uint64(),
-		Signer:     signer,
-	}
-
-	return validator, nil
-}
-
 // CurrentChildBlock fetch current child block
 func (c *ContractCaller) CurrentChildBlock() (uint64, error) {
 	currentChildBlock, err := c.rootChainInstance.CurrentChildBlock(nil)
@@ -84,6 +65,7 @@ func (c *ContractCaller) CurrentChildBlock() (uint64, error) {
 	return currentChildBlock.Uint64(), nil
 }
 
+
 // get balance of account (returns big.Int balance wont fit in uint64)
 func (c *ContractCaller) GetBalance(address common.Address) (*big.Int, error) {
 	balance, err := c.mainChainClient.BalanceAt(context.Background(), address, nil)
@@ -93,4 +75,24 @@ func (c *ContractCaller) GetBalance(address common.Address) (*big.Int, error) {
 	}
 
 	return balance, nil
+}
+
+
+// GetValidatorInfo get validator info
+func (c *ContractCaller) GetValidatorInfo(valID types.ValidatorID) (validator types.Validator, err error) {
+	amount, startEpoch, endEpoch, signer, err := c.stakeManagerInstance.GetStakerDetails(nil, big.NewInt(int64(valID)))
+	if err != nil {
+		Logger.Error("Error fetching validator information from stake manager", "Error", err, "ValidatorID", valID)
+		return
+	}
+
+	validator = types.Validator{
+		ID:         valID,
+		Power:      amount.Uint64(),
+		StartEpoch: startEpoch.Uint64(),
+		EndEpoch:   endEpoch.Uint64(),
+		Signer:     signer,
+	}
+
+	return validator, nil
 }

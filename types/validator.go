@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"math/big"
+	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/ethereum/go-ethereum/common"
@@ -11,7 +12,7 @@ import (
 
 // Validator heimdall validator
 type Validator struct {
-	Address    common.Address `json:"address"`
+	ID         ValidatorID    `json:"ID"`
 	StartEpoch uint64         `json:"startEpoch"`
 	EndEpoch   uint64         `json:"endEpoch"`
 	Power      uint64         `json:"power"` // TODO add 10^-18 here so that we dont overflow easily
@@ -69,7 +70,7 @@ func (v *Validator) CompareAccum(other *Validator) *Validator {
 	} else if v.Accum < other.Accum {
 		return other
 	} else {
-		result := bytes.Compare(v.Address.Bytes(), other.Address.Bytes())
+		result := bytes.Compare(v.Signer.Bytes(), other.Signer.Bytes())
 		if result < 0 {
 			return v
 		} else if result > 0 {
@@ -86,7 +87,7 @@ func (v *Validator) String() string {
 	}
 
 	return fmt.Sprintf("Validator{%v::%v P:%v}",
-		v.Address.String(),
+		v.ID,
 		v.Signer.String(),
 		v.Power,
 	)
@@ -102,3 +103,23 @@ func GetValidatorPower(amount string) uint64 {
 	}
 	return result.Uint64()
 }
+
+// validator ID and helper functions
+type ValidatorID uint64
+
+// generate new validator ID
+func NewValidatorID(id uint64) ValidatorID {
+	return ValidatorID(id)
+}
+
+// get bytes of validatorID
+func (valID ValidatorID) Bytes() []byte {
+	return []byte(strconv.Itoa(valID.Int()))
+}
+
+// convert validator ID to int
+func (valID ValidatorID) Int() int  {
+	return int(valID)
+}
+
+
