@@ -258,7 +258,7 @@ func (ackService *AckService) isValidProposer(count uint64, address []byte) bool
 
 		ackService.Logger.Debug("Fetched proposers list from heimdall", "numberOfProposers", count)
 		for _, proposer := range proposers {
-			if bytes.Equal(proposer.Address.Bytes(), address) {
+			if bytes.Equal(proposer.Signer.Bytes(), address) {
 				return true
 			}
 		}

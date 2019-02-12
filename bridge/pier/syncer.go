@@ -25,6 +25,7 @@ import (
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
+	"github.com/maticnetwork/heimdall/checkpoint"
 )
 
 // EventByID looks up a event by the topic id
@@ -331,8 +332,8 @@ func (syncer *ChainSyncer) processCheckpointEvent(eventName string, abiObject *a
 		)
 
 		// create msg checkpoint ack message
-		// msg := checkpoint.NewMsgCheckpointAck(event.Number.Uint64(), uint64(time.Now().Unix()))
-		// syncer.sendTx(eventName, msg)
+		msg := checkpoint.NewMsgCheckpointAck(event.Number.Uint64(), uint64(time.Now().Unix()))
+		syncer.sendTx(eventName, msg)
 	}
 }
 
@@ -346,7 +347,7 @@ func (syncer *ChainSyncer) processStakedEvent(eventName string, abiObject *abi.A
 			"New event found",
 			"event", eventName,
 			"validator", event.User.Hex(),
-			"signer", event.Signer.Hex(),
+			"ID", event.ValidatorId,
 			"activatonEpoch", event.ActivatonEpoch,
 			"amount", event.Amount,
 		)
@@ -363,12 +364,13 @@ func (syncer *ChainSyncer) processUnstakeInitEvent(eventName string, abiObject *
 			"New event found",
 			"event", eventName,
 			"validator", event.User.Hex(),
+			"validatorID",event.ValidatorId,
 			"deactivatonEpoch", event.DeactivationEpoch,
 			"amount", event.Amount,
 		)
 
 		// send validator exit message
-		msg := staking.NewMsgValidatorExit(event.User)
+		msg := staking.NewMsgValidatorExit(event.ValidatorId.Uint64())
 		syncer.sendTx(eventName, msg)
 	}
 }
@@ -385,6 +387,7 @@ func (syncer *ChainSyncer) processSignerChangeEvent(eventName string, abiObject 
 			"validator", event.Validator.Hex(),
 			"newSigner", event.NewSigner.Hex(),
 			"oldSigner", event.OldSigner.Hex(),
+
 		)
 	}
 }

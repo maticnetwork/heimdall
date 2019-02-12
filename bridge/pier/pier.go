@@ -96,7 +96,7 @@ func isProposer() bool {
 
 		// get first proposer
 		proposer := proposers[0]
-		if bytes.Equal(proposer.Address.Bytes(), helper.GetAddress()) {
+		if bytes.Equal(proposer.Signer.Bytes(), helper.GetAddress()) {
 			return true
 		}
 	} else {
