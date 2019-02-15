@@ -5,7 +5,7 @@ dep:
 	dep ensure -v
 	mkdir -p vendor/github.com/tendermint vendor/github.com/ethereum
 	git clone -b v0.11.0 --single-branch --depth 1 https://github.com/tendermint/iavl vendor/github.com/tendermint/iavl
-	git clone -b v1.8.17 --single-branch --depth 1 https://github.com/ethereum/go-ethereum vendor/github.com/ethereum/go-ethereum
+	git clone -b v1.8.19 --single-branch --depth 1 https://github.com/ethereum/go-ethereum vendor/github.com/ethereum/go-ethereum
 
 clean:
 	rm -rf build
