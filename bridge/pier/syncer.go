@@ -21,7 +21,6 @@ import (
 	"github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
 
-	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 	"github.com/maticnetwork/heimdall/helper"
@@ -332,8 +331,8 @@ func (syncer *ChainSyncer) processCheckpointEvent(eventName string, abiObject *a
 		)
 
 		// create msg checkpoint ack message
-		msg := checkpoint.NewMsgCheckpointAck(event.Number.Uint64(), uint64(time.Now().Unix()))
-		syncer.sendTx(eventName, msg)
+		// msg := checkpoint.NewMsgCheckpointAck(event.Number.Uint64(), uint64(time.Now().Unix()))
+		// syncer.sendTx(eventName, msg)
 	}
 }
 

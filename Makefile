@@ -38,19 +38,31 @@ show-node-id:
 run-heimdall:
 	./build/heimdalld start 
 
+start-heimdall:
+	mkdir -p ./logs
+	./build/heimdalld start > ./logs/heimdalld.log &
+
 reset-heimdalld:
 	./build/heimdalld unsafe-reset-all 
 
-rest-server:
+run-server:
 	./build/heimdalld rest-server 
+
+start-server:
+	mkdir -p ./logs
+	./build/heimdalld rest-server > ./logs/heimdalld-rest-server.log &
 
 start:
 	mkdir -p ./logs
 	./build/heimdalld start > ./logs/heimdalld.log &
 	./build/heimdalld rest-server > ./logs/heimdalld-rest-server.log &
 
-start-bridge:
+run-bridge:
 	./build/bridge start
+
+start-bridge:
+	mkdir -p logs
+	./build/bridge start > ./logs/bridge.log
 
 start-all: 
 	mkdir -p ./logs
