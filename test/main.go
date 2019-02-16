@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	client, err := ethclient.Dial("https://kovan.infura.io")
+	client, err := ethclient.Dial("https://localhost:8545")
 	header, err := client.HeaderByNumber(context.Background(), nil)
 	if header != nil && err == nil {
 		fmt.Println("header fetched %v", header.Number)
