@@ -189,6 +189,8 @@ func (checkpointer *MaticCheckpointer) startPolling(ctx context.Context, pollInt
 				if err == nil && header != nil {
 					// send data to channel
 					checkpointer.HeaderChannel <- header
+				} else if err != nil {
+					checkpointer.Logger.Error("Unable to fetch header by number from matic", "Error", err)
 				}
 			}
 		case <-ctx.Done():
