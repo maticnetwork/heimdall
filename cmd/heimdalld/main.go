@@ -24,7 +24,6 @@ import (
 	"github.com/tendermint/tendermint/privval"
 	tmTypes "github.com/tendermint/tendermint/types"
 
-	"errors"
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/helper"
 	hmserver "github.com/maticnetwork/heimdall/server"
@@ -120,8 +119,7 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cob
 
 			validatorID := viper.GetInt64(cli2.FlagValidatorID)
 			if validatorID == 0 {
-				fmt.Printf("Validator ID cannot be 0")
-				return errors.New("Validator ID cannot be 0")
+				validatorID = 1
 			}
 
 			nodeKey, err := p2p.LoadOrGenNodeKey(config.NodeKeyFile())
@@ -201,10 +199,7 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cob
 	cmd.Flags().String(cli.HomeFlag, helper.DefaultNodeHome, "node's home directory")
 	cmd.Flags().String(helper.FlagClientHome, helper.DefaultCLIHome, "client's home directory")
 	cmd.Flags().String(client.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
-	cmd.Flags().String(client.FlagName, "", "validator's moniker")
-	cmd.Flags().Int(cli2.FlagValidatorID, 0, "--id=<validator ID here>")
-
-	cmd.MarkFlagRequired(cli2.FlagValidatorID)
+	cmd.Flags().Int(cli2.FlagValidatorID, 0, "--id=<validator ID here>, if left blank will be assigned 1")
 	return cmd
 }
 
