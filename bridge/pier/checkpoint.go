@@ -302,7 +302,7 @@ func (checkpointer *MaticCheckpointer) sendRequest(newHeader *types.Header) {
 	checkpointer.Logger.Info("Checkpoint sent successfully", "hash", resp.Hash.String(), "start", start, "end", end, "root", hex.EncodeToString(root))
 }
 
-func (checkpointer *MaticCheckpointer) genHeaderDetailContract(latest uint64, wg *sync.WaitGroup, contractState chan<- ContractCheckpoint) {
+func (checkpointer *MaticCheckpointer) genHeaderDetailContract(lastHeader uint64, wg *sync.WaitGroup, contractState chan<- ContractCheckpoint) {
 	defer wg.Done()
 	lastCheckpointEnd, err := checkpointer.RootChainInstance.CurrentChildBlock(nil)
 	if err != nil {
@@ -319,7 +319,7 @@ func (checkpointer *MaticCheckpointer) genHeaderDetailContract(latest uint64, wg
 	}
 
 	// get diff
-	diff := latest - start + 1
+	diff := lastHeader - start + 1
 
 	// process if diff > 0 (positive)
 	if diff > 0 {
@@ -336,7 +336,7 @@ func (checkpointer *MaticCheckpointer) genHeaderDetailContract(latest uint64, wg
 		// get end result
 		end = expectedDiff + start
 
-		checkpointer.Logger.Debug("Calculating checkpoint eligibility", "latest", latest, "start", start, "end", end)
+		checkpointer.Logger.Debug("Calculating checkpoint eligibility", "latest", lastHeader, "start", start, "end", end)
 	}
 	currentHeaderBlockNumber, err := checkpointer.RootChainInstance.CurrentHeaderBlock(nil)
 	if err != nil {
@@ -360,7 +360,7 @@ func (checkpointer *MaticCheckpointer) genHeaderDetailContract(latest uint64, wg
 		currentTime := time.Now().Unix()
 		if currentTime-lastCheckpointTime > defaultForcePushInterval {
 			checkpointer.Logger.Info("Force push checkpoint", "currentTime", currentTime, "lastCheckpointTime", lastCheckpointTime, "defaultForcePushInterval", defaultForcePushInterval)
-			end = latest
+			end = lastHeader
 		}
 	}
 
