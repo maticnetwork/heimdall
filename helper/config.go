@@ -19,6 +19,8 @@ import (
 
 	"math/big"
 
+	"context"
+
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 )
@@ -28,10 +30,17 @@ const (
 	WithHeimdallConfigFlag = "with-heimdall-config"
 	HomeFlag               = "home"
 	FlagClientHome         = "home-client"
-	MainRPCUrl             = "https://kovan.infura.io"
-	MaticRPCUrl            = "https://testnet.matic.network"
-	NoACKWaitTime          = time.Second * 300 // aka 300 seconds
-	CheckpointBufferTime   = time.Second * 256 // aka 256 seconds
+	// Variables below to be used while init
+	MainRPCUrl                      = "https://ropsten.infura.io"
+	MaticRPCUrl                     = "https://testnet.matic.network"
+	NoACKWaitTime                   = time.Second * 300 // Time ack service waits to clear buffer and elect new proposer (300 seconds)
+	CheckpointBufferTime            = time.Second * 256 // Time checkpoint is allowed to stay in buffer (256 seconds)
+	DefaultCheckpointerPollInterval = 60 * 1000         // 1 minute in milliseconds
+	DefaultSyncerPollInterval       = 30 * 1000         // 0.5 seconds in milliseconds
+	DefaultNoACKPollInterval        = 15 * time.Second
+	DefaultCheckpointLength         = 256   // checkpoint number starts with 0, so length = defaultCheckpointLength -1
+	MaxCheckpointLength             = 1024  // max blocks in one checkpoint
+	DefaultChildBlockInterval       = 10000 // difference between 2 indexes of header blocks
 )
 
 var (
@@ -50,11 +59,21 @@ func init() {
 
 // Configuration represents heimdall config
 type Configuration struct {
-	MainRPCUrl          string `json:"mainRPCUrl"`
-	MaticRPCUrl         string `json:"maticRPCUrl"`
-	StakeManagerAddress string `json:"stakeManagerAddress"`
-	RootchainAddress    string `json:"rootchainAddress"`
-	ChildBlockInterval  uint64 `json:"childBlockInterval"`
+	MainRPCUrl          string `json:"mainRPCUrl"`          // RPC endpoint for main chain
+	MaticRPCUrl         string `json:"maticRPCUrl"`         // RPC endpoint for matic chain
+	StakeManagerAddress string `json:"stakeManagerAddress"` // Stake manager address on main chain
+	RootchainAddress    string `json:"rootchainAddress"`    // Rootchain contract address on main chain
+	ChildBlockInterval  uint64 `json:"childBlockInterval"`  // Difference between header index of 2 child blocks submitted on main chain
+	// config related to bridge
+	CheckpointerPollInterval int           `json:"checkpointerPollInterval"` // Poll interval for checkpointer service to send new checkpoints or missing ACK
+	SyncerPollInterval       int           `json:"syncerPollInterval"`       // Poll interval for syncher service to sync for changes on main chain
+	NoACKPollInterval        time.Duration `json:"noackPollInterval"`        // Poll interval for ack service to send no-ack in case of no checkpoints
+	// checkpoint length related options
+	AvgCheckpointLength uint64 `json:"avgCheckpointLength"` // Average number of blocks checkpoint would contain
+	MaxCheckpointLength uint64 `json:"maxCheckpointLength"` // Maximium number of blocks checkpoint would contain
+	// wait time related options
+	NoACKWaitTime        time.Duration `json:"noackWaitTime"`        // Time ack service waits to clear buffer and elect new proposer
+	CheckpointBufferTime time.Duration `json:"checkpointBufferTime"` // Time checkpoint is allowed to stay in buffer
 }
 
 var conf Configuration
@@ -125,11 +144,25 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 		log.Fatal(err)
 	}
 
+	if header, err := mainChainClient.HeaderByNumber(context.Background(), nil); err != nil {
+		Logger.Error("Unable to connect to mainchain", "Error", err)
+		log.Fatal(err)
+	} else {
+		Logger.Debug("Connected successfully to mainchain", "LatestHeader", header.Number)
+	}
+
 	if maticRPCClient, err = rpc.Dial(conf.MaticRPCUrl); err != nil {
 		Logger.Error("Error while creating matic chain RPC client", "error", err)
 		log.Fatal(err)
 	}
 	maticClient = ethclient.NewClient(maticRPCClient)
+
+	if header, err := maticClient.HeaderByNumber(context.Background(), nil); err != nil {
+		Logger.Error("Unable to connect to matic chain", "Error", err)
+		log.Fatal(err)
+	} else {
+		Logger.Debug("Connected successfully to matic chain", "LatestHeader", header.Number)
+	}
 
 	// load pv file, unmarshall and set to privObject
 	privVal := privval.LoadFilePV(filepath.Join(configDir, "priv_validator.json"))

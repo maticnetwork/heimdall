@@ -146,7 +146,7 @@ func (checkpointer *MaticCheckpointer) OnStart() error {
 	subscription, err := checkpointer.MaticClient.SubscribeNewHead(ctx, checkpointer.HeaderChannel)
 	if err != nil {
 		// start go routine to poll for new header using client object
-		go checkpointer.startPolling(ctx, defaultPollInterval)
+		go checkpointer.startPolling(ctx, helper.GetConfig().CheckpointerPollInterval)
 	} else {
 		// start go routine to listen new header using subscription
 		go checkpointer.startSubscription(ctx, subscription)
@@ -323,14 +323,14 @@ func (checkpointer *MaticCheckpointer) genHeaderDetailContract(lastHeader uint64
 
 	// process if diff > 0 (positive)
 	if diff > 0 {
-		expectedDiff := diff - diff%defaultCheckpointLength
+		expectedDiff := diff - diff%helper.GetConfig().AvgCheckpointLength
 		if expectedDiff > 0 {
 			expectedDiff = expectedDiff - 1
 		}
 
 		// cap with max checkpoint length
-		if expectedDiff > maxCheckpointLength-1 {
-			expectedDiff = maxCheckpointLength - 1
+		if expectedDiff > helper.GetConfig().MaxCheckpointLength-1 {
+			expectedDiff = helper.GetConfig().MaxCheckpointLength - 1
 		}
 
 		// get end result
@@ -347,7 +347,7 @@ func (checkpointer *MaticCheckpointer) genHeaderDetailContract(lastHeader uint64
 	currentHeaderNum := currentHeaderBlockNumber
 
 	// Handle when block producers go down
-	if end == 0 || end == start || (0 < diff && diff < defaultCheckpointLength) {
+	if end == 0 || end == start || (0 < diff && diff < helper.GetConfig().AvgCheckpointLength) {
 		checkpointer.Logger.Debug("Fetching last header block to calculate time")
 		// fetch current header block
 		currentHeaderBlock, err := checkpointer.RootChainInstance.HeaderBlock(nil, currentHeaderBlockNumber.Sub(currentHeaderBlockNumber, big.NewInt(int64(helper.GetConfig().ChildBlockInterval))))
@@ -358,7 +358,7 @@ func (checkpointer *MaticCheckpointer) genHeaderDetailContract(lastHeader uint64
 		}
 		lastCheckpointTime := currentHeaderBlock.CreatedAt.Int64()
 		currentTime := time.Now().Unix()
-		if currentTime-lastCheckpointTime > defaultForcePushInterval {
+		if currentTime-lastCheckpointTime > int64(defaultForcePushInterval) {
 			checkpointer.Logger.Info("Force push checkpoint", "currentTime", currentTime, "lastCheckpointTime", lastCheckpointTime, "defaultForcePushInterval", defaultForcePushInterval)
 			end = lastHeader
 		}

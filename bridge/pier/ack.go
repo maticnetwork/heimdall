@@ -80,7 +80,7 @@ func (ackService *AckService) OnStart() error {
 	ackCtx, cancelACKProcess := context.WithCancel(context.Background())
 	ackService.cancelACKProcess = cancelACKProcess
 	// start polling for checkpoint in buffer
-	go ackService.startPollingCheckpoint(ackCtx, defaultCheckpointPollInterval)
+	go ackService.startPollingCheckpoint(ackCtx, helper.GetConfig().NoACKPollInterval)
 
 	// subscribed to new head
 	ackService.Logger.Debug("Started ACK service")
@@ -153,8 +153,8 @@ func (ackService *AckService) processCheckpoint(lastCreatedAt int64) {
 	currentTime := time.Now()
 	timeDiff := currentTime.Sub(checkpointCreationTime)
 	// check if last checkpoint was < NoACK wait time
-	if timeDiff.Seconds() >= helper.NoACKWaitTime.Seconds() && index == 0 {
-		index = math.Floor(timeDiff.Seconds() / helper.NoACKWaitTime.Seconds())
+	if timeDiff.Seconds() >= helper.GetConfig().NoACKWaitTime.Seconds() && index == 0 {
+		index = math.Floor(timeDiff.Seconds() / helper.GetConfig().NoACKWaitTime.Seconds())
 		ackService.Logger.Debug("Index set", "Index", index)
 	}
 
@@ -169,8 +169,8 @@ func (ackService *AckService) processCheckpoint(lastCreatedAt int64) {
 	timeDiff = currentTime.Sub(lastNoAckTime)
 	ackService.Logger.Debug("created time diff", "TimeDiff", timeDiff, "lasttime", lastNoAckTime)
 	// if last no ack == 0 , first no-ack to be sent
-	if currentTime.Sub(lastNoAckTime).Seconds() < helper.CheckpointBufferTime.Seconds() && lastNoAck != 0 {
-		ackService.Logger.Debug("Cannot send multiple no-ack in short time", "timeDiff", currentTime.Sub(lastNoAckTime).Seconds(), "ExpectedDiff", helper.CheckpointBufferTime.Seconds())
+	if currentTime.Sub(lastNoAckTime).Seconds() < helper.GetConfig().CheckpointBufferTime.Seconds() && lastNoAck != 0 {
+		ackService.Logger.Debug("Cannot send multiple no-ack in short time", "timeDiff", currentTime.Sub(lastNoAckTime).Seconds(), "ExpectedDiff", helper.GetConfig().CheckpointBufferTime.Seconds())
 		return
 	}
 

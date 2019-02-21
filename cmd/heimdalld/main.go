@@ -27,7 +27,7 @@ import (
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/helper"
 	hmserver "github.com/maticnetwork/heimdall/server"
-	cli2 "github.com/maticnetwork/heimdall/staking/cli"
+	stakingcli "github.com/maticnetwork/heimdall/staking/cli"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -117,10 +117,10 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cob
 				chainID = fmt.Sprintf("heimdall-%v", common.RandStr(6))
 			}
 
-			validatorID := viper.GetInt64(cli2.FlagValidatorID)
-			if validatorID == 0 {
-				validatorID = 1
-			}
+			validatorID := viper.GetInt64(stakingcli.FlagValidatorID)
+			// if validatorID == 0 {
+			// 	validatorID = 1
+			// }
 
 			nodeKey, err := p2p.LoadOrGenNodeKey(config.NodeKeyFile())
 			if err != nil {
@@ -140,7 +140,15 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cob
 				MaticRPCUrl:         helper.MaticRPCUrl,
 				StakeManagerAddress: (ethCommon.Address{}).Hex(),
 				RootchainAddress:    (ethCommon.Address{}).Hex(),
-				ChildBlockInterval:  10000,
+				ChildBlockInterval:  helper.DefaultChildBlockInterval,
+
+				CheckpointerPollInterval: helper.DefaultCheckpointerPollInterval,
+				SyncerPollInterval:       helper.DefaultSyncerPollInterval,
+				NoACKPollInterval:        helper.DefaultNoACKPollInterval,
+				AvgCheckpointLength:      helper.DefaultCheckpointLength,
+				MaxCheckpointLength:      helper.MaxCheckpointLength,
+				NoACKWaitTime:            helper.NoACKWaitTime,
+				CheckpointBufferTime:     helper.CheckpointBufferTime,
 			}
 
 			heimdallConfBytes, err := json.MarshalIndent(heimdallConf, "", "  ")
@@ -199,7 +207,7 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cob
 	cmd.Flags().String(cli.HomeFlag, helper.DefaultNodeHome, "node's home directory")
 	cmd.Flags().String(helper.FlagClientHome, helper.DefaultCLIHome, "client's home directory")
 	cmd.Flags().String(client.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
-	cmd.Flags().Int(cli2.FlagValidatorID, 0, "--id=<validator ID here>, if left blank will be assigned 1")
+	cmd.Flags().Int(stakingcli.FlagValidatorID, 1, "--id=<validator ID here>, if left blank will be assigned 1")
 	return cmd
 }
 

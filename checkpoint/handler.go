@@ -90,13 +90,13 @@ func HandleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper, co
 
 	checkpointBuffer, err := k.GetCheckpointFromBuffer(ctx)
 	if err == nil {
-		if msg.TimeStamp == 0 || checkpointBuffer.TimeStamp == 0 || ((msg.TimeStamp > checkpointBuffer.TimeStamp) && msg.TimeStamp-checkpointBuffer.TimeStamp >= uint64(helper.CheckpointBufferTime.Seconds())) {
+		if msg.TimeStamp == 0 || checkpointBuffer.TimeStamp == 0 || ((msg.TimeStamp > checkpointBuffer.TimeStamp) && msg.TimeStamp-checkpointBuffer.TimeStamp >= uint64(helper.GetConfig().CheckpointBufferTime.Seconds())) {
 			common.CheckpointLogger.Debug("Checkpoint has been timed out, flushing buffer", "CheckpointTimestamp", msg.TimeStamp, "PrevCheckpointTimestamp", checkpointBuffer.TimeStamp)
 			k.FlushCheckpointBuffer(ctx)
 		} else {
 			// calulates remaining time for buffer to be flushed
 			checkpointTime := time.Unix(int64(checkpointBuffer.TimeStamp), 0)
-			expiryTime := checkpointTime.Add(helper.CheckpointBufferTime)
+			expiryTime := checkpointTime.Add(helper.GetConfig().CheckpointBufferTime)
 			diff := expiryTime.Sub(time.Now()).Seconds()
 
 			common.CheckpointLogger.Error("Checkpoint already exits in buffer", "Checkpoint", checkpointBuffer.String(), "Expires", expiryTime)
@@ -178,7 +178,7 @@ func HandleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k common.
 	common.CheckpointLogger.Debug("handling no-ack", "Msg", msg)
 	// current time
 	currentTime := time.Unix(int64(msg.TimeStamp), 0) // buffer time
-	bufferTime := helper.CheckpointBufferTime
+	bufferTime := helper.GetConfig().CheckpointBufferTime
 
 	// fetch last checkpoint from store
 	// TODO figure out how to handle this error
