@@ -56,6 +56,7 @@ start:
 	mkdir -p ./logs
 	./build/heimdalld start > ./logs/heimdalld.log &
 	./build/heimdalld rest-server > ./logs/heimdalld-rest-server.log &
+	tail -f ./logs/heimdalld.log
 
 run-bridge:
 	./build/bridge start
