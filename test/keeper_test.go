@@ -2,7 +2,6 @@ package test
 
 import (
 	"bytes"
-	"encoding/hex"
 	"encoding/json"
 	"strconv"
 	"testing"
@@ -328,7 +327,7 @@ func TestHandleMsgCheckpoint(t *testing.T) {
 			// create checkpoint msg
 			msgCheckpoint := checkpoint.NewMsgCheckpointBlock(header.Proposer, header.StartBlock, header.EndBlock, header.RootHash, uint64(time.Now().Unix()))
 			// send checkpoint to handler
-			got := checkpoint.HandleMsgCheckpoint(ctx, msgCheckpoint, keeper, contractCallerObj)
+			got := checkpoint.HandleMsgCheckpoint(ctx, msgCheckpoint, keeper, &contractCallerObj)
 			require.True(t, !got.IsOK(), "expected send-checkpoint to be not ok, got %v", got)
 		})
 	})

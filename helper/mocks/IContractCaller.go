@@ -94,20 +94,20 @@ func (_m *IContractCaller) GetHeaderInfo(headerID uint64) (common.Hash, uint64, 
 	return r0, r1, r2, r3
 }
 
-// GetValidatorInfo provides a mock function with given fields: addr
-func (_m *IContractCaller) GetValidatorInfo(addr common.Address) (types.Validator, error) {
-	ret := _m.Called(addr)
+// GetValidatorInfo provides a mock function with given fields: valID
+func (_m *IContractCaller) GetValidatorInfo(valID types.ValidatorID) (types.Validator, error) {
+	ret := _m.Called(valID)
 
 	var r0 types.Validator
-	if rf, ok := ret.Get(0).(func(common.Address) types.Validator); ok {
-		r0 = rf(addr)
+	if rf, ok := ret.Get(0).(func(types.ValidatorID) types.Validator); ok {
+		r0 = rf(valID)
 	} else {
 		r0 = ret.Get(0).(types.Validator)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(common.Address) error); ok {
-		r1 = rf(addr)
+	if rf, ok := ret.Get(1).(func(types.ValidatorID) error); ok {
+		r1 = rf(valID)
 	} else {
 		r1 = ret.Error(1)
 	}

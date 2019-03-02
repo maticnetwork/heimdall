@@ -118,9 +118,6 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cob
 			}
 
 			validatorID := viper.GetInt64(stakingcli.FlagValidatorID)
-			// if validatorID == 0 {
-			// 	validatorID = 1
-			// }
 
 			nodeKey, err := p2p.LoadOrGenNodeKey(config.NodeKeyFile())
 			if err != nil {
