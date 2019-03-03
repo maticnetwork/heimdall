@@ -358,14 +358,14 @@ func (checkpointer *MaticCheckpointer) genHeaderDetailContract(lastHeader uint64
 		}
 		lastCheckpointTime := currentHeaderBlock.CreatedAt.Int64()
 		currentTime := time.Now().Unix()
-		if currentTime-lastCheckpointTime > int64(defaultForcePushInterval) {
-			checkpointer.Logger.Info("Force push checkpoint", "currentTime", currentTime, "lastCheckpointTime", lastCheckpointTime, "defaultForcePushInterval", defaultForcePushInterval)
+		if currentTime-lastCheckpointTime > int64(helper.GetConfig().MaxCheckpointLength *2) {
+			checkpointer.Logger.Info("Force push checkpoint", "currentTime", currentTime, "lastCheckpointTime", lastCheckpointTime, "defaultForcePushInterval", defaultForcePushInterval,"end",lastHeader)
 			end = lastHeader
 		}
 	}
 
 	if end == 0 || start >= end {
-		checkpointer.Logger.Error("Invalid start end formation", "Start", start, "End", end)
+		checkpointer.Logger.Info("Waiting for 256 blocks or invalid start end formation", "Start", start, "End", end)
 		contractState <- NewContractCheckpoint(0, 0, currentHeaderBlockNumber, errors.New("Invalid start end formation"))
 		return
 	}
