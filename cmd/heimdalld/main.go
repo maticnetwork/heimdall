@@ -76,7 +76,7 @@ func main() {
 
 	rootCmd.AddCommand(newAccountCmd())
 	rootCmd.AddCommand(hmserver.ServeCommands(cdc))
-	rootCmd.AddCommand(InitCmd(ctx, cdc, server.DefaultAppInit))
+	rootCmd.AddCommand(InitCmd(ctx, cdc))
 
 	// prepare and add flags
 	executor := cli.PrepareBaseCmd(rootCmd, "HD", os.ExpandEnv("$HOME/.heimdalld"))
@@ -102,7 +102,7 @@ func exportAppStateAndTMValidators(logger log.Logger, db dbm.DB, storeTracer io.
 
 // InitCmd get cmd to initialize all files for tendermint and application
 // nolint: errcheck
-func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cobra.Command {
+func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init",
 		Short: "Initialize genesis config, priv-validator file, and p2p-node file",
@@ -175,7 +175,7 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cob
 
 			// create genesis state
 			appState := &app.GenesisState{
-				Validators: []app.GenesisValidator{validator},
+				GenValidators: []app.GenesisValidator{validator},
 			}
 
 			appStateJSON, err := json.Marshal(appState)
@@ -264,3 +264,4 @@ func readOrCreatePrivValidator(privValFile string) *privval.FilePV {
 	}
 	return privValidator
 }
+

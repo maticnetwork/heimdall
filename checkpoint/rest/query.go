@@ -292,10 +292,10 @@ func overviewHandlerFunc(
 		validatorCount = len(validatorSet.Validators)
 
 		// last no ack
-		var lastACKTime int64
+		var lastNoACKTime int64
 		lastNoACK, err := cliCtx.QueryStore(common.CheckpointNoACKCacheKey, "checkpoint")
 		if err == nil {
-			lastACKTime, err = strconv.ParseInt(string(lastNoACK), 10, 64)
+			lastNoACKTime, err = strconv.ParseInt(string(lastNoACK), 10, 64)
 		}
 
 		state := stateDump{
@@ -303,7 +303,7 @@ func overviewHandlerFunc(
 			CheckpointBuffer: _checkpoint,
 			ValidatorCount:   validatorCount,
 			ValidatorSet:     validatorSet,
-			LastNoACK:        time.Unix(lastACKTime, 0),
+			LastNoACK:        time.Unix(lastNoACKTime, 0),
 		}
 		result, err := json.Marshal(map[string]interface{}{"result": state})
 		if err != nil {

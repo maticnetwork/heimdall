@@ -227,33 +227,34 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 	if err != nil {
 		panic(err)
 	}
-
 	// initialize validator set
 	newValidatorSet := hmTypes.ValidatorSet{}
-	validatorUpdates := make([]abci.ValidatorUpdate, len(genesisState.Validators))
+	if len(genesisState.GenValidators) >0 {
+		genVals := make([]abci.ValidatorUpdate, len(genesisState.GenValidators))
 
-	for i, validator := range genesisState.Validators {
-		hmValidator := validator.ToHeimdallValidator()
+		for i, validator := range genesisState.GenValidators {
+			hmValidator := validator.HeimdallValidator()
 
-		if ok := newValidatorSet.Add(&hmValidator); !ok {
-			panic(errors.New("Error while adding new validator"))
-		} else {
-			// Add individual validator to state
-			app.masterKeeper.AddValidator(ctx, hmValidator)
+			if ok := newValidatorSet.Add(&hmValidator); !ok {
+				panic(errors.New("Error while adding new validator"))
+			} else {
+				// Add individual validator to state
+				app.masterKeeper.AddValidator(ctx, hmValidator)
 
-			// convert to Validator Update
-			updateVal := abci.ValidatorUpdate{
-				Power:  int64(validator.Power),
-				PubKey: validator.PubKey.ABCIPubKey(),
+				// convert to Validator Update
+				updateVal := abci.ValidatorUpdate{
+					Power:  int64(validator.Power),
+					PubKey: validator.PubKey.ABCIPubKey(),
+				}
+
+				// Add validator to validator updated to be processed below
+				genVals[i] = updateVal
 			}
-
-			// Add validator to validator updated to be processed below
-			validatorUpdates[i] = updateVal
 		}
-	}
+		// Initial validator set log
+		logger.Info("Initial validator set", "size", newValidatorSet.Size())
 
-	// Initial validator set log
-	logger.Info("Initial validator set", "size", newValidatorSet.Size())
+	}
 
 	// update validator set in store
 	err = app.masterKeeper.UpdateValidatorSetInStore(ctx, newValidatorSet)
@@ -268,12 +269,12 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 	//
 	// Set initial ack count
 	//
-	app.masterKeeper.UpdateACKCountWithValue(ctx, genesisState.InitialAckCount)
+	app.masterKeeper.UpdateACKCountWithValue(ctx, genesisState.AckCount)
 
 	// udpate validators
 	return abci.ResponseInitChain{
 		// validator updates
-		Validators: validatorUpdates,
+		Validators: gen,
 
 		// consensus params
 		ConsensusParams: &abci.ConsensusParams{
@@ -288,7 +289,6 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 
 // ExportAppStateAndValidators export app state and validators
 func (app *HeimdallApp) ExportAppStateAndValidators() (appState json.RawMessage, validators []tmTypes.GenesisValidator, err error) {
-	//ctx := app.NewContext(true, abci.Header{})
 	return appState, validators, err
 }
 

@@ -358,8 +358,8 @@ func (checkpointer *MaticCheckpointer) genHeaderDetailContract(lastHeader uint64
 		}
 		lastCheckpointTime := currentHeaderBlock.CreatedAt.Int64()
 		currentTime := time.Now().Unix()
-		if currentTime-lastCheckpointTime > int64(helper.GetConfig().MaxCheckpointLength *2) {
-			checkpointer.Logger.Info("Force push checkpoint", "currentTime", currentTime, "lastCheckpointTime", lastCheckpointTime, "defaultForcePushInterval", defaultForcePushInterval,"end",lastHeader)
+		if currentTime-lastCheckpointTime > int64(helper.GetConfig().MaxCheckpointLength*2) {
+			checkpointer.Logger.Info("Force push checkpoint", "currentTime", currentTime, "lastCheckpointTime", lastCheckpointTime, "defaultForcePushInterval", defaultForcePushInterval, "end", lastHeader)
 			end = lastHeader
 		}
 	}

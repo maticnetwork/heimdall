@@ -31,7 +31,7 @@ const (
 	lastBlockKey = "last-block" // storage key
 )
 
-var defaultForcePushInterval = helper.GetConfig().MaxCheckpointLength *2 // in seconds (1024 * 2 seconds)
+var defaultForcePushInterval = helper.GetConfig().MaxCheckpointLength * 2 // in seconds (1024 * 2 seconds)
 
 var bridgeDB *leveldb.DB
 var bridgeDBOnce sync.Once

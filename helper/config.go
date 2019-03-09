@@ -146,7 +146,6 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 
 	if header, err := mainChainClient.HeaderByNumber(context.Background(), nil); err != nil {
 		Logger.Error("Unable to connect to mainchain", "Error", err)
-		log.Fatal(err)
 	} else {
 		Logger.Debug("Connected successfully to mainchain", "LatestHeader", header.Number)
 	}
@@ -159,7 +158,6 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 
 	if header, err := maticClient.HeaderByNumber(context.Background(), nil); err != nil {
 		Logger.Error("Unable to connect to matic chain", "Error", err)
-		log.Fatal(err)
 	} else {
 		Logger.Debug("Connected successfully to matic chain", "LatestHeader", header.Number)
 	}

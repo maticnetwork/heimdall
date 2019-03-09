@@ -22,6 +22,7 @@ type Validator struct {
 	Accum int64 `json:"accum"`
 }
 
+
 // IsCurrentValidator checks if validator is in current validator set
 func (v *Validator) IsCurrentValidator(ackCount uint64) bool {
 	// current epoch will be ack count + 1

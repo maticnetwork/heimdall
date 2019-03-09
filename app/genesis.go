@@ -27,8 +27,8 @@ type GenesisValidator struct {
 	Signer     common.Address      `json:"signer"`
 }
 
-// ToHeimdallValidator converts genesis validator validator to Heimdall validator
-func (v *GenesisValidator) ToHeimdallValidator() hmTypes.Validator {
+// HeimdallValidator converts genesis validator validator to Heimdall validator
+func (v *GenesisValidator) HeimdallValidator() hmTypes.Validator {
 	return hmTypes.Validator{
 		ID:         v.ID,
 		PubKey:     v.PubKey,
@@ -41,8 +41,15 @@ func (v *GenesisValidator) ToHeimdallValidator() hmTypes.Validator {
 
 // GenesisState to Unmarshal
 type GenesisState struct {
-	Accounts        []GenesisAccount   `json:"accounts"`
-	Validators      []GenesisValidator `json:"validators"`
-	GenTxs          []json.RawMessage  `json:"gentxs"`
-	InitialAckCount uint64             `json:"ack_count"`
+	BufferedCheckpoint hmTypes.CheckpointBlockHeader   `json:"buffered_checkpoint"`
+	CheckpointCache    bool                            `json:"checkpoint_cache"`
+	CheckpointACKCache bool                            `json:"ack_cache"`
+	LastNoACK          int64                           `json:"last_no_ack"`
+	AckCount           uint64                          `json:"ack_count"`
+	GenValidators      []GenesisValidator              `json:"gen_validators"`
+	Validators         []hmTypes.Validator             `json:"validators"`
+	CurrentValSet      hmTypes.ValidatorSet            `json:"current_val_set"`
+	GenTxs             []json.RawMessage               `json:"gentxs"`
+	Accounts           []GenesisAccount                `json:"accounts"`
+	Headers            []hmTypes.CheckpointBlockHeader `json:"headers"`
 }

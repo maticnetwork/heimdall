@@ -152,3 +152,5 @@ func CreateAndSendTx(msg sdk.Msg, cliCtx context.CLIContext) (err error) {
 
 	return nil
 }
+
+
