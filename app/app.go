@@ -227,10 +227,11 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 	if err != nil {
 		panic(err)
 	}
-	_, valUpdates := app.GetValidatorsFromGenesis(ctx,&genesisState,genesisState.AckCount)
+	valSet, valUpdates := app.GetValidatorsFromGenesis(ctx,&genesisState,genesisState.AckCount)
 
+	// TODO match valSet and genesisState.CurrentValSet
 	// update validator set in store
-	err = app.masterKeeper.UpdateValidatorSetInStore(ctx, genesisState.CurrentValSet)
+	err = app.masterKeeper.UpdateValidatorSetInStore(ctx,valSet)
 	if err != nil {
 		logger.Error("Unable to marshall validator set while adding in store", "Error", err)
 		panic(err)
@@ -254,7 +255,6 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 	// Add all headers
 	app.InsertHeaders(ctx,&genesisState)
 
-
 	// TODO make sure old validtors dont go in validator updates ie deactivated validators have to be removed
 	// udpate validators
 	return abci.ResponseInitChain{
@@ -277,7 +277,7 @@ func (app *HeimdallApp) GetValidatorsFromGenesis (ctx sdk.Context,genesisState *
 	// if genesis validators exits --- add to state and return updates and new validator set
 	if len(genesisState.GenValidators)>0{
 		logger.Debug("Loading genesis validators")
-		for i, validator := range genesisState.GenValidators {
+		for _, validator := range genesisState.GenValidators {
 			hmValidator := validator.HeimdallValidator()
 
 			if ok := newValSet.Add(&hmValidator); !ok {
@@ -293,7 +293,7 @@ func (app *HeimdallApp) GetValidatorsFromGenesis (ctx sdk.Context,genesisState *
 				}
 
 				// Add validator to validator updated to be processed below
-				valUpdates[i] = updateVal
+				valUpdates=append(valUpdates, updateVal)
 			}
 		}
 		logger.Debug("Adding validators to state","ValidatorSet",newValSet,"ValUpdates",valUpdates)
@@ -301,7 +301,7 @@ func (app *HeimdallApp) GetValidatorsFromGenesis (ctx sdk.Context,genesisState *
 	}
 
 	// read validators
-	for i, validator := range genesisState.Validators {
+	for _, validator := range genesisState.Validators {
 		logger.Debug("Loading validators from state-dump")
 
 		if ok := newValSet.Add(&validator); !ok {
@@ -320,7 +320,7 @@ func (app *HeimdallApp) GetValidatorsFromGenesis (ctx sdk.Context,genesisState *
 				}
 
 				// Add validator to validator updated to be processed below
-				valUpdates[i] = updateVal
+				valUpdates=append(valUpdates, updateVal)
 			}
 		}
 	}
@@ -328,19 +328,29 @@ func (app *HeimdallApp) GetValidatorsFromGenesis (ctx sdk.Context,genesisState *
 	return
 }
 
-func (app *HeimdallApp)SetCaches(ctx sdk.Context,genesisState *GenesisState){
+
+// Set caches like checkpoint and checkpointACK cache
+// Incase user needs to retry sending last checkpoint or sending ACK
+func (app *HeimdallApp) SetCaches(ctx sdk.Context,genesisState *GenesisState){
 	if genesisState.CheckpointACKCache {
 		app.masterKeeper.SetCheckpointAckCache(ctx,common.DefaultValue)
-	}else{
+	}
+	if genesisState.CheckpointACKCache{
 		app.masterKeeper.SetCheckpointCache(ctx,common.DefaultValue)
 	}
 }
 
+// Insert headers into state
 func (app *HeimdallApp) InsertHeaders(ctx sdk.Context,genesisState *GenesisState)  {
-	//lastCheckpointKey := helper.GetConfig().ChildBlockInterval * genesisState.AckCount
-	//for i,header := range genesisState.Headers {
-	//	app.masterKeeper.AddCheckpoint()
-	//}
+	logger.Debug("Trying to successfull checkpoints","NoOfHeaders",len(genesisState.Headers))
+	if int(genesisState.AckCount) != len(genesisState.Headers) {
+		logger.Error("Number of headers and ack count do not match","HeaderCount",len(genesisState.Headers),"AckCount",genesisState.AckCount)
+		panic(errors.New("Incorrect state in state-dump , Please Check "))
+	}
+	for i,header := range genesisState.Headers {
+		checkpointHeaderIndex := helper.GetConfig().ChildBlockInterval * (genesisState.AckCount-uint64(i))
+		app.masterKeeper.AddCheckpoint(ctx,checkpointHeaderIndex,header)
+	}
 	return
 }
 

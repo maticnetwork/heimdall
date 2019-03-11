@@ -47,7 +47,7 @@ var (
 
 	ACKCountKey             = []byte{0x11} // key to store ACK count
 	BufferCheckpointKey     = []byte{0x12} // Key to store checkpoint in buffer
-	HeaderBlockKey          = []byte{0x13} // prefix key for when storing header after ACk
+	HeaderBlockKey          = []byte{0x13} // prefix key for when storing header after ACK
 	CheckpointCacheKey      = []byte{0x14} // key to store Cache for checkpoint
 	CheckpointACKCacheKey   = []byte{0x15} // key to store Cache for checkpointACK
 	CheckpointNoACKCacheKey = []byte{0x16} // key to store last no-ack

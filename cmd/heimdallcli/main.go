@@ -185,11 +185,13 @@ func ExportCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			//// Headers
 			////
 			var headers []hmTypes.CheckpointBlockHeader
-			sotredHeaders, err := cliCtx.QuerySubspace(hmcmn.ValidatorsKey, "staker")
+			storedHeaders, err := cliCtx.QuerySubspace(hmcmn.HeaderBlockKey, "checkpoint")
 			if err != nil {
 				return err
 			}
-			for _,kv_pair := range sotredHeaders {
+			fmt.Printf("headers bytes %v",storedHeaders)
+			for _,kv_pair := range storedHeaders {
+				fmt.Printf("header %v",kv_pair)
 				var checkpointHeader hmTypes.CheckpointBlockHeader
 				if cdc.UnmarshalBinary(kv_pair.Value,&checkpointHeader); err!=nil{
 					return err
