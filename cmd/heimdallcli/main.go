@@ -230,7 +230,7 @@ func ExportCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 				BufferedCheckpoint:buffer_checkpoint,
 				CheckpointCache:checkpointCache,
 				CheckpointACKCache:checkpointACKCache,
-				LastNoACK:lastNoACKTime,
+				LastNoACK:uint64(lastNoACKTime),
 				Headers:headers,
 				CurrentValSet:currentValSet,
 			}

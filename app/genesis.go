@@ -44,7 +44,7 @@ type GenesisState struct {
 	BufferedCheckpoint hmTypes.CheckpointBlockHeader   `json:"buffered_checkpoint"`
 	CheckpointCache    bool                            `json:"checkpoint_cache"`
 	CheckpointACKCache bool                            `json:"ack_cache"`
-	LastNoACK          int64                           `json:"last_no_ack"`
+	LastNoACK          uint64                           `json:"last_no_ack"`
 	AckCount           uint64                          `json:"ack_count"`
 	GenValidators      []GenesisValidator              `json:"gen_validators"`
 	Validators         []hmTypes.Validator             `json:"validators"`

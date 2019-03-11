@@ -227,37 +227,10 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 	if err != nil {
 		panic(err)
 	}
-	// initialize validator set
-	newValidatorSet := hmTypes.ValidatorSet{}
-	if len(genesisState.GenValidators) >0 {
-		genVals := make([]abci.ValidatorUpdate, len(genesisState.GenValidators))
-
-		for i, validator := range genesisState.GenValidators {
-			hmValidator := validator.HeimdallValidator()
-
-			if ok := newValidatorSet.Add(&hmValidator); !ok {
-				panic(errors.New("Error while adding new validator"))
-			} else {
-				// Add individual validator to state
-				app.masterKeeper.AddValidator(ctx, hmValidator)
-
-				// convert to Validator Update
-				updateVal := abci.ValidatorUpdate{
-					Power:  int64(validator.Power),
-					PubKey: validator.PubKey.ABCIPubKey(),
-				}
-
-				// Add validator to validator updated to be processed below
-				genVals[i] = updateVal
-			}
-		}
-		// Initial validator set log
-		logger.Info("Initial validator set", "size", newValidatorSet.Size())
-
-	}
+	_, valUpdates := app.GetValidatorsFromGenesis(ctx,&genesisState,genesisState.AckCount)
 
 	// update validator set in store
-	err = app.masterKeeper.UpdateValidatorSetInStore(ctx, newValidatorSet)
+	err = app.masterKeeper.UpdateValidatorSetInStore(ctx, genesisState.CurrentValSet)
 	if err != nil {
 		logger.Error("Unable to marshall validator set while adding in store", "Error", err)
 		panic(err)
@@ -266,15 +239,27 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 	// increment accumulator
 	app.masterKeeper.IncreamentAccum(ctx, 1)
 
-	//
 	// Set initial ack count
-	//
 	app.masterKeeper.UpdateACKCountWithValue(ctx, genesisState.AckCount)
 
+	// Add checkpoint in buffer
+	app.masterKeeper.SetCheckpointBuffer(ctx,genesisState.BufferedCheckpoint)
+
+	// Set Caches
+	app.SetCaches(ctx,&genesisState)
+
+	// Set last no-ack
+	app.masterKeeper.SetLastNoAck(ctx,genesisState.LastNoACK)
+
+	// Add all headers
+	app.InsertHeaders(ctx,&genesisState)
+
+
+	// TODO make sure old validtors dont go in validator updates ie deactivated validators have to be removed
 	// udpate validators
 	return abci.ResponseInitChain{
 		// validator updates
-		Validators: gen,
+		Validators: valUpdates,
 
 		// consensus params
 		ConsensusParams: &abci.ConsensusParams{
@@ -286,6 +271,79 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 		},
 	}
 }
+
+// returns validator genesis/existing from genesis state
+func (app *HeimdallApp) GetValidatorsFromGenesis (ctx sdk.Context,genesisState *GenesisState,ackCount uint64)(newValSet hmTypes.ValidatorSet,valUpdates []abci.ValidatorUpdate) {
+	// if genesis validators exits --- add to state and return updates and new validator set
+	if len(genesisState.GenValidators)>0{
+		logger.Debug("Loading genesis validators")
+		for i, validator := range genesisState.GenValidators {
+			hmValidator := validator.HeimdallValidator()
+
+			if ok := newValSet.Add(&hmValidator); !ok {
+				panic(errors.New("Error while adding genesis validator"))
+			} else {
+				// Add individual validator to state
+				app.masterKeeper.AddValidator(ctx, hmValidator)
+
+				// convert to Validator Update
+				updateVal := abci.ValidatorUpdate{
+					Power:  int64(validator.Power),
+					PubKey: validator.PubKey.ABCIPubKey(),
+				}
+
+				// Add validator to validator updated to be processed below
+				valUpdates[i] = updateVal
+			}
+		}
+		logger.Debug("Adding validators to state","ValidatorSet",newValSet,"ValUpdates",valUpdates)
+		return
+	}
+
+	// read validators
+	for i, validator := range genesisState.Validators {
+		logger.Debug("Loading validators from state-dump")
+
+		if ok := newValSet.Add(&validator); !ok {
+			panic(errors.New("Error while addings new validator"))
+		} else {
+			// Add individual validator to state
+			app.masterKeeper.AddValidator(ctx, validator)
+
+			// check if validator is current validator
+			// add to val updates else skip
+			if validator.IsCurrentValidator(ackCount){
+				// convert to Validator Update
+				updateVal := abci.ValidatorUpdate{
+					Power:  int64(validator.Power),
+					PubKey: validator.PubKey.ABCIPubKey(),
+				}
+
+				// Add validator to validator updated to be processed below
+				valUpdates[i] = updateVal
+			}
+		}
+	}
+	logger.Debug("Adding validators to state","ValidatorSet",newValSet,"ValUpdates",valUpdates)
+	return
+}
+
+func (app *HeimdallApp)SetCaches(ctx sdk.Context,genesisState *GenesisState){
+	if genesisState.CheckpointACKCache {
+		app.masterKeeper.SetCheckpointAckCache(ctx,common.DefaultValue)
+	}else{
+		app.masterKeeper.SetCheckpointCache(ctx,common.DefaultValue)
+	}
+}
+
+func (app *HeimdallApp) InsertHeaders(ctx sdk.Context,genesisState *GenesisState)  {
+	//lastCheckpointKey := helper.GetConfig().ChildBlockInterval * genesisState.AckCount
+	//for i,header := range genesisState.Headers {
+	//	app.masterKeeper.AddCheckpoint()
+	//}
+	return
+}
+
 
 // ExportAppStateAndValidators export app state and validators
 func (app *HeimdallApp) ExportAppStateAndValidators() (appState json.RawMessage, validators []tmTypes.GenesisValidator, err error) {
@@ -364,3 +422,4 @@ func PrepareAndSendCheckpoint(ctx sdk.Context, keeper common.Keeper, caller help
 		logger.Info("We are not proposer", "proposer", keeper.GetCurrentProposer(ctx), "validator", validatorAddress.String())
 	}
 }
+

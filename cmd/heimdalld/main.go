@@ -163,7 +163,6 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			//
 
 			// create validator
-
 			_, pubKey := helper.GetPkObjects(pval.PrivKey)
 			validator := app.GenesisValidator{
 				ID:         hmTypes.NewValidatorID(uint64(validatorID)),
