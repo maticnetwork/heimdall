@@ -61,6 +61,8 @@ func main() {
 		client.GetCommands(
 			checkpoint.GetCheckpointBuffer(cdc),
 			checkpoint.GetLastNoACK(cdc),
+			staking.GetValidatorInfo(cdc),
+			staking.GetCurrentValSet(cdc),
 		)...,
 	)
 	rootCmd.AddCommand(
@@ -189,9 +191,7 @@ func ExportCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			fmt.Printf("headers bytes %v",storedHeaders)
 			for _,kv_pair := range storedHeaders {
-				fmt.Printf("header %v",kv_pair)
 				var checkpointHeader hmTypes.CheckpointBlockHeader
 				if cdc.UnmarshalBinary(kv_pair.Value,&checkpointHeader); err!=nil{
 					return err
