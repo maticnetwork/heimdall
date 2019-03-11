@@ -61,6 +61,8 @@ func main() {
 		client.GetCommands(
 			checkpoint.GetCheckpointBuffer(cdc),
 			checkpoint.GetLastNoACK(cdc),
+			checkpoint.GetHeaderFromIndex(cdc),
+			checkpoint.GetCheckpointCount(cdc),
 			staking.GetValidatorInfo(cdc),
 			staking.GetCurrentValSet(cdc),
 		)...,
