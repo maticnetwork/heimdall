@@ -10,6 +10,8 @@ import (
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 	"github.com/maticnetwork/heimdall/types"
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	"errors"
 )
 
 type IContractCaller interface {
@@ -18,6 +20,8 @@ type IContractCaller interface {
 	CurrentChildBlock() (uint64, error)
 	GetBalance(address common.Address) (*big.Int, error)
 	SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte)
+	GetMainChainBlock(blockNum *big.Int) (header *ethtypes.Header,err error)
+	GetMaticChainBlock(blockNum *big.Int) (header *ethtypes.Header,err error)
 }
 
 type ContractCaller struct {
@@ -51,7 +55,7 @@ func (c *ContractCaller) GetHeaderInfo(headerID uint64) (root common.Hash, start
 	headerBlock, err := c.rootChainInstance.HeaderBlock(nil, headerIDInt)
 	if err != nil {
 		Logger.Error("Unable to fetch header block from rootchain", "headerBlockIndex", headerID)
-		return root, start, end, createdAt, errors.new("Unable to fetch header block")
+		return root, start, end, createdAt, errors.New("Unable to fetch header block")
 	}
 
 	return headerBlock.Root, headerBlock.Start.Uint64(), headerBlock.End.Uint64(), headerBlock.CreatedAt.Uint64(), nil
@@ -95,4 +99,25 @@ func (c *ContractCaller) GetValidatorInfo(valID types.ValidatorID) (validator ty
 	}
 
 	return validator, nil
+}
+
+// get main chain block header
+func (c *ContractCaller) GetMainChainBlock(blockNum *big.Int) (header *ethtypes.Header,err error){
+	latestBlock, err := GetMainClient().HeaderByNumber(context.Background(), blockNum)
+	if err != nil {
+		Logger.Error("Unable to connect to main chain", "Error", err)
+		return
+	}
+	return latestBlock,nil
+}
+
+
+// get child chain block header
+func (c *ContractCaller) GetMaticChainBlock(blockNum *big.Int) (header *ethtypes.Header,err error){
+	latestBlock, err := GetMainClient().HeaderByNumber(context.Background(), blockNum)
+	if err != nil {
+		Logger.Error("Unable to connect to matic chain", "Error", err)
+		return
+	}
+	return latestBlock,nil
 }

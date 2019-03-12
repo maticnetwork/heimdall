@@ -2,7 +2,6 @@ package checkpoint
 
 import (
 	"bytes"
-	"context"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -132,11 +131,12 @@ func HandleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 	}
 
 	// check confirmation
-	latestBlock, err := helper.GetMainClient().HeaderByNumber(context.Background(), nil)
+	latestBlock, err := contractCaller.GetMainChainBlock(nil)
 	if err != nil {
 		common.CheckpointLogger.Error("Unable to connect to mainchain", "Error", err)
 		return common.ErrNoConn(k.Codespace).Result()
 	}
+
 	if latestBlock.Number.Uint64() - createdAt < helper.GetConfig().ConfirmationBlocks {
 		common.CheckpointLogger.Error("Not enough confirmations","LatestBlock",latestBlock.Number.Uint64(),"TxBlock",createdAt)
 		return common.ErrWaitFrConfirmation(k.Codespace).Result()
