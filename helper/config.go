@@ -81,6 +81,8 @@ var conf Configuration
 
 // MainChainClient stores eth client for Main chain Network
 var mainChainClient *ethclient.Client
+var mainRPCClient *rpc.Client
+
 
 // MaticClient stores eth/rpc client for Matic Network
 var maticClient *ethclient.Client
@@ -139,29 +141,17 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 		log.Fatal(err)
 	}
 
-	// setup eth client
-	if mainChainClient, err = ethclient.Dial(conf.MainRPCUrl); err != nil {
-		Logger.Error("Error while creating main chain client", "error", err)
+	if mainRPCClient, err = rpc.Dial(conf.MainRPCUrl); err != nil {
+		Logger.Error("Error while creating matic chain RPC client", "error", err)
 		log.Fatal(err)
 	}
-
-	//if header, err := mainChainClient.HeaderByNumber(context.Background(), nil); err != nil {
-	//	Logger.Error("Unable to connect to mainchain", "Error", err)
-	//} else {
-	//	Logger.Debug("Connected successfully to mainchain", "LatestHeader", header.Number)
-	//}
+	mainChainClient = ethclient.NewClient(mainRPCClient)
 
 	if maticRPCClient, err = rpc.Dial(conf.MaticRPCUrl); err != nil {
 		Logger.Error("Error while creating matic chain RPC client", "error", err)
 		log.Fatal(err)
 	}
 	maticClient = ethclient.NewClient(maticRPCClient)
-
-	//if header, err := maticClient.HeaderByNumber(context.Background(), nil); err != nil {
-	//	Logger.Error("Unable to connect to matic chain", "Error", err)
-	//} else {
-	//	Logger.Debug("Connected successfully to matic chain", "LatestHeader", header.Number)
-	//}
 
 	// load pv file, unmarshall and set to privObject
 	privVal := privval.LoadFilePV(filepath.Join(configDir, "priv_validator.json"))
