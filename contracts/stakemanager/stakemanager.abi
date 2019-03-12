@@ -1015,8 +1015,8 @@
 		"inputs": [
 			{
 				"indexed": true,
-				"name": "validator",
-				"type": "address"
+				"name": "validatorId",
+				"type": "uint256"
 			},
 			{
 				"indexed": true,
@@ -1030,6 +1030,33 @@
 			}
 		],
 		"name": "SignerChange",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"name": "",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"name": "",
+				"type": "bytes"
+			},
+			{
+				"indexed": false,
+				"name": "",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "sigsevent",
 		"type": "event"
 	},
 	{
