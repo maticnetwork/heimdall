@@ -11,6 +11,7 @@ import (
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 var cdc = codec.New()
@@ -29,14 +30,11 @@ type MsgValidatorJoin struct {
 	StartEpoch   uint64            `json:"startEpoch"`
 	EndEpoch     uint64            `json:"endEpoch"`
 	Amount       json.Number       `json:"amount"`
+	TxHash common.Hash `json:"tx_hash"`
 }
 
-func NewMsgValidatorJoin(
-	_id uint64,
-	_pubkey types.PubKey,
-	_startEpoch uint64,
-	_endEpoch uint64,
-	_amount json.Number,
+func NewMsgValidatorJoin(_id uint64, _pubkey types.PubKey, _startEpoch uint64, _endEpoch uint64, _amount json.Number,
+	txhash common.Hash,
 ) MsgValidatorJoin {
 	return MsgValidatorJoin{
 		ID:           types.NewValidatorID(_id),
@@ -44,6 +42,7 @@ func NewMsgValidatorJoin(
 		StartEpoch:   _startEpoch,
 		EndEpoch:     _endEpoch,
 		Amount:       _amount,
+		TxHash:txhash,
 	}
 }
 
@@ -92,7 +91,6 @@ func (msg MsgValidatorJoin) GetPower() uint64 {
 //
 // validator update
 //
-
 var _ sdk.Msg = &MsgSignerUpdate{}
 
 // MsgSignerUpdate signer update struct
@@ -101,13 +99,15 @@ type MsgSignerUpdate struct {
 	ID              types.ValidatorID `json:"ID"`
 	NewSignerPubKey types.PubKey      `json:"pubKey"`
 	NewAmount       json.Number       `json:"amount"`
+	TxHash common.Hash `json:"tx_hash"`
 }
 
-func NewMsgValidatorUpdate(_id uint64, pubKey types.PubKey, amount json.Number) MsgSignerUpdate {
+func NewMsgValidatorUpdate(_id uint64, pubKey types.PubKey, amount json.Number,txhash common.Hash) MsgSignerUpdate {
 	return MsgSignerUpdate{
 		ID:              types.NewValidatorID(_id),
 		NewSignerPubKey: pubKey,
 		NewAmount:       amount,
+		TxHash:txhash,
 	}
 }
 
@@ -161,11 +161,13 @@ var _ sdk.Msg = &MsgValidatorExit{}
 
 type MsgValidatorExit struct {
 	ID types.ValidatorID `json:"ID"`
+	TxHash common.Hash `json:"tx_hash"`
 }
 
-func NewMsgValidatorExit(_id uint64) MsgValidatorExit {
+func NewMsgValidatorExit(_id uint64,txhash common.Hash) MsgValidatorExit {
 	return MsgValidatorExit{
 		ID: types.NewValidatorID(_id),
+		TxHash:txhash,
 	}
 }
 

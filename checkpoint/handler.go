@@ -123,6 +123,7 @@ func HandleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper, co
 // Validates if checkpoint submitted on chain is valid
 func HandleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	common.CheckpointLogger.Debug("Validating Checkpoint ACK", "Tx", msg)
+
 	// make call to headerBlock with header number
 	root, start, end, createdAt, err := contractCaller.GetHeaderInfo(msg.HeaderBlock)
 	if err != nil {
@@ -136,17 +137,13 @@ func HandleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 		common.CheckpointLogger.Error("Unable to connect to mainchain", "Error", err)
 		return common.ErrNoConn(k.Codespace).Result()
 	}
-
 	if latestBlock.Number.Uint64() - createdAt < helper.GetConfig().ConfirmationBlocks {
 		common.CheckpointLogger.Error("Not enough confirmations","LatestBlock",latestBlock.Number.Uint64(),"TxBlock",createdAt)
 		return common.ErrWaitFrConfirmation(k.Codespace).Result()
 	}
 
-	common.CheckpointLogger.Debug("HeaderBlock fetched",
-		"headerBlock", msg.HeaderBlock,
-		"start", start,
-		"end", end,
-		"Roothash", root, "CreatedAt", createdAt)
+	common.CheckpointLogger.Debug("HeaderBlock fetched", "headerBlock", msg.HeaderBlock, "start", start,
+		"end", end, "Roothash", root, "CreatedAt", createdAt)
 
 	// get last checkpoint from buffer
 	headerBlock, err := k.GetCheckpointFromBuffer(ctx)

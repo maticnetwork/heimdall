@@ -101,6 +101,20 @@
 		"constant": false,
 		"inputs": [
 			{
+				"name": "_token",
+				"type": "address"
+			}
+		],
+		"name": "setToken",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
 				"name": "newThreshold",
 				"type": "uint256"
 			}
@@ -944,6 +958,20 @@
 		"type": "function"
 	},
 	{
+		"constant": true,
+		"inputs": [],
+		"name": "token",
+		"outputs": [
+			{
+				"name": "",
+				"type": "address"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
 		"inputs": [],
 		"payable": false,
 		"stateMutability": "nonpayable",
@@ -1030,33 +1058,6 @@
 			}
 		],
 		"name": "SignerChange",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": false,
-				"name": "",
-				"type": "address"
-			},
-			{
-				"indexed": false,
-				"name": "",
-				"type": "bytes"
-			},
-			{
-				"indexed": false,
-				"name": "",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"name": "sigsevent",
 		"type": "event"
 	},
 	{

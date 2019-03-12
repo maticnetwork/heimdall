@@ -12,6 +12,7 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
 	hmType "github.com/maticnetwork/heimdall/types"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
@@ -29,6 +30,7 @@ type addValidator struct {
 	StartEpoch   uint64        `json:"startEpoch"`
 	EndEpoch     uint64        `json:"endEpoch"`
 	Amount       json.Number   `json:"Amount"`
+	TxHash string `json:"tx_hash"`
 }
 
 func newValidatorJoinHandler(cliCtx context.CLIContext) http.HandlerFunc {
@@ -51,7 +53,7 @@ func newValidatorJoinHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		// create new msg
-		msg := staking.NewMsgValidatorJoin(m.ID, m.SignerPubKey, m.StartEpoch, m.EndEpoch, m.Amount)
+		msg := staking.NewMsgValidatorJoin(m.ID, m.SignerPubKey, m.StartEpoch, m.EndEpoch, m.Amount,common.HexToHash(m.TxHash))
 
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {
@@ -83,6 +85,7 @@ func newValidatorJoinHandler(cliCtx context.CLIContext) http.HandlerFunc {
 
 type removeValidator struct {
 	ID uint64 `json:"ID"`
+	TxHash string `json:"tx_hash"`
 }
 
 func newValidatorExitHandler(cliCtx context.CLIContext) http.HandlerFunc {
@@ -104,7 +107,7 @@ func newValidatorExitHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		msg := staking.NewMsgValidatorExit(m.ID)
+		msg := staking.NewMsgValidatorExit(m.ID,common.HexToHash(m.TxHash))
 
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {
@@ -137,6 +140,7 @@ type updateValidator struct {
 	ID              uint64        `json:"ID"`
 	NewSignerPubKey hmType.PubKey `json:"pubKey"`
 	NewAmount       json.Number   `json:"amount"`
+	TxHash string `json:"tx_hash"`
 }
 
 func newValidatorUpdateHandler(cliCtx context.CLIContext) http.HandlerFunc {
@@ -159,7 +163,7 @@ func newValidatorUpdateHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		// create msg validator update
-		msg := staking.NewMsgValidatorUpdate(m.ID, m.NewSignerPubKey, m.NewAmount)
+		msg := staking.NewMsgValidatorUpdate(m.ID, m.NewSignerPubKey, m.NewAmount,common.HexToHash(m.TxHash))
 
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {

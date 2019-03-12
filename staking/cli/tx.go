@@ -11,6 +11,7 @@ import (
 	"github.com/maticnetwork/heimdall/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 // send validator join transaction
@@ -28,7 +29,7 @@ func GetValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 
 			pubkeyStr := viper.GetString(FlagSignerPubkey)
 			if pubkeyStr == "" {
-				return fmt.Errorf("Pubkey has to be supplied")
+				return fmt.Errorf("pubkey has to be supplied")
 			}
 
 			startEpoch := viper.GetInt64(FlagStartEpoch)
@@ -37,13 +38,18 @@ func GetValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 
 			amountStr := viper.GetString(FlagAmount)
 
+			txhash:=viper.GetString(FlagTxHash)
+			if txhash == "" {
+				return fmt.Errorf("transaction hash has to be supplied")
+			}
+
 			pubkeyBytes, err := hex.DecodeString(pubkeyStr)
 			if err != nil {
 				return err
 			}
 			pubkey := types.NewPubKey(pubkeyBytes)
 
-			msg := staking.NewMsgValidatorJoin(uint64(validatorID), pubkey, uint64(startEpoch), uint64(endEpoch), json.Number(amountStr))
+			msg := staking.NewMsgValidatorJoin(uint64(validatorID), pubkey, uint64(startEpoch), uint64(endEpoch), json.Number(amountStr),common.HexToHash(txhash))
 
 			return helper.CreateAndSendTx(msg, cliCtx)
 		},
@@ -54,11 +60,13 @@ func GetValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(FlagStartEpoch, "0", "--start-epoch=<start epoch of validator here>")
 	cmd.Flags().String(FlagEndEpoch, "0", "--end-epoch=<end epoch of validator here>")
 	cmd.Flags().String(FlagAmount, "", "--staked-amount=<staked amount>")
+	cmd.Flags().String(FlagTxHash,"","--tx-hash=<transaction-hash>")
 
 	cmd.MarkFlagRequired(FlagSignerPubkey)
 	cmd.MarkFlagRequired(FlagStartEpoch)
 	cmd.MarkFlagRequired(FlagEndEpoch)
 	cmd.MarkFlagRequired(FlagAmount)
+	cmd.MarkFlagRequired(FlagTxHash)
 	return cmd
 }
 
@@ -74,13 +82,20 @@ func GetValidatorExitTx(cdc *codec.Codec) *cobra.Command {
 			if validator == 0 {
 				return fmt.Errorf("validator ID cannot be 0")
 			}
-			msg := staking.NewMsgValidatorExit(uint64(validator))
+			txhash:=viper.GetString(FlagTxHash)
+			if txhash == "" {
+				return fmt.Errorf("transaction hash has to be supplied")
+			}
+			msg := staking.NewMsgValidatorExit(uint64(validator),common.HexToHash(txhash))
 
 			return helper.CreateAndSendTx(msg, cliCtx)
 		},
 	}
 
 	cmd.Flags().Int(FlagValidatorID, 0, "--id=<validator ID here>")
+	cmd.Flags().String(FlagTxHash,"","--tx-hash=<transaction-hash>")
+	cmd.MarkFlagRequired(FlagTxHash)
+
 	return cmd
 }
 
@@ -110,7 +125,12 @@ func GetValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 			}
 			pubkey := types.NewPubKey(pubkeyBytes)
 
-			msg := staking.NewMsgValidatorUpdate(uint64(validator), pubkey, json.Number(amountStr))
+			txhash:=viper.GetString(FlagTxHash)
+			if txhash == "" {
+				return fmt.Errorf("transaction hash has to be supplied")
+			}
+
+			msg := staking.NewMsgValidatorUpdate(uint64(validator), pubkey, json.Number(amountStr),common.HexToHash(txhash))
 
 			return helper.CreateAndSendTx(msg, cliCtx)
 		},
@@ -118,6 +138,8 @@ func GetValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().Int(FlagValidatorID, 0, "--id=<validator ID here>")
 	cmd.Flags().String(FlagNewSignerPubkey, "", "--new-pubkey=< new signer pubkey here>")
 	cmd.Flags().String(FlagAmount, "", "--staked-amount=<staked amount>")
+	cmd.Flags().String(FlagTxHash,"","--tx-hash=<transaction-hash>")
+	cmd.MarkFlagRequired(FlagTxHash)
 
 	cmd.MarkFlagRequired(FlagNewSignerPubkey)
 	cmd.MarkFlagRequired(FlagAmount)
