@@ -16,7 +16,7 @@ Build heimdall
 $ make build
 ```
 
-Start heimdall process
+Start heimdall
 
 ```bash
 $ make run-heimdall
@@ -25,7 +25,13 @@ $ make run-heimdall
 Start rest-server
 
 ```$bash
-$ make rest-server
+$ make run-server
+```
+
+Start bridge
+
+```$bash
+$ make run-bridge
 ```
 
 ### Installation with Docker
@@ -59,16 +65,24 @@ $ docker exec -it matic-heimdall sh -c "make init-heimdall"
 
 **Modify heimdall-config.json**
 
-Modify `~/.heimdalld/config/heimdall-config.json` file with latest contract addresses and URL's like below -
+Modify `~/.heimdalld/config/heimdall-config.json` file with latest contract addresses and URL's
+
+> Example heimdall-config.json
 
 ```json
 {
-  "mainRPCUrl": "https://kovan.infura.io",
+  "mainRPCUrl": "https://ropsten.infura.io",
   "maticRPCUrl": "https://testnet.matic.network",
-
-  "stakeManagerAddress": "0xb4ee6879ba231824651991c8f0a34af4d6bfca6a",
-  "rootchainAddress": "0x168ea52f1fafe28d584f94357383d4f6fa8a749a",
-  "childBlockInterval": 10000
+  "stakeManagerAddress": "0xd0d82149efb003eb8afd602a3c3a1532898ea1af",
+  "rootchainAddress": "0x4463d704416dccf1781231c484e2aedd7dc9da43",
+  "childBlockInterval": 10000,
+  "checkpointerPollInterval": 60000,
+  "syncerPollInterval": 30000,
+  "noackPollInterval": 15000000000,
+  "avgCheckpointLength": 256,
+  "maxCheckpointLength": 1024,
+  "noackWaitTime": 300000000000,
+  "checkpointBufferTime": 256000000000
 }
 ```
 
@@ -104,16 +118,7 @@ Logs can be found under `./logs`
 You can run tests found in tests directory to make sure everything is working as expected after making changes
 
 ```$bash
-$ go test -run <TestCaseName>/<SubTestName>
-```
-
-> Please add -v flag to see test logs
-
-##### Example
-
-```$bash
-$ go test -v -run TestValUpdates/add
-$ go test -v -run TestValidator
+$ make tests
 ```
 
 ### Docker (Only for developers)
