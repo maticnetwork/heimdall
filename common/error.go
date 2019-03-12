@@ -34,6 +34,8 @@ const (
 	CodeValSave            CodeType = 2506
 	CodeValAlreadyJoined   CodeType = 2507
 	CodeSignerUpdateError  CodeType = 2508
+	CodeNoConn CodeType = 2509
+	CodeWaitFrConfirmation CodeType = 2510
 )
 
 // -------- Invalid msg
@@ -58,6 +60,14 @@ func ErrBadAck(codespace sdk.CodespaceType) sdk.Error {
 
 func ErrNoACK(codespace sdk.CodespaceType, timeRemaining float64) sdk.Error {
 	return newError(codespace, CodeNoACK, fmt.Sprintf("Checkpoint Already Exists In Buffer, ACK expected ,expires %v", timeRemaining))
+}
+
+func ErrNoConn(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace,CodeNoConn,"Unable to connect to chain")
+}
+
+func ErrWaitFrConfirmation(codespace sdk.CodespaceType) sdk.Error{
+	return newError(codespace,CodeWaitFrConfirmation,fmt.Sprintf("Please wait for %v confirmations before sending transaction",helper.GetConfig().ConfirmationBlocks))
 }
 
 func ErrNoCheckpointFound(codespace sdk.CodespaceType) sdk.Error {

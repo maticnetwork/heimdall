@@ -4,6 +4,7 @@ import (
 	"math/big"
 
 	"context"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
@@ -12,7 +13,7 @@ import (
 )
 
 type IContractCaller interface {
-	GetHeaderInfo(headerID uint64) (root common.Hash, start uint64, end uint64, err error)
+	GetHeaderInfo(headerID uint64) (root common.Hash, start, end, createdAt uint64, err error)
 	GetValidatorInfo(valID types.ValidatorID) (validator types.Validator, err error)
 	CurrentChildBlock() (uint64, error)
 	GetBalance(address common.Address) (*big.Int, error)
@@ -43,16 +44,17 @@ func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 }
 
 // GetHeaderInfo get header info from header id
-func (c *ContractCaller) GetHeaderInfo(headerID uint64) (root common.Hash, start uint64, end uint64, err error) {
+func (c *ContractCaller) GetHeaderInfo(headerID uint64) (root common.Hash, start, end, createdAt uint64, err error) {
 	// get header from rootchain
 	headerIDInt := big.NewInt(0)
 	headerIDInt = headerIDInt.SetUint64(headerID)
 	headerBlock, err := c.rootChainInstance.HeaderBlock(nil, headerIDInt)
 	if err != nil {
 		Logger.Error("Unable to fetch header block from rootchain", "headerBlockIndex", headerID)
+		return root, start, end, createdAt, errors.new("Unable to fetch header block")
 	}
 
-	return headerBlock.Root, headerBlock.Start.Uint64(), headerBlock.End.Uint64(), nil
+	return headerBlock.Root, headerBlock.Start.Uint64(), headerBlock.End.Uint64(), headerBlock.CreatedAt.Uint64(), nil
 }
 
 // CurrentChildBlock fetch current child block
