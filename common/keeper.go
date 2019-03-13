@@ -471,12 +471,6 @@ func (k *Keeper) SetValidatorIDToSignerAddr(ctx sdk.Context, valID types.Validat
 	store.Set(GetValidatorMapKey(valID.Bytes()), signerAddr.Bytes())
 }
 
-// // SetValidatorAddrToSignerAddr set mapping for validator address to signer address
-// func (k *Keeper) SetValidatorAddrToSignerAddr(ctx sdk.Context, validatorAddr common.Address, signerAddr common.Address) {
-// 	store := ctx.KVStore(k.StakingKey)
-// 	store.Set(GetValidatorMapKey(validatorAddr.Bytes()), signerAddr.Bytes())
-// }
-
 // GetSignerFromValidator get signer address from validator ID
 func (k *Keeper) GetSignerFromValidatorID(ctx sdk.Context, valID types.ValidatorID) (common.Address, bool) {
 	store := ctx.KVStore(k.StakingKey)

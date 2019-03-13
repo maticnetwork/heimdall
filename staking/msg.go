@@ -76,10 +76,6 @@ func (msg MsgValidatorJoin) ValidateBasic() sdk.Error {
 	return nil
 }
 
-//func (msg MsgValidatorJoin) GetPower() uint64 {
-//	return types.GetValidatorPower(msg.Amount.String())
-//}
-
 //
 // validator update
 //

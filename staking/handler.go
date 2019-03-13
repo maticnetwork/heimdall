@@ -18,7 +18,7 @@ func NewHandler(k hmCommon.Keeper, contractCaller helper.IContractCaller) sdk.Ha
 		case MsgValidatorExit:
 			return HandleMsgValidatorExit(ctx, msg, k, contractCaller)
 		case MsgSignerUpdate:
-			return HandleMsgSignerUpdate(ctx, msg, k)
+			return HandleMsgSignerUpdate(ctx, msg, k,contractCaller)
 		default:
 			return sdk.ErrTxDecode("Invalid message in checkpoint module").Result()
 		}
@@ -27,6 +27,11 @@ func NewHandler(k hmCommon.Keeper, contractCaller helper.IContractCaller) sdk.Ha
 
 func HandleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k hmCommon.Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	hmCommon.StakingLogger.Debug("Handing new validator join", "Msg", msg)
+
+	if confirmed :=contractCaller.IsTxConfirmed(msg.TxHash); !confirmed{
+		return hmCommon.ErrWaitFrConfirmation(k.Codespace).Result()
+	}
+
 	//fetch validator from mainchain
 	validator, err := contractCaller.GetValidatorInfo(msg.ID)
 	if err != nil || bytes.Equal(validator.Signer.Bytes(), helper.ZeroAddress.Bytes()) {
@@ -44,32 +49,30 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k hmCommon.Ke
 	pubkey := msg.SignerPubKey
 	signer := pubkey.Address()
 
-	// check validator ID in message corresponds
-	if !bytes.Equal(signer.Bytes(), validator.Signer.Bytes()) || msg.StartEpoch != validator.StartEpoch {
+	// check signer in message corresponds
+	if !bytes.Equal(signer.Bytes(), validator.Signer.Bytes())  {
 		hmCommon.StakingLogger.Error(
-			"Signer Address or startEpoch or doesn't match",
+			"Signer Address does not match",
 			"msgValidator", msg.SignerPubKey.Address().String(),
 			"mainchainValidator", validator.Signer.String(),
-			"msgStartEpoch", msg.StartEpoch,
-			"mainchainStartEpoch", validator.StartEpoch,
 		)
 		return hmCommon.ErrNoValidator(k.Codespace).Result()
 	}
 
 	// Check if validator has been validator before
 	if _, ok := k.GetSignerFromValidatorID(ctx, msg.ID); ok {
-		hmCommon.StakingLogger.Error("Validator has been validator before, cannot join with same address", "presentValidator", msg.ID)
+		hmCommon.StakingLogger.Error("Validator has been validator before, cannot join with same ID", "valID", msg.ID)
 		return hmCommon.ErrValidatorAlreadyJoined(k.Codespace).Result()
 	}
 
 	// create new validator
 	newValidator := hmTypes.Validator{
-		ID:         msg.ID,
-		StartEpoch: msg.StartEpoch,
-		EndEpoch:   msg.EndEpoch,
-		Power:      msg.GetPower(),
+		ID:         validator.ID,
+		StartEpoch: validator.StartEpoch,
+		EndEpoch:   validator.EndEpoch,
+		Power:      validator.Power,
 		PubKey:     pubkey,
-		Signer:     signer,
+		Signer:     validator.Signer,
 	}
 
 	// add validator to store
@@ -84,8 +87,12 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k hmCommon.Ke
 }
 
 // Handle signer update message
-func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k hmCommon.Keeper) sdk.Result {
+func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k hmCommon.Keeper,contractCaller helper.IContractCaller) sdk.Result {
 	hmCommon.StakingLogger.Debug("Handling signer update", "Validator", msg.ID, "Signer", msg.NewSignerPubKey.Address())
+
+	if confirmed :=contractCaller.IsTxConfirmed(msg.TxHash); !confirmed{
+		return hmCommon.ErrWaitFrConfirmation(k.Codespace).Result()
+	}
 
 	// pull val from store
 	validator, ok := k.GetValidatorFromValID(ctx, msg.ID)
@@ -96,6 +103,21 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k hmCommon.Keep
 
 	newPubKey := msg.NewSignerPubKey
 	newSigner := newPubKey.Address()
+
+	id,newSignerTx,_,err:=contractCaller.SigUpdateEvent(msg.TxHash)
+	if err!=nil{
+		hmCommon.StakingLogger.Error("Error fetching log from txhash","Error",err)
+	}
+
+	if int(id) != msg.ID.Int() {
+		// throw invalidTxHash for validator ID
+	}
+
+	if bytes.Compare(newSignerTx.Bytes(),newSigner.Bytes())!=0{
+		// throw signer dont match
+	}
+	//TODO check if signer change txhash is new or old
+	// save last updated at block number somewhere and check if current block is larger than last updates
 
 	// check if updating signer
 	if !bytes.Equal(newSigner.Bytes(), validator.Signer.Bytes()) {
@@ -117,7 +139,7 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k hmCommon.Keep
 	}
 
 	// save validator
-	err := k.AddValidator(ctx, validator)
+	err = k.AddValidator(ctx, validator)
 	if err != nil {
 		hmCommon.StakingLogger.Error("Unable to update signer", "error", err, "ValidatorID", validator.ID)
 		return hmCommon.ErrSignerUpdateError(k.Codespace).Result()
