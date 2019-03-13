@@ -83,7 +83,6 @@ var conf Configuration
 var mainChainClient *ethclient.Client
 var mainRPCClient *rpc.Client
 
-
 // MaticClient stores eth/rpc client for Matic Network
 var maticClient *ethclient.Client
 var maticRPCClient *rpc.Client
@@ -210,6 +209,11 @@ func GetStakeManagerABI() (abi.ABI, error) {
 //
 // Get main/matic clients
 //
+
+// GetMainChainRPCClient returns main chain RPC client
+func GetMainChainRPCClient() *rpc.Client {
+	return mainRPCClient
+}
 
 // GetMainClient returns main chain's eth client
 func GetMainClient() *ethclient.Client {
