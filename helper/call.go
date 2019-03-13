@@ -201,7 +201,7 @@ func (c *ContractCaller) SigUpdateEvent(tx common.Hash) (id uint64, newSigner co
 	}
 	for _, vLog := range txReceipt.Logs {
 		var event stakemanager.StakemanagerSignerChange
-		err := c.stakeManagerABI.Unpack(&event, "SignerChange", vLog.Data)
+		err = c.stakeManagerABI.Unpack(&event, "SignerChange", vLog.Data)
 		if err != nil {
 			Logger.Error("unable to unpack SIGNER CHANGE event", "Error", err)
 			return
