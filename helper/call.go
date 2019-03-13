@@ -13,6 +13,7 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"errors"
 	"github.com/ethereum/go-ethereum/rpc"
+
 )
 
 type IContractCaller interface {
@@ -149,4 +150,29 @@ func (c *ContractCaller) GetBlockNoFromTxHash(tx common.Hash) (blocknumber big.I
 		return blocknumber,errors.New("unable to set string")
 	}
 	return *blockNumberPtr,nil
+}
+
+// Check finality
+func (c *ContractCaller) IsConfirmed(tx common.Hash) bool {
+	txBlk,err:= c.GetBlockNoFromTxHash(tx)
+	if err!=nil{
+		Logger.Error("error getting block number from txhash","Error",err)
+		return false
+	}
+	Logger.Debug("Tx included in block","block",txBlk.Uint64(),"tx",tx)
+
+	latestBlk,err:=c.GetMainChainBlock(nil)
+	if err!=nil{
+		Logger.Error("error getting latest block from main chain","Error",err)
+		return false
+	}
+	Logger.Debug("Latest block on main chain obtained","Block",latestBlk.Number.Uint64())
+	
+	diff:=latestBlk.Number.Uint64() - txBlk.Uint64()
+	if diff < GetConfig().ConfirmationBlocks {
+		Logger.Info("Not enough confirmations","ExpectedConf",GetConfig().ConfirmationBlocks,"ActualConf",diff)
+		return false
+	}
+
+	return true
 }
