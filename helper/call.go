@@ -12,6 +12,7 @@ import (
 	"github.com/maticnetwork/heimdall/types"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"errors"
+	"github.com/ethereum/go-ethereum/rpc"
 )
 
 type IContractCaller interface {
@@ -28,6 +29,18 @@ type ContractCaller struct {
 	rootChainInstance    *rootchain.Rootchain
 	stakeManagerInstance *stakemanager.Stakemanager
 	mainChainClient      *ethclient.Client
+	mainChainRPC *rpc.Client
+}
+
+type txExtraInfo struct {
+	BlockNumber *string         `json:"blockNumber,omitempty"`
+	BlockHash   *common.Hash    `json:"blockHash,omitempty"`
+	From        *common.Address `json:"from,omitempty"`
+}
+
+type rpcTransaction struct {
+	tx *ethtypes.Transaction
+	txExtraInfo
 }
 
 func NewContractCaller() (contractCallerObj ContractCaller, err error) {
@@ -42,6 +55,7 @@ func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 		return contractCallerObj, err
 	}
 	contractCallerObj.mainChainClient = GetMainClient()
+	contractCallerObj.mainChainRPC = GetMainChainRPCClient()
 	contractCallerObj.stakeManagerInstance = stakeManagerInstance
 	contractCallerObj.rootChainInstance = rootChainInstance
 	return contractCallerObj, nil
@@ -120,4 +134,19 @@ func (c *ContractCaller) GetMaticChainBlock(blockNum *big.Int) (header *ethtypes
 		return
 	}
 	return latestBlock,nil
+}
+
+// Get block number of transaction
+func (c *ContractCaller) GetBlockNoFromTxHash(tx common.Hash) (blocknumber big.Int,err error){
+	var json *rpcTransaction
+	err = c.mainChainRPC.CallContext(context.Background(),  &json, "eth_getTransactionByHash",tx)
+	if err!=nil{
+		return
+	}
+	var blkNum big.Int
+	blockNumberPtr,ok:=blkNum.SetString(*json.BlockNumber,0)
+	if !ok{
+		return blocknumber,errors.New("unable to set string")
+	}
+	return *blockNumberPtr,nil
 }
