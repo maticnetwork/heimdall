@@ -8,10 +8,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/ethereum/go-ethereum/common"
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
-	"github.com/ethereum/go-ethereum/common"
 )
 
 var cdc = codec.New()
@@ -27,14 +27,14 @@ var _ sdk.Msg = &MsgValidatorJoin{}
 type MsgValidatorJoin struct {
 	ID           types.ValidatorID `json:"ID"`
 	SignerPubKey types.PubKey      `json:"pubKey"`
-	TxHash common.Hash `json:"tx_hash"`
+	TxHash       common.Hash       `json:"tx_hash"`
 }
 
 func NewMsgValidatorJoin(_id uint64, _pubkey types.PubKey, txhash common.Hash) MsgValidatorJoin {
 	return MsgValidatorJoin{
 		ID:           types.NewValidatorID(_id),
 		SignerPubKey: _pubkey,
-		TxHash:txhash,
+		TxHash:       txhash,
 	}
 }
 
@@ -68,11 +68,6 @@ func (msg MsgValidatorJoin) ValidateBasic() sdk.Error {
 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid pub key %v", msg.SignerPubKey.String())
 	}
 
-	//r, _ := regexp.Compile("[0-9]+")
-	//if msg.Amount == "" || !r.MatchString(msg.Amount.String()) {
-	//	return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid new amount %v", msg.Amount.String())
-	//}
-
 	return nil
 }
 
@@ -87,15 +82,15 @@ type MsgSignerUpdate struct {
 	ID              types.ValidatorID `json:"ID"`
 	NewSignerPubKey types.PubKey      `json:"pubKey"`
 	NewAmount       json.Number       `json:"amount"`
-	TxHash common.Hash `json:"tx_hash"`
+	TxHash          common.Hash       `json:"tx_hash"`
 }
 
-func NewMsgValidatorUpdate(_id uint64, pubKey types.PubKey, amount json.Number,txhash common.Hash) MsgSignerUpdate {
+func NewMsgValidatorUpdate(_id uint64, pubKey types.PubKey, amount json.Number, txhash common.Hash) MsgSignerUpdate {
 	return MsgSignerUpdate{
 		ID:              types.NewValidatorID(_id),
 		NewSignerPubKey: pubKey,
 		NewAmount:       amount,
-		TxHash:txhash,
+		TxHash:          txhash,
 	}
 }
 
@@ -148,14 +143,14 @@ func (msg MsgSignerUpdate) GetNewPower() uint64 {
 var _ sdk.Msg = &MsgValidatorExit{}
 
 type MsgValidatorExit struct {
-	ID types.ValidatorID `json:"ID"`
-	TxHash common.Hash `json:"tx_hash"`
+	ID     types.ValidatorID `json:"ID"`
+	TxHash common.Hash       `json:"tx_hash"`
 }
 
-func NewMsgValidatorExit(_id uint64,txhash common.Hash) MsgValidatorExit {
+func NewMsgValidatorExit(_id uint64, txhash common.Hash) MsgValidatorExit {
 	return MsgValidatorExit{
-		ID: types.NewValidatorID(_id),
-		TxHash:txhash,
+		ID:     types.NewValidatorID(_id),
+		TxHash: txhash,
 	}
 }
 

@@ -5,17 +5,19 @@ import (
 
 	"context"
 
+	"errors"
+
 	"github.com/ethereum/go-ethereum/common"
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 	"github.com/maticnetwork/heimdall/types"
-	ethtypes "github.com/ethereum/go-ethereum/core/types"
-	"errors"
-	"github.com/ethereum/go-ethereum/rpc"
+
+	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
-	"strings"
 )
 
 type IContractCaller interface {
@@ -24,19 +26,19 @@ type IContractCaller interface {
 	CurrentChildBlock() (uint64, error)
 	GetBalance(address common.Address) (*big.Int, error)
 	SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte)
-	GetMainChainBlock(blockNum *big.Int) (header *ethtypes.Header,err error)
-	GetMaticChainBlock(blockNum *big.Int) (header *ethtypes.Header,err error)
-	IsTxConfirmed(tx common.Hash) (bool)
-	GetBlockNoFromTxHash(tx common.Hash) (blocknumber big.Int,err error)
-	SigUpdateEvent(tx common.Hash)(id uint64,newSigner common.Address,oldSigner common.Address,err error)
+	GetMainChainBlock(blockNum *big.Int) (header *ethtypes.Header, err error)
+	GetMaticChainBlock(blockNum *big.Int) (header *ethtypes.Header, err error)
+	IsTxConfirmed(tx common.Hash) bool
+	GetBlockNoFromTxHash(tx common.Hash) (blocknumber big.Int, err error)
+	SigUpdateEvent(tx common.Hash) (id uint64, newSigner common.Address, oldSigner common.Address, err error)
 }
 
 type ContractCaller struct {
 	rootChainInstance    *rootchain.Rootchain
 	stakeManagerInstance *stakemanager.Stakemanager
 	mainChainClient      *ethclient.Client
-	mainChainRPC *rpc.Client
-	stakeManagerABI  abi.ABI
+	mainChainRPC         *rpc.Client
+	stakeManagerABI      abi.ABI
 }
 
 type txExtraInfo struct {
@@ -69,8 +71,8 @@ func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 	// load stake manager abi
 	stakeContract, err := abi.JSON(strings.NewReader(string(stakemanager.StakemanagerABI)))
 	if err != nil {
-		Logger.Error("Error creating abi for stakemanager","Error",err)
-		return contractCallerObj,err
+		Logger.Error("Error creating abi for stakemanager", "Error", err)
+		return contractCallerObj, err
 	}
 	contractCallerObj.stakeManagerABI = stakeContract
 
@@ -132,80 +134,79 @@ func (c *ContractCaller) GetValidatorInfo(valID types.ValidatorID) (validator ty
 }
 
 // get main chain block header
-func (c *ContractCaller) GetMainChainBlock(blockNum *big.Int) (header *ethtypes.Header,err error){
+func (c *ContractCaller) GetMainChainBlock(blockNum *big.Int) (header *ethtypes.Header, err error) {
 	latestBlock, err := GetMainClient().HeaderByNumber(context.Background(), blockNum)
 	if err != nil {
 		Logger.Error("Unable to connect to main chain", "Error", err)
 		return
 	}
-	return latestBlock,nil
+	return latestBlock, nil
 }
 
-
 // get child chain block header
-func (c *ContractCaller) GetMaticChainBlock(blockNum *big.Int) (header *ethtypes.Header,err error){
+func (c *ContractCaller) GetMaticChainBlock(blockNum *big.Int) (header *ethtypes.Header, err error) {
 	latestBlock, err := GetMainClient().HeaderByNumber(context.Background(), blockNum)
 	if err != nil {
 		Logger.Error("Unable to connect to matic chain", "Error", err)
 		return
 	}
-	return latestBlock,nil
+	return latestBlock, nil
 }
 
 // Get block number of transaction
-func (c *ContractCaller) GetBlockNoFromTxHash(tx common.Hash) (blocknumber big.Int,err error){
+func (c *ContractCaller) GetBlockNoFromTxHash(tx common.Hash) (blocknumber big.Int, err error) {
 	var json *rpcTransaction
-	err = c.mainChainRPC.CallContext(context.Background(),  &json, "eth_getTransactionByHash",tx)
-	if err!=nil{
+	err = c.mainChainRPC.CallContext(context.Background(), &json, "eth_getTransactionByHash", tx)
+	if err != nil {
 		return
 	}
 	var blkNum big.Int
-	blockNumberPtr,ok:=blkNum.SetString(*json.BlockNumber,0)
-	if !ok{
-		return blocknumber,errors.New("unable to set string")
+	blockNumberPtr, ok := blkNum.SetString(*json.BlockNumber, 0)
+	if !ok {
+		return blocknumber, errors.New("unable to set string")
 	}
-	return *blockNumberPtr,nil
+	return *blockNumberPtr, nil
 }
 
 // Check finality
 func (c *ContractCaller) IsTxConfirmed(tx common.Hash) bool {
-	txBlk,err:= c.GetBlockNoFromTxHash(tx)
-	if err!=nil{
-		Logger.Error("error getting block number from txhash","Error",err)
+	txBlk, err := c.GetBlockNoFromTxHash(tx)
+	if err != nil {
+		Logger.Error("error getting block number from txhash", "Error", err)
 		return false
 	}
-	Logger.Debug("Tx included in block","block",txBlk.Uint64(),"tx",tx)
+	Logger.Debug("Tx included in block", "block", txBlk.Uint64(), "tx", tx)
 
-	latestBlk,err:=c.GetMainChainBlock(nil)
-	if err!=nil{
-		Logger.Error("error getting latest block from main chain","Error",err)
+	latestBlk, err := c.GetMainChainBlock(nil)
+	if err != nil {
+		Logger.Error("error getting latest block from main chain", "Error", err)
 		return false
 	}
-	Logger.Debug("Latest block on main chain obtained","Block",latestBlk.Number.Uint64())
+	Logger.Debug("Latest block on main chain obtained", "Block", latestBlk.Number.Uint64())
 
-	diff:=latestBlk.Number.Uint64() - txBlk.Uint64()
+	diff := latestBlk.Number.Uint64() - txBlk.Uint64()
 	if diff < GetConfig().ConfirmationBlocks {
-		Logger.Info("Not enough confirmations","ExpectedConf",GetConfig().ConfirmationBlocks,"ActualConf",diff)
+		Logger.Info("Not enough confirmations", "ExpectedConf", GetConfig().ConfirmationBlocks, "ActualConf", diff)
 		return false
 	}
 
 	return true
 }
 
-func (c *ContractCaller) SigUpdateEvent(tx common.Hash)(id uint64,newSigner common.Address,oldSigner common.Address,err error){
-	txReceipt,err:=c.mainChainClient.TransactionReceipt(context.Background(),tx)
-	if err!=nil{
-		Logger.Error("Unable to get transaction receipt by hash","Error",err)
+func (c *ContractCaller) SigUpdateEvent(tx common.Hash) (id uint64, newSigner common.Address, oldSigner common.Address, err error) {
+	txReceipt, err := c.mainChainClient.TransactionReceipt(context.Background(), tx)
+	if err != nil {
+		Logger.Error("Unable to get transaction receipt by hash", "Error", err)
 		return
 	}
 	for _, vLog := range txReceipt.Logs {
 		var event stakemanager.StakemanagerSignerChange
 		err := c.stakeManagerABI.Unpack(&event, "SignerChange", vLog.Data)
 		if err != nil {
-			Logger.Error("unable to unpack SIGNER CHANGE event","Error",err)
+			Logger.Error("unable to unpack SIGNER CHANGE event", "Error", err)
 			return
 		}
-		return event.ValidatorId.Uint64(),event.NewSigner,event.OldSigner,nil
+		return event.ValidatorId.Uint64(), event.NewSigner, event.OldSigner, nil
 	}
 	return
 }
