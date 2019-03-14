@@ -129,7 +129,6 @@ func GetValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(FlagAmount, "", "--staked-amount=<staked amount>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
 	cmd.MarkFlagRequired(FlagTxHash)
-
 	cmd.MarkFlagRequired(FlagNewSignerPubkey)
 	cmd.MarkFlagRequired(FlagAmount)
 

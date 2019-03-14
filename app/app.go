@@ -342,14 +342,16 @@ func (app *HeimdallApp) SetCaches(ctx sdk.Context,genesisState *GenesisState){
 
 // Insert headers into state
 func (app *HeimdallApp) InsertHeaders(ctx sdk.Context,genesisState *GenesisState)  {
-	logger.Debug("Trying to successfull checkpoints","NoOfHeaders",len(genesisState.Headers))
-	if int(genesisState.AckCount) != len(genesisState.Headers) {
-		logger.Error("Number of headers and ack count do not match","HeaderCount",len(genesisState.Headers),"AckCount",genesisState.AckCount)
-		panic(errors.New("Incorrect state in state-dump , Please Check "))
-	}
-	for i,header := range genesisState.Headers {
-		checkpointHeaderIndex := helper.GetConfig().ChildBlockInterval * (genesisState.AckCount-uint64(i))
-		app.masterKeeper.AddCheckpoint(ctx,checkpointHeaderIndex,header)
+	if len(genesisState.Headers)!=0 {
+		logger.Debug("Trying to add successfull checkpoints", "NoOfHeaders", len(genesisState.Headers))
+		if int(genesisState.AckCount) != len(genesisState.Headers) {
+			logger.Error("Number of headers and ack count do not match", "HeaderCount", len(genesisState.Headers), "AckCount", genesisState.AckCount)
+			panic(errors.New("Incorrect state in state-dump , Please Check "))
+		}
+		for i, header := range genesisState.Headers {
+			checkpointHeaderIndex := helper.GetConfig().ChildBlockInterval * (genesisState.AckCount - uint64(i))
+			app.masterKeeper.AddCheckpoint(ctx, checkpointHeaderIndex, header)
+		}
 	}
 	return
 }
