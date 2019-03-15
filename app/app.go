@@ -227,18 +227,37 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 	if err != nil {
 		panic(err)
 	}
-	valSet, valUpdates := app.GetValidatorsFromGenesis(ctx,&genesisState,genesisState.AckCount)
+	var isGenesis bool
+	if len(genesisState.CurrentValSet.Validators)==0{
+		isGenesis=true
+	}else{
+		isGenesis=false
+	}
 
-	// TODO match valSet and genesisState.CurrentValSet
+	valSet, valUpdates := app.GetValidatorsFromGenesis(ctx,&genesisState,genesisState.AckCount)
+	if len(valSet.Validators) == 0 {
+		panic(errors.New("no valid validators found"))
+	}
+
+	var currentValSet hmTypes.ValidatorSet
+	if isGenesis{
+		currentValSet = valSet
+	}else{
+		currentValSet = genesisState.CurrentValSet
+	}
+
+	// TODO match valSet and genesisState.CurrentValSet for difference in accum
 	// update validator set in store
-	err = app.masterKeeper.UpdateValidatorSetInStore(ctx,valSet)
+	err = app.masterKeeper.UpdateValidatorSetInStore(ctx,currentValSet)
 	if err != nil {
 		logger.Error("Unable to marshall validator set while adding in store", "Error", err)
 		panic(err)
 	}
 
-	// increment accumulator
-	app.masterKeeper.IncreamentAccum(ctx, 1)
+	// increment accumulator if starting from genesis
+	if isGenesis{
+		app.masterKeeper.IncreamentAccum(ctx, 1)
+	}
 
 	// Set initial ack count
 	app.masterKeeper.UpdateACKCountWithValue(ctx, genesisState.AckCount)
@@ -274,14 +293,20 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 
 // returns validator genesis/existing from genesis state
 func (app *HeimdallApp) GetValidatorsFromGenesis (ctx sdk.Context,genesisState *GenesisState,ackCount uint64)(newValSet hmTypes.ValidatorSet,valUpdates []abci.ValidatorUpdate) {
-	// if genesis validators exits --- add to state and return updates and new validator set
 	if len(genesisState.GenValidators)>0{
 		logger.Debug("Loading genesis validators")
 		for _, validator := range genesisState.GenValidators {
 			hmValidator := validator.HeimdallValidator()
-
+			if ok:=hmValidator.ValidateBasic(); !ok{
+				logger.Error("Invalid validator properties","validator",hmValidator)
+				return
+			}
+			if !hmValidator.IsCurrentValidator(genesisState.AckCount){
+				logger.Error("Genesis validators should be current validators","FaultyValidator",hmValidator)
+				return
+			}
 			if ok := newValSet.Add(&hmValidator); !ok {
-				panic(errors.New("Error while adding genesis validator"))
+				panic(errors.New("error while adding genesis validator"))
 			} else {
 				// Add individual validator to state
 				app.masterKeeper.AddValidator(ctx, hmValidator)
@@ -301,9 +326,12 @@ func (app *HeimdallApp) GetValidatorsFromGenesis (ctx sdk.Context,genesisState *
 	}
 
 	// read validators
+	logger.Debug("Loading validators from state-dump")
 	for _, validator := range genesisState.Validators {
-		logger.Debug("Loading validators from state-dump")
-
+		if !validator.ValidateBasic() {
+			logger.Error("Invalid validator properties","validator",validator)
+			return
+		}
 		if ok := newValSet.Add(&validator); !ok {
 			panic(errors.New("Error while addings new validator"))
 		} else {
@@ -349,7 +377,7 @@ func (app *HeimdallApp) InsertHeaders(ctx sdk.Context,genesisState *GenesisState
 			panic(errors.New("Incorrect state in state-dump , Please Check "))
 		}
 		for i, header := range genesisState.Headers {
-			checkpointHeaderIndex := helper.GetConfig().ChildBlockInterval * (genesisState.AckCount - uint64(i))
+			checkpointHeaderIndex := helper.GetConfig().ChildBlockInterval * (uint64(i)+1)
 			app.masterKeeper.AddCheckpoint(ctx, checkpointHeaderIndex, header)
 		}
 	}
@@ -418,7 +446,6 @@ func PrepareAndSendCheckpoint(ctx sdk.Context, keeper common.Keeper, caller help
 	// check if we are proposer
 	if bytes.Equal(keeper.GetCurrentProposer(ctx).Signer.Bytes(), validatorAddress.Bytes()) {
 		logger.Info("We are proposer! Validating if checkpoint needs to be pushed", "commitedLastBlock", lastblock, "startBlock", _checkpoint.StartBlock)
-
 		// check if we need to send checkpoint or not
 		if ((lastblock + 1) == _checkpoint.StartBlock) || (lastblock == 0 && _checkpoint.StartBlock == 0) {
 			logger.Info("Sending valid checkpoint", "startBlock", _checkpoint.StartBlock)

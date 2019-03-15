@@ -1,0 +1,16 @@
+{
+  "address": "374BEA368CB9D23443D171CE85BC59F446ED1CD0",
+  "pub_key": {
+    "type": "tendermint/PubKeySecp256k1",
+    "value": "BPg50o1WUwZBkKoJSm1NSoPwdXWMiQBHyeh764Nu7JrEcP07NfJmN5b9zs4TJ2w/M/6wimjSKGe+Dt0LMWMjsiw="
+  },
+  "last_height": "354",
+  "last_round": "0",
+  "last_step": 3,
+  "last_signature": "3arVS6OFVX8lVesSpN9Ym3tRPgdU7tj7xeowVzb9TZBDIXcAWb4b+R3c7y77dqkJO03hoqUT/VUL3Pp4xqDE9AA=",
+  "last_signbytes": "DB8F6865696D64616C6C2D784F5549523084766F7465820162800280",
+  "priv_key": {
+    "type": "tendermint/PrivKeySecp256k1",
+    "value": "ub9MjOx+BAFg85WGe5I7C5rnFQ7olo06Z3GMZY6NftA="
+  }
+}

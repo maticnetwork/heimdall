@@ -18,6 +18,7 @@ import (
 	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"math"
 )
 
 type IContractCaller interface {
@@ -122,9 +123,12 @@ func (c *ContractCaller) GetValidatorInfo(valID types.ValidatorID) (validator ty
 		return
 	}
 
+	decimals := math.Pow10(-18)
+	newAmount:= decimals*float64(amount.Int64())
+
 	validator = types.Validator{
 		ID:         valID,
-		Power:      amount.Uint64(),
+		Power:      uint64(newAmount),
 		StartEpoch: startEpoch.Uint64(),
 		EndEpoch:   endEpoch.Uint64(),
 		Signer:     signer,

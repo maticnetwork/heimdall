@@ -69,13 +69,13 @@ func HandleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper, co
 			common.CheckpointLogger.Error("Checkpoint already exists",
 				"currentTip", lastCheckpoint.EndBlock,
 				"startBlock", msg.StartBlock)
-			return common.ErrBadBlockDetails(k.Codespace).Result()
+			return common.ErrOldCheckpoint(k.Codespace).Result()
 		}
 		if lastCheckpoint.EndBlock+1 != msg.StartBlock {
 			common.CheckpointLogger.Error("Checkpoint not in countinuity",
 				"currentTip", lastCheckpoint.EndBlock,
 				"startBlock", msg.StartBlock)
-			return common.ErrBadBlockDetails(k.Codespace).Result()
+			return common.ErrDisCountinuousCheckpoint(k.Codespace).Result()
 
 		}
 	} else if err.Error() == common.ErrNoCheckpointFound(k.Codespace).Error() && msg.StartBlock != 0 {

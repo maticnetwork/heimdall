@@ -1,0 +1,15 @@
+{
+  "mainRPCUrl": "http://localhost:8545",
+  "maticRPCUrl": "https://testnet.matic.network",
+  "stakeManagerAddress": "0xf61f636df4443d91468bd40b60582997524536ad",
+  "rootchainAddress": "0x412fda7e6418af198fbc13f04b68e00ad9d6dacc",
+  "childBlockInterval": 10000,
+  "checkpointerPollInterval": 60000,
+  "syncerPollInterval": 30000,
+  "noackPollInterval": 15000000000,
+  "avgCheckpointLength": 256,
+  "maxCheckpointLength": 1024,
+  "noackWaitTime": 500000000000,
+  "checkpointBufferTime": 1800000000000,
+  "confirmationBlocks": 20
+}

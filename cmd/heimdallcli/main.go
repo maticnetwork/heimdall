@@ -111,7 +111,7 @@ func ExportCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 		RunE: func(_ *cobra.Command, _ []string) error {
 
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
+			fmt.Println("cofnig %v",ctx.Config.Genesis)
 			config := ctx.Config
 			config.SetRoot(viper.GetString(cli.HomeFlag))
 

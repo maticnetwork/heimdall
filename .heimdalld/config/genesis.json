@@ -1,0 +1,45 @@
+{
+  "genesis_time": "2019-03-13T10:29:36.669127613Z",
+  "chain_id": "heimdall-xOUIR0",
+  "consensus_params": {
+    "block_size_params": {
+      "max_bytes": "22020096",
+      "max_gas": "-1"
+    },
+    "evidence_params": {
+      "max_age": "100000"
+    }
+  },
+  "app_hash": "",
+  "app_state": {
+    "buffered_checkpoint": {
+      "proposer": "0x0000000000000000000000000000000000000000",
+      "startBlock": 0,
+      "endBlock": 0,
+      "rootHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "timestamp": 0
+    },
+    "checkpoint_cache": false,
+    "ack_cache": false,
+    "last_no_ack": 0,
+    "ack_count": 0,
+    "gen_validators": [
+      {
+        "id": 1,
+        "start_epoch": 0,
+        "end_epoch": 0,
+        "power": 1,
+        "pub_key": "0x04f839d28d5653064190aa094a6d4d4a83f075758c890047c9e87beb836eec9ac470fd3b35f2663796fdcece13276c3f33feb08a68d22867be0edd0b316323b22c",
+        "signer": "0x374bea368cb9d23443d171ce85bc59f446ed1cd0"
+      }
+    ],
+    "validators": null,
+    "current_val_set": {
+      "validators": null,
+      "proposer": null
+    },
+    "gentxs": null,
+    "accounts": null,
+    "headers": null
+  }
+}

@@ -24,6 +24,8 @@ const (
 	CodeTooManyNoAck         CodeType = 1506
 	CodeLowBal               CodeType = 1507
 	CodeNoCheckpoint         CodeType = 1508
+	CodeOldCheckpoint CodeType=1509
+	CodeDisCountinuousCheckpoint CodeType = 1510
 
 	CodeOldValidator       CodeType = 2500
 	CodeNoValidator        CodeType = 2501
@@ -51,11 +53,19 @@ func ErrBadProposerDetails(codespace sdk.CodespaceType, proposer common.Address)
 }
 
 func ErrBadBlockDetails(codespace sdk.CodespaceType) sdk.Error {
-	return newError(codespace, CodeInvalidBlockInput, "Checkpoint is not valid")
+	return newError(codespace, CodeInvalidBlockInput, "Wrong roothash for given start and end block numbers")
 }
 
 func ErrBadAck(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeInvalidACK, "Ack Not Valid")
+}
+
+func ErrOldCheckpoint(codespace sdk.CodespaceType) sdk.Error{
+	return newError(codespace,CodeOldCheckpoint,"Checkpoint already received for given start and end block")
+}
+
+func ErrDisCountinuousCheckpoint(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace,CodeDisCountinuousCheckpoint,"Checkpoint not in countinuity")
 }
 
 func ErrNoACK(codespace sdk.CodespaceType, timeRemaining float64) sdk.Error {

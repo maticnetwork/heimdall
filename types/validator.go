@@ -22,7 +22,6 @@ type Validator struct {
 	Accum int64 `json:"accum"`
 }
 
-
 // IsCurrentValidator checks if validator is in current validator set
 func (v *Validator) IsCurrentValidator(ackCount uint64) bool {
 	// current epoch will be ack count + 1
@@ -36,6 +35,23 @@ func (v *Validator) IsCurrentValidator(ackCount uint64) bool {
 	return false
 }
 
+func (v *Validator) ValidateBasic() bool {
+	if v.StartEpoch <0 || v.EndEpoch <0 {
+		return false
+	}
+	if bytes.Equal(v.PubKey.Bytes(),ZeroPubKey.Bytes()){
+		return false
+	}
+	if bytes.Equal(v.Signer.Bytes(),[]byte("")){
+		return false
+	}
+	if v.ID <0{
+		return false
+	}
+	return true
+}
+
+// Marshall validator to bytes
 func MarshallValidator(cdc *codec.Codec, validator Validator) (bz []byte, err error) {
 	bz, err = cdc.MarshalBinary(validator)
 	if err != nil {
@@ -44,6 +60,7 @@ func MarshallValidator(cdc *codec.Codec, validator Validator) (bz []byte, err er
 	return bz, nil
 }
 
+// Unmarshall validator bytes to heimdall validator
 func UnmarshallValidator(cdc *codec.Codec, value []byte) (Validator, error) {
 	var validator Validator
 	// unmarshall validator and return
@@ -82,6 +99,7 @@ func (v *Validator) CompareAccum(other *Validator) *Validator {
 	}
 }
 
+// return string representation of heimdall validator
 func (v *Validator) String() string {
 	if v == nil {
 		return "nil-Validator"

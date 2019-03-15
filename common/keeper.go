@@ -280,6 +280,11 @@ func GetValidatorMapKey(address []byte) []byte {
 
 // AddValidator adds validator indexed with address
 func (k *Keeper) AddValidator(ctx sdk.Context, validator types.Validator) error {
+	// TODO uncomment
+	//if ok:=validator.ValidateBasic(); !ok{
+	//	// return error
+	//}
+
 	store := ctx.KVStore(k.StakingKey)
 
 	bz, err := types.MarshallValidator(k.cdc, validator)
