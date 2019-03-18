@@ -10,21 +10,22 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tendermint/tendermint/libs/cli"
 
+	"encoding/json"
+	"fmt"
+	"strconv"
+
+	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/maticnetwork/heimdall/app"
 	checkpoint "github.com/maticnetwork/heimdall/checkpoint/cli"
+	hmcmn "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	staking "github.com/maticnetwork/heimdall/staking/cli"
-	"github.com/spf13/viper"
-	"encoding/json"
-	"github.com/cosmos/cosmos-sdk/codec"
-	"fmt"
-	"github.com/cosmos/cosmos-sdk/server"
-	"github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/tendermint/tendermint/libs/common"
-	"strconv"
-	hmcmn "github.com/maticnetwork/heimdall/common"
-	tmTypes "github.com/tendermint/tendermint/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
+	"github.com/spf13/viper"
+	"github.com/tendermint/tendermint/libs/common"
+	tmTypes "github.com/tendermint/tendermint/types"
 
 	"bytes"
 	"path/filepath"
@@ -79,7 +80,6 @@ func main() {
 	)
 	rootCmd.AddCommand(ExportCmd(ctx, cdc))
 
-
 	// add proxy, version and key info
 	rootCmd.AddCommand(
 		client.LineBreak,
@@ -111,7 +111,6 @@ func ExportCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 		RunE: func(_ *cobra.Command, _ []string) error {
 
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			fmt.Println("cofnig %v",ctx.Config.Genesis)
 			config := ctx.Config
 			config.SetRoot(viper.GetString(cli.HomeFlag))
 
@@ -153,25 +152,25 @@ func ExportCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			////
 			//// Caches
 			////
-			storedCheckpointCache,err:= cliCtx.QueryStore(hmcmn.CheckpointCacheKey,"checkpoint")
-			if err!=nil{
+			storedCheckpointCache, err := cliCtx.QueryStore(hmcmn.CheckpointCacheKey, "checkpoint")
+			if err != nil {
 				return err
 			}
-			var checkpointCache  bool
-			if bytes.Compare(storedCheckpointCache,hmcmn.DefaultValue) == 0{
+			var checkpointCache bool
+			if bytes.Compare(storedCheckpointCache, hmcmn.DefaultValue) == 0 {
 				checkpointCache = true
-			}else{
+			} else {
 				checkpointCache = false
 			}
 
-			storedCheckpointACK,err := cliCtx.QueryStore(hmcmn.CheckpointACKCacheKey,"checkpoint")
-			if err!=nil{
+			storedCheckpointACK, err := cliCtx.QueryStore(hmcmn.CheckpointACKCacheKey, "checkpoint")
+			if err != nil {
 				return err
 			}
-			var checkpointACKCache  bool
-			if bytes.Compare(storedCheckpointACK,hmcmn.DefaultValue) ==0{
+			var checkpointACKCache bool
+			if bytes.Compare(storedCheckpointACK, hmcmn.DefaultValue) == 0 {
 				checkpointACKCache = true
-			}else{
+			} else {
 				checkpointACKCache = false
 			}
 			////
@@ -179,9 +178,9 @@ func ExportCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			////
 			var lastNoACKTime int64
 			lastNoACK, err := cliCtx.QueryStore(hmcmn.CheckpointNoACKCacheKey, "checkpoint")
-			if err == nil && len(lastNoACK)!=0{
+			if err == nil && len(lastNoACK) != 0 {
 				lastNoACKTime, err = strconv.ParseInt(string(lastNoACK), 10, 64)
-				if err!=nil{
+				if err != nil {
 					return err
 				}
 			}
@@ -193,12 +192,12 @@ func ExportCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			for _,kv_pair := range storedHeaders {
+			for _, kv_pair := range storedHeaders {
 				var checkpointHeader hmTypes.CheckpointBlockHeader
-				if cdc.UnmarshalBinary(kv_pair.Value,&checkpointHeader); err!=nil{
+				if cdc.UnmarshalBinary(kv_pair.Value, &checkpointHeader); err != nil {
 					return err
 				}
-				headers=append(headers, checkpointHeader)
+				headers = append(headers, checkpointHeader)
 			}
 			////
 			//// validators
@@ -208,12 +207,12 @@ func ExportCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			for _,kv_pair := range storedVals {
+			for _, kv_pair := range storedVals {
 				var hmVal hmTypes.Validator
-				if cdc.UnmarshalBinary(kv_pair.Value,&hmVal); err!=nil{
+				if cdc.UnmarshalBinary(kv_pair.Value, &hmVal); err != nil {
 					return err
 				}
-				validators=append(validators, hmVal)
+				validators = append(validators, hmVal)
 			}
 			////
 			//// Current val set
@@ -223,20 +222,20 @@ func ExportCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if err:=cdc.UnmarshalBinary(storedCurrValSet,&currentValSet); err!=nil{
+			if err := cdc.UnmarshalBinary(storedCurrValSet, &currentValSet); err != nil {
 				return err
 			}
 
 			// create genesis state
 			appState := &app.GenesisState{
-				Validators: validators,
-				AckCount:uint64(ackCount),
-				BufferedCheckpoint:buffer_checkpoint,
-				CheckpointCache:checkpointCache,
-				CheckpointACKCache:checkpointACKCache,
-				LastNoACK:uint64(lastNoACKTime),
-				Headers:headers,
-				CurrentValSet:currentValSet,
+				Validators:         validators,
+				AckCount:           uint64(ackCount),
+				BufferedCheckpoint: buffer_checkpoint,
+				CheckpointCache:    checkpointCache,
+				CheckpointACKCache: checkpointACKCache,
+				LastNoACK:          uint64(lastNoACKTime),
+				Headers:            headers,
+				CurrentValSet:      currentValSet,
 			}
 
 			appStateJSON, err := json.Marshal(appState)
@@ -256,7 +255,7 @@ func ExportCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			}
 
 			fmt.Fprintf(os.Stderr, "%s\n", string(out))
-			return writeGenesisFile(rootify("config/dump-genesis.json",config.RootDir), chainID, appStateJSON)
+			return writeGenesisFile(rootify("config/dump-genesis.json", config.RootDir), chainID, appStateJSON)
 
 			return nil
 		},

@@ -114,7 +114,7 @@ func HandleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper, co
 
 	// indicate Checkpoint received by adding in cache, cache cleared in endblock
 	k.SetCheckpointCache(ctx, common.DefaultValue)
-	common.CheckpointLogger.Debug("Set Checkpoint Cache", "CheckpointReceived",k.GetCheckpointCache(ctx, common.CheckpointCacheKey))
+	common.CheckpointLogger.Debug("Set Checkpoint Cache", "CheckpointReceived", k.GetCheckpointCache(ctx, common.CheckpointCacheKey))
 
 	// send tags
 	return sdk.Result{}
@@ -143,7 +143,7 @@ func HandleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 	}
 
 	common.CheckpointLogger.Debug("HeaderBlock fetched", "headerBlock", msg.HeaderBlock, "start", start,
-		"end", end, "Roothash", root, "CreatedAt", createdAt,"Latest",latestBlock.Number.Uint64())
+		"end", end, "Roothash", root, "CreatedAt", createdAt, "Latest", latestBlock.Number.Uint64())
 
 	// get last checkpoint from buffer
 	headerBlock, err := k.GetCheckpointFromBuffer(ctx)

@@ -49,8 +49,8 @@ run-server:
 	./build/heimdalld rest-server 
 
 start-server:
-	mkdir -p ./logs &
-	./build/heimdalld rest-server > ./logs/heimdalld-rest-server.log &
+	mkdir -p ./logs &&
+	./build/heimdalld rest-server > ./logs/heimdalld-rest-server.log &&
 
 start:
 	mkdir -p ./logs &
