@@ -22,7 +22,6 @@ type Validator struct {
 	Accum int64 `json:"accum"`
 }
 
-
 // IsCurrentValidator checks if validator is in current validator set
 func (v *Validator) IsCurrentValidator(ackCount uint64) bool {
 	// current epoch will be ack count + 1
@@ -36,6 +35,22 @@ func (v *Validator) IsCurrentValidator(ackCount uint64) bool {
 	return false
 }
 
+// Validates validator
+func (v *Validator) ValidateBasic() bool {
+	if v.StartEpoch < 0 || v.EndEpoch < 0 {
+		return false
+	}
+	if bytes.Equal(v.PubKey.Bytes(), ZeroPubKey.Bytes()) {
+		return false
+	}
+	if bytes.Equal(v.Signer.Bytes(), []byte("")) {
+		return false
+	}
+	if v.ID < 0 {
+		return false
+	}
+	return true
+}
 func MarshallValidator(cdc *codec.Codec, validator Validator) (bz []byte, err error) {
 	bz, err = cdc.MarshalBinary(validator)
 	if err != nil {

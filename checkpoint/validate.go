@@ -3,7 +3,6 @@ package checkpoint
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"math/big"
 
 	ethCommon "github.com/ethereum/go-ethereum/common"
@@ -11,7 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto/sha3"
 	"github.com/ethereum/go-ethereum/rpc"
-	merkle "github.com/xsleonard/go-merkle"
+	"github.com/xsleonard/go-merkle"
 
 	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
@@ -108,8 +107,8 @@ func convert(input []([32]byte)) [][]byte {
 func convertTo32(input []byte) (output [32]byte, err error) {
 	l := len(input)
 	if l > 32 || l == 0 {
-		err = fmt.Errorf("Input length is greater than 32")
-		common.CheckpointLogger.Error("Input length is greater than 32 while converting", "error", err)
+		//err = fmt.Errorf("input length is greater than 32")
+		//common.CheckpointLogger.Error("input length is greater than 32 while converting", "error", err)
 		return
 	}
 	copy(output[32-l:], input[:])

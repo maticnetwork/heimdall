@@ -146,6 +146,7 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 				MaxCheckpointLength:      helper.MaxCheckpointLength,
 				NoACKWaitTime:            helper.NoACKWaitTime,
 				CheckpointBufferTime:     helper.CheckpointBufferTime,
+				ConfirmationBlocks: helper.ConfirmationBlocks,
 			}
 
 			heimdallConfBytes, err := json.MarshalIndent(heimdallConf, "", "  ")

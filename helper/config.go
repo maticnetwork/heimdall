@@ -31,14 +31,15 @@ const (
 	// Variables below to be used while init
 	MainRPCUrl                      = "https://ropsten.infura.io"
 	MaticRPCUrl                     = "https://testnet.matic.network"
-	NoACKWaitTime                   = time.Second * 300 // Time ack service waits to clear buffer and elect new proposer (300 seconds)
-	CheckpointBufferTime            = time.Second * 256 // Time checkpoint is allowed to stay in buffer (256 seconds)
-	DefaultCheckpointerPollInterval = 60 * 1000         // 1 minute in milliseconds
-	DefaultSyncerPollInterval       = 30 * 1000         // 0.5 seconds in milliseconds
+	NoACKWaitTime                   = time.Second * 500  // Time ack service waits to clear buffer and elect new proposer (500 seconds ~ 8 mins)
+	CheckpointBufferTime            = time.Second * 1800 // Time checkpoint is allowed to stay in buffer (1800 seconds ~ 30 mins)
+	DefaultCheckpointerPollInterval = 60 * 1000          // 1 minute in milliseconds
+	DefaultSyncerPollInterval       = 30 * 1000          // 0.5 seconds in milliseconds
 	DefaultNoACKPollInterval        = 15 * time.Second
 	DefaultCheckpointLength         = 256   // checkpoint number starts with 0, so length = defaultCheckpointLength -1
 	MaxCheckpointLength             = 1024  // max blocks in one checkpoint
 	DefaultChildBlockInterval       = 10000 // difference between 2 indexes of header blocks
+	ConfirmationBlocks              = 6
 )
 
 var (
@@ -72,12 +73,15 @@ type Configuration struct {
 	// wait time related options
 	NoACKWaitTime        time.Duration `json:"noackWaitTime"`        // Time ack service waits to clear buffer and elect new proposer
 	CheckpointBufferTime time.Duration `json:"checkpointBufferTime"` // Time checkpoint is allowed to stay in buffer
+
+	ConfirmationBlocks uint64 `json:"confirmationBlocks"` // Number of blocks for confirmation
 }
 
 var conf Configuration
 
 // MainChainClient stores eth client for Main chain Network
 var mainChainClient *ethclient.Client
+var mainRPCClient *rpc.Client
 
 // MaticClient stores eth/rpc client for Matic Network
 var maticClient *ethclient.Client
@@ -136,29 +140,17 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 		log.Fatal(err)
 	}
 
-	// setup eth client
-	if mainChainClient, err = ethclient.Dial(conf.MainRPCUrl); err != nil {
-		Logger.Error("Error while creating main chain client", "error", err)
+	if mainRPCClient, err = rpc.Dial(conf.MainRPCUrl); err != nil {
+		Logger.Error("Error while creating matic chain RPC client", "error", err)
 		log.Fatal(err)
 	}
-
-	//if header, err := mainChainClient.HeaderByNumber(context.Background(), nil); err != nil {
-	//	Logger.Error("Unable to connect to mainchain", "Error", err)
-	//} else {
-	//	Logger.Debug("Connected successfully to mainchain", "LatestHeader", header.Number)
-	//}
+	mainChainClient = ethclient.NewClient(mainRPCClient)
 
 	if maticRPCClient, err = rpc.Dial(conf.MaticRPCUrl); err != nil {
 		Logger.Error("Error while creating matic chain RPC client", "error", err)
 		log.Fatal(err)
 	}
 	maticClient = ethclient.NewClient(maticRPCClient)
-
-	//if header, err := maticClient.HeaderByNumber(context.Background(), nil); err != nil {
-	//	Logger.Error("Unable to connect to matic chain", "Error", err)
-	//} else {
-	//	Logger.Debug("Connected successfully to matic chain", "LatestHeader", header.Number)
-	//}
 
 	// load pv file, unmarshall and set to privObject
 	privVal := privval.LoadFilePV(filepath.Join(configDir, "priv_validator.json"))
@@ -217,6 +209,11 @@ func GetStakeManagerABI() (abi.ABI, error) {
 //
 // Get main/matic clients
 //
+
+// GetMainChainRPCClient returns main chain RPC client
+func GetMainChainRPCClient() *rpc.Client {
+	return mainRPCClient
+}
 
 // GetMainClient returns main chain's eth client
 func GetMainClient() *ethclient.Client {

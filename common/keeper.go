@@ -280,6 +280,11 @@ func GetValidatorMapKey(address []byte) []byte {
 
 // AddValidator adds validator indexed with address
 func (k *Keeper) AddValidator(ctx sdk.Context, validator types.Validator) error {
+	// TODO uncomment
+	//if ok:=validator.ValidateBasic(); !ok{
+	//	// return error
+	//}
+
 	store := ctx.KVStore(k.StakingKey)
 
 	bz, err := types.MarshallValidator(k.cdc, validator)
@@ -470,12 +475,6 @@ func (k *Keeper) SetValidatorIDToSignerAddr(ctx sdk.Context, valID types.Validat
 	store := ctx.KVStore(k.StakingKey)
 	store.Set(GetValidatorMapKey(valID.Bytes()), signerAddr.Bytes())
 }
-
-// // SetValidatorAddrToSignerAddr set mapping for validator address to signer address
-// func (k *Keeper) SetValidatorAddrToSignerAddr(ctx sdk.Context, validatorAddr common.Address, signerAddr common.Address) {
-// 	store := ctx.KVStore(k.StakingKey)
-// 	store.Set(GetValidatorMapKey(validatorAddr.Bytes()), signerAddr.Bytes())
-// }
 
 // GetSignerFromValidator get signer address from validator ID
 func (k *Keeper) GetSignerFromValidatorID(ctx sdk.Context, valID types.ValidatorID) (common.Address, bool) {

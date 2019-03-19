@@ -101,6 +101,20 @@
 		"constant": false,
 		"inputs": [
 			{
+				"name": "_token",
+				"type": "address"
+			}
+		],
+		"name": "setToken",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
 				"name": "newThreshold",
 				"type": "uint256"
 			}
@@ -944,6 +958,20 @@
 		"type": "function"
 	},
 	{
+		"constant": true,
+		"inputs": [],
+		"name": "token",
+		"outputs": [
+			{
+				"name": "",
+				"type": "address"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
 		"inputs": [],
 		"payable": false,
 		"stateMutability": "nonpayable",
@@ -1015,8 +1043,8 @@
 		"inputs": [
 			{
 				"indexed": true,
-				"name": "validator",
-				"type": "address"
+				"name": "validatorId",
+				"type": "uint256"
 			},
 			{
 				"indexed": true,
