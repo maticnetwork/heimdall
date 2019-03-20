@@ -102,10 +102,13 @@ func (v *Validator) String() string {
 		return "nil-Validator"
 	}
 
-	return fmt.Sprintf("Validator{%v::%v P:%v}",
+	return fmt.Sprintf("Validator{%v::%v P:%v Start:%v End:%v A:%v}",
 		v.ID,
 		v.Signer.String(),
 		v.Power,
+		v.StartEpoch,
+		v.EndEpoch,
+		v.Accum,
 	)
 }
 

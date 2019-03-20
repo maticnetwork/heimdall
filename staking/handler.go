@@ -2,6 +2,7 @@ package staking
 
 import (
 	"bytes"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
@@ -117,25 +118,37 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k hmCommon.Keep
 		hmCommon.StakingLogger.Error("Fetching of validator from store failed", "validatorAddress", msg.ID)
 		return hmCommon.ErrNoValidator(k.Codespace).Result()
 	}
+	oldValidator := validator.Copy()
 
-	//TODO check if signer change txhash is new or old
+	// TODO check if signer change txhash is new or old
 	// save last updated at block number somewhere and check if current block is larger than last updates
 
 	// check if we are actually updating signer
 	if !bytes.Equal(newSigner.Bytes(), validator.Signer.Bytes()) {
 		// Update signer in prev Validator
-		oldSigner := validator.Signer
 		validator.Signer = newSigner
 		validator.PubKey = newPubKey
-		hmCommon.StakingLogger.Debug("Updating new signer", "signer", newSigner.String(), "oldSigner", oldSigner.String(), "validatorID", msg.ID)
+		hmCommon.StakingLogger.Debug("Updating new signer", "signer", newSigner.String(), "oldSigner", oldValidator.Signer.String(), "validatorID", msg.ID)
 	}
 
 	// power change
 	if msg.NewAmount != "" && validator.Power != msg.GetNewPower() {
+		hmCommon.StakingLogger.Debug("Updating power", "newPower", msg.GetNewPower(), "oldPower", validator.Power, "validatorID", msg.ID)
 		validator.Power = msg.GetNewPower()
-		hmCommon.StakingLogger.Debug("Updating power", "newPower", validator.Power, "validatorID", msg.ID)
 	}
 
+	hmCommon.StakingLogger.Error("Removing old validator", "Validator", oldValidator.String())
+	// remove old validator from HM
+	oldValidator.EndEpoch = k.GetACKCount(ctx)
+	// remove old validator from TM
+	oldValidator.Power = 0
+	err = k.AddValidator(ctx, *oldValidator)
+	if err != nil {
+		hmCommon.StakingLogger.Error("Unable to update signer", "error", err, "ValidatorID", validator.ID)
+		return hmCommon.ErrSignerUpdateError(k.Codespace).Result()
+	}
+
+	hmCommon.StakingLogger.Error("Adding new validator", "Validator", validator.String())
 	// save validator
 	err = k.AddValidator(ctx, validator)
 	if err != nil {

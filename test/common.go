@@ -1,12 +1,14 @@
 package test
 
 import (
+	"bytes"
 	"math/rand"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	ethcmn "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -15,13 +17,14 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 
 	"encoding/hex"
+	"os"
+	"time"
+
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/types"
-	"os"
-	"time"
 )
 
 func MakeTestCodec() *codec.Codec {
@@ -107,4 +110,22 @@ func GenRandomVal(count int, startBlock uint64, power uint64, timeAlive uint64, 
 		validators = append(validators, newVal)
 	}
 	return
+}
+
+// finds address in give validator slice
+func FindSigner(signer ethcmn.Address, vals []types.Validator) bool {
+	for _, val := range vals {
+		if bytes.Compare(signer.Bytes(), val.Signer.Bytes()) == 0 {
+			return true
+		}
+	}
+	return false
+}
+
+// print validators
+func PrintVals(t *testing.T, valset *types.ValidatorSet) {
+	t.Log("Printing validators")
+	for i, val := range valset.Validators {
+		t.Log("Validator ===> ", "Index", i, "ValidatorInfo", val.String())
+	}
 }

@@ -1,16 +1,9 @@
 package test
 
 import (
-	"bytes"
-	"encoding/json"
-	"strconv"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/maticnetwork/heimdall/staking"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"time"
@@ -223,6 +216,9 @@ func TestValUpdates(t *testing.T) {
 
 }
 
+// pass 0 as time alive to generate non de-activated validators
+//
+// Generated and loads validators to validator set
 func LoadValidatorSet(count int, t *testing.T, keeper hmcmn.Keeper, ctx sdk.Context, randomise bool, timeAlive int) types.ValidatorSet {
 	// create 4 validators
 	validators := GenRandomVal(4, 0, 10, uint64(timeAlive), randomise, 1)
@@ -389,85 +385,4 @@ func TestFirstNoACK(t *testing.T) {
 	got := checkpoint.HandleMsgCheckpointNoAck(ctx, msgNoACK, keeper)
 	require.True(t, got.IsOK(), "expected send-no-ack to be ok, got %v", got)
 
-}
-
-// Test Staking handlers
-// ------
-
-func TestHandleMsgValidatorJoin(t *testing.T) {
-	contractCallerObj := mocks.IContractCaller{}
-	ctx, keeper := CreateTestInput(t, false)
-	mockVals := GenRandomVal(1, 0, 10, 10, false, 1)
-	// select first validator from slice
-	mockVal := mockVals[0]
-	t.Log("Mock validator generated", "Validator", mockVal.Signer.String())
-	contractCallerObj.On("GetValidatorInfo", mock.Anything).Return(mockVal, nil)
-
-	// insert new validator
-	msgValJoin := staking.NewMsgValidatorJoin(uint64(mockVal.ID), mockVal.PubKey, mockVal.StartEpoch, mockVal.EndEpoch, json.Number(strconv.Itoa(int(mockVal.Accum))))
-	got := staking.HandleMsgValidatorJoin(ctx, msgValJoin, keeper, &contractCallerObj)
-	require.True(t, got.IsOK(), "expected validator join to be ok, got %v", got)
-	// validator is stored properly and signer is created properly
-	storedVal, err := keeper.GetValidatorInfo(ctx, mockVal.Signer.Bytes())
-	require.Empty(t, err, "Unable to get validator info from val address,ValAddr:%v Error:%v ", mockVal.Signer.String(), err)
-	require.Equal(t, mockVal.PubKey.Address(), storedVal.Signer, "Signer address should match")
-	// signer to validator mapping should exist properly
-	storedSigner, found := keeper.GetSignerFromValidatorID(ctx, mockVal.ID)
-	require.True(t, found, "signer and validator address should be mapped, got %v", found)
-	require.Equal(t, mockVal.Signer.Bytes(), storedSigner.Bytes(), "Signer address in signer=>validator map should be same")
-	// insert validator again
-	got = staking.HandleMsgValidatorJoin(ctx, msgValJoin, keeper, &contractCallerObj)
-	require.True(t, !got.IsOK(), "expected validator join to be not-ok, got %v", got)
-
-}
-
-func TestHandleMsgValidatorExit(t *testing.T) {
-	contractCallerObj := mocks.IContractCaller{}
-	ctx, keeper := CreateTestInput(t, false)
-	// pass 0 as time alive to generate non de-activated validators
-	LoadValidatorSet(4, t, keeper, ctx, false, 0)
-	validators := keeper.GetCurrentValidators(ctx)
-	validators[0].EndEpoch = 10
-	msg := staking.NewMsgValidatorExit(uint64(validators[0].ID))
-	contractCallerObj.On("GetValidatorInfo", validators[0].Signer).Return(validators[0], nil)
-
-	got := staking.HandleMsgValidatorExit(ctx, msg, keeper, &contractCallerObj)
-	require.True(t, got.IsOK(), "expected validator exit to be ok, got %v", got)
-
-	got = staking.HandleMsgValidatorExit(ctx, msg, keeper, &contractCallerObj)
-	require.True(t, !got.IsOK(), "expected validator exit to be ok, got %v", got)
-	validator, found := keeper.GetValidatorFromValID(ctx, validators[0].ID)
-
-	require.True(t, found, "Validator should be present even after deactivation")
-	require.Equal(t, 10, int(validator.EndEpoch), "end epoch should be set to 10")
-
-	keeper.UpdateACKCountWithValue(ctx, 20)
-	currentVals := keeper.GetCurrentValidators(ctx)
-	require.Equal(t, 3, len(currentVals), "No validators should exist after epoch passes")
-
-	found = FindSigner(validators[0].Signer, currentVals)
-	require.True(t, !found, "Validator should not exist in current val set")
-}
-
-func TestHandleMsgValidatorUpdate(t *testing.T) {
-	ctx, keeper := CreateTestInput(t, false)
-	// pass 0 as time alive to generate non de-activated validators
-	LoadValidatorSet(4, t, keeper, ctx, false, 0)
-	validators := keeper.GetCurrentValidators(ctx)
-	newSigner := GenRandomVal(1, 0, 10, 10, false, 1)
-	msg := staking.NewMsgValidatorUpdate(uint64(validators[0].ID), newSigner[0].PubKey, json.Number(int(newSigner[0].Accum)))
-	got := staking.HandleMsgSignerUpdate(ctx, msg, keeper)
-	require.True(t, got.IsOK(), "expected validator update to be ok, got %v", got)
-}
-
-// ------
-
-// finds address in give validator slice
-func FindSigner(signer common.Address, vals []types.Validator) bool {
-	for _, val := range vals {
-		if bytes.Compare(signer.Bytes(), val.Signer.Bytes()) == 0 {
-			return true
-		}
-	}
-	return false
 }

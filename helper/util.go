@@ -33,15 +33,6 @@ func UpdateValidators(
 	validators []*hmTypes.Validator,
 	ackCount uint64,
 ) error {
-
-	// var filteredValidators []*hmTypes.Validator
-	// for _, v := range validators {
-	// 	key := hex.EncodeToString(v.Signer.Bytes())
-	// 	s, exists := validatorToSigner[key]
-	// 	if exists && bytes.Equal(v.Signer.Bytes(), s.Bytes()) {
-	// 		filteredValidators = append(filteredValidators, v)
-	// 	}
-	// }
 	for _, validator := range validators {
 		address := validator.Signer.Bytes()
 		_, val := currentSet.GetByAddress(address)
@@ -152,5 +143,3 @@ func CreateAndSendTx(msg sdk.Msg, cliCtx context.CLIContext) (err error) {
 
 	return nil
 }
-
-
