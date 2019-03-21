@@ -1,6 +1,7 @@
 package helper
 
 import (
+	"fmt"
 	"math/big"
 
 	"context"
@@ -17,8 +18,9 @@ import (
 
 	"strings"
 
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"math"
+
+	"github.com/ethereum/go-ethereum/accounts/abi"
 )
 
 type IContractCaller interface {
@@ -64,6 +66,7 @@ func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 		Logger.Error("Error creating stakeManagerInstance while getting validator info", "error", err)
 		return contractCallerObj, err
 	}
+	fmt.Println("main chain client %v %v", GetMainClient(), GetMainChainRPCClient())
 	contractCallerObj.mainChainClient = GetMainClient()
 	contractCallerObj.mainChainRPC = GetMainChainRPCClient()
 	contractCallerObj.stakeManagerInstance = stakeManagerInstance
@@ -124,7 +127,7 @@ func (c *ContractCaller) GetValidatorInfo(valID types.ValidatorID) (validator ty
 	}
 
 	decimals := math.Pow10(-18)
-	newAmount:= decimals*float64(amount.Int64())
+	newAmount := decimals * float64(amount.Int64())
 
 	validator = types.Validator{
 		ID:         valID,
@@ -198,19 +201,16 @@ func (c *ContractCaller) IsTxConfirmed(tx common.Hash) bool {
 }
 
 func (c *ContractCaller) SigUpdateEvent(tx common.Hash) (id uint64, newSigner common.Address, oldSigner common.Address, err error) {
+	fmt.Printf("mainchainc  %v", c.mainChainClient)
 	txReceipt, err := c.mainChainClient.TransactionReceipt(context.Background(), tx)
 	if err != nil {
 		Logger.Error("Unable to get transaction receipt by hash", "Error", err)
 		return
 	}
 	for _, vLog := range txReceipt.Logs {
-		var event stakemanager.StakemanagerSignerChange
-		err = c.stakeManagerABI.Unpack(&event, "SignerChange", vLog.Data)
-		if err != nil {
-			Logger.Error("unable to unpack SIGNER CHANGE event", "Error", err)
-			return
-		}
-		return event.ValidatorId.Uint64(), event.NewSigner, event.OldSigner, nil
+		oldSigner = common.BytesToAddress(vLog.Topics[2].Bytes())
+		newSigner = common.BytesToAddress(vLog.Topics[3].Bytes())
+		id = vLog.Topics[1].Big().Uint64()
 	}
 	return
 }

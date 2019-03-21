@@ -108,5 +108,5 @@ func TestHandleMsgValidatorJoin(t *testing.T) {
 	// insert validator again
 	got = staking.HandleMsgValidatorJoin(ctx, msgValJoin, keeper, &contractCallerObj)
 	require.True(t, !got.IsOK(), "expected validator join to be not-ok, got %v", got)
-
+	// check if new validator gets added in validator set
 }
