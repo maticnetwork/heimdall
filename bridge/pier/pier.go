@@ -68,7 +68,7 @@ func isProposer() bool {
 		return false
 	}
 	defer resp.Body.Close()
-	pierLogger.Debug("Request for proposer was successfull", "Count", count, "Status", resp.Status)
+	pierLogger.Debug("Fetched proposer", "Count", count, "Status", resp.Status)
 	if resp.StatusCode == 200 {
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {

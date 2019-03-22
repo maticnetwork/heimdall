@@ -201,6 +201,9 @@ func proposerHandlerFn(
 			w.Write([]byte(err.Error()))
 			return
 		}
+		if times > len(_validatorSet.Validators) {
+			times = len(_validatorSet.Validators)
+		}
 
 		// proposers
 		var proposers []hmTypes.Validator

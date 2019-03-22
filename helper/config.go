@@ -31,12 +31,12 @@ const (
 	// Variables below to be used while init
 	MainRPCUrl                      = "https://ropsten.infura.io"
 	MaticRPCUrl                     = "https://testnet.matic.network"
-	NoACKWaitTime                   = time.Second * 500  // Time ack service waits to clear buffer and elect new proposer (500 seconds ~ 8 mins)
-	CheckpointBufferTime            = time.Second * 1800 // Time checkpoint is allowed to stay in buffer (1800 seconds ~ 30 mins)
+	NoACKWaitTime                   = time.Second * 1800 // Time ack service waits to clear buffer and elect new proposer (1800 seconds ~ 30 mins)
+	CheckpointBufferTime            = time.Second * 1000 // Time checkpoint is allowed to stay in buffer (1000 seconds ~ 17 mins)
 	DefaultCheckpointerPollInterval = 60 * 1000          // 1 minute in milliseconds
 	DefaultSyncerPollInterval       = 30 * 1000          // 0.5 seconds in milliseconds
-	DefaultNoACKPollInterval        = 15 * time.Second
-	DefaultCheckpointLength         = 256   // checkpoint number starts with 0, so length = defaultCheckpointLength -1
+	DefaultNoACKPollInterval        = 1010 * time.Second
+	DefaultCheckpointLength         = 256   // checkpoint number 	 with 0, so length = defaultCheckpointLength -1
 	MaxCheckpointLength             = 1024  // max blocks in one checkpoint
 	DefaultChildBlockInterval       = 10000 // difference between 2 indexes of header blocks
 	ConfirmationBlocks              = 6

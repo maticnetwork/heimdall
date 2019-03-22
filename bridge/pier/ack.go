@@ -240,7 +240,7 @@ func (ackService *AckService) isValidProposer(count uint64, address []byte) bool
 	}
 	defer resp.Body.Close()
 
-	ackService.Logger.Debug("Request for proposer was successfull", "Count", count, "Status", resp.Status)
+	ackService.Logger.Debug("Fetcged proposers", "Count", count, "Status", resp.Status)
 
 	if resp.StatusCode == 200 {
 		body, err := ioutil.ReadAll(resp.Body)
@@ -256,7 +256,7 @@ func (ackService *AckService) isValidProposer(count uint64, address []byte) bool
 			return false
 		}
 
-		ackService.Logger.Debug("Fetched proposers list from heimdall", "numberOfProposers", count)
+		ackService.Logger.Debug("Fetched proposers list", "numberOfProposers", count)
 		for _, proposer := range proposers {
 			if bytes.Equal(proposer.Signer.Bytes(), address) {
 				return true
