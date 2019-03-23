@@ -130,7 +130,7 @@ func ExportCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 
 			ackCount, err := strconv.ParseInt(string(stored_ackcount), 10, 64)
 			if err != nil {
-				fmt.Printf("Unable to parse int", "Response", stored_ackcount, "Error", err)
+				fmt.Printf("Unable to parse int. Response: %v Error: %v", stored_ackcount, err)
 				return err
 			}
 			//
@@ -143,11 +143,11 @@ func ExportCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 				if len(_checkpointBuffer) != 0 {
 					err = cdc.UnmarshalBinary(_checkpointBuffer, &buffer_checkpoint)
 					if err != nil {
-						fmt.Printf("Unable to unmarshall checkpoint present in buffer", "Error", err, "CheckpointBuffer", _checkpointBuffer)
+						fmt.Printf("Unable to unmarshall checkpoint present in buffer. Error: %v CheckpointBuffer: %v", err, _checkpointBuffer)
 					}
 				}
 			} else {
-				fmt.Printf("Unable to fetch checkpoint from buffer", "Error", err)
+				fmt.Printf("Unable to fetch checkpoint from buffer. Error: %v", err)
 			}
 			////
 			//// Caches
