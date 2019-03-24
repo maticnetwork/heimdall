@@ -19,8 +19,12 @@ import (
 func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
 	// Get all delegations from a delegator
 	r.HandleFunc(
-		"/staking/validator/{address}",
+		"/staking/signer/{address}",
 		validatorByAddressHandlerFn(cdc, cliCtx),
+	).Methods("GET")
+	r.HandleFunc(
+		"/staking/validator/{id}",
+		validatorByIDHandlerFn(cdc, cliCtx),
 	).Methods("GET")
 	r.HandleFunc(
 		"/staking/validator-set",
@@ -32,16 +36,70 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Co
 	).Methods("GET")
 }
 
-// Returns validator information by address
+// Returns validator information by signer address
 func validatorByAddressHandlerFn(
 	cdc *codec.Codec,
 	cliCtx context.CLIContext,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		validatorAddress := common.HexToAddress(vars["address"])
+		signerAddress := common.HexToAddress(vars["address"])
 
-		res, err := cliCtx.QueryStore(hmCommon.GetValidatorKey(validatorAddress.Bytes()), "staker")
+		res, err := cliCtx.QueryStore(hmCommon.GetValidatorKey(signerAddress.Bytes()), "staker")
+		if err != nil {
+			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		// the query will return empty if there is no data
+		if len(res) == 0 {
+			w.WriteHeader(http.StatusNoContent)
+			w.Write([]byte("Validator not found"))
+			return
+		}
+
+		var _validator types.Validator
+		err = cdc.UnmarshalBinary(res, &_validator)
+		if err != nil {
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		result, err := json.Marshal(_validator)
+		if err != nil {
+			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(result)
+
+	}
+}
+
+// Returns validator information by val ID
+func validatorByIDHandlerFn(
+	cdc *codec.Codec,
+	cliCtx context.CLIContext,
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		idStr := vars["id"]
+		id, err := strconv.ParseUint(idStr, 10, 64)
+		if err != nil {
+			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		signerAddr, err := cliCtx.QueryStore(hmCommon.GetValidatorMapKey(hmTypes.NewValidatorID(id).Bytes()), "staker")
+		if err != nil {
+			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		res, err := cliCtx.QueryStore(hmCommon.GetValidatorKey(signerAddr), "staker")
 		if err != nil {
 			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
@@ -142,6 +200,9 @@ func proposerHandlerFn(
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
 			return
+		}
+		if times > len(_validatorSet.Validators) {
+			times = len(_validatorSet.Validators)
 		}
 
 		// proposers

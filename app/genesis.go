@@ -19,18 +19,18 @@ type GenesisAccount struct {
 
 // GenesisValidator genesis validator
 type GenesisValidator struct {
-	Address    common.Address `json:"address"`
-	StartEpoch uint64         `json:"start_epoch"`
-	EndEpoch   uint64         `json:"end_epoch"`
-	Power      uint64         `json:"power"` // aka Amount
-	PubKey     hmTypes.PubKey `json:"pub_key"`
-	Signer     common.Address `json:"signer"`
+	ID         hmTypes.ValidatorID `json:"id"`
+	StartEpoch uint64              `json:"start_epoch"`
+	EndEpoch   uint64              `json:"end_epoch"`
+	Power      uint64              `json:"power"` // aka Amount
+	PubKey     hmTypes.PubKey      `json:"pub_key"`
+	Signer     common.Address      `json:"signer"`
 }
 
-// ToHeimdallValidator converts genesis validator validator to Heimdall validator
-func (v *GenesisValidator) ToHeimdallValidator() hmTypes.Validator {
+// HeimdallValidator converts genesis validator validator to Heimdall validator
+func (v *GenesisValidator) HeimdallValidator() hmTypes.Validator {
 	return hmTypes.Validator{
-		Address:    v.Address,
+		ID:         v.ID,
 		PubKey:     v.PubKey,
 		Power:      v.Power,
 		StartEpoch: v.StartEpoch,
@@ -41,8 +41,15 @@ func (v *GenesisValidator) ToHeimdallValidator() hmTypes.Validator {
 
 // GenesisState to Unmarshal
 type GenesisState struct {
-	Accounts        []GenesisAccount   `json:"accounts"`
-	Validators      []GenesisValidator `json:"validators"`
-	GenTxs          []json.RawMessage  `json:"gentxs"`
-	InitialAckCount uint64             `json:"ack_count"`
+	BufferedCheckpoint hmTypes.CheckpointBlockHeader   `json:"buffered_checkpoint"`
+	CheckpointCache    bool                            `json:"checkpoint_cache"`
+	CheckpointACKCache bool                            `json:"ack_cache"`
+	LastNoACK          uint64                           `json:"last_no_ack"`
+	AckCount           uint64                          `json:"ack_count"`
+	GenValidators      []GenesisValidator              `json:"gen_validators"`
+	Validators         []hmTypes.Validator             `json:"validators"`
+	CurrentValSet      hmTypes.ValidatorSet            `json:"current_val_set"`
+	GenTxs             []json.RawMessage               `json:"gentxs"`
+	Accounts           []GenesisAccount                `json:"accounts"`
+	Headers            []hmTypes.CheckpointBlockHeader `json:"headers"`
 }

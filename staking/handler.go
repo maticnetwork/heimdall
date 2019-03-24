@@ -4,7 +4,6 @@ import (
 	"bytes"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -18,7 +17,7 @@ func NewHandler(k hmCommon.Keeper, contractCaller helper.IContractCaller) sdk.Ha
 		case MsgValidatorExit:
 			return HandleMsgValidatorExit(ctx, msg, k, contractCaller)
 		case MsgSignerUpdate:
-			return HandleMsgSignerUpdate(ctx, msg, k)
+			return HandleMsgSignerUpdate(ctx, msg, k, contractCaller)
 		default:
 			return sdk.ErrTxDecode("Invalid message in checkpoint module").Result()
 		}
@@ -27,49 +26,52 @@ func NewHandler(k hmCommon.Keeper, contractCaller helper.IContractCaller) sdk.Ha
 
 func HandleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k hmCommon.Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	hmCommon.StakingLogger.Debug("Handing new validator join", "Msg", msg)
+
+	if confirmed := contractCaller.IsTxConfirmed(msg.TxHash); !confirmed {
+		return hmCommon.ErrWaitFrConfirmation(k.Codespace).Result()
+	}
+
 	//fetch validator from mainchain
-	validator, err := contractCaller.GetValidatorInfo(msg.ValidatorAddress)
-	if err != nil || bytes.Equal(validator.Address.Bytes(), helper.ZeroAddress.Bytes()) {
+	validator, err := contractCaller.GetValidatorInfo(msg.ID)
+	if err != nil || bytes.Equal(validator.Signer.Bytes(), helper.ZeroAddress.Bytes()) {
 		hmCommon.StakingLogger.Error(
 			"Unable to fetch validator from rootchain",
 			"error", err,
-			"msgValidator", msg.ValidatorAddress.String(),
-			"mainchainValidator", validator.Address.String(),
+			"msgValidator", msg.ID,
+			"mainChainSigner", validator.Signer.String(),
 		)
 		return hmCommon.ErrNoValidator(k.Codespace).Result()
 	}
 	hmCommon.StakingLogger.Debug("Fetched validator from rootchain successfully", "validator", validator.String())
 
-	// check validator address in message corresponds
-	if !bytes.Equal(msg.ValidatorAddress.Bytes(), validator.Address.Bytes()) || msg.StartEpoch != validator.StartEpoch {
-		hmCommon.StakingLogger.Error(
-			"Validator address or startEpoch doesn't match",
-			"msgValidator", msg.ValidatorAddress.String(),
-			"mainchainValidator", validator.Address.String(),
-			"msgStartEpoch", msg.StartEpoch,
-			"mainchainStartEpoch", validator.StartEpoch,
-		)
-		return hmCommon.ErrNoValidator(k.Codespace).Result()
-	}
-
 	// Generate PubKey from Pubkey in message and signer
 	pubkey := msg.SignerPubKey
 	signer := pubkey.Address()
 
+	// check signer in message corresponds
+	if !bytes.Equal(signer.Bytes(), validator.Signer.Bytes()) {
+		hmCommon.StakingLogger.Error(
+			"Signer Address does not match",
+			"msgValidator", msg.SignerPubKey.Address().String(),
+			"mainchainValidator", validator.Signer.String(),
+		)
+		return hmCommon.ErrNoValidator(k.Codespace).Result()
+	}
+
 	// Check if validator has been validator before
-	if _, ok := k.GetSignerFromValidator(ctx, msg.ValidatorAddress); ok {
-		hmCommon.StakingLogger.Error("Validator has been validator before, cannot join with same address", "presentValidator", msg.ValidatorAddress.String())
+	if _, ok := k.GetSignerFromValidatorID(ctx, msg.ID); ok {
+		hmCommon.StakingLogger.Error("Validator has been validator before, cannot join with same ID", "valID", msg.ID)
 		return hmCommon.ErrValidatorAlreadyJoined(k.Codespace).Result()
 	}
 
 	// create new validator
 	newValidator := hmTypes.Validator{
-		Address:    msg.ValidatorAddress,
-		StartEpoch: msg.StartEpoch,
-		EndEpoch:   msg.EndEpoch,
-		Power:      msg.GetPower(),
+		ID:         validator.ID,
+		StartEpoch: validator.StartEpoch,
+		EndEpoch:   validator.EndEpoch,
+		Power:      validator.Power,
 		PubKey:     pubkey,
-		Signer:     signer,
+		Signer:     validator.Signer,
 	}
 
 	// add validator to store
@@ -83,40 +85,74 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k hmCommon.Ke
 	return sdk.Result{}
 }
 
-func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k hmCommon.Keeper) sdk.Result {
-	hmCommon.StakingLogger.Debug("Handling signer update", "Validator", msg.ValidatorAddress, "Signer", msg.NewSignerPubKey.Address)
+// Handle signer update message
+func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k hmCommon.Keeper, contractCaller helper.IContractCaller) sdk.Result {
+	hmCommon.StakingLogger.Debug("Handling signer update", "Validator", msg.ID, "Signer", msg.NewSignerPubKey.Address())
 
-	// pull val from store
-	validator, ok := k.GetValidatorFromValAddr(ctx, msg.ValidatorAddress)
-	if !ok {
-		hmCommon.StakingLogger.Error("Fetching of validator from store failed", "validatorAddress", msg.ValidatorAddress)
-		return hmCommon.ErrNoValidator(k.Codespace).Result()
+	if confirmed := contractCaller.IsTxConfirmed(msg.TxHash); !confirmed {
+		return hmCommon.ErrWaitFrConfirmation(k.Codespace).Result()
 	}
 
 	newPubKey := msg.NewSignerPubKey
 	newSigner := newPubKey.Address()
 
-	// check if updating signer
+	id, newSignerTx, _, err := contractCaller.SigUpdateEvent(msg.TxHash)
+	if err != nil {
+		hmCommon.StakingLogger.Error("Error fetching log from txhash", "Error", err)
+		return hmCommon.ErrInvalidMsg(k.Codespace, "Unable to fetch logs for txHash. Error: %v", err).Result()
+	}
+
+	if int(id) != msg.ID.Int() {
+		hmCommon.StakingLogger.Error("ID in message doesnt match id in logs", "MsgID", msg.ID, "IdFromTx", id)
+		return hmCommon.ErrInvalidMsg(k.Codespace, "Invalid txhash, id's dont match. Id from tx hash is %v", id).Result()
+	}
+
+	if bytes.Compare(newSignerTx.Bytes(), newSigner.Bytes()) != 0 {
+		hmCommon.StakingLogger.Error("Signer in txhash and msg dont match", "MsgSigner", newSigner.String(), "SignerTx", newSignerTx.String())
+		return hmCommon.ErrInvalidMsg(k.Codespace, "Signer in txhash and msg dont match").Result()
+	}
+
+	// pull val from store
+	validator, ok := k.GetValidatorFromValID(ctx, msg.ID)
+	if !ok {
+		hmCommon.StakingLogger.Error("Fetching of validator from store failed", "validatorAddress", msg.ID)
+		return hmCommon.ErrNoValidator(k.Codespace).Result()
+	}
+	oldValidator := validator.Copy()
+
+	// TODO check if signer change txhash is new or old
+	// save last updated at block number somewhere and check if current block is larger than last updates
+
+	// check if we are actually updating signer
 	if !bytes.Equal(newSigner.Bytes(), validator.Signer.Bytes()) {
 		// Update signer in prev Validator
-		oldSigner := validator.Signer
 		validator.Signer = newSigner
 		validator.PubKey = newPubKey
-
-		hmCommon.StakingLogger.Debug("Updating new signer", "signer", newSigner.String(), "oldSigner", oldSigner.String(), "validatorAddress", msg.ValidatorAddress.String())
+		hmCommon.StakingLogger.Debug("Updating new signer", "signer", newSigner.String(), "oldSigner", oldValidator.Signer.String(), "validatorID", msg.ID)
 	}
 
 	// power change
 	if msg.NewAmount != "" && validator.Power != msg.GetNewPower() {
-		// set new power
+		hmCommon.StakingLogger.Debug("Updating power", "newPower", msg.GetNewPower(), "oldPower", validator.Power, "validatorID", msg.ID)
 		validator.Power = msg.GetNewPower()
-		hmCommon.StakingLogger.Debug("Updating power", "newPower", validator.Power, "validatorAddress", msg.ValidatorAddress.String())
 	}
 
-	// save validator
-	err := k.AddValidator(ctx, validator)
+	hmCommon.StakingLogger.Error("Removing old validator", "Validator", oldValidator.String())
+	// remove old validator from HM
+	oldValidator.EndEpoch = k.GetACKCount(ctx)
+	// remove old validator from TM
+	oldValidator.Power = 0
+	err = k.AddValidator(ctx, *oldValidator)
 	if err != nil {
-		hmCommon.StakingLogger.Error("Unable to update signer", "error", err, "validatorAddress", validator.Address.String())
+		hmCommon.StakingLogger.Error("Unable to update signer", "error", err, "ValidatorID", validator.ID)
+		return hmCommon.ErrSignerUpdateError(k.Codespace).Result()
+	}
+
+	hmCommon.StakingLogger.Error("Adding new validator", "Validator", validator.String())
+	// save validator
+	err = k.AddValidator(ctx, validator)
+	if err != nil {
+		hmCommon.StakingLogger.Error("Unable to update signer", "error", err, "ValidatorID", validator.ID)
 		return hmCommon.ErrSignerUpdateError(k.Codespace).Result()
 	}
 
@@ -124,29 +160,34 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k hmCommon.Keep
 }
 
 func HandleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k hmCommon.Keeper, contractCaller helper.IContractCaller) sdk.Result {
-	hmCommon.StakingLogger.Info("Handling validator exit", "Validator", msg.ValidatorAddress)
+	hmCommon.StakingLogger.Info("Handling validator exit", "ValidatorID", msg.ID)
 
-	validator, ok := k.GetValidatorFromValAddr(ctx, msg.ValidatorAddress)
+	if confirmed := contractCaller.IsTxConfirmed(msg.TxHash); !confirmed {
+		return hmCommon.ErrWaitFrConfirmation(k.Codespace).Result()
+	}
+	validator, ok := k.GetValidatorFromValID(ctx, msg.ID)
 	if !ok {
-		hmCommon.StakingLogger.Error("Fetching of validator from store failed", "validatorAddress", msg.ValidatorAddress)
+		hmCommon.StakingLogger.Error("Fetching of validator from store failed", "validatorID", msg.ID)
 		return hmCommon.ErrNoValidator(k.Codespace).Result()
 	}
+
 	hmCommon.StakingLogger.Debug("validator in store", "validator", validator)
 	// check if validator deactivation period is set
 	if validator.EndEpoch != 0 {
 		hmCommon.StakingLogger.Error("Validator already unbonded")
 		return hmCommon.ErrValUnbonded(k.Codespace).Result()
 	}
+
 	// get validator from mainchain
-	updatedVal, err := contractCaller.GetValidatorInfo(validator.Address)
+	updatedVal, err := contractCaller.GetValidatorInfo(validator.ID)
 	if err != nil {
-		hmCommon.StakingLogger.Error("Cannot fetch validator info while unstaking", "Error", err, "ValidatorAddress", validator.Address)
+		hmCommon.StakingLogger.Error("Cannot fetch validator info while unstaking", "Error", err, "validatorID", validator.ID)
 		return hmCommon.ErrNoValidator(k.Codespace).Result()
 	}
 
 	// Add deactivation time for validator
 	if err := k.AddDeactivationEpoch(ctx, validator, updatedVal); err != nil {
-		hmCommon.StakingLogger.Error("Error while setting deactivation epoch to validator", "error", err, "validatorAddress", validator.Address.String())
+		hmCommon.StakingLogger.Error("Error while setting deactivation epoch to validator", "error", err, "validatorID", validator.ID)
 		return hmCommon.ErrValidatorNotDeactivated(k.Codespace).Result()
 	}
 

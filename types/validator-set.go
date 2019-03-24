@@ -106,18 +106,18 @@ func (vals *ValidatorSet) Copy() *ValidatorSet {
 // otherwise.
 func (vals *ValidatorSet) HasAddress(address []byte) bool {
 	idx := sort.Search(len(vals.Validators), func(i int) bool {
-		return bytes.Compare(address, vals.Validators[i].Address.Bytes()) <= 0
+		return bytes.Compare(address, vals.Validators[i].Signer.Bytes()) <= 0
 	})
-	return idx < len(vals.Validators) && bytes.Equal(vals.Validators[idx].Address.Bytes(), address)
+	return idx < len(vals.Validators) && bytes.Equal(vals.Validators[idx].Signer.Bytes(), address)
 }
 
 // GetByAddress returns an index of the validator with address and validator
 // itself if found. Otherwise, -1 and nil are returned.
 func (vals *ValidatorSet) GetByAddress(address []byte) (index int, val *Validator) {
 	idx := sort.Search(len(vals.Validators), func(i int) bool {
-		return bytes.Compare(address, vals.Validators[i].Address.Bytes()) <= 0
+		return bytes.Compare(address, vals.Validators[i].Signer.Bytes()) <= 0
 	})
-	if idx < len(vals.Validators) && bytes.Equal(vals.Validators[idx].Address.Bytes(), address) {
+	if idx < len(vals.Validators) && bytes.Equal(vals.Validators[idx].Signer.Bytes(), address) {
 		return idx, vals.Validators[idx].Copy()
 	}
 	return -1, nil
@@ -131,7 +131,7 @@ func (vals *ValidatorSet) GetByIndex(index int) (address []byte, val *Validator)
 		return nil, nil
 	}
 	val = vals.Validators[index]
-	return val.Address.Bytes(), val.Copy()
+	return val.Signer.Bytes(), val.Copy()
 }
 
 // Size returns the length of the validator set.
@@ -165,7 +165,7 @@ func (vals *ValidatorSet) GetProposer() (proposer *Validator) {
 func (vals *ValidatorSet) findProposer() *Validator {
 	var proposer *Validator
 	for _, val := range vals.Validators {
-		if proposer == nil || !bytes.Equal(val.Address.Bytes(), proposer.Address.Bytes()) {
+		if proposer == nil || !bytes.Equal(val.Signer.Bytes(), proposer.Signer.Bytes()) {
 			proposer = proposer.CompareAccum(val)
 		}
 	}
@@ -177,7 +177,7 @@ func (vals *ValidatorSet) findProposer() *Validator {
 func (vals *ValidatorSet) Add(val *Validator) (added bool) {
 	val = val.Copy()
 	idx := sort.Search(len(vals.Validators), func(i int) bool {
-		return bytes.Compare(val.Address.Bytes(), vals.Validators[i].Address.Bytes()) <= 0
+		return bytes.Compare(val.Signer.Bytes(), vals.Validators[i].Signer.Bytes()) <= 0
 	})
 	if idx >= len(vals.Validators) {
 		vals.Validators = append(vals.Validators, val)
@@ -185,7 +185,7 @@ func (vals *ValidatorSet) Add(val *Validator) (added bool) {
 		// vals.Proposer = nil
 		vals.totalVotingPower = 0
 		return true
-	} else if bytes.Equal(vals.Validators[idx].Address.Bytes(), val.Address.Bytes()) {
+	} else if bytes.Equal(vals.Validators[idx].Signer.Bytes(), val.Signer.Bytes()) {
 		return false
 	} else {
 		newValidators := make([]*Validator, len(vals.Validators)+1)
@@ -203,14 +203,14 @@ func (vals *ValidatorSet) Add(val *Validator) (added bool) {
 // Update updates val and returns true. It returns false if val is not present
 // in the set.
 func (vals *ValidatorSet) Update(val *Validator) (updated bool) {
-	index, sameVal := vals.GetByAddress(val.Address.Bytes())
+	index, sameVal := vals.GetByAddress(val.Signer.Bytes())
 	if sameVal == nil {
 		return false
 	}
 	vals.Validators[index] = val.Copy()
 	// Invalidate cache
 	// vals.Proposer = nil
-	if vals.Proposer != nil && bytes.Equal(vals.Proposer.Address.Bytes(), val.Address.Bytes()) {
+	if vals.Proposer != nil && bytes.Equal(vals.Proposer.Signer.Bytes(), val.Signer.Bytes()) {
 		vals.Proposer = val.Copy()
 	}
 	vals.totalVotingPower = 0
@@ -221,9 +221,9 @@ func (vals *ValidatorSet) Update(val *Validator) (updated bool) {
 // and true. If returns nil and false if validator is not present in the set.
 func (vals *ValidatorSet) Remove(address []byte) (val *Validator, removed bool) {
 	idx := sort.Search(len(vals.Validators), func(i int) bool {
-		return bytes.Compare(address, vals.Validators[i].Address.Bytes()) <= 0
+		return bytes.Compare(address, vals.Validators[i].Signer.Bytes()) <= 0
 	})
-	if idx >= len(vals.Validators) || !bytes.Equal(vals.Validators[idx].Address.Bytes(), address) {
+	if idx >= len(vals.Validators) || !bytes.Equal(vals.Validators[idx].Signer.Bytes(), address) {
 		return nil, false
 	}
 	removedVal := vals.Validators[idx]
@@ -233,7 +233,7 @@ func (vals *ValidatorSet) Remove(address []byte) (val *Validator, removed bool) 
 	}
 	vals.Validators = newValidators
 	// Invalidate cache
-	if removedVal != nil && bytes.Equal(address, removedVal.Address.Bytes()) {
+	if removedVal != nil && bytes.Equal(address, removedVal.Signer.Bytes()) {
 		vals.Proposer = nil
 	}
 	vals.totalVotingPower = 0
@@ -261,7 +261,7 @@ type accumComparable struct {
 func (ac accumComparable) Less(o interface{}) bool {
 	other := o.(accumComparable).Validator
 	larger := ac.CompareAccum(other)
-	return bytes.Equal(larger.Address.Bytes(), ac.Address.Bytes())
+	return bytes.Equal(larger.Signer.Bytes(), ac.Signer.Bytes())
 }
 
 //-------------------------------------
@@ -275,7 +275,7 @@ func (valz ValidatorsByAddress) Len() int {
 }
 
 func (valz ValidatorsByAddress) Less(i, j int) bool {
-	return bytes.Compare(valz[i].Address.Bytes(), valz[j].Address.Bytes()) == -1
+	return bytes.Compare(valz[i].Signer.Bytes(), valz[j].Signer.Bytes()) == -1
 }
 
 func (valz ValidatorsByAddress) Swap(i, j int) {

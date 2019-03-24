@@ -146,7 +146,7 @@ func (checkpointer *MaticCheckpointer) OnStart() error {
 	subscription, err := checkpointer.MaticClient.SubscribeNewHead(ctx, checkpointer.HeaderChannel)
 	if err != nil {
 		// start go routine to poll for new header using client object
-		go checkpointer.startPolling(ctx, defaultPollInterval)
+		go checkpointer.startPolling(ctx, helper.GetConfig().CheckpointerPollInterval)
 	} else {
 		// start go routine to listen new header using subscription
 		go checkpointer.startSubscription(ctx, subscription)
@@ -189,6 +189,8 @@ func (checkpointer *MaticCheckpointer) startPolling(ctx context.Context, pollInt
 				if err == nil && header != nil {
 					// send data to channel
 					checkpointer.HeaderChannel <- header
+				} else if err != nil {
+					checkpointer.Logger.Error("Unable to fetch header by number from matic", "Error", err)
 				}
 			}
 		case <-ctx.Done():
@@ -300,7 +302,7 @@ func (checkpointer *MaticCheckpointer) sendRequest(newHeader *types.Header) {
 	checkpointer.Logger.Info("Checkpoint sent successfully", "hash", resp.Hash.String(), "start", start, "end", end, "root", hex.EncodeToString(root))
 }
 
-func (checkpointer *MaticCheckpointer) genHeaderDetailContract(latest uint64, wg *sync.WaitGroup, contractState chan<- ContractCheckpoint) {
+func (checkpointer *MaticCheckpointer) genHeaderDetailContract(lastHeader uint64, wg *sync.WaitGroup, contractState chan<- ContractCheckpoint) {
 	defer wg.Done()
 	lastCheckpointEnd, err := checkpointer.RootChainInstance.CurrentChildBlock(nil)
 	if err != nil {
@@ -317,24 +319,24 @@ func (checkpointer *MaticCheckpointer) genHeaderDetailContract(latest uint64, wg
 	}
 
 	// get diff
-	diff := latest - start + 1
+	diff := lastHeader - start + 1
 
 	// process if diff > 0 (positive)
 	if diff > 0 {
-		expectedDiff := diff - diff%defaultCheckpointLength
+		expectedDiff := diff - diff%helper.GetConfig().AvgCheckpointLength
 		if expectedDiff > 0 {
 			expectedDiff = expectedDiff - 1
 		}
 
 		// cap with max checkpoint length
-		if expectedDiff > maxCheckpointLength-1 {
-			expectedDiff = maxCheckpointLength - 1
+		if expectedDiff > helper.GetConfig().MaxCheckpointLength-1 {
+			expectedDiff = helper.GetConfig().MaxCheckpointLength - 1
 		}
 
 		// get end result
 		end = expectedDiff + start
 
-		checkpointer.Logger.Debug("Calculating checkpoint eligibility", "latest", latest, "start", start, "end", end)
+		checkpointer.Logger.Debug("Calculating checkpoint eligibility", "latest", lastHeader, "start", start, "end", end)
 	}
 	currentHeaderBlockNumber, err := checkpointer.RootChainInstance.CurrentHeaderBlock(nil)
 	if err != nil {
@@ -345,7 +347,7 @@ func (checkpointer *MaticCheckpointer) genHeaderDetailContract(latest uint64, wg
 	currentHeaderNum := currentHeaderBlockNumber
 
 	// Handle when block producers go down
-	if end == 0 || end == start || (0 < diff && diff < defaultCheckpointLength) {
+	if end == 0 || end == start || (0 < diff && diff < helper.GetConfig().AvgCheckpointLength) {
 		checkpointer.Logger.Debug("Fetching last header block to calculate time")
 		// fetch current header block
 		currentHeaderBlock, err := checkpointer.RootChainInstance.HeaderBlock(nil, currentHeaderBlockNumber.Sub(currentHeaderBlockNumber, big.NewInt(int64(helper.GetConfig().ChildBlockInterval))))
@@ -356,14 +358,14 @@ func (checkpointer *MaticCheckpointer) genHeaderDetailContract(latest uint64, wg
 		}
 		lastCheckpointTime := currentHeaderBlock.CreatedAt.Int64()
 		currentTime := time.Now().Unix()
-		if currentTime-lastCheckpointTime > defaultForcePushInterval {
-			checkpointer.Logger.Info("Force push checkpoint", "currentTime", currentTime, "lastCheckpointTime", lastCheckpointTime, "defaultForcePushInterval", defaultForcePushInterval)
-			end = latest
+		if currentTime-lastCheckpointTime > int64(helper.GetConfig().MaxCheckpointLength*2) {
+			checkpointer.Logger.Info("Force push checkpoint", "currentTime", currentTime, "lastCheckpointTime", lastCheckpointTime, "defaultForcePushInterval", defaultForcePushInterval, "end", lastHeader)
+			end = lastHeader
 		}
 	}
 
 	if end == 0 || start >= end {
-		checkpointer.Logger.Error("Invalid start end formation", "Start", start, "End", end)
+		checkpointer.Logger.Info("Waiting for 256 blocks or invalid start end formation", "Start", start, "End", end)
 		contractState <- NewContractCheckpoint(0, 0, currentHeaderBlockNumber, errors.New("Invalid start end formation"))
 		return
 	}

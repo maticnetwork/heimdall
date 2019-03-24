@@ -27,6 +27,7 @@ import (
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/helper"
 	hmserver "github.com/maticnetwork/heimdall/server"
+	stakingcli "github.com/maticnetwork/heimdall/staking/cli"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -75,7 +76,7 @@ func main() {
 
 	rootCmd.AddCommand(newAccountCmd())
 	rootCmd.AddCommand(hmserver.ServeCommands(cdc))
-	rootCmd.AddCommand(InitCmd(ctx, cdc, server.DefaultAppInit))
+	rootCmd.AddCommand(InitCmd(ctx, cdc))
 
 	// prepare and add flags
 	executor := cli.PrepareBaseCmd(rootCmd, "HD", os.ExpandEnv("$HOME/.heimdalld"))
@@ -101,7 +102,7 @@ func exportAppStateAndTMValidators(logger log.Logger, db dbm.DB, storeTracer io.
 
 // InitCmd get cmd to initialize all files for tendermint and application
 // nolint: errcheck
-func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cobra.Command {
+func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init",
 		Short: "Initialize genesis config, priv-validator file, and p2p-node file",
@@ -115,6 +116,8 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cob
 			if chainID == "" {
 				chainID = fmt.Sprintf("heimdall-%v", common.RandStr(6))
 			}
+
+			validatorID := viper.GetInt64(stakingcli.FlagValidatorID)
 
 			nodeKey, err := p2p.LoadOrGenNodeKey(config.NodeKeyFile())
 			if err != nil {
@@ -134,7 +137,16 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cob
 				MaticRPCUrl:         helper.MaticRPCUrl,
 				StakeManagerAddress: (ethCommon.Address{}).Hex(),
 				RootchainAddress:    (ethCommon.Address{}).Hex(),
-				ChildBlockInterval:  10000,
+				ChildBlockInterval:  helper.DefaultChildBlockInterval,
+
+				CheckpointerPollInterval: helper.DefaultCheckpointerPollInterval,
+				SyncerPollInterval:       helper.DefaultSyncerPollInterval,
+				NoACKPollInterval:        helper.DefaultNoACKPollInterval,
+				AvgCheckpointLength:      helper.DefaultCheckpointLength,
+				MaxCheckpointLength:      helper.MaxCheckpointLength,
+				NoACKWaitTime:            helper.NoACKWaitTime,
+				CheckpointBufferTime:     helper.CheckpointBufferTime,
+				ConfirmationBlocks: helper.ConfirmationBlocks,
 			}
 
 			heimdallConfBytes, err := json.MarshalIndent(heimdallConf, "", "  ")
@@ -152,19 +164,18 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cob
 			//
 
 			// create validator
-
 			_, pubKey := helper.GetPkObjects(pval.PrivKey)
 			validator := app.GenesisValidator{
-				Address:    ethCommon.BytesToAddress(pval.Address),
+				ID:         hmTypes.NewValidatorID(uint64(validatorID)),
 				PubKey:     hmTypes.NewPubKey(pubKey[:]),
 				StartEpoch: 0,
 				Signer:     ethCommon.BytesToAddress(pval.Address),
-				Power:      10,
+				Power:      1,
 			}
 
 			// create genesis state
 			appState := &app.GenesisState{
-				Validators: []app.GenesisValidator{validator},
+				GenValidators: []app.GenesisValidator{validator},
 			}
 
 			appStateJSON, err := json.Marshal(appState)
@@ -193,7 +204,7 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec, appInit server.AppInit) *cob
 	cmd.Flags().String(cli.HomeFlag, helper.DefaultNodeHome, "node's home directory")
 	cmd.Flags().String(helper.FlagClientHome, helper.DefaultCLIHome, "client's home directory")
 	cmd.Flags().String(client.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
-	cmd.Flags().String(client.FlagName, "", "validator's moniker")
+	cmd.Flags().Int(stakingcli.FlagValidatorID, 1, "--id=<validator ID here>, if left blank will be assigned 1")
 	return cmd
 }
 
@@ -253,3 +264,4 @@ func readOrCreatePrivValidator(privValFile string) *privval.FilePV {
 	}
 	return privValidator
 }
+

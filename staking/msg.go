@@ -7,8 +7,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/common"
 
+	"github.com/ethereum/go-ethereum/common"
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
@@ -25,26 +25,16 @@ const StakingRoute = "staking"
 var _ sdk.Msg = &MsgValidatorJoin{}
 
 type MsgValidatorJoin struct {
-	ValidatorAddress common.Address `json:"address"`
-	SignerPubKey     types.PubKey   `json:"pubKey"`
-	StartEpoch       uint64         `json:"startEpoch"`
-	EndEpoch         uint64         `json:"endEpoch"`
-	Amount           json.Number    `json:"amount"`
+	ID           types.ValidatorID `json:"ID"`
+	SignerPubKey types.PubKey      `json:"pubKey"`
+	TxHash       common.Hash       `json:"tx_hash"`
 }
 
-func NewMsgValidatorJoin(
-	address common.Address,
-	pubkey types.PubKey,
-	startEpoch uint64,
-	endEpoch uint64,
-	amount json.Number,
-) MsgValidatorJoin {
+func NewMsgValidatorJoin(_id uint64, _pubkey types.PubKey, txhash common.Hash) MsgValidatorJoin {
 	return MsgValidatorJoin{
-		ValidatorAddress: address,
-		SignerPubKey:     pubkey,
-		StartEpoch:       startEpoch,
-		EndEpoch:         endEpoch,
-		Amount:           amount,
+		ID:           types.NewValidatorID(_id),
+		SignerPubKey: _pubkey,
+		TxHash:       txhash,
 	}
 }
 
@@ -70,44 +60,37 @@ func (msg MsgValidatorJoin) GetSignBytes() []byte {
 }
 
 func (msg MsgValidatorJoin) ValidateBasic() sdk.Error {
-	if bytes.Equal(msg.ValidatorAddress.Bytes(), helper.ZeroAddress.Bytes()) {
-		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator address %v", msg.ValidatorAddress.String())
+	if msg.ID <= 0 {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator ID %v", msg.ID)
 	}
 
 	if bytes.Equal(msg.SignerPubKey.Bytes(), helper.ZeroPubKey.Bytes()) {
 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid pub key %v", msg.SignerPubKey.String())
 	}
 
-	r, _ := regexp.Compile("[0-9]+")
-	if msg.Amount == "" || !r.MatchString(msg.Amount.String()) {
-		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid new amount %v", msg.Amount.String())
-	}
-
 	return nil
-}
-
-func (msg MsgValidatorJoin) GetPower() uint64 {
-	return types.GetValidatorPower(msg.Amount.String())
 }
 
 //
 // validator update
 //
-
 var _ sdk.Msg = &MsgSignerUpdate{}
 
 // MsgSignerUpdate signer update struct
+// TODO add old signer sig check
 type MsgSignerUpdate struct {
-	ValidatorAddress common.Address `json:"address"`
-	NewSignerPubKey  types.PubKey   `json:"pubKey"`
-	NewAmount        json.Number    `json:"amount"`
+	ID              types.ValidatorID `json:"ID"`
+	NewSignerPubKey types.PubKey      `json:"pubKey"`
+	NewAmount       json.Number       `json:"amount"`
+	TxHash          common.Hash       `json:"tx_hash"`
 }
 
-func NewMsgValidatorUpdate(address common.Address, pubKey types.PubKey, amount json.Number) MsgSignerUpdate {
+func NewMsgValidatorUpdate(_id uint64, pubKey types.PubKey, amount json.Number, txhash common.Hash) MsgSignerUpdate {
 	return MsgSignerUpdate{
-		ValidatorAddress: address,
-		NewSignerPubKey:  pubKey,
-		NewAmount:        amount,
+		ID:              types.NewValidatorID(_id),
+		NewSignerPubKey: pubKey,
+		NewAmount:       amount,
+		TxHash:          txhash,
 	}
 }
 
@@ -133,8 +116,8 @@ func (msg MsgSignerUpdate) GetSignBytes() []byte {
 }
 
 func (msg MsgSignerUpdate) ValidateBasic() sdk.Error {
-	if bytes.Equal(msg.ValidatorAddress.Bytes(), helper.ZeroAddress.Bytes()) {
-		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator address %v", msg.ValidatorAddress.String())
+	if msg.ID <= 0 {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator ID %v", msg.ID)
 	}
 
 	if bytes.Equal(msg.NewSignerPubKey.Bytes(), helper.ZeroPubKey.Bytes()) {
@@ -160,12 +143,14 @@ func (msg MsgSignerUpdate) GetNewPower() uint64 {
 var _ sdk.Msg = &MsgValidatorExit{}
 
 type MsgValidatorExit struct {
-	ValidatorAddress common.Address
+	ID     types.ValidatorID `json:"ID"`
+	TxHash common.Hash       `json:"tx_hash"`
 }
 
-func NewMsgValidatorExit(address common.Address) MsgValidatorExit {
+func NewMsgValidatorExit(_id uint64, txhash common.Hash) MsgValidatorExit {
 	return MsgValidatorExit{
-		ValidatorAddress: address,
+		ID:     types.NewValidatorID(_id),
+		TxHash: txhash,
 	}
 }
 
@@ -191,8 +176,8 @@ func (msg MsgValidatorExit) GetSignBytes() []byte {
 }
 
 func (msg MsgValidatorExit) ValidateBasic() sdk.Error {
-	if bytes.Equal(msg.ValidatorAddress.Bytes(), helper.ZeroAddress.Bytes()) {
-		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator address %v", msg.ValidatorAddress.String())
+	if msg.ID <= 0 {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator ID %v", msg.ID)
 	}
 
 	return nil

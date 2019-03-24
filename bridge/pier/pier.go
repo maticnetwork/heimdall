@@ -9,7 +9,6 @@ import (
 	"os"
 	"strconv"
 	"sync"
-	"time"
 
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/tendermint/tendermint/libs/log"
@@ -30,14 +29,9 @@ const (
 
 	bridgeDBFlag = "bridge-db"
 	lastBlockKey = "last-block" // storage key
-
-	defaultPollInterval           = 60 * 1000 // 60 seconds in milliseconds
-	defaultMainPollInterval       = 5 * 1000  // 5 seconds in milliseconds
-	defaultCheckpointPollInterval = 15 * time.Second
-	defaultCheckpointLength       = 256                     // checkpoint number starts with 0, so length = defaultCheckpointLength -1
-	maxCheckpointLength           = 1024                    // max blocks in one checkpoint
-	defaultForcePushInterval      = maxCheckpointLength * 2 // in seconds (4096 * 2 seconds)
 )
+
+var defaultForcePushInterval = helper.GetConfig().MaxCheckpointLength * 2 // in seconds (1024 * 2 seconds)
 
 var bridgeDB *leveldb.DB
 var bridgeDBOnce sync.Once
@@ -74,7 +68,7 @@ func isProposer() bool {
 		return false
 	}
 	defer resp.Body.Close()
-	pierLogger.Debug("Request for proposer was successfull", "Count", count, "Status", resp.Status)
+	pierLogger.Debug("Fetched proposer", "Count", count, "Status", resp.Status)
 	if resp.StatusCode == 200 {
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
@@ -96,7 +90,7 @@ func isProposer() bool {
 
 		// get first proposer
 		proposer := proposers[0]
-		if bytes.Equal(proposer.Address.Bytes(), helper.GetAddress()) {
+		if bytes.Equal(proposer.Signer.Bytes(), helper.GetAddress()) {
 			return true
 		}
 	} else {

@@ -182,12 +182,27 @@ func checkpointHandlerFn(
 			w.Write([]byte(err.Error()))
 			return
 		}
+
+		var validatorSet types.ValidatorSet
+
+		_validatorSet, err := cliCtx.QueryStore(common.CurrentValidatorSetKey, "staker")
+		if err == nil {
+			err:=cdc.UnmarshalBinary(_validatorSet, &validatorSet)
+			if err!=nil{
+				RestLogger.Error("Unable to get validator set to form proposer", "Error", err)
+				w.WriteHeader(http.StatusBadRequest)
+				w.Write([]byte(err.Error()))
+				return
+			}
+		}
+
 		checkpoint := HeaderBlock{
-			Proposer:   helper.ZeroAddress,
+			Proposer:   validatorSet.Proposer.Signer,
 			StartBlock: uint64(start),
 			EndBlock:   uint64(end),
 			RootHash:   ethcmn.BytesToHash(roothash),
 		}
+
 		result, err := json.Marshal(checkpoint)
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
@@ -244,6 +259,7 @@ type stateDump struct {
 	ValidatorCount   int                         `json:ValidatorCount`
 	ValidatorSet     types.ValidatorSet          `json:ValidatorSet`
 	LastNoACK        time.Time                   `json:LastNoACKTime`
+	Headers 		[]types.CheckpointBlockHeader`json:"headers"`
 }
 
 // get all state-dump of heimdall
@@ -292,10 +308,23 @@ func overviewHandlerFunc(
 		validatorCount = len(validatorSet.Validators)
 
 		// last no ack
-		var lastACKTime int64
+		var lastNoACKTime int64
 		lastNoACK, err := cliCtx.QueryStore(common.CheckpointNoACKCacheKey, "checkpoint")
 		if err == nil {
-			lastACKTime, err = strconv.ParseInt(string(lastNoACK), 10, 64)
+			lastNoACKTime, err = strconv.ParseInt(string(lastNoACK), 10, 64)
+		}
+
+		var headers []types.CheckpointBlockHeader
+		storedHeaders, err := cliCtx.QuerySubspace(common.HeaderBlockKey, "checkpoint")
+		if err != nil {
+			RestLogger.Error("Unable to query subspace for headers", "Error", err)
+		}
+		for _,kv_pair := range storedHeaders {
+			var checkpointHeader types.CheckpointBlockHeader
+			if cdc.UnmarshalBinary(kv_pair.Value,&checkpointHeader); err!=nil{
+				RestLogger.Error("Unable to unmarshall header", "Error", err, "Value", kv_pair.Value)
+			}
+			headers=append(headers, checkpointHeader)
 		}
 
 		state := stateDump{
@@ -303,7 +332,8 @@ func overviewHandlerFunc(
 			CheckpointBuffer: _checkpoint,
 			ValidatorCount:   validatorCount,
 			ValidatorSet:     validatorSet,
-			LastNoACK:        time.Unix(lastACKTime, 0),
+			LastNoACK:        time.Unix(lastNoACKTime, 0),
+			Headers:headers,
 		}
 		result, err := json.Marshal(map[string]interface{}{"result": state})
 		if err != nil {

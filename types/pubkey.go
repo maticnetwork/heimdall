@@ -15,6 +15,9 @@ import (
 // PubKey pubkey
 type PubKey [65]byte
 
+// ZeroPubKey represents empty pub key
+var ZeroPubKey = PubKey{}
+
 // NewPubKey from byte array
 func NewPubKey(data []byte) PubKey {
 	var key PubKey

@@ -5,7 +5,7 @@ dep:
 	dep ensure -v
 	mkdir -p vendor/github.com/tendermint vendor/github.com/ethereum
 	git clone -b v0.11.0 --single-branch --depth 1 https://github.com/tendermint/iavl vendor/github.com/tendermint/iavl
-	git clone -b v1.8.17 --single-branch --depth 1 https://github.com/ethereum/go-ethereum vendor/github.com/ethereum/go-ethereum
+	git clone -b v1.8.19 --single-branch --depth 1 https://github.com/ethereum/go-ethereum vendor/github.com/ethereum/go-ethereum
 
 clean:
 	rm -rf build
@@ -38,19 +38,30 @@ show-node-id:
 run-heimdall:
 	./build/heimdalld start 
 
+start-heimdall:
+	mkdir -p ./logs &
+	./build/heimdalld start > ./logs/heimdalld.log &
+
 reset-heimdalld:
 	./build/heimdalld unsafe-reset-all 
 
-rest-server:
+run-server:
 	./build/heimdalld rest-server 
+
+start-server:
+	mkdir -p ./logs &&
+	./build/heimdalld rest-server > ./logs/heimdalld-rest-server.log &&
 
 start:
 	mkdir -p ./logs
-	./build/heimdalld start > ./logs/heimdalld.log &
-	./build/heimdalld rest-server > ./logs/heimdalld-rest-server.log &
+	bash docker/start.sh
+
+run-bridge:
+	./build/bridge start
 
 start-bridge:
-	./build/bridge start
+	mkdir -p logs &
+	./build/bridge start > ./logs/bridge.log &
 
 start-all: 
 	mkdir -p ./logs

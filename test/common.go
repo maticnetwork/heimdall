@@ -1,12 +1,14 @@
 package test
 
 import (
+	"bytes"
 	"math/rand"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	ethcmn "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -15,13 +17,14 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 
 	"encoding/hex"
+	"os"
+	"time"
+
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/types"
-	"os"
-	"time"
 )
 
 func MakeTestCodec() *codec.Codec {
@@ -38,6 +41,7 @@ func MakeTestCodec() *codec.Codec {
 	return cdc
 }
 
+// init for test cases
 func CreateTestInput(t *testing.T, isCheckTx bool) (sdk.Context, common.Keeper) {
 	//t.Parallel()
 	helper.InitHeimdallConfig(os.ExpandEnv("$HOME/.heimdalld"))
@@ -77,10 +81,10 @@ func GenRandCheckpointHeader(headerSize int) (headerBlock types.CheckpointBlockH
 	return headerBlock, nil
 }
 
-func GenRandomVal(count int, startBlock uint64, power uint64, timeAlive uint64, randomise bool) (validators []types.Validator) {
+// Generate random validators
+func GenRandomVal(count int, startBlock uint64, power uint64, timeAlive uint64, randomise bool, startID uint64) (validators []types.Validator) {
 	for i := 0; i < count; i++ {
 		privKey1 := secp256k1.GenPrivKey()
-		privKey2 := secp256k1.GenPrivKey()
 		pubkey := types.NewPubKey(privKey1.PubKey().Bytes())
 		if randomise {
 			startBlock := uint64(rand.Intn(10))
@@ -95,7 +99,7 @@ func GenRandomVal(count int, startBlock uint64, power uint64, timeAlive uint64, 
 		}
 
 		newVal := types.Validator{
-			Address:    ethcmn.BytesToAddress(privKey2.PubKey().Address().Bytes()),
+			ID:         types.NewValidatorID(startID + uint64(i)),
 			StartEpoch: startBlock,
 			EndEpoch:   startBlock + timeAlive,
 			Power:      power,
@@ -106,4 +110,22 @@ func GenRandomVal(count int, startBlock uint64, power uint64, timeAlive uint64, 
 		validators = append(validators, newVal)
 	}
 	return
+}
+
+// finds address in give validator slice
+func FindSigner(signer ethcmn.Address, vals []types.Validator) bool {
+	for _, val := range vals {
+		if bytes.Compare(signer.Bytes(), val.Signer.Bytes()) == 0 {
+			return true
+		}
+	}
+	return false
+}
+
+// print validators
+func PrintVals(t *testing.T, valset *types.ValidatorSet) {
+	t.Log("Printing validators")
+	for i, val := range valset.Validators {
+		t.Log("Validator ===> ", "Index", i, "ValidatorInfo", val.String())
+	}
 }

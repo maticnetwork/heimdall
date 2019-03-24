@@ -31,20 +31,10 @@ var ZeroPubKey = hmTypes.PubKey{}
 func UpdateValidators(
 	currentSet *hmTypes.ValidatorSet,
 	validators []*hmTypes.Validator,
-	validatorToSigner map[string]common.Address,
 	ackCount uint64,
 ) error {
-	var filteredValidators []*hmTypes.Validator
-	for _, v := range validators {
-		key := hex.EncodeToString(v.Address.Bytes())
-		s, exists := validatorToSigner[key]
-		if exists && bytes.Equal(v.Signer.Bytes(), s.Bytes()) {
-			filteredValidators = append(filteredValidators, v)
-		}
-	}
-
-	for _, validator := range filteredValidators {
-		address := validator.Address.Bytes()
+	for _, validator := range validators {
+		address := validator.Signer.Bytes()
 		_, val := currentSet.GetByAddress(address)
 		if val != nil && !validator.IsCurrentValidator(ackCount) {
 			// remove val

@@ -23,6 +23,7 @@ import (
 
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/staking/cli"
 )
 
 var (
@@ -111,6 +112,10 @@ func initTestnet(config *cfg.Config, cdc *codec.Codec) error {
 	if chainID == "" {
 		chainID = "heimdall-" + tmCommon.RandStr(6)
 	}
+	startID := viper.GetInt64(cli.FlagValidatorID)
+	if startID == 0 {
+		startID = 1
+	}
 
 	monikers := make([]string, totalValidators())
 	nodeIDs := make([]string, totalValidators())
@@ -165,11 +170,11 @@ func initTestnet(config *cfg.Config, cdc *codec.Codec) error {
 		// read or create private key
 		_, pubKey := helper.GetPkObjects(valPubKeys[i].PrivKey)
 		validators[i] = app.GenesisValidator{
-			Address:    ethCommon.BytesToAddress(valPubKeys[i].Address),
+			ID:         hmTypes.NewValidatorID(uint64(startID + int64(i))),
 			PubKey:     hmTypes.NewPubKey(pubKey[:]),
 			StartEpoch: 0,
 			Signer:     ethCommon.BytesToAddress(valPubKeys[i].Address),
-			Power:      10,
+			Power:      1,
 		}
 	}
 

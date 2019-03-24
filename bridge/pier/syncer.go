@@ -11,7 +11,7 @@ import (
 
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ethereum "github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	ethCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -24,7 +24,6 @@ import (
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/staking"
 )
 
 // EventByID looks up a event by the topic id
@@ -153,7 +152,7 @@ func (syncer *ChainSyncer) OnStart() error {
 	subscription, err := syncer.MainClient.SubscribeNewHead(ctx, syncer.HeaderChannel)
 	if err != nil {
 		// start go routine to poll for new header using client object
-		go syncer.startPolling(ctx, defaultMainPollInterval)
+		go syncer.startPolling(ctx, helper.GetConfig().SyncerPollInterval)
 	} else {
 		// start go routine to listen new header using subscription
 		go syncer.startSubscription(ctx, subscription)
@@ -346,7 +345,7 @@ func (syncer *ChainSyncer) processStakedEvent(eventName string, abiObject *abi.A
 			"New event found",
 			"event", eventName,
 			"validator", event.User.Hex(),
-			"signer", event.Signer.Hex(),
+			"ID", event.ValidatorId,
 			"activatonEpoch", event.ActivatonEpoch,
 			"amount", event.Amount,
 		)
@@ -363,13 +362,15 @@ func (syncer *ChainSyncer) processUnstakeInitEvent(eventName string, abiObject *
 			"New event found",
 			"event", eventName,
 			"validator", event.User.Hex(),
+			"validatorID", event.ValidatorId,
 			"deactivatonEpoch", event.DeactivationEpoch,
 			"amount", event.Amount,
 		)
 
+		// TODO figure out how to obtain txhash
 		// send validator exit message
-		msg := staking.NewMsgValidatorExit(event.User)
-		syncer.sendTx(eventName, msg)
+		//msg := staking.NewMsgValidatorExit(event.ValidatorId.Uint64())
+		//syncer.sendTx(eventName, msg)
 	}
 }
 
@@ -382,7 +383,7 @@ func (syncer *ChainSyncer) processSignerChangeEvent(eventName string, abiObject 
 		syncer.Logger.Debug(
 			"New event found",
 			"event", eventName,
-			"validator", event.Validator.Hex(),
+			"validatorID", event.ValidatorId,
 			"newSigner", event.NewSigner.Hex(),
 			"oldSigner", event.OldSigner.Hex(),
 		)

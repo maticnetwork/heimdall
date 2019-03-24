@@ -15,15 +15,17 @@ const (
 
 	CodeInvalidMsg CodeType = 1400
 
-	CodeInvalidProposerInput CodeType = 1500
-	CodeInvalidBlockInput    CodeType = 1501
-	CodeInvalidACK           CodeType = 1502
-	CodeNoACK                CodeType = 1503
-	CodeBadTimeStamp         CodeType = 1504
-	CodeInvalidNoACK         CodeType = 1505
-	CodeTooManyNoAck         CodeType = 1506
-	CodeLowBal               CodeType = 1507
-	CodeNoCheckpoint         CodeType = 1508
+	CodeInvalidProposerInput     CodeType = 1500
+	CodeInvalidBlockInput        CodeType = 1501
+	CodeInvalidACK               CodeType = 1502
+	CodeNoACK                    CodeType = 1503
+	CodeBadTimeStamp             CodeType = 1504
+	CodeInvalidNoACK             CodeType = 1505
+	CodeTooManyNoAck             CodeType = 1506
+	CodeLowBal                   CodeType = 1507
+	CodeNoCheckpoint             CodeType = 1508
+	CodeOldCheckpoint            CodeType = 1509
+	CodeDisCountinuousCheckpoint CodeType = 1510
 
 	CodeOldValidator       CodeType = 2500
 	CodeNoValidator        CodeType = 2501
@@ -34,6 +36,8 @@ const (
 	CodeValSave            CodeType = 2506
 	CodeValAlreadyJoined   CodeType = 2507
 	CodeSignerUpdateError  CodeType = 2508
+	CodeNoConn             CodeType = 2509
+	CodeWaitFrConfirmation CodeType = 2510
 )
 
 // -------- Invalid msg
@@ -49,15 +53,31 @@ func ErrBadProposerDetails(codespace sdk.CodespaceType, proposer common.Address)
 }
 
 func ErrBadBlockDetails(codespace sdk.CodespaceType) sdk.Error {
-	return newError(codespace, CodeInvalidBlockInput, "Checkpoint is not valid")
+	return newError(codespace, CodeInvalidBlockInput, "Wrong roothash for given start and end block numbers")
 }
 
 func ErrBadAck(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeInvalidACK, "Ack Not Valid")
 }
 
+func ErrOldCheckpoint(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeOldCheckpoint, "Checkpoint already received for given start and end block")
+}
+
+func ErrDisCountinuousCheckpoint(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeDisCountinuousCheckpoint, "Checkpoint not in countinuity")
+}
+
 func ErrNoACK(codespace sdk.CodespaceType, timeRemaining float64) sdk.Error {
 	return newError(codespace, CodeNoACK, fmt.Sprintf("Checkpoint Already Exists In Buffer, ACK expected ,expires %v", timeRemaining))
+}
+
+func ErrNoConn(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeNoConn, "Unable to connect to chain")
+}
+
+func ErrWaitFrConfirmation(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeWaitFrConfirmation, fmt.Sprintf("Please wait for %v confirmations before sending transaction", helper.GetConfig().ConfirmationBlocks))
 }
 
 func ErrNoCheckpointFound(codespace sdk.CodespaceType) sdk.Error {

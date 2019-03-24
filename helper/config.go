@@ -28,10 +28,18 @@ const (
 	WithHeimdallConfigFlag = "with-heimdall-config"
 	HomeFlag               = "home"
 	FlagClientHome         = "home-client"
-	MainRPCUrl             = "https://kovan.infura.io"
-	MaticRPCUrl            = "https://testnet.matic.network"
-	NoACKWaitTime          = time.Second * 300 // aka 300 seconds
-	CheckpointBufferTime   = time.Second * 256 // aka 256 seconds
+	// Variables below to be used while init
+	MainRPCUrl                      = "https://ropsten.infura.io"
+	MaticRPCUrl                     = "https://testnet.matic.network"
+	NoACKWaitTime                   = time.Second * 1800 // Time ack service waits to clear buffer and elect new proposer (1800 seconds ~ 30 mins)
+	CheckpointBufferTime            = time.Second * 1000 // Time checkpoint is allowed to stay in buffer (1000 seconds ~ 17 mins)
+	DefaultCheckpointerPollInterval = 60 * 1000          // 1 minute in milliseconds
+	DefaultSyncerPollInterval       = 30 * 1000          // 0.5 seconds in milliseconds
+	DefaultNoACKPollInterval        = 1010 * time.Second
+	DefaultCheckpointLength         = 256   // checkpoint number 	 with 0, so length = defaultCheckpointLength -1
+	MaxCheckpointLength             = 1024  // max blocks in one checkpoint
+	DefaultChildBlockInterval       = 10000 // difference between 2 indexes of header blocks
+	ConfirmationBlocks              = 6
 )
 
 var (
@@ -50,17 +58,30 @@ func init() {
 
 // Configuration represents heimdall config
 type Configuration struct {
-	MainRPCUrl          string `json:"mainRPCUrl"`
-	MaticRPCUrl         string `json:"maticRPCUrl"`
-	StakeManagerAddress string `json:"stakeManagerAddress"`
-	RootchainAddress    string `json:"rootchainAddress"`
-	ChildBlockInterval  uint64 `json:"childBlockInterval"`
+	MainRPCUrl          string `json:"mainRPCUrl"`          // RPC endpoint for main chain
+	MaticRPCUrl         string `json:"maticRPCUrl"`         // RPC endpoint for matic chain
+	StakeManagerAddress string `json:"stakeManagerAddress"` // Stake manager address on main chain
+	RootchainAddress    string `json:"rootchainAddress"`    // Rootchain contract address on main chain
+	ChildBlockInterval  uint64 `json:"childBlockInterval"`  // Difference between header index of 2 child blocks submitted on main chain
+	// config related to bridge
+	CheckpointerPollInterval int           `json:"checkpointerPollInterval"` // Poll interval for checkpointer service to send new checkpoints or missing ACK
+	SyncerPollInterval       int           `json:"syncerPollInterval"`       // Poll interval for syncher service to sync for changes on main chain
+	NoACKPollInterval        time.Duration `json:"noackPollInterval"`        // Poll interval for ack service to send no-ack in case of no checkpoints
+	// checkpoint length related options
+	AvgCheckpointLength uint64 `json:"avgCheckpointLength"` // Average number of blocks checkpoint would contain
+	MaxCheckpointLength uint64 `json:"maxCheckpointLength"` // Maximium number of blocks checkpoint would contain
+	// wait time related options
+	NoACKWaitTime        time.Duration `json:"noackWaitTime"`        // Time ack service waits to clear buffer and elect new proposer
+	CheckpointBufferTime time.Duration `json:"checkpointBufferTime"` // Time checkpoint is allowed to stay in buffer
+
+	ConfirmationBlocks uint64 `json:"confirmationBlocks"` // Number of blocks for confirmation
 }
 
 var conf Configuration
 
 // MainChainClient stores eth client for Main chain Network
 var mainChainClient *ethclient.Client
+var mainRPCClient *rpc.Client
 
 // MaticClient stores eth/rpc client for Matic Network
 var maticClient *ethclient.Client
@@ -119,11 +140,11 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 		log.Fatal(err)
 	}
 
-	// setup eth client
-	if mainChainClient, err = ethclient.Dial(conf.MainRPCUrl); err != nil {
-		Logger.Error("Error while creating main chain client", "error", err)
+	if mainRPCClient, err = rpc.Dial(conf.MainRPCUrl); err != nil {
+		Logger.Error("Error while creating matic chain RPC client", "error", err)
 		log.Fatal(err)
 	}
+	mainChainClient = ethclient.NewClient(mainRPCClient)
 
 	if maticRPCClient, err = rpc.Dial(conf.MaticRPCUrl); err != nil {
 		Logger.Error("Error while creating matic chain RPC client", "error", err)
@@ -188,6 +209,11 @@ func GetStakeManagerABI() (abi.ABI, error) {
 //
 // Get main/matic clients
 //
+
+// GetMainChainRPCClient returns main chain RPC client
+func GetMainChainRPCClient() *rpc.Client {
+	return mainRPCClient
+}
 
 // GetMainClient returns main chain's eth client
 func GetMainClient() *ethclient.Client {
