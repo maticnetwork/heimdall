@@ -32,7 +32,6 @@ func ValidateCheckpoint(start uint64, end uint64, rootHash ethCommon.Hash) bool 
 }
 
 func GetHeaders(start uint64, end uint64) ([]byte, error) {
-	// client := helper.GetMaticClient()
 	rpcClient := helper.GetMaticRPCClient()
 
 	if start > end {
