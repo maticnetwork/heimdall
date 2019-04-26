@@ -2,6 +2,7 @@ package staking
 
 import (
 	"bytes"
+	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	hmCommon "github.com/maticnetwork/heimdall/common"
@@ -66,12 +67,13 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k hmCommon.Ke
 
 	// create new validator
 	newValidator := hmTypes.Validator{
-		ID:         validator.ID,
-		StartEpoch: validator.StartEpoch,
-		EndEpoch:   validator.EndEpoch,
-		Power:      validator.Power,
-		PubKey:     pubkey,
-		Signer:     validator.Signer,
+		ID:          validator.ID,
+		StartEpoch:  validator.StartEpoch,
+		EndEpoch:    validator.EndEpoch,
+		Power:       validator.Power,
+		PubKey:      pubkey,
+		Signer:      validator.Signer,
+		LastUpdated: big.NewInt(0),
 	}
 
 	// add validator to store
@@ -120,8 +122,12 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k hmCommon.Keep
 	}
 	oldValidator := validator.Copy()
 
-	// TODO check if signer change txhash is new or old
-	// save last updated at block number somewhere and check if current block is larger than last updates
+	// check if txhash has been used before
+	blockNum, _ := contractCaller.GetBlockNoFromTxHash(msg.TxHash)
+	if err := k.SetLastUpdated(ctx, msg.ID, &blockNum); err != nil {
+		hmCommon.StakingLogger.Error("Error occured while updating last updated", "Error", err)
+		return err.Result()
+	}
 
 	// check if we are actually updating signer
 	if !bytes.Equal(newSigner.Bytes(), validator.Signer.Bytes()) {
