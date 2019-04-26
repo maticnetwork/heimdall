@@ -159,6 +159,7 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k hmCommon.Keep
 	return sdk.Result{}
 }
 
+// handle validator exit transactions
 func HandleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k hmCommon.Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	hmCommon.StakingLogger.Info("Handling validator exit", "ValidatorID", msg.ID)
 
@@ -193,3 +194,5 @@ func HandleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k hmCommon.Ke
 
 	return sdk.Result{}
 }
+
+// handle power update transactions
