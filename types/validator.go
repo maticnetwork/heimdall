@@ -36,7 +36,7 @@ func (v *Validator) IsCurrentValidator(ackCount uint64) bool {
 	return false
 }
 
-// Validates validator
+// does basic validaton on validator
 func (v *Validator) ValidateBasic() bool {
 	if v.StartEpoch < 0 || v.EndEpoch < 0 {
 		return false
@@ -62,7 +62,7 @@ func MarshallValidator(cdc *codec.Codec, validator Validator) (bz []byte, err er
 	return bz, nil
 }
 
-// amono unmarshall validator
+// amino unmarshall validator
 func UnmarshallValidator(cdc *codec.Codec, value []byte) (Validator, error) {
 	var validator Validator
 	// unmarshall validator and return

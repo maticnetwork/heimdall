@@ -19,6 +19,8 @@ func NewHandler(k hmCommon.Keeper, contractCaller helper.IContractCaller) sdk.Ha
 			return HandleMsgValidatorExit(ctx, msg, k, contractCaller)
 		case MsgSignerUpdate:
 			return HandleMsgSignerUpdate(ctx, msg, k, contractCaller)
+		case MsgPowerUpdate:
+			return HandleMsgPowerUpdate(ctx, msg, k, contractCaller)
 		default:
 			return sdk.ErrTxDecode("Invalid message in checkpoint module").Result()
 		}
@@ -204,6 +206,41 @@ func HandleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k hmCommon.Ke
 // handle power update transactions
 func HandleMsgPowerUpdate(ctx sdk.Context, msg MsgPowerUpdate, k hmCommon.Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	hmCommon.StakingLogger.Info("Handling power update", "ValidatorID", msg.ID)
+
+	// make sure tx is has received specified confirmation
+	if confirmed := contractCaller.IsTxConfirmed(msg.TxHash); !confirmed {
+		hmCommon.StakingLogger.Error("Tx has not received enough confirmations", "ReqConf", helper.GetConfig().ConfirmationBlocks, "Tx", msg.TxHash)
+		return hmCommon.ErrWaitFrConfirmation(k.Codespace).Result()
+	}
+
+	// get event from tx
+	valID, power, err := contractCaller.PowerUpdateEvent(msg.TxHash)
+	if err != nil {
+		hmCommon.StakingLogger.Error("Error fetching log from txhash", "Error", err)
+		return hmCommon.ErrInvalidMsg(k.Codespace, "Unable to fetch logs for txHash. Error: %v", err).Result()
+	}
+
+	// check if validator id in event is correct
+	if valID != msg.ID {
+		// return id mismatch error
+	}
+
+	// get validator information from validator ID
+	validator, ok := k.GetValidatorFromValID(ctx, msg.ID)
+	if !ok {
+		hmCommon.StakingLogger.Error("Fetching of validator from store failed", "validatorID", msg.ID)
+		return hmCommon.ErrNoValidator(k.Codespace).Result()
+	}
+	if validator.Power != power {
+		hmCommon.StakingLogger.Info("Updating validator power", "OldPower", validator.Power, "NewPower", power)
+	}
+	validator.Power = power
+
+	err = k.AddValidator(ctx, validator)
+	if err != nil {
+		hmCommon.StakingLogger.Error("Unable to update power", "error", err, "ValidatorID", validator.ID)
+		return hmCommon.ErrSignerUpdateError(k.Codespace).Result()
+	}
 
 	return sdk.Result{}
 

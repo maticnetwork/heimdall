@@ -38,6 +38,7 @@ const (
 	CodeSignerUpdateError  CodeType = 2508
 	CodeNoConn             CodeType = 2509
 	CodeWaitFrConfirmation CodeType = 2510
+	CodePowerUpdateError   CodeType = 2511
 )
 
 // -------- Invalid msg
@@ -124,6 +125,10 @@ func ErrValUnbonded(codespace sdk.CodespaceType) sdk.Error {
 
 func ErrSignerUpdateError(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeSignerUpdateError, "Signer update error")
+}
+
+func ErrPowerUpdateError(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodePowerUpdateError, "Power update error")
 }
 
 func ErrOldTx(codespace sdk.CodespaceType) sdk.Error {

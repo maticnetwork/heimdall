@@ -33,7 +33,8 @@ type IContractCaller interface {
 	GetMaticChainBlock(blockNum *big.Int) (header *ethtypes.Header, err error)
 	IsTxConfirmed(tx common.Hash) bool
 	GetBlockNoFromTxHash(tx common.Hash) (blocknumber big.Int, err error)
-	SigUpdateEvent(tx common.Hash) (id uint64, newSigner common.Address, oldSigner common.Address, err error)
+	SigUpdateEvent(tx common.Hash) (id types.ValidatorID, newSigner common.Address, oldSigner common.Address, err error)
+	PowerUpdateEvent(tx common.Hash) (id types.ValidatorID, power uint64, err error)
 }
 
 type ContractCaller struct {
@@ -200,17 +201,35 @@ func (c *ContractCaller) IsTxConfirmed(tx common.Hash) bool {
 	return true
 }
 
-func (c *ContractCaller) SigUpdateEvent(tx common.Hash) (id uint64, newSigner common.Address, oldSigner common.Address, err error) {
-	fmt.Printf("mainchainc  %v", c.mainChainClient)
+// reads `sigUpdate` log from given transaction hash
+func (c *ContractCaller) SigUpdateEvent(tx common.Hash) (valID types.ValidatorID, newSigner common.Address, oldSigner common.Address, err error) {
+	// fetch tx receipt for given txhash
 	txReceipt, err := c.mainChainClient.TransactionReceipt(context.Background(), tx)
 	if err != nil {
 		Logger.Error("Unable to get transaction receipt by hash", "Error", err)
 		return
 	}
+	// read indexed logs
 	for _, vLog := range txReceipt.Logs {
 		oldSigner = common.BytesToAddress(vLog.Topics[2].Bytes())
 		newSigner = common.BytesToAddress(vLog.Topics[3].Bytes())
-		id = vLog.Topics[1].Big().Uint64()
+		valID = types.NewValidatorID(vLog.Topics[1].Big().Uint64())
+	}
+	return
+}
+
+// reads `powerUpdate` log from given transaction hash
+func (c *ContractCaller) PowerUpdateEvent(tx common.Hash) (valID types.ValidatorID, updatedPower uint64, err error) {
+	// fetch tx receipt for given txhash
+	txReceipt, err := c.mainChainClient.TransactionReceipt(context.Background(), tx)
+	if err != nil {
+		Logger.Error("Unable to get transaction receipt by hash", "Error", err)
+		return
+	}
+	// read indexed logs
+	for _, vLog := range txReceipt.Logs {
+		valID = types.NewValidatorID(vLog.Topics[1].Big().Uint64())
+		updatedPower = vLog.Topics[2].Big().Uint64()
 	}
 	return
 }
