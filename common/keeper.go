@@ -3,6 +3,7 @@ package common
 import (
 	"encoding/hex"
 	"errors"
+	"math/big"
 	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -502,22 +503,32 @@ func (k *Keeper) GetValidatorFromValID(ctx sdk.Context, valID types.ValidatorID)
 	return validator, true
 }
 
-// GetValidatorToSignerMap returns validator to signer map
-//func (k *Keeper) GetValidatorToSignerMap(ctx sdk.Context) map[types.ValidatorID]common.Address {
-//	store := ctx.KVStore(k.StakingKey)
-//
-//	// get validator iterator
-//	iterator := sdk.KVStorePrefixIterator(store, ValidatorMapKey)
-//	defer iterator.Close()
-//
-//	// initialize result map
-//	result := make(map[types.ValidatorID]common.Address)
-//
-//	// loop through validators to get valid validators
-//	prefixLength := len(ValidatorMapKey)
-//	for ; iterator.Valid(); iterator.Next() {
-//		key := hex.EncodeToString(iterator.Key()[prefixLength:])
-//		result[key] = common.BytesToAddress(iterator.Value())
-//	}
-//	return result
-//}
+// set last updated at for a validator
+func (k *Keeper) SetLastUpdated(ctx sdk.Context, valID types.ValidatorID, blckNum *big.Int) sdk.Error {
+	// get validator
+	validator, ok := k.GetValidatorFromValID(ctx, valID)
+	if !ok {
+		return ErrInvalidMsg(k.Codespace, "unable to fetch validator", "ID", valID)
+	}
+	// make sure  new block num > old
+	if blckNum.Cmp(validator.LastUpdated) != 1 {
+		return ErrOldTx(k.Codespace)
+	}
+	validator.LastUpdated = blckNum
+	err := k.AddValidator(ctx, validator)
+	if err != nil {
+		StakingLogger.Debug("Unable to update last updated", "Error", err, "Validator", validator.String())
+		return ErrInvalidMsg(k.Codespace, "unable to add validator", "ID", valID, "Error", err)
+	}
+	return nil
+}
+
+// get last updated at for validator
+func (k *Keeper) GetLastUpdated(ctx sdk.Context, valID types.ValidatorID) (updatedAT *big.Int, found bool) {
+	// get validator
+	validator, ok := k.GetValidatorFromValID(ctx, valID)
+	if !ok {
+		return nil, false
+	}
+	return validator.LastUpdated, true
+}

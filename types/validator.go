@@ -12,12 +12,13 @@ import (
 
 // Validator heimdall validator
 type Validator struct {
-	ID         ValidatorID    `json:"ID"`
-	StartEpoch uint64         `json:"startEpoch"`
-	EndEpoch   uint64         `json:"endEpoch"`
-	Power      uint64         `json:"power"` // TODO add 10^-18 here so that we dont overflow easily
-	PubKey     PubKey         `json:"pubKey"`
-	Signer     common.Address `json:"signer"`
+	ID          ValidatorID    `json:"ID"`
+	StartEpoch  uint64         `json:"startEpoch"`
+	EndEpoch    uint64         `json:"endEpoch"`
+	Power       uint64         `json:"power"` // TODO add 10^-18 here so that we dont overflow easily
+	PubKey      PubKey         `json:"pubKey"`
+	Signer      common.Address `json:"signer"`
+	LastUpdated *big.Int       `json:"last_updated"`
 
 	Accum int64 `json:"accum"`
 }
@@ -51,6 +52,8 @@ func (v *Validator) ValidateBasic() bool {
 	}
 	return true
 }
+
+// amino marshall validator
 func MarshallValidator(cdc *codec.Codec, validator Validator) (bz []byte, err error) {
 	bz, err = cdc.MarshalBinary(validator)
 	if err != nil {
@@ -59,6 +62,7 @@ func MarshallValidator(cdc *codec.Codec, validator Validator) (bz []byte, err er
 	return bz, nil
 }
 
+// amono unmarshall validator
 func UnmarshallValidator(cdc *codec.Codec, value []byte) (Validator, error) {
 	var validator Validator
 	// unmarshall validator and return
@@ -110,6 +114,11 @@ func (v *Validator) String() string {
 		v.EndEpoch,
 		v.Accum,
 	)
+}
+
+// returns block number of last validator update
+func (v *Validator) UpdatedAt() *big.Int {
+	return v.LastUpdated
 }
 
 // GetValidatorPower converts amount to power

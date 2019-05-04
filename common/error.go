@@ -126,6 +126,10 @@ func ErrSignerUpdateError(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeSignerUpdateError, "Signer update error")
 }
 
+func ErrOldTx(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeSignerUpdateError, "Old txhash not allowed")
+}
+
 func ErrValidatorAlreadySynced(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeSignerSynced, "No signer update found, invalid message")
 }
