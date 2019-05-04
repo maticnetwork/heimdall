@@ -175,8 +175,9 @@ func (msg MsgValidatorExit) ValidateBasic() sdk.Error {
 	return nil
 }
 
+//
 // Update power
-
+//
 var _ sdk.Msg = &MsgPowerUpdate{}
 
 type MsgPowerUpdate struct {

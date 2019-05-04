@@ -12,12 +12,16 @@ func RegisterWire(cdc *codec.Codec) {
 	cdc.RegisterConcrete(MsgValidatorJoin{}, "staking/MsgValidatorJoin", nil)
 	cdc.RegisterConcrete(MsgSignerUpdate{}, "staking/MsgSignerUpdate", nil)
 	cdc.RegisterConcrete(MsgValidatorExit{}, "staking/MsgValidatorExit", nil)
+	cdc.RegisterConcrete(MsgPowerUpdate{}, "staking/MsgPowerUpdate", nil)
+
 }
 
 func RegisterPulp(pulp *hmTypes.Pulp) {
 	pulp.RegisterConcrete(MsgValidatorJoin{})
 	pulp.RegisterConcrete(MsgSignerUpdate{})
 	pulp.RegisterConcrete(MsgValidatorExit{})
+	pulp.RegisterConcrete(MsgPowerUpdate{})
+
 }
 
 var cdcEmpty = codec.New()

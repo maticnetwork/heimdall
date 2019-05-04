@@ -14,6 +14,7 @@ import (
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmTypes "github.com/tendermint/tendermint/types"
 
+	ethTypes "github.com/ethereum/go-ethereum/core/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/tendermint/tendermint/crypto/tmhash"
 )
@@ -142,4 +143,9 @@ func CreateAndSendTx(msg sdk.Msg, cliCtx context.CLIContext) (err error) {
 	fmt.Printf("Transaction sent %v", resp.Hash)
 
 	return nil
+}
+
+// verify if receipt belongs to rootchain/stakemanager
+func VerifyReciept(receipt *ethTypes.Receipt) bool {
+	return bytes.Equal(receipt.ContractAddress.Bytes(), GetStakeManagerAddress().Bytes())
 }

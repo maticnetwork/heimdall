@@ -209,6 +209,12 @@ func (c *ContractCaller) SigUpdateEvent(tx common.Hash) (valID types.ValidatorID
 		Logger.Error("Unable to get transaction receipt by hash", "Error", err)
 		return
 	}
+	// check if event originates from stakemanager contract
+	if ok := VerifyReciept(txReceipt); !ok {
+		err = errors.New("Invalid event found in txHash")
+		Logger.Error("TxHash not for stakemanager contract", "Error", err)
+		return
+	}
 	// read indexed logs
 	for _, vLog := range txReceipt.Logs {
 		oldSigner = common.BytesToAddress(vLog.Topics[2].Bytes())
@@ -226,7 +232,13 @@ func (c *ContractCaller) PowerUpdateEvent(tx common.Hash) (valID types.Validator
 		Logger.Error("Unable to get transaction receipt by hash", "Error", err)
 		return
 	}
-	Logger.Info("fetched txreceipt", "receipt", txReceipt)
+	// check if event originates from stakemanager contract
+	if ok := VerifyReciept(txReceipt); !ok {
+		err = errors.New("Invalid event found in txHash")
+		Logger.Error("TxHash not for stakemanager contract", "Error", err)
+		return
+	}
+
 	// read indexed logs
 	for _, vLog := range txReceipt.Logs {
 		valID = types.NewValidatorID(vLog.Topics[1].Big().Uint64())

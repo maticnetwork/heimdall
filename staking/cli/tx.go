@@ -2,8 +2,8 @@ package cli
 
 import (
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -44,7 +44,7 @@ func GetValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 			}
 			pubkey := types.NewPubKey(pubkeyBytes)
 
-			msg := staking.NewMsgValidatorJoin(uint64(validatorID), pubkey, common.HexToHash(txhash))
+			msg := staking.NewMsgValidatorJoin(uint64(validatorID), pubkey, common.HexToHash(txhash), uint64(time.Now().Unix()))
 
 			return helper.CreateAndSendTx(msg, cliCtx)
 		},
@@ -75,7 +75,7 @@ func GetValidatorExitTx(cdc *codec.Codec) *cobra.Command {
 			if txhash == "" {
 				return fmt.Errorf("transaction hash has to be supplied")
 			}
-			msg := staking.NewMsgValidatorExit(uint64(validator), common.HexToHash(txhash))
+			msg := staking.NewMsgValidatorExit(uint64(validator), common.HexToHash(txhash), uint64(time.Now().Unix()))
 
 			return helper.CreateAndSendTx(msg, cliCtx)
 		},
@@ -106,8 +106,6 @@ func GetValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 				return fmt.Errorf("Pubkey has to be supplied")
 			}
 
-			amountStr := viper.GetString(FlagAmount)
-
 			pubkeyBytes, err := hex.DecodeString(pubkeyStr)
 			if err != nil {
 				return err
@@ -119,7 +117,7 @@ func GetValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 				return fmt.Errorf("transaction hash has to be supplied")
 			}
 
-			msg := staking.NewMsgValidatorUpdate(uint64(validator), pubkey, json.Number(amountStr), common.HexToHash(txhash))
+			msg := staking.NewMsgValidatorUpdate(uint64(validator), pubkey, common.HexToHash(txhash), uint64(time.Now().Unix()))
 
 			return helper.CreateAndSendTx(msg, cliCtx)
 		},

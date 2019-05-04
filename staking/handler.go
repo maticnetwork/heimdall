@@ -139,12 +139,6 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k hmCommon.Keep
 		hmCommon.StakingLogger.Debug("Updating new signer", "signer", newSigner.String(), "oldSigner", oldValidator.Signer.String(), "validatorID", msg.ID)
 	}
 
-	// power change
-	// if msg.NewAmount != "" && validator.Power != msg.GetNewPower() {
-	// 	hmCommon.StakingLogger.Debug("Updating power", "newPower", msg.GetNewPower(), "oldPower", validator.Power, "validatorID", msg.ID)
-	// 	validator.Power = msg.GetNewPower()
-	// }
-
 	hmCommon.StakingLogger.Error("Removing old validator", "Validator", oldValidator.String())
 	// remove old validator from HM
 	oldValidator.EndEpoch = k.GetACKCount(ctx)

@@ -241,7 +241,5 @@ func newPowerUpdateHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 		w.Write(result)
-
-		return
 	}
 }
