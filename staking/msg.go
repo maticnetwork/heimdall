@@ -2,8 +2,6 @@ package staking
 
 import (
 	"bytes"
-	"encoding/json"
-	"regexp"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -31,11 +29,12 @@ type MsgValidatorJoin struct {
 	TimeStamp    uint64            `json:"timestamp"`
 }
 
-func NewMsgValidatorJoin(_id uint64, _pubkey types.PubKey, txhash common.Hash) MsgValidatorJoin {
+func NewMsgValidatorJoin(_id uint64, _pubkey types.PubKey, txhash common.Hash, timestamp uint64) MsgValidatorJoin {
 	return MsgValidatorJoin{
 		ID:           types.NewValidatorID(_id),
 		SignerPubKey: _pubkey,
 		TxHash:       txhash,
+		TimeStamp:    timestamp,
 	}
 }
 
@@ -81,17 +80,16 @@ var _ sdk.Msg = &MsgSignerUpdate{}
 type MsgSignerUpdate struct {
 	ID              types.ValidatorID `json:"ID"`
 	NewSignerPubKey types.PubKey      `json:"pubKey"`
-	NewAmount       json.Number       `json:"amount"`
 	TxHash          common.Hash       `json:"tx_hash"`
 	TimeStamp       uint64            `json:"timestamp"`
 }
 
-func NewMsgValidatorUpdate(_id uint64, pubKey types.PubKey, amount json.Number, txhash common.Hash) MsgSignerUpdate {
+func NewMsgValidatorUpdate(_id uint64, pubKey types.PubKey, txhash common.Hash, timestamp uint64) MsgSignerUpdate {
 	return MsgSignerUpdate{
 		ID:              types.NewValidatorID(_id),
 		NewSignerPubKey: pubKey,
-		NewAmount:       amount,
 		TxHash:          txhash,
+		TimeStamp:       timestamp,
 	}
 }
 
@@ -125,16 +123,7 @@ func (msg MsgSignerUpdate) ValidateBasic() sdk.Error {
 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid pub key %v", msg.NewSignerPubKey.String())
 	}
 
-	r, _ := regexp.Compile("[0-9]+")
-	if msg.NewAmount != "" && !r.MatchString(msg.NewAmount.String()) {
-		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid new amount %v", msg.NewAmount.String())
-	}
-
 	return nil
-}
-
-func (msg MsgSignerUpdate) GetNewPower() uint64 {
-	return types.GetValidatorPower(msg.NewAmount.String())
 }
 
 //
@@ -149,10 +138,11 @@ type MsgValidatorExit struct {
 	TimeStamp uint64            `json:"timestamp"`
 }
 
-func NewMsgValidatorExit(_id uint64, txhash common.Hash) MsgValidatorExit {
+func NewMsgValidatorExit(_id uint64, txhash common.Hash, timestamp uint64) MsgValidatorExit {
 	return MsgValidatorExit{
-		ID:     types.NewValidatorID(_id),
-		TxHash: txhash,
+		ID:        types.NewValidatorID(_id),
+		TxHash:    txhash,
+		TimeStamp: timestamp,
 	}
 }
 

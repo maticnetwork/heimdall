@@ -226,6 +226,7 @@ func (c *ContractCaller) PowerUpdateEvent(tx common.Hash) (valID types.Validator
 		Logger.Error("Unable to get transaction receipt by hash", "Error", err)
 		return
 	}
+	Logger.Info("fetched txreceipt", "receipt", txReceipt)
 	// read indexed logs
 	for _, vLog := range txReceipt.Logs {
 		valID = types.NewValidatorID(vLog.Topics[1].Big().Uint64())

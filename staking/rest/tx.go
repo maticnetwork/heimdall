@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -16,11 +17,13 @@ import (
 
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
 	r.HandleFunc(
-		"/staking/validators",
+		"/staking/validator",
 		newValidatorJoinHandler(cliCtx),
 	).Methods("POST")
-	r.HandleFunc("/staking/validators", newValidatorUpdateHandler(cliCtx)).Methods("PUT")
-	r.HandleFunc("/staking/validators", newValidatorExitHandler(cliCtx)).Methods("DELETE")
+	r.HandleFunc("/staking/validator/signer", newSignerUpdateHandler(cliCtx)).Methods("PUT")
+	r.HandleFunc("/staking/validator/power", newPowerUpdateHandler(cliCtx)).Methods("PUT")
+
+	r.HandleFunc("/staking/validator", newValidatorExitHandler(cliCtx)).Methods("DELETE")
 }
 
 type addValidator struct {
@@ -42,14 +45,14 @@ func newValidatorJoinHandler(cliCtx context.CLIContext) http.HandlerFunc {
 
 		err = json.Unmarshal(body, &m)
 		if err != nil {
-			RestLogger.Error("Error unmarshalling json while adding validator", "error", err)
+			RestLogger.Error("Error unmarshalling add validator message ", "error", err)
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
 			return
 		}
 
 		// create new msg
-		msg := staking.NewMsgValidatorJoin(m.ID, m.SignerPubKey, common.HexToHash(m.TxHash))
+		msg := staking.NewMsgValidatorJoin(m.ID, m.SignerPubKey, common.HexToHash(m.TxHash), uint64(time.Now().Unix()))
 
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {
@@ -97,13 +100,13 @@ func newValidatorExitHandler(cliCtx context.CLIContext) http.HandlerFunc {
 
 		err = json.Unmarshal(body, &m)
 		if err != nil {
-			RestLogger.Error("Error unmarshalling json epoch checkpoint", "error", err)
+			RestLogger.Error("Error unmarshalling remove validator message", "error", err)
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
 			return
 		}
 
-		msg := staking.NewMsgValidatorExit(m.ID, common.HexToHash(m.TxHash))
+		msg := staking.NewMsgValidatorExit(m.ID, common.HexToHash(m.TxHash), uint64(time.Now().Unix()))
 
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {
@@ -132,16 +135,15 @@ func newValidatorExitHandler(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-type updateValidator struct {
+type updateSigner struct {
 	ID              uint64        `json:"ID"`
 	NewSignerPubKey hmType.PubKey `json:"pubKey"`
-	NewAmount       json.Number   `json:"amount"`
 	TxHash          string        `json:"tx_hash"`
 }
 
-func newValidatorUpdateHandler(cliCtx context.CLIContext) http.HandlerFunc {
+func newSignerUpdateHandler(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var m updateValidator
+		var m updateSigner
 
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
@@ -152,14 +154,14 @@ func newValidatorUpdateHandler(cliCtx context.CLIContext) http.HandlerFunc {
 
 		err = json.Unmarshal(body, &m)
 		if err != nil {
-			RestLogger.Error("Error unmarshalling json epoch checkpoint", "error", err)
+			RestLogger.Error("Error unmarshalling signer update message", "error", err)
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
 			return
 		}
 
 		// create msg validator update
-		msg := staking.NewMsgValidatorUpdate(m.ID, m.NewSignerPubKey, m.NewAmount, common.HexToHash(m.TxHash))
+		msg := staking.NewMsgValidatorUpdate(m.ID, m.NewSignerPubKey, common.HexToHash(m.TxHash), uint64(time.Now().Unix()))
 
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {
@@ -185,5 +187,61 @@ func newValidatorUpdateHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 		w.Write(result)
+	}
+}
+
+type updatePower struct {
+	ID     uint64 `json:"ID"`
+	TxHash string `json:"tx_hash"`
+}
+
+func newPowerUpdateHandler(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var m updatePower
+
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		err = json.Unmarshal(body, &m)
+		if err != nil {
+			RestLogger.Error("Error unmarshalling power update message", "error", err)
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		// create msg validator update
+		msg := staking.NewMsgPowerUpdate(m.ID, common.HexToHash(m.TxHash), uint64(time.Now().Unix()))
+
+		txBytes, err := helper.CreateTxBytes(msg)
+		if err != nil {
+			RestLogger.Error("Unable to create txBytes", "validatorID", m.ID)
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		resp, err := helper.SendTendermintRequest(cliCtx, txBytes)
+		if err != nil {
+			RestLogger.Error("Error while sending request to Tendermint", "error", err, "validatorID", m.ID, "txBytes", txBytes)
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		result, err := json.Marshal(&resp)
+		if err != nil {
+			RestLogger.Error("Error while marshalling tendermint response", "error", err)
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		w.Write(result)
+
+		return
 	}
 }

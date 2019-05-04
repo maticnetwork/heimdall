@@ -140,10 +140,10 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k hmCommon.Keep
 	}
 
 	// power change
-	if msg.NewAmount != "" && validator.Power != msg.GetNewPower() {
-		hmCommon.StakingLogger.Debug("Updating power", "newPower", msg.GetNewPower(), "oldPower", validator.Power, "validatorID", msg.ID)
-		validator.Power = msg.GetNewPower()
-	}
+	// if msg.NewAmount != "" && validator.Power != msg.GetNewPower() {
+	// 	hmCommon.StakingLogger.Debug("Updating power", "newPower", msg.GetNewPower(), "oldPower", validator.Power, "validatorID", msg.ID)
+	// 	validator.Power = msg.GetNewPower()
+	// }
 
 	hmCommon.StakingLogger.Error("Removing old validator", "Validator", oldValidator.String())
 	// remove old validator from HM
@@ -241,6 +241,8 @@ func HandleMsgPowerUpdate(ctx sdk.Context, msg MsgPowerUpdate, k hmCommon.Keeper
 		hmCommon.StakingLogger.Error("Unable to update power", "error", err, "ValidatorID", validator.ID)
 		return hmCommon.ErrSignerUpdateError(k.Codespace).Result()
 	}
+
+	// update last updated field as well
 
 	return sdk.Result{}
 
