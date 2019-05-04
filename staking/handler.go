@@ -213,11 +213,19 @@ func HandleMsgPowerUpdate(ctx sdk.Context, msg MsgPowerUpdate, k hmCommon.Keeper
 		hmCommon.StakingLogger.Error("Error fetching log from txhash", "Error", err)
 		return hmCommon.ErrInvalidMsg(k.Codespace, "Unable to fetch logs for txHash. Error: %v", err).Result()
 	}
+	hmCommon.StakingLogger.Info("Recieved params from event", "ValID", valID, "NewPower", power)
 
 	// check if validator id in event is correct
 	if valID != msg.ID {
-		// return id mismatch error
+		return hmCommon.ErrInvalidMsg(k.Codespace, "Validator ID's dont match").Result()
 	}
+
+	// check if txhash has been used before
+	// blockNum, _ := contractCaller.GetBlockNoFromTxHash(msg.TxHash)
+	// if err := k.SetLastUpdated(ctx, msg.ID, &blockNum); err != nil {
+	// 	hmCommon.StakingLogger.Error("Error occured while updating last updated", "Error", err)
+	// 	return err.Result()
+	// }
 
 	// get validator information from validator ID
 	validator, ok := k.GetValidatorFromValID(ctx, msg.ID)
@@ -225,6 +233,7 @@ func HandleMsgPowerUpdate(ctx sdk.Context, msg MsgPowerUpdate, k hmCommon.Keeper
 		hmCommon.StakingLogger.Error("Fetching of validator from store failed", "validatorID", msg.ID)
 		return hmCommon.ErrNoValidator(k.Codespace).Result()
 	}
+
 	if validator.Power != power {
 		hmCommon.StakingLogger.Info("Updating validator power", "OldPower", validator.Power, "NewPower", power)
 	}
@@ -236,8 +245,5 @@ func HandleMsgPowerUpdate(ctx sdk.Context, msg MsgPowerUpdate, k hmCommon.Keeper
 		return hmCommon.ErrSignerUpdateError(k.Codespace).Result()
 	}
 
-	// update last updated field as well
-
 	return sdk.Result{}
-
 }

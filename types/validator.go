@@ -122,13 +122,9 @@ func (v *Validator) UpdatedAt() *big.Int {
 }
 
 // GetValidatorPower converts amount to power
-func GetValidatorPower(amount string) uint64 {
-	result := big.NewInt(0)
-	result.SetString(amount, 10)
-	if len(amount) >= 18 {
-		t, _ := big.NewInt(0).SetString("1000000000000000000", 10)
-		result.Div(result, t)
-	}
+func GetValidatorPower(result big.Int) uint64 {
+	t, _ := big.NewInt(0).SetString("1000000000000000000", 10)
+	result.Div(&result, t)
 	return result.Uint64()
 }
 

@@ -2,6 +2,8 @@ package helper
 
 import (
 	"bytes"
+
+	goCtx "context"
 	"encoding/hex"
 	"fmt"
 	"sort"
@@ -14,7 +16,6 @@ import (
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmTypes "github.com/tendermint/tendermint/types"
 
-	ethTypes "github.com/ethereum/go-ethereum/core/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/tendermint/tendermint/crypto/tmhash"
 )
@@ -146,6 +147,14 @@ func CreateAndSendTx(msg sdk.Msg, cliCtx context.CLIContext) (err error) {
 }
 
 // verify if receipt belongs to rootchain/stakemanager
-func VerifyReciept(receipt *ethTypes.Receipt) bool {
-	return bytes.Equal(receipt.ContractAddress.Bytes(), GetStakeManagerAddress().Bytes())
+func VerifyReciept(c *ContractCaller, txHash common.Hash) bool {
+	// get transaction from given transaction hash
+	tx, _, err := c.mainChainClient.TransactionByHash(goCtx.Background(), txHash)
+	if err != nil {
+		Logger.Error("Unable to fetch transaction for given hash", "Tx", txHash.String(), "Error", err)
+		return false
+	}
+	// validate
+	Logger.Debug("Comparing addresses", "Receipt", tx.To().String(), "FromConfig", GetStakeManagerAddress().String())
+	return bytes.Equal(tx.To().Bytes(), GetStakeManagerAddress().Bytes())
 }
