@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -30,12 +31,13 @@ type GenesisValidator struct {
 // HeimdallValidator converts genesis validator validator to Heimdall validator
 func (v *GenesisValidator) HeimdallValidator() hmTypes.Validator {
 	return hmTypes.Validator{
-		ID:         v.ID,
-		PubKey:     v.PubKey,
-		Power:      v.Power,
-		StartEpoch: v.StartEpoch,
-		EndEpoch:   v.EndEpoch,
-		Signer:     v.Signer,
+		ID:          v.ID,
+		PubKey:      v.PubKey,
+		Power:       v.Power,
+		StartEpoch:  v.StartEpoch,
+		EndEpoch:    v.EndEpoch,
+		Signer:      v.Signer,
+		LastUpdated: big.NewInt(0),
 	}
 }
 
@@ -44,7 +46,7 @@ type GenesisState struct {
 	BufferedCheckpoint hmTypes.CheckpointBlockHeader   `json:"buffered_checkpoint"`
 	CheckpointCache    bool                            `json:"checkpoint_cache"`
 	CheckpointACKCache bool                            `json:"ack_cache"`
-	LastNoACK          uint64                           `json:"last_no_ack"`
+	LastNoACK          uint64                          `json:"last_no_ack"`
 	AckCount           uint64                          `json:"ack_count"`
 	GenValidators      []GenesisValidator              `json:"gen_validators"`
 	Validators         []hmTypes.Validator             `json:"validators"`

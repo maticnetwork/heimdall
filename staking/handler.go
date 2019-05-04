@@ -221,11 +221,11 @@ func HandleMsgPowerUpdate(ctx sdk.Context, msg MsgPowerUpdate, k hmCommon.Keeper
 	}
 
 	// check if txhash has been used before
-	// blockNum, _ := contractCaller.GetBlockNoFromTxHash(msg.TxHash)
-	// if err := k.SetLastUpdated(ctx, msg.ID, &blockNum); err != nil {
-	// 	hmCommon.StakingLogger.Error("Error occured while updating last updated", "Error", err)
-	// 	return err.Result()
-	// }
+	blockNum, _ := contractCaller.GetBlockNoFromTxHash(msg.TxHash)
+	if err := k.SetLastUpdated(ctx, msg.ID, &blockNum); err != nil {
+		hmCommon.StakingLogger.Error("Error occured while updating last updated", "Error", err)
+		return err.Result()
+	}
 
 	// get validator information from validator ID
 	validator, ok := k.GetValidatorFromValID(ctx, msg.ID)
