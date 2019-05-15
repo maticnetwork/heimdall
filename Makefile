@@ -4,7 +4,7 @@ LATEST_GIT_TAG:=$(shell git describe --tags $(git rev-list --tags --max-count=1)
 dep:
 	dep ensure -v
 	mkdir -p vendor/github.com/tendermint vendor/github.com/ethereum
-	git clone -b v0.11.0 --single-branch --depth 1 https://github.com/tendermint/iavl vendor/github.com/tendermint/iavl
+	git clone -b v0.12.2 --single-branch --depth 1 https://github.com/tendermint/iavl vendor/github.com/tendermint/iavl
 	git clone -b v1.8.19 --single-branch --depth 1 https://github.com/ethereum/go-ethereum vendor/github.com/ethereum/go-ethereum
 
 clean:
