@@ -13,12 +13,13 @@ import (
 
 func TestFetchHeaders(t *testing.T) {
 	helper.InitHeimdallConfig(os.ExpandEnv("$HOME/.heimdalld"))
-
-	result, err := checkpoint.GetHeaders(0, 10000)
+	start := uint64(0)
+	end:=uint64(300)
+	result, err := checkpoint.GetHeaders(start, end)
 	if err != nil {
 		fmt.Println("error", err)
 	} else {
 		fmt.Println("rootHash generated ", hex.EncodeToString(result))
-		fmt.Println("validating roothash ", checkpoint.ValidateCheckpoint(0, 10000, common.BytesToHash(result)))
+		fmt.Println("validating roothash ", checkpoint.ValidateCheckpoint(start, end, common.BytesToHash(result)))
 	}
 }
