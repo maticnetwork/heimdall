@@ -14,6 +14,7 @@ import (
 
 	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
+	"golang.org/x/sync/errgroup"
 )
 
 func ValidateCheckpoint(start uint64, end uint64, rootHash ethCommon.Hash) bool {
@@ -21,6 +22,7 @@ func ValidateCheckpoint(start uint64, end uint64, rootHash ethCommon.Hash) bool 
 	if err != nil {
 		return false
 	}
+	common.CheckpointLogger.Error("RootHashes are", "rootHashTx", rootHash, "rootHash", hexutil.Encode(root))
 
 	if bytes.Equal(root, rootHash[:]) {
 		common.CheckpointLogger.Info("RootHash matched!")
@@ -32,7 +34,6 @@ func ValidateCheckpoint(start uint64, end uint64, rootHash ethCommon.Hash) bool 
 }
 
 func GetHeaders(start uint64, end uint64) ([]byte, error) {
-	// client := helper.GetMaticClient()
 	rpcClient := helper.GetMaticRPCClient()
 
 	if start > end {
@@ -52,9 +53,8 @@ func GetHeaders(start uint64, end uint64) ([]byte, error) {
 	}
 
 	common.CheckpointLogger.Debug("Drafting batch elements to get all headers", "totalHeaders", len(batchElements))
-
 	// Batch call
-	err := rpcClient.BatchCall(batchElements)
+	batchElements,err:= fetchBatchElements(rpcClient,batchElements)
 	if err != nil {
 		common.CheckpointLogger.Error("Error while executing getHeaders batch call", "error", err)
 		return nil, err
@@ -148,4 +148,46 @@ func nextPowerOfTwo(n uint64) uint64 {
 	n |= n >> 32
 	n++
 	return n
+}
+
+
+// spins go-routines to fetch batch elements to allow creation of large merkle trees
+func fetchBatchElements(rpcClient *rpc.Client,b []rpc.BatchElem)(elements []rpc.BatchElem, err error){
+	var batchLength = int(helper.GetConfig().AvgCheckpointLength)
+
+	var g errgroup.Group
+
+	var allElements [][]rpc.BatchElem
+
+	for i:=0;i<len(b);{
+		var newBatch []rpc.BatchElem
+
+		// if cannot form whole batch use what remains
+		if len(b)< i+batchLength{
+			newBatch = b[i:]
+		}else{
+			newBatch = b[ i:i+batchLength]
+		}
+		// spawn go-routine
+		g.Go(func() error {
+			// Batch call
+			err:= rpcClient.BatchCall(newBatch)
+			if err == nil {
+				allElements = append(allElements, newBatch)
+			}
+			return err
+		})
+		i = i + batchLength
+	}
+	if err := g.Wait(); err != nil {
+		common.CheckpointLogger.Error("Error while fetching headers",err)
+		return nil,err
+	}
+
+	for _,element:= range allElements {
+		common.CheckpointLogger.Info("Concatenating batches","batchLength",len(element))
+		elements = append(elements, element...)
+	}
+	common.CheckpointLogger.Info("Fetched all headers","len",len(elements))
+	return elements,nil
 }
