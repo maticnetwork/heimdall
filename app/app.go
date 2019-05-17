@@ -27,8 +27,8 @@ const (
 	AppName = "Heimdall"
 
 	// internals
-	maxGasPerBlock   sdk.Gas = 1000000  // 1 Million
-	maxBytesPerBlock sdk.Gas = 22020096 // 21 MB
+	maxGasPerBlock   int64 = 1000000  // 1 Million
+	maxBytesPerBlock int64 = 22020096 // 21 MB
 )
 
 type HeimdallApp struct {
@@ -282,11 +282,11 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 
 		// consensus params
 		ConsensusParams: &abci.ConsensusParams{
-			BlockSize: &abci.BlockSize{
+			Block: &abci.BlockParams{
 				MaxBytes: maxBytesPerBlock,
 				MaxGas:   maxGasPerBlock,
 			},
-			EvidenceParams: &abci.EvidenceParams{},
+			Evidence: &abci.EvidenceParams{},
 		},
 	}
 }

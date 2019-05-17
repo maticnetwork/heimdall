@@ -51,8 +51,8 @@ var (
 var cdc = amino.NewCodec()
 
 func init() {
-	cdc.RegisterConcrete(secp256k1.PubKeySecp256k1{}, secp256k1.PubKeyAminoRoute, nil)
-	cdc.RegisterConcrete(secp256k1.PrivKeySecp256k1{}, secp256k1.PrivKeyAminoRoute, nil)
+	cdc.RegisterConcrete(secp256k1.PubKeySecp256k1{}, secp256k1.PubKeyAminoName, nil)
+	cdc.RegisterConcrete(secp256k1.PrivKeySecp256k1{}, secp256k1.PrivKeyAminoName, nil)
 	Logger = logger.NewTMLogger(logger.NewSyncWriter(os.Stdout))
 }
 
@@ -153,8 +153,9 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 	maticClient = ethclient.NewClient(maticRPCClient)
 
 	// load pv file, unmarshall and set to privObject
-	privVal := privval.LoadFilePV(filepath.Join(configDir, "priv_validator.json"))
-	cdc.MustUnmarshalBinaryBare(privVal.PrivKey.Bytes(), &privObject)
+	// TODO add priv state file
+	privVal := privval.LoadFilePV(filepath.Join(configDir, "priv_validator.json"),filepath.Join(configDir, "priv_validator.json"))
+	cdc.MustUnmarshalBinaryBare(privVal.Key.PrivKey.Bytes(), &privObject)
 	cdc.MustUnmarshalBinaryBare(privObject.PubKey().Bytes(), &pubObject)
 
 }

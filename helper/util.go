@@ -11,7 +11,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
-	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmTypes "github.com/tendermint/tendermint/types"
 
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -105,7 +104,7 @@ func CreateTxBytes(msg sdk.Msg) ([]byte, error) {
 }
 
 // SendTendermintRequest sends request to tendermint
-func SendTendermintRequest(cliCtx context.CLIContext, txBytes []byte) (*ctypes.ResultBroadcastTxCommit, error) {
+func SendTendermintRequest(cliCtx context.CLIContext, txBytes []byte) (sdk.TxResponse, error) {
 	Logger.Info("Broadcasting tx bytes to Tendermint", "txBytes", hex.EncodeToString(txBytes), "txHash", hex.EncodeToString(tmhash.Sum(txBytes[4:])))
 	return cliCtx.BroadcastTx(txBytes)
 }
@@ -139,7 +138,7 @@ func CreateAndSendTx(msg sdk.Msg, cliCtx context.CLIContext) (err error) {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Transaction sent %v", resp.Hash)
+	fmt.Printf("Transaction sent %v", resp.TxHash)
 
 	return nil
 }
