@@ -11,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto/sha3"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/xsleonard/go-merkle"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
@@ -21,6 +22,7 @@ func ValidateCheckpoint(start uint64, end uint64, rootHash ethCommon.Hash) bool 
 	if err != nil {
 		return false
 	}
+	common.CheckpointLogger.Error("RootHashes are", "rootHashTx", rootHash, "rootHash", hexutil.Encode(root))
 
 	if bytes.Equal(root, rootHash[:]) {
 		common.CheckpointLogger.Info("RootHash matched!")
@@ -53,7 +55,7 @@ func GetHeaders(start uint64, end uint64) ([]byte, error) {
 	common.CheckpointLogger.Debug("Drafting batch elements to get all headers", "totalHeaders", len(batchElements))
 
 	// Batch call
-	err := rpcClient.BatchCall(batchElements)
+	err := fetchBatchElements(rpcClient, batchElements)
 	if err != nil {
 		common.CheckpointLogger.Error("Error while executing getHeaders batch call", "error", err)
 		return nil, err
@@ -147,4 +149,38 @@ func nextPowerOfTwo(n uint64) uint64 {
 	n |= n >> 32
 	n++
 	return n
+}
+
+// spins go-routines to fetch batch elements to allow creation of large merkle trees
+func fetchBatchElements(rpcClient *rpc.Client, elements []rpc.BatchElem) (err error) {
+	var batchLength = int(helper.GetConfig().AvgCheckpointLength)
+
+	// group
+	var g errgroup.Group
+
+	for i := 0; i < len(elements); i += batchLength {
+		var newBatch []rpc.BatchElem
+		if len(elements) < i+batchLength {
+			newBatch = elements[i:]
+		} else {
+			newBatch = elements[i : i+batchLength]
+		}
+
+		common.CheckpointLogger.Info("Batching requests", "index", i, "length", len(newBatch))
+
+		// spawn go-routine
+		g.Go(func() error {
+			// Batch call
+			err := rpcClient.BatchCall(newBatch)
+			return err
+		})
+	}
+
+	if err := g.Wait(); err != nil {
+		common.CheckpointLogger.Error("Error while fetching headers", err)
+		return err
+	}
+
+	common.CheckpointLogger.Info("Fetched all headers", "len", len(elements))
+	return nil
 }

@@ -275,7 +275,7 @@ func (checkpointer *MaticCheckpointer) sendRequest(newHeader *types.Header) {
 		return
 	}
 
-	checkpointer.Logger.Info("New checkpoint header created", "start", start, "end", end, "root", hex.EncodeToString(root))
+	checkpointer.Logger.Info("New checkpoint header created", "start", start, "end", end, "root", ethCommon.BytesToHash(root))
 
 	// TODO submit checkcoint
 	txBytes, err := helper.CreateTxBytes(
