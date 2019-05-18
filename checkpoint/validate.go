@@ -166,7 +166,7 @@ func fetchBatchElements(rpcClient *rpc.Client, elements []rpc.BatchElem) (err er
 			newBatch = elements[i : i+batchLength]
 		}
 
-		common.CheckpointLogger.Info("Batching requests", "i", i, "length", len(newBatch))
+		common.CheckpointLogger.Info("Batching requests", "index", i, "length", len(newBatch))
 
 		// spawn go-routine
 		g.Go(func() error {
