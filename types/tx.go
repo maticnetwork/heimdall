@@ -4,20 +4,16 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// TxSignature represents tx signature
-type TxSignature []byte
-
 // assertion
 var _ sdk.Tx = BaseTx{}
 
 // BaseTx represents base tx tendermint needs
 type BaseTx struct {
 	Msg        sdk.Msg
-	Signatures TxSignature
 }
 
 // NewBaseTx drafts BaseTx with messages
-func NewBaseTx(msg sdk.Msg, sig TxSignature) BaseTx {
+func NewBaseTx(msg sdk.Msg) BaseTx {
 	return BaseTx{
 		Msg: msg,
 	}
