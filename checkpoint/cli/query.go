@@ -27,7 +27,7 @@ func GetCheckpointBuffer(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 			var _checkpoint types.CheckpointBlockHeader
-			err = cdc.UnmarshalBinary(res, &_checkpoint)
+			err = cdc.UnmarshalBinaryBare(res, &_checkpoint)
 			if err != nil {
 				fmt.Printf("Unable to unmarshall Error: %v", err)
 				return err
@@ -74,7 +74,7 @@ func GetHeaderFromIndex(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 			var _checkpoint types.CheckpointBlockHeader
-			err = cdc.UnmarshalBinary(res, &_checkpoint)
+			err = cdc.UnmarshalBinaryBare(res, &_checkpoint)
 			if err != nil {
 				fmt.Printf("Unable to unmarshall header block , Error:%v HeaderIndex:%v", err, headerNumber)
 				return err

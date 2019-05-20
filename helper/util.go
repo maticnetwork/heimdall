@@ -56,7 +56,6 @@ func UpdateValidators(
 			}
 		}
 	}
-
 	return nil
 }
 
@@ -66,17 +65,16 @@ func GetPkObjects(privKey crypto.PrivKey) (secp256k1.PrivKeySecp256k1, secp256k1
 	var pubObject secp256k1.PubKeySecp256k1
 	cdc.MustUnmarshalBinaryBare(privKey.Bytes(), &privObject)
 	cdc.MustUnmarshalBinaryBare(privObject.PubKey().Bytes(), &pubObject)
-
 	return privObject, pubObject
 }
 
 // StringToPubkey converts string to Pubkey
-func StringToPubkey(pubkeyStr string) (crypto.PubKey, error) {
+func StringToPubkey(pubkeyStr string) (secp256k1.PubKeySecp256k1, error) {
 	var pubkeyBytes secp256k1.PubKeySecp256k1
 	_pubkey, err := hex.DecodeString(pubkeyStr)
 	if err != nil {
 		Logger.Error("Decoding of pubkey(string) to pubkey failed", "Error", err, "PubkeyString", pubkeyStr)
-		return nil, err
+		return pubkeyBytes, err
 	}
 	// copy
 	copy(pubkeyBytes[:], _pubkey)
@@ -85,7 +83,7 @@ func StringToPubkey(pubkeyStr string) (crypto.PubKey, error) {
 }
 
 // BytesToPubkey converts bytes to Pubkey
-func BytesToPubkey(pubKey []byte) crypto.PubKey {
+func BytesToPubkey(pubKey []byte) secp256k1.PubKeySecp256k1 {
 	var pubkeyBytes secp256k1.PubKeySecp256k1
 	copy(pubkeyBytes[:], pubKey)
 	return pubkeyBytes

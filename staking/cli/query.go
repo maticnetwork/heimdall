@@ -34,7 +34,7 @@ func GetValidatorInfo(cdc *codec.Codec) *cobra.Command {
 			}
 
 			var _validator types.Validator
-			err = cdc.UnmarshalBinary(res, &_validator)
+			err = cdc.UnmarshalBinaryBare(res, &_validator)
 			if err != nil {
 				fmt.Printf("Error unmarshalling validator , Error: %v", err)
 				return err
@@ -59,7 +59,7 @@ func GetCurrentValSet(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 			var _validatorSet types.ValidatorSet
-			err = cdc.UnmarshalBinary(res, &_validatorSet)
+			err = cdc.UnmarshalBinaryBare(res, &_validatorSet)
 			if err != nil {
 				return err
 			}

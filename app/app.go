@@ -69,7 +69,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		keyMaster:     sdk.NewKVStoreKey("master"),
 	}
 
-	app.masterKeeper = common.NewKeeper(app.cdc, app.keyMaster, app.keyStaker, app.keyCheckpoint, app.RegisterCodespace(common.DefaultCodespace))
+	app.masterKeeper = common.NewKeeper(app.cdc, app.keyMaster, app.keyStaker, app.keyCheckpoint, common.DefaultCodespace)
 
 	contractCallerObj, err := helper.NewContractCaller()
 	if err != nil {
@@ -88,7 +88,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.SetAnteHandler(auth.NewAnteHandler())
 
 	// mount the multistore and load the latest state
-	app.MountStoresIAVL(app.keyMain, app.keyCheckpoint, app.keyStaker)
+	app.MountStores(app.keyMain, app.keyCheckpoint, app.keyStaker)
 	err = app.LoadLatestVersion(app.keyMain)
 	if err != nil {
 		cmn.Exit(err.Error())

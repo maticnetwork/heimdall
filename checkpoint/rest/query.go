@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/client/utils"
 	"github.com/cosmos/cosmos-sdk/codec"
 	ethcmn "github.com/ethereum/go-ethereum/common"
 	"github.com/gorilla/mux"
@@ -16,6 +15,7 @@ import (
 	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
+	"github.com/cosmos/cosmos-sdk/types/rest"
 )
 
 func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
@@ -48,22 +48,21 @@ func checkpointBufferHandlerFn(
 	return func(w http.ResponseWriter, r *http.Request) {
 		res, err := cliCtx.QueryStore(common.BufferCheckpointKey, "checkpoint")
 		if err != nil {
-			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
 		// the query will return empty if there is no data in buffer
 		if len(res) == 0 {
-			w.WriteHeader(http.StatusNoContent)
+			rest.WriteErrorResponse(w, http.StatusNoContent, err.Error())
 			return
 		}
 
 		var _checkpoint types.CheckpointBlockHeader
-		err = cdc.UnmarshalBinary(res, &_checkpoint)
+		err = cdc.UnmarshalBinaryBare(res, &_checkpoint)
 		if err != nil {
 			RestLogger.Error("Unable to unmarshall", "Error", err)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 		RestLogger.Debug("Checkpoint fetched", "Checkpoint", _checkpoint.String())
@@ -71,12 +70,11 @@ func checkpointBufferHandlerFn(
 		result, err := json.Marshal(&_checkpoint)
 		if err != nil {
 			RestLogger.Error("Error while marshalling response to Json", "error", err)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(result)
+		rest.PostProcessResponse(w,cdc,result,cliCtx.Indent)
+
 	}
 }
 
@@ -88,32 +86,30 @@ func checkpointCountHandlerFn(
 		RestLogger.Debug("Fetching number of checkpoints from state")
 		res, err := cliCtx.QueryStore(common.ACKCountKey, "checkpoint")
 		if err != nil {
-			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
 		// The query will return empty if there is no data
 		if len(res) == 0 {
-			w.WriteHeader(http.StatusNoContent)
+			rest.WriteErrorResponse(w, http.StatusNoContent, err.Error())
 			return
 		}
 
 		ackCount, err := strconv.ParseInt(string(res), 10, 64)
 		if err != nil {
 			RestLogger.Error("Unable to parse int", "Response", res, "Error", err)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 		result, err := json.Marshal(map[string]interface{}{"result": ackCount})
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(result)
+		rest.PostProcessResponse(w,cdc,result,cliCtx.Indent)
 	}
 }
 
@@ -126,32 +122,29 @@ func checkpointHeaderHandlerFn(
 		headerNumber, err := strconv.ParseUint(vars["headerBlockIndex"], 10, 64)
 		res, err := cliCtx.QueryStore(common.GetHeaderKey(uint64(headerNumber)), "checkpoint")
 		if err != nil {
-			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 		// the query will return empty if there is no data
 		if len(res) == 0 {
-			w.WriteHeader(http.StatusNotFound)
+			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
 			return
 		}
 
 		var _checkpoint types.CheckpointBlockHeader
-		err = cdc.UnmarshalBinary(res, &_checkpoint)
+		err = cdc.UnmarshalBinaryBare(res, &_checkpoint)
 		if err != nil {
-			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		result, err := json.Marshal(&_checkpoint)
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(result)
+		rest.PostProcessResponse(w,cdc,result,cliCtx.Indent)
 	}
 }
 
@@ -163,23 +156,20 @@ func checkpointHandlerFn(
 		vars := mux.Vars(r)
 		start, err := strconv.Atoi(vars["start"])
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		end, err := strconv.Atoi(vars["end"])
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		roothash, err := checkpoint.GetHeaders(uint64(start), uint64(end))
 		if err != nil {
 			RestLogger.Error("Unable to get header", "Start", start, "End", end, "Error", err)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
@@ -187,11 +177,10 @@ func checkpointHandlerFn(
 
 		_validatorSet, err := cliCtx.QueryStore(common.CurrentValidatorSetKey, "staker")
 		if err == nil {
-			err:=cdc.UnmarshalBinary(_validatorSet, &validatorSet)
+			err:=cdc.UnmarshalBinaryBare(_validatorSet, &validatorSet)
 			if err!=nil{
+				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 				RestLogger.Error("Unable to get validator set to form proposer", "Error", err)
-				w.WriteHeader(http.StatusBadRequest)
-				w.Write([]byte(err.Error()))
 				return
 			}
 		}
@@ -206,13 +195,10 @@ func checkpointHandlerFn(
 		result, err := json.Marshal(checkpoint)
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(result)
+		rest.PostProcessResponse(w,cdc,result,cliCtx.Indent)
 	}
 }
 
@@ -223,33 +209,29 @@ func noackHandlerFn(
 	return func(w http.ResponseWriter, r *http.Request) {
 		res, err := cliCtx.QueryStore(common.CheckpointNoACKCacheKey, "checkpoint")
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		if len(res) == 0 {
-			w.WriteHeader(http.StatusNoContent)
+			rest.WriteErrorResponse(w, http.StatusNoContent, err.Error())
 			return
 		}
 
 		lastAckTime, err := strconv.ParseInt(string(res), 10, 64)
 		if err != nil {
 			RestLogger.Error("Unable to parse int", "Response", res, "Error", err)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusNoContent, err.Error())
 			return
 		}
 
 		result, err := json.Marshal(map[string]interface{}{"result": lastAckTime})
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusNoContent, err.Error())
 			return
 		}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(result)
+		rest.PostProcessResponse(w,cdc,result,cliCtx.Indent)
 	}
 }
 
@@ -286,7 +268,7 @@ func overviewHandlerFunc(
 		_checkpointBufferBytes, err := cliCtx.QueryStore(common.BufferCheckpointKey, "checkpoint")
 		if err == nil {
 			if len(_checkpointBufferBytes) != 0 {
-				err = cdc.UnmarshalBinary(_checkpointBufferBytes, &_checkpoint)
+				err = cdc.UnmarshalBinaryBare(_checkpointBufferBytes, &_checkpoint)
 				if err != nil {
 					RestLogger.Error("Unable to unmarshall checkpoint present in buffer", "Error", err, "CheckpointBuffer", _checkpointBufferBytes)
 				}
@@ -303,7 +285,7 @@ func overviewHandlerFunc(
 
 		_validatorSet, err := cliCtx.QueryStore(common.CurrentValidatorSetKey, "staker")
 		if err == nil {
-			cdc.UnmarshalBinary(_validatorSet, &validatorSet)
+			cdc.UnmarshalBinaryBare(_validatorSet, &validatorSet)
 		}
 		validatorCount = len(validatorSet.Validators)
 
@@ -321,7 +303,7 @@ func overviewHandlerFunc(
 		}
 		for _,kv_pair := range storedHeaders {
 			var checkpointHeader types.CheckpointBlockHeader
-			if cdc.UnmarshalBinary(kv_pair.Value,&checkpointHeader); err!=nil{
+			if cdc.UnmarshalBinaryBare(kv_pair.Value,&checkpointHeader); err!=nil{
 				RestLogger.Error("Unable to unmarshall header", "Error", err, "Value", kv_pair.Value)
 			}
 			headers=append(headers, checkpointHeader)
@@ -338,13 +320,10 @@ func overviewHandlerFunc(
 		result, err := json.Marshal(map[string]interface{}{"result": state})
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(result)
+		rest.PostProcessResponse(w,cdc,result,cliCtx.Indent)
 	}
 }
 
@@ -356,12 +335,12 @@ func latestCheckpointHandlerFunc(
 	return func(w http.ResponseWriter, r *http.Request) {
 		ackCount, err := cliCtx.QueryStore(common.ACKCountKey, "checkpoint")
 		if err != nil {
-			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 		ackCountInt, err := strconv.ParseInt(string(ackCount), 10, 64)
 		if err != nil {
-			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 		RestLogger.Debug("ACK Count fetched", "ACKCount", ackCountInt)
@@ -370,30 +349,28 @@ func latestCheckpointHandlerFunc(
 		RestLogger.Debug("Last checkpoint key generated", "LastCheckpointKey", lastCheckpointKey, "min", helper.GetConfig().ChildBlockInterval)
 		res, err := cliCtx.QueryStore(common.GetHeaderKey(lastCheckpointKey), "checkpoint")
 		if err != nil {
-			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 		// the query will return empty if there is no data
 		if len(res) == 0 {
-			w.WriteHeader(http.StatusNotFound)
+			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
 			return
 		}
 
 		var _checkpoint types.CheckpointBlockHeader
-		err = cdc.UnmarshalBinary(res, &_checkpoint)
+		err = cdc.UnmarshalBinaryBare(res, &_checkpoint)
 		if err != nil {
-			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 		RestLogger.Debug("Fetched last checkpoint", "Checkpoint", _checkpoint)
 		result, err := json.Marshal(&_checkpoint)
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(result)
+		rest.PostProcessResponse(w,cdc,result,cliCtx.Indent)
 	}
 }

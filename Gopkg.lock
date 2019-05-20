@@ -42,13 +42,16 @@
   revision = "9e5f4b9a998d263e3ce9c56664a7816001ac8000"
 
 [[projects]]
-  digest = "1:a757540f9ca01fe3f6fd07737277d0b2dac1cdc3d239d04bbc07268374f311c3"
+  digest = "1:48f9828959feb5a84fd58cca11b0d2f51fe30a8db9c01f284c5e067a38807751"
   name = "github.com/cosmos/cosmos-sdk"
   packages = [
     "baseapp",
     "client",
     "client/context",
     "client/keys",
+    "client/lcd",
+    "client/lcd/statik",
+    "client/rest",
     "client/rpc",
     "client/tx",
     "client/utils",
@@ -78,22 +81,31 @@
     "types/rest",
     "version",
     "x/auth",
+    "x/auth/client/rest",
     "x/auth/client/txbuilder",
     "x/bank",
+    "x/bank/client/rest",
     "x/crisis",
     "x/distribution",
+    "x/distribution/client/common",
+    "x/distribution/client/rest",
     "x/distribution/keeper",
     "x/distribution/tags",
     "x/distribution/types",
     "x/gov",
+    "x/gov/client/rest",
+    "x/gov/client/utils",
     "x/gov/tags",
     "x/mint",
+    "x/mint/client/rest",
     "x/mock",
     "x/params",
     "x/params/subspace",
     "x/slashing",
+    "x/slashing/client/rest",
     "x/slashing/tags",
     "x/staking",
+    "x/staking/client/rest",
     "x/staking/keeper",
     "x/staking/querier",
     "x/staking/tags",
@@ -369,6 +381,14 @@
   ]
   pruneopts = "UT"
   revision = "5867b95ac084bbfee6ea16595c4e05ab009021da"
+
+[[projects]]
+  digest = "1:77b730fa4c2d98f3ddf492acbea351eb6b0560fa5eace4105a6fc33ff937bb1b"
+  name = "github.com/rakyll/statik"
+  packages = ["fs"]
+  pruneopts = "UT"
+  revision = "3bac566d30cdbeddef402a80f3d6305860e59f12"
+  version = "v0.1.6"
 
 [[projects]]
   branch = "master"
@@ -723,14 +743,14 @@
     "github.com/cosmos/cosmos-sdk/baseapp",
     "github.com/cosmos/cosmos-sdk/client",
     "github.com/cosmos/cosmos-sdk/client/context",
-    "github.com/cosmos/cosmos-sdk/client/keys",
+    "github.com/cosmos/cosmos-sdk/client/lcd",
     "github.com/cosmos/cosmos-sdk/client/rpc",
     "github.com/cosmos/cosmos-sdk/client/tx",
-    "github.com/cosmos/cosmos-sdk/client/utils",
     "github.com/cosmos/cosmos-sdk/codec",
     "github.com/cosmos/cosmos-sdk/server",
     "github.com/cosmos/cosmos-sdk/store",
     "github.com/cosmos/cosmos-sdk/types",
+    "github.com/cosmos/cosmos-sdk/types/rest",
     "github.com/cosmos/cosmos-sdk/version",
     "github.com/go-kit/kit/log",
     "github.com/gorilla/mux",
@@ -751,8 +771,6 @@
     "github.com/tendermint/tendermint/libs/log",
     "github.com/tendermint/tendermint/p2p",
     "github.com/tendermint/tendermint/privval",
-    "github.com/tendermint/tendermint/rpc/core/types",
-    "github.com/tendermint/tendermint/rpc/lib/server",
     "github.com/tendermint/tendermint/types",
     "github.com/tendermint/tendermint/types/time",
     "github.com/xsleonard/go-merkle",

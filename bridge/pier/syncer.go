@@ -24,6 +24,7 @@ import (
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/cosmos/cosmos-sdk/client"
 )
 
 // EventByID looks up a event by the topic id
@@ -103,7 +104,7 @@ func NewChainSyncer() *ChainSyncer {
 	}
 
 	cliCtx := cliContext.NewCLIContext()
-	cliCtx.Async = true
+	cliCtx.BroadcastMode = client.BroadcastAsync
 
 	// creating syncer object
 	syncer := &ChainSyncer{

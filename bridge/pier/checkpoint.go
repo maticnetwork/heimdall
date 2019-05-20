@@ -27,6 +27,7 @@ import (
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/helper"
 	hmtypes "github.com/maticnetwork/heimdall/types"
+	"github.com/cosmos/cosmos-sdk/client"
 )
 
 // MaticCheckpointer to propose
@@ -98,7 +99,7 @@ func NewMaticCheckpointer() *MaticCheckpointer {
 	}
 
 	cliCtx := cliContext.NewCLIContext()
-	cliCtx.Async = true
+	cliCtx.BroadcastMode = client.BroadcastAsync
 
 	// creating checkpointer object
 	checkpointer := &MaticCheckpointer{
@@ -299,7 +300,7 @@ func (checkpointer *MaticCheckpointer) sendRequest(newHeader *types.Header) {
 		return
 	}
 
-	checkpointer.Logger.Info("Checkpoint sent successfully", "hash", resp.Hash.String(), "start", start, "end", end, "root", hex.EncodeToString(root))
+	checkpointer.Logger.Info("Checkpoint sent successfully", "hash", resp.TxHash, "start", start, "end", end, "root", hex.EncodeToString(root))
 }
 
 func (checkpointer *MaticCheckpointer) genHeaderDetailContract(lastHeader uint64, wg *sync.WaitGroup, contractState chan<- ContractCheckpoint) {

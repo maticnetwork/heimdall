@@ -14,21 +14,28 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	ethCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
+	cfg "github.com/tendermint/tendermint/config"
+	"github.com/tendermint/tendermint/p2p"
+
+	"github.com/tendermint/tendermint/privval"
+
 	"github.com/spf13/viper"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/common"
 	dbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
-	"github.com/tendermint/tendermint/p2p"
-	"github.com/tendermint/tendermint/privval"
 	tmTypes "github.com/tendermint/tendermint/types"
 
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/helper"
 	hmserver "github.com/maticnetwork/heimdall/server"
+	"github.com/tendermint/tendermint/crypto"
+
 	stakingcli "github.com/maticnetwork/heimdall/staking/cli"
 	hmTypes "github.com/maticnetwork/heimdall/types"
+	"github.com/cosmos/cosmos-sdk/version"
+	"github.com/cosmos/cosmos-sdk/store"
 )
 
 // ValidatorAccountFormatter helps to print local validator account information
@@ -63,17 +70,28 @@ func main() {
 		helper.WithHeimdallConfigFlag,
 		rootCmd.Flags().Lookup(helper.WithHeimdallConfigFlag),
 	)
+	server.AddCommands(ctx, cdc, rootCmd, newApp, exportAppStateAndTMValidators)
 
-	// cosmos server commands
-	server.AddCommands(
-		ctx,
-		cdc,
-		rootCmd,
-		server.DefaultAppInit,
-		server.AppCreator(newApp),
-		server.AppExporter(exportAppStateAndTMValidators),
+	rootCmd.PersistentFlags().String("log_level", ctx.Config.LogLevel, "Log level")
+	tendermintCmd := &cobra.Command{
+		Use:   "tendermint",
+		Short: "Tendermint subcommands",
+	}
+
+	tendermintCmd.AddCommand(
+		server.ShowNodeIDCmd(ctx),
+		server.ShowValidatorCmd(ctx),
+		server.ShowAddressCmd(ctx),
+		server.VersionCmd(ctx),
 	)
-
+	rootCmd.AddCommand(
+		server.StartCmd(ctx, server.AppCreator(newApp)),
+		server.UnsafeResetAllCmd(ctx),
+		client.LineBreak,
+		client.LineBreak,
+		tendermintCmd,
+		version.VersionCmd,
+	)
 	rootCmd.AddCommand(newAccountCmd())
 	rootCmd.AddCommand(hmserver.ServeCommands(cdc))
 	rootCmd.AddCommand(InitCmd(ctx, cdc))
@@ -92,10 +110,10 @@ func newApp(logger log.Logger, db dbm.DB, storeTracer io.Writer) abci.Applicatio
 	helper.InitHeimdallConfig("")
 
 	// create new heimdall app
-	return app.NewHeimdallApp(logger, db, baseapp.SetPruning(viper.GetString("pruning")))
+	return app.NewHeimdallApp(logger, db, baseapp.SetPruning(store.NewPruningOptionsFromString(viper.GetString("pruning"))))
 }
 
-func exportAppStateAndTMValidators(logger log.Logger, db dbm.DB, storeTracer io.Writer) (json.RawMessage, []tmTypes.GenesisValidator, error) {
+func exportAppStateAndTMValidators(logger log.Logger, db dbm.DB, storeTracer io.Writer, height int64, forZeroHeight bool, jailWhiteList []string,) (json.RawMessage, []tmTypes.GenesisValidator, error) {
 	bapp := app.NewHeimdallApp(logger, db)
 	return bapp.ExportAppStateAndValidators()
 }
@@ -118,15 +136,10 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			}
 
 			validatorID := viper.GetInt64(stakingcli.FlagValidatorID)
-
-			nodeKey, err := p2p.LoadOrGenNodeKey(config.NodeKeyFile())
+			nodeID, valPubKey, err :=  InitializeNodeValidatorFiles(config)
 			if err != nil {
 				return err
 			}
-			nodeID := string(nodeKey.ID())
-
-			// read or create private key
-			pval := readOrCreatePrivValidator(config.PrivValidatorFile())
 
 			//
 			// Heimdall config file
@@ -164,12 +177,12 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			//
 
 			// create validator
-			_, pubKey := helper.GetPkObjects(pval.PrivKey)
+			//_, pubKey := helper.GetPkObjects(pval.PrivKey)
 			validator := app.GenesisValidator{
 				ID:         hmTypes.NewValidatorID(uint64(validatorID)),
-				PubKey:     hmTypes.NewPubKey(pubKey[:]),
+				PubKey:     hmTypes.NewPubKey(valPubKey.Bytes()[:]),
 				StartEpoch: 0,
-				Signer:     ethCommon.BytesToAddress(pval.Address),
+				Signer:     ethCommon.BytesToAddress(valPubKey.Address().Bytes()),
 				Power:      1,
 			}
 
@@ -253,15 +266,42 @@ func writeGenesisFile(genesisFile, chainID string, appState json.RawMessage) err
 	return genDoc.SaveAs(genesisFile)
 }
 
-func readOrCreatePrivValidator(privValFile string) *privval.FilePV {
-	// private validator
-	var privValidator *privval.FilePV
-	if common.FileExists(privValFile) {
-		privValidator = privval.LoadFilePV(privValFile)
-	} else {
-		privValidator = privval.GenFilePV(privValFile)
-		privValidator.Save()
+//func readOrCreatePrivValidator(privValFile string) *privval.FilePV {
+//	// private validator
+//	var privValidator *privval.FilePV
+//	if common.FileExists(privValFile) {
+//		privValidator = privval.LoadFilePV(privValFile)
+//	} else {
+//		privValidator = privval.GenFilePV(privValFile)
+//		privValidator.Save()
+//	}
+//	return privValidator
+//}
+
+func InitializeNodeValidatorFiles(
+	config *cfg.Config) (nodeID string, valPubKey crypto.PubKey, err error,
+) {
+
+	nodeKey, err := p2p.LoadOrGenNodeKey(config.NodeKeyFile())
+	if err != nil {
+		return nodeID, valPubKey, err
 	}
-	return privValidator
+
+	nodeID = string(nodeKey.ID())
+	server.UpgradeOldPrivValFile(config)
+
+	pvKeyFile := config.PrivValidatorKeyFile()
+	if err := common.EnsureDir(filepath.Dir(pvKeyFile), 0777); err != nil {
+		return nodeID, valPubKey, nil
+	}
+
+	pvStateFile := config.PrivValidatorStateFile()
+	if err := common.EnsureDir(filepath.Dir(pvStateFile), 0777); err != nil {
+		return nodeID, valPubKey, nil
+	}
+
+	valPubKey = privval.LoadOrGenFilePV(pvKeyFile, pvStateFile).GetPubKey()
+
+	return nodeID, valPubKey, nil
 }
 

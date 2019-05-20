@@ -23,6 +23,7 @@ import (
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/helper"
 	hmtypes "github.com/maticnetwork/heimdall/types"
+	"github.com/cosmos/cosmos-sdk/client"
 )
 
 // Result represents single req result
@@ -59,7 +60,7 @@ func NewAckService() *AckService {
 	}
 
 	cliCtx := cliContext.NewCLIContext()
-	cliCtx.Async = true
+	cliCtx.BroadcastMode = client.BroadcastAsync
 
 	// creating checkpointer object
 	ackservice := &AckService{
@@ -202,7 +203,7 @@ func (ackService *AckService) processCheckpoint(lastCreatedAt int64) {
 			return
 		}
 
-		ackService.Logger.Info("no-ack transaction sent successfully", "txHash", resp.Hash)
+		ackService.Logger.Info("no-ack transaction sent successfully", "txHash", resp.TxHash)
 	}
 }
 

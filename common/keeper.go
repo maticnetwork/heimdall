@@ -63,7 +63,7 @@ func (k *Keeper) addCheckpoint(ctx sdk.Context, key []byte, headerBlock types.Ch
 	store := ctx.KVStore(k.CheckpointKey)
 
 	// create Checkpoint block and marshall
-	out, err := k.cdc.MarshalBinary(headerBlock)
+	out, err := k.cdc.MarshalBinaryBare(headerBlock)
 	if err != nil {
 		CheckpointLogger.Error("Error marshalling checkpoint", "error", err)
 		return err
@@ -93,7 +93,7 @@ func (k *Keeper) GetCheckpointByIndex(ctx sdk.Context, headerIndex uint64) (type
 	var _checkpoint types.CheckpointBlockHeader
 
 	if store.Has(headerKey) {
-		err := k.cdc.UnmarshalBinary(store.Get(headerKey), &_checkpoint)
+		err := k.cdc.UnmarshalBinaryBare(store.Get(headerKey), &_checkpoint)
 		if err != nil {
 			return _checkpoint, err
 		} else {
@@ -121,7 +121,7 @@ func (k *Keeper) GetLastCheckpoint(ctx sdk.Context) (types.CheckpointBlockHeader
 		// header key
 		headerKey := GetHeaderKey(lastCheckpointKey)
 		if store.Has(headerKey) {
-			err := k.cdc.UnmarshalBinary(store.Get(headerKey), &_checkpoint)
+			err := k.cdc.UnmarshalBinaryBare(store.Get(headerKey), &_checkpoint)
 			if err != nil {
 				CheckpointLogger.Error("Unable to fetch last checkpoint from store", "key", lastCheckpointKey, "acksCount", acksCount)
 				return _checkpoint, err
@@ -195,7 +195,7 @@ func (k *Keeper) GetCheckpointFromBuffer(ctx sdk.Context) (types.CheckpointBlock
 
 	if store.Has(BufferCheckpointKey) {
 		// Get checkpoint and unmarshall
-		err := k.cdc.UnmarshalBinary(store.Get(BufferCheckpointKey), &checkpoint)
+		err := k.cdc.UnmarshalBinaryBare(store.Get(BufferCheckpointKey), &checkpoint)
 		return checkpoint, err
 	}
 
@@ -415,7 +415,7 @@ func (k *Keeper) UpdateValidatorSetInStore(ctx sdk.Context, newValidatorSet type
 	store := ctx.KVStore(k.StakingKey)
 
 	// marshall validator set
-	bz, err := k.cdc.MarshalBinary(newValidatorSet)
+	bz, err := k.cdc.MarshalBinaryBare(newValidatorSet)
 	if err != nil {
 		return err
 	}
@@ -431,7 +431,7 @@ func (k *Keeper) GetValidatorSet(ctx sdk.Context) (validatorSet types.ValidatorS
 	// get current validator set from store
 	bz := store.Get(CurrentValidatorSetKey)
 	// unmarhsall
-	k.cdc.UnmarshalBinary(bz, &validatorSet)
+	k.cdc.UnmarshalBinaryBare(bz, &validatorSet)
 
 	// return validator set
 	return validatorSet

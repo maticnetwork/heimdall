@@ -4,8 +4,6 @@ import (
 	"os"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/rpc"
-	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/spf13/cobra"
 	"github.com/tendermint/tendermint/libs/cli"
@@ -52,9 +50,9 @@ func main() {
 	// with the cdc.
 
 	// add standard rpc, and tx commands
-	rpc.AddCommands(rootCmd)
+	//rpc.AddCommands(rootCmd)
 	rootCmd.AddCommand(client.LineBreak)
-	tx.AddCommands(rootCmd, cdc)
+	//tx.AddCommands(rootCmd, cdc)
 	rootCmd.AddCommand(client.LineBreak)
 
 	// add query/post commands (custom to binary)
@@ -141,7 +139,7 @@ func ExportCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			_checkpointBuffer, err := cliCtx.QueryStore(hmcmn.BufferCheckpointKey, "checkpoint")
 			if err == nil {
 				if len(_checkpointBuffer) != 0 {
-					err = cdc.UnmarshalBinary(_checkpointBuffer, &buffer_checkpoint)
+					err = cdc.UnmarshalBinaryBare(_checkpointBuffer, &buffer_checkpoint)
 					if err != nil {
 						fmt.Printf("Unable to unmarshall checkpoint present in buffer. Error: %v CheckpointBuffer: %v", err, _checkpointBuffer)
 					}
@@ -194,7 +192,7 @@ func ExportCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			}
 			for _, kv_pair := range storedHeaders {
 				var checkpointHeader hmTypes.CheckpointBlockHeader
-				if cdc.UnmarshalBinary(kv_pair.Value, &checkpointHeader); err != nil {
+				if cdc.UnmarshalBinaryBare(kv_pair.Value, &checkpointHeader); err != nil {
 					return err
 				}
 				headers = append(headers, checkpointHeader)
@@ -209,7 +207,7 @@ func ExportCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			}
 			for _, kv_pair := range storedVals {
 				var hmVal hmTypes.Validator
-				if cdc.UnmarshalBinary(kv_pair.Value, &hmVal); err != nil {
+				if cdc.UnmarshalBinaryBare(kv_pair.Value, &hmVal); err != nil {
 					return err
 				}
 				validators = append(validators, hmVal)
@@ -222,7 +220,7 @@ func ExportCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if err := cdc.UnmarshalBinary(storedCurrValSet, &currentValSet); err != nil {
+			if err := cdc.UnmarshalBinaryBare(storedCurrValSet, &currentValSet); err != nil {
 				return err
 			}
 
