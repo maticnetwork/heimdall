@@ -274,6 +274,7 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 	// Add all headers
 	app.InsertHeaders(ctx, &genesisState)
 
+	logger.Info("adding new validators","updates",valUpdates[0].PubKey)
 	// TODO make sure old validtors dont go in validator updates ie deactivated validators have to be removed
 	// udpate validators
 	return abci.ResponseInitChain{
@@ -281,13 +282,13 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 		Validators: valUpdates,
 
 		// consensus params
-		ConsensusParams: &abci.ConsensusParams{
-			Block: &abci.BlockParams{
-				MaxBytes: maxBytesPerBlock,
-				MaxGas:   maxGasPerBlock,
-			},
-			Evidence: &abci.EvidenceParams{},
-		},
+		//ConsensusParams: &abci.ConsensusParams{
+		//	Block: &abci.BlockParams{
+		//		MaxBytes: maxBytesPerBlock,
+		//		MaxGas:   maxGasPerBlock,
+		//	},
+		//	Evidence: &abci.EvidenceParams{},
+		//},
 	}
 }
 
@@ -298,6 +299,7 @@ func (app *HeimdallApp) GetValidatorsFromGenesis(ctx sdk.Context, genesisState *
 		logger.Debug("Loading genesis validators")
 		for _, validator := range genesisState.GenValidators {
 			hmValidator := validator.HeimdallValidator()
+			logger.Debug("gen validator","gen",validator,"hmVal",hmValidator)
 			if ok := hmValidator.ValidateBasic(); !ok {
 				logger.Error("Invalid validator properties", "validator", hmValidator)
 				return
@@ -311,7 +313,6 @@ func (app *HeimdallApp) GetValidatorsFromGenesis(ctx sdk.Context, genesisState *
 			} else {
 				// Add individual validator to state
 				app.masterKeeper.AddValidator(ctx, hmValidator)
-
 				// convert to Validator Update
 				updateVal := abci.ValidatorUpdate{
 					Power:  int64(validator.Power),

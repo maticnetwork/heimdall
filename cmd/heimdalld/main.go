@@ -72,7 +72,7 @@ func main() {
 	)
 	server.AddCommands(ctx, cdc, rootCmd, newApp, exportAppStateAndTMValidators)
 
-	rootCmd.PersistentFlags().String("log_level", ctx.Config.LogLevel, "Log level")
+	//rootCmd.PersistentFlags().String("log_level", ctx.Config.LogLevel, "Log level")
 	tendermintCmd := &cobra.Command{
 		Use:   "tendermint",
 		Short: "Tendermint subcommands",
