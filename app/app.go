@@ -10,6 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethCommon "github.com/ethereum/go-ethereum/common"
 	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	dbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
@@ -238,7 +239,9 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 	if len(valSet.Validators) == 0 {
 		panic(errors.New("no valid validators found"))
 	}
-
+	var pk secp256k1.PubKeySecp256k1
+	copy(pk[:], valUpdates[0].PubKey.Data)
+	logger.Error("Validator update", "vali", pk.Address())
 	var currentValSet hmTypes.ValidatorSet
 	if isGenesis {
 		currentValSet = valSet
@@ -274,7 +277,7 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 	// Add all headers
 	app.InsertHeaders(ctx, &genesisState)
 
-	logger.Info("adding new validators","updates",valUpdates[0].PubKey)
+	logger.Info("adding new validators", "updates", valUpdates[0].PubKey)
 	// TODO make sure old validtors dont go in validator updates ie deactivated validators have to be removed
 	// udpate validators
 	return abci.ResponseInitChain{
@@ -282,13 +285,13 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 		Validators: valUpdates,
 
 		// consensus params
-		//ConsensusParams: &abci.ConsensusParams{
-		//	Block: &abci.BlockParams{
-		//		MaxBytes: maxBytesPerBlock,
-		//		MaxGas:   maxGasPerBlock,
-		//	},
-		//	Evidence: &abci.EvidenceParams{},
-		//},
+		ConsensusParams: &abci.ConsensusParams{
+			Block: &abci.BlockParams{
+				MaxBytes: maxBytesPerBlock,
+				MaxGas:   maxGasPerBlock,
+			},
+			Evidence: &abci.EvidenceParams{},
+		},
 	}
 }
 
@@ -299,7 +302,7 @@ func (app *HeimdallApp) GetValidatorsFromGenesis(ctx sdk.Context, genesisState *
 		logger.Debug("Loading genesis validators")
 		for _, validator := range genesisState.GenValidators {
 			hmValidator := validator.HeimdallValidator()
-			logger.Debug("gen validator","gen",validator,"hmVal",hmValidator)
+			logger.Debug("gen validator", "gen", validator, "hmVal", hmValidator)
 			if ok := hmValidator.ValidateBasic(); !ok {
 				logger.Error("Invalid validator properties", "validator", hmValidator)
 				return
