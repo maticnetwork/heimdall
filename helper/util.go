@@ -68,6 +68,12 @@ func GetPkObjects(privKey crypto.PrivKey) (secp256k1.PrivKeySecp256k1, secp256k1
 	return privObject, pubObject
 }
 
+func GetPubObjects(pubkey crypto.PubKey)(secp256k1.PubKeySecp256k1)  {
+	var pubObject secp256k1.PubKeySecp256k1
+	cdc.MustUnmarshalBinaryBare(pubkey.Bytes(), &pubObject)
+	return pubObject
+}
+
 // StringToPubkey converts string to Pubkey
 func StringToPubkey(pubkeyStr string) (secp256k1.PubKeySecp256k1, error) {
 	var pubkeyBytes secp256k1.PubKeySecp256k1
