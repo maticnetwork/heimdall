@@ -95,7 +95,6 @@ func main() {
 	rootCmd.AddCommand(newAccountCmd())
 	rootCmd.AddCommand(hmserver.ServeCommands(cdc))
 	rootCmd.AddCommand(InitCmd(ctx, cdc))
-
 	// prepare and add flags
 	executor := cli.PrepareBaseCmd(rootCmd, "HD", os.ExpandEnv("$HOME/.heimdalld"))
 	err := executor.Execute()
@@ -118,8 +117,36 @@ func exportAppStateAndTMValidators(logger log.Logger, db dbm.DB, storeTracer io.
 	return bapp.ExportAppStateAndValidators()
 }
 
-// InitCmd get cmd to initialize all files for tendermint and application
-// nolint: errcheck
+
+func newAccountCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "show-account",
+		Short: "Print the account's private key and public key",
+		Run: func(cmd *cobra.Command, args []string) {
+			// init heimdall config
+			helper.InitHeimdallConfig("")
+
+			// get private and public keys
+			privObject := helper.GetPrivKey()
+			pubObject := helper.GetPubKey()
+
+			account := &ValidatorAccountFormatter{
+				Address: "0x" + hex.EncodeToString(pubObject.Address().Bytes()),
+				PrivKey: "0x" + hex.EncodeToString(privObject[:]),
+				PubKey:  hex.EncodeToString(pubObject[:]),
+			}
+
+			b, err := json.Marshal(&account)
+			if err != nil {
+				panic(err)
+			}
+
+			// prints json info
+			fmt.Printf("%s", string(b))
+		},
+	}
+}
+
 func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init",
@@ -175,12 +202,13 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			//
 			// Genesis file
 			//
+			validatorPublicKey := helper.GetPubObjects(valPubKey)
+			newPubkey:=hmTypes.NewPubKey(validatorPublicKey[:])
 
 			// create validator
-			//_, pubKey := helper.GetPkObjects(pval.PrivKey)
 			validator := app.GenesisValidator{
 				ID:         hmTypes.NewValidatorID(uint64(validatorID)),
-				PubKey:     hmTypes.NewPubKey(valPubKey.Bytes()[:]),
+				PubKey:     newPubkey,
 				StartEpoch: 0,
 				Signer:     ethCommon.BytesToAddress(valPubKey.Address().Bytes()),
 				Power:      1,
@@ -221,34 +249,7 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 	return cmd
 }
 
-func newAccountCmd() *cobra.Command {
-	return &cobra.Command{
-		Use:   "show-account",
-		Short: "Print the account's private key and public key",
-		Run: func(cmd *cobra.Command, args []string) {
-			// init heimdall config
-			helper.InitHeimdallConfig("")
 
-			// get private and public keys
-			privObject := helper.GetPrivKey()
-			pubObject := helper.GetPubKey()
-
-			account := &ValidatorAccountFormatter{
-				Address: "0x" + hex.EncodeToString(pubObject.Address().Bytes()),
-				PrivKey: "0x" + hex.EncodeToString(privObject[:]),
-				PubKey:  hex.EncodeToString(pubObject[:]),
-			}
-
-			b, err := json.Marshal(&account)
-			if err != nil {
-				panic(err)
-			}
-
-			// prints json info
-			fmt.Printf("%s", string(b))
-		},
-	}
-}
 
 // WriteGenesisFile creates and writes the genesis configuration to disk. An
 // error is returned if building or writing the configuration to file fails.
@@ -266,17 +267,7 @@ func writeGenesisFile(genesisFile, chainID string, appState json.RawMessage) err
 	return genDoc.SaveAs(genesisFile)
 }
 
-//func readOrCreatePrivValidator(privValFile string) *privval.FilePV {
-//	// private validator
-//	var privValidator *privval.FilePV
-//	if common.FileExists(privValFile) {
-//		privValidator = privval.LoadFilePV(privValFile)
-//	} else {
-//		privValidator = privval.GenFilePV(privValFile)
-//		privValidator.Save()
-//	}
-//	return privValidator
-//}
+
 
 func InitializeNodeValidatorFiles(
 	config *cfg.Config) (nodeID string, valPubKey crypto.PubKey, err error,
@@ -301,7 +292,6 @@ func InitializeNodeValidatorFiles(
 	}
 
 	valPubKey = privval.LoadOrGenFilePV(pvKeyFile, pvStateFile).GetPubKey()
-
 	return nodeID, valPubKey, nil
 }
 
