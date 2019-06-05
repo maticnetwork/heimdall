@@ -67,7 +67,7 @@ func newCheckpointHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		resp, err := helper.SendTendermintRequest(cliCtx, txBytes)
+		resp, err := helper.SendTendermintRequest(cliCtx, txBytes, helper.BroadcastAsync)
 		if err != nil {
 			RestLogger.Error("Error while sending request to Tendermint", "error", err)
 			w.WriteHeader(http.StatusBadRequest)
@@ -118,7 +118,7 @@ func NewCheckpointACKHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		resp, err := helper.SendTendermintRequest(cliCtx, txBytes)
+		resp, err := helper.SendTendermintRequest(cliCtx, txBytes, helper.BroadcastAsync)
 		if err != nil {
 			RestLogger.Error("Error while sending request to Tendermint", "error", err)
 			w.WriteHeader(http.StatusBadRequest)
@@ -150,7 +150,7 @@ func NewCheckpointNoACKHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		resp, err := helper.SendTendermintRequest(cliCtx, txBytes)
+		resp, err := helper.SendTendermintRequest(cliCtx, txBytes, helper.BroadcastAsync)
 		if err != nil {
 			RestLogger.Error("Error while sending request to Tendermint", "error", err)
 			w.WriteHeader(http.StatusBadRequest)

@@ -1,34 +1,31 @@
 package server
 
 import (
-	"net/http"
 	"os"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client/lcd"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/go-kit/kit/log"
-	"github.com/gorilla/mux"
+	checkpoint "github.com/maticnetwork/heimdall/checkpoint/rest"
+	staking "github.com/maticnetwork/heimdall/staking/rest"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	tmLog "github.com/tendermint/tendermint/libs/log"
-	checkpoint "github.com/maticnetwork/heimdall/checkpoint/rest"
-	staking "github.com/maticnetwork/heimdall/staking/rest"
-	"github.com/cosmos/cosmos-sdk/client/lcd"
 )
 
 // ServeCommands will generate a long-running rest server
 // (aka Light Client Daemon) that exposes functionality similar
 // to the cli, but over rest
-func ServeCommands(cdc *codec.Codec) *cobra.Command {
+func ServeCommands(cdc *codec.Codec, registerRoutesFn func(*lcd.RestServer)) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "rest-server",
 		Short: "Start LCD (light-client daemon), a local REST server",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			rs := lcd.NewRestServer(cdc)
-			createHandler(cdc)
+			registerRoutesFn(rs)
 			logger := tmLog.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "rest-server")
 			err := rs.Start(viper.GetString(client.FlagListenAddr),
 				viper.GetInt(client.FlagMaxOpenConnections))
@@ -46,17 +43,10 @@ func ServeCommands(cdc *codec.Codec) *cobra.Command {
 	return cmd
 }
 
-func createHandler(cdc *codec.Codec) http.Handler {
-	r := mux.NewRouter()
-
-	cliCtx := context.NewCLIContext().WithCodec(cdc)
-	cliCtx.TrustNode = true
-	//keys.RegisterRoutes(r, true)
-	rpc.RegisterRoutes(cliCtx, r)
-	tx.RegisterRoutes(cliCtx, r, cdc)
-
-	// Addded rest commands to adding transction !
-	checkpoint.RegisterRoutes(cliCtx, r, cdc)
-	staking.RegisterRoutes(cliCtx, r, cdc)
-	return r
+// register routes of all modules
+func RegisterRoutes(rs *lcd.RestServer) {
+	rpc.RegisterRoutes(rs.CliCtx, rs.Mux)
+	tx.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
+	checkpoint.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
+	staking.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
 }

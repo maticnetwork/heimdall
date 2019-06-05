@@ -68,7 +68,7 @@ func GetPkObjects(privKey crypto.PrivKey) (secp256k1.PrivKeySecp256k1, secp256k1
 	return privObject, pubObject
 }
 
-func GetPubObjects(pubkey crypto.PubKey)(secp256k1.PubKeySecp256k1)  {
+func GetPubObjects(pubkey crypto.PubKey) secp256k1.PubKeySecp256k1 {
 	var pubObject secp256k1.PubKeySecp256k1
 	cdc.MustUnmarshalBinaryBare(pubkey.Bytes(), &pubObject)
 	return pubObject
@@ -108,8 +108,11 @@ func CreateTxBytes(msg sdk.Msg) ([]byte, error) {
 }
 
 // SendTendermintRequest sends request to tendermint
-func SendTendermintRequest(cliCtx context.CLIContext, txBytes []byte) (sdk.TxResponse, error) {
+func SendTendermintRequest(cliCtx context.CLIContext, txBytes []byte, mode string) (sdk.TxResponse, error) {
 	Logger.Info("Broadcasting tx bytes to Tendermint", "txBytes", hex.EncodeToString(txBytes), "txHash", hex.EncodeToString(tmhash.Sum(txBytes[4:])))
+	if mode != "" {
+		cliCtx.BroadcastMode = mode
+	}
 	return cliCtx.BroadcastTx(txBytes)
 }
 
@@ -132,17 +135,19 @@ func GetVoteBytes(votes []tmTypes.Vote, ctx sdk.Context) []byte {
 	return votes[0].SignBytes(ctx.ChainID())
 }
 
+// Creates message and sends tx
+// Used from cli- waits till transaction is included in block
 func CreateAndSendTx(msg sdk.Msg, cliCtx context.CLIContext) (err error) {
 	txBytes, err := CreateTxBytes(msg)
 	if err != nil {
 		return err
 	}
 
-	resp, err := SendTendermintRequest(cliCtx, txBytes)
+	resp, err := SendTendermintRequest(cliCtx, txBytes, BroadcastBlock)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Transaction sent %v", resp.TxHash)
 
+	fmt.Printf("Transaction sent %v", resp.TxHash)
 	return nil
 }

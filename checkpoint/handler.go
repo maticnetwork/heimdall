@@ -186,7 +186,7 @@ func HandleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 
 // Validate checkpoint no-ack transaction
 func HandleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k common.Keeper) sdk.Result {
-	common.CheckpointLogger.Debug("Validating checkpoint no-ack", "TxData", msg)
+	ctx.Logger().Debug("Validating checkpoint no-ack", "TxData", msg)
 	// current time
 	currentTime := time.Unix(int64(msg.TimeStamp), 0) // buffer time
 	bufferTime := helper.GetConfig().CheckpointBufferTime

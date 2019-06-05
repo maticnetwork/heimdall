@@ -3,18 +3,18 @@ package app
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethCommon "github.com/ethereum/go-ethereum/common"
 	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/crypto/secp256k1"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	dbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
 	tmTypes "github.com/tendermint/tendermint/types"
+
+	"errors"
 
 	"github.com/maticnetwork/heimdall/auth"
 	"github.com/maticnetwork/heimdall/checkpoint"
@@ -25,8 +25,8 @@ import (
 )
 
 const (
-	AppName = "Heimdall"
-
+	AppName                 = "Heimdall"
+	ABCIPubKeyTypeSecp256k1 = "secp256k1"
 	// internals
 	maxGasPerBlock   int64 = 1000000  // 1 Million
 	maxBytesPerBlock int64 = 22020096 // 21 MB
@@ -132,16 +132,12 @@ func (app *HeimdallApp) beginBlocker(_ sdk.Context, _ abci.RequestBeginBlock) ab
 
 // EndBlocker executes on each end block
 func (app *HeimdallApp) endBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci.ResponseEndBlock {
-	var valUpdates []abci.ValidatorUpdate
-
+	var valUpdates = make(map[hmTypes.ValidatorID]abci.ValidatorUpdate)
 	if ctx.BlockHeader().NumTxs > 0 {
-
 		// --- Start update to new validators
-
 		currentValidatorSet := app.masterKeeper.GetValidatorSet(ctx)
 		currentValidatorSetCopy := currentValidatorSet.Copy()
 		allValidators := app.masterKeeper.GetAllValidators(ctx)
-		//validatorToSignerMap := app.masterKeeper.GetValidatorToSignerMap(ctx)
 		ackCount := app.masterKeeper.GetACKCount(ctx)
 
 		// apply updates
@@ -158,71 +154,75 @@ func (app *HeimdallApp) endBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 		} else {
 			// remove all stale validators
 			for _, validator := range currentValidatorSetCopy.Validators {
-				// validator update
 				val := abci.ValidatorUpdate{
 					Power:  0,
 					PubKey: validator.PubKey.ABCIPubKey(),
 				}
-				valUpdates = append(valUpdates, val)
+				// validator update
+				valUpdates[validator.ID] = val
 			}
-
 			// add new validators
 			currentValidatorSet := app.masterKeeper.GetValidatorSet(ctx)
 			for _, validator := range currentValidatorSet.Validators {
-				// validator update
 				val := abci.ValidatorUpdate{
 					Power:  int64(validator.Power),
 					PubKey: validator.PubKey.ABCIPubKey(),
 				}
-				valUpdates = append(valUpdates, val)
+				// validator update
+				valUpdates[validator.ID] = val
+			}
+			// --- End update validators
+
+			// check if ACK is present in cache
+			if app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointACKCacheKey) {
+				logger.Info("Checkpoint ACK processed in block", "CheckpointACKProcessed", app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointACKCacheKey))
+
+				// --- Start update proposer
+
+				// increment accum
+				app.masterKeeper.IncreamentAccum(ctx, 1)
+
+				// log new proposer
+				vs := app.masterKeeper.GetValidatorSet(ctx)
+				newProposer := vs.GetProposer()
+				logger.Debug(
+					"New proposer selected",
+					"validator", newProposer.ID,
+					"signer", newProposer.Signer.String(),
+					"power", newProposer.Power,
+				)
+				// --- End update proposer
+
+				// clear ACK cache
+				app.masterKeeper.FlushACKCache(ctx)
+			}
+
+			// check if checkpoint is present in cache
+			if app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointCacheKey) {
+				logger.Info("Checkpoint processed in block", "CheckpointProcessed", app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointCacheKey))
+				// Send Checkpoint to Rootchain
+				PrepareAndSendCheckpoint(ctx, app.masterKeeper, app.caller)
+				// clear Checkpoint cache
+				app.masterKeeper.FlushCheckpointCache(ctx)
 			}
 		}
-
-		// --- End update validators
-
-		// check if ACK is present in cache
-		if app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointACKCacheKey) {
-			logger.Info("Checkpoint ACK processed in block", "CheckpointACKProcessed", app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointACKCacheKey))
-
-			// --- Start update proposer
-
-			// increment accum
-			app.masterKeeper.IncreamentAccum(ctx, 1)
-
-			// log new proposer
-			vs := app.masterKeeper.GetValidatorSet(ctx)
-			newProposer := vs.GetProposer()
-			logger.Debug(
-				"New proposer selected",
-				"validator", newProposer.ID,
-				"signer", newProposer.Signer.String(),
-				"power", newProposer.Power,
-			)
-
-			// --- End update proposer
-
-			// clear ACK cache
-			app.masterKeeper.FlushACKCache(ctx)
-		}
-
-		// check if checkpoint is present in cache
-		if app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointCacheKey) {
-			logger.Info("Checkpoint processed in block", "CheckpointProcessed", app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointCacheKey))
-			// Send Checkpoint to Rootchain
-			PrepareAndSendCheckpoint(ctx, app.masterKeeper, app.caller)
-			// clear Checkpoint cache
-			app.masterKeeper.FlushCheckpointCache(ctx)
-		}
+	}
+	// convert updates from map to array
+	var tmValUpdates []abci.ValidatorUpdate
+	for _, v := range valUpdates {
+		tmValUpdates = append(tmValUpdates, v)
 	}
 
 	// send validator updates to peppermint
 	return abci.ResponseEndBlock{
-		ValidatorUpdates: valUpdates,
+		ValidatorUpdates: tmValUpdates,
 	}
+
 }
 
 func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	logger.Info("Loading validators from genesis and setting defaults")
+	common.InitLoggers(ctx)
 	var genesisState GenesisState
 	err := json.Unmarshal(req.AppStateBytes, &genesisState)
 	if err != nil {
@@ -239,9 +239,6 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 	if len(valSet.Validators) == 0 {
 		panic(errors.New("no valid validators found"))
 	}
-	var pk secp256k1.PubKeySecp256k1
-	copy(pk[:], valUpdates[0].PubKey.Data)
-	logger.Error("Validator update", "vali", pk.Address())
 	var currentValSet hmTypes.ValidatorSet
 	if isGenesis {
 		currentValSet = valSet
@@ -277,7 +274,7 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 	// Add all headers
 	app.InsertHeaders(ctx, &genesisState)
 
-	logger.Info("adding new validators", "updates", valUpdates[0].PubKey)
+	logger.Info("adding new validators", "updates", valUpdates)
 	// TODO make sure old validtors dont go in validator updates ie deactivated validators have to be removed
 	// udpate validators
 	return abci.ResponseInitChain{
@@ -290,7 +287,8 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 				MaxBytes: maxBytesPerBlock,
 				MaxGas:   maxGasPerBlock,
 			},
-			Evidence: &abci.EvidenceParams{},
+			Evidence:  &abci.EvidenceParams{},
+			Validator: &abci.ValidatorParams{PubKeyTypes: []string{ABCIPubKeyTypeSecp256k1}},
 		},
 	}
 }
@@ -351,7 +349,6 @@ func (app *HeimdallApp) GetValidatorsFromGenesis(ctx sdk.Context, genesisState *
 					Power:  int64(validator.Power),
 					PubKey: validator.PubKey.ABCIPubKey(),
 				}
-
 				// Add validator to validator updated to be processed below
 				valUpdates = append(valUpdates, updateVal)
 			}

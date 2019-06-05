@@ -32,10 +32,9 @@ import (
 	hmserver "github.com/maticnetwork/heimdall/server"
 	"github.com/tendermint/tendermint/crypto"
 
+	"github.com/cosmos/cosmos-sdk/store"
 	stakingcli "github.com/maticnetwork/heimdall/staking/cli"
 	hmTypes "github.com/maticnetwork/heimdall/types"
-	"github.com/cosmos/cosmos-sdk/version"
-	"github.com/cosmos/cosmos-sdk/store"
 )
 
 // ValidatorAccountFormatter helps to print local validator account information
@@ -71,29 +70,8 @@ func main() {
 		rootCmd.Flags().Lookup(helper.WithHeimdallConfigFlag),
 	)
 	server.AddCommands(ctx, cdc, rootCmd, newApp, exportAppStateAndTMValidators)
-
-	//rootCmd.PersistentFlags().String("log_level", ctx.Config.LogLevel, "Log level")
-	tendermintCmd := &cobra.Command{
-		Use:   "tendermint",
-		Short: "Tendermint subcommands",
-	}
-
-	tendermintCmd.AddCommand(
-		server.ShowNodeIDCmd(ctx),
-		server.ShowValidatorCmd(ctx),
-		server.ShowAddressCmd(ctx),
-		server.VersionCmd(ctx),
-	)
-	rootCmd.AddCommand(
-		server.StartCmd(ctx, server.AppCreator(newApp)),
-		server.UnsafeResetAllCmd(ctx),
-		client.LineBreak,
-		client.LineBreak,
-		tendermintCmd,
-		version.VersionCmd,
-	)
 	rootCmd.AddCommand(newAccountCmd())
-	rootCmd.AddCommand(hmserver.ServeCommands(cdc))
+	rootCmd.AddCommand(hmserver.ServeCommands(cdc, hmserver.RegisterRoutes))
 	rootCmd.AddCommand(InitCmd(ctx, cdc))
 	// prepare and add flags
 	executor := cli.PrepareBaseCmd(rootCmd, "HD", os.ExpandEnv("$HOME/.heimdalld"))
@@ -112,11 +90,10 @@ func newApp(logger log.Logger, db dbm.DB, storeTracer io.Writer) abci.Applicatio
 	return app.NewHeimdallApp(logger, db, baseapp.SetPruning(store.NewPruningOptionsFromString(viper.GetString("pruning"))))
 }
 
-func exportAppStateAndTMValidators(logger log.Logger, db dbm.DB, storeTracer io.Writer, height int64, forZeroHeight bool, jailWhiteList []string,) (json.RawMessage, []tmTypes.GenesisValidator, error) {
+func exportAppStateAndTMValidators(logger log.Logger, db dbm.DB, storeTracer io.Writer, height int64, forZeroHeight bool, jailWhiteList []string) (json.RawMessage, []tmTypes.GenesisValidator, error) {
 	bapp := app.NewHeimdallApp(logger, db)
 	return bapp.ExportAppStateAndValidators()
 }
-
 
 func newAccountCmd() *cobra.Command {
 	return &cobra.Command{
@@ -163,7 +140,7 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			}
 
 			validatorID := viper.GetInt64(stakingcli.FlagValidatorID)
-			nodeID, valPubKey, err :=  InitializeNodeValidatorFiles(config)
+			nodeID, valPubKey, err := InitializeNodeValidatorFiles(config)
 			if err != nil {
 				return err
 			}
@@ -186,7 +163,7 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 				MaxCheckpointLength:      helper.MaxCheckpointLength,
 				NoACKWaitTime:            helper.NoACKWaitTime,
 				CheckpointBufferTime:     helper.CheckpointBufferTime,
-				ConfirmationBlocks: helper.ConfirmationBlocks,
+				ConfirmationBlocks:       helper.ConfirmationBlocks,
 			}
 
 			heimdallConfBytes, err := json.MarshalIndent(heimdallConf, "", "  ")
@@ -203,7 +180,7 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			// Genesis file
 			//
 			validatorPublicKey := helper.GetPubObjects(valPubKey)
-			newPubkey:=hmTypes.NewPubKey(validatorPublicKey[:])
+			newPubkey := hmTypes.NewPubKey(validatorPublicKey[:])
 
 			// create validator
 			validator := app.GenesisValidator{
@@ -249,8 +226,6 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 	return cmd
 }
 
-
-
 // WriteGenesisFile creates and writes the genesis configuration to disk. An
 // error is returned if building or writing the configuration to file fails.
 // nolint: unparam
@@ -267,8 +242,7 @@ func writeGenesisFile(genesisFile, chainID string, appState json.RawMessage) err
 	return genDoc.SaveAs(genesisFile)
 }
 
-
-
+// initialise node and priv validator files
 func InitializeNodeValidatorFiles(
 	config *cfg.Config) (nodeID string, valPubKey crypto.PubKey, err error,
 ) {
@@ -294,4 +268,3 @@ func InitializeNodeValidatorFiles(
 	valPubKey = privval.LoadOrGenFilePV(pvKeyFile, pvStateFile).GetPubKey()
 	return nodeID, valPubKey, nil
 }
-

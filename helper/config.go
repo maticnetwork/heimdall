@@ -28,6 +28,19 @@ const (
 	WithHeimdallConfigFlag = "with-heimdall-config"
 	HomeFlag               = "home"
 	FlagClientHome         = "home-client"
+
+	// --- TODO Move these to common client flags
+	// BroadcastBlock defines a tx broadcasting mode where the client waits for
+	// the tx to be committed in a block.
+	BroadcastBlock = "block"
+	// BroadcastSync defines a tx broadcasting mode where the client waits for
+	// a CheckTx execution response only.
+	BroadcastSync = "sync"
+	// BroadcastAsync defines a tx broadcasting mode where the client returns
+	// immediately.
+	BroadcastAsync = "async"
+	// --
+
 	// Variables below to be used while init
 	MainRPCUrl                      = "https://ropsten.infura.io"
 	MaticRPCUrl                     = "https://testnet.matic.network"
@@ -154,7 +167,7 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 
 	// load pv file, unmarshall and set to privObject
 	// TODO add priv state file
-	privVal := privval.LoadFilePV(filepath.Join(configDir, "priv_validator_key.json"),filepath.Join(configDir, "priv_validator_key.json"))
+	privVal := privval.LoadFilePV(filepath.Join(configDir, "priv_validator_key.json"), filepath.Join(configDir, "priv_validator_key.json"))
 	cdc.MustUnmarshalBinaryBare(privVal.Key.PrivKey.Bytes(), &privObject)
 	cdc.MustUnmarshalBinaryBare(privObject.PubKey().Bytes(), &pubObject)
 
