@@ -121,7 +121,6 @@ func GetSigs(votes []tmTypes.Vote) (sigs []byte) {
 	sort.Slice(votes, func(i, j int) bool {
 		return bytes.Compare(votes[i].ValidatorAddress.Bytes(), votes[j].ValidatorAddress.Bytes()) < 0
 	})
-
 	// loop votes and append to sig to sigs
 	for _, vote := range votes {
 		sigs = append(sigs, vote.Signature...)
@@ -131,6 +130,7 @@ func GetSigs(votes []tmTypes.Vote) (sigs []byte) {
 
 // GetVoteBytes returns vote bytes
 func GetVoteBytes(votes []tmTypes.Vote, ctx sdk.Context) []byte {
+	fmt.Printf("Number of votes collected", votes[0].Type)
 	// sign bytes for vote
 	return votes[0].SignBytes(ctx.ChainID())
 }

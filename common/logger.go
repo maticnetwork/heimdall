@@ -10,7 +10,14 @@ var CheckpointLogger tmlog.Logger
 var StakingLogger tmlog.Logger
 var HelperLogger tmlog.Logger
 
-func InitLoggers(ctx sdk.Context) {
+func InitCheckpointLogger(ctx *sdk.Context) {
 	CheckpointLogger = ctx.Logger().With("module", "checkpoint")
+}
+
+func InitStakingLogger(ctx *sdk.Context) {
 	StakingLogger = ctx.Logger().With("module", "staking")
+}
+
+func InitHelperLogger(ctx *sdk.Context) {
+	HelperLogger = ctx.Logger().With("module", "helper")
 }

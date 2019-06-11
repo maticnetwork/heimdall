@@ -217,12 +217,11 @@ func (app *HeimdallApp) endBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 	return abci.ResponseEndBlock{
 		ValidatorUpdates: tmValUpdates,
 	}
-
 }
 
 func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	logger.Info("Loading validators from genesis and setting defaults")
-	common.InitLoggers(ctx)
+	common.InitStakingLogger(&ctx)
 	var genesisState GenesisState
 	err := json.Unmarshal(req.AppStateBytes, &genesisState)
 	if err != nil {
@@ -395,7 +394,7 @@ func (app *HeimdallApp) ExportAppStateAndValidators() (appState json.RawMessage,
 }
 
 // GetExtraData get extra data for checkpoint
-func GetExtraData(_checkpoint hmTypes.CheckpointBlockHeader, ctx sdk.Context) []byte {
+func GetExtraData(ctx sdk.Context, _checkpoint hmTypes.CheckpointBlockHeader) []byte {
 	logger.Debug("Creating extra data", "startBlock", _checkpoint.StartBlock, "endBlock", _checkpoint.EndBlock, "roothash", _checkpoint.RootHash, "timestamp", _checkpoint.TimeStamp)
 
 	// craft a message
@@ -435,7 +434,7 @@ func PrepareAndSendCheckpoint(ctx sdk.Context, keeper common.Keeper, caller help
 	}
 
 	// Get extra data
-	extraData := GetExtraData(_checkpoint, ctx)
+	extraData := GetExtraData(ctx, _checkpoint)
 
 	//fetch current child block from rootchain contract
 	lastblock, err := caller.CurrentChildBlock()

@@ -36,7 +36,7 @@ ignored = [
 [[constraint]]
   name = "github.com/tendermint/tendermint"
   source = "github.com/maticnetwork/tendermint"
-  revision = "c7d4c6e1548b110b4915fb5a756b9db2c5b121ae"
+  revision = "aa42854c513f4d2387d858ce84cda7e24e31ab22"
 
 [[constraint]]
   name = "github.com/go-kit/kit"
