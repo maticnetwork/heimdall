@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/client/utils"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gorilla/mux"
@@ -14,6 +13,7 @@ import (
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
+	"github.com/cosmos/cosmos-sdk/types/rest"
 )
 
 func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
@@ -47,35 +47,30 @@ func validatorByAddressHandlerFn(
 
 		res, err := cliCtx.QueryStore(hmCommon.GetValidatorKey(signerAddress.Bytes()), "staker")
 		if err != nil {
-			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
 		// the query will return empty if there is no data
 		if len(res) == 0 {
-			w.WriteHeader(http.StatusNoContent)
-			w.Write([]byte("Validator not found"))
+			rest.WriteErrorResponse(w, http.StatusNoContent, err.Error())
 			return
 		}
 
 		var _validator types.Validator
-		err = cdc.UnmarshalBinary(res, &_validator)
+		err = cdc.UnmarshalBinaryBare(res, &_validator)
 		if err != nil {
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		result, err := json.Marshal(_validator)
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(result)
-
+		rest.PostProcessResponse(w,cdc,result,cliCtx.Indent)
 	}
 }
 
@@ -89,47 +84,42 @@ func validatorByIDHandlerFn(
 		idStr := vars["id"]
 		id, err := strconv.ParseUint(idStr, 10, 64)
 		if err != nil {
-			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		signerAddr, err := cliCtx.QueryStore(hmCommon.GetValidatorMapKey(hmTypes.NewValidatorID(id).Bytes()), "staker")
 		if err != nil {
-			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		res, err := cliCtx.QueryStore(hmCommon.GetValidatorKey(signerAddr), "staker")
 		if err != nil {
-			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		// the query will return empty if there is no data
 		if len(res) == 0 {
-			w.WriteHeader(http.StatusNoContent)
-			w.Write([]byte("Validator not found"))
+			rest.WriteErrorResponse(w, http.StatusNoContent, err.Error())
 			return
 		}
 
 		var _validator types.Validator
-		err = cdc.UnmarshalBinary(res, &_validator)
+		err = cdc.UnmarshalBinaryBare(res, &_validator)
 		if err != nil {
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		result, err := json.Marshal(_validator)
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(result)
-
+		rest.PostProcessResponse(w,cdc,result,cliCtx.Indent)
 	}
 }
 
@@ -142,28 +132,25 @@ func validatorSetHandlerFn(
 
 		res, err := cliCtx.QueryStore(hmCommon.CurrentValidatorSetKey, "staker")
 		if err != nil {
-			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 		// the query will return empty if there is no data
 		if len(res) == 0 {
-			w.WriteHeader(http.StatusNoContent)
+			rest.WriteErrorResponse(w, http.StatusNoContent, err.Error())
 			return
 		}
 		var _validatorSet hmTypes.ValidatorSet
-		cdc.UnmarshalBinary(res, &_validatorSet)
+		cdc.UnmarshalBinaryBare(res, &_validatorSet)
 
 		// todo format validator set to remove pubkey like we did for validator
 		result, err := json.Marshal(&_validatorSet)
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(result)
-
+		rest.PostProcessResponse(w,cdc,result,cliCtx.Indent)
 	}
 }
 
@@ -176,29 +163,28 @@ func proposerHandlerFn(
 		vars := mux.Vars(r)
 		times, err := strconv.Atoi(vars["times"])
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 		RestLogger.Debug("Calculating proposers", "Count", times)
 
 		res, err := cliCtx.QueryStore(hmCommon.CurrentValidatorSetKey, "staker")
 		if err != nil {
-			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
 		// the query will return empty if there is no data
 		if len(res) == 0 {
-			w.WriteHeader(http.StatusNoContent)
+			rest.WriteErrorResponse(w, http.StatusNoContent, err.Error())
 			return
 		}
 
 		var _validatorSet hmTypes.ValidatorSet
-		err = cdc.UnmarshalBinary(res, &_validatorSet)
+		err = cdc.UnmarshalBinaryBare(res, &_validatorSet)
 		if err != nil {
 			RestLogger.Error("Error while marshalling validator set", "error", err)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 		if times > len(_validatorSet.Validators) {
@@ -214,16 +200,13 @@ func proposerHandlerFn(
 			_validatorSet.IncrementAccum(1)
 		}
 
-		// todo format validator set to remove pubkey like we did for validator
+		// TODO format validator set to remove pubkey like we did for validator
 		result, err := json.Marshal(&proposers)
 		if err != nil {
 			RestLogger.Error("Error while marshalling response to Json", "error", err)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(result)
+		rest.PostProcessResponse(w,cdc,result,cliCtx.Indent)
 	}
 }

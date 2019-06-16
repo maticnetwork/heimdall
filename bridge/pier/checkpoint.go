@@ -23,6 +23,7 @@ import (
 	"github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
 
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/helper"
@@ -98,7 +99,7 @@ func NewMaticCheckpointer() *MaticCheckpointer {
 	}
 
 	cliCtx := cliContext.NewCLIContext()
-	cliCtx.Async = true
+	cliCtx.BroadcastMode = client.BroadcastAsync
 
 	// creating checkpointer object
 	checkpointer := &MaticCheckpointer{
@@ -259,7 +260,7 @@ func (checkpointer *MaticCheckpointer) sendRequest(newHeader *types.Header) {
 			return
 		}
 		// send tendermint request
-		_, err = helper.SendTendermintRequest(checkpointer.cliCtx, txBytes)
+		_, err = helper.SendTendermintRequest(checkpointer.cliCtx, txBytes, "")
 		if err != nil {
 			checkpointer.Logger.Error("Error while sending request to Tendermint", "error", err)
 			return
@@ -293,13 +294,13 @@ func (checkpointer *MaticCheckpointer) sendRequest(newHeader *types.Header) {
 		return
 	}
 
-	resp, err := helper.SendTendermintRequest(checkpointer.cliCtx, txBytes)
+	resp, err := helper.SendTendermintRequest(checkpointer.cliCtx, txBytes, "")
 	if err != nil {
 		checkpointer.Logger.Error("Error while sending request to Tendermint", "error", err)
 		return
 	}
 
-	checkpointer.Logger.Info("Checkpoint sent successfully", "hash", resp.Hash.String(), "start", start, "end", end, "root", hex.EncodeToString(root))
+	checkpointer.Logger.Info("Checkpoint sent successfully", "hash", resp.TxHash, "start", start, "end", end, "root", hex.EncodeToString(root))
 }
 
 func (checkpointer *MaticCheckpointer) genHeaderDetailContract(lastHeader uint64, wg *sync.WaitGroup, contractState chan<- ContractCheckpoint) {

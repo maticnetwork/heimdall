@@ -28,6 +28,19 @@ const (
 	WithHeimdallConfigFlag = "with-heimdall-config"
 	HomeFlag               = "home"
 	FlagClientHome         = "home-client"
+
+	// --- TODO Move these to common client flags
+	// BroadcastBlock defines a tx broadcasting mode where the client waits for
+	// the tx to be committed in a block.
+	BroadcastBlock = "block"
+	// BroadcastSync defines a tx broadcasting mode where the client waits for
+	// a CheckTx execution response only.
+	BroadcastSync = "sync"
+	// BroadcastAsync defines a tx broadcasting mode where the client returns
+	// immediately.
+	BroadcastAsync = "async"
+	// --
+
 	// Variables below to be used while init
 	MainRPCUrl                      = "https://ropsten.infura.io"
 	MaticRPCUrl                     = "https://testnet.matic.network"
@@ -51,8 +64,8 @@ var (
 var cdc = amino.NewCodec()
 
 func init() {
-	cdc.RegisterConcrete(secp256k1.PubKeySecp256k1{}, secp256k1.PubKeyAminoRoute, nil)
-	cdc.RegisterConcrete(secp256k1.PrivKeySecp256k1{}, secp256k1.PrivKeyAminoRoute, nil)
+	cdc.RegisterConcrete(secp256k1.PubKeySecp256k1{}, secp256k1.PubKeyAminoName, nil)
+	cdc.RegisterConcrete(secp256k1.PrivKeySecp256k1{}, secp256k1.PrivKeyAminoName, nil)
 	Logger = logger.NewTMLogger(logger.NewSyncWriter(os.Stdout))
 }
 
@@ -153,10 +166,9 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 	maticClient = ethclient.NewClient(maticRPCClient)
 
 	// load pv file, unmarshall and set to privObject
-	privVal := privval.LoadFilePV(filepath.Join(configDir, "priv_validator.json"))
-	cdc.MustUnmarshalBinaryBare(privVal.PrivKey.Bytes(), &privObject)
+	privVal := privval.LoadFilePV(filepath.Join(configDir, "priv_validator_key.json"), filepath.Join(configDir, "priv_validator_key.json"))
+	cdc.MustUnmarshalBinaryBare(privVal.Key.PrivKey.Bytes(), &privObject)
 	cdc.MustUnmarshalBinaryBare(privObject.PubKey().Bytes(), &pubObject)
-
 }
 
 // GetConfig returns cached configuration object

@@ -11,7 +11,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
-	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmTypes "github.com/tendermint/tendermint/types"
 
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -57,7 +56,6 @@ func UpdateValidators(
 			}
 		}
 	}
-
 	return nil
 }
 
@@ -67,17 +65,22 @@ func GetPkObjects(privKey crypto.PrivKey) (secp256k1.PrivKeySecp256k1, secp256k1
 	var pubObject secp256k1.PubKeySecp256k1
 	cdc.MustUnmarshalBinaryBare(privKey.Bytes(), &privObject)
 	cdc.MustUnmarshalBinaryBare(privObject.PubKey().Bytes(), &pubObject)
-
 	return privObject, pubObject
 }
 
+func GetPubObjects(pubkey crypto.PubKey) secp256k1.PubKeySecp256k1 {
+	var pubObject secp256k1.PubKeySecp256k1
+	cdc.MustUnmarshalBinaryBare(pubkey.Bytes(), &pubObject)
+	return pubObject
+}
+
 // StringToPubkey converts string to Pubkey
-func StringToPubkey(pubkeyStr string) (crypto.PubKey, error) {
+func StringToPubkey(pubkeyStr string) (secp256k1.PubKeySecp256k1, error) {
 	var pubkeyBytes secp256k1.PubKeySecp256k1
 	_pubkey, err := hex.DecodeString(pubkeyStr)
 	if err != nil {
 		Logger.Error("Decoding of pubkey(string) to pubkey failed", "Error", err, "PubkeyString", pubkeyStr)
-		return nil, err
+		return pubkeyBytes, err
 	}
 	// copy
 	copy(pubkeyBytes[:], _pubkey)
@@ -86,7 +89,7 @@ func StringToPubkey(pubkeyStr string) (crypto.PubKey, error) {
 }
 
 // BytesToPubkey converts bytes to Pubkey
-func BytesToPubkey(pubKey []byte) crypto.PubKey {
+func BytesToPubkey(pubKey []byte) secp256k1.PubKeySecp256k1 {
 	var pubkeyBytes secp256k1.PubKeySecp256k1
 	copy(pubkeyBytes[:], pubKey)
 	return pubkeyBytes
@@ -105,8 +108,11 @@ func CreateTxBytes(msg sdk.Msg) ([]byte, error) {
 }
 
 // SendTendermintRequest sends request to tendermint
-func SendTendermintRequest(cliCtx context.CLIContext, txBytes []byte) (*ctypes.ResultBroadcastTxCommit, error) {
+func SendTendermintRequest(cliCtx context.CLIContext, txBytes []byte, mode string) (sdk.TxResponse, error) {
 	Logger.Info("Broadcasting tx bytes to Tendermint", "txBytes", hex.EncodeToString(txBytes), "txHash", hex.EncodeToString(tmhash.Sum(txBytes[4:])))
+	if mode != "" {
+		cliCtx.BroadcastMode = mode
+	}
 	return cliCtx.BroadcastTx(txBytes)
 }
 
@@ -115,7 +121,6 @@ func GetSigs(votes []tmTypes.Vote) (sigs []byte) {
 	sort.Slice(votes, func(i, j int) bool {
 		return bytes.Compare(votes[i].ValidatorAddress.Bytes(), votes[j].ValidatorAddress.Bytes()) < 0
 	})
-
 	// loop votes and append to sig to sigs
 	for _, vote := range votes {
 		sigs = append(sigs, vote.Signature...)
@@ -125,21 +130,24 @@ func GetSigs(votes []tmTypes.Vote) (sigs []byte) {
 
 // GetVoteBytes returns vote bytes
 func GetVoteBytes(votes []tmTypes.Vote, ctx sdk.Context) []byte {
+	fmt.Printf("Number of votes collected", votes[0].Type)
 	// sign bytes for vote
 	return votes[0].SignBytes(ctx.ChainID())
 }
 
+// Creates message and sends tx
+// Used from cli- waits till transaction is included in block
 func CreateAndSendTx(msg sdk.Msg, cliCtx context.CLIContext) (err error) {
 	txBytes, err := CreateTxBytes(msg)
 	if err != nil {
 		return err
 	}
 
-	resp, err := SendTendermintRequest(cliCtx, txBytes)
+	resp, err := SendTendermintRequest(cliCtx, txBytes, BroadcastBlock)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Transaction sent %v", resp.Hash)
 
+	fmt.Printf("Transaction sent %v", resp.TxHash)
 	return nil
 }

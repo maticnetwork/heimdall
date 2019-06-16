@@ -19,6 +19,7 @@ import (
 	"github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
 
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/helper"
@@ -59,7 +60,7 @@ func NewAckService() *AckService {
 	}
 
 	cliCtx := cliContext.NewCLIContext()
-	cliCtx.Async = true
+	cliCtx.BroadcastMode = client.BroadcastAsync
 
 	// creating checkpointer object
 	ackservice := &AckService{
@@ -196,13 +197,13 @@ func (ackService *AckService) processCheckpoint(lastCreatedAt int64) {
 			return
 		}
 
-		resp, err := helper.SendTendermintRequest(ackService.cliCtx, txBytes)
+		resp, err := helper.SendTendermintRequest(ackService.cliCtx, txBytes, "")
 		if err != nil {
 			ackService.Logger.Error("Error while sending request to Tendermint", "error", err)
 			return
 		}
 
-		ackService.Logger.Info("no-ack transaction sent successfully", "txHash", resp.Hash)
+		ackService.Logger.Info("no-ack transaction sent successfully", "txHash", resp.TxHash)
 	}
 }
 

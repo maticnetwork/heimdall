@@ -21,6 +21,7 @@ import (
 	"github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
 
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 	"github.com/maticnetwork/heimdall/helper"
@@ -103,7 +104,7 @@ func NewChainSyncer() *ChainSyncer {
 	}
 
 	cliCtx := cliContext.NewCLIContext()
-	cliCtx.Async = true
+	cliCtx.BroadcastMode = client.BroadcastAsync
 
 	// creating syncer object
 	syncer := &ChainSyncer{
@@ -307,7 +308,7 @@ func (syncer *ChainSyncer) sendTx(eventName string, msg sdk.Msg) {
 	}
 
 	// send tendermint request
-	_, err = helper.SendTendermintRequest(syncer.cliContext, txBytes)
+	_, err = helper.SendTendermintRequest(syncer.cliContext, txBytes, "")
 	if err != nil {
 		logEventBroadcastTxError(syncer.Logger, eventName, err)
 		return
