@@ -515,7 +515,7 @@
   version = "v0.14.1"
 
 [[projects]]
-  digest = "1:e9fc773df0df999bac736af11c4efd48907aa9fb9915ab7f709ad87269053de9"
+  digest = "1:9589909a02b21cdb80b3d3910d5888a9266faa4fea8c0cdd07d9f86cc7c6e881"
   name = "github.com/tendermint/tendermint"
   packages = [
     "abci/client",
@@ -582,7 +582,7 @@
     "version",
   ]
   pruneopts = "UT"
-  revision = "aa42854c513f4d2387d858ce84cda7e24e31ab22"
+  revision = "a57b0d759ce08329738a40c5195e3ff856e244a0"
   source = "github.com/maticnetwork/tendermint"
 
 [[projects]]
@@ -772,7 +772,6 @@
     "github.com/tendermint/tendermint/p2p",
     "github.com/tendermint/tendermint/privval",
     "github.com/tendermint/tendermint/types",
-    "github.com/tendermint/tendermint/types/time",
     "github.com/xsleonard/go-merkle",
   ]
   solver-name = "gps-cdcl"

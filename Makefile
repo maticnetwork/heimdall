@@ -19,8 +19,10 @@ build: clean
 	go build -o build/heimdallcli cmd/heimdallcli/main.go
 	go build -o build/bridge bridge/bridge.go
 
-build-testnet:
-	go build -o build/testnet cmd/testnet/main.go
+install:
+	go install cmd/heimdalld/main.go
+	go install cmd/heimdallcli/main.go
+	go install bridge/bridge.go
 
 contracts:
 	abigen --abi=contracts/rootchain/rootchain.abi --pkg=rootchain --out=contracts/rootchain/rootchain.go

@@ -166,11 +166,9 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 	maticClient = ethclient.NewClient(maticRPCClient)
 
 	// load pv file, unmarshall and set to privObject
-	// TODO add priv state file
 	privVal := privval.LoadFilePV(filepath.Join(configDir, "priv_validator_key.json"), filepath.Join(configDir, "priv_validator_key.json"))
 	cdc.MustUnmarshalBinaryBare(privVal.Key.PrivKey.Bytes(), &privObject)
 	cdc.MustUnmarshalBinaryBare(privObject.PubKey().Bytes(), &pubObject)
-
 }
 
 // GetConfig returns cached configuration object
