@@ -11,7 +11,7 @@ import (
 type CodeType = sdk.CodeType
 
 const (
-	DefaultCodespace sdk.CodespaceType = 1
+	DefaultCodespace sdk.CodespaceType = "1"
 
 	CodeInvalidMsg CodeType = 1400
 

@@ -11,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rlp"
+	tmHash "github.com/tendermint/tendermint/crypto/tmhash"
 	"github.com/tendermint/tendermint/types"
 )
 
@@ -58,6 +59,9 @@ func (c *ContractCaller) SendCheckpoint(voteSignBytes []byte, sigs []byte, txDat
 	if err != nil {
 		Logger.Error("Unable to decode vote while sending checkpoint", "vote", hex.EncodeToString(voteSignBytes), "sigs", hex.EncodeToString(sigs), "txData", hex.EncodeToString(txData))
 	}
+	Logger.Debug("RLP decoded vote", "Round", vote.Round, "Type", vote.Type, "ExtraData", vote.Data)
+
+	Logger.Debug("Comparing extra data in vote in tx", "Vote", hex.EncodeToString(vote.Data), "Tx", hex.EncodeToString(tmHash.Sum(txData)))
 	// get stakeManager Instance
 	rootchainABI, err := GetRootChainABI()
 	if err != nil {
@@ -75,6 +79,7 @@ func (c *ContractCaller) SendCheckpoint(voteSignBytes []byte, sigs []byte, txDat
 		To:   &rootChainAddress,
 		Data: data,
 	})
+	GetPubKey().VerifyBytes(voteSignBytes, sigs)
 
 	Logger.Info("Sending new checkpoint", "vote", hex.EncodeToString(voteSignBytes), "sigs", hex.EncodeToString(sigs), "txData", hex.EncodeToString(txData))
 

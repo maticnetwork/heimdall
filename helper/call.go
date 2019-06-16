@@ -66,7 +66,6 @@ func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 		Logger.Error("Error creating stakeManagerInstance while getting validator info", "error", err)
 		return contractCallerObj, err
 	}
-	fmt.Println("main chain client %v %v", GetMainClient(), GetMainChainRPCClient())
 	contractCallerObj.mainChainClient = GetMainClient()
 	contractCallerObj.mainChainRPC = GetMainChainRPCClient()
 	contractCallerObj.stakeManagerInstance = stakeManagerInstance

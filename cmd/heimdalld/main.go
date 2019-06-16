@@ -14,22 +14,42 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	ethCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
+	cfg "github.com/tendermint/tendermint/config"
+	"github.com/tendermint/tendermint/p2p"
+
+	"github.com/tendermint/tendermint/privval"
+
 	"github.com/spf13/viper"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/common"
 	dbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
-	"github.com/tendermint/tendermint/p2p"
-	"github.com/tendermint/tendermint/privval"
 	tmTypes "github.com/tendermint/tendermint/types"
 
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/helper"
 	hmserver "github.com/maticnetwork/heimdall/server"
+	"github.com/tendermint/tendermint/crypto"
+
+	"github.com/cosmos/cosmos-sdk/store"
 	stakingcli "github.com/maticnetwork/heimdall/staking/cli"
 	hmTypes "github.com/maticnetwork/heimdall/types"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
+	"strings"
 )
+
+var (
+	flagNodeDirPrefix    = "node-dir-prefix"
+	flagNumValidators    = "v"
+	flagNumNonValidators = "n"
+	flagOutputDir        = "output-dir"
+	flagNodeDaemonHome   = "node-daemon-home"
+	flagNodeCliHome      = "node-cli-home"
+	flagNodeHostPrefix   = "node-host-prefix"
+)
+
+const nodeDirPerm = 0755
 
 // ValidatorAccountFormatter helps to print local validator account information
 type ValidatorAccountFormatter struct {
@@ -63,21 +83,11 @@ func main() {
 		helper.WithHeimdallConfigFlag,
 		rootCmd.Flags().Lookup(helper.WithHeimdallConfigFlag),
 	)
-
-	// cosmos server commands
-	server.AddCommands(
-		ctx,
-		cdc,
-		rootCmd,
-		server.DefaultAppInit,
-		server.AppCreator(newApp),
-		server.AppExporter(exportAppStateAndTMValidators),
-	)
-
+	server.AddCommands(ctx, cdc, rootCmd, newApp, exportAppStateAndTMValidators)
 	rootCmd.AddCommand(newAccountCmd())
-	rootCmd.AddCommand(hmserver.ServeCommands(cdc))
+	rootCmd.AddCommand(hmserver.ServeCommands(cdc, hmserver.RegisterRoutes))
 	rootCmd.AddCommand(InitCmd(ctx, cdc))
-
+	rootCmd.AddCommand(TestnetCmd(ctx, cdc))
 	// prepare and add flags
 	executor := cli.PrepareBaseCmd(rootCmd, "HD", os.ExpandEnv("$HOME/.heimdalld"))
 	err := executor.Execute()
@@ -90,18 +100,45 @@ func main() {
 func newApp(logger log.Logger, db dbm.DB, storeTracer io.Writer) abci.Application {
 	// init heimdall config
 	helper.InitHeimdallConfig("")
-
 	// create new heimdall app
-	return app.NewHeimdallApp(logger, db, baseapp.SetPruning(viper.GetString("pruning")))
+	return app.NewHeimdallApp(logger, db, baseapp.SetPruning(store.NewPruningOptionsFromString(viper.GetString("pruning"))))
 }
 
-func exportAppStateAndTMValidators(logger log.Logger, db dbm.DB, storeTracer io.Writer) (json.RawMessage, []tmTypes.GenesisValidator, error) {
+func exportAppStateAndTMValidators(logger log.Logger, db dbm.DB, storeTracer io.Writer, height int64, forZeroHeight bool, jailWhiteList []string) (json.RawMessage, []tmTypes.GenesisValidator, error) {
 	bapp := app.NewHeimdallApp(logger, db)
 	return bapp.ExportAppStateAndValidators()
 }
 
-// InitCmd get cmd to initialize all files for tendermint and application
-// nolint: errcheck
+func newAccountCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "show-account",
+		Short: "Print the account's private key and public key",
+		Run: func(cmd *cobra.Command, args []string) {
+			// init heimdall config
+			helper.InitHeimdallConfig("")
+
+			// get private and public keys
+			privObject := helper.GetPrivKey()
+			pubObject := helper.GetPubKey()
+
+			account := &ValidatorAccountFormatter{
+				Address: "0x" + hex.EncodeToString(pubObject.Address().Bytes()),
+				PrivKey: "0x" + hex.EncodeToString(privObject[:]),
+				PubKey:  "0x" + hex.EncodeToString(pubObject[:]),
+			}
+
+			b, err := json.Marshal(&account)
+			if err != nil {
+				panic(err)
+			}
+
+			// prints json info
+			fmt.Printf("%s", string(b))
+		},
+	}
+}
+
+// initialise files required to start heimdall
 func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init",
@@ -118,19 +155,13 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			}
 
 			validatorID := viper.GetInt64(stakingcli.FlagValidatorID)
-
-			nodeKey, err := p2p.LoadOrGenNodeKey(config.NodeKeyFile())
+			nodeID, valPubKey, _, err := InitializeNodeValidatorFiles(config)
 			if err != nil {
 				return err
 			}
-			nodeID := string(nodeKey.ID())
-
-			// read or create private key
-			pval := readOrCreatePrivValidator(config.PrivValidatorFile())
 
 			//
 			// Heimdall config file
-			//
 
 			heimdallConf := helper.Configuration{
 				MainRPCUrl:          helper.MainRPCUrl,
@@ -146,7 +177,7 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 				MaxCheckpointLength:      helper.MaxCheckpointLength,
 				NoACKWaitTime:            helper.NoACKWaitTime,
 				CheckpointBufferTime:     helper.CheckpointBufferTime,
-				ConfirmationBlocks: helper.ConfirmationBlocks,
+				ConfirmationBlocks:       helper.ConfirmationBlocks,
 			}
 
 			heimdallConfBytes, err := json.MarshalIndent(heimdallConf, "", "  ")
@@ -162,14 +193,15 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			//
 			// Genesis file
 			//
+			validatorPublicKey := helper.GetPubObjects(valPubKey)
+			newPubkey := hmTypes.NewPubKey(validatorPublicKey[:])
 
 			// create validator
-			_, pubKey := helper.GetPkObjects(pval.PrivKey)
 			validator := app.GenesisValidator{
 				ID:         hmTypes.NewValidatorID(uint64(validatorID)),
-				PubKey:     hmTypes.NewPubKey(pubKey[:]),
+				PubKey:     newPubkey,
 				StartEpoch: 0,
-				Signer:     ethCommon.BytesToAddress(pval.Address),
+				Signer:     ethCommon.BytesToAddress(valPubKey.Address().Bytes()),
 				Power:      1,
 			}
 
@@ -208,32 +240,228 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 	return cmd
 }
 
-func newAccountCmd() *cobra.Command {
-	return &cobra.Command{
-		Use:   "show-account",
-		Short: "Print the account's private key and public key",
-		Run: func(cmd *cobra.Command, args []string) {
-			// init heimdall config
-			helper.InitHeimdallConfig("")
+// initialise files required to start heimdall testnet
+func TestnetCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "create-testnet",
+		Short: "Initialize files for a Heimdall testnet",
+		Long: `testnet will create "v" + "n" number of directories and populate each with
+necessary files (private validator, genesis, config, etc.).
 
-			// get private and public keys
-			privObject := helper.GetPrivKey()
-			pubObject := helper.GetPubKey()
+Note, strict routability for addresses is turned off in the config file.
+Optionally, it will fill in persistent_peers list in config file using either hostnames or IPs.
 
-			account := &ValidatorAccountFormatter{
-				Address: "0x" + hex.EncodeToString(pubObject.Address().Bytes()),
-				PrivKey: "0x" + hex.EncodeToString(privObject[:]),
-				PubKey:  hex.EncodeToString(pubObject[:]),
+Example:
+testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
+`,
+		Args: cobra.NoArgs,
+		RunE: func(_ *cobra.Command, _ []string) error {
+			config := ctx.Config
+			outDir := viper.GetString(flagOutputDir)
+			numValidators := viper.GetInt(flagNumValidators)
+			numNonValidators := viper.GetInt(flagNumNonValidators)
+			startID := viper.GetInt64(stakingcli.FlagValidatorID)
+			if startID == 0 {
+				startID = 1
+			}
+			totalValidators := totalValidators()
+			signers := make([]ValidatorAccountFormatter, totalValidators)
+			nodeIDs := make([]string, totalValidators)
+			valPubKeys := make([]crypto.PubKey, totalValidators)
+			privKeys := make([]crypto.PrivKey, totalValidators)
+			validators := make([]app.GenesisValidator, totalValidators)
+			genFiles := make([]string, totalValidators)
+			var err error
+			// create chain id
+			chainID := viper.GetString(client.FlagChainID)
+			if chainID == "" {
+				chainID = fmt.Sprintf("heimdall-%v", common.RandStr(6))
 			}
 
-			b, err := json.Marshal(&account)
+			for i := 0; i < numValidators+numNonValidators; i++ {
+				nodeDirName := fmt.Sprintf("%s%d", viper.GetString(flagNodeDirPrefix), i)
+				nodeDaemonHomeName := viper.GetString(flagNodeDaemonHome)
+				nodeCliHomeName := viper.GetString(flagNodeCliHome)
+				nodeDir := filepath.Join(outDir, nodeDirName, nodeDaemonHomeName)
+				clientDir := filepath.Join(outDir, nodeDirName, nodeCliHomeName)
+				config.SetRoot(nodeDir)
+
+				err := os.MkdirAll(filepath.Join(nodeDir, "config"), nodeDirPerm)
+				if err != nil {
+					_ = os.RemoveAll(outDir)
+					return err
+				}
+
+				err = os.MkdirAll(clientDir, nodeDirPerm)
+				if err != nil {
+					_ = os.RemoveAll(outDir)
+					return err
+				}
+
+				nodeIDs[i], valPubKeys[i], privKeys[i], err = InitializeNodeValidatorFiles(config)
+				if err != nil {
+					return err
+				}
+
+				genFiles[i] = config.GenesisFile()
+				//
+				// Genesis file
+				//
+				validatorPublicKey := helper.GetPubObjects(valPubKeys[i])
+				newPubkey := hmTypes.NewPubKey(validatorPublicKey[:])
+
+				// create validator
+				validators[i] = app.GenesisValidator{
+					ID:         hmTypes.NewValidatorID(uint64(startID + int64(i))),
+					PubKey:     newPubkey,
+					StartEpoch: 0,
+					Signer:     ethCommon.BytesToAddress(valPubKeys[i].Address().Bytes()),
+					Power:      1,
+				}
+
+				var privObject secp256k1.PrivKeySecp256k1
+				cdc.MustUnmarshalBinaryBare(privKeys[i].Bytes(), &privObject)
+				signers[i] = ValidatorAccountFormatter{
+					Address: ethCommon.BytesToAddress(valPubKeys[i].Address().Bytes()).String(),
+					PubKey:  newPubkey.String(),
+					PrivKey: "0x" + hex.EncodeToString(privObject[:]),
+				}
+
+				heimdallConf := helper.Configuration{
+					MainRPCUrl:          helper.MainRPCUrl,
+					MaticRPCUrl:         helper.MaticRPCUrl,
+					StakeManagerAddress: (ethCommon.Address{}).Hex(),
+					RootchainAddress:    (ethCommon.Address{}).Hex(),
+					ChildBlockInterval:  helper.DefaultChildBlockInterval,
+
+					CheckpointerPollInterval: helper.DefaultCheckpointerPollInterval,
+					SyncerPollInterval:       helper.DefaultSyncerPollInterval,
+					NoACKPollInterval:        helper.DefaultNoACKPollInterval,
+					AvgCheckpointLength:      helper.DefaultCheckpointLength,
+					MaxCheckpointLength:      helper.MaxCheckpointLength,
+					NoACKWaitTime:            helper.NoACKWaitTime,
+					CheckpointBufferTime:     helper.CheckpointBufferTime,
+					ConfirmationBlocks:       helper.ConfirmationBlocks,
+				}
+
+				heimdallConfBytes, err := json.MarshalIndent(heimdallConf, "", "  ")
+				if err != nil {
+					return err
+				}
+				if err := common.WriteFileAtomic(filepath.Join(config.RootDir, "config/heimdall-config.json"), heimdallConfBytes, 0600); err != nil {
+					fmt.Println("Error writing heimdall-config", err)
+					return err
+				}
+
+			}
+
+			for i := 0; i < totalValidators; i++ {
+				populatePersistentPeersInConfigAndWriteIt(config)
+			}
+			appState := &app.GenesisState{
+				GenValidators: validators,
+			}
+
+			appStateJSON, err := json.Marshal(appState)
 			if err != nil {
-				panic(err)
+				return err
 			}
 
-			// prints json info
-			fmt.Printf("%s", string(b))
+			for i := 0; i < len(validators); i++ {
+				writeGenesisFile(genFiles[i], chainID, appStateJSON)
+			}
+
+			// dump signer information in a json file
+			// TODO move to const string flag
+			dump := viper.GetBool("signer-dump")
+			if dump {
+				signerJSON, err := json.MarshalIndent(signers, "", "  ")
+				if err != nil {
+					return err
+				}
+				if err := common.WriteFileAtomic(filepath.Join("mytestnet/signer-dump.json"), signerJSON, 0600); err != nil {
+					fmt.Println("Error writing signer-dump", err)
+					return err
+				}
+			}
+
+			fmt.Printf("Successfully initialized %d node directories\n", numValidators+numNonValidators)
+			return nil
 		},
+	}
+
+	cmd.Flags().Int(flagNumValidators, 4,
+		"Number of validators to initialize the testnet with",
+	)
+
+	cmd.Flags().Int(flagNumNonValidators, 8,
+		"Number of validators to initialize the testnet with",
+	)
+
+	cmd.Flags().StringP(flagOutputDir, "o", "./mytestnet",
+		"Directory to store initialization data for the testnet",
+	)
+
+	cmd.Flags().String(flagNodeDirPrefix, "node",
+		"Prefix the directory name for each node with (node results in node0, node1, ...)",
+	)
+
+	cmd.Flags().String(flagNodeDaemonHome, "heimdalld",
+		"Home directory of the node's daemon configuration",
+	)
+
+	cmd.Flags().String(flagNodeCliHome, "heimdallcli",
+		"Home directory of the node's cli configuration",
+	)
+
+	cmd.Flags().String(flagNodeHostPrefix, "node",
+		"Hostname prefix (node results in persistent peers list ID0@node0:26656, ID1@node1:26656, ...)")
+
+	cmd.Flags().String(client.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
+	cmd.Flags().Bool("signer-dump", true, "dumps all signer information in a json file")
+	return cmd
+}
+
+// Total Validators to be included in the testnet
+func totalValidators() int {
+	numValidators := viper.GetInt(flagNumValidators)
+	numNonValidators := viper.GetInt(flagNumNonValidators)
+	return numNonValidators + numValidators
+}
+
+// get node directory path
+func nodeDir(i int) string {
+	outDir := viper.GetString(flagOutputDir)
+	nodeDirName := fmt.Sprintf("%s%d", viper.GetString(flagNodeDirPrefix), i)
+	nodeDaemonHomeName := viper.GetString(flagNodeDaemonHome)
+	return filepath.Join(outDir, nodeDirName, nodeDaemonHomeName)
+}
+
+// hostname of ip of nodes
+func hostnameOrIP(i int) string {
+	return fmt.Sprintf("%s%d", viper.GetString(flagNodeHostPrefix), i)
+}
+
+// populate persistent peers in config
+func populatePersistentPeersInConfigAndWriteIt(config *cfg.Config) {
+	persistentPeers := make([]string, totalValidators())
+	for i := 0; i < totalValidators(); i++ {
+		config.SetRoot(nodeDir(i))
+		nodeKey, err := p2p.LoadNodeKey(config.NodeKeyFile())
+		if err != nil {
+			return
+		}
+		persistentPeers[i] = p2p.IDAddressString(nodeKey.ID(), fmt.Sprintf("%s:%d", hostnameOrIP(i), 26656))
+	}
+
+	persistentPeersList := strings.Join(persistentPeers, ",")
+	for i := 0; i < totalValidators(); i++ {
+		config.SetRoot(nodeDir(i))
+		config.P2P.PersistentPeers = persistentPeersList
+		config.P2P.AddrBookStrict = false
+
+		// overwrite default config
+		cfg.WriteConfigFile(filepath.Join(nodeDir(i), "config", "config.toml"), config)
 	}
 }
 
@@ -253,15 +481,30 @@ func writeGenesisFile(genesisFile, chainID string, appState json.RawMessage) err
 	return genDoc.SaveAs(genesisFile)
 }
 
-func readOrCreatePrivValidator(privValFile string) *privval.FilePV {
-	// private validator
-	var privValidator *privval.FilePV
-	if common.FileExists(privValFile) {
-		privValidator = privval.LoadFilePV(privValFile)
-	} else {
-		privValidator = privval.GenFilePV(privValFile)
-		privValidator.Save()
-	}
-	return privValidator
-}
+// initialise node and priv validator files
+func InitializeNodeValidatorFiles(
+	config *cfg.Config) (nodeID string, valPubKey crypto.PubKey, priv crypto.PrivKey, err error,
+) {
 
+	nodeKey, err := p2p.LoadOrGenNodeKey(config.NodeKeyFile())
+	if err != nil {
+		return nodeID, valPubKey, priv, err
+	}
+
+	nodeID = string(nodeKey.ID())
+	server.UpgradeOldPrivValFile(config)
+
+	pvKeyFile := config.PrivValidatorKeyFile()
+	if err := common.EnsureDir(filepath.Dir(pvKeyFile), 0777); err != nil {
+		return nodeID, valPubKey, priv, nil
+	}
+
+	pvStateFile := config.PrivValidatorStateFile()
+	if err := common.EnsureDir(filepath.Dir(pvStateFile), 0777); err != nil {
+		return nodeID, valPubKey, priv, nil
+	}
+
+	FilePv := privval.LoadOrGenFilePV(pvKeyFile, pvStateFile)
+	valPubKey = FilePv.GetPubKey()
+	return nodeID, valPubKey, FilePv.Key.PrivKey, nil
+}
