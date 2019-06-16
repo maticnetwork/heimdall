@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto/sha3"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/maticnetwork/heimdall/common"
 	"github.com/xsleonard/go-merkle"
 	"golang.org/x/sync/errgroup"
 
