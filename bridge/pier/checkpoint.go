@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"math/big"
 	"net/http"
-	"os"
 	"sync"
 	"time"
 
@@ -21,7 +20,6 @@ import (
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/tendermint/tendermint/libs/common"
-	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/maticnetwork/heimdall/checkpoint"
@@ -30,8 +28,8 @@ import (
 	hmtypes "github.com/maticnetwork/heimdall/types"
 )
 
-// MaticCheckpointer to propose
-type MaticCheckpointer struct {
+// Checkpointer to propose
+type Checkpointer struct {
 	// Base service
 	common.BaseService
 
@@ -78,6 +76,7 @@ type HeimdallCheckpoint struct {
 	found bool
 }
 
+// Creates new heimdall checkpoint object
 func NewHeimdallCheckpoint(_start uint64, _end uint64, _found bool) HeimdallCheckpoint {
 	return HeimdallCheckpoint{
 		start: _start,
@@ -86,10 +85,10 @@ func NewHeimdallCheckpoint(_start uint64, _end uint64, _found bool) HeimdallChec
 	}
 }
 
-// NewMaticCheckpointer returns new service object
-func NewMaticCheckpointer() *MaticCheckpointer {
+// NewCheckpointer returns new service object
+func NewCheckpointer() *Checkpointer {
 	// create logger
-	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", maticCheckpointer)
+	logger := Logger.With("module", HeimdallCheckpointer)
 
 	// root chain instance
 	rootchainInstance, err := helper.GetRootChainInstance()
@@ -102,8 +101,8 @@ func NewMaticCheckpointer() *MaticCheckpointer {
 	cliCtx.BroadcastMode = client.BroadcastAsync
 
 	// creating checkpointer object
-	checkpointer := &MaticCheckpointer{
-		storageClient:     getBridgeDBInstance(viper.GetString(bridgeDBFlag)),
+	checkpointer := &Checkpointer{
+		storageClient:     getBridgeDBInstance(viper.GetString(BridgeDBFlag)),
 		MaticClient:       helper.GetMaticClient(),
 		MaticRPCClient:    helper.GetMaticRPCClient(),
 		MainClient:        helper.GetMainClient(),
@@ -112,12 +111,12 @@ func NewMaticCheckpointer() *MaticCheckpointer {
 		cliCtx:            cliCtx,
 	}
 
-	checkpointer.BaseService = *common.NewBaseService(logger, maticCheckpointer, checkpointer)
+	checkpointer.BaseService = *common.NewBaseService(logger, HeimdallCheckpointer, checkpointer)
 	return checkpointer
 }
 
 // startHeaderProcess starts header process when they get new header
-func (checkpointer *MaticCheckpointer) startHeaderProcess(ctx context.Context) {
+func (checkpointer *Checkpointer) startHeaderProcess(ctx context.Context) {
 	for {
 		select {
 		case newHeader := <-checkpointer.HeaderChannel:
@@ -129,7 +128,7 @@ func (checkpointer *MaticCheckpointer) startHeaderProcess(ctx context.Context) {
 }
 
 // OnStart starts new block subscription
-func (checkpointer *MaticCheckpointer) OnStart() error {
+func (checkpointer *Checkpointer) OnStart() error {
 	checkpointer.BaseService.OnStart() // Always call the overridden method.
 
 	// create cancellable context
@@ -160,7 +159,7 @@ func (checkpointer *MaticCheckpointer) OnStart() error {
 }
 
 // OnStop stops all necessary go routines
-func (checkpointer *MaticCheckpointer) OnStop() {
+func (checkpointer *Checkpointer) OnStop() {
 	checkpointer.BaseService.OnStop() // Always call the overridden method.
 
 	// close bridge db instance
@@ -173,7 +172,7 @@ func (checkpointer *MaticCheckpointer) OnStop() {
 	checkpointer.cancelHeaderProcess()
 }
 
-func (checkpointer *MaticCheckpointer) startPolling(ctx context.Context, pollInterval int) {
+func (checkpointer *Checkpointer) startPolling(ctx context.Context, pollInterval int) {
 	// How often to fire the passed in function in second
 	interval := time.Duration(pollInterval) * time.Millisecond
 
@@ -201,7 +200,7 @@ func (checkpointer *MaticCheckpointer) startPolling(ctx context.Context, pollInt
 	}
 }
 
-func (checkpointer *MaticCheckpointer) startSubscription(ctx context.Context, subscription ethereum.Subscription) {
+func (checkpointer *Checkpointer) startSubscription(ctx context.Context, subscription ethereum.Subscription) {
 	for {
 		select {
 		case err := <-subscription.Err():
@@ -218,7 +217,7 @@ func (checkpointer *MaticCheckpointer) startSubscription(ctx context.Context, su
 	}
 }
 
-func (checkpointer *MaticCheckpointer) sendRequest(newHeader *types.Header) {
+func (checkpointer *Checkpointer) sendRequest(newHeader *types.Header) {
 	checkpointer.Logger.Debug("New block detected", "blockNumber", newHeader.Number)
 	contractState := make(chan ContractCheckpoint, 1)
 	var lastContractCheckpoint ContractCheckpoint
@@ -303,7 +302,7 @@ func (checkpointer *MaticCheckpointer) sendRequest(newHeader *types.Header) {
 	checkpointer.Logger.Info("Checkpoint sent successfully", "hash", resp.TxHash, "start", start, "end", end, "root", hex.EncodeToString(root))
 }
 
-func (checkpointer *MaticCheckpointer) genHeaderDetailContract(lastHeader uint64, wg *sync.WaitGroup, contractState chan<- ContractCheckpoint) {
+func (checkpointer *Checkpointer) genHeaderDetailContract(lastHeader uint64, wg *sync.WaitGroup, contractState chan<- ContractCheckpoint) {
 	defer wg.Done()
 	lastCheckpointEnd, err := checkpointer.RootChainInstance.CurrentChildBlock(nil)
 	if err != nil {
@@ -375,11 +374,11 @@ func (checkpointer *MaticCheckpointer) genHeaderDetailContract(lastHeader uint64
 	return
 }
 
-func (checkpointer *MaticCheckpointer) getLastCheckpointStore(wg *sync.WaitGroup, heimdallState chan<- HeimdallCheckpoint) {
+func (checkpointer *Checkpointer) getLastCheckpointStore(wg *sync.WaitGroup, heimdallState chan<- HeimdallCheckpoint) {
 	defer wg.Done()
 	checkpointer.Logger.Info("Fetching checkpoint in buffer")
 	var _checkpoint hmtypes.CheckpointBlockHeader
-	resp, err := http.Get(lastCheckpointURL)
+	resp, err := http.Get(LastCheckpointURL)
 	if err != nil {
 		checkpointer.Logger.Error("Unable to send request to get proposer", "Error", err)
 		heimdallState <- NewHeimdallCheckpoint(_checkpoint.StartBlock, _checkpoint.EndBlock, false)

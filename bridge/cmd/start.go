@@ -16,9 +16,9 @@ var startCmd = &cobra.Command{
 	Short: "Start bridge server",
 	Run: func(cmd *cobra.Command, args []string) {
 		services := [...]common.Service{
-			pier.NewMaticCheckpointer(),
-			pier.NewChainSyncer(),
-			pier.NewAckService(),
+			// pier.NewMaticCheckpointer(),
+			pier.NewSyncer(),
+			// pier.NewAckService(),
 		}
 
 		// sync group

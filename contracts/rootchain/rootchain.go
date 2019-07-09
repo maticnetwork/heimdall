@@ -15,6 +15,18 @@ import (
 	"github.com/ethereum/go-ethereum/event"
 )
 
+// Reference imports to suppress errors if they are not otherwise used.
+var (
+	_ = big.NewInt
+	_ = strings.NewReader
+	_ = ethereum.NotFound
+	_ = abi.U256
+	_ = bind.Bind
+	_ = common.Big1
+	_ = types.BloomLookup
+	_ = event.NewSubscription
+)
+
 // RootchainABI is the input ABI used to generate the binding from.
 const RootchainABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"_token\",\"type\":\"address\"},{\"name\":\"_user\",\"type\":\"address\"},{\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"transferAmount\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_stakeManager\",\"type\":\"address\"}],\"name\":\"setStakeManager\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_withdrawManager\",\"type\":\"address\"}],\"name\":\"setWithdrawManager\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_depositManager\",\"type\":\"address\"}],\"name\":\"setDepositManager\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"childChainContract\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"roundType\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"slash\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_depositCount\",\"type\":\"uint256\"}],\"name\":\"depositBlock\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"address\"},{\"name\":\"\",\"type\":\"address\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_token\",\"type\":\"address\"},{\"name\":\"_user\",\"type\":\"address\"},{\"name\":\"_tokenId\",\"type\":\"uint256\"}],\"name\":\"depositERC721\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"headerBlocks\",\"outputs\":[{\"name\":\"root\",\"type\":\"bytes32\"},{\"name\":\"start\",\"type\":\"uint256\"},{\"name\":\"end\",\"type\":\"uint256\"},{\"name\":\"createdAt\",\"type\":\"uint256\"},{\"name\":\"proposer\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_nftContract\",\"type\":\"address\"}],\"name\":\"setExitNFTContract\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"exitId\",\"type\":\"uint256\"}],\"name\":\"deleteExit\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_validator\",\"type\":\"address\"}],\"name\":\"removeProofValidator\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_headerNumber\",\"type\":\"uint256\"}],\"name\":\"headerBlock\",\"outputs\":[{\"name\":\"_root\",\"type\":\"bytes32\"},{\"name\":\"_start\",\"type\":\"uint256\"},{\"name\":\"_end\",\"type\":\"uint256\"},{\"name\":\"_createdAt\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"depositManager\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"stakeManager\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"currentChildBlock\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"voteType\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes1\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_token\",\"type\":\"address\"},{\"name\":\"_user\",\"type\":\"address\"},{\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"deposit\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"isOwner\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"networkId\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"CHILD_BLOCK_INTERVAL\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_token\",\"type\":\"address\"}],\"name\":\"setWETHToken\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_user\",\"type\":\"address\"},{\"name\":\"_amount\",\"type\":\"uint256\"},{\"name\":\"_data\",\"type\":\"bytes\"}],\"name\":\"tokenFallback\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"address\"}],\"name\":\"proofValidatorContracts\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"chain\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_validator\",\"type\":\"address\"}],\"name\":\"addProofValidator\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_rootToken\",\"type\":\"address\"},{\"name\":\"_childToken\",\"type\":\"address\"},{\"name\":\"_isERC721\",\"type\":\"bool\"}],\"name\":\"mapToken\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"withdrawManager\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"currentHeaderBlock\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"vote\",\"type\":\"bytes\"},{\"name\":\"sigs\",\"type\":\"bytes\"},{\"name\":\"extradata\",\"type\":\"bytes\"}],\"name\":\"submitHeaderBlock\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"depositEthers\",\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newChildChain\",\"type\":\"address\"}],\"name\":\"setChildContract\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"finalizeCommit\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"fallback\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"previousChildChain\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"newChildChain\",\"type\":\"address\"}],\"name\":\"ChildChainChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"validator\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"from\",\"type\":\"address\"}],\"name\":\"ProofValidatorAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"validator\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"from\",\"type\":\"address\"}],\"name\":\"ProofValidatorRemoved\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"proposer\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"number\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"start\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"end\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"root\",\"type\":\"bytes32\"}],\"name\":\"NewHeaderBlock\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"}]"
 
@@ -292,7 +304,7 @@ func (_Rootchain *RootchainCallerSession) CurrentHeaderBlock() (*big.Int, error)
 
 // DepositBlock is a free data retrieval call binding the contract method 0x32590654.
 //
-// Solidity: function depositBlock(_depositCount uint256) constant returns(uint256, address, address, uint256, uint256)
+// Solidity: function depositBlock(uint256 _depositCount) constant returns(uint256, address, address, uint256, uint256)
 func (_Rootchain *RootchainCaller) DepositBlock(opts *bind.CallOpts, _depositCount *big.Int) (*big.Int, common.Address, common.Address, *big.Int, *big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -314,14 +326,14 @@ func (_Rootchain *RootchainCaller) DepositBlock(opts *bind.CallOpts, _depositCou
 
 // DepositBlock is a free data retrieval call binding the contract method 0x32590654.
 //
-// Solidity: function depositBlock(_depositCount uint256) constant returns(uint256, address, address, uint256, uint256)
+// Solidity: function depositBlock(uint256 _depositCount) constant returns(uint256, address, address, uint256, uint256)
 func (_Rootchain *RootchainSession) DepositBlock(_depositCount *big.Int) (*big.Int, common.Address, common.Address, *big.Int, *big.Int, error) {
 	return _Rootchain.Contract.DepositBlock(&_Rootchain.CallOpts, _depositCount)
 }
 
 // DepositBlock is a free data retrieval call binding the contract method 0x32590654.
 //
-// Solidity: function depositBlock(_depositCount uint256) constant returns(uint256, address, address, uint256, uint256)
+// Solidity: function depositBlock(uint256 _depositCount) constant returns(uint256, address, address, uint256, uint256)
 func (_Rootchain *RootchainCallerSession) DepositBlock(_depositCount *big.Int) (*big.Int, common.Address, common.Address, *big.Int, *big.Int, error) {
 	return _Rootchain.Contract.DepositBlock(&_Rootchain.CallOpts, _depositCount)
 }
@@ -354,7 +366,7 @@ func (_Rootchain *RootchainCallerSession) DepositManager() (common.Address, erro
 
 // HeaderBlock is a free data retrieval call binding the contract method 0x61bbd461.
 //
-// Solidity: function headerBlock(_headerNumber uint256) constant returns(_root bytes32, _start uint256, _end uint256, _createdAt uint256)
+// Solidity: function headerBlock(uint256 _headerNumber) constant returns(bytes32 _root, uint256 _start, uint256 _end, uint256 _createdAt)
 func (_Rootchain *RootchainCaller) HeaderBlock(opts *bind.CallOpts, _headerNumber *big.Int) (struct {
 	Root      [32]byte
 	Start     *big.Int
@@ -374,7 +386,7 @@ func (_Rootchain *RootchainCaller) HeaderBlock(opts *bind.CallOpts, _headerNumbe
 
 // HeaderBlock is a free data retrieval call binding the contract method 0x61bbd461.
 //
-// Solidity: function headerBlock(_headerNumber uint256) constant returns(_root bytes32, _start uint256, _end uint256, _createdAt uint256)
+// Solidity: function headerBlock(uint256 _headerNumber) constant returns(bytes32 _root, uint256 _start, uint256 _end, uint256 _createdAt)
 func (_Rootchain *RootchainSession) HeaderBlock(_headerNumber *big.Int) (struct {
 	Root      [32]byte
 	Start     *big.Int
@@ -386,7 +398,7 @@ func (_Rootchain *RootchainSession) HeaderBlock(_headerNumber *big.Int) (struct 
 
 // HeaderBlock is a free data retrieval call binding the contract method 0x61bbd461.
 //
-// Solidity: function headerBlock(_headerNumber uint256) constant returns(_root bytes32, _start uint256, _end uint256, _createdAt uint256)
+// Solidity: function headerBlock(uint256 _headerNumber) constant returns(bytes32 _root, uint256 _start, uint256 _end, uint256 _createdAt)
 func (_Rootchain *RootchainCallerSession) HeaderBlock(_headerNumber *big.Int) (struct {
 	Root      [32]byte
 	Start     *big.Int
@@ -398,7 +410,7 @@ func (_Rootchain *RootchainCallerSession) HeaderBlock(_headerNumber *big.Int) (s
 
 // HeaderBlocks is a free data retrieval call binding the contract method 0x41539d4a.
 //
-// Solidity: function headerBlocks( uint256) constant returns(root bytes32, start uint256, end uint256, createdAt uint256, proposer address)
+// Solidity: function headerBlocks(uint256 ) constant returns(bytes32 root, uint256 start, uint256 end, uint256 createdAt, address proposer)
 func (_Rootchain *RootchainCaller) HeaderBlocks(opts *bind.CallOpts, arg0 *big.Int) (struct {
 	Root      [32]byte
 	Start     *big.Int
@@ -420,7 +432,7 @@ func (_Rootchain *RootchainCaller) HeaderBlocks(opts *bind.CallOpts, arg0 *big.I
 
 // HeaderBlocks is a free data retrieval call binding the contract method 0x41539d4a.
 //
-// Solidity: function headerBlocks( uint256) constant returns(root bytes32, start uint256, end uint256, createdAt uint256, proposer address)
+// Solidity: function headerBlocks(uint256 ) constant returns(bytes32 root, uint256 start, uint256 end, uint256 createdAt, address proposer)
 func (_Rootchain *RootchainSession) HeaderBlocks(arg0 *big.Int) (struct {
 	Root      [32]byte
 	Start     *big.Int
@@ -433,7 +445,7 @@ func (_Rootchain *RootchainSession) HeaderBlocks(arg0 *big.Int) (struct {
 
 // HeaderBlocks is a free data retrieval call binding the contract method 0x41539d4a.
 //
-// Solidity: function headerBlocks( uint256) constant returns(root bytes32, start uint256, end uint256, createdAt uint256, proposer address)
+// Solidity: function headerBlocks(uint256 ) constant returns(bytes32 root, uint256 start, uint256 end, uint256 createdAt, address proposer)
 func (_Rootchain *RootchainCallerSession) HeaderBlocks(arg0 *big.Int) (struct {
 	Root      [32]byte
 	Start     *big.Int
@@ -524,7 +536,7 @@ func (_Rootchain *RootchainCallerSession) Owner() (common.Address, error) {
 
 // ProofValidatorContracts is a free data retrieval call binding the contract method 0xc4b875d3.
 //
-// Solidity: function proofValidatorContracts( address) constant returns(bool)
+// Solidity: function proofValidatorContracts(address ) constant returns(bool)
 func (_Rootchain *RootchainCaller) ProofValidatorContracts(opts *bind.CallOpts, arg0 common.Address) (bool, error) {
 	var (
 		ret0 = new(bool)
@@ -536,14 +548,14 @@ func (_Rootchain *RootchainCaller) ProofValidatorContracts(opts *bind.CallOpts, 
 
 // ProofValidatorContracts is a free data retrieval call binding the contract method 0xc4b875d3.
 //
-// Solidity: function proofValidatorContracts( address) constant returns(bool)
+// Solidity: function proofValidatorContracts(address ) constant returns(bool)
 func (_Rootchain *RootchainSession) ProofValidatorContracts(arg0 common.Address) (bool, error) {
 	return _Rootchain.Contract.ProofValidatorContracts(&_Rootchain.CallOpts, arg0)
 }
 
 // ProofValidatorContracts is a free data retrieval call binding the contract method 0xc4b875d3.
 //
-// Solidity: function proofValidatorContracts( address) constant returns(bool)
+// Solidity: function proofValidatorContracts(address ) constant returns(bool)
 func (_Rootchain *RootchainCallerSession) ProofValidatorContracts(arg0 common.Address) (bool, error) {
 	return _Rootchain.Contract.ProofValidatorContracts(&_Rootchain.CallOpts, arg0)
 }
@@ -654,84 +666,84 @@ func (_Rootchain *RootchainCallerSession) WithdrawManager() (common.Address, err
 
 // AddProofValidator is a paid mutator transaction binding the contract method 0xd060828b.
 //
-// Solidity: function addProofValidator(_validator address) returns()
+// Solidity: function addProofValidator(address _validator) returns()
 func (_Rootchain *RootchainTransactor) AddProofValidator(opts *bind.TransactOpts, _validator common.Address) (*types.Transaction, error) {
 	return _Rootchain.contract.Transact(opts, "addProofValidator", _validator)
 }
 
 // AddProofValidator is a paid mutator transaction binding the contract method 0xd060828b.
 //
-// Solidity: function addProofValidator(_validator address) returns()
+// Solidity: function addProofValidator(address _validator) returns()
 func (_Rootchain *RootchainSession) AddProofValidator(_validator common.Address) (*types.Transaction, error) {
 	return _Rootchain.Contract.AddProofValidator(&_Rootchain.TransactOpts, _validator)
 }
 
 // AddProofValidator is a paid mutator transaction binding the contract method 0xd060828b.
 //
-// Solidity: function addProofValidator(_validator address) returns()
+// Solidity: function addProofValidator(address _validator) returns()
 func (_Rootchain *RootchainTransactorSession) AddProofValidator(_validator common.Address) (*types.Transaction, error) {
 	return _Rootchain.Contract.AddProofValidator(&_Rootchain.TransactOpts, _validator)
 }
 
 // DeleteExit is a paid mutator transaction binding the contract method 0x50c30308.
 //
-// Solidity: function deleteExit(exitId uint256) returns()
+// Solidity: function deleteExit(uint256 exitId) returns()
 func (_Rootchain *RootchainTransactor) DeleteExit(opts *bind.TransactOpts, exitId *big.Int) (*types.Transaction, error) {
 	return _Rootchain.contract.Transact(opts, "deleteExit", exitId)
 }
 
 // DeleteExit is a paid mutator transaction binding the contract method 0x50c30308.
 //
-// Solidity: function deleteExit(exitId uint256) returns()
+// Solidity: function deleteExit(uint256 exitId) returns()
 func (_Rootchain *RootchainSession) DeleteExit(exitId *big.Int) (*types.Transaction, error) {
 	return _Rootchain.Contract.DeleteExit(&_Rootchain.TransactOpts, exitId)
 }
 
 // DeleteExit is a paid mutator transaction binding the contract method 0x50c30308.
 //
-// Solidity: function deleteExit(exitId uint256) returns()
+// Solidity: function deleteExit(uint256 exitId) returns()
 func (_Rootchain *RootchainTransactorSession) DeleteExit(exitId *big.Int) (*types.Transaction, error) {
 	return _Rootchain.Contract.DeleteExit(&_Rootchain.TransactOpts, exitId)
 }
 
 // Deposit is a paid mutator transaction binding the contract method 0x8340f549.
 //
-// Solidity: function deposit(_token address, _user address, _amount uint256) returns()
+// Solidity: function deposit(address _token, address _user, uint256 _amount) returns()
 func (_Rootchain *RootchainTransactor) Deposit(opts *bind.TransactOpts, _token common.Address, _user common.Address, _amount *big.Int) (*types.Transaction, error) {
 	return _Rootchain.contract.Transact(opts, "deposit", _token, _user, _amount)
 }
 
 // Deposit is a paid mutator transaction binding the contract method 0x8340f549.
 //
-// Solidity: function deposit(_token address, _user address, _amount uint256) returns()
+// Solidity: function deposit(address _token, address _user, uint256 _amount) returns()
 func (_Rootchain *RootchainSession) Deposit(_token common.Address, _user common.Address, _amount *big.Int) (*types.Transaction, error) {
 	return _Rootchain.Contract.Deposit(&_Rootchain.TransactOpts, _token, _user, _amount)
 }
 
 // Deposit is a paid mutator transaction binding the contract method 0x8340f549.
 //
-// Solidity: function deposit(_token address, _user address, _amount uint256) returns()
+// Solidity: function deposit(address _token, address _user, uint256 _amount) returns()
 func (_Rootchain *RootchainTransactorSession) Deposit(_token common.Address, _user common.Address, _amount *big.Int) (*types.Transaction, error) {
 	return _Rootchain.Contract.Deposit(&_Rootchain.TransactOpts, _token, _user, _amount)
 }
 
 // DepositERC721 is a paid mutator transaction binding the contract method 0x331ded1a.
 //
-// Solidity: function depositERC721(_token address, _user address, _tokenId uint256) returns()
+// Solidity: function depositERC721(address _token, address _user, uint256 _tokenId) returns()
 func (_Rootchain *RootchainTransactor) DepositERC721(opts *bind.TransactOpts, _token common.Address, _user common.Address, _tokenId *big.Int) (*types.Transaction, error) {
 	return _Rootchain.contract.Transact(opts, "depositERC721", _token, _user, _tokenId)
 }
 
 // DepositERC721 is a paid mutator transaction binding the contract method 0x331ded1a.
 //
-// Solidity: function depositERC721(_token address, _user address, _tokenId uint256) returns()
+// Solidity: function depositERC721(address _token, address _user, uint256 _tokenId) returns()
 func (_Rootchain *RootchainSession) DepositERC721(_token common.Address, _user common.Address, _tokenId *big.Int) (*types.Transaction, error) {
 	return _Rootchain.Contract.DepositERC721(&_Rootchain.TransactOpts, _token, _user, _tokenId)
 }
 
 // DepositERC721 is a paid mutator transaction binding the contract method 0x331ded1a.
 //
-// Solidity: function depositERC721(_token address, _user address, _tokenId uint256) returns()
+// Solidity: function depositERC721(address _token, address _user, uint256 _tokenId) returns()
 func (_Rootchain *RootchainTransactorSession) DepositERC721(_token common.Address, _user common.Address, _tokenId *big.Int) (*types.Transaction, error) {
 	return _Rootchain.Contract.DepositERC721(&_Rootchain.TransactOpts, _token, _user, _tokenId)
 }
@@ -759,63 +771,63 @@ func (_Rootchain *RootchainTransactorSession) DepositEthers() (*types.Transactio
 
 // FinalizeCommit is a paid mutator transaction binding the contract method 0xfb0df30f.
 //
-// Solidity: function finalizeCommit( uint256) returns()
+// Solidity: function finalizeCommit(uint256 ) returns()
 func (_Rootchain *RootchainTransactor) FinalizeCommit(opts *bind.TransactOpts, arg0 *big.Int) (*types.Transaction, error) {
 	return _Rootchain.contract.Transact(opts, "finalizeCommit", arg0)
 }
 
 // FinalizeCommit is a paid mutator transaction binding the contract method 0xfb0df30f.
 //
-// Solidity: function finalizeCommit( uint256) returns()
+// Solidity: function finalizeCommit(uint256 ) returns()
 func (_Rootchain *RootchainSession) FinalizeCommit(arg0 *big.Int) (*types.Transaction, error) {
 	return _Rootchain.Contract.FinalizeCommit(&_Rootchain.TransactOpts, arg0)
 }
 
 // FinalizeCommit is a paid mutator transaction binding the contract method 0xfb0df30f.
 //
-// Solidity: function finalizeCommit( uint256) returns()
+// Solidity: function finalizeCommit(uint256 ) returns()
 func (_Rootchain *RootchainTransactorSession) FinalizeCommit(arg0 *big.Int) (*types.Transaction, error) {
 	return _Rootchain.Contract.FinalizeCommit(&_Rootchain.TransactOpts, arg0)
 }
 
 // MapToken is a paid mutator transaction binding the contract method 0xe117694b.
 //
-// Solidity: function mapToken(_rootToken address, _childToken address, _isERC721 bool) returns()
+// Solidity: function mapToken(address _rootToken, address _childToken, bool _isERC721) returns()
 func (_Rootchain *RootchainTransactor) MapToken(opts *bind.TransactOpts, _rootToken common.Address, _childToken common.Address, _isERC721 bool) (*types.Transaction, error) {
 	return _Rootchain.contract.Transact(opts, "mapToken", _rootToken, _childToken, _isERC721)
 }
 
 // MapToken is a paid mutator transaction binding the contract method 0xe117694b.
 //
-// Solidity: function mapToken(_rootToken address, _childToken address, _isERC721 bool) returns()
+// Solidity: function mapToken(address _rootToken, address _childToken, bool _isERC721) returns()
 func (_Rootchain *RootchainSession) MapToken(_rootToken common.Address, _childToken common.Address, _isERC721 bool) (*types.Transaction, error) {
 	return _Rootchain.Contract.MapToken(&_Rootchain.TransactOpts, _rootToken, _childToken, _isERC721)
 }
 
 // MapToken is a paid mutator transaction binding the contract method 0xe117694b.
 //
-// Solidity: function mapToken(_rootToken address, _childToken address, _isERC721 bool) returns()
+// Solidity: function mapToken(address _rootToken, address _childToken, bool _isERC721) returns()
 func (_Rootchain *RootchainTransactorSession) MapToken(_rootToken common.Address, _childToken common.Address, _isERC721 bool) (*types.Transaction, error) {
 	return _Rootchain.Contract.MapToken(&_Rootchain.TransactOpts, _rootToken, _childToken, _isERC721)
 }
 
 // RemoveProofValidator is a paid mutator transaction binding the contract method 0x609dc55a.
 //
-// Solidity: function removeProofValidator(_validator address) returns()
+// Solidity: function removeProofValidator(address _validator) returns()
 func (_Rootchain *RootchainTransactor) RemoveProofValidator(opts *bind.TransactOpts, _validator common.Address) (*types.Transaction, error) {
 	return _Rootchain.contract.Transact(opts, "removeProofValidator", _validator)
 }
 
 // RemoveProofValidator is a paid mutator transaction binding the contract method 0x609dc55a.
 //
-// Solidity: function removeProofValidator(_validator address) returns()
+// Solidity: function removeProofValidator(address _validator) returns()
 func (_Rootchain *RootchainSession) RemoveProofValidator(_validator common.Address) (*types.Transaction, error) {
 	return _Rootchain.Contract.RemoveProofValidator(&_Rootchain.TransactOpts, _validator)
 }
 
 // RemoveProofValidator is a paid mutator transaction binding the contract method 0x609dc55a.
 //
-// Solidity: function removeProofValidator(_validator address) returns()
+// Solidity: function removeProofValidator(address _validator) returns()
 func (_Rootchain *RootchainTransactorSession) RemoveProofValidator(_validator common.Address) (*types.Transaction, error) {
 	return _Rootchain.Contract.RemoveProofValidator(&_Rootchain.TransactOpts, _validator)
 }
@@ -843,126 +855,126 @@ func (_Rootchain *RootchainTransactorSession) RenounceOwnership() (*types.Transa
 
 // SetChildContract is a paid mutator transaction binding the contract method 0xf8d86e18.
 //
-// Solidity: function setChildContract(newChildChain address) returns()
+// Solidity: function setChildContract(address newChildChain) returns()
 func (_Rootchain *RootchainTransactor) SetChildContract(opts *bind.TransactOpts, newChildChain common.Address) (*types.Transaction, error) {
 	return _Rootchain.contract.Transact(opts, "setChildContract", newChildChain)
 }
 
 // SetChildContract is a paid mutator transaction binding the contract method 0xf8d86e18.
 //
-// Solidity: function setChildContract(newChildChain address) returns()
+// Solidity: function setChildContract(address newChildChain) returns()
 func (_Rootchain *RootchainSession) SetChildContract(newChildChain common.Address) (*types.Transaction, error) {
 	return _Rootchain.Contract.SetChildContract(&_Rootchain.TransactOpts, newChildChain)
 }
 
 // SetChildContract is a paid mutator transaction binding the contract method 0xf8d86e18.
 //
-// Solidity: function setChildContract(newChildChain address) returns()
+// Solidity: function setChildContract(address newChildChain) returns()
 func (_Rootchain *RootchainTransactorSession) SetChildContract(newChildChain common.Address) (*types.Transaction, error) {
 	return _Rootchain.Contract.SetChildContract(&_Rootchain.TransactOpts, newChildChain)
 }
 
 // SetDepositManager is a paid mutator transaction binding the contract method 0x228d71a9.
 //
-// Solidity: function setDepositManager(_depositManager address) returns()
+// Solidity: function setDepositManager(address _depositManager) returns()
 func (_Rootchain *RootchainTransactor) SetDepositManager(opts *bind.TransactOpts, _depositManager common.Address) (*types.Transaction, error) {
 	return _Rootchain.contract.Transact(opts, "setDepositManager", _depositManager)
 }
 
 // SetDepositManager is a paid mutator transaction binding the contract method 0x228d71a9.
 //
-// Solidity: function setDepositManager(_depositManager address) returns()
+// Solidity: function setDepositManager(address _depositManager) returns()
 func (_Rootchain *RootchainSession) SetDepositManager(_depositManager common.Address) (*types.Transaction, error) {
 	return _Rootchain.Contract.SetDepositManager(&_Rootchain.TransactOpts, _depositManager)
 }
 
 // SetDepositManager is a paid mutator transaction binding the contract method 0x228d71a9.
 //
-// Solidity: function setDepositManager(_depositManager address) returns()
+// Solidity: function setDepositManager(address _depositManager) returns()
 func (_Rootchain *RootchainTransactorSession) SetDepositManager(_depositManager common.Address) (*types.Transaction, error) {
 	return _Rootchain.Contract.SetDepositManager(&_Rootchain.TransactOpts, _depositManager)
 }
 
 // SetExitNFTContract is a paid mutator transaction binding the contract method 0x46e11a8d.
 //
-// Solidity: function setExitNFTContract(_nftContract address) returns()
+// Solidity: function setExitNFTContract(address _nftContract) returns()
 func (_Rootchain *RootchainTransactor) SetExitNFTContract(opts *bind.TransactOpts, _nftContract common.Address) (*types.Transaction, error) {
 	return _Rootchain.contract.Transact(opts, "setExitNFTContract", _nftContract)
 }
 
 // SetExitNFTContract is a paid mutator transaction binding the contract method 0x46e11a8d.
 //
-// Solidity: function setExitNFTContract(_nftContract address) returns()
+// Solidity: function setExitNFTContract(address _nftContract) returns()
 func (_Rootchain *RootchainSession) SetExitNFTContract(_nftContract common.Address) (*types.Transaction, error) {
 	return _Rootchain.Contract.SetExitNFTContract(&_Rootchain.TransactOpts, _nftContract)
 }
 
 // SetExitNFTContract is a paid mutator transaction binding the contract method 0x46e11a8d.
 //
-// Solidity: function setExitNFTContract(_nftContract address) returns()
+// Solidity: function setExitNFTContract(address _nftContract) returns()
 func (_Rootchain *RootchainTransactorSession) SetExitNFTContract(_nftContract common.Address) (*types.Transaction, error) {
 	return _Rootchain.Contract.SetExitNFTContract(&_Rootchain.TransactOpts, _nftContract)
 }
 
 // SetStakeManager is a paid mutator transaction binding the contract method 0x0e7c67fc.
 //
-// Solidity: function setStakeManager(_stakeManager address) returns()
+// Solidity: function setStakeManager(address _stakeManager) returns()
 func (_Rootchain *RootchainTransactor) SetStakeManager(opts *bind.TransactOpts, _stakeManager common.Address) (*types.Transaction, error) {
 	return _Rootchain.contract.Transact(opts, "setStakeManager", _stakeManager)
 }
 
 // SetStakeManager is a paid mutator transaction binding the contract method 0x0e7c67fc.
 //
-// Solidity: function setStakeManager(_stakeManager address) returns()
+// Solidity: function setStakeManager(address _stakeManager) returns()
 func (_Rootchain *RootchainSession) SetStakeManager(_stakeManager common.Address) (*types.Transaction, error) {
 	return _Rootchain.Contract.SetStakeManager(&_Rootchain.TransactOpts, _stakeManager)
 }
 
 // SetStakeManager is a paid mutator transaction binding the contract method 0x0e7c67fc.
 //
-// Solidity: function setStakeManager(_stakeManager address) returns()
+// Solidity: function setStakeManager(address _stakeManager) returns()
 func (_Rootchain *RootchainTransactorSession) SetStakeManager(_stakeManager common.Address) (*types.Transaction, error) {
 	return _Rootchain.Contract.SetStakeManager(&_Rootchain.TransactOpts, _stakeManager)
 }
 
 // SetWETHToken is a paid mutator transaction binding the contract method 0xb45d1f68.
 //
-// Solidity: function setWETHToken(_token address) returns()
+// Solidity: function setWETHToken(address _token) returns()
 func (_Rootchain *RootchainTransactor) SetWETHToken(opts *bind.TransactOpts, _token common.Address) (*types.Transaction, error) {
 	return _Rootchain.contract.Transact(opts, "setWETHToken", _token)
 }
 
 // SetWETHToken is a paid mutator transaction binding the contract method 0xb45d1f68.
 //
-// Solidity: function setWETHToken(_token address) returns()
+// Solidity: function setWETHToken(address _token) returns()
 func (_Rootchain *RootchainSession) SetWETHToken(_token common.Address) (*types.Transaction, error) {
 	return _Rootchain.Contract.SetWETHToken(&_Rootchain.TransactOpts, _token)
 }
 
 // SetWETHToken is a paid mutator transaction binding the contract method 0xb45d1f68.
 //
-// Solidity: function setWETHToken(_token address) returns()
+// Solidity: function setWETHToken(address _token) returns()
 func (_Rootchain *RootchainTransactorSession) SetWETHToken(_token common.Address) (*types.Transaction, error) {
 	return _Rootchain.Contract.SetWETHToken(&_Rootchain.TransactOpts, _token)
 }
 
 // SetWithdrawManager is a paid mutator transaction binding the contract method 0x17e3e2e8.
 //
-// Solidity: function setWithdrawManager(_withdrawManager address) returns()
+// Solidity: function setWithdrawManager(address _withdrawManager) returns()
 func (_Rootchain *RootchainTransactor) SetWithdrawManager(opts *bind.TransactOpts, _withdrawManager common.Address) (*types.Transaction, error) {
 	return _Rootchain.contract.Transact(opts, "setWithdrawManager", _withdrawManager)
 }
 
 // SetWithdrawManager is a paid mutator transaction binding the contract method 0x17e3e2e8.
 //
-// Solidity: function setWithdrawManager(_withdrawManager address) returns()
+// Solidity: function setWithdrawManager(address _withdrawManager) returns()
 func (_Rootchain *RootchainSession) SetWithdrawManager(_withdrawManager common.Address) (*types.Transaction, error) {
 	return _Rootchain.Contract.SetWithdrawManager(&_Rootchain.TransactOpts, _withdrawManager)
 }
 
 // SetWithdrawManager is a paid mutator transaction binding the contract method 0x17e3e2e8.
 //
-// Solidity: function setWithdrawManager(_withdrawManager address) returns()
+// Solidity: function setWithdrawManager(address _withdrawManager) returns()
 func (_Rootchain *RootchainTransactorSession) SetWithdrawManager(_withdrawManager common.Address) (*types.Transaction, error) {
 	return _Rootchain.Contract.SetWithdrawManager(&_Rootchain.TransactOpts, _withdrawManager)
 }
@@ -990,84 +1002,84 @@ func (_Rootchain *RootchainTransactorSession) Slash() (*types.Transaction, error
 
 // SubmitHeaderBlock is a paid mutator transaction binding the contract method 0xec83d3ba.
 //
-// Solidity: function submitHeaderBlock(vote bytes, sigs bytes, extradata bytes) returns()
+// Solidity: function submitHeaderBlock(bytes vote, bytes sigs, bytes extradata) returns()
 func (_Rootchain *RootchainTransactor) SubmitHeaderBlock(opts *bind.TransactOpts, vote []byte, sigs []byte, extradata []byte) (*types.Transaction, error) {
 	return _Rootchain.contract.Transact(opts, "submitHeaderBlock", vote, sigs, extradata)
 }
 
 // SubmitHeaderBlock is a paid mutator transaction binding the contract method 0xec83d3ba.
 //
-// Solidity: function submitHeaderBlock(vote bytes, sigs bytes, extradata bytes) returns()
+// Solidity: function submitHeaderBlock(bytes vote, bytes sigs, bytes extradata) returns()
 func (_Rootchain *RootchainSession) SubmitHeaderBlock(vote []byte, sigs []byte, extradata []byte) (*types.Transaction, error) {
 	return _Rootchain.Contract.SubmitHeaderBlock(&_Rootchain.TransactOpts, vote, sigs, extradata)
 }
 
 // SubmitHeaderBlock is a paid mutator transaction binding the contract method 0xec83d3ba.
 //
-// Solidity: function submitHeaderBlock(vote bytes, sigs bytes, extradata bytes) returns()
+// Solidity: function submitHeaderBlock(bytes vote, bytes sigs, bytes extradata) returns()
 func (_Rootchain *RootchainTransactorSession) SubmitHeaderBlock(vote []byte, sigs []byte, extradata []byte) (*types.Transaction, error) {
 	return _Rootchain.Contract.SubmitHeaderBlock(&_Rootchain.TransactOpts, vote, sigs, extradata)
 }
 
 // TokenFallback is a paid mutator transaction binding the contract method 0xc0ee0b8a.
 //
-// Solidity: function tokenFallback(_user address, _amount uint256, _data bytes) returns()
+// Solidity: function tokenFallback(address _user, uint256 _amount, bytes _data) returns()
 func (_Rootchain *RootchainTransactor) TokenFallback(opts *bind.TransactOpts, _user common.Address, _amount *big.Int, _data []byte) (*types.Transaction, error) {
 	return _Rootchain.contract.Transact(opts, "tokenFallback", _user, _amount, _data)
 }
 
 // TokenFallback is a paid mutator transaction binding the contract method 0xc0ee0b8a.
 //
-// Solidity: function tokenFallback(_user address, _amount uint256, _data bytes) returns()
+// Solidity: function tokenFallback(address _user, uint256 _amount, bytes _data) returns()
 func (_Rootchain *RootchainSession) TokenFallback(_user common.Address, _amount *big.Int, _data []byte) (*types.Transaction, error) {
 	return _Rootchain.Contract.TokenFallback(&_Rootchain.TransactOpts, _user, _amount, _data)
 }
 
 // TokenFallback is a paid mutator transaction binding the contract method 0xc0ee0b8a.
 //
-// Solidity: function tokenFallback(_user address, _amount uint256, _data bytes) returns()
+// Solidity: function tokenFallback(address _user, uint256 _amount, bytes _data) returns()
 func (_Rootchain *RootchainTransactorSession) TokenFallback(_user common.Address, _amount *big.Int, _data []byte) (*types.Transaction, error) {
 	return _Rootchain.Contract.TokenFallback(&_Rootchain.TransactOpts, _user, _amount, _data)
 }
 
 // TransferAmount is a paid mutator transaction binding the contract method 0x01f47471.
 //
-// Solidity: function transferAmount(_token address, _user address, _amount uint256) returns(bool)
+// Solidity: function transferAmount(address _token, address _user, uint256 _amount) returns(bool)
 func (_Rootchain *RootchainTransactor) TransferAmount(opts *bind.TransactOpts, _token common.Address, _user common.Address, _amount *big.Int) (*types.Transaction, error) {
 	return _Rootchain.contract.Transact(opts, "transferAmount", _token, _user, _amount)
 }
 
 // TransferAmount is a paid mutator transaction binding the contract method 0x01f47471.
 //
-// Solidity: function transferAmount(_token address, _user address, _amount uint256) returns(bool)
+// Solidity: function transferAmount(address _token, address _user, uint256 _amount) returns(bool)
 func (_Rootchain *RootchainSession) TransferAmount(_token common.Address, _user common.Address, _amount *big.Int) (*types.Transaction, error) {
 	return _Rootchain.Contract.TransferAmount(&_Rootchain.TransactOpts, _token, _user, _amount)
 }
 
 // TransferAmount is a paid mutator transaction binding the contract method 0x01f47471.
 //
-// Solidity: function transferAmount(_token address, _user address, _amount uint256) returns(bool)
+// Solidity: function transferAmount(address _token, address _user, uint256 _amount) returns(bool)
 func (_Rootchain *RootchainTransactorSession) TransferAmount(_token common.Address, _user common.Address, _amount *big.Int) (*types.Transaction, error) {
 	return _Rootchain.Contract.TransferAmount(&_Rootchain.TransactOpts, _token, _user, _amount)
 }
 
 // TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
 //
-// Solidity: function transferOwnership(newOwner address) returns()
+// Solidity: function transferOwnership(address newOwner) returns()
 func (_Rootchain *RootchainTransactor) TransferOwnership(opts *bind.TransactOpts, newOwner common.Address) (*types.Transaction, error) {
 	return _Rootchain.contract.Transact(opts, "transferOwnership", newOwner)
 }
 
 // TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
 //
-// Solidity: function transferOwnership(newOwner address) returns()
+// Solidity: function transferOwnership(address newOwner) returns()
 func (_Rootchain *RootchainSession) TransferOwnership(newOwner common.Address) (*types.Transaction, error) {
 	return _Rootchain.Contract.TransferOwnership(&_Rootchain.TransactOpts, newOwner)
 }
 
 // TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
 //
-// Solidity: function transferOwnership(newOwner address) returns()
+// Solidity: function transferOwnership(address newOwner) returns()
 func (_Rootchain *RootchainTransactorSession) TransferOwnership(newOwner common.Address) (*types.Transaction, error) {
 	return _Rootchain.Contract.TransferOwnership(&_Rootchain.TransactOpts, newOwner)
 }
@@ -1148,7 +1160,7 @@ type RootchainChildChainChanged struct {
 
 // FilterChildChainChanged is a free log retrieval operation binding the contract event 0x1f9f3556dd336016cdf20adaead7d5c73665dba664b60e8c17e9a4eb91ce1d39.
 //
-// Solidity: e ChildChainChanged(previousChildChain indexed address, newChildChain indexed address)
+// Solidity: event ChildChainChanged(address indexed previousChildChain, address indexed newChildChain)
 func (_Rootchain *RootchainFilterer) FilterChildChainChanged(opts *bind.FilterOpts, previousChildChain []common.Address, newChildChain []common.Address) (*RootchainChildChainChangedIterator, error) {
 
 	var previousChildChainRule []interface{}
@@ -1169,7 +1181,7 @@ func (_Rootchain *RootchainFilterer) FilterChildChainChanged(opts *bind.FilterOp
 
 // WatchChildChainChanged is a free log subscription operation binding the contract event 0x1f9f3556dd336016cdf20adaead7d5c73665dba664b60e8c17e9a4eb91ce1d39.
 //
-// Solidity: e ChildChainChanged(previousChildChain indexed address, newChildChain indexed address)
+// Solidity: event ChildChainChanged(address indexed previousChildChain, address indexed newChildChain)
 func (_Rootchain *RootchainFilterer) WatchChildChainChanged(opts *bind.WatchOpts, sink chan<- *RootchainChildChainChanged, previousChildChain []common.Address, newChildChain []common.Address) (event.Subscription, error) {
 
 	var previousChildChainRule []interface{}
@@ -1292,7 +1304,7 @@ type RootchainNewHeaderBlock struct {
 
 // FilterNewHeaderBlock is a free log retrieval operation binding the contract event 0xf146921b854b787ba7d6045e8a8054731dc62430ae16c4bf08147539b1b6ef8f.
 //
-// Solidity: e NewHeaderBlock(proposer indexed address, number indexed uint256, start uint256, end uint256, root bytes32)
+// Solidity: event NewHeaderBlock(address indexed proposer, uint256 indexed number, uint256 start, uint256 end, bytes32 root)
 func (_Rootchain *RootchainFilterer) FilterNewHeaderBlock(opts *bind.FilterOpts, proposer []common.Address, number []*big.Int) (*RootchainNewHeaderBlockIterator, error) {
 
 	var proposerRule []interface{}
@@ -1313,7 +1325,7 @@ func (_Rootchain *RootchainFilterer) FilterNewHeaderBlock(opts *bind.FilterOpts,
 
 // WatchNewHeaderBlock is a free log subscription operation binding the contract event 0xf146921b854b787ba7d6045e8a8054731dc62430ae16c4bf08147539b1b6ef8f.
 //
-// Solidity: e NewHeaderBlock(proposer indexed address, number indexed uint256, start uint256, end uint256, root bytes32)
+// Solidity: event NewHeaderBlock(address indexed proposer, uint256 indexed number, uint256 start, uint256 end, bytes32 root)
 func (_Rootchain *RootchainFilterer) WatchNewHeaderBlock(opts *bind.WatchOpts, sink chan<- *RootchainNewHeaderBlock, proposer []common.Address, number []*big.Int) (event.Subscription, error) {
 
 	var proposerRule []interface{}
@@ -1433,7 +1445,7 @@ type RootchainOwnershipTransferred struct {
 
 // FilterOwnershipTransferred is a free log retrieval operation binding the contract event 0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0.
 //
-// Solidity: e OwnershipTransferred(previousOwner indexed address, newOwner indexed address)
+// Solidity: event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
 func (_Rootchain *RootchainFilterer) FilterOwnershipTransferred(opts *bind.FilterOpts, previousOwner []common.Address, newOwner []common.Address) (*RootchainOwnershipTransferredIterator, error) {
 
 	var previousOwnerRule []interface{}
@@ -1454,7 +1466,7 @@ func (_Rootchain *RootchainFilterer) FilterOwnershipTransferred(opts *bind.Filte
 
 // WatchOwnershipTransferred is a free log subscription operation binding the contract event 0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0.
 //
-// Solidity: e OwnershipTransferred(previousOwner indexed address, newOwner indexed address)
+// Solidity: event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
 func (_Rootchain *RootchainFilterer) WatchOwnershipTransferred(opts *bind.WatchOpts, sink chan<- *RootchainOwnershipTransferred, previousOwner []common.Address, newOwner []common.Address) (event.Subscription, error) {
 
 	var previousOwnerRule []interface{}
@@ -1574,7 +1586,7 @@ type RootchainProofValidatorAdded struct {
 
 // FilterProofValidatorAdded is a free log retrieval operation binding the contract event 0x3dc12d30280bcd33917d2b84141129635923441ba7e6b388b946b41f5ace697d.
 //
-// Solidity: e ProofValidatorAdded(validator indexed address, from indexed address)
+// Solidity: event ProofValidatorAdded(address indexed validator, address indexed from)
 func (_Rootchain *RootchainFilterer) FilterProofValidatorAdded(opts *bind.FilterOpts, validator []common.Address, from []common.Address) (*RootchainProofValidatorAddedIterator, error) {
 
 	var validatorRule []interface{}
@@ -1595,7 +1607,7 @@ func (_Rootchain *RootchainFilterer) FilterProofValidatorAdded(opts *bind.Filter
 
 // WatchProofValidatorAdded is a free log subscription operation binding the contract event 0x3dc12d30280bcd33917d2b84141129635923441ba7e6b388b946b41f5ace697d.
 //
-// Solidity: e ProofValidatorAdded(validator indexed address, from indexed address)
+// Solidity: event ProofValidatorAdded(address indexed validator, address indexed from)
 func (_Rootchain *RootchainFilterer) WatchProofValidatorAdded(opts *bind.WatchOpts, sink chan<- *RootchainProofValidatorAdded, validator []common.Address, from []common.Address) (event.Subscription, error) {
 
 	var validatorRule []interface{}
@@ -1715,7 +1727,7 @@ type RootchainProofValidatorRemoved struct {
 
 // FilterProofValidatorRemoved is a free log retrieval operation binding the contract event 0x96bedef125d36a85bf369db1f6ac9d7487d9daf6d4c22539249f1bf94a11e119.
 //
-// Solidity: e ProofValidatorRemoved(validator indexed address, from indexed address)
+// Solidity: event ProofValidatorRemoved(address indexed validator, address indexed from)
 func (_Rootchain *RootchainFilterer) FilterProofValidatorRemoved(opts *bind.FilterOpts, validator []common.Address, from []common.Address) (*RootchainProofValidatorRemovedIterator, error) {
 
 	var validatorRule []interface{}
@@ -1736,7 +1748,7 @@ func (_Rootchain *RootchainFilterer) FilterProofValidatorRemoved(opts *bind.Filt
 
 // WatchProofValidatorRemoved is a free log subscription operation binding the contract event 0x96bedef125d36a85bf369db1f6ac9d7487d9daf6d4c22539249f1bf94a11e119.
 //
-// Solidity: e ProofValidatorRemoved(validator indexed address, from indexed address)
+// Solidity: event ProofValidatorRemoved(address indexed validator, address indexed from)
 func (_Rootchain *RootchainFilterer) WatchProofValidatorRemoved(opts *bind.WatchOpts, sink chan<- *RootchainProofValidatorRemoved, validator []common.Address, from []common.Address) (event.Subscription, error) {
 
 	var validatorRule []interface{}

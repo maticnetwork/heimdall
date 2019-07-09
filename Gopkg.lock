@@ -645,6 +645,14 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:b521f10a2d8fa85c04a8ef4e62f2d1e14d303599a55d64dabf9f5a02f84d35eb"
+  name = "golang.org/x/sync"
+  packages = ["errgroup"]
+  pruneopts = "UT"
+  revision = "112230192c580c3556b8cee6403af37a4fc5f28c"
+
+[[projects]]
+  branch = "master"
   digest = "1:0beb3839ca69f4a32c40d753a8cd60b273c2ba266329d1a9957731fc4cdb5478"
   name = "golang.org/x/sys"
   packages = [

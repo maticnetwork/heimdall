@@ -9,7 +9,6 @@ import (
 	"math"
 	"math/big"
 	"net/http"
-	"os"
 	"strconv"
 	"time"
 
@@ -17,7 +16,6 @@ import (
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/tendermint/tendermint/libs/common"
-	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/maticnetwork/heimdall/checkpoint"
@@ -50,7 +48,7 @@ type AckService struct {
 // NewAckService returns new service object
 func NewAckService() *AckService {
 	// create logger
-	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", noackService)
+	logger := Logger.With("module", NoackService)
 
 	// root chain instance
 	rootchainInstance, err := helper.GetRootChainInstance()
@@ -64,12 +62,12 @@ func NewAckService() *AckService {
 
 	// creating checkpointer object
 	ackservice := &AckService{
-		storageClient:     getBridgeDBInstance(viper.GetString(bridgeDBFlag)),
+		storageClient:     getBridgeDBInstance(viper.GetString(BridgeDBFlag)),
 		rootChainInstance: rootchainInstance,
 		cliCtx:            cliCtx,
 	}
 
-	ackservice.BaseService = *common.NewBaseService(logger, noackService, ackservice)
+	ackservice.BaseService = *common.NewBaseService(logger, NoackService, ackservice)
 	return ackservice
 }
 
@@ -208,7 +206,7 @@ func (ackService *AckService) processCheckpoint(lastCreatedAt int64) {
 }
 
 func (ackService *AckService) getLastNoAckTime() uint64 {
-	resp, err := http.Get(lastNoAckURL)
+	resp, err := http.Get(LastNoAckURL)
 	if err != nil {
 		ackService.Logger.Error("Unable to send request for checkpoint buffer", "Error", err)
 		return 0
@@ -234,7 +232,7 @@ func (ackService *AckService) getLastNoAckTime() uint64 {
 
 func (ackService *AckService) isValidProposer(count uint64, address []byte) bool {
 	ackService.Logger.Debug("Skipping proposers", "count", strconv.FormatUint(count, 10))
-	resp, err := http.Get(fmt.Sprintf(proposersURL, strconv.FormatUint(count, 10)))
+	resp, err := http.Get(fmt.Sprintf(ProposersURL, strconv.FormatUint(count, 10)))
 	if err != nil {
 		ackService.Logger.Error("Unable to send request for next proposers", "Error", err)
 		return false

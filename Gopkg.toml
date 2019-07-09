@@ -54,3 +54,7 @@ ignored = [
 [[constraint]]
   name = "github.com/cosmos/cosmos-sdk"
   version = "=v0.34.4"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/streadway/amqp"
