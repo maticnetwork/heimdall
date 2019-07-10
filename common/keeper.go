@@ -21,7 +21,9 @@ var (
 	ValidatorMapKey        = []byte{0x22} // prefix for each key for validator map
 	CurrentValidatorSetKey = []byte{0x23} // Key to store current validator set
 
-	SpanDurationKey = []byte{0x24} // Key to store span duration for Bor
+	SpanDurationKey       = []byte{0x24} // Key to store span duration for Bor
+	LastSpanStartBlockKey = []byte{0x25} // Key to store last span start block
+	SpanPrefixKey         = []byte{0x26} // prefix key to store span
 )
 
 //
