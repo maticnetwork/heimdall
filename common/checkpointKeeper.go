@@ -11,6 +11,27 @@ import (
 
 //--------------- Checkpoint Related Keepers
 
+// AddCheckpoint adds checkpoint into final blocks
+func (k *Keeper) AddCheckpoint(ctx sdk.Context, headerBlockNumber uint64, headerBlock types.CheckpointBlockHeader) error {
+	key := GetHeaderKey(headerBlockNumber)
+	err := k.addCheckpoint(ctx, key, headerBlock)
+	if err != nil {
+		return err
+	}
+	CheckpointLogger.Info("Adding good checkpoint to state", "checkpoint", headerBlock, "headerBlockNumber", headerBlockNumber)
+	return nil
+}
+
+// SetCheckpointBuffer flushes Checkpoint Buffer
+func (k *Keeper) SetCheckpointBuffer(ctx sdk.Context, headerBlock types.CheckpointBlockHeader) error {
+	err := k.addCheckpoint(ctx, BufferCheckpointKey, headerBlock)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// addCheckpoint adds checkpoint to store
 func (k *Keeper) addCheckpoint(ctx sdk.Context, key []byte, headerBlock types.CheckpointBlockHeader) error {
 	store := ctx.KVStore(k.CheckpointKey)
 
@@ -24,17 +45,6 @@ func (k *Keeper) addCheckpoint(ctx sdk.Context, key []byte, headerBlock types.Ch
 	// store in key provided
 	store.Set(key, out)
 
-	return nil
-}
-
-// AddCheckpoint adds checkpoint into final blocks
-func (k *Keeper) AddCheckpoint(ctx sdk.Context, headerBlockNumber uint64, headerBlock types.CheckpointBlockHeader) error {
-	key := GetHeaderKey(headerBlockNumber)
-	err := k.addCheckpoint(ctx, key, headerBlock)
-	if err != nil {
-		return err
-	}
-	CheckpointLogger.Info("Adding good checkpoint to state", "checkpoint", headerBlock, "headerBlockNumber", headerBlockNumber)
 	return nil
 }
 
@@ -59,7 +69,6 @@ func (k *Keeper) GetCheckpointByIndex(ctx sdk.Context, headerIndex uint64) (type
 // GetLastCheckpoint gets last checkpoint, headerIndex = TotalACKs * ChildBlockInterval
 func (k *Keeper) GetLastCheckpoint(ctx sdk.Context) (types.CheckpointBlockHeader, error) {
 	store := ctx.KVStore(k.CheckpointKey)
-
 	acksCount := k.GetACKCount(ctx)
 
 	// fetch last checkpoint key (NumberOfACKs * ChildBlockInterval)
@@ -82,7 +91,6 @@ func (k *Keeper) GetLastCheckpoint(ctx sdk.Context) (types.CheckpointBlockHeader
 			}
 		}
 	}
-
 	return _checkpoint, ErrNoCheckpointFound(k.Codespace)
 }
 
@@ -127,15 +135,6 @@ func (k *Keeper) GetCheckpointCache(ctx sdk.Context, key []byte) bool {
 func (k *Keeper) FlushCheckpointBuffer(ctx sdk.Context) {
 	store := ctx.KVStore(k.CheckpointKey)
 	store.Delete(BufferCheckpointKey)
-}
-
-// SetCheckpointBuffer flushes Checkpoint Buffer
-func (k *Keeper) SetCheckpointBuffer(ctx sdk.Context, headerBlock types.CheckpointBlockHeader) error {
-	err := k.addCheckpoint(ctx, BufferCheckpointKey, headerBlock)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 // GetCheckpointFromBuffer gets checkpoint in buffer

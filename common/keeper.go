@@ -8,7 +8,6 @@ import (
 // -------------- KEYS/CONSTANTS
 
 var (
-	//EmptyBufferValue = []byte{0x00} // denotes EMPTY
 	DefaultValue = []byte{0x01} // Value to store in CacheCheckpoint and CacheCheckpointACK & ValidatorSetChange Flag
 
 	ACKCountKey             = []byte{0x11} // key to store ACK count
