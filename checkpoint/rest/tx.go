@@ -8,6 +8,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gorilla/mux"
 
@@ -18,36 +19,41 @@ import (
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
 	r.HandleFunc(
 		"/checkpoint/new",
-		newCheckpointHandler(cliCtx),
+		newCheckpointHandler(cdc, cliCtx),
 	).Methods("POST")
-	r.HandleFunc("/checkpoint/ack", NewCheckpointACKHandler(cliCtx)).Methods("POST")
-	r.HandleFunc("/checkpoint/no-ack", NewCheckpointNoACKHandler(cliCtx)).Methods("POST")
+	r.HandleFunc("/checkpoint/ack", NewCheckpointACKHandler(cdc, cliCtx)).Methods("POST")
+	r.HandleFunc("/checkpoint/no-ack", NewCheckpointNoACKHandler(cdc, cliCtx)).Methods("POST")
 }
 
-// HeaderBlock struct for incoming checkpoint
-type HeaderBlock struct {
-	Proposer   common.Address `json:"proposer"`
-	RootHash   common.Hash    `json:"rootHash"`
-	StartBlock uint64         `json:"startBlock"`
-	EndBlock   uint64         `json:"endBlock"`
-}
+type (
+	// HeaderBlock struct for incoming checkpoint
+	HeaderBlock struct {
+		Proposer   common.Address `json:"proposer"`
+		RootHash   common.Hash    `json:"rootHash"`
+		StartBlock uint64         `json:"startBlock"`
+		EndBlock   uint64         `json:"endBlock"`
+	}
+	// HeaderACK struct for sending ACK for a new headers
+	// by providing the header index assigned my mainchain contract
+	HeaderACK struct {
+		HeaderBlock uint64 `json:"headerBlock"`
+	}
+)
 
-func newCheckpointHandler(cliCtx context.CLIContext) http.HandlerFunc {
+func newCheckpointHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var m HeaderBlock
 
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		err = json.Unmarshal(body, &m)
 		if err != nil {
 			RestLogger.Error("Error unmarshalling json epoch checkpoint", "error", err)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
@@ -62,40 +68,33 @@ func newCheckpointHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {
 			RestLogger.Error("Unable to create txBytes", "proposer", m.Proposer.Hex(), "endBlock", m.EndBlock, "startBlock", m.StartBlock, "rootHash", m.RootHash.Hex())
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		resp, err := helper.SendTendermintRequest(cliCtx, txBytes, helper.BroadcastAsync)
 		if err != nil {
 			RestLogger.Error("Error while sending request to Tendermint", "error", err)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		result, err := json.Marshal(&resp)
 		if err != nil {
 			RestLogger.Error("Error while marshalling tendermint response", "error", err)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		w.Write(result)
+		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
 	}
 }
 
-type HeaderACK struct {
-	HeaderBlock uint64 `json:"headerBlock"`
-}
-
-func NewCheckpointACKHandler(cliCtx context.CLIContext) http.HandlerFunc {
+func NewCheckpointACKHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 			return
 		}
 
@@ -103,8 +102,8 @@ func NewCheckpointACKHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		err = json.Unmarshal(body, &m)
 		if err != nil {
 			RestLogger.Error("Error unmarshalling Header ACK", "error", err)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 			return
 		}
 
@@ -113,31 +112,31 @@ func NewCheckpointACKHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {
 			RestLogger.Error("Unable to create txBytes", "error", err, "headerBlock", m.HeaderBlock)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 			return
 		}
 
 		resp, err := helper.SendTendermintRequest(cliCtx, txBytes, helper.BroadcastAsync)
 		if err != nil {
 			RestLogger.Error("Error while sending request to Tendermint", "error", err)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 			return
 		}
 
 		result, err := json.Marshal(&resp)
 		if err != nil {
 			RestLogger.Error("Error while marshalling tendermint response", "error", err)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 			return
 		}
-		w.Write(result)
+		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
 	}
 }
 
-func NewCheckpointNoACKHandler(cliCtx context.CLIContext) http.HandlerFunc {
+func NewCheckpointNoACKHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// create new msg checkpoint ack
 		msg := checkpoint.NewMsgCheckpointNoAck(uint64(time.Now().Unix()))
@@ -145,26 +144,26 @@ func NewCheckpointNoACKHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {
 			RestLogger.Error("Unable to create txBytes", "error", err, "timestamp", time.Now().Unix())
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 			return
 		}
 
 		resp, err := helper.SendTendermintRequest(cliCtx, txBytes, helper.BroadcastAsync)
 		if err != nil {
 			RestLogger.Error("Error while sending request to Tendermint", "error", err)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 			return
 		}
 
 		result, err := json.Marshal(&resp)
 		if err != nil {
 			RestLogger.Error("Error while marshalling tendermint response", "error", err)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 			return
 		}
-		w.Write(result)
+		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
 	}
 }

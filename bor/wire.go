@@ -1,7 +1,5 @@
 package bor
 
-package staking
-
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
 

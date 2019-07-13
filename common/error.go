@@ -38,6 +38,8 @@ const (
 	CodeSignerUpdateError  CodeType = 2508
 	CodeNoConn             CodeType = 2509
 	CodeWaitFrConfirmation CodeType = 2510
+
+	CodeSpanNotCountinuous CodeType = 3501
 )
 
 // -------- Invalid msg
@@ -144,6 +146,12 @@ func ErrValidatorNotDeactivated(codespace sdk.CodespaceType) sdk.Error {
 
 func ErrValidatorAlreadyJoined(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeValAlreadyJoined, "Validator already joined")
+}
+
+// Bor Errors --------------------------------
+
+func ErrSpanNotInCountinuity(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeSpanNotCountinuous, "Span not countinuous")
 }
 
 func codeToDefaultMsg(code CodeType) string {

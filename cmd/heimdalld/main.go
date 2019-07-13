@@ -32,11 +32,12 @@ import (
 	hmserver "github.com/maticnetwork/heimdall/server"
 	"github.com/tendermint/tendermint/crypto"
 
+	"strings"
+
 	"github.com/cosmos/cosmos-sdk/store"
 	stakingcli "github.com/maticnetwork/heimdall/staking/cli"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
-	"strings"
 )
 
 var (
@@ -328,12 +329,12 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 				}
 
 				heimdallConf := helper.Configuration{
-					MainRPCUrl:          helper.MainRPCUrl,
-					MaticRPCUrl:         helper.MaticRPCUrl,
-					StakeManagerAddress: (ethCommon.Address{}).Hex(),
-					RootchainAddress:    (ethCommon.Address{}).Hex(),
-					ChildBlockInterval:  helper.DefaultChildBlockInterval,
-
+					MainRPCUrl:               helper.MainRPCUrl,
+					MaticRPCUrl:              helper.MaticRPCUrl,
+					StakeManagerAddress:      (ethCommon.Address{}).Hex(),
+					RootchainAddress:         (ethCommon.Address{}).Hex(),
+					ChildBlockInterval:       helper.DefaultChildBlockInterval,
+					BorChainID:               "0x00",
 					CheckpointerPollInterval: helper.DefaultCheckpointerPollInterval,
 					SyncerPollInterval:       helper.DefaultSyncerPollInterval,
 					NoACKPollInterval:        helper.DefaultNoACKPollInterval,

@@ -24,6 +24,7 @@ var (
 	SpanDurationKey       = []byte{0x24} // Key to store span duration for Bor
 	LastSpanStartBlockKey = []byte{0x25} // Key to store last span start block
 	SpanPrefixKey         = []byte{0x26} // prefix key to store span
+	SpanCacheKey          = []byte{0x27} // key to store Cache for span
 )
 
 //
@@ -42,13 +43,14 @@ type Keeper struct {
 }
 
 // NewKeeper create new keeper
-func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, stakingKey sdk.StoreKey, checkpointKey sdk.StoreKey, codespace sdk.CodespaceType) Keeper {
+func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, stakingKey sdk.StoreKey, checkpointKey sdk.StoreKey, borKey sdk.StoreKey, codespace sdk.CodespaceType) Keeper {
 	keeper := Keeper{
 		MasterKey:     key,
 		cdc:           cdc,
 		Codespace:     codespace,
 		CheckpointKey: checkpointKey,
 		StakingKey:    stakingKey,
+		BorKey:        borKey,
 	}
 	return keeper
 }

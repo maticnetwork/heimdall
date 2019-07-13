@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 
+	"github.com/maticnetwork/heimdall/bor"
+
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -18,6 +20,7 @@ import (
 
 	"github.com/maticnetwork/heimdall/auth"
 	"github.com/maticnetwork/heimdall/checkpoint"
+
 	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
@@ -40,7 +43,9 @@ type HeimdallApp struct {
 	keyMain       *sdk.KVStoreKey
 	keyCheckpoint *sdk.KVStoreKey
 	keyStake      *sdk.KVStoreKey
-	keyMaster     *sdk.KVStoreKey
+	keyBor        *sdk.KVStoreKey
+
+	keyMaster *sdk.KVStoreKey
 
 	keyStaker *sdk.KVStoreKey
 	// manage getting and setting accounts
@@ -67,10 +72,11 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		keyMain:       sdk.NewKVStoreKey("main"),
 		keyCheckpoint: sdk.NewKVStoreKey("checkpoint"),
 		keyStaker:     sdk.NewKVStoreKey("staker"),
+		keyBor:        sdk.NewKVStoreKey("bor"),
 		keyMaster:     sdk.NewKVStoreKey("master"),
 	}
 
-	app.masterKeeper = common.NewKeeper(app.cdc, app.keyMaster, app.keyStaker, app.keyCheckpoint, common.DefaultCodespace)
+	app.masterKeeper = common.NewKeeper(app.cdc, app.keyMaster, app.keyStaker, app.keyCheckpoint, app.keyBor, common.DefaultCodespace)
 
 	contractCallerObj, err := helper.NewContractCaller()
 	if err != nil {
@@ -81,6 +87,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	// register message routes
 	app.Router().AddRoute("checkpoint", checkpoint.NewHandler(app.masterKeeper, &app.caller))
 	app.Router().AddRoute("staking", staking.NewHandler(app.masterKeeper, &app.caller))
+	app.Router().AddRoute("bor", bor.NewHandler(app.masterKeeper))
 	// perform initialization logic
 	app.SetInitChainer(app.initChainer)
 	app.SetBeginBlocker(app.beginBlocker)
@@ -108,6 +115,7 @@ func MakeCodec() *codec.Codec {
 	// custom types
 	checkpoint.RegisterWire(cdc)
 	staking.RegisterWire(cdc)
+	bor.RegisterWire(cdc)
 
 	cdc.Seal()
 	return cdc
@@ -120,7 +128,7 @@ func MakePulp() *hmTypes.Pulp {
 	// register custom type
 	checkpoint.RegisterPulp(pulp)
 	staking.RegisterPulp(pulp)
-
+	bor.RegisterPulp(pulp)
 	return pulp
 }
 
@@ -199,10 +207,18 @@ func (app *HeimdallApp) endBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 			// check if checkpoint is present in cache
 			if app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointCacheKey) {
 				logger.Info("Checkpoint processed in block", "CheckpointProcessed", app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointCacheKey))
+				// collect and update sigs in span
+
 				// Send Checkpoint to Rootchain
 				PrepareAndSendCheckpoint(ctx, app.masterKeeper, app.caller)
 				// clear Checkpoint cache
 				app.masterKeeper.FlushCheckpointCache(ctx)
+			}
+
+			if cache := app.masterKeeper.GetSpanCache(ctx); cache {
+				logger.Info("Propose Span processed in block", "ProposeSpanProcesses", cache)
+				// TODO Send proof to bor chain
+				app.masterKeeper.AddSigs(ctx, ctx.BlockHeader().Votes)
 			}
 		}
 	}

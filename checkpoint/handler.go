@@ -12,6 +12,7 @@ import (
 	tmlog "github.com/tendermint/tendermint/libs/log"
 )
 
+// NewHandler creates new handler for handling messages for checkpoint module
 func NewHandler(k common.Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		common.InitCheckpointLogger(&ctx)
@@ -29,7 +30,7 @@ func NewHandler(k common.Keeper, contractCaller helper.IContractCaller) sdk.Hand
 	}
 }
 
-// Validates checkpoint transaction
+// HandleMsgCheckpoint Validates checkpoint transaction
 func HandleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper, contractCaller helper.IContractCaller, logger tmlog.Logger) sdk.Result {
 	logger.Debug("Validating Checkpoint Data", "TxData", msg)
 	if msg.TimeStamp == 0 || msg.TimeStamp > uint64(time.Now().Unix()) {
@@ -47,9 +48,7 @@ func HandleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper, co
 			checkpointTime := time.Unix(int64(checkpointBuffer.TimeStamp), 0)
 			expiryTime := checkpointTime.Add(helper.GetConfig().CheckpointBufferTime)
 			diff := expiryTime.Sub(time.Now()).Seconds()
-
 			logger.Error("Checkpoint already exits in buffer", "Checkpoint", checkpointBuffer.String(), "Expires", expiryTime)
-
 			return common.ErrNoACK(k.Codespace, diff).Result()
 		}
 	}
@@ -123,7 +122,7 @@ func HandleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper, co
 	return sdk.Result{}
 }
 
-// Validates if checkpoint submitted on chain is valid
+// HandleMsgCheckpointAck Validates if checkpoint submitted on chain is valid
 func HandleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keeper, contractCaller helper.IContractCaller, logger tmlog.Logger) sdk.Result {
 	logger.Debug("Validating Checkpoint ACK", "Tx", msg)
 

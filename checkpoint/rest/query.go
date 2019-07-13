@@ -11,11 +11,11 @@ import (
 	ethcmn "github.com/ethereum/go-ethereum/common"
 	"github.com/gorilla/mux"
 
+	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
-	"github.com/cosmos/cosmos-sdk/types/rest"
 )
 
 func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
@@ -33,11 +33,15 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Co
 		"/checkpoint/headers/{headerBlockIndex}",
 		checkpointHeaderHandlerFn(cdc, cliCtx),
 	).Methods("GET")
-	r.HandleFunc("/checkpoint/latest-checkpoint", latestCheckpointHandlerFunc(cdc, cliCtx)).Methods("GET")
-	r.HandleFunc("/checkpoint/{start}/{end}", checkpointHandlerFn(cdc, cliCtx)).Methods("GET")
+	r.HandleFunc("/checkpoint/latest-checkpoint",
+		latestCheckpointHandlerFunc(cdc, cliCtx)).Methods("GET")
+	r.HandleFunc("/checkpoint/{start}/{end}",
+		checkpointHandlerFn(cdc, cliCtx)).Methods("GET")
 
-	r.HandleFunc("/checkpoint/last-no-ack", noackHandlerFn(cdc, cliCtx)).Methods("GET")
-	r.HandleFunc("/overview", overviewHandlerFunc(cdc, cliCtx)).Methods("GET")
+	r.HandleFunc("/checkpoint/last-no-ack",
+		noackHandlerFn(cdc, cliCtx)).Methods("GET")
+	r.HandleFunc("/overview",
+		overviewHandlerFunc(cdc, cliCtx)).Methods("GET")
 	helper.InitHeimdallConfig("")
 }
 
@@ -73,8 +77,7 @@ func checkpointBufferHandlerFn(
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		rest.PostProcessResponse(w,cdc,result,cliCtx.Indent)
-
+		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
 	}
 }
 
@@ -89,13 +92,11 @@ func checkpointCountHandlerFn(
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-
 		// The query will return empty if there is no data
 		if len(res) == 0 {
 			rest.WriteErrorResponse(w, http.StatusNoContent, err.Error())
 			return
 		}
-
 		ackCount, err := strconv.ParseInt(string(res), 10, 64)
 		if err != nil {
 			RestLogger.Error("Unable to parse int", "Response", res, "Error", err)
@@ -108,8 +109,7 @@ func checkpointCountHandlerFn(
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-
-		rest.PostProcessResponse(w,cdc,result,cliCtx.Indent)
+		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
 	}
 }
 
@@ -130,21 +130,19 @@ func checkpointHeaderHandlerFn(
 			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
 			return
 		}
-
 		var _checkpoint types.CheckpointBlockHeader
 		err = cdc.UnmarshalBinaryBare(res, &_checkpoint)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-
 		result, err := json.Marshal(&_checkpoint)
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		rest.PostProcessResponse(w,cdc,result,cliCtx.Indent)
+		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
 	}
 }
 
@@ -177,8 +175,8 @@ func checkpointHandlerFn(
 
 		_validatorSet, err := cliCtx.QueryStore(common.CurrentValidatorSetKey, "staker")
 		if err == nil {
-			err:=cdc.UnmarshalBinaryBare(_validatorSet, &validatorSet)
-			if err!=nil{
+			err := cdc.UnmarshalBinaryBare(_validatorSet, &validatorSet)
+			if err != nil {
 				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 				RestLogger.Error("Unable to get validator set to form proposer", "Error", err)
 				return
@@ -198,7 +196,7 @@ func checkpointHandlerFn(
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		rest.PostProcessResponse(w,cdc,result,cliCtx.Indent)
+		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
 	}
 }
 
@@ -231,17 +229,17 @@ func noackHandlerFn(
 			rest.WriteErrorResponse(w, http.StatusNoContent, err.Error())
 			return
 		}
-		rest.PostProcessResponse(w,cdc,result,cliCtx.Indent)
+		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
 	}
 }
 
 type stateDump struct {
-	ACKCount         int64                       `json:AckCount`
-	CheckpointBuffer types.CheckpointBlockHeader `json:HeaderBlock`
-	ValidatorCount   int                         `json:ValidatorCount`
-	ValidatorSet     types.ValidatorSet          `json:ValidatorSet`
-	LastNoACK        time.Time                   `json:LastNoACKTime`
-	Headers 		[]types.CheckpointBlockHeader`json:"headers"`
+	ACKCount         int64                         `json:AckCount`
+	CheckpointBuffer types.CheckpointBlockHeader   `json:HeaderBlock`
+	ValidatorCount   int                           `json:ValidatorCount`
+	ValidatorSet     types.ValidatorSet            `json:ValidatorSet`
+	LastNoACK        time.Time                     `json:LastNoACKTime`
+	Headers          []types.CheckpointBlockHeader `json:"headers"`
 }
 
 // get all state-dump of heimdall
@@ -301,12 +299,12 @@ func overviewHandlerFunc(
 		if err != nil {
 			RestLogger.Error("Unable to query subspace for headers", "Error", err)
 		}
-		for _,kv_pair := range storedHeaders {
+		for _, kv_pair := range storedHeaders {
 			var checkpointHeader types.CheckpointBlockHeader
-			if cdc.UnmarshalBinaryBare(kv_pair.Value,&checkpointHeader); err!=nil{
+			if cdc.UnmarshalBinaryBare(kv_pair.Value, &checkpointHeader); err != nil {
 				RestLogger.Error("Unable to unmarshall header", "Error", err, "Value", kv_pair.Value)
 			}
-			headers=append(headers, checkpointHeader)
+			headers = append(headers, checkpointHeader)
 		}
 
 		state := stateDump{
@@ -315,7 +313,7 @@ func overviewHandlerFunc(
 			ValidatorCount:   validatorCount,
 			ValidatorSet:     validatorSet,
 			LastNoACK:        time.Unix(lastNoACKTime, 0),
-			Headers:headers,
+			Headers:          headers,
 		}
 		result, err := json.Marshal(map[string]interface{}{"result": state})
 		if err != nil {
@@ -323,7 +321,7 @@ func overviewHandlerFunc(
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		rest.PostProcessResponse(w,cdc,result,cliCtx.Indent)
+		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
 	}
 }
 
@@ -371,6 +369,6 @@ func latestCheckpointHandlerFunc(
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		rest.PostProcessResponse(w,cdc,result,cliCtx.Indent)
+		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
 	}
 }

@@ -7,6 +7,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gorilla/mux"
 	"github.com/maticnetwork/heimdall/helper"
@@ -17,34 +18,44 @@ import (
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
 	r.HandleFunc(
 		"/staking/validators",
-		newValidatorJoinHandler(cliCtx),
+		newValidatorJoinHandler(cdc, cliCtx),
 	).Methods("POST")
-	r.HandleFunc("/staking/validators", newValidatorUpdateHandler(cliCtx)).Methods("PUT")
-	r.HandleFunc("/staking/validators", newValidatorExitHandler(cliCtx)).Methods("DELETE")
+	r.HandleFunc("/staking/validators", newValidatorUpdateHandler(cdc, cliCtx)).Methods("PUT")
+	r.HandleFunc("/staking/validators", newValidatorExitHandler(cdc, cliCtx)).Methods("DELETE")
 }
 
-type addValidator struct {
-	ID           uint64        `json:"ID"`
-	SignerPubKey hmType.PubKey `json:"pubKey"`
-	TxHash       string        `json:"tx_hash"`
-}
+type (
+	removeValidator struct {
+		ID     uint64 `json:"ID"`
+		TxHash string `json:"tx_hash"`
+	}
+	addValidator struct {
+		ID           uint64        `json:"ID"`
+		SignerPubKey hmType.PubKey `json:"pubKey"`
+		TxHash       string        `json:"tx_hash"`
+	}
+	updateValidator struct {
+		ID              uint64        `json:"ID"`
+		NewSignerPubKey hmType.PubKey `json:"pubKey"`
+		NewAmount       json.Number   `json:"amount"`
+		TxHash          string        `json:"tx_hash"`
+	}
+)
 
-func newValidatorJoinHandler(cliCtx context.CLIContext) http.HandlerFunc {
+func newValidatorJoinHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var m addValidator
 
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		err = json.Unmarshal(body, &m)
 		if err != nil {
 			RestLogger.Error("Error unmarshalling json while adding validator", "error", err)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
@@ -54,52 +65,45 @@ func newValidatorJoinHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {
 			RestLogger.Error("Unable to create txBytes", "ValidatorID", m.ID, "ValidatorPubKey", m.SignerPubKey)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		resp, err := helper.SendTendermintRequest(cliCtx, txBytes, helper.BroadcastAsync)
 		if err != nil {
 			RestLogger.Error("Error while sending request to Tendermint", "error", err)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 			return
 		}
 
 		result, err := json.Marshal(&resp)
 		if err != nil {
 			RestLogger.Error("Error while marshalling tendermint response", "error", err)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 			return
 		}
-
-		w.Write(result)
+		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
 	}
 }
 
-type removeValidator struct {
-	ID     uint64 `json:"ID"`
-	TxHash string `json:"tx_hash"`
-}
-
-func newValidatorExitHandler(cliCtx context.CLIContext) http.HandlerFunc {
+func newValidatorExitHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var m removeValidator
 
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 			return
 		}
 
 		err = json.Unmarshal(body, &m)
 		if err != nil {
 			RestLogger.Error("Error unmarshalling json epoch checkpoint", "error", err)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 			return
 		}
 
@@ -108,53 +112,46 @@ func newValidatorExitHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {
 			RestLogger.Error("Unable to create txBytes", "validatorID", m.ID)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 			return
 		}
 
 		resp, err := helper.SendTendermintRequest(cliCtx, txBytes, helper.BroadcastAsync)
 		if err != nil {
 			RestLogger.Error("Error while sending request to Tendermint", "error", err)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 			return
 		}
 
 		result, err := json.Marshal(&resp)
 		if err != nil {
 			RestLogger.Error("Error while marshalling tendermint response", "error", err)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 			return
 		}
-		w.Write(result)
+		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
 	}
 }
 
-type updateValidator struct {
-	ID              uint64        `json:"ID"`
-	NewSignerPubKey hmType.PubKey `json:"pubKey"`
-	NewAmount       json.Number   `json:"amount"`
-	TxHash          string        `json:"tx_hash"`
-}
-
-func newValidatorUpdateHandler(cliCtx context.CLIContext) http.HandlerFunc {
+func newValidatorUpdateHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var m updateValidator
 
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 			return
 		}
 
 		err = json.Unmarshal(body, &m)
 		if err != nil {
 			RestLogger.Error("Error unmarshalling json epoch checkpoint", "error", err)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 			return
 		}
 
@@ -164,26 +161,26 @@ func newValidatorUpdateHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {
 			RestLogger.Error("Unable to create txBytes", "validatorID", m.ID, "newSignerPubKey", m.NewSignerPubKey)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 			return
 		}
 
 		resp, err := helper.SendTendermintRequest(cliCtx, txBytes, helper.BroadcastAsync)
 		if err != nil {
 			RestLogger.Error("Error while sending request to Tendermint", "error", err, "validatorID", m.ID, "newSignerPubKey", m.NewSignerPubKey, "txBytes", txBytes)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 			return
 		}
 
 		result, err := json.Marshal(&resp)
 		if err != nil {
 			RestLogger.Error("Error while marshalling tendermint response", "error", err)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 			return
 		}
-		w.Write(result)
+		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
 	}
 }

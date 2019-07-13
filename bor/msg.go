@@ -1,15 +1,16 @@
 package bor
 
 import (
-	"time"
-
 	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/maticnetwork/heimdall/common"
+	"time"
 )
 
 var cdc = codec.New()
 
-// CheckpointRoute represents rount in app
-const BorProposeSpanRoute = "proposeSpan"
+// BorRoute represents route in app
+const BorRoute = "bor"
 
 //
 // Propose Span Msg
@@ -34,18 +35,17 @@ func NewMsgProposeSpan(startBlock uint64, timestamp uint64) MsgProposeSpan {
 
 // Type returns message type
 func (msg MsgProposeSpan) Type() string {
-	return "checkpoint"
+	return "ProposeSpan"
 }
 
 // Route returns route for message
 func (msg MsgProposeSpan) Route() string {
-	return BorProposeSpanRoute
+	return BorRoute
 }
 
 // GetSigners returns address of the signer
 func (msg MsgProposeSpan) GetSigners() []sdk.AccAddress {
 	addrs := make([]sdk.AccAddress, 1)
-	addrs[0] = sdk.AccAddress(msg.Proposer.Bytes())
 	return addrs
 }
 
@@ -61,7 +61,7 @@ func (msg MsgProposeSpan) GetSignBytes() []byte {
 // ValidateBasic validates the message and returns error
 func (msg MsgProposeSpan) ValidateBasic() sdk.Error {
 	if msg.TimeStamp == 0 || msg.TimeStamp > uint64(time.Now().Unix()) {
-		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid timestamp %d", msg.TimeStamp)
+		return common.ErrInvalidMsg(common.DefaultCodespace, "Invalid timestamp %d", msg.TimeStamp)
 	}
 	return nil
 }
