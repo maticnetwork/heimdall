@@ -44,7 +44,7 @@ type GenesisState struct {
 	BufferedCheckpoint hmTypes.CheckpointBlockHeader   `json:"buffered_checkpoint"`
 	CheckpointCache    bool                            `json:"checkpoint_cache"`
 	CheckpointACKCache bool                            `json:"ack_cache"`
-	LastNoACK          uint64                           `json:"last_no_ack"`
+	LastNoACK          uint64                          `json:"last_no_ack"`
 	AckCount           uint64                          `json:"ack_count"`
 	GenValidators      []GenesisValidator              `json:"gen_validators"`
 	Validators         []hmTypes.Validator             `json:"validators"`
@@ -52,4 +52,6 @@ type GenesisState struct {
 	GenTxs             []json.RawMessage               `json:"gentxs"`
 	Accounts           []GenesisAccount                `json:"accounts"`
 	Headers            []hmTypes.CheckpointBlockHeader `json:"headers"`
+	SpanDuration       uint64                          `json:"spanDuration"` // Bor chain span duration ie number of blocks for which val set is frozen on heimdall
+
 }

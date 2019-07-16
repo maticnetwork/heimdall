@@ -8,7 +8,7 @@ import (
 
 const (
 	gasWantedPerTx sdk.Gas = 900000
-	gasUsedPerTx   sdk.Gas = gasWantedPerTx - 20000 // TODO use proposer amount per tx
+	gasUsedPerTx   sdk.Gas = gasWantedPerTx - 60000 // TODO use proposer amount per tx
 )
 
 // NewAnteHandler returns an AnteHandler that checks and increments sequence
@@ -41,7 +41,7 @@ func NewAnteHandler() sdk.AnteHandler {
 		newCtx = getGasMeterContext(simulate, ctx)
 		newCtx.GasMeter().ConsumeGas(gasUsedPerTx, "fee")
 
-		return newCtx, sdk.Result{GasWanted: gasWantedPerTx}, false
+		return newCtx, sdk.Result{GasWanted: gasWantedPerTx, GasUsed: gasUsedPerTx}, false
 	}
 }
 

@@ -1,10 +1,11 @@
 package bor
 
 import (
+	"time"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/common"
-	"time"
 )
 
 var cdc = codec.New()
@@ -20,7 +21,6 @@ var _ sdk.Msg = &MsgProposeSpan{}
 
 type MsgProposeSpan struct {
 	StartBlock uint64 `json:"startBlock"`
-
 	// Timestamp only exits to allow submission of multiple transactions without bringing in nonce
 	TimeStamp uint64 `json:"timestamp"`
 }

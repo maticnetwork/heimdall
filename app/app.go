@@ -95,7 +95,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.SetAnteHandler(auth.NewAnteHandler())
 
 	// mount the multistore and load the latest state
-	app.MountStores(app.keyMain, app.keyCheckpoint, app.keyStaker)
+	app.MountStores(app.keyMain, app.keyCheckpoint, app.keyStaker, app.keyBor)
 	err = app.LoadLatestVersion(app.keyMain)
 	if err != nil {
 		cmn.Exit(err.Error())
@@ -272,6 +272,9 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 	if isGenesis {
 		app.masterKeeper.IncreamentAccum(ctx, 1)
 	}
+
+	// set span duration from genesis
+	app.masterKeeper.SetSpanDuration(ctx, genesisState.SpanDuration)
 
 	// Set initial ack count
 	app.masterKeeper.UpdateACKCountWithValue(ctx, genesisState.AckCount)

@@ -22,19 +22,23 @@ func NewHandler(k common.Keeper) sdk.Handler {
 // HandleMsgProposeSpan handles proposeSpan msg
 func HandleMsgProposeSpan(ctx sdk.Context, msg MsgProposeSpan, k common.Keeper, logger tmlog.Logger) sdk.Result {
 	logger.Debug("Proposing span", "TxData", msg)
+	common.InitBorLogger(&ctx)
 	// check if last span is up or if greater diff than threshold is found between validator set
 	lastSpan, err := k.GetLastSpan(ctx)
 	if err != nil {
+		common.BorLogger.Error("Unable to fetch last span", "Error", err)
 		return common.ErrSpanNotInCountinuity(k.Codespace).Result()
 	}
 	// check if lastStart + 1 =  newStart
 	if lastSpan.StartBlock+1 != msg.StartBlock {
+		common.BorLogger.Error("Blocks not in countinuity ", "LastStartBlock", lastSpan.StartBlock, "MsgStartBlock", msg.StartBlock)
 		return common.ErrSpanNotInCountinuity(k.Codespace).Result()
 	}
 
 	// freeze for new span
 	err = k.FreezeSet(ctx, msg.StartBlock)
 	if err != nil {
+		common.BorLogger.Error("Unable to freeze validator set for span", "Error", err)
 		return common.ErrSpanNotInCountinuity(k.Codespace).Result()
 	}
 	// send tags

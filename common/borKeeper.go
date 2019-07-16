@@ -30,6 +30,8 @@ func (k *Keeper) AddNewSpan(ctx sdk.Context, span types.Span) error {
 		return err
 	}
 	store.Set(GetSpanKey(span.StartBlock), out)
+	// update last span
+	k.UpdateLastSpan(ctx, span.StartBlock)
 	// set cache for span -- which is to be cleared in end block
 	k.SetSpanCache(ctx)
 	return nil
@@ -64,8 +66,12 @@ func (k *Keeper) AddSigs(ctx sdk.Context, tmVotes []byte) error {
 func (k *Keeper) GetSpan(ctx sdk.Context, startBlock uint64) (span types.Span, err error) {
 	store := ctx.KVStore(k.BorKey)
 	spanKey := GetSpanKey(startBlock)
-	if !store.Has(spanKey) {
+
+	// If we are starting from 0 there will be no spanKey present
+	if !store.Has(spanKey) && startBlock != 0 {
 		return span, errors.New("span not found for start block")
+	} else if !store.Has(spanKey) && startBlock == 0 {
+		return span, nil
 	}
 	if err := k.cdc.UnmarshalBinaryBare(store.Get(spanKey), &span); err != nil {
 		return span, err
@@ -107,8 +113,8 @@ func (k *Keeper) SelectNextProducers(ctx sdk.Context) (vals []types.Validator) {
 	return currVals
 }
 
-// updateLastSpan updates the last span start block
-func (k *Keeper) updateLastSpan(ctx sdk.Context, startBlock uint64) {
+// UpdateLastSpan updates the last span start block
+func (k *Keeper) UpdateLastSpan(ctx sdk.Context, startBlock uint64) {
 	store := ctx.KVStore(k.BorKey)
 	store.Set(LastSpanStartBlockKey, []byte(strconv.FormatUint(startBlock, 10)))
 }
@@ -125,8 +131,14 @@ func (k *Keeper) GetSpanDuration(ctx sdk.Context) (duration uint64, err error) {
 			return uint64(duration), nil
 		}
 	} else {
-		return duration, errors.New("Duration not found")
+		return duration, New("duration not found")
 	}
+}
+
+// SetSpanDuration sets span duration
+func (k *Keeper) SetSpanDuration(ctx sdk.Context, duration uint64) {
+	store := ctx.KVStore(k.BorKey)
+	store.Set(SpanDurationKey, []byte(strconv.FormatUint(duration, 10)))
 }
 
 // SetSpanCache sets span cache

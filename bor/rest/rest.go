@@ -9,14 +9,14 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 )
 
-// RestLogger for staking module logger
+// RestLogger for bor module logger
 var RestLogger tmLog.Logger
 
 func init() {
 	RestLogger = helper.Logger.With("module", "bor/rest")
 }
 
-// RegisterRoutes registers staking-related REST handlers to a router
+// RegisterRoutes registers  bor-related REST handlers to a router
 func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
 	registerQueryRoutes(cliCtx, r, cdc)
 	registerTxRoutes(cliCtx, r, cdc)

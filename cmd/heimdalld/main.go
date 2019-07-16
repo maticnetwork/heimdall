@@ -361,6 +361,7 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 			}
 			appState := &app.GenesisState{
 				GenValidators: validators,
+				SpanDuration:  helper.DefaultSpanDuration,
 			}
 
 			appStateJSON, err := json.Marshal(appState)

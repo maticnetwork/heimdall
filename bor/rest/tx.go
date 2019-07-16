@@ -6,12 +6,13 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/cosmos-sdk/types/rest"
+	"github.com/maticnetwork/heimdall/bor"
+
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/gorilla/mux"
 
-	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/helper"
 )
 
@@ -40,22 +41,19 @@ func postProposeSpanHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.
 
 		err = json.Unmarshal(body, &m)
 		if err != nil {
-			RestLogger.Error("Error unmarshalling json epoch checkpoint", "error", err)
+			RestLogger.Error("Error unmarshalling propose span ", "error", err)
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		msg := checkpoint.NewMsgCheckpointBlock(
-			m.Proposer,
+		msg := bor.NewMsgProposeSpan(
 			m.StartBlock,
-			m.EndBlock,
-			m.RootHash,
 			uint64(time.Now().Unix()),
 		)
 
 		txBytes, err := helper.CreateTxBytes(msg)
 		if err != nil {
-			RestLogger.Error("Unable to create txBytes", "proposer", m.Proposer.Hex(), "endBlock", m.EndBlock, "startBlock", m.StartBlock, "rootHash", m.RootHash.Hex())
+			RestLogger.Error("Unable to create txBytes", "startBlock", m.StartBlock)
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}

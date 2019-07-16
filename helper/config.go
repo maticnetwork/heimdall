@@ -53,6 +53,7 @@ const (
 	MaxCheckpointLength             = 1024  // max blocks in one checkpoint
 	DefaultChildBlockInterval       = 10000 // difference between 2 indexes of header blocks
 	ConfirmationBlocks              = 6
+	DefaultSpanDuration             = 10 // number of blocks for which span is frozen on heimdall
 )
 
 var (
@@ -76,7 +77,9 @@ type Configuration struct {
 	StakeManagerAddress string `json:"stakeManagerAddress"` // Stake manager address on main chain
 	RootchainAddress    string `json:"rootchainAddress"`    // Rootchain contract address on main chain
 	ChildBlockInterval  uint64 `json:"childBlockInterval"`  // Difference between header index of 2 child blocks submitted on main chain
-	BorChainID          string `json:"BorChainID"`          // Bor Chain ID
+
+	SpanDuration uint64 `json:"spanDuration"` // Bor chain span duration ie number of blocks for which val set is frozen on heimdall
+	BorChainID   string `json:"BorChainID"`   // Bor Chain ID
 	// config related to bridge
 	CheckpointerPollInterval int           `json:"checkpointerPollInterval"` // Poll interval for checkpointer service to send new checkpoints or missing ACK
 	SyncerPollInterval       int           `json:"syncerPollInterval"`       // Poll interval for syncher service to sync for changes on main chain
