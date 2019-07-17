@@ -6,6 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/common"
+	"github.com/maticnetwork/heimdall/types"
 )
 
 var cdc = codec.New()
@@ -20,16 +21,24 @@ const BorRoute = "bor"
 var _ sdk.Msg = &MsgProposeSpan{}
 
 type MsgProposeSpan struct {
-	StartBlock uint64 `json:"startBlock"`
+	StartBlock        uint64            `json:"startBlock"`
+	EndBlock          uint64            `json:"endBlock"`
+	Validators        []types.Validator `json:"validatorSet"`
+	SelectedProducers []types.Validator `json:"validator"`
+	ChainID           string            `json:"chainID"`
 	// Timestamp only exits to allow submission of multiple transactions without bringing in nonce
 	TimeStamp uint64 `json:"timestamp"`
 }
 
 // NewMsgProposeSpan creates new propose span message
-func NewMsgProposeSpan(startBlock uint64, timestamp uint64) MsgProposeSpan {
+func NewMsgProposeSpan(startBlock uint64, endBlock uint64, validators []types.Validator, selectedProducers []types.Validator, chainID string, timestamp uint64) MsgProposeSpan {
 	return MsgProposeSpan{
-		StartBlock: startBlock,
-		TimeStamp:  timestamp,
+		StartBlock:        startBlock,
+		EndBlock:          endBlock,
+		Validators:        validators,
+		SelectedProducers: selectedProducers,
+		ChainID:           chainID,
+		TimeStamp:         timestamp,
 	}
 }
 

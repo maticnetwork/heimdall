@@ -131,7 +131,7 @@ func (k *Keeper) GetSpanDuration(ctx sdk.Context) (duration uint64, err error) {
 			return uint64(duration), nil
 		}
 	} else {
-		return duration, New("duration not found")
+		return duration, errors.New("duration not found")
 	}
 }
 

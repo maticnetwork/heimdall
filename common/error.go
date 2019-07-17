@@ -40,6 +40,10 @@ const (
 	CodeWaitFrConfirmation CodeType = 2510
 
 	CodeSpanNotCountinuous CodeType = 3501
+	CodeUnableToFreezeSet  CodeType = 3502
+	CodeSpanNotFound       CodeType = 3503
+	CodeValSetMisMatch     CodeType = 3504
+	CodeProducerMisMatch   CodeType = 3505
 )
 
 // -------- Invalid msg
@@ -152,6 +156,22 @@ func ErrValidatorAlreadyJoined(codespace sdk.CodespaceType) sdk.Error {
 
 func ErrSpanNotInCountinuity(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeSpanNotCountinuous, "Span not countinuous")
+}
+
+func ErrSpanNotFound(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeSpanNotFound, "Span not found")
+}
+
+func ErrUnableToFreezeValSet(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeUnableToFreezeSet, "Unable to freeze validator set for next span")
+}
+
+func ErrValSetMisMatch(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeValSetMisMatch, "Unable to freeze validator set for next span")
+}
+
+func ErrProducerMisMatch(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeProducerMisMatch, "Unable to freeze validator set for next span")
 }
 
 func codeToDefaultMsg(code CodeType) string {

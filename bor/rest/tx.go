@@ -4,14 +4,17 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/maticnetwork/heimdall/bor"
+	"github.com/maticnetwork/heimdall/common"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/gorilla/mux"
+	"github.com/maticnetwork/heimdall/types"
 
 	"github.com/maticnetwork/heimdall/helper"
 )
@@ -27,6 +30,7 @@ type (
 	// ProposeSpan struct for proposing new span
 	ProposeSpan struct {
 		StartBlock uint64 `json:"startBlock"`
+		ChainID    string `json:"chainID"`
 	}
 )
 
@@ -46,8 +50,68 @@ func postProposeSpanHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.
 			return
 		}
 
+		// fetch duration
+		res, err := cliCtx.QueryStore(common.SpanDurationKey, "bor")
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		if len(res) == 0 {
+			rest.WriteErrorResponse(w, http.StatusNoContent, err.Error())
+			return
+		}
+
+		duration, err := strconv.ParseInt(string(res), 10, 64)
+		if err != nil {
+			RestLogger.Error("Unable to parse int", "response", res, "error", err)
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		res, err = cliCtx.QueryStore(common.ACKCountKey, "checkpoint")
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		// The query will return empty if there is no data
+		if len(res) == 0 {
+			rest.WriteErrorResponse(w, http.StatusNoContent, err.Error())
+			return
+		}
+		ackCount, err := strconv.ParseInt(string(res), 10, 64)
+		if err != nil {
+			RestLogger.Error("Unable to parse int", "Response", res, "Error", err)
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		res, err = cliCtx.QueryStore(common.CurrentValidatorSetKey, "staker")
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		// the query will return empty if there is no data
+		if len(res) == 0 {
+			rest.WriteErrorResponse(w, http.StatusNoContent, err.Error())
+			return
+		}
+		var _validatorSet types.ValidatorSet
+		cdc.UnmarshalBinaryBare(res, &_validatorSet)
+		var validators []types.Validator
+
+		for _, val := range _validatorSet.Validators {
+			if val.IsCurrentValidator(uint64(ackCount)) {
+				// append if validator is current valdiator
+				validators = append(validators, *val)
+			}
+		}
+
 		msg := bor.NewMsgProposeSpan(
 			m.StartBlock,
+			m.StartBlock+uint64(duration),
+			validators,
+			validators,
+			m.ChainID,
 			uint64(time.Now().Unix()),
 		)
 

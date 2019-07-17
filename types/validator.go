@@ -132,6 +132,8 @@ func GetValidatorPower(amount string) uint64 {
 	return result.Uint64()
 }
 
+// --------
+
 // validator ID and helper functions
 type ValidatorID uint64
 

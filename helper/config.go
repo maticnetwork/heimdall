@@ -78,8 +78,8 @@ type Configuration struct {
 	RootchainAddress    string `json:"rootchainAddress"`    // Rootchain contract address on main chain
 	ChildBlockInterval  uint64 `json:"childBlockInterval"`  // Difference between header index of 2 child blocks submitted on main chain
 
-	SpanDuration uint64 `json:"spanDuration"` // Bor chain span duration ie number of blocks for which val set is frozen on heimdall
-	BorChainID   string `json:"BorChainID"`   // Bor Chain ID
+	BorChainID string `json:"BorChainID"` // Bor Chain ID
+
 	// config related to bridge
 	CheckpointerPollInterval int           `json:"checkpointerPollInterval"` // Poll interval for checkpointer service to send new checkpoints or missing ACK
 	SyncerPollInterval       int           `json:"syncerPollInterval"`       // Poll interval for syncher service to sync for changes on main chain
