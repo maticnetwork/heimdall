@@ -21,17 +21,17 @@ const BorRoute = "bor"
 var _ sdk.Msg = &MsgProposeSpan{}
 
 type MsgProposeSpan struct {
-	StartBlock        uint64            `json:"startBlock"`
-	EndBlock          uint64            `json:"endBlock"`
-	Validators        []types.Validator `json:"validatorSet"`
-	SelectedProducers []types.Validator `json:"validator"`
-	ChainID           string            `json:"chainID"`
+	StartBlock        uint64             `json:"startBlock"`
+	EndBlock          uint64             `json:"endBlock"`
+	Validators        []types.MinimalVal `json:"validatorSet"`
+	SelectedProducers []types.MinimalVal `json:"validator"`
+	ChainID           string             `json:"chainID"`
 	// Timestamp only exits to allow submission of multiple transactions without bringing in nonce
 	TimeStamp uint64 `json:"timestamp"`
 }
 
 // NewMsgProposeSpan creates new propose span message
-func NewMsgProposeSpan(startBlock uint64, endBlock uint64, validators []types.Validator, selectedProducers []types.Validator, chainID string, timestamp uint64) MsgProposeSpan {
+func NewMsgProposeSpan(startBlock uint64, endBlock uint64, validators []types.MinimalVal, selectedProducers []types.MinimalVal, chainID string, timestamp uint64) MsgProposeSpan {
 	return MsgProposeSpan{
 		StartBlock:        startBlock,
 		EndBlock:          endBlock,

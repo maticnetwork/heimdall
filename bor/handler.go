@@ -47,6 +47,7 @@ func HandleMsgProposeSpan(ctx sdk.Context, msg MsgProposeSpan, k common.Keeper, 
 	}
 
 	currentValidators := k.GetCurrentValidators(ctx)
+
 	lastSpan, err = k.GetLastSpan(ctx)
 	if err != nil {
 		logger.Error("Unable to fetch last span", "Error", err)
@@ -56,11 +57,11 @@ func HandleMsgProposeSpan(ctx sdk.Context, msg MsgProposeSpan, k common.Keeper, 
 	// TODO add check for duration
 
 	// send tags
-	return sortAndCompare(currentValidators, lastSpan.SelectedProducers, msg, k.Codespace)
-
+	return sortAndCompare(types.ValToMinVal(currentValidators), types.ValToMinVal(lastSpan.SelectedProducers), msg, k.Codespace)
+	// return sdk.Result{}
 }
 
-func sortAndCompare(allVals []types.Validator, selectedVals []types.Validator, msg MsgProposeSpan, codespace sdk.CodespaceType) sdk.Result {
+func sortAndCompare(allVals []types.MinimalVal, selectedVals []types.MinimalVal, msg MsgProposeSpan, codespace sdk.CodespaceType) sdk.Result {
 	if len(allVals) != len(msg.Validators) || len(selectedVals) != len(msg.SelectedProducers) {
 		return common.ErrProducerMisMatch(codespace).Result()
 	}
@@ -85,7 +86,7 @@ func sortAndCompare(allVals []types.Validator, selectedVals []types.Validator, m
 	return sdk.Result{}
 }
 
-func sortByAddress(a []types.Validator) []types.Validator {
+func sortByAddress(a []types.MinimalVal) []types.MinimalVal {
 	sort.Slice(a, func(i, j int) bool {
 		return bytes.Compare(a[i].Signer.Bytes(), a[j].Signer.Bytes()) < 0
 	})

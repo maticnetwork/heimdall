@@ -121,6 +121,15 @@ func (v *Validator) UpdatedAt() *big.Int {
 	return v.LastUpdated
 }
 
+// returns block number of last validator update
+func (v *Validator) MinimalVal() MinimalVal {
+	return MinimalVal{
+		ID:     v.ID,
+		Power:  v.Power,
+		Signer: v.Signer,
+	}
+}
+
 // GetValidatorPower converts amount to power
 func GetValidatorPower(amount string) uint64 {
 	result := big.NewInt(0)
@@ -150,4 +159,22 @@ func (valID ValidatorID) Bytes() []byte {
 // convert validator ID to int
 func (valID ValidatorID) Int() int {
 	return int(valID)
+}
+
+// --------
+
+// MinimalVal is the minimal validator representation
+// Used to send validator information to bor validator contract
+type MinimalVal struct {
+	ID     ValidatorID    `json:"ID"`
+	Power  uint64         `json:"power"` // TODO add 10^-18 here so that we dont overflow easily
+	Signer common.Address `json:"signer"`
+}
+
+// ValToMinVal converts array of validators to minimal validators
+func ValToMinVal(vals []Validator) (minVals []MinimalVal) {
+	for _, val := range vals {
+		minVals = append(minVals, val.MinimalVal())
+	}
+	return
 }

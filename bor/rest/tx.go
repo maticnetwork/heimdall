@@ -2,6 +2,7 @@ package rest
 
 import (
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -57,7 +58,7 @@ func postProposeSpanHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.
 			return
 		}
 		if len(res) == 0 {
-			rest.WriteErrorResponse(w, http.StatusNoContent, err.Error())
+			rest.WriteErrorResponse(w, http.StatusNoContent, errors.New("span duration not found ").Error())
 			return
 		}
 
@@ -97,12 +98,12 @@ func postProposeSpanHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.
 		}
 		var _validatorSet types.ValidatorSet
 		cdc.UnmarshalBinaryBare(res, &_validatorSet)
-		var validators []types.Validator
+		var validators []types.MinimalVal
 
 		for _, val := range _validatorSet.Validators {
 			if val.IsCurrentValidator(uint64(ackCount)) {
 				// append if validator is current valdiator
-				validators = append(validators, *val)
+				validators = append(validators, (*val).MinimalVal())
 			}
 		}
 
