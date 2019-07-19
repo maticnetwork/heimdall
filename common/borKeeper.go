@@ -166,5 +166,3 @@ func (k *Keeper) GetSpanCache(ctx sdk.Context) bool {
 	}
 	return false
 }
-
-// TODO add setter for span duration which could be changed by submitting a transaction

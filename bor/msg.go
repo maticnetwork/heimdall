@@ -23,8 +23,8 @@ var _ sdk.Msg = &MsgProposeSpan{}
 type MsgProposeSpan struct {
 	StartBlock        uint64             `json:"startBlock"`
 	EndBlock          uint64             `json:"endBlock"`
-	Validators        []types.MinimalVal `json:"validatorSet"`
-	SelectedProducers []types.MinimalVal `json:"validator"`
+	Validators        []types.MinimalVal `json:"validators"`
+	SelectedProducers []types.MinimalVal `json:"producers"`
 	ChainID           string             `json:"chainID"`
 	// Timestamp only exits to allow submission of multiple transactions without bringing in nonce
 	TimeStamp uint64 `json:"timestamp"`
