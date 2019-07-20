@@ -43,7 +43,7 @@ const (
 
 	// Variables below to be used while init
 	MainRPCUrl                      = "https://ropsten.infura.io"
-	MaticRPCUrl                     = "https://testnet.matic.network"
+	MaticRPCUrl                     = "https://testnet2.matic.network"
 	NoACKWaitTime                   = time.Second * 1800 // Time ack service waits to clear buffer and elect new proposer (1800 seconds ~ 30 mins)
 	CheckpointBufferTime            = time.Second * 1000 // Time checkpoint is allowed to stay in buffer (1000 seconds ~ 17 mins)
 	DefaultCheckpointerPollInterval = 60 * 1000          // 1 minute in milliseconds
@@ -53,7 +53,8 @@ const (
 	MaxCheckpointLength             = 1024  // max blocks in one checkpoint
 	DefaultChildBlockInterval       = 10000 // difference between 2 indexes of header blocks
 	ConfirmationBlocks              = 6
-	DefaultSpanDuration             = 10 // number of blocks for which span is frozen on heimdall
+	DefaultSpanDuration             = 10      // number of blocks for which span is frozen on heimdall
+	DefaultBorChainId               = "15001" // bor chain id
 )
 
 var (

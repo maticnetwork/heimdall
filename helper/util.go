@@ -2,6 +2,7 @@ package helper
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"sort"
@@ -150,4 +151,14 @@ func CreateAndSendTx(msg sdk.Msg, cliCtx context.CLIContext) (err error) {
 
 	fmt.Printf("Transaction sent %v", resp.TxHash)
 	return nil
+}
+
+// TendermintTxDecode decodes transaction string and return base tx object
+func TendermintTxDecode(txString string) ([]byte, error) {
+	decodedTx, err := base64.StdEncoding.DecodeString(txString)
+	if err != nil {
+		return nil, err
+	}
+
+	return []byte(decodedTx), nil
 }
