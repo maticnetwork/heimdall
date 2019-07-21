@@ -8,7 +8,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/maticnetwork/heimdall/common"
+	"github.com/maticnetwork/heimdall/checkpoint"
+	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -22,7 +23,7 @@ func GetCheckpointBuffer(cdc *codec.Codec) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			res, err := cliCtx.QueryStore(common.BufferCheckpointKey, "checkpoint")
+			res, err := cliCtx.QueryStore(checkpoint.BufferCheckpointKey, "checkpoint")
 			if err != nil {
 				return err
 			}
@@ -47,7 +48,7 @@ func GetLastNoACK(cdc *codec.Codec) *cobra.Command {
 		Short: "get last no ack received time",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			res, err := cliCtx.QueryStore(common.CheckpointNoACKCacheKey, "checkpoint")
+			res, err := cliCtx.QueryStore(checkpoint.CheckpointNoACKCacheKey, "checkpoint")
 			if err != nil {
 				return err
 			}
@@ -68,7 +69,7 @@ func GetHeaderFromIndex(cdc *codec.Codec) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			headerNumber := viper.GetInt(FlagHeaderNumber)
-			res, err := cliCtx.QueryStore(common.GetHeaderKey(uint64(headerNumber)), "checkpoint")
+			res, err := cliCtx.QueryStore(checkpoint.GetHeaderKey(uint64(headerNumber)), "checkpoint")
 			if err != nil {
 				fmt.Printf("Unable to fetch header block , Error:%v HeaderIndex:%v", err, headerNumber)
 				return err
@@ -97,7 +98,7 @@ func GetCheckpointCount(cdc *codec.Codec) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			res, err := cliCtx.QueryStore(common.ACKCountKey, "checkpoint")
+			res, err := cliCtx.QueryStore(staking.ACKCountKey, "staking")
 			if err != nil {
 				return err
 			}

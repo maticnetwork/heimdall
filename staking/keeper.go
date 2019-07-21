@@ -1,17 +1,48 @@
-package common
+package staking
 
 import (
 	"encoding/hex"
 	"errors"
 	"math/big"
+	"strconv"
 
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+	cmn "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
 )
 
-// ----------------- Staking Related Keepers
+var (
+	DefaultValue = []byte{0x01} // Value to store in CacheCheckpoint and CacheCheckpointACK & ValidatorSetChange Flag
+
+	ValidatorsKey          = []byte{0x21} // prefix for each key to a validator
+	ValidatorMapKey        = []byte{0x22} // prefix for each key for validator map
+	CurrentValidatorSetKey = []byte{0x23} // Key to store current validator set
+
+	ACKCountKey = []byte{0x11} // key to store ACK count
+
+)
+
+// Keeper stores all related data
+type Keeper struct {
+	cdc        *codec.Codec
+	StakingKey sdk.StoreKey
+
+	// codespace
+	Codespace sdk.CodespaceType
+}
+
+// NewKeeper create new keeper
+func NewKeeper(cdc *codec.Codec, stakingKey sdk.StoreKey, codespace sdk.CodespaceType) Keeper {
+	keeper := Keeper{
+		cdc:        cdc,
+		Codespace:  codespace,
+		StakingKey: stakingKey,
+	}
+	return keeper
+}
 
 // GetValidatorKey drafts the validator key for addresses
 func GetValidatorKey(address []byte) []byte {
@@ -39,7 +70,7 @@ func (k *Keeper) AddValidator(ctx sdk.Context, validator types.Validator) error 
 
 	// store validator with address prefixed with validator key as index
 	store.Set(GetValidatorKey(validator.Signer.Bytes()), bz)
-	StakingLogger.Debug("Validator stored", "key", hex.EncodeToString(GetValidatorKey(validator.Signer.Bytes())), "validator", validator.String())
+	cmn.StakingLogger.Debug("Validator stored", "key", hex.EncodeToString(GetValidatorKey(validator.Signer.Bytes())), "validator", validator.String())
 
 	// add validator to validator ID => SignerAddress map
 	k.SetValidatorIDToSignerAddr(ctx, validator.ID, validator.Signer)
@@ -133,7 +164,7 @@ func (k *Keeper) UpdateSigner(ctx sdk.Context, newSigner common.Address, newPubk
 	// get old validator from state and make power 0
 	validator, err := k.GetValidatorInfo(ctx, prevSigner.Bytes())
 	if err != nil {
-		StakingLogger.Error("Unable to fetch valiator from store")
+		cmn.StakingLogger.Error("Unable to fetch valiator from store")
 		return err
 	}
 
@@ -252,17 +283,17 @@ func (k *Keeper) SetLastUpdated(ctx sdk.Context, valID types.ValidatorID, blckNu
 	// get validator
 	validator, ok := k.GetValidatorFromValID(ctx, valID)
 	if !ok {
-		return ErrInvalidMsg(k.Codespace, "unable to fetch validator", "ID", valID)
+		return cmn.ErrInvalidMsg(k.Codespace, "unable to fetch validator", "ID", valID)
 	}
 	// make sure  new block num > old
 	if blckNum.Cmp(validator.LastUpdated) != 1 {
-		return ErrOldTx(k.Codespace)
+		return cmn.ErrOldTx(k.Codespace)
 	}
 	validator.LastUpdated = blckNum
 	err := k.AddValidator(ctx, validator)
 	if err != nil {
-		StakingLogger.Debug("Unable to update last updated", "Error", err, "Validator", validator.String())
-		return ErrInvalidMsg(k.Codespace, "unable to add validator", "ID", valID, "Error", err)
+		cmn.StakingLogger.Debug("Unable to update last updated", "Error", err, "Validator", validator.String())
+		return cmn.ErrInvalidMsg(k.Codespace, "unable to add validator", "ID", valID, "Error", err)
 	}
 	return nil
 }
@@ -275,4 +306,45 @@ func (k *Keeper) GetLastUpdated(ctx sdk.Context, valID types.ValidatorID) (updat
 		return nil, false
 	}
 	return validator.LastUpdated, true
+}
+
+// GetACKCount returns current ACK count
+func (k *Keeper) GetACKCount(ctx sdk.Context) uint64 {
+	store := ctx.KVStore(k.StakingKey)
+	// check if ack count is there
+	if store.Has(ACKCountKey) {
+		// get current ACK count
+		ackCount, err := strconv.Atoi(string(store.Get(ACKCountKey)))
+		if err != nil {
+			cmn.CheckpointLogger.Error("Unable to convert key to int")
+		} else {
+			return uint64(ackCount)
+		}
+	}
+	return 0
+}
+
+// UpdateACKCountWithValue updates ACK with value
+func (k *Keeper) UpdateACKCountWithValue(ctx sdk.Context, value uint64) {
+	store := ctx.KVStore(k.StakingKey)
+
+	// convert
+	ackCount := []byte(strconv.FormatUint(value, 10))
+
+	// update
+	store.Set(ACKCountKey, ackCount)
+}
+
+// UpdateACKCount updates ACK count by 1
+func (k *Keeper) UpdateACKCount(ctx sdk.Context) {
+	store := ctx.KVStore(k.StakingKey)
+
+	// get current ACK Count
+	ACKCount := k.GetACKCount(ctx)
+
+	// increment by 1
+	ACKs := []byte(strconv.FormatUint(ACKCount+1, 10))
+
+	// update
+	store.Set(ACKCountKey, ACKs)
 }

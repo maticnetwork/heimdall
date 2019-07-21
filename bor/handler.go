@@ -11,7 +11,7 @@ import (
 )
 
 // NewHandler returns a handler for "bor" type messages.
-func NewHandler(k common.Keeper) sdk.Handler {
+func NewHandler(k Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		common.InitBorLogger(&ctx)
 		switch msg := msg.(type) {
@@ -24,7 +24,7 @@ func NewHandler(k common.Keeper) sdk.Handler {
 }
 
 // HandleMsgProposeSpan handles proposeSpan msg
-func HandleMsgProposeSpan(ctx sdk.Context, msg MsgProposeSpan, k common.Keeper, logger tmlog.Logger) sdk.Result {
+func HandleMsgProposeSpan(ctx sdk.Context, msg MsgProposeSpan, k Keeper, logger tmlog.Logger) sdk.Result {
 	logger.Debug("Proposing span", "TxData", msg)
 
 	// check if last span is up or if greater diff than threshold is found between validator set
@@ -46,7 +46,7 @@ func HandleMsgProposeSpan(ctx sdk.Context, msg MsgProposeSpan, k common.Keeper, 
 		return common.ErrSpanNotInCountinuity(k.Codespace).Result()
 	}
 
-	currentValidators := k.GetCurrentValidators(ctx)
+	currentValidators := k.sk.GetCurrentValidators(ctx)
 
 	lastSpan, err = k.GetLastSpan(ctx)
 	if err != nil {

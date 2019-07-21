@@ -16,9 +16,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/maticnetwork/heimdall/app"
+	ck "github.com/maticnetwork/heimdall/checkpoint"
 	checkpoint "github.com/maticnetwork/heimdall/checkpoint/cli"
-	hmcmn "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
+	sk "github.com/maticnetwork/heimdall/staking"
 	staking "github.com/maticnetwork/heimdall/staking/cli"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/spf13/viper"
@@ -120,7 +121,7 @@ func ExportCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			//
 			// ack count
 			//
-			stored_ackcount, err := cliCtx.QueryStore(hmcmn.ACKCountKey, "checkpoint")
+			stored_ackcount, err := cliCtx.QueryStore(sk.ACKCountKey, "staking")
 			if err != nil {
 				fmt.Printf("Error retriving query")
 				return err
@@ -136,7 +137,7 @@ func ExportCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			//
 			var buffer_checkpoint hmTypes.CheckpointBlockHeader
 
-			_checkpointBuffer, err := cliCtx.QueryStore(hmcmn.BufferCheckpointKey, "checkpoint")
+			_checkpointBuffer, err := cliCtx.QueryStore(ck.BufferCheckpointKey, "checkpoint")
 			if err == nil {
 				if len(_checkpointBuffer) != 0 {
 					err = cdc.UnmarshalBinaryBare(_checkpointBuffer, &buffer_checkpoint)
@@ -150,23 +151,23 @@ func ExportCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			////
 			//// Caches
 			////
-			storedCheckpointCache, err := cliCtx.QueryStore(hmcmn.CheckpointCacheKey, "checkpoint")
+			storedCheckpointCache, err := cliCtx.QueryStore(ck.CheckpointCacheKey, "checkpoint")
 			if err != nil {
 				return err
 			}
 			var checkpointCache bool
-			if bytes.Compare(storedCheckpointCache, hmcmn.DefaultValue) == 0 {
+			if bytes.Compare(storedCheckpointCache, ck.DefaultValue) == 0 {
 				checkpointCache = true
 			} else {
 				checkpointCache = false
 			}
 
-			storedCheckpointACK, err := cliCtx.QueryStore(hmcmn.CheckpointACKCacheKey, "checkpoint")
+			storedCheckpointACK, err := cliCtx.QueryStore(ck.CheckpointACKCacheKey, "checkpoint")
 			if err != nil {
 				return err
 			}
 			var checkpointACKCache bool
-			if bytes.Compare(storedCheckpointACK, hmcmn.DefaultValue) == 0 {
+			if bytes.Compare(storedCheckpointACK, ck.DefaultValue) == 0 {
 				checkpointACKCache = true
 			} else {
 				checkpointACKCache = false
@@ -175,7 +176,7 @@ func ExportCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			//// last no ack time
 			////
 			var lastNoACKTime int64
-			lastNoACK, err := cliCtx.QueryStore(hmcmn.CheckpointNoACKCacheKey, "checkpoint")
+			lastNoACK, err := cliCtx.QueryStore(ck.CheckpointNoACKCacheKey, "checkpoint")
 			if err == nil && len(lastNoACK) != 0 {
 				lastNoACKTime, err = strconv.ParseInt(string(lastNoACK), 10, 64)
 				if err != nil {
@@ -186,7 +187,7 @@ func ExportCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			//// Headers
 			////
 			var headers []hmTypes.CheckpointBlockHeader
-			storedHeaders, err := cliCtx.QuerySubspace(hmcmn.HeaderBlockKey, "checkpoint")
+			storedHeaders, err := cliCtx.QuerySubspace(ck.HeaderBlockKey, "checkpoint")
 			if err != nil {
 				return err
 			}
@@ -201,7 +202,7 @@ func ExportCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			//// validators
 			////
 			var validators []hmTypes.Validator
-			storedVals, err := cliCtx.QuerySubspace(hmcmn.ValidatorsKey, "staker")
+			storedVals, err := cliCtx.QuerySubspace(sk.ValidatorsKey, "staking")
 			if err != nil {
 				return err
 			}
@@ -216,7 +217,7 @@ func ExportCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			//// Current val set
 			////
 			var currentValSet hmTypes.ValidatorSet
-			storedCurrValSet, err := cliCtx.QueryStore(hmcmn.CurrentValidatorSetKey, "staker")
+			storedCurrValSet, err := cliCtx.QueryStore(sk.CurrentValidatorSetKey, "staking")
 			if err != nil {
 				return err
 			}

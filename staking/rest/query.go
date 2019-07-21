@@ -10,10 +10,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gorilla/mux"
 
-	hmCommon "github.com/maticnetwork/heimdall/common"
+	"github.com/cosmos/cosmos-sdk/types/rest"
+	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
-	"github.com/cosmos/cosmos-sdk/types/rest"
 )
 
 func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
@@ -45,7 +45,7 @@ func validatorByAddressHandlerFn(
 		vars := mux.Vars(r)
 		signerAddress := common.HexToAddress(vars["address"])
 
-		res, err := cliCtx.QueryStore(hmCommon.GetValidatorKey(signerAddress.Bytes()), "staker")
+		res, err := cliCtx.QueryStore(staking.GetValidatorKey(signerAddress.Bytes()), "staking")
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
@@ -70,7 +70,7 @@ func validatorByAddressHandlerFn(
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		rest.PostProcessResponse(w,cdc,result,cliCtx.Indent)
+		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
 	}
 }
 
@@ -88,13 +88,13 @@ func validatorByIDHandlerFn(
 			return
 		}
 
-		signerAddr, err := cliCtx.QueryStore(hmCommon.GetValidatorMapKey(hmTypes.NewValidatorID(id).Bytes()), "staker")
+		signerAddr, err := cliCtx.QueryStore(staking.GetValidatorMapKey(hmTypes.NewValidatorID(id).Bytes()), "staking")
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		res, err := cliCtx.QueryStore(hmCommon.GetValidatorKey(signerAddr), "staker")
+		res, err := cliCtx.QueryStore(staking.GetValidatorKey(signerAddr), "staking")
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
@@ -119,7 +119,7 @@ func validatorByIDHandlerFn(
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		rest.PostProcessResponse(w,cdc,result,cliCtx.Indent)
+		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
 	}
 }
 
@@ -130,7 +130,7 @@ func validatorSetHandlerFn(
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		res, err := cliCtx.QueryStore(hmCommon.CurrentValidatorSetKey, "staker")
+		res, err := cliCtx.QueryStore(staking.CurrentValidatorSetKey, "staking")
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
@@ -150,7 +150,7 @@ func validatorSetHandlerFn(
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		rest.PostProcessResponse(w,cdc,result,cliCtx.Indent)
+		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
 	}
 }
 
@@ -168,7 +168,7 @@ func proposerHandlerFn(
 		}
 		RestLogger.Debug("Calculating proposers", "Count", times)
 
-		res, err := cliCtx.QueryStore(hmCommon.CurrentValidatorSetKey, "staker")
+		res, err := cliCtx.QueryStore(staking.CurrentValidatorSetKey, "staking")
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
@@ -207,6 +207,6 @@ func proposerHandlerFn(
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		rest.PostProcessResponse(w,cdc,result,cliCtx.Indent)
+		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
 	}
 }

@@ -40,19 +40,16 @@ type HeimdallApp struct {
 	cdc *codec.Codec
 
 	// keys to access the multistore
-	keyMain       *sdk.KVStoreKey
 	keyCheckpoint *sdk.KVStoreKey
-	keyStake      *sdk.KVStoreKey
+	keyStaking    *sdk.KVStoreKey
 	keyBor        *sdk.KVStoreKey
+	keyMain       *sdk.KVStoreKey
 
-	keyMaster *sdk.KVStoreKey
-
-	keyStaker *sdk.KVStoreKey
-	// manage getting and setting accounts
-	//checkpointKeeper checkpoint.Keeper
-	//stakerKeeper     staking.Keeper
-	masterKeeper common.Keeper
-	caller       helper.ContractCaller
+	checkpointKeeper checkpoint.Keeper
+	stakingKeeper    staking.Keeper
+	borKeeper        bor.Keeper
+	// masterKeeper common.Keeper
+	caller helper.ContractCaller
 }
 
 var logger = helper.Logger.With("module", "app")
@@ -69,14 +66,16 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	var app = &HeimdallApp{
 		cdc:           cdc,
 		BaseApp:       bam.NewBaseApp(AppName, logger, db, hmTypes.RLPTxDecoder(pulp), baseAppOptions...),
-		keyMain:       sdk.NewKVStoreKey("main"),
+		keyMain:       sdk.NewKVStoreKey(bam.MainStoreKey),
 		keyCheckpoint: sdk.NewKVStoreKey("checkpoint"),
-		keyStaker:     sdk.NewKVStoreKey("staker"),
+		keyStaking:    sdk.NewKVStoreKey("staking"),
 		keyBor:        sdk.NewKVStoreKey("bor"),
-		keyMaster:     sdk.NewKVStoreKey("master"),
 	}
 
-	app.masterKeeper = common.NewKeeper(app.cdc, app.keyMaster, app.keyStaker, app.keyCheckpoint, app.keyBor, common.DefaultCodespace)
+	// app.masterKeeper = common.NewKeeper(app.cdc, app.keyMaster, app.keyStaker, app.keyCheckpoint, app.keyBor, common.DefaultCodespace)
+	app.stakingKeeper = staking.NewKeeper(app.cdc, app.keyStaking, common.DefaultCodespace)
+	app.checkpointKeeper = checkpoint.NewKeeper(app.cdc, app.stakingKeeper, app.keyCheckpoint, common.DefaultCodespace)
+	app.borKeeper = bor.NewKeeper(app.cdc, app.stakingKeeper, app.keyBor, common.DefaultCodespace)
 
 	contractCallerObj, err := helper.NewContractCaller()
 	if err != nil {
@@ -85,9 +84,10 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.caller = contractCallerObj
 
 	// register message routes
-	app.Router().AddRoute("checkpoint", checkpoint.NewHandler(app.masterKeeper, &app.caller))
-	app.Router().AddRoute("staking", staking.NewHandler(app.masterKeeper, &app.caller))
-	app.Router().AddRoute("bor", bor.NewHandler(app.masterKeeper))
+	app.Router().AddRoute("checkpoint", checkpoint.NewHandler(app.checkpointKeeper, &app.caller))
+	app.Router().AddRoute("staking", staking.NewHandler(app.stakingKeeper, &app.caller))
+	app.Router().AddRoute("bor", bor.NewHandler(app.borKeeper))
+
 	// perform initialization logic
 	app.SetInitChainer(app.initChainer)
 	app.SetBeginBlocker(app.beginBlocker)
@@ -95,7 +95,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.SetAnteHandler(auth.NewAnteHandler())
 
 	// mount the multistore and load the latest state
-	app.MountStores(app.keyMain, app.keyCheckpoint, app.keyStaker, app.keyBor)
+	app.MountStores(app.keyMain, app.keyCheckpoint, app.keyStaking, app.keyBor)
 	err = app.LoadLatestVersion(app.keyMain)
 	if err != nil {
 		cmn.Exit(err.Error())
@@ -142,10 +142,10 @@ func (app *HeimdallApp) endBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 	var valUpdates = make(map[hmTypes.ValidatorID]abci.ValidatorUpdate)
 	if ctx.BlockHeader().NumTxs > 0 {
 		// --- Start update to new validators
-		currentValidatorSet := app.masterKeeper.GetValidatorSet(ctx)
+		currentValidatorSet := app.stakingKeeper.GetValidatorSet(ctx)
 		currentValidatorSetCopy := currentValidatorSet.Copy()
-		allValidators := app.masterKeeper.GetAllValidators(ctx)
-		ackCount := app.masterKeeper.GetACKCount(ctx)
+		allValidators := app.stakingKeeper.GetAllValidators(ctx)
+		ackCount := app.stakingKeeper.GetACKCount(ctx)
 
 		// apply updates
 		helper.UpdateValidators(
@@ -155,7 +155,7 @@ func (app *HeimdallApp) endBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 		)
 
 		// update validator set in store
-		err := app.masterKeeper.UpdateValidatorSetInStore(ctx, currentValidatorSet)
+		err := app.stakingKeeper.UpdateValidatorSetInStore(ctx, currentValidatorSet)
 		if err != nil {
 			logger.Error("Unable to update validator set in state", "Error", err)
 		} else {
@@ -169,7 +169,7 @@ func (app *HeimdallApp) endBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 				valUpdates[validator.ID] = val
 			}
 			// add new validators
-			currentValidatorSet := app.masterKeeper.GetValidatorSet(ctx)
+			currentValidatorSet := app.stakingKeeper.GetValidatorSet(ctx)
 			for _, validator := range currentValidatorSet.Validators {
 				val := abci.ValidatorUpdate{
 					Power:  int64(validator.Power),
@@ -181,16 +181,16 @@ func (app *HeimdallApp) endBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 			// --- End update validators
 
 			// check if ACK is present in cache
-			if app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointACKCacheKey) {
-				logger.Info("Checkpoint ACK processed in block", "CheckpointACKProcessed", app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointACKCacheKey))
+			if app.checkpointKeeper.GetCheckpointCache(ctx, checkpoint.CheckpointACKCacheKey) {
+				logger.Info("Checkpoint ACK processed in block", "CheckpointACKProcessed", app.checkpointKeeper.GetCheckpointCache(ctx, checkpoint.CheckpointACKCacheKey))
 
 				// --- Start update proposer
 
 				// increment accum
-				app.masterKeeper.IncreamentAccum(ctx, 1)
+				app.stakingKeeper.IncreamentAccum(ctx, 1)
 
 				// log new proposer
-				vs := app.masterKeeper.GetValidatorSet(ctx)
+				vs := app.stakingKeeper.GetValidatorSet(ctx)
 				newProposer := vs.GetProposer()
 				logger.Debug(
 					"New proposer selected",
@@ -201,24 +201,24 @@ func (app *HeimdallApp) endBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 				// --- End update proposer
 
 				// clear ACK cache
-				app.masterKeeper.FlushACKCache(ctx)
+				app.checkpointKeeper.FlushACKCache(ctx)
 			}
 
 			// check if checkpoint is present in cache
-			if app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointCacheKey) {
-				logger.Info("Checkpoint processed in block", "CheckpointProcessed", app.masterKeeper.GetCheckpointCache(ctx, common.CheckpointCacheKey))
+			if app.checkpointKeeper.GetCheckpointCache(ctx, checkpoint.CheckpointCacheKey) {
+				logger.Info("Checkpoint processed in block", "CheckpointProcessed", app.checkpointKeeper.GetCheckpointCache(ctx, checkpoint.CheckpointCacheKey))
 				// collect and update sigs in span
 
 				// Send Checkpoint to Rootchain
-				PrepareAndSendCheckpoint(ctx, app.masterKeeper, app.caller)
+				PrepareAndSendCheckpoint(ctx, app.checkpointKeeper, app.stakingKeeper, app.caller)
 				// clear Checkpoint cache
-				app.masterKeeper.FlushCheckpointCache(ctx)
+				app.checkpointKeeper.FlushCheckpointCache(ctx)
 			}
 
-			if cache := app.masterKeeper.GetSpanCache(ctx); cache {
+			if cache := app.borKeeper.GetSpanCache(ctx); cache {
 				logger.Info("Propose Span processed in block", "ProposeSpanProcesses", cache)
 				// TODO Send proof to bor chain
-				app.masterKeeper.AddSigs(ctx, ctx.BlockHeader().Votes)
+				app.borKeeper.AddSigs(ctx, ctx.BlockHeader().Votes)
 			}
 		}
 	}
@@ -262,7 +262,7 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 
 	// TODO match valSet and genesisState.CurrentValSet for difference in accum
 	// update validator set in store
-	err = app.masterKeeper.UpdateValidatorSetInStore(ctx, currentValSet)
+	err = app.stakingKeeper.UpdateValidatorSetInStore(ctx, currentValSet)
 	if err != nil {
 		logger.Error("Unable to marshall validator set while adding in store", "Error", err)
 		panic(err)
@@ -270,23 +270,23 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 
 	// increment accumulator if starting from genesis
 	if isGenesis {
-		app.masterKeeper.IncreamentAccum(ctx, 1)
+		app.stakingKeeper.IncreamentAccum(ctx, 1)
 	}
 
 	// set span duration from genesis
-	app.masterKeeper.SetSpanDuration(ctx, genesisState.SpanDuration)
+	app.borKeeper.SetSpanDuration(ctx, genesisState.SpanDuration)
 
 	// Set initial ack count
-	app.masterKeeper.UpdateACKCountWithValue(ctx, genesisState.AckCount)
+	app.stakingKeeper.UpdateACKCountWithValue(ctx, genesisState.AckCount)
 
 	// Add checkpoint in buffer
-	app.masterKeeper.SetCheckpointBuffer(ctx, genesisState.BufferedCheckpoint)
+	app.checkpointKeeper.SetCheckpointBuffer(ctx, genesisState.BufferedCheckpoint)
 
 	// Set Caches
 	app.SetCaches(ctx, &genesisState)
 
 	// Set last no-ack
-	app.masterKeeper.SetLastNoAck(ctx, genesisState.LastNoACK)
+	app.checkpointKeeper.SetLastNoAck(ctx, genesisState.LastNoACK)
 
 	// Add all headers
 	app.InsertHeaders(ctx, &genesisState)
@@ -330,7 +330,7 @@ func (app *HeimdallApp) GetValidatorsFromGenesis(ctx sdk.Context, genesisState *
 				panic(errors.New("error while adding genesis validator"))
 			} else {
 				// Add individual validator to state
-				app.masterKeeper.AddValidator(ctx, hmValidator)
+				app.stakingKeeper.AddValidator(ctx, hmValidator)
 				// convert to Validator Update
 				updateVal := abci.ValidatorUpdate{
 					Power:  int64(validator.Power),
@@ -356,7 +356,7 @@ func (app *HeimdallApp) GetValidatorsFromGenesis(ctx sdk.Context, genesisState *
 			panic(errors.New("Error while addings new validator"))
 		} else {
 			// Add individual validator to state
-			app.masterKeeper.AddValidator(ctx, validator)
+			app.stakingKeeper.AddValidator(ctx, validator)
 
 			// check if validator is current validator
 			// add to val updates else skip
@@ -380,12 +380,12 @@ func (app *HeimdallApp) GetValidatorsFromGenesis(ctx sdk.Context, genesisState *
 func (app *HeimdallApp) SetCaches(ctx sdk.Context, genesisState *GenesisState) {
 	if genesisState.CheckpointCache {
 		logger.Debug("Found checkpoint cache", "CheckpointCache", genesisState.CheckpointCache)
-		app.masterKeeper.SetCheckpointCache(ctx, common.DefaultValue)
+		app.checkpointKeeper.SetCheckpointCache(ctx, checkpoint.DefaultValue)
 		return
 	}
 	if genesisState.CheckpointACKCache {
 		logger.Debug("Found checkpoint ACK cache", "CheckpointACKCache", genesisState.CheckpointACKCache)
-		app.masterKeeper.SetCheckpointAckCache(ctx, common.DefaultValue)
+		app.checkpointKeeper.SetCheckpointAckCache(ctx, checkpoint.DefaultValue)
 		return
 	}
 }
@@ -400,7 +400,7 @@ func (app *HeimdallApp) InsertHeaders(ctx sdk.Context, genesisState *GenesisStat
 		}
 		for i, header := range genesisState.Headers {
 			checkpointHeaderIndex := helper.GetConfig().ChildBlockInterval * (uint64(i) + 1)
-			app.masterKeeper.AddCheckpoint(ctx, checkpointHeaderIndex, header)
+			app.checkpointKeeper.AddCheckpoint(ctx, checkpointHeaderIndex, header)
 		}
 	}
 	return
@@ -433,7 +433,7 @@ func GetExtraData(ctx sdk.Context, _checkpoint hmTypes.CheckpointBlockHeader) []
 }
 
 // PrepareAndSendCheckpoint prepares all the data required for sending checkpoint and sends tx to rootchain
-func PrepareAndSendCheckpoint(ctx sdk.Context, keeper common.Keeper, caller helper.ContractCaller) {
+func PrepareAndSendCheckpoint(ctx sdk.Context, ck checkpoint.Keeper, sk staking.Keeper, caller helper.ContractCaller) {
 	// fetch votes from block header
 	var votes []tmTypes.Vote
 	err := json.Unmarshal(ctx.BlockHeader().Votes, &votes)
@@ -445,7 +445,7 @@ func PrepareAndSendCheckpoint(ctx sdk.Context, keeper common.Keeper, caller help
 	sigs := helper.GetSigs(votes)
 
 	// Getting latest checkpoint data from store using height as key and unmarshall
-	_checkpoint, err := keeper.GetCheckpointFromBuffer(ctx)
+	_checkpoint, err := ck.GetCheckpointFromBuffer(ctx)
 	if err != nil {
 		logger.Error("Unable to unmarshall checkpoint from buffer while preparing checkpoint tx", "error", err, "height", ctx.BlockHeight())
 		return
@@ -465,7 +465,7 @@ func PrepareAndSendCheckpoint(ctx sdk.Context, keeper common.Keeper, caller help
 	validatorAddress := ethCommon.BytesToAddress(helper.GetPubKey().Address().Bytes())
 
 	// check if we are proposer
-	if bytes.Equal(keeper.GetCurrentProposer(ctx).Signer.Bytes(), validatorAddress.Bytes()) {
+	if bytes.Equal(sk.GetCurrentProposer(ctx).Signer.Bytes(), validatorAddress.Bytes()) {
 		logger.Info("We are proposer! Validating if checkpoint needs to be pushed", "commitedLastBlock", lastblock, "startBlock", _checkpoint.StartBlock)
 		// check if we need to send checkpoint or not
 		if ((lastblock + 1) == _checkpoint.StartBlock) || (lastblock == 0 && _checkpoint.StartBlock == 0) {
@@ -479,6 +479,6 @@ func PrepareAndSendCheckpoint(ctx sdk.Context, keeper common.Keeper, caller help
 			logger.Info("No need to send checkpoint")
 		}
 	} else {
-		logger.Info("We are not proposer", "proposer", keeper.GetCurrentProposer(ctx), "validator", validatorAddress.String())
+		logger.Info("We are not proposer", "proposer", sk.GetCurrentProposer(ctx), "validator", validatorAddress.String())
 	}
 }
