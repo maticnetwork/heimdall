@@ -3,10 +3,12 @@ package staking
 import (
 	"bytes"
 	"math/big"
+	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/staking/tags"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -84,7 +86,12 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k Keeper, con
 		return hmCommon.ErrValidatorSave(k.Codespace).Result()
 	}
 
-	return sdk.Result{}
+	resTags := sdk.NewTags(
+		tags.ValidatorJoin, []byte(newValidator.Signer.String()),
+		tags.ValidatorID, []byte(strconv.FormatUint(uint64(newValidator.ID), 10)),
+	)
+
+	return sdk.Result{Tags: resTags}
 }
 
 // Handle signer update message
@@ -162,7 +169,12 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k Keeper, contr
 		return hmCommon.ErrSignerUpdateError(k.Codespace).Result()
 	}
 
-	return sdk.Result{}
+	resTags := sdk.NewTags(
+		tags.ValidatorUpdate, []byte(newSigner.String()),
+		tags.ValidatorID, []byte(strconv.FormatUint(uint64(validator.ID), 10)),
+	)
+
+	return sdk.Result{Tags: resTags}
 }
 
 func HandleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
@@ -197,5 +209,10 @@ func HandleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k Keeper, con
 		return hmCommon.ErrValidatorNotDeactivated(k.Codespace).Result()
 	}
 
-	return sdk.Result{}
+	resTags := sdk.NewTags(
+		tags.ValidatorExit, []byte(validator.Signer.String()),
+		tags.ValidatorID, []byte(strconv.FormatUint(uint64(validator.ID), 10)),
+	)
+
+	return sdk.Result{Tags: resTags}
 }
