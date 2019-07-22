@@ -3,8 +3,10 @@ package bor
 import (
 	"bytes"
 	"sort"
+	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/maticnetwork/heimdall/bor/tags"
 	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/types"
 	tmlog "github.com/tendermint/tendermint/libs/log"
@@ -53,12 +55,15 @@ func HandleMsgProposeSpan(ctx sdk.Context, msg MsgProposeSpan, k Keeper, logger 
 		logger.Error("Unable to fetch last span", "Error", err)
 		return common.ErrSpanNotFound(k.Codespace).Result()
 	}
+	resTags := sdk.NewTags(
+		tags.NewSpanProposed, []byte(strconv.FormatUint(uint64(msg.StartBlock), 10)),
+	)
 
 	// TODO add check for duration
 
-	// send tags
-	return sortAndCompare(types.ValToMinVal(currentValidators), types.ValToMinVal(lastSpan.SelectedProducers), msg, k.Codespace)
-	// return sdk.Result{}
+	result := sortAndCompare(types.ValToMinVal(currentValidators), types.ValToMinVal(lastSpan.SelectedProducers), msg, k.Codespace)
+	result.Tags = resTags
+	return result
 }
 
 func sortAndCompare(allVals []types.MinimalVal, selectedVals []types.MinimalVal, msg MsgProposeSpan, codespace sdk.CodespaceType) sdk.Result {
