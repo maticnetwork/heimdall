@@ -311,7 +311,7 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 }
 
 // returns validator genesis/existing from genesis state
-// TODO add check from main chain if genesis information is right,else people can create invalid genesis and distribute
+// TODO add check from main chain if genesis information is right, else people can create invalid genesis and distribute
 func (app *HeimdallApp) GetValidatorsFromGenesis(ctx sdk.Context, genesisState *GenesisState, ackCount uint64) (newValSet hmTypes.ValidatorSet, valUpdates []abci.ValidatorUpdate) {
 	if len(genesisState.GenValidators) > 0 {
 		logger.Debug("Loading genesis validators")

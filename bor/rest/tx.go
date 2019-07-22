@@ -86,7 +86,7 @@ func postProposeSpanHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.
 			return
 		}
 
-		res, err = cliCtx.QueryStore(staking.CurrentValidatorSetKey, "staker")
+		res, err = cliCtx.QueryStore(staking.CurrentValidatorSetKey, "staking")
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return

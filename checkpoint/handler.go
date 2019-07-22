@@ -2,10 +2,12 @@ package checkpoint
 
 import (
 	"bytes"
+	"strconv"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/maticnetwork/heimdall/checkpoint/tags"
 	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -118,8 +120,14 @@ func HandleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper, contractC
 	k.SetCheckpointCache(ctx, DefaultValue)
 	logger.Debug("Set Checkpoint Cache", "CheckpointReceived", k.GetCheckpointCache(ctx, CheckpointCacheKey))
 
+	resTags := sdk.NewTags(
+		tags.Proposer, []byte(msg.Proposer.String()),
+		tags.StartBlock, []byte(strconv.FormatUint(uint64(msg.StartBlock), 10)),
+		tags.EndBlock, []byte(strconv.FormatUint(uint64(msg.EndBlock), 10)),
+	)
+
 	// send tags
-	return sdk.Result{}
+	return sdk.Result{Tags: resTags}
 }
 
 // HandleMsgCheckpointAck Validates if checkpoint submitted on chain is valid
@@ -183,7 +191,11 @@ func HandleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k Keeper, con
 	k.SetCheckpointAckCache(ctx, DefaultValue)
 	logger.Debug("Checkpoint ACK cache set", "CacheValue", k.GetCheckpointCache(ctx, CheckpointACKCacheKey))
 
-	return sdk.Result{}
+	resTags := sdk.NewTags(
+		tags.HeaderIndex, []byte(strconv.FormatUint(uint64(msg.HeaderBlock), 10)),
+	)
+
+	return sdk.Result{Tags: resTags}
 }
 
 // Validate checkpoint no-ack transaction
@@ -232,6 +244,10 @@ func HandleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k Keeper,
 		"power", newProposer.Power,
 	)
 
+	resTags := sdk.NewTags(
+		tags.NewProposer, []byte(newProposer.Signer.String()),
+	)
+
 	// --- End
-	return sdk.Result{}
+	return sdk.Result{Tags: resTags}
 }
