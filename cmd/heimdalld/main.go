@@ -179,7 +179,6 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 				NoACKWaitTime:            helper.NoACKWaitTime,
 				CheckpointBufferTime:     helper.CheckpointBufferTime,
 				ConfirmationBlocks:       helper.ConfirmationBlocks,
-				BorChainID:               helper.DefaultBorChainId,
 			}
 
 			heimdallConfBytes, err := json.MarshalIndent(heimdallConf, "", "  ")
@@ -335,7 +334,6 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 					StakeManagerAddress:      (ethCommon.Address{}).Hex(),
 					RootchainAddress:         (ethCommon.Address{}).Hex(),
 					ChildBlockInterval:       helper.DefaultChildBlockInterval,
-					BorChainID:               helper.DefaultBorChainId,
 					CheckpointerPollInterval: helper.DefaultCheckpointerPollInterval,
 					SyncerPollInterval:       helper.DefaultSyncerPollInterval,
 					NoACKPollInterval:        helper.DefaultNoACKPollInterval,

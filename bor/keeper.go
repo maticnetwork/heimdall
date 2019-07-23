@@ -124,12 +124,12 @@ func (k *Keeper) GetLastSpan(ctx sdk.Context) (lastSpan types.Span, err error) {
 }
 
 // FreezeSet freezes validator set for next span
-func (k *Keeper) FreezeSet(ctx sdk.Context, startBlock uint64) error {
+func (k *Keeper) FreezeSet(ctx sdk.Context, startBlock uint64, borChainId string) error {
 	duration, err := k.GetSpanDuration(ctx)
 	if err != nil {
 		return err
 	}
-	newSpan := types.NewSpan(startBlock, startBlock+duration, k.sk.GetValidatorSet(ctx), k.SelectNextProducers(ctx), helper.GetBorChainID())
+	newSpan := types.NewSpan(startBlock, startBlock+duration, k.sk.GetValidatorSet(ctx), k.SelectNextProducers(ctx), borChainId)
 	return k.AddNewSpan(ctx, newSpan)
 }
 

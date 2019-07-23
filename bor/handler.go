@@ -42,7 +42,7 @@ func HandleMsgProposeSpan(ctx sdk.Context, msg MsgProposeSpan, k Keeper, logger 
 	}
 
 	// freeze for new span
-	err = k.FreezeSet(ctx, msg.StartBlock)
+	err = k.FreezeSet(ctx, msg.StartBlock, msg.ChainID)
 	if err != nil {
 		logger.Error("Unable to freeze validator set for span", "Error", err)
 		return common.ErrSpanNotInCountinuity(k.Codespace).Result()

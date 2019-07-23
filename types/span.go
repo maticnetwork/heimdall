@@ -30,8 +30,8 @@ func (s *Span) AddSigs(sigs []byte) {
 }
 
 // GetSignatures returns signatures for a particular
-func (s *Span) GetSignatures() (sigs [][]byte) {
-	return
+func (s *Span) GetSignatures() (sigs []byte) {
+	return s.Signatures
 }
 
 // String returns the string representatin of span

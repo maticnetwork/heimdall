@@ -53,8 +53,7 @@ const (
 	MaxCheckpointLength             = 1024  // max blocks in one checkpoint
 	DefaultChildBlockInterval       = 10000 // difference between 2 indexes of header blocks
 	ConfirmationBlocks              = 6
-	DefaultSpanDuration             = 10      // number of blocks for which span is frozen on heimdall
-	DefaultBorChainId               = "15001" // bor chain id
+	DefaultSpanDuration             = 10 // number of blocks for which span is frozen on heimdall
 )
 
 var (
@@ -79,8 +78,6 @@ type Configuration struct {
 	RootchainAddress    string `json:"rootchainAddress"`    // Rootchain contract address on main chain
 	ChildBlockInterval  uint64 `json:"childBlockInterval"`  // Difference between header index of 2 child blocks submitted on main chain
 
-	BorChainID string `json:"BorChainID"` // Bor Chain ID
-
 	// config related to bridge
 	CheckpointerPollInterval int           `json:"checkpointerPollInterval"` // Poll interval for checkpointer service to send new checkpoints or missing ACK
 	SyncerPollInterval       int           `json:"syncerPollInterval"`       // Poll interval for syncher service to sync for changes on main chain
@@ -104,9 +101,6 @@ var mainRPCClient *rpc.Client
 // MaticClient stores eth/rpc client for Matic Network
 var maticClient *ethclient.Client
 var maticRPCClient *rpc.Client
-
-// chain ID of bor chain
-var borChainID string
 
 // private key object
 var privObject secp256k1.PrivKeySecp256k1
@@ -173,7 +167,6 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 	}
 
 	maticClient = ethclient.NewClient(maticRPCClient)
-	borChainID = conf.BorChainID
 
 	// load pv file, unmarshall and set to privObject
 	privVal := privval.LoadFilePV(filepath.Join(configDir, "priv_validator_key.json"), filepath.Join(configDir, "priv_validator_key.json"))
@@ -271,11 +264,4 @@ func GetPubKey() secp256k1.PubKeySecp256k1 {
 // GetAddress returns address object
 func GetAddress() []byte {
 	return GetPubKey().Address().Bytes()
-}
-
-// GetBorChainID returns bor chainID from which we are accepting blocks for checkpoint
-// and selecting span producers
-// We can add multiple chainID's here :)
-func GetBorChainID() string {
-	return borChainID
 }
