@@ -5,7 +5,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/maticnetwork/heimdall/common"
+	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -22,12 +22,12 @@ func GetValidatorInfo(cdc *codec.Codec) *cobra.Command {
 			if validatorID == 0 {
 				return fmt.Errorf("validator ID cannot be 0")
 			}
-			signerAddr, err := cliCtx.QueryStore(common.GetValidatorMapKey(types.NewValidatorID(uint64(validatorID)).Bytes()), "staker")
+			signerAddr, err := cliCtx.QueryStore(staking.GetValidatorMapKey(types.NewValidatorID(uint64(validatorID)).Bytes()), "staking")
 			if err != nil {
 				fmt.Printf("Error fetching signer address from validator ID")
 				return err
 			}
-			res, err := cliCtx.QueryStore(common.GetValidatorKey(signerAddr), "staker")
+			res, err := cliCtx.QueryStore(staking.GetValidatorKey(signerAddr), "staking")
 			if err != nil {
 				fmt.Printf("Error fetching validator information from store, Error: %v ValidatorID: %v", err, validatorID)
 				return err
@@ -54,7 +54,7 @@ func GetCurrentValSet(cdc *codec.Codec) *cobra.Command {
 		Short: "show current validator set",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			res, err := cliCtx.QueryStore(common.CurrentValidatorSetKey, "staker")
+			res, err := cliCtx.QueryStore(staking.CurrentValidatorSetKey, "staking")
 			if err != nil {
 				return err
 			}

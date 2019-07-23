@@ -3,14 +3,16 @@ package staking
 import (
 	"bytes"
 	"math/big"
+	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/staking/tags"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
-func NewHandler(k hmCommon.Keeper, contractCaller helper.IContractCaller) sdk.Handler {
+func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case MsgValidatorJoin:
@@ -25,7 +27,7 @@ func NewHandler(k hmCommon.Keeper, contractCaller helper.IContractCaller) sdk.Ha
 	}
 }
 
-func HandleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k hmCommon.Keeper, contractCaller helper.IContractCaller) sdk.Result {
+func HandleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	hmCommon.StakingLogger.Debug("Handing new validator join", "Msg", msg)
 
 	if confirmed := contractCaller.IsTxConfirmed(msg.TxHash); !confirmed {
@@ -84,11 +86,16 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k hmCommon.Ke
 		return hmCommon.ErrValidatorSave(k.Codespace).Result()
 	}
 
-	return sdk.Result{}
+	resTags := sdk.NewTags(
+		tags.ValidatorJoin, []byte(newValidator.Signer.String()),
+		tags.ValidatorID, []byte(strconv.FormatUint(uint64(newValidator.ID), 10)),
+	)
+
+	return sdk.Result{Tags: resTags}
 }
 
 // Handle signer update message
-func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k hmCommon.Keeper, contractCaller helper.IContractCaller) sdk.Result {
+func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	hmCommon.StakingLogger.Debug("Handling signer update", "Validator", msg.ID, "Signer", msg.NewSignerPubKey.Address())
 
 	if confirmed := contractCaller.IsTxConfirmed(msg.TxHash); !confirmed {
@@ -162,10 +169,15 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k hmCommon.Keep
 		return hmCommon.ErrSignerUpdateError(k.Codespace).Result()
 	}
 
-	return sdk.Result{}
+	resTags := sdk.NewTags(
+		tags.ValidatorUpdate, []byte(newSigner.String()),
+		tags.ValidatorID, []byte(strconv.FormatUint(uint64(validator.ID), 10)),
+	)
+
+	return sdk.Result{Tags: resTags}
 }
 
-func HandleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k hmCommon.Keeper, contractCaller helper.IContractCaller) sdk.Result {
+func HandleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	hmCommon.StakingLogger.Info("Handling validator exit", "ValidatorID", msg.ID)
 
 	if confirmed := contractCaller.IsTxConfirmed(msg.TxHash); !confirmed {
@@ -197,5 +209,10 @@ func HandleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k hmCommon.Ke
 		return hmCommon.ErrValidatorNotDeactivated(k.Codespace).Result()
 	}
 
-	return sdk.Result{}
+	resTags := sdk.NewTags(
+		tags.ValidatorExit, []byte(validator.Signer.String()),
+		tags.ValidatorID, []byte(strconv.FormatUint(uint64(validator.ID), 10)),
+	)
+
+	return sdk.Result{Tags: resTags}
 }

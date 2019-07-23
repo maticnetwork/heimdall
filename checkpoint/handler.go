@@ -2,10 +2,12 @@ package checkpoint
 
 import (
 	"bytes"
+	"strconv"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/maticnetwork/heimdall/checkpoint/tags"
 	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -13,7 +15,7 @@ import (
 )
 
 // NewHandler creates new handler for handling messages for checkpoint module
-func NewHandler(k common.Keeper, contractCaller helper.IContractCaller) sdk.Handler {
+func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		common.InitCheckpointLogger(&ctx)
 
@@ -31,7 +33,7 @@ func NewHandler(k common.Keeper, contractCaller helper.IContractCaller) sdk.Hand
 }
 
 // HandleMsgCheckpoint Validates checkpoint transaction
-func HandleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper, contractCaller helper.IContractCaller, logger tmlog.Logger) sdk.Result {
+func HandleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper, contractCaller helper.IContractCaller, logger tmlog.Logger) sdk.Result {
 	logger.Debug("Validating Checkpoint Data", "TxData", msg)
 	if msg.TimeStamp == 0 || msg.TimeStamp > uint64(time.Now().Unix()) {
 		logger.Error("Checkpoint timestamp must be in near past", "CurrentTime", time.Now().Unix(), "CheckpointTime", msg.TimeStamp, "Condition", msg.TimeStamp >= uint64(time.Now().Unix()))
@@ -87,11 +89,11 @@ func HandleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper, co
 	logger.Debug("Valid checkpoint tip")
 
 	// check proposer in message
-	if !bytes.Equal(msg.Proposer.Bytes(), k.GetValidatorSet(ctx).Proposer.Signer.Bytes()) {
+	if !bytes.Equal(msg.Proposer.Bytes(), k.sk.GetValidatorSet(ctx).Proposer.Signer.Bytes()) {
 		logger.Error("Invalid proposer in message",
-			"currentProposer", k.GetValidatorSet(ctx).Proposer.Signer.String(),
+			"currentProposer", k.sk.GetValidatorSet(ctx).Proposer.Signer.String(),
 			"checkpointProposer", msg.Proposer.String())
-		return common.ErrBadProposerDetails(k.Codespace, k.GetValidatorSet(ctx).Proposer.Signer).Result()
+		return common.ErrBadProposerDetails(k.Codespace, k.sk.GetValidatorSet(ctx).Proposer.Signer).Result()
 	}
 	logger.Debug("Valid proposer in checkpoint")
 
@@ -115,15 +117,21 @@ func HandleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper, co
 	logger.Debug("Adding good checkpoint to buffer to await ACK", "checkpointStored", checkpoint.String())
 
 	// indicate Checkpoint received by adding in cache, cache cleared in endblock
-	k.SetCheckpointCache(ctx, common.DefaultValue)
-	logger.Debug("Set Checkpoint Cache", "CheckpointReceived", k.GetCheckpointCache(ctx, common.CheckpointCacheKey))
+	k.SetCheckpointCache(ctx, DefaultValue)
+	logger.Debug("Set Checkpoint Cache", "CheckpointReceived", k.GetCheckpointCache(ctx, CheckpointCacheKey))
+
+	resTags := sdk.NewTags(
+		tags.Proposer, []byte(msg.Proposer.String()),
+		tags.StartBlock, []byte(strconv.FormatUint(uint64(msg.StartBlock), 10)),
+		tags.EndBlock, []byte(strconv.FormatUint(uint64(msg.EndBlock), 10)),
+	)
 
 	// send tags
-	return sdk.Result{}
+	return sdk.Result{Tags: resTags}
 }
 
 // HandleMsgCheckpointAck Validates if checkpoint submitted on chain is valid
-func HandleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keeper, contractCaller helper.IContractCaller, logger tmlog.Logger) sdk.Result {
+func HandleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k Keeper, contractCaller helper.IContractCaller, logger tmlog.Logger) sdk.Result {
 	logger.Debug("Validating Checkpoint ACK", "Tx", msg)
 
 	// make call to headerBlock with header number
@@ -176,18 +184,22 @@ func HandleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 	logger.Debug("Checkpoint buffer flushed after receiving checkpoint ack", "checkpoint", headerBlock)
 
 	// update ack count
-	k.UpdateACKCount(ctx)
-	logger.Debug("Valid ack received", "CurrentACKCount", k.GetACKCount(ctx)-1, "UpdatedACKCount", k.GetACKCount(ctx))
+	k.sk.UpdateACKCount(ctx)
+	logger.Debug("Valid ack received", "CurrentACKCount", k.sk.GetACKCount(ctx)-1, "UpdatedACKCount", k.sk.GetACKCount(ctx))
 
 	// indicate ACK received by adding in cache, cache cleared in endblock
-	k.SetCheckpointAckCache(ctx, common.DefaultValue)
-	logger.Debug("Checkpoint ACK cache set", "CacheValue", k.GetCheckpointCache(ctx, common.CheckpointACKCacheKey))
+	k.SetCheckpointAckCache(ctx, DefaultValue)
+	logger.Debug("Checkpoint ACK cache set", "CacheValue", k.GetCheckpointCache(ctx, CheckpointACKCacheKey))
 
-	return sdk.Result{}
+	resTags := sdk.NewTags(
+		tags.HeaderIndex, []byte(strconv.FormatUint(uint64(msg.HeaderBlock), 10)),
+	)
+
+	return sdk.Result{Tags: resTags}
 }
 
 // Validate checkpoint no-ack transaction
-func HandleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k common.Keeper, logger tmlog.Logger) sdk.Result {
+func HandleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k Keeper, logger tmlog.Logger) sdk.Result {
 	logger.Debug("Validating checkpoint no-ack", "TxData", msg)
 	// current time
 	currentTime := time.Unix(int64(msg.TimeStamp), 0) // buffer time
@@ -220,10 +232,10 @@ func HandleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k common.
 	// --- Update to new proposer
 
 	// increment accum
-	k.IncreamentAccum(ctx, 1)
+	k.sk.IncreamentAccum(ctx, 1)
 
 	//log new proposer
-	vs := k.GetValidatorSet(ctx)
+	vs := k.sk.GetValidatorSet(ctx)
 	newProposer := vs.GetProposer()
 	logger.Debug(
 		"New proposer selected",
@@ -232,6 +244,10 @@ func HandleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k common.
 		"power", newProposer.Power,
 	)
 
+	resTags := sdk.NewTags(
+		tags.NewProposer, []byte(newProposer.Signer.String()),
+	)
+
 	// --- End
-	return sdk.Result{}
+	return sdk.Result{Tags: resTags}
 }

@@ -1,20 +1,47 @@
-package common
+package bor
 
 import (
 	"encoding/json"
 	"errors"
 	"strconv"
 
-	"github.com/maticnetwork/heimdall/helper"
-
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	cmn "github.com/maticnetwork/heimdall/common"
+	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/types"
 	tmTypes "github.com/tendermint/tendermint/types"
 )
 
-//
-// Bor related keepers
-//
+var (
+	DefaultValue = []byte{0x01} // Value to store in CacheCheckpoint and CacheCheckpointACK & ValidatorSetChange Flag
+
+	SpanDurationKey       = []byte{0x24} // Key to store span duration for Bor
+	LastSpanStartBlockKey = []byte{0x25} // Key to store last span start block
+	SpanPrefixKey         = []byte{0x26} // prefix key to store span
+	SpanCacheKey          = []byte{0x27} // key to store Cache for span
+)
+
+// Keeper stores all related data
+type Keeper struct {
+	cdc    *codec.Codec
+	sk     staking.Keeper
+	BorKey sdk.StoreKey
+	// codespace
+	Codespace sdk.CodespaceType
+}
+
+// NewKeeper create new keeper
+func NewKeeper(cdc *codec.Codec, stakingKeeper staking.Keeper, borKey sdk.StoreKey, codespace sdk.CodespaceType) Keeper {
+	keeper := Keeper{
+		cdc:       cdc,
+		Codespace: codespace,
+		sk:        stakingKeeper,
+		BorKey:    borKey,
+	}
+	return keeper
+}
 
 // GetSpanKey appends prefix to start block
 func GetSpanKey(startBlock uint64) []byte {
@@ -26,7 +53,7 @@ func (k *Keeper) AddNewSpan(ctx sdk.Context, span types.Span) error {
 	store := ctx.KVStore(k.BorKey)
 	out, err := k.cdc.MarshalBinaryBare(span)
 	if err != nil {
-		CheckpointLogger.Error("Error marshalling span", "error", err)
+		cmn.BorLogger.Error("Error marshalling span", "error", err)
 		return err
 	}
 	store.Set(GetSpanKey(span.StartBlock), out)
@@ -88,7 +115,7 @@ func (k *Keeper) GetLastSpan(ctx sdk.Context) (lastSpan types.Span, err error) {
 		// get last span start block
 		lastSpanStartInt, err := strconv.Atoi(string(store.Get(LastSpanStartBlockKey)))
 		if err != nil {
-			BorLogger.Error("Unable to convert start block to int")
+			cmn.BorLogger.Error("Unable to convert start block to int")
 			return lastSpan, nil
 		}
 		lastSpanStart = uint64(lastSpanStartInt)
@@ -102,13 +129,13 @@ func (k *Keeper) FreezeSet(ctx sdk.Context, startBlock uint64) error {
 	if err != nil {
 		return err
 	}
-	newSpan := types.NewSpan(startBlock, startBlock+duration, k.GetValidatorSet(ctx), k.SelectNextProducers(ctx), helper.GetBorChainID())
+	newSpan := types.NewSpan(startBlock, startBlock+duration, k.sk.GetValidatorSet(ctx), k.SelectNextProducers(ctx), helper.GetBorChainID())
 	return k.AddNewSpan(ctx, newSpan)
 }
 
 // SelectNextProducers selects producers for next span
 func (k *Keeper) SelectNextProducers(ctx sdk.Context) (vals []types.Validator) {
-	currVals := k.GetCurrentValidators(ctx)
+	currVals := k.sk.GetCurrentValidators(ctx)
 	// TODO add producer selection here, currently sending all validators
 	return currVals
 }
@@ -125,7 +152,7 @@ func (k *Keeper) GetSpanDuration(ctx sdk.Context) (duration uint64, err error) {
 	if store.Has(SpanDurationKey) {
 		duration, err := strconv.Atoi(string(store.Get(SpanDurationKey)))
 		if err != nil {
-			BorLogger.Error("Unable to convert key to int")
+			cmn.BorLogger.Error("Unable to convert key to int")
 			return uint64(duration), err
 		} else {
 			return uint64(duration), nil

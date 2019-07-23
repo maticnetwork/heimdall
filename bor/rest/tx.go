@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/maticnetwork/heimdall/bor"
-	"github.com/maticnetwork/heimdall/common"
+	"github.com/maticnetwork/heimdall/staking"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -52,7 +52,7 @@ func postProposeSpanHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.
 		}
 
 		// fetch duration
-		res, err := cliCtx.QueryStore(common.SpanDurationKey, "bor")
+		res, err := cliCtx.QueryStore(bor.SpanDurationKey, "bor")
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
@@ -69,7 +69,7 @@ func postProposeSpanHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.
 			return
 		}
 
-		res, err = cliCtx.QueryStore(common.ACKCountKey, "checkpoint")
+		res, err = cliCtx.QueryStore(staking.ACKCountKey, "staking")
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
@@ -86,7 +86,7 @@ func postProposeSpanHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.
 			return
 		}
 
-		res, err = cliCtx.QueryStore(common.CurrentValidatorSetKey, "staker")
+		res, err = cliCtx.QueryStore(staking.CurrentValidatorSetKey, "staking")
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return

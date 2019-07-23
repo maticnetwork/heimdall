@@ -13,8 +13,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/maticnetwork/heimdall/checkpoint"
-	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/types"
 )
 
@@ -50,7 +50,7 @@ func checkpointBufferHandlerFn(
 	cliCtx context.CLIContext,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		res, err := cliCtx.QueryStore(common.BufferCheckpointKey, "checkpoint")
+		res, err := cliCtx.QueryStore(checkpoint.BufferCheckpointKey, "checkpoint")
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
@@ -87,7 +87,7 @@ func checkpointCountHandlerFn(
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		RestLogger.Debug("Fetching number of checkpoints from state")
-		res, err := cliCtx.QueryStore(common.ACKCountKey, "checkpoint")
+		res, err := cliCtx.QueryStore(staking.ACKCountKey, "checkpoint")
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
@@ -120,7 +120,7 @@ func checkpointHeaderHandlerFn(
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		headerNumber, err := strconv.ParseUint(vars["headerBlockIndex"], 10, 64)
-		res, err := cliCtx.QueryStore(common.GetHeaderKey(uint64(headerNumber)), "checkpoint")
+		res, err := cliCtx.QueryStore(checkpoint.GetHeaderKey(uint64(headerNumber)), "checkpoint")
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
@@ -173,7 +173,7 @@ func checkpointHandlerFn(
 
 		var validatorSet types.ValidatorSet
 
-		_validatorSet, err := cliCtx.QueryStore(common.CurrentValidatorSetKey, "staker")
+		_validatorSet, err := cliCtx.QueryStore(staking.CurrentValidatorSetKey, "staking")
 		if err == nil {
 			err := cdc.UnmarshalBinaryBare(_validatorSet, &validatorSet)
 			if err != nil {
@@ -205,7 +205,7 @@ func noackHandlerFn(
 	cliCtx context.CLIContext,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		res, err := cliCtx.QueryStore(common.CheckpointNoACKCacheKey, "checkpoint")
+		res, err := cliCtx.QueryStore(checkpoint.CheckpointNoACKCacheKey, "checkpoint")
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
@@ -251,7 +251,7 @@ func overviewHandlerFunc(
 
 		// ACk count
 		var ackCountInt int64
-		ackcount, err := cliCtx.QueryStore(common.ACKCountKey, "checkpoint")
+		ackcount, err := cliCtx.QueryStore(staking.ACKCountKey, "staking")
 		if err == nil {
 			ackCountInt, err = strconv.ParseInt(string(ackcount), 10, 64)
 			if err != nil {
@@ -263,7 +263,7 @@ func overviewHandlerFunc(
 
 		// checkpoint buffer
 		var _checkpoint types.CheckpointBlockHeader
-		_checkpointBufferBytes, err := cliCtx.QueryStore(common.BufferCheckpointKey, "checkpoint")
+		_checkpointBufferBytes, err := cliCtx.QueryStore(checkpoint.BufferCheckpointKey, "checkpoint")
 		if err == nil {
 			if len(_checkpointBufferBytes) != 0 {
 				err = cdc.UnmarshalBinaryBare(_checkpointBufferBytes, &_checkpoint)
@@ -281,7 +281,7 @@ func overviewHandlerFunc(
 		var validatorCount int
 		var validatorSet types.ValidatorSet
 
-		_validatorSet, err := cliCtx.QueryStore(common.CurrentValidatorSetKey, "staker")
+		_validatorSet, err := cliCtx.QueryStore(staking.CurrentValidatorSetKey, "staking")
 		if err == nil {
 			cdc.UnmarshalBinaryBare(_validatorSet, &validatorSet)
 		}
@@ -289,13 +289,13 @@ func overviewHandlerFunc(
 
 		// last no ack
 		var lastNoACKTime int64
-		lastNoACK, err := cliCtx.QueryStore(common.CheckpointNoACKCacheKey, "checkpoint")
+		lastNoACK, err := cliCtx.QueryStore(checkpoint.CheckpointNoACKCacheKey, "checkpoint")
 		if err == nil {
 			lastNoACKTime, err = strconv.ParseInt(string(lastNoACK), 10, 64)
 		}
 
 		var headers []types.CheckpointBlockHeader
-		storedHeaders, err := cliCtx.QuerySubspace(common.HeaderBlockKey, "checkpoint")
+		storedHeaders, err := cliCtx.QuerySubspace(checkpoint.HeaderBlockKey, "checkpoint")
 		if err != nil {
 			RestLogger.Error("Unable to query subspace for headers", "Error", err)
 		}
@@ -331,7 +331,7 @@ func latestCheckpointHandlerFunc(
 	cliCtx context.CLIContext,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ackCount, err := cliCtx.QueryStore(common.ACKCountKey, "checkpoint")
+		ackCount, err := cliCtx.QueryStore(staking.ACKCountKey, "staking")
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
@@ -345,7 +345,7 @@ func latestCheckpointHandlerFunc(
 
 		lastCheckpointKey := helper.GetConfig().ChildBlockInterval * uint64(ackCountInt)
 		RestLogger.Debug("Last checkpoint key generated", "LastCheckpointKey", lastCheckpointKey, "min", helper.GetConfig().ChildBlockInterval)
-		res, err := cliCtx.QueryStore(common.GetHeaderKey(lastCheckpointKey), "checkpoint")
+		res, err := cliCtx.QueryStore(checkpoint.GetHeaderKey(lastCheckpointKey), "checkpoint")
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return

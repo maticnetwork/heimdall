@@ -11,7 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/gorilla/mux"
-	"github.com/maticnetwork/heimdall/common"
+	"github.com/maticnetwork/heimdall/bor"
 	"github.com/maticnetwork/heimdall/types"
 )
 
@@ -37,7 +37,7 @@ func getSpanHandlerFn(
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		res, err := cliCtx.QueryStore(common.GetSpanKey(startBlock), "bor")
+		res, err := cliCtx.QueryStore(bor.GetSpanKey(startBlock), "bor")
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
@@ -70,7 +70,7 @@ func getCacheFn(
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		res, err := cliCtx.QueryStore(common.SpanCacheKey, "bor")
+		res, err := cliCtx.QueryStore(bor.SpanCacheKey, "bor")
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
