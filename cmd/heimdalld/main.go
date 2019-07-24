@@ -208,7 +208,9 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 
 			// create genesis state
 			appState := &app.GenesisState{
-				GenValidators: []app.GenesisValidator{validator},
+				GenValidators:  []app.GenesisValidator{validator},
+				SpanDuration:   helper.DefaultSpanDuration,
+				SprintDuration: helper.DefaultSprintDuration,
 			}
 
 			appStateJSON, err := json.Marshal(appState)

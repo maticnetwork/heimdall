@@ -35,8 +35,9 @@ func HandleMsgProposeSpan(ctx sdk.Context, msg MsgProposeSpan, k Keeper, logger 
 		logger.Error("Unable to fetch last span", "Error", err)
 		return common.ErrSpanNotInCountinuity(k.Codespace).Result()
 	}
+
 	// check if lastStart + 1 =  newStart
-	if lastSpan.StartBlock+1 != msg.StartBlock {
+	if lastSpan.StartBlock > msg.StartBlock {
 		common.BorLogger.Error("Blocks not in countinuity ", "LastStartBlock", lastSpan.StartBlock, "MsgStartBlock", msg.StartBlock)
 		return common.ErrSpanNotInCountinuity(k.Codespace).Result()
 	}

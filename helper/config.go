@@ -53,7 +53,8 @@ const (
 	MaxCheckpointLength             = 1024  // max blocks in one checkpoint
 	DefaultChildBlockInterval       = 10000 // difference between 2 indexes of header blocks
 	ConfirmationBlocks              = 6
-	DefaultSpanDuration             = 10 // number of blocks for which span is frozen on heimdall
+	DefaultSprintDuration           = 64                          // sprint for blocks
+	DefaultSpanDuration             = 100 * DefaultSprintDuration // number of blocks for which span is frozen on heimdall
 )
 
 var (
