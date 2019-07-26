@@ -5,12 +5,14 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+	"math/bits"
 	"sort"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/crypto/merkle"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	tmTypes "github.com/tendermint/tendermint/types"
 
@@ -131,12 +133,11 @@ func GetSigs(votes []tmTypes.Vote) (sigs []byte) {
 
 // GetVoteBytes returns vote bytes
 func GetVoteBytes(votes []tmTypes.Vote, ctx sdk.Context) []byte {
-	fmt.Printf("Number of votes collected", votes[0].Type)
 	// sign bytes for vote
 	return votes[0].SignBytes(ctx.ChainID())
 }
 
-// Creates message and sends tx
+// CreateAndSendTx creates message and sends tx
 // Used from cli- waits till transaction is included in block
 func CreateAndSendTx(msg sdk.Msg, cliCtx context.CLIContext) (err error) {
 	txBytes, err := CreateTxBytes(msg)
@@ -161,4 +162,86 @@ func TendermintTxDecode(txString string) ([]byte, error) {
 	}
 
 	return []byte(decodedTx), nil
+}
+
+// GetMerkleProofList return proof array
+// each proof has one byte for direction: 0x0 for left and 0x1 for right
+func GetMerkleProofList(proof *merkle.SimpleProof) [][]byte {
+	result := [][]byte{}
+	computeHashFromAunts(proof.Index, proof.Total, proof.LeafHash, proof.Aunts, &result)
+	return result
+}
+
+// Use the leafHash and innerHashes to get the root merkle hash.
+// If the length of the innerHashes slice isn't exactly correct, the result is nil.
+// Recursive impl.
+func computeHashFromAunts(index int, total int, leafHash []byte, innerHashes [][]byte, newInnerHashes *[][]byte) []byte {
+	if index >= total || index < 0 || total <= 0 {
+		return nil
+	}
+	switch total {
+	case 0:
+		panic("Cannot call computeHashFromAunts() with 0 total")
+	case 1:
+		if len(innerHashes) != 0 {
+			return nil
+		}
+		return leafHash
+	default:
+		if len(innerHashes) == 0 {
+			return nil
+		}
+		numLeft := getSplitPoint(total)
+		if index < numLeft {
+			leftHash := computeHashFromAunts(index, numLeft, leafHash, innerHashes[:len(innerHashes)-1], newInnerHashes)
+			if leftHash == nil {
+				return nil
+			}
+			*newInnerHashes = append(*newInnerHashes, append(rightPrefix, innerHashes[len(innerHashes)-1]...))
+			return innerHash(leftHash, innerHashes[len(innerHashes)-1])
+		}
+		rightHash := computeHashFromAunts(index-numLeft, total-numLeft, leafHash, innerHashes[:len(innerHashes)-1], newInnerHashes)
+		if rightHash == nil {
+			return nil
+		}
+		*newInnerHashes = append(*newInnerHashes, append(leftPrefix, innerHashes[len(innerHashes)-1]...))
+		return innerHash(innerHashes[len(innerHashes)-1], rightHash)
+	}
+}
+
+//
+// Inner funcitons
+//
+
+// getSplitPoint returns the largest power of 2 less than length
+func getSplitPoint(length int) int {
+	if length < 1 {
+		panic("Trying to split a tree with size < 1")
+	}
+	uLength := uint(length)
+	bitlen := bits.Len(uLength)
+	k := 1 << uint(bitlen-1)
+	if k == length {
+		k >>= 1
+	}
+	return k
+}
+
+// TODO: make these have a large predefined capacity
+var (
+	leafPrefix  = []byte{0}
+	innerPrefix = []byte{1}
+
+	leftPrefix  = []byte{0}
+	rightPrefix = []byte{1}
+)
+
+// returns tmhash(0x00 || leaf)
+func leafHash(leaf []byte) []byte {
+	return tmhash.Sum(append(leafPrefix, leaf...))
+}
+
+// returns tmhash(0x01 || left || right)
+func innerHash(left []byte, right []byte) []byte {
+	return tmhash.Sum(append(innerPrefix, append(left, right...)...))
 }
