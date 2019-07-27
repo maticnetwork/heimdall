@@ -14,10 +14,11 @@ import (
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/merkle"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
+	"github.com/tendermint/tendermint/crypto/tmhash"
 	tmTypes "github.com/tendermint/tendermint/types"
 
+	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
-	"github.com/tendermint/tendermint/crypto/tmhash"
 )
 
 // ZeroHash represents empty hash
@@ -99,10 +100,9 @@ func BytesToPubkey(pubKey []byte) secp256k1.PubKeySecp256k1 {
 }
 
 // CreateTxBytes creates tx bytes from Msg
-func CreateTxBytes(msg sdk.Msg) ([]byte, error) {
-	// tx := hmTypes.NewBaseTx(msg)
-	pulp := hmTypes.GetPulpInstance()
-	txBytes, err := pulp.EncodeToBytes(msg)
+func CreateTxBytes(tx authTypes.StdTx) ([]byte, error) {
+	pulp := authTypes.GetPulpInstance()
+	txBytes, err := pulp.EncodeToBytes(tx)
 	if err != nil {
 		Logger.Error("Error generating TX Bytes", "error", err)
 		return []byte(""), err
@@ -133,7 +133,9 @@ func GetSigs(votes []tmTypes.Vote) (sigs []byte) {
 
 // GetVoteBytes returns vote bytes
 func GetVoteBytes(votes []tmTypes.Vote, ctx sdk.Context) []byte {
+	fmt.Println("Number of votes collected", votes[0].Type)
 	// sign bytes for vote
+	fmt.Println("==> vote.data", hex.EncodeToString(votes[0].Data))
 	return votes[0].SignBytes(ctx.ChainID())
 }
 

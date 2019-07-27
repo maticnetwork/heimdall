@@ -2,13 +2,15 @@ package app
 
 import (
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
-
-	"github.com/maticnetwork/heimdall/bor"
+	"errors"
+	"fmt"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/gov"
 	ethCommon "github.com/ethereum/go-ethereum/common"
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
@@ -16,14 +18,16 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	tmTypes "github.com/tendermint/tendermint/types"
 
-	"errors"
-
 	"github.com/maticnetwork/heimdall/auth"
+	authTypes "github.com/maticnetwork/heimdall/auth/types"
+	"github.com/maticnetwork/heimdall/bor"
+	borTypes "github.com/maticnetwork/heimdall/bor/types"
 	"github.com/maticnetwork/heimdall/checkpoint"
-
+	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
+	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -31,7 +35,7 @@ const (
 	AppName                 = "Heimdall"
 	ABCIPubKeyTypeSecp256k1 = "secp256k1"
 	// internals
-	maxGasPerBlock   int64 = 1000000  // 1 Million
+	maxGasPerBlock   int64 = 10000000 // 10 Million
 	maxBytesPerBlock int64 = 22020096 // 21 MB
 )
 
@@ -40,14 +44,19 @@ type HeimdallApp struct {
 	cdc *codec.Codec
 
 	// keys to access the multistore
+	keyAccount    *sdk.KVStoreKey
+	keyGov        *sdk.KVStoreKey
 	keyCheckpoint *sdk.KVStoreKey
 	keyStaking    *sdk.KVStoreKey
 	keyBor        *sdk.KVStoreKey
 	keyMain       *sdk.KVStoreKey
+	tKeyParams    *sdk.TransientStoreKey
 
+	accountKeeper    auth.AccountKeeper
 	checkpointKeeper checkpoint.Keeper
 	stakingKeeper    staking.Keeper
 	borKeeper        bor.Keeper
+
 	// masterKeeper common.Keeper
 	caller helper.ContractCaller
 }
@@ -60,19 +69,22 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	cdc := MakeCodec()
 
 	// create and register pulp codec
-	pulp := hmTypes.GetPulpInstance()
+	pulp := authTypes.GetPulpInstance()
 
 	// create your application type
 	var app = &HeimdallApp{
 		cdc:           cdc,
-		BaseApp:       bam.NewBaseApp(AppName, logger, db, hmTypes.RLPTxDecoder(pulp), baseAppOptions...),
+		BaseApp:       bam.NewBaseApp(AppName, logger, db, authTypes.RLPTxDecoder(pulp), baseAppOptions...),
 		keyMain:       sdk.NewKVStoreKey(bam.MainStoreKey),
-		keyCheckpoint: sdk.NewKVStoreKey("checkpoint"),
-		keyStaking:    sdk.NewKVStoreKey("staking"),
-		keyBor:        sdk.NewKVStoreKey("bor"),
+		keyAccount:    sdk.NewKVStoreKey(authTypes.StoreKey),
+		keyGov:        sdk.NewKVStoreKey(gov.StoreKey),
+		keyCheckpoint: sdk.NewKVStoreKey(checkpointTypes.StoreKey),
+		keyStaking:    sdk.NewKVStoreKey(stakingTypes.StoreKey),
+		keyBor:        sdk.NewKVStoreKey(borTypes.StoreKey),
 	}
 
 	// app.masterKeeper = common.NewKeeper(app.cdc, app.keyMaster, app.keyStaker, app.keyCheckpoint, app.keyBor, common.DefaultCodespace)
+	// app.accountKeeper = auth.AccountKeeper
 	app.stakingKeeper = staking.NewKeeper(app.cdc, app.keyStaking, common.DefaultCodespace)
 	app.checkpointKeeper = checkpoint.NewKeeper(app.cdc, app.stakingKeeper, app.keyCheckpoint, common.DefaultCodespace)
 	app.borKeeper = bor.NewKeeper(app.cdc, app.stakingKeeper, app.keyBor, common.DefaultCodespace)
@@ -84,9 +96,9 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.caller = contractCallerObj
 
 	// register message routes
-	app.Router().AddRoute("checkpoint", checkpoint.NewHandler(app.checkpointKeeper, &app.caller))
-	app.Router().AddRoute("staking", staking.NewHandler(app.stakingKeeper, &app.caller))
-	app.Router().AddRoute("bor", bor.NewHandler(app.borKeeper))
+	app.Router().AddRoute(checkpointTypes.RouterKey, checkpoint.NewHandler(app.checkpointKeeper, &app.caller))
+	app.Router().AddRoute(stakingTypes.RouterKey, staking.NewHandler(app.stakingKeeper, &app.caller))
+	app.Router().AddRoute(borTypes.RouterKey, bor.NewHandler(app.borKeeper))
 
 	// perform initialization logic
 	app.SetInitChainer(app.initChainer)
@@ -206,19 +218,29 @@ func (app *HeimdallApp) endBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 
 			// check if checkpoint is present in cache
 			if app.checkpointKeeper.GetCheckpointCache(ctx, checkpoint.CheckpointCacheKey) {
-				logger.Info("Checkpoint processed in block", "CheckpointProcessed", app.checkpointKeeper.GetCheckpointCache(ctx, checkpoint.CheckpointCacheKey))
+				logger.Info("Checkpoint processed in block", "CheckpointProcessed", true)
 				// collect and update sigs in span
-
 				// Send Checkpoint to Rootchain
 				PrepareAndSendCheckpoint(ctx, app.checkpointKeeper, app.stakingKeeper, app.caller)
 				// clear Checkpoint cache
 				app.checkpointKeeper.FlushCheckpointCache(ctx)
 			}
 
-			if cache := app.borKeeper.GetSpanCache(ctx); cache {
-				logger.Info("Propose Span processed in block", "ProposeSpanProcesses", cache)
+			if app.borKeeper.GetSpanCache(ctx) {
+				logger.Info("Propose Span processed in block", "ProposeSpanProcesses", true)
 				// TODO Send proof to bor chain
-				app.borKeeper.AddSigs(ctx, ctx.BlockHeader().Votes)
+				// app.borKeeper.AddSigs(ctx, ctx.BlockHeader().Votes)
+				// get sigs from votes
+				var votes []tmTypes.Vote
+				err := json.Unmarshal(ctx.BlockHeader().Votes, &votes)
+				if err != nil {
+					logger.Error("Error while unmarshalling vote", "error", err)
+				}
+				sigs := helper.GetSigs(votes)
+				fmt.Println("sigs", hex.EncodeToString(sigs))
+				fmt.Println("vote", hex.EncodeToString(helper.GetVoteBytes(votes, ctx)))
+				// flush span cache
+				app.borKeeper.FlushSpanCache(ctx)
 			}
 		}
 	}

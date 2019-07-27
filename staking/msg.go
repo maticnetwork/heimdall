@@ -11,12 +11,11 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
+	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
 	"github.com/maticnetwork/heimdall/types"
 )
 
 var cdc = codec.New()
-
-const StakingRoute = "staking"
 
 //
 // Validator Join
@@ -43,7 +42,7 @@ func (msg MsgValidatorJoin) Type() string {
 }
 
 func (msg MsgValidatorJoin) Route() string {
-	return StakingRoute
+	return stakingTypes.RouterKey
 }
 
 func (msg MsgValidatorJoin) GetSigners() []sdk.AccAddress {
@@ -99,7 +98,7 @@ func (msg MsgSignerUpdate) Type() string {
 }
 
 func (msg MsgSignerUpdate) Route() string {
-	return StakingRoute
+	return stakingTypes.RouterKey
 }
 
 func (msg MsgSignerUpdate) GetSigners() []sdk.AccAddress {
@@ -159,7 +158,7 @@ func (msg MsgValidatorExit) Type() string {
 }
 
 func (msg MsgValidatorExit) Route() string {
-	return StakingRoute
+	return stakingTypes.RouterKey
 }
 
 func (msg MsgValidatorExit) GetSigners() []sdk.AccAddress {

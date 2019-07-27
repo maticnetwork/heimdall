@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	gasWantedPerTx sdk.Gas = 900000
+	gasWantedPerTx sdk.Gas = 300000
 	gasUsedPerTx   sdk.Gas = gasWantedPerTx - 60000 // TODO use proposer amount per tx
 )
 

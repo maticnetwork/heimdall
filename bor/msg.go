@@ -5,14 +5,12 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	borTypes "github.com/maticnetwork/heimdall/bor/types"
 	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/types"
 )
 
 var cdc = codec.New()
-
-// BorRoute represents route in app
-const BorRoute = "bor"
 
 //
 // Propose Span Msg
@@ -49,7 +47,7 @@ func (msg MsgProposeSpan) Type() string {
 
 // Route returns route for message
 func (msg MsgProposeSpan) Route() string {
-	return BorRoute
+	return borTypes.RouterKey
 }
 
 // GetSigners returns address of the signer

@@ -8,14 +8,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 
+	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 )
 
 var cdc = codec.New()
-
-// CheckpointRoute represents rount in app
-const CheckpointRoute = "checkpoint"
 
 //
 // Checkpoint Msg
@@ -48,7 +46,7 @@ func (msg MsgCheckpoint) Type() string {
 }
 
 func (msg MsgCheckpoint) Route() string {
-	return CheckpointRoute
+	return checkpointTypes.RouterKey
 }
 
 // GetSigners returns address of the signer
@@ -109,7 +107,7 @@ func (msg MsgCheckpointAck) Type() string {
 }
 
 func (msg MsgCheckpointAck) Route() string {
-	return CheckpointRoute
+	return checkpointTypes.RouterKey
 }
 
 func (msg MsgCheckpointAck) GetSigners() []sdk.AccAddress {
@@ -155,7 +153,7 @@ func (msg MsgCheckpointNoAck) Type() string {
 }
 
 func (msg MsgCheckpointNoAck) Route() string {
-	return CheckpointRoute
+	return checkpointTypes.RouterKey
 }
 
 func (msg MsgCheckpointNoAck) GetSigners() []sdk.AccAddress {

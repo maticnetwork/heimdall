@@ -58,9 +58,10 @@ func (p *Pulp) GetMsgTxInstance(hash []byte) interface{} {
 }
 
 // EncodeToBytes encodes msg to bytes
-func (p *Pulp) EncodeToBytes(msg sdk.Msg) ([]byte, error) {
+func (p *Pulp) EncodeToBytes(tx StdTx) ([]byte, error) {
+	msg := tx.GetMsgs()[0]
 	name := fmt.Sprintf("%s::%s", msg.Route(), msg.Type())
-	txBytes, err := rlp.EncodeToBytes(msg)
+	txBytes, err := rlp.EncodeToBytes(tx)
 	if err != nil {
 		return nil, err
 	}
@@ -71,14 +72,14 @@ func (p *Pulp) EncodeToBytes(msg sdk.Msg) ([]byte, error) {
 // DecodeBytes decodes bytes to msg
 func (p *Pulp) DecodeBytes(data []byte) (interface{}, error) {
 	rtype := p.typeInfos[hex.EncodeToString(data[:PulpHashLength])]
-	msg := reflect.New(rtype).Interface()
-	err := rlp.DecodeBytes(data[PulpHashLength:], msg)
+	tx := reflect.New(rtype).Interface()
+	err := rlp.DecodeBytes(data[PulpHashLength:], tx)
 	if err != nil {
 		return nil, err
 	}
 
 	// change pointer to non-pointer
-	vptr := reflect.New(reflect.TypeOf(msg).Elem()).Elem()
-	vptr.Set(reflect.ValueOf(msg).Elem())
+	vptr := reflect.New(reflect.TypeOf(tx).Elem()).Elem()
+	vptr.Set(reflect.ValueOf(tx).Elem())
 	return vptr.Interface(), nil
 }
