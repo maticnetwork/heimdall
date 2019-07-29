@@ -52,6 +52,6 @@ type GenesisState struct {
 	GenTxs             []json.RawMessage               `json:"gentxs"`
 	Accounts           []GenesisAccount                `json:"accounts"`
 	Headers            []hmTypes.CheckpointBlockHeader `json:"headers"`
-	SpanDuration       uint64                          `json:"spanDuration"` // Bor chain span duration ie number of blocks for which val set is frozen on heimdall
-
+	SprintDuration     uint64                          `json:"sprintDuration"` // Bor chain sprint duration
+	SpanDuration       uint64                          `json:"spanDuration"`   // Bor chain span duration ie number of blocks for which val set is frozen on heimdall
 }
