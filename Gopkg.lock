@@ -602,7 +602,7 @@
   version = "v0.9.0"
 
 [[projects]]
-  digest = "1:45f9008eaf9fed87e1109827ea94bcd9c3161bd4b4c07e1d7b07b49385c046af"
+  digest = "1:a6091f39ae042d2fb4f685497b1ccfa1e1cabd6d1c85d1a1571cb8a3fd338eca"
   name = "golang.org/x/crypto"
   packages = [
     "bcrypt",
@@ -621,6 +621,7 @@
     "pbkdf2",
     "poly1305",
     "salsa20/salsa",
+    "sha3",
   ]
   pruneopts = "UT"
   revision = "3764759f34a542a3aef74d6b02e35be7ab893bba"
@@ -782,6 +783,7 @@
     "github.com/tendermint/tendermint/privval",
     "github.com/tendermint/tendermint/types",
     "github.com/xsleonard/go-merkle",
+    "golang.org/x/crypto/sha3",
     "golang.org/x/sync/errgroup",
   ]
   solver-name = "gps-cdcl"
