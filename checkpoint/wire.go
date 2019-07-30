@@ -3,7 +3,7 @@ package checkpoint
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
 
-	hmTypes "github.com/maticnetwork/heimdall/types"
+	authTypes "github.com/maticnetwork/heimdall/auth/types"
 )
 
 func RegisterWire(cdc *codec.Codec) {
@@ -12,7 +12,7 @@ func RegisterWire(cdc *codec.Codec) {
 	cdc.RegisterConcrete(MsgCheckpointNoAck{}, "checkpoint/MsgCheckpointNoACK", nil)
 }
 
-func RegisterPulp(pulp *hmTypes.Pulp) {
+func RegisterPulp(pulp *authTypes.Pulp) {
 	pulp.RegisterConcrete(MsgCheckpoint{})
 	pulp.RegisterConcrete(MsgCheckpointAck{})
 	pulp.RegisterConcrete(MsgCheckpointNoAck{})

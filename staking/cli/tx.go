@@ -8,11 +8,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+
+	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/types"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // send validator join transaction
@@ -45,8 +47,9 @@ func GetValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 			pubkey := types.NewPubKey(pubkeyBytes)
 
 			msg := staking.NewMsgValidatorJoin(uint64(validatorID), pubkey, common.HexToHash(txhash))
-
-			return helper.CreateAndSendTx(msg, cliCtx)
+			// utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			txBldr := authTypes.NewTxBuilderFromCLI().WithTxEncoder(authTypes.RLPTxEncoder(authTypes.GetPulpInstance()))
+			return helper.CreateAndSendTx(cliCtx, txBldr, []sdk.Msg{msg})
 		},
 	}
 

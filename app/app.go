@@ -134,8 +134,8 @@ func MakeCodec() *codec.Codec {
 }
 
 // MakePulp creates pulp codec and registers custom types for decoder
-func MakePulp() *hmTypes.Pulp {
-	pulp := hmTypes.GetPulpInstance()
+func MakePulp() *authTypes.Pulp {
+	pulp := authTypes.GetPulpInstance()
 
 	// register custom type
 	checkpoint.RegisterPulp(pulp)

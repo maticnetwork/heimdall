@@ -1,20 +1,25 @@
 package main
 
 import (
-	"os"
-
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/version"
-	"github.com/spf13/cobra"
-	"github.com/tendermint/tendermint/libs/cli"
-
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strconv"
 
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
+	"github.com/cosmos/cosmos-sdk/version"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"github.com/tendermint/tendermint/libs/cli"
+	"github.com/tendermint/tendermint/libs/common"
+	tmTypes "github.com/tendermint/tendermint/types"
+
 	"github.com/maticnetwork/heimdall/app"
 	ck "github.com/maticnetwork/heimdall/checkpoint"
 	checkpoint "github.com/maticnetwork/heimdall/checkpoint/cli"
@@ -22,12 +27,6 @@ import (
 	sk "github.com/maticnetwork/heimdall/staking"
 	staking "github.com/maticnetwork/heimdall/staking/cli"
 	hmTypes "github.com/maticnetwork/heimdall/types"
-	"github.com/spf13/viper"
-	"github.com/tendermint/tendermint/libs/common"
-	tmTypes "github.com/tendermint/tendermint/types"
-
-	"bytes"
-	"path/filepath"
 )
 
 // rootCmd is the entry point for this binary
@@ -84,6 +83,13 @@ func main() {
 		client.LineBreak,
 		client.LineBreak,
 		version.VersionCmd,
+	)
+
+	// keys command
+	rootCmd.AddCommand(
+		client.LineBreak,
+		client.LineBreak,
+		keys.Commands(),
 	)
 
 	// bind with-heimdall-config config with root cmd

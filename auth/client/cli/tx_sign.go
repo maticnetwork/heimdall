@@ -5,16 +5,15 @@ import (
 	"os"
 	"strings"
 
+	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/client/utils"
+	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/crypto/multisig"
-
-	"github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
-	"github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 const (
@@ -100,7 +99,7 @@ func makeSignCmd(cdc *codec.Codec) func(cmd *cobra.Command, args []string) error
 
 		offline := viper.GetBool(flagOffline)
 		cliCtx := context.NewCLIContext().WithCodec(cdc)
-		txBldr := types.NewTxBuilderFromCLI()
+		txBldr := authTypes.NewTxBuilderFromCLI()
 
 		if viper.GetBool(flagValidateSigs) {
 			if !printAndValidateSigs(cliCtx, txBldr.ChainID(), stdTx, offline) {
@@ -111,7 +110,7 @@ func makeSignCmd(cdc *codec.Codec) func(cmd *cobra.Command, args []string) error
 		}
 
 		// if --signature-only is on, then override --append
-		var newTx types.StdTx
+		var newTx authTypes.StdTx
 		generateSignatureOnly := viper.GetBool(flagSigOnly)
 		multisigAddrStr := viper.GetString(flagMultisig)
 

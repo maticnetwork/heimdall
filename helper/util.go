@@ -6,11 +6,15 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/bits"
+	"os"
 	"sort"
 
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client/keys"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/merkle"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -141,18 +145,131 @@ func GetVoteBytes(votes []tmTypes.Vote, ctx sdk.Context) []byte {
 
 // CreateAndSendTx creates message and sends tx
 // Used from cli- waits till transaction is included in block
-func CreateAndSendTx(msg sdk.Msg, cliCtx context.CLIContext) (err error) {
-	txBytes, err := CreateTxBytes(msg)
+func CreateAndSendTx(cliCtx context.CLIContext, txBldr authTypes.TxBuilder, msgs []sdk.Msg) (err error) {
+	if cliCtx.GenerateOnly {
+		return PrintUnsignedStdTx(txBldr, cliCtx, msgs)
+	}
+
+	// return CompleteAndBroadcastTxCLI(txBldr, cliCtx, msgs)
+	// txBytes, err := CreateTxBytes(tx)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// resp, err := SendTendermintRequest(cliCtx, txBytes, BroadcastBlock)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// fmt.Printf("Transaction sent %v", resp.TxHash)
+	return nil
+}
+
+// CompleteAndBroadcastTxCLI implements a utility function that facilitates
+// sending a series of messages in a signed transaction given a TxBuilder and a
+// QueryContext. It ensures that the account exists, has a proper number and
+// sequence set. In addition, it builds and signs a transaction with the
+// supplied messages. Finally, it broadcasts the signed transaction to a node.
+func CompleteAndBroadcastTxCLI(txBldr authTypes.TxBuilder, cliCtx context.CLIContext, msgs []sdk.Msg) error {
+	txBldr, err := PrepareTxBuilder(txBldr, cliCtx)
 	if err != nil {
 		return err
 	}
 
-	resp, err := SendTendermintRequest(cliCtx, txBytes, BroadcastBlock)
+	fromName := cliCtx.GetFromName()
+
+	if cliCtx.Simulate {
+		return nil
+	}
+
+	if !cliCtx.SkipConfirm {
+		stdSignMsg, err := txBldr.BuildSignMsg(msgs)
+		if err != nil {
+			return err
+		}
+
+		var json []byte
+		if viper.GetBool(client.FlagIndentResponse) {
+			json, err = cliCtx.Codec.MarshalJSONIndent(stdSignMsg, "", "  ")
+			if err != nil {
+				panic(err)
+			}
+		} else {
+			json = cliCtx.Codec.MustMarshalJSON(stdSignMsg)
+		}
+
+		_, _ = fmt.Fprintf(os.Stderr, "%s\n\n", json)
+
+		buf := client.BufferStdin()
+		ok, err := client.GetConfirmation("confirm transaction before signing and broadcasting", buf)
+		if err != nil || !ok {
+			_, _ = fmt.Fprintf(os.Stderr, "%s\n", "cancelled transaction")
+			return err
+		}
+	}
+
+	passphrase, err := keys.GetPassphrase(fromName)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("Transaction sent %v", resp.TxHash)
+	// build and sign the transaction
+	txBytes, err := txBldr.BuildAndSign(fromName, passphrase, msgs)
+	if err != nil {
+		return err
+	}
+
+	// broadcast to a Tendermint node
+	res, err := cliCtx.BroadcastTx(txBytes)
+	if err != nil {
+		return err
+	}
+
+	return cliCtx.PrintOutput(res)
+}
+
+// PrepareTxBuilder populates a TxBuilder in preparation for the build of a Tx.
+func PrepareTxBuilder(txBldr authTypes.TxBuilder, cliCtx context.CLIContext) (authTypes.TxBuilder, error) {
+	from := cliCtx.GetFromAddress()
+
+	accGetter := authTypes.NewAccountRetriever(cliCtx)
+	if err := accGetter.EnsureExists(from); err != nil {
+		return txBldr, err
+	}
+
+	txbldrAccNum, txbldrAccSeq := txBldr.AccountNumber(), txBldr.Sequence()
+	// TODO: (ref #1903) Allow for user supplied account number without
+	// automatically doing a manual lookup.
+	if txbldrAccNum == 0 || txbldrAccSeq == 0 {
+		num, seq, err := authTypes.NewAccountRetriever(cliCtx).GetAccountNumberSequence(from)
+		if err != nil {
+			return txBldr, err
+		}
+
+		if txbldrAccNum == 0 {
+			txBldr = txBldr.WithAccountNumber(num)
+		}
+		if txbldrAccSeq == 0 {
+			txBldr = txBldr.WithSequence(seq)
+		}
+	}
+
+	return txBldr, nil
+}
+
+// PrintUnsignedStdTx builds an unsigned StdTx and prints it to os.Stdout.
+func PrintUnsignedStdTx(txBldr authTypes.TxBuilder, cliCtx context.CLIContext, msgs []sdk.Msg) error {
+	stdTx, err := buildUnsignedStdTxOffline(txBldr, cliCtx, msgs)
+	if err != nil {
+		return err
+	}
+
+	json, err := cliCtx.Codec.MarshalJSON(stdTx)
+	if err != nil {
+		return err
+	}
+
+	_, _ = fmt.Fprintf(cliCtx.Output, "%s\n", json)
 	return nil
 }
 
@@ -214,6 +331,15 @@ func computeHashFromAunts(index int, total int, leafHash []byte, innerHashes [][
 //
 // Inner funcitons
 //
+
+func buildUnsignedStdTxOffline(txBldr authTypes.TxBuilder, cliCtx context.CLIContext, msgs []sdk.Msg) (stdTx authTypes.StdTx, err error) {
+	stdSignMsg, err := txBldr.BuildSignMsg(msgs)
+	if err != nil {
+		return stdTx, nil
+	}
+
+	return authTypes.NewStdTx(stdSignMsg.Msg, nil, stdSignMsg.Memo), nil
+}
 
 // getSplitPoint returns the largest power of 2 less than length
 func getSplitPoint(length int) int {
