@@ -20,7 +20,9 @@ import (
 	"github.com/tendermint/tendermint/libs/common"
 
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/maticnetwork/heimdall/contracts/depositmanager"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
+
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 	"github.com/maticnetwork/heimdall/helper"
 )
@@ -382,8 +384,19 @@ func (syncer *Syncer) processSignerChangeEvent(eventName string, abiObject *abi.
 }
 
 func (syncer *Syncer) processDepositEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
-	// event := new(rootchain.)
-
+	event := new(depositmanager.DepositmanagerDeposit)
+	if err := UnpackLog(abiObject, event, eventName, vLog); err != nil {
+		logEventParseError(syncer.Logger, eventName, err)
+	} else {
+		syncer.Logger.Debug(
+			"New event found",
+			"event", eventName,
+			"user", event.User,
+			"depositCount", event.DepositCount,
+			"token", event.Token.String(),
+		)
+		// TODO dispatch to heimdall
+	}
 }
 
 // EventByID looks up a event by the topic id
