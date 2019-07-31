@@ -438,20 +438,17 @@ func GetExtraData(ctx sdk.Context, _checkpoint hmTypes.CheckpointBlockHeader) []
 	logger.Debug("Creating extra data", "startBlock", _checkpoint.StartBlock, "endBlock", _checkpoint.EndBlock, "roothash", _checkpoint.RootHash, "timestamp", _checkpoint.TimeStamp)
 
 	// craft a message
-	txBytes, err := helper.CreateTxBytes(
-		checkpoint.NewMsgCheckpointBlock(
-			_checkpoint.Proposer,
-			_checkpoint.StartBlock,
-			_checkpoint.EndBlock,
-			_checkpoint.RootHash,
-			_checkpoint.TimeStamp,
-		),
-	)
-	if err != nil {
-		logger.Error("Error decoding transaction data", "error", err)
-	}
+	// msg := checkpoint.NewMsgCheckpointBlock(
+	// 	_checkpoint.Proposer,
+	// 	_checkpoint.StartBlock,
+	// 	_checkpoint.EndBlock,
+	// 	_checkpoint.RootHash,
+	// 	_checkpoint.TimeStamp,
+	// )
 
-	return txBytes[hmTypes.PulpHashLength:]
+	// helper.GetSignedTxBytes(ct)
+	return nil
+	// return txBytes[authTypes.PulpHashLength:]
 }
 
 // PrepareAndSendCheckpoint prepares all the data required for sending checkpoint and sends tx to rootchain

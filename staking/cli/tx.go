@@ -7,11 +7,11 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/types"
@@ -46,10 +46,11 @@ func GetValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 			}
 			pubkey := types.NewPubKey(pubkeyBytes)
 
+			// msg
 			msg := staking.NewMsgValidatorJoin(uint64(validatorID), pubkey, common.HexToHash(txhash))
-			// utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
-			txBldr := authTypes.NewTxBuilderFromCLI().WithTxEncoder(authTypes.RLPTxEncoder(authTypes.GetPulpInstance()))
-			return helper.CreateAndSendTx(cliCtx, txBldr, []sdk.Msg{msg})
+
+			// broadcast messages
+			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
 		},
 	}
 
@@ -80,7 +81,8 @@ func GetValidatorExitTx(cdc *codec.Codec) *cobra.Command {
 			}
 			msg := staking.NewMsgValidatorExit(uint64(validator), common.HexToHash(txhash))
 
-			return helper.CreateAndSendTx(msg, cliCtx)
+			// broadcast messages
+			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
 		},
 	}
 
@@ -124,7 +126,8 @@ func GetValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 
 			msg := staking.NewMsgValidatorUpdate(uint64(validator), pubkey, json.Number(amountStr), common.HexToHash(txhash))
 
-			return helper.CreateAndSendTx(msg, cliCtx)
+			// broadcast messages
+			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
 		},
 	}
 	cmd.Flags().Int(FlagValidatorID, 0, "--id=<validator ID here>")

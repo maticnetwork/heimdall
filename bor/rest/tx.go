@@ -8,16 +8,16 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/maticnetwork/heimdall/bor"
-	"github.com/maticnetwork/heimdall/staking"
-
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/gorilla/mux"
-	"github.com/maticnetwork/heimdall/types"
 
+	"github.com/maticnetwork/heimdall/bor"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/staking"
+	"github.com/maticnetwork/heimdall/types"
 )
 
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
@@ -116,14 +116,7 @@ func postProposeSpanHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.
 			uint64(time.Now().Unix()),
 		)
 
-		txBytes, err := helper.CreateTxBytes(msg)
-		if err != nil {
-			RestLogger.Error("Unable to create txBytes", "startBlock", m.StartBlock)
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		resp, err := helper.SendTendermintRequest(cliCtx, txBytes, helper.BroadcastAsync)
+		resp, err := helper.BroadcastMsgs(cliCtx, []sdk.Msg{msg})
 		if err != nil {
 			RestLogger.Error("Error while sending request to Tendermint", "error", err)
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())

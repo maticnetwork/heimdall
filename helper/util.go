@@ -76,6 +76,7 @@ func GetPkObjects(privKey crypto.PrivKey) (secp256k1.PrivKeySecp256k1, secp256k1
 	return privObject, pubObject
 }
 
+// GetPubObjects returns PubKeySecp256k1 public key
 func GetPubObjects(pubkey crypto.PubKey) secp256k1.PubKeySecp256k1 {
 	var pubObject secp256k1.PubKeySecp256k1
 	cdc.MustUnmarshalBinaryBare(pubkey.Bytes(), &pubObject)
@@ -103,26 +104,6 @@ func BytesToPubkey(pubKey []byte) secp256k1.PubKeySecp256k1 {
 	return pubkeyBytes
 }
 
-// CreateTxBytes creates tx bytes from Msg
-func CreateTxBytes(tx authTypes.StdTx) ([]byte, error) {
-	pulp := authTypes.GetPulpInstance()
-	txBytes, err := pulp.EncodeToBytes(tx)
-	if err != nil {
-		Logger.Error("Error generating TX Bytes", "error", err)
-		return []byte(""), err
-	}
-	return txBytes, nil
-}
-
-// SendTendermintRequest sends request to tendermint
-func SendTendermintRequest(cliCtx context.CLIContext, txBytes []byte, mode string) (sdk.TxResponse, error) {
-	Logger.Info("Broadcasting tx bytes to Tendermint", "txBytes", hex.EncodeToString(txBytes), "txHash", hex.EncodeToString(tmhash.Sum(txBytes[4:])))
-	if mode != "" {
-		cliCtx.BroadcastMode = mode
-	}
-	return cliCtx.BroadcastTx(txBytes)
-}
-
 // GetSigs returns sigs bytes from vote
 func GetSigs(votes []tmTypes.Vote) (sigs []byte) {
 	sort.Slice(votes, func(i, j int) bool {
@@ -143,49 +124,72 @@ func GetVoteBytes(votes []tmTypes.Vote, ctx sdk.Context) []byte {
 	return votes[0].SignBytes(ctx.ChainID())
 }
 
-// CreateAndSendTx creates message and sends tx
-// Used from cli- waits till transaction is included in block
-func CreateAndSendTx(cliCtx context.CLIContext, txBldr authTypes.TxBuilder, msgs []sdk.Msg) (err error) {
-	if cliCtx.GenerateOnly {
-		return PrintUnsignedStdTx(txBldr, cliCtx, msgs)
-	}
-
-	// return CompleteAndBroadcastTxCLI(txBldr, cliCtx, msgs)
-	// txBytes, err := CreateTxBytes(tx)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// resp, err := SendTendermintRequest(cliCtx, txBytes, BroadcastBlock)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// fmt.Printf("Transaction sent %v", resp.TxHash)
-	return nil
+// BroadcastMsgs creates transaction and broadcasts it
+func BroadcastMsgs(cliCtx context.CLIContext, msgs []sdk.Msg) (sdk.TxResponse, error) {
+	txBldr := authTypes.NewTxBuilderFromCLI().WithTxEncoder(authTypes.RLPTxEncoder(authTypes.GetPulpInstance()))
+	return BuildAndBroadcastMsgs(cliCtx, txBldr, msgs)
 }
 
-// CompleteAndBroadcastTxCLI implements a utility function that facilitates
+// BroadcastMsgsWithCLI creates message and sends tx
+// Used from cli- waits till transaction is included in block
+func BroadcastMsgsWithCLI(cliCtx context.CLIContext, msgs []sdk.Msg) error {
+	txBldr := authTypes.NewTxBuilderFromCLI().WithTxEncoder(authTypes.RLPTxEncoder(authTypes.GetPulpInstance()))
+
+	if cliCtx.GenerateOnly {
+		return PrintUnsignedStdTx(cliCtx, txBldr, msgs)
+	}
+
+	return BuildAndBroadcastMsgsWithCLI(cliCtx, txBldr, msgs)
+}
+
+// BuildAndBroadcastMsgs creates transaction and broadcasts it
+func BuildAndBroadcastMsgs(cliCtx context.CLIContext, txBldr authTypes.TxBuilder, msgs []sdk.Msg) (sdk.TxResponse, error) {
+	txBytes, err := GetSignedTxBytes(cliCtx, txBldr, msgs)
+	if err != nil {
+		return sdk.TxResponse{}, err
+	}
+
+	// broadcast to a Tendermint node
+	return BroadcastTxBytes(cliCtx, txBytes, "")
+}
+
+// BuildAndBroadcastMsgsWithCLI implements a utility function that facilitates
 // sending a series of messages in a signed transaction given a TxBuilder and a
 // QueryContext. It ensures that the account exists, has a proper number and
 // sequence set. In addition, it builds and signs a transaction with the
 // supplied messages. Finally, it broadcasts the signed transaction to a node.
-func CompleteAndBroadcastTxCLI(txBldr authTypes.TxBuilder, cliCtx context.CLIContext, msgs []sdk.Msg) error {
-	txBldr, err := PrepareTxBuilder(txBldr, cliCtx)
+func BuildAndBroadcastMsgsWithCLI(cliCtx context.CLIContext, txBldr authTypes.TxBuilder, msgs []sdk.Msg) error {
+	txBytes, err := GetSignedTxBytesWithCLI(cliCtx, txBldr, msgs)
 	if err != nil {
 		return err
+	}
+
+	// broadcast to a Tendermint node
+	res, err := BroadcastTxBytes(cliCtx, txBytes, BroadcastSync) // wait until tx included in block
+	if err != nil {
+		return err
+	}
+
+	return cliCtx.PrintOutput(res)
+}
+
+// GetSignedTxBytes returns signed tx bytes
+func GetSignedTxBytes(cliCtx context.CLIContext, txBldr authTypes.TxBuilder, msgs []sdk.Msg) ([]byte, error) {
+	txBldr, err := PrepareTxBuilder(cliCtx, txBldr)
+	if err != nil {
+		return nil, err
 	}
 
 	fromName := cliCtx.GetFromName()
 
 	if cliCtx.Simulate {
-		return nil
+		return nil, nil
 	}
 
 	if !cliCtx.SkipConfirm {
 		stdSignMsg, err := txBldr.BuildSignMsg(msgs)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		var json []byte
@@ -204,32 +208,69 @@ func CompleteAndBroadcastTxCLI(txBldr authTypes.TxBuilder, cliCtx context.CLICon
 		ok, err := client.GetConfirmation("confirm transaction before signing and broadcasting", buf)
 		if err != nil || !ok {
 			_, _ = fmt.Fprintf(os.Stderr, "%s\n", "cancelled transaction")
-			return err
+			return nil, err
 		}
 	}
 
 	passphrase, err := keys.GetPassphrase(fromName)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// build and sign the transaction
-	txBytes, err := txBldr.BuildAndSign(fromName, passphrase, msgs)
+	return txBldr.BuildAndSign(fromName, passphrase, msgs)
+}
+
+// GetSignedTxBytesWithCLI returns signed tx bytes
+func GetSignedTxBytesWithCLI(cliCtx context.CLIContext, txBldr authTypes.TxBuilder, msgs []sdk.Msg) ([]byte, error) {
+	txBldr, err := PrepareTxBuilder(cliCtx, txBldr)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	// broadcast to a Tendermint node
-	res, err := cliCtx.BroadcastTx(txBytes)
-	if err != nil {
-		return err
+	fromName := cliCtx.GetFromName()
+
+	if cliCtx.Simulate {
+		return nil, nil
 	}
 
-	return cliCtx.PrintOutput(res)
+	if !cliCtx.SkipConfirm {
+		stdSignMsg, err := txBldr.BuildSignMsg(msgs)
+		if err != nil {
+			return nil, err
+		}
+
+		var json []byte
+		if viper.GetBool(client.FlagIndentResponse) {
+			json, err = cliCtx.Codec.MarshalJSONIndent(stdSignMsg, "", "  ")
+			if err != nil {
+				panic(err)
+			}
+		} else {
+			json = cliCtx.Codec.MustMarshalJSON(stdSignMsg)
+		}
+
+		_, _ = fmt.Fprintf(os.Stderr, "%s\n\n", json)
+
+		buf := client.BufferStdin()
+		ok, err := client.GetConfirmation("confirm transaction before signing and broadcasting", buf)
+		if err != nil || !ok {
+			_, _ = fmt.Fprintf(os.Stderr, "%s\n", "cancelled transaction")
+			return nil, err
+		}
+	}
+
+	passphrase, err := keys.GetPassphrase(fromName)
+	if err != nil {
+		return nil, err
+	}
+
+	// build and sign the transaction
+	return txBldr.BuildAndSign(fromName, passphrase, msgs)
 }
 
 // PrepareTxBuilder populates a TxBuilder in preparation for the build of a Tx.
-func PrepareTxBuilder(txBldr authTypes.TxBuilder, cliCtx context.CLIContext) (authTypes.TxBuilder, error) {
+func PrepareTxBuilder(cliCtx context.CLIContext, txBldr authTypes.TxBuilder) (authTypes.TxBuilder, error) {
 	from := cliCtx.GetFromAddress()
 
 	accGetter := authTypes.NewAccountRetriever(cliCtx)
@@ -258,7 +299,7 @@ func PrepareTxBuilder(txBldr authTypes.TxBuilder, cliCtx context.CLIContext) (au
 }
 
 // PrintUnsignedStdTx builds an unsigned StdTx and prints it to os.Stdout.
-func PrintUnsignedStdTx(txBldr authTypes.TxBuilder, cliCtx context.CLIContext, msgs []sdk.Msg) error {
+func PrintUnsignedStdTx(cliCtx context.CLIContext, txBldr authTypes.TxBuilder, msgs []sdk.Msg) error {
 	stdTx, err := buildUnsignedStdTxOffline(txBldr, cliCtx, msgs)
 	if err != nil {
 		return err
@@ -271,6 +312,15 @@ func PrintUnsignedStdTx(txBldr authTypes.TxBuilder, cliCtx context.CLIContext, m
 
 	_, _ = fmt.Fprintf(cliCtx.Output, "%s\n", json)
 	return nil
+}
+
+// BroadcastTxBytes sends request to tendermint using CLI
+func BroadcastTxBytes(cliCtx context.CLIContext, txBytes []byte, mode string) (sdk.TxResponse, error) {
+	Logger.Info("Broadcasting tx bytes to Tendermint", "txBytes", hex.EncodeToString(txBytes), "txHash", hex.EncodeToString(tmhash.Sum(txBytes[4:])))
+	if mode != "" {
+		cliCtx.BroadcastMode = mode
+	}
+	return cliCtx.BroadcastTx(txBytes)
 }
 
 // TendermintTxDecode decodes transaction string and return base tx object

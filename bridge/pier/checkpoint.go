@@ -12,6 +12,7 @@ import (
 	"time"
 
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum"
 	ethCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -253,19 +254,16 @@ func (checkpointer *Checkpointer) sendRequest(newHeader *types.Header) {
 		checkpointer.Logger.Debug("Detected mainchain checkpoint,sending ACK", "HeimdallEnd", lastHeimdallCheckpoint.end, "ContractStart", lastHeimdallCheckpoint.start)
 		headerNumber := lastContractCheckpoint.currentHeaderBlock.Sub(lastContractCheckpoint.currentHeaderBlock, big.NewInt(int64(helper.GetConfig().ChildBlockInterval)))
 		msg := checkpoint.NewMsgCheckpointAck(headerNumber.Uint64(), uint64(time.Now().Unix()))
-		txBytes, err := helper.CreateTxBytes(msg)
-		if err != nil {
-			checkpointer.Logger.Error("Error while creating tx bytes", "error", err)
-			return
-		}
+
 		// send tendermint request
-		_, err = helper.SendTendermintRequest(checkpointer.cliCtx, txBytes, "")
+		_, err := helper.BroadcastMsgs(checkpointer.cliCtx, []sdk.Msg{msg})
 		if err != nil {
 			checkpointer.Logger.Error("Error while sending request to Tendermint", "error", err)
 			return
 		}
 		return
 	}
+
 	start := lastContractCheckpoint.start
 	end := lastContractCheckpoint.end
 
@@ -278,22 +276,15 @@ func (checkpointer *Checkpointer) sendRequest(newHeader *types.Header) {
 	checkpointer.Logger.Info("New checkpoint header created", "start", start, "end", end, "root", ethCommon.BytesToHash(root))
 
 	// TODO submit checkcoint
-	txBytes, err := helper.CreateTxBytes(
-		checkpoint.NewMsgCheckpointBlock(
-			ethCommon.BytesToAddress(helper.GetAddress()),
-			start,
-			end,
-			ethCommon.BytesToHash(root),
-			uint64(time.Now().Unix()),
-		),
+	msg := checkpoint.NewMsgCheckpointBlock(
+		ethCommon.BytesToAddress(helper.GetAddress()),
+		start,
+		end,
+		ethCommon.BytesToHash(root),
+		uint64(time.Now().Unix()),
 	)
 
-	if err != nil {
-		checkpointer.Logger.Error("Error while creating tx bytes", "error", err)
-		return
-	}
-
-	resp, err := helper.SendTendermintRequest(checkpointer.cliCtx, txBytes, "")
+	resp, err := helper.BroadcastMsgs(checkpointer.cliCtx, []sdk.Msg{msg})
 	if err != nil {
 		checkpointer.Logger.Error("Error while sending request to Tendermint", "error", err)
 		return

@@ -7,6 +7,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gorilla/mux"
@@ -62,14 +63,8 @@ func newValidatorJoinHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.H
 		// create new msg
 		msg := staking.NewMsgValidatorJoin(m.ID, m.SignerPubKey, common.HexToHash(m.TxHash))
 
-		txBytes, err := helper.CreateTxBytes(msg)
-		if err != nil {
-			RestLogger.Error("Unable to create txBytes", "ValidatorID", m.ID, "ValidatorPubKey", m.SignerPubKey)
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		resp, err := helper.SendTendermintRequest(cliCtx, txBytes, helper.BroadcastAsync)
+		// broadcast msgs
+		resp, err := helper.BroadcastMsgs(cliCtx, []sdk.Msg{msg})
 		if err != nil {
 			RestLogger.Error("Error while sending request to Tendermint", "error", err)
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -109,15 +104,7 @@ func newValidatorExitHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.H
 
 		msg := staking.NewMsgValidatorExit(m.ID, common.HexToHash(m.TxHash))
 
-		txBytes, err := helper.CreateTxBytes(msg)
-		if err != nil {
-			RestLogger.Error("Unable to create txBytes", "validatorID", m.ID)
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-
-			return
-		}
-
-		resp, err := helper.SendTendermintRequest(cliCtx, txBytes, helper.BroadcastAsync)
+		resp, err := helper.BroadcastMsgs(cliCtx, []sdk.Msg{msg})
 		if err != nil {
 			RestLogger.Error("Error while sending request to Tendermint", "error", err)
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -158,17 +145,9 @@ func newValidatorUpdateHandler(cdc *codec.Codec, cliCtx context.CLIContext) http
 		// create msg validator update
 		msg := staking.NewMsgValidatorUpdate(m.ID, m.NewSignerPubKey, m.NewAmount, common.HexToHash(m.TxHash))
 
-		txBytes, err := helper.CreateTxBytes(msg)
+		resp, err := helper.BroadcastMsgs(cliCtx, []sdk.Msg{msg})
 		if err != nil {
-			RestLogger.Error("Unable to create txBytes", "validatorID", m.ID, "newSignerPubKey", m.NewSignerPubKey)
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-
-			return
-		}
-
-		resp, err := helper.SendTendermintRequest(cliCtx, txBytes, helper.BroadcastAsync)
-		if err != nil {
-			RestLogger.Error("Error while sending request to Tendermint", "error", err, "validatorID", m.ID, "newSignerPubKey", m.NewSignerPubKey, "txBytes", txBytes)
+			RestLogger.Error("Error while sending request to Tendermint", "error", err, "validatorID", m.ID, "newSignerPubKey", m.NewSignerPubKey)
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 
 			return

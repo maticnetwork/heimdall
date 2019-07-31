@@ -7,6 +7,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/helper"
@@ -68,7 +69,7 @@ func GetSendCheckpointTx(cdc *codec.Codec) *cobra.Command {
 				uint64(time.Now().Unix()),
 			)
 
-			return helper.CreateAndSendTx(msg, cliCtx)
+			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
 		},
 	}
 	cmd.Flags().StringP(FlagProposerAddress, "p", helper.GetPubKey().Address().String(), "--proposer=<proposer-address>")
@@ -102,7 +103,7 @@ func GetCheckpointACKTx(cdc *codec.Codec) *cobra.Command {
 
 			msg := checkpoint.NewMsgCheckpointAck(HeaderBlock, uint64(time.Now().Unix()))
 
-			return helper.CreateAndSendTx(msg, cliCtx)
+			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
 		},
 	}
 
@@ -111,7 +112,7 @@ func GetCheckpointACKTx(cdc *codec.Codec) *cobra.Command {
 	return cmd
 }
 
-// send no-ack transaction
+// GetCheckpointNoACKTx send no-ack transaction
 func GetCheckpointNoACKTx(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "send-noack",
@@ -119,9 +120,11 @@ func GetCheckpointNoACKTx(cdc *codec.Codec) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
+			// create new checkpoint no-ack
 			msg := checkpoint.NewMsgCheckpointNoAck(uint64(time.Now().Unix()))
 
-			return helper.CreateAndSendTx(msg, cliCtx)
+			// broadcast messages
+			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
 		},
 	}
 	return cmd
