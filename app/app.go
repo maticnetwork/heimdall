@@ -11,6 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/gov"
+	"github.com/cosmos/cosmos-sdk/x/params"
 	ethCommon "github.com/ethereum/go-ethereum/common"
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
@@ -32,13 +33,16 @@ import (
 )
 
 const (
-	AppName                 = "Heimdall"
+	// AppName denotes app name
+	AppName = "Heimdall"
+	// ABCIPubKeyTypeSecp256k1 denotes pub key type
 	ABCIPubKeyTypeSecp256k1 = "secp256k1"
 	// internals
 	maxGasPerBlock   int64 = 10000000 // 10 Million
 	maxBytesPerBlock int64 = 22020096 // 21 MB
 )
 
+// HeimdallApp main heimdall app
 type HeimdallApp struct {
 	*bam.BaseApp
 	cdc *codec.Codec
@@ -50,9 +54,12 @@ type HeimdallApp struct {
 	keyStaking    *sdk.KVStoreKey
 	keyBor        *sdk.KVStoreKey
 	keyMain       *sdk.KVStoreKey
+	keyParams     *sdk.KVStoreKey
 	tKeyParams    *sdk.TransientStoreKey
 
-	accountKeeper    auth.AccountKeeper
+	accountKeeper auth.AccountKeeper
+	paramsKeeper  params.Keeper
+
 	checkpointKeeper checkpoint.Keeper
 	stakingKeeper    staking.Keeper
 	borKeeper        bor.Keeper
@@ -73,18 +80,29 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 
 	// create your application type
 	var app = &HeimdallApp{
-		cdc:           cdc,
-		BaseApp:       bam.NewBaseApp(AppName, logger, db, authTypes.RLPTxDecoder(pulp), baseAppOptions...),
-		keyMain:       sdk.NewKVStoreKey(bam.MainStoreKey),
-		keyAccount:    sdk.NewKVStoreKey(authTypes.StoreKey),
+		cdc:        cdc,
+		BaseApp:    bam.NewBaseApp(AppName, logger, db, authTypes.RLPTxDecoder(pulp), baseAppOptions...),
+		keyMain:    sdk.NewKVStoreKey(bam.MainStoreKey),
+		keyAccount: sdk.NewKVStoreKey(authTypes.StoreKey),
+		keyParams:  sdk.NewKVStoreKey("params"),
+		tKeyParams: sdk.NewTransientStoreKey("transient_params"),
+
 		keyGov:        sdk.NewKVStoreKey(gov.StoreKey),
 		keyCheckpoint: sdk.NewKVStoreKey(checkpointTypes.StoreKey),
 		keyStaking:    sdk.NewKVStoreKey(stakingTypes.StoreKey),
 		keyBor:        sdk.NewKVStoreKey(borTypes.StoreKey),
 	}
 
-	// app.masterKeeper = common.NewKeeper(app.cdc, app.keyMaster, app.keyStaker, app.keyCheckpoint, app.keyBor, common.DefaultCodespace)
-	// app.accountKeeper = auth.AccountKeeper
+	// define keepers
+	app.paramsKeeper = params.NewKeeper(cdc, app.keyParams, app.tKeyParams)
+
+	// account keeper
+	app.accountKeeper = auth.NewAccountKeeper(
+		app.cdc,
+		app.keyAccount, // target store
+		app.paramsKeeper.Subspace(authTypes.DefaultParamspace),
+		authTypes.ProtoBaseAccount, // prototype
+	)
 	app.stakingKeeper = staking.NewKeeper(app.cdc, app.keyStaking, common.DefaultCodespace)
 	app.checkpointKeeper = checkpoint.NewKeeper(app.cdc, app.stakingKeeper, app.keyCheckpoint, common.DefaultCodespace)
 	app.borKeeper = bor.NewKeeper(app.cdc, app.stakingKeeper, app.keyBor, common.DefaultCodespace)
@@ -100,6 +118,9 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.Router().AddRoute(stakingTypes.RouterKey, staking.NewHandler(app.stakingKeeper, &app.caller))
 	app.Router().AddRoute(borTypes.RouterKey, bor.NewHandler(app.borKeeper))
 
+	// query routes
+	app.QueryRouter().AddRoute(authTypes.QuerierRoute, auth.NewQuerier(app.accountKeeper))
+
 	// perform initialization logic
 	app.SetInitChainer(app.initChainer)
 	app.SetBeginBlocker(app.beginBlocker)
@@ -107,7 +128,15 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.SetAnteHandler(auth.NewAnteHandler())
 
 	// mount the multistore and load the latest state
-	app.MountStores(app.keyMain, app.keyCheckpoint, app.keyStaking, app.keyBor)
+	app.MountStores(
+		app.keyMain,
+		app.keyAccount,
+		app.keyCheckpoint,
+		app.keyStaking,
+		app.keyBor,
+		app.keyParams,
+		app.tKeyParams,
+	)
 	err = app.LoadLatestVersion(app.keyMain)
 	if err != nil {
 		cmn.Exit(err.Error())

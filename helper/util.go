@@ -181,6 +181,9 @@ func GetSignedTxBytes(cliCtx context.CLIContext, txBldr authTypes.TxBuilder, msg
 	}
 
 	fromName := cliCtx.GetFromName()
+	if fromName == "" {
+		return txBldr.BuildAndSign(GetPrivKey(), msgs)
+	}
 
 	if cliCtx.Simulate {
 		return nil, nil
@@ -218,7 +221,7 @@ func GetSignedTxBytes(cliCtx context.CLIContext, txBldr authTypes.TxBuilder, msg
 	}
 
 	// build and sign the transaction
-	return txBldr.BuildAndSign(fromName, passphrase, msgs)
+	return txBldr.BuildAndSignWithPassphrase(fromName, passphrase, msgs)
 }
 
 // GetSignedTxBytesWithCLI returns signed tx bytes
@@ -229,6 +232,9 @@ func GetSignedTxBytesWithCLI(cliCtx context.CLIContext, txBldr authTypes.TxBuild
 	}
 
 	fromName := cliCtx.GetFromName()
+	if fromName == "" {
+		return txBldr.BuildAndSign(GetPrivKey(), msgs)
+	}
 
 	if cliCtx.Simulate {
 		return nil, nil
@@ -265,13 +271,15 @@ func GetSignedTxBytesWithCLI(cliCtx context.CLIContext, txBldr authTypes.TxBuild
 		return nil, err
 	}
 
-	// build and sign the transaction
-	return txBldr.BuildAndSign(fromName, passphrase, msgs)
+	return txBldr.BuildAndSignWithPassphrase(fromName, passphrase, msgs)
 }
 
 // PrepareTxBuilder populates a TxBuilder in preparation for the build of a Tx.
 func PrepareTxBuilder(cliCtx context.CLIContext, txBldr authTypes.TxBuilder) (authTypes.TxBuilder, error) {
 	from := cliCtx.GetFromAddress()
+	if len(from[:]) == 0 {
+		from = GetAddress()
+	}
 
 	accGetter := authTypes.NewAccountRetriever(cliCtx)
 	if err := accGetter.EnsureExists(from); err != nil {

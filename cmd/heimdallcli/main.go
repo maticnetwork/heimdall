@@ -10,7 +10,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/version"
@@ -21,6 +20,7 @@ import (
 	tmTypes "github.com/tendermint/tendermint/types"
 
 	"github.com/maticnetwork/heimdall/app"
+	bor "github.com/maticnetwork/heimdall/bor/cli"
 	ck "github.com/maticnetwork/heimdall/checkpoint"
 	checkpoint "github.com/maticnetwork/heimdall/checkpoint/cli"
 	"github.com/maticnetwork/heimdall/helper"
@@ -58,38 +58,46 @@ func main() {
 	// add query/post commands (custom to binary)
 	rootCmd.AddCommand(
 		client.GetCommands(
+			// checkpoint related cli get commands
 			checkpoint.GetCheckpointBuffer(cdc),
 			checkpoint.GetLastNoACK(cdc),
 			checkpoint.GetHeaderFromIndex(cdc),
 			checkpoint.GetCheckpointCount(cdc),
+
+			// staking related cli get commands
 			staking.GetValidatorInfo(cdc),
 			staking.GetCurrentValSet(cdc),
 		)...,
 	)
 	rootCmd.AddCommand(
 		client.PostCommands(
+			// checkpoint related cli post commands
 			checkpoint.GetSendCheckpointTx(cdc),
 			checkpoint.GetCheckpointACKTx(cdc),
 			checkpoint.GetCheckpointNoACKTx(cdc),
+
+			// staking related cli post commands
 			staking.GetValidatorExitTx(cdc),
 			staking.GetValidatorJoinTx(cdc),
 			staking.GetValidatorUpdateTx(cdc),
+
+			// bor related cli post commands
+			bor.PostSendProposeSpanTx(cdc),
 		)...,
 	)
-	rootCmd.AddCommand(ExportCmd(ctx, cdc))
+
+	// export cmds
+	rootCmd.AddCommand(
+		client.LineBreak,
+		client.LineBreak,
+		ExportCmd(ctx, cdc),
+	)
 
 	// add proxy, version and key info
 	rootCmd.AddCommand(
 		client.LineBreak,
 		client.LineBreak,
 		version.VersionCmd,
-	)
-
-	// keys command
-	rootCmd.AddCommand(
-		client.LineBreak,
-		client.LineBreak,
-		keys.Commands(),
 	)
 
 	// bind with-heimdall-config config with root cmd

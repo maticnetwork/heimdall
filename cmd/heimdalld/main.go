@@ -484,7 +484,7 @@ func writeGenesisFile(genesisFile, chainID string, appState json.RawMessage) err
 	return genDoc.SaveAs(genesisFile)
 }
 
-// initialise node and priv validator files
+// InitializeNodeValidatorFiles initializes node and priv validator files
 func InitializeNodeValidatorFiles(
 	config *cfg.Config) (nodeID string, valPubKey crypto.PubKey, priv crypto.PrivKey, err error,
 ) {

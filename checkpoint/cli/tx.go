@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-// send checkpoint transaction
+// GetSendCheckpointTx send checkpoint transaction
 func GetSendCheckpointTx(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "send-checkpoint",
