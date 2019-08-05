@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/hex"
-	"fmt"
 	"math/big"
 	"strconv"
 	"time"
@@ -23,6 +22,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/maticnetwork/heimdall/contracts/depositmanager"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
+	"github.com/maticnetwork/heimdall/staking"
 
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 	"github.com/maticnetwork/heimdall/helper"
@@ -42,6 +42,8 @@ const (
 type Syncer struct {
 	// Base service
 	common.BaseService
+
+	qConnector QueueConnector
 
 	// storage client
 	storageClient *leveldb.DB
@@ -67,10 +69,9 @@ type Syncer struct {
 }
 
 // NewSyncer returns new service object for syncing events
-func NewSyncer() *Syncer {
+func NewSyncer(connector QueueConnector) *Syncer {
 	// create logger
 	logger := Logger.With("module", ChainSyncer)
-
 	// root chain instance
 	rootchainInstance, err := helper.GetRootChainInstance()
 	if err != nil {
@@ -99,10 +100,10 @@ func NewSyncer() *Syncer {
 
 	// creating syncer object
 	syncer := &Syncer{
-		storageClient: getBridgeDBInstance(viper.GetString(BridgeDBFlag)),
-		cliContext:    cliCtx,
-		abis:          abis,
-
+		storageClient:        getBridgeDBInstance(viper.GetString(BridgeDBFlag)),
+		cliContext:           cliCtx,
+		abis:                 abis,
+		qConnector:           connector,
 		MainClient:           helper.GetMainClient(),
 		RootChainInstance:    rootchainInstance,
 		StakeManagerInstance: stakeManagerInstance,
@@ -270,7 +271,6 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 	} else if len(logs) > 0 {
 		syncer.Logger.Debug("New logs found", "numberOfLogs", len(logs))
 	}
-	fmt.Printf("new logs %v", logs)
 
 	// log
 	for _, vLog := range logs {
@@ -364,11 +364,9 @@ func (syncer *Syncer) processUnstakeInitEvent(eventName string, abiObject *abi.A
 			"deactivatonEpoch", event.DeactivationEpoch,
 			"amount", event.Amount,
 		)
-
-		// TODO figure out how to obtain txhash
 		// send validator exit message
-		// msg := staking.NewMsgValidatorExit(event.ValidatorId.Uint64())
-		//syncer.sendTx(eventName, msg)
+		msg := staking.NewMsgValidatorExit(event.ValidatorId.Uint64(), vLog.TxHash)
+		syncer.qConnector.DispatchToHeimdall(msg)
 	}
 }
 
@@ -377,7 +375,6 @@ func (syncer *Syncer) processSignerChangeEvent(eventName string, abiObject *abi.
 	if err := UnpackLog(abiObject, event, eventName, vLog); err != nil {
 		logEventParseError(syncer.Logger, eventName, err)
 	} else {
-		// TOOD validator signer changed
 		syncer.Logger.Debug(
 			"New event found",
 			"event", eventName,
@@ -385,6 +382,9 @@ func (syncer *Syncer) processSignerChangeEvent(eventName string, abiObject *abi.
 			"newSigner", event.NewSigner.Hex(),
 			"oldSigner", event.OldSigner.Hex(),
 		)
+		// One way to automate this would be
+		// if our pubkey matches newSigner
+		// send tx
 	}
 }
 
