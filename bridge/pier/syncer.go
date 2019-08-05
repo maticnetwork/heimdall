@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/hex"
+	"fmt"
 	"math/big"
 	"strconv"
 	"time"
@@ -86,9 +87,11 @@ func NewSyncer() *Syncer {
 
 	rootchainABI, _ := helper.GetRootChainABI()
 	stakemanagerABI, _ := helper.GetStakeManagerABI()
+	depositManagerABI, _ := helper.GetDepositManagerABI()
 	abis := []*abi.ABI{
 		&rootchainABI,
 		&stakemanagerABI,
+		&depositManagerABI,
 	}
 
 	cliCtx := cliContext.NewCLIContext()
@@ -255,6 +258,7 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 		Addresses: []ethCommon.Address{
 			helper.GetRootChainAddress(),
 			helper.GetStakeManagerAddress(),
+			helper.GetDepositManagerAddress(),
 		},
 	}
 
@@ -266,6 +270,7 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 	} else if len(logs) > 0 {
 		syncer.Logger.Debug("New logs found", "numberOfLogs", len(logs))
 	}
+	fmt.Printf("new logs %v", logs)
 
 	// log
 	for _, vLog := range logs {
@@ -395,6 +400,7 @@ func (syncer *Syncer) processDepositEvent(eventName string, abiObject *abi.ABI, 
 			"depositCount", event.DepositCount,
 			"token", event.Token.String(),
 		)
+
 		// TODO dispatch to heimdall
 	}
 }

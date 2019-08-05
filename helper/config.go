@@ -19,6 +19,7 @@ import (
 
 	"math/big"
 
+	"github.com/maticnetwork/heimdall/contracts/depositmanager"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 )
@@ -73,11 +74,12 @@ func init() {
 
 // Configuration represents heimdall config
 type Configuration struct {
-	MainRPCUrl          string `json:"mainRPCUrl"`          // RPC endpoint for main chain
-	MaticRPCUrl         string `json:"maticRPCUrl"`         // RPC endpoint for matic chain
-	StakeManagerAddress string `json:"stakeManagerAddress"` // Stake manager address on main chain
-	RootchainAddress    string `json:"rootchainAddress"`    // Rootchain contract address on main chain
-	ChildBlockInterval  uint64 `json:"childBlockInterval"`  // Difference between header index of 2 child blocks submitted on main chain
+	MainRPCUrl            string `json:"mainRPCUrl"`            // RPC endpoint for main chain
+	MaticRPCUrl           string `json:"maticRPCUrl"`           // RPC endpoint for matic chain
+	StakeManagerAddress   string `json:"stakeManagerAddress"`   // Stake manager address on main chain
+	RootchainAddress      string `json:"rootchainAddress"`      // Rootchain contract address on main chain
+	DepositManagerAddress string `json:"depositManagerAddress"` // Deposit Manager contract address on main chain
+	ChildBlockInterval    uint64 `json:"childBlockInterval"`    // Difference between header index of 2 child blocks submitted on main chain
 
 	// config related to bridge
 	CheckpointerPollInterval int           `json:"checkpointerPollInterval"` // Poll interval for checkpointer service to send new checkpoints or missing ACK
@@ -109,6 +111,11 @@ var pubObject secp256k1.PubKeySecp256k1
 
 // Logger stores global logger object
 var Logger logger.Logger
+
+// Contracts
+// var RootChain types.Contract
+// var StakeManager types.Contract
+// var DepositManager types.Contract
 
 // InitHeimdallConfig initializes with viper config (from heimdall configuration)
 func InitHeimdallConfig(homeDir string) {
@@ -180,6 +187,18 @@ func GetConfig() Configuration {
 	return conf
 }
 
+// func initContracts() error {
+// 	rootChainInstance, err := rootchain.NewRootchain(GetRootChainAddress(), mainChainClient)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	rootchainABI, err := abi.JSON(strings.NewReader(rootchain.RootchainABI))
+// 	if err != nil {
+// 		return err
+// 	}
+// 	RootChain = types.NewContract("rootchain", common.HexToAddress(GetConfig().RootchainAddress), rootchainABI, 0, rootChainInstance)
+// }
+
 //
 // Root chain
 //
@@ -226,6 +245,30 @@ func GetStakeManagerInstance() (*stakemanager.Stakemanager, error) {
 // GetStakeManagerABI returns ABI for StakeManager contract
 func GetStakeManagerABI() (abi.ABI, error) {
 	return abi.JSON(strings.NewReader(stakemanager.StakemanagerABI))
+}
+
+//
+// Deposit manager
+//
+
+// GetStakeManagerAddress returns StakeManager contract address for selected base chain
+func GetDepositManagerAddress() common.Address {
+	return common.HexToAddress(GetConfig().DepositManagerAddress)
+}
+
+// GetStakeManagerInstance returns StakeManager contract instance for selected base chain
+func GetDepositManagerInstance() (*depositmanager.Depositmanager, error) {
+	depositManagerInstance, err := depositmanager.NewDepositmanager(GetDepositManagerAddress(), mainChainClient)
+	if err != nil {
+		Logger.Error("Unable to create stakemanager instance", "error", err)
+	}
+
+	return depositManagerInstance, err
+}
+
+// GetDepositManagerABI returns ABI for DepositManager contract
+func GetDepositManagerABI() (abi.ABI, error) {
+	return abi.JSON(strings.NewReader(depositmanager.DepositmanagerABI))
 }
 
 //
