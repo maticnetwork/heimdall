@@ -8,6 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	crkeys "github.com/cosmos/cosmos-sdk/crypto/keys"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/crypto"
 	ethCrypto "github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -214,7 +215,8 @@ func (bldr TxBuilder) SignStdTxWithPassphrase(name, passphrase string, stdTx Std
 
 // MakeSignature builds a StdSignature for given a StdSignMsg.
 func MakeSignature(privKey secp256k1.PrivKeySecp256k1, msg StdSignMsg) (sig StdSignature, err error) {
-	return ethCrypto.Sign(msg.Bytes(), privKey[:])
+	data := crypto.Keccak256(msg.Bytes())
+	return ethCrypto.Sign(data, privKey[:])
 }
 
 // MakeSignatureWithKeybase builds a StdSignature given keybase, key name, passphrase, and a StdSignMsg.

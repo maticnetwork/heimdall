@@ -2,6 +2,7 @@ package bor
 
 import (
 	"bytes"
+	"fmt"
 	"sort"
 	"strconv"
 
@@ -28,6 +29,7 @@ func NewHandler(k Keeper) sdk.Handler {
 // HandleMsgProposeSpan handles proposeSpan msg
 func HandleMsgProposeSpan(ctx sdk.Context, msg MsgProposeSpan, k Keeper, logger tmlog.Logger) sdk.Result {
 	logger.Debug("Proposing span", "TxData", msg)
+	fmt.Println("Proposing span", "TxData", msg.StartBlock, msg.EndBlock)
 
 	// check if last span is up or if greater diff than threshold is found between validator set
 	lastSpan, err := k.GetLastSpan(ctx)

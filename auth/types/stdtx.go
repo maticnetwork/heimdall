@@ -3,6 +3,7 @@ package types
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/rlp"
 )
 
 var (
@@ -16,6 +17,13 @@ type StdTx struct {
 	Msg       sdk.Msg      `json:"msg"`
 	Signature StdSignature `json:"signature"`
 	Memo      string       `json:"memo"`
+}
+
+// StdTxRaw is a standard way to wrap a RLP Msg with Fee and Signatures.
+type StdTxRaw struct {
+	Msg       rlp.RawValue
+	Signature StdSignature
+	Memo      string
 }
 
 // NewStdTx is function to get new std tx object

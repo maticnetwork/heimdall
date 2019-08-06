@@ -10,6 +10,8 @@ import (
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/gov"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	ethCommon "github.com/ethereum/go-ethereum/common"
@@ -19,7 +21,7 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	tmTypes "github.com/tendermint/tendermint/types"
 
-	"github.com/maticnetwork/heimdall/auth"
+	hmAuth "github.com/maticnetwork/heimdall/auth"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/bor"
 	borTypes "github.com/maticnetwork/heimdall/bor/types"
@@ -58,6 +60,8 @@ type HeimdallApp struct {
 	tKeyParams    *sdk.TransientStoreKey
 
 	accountKeeper auth.AccountKeeper
+	bankKeeper    bank.Keeper
+	govKeeper     gov.Keeper
 	paramsKeeper  params.Keeper
 
 	checkpointKeeper checkpoint.Keeper
@@ -78,6 +82,13 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	// create and register pulp codec
 	pulp := authTypes.GetPulpInstance()
 
+	// set prefix
+	config := sdk.GetConfig()
+	config.SetBech32PrefixForAccount(hmTypes.PrefixAccAddr, hmTypes.PrefixAccPub)
+	config.SetBech32PrefixForValidator(hmTypes.PrefixValAddr, hmTypes.PrefixValPub)
+	config.SetBech32PrefixForConsensusNode(hmTypes.PrefixConsAddr, hmTypes.PrefixConsPub)
+	config.Seal()
+
 	// create your application type
 	var app = &HeimdallApp{
 		cdc:        cdc,
@@ -87,7 +98,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		keyParams:  sdk.NewKVStoreKey("params"),
 		tKeyParams: sdk.NewTransientStoreKey("transient_params"),
 
-		keyGov:        sdk.NewKVStoreKey(gov.StoreKey),
+		// keyGov:        sdk.NewKVStoreKey(gov.StoreKey),
 		keyCheckpoint: sdk.NewKVStoreKey(checkpointTypes.StoreKey),
 		keyStaking:    sdk.NewKVStoreKey(stakingTypes.StoreKey),
 		keyBor:        sdk.NewKVStoreKey(borTypes.StoreKey),
@@ -101,8 +112,23 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		app.cdc,
 		app.keyAccount, // target store
 		app.paramsKeeper.Subspace(authTypes.DefaultParamspace),
-		authTypes.ProtoBaseAccount, // prototype
+		auth.ProtoBaseAccount, // prototype
 	)
+
+	// bank keeper
+	app.bankKeeper = bank.NewBaseKeeper(
+		app.accountKeeper,
+		app.paramsKeeper.Subspace(bank.DefaultParamspace),
+		bank.DefaultCodespace,
+	)
+
+	// app.govKeeper = gov.NewKeeper(
+	// 	app.cdc,
+	// 	app.keyGov,
+	// 	app.paramsKeeper, app.paramsKeeper.Subspace(gov.DefaultParamspace), app.bankKeeper, &stakingKeeper,
+	// 	gov.DefaultCodespace,
+	// )
+
 	app.stakingKeeper = staking.NewKeeper(app.cdc, app.keyStaking, common.DefaultCodespace)
 	app.checkpointKeeper = checkpoint.NewKeeper(app.cdc, app.stakingKeeper, app.keyCheckpoint, common.DefaultCodespace)
 	app.borKeeper = bor.NewKeeper(app.cdc, app.stakingKeeper, app.keyBor, common.DefaultCodespace)
@@ -114,6 +140,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.caller = contractCallerObj
 
 	// register message routes
+	app.Router().AddRoute(bank.RouterKey, bank.NewHandler(app.bankKeeper))
 	app.Router().AddRoute(checkpointTypes.RouterKey, checkpoint.NewHandler(app.checkpointKeeper, &app.caller))
 	app.Router().AddRoute(stakingTypes.RouterKey, staking.NewHandler(app.stakingKeeper, &app.caller))
 	app.Router().AddRoute(borTypes.RouterKey, bor.NewHandler(app.borKeeper))
@@ -125,7 +152,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.SetInitChainer(app.initChainer)
 	app.SetBeginBlocker(app.beginBlocker)
 	app.SetEndBlocker(app.endBlocker)
-	app.SetAnteHandler(auth.NewAnteHandler())
+	app.SetAnteHandler(hmAuth.NewAnteHandler())
 
 	// mount the multistore and load the latest state
 	app.MountStores(
@@ -150,6 +177,8 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 func MakeCodec() *codec.Codec {
 	cdc := codec.New()
 
+	auth.RegisterCodec(cdc)
+	// bank.RegisterCodec(cdc)
 	codec.RegisterCrypto(cdc)
 	sdk.RegisterCodec(cdc)
 
@@ -293,6 +322,8 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 	if err != nil {
 		panic(err)
 	}
+
+	// genesis
 	var isGenesis bool
 	if len(genesisState.CurrentValSet.Validators) == 0 {
 		isGenesis = true
@@ -300,6 +331,15 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 		isGenesis = false
 	}
 
+	// accounts
+	// Load the genesis accounts
+	for _, genacc := range genesisState.Accounts {
+		acc := app.accountKeeper.NewAccountWithAddress(ctx, genacc.Address[:])
+		acc.SetCoins(genacc.Coins)
+		app.accountKeeper.SetAccount(ctx, acc)
+	}
+
+	// validator set
 	valSet, valUpdates := app.GetValidatorsFromGenesis(ctx, &genesisState, genesisState.AckCount)
 	if len(valSet.Validators) == 0 {
 		panic(errors.New("no valid validators found"))

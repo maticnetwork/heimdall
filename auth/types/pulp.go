@@ -71,15 +71,26 @@ func (p *Pulp) EncodeToBytes(tx StdTx) ([]byte, error) {
 
 // DecodeBytes decodes bytes to msg
 func (p *Pulp) DecodeBytes(data []byte) (interface{}, error) {
+	var txRaw StdTxRaw
+	if err := rlp.DecodeBytes(data[PulpHashLength:], &txRaw); err != nil {
+		return nil, err
+	}
+
 	rtype := p.typeInfos[hex.EncodeToString(data[:PulpHashLength])]
-	tx := reflect.New(rtype).Interface()
-	err := rlp.DecodeBytes(data[PulpHashLength:], tx)
-	if err != nil {
+	newMsg := reflect.New(rtype).Interface()
+	if err := rlp.DecodeBytes(txRaw.Msg[:], newMsg); err != nil {
 		return nil, err
 	}
 
 	// change pointer to non-pointer
-	vptr := reflect.New(reflect.TypeOf(tx).Elem()).Elem()
-	vptr.Set(reflect.ValueOf(tx).Elem())
-	return vptr.Interface(), nil
+	vptr := reflect.New(reflect.TypeOf(newMsg).Elem()).Elem()
+	vptr.Set(reflect.ValueOf(newMsg).Elem())
+	// return vptr.Interface(), nil
+
+	result := StdTx{
+		Msg:       vptr.Interface().(sdk.Msg),
+		Signature: txRaw.Signature,
+		Memo:      txRaw.Memo,
+	}
+	return result, nil
 }

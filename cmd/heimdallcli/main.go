@@ -12,6 +12,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -34,8 +35,34 @@ var (
 	rootCmd = &cobra.Command{
 		Use:   "heimdallcli",
 		Short: "Heimdall light-client",
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			// initialise config
+			initTendermintViperConfig(cmd)
+			return nil
+		},
 	}
 )
+
+func initTendermintViperConfig(cmd *cobra.Command) {
+	tendermintNode, _ := cmd.Flags().GetString(helper.NodeFlag)
+	homeValue, _ := cmd.Flags().GetString(helper.HomeFlag)
+	withHeimdallConfigValue, _ := cmd.Flags().GetString(helper.WithHeimdallConfigFlag)
+
+	// set to viper
+	viper.Set(helper.NodeFlag, tendermintNode)
+	viper.Set(helper.HomeFlag, homeValue)
+	viper.Set(helper.WithHeimdallConfigFlag, withHeimdallConfigValue)
+
+	// start heimdall config
+	helper.InitHeimdallConfig("")
+
+	// set prefix
+	config := sdk.GetConfig()
+	config.SetBech32PrefixForAccount(hmTypes.PrefixAccAddr, hmTypes.PrefixAccPub)
+	config.SetBech32PrefixForValidator(hmTypes.PrefixValAddr, hmTypes.PrefixValPub)
+	config.SetBech32PrefixForConsensusNode(hmTypes.PrefixConsAddr, hmTypes.PrefixConsPub)
+	config.Seal()
+}
 
 func main() {
 	// disable sorting
@@ -107,7 +134,7 @@ func main() {
 	)
 
 	// prepare and add flags
-	executor := cli.PrepareMainCmd(rootCmd, "HD", os.ExpandEnv("$HOME/.heimdallcli"))
+	executor := cli.PrepareMainCmd(rootCmd, "HD", os.ExpandEnv("$HOME/.heimdalld"))
 	err := executor.Execute()
 	if err != nil {
 		// Note: Handle with #870
@@ -115,7 +142,7 @@ func main() {
 	}
 }
 
-// Exports a state dump file
+// Exportcmd a state dump file
 func ExportCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "export-heimdall",

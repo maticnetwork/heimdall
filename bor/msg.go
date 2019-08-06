@@ -42,7 +42,7 @@ func NewMsgProposeSpan(startBlock uint64, endBlock uint64, validators []types.Mi
 
 // Type returns message type
 func (msg MsgProposeSpan) Type() string {
-	return "ProposeSpan"
+	return "propose-span"
 }
 
 // Route returns route for message
