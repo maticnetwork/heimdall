@@ -7,37 +7,33 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
+	"github.com/cosmos/cosmos-sdk/store"
 	ethCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
-	cfg "github.com/tendermint/tendermint/config"
-	"github.com/tendermint/tendermint/p2p"
-
-	"github.com/tendermint/tendermint/privval"
-
 	"github.com/spf13/viper"
 	abci "github.com/tendermint/tendermint/abci/types"
+	cfg "github.com/tendermint/tendermint/config"
+	"github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/common"
 	dbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
+	"github.com/tendermint/tendermint/p2p"
+	"github.com/tendermint/tendermint/privval"
 	tmTypes "github.com/tendermint/tendermint/types"
 
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/helper"
 	hmserver "github.com/maticnetwork/heimdall/server"
-	"github.com/tendermint/tendermint/crypto"
-
-	"strings"
-
-	"github.com/cosmos/cosmos-sdk/store"
 	stakingcli "github.com/maticnetwork/heimdall/staking/cli"
 	hmTypes "github.com/maticnetwork/heimdall/types"
-	"github.com/tendermint/tendermint/crypto/secp256k1"
 )
 
 var (
@@ -139,7 +135,7 @@ func newAccountCmd() *cobra.Command {
 	}
 }
 
-// initialise files required to start heimdall
+// InitCmd initialises files required to start heimdall
 func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init",
@@ -198,7 +194,7 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			newPubkey := hmTypes.NewPubKey(validatorPublicKey[:])
 
 			// create validator
-			validator := app.GenesisValidator{
+			validator := hmTypes.Validator{
 				ID:         hmTypes.NewValidatorID(uint64(validatorID)),
 				PubKey:     newPubkey,
 				StartEpoch: 0,
@@ -207,12 +203,10 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			}
 
 			// create genesis state
-			appState := &app.GenesisState{
-				GenValidators:  []app.GenesisValidator{validator},
-				SpanDuration:   helper.DefaultSpanDuration,
-				SprintDuration: helper.DefaultSprintDuration,
-			}
-
+			appState := app.NewDefaultGenesisState()
+			// set new validator
+			appState.StakingData.Validators = []hmTypes.Validator{validator}
+			// app state json
 			appStateJSON, err := json.Marshal(appState)
 			if err != nil {
 				return err
@@ -272,7 +266,7 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 			nodeIDs := make([]string, totalValidators)
 			valPubKeys := make([]crypto.PubKey, totalValidators)
 			privKeys := make([]crypto.PrivKey, totalValidators)
-			validators := make([]app.GenesisValidator, totalValidators)
+			validators := make([]hmTypes.Validator, totalValidators)
 			genFiles := make([]string, totalValidators)
 			var err error
 			// create chain id
@@ -314,7 +308,7 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 				newPubkey := hmTypes.NewPubKey(validatorPublicKey[:])
 
 				// create validator
-				validators[i] = app.GenesisValidator{
+				validators[i] = hmTypes.Validator{
 					ID:         hmTypes.NewValidatorID(uint64(startID + int64(i))),
 					PubKey:     newPubkey,
 					StartEpoch: 0,
@@ -360,10 +354,10 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 			for i := 0; i < totalValidators; i++ {
 				populatePersistentPeersInConfigAndWriteIt(config)
 			}
-			appState := &app.GenesisState{
-				GenValidators: validators,
-				SpanDuration:  helper.DefaultSpanDuration,
-			}
+
+			// new app state
+			appState := app.NewDefaultGenesisState()
+			appState.StakingData.Validators = validators
 
 			appStateJSON, err := json.Marshal(appState)
 			if err != nil {

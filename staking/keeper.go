@@ -8,6 +8,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/ethereum/go-ethereum/common"
 	cmn "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
@@ -27,21 +28,34 @@ var (
 
 // Keeper stores all related data
 type Keeper struct {
-	cdc        *codec.Codec
-	StakingKey sdk.StoreKey
-
-	// codespace
-	Codespace sdk.CodespaceType
+	cdc *codec.Codec
+	// The (unexposed) keys used to access the stores from the Context.
+	storeKey sdk.StoreKey
+	// codespacecodespace
+	codespace sdk.CodespaceType
+	// param space
+	paramSpace params.Subspace
 }
 
 // NewKeeper create new keeper
-func NewKeeper(cdc *codec.Codec, stakingKey sdk.StoreKey, codespace sdk.CodespaceType) Keeper {
+func NewKeeper(
+	cdc *codec.Codec,
+	storeKey sdk.StoreKey,
+	paramSpace params.Subspace,
+	codespace sdk.CodespaceType,
+) Keeper {
 	keeper := Keeper{
 		cdc:        cdc,
-		Codespace:  codespace,
-		StakingKey: stakingKey,
+		storeKey:   storeKey,
+		paramSpace: paramSpace,
+		codespace:  codespace,
 	}
 	return keeper
+}
+
+// Codespace returns the codespace
+func (k Keeper) Codespace() sdk.CodespaceType {
+	return k.codespace
 }
 
 // GetValidatorKey drafts the validator key for addresses
@@ -61,7 +75,7 @@ func (k *Keeper) AddValidator(ctx sdk.Context, validator types.Validator) error 
 	//	// return error
 	//}
 
-	store := ctx.KVStore(k.StakingKey)
+	store := ctx.KVStore(k.storeKey)
 
 	bz, err := types.MarshallValidator(k.cdc, validator)
 	if err != nil {
@@ -79,7 +93,7 @@ func (k *Keeper) AddValidator(ctx sdk.Context, validator types.Validator) error 
 
 // GetValidatorInfo returns validator
 func (k *Keeper) GetValidatorInfo(ctx sdk.Context, address []byte) (validator types.Validator, err error) {
-	store := ctx.KVStore(k.StakingKey)
+	store := ctx.KVStore(k.storeKey)
 
 	// check if validator exists
 	key := GetValidatorKey(address)
@@ -129,7 +143,7 @@ func (k *Keeper) GetAllValidators(ctx sdk.Context) (validators []*types.Validato
 
 // IterateValidatorsAndApplyFn interate validators and apply the given function.
 func (k *Keeper) IterateValidatorsAndApplyFn(ctx sdk.Context, f func(validator types.Validator) error) {
-	store := ctx.KVStore(k.StakingKey)
+	store := ctx.KVStore(k.storeKey)
 
 	// get validator iterator
 	iterator := sdk.KVStorePrefixIterator(store, ValidatorsKey)
@@ -188,7 +202,7 @@ func (k *Keeper) UpdateSigner(ctx sdk.Context, newSigner common.Address, newPubk
 // UpdateValidatorSetInStore adds validator set to store
 func (k *Keeper) UpdateValidatorSetInStore(ctx sdk.Context, newValidatorSet types.ValidatorSet) error {
 	// TODO check if we may have to delay this by 1 height to sync with tendermint validator updates
-	store := ctx.KVStore(k.StakingKey)
+	store := ctx.KVStore(k.storeKey)
 
 	// marshall validator set
 	bz, err := k.cdc.MarshalBinaryBare(newValidatorSet)
@@ -203,7 +217,7 @@ func (k *Keeper) UpdateValidatorSetInStore(ctx sdk.Context, newValidatorSet type
 
 // GetValidatorSet returns current Validator Set from store
 func (k *Keeper) GetValidatorSet(ctx sdk.Context) (validatorSet types.ValidatorSet) {
-	store := ctx.KVStore(k.StakingKey)
+	store := ctx.KVStore(k.storeKey)
 	// get current validator set from store
 	bz := store.Get(CurrentValidatorSetKey)
 	// unmarhsall
@@ -248,13 +262,13 @@ func (k *Keeper) GetCurrentProposer(ctx sdk.Context) *types.Validator {
 
 // SetValidatorIDToSignerAddr sets mapping for validator ID to signer address
 func (k *Keeper) SetValidatorIDToSignerAddr(ctx sdk.Context, valID types.ValidatorID, signerAddr common.Address) {
-	store := ctx.KVStore(k.StakingKey)
+	store := ctx.KVStore(k.storeKey)
 	store.Set(GetValidatorMapKey(valID.Bytes()), signerAddr.Bytes())
 }
 
 // GetSignerFromValidator get signer address from validator ID
 func (k *Keeper) GetSignerFromValidatorID(ctx sdk.Context, valID types.ValidatorID) (common.Address, bool) {
-	store := ctx.KVStore(k.StakingKey)
+	store := ctx.KVStore(k.storeKey)
 	key := GetValidatorMapKey(valID.Bytes())
 	// check if validator address has been mapped
 	if !store.Has(key) {
@@ -283,17 +297,17 @@ func (k *Keeper) SetLastUpdated(ctx sdk.Context, valID types.ValidatorID, blckNu
 	// get validator
 	validator, ok := k.GetValidatorFromValID(ctx, valID)
 	if !ok {
-		return cmn.ErrInvalidMsg(k.Codespace, "unable to fetch validator", "ID", valID)
+		return cmn.ErrInvalidMsg(k.Codespace(), "unable to fetch validator", "ID", valID)
 	}
 	// make sure  new block num > old
 	if blckNum.Cmp(validator.LastUpdated) != 1 {
-		return cmn.ErrOldTx(k.Codespace)
+		return cmn.ErrOldTx(k.Codespace())
 	}
 	validator.LastUpdated = blckNum
 	err := k.AddValidator(ctx, validator)
 	if err != nil {
 		cmn.StakingLogger.Debug("Unable to update last updated", "Error", err, "Validator", validator.String())
-		return cmn.ErrInvalidMsg(k.Codespace, "unable to add validator", "ID", valID, "Error", err)
+		return cmn.ErrInvalidMsg(k.Codespace(), "unable to add validator", "ID", valID, "Error", err)
 	}
 	return nil
 }
@@ -310,7 +324,7 @@ func (k *Keeper) GetLastUpdated(ctx sdk.Context, valID types.ValidatorID) (updat
 
 // GetACKCount returns current ACK count
 func (k *Keeper) GetACKCount(ctx sdk.Context) uint64 {
-	store := ctx.KVStore(k.StakingKey)
+	store := ctx.KVStore(k.storeKey)
 	// check if ack count is there
 	if store.Has(ACKCountKey) {
 		// get current ACK count
@@ -326,7 +340,7 @@ func (k *Keeper) GetACKCount(ctx sdk.Context) uint64 {
 
 // UpdateACKCountWithValue updates ACK with value
 func (k *Keeper) UpdateACKCountWithValue(ctx sdk.Context, value uint64) {
-	store := ctx.KVStore(k.StakingKey)
+	store := ctx.KVStore(k.storeKey)
 
 	// convert
 	ackCount := []byte(strconv.FormatUint(value, 10))
@@ -337,7 +351,7 @@ func (k *Keeper) UpdateACKCountWithValue(ctx sdk.Context, value uint64) {
 
 // UpdateACKCount updates ACK count by 1
 func (k *Keeper) UpdateACKCount(ctx sdk.Context) {
-	store := ctx.KVStore(k.StakingKey)
+	store := ctx.KVStore(k.storeKey)
 
 	// get current ACK Count
 	ACKCount := k.GetACKCount(ctx)
