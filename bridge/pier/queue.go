@@ -1,11 +1,17 @@
 package pier
 
 import (
-	"log"
+	"github.com/tendermint/tendermint/libs/log"
 
+	"github.com/cosmos/cosmos-sdk/client"
+	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/streadway/amqp"
+)
+
+const (
+	connector = "queue-connector"
 )
 
 type QueueConnector struct {
@@ -13,15 +19,23 @@ type QueueConnector struct {
 	HeimdallQueue   string
 	BorQueue        string
 	CheckpointQueue string
+	cliContext      cliContext.CLIContext
+	Logger          log.Logger
 }
 
 // NewQueueConnector creates a connector object which can be used to connect/send/consume bytes from queue
 func NewQueueConnector(dialer string, heimdallQ string, borQ string, checkpointq string) QueueConnector {
+	logger := Logger.With("module", connector)
+
+	cliCtx := cliContext.NewCLIContext()
+	cliCtx.BroadcastMode = client.BroadcastAsync
 	return QueueConnector{
 		AmqpDailer:      dialer,
 		HeimdallQueue:   heimdallQ,
 		BorQueue:        borQ,
 		CheckpointQueue: checkpointq,
+		cliContext:      cliCtx,
+		Logger:          logger,
 	}
 }
 
@@ -75,13 +89,14 @@ func (qc *QueueConnector) DispatchToHeimdall(msg sdk.Msg) error {
 			ContentType: "text/plain",
 			Body:        txBytes,
 		})
-	log.Printf(" [x] Sent %s", txBytes)
+	qc.Logger.Info("Dispatched message to heimdall", "MsgType", msg.Type())
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
+// ConsumeHeimdallQ consumes messages from heimdall queue
 func (qc *QueueConnector) ConsumeHeimdallQ() error {
 	conn, err := amqp.Dial(qc.AmqpDailer)
 	if err != nil {
@@ -123,11 +138,17 @@ func (qc *QueueConnector) ConsumeHeimdallQ() error {
 
 	go func() {
 		for d := range msgs {
-			log.Printf("Received a message: %s", d.Body)
+			qc.Logger.Debug("Sending transaction to heimdall", "TxBytes", d.Body)
+			resp, err := helper.SendTendermintRequest(qc.cliContext, d.Body, helper.BroadcastAsync)
+			if err != nil {
+				qc.Logger.Error("Unable to send transaction to heimdall", "error", err)
+			} else {
+				qc.Logger.Info("Sent to heimdall", "Response", resp.String())
+			}
 		}
 	}()
 
-	log.Printf(" [*] Waiting for messages. To exit press CTRL+C")
+	qc.Logger.Info("Starting queue consumer")
 	<-forever
 	return nil
 }

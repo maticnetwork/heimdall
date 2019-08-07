@@ -9,6 +9,8 @@
 package pier
 
 import (
+	"log"
+
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/tendermint/tendermint/libs/common"
@@ -33,7 +35,6 @@ func NewConsumerService(connector QueueConnector) *ConsumerService {
 		storageClient: getBridgeDBInstance(viper.GetString(BridgeDBFlag)),
 		qConnector:    connector,
 	}
-
 	consumerService.BaseService = *common.NewBaseService(logger, NoackService, consumerService)
 	return consumerService
 }
@@ -41,14 +42,16 @@ func NewConsumerService(connector QueueConnector) *ConsumerService {
 // OnStart starts new block subscription
 func (consumer *ConsumerService) OnStart() error {
 	consumer.BaseService.OnStart() // Always call the overridden method.
-	consumer.qConnector.ConsumeHeimdallQ()
+	if err := consumer.qConnector.ConsumeHeimdallQ(); err != nil {
+		log.Fatalf("Cannot consume")
+	}
 	return nil
 }
 
 // OnStop stops all necessary go routines
 func (consumer *ConsumerService) OnStop() {
-	consumer.BaseService.OnStop() // Always call the overridden method.
-
+	// Always call the overridden method.
+	consumer.BaseService.OnStop()
 	// close db
 	closeBridgeDBInstance()
 }

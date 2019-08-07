@@ -17,9 +17,9 @@ var startCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		qConnector := pier.NewQueueConnector("amqp://guest:guest@localhost:5672/", "hq", "bq", "cq")
 		services := [...]common.Service{
-			pier.NewCheckpointer(),
+			// pier.NewCheckpointer(),
 			pier.NewSyncer(qConnector),
-			pier.NewAckService(),
+			// pier.NewAckService(),
 			pier.NewConsumerService(qConnector),
 		}
 		// sync group
