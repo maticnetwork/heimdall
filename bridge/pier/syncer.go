@@ -20,12 +20,14 @@ import (
 	"github.com/tendermint/tendermint/libs/common"
 
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/contracts/depositmanager"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/staking"
 
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 	"github.com/maticnetwork/heimdall/helper"
+	hmtypes "github.com/maticnetwork/heimdall/types"
 )
 
 const (
@@ -328,8 +330,8 @@ func (syncer *Syncer) processCheckpointEvent(eventName string, abiObject *abi.AB
 		)
 
 		// create msg checkpoint ack message
-		// msg := checkpoint.NewMsgCheckpointAck(event.Number.Uint64(), uint64(time.Now().Unix()))
-		// syncer.sendTx(eventName, msg)
+		msg := checkpoint.NewMsgCheckpointAck(event.Number.Uint64(), uint64(time.Now().Unix()))
+		syncer.qConnector.DispatchToHeimdall(msg)
 	}
 }
 
@@ -347,6 +349,10 @@ func (syncer *Syncer) processStakedEvent(eventName string, abiObject *abi.ABI, v
 			"activatonEpoch", event.ActivatonEpoch,
 			"amount", event.Amount,
 		)
+		if bytes.Compare(event.User.Bytes(), helper.GetPubKey().Address().Bytes()) == 0 {
+			msg := staking.NewMsgValidatorJoin(event.ValidatorId.Uint64(), hmtypes.NewPubKey(helper.GetPubKey().Bytes()), vLog.TxHash)
+			syncer.qConnector.DispatchToHeimdall(msg)
+		}
 	}
 }
 
@@ -382,9 +388,10 @@ func (syncer *Syncer) processSignerChangeEvent(eventName string, abiObject *abi.
 			"newSigner", event.NewSigner.Hex(),
 			"oldSigner", event.OldSigner.Hex(),
 		)
-		// One way to automate this would be
-		// if our pubkey matches newSigner
-		// send tx
+		// if bytes.Compare(event.NewSigner.Bytes(), helper.GetPubKey().Address().Bytes()) == 0 {
+		// 	msg := staking.NewMsgValidatorUpdate(event.ValidatorId.Uint64(), hmtypes.NewPubKey(helper.GetPubKey().Bytes()), vLog.TxHash)
+		// 	syncer.qConnector.DispatchToHeimdall(msg)
+		// }
 	}
 }
 
