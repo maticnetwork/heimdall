@@ -9,8 +9,6 @@
 package pier
 
 import (
-	"log"
-
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/tendermint/tendermint/libs/common"
@@ -43,7 +41,7 @@ func NewConsumerService(connector QueueConnector) *ConsumerService {
 func (consumer *ConsumerService) OnStart() error {
 	consumer.BaseService.OnStart() // Always call the overridden method.
 	if err := consumer.qConnector.ConsumeHeimdallQ(); err != nil {
-		log.Fatalf("Cannot consume")
+		return err
 	}
 	return nil
 }

@@ -17,7 +17,7 @@ var startCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		qConnector := pier.NewQueueConnector("amqp://guest:guest@localhost:5672/", "hq", "bq", "cq")
 		services := [...]common.Service{
-			// pier.NewCheckpointer(),
+			pier.NewCheckpointer(qConnector),
 			pier.NewSyncer(qConnector),
 			// pier.NewAckService(),
 			pier.NewConsumerService(qConnector),
@@ -45,6 +45,7 @@ var startCmd = &cobra.Command{
 		for _, service := range services {
 			go func(serv common.Service) {
 				defer wg.Done()
+				// TODO handle error while starting service
 				serv.Start()
 				<-serv.Quit()
 			}(service)

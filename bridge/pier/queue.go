@@ -15,12 +15,20 @@ const (
 )
 
 type QueueConnector struct {
-	AmqpDailer      string
-	HeimdallQueue   string
-	BorQueue        string
+	// URL for connecting to AMQP
+	AmqpDailer string
+	// Queue for type sdk.Msg ie transactions that need to be sent to heimdall
+	// Eg: ValidatorJoin, ValidatorExit, Checkpoint
+	HeimdallQueue string
+	// Queue for sending transactions to Bor
+	// Eg: CommitSpan, Deposit Tx
+	BorQueue string
+	// Queue for sending and managing checkpoint related stuff
+	// Eg: CheckpointTxHash, Sending checkpoint on mainchain
 	CheckpointQueue string
-	cliContext      cliContext.CLIContext
-	Logger          log.Logger
+
+	cliContext cliContext.CLIContext
+	Logger     log.Logger
 }
 
 // NewQueueConnector creates a connector object which can be used to connect/send/consume bytes from queue
@@ -47,11 +55,43 @@ func (qc *QueueConnector) DispatchToBor() {
 
 // DispatchToEth dispatches transactions to Ethereum chain
 // contains checkpoint, validator slashing etc type transactions
-func (qc *QueueConnector) DispatchToEth() {
+func (qc *QueueConnector) DispatchToEth(txHash string) error {
+	conn, err := amqp.Dial(qc.AmqpDailer)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+	ch, err := conn.Channel()
+	if err != nil {
+		return err
+	}
+	defer ch.Close()
 
+	q, err := ch.QueueDeclare(
+		qc.CheckpointQueue, // name
+		false,              // durable
+		false,              // delete when unused
+		false,              // exclusive
+		false,              // no-wait
+		nil,                // arguments
+	)
+	if err != nil {
+		return err
+	}
+	err = ch.Publish(
+		"",     // exchange
+		q.Name, // routing key
+		false,  // mandatory
+		false,  // immediate
+		amqp.Publishing{
+			ContentType: "text/plain",
+			Body:        []byte(txHash),
+		})
+
+	return nil
 }
 
-// DispatchToEth dispatches transactions to Ethereum chain
+// DispatchToHeimdall dispatches transactions to Ethereum chain
 // contains validator joined, validator updated etc type transactions
 func (qc *QueueConnector) DispatchToHeimdall(msg sdk.Msg) error {
 	conn, err := amqp.Dial(qc.AmqpDailer)
@@ -144,11 +184,19 @@ func (qc *QueueConnector) ConsumeHeimdallQ() error {
 				qc.Logger.Error("Unable to send transaction to heimdall", "error", err)
 			} else {
 				qc.Logger.Info("Sent to heimdall", "Response", resp.String())
+				// TODO send tx hash to CheckpointQ
+				qc.DispatchToEth(resp.TxHash)
 			}
 		}
 	}()
-
 	qc.Logger.Info("Starting queue consumer")
 	<-forever
+	return nil
+}
+
+// ConsumeCheckpointQ consumes checkpoint tx hash from heimdall and sends prevotes to contract
+func (qc *QueueConnector) ConsumeCheckpointQ() error {
+	// On confirmation/rejection for tx
+	// Send checkpoint to rootchain incase
 	return nil
 }

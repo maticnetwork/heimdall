@@ -50,16 +50,25 @@ type Checkpointer struct {
 	cancelSubscription context.CancelFunc
 	// header listener subscription
 	cancelHeaderProcess context.CancelFunc
+	// queue connnector
+	qConnector QueueConnector
 
 	cliCtx cliContext.CLIContext
 }
 
-type ContractCheckpoint struct {
-	start              uint64
-	end                uint64
-	currentHeaderBlock *big.Int
-	err                error
-}
+type (
+	ContractCheckpoint struct {
+		start              uint64
+		end                uint64
+		currentHeaderBlock *big.Int
+		err                error
+	}
+	HeimdallCheckpoint struct {
+		start uint64
+		end   uint64
+		found bool
+	}
+)
 
 func NewContractCheckpoint(_start uint64, _end uint64, _currentHeaderBlock *big.Int, _err error) ContractCheckpoint {
 	return ContractCheckpoint{
@@ -68,12 +77,6 @@ func NewContractCheckpoint(_start uint64, _end uint64, _currentHeaderBlock *big.
 		currentHeaderBlock: _currentHeaderBlock,
 		err:                _err,
 	}
-}
-
-type HeimdallCheckpoint struct {
-	start uint64
-	end   uint64
-	found bool
 }
 
 // Creates new heimdall checkpoint object
@@ -86,7 +89,7 @@ func NewHeimdallCheckpoint(_start uint64, _end uint64, _found bool) HeimdallChec
 }
 
 // NewCheckpointer returns new service object
-func NewCheckpointer() *Checkpointer {
+func NewCheckpointer(connector QueueConnector) *Checkpointer {
 	// create logger
 	logger := Logger.With("module", HeimdallCheckpointer)
 
@@ -108,6 +111,7 @@ func NewCheckpointer() *Checkpointer {
 		MainClient:        helper.GetMainClient(),
 		RootChainInstance: rootchainInstance,
 		HeaderChannel:     make(chan *types.Header),
+		qConnector:        connector,
 		cliCtx:            cliCtx,
 	}
 
@@ -219,21 +223,24 @@ func (checkpointer *Checkpointer) startSubscription(ctx context.Context, subscri
 
 func (checkpointer *Checkpointer) sendRequest(newHeader *types.Header) {
 	checkpointer.Logger.Debug("New block detected", "blockNumber", newHeader.Number)
+	// fetch contract state
 	contractState := make(chan ContractCheckpoint, 1)
 	var lastContractCheckpoint ContractCheckpoint
+	// fetch heimdall state
 	heimdallState := make(chan HeimdallCheckpoint, 1)
 	var lastHeimdallCheckpoint HeimdallCheckpoint
 
 	var wg sync.WaitGroup
 	wg.Add(2)
 
-	checkpointer.Logger.Debug("Collecting all required data")
+	checkpointer.Logger.Debug("Collecting contract and heimdall checkpoint state ")
 	go checkpointer.genHeaderDetailContract(newHeader.Number.Uint64(), &wg, contractState)
 	go checkpointer.getLastCheckpointStore(&wg, heimdallState)
 
+	// wait for state collection
 	wg.Wait()
 
-	checkpointer.Logger.Info("Done waiting", "contract", contractState, "heimdall", heimdallState)
+	checkpointer.Logger.Info("Fetched contract and heimdall checkpoint state", "contract", contractState, "heimdall", heimdallState)
 	lastContractCheckpoint = <-contractState
 	if lastContractCheckpoint.err != nil {
 		checkpointer.Logger.Error("Error fetching details from contract ", "Error", lastContractCheckpoint.err)
@@ -252,18 +259,18 @@ func (checkpointer *Checkpointer) sendRequest(newHeader *types.Header) {
 	if lastHeimdallCheckpoint.end+1 == lastContractCheckpoint.start {
 		checkpointer.Logger.Debug("Detected mainchain checkpoint,sending ACK", "HeimdallEnd", lastHeimdallCheckpoint.end, "ContractStart", lastHeimdallCheckpoint.start)
 		headerNumber := lastContractCheckpoint.currentHeaderBlock.Sub(lastContractCheckpoint.currentHeaderBlock, big.NewInt(int64(helper.GetConfig().ChildBlockInterval)))
+		// create checkpoint message
 		msg := checkpoint.NewMsgCheckpointAck(headerNumber.Uint64(), uint64(time.Now().Unix()))
-		txBytes, err := helper.CreateTxBytes(msg)
-		if err != nil {
-			checkpointer.Logger.Error("Error while creating tx bytes", "error", err)
+		if err := checkpointer.qConnector.DispatchToHeimdall(msg); err != nil {
+			checkpointer.Logger.Error("Unable to dispatch checkpoint to heimdall", "Msg", msg)
 			return
 		}
 		// send tendermint request
-		_, err = helper.SendTendermintRequest(checkpointer.cliCtx, txBytes, "")
-		if err != nil {
-			checkpointer.Logger.Error("Error while sending request to Tendermint", "error", err)
-			return
-		}
+		// _, err = helper.SendTendermintRequest(checkpointer.cliCtx, txBytes, "")
+		// if err != nil {
+		// 	checkpointer.Logger.Error("Error while sending request to Tendermint", "error", err)
+		// 	return
+		// }
 		return
 	}
 	start := lastContractCheckpoint.start
