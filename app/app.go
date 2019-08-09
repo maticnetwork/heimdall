@@ -609,7 +609,7 @@ func PrepareAndSendCheckpoint(ctx sdk.Context, ck checkpoint.Keeper, sk staking.
 	}
 
 	// Get extra data
-	extraData := GetExtraData(ctx, _checkpoint)
+	extraData := GetExtraData(ctx, *_checkpoint)
 
 	//fetch current child block from rootchain contract
 	lastblock, err := caller.CurrentChildBlock()

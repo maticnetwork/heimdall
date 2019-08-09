@@ -185,7 +185,7 @@ func (k *Keeper) FlushCheckpointBuffer(ctx sdk.Context) {
 }
 
 // GetCheckpointFromBuffer gets checkpoint in buffer
-func (k *Keeper) GetCheckpointFromBuffer(ctx sdk.Context) (types.CheckpointBlockHeader, error) {
+func (k *Keeper) GetCheckpointFromBuffer(ctx sdk.Context) (*types.CheckpointBlockHeader, error) {
 	store := ctx.KVStore(k.storeKey)
 
 	// checkpoint block header
@@ -194,10 +194,10 @@ func (k *Keeper) GetCheckpointFromBuffer(ctx sdk.Context) (types.CheckpointBlock
 	if store.Has(BufferCheckpointKey) {
 		// Get checkpoint and unmarshall
 		err := k.cdc.UnmarshalBinaryBare(store.Get(BufferCheckpointKey), &checkpoint)
-		return checkpoint, err
+		return &checkpoint, err
 	}
 
-	return checkpoint, errors.New("No checkpoint found in buffer")
+	return nil, errors.New("No checkpoint found in buffer")
 }
 
 // SetLastNoAck set last no-ack object

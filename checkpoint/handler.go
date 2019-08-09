@@ -176,7 +176,7 @@ func HandleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k Keeper, con
 	}
 
 	// add checkpoint to headerBlocks
-	k.AddCheckpoint(ctx, msg.HeaderBlock, headerBlock)
+	k.AddCheckpoint(ctx, msg.HeaderBlock, *headerBlock)
 	logger.Info("Checkpoint added to store", "headerBlock", headerBlock.String())
 
 	// flush buffer

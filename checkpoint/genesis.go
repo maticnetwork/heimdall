@@ -82,7 +82,7 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 func ExportGenesis(ctx sdk.Context, keeper Keeper) GenesisState {
 	bufferedCheckpoint, _ := keeper.GetCheckpointFromBuffer(ctx)
 	return NewGenesisState(
-		&bufferedCheckpoint,
+		bufferedCheckpoint,
 		keeper.GetCheckpointCache(ctx, CheckpointCacheKey),
 		keeper.GetCheckpointCache(ctx, CheckpointACKCacheKey),
 		keeper.GetLastNoAck(ctx),
