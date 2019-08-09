@@ -171,6 +171,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 
 	// query routes
 	app.QueryRouter().AddRoute(authTypes.QuerierRoute, auth.NewQuerier(app.accountKeeper))
+	app.QueryRouter().AddRoute(auth.QuerierRoute, auth.NewQuerier(app.accountKeeper))
 
 	// perform initialization logic
 	app.SetInitChainer(app.initChainer)

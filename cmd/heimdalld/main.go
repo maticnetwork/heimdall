@@ -14,6 +14,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/store"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -50,9 +51,15 @@ const nodeDirPerm = 0755
 
 // ValidatorAccountFormatter helps to print local validator account information
 type ValidatorAccountFormatter struct {
-	Address string `json:"address"`
-	PrivKey string `json:"priv_key"`
-	PubKey  string `json:"pub_key"`
+	Address          string `json:"address" yaml:"address"`
+	PrivKey          string `json:"priv_key" yaml:"priv_key"`
+	PubKey           string `json:"pub_key" yaml:"pub_key"`
+	AccountAddress   string `json:"account_address" yaml:"account_address"`
+	AccountPubKey    string `json:"account_pubkey" yaml:"account_pubkey"`
+	ValidatorAddress string `json:"validator_address" yaml:"validator_address"`
+	ValidatorPubKey  string `json:"validator_pubkey" yaml:"validator_pubkey"`
+	ConsensusAddress string `json:"consensus_address" yaml:"consensus_address"`
+	ConsensusPubKey  string `json:"consensus_pubkey" yaml:"consensus_pubkey"`
 }
 
 func main() {
@@ -114,17 +121,29 @@ func newAccountCmd() *cobra.Command {
 			// init heimdall config
 			helper.InitHeimdallConfig("")
 
+			// set prefix
+			config := sdk.GetConfig()
+			config.SetBech32PrefixForAccount(hmTypes.PrefixAccAddr, hmTypes.PrefixAccPub)
+			config.SetBech32PrefixForValidator(hmTypes.PrefixValAddr, hmTypes.PrefixValPub)
+			config.SetBech32PrefixForConsensusNode(hmTypes.PrefixConsAddr, hmTypes.PrefixConsPub)
+
 			// get private and public keys
 			privObject := helper.GetPrivKey()
 			pubObject := helper.GetPubKey()
 
 			account := &ValidatorAccountFormatter{
-				Address: "0x" + hex.EncodeToString(pubObject.Address().Bytes()),
-				PrivKey: "0x" + hex.EncodeToString(privObject[:]),
-				PubKey:  "0x" + hex.EncodeToString(pubObject[:]),
+				Address:          ethCommon.BytesToAddress(pubObject.Address().Bytes()).String(),
+				PrivKey:          "0x" + hex.EncodeToString(privObject[:]),
+				PubKey:           "0x" + hex.EncodeToString(pubObject[:]),
+				AccountAddress:   sdk.AccAddress(pubObject.Address().Bytes()).String(),
+				AccountPubKey:    sdk.MustBech32ifyAccPub(pubObject),
+				ValidatorAddress: sdk.ValAddress(pubObject.Address().Bytes()).String(),
+				ValidatorPubKey:  sdk.MustBech32ifyValPub(pubObject),
+				ConsensusAddress: sdk.ConsAddress(pubObject.Address().Bytes()).String(),
+				ConsensusPubKey:  sdk.MustBech32ifyConsPub(pubObject),
 			}
 
-			b, err := json.Marshal(&account)
+			b, err := json.MarshalIndent(account, "", "    ")
 			if err != nil {
 				panic(err)
 			}
@@ -319,9 +338,15 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 				var privObject secp256k1.PrivKeySecp256k1
 				cdc.MustUnmarshalBinaryBare(privKeys[i].Bytes(), &privObject)
 				signers[i] = ValidatorAccountFormatter{
-					Address: ethCommon.BytesToAddress(valPubKeys[i].Address().Bytes()).String(),
-					PubKey:  newPubkey.String(),
-					PrivKey: "0x" + hex.EncodeToString(privObject[:]),
+					Address:          ethCommon.BytesToAddress(valPubKeys[i].Address().Bytes()).String(),
+					PubKey:           newPubkey.String(),
+					PrivKey:          "0x" + hex.EncodeToString(privObject[:]),
+					AccountAddress:   sdk.AccAddress(valPubKeys[i].Address().Bytes()).String(),
+					AccountPubKey:    sdk.MustBech32ifyAccPub(valPubKeys[i]),
+					ValidatorAddress: sdk.ValAddress(valPubKeys[i].Address().Bytes()).String(),
+					ValidatorPubKey:  sdk.MustBech32ifyValPub(valPubKeys[i]),
+					ConsensusAddress: sdk.ConsAddress(valPubKeys[i].Address().Bytes()).String(),
+					ConsensusPubKey:  sdk.MustBech32ifyConsPub(valPubKeys[i]),
 				}
 
 				heimdallConf := helper.Configuration{

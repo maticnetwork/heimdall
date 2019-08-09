@@ -8,12 +8,19 @@ import (
 	"path/filepath"
 
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/rpc"
+	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
+	at "github.com/cosmos/cosmos-sdk/x/auth"
+	authCmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
+	bankCmd "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
+	ethCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
@@ -73,53 +80,15 @@ func main() {
 	// the below functions and eliminate global vars, like we do
 	// with the cdc.
 
-	// add standard rpc, and tx commands
-	//rpc.AddCommands(rootCmd)
-	rootCmd.AddCommand(client.LineBreak)
-	//tx.AddCommands(rootCmd, cdc)
-	rootCmd.AddCommand(client.LineBreak)
-
 	// add query/post commands (custom to binary)
 	rootCmd.AddCommand(
-		client.GetCommands(
-			// checkpoint related get commands
-			checkpoint.GetCheckpointBuffer(cdc),
-			checkpoint.GetLastNoACK(cdc),
-			checkpoint.GetHeaderFromIndex(cdc),
-			checkpoint.GetCheckpointCount(cdc),
-
-			// staking related get commands
-			staking.GetValidatorInfo(cdc),
-			staking.GetCurrentValSet(cdc),
-		)...,
-	)
-	rootCmd.AddCommand(
-		client.PostCommands(
-			// checkpoint related cli post commands
-			checkpoint.GetSendCheckpointTx(cdc),
-			checkpoint.GetCheckpointACKTx(cdc),
-			checkpoint.GetCheckpointNoACKTx(cdc),
-
-			// staking related cli post commands
-			staking.GetValidatorExitTx(cdc),
-			staking.GetValidatorJoinTx(cdc),
-			staking.GetValidatorUpdateTx(cdc),
-
-			// bor related cli post commands
-			bor.PostSendProposeSpanTx(cdc),
-		)...,
-	)
-
-	// export cmds
-	rootCmd.AddCommand(
 		client.LineBreak,
+		queryCmd(cdc),
+		txCmd(cdc),
 		client.LineBreak,
-		ExportCmd(ctx, cdc),
-	)
-
-	// add proxy, version and key info
-	rootCmd.AddCommand(
-		client.LineBreak,
+		exportCmd(ctx, cdc),
+		convertAddressToHexCmd(cdc),
+		convertHexToAddressCmd(cdc),
 		client.LineBreak,
 		version.VersionCmd,
 	)
@@ -139,8 +108,109 @@ func main() {
 	}
 }
 
-// ExportCmd a state dump file
-func ExportCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
+func queryCmd(cdc *amino.Codec) *cobra.Command {
+	queryCmd := &cobra.Command{
+		Use:     "query",
+		Aliases: []string{"q"},
+		Short:   "Querying subcommands",
+	}
+
+	queryCmd.AddCommand(
+		rpc.ValidatorCommand(cdc),
+		rpc.BlockCommand(),
+		tx.SearchTxCmd(cdc),
+		tx.QueryTxCmd(cdc),
+		client.LineBreak,
+		authCmd.GetAccountCmd(at.StoreKey, cdc),
+	)
+
+	queryCmd.AddCommand(
+		// get commands
+		client.GetCommands(
+			// checkpoint related get commands
+			checkpoint.GetCheckpointBuffer(cdc),
+			checkpoint.GetLastNoACK(cdc),
+			checkpoint.GetHeaderFromIndex(cdc),
+			checkpoint.GetCheckpointCount(cdc),
+
+			// staking related get commands
+			staking.GetValidatorInfo(cdc),
+			staking.GetCurrentValSet(cdc),
+		)...,
+	)
+
+	return queryCmd
+}
+
+func txCmd(cdc *amino.Codec) *cobra.Command {
+	txCmd := &cobra.Command{
+		Use:   "tx",
+		Short: "Transactions subcommands",
+	}
+
+	txCmd.AddCommand(
+		bankCmd.SendTxCmd(cdc),
+		client.LineBreak,
+		authCmd.GetSignCommand(cdc),
+		tx.GetBroadcastCommand(cdc),
+		tx.GetEncodeCommand(cdc),
+		client.LineBreak,
+	)
+
+	txCmd.AddCommand(
+		client.PostCommands(
+			// checkpoint related cli post commands
+			checkpoint.GetSendCheckpointTx(cdc),
+			checkpoint.GetCheckpointACKTx(cdc),
+			checkpoint.GetCheckpointNoACKTx(cdc),
+
+			// staking related cli post commands
+			staking.GetValidatorExitTx(cdc),
+			staking.GetValidatorJoinTx(cdc),
+			staking.GetValidatorUpdateTx(cdc),
+
+			// bor related cli post commands
+			bor.PostSendProposeSpanTx(cdc),
+		)...,
+	)
+
+	return txCmd
+}
+
+func convertAddressToHexCmd(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "address-to-hex [address]",
+		Short: "Convert address to hex",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			key, err := sdk.AccAddressFromBech32(args[0])
+			if err != nil {
+				return err
+			}
+
+			fmt.Println("Hex:", ethCommon.BytesToAddress(key).String())
+			return nil
+		},
+	}
+	return client.GetCommands(cmd)[0]
+}
+
+func convertHexToAddressCmd(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "hex-to-address [hex]",
+		Short: "Convert hex to address",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			address := ethCommon.HexToAddress(args[0])
+			fmt.Println("Address:", sdk.AccAddress(address.Bytes()).String())
+			return nil
+		},
+	}
+	return client.GetCommands(cmd)[0]
+}
+
+// exportCmd a state dump file
+func exportCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "export-heimdall",
 		Short: "Export genesis file with state-dump",
@@ -182,6 +252,10 @@ func ExportCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(client.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
 	return cmd
 }
+
+//
+// Internal functions
+//
 
 func writeGenesisFile(genesisFile, chainID string, appState json.RawMessage) error {
 	genDoc := tmTypes.GenesisDoc{

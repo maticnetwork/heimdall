@@ -11,10 +11,10 @@ import (
 	"github.com/spf13/viper"
 )
 
-// get validator information via address
+// GetValidatorInfo validator information via address
 func GetValidatorInfo(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "get-validator-info",
+		Use:   "validator-info",
 		Short: "show validator information via validator address",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -47,10 +47,10 @@ func GetValidatorInfo(cdc *codec.Codec) *cobra.Command {
 	return cmd
 }
 
-// get validator information via address
+// GetCurrentValSet validator information via address
 func GetCurrentValSet(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "get-current-valset",
+		Use:   "current-validator-set",
 		Short: "show current validator set",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
