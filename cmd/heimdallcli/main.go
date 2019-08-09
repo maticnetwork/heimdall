@@ -2,15 +2,21 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/cli"
+	"github.com/tendermint/tendermint/libs/common"
+	"github.com/tendermint/tendermint/libs/log"
 	tmTypes "github.com/tendermint/tendermint/types"
 
 	"github.com/maticnetwork/heimdall/app"
@@ -52,7 +58,7 @@ func initTendermintViperConfig(cmd *cobra.Command) {
 	config.SetBech32PrefixForAccount(hmTypes.PrefixAccAddr, hmTypes.PrefixAccPub)
 	config.SetBech32PrefixForValidator(hmTypes.PrefixValAddr, hmTypes.PrefixValPub)
 	config.SetBech32PrefixForConsensusNode(hmTypes.PrefixConsAddr, hmTypes.PrefixConsPub)
-	config.Seal()
+	// config.Seal()
 }
 
 func main() {
@@ -61,7 +67,7 @@ func main() {
 
 	// get the codec
 	cdc := app.MakeCodec()
-	// ctx := server.NewDefaultContext()
+	ctx := server.NewDefaultContext()
 
 	// TODO: Setup keybase, viper object, etc. to be passed into
 	// the below functions and eliminate global vars, like we do
@@ -76,13 +82,13 @@ func main() {
 	// add query/post commands (custom to binary)
 	rootCmd.AddCommand(
 		client.GetCommands(
-			// checkpoint related cli get commands
+			// checkpoint related get commands
 			checkpoint.GetCheckpointBuffer(cdc),
 			checkpoint.GetLastNoACK(cdc),
 			checkpoint.GetHeaderFromIndex(cdc),
 			checkpoint.GetCheckpointCount(cdc),
 
-			// staking related cli get commands
+			// staking related get commands
 			staking.GetValidatorInfo(cdc),
 			staking.GetCurrentValSet(cdc),
 		)...,
@@ -105,11 +111,11 @@ func main() {
 	)
 
 	// export cmds
-	// rootCmd.AddCommand(
-	// 	client.LineBreak,
-	// 	client.LineBreak,
-	// 	ExportCmd(ctx, cdc),
-	// )
+	rootCmd.AddCommand(
+		client.LineBreak,
+		client.LineBreak,
+		ExportCmd(ctx, cdc),
+	)
 
 	// add proxy, version and key info
 	rootCmd.AddCommand(
@@ -133,189 +139,49 @@ func main() {
 	}
 }
 
-// Exportcmd a state dump file
-// func ExportCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
-// 	cmd := &cobra.Command{
-// 		Use:   "export-heimdall",
-// 		Short: "Export genesis file with state-dump",
-// 		Args:  cobra.NoArgs,
-// 		RunE: func(_ *cobra.Command, _ []string) error {
-// 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-// 			config := ctx.Config
-// 			config.SetRoot(viper.GetString(cli.HomeFlag))
+// ExportCmd a state dump file
+func ExportCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "export-heimdall",
+		Short: "Export genesis file with state-dump",
+		Args:  cobra.NoArgs,
+		RunE: func(_ *cobra.Command, _ []string) error {
 
-// 			// create chain id
-// 			chainID := viper.GetString(client.FlagChainID)
-// 			if chainID == "" {
-// 				chainID = fmt.Sprintf("heimdall-%v", common.RandStr(6))
-// 			}
-// 			//
-// 			// ack count
-// 			//
-// 			stored_ackcount, err := cliCtx.QueryStore(sk.ACKCountKey, "staking")
-// 			if err != nil {
-// 				fmt.Printf("Error retriving query")
-// 				return err
-// 			}
+			// cliCtx := context.NewCLIContext().WithCodec(cdc)
+			config := ctx.Config
+			config.SetRoot(viper.GetString(cli.HomeFlag))
 
-// 			ackCount, err := strconv.ParseInt(string(stored_ackcount), 10, 64)
-// 			if err != nil {
-// 				fmt.Printf("Unable to parse int. Response: %v Error: %v", stored_ackcount, err)
-// 				return err
-// 			}
-// 			//
-// 			// buffered checkpoint
-// 			//
-// 			var buffer_checkpoint hmTypes.CheckpointBlockHeader
+			// create chain id
+			chainID := viper.GetString(client.FlagChainID)
+			if chainID == "" {
+				chainID = fmt.Sprintf("heimdall-%v", common.RandStr(6))
+			}
 
-// 			_checkpointBuffer, err := cliCtx.QueryStore(ck.BufferCheckpointKey, "checkpoint")
-// 			if err == nil {
-// 				if len(_checkpointBuffer) != 0 {
-// 					err = cdc.UnmarshalBinaryBare(_checkpointBuffer, &buffer_checkpoint)
-// 					if err != nil {
-// 						fmt.Printf("Unable to unmarshall checkpoint present in buffer. Error: %v CheckpointBuffer: %v", err, _checkpointBuffer)
-// 					}
-// 				}
-// 			} else {
-// 				fmt.Printf("Unable to fetch checkpoint from buffer. Error: %v", err)
-// 			}
-// 			////
-// 			//// Caches
-// 			////
-// 			storedCheckpointCache, err := cliCtx.QueryStore(ck.CheckpointCacheKey, "checkpoint")
-// 			if err != nil {
-// 				return err
-// 			}
-// 			var checkpointCache bool
-// 			if bytes.Compare(storedCheckpointCache, ck.DefaultValue) == 0 {
-// 				checkpointCache = true
-// 			} else {
-// 				checkpointCache = false
-// 			}
+			dataDir := path.Join(viper.GetString(cli.HomeFlag), "data")
+			logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout))
+			db, err := sdk.NewLevelDB("application", dataDir)
+			if err != nil {
+				panic(err)
+			}
 
-// 			storedCheckpointACK, err := cliCtx.QueryStore(ck.CheckpointACKCacheKey, "checkpoint")
-// 			if err != nil {
-// 				return err
-// 			}
-// 			var checkpointACKCache bool
-// 			if bytes.Compare(storedCheckpointACK, ck.DefaultValue) == 0 {
-// 				checkpointACKCache = true
-// 			} else {
-// 				checkpointACKCache = false
-// 			}
-// 			////
-// 			//// last no ack time
-// 			////
-// 			var lastNoACKTime int64
-// 			lastNoACK, err := cliCtx.QueryStore(ck.CheckpointNoACKCacheKey, "checkpoint")
-// 			if err == nil && len(lastNoACK) != 0 {
-// 				lastNoACKTime, err = strconv.ParseInt(string(lastNoACK), 10, 64)
-// 				if err != nil {
-// 					return err
-// 				}
-// 			}
-// 			////
-// 			//// Headers
-// 			////
-// 			var headers []hmTypes.CheckpointBlockHeader
-// 			storedHeaders, err := cliCtx.QuerySubspace(ck.HeaderBlockKey, "checkpoint")
-// 			if err != nil {
-// 				return err
-// 			}
-// 			for _, kv_pair := range storedHeaders {
-// 				var checkpointHeader hmTypes.CheckpointBlockHeader
-// 				if cdc.UnmarshalBinaryBare(kv_pair.Value, &checkpointHeader); err != nil {
-// 					return err
-// 				}
-// 				headers = append(headers, checkpointHeader)
-// 			}
-// 			////
-// 			//// validators
-// 			////
-// 			var validators []hmTypes.Validator
-// 			storedVals, err := cliCtx.QuerySubspace(sk.ValidatorsKey, "staking")
-// 			if err != nil {
-// 				return err
-// 			}
-// 			for _, kv_pair := range storedVals {
-// 				var hmVal hmTypes.Validator
-// 				if cdc.UnmarshalBinaryBare(kv_pair.Value, &hmVal); err != nil {
-// 					return err
-// 				}
-// 				validators = append(validators, hmVal)
-// 			}
-// 			////
-// 			//// Current val set
-// 			////
-// 			var currentValSet hmTypes.ValidatorSet
-// 			storedCurrValSet, err := cliCtx.QueryStore(sk.CurrentValidatorSetKey, "staking")
-// 			if err != nil {
-// 				return err
-// 			}
-// 			if err := cdc.UnmarshalBinaryBare(storedCurrValSet, &currentValSet); err != nil {
-// 				return err
-// 			}
+			happ := app.NewHeimdallApp(logger, db)
+			appState, _, err := happ.ExportAppStateAndValidators()
+			if err != nil {
+				panic(err)
+			}
 
-// 			// create genesis state
-// 			appState := &app.GenesisState{
-// 				Validators:         validators,
-// 				AckCount:           uint64(ackCount),
-// 				BufferedCheckpoint: buffer_checkpoint,
-// 				CheckpointCache:    checkpointCache,
-// 				CheckpointACKCache: checkpointACKCache,
-// 				LastNoACK:          uint64(lastNoACKTime),
-// 				Headers:            headers,
-// 				CurrentValSet:      currentValSet,
-// 			}
-
-// 			// iterate to get the accounts
-// 			accounts := []GenesisAccount{}
-// 			appendAccount := func(acc auth.Account) (stop bool) {
-// 				account := NewGenesisAccountI(acc)
-// 				accounts = append(accounts, account)
-// 				return false
-// 			}
-// 			app.accountKeeper.IterateAccounts(ctx, appendAccount)
-
-// 			genState := NewGenesisState(
-// 				accounts,
-// 				auth.ExportGenesis(ctx, app.accountKeeper, app.feeCollectionKeeper),
-// 				bank.ExportGenesis(ctx, app.bankKeeper),
-// 				staking.ExportGenesis(ctx, app.stakingKeeper),
-// 				mint.ExportGenesis(ctx, app.mintKeeper),
-// 				distr.ExportGenesis(ctx, app.distrKeeper),
-// 				gov.ExportGenesis(ctx, app.govKeeper),
-// 				crisis.ExportGenesis(ctx, app.crisisKeeper),
-// 				slashing.ExportGenesis(ctx, app.slashingKeeper),
-// 			)
-
-// 			appStateJSON, err := json.Marshal(appState)
-// 			if err != nil {
-// 				return err
-// 			}
-
-// 			toPrint := struct {
-// 				ChainID string `json:"chain_id"`
-// 			}{
-// 				chainID,
-// 			}
-
-// 			out, err := codec.MarshalJSONIndent(cdc, toPrint)
-// 			if err != nil {
-// 				return err
-// 			}
-
-// 			fmt.Fprintf(os.Stderr, "%s\n", string(out))
-// 			return writeGenesisFile(rootify("config/dump-genesis.json", config.RootDir), chainID, appStateJSON)
-
-// 			return nil
-// 		},
-// 	}
-// 	cmd.Flags().String(cli.HomeFlag, helper.DefaultNodeHome, "node's home directory")
-// 	cmd.Flags().String(helper.FlagClientHome, helper.DefaultCLIHome, "client's home directory")
-// 	cmd.Flags().String(client.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
-// 	return cmd
-// }
+			err = writeGenesisFile(rootify("config/dump-genesis.json", config.RootDir), chainID, appState)
+			if err == nil {
+				fmt.Println("New genesis json file created:", rootify("config/dump-genesis.json", config.RootDir))
+			}
+			return err
+		},
+	}
+	cmd.Flags().String(cli.HomeFlag, helper.DefaultNodeHome, "node's home directory")
+	cmd.Flags().String(helper.FlagClientHome, helper.DefaultCLIHome, "client's home directory")
+	cmd.Flags().String(client.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
+	return cmd
+}
 
 func writeGenesisFile(genesisFile, chainID string, appState json.RawMessage) error {
 	genDoc := tmTypes.GenesisDoc{

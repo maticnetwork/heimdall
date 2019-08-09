@@ -3,7 +3,6 @@ package app
 import (
 	"encoding/json"
 
-	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -45,6 +44,7 @@ func (app *HeimdallApp) ExportAppStateAndValidators() (
 	)
 
 	// create app state
-	appState, err = codec.MarshalJSONIndent(app.cdc, genState)
-	return appState, validators, nil
+	// appState, err = codec.MarshalJSONIndent(app.cdc, genState)
+	appState, err = json.Marshal(genState)
+	return appState, validators, err
 }

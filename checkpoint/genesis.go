@@ -70,7 +70,9 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 	}
 
 	// Add checkpoint in buffer
-	keeper.SetCheckpointBuffer(ctx, *data.BufferedCheckpoint)
+	if data.BufferedCheckpoint != nil {
+		keeper.SetCheckpointBuffer(ctx, *data.BufferedCheckpoint)
+	}
 
 	// Set initial ack count
 	keeper.sk.UpdateACKCountWithValue(ctx, data.AckCount)
