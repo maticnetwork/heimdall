@@ -5,15 +5,17 @@ import (
 	"os"
 	"strings"
 
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/client/utils"
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authTypes "github.com/maticnetwork/heimdall/auth/types"
+	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	amino "github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto/multisig"
+
+	authTypes "github.com/maticnetwork/heimdall/auth/types"
+	"github.com/maticnetwork/heimdall/helper"
 )
 
 const (
@@ -26,7 +28,7 @@ const (
 )
 
 // GetSignCommand returns the transaction sign command.
-func GetSignCommand(codec *codec.Codec) *cobra.Command {
+func GetSignCommand(codec *amino.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "sign [file]",
 		Short: "Sign transactions generated offline",
@@ -46,37 +48,18 @@ The --offline flag makes sure that the client will not reach out to full node.
 As a result, the account and sequence number queries will not be performed and
 it is required to set such parameters manually. Note, invalid values will cause
 the transaction to fail.
-
-The --multisig=<multisig_key> flag generates a signature on behalf of a multisig account
-key. It implies --signature-only. Full multisig signed transactions may eventually
-be generated via the 'multisign' command.
 `,
 		PreRun: preSignCmd,
 		RunE:   makeSignCmd(codec),
 		Args:   cobra.ExactArgs(1),
 	}
 
-	cmd.Flags().String(
-		flagMultisig, "",
-		"Address of the multisig account on behalf of which the transaction shall be signed",
-	)
-	cmd.Flags().Bool(
-		flagAppend, true,
-		"Append the signature to the existing ones. If disabled, old signatures would be overwritten. Ignored if --multisig is on",
-	)
-	cmd.Flags().Bool(
-		flagValidateSigs, false,
-		"Print the addresses that must sign the transaction, those who have already signed it, and make sure that signatures are in the correct order",
-	)
 	cmd.Flags().Bool(flagSigOnly, false, "Print only the generated signature, then exit")
-	cmd.Flags().Bool(
-		flagOffline, false,
-		"Offline mode; Do not query a full node. --account and --sequence options would be ignored if offline is set",
-	)
+	cmd.Flags().Bool(flagOffline, false, "Offline mode; Do not query a full node")
 	cmd.Flags().String(flagOutfile, "", "The document will be written to the given file instead of STDOUT")
 
-	cmd = flags.PostCommands(cmd)[0]
-	cmd.MarkFlagRequired(flags.FlagFrom)
+	cmd = client.PostCommands(cmd)[0]
+	// cmd.MarkFlagRequired(client.FlagFrom)
 
 	return cmd
 }
@@ -85,64 +68,61 @@ func preSignCmd(cmd *cobra.Command, _ []string) {
 	// Conditionally mark the account and sequence numbers required as no RPC
 	// query will be done.
 	if viper.GetBool(flagOffline) {
-		cmd.MarkFlagRequired(flags.FlagAccountNumber)
-		cmd.MarkFlagRequired(flags.FlagSequence)
+		cmd.MarkFlagRequired(client.FlagAccountNumber)
+		cmd.MarkFlagRequired(client.FlagSequence)
 	}
 }
 
-func makeSignCmd(cdc *codec.Codec) func(cmd *cobra.Command, args []string) error {
-	return func(cmd *cobra.Command, args []string) error {
-		stdTx, err := utils.ReadStdTxFromFile(cdc, args[0])
+func makeSignCmd(cdc *amino.Codec) func(cmd *cobra.Command, args []string) error {
+	return func(cmd *cobra.Command, args []string) (err error) {
+		stdTx, err := helper.ReadStdTxFromFile(cdc, args[0])
 		if err != nil {
-			return err
+			return
 		}
-
+		fmt.Println("stdTx", stdTx)
 		offline := viper.GetBool(flagOffline)
-		cliCtx := context.NewCLIContext().WithCodec(cdc)
-		txBldr := authTypes.NewTxBuilderFromCLI()
-
-		if viper.GetBool(flagValidateSigs) {
-			if !printAndValidateSigs(cliCtx, txBldr.ChainID(), stdTx, offline) {
-				return fmt.Errorf("signatures validation failed")
-			}
-
-			return nil
-		}
+		cliCtx := context.NewCLIContext().WithCodec(cdc).WithAccountDecoder(cdc)
 
 		// if --signature-only is on, then override --append
 		var newTx authTypes.StdTx
 		generateSignatureOnly := viper.GetBool(flagSigOnly)
-		multisigAddrStr := viper.GetString(flagMultisig)
 
-		if multisigAddrStr != "" {
-			var multisigAddr sdk.AccAddress
-
-			multisigAddr, err = sdk.AccAddressFromBech32(multisigAddrStr)
-			if err != nil {
-				return err
-			}
-
-			newTx, err = utils.SignStdTxWithSignerAddress(
-				txBldr, cliCtx, multisigAddr, cliCtx.GetFromName(), stdTx, offline,
-			)
-			generateSignatureOnly = true
-		} else {
-			appendSig := viper.GetBool(flagAppend) && !generateSignatureOnly
-			newTx, err = utils.SignStdTx(txBldr, cliCtx, cliCtx.GetFromName(), stdTx, appendSig, offline)
-		}
+		appendSig := viper.GetBool(flagAppend) && !generateSignatureOnly
+		newTx, err = helper.SignStdTx(cliCtx, stdTx, appendSig, offline)
 
 		if err != nil {
 			return err
 		}
 
-		json, err := getSignatureJSON(cdc, newTx, cliCtx.Indent, generateSignatureOnly)
+		var json []byte
+
+		switch generateSignatureOnly {
+		case true:
+			switch cliCtx.Indent {
+			case true:
+				json, err = cdc.MarshalJSONIndent(newTx.Signature, "", "  ")
+
+			default:
+				json, err = cdc.MarshalJSON(newTx.Signature)
+			}
+
+		default:
+			switch cliCtx.Indent {
+			case true:
+				json, err = cdc.MarshalJSONIndent(newTx, "", "  ")
+
+			default:
+				json, err = cdc.MarshalJSON(newTx)
+			}
+		}
+
 		if err != nil {
 			return err
 		}
 
 		if viper.GetString(flagOutfile) == "" {
 			fmt.Printf("%s\n", json)
-			return nil
+			return
 		}
 
 		fp, err := os.OpenFile(
@@ -155,28 +135,7 @@ func makeSignCmd(cdc *codec.Codec) func(cmd *cobra.Command, args []string) error
 		defer fp.Close()
 		fmt.Fprintf(fp, "%s\n", json)
 
-		return nil
-	}
-}
-
-func getSignatureJSON(cdc *codec.Codec, newTx types.StdTx, indent, generateSignatureOnly bool) ([]byte, error) {
-	switch generateSignatureOnly {
-	case true:
-		switch indent {
-		case true:
-			return cdc.MarshalJSONIndent(newTx.Signatures[0], "", "  ")
-
-		default:
-			return cdc.MarshalJSON(newTx.Signatures[0])
-		}
-	default:
-		switch indent {
-		case true:
-			return cdc.MarshalJSONIndent(newTx, "", "  ")
-
-		default:
-			return cdc.MarshalJSON(newTx)
-		}
+		return
 	}
 }
 
@@ -184,7 +143,7 @@ func getSignatureJSON(cdc *codec.Codec, newTx types.StdTx, indent, generateSigna
 // its expected signers. In addition, if offline has not been supplied, the
 // signature is verified over the transaction sign bytes.
 func printAndValidateSigs(
-	cliCtx context.CLIContext, chainID string, stdTx types.StdTx, offline bool,
+	cliCtx context.CLIContext, chainID string, stdTx auth.StdTx, offline bool,
 ) bool {
 
 	fmt.Println("Signers:")
@@ -221,13 +180,13 @@ func printAndValidateSigs(
 		// Validate the actual signature over the transaction bytes since we can
 		// reach out to a full node to query accounts.
 		if !offline && success {
-			acc, err := types.NewAccountRetriever(cliCtx).GetAccount(sigAddr)
+			acc, err := cliCtx.GetAccount(sigAddr)
 			if err != nil {
 				fmt.Printf("failed to get account: %s\n", sigAddr)
 				return false
 			}
 
-			sigBytes := types.StdSignBytes(
+			sigBytes := auth.StdSignBytes(
 				chainID, acc.GetAccountNumber(), acc.GetSequence(),
 				stdTx.Fee, stdTx.GetMsgs(), stdTx.GetMemo(),
 			)

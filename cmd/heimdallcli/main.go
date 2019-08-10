@@ -29,6 +29,7 @@ import (
 
 	"github.com/maticnetwork/heimdall/app"
 	bor "github.com/maticnetwork/heimdall/bor/cli"
+	authCli "github.com/maticnetwork/heimdall/auth/client/cli"
 	checkpoint "github.com/maticnetwork/heimdall/checkpoint/cli"
 	"github.com/maticnetwork/heimdall/helper"
 	staking "github.com/maticnetwork/heimdall/staking/cli"
@@ -153,7 +154,8 @@ func txCmd(cdc *amino.Codec) *cobra.Command {
 	txCmd.AddCommand(
 		bankCmd.SendTxCmd(cdc),
 		client.LineBreak,
-		authCmd.GetSignCommand(cdc),
+		// authCmd.GetSignCommand(cdc),
+		authCli.GetSignCommand(cdc),
 		tx.GetBroadcastCommand(cdc),
 		tx.GetEncodeCommand(cdc),
 		client.LineBreak,

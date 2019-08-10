@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+	"io/ioutil"
 	"math/bits"
 	"os"
 	"sort"
@@ -15,6 +16,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/viper"
+	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/merkle"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -162,6 +164,12 @@ func BuildAndBroadcastMsgsWithCLI(cliCtx context.CLIContext, txBldr authTypes.Tx
 	txBytes, err := GetSignedTxBytesWithCLI(cliCtx, txBldr, msgs)
 	if err != nil {
 		return err
+	}
+
+	// just simulate
+	if cliCtx.Simulate {
+		fmt.Println("TxBytes", txBytes)
+		return nil
 	}
 
 	// broadcast to a Tendermint node
@@ -322,6 +330,68 @@ func PrintUnsignedStdTx(cliCtx context.CLIContext, txBldr authTypes.TxBuilder, m
 	return nil
 }
 
+// SignStdTx appends a signature to a StdTx and returns a copy of it. If appendSig
+// is false, it replaces the signatures already attached with the new signature.
+// Don't perform online validation or lookups if offline is true.
+func SignStdTx(
+	cliCtx context.CLIContext, stdTx authTypes.StdTx, appendSig bool, offline bool,
+) (authTypes.StdTx, error) {
+	txBldr := authTypes.NewTxBuilderFromCLI().WithTxEncoder(authTypes.RLPTxEncoder(authTypes.GetPulpInstance()))
+
+	var signedStdTx authTypes.StdTx
+
+	fromName := cliCtx.GetFromName()
+	var addr sdk.AccAddress
+	if fromName != "" {
+		addr = sdk.AccAddress(GetAddress())
+	} else {
+		info, err := txBldr.Keybase().Get(fromName)
+		if err != nil {
+			return signedStdTx, err
+		}
+
+		addr = sdk.AccAddress(info.GetPubKey().Address().Bytes())
+	}
+
+	if !offline {
+		var err error
+		txBldr, err = populateAccountFromState(txBldr, cliCtx, addr)
+		if err != nil {
+			return signedStdTx, err
+		}
+	}
+
+	if fromName != "" {
+		passphrase, err := keys.GetPassphrase(fromName)
+		if err != nil {
+			return signedStdTx, err
+		}
+
+		// with passpharse
+		return txBldr.SignStdTxWithPassphrase(fromName, passphrase, stdTx, appendSig)
+	}
+
+	return txBldr.SignStdTx(GetPrivKey(), stdTx, appendSig)
+}
+
+// ReadStdTxFromFile and decode a StdTx from the given filename.  Can pass "-" to read from stdin.
+func ReadStdTxFromFile(cdc *amino.Codec, filename string) (stdTx authTypes.StdTx, err error) {
+	var bytes []byte
+	if filename == "-" {
+		bytes, err = ioutil.ReadAll(os.Stdin)
+	} else {
+		bytes, err = ioutil.ReadFile(filename)
+	}
+	if err != nil {
+		return
+	}
+
+	if err = cdc.UnmarshalJSON(bytes, &stdTx); err != nil {
+		return
+	}
+	return
+}
+
 // BroadcastTxBytes sends request to tendermint using CLI
 func BroadcastTxBytes(cliCtx context.CLIContext, txBytes []byte, mode string) (sdk.TxResponse, error) {
 	Logger.Info("Broadcasting tx bytes to Tendermint", "txBytes", hex.EncodeToString(txBytes), "txHash", hex.EncodeToString(tmhash.Sum(txBytes[4:])))
@@ -389,6 +459,33 @@ func computeHashFromAunts(index int, total int, leafHash []byte, innerHashes [][
 //
 // Inner funcitons
 //
+
+func populateAccountFromState(
+	txBldr authTypes.TxBuilder, cliCtx context.CLIContext, addr sdk.AccAddress,
+) (authTypes.TxBuilder, error) {
+
+	accNum, err := cliCtx.GetAccountNumber(addr)
+	if err != nil {
+		return txBldr, err
+	}
+
+	accSeq, err := cliCtx.GetAccountSequence(addr)
+	if err != nil {
+		return txBldr, err
+	}
+
+	return txBldr.WithAccountNumber(accNum).WithSequence(accSeq), nil
+}
+
+func isTxSigner(user sdk.AccAddress, signers []sdk.AccAddress) bool {
+	for _, s := range signers {
+		if bytes.Equal(user.Bytes(), s.Bytes()) {
+			return true
+		}
+	}
+
+	return false
+}
 
 func buildUnsignedStdTxOffline(txBldr authTypes.TxBuilder, cliCtx context.CLIContext, msgs []sdk.Msg) (stdTx authTypes.StdTx, err error) {
 	stdSignMsg, err := txBldr.BuildSignMsg(msgs)

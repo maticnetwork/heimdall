@@ -213,6 +213,30 @@ func (bldr TxBuilder) SignStdTxWithPassphrase(name, passphrase string, stdTx Std
 	return
 }
 
+// SignStdTx appends a signature to a StdTx and returns a copy of it. If append
+// is false, it replaces the signatures already attached with the new signature.
+func (bldr TxBuilder) SignStdTx(privKey secp256k1.PrivKeySecp256k1, stdTx StdTx, appendSig bool) (signedStdTx StdTx, err error) {
+	if bldr.chainID == "" {
+		return StdTx{}, fmt.Errorf("chain ID required but not specified")
+	}
+
+	signMsg := StdSignMsg{
+		ChainID:       bldr.chainID,
+		AccountNumber: bldr.accountNumber,
+		Sequence:      bldr.sequence,
+		Memo:          stdTx.Memo,
+		Msg:           stdTx.Msg, // allow only one message
+	}
+
+	sig, err := MakeSignature(privKey, signMsg)
+	if err != nil {
+		return
+	}
+
+	signedStdTx = NewStdTx(signMsg.Msg, sig, signMsg.Memo)
+	return
+}
+
 // MakeSignature builds a StdSignature for given a StdSignMsg.
 func MakeSignature(privKey secp256k1.PrivKeySecp256k1, msg StdSignMsg) (sig StdSignature, err error) {
 	data := crypto.Keccak256(msg.Bytes())
