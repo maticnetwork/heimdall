@@ -9,8 +9,6 @@ import (
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/gov"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/params/subspace"
@@ -21,8 +19,10 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	tmTypes "github.com/tendermint/tendermint/types"
 
-	hmAuth "github.com/maticnetwork/heimdall/auth"
+	"github.com/maticnetwork/heimdall/auth"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
+	"github.com/maticnetwork/heimdall/bank"
+	bankTypes "github.com/maticnetwork/heimdall/bank/types"
 	"github.com/maticnetwork/heimdall/bor"
 	borTypes "github.com/maticnetwork/heimdall/bor/types"
 	"github.com/maticnetwork/heimdall/checkpoint"
@@ -101,7 +101,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		keyCheckpoint:    sdk.NewKVStoreKey(checkpointTypes.StoreKey),
 		keyStaking:       sdk.NewKVStoreKey(stakingTypes.StoreKey),
 		keyBor:           sdk.NewKVStoreKey(borTypes.StoreKey),
-		keyFeeCollection: sdk.NewKVStoreKey(auth.FeeStoreKey),
+		keyFeeCollection: sdk.NewKVStoreKey(authTypes.FeeStoreKey),
 		keyParams:        sdk.NewKVStoreKey(subspace.StoreKey),
 		tKeyParams:       sdk.NewTransientStoreKey(subspace.TStoreKey),
 	}
@@ -114,14 +114,14 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		app.cdc,
 		app.keyAccount, // target store
 		app.paramsKeeper.Subspace(authTypes.DefaultParamspace),
-		auth.ProtoBaseAccount, // prototype
+		authTypes.ProtoBaseAccount, // prototype
 	)
 
 	// bank keeper
 	app.bankKeeper = bank.NewBaseKeeper(
 		app.accountKeeper,
-		app.paramsKeeper.Subspace(bank.DefaultParamspace),
-		bank.DefaultCodespace,
+		app.paramsKeeper.Subspace(bankTypes.DefaultParamspace),
+		bankTypes.DefaultCodespace,
 	)
 
 	// fee collector
@@ -166,7 +166,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 
 	// register message routes
 	app.Router().
-		AddRoute(bank.RouterKey, bank.NewHandler(app.bankKeeper)).
+		AddRoute(bankTypes.RouterKey, bank.NewHandler(app.bankKeeper)).
 		AddRoute(checkpointTypes.RouterKey, checkpoint.NewHandler(app.checkpointKeeper, &app.caller)).
 		AddRoute(stakingTypes.RouterKey, staking.NewHandler(app.stakingKeeper, &app.caller)).
 		AddRoute(borTypes.RouterKey, bor.NewHandler(app.borKeeper))
@@ -174,14 +174,14 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	// query routes
 	app.QueryRouter().
 		AddRoute(authTypes.QuerierRoute, auth.NewQuerier(app.accountKeeper)).
-		AddRoute(auth.QuerierRoute, auth.NewQuerier(app.accountKeeper)).
+		// AddRoute(auth.QuerierRoute, auth.NewQuerier(app.accountKeeper)).
 		AddRoute(borTypes.QuerierRoute, bor.NewQuerier(app.borKeeper))
 
 	// perform initialization logic
 	app.SetInitChainer(app.initChainer)
 	app.SetBeginBlocker(app.beginBlocker)
 	app.SetEndBlocker(app.endBlocker)
-	app.SetAnteHandler(hmAuth.NewAnteHandler())
+	app.SetAnteHandler(auth.NewAnteHandler())
 
 	// mount the multistore and load the latest state
 	app.MountStores(
@@ -207,8 +207,8 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 func MakeCodec() *codec.Codec {
 	cdc := codec.New()
 
-	auth.RegisterCodec(cdc)
-	// bank.RegisterCodec(cdc)
+	authTypes.RegisterCodec(cdc)
+	bankTypes.RegisterCodec(cdc)
 	codec.RegisterCrypto(cdc)
 	sdk.RegisterCodec(cdc)
 
@@ -355,6 +355,11 @@ func (app *HeimdallApp) initFromGenesisState(ctx sdk.Context, genesisState Genes
 		acc.SetCoins(genacc.Coins)
 		app.accountKeeper.SetAccount(ctx, acc)
 	}
+
+	acc := app.accountKeeper.NewAccountWithAddress(ctx, helper.GetAddress())
+	acc.SetPubKey(helper.GetPubKey())
+	acc.SetCoins(sdk.Coins{sdk.Coin{Denom: "A", Amount: sdk.NewInt(1)}})
+	app.accountKeeper.SetAccount(ctx, acc)
 
 	// check if genesis is actually a genesis
 	var isGenesis bool

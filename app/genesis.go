@@ -6,10 +6,11 @@ import (
 	"sort"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/ethereum/go-ethereum/common"
 
+	"github.com/maticnetwork/heimdall/auth"
+	authTypes "github.com/maticnetwork/heimdall/auth/types"
+	"github.com/maticnetwork/heimdall/bank"
 	"github.com/maticnetwork/heimdall/bor"
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/staking"
@@ -24,7 +25,7 @@ type GenesisAccount struct {
 }
 
 // NewGenesisAccount creates new genesis account
-func NewGenesisAccount(acc auth.Account) GenesisAccount {
+func NewGenesisAccount(acc authTypes.Account) GenesisAccount {
 	gacc := GenesisAccount{
 		Address:       common.BytesToAddress(acc.GetAddress()[:]),
 		Coins:         acc.GetCoins(),

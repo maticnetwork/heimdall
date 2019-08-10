@@ -15,9 +15,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
-	at "github.com/cosmos/cosmos-sdk/x/auth"
-	authCmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
-	bankCmd "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
 	ethCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -28,8 +25,10 @@ import (
 	tmTypes "github.com/tendermint/tendermint/types"
 
 	"github.com/maticnetwork/heimdall/app"
-	bor "github.com/maticnetwork/heimdall/bor/cli"
 	authCli "github.com/maticnetwork/heimdall/auth/client/cli"
+	authTypes "github.com/maticnetwork/heimdall/auth/types"
+	bank "github.com/maticnetwork/heimdall/bank/client/cli"
+	bor "github.com/maticnetwork/heimdall/bor/cli"
 	checkpoint "github.com/maticnetwork/heimdall/checkpoint/cli"
 	"github.com/maticnetwork/heimdall/helper"
 	staking "github.com/maticnetwork/heimdall/staking/cli"
@@ -124,7 +123,7 @@ func queryCmd(cdc *amino.Codec) *cobra.Command {
 		tx.SearchTxCmd(cdc),
 		tx.QueryTxCmd(cdc),
 		client.LineBreak,
-		authCmd.GetAccountCmd(at.StoreKey, cdc),
+		authCli.GetAccountCmd(authTypes.StoreKey, cdc),
 	)
 
 	queryCmd.AddCommand(
@@ -152,7 +151,7 @@ func txCmd(cdc *amino.Codec) *cobra.Command {
 	}
 
 	txCmd.AddCommand(
-		bankCmd.SendTxCmd(cdc),
+		bank.SendTxCmd(cdc),
 		client.LineBreak,
 		// authCmd.GetSignCommand(cdc),
 		authCli.GetSignCommand(cdc),

@@ -14,9 +14,9 @@ var (
 
 // StdTx is a standard way to wrap a Msg with Fee and Signatures.
 type StdTx struct {
-	Msg       sdk.Msg      `json:"msg"`
-	Signature StdSignature `json:"signature"`
-	Memo      string       `json:"memo"`
+	Msg       sdk.Msg      `json:"msg" yaml:"msg"`
+	Signature StdSignature `json:"signature" yaml:"signature"`
+	Memo      string       `json:"memo" yaml:"memo"`
 }
 
 // StdTxRaw is a standard way to wrap a RLP Msg with Fee and Signatures.
@@ -52,7 +52,17 @@ func (tx StdTx) ValidateBasic() sdk.Error {
 // in the order they appear in tx.GetMsgs().
 // Duplicate addresses will be omitted.
 func (tx StdTx) GetSigners() []sdk.AccAddress {
-	return tx.Msg.GetSigners()
+	seen := map[string]bool{}
+	var signers []sdk.AccAddress
+	for _, msg := range tx.GetMsgs() {
+		for _, addr := range msg.GetSigners() {
+			if !seen[addr.String()] {
+				signers = append(signers, addr)
+				seen[addr.String()] = true
+			}
+		}
+	}
+	return signers
 }
 
 // GetMemo returns the memo
@@ -60,9 +70,9 @@ func (tx StdTx) GetMemo() string {
 	return tx.Memo
 }
 
-// GetSignature returns the signature of signers who signed the Msg.
-func (tx StdTx) GetSignature() StdSignature {
-	return tx.Signature
+// GetSignatures returns the signature of signers who signed the Msg.
+func (tx StdTx) GetSignatures() []StdSignature {
+	return []StdSignature{tx.Signature}
 }
 
 // StdSignature represents a sig

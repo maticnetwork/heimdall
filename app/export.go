@@ -3,11 +3,12 @@ package app
 import (
 	"encoding/json"
 
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/bank"
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmTypes "github.com/tendermint/tendermint/types"
 
+	auth "github.com/maticnetwork/heimdall/auth"
+	authTypes "github.com/maticnetwork/heimdall/auth/types"
+	bank "github.com/maticnetwork/heimdall/bank"
 	bor "github.com/maticnetwork/heimdall/bor"
 	checkpoint "github.com/maticnetwork/heimdall/checkpoint"
 	staking "github.com/maticnetwork/heimdall/staking"
@@ -24,7 +25,7 @@ func (app *HeimdallApp) ExportAppStateAndValidators() (
 
 	// iterate to get the accounts
 	accounts := []GenesisAccount{}
-	appendAccount := func(acc auth.Account) (stop bool) {
+	appendAccount := func(acc authTypes.Account) (stop bool) {
 		account := NewGenesisAccount(acc)
 		accounts = append(accounts, account)
 		return false
