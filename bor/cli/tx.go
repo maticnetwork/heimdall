@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/maticnetwork/heimdall/bor"
+	borTypes "github.com/maticnetwork/heimdall/bor/types"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/types"
@@ -41,18 +42,21 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
+			//
+			// Query data
+			//
+
 			// fetch duration
-			res, err := cliCtx.QueryStore(bor.SpanDurationKey, "bor")
+			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", borTypes.QuerierRoute, bor.QueryParams, bor.ParamSpan), nil)
 			if err != nil {
 				return err
 			}
-
 			if len(res) == 0 {
 				return errors.New("span duration not found")
 			}
 
-			duration, err := strconv.ParseInt(string(res), 10, 64)
-			if err != nil {
+			var spanDuration uint64
+			if err := cliCtx.Codec.UnmarshalJSON(res, &spanDuration); err != nil {
 				return err
 			}
 
@@ -97,7 +101,7 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 
 			msg := bor.NewMsgProposeSpan(
 				startBlock,
-				startBlock+uint64(duration),
+				startBlock+spanDuration,
 				validators,
 				validators,
 				chainID,

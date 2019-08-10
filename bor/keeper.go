@@ -19,9 +19,10 @@ var (
 	DefaultValue = []byte{0x01} // Value to store in CacheCheckpoint and CacheCheckpointACK & ValidatorSetChange Flag
 
 	SpanDurationKey       = []byte{0x24} // Key to store span duration for Bor
-	LastSpanStartBlockKey = []byte{0x25} // Key to store last span start block
-	SpanPrefixKey         = []byte{0x26} // prefix key to store span
-	SpanCacheKey          = []byte{0x27} // key to store Cache for span
+	SprintDurationKey     = []byte{0x25} // Key to store span duration for Bor
+	LastSpanStartBlockKey = []byte{0x35} // Key to store last span start block
+	SpanPrefixKey         = []byte{0x36} // prefix key to store span
+	SpanCacheKey          = []byte{0x37} // key to store Cache for span
 )
 
 // Keeper stores all related data
@@ -166,28 +167,6 @@ func (k *Keeper) UpdateLastSpan(ctx sdk.Context, startBlock uint64) {
 	store.Set(LastSpanStartBlockKey, []byte(strconv.FormatUint(startBlock, 10)))
 }
 
-// GetSpanDuration fetches selected span duration from store
-func (k *Keeper) GetSpanDuration1(ctx sdk.Context) (duration uint64, err error) {
-	store := ctx.KVStore(k.storeKey)
-	if store.Has(SpanDurationKey) {
-		duration, err := strconv.Atoi(string(store.Get(SpanDurationKey)))
-		if err != nil {
-			cmn.BorLogger.Error("Unable to convert key to int")
-			return uint64(duration), err
-		} else {
-			return uint64(duration), nil
-		}
-	} else {
-		return duration, errors.New("duration not found")
-	}
-}
-
-// SetSpanDuration sets span duration
-func (k *Keeper) SetSpanDuration1(ctx sdk.Context, duration uint64) {
-	store := ctx.KVStore(k.storeKey)
-	store.Set(SpanDurationKey, []byte(strconv.FormatUint(duration, 10)))
-}
-
 // SetSpanCache sets span cache
 // to be set when we freeze span
 // cache to be cleared in end block
@@ -220,24 +199,24 @@ func (k *Keeper) GetSpanCache(ctx sdk.Context) bool {
 
 // GetSpanDuration returns the span duration
 func (k *Keeper) GetSpanDuration(ctx sdk.Context) uint64 {
-	var value uint64
-	k.paramSpace.Get(ctx, ParamStoreKeySpanDuration, &value)
-	return value
+	var duration uint64
+	k.paramSpace.Get(ctx, ParamStoreKeySpanDuration, &duration)
+	return duration
 }
 
 // SetSpanDuration sets the span duration
-func (k *Keeper) SetSpanDuration(ctx sdk.Context, value uint64) {
-	k.paramSpace.Set(ctx, ParamStoreKeySpanDuration, &value)
+func (k *Keeper) SetSpanDuration(ctx sdk.Context, duration uint64) {
+	k.paramSpace.Set(ctx, ParamStoreKeySpanDuration, duration)
 }
 
 // GetSprintDuration returns the span duration
 func (k *Keeper) GetSprintDuration(ctx sdk.Context) uint64 {
-	var value uint64
-	k.paramSpace.Get(ctx, ParamStoreKeySpanDuration, &value)
-	return value
+	var duration uint64
+	k.paramSpace.Get(ctx, ParamStoreKeySprintDuration, &duration)
+	return duration
 }
 
 // SetSprintDuration sets the sprint duration
-func (k *Keeper) SetSprintDuration(ctx sdk.Context, value uint64) {
-	k.paramSpace.Set(ctx, ParamStoreKeySpanDuration, &value)
+func (k *Keeper) SetSprintDuration(ctx sdk.Context, duration uint64) {
+	k.paramSpace.Set(ctx, ParamStoreKeySprintDuration, duration)
 }

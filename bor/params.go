@@ -15,10 +15,10 @@ const (
 )
 
 // ParamStoreKeySprintDuration is store's key for SprintDuration
-var ParamStoreKeySprintDuration = []byte("SprintDuration")
+var ParamStoreKeySprintDuration = []byte("sprintduration")
 
 // ParamStoreKeySpanDuration is store's key for SpanDuration
-var ParamStoreKeySpanDuration = []byte("SpanDuration")
+var ParamStoreKeySpanDuration = []byte("spanduration")
 
 // ParamKeyTable type declaration for parameters
 func ParamKeyTable() params.KeyTable {

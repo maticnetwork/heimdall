@@ -13,6 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/gov"
 	"github.com/cosmos/cosmos-sdk/x/params"
+	"github.com/cosmos/cosmos-sdk/x/params/subspace"
 	ethCommon "github.com/ethereum/go-ethereum/common"
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
@@ -101,8 +102,8 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		keyStaking:       sdk.NewKVStoreKey(stakingTypes.StoreKey),
 		keyBor:           sdk.NewKVStoreKey(borTypes.StoreKey),
 		keyFeeCollection: sdk.NewKVStoreKey(auth.FeeStoreKey),
-		keyParams:        sdk.NewKVStoreKey("params"),
-		tKeyParams:       sdk.NewTransientStoreKey("transient_params"),
+		keyParams:        sdk.NewKVStoreKey(subspace.StoreKey),
+		tKeyParams:       sdk.NewTransientStoreKey(subspace.TStoreKey),
 	}
 
 	// define param keeper
@@ -164,14 +165,17 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.caller = contractCallerObj
 
 	// register message routes
-	app.Router().AddRoute(bank.RouterKey, bank.NewHandler(app.bankKeeper))
-	app.Router().AddRoute(checkpointTypes.RouterKey, checkpoint.NewHandler(app.checkpointKeeper, &app.caller))
-	app.Router().AddRoute(stakingTypes.RouterKey, staking.NewHandler(app.stakingKeeper, &app.caller))
-	app.Router().AddRoute(borTypes.RouterKey, bor.NewHandler(app.borKeeper))
+	app.Router().
+		AddRoute(bank.RouterKey, bank.NewHandler(app.bankKeeper)).
+		AddRoute(checkpointTypes.RouterKey, checkpoint.NewHandler(app.checkpointKeeper, &app.caller)).
+		AddRoute(stakingTypes.RouterKey, staking.NewHandler(app.stakingKeeper, &app.caller)).
+		AddRoute(borTypes.RouterKey, bor.NewHandler(app.borKeeper))
 
 	// query routes
-	app.QueryRouter().AddRoute(authTypes.QuerierRoute, auth.NewQuerier(app.accountKeeper))
-	app.QueryRouter().AddRoute(auth.QuerierRoute, auth.NewQuerier(app.accountKeeper))
+	app.QueryRouter().
+		AddRoute(authTypes.QuerierRoute, auth.NewQuerier(app.accountKeeper)).
+		AddRoute(auth.QuerierRoute, auth.NewQuerier(app.accountKeeper)).
+		AddRoute(borTypes.QuerierRoute, bor.NewQuerier(app.borKeeper))
 
 	// perform initialization logic
 	app.SetInitChainer(app.initChainer)
