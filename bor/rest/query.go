@@ -3,7 +3,6 @@ package rest
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -29,7 +28,7 @@ func getSpanHandlerFn(
 		params := r.URL.Query()
 
 		// get start block
-		startBlock, ok := rest.ParseUint64OrReturnBadRequest(w, params.Get("start-block"))
+		startBlock, ok := rest.ParseUint64OrReturnBadRequest(w, params.Get("start_block"))
 		if !ok {
 			return
 		}
@@ -42,7 +41,7 @@ func getSpanHandlerFn(
 
 		// the query will return empty if there is no data in buffer
 		if len(res) == 0 {
-			rest.WriteErrorResponse(w, http.StatusNoContent, errors.New("No content found for requested key").Error())
+			rest.WriteErrorResponse(w, http.StatusNotFound, errors.New("No content found for requested span").Error())
 			return
 		}
 
@@ -53,7 +52,6 @@ func getSpanHandlerFn(
 			return
 		}
 
-		RestLogger.Debug("Span fetched", "Span", span.String())
 		result, err := json.Marshal(&span)
 		if err != nil {
 			RestLogger.Error("Error while marshalling response to Json", "error", err)
@@ -69,18 +67,18 @@ func getCacheFn(
 	cliCtx context.CLIContext,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		res, err := cliCtx.QueryStore(bor.SpanCacheKey, "bor")
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		fmt.Printf("Result is %v", res)
+
 		// the query will return empty if there is no data in buffer
 		if len(res) == 0 {
 			rest.WriteErrorResponse(w, http.StatusNoContent, errors.New("no content found for requested key ").Error())
 			return
 		}
+
 		result, err := json.Marshal(&res)
 		if err != nil {
 			RestLogger.Error("Error while marshalling response to Json", "error", err)

@@ -8,9 +8,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/utils"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	authtxb "github.com/cosmos/cosmos-sdk/x/auth/client/txbuilder"
 
+	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/types/rest"
 )
 
@@ -36,7 +35,7 @@ func WriteGenerateStdTxResponse(
 		return
 	}
 
-	txBldr := authtxb.NewTxBuilder(
+	txBldr := authTypes.NewTxBuilder(
 		utils.GetTxEncoder(cliCtx.Codec), br.AccountNumber, br.Sequence, gas, gasAdj,
 		br.Simulate, br.ChainID, br.Memo, br.Fees, br.GasPrices,
 	)
@@ -47,11 +46,11 @@ func WriteGenerateStdTxResponse(
 			return
 		}
 
-		txBldr, err = utils.EnrichWithGas(txBldr, cliCtx, msgs)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-			return
-		}
+		// txBldr, err = utils.EnrichWithGas(txBldr, cliCtx, msgs)
+		// if err != nil {
+		// 	rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+		// 	return
+		// }
 
 		if br.Simulate {
 			rest.WriteSimulationResponse(w, cliCtx.Codec, txBldr.Gas())
@@ -65,7 +64,7 @@ func WriteGenerateStdTxResponse(
 		return
 	}
 
-	output, err := cliCtx.Codec.MarshalJSON(auth.NewStdTx(stdMsg.Msgs, stdMsg.Fee, nil, stdMsg.Memo))
+	output, err := cliCtx.Codec.MarshalJSON(authTypes.NewStdTx(stdMsg.Msg, nil, stdMsg.Memo))
 	if err != nil {
 		rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return

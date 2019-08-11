@@ -15,7 +15,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/tendermint/tendermint/types"
+	tmTypes "github.com/tendermint/tendermint/types"
+
+	"github.com/maticnetwork/heimdall/types"
 )
 
 const (
@@ -108,7 +110,7 @@ func (br BaseReq) ValidateBasic(w http.ResponseWriter) bool {
 		}
 	}
 
-	if _, err := sdk.AccAddressFromBech32(br.From); err != nil || len(br.From) == 0 {
+	if d := types.HexToHeimdallAddress(br.From); d.Equals(types.ZeroHeimdallAddress) || len(br.From) == 0 {
 		WriteErrorResponse(w, http.StatusUnauthorized, fmt.Sprintf("invalid from address: %s", br.From))
 		return false
 	}
@@ -303,7 +305,7 @@ func ParseHTTPArgsWithLimit(r *http.Request, defaultLimit int) (tags []string, p
 		}
 
 		var tag string
-		if key == types.TxHeightKey {
+		if key == tmTypes.TxHeightKey {
 			tag = fmt.Sprintf("%s=%s", key, value)
 		} else {
 			tag = fmt.Sprintf("%s='%s'", key, value)

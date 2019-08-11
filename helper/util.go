@@ -126,21 +126,26 @@ func GetVoteBytes(votes []tmTypes.Vote, ctx sdk.Context) []byte {
 	return votes[0].SignBytes(ctx.ChainID())
 }
 
+// GetTxEncoder returns tx encoder
+func GetTxEncoder() sdk.TxEncoder {
+	return authTypes.RLPTxEncoder(authTypes.GetPulpInstance())
+}
+
 // GetStdTxBytes get tx bytes
 func GetStdTxBytes(cliCtx context.CLIContext, tx authTypes.StdTx) ([]byte, error) {
-	txBldr := authTypes.NewTxBuilderFromCLI().WithTxEncoder(authTypes.RLPTxEncoder(authTypes.GetPulpInstance()))
+	txBldr := authTypes.NewTxBuilderFromCLI().WithTxEncoder(GetTxEncoder())
 	return txBldr.GetStdTxBytes(tx)
 }
 
 // BroadcastMsgs creates transaction and broadcasts it
 func BroadcastMsgs(cliCtx context.CLIContext, msgs []sdk.Msg) (sdk.TxResponse, error) {
-	txBldr := authTypes.NewTxBuilderFromCLI().WithTxEncoder(authTypes.RLPTxEncoder(authTypes.GetPulpInstance()))
+	txBldr := authTypes.NewTxBuilderFromCLI().WithTxEncoder(GetTxEncoder())
 	return BuildAndBroadcastMsgs(cliCtx, txBldr, msgs)
 }
 
 // BroadcastTx broadcasts transaction
 func BroadcastTx(cliCtx context.CLIContext, tx authTypes.StdTx, mode string) (res sdk.TxResponse, err error) {
-	txBldr := authTypes.NewTxBuilderFromCLI().WithTxEncoder(authTypes.RLPTxEncoder(authTypes.GetPulpInstance()))
+	txBldr := authTypes.NewTxBuilderFromCLI().WithTxEncoder(GetTxEncoder())
 
 	var txBytes []byte
 	txBytes, err = txBldr.GetStdTxBytes(tx)
@@ -154,7 +159,7 @@ func BroadcastTx(cliCtx context.CLIContext, tx authTypes.StdTx, mode string) (re
 // BroadcastMsgsWithCLI creates message and sends tx
 // Used from cli- waits till transaction is included in block
 func BroadcastMsgsWithCLI(cliCtx context.CLIContext, msgs []sdk.Msg) error {
-	txBldr := authTypes.NewTxBuilderFromCLI().WithTxEncoder(authTypes.RLPTxEncoder(authTypes.GetPulpInstance()))
+	txBldr := authTypes.NewTxBuilderFromCLI().WithTxEncoder(GetTxEncoder())
 
 	if cliCtx.GenerateOnly {
 		return PrintUnsignedStdTx(cliCtx, txBldr, msgs)
@@ -358,7 +363,7 @@ func PrintUnsignedStdTx(cliCtx context.CLIContext, txBldr authTypes.TxBuilder, m
 func SignStdTx(
 	cliCtx context.CLIContext, stdTx authTypes.StdTx, appendSig bool, offline bool,
 ) (authTypes.StdTx, error) {
-	txBldr := authTypes.NewTxBuilderFromCLI().WithTxEncoder(authTypes.RLPTxEncoder(authTypes.GetPulpInstance()))
+	txBldr := authTypes.NewTxBuilderFromCLI().WithTxEncoder(GetTxEncoder())
 
 	var signedStdTx authTypes.StdTx
 

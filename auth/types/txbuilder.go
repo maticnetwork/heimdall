@@ -16,12 +16,17 @@ import (
 
 // TxBuilder implements a transaction context created in SDK modules.
 type TxBuilder struct {
-	txEncoder     sdk.TxEncoder
-	keybase       crkeys.Keybase
-	accountNumber uint64
-	sequence      uint64
-	chainID       string
-	memo          string
+	txEncoder          sdk.TxEncoder
+	keybase            crkeys.Keybase
+	accountNumber      uint64
+	sequence           uint64
+	gas                uint64
+	gasAdjustment      float64
+	simulateAndExecute bool
+	chainID            string
+	memo               string
+	fees               sdk.Coins
+	gasPrices          sdk.DecCoins
 }
 
 // NewTxBuilder returns a new initialized TxBuilder.
@@ -34,15 +39,22 @@ func NewTxBuilder(
 	simulateAndExecute bool,
 	chainID string,
 	memo string,
+	fees sdk.Coins,
+	gasPrices sdk.DecCoins,
 ) TxBuilder {
 
 	return TxBuilder{
-		txEncoder:     txEncoder,
-		keybase:       nil,
-		accountNumber: accNumber,
-		sequence:      seq,
-		chainID:       chainID,
-		memo:          memo,
+		txEncoder:          txEncoder,
+		keybase:            nil,
+		accountNumber:      accNumber,
+		sequence:           seq,
+		gas:                gas,
+		gasAdjustment:      gasAdj,
+		simulateAndExecute: simulateAndExecute,
+		chainID:            chainID,
+		memo:               memo,
+		fees:               fees,
+		gasPrices:          gasPrices,
 	}
 }
 
@@ -54,11 +66,14 @@ func NewTxBuilderFromCLI() TxBuilder {
 		panic(err)
 	}
 	txbldr := TxBuilder{
-		keybase:       kb,
-		accountNumber: uint64(viper.GetInt64(client.FlagAccountNumber)),
-		sequence:      uint64(viper.GetInt64(client.FlagSequence)),
-		chainID:       viper.GetString(client.FlagChainID),
-		memo:          viper.GetString(client.FlagMemo),
+		keybase:            kb,
+		accountNumber:      uint64(viper.GetInt64(client.FlagAccountNumber)),
+		sequence:           uint64(viper.GetInt64(client.FlagSequence)),
+		gas:                client.GasFlagVar.Gas,
+		gasAdjustment:      viper.GetFloat64(client.FlagGasAdjustment),
+		simulateAndExecute: client.GasFlagVar.Simulate,
+		chainID:            viper.GetString(client.FlagChainID),
+		memo:               viper.GetString(client.FlagMemo),
 	}
 
 	return txbldr
@@ -73,14 +88,30 @@ func (bldr TxBuilder) AccountNumber() uint64 { return bldr.accountNumber }
 // Sequence returns the transaction sequence
 func (bldr TxBuilder) Sequence() uint64 { return bldr.sequence }
 
+// Gas returns the gas for the transaction
+func (bldr TxBuilder) Gas() uint64 { return bldr.gas }
+
+// GasAdjustment returns the gas adjustment
+func (bldr TxBuilder) GasAdjustment() float64 { return bldr.gasAdjustment }
+
 // Keybase returns the keybase
 func (bldr TxBuilder) Keybase() crkeys.Keybase { return bldr.keybase }
+
+// SimulateAndExecute returns the option to simulate and then execute the transaction
+// using the gas from the simulation results
+func (bldr TxBuilder) SimulateAndExecute() bool { return bldr.simulateAndExecute }
 
 // ChainID returns the chain id
 func (bldr TxBuilder) ChainID() string { return bldr.chainID }
 
 // Memo returns the memo message
 func (bldr TxBuilder) Memo() string { return bldr.memo }
+
+// Fees returns the fees for the transaction
+func (bldr TxBuilder) Fees() sdk.Coins { return bldr.fees }
+
+// GasPrices returns the gas prices set for the transaction, if any.
+func (bldr TxBuilder) GasPrices() sdk.DecCoins { return bldr.gasPrices }
 
 // WithTxEncoder returns a copy of the context with an updated codec.
 func (bldr TxBuilder) WithTxEncoder(txEncoder sdk.TxEncoder) TxBuilder {
@@ -91,6 +122,34 @@ func (bldr TxBuilder) WithTxEncoder(txEncoder sdk.TxEncoder) TxBuilder {
 // WithChainID returns a copy of the context with an updated chainID.
 func (bldr TxBuilder) WithChainID(chainID string) TxBuilder {
 	bldr.chainID = chainID
+	return bldr
+}
+
+// WithGas returns a copy of the context with an updated gas.
+func (bldr TxBuilder) WithGas(gas uint64) TxBuilder {
+	bldr.gas = gas
+	return bldr
+}
+
+// WithFees returns a copy of the context with an updated fee.
+func (bldr TxBuilder) WithFees(fees string) TxBuilder {
+	parsedFees, err := sdk.ParseCoins(fees)
+	if err != nil {
+		panic(err)
+	}
+
+	bldr.fees = parsedFees
+	return bldr
+}
+
+// WithGasPrices returns a copy of the context with updated gas prices.
+func (bldr TxBuilder) WithGasPrices(gasPrices string) TxBuilder {
+	parsedGasPrices, err := sdk.ParseDecCoins(gasPrices)
+	if err != nil {
+		panic(err)
+	}
+
+	bldr.gasPrices = parsedGasPrices
 	return bldr
 }
 

@@ -1,12 +1,9 @@
 package rest
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -16,7 +13,7 @@ import (
 
 	"github.com/maticnetwork/heimdall/bor"
 	borTypes "github.com/maticnetwork/heimdall/bor/types"
-	"github.com/maticnetwork/heimdall/helper"
+	restClient "github.com/maticnetwork/heimdall/client/rest"
 	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/types/rest"
@@ -29,27 +26,25 @@ func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec
 	).Methods("POST")
 }
 
-type (
-	// ProposeSpan struct for proposing new span
-	ProposeSpan struct {
-		StartBlock uint64 `json:"startBlock"`
-		ChainID    string `json:"chainID"`
-	}
-)
+// ProposeSpanReq struct for proposing new span
+type ProposeSpanReq struct {
+	BaseReq rest.BaseReq `json:"base_req"`
+
+	StartBlock uint64 `json:"start_block"`
+	BorChainID string `json:"bor_chain_id"`
+}
 
 func postProposeSpanHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var m ProposeSpan
-		body, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
+		// read req from request
+		var req ProposeSpanReq
+		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
 			return
 		}
 
-		err = json.Unmarshal(body, &m)
-		if err != nil {
-			RestLogger.Error("Error unmarshalling propose span ", "error", err)
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+		req.BaseReq = req.BaseReq.Sanitize()
+		if !req.BaseReq.ValidateBasic(w) {
 			return
 		}
 
@@ -75,25 +70,29 @@ func postProposeSpanHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.
 		}
 
 		//
-		// Get validators
+		// Get ack count
 		//
 
 		res, err = cliCtx.QueryStore(staking.ACKCountKey, "staking")
 		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
+
 		// The query will return empty if there is no data
 		if len(res) == 0 {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, errors.New("No ack key found").Error())
 			return
 		}
-		ackCount, err := strconv.ParseInt(string(res), 10, 64)
-		if err != nil {
-			RestLogger.Error("Unable to parse int", "Response", res, "Error", err)
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
+		ackCount, ok := rest.ParseUint64OrReturnBadRequest(w, string(res))
+		if !ok {
 			return
 		}
+
+		//
+		// Validators
+		//
 
 		res, err = cliCtx.QueryStore(staking.CurrentValidatorSetKey, "staking")
 		if err != nil {
@@ -117,27 +116,15 @@ func postProposeSpanHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.
 		}
 
 		msg := bor.NewMsgProposeSpan(
-			m.StartBlock,
-			m.StartBlock+spanDuration,
+			req.StartBlock,
+			req.StartBlock+spanDuration,
 			validators,
 			validators,
-			m.ChainID,
+			req.BorChainID,
 			uint64(time.Now().Unix()),
 		)
 
-		resp, err := helper.BroadcastMsgs(cliCtx, []sdk.Msg{msg})
-		if err != nil {
-			RestLogger.Error("Error while sending request to Tendermint", "error", err)
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		result, err := json.Marshal(&resp)
-		if err != nil {
-			RestLogger.Error("Error while marshalling tendermint response", "error", err)
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-		rest.PostProcessResponse(w, cliCtx, result)
+		// send response
+		restClient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
 	}
 }

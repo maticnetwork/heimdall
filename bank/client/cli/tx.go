@@ -5,14 +5,13 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/client/utils"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtxb "github.com/cosmos/cosmos-sdk/x/auth/client/txbuilder"
 	"github.com/spf13/cobra"
 
 	"github.com/maticnetwork/heimdall/bank/types"
 	hmClient "github.com/maticnetwork/heimdall/client"
+	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -43,7 +42,6 @@ func SendTxCmd(cdc *codec.Codec) *cobra.Command {
 		Short: "Create and sign a send tx",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			txBldr := authtxb.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
 			cliCtx := context.NewCLIContext().
 				WithCodec(cdc).
 				WithAccountDecoder(cdc)
@@ -69,7 +67,7 @@ func SendTxCmd(cdc *codec.Codec) *cobra.Command {
 
 			// build and sign the transaction, then broadcast to Tendermint
 			msg := types.NewMsgSend(hmTypes.BytesToHeimdallAddress(from[:]), hmTypes.HeimdallAddress(to), coins)
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg}, false)
+			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
 		},
 	}
 

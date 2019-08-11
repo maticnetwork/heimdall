@@ -1,16 +1,18 @@
 package types
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // Span stores details for a span on Bor chain
 // span is indexed by start block
 type Span struct {
-	StartBlock        uint64
-	EndBlock          uint64
-	ValidatorSet      ValidatorSet
-	SelectedProducers []Validator
-	Signatures        []byte
-	ChainID           string
+	StartBlock        uint64       `json:"start_block" yaml:"start_block"`
+	EndBlock          uint64       `json:"end_block" yaml:"end_block"`
+	ValidatorSet      ValidatorSet `json:"validator_set" yaml:"validator_set"`
+	SelectedProducers []Validator  `json:"selected_producers" yaml:"selected_producers"`
+	Signatures        []byte       `json:"signatures" yaml:"signatures"`
+	ChainID           string       `json:"bor_chain_id" yaml:"bor_chain_id"`
 }
 
 // NewSpan creates new span
