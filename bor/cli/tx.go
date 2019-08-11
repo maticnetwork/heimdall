@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -14,10 +15,29 @@ import (
 
 	"github.com/maticnetwork/heimdall/bor"
 	borTypes "github.com/maticnetwork/heimdall/bor/types"
+	hmClient "github.com/maticnetwork/heimdall/client"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/types"
 )
+
+// GetTxCmd returns the transaction commands for this module
+func GetTxCmd(cdc *codec.Codec) *cobra.Command {
+	txCmd := &cobra.Command{
+		Use:                        borTypes.ModuleName,
+		Short:                      "Bor transaction subcommands",
+		DisableFlagParsing:         true,
+		SuggestionsMinimumDistance: 2,
+		RunE:                       hmClient.ValidateCmd,
+	}
+
+	txCmd.AddCommand(
+		client.PostCommands(
+			PostSendProposeSpanTx(cdc),
+		)...,
+	)
+	return txCmd
+}
 
 // PostSendProposeSpanTx send propose span transaction
 func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -15,10 +16,32 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/types"
+	hmClient "github.com/maticnetwork/heimdall/client"
+	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
 )
 
+// GetTxCmd returns the transaction commands for this module
+func GetTxCmd(cdc *codec.Codec) *cobra.Command {
+	txCmd := &cobra.Command{
+		Use:                        stakingTypes.ModuleName,
+		Short:                      "Staking transaction subcommands",
+		DisableFlagParsing:         true,
+		SuggestionsMinimumDistance: 2,
+		RunE:                       hmClient.ValidateCmd,
+	}
+
+	txCmd.AddCommand(
+		client.PostCommands(
+			SendValidatorJoinTx(cdc),
+			SendValidatorUpdateTx(cdc),
+			SendValidatorExitTx(cdc),
+		)...,
+	)
+	return txCmd
+}
+
 // send validator join transaction
-func GetValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
+func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "validator-join",
 		Short: "Join Heimdall as a validator",
@@ -64,7 +87,7 @@ func GetValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 }
 
 // send validator exit transaction
-func GetValidatorExitTx(cdc *codec.Codec) *cobra.Command {
+func SendValidatorExitTx(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "validator-exit",
 		Short: "Exit heimdall as a validator ",
@@ -94,7 +117,7 @@ func GetValidatorExitTx(cdc *codec.Codec) *cobra.Command {
 }
 
 // send validator update transaction
-func GetValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
+func SendValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "signer-update",
 		Short: "Update signer for a validator",

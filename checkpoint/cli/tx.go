@@ -5,19 +5,43 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/maticnetwork/heimdall/checkpoint"
-	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/maticnetwork/heimdall/checkpoint"
+	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
+	hmClient "github.com/maticnetwork/heimdall/client"
+	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/types"
 )
 
-// GetSendCheckpointTx send checkpoint transaction
-func GetSendCheckpointTx(cdc *codec.Codec) *cobra.Command {
+// GetTxCmd returns the transaction commands for this module
+func GetTxCmd(cdc *codec.Codec) *cobra.Command {
+	txCmd := &cobra.Command{
+		Use:                        checkpointTypes.ModuleName,
+		Short:                      "Checkpoint transaction subcommands",
+		DisableFlagParsing:         true,
+		SuggestionsMinimumDistance: 2,
+		RunE:                       hmClient.ValidateCmd,
+	}
+
+	txCmd.AddCommand(
+		client.PostCommands(
+			SendCheckpointTx(cdc),
+			SendCheckpointACKTx(cdc),
+			SendCheckpointNoACKTx(cdc),
+		)...,
+	)
+	return txCmd
+}
+
+// SendCheckpointTx send checkpoint transaction
+func SendCheckpointTx(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "send-checkpoint",
 		Short: "send checkpoint to tendermint and ethereum chain ",
@@ -84,8 +108,8 @@ func GetSendCheckpointTx(cdc *codec.Codec) *cobra.Command {
 	return cmd
 }
 
-// send checkpoint ack transaction
-func GetCheckpointACKTx(cdc *codec.Codec) *cobra.Command {
+// SendCheckpointACKTx send checkpoint ack transaction
+func SendCheckpointACKTx(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "send-ack",
 		Short: "send acknowledgement for checkpoint in buffer",
@@ -113,8 +137,8 @@ func GetCheckpointACKTx(cdc *codec.Codec) *cobra.Command {
 	return cmd
 }
 
-// GetCheckpointNoACKTx send no-ack transaction
-func GetCheckpointNoACKTx(cdc *codec.Codec) *cobra.Command {
+// SendCheckpointNoACKTx send no-ack transaction
+func SendCheckpointNoACKTx(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "send-noack",
 		Short: "send no-acknowledgement for last proposer",

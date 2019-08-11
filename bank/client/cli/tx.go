@@ -29,8 +29,11 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 		SuggestionsMinimumDistance: 2,
 		RunE:                       hmClient.ValidateCmd,
 	}
+
 	txCmd.AddCommand(
-		SendTxCmd(cdc),
+		client.PostCommands(
+			SendTxCmd(cdc),
+		)...,
 	)
 	return txCmd
 }
@@ -70,8 +73,6 @@ func SendTxCmd(cdc *codec.Codec) *cobra.Command {
 			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
 		},
 	}
-
-	cmd = client.PostCommands(cmd)[0]
 
 	return cmd
 }

@@ -155,29 +155,14 @@ func txCmd(cdc *amino.Codec) *cobra.Command {
 	}
 
 	txCmd.AddCommand(
-		bank.GetTxCmd(cdc),
-		client.LineBreak,
 		authCli.GetSignCommand(cdc),
 		hmTxCli.GetBroadcastCommand(cdc),
 		hmTxCli.GetEncodeCommand(cdc),
 		client.LineBreak,
-	)
-
-	txCmd.AddCommand(
-		client.PostCommands(
-			// checkpoint related cli post commands
-			checkpoint.GetSendCheckpointTx(cdc),
-			checkpoint.GetCheckpointACKTx(cdc),
-			checkpoint.GetCheckpointNoACKTx(cdc),
-
-			// staking related cli post commands
-			staking.GetValidatorExitTx(cdc),
-			staking.GetValidatorJoinTx(cdc),
-			staking.GetValidatorUpdateTx(cdc),
-
-			// bor related cli post commands
-			bor.PostSendProposeSpanTx(cdc),
-		)...,
+		bank.GetTxCmd(cdc),
+		bor.GetTxCmd(cdc),
+		checkpoint.GetTxCmd(cdc),
+		staking.GetTxCmd(cdc),
 	)
 
 	return txCmd
