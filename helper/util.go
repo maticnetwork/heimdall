@@ -37,6 +37,16 @@ var ZeroAddress = common.Address{}
 // ZeroPubKey represents empty pub key
 var ZeroPubKey = hmTypes.PubKey{}
 
+// GetFromAddress get from address
+func GetFromAddress(cliCtx context.CLIContext) types.HeimdallAddress {
+	fromAddress := cliCtx.GetFromAddress()
+	if len(fromAddress[:]) > 0 {
+		return types.AccAddressToHeimdallAddress(fromAddress)
+	}
+
+	return types.BytesToHeimdallAddress(GetAddress())
+}
+
 // UpdateValidators updates validators in validator set
 func UpdateValidators(
 	currentSet *hmTypes.ValidatorSet,
@@ -192,7 +202,7 @@ func BuildAndBroadcastMsgsWithCLI(cliCtx context.CLIContext, txBldr authTypes.Tx
 
 	// just simulate
 	if cliCtx.Simulate {
-		fmt.Println("TxBytes", txBytes)
+		fmt.Println("TxBytes", "0x"+hex.EncodeToString(txBytes))
 		return nil
 	}
 

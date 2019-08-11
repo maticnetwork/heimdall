@@ -157,3 +157,8 @@ func BytesToHeimdallAddress(b []byte) HeimdallAddress {
 func HexToHeimdallAddress(b string) HeimdallAddress {
 	return HeimdallAddress(common.HexToAddress(b))
 }
+
+// AccAddressToHeimdallAddress returns Address with value b.
+func AccAddressToHeimdallAddress(b sdk.AccAddress) HeimdallAddress {
+	return BytesToHeimdallAddress(b[:])
+}

@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -9,10 +10,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 
-	"github.com/maticnetwork/heimdall/bank/types"
+	authTypes "github.com/maticnetwork/heimdall/auth/types"
+	bankTypes "github.com/maticnetwork/heimdall/bank/types"
 	hmClient "github.com/maticnetwork/heimdall/client"
 	"github.com/maticnetwork/heimdall/helper"
-	hmTypes "github.com/maticnetwork/heimdall/types"
+	"github.com/maticnetwork/heimdall/types"
 )
 
 const (
@@ -23,7 +25,7 @@ const (
 // GetTxCmd returns the transaction commands for this module
 func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 	txCmd := &cobra.Command{
-		Use:                        types.ModuleName,
+		Use:                        bankTypes.ModuleName,
 		Short:                      "Bank transaction subcommands",
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
@@ -42,23 +44,36 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 func SendTxCmd(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "send [to_address] [amount]",
-		Short: "Create and sign a send tx",
+		Short: "Send coin transfer tx",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().
 				WithCodec(cdc).
 				WithAccountDecoder(cdc)
 
-			to := hmTypes.HexToHeimdallAddress(args[0])
+			// get account getter
+			accGetter := authTypes.NewAccountRetriever(cliCtx)
 
-			// parse coins trying to be sent
-			coins, err := sdk.ParseCoins(args[1])
+			// get from account
+			from := helper.GetFromAddress(cliCtx)
+
+			// to key
+			to := types.HexToHeimdallAddress(args[0])
+			if to.Equals(types.ZeroHeimdallAddress) {
+				return errors.New("Invalid to address")
+			}
+
+			if err := accGetter.EnsureExists(from); err != nil {
+				return err
+			}
+
+			account, err := accGetter.GetAccount(from)
 			if err != nil {
 				return err
 			}
 
-			from := cliCtx.GetFromAddress()
-			account, err := cliCtx.GetAccount(from)
+			// parse coins trying to be sent
+			coins, err := sdk.ParseCoins(args[1])
 			if err != nil {
 				return err
 			}
@@ -69,7 +84,7 @@ func SendTxCmd(cdc *codec.Codec) *cobra.Command {
 			}
 
 			// build and sign the transaction, then broadcast to Tendermint
-			msg := types.NewMsgSend(hmTypes.BytesToHeimdallAddress(from[:]), hmTypes.HeimdallAddress(to), coins)
+			msg := bankTypes.NewMsgSend(from, to, coins)
 			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
 		},
 	}

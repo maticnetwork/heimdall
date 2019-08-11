@@ -227,6 +227,8 @@ func MakePulp() *authTypes.Pulp {
 	pulp := authTypes.GetPulpInstance()
 
 	// register custom type
+	bankTypes.RegisterPulp(pulp)
+
 	checkpoint.RegisterPulp(pulp)
 	staking.RegisterPulp(pulp)
 	bor.RegisterPulp(pulp)
