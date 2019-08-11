@@ -10,12 +10,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/spf13/cobra"
 	amino "github.com/tendermint/go-amino"
 
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/types/rest"
 )
 
 type (
@@ -60,7 +60,7 @@ func EncodeTxRequestHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.
 		txBytesBase64 := base64.StdEncoding.EncodeToString(txBytes)
 
 		response := EncodeResp{Tx: txBytesBase64}
-		rest.PostProcessResponse(w, cdc, response, cliCtx.Indent)
+		rest.PostProcessResponse(w, cliCtx, response)
 	}
 }
 

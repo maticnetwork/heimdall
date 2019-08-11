@@ -9,13 +9,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gorilla/mux"
 
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
+	"github.com/maticnetwork/heimdall/types/rest"
 )
 
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
@@ -80,7 +80,7 @@ func newCheckpointHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.Hand
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
+		rest.PostProcessResponse(w, cliCtx, result)
 	}
 }
 
@@ -116,7 +116,7 @@ func NewCheckpointACKHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.H
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
+		rest.PostProcessResponse(w, cliCtx, result)
 	}
 }
 
@@ -138,6 +138,6 @@ func NewCheckpointNoACKHandler(cdc *codec.Codec, cliCtx context.CLIContext) http
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
+		rest.PostProcessResponse(w, cliCtx, result)
 	}
 }

@@ -10,10 +10,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gorilla/mux"
 
-	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
+	"github.com/maticnetwork/heimdall/types/rest"
 )
 
 func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
@@ -70,7 +70,7 @@ func validatorByAddressHandlerFn(
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
+		rest.PostProcessResponse(w, cliCtx, result)
 	}
 }
 
@@ -81,10 +81,10 @@ func validatorByIDHandlerFn(
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		idStr := vars["id"]
-		id, err := strconv.ParseUint(idStr, 10, 64)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
+		// get id
+		id, ok := rest.ParseUint64OrReturnBadRequest(w, vars["id"])
+		if !ok {
 			return
 		}
 
@@ -119,7 +119,7 @@ func validatorByIDHandlerFn(
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
+		rest.PostProcessResponse(w, cliCtx, result)
 	}
 }
 
@@ -150,7 +150,7 @@ func validatorSetHandlerFn(
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
+		rest.PostProcessResponse(w, cliCtx, result)
 	}
 }
 
@@ -207,6 +207,6 @@ func proposerHandlerFn(
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
+		rest.PostProcessResponse(w, cliCtx, result)
 	}
 }

@@ -26,12 +26,12 @@ func RegisterBaseAccount(cdc *codec.Codec) {
 	codec.RegisterCrypto(cdc)
 }
 
-// MsgCdc module wide codec
-var MsgCdc *codec.Codec
+// ModuleCdc module wide codec
+var ModuleCdc *codec.Codec
 
 func init() {
-	MsgCdc = codec.New()
-	RegisterCodec(MsgCdc)
-	codec.RegisterCrypto(MsgCdc)
-	MsgCdc.Seal()
+	ModuleCdc = codec.New()
+	RegisterCodec(ModuleCdc)
+	codec.RegisterCrypto(ModuleCdc)
+	ModuleCdc.Seal()
 }

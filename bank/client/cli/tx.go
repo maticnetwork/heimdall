@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/maticnetwork/heimdall/bank/types"
+	hmClient "github.com/maticnetwork/heimdall/client"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -19,6 +20,21 @@ const (
 	flagTo     = "to"
 	flagAmount = "amount"
 )
+
+// GetTxCmd returns the transaction commands for this module
+func GetTxCmd(cdc *codec.Codec) *cobra.Command {
+	txCmd := &cobra.Command{
+		Use:                        types.ModuleName,
+		Short:                      "Bank transaction subcommands",
+		DisableFlagParsing:         true,
+		SuggestionsMinimumDistance: 2,
+		RunE:                       hmClient.ValidateCmd,
+	}
+	txCmd.AddCommand(
+		SendTxCmd(cdc),
+	)
+	return txCmd
+}
 
 // SendTxCmd will create a send tx and sign it with the given key.
 func SendTxCmd(cdc *codec.Codec) *cobra.Command {
@@ -58,7 +74,6 @@ func SendTxCmd(cdc *codec.Codec) *cobra.Command {
 	}
 
 	cmd = client.PostCommands(cmd)[0]
-	cmd.MarkFlagRequired(client.FlagFrom)
 
 	return cmd
 }

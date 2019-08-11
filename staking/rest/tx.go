@@ -8,12 +8,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gorilla/mux"
+
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
 	hmType "github.com/maticnetwork/heimdall/types"
+	"github.com/maticnetwork/heimdall/types/rest"
 )
 
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
@@ -79,7 +80,7 @@ func newValidatorJoinHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.H
 
 			return
 		}
-		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
+		rest.PostProcessResponse(w, cliCtx, result)
 	}
 }
 
@@ -119,7 +120,7 @@ func newValidatorExitHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.H
 
 			return
 		}
-		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
+		rest.PostProcessResponse(w, cliCtx, result)
 	}
 }
 
@@ -160,6 +161,6 @@ func newValidatorUpdateHandler(cdc *codec.Codec, cliCtx context.CLIContext) http
 
 			return
 		}
-		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
+		rest.PostProcessResponse(w, cliCtx, result)
 	}
 }

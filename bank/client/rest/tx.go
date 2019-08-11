@@ -1,0 +1,53 @@
+package rest
+
+import (
+	"net/http"
+
+	"github.com/gorilla/mux"
+
+	"github.com/cosmos/cosmos-sdk/client/context"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/maticnetwork/heimdall/bank/types"
+	"github.com/maticnetwork/heimdall/client/rest"
+	hmTypes "github.com/maticnetwork/heimdall/types"
+	restTypes "github.com/maticnetwork/heimdall/types/rest"
+)
+
+// RegisterRoutes - Central function to define routes that get registered by the main application
+func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router) {
+	r.HandleFunc("/bank/accounts/{address}/transfers", SendRequestHandlerFn(cliCtx)).Methods("POST")
+	r.HandleFunc("/bank/balances/{address}", QueryBalancesRequestHandlerFn(cliCtx)).Methods("GET")
+}
+
+// SendReq defines the properties of a send request's body.
+type SendReq struct {
+	BaseReq restTypes.BaseReq `json:"base_req" yaml:"base_req"`
+	Amount  sdk.Coins         `json:"amount" yaml:"amount"`
+}
+
+// SendRequestHandlerFn - http request handler to send coins to a address.
+func SendRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+
+		// get to address
+		toAddr := hmTypes.HexToHeimdallAddress(vars["address"])
+
+		var req SendReq
+		if !restTypes.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+			return
+		}
+
+		req.BaseReq = req.BaseReq.Sanitize()
+		if !req.BaseReq.ValidateBasic(w) {
+			return
+		}
+
+		// get from address
+		fromAddr := hmTypes.HexToHeimdallAddress(req.BaseReq.From)
+
+		msg := types.NewMsgSend(fromAddr, toAddr, req.Amount)
+		rest.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+	}
+}

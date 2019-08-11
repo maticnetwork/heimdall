@@ -3,6 +3,7 @@ package rest
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -11,18 +12,19 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/gorilla/mux"
 
 	"github.com/maticnetwork/heimdall/bor"
+	borTypes "github.com/maticnetwork/heimdall/bor/types"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/types"
+	"github.com/maticnetwork/heimdall/types/rest"
 )
 
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
 	r.HandleFunc(
-		"/bor/proposeSpan",
+		"/bor/propose-span",
 		postProposeSpanHandlerFn(cdc, cliCtx),
 	).Methods("POST")
 }
@@ -51,23 +53,30 @@ func postProposeSpanHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.
 			return
 		}
 
-		// fetch duration
-		res, err := cliCtx.QueryStore(bor.SpanDurationKey, "bor")
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-		if len(res) == 0 {
-			rest.WriteErrorResponse(w, http.StatusNoContent, errors.New("span duration not found ").Error())
-			return
-		}
+		//
+		// Get span duration
+		//
 
-		duration, err := strconv.ParseInt(string(res), 10, 64)
+		// fetch duration
+		res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", borTypes.QuerierRoute, bor.QueryParams, bor.ParamSpan), nil)
 		if err != nil {
-			RestLogger.Error("Unable to parse int", "response", res, "error", err)
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
+		if len(res) == 0 {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, errors.New("Span duration not found ").Error())
+			return
+		}
+
+		var spanDuration uint64
+		if err := cliCtx.Codec.UnmarshalJSON(res, &spanDuration); err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		//
+		// Get validators
+		//
 
 		res, err = cliCtx.QueryStore(staking.ACKCountKey, "staking")
 		if err != nil {
@@ -76,7 +85,7 @@ func postProposeSpanHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.
 		}
 		// The query will return empty if there is no data
 		if len(res) == 0 {
-			rest.WriteErrorResponse(w, http.StatusNoContent, err.Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 		ackCount, err := strconv.ParseInt(string(res), 10, 64)
@@ -109,7 +118,7 @@ func postProposeSpanHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.
 
 		msg := bor.NewMsgProposeSpan(
 			m.StartBlock,
-			m.StartBlock+uint64(duration),
+			m.StartBlock+spanDuration,
 			validators,
 			validators,
 			m.ChainID,
@@ -129,6 +138,6 @@ func postProposeSpanHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
+		rest.PostProcessResponse(w, cliCtx, result)
 	}
 }

@@ -277,7 +277,7 @@ func (checkpointer *Checkpointer) sendRequest(newHeader *types.Header) {
 
 	// TODO submit checkcoint
 	msg := checkpoint.NewMsgCheckpointBlock(
-		ethCommon.BytesToAddress(helper.GetAddress()),
+		hmtypes.BytesToHeimdallAddress(helper.GetAddress()),
 		start,
 		end,
 		ethCommon.BytesToHash(root),

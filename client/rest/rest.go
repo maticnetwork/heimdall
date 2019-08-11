@@ -7,19 +7,23 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/utils"
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	authtxb "github.com/cosmos/cosmos-sdk/x/auth/client/txbuilder"
+
+	"github.com/maticnetwork/heimdall/types/rest"
 )
 
 //-----------------------------------------------------------------------------
 // Building / Sending utilities
 
 // WriteGenerateStdTxResponse writes response for the generate only mode.
-func WriteGenerateStdTxResponse(w http.ResponseWriter, cdc *codec.Codec,
-	cliCtx context.CLIContext, br rest.BaseReq, msgs []sdk.Msg) {
+func WriteGenerateStdTxResponse(
+	w http.ResponseWriter,
+	cliCtx context.CLIContext,
+	br rest.BaseReq,
+	msgs []sdk.Msg,
+) {
 
 	gasAdj, ok := rest.ParseFloat64OrReturnBadRequest(w, br.GasAdjustment, client.DefaultGasAdjustment)
 	if !ok {
@@ -33,7 +37,7 @@ func WriteGenerateStdTxResponse(w http.ResponseWriter, cdc *codec.Codec,
 	}
 
 	txBldr := authtxb.NewTxBuilder(
-		utils.GetTxEncoder(cdc), br.AccountNumber, br.Sequence, gas, gasAdj,
+		utils.GetTxEncoder(cliCtx.Codec), br.AccountNumber, br.Sequence, gas, gasAdj,
 		br.Simulate, br.ChainID, br.Memo, br.Fees, br.GasPrices,
 	)
 
@@ -50,7 +54,7 @@ func WriteGenerateStdTxResponse(w http.ResponseWriter, cdc *codec.Codec,
 		}
 
 		if br.Simulate {
-			rest.WriteSimulationResponse(w, cdc, txBldr.Gas())
+			rest.WriteSimulationResponse(w, cliCtx.Codec, txBldr.Gas())
 			return
 		}
 	}
@@ -61,7 +65,7 @@ func WriteGenerateStdTxResponse(w http.ResponseWriter, cdc *codec.Codec,
 		return
 	}
 
-	output, err := cdc.MarshalJSON(auth.NewStdTx(stdMsg.Msgs, stdMsg.Fee, nil, stdMsg.Memo))
+	output, err := cliCtx.Codec.MarshalJSON(auth.NewStdTx(stdMsg.Msgs, stdMsg.Fee, nil, stdMsg.Memo))
 	if err != nil {
 		rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return

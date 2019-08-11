@@ -36,7 +36,7 @@ func (ar AccountRetriever) GetAccount(addr types.HeimdallAddress) (Account, erro
 // height of the query with the account. An error is returned if the query
 // or decoding fails.
 func (ar AccountRetriever) GetAccountWithHeight(addr types.HeimdallAddress) (Account, error) {
-	bs, err := MsgCdc.MarshalJSON(NewQueryAccountParams(addr))
+	bs, err := ModuleCdc.MarshalJSON(NewQueryAccountParams(addr))
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +47,7 @@ func (ar AccountRetriever) GetAccountWithHeight(addr types.HeimdallAddress) (Acc
 	}
 
 	var account Account
-	if err := MsgCdc.UnmarshalJSON(res, &account); err != nil {
+	if err := ModuleCdc.UnmarshalJSON(res, &account); err != nil {
 		return nil, err
 	}
 

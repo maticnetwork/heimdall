@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/viper"
 	tmLog "github.com/tendermint/tendermint/libs/log"
 
+	bank "github.com/maticnetwork/heimdall/bank/client/rest"
 	bor "github.com/maticnetwork/heimdall/bor/rest"
 	checkpoint "github.com/maticnetwork/heimdall/checkpoint/rest"
 	tx "github.com/maticnetwork/heimdall/client/tx"
@@ -52,6 +53,9 @@ func RegisterRoutes(rs *lcd.RestServer) {
 
 	rpc.RegisterRoutes(rs.CliCtx, rs.Mux)
 	tx.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
+
+	bank.RegisterRoutes(rs.CliCtx, rs.Mux)
+
 	checkpoint.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
 	staking.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
 	bor.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
@@ -70,12 +74,3 @@ func RegisterRoutes(rs *lcd.RestServer) {
 	// 	return nil
 	// })
 }
-
-// func registerSwaggerUI(rs *lcd.RestServer) {
-// 	statikFS, err := fs.New()
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	staticServer := http.FileServer(statikFS)
-// 	rs.Mux.PathPrefix("/swagger-ui/").Handler(http.StripPrefix("/swagger-ui/", staticServer))
-// }

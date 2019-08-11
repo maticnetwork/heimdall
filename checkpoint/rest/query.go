@@ -11,11 +11,11 @@ import (
 	ethcmn "github.com/ethereum/go-ethereum/common"
 	"github.com/gorilla/mux"
 
-	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/types"
+	"github.com/maticnetwork/heimdall/types/rest"
 )
 
 func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
@@ -77,7 +77,7 @@ func checkpointBufferHandlerFn(
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
+		rest.PostProcessResponse(w, cliCtx, result)
 	}
 }
 
@@ -109,7 +109,7 @@ func checkpointCountHandlerFn(
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
+		rest.PostProcessResponse(w, cliCtx, result)
 	}
 }
 
@@ -119,7 +119,13 @@ func checkpointHeaderHandlerFn(
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		headerNumber, err := strconv.ParseUint(vars["headerBlockIndex"], 10, 64)
+
+		// get header number
+		headerNumber, ok := rest.ParseUint64OrReturnBadRequest(w, vars["headerBlockIndex"])
+		if !ok {
+			return
+		}
+
 		res, err := cliCtx.QueryStore(checkpoint.GetHeaderKey(uint64(headerNumber)), "checkpoint")
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
@@ -142,7 +148,7 @@ func checkpointHeaderHandlerFn(
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
+		rest.PostProcessResponse(w, cliCtx, result)
 	}
 }
 
@@ -196,7 +202,7 @@ func checkpointHandlerFn(
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
+		rest.PostProcessResponse(w, cliCtx, result)
 	}
 }
 
@@ -229,7 +235,7 @@ func noackHandlerFn(
 			rest.WriteErrorResponse(w, http.StatusNoContent, err.Error())
 			return
 		}
-		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
+		rest.PostProcessResponse(w, cliCtx, result)
 	}
 }
 
@@ -321,7 +327,7 @@ func overviewHandlerFunc(
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
+		rest.PostProcessResponse(w, cliCtx, result)
 	}
 }
 
@@ -369,6 +375,6 @@ func latestCheckpointHandlerFunc(
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
+		rest.PostProcessResponse(w, cliCtx, result)
 	}
 }
