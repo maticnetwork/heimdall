@@ -55,6 +55,20 @@ func RegisterRoutes(rs *lcd.RestServer) {
 	checkpoint.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
 	staking.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
 	bor.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
+
+	// list all paths
+	// rs.Mux.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
+	// 	t, err := route.GetPathTemplate()
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	r, err := route.GetMethods()
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	fmt.Println(strings.Join(r, ","), t)
+	// 	return nil
+	// })
 }
 
 // func registerSwaggerUI(rs *lcd.RestServer) {
