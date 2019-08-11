@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"time"
@@ -8,7 +9,18 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/crypto"
 	yaml "gopkg.in/yaml.v2"
+	amino "github.com/tendermint/go-amino"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
+
+	"github.com/maticnetwork/heimdall/types"
 )
+
+var cdc = amino.NewCodec()
+
+func init() {
+	cdc.RegisterConcrete(secp256k1.PubKeySecp256k1{}, secp256k1.PubKeyAminoName, nil)
+	cdc.RegisterConcrete(secp256k1.PrivKeySecp256k1{}, secp256k1.PrivKeyAminoName, nil)
+}
 
 // Account is an interface used to store coins at a given address within state.
 // It presumes a notion of sequence numbers for replay protection,
@@ -17,8 +29,8 @@ import (
 //
 // Many complex conditions can be used in the concrete struct which implements Account.
 type Account interface {
-	GetAddress() sdk.AccAddress
-	SetAddress(sdk.AccAddress) error // errors if already set.
+	GetAddress() types.HeimdallAddress
+	SetAddress(types.HeimdallAddress) error // errors if already set.
 
 	GetPubKey() crypto.PubKey // can return nil.
 	SetPubKey(crypto.PubKey) error
@@ -70,15 +82,15 @@ var _ Account = (*BaseAccount)(nil)
 // However one doesn't have to use BaseAccount as long as your struct
 // implements Account.
 type BaseAccount struct {
-	Address       sdk.AccAddress `json:"address" yaml:"address"`
-	Coins         sdk.Coins      `json:"coins" yaml:"coins"`
-	PubKey        crypto.PubKey  `json:"public_key" yaml:"public_key"`
-	AccountNumber uint64         `json:"account_number" yaml:"account_number"`
-	Sequence      uint64         `json:"sequence" yaml:"sequence"`
+	Address       types.HeimdallAddress `json:"address" yaml:"address"`
+	Coins         sdk.Coins             `json:"coins" yaml:"coins"`
+	PubKey        crypto.PubKey         `json:"public_key" yaml:"public_key"`
+	AccountNumber uint64                `json:"account_number" yaml:"account_number"`
+	Sequence      uint64                `json:"sequence" yaml:"sequence"`
 }
 
 // NewBaseAccount creates a new BaseAccount object
-func NewBaseAccount(address sdk.AccAddress, coins sdk.Coins,
+func NewBaseAccount(address types.HeimdallAddress, coins sdk.Coins,
 	pubKey crypto.PubKey, accountNumber uint64, sequence uint64) *BaseAccount {
 
 	return &BaseAccount{
@@ -95,7 +107,10 @@ func (acc BaseAccount) String() string {
 	var pubkey string
 
 	if acc.PubKey != nil {
-		pubkey = sdk.MustBech32ifyAccPub(acc.PubKey)
+		// pubkey = sdk.MustBech32ifyAccPub(acc.PubKey)
+		var pubObject secp256k1.PubKeySecp256k1
+		cdc.MustUnmarshalBinaryBare(acc.PubKey.Bytes(), &pubObject)
+		pubkey = "0x" + hex.EncodeToString(pubObject[:])
 	}
 
 	return fmt.Sprintf(`Account:
@@ -114,20 +129,20 @@ func ProtoBaseAccount() Account {
 }
 
 // NewBaseAccountWithAddress - returns a new base account with a given address
-func NewBaseAccountWithAddress(addr sdk.AccAddress) BaseAccount {
+func NewBaseAccountWithAddress(addr types.HeimdallAddress) BaseAccount {
 	return BaseAccount{
 		Address: addr,
 	}
 }
 
 // GetAddress - Implements sdk.Account.
-func (acc BaseAccount) GetAddress() sdk.AccAddress {
+func (acc BaseAccount) GetAddress() types.HeimdallAddress {
 	return acc.Address
 }
 
 // SetAddress - Implements sdk.Account.
-func (acc *BaseAccount) SetAddress(addr sdk.AccAddress) error {
-	if len(acc.Address) != 0 {
+func (acc *BaseAccount) SetAddress(addr types.HeimdallAddress) error {
+	if len(acc.Address) != 0 && !acc.Address.Equals(types.ZeroHeimdallAddress) {
 		return errors.New("cannot override BaseAccount address")
 	}
 	acc.Address = addr
@@ -198,7 +213,7 @@ func (acc BaseAccount) MarshalYAML() (interface{}, error) {
 	}
 
 	bs, err = yaml.Marshal(struct {
-		Address       sdk.AccAddress
+		Address       types.HeimdallAddress
 		Coins         sdk.Coins
 		PubKey        string
 		AccountNumber uint64

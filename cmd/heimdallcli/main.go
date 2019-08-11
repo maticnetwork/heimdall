@@ -30,6 +30,7 @@ import (
 	bank "github.com/maticnetwork/heimdall/bank/client/cli"
 	bor "github.com/maticnetwork/heimdall/bor/cli"
 	checkpoint "github.com/maticnetwork/heimdall/checkpoint/cli"
+	hmTxCli "github.com/maticnetwork/heimdall/client/tx"
 	"github.com/maticnetwork/heimdall/helper"
 	staking "github.com/maticnetwork/heimdall/staking/cli"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -80,6 +81,9 @@ func main() {
 	// TODO: Setup keybase, viper object, etc. to be passed into
 	// the below functions and eliminate global vars, like we do
 	// with the cdc.
+
+	// chain id
+	rootCmd.PersistentFlags().String(client.FlagChainID, "", "Chain ID of tendermint node")
 
 	// add query/post commands (custom to binary)
 	rootCmd.AddCommand(
@@ -153,10 +157,9 @@ func txCmd(cdc *amino.Codec) *cobra.Command {
 	txCmd.AddCommand(
 		bank.SendTxCmd(cdc),
 		client.LineBreak,
-		// authCmd.GetSignCommand(cdc),
 		authCli.GetSignCommand(cdc),
-		tx.GetBroadcastCommand(cdc),
-		tx.GetEncodeCommand(cdc),
+		hmTxCli.GetBroadcastCommand(cdc),
+		hmTxCli.GetEncodeCommand(cdc),
 		client.LineBreak,
 	)
 

@@ -6,17 +6,16 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/lcd"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
-	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/go-kit/kit/log"
-
-	bor "github.com/maticnetwork/heimdall/bor/rest"
-	checkpoint "github.com/maticnetwork/heimdall/checkpoint/rest"
-	staking "github.com/maticnetwork/heimdall/staking/rest"
-
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	tmLog "github.com/tendermint/tendermint/libs/log"
+
+	bor "github.com/maticnetwork/heimdall/bor/rest"
+	checkpoint "github.com/maticnetwork/heimdall/checkpoint/rest"
+	tx "github.com/maticnetwork/heimdall/client/tx"
+	staking "github.com/maticnetwork/heimdall/staking/rest"
 )
 
 // ServeCommands will generate a long-running rest server
@@ -49,9 +48,20 @@ func ServeCommands(cdc *codec.Codec, registerRoutesFn func(*lcd.RestServer)) *co
 
 // RegisterRoutes register routes of all modules
 func RegisterRoutes(rs *lcd.RestServer) {
+	// registerSwaggerUI(rs)
+
 	rpc.RegisterRoutes(rs.CliCtx, rs.Mux)
 	tx.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
 	checkpoint.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
 	staking.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
 	bor.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
 }
+
+// func registerSwaggerUI(rs *lcd.RestServer) {
+// 	statikFS, err := fs.New()
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	staticServer := http.FileServer(statikFS)
+// 	rs.Mux.PathPrefix("/swagger-ui/").Handler(http.StripPrefix("/swagger-ui/", staticServer))
+// }

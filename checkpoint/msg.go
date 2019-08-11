@@ -11,6 +11,7 @@ import (
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/types"
 )
 
 var cdc = codec.New()
@@ -22,15 +23,15 @@ var cdc = codec.New()
 var _ sdk.Msg = &MsgCheckpoint{}
 
 type MsgCheckpoint struct {
-	Proposer   common.Address `json:"proposer"`
-	StartBlock uint64         `json:"startBlock"`
-	EndBlock   uint64         `json:"endBlock"`
-	RootHash   common.Hash    `json:"rootHash"`
-	TimeStamp  uint64         `json:"timestamp"`
+	Proposer   types.HeimdallAddress `json:"proposer"`
+	StartBlock uint64                `json:"startBlock"`
+	EndBlock   uint64                `json:"endBlock"`
+	RootHash   common.Hash           `json:"rootHash"`
+	TimeStamp  uint64                `json:"timestamp"`
 }
 
 // NewMsgCheckpointBlock creates new checkpoint message using mentioned arguments
-func NewMsgCheckpointBlock(proposer common.Address, startBlock uint64, endBlock uint64, roothash common.Hash, timestamp uint64) MsgCheckpoint {
+func NewMsgCheckpointBlock(proposer types.HeimdallAddress, startBlock uint64, endBlock uint64, roothash common.Hash, timestamp uint64) MsgCheckpoint {
 	return MsgCheckpoint{
 		Proposer:   proposer,
 		StartBlock: startBlock,

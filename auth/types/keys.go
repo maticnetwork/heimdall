@@ -1,6 +1,8 @@
 package types
 
-import sdk "github.com/cosmos/cosmos-sdk/types"
+import (
+	"github.com/maticnetwork/heimdall/types"
+)
 
 const (
 	// ModuleName is the name of the module
@@ -31,6 +33,6 @@ var (
 )
 
 // AddressStoreKey turn an address to key used to get it from the account store
-func AddressStoreKey(addr sdk.AccAddress) []byte {
+func AddressStoreKey(addr types.HeimdallAddress) []byte {
 	return append(AddressStoreKeyPrefix, addr.Bytes()...)
 }

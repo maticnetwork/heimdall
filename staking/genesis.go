@@ -4,18 +4,18 @@ import (
 	"errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/common"
+	"github.com/maticnetwork/heimdall/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 // GenesisValidator genesis validator
 type GenesisValidator struct {
-	ID         hmTypes.ValidatorID `json:"id"`
-	StartEpoch uint64              `json:"start_epoch"`
-	EndEpoch   uint64              `json:"end_epoch"`
-	Power      uint64              `json:"power"` // aka Amount
-	PubKey     hmTypes.PubKey      `json:"pub_key"`
-	Signer     common.Address      `json:"signer"`
+	ID         hmTypes.ValidatorID   `json:"id"`
+	StartEpoch uint64                `json:"start_epoch"`
+	EndEpoch   uint64                `json:"end_epoch"`
+	Power      uint64                `json:"power"` // aka Amount
+	PubKey     hmTypes.PubKey        `json:"pub_key"`
+	Signer     types.HeimdallAddress `json:"signer"`
 }
 
 // HeimdallValidator converts genesis validator validator to Heimdall validator

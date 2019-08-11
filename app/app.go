@@ -31,6 +31,7 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
+	"github.com/maticnetwork/heimdall/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -351,7 +352,7 @@ func (app *HeimdallApp) initFromGenesisState(ctx sdk.Context, genesisState Genes
 	// accounts
 	// Load the genesis accounts
 	for _, genacc := range genesisState.Accounts {
-		acc := app.accountKeeper.NewAccountWithAddress(ctx, genacc.Address[:])
+		acc := app.accountKeeper.NewAccountWithAddress(ctx, types.BytesToHeimdallAddress(genacc.Address[:]))
 		acc.SetCoins(genacc.Coins)
 		app.accountKeeper.SetAccount(ctx, acc)
 	}

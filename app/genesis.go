@@ -6,7 +6,6 @@ import (
 	"sort"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/maticnetwork/heimdall/auth"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
@@ -14,20 +13,21 @@ import (
 	"github.com/maticnetwork/heimdall/bor"
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/staking"
+	"github.com/maticnetwork/heimdall/types"
 )
 
 // GenesisAccount genesis account
 type GenesisAccount struct {
-	Address       common.Address `json:"address"`
-	Coins         sdk.Coins      `json:"coins"`
-	Sequence      uint64         `json:"sequence_number"`
-	AccountNumber uint64         `json:"account_number"`
+	Address       types.HeimdallAddress `json:"address"`
+	Coins         sdk.Coins             `json:"coins"`
+	Sequence      uint64                `json:"sequence_number"`
+	AccountNumber uint64                `json:"account_number"`
 }
 
 // NewGenesisAccount creates new genesis account
 func NewGenesisAccount(acc authTypes.Account) GenesisAccount {
 	gacc := GenesisAccount{
-		Address:       common.BytesToAddress(acc.GetAddress()[:]),
+		Address:       acc.GetAddress(),
 		Coins:         acc.GetCoins(),
 		AccountNumber: acc.GetAccountNumber(),
 		Sequence:      acc.GetSequence(),

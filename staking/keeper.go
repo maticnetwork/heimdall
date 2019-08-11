@@ -174,7 +174,7 @@ func (k *Keeper) AddDeactivationEpoch(ctx sdk.Context, validator types.Validator
 }
 
 // UpdateSigner updates validator with signer and pubkey + validator => signer map
-func (k *Keeper) UpdateSigner(ctx sdk.Context, newSigner common.Address, newPubkey types.PubKey, prevSigner common.Address) error {
+func (k *Keeper) UpdateSigner(ctx sdk.Context, newSigner types.HeimdallAddress, newPubkey types.PubKey, prevSigner types.HeimdallAddress) error {
 	// get old validator from state and make power 0
 	validator, err := k.GetValidatorInfo(ctx, prevSigner.Bytes())
 	if err != nil {
@@ -261,7 +261,7 @@ func (k *Keeper) GetCurrentProposer(ctx sdk.Context) *types.Validator {
 }
 
 // SetValidatorIDToSignerAddr sets mapping for validator ID to signer address
-func (k *Keeper) SetValidatorIDToSignerAddr(ctx sdk.Context, valID types.ValidatorID, signerAddr common.Address) {
+func (k *Keeper) SetValidatorIDToSignerAddr(ctx sdk.Context, valID types.ValidatorID, signerAddr types.HeimdallAddress) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(GetValidatorMapKey(valID.Bytes()), signerAddr.Bytes())
 }

@@ -34,6 +34,7 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 	hmserver "github.com/maticnetwork/heimdall/server"
 	stakingcli "github.com/maticnetwork/heimdall/staking/cli"
+	"github.com/maticnetwork/heimdall/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -217,7 +218,7 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 				ID:         hmTypes.NewValidatorID(uint64(validatorID)),
 				PubKey:     newPubkey,
 				StartEpoch: 0,
-				Signer:     ethCommon.BytesToAddress(valPubKey.Address().Bytes()),
+				Signer:     types.BytesToHeimdallAddress(valPubKey.Address().Bytes()),
 				Power:      1,
 			}
 
@@ -331,7 +332,7 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 					ID:         hmTypes.NewValidatorID(uint64(startID + int64(i))),
 					PubKey:     newPubkey,
 					StartEpoch: 0,
-					Signer:     ethCommon.BytesToAddress(valPubKeys[i].Address().Bytes()),
+					Signer:     types.BytesToHeimdallAddress(valPubKeys[i].Address().Bytes()),
 					Power:      1,
 				}
 

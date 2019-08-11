@@ -10,6 +10,7 @@ import (
 	"github.com/maticnetwork/heimdall/auth"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	bankTypes "github.com/maticnetwork/heimdall/bank/types"
+	"github.com/maticnetwork/heimdall/types"
 )
 
 var _ Keeper = (*BaseKeeper)(nil)
@@ -19,13 +20,13 @@ var _ Keeper = (*BaseKeeper)(nil)
 type Keeper interface {
 	SendKeeper
 
-	SetCoins(ctx sdk.Context, addr sdk.AccAddress, amt sdk.Coins) sdk.Error
-	SubtractCoins(ctx sdk.Context, addr sdk.AccAddress, amt sdk.Coins) (sdk.Coins, sdk.Tags, sdk.Error)
-	AddCoins(ctx sdk.Context, addr sdk.AccAddress, amt sdk.Coins) (sdk.Coins, sdk.Tags, sdk.Error)
+	SetCoins(ctx sdk.Context, addr types.HeimdallAddress, amt sdk.Coins) sdk.Error
+	SubtractCoins(ctx sdk.Context, addr types.HeimdallAddress, amt sdk.Coins) (sdk.Coins, sdk.Tags, sdk.Error)
+	AddCoins(ctx sdk.Context, addr types.HeimdallAddress, amt sdk.Coins) (sdk.Coins, sdk.Tags, sdk.Error)
 	InputOutputCoins(ctx sdk.Context, inputs []bankTypes.Input, outputs []bankTypes.Output) (sdk.Tags, sdk.Error)
 
-	DelegateCoins(ctx sdk.Context, addr sdk.AccAddress, amt sdk.Coins) (sdk.Tags, sdk.Error)
-	UndelegateCoins(ctx sdk.Context, addr sdk.AccAddress, amt sdk.Coins) (sdk.Tags, sdk.Error)
+	DelegateCoins(ctx sdk.Context, addr types.HeimdallAddress, amt sdk.Coins) (sdk.Tags, sdk.Error)
+	UndelegateCoins(ctx sdk.Context, addr types.HeimdallAddress, amt sdk.Coins) (sdk.Tags, sdk.Error)
 }
 
 // BaseKeeper manages transfers between accounts. It implements the Keeper interface.
@@ -51,7 +52,7 @@ func NewBaseKeeper(ak auth.AccountKeeper,
 
 // SetCoins sets the coins at the addr.
 func (keeper BaseKeeper) SetCoins(
-	ctx sdk.Context, addr sdk.AccAddress, amt sdk.Coins,
+	ctx sdk.Context, addr types.HeimdallAddress, amt sdk.Coins,
 ) sdk.Error {
 
 	if !amt.IsValid() {
@@ -62,7 +63,7 @@ func (keeper BaseKeeper) SetCoins(
 
 // SubtractCoins subtracts amt from the coins at the addr.
 func (keeper BaseKeeper) SubtractCoins(
-	ctx sdk.Context, addr sdk.AccAddress, amt sdk.Coins,
+	ctx sdk.Context, addr types.HeimdallAddress, amt sdk.Coins,
 ) (sdk.Coins, sdk.Tags, sdk.Error) {
 
 	if !amt.IsValid() {
@@ -73,7 +74,7 @@ func (keeper BaseKeeper) SubtractCoins(
 
 // AddCoins adds amt to the coins at the addr.
 func (keeper BaseKeeper) AddCoins(
-	ctx sdk.Context, addr sdk.AccAddress, amt sdk.Coins,
+	ctx sdk.Context, addr types.HeimdallAddress, amt sdk.Coins,
 ) (sdk.Coins, sdk.Tags, sdk.Error) {
 
 	if !amt.IsValid() {
@@ -94,7 +95,7 @@ func (keeper BaseKeeper) InputOutputCoins(
 // address addr. For vesting accounts, delegations amounts are tracked for both
 // vesting and vested coins.
 func (keeper BaseKeeper) DelegateCoins(
-	ctx sdk.Context, addr sdk.AccAddress, amt sdk.Coins,
+	ctx sdk.Context, addr types.HeimdallAddress, amt sdk.Coins,
 ) (sdk.Tags, sdk.Error) {
 
 	if !amt.IsValid() {
@@ -108,7 +109,7 @@ func (keeper BaseKeeper) DelegateCoins(
 // vesting and vested coins.
 // If any of the undelegation amounts are negative, an error is returned.
 func (keeper BaseKeeper) UndelegateCoins(
-	ctx sdk.Context, addr sdk.AccAddress, amt sdk.Coins,
+	ctx sdk.Context, addr types.HeimdallAddress, amt sdk.Coins,
 ) (sdk.Tags, sdk.Error) {
 
 	if !amt.IsValid() {
@@ -122,7 +123,7 @@ func (keeper BaseKeeper) UndelegateCoins(
 type SendKeeper interface {
 	ViewKeeper
 
-	SendCoins(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) (sdk.Tags, sdk.Error)
+	SendCoins(ctx sdk.Context, fromAddr types.HeimdallAddress, toAddr types.HeimdallAddress, amt sdk.Coins) (sdk.Tags, sdk.Error)
 
 	GetSendEnabled(ctx sdk.Context) bool
 	SetSendEnabled(ctx sdk.Context, enabled bool)
@@ -152,7 +153,7 @@ func NewBaseSendKeeper(ak auth.AccountKeeper,
 
 // SendCoins moves coins from one account to another
 func (keeper BaseSendKeeper) SendCoins(
-	ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins,
+	ctx sdk.Context, fromAddr types.HeimdallAddress, toAddr types.HeimdallAddress, amt sdk.Coins,
 ) (sdk.Tags, sdk.Error) {
 
 	if !amt.IsValid() {
@@ -179,8 +180,8 @@ var _ ViewKeeper = (*BaseViewKeeper)(nil)
 // ViewKeeper defines a module interface that facilitates read only access to
 // account balances.
 type ViewKeeper interface {
-	GetCoins(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
-	HasCoins(ctx sdk.Context, addr sdk.AccAddress, amt sdk.Coins) bool
+	GetCoins(ctx sdk.Context, addr types.HeimdallAddress) sdk.Coins
+	HasCoins(ctx sdk.Context, addr types.HeimdallAddress, amt sdk.Coins) bool
 
 	Codespace() sdk.CodespaceType
 }
@@ -197,12 +198,12 @@ func NewBaseViewKeeper(ak auth.AccountKeeper, codespace sdk.CodespaceType) BaseV
 }
 
 // GetCoins returns the coins at the addr.
-func (keeper BaseViewKeeper) GetCoins(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins {
+func (keeper BaseViewKeeper) GetCoins(ctx sdk.Context, addr types.HeimdallAddress) sdk.Coins {
 	return getCoins(ctx, keeper.ak, addr)
 }
 
 // HasCoins returns whether or not an account has at least amt coins.
-func (keeper BaseViewKeeper) HasCoins(ctx sdk.Context, addr sdk.AccAddress, amt sdk.Coins) bool {
+func (keeper BaseViewKeeper) HasCoins(ctx sdk.Context, addr types.HeimdallAddress, amt sdk.Coins) bool {
 	return hasCoins(ctx, keeper.ak, addr, amt)
 }
 
@@ -211,7 +212,7 @@ func (keeper BaseViewKeeper) Codespace() sdk.CodespaceType {
 	return keeper.codespace
 }
 
-func getCoins(ctx sdk.Context, am auth.AccountKeeper, addr sdk.AccAddress) sdk.Coins {
+func getCoins(ctx sdk.Context, am auth.AccountKeeper, addr types.HeimdallAddress) sdk.Coins {
 	acc := am.GetAccount(ctx, addr)
 	if acc == nil {
 		return sdk.NewCoins()
@@ -219,7 +220,7 @@ func getCoins(ctx sdk.Context, am auth.AccountKeeper, addr sdk.AccAddress) sdk.C
 	return acc.GetCoins()
 }
 
-func setCoins(ctx sdk.Context, am auth.AccountKeeper, addr sdk.AccAddress, amt sdk.Coins) sdk.Error {
+func setCoins(ctx sdk.Context, am auth.AccountKeeper, addr types.HeimdallAddress, amt sdk.Coins) sdk.Error {
 	if !amt.IsValid() {
 		return sdk.ErrInvalidCoins(amt.String())
 	}
@@ -237,11 +238,11 @@ func setCoins(ctx sdk.Context, am auth.AccountKeeper, addr sdk.AccAddress, amt s
 }
 
 // HasCoins returns whether or not an account has at least amt coins.
-func hasCoins(ctx sdk.Context, am auth.AccountKeeper, addr sdk.AccAddress, amt sdk.Coins) bool {
+func hasCoins(ctx sdk.Context, am auth.AccountKeeper, addr types.HeimdallAddress, amt sdk.Coins) bool {
 	return getCoins(ctx, am, addr).IsAllGTE(amt)
 }
 
-func getAccount(ctx sdk.Context, ak auth.AccountKeeper, addr sdk.AccAddress) authTypes.Account {
+func getAccount(ctx sdk.Context, ak auth.AccountKeeper, addr types.HeimdallAddress) authTypes.Account {
 	return ak.GetAccount(ctx, addr)
 }
 
@@ -252,7 +253,7 @@ func setAccount(ctx sdk.Context, ak auth.AccountKeeper, acc authTypes.Account) {
 // subtractCoins subtracts amt coins from an account with the given address addr.
 //
 // CONTRACT: If the account is a vesting account, the amount has to be spendable.
-func subtractCoins(ctx sdk.Context, ak auth.AccountKeeper, addr sdk.AccAddress, amt sdk.Coins) (sdk.Coins, sdk.Tags, sdk.Error) {
+func subtractCoins(ctx sdk.Context, ak auth.AccountKeeper, addr types.HeimdallAddress, amt sdk.Coins) (sdk.Coins, sdk.Tags, sdk.Error) {
 
 	if !amt.IsValid() {
 		return nil, nil, sdk.ErrInvalidCoins(amt.String())
@@ -283,7 +284,7 @@ func subtractCoins(ctx sdk.Context, ak auth.AccountKeeper, addr sdk.AccAddress, 
 }
 
 // AddCoins adds amt to the coins at the addr.
-func addCoins(ctx sdk.Context, am auth.AccountKeeper, addr sdk.AccAddress, amt sdk.Coins) (sdk.Coins, sdk.Tags, sdk.Error) {
+func addCoins(ctx sdk.Context, am auth.AccountKeeper, addr types.HeimdallAddress, amt sdk.Coins) (sdk.Coins, sdk.Tags, sdk.Error) {
 
 	if !amt.IsValid() {
 		return nil, nil, sdk.ErrInvalidCoins(amt.String())
@@ -306,7 +307,7 @@ func addCoins(ctx sdk.Context, am auth.AccountKeeper, addr sdk.AccAddress, amt s
 
 // SendCoins moves coins from one account to another
 // Returns ErrInvalidCoins if amt is invalid.
-func sendCoins(ctx sdk.Context, am auth.AccountKeeper, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) (sdk.Tags, sdk.Error) {
+func sendCoins(ctx sdk.Context, am auth.AccountKeeper, fromAddr types.HeimdallAddress, toAddr types.HeimdallAddress, amt sdk.Coins) (sdk.Tags, sdk.Error) {
 	// Safety check ensuring that when sending coins the keeper must maintain the
 	if !amt.IsValid() {
 		return nil, sdk.ErrInvalidCoins(amt.String())
@@ -356,7 +357,7 @@ func inputOutputCoins(ctx sdk.Context, am auth.AccountKeeper, inputs []bankTypes
 }
 
 func delegateCoins(
-	ctx sdk.Context, ak auth.AccountKeeper, addr sdk.AccAddress, amt sdk.Coins,
+	ctx sdk.Context, ak auth.AccountKeeper, addr types.HeimdallAddress, amt sdk.Coins,
 ) (sdk.Tags, sdk.Error) {
 
 	if !amt.IsValid() {
@@ -390,7 +391,7 @@ func delegateCoins(
 }
 
 func undelegateCoins(
-	ctx sdk.Context, ak auth.AccountKeeper, addr sdk.AccAddress, amt sdk.Coins,
+	ctx sdk.Context, ak auth.AccountKeeper, addr types.HeimdallAddress, amt sdk.Coins,
 ) (sdk.Tags, sdk.Error) {
 
 	if !amt.IsValid() {

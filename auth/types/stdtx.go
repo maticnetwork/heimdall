@@ -75,8 +75,16 @@ func (tx StdTx) GetSignatures() []StdSignature {
 	return []StdSignature{tx.Signature}
 }
 
+//
+// Std signature
+//
+
 // StdSignature represents a sig
 type StdSignature []byte
+
+//
+// Decoders
+//
 
 // RLPTxDecoder decodes the txBytes to a StdTX
 func RLPTxDecoder(pulp *Pulp) sdk.TxDecoder {

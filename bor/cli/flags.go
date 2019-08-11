@@ -1,6 +1,6 @@
 package cli
 
 const (
-	FlagChainId    = "chain-id"
+	FlagBorChainId = "bor-chain-id"
 	FlagStartBlock = "start-block"
 )

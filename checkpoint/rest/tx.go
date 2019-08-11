@@ -15,6 +15,7 @@ import (
 
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/types"
 )
 
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
@@ -29,10 +30,10 @@ func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec
 type (
 	// HeaderBlock struct for incoming checkpoint
 	HeaderBlock struct {
-		Proposer   common.Address `json:"proposer"`
-		RootHash   common.Hash    `json:"rootHash"`
-		StartBlock uint64         `json:"startBlock"`
-		EndBlock   uint64         `json:"endBlock"`
+		Proposer   types.HeimdallAddress `json:"proposer"`
+		RootHash   common.Hash           `json:"rootHash"`
+		StartBlock uint64                `json:"startBlock"`
+		EndBlock   uint64                `json:"endBlock"`
 	}
 	// HeaderACK struct for sending ACK for a new headers
 	// by providing the header index assigned my mainchain contract

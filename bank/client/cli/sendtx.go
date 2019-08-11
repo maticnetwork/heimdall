@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/maticnetwork/heimdall/bank/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 const (
@@ -31,10 +32,7 @@ func SendTxCmd(cdc *codec.Codec) *cobra.Command {
 				WithCodec(cdc).
 				WithAccountDecoder(cdc)
 
-			to, err := sdk.AccAddressFromBech32(args[0])
-			if err != nil {
-				return err
-			}
+			to := hmTypes.HexToHeimdallAddress(args[0])
 
 			// parse coins trying to be sent
 			coins, err := sdk.ParseCoins(args[1])
@@ -54,7 +52,7 @@ func SendTxCmd(cdc *codec.Codec) *cobra.Command {
 			}
 
 			// build and sign the transaction, then broadcast to Tendermint
-			msg := types.NewMsgSend(from, to, coins)
+			msg := types.NewMsgSend(hmTypes.BytesToHeimdallAddress(from[:]), hmTypes.HeimdallAddress(to), coins)
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg}, false)
 		},
 	}

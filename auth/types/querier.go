@@ -1,6 +1,8 @@
 package types
 
-import sdk "github.com/cosmos/cosmos-sdk/types"
+import (
+	"github.com/maticnetwork/heimdall/types"
+)
 
 // query endpoints supported by the auth Querier
 const (
@@ -9,10 +11,10 @@ const (
 
 // QueryAccountParams defines the params for querying accounts.
 type QueryAccountParams struct {
-	Address sdk.AccAddress
+	Address types.HeimdallAddress
 }
 
 // NewQueryAccountParams creates a new instance of QueryAccountParams.
-func NewQueryAccountParams(addr sdk.AccAddress) QueryAccountParams {
+func NewQueryAccountParams(addr types.HeimdallAddress) QueryAccountParams {
 	return QueryAccountParams{Address: addr}
 }

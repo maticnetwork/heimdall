@@ -2,19 +2,21 @@ package types
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/maticnetwork/heimdall/types"
 )
 
 // MsgSend - high level transaction of the coin module
 type MsgSend struct {
-	FromAddress sdk.AccAddress `json:"from_address"`
-	ToAddress   sdk.AccAddress `json:"to_address"`
-	Amount      sdk.Coins      `json:"amount"`
+	FromAddress types.HeimdallAddress `json:"from_address"`
+	ToAddress   types.HeimdallAddress `json:"to_address"`
+	Amount      sdk.Coins             `json:"amount"`
 }
 
 var _ sdk.Msg = MsgSend{}
 
 // NewMsgSend - construct arbitrary multi-in, multi-out send msg.
-func NewMsgSend(fromAddr, toAddr sdk.AccAddress, amount sdk.Coins) MsgSend {
+func NewMsgSend(fromAddr, toAddr types.HeimdallAddress, amount sdk.Coins) MsgSend {
 	return MsgSend{FromAddress: fromAddr, ToAddress: toAddr, Amount: amount}
 }
 
@@ -48,7 +50,7 @@ func (msg MsgSend) GetSignBytes() []byte {
 
 // GetSigners Implements Msg.
 func (msg MsgSend) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.FromAddress}
+	return []sdk.AccAddress{msg.FromAddress[:]}
 }
 
 // MsgMultiSend - high level transaction of the coin module
@@ -93,15 +95,15 @@ func (msg MsgMultiSend) GetSignBytes() []byte {
 func (msg MsgMultiSend) GetSigners() []sdk.AccAddress {
 	addrs := make([]sdk.AccAddress, len(msg.Inputs))
 	for i, in := range msg.Inputs {
-		addrs[i] = in.Address
+		addrs[i] = in.Address[:]
 	}
 	return addrs
 }
 
 // Input models transaction input
 type Input struct {
-	Address sdk.AccAddress `json:"address"`
-	Coins   sdk.Coins      `json:"coins"`
+	Address types.HeimdallAddress `json:"address"`
+	Coins   sdk.Coins             `json:"coins"`
 }
 
 // ValidateBasic - validate transaction input
@@ -119,7 +121,7 @@ func (in Input) ValidateBasic() sdk.Error {
 }
 
 // NewInput - create a transaction input, used with MsgMultiSend
-func NewInput(addr sdk.AccAddress, coins sdk.Coins) Input {
+func NewInput(addr types.HeimdallAddress, coins sdk.Coins) Input {
 	return Input{
 		Address: addr,
 		Coins:   coins,
@@ -128,8 +130,8 @@ func NewInput(addr sdk.AccAddress, coins sdk.Coins) Input {
 
 // Output models transaction outputs
 type Output struct {
-	Address sdk.AccAddress `json:"address"`
-	Coins   sdk.Coins      `json:"coins"`
+	Address types.HeimdallAddress `json:"address"`
+	Coins   sdk.Coins             `json:"coins"`
 }
 
 // ValidateBasic - validate transaction output
@@ -147,7 +149,7 @@ func (out Output) ValidateBasic() sdk.Error {
 }
 
 // NewOutput - create a transaction output, used with MsgMultiSend
-func NewOutput(addr sdk.AccAddress, coins sdk.Coins) Output {
+func NewOutput(addr types.HeimdallAddress, coins sdk.Coins) Output {
 	return Output{
 		Address: addr,
 		Coins:   coins,

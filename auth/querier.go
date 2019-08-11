@@ -6,6 +6,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
+
+	"github.com/maticnetwork/heimdall/types"
 )
 
 // query endpoints supported by the auth Querier
@@ -13,7 +15,7 @@ const (
 	QueryAccount = "account"
 )
 
-// creates a querier for auth REST endpoints
+// NewQuerier creates a querier for auth REST endpoints
 func NewQuerier(keeper AccountKeeper) sdk.Querier {
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) ([]byte, sdk.Error) {
 		switch path[0] {
@@ -25,12 +27,13 @@ func NewQuerier(keeper AccountKeeper) sdk.Querier {
 	}
 }
 
-// defines the params for query: "custom/acc/account"
+// QueryAccountParams defines the params for query: "custom/acc/account"
 type QueryAccountParams struct {
-	Address sdk.AccAddress
+	Address types.HeimdallAddress
 }
 
-func NewQueryAccountParams(addr sdk.AccAddress) QueryAccountParams {
+// NewQueryAccountParams creates new query account params
+func NewQueryAccountParams(addr types.HeimdallAddress) QueryAccountParams {
 	return QueryAccountParams{
 		Address: addr,
 	}

@@ -75,13 +75,13 @@ func preSignCmd(cmd *cobra.Command, _ []string) {
 
 func makeSignCmd(cdc *amino.Codec) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) (err error) {
-		stdTx, err := helper.ReadStdTxFromFile(cdc, args[0])
-		if err != nil {
-			return
-		}
-		fmt.Println("stdTx", stdTx)
-		offline := viper.GetBool(flagOffline)
 		cliCtx := context.NewCLIContext().WithCodec(cdc).WithAccountDecoder(cdc)
+		stdTx, err := helper.ReadStdTxFromFile(cliCtx.Codec, args[0])
+		if err != nil {
+			return err
+		}
+
+		offline := viper.GetBool(flagOffline)
 
 		// if --signature-only is on, then override --append
 		var newTx authTypes.StdTx

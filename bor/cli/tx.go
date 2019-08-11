@@ -27,7 +27,7 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			chainID := viper.GetString(FlagChainId)
+			chainID := viper.GetString(FlagBorChainId)
 			if chainID == "" {
 				return fmt.Errorf("ChainID cannot be empty")
 			}
@@ -111,9 +111,9 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
 		},
 	}
-	cmd.Flags().String(FlagChainId, "", "--chain-id=<chain-id>")
+	cmd.Flags().String(FlagBorChainId, "", "--bor-chain-id=<bor-chain-id>")
 	cmd.Flags().String(FlagStartBlock, "", "--start-block=<start-block-number>")
-	cmd.MarkFlagRequired(FlagChainId)
+	cmd.MarkFlagRequired(FlagBorChainId)
 	cmd.MarkFlagRequired(FlagStartBlock)
 
 	return cmd

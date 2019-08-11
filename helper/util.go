@@ -24,6 +24,7 @@ import (
 	tmTypes "github.com/tendermint/tendermint/types"
 
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
+	"github.com/maticnetwork/heimdall/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -120,16 +121,34 @@ func GetSigs(votes []tmTypes.Vote) (sigs []byte) {
 
 // GetVoteBytes returns vote bytes
 func GetVoteBytes(votes []tmTypes.Vote, ctx sdk.Context) []byte {
-	fmt.Println("Number of votes collected", votes[0].Type)
 	// sign bytes for vote
-	fmt.Println("==> vote.data", hex.EncodeToString(votes[0].Data))
+	fmt.Println("Number of votes collected", votes[0].Type, "vote.data", hex.EncodeToString(votes[0].Data))
 	return votes[0].SignBytes(ctx.ChainID())
+}
+
+// GetStdTxBytes get tx bytes
+func GetStdTxBytes(cliCtx context.CLIContext, tx authTypes.StdTx) ([]byte, error) {
+	txBldr := authTypes.NewTxBuilderFromCLI().WithTxEncoder(authTypes.RLPTxEncoder(authTypes.GetPulpInstance()))
+	return txBldr.GetStdTxBytes(tx)
 }
 
 // BroadcastMsgs creates transaction and broadcasts it
 func BroadcastMsgs(cliCtx context.CLIContext, msgs []sdk.Msg) (sdk.TxResponse, error) {
 	txBldr := authTypes.NewTxBuilderFromCLI().WithTxEncoder(authTypes.RLPTxEncoder(authTypes.GetPulpInstance()))
 	return BuildAndBroadcastMsgs(cliCtx, txBldr, msgs)
+}
+
+// BroadcastTx broadcasts transaction
+func BroadcastTx(cliCtx context.CLIContext, tx authTypes.StdTx, mode string) (res sdk.TxResponse, err error) {
+	txBldr := authTypes.NewTxBuilderFromCLI().WithTxEncoder(authTypes.RLPTxEncoder(authTypes.GetPulpInstance()))
+
+	var txBytes []byte
+	txBytes, err = txBldr.GetStdTxBytes(tx)
+	if err == nil {
+		res, err = BroadcastTxBytes(cliCtx, txBytes, mode)
+	}
+
+	return
 }
 
 // BroadcastMsgsWithCLI creates message and sends tx
@@ -289,8 +308,11 @@ func PrepareTxBuilder(cliCtx context.CLIContext, txBldr authTypes.TxBuilder) (au
 		from = GetAddress()
 	}
 
+	// get heimdall address
+	fhAddress := types.BytesToHeimdallAddress(from)
+
 	accGetter := authTypes.NewAccountRetriever(cliCtx)
-	if err := accGetter.EnsureExists(from); err != nil {
+	if err := accGetter.EnsureExists(fhAddress); err != nil {
 		return txBldr, err
 	}
 
@@ -298,7 +320,7 @@ func PrepareTxBuilder(cliCtx context.CLIContext, txBldr authTypes.TxBuilder) (au
 	// TODO: (ref #1903) Allow for user supplied account number without
 	// automatically doing a manual lookup.
 	if txbldrAccNum == 0 || txbldrAccSeq == 0 {
-		num, seq, err := authTypes.NewAccountRetriever(cliCtx).GetAccountNumberSequence(from)
+		num, seq, err := authTypes.NewAccountRetriever(cliCtx).GetAccountNumberSequence(fhAddress)
 		if err != nil {
 			return txBldr, err
 		}
@@ -341,16 +363,16 @@ func SignStdTx(
 	var signedStdTx authTypes.StdTx
 
 	fromName := cliCtx.GetFromName()
-	var addr sdk.AccAddress
-	if fromName != "" {
-		addr = sdk.AccAddress(GetAddress())
+	var addr []byte
+	if fromName == "" {
+		addr = GetAddress()
 	} else {
 		info, err := txBldr.Keybase().Get(fromName)
 		if err != nil {
 			return signedStdTx, err
 		}
 
-		addr = sdk.AccAddress(info.GetPubKey().Address().Bytes())
+		addr = info.GetPubKey().Address().Bytes()
 	}
 
 	if !offline {
@@ -460,19 +482,25 @@ func computeHashFromAunts(index int, total int, leafHash []byte, innerHashes [][
 // Inner funcitons
 //
 
-func populateAccountFromState(
-	txBldr authTypes.TxBuilder, cliCtx context.CLIContext, addr sdk.AccAddress,
-) (authTypes.TxBuilder, error) {
+func populateAccountFromState(txBldr authTypes.TxBuilder, cliCtx context.CLIContext, addr []byte) (authTypes.TxBuilder, error) {
+	// get account getter
+	accGetter := authTypes.NewAccountRetriever(cliCtx)
 
-	accNum, err := cliCtx.GetAccountNumber(addr)
+	// key
+	key := hmTypes.BytesToHeimdallAddress(addr)
+
+	// ensure account exists
+	if err := accGetter.EnsureExists(key); err != nil {
+		return txBldr, err
+	}
+
+	acc, err := accGetter.GetAccount(key)
 	if err != nil {
 		return txBldr, err
 	}
 
-	accSeq, err := cliCtx.GetAccountSequence(addr)
-	if err != nil {
-		return txBldr, err
-	}
+	accNum := acc.GetAccountNumber()
+	accSeq := acc.GetSequence()
 
 	return txBldr.WithAccountNumber(accNum).WithSequence(accSeq), nil
 }
@@ -490,7 +518,7 @@ func isTxSigner(user sdk.AccAddress, signers []sdk.AccAddress) bool {
 func buildUnsignedStdTxOffline(txBldr authTypes.TxBuilder, cliCtx context.CLIContext, msgs []sdk.Msg) (stdTx authTypes.StdTx, err error) {
 	stdSignMsg, err := txBldr.BuildSignMsg(msgs)
 	if err != nil {
-		return stdTx, nil
+		return stdTx, err
 	}
 
 	return authTypes.NewStdTx(stdSignMsg.Msg, nil, stdSignMsg.Memo), nil

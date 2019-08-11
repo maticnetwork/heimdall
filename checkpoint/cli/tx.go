@@ -11,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -47,7 +48,7 @@ func GetSendCheckpointTx(cdc *codec.Codec) *cobra.Command {
 				return fmt.Errorf("root hash cannot be empty")
 			}
 
-			Proposer := common.HexToAddress(ProposerStr)
+			Proposer := types.HexToHeimdallAddress(ProposerStr)
 
 			StartBlock, err := strconv.ParseUint(StartBlockStr, 10, 64)
 			if err != nil {

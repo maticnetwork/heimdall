@@ -237,6 +237,11 @@ func (bldr TxBuilder) SignStdTx(privKey secp256k1.PrivKeySecp256k1, stdTx StdTx,
 	return
 }
 
+// GetStdTxBytes get tx bytes
+func (bldr TxBuilder) GetStdTxBytes(stdTx StdTx) (result []byte, err error) {
+	return bldr.txEncoder(stdTx)
+}
+
 // MakeSignature builds a StdSignature for given a StdSignMsg.
 func MakeSignature(privKey secp256k1.PrivKeySecp256k1, msg StdSignMsg) (sig StdSignature, err error) {
 	data := crypto.Keccak256(msg.Bytes())
