@@ -18,9 +18,9 @@ var startCmd = &cobra.Command{
 		qConnector := pier.NewQueueConnector("amqp://guest:guest@localhost:5672/", "hq", "bq", "cq")
 		services := [...]common.Service{
 			pier.NewCheckpointer(qConnector),
-			pier.NewSyncer(qConnector),
+			// pier.NewSyncer(qConnector),
 			// pier.NewAckService(),
-			pier.NewConsumerService(qConnector),
+			// pier.NewConsumerService(qConnector),
 		}
 		// sync group
 		var wg sync.WaitGroup

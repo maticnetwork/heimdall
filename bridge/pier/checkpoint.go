@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"math/big"
 	"net/http"
@@ -88,11 +89,11 @@ func NewCheckpointer(connector QueueConnector) *Checkpointer {
 }
 
 // startHeaderProcess starts header process when they get new header
-func (checkpointer *Checkpointer) startHeaderProcess(ctx context.Context) {
+func (c *Checkpointer) startHeaderProcess(ctx context.Context) {
 	for {
 		select {
-		case newHeader := <-checkpointer.HeaderChannel:
-			checkpointer.sendRequest(newHeader)
+		case newHeader := <-c.HeaderChannel:
+			c.sendRequest(newHeader)
 		case <-ctx.Done():
 			return
 		}
@@ -100,51 +101,51 @@ func (checkpointer *Checkpointer) startHeaderProcess(ctx context.Context) {
 }
 
 // OnStart starts new block subscription
-func (checkpointer *Checkpointer) OnStart() error {
-	checkpointer.BaseService.OnStart() // Always call the overridden method.
+func (c *Checkpointer) OnStart() error {
+	c.BaseService.OnStart() // Always call the overridden method.
 
 	// create cancellable context
 	ctx, cancelSubscription := context.WithCancel(context.Background())
-	checkpointer.cancelSubscription = cancelSubscription
+	c.cancelSubscription = cancelSubscription
 
 	// create cancellable context
 	headerCtx, cancelHeaderProcess := context.WithCancel(context.Background())
-	checkpointer.cancelHeaderProcess = cancelHeaderProcess
+	c.cancelHeaderProcess = cancelHeaderProcess
 
 	// start header process
-	go checkpointer.startHeaderProcess(headerCtx)
+	go c.startHeaderProcess(headerCtx)
 
 	// subscribe to new head
-	subscription, err := checkpointer.MaticClient.SubscribeNewHead(ctx, checkpointer.HeaderChannel)
+	subscription, err := c.MaticClient.SubscribeNewHead(ctx, c.HeaderChannel)
 	if err != nil {
 		// start go routine to poll for new header using client object
-		go checkpointer.startPolling(ctx, helper.GetConfig().CheckpointerPollInterval)
+		go c.startPolling(ctx, helper.GetConfig().CheckpointerPollInterval)
 	} else {
 		// start go routine to listen new header using subscription
-		go checkpointer.startSubscription(ctx, subscription)
+		go c.startSubscription(ctx, subscription)
 	}
 
 	// subscribed to new head
-	checkpointer.Logger.Debug("Subscribed to new head")
+	c.Logger.Debug("Subscribed to new head")
 
 	return nil
 }
 
 // OnStop stops all necessary go routines
-func (checkpointer *Checkpointer) OnStop() {
-	checkpointer.BaseService.OnStop() // Always call the overridden method.
+func (c *Checkpointer) OnStop() {
+	c.BaseService.OnStop() // Always call the overridden method.
 
 	// close bridge db instance
 	closeBridgeDBInstance()
 
 	// cancel subscription if any
-	checkpointer.cancelSubscription()
+	c.cancelSubscription()
 
 	// cancel header process
-	checkpointer.cancelHeaderProcess()
+	c.cancelHeaderProcess()
 }
 
-func (checkpointer *Checkpointer) startPolling(ctx context.Context, pollInterval int) {
+func (c *Checkpointer) startPolling(ctx context.Context, pollInterval int) {
 	// How often to fire the passed in function in second
 	interval := time.Duration(pollInterval) * time.Millisecond
 
@@ -157,12 +158,12 @@ func (checkpointer *Checkpointer) startPolling(ctx context.Context, pollInterval
 		select {
 		case <-ticker.C:
 			if isProposer() {
-				header, err := checkpointer.MaticClient.HeaderByNumber(ctx, nil)
+				header, err := c.MaticClient.HeaderByNumber(ctx, nil)
 				if err == nil && header != nil {
 					// send data to channel
-					checkpointer.HeaderChannel <- header
+					c.HeaderChannel <- header
 				} else if err != nil {
-					checkpointer.Logger.Error("Unable to fetch header by number from matic", "Error", err)
+					c.Logger.Error("Unable to fetch header by number", "Error", err)
 				}
 			}
 		case <-ctx.Done():
@@ -172,16 +173,16 @@ func (checkpointer *Checkpointer) startPolling(ctx context.Context, pollInterval
 	}
 }
 
-func (checkpointer *Checkpointer) startSubscription(ctx context.Context, subscription ethereum.Subscription) {
+func (c *Checkpointer) startSubscription(ctx context.Context, subscription ethereum.Subscription) {
 	for {
 		select {
 		case err := <-subscription.Err():
 			// stop service
-			checkpointer.Logger.Error("Error while subscribing new blocks", "error", err)
-			checkpointer.Stop()
+			c.Logger.Error("Error while subscribing new blocks", "error", err)
+			c.Stop()
 
 			// cancel subscription
-			checkpointer.cancelSubscription()
+			c.cancelSubscription()
 			return
 		case <-ctx.Done():
 			return
@@ -192,26 +193,33 @@ func (checkpointer *Checkpointer) startSubscription(ctx context.Context, subscri
 func (c *Checkpointer) sendRequest(newHeader *types.Header) {
 	c.Logger.Debug("New block detected", "blockNumber", newHeader.Number)
 
+	// fetch data
+	// take decision
+	// spawn go routines with timeouts to take care of transactions
+
 	// fetch contract state
 	contractState := make(chan ContractCheckpoint, 1)
 	var lastContractCheckpoint ContractCheckpoint
 
 	// fetch heimdall state
-	heimdallState := make(chan HeimdallCheckpoint, 1)
-	var lastHeimdallCheckpoint HeimdallCheckpoint
+	bufferChan := make(chan HeimdallCheckpoint, 1)
+	var bufferedCheckpoint HeimdallCheckpoint
+
+	commitedChan := make(chan HeimdallCheckpoint, 1)
+	var commitedCheckpoint HeimdallCheckpoint
 
 	var wg sync.WaitGroup
-	wg.Add(2)
+	wg.Add(3)
 
-	c.Logger.Debug("Collecting contract and heimdall checkpoint state ")
-
+	c.Logger.Debug("Collecting contract and heimdall checkpoint state")
 	go c.genHeaderDetailContract(newHeader.Number.Uint64(), &wg, contractState)
-	go c.getLastCheckpointStore(&wg, heimdallState)
+	go c.fetchBufferedCheckpoint(&wg, bufferChan)
+	go c.fetchCommittedCheckpoint(&wg, commitedChan)
 
 	// wait for state collection
 	wg.Wait()
 
-	c.Logger.Info("Fetched contract and heimdall checkpoint state", "contract", contractState, "heimdall", heimdallState)
+	c.Logger.Info("Fetched contract and heimdall states")
 
 	lastContractCheckpoint = <-contractState
 	if lastContractCheckpoint.err != nil {
@@ -221,27 +229,26 @@ func (c *Checkpointer) sendRequest(newHeader *types.Header) {
 
 	c.Logger.Debug("Contract Details fetched", "Start", lastContractCheckpoint.start, "End", lastContractCheckpoint.end, "Currentheader", lastContractCheckpoint.currentHeaderBlock)
 
-	lastHeimdallCheckpoint = <-heimdallState
-	if !lastHeimdallCheckpoint.found {
-		c.Logger.Info("Buffer not found , sending new checkpoint", "Found", lastHeimdallCheckpoint.found)
-	} else if lastHeimdallCheckpoint.start != 0 {
-		c.Logger.Debug("Checkpoint found in buffer", "Start", lastHeimdallCheckpoint.start, "End", lastHeimdallCheckpoint.end)
+	bufferedCheckpoint = <-bufferChan
+	if !bufferedCheckpoint.found {
+		c.Logger.Info("Buffer not found, sending new checkpoint", "Found", bufferedCheckpoint.found)
+	} else if bufferedCheckpoint.start != 0 {
+		c.Logger.Debug("Checkpoint found in buffer", "Start", bufferedCheckpoint.start, "End", bufferedCheckpoint.end)
 	} else {
 		c.Logger.Debug("Sending first checkpoint")
 	}
 
 	// ACK needs to be sent
-	if lastHeimdallCheckpoint.end+1 == lastContractCheckpoint.start {
-		c.Logger.Debug("Detected mainchain checkpoint,sending ACK", "HeimdallEnd", lastHeimdallCheckpoint.end, "ContractStart", lastHeimdallCheckpoint.start)
+	if bufferedCheckpoint.end+1 == bufferedCheckpoint.start {
+		c.Logger.Debug("Detected mainchain checkpoint,sending ACK", "HeimdallEnd", bufferedCheckpoint.end, "ContractStart", bufferedCheckpoint.start)
 		headerNumber := lastContractCheckpoint.currentHeaderBlock.Sub(lastContractCheckpoint.currentHeaderBlock, big.NewInt(int64(helper.GetConfig().ChildBlockInterval)))
-
 		// create and send checkpoint message
 		msg := checkpoint.NewMsgCheckpointAck(headerNumber.Uint64(), uint64(time.Now().Unix()))
 		resp, err := helper.CreateAndSendTx(msg, c.cliCtx)
 		if err != nil {
-			c.Logger.Error("Unable to send checkpoint to heimdall", "Error", err)
+			c.Logger.Error("Unable to send checkpoint ack to heimdall", "Error", err, "HeaderIndex", headerNumber.String())
 		}
-		c.Logger.Debug("Checkpoint tx commited", "TxHash", resp.TxHash)
+		c.Logger.Debug("Checkpoint ACK tx commited", "TxHash", resp.TxHash, "HeaderIndex", headerNumber.String())
 		return
 	}
 
@@ -253,11 +260,8 @@ func (c *Checkpointer) sendRequest(newHeader *types.Header) {
 	if err != nil {
 		return
 	}
-
 	c.Logger.Info("New checkpoint header created", "start", start, "end", end, "root", ethCommon.BytesToHash(root))
-
-	// TODO submit checkcoint
-	txBytes, err := helper.CreateTxBytes(
+	checkpointTxRes, err := helper.CreateAndSendTx(
 		checkpoint.NewMsgCheckpointBlock(
 			ethCommon.BytesToAddress(helper.GetAddress()),
 			start,
@@ -265,20 +269,14 @@ func (c *Checkpointer) sendRequest(newHeader *types.Header) {
 			ethCommon.BytesToHash(root),
 			uint64(time.Now().Unix()),
 		),
+		c.cliCtx,
 	)
 
 	if err != nil {
-		c.Logger.Error("Error while creating tx bytes", "error", err)
+		c.Logger.Error("Error sending checkpoint tx", "error", err, "start", start, "end", end)
 		return
 	}
-
-	resp, err := helper.SendTendermintRequest(c.cliCtx, txBytes, "")
-	if err != nil {
-		c.Logger.Error("Error while sending request to Tendermint", "error", err)
-		return
-	}
-
-	c.Logger.Info("Checkpoint sent successfully", "hash", resp.TxHash, "start", start, "end", end, "root", hex.EncodeToString(root))
+	c.Logger.Info("Checkpoint sent successfully", "hash", checkpointTxRes.TxHash, "start", start, "end", end, "root", hex.EncodeToString(root))
 }
 
 func (c *Checkpointer) genHeaderDetailContract(lastHeader uint64, wg *sync.WaitGroup, contractState chan<- ContractCheckpoint) {
@@ -352,32 +350,53 @@ func (c *Checkpointer) genHeaderDetailContract(lastHeader uint64, wg *sync.WaitG
 	return
 }
 
-func (c *Checkpointer) getLastCheckpointStore(wg *sync.WaitGroup, heimdallState chan<- HeimdallCheckpoint) {
+// fetchBufferedCheckpoint fetch buffered checkpoint from heimdall
+func (c *Checkpointer) fetchBufferedCheckpoint(wg *sync.WaitGroup, bufferedCheckpoint chan<- HeimdallCheckpoint) {
 	defer wg.Done()
 	c.Logger.Info("Fetching checkpoint in buffer")
-	var _checkpoint hmtypes.CheckpointBlockHeader
-	resp, err := http.Get(BufferedCheckpointURL)
+	_checkpoint, err := c.fetchCheckpoint(LatestCheckpoint)
+	if err != nil {
+		c.Logger.Error("Error while fetching data from server", "error", err)
+		bufferedCheckpoint <- NewHeimdallCheckpoint(_checkpoint.StartBlock, _checkpoint.EndBlock, false)
+		return
+	}
+	bufferedCheckpoint <- NewHeimdallCheckpoint(_checkpoint.StartBlock, _checkpoint.EndBlock, true)
+	return
+}
+
+// fetchCommittedCheckpoint fetches latest committed checkpoint from heimdall
+func (c *Checkpointer) fetchCommittedCheckpoint(wg *sync.WaitGroup, lastCheckpoint chan<- HeimdallCheckpoint) {
+	defer wg.Done()
+	c.Logger.Info("Fetching last committed checkpoint")
+	_checkpoint, err := c.fetchCheckpoint(LatestCheckpoint)
+	if err != nil {
+		c.Logger.Error("Error while fetching data from server", "error", err)
+		lastCheckpoint <- NewHeimdallCheckpoint(_checkpoint.StartBlock, _checkpoint.EndBlock, false)
+		return
+	}
+	lastCheckpoint <- NewHeimdallCheckpoint(_checkpoint.StartBlock, _checkpoint.EndBlock, true)
+	return
+}
+
+// fetchCheckpoint fetches checkpoint from given URL
+func (c *Checkpointer) fetchCheckpoint(url string) (checkpoint hmtypes.CheckpointBlockHeader, err error) {
+	resp, err := http.Get(url)
 	if err != nil {
 		c.Logger.Error("Unable to send request to get proposer", "Error", err)
-		heimdallState <- NewHeimdallCheckpoint(_checkpoint.StartBlock, _checkpoint.EndBlock, false)
-		return
+		return checkpoint, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode == 200 {
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			c.Logger.Error("Unable to read data from response", "Error", err)
-			heimdallState <- NewHeimdallCheckpoint(_checkpoint.StartBlock, _checkpoint.EndBlock, false)
-			return
+			return checkpoint, err
 		}
-		if err := json.Unmarshal(body, &_checkpoint); err != nil {
+		if err := json.Unmarshal(body, &checkpoint); err != nil {
 			c.Logger.Error("Error unmarshalling checkpoint", "error", err)
-			heimdallState <- NewHeimdallCheckpoint(_checkpoint.StartBlock, _checkpoint.EndBlock, false)
-			return
+			return checkpoint, err
 		}
-		heimdallState <- NewHeimdallCheckpoint(_checkpoint.StartBlock, _checkpoint.EndBlock, true)
-		return
+		return checkpoint, nil
 	}
-	heimdallState <- NewHeimdallCheckpoint(_checkpoint.StartBlock, _checkpoint.EndBlock, false)
-	return
+	return checkpoint, fmt.Errorf("Invalid response from rest server. Status: %v URL: %v", resp.Status, url)
 }

@@ -342,7 +342,6 @@ func latestCheckpointHandlerFunc(
 			return
 		}
 		RestLogger.Debug("ACK Count fetched", "ACKCount", ackCountInt)
-
 		lastCheckpointKey := helper.GetConfig().ChildBlockInterval * uint64(ackCountInt)
 		RestLogger.Debug("Last checkpoint key generated", "LastCheckpointKey", lastCheckpointKey, "min", helper.GetConfig().ChildBlockInterval)
 		res, err := cliCtx.QueryStore(checkpoint.GetHeaderKey(lastCheckpointKey), "checkpoint")
