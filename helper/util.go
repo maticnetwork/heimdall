@@ -139,19 +139,18 @@ func GetVoteBytes(votes []tmTypes.Vote, ctx sdk.Context) []byte {
 
 // CreateAndSendTx creates message and sends tx
 // Used from cli- waits till transaction is included in block
-func CreateAndSendTx(msg sdk.Msg, cliCtx context.CLIContext) (err error) {
+func CreateAndSendTx(msg sdk.Msg, cliCtx context.CLIContext) (resp sdk.TxResponse, err error) {
 	txBytes, err := CreateTxBytes(msg)
 	if err != nil {
-		return err
+		return resp, err
 	}
-
-	resp, err := SendTendermintRequest(cliCtx, txBytes, BroadcastBlock)
+	resp, err = SendTendermintRequest(cliCtx, txBytes, BroadcastBlock)
 	if err != nil {
-		return err
+		return resp, err
 	}
 
 	fmt.Printf("Transaction sent %v", resp.TxHash)
-	return nil
+	return resp, nil
 }
 
 // TendermintTxDecode decodes transaction string and return base tx object

@@ -67,8 +67,12 @@ func GetSendCheckpointTx(cdc *codec.Codec) *cobra.Command {
 				RootHash,
 				uint64(time.Now().Unix()),
 			)
-
-			return helper.CreateAndSendTx(msg, cliCtx)
+			if resp, err := helper.CreateAndSendTx(msg, cliCtx); err != nil {
+				return err
+			} else {
+				fmt.Printf("Sent transaction successfully %v", resp.TxHash)
+				return nil
+			}
 		},
 	}
 	cmd.Flags().StringP(FlagProposerAddress, "p", helper.GetPubKey().Address().String(), "--proposer=<proposer-address>")
@@ -101,8 +105,12 @@ func GetCheckpointACKTx(cdc *codec.Codec) *cobra.Command {
 			}
 
 			msg := checkpoint.NewMsgCheckpointAck(HeaderBlock, uint64(time.Now().Unix()))
-
-			return helper.CreateAndSendTx(msg, cliCtx)
+			if resp, err := helper.CreateAndSendTx(msg, cliCtx); err != nil {
+				return err
+			} else {
+				fmt.Printf("Sent transaction successfully %v", resp.TxHash)
+				return nil
+			}
 		},
 	}
 
@@ -120,8 +128,12 @@ func GetCheckpointNoACKTx(cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			msg := checkpoint.NewMsgCheckpointNoAck(uint64(time.Now().Unix()))
-
-			return helper.CreateAndSendTx(msg, cliCtx)
+			if resp, err := helper.CreateAndSendTx(msg, cliCtx); err != nil {
+				return err
+			} else {
+				fmt.Printf("Sent transaction successfully %v", resp.TxHash)
+				return nil
+			}
 		},
 	}
 	return cmd

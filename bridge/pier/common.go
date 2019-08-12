@@ -27,9 +27,10 @@ const (
 	NoackService         = "checkpoint-no-ack"
 
 	// TODO fetch port from config
-	LastNoAckURL      = "http://localhost:1317/checkpoint/last-no-ack"
-	ProposersURL      = "http://localhost:1317/staking/proposer/%v"
-	LastCheckpointURL = "http://localhost:1317/checkpoint/buffer"
+	LastNoAckURL          = "http://localhost:1317/checkpoint/last-no-ack"
+	ProposersURL          = "http://localhost:1317/staking/proposer/%v"
+	BufferedCheckpointURL = "http://localhost:1317/checkpoint/buffer"
+	LatestCheckpoint      = "http://localhost:1317/checkpoint/latest-checkpoint"
 
 	BridgeDBFlag = "bridge-db"
 )

@@ -45,8 +45,12 @@ func GetValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 			pubkey := types.NewPubKey(pubkeyBytes)
 
 			msg := staking.NewMsgValidatorJoin(uint64(validatorID), pubkey, common.HexToHash(txhash))
-
-			return helper.CreateAndSendTx(msg, cliCtx)
+			if resp, err := helper.CreateAndSendTx(msg, cliCtx); err != nil {
+				return err
+			} else {
+				fmt.Printf("Sent transaction successfully %v", resp.TxHash)
+				return nil
+			}
 		},
 	}
 
@@ -76,8 +80,12 @@ func GetValidatorExitTx(cdc *codec.Codec) *cobra.Command {
 				return fmt.Errorf("transaction hash has to be supplied")
 			}
 			msg := staking.NewMsgValidatorExit(uint64(validator), common.HexToHash(txhash))
-
-			return helper.CreateAndSendTx(msg, cliCtx)
+			if resp, err := helper.CreateAndSendTx(msg, cliCtx); err != nil {
+				return err
+			} else {
+				fmt.Printf("Sent transaction successfully %v", resp.TxHash)
+				return nil
+			}
 		},
 	}
 
@@ -120,8 +128,12 @@ func GetValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 			}
 
 			msg := staking.NewMsgValidatorUpdate(uint64(validator), pubkey, json.Number(amountStr), common.HexToHash(txhash))
-
-			return helper.CreateAndSendTx(msg, cliCtx)
+			if resp, err := helper.CreateAndSendTx(msg, cliCtx); err != nil {
+				return err
+			} else {
+				fmt.Printf("Sent transaction successfully %v", resp.TxHash)
+				return nil
+			}
 		},
 	}
 	cmd.Flags().Int(FlagValidatorID, 0, "--id=<validator ID here>")

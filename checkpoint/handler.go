@@ -89,20 +89,20 @@ func HandleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper, contractC
 	logger.Debug("Valid checkpoint tip")
 
 	// check proposer in message
-	if !bytes.Equal(msg.Proposer.Bytes(), k.sk.GetValidatorSet(ctx).Proposer.Signer.Bytes()) {
-		logger.Error("Invalid proposer in message",
-			"currentProposer", k.sk.GetValidatorSet(ctx).Proposer.Signer.String(),
-			"checkpointProposer", msg.Proposer.String())
-		return common.ErrBadProposerDetails(k.Codespace, k.sk.GetValidatorSet(ctx).Proposer.Signer).Result()
-	}
+	// if !bytes.Equal(msg.Proposer.Bytes(), k.sk.GetValidatorSet(ctx).Proposer.Signer.Bytes()) {
+	// 	logger.Error("Invalid proposer in message",
+	// 		"currentProposer", k.sk.GetValidatorSet(ctx).Proposer.Signer.String(),
+	// 		"checkpointProposer", msg.Proposer.String())
+	// 	return common.ErrBadProposerDetails(k.Codespace, k.sk.GetValidatorSet(ctx).Proposer.Signer).Result()
+	// }
 	logger.Debug("Valid proposer in checkpoint")
 
 	// check if proposer has min ether
-	balance, _ := contractCaller.GetBalance(msg.Proposer)
-	if balance.Cmp(helper.MinBalance) == -1 {
-		logger.Error("Proposer doesnt have enough ether to send checkpoint tx", "Balance", balance, "RequiredBalance", helper.MinBalance)
-		return common.ErrLowBalance(k.Codespace, msg.Proposer.String()).Result()
-	}
+	// balance, _ := contractCaller.GetBalance(msg.Proposer)
+	// if balance.Cmp(helper.MinBalance) == -1 {
+	// 	logger.Error("Proposer doesnt have enough ether to send checkpoint tx", "Balance", balance, "RequiredBalance", helper.MinBalance)
+	// 	return common.ErrLowBalance(k.Codespace, msg.Proposer.String()).Result()
+	// }
 
 	// add checkpoint to buffer
 	k.SetCheckpointBuffer(ctx, hmTypes.CheckpointBlockHeader{

@@ -56,38 +56,6 @@ type Checkpointer struct {
 	cliCtx cliContext.CLIContext
 }
 
-type (
-	ContractCheckpoint struct {
-		start              uint64
-		end                uint64
-		currentHeaderBlock *big.Int
-		err                error
-	}
-	HeimdallCheckpoint struct {
-		start uint64
-		end   uint64
-		found bool
-	}
-)
-
-func NewContractCheckpoint(_start uint64, _end uint64, _currentHeaderBlock *big.Int, _err error) ContractCheckpoint {
-	return ContractCheckpoint{
-		start:              _start,
-		end:                _end,
-		currentHeaderBlock: _currentHeaderBlock,
-		err:                _err,
-	}
-}
-
-// Creates new heimdall checkpoint object
-func NewHeimdallCheckpoint(_start uint64, _end uint64, _found bool) HeimdallCheckpoint {
-	return HeimdallCheckpoint{
-		start: _start,
-		end:   _end,
-		found: _found,
-	}
-}
-
 // NewCheckpointer returns new service object
 func NewCheckpointer(connector QueueConnector) *Checkpointer {
 	// create logger
@@ -221,11 +189,13 @@ func (checkpointer *Checkpointer) startSubscription(ctx context.Context, subscri
 	}
 }
 
-func (checkpointer *Checkpointer) sendRequest(newHeader *types.Header) {
-	checkpointer.Logger.Debug("New block detected", "blockNumber", newHeader.Number)
+func (c *Checkpointer) sendRequest(newHeader *types.Header) {
+	c.Logger.Debug("New block detected", "blockNumber", newHeader.Number)
+
 	// fetch contract state
 	contractState := make(chan ContractCheckpoint, 1)
 	var lastContractCheckpoint ContractCheckpoint
+
 	// fetch heimdall state
 	heimdallState := make(chan HeimdallCheckpoint, 1)
 	var lastHeimdallCheckpoint HeimdallCheckpoint
@@ -233,46 +203,48 @@ func (checkpointer *Checkpointer) sendRequest(newHeader *types.Header) {
 	var wg sync.WaitGroup
 	wg.Add(2)
 
-	checkpointer.Logger.Debug("Collecting contract and heimdall checkpoint state ")
-	go checkpointer.genHeaderDetailContract(newHeader.Number.Uint64(), &wg, contractState)
-	go checkpointer.getLastCheckpointStore(&wg, heimdallState)
+	c.Logger.Debug("Collecting contract and heimdall checkpoint state ")
+
+	go c.genHeaderDetailContract(newHeader.Number.Uint64(), &wg, contractState)
+	go c.getLastCheckpointStore(&wg, heimdallState)
 
 	// wait for state collection
 	wg.Wait()
 
-	checkpointer.Logger.Info("Fetched contract and heimdall checkpoint state", "contract", contractState, "heimdall", heimdallState)
+	c.Logger.Info("Fetched contract and heimdall checkpoint state", "contract", contractState, "heimdall", heimdallState)
+
 	lastContractCheckpoint = <-contractState
 	if lastContractCheckpoint.err != nil {
-		checkpointer.Logger.Error("Error fetching details from contract ", "Error", lastContractCheckpoint.err)
+		c.Logger.Error("Error fetching details from contract ", "Error", lastContractCheckpoint.err)
 		return
 	}
-	checkpointer.Logger.Debug("Contract Details fetched", "Start", lastContractCheckpoint.start, "End", lastContractCheckpoint.end, "Currentheader", lastContractCheckpoint.currentHeaderBlock)
+
+	c.Logger.Debug("Contract Details fetched", "Start", lastContractCheckpoint.start, "End", lastContractCheckpoint.end, "Currentheader", lastContractCheckpoint.currentHeaderBlock)
 
 	lastHeimdallCheckpoint = <-heimdallState
 	if !lastHeimdallCheckpoint.found {
-		checkpointer.Logger.Info("Buffer not found , sending new checkpoint", "Found", lastHeimdallCheckpoint.found)
+		c.Logger.Info("Buffer not found , sending new checkpoint", "Found", lastHeimdallCheckpoint.found)
+	} else if lastHeimdallCheckpoint.start != 0 {
+		c.Logger.Debug("Checkpoint found in buffer", "Start", lastHeimdallCheckpoint.start, "End", lastHeimdallCheckpoint.end)
 	} else {
-		checkpointer.Logger.Debug("Checkpoint found in buffer", "Start", lastHeimdallCheckpoint.start, "End", lastHeimdallCheckpoint.end)
+		c.Logger.Debug("Sending first checkpoint")
 	}
 
 	// ACK needs to be sent
 	if lastHeimdallCheckpoint.end+1 == lastContractCheckpoint.start {
-		checkpointer.Logger.Debug("Detected mainchain checkpoint,sending ACK", "HeimdallEnd", lastHeimdallCheckpoint.end, "ContractStart", lastHeimdallCheckpoint.start)
+		c.Logger.Debug("Detected mainchain checkpoint,sending ACK", "HeimdallEnd", lastHeimdallCheckpoint.end, "ContractStart", lastHeimdallCheckpoint.start)
 		headerNumber := lastContractCheckpoint.currentHeaderBlock.Sub(lastContractCheckpoint.currentHeaderBlock, big.NewInt(int64(helper.GetConfig().ChildBlockInterval)))
-		// create checkpoint message
+
+		// create and send checkpoint message
 		msg := checkpoint.NewMsgCheckpointAck(headerNumber.Uint64(), uint64(time.Now().Unix()))
-		if err := checkpointer.qConnector.DispatchToHeimdall(msg); err != nil {
-			checkpointer.Logger.Error("Unable to dispatch checkpoint to heimdall", "Msg", msg)
-			return
+		resp, err := helper.CreateAndSendTx(msg, c.cliCtx)
+		if err != nil {
+			c.Logger.Error("Unable to send checkpoint to heimdall", "Error", err)
 		}
-		// send tendermint request
-		// _, err = helper.SendTendermintRequest(checkpointer.cliCtx, txBytes, "")
-		// if err != nil {
-		// 	checkpointer.Logger.Error("Error while sending request to Tendermint", "error", err)
-		// 	return
-		// }
+		c.Logger.Debug("Checkpoint tx commited", "TxHash", resp.TxHash)
 		return
 	}
+
 	start := lastContractCheckpoint.start
 	end := lastContractCheckpoint.end
 
@@ -282,7 +254,7 @@ func (checkpointer *Checkpointer) sendRequest(newHeader *types.Header) {
 		return
 	}
 
-	checkpointer.Logger.Info("New checkpoint header created", "start", start, "end", end, "root", ethCommon.BytesToHash(root))
+	c.Logger.Info("New checkpoint header created", "start", start, "end", end, "root", ethCommon.BytesToHash(root))
 
 	// TODO submit checkcoint
 	txBytes, err := helper.CreateTxBytes(
@@ -296,28 +268,27 @@ func (checkpointer *Checkpointer) sendRequest(newHeader *types.Header) {
 	)
 
 	if err != nil {
-		checkpointer.Logger.Error("Error while creating tx bytes", "error", err)
+		c.Logger.Error("Error while creating tx bytes", "error", err)
 		return
 	}
 
-	resp, err := helper.SendTendermintRequest(checkpointer.cliCtx, txBytes, "")
+	resp, err := helper.SendTendermintRequest(c.cliCtx, txBytes, "")
 	if err != nil {
-		checkpointer.Logger.Error("Error while sending request to Tendermint", "error", err)
+		c.Logger.Error("Error while sending request to Tendermint", "error", err)
 		return
 	}
 
-	checkpointer.Logger.Info("Checkpoint sent successfully", "hash", resp.TxHash, "start", start, "end", end, "root", hex.EncodeToString(root))
+	c.Logger.Info("Checkpoint sent successfully", "hash", resp.TxHash, "start", start, "end", end, "root", hex.EncodeToString(root))
 }
 
-func (checkpointer *Checkpointer) genHeaderDetailContract(lastHeader uint64, wg *sync.WaitGroup, contractState chan<- ContractCheckpoint) {
+func (c *Checkpointer) genHeaderDetailContract(lastHeader uint64, wg *sync.WaitGroup, contractState chan<- ContractCheckpoint) {
 	defer wg.Done()
-	lastCheckpointEnd, err := checkpointer.RootChainInstance.CurrentChildBlock(nil)
+	lastCheckpointEnd, err := c.RootChainInstance.CurrentChildBlock(nil)
 	if err != nil {
-		checkpointer.Logger.Error("Error while fetching current child block from rootchain", "error", err)
+		c.Logger.Error("Error while fetching current child block from rootchain", "error", err)
 		return
 	}
 	var start, end uint64
-
 	start = lastCheckpointEnd.Uint64()
 
 	// add 1 if start > 0
@@ -343,11 +314,11 @@ func (checkpointer *Checkpointer) genHeaderDetailContract(lastHeader uint64, wg 
 		// get end result
 		end = expectedDiff + start
 
-		checkpointer.Logger.Debug("Calculating checkpoint eligibility", "latest", lastHeader, "start", start, "end", end)
+		c.Logger.Debug("Calculating checkpoint eligibility", "latest", lastHeader, "start", start, "end", end)
 	}
-	currentHeaderBlockNumber, err := checkpointer.RootChainInstance.CurrentHeaderBlock(nil)
+	currentHeaderBlockNumber, err := c.RootChainInstance.CurrentHeaderBlock(nil)
 	if err != nil {
-		checkpointer.Logger.Error("Error while fetching current header block number from rootchain", "error", err)
+		c.Logger.Error("Error while fetching current header block number from rootchain", "error", err)
 		contractState <- NewContractCheckpoint(0, 0, currentHeaderBlockNumber, err)
 		return
 	}
@@ -355,24 +326,24 @@ func (checkpointer *Checkpointer) genHeaderDetailContract(lastHeader uint64, wg 
 
 	// Handle when block producers go down
 	if end == 0 || end == start || (0 < diff && diff < helper.GetConfig().AvgCheckpointLength) {
-		checkpointer.Logger.Debug("Fetching last header block to calculate time")
+		c.Logger.Debug("Fetching last header block to calculate time")
 		// fetch current header block
-		currentHeaderBlock, err := checkpointer.RootChainInstance.HeaderBlock(nil, currentHeaderBlockNumber.Sub(currentHeaderBlockNumber, big.NewInt(int64(helper.GetConfig().ChildBlockInterval))))
+		currentHeaderBlock, err := c.RootChainInstance.HeaderBlock(nil, currentHeaderBlockNumber.Sub(currentHeaderBlockNumber, big.NewInt(int64(helper.GetConfig().ChildBlockInterval))))
 		if err != nil {
-			checkpointer.Logger.Error("Error while fetching current header block object from rootchain", "error", err)
+			c.Logger.Error("Error while fetching current header block object from rootchain", "error", err)
 			contractState <- NewContractCheckpoint(0, 0, currentHeaderBlockNumber, err)
 			return
 		}
 		lastCheckpointTime := currentHeaderBlock.CreatedAt.Int64()
 		currentTime := time.Now().Unix()
 		if currentTime-lastCheckpointTime > int64(helper.GetConfig().MaxCheckpointLength*2) {
-			checkpointer.Logger.Info("Force push checkpoint", "currentTime", currentTime, "lastCheckpointTime", lastCheckpointTime, "defaultForcePushInterval", defaultForcePushInterval, "end", lastHeader)
+			c.Logger.Info("Force push checkpoint", "currentTime", currentTime, "lastCheckpointTime", lastCheckpointTime, "defaultForcePushInterval", defaultForcePushInterval, "end", lastHeader)
 			end = lastHeader
 		}
 	}
 
 	if end == 0 || start >= end {
-		checkpointer.Logger.Info("Waiting for 256 blocks or invalid start end formation", "Start", start, "End", end)
+		c.Logger.Info("Waiting for 256 blocks or invalid start end formation", "Start", start, "End", end)
 		contractState <- NewContractCheckpoint(0, 0, currentHeaderBlockNumber, errors.New("Invalid start end formation"))
 		return
 	}
@@ -381,13 +352,13 @@ func (checkpointer *Checkpointer) genHeaderDetailContract(lastHeader uint64, wg 
 	return
 }
 
-func (checkpointer *Checkpointer) getLastCheckpointStore(wg *sync.WaitGroup, heimdallState chan<- HeimdallCheckpoint) {
+func (c *Checkpointer) getLastCheckpointStore(wg *sync.WaitGroup, heimdallState chan<- HeimdallCheckpoint) {
 	defer wg.Done()
-	checkpointer.Logger.Info("Fetching checkpoint in buffer")
+	c.Logger.Info("Fetching checkpoint in buffer")
 	var _checkpoint hmtypes.CheckpointBlockHeader
-	resp, err := http.Get(LastCheckpointURL)
+	resp, err := http.Get(BufferedCheckpointURL)
 	if err != nil {
-		checkpointer.Logger.Error("Unable to send request to get proposer", "Error", err)
+		c.Logger.Error("Unable to send request to get proposer", "Error", err)
 		heimdallState <- NewHeimdallCheckpoint(_checkpoint.StartBlock, _checkpoint.EndBlock, false)
 		return
 	}
@@ -395,12 +366,12 @@ func (checkpointer *Checkpointer) getLastCheckpointStore(wg *sync.WaitGroup, hei
 	if resp.StatusCode == 200 {
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			checkpointer.Logger.Error("Unable to read data from response", "Error", err)
+			c.Logger.Error("Unable to read data from response", "Error", err)
 			heimdallState <- NewHeimdallCheckpoint(_checkpoint.StartBlock, _checkpoint.EndBlock, false)
 			return
 		}
 		if err := json.Unmarshal(body, &_checkpoint); err != nil {
-			checkpointer.Logger.Error("Error unmarshalling checkpoint", "error", err)
+			c.Logger.Error("Error unmarshalling checkpoint", "error", err)
 			heimdallState <- NewHeimdallCheckpoint(_checkpoint.StartBlock, _checkpoint.EndBlock, false)
 			return
 		}

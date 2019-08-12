@@ -10,7 +10,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/rpc"
-	"github.com/maticnetwork/heimdall/common"
 	"github.com/xsleonard/go-merkle"
 	"golang.org/x/crypto/sha3"
 	"golang.org/x/sync/errgroup"
@@ -24,7 +23,7 @@ func ValidateCheckpoint(start uint64, end uint64, rootHash ethCommon.Hash, l tml
 	if err != nil {
 		return false
 	}
-	common.CheckpointLogger.Error("RootHashes are", "rootHashTx", rootHash, "rootHash", hexutil.Encode(root))
+	l.Error("RootHashes are", "rootHashTx", rootHash, "rootHash", hexutil.Encode(root))
 
 	if bytes.Equal(root, rootHash[:]) {
 		l.Info("RootHash matched!")
@@ -141,7 +140,6 @@ func nextPowerOfTwo(n uint64) uint64 {
 // spins go-routines to fetch batch elements to allow creation of large merkle trees
 func fetchBatchElements(rpcClient *rpc.Client, elements []rpc.BatchElem) (err error) {
 	var batchLength = int(helper.GetConfig().AvgCheckpointLength)
-
 	// group
 	var g errgroup.Group
 
@@ -153,7 +151,7 @@ func fetchBatchElements(rpcClient *rpc.Client, elements []rpc.BatchElem) (err er
 			newBatch = elements[i : i+batchLength]
 		}
 
-		common.CheckpointLogger.Info("Batching requests", "index", i, "length", len(newBatch))
+		// common.CheckpointLogger.Info("Batching requests", "index", i, "length", len(newBatch))
 
 		// spawn go-routine
 		g.Go(func() error {
@@ -164,10 +162,9 @@ func fetchBatchElements(rpcClient *rpc.Client, elements []rpc.BatchElem) (err er
 	}
 
 	if err := g.Wait(); err != nil {
-		common.CheckpointLogger.Error("Error while fetching headers", err)
 		return err
 	}
 
-	common.CheckpointLogger.Info("Fetched all headers", "len", len(elements))
+	// common.CheckpointLogger.Info("Fetched all headers", "len", len(elements))
 	return nil
 }
