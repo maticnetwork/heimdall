@@ -83,6 +83,51 @@ func (tx StdTx) GetSignatures() []StdSignature {
 type StdSignature []byte
 
 //
+// Std fee
+//
+
+// StdFee includes the amount of coins paid in fees and the maximum
+// gas to be used by the transaction. The ratio yields an effective "gasprice",
+// which must be above some miminum to be accepted into the mempool.
+type StdFee struct {
+	Amount sdk.Coins `json:"amount"`
+	Gas    uint64    `json:"gas"`
+}
+
+// NewStdFee returns a new instance of StdFee
+func NewStdFee(gas uint64, amount sdk.Coins) StdFee {
+	return StdFee{
+		Amount: amount,
+		Gas:    gas,
+	}
+}
+
+// Bytes for signing later
+func (fee StdFee) Bytes() []byte {
+	// normalize. XXX
+	// this is a sign of something ugly
+	// (in the lcd_test, client side its null,
+	// server side its [])
+	if len(fee.Amount) == 0 {
+		fee.Amount = sdk.NewCoins()
+	}
+	bz, err := ModuleCdc.MarshalJSON(fee) // TODO
+	if err != nil {
+		panic(err)
+	}
+	return bz
+}
+
+// GasPrices returns the gas prices for a StdFee.
+//
+// NOTE: The gas prices returned are not the true gas prices that were
+// originally part of the submitted transaction because the fee is computed
+// as fee = ceil(gasWanted * gasPrices).
+func (fee StdFee) GasPrices() sdk.DecCoins {
+	return sdk.NewDecCoins(fee.Amount).QuoDec(sdk.NewDec(int64(fee.Gas)))
+}
+
+//
 // Decoders
 //
 

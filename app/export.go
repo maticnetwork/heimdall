@@ -12,6 +12,7 @@ import (
 	bor "github.com/maticnetwork/heimdall/bor"
 	checkpoint "github.com/maticnetwork/heimdall/checkpoint"
 	staking "github.com/maticnetwork/heimdall/staking"
+	"github.com/maticnetwork/heimdall/supply"
 )
 
 // ExportAppStateAndValidators exports the state of heimdall for a genesis file
@@ -38,6 +39,7 @@ func (app *HeimdallApp) ExportAppStateAndValidators() (
 
 		auth.ExportGenesis(ctx, app.accountKeeper, app.feeCollectionKeeper),
 		bank.ExportGenesis(ctx, app.bankKeeper),
+		supply.ExportGenesis(ctx, app.supplyKeeper),
 
 		bor.ExportGenesis(ctx, app.borKeeper),
 		checkpoint.ExportGenesis(ctx, app.checkpointKeeper),

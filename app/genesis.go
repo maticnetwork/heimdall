@@ -13,6 +13,7 @@ import (
 	"github.com/maticnetwork/heimdall/bor"
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/staking"
+	"github.com/maticnetwork/heimdall/supply"
 	"github.com/maticnetwork/heimdall/types"
 )
 
@@ -41,8 +42,9 @@ type GenesisState struct {
 	Accounts []GenesisAccount  `json:"accounts"`
 	GenTxs   []json.RawMessage `json:"gentxs"`
 
-	AuthData auth.GenesisState `json:"auth"`
-	BankData bank.GenesisState `json:"bank"`
+	AuthData   auth.GenesisState   `json:"auth"`
+	BankData   bank.GenesisState   `json:"bank"`
+	SupplyData supply.GenesisState `json:"supply"`
 	// GovData  gov.GenesisState  `json:"gov"`
 
 	BorData        bor.GenesisState        `json:"bor"`
@@ -56,6 +58,7 @@ func NewGenesisState(
 
 	authData auth.GenesisState,
 	bankData bank.GenesisState,
+	supplyData supply.GenesisState,
 	// govData gov.GenesisState,
 
 	borData bor.GenesisState,
@@ -65,8 +68,9 @@ func NewGenesisState(
 	return GenesisState{
 		Accounts: accounts,
 
-		AuthData: authData,
-		BankData: bankData,
+		AuthData:   authData,
+		BankData:   bankData,
+		SupplyData: supplyData,
 		// GovData:  govData,
 
 		BorData:        borData,
@@ -101,6 +105,9 @@ func ValidateGenesisState(genesisState GenesisState) error {
 		return err
 	}
 	if err := bank.ValidateGenesis(genesisState.BankData); err != nil {
+		return err
+	}
+	if err := supply.ValidateGenesis(genesisState.SupplyData); err != nil {
 		return err
 	}
 	if err := staking.ValidateGenesis(genesisState.StakingData); err != nil {

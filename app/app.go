@@ -31,6 +31,8 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
+	"github.com/maticnetwork/heimdall/supply"
+	supplyTypes "github.com/maticnetwork/heimdall/supply/types"
 	"github.com/maticnetwork/heimdall/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
@@ -45,6 +47,17 @@ const (
 	maxBytesPerBlock int64 = 22020096 // 21 MB
 )
 
+var (
+	// module account permissions
+	maccPerms = map[string][]string{
+		// auth.FeeCollectorName: nil,
+		// mint.ModuleName:           {supply.Minter},
+		// staking.BondedPoolName:    {supply.Burner, supply.Staking},
+		// staking.NotBondedPoolName: {supply.Burner, supply.Staking},
+		// gov.ModuleName:            {supply.Burner},
+	}
+)
+
 // HeimdallApp main heimdall app
 type HeimdallApp struct {
 	*bam.BaseApp
@@ -52,6 +65,8 @@ type HeimdallApp struct {
 
 	// keys to access the multistore
 	keyAccount       *sdk.KVStoreKey
+	keyBank          *sdk.KVStoreKey
+	keySupply        *sdk.KVStoreKey
 	keyGov           *sdk.KVStoreKey
 	keyCheckpoint    *sdk.KVStoreKey
 	keyStaking       *sdk.KVStoreKey
@@ -63,6 +78,7 @@ type HeimdallApp struct {
 
 	accountKeeper       auth.AccountKeeper
 	bankKeeper          bank.Keeper
+	supplyKeeper        supply.Keeper
 	govKeeper           gov.Keeper
 	feeCollectionKeeper auth.FeeCollectionKeeper
 	paramsKeeper        params.Keeper
@@ -73,6 +89,9 @@ type HeimdallApp struct {
 
 	// masterKeeper common.Keeper
 	caller helper.ContractCaller
+
+	//  total coins supply
+	TotalCoinsSupply sdk.Coins
 }
 
 var logger = helper.Logger.With("module", "app")
@@ -98,6 +117,8 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		BaseApp:    bam.NewBaseApp(AppName, logger, db, authTypes.RLPTxDecoder(pulp), baseAppOptions...),
 		keyMain:    sdk.NewKVStoreKey(bam.MainStoreKey),
 		keyAccount: sdk.NewKVStoreKey(authTypes.StoreKey),
+		keyBank:    sdk.NewKVStoreKey(bankTypes.StoreKey),
+		keySupply:  sdk.NewKVStoreKey(supplyTypes.StoreKey),
 		// keyGov:        sdk.NewKVStoreKey(gov.StoreKey),
 		keyCheckpoint:    sdk.NewKVStoreKey(checkpointTypes.StoreKey),
 		keyStaking:       sdk.NewKVStoreKey(stakingTypes.StoreKey),
@@ -105,6 +126,9 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		keyFeeCollection: sdk.NewKVStoreKey(authTypes.FeeStoreKey),
 		keyParams:        sdk.NewKVStoreKey(subspace.StoreKey),
 		tKeyParams:       sdk.NewTransientStoreKey(subspace.TStoreKey),
+
+		// total supply
+		TotalCoinsSupply: sdk.NewCoins(),
 	}
 
 	// define param keeper
@@ -120,9 +144,21 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 
 	// bank keeper
 	app.bankKeeper = bank.NewBaseKeeper(
-		app.accountKeeper,
+		app.cdc,
+		app.keyBank, // target store
 		app.paramsKeeper.Subspace(bankTypes.DefaultParamspace),
 		bankTypes.DefaultCodespace,
+		app.accountKeeper,
+	)
+
+	// bank keeper
+	app.supplyKeeper = supply.NewKeeper(
+		app.cdc,
+		app.keyBank, // target store
+		app.paramsKeeper.Subspace(supplyTypes.DefaultParamspace),
+		maccPerms,
+		app.accountKeeper,
+		app.bankKeeper,
 	)
 
 	// fee collector
@@ -188,6 +224,8 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.MountStores(
 		app.keyMain,
 		app.keyAccount,
+		app.keyBank,
+		app.keySupply,
 		app.keyCheckpoint,
 		app.keyStaking,
 		app.keyBor,
@@ -208,12 +246,13 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 func MakeCodec() *codec.Codec {
 	cdc := codec.New()
 
-	authTypes.RegisterCodec(cdc)
-	bankTypes.RegisterCodec(cdc)
 	codec.RegisterCrypto(cdc)
 	sdk.RegisterCodec(cdc)
 
-	// custom types
+	authTypes.RegisterCodec(cdc)
+	bankTypes.RegisterCodec(cdc)
+	supplyTypes.RegisterCodec(cdc)
+
 	checkpoint.RegisterWire(cdc)
 	staking.RegisterWire(cdc)
 	bor.RegisterWire(cdc)
@@ -411,6 +450,7 @@ func (app *HeimdallApp) initFromGenesisState(ctx sdk.Context, genesisState Genes
 	//
 	auth.InitGenesis(ctx, app.accountKeeper, app.feeCollectionKeeper, genesisState.AuthData)
 	bank.InitGenesis(ctx, app.bankKeeper, genesisState.BankData)
+	supply.InitGenesis(ctx, app.supplyKeeper, app.accountKeeper, genesisState.SupplyData)
 	bor.InitGenesis(ctx, app.borKeeper, genesisState.BorData)
 	checkpoint.InitGenesis(ctx, app.checkpointKeeper, genesisState.CheckpointData)
 	staking.InitGenesis(ctx, app.stakingKeeper, genesisState.StakingData)

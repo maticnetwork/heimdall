@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
 
@@ -33,20 +34,31 @@ type Keeper interface {
 type BaseKeeper struct {
 	BaseSendKeeper
 
-	ak         auth.AccountKeeper
+	// The (unexposed) key used to access the store from the Context.
+	key sdk.StoreKey
+	// The codec codec for binary encoding/decoding of accounts.
+	cdc *codec.Codec
+	// param subspace
 	paramSpace params.Subspace
+	// account keeper
+	ak auth.AccountKeeper
 }
 
 // NewBaseKeeper returns a new BaseKeeper
-func NewBaseKeeper(ak auth.AccountKeeper,
+func NewBaseKeeper(
+	cdc *codec.Codec,
+	key sdk.StoreKey,
 	paramSpace params.Subspace,
-	codespace sdk.CodespaceType) BaseKeeper {
-
+	codespace sdk.CodespaceType,
+	ak auth.AccountKeeper,
+) BaseKeeper {
 	ps := paramSpace.WithKeyTable(bankTypes.ParamKeyTable())
 	return BaseKeeper{
-		BaseSendKeeper: NewBaseSendKeeper(ak, ps, codespace),
-		ak:             ak,
+		key:            key,
+		cdc:            cdc,
 		paramSpace:     ps,
+		ak:             ak,
+		BaseSendKeeper: NewBaseSendKeeper(ak, ps, codespace),
 	}
 }
 
