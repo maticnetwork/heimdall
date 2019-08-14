@@ -6,15 +6,13 @@ import (
 
 // Bank errors reserve 100 ~ 199.
 const (
-	DefaultCodespace sdk.CodespaceType = "bank"
-
 	CodeSendDisabled         sdk.CodeType = 101
 	CodeInvalidInputsOutputs sdk.CodeType = 102
 )
 
 // ErrNoInputs is an error
 func ErrNoInputs(codespace sdk.CodespaceType) sdk.Error {
-	return sdk.NewError(codespace, CodeInvalidInputsOutputs, "no inputs to send transacction")
+	return sdk.NewError(codespace, CodeInvalidInputsOutputs, "no inputs to send transaction")
 }
 
 // ErrNoOutputs is an error

@@ -82,6 +82,11 @@ func (tx StdTx) GetSignatures() []StdSignature {
 // StdSignature represents a sig
 type StdSignature []byte
 
+// Bytes returns the bytes
+func (ss StdSignature) Bytes() []byte {
+	return ss[:]
+}
+
 //
 // Std fee
 //

@@ -12,6 +12,7 @@ import (
 )
 
 const (
+	// PulpHashLength pulp hash length
 	PulpHashLength int = 4
 )
 

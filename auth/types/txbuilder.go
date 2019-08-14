@@ -307,6 +307,12 @@ func MakeSignature(privKey secp256k1.PrivKeySecp256k1, msg StdSignMsg) (sig StdS
 	return ethCrypto.Sign(data, privKey[:])
 }
 
+// RecoverPubkey builds a StdSignature for given a StdSignMsg.
+func RecoverPubkey(msg []byte, sig []byte) ([]byte, error) {
+	data := crypto.Keccak256(msg)
+	return ethCrypto.RecoverPubkey(data, sig[:])
+}
+
 // MakeSignatureWithKeybase builds a StdSignature given keybase, key name, passphrase, and a StdSignMsg.
 func MakeSignatureWithKeybase(
 	keybase crkeys.Keybase,

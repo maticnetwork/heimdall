@@ -22,13 +22,16 @@ const (
 
 	// FeeStoreKey is a string representation of the store key for fees
 	FeeStoreKey = "fee"
+
+	// FeeCollectorName the root string for the fee collector account address
+	FeeCollectorName = "fee_collector"
 )
 
 var (
 	// AddressStoreKeyPrefix prefix for account-by-address store
 	AddressStoreKeyPrefix = []byte{0x01}
 
-	// param key for global account number
+	// GlobalAccountNumberKey param key for global account number
 	GlobalAccountNumberKey = []byte("globalAccountNumber")
 )
 

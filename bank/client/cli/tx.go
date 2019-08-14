@@ -59,7 +59,7 @@ func SendTxCmd(cdc *codec.Codec) *cobra.Command {
 
 			// to key
 			to := types.HexToHeimdallAddress(args[0])
-			if to.Equals(types.ZeroHeimdallAddress) {
+			if to.Empty() {
 				return errors.New("Invalid to address")
 			}
 

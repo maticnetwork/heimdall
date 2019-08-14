@@ -40,7 +40,7 @@ var ZeroPubKey = hmTypes.PubKey{}
 // GetFromAddress get from address
 func GetFromAddress(cliCtx context.CLIContext) types.HeimdallAddress {
 	fromAddress := cliCtx.GetFromAddress()
-	if len(fromAddress[:]) > 0 {
+	if !fromAddress.Empty() {
 		return types.AccAddressToHeimdallAddress(fromAddress)
 	}
 

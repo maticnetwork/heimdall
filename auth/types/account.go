@@ -7,10 +7,10 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/tendermint/tendermint/crypto"
-	yaml "gopkg.in/yaml.v2"
 	amino "github.com/tendermint/go-amino"
+	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
+	yaml "gopkg.in/yaml.v2"
 
 	"github.com/maticnetwork/heimdall/types"
 )
@@ -142,7 +142,7 @@ func (acc BaseAccount) GetAddress() types.HeimdallAddress {
 
 // SetAddress - Implements sdk.Account.
 func (acc *BaseAccount) SetAddress(addr types.HeimdallAddress) error {
-	if len(acc.Address) != 0 && !acc.Address.Equals(types.ZeroHeimdallAddress) {
+	if len(acc.Address) != 0 && !acc.Address.Empty() {
 		return errors.New("cannot override BaseAccount address")
 	}
 	acc.Address = addr

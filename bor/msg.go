@@ -1,12 +1,9 @@
 package bor
 
 import (
-	"time"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	borTypes "github.com/maticnetwork/heimdall/bor/types"
-	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/types"
 )
 
@@ -18,25 +15,33 @@ var cdc = codec.New()
 
 var _ sdk.Msg = &MsgProposeSpan{}
 
+// MsgProposeSpan creates msg propose span
 type MsgProposeSpan struct {
-	StartBlock        uint64             `json:"startBlock"`
-	EndBlock          uint64             `json:"endBlock"`
-	Validators        []types.MinimalVal `json:"validators"`
-	SelectedProducers []types.MinimalVal `json:"producers"`
-	ChainID           string             `json:"chainID"`
-	// Timestamp only exits to allow submission of multiple transactions without bringing in nonce
-	TimeStamp uint64 `json:"timestamp"`
+	Proposer          types.HeimdallAddress `json:"proposer"`
+	StartBlock        uint64                `json:"startBlock"`
+	EndBlock          uint64                `json:"endBlock"`
+	Validators        []types.MinimalVal    `json:"validators"`
+	SelectedProducers []types.MinimalVal    `json:"producers"`
+	ChainID           string                `json:"borChainID"`
 }
 
 // NewMsgProposeSpan creates new propose span message
-func NewMsgProposeSpan(startBlock uint64, endBlock uint64, validators []types.MinimalVal, selectedProducers []types.MinimalVal, chainID string, timestamp uint64) MsgProposeSpan {
+func NewMsgProposeSpan(
+	proposer types.HeimdallAddress,
+	startBlock uint64,
+	endBlock uint64,
+	validators []types.MinimalVal,
+	selectedProducers []types.MinimalVal,
+	chainID string,
+) MsgProposeSpan {
+
 	return MsgProposeSpan{
+		Proposer:          proposer,
 		StartBlock:        startBlock,
 		EndBlock:          endBlock,
 		Validators:        validators,
 		SelectedProducers: selectedProducers,
 		ChainID:           chainID,
-		TimeStamp:         timestamp,
 	}
 }
 
@@ -52,8 +57,7 @@ func (msg MsgProposeSpan) Route() string {
 
 // GetSigners returns address of the signer
 func (msg MsgProposeSpan) GetSigners() []sdk.AccAddress {
-	addrs := make([]sdk.AccAddress, 1)
-	return addrs
+	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.Proposer)}
 }
 
 // GetSignBytes returns sign bytes for proposeSpan message type
@@ -67,8 +71,9 @@ func (msg MsgProposeSpan) GetSignBytes() []byte {
 
 // ValidateBasic validates the message and returns error
 func (msg MsgProposeSpan) ValidateBasic() sdk.Error {
-	if msg.TimeStamp == 0 || msg.TimeStamp > uint64(time.Now().Unix()) {
-		return common.ErrInvalidMsg(common.DefaultCodespace, "Invalid timestamp %d", msg.TimeStamp)
+	if msg.Proposer.Empty() {
+		return sdk.ErrInvalidAddress(msg.Proposer.String())
 	}
+
 	return nil
 }

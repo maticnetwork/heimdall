@@ -1,5 +1,9 @@
 package types
 
+import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
+
 const (
 	// ModuleName is the name of the module
 	ModuleName = "supply"
@@ -15,4 +19,7 @@ const (
 
 	// DefaultParamspace default name for parameter store
 	DefaultParamspace = ModuleName
+
+	// DefaultCodespace code space
+	DefaultCodespace sdk.CodespaceType = ModuleName
 )

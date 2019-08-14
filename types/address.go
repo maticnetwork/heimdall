@@ -2,6 +2,7 @@ package types
 
 import (
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 
@@ -70,8 +71,7 @@ func (aa HeimdallAddress) Equals(aa2 sdk.Address) bool {
 
 // Empty returns boolean for whether an AccAddress is empty
 func (aa HeimdallAddress) Empty() bool {
-	aa2 := HeimdallAddress{}
-	return bytes.Equal(aa.Bytes(), aa2.Bytes())
+	return bytes.Equal(aa.Bytes(), ZeroHeimdallAddress.Bytes())
 }
 
 // Marshal returns the raw address bytes. It is needed for protobuf
@@ -132,7 +132,7 @@ func (aa HeimdallAddress) String() string {
 		return ""
 	}
 
-	return common.Address(aa).Hex()
+	return "0x" + hex.EncodeToString(aa.Bytes())
 }
 
 // Format implements the fmt.Formatter interface.
@@ -161,4 +161,9 @@ func HexToHeimdallAddress(b string) HeimdallAddress {
 // AccAddressToHeimdallAddress returns Address with value b.
 func AccAddressToHeimdallAddress(b sdk.AccAddress) HeimdallAddress {
 	return BytesToHeimdallAddress(b[:])
+}
+
+// HeimdallAddressToAccAddress returns Address with value b.
+func HeimdallAddressToAccAddress(b HeimdallAddress) sdk.AccAddress {
+	return sdk.AccAddress(b.Bytes())
 }

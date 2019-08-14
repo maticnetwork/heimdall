@@ -50,7 +50,7 @@ const (
 var (
 	// module account permissions
 	maccPerms = map[string][]string{
-		// auth.FeeCollectorName: nil,
+		authTypes.FeeCollectorName: nil,
 		// mint.ModuleName:           {supply.Minter},
 		// staking.BondedPoolName:    {supply.Burner, supply.Staking},
 		// staking.NotBondedPoolName: {supply.Burner, supply.Staking},
@@ -211,14 +211,20 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	// query routes
 	app.QueryRouter().
 		AddRoute(authTypes.QuerierRoute, auth.NewQuerier(app.accountKeeper)).
-		// AddRoute(auth.QuerierRoute, auth.NewQuerier(app.accountKeeper)).
+		AddRoute(supplyTypes.QuerierRoute, supply.NewQuerier(app.supplyKeeper)).
 		AddRoute(borTypes.QuerierRoute, bor.NewQuerier(app.borKeeper))
 
 	// perform initialization logic
 	app.SetInitChainer(app.initChainer)
 	app.SetBeginBlocker(app.beginBlocker)
 	app.SetEndBlocker(app.endBlocker)
-	app.SetAnteHandler(auth.NewAnteHandler())
+	app.SetAnteHandler(
+		auth.NewAnteHandler(
+			app.accountKeeper,
+			app.supplyKeeper,
+			auth.DefaultSigVerificationGasConsumer,
+		),
+	)
 
 	// mount the multistore and load the latest state
 	app.MountStores(

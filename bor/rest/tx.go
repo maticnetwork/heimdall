@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -116,12 +115,12 @@ func postProposeSpanHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.
 		}
 
 		msg := bor.NewMsgProposeSpan(
+			types.HexToHeimdallAddress(req.BaseReq.From),
 			req.StartBlock,
 			req.StartBlock+spanDuration,
 			validators,
 			validators,
 			req.BorChainID,
-			uint64(time.Now().Unix()),
 		)
 
 		// send response

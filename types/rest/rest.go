@@ -110,7 +110,7 @@ func (br BaseReq) ValidateBasic(w http.ResponseWriter) bool {
 		}
 	}
 
-	if d := types.HexToHeimdallAddress(br.From); d.Equals(types.ZeroHeimdallAddress) || len(br.From) == 0 {
+	if types.HexToHeimdallAddress(br.From).Empty() || len(br.From) == 0 {
 		WriteErrorResponse(w, http.StatusUnauthorized, fmt.Sprintf("invalid from address: %s", br.From))
 		return false
 	}

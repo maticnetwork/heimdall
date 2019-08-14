@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -50,6 +49,12 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 			chainID := viper.GetString(FlagBorChainId)
 			if chainID == "" {
 				return fmt.Errorf("ChainID cannot be empty")
+			}
+
+			proposerStr := viper.GetString(FlagProposer)
+			proposer := types.HexToHeimdallAddress(proposerStr)
+			if proposer.Empty() {
+				proposer = helper.GetFromAddress(cliCtx)
 			}
 
 			startBlockStr := viper.GetString(FlagStartBlock)
@@ -120,17 +125,19 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 			}
 
 			msg := bor.NewMsgProposeSpan(
+				proposer,
 				startBlock,
 				startBlock+spanDuration,
 				validators,
 				validators,
 				chainID,
-				uint64(time.Now().Unix()),
 			)
 
 			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
 		},
 	}
+
+	cmd.Flags().String(FlagProposer, "", "--proposer=<proposer>")
 	cmd.Flags().String(FlagBorChainId, "", "--bor-chain-id=<bor-chain-id>")
 	cmd.Flags().String(FlagStartBlock, "", "--start-block=<start-block-number>")
 	cmd.MarkFlagRequired(FlagBorChainId)
