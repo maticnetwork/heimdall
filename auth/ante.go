@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
@@ -173,7 +174,6 @@ func GetSignerAcc(
 	ak AccountKeeper,
 	addr types.HeimdallAddress,
 ) (authTypes.Account, sdk.Result) {
-	fmt.Println("==> addr", addr.String())
 	if acc := ak.GetAccount(ctx, addr); acc != nil {
 		return acc, sdk.Result{}
 	}
@@ -219,10 +219,17 @@ func processSig(
 		if err != nil || !bytes.Equal(acc.GetAddress().Bytes(), pk.Address().Bytes()) {
 			return nil, sdk.ErrUnauthorized("signature verification failed; verify correct account sequence and chain-id").Result()
 		}
+
+		if acc.GetPubKey() == nil {
+			var cryptoPk crypto.PubKey = pk
+			if err := acc.SetPubKey(cryptoPk); err != nil {
+				return nil, sdk.ErrUnauthorized("error while updating account pubkey").Result()
+			}
+		}
 	}
 
 	if err := acc.SetSequence(acc.GetSequence() + 1); err != nil {
-		panic(err)
+		return nil, sdk.ErrUnauthorized("error while updating account sequence").Result()
 	}
 
 	return acc, res
