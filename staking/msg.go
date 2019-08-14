@@ -24,15 +24,24 @@ var cdc = codec.New()
 var _ sdk.Msg = &MsgValidatorJoin{}
 
 type MsgValidatorJoin struct {
-	ID           types.ValidatorID `json:"ID"`
-	SignerPubKey types.PubKey      `json:"pubKey"`
-	TxHash       common.Hash       `json:"tx_hash"`
+	Proposer     types.HeimdallAddress `json:"proposer"`
+	ID           types.ValidatorID     `json:"id"`
+	SignerPubKey types.PubKey          `json:"pub_key"`
+	TxHash       common.Hash           `json:"tx_hash"`
 }
 
-func NewMsgValidatorJoin(_id uint64, _pubkey types.PubKey, txhash common.Hash) MsgValidatorJoin {
+// NewMsgValidatorJoin creates new validator-join
+func NewMsgValidatorJoin(
+	proposer types.HeimdallAddress,
+	id uint64,
+	pubkey types.PubKey,
+	txhash common.Hash,
+) MsgValidatorJoin {
+
 	return MsgValidatorJoin{
-		ID:           types.NewValidatorID(_id),
-		SignerPubKey: _pubkey,
+		Proposer:     proposer,
+		ID:           types.NewValidatorID(id),
+		SignerPubKey: pubkey,
 		TxHash:       txhash,
 	}
 }
@@ -46,8 +55,7 @@ func (msg MsgValidatorJoin) Route() string {
 }
 
 func (msg MsgValidatorJoin) GetSigners() []sdk.AccAddress {
-	addrs := make([]sdk.AccAddress, 0)
-	return addrs
+	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.Proposer)}
 }
 
 func (msg MsgValidatorJoin) GetSignBytes() []byte {
@@ -67,6 +75,10 @@ func (msg MsgValidatorJoin) ValidateBasic() sdk.Error {
 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid pub key %v", msg.SignerPubKey.String())
 	}
 
+	if msg.Proposer.Empty() {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.Proposer.String())
+	}
+
 	return nil
 }
 
@@ -78,15 +90,24 @@ var _ sdk.Msg = &MsgSignerUpdate{}
 // MsgSignerUpdate signer update struct
 // TODO add old signer sig check
 type MsgSignerUpdate struct {
-	ID              types.ValidatorID `json:"ID"`
-	NewSignerPubKey types.PubKey      `json:"pubKey"`
-	NewAmount       json.Number       `json:"amount"`
-	TxHash          common.Hash       `json:"tx_hash"`
+	Proposer        types.HeimdallAddress `json:"proposer"`
+	ID              types.ValidatorID     `json:"ID"`
+	NewSignerPubKey types.PubKey          `json:"pubKey"`
+	NewAmount       json.Number           `json:"amount"`
+	TxHash          common.Hash           `json:"tx_hash"`
 }
 
-func NewMsgValidatorUpdate(_id uint64, pubKey types.PubKey, amount json.Number, txhash common.Hash) MsgSignerUpdate {
+func NewMsgValidatorUpdate(
+	proposer types.HeimdallAddress,
+	id uint64,
+	pubKey types.PubKey,
+	amount json.Number,
+	txhash common.Hash,
+) MsgSignerUpdate {
+
 	return MsgSignerUpdate{
-		ID:              types.NewValidatorID(_id),
+		Proposer:        proposer,
+		ID:              types.NewValidatorID(id),
 		NewSignerPubKey: pubKey,
 		NewAmount:       amount,
 		TxHash:          txhash,
@@ -102,8 +123,7 @@ func (msg MsgSignerUpdate) Route() string {
 }
 
 func (msg MsgSignerUpdate) GetSigners() []sdk.AccAddress {
-	addrs := make([]sdk.AccAddress, 0)
-	return addrs
+	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.Proposer)}
 }
 
 func (msg MsgSignerUpdate) GetSignBytes() []byte {
@@ -117,6 +137,10 @@ func (msg MsgSignerUpdate) GetSignBytes() []byte {
 func (msg MsgSignerUpdate) ValidateBasic() sdk.Error {
 	if msg.ID <= 0 {
 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator ID %v", msg.ID)
+	}
+
+	if msg.Proposer.Empty() {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.Proposer.String())
 	}
 
 	if bytes.Equal(msg.NewSignerPubKey.Bytes(), helper.ZeroPubKey.Bytes()) {
@@ -142,14 +166,16 @@ func (msg MsgSignerUpdate) GetNewPower() uint64 {
 var _ sdk.Msg = &MsgValidatorExit{}
 
 type MsgValidatorExit struct {
-	ID     types.ValidatorID `json:"ID"`
-	TxHash common.Hash       `json:"tx_hash"`
+	Proposer types.HeimdallAddress `json:"proposer"`
+	ID       types.ValidatorID     `json:"ID"`
+	TxHash   common.Hash           `json:"tx_hash"`
 }
 
-func NewMsgValidatorExit(_id uint64, txhash common.Hash) MsgValidatorExit {
+func NewMsgValidatorExit(proposer types.HeimdallAddress, id uint64, txhash common.Hash) MsgValidatorExit {
 	return MsgValidatorExit{
-		ID:     types.NewValidatorID(_id),
-		TxHash: txhash,
+		Proposer: proposer,
+		ID:       types.NewValidatorID(id),
+		TxHash:   txhash,
 	}
 }
 
@@ -162,8 +188,7 @@ func (msg MsgValidatorExit) Route() string {
 }
 
 func (msg MsgValidatorExit) GetSigners() []sdk.AccAddress {
-	addrs := make([]sdk.AccAddress, 0)
-	return addrs
+	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.Proposer)}
 }
 
 func (msg MsgValidatorExit) GetSignBytes() []byte {
@@ -177,6 +202,10 @@ func (msg MsgValidatorExit) GetSignBytes() []byte {
 func (msg MsgValidatorExit) ValidateBasic() sdk.Error {
 	if msg.ID <= 0 {
 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator ID %v", msg.ID)
+	}
+
+	if msg.Proposer.Empty() {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.Proposer.String())
 	}
 
 	return nil

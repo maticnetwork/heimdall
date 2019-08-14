@@ -114,6 +114,7 @@ func postProposeSpanHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.
 			}
 		}
 
+		// draft a propose span message
 		msg := bor.NewMsgProposeSpan(
 			types.HexToHeimdallAddress(req.BaseReq.From),
 			req.StartBlock,

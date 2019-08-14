@@ -22,6 +22,7 @@ var cdc = codec.New()
 
 var _ sdk.Msg = &MsgCheckpoint{}
 
+// MsgCheckpoint represents checkpoint
 type MsgCheckpoint struct {
 	Proposer   types.HeimdallAddress `json:"proposer"`
 	StartBlock uint64                `json:"startBlock"`
@@ -31,7 +32,13 @@ type MsgCheckpoint struct {
 }
 
 // NewMsgCheckpointBlock creates new checkpoint message using mentioned arguments
-func NewMsgCheckpointBlock(proposer types.HeimdallAddress, startBlock uint64, endBlock uint64, roothash common.Hash, timestamp uint64) MsgCheckpoint {
+func NewMsgCheckpointBlock(
+	proposer types.HeimdallAddress,
+	startBlock uint64,
+	endBlock uint64,
+	roothash common.Hash,
+	timestamp uint64,
+) MsgCheckpoint {
 	return MsgCheckpoint{
 		Proposer:   proposer,
 		StartBlock: startBlock,
@@ -52,9 +59,7 @@ func (msg MsgCheckpoint) Route() string {
 
 // GetSigners returns address of the signer
 func (msg MsgCheckpoint) GetSigners() []sdk.AccAddress {
-	addrs := make([]sdk.AccAddress, 1)
-	addrs[0] = sdk.AccAddress(msg.Proposer.Bytes())
-	return addrs
+	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.Proposer)}
 }
 
 func (msg MsgCheckpoint) GetSignBytes() []byte {
@@ -70,12 +75,8 @@ func (msg MsgCheckpoint) ValidateBasic() sdk.Error {
 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid rootHash %v", msg.RootHash.String())
 	}
 
-	if bytes.Equal(msg.Proposer.Bytes(), helper.ZeroAddress.Bytes()) {
+	if msg.Proposer.Empty() {
 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.Proposer.String())
-	}
-
-	if msg.TimeStamp == 0 || msg.TimeStamp > uint64(time.Now().Unix()) {
-		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid timestamp %d", msg.TimeStamp)
 	}
 
 	if msg.StartBlock >= msg.EndBlock || msg.EndBlock == 0 {
@@ -92,14 +93,14 @@ func (msg MsgCheckpoint) ValidateBasic() sdk.Error {
 var _ sdk.Msg = &MsgCheckpointAck{}
 
 type MsgCheckpointAck struct {
-	HeaderBlock uint64 `json:"headerBlock"`
-	Timestamp   uint64 `json:"timestamp"`
+	Proposer    types.HeimdallAddress `json:"proposer"`
+	HeaderBlock uint64                `json:"headerBlock"`
 }
 
-func NewMsgCheckpointAck(headerBlock uint64, timestamp uint64) MsgCheckpointAck {
+func NewMsgCheckpointAck(proposer types.HeimdallAddress, headerBlock uint64) MsgCheckpointAck {
 	return MsgCheckpointAck{
+		Proposer:    proposer,
 		HeaderBlock: headerBlock,
-		Timestamp:   timestamp,
 	}
 }
 
@@ -112,8 +113,7 @@ func (msg MsgCheckpointAck) Route() string {
 }
 
 func (msg MsgCheckpointAck) GetSigners() []sdk.AccAddress {
-	addrs := make([]sdk.AccAddress, 0)
-	return addrs
+	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.Proposer)}
 }
 
 func (msg MsgCheckpointAck) GetSignBytes() []byte {
@@ -125,6 +125,10 @@ func (msg MsgCheckpointAck) GetSignBytes() []byte {
 }
 
 func (msg MsgCheckpointAck) ValidateBasic() sdk.Error {
+	if msg.Proposer.Empty() {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.Proposer.String())
+	}
+
 	childBlockInterval := helper.GetConfig().ChildBlockInterval
 	if msg.HeaderBlock > 0 && msg.HeaderBlock%childBlockInterval != 0 {
 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid header block %d", msg.HeaderBlock)
@@ -140,11 +144,13 @@ func (msg MsgCheckpointAck) ValidateBasic() sdk.Error {
 var _ sdk.Msg = &MsgCheckpointNoAck{}
 
 type MsgCheckpointNoAck struct {
-	TimeStamp uint64 `json:"timestamp"`
+	Proposer  types.HeimdallAddress `json:"proposer"`
+	TimeStamp uint64                `json:"timestamp"`
 }
 
-func NewMsgCheckpointNoAck(timestamp uint64) MsgCheckpointNoAck {
+func NewMsgCheckpointNoAck(proposer types.HeimdallAddress, timestamp uint64) MsgCheckpointNoAck {
 	return MsgCheckpointNoAck{
+		Proposer:  proposer,
 		TimeStamp: timestamp,
 	}
 }
@@ -158,8 +164,7 @@ func (msg MsgCheckpointNoAck) Route() string {
 }
 
 func (msg MsgCheckpointNoAck) GetSigners() []sdk.AccAddress {
-	addrs := make([]sdk.AccAddress, 0)
-	return addrs
+	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.Proposer)}
 }
 
 func (msg MsgCheckpointNoAck) GetSignBytes() []byte {
@@ -173,6 +178,10 @@ func (msg MsgCheckpointNoAck) GetSignBytes() []byte {
 func (msg MsgCheckpointNoAck) ValidateBasic() sdk.Error {
 	if msg.TimeStamp == 0 || msg.TimeStamp > uint64(time.Now().Unix()) {
 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid timestamp %d", msg.TimeStamp)
+	}
+
+	if msg.Proposer.Empty() {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.Proposer.String())
 	}
 
 	return nil

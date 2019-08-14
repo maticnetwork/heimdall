@@ -48,49 +48,48 @@ func SendCheckpointTx(cdc *codec.Codec) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			ProposerStr := viper.GetString(FlagProposerAddress)
-			if viper.GetString(FlagProposerAddress) == "" {
+			// get proposer
+			proposer := types.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
+			if proposer.Empty() {
 				return fmt.Errorf("proposer address cannot be empty")
 			}
 
-			//if common.IsHexAddress(ProposerStr) {
-			//	return fmt.Errorf("Not valid validator address")
-			//}
+			//	start block
 
-			StartBlockStr := viper.GetString(FlagStartBlock)
-			if StartBlockStr == "" {
+			startBlockStr := viper.GetString(FlagStartBlock)
+			if startBlockStr == "" {
 				return fmt.Errorf("start block cannot be empty")
 			}
 
-			EndBlockStr := viper.GetString(FlagEndBlock)
-			if EndBlockStr == "" {
+			startBlock, err := strconv.ParseUint(startBlockStr, 10, 64)
+			if err != nil {
+				return err
+			}
+
+			//	end block
+
+			endBlockStr := viper.GetString(FlagEndBlock)
+			if endBlockStr == "" {
 				return fmt.Errorf("end block cannot be empty")
 			}
 
-			RootHashStr := viper.GetString(FlagRootHash)
-			if RootHashStr == "" {
+			endBlock, err := strconv.ParseUint(endBlockStr, 10, 64)
+			if err != nil {
+				return err
+			}
+
+			// root hash
+
+			rootHashStr := viper.GetString(FlagRootHash)
+			if rootHashStr == "" {
 				return fmt.Errorf("root hash cannot be empty")
 			}
 
-			Proposer := types.HexToHeimdallAddress(ProposerStr)
-
-			StartBlock, err := strconv.ParseUint(StartBlockStr, 10, 64)
-			if err != nil {
-				return err
-			}
-
-			EndBlock, err := strconv.ParseUint(EndBlockStr, 10, 64)
-			if err != nil {
-				return err
-			}
-
-			RootHash := common.HexToHash(RootHashStr)
-
 			msg := checkpoint.NewMsgCheckpointBlock(
-				Proposer,
-				StartBlock,
-				EndBlock,
-				RootHash,
+				proposer,
+				startBlock,
+				endBlock,
+				common.HexToHash(rootHashStr),
 				uint64(time.Now().Unix()),
 			)
 
@@ -101,6 +100,7 @@ func SendCheckpointTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(FlagStartBlock, "", "--start-block=<start-block-number>")
 	cmd.Flags().String(FlagEndBlock, "", "--end-block=<end-block-number>")
 	cmd.Flags().StringP(FlagRootHash, "r", "", "--root-hash=<root-hash>")
+	cmd.MarkFlagRequired(FlagProposerAddress)
 	cmd.MarkFlagRequired(FlagStartBlock)
 	cmd.MarkFlagRequired(FlagEndBlock)
 	cmd.MarkFlagRequired(FlagRootHash)
@@ -116,23 +116,33 @@ func SendCheckpointACKTx(cdc *codec.Codec) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			HeaderBlockStr := viper.GetString(FlagHeaderNumber)
-			if HeaderBlockStr == "" {
+			// get proposer
+			proposer := types.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
+			if proposer.Empty() {
+				return fmt.Errorf("proposer address cannot be empty")
+			}
+
+			headerBlockStr := viper.GetString(FlagHeaderNumber)
+			if headerBlockStr == "" {
 				return fmt.Errorf("header number cannot be empty")
 			}
 
-			HeaderBlock, err := strconv.ParseUint(HeaderBlockStr, 10, 64)
+			headerBlock, err := strconv.ParseUint(headerBlockStr, 10, 64)
 			if err != nil {
 				return err
 			}
 
-			msg := checkpoint.NewMsgCheckpointAck(HeaderBlock, uint64(time.Now().Unix()))
+			// new checkpoint
+			msg := checkpoint.NewMsgCheckpointAck(proposer, headerBlock)
 
+			// msg
 			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
 		},
 	}
 
+	cmd.Flags().StringP(FlagProposerAddress, "p", helper.GetPubKey().Address().String(), "--proposer=<proposer-address>")
 	cmd.Flags().String(FlagHeaderNumber, "", "--header=<header-index>")
+	cmd.MarkFlagRequired(FlagProposerAddress)
 	cmd.MarkFlagRequired(FlagHeaderNumber)
 	return cmd
 }
@@ -145,12 +155,24 @@ func SendCheckpointNoACKTx(cdc *codec.Codec) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
+			// get proposer
+			proposer := types.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
+			if proposer.Empty() {
+				return fmt.Errorf("proposer address cannot be empty")
+			}
+
 			// create new checkpoint no-ack
-			msg := checkpoint.NewMsgCheckpointNoAck(uint64(time.Now().Unix()))
+			msg := checkpoint.NewMsgCheckpointNoAck(
+				proposer,
+				uint64(time.Now().Unix()),
+			)
 
 			// broadcast messages
 			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
 		},
 	}
+
+	cmd.Flags().StringP(FlagProposerAddress, "p", helper.GetPubKey().Address().String(), "--proposer=<proposer-address>")
+	cmd.MarkFlagRequired(FlagProposerAddress)
 	return cmd
 }

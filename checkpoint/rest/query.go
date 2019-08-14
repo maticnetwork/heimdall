@@ -8,6 +8,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/ethereum/go-ethereum/common"
 	ethcmn "github.com/ethereum/go-ethereum/common"
 	"github.com/gorilla/mux"
 
@@ -152,6 +153,14 @@ func checkpointHeaderHandlerFn(
 	}
 }
 
+// HeaderBlockResult represents header block result
+type HeaderBlockResult struct {
+	Proposer   types.HeimdallAddress `json:"proposer"`
+	RootHash   common.Hash           `json:"rootHash"`
+	StartBlock uint64                `json:"startBlock"`
+	EndBlock   uint64                `json:"endBlock"`
+}
+
 func checkpointHandlerFn(
 	cdc *codec.Codec,
 	cliCtx context.CLIContext,
@@ -189,7 +198,7 @@ func checkpointHandlerFn(
 			}
 		}
 
-		checkpoint := HeaderBlock{
+		checkpoint := HeaderBlockResult{
 			Proposer:   validatorSet.Proposer.Signer,
 			StartBlock: uint64(start),
 			EndBlock:   uint64(end),

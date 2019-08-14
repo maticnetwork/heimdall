@@ -259,9 +259,9 @@ func MakeCodec() *codec.Codec {
 	bankTypes.RegisterCodec(cdc)
 	supplyTypes.RegisterCodec(cdc)
 
-	checkpoint.RegisterWire(cdc)
-	staking.RegisterWire(cdc)
-	bor.RegisterWire(cdc)
+	checkpoint.RegisterCodec(cdc)
+	staking.RegisterCodec(cdc)
+	bor.RegisterCodec(cdc)
 
 	cdc.Seal()
 	return cdc

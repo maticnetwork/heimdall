@@ -6,7 +6,7 @@ import (
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 )
 
-func RegisterWire(cdc *codec.Codec) {
+func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(MsgProposeSpan{}, "bor/MsgProposeSpan", nil)
 }
 
@@ -17,6 +17,6 @@ func RegisterPulp(pulp *authTypes.Pulp) {
 var cdcEmpty = codec.New()
 
 func init() {
-	RegisterWire(cdcEmpty)
+	RegisterCodec(cdcEmpty)
 	codec.RegisterCrypto(cdcEmpty)
 }

@@ -253,7 +253,10 @@ func (checkpointer *Checkpointer) sendRequest(newHeader *types.Header) {
 	if lastHeimdallCheckpoint.end+1 == lastContractCheckpoint.start {
 		checkpointer.Logger.Debug("Detected mainchain checkpoint,sending ACK", "HeimdallEnd", lastHeimdallCheckpoint.end, "ContractStart", lastHeimdallCheckpoint.start)
 		headerNumber := lastContractCheckpoint.currentHeaderBlock.Sub(lastContractCheckpoint.currentHeaderBlock, big.NewInt(int64(helper.GetConfig().ChildBlockInterval)))
-		msg := checkpoint.NewMsgCheckpointAck(headerNumber.Uint64(), uint64(time.Now().Unix()))
+		msg := checkpoint.NewMsgCheckpointAck(
+			hmtypes.BytesToHeimdallAddress(helper.GetAddress()),
+			headerNumber.Uint64(),
+		)
 
 		// send tendermint request
 		_, err := helper.BroadcastMsgs(checkpointer.cliCtx, []sdk.Msg{msg})

@@ -7,7 +7,7 @@ import (
 
 // TODO we most likely dont need to register to amino as we are using RLP to encode
 
-func RegisterWire(cdc *codec.Codec) {
+func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(MsgValidatorJoin{}, "staking/MsgValidatorJoin", nil)
 	cdc.RegisterConcrete(MsgSignerUpdate{}, "staking/MsgSignerUpdate", nil)
 	cdc.RegisterConcrete(MsgValidatorExit{}, "staking/MsgValidatorExit", nil)
@@ -22,6 +22,6 @@ func RegisterPulp(pulp *authTypes.Pulp) {
 var cdcEmpty = codec.New()
 
 func init() {
-	RegisterWire(cdcEmpty)
+	RegisterCodec(cdcEmpty)
 	codec.RegisterCrypto(cdcEmpty)
 }

@@ -21,19 +21,19 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 
 		switch msg := msg.(type) {
 		case MsgCheckpoint:
-			return HandleMsgCheckpoint(ctx, msg, k, contractCaller, common.CheckpointLogger)
+			return handleMsgCheckpoint(ctx, msg, k, contractCaller, common.CheckpointLogger)
 		case MsgCheckpointAck:
-			return HandleMsgCheckpointAck(ctx, msg, k, contractCaller, common.CheckpointLogger)
+			return handleMsgCheckpointAck(ctx, msg, k, contractCaller, common.CheckpointLogger)
 		case MsgCheckpointNoAck:
-			return HandleMsgCheckpointNoAck(ctx, msg, k, common.CheckpointLogger)
+			return handleMsgCheckpointNoAck(ctx, msg, k, common.CheckpointLogger)
 		default:
 			return sdk.ErrTxDecode("Invalid message in checkpoint module").Result()
 		}
 	}
 }
 
-// HandleMsgCheckpoint Validates checkpoint transaction
-func HandleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper, contractCaller helper.IContractCaller, logger tmlog.Logger) sdk.Result {
+// handleMsgCheckpoint Validates checkpoint transaction
+func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper, contractCaller helper.IContractCaller, logger tmlog.Logger) sdk.Result {
 	logger.Debug("Validating Checkpoint Data", "TxData", msg)
 	if msg.TimeStamp == 0 || msg.TimeStamp > uint64(time.Now().Unix()) {
 		logger.Error("Checkpoint timestamp must be in near past", "CurrentTime", time.Now().Unix(), "CheckpointTime", msg.TimeStamp, "Condition", msg.TimeStamp >= uint64(time.Now().Unix()))
@@ -130,8 +130,8 @@ func HandleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper, contractC
 	return sdk.Result{Tags: resTags}
 }
 
-// HandleMsgCheckpointAck Validates if checkpoint submitted on chain is valid
-func HandleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k Keeper, contractCaller helper.IContractCaller, logger tmlog.Logger) sdk.Result {
+// handleMsgCheckpointAck Validates if checkpoint submitted on chain is valid
+func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k Keeper, contractCaller helper.IContractCaller, logger tmlog.Logger) sdk.Result {
 	logger.Debug("Validating Checkpoint ACK", "Tx", msg)
 
 	// make call to headerBlock with header number
@@ -199,7 +199,7 @@ func HandleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k Keeper, con
 }
 
 // Validate checkpoint no-ack transaction
-func HandleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k Keeper, logger tmlog.Logger) sdk.Result {
+func handleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k Keeper, logger tmlog.Logger) sdk.Result {
 	logger.Debug("Validating checkpoint no-ack", "TxData", msg)
 	// current time
 	currentTime := time.Unix(int64(msg.TimeStamp), 0) // buffer time

@@ -2,13 +2,15 @@ package test
 
 import (
 	"bytes"
+	"encoding/hex"
 	"math/rand"
+	"os"
 	"testing"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	ethcmn "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -16,10 +18,8 @@ import (
 	dbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
 
-	"encoding/hex"
-	"os"
-	"time"
-
+	bankTypes "github.com/maticnetwork/heimdall/bank/types"
+	"github.com/maticnetwork/heimdall/bor"
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
@@ -33,9 +33,12 @@ func MakeTestCodec() *codec.Codec {
 	codec.RegisterCrypto(cdc)
 	sdk.RegisterCodec(cdc)
 
+	bankTypes.RegisterCodec(cdc)
+
 	// custom types
-	checkpoint.RegisterWire(cdc)
-	staking.RegisterWire(cdc)
+	bor.RegisterCodec(cdc)
+	checkpoint.RegisterCodec(cdc)
+	staking.RegisterCodec(cdc)
 
 	cdc.Seal()
 	return cdc

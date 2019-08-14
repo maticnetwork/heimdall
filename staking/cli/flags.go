@@ -1,6 +1,7 @@
 package cli
 
 const (
+	FlagProposerAddress  = "proposer"
 	FlagValidatorAddress = "validator"
 	FlagValidatorID      = "id"
 	FlagSignerAddress    = "signer"

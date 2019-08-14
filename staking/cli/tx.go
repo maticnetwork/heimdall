@@ -13,11 +13,11 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	hmClient "github.com/maticnetwork/heimdall/client"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
-	"github.com/maticnetwork/heimdall/types"
-	hmClient "github.com/maticnetwork/heimdall/client"
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
+	"github.com/maticnetwork/heimdall/types"
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -48,6 +48,12 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
+			// get proposer
+			proposer := types.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
+			if proposer.Empty() {
+				return fmt.Errorf("proposer address cannot be empty")
+			}
+
 			validatorID := viper.GetInt64(FlagValidatorID)
 			if validatorID == 0 {
 				return fmt.Errorf("Validator ID cannot be zero")
@@ -70,17 +76,23 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 			pubkey := types.NewPubKey(pubkeyBytes)
 
 			// msg
-			msg := staking.NewMsgValidatorJoin(uint64(validatorID), pubkey, common.HexToHash(txhash))
+			msg := staking.NewMsgValidatorJoin(
+				proposer,
+				uint64(validatorID),
+				pubkey,
+				common.HexToHash(txhash),
+			)
 
 			// broadcast messages
 			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
 		},
 	}
 
+	cmd.Flags().StringP(FlagProposerAddress, "p", helper.GetPubKey().Address().String(), "--proposer=<proposer-address>")
 	cmd.Flags().Int(FlagValidatorID, 0, "--id=<validator ID here>")
 	cmd.Flags().String(FlagSignerPubkey, "", "--signer-pubkey=<signer pubkey here>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
-
+	cmd.MarkFlagRequired(FlagProposerAddress)
 	cmd.MarkFlagRequired(FlagSignerPubkey)
 	cmd.MarkFlagRequired(FlagTxHash)
 	return cmd
@@ -94,23 +106,38 @@ func SendValidatorExitTx(cdc *codec.Codec) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
+			// get proposer
+			proposer := types.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
+			if proposer.Empty() {
+				return fmt.Errorf("proposer address cannot be empty")
+			}
+
 			validator := viper.GetInt64(FlagValidatorID)
 			if validator == 0 {
 				return fmt.Errorf("validator ID cannot be 0")
 			}
+
 			txhash := viper.GetString(FlagTxHash)
 			if txhash == "" {
 				return fmt.Errorf("transaction hash has to be supplied")
 			}
-			msg := staking.NewMsgValidatorExit(uint64(validator), common.HexToHash(txhash))
+
+			// draf msg
+			msg := staking.NewMsgValidatorExit(
+				proposer,
+				uint64(validator),
+				common.HexToHash(txhash),
+			)
 
 			// broadcast messages
 			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
 		},
 	}
 
+	cmd.Flags().StringP(FlagProposerAddress, "p", helper.GetPubKey().Address().String(), "--proposer=<proposer-address>")
 	cmd.Flags().Int(FlagValidatorID, 0, "--id=<validator ID here>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
+	cmd.MarkFlagRequired(FlagProposerAddress)
 	cmd.MarkFlagRequired(FlagTxHash)
 
 	return cmd
@@ -123,6 +150,12 @@ func SendValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 		Short: "Update signer for a validator",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			// get proposer
+			proposer := types.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
+			if proposer.Empty() {
+				return fmt.Errorf("proposer address cannot be empty")
+			}
 
 			validator := viper.GetInt64(FlagValidatorID)
 			if validator == 0 {
@@ -147,16 +180,25 @@ func SendValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 				return fmt.Errorf("transaction hash has to be supplied")
 			}
 
-			msg := staking.NewMsgValidatorUpdate(uint64(validator), pubkey, json.Number(amountStr), common.HexToHash(txhash))
+			msg := staking.NewMsgValidatorUpdate(
+				proposer,
+				uint64(validator),
+				pubkey,
+				json.Number(amountStr),
+				common.HexToHash(txhash),
+			)
 
 			// broadcast messages
 			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
 		},
 	}
+
+	cmd.Flags().StringP(FlagProposerAddress, "p", helper.GetPubKey().Address().String(), "--proposer=<proposer-address>")
 	cmd.Flags().Int(FlagValidatorID, 0, "--id=<validator ID here>")
 	cmd.Flags().String(FlagNewSignerPubkey, "", "--new-pubkey=< new signer pubkey here>")
 	cmd.Flags().String(FlagAmount, "", "--staked-amount=<staked amount>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
+	cmd.MarkFlagRequired(FlagProposerAddress)
 	cmd.MarkFlagRequired(FlagTxHash)
 	cmd.MarkFlagRequired(FlagNewSignerPubkey)
 	cmd.MarkFlagRequired(FlagAmount)
