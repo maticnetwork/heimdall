@@ -64,24 +64,22 @@ type HeimdallApp struct {
 	cdc *codec.Codec
 
 	// keys to access the multistore
-	keyAccount       *sdk.KVStoreKey
-	keyBank          *sdk.KVStoreKey
-	keySupply        *sdk.KVStoreKey
-	keyGov           *sdk.KVStoreKey
-	keyCheckpoint    *sdk.KVStoreKey
-	keyStaking       *sdk.KVStoreKey
-	keyBor           *sdk.KVStoreKey
-	keyMain          *sdk.KVStoreKey
-	keyFeeCollection *sdk.KVStoreKey
-	keyParams        *sdk.KVStoreKey
-	tKeyParams       *sdk.TransientStoreKey
+	keyAccount    *sdk.KVStoreKey
+	keyBank       *sdk.KVStoreKey
+	keySupply     *sdk.KVStoreKey
+	keyGov        *sdk.KVStoreKey
+	keyCheckpoint *sdk.KVStoreKey
+	keyStaking    *sdk.KVStoreKey
+	keyBor        *sdk.KVStoreKey
+	keyMain       *sdk.KVStoreKey
+	keyParams     *sdk.KVStoreKey
+	tKeyParams    *sdk.TransientStoreKey
 
-	accountKeeper       auth.AccountKeeper
-	bankKeeper          bank.Keeper
-	supplyKeeper        supply.Keeper
-	govKeeper           gov.Keeper
-	feeCollectionKeeper auth.FeeCollectionKeeper
-	paramsKeeper        params.Keeper
+	accountKeeper auth.AccountKeeper
+	bankKeeper    bank.Keeper
+	supplyKeeper  supply.Keeper
+	govKeeper     gov.Keeper
+	paramsKeeper  params.Keeper
 
 	checkpointKeeper checkpoint.Keeper
 	stakingKeeper    staking.Keeper
@@ -91,7 +89,7 @@ type HeimdallApp struct {
 	caller helper.ContractCaller
 
 	//  total coins supply
-	TotalCoinsSupply sdk.Coins
+	TotalCoinsSupply types.Coins
 }
 
 var logger = helper.Logger.With("module", "app")
@@ -120,15 +118,11 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		keyBank:    sdk.NewKVStoreKey(bankTypes.StoreKey),
 		keySupply:  sdk.NewKVStoreKey(supplyTypes.StoreKey),
 		// keyGov:        sdk.NewKVStoreKey(gov.StoreKey),
-		keyCheckpoint:    sdk.NewKVStoreKey(checkpointTypes.StoreKey),
-		keyStaking:       sdk.NewKVStoreKey(stakingTypes.StoreKey),
-		keyBor:           sdk.NewKVStoreKey(borTypes.StoreKey),
-		keyFeeCollection: sdk.NewKVStoreKey(authTypes.FeeStoreKey),
-		keyParams:        sdk.NewKVStoreKey(subspace.StoreKey),
-		tKeyParams:       sdk.NewTransientStoreKey(subspace.TStoreKey),
-
-		// total supply
-		TotalCoinsSupply: sdk.NewCoins(),
+		keyCheckpoint: sdk.NewKVStoreKey(checkpointTypes.StoreKey),
+		keyStaking:    sdk.NewKVStoreKey(stakingTypes.StoreKey),
+		keyBor:        sdk.NewKVStoreKey(borTypes.StoreKey),
+		keyParams:     sdk.NewKVStoreKey(subspace.StoreKey),
+		tKeyParams:    sdk.NewTransientStoreKey(subspace.TStoreKey),
 	}
 
 	// define param keeper
@@ -159,12 +153,6 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		maccPerms,
 		app.accountKeeper,
 		app.bankKeeper,
-	)
-
-	// fee collector
-	app.feeCollectionKeeper = auth.NewFeeCollectionKeeper(
-		app.cdc,
-		app.keyFeeCollection,
 	)
 
 	// app.govKeeper = gov.NewKeeper(
@@ -235,7 +223,6 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		app.keyCheckpoint,
 		app.keyStaking,
 		app.keyBor,
-		app.keyFeeCollection,
 		app.keyParams,
 		app.tKeyParams,
 	)
@@ -412,49 +399,10 @@ func (app *HeimdallApp) initFromGenesisState(ctx sdk.Context, genesisState Genes
 		isGenesis = false
 	}
 
-	// validator set
-	// valSet, valUpdates := app.GetValidatorsFromGenesis(ctx, &genesisState, genesisState.AckCount)
-	// if len(valSet.Validators) == 0 {
-	// 	panic(errors.New("no valid validators found"))
-	// }
-
-	// var currentValSet hmTypes.ValidatorSet
-	// if isGenesis {
-	// 	currentValSet = valSet
-	// } else {
-	// 	currentValSet = genesisState.CurrentValSet
-	// }
-
-	// // TODO match valSet and genesisState.CurrentValSet for difference in accum
-	// // update validator set in store
-	// err = app.stakingKeeper.UpdateValidatorSetInStore(ctx, currentValSet)
-	// if err != nil {
-	// 	logger.Error("Unable to marshall validator set while adding in store", "Error", err)
-	// 	panic(err)
-	// }
-
-	// set span duration from genesis
-	// app.borKeeper.SetSpanDuration(ctx, genesisState.SpanDuration)
-
-	// Set initial ack count
-	// app.stakingKeeper.UpdateACKCountWithValue(ctx, genesisState.AckCount)
-
-	// Add checkpoint in buffer
-	// app.checkpointKeeper.SetCheckpointBuffer(ctx, genesisState.BufferedCheckpoint)
-
-	// Set Caches
-	// app.SetCaches(ctx, &genesisState)
-
-	// Set last no-ack
-	// app.checkpointKeeper.SetLastNoAck(ctx, genesisState.LastNoACK)
-
-	// Add all headers
-	// app.InsertHeaders(ctx, &genesisState)
-
 	//
 	// InitGenesis
 	//
-	auth.InitGenesis(ctx, app.accountKeeper, app.feeCollectionKeeper, genesisState.AuthData)
+	auth.InitGenesis(ctx, app.accountKeeper, genesisState.AuthData)
 	bank.InitGenesis(ctx, app.bankKeeper, genesisState.BankData)
 	supply.InitGenesis(ctx, app.supplyKeeper, app.accountKeeper, genesisState.SupplyData)
 	bor.InitGenesis(ctx, app.borKeeper, genesisState.BorData)

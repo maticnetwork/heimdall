@@ -7,16 +7,17 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/supply/types"
+	supplyTypes "github.com/maticnetwork/heimdall/supply/types"
+	"github.com/maticnetwork/heimdall/types"
 )
 
 // NewQuerier creates a querier for supply REST endpoints
 func NewQuerier(k Keeper) sdk.Querier {
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) (res []byte, err sdk.Error) {
 		switch path[0] {
-		case types.QueryTotalSupply:
+		case supplyTypes.QueryTotalSupply:
 			return queryTotalSupply(ctx, req, k)
-		case types.QuerySupplyOf:
+		case supplyTypes.QuerySupplyOf:
 			return querySupplyOf(ctx, req, k)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown supply query endpoint")
@@ -25,9 +26,9 @@ func NewQuerier(k Keeper) sdk.Querier {
 }
 
 func queryTotalSupply(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, sdk.Error) {
-	var params types.QueryTotalSupplyParams
+	var params supplyTypes.QueryTotalSupplyParams
 
-	err := types.ModuleCdc.UnmarshalJSON(req.Data, &params)
+	err := supplyTypes.ModuleCdc.UnmarshalJSON(req.Data, &params)
 	if err != nil {
 		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
 	}
@@ -36,7 +37,7 @@ func queryTotalSupply(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte,
 
 	start, end := helper.Paginate(len(totalSupply), params.Page, params.Limit, 100)
 	if start < 0 || end < 0 {
-		totalSupply = sdk.Coins{}
+		totalSupply = types.Coins{}
 	} else {
 		totalSupply = totalSupply[start:end]
 	}
@@ -50,9 +51,9 @@ func queryTotalSupply(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte,
 }
 
 func querySupplyOf(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, sdk.Error) {
-	var params types.QuerySupplyOfParams
+	var params supplyTypes.QuerySupplyOfParams
 
-	err := types.ModuleCdc.UnmarshalJSON(req.Data, &params)
+	err := supplyTypes.ModuleCdc.UnmarshalJSON(req.Data, &params)
 	if err != nil {
 		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
 	}

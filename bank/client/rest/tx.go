@@ -8,9 +8,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/maticnetwork/heimdall/bank/types"
+	bankTypes "github.com/maticnetwork/heimdall/bank/types"
 	restClient "github.com/maticnetwork/heimdall/client/rest"
-	hmTypes "github.com/maticnetwork/heimdall/types"
+	"github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/types/rest"
 )
 
@@ -24,7 +24,7 @@ func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router) {
 type SendReq struct {
 	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
 
-	Amount sdk.Coins `json:"amount" yaml:"amount"`
+	Amount types.Coins `json:"amount" yaml:"amount"`
 }
 
 // SendRequestHandlerFn - http request handler to send coins to a address.
@@ -33,7 +33,7 @@ func SendRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		vars := mux.Vars(r)
 
 		// get to address
-		toAddr := hmTypes.HexToHeimdallAddress(vars["address"])
+		toAddr := types.HexToHeimdallAddress(vars["address"])
 
 		var req SendReq
 		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
@@ -46,9 +46,9 @@ func SendRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		// get from address
-		fromAddr := hmTypes.HexToHeimdallAddress(req.BaseReq.From)
+		fromAddr := types.HexToHeimdallAddress(req.BaseReq.From)
 
-		msg := types.NewMsgSend(fromAddr, toAddr, req.Amount)
+		msg := bankTypes.NewMsgSend(fromAddr, toAddr, req.Amount)
 		restClient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
 	}
 }

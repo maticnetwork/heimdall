@@ -10,6 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	ethCrypto "github.com/ethereum/go-ethereum/crypto/secp256k1"
+	"github.com/maticnetwork/heimdall/types"
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 )
@@ -25,8 +26,8 @@ type TxBuilder struct {
 	simulateAndExecute bool
 	chainID            string
 	memo               string
-	fees               sdk.Coins
-	gasPrices          sdk.DecCoins
+	fees               types.Coins
+	gasPrices          types.DecCoins
 }
 
 // NewTxBuilder returns a new initialized TxBuilder.
@@ -39,8 +40,8 @@ func NewTxBuilder(
 	simulateAndExecute bool,
 	chainID string,
 	memo string,
-	fees sdk.Coins,
-	gasPrices sdk.DecCoins,
+	fees types.Coins,
+	gasPrices types.DecCoins,
 ) TxBuilder {
 
 	return TxBuilder{
@@ -108,10 +109,10 @@ func (bldr TxBuilder) ChainID() string { return bldr.chainID }
 func (bldr TxBuilder) Memo() string { return bldr.memo }
 
 // Fees returns the fees for the transaction
-func (bldr TxBuilder) Fees() sdk.Coins { return bldr.fees }
+func (bldr TxBuilder) Fees() types.Coins { return bldr.fees }
 
 // GasPrices returns the gas prices set for the transaction, if any.
-func (bldr TxBuilder) GasPrices() sdk.DecCoins { return bldr.gasPrices }
+func (bldr TxBuilder) GasPrices() types.DecCoins { return bldr.gasPrices }
 
 // WithTxEncoder returns a copy of the context with an updated codec.
 func (bldr TxBuilder) WithTxEncoder(txEncoder sdk.TxEncoder) TxBuilder {
@@ -133,7 +134,7 @@ func (bldr TxBuilder) WithGas(gas uint64) TxBuilder {
 
 // WithFees returns a copy of the context with an updated fee.
 func (bldr TxBuilder) WithFees(fees string) TxBuilder {
-	parsedFees, err := sdk.ParseCoins(fees)
+	parsedFees, err := types.ParseCoins(fees)
 	if err != nil {
 		panic(err)
 	}
@@ -144,7 +145,7 @@ func (bldr TxBuilder) WithFees(fees string) TxBuilder {
 
 // WithGasPrices returns a copy of the context with updated gas prices.
 func (bldr TxBuilder) WithGasPrices(gasPrices string) TxBuilder {
-	parsedGasPrices, err := sdk.ParseDecCoins(gasPrices)
+	parsedGasPrices, err := types.ParseDecCoins(gasPrices)
 	if err != nil {
 		panic(err)
 	}

@@ -22,7 +22,7 @@ var (
 	gasWantedPerTx sdk.Gas = 300000
 	gasUsedPerTx   sdk.Gas = gasWantedPerTx - 60000 // TODO use proposer amount per tx
 
-	feeWantedPerTx = sdk.Coins{sdk.Coin{Denom: "abc", Amount: sdk.NewInt(1)}}
+	feeWantedPerTx = types.Coins{types.Coin{Denom: "vetic", Amount: types.NewInt(1)}}
 )
 
 func init() {
@@ -46,7 +46,7 @@ type FeeCollector interface {
 		sdk.Context,
 		types.HeimdallAddress,
 		string,
-		sdk.Coins,
+		types.Coins,
 	) (sdk.Tags, sdk.Error)
 }
 
@@ -249,7 +249,7 @@ func DefaultSigVerificationGasConsumer(
 //
 // NOTE: We could use the CoinKeeper (in addition to the AccountKeeper, because
 // the CoinKeeper doesn't give us accounts), but it seems easier to do this.
-func DeductFees(feeCollector FeeCollector, ctx sdk.Context, acc authTypes.Account, fees sdk.Coins) sdk.Result {
+func DeductFees(feeCollector FeeCollector, ctx sdk.Context, acc authTypes.Account, fees types.Coins) sdk.Result {
 	blockTime := ctx.BlockHeader().Time
 	coins := acc.GetCoins()
 

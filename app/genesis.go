@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"sort"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/maticnetwork/heimdall/auth"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/bank"
@@ -20,7 +18,7 @@ import (
 // GenesisAccount genesis account
 type GenesisAccount struct {
 	Address       types.HeimdallAddress `json:"address"`
-	Coins         sdk.Coins             `json:"coins"`
+	Coins         types.Coins           `json:"coins"`
 	Sequence      uint64                `json:"sequence_number"`
 	AccountNumber uint64                `json:"account_number"`
 }

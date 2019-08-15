@@ -5,22 +5,23 @@ import (
 
 	auth "github.com/maticnetwork/heimdall/auth"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
-	"github.com/maticnetwork/heimdall/supply/types"
+	supplyTypes "github.com/maticnetwork/heimdall/supply/types"
+	"github.com/maticnetwork/heimdall/types"
 )
 
 // GenesisState is the supply state that must be provided at genesis.
 type GenesisState struct {
-	Supply types.Supply `json:"supply" yaml:"supply"`
+	Supply supplyTypes.Supply `json:"supply" yaml:"supply"`
 }
 
 // NewGenesisState creates a new genesis state.
-func NewGenesisState(supply types.Supply) GenesisState {
+func NewGenesisState(supply supplyTypes.Supply) GenesisState {
 	return GenesisState{supply}
 }
 
 // DefaultGenesisState returns a default genesis state
 func DefaultGenesisState() GenesisState {
-	return NewGenesisState(types.DefaultSupply())
+	return NewGenesisState(supplyTypes.DefaultSupply())
 }
 
 // InitGenesis sets supply information for genesis.
@@ -29,7 +30,7 @@ func DefaultGenesisState() GenesisState {
 func InitGenesis(ctx sdk.Context, keeper Keeper, ak auth.AccountKeeper, data GenesisState) {
 	// manually set the total supply based on accounts if not provided
 	if data.Supply.Total.Empty() {
-		var totalSupply sdk.Coins
+		var totalSupply types.Coins
 		ak.IterateAccounts(ctx,
 			func(acc authTypes.Account) (stop bool) {
 				totalSupply = totalSupply.Add(acc.GetCoins())

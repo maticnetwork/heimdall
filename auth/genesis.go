@@ -4,40 +4,39 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
+	"github.com/maticnetwork/heimdall/types"
 )
 
 // GenesisState - all auth state that must be provided at genesis
 type GenesisState struct {
-	CollectedFees sdk.Coins   `json:"collected_fees"`
+	CollectedFees types.Coins      `json:"collected_fees"`
 	Params        authTypes.Params `json:"params"`
 }
 
 // NewGenesisState - Create a new genesis state
-func NewGenesisState(collectedFees sdk.Coins, params authTypes.Params) GenesisState {
+func NewGenesisState(params authTypes.Params) GenesisState {
 	return GenesisState{
-		Params:        params,
-		CollectedFees: collectedFees,
+		Params: params,
 	}
 }
 
 // DefaultGenesisState - Return a default genesis state
 func DefaultGenesisState() GenesisState {
-	return NewGenesisState(sdk.NewCoins(), authTypes.DefaultParams())
+	return NewGenesisState(authTypes.DefaultParams())
 }
 
 // InitGenesis - Init store state from genesis data
-func InitGenesis(ctx sdk.Context, ak AccountKeeper, fck FeeCollectionKeeper, data GenesisState) {
+func InitGenesis(ctx sdk.Context, ak AccountKeeper, data GenesisState) {
 	ak.SetParams(ctx, data.Params)
-	fck.setCollectedFees(ctx, data.CollectedFees)
 }
 
 // ExportGenesis returns a GenesisState for a given context and keeper
-func ExportGenesis(ctx sdk.Context, ak AccountKeeper, fck FeeCollectionKeeper) GenesisState {
-	collectedFees := fck.GetCollectedFees(ctx)
+func ExportGenesis(ctx sdk.Context, ak AccountKeeper) GenesisState {
 	params := ak.GetParams(ctx)
 
-	return NewGenesisState(collectedFees, params)
+	return NewGenesisState(params)
 }
 
 // ValidateGenesis performs basic validation of auth genesis data returning an

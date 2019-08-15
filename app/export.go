@@ -37,7 +37,7 @@ func (app *HeimdallApp) ExportAppStateAndValidators() (
 	genState := NewGenesisState(
 		accounts,
 
-		auth.ExportGenesis(ctx, app.accountKeeper, app.feeCollectionKeeper),
+		auth.ExportGenesis(ctx, app.accountKeeper),
 		bank.ExportGenesis(ctx, app.bankKeeper),
 		supply.ExportGenesis(ctx, app.supplyKeeper),
 

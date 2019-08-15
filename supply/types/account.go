@@ -3,7 +3,6 @@ package types
 import (
 	"fmt"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/crypto"
 	yaml "gopkg.in/yaml.v2"
 
@@ -125,7 +124,7 @@ func (ma ModuleAccount) String() string {
 func (ma ModuleAccount) MarshalYAML() (interface{}, error) {
 	bs, err := yaml.Marshal(struct {
 		Address       types.HeimdallAddress
-		Coins         sdk.Coins
+		Coins         types.Coins
 		PubKey        string
 		AccountNumber uint64
 		Sequence      uint64

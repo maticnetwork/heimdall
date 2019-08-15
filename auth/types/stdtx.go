@@ -4,6 +4,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/rlp"
+
+	"github.com/maticnetwork/heimdall/types"
 )
 
 var (
@@ -95,12 +97,12 @@ func (ss StdSignature) Bytes() []byte {
 // gas to be used by the transaction. The ratio yields an effective "gasprice",
 // which must be above some miminum to be accepted into the mempool.
 type StdFee struct {
-	Amount sdk.Coins `json:"amount"`
-	Gas    uint64    `json:"gas"`
+	Amount types.Coins `json:"amount"`
+	Gas    uint64      `json:"gas"`
 }
 
 // NewStdFee returns a new instance of StdFee
-func NewStdFee(gas uint64, amount sdk.Coins) StdFee {
+func NewStdFee(gas uint64, amount types.Coins) StdFee {
 	return StdFee{
 		Amount: amount,
 		Gas:    gas,
@@ -114,7 +116,7 @@ func (fee StdFee) Bytes() []byte {
 	// (in the lcd_test, client side its null,
 	// server side its [])
 	if len(fee.Amount) == 0 {
-		fee.Amount = sdk.NewCoins()
+		fee.Amount = types.NewCoins()
 	}
 	bz, err := ModuleCdc.MarshalJSON(fee) // TODO
 	if err != nil {
@@ -128,8 +130,8 @@ func (fee StdFee) Bytes() []byte {
 // NOTE: The gas prices returned are not the true gas prices that were
 // originally part of the submitted transaction because the fee is computed
 // as fee = ceil(gasWanted * gasPrices).
-func (fee StdFee) GasPrices() sdk.DecCoins {
-	return sdk.NewDecCoins(fee.Amount).QuoDec(sdk.NewDec(int64(fee.Gas)))
+func (fee StdFee) GasPrices() types.DecCoins {
+	return types.NewDecCoins(fee.Amount).QuoDec(types.NewDec(int64(fee.Gas)))
 }
 
 //

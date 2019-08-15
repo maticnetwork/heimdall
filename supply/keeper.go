@@ -95,7 +95,7 @@ func (k Keeper) ValidatePermissions(macc supplyTypes.ModuleAccountInterface) err
 
 //
 // Account related methods
-// 
+//
 
 // GetModuleAddress returns an address based on the module name
 func (k Keeper) GetModuleAddress(moduleName string) (addr types.HeimdallAddress) {
@@ -156,13 +156,12 @@ func (k Keeper) SetModuleAccount(ctx sdk.Context, macc supplyTypes.ModuleAccount
 // Bank related methods
 //
 
-
 // SendCoinsFromModuleToAccount transfers coins from a ModuleAccount to an AccAddress
 func (k Keeper) SendCoinsFromModuleToAccount(
-	ctx sdk.Context, 
+	ctx sdk.Context,
 	senderModule string,
-	recipientAddr types.HeimdallAddress, 
-	amt sdk.Coins,
+	recipientAddr types.HeimdallAddress,
+	amt types.Coins,
 ) (sdk.Tags, sdk.Error) {
 	senderAddr := k.GetModuleAddress(senderModule)
 	if senderAddr.Empty() {
@@ -175,10 +174,10 @@ func (k Keeper) SendCoinsFromModuleToAccount(
 
 // SendCoinsFromModuleToModule transfers coins from a ModuleAccount to another
 func (k Keeper) SendCoinsFromModuleToModule(
-	ctx sdk.Context, 
-	senderModule string, 
-	recipientModule string, 
-	amt sdk.Coins,
+	ctx sdk.Context,
+	senderModule string,
+	recipientModule string,
+	amt types.Coins,
 ) (sdk.Tags, sdk.Error) {
 
 	senderAddr := k.GetModuleAddress(senderModule)
@@ -197,10 +196,10 @@ func (k Keeper) SendCoinsFromModuleToModule(
 
 // SendCoinsFromAccountToModule transfers coins from an AccAddress to a ModuleAccount
 func (k Keeper) SendCoinsFromAccountToModule(
-	ctx sdk.Context, 
+	ctx sdk.Context,
 	senderAddr types.HeimdallAddress,
-	recipientModule string, 
-	amt sdk.Coins,
+	recipientModule string,
+	amt types.Coins,
 ) (sdk.Tags, sdk.Error) {
 
 	// create the account if it doesn't yet exist
@@ -215,10 +214,10 @@ func (k Keeper) SendCoinsFromAccountToModule(
 // DelegateCoinsFromAccountToModule delegates coins and transfers
 // them from a delegator account to a module account
 func (k Keeper) DelegateCoinsFromAccountToModule(
-	ctx sdk.Context, 
+	ctx sdk.Context,
 	senderAddr types.HeimdallAddress,
-	recipientModule string, 
-	amt sdk.Coins,
+	recipientModule string,
+	amt types.Coins,
 ) (sdk.Tags, sdk.Error) {
 
 	// create the account if it doesn't yet exist
@@ -237,10 +236,10 @@ func (k Keeper) DelegateCoinsFromAccountToModule(
 // UndelegateCoinsFromModuleToAccount undelegates the unbonding coins and transfers
 // them from a module account to the delegator account
 func (k Keeper) UndelegateCoinsFromModuleToAccount(
-	ctx sdk.Context, 
+	ctx sdk.Context,
 	senderModule string,
-	recipientAddr types.HeimdallAddress, 
-	amt sdk.Coins,
+	recipientAddr types.HeimdallAddress,
+	amt types.Coins,
 ) (sdk.Tags, sdk.Error) {
 
 	acc := k.GetModuleAccount(ctx, senderModule)
@@ -258,9 +257,9 @@ func (k Keeper) UndelegateCoinsFromModuleToAccount(
 // MintCoins creates new coins from thin air and adds it to the module account.
 // Panics if the name maps to a non-minter module account or if the amount is invalid.
 func (k Keeper) MintCoins(
-	ctx sdk.Context, 
-	moduleName string, 
-	amt sdk.Coins,
+	ctx sdk.Context,
+	moduleName string,
+	amt types.Coins,
 ) (sdk.Tags, sdk.Error) {
 
 	// create the account if it doesn't yet exist
@@ -291,7 +290,7 @@ func (k Keeper) MintCoins(
 
 // BurnCoins burns coins deletes coins from the balance of the module account.
 // Panics if the name maps to a non-burner module account or if the amount is invalid.
-func (k Keeper) BurnCoins(ctx sdk.Context, moduleName string, amt sdk.Coins) (sdk.Tags, sdk.Error) {
+func (k Keeper) BurnCoins(ctx sdk.Context, moduleName string, amt types.Coins) (sdk.Tags, sdk.Error) {
 
 	// create the account if it doesn't yet exist
 	acc := k.GetModuleAccount(ctx, moduleName)
