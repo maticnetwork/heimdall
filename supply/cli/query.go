@@ -2,15 +2,12 @@ package cli
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/spf13/cobra"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/version"
 
 	hmClient "github.com/maticnetwork/heimdall/client"
 	"github.com/maticnetwork/heimdall/supply/types"
@@ -43,19 +40,6 @@ func GetCmdQueryTotalSupply(cdc *codec.Codec) *cobra.Command {
 		Use:   "total [denom]",
 		Args:  cobra.MaximumNArgs(1),
 		Short: "Query the total supply of coins of the chain",
-		Long: strings.TrimSpace(
-			fmt.Sprintf(`Query total supply of coins that are held by accounts in the
-			chain.
-
-Example:
-$ %s query %s total
-
-To query for the total supply of a specific coin denomination use:
-$ %s query %s total stake
-`,
-				version.ClientName, types.ModuleName, version.ClientName, types.ModuleName,
-			),
-		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
@@ -74,7 +58,7 @@ func queryTotalSupply(cliCtx context.CLIContext, cdc *codec.Codec) error {
 		return err
 	}
 
-	res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryTotalSupply), bz)
+	res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryTotalSupply), bz)
 	if err != nil {
 		return err
 	}
@@ -95,7 +79,7 @@ func querySupplyOf(cliCtx context.CLIContext, cdc *codec.Codec, denom string) er
 		return err
 	}
 
-	res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QuerySupplyOf), bz)
+	res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QuerySupplyOf), bz)
 	if err != nil {
 		return err
 	}

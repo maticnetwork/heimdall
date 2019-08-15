@@ -33,6 +33,7 @@ import (
 	hmTxCli "github.com/maticnetwork/heimdall/client/tx"
 	"github.com/maticnetwork/heimdall/helper"
 	staking "github.com/maticnetwork/heimdall/staking/cli"
+	supply "github.com/maticnetwork/heimdall/supply/cli"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -128,21 +129,13 @@ func queryCmd(cdc *amino.Codec) *cobra.Command {
 		tx.QueryTxCmd(cdc),
 		client.LineBreak,
 		authCli.GetAccountCmd(authTypes.StoreKey, cdc),
-	)
 
-	queryCmd.AddCommand(
-		// get commands
-		client.GetCommands(
-			// checkpoint related get commands
-			checkpoint.GetCheckpointBuffer(cdc),
-			checkpoint.GetLastNoACK(cdc),
-			checkpoint.GetHeaderFromIndex(cdc),
-			checkpoint.GetCheckpointCount(cdc),
-
-			// staking related get commands
-			staking.GetValidatorInfo(cdc),
-			staking.GetCurrentValSet(cdc),
-		)...,
+		// supply related queries
+		supply.GetQueryCmd(cdc),
+		// checkpoint related queries
+		checkpoint.GetQueryCmd(cdc),
+		// staking related get commands
+		staking.GetQueryCmd(cdc),
 	)
 
 	return queryCmd
@@ -159,9 +152,14 @@ func txCmd(cdc *amino.Codec) *cobra.Command {
 		hmTxCli.GetBroadcastCommand(cdc),
 		hmTxCli.GetEncodeCommand(cdc),
 		client.LineBreak,
+
+		// get bank tx commands
 		bank.GetTxCmd(cdc),
+		// get bor tx commands
 		bor.GetTxCmd(cdc),
+		// get checkpoint tx commands
 		checkpoint.GetTxCmd(cdc),
+		// get staking tx commands
 		staking.GetTxCmd(cdc),
 	)
 

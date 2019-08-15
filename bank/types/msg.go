@@ -50,7 +50,7 @@ func (msg MsgSend) GetSignBytes() []byte {
 
 // GetSigners Implements Msg.
 func (msg MsgSend) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.FromAddress[:]}
+	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.FromAddress)}
 }
 
 // MsgMultiSend - high level transaction of the coin module
@@ -95,7 +95,7 @@ func (msg MsgMultiSend) GetSignBytes() []byte {
 func (msg MsgMultiSend) GetSigners() []sdk.AccAddress {
 	addrs := make([]sdk.AccAddress, len(msg.Inputs))
 	for i, in := range msg.Inputs {
-		addrs[i] = in.Address[:]
+		addrs[i] = types.HeimdallAddressToAccAddress(in.Address)
 	}
 	return addrs
 }
