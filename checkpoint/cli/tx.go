@@ -51,7 +51,7 @@ func SendCheckpointTx(cdc *codec.Codec) *cobra.Command {
 			// get proposer
 			proposer := types.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
 			if proposer.Empty() {
-				return fmt.Errorf("proposer address cannot be empty")
+				proposer = helper.GetFromAddress(cliCtx)
 			}
 
 			//	start block
@@ -96,11 +96,10 @@ func SendCheckpointTx(cdc *codec.Codec) *cobra.Command {
 			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
 		},
 	}
-	cmd.Flags().StringP(FlagProposerAddress, "p", helper.GetPubKey().Address().String(), "--proposer=<proposer-address>")
+	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
 	cmd.Flags().String(FlagStartBlock, "", "--start-block=<start-block-number>")
 	cmd.Flags().String(FlagEndBlock, "", "--end-block=<end-block-number>")
 	cmd.Flags().StringP(FlagRootHash, "r", "", "--root-hash=<root-hash>")
-	cmd.MarkFlagRequired(FlagProposerAddress)
 	cmd.MarkFlagRequired(FlagStartBlock)
 	cmd.MarkFlagRequired(FlagEndBlock)
 	cmd.MarkFlagRequired(FlagRootHash)
@@ -119,7 +118,7 @@ func SendCheckpointACKTx(cdc *codec.Codec) *cobra.Command {
 			// get proposer
 			proposer := types.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
 			if proposer.Empty() {
-				return fmt.Errorf("proposer address cannot be empty")
+				proposer = helper.GetFromAddress(cliCtx)
 			}
 
 			headerBlockStr := viper.GetString(FlagHeaderNumber)
@@ -140,9 +139,8 @@ func SendCheckpointACKTx(cdc *codec.Codec) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringP(FlagProposerAddress, "p", helper.GetPubKey().Address().String(), "--proposer=<proposer-address>")
+	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
 	cmd.Flags().String(FlagHeaderNumber, "", "--header=<header-index>")
-	cmd.MarkFlagRequired(FlagProposerAddress)
 	cmd.MarkFlagRequired(FlagHeaderNumber)
 	return cmd
 }
@@ -158,7 +156,7 @@ func SendCheckpointNoACKTx(cdc *codec.Codec) *cobra.Command {
 			// get proposer
 			proposer := types.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
 			if proposer.Empty() {
-				return fmt.Errorf("proposer address cannot be empty")
+				proposer = helper.GetFromAddress(cliCtx)
 			}
 
 			// create new checkpoint no-ack
@@ -172,7 +170,6 @@ func SendCheckpointNoACKTx(cdc *codec.Codec) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringP(FlagProposerAddress, "p", helper.GetPubKey().Address().String(), "--proposer=<proposer-address>")
-	cmd.MarkFlagRequired(FlagProposerAddress)
+	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
 	return cmd
 }

@@ -598,3 +598,14 @@ func (dva *DelayedVestingAccount) GetStartTime() int64 {
 func (dva *DelayedVestingAccount) GetEndTime() int64 {
 	return dva.EndTime
 }
+
+//
+// light base account
+//
+
+// LightBaseAccount - a base account structure.
+type LightBaseAccount struct {
+	Address       types.HeimdallAddress `json:"address" yaml:"address"`
+	AccountNumber uint64                `json:"account_number" yaml:"account_number"`
+	Sequence      uint64                `json:"sequence" yaml:"sequence"`
+}

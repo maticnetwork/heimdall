@@ -1,8 +1,8 @@
 package tx
 
 import (
-	"encoding/base64"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -43,23 +43,27 @@ func EncodeTxRequestHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.
 			return
 		}
 
-		err = cdc.UnmarshalJSON(body, &req)
+		err = cliCtx.Codec.UnmarshalJSON(body, &req)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		// re-encode it via the Amino wire protocol
-		txBytes, err := cliCtx.Codec.MarshalBinaryLengthPrefixed(req.Tx)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+		// check if msg is not nil
+		if req.Tx.Msg == nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, errors.New("Invalid msg input").Error())
 			return
 		}
 
-		// base64 encode the encoded tx bytes
-		txBytesBase64 := base64.StdEncoding.EncodeToString(txBytes)
+		// tx bytes
+		txBytes, err := helper.GetStdTxBytes(cliCtx, req.Tx)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
 
-		response := EncodeResp{Tx: txBytesBase64}
+		// response
+		response := EncodeResp{Tx: "0x" + hex.EncodeToString(txBytes)}
 		rest.PostProcessResponse(w, cliCtx, response)
 	}
 }
@@ -82,10 +86,9 @@ If you supply a dash (-) argument in place of an input filename, the command rea
 				return
 			}
 
-			// re-encode it via the Amino wire protocol
 			txBytes, err := helper.GetStdTxBytes(cliCtx, stdTx)
 			response := hex.EncodeToString(txBytes)
-			fmt.Println("Tx:", response)
+			fmt.Println("Tx:", "0x"+response)
 
 			return nil
 		},

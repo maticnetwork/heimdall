@@ -54,7 +54,7 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 			// get proposer
 			proposer := types.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
 			if proposer.Empty() {
-				return fmt.Errorf("proposer address cannot be empty")
+				proposer = helper.GetFromAddress(cliCtx)
 			}
 
 			startBlockStr := viper.GetString(FlagStartBlock)
@@ -137,10 +137,9 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringP(FlagProposerAddress, "p", helper.GetPubKey().Address().String(), "--proposer=<proposer-address>")
+	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
 	cmd.Flags().String(FlagBorChainId, "", "--bor-chain-id=<bor-chain-id>")
 	cmd.Flags().String(FlagStartBlock, "", "--start-block=<start-block-number>")
-	cmd.MarkFlagRequired(FlagProposerAddress)
 	cmd.MarkFlagRequired(FlagBorChainId)
 	cmd.MarkFlagRequired(FlagStartBlock)
 

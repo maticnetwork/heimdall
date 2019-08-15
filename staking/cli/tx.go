@@ -51,7 +51,7 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 			// get proposer
 			proposer := types.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
 			if proposer.Empty() {
-				return fmt.Errorf("proposer address cannot be empty")
+				proposer = helper.GetFromAddress(cliCtx)
 			}
 
 			validatorID := viper.GetInt64(FlagValidatorID)
@@ -88,11 +88,10 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringP(FlagProposerAddress, "p", helper.GetPubKey().Address().String(), "--proposer=<proposer-address>")
+	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
 	cmd.Flags().Int(FlagValidatorID, 0, "--id=<validator ID here>")
 	cmd.Flags().String(FlagSignerPubkey, "", "--signer-pubkey=<signer pubkey here>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
-	cmd.MarkFlagRequired(FlagProposerAddress)
 	cmd.MarkFlagRequired(FlagSignerPubkey)
 	cmd.MarkFlagRequired(FlagTxHash)
 	return cmd
@@ -109,7 +108,7 @@ func SendValidatorExitTx(cdc *codec.Codec) *cobra.Command {
 			// get proposer
 			proposer := types.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
 			if proposer.Empty() {
-				return fmt.Errorf("proposer address cannot be empty")
+				proposer = helper.GetFromAddress(cliCtx)
 			}
 
 			validator := viper.GetInt64(FlagValidatorID)
@@ -134,10 +133,9 @@ func SendValidatorExitTx(cdc *codec.Codec) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringP(FlagProposerAddress, "p", helper.GetPubKey().Address().String(), "--proposer=<proposer-address>")
+	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
 	cmd.Flags().Int(FlagValidatorID, 0, "--id=<validator ID here>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
-	cmd.MarkFlagRequired(FlagProposerAddress)
 	cmd.MarkFlagRequired(FlagTxHash)
 
 	return cmd
@@ -154,7 +152,7 @@ func SendValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 			// get proposer
 			proposer := types.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
 			if proposer.Empty() {
-				return fmt.Errorf("proposer address cannot be empty")
+				proposer = helper.GetFromAddress(cliCtx)
 			}
 
 			validator := viper.GetInt64(FlagValidatorID)
@@ -193,12 +191,11 @@ func SendValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringP(FlagProposerAddress, "p", helper.GetPubKey().Address().String(), "--proposer=<proposer-address>")
+	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
 	cmd.Flags().Int(FlagValidatorID, 0, "--id=<validator ID here>")
 	cmd.Flags().String(FlagNewSignerPubkey, "", "--new-pubkey=< new signer pubkey here>")
 	cmd.Flags().String(FlagAmount, "", "--staked-amount=<staked amount>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
-	cmd.MarkFlagRequired(FlagProposerAddress)
 	cmd.MarkFlagRequired(FlagTxHash)
 	cmd.MarkFlagRequired(FlagNewSignerPubkey)
 	cmd.MarkFlagRequired(FlagAmount)

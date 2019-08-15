@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/viper"
 	tmLog "github.com/tendermint/tendermint/libs/log"
 
+	auth "github.com/maticnetwork/heimdall/auth/client/rest"
 	bank "github.com/maticnetwork/heimdall/bank/client/rest"
 	bor "github.com/maticnetwork/heimdall/bor/rest"
 	checkpoint "github.com/maticnetwork/heimdall/checkpoint/rest"
@@ -54,6 +55,7 @@ func RegisterRoutes(rs *lcd.RestServer) {
 	rpc.RegisterRoutes(rs.CliCtx, rs.Mux)
 	tx.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
 
+	auth.RegisterRoutes(rs.CliCtx, rs.Mux)
 	bank.RegisterRoutes(rs.CliCtx, rs.Mux)
 
 	checkpoint.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)

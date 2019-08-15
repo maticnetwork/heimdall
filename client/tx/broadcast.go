@@ -1,6 +1,7 @@
 package tx
 
 import (
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -41,17 +42,16 @@ func BroadcastTxRequest(cliCtx context.CLIContext, cdc *codec.Codec) http.Handle
 			return
 		}
 
-		txBytes, err := cdc.MarshalBinaryLengthPrefixed(req.Tx)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+		// check if msg is not nil
+		if req.Tx.Msg == nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, errors.New("Invalid msg input").Error())
 			return
 		}
 
-		cliCtx = cliCtx.WithBroadcastMode(req.Mode)
-
-		res, err := cliCtx.BroadcastTx(txBytes)
+		// brodcast tx
+		res, err := helper.BroadcastTx(cliCtx, req.Tx, req.Mode)
 		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
