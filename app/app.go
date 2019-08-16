@@ -162,18 +162,19 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	// 	gov.DefaultCodespace,
 	// )
 
-	app.stakingKeeper = staking.NewKeeper(
-		app.cdc,
-		app.keyStaking,
-		app.paramsKeeper.Subspace(stakingTypes.DefaultParamspace),
-		common.DefaultCodespace,
-	)
 	app.checkpointKeeper = checkpoint.NewKeeper(
 		app.cdc,
 		app.stakingKeeper,
 		app.keyCheckpoint,
 		app.paramsKeeper.Subspace(checkpointTypes.DefaultParamspace),
 		common.DefaultCodespace,
+	)
+	app.stakingKeeper = staking.NewKeeper(
+		app.cdc,
+		app.keyStaking,
+		app.paramsKeeper.Subspace(stakingTypes.DefaultParamspace),
+		common.DefaultCodespace,
+		app.checkpointKeeper,
 	)
 	app.borKeeper = bor.NewKeeper(
 		app.cdc,
@@ -201,6 +202,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		AddRoute(authTypes.QuerierRoute, auth.NewQuerier(app.accountKeeper)).
 		AddRoute(bankTypes.QuerierRoute, bank.NewQuerier(app.bankKeeper)).
 		AddRoute(supplyTypes.QuerierRoute, supply.NewQuerier(app.supplyKeeper)).
+		AddRoute(checkpointTypes.QuerierRoute, checkpoint.NewQuerier(app.checkpointKeeper)).
 		AddRoute(borTypes.QuerierRoute, bor.NewQuerier(app.borKeeper))
 
 	// perform initialization logic
@@ -281,7 +283,7 @@ func (app *HeimdallApp) endBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 		currentValidatorSet := app.stakingKeeper.GetValidatorSet(ctx)
 		currentValidatorSetCopy := currentValidatorSet.Copy()
 		allValidators := app.stakingKeeper.GetAllValidators(ctx)
-		ackCount := app.stakingKeeper.GetACKCount(ctx)
+		ackCount := app.checkpointKeeper.GetACKCount(ctx)
 
 		// apply updates
 		helper.UpdateValidators(

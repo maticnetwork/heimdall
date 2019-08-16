@@ -16,6 +16,7 @@ import (
 var (
 	DefaultValue = []byte{0x01} // Value to store in CacheCheckpoint and CacheCheckpointACK & ValidatorSetChange Flag
 
+	ACKCountKey             = []byte{0x11} // key to store ACK count
 	BufferCheckpointKey     = []byte{0x12} // Key to store checkpoint in buffer
 	HeaderBlockKey          = []byte{0x13} // prefix key for when storing header after ACK
 	CheckpointCacheKey      = []byte{0x14} // key to store Cache for checkpoint
@@ -95,7 +96,7 @@ func (k *Keeper) addCheckpoint(ctx sdk.Context, key []byte, headerBlock types.Ch
 	return nil
 }
 
-// To get checkpoint by header block index 10,000 ,20,000 and so on
+// GetCheckpointByIndex to get checkpoint by header block index 10,000 ,20,000 and so on
 func (k *Keeper) GetCheckpointByIndex(ctx sdk.Context, headerIndex uint64) (types.CheckpointBlockHeader, error) {
 	store := ctx.KVStore(k.storeKey)
 	headerKey := GetHeaderKey(headerIndex)
@@ -116,7 +117,7 @@ func (k *Keeper) GetCheckpointByIndex(ctx sdk.Context, headerIndex uint64) (type
 // GetLastCheckpoint gets last checkpoint, headerIndex = TotalACKs * ChildBlockInterval
 func (k *Keeper) GetLastCheckpoint(ctx sdk.Context) (types.CheckpointBlockHeader, error) {
 	store := ctx.KVStore(k.storeKey)
-	acksCount := k.sk.GetACKCount(ctx)
+	acksCount := k.GetACKCount(ctx)
 
 	// fetch last checkpoint key (NumberOfACKs * ChildBlockInterval)
 	lastCheckpointKey := helper.GetConfig().ChildBlockInterval * acksCount
@@ -241,4 +242,49 @@ func (k *Keeper) GetCheckpointHeaders(ctx sdk.Context) []types.CheckpointBlockHe
 		}
 	}
 	return headers
+}
+
+//
+// Ack count
+//
+
+// GetACKCount returns current ACK count
+func (k Keeper) GetACKCount(ctx sdk.Context) uint64 {
+	store := ctx.KVStore(k.storeKey)
+	// check if ack count is there
+	if store.Has(ACKCountKey) {
+		// get current ACK count
+		ackCount, err := strconv.Atoi(string(store.Get(ACKCountKey)))
+		if err != nil {
+			cmn.CheckpointLogger.Error("Unable to convert key to int")
+		} else {
+			return uint64(ackCount)
+		}
+	}
+	return 0
+}
+
+// UpdateACKCountWithValue updates ACK with value
+func (k Keeper) UpdateACKCountWithValue(ctx sdk.Context, value uint64) {
+	store := ctx.KVStore(k.storeKey)
+
+	// convert
+	ackCount := []byte(strconv.FormatUint(value, 10))
+
+	// update
+	store.Set(ACKCountKey, ackCount)
+}
+
+// UpdateACKCount updates ACK count by 1
+func (k Keeper) UpdateACKCount(ctx sdk.Context) {
+	store := ctx.KVStore(k.storeKey)
+
+	// get current ACK Count
+	ACKCount := k.GetACKCount(ctx)
+
+	// increment by 1
+	ACKs := []byte(strconv.FormatUint(ACKCount+1, 10))
+
+	// update
+	store.Set(ACKCountKey, ACKs)
 }

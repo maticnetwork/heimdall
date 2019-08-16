@@ -153,7 +153,7 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k Keeper, contr
 
 	hmCommon.StakingLogger.Error("Removing old validator", "Validator", oldValidator.String())
 	// remove old validator from HM
-	oldValidator.EndEpoch = k.GetACKCount(ctx)
+	oldValidator.EndEpoch = k.ackRetriever.GetACKCount(ctx)
 	// remove old validator from TM
 	oldValidator.Power = 0
 	err = k.AddValidator(ctx, *oldValidator)

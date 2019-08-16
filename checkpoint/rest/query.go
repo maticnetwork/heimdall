@@ -88,7 +88,7 @@ func checkpointCountHandlerFn(
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		RestLogger.Debug("Fetching number of checkpoints from state")
-		res, err := cliCtx.QueryStore(staking.ACKCountKey, "checkpoint")
+		res, err := cliCtx.QueryStore(checkpoint.ACKCountKey, "checkpoint")
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
@@ -266,7 +266,7 @@ func overviewHandlerFunc(
 
 		// ACk count
 		var ackCountInt int64
-		ackcount, err := cliCtx.QueryStore(staking.ACKCountKey, "staking")
+		ackcount, err := cliCtx.QueryStore(checkpoint.ACKCountKey, "staking")
 		if err == nil {
 			ackCountInt, err = strconv.ParseInt(string(ackcount), 10, 64)
 			if err != nil {
@@ -346,7 +346,7 @@ func latestCheckpointHandlerFunc(
 	cliCtx context.CLIContext,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ackCount, err := cliCtx.QueryStore(staking.ACKCountKey, "staking")
+		ackCount, err := cliCtx.QueryStore(checkpoint.ACKCountKey, "staking")
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return

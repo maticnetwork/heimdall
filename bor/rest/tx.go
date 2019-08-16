@@ -12,6 +12,8 @@ import (
 
 	"github.com/maticnetwork/heimdall/bor"
 	borTypes "github.com/maticnetwork/heimdall/bor/types"
+	"github.com/maticnetwork/heimdall/checkpoint"
+	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	restClient "github.com/maticnetwork/heimdall/client/rest"
 	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/types"
@@ -72,20 +74,21 @@ func postProposeSpanHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.
 		// Get ack count
 		//
 
-		res, err = cliCtx.QueryStore(staking.ACKCountKey, "staking")
+		// fetch ack count
+		res, err = cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", checkpointTypes.QuerierRoute, checkpoint.QueryAckCount), nil)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		// The query will return empty if there is no data
 		if len(res) == 0 {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, errors.New("No ack key found").Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, errors.New("Ack not found").Error())
 			return
 		}
 
-		ackCount, ok := rest.ParseUint64OrReturnBadRequest(w, string(res))
-		if !ok {
+		var ackCount uint64
+		if err := cliCtx.Codec.UnmarshalJSON(res, &ackCount); err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 

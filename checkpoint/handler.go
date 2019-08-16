@@ -184,8 +184,8 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k Keeper, con
 	logger.Debug("Checkpoint buffer flushed after receiving checkpoint ack", "checkpoint", headerBlock)
 
 	// update ack count
-	k.sk.UpdateACKCount(ctx)
-	logger.Debug("Valid ack received", "CurrentACKCount", k.sk.GetACKCount(ctx)-1, "UpdatedACKCount", k.sk.GetACKCount(ctx))
+	k.UpdateACKCount(ctx)
+	logger.Debug("Valid ack received", "CurrentACKCount", k.GetACKCount(ctx)-1, "UpdatedACKCount", k.GetACKCount(ctx))
 
 	// indicate ACK received by adding in cache, cache cleared in endblock
 	k.SetCheckpointAckCache(ctx, DefaultValue)
