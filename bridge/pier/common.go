@@ -1,15 +1,37 @@
 package pier
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"math/big"
+	"net/http"
+	"os"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/maticnetwork/heimdall/helper"
+	hmtypes "github.com/maticnetwork/heimdall/types"
+	"github.com/tendermint/tendermint/libs/log"
+)
+
+const (
+	ChainSyncer          = "chain-syncer"
+	HeimdallCheckpointer = "heimdall-checkpointer"
+	NoackService         = "checkpoint-no-ack"
+
+	// TODO fetch port from config
+	LastNoAckURL      = "http://localhost:1317/checkpoint/last-no-ack"
+	ProposersURL      = "http://localhost:1317/staking/proposer/%v"
+	LastCheckpointURL = "http://localhost:1317/checkpoint/buffer"
+
+	BridgeDBFlag = "bridge-db"
 )
 
 // Big batch of reflect types for topic reconstruction.
@@ -18,6 +40,48 @@ var (
 	reflectAddress = reflect.TypeOf(common.Address{})
 	reflectBigInt  = reflect.TypeOf(new(big.Int))
 )
+
+// Global logger for bridge
+var Logger log.Logger
+
+func init() {
+	Logger = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
+}
+
+func isProposer() bool {
+	count := uint64(1)
+	resp, err := http.Get(fmt.Sprintf(ProposersURL, strconv.FormatUint(count, 10)))
+	if err != nil {
+		return false
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode == 200 {
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return false
+		}
+
+		// unmarshall data from buffer
+		var proposers []hmtypes.Validator
+		if err := json.Unmarshal(body, &proposers); err != nil {
+			return false
+		}
+
+		// no proposer found
+		if len(proposers) == 0 {
+			return false
+		}
+
+		// get first proposer
+		proposer := proposers[0]
+		if bytes.Equal(proposer.Signer.Bytes(), helper.GetAddress()) {
+			return true
+		}
+	} else {
+		Logger.Error("Error while fetching proposer", "status", resp.StatusCode)
+	}
+	return false
+}
 
 // UnpackLog unpacks log
 func UnpackLog(abiObject *abi.ABI, out interface{}, event string, log *types.Log) error {

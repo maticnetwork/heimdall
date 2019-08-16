@@ -5,7 +5,7 @@ dep:
 	dep ensure -v
 	mkdir -p vendor/github.com/tendermint vendor/github.com/ethereum
 	git clone -b v0.12.2 --single-branch --depth 1 https://github.com/tendermint/iavl vendor/github.com/tendermint/iavl
-	git clone -b v1.8.19 --single-branch --depth 1 https://github.com/ethereum/go-ethereum vendor/github.com/ethereum/go-ethereum
+	git clone -b v1.9.0 --single-branch --depth 1 https://github.com/ethereum/go-ethereum vendor/github.com/ethereum/go-ethereum
 
 clean:
 	rm -rf build
@@ -27,6 +27,7 @@ install:
 contracts:
 	abigen --abi=contracts/rootchain/rootchain.abi --pkg=rootchain --out=contracts/rootchain/rootchain.go
 	abigen --abi=contracts/stakemanager/stakemanager.abi --pkg=stakemanager --out=contracts/stakemanager/stakemanager.go
+	abigen --abi=contracts/depositmanager/depositmanager.abi --pkg=depositmanager --out=contracts/depositmanager/depositmanager.go
 
 init-heimdall:
 	./build/heimdalld init

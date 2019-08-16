@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/hex"
 	"math/big"
-	"os"
 	"strconv"
 	"time"
 
@@ -19,7 +18,6 @@ import (
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/tendermint/tendermint/libs/common"
-	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
@@ -27,30 +25,18 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 )
 
-// EventByID looks up a event by the topic id
-func EventByID(abiObject *abi.ABI, sigdata []byte) *abi.Event {
-	for _, event := range abiObject.Events {
-		if bytes.Equal(event.Id().Bytes(), sigdata) {
-			return &event
-		}
-	}
-	return nil
-}
+const (
+	headerEvent      = "NewHeaderBlock"
+	stakeInitEvent   = "Staked"
+	unstakeInitEvent = "UnstakeInit"
+	signerChange     = "SignerChange"
+	depositEvent     = "Deposit"
 
-func logEventParseError(logger log.Logger, name string, err error) {
-	logger.Error("Error while parsing event", "name", name, "error", err)
-}
+	lastBlockKey = "last-block" // storage key
+)
 
-func logEventTxBytesError(logger log.Logger, name string, err error) {
-	logger.Error("Error while createing tx bytes", "name", name, "error", err)
-}
-
-func logEventBroadcastTxError(logger log.Logger, name string, err error) {
-	logger.Error("Error while broadcasting tx bytes", "name", name, "error", err)
-}
-
-// ChainSyncer syncs validators and checkpoints
-type ChainSyncer struct {
+// Syncer syncs validators and checkpoints
+type Syncer struct {
 	// Base service
 	common.BaseService
 
@@ -77,10 +63,10 @@ type ChainSyncer struct {
 	cancelHeaderProcess context.CancelFunc
 }
 
-// NewChainSyncer returns new service object
-func NewChainSyncer() *ChainSyncer {
+// NewSyncer returns new service object for syncing events
+func NewSyncer() *Syncer {
 	// create logger
-	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", chainSyncer)
+	logger := Logger.With("module", ChainSyncer)
 
 	// root chain instance
 	rootchainInstance, err := helper.GetRootChainInstance()
@@ -107,8 +93,8 @@ func NewChainSyncer() *ChainSyncer {
 	cliCtx.BroadcastMode = client.BroadcastAsync
 
 	// creating syncer object
-	syncer := &ChainSyncer{
-		storageClient: getBridgeDBInstance(viper.GetString(bridgeDBFlag)),
+	syncer := &Syncer{
+		storageClient: getBridgeDBInstance(viper.GetString(BridgeDBFlag)),
 		cliContext:    cliCtx,
 		abis:          abis,
 
@@ -118,12 +104,12 @@ func NewChainSyncer() *ChainSyncer {
 		HeaderChannel:        make(chan *types.Header),
 	}
 
-	syncer.BaseService = *common.NewBaseService(logger, chainSyncer, syncer)
+	syncer.BaseService = *common.NewBaseService(logger, ChainSyncer, syncer)
 	return syncer
 }
 
 // startHeaderProcess starts header process when they get new header
-func (syncer *ChainSyncer) startHeaderProcess(ctx context.Context) {
+func (syncer *Syncer) startHeaderProcess(ctx context.Context) {
 	for {
 		select {
 		case newHeader := <-syncer.HeaderChannel:
@@ -135,7 +121,7 @@ func (syncer *ChainSyncer) startHeaderProcess(ctx context.Context) {
 }
 
 // OnStart starts new block subscription
-func (syncer *ChainSyncer) OnStart() error {
+func (syncer *Syncer) OnStart() error {
 	syncer.BaseService.OnStart() // Always call the overridden method.
 
 	// create cancellable context
@@ -166,7 +152,7 @@ func (syncer *ChainSyncer) OnStart() error {
 }
 
 // OnStop stops all necessary go routines
-func (syncer *ChainSyncer) OnStop() {
+func (syncer *Syncer) OnStop() {
 	syncer.BaseService.OnStop() // Always call the overridden method.
 
 	// close db
@@ -180,7 +166,7 @@ func (syncer *ChainSyncer) OnStop() {
 }
 
 // startPolling starts polling
-func (syncer *ChainSyncer) startPolling(ctx context.Context, pollInterval int) {
+func (syncer *Syncer) startPolling(ctx context.Context, pollInterval int) {
 	// How often to fire the passed in function in second
 	interval := time.Duration(pollInterval) * time.Millisecond
 
@@ -204,7 +190,7 @@ func (syncer *ChainSyncer) startPolling(ctx context.Context, pollInterval int) {
 	}
 }
 
-func (syncer *ChainSyncer) startSubscription(ctx context.Context, subscription ethereum.Subscription) {
+func (syncer *Syncer) startSubscription(ctx context.Context, subscription ethereum.Subscription) {
 	for {
 		select {
 		case err := <-subscription.Err():
@@ -221,7 +207,7 @@ func (syncer *ChainSyncer) startSubscription(ctx context.Context, subscription e
 	}
 }
 
-func (syncer *ChainSyncer) processHeader(newHeader *types.Header) {
+func (syncer *Syncer) processHeader(newHeader *types.Header) {
 	syncer.Logger.Debug("New block detected", "blockNumber", newHeader.Number)
 
 	// default fromBlock
@@ -237,7 +223,7 @@ func (syncer *ChainSyncer) processHeader(newHeader *types.Header) {
 		}
 
 		syncer.Logger.Debug("Got last block from bridge storage", "lastBlock", string(lastBlockBytes))
-		if result, ierr := strconv.Atoi(string(lastBlockBytes)); ierr == nil {
+		if result, err := strconv.Atoi(string(lastBlockBytes)); err == nil {
 			if int64(result) >= newHeader.Number.Int64() {
 				return
 			}
@@ -288,34 +274,31 @@ func (syncer *ChainSyncer) processHeader(newHeader *types.Header) {
 				switch selectedEvent.Name {
 				case "NewHeaderBlock":
 					syncer.processCheckpointEvent(selectedEvent.Name, abiObject, &vLog)
-				// case "Staked":
-				// 	syncer.processStakedEvent(selectedEvent.Name, abiObject, &vLog)
+				case "Staked":
+					syncer.processStakedEvent(selectedEvent.Name, abiObject, &vLog)
 				case "UnstakeInit":
 					syncer.processUnstakeInitEvent(selectedEvent.Name, abiObject, &vLog)
-					// case "SignerChange":
-					// 	syncer.processSignerChangeEvent(selectedEvent.Name, abiObject, &vLog)
+				case "SignerChange":
+					syncer.processSignerChangeEvent(selectedEvent.Name, abiObject, &vLog)
+				case "Deposit":
+					syncer.processDepositEvent(selectedEvent.Name, abiObject, &vLog)
+				case "Withdraw":
+					// syncer.processWithdrawEvent(selectedEvent.Name, abiObject, &vLog)
 				}
 			}
 		}
 	}
 }
 
-func (syncer *ChainSyncer) sendTx(eventName string, msg sdk.Msg) {
-	txBytes, err := helper.CreateTxBytes(msg)
-	if err != nil {
-		logEventTxBytesError(syncer.Logger, eventName, err)
-		return
-	}
-
-	// send tendermint request
-	_, err = helper.SendTendermintRequest(syncer.cliContext, txBytes, "")
+func (syncer *Syncer) sendTx(eventName string, msg sdk.Msg) {
+	_, err := helper.BroadcastMsgs(syncer.cliContext, []sdk.Msg{msg})
 	if err != nil {
 		logEventBroadcastTxError(syncer.Logger, eventName, err)
 		return
 	}
 }
 
-func (syncer *ChainSyncer) processCheckpointEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
+func (syncer *Syncer) processCheckpointEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
 	event := new(rootchain.RootchainNewHeaderBlock)
 	if err := UnpackLog(abiObject, event, eventName, vLog); err != nil {
 		logEventParseError(syncer.Logger, eventName, err)
@@ -336,7 +319,7 @@ func (syncer *ChainSyncer) processCheckpointEvent(eventName string, abiObject *a
 	}
 }
 
-func (syncer *ChainSyncer) processStakedEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
+func (syncer *Syncer) processStakedEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
 	event := new(stakemanager.StakemanagerStaked)
 	if err := UnpackLog(abiObject, event, eventName, vLog); err != nil {
 		logEventParseError(syncer.Logger, eventName, err)
@@ -353,7 +336,7 @@ func (syncer *ChainSyncer) processStakedEvent(eventName string, abiObject *abi.A
 	}
 }
 
-func (syncer *ChainSyncer) processUnstakeInitEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
+func (syncer *Syncer) processUnstakeInitEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
 	event := new(stakemanager.StakemanagerUnstakeInit)
 	if err := UnpackLog(abiObject, event, eventName, vLog); err != nil {
 		logEventParseError(syncer.Logger, eventName, err)
@@ -370,12 +353,12 @@ func (syncer *ChainSyncer) processUnstakeInitEvent(eventName string, abiObject *
 
 		// TODO figure out how to obtain txhash
 		// send validator exit message
-		//msg := staking.NewMsgValidatorExit(event.ValidatorId.Uint64())
+		// msg := staking.NewMsgValidatorExit(event.ValidatorId.Uint64())
 		//syncer.sendTx(eventName, msg)
 	}
 }
 
-func (syncer *ChainSyncer) processSignerChangeEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
+func (syncer *Syncer) processSignerChangeEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
 	event := new(stakemanager.StakemanagerSignerChange)
 	if err := UnpackLog(abiObject, event, eventName, vLog); err != nil {
 		logEventParseError(syncer.Logger, eventName, err)
@@ -389,4 +372,19 @@ func (syncer *ChainSyncer) processSignerChangeEvent(eventName string, abiObject 
 			"oldSigner", event.OldSigner.Hex(),
 		)
 	}
+}
+
+func (syncer *Syncer) processDepositEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
+	// event := new(rootchain.)
+
+}
+
+// EventByID looks up a event by the topic id
+func EventByID(abiObject *abi.ABI, sigdata []byte) *abi.Event {
+	for _, event := range abiObject.Events {
+		if bytes.Equal(event.Id().Bytes(), sigdata) {
+			return &event
+		}
+	}
+	return nil
 }

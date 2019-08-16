@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/types"
 )
 
 type CodeType = sdk.CodeType
@@ -38,6 +38,12 @@ const (
 	CodeSignerUpdateError  CodeType = 2508
 	CodeNoConn             CodeType = 2509
 	CodeWaitFrConfirmation CodeType = 2510
+
+	CodeSpanNotCountinuous CodeType = 3501
+	CodeUnableToFreezeSet  CodeType = 3502
+	CodeSpanNotFound       CodeType = 3503
+	CodeValSetMisMatch     CodeType = 3504
+	CodeProducerMisMatch   CodeType = 3505
 )
 
 // -------- Invalid msg
@@ -48,7 +54,7 @@ func ErrInvalidMsg(codespace sdk.CodespaceType, format string, args ...interface
 
 // -------- Checkpoint Errors
 
-func ErrBadProposerDetails(codespace sdk.CodespaceType, proposer common.Address) sdk.Error {
+func ErrBadProposerDetails(codespace sdk.CodespaceType, proposer types.HeimdallAddress) sdk.Error {
 	return newError(codespace, CodeInvalidProposerInput, fmt.Sprintf("Proposer is not valid, current proposer is %v", proposer.String()))
 }
 
@@ -144,6 +150,28 @@ func ErrValidatorNotDeactivated(codespace sdk.CodespaceType) sdk.Error {
 
 func ErrValidatorAlreadyJoined(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeValAlreadyJoined, "Validator already joined")
+}
+
+// Bor Errors --------------------------------
+
+func ErrSpanNotInCountinuity(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeSpanNotCountinuous, "Span not countinuous")
+}
+
+func ErrSpanNotFound(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeSpanNotFound, "Span not found")
+}
+
+func ErrUnableToFreezeValSet(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeUnableToFreezeSet, "Unable to freeze validator set for next span")
+}
+
+func ErrValSetMisMatch(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeValSetMisMatch, "Unable to freeze validator set for next span")
+}
+
+func ErrProducerMisMatch(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeProducerMisMatch, "Unable to freeze validator set for next span")
 }
 
 func codeToDefaultMsg(code CodeType) string {

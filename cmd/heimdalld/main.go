@@ -7,36 +7,35 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
+	"github.com/cosmos/cosmos-sdk/store"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
-	cfg "github.com/tendermint/tendermint/config"
-	"github.com/tendermint/tendermint/p2p"
-
-	"github.com/tendermint/tendermint/privval"
-
 	"github.com/spf13/viper"
 	abci "github.com/tendermint/tendermint/abci/types"
+	cfg "github.com/tendermint/tendermint/config"
+	"github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/common"
 	dbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
+	"github.com/tendermint/tendermint/p2p"
+	"github.com/tendermint/tendermint/privval"
 	tmTypes "github.com/tendermint/tendermint/types"
 
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/helper"
 	hmserver "github.com/maticnetwork/heimdall/server"
-	"github.com/tendermint/tendermint/crypto"
-
-	"github.com/cosmos/cosmos-sdk/store"
 	stakingcli "github.com/maticnetwork/heimdall/staking/cli"
+	"github.com/maticnetwork/heimdall/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
-	"github.com/tendermint/tendermint/crypto/secp256k1"
-	"strings"
 )
 
 var (
@@ -53,9 +52,15 @@ const nodeDirPerm = 0755
 
 // ValidatorAccountFormatter helps to print local validator account information
 type ValidatorAccountFormatter struct {
-	Address string `json:"address"`
-	PrivKey string `json:"priv_key"`
-	PubKey  string `json:"pub_key"`
+	Address          string `json:"address" yaml:"address"`
+	PrivKey          string `json:"priv_key" yaml:"priv_key"`
+	PubKey           string `json:"pub_key" yaml:"pub_key"`
+	AccountAddress   string `json:"account_address" yaml:"account_address"`
+	AccountPubKey    string `json:"account_pubkey" yaml:"account_pubkey"`
+	ValidatorAddress string `json:"validator_address" yaml:"validator_address"`
+	ValidatorPubKey  string `json:"validator_pubkey" yaml:"validator_pubkey"`
+	ConsensusAddress string `json:"consensus_address" yaml:"consensus_address"`
+	ConsensusPubKey  string `json:"consensus_pubkey" yaml:"consensus_pubkey"`
 }
 
 func main() {
@@ -117,17 +122,29 @@ func newAccountCmd() *cobra.Command {
 			// init heimdall config
 			helper.InitHeimdallConfig("")
 
+			// set prefix
+			config := sdk.GetConfig()
+			config.SetBech32PrefixForAccount(hmTypes.PrefixAccAddr, hmTypes.PrefixAccPub)
+			config.SetBech32PrefixForValidator(hmTypes.PrefixValAddr, hmTypes.PrefixValPub)
+			config.SetBech32PrefixForConsensusNode(hmTypes.PrefixConsAddr, hmTypes.PrefixConsPub)
+
 			// get private and public keys
 			privObject := helper.GetPrivKey()
 			pubObject := helper.GetPubKey()
 
 			account := &ValidatorAccountFormatter{
-				Address: "0x" + hex.EncodeToString(pubObject.Address().Bytes()),
-				PrivKey: "0x" + hex.EncodeToString(privObject[:]),
-				PubKey:  "0x" + hex.EncodeToString(pubObject[:]),
+				Address:          ethCommon.BytesToAddress(pubObject.Address().Bytes()).String(),
+				PrivKey:          "0x" + hex.EncodeToString(privObject[:]),
+				PubKey:           "0x" + hex.EncodeToString(pubObject[:]),
+				AccountAddress:   sdk.AccAddress(pubObject.Address().Bytes()).String(),
+				AccountPubKey:    sdk.MustBech32ifyAccPub(pubObject),
+				ValidatorAddress: sdk.ValAddress(pubObject.Address().Bytes()).String(),
+				ValidatorPubKey:  sdk.MustBech32ifyValPub(pubObject),
+				ConsensusAddress: sdk.ConsAddress(pubObject.Address().Bytes()).String(),
+				ConsensusPubKey:  sdk.MustBech32ifyConsPub(pubObject),
 			}
 
-			b, err := json.Marshal(&account)
+			b, err := json.MarshalIndent(account, "", "    ")
 			if err != nil {
 				panic(err)
 			}
@@ -138,7 +155,7 @@ func newAccountCmd() *cobra.Command {
 	}
 }
 
-// initialise files required to start heimdall
+// InitCmd initialises files required to start heimdall
 func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init",
@@ -197,19 +214,19 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			newPubkey := hmTypes.NewPubKey(validatorPublicKey[:])
 
 			// create validator
-			validator := app.GenesisValidator{
+			validator := hmTypes.Validator{
 				ID:         hmTypes.NewValidatorID(uint64(validatorID)),
 				PubKey:     newPubkey,
 				StartEpoch: 0,
-				Signer:     ethCommon.BytesToAddress(valPubKey.Address().Bytes()),
+				Signer:     types.BytesToHeimdallAddress(valPubKey.Address().Bytes()),
 				Power:      1,
 			}
 
 			// create genesis state
-			appState := &app.GenesisState{
-				GenValidators: []app.GenesisValidator{validator},
-			}
-
+			appState := app.NewDefaultGenesisState()
+			// set new validator
+			appState.StakingData.Validators = []hmTypes.Validator{validator}
+			// app state json
 			appStateJSON, err := json.Marshal(appState)
 			if err != nil {
 				return err
@@ -269,7 +286,7 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 			nodeIDs := make([]string, totalValidators)
 			valPubKeys := make([]crypto.PubKey, totalValidators)
 			privKeys := make([]crypto.PrivKey, totalValidators)
-			validators := make([]app.GenesisValidator, totalValidators)
+			validators := make([]hmTypes.Validator, totalValidators)
 			genFiles := make([]string, totalValidators)
 			var err error
 			// create chain id
@@ -311,29 +328,34 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 				newPubkey := hmTypes.NewPubKey(validatorPublicKey[:])
 
 				// create validator
-				validators[i] = app.GenesisValidator{
+				validators[i] = hmTypes.Validator{
 					ID:         hmTypes.NewValidatorID(uint64(startID + int64(i))),
 					PubKey:     newPubkey,
 					StartEpoch: 0,
-					Signer:     ethCommon.BytesToAddress(valPubKeys[i].Address().Bytes()),
+					Signer:     types.BytesToHeimdallAddress(valPubKeys[i].Address().Bytes()),
 					Power:      1,
 				}
 
 				var privObject secp256k1.PrivKeySecp256k1
 				cdc.MustUnmarshalBinaryBare(privKeys[i].Bytes(), &privObject)
 				signers[i] = ValidatorAccountFormatter{
-					Address: ethCommon.BytesToAddress(valPubKeys[i].Address().Bytes()).String(),
-					PubKey:  newPubkey.String(),
-					PrivKey: "0x" + hex.EncodeToString(privObject[:]),
+					Address:          ethCommon.BytesToAddress(valPubKeys[i].Address().Bytes()).String(),
+					PubKey:           newPubkey.String(),
+					PrivKey:          "0x" + hex.EncodeToString(privObject[:]),
+					AccountAddress:   sdk.AccAddress(valPubKeys[i].Address().Bytes()).String(),
+					AccountPubKey:    sdk.MustBech32ifyAccPub(valPubKeys[i]),
+					ValidatorAddress: sdk.ValAddress(valPubKeys[i].Address().Bytes()).String(),
+					ValidatorPubKey:  sdk.MustBech32ifyValPub(valPubKeys[i]),
+					ConsensusAddress: sdk.ConsAddress(valPubKeys[i].Address().Bytes()).String(),
+					ConsensusPubKey:  sdk.MustBech32ifyConsPub(valPubKeys[i]),
 				}
 
 				heimdallConf := helper.Configuration{
-					MainRPCUrl:          helper.MainRPCUrl,
-					MaticRPCUrl:         helper.MaticRPCUrl,
-					StakeManagerAddress: (ethCommon.Address{}).Hex(),
-					RootchainAddress:    (ethCommon.Address{}).Hex(),
-					ChildBlockInterval:  helper.DefaultChildBlockInterval,
-
+					MainRPCUrl:               helper.MainRPCUrl,
+					MaticRPCUrl:              helper.MaticRPCUrl,
+					StakeManagerAddress:      (ethCommon.Address{}).Hex(),
+					RootchainAddress:         (ethCommon.Address{}).Hex(),
+					ChildBlockInterval:       helper.DefaultChildBlockInterval,
 					CheckpointerPollInterval: helper.DefaultCheckpointerPollInterval,
 					SyncerPollInterval:       helper.DefaultSyncerPollInterval,
 					NoACKPollInterval:        helper.DefaultNoACKPollInterval,
@@ -358,9 +380,10 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 			for i := 0; i < totalValidators; i++ {
 				populatePersistentPeersInConfigAndWriteIt(config)
 			}
-			appState := &app.GenesisState{
-				GenValidators: validators,
-			}
+
+			// new app state
+			appState := app.NewDefaultGenesisState()
+			appState.StakingData.Validators = validators
 
 			appStateJSON, err := json.Marshal(appState)
 			if err != nil {
@@ -481,7 +504,7 @@ func writeGenesisFile(genesisFile, chainID string, appState json.RawMessage) err
 	return genDoc.SaveAs(genesisFile)
 }
 
-// initialise node and priv validator files
+// InitializeNodeValidatorFiles initializes node and priv validator files
 func InitializeNodeValidatorFiles(
 	config *cfg.Config) (nodeID string, valPubKey crypto.PubKey, priv crypto.PrivKey, err error,
 ) {

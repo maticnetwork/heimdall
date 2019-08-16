@@ -8,10 +8,11 @@ import (
 	ethCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto/sha3"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/maticnetwork/heimdall/common"
 	"github.com/xsleonard/go-merkle"
+	"golang.org/x/crypto/sha3"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/maticnetwork/heimdall/helper"
@@ -68,9 +69,9 @@ func GetHeaders(start uint64, end uint64) ([]byte, error) {
 		}
 
 		blockHeader := batchElement.Result.(*types.Header)
-		header := getSha3FromByte(appendBytes32(
+		header := crypto.Keccak256(appendBytes32(
 			blockHeader.Number.Bytes(),
-			blockHeader.Time.Bytes(),
+			new(big.Int).SetUint64(blockHeader.Time).Bytes(),
 			blockHeader.TxHash.Bytes(),
 			blockHeader.ReceiptHash.Bytes(),
 		))
@@ -83,7 +84,7 @@ func GetHeaders(start uint64, end uint64) ([]byte, error) {
 	}
 
 	tree := merkle.NewTreeWithOpts(merkle.TreeOptions{EnableHashSorting: false, DisableHashLeaves: true})
-	if err := tree.Generate(convert(headers), sha3.NewKeccak256()); err != nil {
+	if err := tree.Generate(convert(headers), sha3.NewLegacyKeccak256()); err != nil {
 		return nil, err
 	}
 
@@ -119,14 +120,6 @@ func appendBytes32(data ...[]byte) []byte {
 		}
 	}
 	return result
-}
-
-func getSha3FromByte(input []byte) []byte {
-	hash := sha3.NewKeccak256()
-	var buf []byte
-	hash.Write(input)
-	buf = hash.Sum(buf)
-	return buf
 }
 
 func nextPowerOfTwo(n uint64) uint64 {

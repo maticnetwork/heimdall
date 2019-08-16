@@ -1,7 +1,9 @@
 package helper
 
 import (
+	"crypto/ecdsa"
 	"log"
+	"math/big"
 	"os"
 	"path/filepath"
 	"strings"
@@ -9,6 +11,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	ethCrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/spf13/viper"
@@ -16,8 +19,6 @@ import (
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	logger "github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/privval"
-
-	"math/big"
 
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
@@ -43,7 +44,7 @@ const (
 
 	// Variables below to be used while init
 	MainRPCUrl                      = "https://ropsten.infura.io"
-	MaticRPCUrl                     = "https://testnet.matic.network"
+	MaticRPCUrl                     = "https://testnet2.matic.network"
 	NoACKWaitTime                   = time.Second * 1800 // Time ack service waits to clear buffer and elect new proposer (1800 seconds ~ 30 mins)
 	CheckpointBufferTime            = time.Second * 1000 // Time checkpoint is allowed to stay in buffer (1000 seconds ~ 17 mins)
 	DefaultCheckpointerPollInterval = 60 * 1000          // 1 minute in milliseconds
@@ -53,6 +54,8 @@ const (
 	MaxCheckpointLength             = 1024  // max blocks in one checkpoint
 	DefaultChildBlockInterval       = 10000 // difference between 2 indexes of header blocks
 	ConfirmationBlocks              = 6
+	DefaultSprintDuration           = 64                          // sprint for blocks
+	DefaultSpanDuration             = 100 * DefaultSprintDuration // number of blocks for which span is frozen on heimdall
 )
 
 var (
@@ -76,6 +79,7 @@ type Configuration struct {
 	StakeManagerAddress string `json:"stakeManagerAddress"` // Stake manager address on main chain
 	RootchainAddress    string `json:"rootchainAddress"`    // Rootchain contract address on main chain
 	ChildBlockInterval  uint64 `json:"childBlockInterval"`  // Difference between header index of 2 child blocks submitted on main chain
+
 	// config related to bridge
 	CheckpointerPollInterval int           `json:"checkpointerPollInterval"` // Poll interval for checkpointer service to send new checkpoints or missing ACK
 	SyncerPollInterval       int           `json:"syncerPollInterval"`       // Poll interval for syncher service to sync for changes on main chain
@@ -92,7 +96,7 @@ type Configuration struct {
 
 var conf Configuration
 
-// MainChainClient stores eth client for Main chain Network
+// MainChainClient stores eth clie nt for Main chain Network
 var mainChainClient *ethclient.Client
 var mainRPCClient *rpc.Client
 
@@ -157,12 +161,13 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 		Logger.Error("Error while creating matic chain RPC client", "error", err)
 		log.Fatal(err)
 	}
-	mainChainClient = ethclient.NewClient(mainRPCClient)
 
+	mainChainClient = ethclient.NewClient(mainRPCClient)
 	if maticRPCClient, err = rpc.Dial(conf.MaticRPCUrl); err != nil {
 		Logger.Error("Error while creating matic chain RPC client", "error", err)
 		log.Fatal(err)
 	}
+
 	maticClient = ethclient.NewClient(maticRPCClient)
 
 	// load pv file, unmarshall and set to privObject
@@ -180,10 +185,12 @@ func GetConfig() Configuration {
 // Root chain
 //
 
+// GetRootChainAddress returns RootChain contract address for selected base chain
 func GetRootChainAddress() common.Address {
 	return common.HexToAddress(GetConfig().RootchainAddress)
 }
 
+// GetRootChainInstance returns RootChain contract instance for selected base chain
 func GetRootChainInstance() (*rootchain.Rootchain, error) {
 	rootChainInstance, err := rootchain.NewRootchain(GetRootChainAddress(), mainChainClient)
 	if err != nil {
@@ -193,6 +200,7 @@ func GetRootChainInstance() (*rootchain.Rootchain, error) {
 	return rootChainInstance, err
 }
 
+// GetRootChainABI returns ABI for RootChain contract
 func GetRootChainABI() (abi.ABI, error) {
 	return abi.JSON(strings.NewReader(rootchain.RootchainABI))
 }
@@ -201,10 +209,12 @@ func GetRootChainABI() (abi.ABI, error) {
 // Stake manager
 //
 
+// GetStakeManagerAddress returns StakeManager contract address for selected base chain
 func GetStakeManagerAddress() common.Address {
 	return common.HexToAddress(GetConfig().StakeManagerAddress)
 }
 
+// GetStakeManagerInstance returns StakeManager contract instance for selected base chain
 func GetStakeManagerInstance() (*stakemanager.Stakemanager, error) {
 	stakeManagerInstance, err := stakemanager.NewStakemanager(GetStakeManagerAddress(), mainChainClient)
 	if err != nil {
@@ -214,6 +224,7 @@ func GetStakeManagerInstance() (*stakemanager.Stakemanager, error) {
 	return stakeManagerInstance, err
 }
 
+// GetStakeManagerABI returns ABI for StakeManager contract
 func GetStakeManagerABI() (abi.ABI, error) {
 	return abi.JSON(strings.NewReader(stakemanager.StakemanagerABI))
 }
@@ -245,6 +256,16 @@ func GetMaticRPCClient() *rpc.Client {
 // GetPrivKey returns priv key object
 func GetPrivKey() secp256k1.PrivKeySecp256k1 {
 	return privObject
+}
+
+// GetECDSAPrivKey return ecdsa private key
+func GetECDSAPrivKey() *ecdsa.PrivateKey {
+	// get priv key
+	pkObject := GetPrivKey()
+
+	// create ecdsa private key
+	ecdsaPrivateKey, _ := ethCrypto.ToECDSA(pkObject[:])
+	return ecdsaPrivateKey
 }
 
 // GetPubKey returns pub key object
