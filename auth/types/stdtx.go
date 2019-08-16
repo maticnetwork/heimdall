@@ -1,8 +1,11 @@
 package types
 
 import (
+	"encoding/json"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/rlp"
 
 	"github.com/maticnetwork/heimdall/types"
@@ -87,6 +90,55 @@ type StdSignature []byte
 // Bytes returns the bytes
 func (ss StdSignature) Bytes() []byte {
 	return ss[:]
+}
+
+// Marshal returns the raw address bytes. It is needed for protobuf
+// compatibility.
+func (ss StdSignature) Marshal() ([]byte, error) {
+	return ss.Bytes(), nil
+}
+
+// Unmarshal sets the address to the given data. It is needed for protobuf
+// compatibility.
+func (ss *StdSignature) Unmarshal(data []byte) error {
+	*ss = data
+	return nil
+}
+
+// MarshalJSON marshals to JSON using Bech32.
+func (ss StdSignature) MarshalJSON() ([]byte, error) {
+	return json.Marshal(ss.String())
+}
+
+// MarshalYAML marshals to YAML using Bech32.
+func (ss StdSignature) MarshalYAML() (interface{}, error) {
+	return ss.String(), nil
+}
+
+// UnmarshalJSON unmarshals from JSON assuming Bech32 encoding.
+func (ss *StdSignature) UnmarshalJSON(data []byte) error {
+	var s string
+	err := json.Unmarshal(data, &s)
+	if err != nil {
+		return err
+	}
+
+	*ss = common.FromHex(s)
+	return nil
+}
+
+// Empty checks is sig is empty
+func (ss StdSignature) Empty() bool {
+	return len(ss.Bytes()) == 0
+}
+
+// String implements the Stringer interface.
+func (ss StdSignature) String() string {
+	if ss.Empty() {
+		return ""
+	}
+
+	return common.ToHex(ss)
 }
 
 //

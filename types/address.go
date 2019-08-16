@@ -148,6 +148,10 @@ func (aa HeimdallAddress) Format(s fmt.State, verb rune) {
 	}
 }
 
+//
+// Address utils
+//
+
 // BytesToHeimdallAddress returns Address with value b.
 func BytesToHeimdallAddress(b []byte) HeimdallAddress {
 	return HeimdallAddress(common.BytesToAddress(b))

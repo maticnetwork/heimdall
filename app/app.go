@@ -392,6 +392,12 @@ func (app *HeimdallApp) initFromGenesisState(ctx sdk.Context, genesisState Genes
 		app.accountKeeper.SetAccount(ctx, acc)
 	}
 
+	// TODO add into genesis
+	// acc := app.accountKeeper.NewAccountWithAddress(ctx, types.BytesToHeimdallAddress(helper.GetAddress()))
+	// acc.SetPubKey(helper.GetPubKey())
+	// acc.SetCoins(types.Coins{types.Coin{Denom: "vetic", Amount: types.NewInt(1000)}})
+	// app.accountKeeper.SetAccount(ctx, acc)
+
 	// check if genesis is actually a genesis
 	var isGenesis bool
 	if len(genesisState.StakingData.CurrentValSet.Validators) == 0 {
