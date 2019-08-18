@@ -15,7 +15,6 @@ import (
 	"github.com/maticnetwork/heimdall/checkpoint"
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	hmClient "github.com/maticnetwork/heimdall/client"
-	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/types"
 )
 
@@ -126,7 +125,7 @@ func GetCheckpointCount(cdc *codec.Codec) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			res, err := cliCtx.QueryStore(staking.ACKCountKey, "staking")
+			res, err := cliCtx.QueryStore(checkpoint.ACKCountKey, "staking")
 			if err != nil {
 				return err
 			}

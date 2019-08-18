@@ -75,7 +75,7 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 	}
 
 	// Set initial ack count
-	keeper.sk.UpdateACKCountWithValue(ctx, data.AckCount)
+	keeper.UpdateACKCountWithValue(ctx, data.AckCount)
 }
 
 // ExportGenesis returns a GenesisState for a given context and keeper.
@@ -86,7 +86,7 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) GenesisState {
 		keeper.GetCheckpointCache(ctx, CheckpointCacheKey),
 		keeper.GetCheckpointCache(ctx, CheckpointACKCacheKey),
 		keeper.GetLastNoAck(ctx),
-		keeper.sk.GetACKCount(ctx),
+		keeper.GetACKCount(ctx),
 		keeper.GetCheckpointHeaders(ctx),
 	)
 }

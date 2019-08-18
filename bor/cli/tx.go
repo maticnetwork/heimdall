@@ -14,6 +14,8 @@ import (
 
 	"github.com/maticnetwork/heimdall/bor"
 	borTypes "github.com/maticnetwork/heimdall/bor/types"
+	"github.com/maticnetwork/heimdall/checkpoint"
+	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	hmClient "github.com/maticnetwork/heimdall/client"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
@@ -89,21 +91,22 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 			// Get validators
 			//
 
-			res, err = cliCtx.QueryStore(staking.ACKCountKey, "staking")
+			// fetch ack count
+			res, err = cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", checkpointTypes.QuerierRoute, checkpoint.QueryAckCount), nil)
 			if err != nil {
 				return err
 			}
 
-			// The query will return empty if there is no data
 			if len(res) == 0 {
-				return errors.New("No ack key found")
+				return errors.New("Ack not found")
 			}
 
-			ackCount, err := strconv.ParseInt(string(res), 10, 64)
-			if err != nil {
+			var ackCount uint64
+			if err := cliCtx.Codec.UnmarshalJSON(res, &ackCount); err != nil {
 				return err
 			}
 
+			// validators
 			res, err = cliCtx.QueryStore(staking.CurrentValidatorSetKey, "staking")
 			if err != nil {
 				return err
