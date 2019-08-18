@@ -2,6 +2,7 @@ package rest
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 	"time"
@@ -58,7 +59,7 @@ func checkpointBufferHandlerFn(
 
 		// the query will return empty if there is no data in buffer
 		if len(res) == 0 {
-			rest.WriteErrorResponse(w, http.StatusNoContent, err.Error())
+			rest.WriteErrorResponse(w, http.StatusNoContent, errors.New("no content found for requested key").Error())
 			return
 		}
 
@@ -94,7 +95,7 @@ func checkpointCountHandlerFn(
 		}
 		// The query will return empty if there is no data
 		if len(res) == 0 {
-			rest.WriteErrorResponse(w, http.StatusNoContent, err.Error())
+			rest.WriteErrorResponse(w, http.StatusNoContent, errors.New("no content found for requested key").Error())
 			return
 		}
 		ackCount, err := strconv.ParseInt(string(res), 10, 64)
@@ -127,7 +128,7 @@ func checkpointHeaderHandlerFn(
 		}
 		// the query will return empty if there is no data
 		if len(res) == 0 {
-			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
+			rest.WriteErrorResponse(w, http.StatusNotFound, errors.New("no content found for requested key").Error())
 			return
 		}
 		var _checkpoint types.CheckpointBlockHeader
@@ -212,21 +213,21 @@ func noackHandlerFn(
 		}
 
 		if len(res) == 0 {
-			rest.WriteErrorResponse(w, http.StatusNoContent, err.Error())
+			rest.WriteErrorResponse(w, http.StatusNoContent, errors.New("no content found for requested key").Error())
 			return
 		}
 
 		lastAckTime, err := strconv.ParseInt(string(res), 10, 64)
 		if err != nil {
 			RestLogger.Error("Unable to parse int", "Response", res, "Error", err)
-			rest.WriteErrorResponse(w, http.StatusNoContent, err.Error())
+			rest.WriteErrorResponse(w, http.StatusNoContent, errors.New("no content found for requested key").Error())
 			return
 		}
 
 		result, err := json.Marshal(map[string]interface{}{"result": lastAckTime})
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
-			rest.WriteErrorResponse(w, http.StatusNoContent, err.Error())
+			rest.WriteErrorResponse(w, http.StatusNoContent, errors.New("no content found for requested key").Error())
 			return
 		}
 		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
@@ -351,7 +352,7 @@ func latestCheckpointHandlerFunc(
 		}
 		// the query will return empty if there is no data
 		if len(res) == 0 {
-			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
+			rest.WriteErrorResponse(w, http.StatusNotFound, errors.New("no content found for requested key").Error())
 			return
 		}
 

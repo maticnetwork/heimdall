@@ -12,6 +12,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -31,6 +32,9 @@ const (
 	ProposersURL          = "http://localhost:1317/staking/proposer/%v"
 	BufferedCheckpointURL = "http://localhost:1317/checkpoint/buffer"
 	LatestCheckpoint      = "http://localhost:1317/checkpoint/latest-checkpoint"
+
+	TransactionTimeout = 1 * time.Minute
+	CommitTimeout      = 2 * time.Minute
 
 	BridgeDBFlag = "bridge-db"
 )

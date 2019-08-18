@@ -2,6 +2,7 @@ package rest
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -53,7 +54,7 @@ func validatorByAddressHandlerFn(
 
 		// the query will return empty if there is no data
 		if len(res) == 0 {
-			rest.WriteErrorResponse(w, http.StatusNoContent, err.Error())
+			rest.WriteErrorResponse(w, http.StatusNoContent, errors.New("no content found for requested key").Error())
 			return
 		}
 
@@ -102,7 +103,7 @@ func validatorByIDHandlerFn(
 
 		// the query will return empty if there is no data
 		if len(res) == 0 {
-			rest.WriteErrorResponse(w, http.StatusNoContent, err.Error())
+			rest.WriteErrorResponse(w, http.StatusNoContent, errors.New("no content found for requested key").Error())
 			return
 		}
 
@@ -137,7 +138,7 @@ func validatorSetHandlerFn(
 		}
 		// the query will return empty if there is no data
 		if len(res) == 0 {
-			rest.WriteErrorResponse(w, http.StatusNoContent, err.Error())
+			rest.WriteErrorResponse(w, http.StatusNoContent, errors.New("no content found for requested key").Error())
 			return
 		}
 		var _validatorSet hmTypes.ValidatorSet
@@ -176,7 +177,7 @@ func proposerHandlerFn(
 
 		// the query will return empty if there is no data
 		if len(res) == 0 {
-			rest.WriteErrorResponse(w, http.StatusNoContent, err.Error())
+			rest.WriteErrorResponse(w, http.StatusNoContent, errors.New("no content found for requested key").Error())
 			return
 		}
 

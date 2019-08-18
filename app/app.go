@@ -210,7 +210,7 @@ func (app *HeimdallApp) endBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 				// collect and update sigs in span
 
 				// Send Checkpoint to Rootchain
-				PrepareAndSendCheckpoint(ctx, app.checkpointKeeper, app.stakingKeeper, app.caller)
+				// PrepareAndSendCheckpoint(ctx, app.checkpointKeeper, app.stakingKeeper, app.caller)
 				// clear Checkpoint cache
 				app.checkpointKeeper.FlushCheckpointCache(ctx)
 			}
@@ -310,7 +310,7 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 	}
 }
 
-// returns validator genesis/existing from genesis state
+// GetValidatorsFromGenesis returns validator genesis/existing from genesis state
 // TODO add check from main chain if genesis information is right, else people can create invalid genesis and distribute
 func (app *HeimdallApp) GetValidatorsFromGenesis(ctx sdk.Context, genesisState *GenesisState, ackCount uint64) (newValSet hmTypes.ValidatorSet, valUpdates []abci.ValidatorUpdate) {
 	if len(genesisState.GenValidators) > 0 {

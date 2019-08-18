@@ -112,10 +112,10 @@ func CreateTxBytes(msg sdk.Msg) ([]byte, error) {
 
 // SendTendermintRequest sends request to tendermint
 func SendTendermintRequest(cliCtx context.CLIContext, txBytes []byte, mode string) (sdk.TxResponse, error) {
-	Logger.Info("Broadcasting tx bytes to Tendermint", "txBytes", hex.EncodeToString(txBytes), "txHash", hex.EncodeToString(tmhash.Sum(txBytes[4:])))
 	if mode != "" {
 		cliCtx.BroadcastMode = mode
 	}
+	Logger.Info("Broadcasting tx bytes to tendermint", "txBytes", hex.EncodeToString(txBytes), "mode", cliCtx.BroadcastMode, "txHash", hex.EncodeToString(tmhash.Sum(txBytes[4:])))
 	return cliCtx.BroadcastTx(txBytes)
 }
 

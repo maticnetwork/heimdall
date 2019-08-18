@@ -83,7 +83,7 @@ func (c *ContractCaller) SendCheckpoint(voteSignBytes []byte, sigs []byte, txDat
 
 	Logger.Info("Sending new checkpoint", "vote", hex.EncodeToString(voteSignBytes), "sigs", hex.EncodeToString(sigs), "txData", hex.EncodeToString(txData))
 
-	tx, err := c.rootChainInstance.SubmitHeaderBlock(auth, voteSignBytes, sigs, txData)
+	tx, err := c.RootChainInstance.SubmitHeaderBlock(auth, voteSignBytes, sigs, txData)
 	if err != nil {
 		Logger.Error("Error while submitting checkpoint", "error", err)
 	} else {

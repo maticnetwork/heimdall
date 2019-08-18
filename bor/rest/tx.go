@@ -76,7 +76,7 @@ func postProposeSpanHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.
 		}
 		// The query will return empty if there is no data
 		if len(res) == 0 {
-			rest.WriteErrorResponse(w, http.StatusNoContent, err.Error())
+			rest.WriteErrorResponse(w, http.StatusNoContent, errors.New("no content found for requested key").Error())
 			return
 		}
 		ackCount, err := strconv.ParseInt(string(res), 10, 64)
@@ -93,7 +93,7 @@ func postProposeSpanHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.
 		}
 		// the query will return empty if there is no data
 		if len(res) == 0 {
-			rest.WriteErrorResponse(w, http.StatusNoContent, err.Error())
+			rest.WriteErrorResponse(w, http.StatusNoContent, errors.New("no content found for requested key").Error())
 			return
 		}
 		var _validatorSet types.ValidatorSet
