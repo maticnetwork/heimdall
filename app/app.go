@@ -1,7 +1,6 @@
 package app
 
 import (
-	"bytes"
 	"encoding/json"
 
 	"github.com/maticnetwork/heimdall/bor"
@@ -9,7 +8,6 @@ import (
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ethCommon "github.com/ethereum/go-ethereum/common"
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	dbm "github.com/tendermint/tendermint/libs/db"
@@ -412,73 +410,73 @@ func (app *HeimdallApp) ExportAppStateAndValidators() (appState json.RawMessage,
 }
 
 // GetExtraData get extra data for checkpoint
-func GetExtraData(ctx sdk.Context, _checkpoint hmTypes.CheckpointBlockHeader) []byte {
-	logger.Debug("Creating extra data", "startBlock", _checkpoint.StartBlock, "endBlock", _checkpoint.EndBlock, "roothash", _checkpoint.RootHash, "timestamp", _checkpoint.TimeStamp)
+// func GetExtraData(ctx sdk.Context, _checkpoint hmTypes.CheckpointBlockHeader) []byte {
+// 	logger.Debug("Creating extra data", "startBlock", _checkpoint.StartBlock, "endBlock", _checkpoint.EndBlock, "roothash", _checkpoint.RootHash, "timestamp", _checkpoint.TimeStamp)
 
-	// craft a message
-	txBytes, err := helper.CreateTxBytes(
-		checkpoint.NewMsgCheckpointBlock(
-			_checkpoint.Proposer,
-			_checkpoint.StartBlock,
-			_checkpoint.EndBlock,
-			_checkpoint.RootHash,
-			_checkpoint.TimeStamp,
-		),
-	)
-	if err != nil {
-		logger.Error("Error decoding transaction data", "error", err)
-	}
+// 	// craft a message
+// 	txBytes, err := helper.CreateTxBytes(
+// 		checkpoint.NewMsgCheckpointBlock(
+// 			_checkpoint.Proposer,
+// 			_checkpoint.StartBlock,
+// 			_checkpoint.EndBlock,
+// 			_checkpoint.RootHash,
+// 			_checkpoint.TimeStamp,
+// 		),
+// 	)
+// 	if err != nil {
+// 		logger.Error("Error decoding transaction data", "error", err)
+// 	}
 
-	return txBytes[hmTypes.PulpHashLength:]
+// 	return txBytes[hmTypes.PulpHashLength:]
 }
 
-// PrepareAndSendCheckpoint prepares all the data required for sending checkpoint and sends tx to rootchain
-func PrepareAndSendCheckpoint(ctx sdk.Context, ck checkpoint.Keeper, sk staking.Keeper, caller helper.ContractCaller) {
-	// fetch votes from block header
-	var votes []tmTypes.Vote
-	err := json.Unmarshal(ctx.BlockHeader().Votes, &votes)
-	if err != nil {
-		logger.Error("Error while unmarshalling vote", "error", err)
-	}
+// // PrepareAndSendCheckpoint prepares all the data required for sending checkpoint and sends tx to rootchain
+// func PrepareAndSendCheckpoint(ctx sdk.Context, ck checkpoint.Keeper, sk staking.Keeper, caller helper.ContractCaller) {
+// 	// fetch votes from block header
+// 	var votes []tmTypes.Vote
+// 	err := json.Unmarshal(ctx.BlockHeader().Votes, &votes)
+// 	if err != nil {
+// 		logger.Error("Error while unmarshalling vote", "error", err)
+// 	}
 
-	// get sigs from votes
-	sigs := helper.GetSigs(votes)
+// 	// get sigs from votes
+// 	sigs := helper.GetSigs(votes)
 
-	// Getting latest checkpoint data from store using height as key and unmarshall
-	_checkpoint, err := ck.GetCheckpointFromBuffer(ctx)
-	if err != nil {
-		logger.Error("Unable to unmarshall checkpoint from buffer while preparing checkpoint tx", "error", err, "height", ctx.BlockHeight())
-		return
-	}
+// 	// Getting latest checkpoint data from store using height as key and unmarshall
+// 	_checkpoint, err := ck.GetCheckpointFromBuffer(ctx)
+// 	if err != nil {
+// 		logger.Error("Unable to unmarshall checkpoint from buffer while preparing checkpoint tx", "error", err, "height", ctx.BlockHeight())
+// 		return
+// 	}
 
-	// Get extra data
-	extraData := GetExtraData(ctx, _checkpoint)
+// 	// Get extra data
+// 	extraData := GetExtraData(ctx, _checkpoint)
 
-	//fetch current child block from rootchain contract
-	lastblock, err := caller.CurrentChildBlock()
-	if err != nil {
-		logger.Error("Could not fetch last block from mainchain", "error", err)
-		panic(err)
-	}
+// 	//fetch current child block from rootchain contract
+// 	lastblock, err := caller.CurrentChildBlock()
+// 	if err != nil {
+// 		logger.Error("Could not fetch last block from mainchain", "error", err)
+// 		panic(err)
+// 	}
 
-	// get validator address
-	validatorAddress := ethCommon.BytesToAddress(helper.GetPubKey().Address().Bytes())
+// 	// get validator address
+// 	validatorAddress := ethCommon.BytesToAddress(helper.GetPubKey().Address().Bytes())
 
-	// check if we are proposer
-	if bytes.Equal(sk.GetCurrentProposer(ctx).Signer.Bytes(), validatorAddress.Bytes()) {
-		logger.Info("We are proposer! Validating if checkpoint needs to be pushed", "commitedLastBlock", lastblock, "startBlock", _checkpoint.StartBlock)
-		// check if we need to send checkpoint or not
-		if ((lastblock + 1) == _checkpoint.StartBlock) || (lastblock == 0 && _checkpoint.StartBlock == 0) {
-			logger.Info("Sending valid checkpoint", "startBlock", _checkpoint.StartBlock)
-			caller.SendCheckpoint(helper.GetVoteBytes(votes, ctx), sigs, extraData)
-		} else if lastblock > _checkpoint.StartBlock {
-			logger.Info("Start block does not match, checkpoint already sent", "commitedLastBlock", lastblock, "startBlock", _checkpoint.StartBlock)
-		} else if lastblock > _checkpoint.EndBlock {
-			logger.Info("Checkpoint already sent", "commitedLastBlock", lastblock, "startBlock", _checkpoint.StartBlock)
-		} else {
-			logger.Info("No need to send checkpoint")
-		}
-	} else {
-		logger.Info("We are not proposer", "proposer", sk.GetCurrentProposer(ctx), "validator", validatorAddress.String())
-	}
-}
+// 	// check if we are proposer
+// 	if bytes.Equal(sk.GetCurrentProposer(ctx).Signer.Bytes(), validatorAddress.Bytes()) {
+// 		logger.Info("We are proposer! Validating if checkpoint needs to be pushed", "commitedLastBlock", lastblock, "startBlock", _checkpoint.StartBlock)
+// 		// check if we need to send checkpoint or not
+// 		if ((lastblock + 1) == _checkpoint.StartBlock) || (lastblock == 0 && _checkpoint.StartBlock == 0) {
+// 			logger.Info("Sending valid checkpoint", "startBlock", _checkpoint.StartBlock)
+// 			caller.SendCheckpoint(helper.GetVoteBytes(votes, ctx), sigs, extraData)
+// 		} else if lastblock > _checkpoint.StartBlock {
+// 			logger.Info("Start block does not match, checkpoint already sent", "commitedLastBlock", lastblock, "startBlock", _checkpoint.StartBlock)
+// 		} else if lastblock > _checkpoint.EndBlock {
+// 			logger.Info("Checkpoint already sent", "commitedLastBlock", lastblock, "startBlock", _checkpoint.StartBlock)
+// 		} else {
+// 			logger.Info("No need to send checkpoint")
+// 		}
+// 	} else {
+// 		logger.Info("We are not proposer", "proposer", sk.GetCurrentProposer(ctx), "validator", validatorAddress.String())
+// 	}
+// }

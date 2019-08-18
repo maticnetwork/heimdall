@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	"io/ioutil"
 	"log"
 	"math/big"
@@ -450,52 +451,19 @@ func (c *Checkpointer) broadcastCheckpoint(txhash chan string, start uint64, end
 	txhash <- response.TxHash
 }
 
-// fetchSigs fetches votes and extracts sigs from it
-func (c *Checkpointer) fetchVotes() (votes []tmTypes.Vote, sigs []byte) {
-	// using height+1 fetch last commit data
-
-	// extract votes from response
-
-	// extract signs from votes
-
-	// return
-	return
-}
-
-func (c *Checkpointer) FetchCheckpoint() {
-
-}
-
-func (c *Checkpointer) fetchCurrentChildBlock() {
-
-}
-func (c *Checkpointer) PrepareCheckpoint() {
-	// get votes
-
-	// extract sigs
-
-	// get checkpoint from buffer
-
-	// current child block from contract
-
-	// check if we are proposer
-
-	// sendi
-	return
-}
-
 // SubscribeToTx subscribes to a broadcasted Tx and waits for its commitment to a block
 func (c *Checkpointer) SubscribeToTx(tx tmTypes.Tx) error {
 	data, err := c.WaitForOneEvent(tx, query.MustParse("tm.events.type='NewBlock'").String(), CommitTimeout)
 	if err != nil {
-		fmt.Printf("Unable to wait %v ", err)
+		c.Logger.Error("Unable to wait for tx", "error", err)
 		return err
 	}
 	switch t := data.(type) {
 	case tmTypes.EventDataTx:
+		// TODO call PrepareCheckpoint and send to mainchain
 		fmt.Printf("height %v", t.Height)
 	default:
-		fmt.Printf("default triggerd %v", t)
+		c.Logger.Info("No cases matched")
 	}
 	return nil
 }
@@ -528,4 +496,46 @@ func (c *Checkpointer) WaitForOneEvent(tx tmTypes.Tx, evtTyp string, timeout tim
 	case <-ctx.Done():
 		return nil, errors.New("timed out waiting for event")
 	}
+}
+
+// fetchSigs fetches votes and extracts sigs from it
+func (c *Checkpointer) fetchVotes() (votes []tmTypes.Vote, sigs []byte) {
+	// using height+1 fetch last commit data
+
+	// extract votes from response
+
+	// extract signs from votes
+
+	// return
+	return
+}
+
+func (c *Checkpointer) fetchCurrentChildBlock() {
+
+}
+func (c *Checkpointer) PrepareCheckpoint() {
+	// get votes
+
+	// extract sigs
+
+	// get checkpoint from buffer
+
+	// current child block from contract
+
+	// check if we are proposer
+
+	// sendi
+	return
+}
+
+// fetchSigs fetches votes and extracts sigs from it
+func (c *Checkpointer) fetchVotes() (votes []tmTypes.Vote, sigs []byte) {
+	// using height+1 fetch last commit data
+
+	// extract votes from response
+
+	// extract signs from votes
+
+	// return
+	return
 }
