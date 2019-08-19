@@ -498,34 +498,38 @@ func (c *Checkpointer) WaitForOneEvent(tx tmTypes.Tx, evtTyp string, timeout tim
 	}
 }
 
-// fetchSigs fetches votes and extracts sigs from it
-func (c *Checkpointer) fetchVotes(height int64) (votes []*tmTypes.CommitSig, sigs []byte, err error) {
+// fetchVotes fetches votes and extracts sigs from it
+func (c *Checkpointer) fetchVotes(height int64) (votes []*tmTypes.CommitSig, sigs []byte, chainID string, err error) {
 	// using height+1 fetch last commit votes
 	var blockDetails cTypes.ResultBlock
 	resp, err := http.Get(fmt.Sprintf(TendermintBlockURL, height+1))
 	if err != nil {
 		c.Logger.Error("Unable to send request to get proposer", "Error", err)
-		return nil, nil, err
+		return nil, nil, chainID, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode == 200 {
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			c.Logger.Error("Unable to read data from response", "Error", err)
-			return nil, nil, err
+			return nil, nil, chainID, err
 		}
 		if err := json.Unmarshal(body, &blockDetails); err != nil {
 			c.Logger.Error("Error unmarshalling checkpoint", "error", err)
-			return nil, nil, err
+			return nil, nil, chainID, err
 		}
 	}
-
 	// extract votes from response
 	preCommits := blockDetails.Block.LastCommit.Precommits
+
 	// extract signs from votes
 	valSigs := helper.GetSigs(preCommits)
+
+	// extract chainID
+	chainID = blockDetails.Block.ChainID
+
 	// return
-	return preCommits, valSigs, nil
+	return preCommits, valSigs, chainID, nil
 }
 
 func (c *Checkpointer) fetchCurrentChildBlock() {
@@ -536,17 +540,18 @@ func (c *Checkpointer) fetchCurrentChildBlock() {
 // and sends a transaction to mainchain
 func (c *Checkpointer) DispatchCheckpoint(height int64, txBytes tmTypes.Tx, start uint64, end uint64) error {
 	// get votes
-	votes, sigs, err := c.fetchVotes(height)
+	votes, sigs, chainID, err := c.fetchVotes(height)
 	if err != nil {
 		return err
 	}
+
 	// current child block from contract
 	currentChildBlock, err := c.contractConnector.CurrentChildBlock()
 	if err != nil {
 		return err
 	}
+	// fetch current proposer from heimdall
 	validatorAddress := ethCommon.BytesToAddress(helper.GetPubKey().Address().Bytes())
-
 	var proposer hmtypes.Validator
 	resp, err := http.Get(CurrentProposerURL)
 	if err != nil {
@@ -565,14 +570,17 @@ func (c *Checkpointer) DispatchCheckpoint(height int64, txBytes tmTypes.Tx, star
 			return err
 		}
 	}
+
+	// check if we are current proposer
 	if !bytes.Equal(proposer.Signer.Bytes(), validatorAddress.Bytes()) {
 		return errors.New("We are not proposer, aborting dispatch to mainchain")
 	} else {
 		c.Logger.Info("We are proposer! Validating if checkpoint needs to be pushed", "commitedLastBlock", currentChildBlock, "startBlock", start)
+
 		// check if we need to send checkpoint or not
 		if ((currentChildBlock + 1) == start) || (currentChildBlock == 0 && start == 0) {
-			c.Logger.Info("Sending valid checkpoint", "startBlock", start)
-			c.contractConnector.SendCheckpoint(helper.GetVoteBytes(votes, ctx), sigs, extraData)
+			c.Logger.Info("Checkpoint Valid", "startBlock", start)
+			c.contractConnector.SendCheckpoint(helper.GetVoteBytes(votes, chainID), sigs, txBytes[hmtypes.PulpHashLength:])
 		} else if currentChildBlock > start {
 			c.Logger.Info("Start block does not match, checkpoint already sent", "commitedLastBlock", currentChildBlock, "startBlock", start)
 		} else if currentChildBlock > end {

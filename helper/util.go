@@ -132,9 +132,11 @@ func GetSigs(votes []*tmTypes.CommitSig) (sigs []byte) {
 }
 
 // GetVoteBytes returns vote bytes
-func GetVoteBytes(votes []tmTypes.Vote, ctx sdk.Context) []byte {
+func GetVoteBytes(votes []*tmTypes.CommitSig, chainID string) []byte {
+	vote := votes[0]
+	v := tmTypes.Vote(*vote)
 	// sign bytes for vote
-	return votes[0].SignBytes(ctx.ChainID())
+	return v.SignBytes(chainID)
 }
 
 // CreateAndSendTx creates message and sends tx
