@@ -31,7 +31,8 @@ const (
 	LastNoAckURL          = "http://localhost:1317/checkpoint/last-no-ack"
 	ProposersURL          = "http://localhost:1317/staking/proposer/%v"
 	BufferedCheckpointURL = "http://localhost:1317/checkpoint/buffer"
-	LatestCheckpoint      = "http://localhost:1317/checkpoint/latest-checkpoint"
+	LatestCheckpointURL   = "http://localhost:1317/checkpoint/latest-checkpoint"
+	TendermintBlockURL    = "http://localhost:26657/block?height=%v"
 
 	TransactionTimeout = 1 * time.Minute
 	CommitTimeout      = 2 * time.Minute

@@ -28,6 +28,7 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 	hmtypes "github.com/maticnetwork/heimdall/types"
 	httpClient "github.com/tendermint/tendermint/rpc/client"
+	cTypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmTypes "github.com/tendermint/tendermint/types"
 )
 
@@ -365,7 +366,7 @@ func (c *Checkpointer) fetchContractCheckpointState(lastHeader uint64, wg *sync.
 func (c *Checkpointer) fetchBufferedCheckpoint(wg *sync.WaitGroup, bufferedCheckpoint chan<- HeimdallCheckpoint) {
 	defer wg.Done()
 	c.Logger.Info("Fetching checkpoint in buffer")
-	_checkpoint, err := c.fetchCheckpoint(LatestCheckpoint)
+	_checkpoint, err := c.fetchCheckpoint(LatestCheckpointURL)
 	if err != nil {
 		c.Logger.Error("Error while fetching data from server", "error", err)
 		bufferedCheckpoint <- NewHeimdallCheckpoint(_checkpoint.StartBlock, _checkpoint.EndBlock, false)
@@ -499,15 +500,34 @@ func (c *Checkpointer) WaitForOneEvent(tx tmTypes.Tx, evtTyp string, timeout tim
 }
 
 // fetchSigs fetches votes and extracts sigs from it
-func (c *Checkpointer) fetchVotes() (votes []tmTypes.Vote, sigs []byte) {
+func (c *Checkpointer) fetchVotes(height int64) (votes []tmTypes.Vote, sigs []byte, err error) {
 	// using height+1 fetch last commit data
+	resp, err := http.Get(fmt.Sprintf(TendermintBlockURL, height+1))
+	if err != nil {
+		c.Logger.Error("Unable to send request to get proposer", "Error", err)
+		return nil, nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode == 200 {
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			c.Logger.Error("Unable to read data from response", "Error", err)
+			return nil, nil, err
+		}
+		var blockDetails cTypes.ResultBlock
+		if err := json.Unmarshal(body, &blockDetails); err != nil {
+			c.Logger.Error("Error unmarshalling checkpoint", "error", err)
+			return nil, nil, err
+		}
+		return nil, nil, nil
+	}
 
 	// extract votes from response
 
 	// extract signs from votes
 
 	// return
-	return
+	return nil, nil, nil
 }
 
 func (c *Checkpointer) fetchCurrentChildBlock() {
