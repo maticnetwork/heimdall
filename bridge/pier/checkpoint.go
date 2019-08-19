@@ -1,6 +1,7 @@
 package pier
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -380,7 +381,7 @@ func (c *Checkpointer) fetchBufferedCheckpoint(wg *sync.WaitGroup, bufferedCheck
 func (c *Checkpointer) fetchCommittedCheckpoint(wg *sync.WaitGroup, lastCheckpoint chan<- HeimdallCheckpoint) {
 	defer wg.Done()
 	c.Logger.Info("Fetching last committed checkpoint")
-	_checkpoint, err := c.fetchCheckpoint(LatestCheckpoint)
+	_checkpoint, err := c.fetchCheckpoint(LatestCheckpointURL)
 	if err != nil {
 		c.Logger.Error("Error while fetching data from server", "error", err)
 		lastCheckpoint <- NewHeimdallCheckpoint(_checkpoint.StartBlock, _checkpoint.EndBlock, false)
@@ -447,13 +448,13 @@ func (c *Checkpointer) broadcastCheckpoint(txhash chan string, start uint64, end
 
 	c.Logger.Info("Subscribing to checkpoint tx", "hash", response.TxHash, "start", start, "end", end, "root", root.String())
 
-	go c.SubscribeToTx(txBytes)
+	go c.SubscribeToTx(txBytes, start, end)
 
 	txhash <- response.TxHash
 }
 
 // SubscribeToTx subscribes to a broadcasted Tx and waits for its commitment to a block
-func (c *Checkpointer) SubscribeToTx(tx tmTypes.Tx) error {
+func (c *Checkpointer) SubscribeToTx(tx tmTypes.Tx, start, end uint64) error {
 	data, err := c.WaitForOneEvent(tx, query.MustParse("tm.events.type='NewBlock'").String(), CommitTimeout)
 	if err != nil {
 		c.Logger.Error("Unable to wait for tx", "error", err)
@@ -461,8 +462,7 @@ func (c *Checkpointer) SubscribeToTx(tx tmTypes.Tx) error {
 	}
 	switch t := data.(type) {
 	case tmTypes.EventDataTx:
-		// TODO call PrepareCheckpoint and send to mainchain
-		fmt.Printf("height %v", t.Height)
+		c.DispatchCheckpoint(t.Height, tx, start, end)
 	default:
 		c.Logger.Info("No cases matched")
 	}
@@ -476,7 +476,6 @@ func (c *Checkpointer) SubscribeToTx(tx tmTypes.Tx) error {
 // This handles subscribing and unsubscribing under the hood
 func (c *Checkpointer) WaitForOneEvent(tx tmTypes.Tx, evtTyp string, timeout time.Duration) (tmTypes.TMEventData, error) {
 	const subscriber = "helpers"
-
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
@@ -500,8 +499,9 @@ func (c *Checkpointer) WaitForOneEvent(tx tmTypes.Tx, evtTyp string, timeout tim
 }
 
 // fetchSigs fetches votes and extracts sigs from it
-func (c *Checkpointer) fetchVotes(height int64) (votes []tmTypes.Vote, sigs []byte, err error) {
-	// using height+1 fetch last commit data
+func (c *Checkpointer) fetchVotes(height int64) (votes []*tmTypes.CommitSig, sigs []byte, err error) {
+	// using height+1 fetch last commit votes
+	var blockDetails cTypes.ResultBlock
 	resp, err := http.Get(fmt.Sprintf(TendermintBlockURL, height+1))
 	if err != nil {
 		c.Logger.Error("Unable to send request to get proposer", "Error", err)
@@ -514,48 +514,74 @@ func (c *Checkpointer) fetchVotes(height int64) (votes []tmTypes.Vote, sigs []by
 			c.Logger.Error("Unable to read data from response", "Error", err)
 			return nil, nil, err
 		}
-		var blockDetails cTypes.ResultBlock
 		if err := json.Unmarshal(body, &blockDetails); err != nil {
 			c.Logger.Error("Error unmarshalling checkpoint", "error", err)
 			return nil, nil, err
 		}
-		return nil, nil, nil
 	}
 
 	// extract votes from response
-
+	preCommits := blockDetails.Block.LastCommit.Precommits
 	// extract signs from votes
-
+	valSigs := helper.GetSigs(preCommits)
 	// return
-	return nil, nil, nil
+	return preCommits, valSigs, nil
 }
 
 func (c *Checkpointer) fetchCurrentChildBlock() {
 
 }
-func (c *Checkpointer) PrepareCheckpoint() {
+
+// DispatchCheckpoint prepares the data required for mainchain checkpoint submission
+// and sends a transaction to mainchain
+func (c *Checkpointer) DispatchCheckpoint(height int64, txBytes tmTypes.Tx, start uint64, end uint64) error {
 	// get votes
-
-	// extract sigs
-
-	// get checkpoint from buffer
-
+	votes, sigs, err := c.fetchVotes(height)
+	if err != nil {
+		return err
+	}
 	// current child block from contract
+	currentChildBlock, err := c.contractConnector.CurrentChildBlock()
+	if err != nil {
+		return err
+	}
+	validatorAddress := ethCommon.BytesToAddress(helper.GetPubKey().Address().Bytes())
 
-	// check if we are proposer
+	var proposer hmtypes.Validator
+	resp, err := http.Get(CurrentProposerURL)
+	if err != nil {
+		c.Logger.Error("Unable to send request to get heimdall", "Error", err)
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode == 200 {
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			c.Logger.Error("Unable to read data from response", "Error", err)
+			return err
+		}
+		if err := json.Unmarshal(body, &proposer); err != nil {
+			c.Logger.Error("Error unmarshalling validator", "error", err)
+			return err
+		}
+	}
+	if !bytes.Equal(proposer.Signer.Bytes(), validatorAddress.Bytes()) {
+		return errors.New("We are not proposer, aborting dispatch to mainchain")
+	} else {
+		c.Logger.Info("We are proposer! Validating if checkpoint needs to be pushed", "commitedLastBlock", currentChildBlock, "startBlock", start)
+		// check if we need to send checkpoint or not
+		if ((currentChildBlock + 1) == start) || (currentChildBlock == 0 && start == 0) {
+			c.Logger.Info("Sending valid checkpoint", "startBlock", start)
+			c.contractConnector.SendCheckpoint(helper.GetVoteBytes(votes, ctx), sigs, extraData)
+		} else if currentChildBlock > start {
+			c.Logger.Info("Start block does not match, checkpoint already sent", "commitedLastBlock", currentChildBlock, "startBlock", start)
+		} else if currentChildBlock > end {
+			c.Logger.Info("Checkpoint already sent", "commitedLastBlock", currentChildBlock, "startBlock", start)
+		} else {
+			c.Logger.Info("No need to send checkpoint")
+		}
+	}
 
-	// sendi
-	return
-}
-
-// fetchSigs fetches votes and extracts sigs from it
-func (c *Checkpointer) fetchVotes() (votes []tmTypes.Vote, sigs []byte) {
-	// using height+1 fetch last commit data
-
-	// extract votes from response
-
-	// extract signs from votes
-
-	// return
-	return
+	// sending
+	return nil
 }

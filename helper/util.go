@@ -120,7 +120,7 @@ func SendTendermintRequest(cliCtx context.CLIContext, txBytes []byte, mode strin
 }
 
 // GetSigs returns sigs bytes from vote
-func GetSigs(votes []tmTypes.Vote) (sigs []byte) {
+func GetSigs(votes []*tmTypes.CommitSig) (sigs []byte) {
 	sort.Slice(votes, func(i, j int) bool {
 		return bytes.Compare(votes[i].ValidatorAddress.Bytes(), votes[j].ValidatorAddress.Bytes()) < 0
 	})

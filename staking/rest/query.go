@@ -35,6 +35,10 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Co
 		"/staking/proposer/{times}",
 		proposerHandlerFn(cdc, cliCtx),
 	).Methods("GET")
+	r.HandleFunc(
+		"/staking/current-proposer",
+		currentProposerHandlerFn(cdc, cliCtx),
+	).Methods("GET")
 }
 
 // Returns validator information by signer address
@@ -203,6 +207,42 @@ func proposerHandlerFn(
 
 		// TODO format validator set to remove pubkey like we did for validator
 		result, err := json.Marshal(&proposers)
+		if err != nil {
+			RestLogger.Error("Error while marshalling response to Json", "error", err)
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
+	}
+}
+
+// currentProposerHandlerFn get proposer for current validator set
+func currentProposerHandlerFn(
+	cdc *codec.Codec,
+	cliCtx context.CLIContext,
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		res, err := cliCtx.QueryStore(staking.CurrentValidatorSetKey, "staking")
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		// the query will return empty if there is no data
+		if len(res) == 0 {
+			rest.WriteErrorResponse(w, http.StatusNoContent, errors.New("no content found for requested key").Error())
+			return
+		}
+
+		var _validatorSet hmTypes.ValidatorSet
+		err = cdc.UnmarshalBinaryBare(res, &_validatorSet)
+		if err != nil {
+			RestLogger.Error("Error while marshalling validator set", "error", err)
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		result, err := json.Marshal(&_validatorSet.Proposer)
 		if err != nil {
 			RestLogger.Error("Error while marshalling response to Json", "error", err)
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())

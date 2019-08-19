@@ -76,8 +76,11 @@ func (k *Keeper) AddSigs(ctx sdk.Context, tmVotes []byte) error {
 	if err != nil {
 		return err
 	}
-
-	sigs := helper.GetSigs(votes)
+	var commitSigs []*tmTypes.CommitSig
+	for i := range votes {
+		commitSigs[i] = votes[i].CommitSig()
+	}
+	sigs := helper.GetSigs(commitSigs)
 
 	lastSpan.AddSigs(sigs)
 	if err := k.AddNewSpan(ctx, lastSpan); err != nil {
