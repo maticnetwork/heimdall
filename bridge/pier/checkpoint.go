@@ -470,7 +470,7 @@ func (c *Checkpointer) SubscribeToTx(tx tmTypes.Tx, start, end uint64) error {
 }
 
 // fetchVotes fetches votes and extracts sigs from it
-func (c *Checkpointer) fetchVotes() (votes []*tmTypes.CommitSig, sigs []byte, chainID string, err error) {
+func (c *Checkpointer) fetchVotes(height int64) (votes []*tmTypes.CommitSig, sigs []byte, chainID string, err error) {
 	c.Logger.Debug("Subscribing to new height")
 
 	var blockDetails *tmTypes.Block
@@ -484,6 +484,8 @@ func (c *Checkpointer) fetchVotes() (votes []*tmTypes.CommitSig, sigs []byte, ch
 	default:
 		c.Logger.Info("No cases matched")
 	}
+
+	// TODO ensure block.height == height+1
 
 	// extract votes from response
 	preCommits := blockDetails.LastCommit.Precommits
@@ -504,7 +506,7 @@ func (c *Checkpointer) DispatchCheckpoint(height int64, txBytes tmTypes.Tx, star
 	c.Logger.Debug("Preparing checkpoint to be pushed on chain")
 
 	// get votes
-	votes, sigs, chainID, err := c.fetchVotes()
+	votes, sigs, chainID, err := c.fetchVotes(height)
 	if err != nil {
 		return err
 	}
@@ -541,7 +543,6 @@ func (c *Checkpointer) DispatchCheckpoint(height int64, txBytes tmTypes.Tx, star
 		return errors.New("We are not proposer, aborting dispatch to mainchain")
 	} else {
 		c.Logger.Info("We are proposer! Validating if checkpoint needs to be pushed", "commitedLastBlock", currentChildBlock, "startBlock", start)
-
 		// check if we need to send checkpoint or not
 		if ((currentChildBlock + 1) == start) || (currentChildBlock == 0 && start == 0) {
 			c.Logger.Info("Checkpoint Valid", "startBlock", start)
@@ -554,8 +555,6 @@ func (c *Checkpointer) DispatchCheckpoint(height int64, txBytes tmTypes.Tx, star
 			c.Logger.Info("No need to send checkpoint")
 		}
 	}
-
-	// sending
 	return nil
 }
 
@@ -588,6 +587,7 @@ func (c *Checkpointer) WaitForOneEvent(tx tmTypes.Tx, evtTyp string) (tmTypes.TM
 	}
 }
 
+// SubscribeNewBlock subscribes to a new block
 func (c *Checkpointer) SubscribeNewBlock() (tmTypes.TMEventData, error) {
 	const subscriber = "helpers"
 	ctx, cancel := context.WithTimeout(context.Background(), CommitTimeout)
@@ -608,3 +608,25 @@ func (c *Checkpointer) SubscribeNewBlock() (tmTypes.TMEventData, error) {
 		return nil, errors.New("timed out waiting for event")
 	}
 }
+
+// TODO create a generic event subscriber
+// func (c *Checkpointer) SubscribeToEvent(query tmquery.Query) (tmTypes.TMEventData, error) {
+// 	const subscriber = "helpers"
+// 	ctx, cancel := context.WithTimeout(context.Background(), CommitTimeout)
+// 	defer cancel()
+
+// 	// register for the next event of this type
+// 	eventCh, err := c.httpClient.Subscribe(ctx, subscriber, query.String())
+// 	if err != nil {
+// 		return nil, errors.Wrap(err, "failed to subscribe")
+// 	}
+
+// 	// make sure to unregister after the test is over
+// 	defer c.httpClient.UnsubscribeAll(ctx, subscriber)
+// 	select {
+// 	case event := <-eventCh:
+// 		return event.Data.(tmTypes.TMEventData), nil
+// 	case <-ctx.Done():
+// 		return nil, errors.New("timed out waiting for event")
+// 	}
+// }
