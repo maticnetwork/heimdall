@@ -29,7 +29,6 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 	hmtypes "github.com/maticnetwork/heimdall/types"
 	httpClient "github.com/tendermint/tendermint/rpc/client"
-	cTypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmTypes "github.com/tendermint/tendermint/types"
 )
 
@@ -455,11 +454,12 @@ func (c *Checkpointer) broadcastCheckpoint(txhash chan string, start uint64, end
 
 // SubscribeToTx subscribes to a broadcasted Tx and waits for its commitment to a block
 func (c *Checkpointer) SubscribeToTx(tx tmTypes.Tx, start, end uint64) error {
-	data, err := c.WaitForOneEvent(tx, query.MustParse("tm.events.type='NewBlock'").String(), CommitTimeout)
+	data, err := c.WaitForOneEvent(tx, query.MustParse("tm.events.type='NewBlock'").String())
 	if err != nil {
 		c.Logger.Error("Unable to wait for tx", "error", err)
 		return err
 	}
+
 	switch t := data.(type) {
 	case tmTypes.EventDataTx:
 		c.DispatchCheckpoint(t.Height, tx, start, end)
@@ -469,78 +469,42 @@ func (c *Checkpointer) SubscribeToTx(tx tmTypes.Tx, start, end uint64) error {
 	return nil
 }
 
-// WaitForOneEvent subscribes to a websocket event for the given
-// event time and returns upon receiving it one time, or
-// when the timeout duration has expired.
-//
-// This handles subscribing and unsubscribing under the hood
-func (c *Checkpointer) WaitForOneEvent(tx tmTypes.Tx, evtTyp string, timeout time.Duration) (tmTypes.TMEventData, error) {
-	const subscriber = "helpers"
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-
-	query := tmTypes.EventQueryTxFor(tx).String()
-
-	// register for the next event of this type
-	eventCh, err := c.httpClient.Subscribe(ctx, subscriber, query)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to subscribe")
-	}
-
-	// make sure to unregister after the test is over
-	defer c.httpClient.UnsubscribeAll(ctx, subscriber)
-
-	select {
-	case event := <-eventCh:
-		return event.Data.(tmTypes.TMEventData), nil
-	case <-ctx.Done():
-		return nil, errors.New("timed out waiting for event")
-	}
-}
-
 // fetchVotes fetches votes and extracts sigs from it
-func (c *Checkpointer) fetchVotes(height int64) (votes []*tmTypes.CommitSig, sigs []byte, chainID string, err error) {
-	// using height+1 fetch last commit votes
-	var blockDetails cTypes.ResultBlock
-	resp, err := http.Get(fmt.Sprintf(TendermintBlockURL, height+1))
+func (c *Checkpointer) fetchVotes() (votes []*tmTypes.CommitSig, sigs []byte, chainID string, err error) {
+	c.Logger.Debug("Subscribing to new height")
+
+	var blockDetails *tmTypes.Block
+	data, err := c.SubscribeNewBlock()
 	if err != nil {
-		c.Logger.Error("Unable to send request to get proposer", "Error", err)
-		return nil, nil, chainID, err
+		return nil, nil, "", err
 	}
-	defer resp.Body.Close()
-	if resp.StatusCode == 200 {
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			c.Logger.Error("Unable to read data from response", "Error", err)
-			return nil, nil, chainID, err
-		}
-		if err := json.Unmarshal(body, &blockDetails); err != nil {
-			c.Logger.Error("Error unmarshalling checkpoint", "error", err)
-			return nil, nil, chainID, err
-		}
+	switch t := data.(type) {
+	case tmTypes.EventDataNewBlock:
+		blockDetails = t.Block
+	default:
+		c.Logger.Info("No cases matched")
 	}
+
 	// extract votes from response
-	preCommits := blockDetails.Block.LastCommit.Precommits
+	preCommits := blockDetails.LastCommit.Precommits
 
 	// extract signs from votes
 	valSigs := helper.GetSigs(preCommits)
 
 	// extract chainID
-	chainID = blockDetails.Block.ChainID
+	chainID = blockDetails.ChainID
 
 	// return
 	return preCommits, valSigs, chainID, nil
 }
 
-func (c *Checkpointer) fetchCurrentChildBlock() {
-
-}
-
 // DispatchCheckpoint prepares the data required for mainchain checkpoint submission
 // and sends a transaction to mainchain
 func (c *Checkpointer) DispatchCheckpoint(height int64, txBytes tmTypes.Tx, start uint64, end uint64) error {
+	c.Logger.Debug("Preparing checkpoint to be pushed on chain")
+
 	// get votes
-	votes, sigs, chainID, err := c.fetchVotes(height)
+	votes, sigs, chainID, err := c.fetchVotes()
 	if err != nil {
 		return err
 	}
@@ -550,6 +514,7 @@ func (c *Checkpointer) DispatchCheckpoint(height int64, txBytes tmTypes.Tx, star
 	if err != nil {
 		return err
 	}
+
 	// fetch current proposer from heimdall
 	validatorAddress := ethCommon.BytesToAddress(helper.GetPubKey().Address().Bytes())
 	var proposer hmtypes.Validator
@@ -592,4 +557,54 @@ func (c *Checkpointer) DispatchCheckpoint(height int64, txBytes tmTypes.Tx, star
 
 	// sending
 	return nil
+}
+
+// WaitForOneEvent subscribes to a websocket event for the given
+// event time and returns upon receiving it one time, or
+// when the timeout duration has expired.
+//
+// This handles subscribing and unsubscribing under the hood
+func (c *Checkpointer) WaitForOneEvent(tx tmTypes.Tx, evtTyp string) (tmTypes.TMEventData, error) {
+	const subscriber = "helpers"
+	ctx, cancel := context.WithTimeout(context.Background(), CommitTimeout)
+	defer cancel()
+
+	query := tmTypes.EventQueryTxFor(tx).String()
+
+	// register for the next event of this type
+	eventCh, err := c.httpClient.Subscribe(ctx, subscriber, query)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to subscribe")
+	}
+
+	// make sure to unregister after the test is over
+	defer c.httpClient.UnsubscribeAll(ctx, subscriber)
+
+	select {
+	case event := <-eventCh:
+		return event.Data.(tmTypes.TMEventData), nil
+	case <-ctx.Done():
+		return nil, errors.New("timed out waiting for event")
+	}
+}
+
+func (c *Checkpointer) SubscribeNewBlock() (tmTypes.TMEventData, error) {
+	const subscriber = "helpers"
+	ctx, cancel := context.WithTimeout(context.Background(), CommitTimeout)
+	defer cancel()
+
+	// register for the next event of this type
+	eventCh, err := c.httpClient.Subscribe(ctx, subscriber, tmTypes.QueryForEvent(tmTypes.EventNewBlock).String())
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to subscribe")
+	}
+
+	// make sure to unregister after the test is over
+	defer c.httpClient.UnsubscribeAll(ctx, subscriber)
+	select {
+	case event := <-eventCh:
+		return event.Data.(tmTypes.TMEventData), nil
+	case <-ctx.Done():
+		return nil, errors.New("timed out waiting for event")
+	}
 }
