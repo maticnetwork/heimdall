@@ -47,7 +47,8 @@ start-heimdall:
 
 reset-heimdalld:
 	./build/heimdalld unsafe-reset-all 
-
+	rm -rf ~/.heimdalld/bridge
+	
 run-server:
 	./build/heimdalld rest-server 
 

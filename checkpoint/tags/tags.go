@@ -9,6 +9,7 @@ var (
 	Action      = sdk.TagAction
 	Proposer    = "proposer"
 	StartBlock  = "start-block"
+	Checkpoint  = "checkpoint"
 	EndBlock    = "end-block"
 	HeaderIndex = "header-index"
 	NewProposer = "new-proposer"

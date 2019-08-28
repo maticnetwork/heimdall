@@ -15,12 +15,13 @@ var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Start bridge server",
 	Run: func(cmd *cobra.Command, args []string) {
+		qConnector := pier.NewQueueConnector("amqp://guest:guest@localhost:5672/", "hq", "bq", "cq")
 		services := [...]common.Service{
-			// pier.NewMaticCheckpointer(),
-			pier.NewSyncer(),
-			// pier.NewAckService(),
+			pier.NewCheckpointer(qConnector),
+			pier.NewSyncer(qConnector),
+			pier.NewAckService(),
+			pier.NewConsumerService(qConnector),
 		}
-
 		// sync group
 		var wg sync.WaitGroup
 
@@ -44,11 +45,11 @@ var startCmd = &cobra.Command{
 		for _, service := range services {
 			go func(serv common.Service) {
 				defer wg.Done()
+				// TODO handle error while starting service
 				serv.Start()
 				<-serv.Quit()
 			}(service)
 		}
-
 		// wait for all processes
 		wg.Add(len(services))
 		wg.Wait()

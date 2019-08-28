@@ -20,9 +20,14 @@ import (
 	"github.com/tendermint/tendermint/libs/common"
 
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/maticnetwork/heimdall/checkpoint"
+	"github.com/maticnetwork/heimdall/contracts/depositmanager"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
+	"github.com/maticnetwork/heimdall/staking"
+
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 	"github.com/maticnetwork/heimdall/helper"
+	hmtypes "github.com/maticnetwork/heimdall/types"
 )
 
 const (
@@ -39,6 +44,8 @@ const (
 type Syncer struct {
 	// Base service
 	common.BaseService
+
+	qConnector QueueConnector
 
 	// storage client
 	storageClient *leveldb.DB
@@ -64,10 +71,9 @@ type Syncer struct {
 }
 
 // NewSyncer returns new service object for syncing events
-func NewSyncer() *Syncer {
+func NewSyncer(connector QueueConnector) *Syncer {
 	// create logger
 	logger := Logger.With("module", ChainSyncer)
-
 	// root chain instance
 	rootchainInstance, err := helper.GetRootChainInstance()
 	if err != nil {
@@ -84,9 +90,11 @@ func NewSyncer() *Syncer {
 
 	rootchainABI, _ := helper.GetRootChainABI()
 	stakemanagerABI, _ := helper.GetStakeManagerABI()
+	depositManagerABI, _ := helper.GetDepositManagerABI()
 	abis := []*abi.ABI{
 		&rootchainABI,
 		&stakemanagerABI,
+		&depositManagerABI,
 	}
 
 	cliCtx := cliContext.NewCLIContext()
@@ -94,10 +102,10 @@ func NewSyncer() *Syncer {
 
 	// creating syncer object
 	syncer := &Syncer{
-		storageClient: getBridgeDBInstance(viper.GetString(BridgeDBFlag)),
-		cliContext:    cliCtx,
-		abis:          abis,
-
+		storageClient:        getBridgeDBInstance(viper.GetString(BridgeDBFlag)),
+		cliContext:           cliCtx,
+		abis:                 abis,
+		qConnector:           connector,
 		MainClient:           helper.GetMainClient(),
 		RootChainInstance:    rootchainInstance,
 		StakeManagerInstance: stakeManagerInstance,
@@ -253,6 +261,7 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 		Addresses: []ethCommon.Address{
 			helper.GetRootChainAddress(),
 			helper.GetStakeManagerAddress(),
+			helper.GetDepositManagerAddress(),
 		},
 	}
 
@@ -314,8 +323,8 @@ func (syncer *Syncer) processCheckpointEvent(eventName string, abiObject *abi.AB
 		)
 
 		// create msg checkpoint ack message
-		// msg := checkpoint.NewMsgCheckpointAck(event.Number.Uint64(), uint64(time.Now().Unix()))
-		// syncer.sendTx(eventName, msg)
+		msg := checkpoint.NewMsgCheckpointAck(event.Number.Uint64(), uint64(time.Now().Unix()))
+		syncer.qConnector.DispatchToHeimdall(msg)
 	}
 }
 
@@ -333,6 +342,10 @@ func (syncer *Syncer) processStakedEvent(eventName string, abiObject *abi.ABI, v
 			"activatonEpoch", event.ActivatonEpoch,
 			"amount", event.Amount,
 		)
+		if bytes.Compare(event.User.Bytes(), helper.GetPubKey().Address().Bytes()) == 0 {
+			msg := staking.NewMsgValidatorJoin(event.ValidatorId.Uint64(), hmtypes.NewPubKey(helper.GetPubKey().Bytes()), vLog.TxHash)
+			syncer.qConnector.DispatchToHeimdall(msg)
+		}
 	}
 }
 
@@ -350,11 +363,9 @@ func (syncer *Syncer) processUnstakeInitEvent(eventName string, abiObject *abi.A
 			"deactivatonEpoch", event.DeactivationEpoch,
 			"amount", event.Amount,
 		)
-
-		// TODO figure out how to obtain txhash
 		// send validator exit message
-		// msg := staking.NewMsgValidatorExit(event.ValidatorId.Uint64())
-		//syncer.sendTx(eventName, msg)
+		msg := staking.NewMsgValidatorExit(event.ValidatorId.Uint64(), vLog.TxHash)
+		syncer.qConnector.DispatchToHeimdall(msg)
 	}
 }
 
@@ -363,7 +374,6 @@ func (syncer *Syncer) processSignerChangeEvent(eventName string, abiObject *abi.
 	if err := UnpackLog(abiObject, event, eventName, vLog); err != nil {
 		logEventParseError(syncer.Logger, eventName, err)
 	} else {
-		// TOOD validator signer changed
 		syncer.Logger.Debug(
 			"New event found",
 			"event", eventName,
@@ -371,12 +381,28 @@ func (syncer *Syncer) processSignerChangeEvent(eventName string, abiObject *abi.
 			"newSigner", event.NewSigner.Hex(),
 			"oldSigner", event.OldSigner.Hex(),
 		)
+		// if bytes.Compare(event.NewSigner.Bytes(), helper.GetPubKey().Address().Bytes()) == 0 {
+		// 	msg := staking.NewMsgValidatorUpdate(event.ValidatorId.Uint64(), hmtypes.NewPubKey(helper.GetPubKey().Bytes()), vLog.TxHash)
+		// 	syncer.qConnector.DispatchToHeimdall(msg)
+		// }
 	}
 }
 
 func (syncer *Syncer) processDepositEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
-	// event := new(rootchain.)
+	event := new(depositmanager.DepositmanagerDeposit)
+	if err := UnpackLog(abiObject, event, eventName, vLog); err != nil {
+		logEventParseError(syncer.Logger, eventName, err)
+	} else {
+		syncer.Logger.Debug(
+			"New event found",
+			"event", eventName,
+			"user", event.User,
+			"depositCount", event.DepositCount,
+			"token", event.Token.String(),
+		)
 
+		// TODO dispatch to heimdall
+	}
 }
 
 // EventByID looks up a event by the topic id

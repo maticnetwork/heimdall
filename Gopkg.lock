@@ -458,6 +458,14 @@
   version = "v1.4.0"
 
 [[projects]]
+  branch = "master"
+  digest = "1:d6bb6f3240a488ffe5bb6952b513569d009927dcb20ff94885f87b76cef2b698"
+  name = "github.com/streadway/amqp"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "75d898a42a940fbc854dfd1a4199eabdc00cf024"
+
+[[projects]]
   digest = "1:ac83cf90d08b63ad5f7e020ef480d319ae890c208f8524622a2f3136e2686b02"
   name = "github.com/stretchr/objx"
   packages = ["."]
@@ -767,6 +775,7 @@
     "github.com/gorilla/mux",
     "github.com/spf13/cobra",
     "github.com/spf13/viper",
+    "github.com/streadway/amqp",
     "github.com/stretchr/testify/mock",
     "github.com/stretchr/testify/require",
     "github.com/syndtr/goleveldb/leveldb",

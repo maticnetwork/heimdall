@@ -12,6 +12,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -27,9 +28,15 @@ const (
 	NoackService         = "checkpoint-no-ack"
 
 	// TODO fetch port from config
-	LastNoAckURL      = "http://localhost:1317/checkpoint/last-no-ack"
-	ProposersURL      = "http://localhost:1317/staking/proposer/%v"
-	LastCheckpointURL = "http://localhost:1317/checkpoint/buffer"
+	LastNoAckURL          = "http://localhost:1317/checkpoint/last-no-ack"
+	ProposersURL          = "http://localhost:1317/staking/proposer/%v"
+	BufferedCheckpointURL = "http://localhost:1317/checkpoint/buffer"
+	LatestCheckpointURL   = "http://localhost:1317/checkpoint/latest-checkpoint"
+	TendermintBlockURL    = "http://localhost:26657/block?height=%v"
+	CurrentProposerURL    = "http://localhost:1317/staking/current-proposer"
+
+	TransactionTimeout = 1 * time.Minute
+	CommitTimeout      = 2 * time.Minute
 
 	BridgeDBFlag = "bridge-db"
 )
@@ -90,7 +97,6 @@ func UnpackLog(abiObject *abi.ABI, out interface{}, event string, log *types.Log
 			return err
 		}
 	}
-
 	var indexed abi.Arguments
 	for _, arg := range abiObject.Events[event].Inputs {
 		if arg.Indexed {

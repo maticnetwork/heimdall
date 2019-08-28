@@ -1,7 +1,6 @@
 package helper
 
 import (
-	"fmt"
 	"math/big"
 
 	"context"
@@ -27,6 +26,7 @@ type IContractCaller interface {
 	GetHeaderInfo(headerID uint64) (root common.Hash, start, end, createdAt uint64, err error)
 	GetValidatorInfo(valID types.ValidatorID) (validator types.Validator, err error)
 	CurrentChildBlock() (uint64, error)
+	CurrentHeaderBlock() (uint64, error)
 	GetBalance(address common.Address) (*big.Int, error)
 	SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte)
 	GetMainChainBlock(blockNum *big.Int) (header *ethtypes.Header, err error)
@@ -37,10 +37,11 @@ type IContractCaller interface {
 }
 
 type ContractCaller struct {
-	rootChainInstance    *rootchain.Rootchain
-	stakeManagerInstance *stakemanager.Stakemanager
-	mainChainClient      *ethclient.Client
-	mainChainRPC         *rpc.Client
+	RootChainInstance    *rootchain.Rootchain
+	StakeManagerInstance *stakemanager.Stakemanager
+	MainChainClient      *ethclient.Client
+	MainChainRPC         *rpc.Client
+	MaticClient          *ethclient.Client
 	stakeManagerABI      abi.ABI
 }
 
@@ -66,10 +67,11 @@ func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 		Logger.Error("Error creating stakeManagerInstance while getting validator info", "error", err)
 		return contractCallerObj, err
 	}
-	contractCallerObj.mainChainClient = GetMainClient()
-	contractCallerObj.mainChainRPC = GetMainChainRPCClient()
-	contractCallerObj.stakeManagerInstance = stakeManagerInstance
-	contractCallerObj.rootChainInstance = rootChainInstance
+	contractCallerObj.MainChainClient = GetMainClient()
+	contractCallerObj.MainChainRPC = GetMainChainRPCClient()
+	contractCallerObj.StakeManagerInstance = stakeManagerInstance
+	contractCallerObj.RootChainInstance = rootChainInstance
+	contractCallerObj.MaticClient = GetMaticClient()
 
 	// load stake manager abi
 	stakeContract, err := abi.JSON(strings.NewReader(string(stakemanager.StakemanagerABI)))
@@ -87,7 +89,7 @@ func (c *ContractCaller) GetHeaderInfo(headerID uint64) (root common.Hash, start
 	// get header from rootchain
 	headerIDInt := big.NewInt(0)
 	headerIDInt = headerIDInt.SetUint64(headerID)
-	headerBlock, err := c.rootChainInstance.HeaderBlock(nil, headerIDInt)
+	headerBlock, err := c.RootChainInstance.HeaderBlock(nil, headerIDInt)
 	if err != nil {
 		Logger.Error("Unable to fetch header block from rootchain", "headerBlockIndex", headerID)
 		return root, start, end, createdAt, errors.New("Unable to fetch header block")
@@ -98,7 +100,7 @@ func (c *ContractCaller) GetHeaderInfo(headerID uint64) (root common.Hash, start
 
 // CurrentChildBlock fetch current child block
 func (c *ContractCaller) CurrentChildBlock() (uint64, error) {
-	currentChildBlock, err := c.rootChainInstance.CurrentChildBlock(nil)
+	currentChildBlock, err := c.RootChainInstance.CurrentChildBlock(nil)
 	if err != nil {
 		Logger.Error("Could not fetch current child block from rootchain contract", "Error", err)
 		return 0, err
@@ -106,9 +108,19 @@ func (c *ContractCaller) CurrentChildBlock() (uint64, error) {
 	return currentChildBlock.Uint64(), nil
 }
 
-// get balance of account (returns big.Int balance wont fit in uint64)
+// CurrentHeaderBlock fetches current header block
+func (c *ContractCaller) CurrentHeaderBlock() (uint64, error) {
+	currentHeaderBlock, err := c.RootChainInstance.CurrentHeaderBlock(nil)
+	if err != nil {
+		Logger.Error("Could not fetch current header block from rootchain contract", "Error", err)
+		return 0, err
+	}
+	return currentHeaderBlock.Uint64(), nil
+}
+
+// GetBalance get balance of account (returns big.Int balance wont fit in uint64)
 func (c *ContractCaller) GetBalance(address common.Address) (*big.Int, error) {
-	balance, err := c.mainChainClient.BalanceAt(context.Background(), address, nil)
+	balance, err := c.MainChainClient.BalanceAt(context.Background(), address, nil)
 	if err != nil {
 		Logger.Error("Unable to fetch balance of account from root chain", "Error", err, "Address", address.String())
 		return big.NewInt(0), err
@@ -119,7 +131,7 @@ func (c *ContractCaller) GetBalance(address common.Address) (*big.Int, error) {
 
 // GetValidatorInfo get validator info
 func (c *ContractCaller) GetValidatorInfo(valID types.ValidatorID) (validator types.Validator, err error) {
-	amount, startEpoch, endEpoch, signer, err := c.stakeManagerInstance.GetStakerDetails(nil, big.NewInt(int64(valID)))
+	amount, startEpoch, endEpoch, signer, err := c.StakeManagerInstance.GetStakerDetails(nil, big.NewInt(int64(valID)))
 	if err != nil {
 		Logger.Error("Error fetching validator information from stake manager", "Error", err, "ValidatorID", valID)
 		return
@@ -162,7 +174,7 @@ func (c *ContractCaller) GetMaticChainBlock(blockNum *big.Int) (header *ethtypes
 // Get block number of transaction
 func (c *ContractCaller) GetBlockNoFromTxHash(tx common.Hash) (blocknumber big.Int, err error) {
 	var json *rpcTransaction
-	err = c.mainChainRPC.CallContext(context.Background(), &json, "eth_getTransactionByHash", tx)
+	err = c.MainChainRPC.CallContext(context.Background(), &json, "eth_getTransactionByHash", tx)
 	if err != nil {
 		return
 	}
@@ -200,8 +212,7 @@ func (c *ContractCaller) IsTxConfirmed(tx common.Hash) bool {
 }
 
 func (c *ContractCaller) SigUpdateEvent(tx common.Hash) (id uint64, newSigner common.Address, oldSigner common.Address, err error) {
-	fmt.Printf("mainchainc  %v", c.mainChainClient)
-	txReceipt, err := c.mainChainClient.TransactionReceipt(context.Background(), tx)
+	txReceipt, err := c.MainChainClient.TransactionReceipt(context.Background(), tx)
 	if err != nil {
 		Logger.Error("Unable to get transaction receipt by hash", "Error", err)
 		return

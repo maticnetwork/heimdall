@@ -1,10 +1,7 @@
 package app
 
 import (
-	"bytes"
-	"encoding/hex"
 	"encoding/json"
-	"fmt"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -12,12 +9,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/gov"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/params/subspace"
-	ethCommon "github.com/ethereum/go-ethereum/common"
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	dbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
-	tmTypes "github.com/tendermint/tendermint/types"
 
 	"github.com/maticnetwork/heimdall/auth"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
@@ -347,7 +342,7 @@ func (app *HeimdallApp) endBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 				logger.Info("Checkpoint processed in block", "CheckpointProcessed", true)
 				// collect and update sigs in span
 				// Send Checkpoint to Rootchain
-				PrepareAndSendCheckpoint(ctx, app.checkpointKeeper, app.stakingKeeper, app.caller)
+				// PrepareAndSendCheckpoint(ctx, app.checkpointKeeper, app.stakingKeeper, app.caller)
 				// clear Checkpoint cache
 				app.checkpointKeeper.FlushCheckpointCache(ctx)
 			}
@@ -357,14 +352,14 @@ func (app *HeimdallApp) endBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 				// TODO Send proof to bor chain
 				// app.borKeeper.AddSigs(ctx, ctx.BlockHeader().Votes)
 				// get sigs from votes
-				var votes []tmTypes.Vote
-				err := json.Unmarshal(ctx.BlockHeader().Votes, &votes)
-				if err != nil {
-					logger.Error("Error while unmarshalling vote", "error", err)
-				}
-				sigs := helper.GetSigs(votes)
-				fmt.Println("sigs", hex.EncodeToString(sigs))
-				fmt.Println("vote", hex.EncodeToString(helper.GetVoteBytes(votes, ctx)))
+				// var votes []tmTypes.Vote
+				// err := json.Unmarshal(ctx.BlockHeader().Votes, &votes)
+				// if err != nil {
+				// 	logger.Error("Error while unmarshalling vote", "error", err)
+				// }
+				// sigs := helper.GetSigs(votes)
+				// fmt.Println("sigs", hex.EncodeToString(sigs))
+				// fmt.Println("vote", hex.EncodeToString(helper.GetVoteBytes(votes, ctx)))
 				// flush span cache
 				app.borKeeper.FlushSpanCache(ctx)
 			}
@@ -483,74 +478,5 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 			Evidence:  &abci.EvidenceParams{},
 			Validator: &abci.ValidatorParams{PubKeyTypes: []string{ABCIPubKeyTypeSecp256k1}},
 		},
-	}
-}
-
-// GetExtraData get extra data for checkpoint
-func GetExtraData(ctx sdk.Context, _checkpoint hmTypes.CheckpointBlockHeader) []byte {
-	logger.Debug("Creating extra data", "startBlock", _checkpoint.StartBlock, "endBlock", _checkpoint.EndBlock, "roothash", _checkpoint.RootHash, "timestamp", _checkpoint.TimeStamp)
-
-	// craft a message
-	// msg := checkpoint.NewMsgCheckpointBlock(
-	// 	_checkpoint.Proposer,
-	// 	_checkpoint.StartBlock,
-	// 	_checkpoint.EndBlock,
-	// 	_checkpoint.RootHash,
-	// 	_checkpoint.TimeStamp,
-	// )
-
-	// helper.GetSignedTxBytes(ct)
-	return nil
-	// return txBytes[authTypes.PulpHashLength:]
-}
-
-// PrepareAndSendCheckpoint prepares all the data required for sending checkpoint and sends tx to rootchain
-func PrepareAndSendCheckpoint(ctx sdk.Context, ck checkpoint.Keeper, sk staking.Keeper, caller helper.ContractCaller) {
-	// fetch votes from block header
-	var votes []tmTypes.Vote
-	err := json.Unmarshal(ctx.BlockHeader().Votes, &votes)
-	if err != nil {
-		logger.Error("Error while unmarshalling vote", "error", err)
-	}
-
-	// get sigs from votes
-	sigs := helper.GetSigs(votes)
-
-	// Getting latest checkpoint data from store using height as key and unmarshall
-	_checkpoint, err := ck.GetCheckpointFromBuffer(ctx)
-	if err != nil {
-		logger.Error("Unable to unmarshall checkpoint from buffer while preparing checkpoint tx", "error", err, "height", ctx.BlockHeight())
-		return
-	}
-
-	// Get extra data
-	extraData := GetExtraData(ctx, *_checkpoint)
-
-	//fetch current child block from rootchain contract
-	lastblock, err := caller.CurrentChildBlock()
-	if err != nil {
-		logger.Error("Could not fetch last block from mainchain", "error", err)
-		panic(err)
-	}
-
-	// get validator address
-	validatorAddress := ethCommon.BytesToAddress(helper.GetPubKey().Address().Bytes())
-
-	// check if we are proposer
-	if bytes.Equal(sk.GetCurrentProposer(ctx).Signer.Bytes(), validatorAddress.Bytes()) {
-		logger.Info("We are proposer! Validating if checkpoint needs to be pushed", "commitedLastBlock", lastblock, "startBlock", _checkpoint.StartBlock)
-		// check if we need to send checkpoint or not
-		if ((lastblock + 1) == _checkpoint.StartBlock) || (lastblock == 0 && _checkpoint.StartBlock == 0) {
-			logger.Info("Sending valid checkpoint", "startBlock", _checkpoint.StartBlock)
-			caller.SendCheckpoint(helper.GetVoteBytes(votes, ctx), sigs, extraData)
-		} else if lastblock > _checkpoint.StartBlock {
-			logger.Info("Start block does not match, checkpoint already sent", "commitedLastBlock", lastblock, "startBlock", _checkpoint.StartBlock)
-		} else if lastblock > _checkpoint.EndBlock {
-			logger.Info("Checkpoint already sent", "commitedLastBlock", lastblock, "startBlock", _checkpoint.StartBlock)
-		} else {
-			logger.Info("No need to send checkpoint")
-		}
-	} else {
-		logger.Info("We are not proposer", "proposer", sk.GetCurrentProposer(ctx), "validator", validatorAddress.String())
 	}
 }

@@ -146,8 +146,29 @@ func BytesToPubkey(pubKey []byte) secp256k1.PubKeySecp256k1 {
 	return pubkeyBytes
 }
 
+// CreateTxBytes creates tx bytes from Msg
+// func CreateTxBytes(msg sdk.Msg) ([]byte, error) {
+// 	// tx := hmTypes.NewBaseTx(msg)
+// 	pulp := hmTypes.GetPulpInstance()
+// 	txBytes, err := pulp.EncodeToBytes(msg)
+// 	if err != nil {
+// 		Logger.Error("Error generating TX Bytes", "error", err)
+// 		return []byte(""), err
+// 	}
+// 	return txBytes, nil
+// }
+
+// // SendTendermintRequest sends request to tendermint
+// func SendTendermintRequest(cliCtx context.CLIContext, txBytes []byte, mode string) (sdk.TxResponse, error) {
+// 	if mode != "" {
+// 		cliCtx.BroadcastMode = mode
+// 	}
+// 	Logger.Info("Broadcasting tx bytes to tendermint", "txBytes", hex.EncodeToString(txBytes), "mode", cliCtx.BroadcastMode, "txHash", hex.EncodeToString(tmhash.Sum(txBytes[4:])))
+// 	return cliCtx.BroadcastTx(txBytes)
+// }
+
 // GetSigs returns sigs bytes from vote
-func GetSigs(votes []tmTypes.Vote) (sigs []byte) {
+func GetSigs(votes []*tmTypes.CommitSig) (sigs []byte) {
 	sort.Slice(votes, func(i, j int) bool {
 		return bytes.Compare(votes[i].ValidatorAddress.Bytes(), votes[j].ValidatorAddress.Bytes()) < 0
 	})
@@ -159,10 +180,11 @@ func GetSigs(votes []tmTypes.Vote) (sigs []byte) {
 }
 
 // GetVoteBytes returns vote bytes
-func GetVoteBytes(votes []tmTypes.Vote, ctx sdk.Context) []byte {
+func GetVoteBytes(votes []*tmTypes.CommitSig, chainID string) []byte {
+	vote := votes[0]
+	v := tmTypes.Vote(*vote)
 	// sign bytes for vote
-	fmt.Println("Number of votes collected", votes[0].Type, "vote.data", hex.EncodeToString(votes[0].Data))
-	return votes[0].SignBytes(ctx.ChainID())
+	return v.SignBytes(chainID)
 }
 
 // GetTxEncoder returns tx encoder
