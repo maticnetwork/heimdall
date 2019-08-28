@@ -145,7 +145,7 @@ func (c *ContractCaller) GetValidatorInfo(valID types.ValidatorID) (validator ty
 		Power:      uint64(newAmount),
 		StartEpoch: startEpoch.Uint64(),
 		EndEpoch:   endEpoch.Uint64(),
-		Signer:     signer,
+		Signer:     types.HeimdallAddress(signer),
 	}
 
 	return validator, nil

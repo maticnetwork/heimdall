@@ -7,18 +7,17 @@ import (
 	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/ethereum/go-ethereum/common"
 )
 
 // Validator heimdall validator
 type Validator struct {
-	ID          ValidatorID    `json:"ID"`
-	StartEpoch  uint64         `json:"startEpoch"`
-	EndEpoch    uint64         `json:"endEpoch"`
-	Power       uint64         `json:"power"` // TODO add 10^-18 here so that we dont overflow easily
-	PubKey      PubKey         `json:"pubKey"`
-	Signer      common.Address `json:"signer"`
-	LastUpdated *big.Int       `json:"last_updated"`
+	ID          ValidatorID     `json:"ID"`
+	StartEpoch  uint64          `json:"startEpoch"`
+	EndEpoch    uint64          `json:"endEpoch"`
+	Power       uint64          `json:"power"` // TODO add 10^-18 here so that we dont overflow easily
+	PubKey      PubKey          `json:"pubKey"`
+	Signer      HeimdallAddress `json:"signer"`
+	LastUpdated *big.Int        `json:"last_updated"`
 
 	Accum int64 `json:"accum"`
 }
@@ -166,9 +165,9 @@ func (valID ValidatorID) Int() int {
 // MinimalVal is the minimal validator representation
 // Used to send validator information to bor validator contract
 type MinimalVal struct {
-	ID     ValidatorID    `json:"ID"`
-	Power  uint64         `json:"power"` // TODO add 10^-18 here so that we dont overflow easily
-	Signer common.Address `json:"signer"`
+	ID     ValidatorID     `json:"ID"`
+	Power  uint64          `json:"power"` // TODO add 10^-18 here so that we dont overflow easily
+	Signer HeimdallAddress `json:"signer"`
 }
 
 // ValToMinVal converts array of validators to minimal validators

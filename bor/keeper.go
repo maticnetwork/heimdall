@@ -7,6 +7,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/params"
 	cmn "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
@@ -18,29 +19,46 @@ var (
 	DefaultValue = []byte{0x01} // Value to store in CacheCheckpoint and CacheCheckpointACK & ValidatorSetChange Flag
 
 	SpanDurationKey       = []byte{0x24} // Key to store span duration for Bor
-	LastSpanStartBlockKey = []byte{0x25} // Key to store last span start block
-	SpanPrefixKey         = []byte{0x26} // prefix key to store span
-	SpanCacheKey          = []byte{0x27} // key to store Cache for span
+	SprintDurationKey     = []byte{0x25} // Key to store span duration for Bor
+	LastSpanStartBlockKey = []byte{0x35} // Key to store last span start block
+	SpanPrefixKey         = []byte{0x36} // prefix key to store span
+	SpanCacheKey          = []byte{0x37} // key to store Cache for span
 )
 
 // Keeper stores all related data
 type Keeper struct {
-	cdc    *codec.Codec
-	sk     staking.Keeper
-	BorKey sdk.StoreKey
+	cdc *codec.Codec
+	sk  staking.Keeper
+	// The (unexposed) keys used to access the stores from the Context.
+	storeKey sdk.StoreKey
 	// codespace
-	Codespace sdk.CodespaceType
+	codespace sdk.CodespaceType
+	// param space
+	paramSpace params.Subspace
 }
 
 // NewKeeper create new keeper
-func NewKeeper(cdc *codec.Codec, stakingKeeper staking.Keeper, borKey sdk.StoreKey, codespace sdk.CodespaceType) Keeper {
+func NewKeeper(
+	cdc *codec.Codec,
+	stakingKeeper staking.Keeper,
+	storeKey sdk.StoreKey,
+	paramSpace params.Subspace,
+	codespace sdk.CodespaceType,
+) Keeper {
+	// create keeper
 	keeper := Keeper{
-		cdc:       cdc,
-		Codespace: codespace,
-		sk:        stakingKeeper,
-		BorKey:    borKey,
+		cdc:        cdc,
+		sk:         stakingKeeper,
+		storeKey:   storeKey,
+		paramSpace: paramSpace.WithKeyTable(ParamKeyTable()),
+		codespace:  codespace,
 	}
 	return keeper
+}
+
+// Codespace returns the codespace
+func (k Keeper) Codespace() sdk.CodespaceType {
+	return k.codespace
 }
 
 // GetSpanKey appends prefix to start block
@@ -50,7 +68,7 @@ func GetSpanKey(startBlock uint64) []byte {
 
 // AddNewSpan adds new span for bor to store
 func (k *Keeper) AddNewSpan(ctx sdk.Context, span types.Span) error {
-	store := ctx.KVStore(k.BorKey)
+	store := ctx.KVStore(k.storeKey)
 	out, err := k.cdc.MarshalBinaryBare(span)
 	if err != nil {
 		cmn.BorLogger.Error("Error marshalling span", "error", err)
@@ -94,7 +112,7 @@ func (k *Keeper) AddSigs(ctx sdk.Context, tmVotes []byte) error {
 
 // GetSpan fetches span indexed by start block from store
 func (k *Keeper) GetSpan(ctx sdk.Context, startBlock uint64) (span types.Span, err error) {
-	store := ctx.KVStore(k.BorKey)
+	store := ctx.KVStore(k.storeKey)
 	spanKey := GetSpanKey(startBlock)
 
 	// If we are starting from 0 there will be no spanKey present
@@ -112,7 +130,7 @@ func (k *Keeper) GetSpan(ctx sdk.Context, startBlock uint64) (span types.Span, e
 
 // GetLastSpan fetches last span using lastStartBlock
 func (k *Keeper) GetLastSpan(ctx sdk.Context) (lastSpan types.Span, err error) {
-	store := ctx.KVStore(k.BorKey)
+	store := ctx.KVStore(k.storeKey)
 	var lastSpanStart uint64
 	if store.Has(LastSpanStartBlockKey) {
 		// get last span start block
@@ -128,10 +146,7 @@ func (k *Keeper) GetLastSpan(ctx sdk.Context) (lastSpan types.Span, err error) {
 
 // FreezeSet freezes validator set for next span
 func (k *Keeper) FreezeSet(ctx sdk.Context, startBlock uint64, borChainID string) error {
-	duration, err := k.GetSpanDuration(ctx)
-	if err != nil {
-		return err
-	}
+	duration := k.GetSpanDuration(ctx)
 
 	endBlock := startBlock
 	if duration > 0 {
@@ -151,37 +166,15 @@ func (k *Keeper) SelectNextProducers(ctx sdk.Context) (vals []types.Validator) {
 
 // UpdateLastSpan updates the last span start block
 func (k *Keeper) UpdateLastSpan(ctx sdk.Context, startBlock uint64) {
-	store := ctx.KVStore(k.BorKey)
+	store := ctx.KVStore(k.storeKey)
 	store.Set(LastSpanStartBlockKey, []byte(strconv.FormatUint(startBlock, 10)))
-}
-
-// GetSpanDuration fetches selected span duration from store
-func (k *Keeper) GetSpanDuration(ctx sdk.Context) (duration uint64, err error) {
-	store := ctx.KVStore(k.BorKey)
-	if store.Has(SpanDurationKey) {
-		duration, err := strconv.Atoi(string(store.Get(SpanDurationKey)))
-		if err != nil {
-			cmn.BorLogger.Error("Unable to convert key to int")
-			return uint64(duration), err
-		} else {
-			return uint64(duration), nil
-		}
-	} else {
-		return duration, errors.New("duration not found")
-	}
-}
-
-// SetSpanDuration sets span duration
-func (k *Keeper) SetSpanDuration(ctx sdk.Context, duration uint64) {
-	store := ctx.KVStore(k.BorKey)
-	store.Set(SpanDurationKey, []byte(strconv.FormatUint(duration, 10)))
 }
 
 // SetSpanCache sets span cache
 // to be set when we freeze span
 // cache to be cleared in end block
 func (k *Keeper) SetSpanCache(ctx sdk.Context) {
-	store := ctx.KVStore(k.BorKey)
+	store := ctx.KVStore(k.storeKey)
 	// fill in default cache value
 	store.Set(SpanCacheKey, DefaultValue)
 }
@@ -189,16 +182,44 @@ func (k *Keeper) SetSpanCache(ctx sdk.Context) {
 // FlushSpanCache deletes cache stored in SpanCache
 // to be called from end block to acknowledge signature aggregation
 func (k *Keeper) FlushSpanCache(ctx sdk.Context) {
-	store := ctx.KVStore(k.BorKey)
+	store := ctx.KVStore(k.storeKey)
 	store.Delete(SpanCacheKey)
 }
 
 // GetSpanCache check if value exists in span cache or not
 // returns true when found and false when not present
 func (k *Keeper) GetSpanCache(ctx sdk.Context) bool {
-	store := ctx.KVStore(k.BorKey)
+	store := ctx.KVStore(k.storeKey)
 	if store.Has(SpanCacheKey) {
 		return true
 	}
 	return false
+}
+
+//
+//  Params
+//
+
+// GetSpanDuration returns the span duration
+func (k *Keeper) GetSpanDuration(ctx sdk.Context) uint64 {
+	var duration uint64
+	k.paramSpace.Get(ctx, ParamStoreKeySpanDuration, &duration)
+	return duration
+}
+
+// SetSpanDuration sets the span duration
+func (k *Keeper) SetSpanDuration(ctx sdk.Context, duration uint64) {
+	k.paramSpace.Set(ctx, ParamStoreKeySpanDuration, duration)
+}
+
+// GetSprintDuration returns the span duration
+func (k *Keeper) GetSprintDuration(ctx sdk.Context) uint64 {
+	var duration uint64
+	k.paramSpace.Get(ctx, ParamStoreKeySprintDuration, &duration)
+	return duration
+}
+
+// SetSprintDuration sets the sprint duration
+func (k *Keeper) SetSprintDuration(ctx sdk.Context, duration uint64) {
+	k.paramSpace.Set(ctx, ParamStoreKeySprintDuration, duration)
 }

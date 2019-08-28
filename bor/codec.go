@@ -3,20 +3,20 @@ package bor
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
 
-	hmTypes "github.com/maticnetwork/heimdall/types"
+	authTypes "github.com/maticnetwork/heimdall/auth/types"
 )
 
-func RegisterWire(cdc *codec.Codec) {
+func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(MsgProposeSpan{}, "bor/MsgProposeSpan", nil)
 }
 
-func RegisterPulp(pulp *hmTypes.Pulp) {
+func RegisterPulp(pulp *authTypes.Pulp) {
 	pulp.RegisterConcrete(MsgProposeSpan{})
 }
 
 var cdcEmpty = codec.New()
 
 func init() {
-	RegisterWire(cdcEmpty)
+	RegisterCodec(cdcEmpty)
 	codec.RegisterCrypto(cdcEmpty)
 }

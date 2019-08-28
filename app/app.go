@@ -3,51 +3,88 @@ package app
 import (
 	"encoding/json"
 
-	"github.com/maticnetwork/heimdall/bor"
-
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/gov"
+	"github.com/cosmos/cosmos-sdk/x/params"
+	"github.com/cosmos/cosmos-sdk/x/params/subspace"
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	dbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
-	tmTypes "github.com/tendermint/tendermint/types"
-
-	"errors"
 
 	"github.com/maticnetwork/heimdall/auth"
+	authTypes "github.com/maticnetwork/heimdall/auth/types"
+	"github.com/maticnetwork/heimdall/bank"
+	bankTypes "github.com/maticnetwork/heimdall/bank/types"
+	"github.com/maticnetwork/heimdall/bor"
+	borTypes "github.com/maticnetwork/heimdall/bor/types"
 	"github.com/maticnetwork/heimdall/checkpoint"
-
+	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
+	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
+	"github.com/maticnetwork/heimdall/supply"
+	supplyTypes "github.com/maticnetwork/heimdall/supply/types"
+	"github.com/maticnetwork/heimdall/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 const (
-	AppName                 = "Heimdall"
+	// AppName denotes app name
+	AppName = "Heimdall"
+	// ABCIPubKeyTypeSecp256k1 denotes pub key type
 	ABCIPubKeyTypeSecp256k1 = "secp256k1"
 	// internals
-	maxGasPerBlock   int64 = 1000000  // 1 Million
+	maxGasPerBlock   int64 = 10000000 // 10 Million
 	maxBytesPerBlock int64 = 22020096 // 21 MB
 )
 
+var (
+	// module account permissions
+	maccPerms = map[string][]string{
+		authTypes.FeeCollectorName: nil,
+		// mint.ModuleName:           {supply.Minter},
+		// staking.BondedPoolName:    {supply.Burner, supply.Staking},
+		// staking.NotBondedPoolName: {supply.Burner, supply.Staking},
+		// gov.ModuleName:            {supply.Burner},
+	}
+)
+
+// HeimdallApp main heimdall app
 type HeimdallApp struct {
 	*bam.BaseApp
 	cdc *codec.Codec
 
 	// keys to access the multistore
+	keyAccount    *sdk.KVStoreKey
+	keyBank       *sdk.KVStoreKey
+	keySupply     *sdk.KVStoreKey
+	keyGov        *sdk.KVStoreKey
 	keyCheckpoint *sdk.KVStoreKey
 	keyStaking    *sdk.KVStoreKey
 	keyBor        *sdk.KVStoreKey
 	keyMain       *sdk.KVStoreKey
+	keyParams     *sdk.KVStoreKey
+	tKeyParams    *sdk.TransientStoreKey
+
+	accountKeeper auth.AccountKeeper
+	bankKeeper    bank.Keeper
+	supplyKeeper  supply.Keeper
+	govKeeper     gov.Keeper
+	paramsKeeper  params.Keeper
 
 	checkpointKeeper checkpoint.Keeper
 	stakingKeeper    staking.Keeper
 	borKeeper        bor.Keeper
+
 	// masterKeeper common.Keeper
 	caller helper.ContractCaller
+
+	//  total coins supply
+	TotalCoinsSupply types.Coins
 }
 
 var logger = helper.Logger.With("module", "app")
@@ -58,22 +95,89 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	cdc := MakeCodec()
 
 	// create and register pulp codec
-	pulp := hmTypes.GetPulpInstance()
+	pulp := authTypes.GetPulpInstance()
+
+	// set prefix
+	config := sdk.GetConfig()
+	config.SetBech32PrefixForAccount(hmTypes.PrefixAccAddr, hmTypes.PrefixAccPub)
+	config.SetBech32PrefixForValidator(hmTypes.PrefixValAddr, hmTypes.PrefixValPub)
+	config.SetBech32PrefixForConsensusNode(hmTypes.PrefixConsAddr, hmTypes.PrefixConsPub)
+	config.Seal()
 
 	// create your application type
 	var app = &HeimdallApp{
-		cdc:           cdc,
-		BaseApp:       bam.NewBaseApp(AppName, logger, db, hmTypes.RLPTxDecoder(pulp), baseAppOptions...),
-		keyMain:       sdk.NewKVStoreKey(bam.MainStoreKey),
-		keyCheckpoint: sdk.NewKVStoreKey("checkpoint"),
-		keyStaking:    sdk.NewKVStoreKey("staking"),
-		keyBor:        sdk.NewKVStoreKey("bor"),
+		cdc:        cdc,
+		BaseApp:    bam.NewBaseApp(AppName, logger, db, authTypes.RLPTxDecoder(pulp), baseAppOptions...),
+		keyMain:    sdk.NewKVStoreKey(bam.MainStoreKey),
+		keyAccount: sdk.NewKVStoreKey(authTypes.StoreKey),
+		keyBank:    sdk.NewKVStoreKey(bankTypes.StoreKey),
+		keySupply:  sdk.NewKVStoreKey(supplyTypes.StoreKey),
+		// keyGov:        sdk.NewKVStoreKey(gov.StoreKey),
+		keyCheckpoint: sdk.NewKVStoreKey(checkpointTypes.StoreKey),
+		keyStaking:    sdk.NewKVStoreKey(stakingTypes.StoreKey),
+		keyBor:        sdk.NewKVStoreKey(borTypes.StoreKey),
+		keyParams:     sdk.NewKVStoreKey(subspace.StoreKey),
+		tKeyParams:    sdk.NewTransientStoreKey(subspace.TStoreKey),
 	}
 
-	// app.masterKeeper = common.NewKeeper(app.cdc, app.keyMaster, app.keyStaker, app.keyCheckpoint, app.keyBor, common.DefaultCodespace)
-	app.stakingKeeper = staking.NewKeeper(app.cdc, app.keyStaking, common.DefaultCodespace)
-	app.checkpointKeeper = checkpoint.NewKeeper(app.cdc, app.stakingKeeper, app.keyCheckpoint, common.DefaultCodespace)
-	app.borKeeper = bor.NewKeeper(app.cdc, app.stakingKeeper, app.keyBor, common.DefaultCodespace)
+	// define param keeper
+	app.paramsKeeper = params.NewKeeper(cdc, app.keyParams, app.tKeyParams)
+
+	// account keeper
+	app.accountKeeper = auth.NewAccountKeeper(
+		app.cdc,
+		app.keyAccount, // target store
+		app.paramsKeeper.Subspace(authTypes.DefaultParamspace),
+		authTypes.ProtoBaseAccount, // prototype
+	)
+
+	// bank keeper
+	app.bankKeeper = bank.NewBaseKeeper(
+		app.cdc,
+		app.keyBank, // target store
+		app.paramsKeeper.Subspace(bankTypes.DefaultParamspace),
+		bankTypes.DefaultCodespace,
+		app.accountKeeper,
+	)
+
+	// bank keeper
+	app.supplyKeeper = supply.NewKeeper(
+		app.cdc,
+		app.keyBank, // target store
+		app.paramsKeeper.Subspace(supplyTypes.DefaultParamspace),
+		maccPerms,
+		app.accountKeeper,
+		app.bankKeeper,
+	)
+
+	// app.govKeeper = gov.NewKeeper(
+	// 	app.cdc,
+	// 	app.keyGov,
+	// 	app.paramsKeeper, app.paramsKeeper.Subspace(gov.DefaultParamspace), app.bankKeeper, &stakingKeeper,
+	// 	gov.DefaultCodespace,
+	// )
+
+	app.checkpointKeeper = checkpoint.NewKeeper(
+		app.cdc,
+		app.stakingKeeper,
+		app.keyCheckpoint,
+		app.paramsKeeper.Subspace(checkpointTypes.DefaultParamspace),
+		common.DefaultCodespace,
+	)
+	app.stakingKeeper = staking.NewKeeper(
+		app.cdc,
+		app.keyStaking,
+		app.paramsKeeper.Subspace(stakingTypes.DefaultParamspace),
+		common.DefaultCodespace,
+		app.checkpointKeeper,
+	)
+	app.borKeeper = bor.NewKeeper(
+		app.cdc,
+		app.stakingKeeper,
+		app.keyBor,
+		app.paramsKeeper.Subspace(borTypes.DefaultParamspace),
+		common.DefaultCodespace,
+	)
 
 	contractCallerObj, err := helper.NewContractCaller()
 	if err != nil {
@@ -82,18 +186,44 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.caller = contractCallerObj
 
 	// register message routes
-	app.Router().AddRoute("checkpoint", checkpoint.NewHandler(app.checkpointKeeper, &app.caller))
-	app.Router().AddRoute("staking", staking.NewHandler(app.stakingKeeper, &app.caller))
-	app.Router().AddRoute("bor", bor.NewHandler(app.borKeeper))
+	app.Router().
+		AddRoute(bankTypes.RouterKey, bank.NewHandler(app.bankKeeper)).
+		AddRoute(checkpointTypes.RouterKey, checkpoint.NewHandler(app.checkpointKeeper, &app.caller)).
+		AddRoute(stakingTypes.RouterKey, staking.NewHandler(app.stakingKeeper, &app.caller)).
+		AddRoute(borTypes.RouterKey, bor.NewHandler(app.borKeeper))
+
+	// query routes
+	app.QueryRouter().
+		AddRoute(authTypes.QuerierRoute, auth.NewQuerier(app.accountKeeper)).
+		AddRoute(bankTypes.QuerierRoute, bank.NewQuerier(app.bankKeeper)).
+		AddRoute(supplyTypes.QuerierRoute, supply.NewQuerier(app.supplyKeeper)).
+		AddRoute(checkpointTypes.QuerierRoute, checkpoint.NewQuerier(app.checkpointKeeper)).
+		AddRoute(borTypes.QuerierRoute, bor.NewQuerier(app.borKeeper))
 
 	// perform initialization logic
 	app.SetInitChainer(app.initChainer)
 	app.SetBeginBlocker(app.beginBlocker)
 	app.SetEndBlocker(app.endBlocker)
-	app.SetAnteHandler(auth.NewAnteHandler())
+	app.SetAnteHandler(
+		auth.NewAnteHandler(
+			app.accountKeeper,
+			app.supplyKeeper,
+			auth.DefaultSigVerificationGasConsumer,
+		),
+	)
 
 	// mount the multistore and load the latest state
-	app.MountStores(app.keyMain, app.keyCheckpoint, app.keyStaking, app.keyBor)
+	app.MountStores(
+		app.keyMain,
+		app.keyAccount,
+		app.keyBank,
+		app.keySupply,
+		app.keyCheckpoint,
+		app.keyStaking,
+		app.keyBor,
+		app.keyParams,
+		app.tKeyParams,
+	)
 	err = app.LoadLatestVersion(app.keyMain)
 	if err != nil {
 		cmn.Exit(err.Error())
@@ -110,20 +240,25 @@ func MakeCodec() *codec.Codec {
 	codec.RegisterCrypto(cdc)
 	sdk.RegisterCodec(cdc)
 
-	// custom types
-	checkpoint.RegisterWire(cdc)
-	staking.RegisterWire(cdc)
-	bor.RegisterWire(cdc)
+	authTypes.RegisterCodec(cdc)
+	bankTypes.RegisterCodec(cdc)
+	supplyTypes.RegisterCodec(cdc)
+
+	checkpoint.RegisterCodec(cdc)
+	staking.RegisterCodec(cdc)
+	bor.RegisterCodec(cdc)
 
 	cdc.Seal()
 	return cdc
 }
 
 // MakePulp creates pulp codec and registers custom types for decoder
-func MakePulp() *hmTypes.Pulp {
-	pulp := hmTypes.GetPulpInstance()
+func MakePulp() *authTypes.Pulp {
+	pulp := authTypes.GetPulpInstance()
 
 	// register custom type
+	bankTypes.RegisterPulp(pulp)
+
 	checkpoint.RegisterPulp(pulp)
 	staking.RegisterPulp(pulp)
 	bor.RegisterPulp(pulp)
@@ -143,7 +278,7 @@ func (app *HeimdallApp) endBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 		currentValidatorSet := app.stakingKeeper.GetValidatorSet(ctx)
 		currentValidatorSetCopy := currentValidatorSet.Copy()
 		allValidators := app.stakingKeeper.GetAllValidators(ctx)
-		ackCount := app.stakingKeeper.GetACKCount(ctx)
+		ackCount := app.checkpointKeeper.GetACKCount(ctx)
 
 		// apply updates
 		helper.UpdateValidators(
@@ -204,19 +339,29 @@ func (app *HeimdallApp) endBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 
 			// check if checkpoint is present in cache
 			if app.checkpointKeeper.GetCheckpointCache(ctx, checkpoint.CheckpointCacheKey) {
-				logger.Info("Checkpoint processed in block", "CheckpointProcessed", app.checkpointKeeper.GetCheckpointCache(ctx, checkpoint.CheckpointCacheKey))
+				logger.Info("Checkpoint processed in block", "CheckpointProcessed", true)
 				// collect and update sigs in span
-
 				// Send Checkpoint to Rootchain
 				// PrepareAndSendCheckpoint(ctx, app.checkpointKeeper, app.stakingKeeper, app.caller)
 				// clear Checkpoint cache
 				app.checkpointKeeper.FlushCheckpointCache(ctx)
 			}
 
-			if cache := app.borKeeper.GetSpanCache(ctx); cache {
-				logger.Info("Propose Span processed in block", "ProposeSpanProcesses", cache)
+			if app.borKeeper.GetSpanCache(ctx) {
+				logger.Info("Propose Span processed in block", "ProposeSpanProcesses", true)
 				// TODO Send proof to bor chain
-				app.borKeeper.AddSigs(ctx, ctx.BlockHeader().Votes)
+				// app.borKeeper.AddSigs(ctx, ctx.BlockHeader().Votes)
+				// get sigs from votes
+				// var votes []tmTypes.Vote
+				// err := json.Unmarshal(ctx.BlockHeader().Votes, &votes)
+				// if err != nil {
+				// 	logger.Error("Error while unmarshalling vote", "error", err)
+				// }
+				// sigs := helper.GetSigs(votes)
+				// fmt.Println("sigs", hex.EncodeToString(sigs))
+				// fmt.Println("vote", hex.EncodeToString(helper.GetVoteBytes(votes, ctx)))
+				// flush span cache
+				app.borKeeper.FlushSpanCache(ctx)
 			}
 		}
 	}
@@ -232,38 +377,45 @@ func (app *HeimdallApp) endBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 	}
 }
 
-func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
-	logger.Info("Loading validators from genesis and setting defaults")
-	common.InitStakingLogger(&ctx)
-	var genesisState GenesisState
-	err := json.Unmarshal(req.AppStateBytes, &genesisState)
-	if err != nil {
-		panic(err)
+// initialize store from a genesis state
+func (app *HeimdallApp) initFromGenesisState(ctx sdk.Context, genesisState GenesisState) []abci.ValidatorUpdate {
+	genesisState.Sanitize()
+
+	// accounts
+	// Load the genesis accounts
+	for _, genacc := range genesisState.Accounts {
+		acc := app.accountKeeper.NewAccountWithAddress(ctx, types.BytesToHeimdallAddress(genacc.Address[:]))
+		acc.SetCoins(genacc.Coins)
+		app.accountKeeper.SetAccount(ctx, acc)
 	}
+
+	// TODO add into genesis
+	// acc := app.accountKeeper.NewAccountWithAddress(ctx, types.BytesToHeimdallAddress(helper.GetAddress()))
+	// acc.SetPubKey(helper.GetPubKey())
+	// acc.SetCoins(types.Coins{types.Coin{Denom: "vetic", Amount: types.NewInt(1000)}})
+	// app.accountKeeper.SetAccount(ctx, acc)
+
+	// check if genesis is actually a genesis
 	var isGenesis bool
-	if len(genesisState.CurrentValSet.Validators) == 0 {
+	if len(genesisState.StakingData.CurrentValSet.Validators) == 0 {
 		isGenesis = true
 	} else {
 		isGenesis = false
 	}
 
-	valSet, valUpdates := app.GetValidatorsFromGenesis(ctx, &genesisState, genesisState.AckCount)
-	if len(valSet.Validators) == 0 {
-		panic(errors.New("no valid validators found"))
-	}
-	var currentValSet hmTypes.ValidatorSet
-	if isGenesis {
-		currentValSet = valSet
-	} else {
-		currentValSet = genesisState.CurrentValSet
-	}
+	//
+	// InitGenesis
+	//
+	auth.InitGenesis(ctx, app.accountKeeper, genesisState.AuthData)
+	bank.InitGenesis(ctx, app.bankKeeper, genesisState.BankData)
+	supply.InitGenesis(ctx, app.supplyKeeper, app.accountKeeper, genesisState.SupplyData)
+	bor.InitGenesis(ctx, app.borKeeper, genesisState.BorData)
+	checkpoint.InitGenesis(ctx, app.checkpointKeeper, genesisState.CheckpointData)
+	staking.InitGenesis(ctx, app.stakingKeeper, genesisState.StakingData)
 
-	// TODO match valSet and genesisState.CurrentValSet for difference in accum
-	// update validator set in store
-	err = app.stakingKeeper.UpdateValidatorSetInStore(ctx, currentValSet)
-	if err != nil {
-		logger.Error("Unable to marshall validator set while adding in store", "Error", err)
-		panic(err)
+	// validate genesis state
+	if err := ValidateGenesisState(genesisState); err != nil {
+		panic(err) // TODO find a way to do this w/o panics
 	}
 
 	// increment accumulator if starting from genesis
@@ -271,25 +423,46 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 		app.stakingKeeper.IncreamentAccum(ctx, 1)
 	}
 
-	// set span duration from genesis
-	app.borKeeper.SetSpanDuration(ctx, genesisState.SpanDuration)
+	//
+	// get val updates
+	//
 
-	// Set initial ack count
-	app.stakingKeeper.UpdateACKCountWithValue(ctx, genesisState.AckCount)
+	var valUpdates []abci.ValidatorUpdate
 
-	// Add checkpoint in buffer
-	app.checkpointKeeper.SetCheckpointBuffer(ctx, genesisState.BufferedCheckpoint)
+	// check if validator is current validator
+	// add to val updates else skip
+	for _, validator := range genesisState.StakingData.Validators {
+		if validator.IsCurrentValidator(genesisState.CheckpointData.AckCount) {
+			// convert to Validator Update
+			updateVal := abci.ValidatorUpdate{
+				Power:  int64(validator.Power),
+				PubKey: validator.PubKey.ABCIPubKey(),
+			}
+			// Add validator to validator updated to be processed below
+			valUpdates = append(valUpdates, updateVal)
+		}
+	}
+	return valUpdates
+}
 
-	// Set Caches
-	app.SetCaches(ctx, &genesisState)
+func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
+	logger.Info("Loading validators from genesis and setting defaults")
+	common.InitStakingLogger(&ctx)
 
-	// Set last no-ack
-	app.checkpointKeeper.SetLastNoAck(ctx, genesisState.LastNoACK)
+	// get genesis state
+	var genesisState GenesisState
+	err := json.Unmarshal(req.AppStateBytes, &genesisState)
+	if err != nil {
+		panic(err)
+	}
 
-	// Add all headers
-	app.InsertHeaders(ctx, &genesisState)
+	// init state from genesis state
+	valUpdates := app.initFromGenesisState(ctx, genesisState)
 
-	logger.Info("adding new validators", "updates", valUpdates)
+	//
+	// draft reponse init chain
+	//
+
 	// TODO make sure old validtors dont go in validator updates ie deactivated validators have to be removed
 	// udpate validators
 	return abci.ResponseInitChain{
@@ -306,105 +479,4 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 			Validator: &abci.ValidatorParams{PubKeyTypes: []string{ABCIPubKeyTypeSecp256k1}},
 		},
 	}
-}
-
-// GetValidatorsFromGenesis returns validator genesis/existing from genesis state
-// TODO add check from main chain if genesis information is right, else people can create invalid genesis and distribute
-func (app *HeimdallApp) GetValidatorsFromGenesis(ctx sdk.Context, genesisState *GenesisState, ackCount uint64) (newValSet hmTypes.ValidatorSet, valUpdates []abci.ValidatorUpdate) {
-	if len(genesisState.GenValidators) > 0 {
-		logger.Debug("Loading genesis validators")
-		for _, validator := range genesisState.GenValidators {
-			hmValidator := validator.HeimdallValidator()
-			logger.Debug("gen validator", "gen", validator, "hmVal", hmValidator)
-			if ok := hmValidator.ValidateBasic(); !ok {
-				logger.Error("Invalid validator properties", "validator", hmValidator)
-				return
-			}
-			if !hmValidator.IsCurrentValidator(genesisState.AckCount) {
-				logger.Error("Genesis validators should be current validators", "FaultyValidator", hmValidator)
-				return
-			}
-			if ok := newValSet.Add(&hmValidator); !ok {
-				panic(errors.New("error while adding genesis validator"))
-			} else {
-				// Add individual validator to state
-				app.stakingKeeper.AddValidator(ctx, hmValidator)
-				// convert to Validator Update
-				updateVal := abci.ValidatorUpdate{
-					Power:  int64(validator.Power),
-					PubKey: validator.PubKey.ABCIPubKey(),
-				}
-
-				// Add validator to validator updated to be processed below
-				valUpdates = append(valUpdates, updateVal)
-			}
-		}
-		logger.Debug("Adding validators to state", "ValidatorSet", newValSet, "ValUpdates", valUpdates)
-		return
-	}
-
-	// read validators
-	logger.Debug("Loading validators from state-dump")
-	for _, validator := range genesisState.Validators {
-		if !validator.ValidateBasic() {
-			logger.Error("Invalid validator properties", "validator", validator)
-			return
-		}
-		if ok := newValSet.Add(&validator); !ok {
-			panic(errors.New("Error while addings new validator"))
-		} else {
-			// Add individual validator to state
-			app.stakingKeeper.AddValidator(ctx, validator)
-
-			// check if validator is current validator
-			// add to val updates else skip
-			if validator.IsCurrentValidator(ackCount) {
-				// convert to Validator Update
-				updateVal := abci.ValidatorUpdate{
-					Power:  int64(validator.Power),
-					PubKey: validator.PubKey.ABCIPubKey(),
-				}
-				// Add validator to validator updated to be processed below
-				valUpdates = append(valUpdates, updateVal)
-			}
-		}
-	}
-	logger.Debug("Adding validators to state", "ValidatorSet", newValSet, "ValUpdates", valUpdates)
-	return
-}
-
-// Set caches like checkpoint and checkpointACK cache
-// Incase user needs to retry sending last checkpoint or sending ACK
-func (app *HeimdallApp) SetCaches(ctx sdk.Context, genesisState *GenesisState) {
-	if genesisState.CheckpointCache {
-		logger.Debug("Found checkpoint cache", "CheckpointCache", genesisState.CheckpointCache)
-		app.checkpointKeeper.SetCheckpointCache(ctx, checkpoint.DefaultValue)
-		return
-	}
-	if genesisState.CheckpointACKCache {
-		logger.Debug("Found checkpoint ACK cache", "CheckpointACKCache", genesisState.CheckpointACKCache)
-		app.checkpointKeeper.SetCheckpointAckCache(ctx, checkpoint.DefaultValue)
-		return
-	}
-}
-
-// Insert headers into state
-func (app *HeimdallApp) InsertHeaders(ctx sdk.Context, genesisState *GenesisState) {
-	if len(genesisState.Headers) != 0 {
-		logger.Debug("Trying to add successfull checkpoints", "NoOfHeaders", len(genesisState.Headers))
-		if int(genesisState.AckCount) != len(genesisState.Headers) {
-			logger.Error("Number of headers and ack count do not match", "HeaderCount", len(genesisState.Headers), "AckCount", genesisState.AckCount)
-			panic(errors.New("Incorrect state in state-dump , Please Check "))
-		}
-		for i, header := range genesisState.Headers {
-			checkpointHeaderIndex := helper.GetConfig().ChildBlockInterval * (uint64(i) + 1)
-			app.checkpointKeeper.AddCheckpoint(ctx, checkpointHeaderIndex, header)
-		}
-	}
-	return
-}
-
-// ExportAppStateAndValidators export app state and validators
-func (app *HeimdallApp) ExportAppStateAndValidators() (appState json.RawMessage, validators []tmTypes.GenesisValidator, err error) {
-	return appState, validators, err
 }

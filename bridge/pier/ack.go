@@ -13,6 +13,7 @@ import (
 	"time"
 
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/tendermint/tendermint/libs/common"
@@ -184,18 +185,12 @@ func (ackService *AckService) processCheckpoint(lastCreatedAt int64) {
 		)
 
 		// send NO ACK
-		txBytes, err := helper.CreateTxBytes(
-			checkpoint.NewMsgCheckpointNoAck(
-				uint64(time.Now().Unix()),
-			),
+		msg := checkpoint.NewMsgCheckpointNoAck(
+			hmtypes.BytesToHeimdallAddress(helper.GetAddress()),
+			uint64(time.Now().Unix()),
 		)
 
-		if err != nil {
-			ackService.Logger.Error("Error while creating tx bytes", "error", err)
-			return
-		}
-
-		resp, err := helper.SendTendermintRequest(ackService.cliCtx, txBytes, "")
+		resp, err := helper.BroadcastMsgs(ackService.cliCtx, []sdk.Msg{msg})
 		if err != nil {
 			ackService.Logger.Error("Error while sending request to Tendermint", "error", err)
 			return

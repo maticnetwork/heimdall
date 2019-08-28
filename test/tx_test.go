@@ -2,8 +2,12 @@ package test
 
 import (
 	"encoding/hex"
+	"fmt"
+	"reflect"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/stretchr/testify/require"
 	tmerkel "github.com/tendermint/tendermint/crypto/merkle"
 
@@ -60,4 +64,63 @@ func TestTxMerkle(t *testing.T) {
 	expected := "22d3b708469ea7107c230a558d88ef82c18f1ce7f716e84f494c72edf50aeb0e"
 	require.Equal(t, expected, hex.EncodeToString(rootHash), "Tx hash should match")
 	require.Equal(t, 3, len(result), "Proof length should match")
+}
+
+type BaseMsg interface {
+	H()
+}
+
+type Msg struct {
+	Start uint64
+	Name  string
+}
+
+func (n Msg) H() {}
+
+type Tx struct {
+	Msg  BaseMsg
+	Memo string
+}
+
+type TxRaw struct {
+	Msg  rlp.RawValue
+	Memo string
+}
+
+func TestRLP(t *testing.T) {
+	fmt.Println("Hello, playground")
+	var v Tx
+	v.Memo = "hello"
+	v.Msg = Msg{Start: 12, Name: "msg12"}
+	fmt.Println(v)
+
+	data, err := rlp.EncodeToBytes(v)
+	fmt.Println("encode to bytes", err, "data", hexutil.Encode(data))
+
+	var result TxRaw
+	err = rlp.DecodeBytes(data, &result)
+	fmt.Println("result", result)
+
+	rtype := reflect.TypeOf(&Msg{})
+	msg := reflect.New(rtype).Interface()
+	err = rlp.DecodeBytes(result.Msg[:], msg)
+
+	// change pointer to non-pointer
+	vptr := reflect.New(reflect.TypeOf(msg).Elem()).Elem()
+	vptr.Set(reflect.ValueOf(msg).Elem())
+}
+
+func TestTxRLP(t *testing.T) {
+	fmt.Println("Hello, playground")
+	var v Tx
+	v.Memo = "hello"
+	v.Msg = Msg{Start: 1, Name: "msg1"}
+	fmt.Println(v)
+
+	data, err := rlp.EncodeToBytes(v)
+	fmt.Println("==>", err)
+
+	var result Tx
+	err = rlp.DecodeBytes(data, &result)
+	fmt.Println("err ==>", err)
 }

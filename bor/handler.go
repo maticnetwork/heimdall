@@ -2,6 +2,7 @@ package bor
 
 import (
 	"bytes"
+	"fmt"
 	"sort"
 	"strconv"
 
@@ -28,25 +29,26 @@ func NewHandler(k Keeper) sdk.Handler {
 // HandleMsgProposeSpan handles proposeSpan msg
 func HandleMsgProposeSpan(ctx sdk.Context, msg MsgProposeSpan, k Keeper, logger tmlog.Logger) sdk.Result {
 	logger.Debug("Proposing span", "TxData", msg)
+	fmt.Println("Proposing span", "TxData", msg.StartBlock, msg.EndBlock)
 
 	// check if last span is up or if greater diff than threshold is found between validator set
 	lastSpan, err := k.GetLastSpan(ctx)
 	if err != nil {
 		logger.Error("Unable to fetch last span", "Error", err)
-		return common.ErrSpanNotInCountinuity(k.Codespace).Result()
+		return common.ErrSpanNotInCountinuity(k.Codespace()).Result()
 	}
 
 	// check if lastStart + 1 =  newStart
 	if lastSpan.StartBlock > msg.StartBlock {
 		common.BorLogger.Error("Blocks not in countinuity ", "LastStartBlock", lastSpan.StartBlock, "MsgStartBlock", msg.StartBlock)
-		return common.ErrSpanNotInCountinuity(k.Codespace).Result()
+		return common.ErrSpanNotInCountinuity(k.Codespace()).Result()
 	}
 
 	// freeze for new span
 	err = k.FreezeSet(ctx, msg.StartBlock, msg.ChainID)
 	if err != nil {
 		logger.Error("Unable to freeze validator set for span", "Error", err)
-		return common.ErrSpanNotInCountinuity(k.Codespace).Result()
+		return common.ErrSpanNotInCountinuity(k.Codespace()).Result()
 	}
 
 	currentValidators := k.sk.GetCurrentValidators(ctx)
@@ -54,7 +56,7 @@ func HandleMsgProposeSpan(ctx sdk.Context, msg MsgProposeSpan, k Keeper, logger 
 	lastSpan, err = k.GetLastSpan(ctx)
 	if err != nil {
 		logger.Error("Unable to fetch last span", "Error", err)
-		return common.ErrSpanNotFound(k.Codespace).Result()
+		return common.ErrSpanNotFound(k.Codespace()).Result()
 	}
 	resTags := sdk.NewTags(
 		tags.NewSpanProposed, []byte(strconv.FormatUint(uint64(msg.StartBlock), 10)),
@@ -62,7 +64,7 @@ func HandleMsgProposeSpan(ctx sdk.Context, msg MsgProposeSpan, k Keeper, logger 
 
 	// TODO add check for duration
 
-	result := sortAndCompare(types.ValToMinVal(currentValidators), types.ValToMinVal(lastSpan.SelectedProducers), msg, k.Codespace)
+	result := sortAndCompare(types.ValToMinVal(currentValidators), types.ValToMinVal(lastSpan.SelectedProducers), msg, k.Codespace())
 	result.Tags = resTags
 	return result
 }

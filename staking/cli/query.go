@@ -4,17 +4,45 @@ import (
 	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/maticnetwork/heimdall/staking"
-	"github.com/maticnetwork/heimdall/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+
+	"github.com/maticnetwork/heimdall/staking"
+	"github.com/maticnetwork/heimdall/types"
+	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
+	hmClient "github.com/maticnetwork/heimdall/client"
 )
 
-// get validator information via address
+
+// GetQueryCmd returns the cli query commands for this module
+func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
+	// Group supply queries under a subcommand
+	supplyQueryCmd := &cobra.Command{
+		Use:                        stakingTypes.ModuleName,
+		Short:                      "Querying commands for the staking module",
+		DisableFlagParsing:         true,
+		SuggestionsMinimumDistance: 2,
+		RunE:                       hmClient.ValidateCmd,
+	}
+
+	// supply query command
+	supplyQueryCmd.AddCommand(
+		client.GetCommands(
+			GetValidatorInfo(cdc),
+			GetCurrentValSet(cdc),
+		)...,
+	)
+
+	return supplyQueryCmd
+}
+
+// GetValidatorInfo validator information via address
 func GetValidatorInfo(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "get-validator-info",
+		Use:   "validator-info",
 		Short: "show validator information via validator address",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -47,10 +75,10 @@ func GetValidatorInfo(cdc *codec.Codec) *cobra.Command {
 	return cmd
 }
 
-// get validator information via address
+// GetCurrentValSet validator information via address
 func GetCurrentValSet(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "get-current-valset",
+		Use:   "current-validator-set",
 		Short: "show current validator set",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)

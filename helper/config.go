@@ -1,7 +1,9 @@
 package helper
 
 import (
+	"crypto/ecdsa"
 	"log"
+	"math/big"
 	"os"
 	"path/filepath"
 	"strings"
@@ -9,6 +11,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	ethCrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/spf13/viper"
@@ -16,8 +19,6 @@ import (
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	logger "github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/privval"
-
-	"math/big"
 
 	"github.com/maticnetwork/heimdall/contracts/depositmanager"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
@@ -298,6 +299,16 @@ func GetMaticRPCClient() *rpc.Client {
 // GetPrivKey returns priv key object
 func GetPrivKey() secp256k1.PrivKeySecp256k1 {
 	return privObject
+}
+
+// GetECDSAPrivKey return ecdsa private key
+func GetECDSAPrivKey() *ecdsa.PrivateKey {
+	// get priv key
+	pkObject := GetPrivKey()
+
+	// create ecdsa private key
+	ecdsaPrivateKey, _ := ethCrypto.ToECDSA(pkObject[:])
+	return ecdsaPrivateKey
 }
 
 // GetPubKey returns pub key object

@@ -9,14 +9,15 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/ethereum/go-ethereum/common"
 	ethcmn "github.com/ethereum/go-ethereum/common"
 	"github.com/gorilla/mux"
 
-	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/types"
+	"github.com/maticnetwork/heimdall/types/rest"
 )
 
 func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
@@ -78,7 +79,7 @@ func checkpointBufferHandlerFn(
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
+		rest.PostProcessResponse(w, cliCtx, result)
 	}
 }
 
@@ -88,7 +89,7 @@ func checkpointCountHandlerFn(
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		RestLogger.Debug("Fetching number of checkpoints from state")
-		res, err := cliCtx.QueryStore(staking.ACKCountKey, "checkpoint")
+		res, err := cliCtx.QueryStore(checkpoint.ACKCountKey, "checkpoint")
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
@@ -110,7 +111,7 @@ func checkpointCountHandlerFn(
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
+		rest.PostProcessResponse(w, cliCtx, result)
 	}
 }
 
@@ -120,7 +121,13 @@ func checkpointHeaderHandlerFn(
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		headerNumber, err := strconv.ParseUint(vars["headerBlockIndex"], 10, 64)
+
+		// get header number
+		headerNumber, ok := rest.ParseUint64OrReturnBadRequest(w, vars["headerBlockIndex"])
+		if !ok {
+			return
+		}
+
 		res, err := cliCtx.QueryStore(checkpoint.GetHeaderKey(uint64(headerNumber)), "checkpoint")
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
@@ -143,8 +150,16 @@ func checkpointHeaderHandlerFn(
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
+		rest.PostProcessResponse(w, cliCtx, result)
 	}
+}
+
+// HeaderBlockResult represents header block result
+type HeaderBlockResult struct {
+	Proposer   types.HeimdallAddress `json:"proposer"`
+	RootHash   common.Hash           `json:"rootHash"`
+	StartBlock uint64                `json:"startBlock"`
+	EndBlock   uint64                `json:"endBlock"`
 }
 
 func checkpointHandlerFn(
@@ -184,7 +199,7 @@ func checkpointHandlerFn(
 			}
 		}
 
-		checkpoint := HeaderBlock{
+		checkpoint := HeaderBlockResult{
 			Proposer:   validatorSet.Proposer.Signer,
 			StartBlock: uint64(start),
 			EndBlock:   uint64(end),
@@ -197,7 +212,7 @@ func checkpointHandlerFn(
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
+		rest.PostProcessResponse(w, cliCtx, result)
 	}
 }
 
@@ -230,7 +245,7 @@ func noackHandlerFn(
 			rest.WriteErrorResponse(w, http.StatusNoContent, errors.New("no content found for requested key").Error())
 			return
 		}
-		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
+		rest.PostProcessResponse(w, cliCtx, result)
 	}
 }
 
@@ -252,7 +267,7 @@ func overviewHandlerFunc(
 
 		// ACk count
 		var ackCountInt int64
-		ackcount, err := cliCtx.QueryStore(staking.ACKCountKey, "staking")
+		ackcount, err := cliCtx.QueryStore(checkpoint.ACKCountKey, "staking")
 		if err == nil {
 			ackCountInt, err = strconv.ParseInt(string(ackcount), 10, 64)
 			if err != nil {
@@ -322,7 +337,7 @@ func overviewHandlerFunc(
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
+		rest.PostProcessResponse(w, cliCtx, result)
 	}
 }
 
@@ -332,7 +347,7 @@ func latestCheckpointHandlerFunc(
 	cliCtx context.CLIContext,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ackCount, err := cliCtx.QueryStore(staking.ACKCountKey, "staking")
+		ackCount, err := cliCtx.QueryStore(checkpoint.ACKCountKey, "staking")
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
@@ -369,6 +384,6 @@ func latestCheckpointHandlerFunc(
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
+		rest.PostProcessResponse(w, cliCtx, result)
 	}
 }

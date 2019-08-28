@@ -637,7 +637,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:308b068fba27216784b512b9ea0492a4b5c6b4346c2f4c619a2b03d8af143a9c"
+  digest = "1:36099ccd049dc670546acbfec83b8909d6e050af2626b0a480cb7c5c7cb70670"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -650,7 +650,7 @@
     "trace",
   ]
   pruneopts = "UT"
-  revision = "da137c7871d730100384dbcf36e6f8fa493aef5b"
+  revision = "ca1201d0de80cfde86cb01aea620983605dfe99b"
 
 [[projects]]
   branch = "master"
@@ -662,14 +662,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:a0e4b2275e7939970d395eb6d03f409378eb586aab72e0a461d95e3435c6c5c4"
+  digest = "1:cb765633311f4d8df85cdd33a71da68f15f5a5161c6522eaa3ae79d31fc19718"
   name = "golang.org/x/sys"
   packages = [
     "cpu",
     "unix",
   ]
   pruneopts = "UT"
-  revision = "fae7ac547cb717d141c433a2a173315e216b64c4"
+  revision = "fc99dfbffb4e5ed5758a37e31dd861afe285406b"
 
 [[projects]]
   digest = "1:8d8faad6b12a3a4c819a3f9618cb6ee1fa1cfc33253abeeea8b55336721e3405"
@@ -705,7 +705,7 @@
   revision = "c506a9f9061087022822e8da603a52fc387115a8"
 
 [[projects]]
-  digest = "1:cf01ae0753310464677058b125fa31e74fd943781782ada503180ad784fc83d3"
+  digest = "1:581c9b0fe9354faf730ff231cf3682089e0b703073cf10e3976219609d27a9ea"
   name = "google.golang.org/grpc"
   packages = [
     ".",
@@ -743,8 +743,8 @@
     "tap",
   ]
   pruneopts = "UT"
-  revision = "1d89a3c832915b2314551c1d2a506874d62e53f7"
-  version = "v1.22.0"
+  revision = "045159ad57f3781d409358e3ade910a018c16b30"
+  version = "v1.22.1"
 
 [[projects]]
   digest = "1:4d2e5a73dc1500038e504a8d78b986630e3626dc027bc030ba5c75da257cdb96"
@@ -770,6 +770,7 @@
     "github.com/cosmos/cosmos-sdk/types",
     "github.com/cosmos/cosmos-sdk/types/rest",
     "github.com/cosmos/cosmos-sdk/version",
+    "github.com/cosmos/cosmos-sdk/x/gov",
     "github.com/go-kit/kit/log",
     "github.com/gorilla/mux",
     "github.com/spf13/cobra",

@@ -12,6 +12,7 @@ import (
 )
 
 const (
+	// PulpHashLength pulp hash length
 	PulpHashLength int = 4
 )
 
@@ -58,9 +59,10 @@ func (p *Pulp) GetMsgTxInstance(hash []byte) interface{} {
 }
 
 // EncodeToBytes encodes msg to bytes
-func (p *Pulp) EncodeToBytes(msg sdk.Msg) ([]byte, error) {
+func (p *Pulp) EncodeToBytes(tx StdTx) ([]byte, error) {
+	msg := tx.GetMsgs()[0]
 	name := fmt.Sprintf("%s::%s", msg.Route(), msg.Type())
-	txBytes, err := rlp.EncodeToBytes(msg)
+	txBytes, err := rlp.EncodeToBytes(tx)
 	if err != nil {
 		return nil, err
 	}
@@ -70,15 +72,26 @@ func (p *Pulp) EncodeToBytes(msg sdk.Msg) ([]byte, error) {
 
 // DecodeBytes decodes bytes to msg
 func (p *Pulp) DecodeBytes(data []byte) (interface{}, error) {
+	var txRaw StdTxRaw
+	if err := rlp.DecodeBytes(data[PulpHashLength:], &txRaw); err != nil {
+		return nil, err
+	}
+
 	rtype := p.typeInfos[hex.EncodeToString(data[:PulpHashLength])]
-	msg := reflect.New(rtype).Interface()
-	err := rlp.DecodeBytes(data[PulpHashLength:], msg)
-	if err != nil {
+	newMsg := reflect.New(rtype).Interface()
+	if err := rlp.DecodeBytes(txRaw.Msg[:], newMsg); err != nil {
 		return nil, err
 	}
 
 	// change pointer to non-pointer
-	vptr := reflect.New(reflect.TypeOf(msg).Elem()).Elem()
-	vptr.Set(reflect.ValueOf(msg).Elem())
-	return vptr.Interface(), nil
+	vptr := reflect.New(reflect.TypeOf(newMsg).Elem()).Elem()
+	vptr.Set(reflect.ValueOf(newMsg).Elem())
+	// return vptr.Interface(), nil
+
+	result := StdTx{
+		Msg:       vptr.Interface().(sdk.Msg),
+		Signature: txRaw.Signature,
+		Memo:      txRaw.Memo,
+	}
+	return result, nil
 }

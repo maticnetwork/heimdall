@@ -300,14 +300,7 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 }
 
 func (syncer *Syncer) sendTx(eventName string, msg sdk.Msg) {
-	txBytes, err := helper.CreateTxBytes(msg)
-	if err != nil {
-		logEventTxBytesError(syncer.Logger, eventName, err)
-		return
-	}
-
-	// send tendermint request
-	_, err = helper.SendTendermintRequest(syncer.cliContext, txBytes, "")
+	_, err := helper.BroadcastMsgs(syncer.cliContext, []sdk.Msg{msg})
 	if err != nil {
 		logEventBroadcastTxError(syncer.Logger, eventName, err)
 		return

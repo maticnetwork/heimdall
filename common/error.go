@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/types"
 )
 
 type CodeType = sdk.CodeType
@@ -54,7 +54,7 @@ func ErrInvalidMsg(codespace sdk.CodespaceType, format string, args ...interface
 
 // -------- Checkpoint Errors
 
-func ErrBadProposerDetails(codespace sdk.CodespaceType, proposer common.Address) sdk.Error {
+func ErrBadProposerDetails(codespace sdk.CodespaceType, proposer types.HeimdallAddress) sdk.Error {
 	return newError(codespace, CodeInvalidProposerInput, fmt.Sprintf("Proposer is not valid, current proposer is %v", proposer.String()))
 }
 

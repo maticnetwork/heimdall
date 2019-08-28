@@ -6,19 +6,46 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/maticnetwork/heimdall/checkpoint"
-	"github.com/maticnetwork/heimdall/staking"
-	"github.com/maticnetwork/heimdall/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/maticnetwork/heimdall/checkpoint"
+	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
+	hmClient "github.com/maticnetwork/heimdall/client"
+	"github.com/maticnetwork/heimdall/types"
 )
 
-// get checkpoint present in buffer
+// GetQueryCmd returns the cli query commands for this module
+func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
+	// Group supply queries under a subcommand
+	supplyQueryCmd := &cobra.Command{
+		Use:                        checkpointTypes.ModuleName,
+		Short:                      "Querying commands for the checkpoint module",
+		DisableFlagParsing:         true,
+		SuggestionsMinimumDistance: 2,
+		RunE:                       hmClient.ValidateCmd,
+	}
+
+	// supply query command
+	supplyQueryCmd.AddCommand(
+		client.GetCommands(
+			GetCheckpointBuffer(cdc),
+			GetLastNoACK(cdc),
+			GetHeaderFromIndex(cdc),
+			GetCheckpointCount(cdc),
+		)...,
+	)
+
+	return supplyQueryCmd
+}
+
+// GetCheckpointBuffer get checkpoint present in buffer
 func GetCheckpointBuffer(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "show-checkpoint-buffer",
+		Use:   "checkpoint-buffer",
 		Short: "show checkpoint present in buffer",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -41,10 +68,10 @@ func GetCheckpointBuffer(cdc *codec.Codec) *cobra.Command {
 	return cmd
 }
 
-// get last no ack time
+// GetLastNoACK get last no ack time
 func GetLastNoACK(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "get-last-noack",
+		Use:   "last-noack",
 		Short: "get last no ack received time",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -61,11 +88,11 @@ func GetLastNoACK(cdc *codec.Codec) *cobra.Command {
 	return cmd
 }
 
-// get checkpoint given header index
+// GetHeaderFromIndex get checkpoint given header index
 func GetHeaderFromIndex(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "get-last-noack",
-		Short: "get last no ack received time",
+		Use:   "header",
+		Short: "get checkpoint (header) from index",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			headerNumber := viper.GetInt(FlagHeaderNumber)
@@ -90,15 +117,15 @@ func GetHeaderFromIndex(cdc *codec.Codec) *cobra.Command {
 	return cmd
 }
 
-// get number of checkpoint received count
+// GetCheckpointCount get number of checkpoint received count
 func GetCheckpointCount(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "get-last-noack",
-		Short: "get last no ack received time",
+		Use:   "checkpoint-count",
+		Short: "get checkpoint counts",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			res, err := cliCtx.QueryStore(staking.ACKCountKey, "staking")
+			res, err := cliCtx.QueryStore(checkpoint.ACKCountKey, "staking")
 			if err != nil {
 				return err
 			}
