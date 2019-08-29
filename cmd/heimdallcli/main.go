@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -97,7 +96,6 @@ func main() {
 		client.LineBreak,
 		keys.Commands(),
 		exportCmd(ctx, cdc),
-		txFetchCmd(ctx, cdc),
 		convertAddressToHexCmd(cdc),
 		convertHexToAddressCmd(cdc),
 		client.LineBreak,
@@ -243,41 +241,6 @@ func exportCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(cli.HomeFlag, helper.DefaultNodeHome, "node's home directory")
 	cmd.Flags().String(helper.FlagClientHome, helper.DefaultCLIHome, "client's home directory")
 	cmd.Flags().String(client.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
-	return cmd
-}
-
-// txFetchCmd a state dump file
-func txFetchCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "tx-fetch",
-		Short: "Export genesis file with state-dump",
-		Args:  cobra.NoArgs,
-		RunE: func(_ *cobra.Command, _ []string) error {
-			// get cli ctx
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			// get node
-			node, err := cliCtx.GetNode()
-			if err != nil {
-				return err
-			}
-
-			fmt.Println(node)
-			result, err := node.Tx(ethCommon.FromHex("0FA2692BAB6BAF52C559A76C37E3276B35B9823EDBA5C2FE0E890D6F3836F4BB"), true)
-			if err != nil {
-				return err
-			}
-			node.TxSearch("new-span-proposed=10", false, 1, 1)
-			fmt.Println(result.Tx)
-			return nil
-		},
-	}
-	cmd.Flags().String(cli.HomeFlag, helper.DefaultNodeHome, "node's home directory")
-	cmd.Flags().String(helper.FlagClientHome, helper.DefaultCLIHome, "client's home directory")
-	cmd.Flags().StringP(client.FlagNode, "n", "tcp://localhost:26657", "Node to connect to")
-	viper.BindPFlag(client.FlagNode, cmd.Flags().Lookup(client.FlagNode))
-	cmd.Flags().Bool(client.FlagTrustNode, false, "Trust connected full node (don't verify proofs for responses)")
-	viper.BindPFlag(client.FlagTrustNode, cmd.Flags().Lookup(client.FlagTrustNode))
 	return cmd
 }
 
