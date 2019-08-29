@@ -192,6 +192,11 @@ func GetTxEncoder() sdk.TxEncoder {
 	return authTypes.RLPTxEncoder(authTypes.GetPulpInstance())
 }
 
+// GetTxDecoder returns tx decoder
+func GetTxDecoder() sdk.TxDecoder {
+	return authTypes.RLPTxDecoder(authTypes.GetPulpInstance())
+}
+
 // GetStdTxBytes get tx bytes
 func GetStdTxBytes(cliCtx context.CLIContext, tx authTypes.StdTx) ([]byte, error) {
 	txBldr := authTypes.NewTxBuilderFromCLI().WithTxEncoder(GetTxEncoder())
