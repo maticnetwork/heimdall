@@ -6,6 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/streadway/amqp"
 )
@@ -26,9 +27,10 @@ type QueueConnector struct {
 	// Queue for sending and managing checkpoint related stuff
 	// Eg: CheckpointTxHash, Sending checkpoint on mainchain
 	CheckpointQueue string
-
-	cliContext cliContext.CLIContext
-	Logger     log.Logger
+	// tx encoder
+	txEncoder authTypes.TxBuilder
+	cliCtx    cliContext.CLIContext
+	Logger    log.Logger
 }
 
 // NewQueueConnector creates a connector object which can be used to connect/send/consume bytes from queue
@@ -42,7 +44,8 @@ func NewQueueConnector(dialer string, heimdallQ string, borQ string, checkpointq
 		HeimdallQueue:   heimdallQ,
 		BorQueue:        borQ,
 		CheckpointQueue: checkpointq,
-		cliContext:      cliCtx,
+		cliCtx:          cliCtx,
+		txEncoder:       authTypes.NewTxBuilderFromCLI().WithTxEncoder(helper.GetTxEncoder()),
 		Logger:          logger,
 	}
 }
@@ -116,7 +119,7 @@ func (qc *QueueConnector) DispatchToHeimdall(msg sdk.Msg) error {
 	if err != nil {
 		return err
 	}
-	txBytes, err := helper.CreateTxBytes(msg)
+	txBytes, err := helper.GetSignedTxBytes(qc.cliCtx, qc.txEncoder, []sdk.Msg{msg})
 	if err != nil {
 		return err
 	}
@@ -179,7 +182,7 @@ func (qc *QueueConnector) ConsumeHeimdallQ() error {
 	go func() {
 		for d := range msgs {
 			qc.Logger.Debug("Sending transaction to heimdall", "TxBytes", d.Body)
-			resp, err := helper.SendTendermintRequest(qc.cliContext, d.Body, helper.BroadcastAsync)
+			resp, err := helper.BroadcastTxBytes(qc.cliCtx, d.Body, "")
 			if err != nil {
 				qc.Logger.Error("Unable to send transaction to heimdall", "error", err)
 			} else {

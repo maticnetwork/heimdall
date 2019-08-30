@@ -20,6 +20,7 @@ import (
 	"github.com/tendermint/tendermint/libs/common"
 
 	"github.com/cosmos/cosmos-sdk/client"
+	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/contracts/depositmanager"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
@@ -45,6 +46,7 @@ type Syncer struct {
 	// Base service
 	common.BaseService
 
+	// connector to queues
 	qConnector QueueConnector
 
 	// storage client
@@ -66,6 +68,10 @@ type Syncer struct {
 	HeaderChannel chan *types.Header
 	// cancel function for poll/subscription
 	cancelSubscription context.CancelFunc
+
+	// tx encoder
+	txEncoder authTypes.TxBuilder
+
 	// header listener subscription
 	cancelHeaderProcess context.CancelFunc
 }
@@ -110,6 +116,7 @@ func NewSyncer(connector QueueConnector) *Syncer {
 		RootChainInstance:    rootchainInstance,
 		StakeManagerInstance: stakeManagerInstance,
 		HeaderChannel:        make(chan *types.Header),
+		txEncoder:            authTypes.NewTxBuilderFromCLI().WithTxEncoder(helper.GetTxEncoder()),
 	}
 
 	syncer.BaseService = *common.NewBaseService(logger, ChainSyncer, syncer)
@@ -323,7 +330,7 @@ func (syncer *Syncer) processCheckpointEvent(eventName string, abiObject *abi.AB
 		)
 
 		// create msg checkpoint ack message
-		msg := checkpoint.NewMsgCheckpointAck(event.Number.Uint64(), uint64(time.Now().Unix()))
+		msg := checkpoint.NewMsgCheckpointAck(helper.GetFromAddress(syncer.cliContext), event.Number.Uint64())
 		syncer.qConnector.DispatchToHeimdall(msg)
 	}
 }
@@ -343,7 +350,7 @@ func (syncer *Syncer) processStakedEvent(eventName string, abiObject *abi.ABI, v
 			"amount", event.Amount,
 		)
 		if bytes.Compare(event.User.Bytes(), helper.GetPubKey().Address().Bytes()) == 0 {
-			msg := staking.NewMsgValidatorJoin(event.ValidatorId.Uint64(), hmtypes.NewPubKey(helper.GetPubKey().Bytes()), vLog.TxHash)
+			msg := staking.NewMsgValidatorJoin(helper.GetFromAddress(syncer.cliContext), event.ValidatorId.Uint64(), hmtypes.NewPubKey(helper.GetPubKey().Bytes()), vLog.TxHash)
 			syncer.qConnector.DispatchToHeimdall(msg)
 		}
 	}
@@ -364,7 +371,7 @@ func (syncer *Syncer) processUnstakeInitEvent(eventName string, abiObject *abi.A
 			"amount", event.Amount,
 		)
 		// send validator exit message
-		msg := staking.NewMsgValidatorExit(event.ValidatorId.Uint64(), vLog.TxHash)
+		msg := staking.NewMsgValidatorExit(helper.GetFromAddress(syncer.cliContext), event.ValidatorId.Uint64(), vLog.TxHash)
 		syncer.qConnector.DispatchToHeimdall(msg)
 	}
 }

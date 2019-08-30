@@ -93,13 +93,13 @@ func (msg MsgCheckpoint) ValidateBasic() sdk.Error {
 var _ sdk.Msg = &MsgCheckpointAck{}
 
 type MsgCheckpointAck struct {
-	Proposer    types.HeimdallAddress `json:"proposer"`
+	From        types.HeimdallAddress `json:"from"`
 	HeaderBlock uint64                `json:"headerBlock"`
 }
 
-func NewMsgCheckpointAck(proposer types.HeimdallAddress, headerBlock uint64) MsgCheckpointAck {
+func NewMsgCheckpointAck(from types.HeimdallAddress, headerBlock uint64) MsgCheckpointAck {
 	return MsgCheckpointAck{
-		Proposer:    proposer,
+		From:        from,
 		HeaderBlock: headerBlock,
 	}
 }
@@ -113,7 +113,7 @@ func (msg MsgCheckpointAck) Route() string {
 }
 
 func (msg MsgCheckpointAck) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.Proposer)}
+	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.From)}
 }
 
 func (msg MsgCheckpointAck) GetSignBytes() []byte {
@@ -125,8 +125,8 @@ func (msg MsgCheckpointAck) GetSignBytes() []byte {
 }
 
 func (msg MsgCheckpointAck) ValidateBasic() sdk.Error {
-	if msg.Proposer.Empty() {
-		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.Proposer.String())
+	if msg.From.Empty() {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid from %v", msg.From.String())
 	}
 
 	childBlockInterval := helper.GetConfig().ChildBlockInterval
@@ -144,13 +144,13 @@ func (msg MsgCheckpointAck) ValidateBasic() sdk.Error {
 var _ sdk.Msg = &MsgCheckpointNoAck{}
 
 type MsgCheckpointNoAck struct {
-	Proposer  types.HeimdallAddress `json:"proposer"`
+	From      types.HeimdallAddress `json:"from"`
 	TimeStamp uint64                `json:"timestamp"`
 }
 
-func NewMsgCheckpointNoAck(proposer types.HeimdallAddress, timestamp uint64) MsgCheckpointNoAck {
+func NewMsgCheckpointNoAck(from types.HeimdallAddress, timestamp uint64) MsgCheckpointNoAck {
 	return MsgCheckpointNoAck{
-		Proposer:  proposer,
+		From:      from,
 		TimeStamp: timestamp,
 	}
 }
@@ -164,7 +164,7 @@ func (msg MsgCheckpointNoAck) Route() string {
 }
 
 func (msg MsgCheckpointNoAck) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.Proposer)}
+	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.From)}
 }
 
 func (msg MsgCheckpointNoAck) GetSignBytes() []byte {
@@ -180,8 +180,8 @@ func (msg MsgCheckpointNoAck) ValidateBasic() sdk.Error {
 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid timestamp %d", msg.TimeStamp)
 	}
 
-	if msg.Proposer.Empty() {
-		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.Proposer.String())
+	if msg.From.Empty() {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid from %v", msg.From.String())
 	}
 
 	return nil

@@ -16,6 +16,7 @@ import (
 	"github.com/pkg/errors"
 
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum"
 	ethCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -25,6 +26,7 @@ import (
 	"github.com/tendermint/tendermint/libs/pubsub/query"
 
 	"github.com/cosmos/cosmos-sdk/client"
+	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/helper"
 	hmtypes "github.com/maticnetwork/heimdall/types"
@@ -50,6 +52,8 @@ type Checkpointer struct {
 	contractConnector helper.ContractCaller
 	// http client to subscribe to
 	httpClient *httpClient.HTTP
+	// tx encoder
+	txEncoder authTypes.TxBuilder
 	// context for sending transactions to heimdall
 	cliCtx cliContext.CLIContext
 }
@@ -75,6 +79,7 @@ func NewCheckpointer(connector QueueConnector) *Checkpointer {
 		qConnector:        connector,
 		contractConnector: contractCaller,
 		cliCtx:            cliCtx,
+		txEncoder:         authTypes.NewTxBuilderFromCLI().WithTxEncoder(helper.GetTxEncoder()),
 		httpClient:        httpClient.NewHTTP("tcp://0.0.0.0:26657", "/websocket"),
 	}
 
@@ -413,33 +418,38 @@ func (c *Checkpointer) fetchCheckpoint(url string) (checkpoint hmtypes.Checkpoin
 	return checkpoint, fmt.Errorf("Invalid response from rest server. Status: %v URL: %v", resp.Status, url)
 }
 
+// broadcastACK broadcasts ack for a checkpoint to heimdall
 func (c *Checkpointer) broadcastACK(txhash chan string, headerIdx uint64) {
 	// create and send checkpoint ACK message
-	msg := checkpoint.NewMsgCheckpointAck(headerIdx, uint64(time.Now().Unix()))
-	resp, err := helper.CreateAndSendTx(msg, c.cliCtx)
+	msg := checkpoint.NewMsgCheckpointAck(hmtypes.BytesToHeimdallAddress(helper.GetAddress()), headerIdx)
+
+	resp, err := helper.BuildAndBroadcastMsgs(c.cliCtx, c.txEncoder, []sdk.Msg{msg})
 	if err != nil {
 		c.Logger.Error("Unable to send checkpoint ack to heimdall", "Error", err, "HeaderIndex", headerIdx)
 	}
+
 	c.Logger.Debug("Checkpoint ACK tx commited", "TxHash", resp.TxHash, "HeaderIndex", headerIdx)
+	// send transaction hash to channel
 	txhash <- resp.TxHash
 }
 
+// broadcastCheckpoint broadcasts checkpoint tx to heimdall
 func (c *Checkpointer) broadcastCheckpoint(txhash chan string, start uint64, end uint64, proposer ethCommon.Address, root ethCommon.Hash) {
 	msg := checkpoint.NewMsgCheckpointBlock(
-		proposer,
+		helper.GetFromAddress(c.cliCtx),
 		start,
 		end,
 		root,
 		uint64(time.Now().Unix()),
 	)
 
-	txBytes, err := helper.CreateTxBytes(msg)
+	txBytes, err := helper.GetSignedTxBytes(c.cliCtx, c.txEncoder, []sdk.Msg{msg})
 	if err != nil {
 		c.Logger.Error("Error creating tx bytes", "error", err)
 		return
 	}
 
-	response, err := helper.SendTendermintRequest(c.cliCtx, txBytes, "")
+	response, err := helper.BroadcastTxBytes(c.cliCtx, txBytes, "")
 	if err != nil {
 		c.Logger.Error("Error sending checkpoint tx", "error", err, "start", start, "end", end)
 		return
@@ -485,7 +495,7 @@ func (c *Checkpointer) fetchVotes(height int64) (votes []*tmTypes.CommitSig, sig
 		c.Logger.Info("No cases matched")
 	}
 
-	// TODO ensure block.height == height+1
+	// TODO ensure block.height == height+1 OR Subscribe to Height+1
 
 	// extract votes from response
 	preCommits := blockDetails.LastCommit.Precommits
@@ -546,7 +556,7 @@ func (c *Checkpointer) DispatchCheckpoint(height int64, txBytes tmTypes.Tx, star
 		// check if we need to send checkpoint or not
 		if ((currentChildBlock + 1) == start) || (currentChildBlock == 0 && start == 0) {
 			c.Logger.Info("Checkpoint Valid", "startBlock", start)
-			c.contractConnector.SendCheckpoint(helper.GetVoteBytes(votes, chainID), sigs, txBytes[hmtypes.PulpHashLength:])
+			c.contractConnector.SendCheckpoint(helper.GetVoteBytes(votes, chainID), sigs, txBytes[authTypes.PulpHashLength:])
 		} else if currentChildBlock > start {
 			c.Logger.Info("Start block does not match, checkpoint already sent", "commitedLastBlock", currentChildBlock, "startBlock", start)
 		} else if currentChildBlock > end {
