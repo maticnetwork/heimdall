@@ -31,6 +31,7 @@ import (
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/helper"
 	hmtypes "github.com/maticnetwork/heimdall/types"
+	rest "github.com/maticnetwork/heimdall/types/rest"
 	httpClient "github.com/tendermint/tendermint/rpc/client"
 	tmTypes "github.com/tendermint/tendermint/types"
 )
@@ -80,7 +81,7 @@ func NewCheckpointer(connector QueueConnector, cdc *codec.Codec) *Checkpointer {
 		qConnector:        connector,
 		contractConnector: contractCaller,
 		cliCtx:            cliCtx,
-		txEncoder:         authTypes.NewTxBuilderFromCLI().WithTxEncoder(helper.GetTxEncoder()).WithChainID("heimdall-oaKwkR"),
+		txEncoder:         authTypes.NewTxBuilderFromCLI().WithTxEncoder(helper.GetTxEncoder()).WithChainID("heimdall-xOUIR0"),
 		httpClient:        httpClient.NewHTTP("tcp://0.0.0.0:26657", "/websocket"),
 	}
 
@@ -480,11 +481,12 @@ func (c *Checkpointer) SubscribeToTx(tx tmTypes.Tx, start, end uint64) error {
 
 // fetchVotes fetches votes and extracts sigs from it
 func (c *Checkpointer) fetchVotes(height int64) (votes []*tmTypes.CommitSig, sigs []byte, chainID string, err error) {
-	c.Logger.Debug("Subscribing to new height")
+	c.Logger.Debug("Subscribing to new height", "height", height+1)
 
 	var blockDetails *tmTypes.Block
 	data, err := c.SubscribeNewBlock()
 	if err != nil {
+		fmt.Printf("Error subscribing to height %v error %v", height+1, err)
 		return nil, nil, "", err
 	}
 	switch t := data.(type) {
@@ -519,12 +521,14 @@ func (c *Checkpointer) DispatchCheckpoint(height int64, txBytes tmTypes.Tx, star
 	if err != nil {
 		return err
 	}
+	c.Logger.Debug("Fetched votes and signatures", "votes", votes, "sigs", sigs, "chainID", chainID)
 
 	// current child block from contract
 	currentChildBlock, err := c.contractConnector.CurrentChildBlock()
 	if err != nil {
 		return err
 	}
+	c.Logger.Debug("Fetched current child block", "CurrChildBlk", currentChildBlock)
 
 	// fetch current proposer from heimdall
 	validatorAddress := ethCommon.BytesToAddress(helper.GetPubKey().Address().Bytes())
@@ -541,12 +545,16 @@ func (c *Checkpointer) DispatchCheckpoint(height int64, txBytes tmTypes.Tx, star
 			c.Logger.Error("Unable to read data from response", "Error", err)
 			return err
 		}
-		if err := json.Unmarshal(body, &proposer); err != nil {
+		var response rest.ResponseWithHeight
+
+		if err := c.cliCtx.Codec.UnmarshalJSON(body, &response); err != nil {
+			return err
+		}
+		if err := json.Unmarshal(response.Result, &proposer); err != nil {
 			c.Logger.Error("Error unmarshalling validator", "error", err)
 			return err
 		}
 	}
-
 	// check if we are current proposer
 	if !bytes.Equal(proposer.Signer.Bytes(), validatorAddress.Bytes()) {
 		return errors.New("We are not proposer, aborting dispatch to mainchain")
@@ -607,9 +615,9 @@ func (c *Checkpointer) SubscribeNewBlock() (tmTypes.TMEventData, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to subscribe")
 	}
-
-	// make sure to unregister after the test is over
+	// unsubscribe everything
 	defer c.httpClient.UnsubscribeAll(ctx, subscriber)
+
 	select {
 	case event := <-eventCh:
 		return event.Data.(tmTypes.TMEventData), nil
