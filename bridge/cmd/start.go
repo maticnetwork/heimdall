@@ -5,6 +5,7 @@ import (
 	"os/signal"
 	"sync"
 
+	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/bridge/pier"
 	"github.com/spf13/cobra"
 	"github.com/tendermint/tendermint/libs/common"
@@ -16,11 +17,12 @@ var startCmd = &cobra.Command{
 	Short: "Start bridge server",
 	Run: func(cmd *cobra.Command, args []string) {
 		qConnector := pier.NewQueueConnector("amqp://guest:guest@localhost:5672/", "hq", "bq", "cq")
+		cdc := app.MakeCodec()
 		services := [...]common.Service{
-			pier.NewCheckpointer(qConnector),
-			pier.NewSyncer(qConnector),
-			pier.NewAckService(),
-			pier.NewConsumerService(qConnector),
+			pier.NewCheckpointer(qConnector, cdc),
+			// pier.NewSyncer(qConnector),
+			// pier.NewAckService(),
+			// pier.NewConsumerService(qConnector),
 		}
 		// sync group
 		var wg sync.WaitGroup

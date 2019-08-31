@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/pkg/errors"
 
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
@@ -59,11 +60,11 @@ type Checkpointer struct {
 }
 
 // NewCheckpointer returns new service object
-func NewCheckpointer(connector QueueConnector) *Checkpointer {
+func NewCheckpointer(connector QueueConnector, cdc *codec.Codec) *Checkpointer {
 	// create logger
 	logger := Logger.With("module", HeimdallCheckpointer)
 
-	cliCtx := cliContext.NewCLIContext()
+	cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
 	cliCtx.BroadcastMode = client.BroadcastAsync
 
 	contractCaller, err := helper.NewContractCaller()
@@ -164,7 +165,7 @@ func (c *Checkpointer) startPolling(ctx context.Context, pollInterval int) {
 	for {
 		select {
 		case <-ticker.C:
-			if isProposer() {
+			if isProposer(c.cliCtx) {
 				header, err := c.contractConnector.MaticClient.HeaderByNumber(ctx, nil)
 				if err == nil && header != nil {
 					// send data to channel
@@ -199,10 +200,6 @@ func (c *Checkpointer) startSubscription(ctx context.Context, subscription ether
 
 func (c *Checkpointer) sendRequest(newHeader *types.Header) {
 	c.Logger.Debug("New block detected", "blockNumber", newHeader.Number)
-
-	// fetch data
-	// take decision
-	// spawn go routines with timeouts to take care of transactions
 
 	// fetch contract state
 	contractState := make(chan ContractCheckpoint, 1)
@@ -295,6 +292,7 @@ func (c *Checkpointer) sendRequest(newHeader *types.Header) {
 	}
 }
 
+// fetched contract checkpoint state and returns the next probable checkpoint that needs to be sent
 func (c *Checkpointer) fetchContractCheckpointState(lastHeader uint64, wg *sync.WaitGroup, contractState chan<- ContractCheckpoint) {
 	defer wg.Done()
 	lastCheckpointEnd, err := c.contractConnector.CurrentChildBlock()
@@ -367,7 +365,7 @@ func (c *Checkpointer) fetchContractCheckpointState(lastHeader uint64, wg *sync.
 	return
 }
 
-// fetchBufferedCheckpoint fetch buffered checkpoint from heimdall
+// fetch checkpoint present in buffer from heimdall
 func (c *Checkpointer) fetchBufferedCheckpoint(wg *sync.WaitGroup, bufferedCheckpoint chan<- HeimdallCheckpoint) {
 	defer wg.Done()
 	c.Logger.Info("Fetching checkpoint in buffer")

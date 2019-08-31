@@ -14,11 +14,13 @@ import (
 	"strings"
 	"time"
 
+	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/maticnetwork/heimdall/helper"
 	hmtypes "github.com/maticnetwork/heimdall/types"
+	rest "github.com/maticnetwork/heimdall/types/rest"
 	"github.com/tendermint/tendermint/libs/log"
 )
 
@@ -55,7 +57,8 @@ func init() {
 	Logger = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
 }
 
-func isProposer() bool {
+// checks if we are proposer
+func isProposer(cliCtx cliContext.CLIContext) bool {
 	count := uint64(1)
 	resp, err := http.Get(fmt.Sprintf(ProposersURL, strconv.FormatUint(count, 10)))
 	if err != nil {
@@ -67,10 +70,15 @@ func isProposer() bool {
 		if err != nil {
 			return false
 		}
-
 		// unmarshall data from buffer
 		var proposers []hmtypes.Validator
-		if err := json.Unmarshal(body, &proposers); err != nil {
+		var response rest.ResponseWithHeight
+
+		if err := cliCtx.Codec.UnmarshalJSON(body, &response); err != nil {
+			return false
+		}
+
+		if err := json.Unmarshal(response.Result, &proposers); err != nil {
 			return false
 		}
 
@@ -78,7 +86,6 @@ func isProposer() bool {
 		if len(proposers) == 0 {
 			return false
 		}
-
 		// get first proposer
 		proposer := proposers[0]
 		if bytes.Equal(proposer.Signer.Bytes(), helper.GetAddress()) {
