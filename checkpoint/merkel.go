@@ -23,7 +23,6 @@ func ValidateCheckpoint(start uint64, end uint64, rootHash ethCommon.Hash, l tml
 	if err != nil {
 		return false
 	}
-	l.Error("RootHashes are", "rootHashTx", rootHash, "rootHash", hexutil.Encode(root))
 
 	if bytes.Equal(root, rootHash[:]) {
 		l.Info("RootHash matched!")

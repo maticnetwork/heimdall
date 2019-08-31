@@ -156,14 +156,6 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	// 	app.paramsKeeper, app.paramsKeeper.Subspace(gov.DefaultParamspace), app.bankKeeper, &stakingKeeper,
 	// 	gov.DefaultCodespace,
 	// )
-
-	app.checkpointKeeper = checkpoint.NewKeeper(
-		app.cdc,
-		app.stakingKeeper,
-		app.keyCheckpoint,
-		app.paramsKeeper.Subspace(checkpointTypes.DefaultParamspace),
-		common.DefaultCodespace,
-	)
 	app.stakingKeeper = staking.NewKeeper(
 		app.cdc,
 		app.keyStaking,
@@ -171,6 +163,14 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		common.DefaultCodespace,
 		app.checkpointKeeper,
 	)
+	app.checkpointKeeper = checkpoint.NewKeeper(
+		app.cdc,
+		app.stakingKeeper,
+		app.keyCheckpoint,
+		app.paramsKeeper.Subspace(checkpointTypes.DefaultParamspace),
+		common.DefaultCodespace,
+	)
+
 	app.borKeeper = bor.NewKeeper(
 		app.cdc,
 		app.stakingKeeper,
