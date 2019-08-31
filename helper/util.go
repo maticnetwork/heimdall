@@ -383,7 +383,6 @@ func PrepareTxBuilder(cliCtx context.CLIContext, txBldr authTypes.TxBuilder) (au
 
 	accGetter := authTypes.NewAccountRetriever(cliCtx)
 	if err := accGetter.EnsureExists(fhAddress); err != nil {
-		fmt.Printf("ensuring")
 		return txBldr, err
 	}
 

@@ -80,7 +80,7 @@ func NewCheckpointer(connector QueueConnector, cdc *codec.Codec) *Checkpointer {
 		qConnector:        connector,
 		contractConnector: contractCaller,
 		cliCtx:            cliCtx,
-		txEncoder:         authTypes.NewTxBuilderFromCLI().WithTxEncoder(helper.GetTxEncoder()),
+		txEncoder:         authTypes.NewTxBuilderFromCLI().WithTxEncoder(helper.GetTxEncoder()).WithChainID("heimdall-oaKwkR"),
 		httpClient:        httpClient.NewHTTP("tcp://0.0.0.0:26657", "/websocket"),
 	}
 
@@ -447,11 +447,12 @@ func (c *Checkpointer) broadcastCheckpoint(txhash chan string, start uint64, end
 		return
 	}
 
-	response, err := helper.BroadcastTxBytes(c.cliCtx, txBytes, "")
+	response, err := helper.BroadcastTxBytes(c.cliCtx, txBytes, client.BroadcastSync)
 	if err != nil {
 		c.Logger.Error("Error sending checkpoint tx", "error", err, "start", start, "end", end)
 		return
 	}
+	fmt.Printf("response from checkpoint %v", response.String())
 
 	c.Logger.Info("Subscribing to checkpoint tx", "hash", response.TxHash, "start", start, "end", end, "root", root.String())
 

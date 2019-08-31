@@ -54,7 +54,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper, contractC
 			return common.ErrNoACK(k.Codespace(), diff).Result()
 		}
 	}
-	logger.Debug("Received checkpoint from buffer", "Checkpoint", checkpointBuffer.String())
+	// logger.Debug("Received checkpoint from buffer", "Checkpoint", checkpointBuffer.String())
 
 	// validate checkpoint
 	if !ValidateCheckpoint(msg.StartBlock, msg.EndBlock, msg.RootHash, logger) {

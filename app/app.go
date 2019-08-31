@@ -2,7 +2,6 @@ package app
 
 import (
 	"encoding/json"
-	"fmt"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -381,21 +380,18 @@ func (app *HeimdallApp) endBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 // initialize store from a genesis state
 func (app *HeimdallApp) initFromGenesisState(ctx sdk.Context, genesisState GenesisState) []abci.ValidatorUpdate {
 	genesisState.Sanitize()
-	fmt.Println("loading acounts ")
 	// Load the genesis accounts
 	for _, genacc := range genesisState.Accounts {
-		fmt.Printf("Printitng accont %v", types.BytesToHeimdallAddress(genacc.Address.Bytes()))
 		acc := app.accountKeeper.NewAccountWithAddress(ctx, types.BytesToHeimdallAddress(genacc.Address.Bytes()))
 		acc.SetCoins(genacc.Coins)
-		fmt.Printf("Printaccount %v", acc)
 		app.accountKeeper.SetAccount(ctx, acc)
 	}
 
 	// TODO add into genesis
-	// acc := app.accountKeeper.NewAccountWithAddress(ctx, types.BytesToHeimdallAddress(helper.GetAddress()))
-	// acc.SetPubKey(helper.GetPubKey())
-	// acc.SetCoins(types.Coins{types.Coin{Denom: "vetic", Amount: types.NewInt(1000)}})
-	// app.accountKeeper.SetAccount(ctx, acc)
+	acc := app.accountKeeper.NewAccountWithAddress(ctx, types.BytesToHeimdallAddress(helper.GetAddress()))
+	acc.SetPubKey(helper.GetPubKey())
+	acc.SetCoins(types.Coins{types.Coin{Denom: "vetic", Amount: types.NewInt(1000)}})
+	app.accountKeeper.SetAccount(ctx, acc)
 
 	// check if genesis is actually a genesis
 	var isGenesis bool
