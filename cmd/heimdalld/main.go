@@ -227,10 +227,9 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			appState := app.NewDefaultGenesisState()
 			// set new validator
 			appState.StakingData.Validators = []hmTypes.Validator{validator}
+			acc := authTypes.NewBaseAccountWithAddress(hmTypes.BytesToHeimdallAddress(validator.Signer.Bytes()))
 			// set validator account
-			appState.Accounts = []app.GenesisAccount{(app.NewGenesisAccount(
-				authTypes.NewBaseAccountWithAddress(hmTypes.BytesToHeimdallAddress(validator.Signer.Bytes())),
-			))}
+			appState.Accounts = []app.GenesisAccount{app.BaseToGenesisAcc(acc)}
 			// app state json
 			appStateJSON, err := json.Marshal(appState)
 			if err != nil {

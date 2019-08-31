@@ -275,7 +275,6 @@ func BuildAndBroadcastMsgsWithCLI(cliCtx context.CLIContext, txBldr authTypes.Tx
 func GetSignedTxBytes(cliCtx context.CLIContext, txBldr authTypes.TxBuilder, msgs []sdk.Msg) ([]byte, error) {
 	txBldr, err := PrepareTxBuilder(cliCtx, txBldr)
 	if err != nil {
-		fmt.Printf("yahan")
 		return nil, err
 	}
 
@@ -291,8 +290,6 @@ func GetSignedTxBytes(cliCtx context.CLIContext, txBldr authTypes.TxBuilder, msg
 	if !cliCtx.SkipConfirm {
 		stdSignMsg, err := txBldr.BuildSignMsg(msgs)
 		if err != nil {
-			fmt.Printf("shayad")
-
 			return nil, err
 		}
 
@@ -318,10 +315,8 @@ func GetSignedTxBytes(cliCtx context.CLIContext, txBldr authTypes.TxBuilder, msg
 
 	passphrase, err := keys.GetPassphrase(fromName)
 	if err != nil {
-		fmt.Printf("pass")
 		return nil, err
 	}
-	fmt.Println("going for build")
 	// build and sign the transaction
 	return txBldr.BuildAndSignWithPassphrase(fromName, passphrase, msgs)
 }

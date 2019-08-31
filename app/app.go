@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"fmt"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -380,11 +381,13 @@ func (app *HeimdallApp) endBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 // initialize store from a genesis state
 func (app *HeimdallApp) initFromGenesisState(ctx sdk.Context, genesisState GenesisState) []abci.ValidatorUpdate {
 	genesisState.Sanitize()
-	// accounts
+	fmt.Println("loading acounts ")
 	// Load the genesis accounts
 	for _, genacc := range genesisState.Accounts {
-		acc := app.accountKeeper.NewAccountWithAddress(ctx, types.BytesToHeimdallAddress(genacc.Address[:]))
+		fmt.Printf("Printitng accont %v", types.BytesToHeimdallAddress(genacc.Address.Bytes()))
+		acc := app.accountKeeper.NewAccountWithAddress(ctx, types.BytesToHeimdallAddress(genacc.Address.Bytes()))
 		acc.SetCoins(genacc.Coins)
+		fmt.Printf("Printaccount %v", acc)
 		app.accountKeeper.SetAccount(ctx, acc)
 	}
 

@@ -35,6 +35,15 @@ func NewGenesisAccount(acc authTypes.Account) GenesisAccount {
 	return gacc
 }
 
+func BaseToGenesisAcc(acc authTypes.BaseAccount) GenesisAccount {
+	return GenesisAccount{
+		Address:       acc.Address,
+		Coins:         acc.Coins,
+		Sequence:      acc.Sequence,
+		AccountNumber: acc.AccountNumber,
+	}
+}
+
 // GenesisState to Unmarshal
 type GenesisState struct {
 	Accounts []GenesisAccount  `json:"accounts"`

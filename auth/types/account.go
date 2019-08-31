@@ -141,7 +141,7 @@ func (acc BaseAccount) GetAddress() types.HeimdallAddress {
 }
 
 // SetAddress - Implements sdk.Account.
-func (acc BaseAccount) SetAddress(addr types.HeimdallAddress) error {
+func (acc *BaseAccount) SetAddress(addr types.HeimdallAddress) error {
 	if len(acc.Address) != 0 && !acc.Address.Empty() {
 		return errors.New("cannot override BaseAccount address")
 	}
@@ -155,47 +155,47 @@ func (acc BaseAccount) GetPubKey() crypto.PubKey {
 }
 
 // SetPubKey - Implements sdk.Account.
-func (acc BaseAccount) SetPubKey(pubKey crypto.PubKey) error {
+func (acc *BaseAccount) SetPubKey(pubKey crypto.PubKey) error {
 	acc.PubKey = pubKey
 	return nil
 }
 
 // GetCoins - Implements sdk.Account.
-func (acc BaseAccount) GetCoins() types.Coins {
+func (acc *BaseAccount) GetCoins() types.Coins {
 	return acc.Coins
 }
 
 // SetCoins - Implements sdk.Account.
-func (acc BaseAccount) SetCoins(coins types.Coins) error {
+func (acc *BaseAccount) SetCoins(coins types.Coins) error {
 	acc.Coins = coins
 	return nil
 }
 
 // GetAccountNumber - Implements Account
-func (acc BaseAccount) GetAccountNumber() uint64 {
+func (acc *BaseAccount) GetAccountNumber() uint64 {
 	return acc.AccountNumber
 }
 
 // SetAccountNumber - Implements Account
-func (acc BaseAccount) SetAccountNumber(accNumber uint64) error {
+func (acc *BaseAccount) SetAccountNumber(accNumber uint64) error {
 	acc.AccountNumber = accNumber
 	return nil
 }
 
 // GetSequence - Implements sdk.Account.
-func (acc BaseAccount) GetSequence() uint64 {
+func (acc *BaseAccount) GetSequence() uint64 {
 	return acc.Sequence
 }
 
 // SetSequence - Implements sdk.Account.
-func (acc BaseAccount) SetSequence(seq uint64) error {
+func (acc *BaseAccount) SetSequence(seq uint64) error {
 	acc.Sequence = seq
 	return nil
 }
 
 // SpendableCoins returns the total set of spendable coins. For a base account,
 // this is simply the base coins.
-func (acc BaseAccount) SpendableCoins(_ time.Time) types.Coins {
+func (acc *BaseAccount) SpendableCoins(_ time.Time) types.Coins {
 	return acc.GetCoins()
 }
 
