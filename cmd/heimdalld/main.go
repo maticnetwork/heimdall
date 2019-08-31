@@ -31,6 +31,7 @@ import (
 	tmTypes "github.com/tendermint/tendermint/types"
 
 	"github.com/maticnetwork/heimdall/app"
+	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/helper"
 	hmserver "github.com/maticnetwork/heimdall/server"
 	stakingcli "github.com/maticnetwork/heimdall/staking/cli"
@@ -226,6 +227,10 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			appState := app.NewDefaultGenesisState()
 			// set new validator
 			appState.StakingData.Validators = []hmTypes.Validator{validator}
+			// set validator account
+			appState.Accounts = []app.GenesisAccount{(app.NewGenesisAccount(
+				authTypes.NewBaseAccountWithAddress(hmTypes.BytesToHeimdallAddress(validator.Signer.Bytes())),
+			))}
 			// app state json
 			appStateJSON, err := json.Marshal(appState)
 			if err != nil {

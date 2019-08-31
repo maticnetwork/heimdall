@@ -142,7 +142,6 @@ func validateGenesisStateAccounts(accs []GenesisAccount) error {
 
 // NewDefaultGenesisState generates the default state for gaia.
 func NewDefaultGenesisState() GenesisState {
-
 	return GenesisState{
 		Accounts:       nil,
 		AuthData:       auth.DefaultGenesisState(),

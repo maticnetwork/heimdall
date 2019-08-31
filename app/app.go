@@ -2,7 +2,6 @@ package app
 
 import (
 	"encoding/json"
-	"fmt"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -381,7 +380,6 @@ func (app *HeimdallApp) endBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 // initialize store from a genesis state
 func (app *HeimdallApp) initFromGenesisState(ctx sdk.Context, genesisState GenesisState) []abci.ValidatorUpdate {
 	genesisState.Sanitize()
-	fmt.Println("genesis here")
 	// accounts
 	// Load the genesis accounts
 	for _, genacc := range genesisState.Accounts {
@@ -413,7 +411,6 @@ func (app *HeimdallApp) initFromGenesisState(ctx sdk.Context, genesisState Genes
 	bor.InitGenesis(ctx, app.borKeeper, genesisState.BorData)
 	checkpoint.InitGenesis(ctx, app.checkpointKeeper, genesisState.CheckpointData)
 	staking.InitGenesis(ctx, app.stakingKeeper, genesisState.StakingData)
-	auth.InitAcccounts(ctx, app.accountKeeper, genesisState.StakingData)
 	// validate genesis state
 	if err := ValidateGenesisState(genesisState); err != nil {
 		panic(err) // TODO find a way to do this w/o panics

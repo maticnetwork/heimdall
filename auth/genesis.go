@@ -6,10 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
-	staking "github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/types"
-
-	"errors"
 )
 
 // GenesisState - all auth state that must be provided at genesis
@@ -33,20 +30,6 @@ func DefaultGenesisState() GenesisState {
 // InitGenesis - Init store state from genesis data
 func InitGenesis(ctx sdk.Context, ak AccountKeeper, data GenesisState) {
 	ak.SetParams(ctx, data.Params)
-}
-
-// InitAccounts
-func InitAcccounts(ctx sdk.Context, ak AccountKeeper, data staking.GenesisState) {
-	var newValSet types.ValidatorSet
-	for _, validator := range data.Validators {
-		if ok := newValSet.Add(&validator); !ok {
-			panic(errors.New("Error while addings new validator"))
-		} else {
-			// Add individual validator to state
-			ak.NewAccountWithAddress(ctx, types.BytesToHeimdallAddress(validator.Signer.Bytes()))
-			fmt.Printf("added new accounts %v", ak.GetAllAccounts(ctx))
-		}
-	}
 }
 
 // ExportGenesis returns a GenesisState for a given context and keeper

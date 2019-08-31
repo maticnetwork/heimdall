@@ -379,7 +379,7 @@ func (c *Checkpointer) fetchBufferedCheckpoint(wg *sync.WaitGroup, bufferedCheck
 	return
 }
 
-// fetchCommittedCheckpoint fetches latest committed checkpoint from heimdall
+// fetches latest committed checkpoint from heimdall
 func (c *Checkpointer) fetchCommittedCheckpoint(wg *sync.WaitGroup, lastCheckpoint chan<- HeimdallCheckpoint) {
 	defer wg.Done()
 	c.Logger.Info("Fetching last committed checkpoint")
@@ -393,7 +393,7 @@ func (c *Checkpointer) fetchCommittedCheckpoint(wg *sync.WaitGroup, lastCheckpoi
 	return
 }
 
-// fetchCheckpoint fetches checkpoint from given URL
+// fetches checkpoint from given URL
 func (c *Checkpointer) fetchCheckpoint(url string) (checkpoint hmtypes.CheckpointBlockHeader, err error) {
 	resp, err := http.Get(url)
 	if err != nil {
