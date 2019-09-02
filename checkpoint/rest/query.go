@@ -3,6 +3,7 @@ package rest
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -72,7 +73,7 @@ func checkpointBufferHandlerFn(
 			return
 		}
 		RestLogger.Debug("Checkpoint fetched", "Checkpoint", _checkpoint.String())
-
+		fmt.Printf("Checkpoint %v", _checkpoint.String())
 		result, err := json.Marshal(&_checkpoint)
 		if err != nil {
 			RestLogger.Error("Error while marshalling response to Json", "error", err)

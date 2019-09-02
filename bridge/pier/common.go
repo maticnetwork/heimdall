@@ -28,6 +28,7 @@ const (
 	ChainSyncer          = "chain-syncer"
 	HeimdallCheckpointer = "heimdall-checkpointer"
 	NoackService         = "checkpoint-no-ack"
+	SpanServiceStr       = "span-service"
 
 	// TODO fetch port from config
 	LastNoAckURL          = "http://localhost:1317/checkpoint/last-no-ack"

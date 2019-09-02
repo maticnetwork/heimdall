@@ -234,7 +234,7 @@ func (ackService *AckService) isValidProposer(count uint64, address []byte) bool
 	}
 	defer resp.Body.Close()
 
-	ackService.Logger.Debug("Fetcged proposers", "Count", count, "Status", resp.Status)
+	ackService.Logger.Debug("Fetched proposers", "Count", count, "Status", resp.Status)
 
 	if resp.StatusCode == 200 {
 		body, err := ioutil.ReadAll(resp.Body)
