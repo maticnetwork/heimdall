@@ -34,7 +34,6 @@ func NewMsgProposeSpan(
 	selectedProducers []types.MinimalVal,
 	chainID string,
 ) MsgProposeSpan {
-
 	return MsgProposeSpan{
 		Proposer:          proposer,
 		StartBlock:        startBlock,

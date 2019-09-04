@@ -22,10 +22,16 @@ var (
 	CurrentValidatorSetKey = []byte{0x23} // Key to store current validator set
 )
 
+// type AckRetriever struct {
+// 	GetACKCount(ctx sdk.Context,hm app.HeimdallApp) uint64
+// }
 type AckRetriever interface {
 	GetACKCount(ctx sdk.Context) uint64
 }
 
+// func (d AckRetriever) GetACKCount(ctx sdk.Context) uint64 {
+// 	return app.checkpointKeeper.GetACKCount(ctx)
+// }
 // Keeper stores all related data
 type Keeper struct {
 	cdc *codec.Codec

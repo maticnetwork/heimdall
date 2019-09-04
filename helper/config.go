@@ -23,6 +23,7 @@ import (
 	"github.com/maticnetwork/heimdall/contracts/depositmanager"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
+	tmTypes "github.com/tendermint/tendermint/types"
 )
 
 const (
@@ -43,7 +44,6 @@ const (
 	BroadcastAsync = "async"
 	// --
 
-	// Variables below to be used while init
 	MainRPCUrl                      = "https://ropsten.infura.io"
 	MaticRPCUrl                     = "https://testnet2.matic.network"
 	NoACKWaitTime                   = time.Second * 1800 // Time ack service waits to clear buffer and elect new proposer (1800 seconds ~ 30 mins)
@@ -112,6 +112,7 @@ var pubObject secp256k1.PubKeySecp256k1
 
 // Logger stores global logger object
 var Logger logger.Logger
+var GenesisDoc tmTypes.GenesisDoc
 
 // Contracts
 // var RootChain types.Contract
@@ -177,6 +178,14 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 
 	maticClient = ethclient.NewClient(maticRPCClient)
 
+	// Loading genesis doc
+	genDoc, err := tmTypes.GenesisDocFromFile(filepath.Join(configDir, "genesis.json"))
+	if err != nil {
+		Logger.Error("Cannot load genesis file")
+		log.Fatal(err)
+	}
+	GenesisDoc = *genDoc
+
 	// load pv file, unmarshall and set to privObject
 	privVal := privval.LoadFilePV(filepath.Join(configDir, "priv_validator_key.json"), filepath.Join(configDir, "priv_validator_key.json"))
 	cdc.MustUnmarshalBinaryBare(privVal.Key.PrivKey.Bytes(), &privObject)
@@ -186,6 +195,10 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 // GetConfig returns cached configuration object
 func GetConfig() Configuration {
 	return conf
+}
+
+func GetGenesisDoc() tmTypes.GenesisDoc {
+	return GenesisDoc
 }
 
 // func initContracts() error {
