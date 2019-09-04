@@ -89,6 +89,15 @@ type HeimdallApp struct {
 
 var logger = helper.Logger.With("module", "app")
 
+// AckRetriever retriever
+type AckRetriever struct {
+	App *HeimdallApp
+}
+
+func (d AckRetriever) GetACKCount(ctx sdk.Context) uint64 {
+	return d.App.checkpointKeeper.GetACKCount(ctx)
+}
+
 // NewHeimdallApp creates heimdall app
 func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseApp)) *HeimdallApp {
 	// create and register app-level codec for TXs and accounts
@@ -156,13 +165,15 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	// 	app.paramsKeeper, app.paramsKeeper.Subspace(gov.DefaultParamspace), app.bankKeeper, &stakingKeeper,
 	// 	gov.DefaultCodespace,
 	// )
+
 	app.stakingKeeper = staking.NewKeeper(
 		app.cdc,
 		app.keyStaking,
 		app.paramsKeeper.Subspace(stakingTypes.DefaultParamspace),
 		common.DefaultCodespace,
-		app.checkpointKeeper,
+		AckRetriever{App: app},
 	)
+
 	app.checkpointKeeper = checkpoint.NewKeeper(
 		app.cdc,
 		app.stakingKeeper,
@@ -170,7 +181,6 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		app.paramsKeeper.Subspace(checkpointTypes.DefaultParamspace),
 		common.DefaultCodespace,
 	)
-
 	app.borKeeper = bor.NewKeeper(
 		app.cdc,
 		app.stakingKeeper,
@@ -183,6 +193,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	if err != nil {
 		cmn.Exit(err.Error())
 	}
+
 	app.caller = contractCallerObj
 
 	// register message routes
@@ -258,10 +269,10 @@ func MakePulp() *authTypes.Pulp {
 
 	// register custom type
 	bankTypes.RegisterPulp(pulp)
-
 	checkpoint.RegisterPulp(pulp)
 	staking.RegisterPulp(pulp)
 	bor.RegisterPulp(pulp)
+
 	return pulp
 }
 
@@ -452,7 +463,6 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 	if err != nil {
 		panic(err)
 	}
-
 	// init state from genesis state
 	valUpdates := app.initFromGenesisState(ctx, genesisState)
 

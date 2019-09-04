@@ -28,6 +28,7 @@ const (
 	ChainSyncer          = "chain-syncer"
 	HeimdallCheckpointer = "heimdall-checkpointer"
 	NoackService         = "checkpoint-no-ack"
+	SpanServiceStr       = "span-service"
 
 	// TODO fetch port from config
 	LastNoAckURL          = "http://localhost:1317/checkpoint/last-no-ack"
@@ -36,6 +37,9 @@ const (
 	LatestCheckpointURL   = "http://localhost:1317/checkpoint/latest-checkpoint"
 	TendermintBlockURL    = "http://localhost:26657/block?height=%v"
 	CurrentProposerURL    = "http://localhost:1317/staking/current-proposer"
+	LatestSpanURL         = "http://localhost:1317/bor/latest-span"
+	SpanProposerURL       = "http://localhost:1317/bor/span-proposer"
+	NextSpanInfoURL       = "http://localhost:1317/bor/prepare-next-span"
 
 	TransactionTimeout = 1 * time.Minute
 	CommitTimeout      = 2 * time.Minute
@@ -59,40 +63,20 @@ func init() {
 
 // checks if we are proposer
 func isProposer(cliCtx cliContext.CLIContext) bool {
+	var proposers []hmtypes.Validator
 	count := uint64(1)
-	resp, err := http.Get(fmt.Sprintf(ProposersURL, strconv.FormatUint(count, 10)))
+	result, err := FetchFromAPI(cliCtx, fmt.Sprintf(ProposersURL, strconv.FormatUint(count, 10)))
 	if err != nil {
+		Logger.Error("Error fetching proposers", "error", err)
 		return false
 	}
-	defer resp.Body.Close()
-	if resp.StatusCode == 200 {
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return false
-		}
-		// unmarshall data from buffer
-		var proposers []hmtypes.Validator
-		var response rest.ResponseWithHeight
-
-		if err := cliCtx.Codec.UnmarshalJSON(body, &response); err != nil {
-			return false
-		}
-
-		if err := json.Unmarshal(response.Result, &proposers); err != nil {
-			return false
-		}
-
-		// no proposer found
-		if len(proposers) == 0 {
-			return false
-		}
-		// get first proposer
-		proposer := proposers[0]
-		if bytes.Equal(proposer.Signer.Bytes(), helper.GetAddress()) {
-			return true
-		}
-	} else {
-		Logger.Error("Error while fetching proposer", "status", resp.StatusCode)
+	err = json.Unmarshal(result.Result, &proposers)
+	if err != nil {
+		Logger.Error("error unmarshalling proposer slice", "error", err)
+		return false
+	}
+	if bytes.Equal(proposers[0].Signer.Bytes(), helper.GetAddress()) {
+		return true
 	}
 	return false
 }
@@ -243,4 +227,30 @@ func toCamelCase(input string) string {
 		}
 	}
 	return result
+}
+
+// FetchFromAPI fetches data from any URL
+func FetchFromAPI(cliCtx cliContext.CLIContext, URL string) (result rest.ResponseWithHeight, err error) {
+	resp, err := http.Get(URL)
+	if err != nil {
+		return result, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode == 200 {
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return result, err
+		}
+		// unmarshall data from buffer
+		// var proposers []hmtypes.Validator
+		var response rest.ResponseWithHeight
+
+		if err := cliCtx.Codec.UnmarshalJSON(body, &response); err != nil {
+			return result, err
+		}
+		return response, nil
+	} else {
+		Logger.Error("Error while fetching data from URL", "status", resp.StatusCode, "URL", URL)
+		return result, err
+	}
 }

@@ -27,7 +27,8 @@ var (
 // Keeper stores all related data
 type Keeper struct {
 	cdc *codec.Codec
-	sk  staking.Keeper
+	// staking keeper
+	sk staking.Keeper
 	// The (unexposed) keys used to access the stores from the Context.
 	storeKey sdk.StoreKey
 	// codespace

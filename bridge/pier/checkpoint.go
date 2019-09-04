@@ -81,7 +81,7 @@ func NewCheckpointer(connector QueueConnector, cdc *codec.Codec) *Checkpointer {
 		qConnector:        connector,
 		contractConnector: contractCaller,
 		cliCtx:            cliCtx,
-		txEncoder:         authTypes.NewTxBuilderFromCLI().WithTxEncoder(helper.GetTxEncoder()).WithChainID("heimdall-xOUIR0"),
+		txEncoder:         authTypes.NewTxBuilderFromCLI().WithTxEncoder(helper.GetTxEncoder()).WithChainID(helper.GetGenesisDoc().ChainID),
 		httpClient:        httpClient.NewHTTP("tcp://0.0.0.0:26657", "/websocket"),
 	}
 
@@ -166,6 +166,7 @@ func (c *Checkpointer) startPolling(ctx context.Context, pollInterval int) {
 	for {
 		select {
 		case <-ticker.C:
+			fmt.Printf("Checking proposer status")
 			if isProposer(c.cliCtx) {
 				header, err := c.contractConnector.MaticClient.HeaderByNumber(ctx, nil)
 				if err == nil && header != nil {
@@ -453,8 +454,6 @@ func (c *Checkpointer) broadcastCheckpoint(txhash chan string, start uint64, end
 		c.Logger.Error("Error sending checkpoint tx", "error", err, "start", start, "end", end)
 		return
 	}
-	fmt.Printf("response from checkpoint %v", response.String())
-
 	c.Logger.Info("Subscribing to checkpoint tx", "hash", response.TxHash, "start", start, "end", end, "root", root.String())
 
 	go c.SubscribeToTx(txBytes, start, end)
