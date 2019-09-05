@@ -468,6 +468,7 @@ func (c *Checkpointer) SubscribeToTx(tx tmTypes.Tx, start, end uint64) error {
 		c.Logger.Error("Unable to wait for tx", "error", err)
 		return err
 	}
+	fmt.Printf("data %v", data)
 
 	switch t := data.(type) {
 	case tmTypes.EventDataTx:

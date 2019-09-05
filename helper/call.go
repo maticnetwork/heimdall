@@ -163,7 +163,7 @@ func (c *ContractCaller) GetMainChainBlock(blockNum *big.Int) (header *ethtypes.
 
 // get child chain block header
 func (c *ContractCaller) GetMaticChainBlock(blockNum *big.Int) (header *ethtypes.Header, err error) {
-	latestBlock, err := GetMainClient().HeaderByNumber(context.Background(), blockNum)
+	latestBlock, err := GetMaticClient().HeaderByNumber(context.Background(), blockNum)
 	if err != nil {
 		Logger.Error("Unable to connect to matic chain", "Error", err)
 		return

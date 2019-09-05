@@ -18,9 +18,13 @@ import (
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
+	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/tendermint/tendermint/libs/common"
+	httpClient "github.com/tendermint/tendermint/rpc/client"
+	cTypes "github.com/tendermint/tendermint/rpc/core/types"
+	tmTypes "github.com/tendermint/tendermint/types"
 )
 
 const (
@@ -42,6 +46,9 @@ type SpanService struct {
 
 	// contract caller
 	contractConnector helper.ContractCaller
+
+	// http client to subscribe to
+	httpClient *httpClient.HTTP
 
 	cliCtx cliContext.CLIContext
 }
@@ -71,6 +78,7 @@ func NewSpanService(cdc *codec.Codec) *SpanService {
 		storageClient:     getBridgeDBInstance(viper.GetString(BridgeDBFlag)),
 		validatorSet:      rootchainInstance,
 		cliCtx:            cliCtx,
+		httpClient:        httpClient.NewHTTP("tcp://0.0.0.0:26657", "/websocket"),
 		contractConnector: contractCaller,
 	}
 
@@ -141,7 +149,8 @@ func (s *SpanService) propose(ctx context.Context) {
 		return
 	}
 	s.Logger.Debug("Fetched current child block", "CurrentChildBlock", currentBlock)
-	if currentBlock > int64(lastSpan.StartBlock) && currentBlock < int64(lastSpan.EndBlock) {
+	// if currentBlock > int64(lastSpan.StartBlock) && currentBlock < int64(lastSpan.EndBlock) {
+	if currentBlock > int64(lastSpan.StartBlock) {
 		s.Logger.Info("Need to propose committee for next span")
 		// send propose span
 		s.ProposeNewSpan(lastSpan.EndBlock + 1)
@@ -224,13 +233,27 @@ func (s *SpanService) ProposeNewSpan(start uint64) {
 		s.Logger.Error("Unable to fetch next span details", "error", err)
 		return
 	}
+
+	s.Logger.Info("Fetched information for next span", "NewSpan", msg)
+
 	txBldr := authTypes.NewTxBuilderFromCLI().WithTxEncoder(helper.GetTxEncoder()).WithChainID(helper.GetGenesisDoc().ChainID)
-	resp, err := helper.BuildAndBroadcastMsgs(s.cliCtx, txBldr, []sdk.Msg{msg})
+
+	txBytes, err := helper.GetSignedTxBytes(s.cliCtx, txBldr, []sdk.Msg{msg})
+	if err != nil {
+		s.Logger.Error("Error creating tx bytes", "error", err)
+		return
+	}
+	resp, err := helper.BroadcastTxBytes(s.cliCtx, txBytes, client.BroadcastSync)
 	if err != nil {
 		s.Logger.Error("Unable to send propose span to heimdall", "Error", err, "StartBlock", msg.StartBlock, "EndBlock", msg.EndBlock, "ChainID", msg.ChainID)
 		return
 	}
+	// subscribe to tx
+	go s.SubscribeToTx(txBytes, msg.StartBlock, msg.EndBlock)
+	// send to bor
+
 	s.Logger.Info("Transaction sent to heimdall 😀", "TxHash", resp.TxHash)
+
 }
 
 func (s *SpanService) fetchNextSpanDetails(start uint64) (msg bor.MsgProposeSpan, err error) {
@@ -258,4 +281,64 @@ func (s *SpanService) fetchNextSpanDetails(start uint64) (msg bor.MsgProposeSpan
 		return
 	}
 	return msg, nil
+}
+
+// SubscribeToTx subscribes to a broadcasted Tx and waits for its commitment to a block
+func (s *SpanService) SubscribeToTx(tx tmTypes.Tx, start, end uint64) error {
+	data, err := s.WaitForOneEvent(tx)
+	if err != nil {
+		s.Logger.Error("Unable to wait for tx", "error", err)
+		return err
+	}
+
+	switch t := data.(type) {
+	case tmTypes.EventDataTx:
+		fmt.Printf("got data %v", t.Height)
+		results, err := s.QueryTxWithProof(t.Tx.Hash())
+		// s.DispatchProposal(t.Height, tx, start, end)
+		fmt.Printf("got proof %v %v", results, err)
+	default:
+		s.Logger.Info("No cases matched while trying to send propose new committee")
+	}
+	return nil
+}
+
+// QueryTxWithProof query tx with proof from node
+func (s *SpanService) QueryTxWithProof(hash []byte) (*cTypes.ResultTx, error) {
+	node, err := s.cliCtx.GetNode()
+	if err != nil {
+		return nil, err
+	}
+	fmt.Printf("Got node %v", node)
+	return node.Tx(hash, true)
+}
+
+// WaitForOneEvent subscribes to a websocket event for the given
+// event time and returns upon receiving it one time, or
+// when the timeout duration has expired.
+//
+// This handles subscribing and unsubscribing under the hood
+func (s *SpanService) WaitForOneEvent(tx tmTypes.Tx) (tmTypes.TMEventData, error) {
+	const subscriber = "helpers"
+	ctx, cancel := context.WithTimeout(context.Background(), CommitTimeout)
+	defer cancel()
+
+	query := tmTypes.EventQueryTxFor(tx).String()
+
+	// register for the next event of this type
+	eventCh, err := s.httpClient.Subscribe(ctx, subscriber, query)
+	if err != nil {
+		fmt.Printf("error subscribing %v", err)
+		return nil, errors.Wrap(err, "failed to subscribe")
+	}
+
+	// make sure to unregister after the test is over
+	defer s.httpClient.UnsubscribeAll(ctx, subscriber)
+
+	select {
+	case event := <-eventCh:
+		return event.Data.(tmTypes.TMEventData), nil
+	case <-ctx.Done():
+		return nil, errors.New("timed out waiting for event")
+	}
 }
