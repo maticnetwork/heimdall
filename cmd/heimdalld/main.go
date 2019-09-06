@@ -227,9 +227,8 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			appState := app.NewDefaultGenesisState()
 			// set new validator
 			appState.StakingData.Validators = []hmTypes.Validator{validator}
-			acc := authTypes.NewBaseAccountWithAddress(hmTypes.BytesToHeimdallAddress(validator.Signer.Bytes()))
 			// set validator account
-			appState.Accounts = []app.GenesisAccount{app.BaseToGenesisAcc(acc)}
+			appState.Accounts = []app.GenesisAccount{getGenesisAccount(validator.Signer.Bytes())}
 			// app state json
 			appStateJSON, err := json.Marshal(appState)
 			if err != nil {
@@ -381,12 +380,18 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 
 			}
 
+			// other data
+			accounts := make([]app.GenesisAccount, totalValidators)
 			for i := 0; i < totalValidators; i++ {
 				populatePersistentPeersInConfigAndWriteIt(config)
+				// genesis account
+				accounts[i] = getGenesisAccount(validators[i].Signer.Bytes())
 			}
 
 			// new app state
 			appState := app.NewDefaultGenesisState()
+			// set accounts and validators
+			appState.Accounts = accounts
 			appState.StakingData.Validators = validators
 
 			appStateJSON, err := json.Marshal(appState)
@@ -406,7 +411,8 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 				if err != nil {
 					return err
 				}
-				if err := common.WriteFileAtomic(filepath.Join("mytestnet/signer-dump.json"), signerJSON, 0600); err != nil {
+
+				if err := common.WriteFileAtomic(filepath.Join(outDir, "signer-dump.json"), signerJSON, 0600); err != nil {
 					fmt.Println("Error writing signer-dump", err)
 					return err
 				}
@@ -490,6 +496,12 @@ func populatePersistentPeersInConfigAndWriteIt(config *cfg.Config) {
 		// overwrite default config
 		cfg.WriteConfigFile(filepath.Join(nodeDir(i), "config", "config.toml"), config)
 	}
+}
+
+func getGenesisAccount(address []byte) app.GenesisAccount {
+	acc := authTypes.NewBaseAccountWithAddress(hmTypes.BytesToHeimdallAddress(address))
+	acc.SetCoins(types.Coins{types.Coin{Denom: "vetic", Amount: types.NewInt(1000)}})
+	return app.BaseToGenesisAcc(acc)
 }
 
 // WriteGenesisFile creates and writes the genesis configuration to disk. An
