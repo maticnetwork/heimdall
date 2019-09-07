@@ -165,3 +165,18 @@ func QueryTx(cdc *codec.Codec, cliCtx context.CLIContext, hashHexStr string) (sd
 
 	return out, nil
 }
+
+// QueryTxWithProof query tx with proof from node
+func QueryTxWithProof(cdc *codec.Codec, cliCtx context.CLIContext, hashHexStr string) (*ctypes.ResultTx, error) {
+	hash, err := hex.DecodeString(hashHexStr)
+	if err != nil {
+		return nil, err
+	}
+
+	node, err := cliCtx.GetNode()
+	if err != nil {
+		return nil, err
+	}
+
+	return node.Tx(hash, true)
+}

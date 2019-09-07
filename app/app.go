@@ -360,17 +360,6 @@ func (app *HeimdallApp) endBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 
 			if app.borKeeper.GetSpanCache(ctx) {
 				logger.Info("Propose Span processed in block", "ProposeSpanProcesses", true)
-				// TODO Send proof to bor chain
-				// app.borKeeper.AddSigs(ctx, ctx.BlockHeader().Votes)
-				// get sigs from votes
-				// var votes []tmTypes.Vote
-				// err := json.Unmarshal(ctx.BlockHeader().Votes, &votes)
-				// if err != nil {
-				// 	logger.Error("Error while unmarshalling vote", "error", err)
-				// }
-				// sigs := helper.GetSigs(votes)
-				// fmt.Println("sigs", hex.EncodeToString(sigs))
-				// fmt.Println("vote", hex.EncodeToString(helper.GetVoteBytes(votes, ctx)))
 				// flush span cache
 				app.borKeeper.FlushSpanCache(ctx)
 			}
@@ -395,14 +384,9 @@ func (app *HeimdallApp) initFromGenesisState(ctx sdk.Context, genesisState Genes
 	for _, genacc := range genesisState.Accounts {
 		acc := app.accountKeeper.NewAccountWithAddress(ctx, types.BytesToHeimdallAddress(genacc.Address.Bytes()))
 		acc.SetCoins(genacc.Coins)
+		acc.SetSequence(genacc.Sequence)
 		app.accountKeeper.SetAccount(ctx, acc)
 	}
-
-	// TODO add into genesis
-	acc := app.accountKeeper.NewAccountWithAddress(ctx, types.BytesToHeimdallAddress(helper.GetAddress()))
-	acc.SetPubKey(helper.GetPubKey())
-	acc.SetCoins(types.Coins{types.Coin{Denom: "vetic", Amount: types.NewInt(1000)}})
-	app.accountKeeper.SetAccount(ctx, acc)
 
 	// check if genesis is actually a genesis
 	var isGenesis bool
