@@ -13,6 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
+	"github.com/maticnetwork/heimdall/contracts/validatorset"
 	"github.com/maticnetwork/heimdall/types"
 
 	"strings"
@@ -34,11 +35,13 @@ type IContractCaller interface {
 	IsTxConfirmed(tx common.Hash) bool
 	GetBlockNoFromTxHash(tx common.Hash) (blocknumber big.Int, err error)
 	SigUpdateEvent(tx common.Hash) (id uint64, newSigner common.Address, oldSigner common.Address, err error)
+	CommitSpan(voteSignBytes []byte, sigs []byte, txData []byte, proof []byte)
 }
 
 type ContractCaller struct {
 	RootChainInstance    *rootchain.Rootchain
 	StakeManagerInstance *stakemanager.Stakemanager
+	ValidatorSetInstance *validatorset.Validatorset
 	MainChainClient      *ethclient.Client
 	MainChainRPC         *rpc.Client
 	MaticClient          *ethclient.Client
@@ -59,18 +62,24 @@ type rpcTransaction struct {
 func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 	rootChainInstance, err := GetRootChainInstance()
 	if err != nil {
-		Logger.Error("Error creating rootchain instance", "error", err)
+		Logger.Error("Error creating rootchain instance while creating contract caller obj", "error", err)
 		return contractCallerObj, err
 	}
 	stakeManagerInstance, err := GetStakeManagerInstance()
 	if err != nil {
-		Logger.Error("Error creating stakeManagerInstance while getting validator info", "error", err)
+		Logger.Error("Error creating stakeManagerInstance creating contract caller obj", "error", err)
+		return contractCallerObj, err
+	}
+	validatorSetInstance, err := GetValidatorSetInstance()
+	if err != nil {
+		Logger.Error("Error creating validator set instance while creating contract caller obj", "error", err)
 		return contractCallerObj, err
 	}
 	contractCallerObj.MainChainClient = GetMainClient()
 	contractCallerObj.MainChainRPC = GetMainChainRPCClient()
 	contractCallerObj.StakeManagerInstance = stakeManagerInstance
 	contractCallerObj.RootChainInstance = rootChainInstance
+	contractCallerObj.ValidatorSetInstance = validatorSetInstance
 	contractCallerObj.MaticClient = GetMaticClient()
 
 	// load stake manager abi

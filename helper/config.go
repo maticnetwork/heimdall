@@ -23,6 +23,8 @@ import (
 	"github.com/maticnetwork/heimdall/contracts/depositmanager"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
+	"github.com/maticnetwork/heimdall/contracts/validatorset"
+
 	tmTypes "github.com/tendermint/tendermint/types"
 )
 
@@ -80,6 +82,7 @@ type Configuration struct {
 	StakeManagerAddress   string `json:"stakeManagerAddress"`   // Stake manager address on main chain
 	RootchainAddress      string `json:"rootchainAddress"`      // Rootchain contract address on main chain
 	DepositManagerAddress string `json:"depositManagerAddress"` // Deposit Manager contract address on main chain
+	ValidatorSetAddress   string `json:"validatorSetAddress"`   // Validator Set contract address on bor chain
 	ChildBlockInterval    uint64 `json:"childBlockInterval"`    // Difference between header index of 2 child blocks submitted on main chain
 
 	// config related to bridge
@@ -283,6 +286,30 @@ func GetDepositManagerInstance() (*depositmanager.Depositmanager, error) {
 // GetDepositManagerABI returns ABI for DepositManager contract
 func GetDepositManagerABI() (abi.ABI, error) {
 	return abi.JSON(strings.NewReader(depositmanager.DepositmanagerABI))
+}
+
+//
+// Validator set
+//
+
+// GetValidatorSetAddress returns Validator set contract address for selected base chain
+func GetValidatorSetAddress() common.Address {
+	return common.HexToAddress(GetConfig().ValidatorSetAddress)
+}
+
+// GetValidatorSetInstance returns ValidatorSet contract instance for selected base chain
+func GetValidatorSetInstance() (*validatorset.Validatorset, error) {
+	validatorSetInstance, err := validatorset.NewValidatorset(GetValidatorSetAddress(), maticClient)
+	if err != nil {
+		Logger.Error("Unable to create validator set instance", "error", err)
+	}
+
+	return validatorSetInstance, err
+}
+
+// GetValidatorSetABI returns ABI for Validator Set contract
+func GetValidatorSetABI() (abi.ABI, error) {
+	return abi.JSON(strings.NewReader(validatorset.ValidatorsetABI))
 }
 
 //

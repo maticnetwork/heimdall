@@ -24,7 +24,6 @@ import (
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/tendermint/tendermint/libs/common"
-	"github.com/tendermint/tendermint/libs/pubsub/query"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
@@ -64,7 +63,6 @@ type Checkpointer struct {
 func NewCheckpointer(connector QueueConnector, cdc *codec.Codec) *Checkpointer {
 	// create logger
 	logger := Logger.With("module", HeimdallCheckpointer)
-
 	cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
 	cliCtx.BroadcastMode = client.BroadcastAsync
 
@@ -463,7 +461,7 @@ func (c *Checkpointer) broadcastCheckpoint(txhash chan string, start uint64, end
 
 // SubscribeToTx subscribes to a broadcasted Tx and waits for its commitment to a block
 func (c *Checkpointer) SubscribeToTx(tx tmTypes.Tx, start, end uint64) error {
-	data, err := c.WaitForOneEvent(tx, query.MustParse("tm.events.type='NewBlock'").String())
+	data, err := WaitForOneEvent(tx, c.httpClient)
 	if err != nil {
 		c.Logger.Error("Unable to wait for tx", "error", err)
 		return err
@@ -517,7 +515,7 @@ func (c *Checkpointer) DispatchCheckpoint(height int64, txBytes tmTypes.Tx, star
 	c.Logger.Debug("Preparing checkpoint to be pushed on chain")
 
 	// get votes
-	votes, sigs, chainID, err := c.fetchVotes(height)
+	votes, sigs, chainID, err := fetchVotes(height, c.httpClient, c.Logger)
 	if err != nil {
 		return err
 	}

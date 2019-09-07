@@ -86,3 +86,31 @@ func (c *ContractCaller) SendCheckpoint(voteSignBytes []byte, sigs []byte, txDat
 		Logger.Info("Submitted new header successfully", "txHash", tx.Hash().String())
 	}
 }
+
+// CommitSpan sends commit span transaction to validator set contraact on bor to change committee for next span
+func (c *ContractCaller) CommitSpan(voteSignBytes []byte, sigs []byte, txData []byte, proof []byte) {
+	validatorSetABI, err := GetValidatorSetABI()
+	if err != nil {
+		return
+	}
+	data, err := validatorSetABI.Pack("commitSpan", voteSignBytes, sigs, txData, proof)
+	if err != nil {
+		Logger.Error("Unable to pack tx for submitHeaderBlock", "error", err)
+		return
+	}
+	validatorSetAddress := GetValidatorSetAddress()
+	auth, err := GenerateAuthObj(GetMaticClient(), ethereum.CallMsg{
+		To:   &validatorSetAddress,
+		Data: data,
+	})
+	GetPubKey().VerifyBytes(voteSignBytes, sigs)
+	Logger.Info("Submitting new commitee", "Vote", hex.EncodeToString(voteSignBytes), "Sigs", hex.EncodeToString(sigs), "txData", hex.EncodeToString(txData), "proof", hex.EncodeToString(proof))
+
+	var d []byte("0x")
+	tx, err := c.ValidatorSetInstance.CommitSpan(auth, voteSignBytes, sigs, txData, d)
+	if err != nil {
+		Logger.Error("Error while submitting commit commitee for next span", "error", err)
+	} else {
+		Logger.Info("Submitted new committee", "txHash", tx.Hash().String())
+	}
+}

@@ -359,6 +359,7 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 					MaticRPCUrl:              helper.MaticRPCUrl,
 					StakeManagerAddress:      (ethCommon.Address{}).Hex(),
 					RootchainAddress:         (ethCommon.Address{}).Hex(),
+					ValidatorSetAddress:      (ethCommon.Address{}).Hex(),
 					ChildBlockInterval:       helper.DefaultChildBlockInterval,
 					CheckpointerPollInterval: helper.DefaultCheckpointerPollInterval,
 					SyncerPollInterval:       helper.DefaultSyncerPollInterval,

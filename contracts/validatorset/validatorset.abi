@@ -1,0 +1,64 @@
+[
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "vote",
+				"type": "bytes"
+			},
+			{
+				"name": "sigs",
+				"type": "bytes"
+			},
+			{
+				"name": "txBytes",
+				"type": "bytes"
+			},
+			{
+				"name": "proof",
+				"type": "bytes"
+			}
+		],
+		"name": "commitSpan",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "getInitialValidators",
+		"outputs": [
+			{
+				"name": "",
+				"type": "address[]"
+			},
+			{
+				"name": "",
+				"type": "uint256[]"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "getValidators",
+		"outputs": [
+			{
+				"name": "",
+				"type": "address[]"
+			},
+			{
+				"name": "",
+				"type": "uint256[]"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	}
+]

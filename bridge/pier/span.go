@@ -3,10 +3,13 @@ package pier
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -18,7 +21,6 @@ import (
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
-	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/tendermint/tendermint/libs/common"
@@ -95,8 +97,14 @@ func (s *SpanService) OnStart() error {
 
 	s.cancelSpanService = cancelSpanService
 
+	// start http client
+	err := s.httpClient.Start()
+	if err != nil {
+		log.Fatalf("Error connecting to server %v", err)
+	}
+
 	// start polling for checkpoint in buffer
-	go s.startPolling(spanCtx, 5*time.Second)
+	go s.startPolling(spanCtx, 10*time.Second)
 
 	// subscribed to new head
 	s.Logger.Debug("Started Span service")
@@ -106,6 +114,7 @@ func (s *SpanService) OnStart() error {
 // OnStop stops all necessary go routines
 func (s *SpanService) OnStop() {
 	s.BaseService.OnStop()
+	s.httpClient.Stop()
 
 	// cancel ack process
 	s.cancelSpanService()
@@ -264,7 +273,7 @@ func (s *SpanService) fetchNextSpanDetails(start uint64) (msg bor.MsgProposeSpan
 	}
 	q := req.URL.Query()
 	q.Add("start_block", strconv.Itoa(int(start)))
-	q.Add("chain_id", helper.GetGenesisDoc().ChainID)
+	q.Add("chain_id", "15001")
 	q.Add("proposer", helper.GetFromAddress(s.cliCtx).String())
 	req.URL.RawQuery = q.Encode()
 	s.Logger.Debug("sending request", "url", req.URL.String())
@@ -273,8 +282,7 @@ func (s *SpanService) fetchNextSpanDetails(start uint64) (msg bor.MsgProposeSpan
 		Logger.Error("Error fetching proposers", "error", err)
 		return
 	}
-	fmt.Printf("result %v", result.Result)
-
+	// TODO remove and add in config
 	err = json.Unmarshal(result.Result, &msg)
 	if err != nil {
 		Logger.Error("Error unmarshalling propose tx msg ", "error", err)
@@ -285,7 +293,7 @@ func (s *SpanService) fetchNextSpanDetails(start uint64) (msg bor.MsgProposeSpan
 
 // SubscribeToTx subscribes to a broadcasted Tx and waits for its commitment to a block
 func (s *SpanService) SubscribeToTx(tx tmTypes.Tx, start, end uint64) error {
-	data, err := s.WaitForOneEvent(tx)
+	data, err := WaitForOneEvent(tx, s.httpClient)
 	if err != nil {
 		s.Logger.Error("Unable to wait for tx", "error", err)
 		return err
@@ -293,10 +301,7 @@ func (s *SpanService) SubscribeToTx(tx tmTypes.Tx, start, end uint64) error {
 
 	switch t := data.(type) {
 	case tmTypes.EventDataTx:
-		fmt.Printf("got data %v", t.Height)
-		results, err := s.QueryTxWithProof(t.Tx.Hash())
-		// s.DispatchProposal(t.Height, tx, start, end)
-		fmt.Printf("got proof %v %v", results, err)
+		go s.DispatchProposal(t.Height, t.Tx.Hash(), tx)
 	default:
 		s.Logger.Info("No cases matched while trying to send propose new committee")
 	}
@@ -313,32 +318,39 @@ func (s *SpanService) QueryTxWithProof(hash []byte) (*cTypes.ResultTx, error) {
 	return node.Tx(hash, true)
 }
 
-// WaitForOneEvent subscribes to a websocket event for the given
-// event time and returns upon receiving it one time, or
-// when the timeout duration has expired.
-//
-// This handles subscribing and unsubscribing under the hood
-func (s *SpanService) WaitForOneEvent(tx tmTypes.Tx) (tmTypes.TMEventData, error) {
-	const subscriber = "helpers"
-	ctx, cancel := context.WithTimeout(context.Background(), CommitTimeout)
-	defer cancel()
-
-	query := tmTypes.EventQueryTxFor(tx).String()
-
-	// register for the next event of this type
-	eventCh, err := s.httpClient.Subscribe(ctx, subscriber, query)
+func (s *SpanService) DispatchProposal(height int64, txHash []byte, txBytes tmTypes.Tx) {
+	s.Logger.Debug("Subscribing to new height", "height", height+1)
+	// extraData
+	votes, sigs, chainID, err := fetchVotes(height, s.httpClient, s.Logger)
 	if err != nil {
-		fmt.Printf("error subscribing %v", err)
-		return nil, errors.Wrap(err, "failed to subscribe")
+		s.Logger.Error("Error fetching votes", "height", height)
+		return
 	}
+	// proof
+	tx, err := s.QueryTxWithProof(txHash)
+	fmt.Println("TxBytes: ", hex.EncodeToString(tx.Tx[4:]))
+	fmt.Println("Leaf: ", hex.EncodeToString(tx.Proof.Leaf()))
+	fmt.Println("Root: ", tx.Proof.RootHash.String())
+	proofList := helper.GetMerkleProofList(&tx.Proof.Proof)
 
-	// make sure to unregister after the test is over
-	defer s.httpClient.UnsubscribeAll(ctx, subscriber)
-
-	select {
-	case event := <-eventCh:
-		return event.Data.(tmTypes.TMEventData), nil
-	case <-ctx.Done():
-		return nil, errors.New("timed out waiting for event")
+	var result []string
+	for _, e := range proofList {
+		result = append(result, hex.EncodeToString(e))
 	}
+	fmt.Println("Votes: ", hex.EncodeToString(helper.GetVoteBytes(votes, chainID)))
+	fmt.Println("Sigs: ", hex.EncodeToString(sigs))
+	fmt.Println("chainID", chainID)
+
+	fmt.Println("data : ",
+		fmt.Sprintf(`"0x%s","0x%s","0x%s","0x%s"`,
+			hex.EncodeToString(helper.GetVoteBytes(votes, chainID)),
+			hex.EncodeToString(sigs),
+			hex.EncodeToString(tx.Tx[4:]),
+			strings.Join(result, ""),
+		))
+
+	// print proof
+	fmt.Println("Proof: ", strings.Join(result, ""))
+	s.Logger.Info("txBytes comparison", "Param", hex.EncodeToString(txBytes), "ReceivedTx", hex.EncodeToString(tx.Tx), "trimmed", hex.EncodeToString(tx.Tx[4:]))
+	s.contractConnector.CommitSpan(helper.GetVoteBytes(votes, chainID), sigs, tx.Tx[4:], []byte(strings.Join(result, "")))
 }

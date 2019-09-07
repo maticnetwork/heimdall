@@ -2,8 +2,8 @@ package pier
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"math/big"
@@ -14,6 +14,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
+
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -22,6 +24,8 @@ import (
 	hmtypes "github.com/maticnetwork/heimdall/types"
 	rest "github.com/maticnetwork/heimdall/types/rest"
 	"github.com/tendermint/tendermint/libs/log"
+	httpClient "github.com/tendermint/tendermint/rpc/client"
+	tmTypes "github.com/tendermint/tendermint/types"
 )
 
 const (
@@ -253,4 +257,83 @@ func FetchFromAPI(cliCtx cliContext.CLIContext, URL string) (result rest.Respons
 		Logger.Error("Error while fetching data from URL", "status", resp.StatusCode, "URL", URL)
 		return result, err
 	}
+}
+
+// WaitForOneEvent subscribes to a websocket event for the given
+// event time and returns upon receiving it one time, or
+// when the timeout duration has expired.
+//
+// This handles subscribing and unsubscribing under the hood
+func WaitForOneEvent(tx tmTypes.Tx, client *httpClient.HTTP) (tmTypes.TMEventData, error) {
+	const subscriber = "helpers"
+	ctx, cancel := context.WithTimeout(context.Background(), CommitTimeout)
+	defer cancel()
+	query := tmTypes.EventQueryTxFor(tx).String()
+	// register for the next event of this type
+	eventCh, err := client.Subscribe(ctx, subscriber, query)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to subscribe")
+	}
+	// make sure to unregister after the test is over
+	defer client.UnsubscribeAll(ctx, subscriber)
+	select {
+	case event := <-eventCh:
+		return event.Data.(tmTypes.TMEventData), nil
+	case <-ctx.Done():
+		return nil, errors.New("timed out waiting for event")
+	}
+}
+
+// SubscribeNewBlock subscribes to a new block
+func SubscribeNewBlock(client *httpClient.HTTP) (tmTypes.TMEventData, error) {
+	const subscriber = "helpers"
+	ctx, cancel := context.WithTimeout(context.Background(), CommitTimeout)
+	defer cancel()
+
+	// register for the next event of this type
+	eventCh, err := client.Subscribe(ctx, subscriber, tmTypes.QueryForEvent(tmTypes.EventNewBlock).String())
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to subscribe")
+	}
+	// unsubscribe everything
+	defer client.UnsubscribeAll(ctx, subscriber)
+
+	select {
+	case event := <-eventCh:
+		return event.Data.(tmTypes.TMEventData), nil
+	case <-ctx.Done():
+		return nil, errors.New("timed out waiting for event")
+	}
+}
+
+// fetchVotes fetches votes and extracts sigs from it
+func fetchVotes(height int64, client *httpClient.HTTP, logger log.Logger) (votes []*tmTypes.CommitSig, sigs []byte, chainID string, err error) {
+	logger.Debug("Subscribing to new height", "height", height+1)
+
+	var blockDetails *tmTypes.Block
+	data, err := SubscribeNewBlock(client)
+	if err != nil {
+		fmt.Printf("Error subscribing to height %v error %v", height+1, err)
+		return nil, nil, "", err
+	}
+	switch t := data.(type) {
+	case tmTypes.EventDataNewBlock:
+		blockDetails = t.Block
+	default:
+		logger.Info("No cases matched")
+	}
+
+	// TODO ensure block.height == height+1 OR Subscribe to Height+1
+
+	// extract votes from response
+	preCommits := blockDetails.LastCommit.Precommits
+
+	// extract signs from votes
+	valSigs := helper.GetSigs(preCommits)
+
+	// extract chainID
+	chainID = blockDetails.ChainID
+
+	// return
+	return preCommits, valSigs, chainID, nil
 }

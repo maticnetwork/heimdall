@@ -16,14 +16,14 @@ var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Start bridge server",
 	Run: func(cmd *cobra.Command, args []string) {
-		qConnector := pier.NewQueueConnector("amqp://guest:guest@localhost:5672/", "hq", "bq", "cq")
+		// qConnector := pier.NewQueueConnector("amqp://guest:guest@localhost:5672/", "hq", "bq", "cq")
 		cdc := app.MakeCodec()
 		services := [...]common.Service{
-			pier.NewCheckpointer(qConnector, cdc),
+			// pier.NewCheckpointer(qConnector, cdc),
 			// pier.NewSyncer(qConnector),
 			// pier.NewAckService(),
 			// pier.NewConsumerService(qConnector),
-			// pier.NewSpanService(cdc),
+			pier.NewSpanService(cdc),
 		}
 		// sync group
 		var wg sync.WaitGroup
