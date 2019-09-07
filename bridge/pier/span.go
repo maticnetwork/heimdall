@@ -25,7 +25,6 @@ import (
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/tendermint/tendermint/libs/common"
 	httpClient "github.com/tendermint/tendermint/rpc/client"
-	cTypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmTypes "github.com/tendermint/tendermint/types"
 )
 
@@ -308,16 +307,7 @@ func (s *SpanService) SubscribeToTx(tx tmTypes.Tx, start, end uint64) error {
 	return nil
 }
 
-// QueryTxWithProof query tx with proof from node
-func (s *SpanService) QueryTxWithProof(hash []byte) (*cTypes.ResultTx, error) {
-	node, err := s.cliCtx.GetNode()
-	if err != nil {
-		return nil, err
-	}
-	fmt.Printf("Got node %v", node)
-	return node.Tx(hash, true)
-}
-
+// DispatchProposal dispatches proposal
 func (s *SpanService) DispatchProposal(height int64, txHash []byte, txBytes tmTypes.Tx) {
 	s.Logger.Debug("Subscribing to new height", "height", height+1)
 	// extraData
@@ -326,8 +316,9 @@ func (s *SpanService) DispatchProposal(height int64, txHash []byte, txBytes tmTy
 		s.Logger.Error("Error fetching votes", "height", height)
 		return
 	}
+
 	// proof
-	tx, err := s.QueryTxWithProof(txHash)
+	tx, err := helper.QueryTxWithProof(s.cliCtx, txHash)
 	fmt.Println("TxBytes: ", hex.EncodeToString(tx.Tx[4:]))
 	fmt.Println("Leaf: ", hex.EncodeToString(tx.Proof.Leaf()))
 	fmt.Println("Root: ", tx.Proof.RootHash.String())
