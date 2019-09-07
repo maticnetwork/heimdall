@@ -16,16 +16,17 @@ import (
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authTypes "github.com/maticnetwork/heimdall/auth/types"
-	"github.com/maticnetwork/heimdall/bor"
-	"github.com/maticnetwork/heimdall/contracts/rootchain"
-	"github.com/maticnetwork/heimdall/helper"
-	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/tendermint/tendermint/libs/common"
 	httpClient "github.com/tendermint/tendermint/rpc/client"
 	tmTypes "github.com/tendermint/tendermint/types"
+
+	authTypes "github.com/maticnetwork/heimdall/auth/types"
+	"github.com/maticnetwork/heimdall/bor"
+	"github.com/maticnetwork/heimdall/contracts/rootchain"
+	"github.com/maticnetwork/heimdall/helper"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 const (
@@ -143,6 +144,7 @@ func (s *SpanService) startPolling(ctx context.Context, interval time.Duration) 
 // propose producers for next span if needed
 func (s *SpanService) propose(ctx context.Context) {
 	s.Logger.Debug("Trying to propose committee for next span! ")
+
 	// if I am in last proposed span, propose next
 	lastSpan, err := s.checkSpanStatus()
 	if err != nil {
@@ -150,6 +152,7 @@ func (s *SpanService) propose(ctx context.Context) {
 		return
 	}
 	s.Logger.Debug("Fetched last span", "LastSpan", lastSpan.String())
+
 	// call with last span on record + new span duration and see if it has been proposed
 	currentBlock, err := s.GetCurrentChildBlock()
 	if err != nil {
@@ -157,6 +160,7 @@ func (s *SpanService) propose(ctx context.Context) {
 		return
 	}
 	s.Logger.Debug("Fetched current child block", "CurrentChildBlock", currentBlock)
+
 	// if currentBlock > int64(lastSpan.StartBlock) && currentBlock < int64(lastSpan.EndBlock) {
 	if currentBlock > int64(lastSpan.StartBlock) {
 		s.Logger.Info("Need to propose committee for next span")
@@ -270,18 +274,22 @@ func (s *SpanService) fetchNextSpanDetails(start uint64) (msg bor.MsgProposeSpan
 		s.Logger.Error("Error creating a new request", "error", err)
 		return
 	}
+
 	q := req.URL.Query()
 	q.Add("start_block", strconv.Itoa(int(start)))
-	q.Add("chain_id", "15001")
+	q.Add("chain_id", viper.GetString("bor-chain-id"))
 	q.Add("proposer", helper.GetFromAddress(s.cliCtx).String())
 	req.URL.RawQuery = q.Encode()
-	s.Logger.Debug("sending request", "url", req.URL.String())
+
+	// log url
+	s.Logger.Debug("Sending request", "url", req.URL.String())
+
 	result, err := FetchFromAPI(s.cliCtx, req.URL.String())
 	if err != nil {
 		Logger.Error("Error fetching proposers", "error", err)
 		return
 	}
-	// TODO remove and add in config
+
 	err = json.Unmarshal(result.Result, &msg)
 	if err != nil {
 		Logger.Error("Error unmarshalling propose tx msg ", "error", err)

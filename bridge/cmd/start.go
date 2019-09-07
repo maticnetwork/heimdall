@@ -5,10 +5,11 @@ import (
 	"os/signal"
 	"sync"
 
-	"github.com/maticnetwork/heimdall/app"
-	"github.com/maticnetwork/heimdall/bridge/pier"
 	"github.com/spf13/cobra"
 	"github.com/tendermint/tendermint/libs/common"
+
+	"github.com/maticnetwork/heimdall/app"
+	"github.com/maticnetwork/heimdall/bridge/pier"
 )
 
 // startCmd represents the start command

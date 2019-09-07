@@ -30,7 +30,6 @@ import (
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/helper"
 	hmtypes "github.com/maticnetwork/heimdall/types"
-	rest "github.com/maticnetwork/heimdall/types/rest"
 	httpClient "github.com/tendermint/tendermint/rpc/client"
 	tmTypes "github.com/tendermint/tendermint/types"
 )
@@ -531,28 +530,20 @@ func (c *Checkpointer) DispatchCheckpoint(height int64, txBytes tmTypes.Tx, star
 	// fetch current proposer from heimdall
 	validatorAddress := ethCommon.BytesToAddress(helper.GetPubKey().Address().Bytes())
 	var proposer hmtypes.Validator
-	resp, err := http.Get(CurrentProposerURL)
+
+	// fetch latest start block from heimdall via rest query
+	response, err := FetchFromAPI(c.cliCtx, CurrentProposerURL)
 	if err != nil {
-		c.Logger.Error("Unable to send request to get heimdall", "Error", err)
+		c.Logger.Error("Failed to get current proposer through rest")
 		return err
 	}
-	defer resp.Body.Close()
-	if resp.StatusCode == 200 {
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			c.Logger.Error("Unable to read data from response", "Error", err)
-			return err
-		}
-		var response rest.ResponseWithHeight
 
-		if err := c.cliCtx.Codec.UnmarshalJSON(body, &response); err != nil {
-			return err
-		}
-		if err := json.Unmarshal(response.Result, &proposer); err != nil {
-			c.Logger.Error("Error unmarshalling validator", "error", err)
-			return err
-		}
+	// get proposer from response
+	if err := json.Unmarshal(response.Result, &proposer); err != nil {
+		c.Logger.Error("Error unmarshalling validator", "error", err)
+		return err
 	}
+
 	// check if we are current proposer
 	if !bytes.Equal(proposer.Signer.Bytes(), validatorAddress.Bytes()) {
 		return errors.New("We are not proposer, aborting dispatch to mainchain")
