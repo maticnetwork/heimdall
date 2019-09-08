@@ -32,7 +32,7 @@ var startCmd = &cobra.Command{
 			pier.NewAckService(cdc, _queueConnector, _httpClient),
 			pier.NewSpanService(cdc, _queueConnector, _httpClient),
 
-			// // queue consumer server
+			// queue consumer server
 			pier.NewConsumerService(cdc, _queueConnector),
 		}
 

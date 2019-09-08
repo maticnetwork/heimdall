@@ -33,20 +33,21 @@ type ConsumerService struct {
 // NewConsumerService returns new service object
 func NewConsumerService(cdc *codec.Codec, queueConnector QueueConnector) *ConsumerService {
 	// create logger
-	logger := Logger.With("module", NoackService)
+	logger := Logger.With("module", AMQPConsumerService)
 
 	// creating checkpointer object
 	consumerService := &ConsumerService{
 		storageClient:  getBridgeDBInstance(viper.GetString(BridgeDBFlag)),
 		queueConnector: queueConnector,
 	}
-	consumerService.BaseService = *common.NewBaseService(logger, NoackService, consumerService)
+	consumerService.BaseService = *common.NewBaseService(logger, AMQPConsumerService, consumerService)
 	return consumerService
 }
 
 // OnStart starts new block subscription
 func (consumer *ConsumerService) OnStart() error {
 	consumer.BaseService.OnStart() // Always call the overridden method.
+
 	if err := consumer.queueConnector.ConsumeHeimdallQ(); err != nil {
 		return err
 	}

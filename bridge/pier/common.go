@@ -35,6 +35,7 @@ const (
 	HeimdallCheckpointer = "heimdall-checkpointer"
 	NoackService         = "checkpoint-no-ack"
 	SpanServiceStr       = "span-service"
+	AMQPConsumerService  = "amqp-consumer-service"
 
 	LastNoAckURL          = "/checkpoint/last-no-ack"
 	ProposersURL          = "/staking/proposer/%v"
