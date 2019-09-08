@@ -14,6 +14,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/types/rest"
 	tmTypes "github.com/tendermint/tendermint/types"
 
 	"github.com/maticnetwork/heimdall/types"
@@ -167,6 +168,16 @@ func WriteSimulationResponse(w http.ResponseWriter, cdc *codec.Codec, gas uint64
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(resp)
+}
+
+// ReturnNotFoundIfNoContent returns not found error if no content
+func ReturnNotFoundIfNoContent(w http.ResponseWriter, data []byte) bool {
+	if len(data) == 0 {
+		rest.WriteErrorResponse(w, http.StatusNotFound, errors.New("No content found for requested key").Error())
+		return false
+	}
+
+	return true
 }
 
 // ParseInt64OrReturnBadRequest converts s to a int64 value.

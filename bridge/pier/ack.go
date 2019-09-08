@@ -12,13 +12,15 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/client"
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/tendermint/tendermint/libs/common"
+	httpClient "github.com/tendermint/tendermint/rpc/client"
 
-	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/helper"
@@ -43,11 +45,18 @@ type AckService struct {
 	// header listener subscription
 	cancelACKProcess context.CancelFunc
 
+	// cli context
 	cliCtx cliContext.CLIContext
+
+	// queue connector
+	queueConnector QueueConnector
+
+	// http client to subscribe to
+	httpClient *httpClient.HTTP
 }
 
 // NewAckService returns new service object
-func NewAckService() *AckService {
+func NewAckService(cdc *codec.Codec, queueConnector QueueConnector, httpClient *httpClient.HTTP) *AckService {
 	// create logger
 	logger := Logger.With("module", NoackService)
 
@@ -58,14 +67,17 @@ func NewAckService() *AckService {
 		panic(err)
 	}
 
-	cliCtx := cliContext.NewCLIContext()
+	cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
 	cliCtx.BroadcastMode = client.BroadcastAsync
 
 	// creating checkpointer object
 	ackservice := &AckService{
 		storageClient:     getBridgeDBInstance(viper.GetString(BridgeDBFlag)),
 		rootChainInstance: rootchainInstance,
-		cliCtx:            cliCtx,
+
+		cliCtx:         cliCtx,
+		queueConnector: queueConnector,
+		httpClient:     httpClient,
 	}
 
 	ackservice.BaseService = *common.NewBaseService(logger, NoackService, ackservice)
@@ -227,7 +239,9 @@ func (ackService *AckService) getLastNoAckTime() uint64 {
 
 func (ackService *AckService) isValidProposer(count uint64, address []byte) bool {
 	ackService.Logger.Debug("Skipping proposers", "count", strconv.FormatUint(count, 10))
-	resp, err := http.Get(fmt.Sprintf(ProposersURL, strconv.FormatUint(count, 10)))
+	resp, err := http.Get(
+		fmt.Sprintf(GetHeimdallServerEndpoint(ProposersURL), strconv.FormatUint(count, 10)),
+	)
 	if err != nil {
 		ackService.Logger.Error("Unable to send request for next proposers", "Error", err)
 		return false

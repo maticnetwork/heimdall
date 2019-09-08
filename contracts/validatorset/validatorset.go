@@ -28,7 +28,7 @@ var (
 )
 
 // ValidatorsetABI is the input ABI used to generate the binding from.
-const ValidatorsetABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"vote\",\"type\":\"bytes\"},{\"name\":\"sigs\",\"type\":\"bytes\"},{\"name\":\"txBytes\",\"type\":\"bytes\"},{\"name\":\"proof\",\"type\":\"bytes\"}],\"name\":\"commitSpan\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getInitialValidators\",\"outputs\":[{\"name\":\"\",\"type\":\"address[]\"},{\"name\":\"\",\"type\":\"uint256[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getValidators\",\"outputs\":[{\"name\":\"\",\"type\":\"address[]\"},{\"name\":\"\",\"type\":\"uint256[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}]"
+const ValidatorsetABI = "[{\"constant\":true,\"inputs\":[{\"name\":\"span\",\"type\":\"uint256\"}],\"name\":\"getSpan\",\"outputs\":[{\"name\":\"number\",\"type\":\"uint256\"},{\"name\":\"startBlock\",\"type\":\"uint256\"},{\"name\":\"endBlock\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"vote\",\"type\":\"bytes\"},{\"name\":\"sigs\",\"type\":\"bytes\"},{\"name\":\"txBytes\",\"type\":\"bytes\"},{\"name\":\"proof\",\"type\":\"bytes\"}],\"name\":\"commitSpan\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"currentSpanNumber\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getNextSpan\",\"outputs\":[{\"name\":\"number\",\"type\":\"uint256\"},{\"name\":\"startBlock\",\"type\":\"uint256\"},{\"name\":\"endBlock\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getInitialValidators\",\"outputs\":[{\"name\":\"\",\"type\":\"address[]\"},{\"name\":\"\",\"type\":\"uint256[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getCurrentSpan\",\"outputs\":[{\"name\":\"number\",\"type\":\"uint256\"},{\"name\":\"startBlock\",\"type\":\"uint256\"},{\"name\":\"endBlock\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getValidators\",\"outputs\":[{\"name\":\"\",\"type\":\"address[]\"},{\"name\":\"\",\"type\":\"uint256[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"vote\",\"type\":\"bytes\"},{\"name\":\"sigs\",\"type\":\"bytes\"},{\"name\":\"txBytes\",\"type\":\"bytes\"},{\"name\":\"proof\",\"type\":\"bytes\"}],\"name\":\"validateValidatorSet\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
 
 // Validatorset is an auto generated Go binding around an Ethereum contract.
 type Validatorset struct {
@@ -172,6 +172,72 @@ func (_Validatorset *ValidatorsetTransactorRaw) Transact(opts *bind.TransactOpts
 	return _Validatorset.Contract.contract.Transact(opts, method, params...)
 }
 
+// CurrentSpanNumber is a free data retrieval call binding the contract method 0x4dbc959f.
+//
+// Solidity: function currentSpanNumber() constant returns(uint256)
+func (_Validatorset *ValidatorsetCaller) CurrentSpanNumber(opts *bind.CallOpts) (*big.Int, error) {
+	var (
+		ret0 = new(*big.Int)
+	)
+	out := ret0
+	err := _Validatorset.contract.Call(opts, out, "currentSpanNumber")
+	return *ret0, err
+}
+
+// CurrentSpanNumber is a free data retrieval call binding the contract method 0x4dbc959f.
+//
+// Solidity: function currentSpanNumber() constant returns(uint256)
+func (_Validatorset *ValidatorsetSession) CurrentSpanNumber() (*big.Int, error) {
+	return _Validatorset.Contract.CurrentSpanNumber(&_Validatorset.CallOpts)
+}
+
+// CurrentSpanNumber is a free data retrieval call binding the contract method 0x4dbc959f.
+//
+// Solidity: function currentSpanNumber() constant returns(uint256)
+func (_Validatorset *ValidatorsetCallerSession) CurrentSpanNumber() (*big.Int, error) {
+	return _Validatorset.Contract.CurrentSpanNumber(&_Validatorset.CallOpts)
+}
+
+// GetCurrentSpan is a free data retrieval call binding the contract method 0xaf26aa96.
+//
+// Solidity: function getCurrentSpan() constant returns(uint256 number, uint256 startBlock, uint256 endBlock)
+func (_Validatorset *ValidatorsetCaller) GetCurrentSpan(opts *bind.CallOpts) (struct {
+	Number     *big.Int
+	StartBlock *big.Int
+	EndBlock   *big.Int
+}, error) {
+	ret := new(struct {
+		Number     *big.Int
+		StartBlock *big.Int
+		EndBlock   *big.Int
+	})
+	out := ret
+	err := _Validatorset.contract.Call(opts, out, "getCurrentSpan")
+	return *ret, err
+}
+
+// GetCurrentSpan is a free data retrieval call binding the contract method 0xaf26aa96.
+//
+// Solidity: function getCurrentSpan() constant returns(uint256 number, uint256 startBlock, uint256 endBlock)
+func (_Validatorset *ValidatorsetSession) GetCurrentSpan() (struct {
+	Number     *big.Int
+	StartBlock *big.Int
+	EndBlock   *big.Int
+}, error) {
+	return _Validatorset.Contract.GetCurrentSpan(&_Validatorset.CallOpts)
+}
+
+// GetCurrentSpan is a free data retrieval call binding the contract method 0xaf26aa96.
+//
+// Solidity: function getCurrentSpan() constant returns(uint256 number, uint256 startBlock, uint256 endBlock)
+func (_Validatorset *ValidatorsetCallerSession) GetCurrentSpan() (struct {
+	Number     *big.Int
+	StartBlock *big.Int
+	EndBlock   *big.Int
+}, error) {
+	return _Validatorset.Contract.GetCurrentSpan(&_Validatorset.CallOpts)
+}
+
 // GetInitialValidators is a free data retrieval call binding the contract method 0x65b3a1e2.
 //
 // Solidity: function getInitialValidators() constant returns(address[], uint256[])
@@ -200,6 +266,86 @@ func (_Validatorset *ValidatorsetSession) GetInitialValidators() ([]common.Addre
 // Solidity: function getInitialValidators() constant returns(address[], uint256[])
 func (_Validatorset *ValidatorsetCallerSession) GetInitialValidators() ([]common.Address, []*big.Int, error) {
 	return _Validatorset.Contract.GetInitialValidators(&_Validatorset.CallOpts)
+}
+
+// GetNextSpan is a free data retrieval call binding the contract method 0x60c8614d.
+//
+// Solidity: function getNextSpan() constant returns(uint256 number, uint256 startBlock, uint256 endBlock)
+func (_Validatorset *ValidatorsetCaller) GetNextSpan(opts *bind.CallOpts) (struct {
+	Number     *big.Int
+	StartBlock *big.Int
+	EndBlock   *big.Int
+}, error) {
+	ret := new(struct {
+		Number     *big.Int
+		StartBlock *big.Int
+		EndBlock   *big.Int
+	})
+	out := ret
+	err := _Validatorset.contract.Call(opts, out, "getNextSpan")
+	return *ret, err
+}
+
+// GetNextSpan is a free data retrieval call binding the contract method 0x60c8614d.
+//
+// Solidity: function getNextSpan() constant returns(uint256 number, uint256 startBlock, uint256 endBlock)
+func (_Validatorset *ValidatorsetSession) GetNextSpan() (struct {
+	Number     *big.Int
+	StartBlock *big.Int
+	EndBlock   *big.Int
+}, error) {
+	return _Validatorset.Contract.GetNextSpan(&_Validatorset.CallOpts)
+}
+
+// GetNextSpan is a free data retrieval call binding the contract method 0x60c8614d.
+//
+// Solidity: function getNextSpan() constant returns(uint256 number, uint256 startBlock, uint256 endBlock)
+func (_Validatorset *ValidatorsetCallerSession) GetNextSpan() (struct {
+	Number     *big.Int
+	StartBlock *big.Int
+	EndBlock   *big.Int
+}, error) {
+	return _Validatorset.Contract.GetNextSpan(&_Validatorset.CallOpts)
+}
+
+// GetSpan is a free data retrieval call binding the contract method 0x047a6c5b.
+//
+// Solidity: function getSpan(uint256 span) constant returns(uint256 number, uint256 startBlock, uint256 endBlock)
+func (_Validatorset *ValidatorsetCaller) GetSpan(opts *bind.CallOpts, span *big.Int) (struct {
+	Number     *big.Int
+	StartBlock *big.Int
+	EndBlock   *big.Int
+}, error) {
+	ret := new(struct {
+		Number     *big.Int
+		StartBlock *big.Int
+		EndBlock   *big.Int
+	})
+	out := ret
+	err := _Validatorset.contract.Call(opts, out, "getSpan", span)
+	return *ret, err
+}
+
+// GetSpan is a free data retrieval call binding the contract method 0x047a6c5b.
+//
+// Solidity: function getSpan(uint256 span) constant returns(uint256 number, uint256 startBlock, uint256 endBlock)
+func (_Validatorset *ValidatorsetSession) GetSpan(span *big.Int) (struct {
+	Number     *big.Int
+	StartBlock *big.Int
+	EndBlock   *big.Int
+}, error) {
+	return _Validatorset.Contract.GetSpan(&_Validatorset.CallOpts, span)
+}
+
+// GetSpan is a free data retrieval call binding the contract method 0x047a6c5b.
+//
+// Solidity: function getSpan(uint256 span) constant returns(uint256 number, uint256 startBlock, uint256 endBlock)
+func (_Validatorset *ValidatorsetCallerSession) GetSpan(span *big.Int) (struct {
+	Number     *big.Int
+	StartBlock *big.Int
+	EndBlock   *big.Int
+}, error) {
+	return _Validatorset.Contract.GetSpan(&_Validatorset.CallOpts, span)
 }
 
 // GetValidators is a free data retrieval call binding the contract method 0xb7ab4db5.
@@ -251,4 +397,25 @@ func (_Validatorset *ValidatorsetSession) CommitSpan(vote []byte, sigs []byte, t
 // Solidity: function commitSpan(bytes vote, bytes sigs, bytes txBytes, bytes proof) returns()
 func (_Validatorset *ValidatorsetTransactorSession) CommitSpan(vote []byte, sigs []byte, txBytes []byte, proof []byte) (*types.Transaction, error) {
 	return _Validatorset.Contract.CommitSpan(&_Validatorset.TransactOpts, vote, sigs, txBytes, proof)
+}
+
+// ValidateValidatorSet is a paid mutator transaction binding the contract method 0xd0504f89.
+//
+// Solidity: function validateValidatorSet(bytes vote, bytes sigs, bytes txBytes, bytes proof) returns()
+func (_Validatorset *ValidatorsetTransactor) ValidateValidatorSet(opts *bind.TransactOpts, vote []byte, sigs []byte, txBytes []byte, proof []byte) (*types.Transaction, error) {
+	return _Validatorset.contract.Transact(opts, "validateValidatorSet", vote, sigs, txBytes, proof)
+}
+
+// ValidateValidatorSet is a paid mutator transaction binding the contract method 0xd0504f89.
+//
+// Solidity: function validateValidatorSet(bytes vote, bytes sigs, bytes txBytes, bytes proof) returns()
+func (_Validatorset *ValidatorsetSession) ValidateValidatorSet(vote []byte, sigs []byte, txBytes []byte, proof []byte) (*types.Transaction, error) {
+	return _Validatorset.Contract.ValidateValidatorSet(&_Validatorset.TransactOpts, vote, sigs, txBytes, proof)
+}
+
+// ValidateValidatorSet is a paid mutator transaction binding the contract method 0xd0504f89.
+//
+// Solidity: function validateValidatorSet(bytes vote, bytes sigs, bytes txBytes, bytes proof) returns()
+func (_Validatorset *ValidatorsetTransactorSession) ValidateValidatorSet(vote []byte, sigs []byte, txBytes []byte, proof []byte) (*types.Transaction, error) {
+	return _Validatorset.Contract.ValidateValidatorSet(&_Validatorset.TransactOpts, vote, sigs, txBytes, proof)
 }

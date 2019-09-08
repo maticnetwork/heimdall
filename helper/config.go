@@ -34,7 +34,8 @@ const (
 	HomeFlag               = "home"
 	FlagClientHome         = "home-client"
 
-	// --- TODO Move these to common client flags
+	// ---
+	// TODO Move these to common client flags
 	// BroadcastBlock defines a tx broadcasting mode where the client waits for
 	// the tx to be committed in a block.
 	BroadcastBlock = "block"
@@ -46,8 +47,16 @@ const (
 	BroadcastAsync = "async"
 	// --
 
-	MainRPCUrl                      = "https://ropsten.infura.io"
-	MaticRPCUrl                     = "https://testnet2.matic.network"
+	MainRPCUrl  = "https://ropsten.infura.io"
+	MaticRPCUrl = "https://testnet2.matic.network"
+
+	// Services
+
+	// DefaultAmqpURL represents default AMQP url
+	DefaultAmqpURL           = "amqp://guest:guest@localhost:5672/"
+	DefaultHeimdallServerURL = "http://0.0.0.0:1317"
+	DefaultTendermintNodeURL = "http://0.0.0.0:26657"
+
 	NoACKWaitTime                   = time.Second * 1800 // Time ack service waits to clear buffer and elect new proposer (1800 seconds ~ 30 mins)
 	CheckpointBufferTime            = time.Second * 1000 // Time checkpoint is allowed to stay in buffer (1000 seconds ~ 17 mins)
 	DefaultCheckpointerPollInterval = 60 * 1000          // 1 minute in milliseconds
@@ -77,8 +86,13 @@ func init() {
 
 // Configuration represents heimdall config
 type Configuration struct {
-	MainRPCUrl            string `json:"mainRPCUrl"`            // RPC endpoint for main chain
-	MaticRPCUrl           string `json:"maticRPCUrl"`           // RPC endpoint for matic chain
+	MainRPCUrl  string `json:"mainRPCUrl"`  // RPC endpoint for main chain
+	MaticRPCUrl string `json:"maticRPCUrl"` // RPC endpoint for matic chain
+
+	AmqpURL           string `json:"amqpURL"`           // amqp url
+	HeimdallServerURL string `json:"heimdallServerURL"` // heimdall server url
+	TendermintNodeURL string `json:"tendermintNodeURL"` // tendemint noed url
+
 	StakeManagerAddress   string `json:"stakeManagerAddress"`   // Stake manager address on main chain
 	RootchainAddress      string `json:"rootchainAddress"`      // Rootchain contract address on main chain
 	DepositManagerAddress string `json:"depositManagerAddress"` // Deposit Manager contract address on main chain

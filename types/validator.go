@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"math/big"
+	"sort"
 	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -20,6 +21,14 @@ type Validator struct {
 	LastUpdated *big.Int        `json:"last_updated"`
 
 	Accum int64 `json:"accum"`
+}
+
+// SortValidatorByAddress sorts a slice of validators by address
+func SortValidatorByAddress(a []Validator) []Validator {
+	sort.Slice(a, func(i, j int) bool {
+		return bytes.Compare(a[i].Signer.Bytes(), a[j].Signer.Bytes()) < 0
+	})
+	return a
 }
 
 // IsCurrentValidator checks if validator is in current validator set

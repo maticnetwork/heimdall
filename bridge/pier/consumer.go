@@ -9,6 +9,8 @@
 package pier
 
 import (
+	cliContext "github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/tendermint/tendermint/libs/common"
@@ -21,17 +23,22 @@ type ConsumerService struct {
 	// storage client
 	storageClient *leveldb.DB
 
-	qConnector QueueConnector
+	// cli context
+	cliCtx cliContext.CLIContext
+
+	// queue connector
+	queueConnector QueueConnector
 }
 
-// NewAckService returns new service object
-func NewConsumerService(connector QueueConnector) *ConsumerService {
+// NewConsumerService returns new service object
+func NewConsumerService(cdc *codec.Codec, queueConnector QueueConnector) *ConsumerService {
 	// create logger
 	logger := Logger.With("module", NoackService)
+
 	// creating checkpointer object
 	consumerService := &ConsumerService{
-		storageClient: getBridgeDBInstance(viper.GetString(BridgeDBFlag)),
-		qConnector:    connector,
+		storageClient:  getBridgeDBInstance(viper.GetString(BridgeDBFlag)),
+		queueConnector: queueConnector,
 	}
 	consumerService.BaseService = *common.NewBaseService(logger, NoackService, consumerService)
 	return consumerService
@@ -40,7 +47,7 @@ func NewConsumerService(connector QueueConnector) *ConsumerService {
 // OnStart starts new block subscription
 func (consumer *ConsumerService) OnStart() error {
 	consumer.BaseService.OnStart() // Always call the overridden method.
-	if err := consumer.qConnector.ConsumeHeimdallQ(); err != nil {
+	if err := consumer.queueConnector.ConsumeHeimdallQ(); err != nil {
 		return err
 	}
 	return nil

@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -26,6 +25,7 @@ import (
 	"github.com/maticnetwork/heimdall/bor"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -49,14 +49,18 @@ type SpanService struct {
 	// contract caller
 	contractConnector helper.ContractCaller
 
+	// cli context
+	cliCtx cliContext.CLIContext
+
+	// queue connector
+	queueConnector QueueConnector
+
 	// http client to subscribe to
 	httpClient *httpClient.HTTP
-
-	cliCtx cliContext.CLIContext
 }
 
 // NewSpanService returns new service object
-func NewSpanService(cdc *codec.Codec) *SpanService {
+func NewSpanService(cdc *codec.Codec, queueConnector QueueConnector, httpClient *httpClient.HTTP) *SpanService {
 	// create logger
 	logger := Logger.With("module", SpanServiceStr)
 
@@ -79,9 +83,11 @@ func NewSpanService(cdc *codec.Codec) *SpanService {
 	spanService := &SpanService{
 		storageClient:     getBridgeDBInstance(viper.GetString(BridgeDBFlag)),
 		validatorSet:      rootchainInstance,
-		cliCtx:            cliCtx,
-		httpClient:        httpClient.NewHTTP("tcp://0.0.0.0:26657", "/websocket"),
 		contractConnector: contractCaller,
+
+		cliCtx:         cliCtx,
+		queueConnector: queueConnector,
+		httpClient:     httpClient,
 	}
 
 	spanService.BaseService = *common.NewBaseService(logger, SpanServiceStr, spanService)
@@ -96,12 +102,6 @@ func (s *SpanService) OnStart() error {
 	spanCtx, cancelSpanService := context.WithCancel(context.Background())
 
 	s.cancelSpanService = cancelSpanService
-
-	// start http client
-	err := s.httpClient.Start()
-	if err != nil {
-		log.Fatalf("Error connecting to server %v", err)
-	}
 
 	// start polling for checkpoint in buffer
 	go s.startPolling(spanCtx, 10*time.Second)
@@ -131,8 +131,10 @@ func (s *SpanService) startPolling(ctx context.Context, interval time.Duration) 
 	for {
 		select {
 		case <-ticker.C:
-			if s.isSpanProposer() {
-				go s.propose(ctx)
+			if lastSpan, err := s.getLastSpan(); err == nil {
+				if s.isSpanProposer(lastSpan) {
+					go s.propose(lastSpan)
+				}
 			}
 		case <-ctx.Done():
 			ticker.Stop()
@@ -142,17 +144,7 @@ func (s *SpanService) startPolling(ctx context.Context, interval time.Duration) 
 }
 
 // propose producers for next span if needed
-func (s *SpanService) propose(ctx context.Context) {
-	s.Logger.Debug("Trying to propose committee for next span! ")
-
-	// if I am in last proposed span, propose next
-	lastSpan, err := s.checkSpanStatus()
-	if err != nil {
-		s.Logger.Error("Unable to fetch last span start from heimdall")
-		return
-	}
-	s.Logger.Debug("Fetched last span", "LastSpan", lastSpan.String())
-
+func (s *SpanService) propose(lastSpan hmTypes.Span) {
 	// call with last span on record + new span duration and see if it has been proposed
 	currentBlock, err := s.GetCurrentChildBlock()
 	if err != nil {
@@ -160,14 +152,13 @@ func (s *SpanService) propose(ctx context.Context) {
 		return
 	}
 	s.Logger.Debug("Fetched current child block", "CurrentChildBlock", currentBlock)
-
-	// if currentBlock > int64(lastSpan.StartBlock) && currentBlock < int64(lastSpan.EndBlock) {
-	if currentBlock > int64(lastSpan.StartBlock) {
+	if currentBlock >= lastSpan.StartBlock && (lastSpan.EndBlock == 0 || currentBlock <= lastSpan.EndBlock) {
 		s.Logger.Info("Need to propose committee for next span")
 		// send propose span
 		s.ProposeNewSpan(lastSpan.EndBlock + 1)
 	}
 
+	// TODO
 	// query validator set contract and check latest state
 	// if its behind push onchain
 }
@@ -193,44 +184,40 @@ func (s *SpanService) fetchLastSpan() (int, error) {
 }
 
 // checks span status
-func (s *SpanService) checkSpanStatus() (spanStart hmTypes.Span, err error) {
+func (s *SpanService) getLastSpan() (spanStart hmTypes.Span, err error) {
 	// fetch latest start block from heimdall via rest query
-	result, err := FetchFromAPI(s.cliCtx, LatestSpanURL)
+	result, err := FetchFromAPI(s.cliCtx, GetHeimdallServerEndpoint(LatestSpanURL))
 	if err != nil {
-		s.Logger.Error("Fetching latest span from heimdall unsuccessfull")
+		s.Logger.Error("Error while fetching latest span")
 		return
 	}
+
 	var lastSpan hmTypes.Span
 	err = json.Unmarshal(result.Result, &lastSpan)
 	if err != nil {
 		s.Logger.Error("Error unmarshalling", "error", err)
 		return lastSpan, err
 	}
+
 	return lastSpan, nil
 }
 
 // GetCurrentChildBlock gets the
-func (s *SpanService) GetCurrentChildBlock() (int64, error) {
+func (s *SpanService) GetCurrentChildBlock() (uint64, error) {
 	childBlock, err := s.contractConnector.GetMaticChainBlock(nil)
 	if err != nil {
 		return 0, err
 	}
-	return childBlock.Number.Int64(), nil
+	return childBlock.Number.Uint64(), nil
 }
 
-func (s *SpanService) isSpanProposer() bool {
-	result, err := FetchFromAPI(s.cliCtx, SpanProposerURL)
-	if err != nil {
-		s.Logger.Error("Error fetching proposers", "error", err)
-		return false
-	}
+func (s *SpanService) isSpanProposer(lastSpan hmTypes.Span) bool {
+	// sort validator address
+	selectedProducers := types.SortValidatorByAddress(lastSpan.SelectedProducers)
 
-	var proposer hmTypes.Validator
-	err = json.Unmarshal(result.Result, &proposer)
-	if err != nil {
-		s.Logger.Error("error unmarshalling proposer slice ")
-		return false
-	}
+	// get last validator as proposer
+	proposer := selectedProducers[len(selectedProducers)-1]
+
 	s.Logger.Debug("Fetched proposer for span", "proposer", proposer.Signer.String())
 	if bytes.Equal(proposer.Signer.Bytes(), helper.GetAddress()) {
 		return true
@@ -248,28 +235,32 @@ func (s *SpanService) ProposeNewSpan(start uint64) {
 
 	s.Logger.Info("Fetched information for next span", "NewSpan", msg)
 
-	txBldr := authTypes.NewTxBuilderFromCLI().WithTxEncoder(helper.GetTxEncoder()).WithChainID(helper.GetGenesisDoc().ChainID)
+	// tx builder
+	txBldr := authTypes.NewTxBuilderFromCLI().
+		WithTxEncoder(helper.GetTxEncoder()).
+		WithChainID(helper.GetGenesisDoc().ChainID)
 
 	txBytes, err := helper.GetSignedTxBytes(s.cliCtx, txBldr, []sdk.Msg{msg})
 	if err != nil {
 		s.Logger.Error("Error creating tx bytes", "error", err)
 		return
 	}
+
 	resp, err := helper.BroadcastTxBytes(s.cliCtx, txBytes, client.BroadcastSync)
 	if err != nil {
 		s.Logger.Error("Unable to send propose span to heimdall", "Error", err, "StartBlock", msg.StartBlock, "EndBlock", msg.EndBlock, "ChainID", msg.ChainID)
 		return
 	}
+
 	// subscribe to tx
 	go s.SubscribeToTx(txBytes, msg.StartBlock, msg.EndBlock)
 	// send to bor
 
-	s.Logger.Info("Transaction sent to heimdall 😀", "TxHash", resp.TxHash)
-
+	s.Logger.Info("Transaction sent to heimdall", "TxHash", resp.TxHash)
 }
 
 func (s *SpanService) fetchNextSpanDetails(start uint64) (msg bor.MsgProposeSpan, err error) {
-	req, err := http.NewRequest("GET", NextSpanInfoURL, nil)
+	req, err := http.NewRequest("GET", GetHeimdallServerEndpoint(NextSpanInfoURL), nil)
 	if err != nil {
 		s.Logger.Error("Error creating a new request", "error", err)
 		return

@@ -9,6 +9,7 @@ type (
 		currentHeaderBlock *big.Int
 		err                error
 	}
+
 	HeimdallCheckpoint struct {
 		start uint64
 		end   uint64

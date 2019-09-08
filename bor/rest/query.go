@@ -1,12 +1,10 @@
 package rest
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
-	"sort"
 	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -105,45 +103,56 @@ func getLatestSpanHandlerFn(
 	cliCtx context.CLIContext,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		//
+		// Get latest span start block
+		//
+
 		res, err := cliCtx.QueryStore(bor.LastSpanStartBlockKey, "bor")
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
-		// the query will return empty if there is no data in buffer
-		if len(res) == 0 {
-			rest.WriteErrorResponse(w, http.StatusNoContent, errors.New("no content found for requested key").Error())
+		// check content
+		if ok := rest.ReturnNotFoundIfNoContent(w, res); !ok {
 			return
 		}
-		lastestSpanStart, err := strconv.Atoi(string(res))
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusNoContent, errors.New("unable to convert span start to int").Error())
+
+		lastestSpanStart, ok := rest.ParseUint64OrReturnBadRequest(w, string(res))
+		if !ok {
+			return
 		}
 
-		res, err = cliCtx.QueryStore(bor.GetSpanKey(uint64(lastestSpanStart)), "bor")
+		//
+		// Get latest span
+		//
+
+		res, err = cliCtx.QueryStore(bor.GetSpanKey(lastestSpanStart), "bor")
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
-		// the query will return empty if there is no data in buffer
-		if len(res) == 0 {
-			rest.WriteErrorResponse(w, http.StatusNotFound, errors.New("No content found for requested span").Error())
+		// check content
+		if ok := rest.ReturnNotFoundIfNoContent(w, res); !ok {
 			return
 		}
+
 		var span types.Span
 		err = cdc.UnmarshalBinaryBare(res, &span)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
+
 		result, err := json.Marshal(&span)
 		if err != nil {
 			RestLogger.Error("Error while marshalling response to Json", "error", err)
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
+
+		// return result
 		rest.PostProcessResponse(w, cliCtx, result)
 	}
 }
@@ -156,42 +165,56 @@ func getSpanProposersHandlerFn(
 		// TODO add span proposer logic selection here
 		// for now its set as last producer sorted by address in current span
 
+		//
+		// Get latest span start block
+		//
+
 		res, err := cliCtx.QueryStore(bor.LastSpanStartBlockKey, "bor")
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		// the query will return empty if there is no data in buffer
-		if len(res) == 0 {
-			rest.WriteErrorResponse(w, http.StatusNoContent, errors.New("no content found for requested key").Error())
+
+		// check content
+		if ok := rest.ReturnNotFoundIfNoContent(w, res); !ok {
 			return
 		}
 
-		lastestSpanStart, err := strconv.Atoi(string(res))
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusNoContent, errors.New("unable to convert span start to int").Error())
+		lastestSpanStart, ok := rest.ParseUint64OrReturnBadRequest(w, string(res))
+		if !ok {
+			return
 		}
 
-		res, err = cliCtx.QueryStore(bor.GetSpanKey(uint64(lastestSpanStart)), "bor")
+		//
+		// Get latest span
+		//
+
+		res, err = cliCtx.QueryStore(bor.GetSpanKey(lastestSpanStart), "bor")
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
-		// the query will return empty if there is no data in buffer
-		if len(res) == 0 {
-			rest.WriteErrorResponse(w, http.StatusNotFound, errors.New("No content found for requested span").Error())
+		// check content
+		if ok := rest.ReturnNotFoundIfNoContent(w, res); !ok {
 			return
 		}
+
 		var span types.Span
 		err = cdc.UnmarshalBinaryBare(res, &span)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		span.SelectedProducers = sortByAddress(span.SelectedProducers)
 
-		result, err := json.Marshal(&span.SelectedProducers[len(span.SelectedProducers)-1])
+		// selected producers
+		selectedProducers := types.SortValidatorByAddress(span.SelectedProducers)
+
+		//
+		// Get span proposers
+		//
+
+		result, err := json.Marshal(&selectedProducers)
 		if err != nil {
 			RestLogger.Error("Error while marshalling response to Json", "error", err)
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -199,14 +222,6 @@ func getSpanProposersHandlerFn(
 		}
 		rest.PostProcessResponse(w, cliCtx, result)
 	}
-}
-
-// sortByAddress sorts a slice of validators by address
-func sortByAddress(a []types.Validator) []types.Validator {
-	sort.Slice(a, func(i, j int) bool {
-		return bytes.Compare(a[i].Signer.Bytes(), a[j].Signer.Bytes()) < 0
-	})
-	return a
 }
 
 func prepareNextSpanHandlerFn(

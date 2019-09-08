@@ -82,6 +82,18 @@ func (k *Keeper) AddNewSpan(ctx sdk.Context, span types.Span) error {
 	return nil
 }
 
+// AddNewRawSpan adds new span for bor to store
+func (k *Keeper) AddNewRawSpan(ctx sdk.Context, span types.Span) error {
+	store := ctx.KVStore(k.storeKey)
+	out, err := k.cdc.MarshalBinaryBare(span)
+	if err != nil {
+		cmn.BorLogger.Error("Error marshalling span", "error", err)
+		return err
+	}
+	store.Set(GetSpanKey(span.StartBlock), out)
+	return nil
+}
+
 // AddSigs adds collected signatures to the last span added
 func (k *Keeper) AddSigs(ctx sdk.Context, tmVotes []byte) error {
 	lastSpan, err := k.GetLastSpan(ctx)
@@ -126,6 +138,18 @@ func (k *Keeper) GetSpan(ctx sdk.Context, startBlock uint64) (span types.Span, e
 	} else {
 		return span, nil
 	}
+}
+
+// GetAllSpans fetches all indexed by start block from store
+func (k *Keeper) GetAllSpans(ctx sdk.Context) (spans []*types.Span) {
+	// iterate through spans and create span update array
+	k.IterateSpansAndApplyFn(ctx, func(span types.Span) error {
+		// append to list of validatorUpdates
+		spans = append(spans, &span)
+		return nil
+	})
+
+	return
 }
 
 // GetLastSpan fetches last span using lastStartBlock
@@ -222,4 +246,28 @@ func (k *Keeper) GetSprintDuration(ctx sdk.Context) uint64 {
 // SetSprintDuration sets the sprint duration
 func (k *Keeper) SetSprintDuration(ctx sdk.Context, duration uint64) {
 	k.paramSpace.Set(ctx, ParamStoreKeySprintDuration, duration)
+}
+
+//
+// Utils
+//
+
+// IterateSpansAndApplyFn interate spans and apply the given function.
+func (k *Keeper) IterateSpansAndApplyFn(ctx sdk.Context, f func(span types.Span) error) {
+	store := ctx.KVStore(k.storeKey)
+
+	// get span iterator
+	iterator := sdk.KVStorePrefixIterator(store, SpanPrefixKey)
+	defer iterator.Close()
+
+	// loop through spans to get valid spans
+	for ; iterator.Valid(); iterator.Next() {
+		// unmarshall span
+		var result types.Span
+		k.cdc.UnmarshalBinaryBare(iterator.Value(), &result)
+		// call function and return if required
+		if err := f(result); err != nil {
+			return
+		}
+	}
 }

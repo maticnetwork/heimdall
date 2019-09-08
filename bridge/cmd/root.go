@@ -73,7 +73,7 @@ func init() {
 		"",
 		"Bridge db path (default <home>/bridge/storage)",
 	)
-	// bridge storage db
+	// bridge chain id
 	rootCmd.PersistentFlags().String(
 		borChainIDFlag,
 		"15001",

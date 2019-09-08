@@ -8,7 +8,9 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/client"
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -18,16 +20,15 @@ import (
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/tendermint/tendermint/libs/common"
+	httpClient "github.com/tendermint/tendermint/rpc/client"
 
-	"github.com/cosmos/cosmos-sdk/client"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/contracts/depositmanager"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
-	"github.com/maticnetwork/heimdall/staking"
-
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/staking"
 	hmtypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -46,14 +47,8 @@ type Syncer struct {
 	// Base service
 	common.BaseService
 
-	// connector to queues
-	qConnector QueueConnector
-
 	// storage client
 	storageClient *leveldb.DB
-
-	// cli context for tendermint request
-	cliContext cliContext.CLIContext
 
 	// ABIs
 	abis []*abi.ABI
@@ -74,10 +69,19 @@ type Syncer struct {
 
 	// header listener subscription
 	cancelHeaderProcess context.CancelFunc
+
+	// cli context
+	cliCtx cliContext.CLIContext
+
+	// queue connector
+	queueConnector QueueConnector
+
+	// http client to subscribe to
+	httpClient *httpClient.HTTP
 }
 
 // NewSyncer returns new service object for syncing events
-func NewSyncer(connector QueueConnector) *Syncer {
+func NewSyncer(cdc *codec.Codec, queueConnector QueueConnector, httpClient *httpClient.HTTP) *Syncer {
 	// create logger
 	logger := Logger.With("module", ChainSyncer)
 	// root chain instance
@@ -103,15 +107,18 @@ func NewSyncer(connector QueueConnector) *Syncer {
 		&depositManagerABI,
 	}
 
-	cliCtx := cliContext.NewCLIContext()
+	cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
 	cliCtx.BroadcastMode = client.BroadcastAsync
 
 	// creating syncer object
 	syncer := &Syncer{
-		storageClient:        getBridgeDBInstance(viper.GetString(BridgeDBFlag)),
-		cliContext:           cliCtx,
+		storageClient: getBridgeDBInstance(viper.GetString(BridgeDBFlag)),
+
+		cliCtx:         cliCtx,
+		queueConnector: queueConnector,
+		httpClient:     httpClient,
+
 		abis:                 abis,
-		qConnector:           connector,
 		MainClient:           helper.GetMainClient(),
 		RootChainInstance:    rootchainInstance,
 		StakeManagerInstance: stakeManagerInstance,
@@ -305,7 +312,7 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 }
 
 func (syncer *Syncer) sendTx(eventName string, msg sdk.Msg) {
-	_, err := helper.BroadcastMsgs(syncer.cliContext, []sdk.Msg{msg})
+	_, err := helper.BroadcastMsgs(syncer.cliCtx, []sdk.Msg{msg})
 	if err != nil {
 		logEventBroadcastTxError(syncer.Logger, eventName, err)
 		return
@@ -328,8 +335,8 @@ func (syncer *Syncer) processCheckpointEvent(eventName string, abiObject *abi.AB
 		)
 
 		// create msg checkpoint ack message
-		msg := checkpoint.NewMsgCheckpointAck(helper.GetFromAddress(syncer.cliContext), event.Number.Uint64())
-		syncer.qConnector.DispatchToHeimdall(msg)
+		msg := checkpoint.NewMsgCheckpointAck(helper.GetFromAddress(syncer.cliCtx), event.Number.Uint64())
+		syncer.queueConnector.DispatchToHeimdall(msg)
 	}
 }
 
@@ -348,8 +355,8 @@ func (syncer *Syncer) processStakedEvent(eventName string, abiObject *abi.ABI, v
 			"amount", event.Amount,
 		)
 		if bytes.Compare(event.User.Bytes(), helper.GetPubKey().Address().Bytes()) == 0 {
-			msg := staking.NewMsgValidatorJoin(helper.GetFromAddress(syncer.cliContext), event.ValidatorId.Uint64(), hmtypes.NewPubKey(helper.GetPubKey().Bytes()), vLog.TxHash)
-			syncer.qConnector.DispatchToHeimdall(msg)
+			msg := staking.NewMsgValidatorJoin(helper.GetFromAddress(syncer.cliCtx), event.ValidatorId.Uint64(), hmtypes.NewPubKey(helper.GetPubKey().Bytes()), vLog.TxHash)
+			syncer.queueConnector.DispatchToHeimdall(msg)
 		}
 	}
 }
@@ -369,8 +376,8 @@ func (syncer *Syncer) processUnstakeInitEvent(eventName string, abiObject *abi.A
 			"amount", event.Amount,
 		)
 		// send validator exit message
-		msg := staking.NewMsgValidatorExit(helper.GetFromAddress(syncer.cliContext), event.ValidatorId.Uint64(), vLog.TxHash)
-		syncer.qConnector.DispatchToHeimdall(msg)
+		msg := staking.NewMsgValidatorExit(helper.GetFromAddress(syncer.cliCtx), event.ValidatorId.Uint64(), vLog.TxHash)
+		syncer.queueConnector.DispatchToHeimdall(msg)
 	}
 }
 
@@ -388,7 +395,7 @@ func (syncer *Syncer) processSignerChangeEvent(eventName string, abiObject *abi.
 		)
 		// if bytes.Compare(event.NewSigner.Bytes(), helper.GetPubKey().Address().Bytes()) == 0 {
 		// 	msg := staking.NewMsgValidatorUpdate(event.ValidatorId.Uint64(), hmtypes.NewPubKey(helper.GetPubKey().Bytes()), vLog.TxHash)
-		// 	syncer.qConnector.DispatchToHeimdall(msg)
+		// 	syncer.queueConnector.DispatchToHeimdall(msg)
 		// }
 	}
 }

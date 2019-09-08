@@ -2,31 +2,44 @@ package bor
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/maticnetwork/heimdall/types"
 )
 
 // GenesisState is the bor state that must be provided at genesis.
 type GenesisState struct {
-	SprintDuration uint64 `json:"sprintDuration" yaml:"sprintDuration"` // sprint duration
-	SpanDuration   uint64 `json:"spanDuration" yaml:"spanDuration"`     // span duration ie number of blocks for which val set is frozen on heimdall
+	SprintDuration uint64        `json:"sprint_duration" yaml:"sprint_duration"` // sprint duration
+	SpanDuration   uint64        `json:"span_duration" yaml:"span_duration"`     // span duration ie number of blocks for which val set is frozen on heimdall
+	Spans          []*types.Span `json:"spans" yaml:"spans"`                     // list of spans
 }
 
 // NewGenesisState creates a new genesis state.
-func NewGenesisState(sprintDuration uint64, spanDuration uint64) GenesisState {
+func NewGenesisState(sprintDuration uint64, spanDuration uint64, spans []*types.Span) GenesisState {
 	return GenesisState{
 		SprintDuration: sprintDuration,
 		SpanDuration:   spanDuration,
+		Spans:          spans,
 	}
 }
 
 // DefaultGenesisState returns a default genesis state
 func DefaultGenesisState() GenesisState {
-	return NewGenesisState(DefaultSprintDuration, DefaultSpanDuration)
+	return NewGenesisState(DefaultSprintDuration, DefaultSpanDuration, make([]*types.Span, 0))
 }
 
 // InitGenesis sets distribution information for genesis.
 func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 	keeper.SetSprintDuration(ctx, data.SprintDuration)
 	keeper.SetSpanDuration(ctx, data.SpanDuration)
+	if len(data.Spans) > 0 {
+		// add new span
+		for _, span := range data.Spans {
+			keeper.AddNewRawSpan(ctx, *span)
+		}
+
+		// update last span
+		keeper.UpdateLastSpan(ctx, data.Spans[len(data.Spans)-1].StartBlock)
+	}
 }
 
 // ExportGenesis returns a GenesisState for a given context and keeper.
@@ -34,6 +47,8 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) GenesisState {
 	return NewGenesisState(
 		keeper.GetSprintDuration(ctx),
 		keeper.GetSpanDuration(ctx),
+		// TODO think better way to export all spans
+		keeper.GetAllSpans(ctx),
 	)
 }
 

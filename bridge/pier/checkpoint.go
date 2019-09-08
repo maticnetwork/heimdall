@@ -7,7 +7,6 @@ import (
 	"fmt"
 
 	"io/ioutil"
-	"log"
 	"math/big"
 	"net/http"
 	"sync"
@@ -46,22 +45,25 @@ type Checkpointer struct {
 	cancelSubscription context.CancelFunc
 	// header listener subscription
 	cancelHeaderProcess context.CancelFunc
-	// queue connnector
-	qConnector QueueConnector
 	// contract caller
 	contractConnector helper.ContractCaller
-	// http client to subscribe to
-	httpClient *httpClient.HTTP
 	// tx encoder
 	txEncoder authTypes.TxBuilder
-	// context for sending transactions to heimdall
+
+	// cli context
 	cliCtx cliContext.CLIContext
+	// queue connector
+	queueConnector QueueConnector
+	// http client to subscribe to
+	httpClient *httpClient.HTTP
 }
 
 // NewCheckpointer returns new service object
-func NewCheckpointer(connector QueueConnector, cdc *codec.Codec) *Checkpointer {
+func NewCheckpointer(cdc *codec.Codec, queueConnector QueueConnector, httpClient *httpClient.HTTP) *Checkpointer {
 	// create logger
 	logger := Logger.With("module", HeimdallCheckpointer)
+
+	// cli context
 	cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
 	cliCtx.BroadcastMode = client.BroadcastAsync
 
@@ -75,11 +77,12 @@ func NewCheckpointer(connector QueueConnector, cdc *codec.Codec) *Checkpointer {
 	checkpointer := &Checkpointer{
 		storageClient:     getBridgeDBInstance(viper.GetString(BridgeDBFlag)),
 		HeaderChannel:     make(chan *types.Header),
-		qConnector:        connector,
 		contractConnector: contractCaller,
-		cliCtx:            cliCtx,
 		txEncoder:         authTypes.NewTxBuilderFromCLI().WithTxEncoder(helper.GetTxEncoder()).WithChainID(helper.GetGenesisDoc().ChainID),
-		httpClient:        httpClient.NewHTTP("tcp://0.0.0.0:26657", "/websocket"),
+
+		cliCtx:         cliCtx,
+		queueConnector: queueConnector,
+		httpClient:     httpClient,
 	}
 
 	checkpointer.BaseService = *common.NewBaseService(logger, HeimdallCheckpointer, checkpointer)
@@ -109,11 +112,6 @@ func (c *Checkpointer) OnStart() error {
 	// create cancellable context
 	headerCtx, cancelHeaderProcess := context.WithCancel(context.Background())
 	c.cancelHeaderProcess = cancelHeaderProcess
-	// start http client
-	err := c.httpClient.Start()
-	if err != nil {
-		log.Fatalf("Error connecting to server %v", err)
-	}
 
 	// start header process
 	go c.startHeaderProcess(headerCtx)
@@ -146,9 +144,6 @@ func (c *Checkpointer) OnStop() {
 
 	// cancel header process
 	c.cancelHeaderProcess()
-
-	// stop http client
-	c.httpClient.Stop()
 }
 
 func (c *Checkpointer) startPolling(ctx context.Context, pollInterval int) {

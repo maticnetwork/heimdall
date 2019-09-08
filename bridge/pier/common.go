@@ -8,7 +8,9 @@ import (
 	"io/ioutil"
 	"math/big"
 	"net/http"
+	"net/url"
 	"os"
+	"path"
 	"reflect"
 	"strconv"
 	"strings"
@@ -34,16 +36,16 @@ const (
 	NoackService         = "checkpoint-no-ack"
 	SpanServiceStr       = "span-service"
 
-	// TODO fetch port from config
-	LastNoAckURL          = "http://localhost:1317/checkpoint/last-no-ack"
-	ProposersURL          = "http://localhost:1317/staking/proposer/%v"
-	BufferedCheckpointURL = "http://localhost:1317/checkpoint/buffer"
-	LatestCheckpointURL   = "http://localhost:1317/checkpoint/latest-checkpoint"
-	TendermintBlockURL    = "http://localhost:26657/block?height=%v"
-	CurrentProposerURL    = "http://localhost:1317/staking/current-proposer"
-	LatestSpanURL         = "http://localhost:1317/bor/latest-span"
-	SpanProposerURL       = "http://localhost:1317/bor/span-proposer"
-	NextSpanInfoURL       = "http://localhost:1317/bor/prepare-next-span"
+	LastNoAckURL          = "/checkpoint/last-no-ack"
+	ProposersURL          = "/staking/proposer/%v"
+	BufferedCheckpointURL = "/checkpoint/buffer"
+	LatestCheckpointURL   = "/checkpoint/latest-checkpoint"
+	CurrentProposerURL    = "/staking/current-proposer"
+	LatestSpanURL         = "/bor/latest-span"
+	SpanProposerURL       = "/bor/span-proposer"
+	NextSpanInfoURL       = "/bor/prepare-next-span"
+
+	TendermintBlockURL = "http://localhost:26657/block?height=%v"
 
 	TransactionTimeout = 1 * time.Minute
 	CommitTimeout      = 2 * time.Minute
@@ -83,6 +85,13 @@ func isProposer(cliCtx cliContext.CLIContext) bool {
 		return true
 	}
 	return false
+}
+
+// GetHeimdallServerEndpoint returns heimdall server endpoint
+func GetHeimdallServerEndpoint(endpoint string) string {
+	u, _ := url.Parse(helper.GetConfig().HeimdallServerURL)
+	u.Path = path.Join(u.Path, endpoint)
+	return u.String()
 }
 
 // UnpackLog unpacks log
