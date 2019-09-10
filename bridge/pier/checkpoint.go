@@ -158,7 +158,6 @@ func (c *Checkpointer) startPolling(ctx context.Context, pollInterval int) {
 	for {
 		select {
 		case <-ticker.C:
-			fmt.Printf("Checking proposer status")
 			if isProposer(c.cliCtx) {
 				header, err := c.contractConnector.MaticClient.HeaderByNumber(ctx, nil)
 				if err == nil && header != nil {
@@ -460,7 +459,6 @@ func (c *Checkpointer) SubscribeToTx(tx tmTypes.Tx, start, end uint64) error {
 		c.Logger.Error("Unable to wait for tx", "error", err)
 		return err
 	}
-	fmt.Printf("data %v", data)
 
 	switch t := data.(type) {
 	case tmTypes.EventDataTx:
