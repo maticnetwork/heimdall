@@ -318,18 +318,18 @@ func (s *SpanService) DispatchProposal(height int64, txHash []byte, txBytes tmTy
 
 	// proof
 	tx, err := helper.QueryTxWithProof(s.cliCtx, txHash)
-	fmt.Println("TxBytes: ", hex.EncodeToString(tx.Tx[4:]))
-	fmt.Println("Leaf: ", hex.EncodeToString(tx.Proof.Leaf()))
-	fmt.Println("Root: ", tx.Proof.RootHash.String())
+	// fmt.Println("TxBytes: ", hex.EncodeToString(tx.Tx[4:]))
+	// fmt.Println("Leaf: ", hex.EncodeToString(tx.Proof.Leaf()))
+	// fmt.Println("Root: ", tx.Proof.RootHash.String())
 	proofList := helper.GetMerkleProofList(&tx.Proof.Proof)
 
 	var result []string
 	for _, e := range proofList {
 		result = append(result, hex.EncodeToString(e))
 	}
-	fmt.Println("Votes: ", hex.EncodeToString(helper.GetVoteBytes(votes, chainID)))
-	fmt.Println("Sigs: ", hex.EncodeToString(sigs))
-	fmt.Println("chainID", chainID)
+	// fmt.Println("Votes: ", hex.EncodeToString(helper.GetVoteBytes(votes, chainID)))
+	// fmt.Println("Sigs: ", hex.EncodeToString(sigs))
+	// fmt.Println("chainID", chainID)
 
 	fmt.Println("data : ",
 		fmt.Sprintf(`"0x%s","0x%s","0x%s","0x%s"`,
@@ -339,8 +339,8 @@ func (s *SpanService) DispatchProposal(height int64, txHash []byte, txBytes tmTy
 			strings.Join(result, ""),
 		))
 
-	// print proof
-	fmt.Println("Proof: ", strings.Join(result, ""))
-	s.Logger.Info("txBytes comparison", "Param", hex.EncodeToString(txBytes), "ReceivedTx", hex.EncodeToString(tx.Tx), "trimmed", hex.EncodeToString(tx.Tx[4:]))
+	// // print proof
+	// fmt.Println("Proof: ", strings.Join(result, ""))
+	// s.Logger.Info("txBytes comparison", "Param", hex.EncodeToString(txBytes), "ReceivedTx", hex.EncodeToString(tx.Tx), "trimmed", hex.EncodeToString(tx.Tx[4:]))
 	s.contractConnector.CommitSpan(helper.GetVoteBytes(votes, chainID), sigs, tx.Tx[4:], []byte(strings.Join(result, "")))
 }
