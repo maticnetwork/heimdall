@@ -163,7 +163,11 @@ func HandleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 			"rootRecieved", root.String())
 		return common.ErrBadAck(k.Codespace).Result()
 	}
-
+	if headerBlock.EndBlock > end {
+		common.CheckpointLogger.Info("Adjusting endBlock to one already submitted on chain", "OldEndBlock", headerBlock.EndBlock, "AdjustedEndBlock", end)
+		headerBlock.EndBlock = end
+		// TODO proposer also needs to be changed
+	}
 	// add checkpoint to headerBlocks
 	k.AddCheckpoint(ctx, msg.HeaderBlock, headerBlock)
 	common.CheckpointLogger.Info("Checkpoint added to store", "headerBlock", headerBlock.String())
