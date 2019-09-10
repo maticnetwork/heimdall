@@ -123,7 +123,6 @@ func HandleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper, co
 // Validates if checkpoint submitted on chain is valid
 func HandleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	common.CheckpointLogger.Debug("Validating Checkpoint ACK", "Tx", msg)
-
 	// make call to headerBlock with header number
 	root, start, end, createdAt, err := contractCaller.GetHeaderInfo(msg.HeaderBlock)
 	if err != nil {
@@ -151,9 +150,10 @@ func HandleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 		common.CheckpointLogger.Error("Unable to get checkpoint", "error", err)
 		return common.ErrBadAck(k.Codespace).Result()
 	}
-
-	// match header block and checkpoint
-	if start != headerBlock.StartBlock || end != headerBlock.EndBlock || !bytes.Equal(root.Bytes(), headerBlock.RootHash.Bytes()) {
+	if start != headerBlock.StartBlock {
+		common.CheckpointLogger.Error("Invalid start block", "startExpected", headerBlock.StartBlock, "startReceived", start)
+		return common.ErrBadAck(k.Codespace).Result()
+	} else if start == headerBlock.StartBlock && end == headerBlock.EndBlock && bytes.Equal(root.Bytes(), headerBlock.RootHash.Bytes()) {
 		common.CheckpointLogger.Error("Invalid ACK",
 			"startExpected", headerBlock.StartBlock,
 			"startReceived", start,
@@ -161,7 +161,6 @@ func HandleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 			"endReceived", end,
 			"rootExpected", headerBlock.RootHash.String(),
 			"rootRecieved", root.String())
-
 		return common.ErrBadAck(k.Codespace).Result()
 	}
 
