@@ -179,6 +179,14 @@ type MinimalVal struct {
 	Signer HeimdallAddress `json:"signer"`
 }
 
+// SortMinimalValByAddress sorts validators
+func SortMinimalValByAddress(a []MinimalVal) []MinimalVal {
+	sort.Slice(a, func(i, j int) bool {
+		return bytes.Compare(a[i].Signer.Bytes(), a[j].Signer.Bytes()) < 0
+	})
+	return a
+}
+
 // ValToMinVal converts array of validators to minimal validators
 func ValToMinVal(vals []Validator) (minVals []MinimalVal) {
 	for _, val := range vals {

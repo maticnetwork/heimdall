@@ -37,6 +37,9 @@ const (
 	SpanServiceStr       = "span-service"
 	AMQPConsumerService  = "amqp-consumer-service"
 
+	// TxsURL represents txs url
+	TxsURL = "/txs"
+
 	LastNoAckURL          = "/checkpoint/last-no-ack"
 	ProposersURL          = "/staking/proposer/%v"
 	BufferedCheckpointURL = "/checkpoint/buffer"
@@ -294,46 +297,57 @@ func WaitForOneEvent(tx tmTypes.Tx, client *httpClient.HTTP) (tmTypes.TMEventDat
 	}
 }
 
-// SubscribeNewBlock subscribes to a new block
-func SubscribeNewBlock(client *httpClient.HTTP) (tmTypes.TMEventData, error) {
-	const subscriber = "helpers"
+// GetBlock get block as per height
+func GetBlock(client *httpClient.HTTP, height int64) (*tmTypes.Block, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), CommitTimeout)
 	defer cancel()
 
+	// get block using client
+	block, err := client.Block(&height)
+	if err == nil && block != nil {
+		return block.Block, nil
+	}
+
+	// subscriber
+	subscriber := fmt.Sprintf("new-block-%v", height)
+
+	// query for event
+	query := tmTypes.QueryForEvent(tmTypes.EventNewBlock).String()
+
 	// register for the next event of this type
-	eventCh, err := client.Subscribe(ctx, subscriber, tmTypes.QueryForEvent(tmTypes.EventNewBlock).String())
+	eventCh, err := client.Subscribe(ctx, subscriber, query)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to subscribe")
 	}
-	// unsubscribe everything
-	defer client.UnsubscribeAll(ctx, subscriber)
+
+	// unsubscribe query
+	defer client.Unsubscribe(ctx, subscriber, query)
 
 	select {
 	case event := <-eventCh:
-		return event.Data.(tmTypes.TMEventData), nil
+		eventData := event.Data.(tmTypes.TMEventData)
+		switch t := eventData.(type) {
+		case tmTypes.EventDataNewBlock:
+			return t.Block, nil
+		default:
+			return nil, errors.New("timed out waiting for event")
+		}
 	case <-ctx.Done():
 		return nil, errors.New("timed out waiting for event")
 	}
 }
 
 // fetchVotes fetches votes and extracts sigs from it
-func fetchVotes(height int64, client *httpClient.HTTP, logger log.Logger) (votes []*tmTypes.CommitSig, sigs []byte, chainID string, err error) {
-	logger.Debug("Subscribing to new height", "height", height+1)
+func fetchVotes(
+	height int64,
+	client *httpClient.HTTP,
+) (votes []*tmTypes.CommitSig, sigs []byte, chainID string, err error) {
+	// get block client
+	blockDetails, err := GetBlock(client, height+1)
 
-	var blockDetails *tmTypes.Block
-	data, err := SubscribeNewBlock(client)
 	if err != nil {
-		fmt.Printf("Error subscribing to height %v error %v", height+1, err)
 		return nil, nil, "", err
 	}
-	switch t := data.(type) {
-	case tmTypes.EventDataNewBlock:
-		blockDetails = t.Block
-	default:
-		logger.Info("No cases matched")
-	}
-
-	// TODO ensure block.height == height+1 OR Subscribe to Height+1
 
 	// extract votes from response
 	preCommits := blockDetails.LastCommit.Precommits

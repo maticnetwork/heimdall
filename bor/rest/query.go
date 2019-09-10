@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -230,10 +229,13 @@ func prepareNextSpanHandlerFn(
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := r.URL.Query()
-		startBlockStr := params.Get("start_block")
-		startBlock, err := strconv.Atoi(startBlockStr)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
+		spanID, ok := rest.ParseUint64OrReturnBadRequest(w, params.Get("span_id"))
+		if !ok {
+			return
+		}
+		startBlock, ok := rest.ParseUint64OrReturnBadRequest(w, params.Get("start_block"))
+		if !ok {
 			return
 		}
 		chainID := params.Get("chain_id")
@@ -309,9 +311,10 @@ func prepareNextSpanHandlerFn(
 
 		// draft a propose span message
 		msg := bor.NewMsgProposeSpan(
+			spanID,
 			types.HexToHeimdallAddress(proposer),
-			uint64(startBlock),
-			uint64(startBlock)+spanDuration,
+			startBlock,
+			startBlock+spanDuration,
 			validators,
 			validators,
 			chainID,

@@ -151,11 +151,13 @@ func (s *SpanService) propose(lastSpan hmTypes.Span) {
 		s.Logger.Error("Unable to fetch current block")
 		return
 	}
+
 	s.Logger.Debug("Fetched current child block", "CurrentChildBlock", currentBlock)
-	if currentBlock >= lastSpan.StartBlock && (lastSpan.EndBlock == 0 || currentBlock <= lastSpan.EndBlock) {
+	if currentBlock >= lastSpan.StartBlock && currentBlock >= lastSpan.EndBlock {
 		s.Logger.Info("Need to propose committee for next span")
+
 		// send propose span
-		s.ProposeNewSpan(lastSpan.EndBlock + 1)
+		s.ProposeNewSpan(lastSpan.ID+1, lastSpan.EndBlock+1)
 	}
 
 	// TODO
@@ -226,8 +228,8 @@ func (s *SpanService) isSpanProposer(lastSpan hmTypes.Span) bool {
 }
 
 // ProposeNewSpan proposes new span by sending transaction to heimdall
-func (s *SpanService) ProposeNewSpan(start uint64) {
-	msg, err := s.fetchNextSpanDetails(start)
+func (s *SpanService) ProposeNewSpan(id uint64, start uint64) {
+	msg, err := s.fetchNextSpanDetails(id, start)
 	if err != nil {
 		s.Logger.Error("Unable to fetch next span details", "error", err)
 		return
@@ -259,7 +261,7 @@ func (s *SpanService) ProposeNewSpan(start uint64) {
 	s.Logger.Info("Transaction sent to heimdall", "TxHash", resp.TxHash)
 }
 
-func (s *SpanService) fetchNextSpanDetails(start uint64) (msg bor.MsgProposeSpan, err error) {
+func (s *SpanService) fetchNextSpanDetails(id uint64, start uint64) (msg bor.MsgProposeSpan, err error) {
 	req, err := http.NewRequest("GET", GetHeimdallServerEndpoint(NextSpanInfoURL), nil)
 	if err != nil {
 		s.Logger.Error("Error creating a new request", "error", err)
@@ -267,7 +269,8 @@ func (s *SpanService) fetchNextSpanDetails(start uint64) (msg bor.MsgProposeSpan
 	}
 
 	q := req.URL.Query()
-	q.Add("start_block", strconv.Itoa(int(start)))
+	q.Add("span_id", strconv.FormatUint(id, 10))
+	q.Add("start_block", strconv.FormatUint(start, 10))
 	q.Add("chain_id", viper.GetString("bor-chain-id"))
 	q.Add("proposer", helper.GetFromAddress(s.cliCtx).String())
 	req.URL.RawQuery = q.Encode()
@@ -308,9 +311,8 @@ func (s *SpanService) SubscribeToTx(tx tmTypes.Tx, start, end uint64) error {
 
 // DispatchProposal dispatches proposal
 func (s *SpanService) DispatchProposal(height int64, txHash []byte, txBytes tmTypes.Tx) {
-	s.Logger.Debug("Subscribing to new height", "height", height+1)
 	// extraData
-	votes, sigs, chainID, err := fetchVotes(height, s.httpClient, s.Logger)
+	votes, sigs, chainID, err := fetchVotes(height, s.httpClient)
 	if err != nil {
 		s.Logger.Error("Error fetching votes", "height", height)
 		return

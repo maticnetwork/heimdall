@@ -17,16 +17,18 @@ var _ sdk.Msg = &MsgProposeSpan{}
 
 // MsgProposeSpan creates msg propose span
 type MsgProposeSpan struct {
+	ID                uint64                `json:"span_id"`
 	Proposer          types.HeimdallAddress `json:"proposer"`
-	StartBlock        uint64                `json:"startBlock"`
-	EndBlock          uint64                `json:"endBlock"`
+	StartBlock        uint64                `json:"start_block"`
+	EndBlock          uint64                `json:"end_block"`
 	Validators        []types.MinimalVal    `json:"validators"`
 	SelectedProducers []types.MinimalVal    `json:"producers"`
-	ChainID           string                `json:"borChainID"`
+	ChainID           string                `json:"bor_chain_id"`
 }
 
 // NewMsgProposeSpan creates new propose span message
 func NewMsgProposeSpan(
+	id uint64,
 	proposer types.HeimdallAddress,
 	startBlock uint64,
 	endBlock uint64,
@@ -35,6 +37,7 @@ func NewMsgProposeSpan(
 	chainID string,
 ) MsgProposeSpan {
 	return MsgProposeSpan{
+		ID:                id,
 		Proposer:          proposer,
 		StartBlock:        startBlock,
 		EndBlock:          endBlock,

@@ -509,7 +509,7 @@ func (c *Checkpointer) DispatchCheckpoint(height int64, txBytes tmTypes.Tx, star
 	c.Logger.Debug("Preparing checkpoint to be pushed on chain")
 
 	// get votes
-	votes, sigs, chainID, err := fetchVotes(height, c.httpClient, c.Logger)
+	votes, sigs, chainID, err := fetchVotes(height, c.httpClient)
 	if err != nil {
 		return err
 	}

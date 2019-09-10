@@ -1,7 +1,6 @@
 package bor
 
 import (
-	"encoding/json"
 	"errors"
 	"strconv"
 
@@ -9,10 +8,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	cmn "github.com/maticnetwork/heimdall/common"
-	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/types"
-	tmTypes "github.com/tendermint/tendermint/types"
 )
 
 var (
@@ -94,34 +91,6 @@ func (k *Keeper) AddNewRawSpan(ctx sdk.Context, span types.Span) error {
 	return nil
 }
 
-// AddSigs adds collected signatures to the last span added
-func (k *Keeper) AddSigs(ctx sdk.Context, tmVotes []byte) error {
-	lastSpan, err := k.GetLastSpan(ctx)
-	if err != nil {
-		return err
-	}
-
-	var votes []tmTypes.Vote
-	err = json.Unmarshal(tmVotes, &votes)
-	if err != nil {
-		return err
-	}
-	var commitSigs []*tmTypes.CommitSig
-	for i := range votes {
-		commitSigs[i] = votes[i].CommitSig()
-	}
-	sigs := helper.GetSigs(commitSigs)
-
-	lastSpan.AddSigs(sigs)
-	if err := k.AddNewSpan(ctx, lastSpan); err != nil {
-		return err
-	}
-
-	// clear span cache
-	k.FlushSpanCache(ctx)
-	return nil
-}
-
 // GetSpan fetches span indexed by start block from store
 func (k *Keeper) GetSpan(ctx sdk.Context, startBlock uint64) (span types.Span, err error) {
 	store := ctx.KVStore(k.storeKey)
@@ -169,7 +138,7 @@ func (k *Keeper) GetLastSpan(ctx sdk.Context) (lastSpan types.Span, err error) {
 }
 
 // FreezeSet freezes validator set for next span
-func (k *Keeper) FreezeSet(ctx sdk.Context, startBlock uint64, borChainID string) error {
+func (k *Keeper) FreezeSet(ctx sdk.Context, id uint64, startBlock uint64, borChainID string) error {
 	duration := k.GetSpanDuration(ctx)
 
 	endBlock := startBlock
@@ -177,7 +146,14 @@ func (k *Keeper) FreezeSet(ctx sdk.Context, startBlock uint64, borChainID string
 		endBlock = endBlock + duration - 1
 	}
 
-	newSpan := types.NewSpan(startBlock, endBlock, k.sk.GetValidatorSet(ctx), k.SelectNextProducers(ctx), borChainID)
+	newSpan := types.NewSpan(
+		id,
+		startBlock,
+		endBlock,
+		k.sk.GetValidatorSet(ctx),
+		k.SelectNextProducers(ctx),
+		borChainID,
+	)
 	return k.AddNewSpan(ctx, newSpan)
 }
 
