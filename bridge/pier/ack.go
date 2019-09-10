@@ -49,14 +49,14 @@ type AckService struct {
 	cliCtx cliContext.CLIContext
 
 	// queue connector
-	queueConnector QueueConnector
+	queueConnector *QueueConnector
 
 	// http client to subscribe to
 	httpClient *httpClient.HTTP
 }
 
 // NewAckService returns new service object
-func NewAckService(cdc *codec.Codec, queueConnector QueueConnector, httpClient *httpClient.HTTP) *AckService {
+func NewAckService(cdc *codec.Codec, queueConnector *QueueConnector, httpClient *httpClient.HTTP) *AckService {
 	// create logger
 	logger := Logger.With("module", NoackService)
 

@@ -14,14 +14,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/tendermint/tendermint/libs/common"
 	httpClient "github.com/tendermint/tendermint/rpc/client"
 	tmTypes "github.com/tendermint/tendermint/types"
 
-	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/bor"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/helper"
@@ -53,14 +51,14 @@ type SpanService struct {
 	cliCtx cliContext.CLIContext
 
 	// queue connector
-	queueConnector QueueConnector
+	queueConnector *QueueConnector
 
 	// http client to subscribe to
 	httpClient *httpClient.HTTP
 }
 
 // NewSpanService returns new service object
-func NewSpanService(cdc *codec.Codec, queueConnector QueueConnector, httpClient *httpClient.HTTP) *SpanService {
+func NewSpanService(cdc *codec.Codec, queueConnector *QueueConnector, httpClient *httpClient.HTTP) *SpanService {
 	// create logger
 	logger := Logger.With("module", SpanServiceStr)
 
@@ -131,7 +129,7 @@ func (s *SpanService) startPolling(ctx context.Context, interval time.Duration) 
 	for {
 		select {
 		case <-ticker.C:
-			if lastSpan, err := s.getLastSpan(); err == nil {
+			if lastSpan, err := s.getLastSpan(); err == nil && lastSpan != nil {
 				if s.isSpanProposer(lastSpan) {
 					go s.propose(lastSpan)
 				}
@@ -144,7 +142,7 @@ func (s *SpanService) startPolling(ctx context.Context, interval time.Duration) 
 }
 
 // propose producers for next span if needed
-func (s *SpanService) propose(lastSpan hmTypes.Span) {
+func (s *SpanService) propose(lastSpan *hmTypes.Span) {
 	// call with last span on record + new span duration and see if it has been proposed
 	currentBlock, err := s.GetCurrentChildBlock()
 	if err != nil {
@@ -186,22 +184,22 @@ func (s *SpanService) fetchLastSpan() (int, error) {
 }
 
 // checks span status
-func (s *SpanService) getLastSpan() (spanStart hmTypes.Span, err error) {
+func (s *SpanService) getLastSpan() (*hmTypes.Span, error) {
 	// fetch latest start block from heimdall via rest query
 	result, err := FetchFromAPI(s.cliCtx, GetHeimdallServerEndpoint(LatestSpanURL))
 	if err != nil {
 		s.Logger.Error("Error while fetching latest span")
-		return
+		return nil, err
 	}
 
 	var lastSpan hmTypes.Span
 	err = json.Unmarshal(result.Result, &lastSpan)
 	if err != nil {
 		s.Logger.Error("Error unmarshalling", "error", err)
-		return lastSpan, err
+		return nil, err
 	}
 
-	return lastSpan, nil
+	return &lastSpan, nil
 }
 
 // GetCurrentChildBlock gets the
@@ -213,7 +211,7 @@ func (s *SpanService) GetCurrentChildBlock() (uint64, error) {
 	return childBlock.Number.Uint64(), nil
 }
 
-func (s *SpanService) isSpanProposer(lastSpan hmTypes.Span) bool {
+func (s *SpanService) isSpanProposer(lastSpan *hmTypes.Span) bool {
 	// sort validator address
 	selectedProducers := types.SortValidatorByAddress(lastSpan.SelectedProducers)
 
@@ -228,37 +226,40 @@ func (s *SpanService) isSpanProposer(lastSpan hmTypes.Span) bool {
 }
 
 // ProposeNewSpan proposes new span by sending transaction to heimdall
-func (s *SpanService) ProposeNewSpan(id uint64, start uint64) {
+func (s *SpanService) ProposeNewSpan(id uint64, start uint64) error {
 	msg, err := s.fetchNextSpanDetails(id, start)
 	if err != nil {
 		s.Logger.Error("Unable to fetch next span details", "error", err)
-		return
+		return err
 	}
 
-	s.Logger.Info("Fetched information for next span", "NewSpan", msg)
+	// broadcast to heimdall
+	return s.queueConnector.BroadcastToHeimdall(msg)
 
-	// tx builder
-	txBldr := authTypes.NewTxBuilderFromCLI().
-		WithTxEncoder(helper.GetTxEncoder()).
-		WithChainID(helper.GetGenesisDoc().ChainID)
+	// s.Logger.Info("Fetched information for next span", "NewSpan", msg)
 
-	txBytes, err := helper.GetSignedTxBytes(s.cliCtx, txBldr, []sdk.Msg{msg})
-	if err != nil {
-		s.Logger.Error("Error creating tx bytes", "error", err)
-		return
-	}
+	// // tx builder
+	// txBldr := authTypes.NewTxBuilderFromCLI().
+	// 	WithTxEncoder(helper.GetTxEncoder()).
+	// 	WithChainID(helper.GetGenesisDoc().ChainID)
 
-	resp, err := helper.BroadcastTxBytes(s.cliCtx, txBytes, client.BroadcastSync)
-	if err != nil {
-		s.Logger.Error("Unable to send propose span to heimdall", "Error", err, "StartBlock", msg.StartBlock, "EndBlock", msg.EndBlock, "ChainID", msg.ChainID)
-		return
-	}
+	// txBytes, err := helper.GetSignedTxBytes(s.cliCtx, txBldr, []sdk.Msg{msg})
+	// if err != nil {
+	// 	s.Logger.Error("Error creating tx bytes", "error", err)
+	// 	return
+	// }
 
-	// subscribe to tx
-	go s.SubscribeToTx(txBytes, msg.StartBlock, msg.EndBlock)
-	// send to bor
+	// resp, err := helper.BroadcastTxBytes(s.cliCtx, txBytes, client.BroadcastSync)
+	// if err != nil {
+	// 	s.Logger.Error("Unable to send propose span to heimdall", "Error", err, "StartBlock", msg.StartBlock, "EndBlock", msg.EndBlock, "ChainID", msg.ChainID)
+	// 	return
+	// }
 
-	s.Logger.Info("Transaction sent to heimdall", "TxHash", resp.TxHash)
+	// // subscribe to tx
+	// go s.SubscribeToTx(txBytes, msg.StartBlock, msg.EndBlock)
+	// // send to bor
+
+	// s.Logger.Info("Transaction sent to heimdall", "TxHash", resp.TxHash)
 }
 
 func (s *SpanService) fetchNextSpanDetails(id uint64, start uint64) (msg bor.MsgProposeSpan, err error) {

@@ -20,11 +20,12 @@ var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Start bridge server",
 	Run: func(cmd *cobra.Command, args []string) {
-		_queueConnector := pier.NewQueueConnector(helper.GetConfig().AmqpURL, "hq", "bq", "cq")
-		_httpClient := httpClient.NewHTTP(helper.GetConfig().TendermintNodeURL, "/websocket")
-
 		// create codec
 		cdc := app.MakeCodec()
+
+		// queue connector & http client
+		_queueConnector := pier.NewQueueConnector(cdc, helper.GetConfig().AmqpURL)
+		_httpClient := httpClient.NewHTTP(helper.GetConfig().TendermintNodeURL, "/websocket")
 
 		services := [...]common.Service{
 			pier.NewCheckpointer(cdc, _queueConnector, _httpClient),

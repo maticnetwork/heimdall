@@ -74,14 +74,14 @@ type Syncer struct {
 	cliCtx cliContext.CLIContext
 
 	// queue connector
-	queueConnector QueueConnector
+	queueConnector *QueueConnector
 
 	// http client to subscribe to
 	httpClient *httpClient.HTTP
 }
 
 // NewSyncer returns new service object for syncing events
-func NewSyncer(cdc *codec.Codec, queueConnector QueueConnector, httpClient *httpClient.HTTP) *Syncer {
+func NewSyncer(cdc *codec.Codec, queueConnector *QueueConnector, httpClient *httpClient.HTTP) *Syncer {
 	// create logger
 	logger := Logger.With("module", ChainSyncer)
 	// root chain instance
@@ -336,7 +336,7 @@ func (syncer *Syncer) processCheckpointEvent(eventName string, abiObject *abi.AB
 
 		// create msg checkpoint ack message
 		msg := checkpoint.NewMsgCheckpointAck(helper.GetFromAddress(syncer.cliCtx), event.Number.Uint64())
-		syncer.queueConnector.DispatchToHeimdall(msg)
+		syncer.queueConnector.BroadcastToHeimdall(msg)
 	}
 }
 
@@ -356,7 +356,7 @@ func (syncer *Syncer) processStakedEvent(eventName string, abiObject *abi.ABI, v
 		)
 		if bytes.Compare(event.User.Bytes(), helper.GetPubKey().Address().Bytes()) == 0 {
 			msg := staking.NewMsgValidatorJoin(helper.GetFromAddress(syncer.cliCtx), event.ValidatorId.Uint64(), hmtypes.NewPubKey(helper.GetPubKey().Bytes()), vLog.TxHash)
-			syncer.queueConnector.DispatchToHeimdall(msg)
+			syncer.queueConnector.BroadcastToHeimdall(msg)
 		}
 	}
 }
@@ -377,7 +377,7 @@ func (syncer *Syncer) processUnstakeInitEvent(eventName string, abiObject *abi.A
 		)
 		// send validator exit message
 		msg := staking.NewMsgValidatorExit(helper.GetFromAddress(syncer.cliCtx), event.ValidatorId.Uint64(), vLog.TxHash)
-		syncer.queueConnector.DispatchToHeimdall(msg)
+		syncer.queueConnector.BroadcastToHeimdall(msg)
 	}
 }
 

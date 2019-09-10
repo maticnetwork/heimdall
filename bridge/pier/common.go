@@ -40,6 +40,7 @@ const (
 	// TxsURL represents txs url
 	TxsURL = "/txs"
 
+	AccountDetailsURL     = "/auth/accounts/%v"
 	LastNoAckURL          = "/checkpoint/last-no-ack"
 	ProposersURL          = "/staking/proposer/%v"
 	BufferedCheckpointURL = "/checkpoint/buffer"
@@ -48,8 +49,6 @@ const (
 	LatestSpanURL         = "/bor/latest-span"
 	SpanProposerURL       = "/bor/span-proposer"
 	NextSpanInfoURL       = "/bor/prepare-next-span"
-
-	TendermintBlockURL = "http://localhost:26657/block?height=%v"
 
 	TransactionTimeout = 1 * time.Minute
 	CommitTimeout      = 2 * time.Minute
@@ -261,7 +260,6 @@ func FetchFromAPI(cliCtx cliContext.CLIContext, URL string) (result rest.Respons
 		// unmarshall data from buffer
 		// var proposers []hmtypes.Validator
 		var response rest.ResponseWithHeight
-
 		if err := cliCtx.Codec.UnmarshalJSON(body, &response); err != nil {
 			return result, err
 		}
