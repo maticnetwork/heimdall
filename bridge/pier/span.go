@@ -6,19 +6,19 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/ethereum/go-ethereum"
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/tendermint/tendermint/libs/common"
 	httpClient "github.com/tendermint/tendermint/rpc/client"
-	tmTypes "github.com/tendermint/tendermint/types"
 
 	"github.com/maticnetwork/heimdall/bor"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
@@ -29,6 +29,9 @@ import (
 
 const (
 	lastSpanKey = "span-key" // storage key
+
+	// polling
+	spanPolling = 5 * time.Second
 )
 
 type SpanService struct {
@@ -76,6 +79,7 @@ func NewSpanService(cdc *codec.Codec, queueConnector *QueueConnector, httpClient
 
 	cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
 	cliCtx.BroadcastMode = client.BroadcastAsync
+	cliCtx.TrustNode = true
 
 	// creating checkpointer object
 	spanService := &SpanService{
@@ -102,7 +106,7 @@ func (s *SpanService) OnStart() error {
 	s.cancelSpanService = cancelSpanService
 
 	// start polling for checkpoint in buffer
-	go s.startPolling(spanCtx, 10*time.Second)
+	go s.startPolling(spanCtx, spanPolling)
 
 	// subscribed to new head
 	s.Logger.Debug("Started Span service")
@@ -134,6 +138,7 @@ func (s *SpanService) startPolling(ctx context.Context, interval time.Duration) 
 					go s.propose(lastSpan)
 				}
 			}
+			go s.commit()
 		case <-ctx.Done():
 			ticker.Stop()
 			return
@@ -144,23 +149,59 @@ func (s *SpanService) startPolling(ctx context.Context, interval time.Duration) 
 // propose producers for next span if needed
 func (s *SpanService) propose(lastSpan *hmTypes.Span) {
 	// call with last span on record + new span duration and see if it has been proposed
-	currentBlock, err := s.GetCurrentChildBlock()
+	currentBlock, err := s.getCurrentChildBlock()
 	if err != nil {
-		s.Logger.Error("Unable to fetch current block")
+		s.Logger.Error("Unable to fetch current block", "error", err)
 		return
 	}
 
-	s.Logger.Debug("Fetched current child block", "CurrentChildBlock", currentBlock)
-	if currentBlock >= lastSpan.StartBlock && currentBlock >= lastSpan.EndBlock {
-		s.Logger.Info("Need to propose committee for next span")
-
+	if lastSpan.StartBlock <= currentBlock && currentBlock <= lastSpan.EndBlock {
 		// send propose span
-		s.ProposeNewSpan(lastSpan.ID+1, lastSpan.EndBlock+1)
+		msg, err := s.fetchNextSpanDetails(lastSpan.ID+1, lastSpan.EndBlock+1)
+		if err != nil {
+			s.Logger.Error("Unable to fetch next span details", "error", err)
+			return
+		}
+
+		// log new span
+		s.Logger.Debug("Proposing new span", "spanId", msg.ID, "startBlock", msg.StartBlock, "endBlock", msg.EndBlock)
+
+		// broadcast to heimdall
+		if err := s.queueConnector.BroadcastToHeimdall(msg); err != nil {
+			s.Logger.Error("Error while broadcasting msg to heimdall", "error", err)
+			return
+		}
+	}
+}
+
+func (s *SpanService) commit() {
+	// get current span number from bor chain
+	currentSpanNumber := s.contractConnector.CurrentSpanNumber()
+	if currentSpanNumber == nil {
+		currentSpanNumber = big.NewInt(0)
 	}
 
-	// TODO
-	// query validator set contract and check latest state
-	// if its behind push onchain
+	// create tag query
+	var tags []string
+	tags = append(tags, fmt.Sprintf("bor-sync-id>%v", currentSpanNumber))
+	tags = append(tags, "action='propose-span'")
+
+	// search txs
+	txs, err := helper.SearchTxs(s.cliCtx, s.cliCtx.Codec, tags, 1, 20) // first page, 50 limit
+	if err != nil {
+		s.Logger.Error("Error while searching txs", "error", err)
+		return
+	}
+
+	// loop through tx
+	for _, tx := range txs {
+		txHash, err := hex.DecodeString(tx.TxHash)
+		if err != nil {
+			s.Logger.Error("Error while searching txs", "error", err)
+		} else {
+			s.broadcastToBor(tx.Height, txHash)
+		}
+	}
 }
 
 // fetches last span processed in DB
@@ -202,8 +243,8 @@ func (s *SpanService) getLastSpan() (*hmTypes.Span, error) {
 	return &lastSpan, nil
 }
 
-// GetCurrentChildBlock gets the
-func (s *SpanService) GetCurrentChildBlock() (uint64, error) {
+// getCurrentChildBlock gets the current child block
+func (s *SpanService) getCurrentChildBlock() (uint64, error) {
 	childBlock, err := s.contractConnector.GetMaticChainBlock(nil)
 	if err != nil {
 		return 0, err
@@ -211,6 +252,7 @@ func (s *SpanService) GetCurrentChildBlock() (uint64, error) {
 	return childBlock.Number.Uint64(), nil
 }
 
+// isSpanProposer check if current user is proposer
 func (s *SpanService) isSpanProposer(lastSpan *hmTypes.Span) bool {
 	// sort validator address
 	selectedProducers := types.SortValidatorByAddress(lastSpan.SelectedProducers)
@@ -218,48 +260,8 @@ func (s *SpanService) isSpanProposer(lastSpan *hmTypes.Span) bool {
 	// get last validator as proposer
 	proposer := selectedProducers[len(selectedProducers)-1]
 
-	s.Logger.Debug("Fetched proposer for span", "proposer", proposer.Signer.String())
-	if bytes.Equal(proposer.Signer.Bytes(), helper.GetAddress()) {
-		return true
-	}
-	return false
-}
-
-// ProposeNewSpan proposes new span by sending transaction to heimdall
-func (s *SpanService) ProposeNewSpan(id uint64, start uint64) error {
-	msg, err := s.fetchNextSpanDetails(id, start)
-	if err != nil {
-		s.Logger.Error("Unable to fetch next span details", "error", err)
-		return err
-	}
-
-	// broadcast to heimdall
-	return s.queueConnector.BroadcastToHeimdall(msg)
-
-	// s.Logger.Info("Fetched information for next span", "NewSpan", msg)
-
-	// // tx builder
-	// txBldr := authTypes.NewTxBuilderFromCLI().
-	// 	WithTxEncoder(helper.GetTxEncoder()).
-	// 	WithChainID(helper.GetGenesisDoc().ChainID)
-
-	// txBytes, err := helper.GetSignedTxBytes(s.cliCtx, txBldr, []sdk.Msg{msg})
-	// if err != nil {
-	// 	s.Logger.Error("Error creating tx bytes", "error", err)
-	// 	return
-	// }
-
-	// resp, err := helper.BroadcastTxBytes(s.cliCtx, txBytes, client.BroadcastSync)
-	// if err != nil {
-	// 	s.Logger.Error("Unable to send propose span to heimdall", "Error", err, "StartBlock", msg.StartBlock, "EndBlock", msg.EndBlock, "ChainID", msg.ChainID)
-	// 	return
-	// }
-
-	// // subscribe to tx
-	// go s.SubscribeToTx(txBytes, msg.StartBlock, msg.EndBlock)
-	// // send to bor
-
-	// s.Logger.Info("Transaction sent to heimdall", "TxHash", resp.TxHash)
+	// check proposer
+	return bytes.Equal(proposer.Signer.Bytes(), helper.GetAddress())
 }
 
 func (s *SpanService) fetchNextSpanDetails(id uint64, start uint64) (msg bor.MsgProposeSpan, err error) {
@@ -276,74 +278,109 @@ func (s *SpanService) fetchNextSpanDetails(id uint64, start uint64) (msg bor.Msg
 	q.Add("proposer", helper.GetFromAddress(s.cliCtx).String())
 	req.URL.RawQuery = q.Encode()
 
-	// log url
-	s.Logger.Debug("Sending request", "url", req.URL.String())
-
+	// fetch next span details
 	result, err := FetchFromAPI(s.cliCtx, req.URL.String())
 	if err != nil {
-		Logger.Error("Error fetching proposers", "error", err)
+		s.Logger.Error("Error fetching proposers", "error", err)
 		return
 	}
 
 	err = json.Unmarshal(result.Result, &msg)
 	if err != nil {
-		Logger.Error("Error unmarshalling propose tx msg ", "error", err)
+		s.Logger.Error("Error unmarshalling propose tx msg ", "error", err)
 		return
 	}
 	return msg, nil
 }
 
-// SubscribeToTx subscribes to a broadcasted Tx and waits for its commitment to a block
-func (s *SpanService) SubscribeToTx(tx tmTypes.Tx, start, end uint64) error {
-	data, err := WaitForOneEvent(tx, s.httpClient)
-	if err != nil {
-		s.Logger.Error("Unable to wait for tx", "error", err)
-		return err
-	}
+// // SubscribeToTx subscribes to a broadcasted Tx and waits for its commitment to a block
+// func (s *SpanService) SubscribeToTx(tx tmTypes.Tx, start, end uint64) error {
+// 	data, err := WaitForOneEvent(tx, s.httpClient)
+// 	if err != nil {
+// 		s.Logger.Error("Unable to wait for tx", "error", err)
+// 		return err
+// 	}
 
-	switch t := data.(type) {
-	case tmTypes.EventDataTx:
-		go s.DispatchProposal(t.Height, t.Tx.Hash(), tx)
-	default:
-		s.Logger.Info("No cases matched while trying to send propose new committee")
-	}
-	return nil
-}
+// 	switch t := data.(type) {
+// 	case tmTypes.EventDataTx:
+// 		go s.DispatchProposal(t.Height, t.Tx.Hash(), tx)
+// 	default:
+// 		s.Logger.Info("No cases matched while trying to send propose new committee")
+// 	}
+// 	return nil
+// }
 
-// DispatchProposal dispatches proposal
-func (s *SpanService) DispatchProposal(height int64, txHash []byte, txBytes tmTypes.Tx) {
+// broadcastToBor broadcasts to bor
+func (s *SpanService) broadcastToBor(height int64, txHash []byte) error {
 	// extraData
 	votes, sigs, chainID, err := fetchVotes(height, s.httpClient)
 	if err != nil {
 		s.Logger.Error("Error fetching votes", "height", height)
-		return
+		return err
 	}
 
 	// proof
 	tx, err := helper.QueryTxWithProof(s.cliCtx, txHash)
+	if err != nil {
+		return err
+	}
 	// fmt.Println("TxBytes: ", hex.EncodeToString(tx.Tx[4:]))
 	// fmt.Println("Leaf: ", hex.EncodeToString(tx.Proof.Leaf()))
 	// fmt.Println("Root: ", tx.Proof.RootHash.String())
 	proofList := helper.GetMerkleProofList(&tx.Proof.Proof)
+	proof := helper.AppendBytes(proofList...)
 
-	var result []string
-	for _, e := range proofList {
-		result = append(result, hex.EncodeToString(e))
+	// encode commit span
+	encodedData := encodeCommitSpanData(
+		helper.GetVoteBytes(votes, chainID),
+		sigs,
+		tx.Tx[4:],
+		proof,
+	)
+
+	// fmt.Println("data : ",
+	// 	fmt.Sprintf(`"0x%s","0x%s","0x%s","0x%s"`,
+	// 		hex.EncodeToString(helper.GetVoteBytes(votes, chainID)),
+	// 		hex.EncodeToString(sigs),
+	// 		hex.EncodeToString(tx.Tx[4:]),
+	// 		hex.EncodeToString(proof),
+	// 	))
+
+	// get validator address
+	validatorSetAddress := helper.GetValidatorSetAddress()
+	msg := ethereum.CallMsg{
+		To:   &validatorSetAddress,
+		Data: encodedData,
 	}
-	// fmt.Println("Votes: ", hex.EncodeToString(helper.GetVoteBytes(votes, chainID)))
-	// fmt.Println("Sigs: ", hex.EncodeToString(sigs))
-	// fmt.Println("chainID", chainID)
 
-	fmt.Println("data : ",
-		fmt.Sprintf(`"0x%s","0x%s","0x%s","0x%s"`,
-			hex.EncodeToString(helper.GetVoteBytes(votes, chainID)),
-			hex.EncodeToString(sigs),
-			hex.EncodeToString(tx.Tx[4:]),
-			strings.Join(result, ""),
-		))
+	// encode msg data
+	data, err := json.Marshal(msg)
+	if err != nil {
+		return err
+	}
 
-	// // print proof
-	// fmt.Println("Proof: ", strings.Join(result, ""))
-	// s.Logger.Info("txBytes comparison", "Param", hex.EncodeToString(txBytes), "ReceivedTx", hex.EncodeToString(tx.Tx), "trimmed", hex.EncodeToString(tx.Tx[4:]))
-	s.contractConnector.CommitSpan(helper.GetVoteBytes(votes, chainID), sigs, tx.Tx[4:], []byte(strings.Join(result, "")))
+	// broadcast to bor queue
+	return s.queueConnector.BroadcastToBor(data)
+}
+
+//
+// ABI encoding
+//
+
+func encodeCommitSpanData(voteSignBytes []byte, sigs []byte, txData []byte, proof []byte) []byte {
+	// validator set ABI
+	validatorSetABI, err := helper.GetValidatorSetABI()
+	if err != nil {
+		return nil
+	}
+
+	// commit span
+	data, err := validatorSetABI.Pack("commitSpan", voteSignBytes, sigs, txData, proof)
+	if err != nil {
+		Logger.Error("Unable to pack tx for commit span", "error", err)
+		return nil
+	}
+
+	// return data
+	return data
 }

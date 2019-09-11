@@ -69,6 +69,7 @@ func NewAckService(cdc *codec.Codec, queueConnector *QueueConnector, httpClient 
 
 	cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
 	cliCtx.BroadcastMode = client.BroadcastAsync
+	cliCtx.TrustNode = true
 
 	// creating checkpointer object
 	ackservice := &AckService{

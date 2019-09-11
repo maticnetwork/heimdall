@@ -1,13 +1,18 @@
 package pier
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/streadway/amqp"
+	"github.com/tendermint/tendermint/libs/log"
 
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/helper"
@@ -38,12 +43,15 @@ type QueueConnector struct {
 	channel *amqp.Channel
 	// tx encoder
 	cliCtx cliContext.CLIContext
+	// logger
+	logger log.Logger
 }
 
 // NewQueueConnector creates a connector object which can be used to connect/send/consume bytes from queue
 func NewQueueConnector(cdc *codec.Codec, dialer string) *QueueConnector {
 	cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
 	cliCtx.BroadcastMode = client.BroadcastAsync
+	cliCtx.TrustNode = true
 
 	// amqp dialer
 	conn, err := amqp.Dial(dialer)
@@ -62,7 +70,8 @@ func NewQueueConnector(cdc *codec.Codec, dialer string) *QueueConnector {
 		connection: conn,
 		channel:    channel,
 		cliCtx:     cliCtx,
-		// txEncoder:  authTypes.NewTxBuilderFromCLI().WithTxEncoder(helper.GetTxEncoder()),
+		// create logger
+		logger: Logger.With("module", "queue-connector"),
 	}
 
 	// connector
@@ -275,15 +284,44 @@ func (qc *QueueConnector) handleHeimdallBroadcastMsgs(amqpMsgs <-chan amqp.Deliv
 }
 
 func (qc *QueueConnector) handleBorBroadcastMsgs(amqpMsgs <-chan amqp.Delivery) {
+	maticClient := helper.GetMaticClient()
+
 	for amqpMsg := range amqpMsgs {
-		var msg sdk.Msg
-		if err := qc.cliCtx.Codec.UnmarshalJSON(amqpMsg.Body, &msg); err != nil {
-			amqpMsg.Nack(false, false)
+		var msg ethereum.CallMsg
+		if err := json.Unmarshal(amqpMsg.Body, &msg); err != nil {
+			amqpMsg.Ack(false)
+			qc.logger.Error("Error while parsing the transaction from queue", "error", err)
 			return
 		}
 
-		// msg
-		fmt.Println(msg)
+		// get auth
+		auth, err := helper.GenerateAuthObj(maticClient, msg)
+		if err != nil {
+			amqpMsg.Ack(false)
+			qc.logger.Error("Error while fetching the transaction param details", "error", err)
+			return
+		}
+
+		// Create the transaction, sign it and schedule it for execution
+		rawTx := types.NewTransaction(auth.Nonce.Uint64(), *msg.To, msg.Value, auth.GasLimit, auth.GasPrice, msg.Data)
+
+		// signer
+		signedTx, err := auth.Signer(types.HomesteadSigner{}, auth.From, rawTx)
+		if err != nil {
+			amqpMsg.Ack(false)
+			qc.logger.Error("Error while signing the transaction", "error", err)
+			return
+		}
+
+		// broadcast transaction
+		if err := maticClient.SendTransaction(context.Background(), signedTx); err != nil {
+			amqpMsg.Ack(false)
+			qc.logger.Error("Error while broadcasting the transaction", "error", err)
+			return
+		}
+
+		// send ack
+		amqpMsg.Ack(false)
 	}
 }
 

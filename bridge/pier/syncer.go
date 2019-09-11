@@ -109,6 +109,7 @@ func NewSyncer(cdc *codec.Codec, queueConnector *QueueConnector, httpClient *htt
 
 	cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
 	cliCtx.BroadcastMode = client.BroadcastAsync
+	cliCtx.TrustNode = true
 
 	// creating syncer object
 	syncer := &Syncer{
@@ -393,9 +394,11 @@ func (syncer *Syncer) processSignerChangeEvent(eventName string, abiObject *abi.
 			"newSigner", event.NewSigner.Hex(),
 			"oldSigner", event.OldSigner.Hex(),
 		)
+
+		// TODO
 		// if bytes.Compare(event.NewSigner.Bytes(), helper.GetPubKey().Address().Bytes()) == 0 {
 		// 	msg := staking.NewMsgValidatorUpdate(event.ValidatorId.Uint64(), hmtypes.NewPubKey(helper.GetPubKey().Bytes()), vLog.TxHash)
-		// 	syncer.queueConnector.DispatchToHeimdall(msg)
+		// 	syncer.queueConnector.BroadcastToHeimdall(msg)
 		// }
 	}
 }

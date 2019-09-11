@@ -22,6 +22,7 @@ var startCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		// create codec
 		cdc := app.MakeCodec()
+		app.MakePulp()
 
 		// queue connector & http client
 		_queueConnector := pier.NewQueueConnector(cdc, helper.GetConfig().AmqpURL)
