@@ -8,7 +8,7 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/helper/mocks"
 	"github.com/maticnetwork/heimdall/types"
-	"github.com/mn/heimdall/checkpoint"
+	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/stretchr/testify/require"
 )
 
