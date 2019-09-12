@@ -9,6 +9,7 @@ import (
 	"math/big"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -31,9 +32,10 @@ const (
 	lastSpanKey = "span-key" // storage key
 
 	// polling
-	spanPolling = 5 * time.Second
+	spanPolling = 20 * time.Second
 )
 
+// SpanService service spans
 type SpanService struct {
 	// Base service
 	common.BaseService
@@ -164,7 +166,7 @@ func (s *SpanService) propose(lastSpan *hmTypes.Span) {
 		}
 
 		// log new span
-		s.Logger.Debug("Proposing new span", "spanId", msg.ID, "startBlock", msg.StartBlock, "endBlock", msg.EndBlock)
+		s.Logger.Info("Proposing new span", "spanId", msg.ID, "startBlock", msg.StartBlock, "endBlock", msg.EndBlock)
 
 		// broadcast to heimdall
 		if err := s.queueConnector.BroadcastToHeimdall(msg); err != nil {
@@ -186,6 +188,11 @@ func (s *SpanService) commit() {
 	tags = append(tags, fmt.Sprintf("bor-sync-id>%v", currentSpanNumber))
 	tags = append(tags, "action='propose-span'")
 
+	s.Logger.Info("[COMMIT SPAN] Querying heimdall span txs",
+		"currentSpanNumber", currentSpanNumber,
+		"tags", strings.Join(tags, " AND "),
+	)
+
 	// search txs
 	txs, err := helper.SearchTxs(s.cliCtx, s.cliCtx.Codec, tags, 1, 20) // first page, 50 limit
 	if err != nil {
@@ -193,8 +200,15 @@ func (s *SpanService) commit() {
 		return
 	}
 
+	s.Logger.Info("[COMMIT SPAN] Found new span txs",
+		"length", len(txs),
+	)
+
 	// loop through tx
 	for _, tx := range txs {
+		s.Logger.Info("[COMMIT SPAN] Span tx",
+			"tx", tx,
+		)
 		txHash, err := hex.DecodeString(tx.TxHash)
 		if err != nil {
 			s.Logger.Error("Error while searching txs", "error", err)
@@ -360,7 +374,12 @@ func (s *SpanService) broadcastToBor(height int64, txHash []byte) error {
 	}
 
 	// broadcast to bor queue
-	return s.queueConnector.BroadcastToBor(data)
+	if err := s.queueConnector.BroadcastToBor(data); err != nil {
+		s.Logger.Error("Error while dispatching to bor queue", "error", err)
+		return err
+	}
+
+	return nil
 }
 
 //

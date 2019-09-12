@@ -289,7 +289,7 @@ func (qc *QueueConnector) handleBorBroadcastMsgs(amqpMsgs <-chan amqp.Delivery) 
 	for amqpMsg := range amqpMsgs {
 		var msg ethereum.CallMsg
 		if err := json.Unmarshal(amqpMsg.Body, &msg); err != nil {
-			amqpMsg.Ack(false)
+			amqpMsg.Ack(true)
 			qc.logger.Error("Error while parsing the transaction from queue", "error", err)
 			return
 		}
@@ -297,7 +297,7 @@ func (qc *QueueConnector) handleBorBroadcastMsgs(amqpMsgs <-chan amqp.Delivery) 
 		// get auth
 		auth, err := helper.GenerateAuthObj(maticClient, msg)
 		if err != nil {
-			amqpMsg.Ack(false)
+			amqpMsg.Ack(true)
 			qc.logger.Error("Error while fetching the transaction param details", "error", err)
 			return
 		}
@@ -308,20 +308,20 @@ func (qc *QueueConnector) handleBorBroadcastMsgs(amqpMsgs <-chan amqp.Delivery) 
 		// signer
 		signedTx, err := auth.Signer(types.HomesteadSigner{}, auth.From, rawTx)
 		if err != nil {
-			amqpMsg.Ack(false)
+			amqpMsg.Ack(true)
 			qc.logger.Error("Error while signing the transaction", "error", err)
 			return
 		}
 
 		// broadcast transaction
 		if err := maticClient.SendTransaction(context.Background(), signedTx); err != nil {
-			amqpMsg.Ack(false)
+			amqpMsg.Ack(true)
 			qc.logger.Error("Error while broadcasting the transaction", "error", err)
 			return
 		}
 
 		// send ack
-		amqpMsg.Ack(false)
+		amqpMsg.Ack(true)
 	}
 }
 
