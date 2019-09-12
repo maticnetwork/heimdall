@@ -1,26 +1,22 @@
 package helper
 
 import (
-	"math/big"
-
 	"context"
-
 	"errors"
+	"math"
+	"math/big"
+	"strings"
 
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
+
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 	"github.com/maticnetwork/heimdall/contracts/validatorset"
 	"github.com/maticnetwork/heimdall/types"
-
-	"strings"
-
-	"math"
-
-	"github.com/ethereum/go-ethereum/accounts/abi"
 )
 
 type IContractCaller interface {
@@ -35,9 +31,13 @@ type IContractCaller interface {
 	IsTxConfirmed(tx common.Hash) bool
 	GetBlockNoFromTxHash(tx common.Hash) (blocknumber big.Int, err error)
 	SigUpdateEvent(tx common.Hash) (id uint64, newSigner common.Address, oldSigner common.Address, err error)
+
+	// bor related contracts
 	CommitSpan(voteSignBytes []byte, sigs []byte, txData []byte, proof []byte)
+	CurrentSpanNumber() (Number *big.Int)
 }
 
+// ContractCaller contract caller
 type ContractCaller struct {
 	RootChainInstance    *rootchain.Rootchain
 	StakeManagerInstance *stakemanager.Stakemanager
@@ -232,4 +232,15 @@ func (c *ContractCaller) SigUpdateEvent(tx common.Hash) (id uint64, newSigner co
 		id = vLog.Topics[1].Big().Uint64()
 	}
 	return
+}
+
+// CurrentSpanNumber get current span
+func (c *ContractCaller) CurrentSpanNumber() (Number *big.Int) {
+	result, err := c.ValidatorSetInstance.CurrentSpanNumber(nil)
+	if err != nil {
+		Logger.Error("Unable to get current span number", "Error", err)
+		return nil
+	}
+
+	return result
 }

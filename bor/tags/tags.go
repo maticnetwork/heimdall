@@ -7,6 +7,7 @@ import (
 // Checkpoint tags
 var (
 	Action         = sdk.TagAction
+	Success        = "success"
 	BorSyncID      = "bor-sync-id"
 	SpanID         = "span-id"
 	SpanStartBlock = "start-block"

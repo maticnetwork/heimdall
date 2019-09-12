@@ -1,11 +1,3 @@
-// consumes all events from respective queues
-// Deposit Event --> Mint transaction on BOR on the basis of validator set% deposit index
-// Withdraw Event --> Burn transaction on BOR
-// Validator Join/Exit/Power-change --> Validator set changes on BOR
-// Checkpoint Propose --> MsgCheckpoint on Heimdall
-// Checkpoint ACK --> MsgCheckpointACK on Heimdall
-// Checkpoint NO-ACK --> Sends MsgCheckpointNoACK after x interval on Heimdall
-// Validator Join/Exit/Power-change --> Validator set changes on Heimdall
 package pier
 
 import (
@@ -16,6 +8,20 @@ import (
 	"github.com/tendermint/tendermint/libs/common"
 )
 
+//
+//
+// Consumes all events from respective queues
+// Deposit Event --> Mint transaction on BOR on the basis of validator set% deposit index
+// Withdraw Event --> Burn transaction on BOR
+// Validator Join/Exit/Power-change --> Validator set changes on BOR
+// Checkpoint Propose --> MsgCheckpoint on Heimdall
+// Checkpoint ACK --> MsgCheckpointACK on Heimdall
+// Checkpoint NO-ACK --> Sends MsgCheckpointNoACK after x interval on Heimdall
+// Validator Join/Exit/Power-change --> Validator set changes on Heimdall
+//
+//
+
+// ConsumerService consumer service
 type ConsumerService struct {
 	// Base service
 	common.BaseService
@@ -27,11 +33,11 @@ type ConsumerService struct {
 	cliCtx cliContext.CLIContext
 
 	// queue connector
-	queueConnector QueueConnector
+	queueConnector *QueueConnector
 }
 
 // NewConsumerService returns new service object
-func NewConsumerService(cdc *codec.Codec, queueConnector QueueConnector) *ConsumerService {
+func NewConsumerService(cdc *codec.Codec, queueConnector *QueueConnector) *ConsumerService {
 	// create logger
 	logger := Logger.With("module", AMQPConsumerService)
 
@@ -48,9 +54,11 @@ func NewConsumerService(cdc *codec.Codec, queueConnector QueueConnector) *Consum
 func (consumer *ConsumerService) OnStart() error {
 	consumer.BaseService.OnStart() // Always call the overridden method.
 
-	if err := consumer.queueConnector.ConsumeHeimdallQ(); err != nil {
+	// start queue connector
+	if err := consumer.queueConnector.Start(); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -58,6 +66,10 @@ func (consumer *ConsumerService) OnStart() error {
 func (consumer *ConsumerService) OnStop() {
 	// Always call the overridden method.
 	consumer.BaseService.OnStop()
+
+	// queue stop
+	consumer.queueConnector.Stop()
+
 	// close db
 	closeBridgeDBInstance()
 }

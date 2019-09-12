@@ -53,19 +53,20 @@ type Checkpointer struct {
 	// cli context
 	cliCtx cliContext.CLIContext
 	// queue connector
-	queueConnector QueueConnector
+	queueConnector *QueueConnector
 	// http client to subscribe to
 	httpClient *httpClient.HTTP
 }
 
 // NewCheckpointer returns new service object
-func NewCheckpointer(cdc *codec.Codec, queueConnector QueueConnector, httpClient *httpClient.HTTP) *Checkpointer {
+func NewCheckpointer(cdc *codec.Codec, queueConnector *QueueConnector, httpClient *httpClient.HTTP) *Checkpointer {
 	// create logger
 	logger := Logger.With("module", HeimdallCheckpointer)
 
 	// cli context
 	cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
 	cliCtx.BroadcastMode = client.BroadcastAsync
+	cliCtx.TrustNode = true
 
 	contractCaller, err := helper.NewContractCaller()
 	if err != nil {

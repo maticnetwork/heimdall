@@ -37,7 +37,12 @@ func HandleMsgProposeSpan(ctx sdk.Context, msg MsgProposeSpan, k Keeper, logger 
 
 	// check all conditions
 	if lastSpan.ID+1 != msg.ID || msg.StartBlock < lastSpan.StartBlock || msg.EndBlock < msg.StartBlock {
-		common.BorLogger.Error("Blocks not in countinuity ", "LastStartBlock", lastSpan.StartBlock, "MsgStartBlock", msg.StartBlock)
+		logger.Error("Blocks not in countinuity",
+			"lastSpanId", lastSpan.ID,
+			"lastSpanStartBlock", lastSpan.StartBlock,
+			"spanId", msg.ID,
+			"spanStartBlock", msg.StartBlock,
+		)
 		return common.ErrSpanNotInCountinuity(k.Codespace()).Result()
 	}
 
@@ -63,6 +68,7 @@ func HandleMsgProposeSpan(ctx sdk.Context, msg MsgProposeSpan, k Keeper, logger 
 	result, ok := sortAndCompare(types.ValToMinVal(currentValidators), types.ValToMinVal(lastSpan.SelectedProducers), msg, k.Codespace())
 	if ok {
 		result.Tags = sdk.NewTags(
+			tags.Success, []byte("true"),
 			tags.BorSyncID, []byte(strconv.FormatUint(uint64(msg.ID), 10)),
 			tags.SpanID, []byte(strconv.FormatUint(uint64(msg.ID), 10)),
 			tags.SpanStartBlock, []byte(strconv.FormatUint(uint64(msg.StartBlock), 10)),

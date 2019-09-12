@@ -40,6 +40,7 @@ const (
 	// TxsURL represents txs url
 	TxsURL = "/txs"
 
+	AccountDetailsURL     = "/auth/accounts/%v"
 	LastNoAckURL          = "/checkpoint/last-no-ack"
 	ProposersURL          = "/staking/proposer/%v"
 	BufferedCheckpointURL = "/checkpoint/buffer"
@@ -48,8 +49,6 @@ const (
 	LatestSpanURL         = "/bor/latest-span"
 	SpanProposerURL       = "/bor/span-proposer"
 	NextSpanInfoURL       = "/bor/prepare-next-span"
-
-	TendermintBlockURL = "http://localhost:26657/block?height=%v"
 
 	TransactionTimeout = 1 * time.Minute
 	CommitTimeout      = 2 * time.Minute
@@ -261,7 +260,6 @@ func FetchFromAPI(cliCtx cliContext.CLIContext, URL string) (result rest.Respons
 		// unmarshall data from buffer
 		// var proposers []hmtypes.Validator
 		var response rest.ResponseWithHeight
-
 		if err := cliCtx.Codec.UnmarshalJSON(body, &response); err != nil {
 			return result, err
 		}
@@ -297,53 +295,13 @@ func WaitForOneEvent(tx tmTypes.Tx, client *httpClient.HTTP) (tmTypes.TMEventDat
 	}
 }
 
-// GetBlock get block as per height
-func GetBlock(client *httpClient.HTTP, height int64) (*tmTypes.Block, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), CommitTimeout)
-	defer cancel()
-
-	// get block using client
-	block, err := client.Block(&height)
-	if err == nil && block != nil {
-		return block.Block, nil
-	}
-
-	// subscriber
-	subscriber := fmt.Sprintf("new-block-%v", height)
-
-	// query for event
-	query := tmTypes.QueryForEvent(tmTypes.EventNewBlock).String()
-
-	// register for the next event of this type
-	eventCh, err := client.Subscribe(ctx, subscriber, query)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to subscribe")
-	}
-
-	// unsubscribe query
-	defer client.Unsubscribe(ctx, subscriber, query)
-
-	select {
-	case event := <-eventCh:
-		eventData := event.Data.(tmTypes.TMEventData)
-		switch t := eventData.(type) {
-		case tmTypes.EventDataNewBlock:
-			return t.Block, nil
-		default:
-			return nil, errors.New("timed out waiting for event")
-		}
-	case <-ctx.Done():
-		return nil, errors.New("timed out waiting for event")
-	}
-}
-
 // fetchVotes fetches votes and extracts sigs from it
 func fetchVotes(
 	height int64,
 	client *httpClient.HTTP,
 ) (votes []*tmTypes.CommitSig, sigs []byte, chainID string, err error) {
 	// get block client
-	blockDetails, err := GetBlock(client, height+1)
+	blockDetails, err := helper.GetBlockWithClient(client, height+1)
 
 	if err != nil {
 		return nil, nil, "", err

@@ -183,7 +183,7 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 	}
 
 	if mainRPCClient, err = rpc.Dial(conf.MainRPCUrl); err != nil {
-		Logger.Error("Error while creating matic chain RPC client", "error", err)
+		Logger.Error("Error while creating main chain RPC client", "error", err)
 		log.Fatal(err)
 	}
 

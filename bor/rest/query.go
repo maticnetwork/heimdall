@@ -314,7 +314,7 @@ func prepareNextSpanHandlerFn(
 			spanID,
 			types.HexToHeimdallAddress(proposer),
 			startBlock,
-			startBlock+spanDuration,
+			startBlock+spanDuration-1,
 			validators,
 			validators,
 			chainID,
