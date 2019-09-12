@@ -3,6 +3,7 @@ package pier
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -276,15 +277,21 @@ func FetchFromAPI(cliCtx cliContext.CLIContext, URL string) (result rest.Respons
 //
 // This handles subscribing and unsubscribing under the hood
 func WaitForOneEvent(tx tmTypes.Tx, client *httpClient.HTTP) (tmTypes.TMEventData, error) {
-	const subscriber = "helpers"
 	ctx, cancel := context.WithTimeout(context.Background(), CommitTimeout)
 	defer cancel()
+
+	// subscriber
+	subscriber := hex.EncodeToString(tx.Hash())
+
+	// query
 	query := tmTypes.EventQueryTxFor(tx).String()
+
 	// register for the next event of this type
 	eventCh, err := client.Subscribe(ctx, subscriber, query)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to subscribe")
 	}
+
 	// make sure to unregister after the test is over
 	defer client.UnsubscribeAll(ctx, subscriber)
 	select {
@@ -295,8 +302,8 @@ func WaitForOneEvent(tx tmTypes.Tx, client *httpClient.HTTP) (tmTypes.TMEventDat
 	}
 }
 
-// fetchVotes fetches votes and extracts sigs from it
-func fetchVotes(
+// FetchVotes fetches votes and extracts sigs from it
+func FetchVotes(
 	height int64,
 	client *httpClient.HTTP,
 ) (votes []*tmTypes.CommitSig, sigs []byte, chainID string, err error) {

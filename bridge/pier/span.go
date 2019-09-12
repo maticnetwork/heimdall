@@ -324,7 +324,7 @@ func (s *SpanService) fetchNextSpanDetails(id uint64, start uint64) (msg bor.Msg
 // broadcastToBor broadcasts to bor
 func (s *SpanService) broadcastToBor(height int64, txHash []byte) error {
 	// extraData
-	votes, sigs, chainID, err := fetchVotes(height, s.httpClient)
+	votes, sigs, chainID, err := FetchVotes(height, s.httpClient)
 	if err != nil {
 		s.Logger.Error("Error fetching votes", "height", height)
 		return err

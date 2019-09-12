@@ -446,6 +446,7 @@ func (c *Checkpointer) broadcastCheckpoint(txhash chan string, start uint64, end
 	}
 	c.Logger.Info("Subscribing to checkpoint tx", "hash", response.TxHash, "start", start, "end", end, "root", root.String())
 
+	// subscribe to tx
 	go c.SubscribeToTx(txBytes, start, end)
 
 	txhash <- response.TxHash
@@ -468,45 +469,13 @@ func (c *Checkpointer) SubscribeToTx(tx tmTypes.Tx, start, end uint64) error {
 	return nil
 }
 
-// fetchVotes fetches votes and extracts sigs from it
-func (c *Checkpointer) fetchVotes(height int64) (votes []*tmTypes.CommitSig, sigs []byte, chainID string, err error) {
-	c.Logger.Debug("Subscribing to new height", "height", height+1)
-
-	var blockDetails *tmTypes.Block
-	data, err := c.SubscribeNewBlock()
-	if err != nil {
-		fmt.Printf("Error subscribing to height %v error %v", height+1, err)
-		return nil, nil, "", err
-	}
-	switch t := data.(type) {
-	case tmTypes.EventDataNewBlock:
-		blockDetails = t.Block
-	default:
-		c.Logger.Info("No cases matched")
-	}
-
-	// TODO ensure block.height == height+1 OR Subscribe to Height+1
-
-	// extract votes from response
-	preCommits := blockDetails.LastCommit.Precommits
-
-	// extract signs from votes
-	valSigs := helper.GetSigs(preCommits)
-
-	// extract chainID
-	chainID = blockDetails.ChainID
-
-	// return
-	return preCommits, valSigs, chainID, nil
-}
-
 // DispatchCheckpoint prepares the data required for mainchain checkpoint submission
 // and sends a transaction to mainchain
 func (c *Checkpointer) DispatchCheckpoint(height int64, txBytes tmTypes.Tx, start uint64, end uint64) error {
 	c.Logger.Debug("Preparing checkpoint to be pushed on chain")
 
 	// get votes
-	votes, sigs, chainID, err := fetchVotes(height, c.httpClient)
+	votes, sigs, chainID, err := FetchVotes(height, c.httpClient)
 	if err != nil {
 		return err
 	}
@@ -554,35 +523,6 @@ func (c *Checkpointer) DispatchCheckpoint(height int64, txBytes tmTypes.Tx, star
 		}
 	}
 	return nil
-}
-
-// WaitForOneEvent subscribes to a websocket event for the given
-// event time and returns upon receiving it one time, or
-// when the timeout duration has expired.
-//
-// This handles subscribing and unsubscribing under the hood
-func (c *Checkpointer) WaitForOneEvent(tx tmTypes.Tx, evtTyp string) (tmTypes.TMEventData, error) {
-	const subscriber = "helpers"
-	ctx, cancel := context.WithTimeout(context.Background(), CommitTimeout)
-	defer cancel()
-
-	query := tmTypes.EventQueryTxFor(tx).String()
-
-	// register for the next event of this type
-	eventCh, err := c.httpClient.Subscribe(ctx, subscriber, query)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to subscribe")
-	}
-
-	// make sure to unregister after the test is over
-	defer c.httpClient.UnsubscribeAll(ctx, subscriber)
-
-	select {
-	case event := <-eventCh:
-		return event.Data.(tmTypes.TMEventData), nil
-	case <-ctx.Done():
-		return nil, errors.New("timed out waiting for event")
-	}
 }
 
 // SubscribeNewBlock subscribes to a new block
