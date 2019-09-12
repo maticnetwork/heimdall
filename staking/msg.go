@@ -2,8 +2,6 @@ package staking
 
 import (
 	"bytes"
-	"encoding/json"
-	"regexp"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -93,7 +91,6 @@ type MsgSignerUpdate struct {
 	From            types.HeimdallAddress `json:"from"`
 	ID              types.ValidatorID     `json:"ID"`
 	NewSignerPubKey types.PubKey          `json:"pubKey"`
-	NewAmount       json.Number           `json:"amount"`
 	TxHash          common.Hash           `json:"tx_hash"`
 }
 
@@ -101,7 +98,6 @@ func NewMsgValidatorUpdate(
 	from types.HeimdallAddress,
 	id uint64,
 	pubKey types.PubKey,
-	amount json.Number,
 	txhash common.Hash,
 ) MsgSignerUpdate {
 
@@ -109,7 +105,6 @@ func NewMsgValidatorUpdate(
 		From:            from,
 		ID:              types.NewValidatorID(id),
 		NewSignerPubKey: pubKey,
-		NewAmount:       amount,
 		TxHash:          txhash,
 	}
 }
@@ -147,16 +142,7 @@ func (msg MsgSignerUpdate) ValidateBasic() sdk.Error {
 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid pub key %v", msg.NewSignerPubKey.String())
 	}
 
-	r, _ := regexp.Compile("[0-9]+")
-	if msg.NewAmount != "" && !r.MatchString(msg.NewAmount.String()) {
-		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid new amount %v", msg.NewAmount.String())
-	}
-
 	return nil
-}
-
-func (msg MsgSignerUpdate) GetNewPower() uint64 {
-	return types.GetValidatorPower(msg.NewAmount.String())
 }
 
 //

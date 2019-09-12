@@ -11,7 +11,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	ethCommon "github.com/ethereum/go-ethereum/common"
@@ -312,14 +311,6 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 	}
 }
 
-func (syncer *Syncer) sendTx(eventName string, msg sdk.Msg) {
-	_, err := helper.BroadcastMsgs(syncer.cliCtx, []sdk.Msg{msg})
-	if err != nil {
-		logEventBroadcastTxError(syncer.Logger, eventName, err)
-		return
-	}
-}
-
 func (syncer *Syncer) processCheckpointEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
 	event := new(rootchain.RootchainNewHeaderBlock)
 	if err := UnpackLog(abiObject, event, eventName, vLog); err != nil {
@@ -396,10 +387,15 @@ func (syncer *Syncer) processSignerChangeEvent(eventName string, abiObject *abi.
 		)
 
 		// TODO
-		// if bytes.Compare(event.NewSigner.Bytes(), helper.GetPubKey().Address().Bytes()) == 0 {
-		// 	msg := staking.NewMsgValidatorUpdate(event.ValidatorId.Uint64(), hmtypes.NewPubKey(helper.GetPubKey().Bytes()), vLog.TxHash)
-		// 	syncer.queueConnector.BroadcastToHeimdall(msg)
-		// }
+		if bytes.Compare(event.NewSigner.Bytes(), helper.GetAddress()) == 0 {
+			msg := staking.NewMsgValidatorUpdate(
+				hmtypes.BytesToHeimdallAddress(helper.GetAddress()),
+				event.ValidatorId.Uint64(),
+				hmtypes.NewPubKey(helper.GetPubKey().Bytes()),
+				vLog.TxHash,
+			)
+			syncer.queueConnector.BroadcastToHeimdall(msg)
+		}
 	}
 }
 

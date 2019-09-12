@@ -74,7 +74,7 @@ func init() {
 func isProposer(cliCtx cliContext.CLIContext) bool {
 	var proposers []hmtypes.Validator
 	count := uint64(1)
-	result, err := FetchFromAPI(cliCtx, fmt.Sprintf(ProposersURL, strconv.FormatUint(count, 10)))
+	result, err := FetchFromAPI(cliCtx, fmt.Sprintf(GetHeimdallServerEndpoint(ProposersURL), strconv.FormatUint(count, 10)))
 	if err != nil {
 		Logger.Error("Error fetching proposers", "error", err)
 		return false

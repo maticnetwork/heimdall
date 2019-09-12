@@ -2,7 +2,6 @@ package cli
 
 import (
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -165,8 +164,6 @@ func SendValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 				return fmt.Errorf("Pubkey has to be supplied")
 			}
 
-			amountStr := viper.GetString(FlagAmount)
-
 			pubkeyBytes, err := hex.DecodeString(pubkeyStr)
 			if err != nil {
 				return err
@@ -182,7 +179,6 @@ func SendValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 				proposer,
 				uint64(validator),
 				pubkey,
-				json.Number(amountStr),
 				common.HexToHash(txhash),
 			)
 
@@ -194,7 +190,6 @@ func SendValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
 	cmd.Flags().Int(FlagValidatorID, 0, "--id=<validator ID here>")
 	cmd.Flags().String(FlagNewSignerPubkey, "", "--new-pubkey=< new signer pubkey here>")
-	cmd.Flags().String(FlagAmount, "", "--staked-amount=<staked amount>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
 	cmd.MarkFlagRequired(FlagTxHash)
 	cmd.MarkFlagRequired(FlagNewSignerPubkey)

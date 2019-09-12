@@ -124,7 +124,6 @@ func newValidatorUpdateHandler(cdc *codec.Codec, cliCtx context.CLIContext) http
 			types.HexToHeimdallAddress(req.BaseReq.From),
 			req.ID,
 			req.NewSignerPubKey,
-			req.NewAmount,
 			common.HexToHash(req.TxHash),
 		)
 
