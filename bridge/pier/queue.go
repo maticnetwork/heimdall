@@ -258,11 +258,12 @@ func (qc *QueueConnector) handleHeimdallBroadcastMsgs(amqpMsgs <-chan amqp.Deliv
 	accNum := account.GetAccountNumber()
 	accSeq := account.GetSequence()
 
-	for amqpMsg := range amqpMsgs {
+	// handler
+	handler := func(amqpMsg amqp.Delivery) bool {
 		var msg sdk.Msg
 		if err := qc.cliCtx.Codec.UnmarshalJSON(amqpMsg.Body, &msg); err != nil {
 			amqpMsg.Reject(false)
-			return
+			return false
 		}
 
 		txBldr := authTypes.NewTxBuilderFromCLI().
@@ -272,7 +273,7 @@ func (qc *QueueConnector) handleHeimdallBroadcastMsgs(amqpMsgs <-chan amqp.Deliv
 			WithChainID(chainID)
 		if _, err := helper.BuildAndBroadcastMsgs(qc.cliCtx, txBldr, []sdk.Msg{msg}); err != nil {
 			amqpMsg.Reject(false)
-			return
+			return false
 		}
 
 		// send ack
@@ -280,18 +281,26 @@ func (qc *QueueConnector) handleHeimdallBroadcastMsgs(amqpMsgs <-chan amqp.Deliv
 
 		// increment account sequence
 		accSeq = accSeq + 1
+
+		return true
+	}
+
+	// handle all amqp messages
+	for amqpMsg := range amqpMsgs {
+		handler(amqpMsg)
 	}
 }
 
 func (qc *QueueConnector) handleBorBroadcastMsgs(amqpMsgs <-chan amqp.Delivery) {
 	maticClient := helper.GetMaticClient()
 
-	for amqpMsg := range amqpMsgs {
+	// handler
+	handler := func(amqpMsg amqp.Delivery) bool {
 		var msg ethereum.CallMsg
 		if err := json.Unmarshal(amqpMsg.Body, &msg); err != nil {
 			amqpMsg.Ack(true)
 			qc.logger.Error("Error while parsing the transaction from queue", "error", err)
-			return
+			return false
 		}
 
 		// get auth
@@ -299,7 +308,7 @@ func (qc *QueueConnector) handleBorBroadcastMsgs(amqpMsgs <-chan amqp.Delivery) 
 		if err != nil {
 			amqpMsg.Ack(true)
 			qc.logger.Error("Error while fetching the transaction param details", "error", err)
-			return
+			return false
 		}
 
 		// Create the transaction, sign it and schedule it for execution
@@ -310,18 +319,26 @@ func (qc *QueueConnector) handleBorBroadcastMsgs(amqpMsgs <-chan amqp.Delivery) 
 		if err != nil {
 			amqpMsg.Ack(true)
 			qc.logger.Error("Error while signing the transaction", "error", err)
-			return
+			return false
 		}
 
 		// broadcast transaction
 		if err := maticClient.SendTransaction(context.Background(), signedTx); err != nil {
 			amqpMsg.Ack(true)
 			qc.logger.Error("Error while broadcasting the transaction", "error", err)
-			return
+			return false
 		}
 
 		// send ack
 		amqpMsg.Ack(true)
+
+		// amqp msg
+		return true
+	}
+
+	// handle all amqp messages
+	for amqpMsg := range amqpMsgs {
+		handler(amqpMsg)
 	}
 }
 
