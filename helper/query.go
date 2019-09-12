@@ -1,21 +1,29 @@
 package helper
 
 import (
+	"context"
 	"encoding/hex"
-	"errors"
+	"fmt"
 	"strings"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
+	cosmosContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/pkg/errors"
+	httpClient "github.com/tendermint/tendermint/rpc/client"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
+	tmTypes "github.com/tendermint/tendermint/types"
+)
+
+const (
+	CommitTimeout = 2 * time.Minute
 )
 
 // SearchTxs performs a search for transactions for a given set of tags via
 // Tendermint RPC. It returns a slice of Info object containing txs and metadata.
 // An error is returned if the query fails.
-func SearchTxs(cliCtx context.CLIContext, cdc *codec.Codec, tags []string, page, limit int) ([]sdk.TxResponse, error) {
+func SearchTxs(cliCtx cosmosContext.CLIContext, cdc *codec.Codec, tags []string, page, limit int) ([]sdk.TxResponse, error) {
 	if len(tags) == 0 {
 		return nil, errors.New("must declare at least one tag to search")
 	}
@@ -37,7 +45,6 @@ func SearchTxs(cliCtx context.CLIContext, cdc *codec.Codec, tags []string, page,
 	}
 
 	prove := !cliCtx.TrustNode
-
 	resTxs, err := node.TxSearch(query, prove, page, limit)
 	if err != nil {
 		return nil, err
@@ -80,7 +87,7 @@ func formatTxResults(cdc *codec.Codec, resTxs []*ctypes.ResultTx, resBlocks map[
 }
 
 // ValidateTxResult performs transaction verification.
-func ValidateTxResult(cliCtx context.CLIContext, resTx *ctypes.ResultTx) error {
+func ValidateTxResult(cliCtx cosmosContext.CLIContext, resTx *ctypes.ResultTx) error {
 	if !cliCtx.TrustNode {
 		check, err := cliCtx.Verify(resTx.Height)
 		if err != nil {
@@ -94,7 +101,7 @@ func ValidateTxResult(cliCtx context.CLIContext, resTx *ctypes.ResultTx) error {
 	return nil
 }
 
-func getBlocksForTxResults(cliCtx context.CLIContext, resTxs []*ctypes.ResultTx) (map[int64]*ctypes.ResultBlock, error) {
+func getBlocksForTxResults(cliCtx cosmosContext.CLIContext, resTxs []*ctypes.ResultTx) (map[int64]*ctypes.ResultBlock, error) {
 	node, err := cliCtx.GetNode()
 	if err != nil {
 		return nil, err
@@ -131,7 +138,7 @@ func parseTx(cdc *codec.Codec, txBytes []byte) (sdk.Tx, error) {
 }
 
 // QueryTx query tx from node
-func QueryTx(cdc *codec.Codec, cliCtx context.CLIContext, hashHexStr string) (sdk.TxResponse, error) {
+func QueryTx(cdc *codec.Codec, cliCtx cosmosContext.CLIContext, hashHexStr string) (sdk.TxResponse, error) {
 	hash, err := hex.DecodeString(hashHexStr)
 	if err != nil {
 		return sdk.TxResponse{}, err
@@ -167,11 +174,61 @@ func QueryTx(cdc *codec.Codec, cliCtx context.CLIContext, hashHexStr string) (sd
 }
 
 // QueryTxWithProof query tx with proof from node
-func QueryTxWithProof(cliCtx context.CLIContext, hash []byte) (*ctypes.ResultTx, error) {
+func QueryTxWithProof(cliCtx cosmosContext.CLIContext, hash []byte) (*ctypes.ResultTx, error) {
 	node, err := cliCtx.GetNode()
 	if err != nil {
 		return nil, err
 	}
 
 	return node.Tx(hash, true)
+}
+
+// GetBlock returns a block
+func GetBlock(cliCtx cosmosContext.CLIContext, height int64) (*ctypes.ResultBlock, error) {
+	node, err := cliCtx.GetNode()
+	if err != nil {
+		return nil, err
+	}
+
+	return node.Block(&height)
+}
+
+// GetBlockWithClient get block through per height
+func GetBlockWithClient(client *httpClient.HTTP, height int64) (*tmTypes.Block, error) {
+	c, cancel := context.WithTimeout(context.Background(), CommitTimeout)
+	defer cancel()
+
+	// get block using client
+	block, err := client.Block(&height)
+	if err == nil && block != nil {
+		return block.Block, nil
+	}
+
+	// subscriber
+	subscriber := fmt.Sprintf("new-block-%v", height)
+
+	// query for event
+	query := tmTypes.QueryForEvent(tmTypes.EventNewBlock).String()
+
+	// register for the next event of this type
+	eventCh, err := client.Subscribe(c, subscriber, query)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to subscribe")
+	}
+
+	// unsubscribe query
+	defer client.Unsubscribe(c, subscriber, query)
+
+	select {
+	case event := <-eventCh:
+		eventData := event.Data.(tmTypes.TMEventData)
+		switch t := eventData.(type) {
+		case tmTypes.EventDataNewBlock:
+			return t.Block, nil
+		default:
+			return nil, errors.New("timed out waiting for event")
+		}
+	case <-c.Done():
+		return nil, errors.New("timed out waiting for event")
+	}
 }

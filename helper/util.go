@@ -466,7 +466,7 @@ func ReadStdTxFromFile(cdc *amino.Codec, filename string) (stdTx authTypes.StdTx
 
 // BroadcastTxBytes sends request to tendermint using CLI
 func BroadcastTxBytes(cliCtx context.CLIContext, txBytes []byte, mode string) (sdk.TxResponse, error) {
-	Logger.Info("Broadcasting tx bytes to Tendermint", "txBytes", hex.EncodeToString(txBytes), "txHash", hex.EncodeToString(tmhash.Sum(txBytes[4:])))
+	Logger.Debug("Broadcasting tx bytes to Tendermint", "txBytes", hex.EncodeToString(txBytes), "txHash", hex.EncodeToString(tmhash.Sum(txBytes[4:])))
 	if mode != "" {
 		cliCtx.BroadcastMode = mode
 	}
@@ -488,6 +488,15 @@ func TendermintTxDecode(txString string) ([]byte, error) {
 func GetMerkleProofList(proof *merkle.SimpleProof) [][]byte {
 	result := [][]byte{}
 	computeHashFromAunts(proof.Index, proof.Total, proof.LeafHash, proof.Aunts, &result)
+	return result
+}
+
+// AppendBytes appends bytes
+func AppendBytes(data ...[]byte) []byte {
+	var result []byte
+	for _, v := range data {
+		result = append(result, v[:]...)
+	}
 	return result
 }
 
