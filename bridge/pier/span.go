@@ -188,7 +188,7 @@ func (s *SpanService) commit() {
 	tags = append(tags, fmt.Sprintf("bor-sync-id>%v", currentSpanNumber))
 	tags = append(tags, "action='propose-span'")
 
-	s.Logger.Info("[COMMIT SPAN] Querying heimdall span txs",
+	s.Logger.Debug("[COMMIT SPAN] Querying heimdall span txs",
 		"currentSpanNumber", currentSpanNumber,
 		"tags", strings.Join(tags, " AND "),
 	)
@@ -200,15 +200,12 @@ func (s *SpanService) commit() {
 		return
 	}
 
-	s.Logger.Info("[COMMIT SPAN] Found new span txs",
+	s.Logger.Debug("[COMMIT SPAN] Found new span txs",
 		"length", len(txs),
 	)
 
 	// loop through tx
 	for _, tx := range txs {
-		s.Logger.Info("[COMMIT SPAN] Span tx",
-			"tx", tx,
-		)
 		txHash, err := hex.DecodeString(tx.TxHash)
 		if err != nil {
 			s.Logger.Error("Error while searching txs", "error", err)
