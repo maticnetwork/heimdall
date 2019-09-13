@@ -37,15 +37,22 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k Keeper, con
 
 	//fetch validator from mainchain
 	validator, err := contractCaller.GetValidatorInfo(msg.ID)
-	if err != nil || bytes.Equal(validator.Signer.Bytes(), helper.ZeroAddress.Bytes()) {
+	if err != nil {
 		hmCommon.StakingLogger.Error(
 			"Unable to fetch validator from rootchain",
 			"error", err,
-			"msgValidator", msg.ID,
-			"mainChainSigner", validator.Signer.String(),
 		)
 		return hmCommon.ErrNoValidator(k.Codespace()).Result()
 	}
+
+	if bytes.Equal(validator.Signer.Bytes(), helper.ZeroAddress.Bytes()) {
+		hmCommon.StakingLogger.Error(
+			"No validator signer found",
+			"msgValidator", msg.ID,
+		)
+		return hmCommon.ErrNoValidator(k.Codespace()).Result()
+	}
+
 	hmCommon.StakingLogger.Debug("Fetched validator from rootchain successfully", "validator", validator.String())
 
 	// Generate PubKey from Pubkey in message and signer
@@ -56,7 +63,7 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k Keeper, con
 	if !bytes.Equal(signer.Bytes(), validator.Signer.Bytes()) {
 		hmCommon.StakingLogger.Error(
 			"Signer Address does not match",
-			"msgValidator", msg.SignerPubKey.Address().String(),
+			"msgValidator", signer.String(),
 			"mainchainValidator", validator.Signer.String(),
 		)
 		return hmCommon.ErrNoValidator(k.Codespace()).Result()

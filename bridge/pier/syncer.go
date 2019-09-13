@@ -354,10 +354,11 @@ func (syncer *Syncer) processStakedEvent(eventName string, abiObject *abi.ABI, v
 
 		// compare user to get address
 		if bytes.Compare(event.User.Bytes(), helper.GetAddress()) == 0 {
+			pubkey := helper.GetPubKey()
 			msg := staking.NewMsgValidatorJoin(
 				hmtypes.BytesToHeimdallAddress(event.User.Bytes()),
 				event.ValidatorId.Uint64(),
-				hmtypes.NewPubKey(helper.GetPubKey().Bytes()),
+				hmtypes.NewPubKey(pubkey[:]),
 				hmtypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			)
 
@@ -408,12 +409,15 @@ func (syncer *Syncer) processSignerChangeEvent(eventName string, abiObject *abi.
 
 		// signer change
 		if bytes.Compare(event.NewSigner.Bytes(), helper.GetAddress()) == 0 {
+			pubkey := helper.GetPubKey()
 			msg := staking.NewMsgValidatorUpdate(
 				hmtypes.BytesToHeimdallAddress(helper.GetAddress()),
 				event.ValidatorId.Uint64(),
-				hmtypes.NewPubKey(helper.GetPubKey().Bytes()),
+				hmtypes.NewPubKey(pubkey[:]),
 				hmtypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			)
+
+			// process signer update
 			syncer.queueConnector.BroadcastToHeimdall(msg)
 		}
 	}
