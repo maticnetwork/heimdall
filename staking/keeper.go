@@ -206,7 +206,6 @@ func (k *Keeper) UpdateSigner(ctx sdk.Context, newSigner types.HeimdallAddress, 
 
 	// add updated validator to store with new key
 	k.AddValidator(ctx, validator)
-
 	return nil
 }
 

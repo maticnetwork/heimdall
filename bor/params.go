@@ -12,6 +12,8 @@ const (
 	DefaultSprintDuration uint64 = 64
 	// DefaultSpanDuration number of blocks for which span is frozen on heimdall
 	DefaultSpanDuration uint64 = 100 * DefaultSprintDuration
+	// Slot cost for validator
+	SlotCost uint64 = 10
 )
 
 // ParamStoreKeySprintDuration is store's key for SprintDuration

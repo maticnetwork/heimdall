@@ -2,12 +2,14 @@ package bor
 
 import (
 	"errors"
+	"math/big"
 	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	cmn "github.com/maticnetwork/heimdall/common"
+	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/types"
 )
@@ -20,6 +22,7 @@ var (
 	LastSpanStartBlockKey = []byte{0x35} // Key to store last span start block
 	SpanPrefixKey         = []byte{0x36} // prefix key to store span
 	SpanCacheKey          = []byte{0x37} // key to store Cache for span
+	LastProcessedEthBlock = []byte{0x38} // key to store last processed eth block for seed
 )
 
 // Keeper stores all related data
@@ -32,6 +35,8 @@ type Keeper struct {
 	codespace sdk.CodespaceType
 	// param space
 	paramSpace params.Subspace
+	// contract caller
+	contractCaller helper.ContractCaller
 }
 
 // NewKeeper create new keeper
@@ -41,14 +46,16 @@ func NewKeeper(
 	storeKey sdk.StoreKey,
 	paramSpace params.Subspace,
 	codespace sdk.CodespaceType,
+	caller helper.ContractCaller,
 ) Keeper {
 	// create keeper
 	keeper := Keeper{
-		cdc:        cdc,
-		sk:         stakingKeeper,
-		storeKey:   storeKey,
-		paramSpace: paramSpace.WithKeyTable(ParamKeyTable()),
-		codespace:  codespace,
+		cdc:            cdc,
+		sk:             stakingKeeper,
+		storeKey:       storeKey,
+		paramSpace:     paramSpace.WithKeyTable(ParamKeyTable()),
+		codespace:      codespace,
+		contractCaller: caller,
 	}
 	return keeper
 }
@@ -158,16 +165,50 @@ func (k *Keeper) FreezeSet(ctx sdk.Context, id uint64, startBlock uint64, borCha
 }
 
 // SelectNextProducers selects producers for next span
-func (k *Keeper) SelectNextProducers(ctx sdk.Context) (vals []types.Validator) {
+func (k *Keeper) SelectNextProducers(ctx sdk.Context) (vals []types.Validator, err error) {
+	lastEthBlock := k.GetLastEthBlock(ctx)
 	currVals := k.sk.GetCurrentValidators(ctx)
+	blk, err := k.contractCaller.GetMainChainBlock(lastEthBlock)
+	if err != nil {
+		return vals, err
+	}
+	SelectNextProducers(cmn.BorLogger, blk.Hash(), currVals)
 	// TODO add producer selection here, currently sending all validators
-	return currVals
+	return currVals, nil
 }
 
 // UpdateLastSpan updates the last span start block
 func (k *Keeper) UpdateLastSpan(ctx sdk.Context, startBlock uint64) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(LastSpanStartBlockKey, []byte(strconv.FormatUint(startBlock, 10)))
+}
+
+// IncrementLastEthBlock increment last eth block
+func (k *Keeper) IncrementLastEthBlock(ctx sdk.Context, blockNumber *big.Int) {
+	store := ctx.KVStore(k.storeKey)
+	var lastEthBlock *big.Int
+	if store.Has(LastProcessedEthBlock) {
+		lastEthBlock = lastEthBlock.SetBytes(store.Get(LastProcessedEthBlock))
+	} else {
+		lastEthBlock = big.NewInt(0)
+	}
+	store.Set(LastProcessedEthBlock, lastEthBlock.Add(lastEthBlock, big.NewInt(1)).Bytes())
+}
+
+// SetLastEthBlock sets last eth block number
+func (k *Keeper) SetLastEthBlock(ctx sdk.Context, blockNumber big.Int) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(LastProcessedEthBlock, blockNumber.Bytes())
+}
+
+// GetLastEthBlock get last processed Eth block for seed
+func (k *Keeper) GetLastEthBlock(ctx sdk.Context) *big.Int {
+	store := ctx.KVStore(k.storeKey)
+	var lastEthBlock *big.Int
+	if store.Has(LastProcessedEthBlock) {
+		lastEthBlock = lastEthBlock.SetBytes(store.Get(LastProcessedEthBlock))
+	}
+	return lastEthBlock
 }
 
 // SetSpanCache sets span cache
