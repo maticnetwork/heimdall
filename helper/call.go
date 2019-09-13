@@ -140,9 +140,9 @@ func (c *ContractCaller) GetBalance(address common.Address) (*big.Int, error) {
 
 // GetValidatorInfo get validator info
 func (c *ContractCaller) GetValidatorInfo(valID types.ValidatorID) (validator types.Validator, err error) {
-	amount, startEpoch, endEpoch, signer, err := c.StakeManagerInstance.GetStakerDetails(nil, big.NewInt(int64(valID)))
+	amount, startEpoch, endEpoch, signer, status, err := c.StakeManagerInstance.GetStakerDetails(nil, big.NewInt(int64(valID)))
 	if err != nil {
-		Logger.Error("Error fetching validator information from stake manager", "Error", err, "ValidatorID", valID)
+		Logger.Error("Error fetching validator information from stake manager", "error", err, "validatorId", valID, "status", status)
 		return
 	}
 

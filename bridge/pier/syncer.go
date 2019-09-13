@@ -21,7 +21,6 @@ import (
 	"github.com/tendermint/tendermint/libs/common"
 	httpClient "github.com/tendermint/tendermint/rpc/client"
 
-	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/contracts/depositmanager"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
@@ -62,9 +61,6 @@ type Syncer struct {
 	HeaderChannel chan *types.Header
 	// cancel function for poll/subscription
 	cancelSubscription context.CancelFunc
-
-	// tx encoder
-	txEncoder authTypes.TxBuilder
 
 	// header listener subscription
 	cancelHeaderProcess context.CancelFunc
@@ -123,7 +119,6 @@ func NewSyncer(cdc *codec.Codec, queueConnector *QueueConnector, httpClient *htt
 		RootChainInstance:    rootchainInstance,
 		StakeManagerInstance: stakeManagerInstance,
 		HeaderChannel:        make(chan *types.Header),
-		txEncoder:            authTypes.NewTxBuilderFromCLI().WithTxEncoder(helper.GetTxEncoder()),
 	}
 
 	syncer.BaseService = *common.NewBaseService(logger, ChainSyncer, syncer)
@@ -301,10 +296,14 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 					syncer.processUnstakeInitEvent(selectedEvent.Name, abiObject, &vLog)
 				case "SignerChange":
 					syncer.processSignerChangeEvent(selectedEvent.Name, abiObject, &vLog)
+				case "ReStaked":
+					syncer.processReStakedEvent(selectedEvent.Name, abiObject, &vLog)
+				case "Jailed":
+					syncer.processJailedEvent(selectedEvent.Name, abiObject, &vLog)
 				case "Deposit":
 					syncer.processDepositEvent(selectedEvent.Name, abiObject, &vLog)
 				case "Withdraw":
-					// syncer.processWithdrawEvent(selectedEvent.Name, abiObject, &vLog)
+					syncer.processWithdrawEvent(selectedEvent.Name, abiObject, &vLog)
 				}
 			}
 		}
@@ -337,17 +336,25 @@ func (syncer *Syncer) processStakedEvent(eventName string, abiObject *abi.ABI, v
 	if err := UnpackLog(abiObject, event, eventName, vLog); err != nil {
 		logEventParseError(syncer.Logger, eventName, err)
 	} else {
-		// TOOD validator staked
 		syncer.Logger.Debug(
 			"New event found",
 			"event", eventName,
 			"validator", event.User.Hex(),
 			"ID", event.ValidatorId,
-			"activatonEpoch", event.ActivatonEpoch,
+			"activatonEpoch", event.ActivationEpoch,
 			"amount", event.Amount,
 		)
-		if bytes.Compare(event.User.Bytes(), helper.GetPubKey().Address().Bytes()) == 0 {
-			msg := staking.NewMsgValidatorJoin(helper.GetFromAddress(syncer.cliCtx), event.ValidatorId.Uint64(), hmtypes.NewPubKey(helper.GetPubKey().Bytes()), vLog.TxHash)
+
+		// compare user to get address
+		if bytes.Compare(event.User.Bytes(), helper.GetAddress()) == 0 {
+			msg := staking.NewMsgValidatorJoin(
+				hmtypes.BytesToHeimdallAddress(event.User.Bytes()),
+				event.ValidatorId.Uint64(),
+				hmtypes.NewPubKey(helper.GetPubKey().Bytes()),
+				vLog.TxHash,
+			)
+
+			// process staked
 			syncer.queueConnector.BroadcastToHeimdall(msg)
 		}
 	}
@@ -358,7 +365,6 @@ func (syncer *Syncer) processUnstakeInitEvent(eventName string, abiObject *abi.A
 	if err := UnpackLog(abiObject, event, eventName, vLog); err != nil {
 		logEventParseError(syncer.Logger, eventName, err)
 	} else {
-		// TOOD validator staked
 		syncer.Logger.Debug(
 			"New event found",
 			"event", eventName,
@@ -367,8 +373,15 @@ func (syncer *Syncer) processUnstakeInitEvent(eventName string, abiObject *abi.A
 			"deactivatonEpoch", event.DeactivationEpoch,
 			"amount", event.Amount,
 		)
-		// send validator exit message
-		msg := staking.NewMsgValidatorExit(helper.GetFromAddress(syncer.cliCtx), event.ValidatorId.Uint64(), vLog.TxHash)
+
+		// msg validator exit
+		msg := staking.NewMsgValidatorExit(
+			hmtypes.BytesToHeimdallAddress(event.User.Bytes()),
+			event.ValidatorId.Uint64(),
+			vLog.TxHash,
+		)
+
+		// broadcast heimdall
 		syncer.queueConnector.BroadcastToHeimdall(msg)
 	}
 }
@@ -386,7 +399,7 @@ func (syncer *Syncer) processSignerChangeEvent(eventName string, abiObject *abi.
 			"oldSigner", event.OldSigner.Hex(),
 		)
 
-		// TODO
+		// signer change
 		if bytes.Compare(event.NewSigner.Bytes(), helper.GetAddress()) == 0 {
 			msg := staking.NewMsgValidatorUpdate(
 				hmtypes.BytesToHeimdallAddress(helper.GetAddress()),
@@ -399,7 +412,82 @@ func (syncer *Syncer) processSignerChangeEvent(eventName string, abiObject *abi.
 	}
 }
 
+func (syncer *Syncer) processReStakedEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
+	event := new(stakemanager.StakemanagerStaked)
+	if err := UnpackLog(abiObject, event, eventName, vLog); err != nil {
+		logEventParseError(syncer.Logger, eventName, err)
+	} else {
+		syncer.Logger.Debug(
+			"New event found",
+			"event", eventName,
+			"user", event.User.Hex(),
+			"validatorId", event.ValidatorId,
+			"activationEpoch", event.ActivationEpoch,
+			"amount", event.Amount,
+		)
+
+		// // msg validator exit
+		// msg := staking.NewMsgValidatorExit(
+		// 	hmtypes.BytesToHeimdallAddress(helper.GetAddress()),
+		// 	event.ValidatorId.Uint64(),
+		// 	vLog.TxHash,
+		// )
+
+		// // broadcast heimdall
+		// syncer.queueConnector.BroadcastToHeimdall(msg)
+	}
+}
+
+func (syncer *Syncer) processJailedEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
+	event := new(stakemanager.StakemanagerJailed)
+	if err := UnpackLog(abiObject, event, eventName, vLog); err != nil {
+		logEventParseError(syncer.Logger, eventName, err)
+	} else {
+		syncer.Logger.Debug(
+			"New event found",
+			"event", eventName,
+			"validatorID", event.ValidatorId,
+			"exitEpoch", event.ExitEpoch,
+		)
+
+		// // msg validator exit
+		// msg := staking.NewMsgValidatorExit(
+		// 	hmtypes.BytesToHeimdallAddress(helper.GetAddress()),
+		// 	event.ValidatorId.Uint64(),
+		// 	vLog.TxHash,
+		// )
+
+		// // broadcast heimdall
+		// syncer.queueConnector.BroadcastToHeimdall(msg)
+	}
+}
+
+//
+// Process deposit event
+//
+
 func (syncer *Syncer) processDepositEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
+	event := new(depositmanager.DepositmanagerDeposit)
+	if err := UnpackLog(abiObject, event, eventName, vLog); err != nil {
+		logEventParseError(syncer.Logger, eventName, err)
+	} else {
+		syncer.Logger.Debug(
+			"New event found",
+			"event", eventName,
+			"user", event.User,
+			"depositCount", event.DepositCount,
+			"token", event.Token.String(),
+		)
+
+		// TODO dispatch to heimdall
+	}
+}
+
+//
+// Process withdraw event
+//
+
+func (syncer *Syncer) processWithdrawEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
 	event := new(depositmanager.DepositmanagerDeposit)
 	if err := UnpackLog(abiObject, event, eventName, vLog); err != nil {
 		logEventParseError(syncer.Logger, eventName, err)

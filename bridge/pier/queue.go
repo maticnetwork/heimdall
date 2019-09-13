@@ -263,6 +263,7 @@ func (qc *QueueConnector) handleHeimdallBroadcastMsgs(amqpMsgs <-chan amqp.Deliv
 		var msg sdk.Msg
 		if err := qc.cliCtx.Codec.UnmarshalJSON(amqpMsg.Body, &msg); err != nil {
 			amqpMsg.Reject(false)
+			qc.logger.Error("Error while broadcasting the heimdall transaction", "error", err)
 			return false
 		}
 
@@ -273,11 +274,12 @@ func (qc *QueueConnector) handleHeimdallBroadcastMsgs(amqpMsgs <-chan amqp.Deliv
 			WithChainID(chainID)
 		if _, err := helper.BuildAndBroadcastMsgs(qc.cliCtx, txBldr, []sdk.Msg{msg}); err != nil {
 			amqpMsg.Reject(false)
+			qc.logger.Error("Error while broadcasting the heimdall transaction", "error", err)
 			return false
 		}
 
 		// send ack
-		amqpMsg.Ack(true)
+		amqpMsg.Ack(false)
 
 		// increment account sequence
 		accSeq = accSeq + 1
@@ -298,7 +300,7 @@ func (qc *QueueConnector) handleBorBroadcastMsgs(amqpMsgs <-chan amqp.Delivery) 
 	handler := func(amqpMsg amqp.Delivery) bool {
 		var msg ethereum.CallMsg
 		if err := json.Unmarshal(amqpMsg.Body, &msg); err != nil {
-			amqpMsg.Ack(true)
+			amqpMsg.Reject(false)
 			qc.logger.Error("Error while parsing the transaction from queue", "error", err)
 			return false
 		}
@@ -306,7 +308,7 @@ func (qc *QueueConnector) handleBorBroadcastMsgs(amqpMsgs <-chan amqp.Delivery) 
 		// get auth
 		auth, err := helper.GenerateAuthObj(maticClient, msg)
 		if err != nil {
-			amqpMsg.Ack(true)
+			amqpMsg.Reject(false)
 			qc.logger.Error("Error while fetching the transaction param details", "error", err)
 			return false
 		}
@@ -317,20 +319,20 @@ func (qc *QueueConnector) handleBorBroadcastMsgs(amqpMsgs <-chan amqp.Delivery) 
 		// signer
 		signedTx, err := auth.Signer(types.HomesteadSigner{}, auth.From, rawTx)
 		if err != nil {
-			amqpMsg.Ack(true)
+			amqpMsg.Reject(false)
 			qc.logger.Error("Error while signing the transaction", "error", err)
 			return false
 		}
 
 		// broadcast transaction
 		if err := maticClient.SendTransaction(context.Background(), signedTx); err != nil {
-			amqpMsg.Ack(true)
+			amqpMsg.Reject(false)
 			qc.logger.Error("Error while broadcasting the transaction", "error", err)
 			return false
 		}
 
 		// send ack
-		amqpMsg.Ack(true)
+		amqpMsg.Ack(false)
 
 		// amqp msg
 		return true
