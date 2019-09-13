@@ -31,8 +31,8 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 func HandleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	hmCommon.StakingLogger.Debug("Handing new validator join", "Msg", msg)
 
-	if confirmed := contractCaller.IsTxConfirmed(msg.TxHash); !confirmed {
-		return hmCommon.ErrWaitFrConfirmation(k.Codespace()).Result()
+	if confirmed := contractCaller.IsTxConfirmed(msg.TxHash.EthHash()); !confirmed {
+		return hmCommon.ErrWaitForConfirmation(k.Codespace()).Result()
 	}
 
 	//fetch validator from mainchain
@@ -99,14 +99,14 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k Keeper, con
 func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	hmCommon.StakingLogger.Debug("Handling signer update", "Validator", msg.ID, "Signer", msg.NewSignerPubKey.Address())
 
-	if confirmed := contractCaller.IsTxConfirmed(msg.TxHash); !confirmed {
-		return hmCommon.ErrWaitFrConfirmation(k.Codespace()).Result()
+	if confirmed := contractCaller.IsTxConfirmed(msg.TxHash.EthHash()); !confirmed {
+		return hmCommon.ErrWaitForConfirmation(k.Codespace()).Result()
 	}
 
 	newPubKey := msg.NewSignerPubKey
 	newSigner := newPubKey.Address()
 
-	id, newSignerTx, _, err := contractCaller.SigUpdateEvent(msg.TxHash)
+	id, newSignerTx, _, err := contractCaller.SigUpdateEvent(msg.TxHash.EthHash())
 	if err != nil {
 		hmCommon.StakingLogger.Error("Error fetching log from txhash", "Error", err)
 		return hmCommon.ErrInvalidMsg(k.Codespace(), "Unable to fetch logs for txHash. Error: %v", err).Result()
@@ -131,7 +131,7 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k Keeper, contr
 	oldValidator := validator.Copy()
 
 	// check if txhash has been used before
-	blockNum, _ := contractCaller.GetBlockNoFromTxHash(msg.TxHash)
+	blockNum, _ := contractCaller.GetBlockNoFromTxHash(msg.TxHash.EthHash())
 	if err := k.SetLastUpdated(ctx, msg.ID, &blockNum); err != nil {
 		hmCommon.StakingLogger.Error("Error occured while updating last updated", "Error", err)
 		return err.Result()
@@ -175,8 +175,8 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k Keeper, contr
 func HandleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	hmCommon.StakingLogger.Info("Handling validator exit", "ValidatorID", msg.ID)
 
-	if confirmed := contractCaller.IsTxConfirmed(msg.TxHash); !confirmed {
-		return hmCommon.ErrWaitFrConfirmation(k.Codespace()).Result()
+	if confirmed := contractCaller.IsTxConfirmed(msg.TxHash.EthHash()); !confirmed {
+		return hmCommon.ErrWaitForConfirmation(k.Codespace()).Result()
 	}
 	validator, ok := k.GetValidatorFromValID(ctx, msg.ID)
 	if !ok {

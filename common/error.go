@@ -82,7 +82,7 @@ func ErrNoConn(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeNoConn, "Unable to connect to chain")
 }
 
-func ErrWaitFrConfirmation(codespace sdk.CodespaceType) sdk.Error {
+func ErrWaitForConfirmation(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeWaitFrConfirmation, fmt.Sprintf("Please wait for %v confirmations before sending transaction", helper.GetConfig().ConfirmationBlocks))
 }
 

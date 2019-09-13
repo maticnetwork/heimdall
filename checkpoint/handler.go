@@ -149,7 +149,7 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k Keeper, con
 	}
 	if latestBlock.Number.Uint64()-createdAt < helper.GetConfig().ConfirmationBlocks {
 		logger.Error("Not enough confirmations", "LatestBlock", latestBlock.Number.Uint64(), "TxBlock", createdAt)
-		return common.ErrWaitFrConfirmation(k.Codespace()).Result()
+		return common.ErrWaitForConfirmation(k.Codespace()).Result()
 	}
 
 	logger.Debug("HeaderBlock fetched", "headerBlock", msg.HeaderBlock, "start", start,

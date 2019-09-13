@@ -7,7 +7,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/gorilla/mux"
 
 	restClient "github.com/maticnetwork/heimdall/client/rest"
@@ -73,7 +72,7 @@ func newValidatorJoinHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.H
 			types.HexToHeimdallAddress(req.BaseReq.From),
 			req.ID,
 			req.SignerPubKey,
-			common.HexToHash(req.TxHash),
+			types.HexToHeimdallHash(req.TxHash),
 		)
 
 		// send response
@@ -98,7 +97,7 @@ func newValidatorExitHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.H
 		msg := staking.NewMsgValidatorExit(
 			types.HexToHeimdallAddress(req.BaseReq.From),
 			req.ID,
-			common.HexToHash(req.TxHash),
+			types.HexToHeimdallHash(req.TxHash),
 		)
 
 		// send response
@@ -124,7 +123,7 @@ func newValidatorUpdateHandler(cdc *codec.Codec, cliCtx context.CLIContext) http
 			types.HexToHeimdallAddress(req.BaseReq.From),
 			req.ID,
 			req.NewSignerPubKey,
-			common.HexToHash(req.TxHash),
+			types.HexToHeimdallHash(req.TxHash),
 		)
 
 		// send response

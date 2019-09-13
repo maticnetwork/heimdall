@@ -8,7 +8,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -79,7 +78,7 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 				proposer,
 				uint64(validatorID),
 				pubkey,
-				common.HexToHash(txhash),
+				types.HexToHeimdallHash(txhash),
 			)
 
 			// broadcast messages
@@ -124,7 +123,7 @@ func SendValidatorExitTx(cdc *codec.Codec) *cobra.Command {
 			msg := staking.NewMsgValidatorExit(
 				proposer,
 				uint64(validator),
-				common.HexToHash(txhash),
+				types.HexToHeimdallHash(txhash),
 			)
 
 			// broadcast messages
@@ -179,7 +178,7 @@ func SendValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 				proposer,
 				uint64(validator),
 				pubkey,
-				common.HexToHash(txhash),
+				types.HexToHeimdallHash(txhash),
 			)
 
 			// broadcast messages

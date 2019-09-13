@@ -247,11 +247,18 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 		}
 	}
 
+	// confirmation
+	toBlock := newHeader.Number
+	confirmationBlocks := big.NewInt(0).SetUint64(helper.GetConfig().ConfirmationBlocks)
+	if toBlock.Uint64() > confirmationBlocks.Uint64() {
+		toBlock = toBlock.Sub(toBlock, confirmationBlocks)
+	}
+
 	// set last block to storage
-	syncer.storageClient.Put([]byte(lastBlockKey), []byte(newHeader.Number.String()), nil)
+	syncer.storageClient.Put([]byte(lastBlockKey), []byte(toBlock.String()), nil)
 
 	// debug log
-	syncer.Logger.Debug("Processing header", "fromBlock", fromBlock, "toBlock", newHeader.Number)
+	syncer.Logger.Debug("Processing header", "fromBlock", fromBlock, "toBlock", toBlock)
 
 	if newHeader.Number.Int64()-fromBlock > 250 {
 		// return if diff > 250
@@ -259,12 +266,12 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 	}
 
 	// log
-	syncer.Logger.Info("Querying event logs", "fromBlock", fromBlock, "toBlock", newHeader.Number)
+	syncer.Logger.Info("Querying event logs", "fromBlock", fromBlock, "toBlock", toBlock)
 
 	// draft a query
 	query := ethereum.FilterQuery{
 		FromBlock: big.NewInt(fromBlock),
-		ToBlock:   newHeader.Number,
+		ToBlock:   toBlock,
 		Addresses: []ethCommon.Address{
 			helper.GetRootChainAddress(),
 			helper.GetStakeManagerAddress(),
@@ -351,7 +358,7 @@ func (syncer *Syncer) processStakedEvent(eventName string, abiObject *abi.ABI, v
 				hmtypes.BytesToHeimdallAddress(event.User.Bytes()),
 				event.ValidatorId.Uint64(),
 				hmtypes.NewPubKey(helper.GetPubKey().Bytes()),
-				vLog.TxHash,
+				hmtypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			)
 
 			// process staked
@@ -378,7 +385,7 @@ func (syncer *Syncer) processUnstakeInitEvent(eventName string, abiObject *abi.A
 		msg := staking.NewMsgValidatorExit(
 			hmtypes.BytesToHeimdallAddress(event.User.Bytes()),
 			event.ValidatorId.Uint64(),
-			vLog.TxHash,
+			hmtypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 		)
 
 		// broadcast heimdall
@@ -405,7 +412,7 @@ func (syncer *Syncer) processSignerChangeEvent(eventName string, abiObject *abi.
 				hmtypes.BytesToHeimdallAddress(helper.GetAddress()),
 				event.ValidatorId.Uint64(),
 				hmtypes.NewPubKey(helper.GetPubKey().Bytes()),
-				vLog.TxHash,
+				hmtypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			)
 			syncer.queueConnector.BroadcastToHeimdall(msg)
 		}

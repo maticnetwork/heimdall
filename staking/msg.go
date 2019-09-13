@@ -6,7 +6,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/ethereum/go-ethereum/common"
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
@@ -25,7 +24,7 @@ type MsgValidatorJoin struct {
 	From         types.HeimdallAddress `json:"from"`
 	ID           types.ValidatorID     `json:"id"`
 	SignerPubKey types.PubKey          `json:"pub_key"`
-	TxHash       common.Hash           `json:"tx_hash"`
+	TxHash       types.HeimdallHash    `json:"tx_hash"`
 }
 
 // NewMsgValidatorJoin creates new validator-join
@@ -33,7 +32,7 @@ func NewMsgValidatorJoin(
 	from types.HeimdallAddress,
 	id uint64,
 	pubkey types.PubKey,
-	txhash common.Hash,
+	txhash types.HeimdallHash,
 ) MsgValidatorJoin {
 
 	return MsgValidatorJoin{
@@ -91,14 +90,14 @@ type MsgSignerUpdate struct {
 	From            types.HeimdallAddress `json:"from"`
 	ID              types.ValidatorID     `json:"ID"`
 	NewSignerPubKey types.PubKey          `json:"pubKey"`
-	TxHash          common.Hash           `json:"tx_hash"`
+	TxHash          types.HeimdallHash    `json:"tx_hash"`
 }
 
 func NewMsgValidatorUpdate(
 	from types.HeimdallAddress,
 	id uint64,
 	pubKey types.PubKey,
-	txhash common.Hash,
+	txhash types.HeimdallHash,
 ) MsgSignerUpdate {
 
 	return MsgSignerUpdate{
@@ -154,10 +153,10 @@ var _ sdk.Msg = &MsgValidatorExit{}
 type MsgValidatorExit struct {
 	From   types.HeimdallAddress `json:"from"`
 	ID     types.ValidatorID     `json:"ID"`
-	TxHash common.Hash           `json:"tx_hash"`
+	TxHash types.HeimdallHash    `json:"tx_hash"`
 }
 
-func NewMsgValidatorExit(from types.HeimdallAddress, id uint64, txhash common.Hash) MsgValidatorExit {
+func NewMsgValidatorExit(from types.HeimdallAddress, id uint64, txhash types.HeimdallHash) MsgValidatorExit {
 	return MsgValidatorExit{
 		From:   from,
 		ID:     types.NewValidatorID(id),
