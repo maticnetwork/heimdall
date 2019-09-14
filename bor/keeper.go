@@ -147,16 +147,18 @@ func (k *Keeper) GetLastSpan(ctx sdk.Context) (lastSpan types.Span, err error) {
 // FreezeSet freezes validator set for next span
 func (k *Keeper) FreezeSet(ctx sdk.Context, id uint64, startBlock uint64, borChainID string) error {
 	duration := k.GetSpanDuration(ctx)
-
 	endBlock := startBlock
 	if duration > 0 {
 		endBlock = endBlock + duration - 1
 	}
 
+	// select next producers
 	newProducers, err := k.SelectNextProducers(ctx)
 	if err != nil {
 		return err
 	}
+
+	// generate new span
 	newSpan := types.NewSpan(
 		id,
 		startBlock,
@@ -170,15 +172,40 @@ func (k *Keeper) FreezeSet(ctx sdk.Context, id uint64, startBlock uint64, borCha
 
 // SelectNextProducers selects producers for next span
 func (k *Keeper) SelectNextProducers(ctx sdk.Context) (vals []types.Validator, err error) {
+	// fetch last block used for seed
 	lastEthBlock := k.GetLastEthBlock(ctx)
+
+	// get current validators
 	currVals := k.sk.GetCurrentValidators(ctx)
-	blk, err := k.contractCaller.GetMainChainBlock(lastEthBlock)
+
+	// TODO parse current vals and ensure no current proposer is deactivating
+	// in between next span
+
+	// increment last processes header block number
+	newEthBlock := lastEthBlock.Add(lastEthBlock, big.NewInt(1))
+
+	// fetch block header
+	blockHeader, err := k.contractCaller.GetMainChainBlock(newEthBlock)
 	if err != nil {
 		return vals, err
 	}
-	SelectNextProducers(cmn.BorLogger, blk.Hash(), currVals)
-	// TODO add producer selection here, currently sending all validators
-	return currVals, nil
+
+	// select next producers using seed
+	newProducersIds, err := SelectNextProducers(cmn.BorLogger, blockHeader.Hash(), currVals)
+	if err != nil {
+		return vals, err
+	}
+
+	// fetch validators from []valIDs
+	for _, ID := range newProducersIds {
+		if val, ok := k.sk.GetValidatorFromValID(ctx, types.NewValidatorID(ID)); ok {
+			vals = append(vals, val)
+		}
+	}
+
+	// increment last eth block
+	k.IncrementLastEthBlock(ctx)
+	return vals, nil
 }
 
 // UpdateLastSpan updates the last span start block
@@ -188,7 +215,7 @@ func (k *Keeper) UpdateLastSpan(ctx sdk.Context, startBlock uint64) {
 }
 
 // IncrementLastEthBlock increment last eth block
-func (k *Keeper) IncrementLastEthBlock(ctx sdk.Context, blockNumber *big.Int) {
+func (k *Keeper) IncrementLastEthBlock(ctx sdk.Context) {
 	store := ctx.KVStore(k.storeKey)
 	var lastEthBlock *big.Int
 	if store.Has(LastProcessedEthBlock) {
@@ -200,7 +227,7 @@ func (k *Keeper) IncrementLastEthBlock(ctx sdk.Context, blockNumber *big.Int) {
 }
 
 // SetLastEthBlock sets last eth block number
-func (k *Keeper) SetLastEthBlock(ctx sdk.Context, blockNumber big.Int) {
+func (k *Keeper) SetLastEthBlock(ctx sdk.Context, blockNumber *big.Int) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(LastProcessedEthBlock, blockNumber.Bytes())
 }
