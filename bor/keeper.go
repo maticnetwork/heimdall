@@ -153,12 +153,16 @@ func (k *Keeper) FreezeSet(ctx sdk.Context, id uint64, startBlock uint64, borCha
 		endBlock = endBlock + duration - 1
 	}
 
+	newProducers, err := k.SelectNextProducers(ctx)
+	if err != nil {
+		return err
+	}
 	newSpan := types.NewSpan(
 		id,
 		startBlock,
 		endBlock,
 		k.sk.GetValidatorSet(ctx),
-		k.SelectNextProducers(ctx),
+		newProducers,
 		borChainID,
 	)
 	return k.AddNewSpan(ctx, newSpan)

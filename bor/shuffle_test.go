@@ -1,8 +1,17 @@
 package bor
 
 import (
+	"math/rand"
+	"os"
 	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/maticnetwork/heimdall/types"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
+	logger "github.com/tendermint/tendermint/libs/log"
 )
 
 func TestShuffleList_OK(t *testing.T) {
@@ -35,4 +44,45 @@ func TestShuffleList_OK(t *testing.T) {
 	// if !reflect.DeepEqual(list2, []uint64{0, 5, 2, 1, 6, 8, 7, 3, 4, 9}) {
 	// 	t.Errorf("list 2 was incorrectly shuffled got: %v", list2)
 	// }
+}
+
+func TestValShuffle(t *testing.T) {
+	seedHash1 := common.HexToHash("0xc46afc66ad9f4b237414c23a0cf0c469aeb60f52176565990644a9ee36a17667")
+	initialVals := GenRandomVal(4, 0, 100, uint64(10), false, 1)
+	t.Log("InitialVals", "Vals", initialVals)
+	log := logger.NewTMLogger(logger.NewSyncWriter(os.Stdout))
+	shuffledVals, err := SelectNextProducers(log, seedHash1, initialVals)
+	require.Empty(t, err, "Error has to be nil ")
+	t.Log("ShuffledVals", "Vals", shuffledVals)
+}
+
+// Generate random validators
+func GenRandomVal(count int, startBlock uint64, power uint64, timeAlive uint64, randomise bool, startID uint64) (validators []types.Validator) {
+	for i := 0; i < count; i++ {
+		privKey1 := secp256k1.GenPrivKey()
+		pubkey := types.NewPubKey(privKey1.PubKey().Bytes())
+		if randomise {
+			startBlock := uint64(rand.Intn(10))
+			// todo find a way to genrate non zero random number
+			if startBlock == 0 {
+				startBlock = 1
+			}
+			power := uint64(rand.Intn(100))
+			if power == 0 {
+				power = 1
+			}
+		}
+
+		newVal := types.Validator{
+			ID:         types.NewValidatorID(startID + uint64(i)),
+			StartEpoch: startBlock,
+			EndEpoch:   startBlock + timeAlive,
+			Power:      power,
+			Signer:     types.HexToHeimdallAddress(pubkey.Address().String()),
+			PubKey:     pubkey,
+			Accum:      0,
+		}
+		validators = append(validators, newVal)
+	}
+	return
 }
