@@ -7,10 +7,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
+	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	cmn "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/types"
+	"github.com/tendermint/tendermint/libs/log"
 )
 
 var (
@@ -60,6 +62,11 @@ func (k Keeper) Codespace() sdk.CodespaceType {
 	return k.codespace
 }
 
+// Logger returns a module-specific logger
+func (k Keeper) Logger(ctx sdk.Context) log.Logger {
+	return ctx.Logger().With("module", checkpointTypes.ModuleName)
+}
+
 // AddCheckpoint adds checkpoint into final blocks
 func (k *Keeper) AddCheckpoint(ctx sdk.Context, headerBlockNumber uint64, headerBlock types.CheckpointBlockHeader) error {
 	key := GetHeaderKey(headerBlockNumber)
@@ -67,7 +74,7 @@ func (k *Keeper) AddCheckpoint(ctx sdk.Context, headerBlockNumber uint64, header
 	if err != nil {
 		return err
 	}
-	cmn.CheckpointLogger.Info("Adding good checkpoint to state", "checkpoint", headerBlock, "headerBlockNumber", headerBlockNumber)
+	k.Logger(ctx).Info("Adding good checkpoint to state", "checkpoint", headerBlock, "headerBlockNumber", headerBlockNumber)
 	return nil
 }
 
@@ -87,7 +94,7 @@ func (k *Keeper) addCheckpoint(ctx sdk.Context, key []byte, headerBlock types.Ch
 	// create Checkpoint block and marshall
 	out, err := k.cdc.MarshalBinaryBare(headerBlock)
 	if err != nil {
-		cmn.CheckpointLogger.Error("Error marshalling checkpoint", "error", err)
+		k.Logger(ctx).Error("Error marshalling checkpoint", "error", err)
 		return err
 	}
 
@@ -133,7 +140,7 @@ func (k *Keeper) GetLastCheckpoint(ctx sdk.Context) (types.CheckpointBlockHeader
 		if store.Has(headerKey) {
 			err := k.cdc.UnmarshalBinaryBare(store.Get(headerKey), &_checkpoint)
 			if err != nil {
-				cmn.CheckpointLogger.Error("Unable to fetch last checkpoint from store", "key", lastCheckpointKey, "acksCount", acksCount)
+				k.Logger(ctx).Error("Unable to fetch last checkpoint from store", "key", lastCheckpointKey, "acksCount", acksCount)
 				return _checkpoint, err
 			} else {
 				return _checkpoint, nil
@@ -257,7 +264,7 @@ func (k Keeper) GetACKCount(ctx sdk.Context) uint64 {
 		// get current ACK count
 		ackCount, err := strconv.Atoi(string(store.Get(ACKCountKey)))
 		if err != nil {
-			cmn.CheckpointLogger.Error("Unable to convert key to int")
+			k.Logger(ctx).Error("Unable to convert key to int")
 		} else {
 			return uint64(ackCount)
 		}

@@ -15,21 +15,18 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/maticnetwork/heimdall/helper"
-	tmlog "github.com/tendermint/tendermint/libs/log"
 )
 
-func ValidateCheckpoint(start uint64, end uint64, rootHash ethCommon.Hash, l tmlog.Logger) bool {
+func ValidateCheckpoint(start uint64, end uint64, rootHash ethCommon.Hash) bool {
 	root, err := GetHeaders(start, end)
 	if err != nil {
 		return false
 	}
 
 	if bytes.Equal(root, rootHash[:]) {
-		l.Info("RootHash matched!")
 		return true
 	}
 
-	l.Error("RootHash does not match", "rootHashTx", rootHash, "rootHash", hexutil.Encode(root))
 	return false
 }
 

@@ -8,16 +8,14 @@ import (
 	"github.com/maticnetwork/heimdall/bor/tags"
 	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/types"
-	tmlog "github.com/tendermint/tendermint/libs/log"
 )
 
 // NewHandler returns a handler for "bor" type messages.
 func NewHandler(k Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
-		common.InitBorLogger(&ctx)
 		switch msg := msg.(type) {
 		case MsgProposeSpan:
-			return HandleMsgProposeSpan(ctx, msg, k, common.BorLogger)
+			return HandleMsgProposeSpan(ctx, msg, k)
 		default:
 			return sdk.ErrTxDecode("Invalid message in bor module").Result()
 		}
@@ -25,19 +23,19 @@ func NewHandler(k Keeper) sdk.Handler {
 }
 
 // HandleMsgProposeSpan handles proposeSpan msg
-func HandleMsgProposeSpan(ctx sdk.Context, msg MsgProposeSpan, k Keeper, logger tmlog.Logger) sdk.Result {
-	logger.Debug("Proposing span", "TxData", msg)
+func HandleMsgProposeSpan(ctx sdk.Context, msg MsgProposeSpan, k Keeper) sdk.Result {
+	k.Logger(ctx).Debug("Proposing span", "TxData", msg)
 
 	// check if last span is up or if greater diff than threshold is found between validator set
 	lastSpan, err := k.GetLastSpan(ctx)
 	if err != nil {
-		logger.Error("Unable to fetch last span", "Error", err)
+		k.Logger(ctx).Error("Unable to fetch last span", "Error", err)
 		return common.ErrSpanNotInCountinuity(k.Codespace()).Result()
 	}
 
 	// check all conditions
 	if lastSpan.ID+1 != msg.ID || msg.StartBlock < lastSpan.StartBlock || msg.EndBlock < msg.StartBlock {
-		logger.Error("Blocks not in countinuity",
+		k.Logger(ctx).Error("Blocks not in countinuity",
 			"lastSpanId", lastSpan.ID,
 			"lastSpanStartBlock", lastSpan.StartBlock,
 			"spanId", msg.ID,
@@ -49,7 +47,7 @@ func HandleMsgProposeSpan(ctx sdk.Context, msg MsgProposeSpan, k Keeper, logger 
 	// freeze for new span
 	err = k.FreezeSet(ctx, msg.ID, msg.StartBlock, msg.ChainID)
 	if err != nil {
-		logger.Error("Unable to freeze validator set for span", "Error", err)
+		k.Logger(ctx).Error("Unable to freeze validator set for span", "Error", err)
 		return common.ErrSpanNotInCountinuity(k.Codespace()).Result()
 	}
 
@@ -59,7 +57,7 @@ func HandleMsgProposeSpan(ctx sdk.Context, msg MsgProposeSpan, k Keeper, logger 
 	// get last span
 	lastSpan, err = k.GetLastSpan(ctx)
 	if err != nil {
-		logger.Error("Unable to fetch last span", "Error", err)
+		k.Logger(ctx).Error("Unable to fetch last span", "Error", err)
 		return common.ErrSpanNotFound(k.Codespace()).Result()
 	}
 
@@ -86,7 +84,6 @@ func sortAndCompare(allVals []types.MinimalVal, selectedVals []types.MinimalVal,
 	sortedMsgValidators := types.SortMinimalValByAddress(msg.Validators)
 	for i := range sortedMsgValidators {
 		if !bytes.Equal(sortedMsgValidators[i].Signer.Bytes(), sortedAddVals[i].Signer.Bytes()) || sortedMsgValidators[i].Power != sortedAddVals[i].Power {
-			common.BorLogger.Error("Validator Set does not match", "inputValSet", sortedMsgValidators, "storedValSet", sortedAddVals)
 			return common.ErrValSetMisMatch(codespace).Result(), false
 		}
 	}
@@ -95,7 +92,6 @@ func sortAndCompare(allVals []types.MinimalVal, selectedVals []types.MinimalVal,
 	sortedMsgProducers := types.SortMinimalValByAddress(msg.SelectedProducers)
 	for i := range selectedVals {
 		if !bytes.Equal(sortedSelectedVals[i].Signer.Bytes(), sortedMsgProducers[i].Signer.Bytes()) {
-			common.BorLogger.Error("Producer does not match", "inputProducers", sortedMsgProducers, "storedProducers", sortedSelectedVals)
 			return common.ErrProducerMisMatch(codespace).Result(), false
 		}
 	}

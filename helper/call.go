@@ -3,7 +3,6 @@ package helper
 import (
 	"context"
 	"errors"
-	"math"
 	"math/big"
 	"strings"
 
@@ -29,7 +28,7 @@ type IContractCaller interface {
 	GetMainChainBlock(blockNum *big.Int) (header *ethtypes.Header, err error)
 	GetMaticChainBlock(blockNum *big.Int) (header *ethtypes.Header, err error)
 	IsTxConfirmed(tx common.Hash) bool
-	GetBlockNoFromTxHash(tx common.Hash) (blocknumber big.Int, err error)
+	GetBlockNoFromTxHash(tx common.Hash) (blocknumber *big.Int, err error)
 	SigUpdateEvent(tx common.Hash) (id uint64, newSigner common.Address, oldSigner common.Address, err error)
 
 	// bor related contracts
@@ -146,12 +145,17 @@ func (c *ContractCaller) GetValidatorInfo(valID types.ValidatorID) (validator ty
 		return
 	}
 
-	decimals := math.Pow10(-18)
-	newAmount := decimals * float64(amount.Int64())
+	decimals18 := big.NewInt(10).Exp(big.NewInt(10), big.NewInt(18), nil)
+	if amount.Uint64() < decimals18.Uint64() {
+		err = errors.New("amount must be more than 1 token")
+		return
+	}
+	newAmount := amount.Div(amount, decimals18)
 
+	// newAmount
 	validator = types.Validator{
 		ID:         valID,
-		Power:      uint64(newAmount),
+		Power:      newAmount.Uint64(),
 		StartEpoch: startEpoch.Uint64(),
 		EndEpoch:   endEpoch.Uint64(),
 		Signer:     types.HeimdallAddress(signer),
@@ -180,26 +184,30 @@ func (c *ContractCaller) GetMaticChainBlock(blockNum *big.Int) (header *ethtypes
 	return latestBlock, nil
 }
 
-// Get block number of transaction
-func (c *ContractCaller) GetBlockNoFromTxHash(tx common.Hash) (blocknumber big.Int, err error) {
-	var json *rpcTransaction
-	err = c.MainChainRPC.CallContext(context.Background(), &json, "eth_getTransactionByHash", tx)
-	if err != nil {
-		return
+// GetBlockNoFromTxHash gets block number of transaction
+func (c *ContractCaller) GetBlockNoFromTxHash(tx common.Hash) (*big.Int, error) {
+	var rpcTx rpcTransaction
+	if err := c.MainChainRPC.CallContext(context.Background(), &rpcTx, "eth_getTransactionByHash", tx); err != nil {
+		return nil, err
 	}
-	var blkNum big.Int
-	blockNumberPtr, ok := blkNum.SetString(*json.BlockNumber, 0)
+
+	if rpcTx.BlockNumber == nil {
+		return nil, errors.New("No tx found")
+	}
+
+	blkNum := big.NewInt(0)
+	blkNum, ok := blkNum.SetString(*rpcTx.BlockNumber, 0)
 	if !ok {
-		return blocknumber, errors.New("unable to set string")
+		return nil, errors.New("unable to set string")
 	}
-	return *blockNumberPtr, nil
+	return blkNum, nil
 }
 
-// Check finality
+// IsTxConfirmed is tx confirmed
 func (c *ContractCaller) IsTxConfirmed(tx common.Hash) bool {
 	txBlk, err := c.GetBlockNoFromTxHash(tx)
 	if err != nil {
-		Logger.Error("error getting block number from txhash", "Error", err)
+		Logger.Error("Error getting block number from txhash", "Error", err)
 		return false
 	}
 	Logger.Debug("Tx included in block", "block", txBlk.Uint64(), "tx", tx)

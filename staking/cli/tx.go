@@ -90,6 +90,7 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().Int(FlagValidatorID, 0, "--id=<validator ID here>")
 	cmd.Flags().String(FlagSignerPubkey, "", "--signer-pubkey=<signer pubkey here>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
+	cmd.MarkFlagRequired(FlagValidatorID)
 	cmd.MarkFlagRequired(FlagSignerPubkey)
 	cmd.MarkFlagRequired(FlagTxHash)
 	return cmd

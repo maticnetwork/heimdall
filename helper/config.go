@@ -2,6 +2,7 @@ package helper
 
 import (
 	"crypto/ecdsa"
+	"fmt"
 	"log"
 	"math/big"
 	"os"
@@ -161,16 +162,16 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 	}
 
 	configDir := filepath.Join(homeDir, "config")
-	Logger.Info("Initializing tendermint configurations", "configDir", configDir)
+	fmt.Println("Initializing tendermint configurations", "configDir", configDir)
 
 	heimdallViper := viper.New()
 	if heimdallConfigFilePath == "" {
 		heimdallViper.SetConfigName("heimdall-config") // name of config file (without extension)
 		heimdallViper.AddConfigPath(configDir)         // call multiple times to add many search paths
-		Logger.Info("Loading heimdall configurations", "file", filepath.Join(configDir, "heimdall-config.json"))
+		fmt.Println("Loading heimdall configurations", "file", filepath.Join(configDir, "heimdall-config.json"))
 	} else {
 		heimdallViper.SetConfigFile(heimdallConfigFilePath) // set config file explicitly
-		Logger.Info("Loading heimdall configurations", "file", heimdallConfigFilePath)
+		fmt.Println("Loading heimdall configurations", "file", heimdallConfigFilePath)
 	}
 
 	err := heimdallViper.ReadInConfig()
@@ -183,13 +184,11 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 	}
 
 	if mainRPCClient, err = rpc.Dial(conf.MainRPCUrl); err != nil {
-		Logger.Error("Error while creating main chain RPC client", "error", err)
 		log.Fatal(err)
 	}
 
 	mainChainClient = ethclient.NewClient(mainRPCClient)
 	if maticRPCClient, err = rpc.Dial(conf.MaticRPCUrl); err != nil {
-		Logger.Error("Error while creating matic chain RPC client", "error", err)
 		log.Fatal(err)
 	}
 
@@ -198,7 +197,6 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 	// Loading genesis doc
 	genDoc, err := tmTypes.GenesisDocFromFile(filepath.Join(configDir, "genesis.json"))
 	if err != nil {
-		Logger.Error("Cannot load genesis file")
 		log.Fatal(err)
 	}
 	GenesisDoc = *genDoc
@@ -243,7 +241,7 @@ func GetRootChainAddress() common.Address {
 func GetRootChainInstance() (*rootchain.Rootchain, error) {
 	rootChainInstance, err := rootchain.NewRootchain(GetRootChainAddress(), mainChainClient)
 	if err != nil {
-		Logger.Error("Unable to create root chain instance", "error", err)
+		fmt.Println("Unable to create root chain instance", "error", err)
 	}
 
 	return rootChainInstance, err
@@ -265,12 +263,7 @@ func GetStakeManagerAddress() common.Address {
 
 // GetStakeManagerInstance returns StakeManager contract instance for selected base chain
 func GetStakeManagerInstance() (*stakemanager.Stakemanager, error) {
-	stakeManagerInstance, err := stakemanager.NewStakemanager(GetStakeManagerAddress(), mainChainClient)
-	if err != nil {
-		Logger.Error("Unable to create stakemanager instance", "error", err)
-	}
-
-	return stakeManagerInstance, err
+	return stakemanager.NewStakemanager(GetStakeManagerAddress(), mainChainClient)
 }
 
 // GetStakeManagerABI returns ABI for StakeManager contract
@@ -289,12 +282,7 @@ func GetDepositManagerAddress() common.Address {
 
 // GetStakeManagerInstance returns StakeManager contract instance for selected base chain
 func GetDepositManagerInstance() (*depositmanager.Depositmanager, error) {
-	depositManagerInstance, err := depositmanager.NewDepositmanager(GetDepositManagerAddress(), mainChainClient)
-	if err != nil {
-		Logger.Error("Unable to create stakemanager instance", "error", err)
-	}
-
-	return depositManagerInstance, err
+	return depositmanager.NewDepositmanager(GetDepositManagerAddress(), mainChainClient)
 }
 
 // GetDepositManagerABI returns ABI for DepositManager contract
@@ -313,12 +301,7 @@ func GetValidatorSetAddress() common.Address {
 
 // GetValidatorSetInstance returns ValidatorSet contract instance for selected base chain
 func GetValidatorSetInstance() (*validatorset.Validatorset, error) {
-	validatorSetInstance, err := validatorset.NewValidatorset(GetValidatorSetAddress(), maticClient)
-	if err != nil {
-		Logger.Error("Unable to create validator set instance", "error", err)
-	}
-
-	return validatorSetInstance, err
+	return validatorset.NewValidatorset(GetValidatorSetAddress(), maticClient)
 }
 
 // GetValidatorSetABI returns ABI for Validator Set contract

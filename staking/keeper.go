@@ -11,7 +11,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	cmn "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
+	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
 	"github.com/maticnetwork/heimdall/types"
+	"github.com/tendermint/tendermint/libs/log"
 )
 
 var (
@@ -68,6 +70,11 @@ func (k Keeper) Codespace() sdk.CodespaceType {
 	return k.codespace
 }
 
+// Logger returns a module-specific logger
+func (k Keeper) Logger(ctx sdk.Context) log.Logger {
+	return ctx.Logger().With("module", stakingTypes.ModuleName)
+}
+
 // GetValidatorKey drafts the validator key for addresses
 func GetValidatorKey(address []byte) []byte {
 	return append(ValidatorsKey, address...)
@@ -94,7 +101,7 @@ func (k *Keeper) AddValidator(ctx sdk.Context, validator types.Validator) error 
 
 	// store validator with address prefixed with validator key as index
 	store.Set(GetValidatorKey(validator.Signer.Bytes()), bz)
-	cmn.StakingLogger.Debug("Validator stored", "key", hex.EncodeToString(GetValidatorKey(validator.Signer.Bytes())), "validator", validator.String())
+	k.Logger(ctx).Debug("Validator stored", "key", hex.EncodeToString(GetValidatorKey(validator.Signer.Bytes())), "validator", validator.String())
 
 	// add validator to validator ID => SignerAddress map
 	k.SetValidatorIDToSignerAddr(ctx, validator.ID, validator.Signer)
@@ -189,7 +196,7 @@ func (k *Keeper) UpdateSigner(ctx sdk.Context, newSigner types.HeimdallAddress, 
 	// get old validator from state and make power 0
 	validator, err := k.GetValidatorInfo(ctx, prevSigner.Bytes())
 	if err != nil {
-		cmn.StakingLogger.Error("Unable to fetch valiator from store")
+		k.Logger(ctx).Error("Unable to fetch valiator from store")
 		return err
 	}
 
@@ -317,7 +324,7 @@ func (k *Keeper) SetLastUpdated(ctx sdk.Context, valID types.ValidatorID, blckNu
 	validator.LastUpdated = blckNum
 	err := k.AddValidator(ctx, validator)
 	if err != nil {
-		cmn.StakingLogger.Debug("Unable to update last updated", "Error", err, "Validator", validator.String())
+		k.Logger(ctx).Debug("Unable to update last updated", "Error", err, "Validator", validator.String())
 		return cmn.ErrInvalidMsg(k.Codespace(), "unable to add validator", "ID", valID, "Error", err)
 	}
 	return nil

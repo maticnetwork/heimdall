@@ -439,7 +439,6 @@ func (app *HeimdallApp) initFromGenesisState(ctx sdk.Context, genesisState Genes
 
 func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	logger.Info("Loading validators from genesis and setting defaults")
-	common.InitStakingLogger(&ctx)
 
 	// get genesis state
 	var genesisState GenesisState
