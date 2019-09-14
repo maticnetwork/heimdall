@@ -125,7 +125,7 @@ func GetCheckpointCount(cdc *codec.Codec) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			res, err := cliCtx.QueryStore(checkpoint.ACKCountKey, "staking")
+			res, err := cliCtx.QueryStore(checkpoint.ACKCountKey, "checkpoint")
 			if err != nil {
 				return err
 			}

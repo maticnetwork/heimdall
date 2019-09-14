@@ -248,7 +248,7 @@ func (qc *QueueConnector) handleHeimdallBroadcastMsgs(amqpMsgs <-chan amqp.Deliv
 	address := hmTypes.BytesToHeimdallAddress(helper.GetAddress())
 	// fetch from APIs
 	var account authTypes.Account
-	response, _ := FetchFromAPI(qc.cliCtx, fmt.Sprintf(GetHeimdallServerEndpoint(AccountDetailsURL), address))
+	response, _ := FetchFromAPI(qc.cliCtx, GetHeimdallServerEndpoint(fmt.Sprintf(AccountDetailsURL, address)))
 	// get proposer from response
 	if err := qc.cliCtx.Codec.UnmarshalJSON(response.Result, &account); err != nil {
 		panic(err)

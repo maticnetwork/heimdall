@@ -145,7 +145,7 @@ func (ackService *AckService) checkForCheckpoint() {
 	headerNumber.SetUint64(lastHeaderNumber)
 
 	// header block
-	headerObject, err := ackService.rootChainInstance.HeaderBlock(nil, headerNumber)
+	headerObject, err := ackService.rootChainInstance.HeaderBlocks(nil, headerNumber)
 	if err != nil {
 		ackService.Logger.Error("Error while fetching header block object", "error", err)
 		return
@@ -241,7 +241,7 @@ func (ackService *AckService) getLastNoAckTime() uint64 {
 func (ackService *AckService) isValidProposer(count uint64, address []byte) bool {
 	ackService.Logger.Debug("Skipping proposers", "count", strconv.FormatUint(count, 10))
 	resp, err := http.Get(
-		fmt.Sprintf(GetHeimdallServerEndpoint(ProposersURL), strconv.FormatUint(count, 10)),
+		GetHeimdallServerEndpoint(fmt.Sprintf(ProposersURL, strconv.FormatUint(count, 10))),
 	)
 	if err != nil {
 		ackService.Logger.Error("Unable to send request for next proposers", "Error", err)

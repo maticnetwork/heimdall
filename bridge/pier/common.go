@@ -17,18 +17,18 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
-
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/maticnetwork/heimdall/helper"
-	hmtypes "github.com/maticnetwork/heimdall/types"
-	rest "github.com/maticnetwork/heimdall/types/rest"
+	"github.com/pkg/errors"
 	"github.com/tendermint/tendermint/libs/log"
 	httpClient "github.com/tendermint/tendermint/rpc/client"
 	tmTypes "github.com/tendermint/tendermint/types"
+
+	"github.com/maticnetwork/heimdall/helper"
+	hmtypes "github.com/maticnetwork/heimdall/types"
+	rest "github.com/maticnetwork/heimdall/types/rest"
 )
 
 const (
@@ -75,19 +75,24 @@ func init() {
 func isProposer(cliCtx cliContext.CLIContext) bool {
 	var proposers []hmtypes.Validator
 	count := uint64(1)
-	result, err := FetchFromAPI(cliCtx, fmt.Sprintf(GetHeimdallServerEndpoint(ProposersURL), strconv.FormatUint(count, 10)))
+	result, err := FetchFromAPI(cliCtx,
+		GetHeimdallServerEndpoint(fmt.Sprintf(ProposersURL, strconv.FormatUint(count, 10))),
+	)
 	if err != nil {
 		Logger.Error("Error fetching proposers", "error", err)
 		return false
 	}
+
 	err = json.Unmarshal(result.Result, &proposers)
 	if err != nil {
 		Logger.Error("error unmarshalling proposer slice", "error", err)
 		return false
 	}
+
 	if bytes.Equal(proposers[0].Signer.Bytes(), helper.GetAddress()) {
 		return true
 	}
+
 	return false
 }
 

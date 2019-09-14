@@ -19,9 +19,9 @@ import (
 )
 
 type IContractCaller interface {
-	GetHeaderInfo(headerID uint64) (root common.Hash, start, end, createdAt uint64, err error)
+	GetHeaderInfo(headerID uint64) (root common.Hash, start, end, createdAt uint64, proposer types.HeimdallAddress, err error)
 	GetValidatorInfo(valID types.ValidatorID) (validator types.Validator, err error)
-	CurrentChildBlock() (uint64, error)
+	GetLastChildBlock() (uint64, error)
 	CurrentHeaderBlock() (uint64, error)
 	GetBalance(address common.Address) (*big.Int, error)
 	SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte)
@@ -93,27 +93,39 @@ func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 }
 
 // GetHeaderInfo get header info from header id
-func (c *ContractCaller) GetHeaderInfo(headerID uint64) (root common.Hash, start, end, createdAt uint64, err error) {
+func (c *ContractCaller) GetHeaderInfo(headerID uint64) (
+	root common.Hash,
+	start uint64,
+	end uint64,
+	createdAt uint64,
+	proposer types.HeimdallAddress,
+	err error,
+) {
 	// get header from rootchain
 	headerIDInt := big.NewInt(0)
 	headerIDInt = headerIDInt.SetUint64(headerID)
-	headerBlock, err := c.RootChainInstance.HeaderBlock(nil, headerIDInt)
+	headerBlock, err := c.RootChainInstance.HeaderBlocks(nil, headerIDInt)
 	if err != nil {
 		Logger.Error("Unable to fetch header block from rootchain", "headerBlockIndex", headerID)
-		return root, start, end, createdAt, errors.New("Unable to fetch header block")
+		return root, start, end, createdAt, proposer, errors.New("Unable to fetch header block")
 	}
 
-	return headerBlock.Root, headerBlock.Start.Uint64(), headerBlock.End.Uint64(), headerBlock.CreatedAt.Uint64(), nil
+	return headerBlock.Root,
+		headerBlock.Start.Uint64(),
+		headerBlock.End.Uint64(),
+		headerBlock.CreatedAt.Uint64(),
+		types.BytesToHeimdallAddress(headerBlock.Proposer.Bytes()),
+		nil
 }
 
-// CurrentChildBlock fetch current child block
-func (c *ContractCaller) CurrentChildBlock() (uint64, error) {
-	currentChildBlock, err := c.RootChainInstance.CurrentChildBlock(nil)
+// GetLastChildBlock fetch current child block
+func (c *ContractCaller) GetLastChildBlock() (uint64, error) {
+	GetLastChildBlock, err := c.RootChainInstance.GetLastChildBlock(nil)
 	if err != nil {
 		Logger.Error("Could not fetch current child block from rootchain contract", "Error", err)
 		return 0, err
 	}
-	return currentChildBlock.Uint64(), nil
+	return GetLastChildBlock.Uint64(), nil
 }
 
 // CurrentHeaderBlock fetches current header block

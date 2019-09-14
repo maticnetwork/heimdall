@@ -330,11 +330,11 @@ func (syncer *Syncer) processCheckpointEvent(eventName string, abiObject *abi.AB
 			"end", event.End,
 			"root", "0x"+hex.EncodeToString(event.Root[:]),
 			"proposer", event.Proposer.Hex(),
-			"headerNumber", event.Number,
+			"headerNumber", event.HeaderBlockId,
 		)
 
 		// create msg checkpoint ack message
-		msg := checkpoint.NewMsgCheckpointAck(helper.GetFromAddress(syncer.cliCtx), event.Number.Uint64())
+		msg := checkpoint.NewMsgCheckpointAck(helper.GetFromAddress(syncer.cliCtx), event.HeaderBlockId.Uint64())
 		syncer.queueConnector.BroadcastToHeimdall(msg)
 	}
 }

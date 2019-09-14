@@ -31,7 +31,8 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 
 // handleMsgCheckpoint Validates checkpoint transaction
 func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
-	k.Logger(ctx).Debug("Validating Checkpoint Data", "TxData", msg)
+	k.Logger(ctx).Debug("Validating checkpoint data", "TxData", msg)
+
 	if msg.TimeStamp == 0 || msg.TimeStamp > uint64(time.Now().Unix()) {
 		k.Logger(ctx).Error("Checkpoint timestamp must be in near past", "CurrentTime", time.Now().Unix(), "CheckpointTime", msg.TimeStamp, "Condition", msg.TimeStamp >= uint64(time.Now().Unix()))
 		return common.ErrBadTimeStamp(k.Codespace()).Result()
@@ -61,6 +62,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper, contractC
 			"RootHash", msg.RootHash)
 		return common.ErrBadBlockDetails(k.Codespace()).Result()
 	}
+
 	k.Logger(ctx).Debug("Valid Roothash in checkpoint", "StartBlock", msg.StartBlock, "EndBlock", msg.EndBlock)
 
 	// fetch last checkpoint from store
@@ -128,9 +130,9 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k Keeper, con
 	k.Logger(ctx).Debug("Validating Checkpoint ACK", "Tx", msg)
 
 	// make call to headerBlock with header number
-	root, start, end, createdAt, err := contractCaller.GetHeaderInfo(msg.HeaderBlock)
+	root, start, end, createdAt, proposer, err := contractCaller.GetHeaderInfo(msg.HeaderBlock)
 	if err != nil {
-		k.Logger(ctx).Error("Unable to fetch header from rootchain contract", "Error", err, "HeaderBlockIndex", msg.HeaderBlock)
+		k.Logger(ctx).Error("Unable to fetch header from rootchain contract", "Error", err, "headerBlockIndex", msg.HeaderBlock)
 		return common.ErrBadAck(k.Codespace()).Result()
 	}
 
@@ -140,13 +142,21 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k Keeper, con
 		k.Logger(ctx).Error("Unable to connect to mainchain", "Error", err)
 		return common.ErrNoConn(k.Codespace()).Result()
 	}
+
 	if latestBlock.Number.Uint64()-createdAt < helper.GetConfig().ConfirmationBlocks {
-		k.Logger(ctx).Error("Not enough confirmations", "LatestBlock", latestBlock.Number.Uint64(), "TxBlock", createdAt)
+		k.Logger(ctx).Error("Not enough confirmations", "latestBlock", latestBlock.Number.Uint64(), "txBlock", createdAt)
 		return common.ErrWaitForConfirmation(k.Codespace()).Result()
 	}
 
-	k.Logger(ctx).Debug("HeaderBlock fetched", "headerBlock", msg.HeaderBlock, "start", start,
-		"end", end, "Roothash", root, "CreatedAt", createdAt, "Latest", latestBlock.Number.Uint64())
+	k.Logger(ctx).Debug("HeaderBlock fetched",
+		"headerBlock", msg.HeaderBlock,
+		"start", start,
+		"end", end,
+		"roothash", root,
+		"proposer", proposer,
+		"createdAt", createdAt,
+		"latest", latestBlock.Number.Uint64(),
+	)
 
 	// get last checkpoint from buffer
 	headerBlock, err := k.GetCheckpointFromBuffer(ctx)
@@ -163,7 +173,8 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k Keeper, con
 			"endExpected", headerBlock.EndBlock,
 			"endReceived", end,
 			"rootExpected", headerBlock.RootHash.String(),
-			"rootRecieved", root.String())
+			"rootRecieved", root.String(),
+		)
 
 		return common.ErrBadAck(k.Codespace()).Result()
 	}

@@ -238,13 +238,14 @@ func (k Keeper) GetACKCount(ctx sdk.Context) uint64 {
 	// check if ack count is there
 	if store.Has(ACKCountKey) {
 		// get current ACK count
-		ackCount, err := strconv.Atoi(string(store.Get(ACKCountKey)))
+		ackCount, err := strconv.ParseUint(string(store.Get(ACKCountKey)), 10, 64)
 		if err != nil {
 			k.Logger(ctx).Error("Unable to convert key to int")
 		} else {
-			return uint64(ackCount)
+			return ackCount
 		}
 	}
+
 	return 0
 }
 
