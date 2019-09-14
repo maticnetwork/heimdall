@@ -242,8 +242,8 @@ func (k *Keeper) GetValidatorSet(ctx sdk.Context) (validatorSet types.ValidatorS
 	return validatorSet
 }
 
-// IncreamentAccum increments accum for validator set by n times and replace validator set in store
-func (k *Keeper) IncreamentAccum(ctx sdk.Context, times int) {
+// IncrementAccum increments accum for validator set by n times and replace validator set in store
+func (k *Keeper) IncrementAccum(ctx sdk.Context, times int) {
 	// get validator set
 	validatorSet := k.GetValidatorSet(ctx)
 

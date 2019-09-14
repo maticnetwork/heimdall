@@ -18,11 +18,10 @@ import (
 var (
 	DefaultValue = []byte{0x01} // Value to store in CacheCheckpoint and CacheCheckpointACK & ValidatorSetChange Flag
 
-	ACKCountKey           = []byte{0x11} // key to store ACK count
-	BufferCheckpointKey   = []byte{0x12} // Key to store checkpoint in buffer
-	HeaderBlockKey        = []byte{0x13} // prefix key for when storing header after ACK
-	CheckpointACKCacheKey = []byte{0x15} // key to store Cache for checkpointACK
-	LastNoACKKey          = []byte{0x16} // key to store last no-ack
+	ACKCountKey         = []byte{0x11} // key to store ACK count
+	BufferCheckpointKey = []byte{0x12} // Key to store checkpoint in buffer
+	HeaderBlockKey      = []byte{0x13} // prefix key for when storing header after ACK
+	LastNoACKKey        = []byte{14}   // key to store last no-ack
 )
 
 // Keeper stores all related data
@@ -155,20 +154,8 @@ func GetHeaderKey(headerNumber uint64) []byte {
 	return append(HeaderBlockKey, headerNumberBytes...)
 }
 
-// SetCheckpointAckCache sets value in cache for checkpoint ACK
-func (k *Keeper) SetCheckpointAckCache(ctx sdk.Context, value []byte) {
-	store := ctx.KVStore(k.storeKey)
-	store.Set(CheckpointACKCacheKey, value)
-}
-
-// FlushACKCache flushes ack cache
-func (k *Keeper) FlushACKCache(ctx sdk.Context) {
-	store := ctx.KVStore(k.storeKey)
-	store.Delete(CheckpointACKCacheKey)
-}
-
-// GetCheckpointCache check if value exists in cache or not
-func (k *Keeper) GetCheckpointCache(ctx sdk.Context, key []byte) bool {
+// HasStoreValue check if value exists in store or not
+func (k *Keeper) HasStoreValue(ctx sdk.Context, key []byte) bool {
 	store := ctx.KVStore(k.storeKey)
 	if store.Has(key) {
 		return true

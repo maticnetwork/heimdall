@@ -180,9 +180,20 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k Keeper, con
 	k.UpdateACKCount(ctx)
 	k.Logger(ctx).Debug("Valid ack received", "CurrentACKCount", k.GetACKCount(ctx)-1, "UpdatedACKCount", k.GetACKCount(ctx))
 
-	// indicate ACK received by adding in cache, cache cleared in endblock
-	k.SetCheckpointAckCache(ctx, DefaultValue)
-	k.Logger(ctx).Debug("Checkpoint ACK cache set", "CacheValue", k.GetCheckpointCache(ctx, CheckpointACKCacheKey))
+	// --- Update to new proposer
+
+	// increment accum
+	k.sk.IncrementAccum(ctx, 1)
+
+	//log new proposer
+	vs := k.sk.GetValidatorSet(ctx)
+	newProposer := vs.GetProposer()
+	k.Logger(ctx).Debug(
+		"New proposer selected",
+		"validator", newProposer.Signer.String(),
+		"signer", newProposer.Signer.String(),
+		"power", newProposer.Power,
+	)
 
 	resTags := sdk.NewTags(
 		tags.HeaderIndex, []byte(strconv.FormatUint(uint64(msg.HeaderBlock), 10)),
@@ -225,7 +236,7 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k Keeper)
 	// --- Update to new proposer
 
 	// increment accum
-	k.sk.IncreamentAccum(ctx, 1)
+	k.sk.IncrementAccum(ctx, 1)
 
 	//log new proposer
 	vs := k.sk.GetValidatorSet(ctx)

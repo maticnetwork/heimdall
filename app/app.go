@@ -323,30 +323,6 @@ func (app *HeimdallApp) endBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 				valUpdates[validator.ID] = val
 			}
 			// --- End update validators
-
-			// check if ACK is present in cache
-			if app.checkpointKeeper.GetCheckpointCache(ctx, checkpoint.CheckpointACKCacheKey) {
-				logger.Info("Checkpoint ACK processed in block", "CheckpointACKProcessed", app.checkpointKeeper.GetCheckpointCache(ctx, checkpoint.CheckpointACKCacheKey))
-
-				// --- Start update proposer
-
-				// increment accum
-				app.stakingKeeper.IncreamentAccum(ctx, 1)
-
-				// log new proposer
-				vs := app.stakingKeeper.GetValidatorSet(ctx)
-				newProposer := vs.GetProposer()
-				logger.Debug(
-					"New proposer selected",
-					"validator", newProposer.ID,
-					"signer", newProposer.Signer.String(),
-					"power", newProposer.Power,
-				)
-				// --- End update proposer
-
-				// clear ACK cache
-				app.checkpointKeeper.FlushACKCache(ctx)
-			}
 		}
 	}
 	// convert updates from map to array
@@ -396,7 +372,7 @@ func (app *HeimdallApp) initFromGenesisState(ctx sdk.Context, genesisState Genes
 
 	// increment accumulator if starting from genesis
 	if isGenesis {
-		app.stakingKeeper.IncreamentAccum(ctx, 1)
+		app.stakingKeeper.IncrementAccum(ctx, 1)
 	}
 
 	//

@@ -21,7 +21,7 @@ func TestHandleMsgCheckpoint(t *testing.T) {
 		ctx, keeper := CreateTestInput(t, false)
 		// generate proposer for validator set
 		LoadValidatorSet(4, t, keeper, ctx, false, 10)
-		keeper.IncreamentAccum(ctx, 1)
+		keeper.IncrementAccum(ctx, 1)
 		header, err := GenRandCheckpointHeader(10)
 		require.Empty(t, err, "Unable to create random header block, Error:%v", err)
 		// make sure proposer has min ether
@@ -34,7 +34,7 @@ func TestHandleMsgCheckpoint(t *testing.T) {
 		ctx, keeper := CreateTestInput(t, false)
 		// generate proposer for validator set
 		LoadValidatorSet(4, t, keeper, ctx, false, 10)
-		keeper.IncreamentAccum(ctx, 1)
+		keeper.IncrementAccum(ctx, 1)
 		header, err := GenRandCheckpointHeader(10)
 		require.Empty(t, err, "Unable to create random header block, Error:%v", err)
 
@@ -56,7 +56,7 @@ func TestHandleMsgCheckpoint(t *testing.T) {
 			ctx, keeper := CreateTestInput(t, false)
 			// generate proposer for validator set
 			LoadValidatorSet(4, t, keeper, ctx, false, 10)
-			keeper.IncreamentAccum(ctx, 1)
+			keeper.IncrementAccum(ctx, 1)
 			// gen random checkpoint
 			header, err := GenRandCheckpointHeader(10)
 			require.Empty(t, err, "Unable to create random header block, Error:%v", err)
@@ -84,7 +84,7 @@ func TestHandleMsgCheckpoint(t *testing.T) {
 			ctx, keeper := CreateTestInput(t, false)
 			// generate proposer for validator set
 			LoadValidatorSet(4, t, keeper, ctx, false, 10)
-			keeper.IncreamentAccum(ctx, 1)
+			keeper.IncrementAccum(ctx, 1)
 			header, err := GenRandCheckpointHeader(10)
 			require.Empty(t, err, "Unable to create random header block, Error:%v", err)
 			// add current proposer to header
