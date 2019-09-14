@@ -385,7 +385,7 @@ func (syncer *Syncer) processUnstakeInitEvent(eventName string, abiObject *abi.A
 
 		// msg validator exit
 		msg := staking.NewMsgValidatorExit(
-			hmtypes.BytesToHeimdallAddress(event.User.Bytes()),
+			hmtypes.BytesToHeimdallAddress(helper.GetAddress()),
 			event.ValidatorId.Uint64(),
 			hmtypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 		)
