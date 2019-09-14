@@ -18,12 +18,11 @@ import (
 var (
 	DefaultValue = []byte{0x01} // Value to store in CacheCheckpoint and CacheCheckpointACK & ValidatorSetChange Flag
 
-	ACKCountKey             = []byte{0x11} // key to store ACK count
-	BufferCheckpointKey     = []byte{0x12} // Key to store checkpoint in buffer
-	HeaderBlockKey          = []byte{0x13} // prefix key for when storing header after ACK
-	CheckpointCacheKey      = []byte{0x14} // key to store Cache for checkpoint
-	CheckpointACKCacheKey   = []byte{0x15} // key to store Cache for checkpointACK
-	CheckpointNoACKCacheKey = []byte{0x16} // key to store last no-ack
+	ACKCountKey           = []byte{0x11} // key to store ACK count
+	BufferCheckpointKey   = []byte{0x12} // Key to store checkpoint in buffer
+	HeaderBlockKey        = []byte{0x13} // prefix key for when storing header after ACK
+	CheckpointACKCacheKey = []byte{0x15} // key to store Cache for checkpointACK
+	LastNoACKKey          = []byte{0x16} // key to store last no-ack
 )
 
 // Keeper stores all related data
@@ -162,20 +161,10 @@ func (k *Keeper) SetCheckpointAckCache(ctx sdk.Context, value []byte) {
 	store.Set(CheckpointACKCacheKey, value)
 }
 
+// FlushACKCache flushes ack cache
 func (k *Keeper) FlushACKCache(ctx sdk.Context) {
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(CheckpointACKCacheKey)
-}
-
-func (k *Keeper) FlushCheckpointCache(ctx sdk.Context) {
-	store := ctx.KVStore(k.storeKey)
-	store.Delete(CheckpointCacheKey)
-}
-
-// SetCheckpointCache sets value in cache for checkpoint
-func (k *Keeper) SetCheckpointCache(ctx sdk.Context, value []byte) {
-	store := ctx.KVStore(k.storeKey)
-	store.Set(CheckpointCacheKey, value)
 }
 
 // GetCheckpointCache check if value exists in cache or not
@@ -215,16 +204,16 @@ func (k *Keeper) SetLastNoAck(ctx sdk.Context, timestamp uint64) {
 	// convert timestamp to bytes
 	value := []byte(strconv.FormatUint(timestamp, 10))
 	// set no-ack
-	store.Set(CheckpointNoACKCacheKey, value)
+	store.Set(LastNoACKKey, value)
 }
 
 // GetLastNoAck returns last no ack
 func (k *Keeper) GetLastNoAck(ctx sdk.Context) uint64 {
 	store := ctx.KVStore(k.storeKey)
 	// check if ack count is there
-	if store.Has(CheckpointNoACKCacheKey) {
+	if store.Has(LastNoACKKey) {
 		// get current ACK count
-		result, err := strconv.ParseUint(string(store.Get(CheckpointNoACKCacheKey)), 10, 64)
+		result, err := strconv.ParseUint(string(store.Get(LastNoACKKey)), 10, 64)
 		if err == nil {
 			return uint64(result)
 		}

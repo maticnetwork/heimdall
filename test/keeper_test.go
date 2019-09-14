@@ -129,7 +129,7 @@ func TestValUpdates(t *testing.T) {
 		helper.UpdateValidators(
 			currentValSet,                // pointer to current validator set -- UpdateValidators will modify it
 			keeper.GetAllValidators(ctx), // All validators
-			5, // ack count
+			5,                            // ack count
 		)
 		updatedValSet := currentValSet
 		t.Log("Validators in updated validator set")
@@ -166,7 +166,7 @@ func TestValUpdates(t *testing.T) {
 		helper.UpdateValidators(
 			currentValSet,                // pointer to current validator set -- UpdateValidators will modify it
 			keeper.GetAllValidators(ctx), // All validators
-			5, // ack count
+			5,                            // ack count
 		)
 		t.Log("Validators in updated validator set")
 		for _, v := range currentValSet.Validators {
@@ -197,7 +197,7 @@ func TestValUpdates(t *testing.T) {
 		helper.UpdateValidators(
 			&currentValSet,               // pointer to current validator set -- UpdateValidators will modify it
 			keeper.GetAllValidators(ctx), // All validators
-			5, // ack count
+			5,                            // ack count
 		)
 		t.Log("Validators in updated validator set")
 		for _, v := range currentValSet.Validators {
@@ -340,10 +340,6 @@ func SentValidCheckpoint(header types.CheckpointBlockHeader, keeper hmcmn.Keeper
 	// send checkpoint to handler
 	got := checkpoint.HandleMsgCheckpoint(ctx, msgCheckpoint, keeper, &contractCallerObj)
 	require.True(t, got.IsOK(), "expected send-checkpoint to be ok, got %v", got)
-
-	// check if cache is set
-	found := keeper.GetCheckpointCache(ctx, hmcmn.CheckpointCacheKey)
-	require.Equal(t, true, found, "Checkpoint cache should exist")
 
 	// check if checkpoint matches
 	storedHeader, err := keeper.GetCheckpointFromBuffer(ctx)

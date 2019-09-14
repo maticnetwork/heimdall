@@ -113,10 +113,6 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper, contractC
 	checkpoint, _ := k.GetCheckpointFromBuffer(ctx)
 	k.Logger(ctx).Debug("Adding good checkpoint to buffer to await ACK", "checkpointStored", checkpoint.String())
 
-	// indicate Checkpoint received by adding in cache, cache cleared in endblock
-	k.SetCheckpointCache(ctx, DefaultValue)
-	k.Logger(ctx).Debug("Set Checkpoint Cache", "CheckpointReceived", k.GetCheckpointCache(ctx, CheckpointCacheKey))
-
 	resTags := sdk.NewTags(
 		tags.Proposer, []byte(msg.Proposer.String()),
 		tags.StartBlock, []byte(strconv.FormatUint(uint64(msg.StartBlock), 10)),

@@ -347,22 +347,6 @@ func (app *HeimdallApp) endBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 				// clear ACK cache
 				app.checkpointKeeper.FlushACKCache(ctx)
 			}
-
-			// check if checkpoint is present in cache
-			if app.checkpointKeeper.GetCheckpointCache(ctx, checkpoint.CheckpointCacheKey) {
-				logger.Info("Checkpoint processed in block", "CheckpointProcessed", true)
-				// collect and update sigs in span
-				// Send Checkpoint to Rootchain
-				// PrepareAndSendCheckpoint(ctx, app.checkpointKeeper, app.stakingKeeper, app.caller)
-				// clear Checkpoint cache
-				app.checkpointKeeper.FlushCheckpointCache(ctx)
-			}
-
-			if app.borKeeper.GetSpanCache(ctx) {
-				logger.Info("Propose Span processed in block", "ProposeSpanProcesses", true)
-				// flush span cache
-				app.borKeeper.FlushSpanCache(ctx)
-			}
 		}
 	}
 	// convert updates from map to array

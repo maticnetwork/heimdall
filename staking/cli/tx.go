@@ -135,12 +135,13 @@ func SendValidatorExitTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
 	cmd.Flags().Int(FlagValidatorID, 0, "--id=<validator ID here>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
+	cmd.MarkFlagRequired(FlagValidatorID)
 	cmd.MarkFlagRequired(FlagTxHash)
 
 	return cmd
 }
 
-// send validator update transaction
+// SendValidatorUpdateTx send validator update transaction
 func SendValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "signer-update",

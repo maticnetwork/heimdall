@@ -115,10 +115,6 @@ func SentValidCheckpoint(header types.CheckpointBlockHeader, keeper hmcmn.Keeper
 	got := checkpoint.HandleMsgCheckpoint(ctx, msgCheckpoint, keeper, &contractCallerObj)
 	require.True(t, got.IsOK(), "expected send-checkpoint to be ok, got %v", got)
 
-	// check if cache is set
-	found := keeper.GetCheckpointCache(ctx, hmcmn.CheckpointCacheKey)
-	require.Equal(t, true, found, "Checkpoint cache should exist")
-
 	// check if checkpoint matches
 	storedHeader, err := keeper.GetCheckpointFromBuffer(ctx)
 	require.Empty(t, err, "Unable to set checkpoint from buffer, Error: %v", err)

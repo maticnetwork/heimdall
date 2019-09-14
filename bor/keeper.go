@@ -20,7 +20,6 @@ var (
 	SprintDurationKey     = []byte{0x25} // Key to store span duration for Bor
 	LastSpanStartBlockKey = []byte{0x35} // Key to store last span start block
 	SpanPrefixKey         = []byte{0x36} // prefix key to store span
-	SpanCacheKey          = []byte{0x37} // key to store Cache for span
 )
 
 // Keeper stores all related data
@@ -80,8 +79,6 @@ func (k *Keeper) AddNewSpan(ctx sdk.Context, span types.Span) error {
 	store.Set(GetSpanKey(span.StartBlock), out)
 	// update last span
 	k.UpdateLastSpan(ctx, span.StartBlock)
-	// set cache for span -- which is to be cleared in end block
-	k.SetSpanCache(ctx)
 	return nil
 }
 
@@ -174,32 +171,6 @@ func (k *Keeper) SelectNextProducers(ctx sdk.Context) (vals []types.Validator) {
 func (k *Keeper) UpdateLastSpan(ctx sdk.Context, startBlock uint64) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(LastSpanStartBlockKey, []byte(strconv.FormatUint(startBlock, 10)))
-}
-
-// SetSpanCache sets span cache
-// to be set when we freeze span
-// cache to be cleared in end block
-func (k *Keeper) SetSpanCache(ctx sdk.Context) {
-	store := ctx.KVStore(k.storeKey)
-	// fill in default cache value
-	store.Set(SpanCacheKey, DefaultValue)
-}
-
-// FlushSpanCache deletes cache stored in SpanCache
-// to be called from end block to acknowledge signature aggregation
-func (k *Keeper) FlushSpanCache(ctx sdk.Context) {
-	store := ctx.KVStore(k.storeKey)
-	store.Delete(SpanCacheKey)
-}
-
-// GetSpanCache check if value exists in span cache or not
-// returns true when found and false when not present
-func (k *Keeper) GetSpanCache(ctx sdk.Context) bool {
-	store := ctx.KVStore(k.storeKey)
-	if store.Has(SpanCacheKey) {
-		return true
-	}
-	return false
 }
 
 //

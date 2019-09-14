@@ -3,13 +3,11 @@ package staking
 import (
 	"encoding/hex"
 	"errors"
-	"math/big"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/ethereum/go-ethereum/common"
-	cmn "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
 	"github.com/maticnetwork/heimdall/types"
@@ -184,8 +182,7 @@ func (k *Keeper) AddDeactivationEpoch(ctx sdk.Context, validator types.Validator
 	if updatedVal.EndEpoch != 0 {
 		validator.EndEpoch = updatedVal.EndEpoch
 		// update validator in store
-		k.AddValidator(ctx, validator)
-		return nil
+		return k.AddValidator(ctx, validator)
 	}
 
 	return errors.New("Deactivation period not set")
@@ -310,32 +307,12 @@ func (k *Keeper) GetValidatorFromValID(ctx sdk.Context, valID types.ValidatorID)
 	return validator, true
 }
 
-// set last updated at for a validator
-func (k *Keeper) SetLastUpdated(ctx sdk.Context, valID types.ValidatorID, blckNum *big.Int) sdk.Error {
+// GetLastUpdated get last updated at for validator
+func (k *Keeper) GetLastUpdated(ctx sdk.Context, valID types.ValidatorID) (updatedAt uint64, found bool) {
 	// get validator
 	validator, ok := k.GetValidatorFromValID(ctx, valID)
 	if !ok {
-		return cmn.ErrInvalidMsg(k.Codespace(), "unable to fetch validator", "ID", valID)
-	}
-	// make sure  new block num > old
-	if blckNum.Cmp(validator.LastUpdated) != 1 {
-		return cmn.ErrOldTx(k.Codespace())
-	}
-	validator.LastUpdated = blckNum
-	err := k.AddValidator(ctx, validator)
-	if err != nil {
-		k.Logger(ctx).Debug("Unable to update last updated", "Error", err, "Validator", validator.String())
-		return cmn.ErrInvalidMsg(k.Codespace(), "unable to add validator", "ID", valID, "Error", err)
-	}
-	return nil
-}
-
-// get last updated at for validator
-func (k *Keeper) GetLastUpdated(ctx sdk.Context, valID types.ValidatorID) (updatedAT *big.Int, found bool) {
-	// get validator
-	validator, ok := k.GetValidatorFromValID(ctx, valID)
-	if !ok {
-		return nil, false
+		return 0, false
 	}
 	return validator.LastUpdated, true
 }

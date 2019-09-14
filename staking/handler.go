@@ -2,7 +2,7 @@ package staking
 
 import (
 	"bytes"
-	"math/big"
+	"errors"
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -85,7 +85,7 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k Keeper, con
 		Power:       validator.Power,
 		PubKey:      pubkey,
 		Signer:      validator.Signer,
-		LastUpdated: big.NewInt(0),
+		LastUpdated: 0,
 	}
 
 	// add validator to store
@@ -98,13 +98,13 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k Keeper, con
 
 	resTags := sdk.NewTags(
 		tags.ValidatorJoin, []byte(newValidator.Signer.String()),
-		tags.ValidatorID, []byte(strconv.FormatUint(uint64(newValidator.ID), 10)),
+		tags.ValidatorID, []byte(strconv.FormatUint(newValidator.ID.Uint64(), 10)),
 	)
 
 	return sdk.Result{Tags: resTags}
 }
 
-// Handle signer update message
+// HandleMsgSignerUpdate handles signer update message
 func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	k.Logger(ctx).Debug("Handling signer update", "Validator", msg.ID, "Signer", msg.NewSignerPubKey.Address())
 
@@ -121,7 +121,7 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k Keeper, contr
 		return hmCommon.ErrInvalidMsg(k.Codespace(), "Unable to fetch logs for txHash. Error: %v", err).Result()
 	}
 
-	if int(id) != msg.ID.Int() {
+	if id != msg.ID.Uint64() {
 		k.Logger(ctx).Error("ID in message doesnt match id in logs", "MsgID", msg.ID, "IdFromTx", id)
 		return hmCommon.ErrInvalidMsg(k.Codespace(), "Invalid txhash, id's dont match. Id from tx hash is %v", id).Result()
 	}
@@ -131,22 +131,35 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k Keeper, contr
 		return hmCommon.ErrInvalidMsg(k.Codespace(), "Signer in txhash and msg dont match").Result()
 	}
 
-	// pull val from store
+	// pull validator from store
 	validator, ok := k.GetValidatorFromValID(ctx, msg.ID)
 	if !ok {
-		k.Logger(ctx).Error("Fetching of validator from store failed", "validatorAddress", msg.ID)
+		k.Logger(ctx).Error("Fetching of validator from store failed", "validatorId", msg.ID)
 		return hmCommon.ErrNoValidator(k.Codespace()).Result()
 	}
 	oldValidator := validator.Copy()
 
 	// check if txhash has been used before
-	if blockNum, err := contractCaller.GetBlockNoFromTxHash(msg.TxHash.EthHash()); err != nil {
+	blockNum, err := contractCaller.GetBlockNoFromTxHash(msg.TxHash.EthHash())
+	if err != nil {
 		k.Logger(ctx).Error("Error occured while fetching tx", "Error", err)
 		return hmCommon.ErrInvalidMsg(k.Codespace(), "Invalid tx hash").Result()
-	} else if err := k.SetLastUpdated(ctx, msg.ID, blockNum); err != nil {
-		k.Logger(ctx).Error("Error occured while updating last updated", "Error", err)
-		return err.Result()
 	}
+
+	// if block num is nil
+	if blockNum == nil {
+		k.Logger(ctx).Error("Error occured while fetching tx", "Error", errors.New("No block found"))
+		return hmCommon.ErrInvalidMsg(k.Codespace(), "Invalid tx hash").Result()
+	}
+
+	// check if incoming tx is older
+	if blockNum.Uint64() <= validator.LastUpdated {
+		k.Logger(ctx).Error("Older invalid tx found")
+		return hmCommon.ErrOldTx(k.Codespace()).Result()
+	}
+
+	// update last udpated
+	validator.LastUpdated = blockNum.Uint64()
 
 	// check if we are actually updating signer
 	if !bytes.Equal(newSigner.Bytes(), validator.Signer.Bytes()) {
@@ -156,18 +169,23 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k Keeper, contr
 		k.Logger(ctx).Debug("Updating new signer", "signer", newSigner.String(), "oldSigner", oldValidator.Signer.String(), "validatorID", msg.ID)
 	}
 
-	k.Logger(ctx).Error("Removing old validator", "Validator", oldValidator.String())
+	k.Logger(ctx).Debug("Removing old validator", "validator", oldValidator.String())
+
 	// remove old validator from HM
 	oldValidator.EndEpoch = k.ackRetriever.GetACKCount(ctx)
 	// remove old validator from TM
 	oldValidator.Power = 0
-	err = k.AddValidator(ctx, *oldValidator)
-	if err != nil {
-		k.Logger(ctx).Error("Unable to update signer", "error", err, "ValidatorID", validator.ID)
+	// updated last
+	oldValidator.LastUpdated = blockNum.Uint64()
+	// save old validator
+	if err := k.AddValidator(ctx, *oldValidator); err != nil {
+		k.Logger(ctx).Error("Unable to update signer", "error", err, "validatorId", validator.ID)
 		return hmCommon.ErrSignerUpdateError(k.Codespace()).Result()
 	}
 
-	k.Logger(ctx).Error("Adding new validator", "Validator", validator.String())
+	// adding new validator
+	k.Logger(ctx).Debug("Adding new validator", "validator", validator.String())
+
 	// save validator
 	err = k.AddValidator(ctx, validator)
 	if err != nil {
@@ -177,7 +195,8 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k Keeper, contr
 
 	resTags := sdk.NewTags(
 		tags.ValidatorUpdate, []byte(newSigner.String()),
-		tags.ValidatorID, []byte(strconv.FormatUint(uint64(validator.ID), 10)),
+		tags.UpdatedAt, []byte(strconv.FormatUint(validator.LastUpdated, 10)),
+		tags.ValidatorID, []byte(strconv.FormatUint(validator.ID.Uint64(), 10)),
 	)
 
 	return sdk.Result{Tags: resTags}

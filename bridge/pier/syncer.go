@@ -250,6 +250,7 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 	// confirmation
 	toBlock := newHeader.Number
 	confirmationBlocks := big.NewInt(0).SetUint64(helper.GetConfig().ConfirmationBlocks)
+	confirmationBlocks = confirmationBlocks.Add(confirmationBlocks, big.NewInt(1))
 	if toBlock.Uint64() > confirmationBlocks.Uint64() {
 		toBlock = toBlock.Sub(toBlock, confirmationBlocks)
 	}

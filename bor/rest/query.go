@@ -22,7 +22,6 @@ import (
 func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
 	// Get span details from start block
 	r.HandleFunc("/bor/span", getSpanHandlerFn(cdc, cliCtx)).Methods("GET")
-	r.HandleFunc("/bor/cache", getCacheFn(cdc, cliCtx)).Methods("GET")
 	r.HandleFunc("/bor/latest-span", getLatestSpanHandlerFn(cdc, cliCtx)).Methods("GET")
 	r.HandleFunc("/bor/span-proposer", getSpanProposersHandlerFn(cdc, cliCtx)).Methods("GET")
 	r.HandleFunc("/bor/prepare-next-span", prepareNextSpanHandlerFn(cdc, cliCtx)).Methods("GET")
@@ -61,33 +60,6 @@ func getSpanHandlerFn(
 		}
 
 		result, err := json.Marshal(&span)
-		if err != nil {
-			RestLogger.Error("Error while marshalling response to Json", "error", err)
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-		rest.PostProcessResponse(w, cliCtx, result)
-	}
-}
-
-func getCacheFn(
-	cdc *codec.Codec,
-	cliCtx context.CLIContext,
-) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		res, err := cliCtx.QueryStore(bor.SpanCacheKey, "bor")
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-
-		// the query will return empty if there is no data in buffer
-		if len(res) == 0 {
-			rest.WriteErrorResponse(w, http.StatusNoContent, errors.New("no content found for requested key ").Error())
-			return
-		}
-
-		result, err := json.Marshal(&res)
 		if err != nil {
 			RestLogger.Error("Error while marshalling response to Json", "error", err)
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())

@@ -222,7 +222,7 @@ func noackHandlerFn(
 	cliCtx context.CLIContext,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		res, err := cliCtx.QueryStore(checkpoint.CheckpointNoACKCacheKey, "checkpoint")
+		res, err := cliCtx.QueryStore(checkpoint.LastNoACKKey, "checkpoint")
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
@@ -306,7 +306,7 @@ func overviewHandlerFunc(
 
 		// last no ack
 		var lastNoACKTime int64
-		lastNoACK, err := cliCtx.QueryStore(checkpoint.CheckpointNoACKCacheKey, "checkpoint")
+		lastNoACK, err := cliCtx.QueryStore(checkpoint.LastNoACKKey, "checkpoint")
 		if err == nil {
 			lastNoACKTime, err = strconv.ParseInt(string(lastNoACK), 10, 64)
 		}
