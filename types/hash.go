@@ -100,6 +100,11 @@ func (aa HeimdallHash) String() string {
 	return "0x" + hex.EncodeToString(aa.Bytes())
 }
 
+// Hex returns hex string
+func (aa HeimdallHash) Hex() string {
+	return aa.String()
+}
+
 // Format implements the fmt.Formatter interface.
 // nolint: errcheck
 func (aa HeimdallHash) Format(s fmt.State, verb rune) {

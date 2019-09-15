@@ -9,7 +9,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -89,7 +88,7 @@ func SendCheckpointTx(cdc *codec.Codec) *cobra.Command {
 				proposer,
 				startBlock,
 				endBlock,
-				common.HexToHash(rootHashStr),
+				types.HexToHeimdallHash(rootHashStr),
 				uint64(time.Now().Unix()),
 			)
 

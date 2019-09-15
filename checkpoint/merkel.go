@@ -5,7 +5,6 @@ import (
 	"errors"
 	"math/big"
 
-	ethCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -15,15 +14,16 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/maticnetwork/heimdall/helper"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
-func ValidateCheckpoint(start uint64, end uint64, rootHash ethCommon.Hash) bool {
+func ValidateCheckpoint(start uint64, end uint64, rootHash hmTypes.HeimdallHash) bool {
 	root, err := GetHeaders(start, end)
 	if err != nil {
 		return false
 	}
 
-	if bytes.Equal(root, rootHash[:]) {
+	if bytes.Equal(root, rootHash.Bytes()) {
 		return true
 	}
 

@@ -6,7 +6,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/common"
 
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	hmCommon "github.com/maticnetwork/heimdall/common"
@@ -27,7 +26,7 @@ type MsgCheckpoint struct {
 	Proposer   types.HeimdallAddress `json:"proposer"`
 	StartBlock uint64                `json:"startBlock"`
 	EndBlock   uint64                `json:"endBlock"`
-	RootHash   common.Hash           `json:"rootHash"`
+	RootHash   types.HeimdallHash    `json:"rootHash"`
 	TimeStamp  uint64                `json:"timestamp"`
 }
 
@@ -36,7 +35,7 @@ func NewMsgCheckpointBlock(
 	proposer types.HeimdallAddress,
 	startBlock uint64,
 	endBlock uint64,
-	roothash common.Hash,
+	roothash types.HeimdallHash,
 	timestamp uint64,
 ) MsgCheckpoint {
 	return MsgCheckpoint{

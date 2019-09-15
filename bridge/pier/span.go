@@ -21,6 +21,7 @@ import (
 	"github.com/tendermint/tendermint/libs/common"
 	httpClient "github.com/tendermint/tendermint/rpc/client"
 
+	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/bor"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/helper"
@@ -345,7 +346,7 @@ func (s *SpanService) broadcastToBor(height int64, txHash []byte) error {
 	encodedData := encodeCommitSpanData(
 		helper.GetVoteBytes(votes, chainID),
 		sigs,
-		tx.Tx[4:],
+		tx.Tx[authTypes.PulpHashLength:],
 		proof,
 	)
 

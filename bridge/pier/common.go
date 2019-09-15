@@ -258,6 +258,8 @@ func FetchFromAPI(cliCtx cliContext.CLIContext, URL string) (result rest.Respons
 		return result, err
 	}
 	defer resp.Body.Close()
+
+	// response
 	if resp.StatusCode == 200 {
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
@@ -272,7 +274,7 @@ func FetchFromAPI(cliCtx cliContext.CLIContext, URL string) (result rest.Respons
 		return response, nil
 	} else {
 		Logger.Error("Error while fetching data from URL", "status", resp.StatusCode, "URL", URL)
-		return result, err
+		return result, fmt.Errorf("Error while fetching data from url: %v, status: %v", URL, resp.StatusCode)
 	}
 }
 

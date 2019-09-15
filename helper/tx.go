@@ -3,7 +3,6 @@ package helper
 import (
 	"context"
 	"encoding/hex"
-	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum"
@@ -54,11 +53,6 @@ func GenerateAuthObj(client *ethclient.Client, callMsg ethereum.CallMsg) (auth *
 // SendCheckpoint sends checkpoint to rootchain contract
 // todo return err
 func (c *ContractCaller) SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte) {
-	fmt.Println("send checkpoint",
-		"vote", hex.EncodeToString(voteSignBytes),
-		"sigs", hex.EncodeToString(sigs),
-		"txData", hex.EncodeToString(txData))
-
 	var vote types.CanonicalRLPVote
 	err := rlp.DecodeBytes(voteSignBytes, &vote)
 	if err != nil {
@@ -83,7 +77,10 @@ func (c *ContractCaller) SendCheckpoint(voteSignBytes []byte, sigs []byte, txDat
 	})
 	GetPubKey().VerifyBytes(voteSignBytes, sigs)
 
-	Logger.Info("Sending new checkpoint", "vote", hex.EncodeToString(voteSignBytes), "sigs", hex.EncodeToString(sigs), "txData", hex.EncodeToString(txData))
+	Logger.Debug("Sending new checkpoint",
+		"vote", hex.EncodeToString(voteSignBytes),
+		"sigs", hex.EncodeToString(sigs),
+		"txData", hex.EncodeToString(txData))
 
 	tx, err := c.RootChainInstance.SubmitHeaderBlock(auth, voteSignBytes, sigs, txData)
 	if err != nil {
@@ -92,35 +89,3 @@ func (c *ContractCaller) SendCheckpoint(voteSignBytes []byte, sigs []byte, txDat
 		Logger.Info("Submitted new header successfully", "txHash", tx.Hash().String())
 	}
 }
-
-// // CommitSpan sends commit span transaction to validator set contract on bor to change committee for next span
-// func (c *ContractCaller) CommitSpan(voteSignBytes []byte, sigs []byte, txData []byte, proof []byte) {
-// 	// validator set ABI
-// 	validatorSetABI, err := GetValidatorSetABI()
-// 	if err != nil {
-// 		return
-// 	}
-
-// 	// commit span
-// 	data, err := validatorSetABI.Pack("commitSpan", voteSignBytes, sigs, txData, proof)
-// 	if err != nil {
-// 		Logger.Error("Unable to pack tx for submitHeaderBlock", "error", err)
-// 		return
-// 	}
-
-// 	validatorSetAddress := GetValidatorSetAddress()
-// 	auth, err := GenerateAuthObj(GetMaticClient(), ethereum.CallMsg{
-// 		To:   &validatorSetAddress,
-// 		Data: data,
-// 	})
-// 	GetPubKey().VerifyBytes(voteSignBytes, sigs)
-// 	Logger.Info("Submitting new commitee", "Vote", hex.EncodeToString(voteSignBytes), "Sigs", hex.EncodeToString(sigs), "txData", hex.EncodeToString(txData), "proof", hex.EncodeToString(proof))
-
-// 	// commit span
-// 	tx, err := c.ValidatorSetInstance.CommitSpan(auth, voteSignBytes, sigs, txData, proof)
-// 	if err != nil {
-// 		Logger.Error("Error while submitting commit commitee for next span", "error", err)
-// 	} else {
-// 		Logger.Info("Submitted new committee", "txHash", tx.Hash().String())
-// 	}
-// }

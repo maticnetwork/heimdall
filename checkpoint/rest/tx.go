@@ -7,7 +7,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/gorilla/mux"
 
 	"github.com/maticnetwork/heimdall/checkpoint"
@@ -31,7 +30,7 @@ type (
 		BaseReq rest.BaseReq `json:"base_req"`
 
 		Proposer   types.HeimdallAddress `json:"proposer"`
-		RootHash   common.Hash           `json:"rootHash"`
+		RootHash   types.HeimdallHash    `json:"rootHash"`
 		StartBlock uint64                `json:"startBlock"`
 		EndBlock   uint64                `json:"endBlock"`
 	}

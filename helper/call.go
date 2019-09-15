@@ -32,7 +32,6 @@ type IContractCaller interface {
 	SigUpdateEvent(tx common.Hash) (id uint64, newSigner common.Address, oldSigner common.Address, err error)
 
 	// bor related contracts
-	CommitSpan(voteSignBytes []byte, sigs []byte, txData []byte, proof []byte)
 	CurrentSpanNumber() (Number *big.Int)
 }
 
@@ -102,9 +101,7 @@ func (c *ContractCaller) GetHeaderInfo(headerID uint64) (
 	err error,
 ) {
 	// get header from rootchain
-	headerIDInt := big.NewInt(0)
-	headerIDInt = headerIDInt.SetUint64(headerID)
-	headerBlock, err := c.RootChainInstance.HeaderBlocks(nil, headerIDInt)
+	headerBlock, err := c.RootChainInstance.HeaderBlocks(nil, big.NewInt(0).SetUint64(headerID))
 	if err != nil {
 		Logger.Error("Unable to fetch header block from rootchain", "headerBlockIndex", headerID)
 		return root, start, end, createdAt, proposer, errors.New("Unable to fetch header block")
@@ -170,7 +167,7 @@ func (c *ContractCaller) GetValidatorInfo(valID types.ValidatorID) (validator ty
 		Power:      newAmount.Uint64(),
 		StartEpoch: startEpoch.Uint64(),
 		EndEpoch:   endEpoch.Uint64(),
-		Signer:     types.HeimdallAddress(signer),
+		Signer:     types.BytesToHeimdallAddress(signer.Bytes()),
 	}
 
 	return validator, nil
