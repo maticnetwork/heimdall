@@ -376,7 +376,7 @@ func (c *Checkpointer) nextExpectedCheckpoint(latestChildBlock uint64) (*Contrac
 func (c *Checkpointer) fetchBufferedCheckpoint() (*HeimdallCheckpoint, error) {
 	c.Logger.Info("Fetching checkpoint in buffer")
 
-	_checkpoint, err := c.fetchCheckpoint(GetHeimdallServerEndpoint(LatestCheckpointURL))
+	_checkpoint, err := c.fetchCheckpoint(GetHeimdallServerEndpoint(BufferedCheckpointURL))
 	if err != nil {
 		return nil, err
 	}
@@ -399,7 +399,7 @@ func (c *Checkpointer) fetchCommittedCheckpoint() (*HeimdallCheckpoint, error) {
 
 // fetches checkpoint from given URL
 func (c *Checkpointer) fetchCheckpoint(url string) (checkpoint hmtypes.CheckpointBlockHeader, err error) {
-	response, err := FetchFromAPI(c.cliCtx, GetHeimdallServerEndpoint(LatestCheckpointURL))
+	response, err := FetchFromAPI(c.cliCtx, url)
 	if err != nil {
 		return checkpoint, err
 	}

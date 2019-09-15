@@ -272,10 +272,10 @@ func FetchFromAPI(cliCtx cliContext.CLIContext, URL string) (result rest.Respons
 			return result, err
 		}
 		return response, nil
-	} else {
-		Logger.Error("Error while fetching data from URL", "status", resp.StatusCode, "URL", URL)
-		return result, fmt.Errorf("Error while fetching data from url: %v, status: %v", URL, resp.StatusCode)
 	}
+
+	Logger.Debug("Error while fetching data from URL", "status", resp.StatusCode, "URL", URL)
+	return result, fmt.Errorf("Error while fetching data from url: %v, status: %v", URL, resp.StatusCode)
 }
 
 // WaitForOneEvent subscribes to a websocket event for the given

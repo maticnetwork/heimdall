@@ -135,7 +135,7 @@ func (ackService *AckService) checkForCheckpoint() {
 	}
 
 	// fetch last header number
-	lastHeaderNumber := currentHeaderNumber.Uint64() - helper.GetConfig().ChildBlockInterval
+	lastHeaderNumber := currentHeaderNumber.Uint64() // - helper.GetConfig().ChildBlockInterval
 	if lastHeaderNumber == 0 {
 		// First checkpoint required
 		return
