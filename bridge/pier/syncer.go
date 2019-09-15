@@ -22,12 +22,14 @@ import (
 	httpClient "github.com/tendermint/tendermint/rpc/client"
 
 	"github.com/maticnetwork/heimdall/checkpoint"
+	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
 	"github.com/maticnetwork/heimdall/contracts/depositmanager"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
+	"github.com/maticnetwork/heimdall/contracts/statesyncer"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
-	hmtypes "github.com/maticnetwork/heimdall/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 const (
@@ -310,6 +312,8 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 					syncer.processJailedEvent(selectedEvent.Name, abiObject, &vLog)
 				case "Deposit":
 					syncer.processDepositEvent(selectedEvent.Name, abiObject, &vLog)
+				case "StateSynced":
+					syncer.processDepositEvent(selectedEvent.Name, abiObject, &vLog)
 				case "Withdraw":
 					syncer.processWithdrawEvent(selectedEvent.Name, abiObject, &vLog)
 				}
@@ -357,10 +361,10 @@ func (syncer *Syncer) processStakedEvent(eventName string, abiObject *abi.ABI, v
 		if bytes.Compare(event.User.Bytes(), helper.GetAddress()) == 0 {
 			pubkey := helper.GetPubKey()
 			msg := staking.NewMsgValidatorJoin(
-				hmtypes.BytesToHeimdallAddress(event.User.Bytes()),
+				hmTypes.BytesToHeimdallAddress(event.User.Bytes()),
 				event.ValidatorId.Uint64(),
-				hmtypes.NewPubKey(pubkey[:]),
-				hmtypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
+				hmTypes.NewPubKey(pubkey[:]),
+				hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			)
 
 			// process staked
@@ -385,9 +389,9 @@ func (syncer *Syncer) processUnstakeInitEvent(eventName string, abiObject *abi.A
 
 		// msg validator exit
 		msg := staking.NewMsgValidatorExit(
-			hmtypes.BytesToHeimdallAddress(helper.GetAddress()),
+			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
 			event.ValidatorId.Uint64(),
-			hmtypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
+			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 		)
 
 		// broadcast heimdall
@@ -412,10 +416,10 @@ func (syncer *Syncer) processSignerChangeEvent(eventName string, abiObject *abi.
 		if bytes.Compare(event.NewSigner.Bytes(), helper.GetAddress()) == 0 {
 			pubkey := helper.GetPubKey()
 			msg := staking.NewMsgValidatorUpdate(
-				hmtypes.BytesToHeimdallAddress(helper.GetAddress()),
+				hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
 				event.ValidatorId.Uint64(),
-				hmtypes.NewPubKey(pubkey[:]),
-				hmtypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
+				hmTypes.NewPubKey(pubkey[:]),
+				hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			)
 
 			// process signer update
@@ -440,7 +444,7 @@ func (syncer *Syncer) processReStakedEvent(eventName string, abiObject *abi.ABI,
 
 		// // msg validator exit
 		// msg := staking.NewMsgValidatorExit(
-		// 	hmtypes.BytesToHeimdallAddress(helper.GetAddress()),
+		// 	hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
 		// 	event.ValidatorId.Uint64(),
 		// 	vLog.TxHash,
 		// )
@@ -464,7 +468,7 @@ func (syncer *Syncer) processJailedEvent(eventName string, abiObject *abi.ABI, v
 
 		// // msg validator exit
 		// msg := staking.NewMsgValidatorExit(
-		// 	hmtypes.BytesToHeimdallAddress(helper.GetAddress()),
+		// 	hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
 		// 	event.ValidatorId.Uint64(),
 		// 	vLog.TxHash,
 		// )
@@ -515,6 +519,41 @@ func (syncer *Syncer) processWithdrawEvent(eventName string, abiObject *abi.ABI,
 		// TODO dispatch to heimdall
 	}
 }
+
+//
+// Process state synced event
+//
+
+func (syncer *Syncer) processStateSyncedEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
+	event := new(statesyncer.StatesyncerStateSynced)
+	if err := UnpackLog(abiObject, event, eventName, vLog); err != nil {
+		logEventParseError(syncer.Logger, eventName, err)
+	} else {
+		syncer.Logger.Debug(
+			"New event found",
+			"event", eventName,
+			"id", event.Id,
+			"contract", event.ContractAddress,
+			"data", hex.EncodeToString(event.Data),
+		)
+
+		// TODO dispatch to heimdall
+		msg := clerkTypes.NewMsgStateRecord(
+			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
+			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
+			event.Id.Uint64(),
+			hmTypes.BytesToHeimdallAddress(event.ContractAddress.Bytes()),
+			event.Data,
+		)
+
+		// broadcast to heimdall
+		syncer.queueConnector.BroadcastToHeimdall(msg)
+	}
+}
+
+//
+// Utils
+//
 
 // EventByID looks up a event by the topic id
 func EventByID(abiObject *abi.ABI, sigdata []byte) *abi.Event {
