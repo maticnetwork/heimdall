@@ -459,7 +459,7 @@ func (c *Checkpointer) broadcastACK(headerID uint64) error {
 	return c.queueConnector.BroadcastToHeimdall(msg)
 }
 
-// send
+// wait for heimdall checkpoint tx to get confirmed and dispatch checkpoint
 func (c *Checkpointer) commitCheckpoint(startBlock uint64, endBlock uint64) {
 	// create tag query
 	var tags []string
