@@ -10,6 +10,7 @@ import (
 	"github.com/maticnetwork/heimdall/bank"
 	"github.com/maticnetwork/heimdall/bor"
 	"github.com/maticnetwork/heimdall/checkpoint"
+	"github.com/maticnetwork/heimdall/clerk"
 	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/supply"
 	"github.com/maticnetwork/heimdall/types"
@@ -57,6 +58,7 @@ type GenesisState struct {
 	BorData        bor.GenesisState        `json:"bor"`
 	CheckpointData checkpoint.GenesisState `json:"checkpoint"`
 	StakingData    staking.GenesisState    `json:"staking"`
+	ClerkData      clerk.GenesisState      `json:"clerk"`
 }
 
 // NewGenesisState creates new genesis state
@@ -71,6 +73,7 @@ func NewGenesisState(
 	borData bor.GenesisState,
 	checkpointData checkpoint.GenesisState,
 	stakingData staking.GenesisState,
+	clerkData clerk.GenesisState,
 ) GenesisState {
 	return GenesisState{
 		Accounts: accounts,
@@ -83,6 +86,7 @@ func NewGenesisState(
 		BorData:        borData,
 		CheckpointData: checkpointData,
 		StakingData:    stakingData,
+		ClerkData:      clerkData,
 	}
 }
 
@@ -126,6 +130,9 @@ func ValidateGenesisState(genesisState GenesisState) error {
 	if err := checkpoint.ValidateGenesis(genesisState.CheckpointData); err != nil {
 		return err
 	}
+	if err := clerk.ValidateGenesis(genesisState.ClerkData); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -158,6 +165,7 @@ func NewDefaultGenesisState() GenesisState {
 		StakingData:    staking.DefaultGenesisState(),
 		CheckpointData: checkpoint.DefaultGenesisState(),
 		BorData:        bor.DefaultGenesisState(),
+		ClerkData:      clerk.DefaultGenesisState(),
 		GenTxs:         nil,
 	}
 }

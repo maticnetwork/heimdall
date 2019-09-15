@@ -7,12 +7,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
+	"github.com/tendermint/tendermint/libs/log"
+
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	cmn "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/types"
-	"github.com/tendermint/tendermint/libs/log"
 )
 
 var (
