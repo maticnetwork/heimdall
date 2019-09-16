@@ -194,7 +194,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		app.keyBor,
 		app.paramsKeeper.Subspace(borTypes.DefaultParamspace),
 		common.DefaultCodespace,
-		&app.caller
+		app.caller,
 	)
 
 	// register message routes

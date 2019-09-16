@@ -14,6 +14,8 @@ const (
 	DefaultSpanDuration uint64 = 100 * DefaultSprintDuration
 	// Slot cost for validator
 	SlotCost uint64 = 10
+	// Number of Producers to be selected per span
+	NumProducers uint64 = 4
 )
 
 // ParamStoreKeySprintDuration is store's key for SprintDuration

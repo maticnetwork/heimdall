@@ -2,7 +2,6 @@ package bor
 
 import (
 	"encoding/hex"
-	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/maticnetwork/heimdall/helper"
@@ -17,13 +16,13 @@ func SelectNextProducers(logger tmlog.Logger, blkHash common.Hash, currentVals [
 	logger.Info("Seed generated", "Seed", hex.EncodeToString(seed[:]), "BlkHash", blkHash.String())
 	validatorIndices := convertToSlots(currentVals)
 	logger.Info("Created validator indices", "Length", len(validatorIndices), "ValIndices", validatorIndices)
-	return ShuffleList(validatorIndices, seed)
+	selectedIDs, err = ShuffleList(validatorIndices, seed)
+	return selectedIDs[:NumProducers], err
 }
 
 func convertToSlots(vals []types.Validator) (validatorIndices []uint64) {
 	for _, val := range vals {
 		for val.Power > SlotCost {
-			fmt.Printf("Creating slots for validator %v with power %v", val.ID, val.Power)
 			validatorIndices = append(validatorIndices, uint64(val.ID))
 			val.Power = val.Power - SlotCost
 		}
