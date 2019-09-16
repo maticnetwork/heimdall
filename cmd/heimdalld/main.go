@@ -481,9 +481,12 @@ func getDefaultHeimdallConfig() helper.Configuration {
 		HeimdallServerURL: helper.DefaultHeimdallServerURL,
 		TendermintNodeURL: helper.DefaultTendermintNodeURL,
 
-		StakeManagerAddress:      (ethCommon.Address{}).Hex(),
-		RootchainAddress:         (ethCommon.Address{}).Hex(),
-		ValidatorSetAddress:      (ethCommon.Address{}).Hex(),
+		StakeManagerAddress:  (ethCommon.Address{}).Hex(),
+		RootchainAddress:     (ethCommon.Address{}).Hex(),
+		ValidatorSetAddress:  (ethCommon.Address{}).Hex(),
+		StateSenderAddress:   (ethCommon.Address{}).Hex(),
+		StateReceiverAddress: helper.DefaultStateReceiverAddress,
+
 		ChildBlockInterval:       helper.DefaultChildBlockInterval,
 		CheckpointerPollInterval: helper.DefaultCheckpointerPollInterval,
 		SyncerPollInterval:       helper.DefaultSyncerPollInterval,

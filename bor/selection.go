@@ -9,15 +9,15 @@ import (
 	tmlog "github.com/tendermint/tendermint/libs/log"
 )
 
-// SelectNextProducers selects producers for next span by converting power to tickets
-func SelectNextProducers(logger tmlog.Logger, blkHash common.Hash, currentVals []types.Validator) (selectedIDs []uint64, err error) {
+// selectNextProducers selects producers for next span by converting power to tickets
+func SelectNextProducers(logger tmlog.Logger, blkHash common.Hash, currentVals []types.Validator, producerCount uint64) (selectedIDs []uint64, err error) {
 	// extract seed from hash
 	seed := helper.ToBytes32(blkHash.Bytes()[:32])
 	logger.Info("Seed generated", "Seed", hex.EncodeToString(seed[:]), "BlkHash", blkHash.String())
 	validatorIndices := convertToSlots(currentVals)
 	logger.Info("Created validator indices", "Length", len(validatorIndices), "ValIndices", validatorIndices)
 	selectedIDs, err = ShuffleList(validatorIndices, seed)
-	return selectedIDs[:NumProducers], err
+	return selectedIDs[:producerCount], err
 }
 
 // converts validator power to slots

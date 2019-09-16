@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/big"
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -14,6 +15,7 @@ import (
 	borTypes "github.com/maticnetwork/heimdall/bor/types"
 	"github.com/maticnetwork/heimdall/checkpoint"
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
+	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/types/rest"
@@ -257,6 +259,28 @@ func prepareNextSpanHandlerFn(
 		}
 
 		//
+		// Get producer count
+		//
+
+		// fetch producer count
+		res, err = cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", borTypes.QuerierRoute, bor.QueryParams, bor.ParamProducerCount), nil)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		if len(res) == 0 {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, errors.New("Producer count not found").Error())
+			return
+		}
+
+		var producerCount uint64
+		if err := cliCtx.Codec.UnmarshalJSON(res, &producerCount); err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		//
 		// Validators
 		//
 
@@ -280,6 +304,36 @@ func prepareNextSpanHandlerFn(
 				validators = append(validators, (*val).MinimalVal())
 			}
 		}
+
+		contractCaller, err := helper.NewContractCaller()
+		//
+		// Get last eth header processed
+		//
+
+		// fetch last eth header
+		res, err = cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", borTypes.QuerierRoute, bor.QueryParams, bor.ParamLastEthBlock), nil)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		if len(res) == 0 {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, errors.New("Producer count not found").Error())
+			return
+		}
+
+		var lastEthHeader *big.Int
+		if err := cliCtx.Codec.UnmarshalJSON(res, &lastEthHeader); err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		// fetch block header
+		_, err = contractCaller.GetMainChainBlock(lastEthHeader.Add(lastEthHeader, big.NewInt(1)))
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, errors.New("error fetching block from mainchain").Error())
+			return
+		}
+		// bor.SelectNextProducers(nil, blockHeader.Hash(), validators, producerCount)
 
 		// draft a propose span message
 		msg := bor.NewMsgProposeSpan(

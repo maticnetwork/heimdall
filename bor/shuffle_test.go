@@ -51,7 +51,7 @@ func TestValShuffle(t *testing.T) {
 	initialVals := GenRandomVal(4, 0, 100, uint64(10), false, 1)
 	t.Log("InitialVals", "Vals", initialVals)
 	log := logger.NewTMLogger(logger.NewSyncWriter(os.Stdout))
-	shuffledVals, err := SelectNextProducers(log, seedHash1, initialVals)
+	shuffledVals, err := selectNextProducers(log, seedHash1, initialVals)
 	require.Empty(t, err, "Error has to be nil ")
 	t.Log("ShuffledVals", "Vals", shuffledVals)
 }
@@ -72,7 +72,6 @@ func GenRandomVal(count int, startBlock uint64, power uint64, timeAlive uint64, 
 				power = 1
 			}
 		}
-
 		newVal := types.Validator{
 			ID:         types.NewValidatorID(startID + uint64(i)),
 			StartEpoch: startBlock,

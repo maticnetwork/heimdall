@@ -195,7 +195,7 @@ func (k *Keeper) SelectNextProducers(ctx sdk.Context) (vals []types.Validator, e
 	}
 
 	// select next producers using seed
-	newProducersIds, err := SelectNextProducers(k.Logger(ctx), blockHeader.Hash(), currVals)
+	newProducersIds, err := SelectNextProducers(k.Logger(ctx), blockHeader.Hash(), currVals, k.GetProducerCount(ctx))
 	if err != nil {
 		return vals, err
 	}
@@ -298,6 +298,19 @@ func (k *Keeper) GetSprintDuration(ctx sdk.Context) uint64 {
 // SetSprintDuration sets the sprint duration
 func (k *Keeper) SetSprintDuration(ctx sdk.Context, duration uint64) {
 	k.paramSpace.Set(ctx, ParamStoreKeySprintDuration, duration)
+}
+
+// GetProducerCount returns the numeber of producers per span
+func (k *Keeper) GetProducerCount(ctx sdk.Context) uint64 {
+	var count uint64
+	k.paramSpace.Get(ctx, ParamStoreKeyNumOfProducers, &count)
+	return count
+}
+
+// SetProducerCount sets the number of producers selected per span
+func (k *Keeper) SetProducerCount(ctx sdk.Context, count uint64) {
+	k.paramSpace.Set(ctx, ParamStoreKeyNumOfProducers, count)
+
 }
 
 //
