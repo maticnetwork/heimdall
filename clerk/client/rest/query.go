@@ -49,7 +49,7 @@ func handlerRecordFn(
 			return
 		}
 
-		var _record clerkTypes.Record
+		var _record clerkTypes.EventRecord
 		err = cdc.UnmarshalBinaryBare(res, &_record)
 		if err != nil {
 			RestLogger.Error("Error while marshalling state record data", "error", err)

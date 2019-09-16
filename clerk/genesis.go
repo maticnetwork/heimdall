@@ -8,17 +8,17 @@ import (
 
 // GenesisState is the bank state that must be provided at genesis.
 type GenesisState struct {
-	StateRecords []*types.Record `json:"state_records"`
+	StateRecords []*types.EventRecord `json:"state_records"`
 }
 
 // NewGenesisState creates a new genesis state.
-func NewGenesisState(stateRecords []*types.Record) GenesisState {
+func NewGenesisState(stateRecords []*types.EventRecord) GenesisState {
 	return GenesisState{StateRecords: stateRecords}
 }
 
 // DefaultGenesisState returns a default genesis state
 func DefaultGenesisState() GenesisState {
-	return NewGenesisState(make([]*types.Record, 0))
+	return NewGenesisState(make([]*types.EventRecord, 0))
 }
 
 // InitGenesis sets distribution information for genesis.

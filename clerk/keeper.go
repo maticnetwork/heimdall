@@ -55,7 +55,7 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 }
 
 // SetStateRecord adds record to store
-func (k *Keeper) SetStateRecord(ctx sdk.Context, record clerkTypes.Record) error {
+func (k *Keeper) SetStateRecord(ctx sdk.Context, record clerkTypes.EventRecord) error {
 	store := ctx.KVStore(k.storeKey)
 	key := GetStateRecordKey(record.ID)
 
@@ -81,13 +81,13 @@ func (k *Keeper) SetStateRecord(ctx sdk.Context, record clerkTypes.Record) error
 }
 
 // GetStateRecord returns record from store
-func (k *Keeper) GetStateRecord(ctx sdk.Context, stateId uint64) (*clerkTypes.Record, error) {
+func (k *Keeper) GetStateRecord(ctx sdk.Context, stateId uint64) (*clerkTypes.EventRecord, error) {
 	store := ctx.KVStore(k.storeKey)
 	key := GetStateRecordKey(stateId)
 
 	// check store has data
 	if store.Has(key) {
-		var _record clerkTypes.Record
+		var _record clerkTypes.EventRecord
 		err := k.cdc.UnmarshalBinaryBare(store.Get(key), &_record)
 		if err != nil {
 			return nil, err
@@ -108,9 +108,9 @@ func (k *Keeper) HasStateRecord(ctx sdk.Context, stateID uint64) bool {
 }
 
 // GetAllStateRecords get all state records
-func (k *Keeper) GetAllStateRecords(ctx sdk.Context) (records []*types.Record) {
+func (k *Keeper) GetAllStateRecords(ctx sdk.Context) (records []*types.EventRecord) {
 	// iterate through spans and create span update array
-	k.IterateRecordsAndApplyFn(ctx, func(record types.Record) error {
+	k.IterateRecordsAndApplyFn(ctx, func(record types.EventRecord) error {
 		// append to list of validatorUpdates
 		records = append(records, &record)
 		return nil
@@ -134,7 +134,7 @@ func GetStateRecordKey(stateID uint64) []byte {
 //
 
 // IterateRecordsAndApplyFn interate records and apply the given function.
-func (k *Keeper) IterateRecordsAndApplyFn(ctx sdk.Context, f func(record types.Record) error) {
+func (k *Keeper) IterateRecordsAndApplyFn(ctx sdk.Context, f func(record types.EventRecord) error) {
 	store := ctx.KVStore(k.storeKey)
 
 	// get span iterator
@@ -144,7 +144,7 @@ func (k *Keeper) IterateRecordsAndApplyFn(ctx sdk.Context, f func(record types.R
 	// loop through spans to get valid spans
 	for ; iterator.Valid(); iterator.Next() {
 		// unmarshall span
-		var result types.Record
+		var result types.EventRecord
 		k.cdc.UnmarshalBinaryBare(iterator.Value(), &result)
 		// call function and return if required
 		if err := f(result); err != nil {
