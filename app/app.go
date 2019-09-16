@@ -22,6 +22,8 @@ import (
 	borTypes "github.com/maticnetwork/heimdall/bor/types"
 	"github.com/maticnetwork/heimdall/checkpoint"
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
+	"github.com/maticnetwork/heimdall/clerk"
+	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
 	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
@@ -66,6 +68,7 @@ type HeimdallApp struct {
 	keyCheckpoint *sdk.KVStoreKey
 	keyStaking    *sdk.KVStoreKey
 	keyBor        *sdk.KVStoreKey
+	keyClerk      *sdk.KVStoreKey
 	keyMain       *sdk.KVStoreKey
 	keyParams     *sdk.KVStoreKey
 	tKeyParams    *sdk.TransientStoreKey
@@ -79,6 +82,7 @@ type HeimdallApp struct {
 	checkpointKeeper checkpoint.Keeper
 	stakingKeeper    staking.Keeper
 	borKeeper        bor.Keeper
+	clerkKeeper      clerk.Keeper
 
 	// masterKeeper common.Keeper
 	caller helper.ContractCaller
@@ -89,14 +93,23 @@ type HeimdallApp struct {
 
 var logger = helper.Logger.With("module", "app")
 
+//
+// Account retriever
+//
+
 // AckRetriever retriever
 type AckRetriever struct {
 	App *HeimdallApp
 }
 
+// GetACKCount returns ack count
 func (d AckRetriever) GetACKCount(ctx sdk.Context) uint64 {
 	return d.App.checkpointKeeper.GetACKCount(ctx)
 }
+
+//
+// Heimdall app
+//
 
 // NewHeimdallApp creates heimdall app
 func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseApp)) *HeimdallApp {
@@ -125,6 +138,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		keyCheckpoint: sdk.NewKVStoreKey(checkpointTypes.StoreKey),
 		keyStaking:    sdk.NewKVStoreKey(stakingTypes.StoreKey),
 		keyBor:        sdk.NewKVStoreKey(borTypes.StoreKey),
+		keyClerk:      sdk.NewKVStoreKey(clerkTypes.StoreKey),
 		keyParams:     sdk.NewKVStoreKey(subspace.StoreKey),
 		tKeyParams:    sdk.NewTransientStoreKey(subspace.TStoreKey),
 	}
@@ -188,6 +202,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		app.paramsKeeper.Subspace(checkpointTypes.DefaultParamspace),
 		common.DefaultCodespace,
 	)
+
 	app.borKeeper = bor.NewKeeper(
 		app.cdc,
 		app.stakingKeeper,
@@ -197,12 +212,20 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		app.caller,
 	)
 
+	app.clerkKeeper = clerk.NewKeeper(
+		app.cdc,
+		app.keyClerk,
+		app.paramsKeeper.Subspace(clerkTypes.DefaultParamspace),
+		common.DefaultCodespace,
+	)
+
 	// register message routes
 	app.Router().
 		AddRoute(bankTypes.RouterKey, bank.NewHandler(app.bankKeeper)).
 		AddRoute(checkpointTypes.RouterKey, checkpoint.NewHandler(app.checkpointKeeper, &app.caller)).
 		AddRoute(stakingTypes.RouterKey, staking.NewHandler(app.stakingKeeper, &app.caller)).
-		AddRoute(borTypes.RouterKey, bor.NewHandler(app.borKeeper))
+		AddRoute(borTypes.RouterKey, bor.NewHandler(app.borKeeper)).
+		AddRoute(clerkTypes.RouterKey, clerk.NewHandler(app.clerkKeeper, &app.caller))
 
 	// query routes
 	app.QueryRouter().
@@ -210,7 +233,8 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		AddRoute(bankTypes.QuerierRoute, bank.NewQuerier(app.bankKeeper)).
 		AddRoute(supplyTypes.QuerierRoute, supply.NewQuerier(app.supplyKeeper)).
 		AddRoute(checkpointTypes.QuerierRoute, checkpoint.NewQuerier(app.checkpointKeeper)).
-		AddRoute(borTypes.QuerierRoute, bor.NewQuerier(app.borKeeper))
+		AddRoute(borTypes.QuerierRoute, bor.NewQuerier(app.borKeeper)).
+		AddRoute(clerkTypes.QuerierRoute, clerk.NewQuerier(app.clerkKeeper))
 
 	// perform initialization logic
 	app.SetInitChainer(app.initChainer)
@@ -233,6 +257,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		app.keyCheckpoint,
 		app.keyStaking,
 		app.keyBor,
+		app.keyClerk,
 		app.keyParams,
 		app.tKeyParams,
 	)
@@ -259,6 +284,7 @@ func MakeCodec() *codec.Codec {
 	checkpoint.RegisterCodec(cdc)
 	staking.RegisterCodec(cdc)
 	bor.RegisterCodec(cdc)
+	clerkTypes.RegisterCodec(cdc)
 
 	cdc.Seal()
 	return cdc
@@ -273,6 +299,7 @@ func MakePulp() *authTypes.Pulp {
 	checkpoint.RegisterPulp(pulp)
 	staking.RegisterPulp(pulp)
 	bor.RegisterPulp(pulp)
+	clerkTypes.RegisterPulp(pulp)
 
 	return pulp
 }
@@ -324,46 +351,6 @@ func (app *HeimdallApp) endBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 				valUpdates[validator.ID] = val
 			}
 			// --- End update validators
-
-			// check if ACK is present in cache
-			if app.checkpointKeeper.GetCheckpointCache(ctx, checkpoint.CheckpointACKCacheKey) {
-				logger.Info("Checkpoint ACK processed in block", "CheckpointACKProcessed", app.checkpointKeeper.GetCheckpointCache(ctx, checkpoint.CheckpointACKCacheKey))
-
-				// --- Start update proposer
-
-				// increment accum
-				app.stakingKeeper.IncreamentAccum(ctx, 1)
-
-				// log new proposer
-				vs := app.stakingKeeper.GetValidatorSet(ctx)
-				newProposer := vs.GetProposer()
-				logger.Debug(
-					"New proposer selected",
-					"validator", newProposer.ID,
-					"signer", newProposer.Signer.String(),
-					"power", newProposer.Power,
-				)
-				// --- End update proposer
-
-				// clear ACK cache
-				app.checkpointKeeper.FlushACKCache(ctx)
-			}
-
-			// check if checkpoint is present in cache
-			if app.checkpointKeeper.GetCheckpointCache(ctx, checkpoint.CheckpointCacheKey) {
-				logger.Info("Checkpoint processed in block", "CheckpointProcessed", true)
-				// collect and update sigs in span
-				// Send Checkpoint to Rootchain
-				// PrepareAndSendCheckpoint(ctx, app.checkpointKeeper, app.stakingKeeper, app.caller)
-				// clear Checkpoint cache
-				app.checkpointKeeper.FlushCheckpointCache(ctx)
-			}
-
-			if app.borKeeper.GetSpanCache(ctx) {
-				logger.Info("Propose Span processed in block", "ProposeSpanProcesses", true)
-				// flush span cache
-				app.borKeeper.FlushSpanCache(ctx)
-			}
 		}
 	}
 	// convert updates from map to array
@@ -406,6 +393,7 @@ func (app *HeimdallApp) initFromGenesisState(ctx sdk.Context, genesisState Genes
 	bor.InitGenesis(ctx, app.borKeeper, genesisState.BorData)
 	checkpoint.InitGenesis(ctx, app.checkpointKeeper, genesisState.CheckpointData)
 	staking.InitGenesis(ctx, app.stakingKeeper, genesisState.StakingData)
+	clerk.InitGenesis(ctx, app.clerkKeeper, genesisState.ClerkData)
 	// validate genesis state
 	if err := ValidateGenesisState(genesisState); err != nil {
 		panic(err) // TODO find a way to do this w/o panics
@@ -413,7 +401,7 @@ func (app *HeimdallApp) initFromGenesisState(ctx sdk.Context, genesisState Genes
 
 	// increment accumulator if starting from genesis
 	if isGenesis {
-		app.stakingKeeper.IncreamentAccum(ctx, 1)
+		app.stakingKeeper.IncrementAccum(ctx, 1)
 	}
 
 	//
@@ -440,7 +428,6 @@ func (app *HeimdallApp) initFromGenesisState(ctx sdk.Context, genesisState Genes
 
 func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	logger.Info("Loading validators from genesis and setting defaults")
-	common.InitStakingLogger(&ctx)
 
 	// get genesis state
 	var genesisState GenesisState

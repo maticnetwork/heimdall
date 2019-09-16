@@ -46,7 +46,7 @@ func NewAccountKeeper(
 
 // Logger returns a module-specific logger.
 func (ak AccountKeeper) Logger(ctx sdk.Context) log.Logger {
-	return ctx.Logger().With("module", fmt.Sprintf("x/%s", authTypes.ModuleName))
+	return ctx.Logger().With("module", authTypes.ModuleName)
 }
 
 // NewAccountWithAddress implements sdk.AccountKeeper.

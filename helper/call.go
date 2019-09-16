@@ -3,7 +3,6 @@ package helper
 import (
 	"context"
 	"errors"
-	"math"
 	"math/big"
 	"strings"
 
@@ -20,20 +19,19 @@ import (
 )
 
 type IContractCaller interface {
-	GetHeaderInfo(headerID uint64) (root common.Hash, start, end, createdAt uint64, err error)
+	GetHeaderInfo(headerID uint64) (root common.Hash, start, end, createdAt uint64, proposer types.HeimdallAddress, err error)
 	GetValidatorInfo(valID types.ValidatorID) (validator types.Validator, err error)
-	CurrentChildBlock() (uint64, error)
+	GetLastChildBlock() (uint64, error)
 	CurrentHeaderBlock() (uint64, error)
 	GetBalance(address common.Address) (*big.Int, error)
 	SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte)
 	GetMainChainBlock(blockNum *big.Int) (header *ethtypes.Header, err error)
 	GetMaticChainBlock(blockNum *big.Int) (header *ethtypes.Header, err error)
 	IsTxConfirmed(tx common.Hash) bool
-	GetBlockNoFromTxHash(tx common.Hash) (blocknumber big.Int, err error)
+	GetBlockNoFromTxHash(tx common.Hash) (blocknumber *big.Int, err error)
 	SigUpdateEvent(tx common.Hash) (id uint64, newSigner common.Address, oldSigner common.Address, err error)
 
 	// bor related contracts
-	CommitSpan(voteSignBytes []byte, sigs []byte, txData []byte, proof []byte)
 	CurrentSpanNumber() (Number *big.Int)
 }
 
@@ -94,27 +92,37 @@ func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 }
 
 // GetHeaderInfo get header info from header id
-func (c *ContractCaller) GetHeaderInfo(headerID uint64) (root common.Hash, start, end, createdAt uint64, err error) {
+func (c *ContractCaller) GetHeaderInfo(headerID uint64) (
+	root common.Hash,
+	start uint64,
+	end uint64,
+	createdAt uint64,
+	proposer types.HeimdallAddress,
+	err error,
+) {
 	// get header from rootchain
-	headerIDInt := big.NewInt(0)
-	headerIDInt = headerIDInt.SetUint64(headerID)
-	headerBlock, err := c.RootChainInstance.HeaderBlock(nil, headerIDInt)
+	headerBlock, err := c.RootChainInstance.HeaderBlocks(nil, big.NewInt(0).SetUint64(headerID))
 	if err != nil {
 		Logger.Error("Unable to fetch header block from rootchain", "headerBlockIndex", headerID)
-		return root, start, end, createdAt, errors.New("Unable to fetch header block")
+		return root, start, end, createdAt, proposer, errors.New("Unable to fetch header block")
 	}
 
-	return headerBlock.Root, headerBlock.Start.Uint64(), headerBlock.End.Uint64(), headerBlock.CreatedAt.Uint64(), nil
+	return headerBlock.Root,
+		headerBlock.Start.Uint64(),
+		headerBlock.End.Uint64(),
+		headerBlock.CreatedAt.Uint64(),
+		types.BytesToHeimdallAddress(headerBlock.Proposer.Bytes()),
+		nil
 }
 
-// CurrentChildBlock fetch current child block
-func (c *ContractCaller) CurrentChildBlock() (uint64, error) {
-	currentChildBlock, err := c.RootChainInstance.CurrentChildBlock(nil)
+// GetLastChildBlock fetch current child block
+func (c *ContractCaller) GetLastChildBlock() (uint64, error) {
+	GetLastChildBlock, err := c.RootChainInstance.GetLastChildBlock(nil)
 	if err != nil {
 		Logger.Error("Could not fetch current child block from rootchain contract", "Error", err)
 		return 0, err
 	}
-	return currentChildBlock.Uint64(), nil
+	return GetLastChildBlock.Uint64(), nil
 }
 
 // CurrentHeaderBlock fetches current header block
@@ -140,21 +148,26 @@ func (c *ContractCaller) GetBalance(address common.Address) (*big.Int, error) {
 
 // GetValidatorInfo get validator info
 func (c *ContractCaller) GetValidatorInfo(valID types.ValidatorID) (validator types.Validator, err error) {
-	amount, startEpoch, endEpoch, signer, err := c.StakeManagerInstance.GetStakerDetails(nil, big.NewInt(int64(valID)))
+	amount, startEpoch, endEpoch, signer, status, err := c.StakeManagerInstance.GetStakerDetails(nil, big.NewInt(int64(valID)))
 	if err != nil {
-		Logger.Error("Error fetching validator information from stake manager", "Error", err, "ValidatorID", valID)
+		Logger.Error("Error fetching validator information from stake manager", "error", err, "validatorId", valID, "status", status)
 		return
 	}
 
-	decimals := math.Pow10(-18)
-	newAmount := decimals * float64(amount.Int64())
+	decimals18 := big.NewInt(10).Exp(big.NewInt(10), big.NewInt(18), nil)
+	if amount.Uint64() < decimals18.Uint64() {
+		err = errors.New("amount must be more than 1 token")
+		return
+	}
+	newAmount := amount.Div(amount, decimals18)
 
+	// newAmount
 	validator = types.Validator{
 		ID:         valID,
-		Power:      uint64(newAmount),
+		Power:      newAmount.Uint64(),
 		StartEpoch: startEpoch.Uint64(),
 		EndEpoch:   endEpoch.Uint64(),
-		Signer:     types.HeimdallAddress(signer),
+		Signer:     types.BytesToHeimdallAddress(signer.Bytes()),
 	}
 
 	return validator, nil
@@ -180,26 +193,30 @@ func (c *ContractCaller) GetMaticChainBlock(blockNum *big.Int) (header *ethtypes
 	return latestBlock, nil
 }
 
-// Get block number of transaction
-func (c *ContractCaller) GetBlockNoFromTxHash(tx common.Hash) (blocknumber big.Int, err error) {
-	var json *rpcTransaction
-	err = c.MainChainRPC.CallContext(context.Background(), &json, "eth_getTransactionByHash", tx)
-	if err != nil {
-		return
+// GetBlockNoFromTxHash gets block number of transaction
+func (c *ContractCaller) GetBlockNoFromTxHash(tx common.Hash) (*big.Int, error) {
+	var rpcTx rpcTransaction
+	if err := c.MainChainRPC.CallContext(context.Background(), &rpcTx, "eth_getTransactionByHash", tx); err != nil {
+		return nil, err
 	}
-	var blkNum big.Int
-	blockNumberPtr, ok := blkNum.SetString(*json.BlockNumber, 0)
+
+	if rpcTx.BlockNumber == nil {
+		return nil, errors.New("No tx found")
+	}
+
+	blkNum := big.NewInt(0)
+	blkNum, ok := blkNum.SetString(*rpcTx.BlockNumber, 0)
 	if !ok {
-		return blocknumber, errors.New("unable to set string")
+		return nil, errors.New("unable to set string")
 	}
-	return *blockNumberPtr, nil
+	return blkNum, nil
 }
 
-// Check finality
+// IsTxConfirmed is tx confirmed
 func (c *ContractCaller) IsTxConfirmed(tx common.Hash) bool {
 	txBlk, err := c.GetBlockNoFromTxHash(tx)
 	if err != nil {
-		Logger.Error("error getting block number from txhash", "Error", err)
+		Logger.Error("Error getting block number from txhash", "Error", err)
 		return false
 	}
 	Logger.Debug("Tx included in block", "block", txBlk.Uint64(), "tx", tx)

@@ -5,11 +5,7 @@ import (
 
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/tendermint/tendermint/libs/log"
-
-	"github.com/maticnetwork/heimdall/helper"
 )
-
-var defaultForcePushInterval = helper.GetConfig().MaxCheckpointLength * 2 // in seconds (1024 * 2 seconds)
 
 var bridgeDB *leveldb.DB
 var bridgeDBOnce sync.Once
@@ -34,6 +30,8 @@ func getBridgeDBInstance(filePath string) *leveldb.DB {
 // CloseBridgeDBInstance closes bridge-db instance
 func closeBridgeDBInstance() {
 	bridgeDBCloseOnce.Do(func() {
-		bridgeDB.Close()
+		if bridgeDB != nil {
+			bridgeDB.Close()
+		}
 	})
 }

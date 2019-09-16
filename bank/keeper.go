@@ -7,6 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
+	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/maticnetwork/heimdall/auth"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
@@ -60,6 +61,11 @@ func NewBaseKeeper(
 		ak:             ak,
 		BaseSendKeeper: NewBaseSendKeeper(ak, ps, codespace),
 	}
+}
+
+// Logger returns a module-specific logger
+func (keeper BaseKeeper) Logger(ctx sdk.Context) log.Logger {
+	return ctx.Logger().With("module", bankTypes.ModuleName)
 }
 
 // SetCoins sets the coins at the addr.

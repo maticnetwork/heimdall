@@ -95,11 +95,13 @@ func checkpointCountHandlerFn(
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
+
 		// The query will return empty if there is no data
 		if len(res) == 0 {
 			rest.WriteErrorResponse(w, http.StatusNoContent, errors.New("no content found for requested key").Error())
 			return
 		}
+
 		ackCount, err := strconv.ParseInt(string(res), 10, 64)
 		if err != nil {
 			RestLogger.Error("Unable to parse int", "Response", res, "Error", err)
@@ -222,7 +224,7 @@ func noackHandlerFn(
 	cliCtx context.CLIContext,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		res, err := cliCtx.QueryStore(checkpoint.CheckpointNoACKCacheKey, "checkpoint")
+		res, err := cliCtx.QueryStore(checkpoint.LastNoACKKey, "checkpoint")
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
@@ -268,7 +270,7 @@ func overviewHandlerFunc(
 
 		// ACk count
 		var ackCountInt int64
-		ackcount, err := cliCtx.QueryStore(checkpoint.ACKCountKey, "staking")
+		ackcount, err := cliCtx.QueryStore(checkpoint.ACKCountKey, "checkpoint")
 		if err == nil {
 			ackCountInt, err = strconv.ParseInt(string(ackcount), 10, 64)
 			if err != nil {
@@ -306,7 +308,7 @@ func overviewHandlerFunc(
 
 		// last no ack
 		var lastNoACKTime int64
-		lastNoACK, err := cliCtx.QueryStore(checkpoint.CheckpointNoACKCacheKey, "checkpoint")
+		lastNoACK, err := cliCtx.QueryStore(checkpoint.LastNoACKKey, "checkpoint")
 		if err == nil {
 			lastNoACKTime, err = strconv.ParseInt(string(lastNoACK), 10, 64)
 		}
@@ -348,27 +350,34 @@ func latestCheckpointHandlerFunc(
 	cliCtx context.CLIContext,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ackCount, err := cliCtx.QueryStore(checkpoint.ACKCountKey, "staking")
+		_ackCount, err := cliCtx.QueryStore(checkpoint.ACKCountKey, "checkpoint")
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		ackCountInt, err := strconv.ParseInt(string(ackCount), 10, 64)
+
+		ackCount, err := strconv.ParseUint(string(_ackCount), 10, 64)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		RestLogger.Debug("ACK Count fetched", "ACKCount", ackCountInt)
-		lastCheckpointKey := helper.GetConfig().ChildBlockInterval * uint64(ackCountInt)
-		RestLogger.Debug("Last checkpoint key generated", "LastCheckpointKey", lastCheckpointKey, "min", helper.GetConfig().ChildBlockInterval)
+
+		RestLogger.Debug("ACK Count fetched", "ackCount", ackCount)
+		lastCheckpointKey := helper.GetConfig().ChildBlockInterval * ackCount
+		RestLogger.Debug("Last checkpoint key generated",
+			"lastCheckpointKey", lastCheckpointKey,
+			"min", helper.GetConfig().ChildBlockInterval,
+		)
+
 		res, err := cliCtx.QueryStore(checkpoint.GetHeaderKey(lastCheckpointKey), "checkpoint")
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
+
 		// the query will return empty if there is no data
 		if len(res) == 0 {
-			rest.WriteErrorResponse(w, http.StatusNotFound, errors.New("no content found for requested key").Error())
+			rest.WriteErrorResponse(w, http.StatusNotFound, errors.New("No content found for requested key").Error())
 			return
 		}
 

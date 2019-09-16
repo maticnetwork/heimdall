@@ -21,6 +21,7 @@ import (
 	"github.com/tendermint/tendermint/libs/common"
 	httpClient "github.com/tendermint/tendermint/rpc/client"
 
+	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/bor"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/helper"
@@ -188,7 +189,7 @@ func (s *SpanService) commit() {
 	tags = append(tags, fmt.Sprintf("bor-sync-id>%v", currentSpanNumber))
 	tags = append(tags, "action='propose-span'")
 
-	s.Logger.Info("[COMMIT SPAN] Querying heimdall span txs",
+	s.Logger.Debug("[COMMIT SPAN] Querying heimdall span txs",
 		"currentSpanNumber", currentSpanNumber,
 		"tags", strings.Join(tags, " AND "),
 	)
@@ -200,15 +201,12 @@ func (s *SpanService) commit() {
 		return
 	}
 
-	s.Logger.Info("[COMMIT SPAN] Found new span txs",
+	s.Logger.Debug("[COMMIT SPAN] Found new span txs",
 		"length", len(txs),
 	)
 
 	// loop through tx
 	for _, tx := range txs {
-		s.Logger.Info("[COMMIT SPAN] Span tx",
-			"tx", tx,
-		)
 		txHash, err := hex.DecodeString(tx.TxHash)
 		if err != nil {
 			s.Logger.Error("Error while searching txs", "error", err)
@@ -327,7 +325,7 @@ func (s *SpanService) fetchNextSpanDetails(id uint64, start uint64) (msg bor.Msg
 // broadcastToBor broadcasts to bor
 func (s *SpanService) broadcastToBor(height int64, txHash []byte) error {
 	// extraData
-	votes, sigs, chainID, err := fetchVotes(height, s.httpClient)
+	votes, sigs, chainID, err := FetchVotes(height, s.httpClient)
 	if err != nil {
 		s.Logger.Error("Error fetching votes", "height", height)
 		return err
@@ -348,7 +346,7 @@ func (s *SpanService) broadcastToBor(height int64, txHash []byte) error {
 	encodedData := encodeCommitSpanData(
 		helper.GetVoteBytes(votes, chainID),
 		sigs,
-		tx.Tx[4:],
+		tx.Tx[authTypes.PulpHashLength:],
 		proof,
 	)
 

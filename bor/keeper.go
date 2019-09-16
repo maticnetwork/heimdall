@@ -8,10 +8,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
-	cmn "github.com/maticnetwork/heimdall/common"
+	borTypes "github.com/maticnetwork/heimdall/bor/types"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/types"
+	"github.com/tendermint/tendermint/libs/log"
 )
 
 var (
@@ -65,6 +66,11 @@ func (k Keeper) Codespace() sdk.CodespaceType {
 	return k.codespace
 }
 
+// Logger returns a module-specific logger
+func (k Keeper) Logger(ctx sdk.Context) log.Logger {
+	return ctx.Logger().With("module", borTypes.ModuleName)
+}
+
 // GetSpanKey appends prefix to start block
 func GetSpanKey(startBlock uint64) []byte {
 	return append(SpanPrefixKey, []byte(strconv.FormatUint(startBlock, 10))...)
@@ -75,14 +81,12 @@ func (k *Keeper) AddNewSpan(ctx sdk.Context, span types.Span) error {
 	store := ctx.KVStore(k.storeKey)
 	out, err := k.cdc.MarshalBinaryBare(span)
 	if err != nil {
-		cmn.BorLogger.Error("Error marshalling span", "error", err)
+		k.Logger(ctx).Error("Error marshalling span", "error", err)
 		return err
 	}
 	store.Set(GetSpanKey(span.StartBlock), out)
 	// update last span
 	k.UpdateLastSpan(ctx, span.StartBlock)
-	// set cache for span -- which is to be cleared in end block
-	k.SetSpanCache(ctx)
 	return nil
 }
 
@@ -91,7 +95,7 @@ func (k *Keeper) AddNewRawSpan(ctx sdk.Context, span types.Span) error {
 	store := ctx.KVStore(k.storeKey)
 	out, err := k.cdc.MarshalBinaryBare(span)
 	if err != nil {
-		cmn.BorLogger.Error("Error marshalling span", "error", err)
+		k.Logger(ctx).Error("Error marshalling span", "error", err)
 		return err
 	}
 	store.Set(GetSpanKey(span.StartBlock), out)
@@ -136,7 +140,7 @@ func (k *Keeper) GetLastSpan(ctx sdk.Context) (lastSpan types.Span, err error) {
 		// get last span start block
 		lastSpanStartInt, err := strconv.Atoi(string(store.Get(LastSpanStartBlockKey)))
 		if err != nil {
-			cmn.BorLogger.Error("Unable to convert start block to int")
+			k.Logger(ctx).Error("Unable to convert start block to int")
 			return lastSpan, nil
 		}
 		lastSpanStart = uint64(lastSpanStartInt)
@@ -191,7 +195,7 @@ func (k *Keeper) SelectNextProducers(ctx sdk.Context) (vals []types.Validator, e
 	}
 
 	// select next producers using seed
-	newProducersIds, err := SelectNextProducers(cmn.BorLogger, blockHeader.Hash(), currVals)
+	newProducersIds, err := SelectNextProducers(k.Logger(ctx), blockHeader.Hash(), currVals)
 	if err != nil {
 		return vals, err
 	}

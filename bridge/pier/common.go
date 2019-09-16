@@ -3,6 +3,7 @@ package pier
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -16,18 +17,18 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
-
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/maticnetwork/heimdall/helper"
-	hmtypes "github.com/maticnetwork/heimdall/types"
-	rest "github.com/maticnetwork/heimdall/types/rest"
+	"github.com/pkg/errors"
 	"github.com/tendermint/tendermint/libs/log"
 	httpClient "github.com/tendermint/tendermint/rpc/client"
 	tmTypes "github.com/tendermint/tendermint/types"
+
+	"github.com/maticnetwork/heimdall/helper"
+	hmtypes "github.com/maticnetwork/heimdall/types"
+	rest "github.com/maticnetwork/heimdall/types/rest"
 )
 
 const (
@@ -74,19 +75,24 @@ func init() {
 func isProposer(cliCtx cliContext.CLIContext) bool {
 	var proposers []hmtypes.Validator
 	count := uint64(1)
-	result, err := FetchFromAPI(cliCtx, fmt.Sprintf(ProposersURL, strconv.FormatUint(count, 10)))
+	result, err := FetchFromAPI(cliCtx,
+		GetHeimdallServerEndpoint(fmt.Sprintf(ProposersURL, strconv.FormatUint(count, 10))),
+	)
 	if err != nil {
 		Logger.Error("Error fetching proposers", "error", err)
 		return false
 	}
+
 	err = json.Unmarshal(result.Result, &proposers)
 	if err != nil {
 		Logger.Error("error unmarshalling proposer slice", "error", err)
 		return false
 	}
+
 	if bytes.Equal(proposers[0].Signer.Bytes(), helper.GetAddress()) {
 		return true
 	}
+
 	return false
 }
 
@@ -252,6 +258,8 @@ func FetchFromAPI(cliCtx cliContext.CLIContext, URL string) (result rest.Respons
 		return result, err
 	}
 	defer resp.Body.Close()
+
+	// response
 	if resp.StatusCode == 200 {
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
@@ -264,10 +272,10 @@ func FetchFromAPI(cliCtx cliContext.CLIContext, URL string) (result rest.Respons
 			return result, err
 		}
 		return response, nil
-	} else {
-		Logger.Error("Error while fetching data from URL", "status", resp.StatusCode, "URL", URL)
-		return result, err
 	}
+
+	Logger.Debug("Error while fetching data from URL", "status", resp.StatusCode, "URL", URL)
+	return result, fmt.Errorf("Error while fetching data from url: %v, status: %v", URL, resp.StatusCode)
 }
 
 // WaitForOneEvent subscribes to a websocket event for the given
@@ -276,15 +284,21 @@ func FetchFromAPI(cliCtx cliContext.CLIContext, URL string) (result rest.Respons
 //
 // This handles subscribing and unsubscribing under the hood
 func WaitForOneEvent(tx tmTypes.Tx, client *httpClient.HTTP) (tmTypes.TMEventData, error) {
-	const subscriber = "helpers"
 	ctx, cancel := context.WithTimeout(context.Background(), CommitTimeout)
 	defer cancel()
+
+	// subscriber
+	subscriber := hex.EncodeToString(tx.Hash())
+
+	// query
 	query := tmTypes.EventQueryTxFor(tx).String()
+
 	// register for the next event of this type
 	eventCh, err := client.Subscribe(ctx, subscriber, query)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to subscribe")
 	}
+
 	// make sure to unregister after the test is over
 	defer client.UnsubscribeAll(ctx, subscriber)
 	select {
@@ -295,8 +309,8 @@ func WaitForOneEvent(tx tmTypes.Tx, client *httpClient.HTTP) (tmTypes.TMEventDat
 	}
 }
 
-// fetchVotes fetches votes and extracts sigs from it
-func fetchVotes(
+// FetchVotes fetches votes and extracts sigs from it
+func FetchVotes(
 	height int64,
 	client *httpClient.HTTP,
 ) (votes []*tmTypes.CommitSig, sigs []byte, chainID string, err error) {

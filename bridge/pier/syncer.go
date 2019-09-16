@@ -11,7 +11,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	ethCommon "github.com/ethereum/go-ethereum/common"
@@ -22,14 +21,15 @@ import (
 	"github.com/tendermint/tendermint/libs/common"
 	httpClient "github.com/tendermint/tendermint/rpc/client"
 
-	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/checkpoint"
+	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
 	"github.com/maticnetwork/heimdall/contracts/depositmanager"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
+	"github.com/maticnetwork/heimdall/contracts/statesyncer"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
-	hmtypes "github.com/maticnetwork/heimdall/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 const (
@@ -63,9 +63,6 @@ type Syncer struct {
 	HeaderChannel chan *types.Header
 	// cancel function for poll/subscription
 	cancelSubscription context.CancelFunc
-
-	// tx encoder
-	txEncoder authTypes.TxBuilder
 
 	// header listener subscription
 	cancelHeaderProcess context.CancelFunc
@@ -124,7 +121,6 @@ func NewSyncer(cdc *codec.Codec, queueConnector *QueueConnector, httpClient *htt
 		RootChainInstance:    rootchainInstance,
 		StakeManagerInstance: stakeManagerInstance,
 		HeaderChannel:        make(chan *types.Header),
-		txEncoder:            authTypes.NewTxBuilderFromCLI().WithTxEncoder(helper.GetTxEncoder()),
 	}
 
 	syncer.BaseService = *common.NewBaseService(logger, ChainSyncer, syncer)
@@ -253,11 +249,19 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 		}
 	}
 
+	// confirmation
+	toBlock := newHeader.Number
+	confirmationBlocks := big.NewInt(0).SetUint64(helper.GetConfig().ConfirmationBlocks)
+	confirmationBlocks = confirmationBlocks.Add(confirmationBlocks, big.NewInt(1))
+	if toBlock.Uint64() > confirmationBlocks.Uint64() {
+		toBlock = toBlock.Sub(toBlock, confirmationBlocks)
+	}
+
 	// set last block to storage
-	syncer.storageClient.Put([]byte(lastBlockKey), []byte(newHeader.Number.String()), nil)
+	syncer.storageClient.Put([]byte(lastBlockKey), []byte(toBlock.String()), nil)
 
 	// debug log
-	syncer.Logger.Debug("Processing header", "fromBlock", fromBlock, "toBlock", newHeader.Number)
+	syncer.Logger.Debug("Processing header", "fromBlock", fromBlock, "toBlock", toBlock)
 
 	if newHeader.Number.Int64()-fromBlock > 250 {
 		// return if diff > 250
@@ -265,12 +269,12 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 	}
 
 	// log
-	syncer.Logger.Info("Querying event logs", "fromBlock", fromBlock, "toBlock", newHeader.Number)
+	syncer.Logger.Info("Querying event logs", "fromBlock", fromBlock, "toBlock", toBlock)
 
 	// draft a query
 	query := ethereum.FilterQuery{
 		FromBlock: big.NewInt(fromBlock),
-		ToBlock:   newHeader.Number,
+		ToBlock:   toBlock,
 		Addresses: []ethCommon.Address{
 			helper.GetRootChainAddress(),
 			helper.GetStakeManagerAddress(),
@@ -302,21 +306,19 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 					syncer.processUnstakeInitEvent(selectedEvent.Name, abiObject, &vLog)
 				case "SignerChange":
 					syncer.processSignerChangeEvent(selectedEvent.Name, abiObject, &vLog)
+				case "ReStaked":
+					syncer.processReStakedEvent(selectedEvent.Name, abiObject, &vLog)
+				case "Jailed":
+					syncer.processJailedEvent(selectedEvent.Name, abiObject, &vLog)
 				case "Deposit":
 					syncer.processDepositEvent(selectedEvent.Name, abiObject, &vLog)
+				case "StateSynced":
+					syncer.processDepositEvent(selectedEvent.Name, abiObject, &vLog)
 				case "Withdraw":
-					// syncer.processWithdrawEvent(selectedEvent.Name, abiObject, &vLog)
+					syncer.processWithdrawEvent(selectedEvent.Name, abiObject, &vLog)
 				}
 			}
 		}
-	}
-}
-
-func (syncer *Syncer) sendTx(eventName string, msg sdk.Msg) {
-	_, err := helper.BroadcastMsgs(syncer.cliCtx, []sdk.Msg{msg})
-	if err != nil {
-		logEventBroadcastTxError(syncer.Logger, eventName, err)
-		return
 	}
 }
 
@@ -332,11 +334,11 @@ func (syncer *Syncer) processCheckpointEvent(eventName string, abiObject *abi.AB
 			"end", event.End,
 			"root", "0x"+hex.EncodeToString(event.Root[:]),
 			"proposer", event.Proposer.Hex(),
-			"headerNumber", event.Number,
+			"headerNumber", event.HeaderBlockId,
 		)
 
 		// create msg checkpoint ack message
-		msg := checkpoint.NewMsgCheckpointAck(helper.GetFromAddress(syncer.cliCtx), event.Number.Uint64())
+		msg := checkpoint.NewMsgCheckpointAck(helper.GetFromAddress(syncer.cliCtx), event.HeaderBlockId.Uint64())
 		syncer.queueConnector.BroadcastToHeimdall(msg)
 	}
 }
@@ -346,17 +348,26 @@ func (syncer *Syncer) processStakedEvent(eventName string, abiObject *abi.ABI, v
 	if err := UnpackLog(abiObject, event, eventName, vLog); err != nil {
 		logEventParseError(syncer.Logger, eventName, err)
 	} else {
-		// TOOD validator staked
 		syncer.Logger.Debug(
 			"New event found",
 			"event", eventName,
 			"validator", event.User.Hex(),
 			"ID", event.ValidatorId,
-			"activatonEpoch", event.ActivatonEpoch,
+			"activatonEpoch", event.ActivationEpoch,
 			"amount", event.Amount,
 		)
-		if bytes.Compare(event.User.Bytes(), helper.GetPubKey().Address().Bytes()) == 0 {
-			msg := staking.NewMsgValidatorJoin(helper.GetFromAddress(syncer.cliCtx), event.ValidatorId.Uint64(), hmtypes.NewPubKey(helper.GetPubKey().Bytes()), vLog.TxHash)
+
+		// compare user to get address
+		if bytes.Compare(event.User.Bytes(), helper.GetAddress()) == 0 {
+			pubkey := helper.GetPubKey()
+			msg := staking.NewMsgValidatorJoin(
+				hmTypes.BytesToHeimdallAddress(event.User.Bytes()),
+				event.ValidatorId.Uint64(),
+				hmTypes.NewPubKey(pubkey[:]),
+				hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
+			)
+
+			// process staked
 			syncer.queueConnector.BroadcastToHeimdall(msg)
 		}
 	}
@@ -367,7 +378,6 @@ func (syncer *Syncer) processUnstakeInitEvent(eventName string, abiObject *abi.A
 	if err := UnpackLog(abiObject, event, eventName, vLog); err != nil {
 		logEventParseError(syncer.Logger, eventName, err)
 	} else {
-		// TOOD validator staked
 		syncer.Logger.Debug(
 			"New event found",
 			"event", eventName,
@@ -376,8 +386,15 @@ func (syncer *Syncer) processUnstakeInitEvent(eventName string, abiObject *abi.A
 			"deactivatonEpoch", event.DeactivationEpoch,
 			"amount", event.Amount,
 		)
-		// send validator exit message
-		msg := staking.NewMsgValidatorExit(helper.GetFromAddress(syncer.cliCtx), event.ValidatorId.Uint64(), vLog.TxHash)
+
+		// msg validator exit
+		msg := staking.NewMsgValidatorExit(
+			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
+			event.ValidatorId.Uint64(),
+			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
+		)
+
+		// broadcast heimdall
 		syncer.queueConnector.BroadcastToHeimdall(msg)
 	}
 }
@@ -395,13 +412,75 @@ func (syncer *Syncer) processSignerChangeEvent(eventName string, abiObject *abi.
 			"oldSigner", event.OldSigner.Hex(),
 		)
 
-		// TODO
-		// if bytes.Compare(event.NewSigner.Bytes(), helper.GetPubKey().Address().Bytes()) == 0 {
-		// 	msg := staking.NewMsgValidatorUpdate(event.ValidatorId.Uint64(), hmtypes.NewPubKey(helper.GetPubKey().Bytes()), vLog.TxHash)
-		// 	syncer.queueConnector.BroadcastToHeimdall(msg)
-		// }
+		// signer change
+		if bytes.Compare(event.NewSigner.Bytes(), helper.GetAddress()) == 0 {
+			pubkey := helper.GetPubKey()
+			msg := staking.NewMsgValidatorUpdate(
+				hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
+				event.ValidatorId.Uint64(),
+				hmTypes.NewPubKey(pubkey[:]),
+				hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
+			)
+
+			// process signer update
+			syncer.queueConnector.BroadcastToHeimdall(msg)
+		}
 	}
 }
+
+func (syncer *Syncer) processReStakedEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
+	event := new(stakemanager.StakemanagerStaked)
+	if err := UnpackLog(abiObject, event, eventName, vLog); err != nil {
+		logEventParseError(syncer.Logger, eventName, err)
+	} else {
+		syncer.Logger.Debug(
+			"New event found",
+			"event", eventName,
+			"user", event.User.Hex(),
+			"validatorId", event.ValidatorId,
+			"activationEpoch", event.ActivationEpoch,
+			"amount", event.Amount,
+		)
+
+		// // msg validator exit
+		// msg := staking.NewMsgValidatorExit(
+		// 	hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
+		// 	event.ValidatorId.Uint64(),
+		// 	vLog.TxHash,
+		// )
+
+		// // broadcast heimdall
+		// syncer.queueConnector.BroadcastToHeimdall(msg)
+	}
+}
+
+func (syncer *Syncer) processJailedEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
+	event := new(stakemanager.StakemanagerJailed)
+	if err := UnpackLog(abiObject, event, eventName, vLog); err != nil {
+		logEventParseError(syncer.Logger, eventName, err)
+	} else {
+		syncer.Logger.Debug(
+			"New event found",
+			"event", eventName,
+			"validatorID", event.ValidatorId,
+			"exitEpoch", event.ExitEpoch,
+		)
+
+		// // msg validator exit
+		// msg := staking.NewMsgValidatorExit(
+		// 	hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
+		// 	event.ValidatorId.Uint64(),
+		// 	vLog.TxHash,
+		// )
+
+		// // broadcast heimdall
+		// syncer.queueConnector.BroadcastToHeimdall(msg)
+	}
+}
+
+//
+// Process deposit event
+//
 
 func (syncer *Syncer) processDepositEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
 	event := new(depositmanager.DepositmanagerDeposit)
@@ -419,6 +498,62 @@ func (syncer *Syncer) processDepositEvent(eventName string, abiObject *abi.ABI, 
 		// TODO dispatch to heimdall
 	}
 }
+
+//
+// Process withdraw event
+//
+
+func (syncer *Syncer) processWithdrawEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
+	event := new(depositmanager.DepositmanagerDeposit)
+	if err := UnpackLog(abiObject, event, eventName, vLog); err != nil {
+		logEventParseError(syncer.Logger, eventName, err)
+	} else {
+		syncer.Logger.Debug(
+			"New event found",
+			"event", eventName,
+			"user", event.User,
+			"depositCount", event.DepositCount,
+			"token", event.Token.String(),
+		)
+
+		// TODO dispatch to heimdall
+	}
+}
+
+//
+// Process state synced event
+//
+
+func (syncer *Syncer) processStateSyncedEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
+	event := new(statesyncer.StatesyncerStateSynced)
+	if err := UnpackLog(abiObject, event, eventName, vLog); err != nil {
+		logEventParseError(syncer.Logger, eventName, err)
+	} else {
+		syncer.Logger.Debug(
+			"New event found",
+			"event", eventName,
+			"id", event.Id,
+			"contract", event.ContractAddress,
+			"data", hex.EncodeToString(event.Data),
+		)
+
+		// TODO dispatch to heimdall
+		msg := clerkTypes.NewMsgStateRecord(
+			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
+			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
+			event.Id.Uint64(),
+			hmTypes.BytesToHeimdallAddress(event.ContractAddress.Bytes()),
+			event.Data,
+		)
+
+		// broadcast to heimdall
+		syncer.queueConnector.BroadcastToHeimdall(msg)
+	}
+}
+
+//
+// Utils
+//
 
 // EventByID looks up a event by the topic id
 func EventByID(abiObject *abi.ABI, sigdata []byte) *abi.Event {

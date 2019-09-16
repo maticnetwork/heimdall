@@ -16,6 +16,7 @@ import (
 	bank "github.com/maticnetwork/heimdall/bank/client/rest"
 	bor "github.com/maticnetwork/heimdall/bor/rest"
 	checkpoint "github.com/maticnetwork/heimdall/checkpoint/rest"
+	clerk "github.com/maticnetwork/heimdall/clerk/client/rest"
 	tx "github.com/maticnetwork/heimdall/client/tx"
 	staking "github.com/maticnetwork/heimdall/staking/rest"
 )
@@ -61,6 +62,7 @@ func RegisterRoutes(rs *lcd.RestServer) {
 	checkpoint.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
 	staking.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
 	bor.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
+	clerk.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
 
 	// list all paths
 	// rs.Mux.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {

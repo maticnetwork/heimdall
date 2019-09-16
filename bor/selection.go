@@ -20,6 +20,8 @@ func SelectNextProducers(logger tmlog.Logger, blkHash common.Hash, currentVals [
 	return selectedIDs[:NumProducers], err
 }
 
+// converts validator power to slots
+// TODO remove 2nd loop
 func convertToSlots(vals []types.Validator) (validatorIndices []uint64) {
 	for _, val := range vals {
 		for val.Power > SlotCost {

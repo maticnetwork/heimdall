@@ -29,6 +29,7 @@ import (
 	bank "github.com/maticnetwork/heimdall/bank/client/cli"
 	bor "github.com/maticnetwork/heimdall/bor/cli"
 	checkpoint "github.com/maticnetwork/heimdall/checkpoint/cli"
+	clerk "github.com/maticnetwork/heimdall/clerk/client/cli"
 	hmTxCli "github.com/maticnetwork/heimdall/client/tx"
 	"github.com/maticnetwork/heimdall/helper"
 	staking "github.com/maticnetwork/heimdall/staking/cli"
@@ -138,6 +139,8 @@ func queryCmd(cdc *amino.Codec) *cobra.Command {
 		checkpoint.GetQueryCmd(cdc),
 		// staking related get commands
 		staking.GetQueryCmd(cdc),
+		// clerk related get commands
+		clerk.GetQueryCmd(cdc),
 	)
 
 	return queryCmd
@@ -163,6 +166,8 @@ func txCmd(cdc *amino.Codec) *cobra.Command {
 		checkpoint.GetTxCmd(cdc),
 		// get staking tx commands
 		staking.GetTxCmd(cdc),
+		// get clerk tx commands
+		clerk.GetTxCmd(cdc),
 	)
 
 	return txCmd

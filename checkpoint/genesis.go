@@ -11,8 +11,6 @@ import (
 // GenesisState is the checkpoint state that must be provided at genesis.
 type GenesisState struct {
 	BufferedCheckpoint *hmTypes.CheckpointBlockHeader  `json:"buffered_checkpoint" yaml:"buffered_checkpoint"`
-	CheckpointCache    bool                            `json:"checkpoint_cache" yaml:"checkpoint_cache"`
-	CheckpointACKCache bool                            `json:"ack_cache" yaml:"ack_cache"`
 	LastNoACK          uint64                          `json:"last_no_ack" yaml:"last_no_ack"`
 	AckCount           uint64                          `json:"ack_count" yaml:"ack_count"`
 	Headers            []hmTypes.CheckpointBlockHeader `json:"headers" yaml:"headers"`
@@ -21,16 +19,12 @@ type GenesisState struct {
 // NewGenesisState creates a new genesis state.
 func NewGenesisState(
 	bufferedCheckpoint *hmTypes.CheckpointBlockHeader,
-	checkpointCache bool,
-	checkpointACKCache bool,
 	lastNoACK uint64,
 	ackCount uint64,
 	headers []hmTypes.CheckpointBlockHeader,
 ) GenesisState {
 	return GenesisState{
 		BufferedCheckpoint: bufferedCheckpoint,
-		CheckpointCache:    checkpointCache,
-		CheckpointACKCache: checkpointACKCache,
 		LastNoACK:          lastNoACK,
 		AckCount:           ackCount,
 		Headers:            headers,
@@ -44,14 +38,6 @@ func DefaultGenesisState() GenesisState {
 
 // InitGenesis sets distribution information for genesis.
 func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
-	if data.CheckpointCache {
-		keeper.SetCheckpointCache(ctx, DefaultValue)
-	}
-
-	if data.CheckpointACKCache {
-		keeper.SetCheckpointAckCache(ctx, DefaultValue)
-	}
-
 	// Set last no-ack
 	if data.LastNoACK > 0 {
 		keeper.SetLastNoAck(ctx, data.LastNoACK)
@@ -83,8 +69,6 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) GenesisState {
 	bufferedCheckpoint, _ := keeper.GetCheckpointFromBuffer(ctx)
 	return NewGenesisState(
 		bufferedCheckpoint,
-		keeper.GetCheckpointCache(ctx, CheckpointCacheKey),
-		keeper.GetCheckpointCache(ctx, CheckpointACKCacheKey),
 		keeper.GetLastNoAck(ctx),
 		keeper.GetACKCount(ctx),
 		keeper.GetCheckpointHeaders(ctx),
