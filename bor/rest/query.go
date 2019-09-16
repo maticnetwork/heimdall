@@ -295,13 +295,17 @@ func prepareNextSpanHandlerFn(
 			return
 		}
 		var _validatorSet types.ValidatorSet
-		cdc.UnmarshalBinaryBare(res, &_validatorSet)
-		var validators []types.MinimalVal
+		err = cdc.UnmarshalBinaryBare(res, &_validatorSet)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusNoContent, errors.New("unable to unmarshall binary bare").Error())
+			return
+		}
+		var currentValidators []types.Validator
 
 		for _, val := range _validatorSet.Validators {
 			if val.IsCurrentValidator(uint64(ackCount)) {
 				// append if validator is current valdiator
-				validators = append(validators, (*val).MinimalVal())
+				currentValidators = append(currentValidators, *val)
 			}
 		}
 
@@ -328,12 +332,25 @@ func prepareNextSpanHandlerFn(
 			return
 		}
 		// fetch block header
-		_, err = contractCaller.GetMainChainBlock(lastEthHeader.Add(lastEthHeader, big.NewInt(1)))
+		blockHeader, err := contractCaller.GetMainChainBlock(lastEthHeader.Add(lastEthHeader, big.NewInt(1)))
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, errors.New("error fetching block from mainchain").Error())
 			return
 		}
-		// bor.SelectNextProducers(nil, blockHeader.Hash(), validators, producerCount)
+
+		selectedProducerIndices, err := bor.SelectNextProducers(nil, blockHeader.Hash(), currentValidators, producerCount)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, errors.New("error selecting producers from validator set").Error())
+			return
+		}
+		var selectedProducers []types.Validator
+		for _, ID := range selectedProducerIndices {
+			for _, val := range currentValidators {
+				if val.ID.Uint64() == ID {
+					selectedProducers = append(selectedProducers, val)
+				}
+			}
+		}
 
 		// draft a propose span message
 		msg := bor.NewMsgProposeSpan(
@@ -341,8 +358,8 @@ func prepareNextSpanHandlerFn(
 			types.HexToHeimdallAddress(proposer),
 			startBlock,
 			startBlock+spanDuration-1,
-			validators,
-			validators,
+			types.ValToMinVal(currentValidators),
+			types.ValToMinVal(selectedProducers),
 			chainID,
 		)
 		result, err := json.Marshal(&msg)
