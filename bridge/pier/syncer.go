@@ -279,6 +279,7 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 			helper.GetRootChainAddress(),
 			helper.GetStakeManagerAddress(),
 			helper.GetDepositManagerAddress(),
+			helper.GetStateSenderAddress(),
 		},
 	}
 

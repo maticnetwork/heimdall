@@ -143,6 +143,13 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		tKeyParams:    sdk.NewTransientStoreKey(subspace.TStoreKey),
 	}
 
+	contractCallerObj, err := helper.NewContractCaller()
+	if err != nil {
+		cmn.Exit(err.Error())
+	}
+
+	app.caller = contractCallerObj
+
 	// define param keeper
 	app.paramsKeeper = params.NewKeeper(cdc, app.keyParams, app.tKeyParams)
 
@@ -202,6 +209,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		app.keyBor,
 		app.paramsKeeper.Subspace(borTypes.DefaultParamspace),
 		common.DefaultCodespace,
+		app.caller,
 	)
 
 	app.clerkKeeper = clerk.NewKeeper(
@@ -210,13 +218,6 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		app.paramsKeeper.Subspace(clerkTypes.DefaultParamspace),
 		common.DefaultCodespace,
 	)
-
-	contractCallerObj, err := helper.NewContractCaller()
-	if err != nil {
-		cmn.Exit(err.Error())
-	}
-
-	app.caller = contractCallerObj
 
 	// register message routes
 	app.Router().

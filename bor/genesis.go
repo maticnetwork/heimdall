@@ -10,21 +10,23 @@ import (
 type GenesisState struct {
 	SprintDuration uint64        `json:"sprint_duration" yaml:"sprint_duration"` // sprint duration
 	SpanDuration   uint64        `json:"span_duration" yaml:"span_duration"`     // span duration ie number of blocks for which val set is frozen on heimdall
+	ProducerCount  uint64        `json:"producer_count" yaml:"producer_count"`   // producer count per span
 	Spans          []*types.Span `json:"spans" yaml:"spans"`                     // list of spans
 }
 
 // NewGenesisState creates a new genesis state.
-func NewGenesisState(sprintDuration uint64, spanDuration uint64, spans []*types.Span) GenesisState {
+func NewGenesisState(sprintDuration uint64, spanDuration uint64, producerCount uint64, spans []*types.Span) GenesisState {
 	return GenesisState{
 		SprintDuration: sprintDuration,
 		SpanDuration:   spanDuration,
+		ProducerCount:  producerCount,
 		Spans:          spans,
 	}
 }
 
 // DefaultGenesisState returns a default genesis state
 func DefaultGenesisState() GenesisState {
-	return NewGenesisState(DefaultSprintDuration, DefaultSpanDuration, make([]*types.Span, 0))
+	return NewGenesisState(DefaultSprintDuration, DefaultSpanDuration, DefaultProducerCount, make([]*types.Span, 0))
 }
 
 // InitGenesis sets distribution information for genesis.
@@ -47,6 +49,7 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) GenesisState {
 	return NewGenesisState(
 		keeper.GetSprintDuration(ctx),
 		keeper.GetSpanDuration(ctx),
+		keeper.GetProducerCount(ctx),
 		// TODO think better way to export all spans
 		keeper.GetAllSpans(ctx),
 	)

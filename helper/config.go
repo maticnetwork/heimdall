@@ -67,8 +67,8 @@ const (
 	MaxCheckpointLength             = 1024  // max blocks in one checkpoint
 	DefaultChildBlockInterval       = 10000 // difference between 2 indexes of header blocks
 	ConfirmationBlocks              = 6
-	DefaultSprintDuration           = 64                          // sprint for blocks
-	DefaultSpanDuration             = 100 * DefaultSprintDuration // number of blocks for which span is frozen on heimdall
+
+	DefaultStateReceiverAddress = "0000000000000000000000000000000000001001"
 )
 
 var (
@@ -98,7 +98,10 @@ type Configuration struct {
 	RootchainAddress      string `json:"rootchainAddress"`      // Rootchain contract address on main chain
 	DepositManagerAddress string `json:"depositManagerAddress"` // Deposit Manager contract address on main chain
 	ValidatorSetAddress   string `json:"validatorSetAddress"`   // Validator Set contract address on bor chain
-	ChildBlockInterval    uint64 `json:"childBlockInterval"`    // Difference between header index of 2 child blocks submitted on main chain
+	StateSenderAddress    string `json:"stateSenderAddress"`    // main
+	StateReceiverAddress  string `json:"stateReceiverAddress"`  // matic
+
+	ChildBlockInterval uint64 `json:"childBlockInterval"` // Difference between header index of 2 child blocks submitted on main chain
 
 	// config related to bridge
 	CheckpointerPollInterval int           `json:"checkpointerPollInterval"` // Poll interval for checkpointer service to send new checkpoints or missing ACK
@@ -250,6 +253,11 @@ func GetRootChainInstance() (*rootchain.Rootchain, error) {
 // GetRootChainABI returns ABI for RootChain contract
 func GetRootChainABI() (abi.ABI, error) {
 	return abi.JSON(strings.NewReader(rootchain.RootchainABI))
+}
+
+// GetStakeManagerAddress returns StakeManager contract address for selected base chain
+func GetStateSenderAddress() common.Address {
+	return common.HexToAddress(GetConfig().StateSenderAddress)
 }
 
 //
