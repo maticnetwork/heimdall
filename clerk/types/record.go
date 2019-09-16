@@ -28,7 +28,7 @@ func (s *EventRecord) String() string {
 	return fmt.Sprintf(
 		"EventRecord: id %v, contract %v, data: %v",
 		s.ID,
-		s.Contract,
+		s.Contract.String(),
 		hex.EncodeToString(s.Data),
 	)
 }

@@ -29,7 +29,7 @@ func handlerQueryRecord(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) (
 	}
 
 	// get state record by record id
-	record, err := keeper.GetStateRecord(ctx, params.RecordID)
+	record, err := keeper.GetEventRecord(ctx, params.RecordID)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not get state record", err.Error()))
 	}

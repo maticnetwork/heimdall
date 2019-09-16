@@ -54,10 +54,10 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", clerkTypes.ModuleName)
 }
 
-// SetStateRecord adds record to store
-func (k *Keeper) SetStateRecord(ctx sdk.Context, record clerkTypes.EventRecord) error {
+// SetEventRecord adds record to store
+func (k *Keeper) SetEventRecord(ctx sdk.Context, record clerkTypes.EventRecord) error {
 	store := ctx.KVStore(k.storeKey)
-	key := GetStateRecordKey(record.ID)
+	key := GetEventRecordKey(record.ID)
 
 	// check if already set
 	if store.Has(key) {
@@ -80,10 +80,10 @@ func (k *Keeper) SetStateRecord(ctx sdk.Context, record clerkTypes.EventRecord) 
 	return nil
 }
 
-// GetStateRecord returns record from store
-func (k *Keeper) GetStateRecord(ctx sdk.Context, stateId uint64) (*clerkTypes.EventRecord, error) {
+// GetEventRecord returns record from store
+func (k *Keeper) GetEventRecord(ctx sdk.Context, stateId uint64) (*clerkTypes.EventRecord, error) {
 	store := ctx.KVStore(k.storeKey)
-	key := GetStateRecordKey(stateId)
+	key := GetEventRecordKey(stateId)
 
 	// check store has data
 	if store.Has(key) {
@@ -100,15 +100,15 @@ func (k *Keeper) GetStateRecord(ctx sdk.Context, stateId uint64) (*clerkTypes.Ev
 	return nil, errors.New("No record found")
 }
 
-// HasStateRecord check if state record
-func (k *Keeper) HasStateRecord(ctx sdk.Context, stateID uint64) bool {
+// HasEventRecord check if state record
+func (k *Keeper) HasEventRecord(ctx sdk.Context, stateID uint64) bool {
 	store := ctx.KVStore(k.storeKey)
-	key := GetStateRecordKey(stateID)
+	key := GetEventRecordKey(stateID)
 	return store.Has(key)
 }
 
-// GetAllStateRecords get all state records
-func (k *Keeper) GetAllStateRecords(ctx sdk.Context) (records []*types.EventRecord) {
+// GetAllEventRecords get all state records
+func (k *Keeper) GetAllEventRecords(ctx sdk.Context) (records []*types.EventRecord) {
 	// iterate through spans and create span update array
 	k.IterateRecordsAndApplyFn(ctx, func(record types.EventRecord) error {
 		// append to list of validatorUpdates
@@ -120,11 +120,11 @@ func (k *Keeper) GetAllStateRecords(ctx sdk.Context) (records []*types.EventReco
 }
 
 //
-// GetStateRecordKey returns key for state record
+// GetEventRecordKey returns key for state record
 //
 
-// GetStateRecordKey appends prefix to state id
-func GetStateRecordKey(stateID uint64) []byte {
+// GetEventRecordKey appends prefix to state id
+func GetEventRecordKey(stateID uint64) []byte {
 	stateIDBytes := []byte(strconv.FormatUint(stateID, 10))
 	return append(StateRecordPrefixKey, stateIDBytes...)
 }

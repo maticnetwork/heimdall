@@ -75,7 +75,7 @@ func GetStateRecord(cdc *codec.Codec) *cobra.Command {
 			}
 
 			var _record clerkTypes.EventRecord
-			if err := cdc.UnmarshalBinaryBare(res, &_record); err != nil {
+			if err := cdc.UnmarshalJSON(res, &_record); err != nil {
 				fmt.Printf("Unable to unmarshall Error: %v", err)
 				return err
 			}

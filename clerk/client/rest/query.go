@@ -17,7 +17,7 @@ import (
 func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
 	// Get all delegations from a delegator
 	r.HandleFunc(
-		"/clerk/record/{recordId}",
+		"/clerk/event-record/{recordId}",
 		handlerRecordFn(cdc, cliCtx),
 	).Methods("GET")
 }
@@ -37,7 +37,7 @@ func handlerRecordFn(
 		}
 
 		// get record from store
-		res, err := cliCtx.QueryStore(clerk.GetStateRecordKey(recordID), clerkTypes.StoreKey)
+		res, err := cliCtx.QueryStore(clerk.GetEventRecordKey(recordID), clerkTypes.StoreKey)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return

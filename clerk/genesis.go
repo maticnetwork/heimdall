@@ -8,12 +8,12 @@ import (
 
 // GenesisState is the bank state that must be provided at genesis.
 type GenesisState struct {
-	StateRecords []*types.EventRecord `json:"state_records"`
+	EventRecords []*types.EventRecord `json:"event_records"`
 }
 
 // NewGenesisState creates a new genesis state.
-func NewGenesisState(stateRecords []*types.EventRecord) GenesisState {
-	return GenesisState{StateRecords: stateRecords}
+func NewGenesisState(eventRecords []*types.EventRecord) GenesisState {
+	return GenesisState{EventRecords: eventRecords}
 }
 
 // DefaultGenesisState returns a default genesis state
@@ -24,16 +24,16 @@ func DefaultGenesisState() GenesisState {
 // InitGenesis sets distribution information for genesis.
 func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 	// add checkpoint headers
-	if len(data.StateRecords) != 0 {
-		for _, record := range data.StateRecords {
-			keeper.SetStateRecord(ctx, *record)
+	if len(data.EventRecords) != 0 {
+		for _, record := range data.EventRecords {
+			keeper.SetEventRecord(ctx, *record)
 		}
 	}
 }
 
 // ExportGenesis returns a GenesisState for a given context and keeper.
 func ExportGenesis(ctx sdk.Context, keeper Keeper) GenesisState {
-	return NewGenesisState(keeper.GetAllStateRecords(ctx))
+	return NewGenesisState(keeper.GetAllEventRecords(ctx))
 }
 
 // ValidateGenesis performs basic validation of bank genesis data returning an
