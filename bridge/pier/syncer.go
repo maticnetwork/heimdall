@@ -26,7 +26,7 @@ import (
 	"github.com/maticnetwork/heimdall/contracts/depositmanager"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
-	"github.com/maticnetwork/heimdall/contracts/statesyncer"
+	"github.com/maticnetwork/heimdall/contracts/statesender"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -98,10 +98,12 @@ func NewSyncer(cdc *codec.Codec, queueConnector *QueueConnector, httpClient *htt
 	rootchainABI, _ := helper.GetRootChainABI()
 	stakemanagerABI, _ := helper.GetStakeManagerABI()
 	depositManagerABI, _ := helper.GetDepositManagerABI()
+	stateSenderABI, _ := helper.GetStateSenderABI()
 	abis := []*abi.ABI{
 		&rootchainABI,
 		&stakemanagerABI,
 		&depositManagerABI,
+		&stateSenderABI,
 	}
 
 	cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
@@ -314,7 +316,7 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 				case "Deposit":
 					syncer.processDepositEvent(selectedEvent.Name, abiObject, &vLog)
 				case "StateSynced":
-					syncer.processDepositEvent(selectedEvent.Name, abiObject, &vLog)
+					syncer.processStateSyncedEvent(selectedEvent.Name, abiObject, &vLog)
 				case "Withdraw":
 					syncer.processWithdrawEvent(selectedEvent.Name, abiObject, &vLog)
 				}
@@ -526,7 +528,7 @@ func (syncer *Syncer) processWithdrawEvent(eventName string, abiObject *abi.ABI,
 //
 
 func (syncer *Syncer) processStateSyncedEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
-	event := new(statesyncer.StatesyncerStateSynced)
+	event := new(statesender.StatesenderStateSynced)
 	if err := UnpackLog(abiObject, event, eventName, vLog); err != nil {
 		logEventParseError(syncer.Logger, eventName, err)
 	} else {

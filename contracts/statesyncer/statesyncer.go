@@ -28,7 +28,7 @@ var (
 )
 
 // StatesyncerABI is the input ABI used to generate the binding from.
-const StatesyncerABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"contractAddress\",\"type\":\"address\"},{\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"syncState\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"counter\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"id\",\"type\":\"uint256\"},{\"indexed\":true,\"name\":\"contractAddress\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"StateSynced\",\"type\":\"event\"}]"
+const StatesyncerABI = "[{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"states\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"vote\",\"type\":\"bytes\"},{\"name\":\"sigs\",\"type\":\"bytes\"},{\"name\":\"txBytes\",\"type\":\"bytes\"},{\"name\":\"proof\",\"type\":\"bytes\"}],\"name\":\"commitState\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"validatorSet\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"vote\",\"type\":\"bytes\"},{\"name\":\"sigs\",\"type\":\"bytes\"},{\"name\":\"txBytes\",\"type\":\"bytes\"},{\"name\":\"proof\",\"type\":\"bytes\"}],\"name\":\"validateValidatorSet\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"isValidatorSetContract\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"id\",\"type\":\"uint256\"},{\"indexed\":true,\"name\":\"contractAddress\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"NewStateSynced\",\"type\":\"event\"}]"
 
 // Statesyncer is an auto generated Go binding around an Ethereum contract.
 type Statesyncer struct {
@@ -172,56 +172,129 @@ func (_Statesyncer *StatesyncerTransactorRaw) Transact(opts *bind.TransactOpts, 
 	return _Statesyncer.Contract.contract.Transact(opts, method, params...)
 }
 
-// Counter is a free data retrieval call binding the contract method 0x61bc221a.
+// IsValidatorSetContract is a free data retrieval call binding the contract method 0xd79e60b7.
 //
-// Solidity: function counter() constant returns(uint256)
-func (_Statesyncer *StatesyncerCaller) Counter(opts *bind.CallOpts) (*big.Int, error) {
+// Solidity: function isValidatorSetContract() constant returns(bool)
+func (_Statesyncer *StatesyncerCaller) IsValidatorSetContract(opts *bind.CallOpts) (bool, error) {
 	var (
-		ret0 = new(*big.Int)
+		ret0 = new(bool)
 	)
 	out := ret0
-	err := _Statesyncer.contract.Call(opts, out, "counter")
+	err := _Statesyncer.contract.Call(opts, out, "isValidatorSetContract")
 	return *ret0, err
 }
 
-// Counter is a free data retrieval call binding the contract method 0x61bc221a.
+// IsValidatorSetContract is a free data retrieval call binding the contract method 0xd79e60b7.
 //
-// Solidity: function counter() constant returns(uint256)
-func (_Statesyncer *StatesyncerSession) Counter() (*big.Int, error) {
-	return _Statesyncer.Contract.Counter(&_Statesyncer.CallOpts)
+// Solidity: function isValidatorSetContract() constant returns(bool)
+func (_Statesyncer *StatesyncerSession) IsValidatorSetContract() (bool, error) {
+	return _Statesyncer.Contract.IsValidatorSetContract(&_Statesyncer.CallOpts)
 }
 
-// Counter is a free data retrieval call binding the contract method 0x61bc221a.
+// IsValidatorSetContract is a free data retrieval call binding the contract method 0xd79e60b7.
 //
-// Solidity: function counter() constant returns(uint256)
-func (_Statesyncer *StatesyncerCallerSession) Counter() (*big.Int, error) {
-	return _Statesyncer.Contract.Counter(&_Statesyncer.CallOpts)
+// Solidity: function isValidatorSetContract() constant returns(bool)
+func (_Statesyncer *StatesyncerCallerSession) IsValidatorSetContract() (bool, error) {
+	return _Statesyncer.Contract.IsValidatorSetContract(&_Statesyncer.CallOpts)
 }
 
-// SyncState is a paid mutator transaction binding the contract method 0x16f19831.
+// States is a free data retrieval call binding the contract method 0x017a9105.
 //
-// Solidity: function syncState(address contractAddress, bytes data) returns()
-func (_Statesyncer *StatesyncerTransactor) SyncState(opts *bind.TransactOpts, contractAddress common.Address, data []byte) (*types.Transaction, error) {
-	return _Statesyncer.contract.Transact(opts, "syncState", contractAddress, data)
+// Solidity: function states(uint256 ) constant returns(bool)
+func (_Statesyncer *StatesyncerCaller) States(opts *bind.CallOpts, arg0 *big.Int) (bool, error) {
+	var (
+		ret0 = new(bool)
+	)
+	out := ret0
+	err := _Statesyncer.contract.Call(opts, out, "states", arg0)
+	return *ret0, err
 }
 
-// SyncState is a paid mutator transaction binding the contract method 0x16f19831.
+// States is a free data retrieval call binding the contract method 0x017a9105.
 //
-// Solidity: function syncState(address contractAddress, bytes data) returns()
-func (_Statesyncer *StatesyncerSession) SyncState(contractAddress common.Address, data []byte) (*types.Transaction, error) {
-	return _Statesyncer.Contract.SyncState(&_Statesyncer.TransactOpts, contractAddress, data)
+// Solidity: function states(uint256 ) constant returns(bool)
+func (_Statesyncer *StatesyncerSession) States(arg0 *big.Int) (bool, error) {
+	return _Statesyncer.Contract.States(&_Statesyncer.CallOpts, arg0)
 }
 
-// SyncState is a paid mutator transaction binding the contract method 0x16f19831.
+// States is a free data retrieval call binding the contract method 0x017a9105.
 //
-// Solidity: function syncState(address contractAddress, bytes data) returns()
-func (_Statesyncer *StatesyncerTransactorSession) SyncState(contractAddress common.Address, data []byte) (*types.Transaction, error) {
-	return _Statesyncer.Contract.SyncState(&_Statesyncer.TransactOpts, contractAddress, data)
+// Solidity: function states(uint256 ) constant returns(bool)
+func (_Statesyncer *StatesyncerCallerSession) States(arg0 *big.Int) (bool, error) {
+	return _Statesyncer.Contract.States(&_Statesyncer.CallOpts, arg0)
 }
 
-// StatesyncerStateSyncedIterator is returned from FilterStateSynced and is used to iterate over the raw logs and unpacked data for StateSynced events raised by the Statesyncer contract.
-type StatesyncerStateSyncedIterator struct {
-	Event *StatesyncerStateSynced // Event containing the contract specifics and raw log
+// ValidatorSet is a free data retrieval call binding the contract method 0x9426e226.
+//
+// Solidity: function validatorSet() constant returns(address)
+func (_Statesyncer *StatesyncerCaller) ValidatorSet(opts *bind.CallOpts) (common.Address, error) {
+	var (
+		ret0 = new(common.Address)
+	)
+	out := ret0
+	err := _Statesyncer.contract.Call(opts, out, "validatorSet")
+	return *ret0, err
+}
+
+// ValidatorSet is a free data retrieval call binding the contract method 0x9426e226.
+//
+// Solidity: function validatorSet() constant returns(address)
+func (_Statesyncer *StatesyncerSession) ValidatorSet() (common.Address, error) {
+	return _Statesyncer.Contract.ValidatorSet(&_Statesyncer.CallOpts)
+}
+
+// ValidatorSet is a free data retrieval call binding the contract method 0x9426e226.
+//
+// Solidity: function validatorSet() constant returns(address)
+func (_Statesyncer *StatesyncerCallerSession) ValidatorSet() (common.Address, error) {
+	return _Statesyncer.Contract.ValidatorSet(&_Statesyncer.CallOpts)
+}
+
+// CommitState is a paid mutator transaction binding the contract method 0x29050939.
+//
+// Solidity: function commitState(bytes vote, bytes sigs, bytes txBytes, bytes proof) returns()
+func (_Statesyncer *StatesyncerTransactor) CommitState(opts *bind.TransactOpts, vote []byte, sigs []byte, txBytes []byte, proof []byte) (*types.Transaction, error) {
+	return _Statesyncer.contract.Transact(opts, "commitState", vote, sigs, txBytes, proof)
+}
+
+// CommitState is a paid mutator transaction binding the contract method 0x29050939.
+//
+// Solidity: function commitState(bytes vote, bytes sigs, bytes txBytes, bytes proof) returns()
+func (_Statesyncer *StatesyncerSession) CommitState(vote []byte, sigs []byte, txBytes []byte, proof []byte) (*types.Transaction, error) {
+	return _Statesyncer.Contract.CommitState(&_Statesyncer.TransactOpts, vote, sigs, txBytes, proof)
+}
+
+// CommitState is a paid mutator transaction binding the contract method 0x29050939.
+//
+// Solidity: function commitState(bytes vote, bytes sigs, bytes txBytes, bytes proof) returns()
+func (_Statesyncer *StatesyncerTransactorSession) CommitState(vote []byte, sigs []byte, txBytes []byte, proof []byte) (*types.Transaction, error) {
+	return _Statesyncer.Contract.CommitState(&_Statesyncer.TransactOpts, vote, sigs, txBytes, proof)
+}
+
+// ValidateValidatorSet is a paid mutator transaction binding the contract method 0xd0504f89.
+//
+// Solidity: function validateValidatorSet(bytes vote, bytes sigs, bytes txBytes, bytes proof) returns()
+func (_Statesyncer *StatesyncerTransactor) ValidateValidatorSet(opts *bind.TransactOpts, vote []byte, sigs []byte, txBytes []byte, proof []byte) (*types.Transaction, error) {
+	return _Statesyncer.contract.Transact(opts, "validateValidatorSet", vote, sigs, txBytes, proof)
+}
+
+// ValidateValidatorSet is a paid mutator transaction binding the contract method 0xd0504f89.
+//
+// Solidity: function validateValidatorSet(bytes vote, bytes sigs, bytes txBytes, bytes proof) returns()
+func (_Statesyncer *StatesyncerSession) ValidateValidatorSet(vote []byte, sigs []byte, txBytes []byte, proof []byte) (*types.Transaction, error) {
+	return _Statesyncer.Contract.ValidateValidatorSet(&_Statesyncer.TransactOpts, vote, sigs, txBytes, proof)
+}
+
+// ValidateValidatorSet is a paid mutator transaction binding the contract method 0xd0504f89.
+//
+// Solidity: function validateValidatorSet(bytes vote, bytes sigs, bytes txBytes, bytes proof) returns()
+func (_Statesyncer *StatesyncerTransactorSession) ValidateValidatorSet(vote []byte, sigs []byte, txBytes []byte, proof []byte) (*types.Transaction, error) {
+	return _Statesyncer.Contract.ValidateValidatorSet(&_Statesyncer.TransactOpts, vote, sigs, txBytes, proof)
+}
+
+// StatesyncerNewStateSyncedIterator is returned from FilterNewStateSynced and is used to iterate over the raw logs and unpacked data for NewStateSynced events raised by the Statesyncer contract.
+type StatesyncerNewStateSyncedIterator struct {
+	Event *StatesyncerNewStateSynced // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -235,7 +308,7 @@ type StatesyncerStateSyncedIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *StatesyncerStateSyncedIterator) Next() bool {
+func (it *StatesyncerNewStateSyncedIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -244,7 +317,7 @@ func (it *StatesyncerStateSyncedIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(StatesyncerStateSynced)
+			it.Event = new(StatesyncerNewStateSynced)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -259,7 +332,7 @@ func (it *StatesyncerStateSyncedIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(StatesyncerStateSynced)
+		it.Event = new(StatesyncerNewStateSynced)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -275,29 +348,29 @@ func (it *StatesyncerStateSyncedIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *StatesyncerStateSyncedIterator) Error() error {
+func (it *StatesyncerNewStateSyncedIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *StatesyncerStateSyncedIterator) Close() error {
+func (it *StatesyncerNewStateSyncedIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// StatesyncerStateSynced represents a StateSynced event raised by the Statesyncer contract.
-type StatesyncerStateSynced struct {
+// StatesyncerNewStateSynced represents a NewStateSynced event raised by the Statesyncer contract.
+type StatesyncerNewStateSynced struct {
 	Id              *big.Int
 	ContractAddress common.Address
 	Data            []byte
 	Raw             types.Log // Blockchain specific contextual infos
 }
 
-// FilterStateSynced is a free log retrieval operation binding the contract event 0x103fed9db65eac19c4d870f49ab7520fe03b99f1838e5996caf47e9e43308392.
+// FilterNewStateSynced is a free log retrieval operation binding the contract event 0xccac6e4f23d17f6731617ae0dd91240841f79d5398b423af2621441e4e1a0053.
 //
-// Solidity: event StateSynced(uint256 indexed id, address indexed contractAddress, bytes data)
-func (_Statesyncer *StatesyncerFilterer) FilterStateSynced(opts *bind.FilterOpts, id []*big.Int, contractAddress []common.Address) (*StatesyncerStateSyncedIterator, error) {
+// Solidity: event NewStateSynced(uint256 indexed id, address indexed contractAddress, bytes data)
+func (_Statesyncer *StatesyncerFilterer) FilterNewStateSynced(opts *bind.FilterOpts, id []*big.Int, contractAddress []common.Address) (*StatesyncerNewStateSyncedIterator, error) {
 
 	var idRule []interface{}
 	for _, idItem := range id {
@@ -308,17 +381,17 @@ func (_Statesyncer *StatesyncerFilterer) FilterStateSynced(opts *bind.FilterOpts
 		contractAddressRule = append(contractAddressRule, contractAddressItem)
 	}
 
-	logs, sub, err := _Statesyncer.contract.FilterLogs(opts, "StateSynced", idRule, contractAddressRule)
+	logs, sub, err := _Statesyncer.contract.FilterLogs(opts, "NewStateSynced", idRule, contractAddressRule)
 	if err != nil {
 		return nil, err
 	}
-	return &StatesyncerStateSyncedIterator{contract: _Statesyncer.contract, event: "StateSynced", logs: logs, sub: sub}, nil
+	return &StatesyncerNewStateSyncedIterator{contract: _Statesyncer.contract, event: "NewStateSynced", logs: logs, sub: sub}, nil
 }
 
-// WatchStateSynced is a free log subscription operation binding the contract event 0x103fed9db65eac19c4d870f49ab7520fe03b99f1838e5996caf47e9e43308392.
+// WatchNewStateSynced is a free log subscription operation binding the contract event 0xccac6e4f23d17f6731617ae0dd91240841f79d5398b423af2621441e4e1a0053.
 //
-// Solidity: event StateSynced(uint256 indexed id, address indexed contractAddress, bytes data)
-func (_Statesyncer *StatesyncerFilterer) WatchStateSynced(opts *bind.WatchOpts, sink chan<- *StatesyncerStateSynced, id []*big.Int, contractAddress []common.Address) (event.Subscription, error) {
+// Solidity: event NewStateSynced(uint256 indexed id, address indexed contractAddress, bytes data)
+func (_Statesyncer *StatesyncerFilterer) WatchNewStateSynced(opts *bind.WatchOpts, sink chan<- *StatesyncerNewStateSynced, id []*big.Int, contractAddress []common.Address) (event.Subscription, error) {
 
 	var idRule []interface{}
 	for _, idItem := range id {
@@ -329,7 +402,7 @@ func (_Statesyncer *StatesyncerFilterer) WatchStateSynced(opts *bind.WatchOpts, 
 		contractAddressRule = append(contractAddressRule, contractAddressItem)
 	}
 
-	logs, sub, err := _Statesyncer.contract.WatchLogs(opts, "StateSynced", idRule, contractAddressRule)
+	logs, sub, err := _Statesyncer.contract.WatchLogs(opts, "NewStateSynced", idRule, contractAddressRule)
 	if err != nil {
 		return nil, err
 	}
@@ -339,8 +412,8 @@ func (_Statesyncer *StatesyncerFilterer) WatchStateSynced(opts *bind.WatchOpts, 
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(StatesyncerStateSynced)
-				if err := _Statesyncer.contract.UnpackLog(event, "StateSynced", log); err != nil {
+				event := new(StatesyncerNewStateSynced)
+				if err := _Statesyncer.contract.UnpackLog(event, "NewStateSynced", log); err != nil {
 					return err
 				}
 				event.Raw = log

@@ -24,6 +24,7 @@ import (
 	"github.com/maticnetwork/heimdall/contracts/depositmanager"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
+	"github.com/maticnetwork/heimdall/contracts/statesender"
 	"github.com/maticnetwork/heimdall/contracts/validatorset"
 
 	tmTypes "github.com/tendermint/tendermint/types"
@@ -255,11 +256,6 @@ func GetRootChainABI() (abi.ABI, error) {
 	return abi.JSON(strings.NewReader(rootchain.RootchainABI))
 }
 
-// GetStakeManagerAddress returns StakeManager contract address for selected base chain
-func GetStateSenderAddress() common.Address {
-	return common.HexToAddress(GetConfig().StateSenderAddress)
-}
-
 //
 // Stake manager
 //
@@ -315,6 +311,20 @@ func GetValidatorSetInstance() (*validatorset.Validatorset, error) {
 // GetValidatorSetABI returns ABI for Validator Set contract
 func GetValidatorSetABI() (abi.ABI, error) {
 	return abi.JSON(strings.NewReader(validatorset.ValidatorsetABI))
+}
+
+//
+// State sender
+//
+
+// GetStateSenderAddress returns state sender contract address for selected base chain
+func GetStateSenderAddress() common.Address {
+	return common.HexToAddress(GetConfig().StateSenderAddress)
+}
+
+// GetStateSenderABI returns ABI for StateSender contract
+func GetStateSenderABI() (abi.ABI, error) {
+	return abi.JSON(strings.NewReader(statesender.StatesenderABI))
 }
 
 //

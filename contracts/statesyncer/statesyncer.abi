@@ -1,17 +1,44 @@
 [
 	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "states",
+		"outputs": [
+			{
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
 		"constant": false,
 		"inputs": [
 			{
-				"name": "contractAddress",
-				"type": "address"
+				"name": "vote",
+				"type": "bytes"
 			},
 			{
-				"name": "data",
+				"name": "sigs",
+				"type": "bytes"
+			},
+			{
+				"name": "txBytes",
+				"type": "bytes"
+			},
+			{
+				"name": "proof",
 				"type": "bytes"
 			}
 		],
-		"name": "syncState",
+		"name": "commitState",
 		"outputs": [],
 		"payable": false,
 		"stateMutability": "nonpayable",
@@ -20,11 +47,51 @@
 	{
 		"constant": true,
 		"inputs": [],
-		"name": "counter",
+		"name": "validatorSet",
 		"outputs": [
 			{
 				"name": "",
-				"type": "uint256"
+				"type": "address"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "vote",
+				"type": "bytes"
+			},
+			{
+				"name": "sigs",
+				"type": "bytes"
+			},
+			{
+				"name": "txBytes",
+				"type": "bytes"
+			},
+			{
+				"name": "proof",
+				"type": "bytes"
+			}
+		],
+		"name": "validateValidatorSet",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "isValidatorSetContract",
+		"outputs": [
+			{
+				"name": "",
+				"type": "bool"
 			}
 		],
 		"payable": false,
@@ -50,7 +117,7 @@
 				"type": "bytes"
 			}
 		],
-		"name": "StateSynced",
+		"name": "NewStateSynced",
 		"type": "event"
 	}
 ]
