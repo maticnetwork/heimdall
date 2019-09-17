@@ -294,9 +294,9 @@ func (s *ClerkService) broadcastToBor(height int64, txHash []byte) error {
 	// 	))
 
 	// get validator address
-	validatorSetAddress := helper.GetValidatorSetAddress()
+	stateReceiverAddress := helper.GetStateReceiverAddress()
 	msg := ethereum.CallMsg{
-		To:   &validatorSetAddress,
+		To:   &stateReceiverAddress,
 		Data: encodedData,
 	}
 
