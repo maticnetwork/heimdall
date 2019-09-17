@@ -181,21 +181,30 @@ func (k *Keeper) SelectNextProducers(ctx sdk.Context) (vals []types.Validator, e
 
 	// get current validators
 	currVals := k.sk.GetCurrentValidators(ctx)
+	producerCount, err := k.GetProducerCount(ctx)
+	if err != nil {
+		return vals, err
+	}
+
+	// if producers to be selected is more than current validators no need to select/shuffle
+	if len(currVals) <= int(producerCount) {
+		return currVals, nil
+	}
 
 	// TODO parse current vals and ensure no current proposer is deactivating
 	// in between next span
 
-	// increment last processes header block number
+	// increment last processed header block number
 	newEthBlock := lastEthBlock.Add(lastEthBlock, big.NewInt(1))
 
-	// fetch block header
+	// fetch block header from mainchain
 	blockHeader, err := k.contractCaller.GetMainChainBlock(newEthBlock)
 	if err != nil {
 		return vals, err
 	}
 
-	// select next producers using seed
-	newProducersIds, err := SelectNextProducers(k.Logger(ctx), blockHeader.Hash(), currVals, k.GetProducerCount(ctx))
+	// select next producers using seed as blockheader hash
+	newProducersIds, err := SelectNextProducers(k.Logger(ctx), blockHeader.Hash(), currVals, producerCount)
 	if err != nil {
 		return vals, err
 	}
@@ -242,6 +251,8 @@ func (k *Keeper) GetLastEthBlock(ctx sdk.Context) *big.Int {
 	var lastEthBlock *big.Int
 	if store.Has(LastProcessedEthBlock) {
 		lastEthBlock = lastEthBlock.SetBytes(store.Get(LastProcessedEthBlock))
+	} else {
+		lastEthBlock = big.NewInt(0)
 	}
 	return lastEthBlock
 }
@@ -301,10 +312,14 @@ func (k *Keeper) SetSprintDuration(ctx sdk.Context, duration uint64) {
 }
 
 // GetProducerCount returns the numeber of producers per span
-func (k *Keeper) GetProducerCount(ctx sdk.Context) uint64 {
+func (k *Keeper) GetProducerCount(ctx sdk.Context) (uint64, error) {
 	var count uint64
-	k.paramSpace.Get(ctx, ParamStoreKeyNumOfProducers, &count)
-	return count
+	if k.paramSpace.Has(ctx, ParamStoreKeyNumOfProducers) {
+		k.paramSpace.Get(ctx, ParamStoreKeyNumOfProducers, &count)
+	} else {
+		return count, errors.New("producer count store key not found")
+	}
+	return count, nil
 }
 
 // SetProducerCount sets the number of producers selected per span

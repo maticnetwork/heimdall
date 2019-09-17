@@ -45,7 +45,12 @@ func queryParams(ctx sdk.Context, path []string, req abci.RequestQuery, keeper K
 		}
 		return bz, nil
 	case ParamProducerCount:
-		bz, err := codec.MarshalJSONIndent(keeper.cdc, keeper.GetProducerCount(ctx))
+		var bz []byte
+		count, err := keeper.GetProducerCount(ctx)
+		if err != nil {
+			return bz, sdk.ErrInternal(sdk.AppendMsgToErr("cannot fetch producer count from keeper", err.Error()))
+		}
+		bz, err = codec.MarshalJSONIndent(keeper.cdc, count)
 		if err != nil {
 			return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 		}

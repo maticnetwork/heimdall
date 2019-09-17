@@ -149,7 +149,6 @@ func validateGenesisStateAccounts(accs []GenesisAccount) error {
 		if _, ok := addrMap[addrStr]; ok {
 			return fmt.Errorf("duplicate account found in genesis state; address: %s", addrStr)
 		}
-
 		addrMap[addrStr] = true
 	}
 
@@ -157,14 +156,14 @@ func validateGenesisStateAccounts(accs []GenesisAccount) error {
 }
 
 // NewDefaultGenesisState generates the default state for gaia.
-func NewDefaultGenesisState() GenesisState {
+func NewDefaultGenesisState(validators []types.Validator, currentValSet types.ValidatorSet) GenesisState {
 	return GenesisState{
 		Accounts:       nil,
 		AuthData:       auth.DefaultGenesisState(),
 		BankData:       bank.DefaultGenesisState(),
-		StakingData:    staking.DefaultGenesisState(),
+		StakingData:    staking.DefaultGenesisState(validators, currentValSet),
 		CheckpointData: checkpoint.DefaultGenesisState(),
-		BorData:        bor.DefaultGenesisState(),
+		BorData:        bor.DefaultGenesisState(currentValSet),
 		ClerkData:      clerk.DefaultGenesisState(),
 		GenTxs:         nil,
 	}

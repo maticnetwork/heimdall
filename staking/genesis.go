@@ -48,8 +48,8 @@ func NewGenesisState(
 }
 
 // DefaultGenesisState returns a default genesis state
-func DefaultGenesisState() GenesisState {
-	return GenesisState{}
+func DefaultGenesisState(validators []hmTypes.Validator, currentValSet hmTypes.ValidatorSet) GenesisState {
+	return NewGenesisState(validators, currentValSet)
 }
 
 // InitGenesis sets distribution information for genesis.
