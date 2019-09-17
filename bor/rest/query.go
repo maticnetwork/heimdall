@@ -229,7 +229,7 @@ func prepareNextSpanHandlerFn(
 			rest.WriteErrorResponse(w, http.StatusBadRequest, errors.New("Span duration not found ").Error())
 			return
 		}
-
+		fmt.Println("fetched span duration %v")
 		var spanDuration uint64
 		if err := cliCtx.Codec.UnmarshalJSON(res, &spanDuration); err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -330,6 +330,9 @@ func prepareNextSpanHandlerFn(
 		if err := cliCtx.Codec.UnmarshalJSON(res, &lastEthHeader); err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
+		}
+		if lastEthHeader == nil {
+			lastEthHeader = big.NewInt(0)
 		}
 		// fetch block header
 		blockHeader, err := contractCaller.GetMainChainBlock(lastEthHeader.Add(lastEthHeader, big.NewInt(1)))

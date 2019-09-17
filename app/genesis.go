@@ -164,7 +164,7 @@ func NewDefaultGenesisState() GenesisState {
 		BankData:       bank.DefaultGenesisState(),
 		StakingData:    staking.DefaultGenesisState(),
 		CheckpointData: checkpoint.DefaultGenesisState(),
-		BorData:        bor.DefaultGenesisState(),
+		BorData:        bor.DefaultGenesisState(staking.DefaultGenesisState().CurrentValSet),
 		ClerkData:      clerk.DefaultGenesisState(),
 		GenTxs:         nil,
 	}
