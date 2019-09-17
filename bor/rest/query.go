@@ -229,7 +229,6 @@ func prepareNextSpanHandlerFn(
 			rest.WriteErrorResponse(w, http.StatusBadRequest, errors.New("Span duration not found ").Error())
 			return
 		}
-		fmt.Println("fetched span duration %v")
 		var spanDuration uint64
 		if err := cliCtx.Codec.UnmarshalJSON(res, &spanDuration); err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
