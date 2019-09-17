@@ -204,11 +204,13 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 				Signer:     types.BytesToHeimdallAddress(valPubKey.Address().Bytes()),
 				Power:      1,
 			}
+			var vals []*types.Validator
+			vals = append(vals, &validator)
+			newValSet := types.NewValidatorSet(vals)
 
+			validators := []hmTypes.Validator{validator}
 			// create genesis state
-			appState := app.NewDefaultGenesisState()
-			// set new validator
-			appState.StakingData.Validators = []hmTypes.Validator{validator}
+			appState := app.NewDefaultGenesisState(validators, *newValSet)
 			// set validator account
 			appState.Accounts = []app.GenesisAccount{getGenesisAccount(validator.Signer.Bytes())}
 			// app state json
@@ -355,12 +357,17 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 				// genesis account
 				accounts[i] = getGenesisAccount(validators[i].Signer.Bytes())
 			}
+			var vals []*types.Validator
+			for _, validator := range validators {
+				vals = append(vals, &validator)
+
+			}
+			newValSet := types.NewValidatorSet(vals)
 
 			// new app state
-			appState := app.NewDefaultGenesisState()
+			appState := app.NewDefaultGenesisState(validators, *newValSet)
 			// set accounts and validators
 			appState.Accounts = accounts
-			appState.StakingData.Validators = validators
 
 			appStateJSON, err := json.Marshal(appState)
 			if err != nil {
