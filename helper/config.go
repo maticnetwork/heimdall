@@ -67,6 +67,7 @@ const (
 	DefaultChildBlockInterval       = 10000 // difference between 2 indexes of header blocks
 	ConfirmationBlocks              = 6
 
+	DefaultBorChainID           = 15001
 	DefaultStateReceiverAddress = "0000000000000000000000000000000000001001"
 )
 
@@ -92,6 +93,8 @@ type Configuration struct {
 	AmqpURL           string `json:"amqpURL"`           // amqp url
 	HeimdallServerURL string `json:"heimdallServerURL"` // heimdall server url
 	TendermintNodeURL string `json:"tendermintNodeURL"` // tendemint noed url
+
+	BorChainID string `json:"borChainID"` // bor chain id
 
 	StakeManagerAddress   string `json:"stakeManagerAddress"`   // Stake manager address on main chain
 	RootchainAddress      string `json:"rootchainAddress"`      // Rootchain contract address on main chain
