@@ -74,7 +74,7 @@ func CreateNewStateRecord(cdc *codec.Codec) *cobra.Command {
 			}
 
 			// create new state record
-			msg := clerkTypes.NewMsgStateRecord(
+			msg := clerkTypes.NewMsgEventRecord(
 				proposer,
 				types.HexToHeimdallHash(txHashStr),
 				recordID,

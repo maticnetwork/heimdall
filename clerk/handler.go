@@ -15,15 +15,15 @@ import (
 func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
-		case clerkTypes.MsgStateRecord:
-			return handleMsgStateRecord(ctx, msg, k, contractCaller)
+		case clerkTypes.MsgEventRecord:
+			return handleMsgEventRecord(ctx, msg, k, contractCaller)
 		default:
 			return sdk.ErrTxDecode("Invalid message in clerk module").Result()
 		}
 	}
 }
 
-func handleMsgStateRecord(ctx sdk.Context, msg clerkTypes.MsgStateRecord, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
+func handleMsgEventRecord(ctx sdk.Context, msg clerkTypes.MsgEventRecord, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	if confirmed := contractCaller.IsTxConfirmed(msg.TxHash.EthHash()); !confirmed {
 		return common.ErrWaitForConfirmation(k.Codespace()).Result()
 	}

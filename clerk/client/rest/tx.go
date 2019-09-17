@@ -17,7 +17,7 @@ import (
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
 	r.HandleFunc(
 		"/clerk/records",
-		newRecordHandler(cdc, cliCtx),
+		newEventRecordHandler(cdc, cliCtx),
 	).Methods("POST")
 }
 
@@ -31,7 +31,7 @@ type AddRecordReq struct {
 	Data     []byte                `json:"data"`
 }
 
-func newRecordHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
+func newEventRecordHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// read req from request
 		var req AddRecordReq
@@ -45,7 +45,7 @@ func newRecordHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerF
 		}
 
 		// create new msg
-		msg := clerkTypes.NewMsgStateRecord(
+		msg := clerkTypes.NewMsgEventRecord(
 			types.HexToHeimdallAddress(req.BaseReq.From),
 			req.TxHash,
 			req.ID,

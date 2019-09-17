@@ -14,10 +14,13 @@ import (
 
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
+	"github.com/maticnetwork/heimdall/contracts/statereceiver"
+	"github.com/maticnetwork/heimdall/contracts/statesender"
 	"github.com/maticnetwork/heimdall/contracts/validatorset"
 	"github.com/maticnetwork/heimdall/types"
 )
 
+// IContractCaller represents contract caller
 type IContractCaller interface {
 	GetHeaderInfo(headerID uint64) (root common.Hash, start, end, createdAt uint64, proposer types.HeimdallAddress, err error)
 	GetValidatorInfo(valID types.ValidatorID) (validator types.Validator, err error)
@@ -33,17 +36,26 @@ type IContractCaller interface {
 
 	// bor related contracts
 	CurrentSpanNumber() (Number *big.Int)
+	CurrentStateCounter() (Number *big.Int)
 }
 
 // ContractCaller contract caller
 type ContractCaller struct {
-	RootChainInstance    *rootchain.Rootchain
-	StakeManagerInstance *stakemanager.Stakemanager
-	ValidatorSetInstance *validatorset.Validatorset
-	MainChainClient      *ethclient.Client
-	MainChainRPC         *rpc.Client
-	MaticClient          *ethclient.Client
-	stakeManagerABI      abi.ABI
+	MainChainClient  *ethclient.Client
+	MainChainRPC     *rpc.Client
+	MaticChainClient *ethclient.Client
+
+	RootChainInstance     *rootchain.Rootchain
+	StakeManagerInstance  *stakemanager.Stakemanager
+	ValidatorSetInstance  *validatorset.Validatorset
+	StateSenderInstance   *statesender.Statesender
+	StateReceiverInstance *statereceiver.Statereceiver
+
+	RootChainABI     abi.ABI
+	StakeManagerABI  abi.ABI
+	ValidatorSetABI  abi.ABI
+	StateReceiverABI abi.ABI
+	StateSenderABI   abi.ABI
 }
 
 type txExtraInfo struct {
@@ -57,38 +69,61 @@ type rpcTransaction struct {
 	txExtraInfo
 }
 
+// NewContractCaller contract caller
 func NewContractCaller() (contractCallerObj ContractCaller, err error) {
-	rootChainInstance, err := GetRootChainInstance()
-	if err != nil {
-		Logger.Error("Error creating rootchain instance while creating contract caller obj", "error", err)
-		return contractCallerObj, err
-	}
-	stakeManagerInstance, err := GetStakeManagerInstance()
-	if err != nil {
-		Logger.Error("Error creating stakeManagerInstance creating contract caller obj", "error", err)
-		return contractCallerObj, err
-	}
-	validatorSetInstance, err := GetValidatorSetInstance()
-	if err != nil {
-		Logger.Error("Error creating validator set instance while creating contract caller obj", "error", err)
-		return contractCallerObj, err
-	}
 	contractCallerObj.MainChainClient = GetMainClient()
+	contractCallerObj.MaticChainClient = GetMaticClient()
 	contractCallerObj.MainChainRPC = GetMainChainRPCClient()
-	contractCallerObj.StakeManagerInstance = stakeManagerInstance
-	contractCallerObj.RootChainInstance = rootChainInstance
-	contractCallerObj.ValidatorSetInstance = validatorSetInstance
-	contractCallerObj.MaticClient = GetMaticClient()
 
-	// load stake manager abi
-	stakeContract, err := abi.JSON(strings.NewReader(string(stakemanager.StakemanagerABI)))
-	if err != nil {
-		Logger.Error("Error creating abi for stakemanager", "Error", err)
-		return contractCallerObj, err
+	//
+	// Root chain instance
+	//
+
+	if contractCallerObj.RootChainInstance, err = rootchain.NewRootchain(GetRootChainAddress(), contractCallerObj.MainChainClient); err != nil {
+		return
 	}
-	contractCallerObj.stakeManagerABI = stakeContract
 
-	return contractCallerObj, nil
+	if contractCallerObj.StakeManagerInstance, err = stakemanager.NewStakemanager(GetStakeManagerAddress(), contractCallerObj.MainChainClient); err != nil {
+		return
+	}
+
+	if contractCallerObj.ValidatorSetInstance, err = validatorset.NewValidatorset(GetValidatorSetAddress(), contractCallerObj.MaticChainClient); err != nil {
+		return
+	}
+
+	if contractCallerObj.StateSenderInstance, err = statesender.NewStatesender(GetStateSenderAddress(), contractCallerObj.MainChainClient); err != nil {
+		return
+	}
+
+	if contractCallerObj.StateReceiverInstance, err = statereceiver.NewStatereceiver(GetStateReceiverAddress(), contractCallerObj.MaticChainClient); err != nil {
+		return
+	}
+
+	//
+	// ABIs
+	//
+
+	if contractCallerObj.RootChainABI, err = getABI(string(rootchain.RootchainABI)); err != nil {
+		return
+	}
+
+	if contractCallerObj.StakeManagerABI, err = getABI(string(stakemanager.StakemanagerABI)); err != nil {
+		return
+	}
+
+	if contractCallerObj.ValidatorSetABI, err = getABI(string(validatorset.ValidatorsetABI)); err != nil {
+		return
+	}
+
+	if contractCallerObj.StateReceiverABI, err = getABI(string(statereceiver.StatereceiverABI)); err != nil {
+		return
+	}
+
+	if contractCallerObj.StateSenderABI, err = getABI(string(statesender.StatesenderABI)); err != nil {
+		return
+	}
+
+	return
 }
 
 // GetHeaderInfo get header info from header id
@@ -175,7 +210,7 @@ func (c *ContractCaller) GetValidatorInfo(valID types.ValidatorID) (validator ty
 
 // get main chain block header
 func (c *ContractCaller) GetMainChainBlock(blockNum *big.Int) (header *ethtypes.Header, err error) {
-	latestBlock, err := GetMainClient().HeaderByNumber(context.Background(), blockNum)
+	latestBlock, err := c.MainChainClient.HeaderByNumber(context.Background(), blockNum)
 	if err != nil {
 		Logger.Error("Unable to connect to main chain", "Error", err)
 		return
@@ -185,7 +220,7 @@ func (c *ContractCaller) GetMainChainBlock(blockNum *big.Int) (header *ethtypes.
 
 // get child chain block header
 func (c *ContractCaller) GetMaticChainBlock(blockNum *big.Int) (header *ethtypes.Header, err error) {
-	latestBlock, err := GetMaticClient().HeaderByNumber(context.Background(), blockNum)
+	latestBlock, err := c.MaticChainClient.HeaderByNumber(context.Background(), blockNum)
 	if err != nil {
 		Logger.Error("Unable to connect to matic chain", "Error", err)
 		return
@@ -260,4 +295,23 @@ func (c *ContractCaller) CurrentSpanNumber() (Number *big.Int) {
 	}
 
 	return result
+}
+
+// CurrentStateCounter get state counter
+func (c *ContractCaller) CurrentStateCounter() (Number *big.Int) {
+	result, err := c.StateSenderInstance.Counter(nil)
+	if err != nil {
+		Logger.Error("Unable to get current counter number", "Error", err)
+		return nil
+	}
+
+	return result
+}
+
+//
+// private abi methods
+//
+
+func getABI(data string) (abi.ABI, error) {
+	return abi.JSON(strings.NewReader(data))
 }

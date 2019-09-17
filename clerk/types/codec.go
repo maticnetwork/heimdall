@@ -8,12 +8,12 @@ import (
 
 // RegisterCodec registers concrete types on codec codec
 func RegisterCodec(cdc *codec.Codec) {
-	cdc.RegisterConcrete(MsgStateRecord{}, "cosmos-sdk/MsgStateRecord", nil)
+	cdc.RegisterConcrete(MsgEventRecord{}, "cosmos-sdk/MsgEventRecord", nil)
 }
 
 // RegisterPulp register pulp
 func RegisterPulp(pulp *authTypes.Pulp) {
-	pulp.RegisterConcrete(MsgStateRecord{})
+	pulp.RegisterConcrete(MsgEventRecord{})
 }
 
 // ModuleCdc module cdc

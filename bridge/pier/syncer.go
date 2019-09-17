@@ -15,7 +15,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	ethCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/tendermint/tendermint/libs/common"
@@ -50,15 +49,12 @@ type Syncer struct {
 	// storage client
 	storageClient *leveldb.DB
 
+	// contract caller
+	contractConnector helper.ContractCaller
+
 	// ABIs
 	abis []*abi.ABI
 
-	// Mainchain client
-	MainClient *ethclient.Client
-	// Rootchain instance
-	RootChainInstance *rootchain.Rootchain
-	// Stake manager instance
-	StakeManagerInstance *stakemanager.Stakemanager
 	// header channel
 	HeaderChannel chan *types.Header
 	// cancel function for poll/subscription
@@ -81,29 +77,17 @@ type Syncer struct {
 func NewSyncer(cdc *codec.Codec, queueConnector *QueueConnector, httpClient *httpClient.HTTP) *Syncer {
 	// create logger
 	logger := Logger.With("module", ChainSyncer)
-	// root chain instance
-	rootchainInstance, err := helper.GetRootChainInstance()
+
+	contractCaller, err := helper.NewContractCaller()
 	if err != nil {
 		logger.Error("Error while getting root chain instance", "error", err)
 		panic(err)
 	}
 
-	// stake manager instance
-	stakeManagerInstance, err := helper.GetStakeManagerInstance()
-	if err != nil {
-		logger.Error("Error while getting stake manager instance", "error", err)
-		panic(err)
-	}
-
-	rootchainABI, _ := helper.GetRootChainABI()
-	stakemanagerABI, _ := helper.GetStakeManagerABI()
-	depositManagerABI, _ := helper.GetDepositManagerABI()
-	stateSenderABI, _ := helper.GetStateSenderABI()
 	abis := []*abi.ABI{
-		&rootchainABI,
-		&stakemanagerABI,
-		&depositManagerABI,
-		&stateSenderABI,
+		&contractCaller.RootChainABI,
+		&contractCaller.StakeManagerABI,
+		&contractCaller.StateSenderABI,
 	}
 
 	cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
@@ -114,15 +98,13 @@ func NewSyncer(cdc *codec.Codec, queueConnector *QueueConnector, httpClient *htt
 	syncer := &Syncer{
 		storageClient: getBridgeDBInstance(viper.GetString(BridgeDBFlag)),
 
-		cliCtx:         cliCtx,
-		queueConnector: queueConnector,
-		httpClient:     httpClient,
+		cliCtx:            cliCtx,
+		queueConnector:    queueConnector,
+		httpClient:        httpClient,
+		contractConnector: contractCaller,
 
-		abis:                 abis,
-		MainClient:           helper.GetMainClient(),
-		RootChainInstance:    rootchainInstance,
-		StakeManagerInstance: stakeManagerInstance,
-		HeaderChannel:        make(chan *types.Header),
+		abis:          abis,
+		HeaderChannel: make(chan *types.Header),
 	}
 
 	syncer.BaseService = *common.NewBaseService(logger, ChainSyncer, syncer)
@@ -157,7 +139,7 @@ func (syncer *Syncer) OnStart() error {
 	go syncer.startHeaderProcess(headerCtx)
 
 	// subscribe to new head
-	subscription, err := syncer.MainClient.SubscribeNewHead(ctx, syncer.HeaderChannel)
+	subscription, err := syncer.contractConnector.MainChainClient.SubscribeNewHead(ctx, syncer.HeaderChannel)
 	if err != nil {
 		// start go routine to poll for new header using client object
 		go syncer.startPolling(ctx, helper.GetConfig().SyncerPollInterval)
@@ -199,7 +181,7 @@ func (syncer *Syncer) startPolling(ctx context.Context, pollInterval int) {
 	for {
 		select {
 		case <-ticker.C:
-			header, err := syncer.MainClient.HeaderByNumber(ctx, nil)
+			header, err := syncer.contractConnector.MainChainClient.HeaderByNumber(ctx, nil)
 			if err == nil && header != nil {
 				// send data to channel
 				syncer.HeaderChannel <- header
@@ -280,13 +262,12 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 		Addresses: []ethCommon.Address{
 			helper.GetRootChainAddress(),
 			helper.GetStakeManagerAddress(),
-			helper.GetDepositManagerAddress(),
 			helper.GetStateSenderAddress(),
 		},
 	}
 
 	// get all logs
-	logs, err := syncer.MainClient.FilterLogs(context.Background(), query)
+	logs, err := syncer.contractConnector.MainChainClient.FilterLogs(context.Background(), query)
 	if err != nil {
 		syncer.Logger.Error("Error while filtering logs from syncer", "error", err)
 		return
@@ -541,7 +522,7 @@ func (syncer *Syncer) processStateSyncedEvent(eventName string, abiObject *abi.A
 		)
 
 		// TODO dispatch to heimdall
-		msg := clerkTypes.NewMsgStateRecord(
+		msg := clerkTypes.NewMsgEventRecord(
 			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
 			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			event.Id.Uint64(),

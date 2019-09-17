@@ -6,8 +6,8 @@ import (
 	"github.com/maticnetwork/heimdall/types"
 )
 
-// MsgStateRecord - state msg
-type MsgStateRecord struct {
+// MsgEventRecord - state msg
+type MsgEventRecord struct {
 	From     types.HeimdallAddress `json:"from"`
 	TxHash   types.HeimdallHash    `json:"tx_hash"`
 	ID       uint64                `json:"id"`
@@ -15,27 +15,27 @@ type MsgStateRecord struct {
 	Data     []byte                `json:"data"`
 }
 
-var _ sdk.Msg = MsgStateRecord{}
+var _ sdk.Msg = MsgEventRecord{}
 
-// NewMsgStateRecord - construct state msg
-func NewMsgStateRecord(
+// NewMsgEventRecord - construct state msg
+func NewMsgEventRecord(
 	from types.HeimdallAddress,
 	txHash types.HeimdallHash,
 	id uint64,
 	contract types.HeimdallAddress,
 	data []byte,
-) MsgStateRecord {
-	return MsgStateRecord{From: from, TxHash: txHash, ID: id, Contract: contract, Data: data}
+) MsgEventRecord {
+	return MsgEventRecord{From: from, TxHash: txHash, ID: id, Contract: contract, Data: data}
 }
 
 // Route Implements Msg.
-func (msg MsgStateRecord) Route() string { return RouterKey }
+func (msg MsgEventRecord) Route() string { return RouterKey }
 
 // Type Implements Msg.
-func (msg MsgStateRecord) Type() string { return "state-sync" }
+func (msg MsgEventRecord) Type() string { return "event-record" }
 
 // ValidateBasic Implements Msg.
-func (msg MsgStateRecord) ValidateBasic() sdk.Error {
+func (msg MsgEventRecord) ValidateBasic() sdk.Error {
 	if msg.From.Empty() {
 		return sdk.ErrInvalidAddress("missing sender address")
 	}
@@ -51,11 +51,11 @@ func (msg MsgStateRecord) ValidateBasic() sdk.Error {
 }
 
 // GetSignBytes Implements Msg.
-func (msg MsgStateRecord) GetSignBytes() []byte {
+func (msg MsgEventRecord) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
 // GetSigners Implements Msg.
-func (msg MsgStateRecord) GetSigners() []sdk.AccAddress {
+func (msg MsgEventRecord) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.From)}
 }

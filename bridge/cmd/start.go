@@ -33,6 +33,7 @@ var startCmd = &cobra.Command{
 			pier.NewSyncer(cdc, _queueConnector, _httpClient),
 			pier.NewAckService(cdc, _queueConnector, _httpClient),
 			pier.NewSpanService(cdc, _queueConnector, _httpClient),
+			pier.NewClerkService(cdc, _queueConnector, _httpClient),
 
 			// queue consumer server
 			pier.NewConsumerService(cdc, _queueConnector),

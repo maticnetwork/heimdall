@@ -113,7 +113,7 @@ func (c *Checkpointer) OnStart() error {
 	go c.startHeaderProcess(headerCtx)
 
 	// subscribe to new head
-	subscription, err := c.contractConnector.MaticClient.SubscribeNewHead(ctx, c.HeaderChannel)
+	subscription, err := c.contractConnector.MaticChainClient.SubscribeNewHead(ctx, c.HeaderChannel)
 	if err != nil {
 		// start go routine to poll for new header using client object
 		go c.startPolling(ctx, helper.GetConfig().CheckpointerPollInterval)
@@ -155,7 +155,7 @@ func (c *Checkpointer) startPolling(ctx context.Context, pollInterval int) {
 		select {
 		case <-ticker.C:
 			if isProposer(c.cliCtx) {
-				header, err := c.contractConnector.MaticClient.HeaderByNumber(ctx, nil)
+				header, err := c.contractConnector.MaticChainClient.HeaderByNumber(ctx, nil)
 				if err == nil && header != nil {
 					// send data to channel
 					c.HeaderChannel <- header

@@ -343,7 +343,7 @@ func (s *SpanService) broadcastToBor(height int64, txHash []byte) error {
 	proof := helper.AppendBytes(proofList...)
 
 	// encode commit span
-	encodedData := encodeCommitSpanData(
+	encodedData := s.encodeCommitSpanData(
 		helper.GetVoteBytes(votes, chainID),
 		sigs,
 		tx.Tx[authTypes.PulpHashLength:],
@@ -384,13 +384,9 @@ func (s *SpanService) broadcastToBor(height int64, txHash []byte) error {
 // ABI encoding
 //
 
-func encodeCommitSpanData(voteSignBytes []byte, sigs []byte, txData []byte, proof []byte) []byte {
+func (s *SpanService) encodeCommitSpanData(voteSignBytes []byte, sigs []byte, txData []byte, proof []byte) []byte {
 	// validator set ABI
-	validatorSetABI, err := helper.GetValidatorSetABI()
-	if err != nil {
-		return nil
-	}
-
+	validatorSetABI := s.contractConnector.ValidatorSetABI
 	// commit span
 	data, err := validatorSetABI.Pack("commitSpan", voteSignBytes, sigs, txData, proof)
 	if err != nil {

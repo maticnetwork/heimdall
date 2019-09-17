@@ -36,6 +36,7 @@ const (
 	HeimdallCheckpointer = "heimdall-checkpointer"
 	NoackService         = "checkpoint-no-ack"
 	SpanServiceStr       = "span-service"
+	ClerkServiceStr      = "clerk-service"
 	AMQPConsumerService  = "amqp-consumer-service"
 
 	// TxsURL represents txs url
