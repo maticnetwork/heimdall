@@ -149,7 +149,6 @@ func validateGenesisStateAccounts(accs []GenesisAccount) error {
 		if _, ok := addrMap[addrStr]; ok {
 			return fmt.Errorf("duplicate account found in genesis state; address: %s", addrStr)
 		}
-
 		addrMap[addrStr] = true
 	}
 
