@@ -15,6 +15,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+	ethTypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/spf13/viper"
 	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto"
@@ -623,5 +624,16 @@ func ToBytes32(x []byte) [32]byte {
 	var y [32]byte
 	copy(y[:], x)
 	return y
+}
 
+// GetReceiptLogData get receipt log data
+func GetReceiptLogData(log *ethTypes.Log) []byte {
+	var result []byte
+	for i, topic := range log.Topics {
+		if i > 0 {
+			result = append(result, topic.Bytes()...)
+		}
+	}
+
+	return append(result, log.Data...)
 }

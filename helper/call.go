@@ -8,7 +8,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	ethTypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 
@@ -28,11 +28,14 @@ type IContractCaller interface {
 	CurrentHeaderBlock() (uint64, error)
 	GetBalance(address common.Address) (*big.Int, error)
 	SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte)
-	GetMainChainBlock(blockNum *big.Int) (header *ethtypes.Header, err error)
-	GetMaticChainBlock(blockNum *big.Int) (header *ethtypes.Header, err error)
+	GetMainChainBlock(blockNum *big.Int) (header *ethTypes.Header, err error)
+	GetMaticChainBlock(blockNum *big.Int) (header *ethTypes.Header, err error)
 	IsTxConfirmed(tx common.Hash) bool
-	GetBlockNoFromTxHash(tx common.Hash) (blocknumber *big.Int, err error)
+	GetConfirmedTxReceipt(tx common.Hash) (*ethTypes.Receipt, error)
+	GetBlockNumberFromTxHash(tx common.Hash) (blocknumber *big.Int, err error)
 	SigUpdateEvent(tx common.Hash) (id uint64, newSigner common.Address, oldSigner common.Address, err error)
+	GetMainTxReceipt(common.Hash) (*ethTypes.Receipt, error)
+	GetMaticTxReceipt(common.Hash) (*ethTypes.Receipt, error)
 
 	// bor related contracts
 	CurrentSpanNumber() (Number *big.Int)
@@ -65,7 +68,7 @@ type txExtraInfo struct {
 }
 
 type rpcTransaction struct {
-	tx *ethtypes.Transaction
+	tx *ethTypes.Transaction
 	txExtraInfo
 }
 
@@ -209,7 +212,7 @@ func (c *ContractCaller) GetValidatorInfo(valID types.ValidatorID) (validator ty
 }
 
 // get main chain block header
-func (c *ContractCaller) GetMainChainBlock(blockNum *big.Int) (header *ethtypes.Header, err error) {
+func (c *ContractCaller) GetMainChainBlock(blockNum *big.Int) (header *ethTypes.Header, err error) {
 	latestBlock, err := c.MainChainClient.HeaderByNumber(context.Background(), blockNum)
 	if err != nil {
 		Logger.Error("Unable to connect to main chain", "Error", err)
@@ -219,7 +222,7 @@ func (c *ContractCaller) GetMainChainBlock(blockNum *big.Int) (header *ethtypes.
 }
 
 // get child chain block header
-func (c *ContractCaller) GetMaticChainBlock(blockNum *big.Int) (header *ethtypes.Header, err error) {
+func (c *ContractCaller) GetMaticChainBlock(blockNum *big.Int) (header *ethTypes.Header, err error) {
 	latestBlock, err := c.MaticChainClient.HeaderByNumber(context.Background(), blockNum)
 	if err != nil {
 		Logger.Error("Unable to connect to matic chain", "Error", err)
@@ -228,8 +231,8 @@ func (c *ContractCaller) GetMaticChainBlock(blockNum *big.Int) (header *ethtypes
 	return latestBlock, nil
 }
 
-// GetBlockNoFromTxHash gets block number of transaction
-func (c *ContractCaller) GetBlockNoFromTxHash(tx common.Hash) (*big.Int, error) {
+// GetBlockNumberFromTxHash gets block number of transaction
+func (c *ContractCaller) GetBlockNumberFromTxHash(tx common.Hash) (*big.Int, error) {
 	var rpcTx rpcTransaction
 	if err := c.MainChainRPC.CallContext(context.Background(), &rpcTx, "eth_getTransactionByHash", tx); err != nil {
 		return nil, err
@@ -249,29 +252,41 @@ func (c *ContractCaller) GetBlockNoFromTxHash(tx common.Hash) (*big.Int, error) 
 
 // IsTxConfirmed is tx confirmed
 func (c *ContractCaller) IsTxConfirmed(tx common.Hash) bool {
-	txBlk, err := c.GetBlockNoFromTxHash(tx)
-	if err != nil {
-		Logger.Error("Error getting block number from txhash", "Error", err)
-		return false
-	}
-	Logger.Debug("Tx included in block", "block", txBlk.Uint64(), "tx", tx)
-
-	latestBlk, err := c.GetMainChainBlock(nil)
-	if err != nil {
-		Logger.Error("error getting latest block from main chain", "Error", err)
-		return false
-	}
-	Logger.Debug("Latest block on main chain obtained", "Block", latestBlk.Number.Uint64())
-
-	diff := latestBlk.Number.Uint64() - txBlk.Uint64()
-	if diff < GetConfig().ConfirmationBlocks {
-		Logger.Info("Not enough confirmations", "ExpectedConf", GetConfig().ConfirmationBlocks, "ActualConf", diff)
+	// get main tx receipt
+	receipt, err := c.GetConfirmedTxReceipt(tx)
+	if receipt == nil || err != nil {
 		return false
 	}
 
 	return true
 }
 
+// GetConfirmedTxReceipt returns confirmed tx receipt
+func (c *ContractCaller) GetConfirmedTxReceipt(tx common.Hash) (*ethTypes.Receipt, error) {
+	// get main tx receipt
+	receipt, err := c.GetMainTxReceipt(tx)
+	if err != nil {
+		return nil, err
+	}
+	Logger.Debug("Tx included in block", "block", receipt.BlockNumber.Uint64(), "tx", tx)
+
+	// get main chain block
+	latestBlk, err := c.GetMainChainBlock(nil)
+	if err != nil {
+		Logger.Error("error getting latest block from main chain", "Error", err)
+		return nil, err
+	}
+	Logger.Debug("Latest block on main chain obtained", "Block", latestBlk.Number.Uint64())
+
+	diff := latestBlk.Number.Uint64() - receipt.BlockNumber.Uint64()
+	if diff < GetConfig().ConfirmationBlocks {
+		return nil, errors.New("Not enough confirmations")
+	}
+
+	return receipt, nil
+}
+
+// SigUpdateEvent represents sig update event
 func (c *ContractCaller) SigUpdateEvent(tx common.Hash) (id uint64, newSigner common.Address, oldSigner common.Address, err error) {
 	txReceipt, err := c.MainChainClient.TransactionReceipt(context.Background(), tx)
 	if err != nil {
@@ -306,6 +321,20 @@ func (c *ContractCaller) CurrentStateCounter() (Number *big.Int) {
 	}
 
 	return result
+}
+
+// GetMainTxReceipt returns main tx receipt
+func (c *ContractCaller) GetMainTxReceipt(txHash common.Hash) (*ethTypes.Receipt, error) {
+	return c.getTxReceipt(c.MainChainClient, txHash)
+}
+
+// GetMaticTxReceipt returns matic tx receipt
+func (c *ContractCaller) GetMaticTxReceipt(txHash common.Hash) (*ethTypes.Receipt, error) {
+	return c.getTxReceipt(c.MaticChainClient, txHash)
+}
+
+func (c *ContractCaller) getTxReceipt(client *ethclient.Client, txHash common.Hash) (*ethTypes.Receipt, error) {
+	return client.TransactionReceipt(context.Background(), txHash)
 }
 
 //
