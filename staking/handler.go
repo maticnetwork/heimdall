@@ -140,7 +140,7 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k Keeper, contr
 	oldValidator := validator.Copy()
 
 	// check if txhash has been used before
-	blockNum, err := contractCaller.GetBlockNoFromTxHash(msg.TxHash.EthHash())
+	blockNum, err := contractCaller.GetBlockNumberFromTxHash(msg.TxHash.EthHash())
 	if err != nil {
 		k.Logger(ctx).Error("Error occured while fetching tx", "Error", err)
 		return hmCommon.ErrInvalidMsg(k.Codespace(), "Invalid tx hash").Result()
