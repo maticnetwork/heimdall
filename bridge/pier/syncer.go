@@ -308,7 +308,7 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 
 func (syncer *Syncer) processCheckpointEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
 	event := new(rootchain.RootchainNewHeaderBlock)
-	if err := UnpackLog(abiObject, event, eventName, vLog); err != nil {
+	if err := helper.UnpackLog(abiObject, event, eventName, vLog); err != nil {
 		logEventParseError(syncer.Logger, eventName, err)
 	} else {
 		syncer.Logger.Info(
@@ -329,7 +329,7 @@ func (syncer *Syncer) processCheckpointEvent(eventName string, abiObject *abi.AB
 
 func (syncer *Syncer) processStakedEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
 	event := new(stakemanager.StakemanagerStaked)
-	if err := UnpackLog(abiObject, event, eventName, vLog); err != nil {
+	if err := helper.UnpackLog(abiObject, event, eventName, vLog); err != nil {
 		logEventParseError(syncer.Logger, eventName, err)
 	} else {
 		syncer.Logger.Debug(
@@ -359,7 +359,7 @@ func (syncer *Syncer) processStakedEvent(eventName string, abiObject *abi.ABI, v
 
 func (syncer *Syncer) processUnstakeInitEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
 	event := new(stakemanager.StakemanagerUnstakeInit)
-	if err := UnpackLog(abiObject, event, eventName, vLog); err != nil {
+	if err := helper.UnpackLog(abiObject, event, eventName, vLog); err != nil {
 		logEventParseError(syncer.Logger, eventName, err)
 	} else {
 		syncer.Logger.Debug(
@@ -385,7 +385,7 @@ func (syncer *Syncer) processUnstakeInitEvent(eventName string, abiObject *abi.A
 
 func (syncer *Syncer) processSignerChangeEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
 	event := new(stakemanager.StakemanagerSignerChange)
-	if err := UnpackLog(abiObject, event, eventName, vLog); err != nil {
+	if err := helper.UnpackLog(abiObject, event, eventName, vLog); err != nil {
 		logEventParseError(syncer.Logger, eventName, err)
 	} else {
 		syncer.Logger.Debug(
@@ -414,7 +414,7 @@ func (syncer *Syncer) processSignerChangeEvent(eventName string, abiObject *abi.
 
 func (syncer *Syncer) processReStakedEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
 	event := new(stakemanager.StakemanagerStaked)
-	if err := UnpackLog(abiObject, event, eventName, vLog); err != nil {
+	if err := helper.UnpackLog(abiObject, event, eventName, vLog); err != nil {
 		logEventParseError(syncer.Logger, eventName, err)
 	} else {
 		syncer.Logger.Debug(
@@ -440,7 +440,7 @@ func (syncer *Syncer) processReStakedEvent(eventName string, abiObject *abi.ABI,
 
 func (syncer *Syncer) processJailedEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
 	event := new(stakemanager.StakemanagerJailed)
-	if err := UnpackLog(abiObject, event, eventName, vLog); err != nil {
+	if err := helper.UnpackLog(abiObject, event, eventName, vLog); err != nil {
 		logEventParseError(syncer.Logger, eventName, err)
 	} else {
 		syncer.Logger.Debug(
@@ -468,7 +468,7 @@ func (syncer *Syncer) processJailedEvent(eventName string, abiObject *abi.ABI, v
 
 func (syncer *Syncer) processDepositEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
 	event := new(depositmanager.DepositmanagerDeposit)
-	if err := UnpackLog(abiObject, event, eventName, vLog); err != nil {
+	if err := helper.UnpackLog(abiObject, event, eventName, vLog); err != nil {
 		logEventParseError(syncer.Logger, eventName, err)
 	} else {
 		syncer.Logger.Debug(
@@ -489,7 +489,7 @@ func (syncer *Syncer) processDepositEvent(eventName string, abiObject *abi.ABI, 
 
 func (syncer *Syncer) processWithdrawEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
 	event := new(depositmanager.DepositmanagerDeposit)
-	if err := UnpackLog(abiObject, event, eventName, vLog); err != nil {
+	if err := helper.UnpackLog(abiObject, event, eventName, vLog); err != nil {
 		logEventParseError(syncer.Logger, eventName, err)
 	} else {
 		syncer.Logger.Debug(
@@ -510,7 +510,7 @@ func (syncer *Syncer) processWithdrawEvent(eventName string, abiObject *abi.ABI,
 
 func (syncer *Syncer) processStateSyncedEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
 	event := new(statesender.StatesenderStateSynced)
-	if err := UnpackLog(abiObject, event, eventName, vLog); err != nil {
+	if err := helper.UnpackLog(abiObject, event, eventName, vLog); err != nil {
 		logEventParseError(syncer.Logger, eventName, err)
 	} else {
 		syncer.Logger.Debug(
