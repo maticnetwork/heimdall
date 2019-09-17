@@ -40,6 +40,7 @@ type IContractCaller interface {
 	// bor related contracts
 	CurrentSpanNumber() (Number *big.Int)
 	CurrentStateCounter() (Number *big.Int)
+	EncodeStateSyncedEvent(*ethTypes.Log) (*statesender.StatesenderStateSynced, error)
 }
 
 // ContractCaller contract caller
@@ -335,6 +336,15 @@ func (c *ContractCaller) GetMaticTxReceipt(txHash common.Hash) (*ethTypes.Receip
 
 func (c *ContractCaller) getTxReceipt(client *ethclient.Client, txHash common.Hash) (*ethTypes.Receipt, error) {
 	return client.TransactionReceipt(context.Background(), txHash)
+}
+
+// EncodeStateSyncedEvent encode state sync data
+func (c *ContractCaller) EncodeStateSyncedEvent(log *ethTypes.Log) (*statesender.StatesenderStateSynced, error) {
+	event := new(statesender.StatesenderStateSynced)
+	if err := UnpackLog(&c.StateSenderABI, event, "StateSynced", log); err != nil {
+		return nil, err
+	}
+	return event, nil
 }
 
 //

@@ -6,9 +6,10 @@ import (
 
 // Checkpoint tags
 var (
-	Action         = sdk.TagAction
-	RecordTxHash   = "record-tx-hash"
-	RecordID       = "record-id"
-	RecordContract = "record-contract"
-	CreatedAt      = "created-at"
+	Action           = sdk.TagAction
+	RecordTxHash     = "record-tx-hash"
+	RecordTxLogIndex = "record-tx-log-index"
+	RecordID         = "record-id"
+	RecordContract   = "record-contract"
+	CreatedAt        = "created-at"
 )

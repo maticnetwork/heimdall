@@ -67,6 +67,17 @@ func CreateNewStateRecord(cdc *codec.Codec) *cobra.Command {
 				return fmt.Errorf("record id cannot be empty")
 			}
 
+			// log index
+			logIndexStr := viper.GetString(FlagLogIndex)
+			if logIndexStr == "" {
+				return fmt.Errorf("log index cannot be empty")
+			}
+
+			logIndex, err := strconv.ParseUint(logIndexStr, 10, 64)
+			if err != nil {
+				return fmt.Errorf("log index cannot be empty")
+			}
+
 			// msg state record
 			data, err := hex.DecodeString(viper.GetString(FlagRecordData))
 			if err != nil {
@@ -77,6 +88,7 @@ func CreateNewStateRecord(cdc *codec.Codec) *cobra.Command {
 			msg := clerkTypes.NewMsgEventRecord(
 				proposer,
 				types.HexToHeimdallHash(txHashStr),
+				logIndex,
 				recordID,
 				types.HexToHeimdallAddress(viper.GetString(FlagRecordContract)),
 				data,
@@ -87,6 +99,7 @@ func CreateNewStateRecord(cdc *codec.Codec) *cobra.Command {
 	}
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<tx-hash>")
+	cmd.Flags().String(FlagLogIndex, "", "--log-index=<log-index>")
 	cmd.Flags().String(FlagRecordID, "", "--id=<record-id>")
 	cmd.Flags().String(FlagRecordData, "", "--data=<record-data>")
 	cmd.Flags().String(FlagRecordContract, "", "--contract=<record-contract>")
@@ -95,6 +108,7 @@ func CreateNewStateRecord(cdc *codec.Codec) *cobra.Command {
 	cmd.MarkFlagRequired(FlagRecordContract)
 	cmd.MarkFlagRequired(FlagRecordData)
 	cmd.MarkFlagRequired(FlagTxHash)
+	cmd.MarkFlagRequired(FlagLogIndex)
 
 	return cmd
 }

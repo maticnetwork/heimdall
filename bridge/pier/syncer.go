@@ -521,10 +521,10 @@ func (syncer *Syncer) processStateSyncedEvent(eventName string, abiObject *abi.A
 			"data", hex.EncodeToString(event.Data),
 		)
 
-		// TODO dispatch to heimdall
 		msg := clerkTypes.NewMsgEventRecord(
 			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
 			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
+			uint64(vLog.Index),
 			event.Id.Uint64(),
 			hmTypes.BytesToHeimdallAddress(event.ContractAddress.Bytes()),
 			event.Data,

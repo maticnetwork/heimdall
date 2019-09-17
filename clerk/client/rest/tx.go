@@ -26,6 +26,7 @@ type AddRecordReq struct {
 	BaseReq rest.BaseReq `json:"base_req"`
 
 	TxHash   types.HeimdallHash    `json:"tx_hash"`
+	LogIndex uint64                `json:"log_index"`
 	ID       uint64                `json:"id"`
 	Contract types.HeimdallAddress `json:"contract"`
 	Data     []byte                `json:"data"`
@@ -48,6 +49,7 @@ func newEventRecordHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.Han
 		msg := clerkTypes.NewMsgEventRecord(
 			types.HexToHeimdallAddress(req.BaseReq.From),
 			req.TxHash,
+			req.LogIndex,
 			req.ID,
 			req.Contract,
 			req.Data,
