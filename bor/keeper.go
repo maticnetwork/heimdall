@@ -204,7 +204,7 @@ func (k *Keeper) SelectNextProducers(ctx sdk.Context) (vals []types.Validator, e
 	}
 
 	// select next producers using seed as blockheader hash
-	newProducersIds, err := SelectNextProducers(k.Logger(ctx), blockHeader.Hash(), currVals, producerCount)
+	newProducersIds, err := SelectNextProducers(blockHeader.Hash(), currVals, producerCount)
 	if err != nil {
 		return vals, err
 	}

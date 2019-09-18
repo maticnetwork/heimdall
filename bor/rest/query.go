@@ -340,7 +340,7 @@ func prepareNextSpanHandlerFn(
 			return
 		}
 
-		selectedProducerIndices, err := bor.SelectNextProducers(nil, blockHeader.Hash(), currentValidators, producerCount)
+		selectedProducerIndices, err := bor.SelectNextProducers(blockHeader.Hash(), currentValidators, producerCount)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, errors.New("error selecting producers from validator set").Error())
 			return
