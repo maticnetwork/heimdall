@@ -21,7 +21,6 @@ import (
 	logger "github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/privval"
 
-	"github.com/maticnetwork/heimdall/contracts/depositmanager"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 
@@ -96,12 +95,11 @@ type Configuration struct {
 
 	BorChainID string `json:"borChainID"` // bor chain id
 
-	StakeManagerAddress   string `json:"stakeManagerAddress"`   // Stake manager address on main chain
-	RootchainAddress      string `json:"rootchainAddress"`      // Rootchain contract address on main chain
-	DepositManagerAddress string `json:"depositManagerAddress"` // Deposit Manager contract address on main chain
-	ValidatorSetAddress   string `json:"validatorSetAddress"`   // Validator Set contract address on bor chain
-	StateSenderAddress    string `json:"stateSenderAddress"`    // main
-	StateReceiverAddress  string `json:"stateReceiverAddress"`  // matic
+	StakeManagerAddress  string `json:"stakeManagerAddress"`  // Stake manager address on main chain
+	RootchainAddress     string `json:"rootchainAddress"`     // Rootchain contract address on main chain
+	ValidatorSetAddress  string `json:"validatorSetAddress"`  // Validator Set contract address on bor chain
+	StateSenderAddress   string `json:"stateSenderAddress"`   // main
+	StateReceiverAddress string `json:"stateReceiverAddress"` // matic
 
 	ChildBlockInterval uint64 `json:"childBlockInterval"` // Difference between header index of 2 child blocks submitted on main chain
 
@@ -274,25 +272,6 @@ func GetStakeManagerInstance() (*stakemanager.Stakemanager, error) {
 // GetStakeManagerABI returns ABI for StakeManager contract
 func GetStakeManagerABI() (abi.ABI, error) {
 	return abi.JSON(strings.NewReader(stakemanager.StakemanagerABI))
-}
-
-//
-// Deposit manager
-//
-
-// GetStakeManagerAddress returns StakeManager contract address for selected base chain
-func GetDepositManagerAddress() common.Address {
-	return common.HexToAddress(GetConfig().DepositManagerAddress)
-}
-
-// GetStakeManagerInstance returns StakeManager contract instance for selected base chain
-func GetDepositManagerInstance() (*depositmanager.Depositmanager, error) {
-	return depositmanager.NewDepositmanager(GetDepositManagerAddress(), mainChainClient)
-}
-
-// GetDepositManagerABI returns ABI for DepositManager contract
-func GetDepositManagerABI() (abi.ABI, error) {
-	return abi.JSON(strings.NewReader(depositmanager.DepositmanagerABI))
 }
 
 //

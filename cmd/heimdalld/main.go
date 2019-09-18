@@ -35,6 +35,7 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 	hmserver "github.com/maticnetwork/heimdall/server"
 	stakingcli "github.com/maticnetwork/heimdall/staking/cli"
+	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
 	"github.com/maticnetwork/heimdall/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
@@ -202,7 +203,7 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 				PubKey:     newPubkey,
 				StartEpoch: 0,
 				Signer:     types.BytesToHeimdallAddress(valPubKey.Address().Bytes()),
-				Power:      1,
+				Power:      stakingTypes.DefaultValPower,
 			}
 			var vals []*types.Validator
 			vals = append(vals, &validator)

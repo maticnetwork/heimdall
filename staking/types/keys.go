@@ -15,4 +15,7 @@ const (
 
 	// DefaultParamspace default name for parameter store
 	DefaultParamspace = ModuleName
+
+	// Default validator power
+	DefaultValPower = 10
 )

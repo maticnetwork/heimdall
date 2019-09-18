@@ -69,7 +69,7 @@ func genFirstSpan(valset types.ValidatorSet) []*types.Span {
 	for _, val := range valset.Validators {
 		selectedProducers = append(selectedProducers, *val)
 	}
-	newSpan := types.NewSpan(0, 0, 0+DefaultSpanDuration, valset, selectedProducers, helper.GetConfig().BorChainID)
+	newSpan := types.NewSpan(0, 0, 0+DefaultSpanDuration-1, valset, selectedProducers, helper.GetConfig().BorChainID)
 	firstSpan = append(firstSpan, &newSpan)
 	return firstSpan
 }

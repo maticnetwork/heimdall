@@ -305,6 +305,7 @@ func (qc *QueueConnector) handleBorBroadcastMsgs(amqpMsgs <-chan amqp.Delivery) 
 			return false
 		}
 
+		qc.logger.Info("Generating auth object for sending transaction to bor")
 		// get auth
 		auth, err := helper.GenerateAuthObj(maticClient, msg)
 		if err != nil {
@@ -312,10 +313,10 @@ func (qc *QueueConnector) handleBorBroadcastMsgs(amqpMsgs <-chan amqp.Delivery) 
 			qc.logger.Error("Error while fetching the transaction param details", "error", err)
 			return false
 		}
+		qc.logger.Info("Successfully generated auth object", "auth", auth)
 
 		// Create the transaction, sign it and schedule it for execution
 		rawTx := types.NewTransaction(auth.Nonce.Uint64(), *msg.To, msg.Value, auth.GasLimit, auth.GasPrice, msg.Data)
-
 		// signer
 		signedTx, err := auth.Signer(types.HomesteadSigner{}, auth.From, rawTx)
 		if err != nil {
@@ -323,7 +324,7 @@ func (qc *QueueConnector) handleBorBroadcastMsgs(amqpMsgs <-chan amqp.Delivery) 
 			qc.logger.Error("Error while signing the transaction", "error", err)
 			return false
 		}
-
+		qc.logger.Info("Sending transaction to bor", "TxHash", signedTx.Hash())
 		// broadcast transaction
 		if err := maticClient.SendTransaction(context.Background(), signedTx); err != nil {
 			amqpMsg.Reject(false)
