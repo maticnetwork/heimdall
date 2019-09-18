@@ -60,7 +60,7 @@ func HandleMsgProposeSpan(ctx sdk.Context, msg MsgProposeSpan, k Keeper) sdk.Res
 		k.Logger(ctx).Error("Unable to fetch last span", "Error", err)
 		return common.ErrSpanNotFound(k.Codespace()).Result()
 	}
-	k.Logger(ctx).Info("==> Fetched last span", "Span", lastSpan.SelectedProducers)
+
 	// TODO add check for duration
 	result, ok := sortAndCompare(types.ValToMinVal(currentValidators), types.ValToMinVal(lastSpan.SelectedProducers), msg, k.Codespace())
 	if ok {
