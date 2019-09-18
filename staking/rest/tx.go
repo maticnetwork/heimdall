@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -21,6 +20,7 @@ func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec
 		"/staking/validators",
 		newValidatorJoinHandler(cdc, cliCtx),
 	).Methods("POST")
+	r.HandleFunc("/staking/validators/stake", newValidatorStakeUpdateHandler(cdc, cliCtx)).Methods("PUT")
 	r.HandleFunc("/staking/validators", newValidatorUpdateHandler(cdc, cliCtx)).Methods("PUT")
 	r.HandleFunc("/staking/validators", newValidatorExitHandler(cdc, cliCtx)).Methods("DELETE")
 }
@@ -33,24 +33,35 @@ type (
 		ID           uint64        `json:"ID"`
 		SignerPubKey hmType.PubKey `json:"pubKey"`
 		TxHash       string        `json:"tx_hash"`
+		LogIndex     uint64        `json:"log_index"`
 	}
 
-	// UpdateValidatorReq update validator request object
-	UpdateValidatorReq struct {
+	// UpdateSignerReq update validator signer request object
+	UpdateSignerReq struct {
 		BaseReq rest.BaseReq `json:"base_req"`
 
 		ID              uint64        `json:"ID"`
 		NewSignerPubKey hmType.PubKey `json:"pubKey"`
-		NewAmount       json.Number   `json:"amount"`
 		TxHash          string        `json:"tx_hash"`
+		LogIndex        uint64        `json:"log_index"`
+	}
+
+	// UpdateValidatorStakeReq update validator stake request object
+	UpdateValidatorStakeReq struct {
+		BaseReq rest.BaseReq `json:"base_req"`
+
+		ID       uint64 `json:"ID"`
+		TxHash   string `json:"tx_hash"`
+		LogIndex uint64 `json:"log_index"`
 	}
 
 	// RemoveValidatorReq remove validator request object
 	RemoveValidatorReq struct {
 		BaseReq rest.BaseReq `json:"base_req"`
 
-		ID     uint64 `json:"ID"`
-		TxHash string `json:"tx_hash"`
+		ID       uint64 `json:"ID"`
+		TxHash   string `json:"tx_hash"`
+		LogIndex uint64 `json:"log_index"`
 	}
 )
 
@@ -73,6 +84,7 @@ func newValidatorJoinHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.H
 			req.ID,
 			req.SignerPubKey,
 			types.HexToHeimdallHash(req.TxHash),
+			req.LogIndex,
 		)
 
 		// send response
@@ -98,6 +110,7 @@ func newValidatorExitHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.H
 			types.HexToHeimdallAddress(req.BaseReq.From),
 			req.ID,
 			types.HexToHeimdallHash(req.TxHash),
+			req.LogIndex,
 		)
 
 		// send response
@@ -108,7 +121,7 @@ func newValidatorExitHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.H
 func newValidatorUpdateHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// read req from request
-		var req UpdateValidatorReq
+		var req UpdateSignerReq
 		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
 			return
 		}
@@ -119,11 +132,38 @@ func newValidatorUpdateHandler(cdc *codec.Codec, cliCtx context.CLIContext) http
 		}
 
 		// create msg validator update
-		msg := staking.NewMsgValidatorUpdate(
+		msg := staking.NewMsgSignerUpdate(
 			types.HexToHeimdallAddress(req.BaseReq.From),
 			req.ID,
 			req.NewSignerPubKey,
 			types.HexToHeimdallHash(req.TxHash),
+			req.LogIndex,
+		)
+
+		// send response
+		restClient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+	}
+}
+
+func newValidatorStakeUpdateHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// read req from request
+		var req UpdateValidatorStakeReq
+		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+			return
+		}
+
+		req.BaseReq = req.BaseReq.Sanitize()
+		if !req.BaseReq.ValidateBasic(w) {
+			return
+		}
+
+		// create msg validator update
+		msg := staking.NewMsgStakeUpdate(
+			types.HexToHeimdallAddress(req.BaseReq.From),
+			req.ID,
+			types.HexToHeimdallHash(req.TxHash),
+			req.LogIndex,
 		)
 
 		// send response

@@ -302,7 +302,8 @@ func (s *SpanService) fetchNextSpanDetails(id uint64, start uint64) (msg bor.Msg
 		s.Logger.Error("Error unmarshalling propose tx msg ", "error", err)
 		return
 	}
-	s.Logger.Info("==>Generated proposer span msg", "msg", msg)
+
+	s.Logger.Debug("Generated proposer span msg", "msg", msg)
 	return msg, nil
 }
 

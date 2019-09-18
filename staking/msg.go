@@ -25,6 +25,7 @@ type MsgValidatorJoin struct {
 	ID           types.ValidatorID     `json:"id"`
 	SignerPubKey types.PubKey          `json:"pub_key"`
 	TxHash       types.HeimdallHash    `json:"tx_hash"`
+	LogIndex     uint64                `json:"log_index"`
 }
 
 // NewMsgValidatorJoin creates new validator-join
@@ -33,6 +34,7 @@ func NewMsgValidatorJoin(
 	id uint64,
 	pubkey types.PubKey,
 	txhash types.HeimdallHash,
+	logIndex uint64,
 ) MsgValidatorJoin {
 
 	return MsgValidatorJoin{
@@ -40,6 +42,7 @@ func NewMsgValidatorJoin(
 		ID:           types.NewValidatorID(id),
 		SignerPubKey: pubkey,
 		TxHash:       txhash,
+		LogIndex:     logIndex,
 	}
 }
 
@@ -80,6 +83,66 @@ func (msg MsgValidatorJoin) ValidateBasic() sdk.Error {
 }
 
 //
+// Stake update
+//
+
+//
+// validator exit
+//
+
+var _ sdk.Msg = &MsgStakeUpdate{}
+
+// MsgStakeUpdate represents stake update
+type MsgStakeUpdate struct {
+	From     types.HeimdallAddress `json:"from"`
+	ID       types.ValidatorID     `json:"ID"`
+	TxHash   types.HeimdallHash    `json:"tx_hash"`
+	LogIndex uint64                `json:"log_index"`
+}
+
+// NewMsgStakeUpdate represents stake update
+func NewMsgStakeUpdate(from types.HeimdallAddress, id uint64, txhash types.HeimdallHash, logIndex uint64) MsgStakeUpdate {
+	return MsgStakeUpdate{
+		From:     from,
+		ID:       types.NewValidatorID(id),
+		TxHash:   txhash,
+		LogIndex: logIndex,
+	}
+}
+
+func (msg MsgStakeUpdate) Type() string {
+	return "validator-stake-update"
+}
+
+func (msg MsgStakeUpdate) Route() string {
+	return stakingTypes.RouterKey
+}
+
+func (msg MsgStakeUpdate) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.From)}
+}
+
+func (msg MsgStakeUpdate) GetSignBytes() []byte {
+	b, err := cdc.MarshalJSON(msg)
+	if err != nil {
+		panic(err)
+	}
+	return sdk.MustSortJSON(b)
+}
+
+func (msg MsgStakeUpdate) ValidateBasic() sdk.Error {
+	if msg.ID <= 0 {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator ID %v", msg.ID)
+	}
+
+	if msg.From.Empty() {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.From.String())
+	}
+
+	return nil
+}
+
+//
 // validator update
 //
 var _ sdk.Msg = &MsgSignerUpdate{}
@@ -91,25 +154,27 @@ type MsgSignerUpdate struct {
 	ID              types.ValidatorID     `json:"ID"`
 	NewSignerPubKey types.PubKey          `json:"pubKey"`
 	TxHash          types.HeimdallHash    `json:"tx_hash"`
+	LogIndex        uint64                `json:"log_index"`
 }
 
-func NewMsgValidatorUpdate(
+func NewMsgSignerUpdate(
 	from types.HeimdallAddress,
 	id uint64,
 	pubKey types.PubKey,
 	txhash types.HeimdallHash,
+	logIndex uint64,
 ) MsgSignerUpdate {
-
 	return MsgSignerUpdate{
 		From:            from,
 		ID:              types.NewValidatorID(id),
 		NewSignerPubKey: pubKey,
 		TxHash:          txhash,
+		LogIndex:        logIndex,
 	}
 }
 
 func (msg MsgSignerUpdate) Type() string {
-	return "validator-update"
+	return "signer-update"
 }
 
 func (msg MsgSignerUpdate) Route() string {
@@ -151,16 +216,18 @@ func (msg MsgSignerUpdate) ValidateBasic() sdk.Error {
 var _ sdk.Msg = &MsgValidatorExit{}
 
 type MsgValidatorExit struct {
-	From   types.HeimdallAddress `json:"from"`
-	ID     types.ValidatorID     `json:"ID"`
-	TxHash types.HeimdallHash    `json:"tx_hash"`
+	From     types.HeimdallAddress `json:"from"`
+	ID       types.ValidatorID     `json:"ID"`
+	TxHash   types.HeimdallHash    `json:"tx_hash"`
+	LogIndex uint64                `json:"log_index"`
 }
 
-func NewMsgValidatorExit(from types.HeimdallAddress, id uint64, txhash types.HeimdallHash) MsgValidatorExit {
+func NewMsgValidatorExit(from types.HeimdallAddress, id uint64, txhash types.HeimdallHash, logIndex uint64) MsgValidatorExit {
 	return MsgValidatorExit{
-		From:   from,
-		ID:     types.NewValidatorID(id),
-		TxHash: txhash,
+		From:     from,
+		ID:       types.NewValidatorID(id),
+		TxHash:   txhash,
+		LogIndex: logIndex,
 	}
 }
 

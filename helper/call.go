@@ -28,12 +28,13 @@ type IContractCaller interface {
 	CurrentHeaderBlock() (uint64, error)
 	GetBalance(address common.Address) (*big.Int, error)
 	SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte)
-	GetMainChainBlock(blockNum *big.Int) (header *ethTypes.Header, err error)
-	GetMaticChainBlock(blockNum *big.Int) (header *ethTypes.Header, err error)
-	IsTxConfirmed(tx common.Hash) bool
-	GetConfirmedTxReceipt(tx common.Hash) (*ethTypes.Receipt, error)
-	GetBlockNumberFromTxHash(tx common.Hash) (blocknumber *big.Int, err error)
-	SigUpdateEvent(tx common.Hash) (id uint64, newSigner common.Address, oldSigner common.Address, err error)
+	GetMainChainBlock(*big.Int) (*ethTypes.Header, error)
+	GetMaticChainBlock(*big.Int) (*ethTypes.Header, error)
+	IsTxConfirmed(common.Hash) bool
+	GetConfirmedTxReceipt(common.Hash) (*ethTypes.Receipt, error)
+	GetBlockNumberFromTxHash(common.Hash) (*big.Int, error)
+	DecodeValidatorStakeUpdateEvent(*ethTypes.Receipt, uint64) (*stakemanager.StakemanagerStakeUpdate, error)
+	DecodeSignerUpdateEvent(*ethTypes.Receipt, uint64) (*stakemanager.StakemanagerSignerChange, error)
 	GetMainTxReceipt(common.Hash) (*ethTypes.Receipt, error)
 	GetMaticTxReceipt(common.Hash) (*ethTypes.Receipt, error)
 
@@ -193,12 +194,10 @@ func (c *ContractCaller) GetValidatorInfo(valID types.ValidatorID) (validator ty
 		return
 	}
 
-	decimals18 := big.NewInt(10).Exp(big.NewInt(10), big.NewInt(18), nil)
-	if amount.Uint64() < decimals18.Uint64() {
-		err = errors.New("amount must be more than 1 token")
+	newAmount, err := GetPowerFromAmount(amount)
+	if err != nil {
 		return
 	}
-	newAmount := amount.Div(amount, decimals18)
 
 	// newAmount
 	validator = types.Validator{
@@ -287,19 +286,48 @@ func (c *ContractCaller) GetConfirmedTxReceipt(tx common.Hash) (*ethTypes.Receip
 	return receipt, nil
 }
 
-// SigUpdateEvent represents sig update event
-func (c *ContractCaller) SigUpdateEvent(tx common.Hash) (id uint64, newSigner common.Address, oldSigner common.Address, err error) {
-	txReceipt, err := c.MainChainClient.TransactionReceipt(context.Background(), tx)
-	if err != nil {
-		Logger.Error("Unable to get transaction receipt by hash", "Error", err)
-		return
+// DecodeValidatorStakeUpdateEvent represents validator stake update event
+func (c *ContractCaller) DecodeValidatorStakeUpdateEvent(receipt *ethTypes.Receipt, logIndex uint64) (*stakemanager.StakemanagerStakeUpdate, error) {
+	event := new(stakemanager.StakemanagerStakeUpdate)
+
+	found := false
+	for _, vLog := range receipt.Logs {
+		if uint64(vLog.Index) == logIndex {
+			found = true
+			if err := UnpackLog(&c.StakeManagerABI, event, "StakeUpdate", vLog); err != nil {
+				return nil, err
+			}
+			break
+		}
 	}
-	for _, vLog := range txReceipt.Logs {
-		oldSigner = common.BytesToAddress(vLog.Topics[2].Bytes())
-		newSigner = common.BytesToAddress(vLog.Topics[3].Bytes())
-		id = vLog.Topics[1].Big().Uint64()
+
+	if !found {
+		return nil, errors.New("Event not found")
 	}
-	return
+
+	return event, nil
+}
+
+// DecodeSignerUpdateEvent represents sig update event
+func (c *ContractCaller) DecodeSignerUpdateEvent(receipt *ethTypes.Receipt, logIndex uint64) (*stakemanager.StakemanagerSignerChange, error) {
+	event := new(stakemanager.StakemanagerSignerChange)
+
+	found := false
+	for _, vLog := range receipt.Logs {
+		if uint64(vLog.Index) == logIndex {
+			found = true
+			if err := UnpackLog(&c.StakeManagerABI, event, "SignerChange", vLog); err != nil {
+				return nil, err
+			}
+			break
+		}
+	}
+
+	if !found {
+		return nil, errors.New("Event not found")
+	}
+
+	return event, nil
 }
 
 // CurrentSpanNumber get current span

@@ -9,7 +9,8 @@ var (
 	Action              = sdk.TagAction
 	NewProposerSelected = "new-proposer"
 	ValidatorJoin       = "validator-join"
-	ValidatorUpdate     = "validator-update"
+	SignerUpdate        = "signer-update"
+	StakeUpdate         = "stake-update"
 	ValidatorExit       = "validator-exit"
 	DeactivationEpoch   = "deactivation-epoch"
 	ActivationEpoch     = "activation-epoch"
