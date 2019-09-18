@@ -2,7 +2,6 @@ package bor
 
 import (
 	"math/rand"
-	"os"
 	"reflect"
 	"testing"
 
@@ -11,7 +10,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/maticnetwork/heimdall/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
-	logger "github.com/tendermint/tendermint/libs/log"
 )
 
 func TestShuffleList_OK(t *testing.T) {
@@ -50,8 +48,7 @@ func TestValShuffle(t *testing.T) {
 	seedHash1 := common.HexToHash("0xc46afc66ad9f4b237414c23a0cf0c469aeb60f52176565990644a9ee36a17667")
 	initialVals := GenRandomVal(4, 0, 100, uint64(10), false, 1)
 	t.Log("InitialVals", "Vals", initialVals)
-	log := logger.NewTMLogger(logger.NewSyncWriter(os.Stdout))
-	shuffledVals, err := selectNextProducers(log, seedHash1, initialVals)
+	shuffledVals, err := SelectNextProducers(seedHash1, initialVals)
 	require.Empty(t, err, "Error has to be nil ")
 	t.Log("ShuffledVals", "Vals", shuffledVals)
 }

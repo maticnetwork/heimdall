@@ -315,7 +315,6 @@ func (qc *QueueConnector) handleBorBroadcastMsgs(amqpMsgs <-chan amqp.Delivery) 
 
 		// Create the transaction, sign it and schedule it for execution
 		rawTx := types.NewTransaction(auth.Nonce.Uint64(), *msg.To, msg.Value, auth.GasLimit, auth.GasPrice, msg.Data)
-
 		// signer
 		signedTx, err := auth.Signer(types.HomesteadSigner{}, auth.From, rawTx)
 		if err != nil {
@@ -323,6 +322,8 @@ func (qc *QueueConnector) handleBorBroadcastMsgs(amqpMsgs <-chan amqp.Delivery) 
 			qc.logger.Error("Error while signing the transaction", "error", err)
 			return false
 		}
+
+		qc.logger.Debug("Sending transaction to bor", "TxHash", signedTx.Hash())
 
 		// broadcast transaction
 		if err := maticClient.SendTransaction(context.Background(), signedTx); err != nil {

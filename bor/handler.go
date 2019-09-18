@@ -62,7 +62,6 @@ func HandleMsgProposeSpan(ctx sdk.Context, msg MsgProposeSpan, k Keeper) sdk.Res
 	}
 
 	// TODO add check for duration
-
 	result, ok := sortAndCompare(types.ValToMinVal(currentValidators), types.ValToMinVal(lastSpan.SelectedProducers), msg, k.Codespace())
 	if ok {
 		result.Tags = sdk.NewTags(

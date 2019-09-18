@@ -4,20 +4,23 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
-	tmlog "github.com/tendermint/tendermint/libs/log"
 )
 
 // SelectNextProducers selects producers for next span by converting power to tickets
-func SelectNextProducers(logger tmlog.Logger, blkHash common.Hash, currentVals []types.Validator, producerCount uint64) (selectedIDs []uint64, err error) {
+func SelectNextProducers(blkHash common.Hash, currentVals []types.Validator, producerCount uint64) (selectedIDs []uint64, err error) {
+	if len(currentVals) <= int(producerCount) {
+		for _, val := range currentVals {
+			selectedIDs = append(selectedIDs, uint64(val.ID))
+		}
+		return
+	}
+
 	// extract seed from hash
 	seed := helper.ToBytes32(blkHash.Bytes()[:32])
 	validatorIndices := convertToSlots(currentVals)
 	selectedIDs, err = ShuffleList(validatorIndices, seed)
 	if err != nil {
 		return
-	}
-	if len(selectedIDs) < int(producerCount) {
-		return selectedIDs, nil
 	}
 	return selectedIDs[:producerCount], nil
 }

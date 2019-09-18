@@ -22,7 +22,6 @@ import (
 
 	"github.com/maticnetwork/heimdall/checkpoint"
 	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
-	"github.com/maticnetwork/heimdall/contracts/depositmanager"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 	"github.com/maticnetwork/heimdall/contracts/statesender"
@@ -294,12 +293,10 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 					syncer.processReStakedEvent(selectedEvent.Name, abiObject, &vLog)
 				case "Jailed":
 					syncer.processJailedEvent(selectedEvent.Name, abiObject, &vLog)
-				case "Deposit":
-					syncer.processDepositEvent(selectedEvent.Name, abiObject, &vLog)
 				case "StateSynced":
 					syncer.processStateSyncedEvent(selectedEvent.Name, abiObject, &vLog)
-				case "Withdraw":
-					syncer.processWithdrawEvent(selectedEvent.Name, abiObject, &vLog)
+					// case "Withdraw":
+					// 	syncer.processWithdrawEvent(selectedEvent.Name, abiObject, &vLog)
 				}
 			}
 		}
@@ -463,46 +460,25 @@ func (syncer *Syncer) processJailedEvent(eventName string, abiObject *abi.ABI, v
 }
 
 //
-// Process deposit event
-//
-
-func (syncer *Syncer) processDepositEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
-	event := new(depositmanager.DepositmanagerDeposit)
-	if err := helper.UnpackLog(abiObject, event, eventName, vLog); err != nil {
-		logEventParseError(syncer.Logger, eventName, err)
-	} else {
-		syncer.Logger.Debug(
-			"New event found",
-			"event", eventName,
-			"user", event.User,
-			"depositCount", event.DepositCount,
-			"token", event.Token.String(),
-		)
-
-		// TODO dispatch to heimdall
-	}
-}
-
-//
 // Process withdraw event
 //
 
-func (syncer *Syncer) processWithdrawEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
-	event := new(depositmanager.DepositmanagerDeposit)
-	if err := helper.UnpackLog(abiObject, event, eventName, vLog); err != nil {
-		logEventParseError(syncer.Logger, eventName, err)
-	} else {
-		syncer.Logger.Debug(
-			"New event found",
-			"event", eventName,
-			"user", event.User,
-			"depositCount", event.DepositCount,
-			"token", event.Token.String(),
-		)
+// func (syncer *Syncer) processWithdrawEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
+// 	event := new(depositmanager.DepositmanagerDeposit)
+// 	if err := helper.UnpackLog(abiObject, event, eventName, vLog); err != nil {
+// 		logEventParseError(syncer.Logger, eventName, err)
+// 	} else {
+// 		syncer.Logger.Debug(
+// 			"New event found",
+// 			"event", eventName,
+// 			"user", event.User,
+// 			"depositCount", event.DepositCount,
+// 			"token", event.Token.String(),
+// 		)
 
-		// TODO dispatch to heimdall
-	}
-}
+// 		// TODO dispatch to heimdall
+// 	}
+// }
 
 //
 // Process state synced event
