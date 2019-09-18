@@ -3,15 +3,15 @@ package staking
 import (
 	"encoding/hex"
 	"errors"
-	"math/big"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/ethereum/go-ethereum/common"
-	cmn "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
+	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
 	"github.com/maticnetwork/heimdall/types"
+	"github.com/tendermint/tendermint/libs/log"
 )
 
 var (
@@ -22,10 +22,16 @@ var (
 	CurrentValidatorSetKey = []byte{0x23} // Key to store current validator set
 )
 
+// type AckRetriever struct {
+// 	GetACKCount(ctx sdk.Context,hm app.HeimdallApp) uint64
+// }
 type AckRetriever interface {
 	GetACKCount(ctx sdk.Context) uint64
 }
 
+// func (d AckRetriever) GetACKCount(ctx sdk.Context) uint64 {
+// 	return app.checkpointKeeper.GetACKCount(ctx)
+// }
 // Keeper stores all related data
 type Keeper struct {
 	cdc *codec.Codec
@@ -62,6 +68,11 @@ func (k Keeper) Codespace() sdk.CodespaceType {
 	return k.codespace
 }
 
+// Logger returns a module-specific logger
+func (k Keeper) Logger(ctx sdk.Context) log.Logger {
+	return ctx.Logger().With("module", stakingTypes.ModuleName)
+}
+
 // GetValidatorKey drafts the validator key for addresses
 func GetValidatorKey(address []byte) []byte {
 	return append(ValidatorsKey, address...)
@@ -88,7 +99,7 @@ func (k *Keeper) AddValidator(ctx sdk.Context, validator types.Validator) error 
 
 	// store validator with address prefixed with validator key as index
 	store.Set(GetValidatorKey(validator.Signer.Bytes()), bz)
-	cmn.StakingLogger.Debug("Validator stored", "key", hex.EncodeToString(GetValidatorKey(validator.Signer.Bytes())), "validator", validator.String())
+	k.Logger(ctx).Debug("Validator stored", "key", hex.EncodeToString(GetValidatorKey(validator.Signer.Bytes())), "validator", validator.String())
 
 	// add validator to validator ID => SignerAddress map
 	k.SetValidatorIDToSignerAddr(ctx, validator.ID, validator.Signer)
@@ -171,8 +182,7 @@ func (k *Keeper) AddDeactivationEpoch(ctx sdk.Context, validator types.Validator
 	if updatedVal.EndEpoch != 0 {
 		validator.EndEpoch = updatedVal.EndEpoch
 		// update validator in store
-		k.AddValidator(ctx, validator)
-		return nil
+		return k.AddValidator(ctx, validator)
 	}
 
 	return errors.New("Deactivation period not set")
@@ -183,7 +193,7 @@ func (k *Keeper) UpdateSigner(ctx sdk.Context, newSigner types.HeimdallAddress, 
 	// get old validator from state and make power 0
 	validator, err := k.GetValidatorInfo(ctx, prevSigner.Bytes())
 	if err != nil {
-		cmn.StakingLogger.Error("Unable to fetch valiator from store")
+		k.Logger(ctx).Error("Unable to fetch valiator from store")
 		return err
 	}
 
@@ -200,7 +210,6 @@ func (k *Keeper) UpdateSigner(ctx sdk.Context, newSigner types.HeimdallAddress, 
 
 	// add updated validator to store with new key
 	k.AddValidator(ctx, validator)
-
 	return nil
 }
 
@@ -232,8 +241,8 @@ func (k *Keeper) GetValidatorSet(ctx sdk.Context) (validatorSet types.ValidatorS
 	return validatorSet
 }
 
-// IncreamentAccum increments accum for validator set by n times and replace validator set in store
-func (k *Keeper) IncreamentAccum(ctx sdk.Context, times int) {
+// IncrementAccum increments accum for validator set by n times and replace validator set in store
+func (k *Keeper) IncrementAccum(ctx sdk.Context, times int) {
 	// get validator set
 	validatorSet := k.GetValidatorSet(ctx)
 
@@ -297,32 +306,12 @@ func (k *Keeper) GetValidatorFromValID(ctx sdk.Context, valID types.ValidatorID)
 	return validator, true
 }
 
-// set last updated at for a validator
-func (k *Keeper) SetLastUpdated(ctx sdk.Context, valID types.ValidatorID, blckNum *big.Int) sdk.Error {
+// GetLastUpdated get last updated at for validator
+func (k *Keeper) GetLastUpdated(ctx sdk.Context, valID types.ValidatorID) (updatedAt uint64, found bool) {
 	// get validator
 	validator, ok := k.GetValidatorFromValID(ctx, valID)
 	if !ok {
-		return cmn.ErrInvalidMsg(k.Codespace(), "unable to fetch validator", "ID", valID)
-	}
-	// make sure  new block num > old
-	if blckNum.Cmp(validator.LastUpdated) != 1 {
-		return cmn.ErrOldTx(k.Codespace())
-	}
-	validator.LastUpdated = blckNum
-	err := k.AddValidator(ctx, validator)
-	if err != nil {
-		cmn.StakingLogger.Debug("Unable to update last updated", "Error", err, "Validator", validator.String())
-		return cmn.ErrInvalidMsg(k.Codespace(), "unable to add validator", "ID", valID, "Error", err)
-	}
-	return nil
-}
-
-// get last updated at for validator
-func (k *Keeper) GetLastUpdated(ctx sdk.Context, valID types.ValidatorID) (updatedAT *big.Int, found bool) {
-	// get validator
-	validator, ok := k.GetValidatorFromValID(ctx, valID)
-	if !ok {
-		return nil, false
+		return 0, false
 	}
 	return validator.LastUpdated, true
 }

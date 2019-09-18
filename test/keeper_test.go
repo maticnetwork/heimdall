@@ -93,10 +93,10 @@ func TestValidatorSet(t *testing.T) {
 	storedValSet := keeper.GetValidatorSet(ctx)
 	require.Equal(t, valSet, storedValSet, "Validator Set in state doesnt match ")
 
-	//keeper.IncreamentAccum(ctx, 1)
+	//keeper.IncrementAccum(ctx, 1)
 	//initialProposer := keeper.GetCurrentProposer(ctx)
 	//
-	//keeper.IncreamentAccum(ctx, 1)
+	//keeper.IncrementAccum(ctx, 1)
 	//newProposer := keeper.GetCurrentProposer(ctx)
 	//fmt.Printf("Prev :%#v  , New : %#v", initialProposer, newProposer)
 }
@@ -129,7 +129,7 @@ func TestValUpdates(t *testing.T) {
 		helper.UpdateValidators(
 			currentValSet,                // pointer to current validator set -- UpdateValidators will modify it
 			keeper.GetAllValidators(ctx), // All validators
-			5, // ack count
+			5,                            // ack count
 		)
 		updatedValSet := currentValSet
 		t.Log("Validators in updated validator set")
@@ -166,7 +166,7 @@ func TestValUpdates(t *testing.T) {
 		helper.UpdateValidators(
 			currentValSet,                // pointer to current validator set -- UpdateValidators will modify it
 			keeper.GetAllValidators(ctx), // All validators
-			5, // ack count
+			5,                            // ack count
 		)
 		t.Log("Validators in updated validator set")
 		for _, v := range currentValSet.Validators {
@@ -184,7 +184,7 @@ func TestValUpdates(t *testing.T) {
 		// load 4 validators to state
 		LoadValidatorSet(4, t, keeper, ctx, false, 10)
 		initValSet := keeper.GetValidatorSet(ctx)
-		keeper.IncreamentAccum(ctx, 2)
+		keeper.IncrementAccum(ctx, 2)
 		prevValSet := initValSet.Copy()
 		currentValSet := keeper.GetValidatorSet(ctx)
 		valToUpdate := currentValSet.Validators[0]
@@ -197,7 +197,7 @@ func TestValUpdates(t *testing.T) {
 		helper.UpdateValidators(
 			&currentValSet,               // pointer to current validator set -- UpdateValidators will modify it
 			keeper.GetAllValidators(ctx), // All validators
-			5, // ack count
+			5,                            // ack count
 		)
 		t.Log("Validators in updated validator set")
 		for _, v := range currentValSet.Validators {
@@ -247,7 +247,7 @@ func TestHandleMsgCheckpoint(t *testing.T) {
 		ctx, keeper := CreateTestInput(t, false)
 		// generate proposer for validator set
 		LoadValidatorSet(4, t, keeper, ctx, false, 10)
-		keeper.IncreamentAccum(ctx, 1)
+		keeper.IncrementAccum(ctx, 1)
 		header, err := GenRandCheckpointHeader(10)
 		require.Empty(t, err, "Unable to create random header block, Error:%v", err)
 		// make sure proposer has min ether
@@ -260,7 +260,7 @@ func TestHandleMsgCheckpoint(t *testing.T) {
 		ctx, keeper := CreateTestInput(t, false)
 		// generate proposer for validator set
 		LoadValidatorSet(4, t, keeper, ctx, false, 10)
-		keeper.IncreamentAccum(ctx, 1)
+		keeper.IncrementAccum(ctx, 1)
 		header, err := GenRandCheckpointHeader(10)
 		require.Empty(t, err, "Unable to create random header block, Error:%v", err)
 
@@ -282,7 +282,7 @@ func TestHandleMsgCheckpoint(t *testing.T) {
 			ctx, keeper := CreateTestInput(t, false)
 			// generate proposer for validator set
 			LoadValidatorSet(4, t, keeper, ctx, false, 10)
-			keeper.IncreamentAccum(ctx, 1)
+			keeper.IncrementAccum(ctx, 1)
 			// gen random checkpoint
 			header, err := GenRandCheckpointHeader(10)
 			require.Empty(t, err, "Unable to create random header block, Error:%v", err)
@@ -310,7 +310,7 @@ func TestHandleMsgCheckpoint(t *testing.T) {
 			ctx, keeper := CreateTestInput(t, false)
 			// generate proposer for validator set
 			LoadValidatorSet(4, t, keeper, ctx, false, 10)
-			keeper.IncreamentAccum(ctx, 1)
+			keeper.IncrementAccum(ctx, 1)
 			header, err := GenRandCheckpointHeader(10)
 			require.Empty(t, err, "Unable to create random header block, Error:%v", err)
 			// add current proposer to header
@@ -341,10 +341,6 @@ func SentValidCheckpoint(header types.CheckpointBlockHeader, keeper hmcmn.Keeper
 	got := checkpoint.HandleMsgCheckpoint(ctx, msgCheckpoint, keeper, &contractCallerObj)
 	require.True(t, got.IsOK(), "expected send-checkpoint to be ok, got %v", got)
 
-	// check if cache is set
-	found := keeper.GetCheckpointCache(ctx, hmcmn.CheckpointCacheKey)
-	require.Equal(t, true, found, "Checkpoint cache should exist")
-
 	// check if checkpoint matches
 	storedHeader, err := keeper.GetCheckpointFromBuffer(ctx)
 	require.Empty(t, err, "Unable to set checkpoint from buffer, Error: %v", err)
@@ -360,7 +356,7 @@ func TestACKAfterNoACK(t *testing.T) {
 	ctx, keeper := CreateTestInput(t, false)
 	// generate proposer for validator set
 	LoadValidatorSet(4, t, keeper, ctx, false, 10)
-	keeper.IncreamentAccum(ctx, 1)
+	keeper.IncrementAccum(ctx, 1)
 	header, err := GenRandCheckpointHeader(10)
 	require.Empty(t, err, "Unable to create random header block, Error:%v", err)
 	contractCallerObj.On("GetBalance", keeper.GetValidatorSet(ctx).Proposer.Signer).Return(helper.MinBalance, nil)
@@ -380,7 +376,7 @@ func TestACKAfterNoACK(t *testing.T) {
 func TestFirstNoACK(t *testing.T) {
 	ctx, keeper := CreateTestInput(t, false)
 	LoadValidatorSet(4, t, keeper, ctx, false, 10)
-	keeper.IncreamentAccum(ctx, 1)
+	keeper.IncrementAccum(ctx, 1)
 	msgNoACK := checkpoint.NewMsgCheckpointNoAck(uint64(time.Now().Unix()))
 	got := checkpoint.HandleMsgCheckpointNoAck(ctx, msgNoACK, keeper)
 	require.True(t, got.IsOK(), "expected send-no-ack to be ok, got %v", got)

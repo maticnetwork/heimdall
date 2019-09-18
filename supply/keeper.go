@@ -60,7 +60,7 @@ func NewKeeper(
 
 // Logger returns a module-specific logger.
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
-	return ctx.Logger().With("module", fmt.Sprintf("x/%s", supplyTypes.ModuleName))
+	return ctx.Logger().With("module", supplyTypes.ModuleName)
 }
 
 // GetSupply retrieves the Supply from store

@@ -10,6 +10,7 @@ import (
 	"github.com/maticnetwork/heimdall/bank"
 	"github.com/maticnetwork/heimdall/bor"
 	"github.com/maticnetwork/heimdall/checkpoint"
+	"github.com/maticnetwork/heimdall/clerk"
 	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/supply"
 	"github.com/maticnetwork/heimdall/types"
@@ -35,6 +36,15 @@ func NewGenesisAccount(acc authTypes.Account) GenesisAccount {
 	return gacc
 }
 
+func BaseToGenesisAcc(acc authTypes.BaseAccount) GenesisAccount {
+	return GenesisAccount{
+		Address:       acc.Address,
+		Coins:         acc.Coins,
+		Sequence:      acc.Sequence,
+		AccountNumber: acc.AccountNumber,
+	}
+}
+
 // GenesisState to Unmarshal
 type GenesisState struct {
 	Accounts []GenesisAccount  `json:"accounts"`
@@ -48,6 +58,7 @@ type GenesisState struct {
 	BorData        bor.GenesisState        `json:"bor"`
 	CheckpointData checkpoint.GenesisState `json:"checkpoint"`
 	StakingData    staking.GenesisState    `json:"staking"`
+	ClerkData      clerk.GenesisState      `json:"clerk"`
 }
 
 // NewGenesisState creates new genesis state
@@ -62,6 +73,7 @@ func NewGenesisState(
 	borData bor.GenesisState,
 	checkpointData checkpoint.GenesisState,
 	stakingData staking.GenesisState,
+	clerkData clerk.GenesisState,
 ) GenesisState {
 	return GenesisState{
 		Accounts: accounts,
@@ -74,6 +86,7 @@ func NewGenesisState(
 		BorData:        borData,
 		CheckpointData: checkpointData,
 		StakingData:    stakingData,
+		ClerkData:      clerkData,
 	}
 }
 
@@ -117,6 +130,9 @@ func ValidateGenesisState(genesisState GenesisState) error {
 	if err := checkpoint.ValidateGenesis(genesisState.CheckpointData); err != nil {
 		return err
 	}
+	if err := clerk.ValidateGenesis(genesisState.ClerkData); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -133,7 +149,6 @@ func validateGenesisStateAccounts(accs []GenesisAccount) error {
 		if _, ok := addrMap[addrStr]; ok {
 			return fmt.Errorf("duplicate account found in genesis state; address: %s", addrStr)
 		}
-
 		addrMap[addrStr] = true
 	}
 
@@ -141,14 +156,15 @@ func validateGenesisStateAccounts(accs []GenesisAccount) error {
 }
 
 // NewDefaultGenesisState generates the default state for gaia.
-func NewDefaultGenesisState() GenesisState {
+func NewDefaultGenesisState(validators []types.Validator, currentValSet types.ValidatorSet) GenesisState {
 	return GenesisState{
 		Accounts:       nil,
 		AuthData:       auth.DefaultGenesisState(),
 		BankData:       bank.DefaultGenesisState(),
-		StakingData:    staking.DefaultGenesisState(),
+		StakingData:    staking.DefaultGenesisState(validators, currentValSet),
 		CheckpointData: checkpoint.DefaultGenesisState(),
-		BorData:        bor.DefaultGenesisState(),
+		BorData:        bor.DefaultGenesisState(currentValSet),
+		ClerkData:      clerk.DefaultGenesisState(),
 		GenTxs:         nil,
 	}
 }

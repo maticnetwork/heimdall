@@ -5,7 +5,6 @@ import (
 	"errors"
 	"math/big"
 
-	ethCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -15,22 +14,19 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/maticnetwork/heimdall/helper"
-	tmlog "github.com/tendermint/tendermint/libs/log"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
-func ValidateCheckpoint(start uint64, end uint64, rootHash ethCommon.Hash, l tmlog.Logger) bool {
+func ValidateCheckpoint(start uint64, end uint64, rootHash hmTypes.HeimdallHash) bool {
 	root, err := GetHeaders(start, end)
 	if err != nil {
 		return false
 	}
-	l.Error("RootHashes are", "rootHashTx", rootHash, "rootHash", hexutil.Encode(root))
 
-	if bytes.Equal(root, rootHash[:]) {
-		l.Info("RootHash matched!")
+	if bytes.Equal(root, rootHash.Bytes()) {
 		return true
 	}
 
-	l.Error("RootHash does not match", "rootHashTx", rootHash, "rootHash", hexutil.Encode(root))
 	return false
 }
 

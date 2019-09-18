@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -12,7 +13,8 @@ import (
 )
 
 const (
-	bridgeDBFlag = "bridge-db"
+	bridgeDBFlag   = "bridge-db"
+	borChainIDFlag = "bor-chain-id"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -31,6 +33,7 @@ func InitTendermintViperConfig(cmd *cobra.Command) {
 	homeValue, _ := cmd.Flags().GetString(helper.HomeFlag)
 	withHeimdallConfigValue, _ := cmd.Flags().GetString(helper.WithHeimdallConfigFlag)
 	bridgeDBValue, _ := cmd.Flags().GetString(bridgeDBFlag)
+	borChainIDValue, _ := cmd.Flags().GetString(borChainIDFlag)
 
 	// bridge-db directory (default storage)
 	if bridgeDBValue == "" {
@@ -42,6 +45,7 @@ func InitTendermintViperConfig(cmd *cobra.Command) {
 	viper.Set(helper.HomeFlag, homeValue)
 	viper.Set(helper.WithHeimdallConfigFlag, withHeimdallConfigValue)
 	viper.Set(bridgeDBFlag, bridgeDBValue)
+	viper.Set(borChainIDFlag, borChainIDValue)
 
 	// start heimdall config
 	helper.InitHeimdallConfig("")
@@ -69,6 +73,12 @@ func init() {
 		bridgeDBFlag,
 		"",
 		"Bridge db path (default <home>/bridge/storage)",
+	)
+	// bridge chain id
+	rootCmd.PersistentFlags().String(
+		borChainIDFlag,
+		strconv.Itoa(helper.DefaultBorChainID),
+		"Bor chain id",
 	)
 
 	// bind all flags with viper

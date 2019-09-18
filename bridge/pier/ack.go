@@ -5,20 +5,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"math"
 	"math/big"
-	"net/http"
 	"strconv"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/client"
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/tendermint/tendermint/libs/common"
+	httpClient "github.com/tendermint/tendermint/rpc/client"
 
-	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/helper"
@@ -43,11 +42,18 @@ type AckService struct {
 	// header listener subscription
 	cancelACKProcess context.CancelFunc
 
+	// cli context
 	cliCtx cliContext.CLIContext
+
+	// queue connector
+	queueConnector *QueueConnector
+
+	// http client to subscribe to
+	httpClient *httpClient.HTTP
 }
 
 // NewAckService returns new service object
-func NewAckService() *AckService {
+func NewAckService(cdc *codec.Codec, queueConnector *QueueConnector, httpClient *httpClient.HTTP) *AckService {
 	// create logger
 	logger := Logger.With("module", NoackService)
 
@@ -58,14 +64,18 @@ func NewAckService() *AckService {
 		panic(err)
 	}
 
-	cliCtx := cliContext.NewCLIContext()
+	cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
 	cliCtx.BroadcastMode = client.BroadcastAsync
+	cliCtx.TrustNode = true
 
 	// creating checkpointer object
 	ackservice := &AckService{
 		storageClient:     getBridgeDBInstance(viper.GetString(BridgeDBFlag)),
 		rootChainInstance: rootchainInstance,
-		cliCtx:            cliCtx,
+
+		cliCtx:         cliCtx,
+		queueConnector: queueConnector,
+		httpClient:     httpClient,
 	}
 
 	ackservice.BaseService = *common.NewBaseService(logger, NoackService, ackservice)
@@ -122,7 +132,7 @@ func (ackService *AckService) checkForCheckpoint() {
 	}
 
 	// fetch last header number
-	lastHeaderNumber := currentHeaderNumber.Uint64() - helper.GetConfig().ChildBlockInterval
+	lastHeaderNumber := currentHeaderNumber.Uint64() // - helper.GetConfig().ChildBlockInterval
 	if lastHeaderNumber == 0 {
 		// First checkpoint required
 		return
@@ -132,7 +142,7 @@ func (ackService *AckService) checkForCheckpoint() {
 	headerNumber.SetUint64(lastHeaderNumber)
 
 	// header block
-	headerObject, err := ackService.rootChainInstance.HeaderBlock(nil, headerNumber)
+	headerObject, err := ackService.rootChainInstance.HeaderBlocks(nil, headerNumber)
 	if err != nil {
 		ackService.Logger.Error("Error while fetching header block object", "error", err)
 		return
@@ -155,7 +165,6 @@ func (ackService *AckService) processCheckpoint(lastCreatedAt int64) {
 	// check if last checkpoint was < NoACK wait time
 	if timeDiff.Seconds() >= helper.GetConfig().NoACKWaitTime.Seconds() && index == 0 {
 		index = math.Floor(timeDiff.Seconds() / helper.GetConfig().NoACKWaitTime.Seconds())
-		ackService.Logger.Debug("Index set", "Index", index)
 	}
 
 	if index == 0 {
@@ -167,17 +176,16 @@ func (ackService *AckService) processCheckpoint(lastCreatedAt int64) {
 
 	lastNoAckTime := time.Unix(int64(lastNoAck), 0)
 	timeDiff = currentTime.Sub(lastNoAckTime)
-	ackService.Logger.Debug("created time diff", "TimeDiff", timeDiff, "lasttime", lastNoAckTime)
 	// if last no ack == 0 , first no-ack to be sent
 	if currentTime.Sub(lastNoAckTime).Seconds() < helper.GetConfig().CheckpointBufferTime.Seconds() && lastNoAck != 0 {
 		ackService.Logger.Debug("Cannot send multiple no-ack in short time", "timeDiff", currentTime.Sub(lastNoAckTime).Seconds(), "ExpectedDiff", helper.GetConfig().CheckpointBufferTime.Seconds())
 		return
 	}
 
-	ackService.Logger.Debug("Fetching next proposers", "Count", index)
+	ackService.Logger.Debug("Fetching next proposers", "count", index)
 
 	// check if same checkpoint still exists
-	if ackService.isValidProposer(uint64(index), helper.GetPubKey().Address().Bytes()) {
+	if ackService.isValidProposer(uint64(index), helper.GetAddress()) {
 		ackService.Logger.Debug(
 			"Sending NO ACK message",
 			"currentTime", currentTime.String(),
@@ -190,74 +198,56 @@ func (ackService *AckService) processCheckpoint(lastCreatedAt int64) {
 			uint64(time.Now().Unix()),
 		)
 
-		resp, err := helper.BroadcastMsgs(ackService.cliCtx, []sdk.Msg{msg})
+		// send
+		err := ackService.queueConnector.BroadcastToHeimdall(msg)
 		if err != nil {
-			ackService.Logger.Error("Error while sending request to Tendermint", "error", err)
+			ackService.Logger.Error("Error while sending no-ack tx to Heimdall queue", "error", err)
 			return
 		}
 
-		ackService.Logger.Info("no-ack transaction sent successfully", "txHash", resp.TxHash)
+		ackService.Logger.Info("No-ack transaction sent successfully", "index", index)
 	}
 }
 
 func (ackService *AckService) getLastNoAckTime() uint64 {
-	resp, err := http.Get(LastNoAckURL)
+	response, err := FetchFromAPI(ackService.cliCtx, GetHeimdallServerEndpoint(LastNoAckURL))
 	if err != nil {
 		ackService.Logger.Error("Unable to send request for checkpoint buffer", "Error", err)
 		return 0
 	}
 
-	if resp.StatusCode == 200 {
-		ackService.Logger.Debug("Found last no-ack")
-		data, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			ackService.Logger.Error("Unable to parse no-ack body", "error", err)
-			return 0
-		}
-
-		var noackObject Result
-		if err := json.Unmarshal(data, &noackObject); err != nil {
-			ackService.Logger.Error("Error unmarshalling no-ack data ", "error", err)
-		} else {
-			return noackObject.Result
-		}
+	var noackObject Result
+	if err := json.Unmarshal(response.Result, &noackObject); err != nil {
+		ackService.Logger.Error("Error unmarshalling no-ack data ", "error", err)
+		return 0
 	}
-	return 0
+
+	return noackObject.Result
 }
 
 func (ackService *AckService) isValidProposer(count uint64, address []byte) bool {
 	ackService.Logger.Debug("Skipping proposers", "count", strconv.FormatUint(count, 10))
-	resp, err := http.Get(fmt.Sprintf(ProposersURL, strconv.FormatUint(count, 10)))
+	response, err := FetchFromAPI(
+		ackService.cliCtx,
+		GetHeimdallServerEndpoint(fmt.Sprintf(ProposersURL, strconv.FormatUint(count, 10))),
+	)
 	if err != nil {
 		ackService.Logger.Error("Unable to send request for next proposers", "Error", err)
 		return false
 	}
-	defer resp.Body.Close()
 
-	ackService.Logger.Debug("Fetcged proposers", "Count", count, "Status", resp.Status)
+	// unmarshall data from buffer
+	var proposers []hmtypes.Validator
+	if err := json.Unmarshal(response.Result, &proposers); err != nil {
+		ackService.Logger.Error("Error unmarshalling validator data ", "error", err)
+		return false
+	}
 
-	if resp.StatusCode == 200 {
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			ackService.Logger.Error("Unable to read data from response", "Error", err)
-			return false
+	ackService.Logger.Debug("Fetched proposers list", "numberOfProposers", count)
+	for _, proposer := range proposers {
+		if bytes.Equal(proposer.Signer.Bytes(), address) {
+			return true
 		}
-
-		// unmarshall data from buffer
-		var proposers []hmtypes.Validator
-		if err := json.Unmarshal(body, &proposers); err != nil {
-			ackService.Logger.Error("Error unmarshalling validator data ", "error", err)
-			return false
-		}
-
-		ackService.Logger.Debug("Fetched proposers list", "numberOfProposers", count)
-		for _, proposer := range proposers {
-			if bytes.Equal(proposer.Signer.Bytes(), address) {
-				return true
-			}
-		}
-	} else {
-		ackService.Logger.Error("Error while fetching validator data", "status", resp.StatusCode)
 	}
 
 	return false

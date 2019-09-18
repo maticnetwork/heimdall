@@ -59,12 +59,26 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 				proposer = helper.GetFromAddress(cliCtx)
 			}
 
+			// start block
+
 			startBlockStr := viper.GetString(FlagStartBlock)
 			if startBlockStr == "" {
 				return fmt.Errorf("Start block cannot be empty")
 			}
 
 			startBlock, err := strconv.ParseUint(startBlockStr, 10, 64)
+			if err != nil {
+				return err
+			}
+
+			// span
+
+			spanIdStr := viper.GetString(FlagSpanId)
+			if spanIdStr == "" {
+				return fmt.Errorf("Span Id cannot be empty")
+			}
+
+			spanId, err := strconv.ParseUint(spanIdStr, 10, 64)
 			if err != nil {
 				return err
 			}
@@ -128,6 +142,7 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 			}
 
 			msg := bor.NewMsgProposeSpan(
+				spanId,
 				proposer,
 				startBlock,
 				startBlock+spanDuration,
@@ -141,6 +156,7 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 	}
 
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
+	cmd.Flags().String(FlagSpanId, "", "--span-id=<span-id>")
 	cmd.Flags().String(FlagBorChainId, "", "--bor-chain-id=<bor-chain-id>")
 	cmd.Flags().String(FlagStartBlock, "", "--start-block=<start-block-number>")
 	cmd.MarkFlagRequired(FlagBorChainId)

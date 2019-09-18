@@ -31,6 +31,7 @@ import (
 	tmTypes "github.com/tendermint/tendermint/types"
 
 	"github.com/maticnetwork/heimdall/app"
+	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/helper"
 	hmserver "github.com/maticnetwork/heimdall/server"
 	stakingcli "github.com/maticnetwork/heimdall/staking/cli"
@@ -177,26 +178,8 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			//
 			// Heimdall config file
-
-			heimdallConf := helper.Configuration{
-				MainRPCUrl:          helper.MainRPCUrl,
-				MaticRPCUrl:         helper.MaticRPCUrl,
-				StakeManagerAddress: (ethCommon.Address{}).Hex(),
-				RootchainAddress:    (ethCommon.Address{}).Hex(),
-				ChildBlockInterval:  helper.DefaultChildBlockInterval,
-
-				CheckpointerPollInterval: helper.DefaultCheckpointerPollInterval,
-				SyncerPollInterval:       helper.DefaultSyncerPollInterval,
-				NoACKPollInterval:        helper.DefaultNoACKPollInterval,
-				AvgCheckpointLength:      helper.DefaultCheckpointLength,
-				MaxCheckpointLength:      helper.MaxCheckpointLength,
-				NoACKWaitTime:            helper.NoACKWaitTime,
-				CheckpointBufferTime:     helper.CheckpointBufferTime,
-				ConfirmationBlocks:       helper.ConfirmationBlocks,
-			}
-
+			heimdallConf := getDefaultHeimdallConfig()
 			heimdallConfBytes, err := json.MarshalIndent(heimdallConf, "", "  ")
 			if err != nil {
 				return err
@@ -221,11 +204,15 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 				Signer:     types.BytesToHeimdallAddress(valPubKey.Address().Bytes()),
 				Power:      1,
 			}
+			var vals []*types.Validator
+			vals = append(vals, &validator)
+			newValSet := types.NewValidatorSet(vals)
 
+			validators := []hmTypes.Validator{validator}
 			// create genesis state
-			appState := app.NewDefaultGenesisState()
-			// set new validator
-			appState.StakingData.Validators = []hmTypes.Validator{validator}
+			appState := app.NewDefaultGenesisState(validators, *newValSet)
+			// set validator account
+			appState.Accounts = []app.GenesisAccount{getGenesisAccount(validator.Signer.Bytes())}
 			// app state json
 			appStateJSON, err := json.Marshal(appState)
 			if err != nil {
@@ -350,40 +337,37 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 					ConsensusPubKey:  sdk.MustBech32ifyConsPub(valPubKeys[i]),
 				}
 
-				heimdallConf := helper.Configuration{
-					MainRPCUrl:               helper.MainRPCUrl,
-					MaticRPCUrl:              helper.MaticRPCUrl,
-					StakeManagerAddress:      (ethCommon.Address{}).Hex(),
-					RootchainAddress:         (ethCommon.Address{}).Hex(),
-					ChildBlockInterval:       helper.DefaultChildBlockInterval,
-					CheckpointerPollInterval: helper.DefaultCheckpointerPollInterval,
-					SyncerPollInterval:       helper.DefaultSyncerPollInterval,
-					NoACKPollInterval:        helper.DefaultNoACKPollInterval,
-					AvgCheckpointLength:      helper.DefaultCheckpointLength,
-					MaxCheckpointLength:      helper.MaxCheckpointLength,
-					NoACKWaitTime:            helper.NoACKWaitTime,
-					CheckpointBufferTime:     helper.CheckpointBufferTime,
-					ConfirmationBlocks:       helper.ConfirmationBlocks,
-				}
-
+				// get defaultheimdall config
+				heimdallConf := getDefaultHeimdallConfig()
 				heimdallConfBytes, err := json.MarshalIndent(heimdallConf, "", "  ")
 				if err != nil {
 					return err
 				}
+
 				if err := common.WriteFileAtomic(filepath.Join(config.RootDir, "config/heimdall-config.json"), heimdallConfBytes, 0600); err != nil {
 					fmt.Println("Error writing heimdall-config", err)
 					return err
 				}
-
 			}
 
+			// other data
+			accounts := make([]app.GenesisAccount, totalValidators)
 			for i := 0; i < totalValidators; i++ {
 				populatePersistentPeersInConfigAndWriteIt(config)
+				// genesis account
+				accounts[i] = getGenesisAccount(validators[i].Signer.Bytes())
 			}
+			var vals []*types.Validator
+			for _, validator := range validators {
+				vals = append(vals, &validator)
+
+			}
+			newValSet := types.NewValidatorSet(vals)
 
 			// new app state
-			appState := app.NewDefaultGenesisState()
-			appState.StakingData.Validators = validators
+			appState := app.NewDefaultGenesisState(validators, *newValSet)
+			// set accounts and validators
+			appState.Accounts = accounts
 
 			appStateJSON, err := json.Marshal(appState)
 			if err != nil {
@@ -402,7 +386,8 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 				if err != nil {
 					return err
 				}
-				if err := common.WriteFileAtomic(filepath.Join("mytestnet/signer-dump.json"), signerJSON, 0600); err != nil {
+
+				if err := common.WriteFileAtomic(filepath.Join(outDir, "signer-dump.json"), signerJSON, 0600); err != nil {
 					fmt.Println("Error writing signer-dump", err)
 					return err
 				}
@@ -485,6 +470,39 @@ func populatePersistentPeersInConfigAndWriteIt(config *cfg.Config) {
 
 		// overwrite default config
 		cfg.WriteConfigFile(filepath.Join(nodeDir(i), "config", "config.toml"), config)
+	}
+}
+
+func getGenesisAccount(address []byte) app.GenesisAccount {
+	acc := authTypes.NewBaseAccountWithAddress(hmTypes.BytesToHeimdallAddress(address))
+	acc.SetCoins(types.Coins{types.Coin{Denom: "vetic", Amount: types.NewInt(1000)}})
+	return app.BaseToGenesisAcc(acc)
+}
+
+func getDefaultHeimdallConfig() helper.Configuration {
+	return helper.Configuration{
+		MainRPCUrl:  helper.MainRPCUrl,
+		MaticRPCUrl: helper.MaticRPCUrl,
+
+		AmqpURL:           helper.DefaultAmqpURL,
+		HeimdallServerURL: helper.DefaultHeimdallServerURL,
+		TendermintNodeURL: helper.DefaultTendermintNodeURL,
+
+		StakeManagerAddress:  (ethCommon.Address{}).Hex(),
+		RootchainAddress:     (ethCommon.Address{}).Hex(),
+		ValidatorSetAddress:  (ethCommon.Address{}).Hex(),
+		StateSenderAddress:   (ethCommon.Address{}).Hex(),
+		StateReceiverAddress: helper.DefaultStateReceiverAddress,
+
+		ChildBlockInterval:       helper.DefaultChildBlockInterval,
+		CheckpointerPollInterval: helper.DefaultCheckpointerPollInterval,
+		SyncerPollInterval:       helper.DefaultSyncerPollInterval,
+		NoACKPollInterval:        helper.DefaultNoACKPollInterval,
+		AvgCheckpointLength:      helper.DefaultCheckpointLength,
+		MaxCheckpointLength:      helper.MaxCheckpointLength,
+		NoACKWaitTime:            helper.NoACKWaitTime,
+		CheckpointBufferTime:     helper.CheckpointBufferTime,
+		ConfirmationBlocks:       helper.ConfirmationBlocks,
 	}
 }
 

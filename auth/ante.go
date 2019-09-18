@@ -18,9 +18,13 @@ var (
 	simSecp256k1Pubkey secp256k1.PubKeySecp256k1
 	simSecp256k1Sig    [64]byte
 
-	// fees wanted
+	// fees wanted for normal transaction
 	gasWantedPerTx sdk.Gas = 300000
-	gasUsedPerTx   sdk.Gas = gasWantedPerTx - 60000 // TODO use proposer amount per tx
+	gasUsedPerTx   sdk.Gas = gasWantedPerTx - 100000 // TODO use proposer amount per tx
+
+	// fee wanted for checkpoint transaction
+	gasWantedPerCheckpoinTx sdk.Gas = 10000000
+	gasUsedPerCheckpointTx  sdk.Gas = gasWantedPerCheckpoinTx - 1000000
 
 	feeWantedPerTx = types.Coins{types.Coin{Denom: "vetic", Amount: types.NewInt(1)}}
 )
@@ -80,6 +84,11 @@ func NewAnteHandler(
 		// gas for tx
 		gasForTx := gasWantedPerTx // stdTx.Fee.Gas
 		feeForTx := feeWantedPerTx // stdTx.Fee.Amount
+
+		// checkpoint gas limit
+		if stdTx.Msg.Type() == "checkpoint" && stdTx.Msg.Route() == "checkpoint" {
+			gasForTx = gasWantedPerCheckpoinTx // stdTx.Fee.Gas
+		}
 
 		// new gas meter
 		newCtx = SetGasMeter(simulate, ctx, gasForTx)

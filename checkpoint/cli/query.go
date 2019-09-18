@@ -75,7 +75,7 @@ func GetLastNoACK(cdc *codec.Codec) *cobra.Command {
 		Short: "get last no ack received time",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			res, err := cliCtx.QueryStore(checkpoint.CheckpointNoACKCacheKey, "checkpoint")
+			res, err := cliCtx.QueryStore(checkpoint.LastNoACKKey, "checkpoint")
 			if err != nil {
 				return err
 			}
@@ -125,7 +125,7 @@ func GetCheckpointCount(cdc *codec.Codec) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			res, err := cliCtx.QueryStore(checkpoint.ACKCountKey, "staking")
+			res, err := cliCtx.QueryStore(checkpoint.ACKCountKey, "checkpoint")
 			if err != nil {
 				return err
 			}

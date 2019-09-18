@@ -2,14 +2,12 @@ package cli
 
 import (
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -80,7 +78,7 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 				proposer,
 				uint64(validatorID),
 				pubkey,
-				common.HexToHash(txhash),
+				types.HexToHeimdallHash(txhash),
 			)
 
 			// broadcast messages
@@ -92,6 +90,7 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().Int(FlagValidatorID, 0, "--id=<validator ID here>")
 	cmd.Flags().String(FlagSignerPubkey, "", "--signer-pubkey=<signer pubkey here>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
+	cmd.MarkFlagRequired(FlagValidatorID)
 	cmd.MarkFlagRequired(FlagSignerPubkey)
 	cmd.MarkFlagRequired(FlagTxHash)
 	return cmd
@@ -125,7 +124,7 @@ func SendValidatorExitTx(cdc *codec.Codec) *cobra.Command {
 			msg := staking.NewMsgValidatorExit(
 				proposer,
 				uint64(validator),
-				common.HexToHash(txhash),
+				types.HexToHeimdallHash(txhash),
 			)
 
 			// broadcast messages
@@ -136,12 +135,13 @@ func SendValidatorExitTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
 	cmd.Flags().Int(FlagValidatorID, 0, "--id=<validator ID here>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
+	cmd.MarkFlagRequired(FlagValidatorID)
 	cmd.MarkFlagRequired(FlagTxHash)
 
 	return cmd
 }
 
-// send validator update transaction
+// SendValidatorUpdateTx send validator update transaction
 func SendValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "signer-update",
@@ -165,8 +165,6 @@ func SendValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 				return fmt.Errorf("Pubkey has to be supplied")
 			}
 
-			amountStr := viper.GetString(FlagAmount)
-
 			pubkeyBytes, err := hex.DecodeString(pubkeyStr)
 			if err != nil {
 				return err
@@ -182,8 +180,7 @@ func SendValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 				proposer,
 				uint64(validator),
 				pubkey,
-				json.Number(amountStr),
-				common.HexToHash(txhash),
+				types.HexToHeimdallHash(txhash),
 			)
 
 			// broadcast messages
@@ -194,7 +191,6 @@ func SendValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
 	cmd.Flags().Int(FlagValidatorID, 0, "--id=<validator ID here>")
 	cmd.Flags().String(FlagNewSignerPubkey, "", "--new-pubkey=< new signer pubkey here>")
-	cmd.Flags().String(FlagAmount, "", "--staked-amount=<staked amount>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
 	cmd.MarkFlagRequired(FlagTxHash)
 	cmd.MarkFlagRequired(FlagNewSignerPubkey)

@@ -7,6 +7,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
+	"github.com/tendermint/tendermint/libs/log"
+
+	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	cmn "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
@@ -16,18 +19,17 @@ import (
 var (
 	DefaultValue = []byte{0x01} // Value to store in CacheCheckpoint and CacheCheckpointACK & ValidatorSetChange Flag
 
-	ACKCountKey             = []byte{0x11} // key to store ACK count
-	BufferCheckpointKey     = []byte{0x12} // Key to store checkpoint in buffer
-	HeaderBlockKey          = []byte{0x13} // prefix key for when storing header after ACK
-	CheckpointCacheKey      = []byte{0x14} // key to store Cache for checkpoint
-	CheckpointACKCacheKey   = []byte{0x15} // key to store Cache for checkpointACK
-	CheckpointNoACKCacheKey = []byte{0x16} // key to store last no-ack
+	ACKCountKey         = []byte{0x11} // key to store ACK count
+	BufferCheckpointKey = []byte{0x12} // Key to store checkpoint in buffer
+	HeaderBlockKey      = []byte{0x13} // prefix key for when storing header after ACK
+	LastNoACKKey        = []byte{14}   // key to store last no-ack
 )
 
 // Keeper stores all related data
 type Keeper struct {
 	cdc *codec.Codec
-	sk  staking.Keeper
+	// staking keeper
+	sk staking.Keeper
 	// The (unexposed) keys used to access the stores from the Context.
 	storeKey sdk.StoreKey
 	// codespace
@@ -59,6 +61,11 @@ func (k Keeper) Codespace() sdk.CodespaceType {
 	return k.codespace
 }
 
+// Logger returns a module-specific logger
+func (k Keeper) Logger(ctx sdk.Context) log.Logger {
+	return ctx.Logger().With("module", checkpointTypes.ModuleName)
+}
+
 // AddCheckpoint adds checkpoint into final blocks
 func (k *Keeper) AddCheckpoint(ctx sdk.Context, headerBlockNumber uint64, headerBlock types.CheckpointBlockHeader) error {
 	key := GetHeaderKey(headerBlockNumber)
@@ -66,7 +73,7 @@ func (k *Keeper) AddCheckpoint(ctx sdk.Context, headerBlockNumber uint64, header
 	if err != nil {
 		return err
 	}
-	cmn.CheckpointLogger.Info("Adding good checkpoint to state", "checkpoint", headerBlock, "headerBlockNumber", headerBlockNumber)
+	k.Logger(ctx).Info("Adding good checkpoint to state", "checkpoint", headerBlock, "headerBlockNumber", headerBlockNumber)
 	return nil
 }
 
@@ -86,7 +93,7 @@ func (k *Keeper) addCheckpoint(ctx sdk.Context, key []byte, headerBlock types.Ch
 	// create Checkpoint block and marshall
 	out, err := k.cdc.MarshalBinaryBare(headerBlock)
 	if err != nil {
-		cmn.CheckpointLogger.Error("Error marshalling checkpoint", "error", err)
+		k.Logger(ctx).Error("Error marshalling checkpoint", "error", err)
 		return err
 	}
 
@@ -132,7 +139,7 @@ func (k *Keeper) GetLastCheckpoint(ctx sdk.Context) (types.CheckpointBlockHeader
 		if store.Has(headerKey) {
 			err := k.cdc.UnmarshalBinaryBare(store.Get(headerKey), &_checkpoint)
 			if err != nil {
-				cmn.CheckpointLogger.Error("Unable to fetch last checkpoint from store", "key", lastCheckpointKey, "acksCount", acksCount)
+				k.Logger(ctx).Error("Unable to fetch last checkpoint from store", "key", lastCheckpointKey, "acksCount", acksCount)
 				return _checkpoint, err
 			} else {
 				return _checkpoint, nil
@@ -148,30 +155,8 @@ func GetHeaderKey(headerNumber uint64) []byte {
 	return append(HeaderBlockKey, headerNumberBytes...)
 }
 
-// SetCheckpointAckCache sets value in cache for checkpoint ACK
-func (k *Keeper) SetCheckpointAckCache(ctx sdk.Context, value []byte) {
-	store := ctx.KVStore(k.storeKey)
-	store.Set(CheckpointACKCacheKey, value)
-}
-
-func (k *Keeper) FlushACKCache(ctx sdk.Context) {
-	store := ctx.KVStore(k.storeKey)
-	store.Delete(CheckpointACKCacheKey)
-}
-
-func (k *Keeper) FlushCheckpointCache(ctx sdk.Context) {
-	store := ctx.KVStore(k.storeKey)
-	store.Delete(CheckpointCacheKey)
-}
-
-// SetCheckpointCache sets value in cache for checkpoint
-func (k *Keeper) SetCheckpointCache(ctx sdk.Context, value []byte) {
-	store := ctx.KVStore(k.storeKey)
-	store.Set(CheckpointCacheKey, value)
-}
-
-// GetCheckpointCache check if value exists in cache or not
-func (k *Keeper) GetCheckpointCache(ctx sdk.Context, key []byte) bool {
+// HasStoreValue check if value exists in store or not
+func (k *Keeper) HasStoreValue(ctx sdk.Context, key []byte) bool {
 	store := ctx.KVStore(k.storeKey)
 	if store.Has(key) {
 		return true
@@ -207,16 +192,16 @@ func (k *Keeper) SetLastNoAck(ctx sdk.Context, timestamp uint64) {
 	// convert timestamp to bytes
 	value := []byte(strconv.FormatUint(timestamp, 10))
 	// set no-ack
-	store.Set(CheckpointNoACKCacheKey, value)
+	store.Set(LastNoACKKey, value)
 }
 
 // GetLastNoAck returns last no ack
 func (k *Keeper) GetLastNoAck(ctx sdk.Context) uint64 {
 	store := ctx.KVStore(k.storeKey)
 	// check if ack count is there
-	if store.Has(CheckpointNoACKCacheKey) {
+	if store.Has(LastNoACKKey) {
 		// get current ACK count
-		result, err := strconv.ParseUint(string(store.Get(CheckpointNoACKCacheKey)), 10, 64)
+		result, err := strconv.ParseUint(string(store.Get(LastNoACKKey)), 10, 64)
 		if err == nil {
 			return uint64(result)
 		}
@@ -254,13 +239,14 @@ func (k Keeper) GetACKCount(ctx sdk.Context) uint64 {
 	// check if ack count is there
 	if store.Has(ACKCountKey) {
 		// get current ACK count
-		ackCount, err := strconv.Atoi(string(store.Get(ACKCountKey)))
+		ackCount, err := strconv.ParseUint(string(store.Get(ACKCountKey)), 10, 64)
 		if err != nil {
-			cmn.CheckpointLogger.Error("Unable to convert key to int")
+			k.Logger(ctx).Error("Unable to convert key to int")
 		} else {
-			return uint64(ackCount)
+			return ackCount
 		}
 	}
+
 	return 0
 }
 

@@ -383,6 +383,19 @@
   version = "v0.0.3"
 
 [[projects]]
+  digest = "1:fc2d0757b4085488b4e5cc44770bdbe5560d5095df20a380a5e94b3868677593"
+  name = "github.com/prysmaticlabs/prysm"
+  packages = [
+    "proto/beacon/p2p/v1",
+    "proto/common",
+    "shared/bytesutil",
+    "shared/hashutil",
+  ]
+  pruneopts = "UT"
+  revision = "1be950f90cade953b8fb880e91c989187348b5f8"
+  version = "0.1.2"
+
+[[projects]]
   digest = "1:77b730fa4c2d98f3ddf492acbea351eb6b0560fa5eace4105a6fc33ff937bb1b"
   name = "github.com/rakyll/statik"
   packages = ["fs"]
@@ -761,18 +774,26 @@
     "github.com/cosmos/cosmos-sdk/baseapp",
     "github.com/cosmos/cosmos-sdk/client",
     "github.com/cosmos/cosmos-sdk/client/context",
+    "github.com/cosmos/cosmos-sdk/client/keys",
     "github.com/cosmos/cosmos-sdk/client/lcd",
     "github.com/cosmos/cosmos-sdk/client/rpc",
-    "github.com/cosmos/cosmos-sdk/client/tx",
+    "github.com/cosmos/cosmos-sdk/client/utils",
     "github.com/cosmos/cosmos-sdk/codec",
+    "github.com/cosmos/cosmos-sdk/crypto/keys",
     "github.com/cosmos/cosmos-sdk/server",
     "github.com/cosmos/cosmos-sdk/store",
     "github.com/cosmos/cosmos-sdk/types",
     "github.com/cosmos/cosmos-sdk/types/rest",
     "github.com/cosmos/cosmos-sdk/version",
+    "github.com/cosmos/cosmos-sdk/x/auth",
     "github.com/cosmos/cosmos-sdk/x/gov",
+    "github.com/cosmos/cosmos-sdk/x/params",
+    "github.com/cosmos/cosmos-sdk/x/params/subspace",
     "github.com/go-kit/kit/log",
     "github.com/gorilla/mux",
+    "github.com/pkg/errors",
+    "github.com/prysmaticlabs/prysm/shared/bytesutil",
+    "github.com/prysmaticlabs/prysm/shared/hashutil",
     "github.com/spf13/cobra",
     "github.com/spf13/viper",
     "github.com/streadway/amqp",
@@ -784,6 +805,7 @@
     "github.com/tendermint/tendermint/config",
     "github.com/tendermint/tendermint/crypto",
     "github.com/tendermint/tendermint/crypto/merkle",
+    "github.com/tendermint/tendermint/crypto/multisig",
     "github.com/tendermint/tendermint/crypto/secp256k1",
     "github.com/tendermint/tendermint/crypto/tmhash",
     "github.com/tendermint/tendermint/libs/cli",
@@ -792,6 +814,8 @@
     "github.com/tendermint/tendermint/libs/log",
     "github.com/tendermint/tendermint/p2p",
     "github.com/tendermint/tendermint/privval",
+    "github.com/tendermint/tendermint/rpc/client",
+    "github.com/tendermint/tendermint/rpc/core/types",
     "github.com/tendermint/tendermint/types",
     "github.com/xsleonard/go-merkle",
     "golang.org/x/crypto/sha3",

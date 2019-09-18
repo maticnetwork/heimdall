@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"math/big"
+	"sort"
 	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -17,9 +18,17 @@ type Validator struct {
 	Power       uint64          `json:"power"` // TODO add 10^-18 here so that we dont overflow easily
 	PubKey      PubKey          `json:"pubKey"`
 	Signer      HeimdallAddress `json:"signer"`
-	LastUpdated *big.Int        `json:"last_updated"`
+	LastUpdated uint64          `json:"last_updated"`
 
 	Accum int64 `json:"accum"`
+}
+
+// SortValidatorByAddress sorts a slice of validators by address
+func SortValidatorByAddress(a []Validator) []Validator {
+	sort.Slice(a, func(i, j int) bool {
+		return bytes.Compare(a[i].Signer.Bytes(), a[j].Signer.Bytes()) < 0
+	})
+	return a
 }
 
 // IsCurrentValidator checks if validator is in current validator set
@@ -116,7 +125,7 @@ func (v *Validator) String() string {
 }
 
 // returns block number of last validator update
-func (v *Validator) UpdatedAt() *big.Int {
+func (v *Validator) UpdatedAt() uint64 {
 	return v.LastUpdated
 }
 
@@ -142,22 +151,27 @@ func GetValidatorPower(amount string) uint64 {
 
 // --------
 
-// validator ID and helper functions
+// ValidatorID  validator ID and helper functions
 type ValidatorID uint64
 
-// generate new validator ID
+// NewValidatorID generate new validator ID
 func NewValidatorID(id uint64) ValidatorID {
 	return ValidatorID(id)
 }
 
-// get bytes of validatorID
+// Bytes get bytes of validatorID
 func (valID ValidatorID) Bytes() []byte {
 	return []byte(strconv.Itoa(valID.Int()))
 }
 
-// convert validator ID to int
+// Int converts validator ID to int
 func (valID ValidatorID) Int() int {
 	return int(valID)
+}
+
+// Uint64 converts validator ID to int
+func (valID ValidatorID) Uint64() uint64 {
+	return uint64(valID)
 }
 
 // --------
@@ -168,6 +182,14 @@ type MinimalVal struct {
 	ID     ValidatorID     `json:"ID"`
 	Power  uint64          `json:"power"` // TODO add 10^-18 here so that we dont overflow easily
 	Signer HeimdallAddress `json:"signer"`
+}
+
+// SortMinimalValByAddress sorts validators
+func SortMinimalValByAddress(a []MinimalVal) []MinimalVal {
+	sort.Slice(a, func(i, j int) bool {
+		return bytes.Compare(a[i].Signer.Bytes(), a[j].Signer.Bytes()) < 0
+	})
+	return a
 }
 
 // ValToMinVal converts array of validators to minimal validators

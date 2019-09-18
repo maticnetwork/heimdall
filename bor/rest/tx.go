@@ -31,6 +31,7 @@ func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec
 type ProposeSpanReq struct {
 	BaseReq rest.BaseReq `json:"base_req"`
 
+	ID         uint64 `json:"span_id"`
 	StartBlock uint64 `json:"start_block"`
 	BorChainID string `json:"bor_chain_id"`
 }
@@ -119,6 +120,7 @@ func postProposeSpanHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.
 
 		// draft a propose span message
 		msg := bor.NewMsgProposeSpan(
+			req.ID,
 			types.HexToHeimdallAddress(req.BaseReq.From),
 			req.StartBlock,
 			req.StartBlock+spanDuration,

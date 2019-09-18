@@ -58,8 +58,8 @@ func (_m *IContractCaller) GetBalance(address common.Address) (*big.Int, error) 
 	return r0, r1
 }
 
-// GetBlockNoFromTxHash provides a mock function with given fields: tx
-func (_m *IContractCaller) GetBlockNoFromTxHash(tx common.Hash) (big.Int, error) {
+// GetBlockNumberFromTxHash provides a mock function with given fields: tx
+func (_m *IContractCaller) GetBlockNumberFromTxHash(tx common.Hash) (big.Int, error) {
 	ret := _m.Called(tx)
 
 	var r0 big.Int

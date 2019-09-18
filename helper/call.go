@@ -1,48 +1,65 @@
 package helper
 
 import (
-	"math/big"
-
 	"context"
-
 	"errors"
-
-	"github.com/ethereum/go-ethereum/common"
-	ethtypes "github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/ethereum/go-ethereum/rpc"
-	"github.com/maticnetwork/heimdall/contracts/rootchain"
-	"github.com/maticnetwork/heimdall/contracts/stakemanager"
-	"github.com/maticnetwork/heimdall/types"
-
+	"math/big"
 	"strings"
 
-	"math"
-
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/common"
+	ethTypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/rpc"
+
+	"github.com/maticnetwork/heimdall/contracts/rootchain"
+	"github.com/maticnetwork/heimdall/contracts/stakemanager"
+	"github.com/maticnetwork/heimdall/contracts/statereceiver"
+	"github.com/maticnetwork/heimdall/contracts/statesender"
+	"github.com/maticnetwork/heimdall/contracts/validatorset"
+	"github.com/maticnetwork/heimdall/types"
 )
 
+// IContractCaller represents contract caller
 type IContractCaller interface {
-	GetHeaderInfo(headerID uint64) (root common.Hash, start, end, createdAt uint64, err error)
+	GetHeaderInfo(headerID uint64) (root common.Hash, start, end, createdAt uint64, proposer types.HeimdallAddress, err error)
 	GetValidatorInfo(valID types.ValidatorID) (validator types.Validator, err error)
-	CurrentChildBlock() (uint64, error)
+	GetLastChildBlock() (uint64, error)
 	CurrentHeaderBlock() (uint64, error)
 	GetBalance(address common.Address) (*big.Int, error)
 	SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte)
-	GetMainChainBlock(blockNum *big.Int) (header *ethtypes.Header, err error)
-	GetMaticChainBlock(blockNum *big.Int) (header *ethtypes.Header, err error)
+	GetMainChainBlock(blockNum *big.Int) (header *ethTypes.Header, err error)
+	GetMaticChainBlock(blockNum *big.Int) (header *ethTypes.Header, err error)
 	IsTxConfirmed(tx common.Hash) bool
-	GetBlockNoFromTxHash(tx common.Hash) (blocknumber big.Int, err error)
+	GetConfirmedTxReceipt(tx common.Hash) (*ethTypes.Receipt, error)
+	GetBlockNumberFromTxHash(tx common.Hash) (blocknumber *big.Int, err error)
 	SigUpdateEvent(tx common.Hash) (id uint64, newSigner common.Address, oldSigner common.Address, err error)
+	GetMainTxReceipt(common.Hash) (*ethTypes.Receipt, error)
+	GetMaticTxReceipt(common.Hash) (*ethTypes.Receipt, error)
+
+	// bor related contracts
+	CurrentSpanNumber() (Number *big.Int)
+	CurrentStateCounter() (Number *big.Int)
+	EncodeStateSyncedEvent(*ethTypes.Log) (*statesender.StatesenderStateSynced, error)
 }
 
+// ContractCaller contract caller
 type ContractCaller struct {
-	RootChainInstance    *rootchain.Rootchain
-	StakeManagerInstance *stakemanager.Stakemanager
-	MainChainClient      *ethclient.Client
-	MainChainRPC         *rpc.Client
-	MaticClient          *ethclient.Client
-	stakeManagerABI      abi.ABI
+	MainChainClient  *ethclient.Client
+	MainChainRPC     *rpc.Client
+	MaticChainClient *ethclient.Client
+
+	RootChainInstance     *rootchain.Rootchain
+	StakeManagerInstance  *stakemanager.Stakemanager
+	ValidatorSetInstance  *validatorset.Validatorset
+	StateSenderInstance   *statesender.Statesender
+	StateReceiverInstance *statereceiver.Statereceiver
+
+	RootChainABI     abi.ABI
+	StakeManagerABI  abi.ABI
+	ValidatorSetABI  abi.ABI
+	StateReceiverABI abi.ABI
+	StateSenderABI   abi.ABI
 }
 
 type txExtraInfo struct {
@@ -52,60 +69,99 @@ type txExtraInfo struct {
 }
 
 type rpcTransaction struct {
-	tx *ethtypes.Transaction
+	tx *ethTypes.Transaction
 	txExtraInfo
 }
 
+// NewContractCaller contract caller
 func NewContractCaller() (contractCallerObj ContractCaller, err error) {
-	rootChainInstance, err := GetRootChainInstance()
-	if err != nil {
-		Logger.Error("Error creating rootchain instance", "error", err)
-		return contractCallerObj, err
-	}
-	stakeManagerInstance, err := GetStakeManagerInstance()
-	if err != nil {
-		Logger.Error("Error creating stakeManagerInstance while getting validator info", "error", err)
-		return contractCallerObj, err
-	}
 	contractCallerObj.MainChainClient = GetMainClient()
+	contractCallerObj.MaticChainClient = GetMaticClient()
 	contractCallerObj.MainChainRPC = GetMainChainRPCClient()
-	contractCallerObj.StakeManagerInstance = stakeManagerInstance
-	contractCallerObj.RootChainInstance = rootChainInstance
-	contractCallerObj.MaticClient = GetMaticClient()
 
-	// load stake manager abi
-	stakeContract, err := abi.JSON(strings.NewReader(string(stakemanager.StakemanagerABI)))
-	if err != nil {
-		Logger.Error("Error creating abi for stakemanager", "Error", err)
-		return contractCallerObj, err
+	//
+	// Root chain instance
+	//
+
+	if contractCallerObj.RootChainInstance, err = rootchain.NewRootchain(GetRootChainAddress(), contractCallerObj.MainChainClient); err != nil {
+		return
 	}
-	contractCallerObj.stakeManagerABI = stakeContract
 
-	return contractCallerObj, nil
+	if contractCallerObj.StakeManagerInstance, err = stakemanager.NewStakemanager(GetStakeManagerAddress(), contractCallerObj.MainChainClient); err != nil {
+		return
+	}
+
+	if contractCallerObj.ValidatorSetInstance, err = validatorset.NewValidatorset(GetValidatorSetAddress(), contractCallerObj.MaticChainClient); err != nil {
+		return
+	}
+
+	if contractCallerObj.StateSenderInstance, err = statesender.NewStatesender(GetStateSenderAddress(), contractCallerObj.MainChainClient); err != nil {
+		return
+	}
+
+	if contractCallerObj.StateReceiverInstance, err = statereceiver.NewStatereceiver(GetStateReceiverAddress(), contractCallerObj.MaticChainClient); err != nil {
+		return
+	}
+
+	//
+	// ABIs
+	//
+
+	if contractCallerObj.RootChainABI, err = getABI(string(rootchain.RootchainABI)); err != nil {
+		return
+	}
+
+	if contractCallerObj.StakeManagerABI, err = getABI(string(stakemanager.StakemanagerABI)); err != nil {
+		return
+	}
+
+	if contractCallerObj.ValidatorSetABI, err = getABI(string(validatorset.ValidatorsetABI)); err != nil {
+		return
+	}
+
+	if contractCallerObj.StateReceiverABI, err = getABI(string(statereceiver.StatereceiverABI)); err != nil {
+		return
+	}
+
+	if contractCallerObj.StateSenderABI, err = getABI(string(statesender.StatesenderABI)); err != nil {
+		return
+	}
+
+	return
 }
 
 // GetHeaderInfo get header info from header id
-func (c *ContractCaller) GetHeaderInfo(headerID uint64) (root common.Hash, start, end, createdAt uint64, err error) {
+func (c *ContractCaller) GetHeaderInfo(headerID uint64) (
+	root common.Hash,
+	start uint64,
+	end uint64,
+	createdAt uint64,
+	proposer types.HeimdallAddress,
+	err error,
+) {
 	// get header from rootchain
-	headerIDInt := big.NewInt(0)
-	headerIDInt = headerIDInt.SetUint64(headerID)
-	headerBlock, err := c.RootChainInstance.HeaderBlock(nil, headerIDInt)
+	headerBlock, err := c.RootChainInstance.HeaderBlocks(nil, big.NewInt(0).SetUint64(headerID))
 	if err != nil {
 		Logger.Error("Unable to fetch header block from rootchain", "headerBlockIndex", headerID)
-		return root, start, end, createdAt, errors.New("Unable to fetch header block")
+		return root, start, end, createdAt, proposer, errors.New("Unable to fetch header block")
 	}
 
-	return headerBlock.Root, headerBlock.Start.Uint64(), headerBlock.End.Uint64(), headerBlock.CreatedAt.Uint64(), nil
+	return headerBlock.Root,
+		headerBlock.Start.Uint64(),
+		headerBlock.End.Uint64(),
+		headerBlock.CreatedAt.Uint64(),
+		types.BytesToHeimdallAddress(headerBlock.Proposer.Bytes()),
+		nil
 }
 
-// CurrentChildBlock fetch current child block
-func (c *ContractCaller) CurrentChildBlock() (uint64, error) {
-	currentChildBlock, err := c.RootChainInstance.CurrentChildBlock(nil)
+// GetLastChildBlock fetch current child block
+func (c *ContractCaller) GetLastChildBlock() (uint64, error) {
+	GetLastChildBlock, err := c.RootChainInstance.GetLastChildBlock(nil)
 	if err != nil {
 		Logger.Error("Could not fetch current child block from rootchain contract", "Error", err)
 		return 0, err
 	}
-	return currentChildBlock.Uint64(), nil
+	return GetLastChildBlock.Uint64(), nil
 }
 
 // CurrentHeaderBlock fetches current header block
@@ -131,29 +187,34 @@ func (c *ContractCaller) GetBalance(address common.Address) (*big.Int, error) {
 
 // GetValidatorInfo get validator info
 func (c *ContractCaller) GetValidatorInfo(valID types.ValidatorID) (validator types.Validator, err error) {
-	amount, startEpoch, endEpoch, signer, err := c.StakeManagerInstance.GetStakerDetails(nil, big.NewInt(int64(valID)))
+	amount, startEpoch, endEpoch, signer, status, err := c.StakeManagerInstance.GetStakerDetails(nil, big.NewInt(int64(valID)))
 	if err != nil {
-		Logger.Error("Error fetching validator information from stake manager", "Error", err, "ValidatorID", valID)
+		Logger.Error("Error fetching validator information from stake manager", "error", err, "validatorId", valID, "status", status)
 		return
 	}
 
-	decimals := math.Pow10(-18)
-	newAmount := decimals * float64(amount.Int64())
+	decimals18 := big.NewInt(10).Exp(big.NewInt(10), big.NewInt(18), nil)
+	if amount.Uint64() < decimals18.Uint64() {
+		err = errors.New("amount must be more than 1 token")
+		return
+	}
+	newAmount := amount.Div(amount, decimals18)
 
+	// newAmount
 	validator = types.Validator{
 		ID:         valID,
-		Power:      uint64(newAmount),
+		Power:      newAmount.Uint64(),
 		StartEpoch: startEpoch.Uint64(),
 		EndEpoch:   endEpoch.Uint64(),
-		Signer:     types.HeimdallAddress(signer),
+		Signer:     types.BytesToHeimdallAddress(signer.Bytes()),
 	}
 
 	return validator, nil
 }
 
 // get main chain block header
-func (c *ContractCaller) GetMainChainBlock(blockNum *big.Int) (header *ethtypes.Header, err error) {
-	latestBlock, err := GetMainClient().HeaderByNumber(context.Background(), blockNum)
+func (c *ContractCaller) GetMainChainBlock(blockNum *big.Int) (header *ethTypes.Header, err error) {
+	latestBlock, err := c.MainChainClient.HeaderByNumber(context.Background(), blockNum)
 	if err != nil {
 		Logger.Error("Unable to connect to main chain", "Error", err)
 		return
@@ -162,8 +223,8 @@ func (c *ContractCaller) GetMainChainBlock(blockNum *big.Int) (header *ethtypes.
 }
 
 // get child chain block header
-func (c *ContractCaller) GetMaticChainBlock(blockNum *big.Int) (header *ethtypes.Header, err error) {
-	latestBlock, err := GetMainClient().HeaderByNumber(context.Background(), blockNum)
+func (c *ContractCaller) GetMaticChainBlock(blockNum *big.Int) (header *ethTypes.Header, err error) {
+	latestBlock, err := c.MaticChainClient.HeaderByNumber(context.Background(), blockNum)
 	if err != nil {
 		Logger.Error("Unable to connect to matic chain", "Error", err)
 		return
@@ -171,46 +232,62 @@ func (c *ContractCaller) GetMaticChainBlock(blockNum *big.Int) (header *ethtypes
 	return latestBlock, nil
 }
 
-// Get block number of transaction
-func (c *ContractCaller) GetBlockNoFromTxHash(tx common.Hash) (blocknumber big.Int, err error) {
-	var json *rpcTransaction
-	err = c.MainChainRPC.CallContext(context.Background(), &json, "eth_getTransactionByHash", tx)
-	if err != nil {
-		return
+// GetBlockNumberFromTxHash gets block number of transaction
+func (c *ContractCaller) GetBlockNumberFromTxHash(tx common.Hash) (*big.Int, error) {
+	var rpcTx rpcTransaction
+	if err := c.MainChainRPC.CallContext(context.Background(), &rpcTx, "eth_getTransactionByHash", tx); err != nil {
+		return nil, err
 	}
-	var blkNum big.Int
-	blockNumberPtr, ok := blkNum.SetString(*json.BlockNumber, 0)
+
+	if rpcTx.BlockNumber == nil {
+		return nil, errors.New("No tx found")
+	}
+
+	blkNum := big.NewInt(0)
+	blkNum, ok := blkNum.SetString(*rpcTx.BlockNumber, 0)
 	if !ok {
-		return blocknumber, errors.New("unable to set string")
+		return nil, errors.New("unable to set string")
 	}
-	return *blockNumberPtr, nil
+	return blkNum, nil
 }
 
-// Check finality
+// IsTxConfirmed is tx confirmed
 func (c *ContractCaller) IsTxConfirmed(tx common.Hash) bool {
-	txBlk, err := c.GetBlockNoFromTxHash(tx)
-	if err != nil {
-		Logger.Error("error getting block number from txhash", "Error", err)
-		return false
-	}
-	Logger.Debug("Tx included in block", "block", txBlk.Uint64(), "tx", tx)
-
-	latestBlk, err := c.GetMainChainBlock(nil)
-	if err != nil {
-		Logger.Error("error getting latest block from main chain", "Error", err)
-		return false
-	}
-	Logger.Debug("Latest block on main chain obtained", "Block", latestBlk.Number.Uint64())
-
-	diff := latestBlk.Number.Uint64() - txBlk.Uint64()
-	if diff < GetConfig().ConfirmationBlocks {
-		Logger.Info("Not enough confirmations", "ExpectedConf", GetConfig().ConfirmationBlocks, "ActualConf", diff)
+	// get main tx receipt
+	receipt, err := c.GetConfirmedTxReceipt(tx)
+	if receipt == nil || err != nil {
 		return false
 	}
 
 	return true
 }
 
+// GetConfirmedTxReceipt returns confirmed tx receipt
+func (c *ContractCaller) GetConfirmedTxReceipt(tx common.Hash) (*ethTypes.Receipt, error) {
+	// get main tx receipt
+	receipt, err := c.GetMainTxReceipt(tx)
+	if err != nil {
+		return nil, err
+	}
+	Logger.Debug("Tx included in block", "block", receipt.BlockNumber.Uint64(), "tx", tx)
+
+	// get main chain block
+	latestBlk, err := c.GetMainChainBlock(nil)
+	if err != nil {
+		Logger.Error("error getting latest block from main chain", "Error", err)
+		return nil, err
+	}
+	Logger.Debug("Latest block on main chain obtained", "Block", latestBlk.Number.Uint64())
+
+	diff := latestBlk.Number.Uint64() - receipt.BlockNumber.Uint64()
+	if diff < GetConfig().ConfirmationBlocks {
+		return nil, errors.New("Not enough confirmations")
+	}
+
+	return receipt, nil
+}
+
+// SigUpdateEvent represents sig update event
 func (c *ContractCaller) SigUpdateEvent(tx common.Hash) (id uint64, newSigner common.Address, oldSigner common.Address, err error) {
 	txReceipt, err := c.MainChainClient.TransactionReceipt(context.Background(), tx)
 	if err != nil {
@@ -223,4 +300,57 @@ func (c *ContractCaller) SigUpdateEvent(tx common.Hash) (id uint64, newSigner co
 		id = vLog.Topics[1].Big().Uint64()
 	}
 	return
+}
+
+// CurrentSpanNumber get current span
+func (c *ContractCaller) CurrentSpanNumber() (Number *big.Int) {
+	result, err := c.ValidatorSetInstance.CurrentSpanNumber(nil)
+	if err != nil {
+		Logger.Error("Unable to get current span number", "Error", err)
+		return nil
+	}
+
+	return result
+}
+
+// CurrentStateCounter get state counter
+func (c *ContractCaller) CurrentStateCounter() (Number *big.Int) {
+	result, err := c.StateSenderInstance.Counter(nil)
+	if err != nil {
+		Logger.Error("Unable to get current counter number", "Error", err)
+		return nil
+	}
+
+	return result
+}
+
+// GetMainTxReceipt returns main tx receipt
+func (c *ContractCaller) GetMainTxReceipt(txHash common.Hash) (*ethTypes.Receipt, error) {
+	return c.getTxReceipt(c.MainChainClient, txHash)
+}
+
+// GetMaticTxReceipt returns matic tx receipt
+func (c *ContractCaller) GetMaticTxReceipt(txHash common.Hash) (*ethTypes.Receipt, error) {
+	return c.getTxReceipt(c.MaticChainClient, txHash)
+}
+
+func (c *ContractCaller) getTxReceipt(client *ethclient.Client, txHash common.Hash) (*ethTypes.Receipt, error) {
+	return client.TransactionReceipt(context.Background(), txHash)
+}
+
+// EncodeStateSyncedEvent encode state sync data
+func (c *ContractCaller) EncodeStateSyncedEvent(log *ethTypes.Log) (*statesender.StatesenderStateSynced, error) {
+	event := new(statesender.StatesenderStateSynced)
+	if err := UnpackLog(&c.StateSenderABI, event, "StateSynced", log); err != nil {
+		return nil, err
+	}
+	return event, nil
+}
+
+//
+// private abi methods
+//
+
+func getABI(data string) (abi.ABI, error) {
+	return abi.JSON(strings.NewReader(data))
 }

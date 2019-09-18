@@ -82,7 +82,7 @@ func ErrNoConn(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeNoConn, "Unable to connect to chain")
 }
 
-func ErrWaitFrConfirmation(codespace sdk.CodespaceType) sdk.Error {
+func ErrWaitForConfirmation(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeWaitFrConfirmation, fmt.Sprintf("Please wait for %v confirmations before sending transaction", helper.GetConfig().ConfirmationBlocks))
 }
 
@@ -167,11 +167,11 @@ func ErrUnableToFreezeValSet(codespace sdk.CodespaceType) sdk.Error {
 }
 
 func ErrValSetMisMatch(codespace sdk.CodespaceType) sdk.Error {
-	return newError(codespace, CodeValSetMisMatch, "Unable to freeze validator set for next span")
+	return newError(codespace, CodeValSetMisMatch, "Validator set mismatch")
 }
 
 func ErrProducerMisMatch(codespace sdk.CodespaceType) sdk.Error {
-	return newError(codespace, CodeProducerMisMatch, "Unable to freeze validator set for next span")
+	return newError(codespace, CodeProducerMisMatch, "Producer set mismatch")
 }
 
 func codeToDefaultMsg(code CodeType) string {

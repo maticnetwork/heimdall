@@ -11,6 +11,7 @@ import (
 	bank "github.com/maticnetwork/heimdall/bank"
 	bor "github.com/maticnetwork/heimdall/bor"
 	checkpoint "github.com/maticnetwork/heimdall/checkpoint"
+	"github.com/maticnetwork/heimdall/clerk"
 	staking "github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/supply"
 )
@@ -44,6 +45,7 @@ func (app *HeimdallApp) ExportAppStateAndValidators() (
 		bor.ExportGenesis(ctx, app.borKeeper),
 		checkpoint.ExportGenesis(ctx, app.checkpointKeeper),
 		staking.ExportGenesis(ctx, app.stakingKeeper),
+		clerk.ExportGenesis(ctx, app.clerkKeeper),
 	)
 
 	// create app state

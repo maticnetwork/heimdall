@@ -2,6 +2,7 @@ package helper
 
 import (
 	"crypto/ecdsa"
+	"fmt"
 	"log"
 	"math/big"
 	"os"
@@ -23,6 +24,8 @@ import (
 	"github.com/maticnetwork/heimdall/contracts/depositmanager"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
+
+	tmTypes "github.com/tendermint/tendermint/types"
 )
 
 const (
@@ -31,7 +34,8 @@ const (
 	HomeFlag               = "home"
 	FlagClientHome         = "home-client"
 
-	// --- TODO Move these to common client flags
+	// ---
+	// TODO Move these to common client flags
 	// BroadcastBlock defines a tx broadcasting mode where the client waits for
 	// the tx to be committed in a block.
 	BroadcastBlock = "block"
@@ -43,9 +47,16 @@ const (
 	BroadcastAsync = "async"
 	// --
 
-	// Variables below to be used while init
-	MainRPCUrl                      = "https://ropsten.infura.io"
-	MaticRPCUrl                     = "https://testnet2.matic.network"
+	MainRPCUrl  = "https://ropsten.infura.io"
+	MaticRPCUrl = "https://testnet2.matic.network"
+
+	// Services
+
+	// DefaultAmqpURL represents default AMQP url
+	DefaultAmqpURL           = "amqp://guest:guest@localhost:5672/"
+	DefaultHeimdallServerURL = "http://0.0.0.0:1317"
+	DefaultTendermintNodeURL = "http://0.0.0.0:26657"
+
 	NoACKWaitTime                   = time.Second * 1800 // Time ack service waits to clear buffer and elect new proposer (1800 seconds ~ 30 mins)
 	CheckpointBufferTime            = time.Second * 1000 // Time checkpoint is allowed to stay in buffer (1000 seconds ~ 17 mins)
 	DefaultCheckpointerPollInterval = 60 * 1000          // 1 minute in milliseconds
@@ -55,8 +66,9 @@ const (
 	MaxCheckpointLength             = 1024  // max blocks in one checkpoint
 	DefaultChildBlockInterval       = 10000 // difference between 2 indexes of header blocks
 	ConfirmationBlocks              = 6
-	DefaultSprintDuration           = 64                          // sprint for blocks
-	DefaultSpanDuration             = 100 * DefaultSprintDuration // number of blocks for which span is frozen on heimdall
+
+	DefaultBorChainID           = 15001
+	DefaultStateReceiverAddress = "0000000000000000000000000000000000001001"
 )
 
 var (
@@ -75,12 +87,23 @@ func init() {
 
 // Configuration represents heimdall config
 type Configuration struct {
-	MainRPCUrl            string `json:"mainRPCUrl"`            // RPC endpoint for main chain
-	MaticRPCUrl           string `json:"maticRPCUrl"`           // RPC endpoint for matic chain
+	MainRPCUrl  string `json:"mainRPCUrl"`  // RPC endpoint for main chain
+	MaticRPCUrl string `json:"maticRPCUrl"` // RPC endpoint for matic chain
+
+	AmqpURL           string `json:"amqpURL"`           // amqp url
+	HeimdallServerURL string `json:"heimdallServerURL"` // heimdall server url
+	TendermintNodeURL string `json:"tendermintNodeURL"` // tendemint noed url
+
+	BorChainID string `json:"borChainID"` // bor chain id
+
 	StakeManagerAddress   string `json:"stakeManagerAddress"`   // Stake manager address on main chain
 	RootchainAddress      string `json:"rootchainAddress"`      // Rootchain contract address on main chain
 	DepositManagerAddress string `json:"depositManagerAddress"` // Deposit Manager contract address on main chain
-	ChildBlockInterval    uint64 `json:"childBlockInterval"`    // Difference between header index of 2 child blocks submitted on main chain
+	ValidatorSetAddress   string `json:"validatorSetAddress"`   // Validator Set contract address on bor chain
+	StateSenderAddress    string `json:"stateSenderAddress"`    // main
+	StateReceiverAddress  string `json:"stateReceiverAddress"`  // matic
+
+	ChildBlockInterval uint64 `json:"childBlockInterval"` // Difference between header index of 2 child blocks submitted on main chain
 
 	// config related to bridge
 	CheckpointerPollInterval int           `json:"checkpointerPollInterval"` // Poll interval for checkpointer service to send new checkpoints or missing ACK
@@ -112,6 +135,7 @@ var pubObject secp256k1.PubKeySecp256k1
 
 // Logger stores global logger object
 var Logger logger.Logger
+var GenesisDoc tmTypes.GenesisDoc
 
 // Contracts
 // var RootChain types.Contract
@@ -143,16 +167,16 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 	}
 
 	configDir := filepath.Join(homeDir, "config")
-	Logger.Info("Initializing tendermint configurations", "configDir", configDir)
+	fmt.Println("Initializing tendermint configurations", "configDir", configDir)
 
 	heimdallViper := viper.New()
 	if heimdallConfigFilePath == "" {
 		heimdallViper.SetConfigName("heimdall-config") // name of config file (without extension)
 		heimdallViper.AddConfigPath(configDir)         // call multiple times to add many search paths
-		Logger.Info("Loading heimdall configurations", "file", filepath.Join(configDir, "heimdall-config.json"))
+		fmt.Println("Loading heimdall configurations", "file", filepath.Join(configDir, "heimdall-config.json"))
 	} else {
 		heimdallViper.SetConfigFile(heimdallConfigFilePath) // set config file explicitly
-		Logger.Info("Loading heimdall configurations", "file", heimdallConfigFilePath)
+		fmt.Println("Loading heimdall configurations", "file", heimdallConfigFilePath)
 	}
 
 	err := heimdallViper.ReadInConfig()
@@ -165,17 +189,22 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 	}
 
 	if mainRPCClient, err = rpc.Dial(conf.MainRPCUrl); err != nil {
-		Logger.Error("Error while creating matic chain RPC client", "error", err)
 		log.Fatal(err)
 	}
 
 	mainChainClient = ethclient.NewClient(mainRPCClient)
 	if maticRPCClient, err = rpc.Dial(conf.MaticRPCUrl); err != nil {
-		Logger.Error("Error while creating matic chain RPC client", "error", err)
 		log.Fatal(err)
 	}
 
 	maticClient = ethclient.NewClient(maticRPCClient)
+
+	// Loading genesis doc
+	genDoc, err := tmTypes.GenesisDocFromFile(filepath.Join(configDir, "genesis.json"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	GenesisDoc = *genDoc
 
 	// load pv file, unmarshall and set to privObject
 	privVal := privval.LoadFilePV(filepath.Join(configDir, "priv_validator_key.json"), filepath.Join(configDir, "priv_validator_key.json"))
@@ -186,6 +215,10 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 // GetConfig returns cached configuration object
 func GetConfig() Configuration {
 	return conf
+}
+
+func GetGenesisDoc() tmTypes.GenesisDoc {
+	return GenesisDoc
 }
 
 // func initContracts() error {
@@ -213,7 +246,7 @@ func GetRootChainAddress() common.Address {
 func GetRootChainInstance() (*rootchain.Rootchain, error) {
 	rootChainInstance, err := rootchain.NewRootchain(GetRootChainAddress(), mainChainClient)
 	if err != nil {
-		Logger.Error("Unable to create root chain instance", "error", err)
+		fmt.Println("Unable to create root chain instance", "error", err)
 	}
 
 	return rootChainInstance, err
@@ -235,12 +268,7 @@ func GetStakeManagerAddress() common.Address {
 
 // GetStakeManagerInstance returns StakeManager contract instance for selected base chain
 func GetStakeManagerInstance() (*stakemanager.Stakemanager, error) {
-	stakeManagerInstance, err := stakemanager.NewStakemanager(GetStakeManagerAddress(), mainChainClient)
-	if err != nil {
-		Logger.Error("Unable to create stakemanager instance", "error", err)
-	}
-
-	return stakeManagerInstance, err
+	return stakemanager.NewStakemanager(GetStakeManagerAddress(), mainChainClient)
 }
 
 // GetStakeManagerABI returns ABI for StakeManager contract
@@ -259,17 +287,39 @@ func GetDepositManagerAddress() common.Address {
 
 // GetStakeManagerInstance returns StakeManager contract instance for selected base chain
 func GetDepositManagerInstance() (*depositmanager.Depositmanager, error) {
-	depositManagerInstance, err := depositmanager.NewDepositmanager(GetDepositManagerAddress(), mainChainClient)
-	if err != nil {
-		Logger.Error("Unable to create stakemanager instance", "error", err)
-	}
-
-	return depositManagerInstance, err
+	return depositmanager.NewDepositmanager(GetDepositManagerAddress(), mainChainClient)
 }
 
 // GetDepositManagerABI returns ABI for DepositManager contract
 func GetDepositManagerABI() (abi.ABI, error) {
 	return abi.JSON(strings.NewReader(depositmanager.DepositmanagerABI))
+}
+
+//
+// Validator set
+//
+
+// GetValidatorSetAddress returns Validator set contract address for selected base chain
+func GetValidatorSetAddress() common.Address {
+	return common.HexToAddress(GetConfig().ValidatorSetAddress)
+}
+
+//
+// State sender
+//
+
+// GetStateSenderAddress returns state sender contract address for selected base chain
+func GetStateSenderAddress() common.Address {
+	return common.HexToAddress(GetConfig().StateSenderAddress)
+}
+
+//
+// State sender
+//
+
+// GetStateReceiverAddress returns state receiver contract address for selected child chain
+func GetStateReceiverAddress() common.Address {
+	return common.HexToAddress(GetConfig().StateReceiverAddress)
 }
 
 //

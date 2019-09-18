@@ -1,6 +1,7 @@
 package tx
 
 import (
+	"encoding/hex"
 	"fmt"
 	"net/http"
 	"strings"
@@ -15,7 +16,9 @@ import (
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/types"
 
+	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/helper"
+	hmRest "github.com/maticnetwork/heimdall/types/rest"
 )
 
 const (
@@ -199,5 +202,48 @@ func QueryTxRequestHandlerFn(cliCtx context.CLIContext, cdc *codec.Codec) http.H
 		}
 
 		rest.PostProcessResponse(w, cdc, output, cliCtx.Indent)
+	}
+}
+
+// QueryCommitTxRequestHandlerFn implements a REST handler that queries vote, sigs and tx bytes committed block.
+func QueryCommitTxRequestHandlerFn(cliCtx context.CLIContext, cdc *codec.Codec) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+
+		hash, err := hex.DecodeString(vars["hash"])
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		tx, err := helper.QueryTxWithProof(cliCtx, hash)
+		if err != nil {
+			if strings.Contains(err.Error(), vars["hash"]) {
+				rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
+				return
+			}
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		// get block client
+		blockDetails, err := helper.GetBlock(cliCtx, tx.Height+1)
+
+		// extract signs from votes
+		sigs := helper.GetSigs(blockDetails.Block.LastCommit.Precommits)
+
+		// proof
+		proofList := helper.GetMerkleProofList(&tx.Proof.Proof)
+		proof := helper.AppendBytes(proofList...)
+
+		// commit tx proof
+		result := hmRest.CommitTxProof{
+			Vote:  hex.EncodeToString(helper.GetVoteBytes(blockDetails.Block.LastCommit.Precommits, blockDetails.Block.ChainID)),
+			Sigs:  hex.EncodeToString(sigs),
+			Tx:    hex.EncodeToString(tx.Tx[authTypes.PulpHashLength:]),
+			Proof: hex.EncodeToString(proof),
+		}
+
+		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
 	}
 }

@@ -15,6 +15,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+	ethTypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/spf13/viper"
 	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto"
@@ -146,32 +147,12 @@ func BytesToPubkey(pubKey []byte) secp256k1.PubKeySecp256k1 {
 	return pubkeyBytes
 }
 
-// CreateTxBytes creates tx bytes from Msg
-// func CreateTxBytes(msg sdk.Msg) ([]byte, error) {
-// 	// tx := hmTypes.NewBaseTx(msg)
-// 	pulp := hmTypes.GetPulpInstance()
-// 	txBytes, err := pulp.EncodeToBytes(msg)
-// 	if err != nil {
-// 		Logger.Error("Error generating TX Bytes", "error", err)
-// 		return []byte(""), err
-// 	}
-// 	return txBytes, nil
-// }
-
-// // SendTendermintRequest sends request to tendermint
-// func SendTendermintRequest(cliCtx context.CLIContext, txBytes []byte, mode string) (sdk.TxResponse, error) {
-// 	if mode != "" {
-// 		cliCtx.BroadcastMode = mode
-// 	}
-// 	Logger.Info("Broadcasting tx bytes to tendermint", "txBytes", hex.EncodeToString(txBytes), "mode", cliCtx.BroadcastMode, "txHash", hex.EncodeToString(tmhash.Sum(txBytes[4:])))
-// 	return cliCtx.BroadcastTx(txBytes)
-// }
-
 // GetSigs returns sigs bytes from vote
 func GetSigs(votes []*tmTypes.CommitSig) (sigs []byte) {
 	sort.Slice(votes, func(i, j int) bool {
 		return bytes.Compare(votes[i].ValidatorAddress.Bytes(), votes[j].ValidatorAddress.Bytes()) < 0
 	})
+
 	// loop votes and append to sig to sigs
 	for _, vote := range votes {
 		sigs = append(sigs, vote.Signature...)
@@ -317,7 +298,6 @@ func GetSignedTxBytes(cliCtx context.CLIContext, txBldr authTypes.TxBuilder, msg
 	if err != nil {
 		return nil, err
 	}
-
 	// build and sign the transaction
 	return txBldr.BuildAndSignWithPassphrase(fromName, passphrase, msgs)
 }
@@ -487,7 +467,7 @@ func ReadStdTxFromFile(cdc *amino.Codec, filename string) (stdTx authTypes.StdTx
 
 // BroadcastTxBytes sends request to tendermint using CLI
 func BroadcastTxBytes(cliCtx context.CLIContext, txBytes []byte, mode string) (sdk.TxResponse, error) {
-	Logger.Info("Broadcasting tx bytes to Tendermint", "txBytes", hex.EncodeToString(txBytes), "txHash", hex.EncodeToString(tmhash.Sum(txBytes[4:])))
+	Logger.Debug("Broadcasting tx bytes to Tendermint", "txBytes", hex.EncodeToString(txBytes), "txHash", hex.EncodeToString(tmhash.Sum(txBytes[4:])))
 	if mode != "" {
 		cliCtx.BroadcastMode = mode
 	}
@@ -509,6 +489,15 @@ func TendermintTxDecode(txString string) ([]byte, error) {
 func GetMerkleProofList(proof *merkle.SimpleProof) [][]byte {
 	result := [][]byte{}
 	computeHashFromAunts(proof.Index, proof.Total, proof.LeafHash, proof.Aunts, &result)
+	return result
+}
+
+// AppendBytes appends bytes
+func AppendBytes(data ...[]byte) []byte {
+	var result []byte
+	for _, v := range data {
+		result = append(result, v[:]...)
+	}
 	return result
 }
 
@@ -626,4 +615,25 @@ func leafHash(leaf []byte) []byte {
 // returns tmhash(0x01 || left || right)
 func innerHash(left []byte, right []byte) []byte {
 	return tmhash.Sum(append(innerPrefix, append(left, right...)...))
+}
+
+// ToBytes32 is a convenience method for converting a byte slice to a fix
+// sized 32 byte array. This method will truncate the input if it is larger
+// than 32 bytes.
+func ToBytes32(x []byte) [32]byte {
+	var y [32]byte
+	copy(y[:], x)
+	return y
+}
+
+// GetReceiptLogData get receipt log data
+func GetReceiptLogData(log *ethTypes.Log) []byte {
+	var result []byte
+	for i, topic := range log.Topics {
+		if i > 0 {
+			result = append(result, topic.Bytes()...)
+		}
+	}
+
+	return append(result, log.Data...)
 }
