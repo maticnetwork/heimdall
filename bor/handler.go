@@ -30,7 +30,7 @@ func HandleMsgProposeSpan(ctx sdk.Context, msg MsgProposeSpan, k Keeper) sdk.Res
 	lastSpan, err := k.GetLastSpan(ctx)
 	if err != nil {
 		k.Logger(ctx).Error("Unable to fetch last span", "Error", err)
-		return common.ErrSpanNotInCountinuity(k.Codespace()).Result()
+		return common.ErrSpanNotFound(k.Codespace()).Result()
 	}
 
 	// check all conditions
@@ -48,7 +48,7 @@ func HandleMsgProposeSpan(ctx sdk.Context, msg MsgProposeSpan, k Keeper) sdk.Res
 	err = k.FreezeSet(ctx, msg.ID, msg.StartBlock, msg.ChainID)
 	if err != nil {
 		k.Logger(ctx).Error("Unable to freeze validator set for span", "Error", err)
-		return common.ErrSpanNotInCountinuity(k.Codespace()).Result()
+		return common.ErrUnableToFreezeValSet(k.Codespace()).Result()
 	}
 
 	// get current validators
