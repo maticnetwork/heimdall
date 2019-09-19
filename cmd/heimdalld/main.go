@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -491,7 +492,7 @@ func getDefaultHeimdallConfig() helper.Configuration {
 
 		StakeManagerAddress:  (ethCommon.Address{}).Hex(),
 		RootchainAddress:     (ethCommon.Address{}).Hex(),
-		ValidatorSetAddress:  (ethCommon.Address{}).Hex(),
+		ValidatorSetAddress:  helper.DefaultValidatorSetAddress,
 		StateSenderAddress:   (ethCommon.Address{}).Hex(),
 		StateReceiverAddress: helper.DefaultStateReceiverAddress,
 
@@ -504,6 +505,8 @@ func getDefaultHeimdallConfig() helper.Configuration {
 		NoACKWaitTime:            helper.NoACKWaitTime,
 		CheckpointBufferTime:     helper.CheckpointBufferTime,
 		ConfirmationBlocks:       helper.ConfirmationBlocks,
+
+		BorChainID: strconv.Itoa(helper.DefaultBorChainID),
 	}
 }
 

@@ -15,6 +15,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum"
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb"
@@ -23,7 +24,7 @@ import (
 
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/bor"
-	"github.com/maticnetwork/heimdall/contracts/rootchain"
+	borTags "github.com/maticnetwork/heimdall/bor/tags"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -43,9 +44,6 @@ type SpanService struct {
 
 	// storage client
 	storageClient *leveldb.DB
-
-	// Rootchain instance
-	validatorSet *rootchain.Rootchain
 
 	// header listener subscription
 	cancelSpanService context.CancelFunc
@@ -68,12 +66,6 @@ func NewSpanService(cdc *codec.Codec, queueConnector *QueueConnector, httpClient
 	// create logger
 	logger := Logger.With("module", SpanServiceStr)
 
-	// root chain instance
-	rootchainInstance, err := helper.GetRootChainInstance()
-	if err != nil {
-		logger.Error("Error while getting root chain instance", "error", err)
-		panic(err)
-	}
 	contractCaller, err := helper.NewContractCaller()
 	if err != nil {
 		logger.Error("Error while getting root chain instance", "error", err)
@@ -87,7 +79,6 @@ func NewSpanService(cdc *codec.Codec, queueConnector *QueueConnector, httpClient
 	// creating checkpointer object
 	spanService := &SpanService{
 		storageClient:     getBridgeDBInstance(viper.GetString(BridgeDBFlag)),
-		validatorSet:      rootchainInstance,
 		contractConnector: contractCaller,
 
 		cliCtx:         cliCtx,
@@ -207,13 +198,30 @@ func (s *SpanService) commit() {
 
 	// loop through tx
 	for _, tx := range txs {
-		txHash, err := hex.DecodeString(tx.TxHash)
-		if err != nil {
-			s.Logger.Error("Error while searching txs", "error", err)
-		} else {
-			s.broadcastToBor(tx.Height, txHash)
+		if tag := s.getSpanIDTxTag(tx); tag != nil {
+			if spanID, err := strconv.ParseUint(tag.Value, 10, 64); err == nil && spanID >= 1 {
+				if err != nil || s.isSpanCommited(spanID) {
+					continue
+				}
+
+				if txHash, err := hex.DecodeString(tx.TxHash); err != nil {
+					s.Logger.Error("Error while searching txs", "error", err)
+				} else {
+					s.broadcastToBor(tx.Height, txHash)
+				}
+			}
 		}
 	}
+}
+
+func (s *SpanService) getSpanIDTxTag(tx sdk.TxResponse) *sdk.StringTag {
+	for _, tag := range tx.Tags {
+		if tag.Key == borTags.SpanID {
+			return &tag
+		}
+	}
+
+	return nil
 }
 
 // fetches last span processed in DB
@@ -253,6 +261,20 @@ func (s *SpanService) getLastSpan() (*hmTypes.Span, error) {
 	}
 
 	return &lastSpan, nil
+}
+
+// get span details
+func (s *SpanService) isSpanCommited(id uint64) bool {
+	_, _, endBlock, err := s.contractConnector.GetSpanDetails(big.NewInt(0).SetUint64(id))
+	if err != nil {
+		return false
+	}
+
+	if endBlock.Uint64() > 0 {
+		return true
+	}
+
+	return false
 }
 
 // getCurrentChildBlock gets the current child block
