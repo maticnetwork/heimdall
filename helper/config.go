@@ -67,6 +67,7 @@ const (
 	ConfirmationBlocks              = 6
 
 	DefaultBorChainID           = 15001
+	DefaultValidatorSetAddress  = "0000000000000000000000000000000000001000"
 	DefaultStateReceiverAddress = "0000000000000000000000000000000000001001"
 )
 

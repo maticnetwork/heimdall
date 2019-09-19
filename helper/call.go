@@ -40,6 +40,7 @@ type IContractCaller interface {
 
 	// bor related contracts
 	CurrentSpanNumber() (Number *big.Int)
+	GetSpanDetails(id *big.Int) (*big.Int, *big.Int, *big.Int, error)
 	CurrentStateCounter() (Number *big.Int)
 	EncodeStateSyncedEvent(*ethTypes.Log) (*statesender.StatesenderStateSynced, error)
 }
@@ -339,6 +340,17 @@ func (c *ContractCaller) CurrentSpanNumber() (Number *big.Int) {
 	}
 
 	return result
+}
+
+// GetSpanDetails get span details
+func (c *ContractCaller) GetSpanDetails(id *big.Int) (
+	*big.Int,
+	*big.Int,
+	*big.Int,
+	error,
+) {
+	d, err := c.ValidatorSetInstance.GetSpan(nil, id)
+	return d.Number, d.StartBlock, d.EndBlock, err
 }
 
 // CurrentStateCounter get state counter
