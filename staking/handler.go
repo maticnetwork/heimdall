@@ -2,13 +2,14 @@ package staking
 
 import (
 	"bytes"
-	"errors"
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking/tags"
+	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
 	"github.com/maticnetwork/heimdall/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
@@ -18,26 +19,28 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case MsgValidatorJoin:
-			return HandleMsgValidatorJoin(ctx, msg, k, contractCaller)
+			return handleMsgValidatorJoin(ctx, msg, k, contractCaller)
 		case MsgValidatorExit:
-			return HandleMsgValidatorExit(ctx, msg, k, contractCaller)
+			return handleMsgValidatorExit(ctx, msg, k, contractCaller)
 		case MsgSignerUpdate:
-			return HandleMsgSignerUpdate(ctx, msg, k, contractCaller)
+			return handleMsgSignerUpdate(ctx, msg, k, contractCaller)
+		case MsgStakeUpdate:
+			return handleMsgStakeUpdate(ctx, msg, k, contractCaller)
 		default:
 			return sdk.ErrTxDecode("Invalid message in checkpoint module").Result()
 		}
 	}
 }
 
-// HandleMsgValidatorJoin msg validator join
-func HandleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
+// handleMsgValidatorJoin msg validator join
+func handleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	k.Logger(ctx).Debug("Handing new validator join", "msg", msg)
 
 	if confirmed := contractCaller.IsTxConfirmed(msg.TxHash.EthHash()); !confirmed {
 		return hmCommon.ErrWaitForConfirmation(k.Codespace()).Result()
 	}
 
-	//fetch validator from mainchain
+	// fetch validator from mainchain
 	validator, err := contractCaller.GetValidatorInfo(msg.ID)
 	if err != nil {
 		k.Logger(ctx).Error(
@@ -77,6 +80,12 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k Keeper, con
 		return hmCommon.ErrValidatorAlreadyJoined(k.Codespace()).Result()
 	}
 
+	// get validator by signer
+	checkVal, err := k.GetValidatorInfo(ctx, signer.Bytes())
+	if err == nil || bytes.Equal(checkVal.Signer.Bytes(), signer.Bytes()) {
+		return hmCommon.ErrValidatorAlreadyJoined(k.Codespace()).Result()
+	}
+
 	// create new validator
 	newValidator := hmTypes.Validator{
 		ID:          validator.ID,
@@ -104,30 +113,94 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k Keeper, con
 	return sdk.Result{Tags: resTags}
 }
 
-// HandleMsgSignerUpdate handles signer update message
-func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
+// handleMsgStakeUpdate handles stake update message
+func handleMsgStakeUpdate(ctx sdk.Context, msg MsgStakeUpdate, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
+	k.Logger(ctx).Debug("Handling stake update", "Validator", msg.ID)
+
+	// get main tx receipt
+	receipt, err := contractCaller.GetConfirmedTxReceipt(msg.TxHash.EthHash())
+	if err != nil || receipt == nil {
+		return hmCommon.ErrWaitForConfirmation(k.Codespace()).Result()
+	}
+
+	eventLog, err := contractCaller.DecodeValidatorStakeUpdateEvent(receipt, msg.LogIndex)
+	if err != nil || eventLog == nil {
+		k.Logger(ctx).Error("Error fetching log from txhash")
+		return hmCommon.ErrInvalidMsg(k.Codespace(), "Unable to fetch logs for txHash").Result()
+	}
+
+	if eventLog.ValidatorId.Uint64() != msg.ID.Uint64() {
+		k.Logger(ctx).Error("ID in message doesnt match id in logs", "MsgID", msg.ID, "IdFromTx", eventLog.ValidatorId)
+		return hmCommon.ErrInvalidMsg(k.Codespace(), "Invalid txhash, id's dont match. Id from tx hash is %v", eventLog.ValidatorId.Uint64()).Result()
+	}
+
+	// pull validator from store
+	validator, ok := k.GetValidatorFromValID(ctx, msg.ID)
+	if !ok {
+		k.Logger(ctx).Error("Fetching of validator from store failed", "validatorId", msg.ID)
+		return hmCommon.ErrNoValidator(k.Codespace()).Result()
+	}
+
+	// last updated
+	lastUpdated := (receipt.BlockNumber.Uint64() * stakingTypes.DefaultLogIndexUnit) + msg.LogIndex
+
+	// check if incoming tx is older
+	if lastUpdated <= validator.LastUpdated {
+		k.Logger(ctx).Error("Older invalid tx found")
+		return hmCommon.ErrOldTx(k.Codespace()).Result()
+	}
+
+	// update last udpated
+	validator.LastUpdated = lastUpdated
+
+	// set validator amount
+	p, err := helper.GetPowerFromAmount(eventLog.NewAmount)
+	if err != nil {
+		return hmCommon.ErrInvalidMsg(k.Codespace(), "Invalid amount for validator: %v", msg.ID).Result()
+	}
+	validator.Power = p.Uint64()
+
+	// save validator
+	err = k.AddValidator(ctx, validator)
+	if err != nil {
+		k.Logger(ctx).Error("Unable to update signer", "error", err, "ValidatorID", validator.ID)
+		return hmCommon.ErrSignerUpdateError(k.Codespace()).Result()
+	}
+
+	resTags := sdk.NewTags(
+		tags.UpdatedAt, []byte(strconv.FormatUint(validator.LastUpdated, 10)),
+		tags.ValidatorID, []byte(strconv.FormatUint(validator.ID.Uint64(), 10)),
+	)
+
+	return sdk.Result{Tags: resTags}
+}
+
+// handleMsgSignerUpdate handles signer update message
+func handleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	k.Logger(ctx).Debug("Handling signer update", "Validator", msg.ID, "Signer", msg.NewSignerPubKey.Address())
 
-	if confirmed := contractCaller.IsTxConfirmed(msg.TxHash.EthHash()); !confirmed {
+	// get main tx receipt
+	receipt, err := contractCaller.GetConfirmedTxReceipt(msg.TxHash.EthHash())
+	if err != nil || receipt == nil {
 		return hmCommon.ErrWaitForConfirmation(k.Codespace()).Result()
 	}
 
 	newPubKey := msg.NewSignerPubKey
 	newSigner := newPubKey.Address()
 
-	id, newSignerTx, _, err := contractCaller.SigUpdateEvent(msg.TxHash.EthHash())
-	if err != nil {
-		k.Logger(ctx).Error("Error fetching log from txhash", "Error", err)
-		return hmCommon.ErrInvalidMsg(k.Codespace(), "Unable to fetch logs for txHash. Error: %v", err).Result()
+	eventLog, err := contractCaller.DecodeSignerUpdateEvent(receipt, msg.LogIndex)
+	if err != nil || eventLog == nil {
+		k.Logger(ctx).Error("Error fetching log from txhash")
+		return hmCommon.ErrInvalidMsg(k.Codespace(), "Unable to fetch signer update log for txHash").Result()
 	}
 
-	if id != msg.ID.Uint64() {
-		k.Logger(ctx).Error("ID in message doesnt match id in logs", "MsgID", msg.ID, "IdFromTx", id)
-		return hmCommon.ErrInvalidMsg(k.Codespace(), "Invalid txhash, id's dont match. Id from tx hash is %v", id).Result()
+	if eventLog.ValidatorId.Uint64() != msg.ID.Uint64() {
+		k.Logger(ctx).Error("ID in message doesnt match id in logs", "MsgID", msg.ID, "IdFromTx", eventLog.ValidatorId.Uint64())
+		return hmCommon.ErrInvalidMsg(k.Codespace(), "Invalid txhash, id's dont match. Id from tx hash is %v", eventLog.ValidatorId.Uint64()).Result()
 	}
 
-	if bytes.Compare(newSignerTx.Bytes(), newSigner.Bytes()) != 0 {
-		k.Logger(ctx).Error("Signer in txhash and msg dont match", "MsgSigner", newSigner.String(), "SignerTx", newSignerTx.String())
+	if bytes.Compare(eventLog.NewSigner.Bytes(), newSigner.Bytes()) != 0 {
+		k.Logger(ctx).Error("Signer in txhash and msg dont match", "MsgSigner", newSigner.String(), "SignerTx", eventLog.NewSigner.String())
 		return hmCommon.ErrInvalidMsg(k.Codespace(), "Signer in txhash and msg dont match").Result()
 	}
 
@@ -139,27 +212,17 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k Keeper, contr
 	}
 	oldValidator := validator.Copy()
 
-	// check if txhash has been used before
-	blockNum, err := contractCaller.GetBlockNumberFromTxHash(msg.TxHash.EthHash())
-	if err != nil {
-		k.Logger(ctx).Error("Error occured while fetching tx", "Error", err)
-		return hmCommon.ErrInvalidMsg(k.Codespace(), "Invalid tx hash").Result()
-	}
-
-	// if block num is nil
-	if blockNum == nil {
-		k.Logger(ctx).Error("Error occured while fetching tx", "Error", errors.New("No block found"))
-		return hmCommon.ErrInvalidMsg(k.Codespace(), "Invalid tx hash").Result()
-	}
+	// last updated
+	lastUpdated := (receipt.BlockNumber.Uint64() * stakingTypes.DefaultLogIndexUnit) + msg.LogIndex
 
 	// check if incoming tx is older
-	if blockNum.Uint64() <= validator.LastUpdated {
+	if lastUpdated <= validator.LastUpdated {
 		k.Logger(ctx).Error("Older invalid tx found")
 		return hmCommon.ErrOldTx(k.Codespace()).Result()
 	}
 
 	// update last udpated
-	validator.LastUpdated = blockNum.Uint64()
+	validator.LastUpdated = lastUpdated
 
 	// check if we are actually updating signer
 	if !bytes.Equal(newSigner.Bytes(), validator.Signer.Bytes()) {
@@ -176,7 +239,8 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k Keeper, contr
 	// remove old validator from TM
 	oldValidator.Power = 0
 	// updated last
-	oldValidator.LastUpdated = blockNum.Uint64()
+	oldValidator.LastUpdated = lastUpdated
+
 	// save old validator
 	if err := k.AddValidator(ctx, *oldValidator); err != nil {
 		k.Logger(ctx).Error("Unable to update signer", "error", err, "validatorId", validator.ID)
@@ -194,7 +258,7 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k Keeper, contr
 	}
 
 	resTags := sdk.NewTags(
-		tags.ValidatorUpdate, []byte(newSigner.String()),
+		tags.SignerUpdate, []byte(newSigner.String()),
 		tags.UpdatedAt, []byte(strconv.FormatUint(validator.LastUpdated, 10)),
 		tags.ValidatorID, []byte(strconv.FormatUint(validator.ID.Uint64(), 10)),
 	)
@@ -202,8 +266,8 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k Keeper, contr
 	return sdk.Result{Tags: resTags}
 }
 
-// HandleMsgValidatorExit handle msg validator exit
-func HandleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
+// handleMsgValidatorExit handle msg validator exit
+func handleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	k.Logger(ctx).Info("Handling validator exit", "ValidatorID", msg.ID)
 
 	if confirmed := contractCaller.IsTxConfirmed(msg.TxHash.EthHash()); !confirmed {

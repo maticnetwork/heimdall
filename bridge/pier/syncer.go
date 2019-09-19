@@ -287,6 +287,8 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 					syncer.processStakedEvent(selectedEvent.Name, abiObject, &vLog)
 				case "UnstakeInit":
 					syncer.processUnstakeInitEvent(selectedEvent.Name, abiObject, &vLog)
+				case "StakeUpdate":
+					syncer.processStakeUpdateEvent(selectedEvent.Name, abiObject, &vLog)
 				case "SignerChange":
 					syncer.processSignerChangeEvent(selectedEvent.Name, abiObject, &vLog)
 				case "ReStaked":
@@ -346,6 +348,7 @@ func (syncer *Syncer) processStakedEvent(eventName string, abiObject *abi.ABI, v
 				event.ValidatorId.Uint64(),
 				hmTypes.NewPubKey(pubkey[:]),
 				hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
+				uint64(vLog.Index),
 			)
 
 			// process staked
@@ -373,6 +376,33 @@ func (syncer *Syncer) processUnstakeInitEvent(eventName string, abiObject *abi.A
 			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
 			event.ValidatorId.Uint64(),
 			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
+			uint64(vLog.Index),
+		)
+
+		// broadcast heimdall
+		syncer.queueConnector.BroadcastToHeimdall(msg)
+	}
+}
+
+func (syncer *Syncer) processStakeUpdateEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
+	event := new(stakemanager.StakemanagerStakeUpdate)
+	if err := helper.UnpackLog(abiObject, event, eventName, vLog); err != nil {
+		logEventParseError(syncer.Logger, eventName, err)
+	} else {
+		syncer.Logger.Debug(
+			"New event found",
+			"event", eventName,
+			"validatorID", event.ValidatorId,
+			"oldAmount", event.OldAmount,
+			"newAmount", event.NewAmount,
+		)
+
+		// msg validator exit
+		msg := staking.NewMsgStakeUpdate(
+			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
+			event.ValidatorId.Uint64(),
+			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
+			uint64(vLog.Index),
 		)
 
 		// broadcast heimdall
@@ -396,11 +426,12 @@ func (syncer *Syncer) processSignerChangeEvent(eventName string, abiObject *abi.
 		// signer change
 		if bytes.Compare(event.NewSigner.Bytes(), helper.GetAddress()) == 0 {
 			pubkey := helper.GetPubKey()
-			msg := staking.NewMsgValidatorUpdate(
+			msg := staking.NewMsgSignerUpdate(
 				hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
 				event.ValidatorId.Uint64(),
 				hmTypes.NewPubKey(pubkey[:]),
 				hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
+				uint64(vLog.Index),
 			)
 
 			// process signer update

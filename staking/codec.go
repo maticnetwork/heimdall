@@ -11,12 +11,14 @@ func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(MsgValidatorJoin{}, "staking/MsgValidatorJoin", nil)
 	cdc.RegisterConcrete(MsgSignerUpdate{}, "staking/MsgSignerUpdate", nil)
 	cdc.RegisterConcrete(MsgValidatorExit{}, "staking/MsgValidatorExit", nil)
+	cdc.RegisterConcrete(MsgStakeUpdate{}, "staking/MsgStakeUpdate", nil)
 }
 
 func RegisterPulp(pulp *authTypes.Pulp) {
 	pulp.RegisterConcrete(MsgValidatorJoin{})
 	pulp.RegisterConcrete(MsgSignerUpdate{})
 	pulp.RegisterConcrete(MsgValidatorExit{})
+	pulp.RegisterConcrete(MsgStakeUpdate{})
 }
 
 var cdcEmpty = codec.New()

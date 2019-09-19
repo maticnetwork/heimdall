@@ -27,9 +27,9 @@ func TestHandleMsgValidatorUpdate(t *testing.T) {
 	t.Log("To be Updated ===>", "Validator", newSigner[0].String())
 	// gen msg
 	msgTxHash := common.HexToHash("123")
-	msg := staking.NewMsgValidatorUpdate(uint64(newSigner[0].ID), newSigner[0].PubKey, json.Number("10"), msgTxHash)
+	msg := staking.NewMsgSignerUpdate(uint64(newSigner[0].ID), newSigner[0].PubKey, json.Number("10"), msgTxHash)
 	contractCallerObj.On("IsTxConfirmed", msgTxHash).Return(true)
-	contractCallerObj.On("SigUpdateEvent", msgTxHash).Return(uint64(oldSigner.ID), newSigner[0].PubKey.Address(), oldSigner.Signer, nil)
+	contractCallerObj.On("DecodeSignerUpdateEvent", msgTxHash).Return(uint64(oldSigner.ID), newSigner[0].PubKey.Address(), oldSigner.Signer, nil)
 	got := staking.HandleMsgSignerUpdate(ctx, msg, keeper, &contractCallerObj)
 	require.True(t, got.IsOK(), "expected validator update to be ok, got %v", got)
 	newValidators := keeper.GetCurrentValidators(ctx)

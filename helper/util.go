@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io/ioutil"
+	"math/big"
 	"math/bits"
 	"os"
 	"sort"
@@ -636,4 +638,14 @@ func GetReceiptLogData(log *ethTypes.Log) []byte {
 	}
 
 	return append(result, log.Data...)
+}
+
+// GetPowerFromAmount returns power from amount -- note that this will polute amount object
+func GetPowerFromAmount(amount *big.Int) (*big.Int, error) {
+	decimals18 := big.NewInt(10).Exp(big.NewInt(10), big.NewInt(18), nil)
+	if amount.Uint64() < decimals18.Uint64() {
+		return nil, errors.New("amount must be more than 1 token")
+	}
+
+	return amount.Div(amount, decimals18), nil
 }

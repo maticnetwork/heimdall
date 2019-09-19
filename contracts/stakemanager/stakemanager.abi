@@ -180,5 +180,27 @@
 		],
 		"name": "Jailed",
 		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"name": "validatorId",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"name": "oldAmount",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"name": "newAmount",
+				"type": "uint256"
+			}
+		],
+		"name": "StakeUpdate",
+		"type": "event"
 	}
 ]
