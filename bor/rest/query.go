@@ -23,7 +23,7 @@ import (
 
 func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
 	// Get span details from start block
-	r.HandleFunc("/bor/span", getSpanHandlerFn(cdc, cliCtx)).Methods("GET")
+	r.HandleFunc("/bor/span/{id}", getSpanHandlerFn(cdc, cliCtx)).Methods("GET")
 	r.HandleFunc("/bor/latest-span", getLatestSpanHandlerFn(cdc, cliCtx)).Methods("GET")
 	r.HandleFunc("/bor/span-proposer", getSpanProposersHandlerFn(cdc, cliCtx)).Methods("GET")
 	r.HandleFunc("/bor/prepare-next-span", prepareNextSpanHandlerFn(cdc, cliCtx)).Methods("GET")
@@ -34,15 +34,15 @@ func getSpanHandlerFn(
 	cliCtx context.CLIContext,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		params := r.URL.Query()
+		vars := mux.Vars(r)
 
-		// get start block
-		startBlock, ok := rest.ParseUint64OrReturnBadRequest(w, params.Get("start_block"))
+		// get to address
+		spanID, ok := rest.ParseUint64OrReturnBadRequest(w, vars["id"])
 		if !ok {
 			return
 		}
 
-		res, err := cliCtx.QueryStore(bor.GetSpanKey(startBlock), "bor")
+		res, err := cliCtx.QueryStore(bor.GetSpanKey(spanID), "bor")
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
@@ -80,7 +80,7 @@ func getLatestSpanHandlerFn(
 		// Get latest span start block
 		//
 
-		res, err := cliCtx.QueryStore(bor.LastSpanStartBlockKey, "bor")
+		res, err := cliCtx.QueryStore(bor.LastSpanIDKey, "bor")
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
@@ -142,7 +142,7 @@ func getSpanProposersHandlerFn(
 		// Get latest span start block
 		//
 
-		res, err := cliCtx.QueryStore(bor.LastSpanStartBlockKey, "bor")
+		res, err := cliCtx.QueryStore(bor.LastSpanIDKey, "bor")
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
@@ -153,7 +153,7 @@ func getSpanProposersHandlerFn(
 			return
 		}
 
-		lastestSpanStart, ok := rest.ParseUint64OrReturnBadRequest(w, string(res))
+		lastestSpanID, ok := rest.ParseUint64OrReturnBadRequest(w, string(res))
 		if !ok {
 			return
 		}
@@ -162,7 +162,7 @@ func getSpanProposersHandlerFn(
 		// Get latest span
 		//
 
-		res, err = cliCtx.QueryStore(bor.GetSpanKey(lastestSpanStart), "bor")
+		res, err = cliCtx.QueryStore(bor.GetSpanKey(lastestSpanID), "bor")
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return

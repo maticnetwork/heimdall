@@ -20,7 +20,7 @@ var (
 
 	SpanDurationKey       = []byte{0x24} // Key to store span duration for Bor
 	SprintDurationKey     = []byte{0x25} // Key to store span duration for Bor
-	LastSpanStartBlockKey = []byte{0x35} // Key to store last span start block
+	LastSpanIDKey         = []byte{0x35} // Key to store last span start block
 	SpanPrefixKey         = []byte{0x36} // prefix key to store span
 	SpanCacheKey          = []byte{0x37} // key to store Cache for span
 	LastProcessedEthBlock = []byte{0x38} // key to store last processed eth block for seed
@@ -72,8 +72,8 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 }
 
 // GetSpanKey appends prefix to start block
-func GetSpanKey(startBlock uint64) []byte {
-	return append(SpanPrefixKey, []byte(strconv.FormatUint(startBlock, 10))...)
+func GetSpanKey(id uint64) []byte {
+	return append(SpanPrefixKey, []byte(strconv.FormatUint(id, 10))...)
 }
 
 // AddNewSpan adds new span for bor to store
@@ -84,9 +84,12 @@ func (k *Keeper) AddNewSpan(ctx sdk.Context, span types.Span) error {
 		k.Logger(ctx).Error("Error marshalling span", "error", err)
 		return err
 	}
-	store.Set(GetSpanKey(span.StartBlock), out)
+
+	// store set span id
+	store.Set(GetSpanKey(span.ID), out)
+
 	// update last span
-	k.UpdateLastSpan(ctx, span.StartBlock)
+	k.UpdateLastSpan(ctx, span.ID)
 	return nil
 }
 
@@ -98,29 +101,29 @@ func (k *Keeper) AddNewRawSpan(ctx sdk.Context, span types.Span) error {
 		k.Logger(ctx).Error("Error marshalling span", "error", err)
 		return err
 	}
-	store.Set(GetSpanKey(span.StartBlock), out)
+	store.Set(GetSpanKey(span.ID), out)
 	return nil
 }
 
-// GetSpan fetches span indexed by start block from store
-func (k *Keeper) GetSpan(ctx sdk.Context, startBlock uint64) (span types.Span, err error) {
+// GetSpan fetches span indexed by id from store
+func (k *Keeper) GetSpan(ctx sdk.Context, id uint64) (*types.Span, error) {
 	store := ctx.KVStore(k.storeKey)
-	spanKey := GetSpanKey(startBlock)
+	spanKey := GetSpanKey(id)
 
 	// If we are starting from 0 there will be no spanKey present
-	if !store.Has(spanKey) && startBlock != 0 {
-		return span, errors.New("span not found for start block")
-	} else if !store.Has(spanKey) && startBlock == 0 {
-		return span, nil
+	if !store.Has(spanKey) {
+		return nil, errors.New("span not found for id")
 	}
+
+	var span types.Span
 	if err := k.cdc.UnmarshalBinaryBare(store.Get(spanKey), &span); err != nil {
-		return span, err
-	} else {
-		return span, nil
+		return nil, err
 	}
+
+	return &span, nil
 }
 
-// GetAllSpans fetches all indexed by start block from store
+// GetAllSpans fetches all indexed by id from store
 func (k *Keeper) GetAllSpans(ctx sdk.Context) (spans []*types.Span) {
 	// iterate through spans and create span update array
 	k.IterateSpansAndApplyFn(ctx, func(span types.Span) error {
@@ -133,19 +136,20 @@ func (k *Keeper) GetAllSpans(ctx sdk.Context) (spans []*types.Span) {
 }
 
 // GetLastSpan fetches last span using lastStartBlock
-func (k *Keeper) GetLastSpan(ctx sdk.Context) (lastSpan types.Span, err error) {
+func (k *Keeper) GetLastSpan(ctx sdk.Context) (*types.Span, error) {
 	store := ctx.KVStore(k.storeKey)
-	var lastSpanStart uint64
-	if store.Has(LastSpanStartBlockKey) {
-		// get last span start block
-		lastSpanStartInt, err := strconv.Atoi(string(store.Get(LastSpanStartBlockKey)))
+
+	var lastSpanID uint64
+	if store.Has(LastSpanIDKey) {
+		// get last span id
+		var err error
+		lastSpanID, err = strconv.ParseUint(string(store.Get(LastSpanIDKey)), 10, 64)
 		if err != nil {
-			k.Logger(ctx).Error("Unable to convert start block to int")
-			return lastSpan, nil
+			return nil, err
 		}
-		lastSpanStart = uint64(lastSpanStartInt)
 	}
-	return k.GetSpan(ctx, lastSpanStart)
+
+	return k.GetSpan(ctx, lastSpanID)
 }
 
 // FreezeSet freezes validator set for next span
@@ -171,6 +175,7 @@ func (k *Keeper) FreezeSet(ctx sdk.Context, id uint64, startBlock uint64, borCha
 		newProducers,
 		borChainID,
 	)
+
 	return k.AddNewSpan(ctx, newSpan)
 }
 
@@ -222,9 +227,9 @@ func (k *Keeper) SelectNextProducers(ctx sdk.Context) (vals []types.Validator, e
 }
 
 // UpdateLastSpan updates the last span start block
-func (k *Keeper) UpdateLastSpan(ctx sdk.Context, startBlock uint64) {
+func (k *Keeper) UpdateLastSpan(ctx sdk.Context, id uint64) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(LastSpanStartBlockKey, []byte(strconv.FormatUint(startBlock, 10)))
+	store.Set(LastSpanIDKey, []byte(strconv.FormatUint(id, 10)))
 }
 
 // IncrementLastEthBlock increment last eth block
@@ -255,32 +260,6 @@ func (k *Keeper) GetLastEthBlock(ctx sdk.Context) *big.Int {
 		lastEthBlock = big.NewInt(0)
 	}
 	return lastEthBlock
-}
-
-// SetSpanCache sets span cache
-// to be set when we freeze span
-// cache to be cleared in end block
-func (k *Keeper) SetSpanCache(ctx sdk.Context) {
-	store := ctx.KVStore(k.storeKey)
-	// fill in default cache value
-	store.Set(SpanCacheKey, DefaultValue)
-}
-
-// FlushSpanCache deletes cache stored in SpanCache
-// to be called from end block to acknowledge signature aggregation
-func (k *Keeper) FlushSpanCache(ctx sdk.Context) {
-	store := ctx.KVStore(k.storeKey)
-	store.Delete(SpanCacheKey)
-}
-
-// GetSpanCache check if value exists in span cache or not
-// returns true when found and false when not present
-func (k *Keeper) GetSpanCache(ctx sdk.Context) bool {
-	store := ctx.KVStore(k.storeKey)
-	if store.Has(SpanCacheKey) {
-		return true
-	}
-	return false
 }
 
 //
