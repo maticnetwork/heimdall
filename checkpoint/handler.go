@@ -153,7 +153,7 @@ func HandleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 	if start != headerBlock.StartBlock {
 		common.CheckpointLogger.Error("Invalid start block", "startExpected", headerBlock.StartBlock, "startReceived", start)
 		return common.ErrBadAck(k.Codespace).Result()
-	} else if start == headerBlock.StartBlock && end == headerBlock.EndBlock && bytes.Equal(root.Bytes(), headerBlock.RootHash.Bytes()) {
+	} else if start == headerBlock.StartBlock && end == headerBlock.EndBlock && !bytes.Equal(root.Bytes(), headerBlock.RootHash.Bytes()) {
 		common.CheckpointLogger.Error("Invalid ACK",
 			"startExpected", headerBlock.StartBlock,
 			"startReceived", start,
