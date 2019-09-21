@@ -94,17 +94,22 @@ type HeimdallApp struct {
 var logger = helper.Logger.With("module", "app")
 
 //
-// Account retriever
+// Cross communicator
 //
 
-// AckRetriever retriever
-type AckRetriever struct {
+// CrossCommunicator retriever
+type CrossCommunicator struct {
 	App *HeimdallApp
 }
 
 // GetACKCount returns ack count
-func (d AckRetriever) GetACKCount(ctx sdk.Context) uint64 {
+func (d CrossCommunicator) GetACKCount(ctx sdk.Context) uint64 {
 	return d.App.checkpointKeeper.GetACKCount(ctx)
+}
+
+// IsCurrentValidatorByAddress check if validator is current validator
+func (d CrossCommunicator) IsCurrentValidatorByAddress(ctx sdk.Context, address []byte) bool {
+	return d.App.stakingKeeper.IsCurrentValidatorByAddress(ctx, address)
 }
 
 //
@@ -150,6 +155,16 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 
 	app.caller = contractCallerObj
 
+	//
+	// cross communicator
+	//
+
+	crossCommunicator := CrossCommunicator{App: app}
+
+	//
+	// keepers
+	//
+
 	// define param keeper
 	app.paramsKeeper = params.NewKeeper(cdc, app.keyParams, app.tKeyParams)
 
@@ -192,7 +207,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		app.keyStaking,
 		app.paramsKeeper.Subspace(stakingTypes.DefaultParamspace),
 		common.DefaultCodespace,
-		AckRetriever{App: app},
+		crossCommunicator,
 	)
 
 	app.checkpointKeeper = checkpoint.NewKeeper(
@@ -244,6 +259,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		auth.NewAnteHandler(
 			app.accountKeeper,
 			app.supplyKeeper,
+			crossCommunicator,
 			auth.DefaultSigVerificationGasConsumer,
 		),
 	)
