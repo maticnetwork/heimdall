@@ -106,6 +106,21 @@ func (k *Keeper) AddValidator(ctx sdk.Context, validator types.Validator) error 
 	return nil
 }
 
+// IsCurrentValidatorByAddress check if validator is in current validator set by signer address
+func (k *Keeper) IsCurrentValidatorByAddress(ctx sdk.Context, address []byte) bool {
+	// get ack count
+	ackCount := k.ackRetriever.GetACKCount(ctx)
+
+	// get validator info
+	validator, err := k.GetValidatorInfo(ctx, address)
+	if err != nil {
+		return false
+	}
+
+	// check if validator is current validator
+	return validator.IsCurrentValidator(ackCount)
+}
+
 // GetValidatorInfo returns validator
 func (k *Keeper) GetValidatorInfo(ctx sdk.Context, address []byte) (validator types.Validator, err error) {
 	store := ctx.KVStore(k.storeKey)
