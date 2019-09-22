@@ -211,8 +211,17 @@ func (syncer *Syncer) startSubscription(ctx context.Context, subscription ethere
 
 func (syncer *Syncer) processHeader(newHeader *types.Header) {
 	syncer.Logger.Debug("New block detected", "blockNumber", newHeader.Number)
+	latestNumber := newHeader.Number
+
+	// confirmation
+	confirmationBlocks := big.NewInt(0).SetUint64(helper.GetConfig().ConfirmationBlocks)
+	confirmationBlocks = confirmationBlocks.Add(confirmationBlocks, big.NewInt(1))
+	if latestNumber.Uint64() > confirmationBlocks.Uint64() {
+		latestNumber = latestNumber.Sub(latestNumber, confirmationBlocks)
+	}
+
 	// default fromBlock
-	fromBlock := newHeader.Number.Int64()
+	fromBlock := latestNumber
 	// get last block from storage
 	hasLastBlock, _ := syncer.storageClient.Has([]byte(lastBlockKey), nil)
 	if hasLastBlock {
@@ -223,40 +232,35 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 		}
 
 		syncer.Logger.Debug("Got last block from bridge storage", "lastBlock", string(lastBlockBytes))
-		if result, err := strconv.Atoi(string(lastBlockBytes)); err == nil {
-			if int64(result) >= newHeader.Number.Int64() {
+		if result, err := strconv.ParseUint(string(lastBlockBytes), 10, 64); err == nil {
+			if result >= newHeader.Number.Uint64() {
 				return
 			}
 
-			fromBlock = int64(result + 1)
+			fromBlock = big.NewInt(0).SetUint64(result + 1)
 		}
 	}
 
-	// confirmation
-	toBlock := newHeader.Number
-	confirmationBlocks := big.NewInt(0).SetUint64(helper.GetConfig().ConfirmationBlocks)
-	confirmationBlocks = confirmationBlocks.Add(confirmationBlocks, big.NewInt(1))
-	if toBlock.Uint64() > confirmationBlocks.Uint64() {
-		toBlock = toBlock.Sub(toBlock, confirmationBlocks)
-	}
-
-	// set last block to storage
-	syncer.storageClient.Put([]byte(lastBlockKey), []byte(toBlock.String()), nil)
+	// to block
+	toBlock := latestNumber
 
 	// debug log
 	syncer.Logger.Debug("Processing header", "fromBlock", fromBlock, "toBlock", toBlock)
 
-	if newHeader.Number.Int64()-fromBlock > 250 {
-		// return if diff > 250
-		return
+	// set diff
+	if toBlock.Uint64() < fromBlock.Uint64() || toBlock.Uint64()-fromBlock.Uint64() > 250 {
+		fromBlock = toBlock
 	}
+
+	// set last block to storage
+	syncer.storageClient.Put([]byte(lastBlockKey), []byte(toBlock.String()), nil)
 
 	// log
 	syncer.Logger.Info("Querying event logs", "fromBlock", fromBlock, "toBlock", toBlock)
 
 	// draft a query
 	query := ethereum.FilterQuery{
-		FromBlock: big.NewInt(fromBlock),
+		FromBlock: fromBlock,
 		ToBlock:   toBlock,
 		Addresses: []ethCommon.Address{
 			helper.GetRootChainAddress(),
