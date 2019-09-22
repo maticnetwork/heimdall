@@ -17,8 +17,19 @@ import (
 )
 
 const (
+	// CommitTimeout commit timeout
 	CommitTimeout = 2 * time.Minute
 )
+
+// GetNodeStatus returns node status
+func GetNodeStatus(cliCtx cosmosContext.CLIContext) (*ctypes.ResultStatus, error) {
+	node, err := cliCtx.GetNode()
+	if err != nil {
+		return nil, err
+	}
+
+	return node.Status()
+}
 
 // SearchTxs performs a search for transactions for a given set of tags via
 // Tendermint RPC. It returns a slice of Info object containing txs and metadata.
