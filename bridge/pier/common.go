@@ -12,6 +12,7 @@ import (
 	"os"
 	"path"
 	"strconv"
+	"sync"
 	"time"
 
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
@@ -36,15 +37,16 @@ const (
 	// TxsURL represents txs url
 	TxsURL = "/txs"
 
-	AccountDetailsURL     = "/auth/accounts/%v"
-	LastNoAckURL          = "/checkpoint/last-no-ack"
-	ProposersURL          = "/staking/proposer/%v"
-	BufferedCheckpointURL = "/checkpoint/buffer"
-	LatestCheckpointURL   = "/checkpoint/latest-checkpoint"
-	CurrentProposerURL    = "/staking/current-proposer"
-	LatestSpanURL         = "/bor/latest-span"
-	SpanProposerURL       = "/bor/span-proposer"
-	NextSpanInfoURL       = "/bor/prepare-next-span"
+	AccountDetailsURL      = "/auth/accounts/%v"
+	LastNoAckURL           = "/checkpoint/last-no-ack"
+	ProposersURL           = "/staking/proposer/%v"
+	BufferedCheckpointURL  = "/checkpoint/buffer"
+	LatestCheckpointURL    = "/checkpoint/latest-checkpoint"
+	CurrentValidatorSetURL = "/staking/validator-set"
+	CurrentProposerURL     = "/staking/current-proposer"
+	LatestSpanURL          = "/bor/latest-span"
+	SpanProposerURL        = "/bor/span-proposer"
+	NextSpanInfoURL        = "/bor/prepare-next-span"
 
 	TransactionTimeout = 1 * time.Minute
 	CommitTimeout      = 2 * time.Minute
@@ -52,8 +54,12 @@ const (
 	BridgeDBFlag = "bridge-db"
 )
 
-// Global logger for bridge
+// Logger global logger for bridge
 var Logger log.Logger
+
+// mutext
+var delayMultiplierMutex sync.Mutex
+var _delayMultiplier int
 
 func init() {
 	Logger = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
@@ -82,6 +88,77 @@ func isProposer(cliCtx cliContext.CLIContext) bool {
 	}
 
 	return false
+}
+
+// checks if we are proposer
+func getCurrentValidators(cliCtx cliContext.CLIContext) *hmtypes.ValidatorSet {
+	var validatorSet hmtypes.ValidatorSet
+	result, err := FetchFromAPI(cliCtx, GetHeimdallServerEndpoint(CurrentValidatorSetURL))
+	if err != nil {
+		Logger.Error("Error fetching validatorSet", "error", err)
+		return nil
+	}
+
+	err = json.Unmarshal(result.Result, &validatorSet)
+	if err != nil {
+		Logger.Error("error unmarshalling validatorSet", "error", err)
+		return nil
+	}
+
+	return &validatorSet
+}
+
+// LoadDelayMultiplier load delay multipler at particular interval. Basically, it is caching multiplier for give interval
+func LoadDelayMultiplier(cliCtx cliContext.CLIContext, address []byte) error {
+	delayMultiplierMutex.Lock()
+	defer delayMultiplierMutex.Unlock()
+
+	// get current validators
+	validatorSet := getCurrentValidators(cliCtx)
+	proposerAddress := validatorSet.Proposer.Signer.Bytes()
+
+	// return if address is proposer
+	if bytes.Equal(address, validatorSet.Proposer.Signer.Bytes()) {
+		_delayMultiplier = 0
+		return nil
+	}
+
+	var proposerIndex = 0
+	for i, val := range validatorSet.Validators {
+		if bytes.Equal(val.Signer.Bytes(), proposerAddress) {
+			proposerIndex = i
+		}
+	}
+
+	var currentIndex = -1
+	for i, val := range validatorSet.Validators {
+		if bytes.Equal(val.Signer.Bytes(), address) {
+			currentIndex = i
+		}
+	}
+
+	if currentIndex == -1 {
+		return errors.New("Address is not in validator set")
+	}
+
+	delay := 0
+	if currentIndex > proposerIndex {
+		delay = currentIndex - proposerIndex
+	} else {
+		delay = currentIndex + len(validatorSet.Validators) - proposerIndex
+	}
+
+	// delay multipler
+	_delayMultiplier = delay
+
+	return nil
+}
+
+// GetDelayMultiplier returns delay multiplier
+func GetDelayMultiplier() int {
+	delayMultiplierMutex.Lock()
+	defer delayMultiplierMutex.Unlock()
+	return _delayMultiplier
 }
 
 // GetHeimdallServerEndpoint returns heimdall server endpoint

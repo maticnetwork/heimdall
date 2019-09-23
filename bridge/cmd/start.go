@@ -1,11 +1,14 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
 	"sync"
+	"time"
 
+	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/spf13/cobra"
 	"github.com/tendermint/tendermint/libs/common"
 	httpClient "github.com/tendermint/tendermint/rpc/client"
@@ -27,6 +30,13 @@ var startCmd = &cobra.Command{
 		// queue connector & http client
 		_queueConnector := pier.NewQueueConnector(cdc, helper.GetConfig().AmqpURL)
 		_httpClient := httpClient.NewHTTP(helper.GetConfig().TendermintNodeURL, "/websocket")
+
+		// load delay multipler
+		cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
+		ctx, cancelLoadDelayMultipler := context.WithCancel(context.Background())
+
+		// load new delay multiple for delay
+		go loadDelayMultiplier(ctx, cliCtx, 1*time.Minute)
 
 		services := [...]common.Service{
 			pier.NewCheckpointer(cdc, _queueConnector, _httpClient),
@@ -56,6 +66,9 @@ var startCmd = &cobra.Command{
 				// stop http client
 				_httpClient.Stop()
 
+				// cancel load multipler
+				cancelLoadDelayMultipler()
+
 				// exit
 				os.Exit(1)
 			}
@@ -80,6 +93,26 @@ var startCmd = &cobra.Command{
 		wg.Add(len(services))
 		wg.Wait()
 	},
+}
+
+func loadDelayMultiplier(ctx context.Context, cliCtx cliContext.CLIContext, interval time.Duration) {
+	ticker := time.NewTicker(interval)
+	// stop ticker when everything done
+	defer ticker.Stop()
+
+	// load first time
+	pier.LoadDelayMultiplier(cliCtx, helper.GetAddress())
+
+	for {
+		select {
+		case <-ticker.C:
+			pier.LoadDelayMultiplier(cliCtx, helper.GetAddress())
+
+		case <-ctx.Done():
+			ticker.Stop()
+			return
+		}
+	}
 }
 
 func init() {
