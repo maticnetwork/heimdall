@@ -213,7 +213,7 @@ func (k *Keeper) SelectNextProducers(ctx sdk.Context) (vals []types.Validator, e
 	if err != nil {
 		return vals, err
 	}
-	var IDToPower map[uint64]uint64
+	IDToPower := make(map[uint64]uint64)
 
 	for _, ID := range newProducersIds {
 		IDToPower[ID] = IDToPower[ID] + 1
@@ -309,7 +309,6 @@ func (k *Keeper) GetProducerCount(ctx sdk.Context) (uint64, error) {
 // SetProducerCount sets the number of producers selected per span
 func (k *Keeper) SetProducerCount(ctx sdk.Context, count uint64) {
 	k.paramSpace.Set(ctx, ParamStoreKeyNumOfProducers, count)
-
 }
 
 //

@@ -345,12 +345,17 @@ func prepareNextSpanHandlerFn(
 			rest.WriteErrorResponse(w, http.StatusBadRequest, errors.New("error selecting producers from validator set").Error())
 			return
 		}
-		var selectedProducers []types.Validator
+
+		IDToPower := make(map[uint64]uint64)
 		for _, ID := range selectedProducerIndices {
-			for _, val := range currentValidators {
-				if val.ID.Uint64() == ID {
-					selectedProducers = append(selectedProducers, val)
-				}
+			IDToPower[ID] = IDToPower[ID] + 1
+		}
+
+		var selectedProducers []types.Validator
+		for _, val := range currentValidators {
+			if IDToPower[val.ID.Uint64()] > 0 {
+				val.Power = IDToPower[val.ID.Uint64()]
+				selectedProducers = append(selectedProducers, val)
 			}
 		}
 
