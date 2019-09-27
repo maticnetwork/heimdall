@@ -9,6 +9,7 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 
 	auth "github.com/maticnetwork/heimdall/auth"
+	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	bank "github.com/maticnetwork/heimdall/bank"
 	supplyTypes "github.com/maticnetwork/heimdall/supply/types"
 	"github.com/maticnetwork/heimdall/types"
@@ -128,7 +129,11 @@ func (k Keeper) GetModuleAccountAndPermissions(ctx sdk.Context, moduleName strin
 	if acc != nil {
 		macc, ok := acc.(supplyTypes.ModuleAccountInterface)
 		if !ok {
-			panic("account is not a module account")
+			d := acc.(*authTypes.BaseAccount)
+			macc := supplyTypes.NewModuleAccount(d, moduleName, perms...)
+			maccI := (k.ak.NewAccount(ctx, macc)).(supplyTypes.ModuleAccountInterface) // set the account number
+			k.SetModuleAccount(ctx, maccI)
+			return maccI, perms
 		}
 		return macc, perms
 	}
