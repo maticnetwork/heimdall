@@ -58,7 +58,7 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 	var newValSet hmTypes.ValidatorSet
 	for _, validator := range data.Validators {
 		if ok := newValSet.Add(&validator); !ok {
-			panic(errors.New("Error while addings new validator"))
+			panic(errors.New("Error while adding new validator"))
 		} else {
 			// Add individual validator to state
 			keeper.AddValidator(ctx, validator)
@@ -73,9 +73,12 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 		currentValSet = data.CurrentValSet
 	}
 
+	// result
+	resultValSet := hmTypes.NewValidatorSet(currentValSet.Validators)
+
 	// TODO match valSet and genesisState.CurrentValSet for difference in accum
 	// update validator set in store
-	if err := keeper.UpdateValidatorSetInStore(ctx, currentValSet); err != nil {
+	if err := keeper.UpdateValidatorSetInStore(ctx, *resultValSet); err != nil {
 		panic(err)
 	}
 }
