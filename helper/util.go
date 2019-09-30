@@ -79,37 +79,32 @@ func Paginate(numObjs, page, limit, defLimit int) (start, end int) {
 	return start, end
 }
 
-// UpdateValidators updates validators in validator set
-func UpdateValidators(
+// GetUpdatedValidators updates validators in validator set
+func GetUpdatedValidators(
 	currentSet *hmTypes.ValidatorSet,
 	validators []*hmTypes.Validator,
 	ackCount uint64,
-) error {
-	for _, validator := range validators {
+) []*hmTypes.Validator {
+	updates := make([]*hmTypes.Validator, 0)
+	for _, v := range validators {
+		// create copy of validator
+		validator := v.Copy()
+
 		address := validator.Signer.Bytes()
 		_, val := currentSet.GetByAddress(address)
 		if val != nil && !validator.IsCurrentValidator(ackCount) {
-			// remove val
-			_, removed := currentSet.Remove(address)
-			if !removed {
-				return fmt.Errorf("Failed to remove validator %X", address)
-			}
+			// remove validator
+			validator.VotingPower = 0
+			updates = append(updates, validator)
 		} else if val == nil && validator.IsCurrentValidator(ackCount) {
-			// add val
-			added := currentSet.Add(validator)
-			if !added {
-				return fmt.Errorf("Failed to add new validator %v", validator)
-			}
-		} else if val != nil {
-			validator.Accum = val.Accum             // use last accum
-			updated := currentSet.Update(validator) // update validator
-			validator.Accum = 0                     // reset accum
-			if !updated {
-				return fmt.Errorf("Failed to update validator %X to %v", address, validator)
-			}
+			// add validator
+			updates = append(updates, validator)
+		} else if val != nil && validator.VotingPower != val.VotingPower {
+			updates = append(updates, validator)
 		}
 	}
-	return nil
+
+	return updates
 }
 
 // GetPkObjects from crypto priv key

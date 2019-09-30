@@ -203,7 +203,7 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k Keeper, con
 		"New proposer selected",
 		"validator", newProposer.Signer.String(),
 		"signer", newProposer.Signer.String(),
-		"power", newProposer.Power,
+		"power", newProposer.VotingPower,
 	)
 
 	resTags := sdk.NewTags(
@@ -256,7 +256,7 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k Keeper)
 		"New proposer selected",
 		"validator", newProposer.Signer.String(),
 		"signer", newProposer.Signer.String(),
-		"power", newProposer.Power,
+		"power", newProposer.VotingPower,
 	)
 
 	resTags := sdk.NewTags(

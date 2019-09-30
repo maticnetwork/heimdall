@@ -327,52 +327,65 @@ func (app *HeimdallApp) beginBlocker(_ sdk.Context, _ abci.RequestBeginBlock) ab
 
 // EndBlocker executes on each end block
 func (app *HeimdallApp) endBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci.ResponseEndBlock {
-	var valUpdates = make(map[hmTypes.ValidatorID]abci.ValidatorUpdate)
+	var tmValUpdates []abci.ValidatorUpdate
 	if ctx.BlockHeader().NumTxs > 0 {
 		// --- Start update to new validators
 		currentValidatorSet := app.stakingKeeper.GetValidatorSet(ctx)
-		currentValidatorSetCopy := currentValidatorSet.Copy()
+		// currentValidatorSetCopy := currentValidatorSet.Copy()
 		allValidators := app.stakingKeeper.GetAllValidators(ctx)
 		ackCount := app.checkpointKeeper.GetACKCount(ctx)
 
-		// apply updates
-		helper.UpdateValidators(
+		// get validator updates
+		setUpdates := helper.GetUpdatedValidators(
 			&currentValidatorSet, // pointer to current validator set -- UpdateValidators will modify it
 			allValidators,        // All validators
 			ackCount,             // ack count
 		)
 
-		// update validator set in store
-		err := app.stakingKeeper.UpdateValidatorSetInStore(ctx, currentValidatorSet)
-		if err != nil {
-			logger.Error("Unable to update validator set in state", "Error", err)
-		} else {
-			// remove all stale validators
-			for _, validator := range currentValidatorSetCopy.Validators {
-				val := abci.ValidatorUpdate{
-					Power:  0,
-					PubKey: validator.PubKey.ABCIPubKey(),
-				}
-				// validator update
-				valUpdates[validator.ID] = val
-			}
-			// add new validators
-			currentValidatorSet := app.stakingKeeper.GetValidatorSet(ctx)
-			for _, validator := range currentValidatorSet.Validators {
-				val := abci.ValidatorUpdate{
-					Power:  int64(validator.Power),
-					PubKey: validator.PubKey.ABCIPubKey(),
-				}
-				// validator update
-				valUpdates[validator.ID] = val
-			}
-			// --- End update validators
+		// create new validator set
+		if err := currentValidatorSet.UpdateWithChangeSet(setUpdates); err != nil {
+			// return with nothing
+			logger.Error("Unable to update current validator set", "Error", err)
+			return abci.ResponseEndBlock{}
 		}
-	}
-	// convert updates from map to array
-	var tmValUpdates []abci.ValidatorUpdate
-	for _, v := range valUpdates {
-		tmValUpdates = append(tmValUpdates, v)
+
+		// save set in store
+		if err := app.stakingKeeper.UpdateValidatorSetInStore(ctx, currentValidatorSet); err != nil {
+			// return with nothing
+			logger.Error("Unable to update current validator set in state", "Error", err)
+			return abci.ResponseEndBlock{}
+		}
+
+		// var valUpdates = make(map[hmTypes.ValidatorID]abci.ValidatorUpdate)
+
+		// // remove all stale validators
+		// for _, validator := range currentValidatorSetCopy.Validators {
+		// 	val := abci.ValidatorUpdate{
+		// 		Power:  0,
+		// 		PubKey: validator.PubKey.ABCIPubKey(),
+		// 	}
+		// 	// validator update
+		// 	valUpdates[validator.ID] = val
+		// }
+		// // add new validators
+		// currentValidatorSet := app.stakingKeeper.GetValidatorSet(ctx)
+		// for _, validator := range currentValidatorSet.Validators {
+		// 	val := abci.ValidatorUpdate{
+		// 		Power:  int64(validator.Power),
+		// 		PubKey: validator.PubKey.ABCIPubKey(),
+		// 	}
+		// 	// validator update
+		// 	valUpdates[validator.ID] = val
+		// }
+		// // --- End update validators
+
+		// convert updates from map to array
+		for _, v := range setUpdates {
+			tmValUpdates = append(tmValUpdates, abci.ValidatorUpdate{
+				Power:  int64(v.VotingPower),
+				PubKey: v.PubKey.ABCIPubKey(),
+			})
+		}
 	}
 
 	// send validator updates to peppermint
@@ -432,7 +445,7 @@ func (app *HeimdallApp) initFromGenesisState(ctx sdk.Context, genesisState Genes
 		if validator.IsCurrentValidator(genesisState.CheckpointData.AckCount) {
 			// convert to Validator Update
 			updateVal := abci.ValidatorUpdate{
-				Power:  int64(validator.Power),
+				Power:  int64(validator.VotingPower),
 				PubKey: validator.PubKey.ABCIPubKey(),
 			}
 			// Add validator to validator updated to be processed below

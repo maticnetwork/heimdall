@@ -213,15 +213,16 @@ func (k *Keeper) UpdateSigner(ctx sdk.Context, newSigner types.HeimdallAddress, 
 	}
 
 	// copy power to reassign below
-	validatorPower := validator.Power
-	validator.Power = 0
+	validatorPower := validator.VotingPower
+	validator.VotingPower = 0
+
 	// update validator
 	k.AddValidator(ctx, validator)
 
 	//update signer in prev Validator
 	validator.Signer = newSigner
 	validator.PubKey = newPubkey
-	validator.Power = validatorPower
+	validator.VotingPower = validatorPower
 
 	// add updated validator to store with new key
 	k.AddValidator(ctx, validator)
@@ -262,7 +263,7 @@ func (k *Keeper) IncrementAccum(ctx sdk.Context, times int) {
 	validatorSet := k.GetValidatorSet(ctx)
 
 	// increment accum
-	validatorSet.IncrementAccum(times)
+	validatorSet.IncrementProposerPriority(times)
 
 	// replace
 	k.UpdateValidatorSetInStore(ctx, validatorSet)
@@ -274,7 +275,7 @@ func (k *Keeper) GetNextProposer(ctx sdk.Context) *types.Validator {
 	validatorSet := k.GetValidatorSet(ctx)
 
 	// Increment accum in copy
-	copiedValidatorSet := validatorSet.CopyIncrementAccum(1)
+	copiedValidatorSet := validatorSet.CopyIncrementProposerPriority(1)
 
 	// get signer address for next signer
 	return copiedValidatorSet.GetProposer()

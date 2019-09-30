@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 )
@@ -15,12 +16,12 @@ type Validator struct {
 	ID          ValidatorID     `json:"ID"`
 	StartEpoch  uint64          `json:"startEpoch"`
 	EndEpoch    uint64          `json:"endEpoch"`
-	Power       uint64          `json:"power"` // TODO add 10^-18 here so that we dont overflow easily
+	VotingPower int64           `json:"power"` // TODO add 10^-18 here so that we dont overflow easily
 	PubKey      PubKey          `json:"pubKey"`
 	Signer      HeimdallAddress `json:"signer"`
 	LastUpdated uint64          `json:"last_updated"`
 
-	Accum int64 `json:"accum"`
+	ProposerPriority int64 `json:"accum"`
 }
 
 // SortValidatorByAddress sorts a slice of validators by address
@@ -37,7 +38,7 @@ func (v *Validator) IsCurrentValidator(ackCount uint64) bool {
 	currentEpoch := ackCount + 1
 
 	// validator hasnt initialised unstake
-	if v.StartEpoch <= currentEpoch && (v.EndEpoch == 0 || v.EndEpoch >= currentEpoch) && v.Power > 0 {
+	if v.StartEpoch <= currentEpoch && (v.EndEpoch == 0 || v.EndEpoch >= currentEpoch) && v.VotingPower > 0 {
 		return true
 	}
 
@@ -88,23 +89,25 @@ func (v *Validator) Copy() *Validator {
 	return &vCopy
 }
 
-// CompareAccum returns the one with higher Accum.
-func (v *Validator) CompareAccum(other *Validator) *Validator {
+// Returns the one with higher ProposerPriority.
+func (v *Validator) CompareProposerPriority(other *Validator) *Validator {
 	if v == nil {
 		return other
 	}
-	if v.Accum > other.Accum {
+	switch {
+	case v.ProposerPriority > other.ProposerPriority:
 		return v
-	} else if v.Accum < other.Accum {
+	case v.ProposerPriority < other.ProposerPriority:
 		return other
-	} else {
+	default:
 		result := bytes.Compare(v.Signer.Bytes(), other.Signer.Bytes())
-		if result < 0 {
+		switch {
+		case result < 0:
 			return v
-		} else if result > 0 {
+		case result > 0:
 			return other
-		} else {
-			return nil
+		default:
+			panic("Cannot compare identical validators")
 		}
 	}
 }
@@ -113,28 +116,46 @@ func (v *Validator) String() string {
 	if v == nil {
 		return "nil-Validator"
 	}
-
-	return fmt.Sprintf("Validator{%v::%v P:%v Start:%v End:%v A:%v}",
+	return fmt.Sprintf("Validator{%v %v %v VP:%v A:%v}",
 		v.ID,
-		v.Signer.String(),
-		v.Power,
-		v.StartEpoch,
-		v.EndEpoch,
-		v.Accum,
-	)
+		v.Signer,
+		v.PubKey,
+		v.VotingPower,
+		v.ProposerPriority)
 }
 
-// returns block number of last validator update
+// ValidatorListString returns a prettified validator list for logging purposes.
+func ValidatorListString(vals []*Validator) string {
+	chunks := make([]string, len(vals))
+	for i, val := range vals {
+		chunks[i] = fmt.Sprintf("%s:%d", val.Signer, val.VotingPower)
+	}
+
+	return strings.Join(chunks, ",")
+}
+
+// Bytes computes the unique encoding of a validator with a given voting power.
+// These are the bytes that gets hashed in consensus. It excludes address
+// as its redundant with the pubkey. This also excludes ProposerPriority
+// which changes every round.
+func (v *Validator) Bytes() []byte {
+	result := make([]byte, 64)
+	copy(result[12:], v.Signer.Bytes())
+	copy(result[32:], new(big.Int).SetInt64(v.VotingPower).Bytes())
+	return result
+}
+
+// UpdatedAt returns block number of last validator update
 func (v *Validator) UpdatedAt() uint64 {
 	return v.LastUpdated
 }
 
-// returns block number of last validator update
+// MinimalVal returns block number of last validator update
 func (v *Validator) MinimalVal() MinimalVal {
 	return MinimalVal{
-		ID:     v.ID,
-		Power:  v.Power,
-		Signer: v.Signer,
+		ID:          v.ID,
+		VotingPower: v.VotingPower,
+		Signer:      v.Signer,
 	}
 }
 
@@ -179,9 +200,9 @@ func (valID ValidatorID) Uint64() uint64 {
 // MinimalVal is the minimal validator representation
 // Used to send validator information to bor validator contract
 type MinimalVal struct {
-	ID     ValidatorID     `json:"ID"`
-	Power  uint64          `json:"power"` // TODO add 10^-18 here so that we dont overflow easily
-	Signer HeimdallAddress `json:"signer"`
+	ID          ValidatorID     `json:"ID"`
+	VotingPower int64           `json:"power"` // TODO add 10^-18 here so that we dont overflow easily
+	Signer      HeimdallAddress `json:"signer"`
 }
 
 // SortMinimalValByAddress sorts validators
