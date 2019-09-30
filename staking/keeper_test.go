@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
 	cmn "github.com/maticnetwork/heimdall/test"
 	"github.com/maticnetwork/heimdall/types"
@@ -138,6 +139,136 @@ func TestValidatorSet(t *testing.T) {
 
 	storedValSet := keeper.GetValidatorSet(ctx)
 	require.Equal(t, valSet, storedValSet, "Validator Set in state doesnt match ")
+}
+
+func TestValidatorSetChange(t *testing.T) {
+
+	// create sub test to check if validator remove
+	t.Run("remove", func(t *testing.T) {
+		ctx, keeper, _ := cmn.CreateTestInput(t, false)
+
+		// load 4 validators to state
+		LoadValidatorSet(4, t, keeper, ctx, false, 10)
+		initValSet := keeper.GetValidatorSet(ctx)
+
+		currentValSet := initValSet.Copy()
+		prevValidatorSet := initValSet.Copy()
+
+		// remove validator (making IsCurrentValidator return false)
+		prevValidatorSet.Validators[0].StartEpoch = 20
+
+		t.Log("Updated Validators in state")
+		for _, v := range prevValidatorSet.Validators {
+			t.Log("-->", "Address", v.Signer.String(), "StartEpoch", v.StartEpoch, "EndEpoch", v.EndEpoch, "Power", v.Power)
+		}
+
+		err := keeper.AddValidator(ctx, *prevValidatorSet.Validators[0])
+		require.Empty(t, err, "Unable to update validator set")
+
+		// apply updates
+		helper.UpdateValidators(
+			currentValSet,                // pointer to current validator set -- UpdateValidators will modify it
+			keeper.GetAllValidators(ctx), // All validators
+			5,                            // ack count
+		)
+		updatedValSet := currentValSet
+		t.Log("Validators in updated validator set")
+		for _, v := range updatedValSet.Validators {
+			t.Log("-->", "Address", v.Signer.String(), "StartEpoch", v.StartEpoch, "EndEpoch", v.EndEpoch, "Power", v.Power)
+		}
+		// check if 1 validator is removed
+		require.Equal(t, len(prevValidatorSet.Validators)-1, len(updatedValSet.Validators), "Validator set should be reduced by one ")
+		// remove first validator from initial validator set and equate with new
+		require.Equal(t, append(prevValidatorSet.Validators[:0], prevValidatorSet.Validators[1:]...), updatedValSet.Validators, "Validator at 0 index should be deleted")
+	})
+
+	t.Run("add", func(t *testing.T) {
+		ctx, keeper, _ := cmn.CreateTestInput(t, false)
+
+		// load 4 validators to state
+		LoadValidatorSet(4, t, keeper, ctx, false, 10)
+		initValSet := keeper.GetValidatorSet(ctx)
+
+		validators := cmn.GenRandomVal(1, 0, 10, 10, false, 1)
+		prevValSet := initValSet.Copy()
+		valToBeAdded := validators[0]
+		currentValSet := initValSet.Copy()
+		//prevValidatorSet := initValSet.Copy()
+		keeper.AddValidator(ctx, valToBeAdded)
+
+		t.Log("Validators in old validator set")
+		for _, v := range currentValSet.Validators {
+			t.Log("-->", "Address", v.Signer.String(), "StartEpoch", v.StartEpoch, "EndEpoch", v.EndEpoch, "Power", v.Power)
+		}
+		t.Log("Val to be Added")
+		t.Log("-->", "Address", valToBeAdded.Signer.String(), "StartEpoch", valToBeAdded.StartEpoch, "EndEpoch", valToBeAdded.EndEpoch, "Power", valToBeAdded.Power)
+
+		helper.UpdateValidators(
+			currentValSet,                // pointer to current validator set -- UpdateValidators will modify it
+			keeper.GetAllValidators(ctx), // All validators
+			5,                            // ack count
+		)
+		t.Log("Validators in updated validator set")
+		for _, v := range currentValSet.Validators {
+			t.Log("-->", "Address", v.Signer.String(), "StartEpoch", v.StartEpoch, "EndEpoch", v.EndEpoch, "Power", v.Power)
+		}
+
+		require.Equal(t, len(prevValSet.Validators)+1, len(currentValSet.Validators), "Number of validators should be increased by 1")
+		require.Equal(t, true, currentValSet.HasAddress(valToBeAdded.Signer.Bytes()), "New Validator should be added")
+		require.Equal(t, prevValSet.TotalVotingPower()+int64(valToBeAdded.Power), currentValSet.TotalVotingPower(), "Total power should be increased")
+	})
+
+	t.Run("update", func(t *testing.T) {
+		ctx, keeper, _ := cmn.CreateTestInput(t, false)
+
+		// load 4 validators to state
+		LoadValidatorSet(4, t, keeper, ctx, false, 10)
+		initValSet := keeper.GetValidatorSet(ctx)
+		t.Log("init val set-", initValSet)
+		keeper.IncrementAccum(ctx, 2)
+		prevValSet := initValSet.Copy()
+		currentValSet := keeper.GetValidatorSet(ctx)
+		t.Log("current Val set - ", currentValSet)
+		valToUpdate := currentValSet.Validators[0]
+		newSigner := cmn.GenRandomVal(1, 0, 10, 10, false, 1)
+		t.Log("Validators in old validator set")
+		for _, v := range currentValSet.Validators {
+			t.Log("-->", "Address", v.Signer.String(), "Accum", v.Accum, "Signer", v.Signer.String(), "Total power", currentValSet.TotalVotingPower())
+		}
+		keeper.UpdateSigner(ctx, newSigner[0].Signer, newSigner[0].PubKey, valToUpdate.Signer)
+		helper.UpdateValidators(
+			&currentValSet,               // pointer to current validator set -- UpdateValidators will modify it
+			keeper.GetAllValidators(ctx), // All validators
+			5,                            // ack count
+		)
+		t.Log("Validators in updated validator set")
+		for _, v := range currentValSet.Validators {
+			t.Log("-->", "Address", v.Signer.String(), "Accum", v.Accum, "Signer", v.Signer.String(), "Total power", currentValSet.TotalVotingPower())
+		}
+
+		require.Equal(t, len(prevValSet.Validators), len(currentValSet.Validators), "Number of validators should remain same")
+
+		index, _ := currentValSet.GetByAddress(valToUpdate.Signer.Bytes())
+		require.Equal(t, -1, index, "Prev Validator should not be present in CurrentValSet")
+		index, val := currentValSet.GetByAddress(newSigner[0].Signer.Bytes())
+		t.Log("currentValSet - ", currentValSet)
+		// require.Equal(t, 0, index, "New Signer should be present in Current val set")
+		require.Equal(t, newSigner[0].Signer, val.Signer, "Signer address should change")
+		require.Equal(t, newSigner[0].PubKey, val.PubKey, "Signer pubkey should change")
+		// require.Equal(t, valToUpdate.Accum, val.Accum, "Validator accum should not change")
+		require.Equal(t, prevValSet.TotalVotingPower(), currentValSet.TotalVotingPower(), "Total power should not change")
+		// TODO not sure if proposer check is needed
+		//require.Equal(t, &initValSet.Proposer.Address, &currentValSet.Proposer.Address, "Proposer should not change")
+	})
+
+	/* Validator Set changes When
+		1. When ackCount changes
+		2. When new validator joins
+		3. When validator updates stake
+		4. When signer is updatedctx
+		5. When Validator Exits
+	**/
+
 }
 
 func LoadValidatorSet(count int, t *testing.T, keeper staking.Keeper, ctx sdk.Context, randomise bool, timeAlive int) types.ValidatorSet {
