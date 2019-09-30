@@ -8,8 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/maticnetwork/heimdall/app"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -26,6 +24,7 @@ import (
 	"github.com/maticnetwork/heimdall/bor"
 
 	"github.com/maticnetwork/heimdall/checkpoint"
+	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
@@ -51,7 +50,7 @@ func MakeTestCodec() *codec.Codec {
 }
 
 // init for test cases
-func CreateTestInput(t *testing.T, isCheckTx bool) (sdk.Context, staking.Keeper) {
+func CreateTestInput(t *testing.T, isCheckTx bool) (sdk.Context, staking.Keeper, checkpoint.Keeper) {
 	//t.Parallel()
 	helper.InitHeimdallConfig(os.ExpandEnv("$HOME/.heimdalld"))
 
@@ -78,15 +77,25 @@ func CreateTestInput(t *testing.T, isCheckTx bool) (sdk.Context, staking.Keeper)
 	//pulp := MakeTestPulp()
 	paramsKeeper := params.NewKeeper(cdc, keyParams, tKeyParams)
 
+	dummyStakingKeeper := staking.Keeper{}
+
+	checkpointKeeper := checkpoint.NewKeeper(
+		cdc,
+		dummyStakingKeeper,
+		keyCheckpoint,
+		paramsKeeper.Subspace(checkpointTypes.DefaultParamspace),
+		common.DefaultCodespace,
+	)
+
 	stakingKeeper := staking.NewKeeper(
 		cdc,
 		keyStaking,
 		paramsKeeper.Subspace(stakingTypes.DefaultParamspace),
 		common.DefaultCodespace,
-		app.CrossCommunicator{},
+		checkpointKeeper,
 	)
 
-	return ctx, stakingKeeper
+	return ctx, stakingKeeper, checkpointKeeper
 }
 
 // create random header block

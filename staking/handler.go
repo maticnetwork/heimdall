@@ -19,13 +19,13 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case MsgValidatorJoin:
-			return handleMsgValidatorJoin(ctx, msg, k, contractCaller)
+			return HandleMsgValidatorJoin(ctx, msg, k, contractCaller)
 		case MsgValidatorExit:
-			return handleMsgValidatorExit(ctx, msg, k, contractCaller)
+			return HandleMsgValidatorExit(ctx, msg, k, contractCaller)
 		case MsgSignerUpdate:
-			return handleMsgSignerUpdate(ctx, msg, k, contractCaller)
+			return HandleMsgSignerUpdate(ctx, msg, k, contractCaller)
 		case MsgStakeUpdate:
-			return handleMsgStakeUpdate(ctx, msg, k, contractCaller)
+			return HandleMsgStakeUpdate(ctx, msg, k, contractCaller)
 		default:
 			return sdk.ErrTxDecode("Invalid message in checkpoint module").Result()
 		}
@@ -33,7 +33,7 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 }
 
 // handleMsgValidatorJoin msg validator join
-func handleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
+func HandleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	k.Logger(ctx).Debug("Handing new validator join", "msg", msg)
 
 	if confirmed := contractCaller.IsTxConfirmed(msg.TxHash.EthHash()); !confirmed {
@@ -114,7 +114,7 @@ func handleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k Keeper, con
 }
 
 // handleMsgStakeUpdate handles stake update message
-func handleMsgStakeUpdate(ctx sdk.Context, msg MsgStakeUpdate, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
+func HandleMsgStakeUpdate(ctx sdk.Context, msg MsgStakeUpdate, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	k.Logger(ctx).Debug("Handling stake update", "Validator", msg.ID)
 
 	// get main tx receipt
@@ -176,7 +176,7 @@ func handleMsgStakeUpdate(ctx sdk.Context, msg MsgStakeUpdate, k Keeper, contrac
 }
 
 // handleMsgSignerUpdate handles signer update message
-func handleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
+func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	k.Logger(ctx).Debug("Handling signer update", "Validator", msg.ID, "Signer", msg.NewSignerPubKey.Address())
 
 	// get main tx receipt
@@ -236,6 +236,7 @@ func handleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k Keeper, contr
 
 	// remove old validator from HM
 	oldValidator.EndEpoch = k.ackRetriever.GetACKCount(ctx)
+
 	// remove old validator from TM
 	oldValidator.Power = 0
 	// updated last
@@ -267,7 +268,7 @@ func handleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k Keeper, contr
 }
 
 // handleMsgValidatorExit handle msg validator exit
-func handleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
+func HandleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	k.Logger(ctx).Info("Handling validator exit", "ValidatorID", msg.ID)
 
 	if confirmed := contractCaller.IsTxConfirmed(msg.TxHash.EthHash()); !confirmed {
