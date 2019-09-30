@@ -91,7 +91,7 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k Keeper, con
 		ID:          validator.ID,
 		StartEpoch:  validator.StartEpoch,
 		EndEpoch:    validator.EndEpoch,
-		Power:       validator.Power,
+		VotingPower: validator.VotingPower,
 		PubKey:      pubkey,
 		Signer:      validator.Signer,
 		LastUpdated: 0,
@@ -158,7 +158,7 @@ func HandleMsgStakeUpdate(ctx sdk.Context, msg MsgStakeUpdate, k Keeper, contrac
 	if err != nil {
 		return hmCommon.ErrInvalidMsg(k.Codespace(), "Invalid amount for validator: %v", msg.ID).Result()
 	}
-	validator.Power = p.Uint64()
+	validator.VotingPower = p.Int64()
 
 	// save validator
 	err = k.AddValidator(ctx, validator)
@@ -238,7 +238,7 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k Keeper, contr
 	oldValidator.EndEpoch = k.ackRetriever.GetACKCount(ctx)
 
 	// remove old validator from TM
-	oldValidator.Power = 0
+	oldValidator.VotingPower = 0
 	// updated last
 	oldValidator.LastUpdated = lastUpdated
 

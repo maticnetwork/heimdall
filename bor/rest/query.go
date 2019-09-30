@@ -354,7 +354,7 @@ func prepareNextSpanHandlerFn(
 		var selectedProducers []types.Validator
 		for _, val := range currentValidators {
 			if IDToPower[val.ID.Uint64()] > 0 {
-				val.Power = IDToPower[val.ID.Uint64()]
+				val.VotingPower = int64(IDToPower[val.ID.Uint64()])
 				selectedProducers = append(selectedProducers, val)
 			}
 		}

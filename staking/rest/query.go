@@ -202,7 +202,7 @@ func proposerHandlerFn(
 		for index := 0; index < times; index++ {
 			RestLogger.Info("Getting proposer for current validator set", "Index", index, "TotalProposers", times)
 			proposers = append(proposers, *(_validatorSet.GetProposer()))
-			_validatorSet.IncrementAccum(1)
+			_validatorSet.IncrementProposerPriority(1)
 		}
 
 		// TODO format validator set to remove pubkey like we did for validator

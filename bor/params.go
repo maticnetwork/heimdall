@@ -16,7 +16,7 @@ const (
 	DefaultSpanDuration uint64 = 256
 
 	// Slot cost for validator
-	SlotCost uint64 = 1
+	SlotCost int64 = 1
 
 	// Number of Producers to be selected per span
 	DefaultProducerCount uint64 = 4

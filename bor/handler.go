@@ -82,7 +82,7 @@ func sortAndCompare(allVals []types.MinimalVal, selectedVals []types.MinimalVal,
 	sortedAddVals := types.SortMinimalValByAddress(allVals)
 	sortedMsgValidators := types.SortMinimalValByAddress(msg.Validators)
 	for i := range sortedMsgValidators {
-		if !bytes.Equal(sortedMsgValidators[i].Signer.Bytes(), sortedAddVals[i].Signer.Bytes()) || sortedMsgValidators[i].Power != sortedAddVals[i].Power {
+		if !bytes.Equal(sortedMsgValidators[i].Signer.Bytes(), sortedAddVals[i].Signer.Bytes()) || sortedMsgValidators[i].VotingPower != sortedAddVals[i].VotingPower {
 			return common.ErrValSetMisMatch(codespace).Result(), false
 		}
 	}
