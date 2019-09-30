@@ -49,7 +49,7 @@ func TestHandleMsgValidatorJoin(t *testing.T) {
 
 func TestHandleMsgValidatorUpdate(t *testing.T) {
 	contractCallerObj := mocks.IContractCaller{}
-	ctx, keeper, checkpointkeeper := cmn.CreateTestInput(t, false)
+	ctx, keeper, _ := cmn.CreateTestInput(t, false)
 
 	// pass 0 as time alive to generate non de-activated validators
 	LoadValidatorSet(4, t, keeper, ctx, false, 0)
@@ -59,7 +59,7 @@ func TestHandleMsgValidatorUpdate(t *testing.T) {
 	oldSigner := oldValSet.Validators[0]
 	newSigner := cmn.GenRandomVal(1, 0, 10, 10, false, 1)
 	newSigner[0].ID = oldSigner.ID
-	newSigner[0].Power = oldSigner.Power
+	newSigner[0].VotingPower = oldSigner.VotingPower
 	t.Log("To be Updated ===>", "Validator", newSigner[0].String())
 	// gen msg
 	msgTxHash := types.HexToHeimdallHash("123")
@@ -74,28 +74,26 @@ func TestHandleMsgValidatorUpdate(t *testing.T) {
 	contractCallerObj.On("DecodeSignerUpdateEvent", txreceipt, uint64(0)).Return(signerUpdateEvent, nil)
 
 	got := staking.HandleMsgSignerUpdate(ctx, msg, keeper, &contractCallerObj)
-	t.Log(got)
 	require.True(t, got.IsOK(), "expected validator update to be ok, got %v", got)
 	newValidators := keeper.GetCurrentValidators(ctx)
 	require.Equal(t, len(oldValSet.Validators), len(newValidators), "Number of current validators should be equal")
 	// apply updates
-	helper.UpdateValidators(
-		&oldValSet,                          // pointer to current validator set -- UpdateValidators will modify it
-		keeper.GetAllValidators(ctx),        // All validators
-		checkpointkeeper.GetACKCount(ctx)+1, // ack count
-	)
+	// helper.UpdateValidators(
+	// 	&oldValSet,                          // pointer to current validator set -- UpdateValidators will modify it
+	// 	keeper.GetAllValidators(ctx),        // All validators
+	// 	checkpointkeeper.GetACKCount(ctx)+1, // ack count
+	// )
+	setUpdates := helper.GetUpdatedValidators(&oldValSet, keeper.GetAllValidators(ctx), 5)
+	oldValSet.UpdateWithChangeSet(setUpdates)
 	_ = keeper.UpdateValidatorSetInStore(ctx, oldValSet)
-	newValSet := keeper.GetValidatorSet(ctx)
 
-	_, mutatedVal := newValSet.GetByAddress(newSigner[0].PubKey.Address().Bytes())
-	require.Equal(t, oldSigner.Accum, (*mutatedVal).Accum, "Accum should remain the same")
 	ValFrmID, ok := keeper.GetValidatorFromValID(ctx, oldSigner.ID)
 	require.True(t, ok, "new signer should be found, got %v", ok)
 	require.Equal(t, ValFrmID.Signer.Bytes(), newSigner[0].Signer.Bytes(), "New Signer should be mapped to old validator ID")
-	require.Equal(t, ValFrmID.Power, oldSigner.Power, "power of new signer %v should be equal to old signer %v", ValFrmID.Power, oldSigner.Power)
+	require.Equal(t, ValFrmID.VotingPower, oldSigner.VotingPower, "VotingPower of new signer %v should be equal to old signer %v", ValFrmID.VotingPower, oldSigner.VotingPower)
 	removedVal, err := keeper.GetValidatorInfo(ctx, oldSigner.Signer.Bytes())
 	require.Empty(t, err, "deleted validator should be found, got %v", err)
-	require.Equal(t, removedVal.Power, uint64(0), "removed validator power should be zero")
+	require.Equal(t, removedVal.VotingPower, int64(0), "removed validator VotingPower should be zero")
 	t.Log("Deleted validator ===>", "Validator", removedVal.String())
 
 }
@@ -147,8 +145,8 @@ func TestHandleMsgStakeUpdate(t *testing.T) {
 	contractCallerObj.On("GetConfirmedTxReceipt", msgTxHash.EthHash()).Return(txreceipt, nil)
 	stakeUpdateEvent := &stakemanager.StakemanagerStakeUpdate{
 		ValidatorId: new(big.Int).SetUint64(oldVal.ID.Uint64()),
-		OldAmount:   new(big.Int).SetUint64(oldVal.Power),
-		NewAmount:   new(big.Int).SetUint64(2000000000000000000),
+		OldAmount:   new(big.Int).SetInt64(oldVal.VotingPower),
+		NewAmount:   new(big.Int).SetInt64(2000000000000000000),
 	}
 
 	contractCallerObj.On("DecodeValidatorStakeUpdateEvent", txreceipt, uint64(0)).Return(stakeUpdateEvent, nil)
@@ -157,5 +155,5 @@ func TestHandleMsgStakeUpdate(t *testing.T) {
 	require.True(t, got.IsOK(), "expected validator stake update to be ok, got %v", got)
 	updatedVal, err := keeper.GetValidatorInfo(ctx, oldVal.Signer.Bytes())
 	require.Empty(t, err, "unable to fetch validator info %v-", err)
-	require.Equal(t, stakeUpdateEvent.NewAmount.Uint64(), updatedVal.Power, "Validator power should be updated to %v", stakeUpdateEvent.NewAmount.Uint64())
+	require.Equal(t, stakeUpdateEvent.NewAmount.Int64(), updatedVal.VotingPower, "Validator VotingPower should be updated to %v", stakeUpdateEvent.NewAmount.Uint64())
 }

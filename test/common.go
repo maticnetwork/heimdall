@@ -113,7 +113,7 @@ func GenRandCheckpointHeader(start int, headerSize int) (headerBlock types.Check
 }
 
 // Generate random validators
-func GenRandomVal(count int, startBlock uint64, power uint64, timeAlive uint64, randomise bool, startID uint64) (validators []types.Validator) {
+func GenRandomVal(count int, startBlock uint64, power int64, timeAlive uint64, randomise bool, startID uint64) (validators []types.Validator) {
 	for i := 0; i < count; i++ {
 		privKey1 := secp256k1.GenPrivKey()
 		pubkey := types.NewPubKey(privKey1.PubKey().Bytes())
@@ -130,13 +130,13 @@ func GenRandomVal(count int, startBlock uint64, power uint64, timeAlive uint64, 
 		}
 
 		newVal := types.Validator{
-			ID:         types.NewValidatorID(startID + uint64(i)),
-			StartEpoch: startBlock,
-			EndEpoch:   startBlock + timeAlive,
-			Power:      power,
-			Signer:     types.HexToHeimdallAddress(pubkey.Address().String()),
-			PubKey:     pubkey,
-			Accum:      0,
+			ID:               types.NewValidatorID(startID + uint64(i)),
+			StartEpoch:       startBlock,
+			EndEpoch:         startBlock + timeAlive,
+			VotingPower:      power,
+			Signer:           types.HexToHeimdallAddress(pubkey.Address().String()),
+			PubKey:           pubkey,
+			ProposerPriority: 0,
 		}
 		validators = append(validators, newVal)
 	}
