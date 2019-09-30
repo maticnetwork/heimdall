@@ -331,7 +331,6 @@ func (app *HeimdallApp) endBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 	if ctx.BlockHeader().NumTxs > 0 {
 		// --- Start update to new validators
 		currentValidatorSet := app.stakingKeeper.GetValidatorSet(ctx)
-		// currentValidatorSetCopy := currentValidatorSet.Copy()
 		allValidators := app.stakingKeeper.GetAllValidators(ctx)
 		ackCount := app.checkpointKeeper.GetACKCount(ctx)
 
@@ -355,29 +354,6 @@ func (app *HeimdallApp) endBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 			logger.Error("Unable to update current validator set in state", "Error", err)
 			return abci.ResponseEndBlock{}
 		}
-
-		// var valUpdates = make(map[hmTypes.ValidatorID]abci.ValidatorUpdate)
-
-		// // remove all stale validators
-		// for _, validator := range currentValidatorSetCopy.Validators {
-		// 	val := abci.ValidatorUpdate{
-		// 		Power:  0,
-		// 		PubKey: validator.PubKey.ABCIPubKey(),
-		// 	}
-		// 	// validator update
-		// 	valUpdates[validator.ID] = val
-		// }
-		// // add new validators
-		// currentValidatorSet := app.stakingKeeper.GetValidatorSet(ctx)
-		// for _, validator := range currentValidatorSet.Validators {
-		// 	val := abci.ValidatorUpdate{
-		// 		Power:  int64(validator.Power),
-		// 		PubKey: validator.PubKey.ABCIPubKey(),
-		// 	}
-		// 	// validator update
-		// 	valUpdates[validator.ID] = val
-		// }
-		// // --- End update validators
 
 		// convert updates from map to array
 		for _, v := range setUpdates {
