@@ -213,10 +213,15 @@ func (k *Keeper) SelectNextProducers(ctx sdk.Context) (vals []types.Validator, e
 	if err != nil {
 		return vals, err
 	}
+	IDToPower := make(map[uint64]uint64)
 
-	// fetch validators from []valIDs
 	for _, ID := range newProducersIds {
-		if val, ok := k.sk.GetValidatorFromValID(ctx, types.NewValidatorID(ID)); ok {
+		IDToPower[ID] = IDToPower[ID] + 1
+	}
+
+	for key, value := range IDToPower {
+		if val, ok := k.sk.GetValidatorFromValID(ctx, types.NewValidatorID(key)); ok {
+			val.Power = value
 			vals = append(vals, val)
 		}
 	}
@@ -304,7 +309,6 @@ func (k *Keeper) GetProducerCount(ctx sdk.Context) (uint64, error) {
 // SetProducerCount sets the number of producers selected per span
 func (k *Keeper) SetProducerCount(ctx sdk.Context, count uint64) {
 	k.paramSpace.Set(ctx, ParamStoreKeyNumOfProducers, count)
-
 }
 
 //
