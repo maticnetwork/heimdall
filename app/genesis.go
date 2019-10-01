@@ -156,7 +156,7 @@ func validateGenesisStateAccounts(accs []GenesisAccount) error {
 }
 
 // NewDefaultGenesisState generates the default state for gaia.
-func NewDefaultGenesisState(validators []types.Validator, currentValSet types.ValidatorSet) GenesisState {
+func NewDefaultGenesisState(validators []*types.Validator, currentValSet types.ValidatorSet) GenesisState {
 	return GenesisState{
 		Accounts:       nil,
 		AuthData:       auth.DefaultGenesisState(),

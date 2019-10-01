@@ -29,9 +29,9 @@ func SelectNextProducers(blkHash common.Hash, currentVals []types.Validator, pro
 // TODO remove 2nd loop
 func convertToSlots(vals []types.Validator) (validatorIndices []uint64) {
 	for _, val := range vals {
-		for val.Power >= SlotCost {
+		for val.VotingPower >= SlotCost {
 			validatorIndices = append(validatorIndices, uint64(val.ID))
-			val.Power = val.Power - SlotCost
+			val.VotingPower = val.VotingPower - SlotCost
 		}
 	}
 	return validatorIndices

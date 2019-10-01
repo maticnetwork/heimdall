@@ -213,15 +213,15 @@ func (k *Keeper) SelectNextProducers(ctx sdk.Context) (vals []types.Validator, e
 	if err != nil {
 		return vals, err
 	}
-	IDToPower := make(map[uint64]uint64)
 
+	IDToPower := make(map[uint64]uint64)
 	for _, ID := range newProducersIds {
 		IDToPower[ID] = IDToPower[ID] + 1
 	}
 
 	for key, value := range IDToPower {
 		if val, ok := k.sk.GetValidatorFromValID(ctx, types.NewValidatorID(key)); ok {
-			val.Power = value
+			val.VotingPower = int64(value)
 			vals = append(vals, val)
 		}
 	}

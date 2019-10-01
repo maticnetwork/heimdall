@@ -200,19 +200,17 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 
 			// create validator
 			validator := hmTypes.Validator{
-				ID:         hmTypes.NewValidatorID(uint64(validatorID)),
-				PubKey:     newPubkey,
-				StartEpoch: 0,
-				Signer:     types.BytesToHeimdallAddress(valPubKey.Address().Bytes()),
-				Power:      stakingTypes.DefaultValPower,
+				ID:          hmTypes.NewValidatorID(uint64(validatorID)),
+				PubKey:      newPubkey,
+				StartEpoch:  0,
+				Signer:      types.BytesToHeimdallAddress(valPubKey.Address().Bytes()),
+				VotingPower: stakingTypes.DefaultValPower,
 			}
-			var vals []*types.Validator
-			vals = append(vals, &validator)
-			newValSet := types.NewValidatorSet(vals)
 
-			validators := []hmTypes.Validator{validator}
+			vals := []*types.Validator{&validator}
+			newValSet := types.NewValidatorSet(vals)
 			// create genesis state
-			appState := app.NewDefaultGenesisState(validators, *newValSet)
+			appState := app.NewDefaultGenesisState(vals, *newValSet)
 			// set validator account
 			appState.Accounts = []app.GenesisAccount{getGenesisAccount(validator.Signer.Bytes())}
 			// app state json
@@ -275,7 +273,7 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 			nodeIDs := make([]string, totalValidators)
 			valPubKeys := make([]crypto.PubKey, totalValidators)
 			privKeys := make([]crypto.PrivKey, totalValidators)
-			validators := make([]hmTypes.Validator, totalValidators)
+			validators := make([]*hmTypes.Validator, totalValidators)
 			genFiles := make([]string, totalValidators)
 			var err error
 			// create chain id
@@ -317,12 +315,12 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 				newPubkey := hmTypes.NewPubKey(validatorPublicKey[:])
 
 				// create validator
-				validators[i] = hmTypes.Validator{
-					ID:         hmTypes.NewValidatorID(uint64(startID + int64(i))),
-					PubKey:     newPubkey,
-					StartEpoch: 0,
-					Signer:     types.BytesToHeimdallAddress(valPubKeys[i].Address().Bytes()),
-					Power:      1,
+				validators[i] = &hmTypes.Validator{
+					ID:          hmTypes.NewValidatorID(uint64(startID + int64(i))),
+					PubKey:      newPubkey,
+					StartEpoch:  0,
+					Signer:      types.BytesToHeimdallAddress(valPubKeys[i].Address().Bytes()),
+					VotingPower: 1,
 				}
 
 				var privObject secp256k1.PrivKeySecp256k1
@@ -359,12 +357,7 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 				// genesis account
 				accounts[i] = getGenesisAccount(validators[i].Signer.Bytes())
 			}
-			var vals []*types.Validator
-			for _, validator := range validators {
-				vals = append(vals, &validator)
-
-			}
-			newValSet := types.NewValidatorSet(vals)
+			newValSet := types.NewValidatorSet(validators)
 
 			// new app state
 			appState := app.NewDefaultGenesisState(validators, *newValSet)

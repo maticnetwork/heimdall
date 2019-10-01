@@ -202,11 +202,11 @@ func (c *ContractCaller) GetValidatorInfo(valID types.ValidatorID) (validator ty
 
 	// newAmount
 	validator = types.Validator{
-		ID:         valID,
-		Power:      newAmount.Uint64(),
-		StartEpoch: startEpoch.Uint64(),
-		EndEpoch:   endEpoch.Uint64(),
-		Signer:     types.BytesToHeimdallAddress(signer.Bytes()),
+		ID:          valID,
+		VotingPower: newAmount.Int64(),
+		StartEpoch:  startEpoch.Uint64(),
+		EndEpoch:    endEpoch.Uint64(),
+		Signer:      types.BytesToHeimdallAddress(signer.Bytes()),
 	}
 
 	return validator, nil

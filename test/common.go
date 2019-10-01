@@ -11,6 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/params"
 	ethcmn "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -18,12 +19,16 @@ import (
 	dbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
 
+	"github.com/cosmos/cosmos-sdk/x/params/subspace"
 	bankTypes "github.com/maticnetwork/heimdall/bank/types"
 	"github.com/maticnetwork/heimdall/bor"
+
 	"github.com/maticnetwork/heimdall/checkpoint"
+	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
+	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
 	"github.com/maticnetwork/heimdall/types"
 )
 
@@ -45,47 +50,70 @@ func MakeTestCodec() *codec.Codec {
 }
 
 // init for test cases
-func CreateTestInput(t *testing.T, isCheckTx bool) (sdk.Context, common.Keeper) {
+func CreateTestInput(t *testing.T, isCheckTx bool) (sdk.Context, staking.Keeper, checkpoint.Keeper) {
 	//t.Parallel()
 	helper.InitHeimdallConfig(os.ExpandEnv("$HOME/.heimdalld"))
+
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
+
+	// TODO create more keys like borKey etc
 	keyCheckpoint := sdk.NewKVStoreKey("checkpoint")
-	keyStaker := sdk.NewKVStoreKey("staking")
+	keyStaking := sdk.NewKVStoreKey("staking")
 	keyMaster := sdk.NewKVStoreKey("master")
+	keyParams := sdk.NewKVStoreKey(subspace.StoreKey)
+	tKeyParams := sdk.NewTransientStoreKey(subspace.TStoreKey)
+
+	// mount all
 	ms.MountStoreWithDB(keyCheckpoint, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(keyStaker, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyStaking, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyMaster, sdk.StoreTypeIAVL, db)
+
 	err := ms.LoadLatestVersion()
 	require.Nil(t, err)
 
 	ctx := sdk.NewContext(ms, abci.Header{ChainID: "foochainid"}, isCheckTx, log.NewNopLogger())
 	cdc := MakeTestCodec()
 	//pulp := MakeTestPulp()
+	paramsKeeper := params.NewKeeper(cdc, keyParams, tKeyParams)
 
-	masterKeeper := common.NewKeeper(cdc, keyMaster, keyStaker, keyCheckpoint, common.DefaultCodespace)
-	// set empty values in cache by default
-	masterKeeper.UpdateACKCountWithValue(ctx, 1)
+	dummyStakingKeeper := staking.Keeper{}
 
-	return ctx, masterKeeper
+	checkpointKeeper := checkpoint.NewKeeper(
+		cdc,
+		dummyStakingKeeper,
+		keyCheckpoint,
+		paramsKeeper.Subspace(checkpointTypes.DefaultParamspace),
+		common.DefaultCodespace,
+	)
+
+	stakingKeeper := staking.NewKeeper(
+		cdc,
+		keyStaking,
+		paramsKeeper.Subspace(stakingTypes.DefaultParamspace),
+		common.DefaultCodespace,
+		checkpointKeeper,
+	)
+
+	return ctx, stakingKeeper, checkpointKeeper
 }
 
 // create random header block
-func GenRandCheckpointHeader(headerSize int) (headerBlock types.CheckpointBlockHeader, err error) {
-	start := rand.Intn(100) + 1
+func GenRandCheckpointHeader(start int, headerSize int) (headerBlock types.CheckpointBlockHeader, err error) {
+	start = start
 	end := start + headerSize
 	roothash, err := checkpoint.GetHeaders(uint64(start), uint64(end))
 	if err != nil {
 		return headerBlock, err
 	}
 	proposer := ethcmn.Address{}
-	headerBlock = types.CreateBlock(uint64(start), uint64(end), ethcmn.HexToHash(hex.EncodeToString(roothash)), proposer, uint64(time.Now().Unix()))
+	headerBlock = types.CreateBlock(uint64(start), uint64(end), types.HexToHeimdallHash(hex.EncodeToString(roothash)), types.HexToHeimdallAddress(proposer.String()), uint64(time.Now().Unix()))
 
 	return headerBlock, nil
 }
 
 // Generate random validators
-func GenRandomVal(count int, startBlock uint64, power uint64, timeAlive uint64, randomise bool, startID uint64) (validators []types.Validator) {
+func GenRandomVal(count int, startBlock uint64, power int64, timeAlive uint64, randomise bool, startID uint64) (validators []types.Validator) {
 	for i := 0; i < count; i++ {
 		privKey1 := secp256k1.GenPrivKey()
 		pubkey := types.NewPubKey(privKey1.PubKey().Bytes())
@@ -102,13 +130,13 @@ func GenRandomVal(count int, startBlock uint64, power uint64, timeAlive uint64, 
 		}
 
 		newVal := types.Validator{
-			ID:         types.NewValidatorID(startID + uint64(i)),
-			StartEpoch: startBlock,
-			EndEpoch:   startBlock + timeAlive,
-			Power:      power,
-			Signer:     pubkey.Address(),
-			PubKey:     pubkey,
-			Accum:      0,
+			ID:               types.NewValidatorID(startID + uint64(i)),
+			StartEpoch:       startBlock,
+			EndEpoch:         startBlock + timeAlive,
+			VotingPower:      power,
+			Signer:           types.HexToHeimdallAddress(pubkey.Address().String()),
+			PubKey:           pubkey,
+			ProposerPriority: 0,
 		}
 		validators = append(validators, newVal)
 	}
