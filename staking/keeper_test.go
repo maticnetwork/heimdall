@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
 	cmn "github.com/maticnetwork/heimdall/test"
@@ -272,6 +273,41 @@ func TestValidatorSetChange(t *testing.T) {
 		4. When signer is updatedctx
 		5. When Validator Exits
 	**/
+
+}
+
+// Tests setters and getters for validator reward
+func TestValidatorRewards(t *testing.T) {
+	ctx, keeper, _ := cmn.CreateTestInput(t, false)
+	LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	curVal := keeper.GetCurrentValidators(ctx)
+	// check initial reward
+	initReward := uint64(100)
+	keeper.SetValidatorIdToReward(ctx, curVal[0].ID, initReward)
+	valReward := keeper.GetRewardByValidatorID(ctx, curVal[0].ID)
+	require.Equal(t, initReward, valReward, "Validator Initial Reward should be %v but it is %v", initReward, valReward)
+	// check updated reward
+	rewardAdded := uint64(50)
+	keeper.SetValidatorIdToReward(ctx, curVal[0].ID, rewardAdded)
+	updatedReward := keeper.GetRewardByValidatorID(ctx, curVal[0].ID)
+	require.Equal(t, (initReward + rewardAdded), updatedReward, "Validator Updated Reward should be %v but it is %v", (initReward + rewardAdded), updatedReward)
+	// zero reward for Invalid Validator ID
+	rewardNonValId := keeper.GetRewardByValidatorID(ctx, curVal[1].ID)
+	require.Equal(t, uint64(0), rewardNonValId, "Reward should be zero but it is %v", rewardNonValId)
+	// check validator reward map
+	keeper.SetValidatorIdToReward(ctx, curVal[1].ID, 35)
+	keeper.SetValidatorIdToReward(ctx, curVal[2].ID, 45)
+	valRewardMap := keeper.GetAllValidatorsWithReward(ctx)
+	t.Log("Validator Reward Map - ", valRewardMap)
+	require.Equal(t, 3, len(valRewardMap), "Validator Reward map size should be %v but it is %v", 3, len(valRewardMap))
+	require.Equal(t, uint64(150), valRewardMap[curVal[0].ID], "Validator Reward should be %v but it is %v", 150, valRewardMap[curVal[0].ID])
+	require.Equal(t, uint64(35), valRewardMap[curVal[1].ID], "Validator Reward should be %v but it is %v", 35, valRewardMap[curVal[0].ID])
+	require.Equal(t, uint64(45), valRewardMap[curVal[2].ID], "Validator Reward should be %v but it is %v", 45, valRewardMap[curVal[0].ID])
+
+	//TODO  Generate Merkle Root Out of Rewards after sorting by valID
+	rewardRootHash, err := checkpoint.GetRewardRootHash(valRewardMap)
+	require.Empty(t, err, "Error when generating reward root hash from validator reward state tree")
+	t.Log("Reward root hash - ", types.BytesToHeimdallHash(rewardRootHash))
 
 }
 

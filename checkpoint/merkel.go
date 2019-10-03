@@ -86,6 +86,33 @@ func GetHeaders(start uint64, end uint64) ([]byte, error) {
 	return tree.Root().Hash, nil
 }
 
+// GetRewardRootHash returns roothash of Validator Reward State Tree
+func GetRewardRootHash(valRewardMap map[hmTypes.ValidatorID]uint64) ([]byte, error) {
+	// TODO Sort the map by key
+	expectedLength := len(valRewardMap)
+	headers := make([][32]byte, expectedLength)
+	i := 0
+	for k, v := range valRewardMap {
+		header := crypto.Keccak256(appendBytes32(
+			new(big.Int).SetUint64(uint64(k)).Bytes(),
+			new(big.Int).SetUint64(v).Bytes(),
+		))
+		var arr [32]byte
+		copy(arr[:], header)
+
+		// set header
+		headers[i] = arr
+		i++
+	}
+	
+	tree := merkle.NewTreeWithOpts(merkle.TreeOptions{EnableHashSorting: false, DisableHashLeaves: true})
+	if err := tree.Generate(convert(headers), sha3.NewLegacyKeccak256()); err != nil {
+		return nil, err
+	}
+
+	return tree.Root().Hash, nil
+}
+
 func convert(input []([32]byte)) [][]byte {
 	var output [][]byte
 	for _, in := range input {

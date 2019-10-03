@@ -3,6 +3,7 @@ package staking
 import (
 	"encoding/hex"
 	"errors"
+	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -20,6 +21,8 @@ var (
 	ValidatorsKey          = []byte{0x21} // prefix for each key to a validator
 	ValidatorMapKey        = []byte{0x22} // prefix for each key for validator map
 	CurrentValidatorSetKey = []byte{0x23} // Key to store current validator set
+	ValidatorRewardMapKey  = []byte{0x16} // prefix for each key for Validator Reward Map
+
 )
 
 // type AckRetriever struct {
@@ -83,6 +86,10 @@ func GetValidatorMapKey(address []byte) []byte {
 	return append(ValidatorMapKey, address...)
 }
 
+func GetValidatorRewardMapKey(valId []byte) []byte {
+	return append(ValidatorRewardMapKey, valId...)
+}
+
 // AddValidator adds validator indexed with address
 func (k *Keeper) AddValidator(ctx sdk.Context, validator types.Validator) error {
 	// TODO uncomment
@@ -103,6 +110,7 @@ func (k *Keeper) AddValidator(ctx sdk.Context, validator types.Validator) error 
 
 	// add validator to validator ID => SignerAddress map
 	k.SetValidatorIDToSignerAddr(ctx, validator.ID, validator.Signer)
+
 	return nil
 }
 
@@ -330,4 +338,53 @@ func (k *Keeper) GetLastUpdated(ctx sdk.Context, valID types.ValidatorID) (updat
 		return 0, false
 	}
 	return validator.LastUpdated, true
+}
+
+func (k *Keeper) SetValidatorIdToReward(ctx sdk.Context, valID types.ValidatorID, reward uint64) {
+	// Add reward to reward balance
+	store := ctx.KVStore(k.storeKey)
+	rewardBalance := k.GetRewardByValidatorID(ctx, valID)
+	totalReward := reward + rewardBalance
+
+	totalRewardToBytes := []byte(strconv.FormatUint(totalReward, 10))
+	store.Set(GetValidatorRewardMapKey(valID.Bytes()), totalRewardToBytes)
+}
+
+// GetRewardByValidatorID Returns Total Rewards of Validator
+func (k *Keeper) GetRewardByValidatorID(ctx sdk.Context, valID types.ValidatorID) uint64 {
+	store := ctx.KVStore(k.storeKey)
+	key := GetValidatorRewardMapKey(valID.Bytes())
+	if store.Has(key) {
+		// get current reward for validatorId
+		rewardBalance, err := strconv.ParseUint(string(store.Get(key)), 10, 64)
+		if err != nil {
+			k.Logger(ctx).Error("Unable to convert key to int")
+		} else {
+			return rewardBalance
+		}
+	}
+	return 0
+}
+
+// GetAllValidatorsWithReward returns validator reward map
+func (k *Keeper) GetAllValidatorsWithReward(ctx sdk.Context) map[types.ValidatorID]uint64 {
+	store := ctx.KVStore(k.storeKey)
+	valRewardMap := make(map[types.ValidatorID]uint64)
+	iterator := sdk.KVStorePrefixIterator(store, ValidatorRewardMapKey)
+	defer iterator.Close()
+	for ; iterator.Valid(); iterator.Next() {
+		val := iterator.Value()
+		// // unmarshalling val
+		reward, err := strconv.ParseUint(string(val), 10, 64)
+		if err != nil {
+			panic("error while parsing reward")
+		}
+		// unmarshalling key
+		valID, err := strconv.ParseUint(string(iterator.Key()[len(ValidatorRewardMapKey):]), 10, 64)
+		if err != nil {
+			panic("error while parsing validator Id")
+		}
+		valRewardMap[types.ValidatorID(valID)] = reward
+	}
+	return valRewardMap
 }

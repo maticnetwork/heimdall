@@ -105,6 +105,9 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k Keeper, con
 		return hmCommon.ErrValidatorSave(k.Codespace()).Result()
 	}
 
+	// add zero rewards to validatorId
+	k.SetValidatorIdToReward(ctx, newValidator.ID, uint64(0))
+
 	resTags := sdk.NewTags(
 		tags.ValidatorJoin, []byte(newValidator.Signer.String()),
 		tags.ValidatorID, []byte(strconv.FormatUint(newValidator.ID.Uint64(), 10)),
