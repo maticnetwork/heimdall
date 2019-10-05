@@ -29,10 +29,11 @@ type (
 	HeaderBlockReq struct {
 		BaseReq rest.BaseReq `json:"base_req"`
 
-		Proposer   types.HeimdallAddress `json:"proposer"`
-		RootHash   types.HeimdallHash    `json:"rootHash"`
-		StartBlock uint64                `json:"startBlock"`
-		EndBlock   uint64                `json:"endBlock"`
+		Proposer       types.HeimdallAddress `json:"proposer"`
+		RootHash       types.HeimdallHash    `json:"rootHash"`
+		RewardRootHash types.HeimdallHash    `json:"rewardRootHash"`
+		StartBlock     uint64                `json:"startBlock"`
+		EndBlock       uint64                `json:"endBlock"`
 	}
 
 	// HeaderACKReq struct for sending ACK for a new headers
@@ -42,6 +43,7 @@ type (
 
 		Proposer    types.HeimdallAddress `json:"proposer"`
 		HeaderBlock uint64                `json:"headerBlock"`
+		TxHash      types.HeimdallHash    `json:"tx_hash"`
 	}
 
 	// HeaderNoACKReq struct for sending no-ack for a new headers
@@ -70,6 +72,7 @@ func newCheckpointHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.Hand
 			req.StartBlock,
 			req.EndBlock,
 			req.RootHash,
+			req.RewardRootHash,
 			uint64(time.Now().Unix()),
 		)
 
@@ -91,7 +94,7 @@ func newCheckpointACKHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.H
 		}
 
 		// draft a message and send response
-		msg := checkpoint.NewMsgCheckpointAck(req.Proposer, req.HeaderBlock)
+		msg := checkpoint.NewMsgCheckpointAck(req.Proposer, req.HeaderBlock, req.TxHash)
 
 		// send response
 		restClient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})

@@ -269,9 +269,9 @@ func (c *Checkpointer) sendRequest(newHeader *types.Header) {
 		// 	big.NewInt(int64(helper.GetConfig().ChildBlockInterval)),
 		// )
 
-		if err := c.broadcastACK(expectedCheckpointState.currentHeaderBlock.number.Uint64()); err != nil {
-			c.Logger.Error("Error while sending ACK", "Error", err.Error())
-		}
+		// if err := c.broadcastACK(expectedCheckpointState.currentHeaderBlock.number.Uint64()); err != nil {
+		// 	c.Logger.Error("Error while sending ACK", "Error", err.Error())
+		// }
 	}
 
 	//
@@ -425,10 +425,18 @@ func (c *Checkpointer) sendCheckpointToHeimdall(start uint64, end uint64) error 
 		return err
 	}
 
+	// Get Latest Reward Root Hash through rest call
+	c.Logger.Info("Fetching last committed checkpoint")
+	latestCheckpoint, err := c.fetchCheckpoint(GetHeimdallServerEndpoint(LatestCheckpointURL))
+	if err != nil {
+		panic("error while fetching latest checkpoint")
+	}
+	rewardRootHash := latestCheckpoint.RewardRootHash
 	c.Logger.Info("Creating and broadcasting new checkpoint",
 		"start", start,
 		"end", end,
 		"root", hmtypes.BytesToHeimdallHash(root),
+		"rewardRoot", rewardRootHash,
 	)
 
 	// create and send checkpoint message
@@ -437,6 +445,7 @@ func (c *Checkpointer) sendCheckpointToHeimdall(start uint64, end uint64) error 
 		start,
 		end,
 		hmtypes.BytesToHeimdallHash(root),
+		rewardRootHash,
 		uint64(time.Now().Unix()),
 	)
 
@@ -452,12 +461,12 @@ func (c *Checkpointer) sendCheckpointToHeimdall(start uint64, end uint64) error 
 }
 
 // broadcastACK broadcasts ack for a checkpoint to heimdall
-func (c *Checkpointer) broadcastACK(headerID uint64) error {
-	// create and send checkpoint ACK message
-	msg := checkpoint.NewMsgCheckpointAck(hmtypes.BytesToHeimdallAddress(helper.GetAddress()), headerID)
-	// broadcast ack
-	return c.queueConnector.BroadcastToHeimdall(msg)
-}
+// func (c *Checkpointer) broadcastACK(headerID uint64) error {
+// 	// create and send checkpoint ACK message
+// 	msg := checkpoint.NewMsgCheckpointAck(hmtypes.BytesToHeimdallAddress(helper.GetAddress()), headerID)
+// 	// broadcast ack
+// 	return c.queueConnector.BroadcastToHeimdall(msg)
+// }
 
 // wait for heimdall checkpoint tx to get confirmed and dispatch checkpoint
 func (c *Checkpointer) commitCheckpoint(startBlock uint64, endBlock uint64) {

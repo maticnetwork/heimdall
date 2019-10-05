@@ -84,11 +84,15 @@ func SendCheckpointTx(cdc *codec.Codec) *cobra.Command {
 				return fmt.Errorf("root hash cannot be empty")
 			}
 
+			checkpointTxHashStr := viper.GetString(FlagCheckpointTxHash)
+			checkpointTxHash := types.BytesToHeimdallHash([]byte(checkpointTxHashStr))
+
 			msg := checkpoint.NewMsgCheckpointBlock(
 				proposer,
 				startBlock,
 				endBlock,
 				types.HexToHeimdallHash(rootHashStr),
+				checkpointTxHash,
 				uint64(time.Now().Unix()),
 			)
 
@@ -130,8 +134,11 @@ func SendCheckpointACKTx(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
+			checkpointTxHashStr := viper.GetString(FlagCheckpointTxHash)
+			checkpointTxHash := types.BytesToHeimdallHash([]byte(checkpointTxHashStr))
+
 			// new checkpoint
-			msg := checkpoint.NewMsgCheckpointAck(proposer, headerBlock)
+			msg := checkpoint.NewMsgCheckpointAck(proposer, headerBlock, checkpointTxHash)
 
 			// msg
 			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
@@ -140,6 +147,8 @@ func SendCheckpointACKTx(cdc *codec.Codec) *cobra.Command {
 
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
 	cmd.Flags().String(FlagHeaderNumber, "", "--header=<header-index>")
+	cmd.Flags().StringP(FlagCheckpointTxHash, "tx", "", "--txhash=<checkpoint-txhash>")
+
 	cmd.MarkFlagRequired(FlagHeaderNumber)
 	return cmd
 }

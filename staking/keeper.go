@@ -9,6 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/ethereum/go-ethereum/common"
+	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/helper"
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
 	"github.com/maticnetwork/heimdall/types"
@@ -366,8 +367,8 @@ func (k *Keeper) GetRewardByValidatorID(ctx sdk.Context, valID types.ValidatorID
 	return 0
 }
 
-// GetAllValidatorsWithReward returns validator reward map
-func (k *Keeper) GetAllValidatorsWithReward(ctx sdk.Context) map[types.ValidatorID]uint64 {
+// GetAllValidatorRewards returns validator reward map
+func (k *Keeper) GetAllValidatorRewards(ctx sdk.Context) map[types.ValidatorID]uint64 {
 	store := ctx.KVStore(k.storeKey)
 	valRewardMap := make(map[types.ValidatorID]uint64)
 	iterator := sdk.KVStorePrefixIterator(store, ValidatorRewardMapKey)
@@ -377,14 +378,61 @@ func (k *Keeper) GetAllValidatorsWithReward(ctx sdk.Context) map[types.Validator
 		// // unmarshalling val
 		reward, err := strconv.ParseUint(string(val), 10, 64)
 		if err != nil {
-			panic("error while parsing reward")
+			k.Logger(ctx).Debug("Error while parsing reward",
+				"rewardval", val,
+			)
 		}
 		// unmarshalling key
 		valID, err := strconv.ParseUint(string(iterator.Key()[len(ValidatorRewardMapKey):]), 10, 64)
 		if err != nil {
-			panic("error while parsing validator Id")
+			k.Logger(ctx).Debug("Error while parsing ValId",
+				"valID", string(iterator.Key()[len(ValidatorRewardMapKey):]),
+			)
 		}
 		valRewardMap[types.ValidatorID(valID)] = reward
 	}
 	return valRewardMap
+}
+
+// CalculateSignerRewards calculates new rewards for signers
+func (k *Keeper) CalculateSignerRewards(ctx sdk.Context, voteBytes []byte, sigInput []byte) (map[types.ValidatorID]uint64, error) {
+	signerRewards := make(map[types.ValidatorID]uint64)
+	sigLength := 65
+	// Calculate reward for signers and update signerRewards map
+	for i := 0; i < len(sigInput); i += sigLength {
+		signature := sigInput[i : i+sigLength]
+		pKey, err := authTypes.RecoverPubkey(voteBytes, []byte(signature))
+		if err == nil {
+			pubKey := types.NewPubKey(pKey)
+			signerAddress := pubKey.Address().Bytes()
+			valInfo, err := k.GetValidatorInfo(ctx, signerAddress)
+			if err == nil {
+				// TODO - Reward should be calculated by fetching params on mainchain
+				signerRewards[valInfo.ID] = uint64(20)
+				k.Logger(ctx).Debug("Reward for Address",
+					"SignerAddress", signerAddress,
+					"ValidatorId", valInfo.ID,
+				)
+			} else {
+				k.Logger(ctx).Debug("No Validator Found for",
+					"SignerAddress", signerAddress,
+				)
+				return nil, err
+			}
+		} else {
+			k.Logger(ctx).Debug("Error Recovering PubKek",
+				"Signature", signature,
+				"Message", voteBytes,
+			)
+			return nil, err
+		}
+	}
+	return signerRewards, nil
+}
+
+// UpdateValidatorRewards Updates validators with Rewards
+func (k *Keeper) UpdateValidatorRewards(ctx sdk.Context, valrewards map[types.ValidatorID]uint64) {
+	for valID, reward := range valrewards {
+		k.SetValidatorIdToReward(ctx, valID, reward)
+	}
 }

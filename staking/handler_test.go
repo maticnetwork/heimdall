@@ -52,7 +52,7 @@ func TestHandleMsgValidatorUpdate(t *testing.T) {
 	ctx, keeper, _ := cmn.CreateTestInput(t, false)
 
 	// pass 0 as time alive to generate non de-activated validators
-	LoadValidatorSet(4, t, keeper, ctx, false, 0)
+	cmn.LoadValidatorSet(4, t, keeper, ctx, false, 0)
 	oldValSet := keeper.GetValidatorSet(ctx)
 
 	// vals := oldValSet.(*Validators)
@@ -102,7 +102,7 @@ func TestHandleMsgValidatorExit(t *testing.T) {
 	contractCallerObj := mocks.IContractCaller{}
 	ctx, keeper, checkpointkeeper := cmn.CreateTestInput(t, false)
 	// pass 0 as time alive to generate non de-activated validators
-	LoadValidatorSet(4, t, keeper, ctx, false, 0)
+	cmn.LoadValidatorSet(4, t, keeper, ctx, false, 0)
 	validators := keeper.GetCurrentValidators(ctx)
 	msgTxHash := types.HexToHeimdallHash("123")
 	contractCallerObj.On("IsTxConfirmed", msgTxHash.EthHash()).Return(true)
@@ -133,7 +133,7 @@ func TestHandleMsgStakeUpdate(t *testing.T) {
 	ctx, keeper, _ := cmn.CreateTestInput(t, false)
 
 	// pass 0 as time alive to generate non de-activated validators
-	LoadValidatorSet(4, t, keeper, ctx, false, 0)
+	cmn.LoadValidatorSet(4, t, keeper, ctx, false, 0)
 	oldValSet := keeper.GetValidatorSet(ctx)
 	oldVal := oldValSet.Validators[0]
 
@@ -156,4 +156,5 @@ func TestHandleMsgStakeUpdate(t *testing.T) {
 	updatedVal, err := keeper.GetValidatorInfo(ctx, oldVal.Signer.Bytes())
 	require.Empty(t, err, "unable to fetch validator info %v-", err)
 	require.Equal(t, stakeUpdateEvent.NewAmount.Int64(), updatedVal.VotingPower, "Validator VotingPower should be updated to %v", stakeUpdateEvent.NewAmount.Uint64())
+
 }

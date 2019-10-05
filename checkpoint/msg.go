@@ -23,11 +23,12 @@ var _ sdk.Msg = &MsgCheckpoint{}
 
 // MsgCheckpoint represents checkpoint
 type MsgCheckpoint struct {
-	Proposer   types.HeimdallAddress `json:"proposer"`
-	StartBlock uint64                `json:"startBlock"`
-	EndBlock   uint64                `json:"endBlock"`
-	RootHash   types.HeimdallHash    `json:"rootHash"`
-	TimeStamp  uint64                `json:"timestamp"`
+	Proposer       types.HeimdallAddress `json:"proposer"`
+	StartBlock     uint64                `json:"startBlock"`
+	EndBlock       uint64                `json:"endBlock"`
+	RootHash       types.HeimdallHash    `json:"rootHash"`
+	RewardRootHash types.HeimdallHash    `json:"rewardRootHash"`
+	TimeStamp      uint64                `json:"timestamp"`
 }
 
 // NewMsgCheckpointBlock creates new checkpoint message using mentioned arguments
@@ -36,14 +37,16 @@ func NewMsgCheckpointBlock(
 	startBlock uint64,
 	endBlock uint64,
 	roothash types.HeimdallHash,
+	rewardRootHash types.HeimdallHash,
 	timestamp uint64,
 ) MsgCheckpoint {
 	return MsgCheckpoint{
-		Proposer:   proposer,
-		StartBlock: startBlock,
-		EndBlock:   endBlock,
-		RootHash:   roothash,
-		TimeStamp:  timestamp,
+		Proposer:       proposer,
+		StartBlock:     startBlock,
+		EndBlock:       endBlock,
+		RootHash:       roothash,
+		RewardRootHash: rewardRootHash,
+		TimeStamp:      timestamp,
 	}
 }
 
@@ -91,15 +94,18 @@ func (msg MsgCheckpoint) ValidateBasic() sdk.Error {
 
 var _ sdk.Msg = &MsgCheckpointAck{}
 
+// MsgCheckpointAck Add mainchain commit transaction hash to MsgCheckpointAck
 type MsgCheckpointAck struct {
 	From        types.HeimdallAddress `json:"from"`
 	HeaderBlock uint64                `json:"headerBlock"`
+	TxHash      types.HeimdallHash    `json:"tx_hash"`
 }
 
-func NewMsgCheckpointAck(from types.HeimdallAddress, headerBlock uint64) MsgCheckpointAck {
+func NewMsgCheckpointAck(from types.HeimdallAddress, headerBlock uint64, txHash types.HeimdallHash) MsgCheckpointAck {
 	return MsgCheckpointAck{
 		From:        from,
 		HeaderBlock: headerBlock,
+		TxHash:      txHash,
 	}
 }
 

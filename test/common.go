@@ -107,7 +107,7 @@ func GenRandCheckpointHeader(start int, headerSize int) (headerBlock types.Check
 		return headerBlock, err
 	}
 	proposer := ethcmn.Address{}
-	headerBlock = types.CreateBlock(uint64(start), uint64(end), types.HexToHeimdallHash(hex.EncodeToString(roothash)), types.HexToHeimdallAddress(proposer.String()), uint64(time.Now().Unix()))
+	headerBlock = types.CreateBlock(uint64(start), uint64(end), types.HexToHeimdallHash(hex.EncodeToString(roothash)), types.HexToHeimdallHash(hex.EncodeToString(roothash)), types.HexToHeimdallAddress(proposer.String()), uint64(time.Now().Unix()))
 
 	return headerBlock, nil
 }
@@ -141,6 +141,27 @@ func GenRandomVal(count int, startBlock uint64, power int64, timeAlive uint64, r
 		validators = append(validators, newVal)
 	}
 	return
+}
+
+// Load Validator Set
+func LoadValidatorSet(count int, t *testing.T, keeper staking.Keeper, ctx sdk.Context, randomise bool, timeAlive int) types.ValidatorSet {
+	// create 4 validators
+	validators := GenRandomVal(4, 0, 10, uint64(timeAlive), randomise, 1)
+	var valSet types.ValidatorSet
+	// add validators to new Validator set and state
+	for _, validator := range validators {
+		err := keeper.AddValidator(ctx, validator)
+		require.Empty(t, err, "Unable to set validator, Error: %v", err)
+		// add validator to validator set
+		// valSet.Add(&validator)
+		valSet.UpdateWithChangeSet([]*types.Validator{&validator})
+	}
+
+	err := keeper.UpdateValidatorSetInStore(ctx, valSet)
+	require.Empty(t, err, "Unable to update validator set")
+	vals := keeper.GetAllValidators(ctx)
+	t.Log("Vals inserted", vals)
+	return valSet
 }
 
 // finds address in give validator slice

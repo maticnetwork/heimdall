@@ -1,12 +1,14 @@
 package staking_test
 
 import (
+	"encoding/hex"
+	"strings"
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/maticnetwork/heimdall/checkpoint"
+	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/staking"
 	cmn "github.com/maticnetwork/heimdall/test"
 	"github.com/maticnetwork/heimdall/types"
 	"github.com/stretchr/testify/require"
@@ -141,7 +143,7 @@ func TestValidatorSetChange(t *testing.T) {
 		ctx, keeper, _ := cmn.CreateTestInput(t, false)
 
 		// load 4 validators to state
-		LoadValidatorSet(4, t, keeper, ctx, false, 10)
+		cmn.LoadValidatorSet(4, t, keeper, ctx, false, 10)
 		initValSet := keeper.GetValidatorSet(ctx)
 
 		currentValSet := initValSet.Copy()
@@ -186,7 +188,7 @@ func TestValidatorSetChange(t *testing.T) {
 		ctx, keeper, _ := cmn.CreateTestInput(t, false)
 
 		// load 4 validators to state
-		LoadValidatorSet(4, t, keeper, ctx, false, 10)
+		cmn.LoadValidatorSet(4, t, keeper, ctx, false, 10)
 		initValSet := keeper.GetValidatorSet(ctx)
 
 		validators := cmn.GenRandomVal(1, 0, 10, 10, false, 1)
@@ -225,7 +227,7 @@ func TestValidatorSetChange(t *testing.T) {
 		ctx, keeper, _ := cmn.CreateTestInput(t, false)
 
 		// load 4 validators to state
-		LoadValidatorSet(4, t, keeper, ctx, false, 10)
+		cmn.LoadValidatorSet(4, t, keeper, ctx, false, 10)
 		initValSet := keeper.GetValidatorSet(ctx)
 		t.Log("init val set-", initValSet)
 		keeper.IncrementAccum(ctx, 2)
@@ -279,7 +281,7 @@ func TestValidatorSetChange(t *testing.T) {
 // Tests setters and getters for validator reward
 func TestValidatorRewards(t *testing.T) {
 	ctx, keeper, _ := cmn.CreateTestInput(t, false)
-	LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	cmn.LoadValidatorSet(4, t, keeper, ctx, false, 10)
 	curVal := keeper.GetCurrentValidators(ctx)
 	// check initial reward
 	initReward := uint64(100)
@@ -297,7 +299,7 @@ func TestValidatorRewards(t *testing.T) {
 	// check validator reward map
 	keeper.SetValidatorIdToReward(ctx, curVal[1].ID, 35)
 	keeper.SetValidatorIdToReward(ctx, curVal[2].ID, 45)
-	valRewardMap := keeper.GetAllValidatorsWithReward(ctx)
+	valRewardMap := keeper.GetAllValidatorRewards(ctx)
 	t.Log("Validator Reward Map - ", valRewardMap)
 	require.Equal(t, 3, len(valRewardMap), "Validator Reward map size should be %v but it is %v", 3, len(valRewardMap))
 	require.Equal(t, uint64(150), valRewardMap[curVal[0].ID], "Validator Reward should be %v but it is %v", 150, valRewardMap[curVal[0].ID])
@@ -311,22 +313,46 @@ func TestValidatorRewards(t *testing.T) {
 
 }
 
-func LoadValidatorSet(count int, t *testing.T, keeper staking.Keeper, ctx sdk.Context, randomise bool, timeAlive int) types.ValidatorSet {
-	// create 4 validators
-	validators := cmn.GenRandomVal(4, 0, 10, uint64(timeAlive), randomise, 1)
-	var valSet types.ValidatorSet
-	// add validators to new Validator set and state
-	for _, validator := range validators {
-		err := keeper.AddValidator(ctx, validator)
-		require.Empty(t, err, "Unable to set validator, Error: %v", err)
-		// add validator to validator set
-		// valSet.Add(&validator)
-		valSet.UpdateWithChangeSet([]*types.Validator{&validator})
+func TestCalculateSignerRewards(t *testing.T) {
+	ctx, keeper, _ := cmn.CreateTestInput(t, false)
+	// These are pubkeys and signer address for below submitheaderblock trasaction payload
+	pubKeys := []string{"045b608112c8d9ca26f50ede110495e6be48cf9bb6d220d0354e3771701d3c9b1c8805d039e194f8938b820fee6d0aff4e2120b385f1e58b62d8649a796e7433a2", "041e8bc59b9c58358c9f2847d9dc62b927bc3fc7ac83e9b1a38b402ffb6d6d2d7be9329f51e6a9a4cfb75bc426def46be8f847a4c2fd335be55f382a08d4f3325a", "047ad78e23df40cecc5c6adf661df02d103aff74a95e2c4de99b1d0855b67d2881c659d7831daeae2c7626b60575a9a4aae62bd1ea225c1f71cb2c63c63a7de4a0"}
+	signerAddresses := []string{"a03d8f5af7413e4fd5a37fde9286e390ef8f3c07", "b1bf4473c6b1918a6e37408e1c14df81281411a8", "ba754e3893adb3cabc0afe7932b4b5a3cee3f3ab"}
+	// Add these validators to store
+	for i := 0; i < len(signerAddresses); i++ {
+		newVal := types.Validator{
+			ID:               types.NewValidatorID(uint64(i)),
+			StartEpoch:       0,
+			EndEpoch:         100,
+			VotingPower:      20,
+			Signer:           types.HexToHeimdallAddress(signerAddresses[i]),
+			PubKey:           types.NewPubKey([]byte(pubKeys[i])),
+			ProposerPriority: 0,
+		}
+		keeper.AddValidator(ctx, newVal)
 	}
+	// Unpack Signers from paylaod
+	data := string(rootchain.RootchainABI)
+	abi, err := abi.JSON(strings.NewReader(data))
+	require.Empty(t, err, "Error while getting RootChainABI")
+	payload := "ec83d3ba000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000c000000000000000000000000000000000000000000000000000000000000001c00000000000000000000000000000000000000000000000000000000000000030ef8f6865696d64616c6c2d39337251774b84766f7465820cb0800294907eb68cd3480777e3fde8897fb1373de6e982cc0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c3c65be37c47302d110fbe6453ef84cc69ecc744d9dbd6fa98d68a621541e2e8291758b962f41ed31a1f8c25db2631da2f49fe20ff1e2d683dd0d802fcef6928d5000622073cfbc99994cd06d7a7a8b01e453b57495010d6eb312a68b00ca6f581d0729f494a385bd1fbe2fd8df3da706fa85a54694ab0d9a4177555048aaa7b3371005c6dd42d128482e603c5adc7cfca0f0c730b49d6bd8ba750307d497c21097c922479f51151c53b35f20a1a1cb4790afa95e470b8f70b0318726d6175b9055b340000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000045f84394b1bf4473c6b1918a6e37408e1c14df81281411a883543ff8835441f7a07d2842c3044740cfe1e1a5f782bfd3b91de0c634e9933524b5e3daacc854f49b845d94796f000000000000000000000000000000000000000000000000000000"
+	decodedPayload, err := hex.DecodeString(payload)
+	require.Empty(t, err, "Error while decoding payload")
+	voteSignBytes, inputSigs, txData := helper.UnpackSigAndVotes(decodedPayload, abi)
+	t.Log("voteSignBytes", hex.EncodeToString(voteSignBytes))
+	t.Log("inputSigs", hex.EncodeToString(inputSigs))
+	t.Log("txData", hex.EncodeToString(txData))
 
-	err := keeper.UpdateValidatorSetInStore(ctx, valSet)
-	require.Empty(t, err, "Unable to update validator set")
-	vals := keeper.GetAllValidators(ctx)
-	t.Log("Vals inserted", vals)
-	return valSet
+	// Calculate Rewards for Signers
+	signerRewardMap, err := keeper.CalculateSignerRewards(ctx, voteSignBytes, inputSigs)
+	t.Log("Signer Reward Map - ", signerRewardMap)
+	require.Empty(t, err, "Error while calculating rewards for signers", err)
+	require.Equal(t, len(pubKeys), len(signerRewardMap), "No of signers should be %v but it is %v", len(pubKeys), len(signerRewardMap))
+
+	// Verify Rewards for validator Signatures
+	for i := 0; i < len(signerRewardMap); i++ {
+		val, err := keeper.GetValidatorInfo(ctx, types.HexToHeimdallAddress(signerAddresses[i]).Bytes())
+		require.Empty(t, err, "Error while getting val info for signer -", types.HexToHeimdallAddress(signerAddresses[i]).Bytes())
+		require.Equal(t, uint64(20), signerRewardMap[val.ID], "Reward for valId %v should be %v but it %v", val.ID, uint64(20), signerRewardMap[val.ID])
+	}
 }

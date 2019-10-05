@@ -130,6 +130,7 @@ var maticRPCClient *rpc.Client
 
 // private key object
 var privObject secp256k1.PrivKeySecp256k1
+
 var pubObject secp256k1.PubKeySecp256k1
 
 // Logger stores global logger object

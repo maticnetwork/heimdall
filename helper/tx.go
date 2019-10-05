@@ -3,9 +3,12 @@ package helper
 import (
 	"context"
 	"encoding/hex"
+	"log"
 	"math/big"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -88,4 +91,37 @@ func (c *ContractCaller) SendCheckpoint(voteSignBytes []byte, sigs []byte, txDat
 	} else {
 		Logger.Info("Submitted new header successfully", "txHash", tx.Hash().String())
 	}
+}
+
+// GetCheckpointSign returns sigs input of committed checkpoint tranasction
+func (c *ContractCaller) GetCheckpointSign(ctx sdk.Context, txHash common.Hash) ([]byte, []byte, []byte) {
+	mainChainClient := GetMainClient()
+	transaction, isPending, err := mainChainClient.TransactionByHash(ctx, txHash)
+
+	if err != nil && !isPending {
+		payload := transaction.Data()
+		abi := c.RootChainABI
+		return UnpackSigAndVotes(payload, abi)
+	} else {
+		Logger.Error("Error while Fetching Transaction By hash from MainChain", "error", err)
+		return []byte{}, []byte{}, []byte{}
+	}
+}
+
+// UnpackSigAndVotes Unpacks Sig and Votes from Tx Payload
+func UnpackSigAndVotes(payload []byte, abi abi.ABI) ([]byte, []byte, []byte) {
+	// recover Method from signature and ABI
+	method := abi.Methods["submitHeaderBlock"]
+	decodedPayload := payload[4:]
+	inputDataMap := make(map[string]interface{})
+	// unpack method inputs
+	err := method.Inputs.UnpackIntoMap(inputDataMap, decodedPayload)
+	if err != nil {
+		log.Fatal(err)
+	}
+	inputSigs := inputDataMap["sigs"].([]byte)
+	txData := inputDataMap["extradata"].([]byte)
+	voteSignBytes := inputDataMap["vote"].([]byte)
+	Logger.Debug("Sigs of committed checkpoint transaction - ", hex.EncodeToString(inputSigs))
+	return voteSignBytes, inputSigs, txData
 }
