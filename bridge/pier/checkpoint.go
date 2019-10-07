@@ -412,6 +412,22 @@ func (c *Checkpointer) fetchCheckpoint(url string) (checkpoint hmtypes.Checkpoin
 	return checkpoint, nil
 }
 
+// fetches initial genesis rewardroothash
+func (c *Checkpointer) fetchInitialRewardRoot() (rewardRootHash hmtypes.HeimdallHash, err error) {
+	response, err := FetchFromAPI(c.cliCtx, GetHeimdallServerEndpoint(InitialRewardRootURL))
+	if err != nil {
+		c.Logger.Error("Error Fetching rewardroothash", "error", err)
+		return rewardRootHash, err
+	}
+
+	if err := json.Unmarshal(response.Result, &rewardRootHash); err != nil {
+		c.Logger.Error("Error unmarshalling rewardroothash", "error", err)
+		return rewardRootHash, err
+	}
+
+	return rewardRootHash, nil
+}
+
 // broadcast checkpoint
 func (c *Checkpointer) sendCheckpointToHeimdall(start uint64, end uint64) error {
 	if end == 0 || start >= end {
@@ -431,7 +447,17 @@ func (c *Checkpointer) sendCheckpointToHeimdall(start uint64, end uint64) error 
 	if err != nil {
 		panic("error while fetching latest checkpoint")
 	}
-	rewardRootHash := latestCheckpoint.RewardRootHash
+
+	rewardRootHash := hmtypes.ZeroHeimdallHash
+	if latestCheckpoint.EndBlock == uint64(0) {
+		if rewardRootHash, err = c.fetchInitialRewardRoot(); err != nil {
+			c.Logger.Info("Error while fetch initial reward root hash", "err", err)
+			return err
+		}
+	} else {
+		rewardRootHash = latestCheckpoint.RewardRootHash
+	}
+
 	c.Logger.Info("Creating and broadcasting new checkpoint",
 		"start", start,
 		"end", end,

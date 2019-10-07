@@ -32,24 +32,31 @@ func (v *GenesisValidator) HeimdallValidator() hmTypes.Validator {
 
 // GenesisState is the checkpoint state that must be provided at genesis.
 type GenesisState struct {
-	Validators    []*hmTypes.Validator `json:"validators" yaml:"validators"`
-	CurrentValSet hmTypes.ValidatorSet `json:"current_val_set" yaml:"current_val_set"`
+	Validators       []*hmTypes.Validator         `json:"validators" yaml:"validators"`
+	CurrentValSet    hmTypes.ValidatorSet         `json:"current_val_set" yaml:"current_val_set"`
+	ValidatorRewards map[types.ValidatorID]uint64 `json:"val_rewards" yaml:"val_rewards"`
 }
 
 // NewGenesisState creates a new genesis state.
 func NewGenesisState(
 	validators []*hmTypes.Validator,
 	currentValSet hmTypes.ValidatorSet,
+	validatorRewards map[types.ValidatorID]uint64,
 ) GenesisState {
 	return GenesisState{
-		Validators:    validators,
-		CurrentValSet: currentValSet,
+		Validators:       validators,
+		CurrentValSet:    currentValSet,
+		ValidatorRewards: validatorRewards,
 	}
 }
 
 // DefaultGenesisState returns a default genesis state
 func DefaultGenesisState(validators []*hmTypes.Validator, currentValSet hmTypes.ValidatorSet) GenesisState {
-	return NewGenesisState(validators, currentValSet)
+	validatorRewards := make(map[types.ValidatorID]uint64)
+	for _, val := range validators {
+		validatorRewards[val.ID] = uint64(0)
+	}
+	return NewGenesisState(validators, currentValSet, validatorRewards)
 }
 
 // InitGenesis sets distribution information for genesis.
@@ -64,11 +71,13 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 
 	// result
 	resultValSet := hmTypes.NewValidatorSet(vals)
+	validatorRewards := make(map[types.ValidatorID]uint64)
 
 	// add validators in store
 	for _, validator := range resultValSet.Validators {
 		// Add individual validator to state
 		keeper.AddValidator(ctx, *validator)
+
 	}
 
 	// TODO match valSet and genesisState.CurrentValSet for difference in accum
@@ -76,6 +85,17 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 	if err := keeper.UpdateValidatorSetInStore(ctx, *resultValSet); err != nil {
 		panic(err)
 	}
+
+	// Add rewards for initial validators
+	for _, validator := range data.Validators {
+		if _, ok := data.ValidatorRewards[validator.ID]; ok {
+			validatorRewards[validator.ID] = data.ValidatorRewards[validator.ID]
+		} else {
+			validatorRewards[validator.ID] = uint64(0)
+		}
+	}
+	keeper.UpdateValidatorRewards(ctx, validatorRewards)
+
 }
 
 // ExportGenesis returns a GenesisState for a given context and keeper.
@@ -84,6 +104,7 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) GenesisState {
 	return NewGenesisState(
 		keeper.GetAllValidators(ctx),
 		keeper.GetValidatorSet(ctx),
+		keeper.GetAllValidatorRewards(ctx),
 	)
 }
 

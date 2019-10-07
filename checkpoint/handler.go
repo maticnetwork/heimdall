@@ -90,6 +90,18 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper, contractC
 	} else if err.Error() == common.ErrNoCheckpointFound(k.Codespace()).Error() && msg.StartBlock != 0 {
 		k.Logger(ctx).Error("First checkpoint to start from block 1", "Error", err)
 		return common.ErrBadBlockDetails(k.Codespace()).Result()
+	} else if err.Error() == common.ErrNoCheckpointFound(k.Codespace()).Error() && msg.StartBlock == 0 {
+		// Check if genesis RewardRootHash matches
+		genesisValidatorRewards := k.sk.GetAllValidatorRewards(ctx)
+		genesisrewardRootHash, err := GetRewardRootHash(genesisValidatorRewards)
+		if err != nil {
+			k.Logger(ctx).Error("Error calculating genesis rewardroothash", err)
+		}
+		if types.BytesToHeimdallHash(genesisrewardRootHash) != msg.RewardRootHash {
+			k.Logger(ctx).Error("Genesis RewardRootHash", genesisrewardRootHash,
+				"doesn't match with Genesis RewardRootHash of msg", msg.RewardRootHash)
+			return common.ErrBadBlockDetails(k.Codespace()).Result()
+		}
 	}
 	k.Logger(ctx).Debug("Valid checkpoint tip")
 	k.Logger(ctx).Debug("RewardRootHash matches")
@@ -196,7 +208,7 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k Keeper, con
 	voteBytes, sigInput, _ := contractCaller.GetCheckpointSign(ctx, ethCmn.Hash(txHash))
 	signerRewards, err := k.sk.CalculateSignerRewards(ctx, voteBytes, sigInput)
 	if err != nil {
-		// TODO update store with new rewards
+		// update store with new rewards
 		k.sk.UpdateValidatorRewards(ctx, signerRewards)
 		k.Logger(ctx).Info("Signer Rewards updated to store", signerRewards)
 	}
