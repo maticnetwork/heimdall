@@ -265,12 +265,32 @@ func initialRewardRootHandlerFn(
 	cliCtx context.CLIContext,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
+		RestLogger.Info("Calculating Initial Reward RootHash")
 		res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", checkpointTypes.QuerierRoute, checkpoint.QueryInitialRewardRoot), nil)
+		RestLogger.Debug("RESPONSE initial rewardRootHash ", "res", res)
+
 		if err != nil {
+			RestLogger.Error("Error while calculating Initial Rewardroot ", "Error", err.Error())
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		rest.PostProcessResponse(w, cliCtx, res)
+
+		if len(res) == 0 {
+			RestLogger.Error("RewardRootHash not found ", "Error", err.Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, errors.New("RewardRootHash not found").Error())
+			return
+		}
+
+		var rewardRootHash = hmTypes.BytesToHeimdallHash(res)
+		RestLogger.Debug("Fetched initial rewardRootHash ", "rewardRootHash", rewardRootHash)
+
+		result, err := json.Marshal(&rewardRootHash)
+		if err != nil {
+			RestLogger.Error("Error while marshalling response to Json", "error", err)
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		rest.PostProcessResponse(w, cliCtx, result)
 	}
 }

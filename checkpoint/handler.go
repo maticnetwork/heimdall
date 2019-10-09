@@ -205,13 +205,23 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k Keeper, con
 	txHash := msg.TxHash
 
 	// Fetch all the signatures from tx input data and calculate signer rewards
-	voteBytes, sigInput, _ := contractCaller.GetCheckpointSign(ctx, ethCmn.Hash(txHash))
+	voteBytes, sigInput, _, err := contractCaller.GetCheckpointSign(ctx, ethCmn.Hash(txHash))
+	if err != nil {
+		k.Logger(ctx).Error("Error while fetching signers from transaction", "error", err)
+		return common.ErrBadAck(k.Codespace()).Result()
+	}
+
+	// Calculate Signer Rewards
 	signerRewards, err := k.sk.CalculateSignerRewards(ctx, voteBytes, sigInput)
 	if err != nil {
-		// update store with new rewards
-		k.sk.UpdateValidatorRewards(ctx, signerRewards)
-		k.Logger(ctx).Info("Signer Rewards updated to store", signerRewards)
+		k.Logger(ctx).Error("Error while calculating Signer Rewards", "error", err)
+		return common.ErrBadAck(k.Codespace()).Result()
 	}
+
+	// update store with new rewards
+	k.sk.UpdateValidatorRewards(ctx, signerRewards)
+	k.Logger(ctx).Info("Signer Rewards updated to store", signerRewards)
+
 	// Calculate new reward root hash
 	valRewardMap := k.sk.GetAllValidatorRewards(ctx)
 	k.Logger(ctx).Debug("rewards of all validators", "RewardMap", valRewardMap)

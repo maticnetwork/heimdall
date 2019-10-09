@@ -414,17 +414,17 @@ func (c *Checkpointer) fetchCheckpoint(url string) (checkpoint hmtypes.Checkpoin
 
 // fetches initial genesis rewardroothash
 func (c *Checkpointer) fetchInitialRewardRoot() (rewardRootHash hmtypes.HeimdallHash, err error) {
+	c.Logger.Info("Sending Rest call to Get Initial RewardRootHash")
 	response, err := FetchFromAPI(c.cliCtx, GetHeimdallServerEndpoint(InitialRewardRootURL))
 	if err != nil {
-		c.Logger.Error("Error Fetching rewardroothash", "error", err)
+		c.Logger.Error("Error Fetching rewardroothash from HeimdallServer ", "error", err)
 		return rewardRootHash, err
 	}
 
 	if err := json.Unmarshal(response.Result, &rewardRootHash); err != nil {
-		c.Logger.Error("Error unmarshalling rewardroothash", "error", err)
+		c.Logger.Error("Error unmarshalling rewardroothash received from Heimdall Server", "error", err)
 		return rewardRootHash, err
 	}
-
 	return rewardRootHash, nil
 }
 
@@ -441,20 +441,21 @@ func (c *Checkpointer) sendCheckpointToHeimdall(start uint64, end uint64) error 
 		return err
 	}
 
-	// Get Latest Reward Root Hash through rest call
-	c.Logger.Info("Fetching last committed checkpoint")
-	latestCheckpoint, err := c.fetchCheckpoint(GetHeimdallServerEndpoint(LatestCheckpointURL))
-	if err != nil {
-		panic("error while fetching latest checkpoint")
-	}
-
 	rewardRootHash := hmtypes.ZeroHeimdallHash
-	if latestCheckpoint.EndBlock == uint64(0) {
+	c.Logger.Info("Check if it is firstcheckpoint, if so Get InitialRewardRoot from HeimdallServer")
+	if start == uint64(0) {
 		if rewardRootHash, err = c.fetchInitialRewardRoot(); err != nil {
-			c.Logger.Info("Error while fetch initial reward root hash", "err", err)
+			c.Logger.Info("Error while fetching initial reward root hash from HeimdallServer", "err", err)
 			return err
 		}
 	} else {
+		// Get Latest Reward Root Hash through rest call
+		c.Logger.Info("Sending Request to HeimdallServer to fetch latest committed Checkpoint")
+		latestCheckpoint, err := c.fetchCheckpoint(GetHeimdallServerEndpoint(LatestCheckpointURL))
+		if err != nil {
+			c.Logger.Info("Error while fetching Latest Checkpoint from heimdallserver", "err", err)
+			return err
+		}
 		rewardRootHash = latestCheckpoint.RewardRootHash
 	}
 

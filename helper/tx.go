@@ -3,7 +3,7 @@ package helper
 import (
 	"context"
 	"encoding/hex"
-	"log"
+	"errors"
 	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -94,22 +94,23 @@ func (c *ContractCaller) SendCheckpoint(voteSignBytes []byte, sigs []byte, txDat
 }
 
 // GetCheckpointSign returns sigs input of committed checkpoint tranasction
-func (c *ContractCaller) GetCheckpointSign(ctx sdk.Context, txHash common.Hash) ([]byte, []byte, []byte) {
+func (c *ContractCaller) GetCheckpointSign(ctx sdk.Context, txHash common.Hash) ([]byte, []byte, []byte, error) {
 	mainChainClient := GetMainClient()
 	transaction, isPending, err := mainChainClient.TransactionByHash(ctx, txHash)
-
-	if err != nil && !isPending {
-		payload := transaction.Data()
-		abi := c.RootChainABI
-		return UnpackSigAndVotes(payload, abi)
-	} else {
+	if err != nil {
 		Logger.Error("Error while Fetching Transaction By hash from MainChain", "error", err)
-		return []byte{}, []byte{}, []byte{}
+		return []byte{}, []byte{}, []byte{}, err
+	} else if isPending {
+		return []byte{}, []byte{}, []byte{}, errors.New("Transaction is still pending")
 	}
+
+	payload := transaction.Data()
+	abi := c.RootChainABI
+	return UnpackSigAndVotes(payload, abi)
 }
 
 // UnpackSigAndVotes Unpacks Sig and Votes from Tx Payload
-func UnpackSigAndVotes(payload []byte, abi abi.ABI) ([]byte, []byte, []byte) {
+func UnpackSigAndVotes(payload []byte, abi abi.ABI) ([]byte, []byte, []byte, error) {
 	// recover Method from signature and ABI
 	method := abi.Methods["submitHeaderBlock"]
 	decodedPayload := payload[4:]
@@ -117,11 +118,11 @@ func UnpackSigAndVotes(payload []byte, abi abi.ABI) ([]byte, []byte, []byte) {
 	// unpack method inputs
 	err := method.Inputs.UnpackIntoMap(inputDataMap, decodedPayload)
 	if err != nil {
-		log.Fatal(err)
+		return []byte{}, []byte{}, []byte{}, err
 	}
 	inputSigs := inputDataMap["sigs"].([]byte)
 	txData := inputDataMap["extradata"].([]byte)
 	voteSignBytes := inputDataMap["vote"].([]byte)
 	Logger.Debug("Sigs of committed checkpoint transaction - ", hex.EncodeToString(inputSigs))
-	return voteSignBytes, inputSigs, txData
+	return voteSignBytes, inputSigs, txData, nil
 }

@@ -28,7 +28,7 @@ type IContractCaller interface {
 	CurrentHeaderBlock() (uint64, error)
 	GetBalance(address common.Address) (*big.Int, error)
 	SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte)
-	GetCheckpointSign(ctx sdk.Context, txHash common.Hash) ([]byte, []byte, []byte)
+	GetCheckpointSign(ctx sdk.Context, txHash common.Hash) ([]byte, []byte, []byte, error)
 	GetMainChainBlock(*big.Int) (*ethTypes.Header, error)
 	GetMaticChainBlock(*big.Int) (*ethTypes.Header, error)
 	IsTxConfirmed(common.Hash) bool
