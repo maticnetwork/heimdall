@@ -60,7 +60,7 @@ func NewKeeper(
 	keeper := Keeper{
 		cdc:          cdc,
 		storeKey:     storeKey,
-		paramSpace:   paramSpace,
+		paramSpace:   paramSpace.WithKeyTable(ParamKeyTable()),
 		codespace:    codespace,
 		ackRetriever: ackRetriever,
 	}
@@ -407,11 +407,11 @@ func (k *Keeper) CalculateSignerRewards(ctx sdk.Context, voteBytes []byte, sigIn
 			signerAddress := pubKey.Address().Bytes()
 			valInfo, err := k.GetValidatorInfo(ctx, signerAddress)
 			if err == nil {
-				// TODO - Reward should be calculated by fetching params on mainchain
-				signerRewards[valInfo.ID] = uint64(20)
+				signerRewards[valInfo.ID] = k.GetRewardAmount(ctx)
 				k.Logger(ctx).Debug("Reward for Address",
 					"SignerAddress", signerAddress,
 					"ValidatorId", valInfo.ID,
+					"Reward", signerRewards[valInfo.ID],
 				)
 			} else {
 				k.Logger(ctx).Debug("No Validator Found for",
@@ -435,4 +435,16 @@ func (k *Keeper) UpdateValidatorRewards(ctx sdk.Context, valrewards map[types.Va
 	for valID, reward := range valrewards {
 		k.SetValidatorIdToReward(ctx, valID, reward)
 	}
+}
+
+// GetRewardAmount returns the reward Amount
+func (k *Keeper) GetRewardAmount(ctx sdk.Context) uint64 {
+	var rewardAmount uint64
+	k.paramSpace.Get(ctx, ParamStoreKeyRewardAmount, &rewardAmount)
+	return rewardAmount
+}
+
+// SetRewardAmount sets the reward Amount
+func (k *Keeper) SetRewardAmount(ctx sdk.Context, rewardAmount uint64) {
+	k.paramSpace.Set(ctx, ParamStoreKeyRewardAmount, rewardAmount)
 }

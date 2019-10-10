@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"math/big"
+	"sort"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -88,29 +89,41 @@ func GetHeaders(start uint64, end uint64) ([]byte, error) {
 
 // GetRewardRootHash returns roothash of Validator Reward State Tree
 func GetRewardRootHash(valRewardMap map[hmTypes.ValidatorID]uint64) ([]byte, error) {
-	// TODO Sort the map by key
+	// Sort the map by key
+	keys := make([]uint64, 0)
+	for k := range valRewardMap {
+		keys = append(keys, uint64(k))
+	}
+	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
 	expectedLength := len(valRewardMap)
-	headers := make([][32]byte, expectedLength)
+	valrewardHashes := make([][32]byte, expectedLength)
 	i := 0
-	for k, v := range valRewardMap {
-		header := crypto.Keccak256(appendBytes32(
-			new(big.Int).SetUint64(uint64(k)).Bytes(),
-			new(big.Int).SetUint64(v).Bytes(),
+	for _, key := range keys {
+		valrewardHash := crypto.Keccak256(appendBytes32(
+			new(big.Int).SetUint64(uint64(key)).Bytes(),
+			new(big.Int).SetUint64(valRewardMap[hmTypes.ValidatorID(key)]).Bytes(),
 		))
 		var arr [32]byte
-		copy(arr[:], header)
+		copy(arr[:], valrewardHash)
 
-		// set header
-		headers[i] = arr
+		valrewardHashes[i] = arr
 		i++
 	}
-	
+
 	tree := merkle.NewTreeWithOpts(merkle.TreeOptions{EnableHashSorting: false, DisableHashLeaves: true})
-	if err := tree.Generate(convert(headers), sha3.NewLegacyKeccak256()); err != nil {
+	if err := tree.Generate(convert(valrewardHashes), sha3.NewLegacyKeccak256()); err != nil {
 		return nil, err
 	}
-
 	return tree.Root().Hash, nil
+}
+
+// GetRewardLeafHash returns RewardLeafHash of val reward
+func GetRewardLeafHash(valID uint64, reward uint64) []byte {
+	return crypto.Keccak256(appendBytes32(
+		new(big.Int).SetUint64(valID).Bytes(),
+		new(big.Int).SetUint64(reward).Bytes(),
+	))
 }
 
 func convert(input []([32]byte)) [][]byte {
