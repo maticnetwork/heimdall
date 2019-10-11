@@ -265,9 +265,8 @@ func initialRewardRootHandlerFn(
 	cliCtx context.CLIContext,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		RestLogger.Info("Calculating Initial Reward RootHash")
 		res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", checkpointTypes.QuerierRoute, checkpoint.QueryInitialRewardRoot), nil)
-		RestLogger.Debug("RESPONSE initial rewardRootHash ", "res", res)
+		RestLogger.Debug("initial rewardRootHash querier response", "res", res)
 
 		if err != nil {
 			RestLogger.Error("Error while calculating Initial Rewardroot ", "Error", err.Error())

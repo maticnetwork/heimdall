@@ -99,7 +99,7 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 	}
 	keeper.UpdateValidatorRewards(ctx, validatorRewards)
 
-	// Reward amount will be the reward issued for checkpoint signature
+	// Reward amount - reward issued for checkpoint signature
 	keeper.SetRewardAmount(ctx, data.RewardAmount)
 
 }

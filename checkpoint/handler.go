@@ -187,7 +187,6 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k Keeper, con
 	}
 
 	// match header block and checkpoint
-	// TODO: check reward root hash
 	if start != headerBlock.StartBlock || end != headerBlock.EndBlock || !bytes.Equal(root.Bytes(), headerBlock.RootHash.Bytes()) {
 		k.Logger(ctx).Error("Invalid ACK",
 			"startExpected", headerBlock.StartBlock,

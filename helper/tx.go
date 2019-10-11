@@ -123,6 +123,5 @@ func UnpackSigAndVotes(payload []byte, abi abi.ABI) ([]byte, []byte, []byte, err
 	inputSigs := inputDataMap["sigs"].([]byte)
 	txData := inputDataMap["extradata"].([]byte)
 	voteSignBytes := inputDataMap["vote"].([]byte)
-	Logger.Debug("Sigs of committed checkpoint transaction - ", hex.EncodeToString(inputSigs))
 	return voteSignBytes, inputSigs, txData, nil
 }

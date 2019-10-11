@@ -258,10 +258,10 @@ func (c *Checkpointer) sendRequest(newHeader *types.Header) {
 		expectedCheckpointState.currentHeaderBlock.start == bufferedCheckpoint.start {
 
 		// expected checkpoint state
-		c.Logger.Debug("Sending ACK",
-			"bufferedCheckpointEnd", bufferedCheckpoint.end,
-			"contractStart", bufferedCheckpoint.start,
-		)
+		// c.Logger.Debug("Sending ACK",
+		// 	"bufferedCheckpointEnd", bufferedCheckpoint.end,
+		// 	"contractStart", bufferedCheckpoint.start,
+		// )
 
 		// // calculate header index
 		// headerNumber := expectedCheckpointState.currentHeaderBlock.Sub(
@@ -442,7 +442,7 @@ func (c *Checkpointer) sendCheckpointToHeimdall(start uint64, end uint64) error 
 	}
 
 	rewardRootHash := hmtypes.ZeroHeimdallHash
-	c.Logger.Info("Check if it is firstcheckpoint, if so Get InitialRewardRoot from HeimdallServer")
+	// Check if it is firstcheckpoint, if so Get InitialRewardRoot from HeimdallServer
 	if start == uint64(0) {
 		if rewardRootHash, err = c.fetchInitialRewardRoot(); err != nil {
 			c.Logger.Info("Error while fetching initial reward root hash from HeimdallServer", "err", err)
@@ -450,7 +450,6 @@ func (c *Checkpointer) sendCheckpointToHeimdall(start uint64, end uint64) error 
 		}
 	} else {
 		// Get Latest Reward Root Hash through rest call
-		c.Logger.Info("Sending Request to HeimdallServer to fetch latest committed Checkpoint")
 		latestCheckpoint, err := c.fetchCheckpoint(GetHeimdallServerEndpoint(LatestCheckpointURL))
 		if err != nil {
 			c.Logger.Info("Error while fetching Latest Checkpoint from heimdallserver", "err", err)
