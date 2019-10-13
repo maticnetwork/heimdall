@@ -4,8 +4,8 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"github.com/prysmaticlabs/prysm/shared/bytesutil"
-	"github.com/prysmaticlabs/prysm/shared/hashutil"
+	"github.com/maticnetwork/heimdall/bytesutil"
+	"github.com/maticnetwork/heimdall/hashutil"
 )
 
 const seedSize = int8(32)
