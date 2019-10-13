@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/maticnetwork/heimdall/hashutil"
+	"github.com/maticnetwork/heimdall/common/hashutil"
 )
 
 func TestMerkleRoot(t *testing.T) {

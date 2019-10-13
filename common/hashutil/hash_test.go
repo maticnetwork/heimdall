@@ -4,8 +4,8 @@ import (
 	"encoding/hex"
 	"testing"
 
-	"github.com/maticnetwork/heimdall/bytesutil"
-	"github.com/maticnetwork/heimdall/hashutil"
+	"github.com/maticnetwork/heimdall/common/bytesutil"
+	"github.com/maticnetwork/heimdall/common/hashutil"
 )
 
 func TestHash(t *testing.T) {

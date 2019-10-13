@@ -13,8 +13,8 @@ import (
 	"github.com/karlseguin/ccache"
 	"github.com/pkg/errors"
 
-	"github.com/maticnetwork/heimdall/bytesutil"
-	"github.com/maticnetwork/heimdall/hashutil"
+	"github.com/maticnetwork/heimdall/common/bytesutil"
+	"github.com/maticnetwork/heimdall/common/hashutil"
 
 	bls12 "github.com/kilic/bls12-381"
 )

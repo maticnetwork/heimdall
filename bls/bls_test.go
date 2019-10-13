@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/maticnetwork/heimdall/bls"
-	"github.com/maticnetwork/heimdall/bytesutil"
+	"github.com/maticnetwork/heimdall/common/bytesutil"
 )
 
 func TestMarshalUnmarshal(t *testing.T) {

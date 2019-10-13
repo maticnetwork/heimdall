@@ -5,7 +5,7 @@ import (
 	"reflect"
 
 	"github.com/gogo/protobuf/proto"
-	"github.com/maticnetwork/heimdall/bytesutil"
+	"github.com/maticnetwork/heimdall/common/bytesutil"
 	"github.com/minio/highwayhash"
 	"github.com/minio/sha256-simd"
 	"golang.org/x/crypto/sha3"
