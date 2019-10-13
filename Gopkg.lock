@@ -276,6 +276,22 @@
   version = "v1.0.0"
 
 [[projects]]
+  digest = "1:9642c35dd8d4b8981d58327a917f178898baf9b331373748dd50439aec5c2628"
+  name = "github.com/karlseguin/ccache"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "ec06cd93a07565b373789b0078ba88fe697fddd9"
+  version = "v2.0.3"
+
+[[projects]]
+  branch = "master"
+  digest = "1:1fbf3477f18d801f6039c259df30f5c5ef6d28385c40f2f72e9f2735b2409326"
+  name = "github.com/kilic/bls12-381"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "a4b75c8c0d8774fb15aa59bde80f019c6f23bc5e"
+
+[[projects]]
   branch = "master"
   digest = "1:a64e323dc06b73892e5bb5d040ced475c4645d456038333883f58934abbf6f72"
   name = "github.com/kr/logfmt"
@@ -306,6 +322,22 @@
   pruneopts = "UT"
   revision = "c12348ce28de40eed0136aa2b644d0ee0650e56c"
   version = "v1.0.1"
+
+[[projects]]
+  digest = "1:9027cf919c7a9a0577048c325829ad57c2f8b35b8be2dcf290a163b5a6be5a7f"
+  name = "github.com/minio/highwayhash"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "02ca4b43caa3297fbb615700d8800acc7933be98"
+  version = "v1.0.0"
+
+[[projects]]
+  digest = "1:0d8b29788bd5eef02a1d7cff49bc557d66dccbfe5c386b6422d8a4e4752a5e14"
+  name = "github.com/minio/sha256-simd"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "6de4475307716de15b286880ff321c9547086fdd"
+  version = "v0.1.1"
 
 [[projects]]
   digest = "1:53bc4cd4914cd7cd52139990d5170d6dc99067ae31c56530621b18b35fc30318"
@@ -381,19 +413,6 @@
   pruneopts = "UT"
   revision = "3f98efb27840a48a7a2898ec80be07674d19f9c8"
   version = "v0.0.3"
-
-[[projects]]
-  digest = "1:fc2d0757b4085488b4e5cc44770bdbe5560d5095df20a380a5e94b3868677593"
-  name = "github.com/prysmaticlabs/prysm"
-  packages = [
-    "proto/beacon/p2p/v1",
-    "proto/common",
-    "shared/bytesutil",
-    "shared/hashutil",
-  ]
-  pruneopts = "UT"
-  revision = "1be950f90cade953b8fb880e91c989187348b5f8"
-  version = "0.1.2"
 
 [[projects]]
   digest = "1:77b730fa4c2d98f3ddf492acbea351eb6b0560fa5eace4105a6fc33ff937bb1b"
@@ -790,10 +809,13 @@
     "github.com/cosmos/cosmos-sdk/x/params",
     "github.com/cosmos/cosmos-sdk/x/params/subspace",
     "github.com/go-kit/kit/log",
+    "github.com/gogo/protobuf/proto",
     "github.com/gorilla/mux",
+    "github.com/karlseguin/ccache",
+    "github.com/kilic/bls12-381",
+    "github.com/minio/highwayhash",
+    "github.com/minio/sha256-simd",
     "github.com/pkg/errors",
-    "github.com/prysmaticlabs/prysm/shared/bytesutil",
-    "github.com/prysmaticlabs/prysm/shared/hashutil",
     "github.com/spf13/cobra",
     "github.com/spf13/viper",
     "github.com/streadway/amqp",
