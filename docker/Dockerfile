@@ -20,8 +20,11 @@ WORKDIR /go/src/github.com/maticnetwork/heimdall
 # run dep
 RUN make dep
 
+# GOBIN required for go install
+ENV GOBIN $GOPATH/bin
+
 # run build
-RUN make build
+RUN make install
 
 # add volumes
 VOLUME ["/root/.heimdalld", "./logs", "./build"]
