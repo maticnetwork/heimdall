@@ -84,15 +84,18 @@ func SendCheckpointTx(cdc *codec.Codec) *cobra.Command {
 				return fmt.Errorf("root hash cannot be empty")
 			}
 
-			checkpointTxHashStr := viper.GetString(FlagCheckpointTxHash)
-			checkpointTxHash := types.BytesToHeimdallHash([]byte(checkpointTxHashStr))
+			// Reward Root Hash
+			rewardRootHashStr := viper.GetString(FlagRewardRootHash)
+			if rewardRootHashStr == "" {
+				return fmt.Errorf("reward root hash cannot be empty")
+			}
 
 			msg := checkpoint.NewMsgCheckpointBlock(
 				proposer,
 				startBlock,
 				endBlock,
 				types.HexToHeimdallHash(rootHashStr),
-				checkpointTxHash,
+				types.HexToHeimdallHash(rewardRootHashStr),
 				uint64(time.Now().Unix()),
 			)
 
@@ -103,9 +106,11 @@ func SendCheckpointTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(FlagStartBlock, "", "--start-block=<start-block-number>")
 	cmd.Flags().String(FlagEndBlock, "", "--end-block=<end-block-number>")
 	cmd.Flags().StringP(FlagRootHash, "r", "", "--root-hash=<root-hash>")
+	cmd.Flags().String(FlagRewardRootHash, "", "--reward-root=<reward-root>")
 	cmd.MarkFlagRequired(FlagStartBlock)
 	cmd.MarkFlagRequired(FlagEndBlock)
 	cmd.MarkFlagRequired(FlagRootHash)
+	cmd.MarkFlagRequired(FlagRewardRootHash)
 
 	return cmd
 }
@@ -135,6 +140,9 @@ func SendCheckpointACKTx(cdc *codec.Codec) *cobra.Command {
 			}
 
 			checkpointTxHashStr := viper.GetString(FlagCheckpointTxHash)
+			if checkpointTxHashStr == "" {
+				return fmt.Errorf("checkpoint tx hash cannot be empty")
+			}
 			checkpointTxHash := types.BytesToHeimdallHash([]byte(checkpointTxHashStr))
 
 			// new checkpoint
@@ -150,6 +158,7 @@ func SendCheckpointACKTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().StringP(FlagCheckpointTxHash, "tx", "", "--txhash=<checkpoint-txhash>")
 
 	cmd.MarkFlagRequired(FlagHeaderNumber)
+	cmd.MarkFlagRequired(FlagCheckpointTxHash)
 	return cmd
 }
 

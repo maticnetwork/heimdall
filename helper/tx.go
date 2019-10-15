@@ -110,18 +110,18 @@ func (c *ContractCaller) GetCheckpointSign(ctx sdk.Context, txHash common.Hash) 
 }
 
 // UnpackSigAndVotes Unpacks Sig and Votes from Tx Payload
-func UnpackSigAndVotes(payload []byte, abi abi.ABI) ([]byte, []byte, []byte, error) {
+func UnpackSigAndVotes(payload []byte, abi abi.ABI) (votes []byte, sigs []byte, checkpointData []byte, err error) {
 	// recover Method from signature and ABI
 	method := abi.Methods["submitHeaderBlock"]
 	decodedPayload := payload[4:]
 	inputDataMap := make(map[string]interface{})
 	// unpack method inputs
-	err := method.Inputs.UnpackIntoMap(inputDataMap, decodedPayload)
+	err = method.Inputs.UnpackIntoMap(inputDataMap, decodedPayload)
 	if err != nil {
-		return []byte{}, []byte{}, []byte{}, err
+		return
 	}
-	inputSigs := inputDataMap["sigs"].([]byte)
-	txData := inputDataMap["extradata"].([]byte)
-	voteSignBytes := inputDataMap["vote"].([]byte)
-	return voteSignBytes, inputSigs, txData, nil
+	sigs = inputDataMap["sigs"].([]byte)
+	checkpointData = inputDataMap["extradata"].([]byte)
+	votes = inputDataMap["vote"].([]byte)
+	return
 }

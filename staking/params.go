@@ -5,16 +5,23 @@ import (
 )
 
 const (
-	// DefaultRewardAmount - Reward Amount Given to the Checkpoint Signer
-	DefaultRewardAmount = uint64(10)
+	// DefaultCheckpointReward - Total Checkpoint reward
+	DefaultCheckpointReward = uint64(10000)
+
+	// DefaultProposerToSignerRewards - Proposer Signer Reward Ratio
+	DefaultProposerToSignerRewards = uint64(10)
 )
 
-// ParamStoreKeyRewardAmount - Store's Key for Reward amount
-var ParamStoreKeyRewardAmount = []byte("rewardamount")
+// ParamStoreKeyCheckpointReward - Store's Key for Reward amount
+var ParamStoreKeyCheckpointReward = []byte("checkpointreward")
+
+// ParamStoreKeyProposerToSignerRewards - Store's Key for Reward amount
+var ParamStoreKeyProposerToSignerRewards = []byte("proposertosignerrewards")
 
 // ParamKeyTable type declaration for parameters
 func ParamKeyTable() params.KeyTable {
 	return params.NewKeyTable(
-		ParamStoreKeyRewardAmount, DefaultRewardAmount,
+		ParamStoreKeyCheckpointReward, DefaultCheckpointReward,
+		ParamStoreKeyProposerToSignerRewards, DefaultProposerToSignerRewards,
 	)
 }

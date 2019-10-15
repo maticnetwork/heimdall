@@ -305,7 +305,7 @@ func (k *Keeper) SetValidatorIDToSignerAddr(ctx sdk.Context, valID types.Validat
 	store.Set(GetValidatorMapKey(valID.Bytes()), signerAddr.Bytes())
 }
 
-// GetSignerFromValidator get signer address from validator ID
+// GetSignerFromValidatorID get signer address from validator ID
 func (k *Keeper) GetSignerFromValidatorID(ctx sdk.Context, valID types.ValidatorID) (common.Address, bool) {
 	store := ctx.KVStore(k.storeKey)
 	key := GetValidatorMapKey(valID.Bytes())
@@ -317,7 +317,7 @@ func (k *Keeper) GetSignerFromValidatorID(ctx sdk.Context, valID types.Validator
 	return common.BytesToAddress(store.Get(key)), true
 }
 
-// GetValidatorFromValAddr returns signer from validator ID
+// GetValidatorFromValID returns signer from validator ID
 func (k *Keeper) GetValidatorFromValID(ctx sdk.Context, valID types.ValidatorID) (validator types.Validator, ok bool) {
 	signerAddr, ok := k.GetSignerFromValidatorID(ctx, valID)
 	if !ok {
@@ -341,6 +341,7 @@ func (k *Keeper) GetLastUpdated(ctx sdk.Context, valID types.ValidatorID) (updat
 	return validator.LastUpdated, true
 }
 
+// SetValidatorIdToReward will update valid with new reward
 func (k *Keeper) SetValidatorIdToReward(ctx sdk.Context, valID types.ValidatorID, reward uint64) {
 	// Add reward to reward balance
 	store := ctx.KVStore(k.storeKey)
@@ -397,36 +398,48 @@ func (k *Keeper) GetAllValidatorRewards(ctx sdk.Context) map[types.ValidatorID]u
 // CalculateSignerRewards calculates new rewards for signers
 func (k *Keeper) CalculateSignerRewards(ctx sdk.Context, voteBytes []byte, sigInput []byte) (map[types.ValidatorID]uint64, error) {
 	signerRewards := make(map[types.ValidatorID]uint64)
-	sigLength := 65
-	// Calculate reward for signers and update signerRewards map
+	signerPower := make(map[types.ValidatorID]uint64)
+
+	const sigLength = 65
+	totalSignerPower := uint64(0)
+
+	// Calculate total stake Power of all Signers.
 	for i := 0; i < len(sigInput); i += sigLength {
 		signature := sigInput[i : i+sigLength]
 		pKey, err := authTypes.RecoverPubkey(voteBytes, []byte(signature))
-		if err == nil {
-			pubKey := types.NewPubKey(pKey)
-			signerAddress := pubKey.Address().Bytes()
-			valInfo, err := k.GetValidatorInfo(ctx, signerAddress)
-			if err == nil {
-				signerRewards[valInfo.ID] = k.GetRewardAmount(ctx)
-				k.Logger(ctx).Debug("Reward for Address",
-					"SignerAddress", signerAddress,
-					"ValidatorId", valInfo.ID,
-					"Reward", signerRewards[valInfo.ID],
-				)
-			} else {
-				k.Logger(ctx).Debug("No Validator Found for",
-					"SignerAddress", signerAddress,
-				)
-				return nil, err
-			}
-		} else {
-			k.Logger(ctx).Debug("Error Recovering PubKek",
-				"Signature", signature,
-				"Message", voteBytes,
-			)
+		if err != nil {
+			k.Logger(ctx).Error("Error Recovering PubKey", "Error", err)
 			return nil, err
 		}
+
+		pubKey := types.NewPubKey(pKey)
+		signerAddress := pubKey.Address().Bytes()
+		valInfo, err := k.GetValidatorInfo(ctx, signerAddress)
+
+		if err != nil {
+			k.Logger(ctx).Error("No Validator Found for", "SignerAddress", signerAddress, "Error", err)
+			return nil, err
+		}
+		totalSignerPower += uint64(valInfo.VotingPower)
+		signerPower[valInfo.ID] = uint64(valInfo.VotingPower)
 	}
+
+	currentCheckpointReward := k.GetCurrentCheckpointReward(ctx, totalSignerPower)
+	totalSignerReward := k.GetTotalSignerReward(ctx, currentCheckpointReward)
+
+	// Weighted Distribution of totalSignerReward for signers
+	for valID, pow := range signerPower {
+		signerReward := totalSignerReward * (pow / totalSignerPower)
+		signerRewards[valID] = signerReward
+		k.Logger(ctx).Debug("Updated Reward for Validator", "ValidatorId", valID, "Reward", signerRewards[valID])
+	}
+
+	// Proposer Bonus Reward
+	proposer := k.GetCurrentProposer(ctx)
+	proposerReward := k.GetProposerReward(ctx, currentCheckpointReward)
+	signerRewards[proposer.ID] += proposerReward
+	k.Logger(ctx).Debug("Updated Reward for Validator with proposer bonus", "ValidatorId", proposer.ID, "Reward", signerRewards[proposer.ID])
+
 	return signerRewards, nil
 }
 
@@ -437,14 +450,46 @@ func (k *Keeper) UpdateValidatorRewards(ctx sdk.Context, valrewards map[types.Va
 	}
 }
 
-// GetRewardAmount returns the reward Amount
-func (k *Keeper) GetRewardAmount(ctx sdk.Context) uint64 {
-	var rewardAmount uint64
-	k.paramSpace.Get(ctx, ParamStoreKeyRewardAmount, &rewardAmount)
-	return rewardAmount
+// GetTotalSignerReward returns total reward of all signer
+func (k *Keeper) GetTotalSignerReward(ctx sdk.Context, currentCheckpointReward uint64) uint64 {
+	proposerToSignerReward := k.GetProposerToSignerRewards(ctx)
+	return currentCheckpointReward * ((100 - proposerToSignerReward) / 100)
 }
 
-// SetRewardAmount sets the reward Amount
-func (k *Keeper) SetRewardAmount(ctx sdk.Context, rewardAmount uint64) {
-	k.paramSpace.Set(ctx, ParamStoreKeyRewardAmount, rewardAmount)
+// GetProposerReward returns the proposer reward
+func (k *Keeper) GetProposerReward(ctx sdk.Context, currentCheckpointReward uint64) uint64 {
+	proposerToSignerReward := k.GetProposerToSignerRewards(ctx)
+	return currentCheckpointReward * (proposerToSignerReward / 100)
+}
+
+// GetCurrentCheckpointReward returns the reward to be distributed for current checkpoint
+func (k *Keeper) GetCurrentCheckpointReward(ctx sdk.Context, totalSignerPower uint64) uint64 {
+	checkpointReward := k.GetCheckpointReward(ctx)
+	currValSet := k.GetValidatorSet(ctx)
+	totalPower := currValSet.TotalVotingPower()
+	return checkpointReward * (totalSignerPower / uint64(totalPower))
+}
+
+// GetCheckpointReward returns the reward Amount
+func (k *Keeper) GetCheckpointReward(ctx sdk.Context) uint64 {
+	var checkpointReward uint64
+	k.paramSpace.Get(ctx, ParamStoreKeyCheckpointReward, &checkpointReward)
+	return checkpointReward
+}
+
+// SetCheckpointReward sets the checkpoint reward Amount
+func (k *Keeper) SetCheckpointReward(ctx sdk.Context, checkpointReward uint64) {
+	k.paramSpace.Set(ctx, ParamStoreKeyCheckpointReward, checkpointReward)
+}
+
+// GetProposerToSignerRewards returns the proposer to signer reward
+func (k *Keeper) GetProposerToSignerRewards(ctx sdk.Context) uint64 {
+	var proposerToSignerReward uint64
+	k.paramSpace.Get(ctx, ParamStoreKeyProposerToSignerRewards, &proposerToSignerReward)
+	return proposerToSignerReward
+}
+
+// SetProposerToSignerRewards sets the Proposer to signer reward
+func (k *Keeper) SetProposerToSignerRewards(ctx sdk.Context, proposerToSignerReward uint64) {
+	k.paramSpace.Set(ctx, ParamStoreKeyProposerToSignerRewards, proposerToSignerReward)
 }

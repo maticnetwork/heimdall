@@ -32,10 +32,11 @@ func (v *GenesisValidator) HeimdallValidator() hmTypes.Validator {
 
 // GenesisState is the checkpoint state that must be provided at genesis.
 type GenesisState struct {
-	Validators       []*hmTypes.Validator         `json:"validators" yaml:"validators"`
-	CurrentValSet    hmTypes.ValidatorSet         `json:"current_val_set" yaml:"current_val_set"`
-	ValidatorRewards map[types.ValidatorID]uint64 `json:"val_rewards" yaml:"val_rewards"`
-	RewardAmount     uint64                       `json:"reward_amount" yaml:"reward_amount"`
+	Validators              []*hmTypes.Validator         `json:"validators" yaml:"validators"`
+	CurrentValSet           hmTypes.ValidatorSet         `json:"current_val_set" yaml:"current_val_set"`
+	ValidatorRewards        map[types.ValidatorID]uint64 `json:"val_rewards" yaml:"val_rewards"`
+	CheckpointReward        uint64                       `json:"checkpoint_reward" yaml:"checkpoint_reward"`
+	ProposerToSignerRewards uint64                       `json:"proposer_signer_reward" yaml:"proposer_signer_reward"`
 }
 
 // NewGenesisState creates a new genesis state.
@@ -43,13 +44,16 @@ func NewGenesisState(
 	validators []*hmTypes.Validator,
 	currentValSet hmTypes.ValidatorSet,
 	validatorRewards map[types.ValidatorID]uint64,
-	rewardAmount uint64,
+	checkpointReward uint64,
+	proposerToSignerRewards uint64,
+
 ) GenesisState {
 	return GenesisState{
-		Validators:       validators,
-		CurrentValSet:    currentValSet,
-		ValidatorRewards: validatorRewards,
-		RewardAmount:     rewardAmount,
+		Validators:              validators,
+		CurrentValSet:           currentValSet,
+		ValidatorRewards:        validatorRewards,
+		CheckpointReward:        checkpointReward,
+		ProposerToSignerRewards: proposerToSignerRewards,
 	}
 }
 
@@ -59,7 +63,7 @@ func DefaultGenesisState(validators []*hmTypes.Validator, currentValSet hmTypes.
 	for _, val := range validators {
 		validatorRewards[val.ID] = uint64(0)
 	}
-	return NewGenesisState(validators, currentValSet, validatorRewards, DefaultRewardAmount)
+	return NewGenesisState(validators, currentValSet, validatorRewards, DefaultCheckpointReward, DefaultProposerToSignerRewards)
 }
 
 // InitGenesis sets distribution information for genesis.
@@ -99,8 +103,9 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 	}
 	keeper.UpdateValidatorRewards(ctx, validatorRewards)
 
-	// Reward amount - reward issued for checkpoint signature
-	keeper.SetRewardAmount(ctx, data.RewardAmount)
+	// Rewards - reward issued for checkpoint signature
+	keeper.SetCheckpointReward(ctx, data.CheckpointReward)
+	keeper.SetProposerToSignerRewards(ctx, data.ProposerToSignerRewards)
 
 }
 
@@ -111,7 +116,8 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) GenesisState {
 		keeper.GetAllValidators(ctx),
 		keeper.GetValidatorSet(ctx),
 		keeper.GetAllValidatorRewards(ctx),
-		keeper.GetRewardAmount(ctx),
+		keeper.GetCheckpointReward(ctx),
+		keeper.GetProposerToSignerRewards(ctx),
 	)
 }
 

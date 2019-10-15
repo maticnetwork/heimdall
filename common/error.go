@@ -44,6 +44,11 @@ const (
 	CodeSpanNotFound       CodeType = 3503
 	CodeValSetMisMatch     CodeType = 3504
 	CodeProducerMisMatch   CodeType = 3505
+
+	CodeFetchCheckpointSigners  CodeType = 4501
+	CodeErrComputeSignerRewards CodeType = 4502
+	CodeErrComputeGenesisReward CodeType = 4503
+	CodeRewardRootMismatch      CodeType = 4504
 )
 
 // -------- Invalid msg
@@ -150,6 +155,23 @@ func ErrValidatorNotDeactivated(codespace sdk.CodespaceType) sdk.Error {
 
 func ErrValidatorAlreadyJoined(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeValAlreadyJoined, "Validator already joined")
+}
+
+// ----------- Reward Errors
+func ErrFetchCheckpointSigners(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeFetchCheckpointSigners, "Error Fetching checkpoint signatures from tx")
+}
+
+func ErrComputeCheckpointRewards(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeErrComputeGenesisReward, "Error while computing signer rewards")
+}
+
+func ErrComputeGenesisRewardRoot(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeErrComputeGenesisReward, "Error which computing Genesis Reward Root")
+}
+
+func ErrRewardRootMismatch(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeRewardRootMismatch, "Reward Root hash mismatch")
 }
 
 // Bor Errors --------------------------------
