@@ -68,6 +68,8 @@ func CreateTestInput(t *testing.T, isCheckTx bool) (sdk.Context, staking.Keeper,
 	ms.MountStoreWithDB(keyCheckpoint, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyStaking, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyMaster, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyParams, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(tKeyParams, sdk.StoreTypeTransient, db)
 
 	err := ms.LoadLatestVersion()
 	require.Nil(t, err)
@@ -94,7 +96,6 @@ func CreateTestInput(t *testing.T, isCheckTx bool) (sdk.Context, staking.Keeper,
 		common.DefaultCodespace,
 		checkpointKeeper,
 	)
-
 	return ctx, stakingKeeper, checkpointKeeper
 }
 

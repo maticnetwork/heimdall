@@ -2,6 +2,7 @@ package staking_test
 
 import (
 	"encoding/hex"
+	"math/big"
 	"strings"
 	"testing"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/staking"
 	cmn "github.com/maticnetwork/heimdall/test"
 	"github.com/maticnetwork/heimdall/types"
 	"github.com/stretchr/testify/require"
@@ -284,29 +286,30 @@ func TestValidatorRewards(t *testing.T) {
 	cmn.LoadValidatorSet(4, t, keeper, ctx, false, 10)
 	curVal := keeper.GetCurrentValidators(ctx)
 	// check initial reward
-	initReward := uint64(100)
-	keeper.SetValidatorIdToReward(ctx, curVal[0].ID, initReward)
+	initReward := big.NewInt(100)
+	keeper.SetValidatorIDToReward(ctx, curVal[0].ID, initReward)
 	valReward := keeper.GetRewardByValidatorID(ctx, curVal[0].ID)
 	require.Equal(t, initReward, valReward, "Validator Initial Reward should be %v but it is %v", initReward, valReward)
 	// check updated reward
-	rewardAdded := uint64(50)
-	keeper.SetValidatorIdToReward(ctx, curVal[0].ID, rewardAdded)
+	rewardAdded := big.NewInt(50)
+	keeper.SetValidatorIDToReward(ctx, curVal[0].ID, rewardAdded)
 	updatedReward := keeper.GetRewardByValidatorID(ctx, curVal[0].ID)
-	require.Equal(t, (initReward + rewardAdded), updatedReward, "Validator Updated Reward should be %v but it is %v", (initReward + rewardAdded), updatedReward)
+	rewardSum := big.NewInt(0).Add(initReward, rewardAdded)
+	require.Equal(t, rewardSum, updatedReward, "Validator Updated Reward should be %v but it is %v", rewardSum, updatedReward)
 	// zero reward for Invalid Validator ID
 	rewardNonValId := keeper.GetRewardByValidatorID(ctx, curVal[1].ID)
-	require.Equal(t, uint64(0), rewardNonValId, "Reward should be zero but it is %v", rewardNonValId)
+	require.Equal(t, big.NewInt(0), rewardNonValId, "Reward should be zero but it is %v", rewardNonValId)
 	// check validator reward map
-	keeper.SetValidatorIdToReward(ctx, curVal[1].ID, 35)
-	keeper.SetValidatorIdToReward(ctx, curVal[2].ID, 45)
+	keeper.SetValidatorIDToReward(ctx, curVal[1].ID, big.NewInt(35))
+	keeper.SetValidatorIDToReward(ctx, curVal[2].ID, big.NewInt(45))
 	valRewardMap := keeper.GetAllValidatorRewards(ctx)
 	t.Log("Validator Reward Map - ", valRewardMap)
 	require.Equal(t, 3, len(valRewardMap), "Validator Reward map size should be %v but it is %v", 3, len(valRewardMap))
-	require.Equal(t, uint64(150), valRewardMap[curVal[0].ID], "Validator Reward should be %v but it is %v", 150, valRewardMap[curVal[0].ID])
-	require.Equal(t, uint64(35), valRewardMap[curVal[1].ID], "Validator Reward should be %v but it is %v", 35, valRewardMap[curVal[0].ID])
-	require.Equal(t, uint64(45), valRewardMap[curVal[2].ID], "Validator Reward should be %v but it is %v", 45, valRewardMap[curVal[0].ID])
+	require.Equal(t, rewardSum, valRewardMap[curVal[0].ID], "Validator Reward should be %v but it is %v", rewardSum, valRewardMap[curVal[0].ID])
+	require.Equal(t, big.NewInt(35), valRewardMap[curVal[1].ID], "Validator Reward should be %v but it is %v", big.NewInt(35), valRewardMap[curVal[0].ID])
+	require.Equal(t, big.NewInt(45), valRewardMap[curVal[2].ID], "Validator Reward should be %v but it is %v", big.NewInt(45), valRewardMap[curVal[0].ID])
 
-	//TODO  Generate Merkle Root Out of Rewards after sorting by valID
+	// Generate Merkle Root Out of Rewards after sorting by valID
 	rewardRootHash, err := checkpoint.GetRewardRootHash(valRewardMap)
 	require.Empty(t, err, "Error when generating reward root hash from validator reward state tree")
 	t.Log("Reward root hash - ", types.BytesToHeimdallHash(rewardRootHash))
@@ -315,22 +318,47 @@ func TestValidatorRewards(t *testing.T) {
 
 func TestCalculateSignerRewards(t *testing.T) {
 	ctx, keeper, _ := cmn.CreateTestInput(t, false)
+	checkpointReward := big.NewInt(0).Exp(big.NewInt(10), big.NewInt(22), nil)
+	keeper.SetCheckpointReward(ctx, checkpointReward)
+	keeper.SetProposerBonusPercent(ctx, staking.DefaultProposerBonusPercent)
+	var valSet = types.ValidatorSet{}
+	var newVal = types.Validator{}
+	signerRewardshouldbe := make(map[types.ValidatorID]*big.Int)
+	signerRewardshouldbe[1], _ = big.NewInt(0).SetString("900000000000000000000", 10)
+	signerRewardshouldbe[2], _ = big.NewInt(0).SetString("1800000000000000000000", 10)
+	signerRewardshouldbe[3], _ = big.NewInt(0).SetString("3300000000000000000000", 10)
 	// These are pubkeys and signer address for below submitheaderblock trasaction payload
 	pubKeys := []string{"045b608112c8d9ca26f50ede110495e6be48cf9bb6d220d0354e3771701d3c9b1c8805d039e194f8938b820fee6d0aff4e2120b385f1e58b62d8649a796e7433a2", "041e8bc59b9c58358c9f2847d9dc62b927bc3fc7ac83e9b1a38b402ffb6d6d2d7be9329f51e6a9a4cfb75bc426def46be8f847a4c2fd335be55f382a08d4f3325a", "047ad78e23df40cecc5c6adf661df02d103aff74a95e2c4de99b1d0855b67d2881c659d7831daeae2c7626b60575a9a4aae62bd1ea225c1f71cb2c63c63a7de4a0"}
 	signerAddresses := []string{"a03d8f5af7413e4fd5a37fde9286e390ef8f3c07", "b1bf4473c6b1918a6e37408e1c14df81281411a8", "ba754e3893adb3cabc0afe7932b4b5a3cee3f3ab"}
 	// Add these validators to store
 	for i := 0; i < len(signerAddresses); i++ {
-		newVal := types.Validator{
-			ID:               types.NewValidatorID(uint64(i)),
+		newVal = types.Validator{
+			ID:               types.NewValidatorID(uint64(i + 1)),
 			StartEpoch:       0,
 			EndEpoch:         100,
-			VotingPower:      20,
+			VotingPower:      int64(i) + 1,
 			Signer:           types.HexToHeimdallAddress(signerAddresses[i]),
 			PubKey:           types.NewPubKey([]byte(pubKeys[i])),
 			ProposerPriority: 0,
 		}
 		keeper.AddValidator(ctx, newVal)
+		valSet.UpdateWithChangeSet([]*types.Validator{&newVal})
 	}
+
+	// Add extra validator not part of signer. This is to make sure totalStakePower != signerPower
+	nonSignerVals := cmn.GenRandomVal(1, 0, 4, uint64(10), true, 1)
+	nonSignerVals[0].ID = types.NewValidatorID(uint64(4))
+	keeper.AddValidator(ctx, nonSignerVals[0])
+	valSet.UpdateWithChangeSet([]*types.Validator{&nonSignerVals[0]})
+
+	// Set last signer as the proposer
+	valSet.Proposer = &newVal
+	err := keeper.UpdateValidatorSetInStore(ctx, valSet)
+	require.Empty(t, err, "Unable to update validator set")
+
+	// updatedValSet := keeper.GetValidatorSet(ctx)
+	// t.Log(updatedValSet)
+
 	// Unpack Signers from paylaod
 	data := string(rootchain.RootchainABI)
 	abi, err := abi.JSON(strings.NewReader(data))
@@ -354,6 +382,6 @@ func TestCalculateSignerRewards(t *testing.T) {
 	for i := 0; i < len(signerRewardMap); i++ {
 		val, err := keeper.GetValidatorInfo(ctx, types.HexToHeimdallAddress(signerAddresses[i]).Bytes())
 		require.Empty(t, err, "Error while getting val info for signer -", types.HexToHeimdallAddress(signerAddresses[i]).Bytes())
-		require.Equal(t, uint64(20), signerRewardMap[val.ID], "Reward for valId %v should be %v but it %v", val.ID, uint64(20), signerRewardMap[val.ID])
+		require.Equal(t, signerRewardshouldbe[val.ID], signerRewardMap[val.ID], "Reward for valId %v should be %v but it %v", val.ID, signerRewardshouldbe[val.ID], signerRewardMap[val.ID])
 	}
 }

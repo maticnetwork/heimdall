@@ -88,7 +88,7 @@ func GetHeaders(start uint64, end uint64) ([]byte, error) {
 }
 
 // GetRewardRootHash returns roothash of Validator Reward State Tree
-func GetRewardRootHash(valRewardMap map[hmTypes.ValidatorID]uint64) ([]byte, error) {
+func GetRewardRootHash(valRewardMap map[hmTypes.ValidatorID]*big.Int) ([]byte, error) {
 	// Sort the map by key
 	keys := make([]uint64, 0)
 	for k := range valRewardMap {
@@ -102,7 +102,7 @@ func GetRewardRootHash(valRewardMap map[hmTypes.ValidatorID]uint64) ([]byte, err
 	for _, key := range keys {
 		valrewardHash := crypto.Keccak256(appendBytes32(
 			new(big.Int).SetUint64(uint64(key)).Bytes(),
-			new(big.Int).SetUint64(valRewardMap[hmTypes.ValidatorID(key)]).Bytes(),
+			valRewardMap[hmTypes.ValidatorID(key)].Bytes(),
 		))
 		var arr [32]byte
 		copy(arr[:], valrewardHash)
