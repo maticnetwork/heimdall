@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math/big"
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -15,7 +14,6 @@ import (
 	borTypes "github.com/maticnetwork/heimdall/bor/types"
 	"github.com/maticnetwork/heimdall/checkpoint"
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
-	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/types/rest"
@@ -258,28 +256,6 @@ func prepareNextSpanHandlerFn(
 		}
 
 		//
-		// Get producer count
-		//
-
-		// fetch producer count
-		res, err = cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", borTypes.QuerierRoute, bor.QueryParams, bor.ParamProducerCount), nil)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		if len(res) == 0 {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, errors.New("Producer count not found").Error())
-			return
-		}
-
-		var producerCount uint64
-		if err := cliCtx.Codec.UnmarshalJSON(res, &producerCount); err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		//
 		// Validators
 		//
 
@@ -308,55 +284,23 @@ func prepareNextSpanHandlerFn(
 			}
 		}
 
-		contractCaller, err := helper.NewContractCaller()
-		//
-		// Get last eth header processed
-		//
+		// Fetching SelectedProducers
 
-		// fetch last eth header
-		res, err = cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", borTypes.QuerierRoute, bor.QueryParams, bor.ParamLastEthBlock), nil)
+		res, err = cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", borTypes.QuerierRoute, bor.QueryParams, bor.ParamNextProducers), nil)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		if len(res) == 0 {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, errors.New("Producer count not found").Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, errors.New("Next Producers not found").Error())
 			return
-		}
-
-		var lastEthHeader *big.Int
-		if err := cliCtx.Codec.UnmarshalJSON(res, &lastEthHeader); err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-		if lastEthHeader == nil {
-			lastEthHeader = big.NewInt(0)
-		}
-		// fetch block header
-		blockHeader, err := contractCaller.GetMainChainBlock(lastEthHeader.Add(lastEthHeader, big.NewInt(1)))
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, errors.New("error fetching block from mainchain").Error())
-			return
-		}
-
-		selectedProducerIndices, err := bor.SelectNextProducers(blockHeader.Hash(), currentValidators, producerCount)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, errors.New("error selecting producers from validator set").Error())
-			return
-		}
-
-		IDToPower := make(map[uint64]uint64)
-		for _, ID := range selectedProducerIndices {
-			IDToPower[ID] = IDToPower[ID] + 1
 		}
 
 		var selectedProducers []types.Validator
-		for _, val := range currentValidators {
-			if IDToPower[val.ID.Uint64()] > 0 {
-				val.VotingPower = int64(IDToPower[val.ID.Uint64()])
-				selectedProducers = append(selectedProducers, val)
-			}
+		if err := cliCtx.Codec.UnmarshalJSON(res, &selectedProducers); err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
 		}
 
 		// draft a propose span message

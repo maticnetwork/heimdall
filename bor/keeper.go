@@ -229,7 +229,7 @@ func (k *Keeper) SelectNextProducers(ctx sdk.Context) (vals []types.Validator, e
 	// increment last eth block
 	k.IncrementLastEthBlock(ctx)
 	return vals, nil
-}
+	}
 
 // UpdateLastSpan updates the last span start block
 func (k *Keeper) UpdateLastSpan(ctx sdk.Context, id uint64) {
