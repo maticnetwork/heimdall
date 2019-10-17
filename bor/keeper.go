@@ -166,6 +166,9 @@ func (k *Keeper) FreezeSet(ctx sdk.Context, id uint64, startBlock uint64, borCha
 		return err
 	}
 
+	// increment last eth block
+	k.IncrementLastEthBlock(ctx)
+
 	// generate new span
 	newSpan := types.NewSpan(
 		id,
@@ -223,8 +226,6 @@ func (k *Keeper) SelectNextProducers(ctx sdk.Context) (vals []types.Validator, e
 		}
 	}
 
-	// increment last eth block
-	k.IncrementLastEthBlock(ctx)
 	return vals, nil
 }
 
