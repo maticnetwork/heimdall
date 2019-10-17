@@ -20,8 +20,8 @@ build: clean
 	go build -o build/bridge bridge/bridge.go
 
 install:
-	go install cmd/heimdalld/main.go
-	go install cmd/heimdallcli/main.go
+	go install ./cmd/heimdalld
+	go install ./cmd/heimdallcli
 	go install bridge/bridge.go
 
 contracts:
