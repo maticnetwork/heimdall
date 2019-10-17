@@ -6,10 +6,11 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
+	ethCmn "github.com/ethereum/go-ethereum/common"
 	"github.com/maticnetwork/heimdall/checkpoint/tags"
 	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -79,13 +80,32 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper, contractC
 				"currentTip", lastCheckpoint.EndBlock,
 				"startBlock", msg.StartBlock)
 			return common.ErrDisCountinuousCheckpoint(k.Codespace()).Result()
-
+		}
+		// make sure latest rewardroothash matches
+		if !bytes.Equal(lastCheckpoint.RewardRootHash.Bytes(), msg.RewardRootHash.Bytes()) {
+			k.Logger(ctx).Error("RewardRootHash of LastCheckpoint", lastCheckpoint.RewardRootHash,
+				"doesn't match with RewardRootHash of msg", msg.RewardRootHash)
+			return common.ErrBadBlockDetails(k.Codespace()).Result()
 		}
 	} else if err.Error() == common.ErrNoCheckpointFound(k.Codespace()).Error() && msg.StartBlock != 0 {
 		k.Logger(ctx).Error("First checkpoint to start from block 1", "Error", err)
 		return common.ErrBadBlockDetails(k.Codespace()).Result()
+	} else if err.Error() == common.ErrNoCheckpointFound(k.Codespace()).Error() && msg.StartBlock == 0 {
+		// Check if genesis RewardRootHash matches
+		genesisValidatorRewards := k.sk.GetAllValidatorRewards(ctx)
+		genesisrewardRootHash, err := GetRewardRootHash(genesisValidatorRewards)
+		if err != nil {
+			k.Logger(ctx).Error("Error calculating genesis rewardroothash", err)
+			return common.ErrComputeGenesisRewardRoot(k.Codespace()).Result()
+		}
+		if !bytes.Equal(genesisrewardRootHash, msg.RewardRootHash.Bytes()) {
+			k.Logger(ctx).Error("Genesis RewardRootHash", types.BytesToHeimdallHash(genesisrewardRootHash).String(),
+				"doesn't match with Genesis RewardRootHash of msg", msg.RewardRootHash)
+			return common.ErrRewardRootMismatch(k.Codespace()).Result()
+		}
 	}
 	k.Logger(ctx).Debug("Valid checkpoint tip")
+	k.Logger(ctx).Debug("RewardRootHash matches")
 
 	// check proposer in message
 	if !bytes.Equal(msg.Proposer.Bytes(), k.sk.GetValidatorSet(ctx).Proposer.Signer.Bytes()) {
@@ -104,12 +124,14 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper, contractC
 	// }
 
 	// add checkpoint to buffer
+	// Add RewardRootHash to CheckpointBuffer
 	k.SetCheckpointBuffer(ctx, hmTypes.CheckpointBlockHeader{
-		StartBlock: msg.StartBlock,
-		EndBlock:   msg.EndBlock,
-		RootHash:   msg.RootHash,
-		Proposer:   msg.Proposer,
-		TimeStamp:  msg.TimeStamp,
+		StartBlock:     msg.StartBlock,
+		EndBlock:       msg.EndBlock,
+		RootHash:       msg.RootHash,
+		RewardRootHash: msg.RewardRootHash,
+		Proposer:       msg.Proposer,
+		TimeStamp:      msg.TimeStamp,
 	})
 
 	checkpoint, _ := k.GetCheckpointFromBuffer(ctx)
@@ -179,7 +201,37 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k Keeper, con
 		return common.ErrBadAck(k.Codespace()).Result()
 	}
 
-	// add checkpoint to headerBlocks
+	// Get Tx hash from ack msg
+	txHash := msg.TxHash
+
+	// Fetch all the signatures from tx input data and calculate signer rewards
+	voteBytes, sigInput, _, err := contractCaller.GetCheckpointSign(ctx, ethCmn.Hash(txHash))
+	if err != nil {
+		k.Logger(ctx).Error("Error while fetching signers from transaction", "error", err)
+		return common.ErrFetchCheckpointSigners(k.Codespace()).Result()
+	}
+
+	// Calculate Signer Rewards
+	signerRewards, err := k.sk.CalculateSignerRewards(ctx, voteBytes, sigInput)
+	if err != nil {
+		k.Logger(ctx).Error("Error while calculating Signer Rewards", "error", err)
+		return common.ErrComputeCheckpointRewards(k.Codespace()).Result()
+	}
+
+	// update store with new rewards
+	k.sk.UpdateValidatorRewards(ctx, signerRewards)
+	k.Logger(ctx).Info("Signer Rewards updated to store")
+
+	// Calculate new reward root hash
+	valRewardMap := k.sk.GetAllValidatorRewards(ctx)
+	k.Logger(ctx).Debug("rewards of all validators", "RewardMap", valRewardMap)
+	rewardRoot, err := GetRewardRootHash(valRewardMap)
+	k.Logger(ctx).Info("Reward root hash generated", "RewardRootHash", types.BytesToHeimdallHash(rewardRoot).String())
+
+	// Add new Reward root hash to bufferedcheckpoint header block
+	headerBlock.RewardRootHash = types.BytesToHeimdallHash(rewardRoot)
+
+	// Add checkpoint to headerBlocks
 	k.AddCheckpoint(ctx, msg.HeaderBlock, *headerBlock)
 	k.Logger(ctx).Info("Checkpoint added to store", "headerBlock", headerBlock.String())
 

@@ -84,11 +84,18 @@ func SendCheckpointTx(cdc *codec.Codec) *cobra.Command {
 				return fmt.Errorf("root hash cannot be empty")
 			}
 
+			// Reward Root Hash
+			rewardRootHashStr := viper.GetString(FlagRewardRootHash)
+			if rewardRootHashStr == "" {
+				return fmt.Errorf("reward root hash cannot be empty")
+			}
+
 			msg := checkpoint.NewMsgCheckpointBlock(
 				proposer,
 				startBlock,
 				endBlock,
 				types.HexToHeimdallHash(rootHashStr),
+				types.HexToHeimdallHash(rewardRootHashStr),
 				uint64(time.Now().Unix()),
 			)
 
@@ -99,9 +106,11 @@ func SendCheckpointTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(FlagStartBlock, "", "--start-block=<start-block-number>")
 	cmd.Flags().String(FlagEndBlock, "", "--end-block=<end-block-number>")
 	cmd.Flags().StringP(FlagRootHash, "r", "", "--root-hash=<root-hash>")
+	cmd.Flags().String(FlagRewardRootHash, "", "--reward-root=<reward-root>")
 	cmd.MarkFlagRequired(FlagStartBlock)
 	cmd.MarkFlagRequired(FlagEndBlock)
 	cmd.MarkFlagRequired(FlagRootHash)
+	cmd.MarkFlagRequired(FlagRewardRootHash)
 
 	return cmd
 }
@@ -130,8 +139,14 @@ func SendCheckpointACKTx(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
+			checkpointTxHashStr := viper.GetString(FlagCheckpointTxHash)
+			if checkpointTxHashStr == "" {
+				return fmt.Errorf("checkpoint tx hash cannot be empty")
+			}
+			checkpointTxHash := types.BytesToHeimdallHash([]byte(checkpointTxHashStr))
+
 			// new checkpoint
-			msg := checkpoint.NewMsgCheckpointAck(proposer, headerBlock)
+			msg := checkpoint.NewMsgCheckpointAck(proposer, headerBlock, checkpointTxHash)
 
 			// msg
 			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
@@ -140,7 +155,10 @@ func SendCheckpointACKTx(cdc *codec.Codec) *cobra.Command {
 
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
 	cmd.Flags().String(FlagHeaderNumber, "", "--header=<header-index>")
+	cmd.Flags().StringP(FlagCheckpointTxHash, "tx", "", "--txhash=<checkpoint-txhash>")
+
 	cmd.MarkFlagRequired(FlagHeaderNumber)
+	cmd.MarkFlagRequired(FlagCheckpointTxHash)
 	return cmd
 }
 

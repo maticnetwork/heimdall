@@ -32,7 +32,7 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 	}
 }
 
-// handleMsgValidatorJoin msg validator join
+// HandleMsgValidatorJoin msg validator join
 func HandleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	k.Logger(ctx).Debug("Handing new validator join", "msg", msg)
 
@@ -113,7 +113,7 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k Keeper, con
 	return sdk.Result{Tags: resTags}
 }
 
-// handleMsgStakeUpdate handles stake update message
+// HandleMsgStakeUpdate handles stake update message
 func HandleMsgStakeUpdate(ctx sdk.Context, msg MsgStakeUpdate, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	k.Logger(ctx).Debug("Handling stake update", "Validator", msg.ID)
 
@@ -175,7 +175,7 @@ func HandleMsgStakeUpdate(ctx sdk.Context, msg MsgStakeUpdate, k Keeper, contrac
 	return sdk.Result{Tags: resTags}
 }
 
-// handleMsgSignerUpdate handles signer update message
+// HandleMsgSignerUpdate handles signer update message
 func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	k.Logger(ctx).Debug("Handling signer update", "Validator", msg.ID, "Signer", msg.NewSignerPubKey.Address())
 
@@ -267,7 +267,7 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k Keeper, contr
 	return sdk.Result{Tags: resTags}
 }
 
-// handleMsgValidatorExit handle msg validator exit
+// HandleMsgValidatorExit handle msg validator exit
 func HandleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	k.Logger(ctx).Info("Handling validator exit", "ValidatorID", msg.ID)
 

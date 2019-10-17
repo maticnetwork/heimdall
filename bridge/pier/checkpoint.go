@@ -258,10 +258,10 @@ func (c *Checkpointer) sendRequest(newHeader *types.Header) {
 		expectedCheckpointState.currentHeaderBlock.start == bufferedCheckpoint.start {
 
 		// expected checkpoint state
-		c.Logger.Debug("Sending ACK",
-			"bufferedCheckpointEnd", bufferedCheckpoint.end,
-			"contractStart", bufferedCheckpoint.start,
-		)
+		// c.Logger.Debug("Sending ACK",
+		// 	"bufferedCheckpointEnd", bufferedCheckpoint.end,
+		// 	"contractStart", bufferedCheckpoint.start,
+		// )
 
 		// // calculate header index
 		// headerNumber := expectedCheckpointState.currentHeaderBlock.Sub(
@@ -269,9 +269,9 @@ func (c *Checkpointer) sendRequest(newHeader *types.Header) {
 		// 	big.NewInt(int64(helper.GetConfig().ChildBlockInterval)),
 		// )
 
-		if err := c.broadcastACK(expectedCheckpointState.currentHeaderBlock.number.Uint64()); err != nil {
-			c.Logger.Error("Error while sending ACK", "Error", err.Error())
-		}
+		// if err := c.broadcastACK(expectedCheckpointState.currentHeaderBlock.number.Uint64()); err != nil {
+		// 	c.Logger.Error("Error while sending ACK", "Error", err.Error())
+		// }
 	}
 
 	//
@@ -412,6 +412,22 @@ func (c *Checkpointer) fetchCheckpoint(url string) (checkpoint hmtypes.Checkpoin
 	return checkpoint, nil
 }
 
+// fetches initial genesis rewardroothash
+func (c *Checkpointer) fetchInitialRewardRoot() (rewardRootHash hmtypes.HeimdallHash, err error) {
+	c.Logger.Info("Sending Rest call to Get Initial RewardRootHash")
+	response, err := FetchFromAPI(c.cliCtx, GetHeimdallServerEndpoint(InitialRewardRootURL))
+	if err != nil {
+		c.Logger.Error("Error Fetching rewardroothash from HeimdallServer ", "error", err)
+		return rewardRootHash, err
+	}
+
+	if err := json.Unmarshal(response.Result, &rewardRootHash); err != nil {
+		c.Logger.Error("Error unmarshalling rewardroothash received from Heimdall Server", "error", err)
+		return rewardRootHash, err
+	}
+	return rewardRootHash, nil
+}
+
 // broadcast checkpoint
 func (c *Checkpointer) sendCheckpointToHeimdall(start uint64, end uint64) error {
 	if end == 0 || start >= end {
@@ -425,10 +441,28 @@ func (c *Checkpointer) sendCheckpointToHeimdall(start uint64, end uint64) error 
 		return err
 	}
 
+	rewardRootHash := hmtypes.ZeroHeimdallHash
+	// Check if it is firstcheckpoint, if so Get InitialRewardRoot from HeimdallServer
+	if start == uint64(0) {
+		if rewardRootHash, err = c.fetchInitialRewardRoot(); err != nil {
+			c.Logger.Info("Error while fetching initial reward root hash from HeimdallServer", "err", err)
+			return err
+		}
+	} else {
+		// Get Latest Reward Root Hash through rest call
+		latestCheckpoint, err := c.fetchCheckpoint(GetHeimdallServerEndpoint(LatestCheckpointURL))
+		if err != nil {
+			c.Logger.Info("Error while fetching Latest Checkpoint from heimdallserver", "err", err)
+			return err
+		}
+		rewardRootHash = latestCheckpoint.RewardRootHash
+	}
+
 	c.Logger.Info("Creating and broadcasting new checkpoint",
 		"start", start,
 		"end", end,
 		"root", hmtypes.BytesToHeimdallHash(root),
+		"rewardRoot", rewardRootHash,
 	)
 
 	// create and send checkpoint message
@@ -437,6 +471,7 @@ func (c *Checkpointer) sendCheckpointToHeimdall(start uint64, end uint64) error 
 		start,
 		end,
 		hmtypes.BytesToHeimdallHash(root),
+		rewardRootHash,
 		uint64(time.Now().Unix()),
 	)
 
@@ -452,12 +487,12 @@ func (c *Checkpointer) sendCheckpointToHeimdall(start uint64, end uint64) error 
 }
 
 // broadcastACK broadcasts ack for a checkpoint to heimdall
-func (c *Checkpointer) broadcastACK(headerID uint64) error {
-	// create and send checkpoint ACK message
-	msg := checkpoint.NewMsgCheckpointAck(hmtypes.BytesToHeimdallAddress(helper.GetAddress()), headerID)
-	// broadcast ack
-	return c.queueConnector.BroadcastToHeimdall(msg)
-}
+// func (c *Checkpointer) broadcastACK(headerID uint64) error {
+// 	// create and send checkpoint ACK message
+// 	msg := checkpoint.NewMsgCheckpointAck(hmtypes.BytesToHeimdallAddress(helper.GetAddress()), headerID)
+// 	// broadcast ack
+// 	return c.queueConnector.BroadcastToHeimdall(msg)
+// }
 
 // wait for heimdall checkpoint tx to get confirmed and dispatch checkpoint
 func (c *Checkpointer) commitCheckpoint(startBlock uint64, endBlock uint64) {

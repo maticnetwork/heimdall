@@ -5,6 +5,8 @@ const (
 	FlagStartBlock      = "start-block"
 	FlagEndBlock        = "end-block"
 	FlagRootHash        = "root-hash"
+	FlagRewardRootHash  = "reward-root"
 
-	FlagHeaderNumber = "header"
+	FlagHeaderNumber     = "header"
+	FlagCheckpointTxHash = "txhash"
 )

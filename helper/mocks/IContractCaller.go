@@ -5,7 +5,9 @@ package mocks
 import (
 	big "math/big"
 
+	cosmos_sdktypes "github.com/cosmos/cosmos-sdk/types"
 	common "github.com/ethereum/go-ethereum/common"
+
 	heimdalltypes "github.com/maticnetwork/heimdall/types"
 
 	mock "github.com/stretchr/testify/mock"
@@ -188,6 +190,47 @@ func (_m *IContractCaller) GetBlockNumberFromTxHash(_a0 common.Hash) (*big.Int, 
 	}
 
 	return r0, r1
+}
+
+// GetCheckpointSign provides a mock function with given fields: ctx, txHash
+func (_m *IContractCaller) GetCheckpointSign(ctx cosmos_sdktypes.Context, txHash common.Hash) ([]byte, []byte, []byte, error) {
+	ret := _m.Called(ctx, txHash)
+
+	var r0 []byte
+	if rf, ok := ret.Get(0).(func(cosmos_sdktypes.Context, common.Hash) []byte); ok {
+		r0 = rf(ctx, txHash)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]byte)
+		}
+	}
+
+	var r1 []byte
+	if rf, ok := ret.Get(1).(func(cosmos_sdktypes.Context, common.Hash) []byte); ok {
+		r1 = rf(ctx, txHash)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).([]byte)
+		}
+	}
+
+	var r2 []byte
+	if rf, ok := ret.Get(2).(func(cosmos_sdktypes.Context, common.Hash) []byte); ok {
+		r2 = rf(ctx, txHash)
+	} else {
+		if ret.Get(2) != nil {
+			r2 = ret.Get(2).([]byte)
+		}
+	}
+
+	var r3 error
+	if rf, ok := ret.Get(3).(func(cosmos_sdktypes.Context, common.Hash) error); ok {
+		r3 = rf(ctx, txHash)
+	} else {
+		r3 = ret.Error(3)
+	}
+
+	return r0, r1, r2, r3
 }
 
 // GetConfirmedTxReceipt provides a mock function with given fields: _a0

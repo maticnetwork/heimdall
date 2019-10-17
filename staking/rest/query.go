@@ -3,6 +3,7 @@ package rest
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -11,6 +12,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gorilla/mux"
 
+	"github.com/maticnetwork/heimdall/checkpoint"
+	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -38,6 +41,10 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Co
 	r.HandleFunc(
 		"/staking/current-proposer",
 		currentProposerHandlerFn(cdc, cliCtx),
+	).Methods("GET")
+	r.HandleFunc(
+		"/staking/initial-reward-root",
+		initialRewardRootHandlerFn(cdc, cliCtx),
 	).Methods("GET")
 }
 
@@ -248,6 +255,41 @@ func currentProposerHandlerFn(
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
+		rest.PostProcessResponse(w, cliCtx, result)
+	}
+}
+
+// initialRewardRootHandlerFn returns genesis rewardroothash
+func initialRewardRootHandlerFn(
+	cdc *codec.Codec,
+	cliCtx context.CLIContext,
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", checkpointTypes.QuerierRoute, checkpoint.QueryInitialRewardRoot), nil)
+		RestLogger.Debug("initial rewardRootHash querier response", "res", res)
+
+		if err != nil {
+			RestLogger.Error("Error while calculating Initial Rewardroot ", "Error", err.Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		if len(res) == 0 {
+			RestLogger.Error("RewardRootHash not found ", "Error", err.Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, errors.New("RewardRootHash not found").Error())
+			return
+		}
+
+		var rewardRootHash = hmTypes.BytesToHeimdallHash(res)
+		RestLogger.Debug("Fetched initial rewardRootHash ", "rewardRootHash", rewardRootHash)
+
+		result, err := json.Marshal(&rewardRootHash)
+		if err != nil {
+			RestLogger.Error("Error while marshalling response to Json", "error", err)
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
 		rest.PostProcessResponse(w, cliCtx, result)
 	}
 }

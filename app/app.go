@@ -396,8 +396,9 @@ func (app *HeimdallApp) initFromGenesisState(ctx sdk.Context, genesisState Genes
 	bank.InitGenesis(ctx, app.bankKeeper, genesisState.BankData)
 	supply.InitGenesis(ctx, app.supplyKeeper, app.accountKeeper, genesisState.SupplyData)
 	bor.InitGenesis(ctx, app.borKeeper, genesisState.BorData)
-	checkpoint.InitGenesis(ctx, app.checkpointKeeper, genesisState.CheckpointData)
+	// staking should be initialized before checkpoint as checkpoint genesis initialization may depend on staking genesis. [eg.. rewardroot calculation]
 	staking.InitGenesis(ctx, app.stakingKeeper, genesisState.StakingData)
+	checkpoint.InitGenesis(ctx, app.checkpointKeeper, genesisState.CheckpointData)
 	clerk.InitGenesis(ctx, app.clerkKeeper, genesisState.ClerkData)
 	// validate genesis state
 	if err := ValidateGenesisState(genesisState); err != nil {
