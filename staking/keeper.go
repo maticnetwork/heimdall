@@ -415,8 +415,8 @@ func (k *Keeper) CalculateSignerRewards(ctx sdk.Context, voteBytes []byte, sigIn
 		signerPower[valInfo.ID] = valInfo.VotingPower
 	}
 
-	currentCheckpointReward := k.GetCurrentCheckpointReward(ctx, totalSignerPower)
-	totalSignerReward := k.GetTotalSignerReward(ctx, currentCheckpointReward)
+	currentCheckpointReward := k.ComputeCurrentCheckpointReward(ctx, totalSignerPower)
+	totalSignerReward := k.ComputeTotalSignerReward(ctx, currentCheckpointReward)
 
 	// Weighted Distribution of totalSignerReward for signers
 	for valID, pow := range signerPower {
@@ -435,7 +435,7 @@ func (k *Keeper) CalculateSignerRewards(ctx sdk.Context, voteBytes []byte, sigIn
 
 	// Proposer Bonus Reward
 	proposer := k.GetCurrentProposer(ctx)
-	proposerReward := k.GetProposerReward(ctx, currentCheckpointReward)
+	proposerReward := k.ComputeProposerReward(ctx, currentCheckpointReward)
 	proposerBonus := big.NewInt(0)
 	proposerReward.Int(proposerBonus)
 	signerRewards[proposer.ID] = big.NewInt(0).Add(signerRewards[proposer.ID], proposerBonus)
@@ -451,8 +451,8 @@ func (k *Keeper) UpdateValidatorRewards(ctx sdk.Context, valrewards map[types.Va
 	}
 }
 
-// GetTotalSignerReward returns total reward of all signer
-func (k *Keeper) GetTotalSignerReward(ctx sdk.Context, currentCheckpointReward *big.Float) *big.Float {
+// ComputeTotalSignerReward returns total reward of all signer
+func (k *Keeper) ComputeTotalSignerReward(ctx sdk.Context, currentCheckpointReward *big.Float) *big.Float {
 	proposerBonusPercent := k.GetProposerBonusPercent(ctx)
 	totalSignerRewardPercent := 100 - proposerBonusPercent
 	signerRewardToFloat := new(big.Float)
@@ -463,8 +463,8 @@ func (k *Keeper) GetTotalSignerReward(ctx sdk.Context, currentCheckpointReward *
 	return new(big.Float).Quo(bigval, bigfloatval)
 }
 
-// GetProposerReward returns the proposer reward
-func (k *Keeper) GetProposerReward(ctx sdk.Context, currentCheckpointReward *big.Float) *big.Float {
+// ComputeProposerReward returns the proposer reward
+func (k *Keeper) ComputeProposerReward(ctx sdk.Context, currentCheckpointReward *big.Float) *big.Float {
 	proposerBonus := k.GetProposerBonusPercent(ctx)
 	proposerBonusToFloat := new(big.Float)
 	proposerBonusToFloat.SetInt(big.NewInt(proposerBonus))
@@ -474,8 +474,8 @@ func (k *Keeper) GetProposerReward(ctx sdk.Context, currentCheckpointReward *big
 	return new(big.Float).Quo(bigval, bigfloatval)
 }
 
-// GetCurrentCheckpointReward returns the reward to be distributed for current checkpoint
-func (k *Keeper) GetCurrentCheckpointReward(ctx sdk.Context, totalSignerPower int64) *big.Float {
+// ComputeCurrentCheckpointReward returns the reward to be distributed for current checkpoint
+func (k *Keeper) ComputeCurrentCheckpointReward(ctx sdk.Context, totalSignerPower int64) *big.Float {
 	checkpointReward := k.GetCheckpointReward(ctx)
 	currValSet := k.GetValidatorSet(ctx)
 	totalPower := currValSet.TotalVotingPower()

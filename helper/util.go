@@ -16,6 +16,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/spf13/viper"
@@ -643,4 +644,21 @@ func GetPowerFromAmount(amount *big.Int) (*big.Int, error) {
 	}
 
 	return amount.Div(amount, decimals18), nil
+}
+
+// UnpackSigAndVotes Unpacks Sig and Votes from Tx Payload
+func UnpackSigAndVotes(payload []byte, abi abi.ABI) (votes []byte, sigs []byte, checkpointData []byte, err error) {
+	// recover Method from signature and ABI
+	method := abi.Methods["submitHeaderBlock"]
+	decodedPayload := payload[4:]
+	inputDataMap := make(map[string]interface{})
+	// unpack method inputs
+	err = method.Inputs.UnpackIntoMap(inputDataMap, decodedPayload)
+	if err != nil {
+		return
+	}
+	sigs = inputDataMap["sigs"].([]byte)
+	checkpointData = inputDataMap["extradata"].([]byte)
+	votes = inputDataMap["vote"].([]byte)
+	return
 }

@@ -1,14 +1,5 @@
 package test
 
-import (
-	"testing"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/maticnetwork/heimdall/staking"
-	"github.com/maticnetwork/heimdall/types"
-	"github.com/stretchr/testify/require"
-)
-
 // TODO use table testing as much as possible
 
 // func TestUpdateAck(t *testing.T) {
@@ -80,20 +71,20 @@ import (
 // 	//require.Equal(t, validator.Signer, mappedSigner, "GetValidatorToSignerMap doesnt give right signer")
 // }
 
-func TestValidatorSet(t *testing.T) {
-	ctx, keeper := CreateTestInput(t, false)
-	valSet := LoadValidatorSet(4, t, keeper, ctx, true, 10)
+// func TestValidatorSet(t *testing.T) {
+// 	ctx, keeper := CreateTestInput(t, false)
+// 	valSet := LoadValidatorSet(4, t, keeper, ctx, true, 10)
 
-	storedValSet := keeper.GetValidatorSet(ctx)
-	require.Equal(t, valSet, storedValSet, "Validator Set in state doesnt match ")
+// 	storedValSet := keeper.GetValidatorSet(ctx)
+// 	require.Equal(t, valSet, storedValSet, "Validator Set in state doesnt match ")
 
-	//keeper.IncrementAccum(ctx, 1)
-	//initialProposer := keeper.GetCurrentProposer(ctx)
-	//
-	//keeper.IncrementAccum(ctx, 1)
-	//newProposer := keeper.GetCurrentProposer(ctx)
-	//fmt.Printf("Prev :%#v  , New : %#v", initialProposer, newProposer)
-}
+// 	//keeper.IncrementAccum(ctx, 1)
+// 	//initialProposer := keeper.GetCurrentProposer(ctx)
+// 	//
+// 	//keeper.IncrementAccum(ctx, 1)
+// 	//newProposer := keeper.GetCurrentProposer(ctx)
+// 	//fmt.Printf("Prev :%#v  , New : %#v", initialProposer, newProposer)
+// }
 
 // func TestValUpdates(t *testing.T) {
 
@@ -213,26 +204,26 @@ func TestValidatorSet(t *testing.T) {
 // // pass 0 as time alive to generate non de-activated validators
 // //
 // // Generated and loads validators to validator set
-func LoadValidatorSet(count int, t *testing.T, keeper staking.Keeper, ctx sdk.Context, randomise bool, timeAlive int) types.ValidatorSet {
-	// create 4 validators
-	validators := GenRandomVal(4, 0, 10, uint64(timeAlive), randomise, 1)
+// func LoadValidatorSet(count int, t *testing.T, keeper staking.Keeper, ctx sdk.Context, randomise bool, timeAlive int) types.ValidatorSet {
+// 	// create 4 validators
+// 	validators := GenRandomVal(4, 0, 10, uint64(timeAlive), randomise, 1)
 
-	var valSet types.ValidatorSet
+// 	var valSet types.ValidatorSet
 
-	// add validators to new Validator set and state
-	for _, validator := range validators {
-		err := keeper.AddValidator(ctx, validator)
-		require.Empty(t, err, "Unable to set validator, Error: %v", err)
-		// add validator to validator set
-		valSet.Add(&validator)
-	}
+// 	// add validators to new Validator set and state
+// 	for _, validator := range validators {
+// 		err := keeper.AddValidator(ctx, validator)
+// 		require.Empty(t, err, "Unable to set validator, Error: %v", err)
+// 		// add validator to validator set
+// 		valSet.Add(&validator)
+// 	}
 
-	err := keeper.UpdateValidatorSetInStore(ctx, valSet)
-	require.Empty(t, err, "Unable to update validator set")
-	vals := keeper.GetAllValidators(ctx)
-	t.Log("Vals inserted", vals)
-	return valSet
-}
+// 	err := keeper.UpdateValidatorSetInStore(ctx, valSet)
+// 	require.Empty(t, err, "Unable to update validator set")
+// 	vals := keeper.GetAllValidators(ctx)
+// 	t.Log("Vals inserted", vals)
+// 	return valSet
+// }
 
 // // test handler for message
 // func TestHandleMsgCheckpoint(t *testing.T) {

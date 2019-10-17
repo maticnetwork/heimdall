@@ -351,7 +351,7 @@ func TestCalculateSignerRewards(t *testing.T) {
 	keeper.AddValidator(ctx, nonSignerVals[0])
 	valSet.UpdateWithChangeSet([]*types.Validator{&nonSignerVals[0]})
 
-	// Set last signer as the proposer
+	// Set one of the signer as the proposer
 	valSet.Proposer = &newVal
 	err := keeper.UpdateValidatorSetInStore(ctx, valSet)
 	require.Empty(t, err, "Unable to update validator set")
