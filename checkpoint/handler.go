@@ -82,7 +82,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper, contractC
 			return common.ErrDisCountinuousCheckpoint(k.Codespace()).Result()
 		}
 		// make sure latest rewardroothash matches
-		if lastCheckpoint.RewardRootHash != msg.RewardRootHash {
+		if !bytes.Equal(lastCheckpoint.RewardRootHash.Bytes(), msg.RewardRootHash.Bytes()) {
 			k.Logger(ctx).Error("RewardRootHash of LastCheckpoint", lastCheckpoint.RewardRootHash,
 				"doesn't match with RewardRootHash of msg", msg.RewardRootHash)
 			return common.ErrBadBlockDetails(k.Codespace()).Result()
@@ -96,11 +96,12 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper, contractC
 		genesisrewardRootHash, err := GetRewardRootHash(genesisValidatorRewards)
 		if err != nil {
 			k.Logger(ctx).Error("Error calculating genesis rewardroothash", err)
+			return common.ErrComputeGenesisRewardRoot(k.Codespace()).Result()
 		}
-		if types.BytesToHeimdallHash(genesisrewardRootHash) != msg.RewardRootHash {
-			k.Logger(ctx).Error("Genesis RewardRootHash", genesisrewardRootHash,
+		if !bytes.Equal(genesisrewardRootHash, msg.RewardRootHash.Bytes()) {
+			k.Logger(ctx).Error("Genesis RewardRootHash", types.BytesToHeimdallHash(genesisrewardRootHash).String(),
 				"doesn't match with Genesis RewardRootHash of msg", msg.RewardRootHash)
-			return common.ErrBadBlockDetails(k.Codespace()).Result()
+			return common.ErrRewardRootMismatch(k.Codespace()).Result()
 		}
 	}
 	k.Logger(ctx).Debug("Valid checkpoint tip")
@@ -207,28 +208,28 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k Keeper, con
 	voteBytes, sigInput, _, err := contractCaller.GetCheckpointSign(ctx, ethCmn.Hash(txHash))
 	if err != nil {
 		k.Logger(ctx).Error("Error while fetching signers from transaction", "error", err)
-		return common.ErrBadAck(k.Codespace()).Result()
+		return common.ErrFetchCheckpointSigners(k.Codespace()).Result()
 	}
 
 	// Calculate Signer Rewards
 	signerRewards, err := k.sk.CalculateSignerRewards(ctx, voteBytes, sigInput)
 	if err != nil {
 		k.Logger(ctx).Error("Error while calculating Signer Rewards", "error", err)
-		return common.ErrBadAck(k.Codespace()).Result()
+		return common.ErrComputeCheckpointRewards(k.Codespace()).Result()
 	}
 
 	// update store with new rewards
 	k.sk.UpdateValidatorRewards(ctx, signerRewards)
-	k.Logger(ctx).Info("Signer Rewards updated to store", signerRewards)
+	k.Logger(ctx).Info("Signer Rewards updated to store")
 
 	// Calculate new reward root hash
 	valRewardMap := k.sk.GetAllValidatorRewards(ctx)
 	k.Logger(ctx).Debug("rewards of all validators", "RewardMap", valRewardMap)
-	rewardRootHash, err := GetRewardRootHash(valRewardMap)
-	k.Logger(ctx).Info("Reward root hash generated", "RewardRootHash", rewardRootHash)
+	rewardRoot, err := GetRewardRootHash(valRewardMap)
+	k.Logger(ctx).Info("Reward root hash generated", "RewardRootHash", types.BytesToHeimdallHash(rewardRoot).String())
 
 	// Add new Reward root hash to bufferedcheckpoint header block
-	headerBlock.RewardRootHash = types.BytesToHeimdallHash(rewardRootHash)
+	headerBlock.RewardRootHash = types.BytesToHeimdallHash(rewardRoot)
 
 	// Add checkpoint to headerBlocks
 	k.AddCheckpoint(ctx, msg.HeaderBlock, *headerBlock)

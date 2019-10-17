@@ -395,3 +395,19 @@ func (c *ContractCaller) EncodeStateSyncedEvent(log *ethTypes.Log) (*statesender
 func getABI(data string) (abi.ABI, error) {
 	return abi.JSON(strings.NewReader(data))
 }
+
+// GetCheckpointSign returns sigs input of committed checkpoint tranasction
+func (c *ContractCaller) GetCheckpointSign(ctx sdk.Context, txHash common.Hash) ([]byte, []byte, []byte, error) {
+	mainChainClient := GetMainClient()
+	transaction, isPending, err := mainChainClient.TransactionByHash(ctx, txHash)
+	if err != nil {
+		Logger.Error("Error while Fetching Transaction By hash from MainChain", "error", err)
+		return []byte{}, []byte{}, []byte{}, err
+	} else if isPending {
+		return []byte{}, []byte{}, []byte{}, errors.New("Transaction is still pending")
+	}
+
+	payload := transaction.Data()
+	abi := c.RootChainABI
+	return UnpackSigAndVotes(payload, abi)
+}

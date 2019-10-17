@@ -2,6 +2,7 @@ package staking
 
 import (
 	"errors"
+	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/types"
@@ -32,34 +33,39 @@ func (v *GenesisValidator) HeimdallValidator() hmTypes.Validator {
 
 // GenesisState is the checkpoint state that must be provided at genesis.
 type GenesisState struct {
-	Validators       []*hmTypes.Validator         `json:"validators" yaml:"validators"`
-	CurrentValSet    hmTypes.ValidatorSet         `json:"current_val_set" yaml:"current_val_set"`
-	ValidatorRewards map[types.ValidatorID]uint64 `json:"val_rewards" yaml:"val_rewards"`
-	RewardAmount     uint64                       `json:"reward_amount" yaml:"reward_amount"`
+	Validators           []*hmTypes.Validator           `json:"validators" yaml:"validators"`
+	CurrentValSet        hmTypes.ValidatorSet           `json:"current_val_set" yaml:"current_val_set"`
+	ValidatorRewards     map[types.ValidatorID]*big.Int `json:"val_rewards" yaml:"val_rewards"`
+	CheckpointReward     *big.Int                       `json:"checkpoint_reward" yaml:"checkpoint_reward"`
+	ProposerBonusPercent int64                          `json:"proposer_bonus_percent" yaml:"proposer_bonus_percent"`
 }
 
 // NewGenesisState creates a new genesis state.
 func NewGenesisState(
 	validators []*hmTypes.Validator,
 	currentValSet hmTypes.ValidatorSet,
-	validatorRewards map[types.ValidatorID]uint64,
-	rewardAmount uint64,
+	validatorRewards map[types.ValidatorID]*big.Int,
+	checkpointReward *big.Int,
+	proposerBonusPercent int64,
+
 ) GenesisState {
 	return GenesisState{
-		Validators:       validators,
-		CurrentValSet:    currentValSet,
-		ValidatorRewards: validatorRewards,
-		RewardAmount:     rewardAmount,
+		Validators:           validators,
+		CurrentValSet:        currentValSet,
+		ValidatorRewards:     validatorRewards,
+		CheckpointReward:     checkpointReward,
+		ProposerBonusPercent: proposerBonusPercent,
 	}
 }
 
 // DefaultGenesisState returns a default genesis state
 func DefaultGenesisState(validators []*hmTypes.Validator, currentValSet hmTypes.ValidatorSet) GenesisState {
-	validatorRewards := make(map[types.ValidatorID]uint64)
+	validatorRewards := make(map[types.ValidatorID]*big.Int)
 	for _, val := range validators {
-		validatorRewards[val.ID] = uint64(0)
+		validatorRewards[val.ID] = big.NewInt(0)
 	}
-	return NewGenesisState(validators, currentValSet, validatorRewards, DefaultRewardAmount)
+	initialCheckpointReward := big.NewInt(10).Exp(big.NewInt(10), big.NewInt(18), nil)
+	return NewGenesisState(validators, currentValSet, validatorRewards, initialCheckpointReward, DefaultProposerBonusPercent)
 }
 
 // InitGenesis sets distribution information for genesis.
@@ -74,7 +80,7 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 
 	// result
 	resultValSet := hmTypes.NewValidatorSet(vals)
-	validatorRewards := make(map[types.ValidatorID]uint64)
+	validatorRewards := make(map[types.ValidatorID]*big.Int)
 
 	// add validators in store
 	for _, validator := range resultValSet.Validators {
@@ -94,13 +100,14 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 		if _, ok := data.ValidatorRewards[validator.ID]; ok {
 			validatorRewards[validator.ID] = data.ValidatorRewards[validator.ID]
 		} else {
-			validatorRewards[validator.ID] = uint64(0)
+			validatorRewards[validator.ID] = big.NewInt(0)
 		}
 	}
 	keeper.UpdateValidatorRewards(ctx, validatorRewards)
 
-	// Reward amount - reward issued for checkpoint signature
-	keeper.SetRewardAmount(ctx, data.RewardAmount)
+	// Rewards - reward issued for checkpoint signature
+	keeper.SetCheckpointReward(ctx, data.CheckpointReward)
+	keeper.SetProposerBonusPercent(ctx, data.ProposerBonusPercent)
 
 }
 
@@ -111,7 +118,8 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) GenesisState {
 		keeper.GetAllValidators(ctx),
 		keeper.GetValidatorSet(ctx),
 		keeper.GetAllValidatorRewards(ctx),
-		keeper.GetRewardAmount(ctx),
+		keeper.GetCheckpointReward(ctx),
+		keeper.GetProposerBonusPercent(ctx),
 	)
 }
 

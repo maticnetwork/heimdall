@@ -1,20 +1,30 @@
 package staking
 
 import (
+	"math/big"
+
 	"github.com/cosmos/cosmos-sdk/x/params"
 )
 
 const (
-	// DefaultRewardAmount - Reward Amount Given to the Checkpoint Signer
-	DefaultRewardAmount = uint64(10)
+	// DefaultCheckpointReward - Total Checkpoint reward
+	// DefaultCheckpointReward = big.NewInt(10).Exp(big.NewInt(10), big.NewInt(18), nil).Bytes()
+
+	// DefaultProposerBonusPercent - Proposer Signer Reward Ratio
+	DefaultProposerBonusPercent = int64(10)
 )
 
-// ParamStoreKeyRewardAmount - Store's Key for Reward amount
-var ParamStoreKeyRewardAmount = []byte("rewardamount")
+// ParamStoreKeyCheckpointReward - Store's Key for Reward amount
+var ParamStoreKeyCheckpointReward = []byte("checkpointreward")
+
+// ParamStoreKeyProposerBonusPercent - Store's Key for Reward amount
+var ParamStoreKeyProposerBonusPercent = []byte("proposerbonuspercent")
 
 // ParamKeyTable type declaration for parameters
 func ParamKeyTable() params.KeyTable {
+	DefaultCheckpointReward := big.NewInt(10).Exp(big.NewInt(10), big.NewInt(18), nil).Bytes()
 	return params.NewKeyTable(
-		ParamStoreKeyRewardAmount, DefaultRewardAmount,
+		ParamStoreKeyCheckpointReward, DefaultCheckpointReward,
+		ParamStoreKeyProposerBonusPercent, DefaultProposerBonusPercent,
 	)
 }
