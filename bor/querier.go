@@ -16,6 +16,7 @@ const (
 	ParamSprint        = "sprint"
 	ParamProducerCount = "producer-count"
 	ParamLastEthBlock  = "last-eth-block"
+	ParamNextProducers = "next-producers"
 )
 
 // NewQuerier creates a querier for auth REST endpoints
@@ -57,6 +58,17 @@ func queryParams(ctx sdk.Context, path []string, req abci.RequestQuery, keeper K
 		return bz, nil
 	case ParamLastEthBlock:
 		bz, err := codec.MarshalJSONIndent(keeper.cdc, keeper.GetLastEthBlock(ctx))
+		if err != nil {
+			return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+		}
+		return bz, nil
+	case ParamNextProducers:
+		var bz []byte
+		nextProducers, err := keeper.SelectNextProducers(ctx)
+		if err != nil {
+			return bz, sdk.ErrInternal((sdk.AppendMsgToErr("cannot fetch next producers from keeper", err.Error())))
+		}
+		bz, err = codec.MarshalJSONIndent(keeper.cdc, nextProducers)
 		if err != nil {
 			return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 		}

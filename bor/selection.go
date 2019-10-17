@@ -7,9 +7,9 @@ import (
 )
 
 // SelectNextProducers selects producers for next span by converting power to tickets
-func SelectNextProducers(blkHash common.Hash, currentVals []types.Validator, producerCount uint64) (selectedIDs []uint64, err error) {
-	if len(currentVals) <= int(producerCount) {
-		for _, val := range currentVals {
+func SelectNextProducers(blkHash common.Hash, spanEligibleVals []types.Validator, producerCount uint64) (selectedIDs []uint64, err error) {
+	if len(spanEligibleVals) <= int(producerCount) {
+		for _, val := range spanEligibleVals {
 			selectedIDs = append(selectedIDs, uint64(val.ID))
 		}
 		return
@@ -17,7 +17,7 @@ func SelectNextProducers(blkHash common.Hash, currentVals []types.Validator, pro
 
 	// extract seed from hash
 	seed := helper.ToBytes32(blkHash.Bytes()[:32])
-	validatorIndices := convertToSlots(currentVals)
+	validatorIndices := convertToSlots(spanEligibleVals)
 	selectedIDs, err = ShuffleList(validatorIndices, seed)
 	if err != nil {
 		return

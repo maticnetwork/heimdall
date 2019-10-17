@@ -88,8 +88,9 @@ func GetValidatorMapKey(address []byte) []byte {
 	return append(ValidatorMapKey, address...)
 }
 
-func GetValidatorRewardMapKey(valId []byte) []byte {
-	return append(ValidatorRewardMapKey, valId...)
+// GetValidatorRewardMapKey returns validator reward map
+func GetValidatorRewardMapKey(valID []byte) []byte {
+	return append(ValidatorRewardMapKey, valID...)
 }
 
 // AddValidator adds validator indexed with address
@@ -161,6 +162,24 @@ func (k *Keeper) GetCurrentValidators(ctx sdk.Context) (validators []types.Valid
 	k.IterateValidatorsAndApplyFn(ctx, func(validator types.Validator) error {
 		// check if validator is valid for current epoch
 		if validator.IsCurrentValidator(ackCount) {
+			// append if validator is current valdiator
+			validators = append(validators, validator)
+		}
+		return nil
+	})
+
+	return
+}
+
+// GetSpanEligibleValidators returns current validators who are not getting deactivated in between next span
+func (k *Keeper) GetSpanEligibleValidators(ctx sdk.Context) (validators []types.Validator) {
+	// get ack count
+	ackCount := k.ackRetriever.GetACKCount(ctx)
+
+	// Get validators and iterate through validator list
+	k.IterateValidatorsAndApplyFn(ctx, func(validator types.Validator) error {
+		// check if validator is valid for current epoch and endEpoch is not set.
+		if validator.EndEpoch == 0 && validator.IsCurrentValidator(ackCount) {
 			// append if validator is current valdiator
 			validators = append(validators, validator)
 		}

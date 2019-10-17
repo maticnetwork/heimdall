@@ -50,7 +50,7 @@ func TestValShuffle(t *testing.T) {
 	// t.Log("InitialVals", "Vals", initialVals)
 	selectedProducerIndices, err := SelectNextProducers(seedHash1, initialVals, 40)
 	t.Log("Found data", "data", selectedProducerIndices)
-	IDToPower := make(map[uint64]uint64)
+	IDToPower := make(map[uint64]int64)
 	for _, ID := range selectedProducerIndices {
 		IDToPower[ID] = IDToPower[ID] + 1
 	}
@@ -58,7 +58,7 @@ func TestValShuffle(t *testing.T) {
 	var selectedProducers []types.Validator
 	for _, val := range initialVals {
 		if IDToPower[val.ID.Uint64()] > 0 {
-			val.Power = IDToPower[val.ID.Uint64()]
+			val.VotingPower = IDToPower[val.ID.Uint64()]
 			selectedProducers = append(selectedProducers, val)
 		}
 	}
@@ -68,7 +68,7 @@ func TestValShuffle(t *testing.T) {
 }
 
 // Generate random validators
-func GenRandomVal(count int, startBlock uint64, power uint64, timeAlive uint64, randomise bool, startID uint64) (validators []types.Validator) {
+func GenRandomVal(count int, startBlock uint64, power int64, timeAlive uint64, randomise bool, startID uint64) (validators []types.Validator) {
 	for i := 0; i < count; i++ {
 		privKey1 := secp256k1.GenPrivKey()
 		pubkey := types.NewPubKey(privKey1.PubKey().Bytes())
@@ -84,13 +84,13 @@ func GenRandomVal(count int, startBlock uint64, power uint64, timeAlive uint64, 
 			}
 		}
 		newVal := types.Validator{
-			ID:         types.NewValidatorID(startID + uint64(i)),
-			StartEpoch: startBlock,
-			EndEpoch:   startBlock + timeAlive,
-			Power:      power,
-			Signer:     types.HexToHeimdallAddress(pubkey.Address().String()),
-			PubKey:     pubkey,
-			Accum:      0,
+			ID:               types.NewValidatorID(startID + uint64(i)),
+			StartEpoch:       startBlock,
+			EndEpoch:         startBlock + timeAlive,
+			VotingPower:      power,
+			Signer:           types.HexToHeimdallAddress(pubkey.Address().String()),
+			PubKey:           pubkey,
+			ProposerPriority: 0,
 		}
 		validators = append(validators, newVal)
 	}

@@ -166,6 +166,9 @@ func (k *Keeper) FreezeSet(ctx sdk.Context, id uint64, startBlock uint64, borCha
 		return err
 	}
 
+	// increment last eth block
+	k.IncrementLastEthBlock(ctx)
+
 	// generate new span
 	newSpan := types.NewSpan(
 		id,
@@ -184,20 +187,17 @@ func (k *Keeper) SelectNextProducers(ctx sdk.Context) (vals []types.Validator, e
 	// fetch last block used for seed
 	lastEthBlock := k.GetLastEthBlock(ctx)
 
-	// get current validators
-	currVals := k.sk.GetCurrentValidators(ctx)
+	// spanEligibleVals are current validators who are not getting deactivated in between next span
+	spanEligibleVals := k.sk.GetSpanEligibleValidators(ctx)
 	producerCount, err := k.GetProducerCount(ctx)
 	if err != nil {
 		return vals, err
 	}
 
 	// if producers to be selected is more than current validators no need to select/shuffle
-	if len(currVals) <= int(producerCount) {
-		return currVals, nil
+	if len(spanEligibleVals) <= int(producerCount) {
+		return spanEligibleVals, nil
 	}
-
-	// TODO parse current vals and ensure no current proposer is deactivating
-	// in between next span
 
 	// increment last processed header block number
 	newEthBlock := lastEthBlock.Add(lastEthBlock, big.NewInt(1))
@@ -209,7 +209,7 @@ func (k *Keeper) SelectNextProducers(ctx sdk.Context) (vals []types.Validator, e
 	}
 
 	// select next producers using seed as blockheader hash
-	newProducersIds, err := SelectNextProducers(blockHeader.Hash(), currVals, producerCount)
+	newProducersIds, err := SelectNextProducers(blockHeader.Hash(), spanEligibleVals, producerCount)
 	if err != nil {
 		return vals, err
 	}
@@ -226,8 +226,6 @@ func (k *Keeper) SelectNextProducers(ctx sdk.Context) (vals []types.Validator, e
 		}
 	}
 
-	// increment last eth block
-	k.IncrementLastEthBlock(ctx)
 	return vals, nil
 }
 
