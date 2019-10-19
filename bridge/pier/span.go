@@ -127,11 +127,7 @@ func (s *SpanService) startPolling(ctx context.Context, interval time.Duration) 
 	for {
 		select {
 		case <-ticker.C:
-			if lastSpan, err := s.getLastSpan(); err == nil && lastSpan != nil {
-				if s.isSpanProposer(lastSpan) {
-					go s.propose(lastSpan)
-				}
-			}
+			s.checkAndPropose()
 			go s.commit()
 		case <-ctx.Done():
 			ticker.Stop()
@@ -140,8 +136,21 @@ func (s *SpanService) startPolling(ctx context.Context, interval time.Duration) 
 	}
 }
 
+// checkAndPropose will check if current user is span proposer and proposes the span
+func (s *SpanService) checkAndPropose() {
+	lastSpan, err := s.getLastSpan()
+	if err == nil && lastSpan != nil {
+		nextSpanMsg, err := s.fetchNextSpanDetails(lastSpan.ID+1, lastSpan.EndBlock+1)
+
+		// check if current user is among next span producers
+		if err != nil && s.isSpanProposer(nextSpanMsg.SelectedProducers) {
+			go s.propose(lastSpan, nextSpanMsg)
+		}
+	}
+}
+
 // propose producers for next span if needed
-func (s *SpanService) propose(lastSpan *hmTypes.Span) {
+func (s *SpanService) propose(lastSpan *hmTypes.Span, nextSpanMsg bor.MsgProposeSpan) {
 	// call with last span on record + new span duration and see if it has been proposed
 	currentBlock, err := s.getCurrentChildBlock()
 	if err != nil {
@@ -150,18 +159,12 @@ func (s *SpanService) propose(lastSpan *hmTypes.Span) {
 	}
 
 	if lastSpan.StartBlock <= currentBlock && currentBlock <= lastSpan.EndBlock {
-		// send propose span
-		msg, err := s.fetchNextSpanDetails(lastSpan.ID+1, lastSpan.EndBlock+1)
-		if err != nil {
-			s.Logger.Error("Unable to fetch next span details", "error", err)
-			return
-		}
 
 		// log new span
-		s.Logger.Info("Proposing new span", "spanId", msg.ID, "startBlock", msg.StartBlock, "endBlock", msg.EndBlock)
+		s.Logger.Info("Proposing new span", "spanId", nextSpanMsg.ID, "startBlock", nextSpanMsg.StartBlock, "endBlock", nextSpanMsg.EndBlock)
 
 		// broadcast to heimdall
-		if err := s.queueConnector.BroadcastToHeimdall(msg); err != nil {
+		if err := s.queueConnector.BroadcastToHeimdall(nextSpanMsg); err != nil {
 			s.Logger.Error("Error while broadcasting msg to heimdall", "error", err)
 			return
 		}
@@ -286,16 +289,15 @@ func (s *SpanService) getCurrentChildBlock() (uint64, error) {
 	return childBlock.Number.Uint64(), nil
 }
 
-// isSpanProposer check if current user is proposer
-func (s *SpanService) isSpanProposer(lastSpan *hmTypes.Span) bool {
-	// sort validator address
-	selectedProducers := types.SortValidatorByAddress(lastSpan.SelectedProducers)
-
-	// get last validator as proposer
-	proposer := selectedProducers[len(selectedProducers)-1]
-
-	// check proposer
-	return bytes.Equal(proposer.Signer.Bytes(), helper.GetAddress())
+// isSpanProposer checks if current user is span proposer
+func (s *SpanService) isSpanProposer(nextSpanProducers []types.MinimalVal) bool {
+	// anyone among next span producers can become next span proposer
+	for _, val := range nextSpanProducers {
+		if bytes.Equal(val.Signer.Bytes(), helper.GetAddress()) {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *SpanService) fetchNextSpanDetails(id uint64, start uint64) (msg bor.MsgProposeSpan, err error) {
