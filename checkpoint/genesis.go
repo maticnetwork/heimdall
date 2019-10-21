@@ -2,6 +2,7 @@ package checkpoint
 
 import (
 	"errors"
+	"sort"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/helper"
@@ -49,6 +50,10 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 			panic(errors.New("Incorrect state in state-dump , Please Check "))
 		}
 
+		sort.Slice(data.Headers, func(i, j int) bool {
+			return data.Headers[i].TimeStamp < data.Headers[j].TimeStamp
+		})
+
 		for i, header := range data.Headers {
 			checkpointHeaderIndex := helper.GetConfig().ChildBlockInterval * (uint64(i) + 1)
 			keeper.AddCheckpoint(ctx, checkpointHeaderIndex, header)
@@ -67,11 +72,16 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 // ExportGenesis returns a GenesisState for a given context and keeper.
 func ExportGenesis(ctx sdk.Context, keeper Keeper) GenesisState {
 	bufferedCheckpoint, _ := keeper.GetCheckpointFromBuffer(ctx)
+	headers := keeper.GetCheckpointHeaders(ctx)
+
+	sort.Slice(headers, func(i, j int) bool {
+		return headers[i].TimeStamp < headers[j].TimeStamp
+	})
 	return NewGenesisState(
 		bufferedCheckpoint,
 		keeper.GetLastNoAck(ctx),
 		keeper.GetACKCount(ctx),
-		keeper.GetCheckpointHeaders(ctx),
+		headers,
 	)
 }
 
