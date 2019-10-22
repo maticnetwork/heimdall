@@ -43,8 +43,8 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Co
 		currentProposerHandlerFn(cdc, cliCtx),
 	).Methods("GET")
 	r.HandleFunc(
-		"/staking/initial-reward-root",
-		initialRewardRootHandlerFn(cdc, cliCtx),
+		"/staking/initial-account-root",
+		initialAccountRootHandlerFn(cdc, cliCtx),
 	).Methods("GET")
 }
 
@@ -259,31 +259,31 @@ func currentProposerHandlerFn(
 	}
 }
 
-// initialRewardRootHandlerFn returns genesis rewardroothash
-func initialRewardRootHandlerFn(
+// initialAccountRootHandlerFn returns genesis accountroothash
+func initialAccountRootHandlerFn(
 	cdc *codec.Codec,
 	cliCtx context.CLIContext,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", checkpointTypes.QuerierRoute, checkpoint.QueryInitialRewardRoot), nil)
-		RestLogger.Debug("initial rewardRootHash querier response", "res", res)
+		res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", checkpointTypes.QuerierRoute, checkpoint.QueryInitialAccountRoot), nil)
+		RestLogger.Debug("initial accountRootHash querier response", "res", res)
 
 		if err != nil {
-			RestLogger.Error("Error while calculating Initial Rewardroot ", "Error", err.Error())
+			RestLogger.Error("Error while calculating Initial AccountRoot  ", "Error", err.Error())
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		if len(res) == 0 {
-			RestLogger.Error("RewardRootHash not found ", "Error", err.Error())
-			rest.WriteErrorResponse(w, http.StatusBadRequest, errors.New("RewardRootHash not found").Error())
+			RestLogger.Error("AccountRootHash not found ", "Error", err.Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, errors.New("AccountRootHash not found").Error())
 			return
 		}
 
-		var rewardRootHash = hmTypes.BytesToHeimdallHash(res)
-		RestLogger.Debug("Fetched initial rewardRootHash ", "rewardRootHash", rewardRootHash)
+		var accountRootHash = hmTypes.BytesToHeimdallHash(res)
+		RestLogger.Debug("Fetched initial accountRootHash ", "AccountRootHash", accountRootHash)
 
-		result, err := json.Marshal(&rewardRootHash)
+		result, err := json.Marshal(&accountRootHash)
 		if err != nil {
 			RestLogger.Error("Error while marshalling response to Json", "error", err)
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())

@@ -29,11 +29,11 @@ type (
 	HeaderBlockReq struct {
 		BaseReq rest.BaseReq `json:"base_req"`
 
-		Proposer       types.HeimdallAddress `json:"proposer"`
-		RootHash       types.HeimdallHash    `json:"rootHash"`
-		RewardRootHash types.HeimdallHash    `json:"rewardRootHash"`
-		StartBlock     uint64                `json:"startBlock"`
-		EndBlock       uint64                `json:"endBlock"`
+		Proposer        types.HeimdallAddress `json:"proposer"`
+		RootHash        types.HeimdallHash    `json:"rootHash"`
+		AccountRootHash types.HeimdallHash    `json:"accountRootHash"`
+		StartBlock      uint64                `json:"startBlock"`
+		EndBlock        uint64                `json:"endBlock"`
 	}
 
 	// HeaderACKReq struct for sending ACK for a new headers
@@ -72,7 +72,7 @@ func newCheckpointHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.Hand
 			req.StartBlock,
 			req.EndBlock,
 			req.RootHash,
-			req.RewardRootHash,
+			req.AccountRootHash,
 			uint64(time.Now().Unix()),
 		)
 

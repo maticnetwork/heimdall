@@ -8,8 +8,8 @@ import (
 
 // query endpoints supported by the auth Querier
 const (
-	QueryAckCount          = "ack-count"
-	QueryInitialRewardRoot = "initial-reward-root"
+	QueryAckCount           = "ack-count"
+	QueryInitialAccountRoot = "initial-account-root"
 )
 
 // NewQuerier creates a querier for auth REST endpoints
@@ -18,8 +18,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 		switch path[0] {
 		case QueryAckCount:
 			return queryAckCount(ctx, req, keeper)
-		case QueryInitialRewardRoot:
-			return queryInitialRewardRoot(ctx, req, keeper)
+		case QueryInitialAccountRoot:
+			return queryInitialAccountRoot(ctx, req, keeper)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown auth query endpoint")
 		}
@@ -34,11 +34,12 @@ func queryAckCount(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byt
 	return bz, nil
 }
 
-func queryInitialRewardRoot(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	valRewardMap := keeper.sk.GetAllValidatorRewards(ctx)
-	rewardRootHash, err := GetRewardRootHash(valRewardMap)
+func queryInitialAccountRoot(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	// Calculate new account root hash
+	valAccounts := keeper.sk.GetAllValidatorAccounts(ctx)
+	accountRoot, err := GetAccountRootHash(valAccounts)
 	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not fetch genesis rewardroothash", err.Error()))
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not fetch genesis accountroothash ", err.Error()))
 	}
-	return rewardRootHash, nil
+	return accountRoot, nil
 }

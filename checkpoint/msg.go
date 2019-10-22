@@ -23,12 +23,12 @@ var _ sdk.Msg = &MsgCheckpoint{}
 
 // MsgCheckpoint represents checkpoint
 type MsgCheckpoint struct {
-	Proposer       types.HeimdallAddress `json:"proposer"`
-	StartBlock     uint64                `json:"startBlock"`
-	EndBlock       uint64                `json:"endBlock"`
-	RootHash       types.HeimdallHash    `json:"rootHash"`
-	RewardRootHash types.HeimdallHash    `json:"rewardRootHash"`
-	TimeStamp      uint64                `json:"timestamp"`
+	Proposer        types.HeimdallAddress `json:"proposer"`
+	StartBlock      uint64                `json:"startBlock"`
+	EndBlock        uint64                `json:"endBlock"`
+	RootHash        types.HeimdallHash    `json:"rootHash"`
+	AccountRootHash types.HeimdallHash    `json:"accountRootHash"`
+	TimeStamp       uint64                `json:"timestamp"`
 }
 
 // NewMsgCheckpointBlock creates new checkpoint message using mentioned arguments
@@ -37,16 +37,16 @@ func NewMsgCheckpointBlock(
 	startBlock uint64,
 	endBlock uint64,
 	roothash types.HeimdallHash,
-	rewardRootHash types.HeimdallHash,
+	accountRootHash types.HeimdallHash,
 	timestamp uint64,
 ) MsgCheckpoint {
 	return MsgCheckpoint{
-		Proposer:       proposer,
-		StartBlock:     startBlock,
-		EndBlock:       endBlock,
-		RootHash:       roothash,
-		RewardRootHash: rewardRootHash,
-		TimeStamp:      timestamp,
+		Proposer:        proposer,
+		StartBlock:      startBlock,
+		EndBlock:        endBlock,
+		RootHash:        roothash,
+		AccountRootHash: accountRootHash,
+		TimeStamp:       timestamp,
 	}
 }
 

@@ -280,6 +280,28 @@ func TestValidatorSetChange(t *testing.T) {
 
 }
 
+// tests setter/getters for validatorAccountMaps , validator account set/get
+func TestValidatorAccount(t *testing.T) {
+	ctx, keeper, _ := cmn.CreateTestInput(t, false)
+
+	validatorAccount1 := types.ValidatorAccount{
+		ID:            2,
+		RewardAmount:  big.NewInt(100000).Bytes(),
+		SlashedAmount: big.NewInt(0).Exp(big.NewInt(10), big.NewInt(22), nil).Bytes(),
+	}
+
+	err := keeper.AddValidatorAccount(ctx, validatorAccount1)
+	require.Empty(t, err, "Error when adding validator account to store")
+	t.Log("validator account added - ", validatorAccount1)
+
+	va, err := keeper.GetValidatorAccountByValID(ctx, validatorAccount1.ID)
+	require.Empty(t, err, "Error while fetching validator account from store")
+	t.Log("Validator Account from store - ", va)
+	require.Equal(t, validatorAccount1.ID, va.ID, "ID of validator account should be %v but it %v", validatorAccount1.ID, va.ID)
+	require.Equal(t, validatorAccount1.RewardAmount, va.RewardAmount, "Reward of validator account should be %v but it is %v", validatorAccount1.RewardAmount, va.RewardAmount)
+	require.Equal(t, validatorAccount1.SlashedAmount, va.SlashedAmount, "Slashed amount of validator account should be %v but it is %v", validatorAccount1.SlashedAmount, va.SlashedAmount)
+}
+
 // Tests setters and getters for validator reward
 func TestValidatorRewards(t *testing.T) {
 	ctx, keeper, _ := cmn.CreateTestInput(t, false)
@@ -287,32 +309,41 @@ func TestValidatorRewards(t *testing.T) {
 	curVal := keeper.GetCurrentValidators(ctx)
 	// check initial reward
 	initReward := big.NewInt(100)
-	keeper.SetValidatorIDToReward(ctx, curVal[0].ID, initReward)
-	valReward := keeper.GetRewardByValidatorID(ctx, curVal[0].ID)
+	keeper.AddRewardToValidator(ctx, curVal[0].ID, initReward)
+	valReward, err := keeper.GetRewardByValidatorID(ctx, curVal[0].ID)
+	require.Empty(t, err, "Error fetching validator reward")
 	require.Equal(t, initReward, valReward, "Validator Initial Reward should be %v but it is %v", initReward, valReward)
 	// check updated reward
 	rewardAdded := big.NewInt(50)
-	keeper.SetValidatorIDToReward(ctx, curVal[0].ID, rewardAdded)
-	updatedReward := keeper.GetRewardByValidatorID(ctx, curVal[0].ID)
+	keeper.AddRewardToValidator(ctx, curVal[0].ID, rewardAdded)
+	updatedReward, err := keeper.GetRewardByValidatorID(ctx, curVal[0].ID)
 	rewardSum := big.NewInt(0).Add(initReward, rewardAdded)
 	require.Equal(t, rewardSum, updatedReward, "Validator Updated Reward should be %v but it is %v", rewardSum, updatedReward)
 	// zero reward for Invalid Validator ID
-	rewardNonValId := keeper.GetRewardByValidatorID(ctx, curVal[1].ID)
+	rewardNonValId, err := keeper.GetRewardByValidatorID(ctx, curVal[1].ID)
 	require.Equal(t, big.NewInt(0), rewardNonValId, "Reward should be zero but it is %v", rewardNonValId)
-	// check validator reward map
-	keeper.SetValidatorIDToReward(ctx, curVal[1].ID, big.NewInt(35))
-	keeper.SetValidatorIDToReward(ctx, curVal[2].ID, big.NewInt(45))
-	valRewardMap := keeper.GetAllValidatorRewards(ctx)
-	t.Log("Validator Reward Map - ", valRewardMap)
-	require.Equal(t, 3, len(valRewardMap), "Validator Reward map size should be %v but it is %v", 3, len(valRewardMap))
-	require.Equal(t, rewardSum, valRewardMap[curVal[0].ID], "Validator Reward should be %v but it is %v", rewardSum, valRewardMap[curVal[0].ID])
-	require.Equal(t, big.NewInt(35), valRewardMap[curVal[1].ID], "Validator Reward should be %v but it is %v", big.NewInt(35), valRewardMap[curVal[0].ID])
-	require.Equal(t, big.NewInt(45), valRewardMap[curVal[2].ID], "Validator Reward should be %v but it is %v", big.NewInt(45), valRewardMap[curVal[0].ID])
+	//	check validator accounts
+	keeper.AddRewardToValidator(ctx, curVal[1].ID, big.NewInt(35))
+	keeper.AddRewardToValidator(ctx, curVal[2].ID, big.NewInt(45))
+	valAccounts := keeper.GetAllValidatorAccounts(ctx)
+	t.Log("Validator Accounts - ", valAccounts)
+	require.Equal(t, 3, len(valAccounts), "Validator accounts should be %v but it is %v", 3, len(valAccounts))
+	for _, val := range valAccounts {
 
-	// Generate Merkle Root Out of Rewards after sorting by valID
-	rewardRootHash, err := checkpoint.GetRewardRootHash(valRewardMap)
-	require.Empty(t, err, "Error when generating reward root hash from validator reward state tree")
-	t.Log("Reward root hash - ", types.BytesToHeimdallHash(rewardRootHash))
+		switch val.ID {
+		case curVal[0].ID:
+			require.Equal(t, rewardSum, big.NewInt(0).SetBytes(val.RewardAmount), "Validator Reward should be %v but it is %v", rewardSum, big.NewInt(0).SetBytes(val.RewardAmount))
+		case curVal[1].ID:
+			require.Equal(t, big.NewInt(35), big.NewInt(0).SetBytes(val.RewardAmount), "Validator Reward should be %v but it is %v", big.NewInt(35), big.NewInt(0).SetBytes(val.RewardAmount))
+		case curVal[2].ID:
+			require.Equal(t, big.NewInt(45), big.NewInt(0).SetBytes(val.RewardAmount), "Validator Reward should be %v but it is %v", big.NewInt(45), big.NewInt(0).SetBytes(val.RewardAmount))
+		}
+	}
+
+	// Generate Merkle Root Out of Accounts after sorting by valID
+	accountRootHash, err := checkpoint.GetAccountRootHash(valAccounts)
+	require.Empty(t, err, "Error when generating Account root hash from validator reward state tree")
+	t.Log("Account root hash - ", types.BytesToHeimdallHash(accountRootHash))
 
 }
 
