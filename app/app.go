@@ -31,7 +31,6 @@ import (
 	"github.com/maticnetwork/heimdall/supply"
 	supplyTypes "github.com/maticnetwork/heimdall/supply/types"
 	"github.com/maticnetwork/heimdall/types"
-	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 const (
@@ -126,9 +125,6 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 
 	// set prefix
 	config := sdk.GetConfig()
-	config.SetBech32PrefixForAccount(hmTypes.PrefixAccAddr, hmTypes.PrefixAccPub)
-	config.SetBech32PrefixForValidator(hmTypes.PrefixValAddr, hmTypes.PrefixValPub)
-	config.SetBech32PrefixForConsensusNode(hmTypes.PrefixConsAddr, hmTypes.PrefixConsPub)
 	config.Seal()
 
 	// create your application type

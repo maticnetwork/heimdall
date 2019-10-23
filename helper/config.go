@@ -46,8 +46,8 @@ const (
 	BroadcastAsync = "async"
 	// --
 
-	MainRPCUrl  = "https://ropsten.infura.io"
-	MaticRPCUrl = "https://testnet2.matic.network"
+	DefaultMainRPCUrl = "https://ropsten.infura.io"
+	DefaultBorRPCUrl  = "https://testnet2.matic.network"
 
 	// Services
 
@@ -87,8 +87,8 @@ func init() {
 
 // Configuration represents heimdall config
 type Configuration struct {
-	MainRPCUrl  string `json:"mainRPCUrl"`  // RPC endpoint for main chain
-	MaticRPCUrl string `json:"maticRPCUrl"` // RPC endpoint for matic chain
+	MainRPCUrl string `json:"mainRPCUrl"` // RPC endpoint for main chain
+	BorRPCUrl  string `json:"borRPCUrl"`  // RPC endpoint for bor chain
 
 	AmqpURL           string `json:"amqpURL"`           // amqp url
 	HeimdallServerURL string `json:"heimdallServerURL"` // heimdall server url
@@ -117,6 +117,23 @@ type Configuration struct {
 
 	ConfirmationBlocks uint64 `json:"confirmationBlocks"` // Number of blocks for confirmation
 }
+
+// Note: any changes to the comments/variables/mapstructure
+// must be reflected in the appropriate struct in helper/config.go
+const defaultConfigTemplate = `# This is a TOML config file.
+# For more information, see https://github.com/toml-lang/toml
+
+##### main base config options #####
+
+# RPC endpoint for ethereum chain
+eth_RPC_URL = "{{ .BaseConfig.ProxyApp }}"
+
+# RPC endpoint for matic chain
+bor_RPC_URL = "{{ .BaseConfig.Moniker }}"
+
+# AMQP URL 
+amqp_URL = "{{ . }}"
+`
 
 var conf Configuration
 
@@ -162,21 +179,17 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 		return
 	}
 
-	if strings.Compare(conf.MaticRPCUrl, "") != 0 {
+	if strings.Compare(conf.BorRPCUrl, "") != 0 {
 		return
 	}
 
 	configDir := filepath.Join(homeDir, "config")
-	fmt.Println("Initializing tendermint configurations", "configDir", configDir)
-
 	heimdallViper := viper.New()
 	if heimdallConfigFilePath == "" {
 		heimdallViper.SetConfigName("heimdall-config") // name of config file (without extension)
 		heimdallViper.AddConfigPath(configDir)         // call multiple times to add many search paths
-		fmt.Println("Loading heimdall configurations", "file", filepath.Join(configDir, "heimdall-config.json"))
 	} else {
 		heimdallViper.SetConfigFile(heimdallConfigFilePath) // set config file explicitly
-		fmt.Println("Loading heimdall configurations", "file", heimdallConfigFilePath)
 	}
 
 	err := heimdallViper.ReadInConfig()
@@ -193,7 +206,7 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 	}
 
 	mainChainClient = ethclient.NewClient(mainRPCClient)
-	if maticRPCClient, err = rpc.Dial(conf.MaticRPCUrl); err != nil {
+	if maticRPCClient, err = rpc.Dial(conf.BorRPCUrl); err != nil {
 		log.Fatal(err)
 	}
 

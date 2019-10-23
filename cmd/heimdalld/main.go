@@ -125,26 +125,14 @@ func newAccountCmd() *cobra.Command {
 			// init heimdall config
 			helper.InitHeimdallConfig("")
 
-			// set prefix
-			config := sdk.GetConfig()
-			config.SetBech32PrefixForAccount(hmTypes.PrefixAccAddr, hmTypes.PrefixAccPub)
-			config.SetBech32PrefixForValidator(hmTypes.PrefixValAddr, hmTypes.PrefixValPub)
-			config.SetBech32PrefixForConsensusNode(hmTypes.PrefixConsAddr, hmTypes.PrefixConsPub)
-
 			// get private and public keys
 			privObject := helper.GetPrivKey()
 			pubObject := helper.GetPubKey()
 
 			account := &ValidatorAccountFormatter{
-				Address:          ethCommon.BytesToAddress(pubObject.Address().Bytes()).String(),
-				PrivKey:          "0x" + hex.EncodeToString(privObject[:]),
-				PubKey:           "0x" + hex.EncodeToString(pubObject[:]),
-				AccountAddress:   sdk.AccAddress(pubObject.Address().Bytes()).String(),
-				AccountPubKey:    sdk.MustBech32ifyAccPub(pubObject),
-				ValidatorAddress: sdk.ValAddress(pubObject.Address().Bytes()).String(),
-				ValidatorPubKey:  sdk.MustBech32ifyValPub(pubObject),
-				ConsensusAddress: sdk.ConsAddress(pubObject.Address().Bytes()).String(),
-				ConsensusPubKey:  sdk.MustBech32ifyConsPub(pubObject),
+				Address: ethCommon.BytesToAddress(pubObject.Address().Bytes()).String(),
+				PrivKey: "0x" + hex.EncodeToString(privObject[:]),
+				PubKey:  "0x" + hex.EncodeToString(pubObject[:]),
 			}
 
 			b, err := json.MarshalIndent(account, "", "    ")
@@ -476,8 +464,8 @@ func getGenesisAccount(address []byte) app.GenesisAccount {
 
 func getDefaultHeimdallConfig() helper.Configuration {
 	return helper.Configuration{
-		MainRPCUrl:  helper.MainRPCUrl,
-		MaticRPCUrl: helper.MaticRPCUrl,
+		MainRPCUrl: helper.DefaultMainRPCUrl,
+		BorRPCUrl:  helper.DefaultBorRPCUrl,
 
 		AmqpURL:           helper.DefaultAmqpURL,
 		HeimdallServerURL: helper.DefaultHeimdallServerURL,
