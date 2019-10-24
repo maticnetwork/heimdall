@@ -143,7 +143,7 @@ func (s *SpanService) checkAndPropose() {
 		nextSpanMsg, err := s.fetchNextSpanDetails(lastSpan.ID+1, lastSpan.EndBlock+1)
 
 		// check if current user is among next span producers
-		if err != nil && s.isSpanProposer(nextSpanMsg.SelectedProducers) {
+		if err == nil && s.isSpanProposer(nextSpanMsg.SelectedProducers) {
 			go s.propose(lastSpan, nextSpanMsg)
 		}
 	}
