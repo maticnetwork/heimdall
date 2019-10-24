@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"math/big"
+	"sort"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -89,6 +90,7 @@ func GetHeaders(start uint64, end uint64) ([]byte, error) {
 // GetAccountRootHash returns roothash of Validator Account State Tree
 func GetAccountRootHash(validatorAccounts []hmTypes.ValidatorAccount) ([]byte, error) {
 	// Sort the validatorAccounts by valID
+	sort.Slice(validatorAccounts, func(i, j int) bool { return validatorAccounts[i].ID < validatorAccounts[j].ID })
 
 	expectedLength := len(validatorAccounts)
 	valAccountHashes := make([][32]byte, expectedLength)

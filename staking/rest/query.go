@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/big"
 	"net/http"
 	"strconv"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/maticnetwork/heimdall/checkpoint"
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/staking"
+	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
 	"github.com/maticnetwork/heimdall/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/types/rest"
@@ -41,6 +43,10 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Co
 	r.HandleFunc(
 		"/staking/current-proposer",
 		currentProposerHandlerFn(cdc, cliCtx),
+	).Methods("GET")
+	r.HandleFunc(
+		"/staking/slash-validator",
+		slashValidatorHandlerFn(cdc, cliCtx),
 	).Methods("GET")
 	r.HandleFunc(
 		"/staking/initial-account-root",
@@ -291,5 +297,40 @@ func initialAccountRootHandlerFn(
 		}
 
 		rest.PostProcessResponse(w, cliCtx, result)
+	}
+}
+
+func slashValidatorHandlerFn(
+	cdc *codec.Codec,
+	cliCtx context.CLIContext,
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		params := r.URL.Query()
+		RestLogger.Info("Slashing validator.", "valID", params.Get("val_id"), "slash amount", params.Get("slash_amount"))
+		valID, ok := rest.ParseUint64OrReturnBadRequest(w, params.Get("val_id"))
+		if !ok {
+			return
+		}
+		slashAmount, ok := big.NewInt(0).SetString(params.Get("slash_amount"), 10)
+		if !ok {
+			return
+		}
+
+		slashingParams := stakingTypes.NewValidatorSlashParams(types.ValidatorID(valID), slashAmount)
+		bz, err := cliCtx.Codec.MarshalJSON(slashingParams)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", stakingTypes.QuerierRoute, staking.QuerySlashValidator), bz)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		RestLogger.Debug("slashed validator successfully ", "res", res)
+		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }

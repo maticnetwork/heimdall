@@ -101,9 +101,11 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 
 	// Add initial validator accounts
 	for _, valAccount := range data.ValidatorAccounts {
-		keeper.AddValidatorAccount(ctx, valAccount)
+		if err := keeper.AddValidatorAccount(ctx, valAccount); err != nil {
+			panic((err))
+		}
 	}
-
+			
 	// Rewards - reward issued for checkpoint signature
 	keeper.SetCheckpointReward(ctx, data.CheckpointReward)
 	keeper.SetProposerBonusPercent(ctx, data.ProposerBonusPercent)

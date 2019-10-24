@@ -249,6 +249,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		AddRoute(supplyTypes.QuerierRoute, supply.NewQuerier(app.supplyKeeper)).
 		AddRoute(checkpointTypes.QuerierRoute, checkpoint.NewQuerier(app.checkpointKeeper)).
 		AddRoute(borTypes.QuerierRoute, bor.NewQuerier(app.borKeeper)).
+		AddRoute(stakingTypes.QuerierRoute, staking.NewQuerier(app.stakingKeeper)).
 		AddRoute(clerkTypes.QuerierRoute, clerk.NewQuerier(app.clerkKeeper))
 
 	// perform initialization logic
