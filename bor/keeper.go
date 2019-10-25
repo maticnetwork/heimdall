@@ -238,11 +238,9 @@ func (k *Keeper) UpdateLastSpan(ctx sdk.Context, id uint64) {
 // IncrementLastEthBlock increment last eth block
 func (k *Keeper) IncrementLastEthBlock(ctx sdk.Context) {
 	store := ctx.KVStore(k.storeKey)
-	var lastEthBlock *big.Int
+	lastEthBlock := big.NewInt(0)
 	if store.Has(LastProcessedEthBlock) {
 		lastEthBlock = lastEthBlock.SetBytes(store.Get(LastProcessedEthBlock))
-	} else {
-		lastEthBlock = big.NewInt(0)
 	}
 	store.Set(LastProcessedEthBlock, lastEthBlock.Add(lastEthBlock, big.NewInt(1)).Bytes())
 }
@@ -256,11 +254,9 @@ func (k *Keeper) SetLastEthBlock(ctx sdk.Context, blockNumber *big.Int) {
 // GetLastEthBlock get last processed Eth block for seed
 func (k *Keeper) GetLastEthBlock(ctx sdk.Context) *big.Int {
 	store := ctx.KVStore(k.storeKey)
-	var lastEthBlock *big.Int
+	lastEthBlock := big.NewInt(0)
 	if store.Has(LastProcessedEthBlock) {
 		lastEthBlock = lastEthBlock.SetBytes(store.Get(LastProcessedEthBlock))
-	} else {
-		lastEthBlock = big.NewInt(0)
 	}
 	return lastEthBlock
 }
