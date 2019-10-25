@@ -27,7 +27,6 @@ import (
 	borTags "github.com/maticnetwork/heimdall/bor/tags"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
-	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 const (
@@ -150,7 +149,7 @@ func (s *SpanService) checkAndPropose() {
 }
 
 // propose producers for next span if needed
-func (s *SpanService) propose(lastSpan *hmTypes.Span, nextSpanMsg bor.MsgProposeSpan) {
+func (s *SpanService) propose(lastSpan *types.Span, nextSpanMsg *types.Span) {
 	// call with last span on record + new span duration and see if it has been proposed
 	currentBlock, err := s.getCurrentChildBlock()
 	if err != nil {
@@ -159,12 +158,18 @@ func (s *SpanService) propose(lastSpan *hmTypes.Span, nextSpanMsg bor.MsgPropose
 	}
 
 	if lastSpan.StartBlock <= currentBlock && currentBlock <= lastSpan.EndBlock {
-
 		// log new span
 		s.Logger.Info("Proposing new span", "spanId", nextSpanMsg.ID, "startBlock", nextSpanMsg.StartBlock, "endBlock", nextSpanMsg.EndBlock)
 
 		// broadcast to heimdall
-		if err := s.queueConnector.BroadcastToHeimdall(nextSpanMsg); err != nil {
+		msg := bor.MsgProposeSpan{
+			ID:         nextSpanMsg.ID,
+			Proposer:   types.BytesToHeimdallAddress(helper.GetAddress()),
+			StartBlock: nextSpanMsg.StartBlock,
+			EndBlock:   nextSpanMsg.EndBlock,
+			ChainID:    nextSpanMsg.ChainID,
+		}
+		if err := s.queueConnector.BroadcastToHeimdall(msg); err != nil {
 			s.Logger.Error("Error while broadcasting msg to heimdall", "error", err)
 			return
 		}
@@ -248,7 +253,7 @@ func (s *SpanService) fetchLastSpan() (int, error) {
 }
 
 // checks span status
-func (s *SpanService) getLastSpan() (*hmTypes.Span, error) {
+func (s *SpanService) getLastSpan() (*types.Span, error) {
 	// fetch latest start block from heimdall via rest query
 	result, err := FetchFromAPI(s.cliCtx, GetHeimdallServerEndpoint(LatestSpanURL))
 	if err != nil {
@@ -256,7 +261,7 @@ func (s *SpanService) getLastSpan() (*hmTypes.Span, error) {
 		return nil, err
 	}
 
-	var lastSpan hmTypes.Span
+	var lastSpan types.Span
 	err = json.Unmarshal(result.Result, &lastSpan)
 	if err != nil {
 		s.Logger.Error("Error unmarshalling", "error", err)
@@ -290,7 +295,7 @@ func (s *SpanService) getCurrentChildBlock() (uint64, error) {
 }
 
 // isSpanProposer checks if current user is span proposer
-func (s *SpanService) isSpanProposer(nextSpanProducers []types.MinimalVal) bool {
+func (s *SpanService) isSpanProposer(nextSpanProducers []types.Validator) bool {
 	// anyone among next span producers can become next span proposer
 	for _, val := range nextSpanProducers {
 		if bytes.Equal(val.Signer.Bytes(), helper.GetAddress()) {
@@ -300,11 +305,11 @@ func (s *SpanService) isSpanProposer(nextSpanProducers []types.MinimalVal) bool 
 	return false
 }
 
-func (s *SpanService) fetchNextSpanDetails(id uint64, start uint64) (msg bor.MsgProposeSpan, err error) {
+func (s *SpanService) fetchNextSpanDetails(id uint64, start uint64) (*types.Span, error) {
 	req, err := http.NewRequest("GET", GetHeimdallServerEndpoint(NextSpanInfoURL), nil)
 	if err != nil {
 		s.Logger.Error("Error creating a new request", "error", err)
-		return
+		return nil, err
 	}
 
 	q := req.URL.Query()
@@ -318,17 +323,17 @@ func (s *SpanService) fetchNextSpanDetails(id uint64, start uint64) (msg bor.Msg
 	result, err := FetchFromAPI(s.cliCtx, req.URL.String())
 	if err != nil {
 		s.Logger.Error("Error fetching proposers", "error", err)
-		return
+		return nil, err
 	}
 
-	err = json.Unmarshal(result.Result, &msg)
-	if err != nil {
+	var msg types.Span
+	if err = json.Unmarshal(result.Result, &msg); err != nil {
 		s.Logger.Error("Error unmarshalling propose tx msg ", "error", err)
-		return
+		return nil, err
 	}
 
 	s.Logger.Debug("Generated proposer span msg", "msg", msg)
-	return msg, nil
+	return &msg, nil
 }
 
 // // SubscribeToTx subscribes to a broadcasted Tx and waits for its commitment to a block

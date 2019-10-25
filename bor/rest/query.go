@@ -211,7 +211,6 @@ func prepareNextSpanHandlerFn(
 			return
 		}
 		chainID := params.Get("chain_id")
-		proposer := params.Get("proposer")
 
 		//
 		// Get span duration
@@ -269,19 +268,12 @@ func prepareNextSpanHandlerFn(
 			rest.WriteErrorResponse(w, http.StatusNoContent, errors.New("no content found for requested key").Error())
 			return
 		}
+
 		var _validatorSet types.ValidatorSet
 		err = cdc.UnmarshalBinaryBare(res, &_validatorSet)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusNoContent, errors.New("unable to unmarshall binary bare").Error())
 			return
-		}
-		var currentValidators []types.Validator
-
-		for _, val := range _validatorSet.Validators {
-			if val.IsCurrentValidator(uint64(ackCount)) {
-				// append if validator is current valdiator
-				currentValidators = append(currentValidators, *val)
-			}
 		}
 
 		// Fetching SelectedProducers
@@ -304,13 +296,12 @@ func prepareNextSpanHandlerFn(
 		}
 
 		// draft a propose span message
-		msg := bor.NewMsgProposeSpan(
+		msg := types.NewSpan(
 			spanID,
-			types.HexToHeimdallAddress(proposer),
 			startBlock,
 			startBlock+spanDuration-1,
-			types.ValToMinVal(currentValidators),
-			types.ValToMinVal(selectedProducers),
+			_validatorSet,
+			selectedProducers,
 			chainID,
 		)
 		result, err := json.Marshal(&msg)

@@ -12,10 +12,7 @@ import (
 
 	"github.com/maticnetwork/heimdall/bor"
 	borTypes "github.com/maticnetwork/heimdall/bor/types"
-	"github.com/maticnetwork/heimdall/checkpoint"
-	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	restClient "github.com/maticnetwork/heimdall/client/rest"
-	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/types/rest"
 )
@@ -71,61 +68,12 @@ func postProposeSpanHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.
 			return
 		}
 
-		//
-		// Get ack count
-		//
-
-		// fetch ack count
-		res, err = cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", checkpointTypes.QuerierRoute, checkpoint.QueryAckCount), nil)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		if len(res) == 0 {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, errors.New("Ack not found").Error())
-			return
-		}
-
-		var ackCount uint64
-		if err := cliCtx.Codec.UnmarshalJSON(res, &ackCount); err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		//
-		// Validators
-		//
-
-		res, err = cliCtx.QueryStore(staking.CurrentValidatorSetKey, "staking")
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-		// the query will return empty if there is no data
-		if len(res) == 0 {
-			rest.WriteErrorResponse(w, http.StatusNoContent, errors.New("no content found for requested key").Error())
-			return
-		}
-		var _validatorSet types.ValidatorSet
-		cdc.UnmarshalBinaryBare(res, &_validatorSet)
-		var validators []types.MinimalVal
-
-		for _, val := range _validatorSet.Validators {
-			if val.IsCurrentValidator(uint64(ackCount)) {
-				// append if validator is current valdiator
-				validators = append(validators, (*val).MinimalVal())
-			}
-		}
-
 		// draft a propose span message
 		msg := bor.NewMsgProposeSpan(
 			req.ID,
 			types.HexToHeimdallAddress(req.BaseReq.From),
 			req.StartBlock,
 			req.StartBlock+spanDuration,
-			validators,
-			validators,
 			req.BorChainID,
 		)
 
