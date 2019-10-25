@@ -154,7 +154,7 @@ func (v *Validator) UpdatedAt() uint64 {
 func (v *Validator) MinimalVal() MinimalVal {
 	return MinimalVal{
 		ID:          v.ID,
-		VotingPower: v.VotingPower,
+		VotingPower: uint64(v.VotingPower),
 		Signer:      v.Signer,
 	}
 }
@@ -201,7 +201,7 @@ func (valID ValidatorID) Uint64() uint64 {
 // Used to send validator information to bor validator contract
 type MinimalVal struct {
 	ID          ValidatorID     `json:"ID"`
-	VotingPower int64           `json:"power"` // TODO add 10^-18 here so that we dont overflow easily
+	VotingPower uint64          `json:"power"` // TODO add 10^-18 here so that we dont overflow easily
 	Signer      HeimdallAddress `json:"signer"`
 }
 
