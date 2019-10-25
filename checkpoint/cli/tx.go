@@ -155,7 +155,7 @@ func SendCheckpointACKTx(cdc *codec.Codec) *cobra.Command {
 
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
 	cmd.Flags().String(FlagHeaderNumber, "", "--header=<header-index>")
-	cmd.Flags().StringP(FlagCheckpointTxHash, "tx", "", "--txhash=<checkpoint-txhash>")
+	cmd.Flags().StringP(FlagCheckpointTxHash, "t", "", "--txhash=<checkpoint-txhash>")
 
 	cmd.MarkFlagRequired(FlagHeaderNumber)
 	cmd.MarkFlagRequired(FlagCheckpointTxHash)
