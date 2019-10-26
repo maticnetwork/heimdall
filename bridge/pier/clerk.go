@@ -3,7 +3,6 @@ package pier
 import (
 	"bytes"
 	"context"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"math/big"
@@ -21,7 +20,6 @@ import (
 	"github.com/tendermint/tendermint/libs/common"
 	httpClient "github.com/tendermint/tendermint/rpc/client"
 
-	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
@@ -178,17 +176,15 @@ func (s *ClerkService) commit() {
 	// loop through tx
 	end := start
 	for _, tx := range txs {
-		txHash, err := hex.DecodeString(tx.TxHash)
-		if err != nil {
-			s.Logger.Error("Error while searching txs", "error", err)
-		} else {
-			s.broadcastToBor(tx.Height, txHash)
-		}
-
 		for _, tag := range tx.Tags {
 			if tag.Key == clerkTypes.RecordID {
-				if e, err := strconv.ParseUint(tag.Value, 10, 64); err == nil && e > end {
-					end = e
+				recordID, err := strconv.ParseUint(tag.Value, 10, 64)
+				if err == nil {
+					// broadcast to bor
+					s.broadcastToBor(recordID)
+					if recordID > end {
+						end = recordID
+					}
 				}
 			}
 		}
@@ -257,41 +253,10 @@ func (s *ClerkService) isRecordProposer(lastSpan *hmTypes.Span) bool {
 	return bytes.Equal(proposer.Signer.Bytes(), helper.GetAddress())
 }
 
-// broadcastToBor broadcasts to bor
-func (s *ClerkService) broadcastToBor(height int64, txHash []byte) error {
-	// extraData
-	votes, sigs, chainID, err := FetchVotes(height, s.httpClient)
-	if err != nil {
-		s.Logger.Error("Error fetching votes", "height", height)
-		return err
-	}
-
-	// proof
-	tx, err := helper.QueryTxWithProof(s.cliCtx, txHash)
-	if err != nil {
-		return err
-	}
-	// fmt.Println("TxBytes: ", hex.EncodeToString(tx.Tx[4:]))
-	// fmt.Println("Leaf: ", hex.EncodeToString(tx.Proof.Leaf()))
-	// fmt.Println("Root: ", tx.Proof.RootHash.String())
-	proofList := helper.GetMerkleProofList(&tx.Proof.Proof)
-	proof := helper.AppendBytes(proofList...)
-
+// propose state to bor
+func (s *ClerkService) broadcastToBor(stateID uint64) error {
 	// encode commit span
-	encodedData := s.encodeCommitStateData(
-		helper.GetVoteBytes(votes, chainID),
-		sigs,
-		tx.Tx[authTypes.PulpHashLength:],
-		proof,
-	)
-
-	// fmt.Println("data : ",
-	// 	fmt.Sprintf(`"0x%s","0x%s","0x%s","0x%s"`,
-	// 		hex.EncodeToString(helper.GetVoteBytes(votes, chainID)),
-	// 		hex.EncodeToString(sigs),
-	// 		hex.EncodeToString(tx.Tx[4:]),
-	// 		hex.EncodeToString(proof),
-	// 	))
+	encodedData := s.encodeProposeStateData(stateID)
 
 	// get validator address
 	stateReceiverAddress := helper.GetStateReceiverAddress()
@@ -319,12 +284,12 @@ func (s *ClerkService) broadcastToBor(height int64, txHash []byte) error {
 // ABI encoding
 //
 
-func (s *ClerkService) encodeCommitStateData(voteSignBytes []byte, sigs []byte, txData []byte, proof []byte) []byte {
+func (s *ClerkService) encodeProposeStateData(stateID uint64) []byte {
 	// state receiver ABI
 	stateReceiverABI := s.contractConnector.StateReceiverABI
 
 	// commit state
-	data, err := stateReceiverABI.Pack("commitState", voteSignBytes, sigs, txData, proof)
+	data, err := stateReceiverABI.Pack("proposeState", big.NewInt(0).SetUint64(stateID))
 	if err != nil {
 		Logger.Error("Unable to pack tx for commit state", "error", err)
 		return nil

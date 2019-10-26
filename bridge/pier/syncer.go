@@ -537,8 +537,6 @@ func (syncer *Syncer) processStateSyncedEvent(eventName string, abiObject *abi.A
 			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			uint64(vLog.Index),
 			event.Id.Uint64(),
-			hmTypes.BytesToHeimdallAddress(event.ContractAddress.Bytes()),
-			event.Data,
 		)
 
 		// broadcast to heimdall

@@ -1,14 +1,15 @@
 package clerk
 
 import (
-	"bytes"
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
 	"github.com/maticnetwork/heimdall/common"
+	"github.com/maticnetwork/heimdall/contracts/statesender"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/types"
 )
 
 // NewHandler creates new handler for handling messages for checkpoint module
@@ -35,21 +36,21 @@ func handleMsgEventRecord(ctx sdk.Context, msg clerkTypes.MsgEventRecord, k Keep
 		return common.ErrWaitForConfirmation(k.Codespace()).Result()
 	}
 
-	found := false
+	var parsedLog *statesender.StatesenderStateSynced
 	for _, log := range receipt.Logs {
 		if uint64(log.Index) == msg.LogIndex && len(log.Topics) == 3 {
-			parsedLog, err := contractCaller.EncodeStateSyncedEvent(log)
+			p, err := contractCaller.EncodeStateSyncedEvent(log)
 			if err != nil {
 				break
 			}
 
-			if bytes.Equal(msg.Data, parsedLog.Data) && msg.ID == parsedLog.Id.Uint64() && bytes.Equal(msg.Contract.Bytes(), parsedLog.ContractAddress.Bytes()) {
-				found = true
+			if p != nil && msg.ID == p.Id.Uint64() {
+				parsedLog = p
 			}
 		}
 	}
 
-	if !found {
+	if parsedLog == nil {
 		return clerkTypes.ErrEventRecordInvalid(k.Codespace()).Result()
 	}
 
@@ -58,8 +59,8 @@ func handleMsgEventRecord(ctx sdk.Context, msg clerkTypes.MsgEventRecord, k Keep
 		msg.TxHash,
 		msg.LogIndex,
 		msg.ID,
-		msg.Contract,
-		msg.Data,
+		types.BytesToHeimdallAddress(parsedLog.ContractAddress.Bytes()),
+		parsedLog.Data,
 	)
 
 	// save event into state
@@ -70,7 +71,7 @@ func handleMsgEventRecord(ctx sdk.Context, msg clerkTypes.MsgEventRecord, k Keep
 
 	resTags := sdk.NewTags(
 		clerkTypes.RecordID, []byte(strconv.FormatUint(msg.ID, 10)),
-		clerkTypes.RecordContract, []byte(msg.Contract.String()),
+		clerkTypes.RecordContract, []byte(parsedLog.ContractAddress.String()),
 		clerkTypes.RecordTxHash, []byte(msg.TxHash.String()),
 		clerkTypes.RecordTxLogIndex, []byte(strconv.FormatUint(msg.LogIndex, 10)),
 	)

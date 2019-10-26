@@ -12,8 +12,6 @@ type MsgEventRecord struct {
 	TxHash   types.HeimdallHash    `json:"tx_hash"`
 	LogIndex uint64                `json:"log_index"`
 	ID       uint64                `json:"id"`
-	Contract types.HeimdallAddress `json:"contract"`
-	Data     []byte                `json:"data"`
 }
 
 var _ sdk.Msg = MsgEventRecord{}
@@ -24,16 +22,12 @@ func NewMsgEventRecord(
 	txHash types.HeimdallHash,
 	logIndex uint64,
 	id uint64,
-	contract types.HeimdallAddress,
-	data []byte,
 ) MsgEventRecord {
 	return MsgEventRecord{
 		From:     from,
 		TxHash:   txHash,
 		LogIndex: logIndex,
 		ID:       id,
-		Contract: contract,
-		Data:     data,
 	}
 }
 
@@ -51,10 +45,6 @@ func (msg MsgEventRecord) ValidateBasic() sdk.Error {
 
 	if msg.TxHash.Empty() {
 		return sdk.ErrInvalidAddress("missing tx hash")
-	}
-
-	if msg.Contract.Empty() {
-		return sdk.ErrInvalidAddress("missing contract address")
 	}
 	return nil
 }
