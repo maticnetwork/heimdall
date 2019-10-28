@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 )
@@ -9,8 +10,8 @@ import (
 // ValidatorAccount contains Rewards, Slashed Amount
 type ValidatorAccount struct {
 	ID            ValidatorID `json:"ID"`
-	RewardAmount  []byte      `json:"rewardAmount"`
-	SlashedAmount []byte      `json:"slashedAmount"`
+	RewardAmount  string      `json:"rewardAmount"`
+	SlashedAmount string      `json:"slashedAmount"`
 }
 
 func (va *ValidatorAccount) String() string {
@@ -43,4 +44,10 @@ func UnMarshallValidatorAccount(cdc *codec.Codec, value []byte) (ValidatorAccoun
 		return validatorAccount, err
 	}
 	return validatorAccount, nil
+}
+
+// SortValidatorAccountByID - Sorts Validator Accounts By Validator ID
+func SortValidatorAccountByID(validatorAccounts []ValidatorAccount) []ValidatorAccount {
+	sort.Slice(validatorAccounts, func(i, j int) bool { return validatorAccounts[i].ID < validatorAccounts[j].ID })
+	return validatorAccounts
 }

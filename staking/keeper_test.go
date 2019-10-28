@@ -286,8 +286,8 @@ func TestValidatorAccount(t *testing.T) {
 
 	validatorAccount1 := types.ValidatorAccount{
 		ID:            2,
-		RewardAmount:  big.NewInt(100000).Bytes(),
-		SlashedAmount: big.NewInt(0).Exp(big.NewInt(10), big.NewInt(22), nil).Bytes(),
+		RewardAmount:  big.NewInt(100000).String(),
+		SlashedAmount: big.NewInt(0).Exp(big.NewInt(10), big.NewInt(22), nil).String(),
 	}
 
 	err := keeper.AddValidatorAccount(ctx, validatorAccount1)
@@ -332,11 +332,14 @@ func TestValidatorSlashing(t *testing.T) {
 
 		switch val.ID {
 		case curVal[0].ID:
-			require.Equal(t, slashSum, big.NewInt(0).SetBytes(val.SlashedAmount), "Validator SlashedAmount should be %v but it is %v", slashSum, big.NewInt(0).SetBytes(val.SlashedAmount))
+			slashAmount, _ := big.NewInt(0).SetString(val.SlashedAmount, 10)
+			require.Equal(t, slashSum, slashAmount, "Validator SlashedAmount should be %v but it is %v", slashSum, slashAmount)
 		case curVal[1].ID:
-			require.Equal(t, big.NewInt(35), big.NewInt(0).SetBytes(val.SlashedAmount), "Validator SlashedAmount should be %v but it is %v", big.NewInt(35), big.NewInt(0).SetBytes(val.SlashedAmount))
+			slashAmount, _ := big.NewInt(0).SetString(val.SlashedAmount, 10)
+			require.Equal(t, big.NewInt(35), slashAmount, "Validator SlashedAmount should be %v but it is %v", big.NewInt(35), slashAmount)
 		case curVal[2].ID:
-			require.Equal(t, big.NewInt(45), big.NewInt(0).SetBytes(val.SlashedAmount), "Validator SlashedAmount should be %v but it is %v", big.NewInt(45), big.NewInt(0).SetBytes(val.SlashedAmount))
+			slashAmount, _ := big.NewInt(0).SetString(val.SlashedAmount, 10)
+			require.Equal(t, big.NewInt(45), slashAmount, "Validator SlashedAmount should be %v but it is %v", big.NewInt(45), slashAmount)
 		}
 	}
 
@@ -377,11 +380,14 @@ func TestValidatorRewards(t *testing.T) {
 
 		switch val.ID {
 		case curVal[0].ID:
-			require.Equal(t, rewardSum, big.NewInt(0).SetBytes(val.RewardAmount), "Validator Reward should be %v but it is %v", rewardSum, big.NewInt(0).SetBytes(val.RewardAmount))
+			reward, _ := big.NewInt(0).SetString(val.RewardAmount, 10)
+			require.Equal(t, rewardSum, reward, "Validator Reward should be %v but it is %v", rewardSum, reward)
 		case curVal[1].ID:
-			require.Equal(t, big.NewInt(35), big.NewInt(0).SetBytes(val.RewardAmount), "Validator Reward should be %v but it is %v", big.NewInt(35), big.NewInt(0).SetBytes(val.RewardAmount))
+			reward, _ := big.NewInt(0).SetString(val.RewardAmount, 10)
+			require.Equal(t, big.NewInt(35), reward, "Validator Reward should be %v but it is %v", big.NewInt(35), reward)
 		case curVal[2].ID:
-			require.Equal(t, big.NewInt(45), big.NewInt(0).SetBytes(val.RewardAmount), "Validator Reward should be %v but it is %v", big.NewInt(45), big.NewInt(0).SetBytes(val.RewardAmount))
+			reward, _ := big.NewInt(0).SetString(val.RewardAmount, 10)
+			require.Equal(t, big.NewInt(45), reward, "Validator Reward should be %v but it is %v", big.NewInt(45), reward)
 		}
 	}
 

@@ -37,6 +37,10 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Co
 		validatorSetHandlerFn(cdc, cliCtx),
 	).Methods("GET")
 	r.HandleFunc(
+		"/staking/validator-account/{id}",
+		validatorAccountByIDHandlerFn(cdc, cliCtx),
+	).Methods("GET")
+	r.HandleFunc(
 		"/staking/proposer/{times}",
 		proposerHandlerFn(cdc, cliCtx),
 	).Methods("GET")
@@ -168,6 +172,45 @@ func validatorSetHandlerFn(
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
+		rest.PostProcessResponse(w, cliCtx, result)
+	}
+}
+
+// get validatoraccount by valID
+func validatorAccountByIDHandlerFn(
+	cdc *codec.Codec,
+	cliCtx context.CLIContext,
+) http.HandlerFunc {
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+
+		// get id
+		id, ok := rest.ParseUint64OrReturnBadRequest(w, vars["id"])
+		if !ok {
+			return
+		}
+
+		res, err := cliCtx.QueryStore(staking.GetValidatorAccountMapKey(hmTypes.NewValidatorID(id).Bytes()), "staking")
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+		}
+
+		if len(res) == 0 {
+			rest.WriteErrorResponse(w, http.StatusNoContent, errors.New("no content found for requested key").Error())
+		}
+
+		var _valAccount hmTypes.ValidatorAccount
+
+		cdc.UnmarshalBinaryBare(res, &_valAccount)
+
+		result, err := json.Marshal(&_valAccount)
+		if err != nil {
+			RestLogger.Error("Error while marshalling response to Json", "error", err)
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
 		rest.PostProcessResponse(w, cliCtx, result)
 	}
 }
@@ -307,30 +350,35 @@ func slashValidatorHandlerFn(
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		params := r.URL.Query()
-		RestLogger.Info("Slashing validator.", "valID", params.Get("val_id"), "slash amount", params.Get("slash_amount"))
 		valID, ok := rest.ParseUint64OrReturnBadRequest(w, params.Get("val_id"))
 		if !ok {
 			return
 		}
+
 		slashAmount, ok := big.NewInt(0).SetString(params.Get("slash_amount"), 10)
 		if !ok {
 			return
 		}
 
+		RestLogger.Info("Slashing validator - ", "valID", valID, "slashAmount", slashAmount)
+
 		slashingParams := stakingTypes.NewValidatorSlashParams(types.ValidatorID(valID), slashAmount)
+
 		bz, err := cliCtx.Codec.MarshalJSON(slashingParams)
 		if err != nil {
+			RestLogger.Info("Error marshallingSlashing Params - ", "err", err)
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", stakingTypes.QuerierRoute, staking.QuerySlashValidator), bz)
 		if err != nil {
+			RestLogger.Info("Error query data - ", "err", err)
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		RestLogger.Debug("slashed validator successfully ", "res", res)
+		RestLogger.Info("slashedd validator successfully ", "res", res)
 		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }

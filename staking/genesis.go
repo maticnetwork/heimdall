@@ -36,7 +36,7 @@ type GenesisState struct {
 	Validators           []*hmTypes.Validator       `json:"validators" yaml:"validators"`
 	CurrentValSet        hmTypes.ValidatorSet       `json:"current_val_set" yaml:"current_val_set"`
 	ValidatorAccounts    []hmTypes.ValidatorAccount `json:"val_accounts" yaml:"val_accounts"`
-	CheckpointReward     *big.Int                   `json:"checkpoint_reward" yaml:"checkpoint_reward"`
+	CheckpointReward     string                     `json:"checkpoint_reward" yaml:"checkpoint_reward"`
 	ProposerBonusPercent int64                      `json:"proposer_bonus_percent" yaml:"proposer_bonus_percent"`
 }
 
@@ -45,7 +45,7 @@ func NewGenesisState(
 	validators []*hmTypes.Validator,
 	currentValSet hmTypes.ValidatorSet,
 	validatorAccounts []hmTypes.ValidatorAccount,
-	checkpointReward *big.Int,
+	checkpointReward string,
 	proposerBonusPercent int64,
 
 ) GenesisState {
@@ -64,12 +64,12 @@ func DefaultGenesisState(validators []*hmTypes.Validator, currentValSet hmTypes.
 	for _, val := range validators {
 		valAccount := hmTypes.ValidatorAccount{
 			ID:            val.ID,
-			RewardAmount:  big.NewInt(0).Bytes(),
-			SlashedAmount: big.NewInt(0).Bytes(),
+			RewardAmount:  big.NewInt(0).String(),
+			SlashedAmount: big.NewInt(0).String(),
 		}
 		validatorAccounts = append(validatorAccounts, valAccount)
 	}
-	initialCheckpointReward := big.NewInt(10).Exp(big.NewInt(10), big.NewInt(18), nil)
+	initialCheckpointReward := big.NewInt(10).Exp(big.NewInt(10), big.NewInt(18), nil).String()
 	return NewGenesisState(validators, currentValSet, validatorAccounts, initialCheckpointReward, DefaultProposerBonusPercent)
 }
 
@@ -99,15 +99,38 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 		panic(err)
 	}
 
-	// Add initial validator accounts
-	for _, valAccount := range data.ValidatorAccounts {
-		if err := keeper.AddValidatorAccount(ctx, valAccount); err != nil {
-			panic((err))
+	// Add genesis validator accounts
+	for _, validator := range resultValSet.Validators {
+		// check if validator exists in data.ValidatorAccounts
+		isExist := false
+		// Add validator account from genesis
+		for _, valAccount := range data.ValidatorAccounts {
+			if valAccount.ID == validator.ID {
+				isExist = true
+				if err := keeper.AddValidatorAccount(ctx, valAccount); err != nil {
+					panic((err))
+				}
+			}
+		}
+		// Create Validator Account if not set in genesis
+		if !isExist {
+			validatorAccount := types.ValidatorAccount{
+				ID:            validator.ID,
+				RewardAmount:  big.NewInt(0).String(),
+				SlashedAmount: big.NewInt(0).String(),
+			}
+			if err := keeper.AddValidatorAccount(ctx, validatorAccount); err != nil {
+				panic((err))
+			}
 		}
 	}
-			
+
 	// Rewards - reward issued for checkpoint signature
-	keeper.SetCheckpointReward(ctx, data.CheckpointReward)
+	checkpointReward, ok := big.NewInt(0).SetString(data.CheckpointReward, 10)
+	if !ok {
+		panic("unable to set checkpoint reward")
+	}
+	keeper.SetCheckpointReward(ctx, checkpointReward)
 	keeper.SetProposerBonusPercent(ctx, data.ProposerBonusPercent)
 
 }
@@ -119,7 +142,7 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) GenesisState {
 		keeper.GetAllValidators(ctx),
 		keeper.GetValidatorSet(ctx),
 		keeper.GetAllValidatorAccounts(ctx),
-		keeper.GetCheckpointReward(ctx),
+		keeper.GetCheckpointReward(ctx).String(),
 		keeper.GetProposerBonusPercent(ctx),
 	)
 }

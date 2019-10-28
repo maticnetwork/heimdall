@@ -370,15 +370,15 @@ func (k *Keeper) RewardValidator(ctx sdk.Context, valID types.ValidatorID, rewar
 	} else {
 		validatorAccount = types.ValidatorAccount{
 			ID:            valID,
-			RewardAmount:  big.NewInt(0).Bytes(),
-			SlashedAmount: big.NewInt(0).Bytes(),
+			RewardAmount:  big.NewInt(0).String(),
+			SlashedAmount: big.NewInt(0).String(),
 		}
 	}
 
 	// Add reward to reward balance
-	rewardBalance := big.NewInt(0).SetBytes(validatorAccount.RewardAmount)
+	rewardBalance, _ := big.NewInt(0).SetString(validatorAccount.RewardAmount, 10)
 	updatedReward := big.NewInt(0).Add(reward, rewardBalance)
-	validatorAccount.RewardAmount = updatedReward.Bytes()
+	validatorAccount.RewardAmount = updatedReward.String()
 	err = k.AddValidatorAccount(ctx, validatorAccount)
 	return
 }
@@ -389,7 +389,7 @@ func (k *Keeper) GetRewardByValidatorID(ctx sdk.Context, valID types.ValidatorID
 	if err != nil {
 		return big.NewInt(0), err
 	}
-	validatorReward := big.NewInt(0).SetBytes(validatorAccount.RewardAmount)
+	validatorReward, _ := big.NewInt(0).SetString(validatorAccount.RewardAmount, 10)
 	return validatorReward, nil
 }
 
@@ -405,15 +405,15 @@ func (k *Keeper) SlashValidator(ctx sdk.Context, valID types.ValidatorID, slashA
 	} else {
 		validatorAccount = types.ValidatorAccount{
 			ID:            valID,
-			RewardAmount:  big.NewInt(0).Bytes(),
-			SlashedAmount: big.NewInt(0).Bytes(),
+			RewardAmount:  big.NewInt(0).String(),
+			SlashedAmount: big.NewInt(0).String(),
 		}
 	}
 
 	// Add slashamount to slash balance
-	slashBalance := big.NewInt(0).SetBytes(validatorAccount.SlashedAmount)
+	slashBalance, _ := big.NewInt(0).SetString(validatorAccount.SlashedAmount, 10)
 	updatedSlash := big.NewInt(0).Add(slashAmount, slashBalance)
-	validatorAccount.SlashedAmount = updatedSlash.Bytes()
+	validatorAccount.SlashedAmount = updatedSlash.String()
 	k.Logger(ctx).Info("Validator account after slashing - ", "valaccount", validatorAccount)
 	err = k.AddValidatorAccount(ctx, validatorAccount)
 	return
@@ -426,7 +426,7 @@ func (k *Keeper) GetSlashedAmountByValidatorID(ctx sdk.Context, valID types.Vali
 		return big.NewInt(0), err
 	}
 
-	slashedAmount := big.NewInt(0).SetBytes(validatorAccount.SlashedAmount)
+	slashedAmount, _ := big.NewInt(0).SetString(validatorAccount.SlashedAmount, 10)
 	return slashedAmount, nil
 }
 
@@ -465,7 +465,6 @@ func (k *Keeper) AddValidatorAccount(ctx sdk.Context, validatorAccount types.Val
 	store := ctx.KVStore(k.storeKey)
 	// marshall validator account
 	bz, err := types.MarshallValidatorAccount(k.cdc, validatorAccount)
-
 	if err != nil {
 		return err
 	}
