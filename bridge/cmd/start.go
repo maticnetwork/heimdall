@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client"
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/spf13/cobra"
 
@@ -83,7 +83,7 @@ var startCmd = &cobra.Command{
 
 		// start bridge services only when node fully synced
 		for {
-			if pier.IsSycned(cliCtx) {
+			if pier.IsSynced(cliCtx) {
 				logger.Info("Node upto date, starting bridge services")
 				break
 			} else {
