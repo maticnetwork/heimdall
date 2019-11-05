@@ -43,12 +43,16 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 		keeper.SetLastNoAck(ctx, data.LastNoACK)
 	}
 
-	// add checkpoint headers
+	// Add finalised checkpoints to state
 	if len(data.Headers) != 0 {
+		// check if we are provided all the headers
 		if int(data.AckCount) != len(data.Headers) {
 			panic(errors.New("Incorrect state in state-dump , Please Check "))
 		}
+		// sort headers before loading to state
+		data.Headers = hmTypes.SortHeaders(data.Headers)
 
+		// load checkpoints to state
 		for i, header := range data.Headers {
 			checkpointHeaderIndex := helper.GetConfig().ChildBlockInterval * (uint64(i) + 1)
 			keeper.AddCheckpoint(ctx, checkpointHeaderIndex, header)
@@ -71,7 +75,7 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) GenesisState {
 		bufferedCheckpoint,
 		keeper.GetLastNoAck(ctx),
 		keeper.GetACKCount(ctx),
-		keeper.GetCheckpointHeaders(ctx),
+		hmTypes.SortHeaders(keeper.GetCheckpointHeaders(ctx)),
 	)
 }
 
