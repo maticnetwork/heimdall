@@ -3,26 +3,20 @@ package pier
 import (
 	"bytes"
 	"context"
-	"encoding/hex"
 	"encoding/json"
-	"fmt"
-	"math/big"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum"
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/tendermint/tendermint/libs/common"
 	httpClient "github.com/tendermint/tendermint/rpc/client"
 
-	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/bor"
 	borTags "github.com/maticnetwork/heimdall/bor/tags"
 	"github.com/maticnetwork/heimdall/helper"
@@ -127,7 +121,6 @@ func (s *SpanService) startPolling(ctx context.Context, interval time.Duration) 
 		select {
 		case <-ticker.C:
 			s.checkAndPropose()
-			go s.commit()
 		case <-ctx.Done():
 			ticker.Stop()
 			return
@@ -172,52 +165,6 @@ func (s *SpanService) propose(lastSpan *types.Span, nextSpanMsg *types.Span) {
 		if err := s.queueConnector.BroadcastToHeimdall(msg); err != nil {
 			s.Logger.Error("Error while broadcasting msg to heimdall", "error", err)
 			return
-		}
-	}
-}
-
-func (s *SpanService) commit() {
-	// get current span number from bor chain
-	currentSpanNumber := s.contractConnector.CurrentSpanNumber()
-	if currentSpanNumber == nil {
-		currentSpanNumber = big.NewInt(0)
-	}
-
-	// create tag query
-	var tags []string
-	tags = append(tags, fmt.Sprintf("bor-sync-id>%v", currentSpanNumber))
-	tags = append(tags, "action='propose-span'")
-
-	s.Logger.Debug("[COMMIT SPAN] Querying heimdall span txs",
-		"currentSpanNumber", currentSpanNumber,
-		"tags", strings.Join(tags, " AND "),
-	)
-
-	// search txs
-	txs, err := helper.SearchTxs(s.cliCtx, s.cliCtx.Codec, tags, 1, 20) // first page, 50 limit
-	if err != nil {
-		s.Logger.Error("Error while searching txs", "error", err)
-		return
-	}
-
-	s.Logger.Debug("[COMMIT SPAN] Found new span txs",
-		"length", len(txs),
-	)
-
-	// loop through tx
-	for _, tx := range txs {
-		if tag := s.getSpanIDTxTag(tx); tag != nil {
-			if spanID, err := strconv.ParseUint(tag.Value, 10, 64); err == nil && spanID >= 1 {
-				if err != nil || s.isSpanCommited(spanID) {
-					continue
-				}
-
-				if txHash, err := hex.DecodeString(tx.TxHash); err != nil {
-					s.Logger.Error("Error while searching txs", "error", err)
-				} else {
-					s.broadcastToBor(tx.Height, txHash)
-				}
-			}
 		}
 	}
 }
@@ -271,20 +218,6 @@ func (s *SpanService) getLastSpan() (*types.Span, error) {
 	return &lastSpan, nil
 }
 
-// get span details
-func (s *SpanService) isSpanCommited(id uint64) bool {
-	_, _, endBlock, err := s.contractConnector.GetSpanDetails(big.NewInt(0).SetUint64(id))
-	if err != nil {
-		return false
-	}
-
-	if endBlock.Uint64() > 0 {
-		return true
-	}
-
-	return false
-}
-
 // getCurrentChildBlock gets the current child block
 func (s *SpanService) getCurrentChildBlock() (uint64, error) {
 	childBlock, err := s.contractConnector.GetMaticChainBlock(nil)
@@ -334,97 +267,4 @@ func (s *SpanService) fetchNextSpanDetails(id uint64, start uint64) (*types.Span
 
 	s.Logger.Debug("Generated proposer span msg", "msg", msg)
 	return &msg, nil
-}
-
-// // SubscribeToTx subscribes to a broadcasted Tx and waits for its commitment to a block
-// func (s *SpanService) SubscribeToTx(tx tmTypes.Tx, start, end uint64) error {
-// 	data, err := WaitForOneEvent(tx, s.httpClient)
-// 	if err != nil {
-// 		s.Logger.Error("Unable to wait for tx", "error", err)
-// 		return err
-// 	}
-
-// 	switch t := data.(type) {
-// 	case tmTypes.EventDataTx:
-// 		go s.DispatchProposal(t.Height, t.Tx.Hash(), tx)
-// 	default:
-// 		s.Logger.Info("No cases matched while trying to send propose new committee")
-// 	}
-// 	return nil
-// }
-
-// broadcastToBor broadcasts to bor
-func (s *SpanService) broadcastToBor(height int64, txHash []byte) error {
-	// extraData
-	votes, sigs, chainID, err := FetchVotes(height, s.httpClient)
-	if err != nil {
-		s.Logger.Error("Error fetching votes", "height", height)
-		return err
-	}
-
-	// proof
-	tx, err := helper.QueryTxWithProof(s.cliCtx, txHash)
-	if err != nil {
-		return err
-	}
-	// fmt.Println("TxBytes: ", hex.EncodeToString(tx.Tx[4:]))
-	// fmt.Println("Leaf: ", hex.EncodeToString(tx.Proof.Leaf()))
-	// fmt.Println("Root: ", tx.Proof.RootHash.String())
-	proofList := helper.GetMerkleProofList(&tx.Proof.Proof)
-	proof := helper.AppendBytes(proofList...)
-
-	// encode commit span
-	encodedData := s.encodeCommitSpanData(
-		helper.GetVoteBytes(votes, chainID),
-		sigs,
-		tx.Tx[authTypes.PulpHashLength:],
-		proof,
-	)
-
-	// fmt.Println("data : ",
-	// 	fmt.Sprintf(`"0x%s","0x%s","0x%s","0x%s"`,
-	// 		hex.EncodeToString(helper.GetVoteBytes(votes, chainID)),
-	// 		hex.EncodeToString(sigs),
-	// 		hex.EncodeToString(tx.Tx[4:]),
-	// 		hex.EncodeToString(proof),
-	// 	))
-
-	// get validator address
-	validatorSetAddress := helper.GetValidatorSetAddress()
-	msg := ethereum.CallMsg{
-		To:   &validatorSetAddress,
-		Data: encodedData,
-	}
-
-	// encode msg data
-	data, err := json.Marshal(msg)
-	if err != nil {
-		return err
-	}
-
-	// broadcast to bor queue
-	if err := s.queueConnector.BroadcastToBor(data); err != nil {
-		s.Logger.Error("Error while dispatching to bor queue", "error", err)
-		return err
-	}
-
-	return nil
-}
-
-//
-// ABI encoding
-//
-
-func (s *SpanService) encodeCommitSpanData(voteSignBytes []byte, sigs []byte, txData []byte, proof []byte) []byte {
-	// validator set ABI
-	validatorSetABI := s.contractConnector.ValidatorSetABI
-	// commit span
-	data, err := validatorSetABI.Pack("commitSpan", voteSignBytes, sigs, txData, proof)
-	if err != nil {
-		Logger.Error("Unable to pack tx for commit span", "error", err)
-		return nil
-	}
-
-	// return data
-	return data
 }
