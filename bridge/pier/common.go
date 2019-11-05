@@ -53,7 +53,7 @@ const (
 	BridgeDBFlag = "bridge-db"
 )
 
-// Logger is the global logger for bridge
+// Global logger for bridge
 var Logger log.Logger
 
 func init() {
@@ -157,6 +157,7 @@ func FetchVotes(
 ) (votes []*tmTypes.CommitSig, sigs []byte, chainID string, err error) {
 	// get block client
 	blockDetails, err := helper.GetBlockWithClient(client, height+1)
+
 	if err != nil {
 		return nil, nil, "", err
 	}
@@ -170,15 +171,6 @@ func FetchVotes(
 	// extract chainID
 	chainID = blockDetails.ChainID
 
+	// return
 	return preCommits, valSigs, chainID, nil
-}
-
-// IsSynced checks if the heimdall node you are connected to is fully synced or not
-// returns true when synced
-func IsSynced(cliCtx cliContext.CLIContext) bool {
-	resp, err := helper.GetNodeStatus(cliCtx)
-	if err != nil {
-		return false
-	}
-	return resp.SyncInfo.CatchingUp
 }
