@@ -131,7 +131,6 @@ func (qc *QueueConnector) Start() error {
 	if err != nil {
 		return err
 	}
-
 	// process heimdall broadcast messages
 	go qc.handleHeimdallBroadcastMsgs(msgs)
 
@@ -248,9 +247,13 @@ func (qc *QueueConnector) handleHeimdallBroadcastMsgs(amqpMsgs <-chan amqp.Deliv
 	address := hmTypes.BytesToHeimdallAddress(helper.GetAddress())
 	// fetch from APIs
 	var account authTypes.Account
-	response, _ := FetchFromAPI(qc.cliCtx, GetHeimdallServerEndpoint(fmt.Sprintf(AccountDetailsURL, address)))
+	response, err := FetchFromAPI(qc.cliCtx, GetHeimdallServerEndpoint(fmt.Sprintf(AccountDetailsURL, address)))
+	if err != nil {
+		qc.logger.Error("Error fetching account from rest-api", "url", GetHeimdallServerEndpoint(fmt.Sprintf(AccountDetailsURL, address)))
+	}
+	
 	// get proposer from response
-	if err := qc.cliCtx.Codec.UnmarshalJSON(response.Result, &account); err != nil {
+	if err := qc.cliCtx.Codec.UnmarshalJSON(response.Result, &account); err != nil && len(response.Result) != 0 {
 		panic(err)
 	}
 
