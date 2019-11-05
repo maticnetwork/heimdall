@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"sort"
 )
 
 // CheckpointBlockHeader block header struct
@@ -24,6 +25,14 @@ func CreateBlock(start uint64, end uint64, rootHash HeimdallHash, rewardRootHash
 		Proposer:       proposer,
 		TimeStamp:      timestamp,
 	}
+}
+
+// SortHeaders sorts array of headers on the basis for timestamps
+func SortHeaders(headers []CheckpointBlockHeader) []CheckpointBlockHeader {
+	sort.Slice(headers, func(i, j int) bool {
+		return headers[i].TimeStamp < headers[j].TimeStamp
+	})
+	return headers
 }
 
 // String returns human redable string
