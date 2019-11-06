@@ -7,6 +7,7 @@ import (
 	"math/big"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -87,14 +88,14 @@ func init() {
 
 // Configuration represents heimdall config
 type Configuration struct {
-	MainRPCUrl string `json:"mainRPCUrl"` // RPC endpoint for main chain
-	BorRPCUrl  string `json:"borRPCUrl"`  // RPC endpoint for bor chain
+	EthRPCUrl string `json:"mainRPCUrl"` // RPC endpoint for main chain
+	BorRPCUrl string `json:"borRPCUrl"`  // RPC endpoint for bor chain
+
+	BorChainID string `json:"borChainID"` // bor chain id
 
 	AmqpURL           string `json:"amqpURL"`           // amqp url
 	HeimdallServerURL string `json:"heimdallServerURL"` // heimdall server url
-	TendermintNodeURL string `json:"tendermintNodeURL"` // tendemint noed url
-
-	BorChainID string `json:"borChainID"` // bor chain id
+	TendermintRPCUrl  string `json:"tendermintRPCUrl"`  // tendemint node url
 
 	StakeManagerAddress  string `json:"stakeManagerAddress"`  // Stake manager address on main chain
 	RootchainAddress     string `json:"rootchainAddress"`     // Rootchain contract address on main chain
@@ -184,7 +185,7 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 		log.Fatal(err)
 	}
 
-	if mainRPCClient, err = rpc.Dial(conf.MainRPCUrl); err != nil {
+	if mainRPCClient, err = rpc.Dial(conf.EthRPCUrl); err != nil {
 		log.Fatal(err)
 	}
 
@@ -206,6 +207,36 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 	privVal := privval.LoadFilePV(filepath.Join(configDir, "priv_validator_key.json"), filepath.Join(configDir, "priv_validator_key.json"))
 	cdc.MustUnmarshalBinaryBare(privVal.Key.PrivKey.Bytes(), &privObject)
 	cdc.MustUnmarshalBinaryBare(privObject.PubKey().Bytes(), &pubObject)
+}
+
+// GetDefaultHeimdallConfig returns configration with default params
+func GetDefaultHeimdallConfig() Configuration {
+	return Configuration{
+		EthRPCUrl: DefaultMainRPCUrl,
+		BorRPCUrl: DefaultBorRPCUrl,
+
+		AmqpURL:           DefaultAmqpURL,
+		HeimdallServerURL: DefaultHeimdallServerURL,
+		TendermintRPCUrl:  DefaultTendermintNodeURL,
+
+		StakeManagerAddress:  (common.Address{}).Hex(),
+		RootchainAddress:     (common.Address{}).Hex(),
+		ValidatorSetAddress:  DefaultValidatorSetAddress,
+		StateSenderAddress:   (common.Address{}).Hex(),
+		StateReceiverAddress: DefaultStateReceiverAddress,
+
+		ChildBlockInterval:       DefaultChildBlockInterval,
+		CheckpointerPollInterval: DefaultCheckpointerPollInterval,
+		SyncerPollInterval:       DefaultSyncerPollInterval,
+		NoACKPollInterval:        DefaultNoACKPollInterval,
+		AvgCheckpointLength:      DefaultCheckpointLength,
+		MaxCheckpointLength:      MaxCheckpointLength,
+		NoACKWaitTime:            NoACKWaitTime,
+		CheckpointBufferTime:     CheckpointBufferTime,
+		ConfirmationBlocks:       ConfirmationBlocks,
+
+		BorChainID: strconv.Itoa(DefaultBorChainID),
+	}
 }
 
 // GetConfig returns cached configuration object

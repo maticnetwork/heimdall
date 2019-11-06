@@ -7,7 +7,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -169,16 +168,9 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			}
 
 			// Heimdall config file
-			heimdallConf := getDefaultHeimdallConfig()
-			heimdallConfBytes, err := json.MarshalIndent(heimdallConf, "", "  ")
-			if err != nil {
-				return err
-			}
+			heimdallConf := helper.GetDefaultHeimdallConfig()
 
-			if err := common.WriteFileAtomic(filepath.Join(config.RootDir, "config/heimdall-config.json"), heimdallConfBytes, 0600); err != nil {
-				fmt.Println("Error writing heimdall-config", err)
-				return err
-			}
+			helper.WriteConfigFile(filepath.Join(config.RootDir, "config/heimdall-config.toml"), &heimdallConf)
 
 			//
 			// Genesis file
@@ -325,17 +317,9 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 					ConsensusPubKey:  sdk.MustBech32ifyConsPub(valPubKeys[i]),
 				}
 
-				// get defaultheimdall config
-				heimdallConf := getDefaultHeimdallConfig()
-				heimdallConfBytes, err := json.MarshalIndent(heimdallConf, "", "  ")
-				if err != nil {
-					return err
-				}
+				heimdallConf := helper.GetDefaultHeimdallConfig()
 
-				if err := common.WriteFileAtomic(filepath.Join(config.RootDir, "config/heimdall-config.json"), heimdallConfBytes, 0600); err != nil {
-					fmt.Println("Error writing heimdall-config", err)
-					return err
-				}
+				helper.WriteConfigFile(filepath.Join(config.RootDir, "config/heimdall-config.toml"), &heimdallConf)
 			}
 
 			// other data
@@ -460,35 +444,6 @@ func getGenesisAccount(address []byte) app.GenesisAccount {
 	acc := authTypes.NewBaseAccountWithAddress(hmTypes.BytesToHeimdallAddress(address))
 	acc.SetCoins(types.Coins{types.Coin{Denom: "vetic", Amount: types.NewInt(1000)}})
 	return app.BaseToGenesisAcc(acc)
-}
-
-func getDefaultHeimdallConfig() helper.Configuration {
-	return helper.Configuration{
-		MainRPCUrl: helper.DefaultMainRPCUrl,
-		BorRPCUrl:  helper.DefaultBorRPCUrl,
-
-		AmqpURL:           helper.DefaultAmqpURL,
-		HeimdallServerURL: helper.DefaultHeimdallServerURL,
-		TendermintNodeURL: helper.DefaultTendermintNodeURL,
-
-		StakeManagerAddress:  (ethCommon.Address{}).Hex(),
-		RootchainAddress:     (ethCommon.Address{}).Hex(),
-		ValidatorSetAddress:  helper.DefaultValidatorSetAddress,
-		StateSenderAddress:   (ethCommon.Address{}).Hex(),
-		StateReceiverAddress: helper.DefaultStateReceiverAddress,
-
-		ChildBlockInterval:       helper.DefaultChildBlockInterval,
-		CheckpointerPollInterval: helper.DefaultCheckpointerPollInterval,
-		SyncerPollInterval:       helper.DefaultSyncerPollInterval,
-		NoACKPollInterval:        helper.DefaultNoACKPollInterval,
-		AvgCheckpointLength:      helper.DefaultCheckpointLength,
-		MaxCheckpointLength:      helper.MaxCheckpointLength,
-		NoACKWaitTime:            helper.NoACKWaitTime,
-		CheckpointBufferTime:     helper.CheckpointBufferTime,
-		ConfirmationBlocks:       helper.ConfirmationBlocks,
-
-		BorChainID: strconv.Itoa(helper.DefaultBorChainID),
-	}
 }
 
 // WriteGenesisFile creates and writes the genesis configuration to disk. An
