@@ -14,11 +14,8 @@ import (
 
 	"github.com/maticnetwork/heimdall/bor"
 	borTypes "github.com/maticnetwork/heimdall/bor/types"
-	"github.com/maticnetwork/heimdall/checkpoint"
-	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	hmClient "github.com/maticnetwork/heimdall/client"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/types"
 )
 
@@ -73,12 +70,12 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 
 			// span
 
-			spanIdStr := viper.GetString(FlagSpanId)
-			if spanIdStr == "" {
+			spanIDStr := viper.GetString(FlagSpanId)
+			if spanIDStr == "" {
 				return fmt.Errorf("Span Id cannot be empty")
 			}
 
-			spanId, err := strconv.ParseUint(spanIdStr, 10, 64)
+			spanID, err := strconv.ParseUint(spanIDStr, 10, 64)
 			if err != nil {
 				return err
 			}
@@ -101,53 +98,11 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			//
-			// Get validators
-			//
-
-			// fetch ack count
-			res, err = cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", checkpointTypes.QuerierRoute, checkpoint.QueryAckCount), nil)
-			if err != nil {
-				return err
-			}
-
-			if len(res) == 0 {
-				return errors.New("Ack not found")
-			}
-
-			var ackCount uint64
-			if err := cliCtx.Codec.UnmarshalJSON(res, &ackCount); err != nil {
-				return err
-			}
-
-			// validators
-			res, err = cliCtx.QueryStore(staking.CurrentValidatorSetKey, "staking")
-			if err != nil {
-				return err
-			}
-			// the query will return empty if there is no data
-			if len(res) == 0 {
-				return errors.New("No current validator set found")
-			}
-
-			var _validatorSet types.ValidatorSet
-			cdc.UnmarshalBinaryBare(res, &_validatorSet)
-			var validators []types.MinimalVal
-
-			for _, val := range _validatorSet.Validators {
-				if val.IsCurrentValidator(uint64(ackCount)) {
-					// append if validator is current valdiator
-					validators = append(validators, (*val).MinimalVal())
-				}
-			}
-
 			msg := bor.NewMsgProposeSpan(
-				spanId,
+				spanID,
 				proposer,
 				startBlock,
 				startBlock+spanDuration,
-				validators,
-				validators,
 				chainID,
 			)
 
