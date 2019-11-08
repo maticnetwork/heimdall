@@ -300,7 +300,9 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 				case "Jailed":
 					syncer.processJailedEvent(selectedEvent.Name, abiObject, &vLog)
 				case "StateSynced":
-					syncer.processStateSyncedEvent(selectedEvent.Name, abiObject, &vLog)
+					if IsStateSyncer(syncer.cliCtx) {
+						syncer.processStateSyncedEvent(selectedEvent.Name, abiObject, &vLog)
+					}
 					// case "Withdraw":
 					// 	syncer.processWithdrawEvent(selectedEvent.Name, abiObject, &vLog)
 				}

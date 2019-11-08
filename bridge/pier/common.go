@@ -20,6 +20,7 @@ import (
 	httpClient "github.com/tendermint/tendermint/rpc/client"
 	tmTypes "github.com/tendermint/tendermint/types"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/maticnetwork/heimdall/helper"
 	hmtypes "github.com/maticnetwork/heimdall/types"
 	rest "github.com/maticnetwork/heimdall/types/rest"
@@ -39,6 +40,7 @@ const (
 	AccountDetailsURL     = "/auth/accounts/%v"
 	LastNoAckURL          = "/checkpoint/last-no-ack"
 	ProposersURL          = "/staking/proposer/%v"
+	StateSyncerURL        = "/clerk/state-syncer-list"
 	BufferedCheckpointURL = "/checkpoint/buffer"
 	LatestCheckpointURL   = "/checkpoint/latest-checkpoint"
 	CurrentProposerURL    = "/staking/current-proposer"
@@ -83,6 +85,32 @@ func isProposer(cliCtx cliContext.CLIContext) bool {
 	}
 
 	return false
+}
+
+// IsStateSyncer returns if current user is state syncer or not
+func IsStateSyncer(cliCtx cliContext.CLIContext) bool {
+	var stateSyncerList []common.Address
+	isStateSyncer := false
+
+	result, err := FetchFromAPI(cliCtx, GetHeimdallServerEndpoint(fmt.Sprintf(StateSyncerURL)))
+	if err != nil {
+		Logger.Error("Error fetching State syncer", "error", err)
+		return false
+	}
+
+	err = json.Unmarshal(result.Result, &stateSyncerList)
+	if err != nil {
+		Logger.Error("Error unmarshalling state syncer", "error", err)
+		return false
+	}
+
+	for _, syncerAddr := range stateSyncerList {
+		if bytes.Equal(syncerAddr.Bytes(), helper.GetAddress()) {
+			isStateSyncer = true
+			break
+		}
+	}
+	return isStateSyncer
 }
 
 // GetHeimdallServerEndpoint returns heimdall server endpoint

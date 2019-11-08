@@ -7,14 +7,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
-	"github.com/tendermint/tendermint/libs/log"
-
 	"github.com/maticnetwork/heimdall/clerk/types"
 	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
+	"github.com/tendermint/tendermint/libs/log"
 )
 
 var (
-	StateRecordPrefixKey = []byte{0x11} // prefix key for when storing state
+	StateRecordPrefixKey   = []byte{0x11} // prefix key for when storing state
+	StateSyncEventCountKey = []byte{0x12} // state sync event count key
 )
 
 // Keeper stores all related data
@@ -151,4 +151,44 @@ func (k *Keeper) IterateRecordsAndApplyFn(ctx sdk.Context, f func(record types.E
 			return
 		}
 	}
+}
+
+// GetStateSyncEventCount returns next validatorID
+func (k *Keeper) GetStateSyncEventCount(ctx sdk.Context) uint64 {
+	store := ctx.KVStore(k.storeKey)
+	// check if StateSyncEventCountKey is there
+	if store.Has(StateSyncEventCountKey) {
+		// get current StateSyncEventCountKey
+		eventCount, err := strconv.ParseUint(string(store.Get(StateSyncEventCountKey)), 10, 64)
+		if err != nil {
+			k.Logger(ctx).Error("Unable to convert eventCount to int")
+		} else {
+			return eventCount
+		}
+	}
+	return 0
+}
+
+// IncrementStateSyncEventCount increments state sync event count
+func (k *Keeper) IncrementStateSyncEventCount(ctx sdk.Context) {
+	store := ctx.KVStore(k.storeKey)
+
+	// get StateSyncEventCount
+	eventCount := k.GetStateSyncEventCount(ctx)
+
+	// increment by 1
+	eventCountInBytes := []byte(strconv.FormatUint(eventCount+1, 10))
+
+	// update
+	store.Set(StateSyncEventCountKey, eventCountInBytes)
+}
+
+// SetStateSyncEventCount sets state sync event count
+func (k *Keeper) SetStateSyncEventCount(ctx sdk.Context, eventCount uint64) {
+	store := ctx.KVStore(k.storeKey)
+
+	// convert state sync event to bytes
+	eventCountInBytes := []byte(strconv.FormatUint(eventCount, 10))
+
+	store.Set(StateSyncEventCountKey, eventCountInBytes)
 }

@@ -2,7 +2,8 @@ package types
 
 // query endpoints supported by the auth Querier
 const (
-	QueryRecord = "record"
+	QueryRecord      = "record"
+	QueryStateSyncer = "statesyncer"
 )
 
 // QueryRecordParams defines the params for querying accounts.

@@ -7,15 +7,21 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/maticnetwork/heimdall/clerk/types"
+	"github.com/ethereum/go-ethereum/common"
+
+	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
+	"github.com/maticnetwork/heimdall/staking"
+	"github.com/maticnetwork/heimdall/types"
 )
 
 // NewQuerier creates a querier for auth REST endpoints
-func NewQuerier(keeper Keeper) sdk.Querier {
+func NewQuerier(clerkKeeper Keeper, stakingKeeper staking.Keeper) sdk.Querier {
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) ([]byte, sdk.Error) {
 		switch path[0] {
-		case types.QueryRecord:
-			return handlerQueryRecord(ctx, req, keeper)
+		case clerkTypes.QueryRecord:
+			return handlerQueryRecord(ctx, req, clerkKeeper)
+		case clerkTypes.QueryStateSyncer:
+			return handlerQueryStateSyncer(ctx, req, clerkKeeper, stakingKeeper)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown auth query endpoint")
 		}
@@ -23,7 +29,7 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 }
 
 func handlerQueryRecord(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	var params types.QueryRecordParams
+	var params clerkTypes.QueryRecordParams
 	if err := keeper.cdc.UnmarshalJSON(req.Data, &params); err != nil {
 		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
 	}
@@ -45,4 +51,39 @@ func handlerQueryRecord(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) (
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
 	return bz, nil
+}
+
+func handlerQueryStateSyncer(ctx sdk.Context, req abci.RequestQuery, clerkKeeper Keeper, stakingKeeper staking.Keeper) ([]byte, sdk.Error) {
+	// Total no of state sync events
+	eventCount := clerkKeeper.GetStateSyncEventCount(ctx)
+
+	// Total no of validators
+	validatorCount := len(stakingKeeper.GetAllValidators(ctx))
+
+	stateSyncerList := []common.Address{}
+
+	// No of state syncers to returns
+	syncerCount := 3
+	// if no of validators is less than three, return existing validators
+	if validatorCount < 3 {
+		syncerCount = validatorCount
+	}
+
+	// Select next 3 active validators
+	for i := 0; i < syncerCount; {
+		valID := eventCount % uint64(validatorCount)
+		addr, _ := stakingKeeper.GetSignerFromValidatorID(ctx, types.ValidatorID(valID))
+
+		if stakingKeeper.IsCurrentValidatorByAddress(ctx, addr.Bytes()) {
+			stateSyncerList = append(stateSyncerList, addr)
+			i++
+			eventCount++
+		}
+	}
+
+	res, err := codec.MarshalJSONIndent(clerkKeeper.cdc, stateSyncerList)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal syncer list to JSON", err.Error()))
+	}
+	return res, nil
 }

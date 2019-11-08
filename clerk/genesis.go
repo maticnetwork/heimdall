@@ -23,12 +23,16 @@ func DefaultGenesisState() GenesisState {
 
 // InitGenesis sets distribution information for genesis.
 func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
+
 	// add checkpoint headers
-	if len(data.EventRecords) != 0 {
+	eventCount := len(data.EventRecords)
+	if eventCount != 0 {
 		for _, record := range data.EventRecords {
 			keeper.SetEventRecord(ctx, *record)
 		}
 	}
+
+	keeper.SetStateSyncEventCount(ctx, uint64(eventCount))
 }
 
 // ExportGenesis returns a GenesisState for a given context and keeper.

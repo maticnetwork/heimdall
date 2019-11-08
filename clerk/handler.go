@@ -69,6 +69,9 @@ func handleMsgEventRecord(ctx sdk.Context, msg clerkTypes.MsgEventRecord, k Keep
 		return clerkTypes.ErrEventUpdate(k.Codespace()).Result()
 	}
 
+	// increment state sync event count
+	k.IncrementStateSyncEventCount(ctx)
+
 	resTags := sdk.NewTags(
 		clerkTypes.RecordID, []byte(strconv.FormatUint(msg.ID, 10)),
 		clerkTypes.RecordContract, []byte(parsedLog.ContractAddress.String()),
