@@ -19,7 +19,7 @@ import (
 
 // tests setter/getters for validatorSignerMaps , validator set/get
 func TestValidator(t *testing.T) {
-	ctx, keeper, _ := cmn.CreateTestInput(t, false)
+	ctx, keeper, _, _ := cmn.CreateTestInput(t, false)
 	validators := cmn.GenRandomVal(1, 0, 10, uint64(10), true, 1)
 	// Add Validator to state
 	for _, validator := range validators {
@@ -45,7 +45,7 @@ func TestValidator(t *testing.T) {
 
 // tests VotingPower change, validator creation, validator set update when signer changes
 func TestUpdateSigner(t *testing.T) {
-	ctx, keeper, _ := cmn.CreateTestInput(t, false)
+	ctx, keeper, _, _ := cmn.CreateTestInput(t, false)
 	validators := cmn.GenRandomVal(1, 0, 10, uint64(10), true, 1)
 
 	// Add validator to State
@@ -113,7 +113,7 @@ func TestCurrentValidator(t *testing.T) {
 		{"start epoch greater than ackcount", uint64(3), uint64(0), int64(10), uint64(1), false, "should not be current validator as start epoch greater than ackcount."},
 	}
 
-	ctx, stakingKeeper, checkpointKeeper := cmn.CreateTestInput(t, false)
+	ctx, stakingKeeper, checkpointKeeper, _ := cmn.CreateTestInput(t, false)
 	for i, item := range dataItems {
 		t.Run(item.name, func(t *testing.T) {
 			// Create a Validator [startEpoch, endEpoch, VotingPower]
@@ -142,7 +142,7 @@ func TestValidatorSetChange(t *testing.T) {
 
 	// create sub test to check if validator remove
 	t.Run("remove", func(t *testing.T) {
-		ctx, keeper, _ := cmn.CreateTestInput(t, false)
+		ctx, keeper, _, _ := cmn.CreateTestInput(t, false)
 
 		// load 4 validators to state
 		cmn.LoadValidatorSet(4, t, keeper, ctx, false, 10)
@@ -187,7 +187,7 @@ func TestValidatorSetChange(t *testing.T) {
 	})
 
 	t.Run("add", func(t *testing.T) {
-		ctx, keeper, _ := cmn.CreateTestInput(t, false)
+		ctx, keeper, _, _ := cmn.CreateTestInput(t, false)
 
 		// load 4 validators to state
 		cmn.LoadValidatorSet(4, t, keeper, ctx, false, 10)
@@ -226,7 +226,7 @@ func TestValidatorSetChange(t *testing.T) {
 	})
 
 	t.Run("update", func(t *testing.T) {
-		ctx, keeper, _ := cmn.CreateTestInput(t, false)
+		ctx, keeper, _, _ := cmn.CreateTestInput(t, false)
 
 		// load 4 validators to state
 		cmn.LoadValidatorSet(4, t, keeper, ctx, false, 10)
@@ -282,7 +282,7 @@ func TestValidatorSetChange(t *testing.T) {
 
 // Tests setters and getters for validator reward
 func TestValidatorRewards(t *testing.T) {
-	ctx, keeper, _ := cmn.CreateTestInput(t, false)
+	ctx, keeper, _, _ := cmn.CreateTestInput(t, false)
 	cmn.LoadValidatorSet(4, t, keeper, ctx, false, 10)
 	curVal := keeper.GetCurrentValidators(ctx)
 	// check initial reward
@@ -317,7 +317,7 @@ func TestValidatorRewards(t *testing.T) {
 }
 
 func TestCalculateSignerRewards(t *testing.T) {
-	ctx, keeper, _ := cmn.CreateTestInput(t, false)
+	ctx, keeper, _, _ := cmn.CreateTestInput(t, false)
 	checkpointReward := big.NewInt(0).Exp(big.NewInt(10), big.NewInt(22), nil)
 	keeper.SetCheckpointReward(ctx, checkpointReward)
 	keeper.SetProposerBonusPercent(ctx, staking.DefaultProposerBonusPercent)

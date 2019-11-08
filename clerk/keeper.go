@@ -153,7 +153,7 @@ func (k *Keeper) IterateRecordsAndApplyFn(ctx sdk.Context, f func(record types.E
 	}
 }
 
-// GetStateSyncEventCount returns next validatorID
+// GetStateSyncEventCount returns count of State Sync Events
 func (k *Keeper) GetStateSyncEventCount(ctx sdk.Context) uint64 {
 	store := ctx.KVStore(k.storeKey)
 	// check if StateSyncEventCountKey is there

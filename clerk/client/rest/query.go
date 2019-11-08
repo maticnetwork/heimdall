@@ -10,10 +10,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/gorilla/mux"
 
-	"github.com/ethereum/go-ethereum/common"
-
 	"github.com/maticnetwork/heimdall/clerk"
 	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
+	"github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/types/rest"
 )
 
@@ -88,7 +87,7 @@ func getNextStateSyncerHandlerFn(
 		}
 
 		// unmarshalling json encoded state syncer list
-		var stateSyncerList []common.Address
+		var stateSyncerList []types.Validator
 		if err := cliCtx.Codec.UnmarshalJSON(res, &stateSyncerList); err != nil {
 			RestLogger.Error("Error while unmarshalling state syncer list", "error", err)
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())

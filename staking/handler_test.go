@@ -17,7 +17,7 @@ import (
 
 func TestHandleMsgValidatorJoin(t *testing.T) {
 	contractCallerObj := mocks.IContractCaller{}
-	ctx, keeper, _ := cmn.CreateTestInput(t, false)
+	ctx, keeper, _, _ := cmn.CreateTestInput(t, false)
 	mockVals := cmn.GenRandomVal(1, 0, 10, 10, false, 1)
 	// select first validator from slice
 	mockVal := mockVals[0]
@@ -49,7 +49,7 @@ func TestHandleMsgValidatorJoin(t *testing.T) {
 
 func TestHandleMsgValidatorUpdate(t *testing.T) {
 	contractCallerObj := mocks.IContractCaller{}
-	ctx, keeper, _ := cmn.CreateTestInput(t, false)
+	ctx, keeper, _, _ := cmn.CreateTestInput(t, false)
 
 	// pass 0 as time alive to generate non de-activated validators
 	cmn.LoadValidatorSet(4, t, keeper, ctx, false, 0)
@@ -100,7 +100,7 @@ func TestHandleMsgValidatorUpdate(t *testing.T) {
 
 func TestHandleMsgValidatorExit(t *testing.T) {
 	contractCallerObj := mocks.IContractCaller{}
-	ctx, keeper, checkpointkeeper := cmn.CreateTestInput(t, false)
+	ctx, keeper, checkpointkeeper, _ := cmn.CreateTestInput(t, false)
 	// pass 0 as time alive to generate non de-activated validators
 	cmn.LoadValidatorSet(4, t, keeper, ctx, false, 0)
 	validators := keeper.GetCurrentValidators(ctx)
@@ -130,7 +130,7 @@ func TestHandleMsgValidatorExit(t *testing.T) {
 
 func TestHandleMsgStakeUpdate(t *testing.T) {
 	contractCallerObj := mocks.IContractCaller{}
-	ctx, keeper, _ := cmn.CreateTestInput(t, false)
+	ctx, keeper, _, _ := cmn.CreateTestInput(t, false)
 
 	// pass 0 as time alive to generate non de-activated validators
 	cmn.LoadValidatorSet(4, t, keeper, ctx, false, 0)

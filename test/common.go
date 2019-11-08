@@ -22,9 +22,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/params/subspace"
 	bankTypes "github.com/maticnetwork/heimdall/bank/types"
 	"github.com/maticnetwork/heimdall/bor"
+	"github.com/maticnetwork/heimdall/clerk"
 
 	"github.com/maticnetwork/heimdall/checkpoint"
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
+	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
 	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
@@ -50,7 +52,7 @@ func MakeTestCodec() *codec.Codec {
 }
 
 // init for test cases
-func CreateTestInput(t *testing.T, isCheckTx bool) (sdk.Context, staking.Keeper, checkpoint.Keeper) {
+func CreateTestInput(t *testing.T, isCheckTx bool) (sdk.Context, staking.Keeper, checkpoint.Keeper, clerk.Keeper) {
 	//t.Parallel()
 	helper.InitHeimdallConfig(os.ExpandEnv("$HOME/.heimdalld"))
 
@@ -60,6 +62,7 @@ func CreateTestInput(t *testing.T, isCheckTx bool) (sdk.Context, staking.Keeper,
 	// TODO create more keys like borKey etc
 	keyCheckpoint := sdk.NewKVStoreKey("checkpoint")
 	keyStaking := sdk.NewKVStoreKey("staking")
+	keyClerk := sdk.NewKVStoreKey("clerk")
 	keyMaster := sdk.NewKVStoreKey("master")
 	keyParams := sdk.NewKVStoreKey(subspace.StoreKey)
 	tKeyParams := sdk.NewTransientStoreKey(subspace.TStoreKey)
@@ -67,6 +70,7 @@ func CreateTestInput(t *testing.T, isCheckTx bool) (sdk.Context, staking.Keeper,
 	// mount all
 	ms.MountStoreWithDB(keyCheckpoint, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyStaking, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyClerk, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyMaster, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyParams, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(tKeyParams, sdk.StoreTypeTransient, db)
@@ -96,7 +100,14 @@ func CreateTestInput(t *testing.T, isCheckTx bool) (sdk.Context, staking.Keeper,
 		common.DefaultCodespace,
 		checkpointKeeper,
 	)
-	return ctx, stakingKeeper, checkpointKeeper
+
+	clerkKeeper := clerk.NewKeeper(
+		cdc,
+		keyClerk,
+		paramsKeeper.Subspace(clerkTypes.DefaultParamspace),
+		common.DefaultCodespace,
+	)
+	return ctx, stakingKeeper, checkpointKeeper, clerkKeeper
 }
 
 // create random header block
@@ -147,7 +158,7 @@ func GenRandomVal(count int, startBlock uint64, power int64, timeAlive uint64, r
 // Load Validator Set
 func LoadValidatorSet(count int, t *testing.T, keeper staking.Keeper, ctx sdk.Context, randomise bool, timeAlive int) types.ValidatorSet {
 	// create 4 validators
-	validators := GenRandomVal(4, 0, 10, uint64(timeAlive), randomise, 1)
+	validators := GenRandomVal(count, 0, 10, uint64(timeAlive), randomise, 1)
 	var valSet types.ValidatorSet
 	// add validators to new Validator set and state
 	for _, validator := range validators {

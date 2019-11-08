@@ -20,8 +20,8 @@ import (
 	httpClient "github.com/tendermint/tendermint/rpc/client"
 	tmTypes "github.com/tendermint/tendermint/types"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/types"
 	hmtypes "github.com/maticnetwork/heimdall/types"
 	rest "github.com/maticnetwork/heimdall/types/rest"
 )
@@ -89,7 +89,7 @@ func isProposer(cliCtx cliContext.CLIContext) bool {
 
 // IsStateSyncer returns if current user is state syncer or not
 func IsStateSyncer(cliCtx cliContext.CLIContext) bool {
-	var stateSyncerList []common.Address
+	var stateSyncerList []types.Validator
 	isStateSyncer := false
 
 	result, err := FetchFromAPI(cliCtx, GetHeimdallServerEndpoint(fmt.Sprintf(StateSyncerURL)))
@@ -104,8 +104,8 @@ func IsStateSyncer(cliCtx cliContext.CLIContext) bool {
 		return false
 	}
 
-	for _, syncerAddr := range stateSyncerList {
-		if bytes.Equal(syncerAddr.Bytes(), helper.GetAddress()) {
+	for _, syncer := range stateSyncerList {
+		if bytes.Equal(syncer.Signer.Bytes(), helper.GetAddress()) {
 			isStateSyncer = true
 			break
 		}
