@@ -5,28 +5,37 @@ import (
 	"os"
 	"os/signal"
 	"sync"
+	"time"
+
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/common"
 	httpClient "github.com/tendermint/tendermint/rpc/client"
 
+	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/bridge/pier"
 	"github.com/maticnetwork/heimdall/helper"
 )
 
-func startCmd() *cobra.Command {
-	// startCmd represents the start command
-	var startCmd = &cobra.Command{
+const (
+	WaitDuration = 1 * time.Minute
+)
+
+// GetStartCmd returns the start command to start bridge
+func GetStartCmd() *cobra.Command {
+	startCmd := &cobra.Command{
 		Use:   "start",
 		Short: "Start bridge server",
 		Run: func(cmd *cobra.Command, args []string) {
+			logger := pier.Logger.With("module", "bridge")
+
 			// create codec
 			cdc := app.MakeCodec()
 			app.MakePulp()
-
 			// queue connector & http client
 			_queueConnector := pier.NewQueueConnector(cdc, helper.GetConfig().AmqpURL)
 			_httpClient := httpClient.NewHTTP(helper.GetConfig().TendermintNodeURL, "/websocket")
@@ -65,6 +74,22 @@ func startCmd() *cobra.Command {
 				panic(fmt.Sprintf("Error connecting to server %v", err))
 			}
 
+			// cli context
+			cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
+			cliCtx.BroadcastMode = client.BroadcastAsync
+			cliCtx.TrustNode = true
+
+			// start bridge services only when node fully synced
+			for {
+				if !pier.IsCatchingUp(cliCtx) {
+					logger.Info("Node upto date, starting bridge services")
+					break
+				} else {
+					logger.Info("Waiting for heimdall to be synced")
+				}
+				time.Sleep(WaitDuration)
+			}
+
 			// strt all processes
 			for _, service := range services {
 				go func(serv common.Service) {
@@ -77,21 +102,17 @@ func startCmd() *cobra.Command {
 			// wait for all processes
 			wg.Add(len(services))
 			wg.Wait()
-		},
-	}
-
+		}}
 	startCmd.Flags().Bool("all", false, "start all bridge services")
 	viper.BindPFlag("all", startCmd.Flags().Lookup("all"))
 
-	startCmd.Flags().StringSlice("only", []string{}, "comma separated bridge services to start")
+	startCmd.Flags().StringSlice("only", []string{}, "comma separated bridge services to start")
 	viper.BindPFlag("only", startCmd.Flags().Lookup("only"))
-
 	return startCmd
 }
 
 // SelectedServices will select services to start based on set flags --all, --only
 func SelectedServices(cdc *codec.Codec, _httpClient *httpClient.HTTP, _queueConnector *pier.QueueConnector) []common.Service {
-
 	services := []common.Service{
 		pier.NewConsumerService(cdc, _queueConnector),
 	}
@@ -123,10 +144,9 @@ func SelectedServices(cdc *codec.Codec, _httpClient *httpClient.HTTP, _queueConn
 			}
 		}
 	}
-
 	return services
 }
 
 func init() {
-	rootCmd.AddCommand(startCmd())
+	rootCmd.AddCommand(GetStartCmd())
 }

@@ -48,7 +48,7 @@ start-heimdall:
 	mkdir -p ./logs &
 	./build/heimdalld start > ./logs/heimdalld.log &
 
-reset-heimdalld:
+reset-heimdall:
 	./build/heimdalld unsafe-reset-all 
 	rm -rf ~/.heimdalld/bridge
 	
