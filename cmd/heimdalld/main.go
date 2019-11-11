@@ -169,7 +169,7 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 
 			// Heimdall config file
 			heimdallConf := helper.GetDefaultHeimdallConfig()
-
+			fmt.Println("pringitn heimdall-config", heimdallConf.MaxCheckpointLength)
 			helper.WriteConfigFile(filepath.Join(config.RootDir, "config/heimdall-config.toml"), &heimdallConf)
 
 			//

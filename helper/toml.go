@@ -62,12 +62,12 @@ noack_poll_interval = "{{ .NoACKPollInterval }}"
 
 ##### Checkpoint Length Config #####
 avg_checkpoint_length = "{{ .AvgCheckpointLength }}"
-max_checkpoint_length = "{{ .CheckpointBufferTime }}"
+max_checkpoint_length = "{{ .MaxCheckpointLength }}"
 
 ##### Timeout Config #####
 
 no_ack_wait_time = "{{ .NoACKWaitTime }}"
-checkpoint_buffer_time = "{{ .CheckpointerPollInterval }}"
+checkpoint_buffer_time = "{{ .CheckpointBufferTime }}"
 
 ##### Transaction Confirmations  #####
 
