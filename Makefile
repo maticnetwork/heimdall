@@ -25,9 +25,9 @@ tests:
 
 build: clean
 	mkdir -p build
-	go build $(BUILD_FLAGS) -o build/heimdalld cmd/heimdalld/main.go
-	go build $(BUILD_FLAGS) -o build/heimdallcli cmd/heimdallcli/main.go
-	go build $(BUILD_FLAGS) -o build/bridge bridge/bridge.go
+	go build -o build/heimdalld cmd/heimdalld/main.go
+	go build -o build/heimdallcli cmd/heimdallcli/main.go
+	go build -o build/bridge bridge/bridge.go
 
 install:
 	go install $(BUILD_FLAGS) ./cmd/heimdalld
