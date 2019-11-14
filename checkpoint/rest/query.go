@@ -36,15 +36,25 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Co
 		"/checkpoint/headers/{headerBlockIndex}",
 		checkpointHeaderHandlerFn(cdc, cliCtx),
 	).Methods("GET")
+
 	r.HandleFunc("/checkpoint/latest-checkpoint",
-		latestCheckpointHandlerFunc(cdc, cliCtx)).Methods("GET")
+		latestCheckpointHandlerFunc(cdc, cliCtx),
+	).Methods("GET")
+
+	r.HandleFunc("/checkpoint/{checkpointNumber}",
+		checkpointByNumberHandlerFunc(cdc, cliCtx),
+	).Methods("GET")
+
 	r.HandleFunc("/checkpoint/{start}/{end}",
-		checkpointHandlerFn(cdc, cliCtx)).Methods("GET")
+		checkpointHandlerFn(cdc, cliCtx),
+	).Methods("GET")
 
 	r.HandleFunc("/checkpoint/last-no-ack",
 		noackHandlerFn(cdc, cliCtx)).Methods("GET")
+
 	r.HandleFunc("/overview",
 		overviewHandlerFunc(cdc, cliCtx)).Methods("GET")
+
 	helper.InitHeimdallConfig("")
 }
 
@@ -388,6 +398,57 @@ func latestCheckpointHandlerFunc(
 			return
 		}
 		RestLogger.Debug("Fetched last checkpoint", "Checkpoint", _checkpoint)
+		result, err := json.Marshal(&_checkpoint)
+		if err != nil {
+			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		rest.PostProcessResponse(w, cliCtx, result)
+	}
+}
+
+// get  checkpoint by checkppint number from store
+func checkpointByNumberHandlerFunc(
+	cdc *codec.Codec,
+	cliCtx context.CLIContext,
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		vars := mux.Vars(r)
+
+		// get checkpoint number
+		checkpointNumber, ok := rest.ParseUint64OrReturnBadRequest(w, vars["checkpointNumber"])
+		if !ok {
+			return
+		}
+
+		RestLogger.Debug("Get Checkpoint for ", "checkpointNumber", checkpointNumber)
+		checkpointKey := helper.GetConfig().ChildBlockInterval * checkpointNumber
+		RestLogger.Debug("checkpoint key generated",
+			"checkpointKey", checkpointKey,
+			"min", helper.GetConfig().ChildBlockInterval,
+		)
+
+		res, err := cliCtx.QueryStore(checkpoint.GetHeaderKey(checkpointKey), "checkpoint")
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		// the query will return empty if there is no data
+		if len(res) == 0 {
+			rest.WriteErrorResponse(w, http.StatusNotFound, errors.New("No content found for requested key").Error())
+			return
+		}
+
+		var _checkpoint types.CheckpointBlockHeader
+		err = cdc.UnmarshalBinaryBare(res, &_checkpoint)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		RestLogger.Debug("Fetched checkpoint", "Checkpoint", _checkpoint)
 		result, err := json.Marshal(&_checkpoint)
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
