@@ -3,6 +3,8 @@ package types
 // query endpoints supported by the staking Querier
 const (
 	QueryValStatus = "val-status"
+	QueryCheckpointReward = "checkpoint-reward"
+	QueryProposerBonusPercent = "proposer-bonus-percent"
 )
 
 // QueryValStatusParams defines the params for querying val status.
