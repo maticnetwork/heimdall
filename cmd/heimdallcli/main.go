@@ -13,8 +13,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/version"
 	ethCommon "github.com/ethereum/go-ethereum/common"
+	"github.com/maticnetwork/heimdall/version"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tendermint/go-amino"
@@ -34,7 +34,6 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 	staking "github.com/maticnetwork/heimdall/staking/cli"
 	supply "github.com/maticnetwork/heimdall/supply/cli"
-	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 // rootCmd is the entry point for this binary
@@ -62,13 +61,6 @@ func initTendermintViperConfig(cmd *cobra.Command) {
 
 	// start heimdall config
 	helper.InitHeimdallConfig("")
-
-	// set prefix
-	config := sdk.GetConfig()
-	config.SetBech32PrefixForAccount(hmTypes.PrefixAccAddr, hmTypes.PrefixAccPub)
-	config.SetBech32PrefixForValidator(hmTypes.PrefixValAddr, hmTypes.PrefixValPub)
-	config.SetBech32PrefixForConsensusNode(hmTypes.PrefixConsAddr, hmTypes.PrefixConsPub)
-	// config.Seal()
 }
 
 func main() {
@@ -100,7 +92,7 @@ func main() {
 		convertAddressToHexCmd(cdc),
 		convertHexToAddressCmd(cdc),
 		client.LineBreak,
-		version.VersionCmd,
+		version.Cmd,
 	)
 
 	// bind with-heimdall-config config with root cmd

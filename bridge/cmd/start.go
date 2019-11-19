@@ -38,7 +38,7 @@ func GetStartCmd() *cobra.Command {
 			app.MakePulp()
 			// queue connector & http client
 			_queueConnector := pier.NewQueueConnector(cdc, helper.GetConfig().AmqpURL)
-			_httpClient := httpClient.NewHTTP(helper.GetConfig().TendermintNodeURL, "/websocket")
+			_httpClient := httpClient.NewHTTP(helper.GetConfig().TendermintRPCUrl, "/websocket")
 
 			// selected services to start
 			services := SelectedServices(cdc, _httpClient, _queueConnector)

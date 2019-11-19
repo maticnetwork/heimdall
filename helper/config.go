@@ -7,6 +7,7 @@ import (
 	"math/big"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -38,16 +39,18 @@ const (
 	// BroadcastBlock defines a tx broadcasting mode where the client waits for
 	// the tx to be committed in a block.
 	BroadcastBlock = "block"
+
 	// BroadcastSync defines a tx broadcasting mode where the client waits for
 	// a CheckTx execution response only.
 	BroadcastSync = "sync"
+
 	// BroadcastAsync defines a tx broadcasting mode where the client returns
 	// immediately.
 	BroadcastAsync = "async"
 	// --
 
-	MainRPCUrl  = "https://ropsten.infura.io"
-	MaticRPCUrl = "https://testnet2.matic.network"
+	DefaultMainRPCUrl = "https://ropsten.infura.io"
+	DefaultBorRPCUrl  = "https://testnet2.matic.network"
 
 	// Services
 
@@ -56,10 +59,10 @@ const (
 	DefaultHeimdallServerURL = "http://0.0.0.0:1317"
 	DefaultTendermintNodeURL = "http://0.0.0.0:26657"
 
-	NoACKWaitTime                   = time.Second * 1800 // Time ack service waits to clear buffer and elect new proposer (1800 seconds ~ 30 mins)
-	CheckpointBufferTime            = time.Second * 1000 // Time checkpoint is allowed to stay in buffer (1000 seconds ~ 17 mins)
-	DefaultCheckpointerPollInterval = 60 * 1000          // 1 minute in milliseconds
-	DefaultSyncerPollInterval       = 30 * 1000          // 0.5 seconds in milliseconds
+	NoACKWaitTime                   = 1800 * time.Second // Time ack service waits to clear buffer and elect new proposer (1800 seconds ~ 30 mins)
+	CheckpointBufferTime            = 1000 * time.Second // Time checkpoint is allowed to stay in buffer (1000 seconds ~ 17 mins)
+	DefaultCheckpointerPollInterval = 1 * time.Minute    // 1 minute in milliseconds
+	DefaultSyncerPollInterval       = 1 * time.Minute    // 0.5 seconds in milliseconds
 	DefaultNoACKPollInterval        = 1010 * time.Second
 	DefaultCheckpointLength         = 256   // checkpoint number 	 with 0, so length = defaultCheckpointLength -1
 	MaxCheckpointLength             = 1024  // max blocks in one checkpoint
@@ -87,35 +90,37 @@ func init() {
 
 // Configuration represents heimdall config
 type Configuration struct {
-	MainRPCUrl  string `json:"mainRPCUrl"`  // RPC endpoint for main chain
-	MaticRPCUrl string `json:"maticRPCUrl"` // RPC endpoint for matic chain
+	EthRPCUrl        string `mapstructure:"eth_RPC_URL"`        // RPC endpoint for main chain
+	BorRPCUrl        string `mapstructure:"bor_RPC_URL"`        // RPC endpoint for bor chain
+	TendermintRPCUrl string `mapstructure:"tendermint_RPC_URL"` // tendemint node url
 
-	AmqpURL           string `json:"amqpURL"`           // amqp url
-	HeimdallServerURL string `json:"heimdallServerURL"` // heimdall server url
-	TendermintNodeURL string `json:"tendermintNodeURL"` // tendemint noed url
+	BorChainID string `mapstructure:"bor_chain_id"` // bor chain id
 
-	BorChainID string `json:"borChainID"` // bor chain id
+	AmqpURL           string `mapstructure:"amqp_url"`             // amqp url
+	HeimdallServerURL string `mapstructure:"heimdall_rest_server"` // heimdall server url
 
-	StakeManagerAddress  string `json:"stakeManagerAddress"`  // Stake manager address on main chain
-	RootchainAddress     string `json:"rootchainAddress"`     // Rootchain contract address on main chain
-	ValidatorSetAddress  string `json:"validatorSetAddress"`  // Validator Set contract address on bor chain
-	StateSenderAddress   string `json:"stateSenderAddress"`   // main
-	StateReceiverAddress string `json:"stateReceiverAddress"` // matic
+	StakeManagerAddress  string `mapstructure:"stakemanager_contract"`   // Stake manager address on main chain
+	RootchainAddress     string `mapstructure:"rootchain_contract"`      // Rootchain contract address on main chain
+	StateSenderAddress   string `mapstructure:"state_sender_contract"`   // main
+	StateReceiverAddress string `mapstructure:"state_receiver_contract"` // matic
+	ValidatorSetAddress  string `mapstructure:"validator_set_contract"`  // Validator Set contract address on bor chain
 
-	ChildBlockInterval uint64 `json:"childBlockInterval"` // Difference between header index of 2 child blocks submitted on main chain
+	ChildBlockInterval uint64 `mapstructure:"child_chain_block_interval"` // Difference between header index of 2 child blocks submitted on main chain
 
 	// config related to bridge
-	CheckpointerPollInterval int           `json:"checkpointerPollInterval"` // Poll interval for checkpointer service to send new checkpoints or missing ACK
-	SyncerPollInterval       int           `json:"syncerPollInterval"`       // Poll interval for syncher service to sync for changes on main chain
-	NoACKPollInterval        time.Duration `json:"noackPollInterval"`        // Poll interval for ack service to send no-ack in case of no checkpoints
-	// checkpoint length related options
-	AvgCheckpointLength uint64 `json:"avgCheckpointLength"` // Average number of blocks checkpoint would contain
-	MaxCheckpointLength uint64 `json:"maxCheckpointLength"` // Maximium number of blocks checkpoint would contain
-	// wait time related options
-	NoACKWaitTime        time.Duration `json:"noackWaitTime"`        // Time ack service waits to clear buffer and elect new proposer
-	CheckpointBufferTime time.Duration `json:"checkpointBufferTime"` // Time checkpoint is allowed to stay in buffer
+	CheckpointerPollInterval time.Duration `mapstructure:"checkpoint_poll_interval"` // Poll interval for checkpointer service to send new checkpoints or missing ACK
+	SyncerPollInterval       time.Duration `mapstructure:"syncer_poll_interval"`     // Poll interval for syncher service to sync for changes on main chain
+	NoACKPollInterval        time.Duration `mapstructure:"noack_poll_interval"`      // Poll interval for ack service to send no-ack in case of no checkpoints
 
-	ConfirmationBlocks uint64 `json:"confirmationBlocks"` // Number of blocks for confirmation
+	// checkpoint length related options
+	AvgCheckpointLength uint64 `mapstructure:"avg_checkpoint_length"` // Average number of blocks checkpoint would contain
+	MaxCheckpointLength uint64 `mapstructure:"max_checkpoint_length"` // Maximium number of blocks checkpoint would contain
+
+	// wait time related options
+	NoACKWaitTime        time.Duration `mapstructure:"no_ack_wait_time"`       // Time ack service waits to clear buffer and elect new proposer
+	CheckpointBufferTime time.Duration `mapstructure:"checkpoint_buffer_time"` // Time checkpoint is allowed to stay in buffer
+
+	ConfirmationBlocks uint64 `mapstructure:"confirmation_blocks"` // Number of blocks for confirmation
 }
 
 var conf Configuration
@@ -135,6 +140,8 @@ var pubObject secp256k1.PubKeySecp256k1
 
 // Logger stores global logger object
 var Logger logger.Logger
+
+// GenesisDoc contains the genesis file
 var GenesisDoc tmTypes.GenesisDoc
 
 // Contracts
@@ -162,21 +169,18 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 		return
 	}
 
-	if strings.Compare(conf.MaticRPCUrl, "") != 0 {
+	if strings.Compare(conf.BorRPCUrl, "") != 0 {
 		return
 	}
 
 	configDir := filepath.Join(homeDir, "config")
-	fmt.Println("Initializing tendermint configurations", "configDir", configDir)
 
 	heimdallViper := viper.New()
 	if heimdallConfigFilePath == "" {
 		heimdallViper.SetConfigName("heimdall-config") // name of config file (without extension)
 		heimdallViper.AddConfigPath(configDir)         // call multiple times to add many search paths
-		fmt.Println("Loading heimdall configurations", "file", filepath.Join(configDir, "heimdall-config.json"))
 	} else {
 		heimdallViper.SetConfigFile(heimdallConfigFilePath) // set config file explicitly
-		fmt.Println("Loading heimdall configurations", "file", heimdallConfigFilePath)
 	}
 
 	err := heimdallViper.ReadInConfig()
@@ -184,16 +188,16 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 		log.Fatal(err)
 	}
 
-	if err = heimdallViper.Unmarshal(&conf); err != nil {
-		log.Fatal(err)
+	if err = heimdallViper.UnmarshalExact(&conf); err != nil {
+		log.Fatalln("Unable to unmarshall config", "Error", err)
 	}
 
-	if mainRPCClient, err = rpc.Dial(conf.MainRPCUrl); err != nil {
-		log.Fatal(err)
+	if mainRPCClient, err = rpc.Dial(conf.EthRPCUrl); err != nil {
+		log.Fatalln("Unable to dial via ethClient", "URL=", conf.EthRPCUrl, "chain=eth", "Error", err)
 	}
 
 	mainChainClient = ethclient.NewClient(mainRPCClient)
-	if maticRPCClient, err = rpc.Dial(conf.MaticRPCUrl); err != nil {
+	if maticRPCClient, err = rpc.Dial(conf.BorRPCUrl); err != nil {
 		log.Fatal(err)
 	}
 
@@ -210,6 +214,39 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 	privVal := privval.LoadFilePV(filepath.Join(configDir, "priv_validator_key.json"), filepath.Join(configDir, "priv_validator_key.json"))
 	cdc.MustUnmarshalBinaryBare(privVal.Key.PrivKey.Bytes(), &privObject)
 	cdc.MustUnmarshalBinaryBare(privObject.PubKey().Bytes(), &pubObject)
+}
+
+// GetDefaultHeimdallConfig returns configration with default params
+func GetDefaultHeimdallConfig() Configuration {
+	return Configuration{
+		EthRPCUrl:        DefaultMainRPCUrl,
+		BorRPCUrl:        DefaultBorRPCUrl,
+		TendermintRPCUrl: DefaultTendermintNodeURL,
+		BorChainID:       strconv.Itoa(DefaultBorChainID),
+
+		AmqpURL:           DefaultAmqpURL,
+		HeimdallServerURL: DefaultHeimdallServerURL,
+
+		StakeManagerAddress:  (common.Address{}).Hex(),
+		RootchainAddress:     (common.Address{}).Hex(),
+		StateSenderAddress:   (common.Address{}).Hex(),
+		StateReceiverAddress: DefaultStateReceiverAddress,
+		ValidatorSetAddress:  DefaultValidatorSetAddress,
+
+		ChildBlockInterval: DefaultChildBlockInterval,
+
+		CheckpointerPollInterval: DefaultCheckpointerPollInterval,
+		SyncerPollInterval:       DefaultSyncerPollInterval,
+		NoACKPollInterval:        DefaultNoACKPollInterval,
+
+		AvgCheckpointLength: DefaultCheckpointLength,
+		MaxCheckpointLength: MaxCheckpointLength,
+
+		NoACKWaitTime:        NoACKWaitTime,
+		CheckpointBufferTime: CheckpointBufferTime,
+
+		ConfirmationBlocks: ConfirmationBlocks,
+	}
 }
 
 // GetConfig returns cached configuration object

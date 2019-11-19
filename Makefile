@@ -1,5 +1,15 @@
 # Fetch git latest tag
 LATEST_GIT_TAG:=$(shell git describe --tags $(git rev-list --tags --max-count=1))
+VERSION := $(shell echo $(shell git describe --tags) | sed 's/^v//')
+COMMIT := $(shell git log -1 --format='%H')
+
+ldflags = -X github.com/maticnetwork/heimdall/version.Name=heimdall \
+		  -X github.com/maticnetwork/heimdall/version.ServerName=heimdalld \
+		  -X github.com/maticnetwork/heimdall/version.ClientName=heimdallcli \
+		  -X github.com/maticnetwork/heimdall/version.Version=$(VERSION) \
+		  -X github.com/maticnetwork/heimdall/version.Commit=$(COMMIT)
+
+BUILD_FLAGS := -ldflags '$(ldflags)'
 
 dep:
 	dep ensure -v
@@ -20,9 +30,9 @@ build: clean
 	go build -o build/bridge bridge/bridge.go
 
 install:
-	go install ./cmd/heimdalld
-	go install ./cmd/heimdallcli
-	go install bridge/bridge.go
+	go install $(BUILD_FLAGS) ./cmd/heimdalld
+	go install $(BUILD_FLAGS) ./cmd/heimdallcli
+	go install $(BUILD_FLAGS) bridge/bridge.go
 
 contracts:
 	abigen --abi=contracts/rootchain/rootchain.abi --pkg=rootchain --out=contracts/rootchain/rootchain.go

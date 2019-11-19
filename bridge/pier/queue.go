@@ -250,8 +250,9 @@ func (qc *QueueConnector) handleHeimdallBroadcastMsgs(amqpMsgs <-chan amqp.Deliv
 	response, err := FetchFromAPI(qc.cliCtx, GetHeimdallServerEndpoint(fmt.Sprintf(AccountDetailsURL, address)))
 	if err != nil {
 		qc.logger.Error("Error fetching account from rest-api", "url", GetHeimdallServerEndpoint(fmt.Sprintf(AccountDetailsURL, address)))
+		panic("Error connecting to rest-server, please start server before bridge")
 	}
-	
+
 	// get proposer from response
 	if err := qc.cliCtx.Codec.UnmarshalJSON(response.Result, &account); err != nil && len(response.Result) != 0 {
 		panic(err)
@@ -347,122 +348,3 @@ func (qc *QueueConnector) handleBorBroadcastMsgs(amqpMsgs <-chan amqp.Delivery) 
 		handler(amqpMsg)
 	}
 }
-
-// // ConsumeHeimdallQ consumes messages from heimdall queue
-// func (qc *QueueConnector) ConsumeHeimdallQ() error {
-// 	conn, err := amqp.Dial(qc.AmqpDailer)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	defer conn.Close()
-// 	ch, err := conn.Channel()
-// 	if err != nil {
-// 		return err
-// 	}
-// 	defer ch.Close()
-
-// 	q, err := ch.QueueDeclare(
-// 		qc.HeimdallQueue, // name
-// 		false,            // durable
-// 		false,            // delete when unused
-// 		false,            // exclusive
-// 		false,            // no-wait
-// 		nil,              // arguments
-// 	)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	msgs, err := ch.Consume(
-// 		q.Name, // queue
-// 		"",     // consumer
-// 		true,   // auto-ack
-// 		false,  // exclusive
-// 		false,  // no-local
-// 		false,  // no-wait
-// 		nil,    // args
-// 	)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	forever := make(chan bool)
-
-// 	go func() {
-// 		for d := range msgs {
-// 			qc.Logger.Debug("Sending transaction to heimdall", "TxBytes", d.Body)
-// 			resp, err := helper.BroadcastTxBytes(qc.cliCtx, d.Body, "")
-// 			if err != nil {
-// 				qc.Logger.Error("Unable to send transaction to heimdall", "error", err)
-// 			} else {
-// 				qc.Logger.Info("Sent to heimdall", "Response", resp.String())
-// 				// TODO identify msg type checkpoint and add conditional
-// 				qc.DispatchToEth(resp.TxHash)
-// 			}
-// 		}
-// 	}()
-// 	qc.Logger.Info("Starting queue consumer")
-// 	<-forever
-// 	return nil
-// }
-
-// // ConsumeCheckpointQ consumes checkpoint tx hash from heimdall and sends prevotes to contract
-// func (qc *QueueConnector) ConsumeCheckpointQ() error {
-// 	// On confirmation/rejection for tx
-// 	// Send checkpoint to rootchain incase
-// 	conn, err := amqp.Dial(qc.AmqpDailer)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	defer conn.Close()
-// 	ch, err := conn.Channel()
-// 	if err != nil {
-// 		return err
-// 	}
-// 	defer ch.Close()
-
-// 	q, err := ch.QueueDeclare(
-// 		qc.CheckpointQueue, // name
-// 		false,              // durable
-// 		false,              // delete when unused
-// 		false,              // exclusive
-// 		false,              // no-wait
-// 		nil,                // arguments
-// 	)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	msgs, err := ch.Consume(
-// 		q.Name, // queue
-// 		"",     // consumer
-// 		true,   // auto-ack
-// 		false,  // exclusive
-// 		false,  // no-local
-// 		false,  // no-wait
-// 		nil,    // args
-// 	)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	forever := make(chan bool)
-
-// 	go func() {
-// 		for d := range msgs {
-// 			qc.Logger.Debug("Sending transaction to heimdall", "TxBytes", d.Body)
-// 			// resp, err := helper.SendTendermintRequest(qc.cliContext, d.Body, helper.BroadcastAsync)
-// 			// if err != nil {
-// 			// 	qc.Logger.Error("Unable to send transaction to heimdall", "error", err)
-// 			// } else {
-// 			// 	qc.Logger.Info("Sent to heimdall", "Response", resp.String())
-// 			// 	// TODO identify msg type checkpoint and add conditional
-// 			// 	qc.DispatchToEth(resp.TxHash)
-// 			// }
-// 		}
-// 	}()
-// 	qc.Logger.Info("Starting queue consumer")
-// 	<-forever
-// 	return nil
-
-// }
