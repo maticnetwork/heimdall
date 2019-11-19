@@ -39,9 +39,11 @@ const (
 	// BroadcastBlock defines a tx broadcasting mode where the client waits for
 	// the tx to be committed in a block.
 	BroadcastBlock = "block"
+
 	// BroadcastSync defines a tx broadcasting mode where the client waits for
 	// a CheckTx execution response only.
 	BroadcastSync = "sync"
+
 	// BroadcastAsync defines a tx broadcasting mode where the client returns
 	// immediately.
 	BroadcastAsync = "async"
@@ -57,10 +59,10 @@ const (
 	DefaultHeimdallServerURL = "http://0.0.0.0:1317"
 	DefaultTendermintNodeURL = "http://0.0.0.0:26657"
 
-	NoACKWaitTime                   = time.Second * 1800 // Time ack service waits to clear buffer and elect new proposer (1800 seconds ~ 30 mins)
-	CheckpointBufferTime            = time.Second * 1000 // Time checkpoint is allowed to stay in buffer (1000 seconds ~ 17 mins)
-	DefaultCheckpointerPollInterval = 60 * 1000          // 1 minute in milliseconds
-	DefaultSyncerPollInterval       = 30 * 1000          // 0.5 seconds in milliseconds
+	NoACKWaitTime                   = 1800 * time.Second // Time ack service waits to clear buffer and elect new proposer (1800 seconds ~ 30 mins)
+	CheckpointBufferTime            = 1000 * time.Second // Time checkpoint is allowed to stay in buffer (1000 seconds ~ 17 mins)
+	DefaultCheckpointerPollInterval = 1 * time.Minute    // 1 minute in milliseconds
+	DefaultSyncerPollInterval       = 1 * time.Minute    // 0.5 seconds in milliseconds
 	DefaultNoACKPollInterval        = 1010 * time.Second
 	DefaultCheckpointLength         = 256   // checkpoint number 	 with 0, so length = defaultCheckpointLength -1
 	MaxCheckpointLength             = 1024  // max blocks in one checkpoint
@@ -111,8 +113,8 @@ type Configuration struct {
 	NoACKPollInterval        time.Duration `mapstructure:"noack_poll_interval"`      // Poll interval for ack service to send no-ack in case of no checkpoints
 
 	// checkpoint length related options
-	AvgCheckpointLength uint `mapstructure:"avg_checkpoint_length"` // Average number of blocks checkpoint would contain
-	MaxCheckpointLength uint `mapstructure:"max_checkpoint_length"` // Maximium number of blocks checkpoint would contain
+	AvgCheckpointLength uint64 `mapstructure:"avg_checkpoint_length"` // Average number of blocks checkpoint would contain
+	MaxCheckpointLength uint64 `mapstructure:"max_checkpoint_length"` // Maximium number of blocks checkpoint would contain
 
 	// wait time related options
 	NoACKWaitTime        time.Duration `mapstructure:"no_ack_wait_time"`       // Time ack service waits to clear buffer and elect new proposer

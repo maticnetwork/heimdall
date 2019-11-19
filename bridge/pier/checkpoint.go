@@ -116,7 +116,7 @@ func (c *Checkpointer) OnStart() error {
 	subscription, err := c.contractConnector.MaticChainClient.SubscribeNewHead(ctx, c.HeaderChannel)
 	if err != nil {
 		// start go routine to poll for new header using client object
-		go c.startPolling(ctx, helper.GetConfig().CheckpointerPollInterval)
+		go c.startPolling(ctx, int(helper.GetConfig().CheckpointerPollInterval))
 	} else {
 		// start go routine to listen new header using subscription
 		go c.startSubscription(ctx, subscription)
