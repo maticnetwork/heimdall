@@ -1,23 +1,14 @@
 ---
 swagger: "2.0"
 info:
-  version: "3.0"
+  version: "1.0"
   title: Heimdall
   description: A REST interface for state queries, transaction generation and broadcasting.
 tags:
-  - name: Transactions
-    description: Search, encode, or broadcast transactions.
-  - name: Tendermint RPC
-    description: Tendermint APIs, such as query blocks, transactions and validatorset
-  - name: Auth
-    description: Authenticate accounts
-  - name: Bank
-    description: Create and broadcast transactions
-  - name: version
-  - name: Mint
-    description: Minting module APIs
-  - name: Misc
-    description: Query app version
+  - name: Staking
+    description: Stake module APIs
+  - name: Checkpoint
+    description: Checkpoint module APIs
 schemes:
   - http
 host: localhost:1317
@@ -25,438 +16,274 @@ securityDefinitions:
   kms:
     type: basic
 paths:
-  /node_info:
+  /staking/signer/{address}:
+    parameters:
+      - in: path
+        name: address
+        description: Signer Address of Validator
+        required: true
+        type: string
+        x-example: "0x6c468cf8c9879006e22ec4029696e005c2319c9d"
     get:
-      description: Information about the connected node
-      summary: The properties of the connected node
+      summary: Query the information from a single validator
       tags:
-        - Tendermint RPC
+        - Staking
       produces:
         - application/json
       responses:
         200:
-          description: Node status
+          description: OK
           schema:
-            type: object
-            properties:
-              application_version:
-                properties:
-                  build_tags:
-                    type: string
-                  client_name:
-                    type: string
-                  commit:
-                    type: string
-                  go:
-                    type: string
-                  name:
-                    type: string
-                  server_name:
-                    type: string
-                  version:
-                    type: string
-              node_info:
-                properties:
-                  id:
-                    type: string
-                  moniker:
-                    type: string
-                    example: validator-name
-                  protocol_version:
-                    properties:
-                      p2p:
-                        type: string
-                        example: 7
-                      block:
-                        type: string
-                        example: 10
-                      app:
-                        type: string
-                        example: 0
-                  network:
-                    type: string
-                    example: gaia-2
-                  channels:
-                    type: string
-                  listen_addr:
-                    type: string
-                    example: 192.168.56.1:26656
-                  version:
-                    description: Tendermint version
-                    type: string
-                    example: 0.15.0
-                  other:
-                    description: more information on versions
-                    type: object
-                    properties:
-                      tx_index:
-                        type: string
-                        example: on
-                      rpc_address:
-                        type: string
-                        example: tcp://0.0.0.0:26657
+            $ref: "#/definitions/Validator"
+        400:
+          description: Invalid signer address
         500:
-          description: Failed to query node status
-  /syncing:
+          description: Internal Server Error
+          
+  /staking/validator-status/{address}:
+    parameters:
+      - in: path
+        name: address
+        description: Signer Address of Validator
+        required: true
+        type: string
+        x-example: "0x6c468cf8c9879006e22ec4029696e005c2319c9d"
     get:
-      summary: Syncing state of node
+      summary: Query the Status Info of Validator
       tags:
-        - Tendermint RPC
-      description: Get if the node is currently syning with other nodes
+        - Staking
       produces:
         - application/json
       responses:
         200:
-          description: Node syncing status
+          description: OK
           schema:
             type: object
             properties:
-              syncing:
+              status:
                 type: boolean
-        500:
-          description: Server internal error
-  /blocks/latest:
-    get:
-      summary: Get the latest block
-      tags:
-        - Tendermint RPC
-      produces:
-        - application/json
-      responses:
-        200:
-          description: The latest block
-          schema:
-            $ref: "#/definitions/BlockQuery"
-        500:
-          description: Server internal error
-  /blocks/{height}:
-    get:
-      summary: Get a block at a certain height
-      tags:
-        - Tendermint RPC
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: height
-          description: Block height
-          required: true
-          type: number
-          x-example: 1
-      responses:
-        200:
-          description: The block at a specific height
-          schema:
-            $ref: "#/definitions/BlockQuery"
-        404:
-          description: Request block height doesn't
         400:
-          description: Invalid height
-        500:
-          description: Server internal error
-  /validatorsets/latest:
-    get:
-      summary: Get the latest validator set
-      tags:
-        - Tendermint RPC
-      produces:
-        - application/json
-      responses:
-        200:
-          description: The validator set at the latest block height
-          schema:
-            type: object
-            properties:
-              block_height:
-                type: string
-              validators:
-                type: array
-                items:
-                  $ref: "#/definitions/TendermintValidator"
-        500:
-          description: Server internal error
-  /validatorsets/{height}:
-    get:
-      summary: Get a validator set a certain height
-      tags:
-        - Tendermint RPC
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: height
-          description: Block height
-          required: true
-          type: number
-          x-example: 1
-      responses:
-        200:
-          description: The validator set at a specific block height
-          schema:
-            type: object
-            properties:
-              block_height:
-                type: string
-              validators:
-                type: array
-                items:
-                  $ref: "#/definitions/TendermintValidator"
-        404:
-          description: Block at height not available
-        400:
-          description: Invalid height
-        500:
-          description: Server internal error
-  /txs/{hash}:
-    get:
-      summary: Get a Tx by hash
-      tags:
-        - Transactions
-      description: Retrieve a transaction using its hash.
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: hash
-          description: Tx hash
-          required: true
-          type: string
-          x-example: BCBE20E8D46758B96AE5883B792858296AC06E51435490FBDCAE25A72B3CC76B
-      responses:
-        200:
-          description: Tx with the provided hash
-          schema:
-            $ref: "#/definitions/TxQuery"
+          description: Invalid signer address
         500:
           description: Internal Server Error
-  /txs:
+          
+  /staking/validator/{id}:
+    parameters:
+      - in: path
+        name: id
+        description: Get Validator by val ID
+        required: true
+        type: integer
+        x-example: 1
     get:
+      summary: Query the Validator by val ID
       tags:
-        - Transactions
-      summary: Search transactions
-      description: Search transactions by events.
+        - Staking
       produces:
         - application/json
-      parameters:
-        - in: query
-          name: message.action
-          type: string
-          description: "transaction events such as 'message.action=send' which results in the following endpoint: 'GET /txs?message.action=send'. note that each module documents its own events. look for xx_events.md in the corresponding cosmos-sdk/docs/spec directory"
-          x-example: "send"
-        - in: query
-          name: message.sender
-          type: string
-          description: "transaction tags with sender: 'GET /txs?message.action=send&message.sender=cosmos16xyempempp92x9hyzz9wrgf94r6j9h5f06pxxv'"
-          x-example: "cosmos16xyempempp92x9hyzz9wrgf94r6j9h5f06pxxv"
-        - in: query
-          name: page
-          description: Page number
-          type: integer
-          x-example: 1
-        - in: query
-          name: limit
-          description: Maximum number of items per page
-          type: integer
-          x-example: 1
       responses:
         200:
-          description: All txs matching the provided events
+          description: OK
           schema:
-            $ref: "#/definitions/PaginatedQueryTxs"
+            $ref: "#/definitions/Validator"
         400:
-          description: Invalid search events
+          description: Invalid Validator ID
         500:
-          description: Internal Server Error
-    post:
-      tags:
-        - Transactions
-      summary: Broadcast a signed tx
-      description: Broadcast a signed tx to a full node
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      parameters:
-        - in: body
-          name: txBroadcast
-          description: The tx must be a signed StdTx. The supported broadcast modes include `"block"`(return after tx commit), `"sync"`(return afer CheckTx) and `"async"`(return right away).
-          required: true
-          schema:
-            type: object
-            properties:
-              tx:
-                $ref: "#/definitions/StdTx"
-              mode:
-                type: string
-                example: block
-      responses:
-        200:
-          description: Tx broadcasting result
-          schema:
-            $ref: "#/definitions/BroadcastTxCommitResult"
-        500:
-          description: Internal Server Error
-  /txs/encode:
-    post:
-      tags:
-        - Transactions
-      summary: Encode a transaction to the Amino wire format
-      description: Encode a transaction (signed or not) from JSON to base64-encoded Amino serialized bytes
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      parameters:
-        - in: body
-          name: tx
-          description: The tx to encode
-          required: true
-          schema:
-            type: object
-            properties:
-              tx:
-                $ref: "#/definitions/StdTx"
-      responses:
-        200:
-          description: The tx was successfully decoded and re-encoded
-          schema:
-            type: object
-            properties:
-              tx:
-                type: string
-                example: The base64-encoded Amino-serialized bytes for the tx
-        400:
-          description: The tx was malformated
-        500:
-          description: Server internal error
-  /txs/decode:
-    post:
-      tags:
-        - Transactions
-      summary: Decode a transaction from the Amino wire format
-      description: Decode a transaction (signed or not) from base64-encoded Amino serialized bytes to JSON
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      parameters:
-        - in: body
-          name: tx
-          description: The tx to decode
-          required: true
-          schema:
-            type: object
-            properties:
-              tx:
-                type: string
-                example: SvBiXe4KPqijYZoKFFHEzJ8c2HPAfv2EFUcIhx0yPagwEhTy0vPA+GGhCEslKXa4Af0uB+mfShoMCgVzdGFrZRIDMTAwEgQQwJoM
-      responses:
-        200:
-          description: The tx was successfully decoded
-          schema:
-            $ref: "#/definitions/StdTx"
-        400:
-          description: The tx was malformated
-        500:
-          description: Server internal error
-  /bank/balances/{address}:
+          description: Internal Server Error  
+  /staking/current-proposer:
     get:
-      summary: Get the account balances
+      summary: Query the Current Block Proposer
       tags:
-        - Bank
+        - Staking
       produces:
         - application/json
-      parameters:
-        - in: path
-          name: address
-          description: Account address in bech32 format
-          required: true
-          type: string
-          x-example: cosmos16xyempempp92x9hyzz9wrgf94r6j9h5f06pxxv
       responses:
         200:
-          description: Account balances
+          description: OK
           schema:
-            type: array
-            items:
-              $ref: "#/definitions/Coin"
+            $ref: "#/definitions/Validator"
         500:
-          description: Server internal error
-  /bank/accounts/{address}/transfers:
-    post:
-      summary: Send coins from one account to another
-      tags:
-        - Bank
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: address
-          description: Account address in bech32 format
-          required: true
-          type: string
-          x-example: cosmos16xyempempp92x9hyzz9wrgf94r6j9h5f06pxxv
-        - in: body
-          name: account
-          description: The sender and tx information
-          required: true
-          schema:
-            type: object
-            properties:
-              base_req:
-                $ref: "#/definitions/BaseReq"
-              amount:
-                type: array
-                items:
-                  $ref: "#/definitions/Coin"
-      responses:
-        202:
-          description: Tx was succesfully generated
-          schema:
-            $ref: "#/definitions/StdTx"
-        400:
-          description: Invalid request
-        500:
-          description: Server internal error
-  /auth/accounts/{address}:
+          description: Internal Server Error  
+  /staking/validator-set:
     get:
-      summary: Get the account information on blockchain
+      summary: Query the Current Validator Set
       tags:
-        - Auth
+        - Staking
       produces:
         - application/json
-      parameters:
-        - in: path
-          name: address
-          description: Account address
-          required: true
-          type: string
-          x-example: cosmos16xyempempp92x9hyzz9wrgf94r6j9h5f06pxxv
       responses:
         200:
-          description: Account information on the blockchain
+          description: OK
           schema:
-            type: object
-            properties:
-              type:
-                type: string
-              value:
-                type: object
-                properties:
-                  account_number:
-                    type: string
-                  address:
-                    type: string
-                  coins:
-                    type: array
-                    items:
-                      $ref: "#/definitions/Coin"
-                  public_key:
-                    $ref: "#/definitions/PublicKey"
-                  sequence:
-                    type: string
+            $ref: "#/definitions/ValidatorSet"
         500:
-          description: Server internel error
+          description: Internal Server Error  
   
+  /checkpoint/count:
+    get:
+      summary: Query number of checkpoints
+      tags:
+        - Checkpoint
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            type: object
+            properties:
+              checkpoint-count:
+                type: integer
+        500:
+          description: Internal Server Error  
+  
+  /checkpoint/latest-checkpoint:
+    get:
+      summary: Query the Latest checkpoint
+      tags:
+        - Checkpoint
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/Checkpoint"
+        500:
+          description: Internal Server Error    
+  /checkpoint/buffer:
+    get:
+      summary: Query the checkpoint in the buffer
+      tags:
+        - Checkpoint
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/Checkpoint"
+        500:
+          description: Internal Server Error  
+          
+  /checkpoint/headers/{headerBlockIndex}:
+    parameters:
+      - in: path
+        name: headerBlockIndex
+        description: header Block Index
+        required: true
+        type: integer
+        x-example: 123    
+    get:
+      summary: Query the checkpoint by header block index
+      tags:
+        - Checkpoint
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/Checkpoint"
+        500:
+          description: Internal Server Error    
+          
+  /checkpoint/{checkpointNumber}:
+    parameters:
+      - in: path
+        name: checkpointNumber
+        description: checkpoint Number
+        required: true
+        type: integer
+        x-example: 10 
+    get:
+      summary: Query the checkpoint by checkpoint Number
+      tags:
+        - Checkpoint
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/Checkpoint"
+        500:
+          description: Internal Server Error    
+
+definitions:
+  Address:
+    type: string
+    description: hex address
+    example: 0x6c468cf8c9879006e22ec4029696e005c2319c9d
+  ValidatorAddress:
+    type: string
+    description: hex address
+    example: "0x6c468cf8c9879006e22ec4029696e005c2319c9d"
+  HeimdallAddress:
+    type: string
+    description: hex address
+    example: "0x6c468cf8c9879006e22ec4029696e005c2319c9d"
+  
+  HeimdallHash:
+    type: string
+    description: common.Hash
+    example: "0x6c468cf8c9879006e22ec4029696e005c2319c9d"
+  
+  Validator:
+    type: object
+    properties:
+      ID:
+        type: integer
+        example: 1
+      startEpoch:
+        type: integer
+        example: 0
+      EndEpoch:
+        type: integer
+        example: 0
+      VotingPower:
+        type: integer
+        example: 10
+      PubKey:
+        type: string
+        example : "0x04b12d8b2f6e3d45a7ace12c4b2158f79b95e4c28ebe5ad54c439be9431d7fc9dc1164210bf6a5c3b8523528b931e772c86a307e8cff4b725e6b4a77d21417bf19"
+      signer:
+        $ref: "#/definitions/Address"
+      LastUpdated:
+        type: integer
+        example: 0
+      accum:
+        type: integer
+        example: 0
+  PublicKey:
+    type: object
+    properties:
+      value:
+        type: string 
+  ValidatorSet:
+    type: object
+    properties:
+      validators:
+        type: array
+        items:
+          $ref: "#/definitions/Validator"
+      proposer:
+          $ref: "#/definitions/Validator"
+  Checkpoint:
+    type: object
+    properties:
+      Proposer:
+        $ref: "#/definitions/HeimdallAddress"
+      StartBlock:
+        type: integer
+        example: 0
+      EndBlock:
+        type: integer
+        example: 0
+      RootHash:
+        $ref: "#/definitions/HeimdallHash"
+      RewardRootHash:
+        $ref: "#/definitions/HeimdallHash"
+      TimeStamp:
+        type: integer
+        example: 0
