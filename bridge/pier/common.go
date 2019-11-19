@@ -174,3 +174,13 @@ func FetchVotes(
 	// return
 	return preCommits, valSigs, chainID, nil
 }
+
+// IsCatchingUp checks if the heimdall node you are connected to is fully synced or not
+// returns true when synced
+func IsCatchingUp(cliCtx cliContext.CLIContext) bool {
+	resp, err := helper.GetNodeStatus(cliCtx)
+	if err != nil {
+		return true
+	}
+	return resp.SyncInfo.CatchingUp
+}

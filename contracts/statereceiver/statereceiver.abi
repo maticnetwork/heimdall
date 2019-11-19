@@ -22,19 +22,7 @@
 		"constant": false,
 		"inputs": [
 			{
-				"name": "vote",
-				"type": "bytes"
-			},
-			{
-				"name": "sigs",
-				"type": "bytes"
-			},
-			{
-				"name": "txBytes",
-				"type": "bytes"
-			},
-			{
-				"name": "proof",
+				"name": "recordBytes",
 				"type": "bytes"
 			}
 		],
@@ -42,6 +30,34 @@
 		"outputs": [],
 		"payable": false,
 		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "getPendingStates",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256[]"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "SYSTEM_ADDRESS",
+		"outputs": [
+			{
+				"name": "",
+				"type": "address"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
 		"type": "function"
 	},
 	{
@@ -99,25 +115,55 @@
 		"type": "function"
 	},
 	{
-		"anonymous": false,
+		"constant": false,
 		"inputs": [
 			{
-				"indexed": true,
-				"name": "id",
+				"name": "stateId",
 				"type": "uint256"
-			},
-			{
-				"indexed": true,
-				"name": "contractAddress",
-				"type": "address"
-			},
-			{
-				"indexed": false,
-				"name": "data",
-				"type": "bytes"
 			}
 		],
-		"name": "NewStateSynced",
-		"type": "event"
+		"name": "proposeState",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "signer",
+				"type": "address"
+			}
+		],
+		"name": "isProducer",
+		"outputs": [
+			{
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "signer",
+				"type": "address"
+			}
+		],
+		"name": "isValidator",
+		"outputs": [
+			{
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
 	}
 ]

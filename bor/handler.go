@@ -1,13 +1,11 @@
 package bor
 
 import (
-	"bytes"
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/bor/tags"
 	"github.com/maticnetwork/heimdall/common"
-	"github.com/maticnetwork/heimdall/types"
 )
 
 // NewHandler returns a handler for "bor" type messages.
@@ -51,9 +49,6 @@ func HandleMsgProposeSpan(ctx sdk.Context, msg MsgProposeSpan, k Keeper) sdk.Res
 		return common.ErrUnableToFreezeValSet(k.Codespace()).Result()
 	}
 
-	// get current validators
-	currentValidators := k.sk.GetCurrentValidators(ctx)
-
 	// get last span
 	lastSpan, err = k.GetLastSpan(ctx)
 	if err != nil {
@@ -62,38 +57,13 @@ func HandleMsgProposeSpan(ctx sdk.Context, msg MsgProposeSpan, k Keeper) sdk.Res
 	}
 
 	// TODO add check for duration
-	result, ok := sortAndCompare(types.ValToMinVal(currentValidators), types.ValToMinVal(lastSpan.SelectedProducers), msg, k.Codespace())
-	if ok {
-		result.Tags = sdk.NewTags(
+	result := sdk.Result{
+		Tags: sdk.NewTags(
 			tags.Success, []byte("true"),
 			tags.BorSyncID, []byte(strconv.FormatUint(uint64(msg.ID), 10)),
 			tags.SpanID, []byte(strconv.FormatUint(uint64(msg.ID), 10)),
 			tags.SpanStartBlock, []byte(strconv.FormatUint(uint64(msg.StartBlock), 10)),
-		)
+		),
 	}
 	return result
-}
-
-func sortAndCompare(allVals []types.MinimalVal, selectedVals []types.MinimalVal, msg MsgProposeSpan, codespace sdk.CodespaceType) (sdk.Result, bool) {
-	if len(allVals) != len(msg.Validators) || len(selectedVals) != len(msg.SelectedProducers) {
-		return common.ErrProducerMisMatch(codespace).Result(), false
-	}
-
-	sortedAddVals := types.SortMinimalValByAddress(allVals)
-	sortedMsgValidators := types.SortMinimalValByAddress(msg.Validators)
-	for i := range sortedMsgValidators {
-		if !bytes.Equal(sortedMsgValidators[i].Signer.Bytes(), sortedAddVals[i].Signer.Bytes()) || sortedMsgValidators[i].VotingPower != sortedAddVals[i].VotingPower {
-			return common.ErrValSetMisMatch(codespace).Result(), false
-		}
-	}
-
-	sortedSelectedVals := types.SortMinimalValByAddress(selectedVals)
-	sortedMsgProducers := types.SortMinimalValByAddress(msg.SelectedProducers)
-	for i := range selectedVals {
-		if !bytes.Equal(sortedSelectedVals[i].Signer.Bytes(), sortedMsgProducers[i].Signer.Bytes()) {
-			return common.ErrProducerMisMatch(codespace).Result(), false
-		}
-	}
-
-	return sdk.Result{}, true
 }

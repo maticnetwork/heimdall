@@ -28,7 +28,7 @@ var (
 )
 
 // StatereceiverABI is the input ABI used to generate the binding from.
-const StatereceiverABI = "[{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"states\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"vote\",\"type\":\"bytes\"},{\"name\":\"sigs\",\"type\":\"bytes\"},{\"name\":\"txBytes\",\"type\":\"bytes\"},{\"name\":\"proof\",\"type\":\"bytes\"}],\"name\":\"commitState\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"validatorSet\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"vote\",\"type\":\"bytes\"},{\"name\":\"sigs\",\"type\":\"bytes\"},{\"name\":\"txBytes\",\"type\":\"bytes\"},{\"name\":\"proof\",\"type\":\"bytes\"}],\"name\":\"validateValidatorSet\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"isValidatorSetContract\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"id\",\"type\":\"uint256\"},{\"indexed\":true,\"name\":\"contractAddress\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"NewStateSynced\",\"type\":\"event\"}]"
+const StatereceiverABI = "[{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"states\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"recordBytes\",\"type\":\"bytes\"}],\"name\":\"commitState\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getPendingStates\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"SYSTEM_ADDRESS\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"validatorSet\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"vote\",\"type\":\"bytes\"},{\"name\":\"sigs\",\"type\":\"bytes\"},{\"name\":\"txBytes\",\"type\":\"bytes\"},{\"name\":\"proof\",\"type\":\"bytes\"}],\"name\":\"validateValidatorSet\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"isValidatorSetContract\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"stateId\",\"type\":\"uint256\"}],\"name\":\"proposeState\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"signer\",\"type\":\"address\"}],\"name\":\"isProducer\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"signer\",\"type\":\"address\"}],\"name\":\"isValidator\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}]"
 
 // Statereceiver is an auto generated Go binding around an Ethereum contract.
 type Statereceiver struct {
@@ -172,6 +172,110 @@ func (_Statereceiver *StatereceiverTransactorRaw) Transact(opts *bind.TransactOp
 	return _Statereceiver.Contract.contract.Transact(opts, method, params...)
 }
 
+// SYSTEMADDRESS is a free data retrieval call binding the contract method 0x3434735f.
+//
+// Solidity: function SYSTEM_ADDRESS() constant returns(address)
+func (_Statereceiver *StatereceiverCaller) SYSTEMADDRESS(opts *bind.CallOpts) (common.Address, error) {
+	var (
+		ret0 = new(common.Address)
+	)
+	out := ret0
+	err := _Statereceiver.contract.Call(opts, out, "SYSTEM_ADDRESS")
+	return *ret0, err
+}
+
+// SYSTEMADDRESS is a free data retrieval call binding the contract method 0x3434735f.
+//
+// Solidity: function SYSTEM_ADDRESS() constant returns(address)
+func (_Statereceiver *StatereceiverSession) SYSTEMADDRESS() (common.Address, error) {
+	return _Statereceiver.Contract.SYSTEMADDRESS(&_Statereceiver.CallOpts)
+}
+
+// SYSTEMADDRESS is a free data retrieval call binding the contract method 0x3434735f.
+//
+// Solidity: function SYSTEM_ADDRESS() constant returns(address)
+func (_Statereceiver *StatereceiverCallerSession) SYSTEMADDRESS() (common.Address, error) {
+	return _Statereceiver.Contract.SYSTEMADDRESS(&_Statereceiver.CallOpts)
+}
+
+// GetPendingStates is a free data retrieval call binding the contract method 0x21ec23b6.
+//
+// Solidity: function getPendingStates() constant returns(uint256[])
+func (_Statereceiver *StatereceiverCaller) GetPendingStates(opts *bind.CallOpts) ([]*big.Int, error) {
+	var (
+		ret0 = new([]*big.Int)
+	)
+	out := ret0
+	err := _Statereceiver.contract.Call(opts, out, "getPendingStates")
+	return *ret0, err
+}
+
+// GetPendingStates is a free data retrieval call binding the contract method 0x21ec23b6.
+//
+// Solidity: function getPendingStates() constant returns(uint256[])
+func (_Statereceiver *StatereceiverSession) GetPendingStates() ([]*big.Int, error) {
+	return _Statereceiver.Contract.GetPendingStates(&_Statereceiver.CallOpts)
+}
+
+// GetPendingStates is a free data retrieval call binding the contract method 0x21ec23b6.
+//
+// Solidity: function getPendingStates() constant returns(uint256[])
+func (_Statereceiver *StatereceiverCallerSession) GetPendingStates() ([]*big.Int, error) {
+	return _Statereceiver.Contract.GetPendingStates(&_Statereceiver.CallOpts)
+}
+
+// IsProducer is a free data retrieval call binding the contract method 0xf5521022.
+//
+// Solidity: function isProducer(address signer) constant returns(bool)
+func (_Statereceiver *StatereceiverCaller) IsProducer(opts *bind.CallOpts, signer common.Address) (bool, error) {
+	var (
+		ret0 = new(bool)
+	)
+	out := ret0
+	err := _Statereceiver.contract.Call(opts, out, "isProducer", signer)
+	return *ret0, err
+}
+
+// IsProducer is a free data retrieval call binding the contract method 0xf5521022.
+//
+// Solidity: function isProducer(address signer) constant returns(bool)
+func (_Statereceiver *StatereceiverSession) IsProducer(signer common.Address) (bool, error) {
+	return _Statereceiver.Contract.IsProducer(&_Statereceiver.CallOpts, signer)
+}
+
+// IsProducer is a free data retrieval call binding the contract method 0xf5521022.
+//
+// Solidity: function isProducer(address signer) constant returns(bool)
+func (_Statereceiver *StatereceiverCallerSession) IsProducer(signer common.Address) (bool, error) {
+	return _Statereceiver.Contract.IsProducer(&_Statereceiver.CallOpts, signer)
+}
+
+// IsValidator is a free data retrieval call binding the contract method 0xfacd743b.
+//
+// Solidity: function isValidator(address signer) constant returns(bool)
+func (_Statereceiver *StatereceiverCaller) IsValidator(opts *bind.CallOpts, signer common.Address) (bool, error) {
+	var (
+		ret0 = new(bool)
+	)
+	out := ret0
+	err := _Statereceiver.contract.Call(opts, out, "isValidator", signer)
+	return *ret0, err
+}
+
+// IsValidator is a free data retrieval call binding the contract method 0xfacd743b.
+//
+// Solidity: function isValidator(address signer) constant returns(bool)
+func (_Statereceiver *StatereceiverSession) IsValidator(signer common.Address) (bool, error) {
+	return _Statereceiver.Contract.IsValidator(&_Statereceiver.CallOpts, signer)
+}
+
+// IsValidator is a free data retrieval call binding the contract method 0xfacd743b.
+//
+// Solidity: function isValidator(address signer) constant returns(bool)
+func (_Statereceiver *StatereceiverCallerSession) IsValidator(signer common.Address) (bool, error) {
+	return _Statereceiver.Contract.IsValidator(&_Statereceiver.CallOpts, signer)
+}
+
 // IsValidatorSetContract is a free data retrieval call binding the contract method 0xd79e60b7.
 //
 // Solidity: function isValidatorSetContract() constant returns(bool)
@@ -250,25 +354,46 @@ func (_Statereceiver *StatereceiverCallerSession) ValidatorSet() (common.Address
 	return _Statereceiver.Contract.ValidatorSet(&_Statereceiver.CallOpts)
 }
 
-// CommitState is a paid mutator transaction binding the contract method 0x29050939.
+// CommitState is a paid mutator transaction binding the contract method 0x080356b7.
 //
-// Solidity: function commitState(bytes vote, bytes sigs, bytes txBytes, bytes proof) returns()
-func (_Statereceiver *StatereceiverTransactor) CommitState(opts *bind.TransactOpts, vote []byte, sigs []byte, txBytes []byte, proof []byte) (*types.Transaction, error) {
-	return _Statereceiver.contract.Transact(opts, "commitState", vote, sigs, txBytes, proof)
+// Solidity: function commitState(bytes recordBytes) returns()
+func (_Statereceiver *StatereceiverTransactor) CommitState(opts *bind.TransactOpts, recordBytes []byte) (*types.Transaction, error) {
+	return _Statereceiver.contract.Transact(opts, "commitState", recordBytes)
 }
 
-// CommitState is a paid mutator transaction binding the contract method 0x29050939.
+// CommitState is a paid mutator transaction binding the contract method 0x080356b7.
 //
-// Solidity: function commitState(bytes vote, bytes sigs, bytes txBytes, bytes proof) returns()
-func (_Statereceiver *StatereceiverSession) CommitState(vote []byte, sigs []byte, txBytes []byte, proof []byte) (*types.Transaction, error) {
-	return _Statereceiver.Contract.CommitState(&_Statereceiver.TransactOpts, vote, sigs, txBytes, proof)
+// Solidity: function commitState(bytes recordBytes) returns()
+func (_Statereceiver *StatereceiverSession) CommitState(recordBytes []byte) (*types.Transaction, error) {
+	return _Statereceiver.Contract.CommitState(&_Statereceiver.TransactOpts, recordBytes)
 }
 
-// CommitState is a paid mutator transaction binding the contract method 0x29050939.
+// CommitState is a paid mutator transaction binding the contract method 0x080356b7.
 //
-// Solidity: function commitState(bytes vote, bytes sigs, bytes txBytes, bytes proof) returns()
-func (_Statereceiver *StatereceiverTransactorSession) CommitState(vote []byte, sigs []byte, txBytes []byte, proof []byte) (*types.Transaction, error) {
-	return _Statereceiver.Contract.CommitState(&_Statereceiver.TransactOpts, vote, sigs, txBytes, proof)
+// Solidity: function commitState(bytes recordBytes) returns()
+func (_Statereceiver *StatereceiverTransactorSession) CommitState(recordBytes []byte) (*types.Transaction, error) {
+	return _Statereceiver.Contract.CommitState(&_Statereceiver.TransactOpts, recordBytes)
+}
+
+// ProposeState is a paid mutator transaction binding the contract method 0xede01f17.
+//
+// Solidity: function proposeState(uint256 stateId) returns()
+func (_Statereceiver *StatereceiverTransactor) ProposeState(opts *bind.TransactOpts, stateId *big.Int) (*types.Transaction, error) {
+	return _Statereceiver.contract.Transact(opts, "proposeState", stateId)
+}
+
+// ProposeState is a paid mutator transaction binding the contract method 0xede01f17.
+//
+// Solidity: function proposeState(uint256 stateId) returns()
+func (_Statereceiver *StatereceiverSession) ProposeState(stateId *big.Int) (*types.Transaction, error) {
+	return _Statereceiver.Contract.ProposeState(&_Statereceiver.TransactOpts, stateId)
+}
+
+// ProposeState is a paid mutator transaction binding the contract method 0xede01f17.
+//
+// Solidity: function proposeState(uint256 stateId) returns()
+func (_Statereceiver *StatereceiverTransactorSession) ProposeState(stateId *big.Int) (*types.Transaction, error) {
+	return _Statereceiver.Contract.ProposeState(&_Statereceiver.TransactOpts, stateId)
 }
 
 // ValidateValidatorSet is a paid mutator transaction binding the contract method 0xd0504f89.
@@ -290,146 +415,4 @@ func (_Statereceiver *StatereceiverSession) ValidateValidatorSet(vote []byte, si
 // Solidity: function validateValidatorSet(bytes vote, bytes sigs, bytes txBytes, bytes proof) returns()
 func (_Statereceiver *StatereceiverTransactorSession) ValidateValidatorSet(vote []byte, sigs []byte, txBytes []byte, proof []byte) (*types.Transaction, error) {
 	return _Statereceiver.Contract.ValidateValidatorSet(&_Statereceiver.TransactOpts, vote, sigs, txBytes, proof)
-}
-
-// StatereceiverNewStateSyncedIterator is returned from FilterNewStateSynced and is used to iterate over the raw logs and unpacked data for NewStateSynced events raised by the Statereceiver contract.
-type StatereceiverNewStateSyncedIterator struct {
-	Event *StatereceiverNewStateSynced // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *StatereceiverNewStateSyncedIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(StatereceiverNewStateSynced)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(StatereceiverNewStateSynced)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *StatereceiverNewStateSyncedIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *StatereceiverNewStateSyncedIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// StatereceiverNewStateSynced represents a NewStateSynced event raised by the Statereceiver contract.
-type StatereceiverNewStateSynced struct {
-	Id              *big.Int
-	ContractAddress common.Address
-	Data            []byte
-	Raw             types.Log // Blockchain specific contextual infos
-}
-
-// FilterNewStateSynced is a free log retrieval operation binding the contract event 0xccac6e4f23d17f6731617ae0dd91240841f79d5398b423af2621441e4e1a0053.
-//
-// Solidity: event NewStateSynced(uint256 indexed id, address indexed contractAddress, bytes data)
-func (_Statereceiver *StatereceiverFilterer) FilterNewStateSynced(opts *bind.FilterOpts, id []*big.Int, contractAddress []common.Address) (*StatereceiverNewStateSyncedIterator, error) {
-
-	var idRule []interface{}
-	for _, idItem := range id {
-		idRule = append(idRule, idItem)
-	}
-	var contractAddressRule []interface{}
-	for _, contractAddressItem := range contractAddress {
-		contractAddressRule = append(contractAddressRule, contractAddressItem)
-	}
-
-	logs, sub, err := _Statereceiver.contract.FilterLogs(opts, "NewStateSynced", idRule, contractAddressRule)
-	if err != nil {
-		return nil, err
-	}
-	return &StatereceiverNewStateSyncedIterator{contract: _Statereceiver.contract, event: "NewStateSynced", logs: logs, sub: sub}, nil
-}
-
-// WatchNewStateSynced is a free log subscription operation binding the contract event 0xccac6e4f23d17f6731617ae0dd91240841f79d5398b423af2621441e4e1a0053.
-//
-// Solidity: event NewStateSynced(uint256 indexed id, address indexed contractAddress, bytes data)
-func (_Statereceiver *StatereceiverFilterer) WatchNewStateSynced(opts *bind.WatchOpts, sink chan<- *StatereceiverNewStateSynced, id []*big.Int, contractAddress []common.Address) (event.Subscription, error) {
-
-	var idRule []interface{}
-	for _, idItem := range id {
-		idRule = append(idRule, idItem)
-	}
-	var contractAddressRule []interface{}
-	for _, contractAddressItem := range contractAddress {
-		contractAddressRule = append(contractAddressRule, contractAddressItem)
-	}
-
-	logs, sub, err := _Statereceiver.contract.WatchLogs(opts, "NewStateSynced", idRule, contractAddressRule)
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(StatereceiverNewStateSynced)
-				if err := _Statereceiver.contract.UnpackLog(event, "NewStateSynced", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
 }

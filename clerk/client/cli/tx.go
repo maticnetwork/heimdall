@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"encoding/hex"
 	"fmt"
 	"strconv"
 
@@ -78,20 +77,12 @@ func CreateNewStateRecord(cdc *codec.Codec) *cobra.Command {
 				return fmt.Errorf("log index cannot be empty")
 			}
 
-			// msg state record
-			data, err := hex.DecodeString(viper.GetString(FlagRecordData))
-			if err != nil {
-				return err
-			}
-
 			// create new state record
 			msg := clerkTypes.NewMsgEventRecord(
 				proposer,
 				types.HexToHeimdallHash(txHashStr),
 				logIndex,
 				recordID,
-				types.HexToHeimdallAddress(viper.GetString(FlagRecordContract)),
-				data,
 			)
 
 			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
@@ -101,12 +92,8 @@ func CreateNewStateRecord(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<tx-hash>")
 	cmd.Flags().String(FlagLogIndex, "", "--log-index=<log-index>")
 	cmd.Flags().String(FlagRecordID, "", "--id=<record-id>")
-	cmd.Flags().String(FlagRecordData, "", "--data=<record-data>")
-	cmd.Flags().String(FlagRecordContract, "", "--contract=<record-contract>")
 	cmd.MarkFlagRequired(FlagProposerAddress)
 	cmd.MarkFlagRequired(FlagRecordID)
-	cmd.MarkFlagRequired(FlagRecordContract)
-	cmd.MarkFlagRequired(FlagRecordData)
 	cmd.MarkFlagRequired(FlagTxHash)
 	cmd.MarkFlagRequired(FlagLogIndex)
 
