@@ -36,25 +36,29 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 	keeper.SetSpanDuration(ctx, data.SpanDuration)
 	keeper.SetProducerCount(ctx, data.ProducerCount)
 	if len(data.Spans) > 0 {
+		// sort data spans before inserting to ensure lastspanId fetched is correct
+		types.SortSpanByID(data.Spans)
 		// add new span
 		for _, span := range data.Spans {
 			keeper.AddNewRawSpan(ctx, *span)
 		}
+
 		// update last span
-		keeper.UpdateLastSpan(ctx, data.Spans[len(data.Spans)-1].StartBlock)
+		keeper.UpdateLastSpan(ctx, data.Spans[len(data.Spans)-1].ID)
 	}
 }
 
 // ExportGenesis returns a GenesisState for a given context and keeper.
 func ExportGenesis(ctx sdk.Context, keeper Keeper) GenesisState {
 	producerCount, _ := keeper.GetProducerCount(ctx)
-
+	allSpans := keeper.GetAllSpans(ctx)
+	types.SortSpanByID(allSpans)
 	return NewGenesisState(
 		keeper.GetSprintDuration(ctx),
 		keeper.GetSpanDuration(ctx),
 		producerCount,
 		// TODO think better way to export all spans
-		keeper.GetAllSpans(ctx),
+		allSpans,
 	)
 }
 
