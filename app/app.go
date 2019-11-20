@@ -243,6 +243,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		AddRoute(authTypes.QuerierRoute, auth.NewQuerier(app.accountKeeper)).
 		AddRoute(bankTypes.QuerierRoute, bank.NewQuerier(app.bankKeeper)).
 		AddRoute(supplyTypes.QuerierRoute, supply.NewQuerier(app.supplyKeeper)).
+		AddRoute(stakingTypes.QuerierRoute, staking.NewQuerier(app.stakingKeeper)).
 		AddRoute(checkpointTypes.QuerierRoute, checkpoint.NewQuerier(app.checkpointKeeper)).
 		AddRoute(borTypes.QuerierRoute, bor.NewQuerier(app.borKeeper)).
 		AddRoute(clerkTypes.QuerierRoute, clerk.NewQuerier(app.clerkKeeper))

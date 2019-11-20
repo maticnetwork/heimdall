@@ -1,0 +1,289 @@
+---
+swagger: "2.0"
+info:
+  version: "1.0"
+  title: Heimdall
+  description: A REST interface for state queries, transaction generation and broadcasting.
+tags:
+  - name: Staking
+    description: Stake module APIs
+  - name: Checkpoint
+    description: Checkpoint module APIs
+schemes:
+  - http
+host: localhost:1317
+securityDefinitions:
+  kms:
+    type: basic
+paths:
+  /staking/signer/{address}:
+    parameters:
+      - in: path
+        name: address
+        description: Signer Address of Validator
+        required: true
+        type: string
+        x-example: "0x6c468cf8c9879006e22ec4029696e005c2319c9d"
+    get:
+      summary: Query the information from a single validator
+      tags:
+        - Staking
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/Validator"
+        400:
+          description: Invalid signer address
+        500:
+          description: Internal Server Error
+          
+  /staking/validator-status/{address}:
+    parameters:
+      - in: path
+        name: address
+        description: Signer Address of Validator
+        required: true
+        type: string
+        x-example: "0x6c468cf8c9879006e22ec4029696e005c2319c9d"
+    get:
+      summary: Query the Status Info of Validator
+      tags:
+        - Staking
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            type: object
+            properties:
+              status:
+                type: boolean
+        400:
+          description: Invalid signer address
+        500:
+          description: Internal Server Error
+          
+  /staking/validator/{id}:
+    parameters:
+      - in: path
+        name: id
+        description: Get Validator by val ID
+        required: true
+        type: integer
+        x-example: 1
+    get:
+      summary: Query the Validator by val ID
+      tags:
+        - Staking
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/Validator"
+        400:
+          description: Invalid Validator ID
+        500:
+          description: Internal Server Error  
+  /staking/current-proposer:
+    get:
+      summary: Query the Current Block Proposer
+      tags:
+        - Staking
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/Validator"
+        500:
+          description: Internal Server Error  
+  /staking/validator-set:
+    get:
+      summary: Query the Current Validator Set
+      tags:
+        - Staking
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/ValidatorSet"
+        500:
+          description: Internal Server Error  
+  
+  /checkpoint/count:
+    get:
+      summary: Query number of checkpoints
+      tags:
+        - Checkpoint
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            type: object
+            properties:
+              checkpoint-count:
+                type: integer
+        500:
+          description: Internal Server Error  
+  
+  /checkpoint/latest-checkpoint:
+    get:
+      summary: Query the Latest checkpoint
+      tags:
+        - Checkpoint
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/Checkpoint"
+        500:
+          description: Internal Server Error    
+  /checkpoint/buffer:
+    get:
+      summary: Query the checkpoint in the buffer
+      tags:
+        - Checkpoint
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/Checkpoint"
+        500:
+          description: Internal Server Error  
+          
+  /checkpoint/headers/{headerBlockIndex}:
+    parameters:
+      - in: path
+        name: headerBlockIndex
+        description: header Block Index
+        required: true
+        type: integer
+        x-example: 123    
+    get:
+      summary: Query the checkpoint by header block index
+      tags:
+        - Checkpoint
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/Checkpoint"
+        500:
+          description: Internal Server Error    
+          
+  /checkpoint/{checkpointNumber}:
+    parameters:
+      - in: path
+        name: checkpointNumber
+        description: checkpoint Number
+        required: true
+        type: integer
+        x-example: 10 
+    get:
+      summary: Query the checkpoint by checkpoint Number
+      tags:
+        - Checkpoint
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/Checkpoint"
+        500:
+          description: Internal Server Error    
+
+definitions:
+  Address:
+    type: string
+    description: hex address
+    example: 0x6c468cf8c9879006e22ec4029696e005c2319c9d
+  ValidatorAddress:
+    type: string
+    description: hex address
+    example: "0x6c468cf8c9879006e22ec4029696e005c2319c9d"
+  HeimdallAddress:
+    type: string
+    description: hex address
+    example: "0x6c468cf8c9879006e22ec4029696e005c2319c9d"
+  
+  HeimdallHash:
+    type: string
+    description: common.Hash
+    example: "0x6c468cf8c9879006e22ec4029696e005c2319c9d"
+  
+  Validator:
+    type: object
+    properties:
+      ID:
+        type: integer
+        example: 1
+      startEpoch:
+        type: integer
+        example: 0
+      EndEpoch:
+        type: integer
+        example: 0
+      VotingPower:
+        type: integer
+        example: 10
+      PubKey:
+        type: string
+        example : "0x04b12d8b2f6e3d45a7ace12c4b2158f79b95e4c28ebe5ad54c439be9431d7fc9dc1164210bf6a5c3b8523528b931e772c86a307e8cff4b725e6b4a77d21417bf19"
+      signer:
+        $ref: "#/definitions/Address"
+      LastUpdated:
+        type: integer
+        example: 0
+      accum:
+        type: integer
+        example: 0
+  PublicKey:
+    type: object
+    properties:
+      value:
+        type: string 
+  ValidatorSet:
+    type: object
+    properties:
+      validators:
+        type: array
+        items:
+          $ref: "#/definitions/Validator"
+      proposer:
+          $ref: "#/definitions/Validator"
+  Checkpoint:
+    type: object
+    properties:
+      Proposer:
+        $ref: "#/definitions/HeimdallAddress"
+      StartBlock:
+        type: integer
+        example: 0
+      EndBlock:
+        type: integer
+        example: 0
+      RootHash:
+        $ref: "#/definitions/HeimdallHash"
+      RewardRootHash:
+        $ref: "#/definitions/HeimdallHash"
+      TimeStamp:
+        type: integer
+        example: 0

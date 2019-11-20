@@ -74,11 +74,11 @@ start:
 	bash docker/start.sh
 
 run-bridge:
-	./build/bridge start
+	./build/bridge start --all
 
 start-bridge:
 	mkdir -p logs &
-	./build/bridge start > ./logs/bridge.log &
+	./build/bridge start --all > ./logs/bridge.log &
 
 start-all: 
 	mkdir -p ./logs
