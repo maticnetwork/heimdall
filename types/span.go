@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"sort"
 )
 
 // Span stores details for a span on Bor chain
@@ -38,4 +39,11 @@ func (s *Span) String() string {
 		s.ValidatorSet,
 		s.SelectedProducers,
 	)
+}
+
+// SortSpanByID sorts spans by SpanID
+func SortSpanByID(a []*Span) {
+	sort.Slice(a, func(i, j int) bool {
+		return a[i].ID < a[j].ID
+	})
 }
