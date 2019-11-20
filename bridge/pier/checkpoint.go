@@ -116,7 +116,7 @@ func (c *Checkpointer) OnStart() error {
 	subscription, err := c.contractConnector.MaticChainClient.SubscribeNewHead(ctx, c.HeaderChannel)
 	if err != nil {
 		// start go routine to poll for new header using client object
-		go c.startPolling(ctx, int(helper.GetConfig().CheckpointerPollInterval))
+		go c.startPolling(ctx, helper.GetConfig().CheckpointerPollInterval)
 	} else {
 		// start go routine to listen new header using subscription
 		go c.startSubscription(ctx, subscription)
@@ -142,10 +142,9 @@ func (c *Checkpointer) OnStop() {
 	c.cancelHeaderProcess()
 }
 
-func (c *Checkpointer) startPolling(ctx context.Context, pollInterval int) {
+func (c *Checkpointer) startPolling(ctx context.Context, pollInterval time.Duration) {
 	// How often to fire the passed in function in second
-	interval := time.Duration(pollInterval) * time.Millisecond
-
+	interval := pollInterval
 	// Setup the ticket and the channel to signal
 	// the ending of the interval
 	ticker := time.NewTicker(interval)
