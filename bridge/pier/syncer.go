@@ -141,7 +141,7 @@ func (syncer *Syncer) OnStart() error {
 	subscription, err := syncer.contractConnector.MainChainClient.SubscribeNewHead(ctx, syncer.HeaderChannel)
 	if err != nil {
 		// start go routine to poll for new header using client object
-		go syncer.startPolling(ctx, int(helper.GetConfig().SyncerPollInterval))
+		go syncer.startPolling(ctx, helper.GetConfig().SyncerPollInterval)
 	} else {
 		// start go routine to listen new header using subscription
 		go syncer.startSubscription(ctx, subscription)
@@ -168,9 +168,9 @@ func (syncer *Syncer) OnStop() {
 }
 
 // startPolling starts polling
-func (syncer *Syncer) startPolling(ctx context.Context, pollInterval int) {
+func (syncer *Syncer) startPolling(ctx context.Context, pollInterval time.Duration) {
 	// How often to fire the passed in function in second
-	interval := time.Duration(pollInterval) * time.Millisecond
+	interval := pollInterval
 
 	// Setup the ticket and the channel to signal
 	// the ending of the interval
