@@ -56,7 +56,7 @@ run-heimdall:
 
 start-heimdall:
 	mkdir -p ./logs &
-	./build/heimdalld start > ./logs/heimdalld.log &
+	./build/heimdalld start --log_level="debug" > ./logs/heimdalld.log &
 
 reset-heimdall:
 	./build/heimdalld unsafe-reset-all 
@@ -66,8 +66,8 @@ run-server:
 	./build/heimdalld rest-server 
 
 start-server:
-	mkdir -p ./logs &&
-	./build/heimdalld rest-server > ./logs/heimdalld-rest-server.log &&
+	mkdir -p ./logs &
+	./build/heimdalld rest-server > ./logs/heimdalld-rest-server.log &
 
 start:
 	mkdir -p ./logs
