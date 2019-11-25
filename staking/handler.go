@@ -91,7 +91,7 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k Keeper, con
 		ID:          validator.ID,
 		StartEpoch:  validator.StartEpoch,
 		EndEpoch:    validator.EndEpoch,
-		VotingPower: validator.VotingPower,
+		VotingPower: types.GetValidatorPower(validator.VotingPower),
 		PubKey:      pubkey,
 		Signer:      validator.Signer,
 		LastUpdated: 0,
