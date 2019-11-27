@@ -56,7 +56,7 @@ run-heimdall:
 
 start-heimdall:
 	mkdir -p ./logs &
-	./build/heimdalld start --log_level="debug" > ./logs/heimdalld.log &
+	./build/heimdalld start > ./logs/heimdalld.log &
 
 reset-heimdall:
 	./build/heimdalld unsafe-reset-all 
