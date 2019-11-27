@@ -9,6 +9,8 @@ tags:
     description: Stake module APIs
   - name: Checkpoint
     description: Checkpoint module APIs
+  - name: Span
+    description: Span module APIs
 schemes:
   - http
 host: localhost:1317
@@ -119,6 +121,42 @@ paths:
         500:
           description: Internal Server Error  
   
+  /staking/checkpoint-reward:
+    get:
+      summary: Query the checkpoint reward
+      tags:
+        - Staking
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            type: object
+            properties:
+              result:
+                type: integer
+        500:
+          description: Internal Server Error  
+          
+  /staking/proposer-bonus-percent:
+    get:
+      summary: Query the proposer bonus percent
+      tags:
+        - Staking
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            type: object
+            properties:
+              result:
+                type: integer
+        500:
+          description: Internal Server Error  
+
   /checkpoint/count:
     get:
       summary: Query number of checkpoints
@@ -132,7 +170,7 @@ paths:
           schema:
             type: object
             properties:
-              checkpoint-count:
+              result:
                 type: integer
         500:
           description: Internal Server Error  
@@ -208,8 +246,43 @@ paths:
           schema:
             $ref: "#/definitions/Checkpoint"
         500:
+          description: Internal Server Error   
+          
+  /bor/span/{id}:
+    parameters:
+      - in: path
+        name: id
+        description: span number
+        required: true
+        type: integer
+        x-example: 10 
+    get:
+      summary: Query the span by id
+      tags:
+        - Span
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/Span"
+        500:
+          description: Internal Server Error             
+  /bor/latest-span:
+    get:
+      summary: Query the latest span
+      tags:
+        - Span
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/Span"
+        500:
           description: Internal Server Error    
-
 definitions:
   Address:
     type: string
@@ -287,3 +360,25 @@ definitions:
       TimeStamp:
         type: integer
         example: 0
+  Span:
+    type: object
+    properties:
+      ID:
+        type: integer
+        example: 2
+      StartBlock:
+        type: integer
+        example: 0
+      EndBlock:
+        type: integer
+        example: 0
+      ValidatorSet:
+        $ref: "#/definitions/ValidatorSet"
+      SelectedProducers:
+        type: array
+        items:
+          $ref: "#/definitions/Validator"
+      ChainID:
+        type: string
+        example: "heimdall-P5rXwg"
+        
