@@ -266,7 +266,7 @@ func VerifyGenesis(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 					"HeaderIndexFound", genesisState.CheckpointData.AckCount*helper.GetConfig().ChildBlockInterval)
 				return nil
 			}
-			fmt.Println("ACK count valid!","count",currentHeaderIndex)
+			fmt.Println("ACK count valid:", "count", currentHeaderIndex)
 
 			// check all headers
 			for i, header := range genesisState.CheckpointData.Headers {
@@ -281,7 +281,7 @@ func VerifyGenesis(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 						"EndExpected", header.EndBlock, "EndReceived", header.EndBlock,
 						"RootHashExpected", header.RootHash.String(), "RootHashReceivd", root.String())
 				}
-				fmt.Println("Checkpoint block valid!", "start", start, "end", end, "root", root.String())
+				fmt.Println("Checkpoint block valid:", "start", start, "end", end, "root", root.String())
 			}
 
 			// validate validators
@@ -291,10 +291,13 @@ func VerifyGenesis(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 				if err != nil {
 					return err
 				}
+
 				if val.VotingPower != v.VotingPower {
-					return fmt.Errorf("Voting power mismatch. Expected: %v Recived: %v ValID: %v", val.VotingPower, v.VotingPower, v.ID)
+					return fmt.Errorf("Voting power mismatch. Expected: %v Received: %v ValID: %v", val.VotingPower, v.VotingPower, v.ID)
 				}
 			}
+
+			fmt.Println("Validators information is valid:", "validatorCount", len(validators))
 			return nil
 		},
 	}
