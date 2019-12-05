@@ -275,11 +275,17 @@ func VerifyGenesis(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 				if err != nil {
 					return err
 				}
-				if header.StartBlock != start || header.EndBlock != end || bytes.Equal(header.RootHash.Bytes(), root.Bytes()) {
-					return fmt.Errorf("Checkpoint block doesnt match",
-						"StartExpected", header.StartBlock, "StartReceived", start,
-						"EndExpected", header.EndBlock, "EndReceived", header.EndBlock,
-						"RootHashExpected", header.RootHash.String(), "RootHashReceivd", root.String())
+
+				if header.StartBlock != start || header.EndBlock != end || !bytes.Equal(header.RootHash.Bytes(), root.Bytes()) {
+					return fmt.Errorf(
+						"Checkpoint block doesnt match: startExpected %v, startReceived %v, endExpected %v, endReceived %v, rootHashExpected %v, rootHashReceived %v",
+						header.StartBlock,
+						start,
+						header.EndBlock,
+						header.EndBlock,
+						header.RootHash.String(),
+						root.String(),
+					)
 				}
 				fmt.Println("Checkpoint block valid:", "start", start, "end", end, "root", root.String())
 			}
