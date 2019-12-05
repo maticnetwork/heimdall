@@ -35,7 +35,6 @@ const (
 	stakeInitEvent   = "Staked"
 	unstakeInitEvent = "UnstakeInit"
 	signerChange     = "SignerChange"
-	depositEvent     = "Deposit"
 
 	lastBlockKey = "last-block" // storage key
 )
@@ -248,7 +247,7 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 	syncer.Logger.Debug("Processing header", "fromBlock", fromBlock, "toBlock", toBlock)
 
 	// set diff
-	if toBlock.Uint64() < fromBlock.Uint64() || toBlock.Uint64()-fromBlock.Uint64() > 250 {
+	if toBlock.Uint64() < fromBlock.Uint64() {
 		fromBlock = toBlock
 	}
 
@@ -304,6 +303,7 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 					// case "Withdraw":
 					// 	syncer.processWithdrawEvent(selectedEvent.Name, abiObject, &vLog)
 				}
+				break
 			}
 		}
 	}
