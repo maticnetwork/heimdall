@@ -202,7 +202,6 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 	}
 
 	maticClient = ethclient.NewClient(maticRPCClient)
-
 	// Loading genesis doc
 	genDoc, err := tmTypes.GenesisDocFromFile(filepath.Join(configDir, "genesis.json"))
 	if err != nil {

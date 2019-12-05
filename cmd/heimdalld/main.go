@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -95,6 +96,8 @@ func main() {
 	rootCmd.AddCommand(hmserver.ServeCommands(cdc, hmserver.RegisterRoutes))
 	rootCmd.AddCommand(InitCmd(ctx, cdc))
 	rootCmd.AddCommand(TestnetCmd(ctx, cdc))
+	rootCmd.AddCommand(VerifyGenesis(ctx, cdc))
+
 	// prepare and add flags
 	executor := cli.PrepareBaseCmd(rootCmd, "HD", os.ExpandEnv("$HOME/.heimdalld"))
 	err := executor.Execute()
@@ -220,6 +223,91 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(helper.FlagClientHome, helper.DefaultCLIHome, "client's home directory")
 	cmd.Flags().String(client.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
 	cmd.Flags().Int(stakingcli.FlagValidatorID, 1, "--id=<validator ID here>, if left blank will be assigned 1")
+	return cmd
+}
+
+// VerifyGenesis verifies the genesis file and brings it in sync with on-chain contract
+func VerifyGenesis(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "verify-genesis",
+		Short: "Verify if the genesis matches",
+		Args:  cobra.NoArgs,
+		RunE: func(_ *cobra.Command, _ []string) error {
+			config := ctx.Config
+			config.SetRoot(viper.GetString(cli.HomeFlag))
+			helper.InitHeimdallConfig("")
+
+			// Loading genesis doc
+			genDoc, err := tmTypes.GenesisDocFromFile(filepath.Join(config.RootDir, "config/genesis.json"))
+			if err != nil {
+				return err
+			}
+
+			// get genesis state
+			var genesisState app.GenesisState
+			err = json.Unmarshal(genDoc.AppState, &genesisState)
+			if err != nil {
+				return err
+			}
+			contractCaller, err := helper.NewContractCaller()
+			if err != nil {
+				return err
+			}
+
+			// check header count
+			currentHeaderIndex, err := contractCaller.CurrentHeaderBlock()
+			if err != nil {
+				return nil
+			}
+
+			if genesisState.CheckpointData.AckCount*helper.GetConfig().ChildBlockInterval != currentHeaderIndex {
+				fmt.Println("Header Count doesn't match",
+					"ExpectedHeader", currentHeaderIndex,
+					"HeaderIndexFound", genesisState.CheckpointData.AckCount*helper.GetConfig().ChildBlockInterval)
+				return nil
+			}
+			fmt.Println("ACK count valid:", "count", currentHeaderIndex)
+
+			// check all headers
+			for i, header := range genesisState.CheckpointData.Headers {
+				ackCount := uint64(i + 1)
+				root, start, end, _, _, err := contractCaller.GetHeaderInfo(ackCount * helper.GetConfig().ChildBlockInterval)
+				if err != nil {
+					return err
+				}
+
+				if header.StartBlock != start || header.EndBlock != end || !bytes.Equal(header.RootHash.Bytes(), root.Bytes()) {
+					return fmt.Errorf(
+						"Checkpoint block doesnt match: startExpected %v, startReceived %v, endExpected %v, endReceived %v, rootHashExpected %v, rootHashReceived %v",
+						header.StartBlock,
+						start,
+						header.EndBlock,
+						header.EndBlock,
+						header.RootHash.String(),
+						root.String(),
+					)
+				}
+				fmt.Println("Checkpoint block valid:", "start", start, "end", end, "root", root.String())
+			}
+
+			// validate validators
+			validators := genesisState.StakingData.Validators
+			for _, v := range validators {
+				val, err := contractCaller.GetValidatorInfo(v.ID)
+				if err != nil {
+					return err
+				}
+
+				if val.VotingPower != v.VotingPower {
+					return fmt.Errorf("Voting power mismatch. Expected: %v Received: %v ValID: %v", val.VotingPower, v.VotingPower, v.ID)
+				}
+			}
+
+			fmt.Println("Validators information is valid:", "validatorCount", len(validators))
+			return nil
+		},
+	}
+
 	return cmd
 }
 

@@ -159,17 +159,6 @@ func (v *Validator) MinimalVal() MinimalVal {
 	}
 }
 
-// GetValidatorPower converts amount to power
-func GetValidatorPower(amount string) uint64 {
-	result := big.NewInt(0)
-	result.SetString(amount, 10)
-	if len(amount) >= 18 {
-		t, _ := big.NewInt(0).SetString("1000000000000000000", 10)
-		result.Div(result, t)
-	}
-	return result.Uint64()
-}
-
 // --------
 
 // ValidatorID  validator ID and helper functions
