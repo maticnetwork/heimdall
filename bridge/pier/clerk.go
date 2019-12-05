@@ -145,11 +145,6 @@ func (s *ClerkService) commit() {
 	// start from
 	start := lastEventRecord
 
-	// if diff >= 250, ignore
-	if currentStateCounter.Uint64() > start && currentStateCounter.Uint64()-start >= 250 {
-		start = currentStateCounter.Uint64() - 1
-	}
-
 	// create tag query
 	var tags []string
 	tags = append(tags, fmt.Sprintf("record-id>%v", start))
