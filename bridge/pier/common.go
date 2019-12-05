@@ -46,6 +46,7 @@ const (
 	SpanProposerURL       = "/bor/span-proposer"
 	NextSpanInfoURL       = "/bor/prepare-next-span"
 	InitialRewardRootURL  = "/staking/initial-reward-root"
+	ValidatorURL          = "/staking/validator/%v"
 
 	TransactionTimeout = 1 * time.Minute
 	CommitTimeout      = 2 * time.Minute
@@ -83,6 +84,33 @@ func isProposer(cliCtx cliContext.CLIContext) bool {
 	}
 
 	return false
+}
+
+// check if we are the EventSender
+func isEventSender(cliCtx cliContext.CLIContext, validatorID uint64) bool {
+
+	var validator hmtypes.Validator
+
+	result, err := FetchFromAPI(cliCtx,
+		GetHeimdallServerEndpoint(fmt.Sprintf(ValidatorURL, strconv.FormatUint(validatorID, 10))),
+	)
+	if err != nil {
+		Logger.Error("Error fetching proposers", "error", err)
+		return false
+	}
+
+	err = json.Unmarshal(result.Result, &validator)
+	if err != nil {
+		Logger.Error("error unmarshalling proposer slice", "error", err)
+		return false
+	}
+
+	if bytes.Equal(validator.Signer.Bytes(), helper.GetAddress()) {
+		return true
+	}
+
+	return false
+
 }
 
 // GetHeimdallServerEndpoint returns heimdall server endpoint
