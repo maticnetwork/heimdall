@@ -99,13 +99,15 @@ type MsgCheckpointAck struct {
 	From        types.HeimdallAddress `json:"from"`
 	HeaderBlock uint64                `json:"headerBlock"`
 	TxHash      types.HeimdallHash    `json:"tx_hash"`
+	LogIndex    uint64                `json:"log_index"`
 }
 
-func NewMsgCheckpointAck(from types.HeimdallAddress, headerBlock uint64, txHash types.HeimdallHash) MsgCheckpointAck {
+func NewMsgCheckpointAck(from types.HeimdallAddress, headerBlock uint64, txHash types.HeimdallHash, logIndex uint64) MsgCheckpointAck {
 	return MsgCheckpointAck{
 		From:        from,
 		HeaderBlock: headerBlock,
 		TxHash:      txHash,
+		LogIndex:    logIndex,
 	}
 }
 

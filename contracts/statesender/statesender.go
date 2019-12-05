@@ -510,6 +510,17 @@ func (_Statesender *StatesenderFilterer) WatchNewRegistration(opts *bind.WatchOp
 	}), nil
 }
 
+// ParseNewRegistration is a log parse operation binding the contract event 0x3f4512aacd7a664fdb321a48e8340120d63253a91c6367a143abd19ecf68aedd.
+//
+// Solidity: event NewRegistration(address indexed user, address indexed sender, address indexed receiver)
+func (_Statesender *StatesenderFilterer) ParseNewRegistration(log types.Log) (*StatesenderNewRegistration, error) {
+	event := new(StatesenderNewRegistration)
+	if err := _Statesender.contract.UnpackLog(event, "NewRegistration", log); err != nil {
+		return nil, err
+	}
+	return event, nil
+}
+
 // StatesenderOwnershipTransferredIterator is returned from FilterOwnershipTransferred and is used to iterate over the raw logs and unpacked data for OwnershipTransferred events raised by the Statesender contract.
 type StatesenderOwnershipTransferredIterator struct {
 	Event *StatesenderOwnershipTransferred // Event containing the contract specifics and raw log
@@ -649,6 +660,17 @@ func (_Statesender *StatesenderFilterer) WatchOwnershipTransferred(opts *bind.Wa
 			}
 		}
 	}), nil
+}
+
+// ParseOwnershipTransferred is a log parse operation binding the contract event 0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0.
+//
+// Solidity: event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
+func (_Statesender *StatesenderFilterer) ParseOwnershipTransferred(log types.Log) (*StatesenderOwnershipTransferred, error) {
+	event := new(StatesenderOwnershipTransferred)
+	if err := _Statesender.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+		return nil, err
+	}
+	return event, nil
 }
 
 // StatesenderStateSyncedIterator is returned from FilterStateSynced and is used to iterate over the raw logs and unpacked data for StateSynced events raised by the Statesender contract.
@@ -791,4 +813,15 @@ func (_Statesender *StatesenderFilterer) WatchStateSynced(opts *bind.WatchOpts, 
 			}
 		}
 	}), nil
+}
+
+// ParseStateSynced is a log parse operation binding the contract event 0x103fed9db65eac19c4d870f49ab7520fe03b99f1838e5996caf47e9e43308392.
+//
+// Solidity: event StateSynced(uint256 indexed id, address indexed contractAddress, bytes data)
+func (_Statesender *StatesenderFilterer) ParseStateSynced(log types.Log) (*StatesenderStateSynced, error) {
+	event := new(StatesenderStateSynced)
+	if err := _Statesender.contract.UnpackLog(event, "StateSynced", log); err != nil {
+		return nil, err
+	}
+	return event, nil
 }

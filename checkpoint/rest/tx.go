@@ -44,6 +44,7 @@ type (
 		Proposer    types.HeimdallAddress `json:"proposer"`
 		HeaderBlock uint64                `json:"headerBlock"`
 		TxHash      types.HeimdallHash    `json:"tx_hash"`
+		LogIndex    uint64                `json:"log_index"`
 	}
 
 	// HeaderNoACKReq struct for sending no-ack for a new headers
@@ -94,7 +95,7 @@ func newCheckpointACKHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.H
 		}
 
 		// draft a message and send response
-		msg := checkpoint.NewMsgCheckpointAck(req.Proposer, req.HeaderBlock, req.TxHash)
+		msg := checkpoint.NewMsgCheckpointAck(req.Proposer, req.HeaderBlock, req.TxHash, req.LogIndex)
 
 		// send response
 		restClient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})

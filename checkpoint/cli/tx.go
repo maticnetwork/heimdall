@@ -146,7 +146,7 @@ func SendCheckpointACKTx(cdc *codec.Codec) *cobra.Command {
 			checkpointTxHash := types.BytesToHeimdallHash([]byte(checkpointTxHashStr))
 
 			// new checkpoint
-			msg := checkpoint.NewMsgCheckpointAck(proposer, headerBlock, checkpointTxHash)
+			msg := checkpoint.NewMsgCheckpointAck(proposer, headerBlock, checkpointTxHash, uint64(viper.GetInt64(FlagCheckpointLogIndex)))
 
 			// msg
 			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
@@ -156,9 +156,12 @@ func SendCheckpointACKTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
 	cmd.Flags().String(FlagHeaderNumber, "", "--header=<header-index>")
 	cmd.Flags().StringP(FlagCheckpointTxHash, "t", "", "--txhash=<checkpoint-txhash>")
+	cmd.Flags().String(FlagCheckpointLogIndex, "", "--log-index=<log-index>")
 
 	cmd.MarkFlagRequired(FlagHeaderNumber)
 	cmd.MarkFlagRequired(FlagCheckpointTxHash)
+	cmd.MarkFlagRequired(FlagCheckpointLogIndex)
+
 	return cmd
 }
 

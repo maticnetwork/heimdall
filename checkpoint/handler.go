@@ -9,6 +9,7 @@ import (
 	ethCmn "github.com/ethereum/go-ethereum/common"
 	"github.com/maticnetwork/heimdall/checkpoint/tags"
 	"github.com/maticnetwork/heimdall/common"
+	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -211,8 +212,22 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k Keeper, con
 		return common.ErrFetchCheckpointSigners(k.Codespace()).Result()
 	}
 
+	// get main tx receipt
+	receipt, err := contractCaller.GetConfirmedTxReceipt(msg.TxHash.EthHash())
+	if err != nil || receipt == nil {
+		return hmCommon.ErrWaitForConfirmation(k.Codespace()).Result()
+	}
+
+	eventLog, err := contractCaller.DecodeNewHeaderBlockEvent(receipt, msg.LogIndex)
+	if err != nil || eventLog == nil {
+		k.Logger(ctx).Error("Error fetching log from txhash")
+		return hmCommon.ErrInvalidMsg(k.Codespace(), "Unable to fetch logs for txHash").Result()
+	}
+
+	k.Logger(ctx).Info("Fetched checkpoint reward from event", eventLog.Reward)
+
 	// Calculate Signer Rewards
-	signerRewards, err := k.sk.CalculateSignerRewards(ctx, voteBytes, sigInput)
+	signerRewards, err := k.sk.CalculateSignerRewards(ctx, voteBytes, sigInput, eventLog.Reward)
 	if err != nil {
 		k.Logger(ctx).Error("Error while calculating Signer Rewards", "error", err)
 		return common.ErrComputeCheckpointRewards(k.Codespace()).Result()

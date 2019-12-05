@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math/big"
 	"net/http"
 	"strconv"
 
@@ -55,10 +54,6 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Co
 	r.HandleFunc(
 		"/staking/proposer-bonus-percent",
 		proposerBonusPercentHandlerFn(cdc, cliCtx),
-	).Methods("GET")
-	r.HandleFunc(
-		"/staking/checkpoint-reward",
-		checkpointRewardHandlerFn(cdc, cliCtx),
 	).Methods("GET")
 }
 
@@ -388,46 +383,6 @@ func proposerBonusPercentHandlerFn(
 		}
 
 		result, err := json.Marshal(_proposerBonusPercent)
-		if err != nil {
-			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-		rest.PostProcessResponse(w, cliCtx, result)
-	}
-}
-
-// Returns checkpoint Reward information
-func checkpointRewardHandlerFn(
-	cdc *codec.Codec,
-	cliCtx context.CLIContext,
-) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-
-		// fetch state reocrd
-		res, err := cliCtx.QueryWithData(
-			fmt.Sprintf("custom/%s/%s", stakingTypes.QuerierRoute, stakingTypes.QueryCheckpointReward),
-			nil,
-		)
-
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-
-		// the query will return empty if there is no data
-		if len(res) == 0 {
-			rest.WriteErrorResponse(w, http.StatusNoContent, errors.New("no content found for requested key").Error())
-			return
-		}
-
-		var _checkpointReward *big.Int
-		if err := cliCtx.Codec.UnmarshalJSON(res, &_checkpointReward); err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		result, err := json.Marshal(_checkpointReward)
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())

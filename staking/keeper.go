@@ -406,7 +406,7 @@ func (k *Keeper) GetAllValidatorRewards(ctx sdk.Context) map[types.ValidatorID]*
 }
 
 // CalculateSignerRewards calculates new rewards for signers
-func (k *Keeper) CalculateSignerRewards(ctx sdk.Context, voteBytes []byte, sigInput []byte) (map[types.ValidatorID]*big.Int, error) {
+func (k *Keeper) CalculateSignerRewards(ctx sdk.Context, voteBytes []byte, sigInput []byte, checkpointReward *big.Int) (map[types.ValidatorID]*big.Int, error) {
 	signerRewards := make(map[types.ValidatorID]*big.Int)
 	signerPower := make(map[types.ValidatorID]int64)
 
@@ -434,7 +434,8 @@ func (k *Keeper) CalculateSignerRewards(ctx sdk.Context, voteBytes []byte, sigIn
 		signerPower[valInfo.ID] = valInfo.VotingPower
 	}
 
-	currentCheckpointReward := k.ComputeCurrentCheckpointReward(ctx, totalSignerPower)
+	currentCheckpointReward := new(big.Float)
+	currentCheckpointReward.SetInt(checkpointReward)
 	totalSignerReward := k.ComputeTotalSignerReward(ctx, currentCheckpointReward)
 
 	// Weighted Distribution of totalSignerReward for signers
@@ -491,35 +492,6 @@ func (k *Keeper) ComputeProposerReward(ctx sdk.Context, currentCheckpointReward 
 	bigfloatval := new(big.Float)
 	bigfloatval.SetFloat64(float64(100))
 	return new(big.Float).Quo(bigval, bigfloatval)
-}
-
-// ComputeCurrentCheckpointReward returns the reward to be distributed for current checkpoint
-func (k *Keeper) ComputeCurrentCheckpointReward(ctx sdk.Context, totalSignerPower int64) *big.Float {
-	checkpointReward := k.GetCheckpointReward(ctx)
-	currValSet := k.GetValidatorSet(ctx)
-	totalPower := currValSet.TotalVotingPower()
-	bigval := big.NewInt(0).Mul(checkpointReward, big.NewInt(totalSignerPower))
-
-	bigfloatval := new(big.Float)
-	bigfloatval.SetInt(bigval)
-
-	totalPow := new(big.Float)
-	totalPow.SetInt(big.NewInt(totalPower))
-
-	return new(big.Float).Quo(bigfloatval, totalPow)
-}
-
-// GetCheckpointReward returns the reward Amount
-func (k *Keeper) GetCheckpointReward(ctx sdk.Context) *big.Int {
-	var checkpointRewardBytes []byte
-	k.paramSpace.Get(ctx, ParamStoreKeyCheckpointReward, &checkpointRewardBytes)
-	checkpointReward := big.NewInt(0).SetBytes(checkpointRewardBytes)
-	return checkpointReward
-}
-
-// SetCheckpointReward sets the checkpoint reward Amount
-func (k *Keeper) SetCheckpointReward(ctx sdk.Context, checkpointReward *big.Int) {
-	k.paramSpace.Set(ctx, ParamStoreKeyCheckpointReward, checkpointReward.Bytes())
 }
 
 // GetProposerBonusPercent returns the proposer to signer reward

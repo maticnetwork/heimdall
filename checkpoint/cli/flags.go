@@ -7,6 +7,7 @@ const (
 	FlagRootHash        = "root-hash"
 	FlagRewardRootHash  = "reward-root"
 
-	FlagHeaderNumber     = "header"
-	FlagCheckpointTxHash = "txhash"
+	FlagHeaderNumber       = "header"
+	FlagCheckpointTxHash   = "txhash"
+	FlagCheckpointLogIndex = "log-index"
 )

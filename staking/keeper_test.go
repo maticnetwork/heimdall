@@ -319,14 +319,14 @@ func TestValidatorRewards(t *testing.T) {
 func TestCalculateSignerRewards(t *testing.T) {
 	ctx, keeper, _ := cmn.CreateTestInput(t, false)
 	checkpointReward := big.NewInt(0).Exp(big.NewInt(10), big.NewInt(22), nil)
-	keeper.SetCheckpointReward(ctx, checkpointReward)
+	t.Log("checkpoint reward - ", checkpointReward)
 	keeper.SetProposerBonusPercent(ctx, staking.DefaultProposerBonusPercent)
 	var valSet = types.ValidatorSet{}
 	var newVal = types.Validator{}
 	signerRewardshouldbe := make(map[types.ValidatorID]*big.Int)
-	signerRewardshouldbe[1], _ = big.NewInt(0).SetString("900000000000000000000", 10)
-	signerRewardshouldbe[2], _ = big.NewInt(0).SetString("1800000000000000000000", 10)
-	signerRewardshouldbe[3], _ = big.NewInt(0).SetString("3300000000000000000000", 10)
+	signerRewardshouldbe[1], _ = big.NewInt(0).SetString("1500000000000000000000", 10)
+	signerRewardshouldbe[2], _ = big.NewInt(0).SetString("3000000000000000000000", 10)
+	signerRewardshouldbe[3], _ = big.NewInt(0).SetString("5500000000000000393216", 10)
 	// These are pubkeys and signer address for below submitheaderblock trasaction payload
 	pubKeys := []string{"045b608112c8d9ca26f50ede110495e6be48cf9bb6d220d0354e3771701d3c9b1c8805d039e194f8938b820fee6d0aff4e2120b385f1e58b62d8649a796e7433a2", "041e8bc59b9c58358c9f2847d9dc62b927bc3fc7ac83e9b1a38b402ffb6d6d2d7be9329f51e6a9a4cfb75bc426def46be8f847a4c2fd335be55f382a08d4f3325a", "047ad78e23df40cecc5c6adf661df02d103aff74a95e2c4de99b1d0855b67d2881c659d7831daeae2c7626b60575a9a4aae62bd1ea225c1f71cb2c63c63a7de4a0"}
 	signerAddresses := []string{"a03d8f5af7413e4fd5a37fde9286e390ef8f3c07", "b1bf4473c6b1918a6e37408e1c14df81281411a8", "ba754e3893adb3cabc0afe7932b4b5a3cee3f3ab"}
@@ -373,7 +373,7 @@ func TestCalculateSignerRewards(t *testing.T) {
 	t.Log("txData", hex.EncodeToString(txData))
 
 	// Calculate Rewards for Signers
-	signerRewardMap, err := keeper.CalculateSignerRewards(ctx, voteSignBytes, inputSigs)
+	signerRewardMap, err := keeper.CalculateSignerRewards(ctx, voteSignBytes, inputSigs, checkpointReward)
 	t.Log("Signer Reward Map - ", signerRewardMap)
 	require.Empty(t, err, "Error while calculating rewards for signers", err)
 	require.Equal(t, len(pubKeys), len(signerRewardMap), "No of signers should be %v but it is %v", len(pubKeys), len(signerRewardMap))
