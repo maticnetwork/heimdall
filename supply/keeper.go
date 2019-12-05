@@ -216,49 +216,6 @@ func (k Keeper) SendCoinsFromAccountToModule(
 	return k.bk.SendCoins(ctx, senderAddr, recipientAcc.GetAddress(), amt)
 }
 
-// DelegateCoinsFromAccountToModule delegates coins and transfers
-// them from a delegator account to a module account
-func (k Keeper) DelegateCoinsFromAccountToModule(
-	ctx sdk.Context,
-	senderAddr types.HeimdallAddress,
-	recipientModule string,
-	amt types.Coins,
-) (sdk.Tags, sdk.Error) {
-
-	// create the account if it doesn't yet exist
-	recipientAcc := k.GetModuleAccount(ctx, recipientModule)
-	if recipientAcc == nil {
-		return nil, supplyTypes.ErrNoAccountCreated(supplyTypes.DefaultCodespace)
-	}
-
-	if !recipientAcc.HasPermission(supplyTypes.Staking) {
-		return nil, supplyTypes.ErrNoPermission(supplyTypes.DefaultCodespace)
-	}
-
-	return k.bk.DelegateCoins(ctx, senderAddr, recipientAcc.GetAddress(), amt)
-}
-
-// UndelegateCoinsFromModuleToAccount undelegates the unbonding coins and transfers
-// them from a module account to the delegator account
-func (k Keeper) UndelegateCoinsFromModuleToAccount(
-	ctx sdk.Context,
-	senderModule string,
-	recipientAddr types.HeimdallAddress,
-	amt types.Coins,
-) (sdk.Tags, sdk.Error) {
-
-	acc := k.GetModuleAccount(ctx, senderModule)
-	if acc == nil {
-		return nil, sdk.ErrUnknownAddress(fmt.Sprintf("module account %s does not exist", senderModule))
-	}
-
-	if !acc.HasPermission(supplyTypes.Staking) {
-		return nil, supplyTypes.ErrNoPermission(supplyTypes.DefaultCodespace)
-	}
-
-	return k.bk.UndelegateCoins(ctx, acc.GetAddress(), recipientAddr, amt)
-}
-
 // MintCoins creates new coins from thin air and adds it to the module account.
 // Panics if the name maps to a non-minter module account or if the amount is invalid.
 func (k Keeper) MintCoins(

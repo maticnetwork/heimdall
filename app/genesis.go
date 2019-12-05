@@ -138,8 +138,7 @@ func ValidateGenesisState(genesisState GenesisState) error {
 }
 
 // validateGenesisStateAccounts performs validation of genesis accounts. It
-// ensures that there are no duplicate accounts in the genesis state and any
-// provided vesting accounts are valid.
+// ensures that there are no duplicate accounts in the genesis state.
 func validateGenesisStateAccounts(accs []GenesisAccount) error {
 	addrMap := make(map[string]bool, len(accs))
 	for _, acc := range accs {
