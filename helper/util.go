@@ -658,7 +658,7 @@ func UnpackSigAndVotes(payload []byte, abi abi.ABI) (votes []byte, sigs []byte, 
 		return
 	}
 	sigs = inputDataMap["sigs"].([]byte)
-	checkpointData = inputDataMap["extradata"].([]byte)
+	checkpointData = inputDataMap["txData"].([]byte)
 	votes = inputDataMap["vote"].([]byte)
 	return
 }

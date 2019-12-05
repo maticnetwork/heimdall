@@ -2,6 +2,7 @@ package checkpoint
 
 import (
 	"bytes"
+	"math/big"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -96,16 +97,18 @@ var _ sdk.Msg = &MsgCheckpointAck{}
 
 // MsgCheckpointAck Add mainchain commit transaction hash to MsgCheckpointAck
 type MsgCheckpointAck struct {
-	From        types.HeimdallAddress `json:"from"`
-	HeaderBlock uint64                `json:"headerBlock"`
-	TxHash      types.HeimdallHash    `json:"tx_hash"`
+	From             types.HeimdallAddress `json:"from"`
+	HeaderBlock      uint64                `json:"headerBlock"`
+	TxHash           types.HeimdallHash    `json:"tx_hash"`
+	CheckpointReward *big.Int              `json:checkpoint_reward`
 }
 
-func NewMsgCheckpointAck(from types.HeimdallAddress, headerBlock uint64, txHash types.HeimdallHash) MsgCheckpointAck {
+func NewMsgCheckpointAck(from types.HeimdallAddress, headerBlock uint64, txHash types.HeimdallHash, checkpointReward *big.Int) MsgCheckpointAck {
 	return MsgCheckpointAck{
-		From:        from,
-		HeaderBlock: headerBlock,
-		TxHash:      txHash,
+		From:             from,
+		HeaderBlock:      headerBlock,
+		TxHash:           txHash,
+		CheckpointReward: checkpointReward,
 	}
 }
 

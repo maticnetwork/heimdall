@@ -212,7 +212,7 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k Keeper, con
 	}
 
 	// Calculate Signer Rewards
-	signerRewards, err := k.sk.CalculateSignerRewards(ctx, voteBytes, sigInput)
+	signerRewards, err := k.sk.CalculateSignerRewards(ctx, voteBytes, sigInput, msg.CheckpointReward)
 	if err != nil {
 		k.Logger(ctx).Error("Error while calculating Signer Rewards", "error", err)
 		return common.ErrComputeCheckpointRewards(k.Codespace()).Result()

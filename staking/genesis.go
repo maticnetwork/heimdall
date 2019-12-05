@@ -36,7 +36,6 @@ type GenesisState struct {
 	Validators           []*hmTypes.Validator           `json:"validators" yaml:"validators"`
 	CurrentValSet        hmTypes.ValidatorSet           `json:"current_val_set" yaml:"current_val_set"`
 	ValidatorRewards     map[types.ValidatorID]*big.Int `json:"val_rewards" yaml:"val_rewards"`
-	CheckpointReward     *big.Int                       `json:"checkpoint_reward" yaml:"checkpoint_reward"`
 	ProposerBonusPercent int64                          `json:"proposer_bonus_percent" yaml:"proposer_bonus_percent"`
 }
 
@@ -45,7 +44,6 @@ func NewGenesisState(
 	validators []*hmTypes.Validator,
 	currentValSet hmTypes.ValidatorSet,
 	validatorRewards map[types.ValidatorID]*big.Int,
-	checkpointReward *big.Int,
 	proposerBonusPercent int64,
 
 ) GenesisState {
@@ -53,7 +51,6 @@ func NewGenesisState(
 		Validators:           validators,
 		CurrentValSet:        currentValSet,
 		ValidatorRewards:     validatorRewards,
-		CheckpointReward:     checkpointReward,
 		ProposerBonusPercent: proposerBonusPercent,
 	}
 }
@@ -64,8 +61,7 @@ func DefaultGenesisState(validators []*hmTypes.Validator, currentValSet hmTypes.
 	for _, val := range validators {
 		validatorRewards[val.ID] = big.NewInt(0)
 	}
-	initialCheckpointReward := big.NewInt(10).Exp(big.NewInt(10), big.NewInt(18), nil)
-	return NewGenesisState(validators, currentValSet, validatorRewards, initialCheckpointReward, DefaultProposerBonusPercent)
+	return NewGenesisState(validators, currentValSet, validatorRewards, DefaultProposerBonusPercent)
 }
 
 // InitGenesis sets distribution information for genesis.
@@ -105,8 +101,6 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 	}
 	keeper.UpdateValidatorRewards(ctx, validatorRewards)
 
-	// Rewards - reward issued for checkpoint signature
-	keeper.SetCheckpointReward(ctx, data.CheckpointReward)
 	keeper.SetProposerBonusPercent(ctx, data.ProposerBonusPercent)
 
 }
@@ -118,7 +112,6 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) GenesisState {
 		keeper.GetAllValidators(ctx),
 		keeper.GetValidatorSet(ctx),
 		keeper.GetAllValidatorRewards(ctx),
-		keeper.GetCheckpointReward(ctx),
 		keeper.GetProposerBonusPercent(ctx),
 	)
 }

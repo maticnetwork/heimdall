@@ -319,13 +319,14 @@ func (syncer *Syncer) processCheckpointEvent(eventName string, abiObject *abi.AB
 			"event", eventName,
 			"start", event.Start,
 			"end", event.End,
+			"reward", event.Reward,
 			"root", "0x"+hex.EncodeToString(event.Root[:]),
 			"proposer", event.Proposer.Hex(),
 			"headerNumber", event.HeaderBlockId,
 		)
 
 		// create msg checkpoint ack message
-		msg := checkpoint.NewMsgCheckpointAck(helper.GetFromAddress(syncer.cliCtx), event.HeaderBlockId.Uint64(), hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()))
+		msg := checkpoint.NewMsgCheckpointAck(helper.GetFromAddress(syncer.cliCtx), event.HeaderBlockId.Uint64(), hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()), event.Reward)
 		syncer.queueConnector.BroadcastToHeimdall(msg)
 	}
 }

@@ -9,4 +9,5 @@ const (
 
 	FlagHeaderNumber     = "header"
 	FlagCheckpointTxHash = "txhash"
+	FlagCheckpointReward = "reward"
 )

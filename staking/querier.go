@@ -17,8 +17,6 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 		switch path[0] {
 		case stakingTypes.QueryValStatus:
 			return handlerQueryValStatus(ctx, req, keeper)
-		case stakingTypes.QueryCheckpointReward:
-			return handlerQueryCheckpointReward(ctx, req, keeper)
 		case stakingTypes.QueryProposerBonusPercent:
 			return handlerQueryProposerBonusPercent(ctx, req, keeper)
 		default:
@@ -38,18 +36,6 @@ func handlerQueryValStatus(ctx sdk.Context, req abci.RequestQuery, keeper Keeper
 
 	// json record
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, status)
-	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
-	}
-	return bz, nil
-}
-
-func handlerQueryCheckpointReward(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	// GetCheckpointReward
-	checkpointReward := keeper.GetCheckpointReward(ctx)
-
-	// json record
-	bz, err := codec.MarshalJSONIndent(keeper.cdc, checkpointReward)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
