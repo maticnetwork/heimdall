@@ -200,7 +200,7 @@ func (k Keeper) SendCoinsFromModuleToModule(
 }
 
 // SendCoinsFromAccountToModule transfers coins from an AccAddress to a ModuleAccount
-func (k Keeper) SendCoinsFromAccountToModule(
+func (k Keeper) c(
 	ctx sdk.Context,
 	senderAddr types.HeimdallAddress,
 	recipientModule string,
@@ -214,68 +214,4 @@ func (k Keeper) SendCoinsFromAccountToModule(
 	}
 
 	return k.bk.SendCoins(ctx, senderAddr, recipientAcc.GetAddress(), amt)
-}
-
-// MintCoins creates new coins from thin air and adds it to the module account.
-// Panics if the name maps to a non-minter module account or if the amount is invalid.
-func (k Keeper) MintCoins(
-	ctx sdk.Context,
-	moduleName string,
-	amt types.Coins,
-) (sdk.Tags, sdk.Error) {
-
-	// create the account if it doesn't yet exist
-	acc := k.GetModuleAccount(ctx, moduleName)
-	if acc == nil {
-		return nil, sdk.ErrUnknownAddress(fmt.Sprintf("module account %s does not exist", moduleName))
-	}
-
-	if !acc.HasPermission(supplyTypes.Minter) {
-		return nil, supplyTypes.ErrNoPermission(supplyTypes.DefaultCodespace)
-	}
-
-	_, tags, err := k.bk.AddCoins(ctx, acc.GetAddress(), amt)
-	if err != nil {
-		return tags, err
-	}
-
-	// update total supply
-	supply := k.GetSupply(ctx)
-	supply.Inflate(amt)
-	k.SetSupply(ctx, supply)
-
-	logger := k.Logger(ctx)
-	logger.Info(fmt.Sprintf("minted %s from %s module account", amt.String(), moduleName))
-
-	return nil, nil
-}
-
-// BurnCoins burns coins deletes coins from the balance of the module account.
-// Panics if the name maps to a non-burner module account or if the amount is invalid.
-func (k Keeper) BurnCoins(ctx sdk.Context, moduleName string, amt types.Coins) (sdk.Tags, sdk.Error) {
-
-	// create the account if it doesn't yet exist
-	acc := k.GetModuleAccount(ctx, moduleName)
-	if acc == nil {
-		return nil, sdk.ErrUnknownAddress(fmt.Sprintf("module account %s does not exist", moduleName))
-	}
-
-	if !acc.HasPermission(supplyTypes.Burner) {
-		return nil, supplyTypes.ErrNoPermission(supplyTypes.DefaultCodespace)
-	}
-
-	_, _, err := k.bk.SubtractCoins(ctx, acc.GetAddress(), amt)
-	if err != nil {
-		return nil, err
-	}
-
-	// update total supply
-	supply := k.GetSupply(ctx)
-	supply.Deflate(amt)
-	k.SetSupply(ctx, supply)
-
-	logger := k.Logger(ctx)
-	logger.Info(fmt.Sprintf("burned %s from %s module account", amt.String(), moduleName))
-
-	return nil, nil
 }
