@@ -35,6 +35,7 @@ type IContractCaller interface {
 	GetConfirmedTxReceipt(common.Hash) (*ethTypes.Receipt, error)
 	GetBlockNumberFromTxHash(common.Hash) (*big.Int, error)
 	DecodeValidatorStakeUpdateEvent(*ethTypes.Receipt, uint64) (*stakemanager.StakemanagerStakeUpdate, error)
+	DecodeNewHeaderBlockEvent(*ethTypes.Receipt, uint64) (*rootchain.RootchainNewHeaderBlock, error)
 	DecodeSignerUpdateEvent(*ethTypes.Receipt, uint64) (*stakemanager.StakemanagerSignerChange, error)
 	GetMainTxReceipt(common.Hash) (*ethTypes.Receipt, error)
 	GetMaticTxReceipt(common.Hash) (*ethTypes.Receipt, error)
@@ -297,6 +298,28 @@ func (c *ContractCaller) DecodeValidatorStakeUpdateEvent(receipt *ethTypes.Recei
 		if uint64(vLog.Index) == logIndex {
 			found = true
 			if err := UnpackLog(&c.StakeManagerABI, event, "StakeUpdate", vLog); err != nil {
+				return nil, err
+			}
+			break
+		}
+	}
+
+	if !found {
+		return nil, errors.New("Event not found")
+	}
+
+	return event, nil
+}
+
+// DecodeNewHeaderBlockEvent represents new header block event
+func (c *ContractCaller) DecodeNewHeaderBlockEvent(receipt *ethTypes.Receipt, logIndex uint64) (*rootchain.RootchainNewHeaderBlock, error) {
+	event := new(rootchain.RootchainNewHeaderBlock)
+
+	found := false
+	for _, vLog := range receipt.Logs {
+		if uint64(vLog.Index) == logIndex {
+			found = true
+			if err := UnpackLog(&c.RootChainABI, event, "NewHeaderBlock", vLog); err != nil {
 				return nil, err
 			}
 			break

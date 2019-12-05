@@ -2,7 +2,6 @@ package cli
 
 import (
 	"fmt"
-	"math/big"
 	"strconv"
 	"time"
 
@@ -146,15 +145,8 @@ func SendCheckpointACKTx(cdc *codec.Codec) *cobra.Command {
 			}
 			checkpointTxHash := types.BytesToHeimdallHash([]byte(checkpointTxHashStr))
 
-			checkpointRewardStr := viper.GetString(FlagCheckpointReward)
-			if checkpointRewardStr == "" {
-				return fmt.Errorf("checkpoint reward cannot be empty")
-			}
-
-			checkpointReward, _ := big.NewInt(0).SetString(checkpointRewardStr, 10)
-
 			// new checkpoint
-			msg := checkpoint.NewMsgCheckpointAck(proposer, headerBlock, checkpointTxHash, checkpointReward)
+			msg := checkpoint.NewMsgCheckpointAck(proposer, headerBlock, checkpointTxHash, uint64(viper.GetInt64(FlagCheckpointLogIndex)))
 
 			// msg
 			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
@@ -164,11 +156,12 @@ func SendCheckpointACKTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
 	cmd.Flags().String(FlagHeaderNumber, "", "--header=<header-index>")
 	cmd.Flags().StringP(FlagCheckpointTxHash, "t", "", "--txhash=<checkpoint-txhash>")
-	cmd.Flags().StringP(FlagCheckpointReward, "r", "", "--reward=<checkpoint-reward>")
+	cmd.Flags().String(FlagCheckpointLogIndex, "", "--log-index=<log-index>")
 
 	cmd.MarkFlagRequired(FlagHeaderNumber)
 	cmd.MarkFlagRequired(FlagCheckpointTxHash)
-	cmd.MarkFlagRequired(FlagCheckpointReward)
+	cmd.MarkFlagRequired(FlagCheckpointLogIndex)
+
 	return cmd
 }
 

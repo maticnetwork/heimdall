@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"math/big"
 	"net/http"
 	"time"
 
@@ -42,10 +41,10 @@ type (
 	HeaderACKReq struct {
 		BaseReq rest.BaseReq `json:"base_req"`
 
-		Proposer         types.HeimdallAddress `json:"proposer"`
-		HeaderBlock      uint64                `json:"headerBlock"`
-		TxHash           types.HeimdallHash    `json:"tx_hash"`
-		CheckpointReward *big.Int              `json: "checkpoint_reward"`
+		Proposer    types.HeimdallAddress `json:"proposer"`
+		HeaderBlock uint64                `json:"headerBlock"`
+		TxHash      types.HeimdallHash    `json:"tx_hash"`
+		LogIndex    uint64                `json:"log_index"`
 	}
 
 	// HeaderNoACKReq struct for sending no-ack for a new headers
@@ -96,7 +95,7 @@ func newCheckpointACKHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.H
 		}
 
 		// draft a message and send response
-		msg := checkpoint.NewMsgCheckpointAck(req.Proposer, req.HeaderBlock, req.TxHash, req.CheckpointReward)
+		msg := checkpoint.NewMsgCheckpointAck(req.Proposer, req.HeaderBlock, req.TxHash, req.LogIndex)
 
 		// send response
 		restClient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
