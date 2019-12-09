@@ -200,7 +200,7 @@ func (k Keeper) SendCoinsFromModuleToModule(
 }
 
 // SendCoinsFromAccountToModule transfers coins from an AccAddress to a ModuleAccount
-func (k Keeper) c(
+func (k Keeper) SendCoinsFromAccountToModule(
 	ctx sdk.Context,
 	senderAddr types.HeimdallAddress,
 	recipientModule string,
