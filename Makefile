@@ -11,12 +11,6 @@ ldflags = -X github.com/maticnetwork/heimdall/version.Name=heimdall \
 
 BUILD_FLAGS := -ldflags '$(ldflags)'
 
-dep:
-	dep ensure -v
-	mkdir -p vendor/github.com/tendermint vendor/github.com/ethereum
-	git clone -b v0.12.2 --single-branch --depth 1 https://github.com/tendermint/iavl vendor/github.com/tendermint/iavl
-	git clone -b v1.9.0 --single-branch --depth 1 https://github.com/ethereum/go-ethereum vendor/github.com/ethereum/go-ethereum
-
 clean:
 	rm -rf build
 
