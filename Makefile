@@ -94,4 +94,4 @@ push-docker:
 build-docker-develop:
 	docker build -t "maticnetwork/heimdall:develop" -f docker/Dockerfile.develop .
 
-.PHONY: contracts dep build
+.PHONY: contracts build
