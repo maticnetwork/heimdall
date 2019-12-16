@@ -90,7 +90,9 @@ func (c *Checkpointer) startHeaderProcess(ctx context.Context) {
 	for {
 		select {
 		case newHeader := <-c.HeaderChannel:
-			c.sendRequest(newHeader)
+			if isProposer(c.cliCtx) {
+				c.sendRequest(newHeader)
+			}
 		case <-ctx.Done():
 			return
 		}
@@ -153,15 +155,14 @@ func (c *Checkpointer) startPolling(ctx context.Context, pollInterval time.Durat
 	for {
 		select {
 		case <-ticker.C:
-			if isProposer(c.cliCtx) {
-				header, err := c.contractConnector.MaticChainClient.HeaderByNumber(ctx, nil)
-				if err == nil && header != nil {
-					// send data to channel
-					c.HeaderChannel <- header
-				} else if err != nil {
-					c.Logger.Error("Unable to fetch header by number", "Error", err)
-				}
+			header, err := c.contractConnector.MaticChainClient.HeaderByNumber(ctx, nil)
+			if err == nil && header != nil {
+				// send data to channel
+				c.HeaderChannel <- header
+			} else if err != nil {
+				c.Logger.Error("Unable to fetch header by number", "Error", err)
 			}
+
 		case <-ctx.Done():
 			ticker.Stop()
 			return

@@ -145,17 +145,12 @@ func (s *ClerkService) commit() {
 	// start from
 	start := lastEventRecord
 
-	// if diff >= 250, ignore
-	if currentStateCounter.Uint64() > start && currentStateCounter.Uint64()-start >= 250 {
-		start = currentStateCounter.Uint64() - 1
-	}
-
 	// create tag query
 	var tags []string
 	tags = append(tags, fmt.Sprintf("record-id>%v", start))
 	tags = append(tags, "action='event-record'")
 
-	s.Logger.Debug("[COMMIT RECORD] Querying heimdall event record txs",
+	s.Logger.Debug("Querying heimdall event record txs",
 		"start", start,
 		"lastEventRecord", lastEventRecord,
 		"currentStateCounter", currentStateCounter.Uint64(),
@@ -169,7 +164,7 @@ func (s *ClerkService) commit() {
 		return
 	}
 
-	s.Logger.Debug("[COMMIT RECORD] Found new state txs",
+	s.Logger.Debug(" Found new state txs",
 		"length", len(txs),
 	)
 

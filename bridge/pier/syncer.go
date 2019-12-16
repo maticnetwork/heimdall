@@ -35,7 +35,6 @@ const (
 	stakeInitEvent   = "Staked"
 	unstakeInitEvent = "UnstakeInit"
 	signerChange     = "SignerChange"
-	depositEvent     = "Deposit"
 
 	lastBlockKey = "last-block" // storage key
 )
@@ -248,7 +247,7 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 	syncer.Logger.Debug("Processing header", "fromBlock", fromBlock, "toBlock", toBlock)
 
 	// set diff
-	if toBlock.Uint64() < fromBlock.Uint64() || toBlock.Uint64()-fromBlock.Uint64() > 250 {
+	if toBlock.Uint64() < fromBlock.Uint64() {
 		fromBlock = toBlock
 	}
 
@@ -304,6 +303,7 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 					// case "Withdraw":
 					// 	syncer.processWithdrawEvent(selectedEvent.Name, abiObject, &vLog)
 				}
+				break
 			}
 		}
 	}
@@ -346,7 +346,7 @@ func (syncer *Syncer) processStakedEvent(eventName string, abiObject *abi.ABI, v
 		)
 
 		// compare user to get address
-		if bytes.Compare(event.User.Bytes(), helper.GetAddress()) == 0 {
+		if isEventSender(syncer.cliCtx, event.ValidatorId.Uint64()) {
 			pubkey := helper.GetPubKey()
 			msg := staking.NewMsgValidatorJoin(
 				hmTypes.BytesToHeimdallAddress(event.User.Bytes()),
@@ -377,15 +377,17 @@ func (syncer *Syncer) processUnstakeInitEvent(eventName string, abiObject *abi.A
 		)
 
 		// msg validator exit
-		msg := staking.NewMsgValidatorExit(
-			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
-			event.ValidatorId.Uint64(),
-			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
-			uint64(vLog.Index),
-		)
+		if isEventSender(syncer.cliCtx, event.ValidatorId.Uint64()) {
+			msg := staking.NewMsgValidatorExit(
+				hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
+				event.ValidatorId.Uint64(),
+				hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
+				uint64(vLog.Index),
+			)
 
-		// broadcast heimdall
-		syncer.queueConnector.BroadcastToHeimdall(msg)
+			// broadcast heimdall
+			syncer.queueConnector.BroadcastToHeimdall(msg)
+		}
 	}
 }
 
@@ -403,15 +405,17 @@ func (syncer *Syncer) processStakeUpdateEvent(eventName string, abiObject *abi.A
 		)
 
 		// msg validator exit
-		msg := staking.NewMsgStakeUpdate(
-			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
-			event.ValidatorId.Uint64(),
-			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
-			uint64(vLog.Index),
-		)
+		if isEventSender(syncer.cliCtx, event.ValidatorId.Uint64()) {
+			msg := staking.NewMsgStakeUpdate(
+				hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
+				event.ValidatorId.Uint64(),
+				hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
+				uint64(vLog.Index),
+			)
 
-		// broadcast heimdall
-		syncer.queueConnector.BroadcastToHeimdall(msg)
+			// broadcast heimdall
+			syncer.queueConnector.BroadcastToHeimdall(msg)
+		}
 	}
 }
 
