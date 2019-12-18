@@ -76,7 +76,6 @@ func HandleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k common.Keeper, co
 				"currentTip", lastCheckpoint.EndBlock,
 				"startBlock", msg.StartBlock)
 			return common.ErrDisCountinuousCheckpoint(k.Codespace).Result()
-
 		}
 	} else if err.Error() == common.ErrNoCheckpointFound(k.Codespace).Error() && msg.StartBlock != 0 {
 		common.CheckpointLogger.Error("First checkpoint to start from block 1", "Error", err)
@@ -166,6 +165,7 @@ func HandleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k common.Keep
 	if headerBlock.EndBlock > end {
 		common.CheckpointLogger.Info("Adjusting endBlock to one already submitted on chain", "OldEndBlock", headerBlock.EndBlock, "AdjustedEndBlock", end)
 		headerBlock.EndBlock = end
+		headerBlock.RootHash = root
 		// TODO proposer also needs to be changed
 	}
 	// add checkpoint to headerBlocks

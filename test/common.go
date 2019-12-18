@@ -67,18 +67,30 @@ func CreateTestInput(t *testing.T, isCheckTx bool) (sdk.Context, common.Keeper) 
 	return ctx, masterKeeper
 }
 
-// create random header block
+// GenRandCheckpointHeader creates random header block
 func GenRandCheckpointHeader(headerSize int) (headerBlock types.CheckpointBlockHeader, err error) {
 	start := rand.Intn(100) + 1
 	end := start + headerSize
-	roothash, err := checkpoint.GetHeaders(uint64(start), uint64(end))
+	headerBlock, err = GetDeterministicHeader(uint64(start), uint64(end))
 	if err != nil {
 		return headerBlock, err
 	}
 	proposer := ethcmn.Address{}
-	headerBlock = types.CreateBlock(uint64(start), uint64(end), ethcmn.HexToHash(hex.EncodeToString(roothash)), proposer, uint64(time.Now().Unix()))
-
+	headerBlock.Proposer = proposer
+	headerBlock.TimeStamp = uint64(time.Now().Unix())
 	return headerBlock, nil
+}
+
+// GetDeterministicHeader creates header block for given start and end block
+func GetDeterministicHeader(start uint64, end uint64) (headerBlock types.CheckpointBlockHeader, err error) {
+	roothash, err := checkpoint.GetHeaders(uint64(start), uint64(end))
+	if err != nil {
+		return headerBlock, err
+	}
+	headerBlock.StartBlock = start
+	headerBlock.EndBlock = end
+	headerBlock.RootHash = ethcmn.HexToHash(hex.EncodeToString(roothash))
+	return
 }
 
 // Generate random validators
