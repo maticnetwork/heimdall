@@ -22,7 +22,6 @@ import (
 )
 
 func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
-	// Get all delegations from a delegator
 	r.HandleFunc(
 		"/staking/signer/{address}",
 		validatorByAddressHandlerFn(cdc, cliCtx),

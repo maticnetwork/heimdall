@@ -293,8 +293,7 @@ func DeductFees(feeCollector FeeCollector, ctx sdk.Context, acc authTypes.Accoun
 		).Result()
 	}
 
-	// Validate the account has enough "spendable" coins as this will cover cases
-	// such as vesting accounts.
+	// Validate the account has enough "spendable" coins
 	spendableCoins := acc.SpendableCoins(blockTime)
 	if _, hasNeg := spendableCoins.SafeSub(fees); hasNeg {
 		return sdk.ErrInsufficientFunds(

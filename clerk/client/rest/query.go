@@ -15,7 +15,6 @@ import (
 )
 
 func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
-	// Get all delegations from a delegator
 	r.HandleFunc(
 		"/clerk/event-record/{recordId}",
 		handlerRecordFn(cdc, cliCtx),
