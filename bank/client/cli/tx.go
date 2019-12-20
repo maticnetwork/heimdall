@@ -97,9 +97,8 @@ func SendTxCmd(cdc *codec.Codec) *cobra.Command {
 // TopupTxCmd will create a topup tx
 func TopupTxCmd(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "topup [id] [tx_hash] [log_index]",
+		Use:   "topup",
 		Short: "Topup tokens for validators",
-		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().
 				WithCodec(cdc).
@@ -134,5 +133,11 @@ func TopupTxCmd(cdc *codec.Codec) *cobra.Command {
 		},
 	}
 
+	cmd.Flags().Int(FlagValidatorID, 0, "--validator-id=<validator ID here>")
+	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
+	cmd.Flags().String(FlagLogIndex, "", "--log-index=<log-index>")
+	cmd.MarkFlagRequired(FlagValidatorID)
+	cmd.MarkFlagRequired(FlagTxHash)
+	cmd.MarkFlagRequired(FlagLogIndex)
 	return cmd
 }
