@@ -17,7 +17,7 @@ import (
 // RegisterRoutes - Central function to define routes that get registered by the main application
 func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc("/bank/accounts/{address}/transfers", SendRequestHandlerFn(cliCtx)).Methods("POST")
-	r.HandleFunc("/bank/accounts/{address}/topup", TopupHandlerFn(cliCtx)).Methods("POST")
+	r.HandleFunc("/bank/accounts/topup", TopupHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/bank/balances/{address}", QueryBalancesRequestHandlerFn(cliCtx)).Methods("GET")
 }
 
@@ -70,12 +70,7 @@ type TopupReq struct {
 // TopupHandlerFn - http request handler to topup coins to a address.
 func TopupHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-
-		// get to address
-		toAddr := types.HexToHeimdallAddress(vars["address"])
-
-		var req SendReq
+		var req TopupReq
 		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
 			return
 		}
@@ -88,7 +83,13 @@ func TopupHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		// get from address
 		fromAddr := types.HexToHeimdallAddress(req.BaseReq.From)
 
-		msg := bankTypes.NewMsgSend(fromAddr, toAddr, req.Amount)
+		// get msg
+		msg := bankTypes.NewMsgTopup(
+			fromAddr,
+			req.ID,
+			types.HexToHeimdallHash(req.TxHash),
+			req.LogIndex,
+		)
 		restClient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
 	}
 }

@@ -196,20 +196,24 @@ func ValidateInputsOutputs(inputs []Input, outputs []Output) sdk.Error {
 // Fee token
 //
 
-// MsgMintFeeToken - high level transaction of the fee coin module
-type MsgMintFeeToken struct {
+// MsgTopup - high level transaction of the fee coin module
+type MsgTopup struct {
 	FromAddress types.HeimdallAddress `json:"from_address"`
 	ID          types.ValidatorID     `json:"id"`
 	TxHash      types.HeimdallHash    `json:"tx_hash"`
 	LogIndex    uint64                `json:"log_index"`
 }
 
-var _ sdk.Msg = MsgMintFeeToken{}
+var _ sdk.Msg = MsgTopup{}
 
-// NewMsgMintFeeToken - construct arbitrary multi-in, multi-out send msg.
-func NewMsgMintFeeToken(fromAddr types.HeimdallAddress, id uint64, txhash types.HeimdallHash,
-	logIndex uint64) MsgMintFeeToken {
-	return MsgMintFeeToken{
+// NewMsgTopup - construct arbitrary multi-in, multi-out send msg.
+func NewMsgTopup(
+	fromAddr types.HeimdallAddress,
+	id uint64,
+	txhash types.HeimdallHash,
+	logIndex uint64,
+) MsgTopup {
+	return MsgTopup{
 		FromAddress: fromAddr,
 		ID:          types.NewValidatorID(id),
 		TxHash:      txhash,
@@ -218,13 +222,13 @@ func NewMsgMintFeeToken(fromAddr types.HeimdallAddress, id uint64, txhash types.
 }
 
 // Route Implements Msg.
-func (msg MsgMintFeeToken) Route() string { return RouterKey }
+func (msg MsgTopup) Route() string { return RouterKey }
 
 // Type Implements Msg.
-func (msg MsgMintFeeToken) Type() string { return "mint-fee-token" }
+func (msg MsgTopup) Type() string { return "mint-fee-token" }
 
 // ValidateBasic Implements Msg.
-func (msg MsgMintFeeToken) ValidateBasic() sdk.Error {
+func (msg MsgTopup) ValidateBasic() sdk.Error {
 	if msg.FromAddress.Empty() {
 		return sdk.ErrInvalidAddress("missing sender address")
 	}
@@ -241,11 +245,11 @@ func (msg MsgMintFeeToken) ValidateBasic() sdk.Error {
 }
 
 // GetSignBytes Implements Msg.
-func (msg MsgMintFeeToken) GetSignBytes() []byte {
+func (msg MsgTopup) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
 // GetSigners Implements Msg.
-func (msg MsgMintFeeToken) GetSigners() []sdk.AccAddress {
+func (msg MsgTopup) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.FromAddress)}
 }

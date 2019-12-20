@@ -4,4 +4,6 @@ package bank
 var (
 	TagKeyRecipient = "recipient"
 	TagKeySender    = "sender"
+	TagValidatorID  = "validator-id"
+	TagTopupAmount  = "topup-amount"
 )

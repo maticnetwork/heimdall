@@ -1,6 +1,8 @@
 package bank
 
 import (
+	"strconv"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/maticnetwork/heimdall/bank/types"
@@ -17,8 +19,8 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 			return handleMsgSend(ctx, k, msg)
 		case types.MsgMultiSend:
 			return handleMsgMultiSend(ctx, k, msg)
-		case types.MsgMintFeeToken:
-			return handleMsgMintFeeToken(ctx, k, msg, contractCaller)
+		case types.MsgTopup:
+			return handleMsgTopup(ctx, k, msg, contractCaller)
 		default:
 			errMsg := "Unrecognized bank Msg type: %s" + msg.Type()
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -58,7 +60,7 @@ func handleMsgMultiSend(ctx sdk.Context, k Keeper, msg types.MsgMultiSend) sdk.R
 }
 
 // Handle MsgMintFeeToken
-func handleMsgMintFeeToken(ctx sdk.Context, k Keeper, msg types.MsgMintFeeToken, contractCaller helper.IContractCaller) sdk.Result {
+func handleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCaller helper.IContractCaller) sdk.Result {
 	if !k.GetSendEnabled(ctx) {
 		return types.ErrSendDisabled(k.Codespace()).Result()
 	}
@@ -92,7 +94,7 @@ func handleMsgMintFeeToken(ctx sdk.Context, k Keeper, msg types.MsgMintFeeToken,
 	}
 
 	// validator topup
-	topupObject, err := k.GetValidatorTopup(ctx, validator.Signer)
+	topupObject, err := k.GetTopup(ctx, validator.Signer)
 	if err != nil {
 		return types.ErrNoValidatorTopup(k.Codespace()).Result()
 	}
@@ -128,13 +130,18 @@ func handleMsgMintFeeToken(ctx sdk.Context, k Keeper, msg types.MsgMintFeeToken,
 		return ec.Result()
 	}
 	// save old validator
-	if err := k.SetValidatorTopup(ctx, validator.Signer, *topupObject); err != nil {
+	if err := k.SetTopup(ctx, validator.Signer, *topupObject); err != nil {
 		k.Logger(ctx).Error("Unable to update signer", "error", err, "validatorId", validator.ID)
 		return hmCommon.ErrSignerUpdateError(k.Codespace()).Result()
 	}
 
+	// response tags
+	resTags := sdk.NewTags(
+		TagValidatorID, []byte(strconv.FormatUint(uint64(msg.ID), 10)),
+	)
+
 	// new tags
 	return sdk.Result{
-		Tags: addTags,
+		Tags: addTags.AppendTags(resTags),
 	}
 }

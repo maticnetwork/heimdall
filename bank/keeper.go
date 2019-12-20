@@ -32,8 +32,8 @@ type Keeper interface {
 	SubtractCoins(ctx sdk.Context, addr types.HeimdallAddress, amt types.Coins) (types.Coins, sdk.Tags, sdk.Error)
 	AddCoins(ctx sdk.Context, addr types.HeimdallAddress, amt types.Coins) (types.Coins, sdk.Tags, sdk.Error)
 	InputOutputCoins(ctx sdk.Context, inputs []bankTypes.Input, outputs []bankTypes.Output) (sdk.Tags, sdk.Error)
-	GetValidatorTopup(ctx sdk.Context, addr types.HeimdallAddress) (*bankTypes.ValidatorTopup, error)
-	SetValidatorTopup(ctx sdk.Context, addr types.HeimdallAddress, validatorTop bankTypes.ValidatorTopup) error
+	GetTopup(ctx sdk.Context, addr types.HeimdallAddress) (*bankTypes.ValidatorTopup, error)
+	SetTopup(ctx sdk.Context, addr types.HeimdallAddress, validatorTop bankTypes.ValidatorTopup) error
 }
 
 // BaseKeeper manages transfers between accounts. It implements the Keeper interface.
@@ -73,8 +73,8 @@ func (keeper BaseKeeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", bankTypes.ModuleName)
 }
 
-// GetValidatorTopupKey drafts the validator key for addresses
-func GetValidatorTopupKey(address []byte) []byte {
+// GetTopupKey drafts the validator key for addresses
+func GetTopupKey(address []byte) []byte {
 	return append(ValidatorTopupKey, address...)
 }
 
@@ -119,12 +119,12 @@ func (keeper BaseKeeper) InputOutputCoins(
 	return inputOutputCoins(ctx, keeper.ak, inputs, outputs)
 }
 
-// GetValidatorTopup returns validator toptup
-func (keeper BaseKeeper) GetValidatorTopup(ctx sdk.Context, addr types.HeimdallAddress) (*bankTypes.ValidatorTopup, error) {
+// GetTopup returns validator toptup
+func (keeper BaseKeeper) GetTopup(ctx sdk.Context, addr types.HeimdallAddress) (*bankTypes.ValidatorTopup, error) {
 	store := ctx.KVStore(keeper.key)
 
 	// check if topup exists
-	key := GetValidatorTopupKey(addr.Bytes())
+	key := GetTopupKey(addr.Bytes())
 	if !store.Has(key) {
 		return nil, nil
 	}
@@ -139,8 +139,8 @@ func (keeper BaseKeeper) GetValidatorTopup(ctx sdk.Context, addr types.HeimdallA
 	return &validatorTopup, nil
 }
 
-// SetValidatorTopup sets validator topup object
-func (keeper BaseKeeper) SetValidatorTopup(ctx sdk.Context, addr types.HeimdallAddress, validatorTopup bankTypes.ValidatorTopup) error {
+// SetTopup sets validator topup object
+func (keeper BaseKeeper) SetTopup(ctx sdk.Context, addr types.HeimdallAddress, validatorTopup bankTypes.ValidatorTopup) error {
 	store := ctx.KVStore(keeper.key)
 
 	// validator topup
@@ -150,8 +150,8 @@ func (keeper BaseKeeper) SetValidatorTopup(ctx sdk.Context, addr types.HeimdallA
 	}
 
 	// store validator with address prefixed with validator key as index
-	store.Set(GetValidatorTopupKey(addr.Bytes()), bz)
-	keeper.Logger(ctx).Debug("Validator topup stored", "key", hex.EncodeToString(GetValidatorTopupKey(addr.Bytes())))
+	store.Set(GetTopupKey(addr.Bytes()), bz)
+	keeper.Logger(ctx).Debug("Validator topup stored", "key", hex.EncodeToString(GetTopupKey(addr.Bytes())))
 
 	return nil
 }
