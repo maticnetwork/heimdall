@@ -5,6 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/maticnetwork/heimdall/auth"
 	"github.com/maticnetwork/heimdall/bank/types"
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
@@ -129,6 +130,11 @@ func handleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCalle
 	if ec != nil {
 		return ec.Result()
 	}
+	// transfer fees to sender (proposer)
+	transferTags, ec := k.SendCoins(ctx, validator.Signer, msg.FromAddress, auth.FeeWantedPerTx)
+	if ec != nil {
+		return ec.Result()
+	}
 	// save old validator
 	if err := k.SetTopup(ctx, validator.Signer, *topupObject); err != nil {
 		k.Logger(ctx).Error("Unable to update signer", "error", err, "validatorId", validator.ID)
@@ -138,10 +144,11 @@ func handleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCalle
 	// response tags
 	resTags := sdk.NewTags(
 		TagValidatorID, []byte(strconv.FormatUint(uint64(msg.ID), 10)),
+		TagTopupAmount, []byte(strconv.FormatUint(eventLog.Amount.Uint64(), 10)),
 	)
 
 	// new tags
 	return sdk.Result{
-		Tags: addTags.AppendTags(resTags),
+		Tags: addTags.AppendTags(resTags).AppendTags(transferTags),
 	}
 }
