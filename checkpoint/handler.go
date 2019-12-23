@@ -211,7 +211,7 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k Keeper, con
 	txHash := msg.TxHash
 
 	// Fetch all the signatures from tx input data and calculate signer rewards
-	voteBytes, sigInput, _, err := contractCaller.GetCheckpointSign(ctx, ethCmn.Hash(txHash))
+	voteBytes, sigInput, _, err := contractCaller.GetCheckpointSign(ethCmn.Hash(txHash))
 	if err != nil {
 		k.Logger(ctx).Error("Error while fetching signers from transaction", "error", err)
 		return common.ErrFetchCheckpointSigners(k.Codespace()).Result()

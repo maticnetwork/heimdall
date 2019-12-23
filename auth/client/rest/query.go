@@ -25,25 +25,31 @@ func QueryAccountRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
 		// account getter
 		accGetter := authTypes.NewAccountRetriever(cliCtx)
 
-		if err := accGetter.EnsureExists(key); err != nil {
-			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
-			return
-		}
-
-		account, err := accGetter.GetAccount(key)
+		account, height, err := accGetter.GetAccountWithHeight(key)
 		if err != nil {
+			if err := accGetter.EnsureExists(key); err != nil {
+				cliCtx = cliCtx.WithHeight(height)
+				rest.PostProcessResponse(w, cliCtx, authTypes.BaseAccount{})
+				return
+			}
 			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
 			return
 		}
 
+		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, account)
 	}
 }
 
-// QueryAccountSequenceRequestHandlerFn query accoun sequence REST Handler
+// QueryAccountSequenceRequestHandlerFn query account sequence REST Handler
 func QueryAccountSequenceRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -56,16 +62,21 @@ func QueryAccountSequenceRequestHandlerFn(cliCtx context.CLIContext) http.Handle
 			return
 		}
 
-		// account getter
-		accGetter := authTypes.NewAccountRetriever(cliCtx)
-
-		if err := accGetter.EnsureExists(key); err != nil {
-			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
 			return
 		}
 
-		account, err := accGetter.GetAccount(key)
+		// account getter
+		accGetter := authTypes.NewAccountRetriever(cliCtx)
+
+		account, height, err := accGetter.GetAccountWithHeight(key)
 		if err != nil {
+			if err := accGetter.EnsureExists(key); err != nil {
+				cliCtx = cliCtx.WithHeight(height)
+				rest.PostProcessResponse(w, cliCtx, authTypes.BaseAccount{})
+				return
+			}
 			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
 			return
 		}
@@ -77,6 +88,7 @@ func QueryAccountSequenceRequestHandlerFn(cliCtx context.CLIContext) http.Handle
 			AccountNumber: account.GetAccountNumber(),
 		}
 
+		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, result)
 	}
 }

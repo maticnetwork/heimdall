@@ -46,6 +46,6 @@ require (
 	gopkg.in/yaml.v2 v2.2.2
 )
 
-replace github.com/tendermint/tendermint => github.com/maticnetwork/tendermint v0.26.0-dev0.0.20191029180056-7b67ee408bb1
+replace github.com/tendermint/tendermint => github.com/maticnetwork/tendermint v0.26.0-dev0.0.20191223163258-141a71730975
 
 replace golang.org/x/crypto => github.com/tendermint/crypto v0.0.0-20191022145703-50d29ede1e15

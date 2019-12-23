@@ -11,7 +11,7 @@ type NodeQuerier interface {
 	// QueryWithData performs a query to a Tendermint node with the provided path
 	// and a data payload. It returns the result and height of the query upon success
 	// or an error if the query fails.
-	QueryWithData(path string, data []byte) ([]byte, error)
+	QueryWithData(path string, data []byte) ([]byte, int64, error)
 }
 
 // AccountRetriever defines the properties of a type that can be used to
@@ -28,30 +28,30 @@ func NewAccountRetriever(querier NodeQuerier) AccountRetriever {
 // GetAccount queries for an account given an address and a block height. An
 // error is returned if the query or decoding fails.
 func (ar AccountRetriever) GetAccount(addr types.HeimdallAddress) (Account, error) {
-	account, err := ar.GetAccountWithHeight(addr)
+	account, _, err := ar.GetAccountWithHeight(addr)
 	return account, err
 }
 
 // GetAccountWithHeight queries for an account given an address. Returns the
 // height of the query with the account. An error is returned if the query
 // or decoding fails.
-func (ar AccountRetriever) GetAccountWithHeight(addr types.HeimdallAddress) (Account, error) {
+func (ar AccountRetriever) GetAccountWithHeight(addr types.HeimdallAddress) (Account, int64, error) {
 	bs, err := ModuleCdc.MarshalJSON(NewQueryAccountParams(addr))
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	res, err := ar.querier.QueryWithData(fmt.Sprintf("custom/%s/%s", QuerierRoute, QueryAccount), bs)
+	res, height, err := ar.querier.QueryWithData(fmt.Sprintf("custom/%s/%s", QuerierRoute, QueryAccount), bs)
 	if err != nil {
-		return nil, err
+		return nil, height, err
 	}
 
 	var account Account
 	if err := ModuleCdc.UnmarshalJSON(res, &account); err != nil {
-		return nil, err
+		return nil, height, err
 	}
 
-	return account, nil
+	return account, height, nil
 }
 
 // EnsureExists returns an error if no account exists for the given address else nil.

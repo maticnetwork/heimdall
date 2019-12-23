@@ -160,7 +160,7 @@ func QueryTxsByTagsRequestHandlerFn(cliCtx context.CLIContext, cdc *codec.Codec)
 		}
 
 		if len(r.Form) == 0 {
-			rest.PostProcessResponse(w, cdc, txs, cliCtx.Indent)
+			rest.PostProcessResponse(w, cdc, cliCtx.Indent)
 			return
 		}
 
@@ -176,7 +176,7 @@ func QueryTxsByTagsRequestHandlerFn(cliCtx context.CLIContext, cdc *codec.Codec)
 			return
 		}
 
-		rest.PostProcessResponse(w, cdc, txs, cliCtx.Indent)
+		rest.PostProcessResponse(w, cdc, cliCtx.Indent)
 	}
 }
 
@@ -186,6 +186,11 @@ func QueryTxRequestHandlerFn(cliCtx context.CLIContext, cdc *codec.Codec) http.H
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		hashHexStr := vars["hash"]
+
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
 
 		output, err := helper.QueryTx(cdc, cliCtx, hashHexStr)
 		if err != nil {
@@ -201,7 +206,7 @@ func QueryTxRequestHandlerFn(cliCtx context.CLIContext, cdc *codec.Codec) http.H
 			rest.WriteErrorResponse(w, http.StatusNotFound, fmt.Sprintf("no transaction found with hash %s", hashHexStr))
 		}
 
-		rest.PostProcessResponse(w, cdc, output, cliCtx.Indent)
+		rest.PostProcessResponse(w, cliCtx, output)
 	}
 }
 
@@ -209,6 +214,11 @@ func QueryTxRequestHandlerFn(cliCtx context.CLIContext, cdc *codec.Codec) http.H
 func QueryCommitTxRequestHandlerFn(cliCtx context.CLIContext, cdc *codec.Codec) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
+
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
 
 		hash, err := hex.DecodeString(vars["hash"])
 		if err != nil {
@@ -244,6 +254,6 @@ func QueryCommitTxRequestHandlerFn(cliCtx context.CLIContext, cdc *codec.Codec) 
 			Proof: hex.EncodeToString(proof),
 		}
 
-		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
+		rest.PostProcessResponse(w, cliCtx, result)
 	}
 }

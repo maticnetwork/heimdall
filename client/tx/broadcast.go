@@ -73,7 +73,7 @@ $ gaiacli tx broadcast ./mytxn.json
 `),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			cliCtx := context.NewCLIContext().WithCodec(cdc).WithAccountDecoder(cdc)
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			stdTx, err := helper.ReadStdTxFromFile(cliCtx.Codec, args[0])
 			if err != nil {
 				return

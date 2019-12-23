@@ -75,7 +75,7 @@ func preSignCmd(cmd *cobra.Command, _ []string) {
 
 func makeSignCmd(cdc *amino.Codec) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) (err error) {
-		cliCtx := context.NewCLIContext().WithCodec(cdc).WithAccountDecoder(cdc)
+		cliCtx := context.NewCLIContext().WithCodec(cdc)
 		stdTx, err := helper.ReadStdTxFromFile(cliCtx.Codec, args[0])
 		if err != nil {
 			return err
