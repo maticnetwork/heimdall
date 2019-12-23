@@ -119,7 +119,7 @@ func (keeper BaseKeeper) InputOutputCoins(
 	return inputOutputCoins(ctx, keeper.ak, inputs, outputs)
 }
 
-// GetTopup returns validator toptup
+// GetTopup returns validator toptup information
 func (keeper BaseKeeper) GetTopup(ctx sdk.Context, addr types.HeimdallAddress) (*bankTypes.ValidatorTopup, error) {
 	store := ctx.KVStore(keeper.key)
 
