@@ -183,7 +183,7 @@ func (msg MsgCheckpointNoAck) GetSignBytes() []byte {
 }
 
 func (msg MsgCheckpointNoAck) ValidateBasic() sdk.Error {
-	if msg.TimeStamp == 0 || msg.TimeStamp > uint64(time.Now().Unix()) {
+	if msg.TimeStamp == 0 || msg.TimeStamp > uint64(time.Now().UTC().Unix()) {
 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid timestamp %d", msg.TimeStamp)
 	}
 

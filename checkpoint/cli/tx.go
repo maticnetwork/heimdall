@@ -96,7 +96,7 @@ func SendCheckpointTx(cdc *codec.Codec) *cobra.Command {
 				endBlock,
 				types.HexToHeimdallHash(rootHashStr),
 				types.HexToHeimdallHash(rewardRootHashStr),
-				uint64(time.Now().Unix()),
+				uint64(time.Now().UTC().Unix()),
 			)
 
 			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
@@ -182,7 +182,7 @@ func SendCheckpointNoACKTx(cdc *codec.Codec) *cobra.Command {
 			// create new checkpoint no-ack
 			msg := checkpoint.NewMsgCheckpointNoAck(
 				proposer,
-				uint64(time.Now().Unix()),
+				uint64(time.Now().UTC().Unix()),
 			)
 
 			// broadcast messages

@@ -44,7 +44,7 @@ func TestHandleMsgCheckpoint(t *testing.T) {
 		contractCallerObj.On("GetBalance", header.Proposer).Return(helper.MinBalance, nil)
 
 		// create checkpoint msg
-		msgCheckpoint := checkpoint.NewMsgCheckpointBlock(header.Proposer, header.StartBlock, header.EndBlock, header.RootHash, uint64(time.Now().Unix()))
+		msgCheckpoint := checkpoint.NewMsgCheckpointBlock(header.Proposer, header.StartBlock, header.EndBlock, header.RootHash, uint64(time.Now().UTC().Unix()))
 
 		// send checkpoint to handler
 		got := checkpoint.HandleMsgCheckpoint(ctx, msgCheckpoint, keeper, &contractCallerObj)
@@ -66,7 +66,7 @@ func TestHandleMsgCheckpoint(t *testing.T) {
 			contractCallerObj.On("GetBalance", header.Proposer).Return(helper.MinBalance, nil)
 			// create checkpoint 257 seconds prev to current time
 			header.TimeStamp = uint64(time.Now().Add(-(helper.CheckpointBufferTime + time.Second)).Unix())
-			t.Log("Sending checkpoint with timestamp", "Timestamp", header.TimeStamp, "Current", time.Now().Unix())
+			t.Log("Sending checkpoint with timestamp", "Timestamp", header.TimeStamp, "Current", time.Now().UTC().Unix())
 			// send old checkpoint
 			SentValidCheckpoint(header, keeper, ctx, contractCallerObj, t)
 			header, err = GenRandCheckpointHeader(10)
@@ -95,7 +95,7 @@ func TestHandleMsgCheckpoint(t *testing.T) {
 			header.Proposer = keeper.GetValidatorSet(ctx).Proposer.Signer
 			SentValidCheckpoint(header, keeper, ctx, contractCallerObj, t)
 			// create checkpoint msg
-			msgCheckpoint := checkpoint.NewMsgCheckpointBlock(header.Proposer, header.StartBlock, header.EndBlock, header.RootHash, uint64(time.Now().Unix()))
+			msgCheckpoint := checkpoint.NewMsgCheckpointBlock(header.Proposer, header.StartBlock, header.EndBlock, header.RootHash, uint64(time.Now().UTC().Unix()))
 			// send checkpoint to handler
 			got := checkpoint.HandleMsgCheckpoint(ctx, msgCheckpoint, keeper, &contractCallerObj)
 			require.True(t, !got.IsOK(), "expected send-checkpoint to be not ok, got %v", got)
