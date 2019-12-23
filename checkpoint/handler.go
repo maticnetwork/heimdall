@@ -187,19 +187,24 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k Keeper, con
 		k.Logger(ctx).Error("Unable to get checkpoint", "error", err)
 		return common.ErrBadAck(k.Codespace()).Result()
 	}
-
-	// match header block and checkpoint
-	if start != headerBlock.StartBlock || end != headerBlock.EndBlock || !bytes.Equal(root.Bytes(), headerBlock.RootHash.Bytes()) {
+	if start != headerBlock.StartBlock {
+		k.Logger(ctx).Error("Invalid start block", "startExpected", headerBlock.StartBlock, "startReceived", start)
+		return common.ErrBadAck(k.Codespace()).Result()
+	} else if start == headerBlock.StartBlock && end == headerBlock.EndBlock && !bytes.Equal(root.Bytes(), headerBlock.RootHash.Bytes()) {
 		k.Logger(ctx).Error("Invalid ACK",
 			"startExpected", headerBlock.StartBlock,
 			"startReceived", start,
 			"endExpected", headerBlock.EndBlock,
 			"endReceived", end,
 			"rootExpected", headerBlock.RootHash.String(),
-			"rootRecieved", root.String(),
-		)
-
+			"rootRecieved", root.String())
 		return common.ErrBadAck(k.Codespace()).Result()
+	}
+	if headerBlock.EndBlock > end {
+		k.Logger(ctx).Info("Adjusting endBlock to one already submitted on chain", "OldEndBlock", headerBlock.EndBlock, "AdjustedEndBlock", end)
+		headerBlock.EndBlock = end
+		headerBlock.RootHash = types.HeimdallHash(root)
+		// TODO proposer also needs to be changed
 	}
 
 	// Get Tx hash from ack msg
