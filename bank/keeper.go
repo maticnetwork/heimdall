@@ -151,7 +151,7 @@ func (keeper BaseKeeper) SetTopup(ctx sdk.Context, addr types.HeimdallAddress, v
 
 	// store validator with address prefixed with validator key as index
 	store.Set(GetTopupKey(addr.Bytes()), bz)
-	keeper.Logger(ctx).Debug("Validator topup stored", "key", hex.EncodeToString(GetTopupKey(addr.Bytes())))
+	keeper.Logger(ctx).Debug("Validator topup stored", "key", hex.EncodeToString(GetTopupKey(addr.Bytes())), "totalTopups", validatorTopup.Copy().TotalTopups)
 
 	return nil
 }
