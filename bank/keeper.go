@@ -3,6 +3,7 @@ package bank
 import (
 	"encoding/hex"
 	"fmt"
+	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -16,8 +17,12 @@ import (
 )
 
 var (
+	// DefaultValue default value
+	DefaultValue = []byte{0x01}
 	// ValidatorTopupKey represents validator topup key
 	ValidatorTopupKey = []byte{0x80} // prefix for each key to a validator
+	// TopupSequencePrefixKey represents topup sequence prefix key
+	TopupSequencePrefixKey = []byte{0x81}
 )
 
 // Keeper manages transfers between accounts
@@ -50,11 +55,6 @@ func NewKeeper(
 		paramSpace: ps,
 		ak:         ak,
 	}
-}
-
-// GetTopupKey drafts the validator key for addresses
-func GetTopupKey(address []byte) []byte {
-	return append(ValidatorTopupKey, address...)
 }
 
 // Codespace returns the keeper's codespace.
@@ -108,43 +108,6 @@ func (keeper Keeper) InputOutputCoins(
 	return inputOutputCoins(ctx, keeper.ak, inputs, outputs)
 }
 
-// GetTopup returns validator toptup information
-func (keeper Keeper) GetTopup(ctx sdk.Context, addr types.HeimdallAddress) (*bankTypes.ValidatorTopup, error) {
-	store := ctx.KVStore(keeper.key)
-
-	// check if topup exists
-	key := GetTopupKey(addr.Bytes())
-	if !store.Has(key) {
-		return nil, nil
-	}
-
-	// unmarshall validator and return
-	validatorTopup, err := bankTypes.UnmarshallValidatorTopup(keeper.cdc, store.Get(key))
-	if err != nil {
-		return nil, err
-	}
-
-	// return true if validator
-	return &validatorTopup, nil
-}
-
-// SetTopup sets validator topup object
-func (keeper Keeper) SetTopup(ctx sdk.Context, addr types.HeimdallAddress, validatorTopup bankTypes.ValidatorTopup) error {
-	store := ctx.KVStore(keeper.key)
-
-	// validator topup
-	bz, err := bankTypes.MarshallValidatorTopup(keeper.cdc, validatorTopup)
-	if err != nil {
-		return err
-	}
-
-	// store validator with address prefixed with validator key as index
-	store.Set(GetTopupKey(addr.Bytes()), bz)
-	keeper.Logger(ctx).Debug("Validator topup stored", "key", hex.EncodeToString(GetTopupKey(addr.Bytes())), "totalTopups", validatorTopup.Copy().TotalTopups)
-
-	return nil
-}
-
 // SendCoins moves coins from one account to another
 func (keeper Keeper) SendCoins(
 	ctx sdk.Context, fromAddr types.HeimdallAddress, toAddr types.HeimdallAddress, amt types.Coins,
@@ -178,6 +141,73 @@ func (keeper Keeper) GetCoins(ctx sdk.Context, addr types.HeimdallAddress) types
 func (keeper Keeper) HasCoins(ctx sdk.Context, addr types.HeimdallAddress, amt types.Coins) bool {
 	return hasCoins(ctx, keeper.ak, addr, amt)
 }
+
+//
+// Topup methods
+//
+
+// GetTopupKey drafts the topup key for address
+func GetTopupKey(address []byte) []byte {
+	return append(ValidatorTopupKey, address...)
+}
+
+// GetTopupSequenceKey drafts topup sequence for address
+func GetTopupSequenceKey(sequence uint64) []byte {
+	return append(TopupSequencePrefixKey, []byte(strconv.FormatUint(sequence, 10))...)
+}
+
+// GetValidatorTopup returns validator toptup information
+func (keeper Keeper) GetValidatorTopup(ctx sdk.Context, addr types.HeimdallAddress) (*bankTypes.ValidatorTopup, error) {
+	store := ctx.KVStore(keeper.key)
+
+	// check if topup exists
+	key := GetTopupKey(addr.Bytes())
+	if !store.Has(key) {
+		return nil, nil
+	}
+
+	// unmarshall validator and return
+	validatorTopup, err := bankTypes.UnmarshallValidatorTopup(keeper.cdc, store.Get(key))
+	if err != nil {
+		return nil, err
+	}
+
+	// return true if validator
+	return &validatorTopup, nil
+}
+
+// SetValidatorTopup sets validator topup object
+func (keeper Keeper) SetValidatorTopup(ctx sdk.Context, addr types.HeimdallAddress, validatorTopup bankTypes.ValidatorTopup) error {
+	store := ctx.KVStore(keeper.key)
+
+	// validator topup
+	bz, err := bankTypes.MarshallValidatorTopup(keeper.cdc, validatorTopup)
+	if err != nil {
+		return err
+	}
+
+	// store validator with address prefixed with validator key as index
+	store.Set(GetTopupKey(addr.Bytes()), bz)
+	keeper.Logger(ctx).Debug("Validator topup stored", "key", hex.EncodeToString(GetTopupKey(addr.Bytes())), "totalTopups", validatorTopup.Copy().TotalTopups)
+
+	return nil
+}
+
+// SetTopupSequence sets mapping for sequence id to bool
+func (keeper Keeper) SetTopupSequence(ctx sdk.Context, sequence uint64) {
+	store := ctx.KVStore(keeper.key)
+	store.Set(GetTopupSequenceKey(sequence), DefaultValue)
+}
+
+// HasTopupSequence checks if topup already exists
+func (keeper Keeper) HasTopupSequence(ctx sdk.Context, sequence uint64) bool {
+	store := ctx.KVStore(keeper.key)
+	return store.Has(GetTopupSequenceKey(sequence))
+}
+
+//
+// Internal methods
+//
 
 func getCoins(ctx sdk.Context, am auth.AccountKeeper, addr types.HeimdallAddress) types.Coins {
 	acc := am.GetAccount(ctx, addr)
