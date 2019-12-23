@@ -160,7 +160,7 @@ func (ackService *AckService) processCheckpoint(lastCreatedAt int64) {
 	}
 
 	checkpointCreationTime := time.Unix(lastCreatedAt, 0)
-	currentTime := time.Now()
+	currentTime := time.Now().UTC()
 	timeDiff := currentTime.Sub(checkpointCreationTime)
 	// check if last checkpoint was < NoACK wait time
 	if timeDiff.Seconds() >= helper.GetConfig().NoACKWaitTime.Seconds() && index == 0 {
@@ -195,7 +195,7 @@ func (ackService *AckService) processCheckpoint(lastCreatedAt int64) {
 		// send NO ACK
 		msg := checkpoint.NewMsgCheckpointNoAck(
 			hmtypes.BytesToHeimdallAddress(helper.GetAddress()),
-			uint64(time.Now().Unix()),
+			uint64(time.Now().UTC().Unix()),
 		)
 
 		// send

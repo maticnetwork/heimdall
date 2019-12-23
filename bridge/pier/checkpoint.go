@@ -346,7 +346,7 @@ func (c *Checkpointer) nextExpectedCheckpoint(latestChildBlock uint64) (*Contrac
 	if end == 0 || end == start || (0 < diff && diff < helper.GetConfig().AvgCheckpointLength) {
 		c.Logger.Debug("Fetching last header block to calculate time")
 
-		currentTime := time.Now().Unix()
+		currentTime := time.Now().UTC().Unix()
 		defaultForcePushInterval := helper.GetConfig().MaxCheckpointLength * 2 // in seconds (1024 * 2 seconds)
 		if currentTime-int64(lastCheckpointTime) > int64(defaultForcePushInterval) {
 			end = latestChildBlock
@@ -472,7 +472,7 @@ func (c *Checkpointer) sendCheckpointToHeimdall(start uint64, end uint64) error 
 		end,
 		hmtypes.BytesToHeimdallHash(root),
 		rewardRootHash,
-		uint64(time.Now().Unix()),
+		uint64(time.Now().UTC().Unix()),
 	)
 
 	// return broadcast to heimdall
