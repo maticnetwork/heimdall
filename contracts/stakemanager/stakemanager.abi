@@ -202,5 +202,22 @@
 		],
 		"name": "StakeUpdate",
 		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"name": "validatorId",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "TopupFees",
+		"type": "event"
 	}
 ]

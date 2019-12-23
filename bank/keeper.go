@@ -1,6 +1,7 @@
 package bank
 
 import (
+	"encoding/hex"
 	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -14,6 +15,11 @@ import (
 	"github.com/maticnetwork/heimdall/types"
 )
 
+var (
+	// ValidatorTopupKey represents validator topup key
+	ValidatorTopupKey = []byte{0x80} // prefix for each key to a validator
+)
+
 var _ Keeper = (*BaseKeeper)(nil)
 
 // Keeper defines a module interface that facilitates the transfer of coins
@@ -21,10 +27,13 @@ var _ Keeper = (*BaseKeeper)(nil)
 type Keeper interface {
 	SendKeeper
 
+	Logger(ctx sdk.Context) log.Logger
 	SetCoins(ctx sdk.Context, addr types.HeimdallAddress, amt types.Coins) sdk.Error
 	SubtractCoins(ctx sdk.Context, addr types.HeimdallAddress, amt types.Coins) (types.Coins, sdk.Tags, sdk.Error)
 	AddCoins(ctx sdk.Context, addr types.HeimdallAddress, amt types.Coins) (types.Coins, sdk.Tags, sdk.Error)
 	InputOutputCoins(ctx sdk.Context, inputs []bankTypes.Input, outputs []bankTypes.Output) (sdk.Tags, sdk.Error)
+	GetTopup(ctx sdk.Context, addr types.HeimdallAddress) (*bankTypes.ValidatorTopup, error)
+	SetTopup(ctx sdk.Context, addr types.HeimdallAddress, validatorTop bankTypes.ValidatorTopup) error
 }
 
 // BaseKeeper manages transfers between accounts. It implements the Keeper interface.
@@ -62,6 +71,11 @@ func NewBaseKeeper(
 // Logger returns a module-specific logger
 func (keeper BaseKeeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", bankTypes.ModuleName)
+}
+
+// GetTopupKey drafts the validator key for addresses
+func GetTopupKey(address []byte) []byte {
+	return append(ValidatorTopupKey, address...)
 }
 
 // SetCoins sets the coins at the addr.
@@ -105,7 +119,48 @@ func (keeper BaseKeeper) InputOutputCoins(
 	return inputOutputCoins(ctx, keeper.ak, inputs, outputs)
 }
 
-// between accounts without the possibility of creating coins.
+// GetTopup returns validator toptup information
+func (keeper BaseKeeper) GetTopup(ctx sdk.Context, addr types.HeimdallAddress) (*bankTypes.ValidatorTopup, error) {
+	store := ctx.KVStore(keeper.key)
+
+	// check if topup exists
+	key := GetTopupKey(addr.Bytes())
+	if !store.Has(key) {
+		return nil, nil
+	}
+
+	// unmarshall validator and return
+	validatorTopup, err := bankTypes.UnmarshallValidatorTopup(keeper.cdc, store.Get(key))
+	if err != nil {
+		return nil, err
+	}
+
+	// return true if validator
+	return &validatorTopup, nil
+}
+
+// SetTopup sets validator topup object
+func (keeper BaseKeeper) SetTopup(ctx sdk.Context, addr types.HeimdallAddress, validatorTopup bankTypes.ValidatorTopup) error {
+	store := ctx.KVStore(keeper.key)
+
+	// validator topup
+	bz, err := bankTypes.MarshallValidatorTopup(keeper.cdc, validatorTopup)
+	if err != nil {
+		return err
+	}
+
+	// store validator with address prefixed with validator key as index
+	store.Set(GetTopupKey(addr.Bytes()), bz)
+	keeper.Logger(ctx).Debug("Validator topup stored", "key", hex.EncodeToString(GetTopupKey(addr.Bytes())), "totalTopups", validatorTopup.Copy().TotalTopups)
+
+	return nil
+}
+
+//
+// Send keeper
+//
+
+// SendKeeper to enable transfer between accounts without the possibility of creating coins.
 type SendKeeper interface {
 	ViewKeeper
 
@@ -135,6 +190,11 @@ func NewBaseSendKeeper(ak auth.AccountKeeper,
 		ak:             ak,
 		paramSpace:     paramSpace,
 	}
+}
+
+// Logger returns a module-specific logger
+func (keeper BaseSendKeeper) Logger(ctx sdk.Context) log.Logger {
+	return ctx.Logger().With("module", bankTypes.ModuleName)
 }
 
 // SendCoins moves coins from one account to another

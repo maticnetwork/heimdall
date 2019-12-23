@@ -17,6 +17,7 @@ import (
 // RegisterRoutes - Central function to define routes that get registered by the main application
 func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc("/bank/accounts/{address}/transfers", SendRequestHandlerFn(cliCtx)).Methods("POST")
+	r.HandleFunc("/bank/accounts/topup", TopupHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/bank/balances/{address}", QueryBalancesRequestHandlerFn(cliCtx)).Methods("GET")
 }
 
@@ -49,6 +50,46 @@ func SendRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		fromAddr := types.HexToHeimdallAddress(req.BaseReq.From)
 
 		msg := bankTypes.NewMsgSend(fromAddr, toAddr, req.Amount)
+		restClient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+	}
+}
+
+//
+// Topup req
+//
+
+// TopupReq defines the properties of a topup request's body.
+type TopupReq struct {
+	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
+
+	ID       uint64 `json:"id" yaml:"id"`
+	TxHash   string `json:"tx_hash" yaml:"tx_hash"`
+	LogIndex uint64 `json:"log_index" yaml:"log_index"`
+}
+
+// TopupHandlerFn - http request handler to topup coins to a address.
+func TopupHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req TopupReq
+		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+			return
+		}
+
+		req.BaseReq = req.BaseReq.Sanitize()
+		if !req.BaseReq.ValidateBasic(w) {
+			return
+		}
+
+		// get from address
+		fromAddr := types.HexToHeimdallAddress(req.BaseReq.From)
+
+		// get msg
+		msg := bankTypes.NewMsgTopup(
+			fromAddr,
+			req.ID,
+			types.HexToHeimdallHash(req.TxHash),
+			req.LogIndex,
+		)
 		restClient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
 	}
 }

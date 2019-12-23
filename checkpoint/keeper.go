@@ -22,7 +22,7 @@ var (
 	ACKCountKey         = []byte{0x11} // key to store ACK count
 	BufferCheckpointKey = []byte{0x12} // Key to store checkpoint in buffer
 	HeaderBlockKey      = []byte{0x13} // prefix key for when storing header after ACK
-	LastNoACKKey        = []byte{14}   // key to store last no-ack
+	LastNoACKKey        = []byte{0x14} // key to store last no-ack
 )
 
 // Keeper stores all related data

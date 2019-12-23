@@ -95,7 +95,7 @@ var _ sdk.Msg = &MsgStakeUpdate{}
 // MsgStakeUpdate represents stake update
 type MsgStakeUpdate struct {
 	From     types.HeimdallAddress `json:"from"`
-	ID       types.ValidatorID     `json:"ID"`
+	ID       types.ValidatorID     `json:"id"`
 	TxHash   types.HeimdallHash    `json:"tx_hash"`
 	LogIndex uint64                `json:"log_index"`
 }
@@ -151,7 +151,7 @@ var _ sdk.Msg = &MsgSignerUpdate{}
 // TODO add old signer sig check
 type MsgSignerUpdate struct {
 	From            types.HeimdallAddress `json:"from"`
-	ID              types.ValidatorID     `json:"ID"`
+	ID              types.ValidatorID     `json:"id"`
 	NewSignerPubKey types.PubKey          `json:"pubKey"`
 	TxHash          types.HeimdallHash    `json:"tx_hash"`
 	LogIndex        uint64                `json:"log_index"`
@@ -217,7 +217,7 @@ var _ sdk.Msg = &MsgValidatorExit{}
 
 type MsgValidatorExit struct {
 	From     types.HeimdallAddress `json:"from"`
-	ID       types.ValidatorID     `json:"ID"`
+	ID       types.ValidatorID     `json:"id"`
 	TxHash   types.HeimdallHash    `json:"tx_hash"`
 	LogIndex uint64                `json:"log_index"`
 }

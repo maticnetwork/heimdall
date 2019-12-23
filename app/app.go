@@ -232,7 +232,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 
 	// register message routes
 	app.Router().
-		AddRoute(bankTypes.RouterKey, bank.NewHandler(app.bankKeeper)).
+		AddRoute(bankTypes.RouterKey, bank.NewHandler(app.bankKeeper, &app.caller)).
 		AddRoute(checkpointTypes.RouterKey, checkpoint.NewHandler(app.checkpointKeeper, &app.caller)).
 		AddRoute(stakingTypes.RouterKey, staking.NewHandler(app.stakingKeeper, &app.caller)).
 		AddRoute(borTypes.RouterKey, bor.NewHandler(app.borKeeper)).
@@ -256,7 +256,6 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		auth.NewAnteHandler(
 			app.accountKeeper,
 			app.supplyKeeper,
-			crossCommunicator,
 			auth.DefaultSigVerificationGasConsumer,
 		),
 	)

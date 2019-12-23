@@ -18,7 +18,4 @@ const (
 
 	// DefaultValPower default validator power
 	DefaultValPower = 10
-
-	// DefaultLogIndexUnit default tx hash + log index unit
-	DefaultLogIndexUnit = 10000
 )
