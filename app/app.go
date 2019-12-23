@@ -173,7 +173,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	)
 
 	// bank keeper
-	app.bankKeeper = bank.NewBaseKeeper(
+	app.bankKeeper = bank.NewKeeper(
 		app.cdc,
 		app.keyBank, // target store
 		app.paramsKeeper.Subspace(bankTypes.DefaultParamspace),
