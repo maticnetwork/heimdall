@@ -15,8 +15,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) ([]byte, sdk.Error) {
 		switch path[0] {
-		case stakingTypes.QueryValStatus:
-			return handlerQueryValStatus(ctx, req, keeper)
+		case stakingTypes.QueryValidatorStatus:
+			return handlerQueryValidatorStatus(ctx, req, keeper)
 		case stakingTypes.QueryProposerBonusPercent:
 			return handlerQueryProposerBonusPercent(ctx, req, keeper)
 		default:
@@ -25,8 +25,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 	}
 }
 
-func handlerQueryValStatus(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	var params stakingTypes.QueryValStatusParams
+func handlerQueryValidatorStatus(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	var params stakingTypes.QueryValidatorStatusParams
 	if err := keeper.cdc.UnmarshalJSON(req.Data, &params); err != nil {
 		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
 	}

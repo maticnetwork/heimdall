@@ -256,7 +256,6 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		auth.NewAnteHandler(
 			app.accountKeeper,
 			app.supplyKeeper,
-			crossCommunicator,
 			auth.DefaultSigVerificationGasConsumer,
 		),
 	)
