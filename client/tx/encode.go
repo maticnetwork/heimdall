@@ -9,7 +9,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/spf13/cobra"
 	amino "github.com/tendermint/go-amino"
 
@@ -33,7 +32,7 @@ type (
 // EncodeTxRequestHandlerFn returns the encode tx REST handler. In particular,
 // it takes a json-formatted transaction, encodes it to the Amino wire protocol,
 // and responds with base64-encoded bytes.
-func EncodeTxRequestHandlerFn(cliCtx context.CLIContext, cdc *codec.Codec) http.HandlerFunc {
+func EncodeTxRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req EncodeReq
 

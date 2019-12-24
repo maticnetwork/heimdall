@@ -5,12 +5,11 @@ import (
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/gorilla/mux"
 
-	"github.com/maticnetwork/heimdall/bank"
 	bankTypes "github.com/maticnetwork/heimdall/bank/types"
 	"github.com/maticnetwork/heimdall/types"
-	"github.com/maticnetwork/heimdall/types/rest"
 )
 
 // QueryBalancesRequestHandlerFn query accountREST Handler
@@ -32,11 +31,13 @@ func QueryBalancesRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", bankTypes.QuerierRoute, bank.QueryBalance), bz)
+		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", bankTypes.QuerierRoute, bankTypes.QueryBalance), bz)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
+
+		cliCtx = cliCtx.WithHeight(height)
 
 		// the query will return empty if there is no data for this account
 		if len(res) == 0 {

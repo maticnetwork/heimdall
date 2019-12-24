@@ -13,7 +13,7 @@ import (
 // GetAccountCmd returns a query account that will display the state of the
 // account at a given address.
 // nolint: unparam
-func GetAccountCmd(storeName string, cdc *codec.Codec) *cobra.Command {
+func GetAccountCmd(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "account [address]",
 		Short: "Query account balance",

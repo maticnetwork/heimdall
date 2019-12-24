@@ -25,11 +25,11 @@ import (
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/common"
-	dbm "github.com/tendermint/tm-db"
 	"github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/p2p"
 	"github.com/tendermint/tendermint/privval"
 	tmTypes "github.com/tendermint/tendermint/types"
+	dbm "github.com/tendermint/tm-db"
 
 	"github.com/maticnetwork/heimdall/app"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"

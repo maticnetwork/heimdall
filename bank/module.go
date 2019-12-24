@@ -1,4 +1,4 @@
-package auth
+package bank
 
 import (
 	"encoding/json"
@@ -11,9 +11,9 @@ import (
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	authCli "github.com/maticnetwork/heimdall/auth/client/cli"
-	authRest "github.com/maticnetwork/heimdall/auth/client/rest"
-	"github.com/maticnetwork/heimdall/auth/types"
+	bankCli "github.com/maticnetwork/heimdall/bank/client/cli"
+	bankRest "github.com/maticnetwork/heimdall/bank/client/rest"
+	"github.com/maticnetwork/heimdall/bank/types"
 )
 
 var (
@@ -53,17 +53,17 @@ func (AppModuleBasic) ValidateGenesis(bz json.RawMessage) error {
 
 // RegisterRESTRoutes registers the REST routes for the auth module.
 func (AppModuleBasic) RegisterRESTRoutes(ctx context.CLIContext, rtr *mux.Router) {
-	authRest.RegisterRoutes(ctx, rtr)
+	bankRest.RegisterRoutes(ctx, rtr)
 }
 
 // GetTxCmd returns the root tx command for the auth module.
 func (AppModuleBasic) GetTxCmd(cdc *codec.Codec) *cobra.Command {
-	return authCli.GetTxCmd(cdc)
+	return bankCli.GetTxCmd(cdc)
 }
 
 // GetQueryCmd returns the root query command for the auth module.
 func (AppModuleBasic) GetQueryCmd(cdc *codec.Codec) *cobra.Command {
-	return authCli.GetQueryCmd(cdc)
+	return nil
 }
 
 //____________________________________________________________________________
@@ -72,14 +72,14 @@ func (AppModuleBasic) GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 type AppModule struct {
 	AppModuleBasic
 
-	accountKeeper AccountKeeper
+	keeper Keeper
 }
 
 // NewAppModule creates a new AppModule object
-func NewAppModule(accountKeeper AccountKeeper) AppModule {
+func NewAppModule(keeper Keeper) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{},
-		accountKeeper:  accountKeeper,
+		keeper:         keeper,
 	}
 }
 
@@ -108,7 +108,7 @@ func (AppModule) QuerierRoute() string {
 
 // NewQuerierHandler returns the auth module sdk.Querier.
 func (am AppModule) NewQuerierHandler() sdk.Querier {
-	return NewQuerier(am.accountKeeper)
+	return NewQuerier(am.keeper)
 }
 
 // InitGenesis performs genesis initialization for the auth module. It returns
@@ -116,14 +116,14 @@ func (am AppModule) NewQuerierHandler() sdk.Querier {
 func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.ValidatorUpdate {
 	var genesisState types.GenesisState
 	types.ModuleCdc.MustUnmarshalJSON(data, &genesisState)
-	InitGenesis(ctx, am.accountKeeper, genesisState)
+	InitGenesis(ctx, am.keeper, genesisState)
 	return []abci.ValidatorUpdate{}
 }
 
 // ExportGenesis returns the exported genesis state as raw bytes for the auth
 // module.
 func (am AppModule) ExportGenesis(ctx sdk.Context) json.RawMessage {
-	gs := ExportGenesis(ctx, am.accountKeeper)
+	gs := ExportGenesis(ctx, am.keeper)
 	return types.ModuleCdc.MustMarshalJSON(gs)
 }
 

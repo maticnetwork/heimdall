@@ -18,11 +18,6 @@ import (
 	"github.com/maticnetwork/heimdall/types"
 )
 
-const (
-	flagTo     = "to"
-	flagAmount = "amount"
-)
-
 // GetTxCmd returns the transaction commands for this module
 func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 	txCmd := &cobra.Command{
@@ -49,9 +44,7 @@ func SendTxCmd(cdc *codec.Codec) *cobra.Command {
 		Short: "Send coin transfer tx",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().
-				WithCodec(cdc).
-				WithAccountDecoder(cdc)
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			// get account getter
 			accGetter := authTypes.NewAccountRetriever(cliCtx)
@@ -100,9 +93,7 @@ func TopupTxCmd(cdc *codec.Codec) *cobra.Command {
 		Use:   "topup",
 		Short: "Topup tokens for validators",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().
-				WithCodec(cdc).
-				WithAccountDecoder(cdc)
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			// get proposer
 			proposer := types.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))

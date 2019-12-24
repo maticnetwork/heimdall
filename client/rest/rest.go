@@ -7,11 +7,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/rest"
 
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/client/utils"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/types/rest"
+	hmRest "github.com/maticnetwork/heimdall/types/rest"
 )
 
 //-----------------------------------------------------------------------------
@@ -21,7 +22,7 @@ import (
 func WriteGenerateStdTxResponse(
 	w http.ResponseWriter,
 	cliCtx context.CLIContext,
-	br rest.BaseReq,
+	br hmRest.BaseReq,
 	msgs []sdk.Msg,
 ) {
 
@@ -32,7 +33,7 @@ func WriteGenerateStdTxResponse(
 
 	simAndExec, gas, err := client.ParseGas(br.Gas)
 	if err != nil {
-		rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+		hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -43,31 +44,31 @@ func WriteGenerateStdTxResponse(
 
 	if br.Simulate || simAndExec {
 		if gasAdj < 0 {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, utils.ErrInvalidGasAdjustment.Error())
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, utils.ErrInvalidGasAdjustment.Error())
 			return
 		}
 
 		// txBldr, err = utils.EnrichWithGas(txBldr, cliCtx, msgs)
 		// if err != nil {
-		// 	rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+		// 	hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 		// 	return
 		// }
 
 		if br.Simulate {
-			rest.WriteSimulationResponse(w, cliCtx.Codec, txBldr.Gas())
+			hmRest.WriteSimulationResponse(w, cliCtx.Codec, txBldr.Gas())
 			return
 		}
 	}
 
 	stdMsg, err := txBldr.BuildSignMsg(msgs)
 	if err != nil {
-		rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+		hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	output, err := cliCtx.Codec.MarshalJSON(authTypes.NewStdTx(stdMsg.Msg, nil, stdMsg.Memo))
 	if err != nil {
-		rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+		hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 

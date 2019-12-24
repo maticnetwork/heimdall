@@ -1,8 +1,6 @@
 package app
 
 import (
-	"encoding/json"
-
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -50,6 +48,7 @@ var (
 	// and genesis verification.
 	ModuleBasics = module.NewBasicManager(
 		auth.AppModuleBasic{},
+		bank.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -204,7 +203,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	)
 
 	// bank keeper
-	app.bankKeeper = bank.NewKeeper(
+	app.BankKeeper = bank.NewKeeper(
 		app.cdc,
 		keys[bankTypes.StoreKey], // target store
 		app.subspaces[bankTypes.ModuleName],
@@ -264,28 +263,47 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		common.DefaultCodespace,
 	)
 
-	// register message routes
-	app.Router().
-		AddRoute(bankTypes.RouterKey, bank.NewHandler(app.bankKeeper, &app.caller)).
-		AddRoute(checkpointTypes.RouterKey, checkpoint.NewHandler(app.checkpointKeeper, &app.caller)).
-		AddRoute(stakingTypes.RouterKey, staking.NewHandler(app.stakingKeeper, &app.caller)).
-		AddRoute(borTypes.RouterKey, bor.NewHandler(app.borKeeper)).
-		AddRoute(clerkTypes.RouterKey, clerk.NewHandler(app.clerkKeeper, &app.caller))
+	// NOTE: Any module instantiated in the module manager that is later modified
+	// must be passed by reference here.
+	app.mm = module.NewManager(
+		auth.NewAppModule(app.AccountKeeper),
+		bank.NewAppModule(app.BankKeeper),
+	)
 
-	// query routes
-	app.QueryRouter().
-		AddRoute(authTypes.QuerierRoute, auth.NewQuerier(app.accountKeeper)).
-		AddRoute(bankTypes.QuerierRoute, bank.NewQuerier(app.bankKeeper)).
-		AddRoute(supplyTypes.QuerierRoute, supply.NewQuerier(app.supplyKeeper)).
-		AddRoute(stakingTypes.QuerierRoute, staking.NewQuerier(app.stakingKeeper)).
-		AddRoute(checkpointTypes.QuerierRoute, checkpoint.NewQuerier(app.checkpointKeeper)).
-		AddRoute(borTypes.QuerierRoute, bor.NewQuerier(app.borKeeper)).
-		AddRoute(clerkTypes.QuerierRoute, clerk.NewQuerier(app.clerkKeeper))
+	// NOTE: The genutils module must occur after staking so that pools are
+	// properly initialized with tokens from genesis accounts.
+	app.mm.SetOrderInitGenesis(
+		authTypes.ModuleName,
+	)
+
+	// register message routes and query routes
+	app.mm.RegisterRoutes(app.Router(), app.QueryRouter())
+
+	// register message routes
+	// app.Router().
+	// 	AddRoute(bankTypes.RouterKey, bank.NewHandler(app.bankKeeper, &app.caller)).
+	// 	AddRoute(checkpointTypes.RouterKey, checkpoint.NewHandler(app.checkpointKeeper, &app.caller)).
+	// 	AddRoute(stakingTypes.RouterKey, staking.NewHandler(app.stakingKeeper, &app.caller)).
+	// 	AddRoute(borTypes.RouterKey, bor.NewHandler(app.borKeeper)).
+	// 	AddRoute(clerkTypes.RouterKey, clerk.NewHandler(app.clerkKeeper, &app.caller))
+
+	// app.QueryRouter().
+	// 	AddRoute(authTypes.QuerierRoute, auth.NewQuerier(app.AccountKeeper)).
+	// 	AddRoute(bankTypes.QuerierRoute, bank.NewQuerier(app.bankKeeper)).
+	// 	AddRoute(supplyTypes.QuerierRoute, supply.NewQuerier(app.supplyKeeper)).
+	// 	AddRoute(stakingTypes.QuerierRoute, staking.NewQuerier(app.stakingKeeper)).
+	// 	AddRoute(checkpointTypes.QuerierRoute, checkpoint.NewQuerier(app.checkpointKeeper)).
+	// 	AddRoute(borTypes.QuerierRoute, bor.NewQuerier(app.borKeeper)).
+	// 	AddRoute(clerkTypes.QuerierRoute, clerk.NewQuerier(app.clerkKeeper))
+
+	// mount the multistore and load the latest state
+	app.MountKVStores(keys)
+	app.MountTransientStores(tkeys)
 
 	// perform initialization logic
-	app.SetInitChainer(app.initChainer)
-	app.SetBeginBlocker(app.beginBlocker)
-	app.SetEndBlocker(app.endBlocker)
+	app.SetInitChainer(app.InitChainer)
+	app.SetBeginBlocker(app.BeginBlocker)
+	app.SetEndBlocker(app.EndBlocker)
 	app.SetAnteHandler(
 		auth.NewAnteHandler(
 			app.AccountKeeper,
@@ -293,10 +311,6 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 			auth.DefaultSigVerificationGasConsumer,
 		),
 	)
-
-	// mount the multistore and load the latest state
-	app.MountKVStores(keys)
-	app.MountTransientStores(tkeys)
 
 	// load latest version
 	err = app.LoadLatestVersion(app.keys[bam.MainStoreKey])
@@ -342,19 +356,65 @@ func MakePulp() *authTypes.Pulp {
 	return pulp
 }
 
-// BeginBlocker executes before each block
-func (app *HeimdallApp) beginBlocker(_ sdk.Context, _ abci.RequestBeginBlock) abci.ResponseBeginBlock {
-	return abci.ResponseBeginBlock{}
+// Name returns the name of the App
+func (app *HeimdallApp) Name() string { return app.BaseApp.Name() }
+
+// InitChainer initializes chain
+func (app *HeimdallApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
+	var genesisState GenesisState
+	app.cdc.MustUnmarshalJSON(req.AppStateBytes, &genesisState)
+
+	// get validator updates
+	obj := app.mm.InitGenesis(ctx, genesisState)
+
+	// logger.Info("Loading validators from genesis and setting defaults")
+
+	// // get genesis state
+	// var genesisState GenesisState
+	// err := json.Unmarshal(req.AppStateBytes, &genesisState)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// // init state from genesis state
+	// valUpdates := app.initFromGenesisState(ctx, genesisState)
+
+	//
+	// draft reponse init chain
+	//
+
+	// TODO make sure old validtors dont go in validator updates ie deactivated validators have to be removed
+	// udpate validators
+	return abci.ResponseInitChain{
+		// validator updates
+		Validators: obj.GetValidators(),
+
+		// consensus params
+		ConsensusParams: &abci.ConsensusParams{
+			Block: &abci.BlockParams{
+				MaxBytes: maxBytesPerBlock,
+				MaxGas:   maxGasPerBlock,
+			},
+			Evidence:  &abci.EvidenceParams{},
+			Validator: &abci.ValidatorParams{PubKeyTypes: []string{ABCIPubKeyTypeSecp256k1}},
+		},
+	}
+}
+
+// BeginBlocker application updates every begin block
+func (app *HeimdallApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
+	return app.mm.BeginBlock(ctx, req)
 }
 
 // EndBlocker executes on each end block
-func (app *HeimdallApp) endBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci.ResponseEndBlock {
+func (app *HeimdallApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
+	// return app.mm.EndBlock(ctx, req)
+
 	var tmValUpdates []abci.ValidatorUpdate
 	if ctx.BlockHeader().NumTxs > 0 {
 		// --- Start update to new validators
-		currentValidatorSet := app.stakingKeeper.GetValidatorSet(ctx)
-		allValidators := app.stakingKeeper.GetAllValidators(ctx)
-		ackCount := app.checkpointKeeper.GetACKCount(ctx)
+		currentValidatorSet := app.StakingKeeper.GetValidatorSet(ctx)
+		allValidators := app.StakingKeeper.GetAllValidators(ctx)
+		ackCount := app.CheckpointKeeper.GetACKCount(ctx)
 
 		// get validator updates
 		setUpdates := helper.GetUpdatedValidators(
@@ -371,7 +431,7 @@ func (app *HeimdallApp) endBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 		}
 
 		// save set in store
-		if err := app.stakingKeeper.UpdateValidatorSetInStore(ctx, currentValidatorSet); err != nil {
+		if err := app.StakingKeeper.UpdateValidatorSetInStore(ctx, currentValidatorSet); err != nil {
 			// return with nothing
 			logger.Error("Unable to update current validator set in state", "Error", err)
 			return abci.ResponseEndBlock{}
@@ -393,100 +453,66 @@ func (app *HeimdallApp) endBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci
 }
 
 // initialize store from a genesis state
-func (app *HeimdallApp) initFromGenesisState(ctx sdk.Context, genesisState GenesisState) []abci.ValidatorUpdate {
-	genesisState.Sanitize()
-	// Load the genesis accounts
-	for _, genacc := range genesisState.Accounts {
-		acc := app.accountKeeper.NewAccountWithAddress(ctx, types.BytesToHeimdallAddress(genacc.Address.Bytes()))
-		acc.SetCoins(genacc.Coins)
-		acc.SetSequence(genacc.Sequence)
-		app.accountKeeper.SetAccount(ctx, acc)
-	}
+// func (app *HeimdallApp) initFromGenesisState(ctx sdk.Context, genesisState GenesisState) []abci.ValidatorUpdate {
 
-	// check if genesis is actually a genesis
-	var isGenesis bool
-	if len(genesisState.StakingData.CurrentValSet.Validators) == 0 {
-		isGenesis = true
-	} else {
-		isGenesis = false
-	}
+// 	// Load the genesis accounts
+// 	for _, genacc := range genesisState.Accounts {
+// 		acc := app.accountKeeper.NewAccountWithAddress(ctx, types.BytesToHeimdallAddress(genacc.Address.Bytes()))
+// 		acc.SetCoins(genacc.Coins)
+// 		acc.SetSequence(genacc.Sequence)
+// 		app.accountKeeper.SetAccount(ctx, acc)
+// 	}
 
-	//
-	// InitGenesis
-	//
-	auth.InitGenesis(ctx, app.accountKeeper, genesisState.AuthData)
-	bank.InitGenesis(ctx, app.bankKeeper, genesisState.BankData)
-	supply.InitGenesis(ctx, app.supplyKeeper, app.accountKeeper, genesisState.SupplyData)
-	bor.InitGenesis(ctx, app.borKeeper, genesisState.BorData)
-	// staking should be initialized before checkpoint as checkpoint genesis initialization may depend on staking genesis. [eg.. rewardroot calculation]
-	staking.InitGenesis(ctx, app.stakingKeeper, genesisState.StakingData)
-	checkpoint.InitGenesis(ctx, app.checkpointKeeper, genesisState.CheckpointData)
-	clerk.InitGenesis(ctx, app.clerkKeeper, genesisState.ClerkData)
-	// validate genesis state
-	if err := ValidateGenesisState(genesisState); err != nil {
-		panic(err) // TODO find a way to do this w/o panics
-	}
+// 	// check if genesis is actually a genesis
+// 	var isGenesis bool
+// 	if len(genesisState.StakingData.CurrentValSet.Validators) == 0 {
+// 		isGenesis = true
+// 	} else {
+// 		isGenesis = false
+// 	}
 
-	// increment accumulator if starting from genesis
-	if isGenesis {
-		app.stakingKeeper.IncrementAccum(ctx, 1)
-	}
+// 	//
+// 	// InitGenesis
+// 	//
+// 	auth.InitGenesis(ctx, app.accountKeeper, genesisState.AuthData)
+// 	bank.InitGenesis(ctx, app.bankKeeper, genesisState.BankData)
+// 	supply.InitGenesis(ctx, app.supplyKeeper, app.accountKeeper, genesisState.SupplyData)
+// 	bor.InitGenesis(ctx, app.borKeeper, genesisState.BorData)
+// 	// staking should be initialized before checkpoint as checkpoint genesis initialization may depend on staking genesis. [eg.. rewardroot calculation]
+// 	staking.InitGenesis(ctx, app.stakingKeeper, genesisState.StakingData)
+// 	checkpoint.InitGenesis(ctx, app.checkpointKeeper, genesisState.CheckpointData)
+// 	clerk.InitGenesis(ctx, app.clerkKeeper, genesisState.ClerkData)
+// 	// validate genesis state
+// 	if err := ValidateGenesisState(genesisState); err != nil {
+// 		panic(err) // TODO find a way to do this w/o panics
+// 	}
 
-	//
-	// get val updates
-	//
+// 	// increment accumulator if starting from genesis
+// 	if isGenesis {
+// 		app.StakingKeeper.IncrementAccum(ctx, 1)
+// 	}
 
-	var valUpdates []abci.ValidatorUpdate
+// 	//
+// 	// get val updates
+// 	//
 
-	// check if validator is current validator
-	// add to val updates else skip
-	for _, validator := range genesisState.StakingData.Validators {
-		if validator.IsCurrentValidator(genesisState.CheckpointData.AckCount) {
-			// convert to Validator Update
-			updateVal := abci.ValidatorUpdate{
-				Power:  int64(validator.VotingPower),
-				PubKey: validator.PubKey.ABCIPubKey(),
-			}
-			// Add validator to validator updated to be processed below
-			valUpdates = append(valUpdates, updateVal)
-		}
-	}
-	return valUpdates
-}
+// 	var valUpdates []abci.ValidatorUpdate
 
-func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
-	logger.Info("Loading validators from genesis and setting defaults")
-
-	// get genesis state
-	var genesisState GenesisState
-	err := json.Unmarshal(req.AppStateBytes, &genesisState)
-	if err != nil {
-		panic(err)
-	}
-	// init state from genesis state
-	valUpdates := app.initFromGenesisState(ctx, genesisState)
-
-	//
-	// draft reponse init chain
-	//
-
-	// TODO make sure old validtors dont go in validator updates ie deactivated validators have to be removed
-	// udpate validators
-	return abci.ResponseInitChain{
-		// validator updates
-		Validators: valUpdates,
-
-		// consensus params
-		ConsensusParams: &abci.ConsensusParams{
-			Block: &abci.BlockParams{
-				MaxBytes: maxBytesPerBlock,
-				MaxGas:   maxGasPerBlock,
-			},
-			Evidence:  &abci.EvidenceParams{},
-			Validator: &abci.ValidatorParams{PubKeyTypes: []string{ABCIPubKeyTypeSecp256k1}},
-		},
-	}
-}
+// 	// check if validator is current validator
+// 	// add to val updates else skip
+// 	for _, validator := range genesisState.StakingData.Validators {
+// 		if validator.IsCurrentValidator(genesisState.CheckpointData.AckCount) {
+// 			// convert to Validator Update
+// 			updateVal := abci.ValidatorUpdate{
+// 				Power:  int64(validator.VotingPower),
+// 				PubKey: validator.PubKey.ABCIPubKey(),
+// 			}
+// 			// Add validator to validator updated to be processed below
+// 			valUpdates = append(valUpdates, updateVal)
+// 		}
+// 	}
+// 	return valUpdates
+// }
 
 // LoadHeight loads a particular height
 func (app *HeimdallApp) LoadHeight(height int64) error {

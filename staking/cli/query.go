@@ -3,19 +3,17 @@ package cli
 import (
 	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-
-	"github.com/maticnetwork/heimdall/staking"
-	"github.com/maticnetwork/heimdall/types"
-	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
 	hmClient "github.com/maticnetwork/heimdall/client"
+	"github.com/maticnetwork/heimdall/staking"
+	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
+	"github.com/maticnetwork/heimdall/types"
 )
-
 
 // GetQueryCmd returns the cli query commands for this module
 func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
@@ -50,12 +48,12 @@ func GetValidatorInfo(cdc *codec.Codec) *cobra.Command {
 			if validatorID == 0 {
 				return fmt.Errorf("validator ID cannot be 0")
 			}
-			signerAddr, err := cliCtx.QueryStore(staking.GetValidatorMapKey(types.NewValidatorID(uint64(validatorID)).Bytes()), "staking")
+			signerAddr, _, err := cliCtx.QueryStore(staking.GetValidatorMapKey(types.NewValidatorID(uint64(validatorID)).Bytes()), "staking")
 			if err != nil {
 				fmt.Printf("Error fetching signer address from validator ID")
 				return err
 			}
-			res, err := cliCtx.QueryStore(staking.GetValidatorKey(signerAddr), "staking")
+			res, _, err := cliCtx.QueryStore(staking.GetValidatorKey(signerAddr), "staking")
 			if err != nil {
 				fmt.Printf("Error fetching validator information from store, Error: %v ValidatorID: %v", err, validatorID)
 				return err
@@ -82,7 +80,7 @@ func GetCurrentValSet(cdc *codec.Codec) *cobra.Command {
 		Short: "show current validator set",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			res, err := cliCtx.QueryStore(staking.CurrentValidatorSetKey, "staking")
+			res, _, err := cliCtx.QueryStore(staking.CurrentValidatorSetKey, "staking")
 			if err != nil {
 				return err
 			}
