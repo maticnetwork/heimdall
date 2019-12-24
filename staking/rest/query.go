@@ -104,7 +104,7 @@ func validatorStatusByAddreesHandlerFn(
 		signerAddress := common.HexToAddress(vars["address"])
 
 		// get query params
-		queryParams, err := cliCtx.Codec.MarshalJSON(stakingTypes.NewQueryValStatusParams(signerAddress.Bytes()))
+		queryParams, err := cliCtx.Codec.MarshalJSON(stakingTypes.NewQueryValidatorStatusParams(signerAddress.Bytes()))
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
@@ -112,7 +112,7 @@ func validatorStatusByAddreesHandlerFn(
 
 		// fetch state reocrd
 		res, err := cliCtx.QueryWithData(
-			fmt.Sprintf("custom/%s/%s", stakingTypes.QuerierRoute, stakingTypes.QueryValStatus),
+			fmt.Sprintf("custom/%s/%s", stakingTypes.QuerierRoute, stakingTypes.QueryValidatorStatus),
 			queryParams,
 		)
 

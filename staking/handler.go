@@ -9,7 +9,6 @@ import (
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking/tags"
-	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
 	"github.com/maticnetwork/heimdall/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
@@ -142,7 +141,7 @@ func HandleMsgStakeUpdate(ctx sdk.Context, msg MsgStakeUpdate, k Keeper, contrac
 	}
 
 	// last updated
-	lastUpdated := (receipt.BlockNumber.Uint64() * stakingTypes.DefaultLogIndexUnit) + msg.LogIndex
+	lastUpdated := (receipt.BlockNumber.Uint64() * hmTypes.DefaultLogIndexUnit) + msg.LogIndex
 
 	// check if incoming tx is older
 	if lastUpdated <= validator.LastUpdated {
@@ -213,7 +212,7 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k Keeper, contr
 	oldValidator := validator.Copy()
 
 	// last updated
-	lastUpdated := (receipt.BlockNumber.Uint64() * stakingTypes.DefaultLogIndexUnit) + msg.LogIndex
+	lastUpdated := (receipt.BlockNumber.Uint64() * hmTypes.DefaultLogIndexUnit) + msg.LogIndex
 
 	// check if incoming tx is older
 	if lastUpdated <= validator.LastUpdated {

@@ -108,7 +108,7 @@ func GenRandCheckpointHeader(start int, headerSize int) (headerBlock types.Check
 		return headerBlock, err
 	}
 	proposer := ethcmn.Address{}
-	headerBlock = types.CreateBlock(uint64(start), uint64(end), types.HexToHeimdallHash(hex.EncodeToString(roothash)), types.HexToHeimdallHash(hex.EncodeToString(roothash)), types.HexToHeimdallAddress(proposer.String()), uint64(time.Now().Unix()))
+	headerBlock = types.CreateBlock(uint64(start), uint64(end), types.HexToHeimdallHash(hex.EncodeToString(roothash)), types.HexToHeimdallHash(hex.EncodeToString(roothash)), types.HexToHeimdallAddress(proposer.String()), uint64(time.Now().UTC().Unix()))
 
 	return headerBlock, nil
 }

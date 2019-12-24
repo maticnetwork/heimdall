@@ -26,7 +26,8 @@ var (
 	gasWantedPerCheckpoinTx sdk.Gas = 10000000
 	gasUsedPerCheckpointTx  sdk.Gas = gasWantedPerCheckpoinTx - 1000000
 
-	feeWantedPerTx = types.Coins{types.Coin{Denom: "vetic", Amount: types.NewInt(1)}}
+	// FeeWantedPerTx fee wanted per tx
+	FeeWantedPerTx = types.Coins{types.Coin{Denom: "vetic", Amount: types.NewInt(1)}}
 )
 
 func init() {
@@ -54,32 +55,14 @@ type FeeCollector interface {
 	) (sdk.Tags, sdk.Error)
 }
 
-//
-// Validator verifier interface
-//
-
-// ValidatorVerifier interface to check validator
-type ValidatorVerifier interface {
-	IsCurrentValidatorByAddress(ctx sdk.Context, address []byte) bool
-}
-
 // NewAnteHandler returns an AnteHandler that checks and increments sequence
 // numbers, checks signatures & account numbers, and deducts fees from the first
 // signer.
 func NewAnteHandler(
 	ak AccountKeeper,
 	feeCollector FeeCollector,
-	validatorVerifier ValidatorVerifier,
 	sigGasConsumer SignatureVerificationGasConsumer,
 ) sdk.AnteHandler {
-
-	// route map for validator exclusion
-	validatorExclusionRoutes := map[string]bool{
-		"checkpoint": true,
-		"bor":        true,
-		"clerk":      true,
-	}
-
 	return func(ctx sdk.Context, tx sdk.Tx, simulate bool) (newCtx sdk.Context, res sdk.Result, abort bool) {
 		// get module address
 		if addr := feeCollector.GetModuleAddress(authTypes.FeeCollectorName); addr.Empty() {
@@ -100,7 +83,7 @@ func NewAnteHandler(
 
 		// gas for tx
 		gasForTx := gasWantedPerTx // stdTx.Fee.Gas
-		feeForTx := feeWantedPerTx // stdTx.Fee.Amount
+		feeForTx := FeeWantedPerTx // stdTx.Fee.Amount
 
 		// checkpoint gas limit
 		if stdTx.Msg.Type() == "checkpoint" && stdTx.Msg.Route() == "checkpoint" {
@@ -156,15 +139,13 @@ func NewAnteHandler(
 
 		// deduct the fees
 		if !feeForTx.IsZero() {
-			if !(validatorExclusionRoutes[stdTx.Msg.Route()] && validatorVerifier.IsCurrentValidatorByAddress(ctx, signerAccs[0].GetAddress().Bytes())) {
-				res = DeductFees(feeCollector, newCtx, signerAccs[0], feeForTx)
-				if !res.IsOK() {
-					return newCtx, res, true
-				}
-
-				// reload the account as fees have been deducted
-				signerAccs[0] = ak.GetAccount(newCtx, signerAccs[0].GetAddress())
+			res = DeductFees(feeCollector, newCtx, signerAccs[0], feeForTx)
+			if !res.IsOK() {
+				return newCtx, res, true
 			}
+
+			// reload the account as fees have been deducted
+			signerAccs[0] = ak.GetAccount(newCtx, signerAccs[0].GetAddress())
 		}
 
 		// stdSigs contains the sequence number, account number, and signatures.

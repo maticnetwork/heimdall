@@ -263,7 +263,7 @@ func TestHandleMsgCheckpoint(t *testing.T) {
 			contractCallerObj.On("GetBalance", header.Proposer).Return(helper.MinBalance, nil)
 			// create checkpoint 257 seconds prev to current time
 			header.TimeStamp = uint64(time.Now().Add(-(helper.CheckpointBufferTime + time.Second)).Unix())
-			t.Log("Sending checkpoint with timestamp", "Timestamp", header.TimeStamp, "Current", time.Now().Unix())
+			t.Log("Sending checkpoint with timestamp", "Timestamp", header.TimeStamp, "Current", time.Now().UTC().Unix())
 			// send old checkpoint
 			SentValidCheckpoint(header, ck, sk, ctx, contractCallerObj, t)
 
@@ -301,6 +301,7 @@ func TestHandleMsgCheckpoint(t *testing.T) {
 			header.RewardRootHash = types.BytesToHeimdallHash(genesisrewardRootHash)
 			// create checkpoint msg
 			msgCheckpoint := NewMsgCheckpointBlock(header.Proposer, header.StartBlock, header.EndBlock, header.RootHash, header.RewardRootHash, uint64(time.Now().Unix()))
+
 			// send checkpoint to handler
 			got := handleMsgCheckpoint(ctx, msgCheckpoint, ck, &contractCallerObj)
 			require.True(t, !got.IsOK(), "expected send-checkpoint to be not ok, got %v", got)

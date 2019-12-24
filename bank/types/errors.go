@@ -8,6 +8,7 @@ import (
 const (
 	CodeSendDisabled         sdk.CodeType = 101
 	CodeInvalidInputsOutputs sdk.CodeType = 102
+	CodeNoValidatorTopup     sdk.CodeType = 103
 )
 
 // ErrNoInputs is an error
@@ -28,4 +29,9 @@ func ErrInputOutputMismatch(codespace sdk.CodespaceType) sdk.Error {
 // ErrSendDisabled is an error
 func ErrSendDisabled(codespace sdk.CodespaceType) sdk.Error {
 	return sdk.NewError(codespace, CodeSendDisabled, "send transactions are currently disabled")
+}
+
+// ErrNoValidatorTopup is an error for validator topup
+func ErrNoValidatorTopup(codespace sdk.CodespaceType) sdk.Error {
+	return sdk.NewError(codespace, CodeNoValidatorTopup, "no validator topup")
 }

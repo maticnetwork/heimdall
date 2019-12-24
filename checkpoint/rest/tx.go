@@ -74,7 +74,7 @@ func newCheckpointHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.Hand
 			req.EndBlock,
 			req.RootHash,
 			req.RewardRootHash,
-			uint64(time.Now().Unix()),
+			uint64(time.Now().UTC().Unix()),
 		)
 
 		// send response
@@ -117,7 +117,7 @@ func newCheckpointNoACKHandler(cdc *codec.Codec, cliCtx context.CLIContext) http
 		// draft a message and send response
 		msg := checkpoint.NewMsgCheckpointNoAck(
 			req.Proposer,
-			uint64(time.Now().Unix()),
+			uint64(time.Now().UTC().Unix()),
 		)
 
 		// send response

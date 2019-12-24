@@ -35,8 +35,8 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	k.Logger(ctx).Debug("Validating checkpoint data", "TxData", msg)
 
-	if msg.TimeStamp == 0 || msg.TimeStamp > uint64(time.Now().Unix()) {
-		k.Logger(ctx).Error("Checkpoint timestamp must be in near past", "CurrentTime", time.Now().Unix(), "CheckpointTime", msg.TimeStamp, "Condition", msg.TimeStamp >= uint64(time.Now().Unix()))
+	if msg.TimeStamp == 0 || msg.TimeStamp > uint64(time.Now().UTC().Unix()) {
+		k.Logger(ctx).Error("Checkpoint timestamp must be in near past", "CurrentTime", time.Now().UTC().Unix(), "CheckpointTime", msg.TimeStamp, "Condition", msg.TimeStamp >= uint64(time.Now().UTC().Unix()))
 		return common.ErrBadTimeStamp(k.Codespace()).Result()
 	}
 
@@ -49,7 +49,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper, contractC
 			// calulates remaining time for buffer to be flushed
 			checkpointTime := time.Unix(int64(checkpointBuffer.TimeStamp), 0)
 			expiryTime := checkpointTime.Add(helper.GetConfig().CheckpointBufferTime)
-			diff := expiryTime.Sub(time.Now()).Seconds()
+			diff := expiryTime.Sub(time.Now().UTC()).Seconds()
 			k.Logger(ctx).Error("Checkpoint already exits in buffer", "Checkpoint", checkpointBuffer.String(), "Expires", expiryTime)
 			return common.ErrNoACK(k.Codespace(), diff).Result()
 		}
@@ -187,19 +187,24 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k Keeper, con
 		k.Logger(ctx).Error("Unable to get checkpoint", "error", err)
 		return common.ErrBadAck(k.Codespace()).Result()
 	}
-
-	// match header block and checkpoint
-	if start != headerBlock.StartBlock || end != headerBlock.EndBlock || !bytes.Equal(root.Bytes(), headerBlock.RootHash.Bytes()) {
+	if start != headerBlock.StartBlock {
+		k.Logger(ctx).Error("Invalid start block", "startExpected", headerBlock.StartBlock, "startReceived", start)
+		return common.ErrBadAck(k.Codespace()).Result()
+	} else if start == headerBlock.StartBlock && end == headerBlock.EndBlock && !bytes.Equal(root.Bytes(), headerBlock.RootHash.Bytes()) {
 		k.Logger(ctx).Error("Invalid ACK",
 			"startExpected", headerBlock.StartBlock,
 			"startReceived", start,
 			"endExpected", headerBlock.EndBlock,
 			"endReceived", end,
 			"rootExpected", headerBlock.RootHash.String(),
-			"rootRecieved", root.String(),
-		)
-
+			"rootRecieved", root.String())
 		return common.ErrBadAck(k.Codespace()).Result()
+	}
+	if headerBlock.EndBlock > end {
+		k.Logger(ctx).Info("Adjusting endBlock to one already submitted on chain", "OldEndBlock", headerBlock.EndBlock, "AdjustedEndBlock", end)
+		headerBlock.EndBlock = end
+		headerBlock.RootHash = types.HeimdallHash(root)
+		// TODO proposer also needs to be changed
 	}
 
 	// Get Tx hash from ack msg
