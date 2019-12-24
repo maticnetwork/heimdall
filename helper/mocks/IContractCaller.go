@@ -148,6 +148,29 @@ func (_m *IContractCaller) DecodeValidatorStakeUpdateEvent(_a0 *types.Receipt, _
 	return r0, r1
 }
 
+// DecodeValidatorTopupFeesEvent provides a mock function with given fields: _a0, _a1
+func (_m *IContractCaller) DecodeValidatorTopupFeesEvent(_a0 *types.Receipt, _a1 uint64) (*stakemanager.StakemanagerTopupFees, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *stakemanager.StakemanagerTopupFees
+	if rf, ok := ret.Get(0).(func(*types.Receipt, uint64) *stakemanager.StakemanagerTopupFees); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*stakemanager.StakemanagerTopupFees)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*types.Receipt, uint64) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // EncodeStateSyncedEvent provides a mock function with given fields: _a0
 func (_m *IContractCaller) EncodeStateSyncedEvent(_a0 *types.Log) (*statesender.StatesenderStateSynced, error) {
 	ret := _m.Called(_a0)
