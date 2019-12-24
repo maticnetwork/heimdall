@@ -95,7 +95,7 @@ func handleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCalle
 	}
 
 	// validator topup
-	topupObject, err := k.GetTopup(ctx, validator.Signer)
+	topupObject, err := k.GetValidatorTopup(ctx, validator.Signer)
 	if err != nil {
 		return types.ErrNoValidatorTopup(k.Codespace()).Result()
 	}
@@ -105,41 +105,43 @@ func handleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCalle
 		topupObject = &types.ValidatorTopup{
 			ID:          validator.ID,
 			TotalTopups: hmTypes.Coins{hmTypes.Coin{Denom: "vetic", Amount: hmTypes.NewInt(1)}},
-			LastUpdated: 0,
 		}
 	}
 
 	// create topup amount
 	topupAmount := hmTypes.Coins{hmTypes.Coin{Denom: "vetic", Amount: hmTypes.NewIntFromBigInt(eventLog.Amount)}}
 
-	// last updated
-	lastUpdated := (receipt.BlockNumber.Uint64() * hmTypes.DefaultLogIndexUnit) + msg.LogIndex
+	// sequence id
+	sequence := (receipt.BlockNumber.Uint64() * hmTypes.DefaultLogIndexUnit) + msg.LogIndex
 
-	// check if incoming tx is older
-	if lastUpdated <= topupObject.LastUpdated {
+	// check if incoming tx already exists
+	if k.HasTopupSequence(ctx, sequence) {
 		k.Logger(ctx).Error("Older invalid tx found")
 		return hmCommon.ErrOldTx(k.Codespace()).Result()
 	}
 
-	// update last udpated
-	topupObject.LastUpdated = lastUpdated
 	// add total topups amount
 	topupObject.TotalTopups = topupObject.TotalTopups.Add(topupAmount)
+
 	// increase coins in account
 	_, addTags, ec := k.AddCoins(ctx, validator.Signer, topupAmount)
 	if ec != nil {
 		return ec.Result()
 	}
+
 	// transfer fees to sender (proposer)
 	transferTags, ec := k.SendCoins(ctx, validator.Signer, msg.FromAddress, auth.FeeWantedPerTx)
 	if ec != nil {
 		return ec.Result()
 	}
+
 	// save old validator
-	if err := k.SetTopup(ctx, validator.Signer, *topupObject); err != nil {
+	if err := k.SetValidatorTopup(ctx, validator.Signer, *topupObject); err != nil {
 		k.Logger(ctx).Error("Unable to update signer", "error", err, "validatorId", validator.ID)
 		return hmCommon.ErrSignerUpdateError(k.Codespace()).Result()
 	}
+	// save topup
+	k.SetTopupSequence(ctx, sequence)
 
 	// response tags
 	resTags := sdk.NewTags(

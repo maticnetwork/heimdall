@@ -14,7 +14,6 @@ import (
 type ValidatorTopup struct {
 	ID          hmTypes.ValidatorID `json:"id"`
 	TotalTopups hmTypes.Coins       `json:"total_topups"`
-	LastUpdated uint64              `json:"last_updated"`
 }
 
 // MarshallValidatorTopup marshall validator topup

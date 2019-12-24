@@ -204,7 +204,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	)
 
 	// bank keeper
-	app.BankKeeper = bank.NewBaseKeeper(
+	app.bankKeeper = bank.NewKeeper(
 		app.cdc,
 		keys[bankTypes.StoreKey], // target store
 		app.subspaces[bankTypes.ModuleName],

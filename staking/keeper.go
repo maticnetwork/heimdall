@@ -24,19 +24,13 @@ var (
 	ValidatorMapKey        = []byte{0x22} // prefix for each key for validator map
 	CurrentValidatorSetKey = []byte{0x23} // Key to store current validator set
 	ValidatorRewardMapKey  = []byte{0x16} // prefix for each key for Validator Reward Map
-
+	StakingSequenceKey     = []byte{0x24} // prefix for each key for staking sequence map
 )
 
-// type AckRetriever struct {
-// 	GetACKCount(ctx sdk.Context,hm app.HeimdallApp) uint64
-// }
 type AckRetriever interface {
 	GetACKCount(ctx sdk.Context) uint64
 }
 
-// func (d AckRetriever) GetACKCount(ctx sdk.Context) uint64 {
-// 	return app.checkpointKeeper.GetACKCount(ctx)
-// }
 // Keeper stores all related data
 type Keeper struct {
 	cdc *codec.Codec
@@ -91,6 +85,11 @@ func GetValidatorMapKey(address []byte) []byte {
 // GetValidatorRewardMapKey returns validator reward map
 func GetValidatorRewardMapKey(valID []byte) []byte {
 	return append(ValidatorRewardMapKey, valID...)
+}
+
+// GetStakingSequenceKey returns staking sequence key
+func GetStakingSequenceKey(sequence uint64) []byte {
+	return append(StakingSequenceKey, []byte(strconv.FormatUint(sequence, 10))...)
 }
 
 // AddValidator adds validator indexed with address
@@ -504,4 +503,20 @@ func (k *Keeper) GetProposerBonusPercent(ctx sdk.Context) int64 {
 // SetProposerBonusPercent sets the Proposer to signer reward
 func (k *Keeper) SetProposerBonusPercent(ctx sdk.Context, proposerBonusPercent int64) {
 	k.paramSpace.Set(ctx, ParamStoreKeyProposerBonusPercent, proposerBonusPercent)
+}
+
+//
+// Staking sequence
+//
+
+// SetStakingSequence sets staking sequence
+func (k *Keeper) SetStakingSequence(ctx sdk.Context, sequence uint64) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(GetStakingSequenceKey(sequence), DefaultValue)
+}
+
+// HasStakingSequence checks if staking sequence already exists
+func (k *Keeper) HasStakingSequence(ctx sdk.Context, sequence uint64) bool {
+	store := ctx.KVStore(k.storeKey)
+	return store.Has(GetStakingSequenceKey(sequence))
 }

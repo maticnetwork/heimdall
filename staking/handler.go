@@ -145,17 +145,17 @@ func HandleMsgStakeUpdate(ctx sdk.Context, msg MsgStakeUpdate, k Keeper, contrac
 		return hmCommon.ErrNoValidator(k.Codespace()).Result()
 	}
 
-	// last updated
-	lastUpdated := (receipt.BlockNumber.Uint64() * hmTypes.DefaultLogIndexUnit) + msg.LogIndex
+	// sequence id
+	sequence := (receipt.BlockNumber.Uint64() * hmTypes.DefaultLogIndexUnit) + msg.LogIndex
 
 	// check if incoming tx is older
-	if lastUpdated <= validator.LastUpdated {
+	if k.HasStakingSequence(ctx, sequence) {
 		k.Logger(ctx).Error("Older invalid tx found")
 		return hmCommon.ErrOldTx(k.Codespace()).Result()
 	}
 
-	// update last udpated
-	validator.LastUpdated = lastUpdated
+	// update last updated
+	validator.LastUpdated = sequence
 
 	// set validator amount
 	p, err := helper.GetPowerFromAmount(eventLog.NewAmount)
@@ -170,6 +170,9 @@ func HandleMsgStakeUpdate(ctx sdk.Context, msg MsgStakeUpdate, k Keeper, contrac
 		k.Logger(ctx).Error("Unable to update signer", "error", err, "ValidatorID", validator.ID)
 		return hmCommon.ErrSignerUpdateError(k.Codespace()).Result()
 	}
+
+	// save staking sequence
+	k.SetStakingSequence(ctx, sequence)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -222,17 +225,17 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k Keeper, contr
 	}
 	oldValidator := validator.Copy()
 
-	// last updated
-	lastUpdated := (receipt.BlockNumber.Uint64() * hmTypes.DefaultLogIndexUnit) + msg.LogIndex
+	// sequence id
+	sequence := (receipt.BlockNumber.Uint64() * hmTypes.DefaultLogIndexUnit) + msg.LogIndex
 
 	// check if incoming tx is older
-	if lastUpdated <= validator.LastUpdated {
+	if k.HasStakingSequence(ctx, sequence) {
 		k.Logger(ctx).Error("Older invalid tx found")
 		return hmCommon.ErrOldTx(k.Codespace()).Result()
 	}
 
 	// update last udpated
-	validator.LastUpdated = lastUpdated
+	validator.LastUpdated = sequence
 
 	// check if we are actually updating signer
 	if !bytes.Equal(newSigner.Bytes(), validator.Signer.Bytes()) {
@@ -250,7 +253,7 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k Keeper, contr
 	// remove old validator from TM
 	oldValidator.VotingPower = 0
 	// updated last
-	oldValidator.LastUpdated = lastUpdated
+	oldValidator.LastUpdated = sequence
 
 	// save old validator
 	if err := k.AddValidator(ctx, *oldValidator); err != nil {
@@ -267,6 +270,8 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k Keeper, contr
 		k.Logger(ctx).Error("Unable to update signer", "error", err, "ValidatorID", validator.ID)
 		return hmCommon.ErrSignerUpdateError(k.Codespace()).Result()
 	}
+	// save staking sequence
+	k.SetStakingSequence(ctx, sequence)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(

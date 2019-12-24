@@ -3,6 +3,7 @@ package bank
 import (
 	"encoding/hex"
 	"fmt"
+	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -16,70 +17,58 @@ import (
 )
 
 var (
+	// DefaultValue default value
+	DefaultValue = []byte{0x01}
 	// ValidatorTopupKey represents validator topup key
 	ValidatorTopupKey = []byte{0x80} // prefix for each key to a validator
+	// TopupSequencePrefixKey represents topup sequence prefix key
+	TopupSequencePrefixKey = []byte{0x81}
 )
 
-var _ Keeper = (*BaseKeeper)(nil)
-
-// Keeper defines a module interface that facilitates the transfer of coins
-// between accounts.
-type Keeper interface {
-	SendKeeper
-
-	Logger(ctx sdk.Context) log.Logger
-	SetCoins(ctx sdk.Context, addr types.HeimdallAddress, amt types.Coins) sdk.Error
-	SubtractCoins(ctx sdk.Context, addr types.HeimdallAddress, amt types.Coins) (types.Coins, sdk.Tags, sdk.Error)
-	AddCoins(ctx sdk.Context, addr types.HeimdallAddress, amt types.Coins) (types.Coins, sdk.Tags, sdk.Error)
-	InputOutputCoins(ctx sdk.Context, inputs []bankTypes.Input, outputs []bankTypes.Output) (sdk.Tags, sdk.Error)
-	GetTopup(ctx sdk.Context, addr types.HeimdallAddress) (*bankTypes.ValidatorTopup, error)
-	SetTopup(ctx sdk.Context, addr types.HeimdallAddress, validatorTop bankTypes.ValidatorTopup) error
-}
-
-// BaseKeeper manages transfers between accounts. It implements the Keeper interface.
-type BaseKeeper struct {
-	BaseSendKeeper
-
+// Keeper manages transfers between accounts
+type Keeper struct {
 	// The (unexposed) key used to access the store from the Context.
 	key sdk.StoreKey
 	// The codec codec for binary encoding/decoding of accounts.
 	cdc *codec.Codec
+	// code space
+	codespace sdk.CodespaceType
 	// param subspace
 	paramSpace params.Subspace
 	// account keeper
 	ak auth.AccountKeeper
 }
 
-// NewBaseKeeper returns a new BaseKeeper
-func NewBaseKeeper(
+// NewKeeper returns a new Keeper
+func NewKeeper(
 	cdc *codec.Codec,
 	key sdk.StoreKey,
 	paramSpace params.Subspace,
 	codespace sdk.CodespaceType,
 	ak auth.AccountKeeper,
-) BaseKeeper {
+) Keeper {
 	ps := paramSpace.WithKeyTable(bankTypes.ParamKeyTable())
-	return BaseKeeper{
-		key:            key,
-		cdc:            cdc,
-		paramSpace:     ps,
-		ak:             ak,
-		BaseSendKeeper: NewBaseSendKeeper(ak, ps, codespace),
+	return Keeper{
+		key:        key,
+		cdc:        cdc,
+		codespace:  codespace,
+		paramSpace: ps,
+		ak:         ak,
 	}
 }
 
+// Codespace returns the keeper's codespace.
+func (keeper Keeper) Codespace() sdk.CodespaceType {
+	return keeper.codespace
+}
+
 // Logger returns a module-specific logger
-func (keeper BaseKeeper) Logger(ctx sdk.Context) log.Logger {
+func (keeper Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", bankTypes.ModuleName)
 }
 
-// GetTopupKey drafts the validator key for addresses
-func GetTopupKey(address []byte) []byte {
-	return append(ValidatorTopupKey, address...)
-}
-
 // SetCoins sets the coins at the addr.
-func (keeper BaseKeeper) SetCoins(
+func (keeper Keeper) SetCoins(
 	ctx sdk.Context, addr types.HeimdallAddress, amt types.Coins,
 ) sdk.Error {
 
@@ -90,7 +79,7 @@ func (keeper BaseKeeper) SetCoins(
 }
 
 // SubtractCoins subtracts amt from the coins at the addr.
-func (keeper BaseKeeper) SubtractCoins(
+func (keeper Keeper) SubtractCoins(
 	ctx sdk.Context, addr types.HeimdallAddress, amt types.Coins,
 ) (types.Coins, sdk.Tags, sdk.Error) {
 
@@ -101,7 +90,7 @@ func (keeper BaseKeeper) SubtractCoins(
 }
 
 // AddCoins adds amt to the coins at the addr.
-func (keeper BaseKeeper) AddCoins(
+func (keeper Keeper) AddCoins(
 	ctx sdk.Context, addr types.HeimdallAddress, amt types.Coins,
 ) (types.Coins, sdk.Tags, sdk.Error) {
 
@@ -112,15 +101,63 @@ func (keeper BaseKeeper) AddCoins(
 }
 
 // InputOutputCoins handles a list of inputs and outputs
-func (keeper BaseKeeper) InputOutputCoins(
+func (keeper Keeper) InputOutputCoins(
 	ctx sdk.Context, inputs []bankTypes.Input, outputs []bankTypes.Output,
 ) (sdk.Tags, sdk.Error) {
 
 	return inputOutputCoins(ctx, keeper.ak, inputs, outputs)
 }
 
-// GetTopup returns validator toptup information
-func (keeper BaseKeeper) GetTopup(ctx sdk.Context, addr types.HeimdallAddress) (*bankTypes.ValidatorTopup, error) {
+// SendCoins moves coins from one account to another
+func (keeper Keeper) SendCoins(
+	ctx sdk.Context, fromAddr types.HeimdallAddress, toAddr types.HeimdallAddress, amt types.Coins,
+) (sdk.Tags, sdk.Error) {
+
+	if !amt.IsValid() {
+		return nil, sdk.ErrInvalidCoins(amt.String())
+	}
+	return sendCoins(ctx, keeper.ak, fromAddr, toAddr, amt)
+}
+
+// GetSendEnabled returns the current SendEnabled
+// nolint: errcheck
+func (keeper Keeper) GetSendEnabled(ctx sdk.Context) bool {
+	var enabled bool
+	keeper.paramSpace.Get(ctx, bankTypes.ParamStoreKeySendEnabled, &enabled)
+	return enabled
+}
+
+// SetSendEnabled sets the send enabled
+func (keeper Keeper) SetSendEnabled(ctx sdk.Context, enabled bool) {
+	keeper.paramSpace.Set(ctx, bankTypes.ParamStoreKeySendEnabled, &enabled)
+}
+
+// GetCoins returns the coins at the addr.
+func (keeper Keeper) GetCoins(ctx sdk.Context, addr types.HeimdallAddress) types.Coins {
+	return getCoins(ctx, keeper.ak, addr)
+}
+
+// HasCoins returns whether or not an account has at least amt coins.
+func (keeper Keeper) HasCoins(ctx sdk.Context, addr types.HeimdallAddress, amt types.Coins) bool {
+	return hasCoins(ctx, keeper.ak, addr, amt)
+}
+
+//
+// Topup methods
+//
+
+// GetTopupKey drafts the topup key for address
+func GetTopupKey(address []byte) []byte {
+	return append(ValidatorTopupKey, address...)
+}
+
+// GetTopupSequenceKey drafts topup sequence for address
+func GetTopupSequenceKey(sequence uint64) []byte {
+	return append(TopupSequencePrefixKey, []byte(strconv.FormatUint(sequence, 10))...)
+}
+
+// GetValidatorTopup returns validator toptup information
+func (keeper Keeper) GetValidatorTopup(ctx sdk.Context, addr types.HeimdallAddress) (*bankTypes.ValidatorTopup, error) {
 	store := ctx.KVStore(keeper.key)
 
 	// check if topup exists
@@ -139,8 +176,8 @@ func (keeper BaseKeeper) GetTopup(ctx sdk.Context, addr types.HeimdallAddress) (
 	return &validatorTopup, nil
 }
 
-// SetTopup sets validator topup object
-func (keeper BaseKeeper) SetTopup(ctx sdk.Context, addr types.HeimdallAddress, validatorTopup bankTypes.ValidatorTopup) error {
+// SetValidatorTopup sets validator topup object
+func (keeper Keeper) SetValidatorTopup(ctx sdk.Context, addr types.HeimdallAddress, validatorTopup bankTypes.ValidatorTopup) error {
 	store := ctx.KVStore(keeper.key)
 
 	// validator topup
@@ -156,107 +193,21 @@ func (keeper BaseKeeper) SetTopup(ctx sdk.Context, addr types.HeimdallAddress, v
 	return nil
 }
 
+// SetTopupSequence sets mapping for sequence id to bool
+func (keeper Keeper) SetTopupSequence(ctx sdk.Context, sequence uint64) {
+	store := ctx.KVStore(keeper.key)
+	store.Set(GetTopupSequenceKey(sequence), DefaultValue)
+}
+
+// HasTopupSequence checks if topup already exists
+func (keeper Keeper) HasTopupSequence(ctx sdk.Context, sequence uint64) bool {
+	store := ctx.KVStore(keeper.key)
+	return store.Has(GetTopupSequenceKey(sequence))
+}
+
 //
-// Send keeper
+// Internal methods
 //
-
-// SendKeeper to enable transfer between accounts without the possibility of creating coins.
-type SendKeeper interface {
-	ViewKeeper
-
-	SendCoins(ctx sdk.Context, fromAddr types.HeimdallAddress, toAddr types.HeimdallAddress, amt types.Coins) (sdk.Tags, sdk.Error)
-
-	GetSendEnabled(ctx sdk.Context) bool
-	SetSendEnabled(ctx sdk.Context, enabled bool)
-}
-
-var _ SendKeeper = (*BaseSendKeeper)(nil)
-
-// BaseSendKeeper only allows transfers between accounts without the possibility of
-// creating coins. It implements the SendKeeper interface.
-type BaseSendKeeper struct {
-	BaseViewKeeper
-
-	ak         auth.AccountKeeper
-	paramSpace params.Subspace
-}
-
-// NewBaseSendKeeper returns a new BaseSendKeeper.
-func NewBaseSendKeeper(ak auth.AccountKeeper,
-	paramSpace params.Subspace, codespace sdk.CodespaceType) BaseSendKeeper {
-
-	return BaseSendKeeper{
-		BaseViewKeeper: NewBaseViewKeeper(ak, codespace),
-		ak:             ak,
-		paramSpace:     paramSpace,
-	}
-}
-
-// Logger returns a module-specific logger
-func (keeper BaseSendKeeper) Logger(ctx sdk.Context) log.Logger {
-	return ctx.Logger().With("module", bankTypes.ModuleName)
-}
-
-// SendCoins moves coins from one account to another
-func (keeper BaseSendKeeper) SendCoins(
-	ctx sdk.Context, fromAddr types.HeimdallAddress, toAddr types.HeimdallAddress, amt types.Coins,
-) (sdk.Tags, sdk.Error) {
-
-	if !amt.IsValid() {
-		return nil, sdk.ErrInvalidCoins(amt.String())
-	}
-	return sendCoins(ctx, keeper.ak, fromAddr, toAddr, amt)
-}
-
-// GetSendEnabled returns the current SendEnabled
-// nolint: errcheck
-func (keeper BaseSendKeeper) GetSendEnabled(ctx sdk.Context) bool {
-	var enabled bool
-	keeper.paramSpace.Get(ctx, bankTypes.ParamStoreKeySendEnabled, &enabled)
-	return enabled
-}
-
-// SetSendEnabled sets the send enabled
-func (keeper BaseSendKeeper) SetSendEnabled(ctx sdk.Context, enabled bool) {
-	keeper.paramSpace.Set(ctx, bankTypes.ParamStoreKeySendEnabled, &enabled)
-}
-
-var _ ViewKeeper = (*BaseViewKeeper)(nil)
-
-// ViewKeeper defines a module interface that facilitates read only access to
-// account balances.
-type ViewKeeper interface {
-	GetCoins(ctx sdk.Context, addr types.HeimdallAddress) types.Coins
-	HasCoins(ctx sdk.Context, addr types.HeimdallAddress, amt types.Coins) bool
-
-	Codespace() sdk.CodespaceType
-}
-
-// BaseViewKeeper implements a read only keeper implementation of ViewKeeper.
-type BaseViewKeeper struct {
-	ak        auth.AccountKeeper
-	codespace sdk.CodespaceType
-}
-
-// NewBaseViewKeeper returns a new BaseViewKeeper.
-func NewBaseViewKeeper(ak auth.AccountKeeper, codespace sdk.CodespaceType) BaseViewKeeper {
-	return BaseViewKeeper{ak: ak, codespace: codespace}
-}
-
-// GetCoins returns the coins at the addr.
-func (keeper BaseViewKeeper) GetCoins(ctx sdk.Context, addr types.HeimdallAddress) types.Coins {
-	return getCoins(ctx, keeper.ak, addr)
-}
-
-// HasCoins returns whether or not an account has at least amt coins.
-func (keeper BaseViewKeeper) HasCoins(ctx sdk.Context, addr types.HeimdallAddress, amt types.Coins) bool {
-	return hasCoins(ctx, keeper.ak, addr, amt)
-}
-
-// Codespace returns the keeper's codespace.
-func (keeper BaseViewKeeper) Codespace() sdk.CodespaceType {
-	return keeper.codespace
-}
 
 func getCoins(ctx sdk.Context, am auth.AccountKeeper, addr types.HeimdallAddress) types.Coins {
 	acc := am.GetAccount(ctx, addr)

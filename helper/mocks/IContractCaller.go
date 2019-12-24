@@ -12,6 +12,8 @@ import (
 
 	mock "github.com/stretchr/testify/mock"
 
+	rootchain "github.com/maticnetwork/heimdall/contracts/rootchain"
+
 	stakemanager "github.com/maticnetwork/heimdall/contracts/stakemanager"
 
 	statesender "github.com/maticnetwork/heimdall/contracts/statesender"
@@ -77,6 +79,29 @@ func (_m *IContractCaller) CurrentStateCounter() *big.Int {
 	return r0
 }
 
+// DecodeNewHeaderBlockEvent provides a mock function with given fields: _a0, _a1
+func (_m *IContractCaller) DecodeNewHeaderBlockEvent(_a0 *types.Receipt, _a1 uint64) (*rootchain.RootchainNewHeaderBlock, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *rootchain.RootchainNewHeaderBlock
+	if rf, ok := ret.Get(0).(func(*types.Receipt, uint64) *rootchain.RootchainNewHeaderBlock); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*rootchain.RootchainNewHeaderBlock)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*types.Receipt, uint64) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // DecodeSignerUpdateEvent provides a mock function with given fields: _a0, _a1
 func (_m *IContractCaller) DecodeSignerUpdateEvent(_a0 *types.Receipt, _a1 uint64) (*stakemanager.StakemanagerSignerChange, error) {
 	ret := _m.Called(_a0, _a1)
@@ -110,6 +135,29 @@ func (_m *IContractCaller) DecodeValidatorStakeUpdateEvent(_a0 *types.Receipt, _
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*stakemanager.StakemanagerStakeUpdate)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*types.Receipt, uint64) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// DecodeValidatorTopupFeesEvent provides a mock function with given fields: _a0, _a1
+func (_m *IContractCaller) DecodeValidatorTopupFeesEvent(_a0 *types.Receipt, _a1 uint64) (*stakemanager.StakemanagerTopupFees, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *stakemanager.StakemanagerTopupFees
+	if rf, ok := ret.Get(0).(func(*types.Receipt, uint64) *stakemanager.StakemanagerTopupFees); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*stakemanager.StakemanagerTopupFees)
 		}
 	}
 
