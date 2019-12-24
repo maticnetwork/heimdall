@@ -8,8 +8,7 @@ import (
 
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/staking/tags"
-	"github.com/maticnetwork/heimdall/types"
+	"github.com/maticnetwork/heimdall/staking/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -104,12 +103,18 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k Keeper, con
 		return hmCommon.ErrValidatorSave(k.Codespace()).Result()
 	}
 
-	resTags := sdk.NewTags(
-		tags.ValidatorJoin, []byte(newValidator.Signer.String()),
-		tags.ValidatorID, []byte(strconv.FormatUint(newValidator.ID.Uint64(), 10)),
-	)
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeValidatorJoin,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(newValidator.ID.Uint64(), 10)),
+			sdk.NewAttribute(types.AttributeKeySigner, newValidator.Signer.String()),
+		),
+	})
 
-	return sdk.Result{Tags: resTags}
+	return sdk.Result{
+		Events: ctx.EventManager().Events(),
+	}
 }
 
 // HandleMsgStakeUpdate handles stake update message
@@ -166,12 +171,18 @@ func HandleMsgStakeUpdate(ctx sdk.Context, msg MsgStakeUpdate, k Keeper, contrac
 		return hmCommon.ErrSignerUpdateError(k.Codespace()).Result()
 	}
 
-	resTags := sdk.NewTags(
-		tags.UpdatedAt, []byte(strconv.FormatUint(validator.LastUpdated, 10)),
-		tags.ValidatorID, []byte(strconv.FormatUint(validator.ID.Uint64(), 10)),
-	)
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeStakeUpdate,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(validator.ID.Uint64(), 10)),
+			sdk.NewAttribute(types.AttributeKeyUpdatedAt, strconv.FormatUint(validator.LastUpdated, 10)),
+		),
+	})
 
-	return sdk.Result{Tags: resTags}
+	return sdk.Result{
+		Events: ctx.EventManager().Events(),
+	}
 }
 
 // HandleMsgSignerUpdate handles signer update message
@@ -226,7 +237,7 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k Keeper, contr
 	// check if we are actually updating signer
 	if !bytes.Equal(newSigner.Bytes(), validator.Signer.Bytes()) {
 		// Update signer in prev Validator
-		validator.Signer = types.HeimdallAddress(newSigner)
+		validator.Signer = hmTypes.HeimdallAddress(newSigner)
 		validator.PubKey = newPubKey
 		k.Logger(ctx).Debug("Updating new signer", "signer", newSigner.String(), "oldSigner", oldValidator.Signer.String(), "validatorID", msg.ID)
 	}
@@ -257,13 +268,18 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k Keeper, contr
 		return hmCommon.ErrSignerUpdateError(k.Codespace()).Result()
 	}
 
-	resTags := sdk.NewTags(
-		tags.SignerUpdate, []byte(newSigner.String()),
-		tags.UpdatedAt, []byte(strconv.FormatUint(validator.LastUpdated, 10)),
-		tags.ValidatorID, []byte(strconv.FormatUint(validator.ID.Uint64(), 10)),
-	)
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeSignerUpdate,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(validator.ID.Uint64(), 10)),
+			sdk.NewAttribute(types.AttributeKeyUpdatedAt, strconv.FormatUint(validator.LastUpdated, 10)),
+		),
+	})
 
-	return sdk.Result{Tags: resTags}
+	return sdk.Result{
+		Events: ctx.EventManager().Events(),
+	}
 }
 
 // HandleMsgValidatorExit handle msg validator exit
@@ -299,10 +315,15 @@ func HandleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k Keeper, con
 		return hmCommon.ErrValidatorNotDeactivated(k.Codespace()).Result()
 	}
 
-	resTags := sdk.NewTags(
-		tags.ValidatorExit, []byte(validator.Signer.String()),
-		tags.ValidatorID, []byte(strconv.FormatUint(uint64(validator.ID), 10)),
-	)
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeValidatorExit,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(validator.ID.Uint64(), 10)),
+		),
+	})
 
-	return sdk.Result{Tags: resTags}
+	return sdk.Result{
+		Events: ctx.EventManager().Events(),
+	}
 }

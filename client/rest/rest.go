@@ -9,6 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
+	"github.com/maticnetwork/heimdall/client/utils"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types/rest"
 )
@@ -42,7 +43,7 @@ func WriteGenerateStdTxResponse(
 
 	if br.Simulate || simAndExec {
 		if gasAdj < 0 {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, client.ErrInvalidGasAdjustment.Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, utils.ErrInvalidGasAdjustment.Error())
 			return
 		}
 

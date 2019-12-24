@@ -6,13 +6,14 @@ import (
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/gov"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/params/subspace"
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
-	dbm "github.com/tendermint/tm-db"
 	"github.com/tendermint/tendermint/libs/log"
+	dbm "github.com/tendermint/tm-db"
 
 	"github.com/maticnetwork/heimdall/auth"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
@@ -31,6 +32,7 @@ import (
 	"github.com/maticnetwork/heimdall/supply"
 	supplyTypes "github.com/maticnetwork/heimdall/supply/types"
 	"github.com/maticnetwork/heimdall/types"
+	"github.com/maticnetwork/heimdall/version"
 )
 
 const (
@@ -44,6 +46,13 @@ const (
 )
 
 var (
+	// ModuleBasics defines the module BasicManager is in charge of setting up basic,
+	// non-dependant module elements, such as codec registration
+	// and genesis verification.
+	ModuleBasics = module.NewBasicManager(
+		auth.AppModuleBasic{},
+	)
+
 	// module account permissions
 	maccPerms = map[string][]string{
 		authTypes.FeeCollectorName: nil,
@@ -59,18 +68,25 @@ type HeimdallApp struct {
 	*bam.BaseApp
 	cdc *codec.Codec
 
-	// keys to access the multistore
-	keyAccount    *sdk.KVStoreKey
-	keyBank       *sdk.KVStoreKey
-	keySupply     *sdk.KVStoreKey
-	keyGov        *sdk.KVStoreKey
-	keyCheckpoint *sdk.KVStoreKey
-	keyStaking    *sdk.KVStoreKey
-	keyBor        *sdk.KVStoreKey
-	keyClerk      *sdk.KVStoreKey
-	keyMain       *sdk.KVStoreKey
-	keyParams     *sdk.KVStoreKey
-	tKeyParams    *sdk.TransientStoreKey
+	// keys to access the substores
+	keys  map[string]*sdk.KVStoreKey
+	tkeys map[string]*sdk.TransientStoreKey
+
+	// subspaces
+	subspaces map[string]params.Subspace
+
+	// // keys to access the multistore
+	// keyAccount    *sdk.KVStoreKey
+	// keyBank       *sdk.KVStoreKey
+	// keySupply     *sdk.KVStoreKey
+	// keyGov        *sdk.KVStoreKey
+	// keyCheckpoint *sdk.KVStoreKey
+	// keyStaking    *sdk.KVStoreKey
+	// keyBor        *sdk.KVStoreKey
+	// keyClerk      *sdk.KVStoreKey
+	// keyMain       *sdk.KVStoreKey
+	// keyParams     *sdk.KVStoreKey
+	// tKeyParams    *sdk.TransientStoreKey
 
 	accountKeeper auth.AccountKeeper
 	bankKeeper    bank.Keeper
@@ -88,6 +104,9 @@ type HeimdallApp struct {
 
 	//  total coins supply
 	TotalCoinsSupply types.Coins
+
+	// the module manager
+	mm *module.Manager
 }
 
 var logger = helper.Logger.With("module", "app")
@@ -127,22 +146,49 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	config := sdk.GetConfig()
 	config.Seal()
 
-	// create your application type
+	// base app
+	bApp := bam.NewBaseApp(AppName, logger, db, authTypes.RLPTxDecoder(pulp), baseAppOptions...)
+	bApp.SetCommitMultiStoreTracer(nil)
+	bApp.SetAppVersion(version.Version)
+
+	// keys
+	keys := sdk.NewKVStoreKeys(
+		bam.MainStoreKey, 
+		authTypes.StoreKey, 
+		bankTypes.StoreKey,
+		supplyTypes.StoreKey, 
+		// gov.StoreKey,
+		stakingTypes.StoreKey, 
+		checkpointTypes.StoreKey, 
+		borTypes.StoreKey, 
+		clerkTypes.StoreKey,
+		subspace.StoreKey, // params.StoreKey
+	)
+	tkeys := sdk.NewTransientStoreKeys(params.TStoreKey)
+
+	// create heimdall app
 	var app = &HeimdallApp{
 		cdc:        cdc,
-		BaseApp:    bam.NewBaseApp(AppName, logger, db, authTypes.RLPTxDecoder(pulp), baseAppOptions...),
-		keyMain:    sdk.NewKVStoreKey(bam.MainStoreKey),
-		keyAccount: sdk.NewKVStoreKey(authTypes.StoreKey),
-		keyBank:    sdk.NewKVStoreKey(bankTypes.StoreKey),
-		keySupply:  sdk.NewKVStoreKey(supplyTypes.StoreKey),
-		// keyGov:        sdk.NewKVStoreKey(gov.StoreKey),
-		keyCheckpoint: sdk.NewKVStoreKey(checkpointTypes.StoreKey),
-		keyStaking:    sdk.NewKVStoreKey(stakingTypes.StoreKey),
-		keyBor:        sdk.NewKVStoreKey(borTypes.StoreKey),
-		keyClerk:      sdk.NewKVStoreKey(clerkTypes.StoreKey),
-		keyParams:     sdk.NewKVStoreKey(subspace.StoreKey),
-		tKeyParams:    sdk.NewTransientStoreKey(subspace.TStoreKey),
+		BaseApp:    	bApp,
+		keys:           keys,
+		tkeys:          tkeys,
+		subspaces:      make(map[string]params.Subspace),
 	}
+
+	// init params keeper and subspaces
+	app.ParamsKeeper = params.NewKeeper(app.cdc, keys[params.StoreKey], tkeys[params.TStoreKey], params.DefaultCodespace)
+	app.subspaces[authTypes.ModuleName] = app.ParamsKeeper.Subspace(authTypes.DefaultParamspace)
+	app.subspaces[bankTypes.ModuleName] = app.ParamsKeeper.Subspace(bankTypes.DefaultParamspace)
+	app.subspaces[supplyTypes.ModuleName] = app.ParamsKeeper.Subspace(supplyTypes.DefaultParamspace)
+	// app.subspaces[gov.ModuleName] = app.ParamsKeeper.Subspace(gov.DefaultParamspace).WithKeyTable(gov.ParamKeyTable())
+	app.subspaces[stakingTypes.ModuleName] = app.ParamsKeeper.Subspace(stakingTypes.DefaultParamspace)
+	app.subspaces[checkpointTypes.ModuleName] = app.ParamsKeeper.Subspace(checkpointTypes.DefaultParamspace)
+	app.subspaces[borTypes.ModuleName] = app.ParamsKeeper.Subspace(borTypes.DefaultParamspace)
+	app.subspaces[clerkTypes.ModuleName] = app.ParamsKeeper.Subspace(clerkTypes.DefaultParamspace)
+
+	//
+	// Contract caller
+	//
 
 	contractCallerObj, err := helper.NewContractCaller()
 	if err != nil {

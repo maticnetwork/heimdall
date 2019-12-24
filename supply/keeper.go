@@ -12,7 +12,7 @@ import (
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	bank "github.com/maticnetwork/heimdall/bank"
 	supplyTypes "github.com/maticnetwork/heimdall/supply/types"
-	"github.com/maticnetwork/heimdall/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 // Keys for supply store
@@ -99,7 +99,7 @@ func (k Keeper) ValidatePermissions(macc supplyTypes.ModuleAccountInterface) err
 //
 
 // GetModuleAddress returns an address based on the module name
-func (k Keeper) GetModuleAddress(moduleName string) (addr types.HeimdallAddress) {
+func (k Keeper) GetModuleAddress(moduleName string) (addr hmTypes.HeimdallAddress) {
 	permAddr, ok := k.permAddrs[moduleName]
 	if !ok {
 		return
@@ -109,7 +109,7 @@ func (k Keeper) GetModuleAddress(moduleName string) (addr types.HeimdallAddress)
 }
 
 // GetModuleAddressAndPermissions returns an address and permissions based on the module name
-func (k Keeper) GetModuleAddressAndPermissions(moduleName string) (addr types.HeimdallAddress, permissions []string) {
+func (k Keeper) GetModuleAddressAndPermissions(moduleName string) (addr hmTypes.HeimdallAddress, permissions []string) {
 	permAddr, ok := k.permAddrs[moduleName]
 	if !ok {
 		return addr, permissions
@@ -165,12 +165,12 @@ func (k Keeper) SetModuleAccount(ctx sdk.Context, macc supplyTypes.ModuleAccount
 func (k Keeper) SendCoinsFromModuleToAccount(
 	ctx sdk.Context,
 	senderModule string,
-	recipientAddr types.HeimdallAddress,
-	amt types.Coins,
-) (sdk.Tags, sdk.Error) {
+	recipientAddr hmTypes.HeimdallAddress,
+	amt hmTypes.Coins,
+) sdk.Error {
 	senderAddr := k.GetModuleAddress(senderModule)
 	if senderAddr.Empty() {
-		return nil, sdk.ErrUnknownAddress(fmt.Sprintf("module account %s does not exist", senderModule))
+		return sdk.ErrUnknownAddress(fmt.Sprintf("module account %s does not exist", senderModule))
 	}
 
 	// ignore tags
@@ -182,18 +182,18 @@ func (k Keeper) SendCoinsFromModuleToModule(
 	ctx sdk.Context,
 	senderModule string,
 	recipientModule string,
-	amt types.Coins,
-) (sdk.Tags, sdk.Error) {
+	amt hmTypes.Coins,
+) sdk.Error {
 
 	senderAddr := k.GetModuleAddress(senderModule)
 	if senderAddr.Empty() {
-		return nil, sdk.ErrUnknownAddress(fmt.Sprintf("module account %s does not exist", senderModule))
+		return sdk.ErrUnknownAddress(fmt.Sprintf("module account %s does not exist", senderModule))
 	}
 
 	// create the account if it doesn't yet exist
 	recipientAcc := k.GetModuleAccount(ctx, recipientModule)
 	if recipientAcc == nil {
-		return nil, supplyTypes.ErrNoAccountCreated(supplyTypes.DefaultCodespace)
+		return supplyTypes.ErrNoAccountCreated(supplyTypes.DefaultCodespace)
 	}
 
 	return k.bk.SendCoins(ctx, senderAddr, recipientAcc.GetAddress(), amt)
@@ -202,15 +202,15 @@ func (k Keeper) SendCoinsFromModuleToModule(
 // SendCoinsFromAccountToModule transfers coins from an AccAddress to a ModuleAccount
 func (k Keeper) SendCoinsFromAccountToModule(
 	ctx sdk.Context,
-	senderAddr types.HeimdallAddress,
+	senderAddr hmTypes.HeimdallAddress,
 	recipientModule string,
-	amt types.Coins,
-) (sdk.Tags, sdk.Error) {
+	amt hmTypes.Coins,
+) sdk.Error {
 
 	// create the account if it doesn't yet exist
 	recipientAcc := k.GetModuleAccount(ctx, recipientModule)
 	if recipientAcc == nil {
-		return nil, supplyTypes.ErrNoAccountCreated(supplyTypes.DefaultCodespace)
+		return supplyTypes.ErrNoAccountCreated(supplyTypes.DefaultCodespace)
 	}
 
 	return k.bk.SendCoins(ctx, senderAddr, recipientAcc.GetAddress(), amt)

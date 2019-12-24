@@ -52,7 +52,7 @@ type FeeCollector interface {
 		types.HeimdallAddress,
 		string,
 		types.Coins,
-	) (sdk.Tags, sdk.Error)
+	) sdk.Error
 }
 
 // NewAnteHandler returns an AnteHandler that checks and increments sequence
@@ -282,7 +282,7 @@ func DeductFees(feeCollector FeeCollector, ctx sdk.Context, acc authTypes.Accoun
 		).Result()
 	}
 
-	_, err := feeCollector.SendCoinsFromAccountToModule(ctx, acc.GetAddress(), authTypes.FeeCollectorName, fees)
+	err := feeCollector.SendCoinsFromAccountToModule(ctx, acc.GetAddress(), authTypes.FeeCollectorName, fees)
 	if err != nil {
 		return err.Result()
 	}

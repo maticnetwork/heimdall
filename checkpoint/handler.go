@@ -7,11 +7,10 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethCmn "github.com/ethereum/go-ethereum/common"
-	"github.com/maticnetwork/heimdall/checkpoint/tags"
+	"github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/common"
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -100,7 +99,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper, contractC
 			return common.ErrComputeGenesisRewardRoot(k.Codespace()).Result()
 		}
 		if !bytes.Equal(genesisrewardRootHash, msg.RewardRootHash.Bytes()) {
-			k.Logger(ctx).Error("Genesis RewardRootHash", types.BytesToHeimdallHash(genesisrewardRootHash).String(),
+			k.Logger(ctx).Error("Genesis RewardRootHash", hmTypes.BytesToHeimdallHash(genesisrewardRootHash).String(),
 				"doesn't match with Genesis RewardRootHash of msg", msg.RewardRootHash)
 			return common.ErrRewardRootMismatch(k.Codespace()).Result()
 		}
@@ -138,14 +137,19 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper, contractC
 	checkpoint, _ := k.GetCheckpointFromBuffer(ctx)
 	k.Logger(ctx).Debug("Adding good checkpoint to buffer to await ACK", "checkpointStored", checkpoint.String())
 
-	resTags := sdk.NewTags(
-		tags.Proposer, []byte(msg.Proposer.String()),
-		tags.StartBlock, []byte(strconv.FormatUint(uint64(msg.StartBlock), 10)),
-		tags.EndBlock, []byte(strconv.FormatUint(uint64(msg.EndBlock), 10)),
-	)
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeCheckpoint,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(types.AttributeKeyProposer, msg.Proposer.String()),
+			sdk.NewAttribute(types.AttributeKeyStartBlock, strconv.FormatUint(uint64(msg.StartBlock), 10)),
+			sdk.NewAttribute(types.AttributeKeyEndBlock, strconv.FormatUint(uint64(msg.EndBlock), 10)),
+		),
+	})
 
-	// send tags
-	return sdk.Result{Tags: resTags}
+	return sdk.Result{
+		Events: ctx.EventManager().Events(),
+	}
 }
 
 // handleMsgCheckpointAck Validates if checkpoint submitted on chain is valid
@@ -203,7 +207,7 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k Keeper, con
 	if headerBlock.EndBlock > end {
 		k.Logger(ctx).Info("Adjusting endBlock to one already submitted on chain", "OldEndBlock", headerBlock.EndBlock, "AdjustedEndBlock", end)
 		headerBlock.EndBlock = end
-		headerBlock.RootHash = types.HeimdallHash(root)
+		headerBlock.RootHash = hmTypes.HeimdallHash(root)
 		// TODO proposer also needs to be changed
 	}
 
@@ -246,10 +250,10 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k Keeper, con
 	valRewardMap := k.sk.GetAllValidatorRewards(ctx)
 	k.Logger(ctx).Debug("rewards of all validators", "RewardMap", valRewardMap)
 	rewardRoot, err := GetRewardRootHash(valRewardMap)
-	k.Logger(ctx).Info("Reward root hash generated", "RewardRootHash", types.BytesToHeimdallHash(rewardRoot).String())
+	k.Logger(ctx).Info("Reward root hash generated", "RewardRootHash", hmTypes.BytesToHeimdallHash(rewardRoot).String())
 
 	// Add new Reward root hash to bufferedcheckpoint header block
-	headerBlock.RewardRootHash = types.BytesToHeimdallHash(rewardRoot)
+	headerBlock.RewardRootHash = hmTypes.BytesToHeimdallHash(rewardRoot)
 
 	// Add checkpoint to headerBlocks
 	k.AddCheckpoint(ctx, msg.HeaderBlock, *headerBlock)
@@ -278,11 +282,17 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k Keeper, con
 		"power", newProposer.VotingPower,
 	)
 
-	resTags := sdk.NewTags(
-		tags.HeaderIndex, []byte(strconv.FormatUint(uint64(msg.HeaderBlock), 10)),
-	)
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeCheckpointAck,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(types.AttributeKeyHeaderIndex, strconv.FormatUint(uint64(msg.HeaderBlock), 10)),
+		),
+	})
 
-	return sdk.Result{Tags: resTags}
+	return sdk.Result{
+		Events: ctx.EventManager().Events(),
+	}
 }
 
 // Validate checkpoint no-ack transaction
@@ -331,10 +341,16 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k Keeper)
 		"power", newProposer.VotingPower,
 	)
 
-	resTags := sdk.NewTags(
-		tags.NewProposer, []byte(newProposer.Signer.String()),
-	)
+	// add events
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeCheckpointNoAck,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(types.AttributeKeyNewProposer, newProposer.Signer.String()),
+		),
+	})
 
-	// --- End
-	return sdk.Result{Tags: resTags}
+	return sdk.Result{
+		Events: ctx.EventManager().Events(),
+	}
 }
