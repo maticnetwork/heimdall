@@ -11,9 +11,8 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/maticnetwork/heimdall/auth"
-	authTypes "github.com/maticnetwork/heimdall/auth/types"
-	bankTypes "github.com/maticnetwork/heimdall/bank/types"
-	"github.com/maticnetwork/heimdall/types"
+	"github.com/maticnetwork/heimdall/bank/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 var (
@@ -47,7 +46,7 @@ func NewKeeper(
 	codespace sdk.CodespaceType,
 	ak auth.AccountKeeper,
 ) Keeper {
-	ps := paramSpace.WithKeyTable(bankTypes.ParamKeyTable())
+	ps := paramSpace.WithKeyTable(types.ParamKeyTable())
 	return Keeper{
 		key:        key,
 		cdc:        cdc,
@@ -64,82 +63,180 @@ func (keeper Keeper) Codespace() sdk.CodespaceType {
 
 // Logger returns a module-specific logger
 func (keeper Keeper) Logger(ctx sdk.Context) log.Logger {
-	return ctx.Logger().With("module", bankTypes.ModuleName)
+	return ctx.Logger().With("module", types.ModuleName)
 }
 
 // SetCoins sets the coins at the addr.
 func (keeper Keeper) SetCoins(
-	ctx sdk.Context, addr types.HeimdallAddress, amt types.Coins,
+	ctx sdk.Context, addr hmTypes.HeimdallAddress, amt hmTypes.Coins,
 ) sdk.Error {
 
 	if !amt.IsValid() {
 		return sdk.ErrInvalidCoins(amt.String())
 	}
-	return setCoins(ctx, keeper.ak, addr, amt)
+
+	acc := keeper.ak.GetAccount(ctx, addr)
+	if acc == nil {
+		acc = keeper.ak.NewAccountWithAddress(ctx, addr)
+	}
+
+	err := acc.SetCoins(amt)
+	if err != nil {
+		// Handle w/ #870
+		panic(err)
+	}
+	keeper.ak.SetAccount(ctx, acc)
+	return nil
 }
 
 // SubtractCoins subtracts amt from the coins at the addr.
 func (keeper Keeper) SubtractCoins(
-	ctx sdk.Context, addr types.HeimdallAddress, amt types.Coins,
-) (types.Coins, sdk.Tags, sdk.Error) {
-
-	if !amt.IsValid() {
-		return nil, nil, sdk.ErrInvalidCoins(amt.String())
-	}
-	return subtractCoins(ctx, keeper.ak, addr, amt)
-}
-
-// AddCoins adds amt to the coins at the addr.
-func (keeper Keeper) AddCoins(
-	ctx sdk.Context, addr types.HeimdallAddress, amt types.Coins,
-) (types.Coins, sdk.Tags, sdk.Error) {
-
-	if !amt.IsValid() {
-		return nil, nil, sdk.ErrInvalidCoins(amt.String())
-	}
-	return addCoins(ctx, keeper.ak, addr, amt)
-}
-
-// InputOutputCoins handles a list of inputs and outputs
-func (keeper Keeper) InputOutputCoins(
-	ctx sdk.Context, inputs []bankTypes.Input, outputs []bankTypes.Output,
-) (sdk.Tags, sdk.Error) {
-
-	return inputOutputCoins(ctx, keeper.ak, inputs, outputs)
-}
-
-// SendCoins moves coins from one account to another
-func (keeper Keeper) SendCoins(
-	ctx sdk.Context, fromAddr types.HeimdallAddress, toAddr types.HeimdallAddress, amt types.Coins,
-) (sdk.Tags, sdk.Error) {
+	ctx sdk.Context, addr hmTypes.HeimdallAddress, amt hmTypes.Coins,
+) (hmTypes.Coins, sdk.Error) {
 
 	if !amt.IsValid() {
 		return nil, sdk.ErrInvalidCoins(amt.String())
 	}
-	return sendCoins(ctx, keeper.ak, fromAddr, toAddr, amt)
+
+	oldCoins, spendableCoins := hmTypes.NewCoins(), hmTypes.NewCoins()
+
+	acc := keeper.ak.GetAccount(ctx, addr)
+	if acc != nil {
+		oldCoins = acc.GetCoins()
+		spendableCoins = acc.SpendableCoins(ctx.BlockHeader().Time)
+	}
+
+	// So the check here is sufficient instead of subtracting from oldCoins.
+	_, hasNeg := spendableCoins.SafeSub(amt)
+	if hasNeg {
+		return amt, sdk.ErrInsufficientCoins(
+			fmt.Sprintf("insufficient account funds; %s < %s", spendableCoins, amt),
+		)
+	}
+
+	newCoins := oldCoins.Sub(amt) // should not panic as spendable coins was already checked
+	err := keeper.SetCoins(ctx, addr, newCoins)
+
+	return newCoins, err
+}
+
+// AddCoins adds amt to the coins at the addr.
+func (keeper Keeper) AddCoins(
+	ctx sdk.Context, addr hmTypes.HeimdallAddress, amt hmTypes.Coins,
+) (hmTypes.Coins, sdk.Error) {
+
+	if !amt.IsValid() {
+		return nil, sdk.ErrInvalidCoins(amt.String())
+	}
+
+	oldCoins := keeper.GetCoins(ctx, addr)
+	newCoins := oldCoins.Add(amt)
+
+	if newCoins.IsAnyNegative() {
+		return amt, sdk.ErrInsufficientCoins(
+			fmt.Sprintf("insufficient account funds; %s < %s", oldCoins, amt),
+		)
+	}
+
+	err := keeper.SetCoins(ctx, addr, newCoins)
+	return newCoins, err
+}
+
+// InputOutputCoins handles a list of inputs and outputs
+func (keeper Keeper) InputOutputCoins(
+	ctx sdk.Context, inputs []types.Input, outputs []types.Output,
+) sdk.Error {
+	// Safety check ensuring that when sending coins the keeper must maintain the
+	// Check supply invariant and validity of Coins.
+	if err := types.ValidateInputsOutputs(inputs, outputs); err != nil {
+		return err
+	}
+
+	for _, in := range inputs {
+		_, err := keeper.SubtractCoins(ctx, in.Address, in.Coins)
+		if err != nil {
+			return err
+		}
+
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				sdk.EventTypeMessage,
+				sdk.NewAttribute(types.AttributeKeySender, in.Address.String()),
+			),
+		)
+	}
+
+	for _, out := range outputs {
+		_, err := keeper.AddCoins(ctx, out.Address, out.Coins)
+		if err != nil {
+			return err
+		}
+
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				types.EventTypeTransfer,
+				sdk.NewAttribute(types.AttributeKeyRecipient, out.Address.String()),
+			),
+		)
+	}
+
+	return nil
+}
+
+// SendCoins moves coins from one account to another
+func (keeper Keeper) SendCoins(
+	ctx sdk.Context, fromAddr hmTypes.HeimdallAddress, toAddr hmTypes.HeimdallAddress, amt hmTypes.Coins,
+) sdk.Error {
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeTransfer,
+			sdk.NewAttribute(types.AttributeKeyRecipient, toAddr.String()),
+			sdk.NewAttribute(sdk.AttributeKeyAmount, amt.String()),
+		),
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(types.AttributeKeySender, fromAddr.String()),
+		),
+	})
+
+	_, err := keeper.SubtractCoins(ctx, fromAddr, amt)
+	if err != nil {
+		return err
+	}
+
+	_, err = keeper.AddCoins(ctx, toAddr, amt)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // GetSendEnabled returns the current SendEnabled
 // nolint: errcheck
 func (keeper Keeper) GetSendEnabled(ctx sdk.Context) bool {
 	var enabled bool
-	keeper.paramSpace.Get(ctx, bankTypes.ParamStoreKeySendEnabled, &enabled)
+	keeper.paramSpace.Get(ctx, types.ParamStoreKeySendEnabled, &enabled)
 	return enabled
 }
 
 // SetSendEnabled sets the send enabled
 func (keeper Keeper) SetSendEnabled(ctx sdk.Context, enabled bool) {
-	keeper.paramSpace.Set(ctx, bankTypes.ParamStoreKeySendEnabled, &enabled)
+	keeper.paramSpace.Set(ctx, types.ParamStoreKeySendEnabled, &enabled)
 }
 
 // GetCoins returns the coins at the addr.
-func (keeper Keeper) GetCoins(ctx sdk.Context, addr types.HeimdallAddress) types.Coins {
-	return getCoins(ctx, keeper.ak, addr)
+func (keeper Keeper) GetCoins(ctx sdk.Context, addr hmTypes.HeimdallAddress) hmTypes.Coins {
+	acc := keeper.ak.GetAccount(ctx, addr)
+	if acc == nil {
+		return hmTypes.NewCoins()
+	}
+	return acc.GetCoins()
 }
 
 // HasCoins returns whether or not an account has at least amt coins.
-func (keeper Keeper) HasCoins(ctx sdk.Context, addr types.HeimdallAddress, amt types.Coins) bool {
-	return hasCoins(ctx, keeper.ak, addr, amt)
+func (keeper Keeper) HasCoins(ctx sdk.Context, addr hmTypes.HeimdallAddress, amt hmTypes.Coins) bool {
+	return keeper.GetCoins(ctx, addr).IsAllGTE(amt)
 }
 
 //
@@ -157,7 +254,7 @@ func GetTopupSequenceKey(sequence uint64) []byte {
 }
 
 // GetValidatorTopup returns validator toptup information
-func (keeper Keeper) GetValidatorTopup(ctx sdk.Context, addr types.HeimdallAddress) (*bankTypes.ValidatorTopup, error) {
+func (keeper Keeper) GetValidatorTopup(ctx sdk.Context, addr hmTypes.HeimdallAddress) (*types.ValidatorTopup, error) {
 	store := ctx.KVStore(keeper.key)
 
 	// check if topup exists
@@ -167,7 +264,7 @@ func (keeper Keeper) GetValidatorTopup(ctx sdk.Context, addr types.HeimdallAddre
 	}
 
 	// unmarshall validator and return
-	validatorTopup, err := bankTypes.UnmarshallValidatorTopup(keeper.cdc, store.Get(key))
+	validatorTopup, err := types.UnmarshallValidatorTopup(keeper.cdc, store.Get(key))
 	if err != nil {
 		return nil, err
 	}
@@ -177,11 +274,11 @@ func (keeper Keeper) GetValidatorTopup(ctx sdk.Context, addr types.HeimdallAddre
 }
 
 // SetValidatorTopup sets validator topup object
-func (keeper Keeper) SetValidatorTopup(ctx sdk.Context, addr types.HeimdallAddress, validatorTopup bankTypes.ValidatorTopup) error {
+func (keeper Keeper) SetValidatorTopup(ctx sdk.Context, addr hmTypes.HeimdallAddress, validatorTopup types.ValidatorTopup) error {
 	store := ctx.KVStore(keeper.key)
 
 	// validator topup
-	bz, err := bankTypes.MarshallValidatorTopup(keeper.cdc, validatorTopup)
+	bz, err := types.MarshallValidatorTopup(keeper.cdc, validatorTopup)
 	if err != nil {
 		return err
 	}
@@ -203,149 +300,4 @@ func (keeper Keeper) SetTopupSequence(ctx sdk.Context, sequence uint64) {
 func (keeper Keeper) HasTopupSequence(ctx sdk.Context, sequence uint64) bool {
 	store := ctx.KVStore(keeper.key)
 	return store.Has(GetTopupSequenceKey(sequence))
-}
-
-//
-// Internal methods
-//
-
-func getCoins(ctx sdk.Context, am auth.AccountKeeper, addr types.HeimdallAddress) types.Coins {
-	acc := am.GetAccount(ctx, addr)
-	if acc == nil {
-		return types.NewCoins()
-	}
-	return acc.GetCoins()
-}
-
-func setCoins(ctx sdk.Context, am auth.AccountKeeper, addr types.HeimdallAddress, amt types.Coins) sdk.Error {
-	if !amt.IsValid() {
-		return sdk.ErrInvalidCoins(amt.String())
-	}
-	acc := am.GetAccount(ctx, addr)
-	if acc == nil {
-		acc = am.NewAccountWithAddress(ctx, addr)
-	}
-	err := acc.SetCoins(amt)
-	if err != nil {
-		// Handle w/ #870
-		panic(err)
-	}
-	am.SetAccount(ctx, acc)
-	return nil
-}
-
-// HasCoins returns whether or not an account has at least amt coins.
-func hasCoins(ctx sdk.Context, am auth.AccountKeeper, addr types.HeimdallAddress, amt types.Coins) bool {
-	return getCoins(ctx, am, addr).IsAllGTE(amt)
-}
-
-func getAccount(ctx sdk.Context, ak auth.AccountKeeper, addr types.HeimdallAddress) authTypes.Account {
-	return ak.GetAccount(ctx, addr)
-}
-
-func setAccount(ctx sdk.Context, ak auth.AccountKeeper, acc authTypes.Account) {
-	ak.SetAccount(ctx, acc)
-}
-
-// subtractCoins subtracts amt coins from an account with the given address addr.
-func subtractCoins(ctx sdk.Context, ak auth.AccountKeeper, addr types.HeimdallAddress, amt types.Coins) (types.Coins, sdk.Tags, sdk.Error) {
-
-	if !amt.IsValid() {
-		return nil, nil, sdk.ErrInvalidCoins(amt.String())
-	}
-
-	oldCoins, spendableCoins := types.NewCoins(), types.NewCoins()
-
-	acc := getAccount(ctx, ak, addr)
-	if acc != nil {
-		oldCoins = acc.GetCoins()
-		spendableCoins = acc.SpendableCoins(ctx.BlockHeader().Time)
-	}
-
-	// So the check here is sufficient instead of subtracting from oldCoins.
-	_, hasNeg := spendableCoins.SafeSub(amt)
-	if hasNeg {
-		return amt, nil, sdk.ErrInsufficientCoins(
-			fmt.Sprintf("insufficient account funds; %s < %s", spendableCoins, amt),
-		)
-	}
-
-	newCoins := oldCoins.Sub(amt) // should not panic as spendable coins was already checked
-	err := setCoins(ctx, ak, addr, newCoins)
-	tags := sdk.NewTags(TagKeySender, addr.String())
-
-	return newCoins, tags, err
-}
-
-// AddCoins adds amt to the coins at the addr.
-func addCoins(ctx sdk.Context, am auth.AccountKeeper, addr types.HeimdallAddress, amt types.Coins) (types.Coins, sdk.Tags, sdk.Error) {
-
-	if !amt.IsValid() {
-		return nil, nil, sdk.ErrInvalidCoins(amt.String())
-	}
-
-	oldCoins := getCoins(ctx, am, addr)
-	newCoins := oldCoins.Add(amt)
-
-	if newCoins.IsAnyNegative() {
-		return amt, nil, sdk.ErrInsufficientCoins(
-			fmt.Sprintf("insufficient account funds; %s < %s", oldCoins, amt),
-		)
-	}
-
-	err := setCoins(ctx, am, addr, newCoins)
-	tags := sdk.NewTags(TagKeyRecipient, addr.String())
-
-	return newCoins, tags, err
-}
-
-// SendCoins moves coins from one account to another
-// Returns ErrInvalidCoins if amt is invalid.
-func sendCoins(ctx sdk.Context, am auth.AccountKeeper, fromAddr types.HeimdallAddress, toAddr types.HeimdallAddress, amt types.Coins) (sdk.Tags, sdk.Error) {
-	// Safety check ensuring that when sending coins the keeper must maintain the
-	if !amt.IsValid() {
-		return nil, sdk.ErrInvalidCoins(amt.String())
-	}
-
-	_, subTags, err := subtractCoins(ctx, am, fromAddr, amt)
-	if err != nil {
-		return nil, err
-	}
-
-	_, addTags, err := addCoins(ctx, am, toAddr, amt)
-	if err != nil {
-		return nil, err
-	}
-
-	return subTags.AppendTags(addTags), nil
-}
-
-// InputOutputCoins handles a list of inputs and outputs
-// NOTE: Make sure to revert state changes from tx on error
-func inputOutputCoins(ctx sdk.Context, am auth.AccountKeeper, inputs []bankTypes.Input, outputs []bankTypes.Output) (sdk.Tags, sdk.Error) {
-	// Safety check ensuring that when sending coins the keeper must maintain the
-	// Check supply invariant and validity of Coins.
-	if err := bankTypes.ValidateInputsOutputs(inputs, outputs); err != nil {
-		return nil, err
-	}
-
-	allTags := sdk.EmptyTags()
-
-	for _, in := range inputs {
-		_, tags, err := subtractCoins(ctx, am, in.Address, in.Coins)
-		if err != nil {
-			return nil, err
-		}
-		allTags = allTags.AppendTags(tags)
-	}
-
-	for _, out := range outputs {
-		_, tags, err := addCoins(ctx, am, out.Address, out.Coins)
-		if err != nil {
-			return nil, err
-		}
-		allTags = allTags.AppendTags(tags)
-	}
-
-	return allTags, nil
 }
