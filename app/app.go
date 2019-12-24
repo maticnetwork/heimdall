@@ -9,7 +9,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/gov"
 	"github.com/cosmos/cosmos-sdk/x/params"
-	"github.com/cosmos/cosmos-sdk/x/params/subspace"
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
@@ -75,29 +74,18 @@ type HeimdallApp struct {
 	// subspaces
 	subspaces map[string]params.Subspace
 
-	// // keys to access the multistore
-	// keyAccount    *sdk.KVStoreKey
-	// keyBank       *sdk.KVStoreKey
-	// keySupply     *sdk.KVStoreKey
-	// keyGov        *sdk.KVStoreKey
-	// keyCheckpoint *sdk.KVStoreKey
-	// keyStaking    *sdk.KVStoreKey
-	// keyBor        *sdk.KVStoreKey
-	// keyClerk      *sdk.KVStoreKey
-	// keyMain       *sdk.KVStoreKey
-	// keyParams     *sdk.KVStoreKey
-	// tKeyParams    *sdk.TransientStoreKey
+	// keepers
+	AccountKeeper    auth.AccountKeeper
+	BankKeeper       bank.Keeper
+	SupplyKeeper     supply.Keeper
+	GovKeeper        gov.Keeper
+	CheckpointKeeper checkpoint.Keeper
+	StakingKeeper    staking.Keeper
+	BorKeeper        bor.Keeper
+	ClerkKeeper      clerk.Keeper
 
-	accountKeeper auth.AccountKeeper
-	bankKeeper    bank.Keeper
-	supplyKeeper  supply.Keeper
-	govKeeper     gov.Keeper
-	paramsKeeper  params.Keeper
-
-	checkpointKeeper checkpoint.Keeper
-	stakingKeeper    staking.Keeper
-	borKeeper        bor.Keeper
-	clerkKeeper      clerk.Keeper
+	// param keeper
+	ParamsKeeper params.Keeper
 
 	// masterKeeper common.Keeper
 	caller helper.ContractCaller
@@ -122,12 +110,12 @@ type CrossCommunicator struct {
 
 // GetACKCount returns ack count
 func (d CrossCommunicator) GetACKCount(ctx sdk.Context) uint64 {
-	return d.App.checkpointKeeper.GetACKCount(ctx)
+	return d.App.CheckpointKeeper.GetACKCount(ctx)
 }
 
 // IsCurrentValidatorByAddress check if validator is current validator
 func (d CrossCommunicator) IsCurrentValidatorByAddress(ctx sdk.Context, address []byte) bool {
-	return d.App.stakingKeeper.IsCurrentValidatorByAddress(ctx, address)
+	return d.App.StakingKeeper.IsCurrentValidatorByAddress(ctx, address)
 }
 
 //
@@ -153,26 +141,26 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 
 	// keys
 	keys := sdk.NewKVStoreKeys(
-		bam.MainStoreKey, 
-		authTypes.StoreKey, 
+		bam.MainStoreKey,
+		authTypes.StoreKey,
 		bankTypes.StoreKey,
-		supplyTypes.StoreKey, 
+		supplyTypes.StoreKey,
 		// gov.StoreKey,
-		stakingTypes.StoreKey, 
-		checkpointTypes.StoreKey, 
-		borTypes.StoreKey, 
+		stakingTypes.StoreKey,
+		checkpointTypes.StoreKey,
+		borTypes.StoreKey,
 		clerkTypes.StoreKey,
-		subspace.StoreKey, // params.StoreKey
+		params.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(params.TStoreKey)
 
 	// create heimdall app
 	var app = &HeimdallApp{
-		cdc:        cdc,
-		BaseApp:    	bApp,
-		keys:           keys,
-		tkeys:          tkeys,
-		subspaces:      make(map[string]params.Subspace),
+		cdc:       cdc,
+		BaseApp:   bApp,
+		keys:      keys,
+		tkeys:     tkeys,
+		subspaces: make(map[string]params.Subspace),
 	}
 
 	// init params keeper and subspaces
@@ -207,72 +195,72 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	// keepers
 	//
 
-	// define param keeper
-	app.paramsKeeper = params.NewKeeper(cdc, app.keyParams, app.tKeyParams)
-
 	// account keeper
-	app.accountKeeper = auth.NewAccountKeeper(
+	app.AccountKeeper = auth.NewAccountKeeper(
 		app.cdc,
-		app.keyAccount, // target store
-		app.paramsKeeper.Subspace(authTypes.DefaultParamspace),
+		keys[authTypes.StoreKey], // target store
+		app.subspaces[authTypes.ModuleName],
 		authTypes.ProtoBaseAccount, // prototype
 	)
 
 	// bank keeper
-	app.bankKeeper = bank.NewBaseKeeper(
+	app.BankKeeper = bank.NewBaseKeeper(
 		app.cdc,
-		app.keyBank, // target store
-		app.paramsKeeper.Subspace(bankTypes.DefaultParamspace),
+		keys[bankTypes.StoreKey], // target store
+		app.subspaces[bankTypes.ModuleName],
 		bankTypes.DefaultCodespace,
-		app.accountKeeper,
+		app.AccountKeeper,
 	)
 
 	// bank keeper
-	app.supplyKeeper = supply.NewKeeper(
+	app.SupplyKeeper = supply.NewKeeper(
 		app.cdc,
-		app.keyBank, // target store
-		app.paramsKeeper.Subspace(supplyTypes.DefaultParamspace),
+		keys[supplyTypes.StoreKey], // target store
+		app.subspaces[supplyTypes.ModuleName],
 		maccPerms,
-		app.accountKeeper,
-		app.bankKeeper,
+		app.AccountKeeper,
+		app.BankKeeper,
 	)
 
-	// app.govKeeper = gov.NewKeeper(
+	// app.GovKeeper = gov.NewKeeper(
 	// 	app.cdc,
-	// 	app.keyGov,
-	// 	app.paramsKeeper, app.paramsKeeper.Subspace(gov.DefaultParamspace), app.bankKeeper, &stakingKeeper,
+	// 	keys[govTypes.StoreKey],
+	// 	app.ParamsKeeper,
+	// 	app.paramsKeeper.Subspace(gov.DefaultParamspace),
+	// 	app.bankKeeper,
+	// 	&stakingKeeper,
 	// 	gov.DefaultCodespace,
 	// )
 
-	app.stakingKeeper = staking.NewKeeper(
+	app.StakingKeeper = staking.NewKeeper(
 		app.cdc,
-		app.keyStaking,
-		app.paramsKeeper.Subspace(stakingTypes.DefaultParamspace),
+		keys[stakingTypes.StoreKey], // target store
+		app.subspaces[stakingTypes.ModuleName],
 		common.DefaultCodespace,
 		crossCommunicator,
 	)
 
-	app.checkpointKeeper = checkpoint.NewKeeper(
+	app.CheckpointKeeper = checkpoint.NewKeeper(
 		app.cdc,
-		app.stakingKeeper,
-		app.keyCheckpoint,
-		app.paramsKeeper.Subspace(checkpointTypes.DefaultParamspace),
+		keys[checkpointTypes.StoreKey], // target store
+		app.subspaces[checkpointTypes.ModuleName],
 		common.DefaultCodespace,
+		app.StakingKeeper,
 	)
 
-	app.borKeeper = bor.NewKeeper(
+	app.BorKeeper = bor.NewKeeper(
 		app.cdc,
-		app.stakingKeeper,
-		app.keyBor,
-		app.paramsKeeper.Subspace(borTypes.DefaultParamspace),
+		keys[borTypes.StoreKey], // target store
+		app.subspaces[borTypes.ModuleName],
 		common.DefaultCodespace,
+		app.StakingKeeper,
 		app.caller,
 	)
 
-	app.clerkKeeper = clerk.NewKeeper(
+	app.ClerkKeeper = clerk.NewKeeper(
 		app.cdc,
-		app.keyClerk,
-		app.paramsKeeper.Subspace(clerkTypes.DefaultParamspace),
+		keys[clerkTypes.StoreKey], // target store
+		app.subspaces[clerkTypes.ModuleName],
 		common.DefaultCodespace,
 	)
 
@@ -300,26 +288,18 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.SetEndBlocker(app.endBlocker)
 	app.SetAnteHandler(
 		auth.NewAnteHandler(
-			app.accountKeeper,
-			app.supplyKeeper,
+			app.AccountKeeper,
+			app.SupplyKeeper,
 			auth.DefaultSigVerificationGasConsumer,
 		),
 	)
 
 	// mount the multistore and load the latest state
-	app.MountStores(
-		app.keyMain,
-		app.keyAccount,
-		app.keyBank,
-		app.keySupply,
-		app.keyCheckpoint,
-		app.keyStaking,
-		app.keyBor,
-		app.keyClerk,
-		app.keyParams,
-		app.tKeyParams,
-	)
-	err = app.LoadLatestVersion(app.keyMain)
+	app.MountKVStores(keys)
+	app.MountTransientStores(tkeys)
+
+	// load latest version
+	err = app.LoadLatestVersion(app.keys[bam.MainStoreKey])
 	if err != nil {
 		cmn.Exit(err.Error())
 	}
@@ -506,4 +486,57 @@ func (app *HeimdallApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 			Validator: &abci.ValidatorParams{PubKeyTypes: []string{ABCIPubKeyTypeSecp256k1}},
 		},
 	}
+}
+
+// LoadHeight loads a particular height
+func (app *HeimdallApp) LoadHeight(height int64) error {
+	return app.LoadVersion(height, app.keys[bam.MainStoreKey])
+}
+
+// ModuleAccountAddrs returns all the app's module account addresses.
+func (app *HeimdallApp) ModuleAccountAddrs() map[string]bool {
+	modAccAddrs := make(map[string]bool)
+	for acc := range maccPerms {
+		modAccAddrs[supplyTypes.NewModuleAddress(acc).String()] = true
+	}
+
+	return modAccAddrs
+}
+
+// Codec returns HeimdallApp's codec.
+//
+// NOTE: This is solely to be used for testing purposes as it may be desirable
+// for modules to register their own custom testing types.
+func (app *HeimdallApp) Codec() *codec.Codec {
+	return app.cdc
+}
+
+// GetKey returns the KVStoreKey for the provided store key.
+//
+// NOTE: This is solely to be used for testing purposes.
+func (app *HeimdallApp) GetKey(storeKey string) *sdk.KVStoreKey {
+	return app.keys[storeKey]
+}
+
+// GetTKey returns the TransientStoreKey for the provided store key.
+//
+// NOTE: This is solely to be used for testing purposes.
+func (app *HeimdallApp) GetTKey(storeKey string) *sdk.TransientStoreKey {
+	return app.tkeys[storeKey]
+}
+
+// GetSubspace returns a param subspace for a given module name.
+//
+// NOTE: This is solely to be used for testing purposes.
+func (app *HeimdallApp) GetSubspace(moduleName string) params.Subspace {
+	return app.subspaces[moduleName]
+}
+
+// GetMaccPerms returns a copy of the module account permissions
+func GetMaccPerms() map[string][]string {
+	dupMaccPerms := make(map[string][]string)
+	for k, v := range maccPerms {
+		dupMaccPerms[k] = v
+	}
+	return dupMaccPerms
 }

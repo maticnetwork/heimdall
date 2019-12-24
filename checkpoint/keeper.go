@@ -41,17 +41,17 @@ type Keeper struct {
 // NewKeeper create new keeper
 func NewKeeper(
 	cdc *codec.Codec,
-	stakingKeeper staking.Keeper,
 	storeKey sdk.StoreKey,
 	paramSpace params.Subspace,
 	codespace sdk.CodespaceType,
+	stakingKeeper staking.Keeper,
 ) Keeper {
 	keeper := Keeper{
 		cdc:        cdc,
-		sk:         stakingKeeper,
 		storeKey:   storeKey,
 		paramSpace: paramSpace,
 		codespace:  codespace,
+		sk:         stakingKeeper,
 	}
 	return keeper
 }
