@@ -1,44 +1,50 @@
 package checkpoint
 
 import (
-	"testing"
-	"time"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/helper/mocks"
-	"github.com/maticnetwork/heimdall/types"
-	"github.com/maticnetwork/heimdall/checkpoint"
-	"github.com/stretchr/testify/require"
 	"bytes"
 	"encoding/hex"
+	"math/big"
 	"math/rand"
 	"os"
+	"testing"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
-	ethcmn "github.com/ethereum/go-ethereum/common"
+	"github.com/cosmos/cosmos-sdk/x/params/subspace"
+	"github.com/maticnetwork/heimdall/bor"
+	"github.com/maticnetwork/heimdall/common"
+	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/helper/mocks"
+	"github.com/maticnetwork/heimdall/staking"
+	"github.com/maticnetwork/heimdall/types"
 	"github.com/stretchr/testify/require"
-	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
+
+	// "testing"
+	// "bytes"
+	// "encoding/hex"
+	// "math/rand"
+	// "os"
+	// "time"
+	// "github.com/maticnetwork/heimdall/helper/mocks"
+	// "github.com/cosmos/cosmos-sdk/codec"
+	// "github.com/cosmos/cosmos-sdk/store"
+	// "github.com/cosmos/cosmos-sdk/x/params"
+	ethcmn "github.com/ethereum/go-ethereum/common"
+	// "github.com/stretchr/testify/require"
+	abci "github.com/tendermint/tendermint/abci/types"
+	// "github.com/tendermint/tendermint/crypto/secp256k1"
 	dbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
 
-	"github.com/cosmos/cosmos-sdk/x/params/subspace"
 	bankTypes "github.com/maticnetwork/heimdall/bank/types"
-	"github.com/maticnetwork/heimdall/bor"
-
-	"github.com/maticnetwork/heimdall/checkpoint"
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
-	"github.com/maticnetwork/heimdall/common"
-	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/staking"
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
-	"github.com/maticnetwork/heimdall/types"
 )
+
 func MakeTestCodec() *codec.Codec {
 	cdc := codec.New()
 
@@ -49,7 +55,7 @@ func MakeTestCodec() *codec.Codec {
 
 	// custom types
 	bor.RegisterCodec(cdc)
-	checkpoint.RegisterCodec(cdc)
+	RegisterCodec(cdc)
 	staking.RegisterCodec(cdc)
 
 	cdc.Seal()
@@ -57,7 +63,7 @@ func MakeTestCodec() *codec.Codec {
 }
 
 // init for test cases
-func CreateTestInput(t *testing.T, isCheckTx bool) (sdk.Context, staking.Keeper, checkpoint.Keeper) {
+func CreateTestInput(t *testing.T, isCheckTx bool) (sdk.Context, staking.Keeper, Keeper) {
 	//t.Parallel()
 	helper.InitHeimdallConfig(os.ExpandEnv("$HOME/.heimdalld"))
 
@@ -88,7 +94,7 @@ func CreateTestInput(t *testing.T, isCheckTx bool) (sdk.Context, staking.Keeper,
 
 	dummyStakingKeeper := staking.Keeper{}
 
-	checkpointKeeper := checkpoint.NewKeeper(
+	checkpointKeeper := NewKeeper(
 		cdc,
 		dummyStakingKeeper,
 		keyCheckpoint,
@@ -103,6 +109,7 @@ func CreateTestInput(t *testing.T, isCheckTx bool) (sdk.Context, staking.Keeper,
 		common.DefaultCodespace,
 		checkpointKeeper,
 	)
+	checkpointKeeper.sk = stakingKeeper
 	return ctx, stakingKeeper, checkpointKeeper
 }
 
@@ -110,7 +117,7 @@ func CreateTestInput(t *testing.T, isCheckTx bool) (sdk.Context, staking.Keeper,
 func GenRandCheckpointHeader(start int, headerSize int) (headerBlock types.CheckpointBlockHeader, err error) {
 	start = start
 	end := start + headerSize
-	roothash, err := checkpoint.GetHeaders(uint64(start), uint64(end))
+	roothash, err := GetHeaders(uint64(start), uint64(end))
 	if err != nil {
 		return headerBlock, err
 	}
@@ -167,8 +174,14 @@ func LoadValidatorSet(count int, t *testing.T, keeper staking.Keeper, ctx sdk.Co
 
 	err := keeper.UpdateValidatorSetInStore(ctx, valSet)
 	require.Empty(t, err, "Unable to update validator set")
+	validatorRewards := make(map[types.ValidatorID]*big.Int)
+	for _, val := range validators {
+		validatorRewards[val.ID] = big.NewInt(0)
+	}
+	keeper.UpdateValidatorRewards(ctx, validatorRewards)
+
 	vals := keeper.GetAllValidators(ctx)
-	t.Log("Vals inserted", vals)
+	t.Log("Vals added to store", len(vals))
 	return valSet
 }
 
@@ -190,116 +203,129 @@ func PrintVals(t *testing.T, valset *types.ValidatorSet) {
 	}
 }
 
-
-
 // test handler for message
 func TestHandleMsgCheckpoint(t *testing.T) {
 	contractCallerObj := mocks.IContractCaller{}
 
 	// check valid checkpoint
 	t.Run("validCheckpoint", func(t *testing.T) {
-		ctx, keeper := CreateTestInput(t, false)
+		ctx, sk, ck := CreateTestInput(t, false)
 		// generate proposer for validator set
-		LoadValidatorSet(4, t, keeper, ctx, false, 10)
-		keeper.IncrementAccum(ctx, 1)
-		header, err := GenRandCheckpointHeader(10)
+		LoadValidatorSet(4, t, sk, ctx, false, 10)
+		sk.IncrementAccum(ctx, 1)
+		header, err := GenRandCheckpointHeader(0, 10)
 		require.Empty(t, err, "Unable to create random header block, Error:%v", err)
 		// make sure proposer has min ether
-		contractCallerObj.On("GetBalance", keeper.GetValidatorSet(ctx).Proposer.Signer).Return(helper.MinBalance, nil)
-		SentValidCheckpoint(header, keeper, ctx, contractCallerObj, t)
+		contractCallerObj.On("GetBalance", sk.GetValidatorSet(ctx).Proposer.Signer).Return(helper.MinBalance, nil)
+		SentValidCheckpoint(header, ck, sk, ctx, contractCallerObj, t)
 	})
 
-	// // check invalid proposer
-	// t.Run("invalidProposer", func(t *testing.T) {
-	// 	ctx, keeper := CreateTestInput(t, false)
-	// 	// generate proposer for validator set
-	// 	LoadValidatorSet(4, t, keeper, ctx, false, 10)
-	// 	keeper.IncrementAccum(ctx, 1)
-	// 	header, err := GenRandCheckpointHeader(10)
-	// 	require.Empty(t, err, "Unable to create random header block, Error:%v", err)
+	// check invalid proposer
+	t.Run("invalidProposer", func(t *testing.T) {
+		ctx, sk, ck := CreateTestInput(t, false)
+		// generate proposer for validator set
+		LoadValidatorSet(4, t, sk, ctx, false, 10)
+		sk.IncrementAccum(ctx, 1)
+		header, err := GenRandCheckpointHeader(0, 10)
+		require.Empty(t, err, "Unable to create random header block, Error:%v", err)
 
-	// 	// add wrong proposer to header
-	// 	header.Proposer = keeper.GetValidatorSet(ctx).Validators[2].Signer
-	// 	// make sure proposer has min ether
-	// 	contractCallerObj.On("GetBalance", header.Proposer).Return(helper.MinBalance, nil)
+		// add wrong proposer to header
+		header.Proposer = sk.GetValidatorSet(ctx).Validators[2].Signer
+		// make sure proposer has min ether
+		contractCallerObj.On("GetBalance", header.Proposer).Return(helper.MinBalance, nil)
+		// create checkpoint msg
+		genesisValidatorRewards := sk.GetAllValidatorRewards(ctx)
+		genesisrewardRootHash, _ := GetRewardRootHash(genesisValidatorRewards)
+		header.RewardRootHash = types.BytesToHeimdallHash(genesisrewardRootHash)
+		// create checkpoint msg
+		msgCheckpoint := NewMsgCheckpointBlock(header.Proposer,
+			header.StartBlock,
+			header.EndBlock,
+			header.RootHash,
+			header.RewardRootHash,
+			header.TimeStamp) // send checkpoint to handler
+		got := handleMsgCheckpoint(ctx, msgCheckpoint, ck, &contractCallerObj)
+		require.True(t, !got.IsOK(), "expected send-checkpoint to be not ok, got %v", got.IsOK())
+	})
 
-	// 	// create checkpoint msg
-	// 	msgCheckpoint := checkpoint.NewMsgCheckpointBlock(header.Proposer, header.StartBlock, header.EndBlock, header.RootHash, uint64(time.Now().Unix()))
+	t.Run("multipleCheckpoint", func(t *testing.T) {
+		t.Run("afterTimeout", func(t *testing.T) {
+			ctx, sk, ck := CreateTestInput(t, false)
+			// generate proposer for validator set
+			LoadValidatorSet(4, t, sk, ctx, false, 10)
+			sk.IncrementAccum(ctx, 1)
+			header, err := GenRandCheckpointHeader(0, 10)
+			require.Empty(t, err, "Unable to create random header block, Error:%v", err)
 
-	// 	// send checkpoint to handler
-	// 	got := checkpoint.HandleMsgCheckpoint(ctx, msgCheckpoint, keeper, &contractCallerObj)
-	// 	require.True(t, !got.IsOK(), "expected send-checkpoint to be not ok, got %v", got)
-	// })
+			// add current proposer to header
+			header.Proposer = sk.GetValidatorSet(ctx).Proposer.Signer
+			// make sure proposer has min ether
+			contractCallerObj.On("GetBalance", header.Proposer).Return(helper.MinBalance, nil)
+			// create checkpoint 257 seconds prev to current time
+			header.TimeStamp = uint64(time.Now().Add(-(helper.CheckpointBufferTime + time.Second)).Unix())
+			t.Log("Sending checkpoint with timestamp", "Timestamp", header.TimeStamp, "Current", time.Now().Unix())
+			// send old checkpoint
+			SentValidCheckpoint(header, ck, sk, ctx, contractCallerObj, t)
 
-	// t.Run("multipleCheckpoint", func(t *testing.T) {
-	// 	t.Run("afterTimeout", func(t *testing.T) {
-	// 		ctx, keeper := CreateTestInput(t, false)
-	// 		// generate proposer for validator set
-	// 		LoadValidatorSet(4, t, keeper, ctx, false, 10)
-	// 		keeper.IncrementAccum(ctx, 1)
-	// 		// gen random checkpoint
-	// 		header, err := GenRandCheckpointHeader(10)
-	// 		require.Empty(t, err, "Unable to create random header block, Error:%v", err)
-	// 		// add current proposer to header
-	// 		header.Proposer = keeper.GetValidatorSet(ctx).Proposer.Signer
-	// 		// make sure proposer has min ether
-	// 		contractCallerObj.On("GetBalance", header.Proposer).Return(helper.MinBalance, nil)
-	// 		// create checkpoint 257 seconds prev to current time
-	// 		header.TimeStamp = uint64(time.Now().Add(-(helper.CheckpointBufferTime + time.Second)).Unix())
-	// 		t.Log("Sending checkpoint with timestamp", "Timestamp", header.TimeStamp, "Current", time.Now().Unix())
-	// 		// send old checkpoint
-	// 		SentValidCheckpoint(header, keeper, ctx, contractCallerObj, t)
-	// 		header, err = GenRandCheckpointHeader(10)
-	// 		header.Proposer = keeper.GetValidatorSet(ctx).Proposer.Signer
-	// 		// create new checkpoint with current time
-	// 		header.TimeStamp = uint64(time.Now().Unix())
+			header, err = GenRandCheckpointHeader(0, 10)
+			header.Proposer = sk.GetValidatorSet(ctx).Proposer.Signer
+			// create new checkpoint with current time
+			header.TimeStamp = uint64(time.Now().Unix())
+			genesisValidatorRewards := sk.GetAllValidatorRewards(ctx)
+			genesisrewardRootHash, _ := GetRewardRootHash(genesisValidatorRewards)
+			header.RewardRootHash = types.BytesToHeimdallHash(genesisrewardRootHash)
+			msgCheckpoint := NewMsgCheckpointBlock(header.Proposer, header.StartBlock, header.EndBlock, header.RootHash, header.RewardRootHash, header.TimeStamp)
+			// send new checkpoint which should replace old one
+			got := handleMsgCheckpoint(ctx, msgCheckpoint, ck, &contractCallerObj)
+			require.True(t, got.IsOK(), "expected send-checkpoint to be  ok, got %v", got)
+		})
 
-	// 		msgCheckpoint := checkpoint.NewMsgCheckpointBlock(header.Proposer, header.StartBlock, header.EndBlock, header.RootHash, header.TimeStamp)
-	// 		// send new checkpoint which should replace old one
-	// 		got := checkpoint.HandleMsgCheckpoint(ctx, msgCheckpoint, keeper, &contractCallerObj)
-	// 		require.True(t, got.IsOK(), "expected send-checkpoint to be  ok, got %v", got)
-	// 	})
+		t.Run("beforeTimeout", func(t *testing.T) {
+			ctx, sk, ck := CreateTestInput(t, false)
+			// generate proposer for validator set
+			LoadValidatorSet(4, t, sk, ctx, false, 10)
+			sk.IncrementAccum(ctx, 1)
+			header, err := GenRandCheckpointHeader(0, 10)
+			require.Empty(t, err, "Unable to create random header block, Error:%v", err)
 
-	// 	t.Run("beforeTimeout", func(t *testing.T) {
-	// 		ctx, keeper := CreateTestInput(t, false)
-	// 		// generate proposer for validator set
-	// 		LoadValidatorSet(4, t, keeper, ctx, false, 10)
-	// 		keeper.IncrementAccum(ctx, 1)
-	// 		header, err := GenRandCheckpointHeader(10)
-	// 		require.Empty(t, err, "Unable to create random header block, Error:%v", err)
-	// 		// add current proposer to header
-	// 		header.Proposer = keeper.GetValidatorSet(ctx).Proposer.Signer
-	// 		// make sure proposer has min ether
-	// 		contractCallerObj.On("GetBalance", header.Proposer).Return(helper.MinBalance, nil)
-	// 		// add current proposer to header
-	// 		header.Proposer = keeper.GetValidatorSet(ctx).Proposer.Signer
-	// 		SentValidCheckpoint(header, keeper, ctx, contractCallerObj, t)
-	// 		// create checkpoint msg
-	// 		msgCheckpoint := checkpoint.NewMsgCheckpointBlock(header.Proposer, header.StartBlock, header.EndBlock, header.RootHash, uint64(time.Now().Unix()))
-	// 		// send checkpoint to handler
-	// 		got := checkpoint.HandleMsgCheckpoint(ctx, msgCheckpoint, keeper, &contractCallerObj)
-	// 		require.True(t, !got.IsOK(), "expected send-checkpoint to be not ok, got %v", got)
-	// 	})
-	// })
+			// add current proposer to header
+			header.Proposer = sk.GetValidatorSet(ctx).Proposer.Signer
+			// make sure proposer has min ether
+			contractCallerObj.On("GetBalance", header.Proposer).Return(helper.MinBalance, nil)
+			// add current proposer to header
+			header.Proposer = sk.GetValidatorSet(ctx).Proposer.Signer
+			// send old checkpoint
+			SentValidCheckpoint(header, ck, sk, ctx, contractCallerObj, t)
+			genesisValidatorRewards := sk.GetAllValidatorRewards(ctx)
+			genesisrewardRootHash, _ := GetRewardRootHash(genesisValidatorRewards)
+			header.RewardRootHash = types.BytesToHeimdallHash(genesisrewardRootHash)
+			// create checkpoint msg
+			msgCheckpoint := NewMsgCheckpointBlock(header.Proposer, header.StartBlock, header.EndBlock, header.RootHash, header.RewardRootHash, uint64(time.Now().Unix()))
+			// send checkpoint to handler
+			got := handleMsgCheckpoint(ctx, msgCheckpoint, ck, &contractCallerObj)
+			require.True(t, !got.IsOK(), "expected send-checkpoint to be not ok, got %v", got)
+		})
+	})
 
 }
 
-func SentValidCheckpoint(header types.CheckpointBlockHeader, keeper hmcmn.Keeper, ctx sdk.Context, contractCallerObj mocks.IContractCaller, t *testing.T) {
+func SentValidCheckpoint(header types.CheckpointBlockHeader, ck Keeper, sk staking.Keeper, ctx sdk.Context, contractCallerObj mocks.IContractCaller, t *testing.T) {
 	// add current proposer to header
-	header.Proposer = keeper.GetValidatorSet(ctx).Proposer.Signer
-
+	header.Proposer = sk.GetValidatorSet(ctx).Proposer.Signer
+	genesisValidatorRewards := sk.GetAllValidatorRewards(ctx)
+	genesisrewardRootHash, _ := GetRewardRootHash(genesisValidatorRewards)
+	header.RewardRootHash = types.BytesToHeimdallHash(genesisrewardRootHash)
 	// create checkpoint msg
-	msgCheckpoint := checkpoint.NewMsgCheckpointBlock(header.Proposer, header.StartBlock, header.EndBlock, header.RootHash, header.TimeStamp)
-
+	msgCheckpoint := NewMsgCheckpointBlock(header.Proposer,
+		header.StartBlock,
+		header.EndBlock,
+		header.RootHash,
+		header.RewardRootHash,
+		header.TimeStamp)
 	// send checkpoint to handler
-	got := checkpoint.HandleMsgCheckpoint(ctx, msgCheckpoint, keeper, &contractCallerObj)
+	got := handleMsgCheckpoint(ctx, msgCheckpoint, ck, &contractCallerObj)
 	require.True(t, got.IsOK(), "expected send-checkpoint to be ok, got %v", got)
-
-	// check if checkpoint matches
-	storedHeader, err := keeper.GetCheckpointFromBuffer(ctx)
+	storedHeader, err := ck.GetCheckpointFromBuffer(ctx)
+	t.Log("Header added to buffer", storedHeader.String())
 	require.Empty(t, err, "Unable to set checkpoint from buffer, Error: %v", err)
-
-	// ignoring time difference
-	header.TimeStamp = storedHeader.TimeStamp
-	require.Equal(t, header, storedHeader, "Header block Doesnt Match")
 }

@@ -85,7 +85,6 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 
 	}
 
-	// TODO match valSet and genesisState.CurrentValSet for difference in accum
 	// update validator set in store
 	if err := keeper.UpdateValidatorSetInStore(ctx, *resultValSet); err != nil {
 		panic(err)
@@ -102,7 +101,6 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 	keeper.UpdateValidatorRewards(ctx, validatorRewards)
 
 	keeper.SetProposerBonusPercent(ctx, data.ProposerBonusPercent)
-
 }
 
 // ExportGenesis returns a GenesisState for a given context and keeper.
