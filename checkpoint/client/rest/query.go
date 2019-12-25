@@ -173,7 +173,7 @@ func checkpointHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		var validatorSet hmTypes.ValidatorSet
 		validatorSetBytes, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", stakingTypes.QuerierRoute, stakingTypes.QueryCurrentValidatorSet), nil)
 		if err == nil {
-			err := cliCtx.Codec.UnmarshalBinaryBare(validatorSetBytes, &validatorSet)
+			err := cliCtx.Codec.UnmarshalJSON(validatorSetBytes, &validatorSet)
 			if err != nil {
 				hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 				RestLogger.Error("Unable to get validator set to form proposer", "Error", err)
@@ -277,7 +277,7 @@ func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		if len(checkpointBufferBytes) != 0 {
-			if err = cliCtx.Codec.UnmarshalBinaryBare(checkpointBufferBytes, &_checkpoint); err != nil {
+			if err = cliCtx.Codec.UnmarshalJSON(checkpointBufferBytes, &_checkpoint); err != nil {
 				hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 				return
 			}
@@ -294,7 +294,7 @@ func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		if err := cliCtx.Codec.UnmarshalBinaryBare(validatorSetBytes, &validatorSet); err != nil {
+		if err := cliCtx.Codec.UnmarshalJSON(validatorSetBytes, &validatorSet); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}

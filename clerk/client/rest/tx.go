@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gorilla/mux"
 
@@ -14,10 +13,10 @@ import (
 	"github.com/maticnetwork/heimdall/types/rest"
 )
 
-func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
+func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc(
 		"/clerk/records",
-		newEventRecordHandler(cdc, cliCtx),
+		newEventRecordHandler(cliCtx),
 	).Methods("POST")
 }
 
@@ -30,7 +29,7 @@ type AddRecordReq struct {
 	ID       uint64             `json:"id"`
 }
 
-func newEventRecordHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
+func newEventRecordHandler(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// read req from request
 		var req AddRecordReq

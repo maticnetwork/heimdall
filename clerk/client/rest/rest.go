@@ -2,7 +2,6 @@ package rest
 
 import (
 	"github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/gorilla/mux"
 	tmLog "github.com/tendermint/tendermint/libs/log"
 
@@ -17,7 +16,7 @@ func init() {
 }
 
 // RegisterRoutes registers checkpoint-related REST handlers to a router
-func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
-	registerQueryRoutes(cliCtx, r, cdc)
-	registerTxRoutes(cliCtx, r, cdc)
+func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router) {
+	registerQueryRoutes(cliCtx, r)
+	registerTxRoutes(cliCtx, r)
 }

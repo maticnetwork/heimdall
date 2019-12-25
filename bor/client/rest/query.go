@@ -151,9 +151,9 @@ func prepareNextSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var _validatorSet hmTypes.ValidatorSet
-		err = cliCtx.Codec.UnmarshalBinaryBare(validatorSetBytes, &_validatorSet)
+		err = cliCtx.Codec.UnmarshalJSON(validatorSetBytes, &_validatorSet)
 		if err != nil {
-			hmRest.WriteErrorResponse(w, http.StatusNoContent, errors.New("unable to unmarshall binary bare").Error())
+			hmRest.WriteErrorResponse(w, http.StatusNoContent, errors.New("unable to unmarshall JSON").Error())
 			return
 		}
 

@@ -1,4 +1,4 @@
-package bor
+package clerk
 
 import (
 	"encoding/json"
@@ -11,9 +11,9 @@ import (
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	borCli "github.com/maticnetwork/heimdall/bor/client/cli"
-	borRest "github.com/maticnetwork/heimdall/bor/client/rest"
-	"github.com/maticnetwork/heimdall/bor/types"
+	clerkCli "github.com/maticnetwork/heimdall/clerk/client/cli"
+	clerkRest "github.com/maticnetwork/heimdall/clerk/client/rest"
+	"github.com/maticnetwork/heimdall/clerk/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -60,17 +60,17 @@ func (AppModuleBasic) VerifyGenesis(bz map[string]json.RawMessage) error {
 
 // RegisterRESTRoutes registers the REST routes for the auth module.
 func (AppModuleBasic) RegisterRESTRoutes(ctx context.CLIContext, rtr *mux.Router) {
-	borRest.RegisterRoutes(ctx, rtr)
+	clerkRest.RegisterRoutes(ctx, rtr)
 }
 
 // GetTxCmd returns the root tx command for the auth module.
 func (AppModuleBasic) GetTxCmd(cdc *codec.Codec) *cobra.Command {
-	return borCli.GetTxCmd(cdc)
+	return clerkCli.GetTxCmd(cdc)
 }
 
 // GetQueryCmd returns the root query command for the auth module.
 func (AppModuleBasic) GetQueryCmd(cdc *codec.Codec) *cobra.Command {
-	return borCli.GetQueryCmd(cdc)
+	return clerkCli.GetQueryCmd(cdc)
 }
 
 //____________________________________________________________________________

@@ -52,6 +52,7 @@ var (
 		supply.AppModuleBasic{},
 		checkpoint.AppModuleBasic{},
 		bor.AppModuleBasic{},
+		clerk.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -274,6 +275,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		supply.NewAppModule(app.SupplyKeeper),
 		checkpoint.NewAppModule(app.CheckpointKeeper),
 		bor.NewAppModule(app.BorKeeper),
+		clerk.NewAppModule(app.ClerkKeeper),
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -284,6 +286,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		supplyTypes.ModuleName,
 		checkpointTypes.ModuleName,
 		borTypes.ModuleName,
+		clerkTypes.ModuleName,
 	)
 
 	// register message routes and query routes
