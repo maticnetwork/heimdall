@@ -18,10 +18,10 @@ import (
 	"github.com/tendermint/tendermint/libs/common"
 	httpClient "github.com/tendermint/tendermint/rpc/client"
 
-	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/helper"
 	hmtypes "github.com/maticnetwork/heimdall/types"
+	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 )
 
 // Result represents single req result
@@ -193,7 +193,7 @@ func (ackService *AckService) processCheckpoint(lastCreatedAt int64) {
 		)
 
 		// send NO ACK
-		msg := checkpoint.NewMsgCheckpointNoAck(
+		msg := checkpointTypes.NewMsgCheckpointNoAck(
 			hmtypes.BytesToHeimdallAddress(helper.GetAddress()),
 			uint64(time.Now().UTC().Unix()),
 		)

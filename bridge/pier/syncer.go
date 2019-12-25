@@ -11,7 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/maticnetwork/bor"
+	ethereum "github.com/maticnetwork/bor"
 	"github.com/maticnetwork/bor/accounts/abi"
 	ethCommon "github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/bor/core/types"
@@ -20,13 +20,13 @@ import (
 	"github.com/tendermint/tendermint/libs/common"
 	httpClient "github.com/tendermint/tendermint/rpc/client"
 
-	"github.com/maticnetwork/heimdall/checkpoint"
+	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 	"github.com/maticnetwork/heimdall/contracts/statesender"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/staking"
+	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -326,7 +326,7 @@ func (syncer *Syncer) processCheckpointEvent(eventName string, abiObject *abi.AB
 		)
 
 		// create msg checkpoint ack message
-		msg := checkpoint.NewMsgCheckpointAck(helper.GetFromAddress(syncer.cliCtx), event.HeaderBlockId.Uint64(), hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()), uint64(vLog.Index))
+		msg := checkpointTypes.NewMsgCheckpointAck(helper.GetFromAddress(syncer.cliCtx), event.HeaderBlockId.Uint64(), hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()), uint64(vLog.Index))
 		syncer.queueConnector.BroadcastToHeimdall(msg)
 	}
 }
@@ -348,7 +348,7 @@ func (syncer *Syncer) processStakedEvent(eventName string, abiObject *abi.ABI, v
 		// compare user to get address
 		if isEventSender(syncer.cliCtx, event.ValidatorId.Uint64()) {
 			pubkey := helper.GetPubKey()
-			msg := staking.NewMsgValidatorJoin(
+			msg := stakingTypes.NewMsgValidatorJoin(
 				hmTypes.BytesToHeimdallAddress(event.User.Bytes()),
 				event.ValidatorId.Uint64(),
 				hmTypes.NewPubKey(pubkey[:]),
@@ -378,7 +378,7 @@ func (syncer *Syncer) processUnstakeInitEvent(eventName string, abiObject *abi.A
 
 		// msg validator exit
 		if isEventSender(syncer.cliCtx, event.ValidatorId.Uint64()) {
-			msg := staking.NewMsgValidatorExit(
+			msg := stakingTypes.NewMsgValidatorExit(
 				hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
 				event.ValidatorId.Uint64(),
 				hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
@@ -406,7 +406,7 @@ func (syncer *Syncer) processStakeUpdateEvent(eventName string, abiObject *abi.A
 
 		// msg validator exit
 		if isEventSender(syncer.cliCtx, event.ValidatorId.Uint64()) {
-			msg := staking.NewMsgStakeUpdate(
+			msg := stakingTypes.NewMsgStakeUpdate(
 				hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
 				event.ValidatorId.Uint64(),
 				hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
@@ -435,7 +435,7 @@ func (syncer *Syncer) processSignerChangeEvent(eventName string, abiObject *abi.
 		// signer change
 		if bytes.Compare(event.NewSigner.Bytes(), helper.GetAddress()) == 0 {
 			pubkey := helper.GetPubKey()
-			msg := staking.NewMsgSignerUpdate(
+			msg := stakingTypes.NewMsgSignerUpdate(
 				hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
 				event.ValidatorId.Uint64(),
 				hmTypes.NewPubKey(pubkey[:]),
@@ -556,7 +556,7 @@ func (syncer *Syncer) processStateSyncedEvent(eventName string, abiObject *abi.A
 // EventByID looks up a event by the topic id
 func EventByID(abiObject *abi.ABI, sigdata []byte) *abi.Event {
 	for _, event := range abiObject.Events {
-		if bytes.Equal(event.ID().Bytes(), sigdata) {
+		if bytes.Equal(event.Id().Bytes(), sigdata) {
 			return &event
 		}
 	}

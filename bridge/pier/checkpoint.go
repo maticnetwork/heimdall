@@ -13,7 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/maticnetwork/bor"
+	ethereum "github.com/maticnetwork/bor"
 	ethCommon "github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/bor/core/types"
 	"github.com/pkg/errors"
@@ -23,7 +23,7 @@ import (
 	httpClient "github.com/tendermint/tendermint/rpc/client"
 
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
-	"github.com/maticnetwork/heimdall/checkpoint"
+	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/helper"
 	hmtypes "github.com/maticnetwork/heimdall/types"
 )
@@ -436,7 +436,7 @@ func (c *Checkpointer) sendCheckpointToHeimdall(start uint64, end uint64) error 
 	}
 
 	// Get root hash
-	root, err := checkpoint.GetHeaders(start, end)
+	root, err := checkpointTypes.GetHeaders(start, end)
 	if err != nil {
 		return err
 	}
@@ -466,7 +466,7 @@ func (c *Checkpointer) sendCheckpointToHeimdall(start uint64, end uint64) error 
 	)
 
 	// create and send checkpoint message
-	msg := checkpoint.NewMsgCheckpointBlock(
+	msg := checkpointTypes.NewMsgCheckpointBlock(
 		hmtypes.BytesToHeimdallAddress(helper.GetAddress()),
 		start,
 		end,
@@ -505,7 +505,7 @@ func (c *Checkpointer) commitCheckpoint(startBlock uint64, endBlock uint64) {
 	// handler
 	handler := func() bool {
 		// search txs
-		txs, err := helper.SearchTxs(c.cliCtx, c.cliCtx.Codec, tags, 1, 1) // first page, 1 limit
+		txs, err := helper.QueryTxsByEvents(c.cliCtx, tags, 1, 1) // first page, 1 limit
 		if err != nil {
 			c.Logger.Error("Error while searching txs", "error", err)
 			return false

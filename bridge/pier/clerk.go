@@ -13,16 +13,16 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/maticnetwork/bor"
+	ethereum "github.com/maticnetwork/bor"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/tendermint/tendermint/libs/common"
 	httpClient "github.com/tendermint/tendermint/rpc/client"
 
-	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
+	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -158,7 +158,7 @@ func (s *ClerkService) commit() {
 	)
 
 	// search txs
-	txs, err := helper.SearchTxs(s.cliCtx, s.cliCtx.Codec, tags, 1, 50) // first page, 50 limit
+	txs, err := helper.QueryTxsByEvents(s.cliCtx, tags, 1, 50) // first page, 50 limit
 	if err != nil {
 		s.Logger.Error("Error while searching txs", "error", err)
 		return

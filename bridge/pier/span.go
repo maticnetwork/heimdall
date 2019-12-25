@@ -11,13 +11,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/tendermint/tendermint/libs/common"
 	httpClient "github.com/tendermint/tendermint/rpc/client"
 
-	"github.com/maticnetwork/heimdall/bor"
+	borTypes "github.com/maticnetwork/heimdall/bor/types"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
 )
@@ -154,7 +153,7 @@ func (s *SpanService) propose(lastSpan *types.Span, nextSpanMsg *types.Span) {
 		s.Logger.Info("Proposing new span", "spanId", nextSpanMsg.ID, "startBlock", nextSpanMsg.StartBlock, "endBlock", nextSpanMsg.EndBlock)
 
 		// broadcast to heimdall
-		msg := bor.MsgProposeSpan{
+		msg := borTypes.MsgProposeSpan{
 			ID:         nextSpanMsg.ID,
 			Proposer:   types.BytesToHeimdallAddress(helper.GetAddress()),
 			StartBlock: nextSpanMsg.StartBlock,
