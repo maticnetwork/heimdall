@@ -14,11 +14,13 @@ import (
 	authCli "github.com/maticnetwork/heimdall/auth/client/cli"
 	authRest "github.com/maticnetwork/heimdall/auth/client/rest"
 	"github.com/maticnetwork/heimdall/auth/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 var (
-	_ module.AppModule      = AppModule{}
-	_ module.AppModuleBasic = AppModuleBasic{}
+	_ module.AppModule            = AppModule{}
+	_ module.AppModuleBasic       = AppModuleBasic{}
+	_ hmTypes.HeimdallModuleBasic = AppModule{}
 	// _ module.AppModuleSimulation = AppModule{}
 )
 
@@ -49,6 +51,11 @@ func (AppModuleBasic) ValidateGenesis(bz json.RawMessage) error {
 		return err
 	}
 	return types.ValidateGenesis(data)
+}
+
+// VerifyGenesis performs verification on auth module state.
+func (AppModuleBasic) VerifyGenesis(map[string]json.RawMessage) error {
+	return nil
 }
 
 // RegisterRESTRoutes registers the REST routes for the auth module.

@@ -6,21 +6,19 @@ import (
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gorilla/mux"
 
-	"github.com/maticnetwork/heimdall/bor"
-	borTypes "github.com/maticnetwork/heimdall/bor/types"
+	"github.com/maticnetwork/heimdall/bor/types"
 	restClient "github.com/maticnetwork/heimdall/client/rest"
-	"github.com/maticnetwork/heimdall/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/types/rest"
 )
 
-func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
+func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc(
 		"/bor/propose-span",
-		postProposeSpanHandlerFn(cdc, cliCtx),
+		postProposeSpanHandlerFn(cliCtx),
 	).Methods("POST")
 }
 
@@ -33,7 +31,7 @@ type ProposeSpanReq struct {
 	BorChainID string `json:"bor_chain_id"`
 }
 
-func postProposeSpanHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
+func postProposeSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		// read req from request
@@ -52,7 +50,7 @@ func postProposeSpanHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.
 		//
 
 		// fetch duration
-		res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", borTypes.QuerierRoute, bor.QueryParams, bor.ParamSpan), nil)
+		res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", types.QuerierRoute, types.QueryParams, types.ParamSpan), nil)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
@@ -69,9 +67,9 @@ func postProposeSpanHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.
 		}
 
 		// draft a propose span message
-		msg := bor.NewMsgProposeSpan(
+		msg := types.NewMsgProposeSpan(
 			req.ID,
-			types.HexToHeimdallAddress(req.BaseReq.From),
+			hmTypes.HexToHeimdallAddress(req.BaseReq.From),
 			req.StartBlock,
 			req.StartBlock+spanDuration,
 			req.BorChainID,

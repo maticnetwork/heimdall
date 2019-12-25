@@ -4,6 +4,7 @@ package types
 const (
 	QueryValidatorStatus      = "validator-status"
 	QueryProposerBonusPercent = "proposer-bonus-percent"
+	QueryCurrentValidatorSet  = "current-validator-set"
 )
 
 // QueryValidatorStatusParams defines the params for querying val status.

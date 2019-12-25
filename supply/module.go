@@ -1,4 +1,4 @@
-package bank
+package supply
 
 import (
 	"encoding/json"
@@ -11,9 +11,8 @@ import (
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	bankCli "github.com/maticnetwork/heimdall/bank/client/cli"
-	bankRest "github.com/maticnetwork/heimdall/bank/client/rest"
-	"github.com/maticnetwork/heimdall/bank/types"
+	supplyCli "github.com/maticnetwork/heimdall/supply/client/cli"
+	"github.com/maticnetwork/heimdall/supply/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -59,18 +58,16 @@ func (AppModuleBasic) VerifyGenesis(bz map[string]json.RawMessage) error {
 }
 
 // RegisterRESTRoutes registers the REST routes for the auth module.
-func (AppModuleBasic) RegisterRESTRoutes(ctx context.CLIContext, rtr *mux.Router) {
-	bankRest.RegisterRoutes(ctx, rtr)
-}
+func (AppModuleBasic) RegisterRESTRoutes(ctx context.CLIContext, rtr *mux.Router) {}
 
 // GetTxCmd returns the root tx command for the auth module.
 func (AppModuleBasic) GetTxCmd(cdc *codec.Codec) *cobra.Command {
-	return bankCli.GetTxCmd(cdc)
+	return nil
 }
 
 // GetQueryCmd returns the root query command for the auth module.
 func (AppModuleBasic) GetQueryCmd(cdc *codec.Codec) *cobra.Command {
-	return nil
+	return supplyCli.GetQueryCmd(cdc)
 }
 
 //____________________________________________________________________________
@@ -123,7 +120,7 @@ func (am AppModule) NewQuerierHandler() sdk.Querier {
 func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.ValidatorUpdate {
 	var genesisState types.GenesisState
 	types.ModuleCdc.MustUnmarshalJSON(data, &genesisState)
-	InitGenesis(ctx, am.keeper, genesisState)
+	InitGenesis(ctx, am.keeper, am.keeper.ak, genesisState)
 	return []abci.ValidatorUpdate{}
 }
 

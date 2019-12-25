@@ -61,7 +61,7 @@ func GetStateRecord(cdc *codec.Codec) *cobra.Command {
 			}
 
 			// fetch state reocrd
-			res, err := cliCtx.QueryWithData(
+			res, _, err := cliCtx.QueryWithData(
 				fmt.Sprintf("custom/%s/%s", clerkTypes.QuerierRoute, clerkTypes.QueryRecord),
 				queryParams,
 			)

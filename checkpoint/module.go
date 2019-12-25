@@ -1,7 +1,9 @@
-package bank
+package checkpoint
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -11,9 +13,10 @@ import (
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	bankCli "github.com/maticnetwork/heimdall/bank/client/cli"
-	bankRest "github.com/maticnetwork/heimdall/bank/client/rest"
-	"github.com/maticnetwork/heimdall/bank/types"
+	checkpointCli "github.com/maticnetwork/heimdall/checkpoint/client/cli"
+	checkpointRest "github.com/maticnetwork/heimdall/checkpoint/client/rest"
+	"github.com/maticnetwork/heimdall/checkpoint/types"
+	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -55,17 +58,22 @@ func (AppModuleBasic) ValidateGenesis(bz json.RawMessage) error {
 
 // VerifyGenesis performs verification on auth module state.
 func (AppModuleBasic) VerifyGenesis(bz map[string]json.RawMessage) error {
-	return nil
+	var data types.GenesisState
+	err := types.ModuleCdc.UnmarshalJSON(bz[types.ModuleName], &data)
+	if err != nil {
+		return err
+	}
+	return verifyGenesis(data)
 }
 
 // RegisterRESTRoutes registers the REST routes for the auth module.
 func (AppModuleBasic) RegisterRESTRoutes(ctx context.CLIContext, rtr *mux.Router) {
-	bankRest.RegisterRoutes(ctx, rtr)
+	checkpointRest.RegisterRoutes(ctx, rtr)
 }
 
 // GetTxCmd returns the root tx command for the auth module.
 func (AppModuleBasic) GetTxCmd(cdc *codec.Codec) *cobra.Command {
-	return bankCli.GetTxCmd(cdc)
+	return checkpointCli.GetTxCmd(cdc)
 }
 
 // GetQueryCmd returns the root query command for the auth module.
@@ -141,4 +149,53 @@ func (AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
 // updates.
 func (AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
 	return []abci.ValidatorUpdate{}
+}
+
+//
+// Internal methods
+//
+func verifyGenesis(state types.GenesisState) error {
+	contractCaller, err := helper.NewContractCaller()
+	if err != nil {
+		return err
+	}
+
+	// check header count
+	currentHeaderIndex, err := contractCaller.CurrentHeaderBlock()
+	if err != nil {
+		return nil
+	}
+
+	if state.AckCount*helper.GetConfig().ChildBlockInterval != currentHeaderIndex {
+		fmt.Println("Header Count doesn't match",
+			"ExpectedHeader", currentHeaderIndex,
+			"HeaderIndexFound", state.AckCount*helper.GetConfig().ChildBlockInterval)
+		return nil
+	}
+
+	fmt.Println("ACK count valid:", "count", currentHeaderIndex)
+
+	// check all headers
+	for i, header := range state.Headers {
+		ackCount := uint64(i + 1)
+		root, start, end, _, _, err := contractCaller.GetHeaderInfo(ackCount * helper.GetConfig().ChildBlockInterval)
+		if err != nil {
+			return err
+		}
+
+		if header.StartBlock != start || header.EndBlock != end || !bytes.Equal(header.RootHash.Bytes(), root.Bytes()) {
+			return fmt.Errorf(
+				"Checkpoint block doesnt match: startExpected %v, startReceived %v, endExpected %v, endReceived %v, rootHashExpected %v, rootHashReceived %v",
+				header.StartBlock,
+				start,
+				header.EndBlock,
+				header.EndBlock,
+				header.RootHash.String(),
+				root.String(),
+			)
+		}
+		fmt.Println("Checkpoint block valid:", "start", start, "end", end, "root", root.String())
+	}
+
+	return nil
 }

@@ -59,7 +59,7 @@ func queryTotalSupply(cliCtx context.CLIContext, cdc *codec.Codec) error {
 		return err
 	}
 
-	res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", supplyTypes.QuerierRoute, supplyTypes.QueryTotalSupply), bz)
+	res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", supplyTypes.QuerierRoute, supplyTypes.QueryTotalSupply), bz)
 	if err != nil {
 		return err
 	}
@@ -80,7 +80,7 @@ func querySupplyOf(cliCtx context.CLIContext, cdc *codec.Codec, denom string) er
 		return err
 	}
 
-	res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", supplyTypes.QuerierRoute, supplyTypes.QuerySupplyOf), bz)
+	res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", supplyTypes.QuerierRoute, supplyTypes.QuerySupplyOf), bz)
 	if err != nil {
 		return err
 	}

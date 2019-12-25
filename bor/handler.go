@@ -13,7 +13,7 @@ import (
 func NewHandler(k Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
-		case MsgProposeSpan:
+		case types.MsgProposeSpan:
 			return HandleMsgProposeSpan(ctx, msg, k)
 		default:
 			return sdk.ErrTxDecode("Invalid message in bor module").Result()
@@ -22,7 +22,7 @@ func NewHandler(k Keeper) sdk.Handler {
 }
 
 // HandleMsgProposeSpan handles proposeSpan msg
-func HandleMsgProposeSpan(ctx sdk.Context, msg MsgProposeSpan, k Keeper) sdk.Result {
+func HandleMsgProposeSpan(ctx sdk.Context, msg types.MsgProposeSpan, k Keeper) sdk.Result {
 	k.Logger(ctx).Debug("Proposing span", "TxData", msg)
 
 	// check if last span is up or if greater diff than threshold is found between validator set

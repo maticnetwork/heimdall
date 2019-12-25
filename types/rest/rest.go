@@ -171,9 +171,9 @@ func WriteSimulationResponse(w http.ResponseWriter, cdc *codec.Codec, gas uint64
 }
 
 // ReturnNotFoundIfNoContent returns not found error if no content
-func ReturnNotFoundIfNoContent(w http.ResponseWriter, data []byte) bool {
+func ReturnNotFoundIfNoContent(w http.ResponseWriter, data []byte, message string) bool {
 	if len(data) == 0 {
-		rest.WriteErrorResponse(w, http.StatusNotFound, errors.New("No content found for requested key").Error())
+		rest.WriteErrorResponse(w, http.StatusNotFound, errors.New(message).Error())
 		return false
 	}
 

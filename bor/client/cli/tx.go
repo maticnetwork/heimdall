@@ -12,17 +12,16 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/maticnetwork/heimdall/bor"
-	borTypes "github.com/maticnetwork/heimdall/bor/types"
+	"github.com/maticnetwork/heimdall/bor/types"
 	hmClient "github.com/maticnetwork/heimdall/client"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 // GetTxCmd returns the transaction commands for this module
 func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 	txCmd := &cobra.Command{
-		Use:                        borTypes.ModuleName,
+		Use:                        types.ModuleName,
 		Short:                      "Bor transaction subcommands",
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
@@ -51,7 +50,7 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 			}
 
 			// get proposer
-			proposer := types.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
+			proposer := hmTypes.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
 			if proposer.Empty() {
 				proposer = helper.GetFromAddress(cliCtx)
 			}
@@ -85,7 +84,7 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 			//
 
 			// fetch duration
-			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", borTypes.QuerierRoute, bor.QueryParams, bor.ParamSpan), nil)
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", types.QuerierRoute, types.QueryParams, types.ParamSpan), nil)
 			if err != nil {
 				return err
 			}
@@ -98,7 +97,7 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			msg := bor.NewMsgProposeSpan(
+			msg := types.NewMsgProposeSpan(
 				spanID,
 				proposer,
 				startBlock,

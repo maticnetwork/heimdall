@@ -1,19 +1,15 @@
-package checkpoint
+package types
 
 import (
 	"bytes"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
 )
-
-var cdc = codec.New()
 
 //
 // Checkpoint Msg
@@ -56,7 +52,7 @@ func (msg MsgCheckpoint) Type() string {
 }
 
 func (msg MsgCheckpoint) Route() string {
-	return checkpointTypes.RouterKey
+	return RouterKey
 }
 
 // GetSigners returns address of the signer
@@ -65,7 +61,7 @@ func (msg MsgCheckpoint) GetSigners() []sdk.AccAddress {
 }
 
 func (msg MsgCheckpoint) GetSignBytes() []byte {
-	b, err := cdc.MarshalJSON(msg)
+	b, err := ModuleCdc.MarshalJSON(msg)
 	if err != nil {
 		panic(err)
 	}
@@ -116,7 +112,7 @@ func (msg MsgCheckpointAck) Type() string {
 }
 
 func (msg MsgCheckpointAck) Route() string {
-	return checkpointTypes.RouterKey
+	return RouterKey
 }
 
 func (msg MsgCheckpointAck) GetSigners() []sdk.AccAddress {
@@ -124,7 +120,7 @@ func (msg MsgCheckpointAck) GetSigners() []sdk.AccAddress {
 }
 
 func (msg MsgCheckpointAck) GetSignBytes() []byte {
-	b, err := cdc.MarshalJSON(msg)
+	b, err := ModuleCdc.MarshalJSON(msg)
 	if err != nil {
 		panic(err)
 	}
@@ -167,7 +163,7 @@ func (msg MsgCheckpointNoAck) Type() string {
 }
 
 func (msg MsgCheckpointNoAck) Route() string {
-	return checkpointTypes.RouterKey
+	return RouterKey
 }
 
 func (msg MsgCheckpointNoAck) GetSigners() []sdk.AccAddress {
@@ -175,7 +171,7 @@ func (msg MsgCheckpointNoAck) GetSigners() []sdk.AccAddress {
 }
 
 func (msg MsgCheckpointNoAck) GetSignBytes() []byte {
-	b, err := cdc.MarshalJSON(msg)
+	b, err := ModuleCdc.MarshalJSON(msg)
 	if err != nil {
 		panic(err)
 	}

@@ -38,7 +38,7 @@ func SortHeaders(headers []CheckpointBlockHeader) []CheckpointBlockHeader {
 // String returns human redable string
 func (m CheckpointBlockHeader) String() string {
 	return fmt.Sprintf(
-		"CheckpointBlockHeader {%v (%d:%d) %v %v}",
+		"CheckpointBlockHeader {%v (%d:%d) %v %v %v}",
 		m.Proposer.String(),
 		m.StartBlock,
 		m.EndBlock,

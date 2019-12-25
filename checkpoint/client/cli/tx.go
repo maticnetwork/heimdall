@@ -12,17 +12,16 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/maticnetwork/heimdall/checkpoint"
-	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
+	types "github.com/maticnetwork/heimdall/checkpoint/types"
 	hmClient "github.com/maticnetwork/heimdall/client"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 // GetTxCmd returns the transaction commands for this module
 func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 	txCmd := &cobra.Command{
-		Use:                        checkpointTypes.ModuleName,
+		Use:                        types.ModuleName,
 		Short:                      "Checkpoint transaction subcommands",
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
@@ -48,7 +47,7 @@ func SendCheckpointTx(cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			// get proposer
-			proposer := types.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
+			proposer := hmTypes.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
 			if proposer.Empty() {
 				proposer = helper.GetFromAddress(cliCtx)
 			}
@@ -90,12 +89,12 @@ func SendCheckpointTx(cdc *codec.Codec) *cobra.Command {
 				return fmt.Errorf("reward root hash cannot be empty")
 			}
 
-			msg := checkpoint.NewMsgCheckpointBlock(
+			msg := types.NewMsgCheckpointBlock(
 				proposer,
 				startBlock,
 				endBlock,
-				types.HexToHeimdallHash(rootHashStr),
-				types.HexToHeimdallHash(rewardRootHashStr),
+				hmTypes.HexToHeimdallHash(rootHashStr),
+				hmTypes.HexToHeimdallHash(rewardRootHashStr),
 				uint64(time.Now().UTC().Unix()),
 			)
 
@@ -124,7 +123,7 @@ func SendCheckpointACKTx(cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			// get proposer
-			proposer := types.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
+			proposer := hmTypes.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
 			if proposer.Empty() {
 				proposer = helper.GetFromAddress(cliCtx)
 			}
@@ -143,10 +142,10 @@ func SendCheckpointACKTx(cdc *codec.Codec) *cobra.Command {
 			if checkpointTxHashStr == "" {
 				return fmt.Errorf("checkpoint tx hash cannot be empty")
 			}
-			checkpointTxHash := types.BytesToHeimdallHash([]byte(checkpointTxHashStr))
+			checkpointTxHash := hmTypes.BytesToHeimdallHash([]byte(checkpointTxHashStr))
 
 			// new checkpoint
-			msg := checkpoint.NewMsgCheckpointAck(proposer, headerBlock, checkpointTxHash, uint64(viper.GetInt64(FlagCheckpointLogIndex)))
+			msg := types.NewMsgCheckpointAck(proposer, headerBlock, checkpointTxHash, uint64(viper.GetInt64(FlagCheckpointLogIndex)))
 
 			// msg
 			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
@@ -174,13 +173,13 @@ func SendCheckpointNoACKTx(cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			// get proposer
-			proposer := types.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
+			proposer := hmTypes.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
 			if proposer.Empty() {
 				proposer = helper.GetFromAddress(cliCtx)
 			}
 
 			// create new checkpoint no-ack
-			msg := checkpoint.NewMsgCheckpointNoAck(
+			msg := types.NewMsgCheckpointNoAck(
 				proposer,
 				uint64(time.Now().UTC().Unix()),
 			)

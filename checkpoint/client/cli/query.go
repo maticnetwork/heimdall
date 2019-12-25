@@ -1,9 +1,8 @@
 package cli
 
 import (
-	"encoding/binary"
+	"errors"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -12,17 +11,15 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/maticnetwork/heimdall/checkpoint"
-	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
+	"github.com/maticnetwork/heimdall/checkpoint/types"
 	hmClient "github.com/maticnetwork/heimdall/client"
-	"github.com/maticnetwork/heimdall/types"
 )
 
 // GetQueryCmd returns the cli query commands for this module
 func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 	// Group supply queries under a subcommand
 	supplyQueryCmd := &cobra.Command{
-		Use:                        checkpointTypes.ModuleName,
+		Use:                        types.ModuleName,
 		Short:                      "Querying commands for the checkpoint module",
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
@@ -50,17 +47,16 @@ func GetCheckpointBuffer(cdc *codec.Codec) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			res, err := cliCtx.QueryStore(checkpoint.BufferCheckpointKey, "checkpoint")
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCheckpointBuffer), nil)
 			if err != nil {
 				return err
 			}
-			var _checkpoint types.CheckpointBlockHeader
-			err = cdc.UnmarshalBinaryBare(res, &_checkpoint)
-			if err != nil {
-				fmt.Printf("Unable to unmarshall Error: %v", err)
-				return err
+
+			if len(res) == 0 {
+				return errors.New("No checkpoint buffer found")
 			}
-			fmt.Printf("Proposer: %v , StartBlock: %v , EndBlock: %v, Roothash: %v", _checkpoint.Proposer.String(), _checkpoint.StartBlock, _checkpoint.EndBlock, _checkpoint.RootHash.String())
+
+			fmt.Printf(string(res))
 			return nil
 		},
 	}
@@ -75,12 +71,22 @@ func GetLastNoACK(cdc *codec.Codec) *cobra.Command {
 		Short: "get last no ack received time",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			res, err := cliCtx.QueryStore(checkpoint.LastNoACKKey, "checkpoint")
+
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryLastNoAck), nil)
 			if err != nil {
 				return err
 			}
 
-			fmt.Printf("LastNoACK received at %v", time.Unix(int64(binary.BigEndian.Uint64(res)), 0))
+			if len(res) == 0 {
+				return errors.New("No last-no-ack count found")
+			}
+
+			var lastNoAck uint64
+			if err := cliCtx.Codec.UnmarshalJSON(res, &lastNoAck); err != nil {
+				return err
+			}
+
+			fmt.Printf("LastNoACK received at %v", time.Unix(int64(lastNoAck), 0))
 			return nil
 		},
 	}
@@ -96,19 +102,20 @@ func GetHeaderFromIndex(cdc *codec.Codec) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			headerNumber := viper.GetInt(FlagHeaderNumber)
-			res, err := cliCtx.QueryStore(checkpoint.GetHeaderKey(uint64(headerNumber)), "checkpoint")
-			if err != nil {
-				fmt.Printf("Unable to fetch header block , Error:%v HeaderIndex:%v", err, headerNumber)
-				return err
-			}
-			var _checkpoint types.CheckpointBlockHeader
-			err = cdc.UnmarshalBinaryBare(res, &_checkpoint)
-			if err != nil {
-				fmt.Printf("Unable to unmarshall header block , Error:%v HeaderIndex:%v", err, headerNumber)
-				return err
-			}
-			fmt.Printf("Proposer: %v , StartBlock: %v , EndBlock: %v, Roothash: %v", _checkpoint.Proposer.String(), _checkpoint.StartBlock, _checkpoint.EndBlock, _checkpoint.RootHash.String())
 
+			// get query params
+			queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQueryCheckpointParams(uint64(headerNumber)))
+			if err != nil {
+				return err
+			}
+
+			// fetch checkpoint
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCheckpoint), queryParams)
+			if err != nil {
+				return err
+			}
+
+			fmt.Printf(string(res))
 			return nil
 		},
 	}
@@ -125,15 +132,20 @@ func GetCheckpointCount(cdc *codec.Codec) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			res, err := cliCtx.QueryStore(checkpoint.ACKCountKey, "checkpoint")
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryAckCount), nil)
 			if err != nil {
 				return err
 			}
 
-			ackCount, err := strconv.ParseInt(string(res), 10, 64)
-			if err != nil {
+			if len(res) == 0 {
+				return errors.New("No ack count found")
+			}
+
+			var ackCount uint64
+			if err := cliCtx.Codec.UnmarshalJSON(res, &ackCount); err != nil {
 				return err
 			}
+
 			fmt.Printf("Total number of checkpoint so far : %v", ackCount)
 			return nil
 		},

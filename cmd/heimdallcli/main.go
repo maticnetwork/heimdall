@@ -117,8 +117,6 @@ func queryCmd(cdc *amino.Codec) *cobra.Command {
 		rpc.BlockCommand(),
 		hmTxCli.QueryTxsByEventsCmd(cdc),
 		hmTxCli.QueryTxCmd(cdc),
-		client.LineBreak,
-		authCli.GetAccountCmd(authTypes.StoreKey, cdc),
 	)
 
 	// add modules' query commands

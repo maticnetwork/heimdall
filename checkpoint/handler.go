@@ -7,6 +7,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethCmn "github.com/ethereum/go-ethereum/common"
+
 	"github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/common"
 	hmCommon "github.com/maticnetwork/heimdall/common"
@@ -18,11 +19,11 @@ import (
 func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
-		case MsgCheckpoint:
+		case types.MsgCheckpoint:
 			return handleMsgCheckpoint(ctx, msg, k, contractCaller)
-		case MsgCheckpointAck:
+		case types.MsgCheckpointAck:
 			return handleMsgCheckpointAck(ctx, msg, k, contractCaller)
-		case MsgCheckpointNoAck:
+		case types.MsgCheckpointNoAck:
 			return handleMsgCheckpointNoAck(ctx, msg, k)
 		default:
 			return sdk.ErrTxDecode("Invalid message in checkpoint module").Result()
@@ -31,7 +32,7 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 }
 
 // handleMsgCheckpoint Validates checkpoint transaction
-func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
+func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	k.Logger(ctx).Debug("Validating checkpoint data", "TxData", msg)
 
 	if msg.TimeStamp == 0 || msg.TimeStamp > uint64(time.Now().UTC().Unix()) {
@@ -56,7 +57,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper, contractC
 	// k.Logger(ctx).Debug("Received checkpoint from buffer", "Checkpoint", checkpointBuffer.String())
 
 	// validate checkpoint
-	if !ValidateCheckpoint(msg.StartBlock, msg.EndBlock, msg.RootHash) {
+	if !types.ValidateCheckpoint(msg.StartBlock, msg.EndBlock, msg.RootHash) {
 		k.Logger(ctx).Error("RootHash is not valid",
 			"StartBlock", msg.StartBlock,
 			"EndBlock", msg.EndBlock,
@@ -93,7 +94,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper, contractC
 	} else if err.Error() == common.ErrNoCheckpointFound(k.Codespace()).Error() && msg.StartBlock == 0 {
 		// Check if genesis RewardRootHash matches
 		genesisValidatorRewards := k.sk.GetAllValidatorRewards(ctx)
-		genesisrewardRootHash, err := GetRewardRootHash(genesisValidatorRewards)
+		genesisrewardRootHash, err := types.GetRewardRootHash(genesisValidatorRewards)
 		if err != nil {
 			k.Logger(ctx).Error("Error calculating genesis rewardroothash", err)
 			return common.ErrComputeGenesisRewardRoot(k.Codespace()).Result()
@@ -153,7 +154,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper, contractC
 }
 
 // handleMsgCheckpointAck Validates if checkpoint submitted on chain is valid
-func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
+func handleMsgCheckpointAck(ctx sdk.Context, msg types.MsgCheckpointAck, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	k.Logger(ctx).Debug("Validating Checkpoint ACK", "Tx", msg)
 
 	// make call to headerBlock with header number
@@ -249,7 +250,7 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k Keeper, con
 	// Calculate new reward root hash
 	valRewardMap := k.sk.GetAllValidatorRewards(ctx)
 	k.Logger(ctx).Debug("rewards of all validators", "RewardMap", valRewardMap)
-	rewardRoot, err := GetRewardRootHash(valRewardMap)
+	rewardRoot, err := types.GetRewardRootHash(valRewardMap)
 	k.Logger(ctx).Info("Reward root hash generated", "RewardRootHash", hmTypes.BytesToHeimdallHash(rewardRoot).String())
 
 	// Add new Reward root hash to bufferedcheckpoint header block
@@ -296,7 +297,7 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k Keeper, con
 }
 
 // Validate checkpoint no-ack transaction
-func handleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k Keeper) sdk.Result {
+func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k Keeper) sdk.Result {
 	k.Logger(ctx).Debug("Validating checkpoint no-ack", "TxData", msg)
 	// current time
 	currentTime := time.Unix(int64(msg.TimeStamp), 0) // buffer time

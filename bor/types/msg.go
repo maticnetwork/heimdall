@@ -1,13 +1,9 @@
-package bor
+package types
 
 import (
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	borTypes "github.com/maticnetwork/heimdall/bor/types"
-	"github.com/maticnetwork/heimdall/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
-
-var cdc = codec.New()
 
 //
 // Propose Span Msg
@@ -17,17 +13,17 @@ var _ sdk.Msg = &MsgProposeSpan{}
 
 // MsgProposeSpan creates msg propose span
 type MsgProposeSpan struct {
-	ID         uint64                `json:"span_id"`
-	Proposer   types.HeimdallAddress `json:"proposer"`
-	StartBlock uint64                `json:"start_block"`
-	EndBlock   uint64                `json:"end_block"`
-	ChainID    string                `json:"bor_chain_id"`
+	ID         uint64                  `json:"span_id"`
+	Proposer   hmTypes.HeimdallAddress `json:"proposer"`
+	StartBlock uint64                  `json:"start_block"`
+	EndBlock   uint64                  `json:"end_block"`
+	ChainID    string                  `json:"bor_chain_id"`
 }
 
 // NewMsgProposeSpan creates new propose span message
 func NewMsgProposeSpan(
 	id uint64,
-	proposer types.HeimdallAddress,
+	proposer hmTypes.HeimdallAddress,
 	startBlock uint64,
 	endBlock uint64,
 	chainID string,
@@ -48,17 +44,17 @@ func (msg MsgProposeSpan) Type() string {
 
 // Route returns route for message
 func (msg MsgProposeSpan) Route() string {
-	return borTypes.RouterKey
+	return RouterKey
 }
 
 // GetSigners returns address of the signer
 func (msg MsgProposeSpan) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.Proposer)}
+	return []sdk.AccAddress{hmTypes.HeimdallAddressToAccAddress(msg.Proposer)}
 }
 
 // GetSignBytes returns sign bytes for proposeSpan message type
 func (msg MsgProposeSpan) GetSignBytes() []byte {
-	b, err := cdc.MarshalJSON(msg)
+	b, err := ModuleCdc.MarshalJSON(msg)
 	if err != nil {
 		panic(err)
 	}

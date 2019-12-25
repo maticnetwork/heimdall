@@ -1,4 +1,4 @@
-package bank
+package bor
 
 import (
 	"encoding/json"
@@ -11,9 +11,9 @@ import (
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	bankCli "github.com/maticnetwork/heimdall/bank/client/cli"
-	bankRest "github.com/maticnetwork/heimdall/bank/client/rest"
-	"github.com/maticnetwork/heimdall/bank/types"
+	borCli "github.com/maticnetwork/heimdall/bor/client/cli"
+	borRest "github.com/maticnetwork/heimdall/bor/client/rest"
+	"github.com/maticnetwork/heimdall/bor/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -60,12 +60,12 @@ func (AppModuleBasic) VerifyGenesis(bz map[string]json.RawMessage) error {
 
 // RegisterRESTRoutes registers the REST routes for the auth module.
 func (AppModuleBasic) RegisterRESTRoutes(ctx context.CLIContext, rtr *mux.Router) {
-	bankRest.RegisterRoutes(ctx, rtr)
+	borRest.RegisterRoutes(ctx, rtr)
 }
 
 // GetTxCmd returns the root tx command for the auth module.
 func (AppModuleBasic) GetTxCmd(cdc *codec.Codec) *cobra.Command {
-	return bankCli.GetTxCmd(cdc)
+	return borCli.GetTxCmd(cdc)
 }
 
 // GetQueryCmd returns the root query command for the auth module.

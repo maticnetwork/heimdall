@@ -1,13 +1,10 @@
-package bor
+package types
 
 import (
 	"github.com/cosmos/cosmos-sdk/x/params"
 )
 
 const (
-	// DefaultParamspace for params keeper
-	DefaultParamspace = "bor"
-
 	// DefaultSprintDuration sprint for blocks
 	DefaultSprintDuration uint64 = 64
 

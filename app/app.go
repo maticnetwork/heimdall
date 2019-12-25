@@ -49,6 +49,9 @@ var (
 	ModuleBasics = module.NewBasicManager(
 		auth.AppModuleBasic{},
 		bank.AppModuleBasic{},
+		supply.AppModuleBasic{},
+		checkpoint.AppModuleBasic{},
+		bor.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -268,12 +271,19 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.mm = module.NewManager(
 		auth.NewAppModule(app.AccountKeeper),
 		bank.NewAppModule(app.BankKeeper),
+		supply.NewAppModule(app.SupplyKeeper),
+		checkpoint.NewAppModule(app.CheckpointKeeper),
+		bor.NewAppModule(app.BorKeeper),
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
 	// properly initialized with tokens from genesis accounts.
 	app.mm.SetOrderInitGenesis(
 		authTypes.ModuleName,
+		bankTypes.ModuleName,
+		supplyTypes.ModuleName,
+		checkpointTypes.ModuleName,
+		borTypes.ModuleName,
 	)
 
 	// register message routes and query routes
@@ -333,9 +343,9 @@ func MakeCodec() *codec.Codec {
 	bankTypes.RegisterCodec(cdc)
 	supplyTypes.RegisterCodec(cdc)
 
-	checkpoint.RegisterCodec(cdc)
+	checkpointTypes.RegisterCodec(cdc)
 	staking.RegisterCodec(cdc)
-	bor.RegisterCodec(cdc)
+	borTypes.RegisterCodec(cdc)
 	clerkTypes.RegisterCodec(cdc)
 
 	cdc.Seal()
@@ -348,9 +358,9 @@ func MakePulp() *authTypes.Pulp {
 
 	// register custom type
 	bankTypes.RegisterPulp(pulp)
-	checkpoint.RegisterPulp(pulp)
+	checkpointTypes.RegisterPulp(pulp)
 	staking.RegisterPulp(pulp)
-	bor.RegisterPulp(pulp)
+	borTypes.RegisterPulp(pulp)
 	clerkTypes.RegisterPulp(pulp)
 
 	return pulp
