@@ -4,7 +4,7 @@ import (
 	"math/big"
 	"testing"
 
-	ethTypes "github.com/ethereum/go-ethereum/core/types"
+	ethTypes "github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/helper/mocks"

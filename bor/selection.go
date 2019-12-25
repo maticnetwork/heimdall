@@ -1,7 +1,7 @@
 package bor
 
 import (
-	"github.com/ethereum/go-ethereum/common"
+	"github.com/maticnetwork/bor/common"
 
 	"github.com/maticnetwork/heimdall/bor/types"
 	"github.com/maticnetwork/heimdall/helper"

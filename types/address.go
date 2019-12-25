@@ -7,7 +7,7 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/common"
+	"github.com/maticnetwork/bor/common"
 	"gopkg.in/yaml.v2"
 )
 

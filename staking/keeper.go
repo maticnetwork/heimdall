@@ -9,7 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
-	"github.com/ethereum/go-ethereum/common"
+	"github.com/maticnetwork/bor/common"
 	"github.com/tendermint/tendermint/libs/log"
 
 	authTypes "github.com/maticnetwork/heimdall/auth/types"

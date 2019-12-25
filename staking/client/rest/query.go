@@ -7,7 +7,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/types/rest"
-	"github.com/ethereum/go-ethereum/common"
+	"github.com/maticnetwork/bor/common"
 	"github.com/gorilla/mux"
 
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"

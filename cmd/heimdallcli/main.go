@@ -13,7 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ethCommon "github.com/ethereum/go-ethereum/common"
+	ethCommon "github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/heimdall/version"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -25,7 +25,6 @@ import (
 
 	"github.com/maticnetwork/heimdall/app"
 	authCli "github.com/maticnetwork/heimdall/auth/client/cli"
-	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	hmTxCli "github.com/maticnetwork/heimdall/client/tx"
 	"github.com/maticnetwork/heimdall/helper"
 )

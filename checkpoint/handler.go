@@ -6,7 +6,7 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ethCmn "github.com/ethereum/go-ethereum/common"
+	ethCmn "github.com/maticnetwork/bor/common"
 
 	"github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/common"

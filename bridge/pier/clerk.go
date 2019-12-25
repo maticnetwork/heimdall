@@ -13,7 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/ethereum/go-ethereum"
+	"github.com/maticnetwork/bor"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb"
