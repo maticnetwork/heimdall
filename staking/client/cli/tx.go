@@ -13,15 +13,14 @@ import (
 
 	hmClient "github.com/maticnetwork/heimdall/client"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/staking"
-	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
-	"github.com/maticnetwork/heimdall/types"
+	"github.com/maticnetwork/heimdall/staking/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 // GetTxCmd returns the transaction commands for this module
 func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 	txCmd := &cobra.Command{
-		Use:                        stakingTypes.ModuleName,
+		Use:                        types.ModuleName,
 		Short:                      "Staking transaction subcommands",
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
@@ -48,7 +47,7 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			// get proposer
-			proposer := types.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
+			proposer := hmTypes.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
 			if proposer.Empty() {
 				proposer = helper.GetFromAddress(cliCtx)
 			}
@@ -72,14 +71,14 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			pubkey := types.NewPubKey(pubkeyBytes)
+			pubkey := hmTypes.NewPubKey(pubkeyBytes)
 
 			// msg
-			msg := staking.NewMsgValidatorJoin(
+			msg := types.NewMsgValidatorJoin(
 				proposer,
 				uint64(validatorID),
 				pubkey,
-				types.HexToHeimdallHash(txhash),
+				hmTypes.HexToHeimdallHash(txhash),
 				uint64(viper.GetInt64(FlagLogIndex)),
 			)
 
@@ -109,7 +108,7 @@ func SendValidatorExitTx(cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			// get proposer
-			proposer := types.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
+			proposer := hmTypes.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
 			if proposer.Empty() {
 				proposer = helper.GetFromAddress(cliCtx)
 			}
@@ -125,10 +124,10 @@ func SendValidatorExitTx(cdc *codec.Codec) *cobra.Command {
 			}
 
 			// draf msg
-			msg := staking.NewMsgValidatorExit(
+			msg := types.NewMsgValidatorExit(
 				proposer,
 				uint64(validator),
-				types.HexToHeimdallHash(txhash),
+				hmTypes.HexToHeimdallHash(txhash),
 				uint64(viper.GetInt64(FlagLogIndex)),
 			)
 
@@ -157,7 +156,7 @@ func SendValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			// get proposer
-			proposer := types.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
+			proposer := hmTypes.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
 			if proposer.Empty() {
 				proposer = helper.GetFromAddress(cliCtx)
 			}
@@ -176,18 +175,18 @@ func SendValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			pubkey := types.NewPubKey(pubkeyBytes)
+			pubkey := hmTypes.NewPubKey(pubkeyBytes)
 
 			txhash := viper.GetString(FlagTxHash)
 			if txhash == "" {
 				return fmt.Errorf("transaction hash has to be supplied")
 			}
 
-			msg := staking.NewMsgSignerUpdate(
+			msg := types.NewMsgSignerUpdate(
 				proposer,
 				uint64(validator),
 				pubkey,
-				types.HexToHeimdallHash(txhash),
+				hmTypes.HexToHeimdallHash(txhash),
 				uint64(viper.GetInt64(FlagLogIndex)),
 			)
 
@@ -217,7 +216,7 @@ func SendValidatorStakeUpdateTx(cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			// get proposer
-			proposer := types.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
+			proposer := hmTypes.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
 			if proposer.Empty() {
 				proposer = helper.GetFromAddress(cliCtx)
 			}
@@ -232,10 +231,10 @@ func SendValidatorStakeUpdateTx(cdc *codec.Codec) *cobra.Command {
 				return fmt.Errorf("transaction hash has to be supplied")
 			}
 
-			msg := staking.NewMsgStakeUpdate(
+			msg := types.NewMsgStakeUpdate(
 				proposer,
 				uint64(validator),
-				types.HexToHeimdallHash(txhash),
+				hmTypes.HexToHeimdallHash(txhash),
 				uint64(viper.GetInt64(FlagLogIndex)),
 			)
 

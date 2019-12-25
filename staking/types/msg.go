@@ -1,4 +1,4 @@
-package staking
+package types
 
 import (
 	"bytes"
@@ -8,8 +8,7 @@ import (
 
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
-	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
-	"github.com/maticnetwork/heimdall/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 var cdc = codec.New()
@@ -21,25 +20,25 @@ var cdc = codec.New()
 var _ sdk.Msg = &MsgValidatorJoin{}
 
 type MsgValidatorJoin struct {
-	From         types.HeimdallAddress `json:"from"`
-	ID           types.ValidatorID     `json:"id"`
-	SignerPubKey types.PubKey          `json:"pub_key"`
-	TxHash       types.HeimdallHash    `json:"tx_hash"`
-	LogIndex     uint64                `json:"log_index"`
+	From         hmTypes.HeimdallAddress `json:"from"`
+	ID           hmTypes.ValidatorID     `json:"id"`
+	SignerPubKey hmTypes.PubKey          `json:"pub_key"`
+	TxHash       hmTypes.HeimdallHash    `json:"tx_hash"`
+	LogIndex     uint64                  `json:"log_index"`
 }
 
 // NewMsgValidatorJoin creates new validator-join
 func NewMsgValidatorJoin(
-	from types.HeimdallAddress,
+	from hmTypes.HeimdallAddress,
 	id uint64,
-	pubkey types.PubKey,
-	txhash types.HeimdallHash,
+	pubkey hmTypes.PubKey,
+	txhash hmTypes.HeimdallHash,
 	logIndex uint64,
 ) MsgValidatorJoin {
 
 	return MsgValidatorJoin{
 		From:         from,
-		ID:           types.NewValidatorID(id),
+		ID:           hmTypes.NewValidatorID(id),
 		SignerPubKey: pubkey,
 		TxHash:       txhash,
 		LogIndex:     logIndex,
@@ -51,11 +50,11 @@ func (msg MsgValidatorJoin) Type() string {
 }
 
 func (msg MsgValidatorJoin) Route() string {
-	return stakingTypes.RouterKey
+	return RouterKey
 }
 
 func (msg MsgValidatorJoin) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.From)}
+	return []sdk.AccAddress{hmTypes.HeimdallAddressToAccAddress(msg.From)}
 }
 
 func (msg MsgValidatorJoin) GetSignBytes() []byte {
@@ -94,17 +93,17 @@ var _ sdk.Msg = &MsgStakeUpdate{}
 
 // MsgStakeUpdate represents stake update
 type MsgStakeUpdate struct {
-	From     types.HeimdallAddress `json:"from"`
-	ID       types.ValidatorID     `json:"id"`
-	TxHash   types.HeimdallHash    `json:"tx_hash"`
-	LogIndex uint64                `json:"log_index"`
+	From     hmTypes.HeimdallAddress `json:"from"`
+	ID       hmTypes.ValidatorID     `json:"id"`
+	TxHash   hmTypes.HeimdallHash    `json:"tx_hash"`
+	LogIndex uint64                  `json:"log_index"`
 }
 
 // NewMsgStakeUpdate represents stake update
-func NewMsgStakeUpdate(from types.HeimdallAddress, id uint64, txhash types.HeimdallHash, logIndex uint64) MsgStakeUpdate {
+func NewMsgStakeUpdate(from hmTypes.HeimdallAddress, id uint64, txhash hmTypes.HeimdallHash, logIndex uint64) MsgStakeUpdate {
 	return MsgStakeUpdate{
 		From:     from,
-		ID:       types.NewValidatorID(id),
+		ID:       hmTypes.NewValidatorID(id),
 		TxHash:   txhash,
 		LogIndex: logIndex,
 	}
@@ -115,11 +114,11 @@ func (msg MsgStakeUpdate) Type() string {
 }
 
 func (msg MsgStakeUpdate) Route() string {
-	return stakingTypes.RouterKey
+	return RouterKey
 }
 
 func (msg MsgStakeUpdate) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.From)}
+	return []sdk.AccAddress{hmTypes.HeimdallAddressToAccAddress(msg.From)}
 }
 
 func (msg MsgStakeUpdate) GetSignBytes() []byte {
@@ -150,23 +149,23 @@ var _ sdk.Msg = &MsgSignerUpdate{}
 // MsgSignerUpdate signer update struct
 // TODO add old signer sig check
 type MsgSignerUpdate struct {
-	From            types.HeimdallAddress `json:"from"`
-	ID              types.ValidatorID     `json:"id"`
-	NewSignerPubKey types.PubKey          `json:"pubKey"`
-	TxHash          types.HeimdallHash    `json:"tx_hash"`
-	LogIndex        uint64                `json:"log_index"`
+	From            hmTypes.HeimdallAddress `json:"from"`
+	ID              hmTypes.ValidatorID     `json:"id"`
+	NewSignerPubKey hmTypes.PubKey          `json:"pubKey"`
+	TxHash          hmTypes.HeimdallHash    `json:"tx_hash"`
+	LogIndex        uint64                  `json:"log_index"`
 }
 
 func NewMsgSignerUpdate(
-	from types.HeimdallAddress,
+	from hmTypes.HeimdallAddress,
 	id uint64,
-	pubKey types.PubKey,
-	txhash types.HeimdallHash,
+	pubKey hmTypes.PubKey,
+	txhash hmTypes.HeimdallHash,
 	logIndex uint64,
 ) MsgSignerUpdate {
 	return MsgSignerUpdate{
 		From:            from,
-		ID:              types.NewValidatorID(id),
+		ID:              hmTypes.NewValidatorID(id),
 		NewSignerPubKey: pubKey,
 		TxHash:          txhash,
 		LogIndex:        logIndex,
@@ -178,11 +177,11 @@ func (msg MsgSignerUpdate) Type() string {
 }
 
 func (msg MsgSignerUpdate) Route() string {
-	return stakingTypes.RouterKey
+	return RouterKey
 }
 
 func (msg MsgSignerUpdate) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.From)}
+	return []sdk.AccAddress{hmTypes.HeimdallAddressToAccAddress(msg.From)}
 }
 
 func (msg MsgSignerUpdate) GetSignBytes() []byte {
@@ -216,16 +215,16 @@ func (msg MsgSignerUpdate) ValidateBasic() sdk.Error {
 var _ sdk.Msg = &MsgValidatorExit{}
 
 type MsgValidatorExit struct {
-	From     types.HeimdallAddress `json:"from"`
-	ID       types.ValidatorID     `json:"id"`
-	TxHash   types.HeimdallHash    `json:"tx_hash"`
-	LogIndex uint64                `json:"log_index"`
+	From     hmTypes.HeimdallAddress `json:"from"`
+	ID       hmTypes.ValidatorID     `json:"id"`
+	TxHash   hmTypes.HeimdallHash    `json:"tx_hash"`
+	LogIndex uint64                  `json:"log_index"`
 }
 
-func NewMsgValidatorExit(from types.HeimdallAddress, id uint64, txhash types.HeimdallHash, logIndex uint64) MsgValidatorExit {
+func NewMsgValidatorExit(from hmTypes.HeimdallAddress, id uint64, txhash hmTypes.HeimdallHash, logIndex uint64) MsgValidatorExit {
 	return MsgValidatorExit{
 		From:     from,
-		ID:       types.NewValidatorID(id),
+		ID:       hmTypes.NewValidatorID(id),
 		TxHash:   txhash,
 		LogIndex: logIndex,
 	}
@@ -236,11 +235,11 @@ func (msg MsgValidatorExit) Type() string {
 }
 
 func (msg MsgValidatorExit) Route() string {
-	return stakingTypes.RouterKey
+	return RouterKey
 }
 
 func (msg MsgValidatorExit) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.From)}
+	return []sdk.AccAddress{hmTypes.HeimdallAddressToAccAddress(msg.From)}
 }
 
 func (msg MsgValidatorExit) GetSignBytes() []byte {

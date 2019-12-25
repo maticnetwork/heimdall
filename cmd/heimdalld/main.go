@@ -34,9 +34,8 @@ import (
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/helper"
 	hmserver "github.com/maticnetwork/heimdall/server"
-	stakingcli "github.com/maticnetwork/heimdall/staking/cli"
+	stakingcli "github.com/maticnetwork/heimdall/staking/client/cli"
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
-	"github.com/maticnetwork/heimdall/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -184,12 +183,12 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 				ID:          hmTypes.NewValidatorID(uint64(validatorID)),
 				PubKey:      newPubkey,
 				StartEpoch:  0,
-				Signer:      types.BytesToHeimdallAddress(valPubKey.Address().Bytes()),
+				Signer:      hmTypes.BytesToHeimdallAddress(valPubKey.Address().Bytes()),
 				VotingPower: stakingTypes.DefaultValPower,
 			}
 
-			vals := []*types.Validator{&validator}
-			_ = types.NewValidatorSet(vals)
+			vals := []*hmTypes.Validator{&validator}
+			_ = hmTypes.NewValidatorSet(vals)
 			// create genesis state
 			appStateBytes := app.NewDefaultGenesisState()
 			// set validator account
@@ -396,7 +395,7 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 					ID:          hmTypes.NewValidatorID(uint64(startID + int64(i))),
 					PubKey:      newPubkey,
 					StartEpoch:  0,
-					Signer:      types.BytesToHeimdallAddress(valPubKeys[i].Address().Bytes()),
+					Signer:      hmTypes.BytesToHeimdallAddress(valPubKeys[i].Address().Bytes()),
 					VotingPower: 1,
 				}
 
@@ -425,7 +424,7 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 			// 	// genesis account
 			// 	accounts[i] = getGenesisAccount(validators[i].Signer.Bytes())
 			// }
-			// _ = types.NewValidatorSet(validators)
+			// _ = hmTypes.NewValidatorSet(validators)
 
 			// new app state
 			appStateBytes := app.NewDefaultGenesisState()
@@ -538,7 +537,7 @@ func populatePersistentPeersInConfigAndWriteIt(config *cfg.Config) {
 
 func getGenesisAccount(address []byte) authTypes.Account {
 	acc := authTypes.NewBaseAccountWithAddress(hmTypes.BytesToHeimdallAddress(address))
-	acc.SetCoins(types.Coins{types.Coin{Denom: "vetic", Amount: types.NewInt(1000)}})
+	acc.SetCoins(hmTypes.Coins{hmTypes.Coin{Denom: "vetic", Amount: hmTypes.NewInt(1000)}})
 	return &acc
 }
 

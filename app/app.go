@@ -50,6 +50,7 @@ var (
 		auth.AppModuleBasic{},
 		bank.AppModuleBasic{},
 		supply.AppModuleBasic{},
+		staking.AppModuleBasic{},
 		checkpoint.AppModuleBasic{},
 		bor.AppModuleBasic{},
 		clerk.AppModuleBasic{},
@@ -273,6 +274,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		auth.NewAppModule(app.AccountKeeper),
 		bank.NewAppModule(app.BankKeeper),
 		supply.NewAppModule(app.SupplyKeeper),
+		staking.NewAppModule(app.StakingKeeper),
 		checkpoint.NewAppModule(app.CheckpointKeeper),
 		bor.NewAppModule(app.BorKeeper),
 		clerk.NewAppModule(app.ClerkKeeper),
@@ -284,6 +286,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		authTypes.ModuleName,
 		bankTypes.ModuleName,
 		supplyTypes.ModuleName,
+		stakingTypes.ModuleName,
 		checkpointTypes.ModuleName,
 		borTypes.ModuleName,
 		clerkTypes.ModuleName,
@@ -345,9 +348,8 @@ func MakeCodec() *codec.Codec {
 	authTypes.RegisterCodec(cdc)
 	bankTypes.RegisterCodec(cdc)
 	supplyTypes.RegisterCodec(cdc)
-
 	checkpointTypes.RegisterCodec(cdc)
-	staking.RegisterCodec(cdc)
+	stakingTypes.RegisterCodec(cdc)
 	borTypes.RegisterCodec(cdc)
 	clerkTypes.RegisterCodec(cdc)
 
@@ -361,8 +363,8 @@ func MakePulp() *authTypes.Pulp {
 
 	// register custom type
 	bankTypes.RegisterPulp(pulp)
+	stakingTypes.RegisterPulp(pulp)
 	checkpointTypes.RegisterPulp(pulp)
-	staking.RegisterPulp(pulp)
 	borTypes.RegisterPulp(pulp)
 	clerkTypes.RegisterPulp(pulp)
 

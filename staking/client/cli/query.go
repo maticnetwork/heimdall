@@ -10,16 +10,15 @@ import (
 	"github.com/spf13/viper"
 
 	hmClient "github.com/maticnetwork/heimdall/client"
-	"github.com/maticnetwork/heimdall/staking"
-	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
-	"github.com/maticnetwork/heimdall/types"
+	"github.com/maticnetwork/heimdall/staking/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 // GetQueryCmd returns the cli query commands for this module
 func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 	// Group supply queries under a subcommand
 	supplyQueryCmd := &cobra.Command{
-		Use:                        stakingTypes.ModuleName,
+		Use:                        types.ModuleName,
 		Short:                      "Querying commands for the staking module",
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
@@ -48,23 +47,20 @@ func GetValidatorInfo(cdc *codec.Codec) *cobra.Command {
 			if validatorID == 0 {
 				return fmt.Errorf("validator ID cannot be 0")
 			}
-			signerAddr, _, err := cliCtx.QueryStore(staking.GetValidatorMapKey(types.NewValidatorID(uint64(validatorID)).Bytes()), "staking")
+
+			// get query params
+			queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQueryValidatorParams(hmTypes.ValidatorID(validatorID)))
 			if err != nil {
-				fmt.Printf("Error fetching signer address from validator ID")
-				return err
-			}
-			res, _, err := cliCtx.QueryStore(staking.GetValidatorKey(signerAddr), "staking")
-			if err != nil {
-				fmt.Printf("Error fetching validator information from store, Error: %v ValidatorID: %v", err, validatorID)
 				return err
 			}
 
-			var _validator types.Validator
-			err = cdc.UnmarshalBinaryBare(res, &_validator)
+			// get validator
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryValidator), queryParams)
 			if err != nil {
-				fmt.Printf("Error unmarshalling validator , Error: %v", err)
 				return err
 			}
+
+			fmt.Println(res)
 			return nil
 		},
 	}
@@ -80,16 +76,14 @@ func GetCurrentValSet(cdc *codec.Codec) *cobra.Command {
 		Short: "show current validator set",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			res, _, err := cliCtx.QueryStore(staking.CurrentValidatorSetKey, "staking")
+
+			// get validator set
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCurrentValidatorSet), nil)
 			if err != nil {
 				return err
 			}
-			var _validatorSet types.ValidatorSet
-			err = cdc.UnmarshalBinaryBare(res, &_validatorSet)
-			if err != nil {
-				return err
-			}
-			fmt.Printf("Current validator set : %v", _validatorSet)
+
+			fmt.Println(res)
 			return nil
 		},
 	}
