@@ -37,7 +37,7 @@ import (
 	// "github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 	// "github.com/tendermint/tendermint/crypto/secp256k1"
-	dbm "github.com/tendermint/tendermint/libs/db"
+	dbm "github.com/tendermint/tm-db"
 	"github.com/tendermint/tendermint/libs/log"
 
 	bankTypes "github.com/maticnetwork/heimdall/bank/types"

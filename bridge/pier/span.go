@@ -18,7 +18,6 @@ import (
 	httpClient "github.com/tendermint/tendermint/rpc/client"
 
 	"github.com/maticnetwork/heimdall/bor"
-	borTags "github.com/maticnetwork/heimdall/bor/tags"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
 )
@@ -167,16 +166,6 @@ func (s *SpanService) propose(lastSpan *types.Span, nextSpanMsg *types.Span) {
 			return
 		}
 	}
-}
-
-func (s *SpanService) getSpanIDTxTag(tx sdk.TxResponse) *sdk.StringTag {
-	for _, tag := range tx.Tags {
-		if tag.Key == borTags.SpanID {
-			return &tag
-		}
-	}
-
-	return nil
 }
 
 // fetches last span processed in DB
