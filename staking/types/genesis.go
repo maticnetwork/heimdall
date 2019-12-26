@@ -5,7 +5,6 @@ import (
 	"errors"
 	"math/big"
 
-	"github.com/cosmos/cosmos-sdk/codec"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -33,17 +32,17 @@ func (v *GenesisValidator) HeimdallValidator() hmTypes.Validator {
 
 // GenesisState is the checkpoint state that must be provided at genesis.
 type GenesisState struct {
-	Validators           []*hmTypes.Validator `json:"validators" yaml:"validators"`
-	CurrentValSet        hmTypes.ValidatorSet `json:"current_val_set" yaml:"current_val_set"`
-	ValidatorRewards     map[string]*big.Int  `json:"val_rewards" yaml:"val_rewards"`
-	ProposerBonusPercent int64                `json:"proposer_bonus_percent" yaml:"proposer_bonus_percent"`
+	Validators           []*hmTypes.Validator             `json:"validators" yaml:"validators"`
+	CurrentValSet        hmTypes.ValidatorSet             `json:"current_val_set" yaml:"current_val_set"`
+	ValidatorRewards     map[hmTypes.ValidatorID]*big.Int `json:"val_rewards" yaml:"val_rewards"`
+	ProposerBonusPercent int64                            `json:"proposer_bonus_percent" yaml:"proposer_bonus_percent"`
 }
 
 // NewGenesisState creates a new genesis state.
 func NewGenesisState(
 	validators []*hmTypes.Validator,
 	currentValSet hmTypes.ValidatorSet,
-	validatorRewards map[string]*big.Int,
+	validatorRewards map[hmTypes.ValidatorID]*big.Int,
 	proposerBonusPercent int64,
 
 ) GenesisState {
@@ -54,15 +53,6 @@ func NewGenesisState(
 		ProposerBonusPercent: proposerBonusPercent,
 	}
 }
-
-// // DefaultGenesisState returns a default genesis state
-// func DefaultGenesisState(validators []*hmTypes.Validator, currentValSet hmTypes.ValidatorSet) GenesisState {
-// 	validatorRewards := make(map[hmTypes.ValidatorID]*big.Int)
-// 	for _, val := range validators {
-// 		validatorRewards[val.ID] = big.NewInt(0)
-// 	}
-// 	return NewGenesisState(nil, currentValSet, validatorRewards, DefaultProposerBonusPercent)
-// }
 
 // DefaultGenesisState returns a default genesis state
 func DefaultGenesisState() GenesisState {
@@ -82,7 +72,7 @@ func ValidateGenesis(data GenesisState) error {
 }
 
 // GetGenesisStateFromAppState returns staking GenesisState given raw application genesis state
-func GetGenesisStateFromAppState(cdc *codec.Codec, appState map[string]json.RawMessage) GenesisState {
+func GetGenesisStateFromAppState(appState map[string]json.RawMessage) GenesisState {
 	var genesisState GenesisState
 	if appState[ModuleName] != nil {
 		err := json.Unmarshal(appState[ModuleName], &genesisState)
@@ -92,4 +82,25 @@ func GetGenesisStateFromAppState(cdc *codec.Codec, appState map[string]json.RawM
 	}
 
 	return genesisState
+}
+
+// SetGenesisStateToAppState sets state into app state
+func SetGenesisStateToAppState(appState map[string]json.RawMessage, validators []*hmTypes.Validator, currentValSet hmTypes.ValidatorSet) (map[string]json.RawMessage, error) {
+	validatorRewards := make(map[hmTypes.ValidatorID]*big.Int)
+	for _, val := range validators {
+		validatorRewards[val.ID] = big.NewInt(0)
+	}
+
+	// set state to staking state
+	stakingState := GetGenesisStateFromAppState(appState)
+	stakingState.Validators = validators
+	stakingState.CurrentValSet = currentValSet
+	stakingState.ValidatorRewards = validatorRewards
+
+	var err error
+	appState[ModuleName], err = json.Marshal(stakingState)
+	if err != nil {
+		return appState, err
+	}
+	return appState, nil
 }

@@ -36,8 +36,8 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 
 	// Add rewards for initial validators
 	for _, validator := range data.Validators {
-		if _, ok := data.ValidatorRewards[validator.ID.String()]; ok {
-			validatorRewards[validator.ID] = data.ValidatorRewards[validator.ID.String()]
+		if _, ok := data.ValidatorRewards[validator.ID]; ok {
+			validatorRewards[validator.ID] = data.ValidatorRewards[validator.ID]
 		} else {
 			validatorRewards[validator.ID] = big.NewInt(0)
 		}
@@ -52,19 +52,11 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 
 // ExportGenesis returns a GenesisState for a given context and keeper.
 func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
-	// Validator rewards
-	validatorRewards := make(map[string]*big.Int)
-
-	// Add rewards for initial validators
-	for validatorID, validator := range keeper.GetAllValidatorRewards(ctx) {
-		validatorRewards[validatorID.String()] = validator
-	}
-
 	// return new genesis state
 	return types.NewGenesisState(
 		keeper.GetAllValidators(ctx),
 		keeper.GetValidatorSet(ctx),
-		validatorRewards,
+		keeper.GetAllValidatorRewards(ctx),
 		keeper.GetProposerBonusPercent(ctx),
 	)
 }

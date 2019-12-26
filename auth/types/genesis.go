@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/maticnetwork/heimdall/types"
 )
 
@@ -52,7 +51,7 @@ func DefaultGenesisState() GenesisState {
 
 // GetGenesisStateFromAppState returns x/auth GenesisState given raw application
 // genesis state.
-func GetGenesisStateFromAppState(cdc *codec.Codec, appState map[string]json.RawMessage) GenesisState {
+func GetGenesisStateFromAppState(appState map[string]json.RawMessage) GenesisState {
 	var genesisState GenesisState
 	if appState[ModuleName] != nil {
 		err := json.Unmarshal(appState[ModuleName], &genesisState)
@@ -62,6 +61,18 @@ func GetGenesisStateFromAppState(cdc *codec.Codec, appState map[string]json.RawM
 	}
 
 	return genesisState
+}
+
+// SetGenesisStateToAppState sets state into app state
+func SetGenesisStateToAppState(appState map[string]json.RawMessage, accounts []GenesisAccount) (map[string]json.RawMessage, error) {
+	authState := GetGenesisStateFromAppState(appState)
+	authState.Accounts = accounts
+	var err error
+	appState[ModuleName], err = json.Marshal(authState)
+	if err != nil {
+		return appState, err
+	}
+	return appState, nil
 }
 
 // ValidateGenesis performs basic validation of auth genesis data returning an
@@ -116,11 +127,9 @@ type GenesisAccountIterator struct{}
 // IterateGenesisAccounts iterates over all the genesis accounts found in
 // appGenesis and invokes a callback on each genesis account. If any call
 // returns true, iteration stops.
-func (GenesisAccountIterator) IterateGenesisAccounts(
-	cdc *codec.Codec, appGenesis map[string]json.RawMessage, cb func(Account) (stop bool),
-) {
+func (GenesisAccountIterator) IterateGenesisAccounts(appGenesis map[string]json.RawMessage, cb func(Account) (stop bool)) {
 
-	for _, genAcc := range GetGenesisStateFromAppState(cdc, appGenesis).Accounts {
+	for _, genAcc := range GetGenesisStateFromAppState(appGenesis).Accounts {
 		if cb(genAcc) {
 			break
 		}

@@ -188,14 +188,22 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			}
 
 			vals := []*hmTypes.Validator{&validator}
-			_ = hmTypes.NewValidatorSet(vals)
+			validatorSet := hmTypes.NewValidatorSet(vals)
+
 			// create genesis state
 			appStateBytes := app.NewDefaultGenesisState()
 
 			// auth state change
-			authState := authTypes.GetGenesisStateFromAppState(cdc, appStateBytes)
-			authState.Accounts = []authTypes.GenesisAccount{getGenesisAccount(validator.Signer.Bytes())}
-			appStateBytes[authTypes.ModuleName], err = json.Marshal(authState)
+			appStateBytes, err = authTypes.SetGenesisStateToAppState(
+				appStateBytes,
+				[]authTypes.GenesisAccount{getGenesisAccount(validator.Signer.Bytes())},
+			)
+			if err != nil {
+				return err
+			}
+
+			// staking state change
+			appStateBytes, err = stakingTypes.SetGenesisStateToAppState(appStateBytes, vals, *validatorSet)
 			if err != nil {
 				return err
 			}
