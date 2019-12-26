@@ -8,10 +8,9 @@ import (
 	"github.com/maticnetwork/heimdall/types"
 )
 
-// GenesisAccount defines a genesis account that embeds an Account with validation capabilities.
-type GenesisAccount interface {
-	Account
-	Validate() error
+// GenesisAccount genesis account
+type GenesisAccount struct {
+	*BaseAccount
 }
 
 // GenesisAccounts defines a slice of GenesisAccount objects
@@ -128,7 +127,6 @@ type GenesisAccountIterator struct{}
 // appGenesis and invokes a callback on each genesis account. If any call
 // returns true, iteration stops.
 func (GenesisAccountIterator) IterateGenesisAccounts(appGenesis map[string]json.RawMessage, cb func(Account) (stop bool)) {
-
 	for _, genAcc := range GetGenesisStateFromAppState(appGenesis).Accounts {
 		if cb(genAcc) {
 			break

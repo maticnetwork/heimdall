@@ -57,7 +57,7 @@ type Account interface {
 // BaseAccount
 
 var _ Account = (*BaseAccount)(nil)
-var _ GenesisAccount = (*BaseAccount)(nil)
+var _ Account = (*GenesisAccount)(nil)
 
 // BaseAccount - a base account structure.
 // This can be extended by embedding within in your AppAccount.
