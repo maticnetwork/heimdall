@@ -64,6 +64,6 @@ require (
 	gotest.tools v2.2.0+incompatible // indirect
 )
 
-replace github.com/tendermint/tendermint => github.com/maticnetwork/tendermint v0.26.0-dev0.0.20191223163258-141a71730975
+replace github.com/tendermint/tendermint => github.com/maticnetwork/tendermint v0.26.0-dev0.0.20191226194020-c743ff66399b
 
 replace golang.org/x/crypto => github.com/tendermint/crypto v0.0.0-20191022145703-50d29ede1e15
