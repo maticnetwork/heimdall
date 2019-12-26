@@ -1,6 +1,7 @@
 package types
 
 import (
+	"bytes"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -56,6 +57,7 @@ type Account interface {
 // BaseAccount
 
 var _ Account = (*BaseAccount)(nil)
+var _ Account = (*GenesisAccount)(nil)
 
 // BaseAccount - a base account structure.
 // This can be extended by embedding within in your AppAccount.
@@ -177,6 +179,16 @@ func (acc *BaseAccount) SetSequence(seq uint64) error {
 // this is simply the base coins.
 func (acc *BaseAccount) SpendableCoins(_ time.Time) types.Coins {
 	return acc.GetCoins()
+}
+
+// Validate checks for errors on the account fields
+func (acc BaseAccount) Validate() error {
+	if acc.PubKey != nil && !acc.Address.Empty() &&
+		!bytes.Equal(acc.PubKey.Address().Bytes(), acc.Address.Bytes()) {
+		return errors.New("pubkey and address pair is invalid")
+	}
+
+	return nil
 }
 
 // MarshalYAML returns the YAML representation of an account.

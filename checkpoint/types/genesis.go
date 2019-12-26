@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/json"
 	"errors"
 
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -44,4 +45,17 @@ func ValidateGenesis(data GenesisState) error {
 	}
 
 	return nil
+}
+
+// GetGenesisStateFromAppState returns staking GenesisState given raw application genesis state
+func GetGenesisStateFromAppState(appState map[string]json.RawMessage) GenesisState {
+	var genesisState GenesisState
+	if appState[ModuleName] != nil {
+		err := json.Unmarshal(appState[ModuleName], &genesisState)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	return genesisState
 }

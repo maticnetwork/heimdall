@@ -8,14 +8,8 @@ import (
 func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterInterface((*Account)(nil), nil)
 	cdc.RegisterConcrete(&BaseAccount{}, "auth/Account", nil)
+	cdc.RegisterConcrete(&GenesisAccount{}, "auth/GenesisAccount", nil)
 	cdc.RegisterConcrete(StdTx{}, "auth/StdTx", nil)
-}
-
-// RegisterBaseAccount most users shouldn't use this, but this comes in handy for tests.
-func RegisterBaseAccount(cdc *codec.Codec) {
-	cdc.RegisterInterface((*Account)(nil), nil)
-	cdc.RegisterConcrete(&BaseAccount{}, "cosmos-sdk/BaseAccount", nil)
-	codec.RegisterCrypto(cdc)
 }
 
 // ModuleCdc module wide codec

@@ -2,6 +2,7 @@ package staking
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -11,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
 
+	"github.com/maticnetwork/heimdall/helper"
 	stakingCli "github.com/maticnetwork/heimdall/staking/client/cli"
 	stakingRest "github.com/maticnetwork/heimdall/staking/client/rest"
 	"github.com/maticnetwork/heimdall/staking/types"
@@ -40,13 +42,17 @@ func (AppModuleBasic) RegisterCodec(cdc *codec.Codec) {
 // DefaultGenesis returns default genesis state as raw bytes for the auth
 // module.
 func (AppModuleBasic) DefaultGenesis() json.RawMessage {
-	return types.ModuleCdc.MustMarshalJSON(types.DefaultGenesisState())
+	result, err := json.Marshal(types.DefaultGenesisState())
+	if err != nil {
+		panic(err)
+	}
+	return result
 }
 
 // ValidateGenesis performs genesis state validation for the auth module.
 func (AppModuleBasic) ValidateGenesis(bz json.RawMessage) error {
 	var data types.GenesisState
-	err := types.ModuleCdc.UnmarshalJSON(bz, &data)
+	err := json.Unmarshal(bz, &data)
 	if err != nil {
 		return err
 	}
@@ -55,6 +61,30 @@ func (AppModuleBasic) ValidateGenesis(bz json.RawMessage) error {
 
 // VerifyGenesis performs verification on auth module state.
 func (AppModuleBasic) VerifyGenesis(bz map[string]json.RawMessage) error {
+	var data types.GenesisState
+	err := json.Unmarshal(bz[types.ModuleName], &data)
+	if err != nil {
+		return err
+	}
+
+	contractCaller, err := helper.NewContractCaller()
+	if err != nil {
+		return err
+	}
+
+	// validate validators
+	validators := data.Validators
+	for _, v := range validators {
+		val, err := contractCaller.GetValidatorInfo(v.ID)
+		if err != nil {
+			return err
+		}
+
+		if val.VotingPower != v.VotingPower {
+			return fmt.Errorf("Voting power mismatch. Expected: %v Received: %v ValID: %v", val.VotingPower, v.VotingPower, v.ID)
+		}
+	}
+
 	return nil
 }
 
@@ -75,22 +105,24 @@ func (AppModuleBasic) GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 
 //____________________________________________________________________________
 
-// AppModule implements an application module for the auth module.
+// AppModule implements an application module for the supply module.
 type AppModule struct {
 	AppModuleBasic
 
-	keeper Keeper
+	keeper         Keeper
+	contractCaller helper.IContractCaller
 }
 
 // NewAppModule creates a new AppModule object
-func NewAppModule(keeper Keeper) AppModule {
+func NewAppModule(keeper Keeper, contractCaller helper.IContractCaller) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{},
 		keeper:         keeper,
+		contractCaller: contractCaller,
 	}
 }
 
-// Name returns the auth module's name.
+// Name returns the module's name.
 func (AppModule) Name() string {
 	return types.ModuleName
 }
@@ -98,17 +130,17 @@ func (AppModule) Name() string {
 // RegisterInvariants performs a no-op.
 func (AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
-// Route returns the message routing key for the auth module.
+// Route returns the message routing key for the module.
 func (AppModule) Route() string {
 	return types.RouterKey
 }
 
-// NewHandler returns an sdk.Handler for the auth module.
-func (AppModule) NewHandler() sdk.Handler {
-	return nil
+// NewHandler returns an sdk.Handler for the module.
+func (am AppModule) NewHandler() sdk.Handler {
+	return NewHandler(am.keeper, am.contractCaller)
 }
 
-// QuerierRoute returns the auth module's querier route name.
+// QuerierRoute returns the staking module's querier route name.
 func (AppModule) QuerierRoute() string {
 	return types.QuerierRoute
 }
@@ -122,7 +154,10 @@ func (am AppModule) NewQuerierHandler() sdk.Querier {
 // no validator updates.
 func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.ValidatorUpdate {
 	var genesisState types.GenesisState
-	types.ModuleCdc.MustUnmarshalJSON(data, &genesisState)
+	err := json.Unmarshal(data, &genesisState)
+	if err != nil {
+		panic(err)
+	}
 	InitGenesis(ctx, am.keeper, genesisState)
 	return []abci.ValidatorUpdate{}
 }
@@ -131,7 +166,11 @@ func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.Va
 // module.
 func (am AppModule) ExportGenesis(ctx sdk.Context) json.RawMessage {
 	gs := ExportGenesis(ctx, am.keeper)
-	return types.ModuleCdc.MustMarshalJSON(gs)
+	res, err := json.Marshal(gs)
+	if err != nil {
+		panic(err)
+	}
+	return res
 }
 
 // BeginBlock returns the begin blocker for the auth module.
