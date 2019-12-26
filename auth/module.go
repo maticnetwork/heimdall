@@ -14,6 +14,7 @@ import (
 	authCli "github.com/maticnetwork/heimdall/auth/client/cli"
 	authRest "github.com/maticnetwork/heimdall/auth/client/rest"
 	"github.com/maticnetwork/heimdall/auth/types"
+	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -40,13 +41,17 @@ func (AppModuleBasic) RegisterCodec(cdc *codec.Codec) {
 // DefaultGenesis returns default genesis state as raw bytes for the auth
 // module.
 func (AppModuleBasic) DefaultGenesis() json.RawMessage {
-	return types.ModuleCdc.MustMarshalJSON(types.DefaultGenesisState())
+	result, err := json.Marshal(types.DefaultGenesisState())
+	if err != nil {
+		panic(err)
+	}
+	return result
 }
 
 // ValidateGenesis performs genesis state validation for the auth module.
 func (AppModuleBasic) ValidateGenesis(bz json.RawMessage) error {
 	var data types.GenesisState
-	err := types.ModuleCdc.UnmarshalJSON(bz, &data)
+	err := json.Unmarshal(bz, &data)
 	if err != nil {
 		return err
 	}
@@ -79,14 +84,16 @@ func (AppModuleBasic) GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 type AppModule struct {
 	AppModuleBasic
 
-	accountKeeper AccountKeeper
+	accountKeeper  AccountKeeper
+	contractCaller helper.IContractCaller
 }
 
 // NewAppModule creates a new AppModule object
-func NewAppModule(accountKeeper AccountKeeper) AppModule {
+func NewAppModule(accountKeeper AccountKeeper, contractCaller helper.IContractCaller) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{},
 		accountKeeper:  accountKeeper,
+		contractCaller: contractCaller,
 	}
 }
 
@@ -122,7 +129,10 @@ func (am AppModule) NewQuerierHandler() sdk.Querier {
 // no validator updates.
 func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.ValidatorUpdate {
 	var genesisState types.GenesisState
-	types.ModuleCdc.MustUnmarshalJSON(data, &genesisState)
+	err := json.Unmarshal(data, &genesisState)
+	if err != nil {
+		panic(err)
+	}
 	InitGenesis(ctx, am.accountKeeper, genesisState)
 	return []abci.ValidatorUpdate{}
 }
@@ -131,7 +141,11 @@ func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.Va
 // module.
 func (am AppModule) ExportGenesis(ctx sdk.Context) json.RawMessage {
 	gs := ExportGenesis(ctx, am.accountKeeper)
-	return types.ModuleCdc.MustMarshalJSON(gs)
+	res, err := json.Marshal(gs)
+	if err != nil {
+		panic(err)
+	}
+	return res
 }
 
 // BeginBlock returns the begin blocker for the auth module.

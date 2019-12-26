@@ -184,6 +184,11 @@ func (valID ValidatorID) Uint64() uint64 {
 	return uint64(valID)
 }
 
+// Uint64 converts validator ID to int
+func (valID ValidatorID) String() string {
+	return string(valID)
+}
+
 // --------
 
 // MinimalVal is the minimal validator representation

@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/json"
 	"errors"
 	"math/big"
 
@@ -53,19 +54,9 @@ func NewGenesisState(
 	}
 }
 
-// // DefaultGenesisState returns a default genesis state
-// func DefaultGenesisState(validators []*hmTypes.Validator, currentValSet hmTypes.ValidatorSet) GenesisState {
-// 	validatorRewards := make(map[hmTypes.ValidatorID]*big.Int)
-// 	for _, val := range validators {
-// 		validatorRewards[val.ID] = big.NewInt(0)
-// 	}
-// 	return NewGenesisState(nil, currentValSet, validatorRewards, DefaultProposerBonusPercent)
-// }
-
 // DefaultGenesisState returns a default genesis state
 func DefaultGenesisState() GenesisState {
-	validatorRewards := make(map[hmTypes.ValidatorID]*big.Int)
-	return NewGenesisState(nil, hmTypes.ValidatorSet{}, validatorRewards, DefaultProposerBonusPercent)
+	return NewGenesisState(nil, hmTypes.ValidatorSet{}, nil, DefaultProposerBonusPercent)
 }
 
 // ValidateGenesis performs basic validation of bor genesis data returning an
@@ -78,4 +69,38 @@ func ValidateGenesis(data GenesisState) error {
 	}
 
 	return nil
+}
+
+// GetGenesisStateFromAppState returns staking GenesisState given raw application genesis state
+func GetGenesisStateFromAppState(appState map[string]json.RawMessage) GenesisState {
+	var genesisState GenesisState
+	if appState[ModuleName] != nil {
+		err := json.Unmarshal(appState[ModuleName], &genesisState)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	return genesisState
+}
+
+// SetGenesisStateToAppState sets state into app state
+func SetGenesisStateToAppState(appState map[string]json.RawMessage, validators []*hmTypes.Validator, currentValSet hmTypes.ValidatorSet) (map[string]json.RawMessage, error) {
+	validatorRewards := make(map[hmTypes.ValidatorID]*big.Int)
+	for _, val := range validators {
+		validatorRewards[val.ID] = big.NewInt(0)
+	}
+
+	// set state to staking state
+	stakingState := GetGenesisStateFromAppState(appState)
+	stakingState.Validators = validators
+	stakingState.CurrentValSet = currentValSet
+	stakingState.ValidatorRewards = validatorRewards
+
+	var err error
+	appState[ModuleName], err = json.Marshal(stakingState)
+	if err != nil {
+		return appState, err
+	}
+	return appState, nil
 }
