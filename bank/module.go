@@ -14,6 +14,7 @@ import (
 	bankCli "github.com/maticnetwork/heimdall/bank/client/cli"
 	bankRest "github.com/maticnetwork/heimdall/bank/client/rest"
 	"github.com/maticnetwork/heimdall/bank/types"
+	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -83,14 +84,16 @@ func (AppModuleBasic) GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 type AppModule struct {
 	AppModuleBasic
 
-	keeper Keeper
+	keeper         Keeper
+	contractCaller helper.IContractCaller
 }
 
 // NewAppModule creates a new AppModule object
-func NewAppModule(keeper Keeper) AppModule {
+func NewAppModule(keeper Keeper, contractCaller helper.IContractCaller) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{},
 		keeper:         keeper,
+		contractCaller: contractCaller,
 	}
 }
 
@@ -107,9 +110,9 @@ func (AppModule) Route() string {
 	return types.RouterKey
 }
 
-// NewHandler returns an sdk.Handler for the auth module.
-func (AppModule) NewHandler() sdk.Handler {
-	return nil
+// NewHandler returns an sdk.Handler for the module.
+func (am AppModule) NewHandler() sdk.Handler {
+	return NewHandler(am.keeper, am.contractCaller)
 }
 
 // QuerierRoute returns the auth module's querier route name.

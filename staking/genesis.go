@@ -48,6 +48,11 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 
 	// proposer bonus percent
 	keeper.SetProposerBonusPercent(ctx, data.ProposerBonusPercent)
+
+	// increament accum if init validator set
+	if len(data.CurrentValSet.Validators) == 0 {
+		keeper.IncrementAccum(ctx, 1)
+	}
 }
 
 // ExportGenesis returns a GenesisState for a given context and keeper.

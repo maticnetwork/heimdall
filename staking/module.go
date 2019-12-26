@@ -105,22 +105,24 @@ func (AppModuleBasic) GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 
 //____________________________________________________________________________
 
-// AppModule implements an application module for the auth module.
+// AppModule implements an application module for the supply module.
 type AppModule struct {
 	AppModuleBasic
 
-	keeper Keeper
+	keeper         Keeper
+	contractCaller helper.IContractCaller
 }
 
 // NewAppModule creates a new AppModule object
-func NewAppModule(keeper Keeper) AppModule {
+func NewAppModule(keeper Keeper, contractCaller helper.IContractCaller) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{},
 		keeper:         keeper,
+		contractCaller: contractCaller,
 	}
 }
 
-// Name returns the auth module's name.
+// Name returns the module's name.
 func (AppModule) Name() string {
 	return types.ModuleName
 }
@@ -128,17 +130,17 @@ func (AppModule) Name() string {
 // RegisterInvariants performs a no-op.
 func (AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
-// Route returns the message routing key for the auth module.
+// Route returns the message routing key for the module.
 func (AppModule) Route() string {
 	return types.RouterKey
 }
 
-// NewHandler returns an sdk.Handler for the auth module.
-func (AppModule) NewHandler() sdk.Handler {
-	return nil
+// NewHandler returns an sdk.Handler for the module.
+func (am AppModule) NewHandler() sdk.Handler {
+	return NewHandler(am.keeper, am.contractCaller)
 }
 
-// QuerierRoute returns the auth module's querier route name.
+// QuerierRoute returns the staking module's querier route name.
 func (AppModule) QuerierRoute() string {
 	return types.QuerierRoute
 }

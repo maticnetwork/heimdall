@@ -14,6 +14,7 @@ import (
 	authCli "github.com/maticnetwork/heimdall/auth/client/cli"
 	authRest "github.com/maticnetwork/heimdall/auth/client/rest"
 	"github.com/maticnetwork/heimdall/auth/types"
+	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -83,14 +84,16 @@ func (AppModuleBasic) GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 type AppModule struct {
 	AppModuleBasic
 
-	accountKeeper AccountKeeper
+	accountKeeper  AccountKeeper
+	contractCaller helper.IContractCaller
 }
 
 // NewAppModule creates a new AppModule object
-func NewAppModule(accountKeeper AccountKeeper) AppModule {
+func NewAppModule(accountKeeper AccountKeeper, contractCaller helper.IContractCaller) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{},
 		accountKeeper:  accountKeeper,
+		contractCaller: contractCaller,
 	}
 }
 

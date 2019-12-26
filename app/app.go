@@ -1,6 +1,8 @@
 package app
 
 import (
+	"encoding/json"
+
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -271,13 +273,13 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
 	app.mm = module.NewManager(
-		auth.NewAppModule(app.AccountKeeper),
-		bank.NewAppModule(app.BankKeeper),
-		supply.NewAppModule(app.SupplyKeeper),
-		staking.NewAppModule(app.StakingKeeper),
-		checkpoint.NewAppModule(app.CheckpointKeeper),
-		bor.NewAppModule(app.BorKeeper),
-		clerk.NewAppModule(app.ClerkKeeper),
+		auth.NewAppModule(app.AccountKeeper, &app.caller),
+		bank.NewAppModule(app.BankKeeper, &app.caller),
+		supply.NewAppModule(app.SupplyKeeper, &app.caller),
+		staking.NewAppModule(app.StakingKeeper, &app.caller),
+		checkpoint.NewAppModule(app.CheckpointKeeper, &app.caller),
+		bor.NewAppModule(app.BorKeeper, &app.caller),
+		clerk.NewAppModule(app.ClerkKeeper, &app.caller),
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -377,31 +379,37 @@ func (app *HeimdallApp) Name() string { return app.BaseApp.Name() }
 // InitChainer initializes chain
 func (app *HeimdallApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	var genesisState GenesisState
-	app.cdc.MustUnmarshalJSON(req.AppStateBytes, &genesisState)
+	err := json.Unmarshal(req.AppStateBytes, &genesisState)
+	if err != nil {
+		panic(err)
+	}
 
 	// get validator updates
-	obj := app.mm.InitGenesis(ctx, genesisState)
+	app.mm.InitGenesis(ctx, genesisState)
 
-	// logger.Info("Loading validators from genesis and setting defaults")
+	stakingState := stakingTypes.GetGenesisStateFromAppState(genesisState)
+	checkpointState := checkpointTypes.GetGenesisStateFromAppState(genesisState)
 
-	// // get genesis state
-	// var genesisState GenesisState
-	// err := json.Unmarshal(req.AppStateBytes, &genesisState)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// // init state from genesis state
-	// valUpdates := app.initFromGenesisState(ctx, genesisState)
-
-	//
-	// draft reponse init chain
-	//
+	// check if validator is current validator
+	// add to val updates else skip
+	var valUpdates []abci.ValidatorUpdate
+	for _, validator := range stakingState.Validators {
+		if validator.IsCurrentValidator(checkpointState.AckCount) {
+			// convert to Validator Update
+			updateVal := abci.ValidatorUpdate{
+				Power:  int64(validator.VotingPower),
+				PubKey: validator.PubKey.ABCIPubKey(),
+			}
+			// Add validator to validator updated to be processed below
+			valUpdates = append(valUpdates, updateVal)
+		}
+	}
 
 	// TODO make sure old validtors dont go in validator updates ie deactivated validators have to be removed
 	// udpate validators
 	return abci.ResponseInitChain{
 		// validator updates
-		Validators: obj.GetValidators(),
+		Validators: valUpdates,
 
 		// consensus params
 		ConsensusParams: &abci.ConsensusParams{
@@ -476,14 +484,6 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) ab
 // 		acc.SetCoins(genacc.Coins)
 // 		acc.SetSequence(genacc.Sequence)
 // 		app.accountKeeper.SetAccount(ctx, acc)
-// 	}
-
-// 	// check if genesis is actually a genesis
-// 	var isGenesis bool
-// 	if len(genesisState.StakingData.CurrentValSet.Validators) == 0 {
-// 		isGenesis = true
-// 	} else {
-// 		isGenesis = false
 // 	}
 
 // 	//
