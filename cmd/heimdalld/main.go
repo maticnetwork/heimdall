@@ -376,18 +376,28 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 			}
 
 			// other data
-			// accounts := make([]app.GenesisAccount, totalValidators)
-			// for i := 0; i < totalValidators; i++ {
-			// 	populatePersistentPeersInConfigAndWriteIt(config)
-			// 	// genesis account
-			// 	accounts[i] = getGenesisAccount(validators[i].Signer.Bytes())
-			// }
-			// _ = hmTypes.NewValidatorSet(validators)
+			accounts := make([]authTypes.GenesisAccount, totalValidators)
+			for i := 0; i < totalValidators; i++ {
+				populatePersistentPeersInConfigAndWriteIt(config)
+				// genesis account
+				accounts[i] = getGenesisAccount(validators[i].Signer.Bytes())
+			}
+			validatorSet := hmTypes.NewValidatorSet(validators)
 
 			// new app state
 			appStateBytes := app.NewDefaultGenesisState()
-			// set accounts and validators
-			// appState.Accounts = accounts
+
+			// auth state change
+			appStateBytes, err = authTypes.SetGenesisStateToAppState(appStateBytes, accounts)
+			if err != nil {
+				return err
+			}
+
+			// staking state change
+			appStateBytes, err = stakingTypes.SetGenesisStateToAppState(appStateBytes, validators, *validatorSet)
+			if err != nil {
+				return err
+			}
 
 			appStateJSON, err := json.Marshal(appStateBytes)
 			if err != nil {
