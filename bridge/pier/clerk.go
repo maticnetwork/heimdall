@@ -20,9 +20,9 @@ import (
 	"github.com/tendermint/tendermint/libs/common"
 	httpClient "github.com/tendermint/tendermint/rpc/client"
 
+	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
-	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -158,27 +158,32 @@ func (s *ClerkService) commit() {
 	)
 
 	// search txs
-	txs, err := helper.QueryTxsByEvents(s.cliCtx, tags, 1, 50) // first page, 50 limit
+	searchResult, err := helper.QueryTxsByEvents(s.cliCtx, tags, 1, 50) // first page, 50 limit
 	if err != nil {
 		s.Logger.Error("Error while searching txs", "error", err)
 		return
 	}
 
-	s.Logger.Debug(" Found new state txs",
-		"length", len(txs),
-	)
+	s.Logger.Debug(" Found new state txs", "length", searchResult.Count)
 
 	// loop through tx
 	end := start
-	for _, tx := range txs {
-		for _, tag := range tx.Tags {
-			if tag.Key == clerkTypes.RecordID {
-				recordID, err := strconv.ParseUint(tag.Value, 10, 64)
-				if err == nil {
-					// broadcast to bor
-					s.broadcastToBor(recordID)
-					if recordID > end {
-						end = recordID
+	// TODO remove nested loops
+	for _, tx := range searchResult.Txs {
+		for _, log := range tx.Logs {
+			for _, event := range log.Events {
+				if event.Type == clerkTypes.EventTypeRecord {
+					for _, attribute := range event.Attributes {
+						if attribute.Key == clerkTypes.AttributeKeyRecordID {
+							recordID, err := strconv.ParseUint(attribute.Value, 10, 64)
+							if err == nil {
+								// broadcast to bor
+								s.broadcastToBor(recordID)
+								if recordID > end {
+									end = recordID
+								}
+							}
+						}
 					}
 				}
 			}

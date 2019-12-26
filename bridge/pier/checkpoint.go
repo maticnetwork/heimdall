@@ -505,20 +505,22 @@ func (c *Checkpointer) commitCheckpoint(startBlock uint64, endBlock uint64) {
 	// handler
 	handler := func() bool {
 		// search txs
-		txs, err := helper.QueryTxsByEvents(c.cliCtx, tags, 1, 1) // first page, 1 limit
+		searchResult, err := helper.QueryTxsByEvents(c.cliCtx, tags, 1, 1) // first page, 1 limit
 		if err != nil {
 			c.Logger.Error("Error while searching txs", "error", err)
 			return false
 		}
 
 		// loop through tx
-		for _, tx := range txs {
-			txHash, err := hex.DecodeString(tx.TxHash)
-			if err != nil {
-				c.Logger.Error("Error while searching txs", "error", err)
-			} else {
-				if err := c.dispatchCheckpoint(tx.Height, txHash, startBlock, endBlock); err == nil {
-					return true
+		if searchResult.Count > 0 {
+			for _, tx := range searchResult.Txs {
+				txHash, err := hex.DecodeString(tx.TxHash)
+				if err != nil {
+					c.Logger.Error("Error while searching txs", "error", err)
+				} else {
+					if err := c.dispatchCheckpoint(tx.Height, txHash, startBlock, endBlock); err == nil {
+						return true
+					}
 				}
 			}
 		}
