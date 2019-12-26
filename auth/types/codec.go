@@ -7,6 +7,7 @@ import (
 // RegisterCodec registers concrete types on the codec
 func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterInterface((*Account)(nil), nil)
+	cdc.RegisterInterface((*GenesisAccount)(nil), nil)
 	cdc.RegisterConcrete(&BaseAccount{}, "auth/Account", nil)
 	cdc.RegisterConcrete(StdTx{}, "auth/StdTx", nil)
 }
