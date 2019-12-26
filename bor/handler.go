@@ -4,7 +4,8 @@ import (
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/maticnetwork/heimdall/bor/tags"
+
+	"github.com/maticnetwork/heimdall/bor/types"
 	"github.com/maticnetwork/heimdall/common"
 )
 
@@ -12,7 +13,7 @@ import (
 func NewHandler(k Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
-		case MsgProposeSpan:
+		case types.MsgProposeSpan:
 			return HandleMsgProposeSpan(ctx, msg, k)
 		default:
 			return sdk.ErrTxDecode("Invalid message in bor module").Result()
@@ -21,7 +22,7 @@ func NewHandler(k Keeper) sdk.Handler {
 }
 
 // HandleMsgProposeSpan handles proposeSpan msg
-func HandleMsgProposeSpan(ctx sdk.Context, msg MsgProposeSpan, k Keeper) sdk.Result {
+func HandleMsgProposeSpan(ctx sdk.Context, msg types.MsgProposeSpan, k Keeper) sdk.Result {
 	k.Logger(ctx).Debug("Proposing span", "TxData", msg)
 
 	// check if last span is up or if greater diff than threshold is found between validator set
@@ -56,14 +57,20 @@ func HandleMsgProposeSpan(ctx sdk.Context, msg MsgProposeSpan, k Keeper) sdk.Res
 		return common.ErrSpanNotFound(k.Codespace()).Result()
 	}
 
-	// TODO add check for duration
-	result := sdk.Result{
-		Tags: sdk.NewTags(
-			tags.Success, []byte("true"),
-			tags.BorSyncID, []byte(strconv.FormatUint(uint64(msg.ID), 10)),
-			tags.SpanID, []byte(strconv.FormatUint(uint64(msg.ID), 10)),
-			tags.SpanStartBlock, []byte(strconv.FormatUint(uint64(msg.StartBlock), 10)),
+	// add events
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeProposeSpan,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(types.AttributeKeySuccess, "true"),
+			sdk.NewAttribute(types.AttributeKeyBorSyncID, strconv.FormatUint(uint64(msg.ID), 10)),
+			sdk.NewAttribute(sdk.AttributeKeyAmount, strconv.FormatUint(uint64(msg.ID), 10)),
+			sdk.NewAttribute(types.AttributeKeySpanStartBlock, strconv.FormatUint(uint64(msg.StartBlock), 10)),
 		),
+	})
+
+	// draft result with events
+	return sdk.Result{
+		Events: ctx.EventManager().Events(),
 	}
-	return result
 }

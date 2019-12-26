@@ -14,17 +14,9 @@ import (
 	amino "github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto/multisig"
 
-	authTypes "github.com/maticnetwork/heimdall/auth/types"
+	"github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/helper"
-)
-
-const (
-	flagMultisig     = "multisig"
-	flagAppend       = "append"
-	flagValidateSigs = "validate-signatures"
-	flagOffline      = "offline"
-	flagSigOnly      = "signature-only"
-	flagOutfile      = "output-document"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 // GetSignCommand returns the transaction sign command.
@@ -75,7 +67,7 @@ func preSignCmd(cmd *cobra.Command, _ []string) {
 
 func makeSignCmd(cdc *amino.Codec) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) (err error) {
-		cliCtx := context.NewCLIContext().WithCodec(cdc).WithAccountDecoder(cdc)
+		cliCtx := context.NewCLIContext().WithCodec(cdc)
 		stdTx, err := helper.ReadStdTxFromFile(cliCtx.Codec, args[0])
 		if err != nil {
 			return err
@@ -84,7 +76,7 @@ func makeSignCmd(cdc *amino.Codec) func(cmd *cobra.Command, args []string) error
 		offline := viper.GetBool(flagOffline)
 
 		// if --signature-only is on, then override --append
-		var newTx authTypes.StdTx
+		var newTx types.StdTx
 		generateSignatureOnly := viper.GetBool(flagSigOnly)
 
 		appendSig := viper.GetBool(flagAppend) && !generateSignatureOnly
@@ -164,7 +156,7 @@ func printAndValidateSigs(
 	}
 
 	for i, sig := range sigs {
-		sigAddr := sdk.AccAddress(sig.Address())
+		sigAddr := hmTypes.BytesToHeimdallAddress(sig.Address().Bytes())
 		sigSanity := "OK"
 
 		var (
@@ -180,7 +172,7 @@ func printAndValidateSigs(
 		// Validate the actual signature over the transaction bytes since we can
 		// reach out to a full node to query accounts.
 		if !offline && success {
-			acc, err := cliCtx.GetAccount(sigAddr)
+			acc, err := types.NewAccountRetriever(cliCtx).GetAccount(sigAddr)
 			if err != nil {
 				fmt.Printf("failed to get account: %s\n", sigAddr)
 				return false

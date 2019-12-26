@@ -14,13 +14,8 @@ import (
 	"github.com/spf13/viper"
 	tmLog "github.com/tendermint/tendermint/libs/log"
 
-	auth "github.com/maticnetwork/heimdall/auth/client/rest"
-	bank "github.com/maticnetwork/heimdall/bank/client/rest"
-	bor "github.com/maticnetwork/heimdall/bor/rest"
-	checkpoint "github.com/maticnetwork/heimdall/checkpoint/rest"
-	clerk "github.com/maticnetwork/heimdall/clerk/client/rest"
+	"github.com/maticnetwork/heimdall/app"
 	tx "github.com/maticnetwork/heimdall/client/tx"
-	staking "github.com/maticnetwork/heimdall/staking/rest"
 
 	// unnamed import of statik for swagger UI support
 	_ "github.com/maticnetwork/heimdall/server/statik"
@@ -37,15 +32,18 @@ func ServeCommands(cdc *codec.Codec, registerRoutesFn func(*lcd.RestServer)) *co
 			rs := lcd.NewRestServer(cdc)
 			registerRoutesFn(rs)
 			logger := tmLog.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "rest-server")
-			err := rs.Start(viper.GetString(client.FlagListenAddr),
-				viper.GetInt(client.FlagMaxOpenConnections))
+			err := rs.Start(
+				viper.GetString(client.FlagListenAddr),
+				viper.GetInt(client.FlagMaxOpenConnections),
+				0,
+				0,
+			)
 
 			logger.Info("REST server started")
 			return err
 		},
 	}
 	cmd.Flags().String(client.FlagListenAddr, "tcp://0.0.0.0:1317", "The address for the server to listen on")
-	cmd.Flags().String(client.FlagCORS, "", "Set the domains that can make CORS requests (* for all)")
 	cmd.Flags().Bool(client.FlagTrustNode, true, "Trust connected full node (don't verify proofs for responses)")
 	cmd.Flags().String(client.FlagChainID, "", "The chain ID to connect to")
 	cmd.Flags().String(client.FlagNode, "tcp://localhost:26657", "Address of the node to connect to")
@@ -58,16 +56,19 @@ func ServeCommands(cdc *codec.Codec, registerRoutesFn func(*lcd.RestServer)) *co
 func RegisterRoutes(rs *lcd.RestServer) {
 	registerSwaggerUI(rs)
 
-	rpc.RegisterRoutes(rs.CliCtx, rs.Mux)
-	tx.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
+	rpc.RegisterRPCRoutes(rs.CliCtx, rs.Mux)
+	tx.RegisterRoutes(rs.CliCtx, rs.Mux)
 
-	auth.RegisterRoutes(rs.CliCtx, rs.Mux)
-	bank.RegisterRoutes(rs.CliCtx, rs.Mux)
+	// auth.RegisterRoutes(rs.CliCtx, rs.Mux)
+	// bank.RegisterRoutes(rs.CliCtx, rs.Mux)
 
-	checkpoint.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
-	staking.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
-	bor.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
-	clerk.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
+	// checkpoint.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
+	// staking.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
+	// bor.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
+	// clerk.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
+
+	// register rest routes
+	app.ModuleBasics.RegisterRESTRoutes(rs.CliCtx, rs.Mux)
 
 	// list all paths
 	// rs.Mux.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {

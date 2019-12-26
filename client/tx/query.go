@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -31,8 +32,8 @@ const (
 // CLI
 // ----------------------------------------------------------------------------
 
-// SearchTxCmd returns a command to search through tagged transactions.
-func SearchTxCmd(cdc *codec.Codec) *cobra.Command {
+// QueryTxsByEventsCmd returns a command to search through tagged transactions.
+func QueryTxsByEventsCmd(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "txs",
 		Short: "Search for paginated transactions that match a set of tags",
@@ -74,7 +75,7 @@ $ gaiacli query txs --tags '<tag1>:<value1>&<tag2>:<value2>' --page 1 --limit 30
 			limit := viper.GetInt(flagLimit)
 
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			txs, err := helper.SearchTxs(cliCtx, cdc, tmTags, page, limit)
+			txs, err := helper.QueryTxsByEvents(cliCtx, tmTags, page, limit)
 			if err != nil {
 				return err
 			}
@@ -117,7 +118,7 @@ func QueryTxCmd(cdc *codec.Codec) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			output, err := helper.QueryTx(cdc, cliCtx, args[0])
+			output, err := helper.QueryTx(cliCtx, args[0])
 			if err != nil {
 				return err
 			}
@@ -142,52 +143,71 @@ func QueryTxCmd(cdc *codec.Codec) *cobra.Command {
 // REST
 // ----------------------------------------------------------------------------
 
-// QueryTxsByTagsRequestHandlerFn implements a REST handler that searches for
-// transactions by tags.
-func QueryTxsByTagsRequestHandlerFn(cliCtx context.CLIContext, cdc *codec.Codec) http.HandlerFunc {
+// QueryTxsRequestHandlerFn implements a REST handler that searches for transactions.
+// Genesis transactions are returned if the height parameter is set to zero,
+// otherwise the transactions are searched for by events.
+func QueryTxsRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		err := r.ParseForm()
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, sdk.AppendMsgToErr("could not parse query parameters", err.Error()))
+			return
+		}
+
+		// if the height query param is set to zero, query for genesis transactions
+		heightStr := r.FormValue("height")
+		if heightStr != "" {
+			if height, err := strconv.ParseInt(heightStr, 10, 64); err == nil && height == 0 {
+				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+				return
+			}
+		}
+
 		var (
-			tags        []string
+			events      []string
 			txs         []sdk.TxResponse
 			page, limit int
 		)
 
-		err := r.ParseForm()
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest,
-				sdk.AppendMsgToErr("could not parse query parameters", err.Error()))
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
 			return
 		}
 
 		if len(r.Form) == 0 {
-			rest.PostProcessResponse(w, cdc, txs, cliCtx.Indent)
+			rest.PostProcessResponse(w, cliCtx, txs)
 			return
 		}
 
-		tags, page, limit, err = rest.ParseHTTPArgs(r)
+		events, page, limit, err = rest.ParseHTTPArgs(r)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		txs, err = helper.SearchTxs(cliCtx, cdc, tags, page, limit)
+		searchResult, err := helper.QueryTxsByEvents(cliCtx, events, page, limit)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
-		rest.PostProcessResponse(w, cdc, txs, cliCtx.Indent)
+		rest.PostProcessResponseBare(w, cliCtx, searchResult)
 	}
 }
 
 // QueryTxRequestHandlerFn implements a REST handler that queries a transaction
 // by hash in a committed block.
-func QueryTxRequestHandlerFn(cliCtx context.CLIContext, cdc *codec.Codec) http.HandlerFunc {
+func QueryTxRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		hashHexStr := vars["hash"]
 
-		output, err := helper.QueryTx(cdc, cliCtx, hashHexStr)
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		output, err := helper.QueryTx(cliCtx, hashHexStr)
 		if err != nil {
 			if strings.Contains(err.Error(), hashHexStr) {
 				rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
@@ -201,14 +221,19 @@ func QueryTxRequestHandlerFn(cliCtx context.CLIContext, cdc *codec.Codec) http.H
 			rest.WriteErrorResponse(w, http.StatusNotFound, fmt.Sprintf("no transaction found with hash %s", hashHexStr))
 		}
 
-		rest.PostProcessResponse(w, cdc, output, cliCtx.Indent)
+		rest.PostProcessResponse(w, cliCtx, output)
 	}
 }
 
 // QueryCommitTxRequestHandlerFn implements a REST handler that queries vote, sigs and tx bytes committed block.
-func QueryCommitTxRequestHandlerFn(cliCtx context.CLIContext, cdc *codec.Codec) http.HandlerFunc {
+func QueryCommitTxRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
+
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
 
 		hash, err := hex.DecodeString(vars["hash"])
 		if err != nil {
@@ -244,6 +269,6 @@ func QueryCommitTxRequestHandlerFn(cliCtx context.CLIContext, cdc *codec.Codec) 
 			Proof: hex.EncodeToString(proof),
 		}
 
-		rest.PostProcessResponse(w, cdc, result, cliCtx.Indent)
+		rest.PostProcessResponse(w, cliCtx, result)
 	}
 }

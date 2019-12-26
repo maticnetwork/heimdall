@@ -6,12 +6,12 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ethCmn "github.com/ethereum/go-ethereum/common"
-	"github.com/maticnetwork/heimdall/checkpoint/tags"
+	ethCmn "github.com/maticnetwork/bor/common"
+
+	"github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/common"
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -19,11 +19,11 @@ import (
 func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
-		case MsgCheckpoint:
+		case types.MsgCheckpoint:
 			return handleMsgCheckpoint(ctx, msg, k, contractCaller)
-		case MsgCheckpointAck:
+		case types.MsgCheckpointAck:
 			return handleMsgCheckpointAck(ctx, msg, k, contractCaller)
-		case MsgCheckpointNoAck:
+		case types.MsgCheckpointNoAck:
 			return handleMsgCheckpointNoAck(ctx, msg, k)
 		default:
 			return sdk.ErrTxDecode("Invalid message in checkpoint module").Result()
@@ -32,7 +32,7 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 }
 
 // handleMsgCheckpoint Validates checkpoint transaction
-func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
+func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	k.Logger(ctx).Debug("Validating checkpoint data", "TxData", msg)
 
 	if msg.TimeStamp == 0 || msg.TimeStamp > uint64(time.Now().UTC().Unix()) {
@@ -57,7 +57,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper, contractC
 	// k.Logger(ctx).Debug("Received checkpoint from buffer", "Checkpoint", checkpointBuffer.String())
 
 	// validate checkpoint
-	if !ValidateCheckpoint(msg.StartBlock, msg.EndBlock, msg.RootHash) {
+	if !types.ValidateCheckpoint(msg.StartBlock, msg.EndBlock, msg.RootHash) {
 		k.Logger(ctx).Error("RootHash is not valid",
 			"StartBlock", msg.StartBlock,
 			"EndBlock", msg.EndBlock,
@@ -94,13 +94,13 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper, contractC
 	} else if err.Error() == common.ErrNoCheckpointFound(k.Codespace()).Error() && msg.StartBlock == 0 {
 		// Check if genesis RewardRootHash matches
 		genesisValidatorRewards := k.sk.GetAllValidatorRewards(ctx)
-		genesisrewardRootHash, err := GetRewardRootHash(genesisValidatorRewards)
+		genesisrewardRootHash, err := types.GetRewardRootHash(genesisValidatorRewards)
 		if err != nil {
 			k.Logger(ctx).Error("Error calculating genesis rewardroothash", err)
 			return common.ErrComputeGenesisRewardRoot(k.Codespace()).Result()
 		}
 		if !bytes.Equal(genesisrewardRootHash, msg.RewardRootHash.Bytes()) {
-			k.Logger(ctx).Error("Genesis RewardRootHash", types.BytesToHeimdallHash(genesisrewardRootHash).String(),
+			k.Logger(ctx).Error("Genesis RewardRootHash", hmTypes.BytesToHeimdallHash(genesisrewardRootHash).String(),
 				"doesn't match with Genesis RewardRootHash of msg", msg.RewardRootHash)
 			return common.ErrRewardRootMismatch(k.Codespace()).Result()
 		}
@@ -138,18 +138,23 @@ func handleMsgCheckpoint(ctx sdk.Context, msg MsgCheckpoint, k Keeper, contractC
 	checkpoint, _ := k.GetCheckpointFromBuffer(ctx)
 	k.Logger(ctx).Debug("Adding good checkpoint to buffer to await ACK", "checkpointStored", checkpoint.String())
 
-	resTags := sdk.NewTags(
-		tags.Proposer, []byte(msg.Proposer.String()),
-		tags.StartBlock, []byte(strconv.FormatUint(uint64(msg.StartBlock), 10)),
-		tags.EndBlock, []byte(strconv.FormatUint(uint64(msg.EndBlock), 10)),
-	)
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeCheckpoint,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(types.AttributeKeyProposer, msg.Proposer.String()),
+			sdk.NewAttribute(types.AttributeKeyStartBlock, strconv.FormatUint(uint64(msg.StartBlock), 10)),
+			sdk.NewAttribute(types.AttributeKeyEndBlock, strconv.FormatUint(uint64(msg.EndBlock), 10)),
+		),
+	})
 
-	// send tags
-	return sdk.Result{Tags: resTags}
+	return sdk.Result{
+		Events: ctx.EventManager().Events(),
+	}
 }
 
 // handleMsgCheckpointAck Validates if checkpoint submitted on chain is valid
-func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
+func handleMsgCheckpointAck(ctx sdk.Context, msg types.MsgCheckpointAck, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	k.Logger(ctx).Debug("Validating Checkpoint ACK", "Tx", msg)
 
 	// make call to headerBlock with header number
@@ -203,7 +208,7 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k Keeper, con
 	if headerBlock.EndBlock > end {
 		k.Logger(ctx).Info("Adjusting endBlock to one already submitted on chain", "OldEndBlock", headerBlock.EndBlock, "AdjustedEndBlock", end)
 		headerBlock.EndBlock = end
-		headerBlock.RootHash = types.HeimdallHash(root)
+		headerBlock.RootHash = hmTypes.HeimdallHash(root)
 		// TODO proposer also needs to be changed
 	}
 
@@ -211,7 +216,7 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k Keeper, con
 	txHash := msg.TxHash
 
 	// Fetch all the signatures from tx input data and calculate signer rewards
-	voteBytes, sigInput, _, err := contractCaller.GetCheckpointSign(ctx, ethCmn.Hash(txHash))
+	voteBytes, sigInput, _, err := contractCaller.GetCheckpointSign(ethCmn.Hash(txHash))
 	if err != nil {
 		k.Logger(ctx).Error("Error while fetching signers from transaction", "error", err)
 		return common.ErrFetchCheckpointSigners(k.Codespace()).Result()
@@ -245,11 +250,11 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k Keeper, con
 	// Calculate new reward root hash
 	valRewardMap := k.sk.GetAllValidatorRewards(ctx)
 	k.Logger(ctx).Debug("rewards of all validators", "RewardMap", valRewardMap)
-	rewardRoot, err := GetRewardRootHash(valRewardMap)
-	k.Logger(ctx).Info("Reward root hash generated", "RewardRootHash", types.BytesToHeimdallHash(rewardRoot).String())
+	rewardRoot, err := types.GetRewardRootHash(valRewardMap)
+	k.Logger(ctx).Info("Reward root hash generated", "RewardRootHash", hmTypes.BytesToHeimdallHash(rewardRoot).String())
 
 	// Add new Reward root hash to bufferedcheckpoint header block
-	headerBlock.RewardRootHash = types.BytesToHeimdallHash(rewardRoot)
+	headerBlock.RewardRootHash = hmTypes.BytesToHeimdallHash(rewardRoot)
 
 	// Add checkpoint to headerBlocks
 	k.AddCheckpoint(ctx, msg.HeaderBlock, *headerBlock)
@@ -278,15 +283,21 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg MsgCheckpointAck, k Keeper, con
 		"power", newProposer.VotingPower,
 	)
 
-	resTags := sdk.NewTags(
-		tags.HeaderIndex, []byte(strconv.FormatUint(uint64(msg.HeaderBlock), 10)),
-	)
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeCheckpointAck,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(types.AttributeKeyHeaderIndex, strconv.FormatUint(uint64(msg.HeaderBlock), 10)),
+		),
+	})
 
-	return sdk.Result{Tags: resTags}
+	return sdk.Result{
+		Events: ctx.EventManager().Events(),
+	}
 }
 
 // Validate checkpoint no-ack transaction
-func handleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k Keeper) sdk.Result {
+func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k Keeper) sdk.Result {
 	k.Logger(ctx).Debug("Validating checkpoint no-ack", "TxData", msg)
 	// current time
 	currentTime := time.Unix(int64(msg.TimeStamp), 0) // buffer time
@@ -331,10 +342,16 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg MsgCheckpointNoAck, k Keeper)
 		"power", newProposer.VotingPower,
 	)
 
-	resTags := sdk.NewTags(
-		tags.NewProposer, []byte(newProposer.Signer.String()),
-	)
+	// add events
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeCheckpointNoAck,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(types.AttributeKeyNewProposer, newProposer.Signer.String()),
+		),
+	})
 
-	// --- End
-	return sdk.Result{Tags: resTags}
+	return sdk.Result{
+		Events: ctx.EventManager().Events(),
+	}
 }

@@ -8,7 +8,6 @@ import (
 	"time"
 
 	cosmosContext "github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
 	httpClient "github.com/tendermint/tendermint/rpc/client"
@@ -31,10 +30,10 @@ func GetNodeStatus(cliCtx cosmosContext.CLIContext) (*ctypes.ResultStatus, error
 	return node.Status()
 }
 
-// SearchTxs performs a search for transactions for a given set of tags via
+// QueryTxsByEvents performs a search for transactions for a given set of tags via
 // Tendermint RPC. It returns a slice of Info object containing txs and metadata.
 // An error is returned if the query fails.
-func SearchTxs(cliCtx cosmosContext.CLIContext, cdc *codec.Codec, tags []string, page, limit int) ([]sdk.TxResponse, error) {
+func QueryTxsByEvents(cliCtx cosmosContext.CLIContext, tags []string, page, limit int) (*sdk.SearchTxsResult, error) {
 	if len(tags) == 0 {
 		return nil, errors.New("must declare at least one tag to search")
 	}
@@ -75,20 +74,22 @@ func SearchTxs(cliCtx cosmosContext.CLIContext, cdc *codec.Codec, tags []string,
 		return nil, err
 	}
 
-	txs, err := formatTxResults(cdc, resTxs.Txs, resBlocks)
+	txs, err := formatTxResults(resTxs.Txs, resBlocks)
 	if err != nil {
 		return nil, err
 	}
 
-	return txs, nil
+	result := sdk.NewSearchTxsResult(resTxs.TotalCount, len(txs), page, limit, txs)
+
+	return &result, nil
 }
 
 // formatTxResults parses the indexed txs into a slice of TxResponse objects.
-func formatTxResults(cdc *codec.Codec, resTxs []*ctypes.ResultTx, resBlocks map[int64]*ctypes.ResultBlock) ([]sdk.TxResponse, error) {
+func formatTxResults(resTxs []*ctypes.ResultTx, resBlocks map[int64]*ctypes.ResultBlock) ([]sdk.TxResponse, error) {
 	var err error
 	out := make([]sdk.TxResponse, len(resTxs))
 	for i := range resTxs {
-		out[i], err = formatTxResult(cdc, resTxs[i], resBlocks[resTxs[i].Height])
+		out[i], err = formatTxResult(resTxs[i], resBlocks[resTxs[i].Height])
 		if err != nil {
 			return nil, err
 		}
@@ -134,8 +135,8 @@ func getBlocksForTxResults(cliCtx cosmosContext.CLIContext, resTxs []*ctypes.Res
 	return resBlocks, nil
 }
 
-func formatTxResult(cdc *codec.Codec, resTx *ctypes.ResultTx, resBlock *ctypes.ResultBlock) (sdk.TxResponse, error) {
-	tx, err := parseTx(cdc, resTx.Tx)
+func formatTxResult(resTx *ctypes.ResultTx, resBlock *ctypes.ResultBlock) (sdk.TxResponse, error) {
+	tx, err := parseTx(resTx.Tx)
 	if err != nil {
 		return sdk.TxResponse{}, err
 	}
@@ -143,13 +144,13 @@ func formatTxResult(cdc *codec.Codec, resTx *ctypes.ResultTx, resBlock *ctypes.R
 	return sdk.NewResponseResultTx(resTx, tx, resBlock.Block.Time.Format(time.RFC3339)), nil
 }
 
-func parseTx(cdc *codec.Codec, txBytes []byte) (sdk.Tx, error) {
+func parseTx(txBytes []byte) (sdk.Tx, error) {
 	decoder := GetTxDecoder()
 	return decoder(txBytes)
 }
 
 // QueryTx query tx from node
-func QueryTx(cdc *codec.Codec, cliCtx cosmosContext.CLIContext, hashHexStr string) (sdk.TxResponse, error) {
+func QueryTx(cliCtx cosmosContext.CLIContext, hashHexStr string) (sdk.TxResponse, error) {
 	hash, err := hex.DecodeString(hashHexStr)
 	if err != nil {
 		return sdk.TxResponse{}, err
@@ -176,7 +177,7 @@ func QueryTx(cdc *codec.Codec, cliCtx cosmosContext.CLIContext, hashHexStr strin
 		return sdk.TxResponse{}, err
 	}
 
-	out, err := formatTxResult(cdc, resTx, resBlocks[resTx.Height])
+	out, err := formatTxResult(resTx, resBlocks[resTx.Height])
 	if err != nil {
 		return out, err
 	}

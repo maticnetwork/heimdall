@@ -8,8 +8,7 @@ import (
 
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/staking/tags"
-	"github.com/maticnetwork/heimdall/types"
+	"github.com/maticnetwork/heimdall/staking/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -17,13 +16,13 @@ import (
 func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
-		case MsgValidatorJoin:
+		case types.MsgValidatorJoin:
 			return HandleMsgValidatorJoin(ctx, msg, k, contractCaller)
-		case MsgValidatorExit:
+		case types.MsgValidatorExit:
 			return HandleMsgValidatorExit(ctx, msg, k, contractCaller)
-		case MsgSignerUpdate:
+		case types.MsgSignerUpdate:
 			return HandleMsgSignerUpdate(ctx, msg, k, contractCaller)
-		case MsgStakeUpdate:
+		case types.MsgStakeUpdate:
 			return HandleMsgStakeUpdate(ctx, msg, k, contractCaller)
 		default:
 			return sdk.ErrTxDecode("Invalid message in checkpoint module").Result()
@@ -32,7 +31,7 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 }
 
 // HandleMsgValidatorJoin msg validator join
-func HandleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
+func HandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	k.Logger(ctx).Debug("Handing new validator join", "msg", msg)
 
 	if confirmed := contractCaller.IsTxConfirmed(msg.TxHash.EthHash()); !confirmed {
@@ -104,16 +103,22 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg MsgValidatorJoin, k Keeper, con
 		return hmCommon.ErrValidatorSave(k.Codespace()).Result()
 	}
 
-	resTags := sdk.NewTags(
-		tags.ValidatorJoin, []byte(newValidator.Signer.String()),
-		tags.ValidatorID, []byte(strconv.FormatUint(newValidator.ID.Uint64(), 10)),
-	)
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeValidatorJoin,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(newValidator.ID.Uint64(), 10)),
+			sdk.NewAttribute(types.AttributeKeySigner, newValidator.Signer.String()),
+		),
+	})
 
-	return sdk.Result{Tags: resTags}
+	return sdk.Result{
+		Events: ctx.EventManager().Events(),
+	}
 }
 
 // HandleMsgStakeUpdate handles stake update message
-func HandleMsgStakeUpdate(ctx sdk.Context, msg MsgStakeUpdate, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
+func HandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	k.Logger(ctx).Debug("Handling stake update", "Validator", msg.ID)
 
 	// get main tx receipt
@@ -169,16 +174,22 @@ func HandleMsgStakeUpdate(ctx sdk.Context, msg MsgStakeUpdate, k Keeper, contrac
 	// save staking sequence
 	k.SetStakingSequence(ctx, sequence)
 
-	resTags := sdk.NewTags(
-		tags.UpdatedAt, []byte(strconv.FormatUint(validator.LastUpdated, 10)),
-		tags.ValidatorID, []byte(strconv.FormatUint(validator.ID.Uint64(), 10)),
-	)
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeStakeUpdate,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(validator.ID.Uint64(), 10)),
+			sdk.NewAttribute(types.AttributeKeyUpdatedAt, strconv.FormatUint(validator.LastUpdated, 10)),
+		),
+	})
 
-	return sdk.Result{Tags: resTags}
+	return sdk.Result{
+		Events: ctx.EventManager().Events(),
+	}
 }
 
 // HandleMsgSignerUpdate handles signer update message
-func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
+func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	k.Logger(ctx).Debug("Handling signer update", "Validator", msg.ID, "Signer", msg.NewSignerPubKey.Address())
 
 	// get main tx receipt
@@ -229,7 +240,7 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k Keeper, contr
 	// check if we are actually updating signer
 	if !bytes.Equal(newSigner.Bytes(), validator.Signer.Bytes()) {
 		// Update signer in prev Validator
-		validator.Signer = types.HeimdallAddress(newSigner)
+		validator.Signer = hmTypes.HeimdallAddress(newSigner)
 		validator.PubKey = newPubKey
 		k.Logger(ctx).Debug("Updating new signer", "signer", newSigner.String(), "oldSigner", oldValidator.Signer.String(), "validatorID", msg.ID)
 	}
@@ -259,21 +270,25 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg MsgSignerUpdate, k Keeper, contr
 		k.Logger(ctx).Error("Unable to update signer", "error", err, "ValidatorID", validator.ID)
 		return hmCommon.ErrSignerUpdateError(k.Codespace()).Result()
 	}
-
 	// save staking sequence
 	k.SetStakingSequence(ctx, sequence)
 
-	resTags := sdk.NewTags(
-		tags.SignerUpdate, []byte(newSigner.String()),
-		tags.UpdatedAt, []byte(strconv.FormatUint(validator.LastUpdated, 10)),
-		tags.ValidatorID, []byte(strconv.FormatUint(validator.ID.Uint64(), 10)),
-	)
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeSignerUpdate,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(validator.ID.Uint64(), 10)),
+			sdk.NewAttribute(types.AttributeKeyUpdatedAt, strconv.FormatUint(validator.LastUpdated, 10)),
+		),
+	})
 
-	return sdk.Result{Tags: resTags}
+	return sdk.Result{
+		Events: ctx.EventManager().Events(),
+	}
 }
 
 // HandleMsgValidatorExit handle msg validator exit
-func HandleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
+func HandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	k.Logger(ctx).Info("Handling validator exit", "ValidatorID", msg.ID)
 
 	if confirmed := contractCaller.IsTxConfirmed(msg.TxHash.EthHash()); !confirmed {
@@ -305,10 +320,15 @@ func HandleMsgValidatorExit(ctx sdk.Context, msg MsgValidatorExit, k Keeper, con
 		return hmCommon.ErrValidatorNotDeactivated(k.Codespace()).Result()
 	}
 
-	resTags := sdk.NewTags(
-		tags.ValidatorExit, []byte(validator.Signer.String()),
-		tags.ValidatorID, []byte(strconv.FormatUint(uint64(validator.ID), 10)),
-	)
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeValidatorExit,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(validator.ID.Uint64(), 10)),
+		),
+	})
 
-	return sdk.Result{Tags: resTags}
+	return sdk.Result{
+		Events: ctx.EventManager().Events(),
+	}
 }

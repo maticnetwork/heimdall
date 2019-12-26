@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -16,7 +15,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ethCommon "github.com/ethereum/go-ethereum/common"
+	ethCommon "github.com/maticnetwork/bor/common"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -25,19 +24,18 @@ import (
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/common"
-	dbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/p2p"
 	"github.com/tendermint/tendermint/privval"
 	tmTypes "github.com/tendermint/tendermint/types"
+	dbm "github.com/tendermint/tm-db"
 
 	"github.com/maticnetwork/heimdall/app"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/helper"
 	hmserver "github.com/maticnetwork/heimdall/server"
-	stakingcli "github.com/maticnetwork/heimdall/staking/cli"
+	stakingcli "github.com/maticnetwork/heimdall/staking/client/cli"
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
-	"github.com/maticnetwork/heimdall/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -185,18 +183,18 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 				ID:          hmTypes.NewValidatorID(uint64(validatorID)),
 				PubKey:      newPubkey,
 				StartEpoch:  0,
-				Signer:      types.BytesToHeimdallAddress(valPubKey.Address().Bytes()),
+				Signer:      hmTypes.BytesToHeimdallAddress(valPubKey.Address().Bytes()),
 				VotingPower: stakingTypes.DefaultValPower,
 			}
 
-			vals := []*types.Validator{&validator}
-			newValSet := types.NewValidatorSet(vals)
+			vals := []*hmTypes.Validator{&validator}
+			_ = hmTypes.NewValidatorSet(vals)
 			// create genesis state
-			appState := app.NewDefaultGenesisState(vals, *newValSet)
+			appStateBytes := app.NewDefaultGenesisState()
 			// set validator account
-			appState.Accounts = []app.GenesisAccount{getGenesisAccount(validator.Signer.Bytes())}
+			// appState.Accounts = []app.GenesisAccount{getGenesisAccount(validator.Signer.Bytes())}
 			// app state json
-			appStateJSON, err := json.Marshal(appState)
+			appStateJSON, err := json.Marshal(appStateBytes)
 			if err != nil {
 				return err
 			}
@@ -249,62 +247,73 @@ func VerifyGenesis(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			contractCaller, err := helper.NewContractCaller()
-			if err != nil {
-				return err
-			}
 
-			// check header count
-			currentHeaderIndex, err := contractCaller.CurrentHeaderBlock()
-			if err != nil {
-				return nil
-			}
-
-			if genesisState.CheckpointData.AckCount*helper.GetConfig().ChildBlockInterval != currentHeaderIndex {
-				fmt.Println("Header Count doesn't match",
-					"ExpectedHeader", currentHeaderIndex,
-					"HeaderIndexFound", genesisState.CheckpointData.AckCount*helper.GetConfig().ChildBlockInterval)
-				return nil
-			}
-			fmt.Println("ACK count valid:", "count", currentHeaderIndex)
-
-			// check all headers
-			for i, header := range genesisState.CheckpointData.Headers {
-				ackCount := uint64(i + 1)
-				root, start, end, _, _, err := contractCaller.GetHeaderInfo(ackCount * helper.GetConfig().ChildBlockInterval)
-				if err != nil {
+			// verify genesis
+			for _, b := range app.ModuleBasics {
+				m := b.(hmTypes.HeimdallModuleBasic)
+				if err := m.VerifyGenesis(genesisState); err != nil {
 					return err
 				}
-
-				if header.StartBlock != start || header.EndBlock != end || !bytes.Equal(header.RootHash.Bytes(), root.Bytes()) {
-					return fmt.Errorf(
-						"Checkpoint block doesnt match: startExpected %v, startReceived %v, endExpected %v, endReceived %v, rootHashExpected %v, rootHashReceived %v",
-						header.StartBlock,
-						start,
-						header.EndBlock,
-						header.EndBlock,
-						header.RootHash.String(),
-						root.String(),
-					)
-				}
-				fmt.Println("Checkpoint block valid:", "start", start, "end", end, "root", root.String())
 			}
 
-			// validate validators
-			validators := genesisState.StakingData.Validators
-			for _, v := range validators {
-				val, err := contractCaller.GetValidatorInfo(v.ID)
-				if err != nil {
-					return err
-				}
-
-				if val.VotingPower != v.VotingPower {
-					return fmt.Errorf("Voting power mismatch. Expected: %v Received: %v ValID: %v", val.VotingPower, v.VotingPower, v.ID)
-				}
-			}
-
-			fmt.Println("Validators information is valid:", "validatorCount", len(validators))
 			return nil
+
+			// contractCaller, err := helper.NewContractCaller()
+			// if err != nil {
+			// 	return err
+			// }
+
+			// // check header count
+			// currentHeaderIndex, err := contractCaller.CurrentHeaderBlock()
+			// if err != nil {
+			// 	return nil
+			// }
+
+			// if genesisState.CheckpointData.AckCount*helper.GetConfig().ChildBlockInterval != currentHeaderIndex {
+			// 	fmt.Println("Header Count doesn't match",
+			// 		"ExpectedHeader", currentHeaderIndex,
+			// 		"HeaderIndexFound", genesisState.CheckpointData.AckCount*helper.GetConfig().ChildBlockInterval)
+			// 	return nil
+			// }
+			// fmt.Println("ACK count valid:", "count", currentHeaderIndex)
+
+			// // check all headers
+			// for i, header := range genesisState.CheckpointData.Headers {
+			// 	ackCount := uint64(i + 1)
+			// 	root, start, end, _, _, err := contractCaller.GetHeaderInfo(ackCount * helper.GetConfig().ChildBlockInterval)
+			// 	if err != nil {
+			// 		return err
+			// 	}
+
+			// 	if header.StartBlock != start || header.EndBlock != end || !bytes.Equal(header.RootHash.Bytes(), root.Bytes()) {
+			// 		return fmt.Errorf(
+			// 			"Checkpoint block doesnt match: startExpected %v, startReceived %v, endExpected %v, endReceived %v, rootHashExpected %v, rootHashReceived %v",
+			// 			header.StartBlock,
+			// 			start,
+			// 			header.EndBlock,
+			// 			header.EndBlock,
+			// 			header.RootHash.String(),
+			// 			root.String(),
+			// 		)
+			// 	}
+			// 	fmt.Println("Checkpoint block valid:", "start", start, "end", end, "root", root.String())
+			// }
+
+			// // validate validators
+			// validators := genesisState.StakingData.Validators
+			// for _, v := range validators {
+			// 	val, err := contractCaller.GetValidatorInfo(v.ID)
+			// 	if err != nil {
+			// 		return err
+			// 	}
+
+			// 	if val.VotingPower != v.VotingPower {
+			// 		return fmt.Errorf("Voting power mismatch. Expected: %v Received: %v ValID: %v", val.VotingPower, v.VotingPower, v.ID)
+			// 	}
+			// }
+
+			// fmt.Println("Validators information is valid:", "validatorCount", len(validators))
+			// return nil
 		},
 	}
 
@@ -386,7 +395,7 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 					ID:          hmTypes.NewValidatorID(uint64(startID + int64(i))),
 					PubKey:      newPubkey,
 					StartEpoch:  0,
-					Signer:      types.BytesToHeimdallAddress(valPubKeys[i].Address().Bytes()),
+					Signer:      hmTypes.BytesToHeimdallAddress(valPubKeys[i].Address().Bytes()),
 					VotingPower: 1,
 				}
 
@@ -409,20 +418,20 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 			}
 
 			// other data
-			accounts := make([]app.GenesisAccount, totalValidators)
-			for i := 0; i < totalValidators; i++ {
-				populatePersistentPeersInConfigAndWriteIt(config)
-				// genesis account
-				accounts[i] = getGenesisAccount(validators[i].Signer.Bytes())
-			}
-			newValSet := types.NewValidatorSet(validators)
+			// accounts := make([]app.GenesisAccount, totalValidators)
+			// for i := 0; i < totalValidators; i++ {
+			// 	populatePersistentPeersInConfigAndWriteIt(config)
+			// 	// genesis account
+			// 	accounts[i] = getGenesisAccount(validators[i].Signer.Bytes())
+			// }
+			// _ = hmTypes.NewValidatorSet(validators)
 
 			// new app state
-			appState := app.NewDefaultGenesisState(validators, *newValSet)
+			appStateBytes := app.NewDefaultGenesisState()
 			// set accounts and validators
-			appState.Accounts = accounts
+			// appState.Accounts = accounts
 
-			appStateJSON, err := json.Marshal(appState)
+			appStateJSON, err := json.Marshal(appStateBytes)
 			if err != nil {
 				return err
 			}
@@ -526,10 +535,10 @@ func populatePersistentPeersInConfigAndWriteIt(config *cfg.Config) {
 	}
 }
 
-func getGenesisAccount(address []byte) app.GenesisAccount {
+func getGenesisAccount(address []byte) authTypes.Account {
 	acc := authTypes.NewBaseAccountWithAddress(hmTypes.BytesToHeimdallAddress(address))
-	acc.SetCoins(types.Coins{types.Coin{Denom: "vetic", Amount: types.NewInt(1000)}})
-	return app.BaseToGenesisAcc(acc)
+	acc.SetCoins(hmTypes.Coins{hmTypes.Coin{Denom: "vetic", Amount: hmTypes.NewInt(1000)}})
+	return &acc
 }
 
 // WriteGenesisFile creates and writes the genesis configuration to disk. An

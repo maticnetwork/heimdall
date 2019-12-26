@@ -9,12 +9,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
-	"github.com/ethereum/go-ethereum/common"
+	"github.com/maticnetwork/bor/common"
+	"github.com/tendermint/tendermint/libs/log"
+
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/helper"
-	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
-	"github.com/maticnetwork/heimdall/types"
-	"github.com/tendermint/tendermint/libs/log"
+	"github.com/maticnetwork/heimdall/staking/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 var (
@@ -55,7 +56,7 @@ func NewKeeper(
 	keeper := Keeper{
 		cdc:          cdc,
 		storeKey:     storeKey,
-		paramSpace:   paramSpace.WithKeyTable(ParamKeyTable()),
+		paramSpace:   paramSpace.WithKeyTable(types.ParamKeyTable()),
 		codespace:    codespace,
 		ackRetriever: ackRetriever,
 	}
@@ -69,7 +70,7 @@ func (k Keeper) Codespace() sdk.CodespaceType {
 
 // Logger returns a module-specific logger
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
-	return ctx.Logger().With("module", stakingTypes.ModuleName)
+	return ctx.Logger().With("module", types.ModuleName)
 }
 
 // GetValidatorKey drafts the validator key for addresses
@@ -93,7 +94,7 @@ func GetStakingSequenceKey(sequence uint64) []byte {
 }
 
 // AddValidator adds validator indexed with address
-func (k *Keeper) AddValidator(ctx sdk.Context, validator types.Validator) error {
+func (k *Keeper) AddValidator(ctx sdk.Context, validator hmTypes.Validator) error {
 	// TODO uncomment
 	//if ok:=validator.ValidateBasic(); !ok{
 	//	// return error
@@ -101,7 +102,7 @@ func (k *Keeper) AddValidator(ctx sdk.Context, validator types.Validator) error 
 
 	store := ctx.KVStore(k.storeKey)
 
-	bz, err := types.MarshallValidator(k.cdc, validator)
+	bz, err := hmTypes.MarshallValidator(k.cdc, validator)
 	if err != nil {
 		return err
 	}
@@ -132,7 +133,7 @@ func (k *Keeper) IsCurrentValidatorByAddress(ctx sdk.Context, address []byte) bo
 }
 
 // GetValidatorInfo returns validator
-func (k *Keeper) GetValidatorInfo(ctx sdk.Context, address []byte) (validator types.Validator, err error) {
+func (k *Keeper) GetValidatorInfo(ctx sdk.Context, address []byte) (validator hmTypes.Validator, err error) {
 	store := ctx.KVStore(k.storeKey)
 
 	// check if validator exists
@@ -142,7 +143,7 @@ func (k *Keeper) GetValidatorInfo(ctx sdk.Context, address []byte) (validator ty
 	}
 
 	// unmarshall validator and return
-	validator, err = types.UnmarshallValidator(k.cdc, store.Get(key))
+	validator, err = hmTypes.UnmarshallValidator(k.cdc, store.Get(key))
 	if err != nil {
 		return validator, err
 	}
@@ -152,13 +153,13 @@ func (k *Keeper) GetValidatorInfo(ctx sdk.Context, address []byte) (validator ty
 }
 
 // GetCurrentValidators returns all validators who are in validator set
-func (k *Keeper) GetCurrentValidators(ctx sdk.Context) (validators []types.Validator) {
+func (k *Keeper) GetCurrentValidators(ctx sdk.Context) (validators []hmTypes.Validator) {
 	// get ack count
 	ackCount := k.ackRetriever.GetACKCount(ctx)
 
 	// Get validators
 	// iterate through validator list
-	k.IterateValidatorsAndApplyFn(ctx, func(validator types.Validator) error {
+	k.IterateValidatorsAndApplyFn(ctx, func(validator hmTypes.Validator) error {
 		// check if validator is valid for current epoch
 		if validator.IsCurrentValidator(ackCount) {
 			// append if validator is current valdiator
@@ -171,12 +172,12 @@ func (k *Keeper) GetCurrentValidators(ctx sdk.Context) (validators []types.Valid
 }
 
 // GetSpanEligibleValidators returns current validators who are not getting deactivated in between next span
-func (k *Keeper) GetSpanEligibleValidators(ctx sdk.Context) (validators []types.Validator) {
+func (k *Keeper) GetSpanEligibleValidators(ctx sdk.Context) (validators []hmTypes.Validator) {
 	// get ack count
 	ackCount := k.ackRetriever.GetACKCount(ctx)
 
 	// Get validators and iterate through validator list
-	k.IterateValidatorsAndApplyFn(ctx, func(validator types.Validator) error {
+	k.IterateValidatorsAndApplyFn(ctx, func(validator hmTypes.Validator) error {
 		// check if validator is valid for current epoch and endEpoch is not set.
 		if validator.EndEpoch == 0 && validator.IsCurrentValidator(ackCount) {
 			// append if validator is current valdiator
@@ -189,9 +190,9 @@ func (k *Keeper) GetSpanEligibleValidators(ctx sdk.Context) (validators []types.
 }
 
 // GetAllValidators returns all validators
-func (k *Keeper) GetAllValidators(ctx sdk.Context) (validators []*types.Validator) {
+func (k *Keeper) GetAllValidators(ctx sdk.Context) (validators []*hmTypes.Validator) {
 	// iterate through validators and create validator update array
-	k.IterateValidatorsAndApplyFn(ctx, func(validator types.Validator) error {
+	k.IterateValidatorsAndApplyFn(ctx, func(validator hmTypes.Validator) error {
 		// append to list of validatorUpdates
 		validators = append(validators, &validator)
 		return nil
@@ -201,7 +202,7 @@ func (k *Keeper) GetAllValidators(ctx sdk.Context) (validators []*types.Validato
 }
 
 // IterateValidatorsAndApplyFn interate validators and apply the given function.
-func (k *Keeper) IterateValidatorsAndApplyFn(ctx sdk.Context, f func(validator types.Validator) error) {
+func (k *Keeper) IterateValidatorsAndApplyFn(ctx sdk.Context, f func(validator hmTypes.Validator) error) {
 	store := ctx.KVStore(k.storeKey)
 
 	// get validator iterator
@@ -211,7 +212,7 @@ func (k *Keeper) IterateValidatorsAndApplyFn(ctx sdk.Context, f func(validator t
 	// loop through validators to get valid validators
 	for ; iterator.Valid(); iterator.Next() {
 		// unmarshall validator
-		validator, _ := types.UnmarshallValidator(k.cdc, iterator.Value())
+		validator, _ := hmTypes.UnmarshallValidator(k.cdc, iterator.Value())
 		// call function and return if required
 		if err := f(validator); err != nil {
 			return
@@ -220,7 +221,7 @@ func (k *Keeper) IterateValidatorsAndApplyFn(ctx sdk.Context, f func(validator t
 }
 
 // AddDeactivationEpoch adds deactivation epoch
-func (k *Keeper) AddDeactivationEpoch(ctx sdk.Context, validator types.Validator, updatedVal types.Validator) error {
+func (k *Keeper) AddDeactivationEpoch(ctx sdk.Context, validator hmTypes.Validator, updatedVal hmTypes.Validator) error {
 	// check if validator has unstaked
 	if updatedVal.EndEpoch != 0 {
 		validator.EndEpoch = updatedVal.EndEpoch
@@ -232,7 +233,7 @@ func (k *Keeper) AddDeactivationEpoch(ctx sdk.Context, validator types.Validator
 }
 
 // UpdateSigner updates validator with signer and pubkey + validator => signer map
-func (k *Keeper) UpdateSigner(ctx sdk.Context, newSigner types.HeimdallAddress, newPubkey types.PubKey, prevSigner types.HeimdallAddress) error {
+func (k *Keeper) UpdateSigner(ctx sdk.Context, newSigner hmTypes.HeimdallAddress, newPubkey hmTypes.PubKey, prevSigner hmTypes.HeimdallAddress) error {
 	// get old validator from state and make power 0
 	validator, err := k.GetValidatorInfo(ctx, prevSigner.Bytes())
 	if err != nil {
@@ -258,7 +259,7 @@ func (k *Keeper) UpdateSigner(ctx sdk.Context, newSigner types.HeimdallAddress, 
 }
 
 // UpdateValidatorSetInStore adds validator set to store
-func (k *Keeper) UpdateValidatorSetInStore(ctx sdk.Context, newValidatorSet types.ValidatorSet) error {
+func (k *Keeper) UpdateValidatorSetInStore(ctx sdk.Context, newValidatorSet hmTypes.ValidatorSet) error {
 	// TODO check if we may have to delay this by 1 height to sync with tendermint validator updates
 	store := ctx.KVStore(k.storeKey)
 
@@ -274,7 +275,7 @@ func (k *Keeper) UpdateValidatorSetInStore(ctx sdk.Context, newValidatorSet type
 }
 
 // GetValidatorSet returns current Validator Set from store
-func (k *Keeper) GetValidatorSet(ctx sdk.Context) (validatorSet types.ValidatorSet) {
+func (k *Keeper) GetValidatorSet(ctx sdk.Context) (validatorSet hmTypes.ValidatorSet) {
 	store := ctx.KVStore(k.storeKey)
 	// get current validator set from store
 	bz := store.Get(CurrentValidatorSetKey)
@@ -298,7 +299,7 @@ func (k *Keeper) IncrementAccum(ctx sdk.Context, times int) {
 }
 
 // GetNextProposer returns next proposer
-func (k *Keeper) GetNextProposer(ctx sdk.Context) *types.Validator {
+func (k *Keeper) GetNextProposer(ctx sdk.Context) *hmTypes.Validator {
 	// get validator set
 	validatorSet := k.GetValidatorSet(ctx)
 
@@ -310,7 +311,7 @@ func (k *Keeper) GetNextProposer(ctx sdk.Context) *types.Validator {
 }
 
 // GetCurrentProposer returns current proposer
-func (k *Keeper) GetCurrentProposer(ctx sdk.Context) *types.Validator {
+func (k *Keeper) GetCurrentProposer(ctx sdk.Context) *hmTypes.Validator {
 	// get validator set
 	validatorSet := k.GetValidatorSet(ctx)
 
@@ -319,13 +320,13 @@ func (k *Keeper) GetCurrentProposer(ctx sdk.Context) *types.Validator {
 }
 
 // SetValidatorIDToSignerAddr sets mapping for validator ID to signer address
-func (k *Keeper) SetValidatorIDToSignerAddr(ctx sdk.Context, valID types.ValidatorID, signerAddr types.HeimdallAddress) {
+func (k *Keeper) SetValidatorIDToSignerAddr(ctx sdk.Context, valID hmTypes.ValidatorID, signerAddr hmTypes.HeimdallAddress) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(GetValidatorMapKey(valID.Bytes()), signerAddr.Bytes())
 }
 
 // GetSignerFromValidatorID get signer address from validator ID
-func (k *Keeper) GetSignerFromValidatorID(ctx sdk.Context, valID types.ValidatorID) (common.Address, bool) {
+func (k *Keeper) GetSignerFromValidatorID(ctx sdk.Context, valID hmTypes.ValidatorID) (common.Address, bool) {
 	store := ctx.KVStore(k.storeKey)
 	key := GetValidatorMapKey(valID.Bytes())
 	// check if validator address has been mapped
@@ -337,7 +338,7 @@ func (k *Keeper) GetSignerFromValidatorID(ctx sdk.Context, valID types.Validator
 }
 
 // GetValidatorFromValID returns signer from validator ID
-func (k *Keeper) GetValidatorFromValID(ctx sdk.Context, valID types.ValidatorID) (validator types.Validator, ok bool) {
+func (k *Keeper) GetValidatorFromValID(ctx sdk.Context, valID hmTypes.ValidatorID) (validator hmTypes.Validator, ok bool) {
 	signerAddr, ok := k.GetSignerFromValidatorID(ctx, valID)
 	if !ok {
 		return validator, ok
@@ -351,7 +352,7 @@ func (k *Keeper) GetValidatorFromValID(ctx sdk.Context, valID types.ValidatorID)
 }
 
 // GetLastUpdated get last updated at for validator
-func (k *Keeper) GetLastUpdated(ctx sdk.Context, valID types.ValidatorID) (updatedAt uint64, found bool) {
+func (k *Keeper) GetLastUpdated(ctx sdk.Context, valID hmTypes.ValidatorID) (updatedAt uint64, found bool) {
 	// get validator
 	validator, ok := k.GetValidatorFromValID(ctx, valID)
 	if !ok {
@@ -361,7 +362,7 @@ func (k *Keeper) GetLastUpdated(ctx sdk.Context, valID types.ValidatorID) (updat
 }
 
 // SetValidatorIDToReward will update valid with new reward
-func (k *Keeper) SetValidatorIDToReward(ctx sdk.Context, valID types.ValidatorID, reward *big.Int) {
+func (k *Keeper) SetValidatorIDToReward(ctx sdk.Context, valID hmTypes.ValidatorID, reward *big.Int) {
 	// Add reward to reward balance
 	store := ctx.KVStore(k.storeKey)
 	rewardBalance := k.GetRewardByValidatorID(ctx, valID)
@@ -370,7 +371,7 @@ func (k *Keeper) SetValidatorIDToReward(ctx sdk.Context, valID types.ValidatorID
 }
 
 // GetRewardByValidatorID Returns Total Rewards of Validator
-func (k *Keeper) GetRewardByValidatorID(ctx sdk.Context, valID types.ValidatorID) *big.Int {
+func (k *Keeper) GetRewardByValidatorID(ctx sdk.Context, valID hmTypes.ValidatorID) *big.Int {
 	store := ctx.KVStore(k.storeKey)
 	key := GetValidatorRewardMapKey(valID.Bytes())
 	if store.Has(key) {
@@ -382,9 +383,9 @@ func (k *Keeper) GetRewardByValidatorID(ctx sdk.Context, valID types.ValidatorID
 }
 
 // GetAllValidatorRewards returns validator reward map
-func (k *Keeper) GetAllValidatorRewards(ctx sdk.Context) map[types.ValidatorID]*big.Int {
+func (k *Keeper) GetAllValidatorRewards(ctx sdk.Context) map[hmTypes.ValidatorID]*big.Int {
 	store := ctx.KVStore(k.storeKey)
-	valRewardMap := make(map[types.ValidatorID]*big.Int)
+	valRewardMap := make(map[hmTypes.ValidatorID]*big.Int)
 	iterator := sdk.KVStorePrefixIterator(store, ValidatorRewardMapKey)
 	defer iterator.Close()
 	for ; iterator.Valid(); iterator.Next() {
@@ -399,15 +400,15 @@ func (k *Keeper) GetAllValidatorRewards(ctx sdk.Context) map[types.ValidatorID]*
 				"valID", string(iterator.Key()[len(ValidatorRewardMapKey):]),
 			)
 		}
-		valRewardMap[types.ValidatorID(valID)] = reward
+		valRewardMap[hmTypes.ValidatorID(valID)] = reward
 	}
 	return valRewardMap
 }
 
 // CalculateSignerRewards calculates new rewards for signers
-func (k *Keeper) CalculateSignerRewards(ctx sdk.Context, voteBytes []byte, sigInput []byte, checkpointReward *big.Int) (map[types.ValidatorID]*big.Int, error) {
-	signerRewards := make(map[types.ValidatorID]*big.Int)
-	signerPower := make(map[types.ValidatorID]int64)
+func (k *Keeper) CalculateSignerRewards(ctx sdk.Context, voteBytes []byte, sigInput []byte, checkpointReward *big.Int) (map[hmTypes.ValidatorID]*big.Int, error) {
+	signerRewards := make(map[hmTypes.ValidatorID]*big.Int)
+	signerPower := make(map[hmTypes.ValidatorID]int64)
 
 	const sigLength = 65
 	totalSignerPower := int64(0)
@@ -421,7 +422,7 @@ func (k *Keeper) CalculateSignerRewards(ctx sdk.Context, voteBytes []byte, sigIn
 			return nil, err
 		}
 
-		pubKey := types.NewPubKey(pKey)
+		pubKey := hmTypes.NewPubKey(pKey)
 		signerAddress := pubKey.Address().Bytes()
 		valInfo, err := k.GetValidatorInfo(ctx, signerAddress)
 
@@ -464,7 +465,7 @@ func (k *Keeper) CalculateSignerRewards(ctx sdk.Context, voteBytes []byte, sigIn
 }
 
 // UpdateValidatorRewards Updates validators with Rewards
-func (k *Keeper) UpdateValidatorRewards(ctx sdk.Context, valrewards map[types.ValidatorID]*big.Int) {
+func (k *Keeper) UpdateValidatorRewards(ctx sdk.Context, valrewards map[hmTypes.ValidatorID]*big.Int) {
 	for valID, reward := range valrewards {
 		k.SetValidatorIDToReward(ctx, valID, reward)
 	}
@@ -496,13 +497,13 @@ func (k *Keeper) ComputeProposerReward(ctx sdk.Context, currentCheckpointReward 
 // GetProposerBonusPercent returns the proposer to signer reward
 func (k *Keeper) GetProposerBonusPercent(ctx sdk.Context) int64 {
 	var proposerBonusPercent int64
-	k.paramSpace.Get(ctx, ParamStoreKeyProposerBonusPercent, &proposerBonusPercent)
+	k.paramSpace.Get(ctx, types.ParamStoreKeyProposerBonusPercent, &proposerBonusPercent)
 	return proposerBonusPercent
 }
 
 // SetProposerBonusPercent sets the Proposer to signer reward
 func (k *Keeper) SetProposerBonusPercent(ctx sdk.Context, proposerBonusPercent int64) {
-	k.paramSpace.Set(ctx, ParamStoreKeyProposerBonusPercent, proposerBonusPercent)
+	k.paramSpace.Set(ctx, types.ParamStoreKeyProposerBonusPercent, proposerBonusPercent)
 }
 
 //

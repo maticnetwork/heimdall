@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/rlp"
+	"github.com/maticnetwork/bor/common/hexutil"
+	"github.com/maticnetwork/bor/rlp"
 	"github.com/stretchr/testify/require"
 	tmerkel "github.com/tendermint/tendermint/crypto/merkle"
 

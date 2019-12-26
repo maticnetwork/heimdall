@@ -13,7 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ethCommon "github.com/ethereum/go-ethereum/common"
+	ethCommon "github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/heimdall/version"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -25,15 +25,8 @@ import (
 
 	"github.com/maticnetwork/heimdall/app"
 	authCli "github.com/maticnetwork/heimdall/auth/client/cli"
-	authTypes "github.com/maticnetwork/heimdall/auth/types"
-	bank "github.com/maticnetwork/heimdall/bank/client/cli"
-	bor "github.com/maticnetwork/heimdall/bor/cli"
-	checkpoint "github.com/maticnetwork/heimdall/checkpoint/cli"
-	clerk "github.com/maticnetwork/heimdall/clerk/client/cli"
 	hmTxCli "github.com/maticnetwork/heimdall/client/tx"
 	"github.com/maticnetwork/heimdall/helper"
-	staking "github.com/maticnetwork/heimdall/staking/cli"
-	supply "github.com/maticnetwork/heimdall/supply/cli"
 )
 
 // rootCmd is the entry point for this binary
@@ -83,6 +76,7 @@ func main() {
 
 	// add query/post commands (custom to binary)
 	rootCmd.AddCommand(
+		rpc.StatusCommand(),
 		client.LineBreak,
 		queryCmd(cdc),
 		txCmd(cdc),
@@ -120,20 +114,12 @@ func queryCmd(cdc *amino.Codec) *cobra.Command {
 	queryCmd.AddCommand(
 		rpc.ValidatorCommand(cdc),
 		rpc.BlockCommand(),
-		hmTxCli.SearchTxCmd(cdc),
+		hmTxCli.QueryTxsByEventsCmd(cdc),
 		hmTxCli.QueryTxCmd(cdc),
-		client.LineBreak,
-		authCli.GetAccountCmd(authTypes.StoreKey, cdc),
-
-		// supply related queries
-		supply.GetQueryCmd(cdc),
-		// checkpoint related queries
-		checkpoint.GetQueryCmd(cdc),
-		// staking related get commands
-		staking.GetQueryCmd(cdc),
-		// clerk related get commands
-		clerk.GetQueryCmd(cdc),
 	)
+
+	// add modules' query commands
+	app.ModuleBasics.AddQueryCommands(queryCmd, cdc)
 
 	return queryCmd
 }
@@ -149,18 +135,10 @@ func txCmd(cdc *amino.Codec) *cobra.Command {
 		hmTxCli.GetBroadcastCommand(cdc),
 		hmTxCli.GetEncodeCommand(cdc),
 		client.LineBreak,
-
-		// get bank tx commands
-		bank.GetTxCmd(cdc),
-		// get bor tx commands
-		bor.GetTxCmd(cdc),
-		// get checkpoint tx commands
-		checkpoint.GetTxCmd(cdc),
-		// get staking tx commands
-		staking.GetTxCmd(cdc),
-		// get clerk tx commands
-		clerk.GetTxCmd(cdc),
 	)
+
+	// add modules' tx commands
+	app.ModuleBasics.AddTxCommands(txCmd, cdc)
 
 	return txCmd
 }

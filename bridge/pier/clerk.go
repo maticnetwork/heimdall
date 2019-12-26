@@ -13,7 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/ethereum/go-ethereum"
+	ethereum "github.com/maticnetwork/bor"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb"
@@ -158,27 +158,32 @@ func (s *ClerkService) commit() {
 	)
 
 	// search txs
-	txs, err := helper.SearchTxs(s.cliCtx, s.cliCtx.Codec, tags, 1, 50) // first page, 50 limit
+	searchResult, err := helper.QueryTxsByEvents(s.cliCtx, tags, 1, 50) // first page, 50 limit
 	if err != nil {
 		s.Logger.Error("Error while searching txs", "error", err)
 		return
 	}
 
-	s.Logger.Debug(" Found new state txs",
-		"length", len(txs),
-	)
+	s.Logger.Debug(" Found new state txs", "length", searchResult.Count)
 
 	// loop through tx
 	end := start
-	for _, tx := range txs {
-		for _, tag := range tx.Tags {
-			if tag.Key == clerkTypes.RecordID {
-				recordID, err := strconv.ParseUint(tag.Value, 10, 64)
-				if err == nil {
-					// broadcast to bor
-					s.broadcastToBor(recordID)
-					if recordID > end {
-						end = recordID
+	// TODO remove nested loops
+	for _, tx := range searchResult.Txs {
+		for _, log := range tx.Logs {
+			for _, event := range log.Events {
+				if event.Type == clerkTypes.EventTypeRecord {
+					for _, attribute := range event.Attributes {
+						if attribute.Key == clerkTypes.AttributeKeyRecordID {
+							recordID, err := strconv.ParseUint(attribute.Value, 10, 64)
+							if err == nil {
+								// broadcast to bor
+								s.broadcastToBor(recordID)
+								if recordID > end {
+									end = recordID
+								}
+							}
+						}
 					}
 				}
 			}

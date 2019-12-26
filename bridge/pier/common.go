@@ -43,7 +43,6 @@ const (
 	LatestCheckpointURL   = "/checkpoint/latest-checkpoint"
 	CurrentProposerURL    = "/staking/current-proposer"
 	LatestSpanURL         = "/bor/latest-span"
-	SpanProposerURL       = "/bor/span-proposer"
 	NextSpanInfoURL       = "/bor/prepare-next-span"
 	InitialRewardRootURL  = "/staking/initial-reward-root"
 	ValidatorURL          = "/staking/validator/%v"

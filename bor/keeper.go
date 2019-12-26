@@ -8,11 +8,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
-	borTypes "github.com/maticnetwork/heimdall/bor/types"
+	"github.com/tendermint/tendermint/libs/log"
+
+	"github.com/maticnetwork/heimdall/bor/types"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
-	"github.com/maticnetwork/heimdall/types"
-	"github.com/tendermint/tendermint/libs/log"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 var (
@@ -43,19 +44,19 @@ type Keeper struct {
 // NewKeeper create new keeper
 func NewKeeper(
 	cdc *codec.Codec,
-	stakingKeeper staking.Keeper,
 	storeKey sdk.StoreKey,
 	paramSpace params.Subspace,
 	codespace sdk.CodespaceType,
+	stakingKeeper staking.Keeper,
 	caller helper.ContractCaller,
 ) Keeper {
 	// create keeper
 	keeper := Keeper{
 		cdc:            cdc,
-		sk:             stakingKeeper,
 		storeKey:       storeKey,
-		paramSpace:     paramSpace.WithKeyTable(ParamKeyTable()),
+		paramSpace:     paramSpace.WithKeyTable(types.ParamKeyTable()),
 		codespace:      codespace,
+		sk:             stakingKeeper,
 		contractCaller: caller,
 	}
 	return keeper
@@ -68,7 +69,7 @@ func (k Keeper) Codespace() sdk.CodespaceType {
 
 // Logger returns a module-specific logger
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
-	return ctx.Logger().With("module", borTypes.ModuleName)
+	return ctx.Logger().With("module", types.ModuleName)
 }
 
 // GetSpanKey appends prefix to start block
@@ -77,7 +78,7 @@ func GetSpanKey(id uint64) []byte {
 }
 
 // AddNewSpan adds new span for bor to store
-func (k *Keeper) AddNewSpan(ctx sdk.Context, span types.Span) error {
+func (k *Keeper) AddNewSpan(ctx sdk.Context, span hmTypes.Span) error {
 	store := ctx.KVStore(k.storeKey)
 	out, err := k.cdc.MarshalBinaryBare(span)
 	if err != nil {
@@ -94,7 +95,7 @@ func (k *Keeper) AddNewSpan(ctx sdk.Context, span types.Span) error {
 }
 
 // AddNewRawSpan adds new span for bor to store
-func (k *Keeper) AddNewRawSpan(ctx sdk.Context, span types.Span) error {
+func (k *Keeper) AddNewRawSpan(ctx sdk.Context, span hmTypes.Span) error {
 	store := ctx.KVStore(k.storeKey)
 	out, err := k.cdc.MarshalBinaryBare(span)
 	if err != nil {
@@ -106,7 +107,7 @@ func (k *Keeper) AddNewRawSpan(ctx sdk.Context, span types.Span) error {
 }
 
 // GetSpan fetches span indexed by id from store
-func (k *Keeper) GetSpan(ctx sdk.Context, id uint64) (*types.Span, error) {
+func (k *Keeper) GetSpan(ctx sdk.Context, id uint64) (*hmTypes.Span, error) {
 	store := ctx.KVStore(k.storeKey)
 	spanKey := GetSpanKey(id)
 
@@ -115,7 +116,7 @@ func (k *Keeper) GetSpan(ctx sdk.Context, id uint64) (*types.Span, error) {
 		return nil, errors.New("span not found for id")
 	}
 
-	var span types.Span
+	var span hmTypes.Span
 	if err := k.cdc.UnmarshalBinaryBare(store.Get(spanKey), &span); err != nil {
 		return nil, err
 	}
@@ -124,9 +125,9 @@ func (k *Keeper) GetSpan(ctx sdk.Context, id uint64) (*types.Span, error) {
 }
 
 // GetAllSpans fetches all indexed by id from store
-func (k *Keeper) GetAllSpans(ctx sdk.Context) (spans []*types.Span) {
+func (k *Keeper) GetAllSpans(ctx sdk.Context) (spans []*hmTypes.Span) {
 	// iterate through spans and create span update array
-	k.IterateSpansAndApplyFn(ctx, func(span types.Span) error {
+	k.IterateSpansAndApplyFn(ctx, func(span hmTypes.Span) error {
 		// append to list of validatorUpdates
 		spans = append(spans, &span)
 		return nil
@@ -136,7 +137,7 @@ func (k *Keeper) GetAllSpans(ctx sdk.Context) (spans []*types.Span) {
 }
 
 // GetLastSpan fetches last span using lastStartBlock
-func (k *Keeper) GetLastSpan(ctx sdk.Context) (*types.Span, error) {
+func (k *Keeper) GetLastSpan(ctx sdk.Context) (*hmTypes.Span, error) {
 	store := ctx.KVStore(k.storeKey)
 
 	var lastSpanID uint64
@@ -170,7 +171,7 @@ func (k *Keeper) FreezeSet(ctx sdk.Context, id uint64, startBlock uint64, borCha
 	k.IncrementLastEthBlock(ctx)
 
 	// generate new span
-	newSpan := types.NewSpan(
+	newSpan := hmTypes.NewSpan(
 		id,
 		startBlock,
 		endBlock,
@@ -183,7 +184,7 @@ func (k *Keeper) FreezeSet(ctx sdk.Context, id uint64, startBlock uint64, borCha
 }
 
 // SelectNextProducers selects producers for next span
-func (k *Keeper) SelectNextProducers(ctx sdk.Context) (vals []types.Validator, err error) {
+func (k *Keeper) SelectNextProducers(ctx sdk.Context) (vals []hmTypes.Validator, err error) {
 	// fetch last block used for seed
 	lastEthBlock := k.GetLastEthBlock(ctx)
 
@@ -220,7 +221,7 @@ func (k *Keeper) SelectNextProducers(ctx sdk.Context) (vals []types.Validator, e
 	}
 
 	for key, value := range IDToPower {
-		if val, ok := k.sk.GetValidatorFromValID(ctx, types.NewValidatorID(key)); ok {
+		if val, ok := k.sk.GetValidatorFromValID(ctx, hmTypes.NewValidatorID(key)); ok {
 			val.VotingPower = int64(value)
 			vals = append(vals, val)
 		}
@@ -268,32 +269,32 @@ func (k *Keeper) GetLastEthBlock(ctx sdk.Context) *big.Int {
 // GetSpanDuration returns the span duration
 func (k *Keeper) GetSpanDuration(ctx sdk.Context) uint64 {
 	var duration uint64
-	k.paramSpace.Get(ctx, ParamStoreKeySpanDuration, &duration)
+	k.paramSpace.Get(ctx, types.ParamStoreKeySpanDuration, &duration)
 	return duration
 }
 
 // SetSpanDuration sets the span duration
 func (k *Keeper) SetSpanDuration(ctx sdk.Context, duration uint64) {
-	k.paramSpace.Set(ctx, ParamStoreKeySpanDuration, duration)
+	k.paramSpace.Set(ctx, types.ParamStoreKeySpanDuration, duration)
 }
 
 // GetSprintDuration returns the span duration
 func (k *Keeper) GetSprintDuration(ctx sdk.Context) uint64 {
 	var duration uint64
-	k.paramSpace.Get(ctx, ParamStoreKeySprintDuration, &duration)
+	k.paramSpace.Get(ctx, types.ParamStoreKeySprintDuration, &duration)
 	return duration
 }
 
 // SetSprintDuration sets the sprint duration
 func (k *Keeper) SetSprintDuration(ctx sdk.Context, duration uint64) {
-	k.paramSpace.Set(ctx, ParamStoreKeySprintDuration, duration)
+	k.paramSpace.Set(ctx, types.ParamStoreKeySprintDuration, duration)
 }
 
 // GetProducerCount returns the numeber of producers per span
 func (k *Keeper) GetProducerCount(ctx sdk.Context) (uint64, error) {
 	var count uint64
-	if k.paramSpace.Has(ctx, ParamStoreKeyNumOfProducers) {
-		k.paramSpace.Get(ctx, ParamStoreKeyNumOfProducers, &count)
+	if k.paramSpace.Has(ctx, types.ParamStoreKeyNumOfProducers) {
+		k.paramSpace.Get(ctx, types.ParamStoreKeyNumOfProducers, &count)
 	} else {
 		return count, errors.New("producer count store key not found")
 	}
@@ -302,7 +303,7 @@ func (k *Keeper) GetProducerCount(ctx sdk.Context) (uint64, error) {
 
 // SetProducerCount sets the number of producers selected per span
 func (k *Keeper) SetProducerCount(ctx sdk.Context, count uint64) {
-	k.paramSpace.Set(ctx, ParamStoreKeyNumOfProducers, count)
+	k.paramSpace.Set(ctx, types.ParamStoreKeyNumOfProducers, count)
 }
 
 //
@@ -310,7 +311,7 @@ func (k *Keeper) SetProducerCount(ctx sdk.Context, count uint64) {
 //
 
 // IterateSpansAndApplyFn interate spans and apply the given function.
-func (k *Keeper) IterateSpansAndApplyFn(ctx sdk.Context, f func(span types.Span) error) {
+func (k *Keeper) IterateSpansAndApplyFn(ctx sdk.Context, f func(span hmTypes.Span) error) {
 	store := ctx.KVStore(k.storeKey)
 
 	// get span iterator
@@ -320,7 +321,7 @@ func (k *Keeper) IterateSpansAndApplyFn(ctx sdk.Context, f func(span types.Span)
 	// loop through spans to get valid spans
 	for ; iterator.Valid(); iterator.Next() {
 		// unmarshall span
-		var result types.Span
+		var result hmTypes.Span
 		k.cdc.UnmarshalBinaryBare(iterator.Value(), &result)
 		// call function and return if required
 		if err := f(result); err != nil {

@@ -6,12 +6,11 @@ import (
 	"math/big"
 	"strings"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/common"
-	ethTypes "github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/maticnetwork/bor/accounts/abi"
+	"github.com/maticnetwork/bor/common"
+	ethTypes "github.com/maticnetwork/bor/core/types"
+	"github.com/maticnetwork/bor/ethclient"
+	"github.com/maticnetwork/bor/rpc"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 	"github.com/maticnetwork/heimdall/contracts/statereceiver"
@@ -28,7 +27,7 @@ type IContractCaller interface {
 	CurrentHeaderBlock() (uint64, error)
 	GetBalance(address common.Address) (*big.Int, error)
 	SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte)
-	GetCheckpointSign(ctx sdk.Context, txHash common.Hash) ([]byte, []byte, []byte, error)
+	GetCheckpointSign(txHash common.Hash) ([]byte, []byte, []byte, error)
 	GetMainChainBlock(*big.Int) (*ethTypes.Header, error)
 	GetMaticChainBlock(*big.Int) (*ethTypes.Header, error)
 	IsTxConfirmed(common.Hash) bool
@@ -443,9 +442,9 @@ func getABI(data string) (abi.ABI, error) {
 }
 
 // GetCheckpointSign returns sigs input of committed checkpoint tranasction
-func (c *ContractCaller) GetCheckpointSign(ctx sdk.Context, txHash common.Hash) ([]byte, []byte, []byte, error) {
+func (c *ContractCaller) GetCheckpointSign(txHash common.Hash) ([]byte, []byte, []byte, error) {
 	mainChainClient := GetMainClient()
-	transaction, isPending, err := mainChainClient.TransactionByHash(ctx, txHash)
+	transaction, isPending, err := mainChainClient.TransactionByHash(context.Background(), txHash)
 	if err != nil {
 		Logger.Error("Error while Fetching Transaction By hash from MainChain", "error", err)
 		return []byte{}, []byte{}, []byte{}, err

@@ -5,11 +5,12 @@ import (
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/gorilla/mux"
 
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/types"
-	"github.com/maticnetwork/heimdall/types/rest"
+	hmRest "github.com/maticnetwork/heimdall/types/rest"
 )
 
 // QueryAccountRequestHandlerFn query account REST Handler
@@ -21,29 +22,35 @@ func QueryAccountRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		// key
 		key := types.HexToHeimdallAddress(vars["address"])
 		if key.Empty() {
-			rest.WriteErrorResponse(w, http.StatusNotFound, errors.New("Invalid address").Error())
+			hmRest.WriteErrorResponse(w, http.StatusNotFound, errors.New("Invalid address").Error())
+			return
+		}
+
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
 			return
 		}
 
 		// account getter
 		accGetter := authTypes.NewAccountRetriever(cliCtx)
 
-		if err := accGetter.EnsureExists(key); err != nil {
-			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
-			return
-		}
-
-		account, err := accGetter.GetAccount(key)
+		account, height, err := accGetter.GetAccountWithHeight(key)
 		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
+			if err := accGetter.EnsureExists(key); err != nil {
+				cliCtx = cliCtx.WithHeight(height)
+				hmRest.PostProcessResponse(w, cliCtx, authTypes.BaseAccount{})
+				return
+			}
+			hmRest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
 			return
 		}
 
-		rest.PostProcessResponse(w, cliCtx, account)
+		cliCtx = cliCtx.WithHeight(height)
+		hmRest.PostProcessResponse(w, cliCtx, account)
 	}
 }
 
-// QueryAccountSequenceRequestHandlerFn query accoun sequence REST Handler
+// QueryAccountSequenceRequestHandlerFn query account sequence REST Handler
 func QueryAccountSequenceRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -52,21 +59,26 @@ func QueryAccountSequenceRequestHandlerFn(cliCtx context.CLIContext) http.Handle
 		// key
 		key := types.HexToHeimdallAddress(vars["address"])
 		if key.Empty() {
-			rest.WriteErrorResponse(w, http.StatusNotFound, errors.New("Invalid address").Error())
+			hmRest.WriteErrorResponse(w, http.StatusNotFound, errors.New("Invalid address").Error())
+			return
+		}
+
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
 			return
 		}
 
 		// account getter
 		accGetter := authTypes.NewAccountRetriever(cliCtx)
 
-		if err := accGetter.EnsureExists(key); err != nil {
-			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
-			return
-		}
-
-		account, err := accGetter.GetAccount(key)
+		account, height, err := accGetter.GetAccountWithHeight(key)
 		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
+			if err := accGetter.EnsureExists(key); err != nil {
+				cliCtx = cliCtx.WithHeight(height)
+				hmRest.PostProcessResponse(w, cliCtx, authTypes.BaseAccount{})
+				return
+			}
+			hmRest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
 			return
 		}
 
@@ -77,6 +89,7 @@ func QueryAccountSequenceRequestHandlerFn(cliCtx context.CLIContext) http.Handle
 			AccountNumber: account.GetAccountNumber(),
 		}
 
-		rest.PostProcessResponse(w, cliCtx, result)
+		cliCtx = cliCtx.WithHeight(height)
+		hmRest.PostProcessResponse(w, cliCtx, result)
 	}
 }
