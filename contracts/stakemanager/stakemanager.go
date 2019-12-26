@@ -349,6 +349,17 @@ func (_Stakemanager *StakemanagerFilterer) WatchJailed(opts *bind.WatchOpts, sin
 	}), nil
 }
 
+// ParseJailed is a log parse operation binding the contract event 0xa1735a3843d9467dd849a217582720a8af66b9d034712e0b21b0f5ece80670cd.
+//
+// Solidity: event Jailed(uint256 indexed validatorId, uint256 indexed exitEpoch)
+func (_Stakemanager *StakemanagerFilterer) ParseJailed(log types.Log) (*StakemanagerJailed, error) {
+	event := new(StakemanagerJailed)
+	if err := _Stakemanager.contract.UnpackLog(event, "Jailed", log); err != nil {
+		return nil, err
+	}
+	return event, nil
+}
+
 // StakemanagerReStakedIterator is returned from FilterReStaked and is used to iterate over the raw logs and unpacked data for ReStaked events raised by the Stakemanager contract.
 type StakemanagerReStakedIterator struct {
 	Event *StakemanagerReStaked // Event containing the contract specifics and raw log
@@ -481,6 +492,17 @@ func (_Stakemanager *StakemanagerFilterer) WatchReStaked(opts *bind.WatchOpts, s
 			}
 		}
 	}), nil
+}
+
+// ParseReStaked is a log parse operation binding the contract event 0x9cc0e589f20d3310eb2ad571b23529003bd46048d0d1af29277dcf0aa3c398ce.
+//
+// Solidity: event ReStaked(uint256 indexed validatorId, uint256 amount, uint256 total)
+func (_Stakemanager *StakemanagerFilterer) ParseReStaked(log types.Log) (*StakemanagerReStaked, error) {
+	event := new(StakemanagerReStaked)
+	if err := _Stakemanager.contract.UnpackLog(event, "ReStaked", log); err != nil {
+		return nil, err
+	}
+	return event, nil
 }
 
 // StakemanagerSignerChangeIterator is returned from FilterSignerChange and is used to iterate over the raw logs and unpacked data for SignerChange events raised by the Stakemanager contract.
@@ -633,6 +655,17 @@ func (_Stakemanager *StakemanagerFilterer) WatchSignerChange(opts *bind.WatchOpt
 	}), nil
 }
 
+// ParseSignerChange is a log parse operation binding the contract event 0x7dfd3bad1e3cac97d3b89ff06d78394523c4f08fdee4daa71a59160003240c89.
+//
+// Solidity: event SignerChange(uint256 indexed validatorId, address indexed oldSigner, address indexed newSigner)
+func (_Stakemanager *StakemanagerFilterer) ParseSignerChange(log types.Log) (*StakemanagerSignerChange, error) {
+	event := new(StakemanagerSignerChange)
+	if err := _Stakemanager.contract.UnpackLog(event, "SignerChange", log); err != nil {
+		return nil, err
+	}
+	return event, nil
+}
+
 // StakemanagerStakeUpdateIterator is returned from FilterStakeUpdate and is used to iterate over the raw logs and unpacked data for StakeUpdate events raised by the Stakemanager contract.
 type StakemanagerStakeUpdateIterator struct {
 	Event *StakemanagerStakeUpdate // Event containing the contract specifics and raw log
@@ -781,6 +814,17 @@ func (_Stakemanager *StakemanagerFilterer) WatchStakeUpdate(opts *bind.WatchOpts
 			}
 		}
 	}), nil
+}
+
+// ParseStakeUpdate is a log parse operation binding the contract event 0x35af9eea1f0e7b300b0a14fae90139a072470e44daa3f14b5069bebbc1265bda.
+//
+// Solidity: event StakeUpdate(uint256 indexed validatorId, uint256 indexed oldAmount, uint256 indexed newAmount)
+func (_Stakemanager *StakemanagerFilterer) ParseStakeUpdate(log types.Log) (*StakemanagerStakeUpdate, error) {
+	event := new(StakemanagerStakeUpdate)
+	if err := _Stakemanager.contract.UnpackLog(event, "StakeUpdate", log); err != nil {
+		return nil, err
+	}
+	return event, nil
 }
 
 // StakemanagerStakedIterator is returned from FilterStaked and is used to iterate over the raw logs and unpacked data for Staked events raised by the Stakemanager contract.
@@ -935,6 +979,17 @@ func (_Stakemanager *StakemanagerFilterer) WatchStaked(opts *bind.WatchOpts, sin
 	}), nil
 }
 
+// ParseStaked is a log parse operation binding the contract event 0x9cfd25589d1eb8ad71e342a86a8524e83522e3936c0803048c08f6d9ad974f40.
+//
+// Solidity: event Staked(address indexed user, uint256 indexed validatorId, uint256 indexed activationEpoch, uint256 amount, uint256 total)
+func (_Stakemanager *StakemanagerFilterer) ParseStaked(log types.Log) (*StakemanagerStaked, error) {
+	event := new(StakemanagerStaked)
+	if err := _Stakemanager.contract.UnpackLog(event, "Staked", log); err != nil {
+		return nil, err
+	}
+	return event, nil
+}
+
 // StakemanagerTopupFeesIterator is returned from FilterTopupFees and is used to iterate over the raw logs and unpacked data for TopupFees events raised by the Stakemanager contract.
 type StakemanagerTopupFeesIterator struct {
 	Event *StakemanagerTopupFees // Event containing the contract specifics and raw log
@@ -1074,6 +1129,17 @@ func (_Stakemanager *StakemanagerFilterer) WatchTopupFees(opts *bind.WatchOpts, 
 			}
 		}
 	}), nil
+}
+
+// ParseTopupFees is a log parse operation binding the contract event 0xf25f8d72205a97cbe9be1a60e7677e81fa177fb43737759544c67ba5ff80cf9b.
+//
+// Solidity: event TopupFees(uint256 indexed validatorId, uint256 indexed amount)
+func (_Stakemanager *StakemanagerFilterer) ParseTopupFees(log types.Log) (*StakemanagerTopupFees, error) {
+	event := new(StakemanagerTopupFees)
+	if err := _Stakemanager.contract.UnpackLog(event, "TopupFees", log); err != nil {
+		return nil, err
+	}
+	return event, nil
 }
 
 // StakemanagerUnstakeInitIterator is returned from FilterUnstakeInit and is used to iterate over the raw logs and unpacked data for UnstakeInit events raised by the Stakemanager contract.
@@ -1229,6 +1295,17 @@ func (_Stakemanager *StakemanagerFilterer) WatchUnstakeInit(opts *bind.WatchOpts
 	}), nil
 }
 
+// ParseUnstakeInit is a log parse operation binding the contract event 0x51ff6d8ad000896362d1a3c9de9ad835adb6da92ec3ddee44018ef64f3c8b561.
+//
+// Solidity: event UnstakeInit(address indexed user, uint256 indexed validatorId, uint256 deactivationEpoch, uint256 indexed amount)
+func (_Stakemanager *StakemanagerFilterer) ParseUnstakeInit(log types.Log) (*StakemanagerUnstakeInit, error) {
+	event := new(StakemanagerUnstakeInit)
+	if err := _Stakemanager.contract.UnpackLog(event, "UnstakeInit", log); err != nil {
+		return nil, err
+	}
+	return event, nil
+}
+
 // StakemanagerUnstakedIterator is returned from FilterUnstaked and is used to iterate over the raw logs and unpacked data for Unstaked events raised by the Stakemanager contract.
 type StakemanagerUnstakedIterator struct {
 	Event *StakemanagerUnstaked // Event containing the contract specifics and raw log
@@ -1370,4 +1447,15 @@ func (_Stakemanager *StakemanagerFilterer) WatchUnstaked(opts *bind.WatchOpts, s
 			}
 		}
 	}), nil
+}
+
+// ParseUnstaked is a log parse operation binding the contract event 0x204fccf0d92ed8d48f204adb39b2e81e92bad0dedb93f5716ca9478cfb57de00.
+//
+// Solidity: event Unstaked(address indexed user, uint256 indexed validatorId, uint256 amount, uint256 total)
+func (_Stakemanager *StakemanagerFilterer) ParseUnstaked(log types.Log) (*StakemanagerUnstaked, error) {
+	event := new(StakemanagerUnstaked)
+	if err := _Stakemanager.contract.UnpackLog(event, "Unstaked", log); err != nil {
+		return nil, err
+	}
+	return event, nil
 }

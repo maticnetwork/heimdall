@@ -24,6 +24,8 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 			return HandleMsgSignerUpdate(ctx, msg, k, contractCaller)
 		case types.MsgStakeUpdate:
 			return HandleMsgStakeUpdate(ctx, msg, k, contractCaller)
+		case MsgDelegatorBond:
+			return HandleMsgDelegatorBond(ctx, msg, k, contractCaller)
 		default:
 			return sdk.ErrTxDecode("Invalid message in checkpoint module").Result()
 		}
@@ -331,4 +333,65 @@ func HandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k Keepe
 	return sdk.Result{
 		Events: ctx.EventManager().Events(),
 	}
+}
+
+// HandleMsgDelegatorBond msg delegator Bond with Validator
+// 1. On Bonding event, Validator to whom delegator is bonded will send `MsgDelegatorBond` transaction to Heimdall.
+// 2. Delegator is updated with Validator ID.
+// 3. VotingPower of the bonded validator is updated.
+// 4. shares are added to Delegator proportional to his stake and exchange rate. // delegatorshares = (delegatorstake / exchangeRate)
+// 5. Exchange rate is calculated instantly.  //   ExchangeRate = (delegatedpower + delegatorRewardPool) / totaldelegatorshares
+// 6. TotalDelegatorShares of bonded validator is updated.
+// 7. DelegatedPower of bonded validator is updated.
+func HandleMsgDelegatorBond(ctx sdk.Context, msg MsgDelegatorBond, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
+
+	k.Logger(ctx).Debug("Handling delegator bond with validator", "Delegator", msg.ID)
+
+	// get main tx receipt
+	receipt, err := contractCaller.GetConfirmedTxReceipt(msg.TxHash.EthHash())
+	if err != nil || receipt == nil {
+		return hmCommon.ErrWaitForConfirmation(k.Codespace()).Result()
+	}
+
+	eventLog, err := contractCaller.DecodeDelegatorBondEvent(receipt, msg.LogIndex)
+	if err != nil || eventLog == nil {
+		k.Logger(ctx).Error("Error fetching log from txhash")
+		return hmCommon.ErrInvalidMsg(k.Codespace(), "Unable to fetch delegator bond log for txHash").Result()
+	}
+
+	if eventLog.DelegatorId.Uint64() != msg.ID.Uint64() {
+		k.Logger(ctx).Error("Delegator ID in message doesnt match delegaot id in logs", "MsgID", msg.ID, "IdFromTx", eventLog.DelegatorId.Uint64())
+		return hmCommon.ErrInvalidMsg(k.Codespace(), "Invalid txhash, id's dont match. Id from tx hash is %v", eventLog.DelegatorId.Uint64()).Result()
+	}
+
+	// // pull delegator from store
+	// delegator, err := k.GetDelegatorInfo(ctx, msg.ID)
+	// if err != nil {
+	// 	k.Logger(ctx).Error("Fetching of delegator from store failed", "delegatorId", msg.ID)
+	// 	return hmCommon.ErrNoDelegator(k.Codespace()).Result()
+	// }
+
+	// // last updated
+	// lastUpdated := (receipt.BlockNumber.Uint64() * types.DefaultLogIndexUnit) + msg.LogIndex
+
+	// // check if incoming tx is older
+	// if lastUpdated <= delegator.LastUpdated {
+	// 	k.Logger(ctx).Error("Older invalid tx found")
+	// 	return hmCommon.ErrOldTx(k.Codespace()).Result()
+	// }
+
+	// // check if delegator is already bonded
+	// if delegator.ValID != 0 {
+	// 	k.Logger(ctx).Error("Delegator is already bonded")
+	// 	return hmCommon.ErrAlreadyBonded(k.Codespace()).Result()
+	// }
+
+	k.BondDelegator(ctx, msg.ID, types.ValidatorID(eventLog.ValidatorId.Uint64()), eventLog.Amount)
+
+	resTags := sdk.NewTags(
+		tags.DelegatorID, []byte(strconv.FormatUint(eventLog.DelegatorId.Uint64(), 10)),
+		tags.ValidatorID, []byte(strconv.FormatUint(eventLog.ValidatorId.Uint64(), 10)),
+	)
+
+	return sdk.Result{Tags: resTags}
 }

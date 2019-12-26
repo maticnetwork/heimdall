@@ -13,13 +13,16 @@ import (
 
 // Validator heimdall validator
 type Validator struct {
-	ID          ValidatorID     `json:"ID"`
-	StartEpoch  uint64          `json:"startEpoch"`
-	EndEpoch    uint64          `json:"endEpoch"`
-	VotingPower int64           `json:"power"` // TODO add 10^-18 here so that we dont overflow easily
-	PubKey      PubKey          `json:"pubKey"`
-	Signer      HeimdallAddress `json:"signer"`
-	LastUpdated uint64          `json:"last_updated"`
+	ID                   ValidatorID     `json:"ID"`
+	StartEpoch           uint64          `json:"startEpoch"`
+	EndEpoch             uint64          `json:"endEpoch"`
+	VotingPower          int64           `json:"power"` // TODO add 10^-18 here so that we dont overflow easily
+	DelegatedPower       int64           `json:"delegatedpower"`
+	DelgatorRewardPool   string          `json:delegatorRewardPool`
+	TotalDelegatorShares float32         `json:totalDelegatorShares`
+	PubKey               PubKey          `json:"pubKey"`
+	Signer               HeimdallAddress `json:"signer"`
+	LastUpdated          uint64          `json:"last_updated"`
 
 	ProposerPriority int64 `json:"accum"`
 }
@@ -208,4 +211,13 @@ func ValToMinVal(vals []Validator) (minVals []MinimalVal) {
 		minVals = append(minVals, val.MinimalVal())
 	}
 	return
+}
+
+// ExchangeRate = (delegatedpower + delegatorRewardPool) / totaldelegatorshares
+func (v *Validator) ExchangeRate() float32 {
+	exchangeRate := float32(1)
+	// totalAssets := v.DelegatedPower + v.DelgatorRewardPool
+	totalAssets := 100
+	exchangeRate = float32(totalAssets) / float32(v.TotalDelegatorShares)
+	return exchangeRate
 }

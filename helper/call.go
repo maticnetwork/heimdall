@@ -11,6 +11,7 @@ import (
 	ethTypes "github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/bor/ethclient"
 	"github.com/maticnetwork/bor/rpc"
+	"github.com/maticnetwork/heimdall/contracts/delegationmanager"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 	"github.com/maticnetwork/heimdall/contracts/statereceiver"
@@ -39,6 +40,7 @@ type IContractCaller interface {
 	DecodeSignerUpdateEvent(*ethTypes.Receipt, uint64) (*stakemanager.StakemanagerSignerChange, error)
 	GetMainTxReceipt(common.Hash) (*ethTypes.Receipt, error)
 	GetMaticTxReceipt(common.Hash) (*ethTypes.Receipt, error)
+	DecodeDelegatorBondEvent(*ethTypes.Receipt, uint64) (*delegationmanager.DelegationmanagerBonding, error)
 
 	// bor related contracts
 	CurrentSpanNumber() (Number *big.Int)
@@ -53,17 +55,19 @@ type ContractCaller struct {
 	MainChainRPC     *rpc.Client
 	MaticChainClient *ethclient.Client
 
-	RootChainInstance     *rootchain.Rootchain
-	StakeManagerInstance  *stakemanager.Stakemanager
-	ValidatorSetInstance  *validatorset.Validatorset
-	StateSenderInstance   *statesender.Statesender
-	StateReceiverInstance *statereceiver.Statereceiver
+	RootChainInstance         *rootchain.Rootchain
+	StakeManagerInstance      *stakemanager.Stakemanager
+	DelegationManagerInstance *delegationmanager.Delegationmanager
+	ValidatorSetInstance      *validatorset.Validatorset
+	StateSenderInstance       *statesender.Statesender
+	StateReceiverInstance     *statereceiver.Statereceiver
 
-	RootChainABI     abi.ABI
-	StakeManagerABI  abi.ABI
-	ValidatorSetABI  abi.ABI
-	StateReceiverABI abi.ABI
-	StateSenderABI   abi.ABI
+	RootChainABI         abi.ABI
+	StakeManagerABI      abi.ABI
+	DelegationManagerABI abi.ABI
+	ValidatorSetABI      abi.ABI
+	StateReceiverABI     abi.ABI
+	StateSenderABI       abi.ABI
 }
 
 type txExtraInfo struct {
@@ -88,6 +92,10 @@ func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 	//
 
 	if contractCallerObj.RootChainInstance, err = rootchain.NewRootchain(GetRootChainAddress(), contractCallerObj.MainChainClient); err != nil {
+		return
+	}
+
+	if contractCallerObj.DelegationManagerInstance, err = delegationmanager.NewDelegationmanager((GetDelegationManagerAddress()), contractCallerObj.MainChainClient); err != nil {
 		return
 	}
 
@@ -120,6 +128,10 @@ func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 	}
 
 	if contractCallerObj.ValidatorSetABI, err = getABI(string(validatorset.ValidatorsetABI)); err != nil {
+		return
+	}
+
+	if contractCallerObj.DelegationManagerABI, err = getABI(string(delegationmanager.DelegationmanagerABI)); err != nil {
 		return
 	}
 
@@ -364,6 +376,28 @@ func (c *ContractCaller) DecodeSignerUpdateEvent(receipt *ethTypes.Receipt, logI
 		if uint64(vLog.Index) == logIndex {
 			found = true
 			if err := UnpackLog(&c.StakeManagerABI, event, "SignerChange", vLog); err != nil {
+				return nil, err
+			}
+			break
+		}
+	}
+
+	if !found {
+		return nil, errors.New("Event not found")
+	}
+
+	return event, nil
+}
+
+// DecodeDelegatorBondEvent represents delegator bond event
+func (c *ContractCaller) DecodeDelegatorBondEvent(receipt *ethTypes.Receipt, logIndex uint64) (*delegationmanager.DelegationmanagerBonding, error) {
+	event := new(delegationmanager.DelegationmanagerBonding)
+
+	found := false
+	for _, log := range receipt.Logs {
+		if uint64(log.Index) == logIndex {
+			found = true
+			if err := UnpackLog(&c.DelegationManagerABI, event, "Bonding", log); err != nil {
 				return nil, err
 			}
 			break

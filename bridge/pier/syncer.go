@@ -22,6 +22,7 @@ import (
 
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
+	"github.com/maticnetwork/heimdall/contracts/delegationmanager"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 	"github.com/maticnetwork/heimdall/contracts/statesender"
@@ -546,6 +547,33 @@ func (syncer *Syncer) processStateSyncedEvent(eventName string, abiObject *abi.A
 
 		// broadcast to heimdall
 		syncer.queueConnector.BroadcastToHeimdall(msg)
+	}
+}
+
+// processDelegatorBondEvent
+func (syncer *Syncer) processDelegatorBondEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
+	event := new(delegationmanager.DelegationmanagerBonding)
+	if err := helper.UnpackLog(abiObject, event, eventName, vLog); err != nil {
+		logEventParseError(syncer.Logger, eventName, err)
+	} else {
+		syncer.Logger.Debug(
+			"New event found",
+			"event", eventName,
+			"DelegatorId", event.DelegatorId,
+			"ValidatorId", event.ValidatorId,
+			"Amount", event.Amount,
+		)
+
+		msg := staking.NewMsgDelegatorBond(
+			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
+			event.DelegatorId.Uint64(),
+			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
+			uint64(vLog.Index),
+		)
+
+		// broadcast to heimdall
+		syncer.queueConnector.BroadcastToHeimdall(msg)
+
 	}
 }
 
