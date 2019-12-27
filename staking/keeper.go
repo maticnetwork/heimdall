@@ -362,10 +362,10 @@ func GetDividendAccountMapKey(id []byte) []byte {
 }
 
 // AddDividendAccount adds DividendAccount index with DividendID
-func (k *Keeper) AddDividendAccount(ctx sdk.Context, dividendAccount types.DividendAccount) error {
+func (k *Keeper) AddDividendAccount(ctx sdk.Context, dividendAccount hmTypes.DividendAccount) error {
 	store := ctx.KVStore(k.storeKey)
 	// marshall validator account
-	bz, err := types.MarshallDividendAccount(k.cdc, dividendAccount)
+	bz, err := hmTypes.MarshallDividendAccount(k.cdc, dividendAccount)
 	if err != nil {
 		return err
 	}
@@ -376,21 +376,19 @@ func (k *Keeper) AddDividendAccount(ctx sdk.Context, dividendAccount types.Divid
 }
 
 // GetDividendAccountByID will return DividendAccount of valID
-func (k *Keeper) GetDividendAccountByID(ctx sdk.Context, dividendID types.DividendAccountID) (dividendAccount types.DividendAccount, err error) {
+func (k *Keeper) GetDividendAccountByID(ctx sdk.Context, dividendID hmTypes.DividendAccountID) (dividendAccount hmTypes.DividendAccount, err error) {
 
 	// check if dividend account exists
 	if !k.CheckIfDividendAccountExists(ctx, dividendID) {
 		return dividendAccount, errors.New("Validator Account not found")
 	}
 
-// SetValidatorIDToReward will update valid with new reward
-func (k *Keeper) SetValidatorIDToReward(ctx sdk.Context, valID hmTypes.ValidatorID, reward *big.Int) {
 	// Add reward to reward balance
 	store := ctx.KVStore(k.storeKey)
 	key := GetDividendAccountMapKey(dividendID.Bytes())
 
 	// unmarshall dividend account and return
-	dividendAccount, err = types.UnMarshallDividendAccount(k.cdc, store.Get(key))
+	dividendAccount, err = hmTypes.UnMarshallDividendAccount(k.cdc, store.Get(key))
 	if err != nil {
 		return dividendAccount, err
 	}
@@ -399,7 +397,7 @@ func (k *Keeper) SetValidatorIDToReward(ctx sdk.Context, valID hmTypes.Validator
 }
 
 // CheckIfDividendAccountExists will return true if dividend account exists
-func (k *Keeper) CheckIfDividendAccountExists(ctx sdk.Context, dividendID types.DividendAccountID) (ok bool) {
+func (k *Keeper) CheckIfDividendAccountExists(ctx sdk.Context, dividendID hmTypes.DividendAccountID) (ok bool) {
 	store := ctx.KVStore(k.storeKey)
 	key := GetDividendAccountMapKey(dividendID.Bytes())
 	if !store.Has(key) {
@@ -409,9 +407,9 @@ func (k *Keeper) CheckIfDividendAccountExists(ctx sdk.Context, dividendID types.
 }
 
 // GetAllDividendAccounts returns all DividendAccountss
-func (k *Keeper) GetAllDividendAccounts(ctx sdk.Context) (dividendAccounts []types.DividendAccount) {
+func (k *Keeper) GetAllDividendAccounts(ctx sdk.Context) (dividendAccounts []hmTypes.DividendAccount) {
 	// iterate through dividendAccounts and create dividendAccounts update array
-	k.IterateDividendAccountsAndApplyFn(ctx, func(dividendAccount types.DividendAccount) error {
+	k.IterateDividendAccountsAndApplyFn(ctx, func(dividendAccount hmTypes.DividendAccount) error {
 		// append to list of dividendUpdates
 		dividendAccounts = append(dividendAccounts, dividendAccount)
 		return nil
@@ -421,7 +419,7 @@ func (k *Keeper) GetAllDividendAccounts(ctx sdk.Context) (dividendAccounts []typ
 }
 
 // IterateDividendAccountsAndApplyFn iterate dividendAccounts and apply the given function.
-func (k *Keeper) IterateDividendAccountsAndApplyFn(ctx sdk.Context, f func(dividendAccount types.DividendAccount) error) {
+func (k *Keeper) IterateDividendAccountsAndApplyFn(ctx sdk.Context, f func(dividendAccount hmTypes.DividendAccount) error) {
 	store := ctx.KVStore(k.storeKey)
 
 	// get validator iterator
@@ -431,7 +429,7 @@ func (k *Keeper) IterateDividendAccountsAndApplyFn(ctx sdk.Context, f func(divid
 	// loop through dividendAccounts
 	for ; iterator.Valid(); iterator.Next() {
 		// unmarshall dividendAccount
-		dividendAccount, _ := types.UnMarshallDividendAccount(k.cdc, iterator.Value())
+		dividendAccount, _ := hmTypes.UnMarshallDividendAccount(k.cdc, iterator.Value())
 		// call function and return if required
 		if err := f(dividendAccount); err != nil {
 			return
@@ -445,9 +443,9 @@ func (k *Keeper) IterateDividendAccountsAndApplyFn(ctx sdk.Context, f func(divid
 // 4. Exchange rate is calculated instantly.  //   ExchangeRate = (delegatedpower + delegatorRewardPool) / totaldelegatorshares
 // 5. TotalDelegatorShares of bonded validator is updated.
 // 6. DelegatedPower of bonded validator is updated.
-func (k *Keeper) BondDelegator(ctx sdk.Context, delegatorID types.DelegatorID, valID types.ValidatorID, amount *big.Int) error {
+func (k *Keeper) BondDelegator(ctx sdk.Context, delegatorID hmTypes.DelegatorID, valID hmTypes.ValidatorID, amount *big.Int) error {
 
-	delegatorAccount, err := k.GetDividendAccountByID(ctx, types.DividendAccountID(delegatorID))
+	delegatorAccount, err := k.GetDividendAccountByID(ctx, hmTypes.DividendAccountID(delegatorID))
 	if err != nil {
 		k.Logger(ctx).Error("Fetching of dividend account from store failed", "delegatorId", delegatorID)
 		return errors.New("DelegatorAccount not found")
@@ -499,7 +497,7 @@ func (k *Keeper) BondDelegator(ctx sdk.Context, delegatorID types.DelegatorID, v
 }
 
 // RewardValidator will update validator dividend account with new reward
-func (k *Keeper) RewardValidator(ctx sdk.Context, valID types.ValidatorID, totalRewards *big.Int) (err error) {
+func (k *Keeper) RewardValidator(ctx sdk.Context, valID hmTypes.ValidatorID, totalRewards *big.Int) (err error) {
 	// Divide total reward between validator and his delegator pool.
 	validator, ok := k.GetValidatorFromValID(ctx, valID)
 	if !ok {
@@ -526,15 +524,15 @@ func (k *Keeper) RewardValidator(ctx sdk.Context, valID types.ValidatorID, total
 	delReward := big.NewInt(0)
 	delReward, _ = delRew.Int(delReward)
 
-	var validatorAccount types.DividendAccount
-	if k.CheckIfDividendAccountExists(ctx, types.DividendAccountID(valID)) {
-		validatorAccount, err = k.GetDividendAccountByID(ctx, types.DividendAccountID(valID))
+	var validatorAccount hmTypes.DividendAccount
+	if k.CheckIfDividendAccountExists(ctx, hmTypes.DividendAccountID(valID)) {
+		validatorAccount, err = k.GetDividendAccountByID(ctx, hmTypes.DividendAccountID(valID))
 		if err != nil {
 			return err
 		}
 	} else {
-		validatorAccount = types.DividendAccount{
-			ID:            types.DividendAccountID(valID),
+		validatorAccount = hmTypes.DividendAccount{
+			ID:            hmTypes.DividendAccountID(valID),
 			RewardAmount:  big.NewInt(0).String(),
 			SlashedAmount: big.NewInt(0).String(),
 		}
@@ -561,7 +559,7 @@ func (k *Keeper) RewardValidator(ctx sdk.Context, valID types.ValidatorID, total
 }
 
 // GetRewardByDividendAccountID Returns Total Rewards of Dividend Account
-func (k *Keeper) GetRewardByDividendAccountID(ctx sdk.Context, dividendAccountID types.DividendAccountID) (*big.Int, error) {
+func (k *Keeper) GetRewardByDividendAccountID(ctx sdk.Context, dividendAccountID hmTypes.DividendAccountID) (*big.Int, error) {
 	dividendAccount, err := k.GetDividendAccountByID(ctx, dividendAccountID)
 	if err != nil {
 		return big.NewInt(0), err

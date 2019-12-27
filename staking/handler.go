@@ -24,7 +24,7 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 			return HandleMsgSignerUpdate(ctx, msg, k, contractCaller)
 		case types.MsgStakeUpdate:
 			return HandleMsgStakeUpdate(ctx, msg, k, contractCaller)
-		case MsgDelegatorBond:
+		case types.MsgDelegatorBond:
 			return HandleMsgDelegatorBond(ctx, msg, k, contractCaller)
 		default:
 			return sdk.ErrTxDecode("Invalid message in checkpoint module").Result()
@@ -343,7 +343,7 @@ func HandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k Keepe
 // 5. Exchange rate is calculated instantly.  //   ExchangeRate = (delegatedpower + delegatorRewardPool) / totaldelegatorshares
 // 6. TotalDelegatorShares of bonded validator is updated.
 // 7. DelegatedPower of bonded validator is updated.
-func HandleMsgDelegatorBond(ctx sdk.Context, msg MsgDelegatorBond, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
+func HandleMsgDelegatorBond(ctx sdk.Context, msg types.MsgDelegatorBond, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 
 	k.Logger(ctx).Debug("Handling delegator bond with validator", "Delegator", msg.ID)
 
@@ -386,12 +386,18 @@ func HandleMsgDelegatorBond(ctx sdk.Context, msg MsgDelegatorBond, k Keeper, con
 	// 	return hmCommon.ErrAlreadyBonded(k.Codespace()).Result()
 	// }
 
-	k.BondDelegator(ctx, msg.ID, types.ValidatorID(eventLog.ValidatorId.Uint64()), eventLog.Amount)
+	k.BondDelegator(ctx, msg.ID, hmTypes.ValidatorID(eventLog.ValidatorId.Uint64()), eventLog.Amount)
 
-	resTags := sdk.NewTags(
-		tags.DelegatorID, []byte(strconv.FormatUint(eventLog.DelegatorId.Uint64(), 10)),
-		tags.ValidatorID, []byte(strconv.FormatUint(eventLog.ValidatorId.Uint64(), 10)),
-	)
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeDelegatorBond,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(eventLog.ValidatorId.Uint64(), 10)),
+			sdk.NewAttribute(types.AttributeKeyDelegatorID, strconv.FormatUint(eventLog.DelegatorId.Uint64(), 10)),
+		),
+	})
 
-	return sdk.Result{Tags: resTags}
+	return sdk.Result{
+		Events: ctx.EventManager().Events(),
+	}
 }

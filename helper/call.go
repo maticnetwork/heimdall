@@ -95,7 +95,7 @@ func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 		return
 	}
 
-	if contractCallerObj.DelegationManagerInstance, err = delegationmanager.NewDelegationmanager((GetDelegationManagerAddress()), contractCallerObj.MainChainClient); err != nil {
+	if contractCallerObj.DelegationManagerInstance, err = delegationmanager.NewDelegationmanager(GetDelegationManagerAddress(), contractCallerObj.MainChainClient); err != nil {
 		return
 	}
 

@@ -2,15 +2,16 @@ package rest
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"math/big"
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/types/rest"
-	"github.com/maticnetwork/bor/common"
 	"github.com/gorilla/mux"
+	"github.com/maticnetwork/bor/common"
 
-	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/staking/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmRest "github.com/maticnetwork/heimdall/types/rest"
@@ -42,8 +43,12 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 		currentProposerHandlerFn(cliCtx),
 	).Methods("GET")
 	r.HandleFunc(
-		"/staking/initial-reward-root",
-		initialRewardRootHandlerFn(cliCtx),
+		"/staking/slash-validator",
+		slashValidatorHandlerFn(cliCtx),
+	).Methods("GET")
+	r.HandleFunc(
+		"/staking/initial-account-root",
+		initialAccountRootHandlerFn(cliCtx),
 	).Methods("GET")
 	r.HandleFunc(
 		"/staking/proposer-bonus-percent",
@@ -239,34 +244,79 @@ func currentProposerHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-// initialRewardRootHandlerFn returns genesis rewardroothash
-func initialRewardRootHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func slashValidatorHandlerFn(
+	cliCtx context.CLIContext,
+) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", checkpointTypes.QuerierRoute, checkpointTypes.QueryInitialRewardRoot), nil)
-		RestLogger.Debug("initial rewardRootHash querier response", "res", res)
+
+		params := r.URL.Query()
+		valID, ok := rest.ParseUint64OrReturnBadRequest(w, params.Get("val_id"))
+		if !ok {
+			return
+		}
+
+		slashAmount, ok := big.NewInt(0).SetString(params.Get("slash_amount"), 10)
+		if !ok {
+			return
+		}
+
+		RestLogger.Info("Slashing validator - ", "valID", valID, "slashAmount", slashAmount)
+
+		slashingParams := types.NewValidatorSlashParams(hmTypes.ValidatorID(valID), slashAmount)
+
+		bz, err := cliCtx.Codec.MarshalJSON(slashingParams)
+		if err != nil {
+			RestLogger.Info("Error marshallingSlashing Params - ", "err", err)
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QuerySlashValidator), bz)
+		if err != nil {
+			RestLogger.Info("Error query data - ", "err", err)
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		RestLogger.Info("slashedd validator successfully ", "res", res)
+
+		cliCtx.WithHeight(height)
+		rest.PostProcessResponse(w, cliCtx, res)
+	}
+}
+
+// initialAccountRootHandlerFn returns genesis accountroothash
+func initialAccountRootHandlerFn(
+	cliCtx context.CLIContext,
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryInitialAccountRoot), nil)
+		RestLogger.Debug("initial accountRootHash querier response", "res", res)
 
 		if err != nil {
-			RestLogger.Error("Error while calculating Initial Rewardroot ", "Error", err.Error())
-			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			RestLogger.Error("Error while calculating Initial AccountRoot  ", "Error", err.Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		// error if no checkpoint found
-		if ok := hmRest.ReturnNotFoundIfNoContent(w, res, "RewardRootHash not found"); !ok {
-			RestLogger.Error("RewardRootHash not found ", "Error", err.Error())
+		if len(res) == 0 {
+			RestLogger.Error("AccountRootHash not found ", "Error", err.Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, errors.New("AccountRootHash not found").Error())
 			return
 		}
 
-		rewardRootHash := hmTypes.BytesToHeimdallHash(res)
-		RestLogger.Debug("Fetched initial rewardRootHash ", "rewardRootHash", rewardRootHash)
+		var accountRootHash = hmTypes.BytesToHeimdallHash(res)
+		RestLogger.Debug("Fetched initial accountRootHash ", "AccountRootHash", accountRootHash)
 
-		result, err := json.Marshal(&rewardRootHash)
+		result, err := json.Marshal(&accountRootHash)
 		if err != nil {
 			RestLogger.Error("Error while marshalling response to Json", "error", err)
-			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
+		// return result
+		cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, result)
 	}
 }

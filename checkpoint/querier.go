@@ -17,8 +17,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 		switch path[0] {
 		case types.QueryAckCount:
 			return handleQueryAckCount(ctx, req, keeper)
-		case types.QueryInitialRewardRoot:
-			return handleQueryInitialRewardRoot(ctx, req, keeper)
+		case types.QueryInitialAccountRoot:
+			return queryInitialAccountRoot(ctx, req, keeper)
 		case types.QueryCheckpoint:
 			return handleQueryCheckpoint(ctx, req, keeper)
 		case types.QueryCheckpointBuffer:
@@ -41,13 +41,14 @@ func handleQueryAckCount(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) 
 	return bz, nil
 }
 
-func handleQueryInitialRewardRoot(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	valRewardMap := keeper.sk.GetAllValidatorRewards(ctx)
-	rewardRootHash, err := types.GetRewardRootHash(valRewardMap)
+func queryInitialAccountRoot(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	// Calculate new account root hash
+	dividendAccounts := keeper.sk.GetAllDividendAccounts(ctx)
+	accountRoot, err := types.GetAccountRootHash(dividendAccounts)
 	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not fetch genesis rewardroothash", err.Error()))
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not fetch genesis accountroothash ", err.Error()))
 	}
-	return rewardRootHash, nil
+	return accountRoot, nil
 }
 
 func handleQueryCheckpoint(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {

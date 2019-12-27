@@ -1,8 +1,6 @@
 package staking
 
 import (
-	"math/big"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/staking/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -20,7 +18,7 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 
 	// result
 	resultValSet := hmTypes.NewValidatorSet(vals)
-	validatorRewards := make(map[hmTypes.ValidatorID]*big.Int)
+	// validatorRewards := make(map[hmTypes.ValidatorID]*big.Int)
 
 	// add validators in store
 	for _, validator := range resultValSet.Validators {
@@ -34,17 +32,12 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 		panic(err)
 	}
 
-	// Add rewards for initial validators
-	for _, validator := range data.Validators {
-		if _, ok := data.ValidatorRewards[validator.ID]; ok {
-			validatorRewards[validator.ID] = data.ValidatorRewards[validator.ID]
-		} else {
-			validatorRewards[validator.ID] = big.NewInt(0)
+	// Add genesis dividend accounts
+	for _, dividendAccount := range data.DividentAccounts {
+		if err := keeper.AddDividendAccount(ctx, dividendAccount); err != nil {
+			panic((err))
 		}
 	}
-
-	// update validator rewards
-	keeper.UpdateValidatorRewards(ctx, validatorRewards)
 
 	// proposer bonus percent
 	keeper.SetProposerBonusPercent(ctx, data.ProposerBonusPercent)
@@ -61,7 +54,7 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
 	return types.NewGenesisState(
 		keeper.GetAllValidators(ctx),
 		keeper.GetValidatorSet(ctx),
-		keeper.GetAllValidatorRewards(ctx),
+		keeper.GetAllDividendAccounts(ctx),
 		keeper.GetProposerBonusPercent(ctx),
 	)
 }

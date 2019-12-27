@@ -564,9 +564,9 @@ func (syncer *Syncer) processDelegatorBondEvent(eventName string, abiObject *abi
 			"Amount", event.Amount,
 		)
 
-		msg := staking.NewMsgDelegatorBond(
+		msg := stakingTypes.NewMsgDelegatorBond(
 			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
-			event.DelegatorId.Uint64(),
+			hmTypes.DelegatorID(event.DelegatorId.Uint64()),
 			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			uint64(vLog.Index),
 		)

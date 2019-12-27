@@ -8,6 +8,7 @@ import (
 
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -277,15 +278,15 @@ type MsgDelegatorBond struct {
 
 // NewMsgDelegatorBond creates new delegator-bond
 func NewMsgDelegatorBond(
-	from types.HeimdallAddress,
-	id uint64,
-	txhash types.HeimdallHash,
+	from hmTypes.HeimdallAddress,
+	id hmTypes.DelegatorID,
+	txhash hmTypes.HeimdallHash,
 	logIndex uint64,
 ) MsgDelegatorBond {
 
 	return MsgDelegatorBond{
 		From:     from,
-		ID:       types.NewDelegatorID(id),
+		ID:       id,
 		TxHash:   txhash,
 		LogIndex: logIndex,
 	}
@@ -296,7 +297,7 @@ func (msg MsgDelegatorBond) Type() string {
 }
 
 func (msg MsgDelegatorBond) Route() string {
-	return stakingTypes.RouterKey
+	return RouterKey
 }
 
 func (msg MsgDelegatorBond) GetSigners() []sdk.AccAddress {

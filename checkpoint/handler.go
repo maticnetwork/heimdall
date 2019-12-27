@@ -82,27 +82,27 @@ func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, con
 				"startBlock", msg.StartBlock)
 			return common.ErrDisCountinuousCheckpoint(k.Codespace()).Result()
 		}
-		// make sure latest rewardroothash matches
-		if !bytes.Equal(lastCheckpoint.RewardRootHash.Bytes(), msg.RewardRootHash.Bytes()) {
-			k.Logger(ctx).Error("RewardRootHash of LastCheckpoint", lastCheckpoint.RewardRootHash,
-				"doesn't match with RewardRootHash of msg", msg.RewardRootHash)
+		// make sure latest AccountRootHash matches
+		if !bytes.Equal(lastCheckpoint.AccountRootHash.Bytes(), msg.AccountRootHash.Bytes()) {
+			k.Logger(ctx).Error("AccountRootHash of LastCheckpoint", lastCheckpoint.AccountRootHash,
+				"doesn't match with AccountRootHash of msg", msg.AccountRootHash)
 			return common.ErrBadBlockDetails(k.Codespace()).Result()
 		}
 	} else if err.Error() == common.ErrNoCheckpointFound(k.Codespace()).Error() && msg.StartBlock != 0 {
 		k.Logger(ctx).Error("First checkpoint to start from block 1", "Error", err)
 		return common.ErrBadBlockDetails(k.Codespace()).Result()
 	} else if err.Error() == common.ErrNoCheckpointFound(k.Codespace()).Error() && msg.StartBlock == 0 {
-		// Check if genesis RewardRootHash matches
-		genesisValidatorRewards := k.sk.GetAllValidatorRewards(ctx)
-		genesisrewardRootHash, err := types.GetRewardRootHash(genesisValidatorRewards)
+		// Check if genesis DividendAccountRootHash matches
+		genesisDividendAccounts := k.sk.GetAllDividendAccounts(ctx)
+		genesisaccountRootHash, err := types.GetAccountRootHash(genesisDividendAccounts)
 		if err != nil {
-			k.Logger(ctx).Error("Error calculating genesis rewardroothash", err)
-			return common.ErrComputeGenesisRewardRoot(k.Codespace()).Result()
+			k.Logger(ctx).Error("Error calculating genesis accountroothash", err)
+			return common.ErrComputeGenesisAccountRoot(k.Codespace()).Result()
 		}
-		if !bytes.Equal(genesisrewardRootHash, msg.RewardRootHash.Bytes()) {
-			k.Logger(ctx).Error("Genesis RewardRootHash", hmTypes.BytesToHeimdallHash(genesisrewardRootHash).String(),
-				"doesn't match with Genesis RewardRootHash of msg", msg.RewardRootHash)
-			return common.ErrRewardRootMismatch(k.Codespace()).Result()
+		if !bytes.Equal(genesisaccountRootHash, msg.AccountRootHash.Bytes()) {
+			k.Logger(ctx).Error("Genesis AccountRootHash", hmTypes.BytesToHeimdallHash(genesisaccountRootHash).String(),
+				"doesn't match with Genesis AccountRootHash of msg", msg.AccountRootHash)
+			return common.ErrAccountRootMismatch(k.Codespace()).Result()
 		}
 	}
 	k.Logger(ctx).Debug("Valid checkpoint tip")
@@ -125,14 +125,14 @@ func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, con
 	// }
 
 	// add checkpoint to buffer
-	// Add RewardRootHash to CheckpointBuffer
+	// Add AccountRootHash to CheckpointBuffer
 	k.SetCheckpointBuffer(ctx, hmTypes.CheckpointBlockHeader{
-		StartBlock:     msg.StartBlock,
-		EndBlock:       msg.EndBlock,
-		RootHash:       msg.RootHash,
-		RewardRootHash: msg.RewardRootHash,
-		Proposer:       msg.Proposer,
-		TimeStamp:      msg.TimeStamp,
+		StartBlock:      msg.StartBlock,
+		EndBlock:        msg.EndBlock,
+		RootHash:        msg.RootHash,
+		AccountRootHash: msg.AccountRootHash,
+		Proposer:        msg.Proposer,
+		TimeStamp:       msg.TimeStamp,
 	})
 
 	checkpoint, _ := k.GetCheckpointFromBuffer(ctx)
@@ -247,14 +247,14 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg types.MsgCheckpointAck, k Keepe
 	k.sk.UpdateValidatorRewards(ctx, signerRewards)
 	k.Logger(ctx).Info("Signer Rewards updated to store")
 
-	// Calculate new reward root hash
-	valRewardMap := k.sk.GetAllValidatorRewards(ctx)
-	k.Logger(ctx).Debug("rewards of all validators", "RewardMap", valRewardMap)
-	rewardRoot, err := types.GetRewardRootHash(valRewardMap)
-	k.Logger(ctx).Info("Reward root hash generated", "RewardRootHash", hmTypes.BytesToHeimdallHash(rewardRoot).String())
+	// Calculate new account root hash
+	dividendAccounts := k.sk.GetAllDividendAccounts(ctx)
+	k.Logger(ctx).Debug("dividendAccounts of all validators and delegators", "dividendAccounts", dividendAccounts)
+	accountRoot, err := types.GetAccountRootHash(dividendAccounts)
+	k.Logger(ctx).Info("Validator Account root hash generated", "AccountRootHash", hmTypes.BytesToHeimdallHash(accountRoot).String())
 
-	// Add new Reward root hash to bufferedcheckpoint header block
-	headerBlock.RewardRootHash = hmTypes.BytesToHeimdallHash(rewardRoot)
+	// Add new AccountRootHash root hash to bufferedcheckpoint header block
+	headerBlock.AccountRootHash = hmTypes.BytesToHeimdallHash(accountRoot)
 
 	// Add checkpoint to headerBlocks
 	k.AddCheckpoint(ctx, msg.HeaderBlock, *headerBlock)

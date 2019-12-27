@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"math/big"
-	"sort"
 
 	"github.com/maticnetwork/bor/common/hexutil"
 	"github.com/maticnetwork/bor/core/types"
@@ -87,43 +86,36 @@ func GetHeaders(start uint64, end uint64) ([]byte, error) {
 	return tree.Root().Hash, nil
 }
 
-// GetRewardRootHash returns roothash of Validator Reward State Tree
-func GetRewardRootHash(valRewardMap map[hmTypes.ValidatorID]*big.Int) ([]byte, error) {
-	// Sort the map by key
-	keys := make([]uint64, 0)
-	for k := range valRewardMap {
-		keys = append(keys, uint64(k))
-	}
-	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+// GetAccountRootHash returns roothash of Validator, Delegator Account State Tree
+func GetAccountRootHash(dividendAccounts []hmTypes.DividendAccount) ([]byte, error) {
+	// Sort the dividendAccounts by ID
+	dividendAccounts = hmTypes.SortDividendAccountByID(dividendAccounts)
 
-	expectedLength := len(valRewardMap)
-	valrewardHashes := make([][32]byte, expectedLength)
+	expectedLength := len(dividendAccounts)
+	valAccountHashes := make([][32]byte, expectedLength)
 	i := 0
-	for _, key := range keys {
-		valrewardHash := crypto.Keccak256(appendBytes32(
-			new(big.Int).SetUint64(uint64(key)).Bytes(),
-			valRewardMap[hmTypes.ValidatorID(key)].Bytes(),
+
+	// add dividendAccounts hashes
+	for _, da := range dividendAccounts {
+		reward, _ := big.NewInt(0).SetString(da.RewardAmount, 10)
+		slashAmount, _ := big.NewInt(0).SetString(da.SlashedAmount, 10)
+		valAccountHash := crypto.Keccak256(appendBytes32(
+			new(big.Int).SetUint64(uint64(da.ID)).Bytes(),
+			reward.Bytes(),
+			slashAmount.Bytes(),
 		))
 		var arr [32]byte
-		copy(arr[:], valrewardHash)
+		copy(arr[:], valAccountHash)
 
-		valrewardHashes[i] = arr
+		valAccountHashes[i] = arr
 		i++
 	}
 
 	tree := merkle.NewTreeWithOpts(merkle.TreeOptions{EnableHashSorting: false, DisableHashLeaves: true})
-	if err := tree.Generate(convert(valrewardHashes), sha3.NewLegacyKeccak256()); err != nil {
+	if err := tree.Generate(convert(valAccountHashes), sha3.NewLegacyKeccak256()); err != nil {
 		return nil, err
 	}
 	return tree.Root().Hash, nil
-}
-
-// GetRewardLeafHash returns RewardLeafHash of val reward
-func GetRewardLeafHash(valID uint64, reward uint64) []byte {
-	return crypto.Keccak256(appendBytes32(
-		new(big.Int).SetUint64(valID).Bytes(),
-		new(big.Int).SetUint64(reward).Bytes(),
-	))
 }
 
 func convert(input []([32]byte)) [][]byte {

@@ -1,6 +1,11 @@
 package types
 
-import "github.com/maticnetwork/heimdall/types"
+import (
+	"math/big"
+
+	"github.com/maticnetwork/heimdall/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
+)
 
 // query endpoints supported by the staking Querier
 const (
@@ -11,6 +16,8 @@ const (
 	QueryProposer             = "proposer"
 	QueryCurrentProposer      = "current-proposer"
 	QueryProposerBonusPercent = "proposer-bonus-percent"
+	QueryInitialAccountRoot   = "initial-account-root"
+	QuerySlashValidator       = "slash-validator"
 )
 
 // QuerySignerParams defines the params for querying by address
@@ -41,4 +48,25 @@ type QueryProposerParams struct {
 // NewQueryProposerParams creates a new instance of QueryProposerParams.
 func NewQueryProposerParams(times uint64) QueryProposerParams {
 	return QueryProposerParams{Times: times}
+}
+
+// QueryValidatorStatusParams defines the params for querying val status.
+type QueryValidatorStatusParams struct {
+	SignerAddress []byte
+}
+
+// ValidatorSlashParams defines the params for slashing a validator
+type ValidatorSlashParams struct {
+	ValID       hmTypes.ValidatorID
+	SlashAmount *big.Int
+}
+
+// NewQueryValidatorStatusParams creates a new instance of QueryValidatorStatusParams.
+func NewQueryValidatorStatusParams(signerAddress []byte) QueryValidatorStatusParams {
+	return QueryValidatorStatusParams{SignerAddress: signerAddress}
+}
+
+// NewValidatorSlashParams creates a new instance of ValidatorSlashParams.
+func NewValidatorSlashParams(validatorID hmTypes.ValidatorID, amountToSlash *big.Int) ValidatorSlashParams {
+	return ValidatorSlashParams{ValID: validatorID, SlashAmount: amountToSlash}
 }
