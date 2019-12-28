@@ -473,7 +473,7 @@ func (k *Keeper) BondDelegator(ctx sdk.Context, delegatorID hmTypes.DelegatorID,
 	delegatorAccount.Shares += delegatorshares
 
 	// 6. TotalDelegatorShares of bonded validator is updated.
-	validator.TotalDelegatorShares += delegatorshares
+	validator.TotalDelegatorShares += string(int(delegatorshares))
 
 	validator.VotingPower += p.Int64()
 

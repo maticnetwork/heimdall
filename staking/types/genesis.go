@@ -9,23 +9,29 @@ import (
 
 // GenesisValidator genesis validator
 type GenesisValidator struct {
-	ID         hmTypes.ValidatorID     `json:"id"`
-	StartEpoch uint64                  `json:"start_epoch"`
-	EndEpoch   uint64                  `json:"end_epoch"`
-	Power      uint64                  `json:"power"` // aka Amount
-	PubKey     hmTypes.PubKey          `json:"pub_key"`
-	Signer     hmTypes.HeimdallAddress `json:"signer"`
+	ID                   hmTypes.ValidatorID     `json:"id"`
+	StartEpoch           uint64                  `json:"start_epoch"`
+	EndEpoch             uint64                  `json:"end_epoch"`
+	Power                uint64                  `json:"power"` // aka Amount
+	DelegatedPower       int64                   `json:"delegatedpower"`
+	DelgatorRewardPool   string                  `json:delegatorRewardPool`
+	TotalDelegatorShares string                  `json:totalDelegatorShares`
+	PubKey               hmTypes.PubKey          `json:"pub_key"`
+	Signer               hmTypes.HeimdallAddress `json:"signer"`
 }
 
 // HeimdallValidator converts genesis validator validator to Heimdall validator
 func (v *GenesisValidator) HeimdallValidator() hmTypes.Validator {
 	return hmTypes.Validator{
-		ID:          v.ID,
-		PubKey:      v.PubKey,
-		VotingPower: int64(v.Power),
-		StartEpoch:  v.StartEpoch,
-		EndEpoch:    v.EndEpoch,
-		Signer:      v.Signer,
+		ID:                   v.ID,
+		PubKey:               v.PubKey,
+		VotingPower:          int64(v.Power),
+		DelegatedPower:       int64(v.DelegatedPower),
+		DelgatorRewardPool:   v.DelgatorRewardPool,
+		TotalDelegatorShares: v.TotalDelegatorShares,
+		StartEpoch:           v.StartEpoch,
+		EndEpoch:             v.EndEpoch,
+		Signer:               v.Signer,
 	}
 }
 

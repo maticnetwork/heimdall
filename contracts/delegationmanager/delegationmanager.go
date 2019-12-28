@@ -7,6 +7,7 @@ import (
 	"math/big"
 	"strings"
 
+	
 	ethereum "github.com/maticnetwork/bor"
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/accounts/abi/bind"
@@ -28,7 +29,7 @@ var (
 )
 
 // DelegationmanagerABI is the input ABI used to generate the binding from.
-const DelegationmanagerABI = "[{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"delegatorId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"stakeRewards\",\"type\":\"bool\"}],\"name\":\"reStake\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"delegatorId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"}],\"name\":\"bond\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"delegatorId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"accumBalance\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"accumSlashedAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"accIndex\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"accProof\",\"type\":\"bytes\"}],\"name\":\"unstakeClaim\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"MIN_DEPOSIT_SIZE\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"}],\"name\":\"validatorDelegation\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"delegatorId\",\"type\":\"uint256\"}],\"name\":\"unstake\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"}],\"name\":\"bondAll\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"validators\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"delegatedAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"commissionRate\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"isUnBonding\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"}],\"name\":\"acceptsDelegation\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"}],\"name\":\"unbondAll\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"}],\"name\":\"validatorUnstake\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"delegators\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"reward\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"claimedRewards\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"slashedAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"bondedTo\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"deactivationEpoch\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"delegatorId\",\"type\":\"uint256\"}],\"name\":\"unBond\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"}],\"name\":\"stake\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"registry\",\"outputs\":[{\"internalType\":\"contractRegistry\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"totalStaked\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"stakerNFT\",\"outputs\":[{\"internalType\":\"contractStaker\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"validatorHopLimit\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"isOwner\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"delegatorId\",\"type\":\"uint256\"}],\"name\":\"withdrawRewards\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"unlock\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256[]\",\"name\":\"_delegators\",\"type\":\"uint256[]\"},{\"internalType\":\"uint256\",\"name\":\"slashRate\",\"type\":\"uint256\"}],\"name\":\"slash\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"locked\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"delegatorId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"accumBalance\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"accumSlashedAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"accIndex\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"withdraw\",\"type\":\"bool\"},{\"internalType\":\"bytes\",\"name\":\"accProof\",\"type\":\"bytes\"}],\"name\":\"claimRewards\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"rate\",\"type\":\"uint256\"}],\"name\":\"updateCommissionRate\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"lock\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"token\",\"outputs\":[{\"internalType\":\"contractIERC20\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_registry\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_token\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_stakerNFT\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"delegatorId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"activatonEpoch\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"total\",\"type\":\"uint256\"}],\"name\":\"Staked\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"delegatorId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"total\",\"type\":\"uint256\"}],\"name\":\"Unstaked\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"delegatorId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"deactivationEpoch\",\"type\":\"uint256\"}],\"name\":\"UnstakeInit\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"delegatorId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"Bonding\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"delegatorId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"UnBonding\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"rate\",\"type\":\"uint256\"}],\"name\":\"UpdateCommission\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"delegatorId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"oldValidatorId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"newValidatorId\",\"type\":\"uint256\"}],\"name\":\"ReBonding\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"delegatorId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"total\",\"type\":\"uint256\"}],\"name\":\"ReStaked\",\"type\":\"event\"}]"
+const DelegationmanagerABI = "[{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"delegatorId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"stakeRewards\",\"type\":\"bool\"}],\"name\":\"reStake\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"delegatorId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"}],\"name\":\"bond\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"delegatorId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"accumBalance\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"accumSlashedAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"accIndex\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"accProof\",\"type\":\"bytes\"}],\"name\":\"unstakeClaim\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"MIN_DEPOSIT_SIZE\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"}],\"name\":\"validatorDelegation\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"delegatorId\",\"type\":\"uint256\"}],\"name\":\"unstake\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"}],\"name\":\"bondAll\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"validators\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"delegatedAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"commissionRate\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"isUnBonding\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"}],\"name\":\"acceptsDelegation\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"}],\"name\":\"unbondAll\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"}],\"name\":\"validatorUnstake\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"delegators\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"reward\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"claimedRewards\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"slashedAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"bondedTo\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"deactivationEpoch\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"delegatorId\",\"type\":\"uint256\"}],\"name\":\"unBond\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"}],\"name\":\"stake\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"registry\",\"outputs\":[{\"internalType\":\"contractRegistry\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"totalStaked\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"stakerNFT\",\"outputs\":[{\"internalType\":\"contractStaker\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"validatorHopLimit\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"isOwner\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"delegatorId\",\"type\":\"uint256\"}],\"name\":\"withdrawRewards\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"unlock\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256[]\",\"name\":\"_delegators\",\"type\":\"uint256[]\"},{\"internalType\":\"uint256\",\"name\":\"slashRate\",\"type\":\"uint256\"}],\"name\":\"slash\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"locked\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"delegatorId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"accumBalance\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"accumSlashedAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"accIndex\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"withdraw\",\"type\":\"bool\"},{\"internalType\":\"bytes\",\"name\":\"accProof\",\"type\":\"bytes\"}],\"name\":\"claimRewards\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"rate\",\"type\":\"uint256\"}],\"name\":\"updateCommissionRate\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"lock\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"token\",\"outputs\":[{\"internalType\":\"contractIERC20\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_registry\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_token\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_stakerNFT\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"delegatorId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"activatonEpoch\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"total\",\"type\":\"uint256\"}],\"name\":\"DelegatorStaked\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"delegatorId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"total\",\"type\":\"uint256\"}],\"name\":\"DelegatorUnstaked\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"delegatorId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"deactivationEpoch\",\"type\":\"uint256\"}],\"name\":\"UnstakeInit\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"delegatorId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"Bonding\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"delegatorId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"UnBonding\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"rate\",\"type\":\"uint256\"}],\"name\":\"UpdateCommission\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"delegatorId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"oldValidatorId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"newValidatorId\",\"type\":\"uint256\"}],\"name\":\"ReBonding\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"delegatorId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"total\",\"type\":\"uint256\"}],\"name\":\"DelegatorReStaked\",\"type\":\"event\"}]"
 
 // Delegationmanager is an auto generated Go binding around an Ethereum contract.
 type Delegationmanager struct {
@@ -1068,6 +1069,476 @@ func (_Delegationmanager *DelegationmanagerFilterer) ParseBonding(log types.Log)
 	return event, nil
 }
 
+// DelegationmanagerDelegatorReStakedIterator is returned from FilterDelegatorReStaked and is used to iterate over the raw logs and unpacked data for DelegatorReStaked events raised by the Delegationmanager contract.
+type DelegationmanagerDelegatorReStakedIterator struct {
+	Event *DelegationmanagerDelegatorReStaked // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *DelegationmanagerDelegatorReStakedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(DelegationmanagerDelegatorReStaked)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(DelegationmanagerDelegatorReStaked)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *DelegationmanagerDelegatorReStakedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *DelegationmanagerDelegatorReStakedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// DelegationmanagerDelegatorReStaked represents a DelegatorReStaked event raised by the Delegationmanager contract.
+type DelegationmanagerDelegatorReStaked struct {
+	DelegatorId *big.Int
+	Amount      *big.Int
+	Total       *big.Int
+	Raw         types.Log // Blockchain specific contextual infos
+}
+
+// FilterDelegatorReStaked is a free log retrieval operation binding the contract event 0x8a96681fbee1934ce3b770ca1f525dda4eaf3501459b10df46f206731533cbbc.
+//
+// Solidity: event DelegatorReStaked(uint256 indexed delegatorId, uint256 indexed amount, uint256 total)
+func (_Delegationmanager *DelegationmanagerFilterer) FilterDelegatorReStaked(opts *bind.FilterOpts, delegatorId []*big.Int, amount []*big.Int) (*DelegationmanagerDelegatorReStakedIterator, error) {
+
+	var delegatorIdRule []interface{}
+	for _, delegatorIdItem := range delegatorId {
+		delegatorIdRule = append(delegatorIdRule, delegatorIdItem)
+	}
+	var amountRule []interface{}
+	for _, amountItem := range amount {
+		amountRule = append(amountRule, amountItem)
+	}
+
+	logs, sub, err := _Delegationmanager.contract.FilterLogs(opts, "DelegatorReStaked", delegatorIdRule, amountRule)
+	if err != nil {
+		return nil, err
+	}
+	return &DelegationmanagerDelegatorReStakedIterator{contract: _Delegationmanager.contract, event: "DelegatorReStaked", logs: logs, sub: sub}, nil
+}
+
+// WatchDelegatorReStaked is a free log subscription operation binding the contract event 0x8a96681fbee1934ce3b770ca1f525dda4eaf3501459b10df46f206731533cbbc.
+//
+// Solidity: event DelegatorReStaked(uint256 indexed delegatorId, uint256 indexed amount, uint256 total)
+func (_Delegationmanager *DelegationmanagerFilterer) WatchDelegatorReStaked(opts *bind.WatchOpts, sink chan<- *DelegationmanagerDelegatorReStaked, delegatorId []*big.Int, amount []*big.Int) (event.Subscription, error) {
+
+	var delegatorIdRule []interface{}
+	for _, delegatorIdItem := range delegatorId {
+		delegatorIdRule = append(delegatorIdRule, delegatorIdItem)
+	}
+	var amountRule []interface{}
+	for _, amountItem := range amount {
+		amountRule = append(amountRule, amountItem)
+	}
+
+	logs, sub, err := _Delegationmanager.contract.WatchLogs(opts, "DelegatorReStaked", delegatorIdRule, amountRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(DelegationmanagerDelegatorReStaked)
+				if err := _Delegationmanager.contract.UnpackLog(event, "DelegatorReStaked", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseDelegatorReStaked is a log parse operation binding the contract event 0x8a96681fbee1934ce3b770ca1f525dda4eaf3501459b10df46f206731533cbbc.
+//
+// Solidity: event DelegatorReStaked(uint256 indexed delegatorId, uint256 indexed amount, uint256 total)
+func (_Delegationmanager *DelegationmanagerFilterer) ParseDelegatorReStaked(log types.Log) (*DelegationmanagerDelegatorReStaked, error) {
+	event := new(DelegationmanagerDelegatorReStaked)
+	if err := _Delegationmanager.contract.UnpackLog(event, "DelegatorReStaked", log); err != nil {
+		return nil, err
+	}
+	return event, nil
+}
+
+// DelegationmanagerDelegatorStakedIterator is returned from FilterDelegatorStaked and is used to iterate over the raw logs and unpacked data for DelegatorStaked events raised by the Delegationmanager contract.
+type DelegationmanagerDelegatorStakedIterator struct {
+	Event *DelegationmanagerDelegatorStaked // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *DelegationmanagerDelegatorStakedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(DelegationmanagerDelegatorStaked)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(DelegationmanagerDelegatorStaked)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *DelegationmanagerDelegatorStakedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *DelegationmanagerDelegatorStakedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// DelegationmanagerDelegatorStaked represents a DelegatorStaked event raised by the Delegationmanager contract.
+type DelegationmanagerDelegatorStaked struct {
+	User           common.Address
+	DelegatorId    *big.Int
+	ActivatonEpoch *big.Int
+	Amount         *big.Int
+	Total          *big.Int
+	Raw            types.Log // Blockchain specific contextual infos
+}
+
+// FilterDelegatorStaked is a free log retrieval operation binding the contract event 0x7791ed829a068f876ee9c5144ad9bcc731dfc02894dedfd0250595ac7d2202d0.
+//
+// Solidity: event DelegatorStaked(address indexed user, uint256 indexed delegatorId, uint256 indexed activatonEpoch, uint256 amount, uint256 total)
+func (_Delegationmanager *DelegationmanagerFilterer) FilterDelegatorStaked(opts *bind.FilterOpts, user []common.Address, delegatorId []*big.Int, activatonEpoch []*big.Int) (*DelegationmanagerDelegatorStakedIterator, error) {
+
+	var userRule []interface{}
+	for _, userItem := range user {
+		userRule = append(userRule, userItem)
+	}
+	var delegatorIdRule []interface{}
+	for _, delegatorIdItem := range delegatorId {
+		delegatorIdRule = append(delegatorIdRule, delegatorIdItem)
+	}
+	var activatonEpochRule []interface{}
+	for _, activatonEpochItem := range activatonEpoch {
+		activatonEpochRule = append(activatonEpochRule, activatonEpochItem)
+	}
+
+	logs, sub, err := _Delegationmanager.contract.FilterLogs(opts, "DelegatorStaked", userRule, delegatorIdRule, activatonEpochRule)
+	if err != nil {
+		return nil, err
+	}
+	return &DelegationmanagerDelegatorStakedIterator{contract: _Delegationmanager.contract, event: "DelegatorStaked", logs: logs, sub: sub}, nil
+}
+
+// WatchDelegatorStaked is a free log subscription operation binding the contract event 0x7791ed829a068f876ee9c5144ad9bcc731dfc02894dedfd0250595ac7d2202d0.
+//
+// Solidity: event DelegatorStaked(address indexed user, uint256 indexed delegatorId, uint256 indexed activatonEpoch, uint256 amount, uint256 total)
+func (_Delegationmanager *DelegationmanagerFilterer) WatchDelegatorStaked(opts *bind.WatchOpts, sink chan<- *DelegationmanagerDelegatorStaked, user []common.Address, delegatorId []*big.Int, activatonEpoch []*big.Int) (event.Subscription, error) {
+
+	var userRule []interface{}
+	for _, userItem := range user {
+		userRule = append(userRule, userItem)
+	}
+	var delegatorIdRule []interface{}
+	for _, delegatorIdItem := range delegatorId {
+		delegatorIdRule = append(delegatorIdRule, delegatorIdItem)
+	}
+	var activatonEpochRule []interface{}
+	for _, activatonEpochItem := range activatonEpoch {
+		activatonEpochRule = append(activatonEpochRule, activatonEpochItem)
+	}
+
+	logs, sub, err := _Delegationmanager.contract.WatchLogs(opts, "DelegatorStaked", userRule, delegatorIdRule, activatonEpochRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(DelegationmanagerDelegatorStaked)
+				if err := _Delegationmanager.contract.UnpackLog(event, "DelegatorStaked", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseDelegatorStaked is a log parse operation binding the contract event 0x7791ed829a068f876ee9c5144ad9bcc731dfc02894dedfd0250595ac7d2202d0.
+//
+// Solidity: event DelegatorStaked(address indexed user, uint256 indexed delegatorId, uint256 indexed activatonEpoch, uint256 amount, uint256 total)
+func (_Delegationmanager *DelegationmanagerFilterer) ParseDelegatorStaked(log types.Log) (*DelegationmanagerDelegatorStaked, error) {
+	event := new(DelegationmanagerDelegatorStaked)
+	if err := _Delegationmanager.contract.UnpackLog(event, "DelegatorStaked", log); err != nil {
+		return nil, err
+	}
+	return event, nil
+}
+
+// DelegationmanagerDelegatorUnstakedIterator is returned from FilterDelegatorUnstaked and is used to iterate over the raw logs and unpacked data for DelegatorUnstaked events raised by the Delegationmanager contract.
+type DelegationmanagerDelegatorUnstakedIterator struct {
+	Event *DelegationmanagerDelegatorUnstaked // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *DelegationmanagerDelegatorUnstakedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(DelegationmanagerDelegatorUnstaked)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(DelegationmanagerDelegatorUnstaked)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *DelegationmanagerDelegatorUnstakedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *DelegationmanagerDelegatorUnstakedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// DelegationmanagerDelegatorUnstaked represents a DelegatorUnstaked event raised by the Delegationmanager contract.
+type DelegationmanagerDelegatorUnstaked struct {
+	User        common.Address
+	DelegatorId *big.Int
+	Amount      *big.Int
+	Total       *big.Int
+	Raw         types.Log // Blockchain specific contextual infos
+}
+
+// FilterDelegatorUnstaked is a free log retrieval operation binding the contract event 0xa923491c5b977940d8b453ab5b9dd6b1e39130a1c32849293d2c13d3b9537639.
+//
+// Solidity: event DelegatorUnstaked(address indexed user, uint256 indexed delegatorId, uint256 amount, uint256 total)
+func (_Delegationmanager *DelegationmanagerFilterer) FilterDelegatorUnstaked(opts *bind.FilterOpts, user []common.Address, delegatorId []*big.Int) (*DelegationmanagerDelegatorUnstakedIterator, error) {
+
+	var userRule []interface{}
+	for _, userItem := range user {
+		userRule = append(userRule, userItem)
+	}
+	var delegatorIdRule []interface{}
+	for _, delegatorIdItem := range delegatorId {
+		delegatorIdRule = append(delegatorIdRule, delegatorIdItem)
+	}
+
+	logs, sub, err := _Delegationmanager.contract.FilterLogs(opts, "DelegatorUnstaked", userRule, delegatorIdRule)
+	if err != nil {
+		return nil, err
+	}
+	return &DelegationmanagerDelegatorUnstakedIterator{contract: _Delegationmanager.contract, event: "DelegatorUnstaked", logs: logs, sub: sub}, nil
+}
+
+// WatchDelegatorUnstaked is a free log subscription operation binding the contract event 0xa923491c5b977940d8b453ab5b9dd6b1e39130a1c32849293d2c13d3b9537639.
+//
+// Solidity: event DelegatorUnstaked(address indexed user, uint256 indexed delegatorId, uint256 amount, uint256 total)
+func (_Delegationmanager *DelegationmanagerFilterer) WatchDelegatorUnstaked(opts *bind.WatchOpts, sink chan<- *DelegationmanagerDelegatorUnstaked, user []common.Address, delegatorId []*big.Int) (event.Subscription, error) {
+
+	var userRule []interface{}
+	for _, userItem := range user {
+		userRule = append(userRule, userItem)
+	}
+	var delegatorIdRule []interface{}
+	for _, delegatorIdItem := range delegatorId {
+		delegatorIdRule = append(delegatorIdRule, delegatorIdItem)
+	}
+
+	logs, sub, err := _Delegationmanager.contract.WatchLogs(opts, "DelegatorUnstaked", userRule, delegatorIdRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(DelegationmanagerDelegatorUnstaked)
+				if err := _Delegationmanager.contract.UnpackLog(event, "DelegatorUnstaked", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseDelegatorUnstaked is a log parse operation binding the contract event 0xa923491c5b977940d8b453ab5b9dd6b1e39130a1c32849293d2c13d3b9537639.
+//
+// Solidity: event DelegatorUnstaked(address indexed user, uint256 indexed delegatorId, uint256 amount, uint256 total)
+func (_Delegationmanager *DelegationmanagerFilterer) ParseDelegatorUnstaked(log types.Log) (*DelegationmanagerDelegatorUnstaked, error) {
+	event := new(DelegationmanagerDelegatorUnstaked)
+	if err := _Delegationmanager.contract.UnpackLog(event, "DelegatorUnstaked", log); err != nil {
+		return nil, err
+	}
+	return event, nil
+}
+
 // DelegationmanagerOwnershipTransferredIterator is returned from FilterOwnershipTransferred and is used to iterate over the raw logs and unpacked data for OwnershipTransferred events raised by the Delegationmanager contract.
 type DelegationmanagerOwnershipTransferredIterator struct {
 	Event *DelegationmanagerOwnershipTransferred // Event containing the contract specifics and raw log
@@ -1376,322 +1847,6 @@ func (_Delegationmanager *DelegationmanagerFilterer) WatchReBonding(opts *bind.W
 func (_Delegationmanager *DelegationmanagerFilterer) ParseReBonding(log types.Log) (*DelegationmanagerReBonding, error) {
 	event := new(DelegationmanagerReBonding)
 	if err := _Delegationmanager.contract.UnpackLog(event, "ReBonding", log); err != nil {
-		return nil, err
-	}
-	return event, nil
-}
-
-// DelegationmanagerReStakedIterator is returned from FilterReStaked and is used to iterate over the raw logs and unpacked data for ReStaked events raised by the Delegationmanager contract.
-type DelegationmanagerReStakedIterator struct {
-	Event *DelegationmanagerReStaked // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *DelegationmanagerReStakedIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(DelegationmanagerReStaked)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(DelegationmanagerReStaked)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *DelegationmanagerReStakedIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *DelegationmanagerReStakedIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// DelegationmanagerReStaked represents a ReStaked event raised by the Delegationmanager contract.
-type DelegationmanagerReStaked struct {
-	DelegatorId *big.Int
-	Amount      *big.Int
-	Total       *big.Int
-	Raw         types.Log // Blockchain specific contextual infos
-}
-
-// FilterReStaked is a free log retrieval operation binding the contract event 0x9cc0e589f20d3310eb2ad571b23529003bd46048d0d1af29277dcf0aa3c398ce.
-//
-// Solidity: event ReStaked(uint256 indexed delegatorId, uint256 indexed amount, uint256 total)
-func (_Delegationmanager *DelegationmanagerFilterer) FilterReStaked(opts *bind.FilterOpts, delegatorId []*big.Int, amount []*big.Int) (*DelegationmanagerReStakedIterator, error) {
-
-	var delegatorIdRule []interface{}
-	for _, delegatorIdItem := range delegatorId {
-		delegatorIdRule = append(delegatorIdRule, delegatorIdItem)
-	}
-	var amountRule []interface{}
-	for _, amountItem := range amount {
-		amountRule = append(amountRule, amountItem)
-	}
-
-	logs, sub, err := _Delegationmanager.contract.FilterLogs(opts, "ReStaked", delegatorIdRule, amountRule)
-	if err != nil {
-		return nil, err
-	}
-	return &DelegationmanagerReStakedIterator{contract: _Delegationmanager.contract, event: "ReStaked", logs: logs, sub: sub}, nil
-}
-
-// WatchReStaked is a free log subscription operation binding the contract event 0x9cc0e589f20d3310eb2ad571b23529003bd46048d0d1af29277dcf0aa3c398ce.
-//
-// Solidity: event ReStaked(uint256 indexed delegatorId, uint256 indexed amount, uint256 total)
-func (_Delegationmanager *DelegationmanagerFilterer) WatchReStaked(opts *bind.WatchOpts, sink chan<- *DelegationmanagerReStaked, delegatorId []*big.Int, amount []*big.Int) (event.Subscription, error) {
-
-	var delegatorIdRule []interface{}
-	for _, delegatorIdItem := range delegatorId {
-		delegatorIdRule = append(delegatorIdRule, delegatorIdItem)
-	}
-	var amountRule []interface{}
-	for _, amountItem := range amount {
-		amountRule = append(amountRule, amountItem)
-	}
-
-	logs, sub, err := _Delegationmanager.contract.WatchLogs(opts, "ReStaked", delegatorIdRule, amountRule)
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(DelegationmanagerReStaked)
-				if err := _Delegationmanager.contract.UnpackLog(event, "ReStaked", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// ParseReStaked is a log parse operation binding the contract event 0x9cc0e589f20d3310eb2ad571b23529003bd46048d0d1af29277dcf0aa3c398ce.
-//
-// Solidity: event ReStaked(uint256 indexed delegatorId, uint256 indexed amount, uint256 total)
-func (_Delegationmanager *DelegationmanagerFilterer) ParseReStaked(log types.Log) (*DelegationmanagerReStaked, error) {
-	event := new(DelegationmanagerReStaked)
-	if err := _Delegationmanager.contract.UnpackLog(event, "ReStaked", log); err != nil {
-		return nil, err
-	}
-	return event, nil
-}
-
-// DelegationmanagerStakedIterator is returned from FilterStaked and is used to iterate over the raw logs and unpacked data for Staked events raised by the Delegationmanager contract.
-type DelegationmanagerStakedIterator struct {
-	Event *DelegationmanagerStaked // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *DelegationmanagerStakedIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(DelegationmanagerStaked)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(DelegationmanagerStaked)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *DelegationmanagerStakedIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *DelegationmanagerStakedIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// DelegationmanagerStaked represents a Staked event raised by the Delegationmanager contract.
-type DelegationmanagerStaked struct {
-	User           common.Address
-	DelegatorId    *big.Int
-	ActivatonEpoch *big.Int
-	Amount         *big.Int
-	Total          *big.Int
-	Raw            types.Log // Blockchain specific contextual infos
-}
-
-// FilterStaked is a free log retrieval operation binding the contract event 0x9cfd25589d1eb8ad71e342a86a8524e83522e3936c0803048c08f6d9ad974f40.
-//
-// Solidity: event Staked(address indexed user, uint256 indexed delegatorId, uint256 indexed activatonEpoch, uint256 amount, uint256 total)
-func (_Delegationmanager *DelegationmanagerFilterer) FilterStaked(opts *bind.FilterOpts, user []common.Address, delegatorId []*big.Int, activatonEpoch []*big.Int) (*DelegationmanagerStakedIterator, error) {
-
-	var userRule []interface{}
-	for _, userItem := range user {
-		userRule = append(userRule, userItem)
-	}
-	var delegatorIdRule []interface{}
-	for _, delegatorIdItem := range delegatorId {
-		delegatorIdRule = append(delegatorIdRule, delegatorIdItem)
-	}
-	var activatonEpochRule []interface{}
-	for _, activatonEpochItem := range activatonEpoch {
-		activatonEpochRule = append(activatonEpochRule, activatonEpochItem)
-	}
-
-	logs, sub, err := _Delegationmanager.contract.FilterLogs(opts, "Staked", userRule, delegatorIdRule, activatonEpochRule)
-	if err != nil {
-		return nil, err
-	}
-	return &DelegationmanagerStakedIterator{contract: _Delegationmanager.contract, event: "Staked", logs: logs, sub: sub}, nil
-}
-
-// WatchStaked is a free log subscription operation binding the contract event 0x9cfd25589d1eb8ad71e342a86a8524e83522e3936c0803048c08f6d9ad974f40.
-//
-// Solidity: event Staked(address indexed user, uint256 indexed delegatorId, uint256 indexed activatonEpoch, uint256 amount, uint256 total)
-func (_Delegationmanager *DelegationmanagerFilterer) WatchStaked(opts *bind.WatchOpts, sink chan<- *DelegationmanagerStaked, user []common.Address, delegatorId []*big.Int, activatonEpoch []*big.Int) (event.Subscription, error) {
-
-	var userRule []interface{}
-	for _, userItem := range user {
-		userRule = append(userRule, userItem)
-	}
-	var delegatorIdRule []interface{}
-	for _, delegatorIdItem := range delegatorId {
-		delegatorIdRule = append(delegatorIdRule, delegatorIdItem)
-	}
-	var activatonEpochRule []interface{}
-	for _, activatonEpochItem := range activatonEpoch {
-		activatonEpochRule = append(activatonEpochRule, activatonEpochItem)
-	}
-
-	logs, sub, err := _Delegationmanager.contract.WatchLogs(opts, "Staked", userRule, delegatorIdRule, activatonEpochRule)
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(DelegationmanagerStaked)
-				if err := _Delegationmanager.contract.UnpackLog(event, "Staked", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// ParseStaked is a log parse operation binding the contract event 0x9cfd25589d1eb8ad71e342a86a8524e83522e3936c0803048c08f6d9ad974f40.
-//
-// Solidity: event Staked(address indexed user, uint256 indexed delegatorId, uint256 indexed activatonEpoch, uint256 amount, uint256 total)
-func (_Delegationmanager *DelegationmanagerFilterer) ParseStaked(log types.Log) (*DelegationmanagerStaked, error) {
-	event := new(DelegationmanagerStaked)
-	if err := _Delegationmanager.contract.UnpackLog(event, "Staked", log); err != nil {
 		return nil, err
 	}
 	return event, nil
@@ -2014,160 +2169,6 @@ func (_Delegationmanager *DelegationmanagerFilterer) WatchUnstakeInit(opts *bind
 func (_Delegationmanager *DelegationmanagerFilterer) ParseUnstakeInit(log types.Log) (*DelegationmanagerUnstakeInit, error) {
 	event := new(DelegationmanagerUnstakeInit)
 	if err := _Delegationmanager.contract.UnpackLog(event, "UnstakeInit", log); err != nil {
-		return nil, err
-	}
-	return event, nil
-}
-
-// DelegationmanagerUnstakedIterator is returned from FilterUnstaked and is used to iterate over the raw logs and unpacked data for Unstaked events raised by the Delegationmanager contract.
-type DelegationmanagerUnstakedIterator struct {
-	Event *DelegationmanagerUnstaked // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *DelegationmanagerUnstakedIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(DelegationmanagerUnstaked)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(DelegationmanagerUnstaked)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *DelegationmanagerUnstakedIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *DelegationmanagerUnstakedIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// DelegationmanagerUnstaked represents a Unstaked event raised by the Delegationmanager contract.
-type DelegationmanagerUnstaked struct {
-	User        common.Address
-	DelegatorId *big.Int
-	Amount      *big.Int
-	Total       *big.Int
-	Raw         types.Log // Blockchain specific contextual infos
-}
-
-// FilterUnstaked is a free log retrieval operation binding the contract event 0x204fccf0d92ed8d48f204adb39b2e81e92bad0dedb93f5716ca9478cfb57de00.
-//
-// Solidity: event Unstaked(address indexed user, uint256 indexed delegatorId, uint256 amount, uint256 total)
-func (_Delegationmanager *DelegationmanagerFilterer) FilterUnstaked(opts *bind.FilterOpts, user []common.Address, delegatorId []*big.Int) (*DelegationmanagerUnstakedIterator, error) {
-
-	var userRule []interface{}
-	for _, userItem := range user {
-		userRule = append(userRule, userItem)
-	}
-	var delegatorIdRule []interface{}
-	for _, delegatorIdItem := range delegatorId {
-		delegatorIdRule = append(delegatorIdRule, delegatorIdItem)
-	}
-
-	logs, sub, err := _Delegationmanager.contract.FilterLogs(opts, "Unstaked", userRule, delegatorIdRule)
-	if err != nil {
-		return nil, err
-	}
-	return &DelegationmanagerUnstakedIterator{contract: _Delegationmanager.contract, event: "Unstaked", logs: logs, sub: sub}, nil
-}
-
-// WatchUnstaked is a free log subscription operation binding the contract event 0x204fccf0d92ed8d48f204adb39b2e81e92bad0dedb93f5716ca9478cfb57de00.
-//
-// Solidity: event Unstaked(address indexed user, uint256 indexed delegatorId, uint256 amount, uint256 total)
-func (_Delegationmanager *DelegationmanagerFilterer) WatchUnstaked(opts *bind.WatchOpts, sink chan<- *DelegationmanagerUnstaked, user []common.Address, delegatorId []*big.Int) (event.Subscription, error) {
-
-	var userRule []interface{}
-	for _, userItem := range user {
-		userRule = append(userRule, userItem)
-	}
-	var delegatorIdRule []interface{}
-	for _, delegatorIdItem := range delegatorId {
-		delegatorIdRule = append(delegatorIdRule, delegatorIdItem)
-	}
-
-	logs, sub, err := _Delegationmanager.contract.WatchLogs(opts, "Unstaked", userRule, delegatorIdRule)
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(DelegationmanagerUnstaked)
-				if err := _Delegationmanager.contract.UnpackLog(event, "Unstaked", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// ParseUnstaked is a log parse operation binding the contract event 0x204fccf0d92ed8d48f204adb39b2e81e92bad0dedb93f5716ca9478cfb57de00.
-//
-// Solidity: event Unstaked(address indexed user, uint256 indexed delegatorId, uint256 amount, uint256 total)
-func (_Delegationmanager *DelegationmanagerFilterer) ParseUnstaked(log types.Log) (*DelegationmanagerUnstaked, error) {
-	event := new(DelegationmanagerUnstaked)
-	if err := _Delegationmanager.contract.UnpackLog(event, "Unstaked", log); err != nil {
 		return nil, err
 	}
 	return event, nil

@@ -19,7 +19,7 @@ type Validator struct {
 	VotingPower          int64           `json:"power"` // TODO add 10^-18 here so that we dont overflow easily
 	DelegatedPower       int64           `json:"delegatedpower"`
 	DelgatorRewardPool   string          `json:delegatorRewardPool`
-	TotalDelegatorShares float32         `json:totalDelegatorShares`
+	TotalDelegatorShares string          `json:totalDelegatorShares`
 	PubKey               PubKey          `json:"pubKey"`
 	Signer               HeimdallAddress `json:"signer"`
 	LastUpdated          uint64          `json:"last_updated"`
@@ -223,6 +223,6 @@ func (v *Validator) ExchangeRate() float32 {
 	exchangeRate := float32(1)
 	// totalAssets := v.DelegatedPower + v.DelgatorRewardPool
 	totalAssets := 100
-	exchangeRate = float32(totalAssets) / float32(v.TotalDelegatorShares)
+	exchangeRate = float32(totalAssets) / float32(10)
 	return exchangeRate
 }
