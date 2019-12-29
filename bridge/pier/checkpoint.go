@@ -262,6 +262,8 @@ func (c *MaticCheckpointer) determineAction(
 	probableNextCheckpoint ContractCheckpointState,
 	bufferedCheckpont HeimdallCheckpoint,
 	latestCommittedCheckpoint HeimdallCheckpoint) (err error) {
+	
+	// 
 	// ACK needs to be sent
 	if lastHeimdallCheckpoint.end+1 == lastContractCheckpoint.start {
 		c.Logger.Debug("Detected mainchain checkpoint,sending ACK", "HeimdallEnd", lastHeimdallCheckpoint.end, "ContractStart", lastHeimdallCheckpoint.start)
