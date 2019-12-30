@@ -513,7 +513,7 @@ func populatePersistentPeersInConfigAndWriteIt(config *cfg.Config) {
 func getGenesisAccount(address []byte) authTypes.GenesisAccount {
 	acc := authTypes.NewBaseAccountWithAddress(hmTypes.BytesToHeimdallAddress(address))
 	acc.SetCoins(hmTypes.Coins{hmTypes.Coin{Denom: "vetic", Amount: hmTypes.NewInt(1000)}})
-	return authTypes.GenesisAccount{BaseAccount: &acc}
+	return authTypes.BaseToGenesisAccount(acc)
 }
 
 // WriteGenesisFile creates and writes the genesis configuration to disk. An

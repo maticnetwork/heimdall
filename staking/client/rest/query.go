@@ -7,8 +7,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/types/rest"
-	"github.com/maticnetwork/bor/common"
 	"github.com/gorilla/mux"
+	"github.com/maticnetwork/bor/common"
 
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/staking/types"
@@ -57,6 +57,11 @@ func validatorByAddressHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		vars := mux.Vars(r)
 		signerAddress := common.HexToAddress(vars["address"])
 
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
 		// get query params
 		queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQuerySignerParams(signerAddress.Bytes()))
 		if err != nil {
@@ -88,6 +93,11 @@ func validatorStatusByAddreesHandlerFn(cliCtx context.CLIContext) http.HandlerFu
 		vars := mux.Vars(r)
 		signerAddress := common.HexToAddress(vars["address"])
 
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
 		// get query params
 		queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQuerySignerParams(signerAddress.Bytes()))
 		if err != nil {
@@ -108,7 +118,7 @@ func validatorStatusByAddreesHandlerFn(cliCtx context.CLIContext) http.HandlerFu
 		}
 
 		var status bool
-		if err := cliCtx.Codec.UnmarshalJSON(statusBytes, &status); err != nil {
+		if err := json.Unmarshal(statusBytes, &status); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -129,6 +139,11 @@ func validatorStatusByAddreesHandlerFn(cliCtx context.CLIContext) http.HandlerFu
 func validatorByIDHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
+
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
 
 		// get id
 		id, ok := rest.ParseUint64OrReturnBadRequest(w, vars["id"])
@@ -164,6 +179,11 @@ func validatorByIDHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 // get current validator set
 func validatorSetHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
 		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCurrentValidatorSet), nil)
 		if err != nil {
 			RestLogger.Error("Error while fetching current validator set ", "Error", err.Error())
@@ -186,6 +206,11 @@ func validatorSetHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 func proposerHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
+
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
 
 		// get proposer times
 		times, ok := rest.ParseUint64OrReturnBadRequest(w, vars["times"])
@@ -221,6 +246,11 @@ func proposerHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 // currentProposerHandlerFn get proposer for current validator set
 func currentProposerHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
 		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCurrentProposer), nil)
 		if err != nil {
 			RestLogger.Error("Error while fetching current proposer ", "Error", err.Error())
@@ -242,6 +272,11 @@ func currentProposerHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 // initialRewardRootHandlerFn returns genesis rewardroothash
 func initialRewardRootHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
 		res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", checkpointTypes.QuerierRoute, checkpointTypes.QueryInitialRewardRoot), nil)
 		RestLogger.Debug("initial rewardRootHash querier response", "res", res)
 
@@ -274,6 +309,10 @@ func initialRewardRootHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 // Returns proposer Bonus Percent information
 func proposerBonusPercentHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
 
 		// fetch state reocrd
 		res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryProposerBonusPercent), nil)
@@ -290,7 +329,7 @@ func proposerBonusPercentHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var _proposerBonusPercent int64
-		if err := cliCtx.Codec.UnmarshalJSON(res, &_proposerBonusPercent); err != nil {
+		if err := json.Unmarshal(res, &_proposerBonusPercent); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
