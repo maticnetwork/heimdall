@@ -4,7 +4,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
-	supplyTypes "github.com/maticnetwork/heimdall/supply/types"
 )
 
 // InitGenesis - Init store state from genesis data
@@ -13,7 +12,7 @@ func InitGenesis(ctx sdk.Context, ak AccountKeeper, data authTypes.GenesisState)
 	data.Accounts = authTypes.SanitizeGenesisAccounts(data.Accounts)
 
 	for _, a := range data.Accounts {
-		acc := ak.NewAccount(ctx, a)
+		acc := ak.NewAccount(ctx, &a)
 		ak.SetAccount(ctx, acc)
 	}
 }
@@ -24,11 +23,7 @@ func ExportGenesis(ctx sdk.Context, ak AccountKeeper) authTypes.GenesisState {
 
 	var genAccounts authTypes.GenesisAccounts
 	ak.IterateAccounts(ctx, func(account authTypes.Account) bool {
-		if genesisAccount, ok := account.(*authTypes.GenesisAccount); ok {
-			genAccounts = append(genAccounts, *genesisAccount)
-		} else if supplyAccount, ok := account.(*supplyTypes.ModuleAccount); ok {
-			genAccounts = append(genAccounts, authTypes.GenesisAccount{BaseAccount: supplyAccount.BaseAccount})
-		}
+		genAccounts = append(genAccounts, authTypes.NewGenesisAccount(account))
 		return false
 	})
 

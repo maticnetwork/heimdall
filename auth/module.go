@@ -41,7 +41,7 @@ func (AppModuleBasic) RegisterCodec(cdc *codec.Codec) {
 // DefaultGenesis returns default genesis state as raw bytes for the auth
 // module.
 func (AppModuleBasic) DefaultGenesis() json.RawMessage {
-	result, err := json.Marshal(types.DefaultGenesisState())
+	result, err := types.ModuleCdc.MarshalJSON(types.DefaultGenesisState())
 	if err != nil {
 		panic(err)
 	}
@@ -51,7 +51,7 @@ func (AppModuleBasic) DefaultGenesis() json.RawMessage {
 // ValidateGenesis performs genesis state validation for the auth module.
 func (AppModuleBasic) ValidateGenesis(bz json.RawMessage) error {
 	var data types.GenesisState
-	err := json.Unmarshal(bz, &data)
+	err := types.ModuleCdc.UnmarshalJSON(bz, &data)
 	if err != nil {
 		return err
 	}
