@@ -32,6 +32,7 @@ import (
 
 	"github.com/maticnetwork/heimdall/app"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
+	borTypes "github.com/maticnetwork/heimdall/bor/types"
 	"github.com/maticnetwork/heimdall/helper"
 	hmserver "github.com/maticnetwork/heimdall/server"
 	stakingcli "github.com/maticnetwork/heimdall/staking/client/cli"
@@ -204,6 +205,12 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 
 			// staking state change
 			appStateBytes, err = stakingTypes.SetGenesisStateToAppState(appStateBytes, vals, *validatorSet)
+			if err != nil {
+				return err
+			}
+
+			// bor state change
+			appStateBytes, err = borTypes.SetGenesisStateToAppState(appStateBytes, *validatorSet)
 			if err != nil {
 				return err
 			}

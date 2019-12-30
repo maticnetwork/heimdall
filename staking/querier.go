@@ -1,9 +1,9 @@
 package staking
 
 import (
+	"encoding/json"
 	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 
@@ -40,7 +40,7 @@ func handleQueryCurrentValidatorSet(ctx sdk.Context, req abci.RequestQuery, keep
 	validatorSet := keeper.GetValidatorSet(ctx)
 
 	// json record
-	bz, err := codec.MarshalJSONIndent(keeper.cdc, validatorSet)
+	bz, err := json.Marshal(validatorSet)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
@@ -60,7 +60,7 @@ func handleQuerySigner(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([
 	}
 
 	// json record
-	bz, err := codec.MarshalJSONIndent(keeper.cdc, validator)
+	bz, err := json.Marshal(validator)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
@@ -80,7 +80,7 @@ func handleQueryValidator(ctx sdk.Context, req abci.RequestQuery, keeper Keeper)
 	}
 
 	// json record
-	bz, err := codec.MarshalJSONIndent(keeper.cdc, validator)
+	bz, err := json.Marshal(validator)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
@@ -97,7 +97,7 @@ func handleQueryValidatorStatus(ctx sdk.Context, req abci.RequestQuery, keeper K
 	status := keeper.IsCurrentValidatorByAddress(ctx, params.SignerAddress)
 
 	// json record
-	bz, err := codec.MarshalJSONIndent(keeper.cdc, status)
+	bz, err := json.Marshal(status)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
@@ -128,7 +128,7 @@ func handleQueryProposer(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) 
 	}
 
 	// json record
-	bz, err := codec.MarshalJSONIndent(keeper.cdc, proposers)
+	bz, err := json.Marshal(proposers)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
@@ -138,7 +138,7 @@ func handleQueryProposer(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) 
 func handleQueryCurrentProposer(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	proposer := keeper.GetCurrentProposer(ctx)
 
-	bz, err := codec.MarshalJSONIndent(keeper.cdc, proposer)
+	bz, err := json.Marshal(proposer)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
@@ -150,7 +150,7 @@ func handleQueryProposerBonusPercent(ctx sdk.Context, req abci.RequestQuery, kee
 	proposerBonusPercent := keeper.GetProposerBonusPercent(ctx)
 
 	// json record
-	bz, err := codec.MarshalJSONIndent(keeper.cdc, proposerBonusPercent)
+	bz, err := json.Marshal(proposerBonusPercent)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
