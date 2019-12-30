@@ -4,12 +4,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
+	supplyTypes "github.com/maticnetwork/heimdall/supply/types"
 )
 
 // InitGenesis - Init store state from genesis data
-//
-// CONTRACT: old coins from the FeeCollectionKeeper need to be transferred through
-// a genesis port script to the new fee collector account
 func InitGenesis(ctx sdk.Context, ak AccountKeeper, data authTypes.GenesisState) {
 	ak.SetParams(ctx, data.Params)
 	data.Accounts = authTypes.SanitizeGenesisAccounts(data.Accounts)
@@ -26,8 +24,11 @@ func ExportGenesis(ctx sdk.Context, ak AccountKeeper) authTypes.GenesisState {
 
 	var genAccounts authTypes.GenesisAccounts
 	ak.IterateAccounts(ctx, func(account authTypes.Account) bool {
-		genAccount := account.(authTypes.GenesisAccount)
-		genAccounts = append(genAccounts, genAccount)
+		if genesisAccount, ok := account.(*authTypes.GenesisAccount); ok {
+			genAccounts = append(genAccounts, *genesisAccount)
+		} else if supplyAccount, ok := account.(*supplyTypes.ModuleAccount); ok {
+			genAccounts = append(genAccounts, authTypes.GenesisAccount{BaseAccount: supplyAccount.BaseAccount})
+		}
 		return false
 	})
 
