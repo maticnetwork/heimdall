@@ -19,13 +19,18 @@ import (
 
 func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	// Get span details from start block
-	r.HandleFunc("/bor/span/{id}", getSpanHandlerFn(cliCtx)).Methods("GET")
-	r.HandleFunc("/bor/latest-span", getLatestSpanHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc("/bor/span/{id}", spanHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc("/bor/latest-span", latestSpanHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/bor/prepare-next-span", prepareNextSpanHandlerFn(cliCtx)).Methods("GET")
 }
 
-func getSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func spanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
 		vars := mux.Vars(r)
 
 		// get to address
@@ -57,8 +62,13 @@ func getSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func getLatestSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func latestSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
 		// fetch latest span
 		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryLatestSpan), nil)
 		if err != nil {
@@ -79,12 +89,18 @@ func getLatestSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 func prepareNextSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
 		params := r.URL.Query()
 
 		spanID, ok := rest.ParseUint64OrReturnBadRequest(w, params.Get("span_id"))
 		if !ok {
 			return
 		}
+
 		startBlock, ok := rest.ParseUint64OrReturnBadRequest(w, params.Get("start_block"))
 		if !ok {
 			return
@@ -108,7 +124,7 @@ func prepareNextSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var spanDuration uint64
-		if err := cliCtx.Codec.UnmarshalJSON(spanDurationBytes, &spanDuration); err != nil {
+		if err := json.Unmarshal(spanDurationBytes, &spanDuration); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -130,7 +146,7 @@ func prepareNextSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var ackCount uint64
-		if err := cliCtx.Codec.UnmarshalJSON(ackCountBytes, &ackCount); err != nil {
+		if err := json.Unmarshal(ackCountBytes, &ackCount); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -151,7 +167,7 @@ func prepareNextSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var _validatorSet hmTypes.ValidatorSet
-		err = cliCtx.Codec.UnmarshalJSON(validatorSetBytes, &_validatorSet)
+		err = json.Unmarshal(validatorSetBytes, &_validatorSet)
 		if err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusNoContent, errors.New("unable to unmarshall JSON").Error())
 			return
@@ -173,7 +189,7 @@ func prepareNextSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var selectedProducers []hmTypes.Validator
-		if err := cliCtx.Codec.UnmarshalJSON(nextProducerBytes, &selectedProducers); err != nil {
+		if err := json.Unmarshal(nextProducerBytes, &selectedProducers); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}

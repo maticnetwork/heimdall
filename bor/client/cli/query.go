@@ -71,7 +71,7 @@ func GetSpan(cdc *codec.Codec) *cobra.Command {
 				return errors.New("Span not found")
 			}
 
-			fmt.Println(res)
+			fmt.Println(string(res))
 			return nil
 		},
 	}
@@ -102,7 +102,7 @@ func GetLatestSpan(cdc *codec.Codec) *cobra.Command {
 				return errors.New("Latest span not found")
 			}
 
-			fmt.Println(res)
+			fmt.Println(string(res))
 			return nil
 		},
 	}

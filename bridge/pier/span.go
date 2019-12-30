@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -148,8 +147,6 @@ func (s *SpanService) propose(lastSpan *types.Span, nextSpanMsg *types.Span) {
 		s.Logger.Error("Unable to fetch current block", "error", err)
 		return
 	}
-
-	fmt.Println("currentBlock", lastSpan)
 
 	if lastSpan.StartBlock <= currentBlock && currentBlock <= lastSpan.EndBlock {
 		// log new span
