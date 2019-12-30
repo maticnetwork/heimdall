@@ -11,9 +11,9 @@ import (
 // DividendAccount contains Rewards, Shares, Slashed Amount
 type DividendAccount struct {
 	ID            DividendAccountID `json:"ID"`
-	Shares        float32           `json:"shares"`
-	RewardAmount  string            `json:"rewardAmount"`
-	SlashedAmount string            `json:"slashedAmount"`
+	Shares        string            `json:"shares"`        // string representation of big.Int
+	RewardAmount  string            `json:"rewardAmount"`  // string representation of big.Int
+	SlashedAmount string            `json:"slashedAmount"` // string representation of big.Int
 }
 
 // DividendAccountID  dividend account ID and helper functions

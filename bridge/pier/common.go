@@ -72,6 +72,8 @@ func isProposer(cliCtx cliContext.CLIContext) bool {
 		return false
 	}
 
+	Logger.Info("validator fetched isProposer - ", "result", result.Result)
+
 	err = json.Unmarshal(result.Result, &proposers)
 	if err != nil {
 		Logger.Error("error unmarshalling proposer slice", "error", err)
@@ -97,6 +99,8 @@ func isEventSender(cliCtx cliContext.CLIContext, validatorID uint64) bool {
 		Logger.Error("Error fetching proposers", "error", err)
 		return false
 	}
+
+	Logger.Info("validator fetched isEventSender - ", "result", result)
 
 	err = json.Unmarshal(result.Result, &validator)
 	if err != nil {

@@ -18,8 +18,8 @@ type Validator struct {
 	EndEpoch             uint64          `json:"endEpoch"`
 	VotingPower          int64           `json:"power"` // TODO add 10^-18 here so that we dont overflow easily
 	DelegatedPower       int64           `json:"delegatedpower"`
-	DelgatorRewardPool   string          `json:delegatorRewardPool`
-	TotalDelegatorShares string          `json:totalDelegatorShares`
+	DelgatorRewardPool   string          `json:delegatorRewardPool`  // string representation of big.Int
+	TotalDelegatorShares string          `json:totalDelegatorShares` // string representation of big.Int
 	PubKey               PubKey          `json:"pubKey"`
 	Signer               HeimdallAddress `json:"signer"`
 	LastUpdated          uint64          `json:"last_updated"`
@@ -218,11 +218,27 @@ func ValToMinVal(vals []Validator) (minVals []MinimalVal) {
 	return
 }
 
+// ExchangeRate will return value of 1 share
 // ExchangeRate = (delegatedpower + delegatorRewardPool) / totaldelegatorshares
-func (v *Validator) ExchangeRate() float32 {
-	exchangeRate := float32(1)
-	// totalAssets := v.DelegatedPower + v.DelgatorRewardPool
-	totalAssets := 100
-	exchangeRate = float32(totalAssets) / float32(10)
+func (v *Validator) ExchangeRate() *big.Float {
+
+	pow, _ := GetAmountFromPower(v.DelegatedPower)
+	reward, _ := big.NewInt(0).SetString(v.DelgatorRewardPool, 10)
+	totalAssets := big.NewInt(0).Add(pow, reward)
+	delegatorshares, _ := big.NewInt(0).SetString(v.TotalDelegatorShares, 10)
+
+	assetInFloat := big.NewFloat(0).SetInt(totalAssets)
+	sharesInFloat := big.NewFloat(0).SetInt(delegatorshares)
+
+	exchangeRate := new(big.Float).Quo(assetInFloat, sharesInFloat)
+
 	return exchangeRate
+}
+
+// GetAmountFromPower returns amount from power
+func GetAmountFromPower(power int64) (*big.Int, error) {
+	decimals18 := big.NewInt(10).Exp(big.NewInt(10), big.NewInt(18), nil)
+	pow := big.NewInt(power)
+	amount := pow.Mul(pow, decimals18)
+	return amount, nil
 }

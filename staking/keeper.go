@@ -380,10 +380,10 @@ func (k *Keeper) GetDividendAccountByID(ctx sdk.Context, dividendID hmTypes.Divi
 
 	// check if dividend account exists
 	if !k.CheckIfDividendAccountExists(ctx, dividendID) {
-		return dividendAccount, errors.New("Validator Account not found")
+		return dividendAccount, errors.New("Dividend Account not found")
 	}
 
-	// Add reward to reward balance
+	// Get DividendAccount key
 	store := ctx.KVStore(k.storeKey)
 	key := GetDividendAccountMapKey(dividendID.Bytes())
 
@@ -443,12 +443,21 @@ func (k *Keeper) IterateDividendAccountsAndApplyFn(ctx sdk.Context, f func(divid
 // 4. Exchange rate is calculated instantly.  //   ExchangeRate = (delegatedpower + delegatorRewardPool) / totaldelegatorshares
 // 5. TotalDelegatorShares of bonded validator is updated.
 // 6. DelegatedPower of bonded validator is updated.
-func (k *Keeper) BondDelegator(ctx sdk.Context, delegatorID hmTypes.DelegatorID, valID hmTypes.ValidatorID, amount *big.Int) error {
+func (k *Keeper) BondDelegator(ctx sdk.Context, delegatorID hmTypes.DelegatorID, valID hmTypes.ValidatorID, amount *big.Int) (err error) {
 
-	delegatorAccount, err := k.GetDividendAccountByID(ctx, hmTypes.DividendAccountID(delegatorID))
-	if err != nil {
-		k.Logger(ctx).Error("Fetching of dividend account from store failed", "delegatorId", delegatorID)
-		return errors.New("DelegatorAccount not found")
+	var dividendAccount hmTypes.DividendAccount
+	if k.CheckIfDividendAccountExists(ctx, hmTypes.DividendAccountID(delegatorID)) {
+		dividendAccount, err = k.GetDividendAccountByID(ctx, hmTypes.DividendAccountID(delegatorID))
+		if err != nil {
+			return err
+		}
+	} else {
+		dividendAccount = hmTypes.DividendAccount{
+			ID:            hmTypes.DividendAccountID(valID),
+			RewardAmount:  big.NewInt(0).String(),
+			Shares:        big.NewInt(0).String(),
+			SlashedAmount: big.NewInt(0).String(),
+		}
 	}
 
 	// 3. VotingPower of the bonded validator is updated.
@@ -459,21 +468,26 @@ func (k *Keeper) BondDelegator(ctx sdk.Context, delegatorID hmTypes.DelegatorID,
 		return errors.New("Validator not found")
 	}
 
+	// 4. shares are added to Delegator proportional to his stake and exchange rate.
+	// newDelegatorshares = (delegatorstake / exchangeRate)
+	delegatorStake := big.NewFloat(0).SetInt(amount)
+	newDelegatorshares := new(big.Float).Quo(delegatorStake, validator.ExchangeRate())
+	newShares := new(big.Int)
+	newDelegatorshares.Int(newShares)
+
+	// add shares to delegator dividend account
+	oldShares, _ := big.NewInt(0).SetString(dividendAccount.Shares, 10)
+	dividendAccount.Shares = big.NewInt(0).Add(oldShares, newShares).String()
+
+	// 6. TotalDelegatorShares of bonded validator is updated.
+	oldTotalDelegatorShares, _ := big.NewInt(0).SetString(validator.TotalDelegatorShares, 10)
+	validator.TotalDelegatorShares = big.NewInt(0).Add(oldTotalDelegatorShares, newShares).String()
+
 	p, err := helper.GetPowerFromAmount(amount)
 	if err != nil {
 		k.Logger(ctx).Error("Unable to convert amount to power", "Amount", amount)
 		return errors.New("Unable to convert amount to power")
 	}
-
-	// 4. shares are added to Delegator proportional to his stake and exchange rate.
-	// delegatorshares = (delegatorstake / exchangeRate)
-	delegatorshares := float32(p.Int64()) / validator.ExchangeRate()
-
-	// add shares to delegator account
-	delegatorAccount.Shares += delegatorshares
-
-	// 6. TotalDelegatorShares of bonded validator is updated.
-	validator.TotalDelegatorShares += string(int(delegatorshares))
 
 	validator.VotingPower += p.Int64()
 
@@ -481,10 +495,10 @@ func (k *Keeper) BondDelegator(ctx sdk.Context, delegatorID hmTypes.DelegatorID,
 	validator.DelegatedPower += p.Int64()
 
 	// save delegator account
-	err = k.AddDividendAccount(ctx, delegatorAccount)
+	err = k.AddDividendAccount(ctx, dividendAccount)
 	if err != nil {
 		k.Logger(ctx).Error("Unable to update delegatorAccount", "error", err, "DelegatorID", delegatorID)
-		return errors.New("DelegatorAccount updation failed")
+		return errors.New("Delegator DividendAccount updation failed")
 	}
 
 	// save validator

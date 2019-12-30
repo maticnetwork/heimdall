@@ -34,7 +34,7 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 
 // HandleMsgValidatorJoin msg validator join
 func HandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
-	k.Logger(ctx).Debug("Handing new validator join", "msg", msg)
+	k.Logger(ctx).Info("Handing new validator join", "msg", msg)
 
 	if confirmed := contractCaller.IsTxConfirmed(msg.TxHash.EthHash()); !confirmed {
 		return hmCommon.ErrWaitForConfirmation(k.Codespace()).Result()
@@ -345,7 +345,7 @@ func HandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k Keepe
 // 7. DelegatedPower of bonded validator is updated.
 func HandleMsgDelegatorBond(ctx sdk.Context, msg types.MsgDelegatorBond, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 
-	k.Logger(ctx).Debug("Handling delegator bond with validator", "Delegator", msg.ID)
+	k.Logger(ctx).Info("Handling delegator bond with validator", "Delegator", msg.ID)
 
 	// get main tx receipt
 	receipt, err := contractCaller.GetConfirmedTxReceipt(msg.TxHash.EthHash())
@@ -364,29 +364,19 @@ func HandleMsgDelegatorBond(ctx sdk.Context, msg types.MsgDelegatorBond, k Keepe
 		return hmCommon.ErrInvalidMsg(k.Codespace(), "Invalid txhash, id's dont match. Id from tx hash is %v", eventLog.DelegatorId.Uint64()).Result()
 	}
 
-	// // pull delegator from store
-	// delegator, err := k.GetDelegatorInfo(ctx, msg.ID)
-	// if err != nil {
-	// 	k.Logger(ctx).Error("Fetching of delegator from store failed", "delegatorId", msg.ID)
-	// 	return hmCommon.ErrNoDelegator(k.Codespace()).Result()
-	// }
+	// sequence id
+	sequence := (receipt.BlockNumber.Uint64() * hmTypes.DefaultLogIndexUnit) + msg.LogIndex
 
-	// // last updated
-	// lastUpdated := (receipt.BlockNumber.Uint64() * types.DefaultLogIndexUnit) + msg.LogIndex
-
-	// // check if incoming tx is older
-	// if lastUpdated <= delegator.LastUpdated {
-	// 	k.Logger(ctx).Error("Older invalid tx found")
-	// 	return hmCommon.ErrOldTx(k.Codespace()).Result()
-	// }
-
-	// // check if delegator is already bonded
-	// if delegator.ValID != 0 {
-	// 	k.Logger(ctx).Error("Delegator is already bonded")
-	// 	return hmCommon.ErrAlreadyBonded(k.Codespace()).Result()
-	// }
+	// check if incoming tx is older
+	if k.HasStakingSequence(ctx, sequence) {
+		k.Logger(ctx).Error("Older invalid tx found")
+		return hmCommon.ErrOldTx(k.Codespace()).Result()
+	}
 
 	k.BondDelegator(ctx, msg.ID, hmTypes.ValidatorID(eventLog.ValidatorId.Uint64()), eventLog.Amount)
+
+	// save staking sequence
+	k.SetStakingSequence(ctx, sequence)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(

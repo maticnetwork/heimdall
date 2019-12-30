@@ -87,6 +87,7 @@ func NewSyncer(cdc *codec.Codec, queueConnector *QueueConnector, httpClient *htt
 		&contractCaller.RootChainABI,
 		&contractCaller.StakeManagerABI,
 		&contractCaller.StateSenderABI,
+		&contractCaller.DelegationManagerABI,
 	}
 
 	cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
@@ -266,6 +267,7 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 			helper.GetRootChainAddress(),
 			helper.GetStakeManagerAddress(),
 			helper.GetStateSenderAddress(),
+			helper.GetDelegationManagerAddress(),
 		},
 	}
 
@@ -284,6 +286,7 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 		for _, abiObject := range syncer.abis {
 			selectedEvent := EventByID(abiObject, topic)
 			if selectedEvent != nil {
+				syncer.Logger.Debug("selectedEvent ", " event name -", selectedEvent.Name)
 				switch selectedEvent.Name {
 				case "NewHeaderBlock":
 					syncer.processCheckpointEvent(selectedEvent.Name, abiObject, &vLog)
@@ -301,6 +304,8 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 					syncer.processJailedEvent(selectedEvent.Name, abiObject, &vLog)
 				case "StateSynced":
 					syncer.processStateSyncedEvent(selectedEvent.Name, abiObject, &vLog)
+				case "Bonding":
+					syncer.processDelegatorBondEvent(selectedEvent.Name, abiObject, &vLog)
 					// case "Withdraw":
 					// 	syncer.processWithdrawEvent(selectedEvent.Name, abiObject, &vLog)
 				}
@@ -557,7 +562,7 @@ func (syncer *Syncer) processDelegatorBondEvent(eventName string, abiObject *abi
 		logEventParseError(syncer.Logger, eventName, err)
 	} else {
 		syncer.Logger.Debug(
-			"New event found",
+			"New delegator bond event found",
 			"event", eventName,
 			"DelegatorId", event.DelegatorId,
 			"ValidatorId", event.ValidatorId,

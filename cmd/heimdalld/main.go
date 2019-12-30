@@ -186,8 +186,8 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 				Signer:               hmTypes.BytesToHeimdallAddress(valPubKey.Address().Bytes()),
 				VotingPower:          stakingTypes.DefaultValPower,
 				DelegatedPower:       0,
-				DelgatorRewardPool:   string(0),
-				TotalDelegatorShares: string(0),
+				DelgatorRewardPool:   "",
+				TotalDelegatorShares: "",
 			}
 
 			vals := []*hmTypes.Validator{&validator}
