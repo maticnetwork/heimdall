@@ -30,16 +30,15 @@ func (accounts GenesisAccounts) Contains(addr types.HeimdallAddress) bool {
 
 // GenesisState - all auth state that must be provided at genesis
 type GenesisState struct {
-	CollectedFees types.Coins     `json:"collected_fees" yaml:"collected_fees"`
-	Params        Params          `json:"params" yaml:"params"`
-	Accounts      GenesisAccounts `json:"accounts" yaml:"accounts"`
+	Params   Params          `json:"params" yaml:"params"`
+	Accounts GenesisAccounts `json:"accounts" yaml:"accounts"`
 }
 
 // NewGenesisState - Create a new genesis state
 func NewGenesisState(params Params, accounts GenesisAccounts) GenesisState {
 	return GenesisState{
 		Params:   params,
-		Accounts: accounts,
+		Accounts: SanitizeGenesisAccounts(accounts),
 	}
 }
 
