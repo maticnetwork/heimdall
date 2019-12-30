@@ -1,3 +1,5 @@
+.DS_Store
+
 # ignore vendor
 vendor/
 vendor/github.com/maticnetwork/bor
