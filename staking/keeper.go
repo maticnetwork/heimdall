@@ -510,6 +510,88 @@ func (k *Keeper) BondDelegator(ctx sdk.Context, delegatorID hmTypes.DelegatorID,
 	return nil
 }
 
+// HandleMsgDelegatorUnBond msg delegator unbond with validator
+// ** stake calculations **
+// 1. On Bonding event, Validator will send MsgDelegatorUnBond transaction to heimdall.
+// 2. Delegator is updated with Validator ID = 0.
+// 3. VotingPower of bonded validator is reduced.
+// 4. DelegatedPower of the bonded validator is reduced after reward calculation.
+
+// ** reward calculations **
+// 1. Exchange rate is calculated instantly.  ExchangeRate = (delegatedpower + delegatorRewardPool) / totaldelegatorshares
+// 2. Based on exchange rate and no of shares delegator holds, totalReturns for delegator is calculated.  `totalReturns = exchangeRate * noOfShares`
+// 3. Delegator RewardAmount += totalReturns - delegatorVotingPower
+// 4. Add RewardAmount to DelegatorAccount .
+// 5. Reduce TotalDelegatorShares of bonded validator.
+// 6. Reduce DelgatorRewardPool of bonded validator.
+// 7. make shares = 0 on Delegator Account.
+// UnBondDelegator
+func (k *Keeper) UnBondDelegator(ctx sdk.Context, delegatorID hmTypes.DelegatorID, valID hmTypes.ValidatorID, amount *big.Int) (err error) {
+
+	// delegatorAccount, err := k.GetDividendAccountByID(ctx, hmTypes.DividendAccountID(delegatorID))
+	// if err != nil {
+	// 	k.Logger(ctx).Error("Fetching of delegator dividend account from store failed", "delegatorId", delegatorID)
+	// 	return errors.New("Delegator DividendAccount not found")
+	// }
+
+	// // 3. VotingPower of the bonded validator is updated.
+	// // pull validator from store
+	// validator, ok := k.GetValidatorFromValID(ctx, valID)
+	// if !ok {
+	// 	k.Logger(ctx).Error("Fetching of bonded validator from store failed", "validatorId", valID)
+	// 	return errors.New("Validator not found")
+	// }
+
+	// // Get shares of delegator account
+	// delegatorshares := delegatorAccount.Shares
+
+	// // 6. TotalDelegatorShares of bonded validator is updated.
+	// validator.TotalDelegatorShares -= delegatorshares
+
+	// validator.VotingPower -= delegator.VotingPower
+
+	// // calculate rewards.
+	// totalDelegatorReturns := validator.ExchangeRate() * delegatorshares
+
+	// rewardAmount := totalDelegatorReturns - float32(delegator.VotingPower)
+
+	// validator.DelgatorRewardPool = int64(float32(validator.DelgatorRewardPool) - rewardAmount)
+
+	// // 7. DelegatedPower of bonded validator is updated.
+	// validator.DelegatedPower -= delegator.VotingPower
+
+	// // save validator
+	// err = k.sk.AddValidator(ctx, validator)
+	// if err != nil {
+	// 	k.Logger(ctx).Error("Unable to update validator", "error", err, "ValidatorID", validator.ID)
+	// 	return errors.New("error adding validator to store")
+	// }
+
+	// // 2. update validator ID of delegator.
+	// delegator.ValID = 0
+
+	// // update last udpated
+	// delegator.LastUpdated = lastUpdated
+
+	// delegatorAccount.Shares = 0
+
+	// // save delegator account
+	// err = k.AddDelegatorAccount(ctx, delegatorAccount)
+	// if err != nil {
+	// 	k.Logger(ctx).Error("Unable to update delegatorAccount", "error", err, "DelegatorID", delegator.ID)
+	// 	return errors.New("DelegatorAccount updation failed")
+	// }
+
+	// // save delegator
+	// err = k.AddDelegator(ctx, delegator)
+	// if err != nil {
+	// 	k.Logger(ctx).Error("Unable to update delegator", "error", err, "DelegatorID", delegator.ID)
+	// 	return errors.New("error adding delegator to store")
+	// }
+
+	return nil
+}
+
 // RewardValidator will update validator dividend account with new reward
 func (k *Keeper) RewardValidator(ctx sdk.Context, valID hmTypes.ValidatorID, totalRewards *big.Int) (err error) {
 	// Divide total reward between validator and his delegator pool.

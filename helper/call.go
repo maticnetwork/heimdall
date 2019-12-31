@@ -41,6 +41,7 @@ type IContractCaller interface {
 	GetMainTxReceipt(common.Hash) (*ethTypes.Receipt, error)
 	GetMaticTxReceipt(common.Hash) (*ethTypes.Receipt, error)
 	DecodeDelegatorBondEvent(*ethTypes.Receipt, uint64) (*delegationmanager.DelegationmanagerBonding, error)
+	DecodeDelegatorUnBondEvent(*ethTypes.Receipt, uint64) (*delegationmanager.DelegationmanagerUnBonding, error)
 
 	// bor related contracts
 	CurrentSpanNumber() (Number *big.Int)
@@ -398,6 +399,28 @@ func (c *ContractCaller) DecodeDelegatorBondEvent(receipt *ethTypes.Receipt, log
 		if uint64(log.Index) == logIndex {
 			found = true
 			if err := UnpackLog(&c.DelegationManagerABI, event, "Bonding", log); err != nil {
+				return nil, err
+			}
+			break
+		}
+	}
+
+	if !found {
+		return nil, errors.New("Event not found")
+	}
+
+	return event, nil
+}
+
+// DecodeDelegatorUnBondEvent represents Delegator Unbonding event
+func (c *ContractCaller) DecodeDelegatorUnBondEvent(receipt *ethTypes.Receipt, logIndex uint64) (*delegationmanager.DelegationmanagerUnBonding, error) {
+
+	event := new(delegationmanager.DelegationmanagerUnBonding)
+	found := false
+	for _, log := range receipt.Logs {
+		if uint64(log.Index) == logIndex {
+			found = true
+			if err := UnpackLog(&c.DelegationManagerABI, event, "UnBonding", log); err != nil {
 				return nil, err
 			}
 			break

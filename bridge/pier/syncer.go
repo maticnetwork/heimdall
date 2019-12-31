@@ -306,6 +306,8 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 					syncer.processStateSyncedEvent(selectedEvent.Name, abiObject, &vLog)
 				case "Bonding":
 					syncer.processDelegatorBondEvent(selectedEvent.Name, abiObject, &vLog)
+				case "UnBonding":
+					syncer.processDelegatorUnBondEvent(selectedEvent.Name, abiObject, &vLog)
 					// case "Withdraw":
 					// 	syncer.processWithdrawEvent(selectedEvent.Name, abiObject, &vLog)
 				}
@@ -579,6 +581,32 @@ func (syncer *Syncer) processDelegatorBondEvent(eventName string, abiObject *abi
 		// broadcast to heimdall
 		syncer.queueConnector.BroadcastToHeimdall(msg)
 
+	}
+}
+
+// processDelegatorUnBondEvent
+func (syncer *Syncer) processDelegatorUnBondEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
+
+	event := new(delegationmanager.DelegationmanagerUnBonding)
+
+	if err := helper.UnpackLog(abiObject, event, eventName, vLog); err != nil {
+		logEventParseError(syncer.Logger, eventName, err)
+	} else {
+		syncer.Logger.Debug(
+			"New event found",
+			"event", eventName,
+			"DelegatorId", event.DelegatorId,
+			"ValidatorId", event.ValidatorId,
+		)
+		msg := stakingTypes.NewMsgDelegatorUnBond(
+			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
+			hmTypes.DelegatorID(event.DelegatorId.Uint64()),
+			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
+			uint64(vLog.Index),
+		)
+
+		// broadcast to heimdall
+		syncer.queueConnector.BroadcastToHeimdall(msg)
 	}
 }
 

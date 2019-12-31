@@ -7,6 +7,7 @@ require (
 	github.com/apilayer/freegeoip v3.5.0+incompatible // indirect
 	github.com/aristanetworks/goarista v0.0.0-20191206003309-5d8d36c240c9 // indirect
 	github.com/btcsuite/btcd v0.0.0-20190629003639-c26ffa870fd8 // indirect
+	github.com/cbergoon/merkletree v0.2.0
 	github.com/cespare/cp v0.1.0 // indirect
 	github.com/cosmos/cosmos-sdk v0.37.4
 	github.com/deckarep/golang-set v1.7.1 // indirect

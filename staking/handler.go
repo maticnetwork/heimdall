@@ -26,6 +26,8 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 			return HandleMsgStakeUpdate(ctx, msg, k, contractCaller)
 		case types.MsgDelegatorBond:
 			return HandleMsgDelegatorBond(ctx, msg, k, contractCaller)
+		case types.MsgDelegatorUnBond:
+			return HandleMsgDelegatorUnBond(ctx, msg, k, contractCaller)
 		default:
 			return sdk.ErrTxDecode("Invalid message in checkpoint module").Result()
 		}
@@ -375,6 +377,68 @@ func HandleMsgDelegatorBond(ctx sdk.Context, msg types.MsgDelegatorBond, k Keepe
 
 	k.BondDelegator(ctx, msg.ID, hmTypes.ValidatorID(eventLog.ValidatorId.Uint64()), eventLog.Amount)
 
+	// save staking sequence
+	k.SetStakingSequence(ctx, sequence)
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeDelegatorBond,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(eventLog.ValidatorId.Uint64(), 10)),
+			sdk.NewAttribute(types.AttributeKeyDelegatorID, strconv.FormatUint(eventLog.DelegatorId.Uint64(), 10)),
+		),
+	})
+
+	return sdk.Result{
+		Events: ctx.EventManager().Events(),
+	}
+}
+
+// HandleMsgDelegatorUnBond msg delegator unbond with validator
+// ** stake calculations **
+// 1. On Bonding event, Validator will send MsgDelegatorUnBond transaction to heimdall.
+// 2. Delegator is updated with Validator ID = 0.
+// 3. VotingPower of bonded validator is reduced.
+// 4. DelegatedPower of the bonded validator is reduced after reward calculation.
+
+// ** reward calculations **
+// 1. Exchange rate is calculated instantly.  ExchangeRate = (delegatedpower + delegatorRewardPool) / totaldelegatorshares
+// 2. Based on exchange rate and no of shares delegator holds, totalReturns for delegator is calculated.  `totalReturns = exchangeRate * noOfShares`
+// 3. Delegator RewardAmount += totalReturns - delegatorVotingPower
+// 4. Add RewardAmount to DelegatorAccount .
+// 5. Reduce TotalDelegatorShares of bonded validator.
+// 6. Reduce DelgatorRewardPool of bonded validator.
+// 7. make shares = 0 on Delegator Account.
+func HandleMsgDelegatorUnBond(ctx sdk.Context, msg types.MsgDelegatorUnBond, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
+	k.Logger(ctx).Debug("Handling delegator unbond", "msg", msg)
+
+	// get main tx receipt
+	receipt, err := contractCaller.GetConfirmedTxReceipt(msg.TxHash.EthHash())
+	if err != nil || receipt == nil {
+		return hmCommon.ErrWaitForConfirmation(k.Codespace()).Result()
+	}
+
+	eventLog, err := contractCaller.DecodeDelegatorUnBondEvent(receipt, msg.LogIndex)
+	if err != nil || eventLog == nil {
+		k.Logger(ctx).Error("Error fetching log from txhash")
+		return hmCommon.ErrInvalidMsg(k.Codespace(), "Unable to fetch delegator unbond log for txHash").Result()
+	}
+
+	if eventLog.DelegatorId.Uint64() != msg.ID.Uint64() {
+		k.Logger(ctx).Error("Delegator ID in message doesnt match delegator id in logs", "MsgID", msg.ID, "IdFromTx", eventLog.DelegatorId.Uint64())
+		return hmCommon.ErrInvalidMsg(k.Codespace(), "Invalid txhash, id's dont match. Id from tx hash is %v", eventLog.DelegatorId.Uint64()).Result()
+	}
+
+	// sequence id
+	sequence := (receipt.BlockNumber.Uint64() * hmTypes.DefaultLogIndexUnit) + msg.LogIndex
+
+	// check if incoming tx is older
+	if k.HasStakingSequence(ctx, sequence) {
+		k.Logger(ctx).Error("Older invalid tx found")
+		return hmCommon.ErrOldTx(k.Codespace()).Result()
+	}
+
+	k.UnBondDelegator(ctx, msg.ID, hmTypes.ValidatorID(eventLog.ValidatorId.Uint64()), eventLog.Amount)
 	// save staking sequence
 	k.SetStakingSequence(ctx, sequence)
 

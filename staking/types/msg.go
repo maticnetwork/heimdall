@@ -323,3 +323,64 @@ func (msg MsgDelegatorBond) ValidateBasic() sdk.Error {
 
 	return nil
 }
+
+// //
+// Delegator unbond
+//
+
+var _ sdk.Msg = &MsgDelegatorUnBond{}
+
+type MsgDelegatorUnBond struct {
+	From     types.HeimdallAddress `json:"from"`
+	ID       types.DelegatorID     `json:"id"`
+	TxHash   types.HeimdallHash    `json:"tx_hash"`
+	LogIndex uint64                `json:"log_index"`
+}
+
+// NewMsgDelegatorUnBond creates new delegator-unbond
+func NewMsgDelegatorUnBond(
+	from hmTypes.HeimdallAddress,
+	id hmTypes.DelegatorID,
+	txhash hmTypes.HeimdallHash,
+	logIndex uint64,
+) MsgDelegatorUnBond {
+
+	return MsgDelegatorUnBond{
+		From:     from,
+		ID:       id,
+		TxHash:   txhash,
+		LogIndex: logIndex,
+	}
+}
+
+func (msg MsgDelegatorUnBond) Type() string {
+	return "delegator-unbond"
+}
+
+func (msg MsgDelegatorUnBond) Route() string {
+	return RouterKey
+}
+
+func (msg MsgDelegatorUnBond) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.From)}
+}
+
+func (msg MsgDelegatorUnBond) GetSignBytes() []byte {
+	b, err := cdc.MarshalJSON(msg)
+	if err != nil {
+		panic(err)
+	}
+	return sdk.MustSortJSON(b)
+}
+
+func (msg MsgDelegatorUnBond) ValidateBasic() sdk.Error {
+	if msg.ID <= 0 {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid delegator ID %v", msg.ID)
+	}
+
+	if msg.From.Empty() {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.From.String())
+	}
+
+	return nil
+}
