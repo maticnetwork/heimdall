@@ -50,3 +50,4 @@ ignored = [
 [[constraint]]
   name = "github.com/cosmos/cosmos-sdk"
   version = "=v0.25.0"
+
