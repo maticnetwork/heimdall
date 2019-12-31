@@ -10,10 +10,10 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/types/rest"
-	"github.com/maticnetwork/bor/common"
-	ethcmn "github.com/maticnetwork/bor/common"
 	"github.com/gorilla/mux"
 
+	"github.com/maticnetwork/bor/common"
+	ethcmn "github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/helper"
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
@@ -60,6 +60,11 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 
 func checkpointBufferHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
 		// fetch checkpoint
 		result, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCheckpointBuffer), nil)
 		if err != nil {
@@ -74,6 +79,11 @@ func checkpointBufferHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 func checkpointCountHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
 		RestLogger.Debug("Fetching number of checkpoints from state")
 		ackCountBytes, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryAckCount), nil)
 		if err != nil {
@@ -87,7 +97,7 @@ func checkpointCountHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var ackCount uint64
-		if err := cliCtx.Codec.UnmarshalJSON(ackCountBytes, &ackCount); err != nil {
+		if err := json.Unmarshal(ackCountBytes, &ackCount); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -107,6 +117,11 @@ func checkpointCountHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 func checkpointHeaderHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
+
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
 
 		// get header number
 		headerNumber, ok := rest.ParseUint64OrReturnBadRequest(w, vars["headerBlockIndex"])
@@ -143,6 +158,11 @@ type HeaderBlockResult struct {
 func checkpointHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
+
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
 
 		// get start
 		start, err := strconv.Atoi(vars["start"])
@@ -203,6 +223,11 @@ func checkpointHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 func noackHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
 		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryLastNoAck), nil)
 		if err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -244,6 +269,11 @@ type stateDump struct {
 func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
 		//
 		// Ack acount
 		//
@@ -260,7 +290,7 @@ func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		if err := cliCtx.Codec.UnmarshalJSON(ackCountBytes, &ackCountInt); err != nil {
+		if err := json.Unmarshal(ackCountBytes, &ackCountInt); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -277,7 +307,7 @@ func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		if len(checkpointBufferBytes) != 0 {
-			if err = cliCtx.Codec.UnmarshalJSON(checkpointBufferBytes, &_checkpoint); err != nil {
+			if err = json.Unmarshal(checkpointBufferBytes, &_checkpoint); err != nil {
 				hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 				return
 			}
@@ -294,7 +324,7 @@ func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		if err := cliCtx.Codec.UnmarshalJSON(validatorSetBytes, &validatorSet); err != nil {
+		if err := json.Unmarshal(validatorSetBytes, &validatorSet); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -319,7 +349,7 @@ func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		if err := cliCtx.Codec.UnmarshalJSON(lastNoACKBytes, &lastNoACKTime); err != nil {
+		if err := json.Unmarshal(lastNoACKBytes, &lastNoACKTime); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -349,6 +379,11 @@ func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 // get last checkpoint from store
 func latestCheckpointHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
 		//
 		// Get ack count
 		//
@@ -365,7 +400,7 @@ func latestCheckpointHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var ackCount uint64
-		if err := cliCtx.Codec.UnmarshalJSON(ackcountBytes, &ackCount); err != nil {
+		if err := json.Unmarshal(ackcountBytes, &ackCount); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -411,6 +446,11 @@ func checkpointByNumberHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
 		// get checkpoint number
 		checkpointNumber, ok := rest.ParseUint64OrReturnBadRequest(w, vars["checkpointNumber"])
 		if !ok {
@@ -451,6 +491,11 @@ func checkpointListhandlerFn(
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
+
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
 
 		// get page
 		page, ok := rest.ParseUint64OrReturnBadRequest(w, vars["page"])

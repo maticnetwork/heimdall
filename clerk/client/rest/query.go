@@ -24,6 +24,11 @@ func handlerRecordFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
 		// record id
 		recordID, ok := rest.ParseUint64OrReturnBadRequest(w, vars["recordId"])
 		if !ok {

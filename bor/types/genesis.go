@@ -1,6 +1,8 @@
 package types
 
 import (
+	"encoding/json"
+
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
@@ -42,4 +44,31 @@ func genFirstSpan(valset hmTypes.ValidatorSet) []*hmTypes.Span {
 	newSpan := hmTypes.NewSpan(0, 0, 0+DefaultSpanDuration-1, valset, selectedProducers, helper.GetConfig().BorChainID)
 	firstSpan = append(firstSpan, &newSpan)
 	return firstSpan
+}
+
+// GetGenesisStateFromAppState returns staking GenesisState given raw application genesis state
+func GetGenesisStateFromAppState(appState map[string]json.RawMessage) GenesisState {
+	var genesisState GenesisState
+	if appState[ModuleName] != nil {
+		err := json.Unmarshal(appState[ModuleName], &genesisState)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	return genesisState
+}
+
+// SetGenesisStateToAppState sets state into app state
+func SetGenesisStateToAppState(appState map[string]json.RawMessage, currentValSet hmTypes.ValidatorSet) (map[string]json.RawMessage, error) {
+	// set state to bor state
+	borState := GetGenesisStateFromAppState(appState)
+	borState.Spans = genFirstSpan(currentValSet)
+
+	var err error
+	appState[ModuleName], err = json.Marshal(borState)
+	if err != nil {
+		return appState, err
+	}
+	return appState, nil
 }

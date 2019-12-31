@@ -32,6 +32,7 @@ import (
 
 	"github.com/maticnetwork/heimdall/app"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
+	borTypes "github.com/maticnetwork/heimdall/bor/types"
 	"github.com/maticnetwork/heimdall/helper"
 	hmserver "github.com/maticnetwork/heimdall/server"
 	stakingcli "github.com/maticnetwork/heimdall/staking/client/cli"
@@ -207,6 +208,12 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 
 			// staking state change
 			appStateBytes, err = stakingTypes.SetGenesisStateToAppState(appStateBytes, vals, *validatorSet)
+			if err != nil {
+				return err
+			}
+
+			// bor state change
+			appStateBytes, err = borTypes.SetGenesisStateToAppState(appStateBytes, *validatorSet)
 			if err != nil {
 				return err
 			}
@@ -509,7 +516,7 @@ func populatePersistentPeersInConfigAndWriteIt(config *cfg.Config) {
 func getGenesisAccount(address []byte) authTypes.GenesisAccount {
 	acc := authTypes.NewBaseAccountWithAddress(hmTypes.BytesToHeimdallAddress(address))
 	acc.SetCoins(hmTypes.Coins{hmTypes.Coin{Denom: "vetic", Amount: hmTypes.NewInt(1000)}})
-	return authTypes.GenesisAccount{BaseAccount: &acc}
+	return authTypes.BaseToGenesisAccount(acc)
 }
 
 // WriteGenesisFile creates and writes the genesis configuration to disk. An

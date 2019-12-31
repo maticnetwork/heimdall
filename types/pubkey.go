@@ -2,11 +2,13 @@ package types
 
 import (
 	"encoding/hex"
+	"encoding/json"
 
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	tmTypes "github.com/tendermint/tendermint/types"
+	"gopkg.in/yaml.v2"
 
 	"github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/bor/common/hexutil"
@@ -60,4 +62,50 @@ func (a PubKey) CryptoPubKey() crypto.PubKey {
 // ABCIPubKey returns abci pubkey for cosmos
 func (a PubKey) ABCIPubKey() abci.PubKey {
 	return tmTypes.TM2PB.PubKey(a.CryptoPubKey())
+}
+
+// Marshal returns the raw address bytes. It is needed for protobuf compatibility.
+func (a PubKey) Marshal() ([]byte, error) {
+	return a.Bytes(), nil
+}
+
+// Unmarshal sets the address to the given data. It is needed for protobuf
+// compatibility.
+func (a *PubKey) Unmarshal(data []byte) error {
+	copy(a[:], data[:])
+	return nil
+}
+
+// MarshalJSON marshals to JSON using Bech32.
+func (a PubKey) MarshalJSON() ([]byte, error) {
+	return json.Marshal(a.String())
+}
+
+// MarshalYAML marshals to YAML using Bech32.
+func (a PubKey) MarshalYAML() (interface{}, error) {
+	return a.String(), nil
+}
+
+// UnmarshalJSON unmarshals from JSON assuming Bech32 encoding.
+func (a *PubKey) UnmarshalJSON(data []byte) error {
+	var s string
+	err := json.Unmarshal(data, &s)
+	if err != nil {
+		return err
+	}
+
+	copy(a[:], common.FromHex(s))
+	return nil
+}
+
+// UnmarshalYAML unmarshals from JSON assuming Bech32 encoding.
+func (a *PubKey) UnmarshalYAML(data []byte) error {
+	var s string
+	err := yaml.Unmarshal(data, &s)
+	if err != nil {
+		return err
+	}
+
+	copy(a[:], common.FromHex(s))
+	return nil
 }

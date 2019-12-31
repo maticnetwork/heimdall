@@ -1,9 +1,9 @@
 package clerk
 
 import (
+	"encoding/json"
 	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 
@@ -40,7 +40,7 @@ func handleQueryRecord(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([
 	}
 
 	// json record
-	bz, err := codec.MarshalJSONIndent(keeper.cdc, record)
+	bz, err := json.Marshal(record)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}

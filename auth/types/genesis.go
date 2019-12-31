@@ -8,10 +8,9 @@ import (
 	"github.com/maticnetwork/heimdall/types"
 )
 
-// GenesisAccount genesis account
-type GenesisAccount struct {
-	*BaseAccount
-}
+//
+// Genesis accounts
+//
 
 // GenesisAccounts defines a slice of GenesisAccount objects
 type GenesisAccounts []GenesisAccount
@@ -28,18 +27,21 @@ func (accounts GenesisAccounts) Contains(addr types.HeimdallAddress) bool {
 	return false
 }
 
+//
+// Gensis state
+//
+
 // GenesisState - all auth state that must be provided at genesis
 type GenesisState struct {
-	CollectedFees types.Coins     `json:"collected_fees" yaml:"collected_fees"`
-	Params        Params          `json:"params" yaml:"params"`
-	Accounts      GenesisAccounts `json:"accounts" yaml:"accounts"`
+	Params   Params          `json:"params" yaml:"params"`
+	Accounts GenesisAccounts `json:"accounts" yaml:"accounts"`
 }
 
 // NewGenesisState - Create a new genesis state
 func NewGenesisState(params Params, accounts GenesisAccounts) GenesisState {
 	return GenesisState{
 		Params:   params,
-		Accounts: accounts,
+		Accounts: SanitizeGenesisAccounts(accounts),
 	}
 }
 
@@ -128,7 +130,7 @@ type GenesisAccountIterator struct{}
 // returns true, iteration stops.
 func (GenesisAccountIterator) IterateGenesisAccounts(appGenesis map[string]json.RawMessage, cb func(Account) (stop bool)) {
 	for _, genAcc := range GetGenesisStateFromAppState(appGenesis).Accounts {
-		if cb(genAcc) {
+		if cb(&genAcc) {
 			break
 		}
 	}

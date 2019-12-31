@@ -7,15 +7,12 @@ import (
 )
 
 // InitGenesis - Init store state from genesis data
-//
-// CONTRACT: old coins from the FeeCollectionKeeper need to be transferred through
-// a genesis port script to the new fee collector account
 func InitGenesis(ctx sdk.Context, ak AccountKeeper, data authTypes.GenesisState) {
 	ak.SetParams(ctx, data.Params)
 	data.Accounts = authTypes.SanitizeGenesisAccounts(data.Accounts)
 
 	for _, a := range data.Accounts {
-		acc := ak.NewAccount(ctx, a)
+		acc := ak.NewAccount(ctx, &a)
 		ak.SetAccount(ctx, acc)
 	}
 }
@@ -26,8 +23,7 @@ func ExportGenesis(ctx sdk.Context, ak AccountKeeper) authTypes.GenesisState {
 
 	var genAccounts authTypes.GenesisAccounts
 	ak.IterateAccounts(ctx, func(account authTypes.Account) bool {
-		genAccount := account.(authTypes.GenesisAccount)
-		genAccounts = append(genAccounts, genAccount)
+		genAccounts = append(genAccounts, authTypes.NewGenesisAccount(account))
 		return false
 	})
 

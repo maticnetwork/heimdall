@@ -1,9 +1,9 @@
 package bor
 
 import (
+	"encoding/json"
 	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 
@@ -31,13 +31,13 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 func queryParams(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	switch path[0] {
 	case types.ParamSpan:
-		bz, err := codec.MarshalJSONIndent(keeper.cdc, keeper.GetSpanDuration(ctx))
+		bz, err := json.Marshal(keeper.GetSpanDuration(ctx))
 		if err != nil {
 			return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 		}
 		return bz, nil
 	case types.ParamSprint:
-		bz, err := codec.MarshalJSONIndent(keeper.cdc, keeper.GetSprintDuration(ctx))
+		bz, err := json.Marshal(keeper.GetSprintDuration(ctx))
 		if err != nil {
 			return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 		}
@@ -48,13 +48,13 @@ func queryParams(ctx sdk.Context, path []string, req abci.RequestQuery, keeper K
 		if err != nil {
 			return bz, sdk.ErrInternal(sdk.AppendMsgToErr("cannot fetch producer count from keeper", err.Error()))
 		}
-		bz, err = codec.MarshalJSONIndent(keeper.cdc, count)
+		bz, err = json.Marshal(count)
 		if err != nil {
 			return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 		}
 		return bz, nil
 	case types.ParamLastEthBlock:
-		bz, err := codec.MarshalJSONIndent(keeper.cdc, keeper.GetLastEthBlock(ctx))
+		bz, err := json.Marshal(keeper.GetLastEthBlock(ctx))
 		if err != nil {
 			return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 		}
@@ -81,7 +81,7 @@ func handleQuerySpan(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]b
 	}
 
 	// json record
-	bz, err := codec.MarshalJSONIndent(keeper.cdc, span)
+	bz, err := json.Marshal(span)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
@@ -100,7 +100,7 @@ func handleQueryLatestSpan(ctx sdk.Context, req abci.RequestQuery, keeper Keeper
 	}
 
 	// json record
-	bz, err := codec.MarshalJSONIndent(keeper.cdc, span)
+	bz, err := json.Marshal(span)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
@@ -113,7 +113,7 @@ func handleQueryNextProducers(ctx sdk.Context, req abci.RequestQuery, keeper Kee
 		return nil, sdk.ErrInternal((sdk.AppendMsgToErr("cannot fetch next producers from keeper", err.Error())))
 	}
 
-	bz, err := codec.MarshalJSONIndent(keeper.cdc, nextProducers)
+	bz, err := json.Marshal(nextProducers)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
