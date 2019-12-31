@@ -278,29 +278,36 @@ func (c *MaticCheckpointer) determineAction(
 	latestCommittedCheckpoint HeimdallCheckpoint,
 	currentCheckpointHead hmtypes.CheckpointBlockHeader,
 ) (err error) {
-	// determine action based on the given data
+	// if contract state and heimdall state match => send new checkpoint
+	if currentCheckpointHead.StartBlock == latestCommittedCheckpoint.start {
+		c.Logger.Debug("Need to send a new checkpoint", "HeimdallEnd", latestCommittedCheckpoint.end, "ContractStart", currentCheckpointHead.StartBlock)
+		return c.CreateAndSendCheckpointToHeimdall(probableNextCheckpoint.start, probableNextCheckpoint.end)
+	}
 
-	//
-	// ACK needs to be sent
-	// if lastHeimdallCheckpoint.end+1 == lastContractCheckpoint.start {
-	// 	c.Logger.Debug("Detected mainchain checkpoint,sending ACK", "HeimdallEnd", lastHeimdallCheckpoint.end, "ContractStart", lastHeimdallCheckpoint.start)
-	// 	headerNumber := lastContractCheckpoint.currentHeaderBlock.Sub(lastContractCheckpoint.currentHeaderBlock, big.NewInt(int64(helper.GetConfig().ChildBlockInterval)))
-	// 	msg := checkpoint.NewMsgCheckpointAck(headerNumber.Uint64(), uint64(time.Now().Unix()))
-	// 	txBytes, err := helper.CreateTxBytes(msg)
-	// 	if err != nil {
-	// 		c.Logger.Error("Error while creating tx bytes", "error", err)
-	// 		return
-	// 	}
-	// 	// send tendermint request
-	// 	_, err = helper.SendTendermintRequest(c.cliCtx, txBytes)
-	// 	if err != nil {
-	// 		c.Logger.Error("Error while sending request to Tendermint", "error", err)
-	// 		return
-	// 	}
-	// 	return
-	// }
-	// start := lastContractCheckpoint.start
-	// end := lastContractCheckpoint.end
+	// if checkpoint in buffer and contract state match && heimdall is one checkpoint behind => send ACK
+	if bufferedCheckpont.start == currentCheckpointHead.StartBlock && latestCommittedCheckpoint.end+1 == currentCheckpointHead.StartBlock {
+		c.Logger.Debug("Detected mainchain checkpoint,sending ACK", "HeimdallEnd", latestCommittedCheckpoint.end, "ContractStart", currentCheckpointHead.StartBlock)
+		newHeaderNumber := probableNextCheckpoint.currentHeaderBlock.Sub(probableNextCheckpoint.currentHeaderBlock, big.NewInt(int64(helper.GetConfig().ChildBlockInterval)))
+
+		// create ack message
+		msg := checkpoint.NewMsgCheckpointAck(newHeaderNumber.Uint64(), uint64(time.Now().Unix()))
+		txBytes, err := helper.CreateTxBytes(msg)
+		if err != nil {
+			c.Logger.Error("Error while creating tx bytes", "error", err)
+			return err
+		}
+
+		// send tendermint request
+		resp, err := helper.SendTendermintRequest(c.cliCtx, txBytes)
+		if err != nil {
+			c.Logger.Error("Error while sending request to Tendermint", "error", err)
+			return err
+		}
+		c.Logger.Info("Checkpoint sent successfully", "hash", resp.Hash.String(), "headerIndex", newHeaderNumber)
+		return nil
+	}
+	c.Logger.Debug("No conditions met, doing nothing", "HeimdallEnd", latestCommittedCheckpoint.end, "ContractStart", currentCheckpointHead.StartBlock)
+
 	return nil
 }
 
@@ -456,11 +463,11 @@ func (c *MaticCheckpointer) isForcePushNeeded(start, end, diff, latestChildBlock
 	return start, end, isUpdated
 }
 
-func (c *MaticCheckpointer) CreateAndSendCheckpointToHeimdall(start, end uint64) {
+func (c *MaticCheckpointer) CreateAndSendCheckpointToHeimdall(start, end uint64) error {
 	// Get root hash
 	root, err := checkpoint.GetHeaders(start, end)
 	if err != nil {
-		return
+		return err
 	}
 
 	c.Logger.Info("New checkpoint header created", "start", start, "end", end, "root", ethCommon.BytesToHash(root))
@@ -478,14 +485,15 @@ func (c *MaticCheckpointer) CreateAndSendCheckpointToHeimdall(start, end uint64)
 
 	if err != nil {
 		c.Logger.Error("Error while creating tx bytes", "error", err)
-		return
+		return err
 	}
 
 	resp, err := helper.SendTendermintRequest(c.cliCtx, txBytes)
 	if err != nil {
 		c.Logger.Error("Error while sending request to Tendermint", "error", err)
-		return
+		return err
 	}
 
 	c.Logger.Info("Checkpoint sent successfully", "hash", resp.Hash.String(), "start", start, "end", end, "root", hex.EncodeToString(root))
+	return nil
 }
