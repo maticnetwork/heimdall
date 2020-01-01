@@ -1,6 +1,7 @@
 package clerk
 
 import (
+	"fmt"
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -15,6 +16,8 @@ import (
 // NewHandler creates new handler for handling messages for checkpoint module
 func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
+		ctx = ctx.WithEventManager(sdk.NewEventManager())
+
 		switch msg := msg.(type) {
 		case types.MsgEventRecord:
 			return handleMsgEventRecord(ctx, msg, k, contractCaller)
@@ -80,6 +83,15 @@ func handleMsgEventRecord(ctx sdk.Context, msg types.MsgEventRecord, k Keeper, c
 			sdk.NewAttribute(types.AttributeKeyRecordTxLogIndex, strconv.FormatUint(msg.LogIndex, 10)),
 		),
 	})
+
+	fmt.Println("ctx.EventManager().Events() == Start")
+	for i, event := range ctx.EventManager().Events() {
+		fmt.Println("Event", i, "Type", event.Type)
+		for j, attribute := range event.Attributes {
+			fmt.Println("    ", j, "Attribute", attribute.String())
+		}
+	}
+	fmt.Println("ctx.EventManager().Events() == End")
 
 	return sdk.Result{
 		Events: ctx.EventManager().Events(),
