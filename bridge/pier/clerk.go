@@ -147,8 +147,8 @@ func (s *ClerkService) commit() {
 
 	// create tag query
 	var tags []string
-	tags = append(tags, fmt.Sprintf("record-id>%v", start))
-	tags = append(tags, "action='event-record'")
+	tags = append(tags, fmt.Sprintf("record.record-id>%v", start))
+	tags = append(tags, "message.action='event-record'")
 
 	s.Logger.Debug("Querying heimdall event record txs",
 		"start", start,
@@ -164,7 +164,7 @@ func (s *ClerkService) commit() {
 		return
 	}
 
-	s.Logger.Debug(" Found new state txs", "length", searchResult.Count)
+	s.Logger.Debug("Found new state txs", "length", searchResult.Count)
 
 	// loop through tx
 	end := start
@@ -183,6 +183,7 @@ func (s *ClerkService) commit() {
 									end = recordID
 								}
 							}
+							break
 						}
 					}
 				}
