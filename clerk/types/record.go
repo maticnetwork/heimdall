@@ -1,7 +1,6 @@
 package types
 
 import (
-	"encoding/hex"
 	"fmt"
 
 	"github.com/maticnetwork/heimdall/types"
@@ -11,7 +10,7 @@ import (
 type EventRecord struct {
 	ID       uint64                `json:"id" yaml:"id"`
 	Contract types.HeimdallAddress `json:"contract" yaml:"contract"`
-	Data     []byte                `json:"data" yaml:"data"`
+	Data     types.HexBytes        `json:"data" yaml:"data"`
 	TxHash   types.HeimdallHash    `json:"tx_hash" yaml:"tx_hash"`
 	LogIndex uint64                `json:"log_index" yaml:"log_index"`
 }
@@ -22,7 +21,7 @@ func NewEventRecord(
 	logIndex uint64,
 	id uint64,
 	contract types.HeimdallAddress,
-	data []byte,
+	data types.HexBytes,
 ) EventRecord {
 	return EventRecord{
 		ID:       id,
@@ -39,7 +38,7 @@ func (s *EventRecord) String() string {
 		"EventRecord: id %v, contract %v, data: %v, txHash: %v, logIndex: %v",
 		s.ID,
 		s.Contract.String(),
-		hex.EncodeToString(s.Data),
+		s.Data.String(),
 		s.TxHash.Hex(),
 		s.LogIndex,
 	)

@@ -15,6 +15,8 @@ import (
 // NewHandler creates new handler for handling messages for checkpoint module
 func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
+		ctx = ctx.WithEventManager(sdk.NewEventManager())
+
 		switch msg := msg.(type) {
 		case types.MsgEventRecord:
 			return handleMsgEventRecord(ctx, msg, k, contractCaller)
