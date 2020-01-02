@@ -1,7 +1,6 @@
 package clerk
 
 import (
-	"fmt"
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -83,15 +82,6 @@ func handleMsgEventRecord(ctx sdk.Context, msg types.MsgEventRecord, k Keeper, c
 			sdk.NewAttribute(types.AttributeKeyRecordTxLogIndex, strconv.FormatUint(msg.LogIndex, 10)),
 		),
 	})
-
-	fmt.Println("ctx.EventManager().Events() == Start")
-	for i, event := range ctx.EventManager().Events() {
-		fmt.Println("Event", i, "Type", event.Type)
-		for j, attribute := range event.Attributes {
-			fmt.Println("    ", j, "Attribute", attribute.String())
-		}
-	}
-	fmt.Println("ctx.EventManager().Events() == End")
 
 	return sdk.Result{
 		Events: ctx.EventManager().Events(),
