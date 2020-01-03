@@ -13,6 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethereum "github.com/maticnetwork/bor"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
@@ -147,8 +148,8 @@ func (s *ClerkService) commit() {
 
 	// create tag query
 	var tags []string
-	tags = append(tags, fmt.Sprintf("record-id>%v", start))
-	tags = append(tags, "action='event-record'")
+	tags = append(tags, fmt.Sprintf("record.record-id>%v", start))
+	tags = append(tags, "message.action='event-record'")
 
 	s.Logger.Debug("Querying heimdall event record txs",
 		"start", start,
@@ -164,25 +165,29 @@ func (s *ClerkService) commit() {
 		return
 	}
 
-	s.Logger.Debug(" Found new state txs", "length", searchResult.Count)
+	s.Logger.Debug("Found new state txs", "length", searchResult.Count)
 
 	// loop through tx
 	end := start
 	// TODO remove nested loops
 	for _, tx := range searchResult.Txs {
 		for _, log := range tx.Logs {
-			for _, event := range log.Events {
-				if event.Type == clerkTypes.EventTypeRecord {
-					for _, attribute := range event.Attributes {
-						if attribute.Key == clerkTypes.AttributeKeyRecordID {
-							recordID, err := strconv.ParseUint(attribute.Value, 10, 64)
-							if err == nil {
-								// broadcast to bor
-								s.broadcastToBor(recordID)
-								if recordID > end {
-									end = recordID
-								}
-							}
+			event := helper.FilterEvents(log.Events, func(et sdk.StringEvent) bool {
+				return et.Type == clerkTypes.EventTypeRecord
+			})
+
+			if event != nil {
+				attribute := helper.FilterAttributes(event.Attributes, func(ae sdk.Attribute) bool {
+					return ae.Key == clerkTypes.AttributeKeyRecordID
+				})
+
+				if attribute != nil {
+					recordID, err := strconv.ParseUint(attribute.Value, 10, 64)
+					if err == nil {
+						// broadcast to bor
+						s.broadcastToBor(recordID)
+						if recordID > end {
+							end = recordID
 						}
 					}
 				}
