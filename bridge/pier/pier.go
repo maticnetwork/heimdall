@@ -87,7 +87,6 @@ func isProposer() bool {
 		if len(proposers) == 0 {
 			return false
 		}
-
 		// get first proposer
 		proposer := proposers[0]
 		if bytes.Equal(proposer.Signer.Bytes(), helper.GetAddress()) {

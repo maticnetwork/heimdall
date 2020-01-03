@@ -247,19 +247,28 @@ func (c *MaticCheckpointer) sendRequest(newHeader *types.Header) {
 	// fetch checkpoint from contract
 	go func() {
 		defer wg.Done()
-		nextProbCheckpoint, _ = c.nextExpectedCheckpoint(newHeader.Number.Uint64(), currentCheckpointHead)
+		nextProbCheckpoint, err = c.nextExpectedCheckpoint(newHeader.Number.Uint64(), currentCheckpointHead)
+		if err != nil {
+			c.Logger.Error("error fetching checkpoint from contract", "error", err)
+		}
 	}()
 
 	// fetch checkpoint from buffer
 	go func() {
 		defer wg.Done()
-		checkpointStateInBuffer, _ = c.fetchBufferedCheckpoint()
+		checkpointStateInBuffer, err = c.fetchBufferedCheckpoint()
+		if err != nil {
+			c.Logger.Error("error fetching checkpoint from buffer", "error", err)
+		}
 	}()
 
 	// fetch checkpoint last confirmed on heimdall
 	go func() {
 		defer wg.Done()
-		checkpointStateOnHeimdall, _ = c.fetchCommittedCheckpoint()
+		checkpointStateOnHeimdall, err = c.fetchCommittedCheckpoint()
+		if err != nil {
+			c.Logger.Error("error fetching checkpoint from heimdall", "error", err)
+		}
 	}()
 
 	// wait for state collection
@@ -355,7 +364,6 @@ func (c *MaticCheckpointer) nextExpectedCheckpoint(latestChildBlock uint64, curr
 
 // fetch checkpoint present in buffer from heimdall
 func (c *MaticCheckpointer) fetchBufferedCheckpoint() (*HeimdallCheckpoint, error) {
-	c.Logger.Info("Fetching checkpoint in buffer")
 	_checkpoint, err := c.fetchCheckpoint(GetHeimdallServerEndpoint(BufferedCheckpointURL))
 	if err != nil {
 		return nil, err
@@ -367,8 +375,6 @@ func (c *MaticCheckpointer) fetchBufferedCheckpoint() (*HeimdallCheckpoint, erro
 
 // fetches latest committed checkpoint from heimdall
 func (c *MaticCheckpointer) fetchCommittedCheckpoint() (*HeimdallCheckpoint, error) {
-	c.Logger.Info("Fetching last committed checkpoint")
-
 	_checkpoint, err := c.fetchCheckpoint(GetHeimdallServerEndpoint(LatestCheckpointURL))
 	if err != nil {
 		return nil, err
@@ -413,7 +419,7 @@ func (c *MaticCheckpointer) fetchCheckpointFromContract() (hmtypes.CheckpointBlo
 
 // fetches checkpoint from given URL
 func (c *MaticCheckpointer) fetchCheckpoint(url string) (checkpoint hmtypes.CheckpointBlockHeader, err error) {
-	resp, err := http.Get(BufferedCheckpointURL)
+	resp, err := http.Get(url)
 	if err != nil {
 		return checkpoint, err
 	}
@@ -424,11 +430,13 @@ func (c *MaticCheckpointer) fetchCheckpoint(url string) (checkpoint hmtypes.Chec
 		if err != nil {
 			return checkpoint, err
 		}
-
 		if err := json.Unmarshal(body, &checkpoint); err != nil {
 			c.Logger.Error("Error unmarshalling checkpoint", "error", err)
 			return checkpoint, err
 		}
+		return checkpoint, nil
+	} else if resp.StatusCode == 404 {
+		// if there is no content instead of returning nil return empty obj
 		return checkpoint, nil
 	}
 	return checkpoint, fmt.Errorf("Error while fetching data from url: %v, status: %v", BufferedCheckpointURL, resp.StatusCode)
