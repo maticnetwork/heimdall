@@ -54,15 +54,9 @@ const nodeDirPerm = 0755
 
 // ValidatorAccountFormatter helps to print local validator account information
 type ValidatorAccountFormatter struct {
-	Address          string `json:"address" yaml:"address"`
-	PrivKey          string `json:"priv_key" yaml:"priv_key"`
-	PubKey           string `json:"pub_key" yaml:"pub_key"`
-	AccountAddress   string `json:"account_address" yaml:"account_address"`
-	AccountPubKey    string `json:"account_pubkey" yaml:"account_pubkey"`
-	ValidatorAddress string `json:"validator_address" yaml:"validator_address"`
-	ValidatorPubKey  string `json:"validator_pubkey" yaml:"validator_pubkey"`
-	ConsensusAddress string `json:"consensus_address" yaml:"consensus_address"`
-	ConsensusPubKey  string `json:"consensus_pubkey" yaml:"consensus_pubkey"`
+	Address string `json:"address" yaml:"address"`
+	PrivKey string `json:"priv_key" yaml:"priv_key"`
+	PubKey  string `json:"pub_key" yaml:"pub_key"`
 }
 
 func main() {
