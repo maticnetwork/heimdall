@@ -212,6 +212,13 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg types.MsgCheckpointAck, k Keepe
 		// TODO proposer also needs to be changed
 	}
 
+	// Copy Dividend Account to Prev Account Map before reward allocation.
+	// PrevAccountMap will be used in RewardProofGeneration.
+	err = k.sk.CopyToPrevDividendAccounts(ctx)
+	if err != nil {
+		k.Logger(ctx).Error("Error while copying Dividend Accounts to Prev Divident Account Map.", "error", err)
+	}
+
 	// Get Tx hash from ack msg
 	txHash := msg.TxHash
 

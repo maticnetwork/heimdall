@@ -1,11 +1,15 @@
 package types
 
 import (
+	"crypto/sha256"
 	"fmt"
+	"math/big"
 	"sort"
 	"strconv"
 
+	"github.com/cbergoon/merkletree"
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/maticnetwork/bor/crypto"
 )
 
 // DividendAccount contains Rewards, Shares, Slashed Amount
@@ -76,4 +80,49 @@ func UnMarshallDividendAccount(cdc *codec.Codec, value []byte) (DividendAccount,
 func SortDividendAccountByID(dividendAccounts []DividendAccount) []DividendAccount {
 	sort.Slice(dividendAccounts, func(i, j int) bool { return dividendAccounts[i].ID < dividendAccounts[j].ID })
 	return dividendAccounts
+}
+
+//CalculateHash hashes the values of a DividendAccount
+func (da DividendAccount) CalculateHash() ([]byte, error) {
+	h := sha256.New()
+	reward, _ := big.NewInt(0).SetString(da.RewardAmount, 10)
+	slashAmount, _ := big.NewInt(0).SetString(da.SlashedAmount, 10)
+	divAccountHash := crypto.Keccak256(appendBytes32(
+		new(big.Int).SetUint64(uint64(da.ID)).Bytes(),
+		reward.Bytes(),
+		slashAmount.Bytes(),
+	))
+	var arr [32]byte
+	copy(arr[:], divAccountHash)
+
+	if _, err := h.Write(arr[:]); err != nil {
+		return nil, err
+	}
+
+	return h.Sum(nil), nil
+}
+
+func appendBytes32(data ...[]byte) []byte {
+	var result []byte
+	for _, v := range data {
+		paddedV, err := convertTo32(v)
+		if err == nil {
+			result = append(result, paddedV[:]...)
+		}
+	}
+	return result
+}
+
+func convertTo32(input []byte) (output [32]byte, err error) {
+	l := len(input)
+	if l > 32 || l == 0 {
+		return
+	}
+	copy(output[32-l:], input[:])
+	return
+}
+
+//Equals tests for equality of two Contents
+func (da DividendAccount) Equals(other merkletree.Content) (bool, error) {
+	return da.ID == other.(DividendAccount).ID, nil
 }

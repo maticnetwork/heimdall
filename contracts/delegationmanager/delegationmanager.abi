@@ -640,7 +640,7 @@
 				"type": "uint256"
 			}
 		],
-		"name": "DelegatorStaked",
+		"name": "DelStaked",
 		"type": "event"
 	},
 	{
@@ -671,7 +671,7 @@
 				"type": "uint256"
 			}
 		],
-		"name": "DelegatorUnstaked",
+		"name": "DelUnstaked",
 		"type": "event"
 	},
 	{
@@ -696,7 +696,32 @@
 				"type": "uint256"
 			}
 		],
-		"name": "UnstakeInit",
+		"name": "DelUnstakeInit",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "delegatorId",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "oldAmount",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "newAmount",
+				"type": "uint256"
+			}
+		],
+		"name": "DelStakeUpdate",
 		"type": "event"
 	},
 	{
@@ -815,7 +840,7 @@
 				"type": "uint256"
 			}
 		],
-		"name": "DelegatorReStaked",
+		"name": "DelReStaked",
 		"type": "event"
 	}
 ]

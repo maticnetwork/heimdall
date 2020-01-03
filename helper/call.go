@@ -34,7 +34,7 @@ type IContractCaller interface {
 	IsTxConfirmed(common.Hash) bool
 	GetConfirmedTxReceipt(common.Hash) (*ethTypes.Receipt, error)
 	GetBlockNumberFromTxHash(common.Hash) (*big.Int, error)
-	DecodeValidatorTopupFeesEvent(*ethTypes.Receipt, uint64) (*stakemanager.StakemanagerTopupFees, error)
+	DecodeValidatorTopupFeesEvent(*ethTypes.Receipt, uint64) (*stakemanager.StakemanagerTopUpFee, error)
 	DecodeValidatorStakeUpdateEvent(*ethTypes.Receipt, uint64) (*stakemanager.StakemanagerStakeUpdate, error)
 	DecodeNewHeaderBlockEvent(*ethTypes.Receipt, uint64) (*rootchain.RootchainNewHeaderBlock, error)
 	DecodeSignerUpdateEvent(*ethTypes.Receipt, uint64) (*stakemanager.StakemanagerSignerChange, error)
@@ -42,6 +42,9 @@ type IContractCaller interface {
 	GetMaticTxReceipt(common.Hash) (*ethTypes.Receipt, error)
 	DecodeDelegatorBondEvent(*ethTypes.Receipt, uint64) (*delegationmanager.DelegationmanagerBonding, error)
 	DecodeDelegatorUnBondEvent(*ethTypes.Receipt, uint64) (*delegationmanager.DelegationmanagerUnBonding, error)
+	DecodeDelegatorReBondEvent(*ethTypes.Receipt, uint64) (*delegationmanager.DelegationmanagerReBonding, error)
+	DecodeDelStakeUpdateEvent(*ethTypes.Receipt, uint64) (*delegationmanager.DelegationmanagerDelStakeUpdate, error)
+	// CurrentAccountStateRoot() ([32]byte, error)
 
 	// bor related contracts
 	CurrentSpanNumber() (Number *big.Int)
@@ -303,14 +306,14 @@ func (c *ContractCaller) GetConfirmedTxReceipt(tx common.Hash) (*ethTypes.Receip
 }
 
 // DecodeValidatorTopupFeesEvent represents topup for fees tokens
-func (c *ContractCaller) DecodeValidatorTopupFeesEvent(receipt *ethTypes.Receipt, logIndex uint64) (*stakemanager.StakemanagerTopupFees, error) {
-	event := new(stakemanager.StakemanagerTopupFees)
+func (c *ContractCaller) DecodeValidatorTopupFeesEvent(receipt *ethTypes.Receipt, logIndex uint64) (*stakemanager.StakemanagerTopUpFee, error) {
+	event := new(stakemanager.StakemanagerTopUpFee)
 
 	found := false
 	for _, vLog := range receipt.Logs {
 		if uint64(vLog.Index) == logIndex {
 			found = true
-			if err := UnpackLog(&c.StakeManagerABI, event, "TopupFees", vLog); err != nil {
+			if err := UnpackLog(&c.StakeManagerABI, event, "TopUpFee", vLog); err != nil {
 				return nil, err
 			}
 			break
@@ -433,6 +436,62 @@ func (c *ContractCaller) DecodeDelegatorUnBondEvent(receipt *ethTypes.Receipt, l
 
 	return event, nil
 }
+
+// DecodeDelegatorReBondEvent represents Delegator Rebonding event
+func (c *ContractCaller) DecodeDelegatorReBondEvent(receipt *ethTypes.Receipt, logIndex uint64) (*delegationmanager.DelegationmanagerReBonding, error) {
+
+	event := new(delegationmanager.DelegationmanagerReBonding)
+	found := false
+	for _, log := range receipt.Logs {
+		if uint64(log.Index) == logIndex {
+			found = true
+			if err := UnpackLog(&c.DelegationManagerABI, event, "ReBonding", log); err != nil {
+				return nil, err
+			}
+			break
+		}
+	}
+
+	if !found {
+		return nil, errors.New("Event not found")
+	}
+
+	return event, nil
+}
+
+// DecodeDelStakeUpdateEvent represents Delegator Stake Update event
+func (c *ContractCaller) DecodeDelStakeUpdateEvent(receipt *ethTypes.Receipt, logIndex uint64) (*delegationmanager.DelegationmanagerDelStakeUpdate, error) {
+
+	event := new(delegationmanager.DelegationmanagerDelStakeUpdate)
+	found := false
+	for _, log := range receipt.Logs {
+		if uint64(log.Index) == logIndex {
+			found = true
+			if err := UnpackLog(&c.DelegationManagerABI, event, "DelStakeUpdate", log); err != nil {
+				return nil, err
+			}
+			break
+		}
+	}
+
+	if !found {
+		return nil, errors.New("Event not found")
+	}
+
+	return event, nil
+}
+
+// // CurrentSpanNumber get current span
+// func (c *ContractCaller) CurrentAccountStateRoot() ([32]byte, error) {
+// 	accountStateRoot, err := c.StakeManagerInstance.AccountStateRoot(nil)
+
+// 	if err != nil {
+// 		Logger.Error("Unable to get current account state roor", "Error", err)
+// 		return []byte, err
+// 	}
+
+// 	return accountStateRoot
+// }
 
 // CurrentSpanNumber get current span
 func (c *ContractCaller) CurrentSpanNumber() (Number *big.Int) {

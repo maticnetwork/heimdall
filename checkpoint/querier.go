@@ -18,7 +18,7 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 		case types.QueryAckCount:
 			return handleQueryAckCount(ctx, req, keeper)
 		case types.QueryInitialAccountRoot:
-			return queryInitialAccountRoot(ctx, req, keeper)
+			return handleInitialAccountRoot(ctx, req, keeper)
 		case types.QueryCheckpoint:
 			return handleQueryCheckpoint(ctx, req, keeper)
 		case types.QueryCheckpointBuffer:
@@ -27,6 +27,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return handleQueryLastNoAck(ctx, req, keeper)
 		case types.QueryCheckpointList:
 			return handleQueryCheckpointList(ctx, req, keeper)
+		case types.QueryAccountProof:
+			return handleQueryAccountProof(ctx, req, keeper)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown auth query endpoint")
 		}
@@ -41,7 +43,7 @@ func handleQueryAckCount(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) 
 	return bz, nil
 }
 
-func queryInitialAccountRoot(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+func handleInitialAccountRoot(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	// Calculate new account root hash
 	dividendAccounts := keeper.sk.GetAllDividendAccounts(ctx)
 	accountRoot, err := types.GetAccountRootHash(dividendAccounts)
@@ -49,6 +51,40 @@ func queryInitialAccountRoot(ctx sdk.Context, req abci.RequestQuery, keeper Keep
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not fetch genesis accountroothash ", err.Error()))
 	}
 	return accountRoot, nil
+}
+
+func handleQueryAccountProof(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	// 1. Fetch AccountRoot a1 present on RootChainContract
+	// 2. Fetch AccountRoot a2 present in latest checkpoint
+	// 3. if a1 == a2, Calculate merkle path using GetAllDividendAccounts
+	// 4. if a1 != a2, Calculate merkle path using GetAllPrevDividendAccounts
+
+	// contractCallerObj, err := helper.NewContractCaller()
+	// if err != nil {
+
+	// }
+
+	// accountRootOnChain, err := contractCallerObj.CurrentAccountStateRoot()
+	// if err != nil {
+	// 	RestLogger.Error("Unable to get current account state root caller object ", "Error", err.Error())
+	// }
+
+	// lastCheckpoint, err := keeper.GetLastCheckpoint(ctx)
+	// var dividendAccounts []hmTypes.DividendAccount
+
+	// if accountRootOnChain == lastCheckpoint.AccountRootHash {
+	// 	dividendAccounts = keeper.sk.GetAllDividendAccounts(ctx)
+	// } else {
+	// 	dividendAccounts = keeper.sk.GetAllPrevDividendAccounts(ctx)
+	// }
+	// // Calculate new account root hash
+	// merkleProof, index, err := types.GetAccountProof(dividendAccounts)
+	// if err != nil {
+	// 	return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not fetch merkle proof ", err.Error()))
+	// }
+	// return merkleProof, index, err
+
+	return nil, nil
 }
 
 func handleQueryCheckpoint(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {

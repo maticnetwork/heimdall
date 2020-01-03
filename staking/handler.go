@@ -2,6 +2,7 @@ package staking
 
 import (
 	"bytes"
+	"math/big"
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -28,6 +29,8 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 			return HandleMsgDelegatorBond(ctx, msg, k, contractCaller)
 		case types.MsgDelegatorUnBond:
 			return HandleMsgDelegatorUnBond(ctx, msg, k, contractCaller)
+		case types.MsgDelegatorReBond:
+			return HandleMsgDelegatorReBond(ctx, msg, k, contractCaller)
 		default:
 			return sdk.ErrTxDecode("Invalid message in checkpoint module").Result()
 		}
@@ -447,6 +450,113 @@ func HandleMsgDelegatorUnBond(ctx sdk.Context, msg types.MsgDelegatorUnBond, k K
 			types.EventTypeDelegatorBond,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(eventLog.ValidatorId.Uint64(), 10)),
+			sdk.NewAttribute(types.AttributeKeyDelegatorID, strconv.FormatUint(eventLog.DelegatorId.Uint64(), 10)),
+		),
+	})
+
+	return sdk.Result{
+		Events: ctx.EventManager().Events(),
+	}
+}
+
+// HandleMsgDelegatorReBond msg delegator rebond with validator
+// 1. Unbond from old validator
+// 2. Bond with new validator
+func HandleMsgDelegatorReBond(ctx sdk.Context, msg types.MsgDelegatorReBond, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
+	k.Logger(ctx).Debug("Handling delegator rebond", "msg", msg)
+
+	// get main tx receipt
+	receipt, err := contractCaller.GetConfirmedTxReceipt(msg.TxHash.EthHash())
+	if err != nil || receipt == nil {
+		return hmCommon.ErrWaitForConfirmation(k.Codespace()).Result()
+	}
+
+	eventLog, err := contractCaller.DecodeDelegatorReBondEvent(receipt, msg.LogIndex)
+	if err != nil || eventLog == nil {
+		k.Logger(ctx).Error("Error fetching log from txhash")
+		return hmCommon.ErrInvalidMsg(k.Codespace(), "Unable to fetch delegator rebond log for txHash").Result()
+	}
+
+	if eventLog.DelegatorId.Uint64() != msg.ID.Uint64() {
+		k.Logger(ctx).Error("Delegator ID in message doesnt match delegator id in logs", "MsgID", msg.ID, "IdFromTx", eventLog.DelegatorId.Uint64())
+		return hmCommon.ErrInvalidMsg(k.Codespace(), "Invalid txhash, id's dont match. Id from tx hash is %v", eventLog.DelegatorId.Uint64()).Result()
+	}
+
+	// sequence id
+	sequence := (receipt.BlockNumber.Uint64() * hmTypes.DefaultLogIndexUnit) + msg.LogIndex
+
+	// check if incoming tx is older
+	if k.HasStakingSequence(ctx, sequence) {
+		k.Logger(ctx).Error("Older invalid tx found")
+		return hmCommon.ErrOldTx(k.Codespace()).Result()
+	}
+
+	// k.UnBondDelegator(ctx, msg.ID, hmTypes.ValidatorID(eventLog.OldValidatorId.Uint64()), eventLog.Amount)
+	// k.BondDelegator(ctx, msg.ID, hmTypes.ValidatorID(eventLog.NewValidatorId.Uint64()), eventLog.Amount)
+
+	k.UnBondDelegator(ctx, msg.ID, hmTypes.ValidatorID(eventLog.OldValidatorId.Uint64()), big.NewInt(0))
+	k.BondDelegator(ctx, msg.ID, hmTypes.ValidatorID(eventLog.NewValidatorId.Uint64()), big.NewInt(0))
+
+	// save staking sequence
+	k.SetStakingSequence(ctx, sequence)
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeDelegatorBond,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(eventLog.OldValidatorId.Uint64(), 10)),
+			sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(eventLog.NewValidatorId.Uint64(), 10)),
+			sdk.NewAttribute(types.AttributeKeyDelegatorID, strconv.FormatUint(eventLog.DelegatorId.Uint64(), 10)),
+		),
+	})
+
+	return sdk.Result{
+		Events: ctx.EventManager().Events(),
+	}
+}
+
+// HandleMsgDelStakeUpdate msg delegator stake Update
+// 1. if old amount is greater than new amount, It's becoz of slashing. Burn shares. Update slashed amount. No change of rewards
+// 2. if old amount is lesser than new amount, It's becoz of new stake added. Add shares.
+func HandleMsgDelStakeUpdate(ctx sdk.Context, msg types.MsgDelStakeUpdate, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
+	k.Logger(ctx).Debug("Handling delegator rebond", "msg", msg)
+
+	// get main tx receipt
+	receipt, err := contractCaller.GetConfirmedTxReceipt(msg.TxHash.EthHash())
+	if err != nil || receipt == nil {
+		return hmCommon.ErrWaitForConfirmation(k.Codespace()).Result()
+	}
+
+	eventLog, err := contractCaller.DecodeDelStakeUpdateEvent(receipt, msg.LogIndex)
+	if err != nil || eventLog == nil {
+		k.Logger(ctx).Error("Error fetching log from txhash")
+		return hmCommon.ErrInvalidMsg(k.Codespace(), "Unable to fetch delegator stake update log for txHash").Result()
+	}
+
+	if eventLog.DelegatorId.Uint64() != msg.ID.Uint64() {
+		k.Logger(ctx).Error("Delegator ID in message doesnt match delegator id in logs", "MsgID", msg.ID, "IdFromTx", eventLog.DelegatorId.Uint64())
+		return hmCommon.ErrInvalidMsg(k.Codespace(), "Invalid txhash, id's dont match. Id from tx hash is %v", eventLog.DelegatorId.Uint64()).Result()
+	}
+
+	// sequence id
+	sequence := (receipt.BlockNumber.Uint64() * hmTypes.DefaultLogIndexUnit) + msg.LogIndex
+
+	// check if incoming tx is older
+	if k.HasStakingSequence(ctx, sequence) {
+		k.Logger(ctx).Error("Older invalid tx found")
+		return hmCommon.ErrOldTx(k.Codespace()).Result()
+	}
+
+	// k.UnBondDelegator(ctx, msg.ID, hmTypes.ValidatorID(eventLog.OldValidatorId.Uint64()), eventLog.Amount)
+	// k.BondDelegator(ctx, msg.ID, hmTypes.ValidatorID(eventLog.NewValidatorId.Uint64()), eventLog.Amount)
+
+	// save staking sequence
+	k.SetStakingSequence(ctx, sequence)
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeDelegatorBond,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			sdk.NewAttribute(types.AttributeKeyDelegatorID, strconv.FormatUint(eventLog.DelegatorId.Uint64(), 10)),
 		),
 	})

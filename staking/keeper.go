@@ -21,11 +21,12 @@ import (
 var (
 	DefaultValue = []byte{0x01} // Value to store in CacheCheckpoint and CacheCheckpointACK & ValidatorSetChange Flag
 
-	ValidatorsKey          = []byte{0x21} // prefix for each key to a validator
-	ValidatorMapKey        = []byte{0x22} // prefix for each key for validator map
-	CurrentValidatorSetKey = []byte{0x23} // Key to store current validator set
-	DividendAccountMapKey  = []byte{0x42} // prefix for each key for Dividend Account Map
-	StakingSequenceKey     = []byte{0x24} // prefix for each key for staking sequence map
+	ValidatorsKey             = []byte{0x21} // prefix for each key to a validator
+	ValidatorMapKey           = []byte{0x22} // prefix for each key for validator map
+	CurrentValidatorSetKey    = []byte{0x23} // Key to store current validator set
+	PrevDividendAccountMapKey = []byte{0x41} // store for dividend accounts before checkpoint ack.
+	DividendAccountMapKey     = []byte{0x42} // prefix for each key for Dividend Account Map
+	StakingSequenceKey        = []byte{0x24} // prefix for each key for staking sequence map
 )
 
 type AckRetriever interface {
@@ -361,10 +362,15 @@ func GetDividendAccountMapKey(id []byte) []byte {
 	return append(DividendAccountMapKey, id...)
 }
 
+// GetPrevDividendAccountMapKey returns prev dividend account map
+func GetPrevDividendAccountMapKey(id []byte) []byte {
+	return append(PrevDividendAccountMapKey, id...)
+}
+
 // AddDividendAccount adds DividendAccount index with DividendID
 func (k *Keeper) AddDividendAccount(ctx sdk.Context, dividendAccount hmTypes.DividendAccount) error {
 	store := ctx.KVStore(k.storeKey)
-	// marshall validator account
+	// marshall dividend account
 	bz, err := hmTypes.MarshallDividendAccount(k.cdc, dividendAccount)
 	if err != nil {
 		return err
@@ -409,7 +415,7 @@ func (k *Keeper) CheckIfDividendAccountExists(ctx sdk.Context, dividendID hmType
 // GetAllDividendAccounts returns all DividendAccountss
 func (k *Keeper) GetAllDividendAccounts(ctx sdk.Context) (dividendAccounts []hmTypes.DividendAccount) {
 	// iterate through dividendAccounts and create dividendAccounts update array
-	k.IterateDividendAccountsAndApplyFn(ctx, func(dividendAccount hmTypes.DividendAccount) error {
+	k.IterateDividendAccountsByPrefixAndApplyFn(ctx, DividendAccountMapKey, func(dividendAccount hmTypes.DividendAccount) error {
 		// append to list of dividendUpdates
 		dividendAccounts = append(dividendAccounts, dividendAccount)
 		return nil
@@ -418,12 +424,12 @@ func (k *Keeper) GetAllDividendAccounts(ctx sdk.Context) (dividendAccounts []hmT
 	return
 }
 
-// IterateDividendAccountsAndApplyFn iterate dividendAccounts and apply the given function.
-func (k *Keeper) IterateDividendAccountsAndApplyFn(ctx sdk.Context, f func(dividendAccount hmTypes.DividendAccount) error) {
+// IterateDividendAccountsByPrefixAndApplyFn iterate dividendAccounts and apply the given function.
+func (k *Keeper) IterateDividendAccountsByPrefixAndApplyFn(ctx sdk.Context, prefix []byte, f func(dividendAccount hmTypes.DividendAccount) error) {
 	store := ctx.KVStore(k.storeKey)
 
 	// get validator iterator
-	iterator := sdk.KVStorePrefixIterator(store, DividendAccountMapKey)
+	iterator := sdk.KVStorePrefixIterator(store, prefix)
 	defer iterator.Close()
 
 	// loop through dividendAccounts
@@ -435,6 +441,37 @@ func (k *Keeper) IterateDividendAccountsAndApplyFn(ctx sdk.Context, f func(divid
 			return
 		}
 	}
+}
+
+// CopyToPrevDividendAccounts copies all dividend accounts to prevDividendAccountMap
+func (k *Keeper) CopyToPrevDividendAccounts(ctx sdk.Context) error {
+	// iterate through dividendAccounts and update prev dividend accounts maps
+	k.IterateDividendAccountsByPrefixAndApplyFn(ctx, DividendAccountMapKey, func(dividendAccount hmTypes.DividendAccount) error {
+
+		store := ctx.KVStore(k.storeKey)
+		// marshall dividend account
+		bz, err := hmTypes.MarshallDividendAccount(k.cdc, dividendAccount)
+		if err != nil {
+			return err
+		}
+
+		store.Set(GetPrevDividendAccountMapKey(dividendAccount.ID.Bytes()), bz)
+		return nil
+	})
+
+	return nil
+}
+
+// GetAllPrevDividendAccounts returns all PrevDividendAccountss
+func (k *Keeper) GetAllPrevDividendAccounts(ctx sdk.Context) (dividendAccounts []hmTypes.DividendAccount) {
+	// iterate through prev dividendAccounts and create dividendAccounts update array
+	k.IterateDividendAccountsByPrefixAndApplyFn(ctx, PrevDividendAccountMapKey, func(dividendAccount hmTypes.DividendAccount) error {
+		// append to list of dividendUpdates
+		dividendAccounts = append(dividendAccounts, dividendAccount)
+		return nil
+	})
+
+	return
 }
 
 // 1. Delegator is updated with Validator ID.
@@ -512,7 +549,7 @@ func (k *Keeper) BondDelegator(ctx sdk.Context, delegatorID hmTypes.DelegatorID,
 
 // HandleMsgDelegatorUnBond msg delegator unbond with validator
 // ** stake calculations **
-// 1. On Bonding event, Validator will send MsgDelegatorUnBond transaction to heimdall.
+// 1. On UnBonding event, Validator will send MsgDelegatorUnBond transaction to heimdall.
 // 2. Delegator is updated with Validator ID = 0.
 // 3. VotingPower of bonded validator is reduced.
 // 4. DelegatedPower of the bonded validator is reduced after reward calculation.
@@ -528,68 +565,79 @@ func (k *Keeper) BondDelegator(ctx sdk.Context, delegatorID hmTypes.DelegatorID,
 // UnBondDelegator
 func (k *Keeper) UnBondDelegator(ctx sdk.Context, delegatorID hmTypes.DelegatorID, valID hmTypes.ValidatorID, amount *big.Int) (err error) {
 
-	// delegatorAccount, err := k.GetDividendAccountByID(ctx, hmTypes.DividendAccountID(delegatorID))
-	// if err != nil {
-	// 	k.Logger(ctx).Error("Fetching of delegator dividend account from store failed", "delegatorId", delegatorID)
-	// 	return errors.New("Delegator DividendAccount not found")
-	// }
+	delegatorAccount, err := k.GetDividendAccountByID(ctx, hmTypes.DividendAccountID(delegatorID))
+	if err != nil {
+		k.Logger(ctx).Error("Fetching of delegator dividend account from store failed", "delegatorId", delegatorID)
+		return errors.New("Delegator DividendAccount not found")
+	}
 
-	// // 3. VotingPower of the bonded validator is updated.
-	// // pull validator from store
-	// validator, ok := k.GetValidatorFromValID(ctx, valID)
-	// if !ok {
-	// 	k.Logger(ctx).Error("Fetching of bonded validator from store failed", "validatorId", valID)
-	// 	return errors.New("Validator not found")
-	// }
+	// pull validator from store
+	validator, ok := k.GetValidatorFromValID(ctx, valID)
+	if !ok {
+		k.Logger(ctx).Error("Fetching of bonded validator from store failed", "validatorId", valID)
+		return errors.New("Validator not found")
+	}
 
-	// // Get shares of delegator account
-	// delegatorshares := delegatorAccount.Shares
-
-	// // 6. TotalDelegatorShares of bonded validator is updated.
-	// validator.TotalDelegatorShares -= delegatorshares
+	// Get shares of delegator account
+	delegatorshares, ok := big.NewFloat(0).SetString(delegatorAccount.Shares)
+	if !ok {
+		return errors.New("unable to convert string to big float")
+	}
+	delegatorsharesInt, ok := big.NewInt(0).SetString(delegatorAccount.Shares, 10)
 
 	// validator.VotingPower -= delegator.VotingPower
 
 	// // calculate rewards.
-	// totalDelegatorReturns := validator.ExchangeRate() * delegatorshares
+	totalDelegatorReturns := big.NewFloat(0).Mul(validator.ExchangeRate(), delegatorshares)
+	totalDelegatorReturnsInt := big.NewInt(0)
+	totalDelegatorReturnsInt, _ = totalDelegatorReturns.Int(totalDelegatorReturnsInt)
+	rewardAmount := big.NewInt(0).Sub(totalDelegatorReturnsInt, amount)
 
-	// rewardAmount := totalDelegatorReturns - float32(delegator.VotingPower)
+	prevRewardAmount, ok := big.NewInt(0).SetString(delegatorAccount.RewardAmount, 10)
+	if !ok {
+		errors.New("cannot convert delegator reward amount to string")
+	}
+	delegatorAccount.RewardAmount = big.NewInt(0).Add(prevRewardAmount, rewardAmount).String()
+	delegatorAccount.Shares = big.NewInt(0).String()
 
-	// validator.DelgatorRewardPool = int64(float32(validator.DelgatorRewardPool) - rewardAmount)
+	delegatorRewardPool, ok := big.NewInt(0).SetString(validator.DelgatorRewardPool, 10)
+	if !ok {
+		return errors.New("cannot convert delegator reward pool to big int")
+	}
+	validator.DelgatorRewardPool = big.NewInt(0).Sub(delegatorRewardPool, rewardAmount).String()
+
+	// // 6. TotalDelegatorShares of bonded validator is updated.
+	// validator.TotalDelegatorShares -= delegatorshares
+	totalDelegatorShares, ok := big.NewInt(0).SetString(validator.TotalDelegatorShares, 10)
+	if !ok {
+		return errors.New("cannot convert TotalDelegatorShares to big int")
+	}
+
+	validator.TotalDelegatorShares = big.NewInt(0).Sub(totalDelegatorShares, delegatorsharesInt).String()
 
 	// // 7. DelegatedPower of bonded validator is updated.
-	// validator.DelegatedPower -= delegator.VotingPower
+	delPow, err := helper.GetPowerFromAmount(amount)
+	validator.DelegatedPower -= delPow.Int64()
 
-	// // save validator
-	// err = k.sk.AddValidator(ctx, validator)
-	// if err != nil {
-	// 	k.Logger(ctx).Error("Unable to update validator", "error", err, "ValidatorID", validator.ID)
-	// 	return errors.New("error adding validator to store")
-	// }
+	// save validator
+	err = k.AddValidator(ctx, validator)
+	if err != nil {
+		k.Logger(ctx).Error("Unable to update validator", "error", err, "ValidatorID", validator.ID)
+		return errors.New("error adding validator to store")
+	}
 
-	// // 2. update validator ID of delegator.
-	// delegator.ValID = 0
-
-	// // update last udpated
-	// delegator.LastUpdated = lastUpdated
-
-	// delegatorAccount.Shares = 0
-
-	// // save delegator account
-	// err = k.AddDelegatorAccount(ctx, delegatorAccount)
-	// if err != nil {
-	// 	k.Logger(ctx).Error("Unable to update delegatorAccount", "error", err, "DelegatorID", delegator.ID)
-	// 	return errors.New("DelegatorAccount updation failed")
-	// }
-
-	// // save delegator
-	// err = k.AddDelegator(ctx, delegator)
-	// if err != nil {
-	// 	k.Logger(ctx).Error("Unable to update delegator", "error", err, "DelegatorID", delegator.ID)
-	// 	return errors.New("error adding delegator to store")
-	// }
+	// save delegator account
+	err = k.AddDividendAccount(ctx, delegatorAccount)
+	if err != nil {
+		k.Logger(ctx).Error("Unable to update delegator DividenAccount", "error", err, "DelegatorID", delegatorID)
+		return errors.New("DelegatorAccount updation failed")
+	}
 
 	return nil
+}
+
+func (k *Keeper) DelStakeUpdate(delegatorID hmTypes.DelegatorID, oldAmount *big.Int, newAmount *big.Int) {
+
 }
 
 // RewardValidator will update validator dividend account with new reward

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"math/big"
 
+	"github.com/cbergoon/merkletree"
 	"github.com/maticnetwork/bor/common/hexutil"
 	"github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/bor/crypto"
@@ -88,34 +89,48 @@ func GetHeaders(start uint64, end uint64) ([]byte, error) {
 
 // GetAccountRootHash returns roothash of Validator, Delegator Account State Tree
 func GetAccountRootHash(dividendAccounts []hmTypes.DividendAccount) ([]byte, error) {
-	// Sort the dividendAccounts by ID
-	dividendAccounts = hmTypes.SortDividendAccountByID(dividendAccounts)
-
-	expectedLength := len(dividendAccounts)
-	valAccountHashes := make([][32]byte, expectedLength)
-	i := 0
-
-	// add dividendAccounts hashes
-	for _, da := range dividendAccounts {
-		reward, _ := big.NewInt(0).SetString(da.RewardAmount, 10)
-		slashAmount, _ := big.NewInt(0).SetString(da.SlashedAmount, 10)
-		valAccountHash := crypto.Keccak256(appendBytes32(
-			new(big.Int).SetUint64(uint64(da.ID)).Bytes(),
-			reward.Bytes(),
-			slashAmount.Bytes(),
-		))
-		var arr [32]byte
-		copy(arr[:], valAccountHash)
-
-		valAccountHashes[i] = arr
-		i++
-	}
-
-	tree := merkle.NewTreeWithOpts(merkle.TreeOptions{EnableHashSorting: false, DisableHashLeaves: true})
-	if err := tree.Generate(convert(valAccountHashes), sha3.NewLegacyKeccak256()); err != nil {
+	tree, err := GetAccountTree(dividendAccounts)
+	if err != nil {
 		return nil, err
 	}
-	return tree.Root().Hash, nil
+
+	return tree.Root.Hash, nil
+}
+
+// GetAccountTree returns roothash of Validator, Delegator Account State Tree
+func GetAccountTree(dividendAccounts []hmTypes.DividendAccount) (*merkletree.MerkleTree, error) {
+	// Sort the dividendAccounts by ID
+	dividendAccounts = hmTypes.SortDividendAccountByID(dividendAccounts)
+	var list []merkletree.Content
+
+	for i := 0; i < len(dividendAccounts); i++ {
+		list = append(list, dividendAccounts[i])
+	}
+
+	tree, err := merkletree.NewTree(list)
+	if err != nil {
+		return nil, err
+	}
+
+	return tree, nil
+}
+
+// GetAccountProof returns proof of dividend Account
+func GetAccountProof(dividendAccounts []hmTypes.DividendAccount) ([][]byte, []int64, error) {
+	// Sort the dividendAccounts by ID
+	dividendAccounts = hmTypes.SortDividendAccountByID(dividendAccounts)
+	var list []merkletree.Content
+
+	for i := 0; i < len(dividendAccounts); i++ {
+		list = append(list, dividendAccounts[i])
+	}
+
+	tree, err := merkletree.NewTree(list)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return tree.GetMerklePath(list[1])
 }
 
 func convert(input []([32]byte)) [][]byte {

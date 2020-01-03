@@ -53,6 +53,10 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 		"/staking/proposer-bonus-percent",
 		proposerBonusPercentHandlerFn(cliCtx),
 	).Methods("GET")
+	r.HandleFunc(
+		"/staking/account-proof",
+		dividendAccountProofHandlerFn(cliCtx),
+	).Methods("GET")
 }
 
 // Returns validator information by signer address
@@ -395,5 +399,25 @@ func proposerBonusPercentHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 		rest.PostProcessResponse(w, cliCtx, result)
+	}
+}
+
+// Returns Merkle path for dividendAccountID using dividend Account Tree
+func dividendAccountProofHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		// fetch state reocrd
+		merkleProof, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryAccountProof), nil)
+		if err != nil {
+			RestLogger.Error("Error while fetching merkle proof", "Error", err.Error())
+			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		rest.PostProcessResponse(w, cliCtx, merkleProof)
 	}
 }

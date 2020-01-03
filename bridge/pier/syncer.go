@@ -308,6 +308,10 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 					syncer.processDelegatorBondEvent(selectedEvent.Name, abiObject, &vLog)
 				case "UnBonding":
 					syncer.processDelegatorUnBondEvent(selectedEvent.Name, abiObject, &vLog)
+				case "ReBonding":
+					syncer.processDelegatorReBondEvent(selectedEvent.Name, abiObject, &vLog)
+				case "DelStakeUpdate":
+					syncer.processDelStakeUpdateEvent(selectedEvent.Name, abiObject, &vLog)
 					// case "Withdraw":
 					// 	syncer.processWithdrawEvent(selectedEvent.Name, abiObject, &vLog)
 				}
@@ -347,7 +351,7 @@ func (syncer *Syncer) processStakedEvent(eventName string, abiObject *abi.ABI, v
 		syncer.Logger.Debug(
 			"New event found",
 			"event", eventName,
-			"validator", event.User.Hex(),
+			"validator", event.Signer.Hex(),
 			"ID", event.ValidatorId,
 			"activatonEpoch", event.ActivationEpoch,
 			"amount", event.Amount,
@@ -357,7 +361,7 @@ func (syncer *Syncer) processStakedEvent(eventName string, abiObject *abi.ABI, v
 		if isEventSender(syncer.cliCtx, event.ValidatorId.Uint64()) {
 			pubkey := helper.GetPubKey()
 			msg := stakingTypes.NewMsgValidatorJoin(
-				hmTypes.BytesToHeimdallAddress(event.User.Bytes()),
+				hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
 				event.ValidatorId.Uint64(),
 				hmTypes.NewPubKey(pubkey[:]),
 				hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
@@ -465,7 +469,7 @@ func (syncer *Syncer) processReStakedEvent(eventName string, abiObject *abi.ABI,
 		syncer.Logger.Debug(
 			"New event found",
 			"event", eventName,
-			"user", event.User.Hex(),
+			"signer", event.Signer.Hex(),
 			"validatorId", event.ValidatorId,
 			"activationEpoch", event.ActivationEpoch,
 			"amount", event.Amount,
@@ -599,6 +603,60 @@ func (syncer *Syncer) processDelegatorUnBondEvent(eventName string, abiObject *a
 			"ValidatorId", event.ValidatorId,
 		)
 		msg := stakingTypes.NewMsgDelegatorUnBond(
+			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
+			hmTypes.DelegatorID(event.DelegatorId.Uint64()),
+			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
+			uint64(vLog.Index),
+		)
+
+		// broadcast to heimdall
+		syncer.queueConnector.BroadcastToHeimdall(msg)
+	}
+}
+
+// processDelegatorReBondEvent
+func (syncer *Syncer) processDelegatorReBondEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
+
+	event := new(delegationmanager.DelegationmanagerReBonding)
+
+	if err := helper.UnpackLog(abiObject, event, eventName, vLog); err != nil {
+		logEventParseError(syncer.Logger, eventName, err)
+	} else {
+		syncer.Logger.Debug(
+			"New event found",
+			"event", eventName,
+			"DelegatorId", event.DelegatorId,
+			"OldValidatorId", event.OldValidatorId,
+			"NewValidatorID", event.NewValidatorId,
+		)
+		msg := stakingTypes.NewMsgDelegatorReBond(
+			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
+			hmTypes.DelegatorID(event.DelegatorId.Uint64()),
+			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
+			uint64(vLog.Index),
+		)
+
+		// broadcast to heimdall
+		syncer.queueConnector.BroadcastToHeimdall(msg)
+	}
+}
+
+// processDelStakeUpdateEvent
+func (syncer *Syncer) processDelStakeUpdateEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
+
+	event := new(delegationmanager.DelegationmanagerDelStakeUpdate)
+
+	if err := helper.UnpackLog(abiObject, event, eventName, vLog); err != nil {
+		logEventParseError(syncer.Logger, eventName, err)
+	} else {
+		syncer.Logger.Debug(
+			"New event found",
+			"event", eventName,
+			"DelegatorId", event.DelegatorId,
+			"OldAmount", event.OldAmount,
+			"NewAmount", event.NewAmount,
+		)
+		msg := stakingTypes.NewMsgDelStakeUpdate(
 			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
 			hmTypes.DelegatorID(event.DelegatorId.Uint64()),
 			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),

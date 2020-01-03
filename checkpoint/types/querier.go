@@ -4,6 +4,7 @@ package types
 const (
 	QueryAckCount           = "ack-count"
 	QueryInitialAccountRoot = "initial-account-root"
+	QueryAccountProof       = "dividend-account-proof"
 	QueryCheckpoint         = "checkpoint"
 	QueryCheckpointBuffer   = "checkpoint-buffer"
 	QueryLastNoAck          = "last-no-ack"
