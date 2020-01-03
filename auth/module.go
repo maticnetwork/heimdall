@@ -129,7 +129,7 @@ func (am AppModule) NewQuerierHandler() sdk.Querier {
 // no validator updates.
 func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.ValidatorUpdate {
 	var genesisState types.GenesisState
-	err := json.Unmarshal(data, &genesisState)
+	err := types.ModuleCdc.UnmarshalJSON(data, &genesisState)
 	if err != nil {
 		panic(err)
 	}
@@ -141,7 +141,7 @@ func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.Va
 // module.
 func (am AppModule) ExportGenesis(ctx sdk.Context) json.RawMessage {
 	gs := ExportGenesis(ctx, am.accountKeeper)
-	res, err := json.Marshal(gs)
+	res, err := types.ModuleCdc.MarshalJSON(gs)
 	if err != nil {
 		panic(err)
 	}
