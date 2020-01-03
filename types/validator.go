@@ -20,6 +20,7 @@ type Validator struct {
 	DelegatedPower       int64           `json:"delegatedpower"`
 	DelgatorRewardPool   string          `json:delegatorRewardPool`  // string representation of big.Int
 	TotalDelegatorShares string          `json:totalDelegatorShares` // string representation of big.Int
+	CommissionRate       uint64          `json:commissionRate`
 	PubKey               PubKey          `json:"pubKey"`
 	Signer               HeimdallAddress `json:"signer"`
 	LastUpdated          uint64          `json:"last_updated"`

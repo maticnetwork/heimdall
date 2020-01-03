@@ -40,6 +40,7 @@ type IContractCaller interface {
 	DecodeSignerUpdateEvent(*ethTypes.Receipt, uint64) (*stakemanager.StakemanagerSignerChange, error)
 	GetMainTxReceipt(common.Hash) (*ethTypes.Receipt, error)
 	GetMaticTxReceipt(common.Hash) (*ethTypes.Receipt, error)
+	DecodeCommissionRateUpdateEvent(*ethTypes.Receipt, uint64) (*delegationmanager.DelegationmanagerUpdateCommission, error)
 	DecodeDelegatorBondEvent(*ethTypes.Receipt, uint64) (*delegationmanager.DelegationmanagerBonding, error)
 	DecodeDelegatorUnBondEvent(*ethTypes.Receipt, uint64) (*delegationmanager.DelegationmanagerUnBonding, error)
 	DecodeDelegatorReBondEvent(*ethTypes.Receipt, uint64) (*delegationmanager.DelegationmanagerReBonding, error)
@@ -468,6 +469,28 @@ func (c *ContractCaller) DecodeDelStakeUpdateEvent(receipt *ethTypes.Receipt, lo
 		if uint64(log.Index) == logIndex {
 			found = true
 			if err := UnpackLog(&c.DelegationManagerABI, event, "DelStakeUpdate", log); err != nil {
+				return nil, err
+			}
+			break
+		}
+	}
+
+	if !found {
+		return nil, errors.New("Event not found")
+	}
+
+	return event, nil
+}
+
+// DecodeCommissionRateUpdateEvent represents validator commission rate Update event
+func (c *ContractCaller) DecodeCommissionRateUpdateEvent(receipt *ethTypes.Receipt, logIndex uint64) (*delegationmanager.DelegationmanagerUpdateCommission, error) {
+
+	event := new(delegationmanager.DelegationmanagerUpdateCommission)
+	found := false
+	for _, log := range receipt.Logs {
+		if uint64(log.Index) == logIndex {
+			found = true
+			if err := UnpackLog(&c.DelegationManagerABI, event, "UpdateCommission", log); err != nil {
 				return nil, err
 			}
 			break

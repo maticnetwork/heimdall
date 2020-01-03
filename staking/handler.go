@@ -197,6 +197,73 @@ func HandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keeper, c
 	}
 }
 
+// HandleMsgCommissionRateUpdate handles commission rate update message
+func HandleMsgCommissionRateUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
+	k.Logger(ctx).Debug("Handling commission rate update", "Validator", msg.ID)
+
+	// get main tx receipt
+	receipt, err := contractCaller.GetConfirmedTxReceipt(msg.TxHash.EthHash())
+	if err != nil || receipt == nil {
+		return hmCommon.ErrWaitForConfirmation(k.Codespace()).Result()
+	}
+
+	eventLog, err := contractCaller.DecodeCommissionRateUpdateEvent(receipt, msg.LogIndex)
+	if err != nil || eventLog == nil {
+		k.Logger(ctx).Error("Error fetching log from txhash")
+		return hmCommon.ErrInvalidMsg(k.Codespace(), "Unable to fetch logs for txHash").Result()
+	}
+
+	if eventLog.ValidatorId.Uint64() != msg.ID.Uint64() {
+		k.Logger(ctx).Error("ID in message doesnt match id in logs", "MsgID", msg.ID, "IdFromTx", eventLog.ValidatorId)
+		return hmCommon.ErrInvalidMsg(k.Codespace(), "Invalid txhash, id's dont match. Id from tx hash is %v", eventLog.ValidatorId.Uint64()).Result()
+	}
+
+	// pull validator from store
+	validator, ok := k.GetValidatorFromValID(ctx, msg.ID)
+	if !ok {
+		k.Logger(ctx).Error("Fetching of validator from store failed", "validatorId", msg.ID)
+		return hmCommon.ErrNoValidator(k.Codespace()).Result()
+	}
+
+	// sequence id
+	sequence := (receipt.BlockNumber.Uint64() * hmTypes.DefaultLogIndexUnit) + msg.LogIndex
+
+	// check if incoming tx is older
+	if k.HasStakingSequence(ctx, sequence) {
+		k.Logger(ctx).Error("Older invalid tx found")
+		return hmCommon.ErrOldTx(k.Codespace()).Result()
+	}
+
+	// update last updated
+	validator.LastUpdated = sequence
+
+	// set validator amount
+	validator.CommissionRate = eventLog.Rate.Uint64()
+
+	// save validator
+	err = k.AddValidator(ctx, validator)
+	if err != nil {
+		k.Logger(ctx).Error("Unable to update commission rate", "error", err, "ValidatorID", validator.ID)
+		return hmCommon.ErrSignerUpdateError(k.Codespace()).Result()
+	}
+
+	// save staking sequence
+	k.SetStakingSequence(ctx, sequence)
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeCommissionUpdate,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(validator.ID.Uint64(), 10)),
+			sdk.NewAttribute(types.AttributeKeyUpdatedAt, strconv.FormatUint(validator.LastUpdated, 10)),
+		),
+	})
+
+	return sdk.Result{
+		Events: ctx.EventManager().Events(),
+	}
+}
+
 // HandleMsgSignerUpdate handles signer update message
 func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	k.Logger(ctx).Debug("Handling signer update", "Validator", msg.ID, "Signer", msg.NewSignerPubKey.Address())

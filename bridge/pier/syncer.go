@@ -304,6 +304,8 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 					syncer.processJailedEvent(selectedEvent.Name, abiObject, &vLog)
 				case "StateSynced":
 					syncer.processStateSyncedEvent(selectedEvent.Name, abiObject, &vLog)
+				case "UpdateCommission":
+					syncer.processCommissionUpdateEvent(selectedEvent.Name, abiObject, &vLog)
 				case "Bonding":
 					syncer.processDelegatorBondEvent(selectedEvent.Name, abiObject, &vLog)
 				case "UnBonding":
@@ -428,6 +430,33 @@ func (syncer *Syncer) processStakeUpdateEvent(eventName string, abiObject *abi.A
 			// broadcast heimdall
 			syncer.queueConnector.BroadcastToHeimdall(msg)
 		}
+	}
+}
+
+func (syncer *Syncer) processCommissionUpdateEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
+	event := new(delegationmanager.DelegationmanagerUpdateCommission)
+	if err := helper.UnpackLog(abiObject, event, eventName, vLog); err != nil {
+		logEventParseError(syncer.Logger, eventName, err)
+	} else {
+		syncer.Logger.Debug(
+			"New event found",
+			"event", eventName,
+			"validatorID", event.ValidatorId,
+			"commission rate", event.Rate,
+		)
+
+		// msg update commission rate
+
+		msg := stakingTypes.NewMsgCommissionRateUpdate(
+			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
+			event.ValidatorId.Uint64(),
+			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
+			uint64(vLog.Index),
+		)
+
+		// broadcast heimdall
+		syncer.queueConnector.BroadcastToHeimdall(msg)
+
 	}
 }
 
