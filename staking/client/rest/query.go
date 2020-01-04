@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -278,7 +279,7 @@ func initialRewardRootHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", checkpointTypes.QuerierRoute, checkpointTypes.QueryInitialRewardRoot), nil)
-		RestLogger.Debug("initial rewardRootHash querier response", "res", res)
+		RestLogger.Debug("initial rewardRootHash querier response", "res", hex.EncodeToString(res))
 
 		if err != nil {
 			RestLogger.Error("Error while calculating Initial Rewardroot ", "Error", err.Error())
