@@ -28,7 +28,7 @@ var (
 )
 
 // RootchainABI is the input ABI used to generate the binding from.
-const RootchainABI = "[{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"headerBlocks\",\"outputs\":[{\"name\":\"root\",\"type\":\"bytes32\"},{\"name\":\"start\",\"type\":\"uint256\"},{\"name\":\"end\",\"type\":\"uint256\"},{\"name\":\"createdAt\",\"type\":\"uint256\"},{\"name\":\"proposer\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getLastChildBlock\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"currentHeaderBlock\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"vote\",\"type\":\"bytes\"},{\"name\":\"sigs\",\"type\":\"bytes\"},{\"name\":\"extradata\",\"type\":\"bytes\"}],\"name\":\"submitHeaderBlock\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"proposer\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"headerBlockId\",\"type\":\"uint256\"},{\"indexed\":true,\"name\":\"reward\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"start\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"end\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"root\",\"type\":\"bytes32\"}],\"name\":\"NewHeaderBlock\",\"type\":\"event\"}]"
+const RootchainABI = "[{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"headerBlocks\",\"outputs\":[{\"name\":\"root\",\"type\":\"bytes32\"},{\"name\":\"start\",\"type\":\"uint256\"},{\"name\":\"end\",\"type\":\"uint256\"},{\"name\":\"createdAt\",\"type\":\"uint256\"},{\"name\":\"proposer\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getLastChildBlock\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"currentHeaderBlock\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"vote\",\"type\":\"bytes\"},{\"name\":\"sigs\",\"type\":\"bytes\"},{\"name\":\"txData\",\"type\":\"bytes\"}],\"name\":\"submitHeaderBlock\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"proposer\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"headerBlockId\",\"type\":\"uint256\"},{\"indexed\":true,\"name\":\"reward\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"start\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"end\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"root\",\"type\":\"bytes32\"}],\"name\":\"NewHeaderBlock\",\"type\":\"event\"}]"
 
 // Rootchain is an auto generated Go binding around an Ethereum contract.
 type Rootchain struct {
@@ -274,23 +274,23 @@ func (_Rootchain *RootchainCallerSession) HeaderBlocks(arg0 *big.Int) (struct {
 
 // SubmitHeaderBlock is a paid mutator transaction binding the contract method 0xec83d3ba.
 //
-// Solidity: function submitHeaderBlock(bytes vote, bytes sigs, bytes extradata) returns()
-func (_Rootchain *RootchainTransactor) SubmitHeaderBlock(opts *bind.TransactOpts, vote []byte, sigs []byte, extradata []byte) (*types.Transaction, error) {
-	return _Rootchain.contract.Transact(opts, "submitHeaderBlock", vote, sigs, extradata)
+// Solidity: function submitHeaderBlock(bytes vote, bytes sigs, bytes txData) returns()
+func (_Rootchain *RootchainTransactor) SubmitHeaderBlock(opts *bind.TransactOpts, vote []byte, sigs []byte, txData []byte) (*types.Transaction, error) {
+	return _Rootchain.contract.Transact(opts, "submitHeaderBlock", vote, sigs, txData)
 }
 
 // SubmitHeaderBlock is a paid mutator transaction binding the contract method 0xec83d3ba.
 //
-// Solidity: function submitHeaderBlock(bytes vote, bytes sigs, bytes extradata) returns()
-func (_Rootchain *RootchainSession) SubmitHeaderBlock(vote []byte, sigs []byte, extradata []byte) (*types.Transaction, error) {
-	return _Rootchain.Contract.SubmitHeaderBlock(&_Rootchain.TransactOpts, vote, sigs, extradata)
+// Solidity: function submitHeaderBlock(bytes vote, bytes sigs, bytes txData) returns()
+func (_Rootchain *RootchainSession) SubmitHeaderBlock(vote []byte, sigs []byte, txData []byte) (*types.Transaction, error) {
+	return _Rootchain.Contract.SubmitHeaderBlock(&_Rootchain.TransactOpts, vote, sigs, txData)
 }
 
 // SubmitHeaderBlock is a paid mutator transaction binding the contract method 0xec83d3ba.
 //
-// Solidity: function submitHeaderBlock(bytes vote, bytes sigs, bytes extradata) returns()
-func (_Rootchain *RootchainTransactorSession) SubmitHeaderBlock(vote []byte, sigs []byte, extradata []byte) (*types.Transaction, error) {
-	return _Rootchain.Contract.SubmitHeaderBlock(&_Rootchain.TransactOpts, vote, sigs, extradata)
+// Solidity: function submitHeaderBlock(bytes vote, bytes sigs, bytes txData) returns()
+func (_Rootchain *RootchainTransactorSession) SubmitHeaderBlock(vote []byte, sigs []byte, txData []byte) (*types.Transaction, error) {
+	return _Rootchain.Contract.SubmitHeaderBlock(&_Rootchain.TransactOpts, vote, sigs, txData)
 }
 
 // RootchainNewHeaderBlockIterator is returned from FilterNewHeaderBlock and is used to iterate over the raw logs and unpacked data for NewHeaderBlock events raised by the Rootchain contract.
