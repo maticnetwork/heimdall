@@ -58,7 +58,7 @@ func handleQueryCheckpoint(ctx sdk.Context, req abci.RequestQuery, keeper Keeper
 
 	res, err := keeper.GetCheckpointByIndex(ctx, params.HeaderIndex)
 	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not fetch genesis rewardroothash", err.Error()))
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr(fmt.Sprintf("could not fetch checkpoint by index %v", params.HeaderIndex), err.Error()))
 	}
 
 	bz, err := json.Marshal(res)
@@ -71,7 +71,7 @@ func handleQueryCheckpoint(ctx sdk.Context, req abci.RequestQuery, keeper Keeper
 func handleQueryCheckpointBuffer(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	res, err := keeper.GetCheckpointFromBuffer(ctx)
 	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not fetch genesis rewardroothash", err.Error()))
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not fetch checkpoint buffer", err.Error()))
 	}
 
 	if res == nil {
@@ -104,7 +104,7 @@ func handleQueryCheckpointList(ctx sdk.Context, req abci.RequestQuery, keeper Ke
 
 	res, err := keeper.GetCheckpointList(ctx, params.Page, params.Limit)
 	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not fetch genesis rewardroothash", err.Error()))
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr(fmt.Sprintf("could not fetch checkpoint list with page %v and limit %v", params.Page, params.Limit), err.Error()))
 	}
 
 	bz, err := json.Marshal(res)
