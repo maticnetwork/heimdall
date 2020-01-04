@@ -498,9 +498,9 @@ func (c *Checkpointer) sendCheckpointToHeimdall(start uint64, end uint64) error 
 func (c *Checkpointer) commitCheckpoint(startBlock uint64, endBlock uint64) {
 	// create tag query
 	var tags []string
-	tags = append(tags, fmt.Sprintf("propose-span.start-block='%v'", startBlock))
-	tags = append(tags, fmt.Sprintf("propose-span.end-block='%v'", endBlock))
-	tags = append(tags, "action='checkpoint'")
+	tags = append(tags, fmt.Sprintf("checkpoint.start-block='%v'", startBlock))
+	tags = append(tags, fmt.Sprintf("checkpoint.end-block='%v'", endBlock))
+	tags = append(tags, "message.action='checkpoint'")
 
 	// handler
 	handler := func() bool {
