@@ -452,7 +452,7 @@ func (c *Checkpointer) sendCheckpointToHeimdall(start uint64, end uint64) error 
 		// Get Latest Reward Root Hash through rest call
 		latestCheckpoint, err := c.fetchCheckpoint(GetHeimdallServerEndpoint(LatestCheckpointURL))
 		if err != nil {
-			c.Logger.Info("Error while fetching Latest Checkpoint from heimdallserver", "err", err)
+			c.Logger.Info("Error while fetching Latest Checkpoint from HeimdallServer", "err", err)
 			return err
 		}
 		rewardRootHash = latestCheckpoint.RewardRootHash
