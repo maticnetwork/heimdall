@@ -452,7 +452,7 @@ func (c *Checkpointer) sendCheckpointToHeimdall(start uint64, end uint64) error 
 		// Get Latest Account Root Hash through rest call
 		latestCheckpoint, err := c.fetchCheckpoint(GetHeimdallServerEndpoint(LatestCheckpointURL))
 		if err != nil {
-			c.Logger.Info("Error while fetching Latest Checkpoint from heimdallserver", "err", err)
+			c.Logger.Info("Error while fetching Latest Checkpoint from HeimdallServer", "err", err)
 			return err
 		}
 		accountRootHash = latestCheckpoint.AccountRootHash
@@ -498,9 +498,9 @@ func (c *Checkpointer) sendCheckpointToHeimdall(start uint64, end uint64) error 
 func (c *Checkpointer) commitCheckpoint(startBlock uint64, endBlock uint64) {
 	// create tag query
 	var tags []string
-	tags = append(tags, fmt.Sprintf("propose-span.start-block='%v'", startBlock))
-	tags = append(tags, fmt.Sprintf("propose-span.end-block='%v'", endBlock))
-	tags = append(tags, "action='checkpoint'")
+	tags = append(tags, fmt.Sprintf("checkpoint.start-block='%v'", startBlock))
+	tags = append(tags, fmt.Sprintf("checkpoint.end-block='%v'", endBlock))
+	tags = append(tags, "message.action='checkpoint'")
 
 	// handler
 	handler := func() bool {

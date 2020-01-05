@@ -16,6 +16,7 @@ import (
 
 	"github.com/maticnetwork/heimdall/app"
 	tx "github.com/maticnetwork/heimdall/client/tx"
+	"github.com/maticnetwork/heimdall/helper"
 
 	// unnamed import of statik for swagger UI support
 	_ "github.com/maticnetwork/heimdall/server/statik"
@@ -29,6 +30,8 @@ func ServeCommands(cdc *codec.Codec, registerRoutesFn func(*lcd.RestServer)) *co
 		Use:   "rest-server",
 		Short: "Start LCD (light-client daemon), a local REST server",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			helper.InitHeimdallConfig("")
+
 			rs := lcd.NewRestServer(cdc)
 			registerRoutesFn(rs)
 			logger := tmLog.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "rest-server")

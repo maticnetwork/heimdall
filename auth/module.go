@@ -41,7 +41,7 @@ func (AppModuleBasic) RegisterCodec(cdc *codec.Codec) {
 // DefaultGenesis returns default genesis state as raw bytes for the auth
 // module.
 func (AppModuleBasic) DefaultGenesis() json.RawMessage {
-	result, err := types.ModuleCdc.MarshalJSON(types.DefaultGenesisState())
+	result, err := json.Marshal(types.DefaultGenesisState())
 	if err != nil {
 		panic(err)
 	}
@@ -51,7 +51,7 @@ func (AppModuleBasic) DefaultGenesis() json.RawMessage {
 // ValidateGenesis performs genesis state validation for the auth module.
 func (AppModuleBasic) ValidateGenesis(bz json.RawMessage) error {
 	var data types.GenesisState
-	err := types.ModuleCdc.UnmarshalJSON(bz, &data)
+	err := json.Unmarshal(bz, &data)
 	if err != nil {
 		return err
 	}
@@ -129,7 +129,7 @@ func (am AppModule) NewQuerierHandler() sdk.Querier {
 // no validator updates.
 func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.ValidatorUpdate {
 	var genesisState types.GenesisState
-	err := types.ModuleCdc.UnmarshalJSON(data, &genesisState)
+	err := json.Unmarshal(data, &genesisState)
 	if err != nil {
 		panic(err)
 	}
@@ -141,7 +141,7 @@ func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.Va
 // module.
 func (am AppModule) ExportGenesis(ctx sdk.Context) json.RawMessage {
 	gs := ExportGenesis(ctx, am.accountKeeper)
-	res, err := types.ModuleCdc.MarshalJSON(gs)
+	res, err := json.Marshal(gs)
 	if err != nil {
 		panic(err)
 	}
