@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/maticnetwork/bor/common"
 	types "github.com/maticnetwork/heimdall/checkpoint/types"
 	hmClient "github.com/maticnetwork/heimdall/client"
 	"github.com/maticnetwork/heimdall/helper"
@@ -142,7 +143,8 @@ func SendCheckpointACKTx(cdc *codec.Codec) *cobra.Command {
 			if checkpointTxHashStr == "" {
 				return fmt.Errorf("checkpoint tx hash cannot be empty")
 			}
-			checkpointTxHash := hmTypes.BytesToHeimdallHash([]byte(checkpointTxHashStr))
+
+			checkpointTxHash := hmTypes.BytesToHeimdallHash(common.FromHex(checkpointTxHashStr))
 
 			// new checkpoint
 			msg := types.NewMsgCheckpointAck(proposer, headerBlock, checkpointTxHash, uint64(viper.GetInt64(FlagCheckpointLogIndex)))
