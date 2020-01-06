@@ -241,8 +241,8 @@ github.com/magiconair/properties v1.8.1 h1:ZC2Vc7/ZFkGmsVC9KvOjumD+G5lXy2RtTKyzR
 github.com/magiconair/properties v1.8.1/go.mod h1:PppfXfuXeibc/6YijjN8zIbojt8czPbwD3XqdrwzmxQ=
 github.com/maticnetwork/bor v0.0.0-20191204165821-bd9cd503a1b3 h1:KhlP5W7sxwgk/zA+7HB2cNzHQNyGU+ijc5x5sfq1HxI=
 github.com/maticnetwork/bor v0.0.0-20191204165821-bd9cd503a1b3/go.mod h1:Bdz1Wi8GdWw8sXeXhUhQtTFMi+jolJdyjejdXc5fks4=
-github.com/maticnetwork/tendermint v0.26.0-dev0.0.20191226194020-c743ff66399b h1:YES9NAyWUh/xAYYWnUq6+bdqcZu92jTldTuMtgTbvjc=
-github.com/maticnetwork/tendermint v0.26.0-dev0.0.20191226194020-c743ff66399b/go.mod h1:2uZWl1/STgy84Y0QUipDtU7pMbKQxpFRi1h1qt7B/vE=
+github.com/maticnetwork/tendermint v0.26.0-dev0.0.20200105181728-9b2d312d5d14 h1:QLLqq+rlcylWhTxgRMzJKfz3h0QvURTxAzyX86gA2Ng=
+github.com/maticnetwork/tendermint v0.26.0-dev0.0.20200105181728-9b2d312d5d14/go.mod h1:2uZWl1/STgy84Y0QUipDtU7pMbKQxpFRi1h1qt7B/vE=
 github.com/mattn/go-colorable v0.1.0 h1:v2XXALHHh6zHfYTJ+cSkwtyffnaOyR1MXaA91mTrb8o=
 github.com/mattn/go-colorable v0.1.0/go.mod h1:9vuHe8Xs5qXnSaW/c/ABM9alt+Vo+STaOChaDxuIBZU=
 github.com/mattn/go-ieproxy v0.0.0-20190610004146-91bb50d98149/go.mod h1:31jz6HNzdxOmlERGGEc4v/dMssOfmp2p5bT/okiKFFc=
