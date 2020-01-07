@@ -20,6 +20,7 @@ import (
 	"github.com/tendermint/tendermint/libs/common"
 	httpClient "github.com/tendermint/tendermint/rpc/client"
 
+	bankTypes "github.com/maticnetwork/heimdall/bank/types"
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
 	"github.com/maticnetwork/heimdall/contracts/delegationmanager"
@@ -304,6 +305,8 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 					syncer.processJailedEvent(selectedEvent.Name, abiObject, &vLog)
 				case "StateSynced":
 					syncer.processStateSyncedEvent(selectedEvent.Name, abiObject, &vLog)
+				case "TopUpFee":
+					syncer.processTopupFeeEvent(selectedEvent.Name, abiObject, &vLog)
 				case "UpdateCommission":
 					syncer.processCommissionUpdateEvent(selectedEvent.Name, abiObject, &vLog)
 				case "Bonding":
@@ -697,6 +700,27 @@ func (syncer *Syncer) processDelStakeUpdateEvent(eventName string, abiObject *ab
 		syncer.queueConnector.BroadcastToHeimdall(msg)
 	}
 }
+
+// processTopupFeeEvent
+func (syncer *Syncer) processTopupFeeEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
+
+	event := new(stakemanager.StakemanagerTopUpFee)
+	if err := helper.UnpackLog(abiObject, event, eventName, vLog); err != nil {
+		logEventParseError(syncer.Logger, eventName, err)
+	} else {
+		syncer.Logger.Info(
+			"New event found",
+			"event", eventName,
+			"validatorId", event.ValidatorId,
+			"Fee", event.Fee,
+		)
+
+		// create msg checkpoint ack message
+		msg := bankTypes.NewMsgTopup(helper.GetFromAddress(syncer.cliCtx), event.ValidatorId.Uint64(), hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()), uint64(vLog.Index))
+		syncer.queueConnector.BroadcastToHeimdall(msg)
+	}
+}
+
 
 //
 // Utils

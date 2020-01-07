@@ -24,6 +24,8 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 			return handleMsgMultiSend(ctx, k, msg)
 		case types.MsgTopup:
 			return handleMsgTopup(ctx, k, msg, contractCaller)
+		case types.MsgWithdrawTopup:
+			return handleMsgWithdrawTopup(ctx, k, msg)
 		default:
 			errMsg := "Unrecognized bank Msg type: %s" + msg.Type()
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -167,6 +169,43 @@ func handleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCalle
 			sdk.NewAttribute(types.AttributeKeyTopupAmount, strconv.FormatUint(eventLog.Fee.Uint64(), 10)),
 		),
 	})
+
+	return sdk.Result{
+		Events: ctx.EventManager().Events(),
+	}
+}
+
+// Handle MsgWithdrawTopup.
+func handleMsgWithdrawTopup(ctx sdk.Context, k Keeper, msg types.MsgWithdrawTopup) sdk.Result {
+	if !k.GetSendEnabled(ctx) {
+		return types.ErrSendDisabled(k.Codespace()).Result()
+	}
+
+	// check if topup is already withdrawn
+	coinBalance := k.GetCoins(ctx, msg.FromAddress)
+	if coinBalance.IsZero() {
+		return types.ErrTopupAlreadyWithdrawn(k.Codespace()).Result()
+	}
+
+	// withdraw coins of validator.
+	balanceLeft, err := k.SubtractCoins(ctx, msg.FromAddress, coinBalance)
+	if err != nil {
+		return err.Result()
+	}
+
+	// balance should not be left after withdrawal
+	if !balanceLeft.IsZero() {
+		return hmCommon.ErrSignerUpdateError(k.Codespace()).Result()
+	}
+
+	// Add topup to Dividend Account
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+		),
+	)
 
 	return sdk.Result{
 		Events: ctx.EventManager().Events(),
