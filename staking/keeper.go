@@ -490,14 +490,13 @@ func (k *Keeper) BondDelegator(ctx sdk.Context, delegatorID hmTypes.DelegatorID,
 		}
 	} else {
 		dividendAccount = hmTypes.DividendAccount{
-			ID:            hmTypes.DividendAccountID(valID),
+			ID:            hmTypes.DividendAccountID(delegatorID),
 			RewardAmount:  big.NewInt(0).String(),
 			Shares:        big.NewInt(0).String(),
 			SlashedAmount: big.NewInt(0).String(),
 		}
 	}
 
-	// 3. VotingPower of the bonded validator is updated.
 	// pull validator from store
 	validator, ok := k.GetValidatorFromValID(ctx, valID)
 	if !ok {
@@ -505,20 +504,7 @@ func (k *Keeper) BondDelegator(ctx sdk.Context, delegatorID hmTypes.DelegatorID,
 		return errors.New("Validator not found")
 	}
 
-	// 4. shares are added to Delegator proportional to his stake and exchange rate.
-	// newDelegatorshares = (delegatorstake / exchangeRate)
-	delegatorStake := big.NewFloat(0).SetInt(amount)
-	newDelegatorshares := new(big.Float).Quo(delegatorStake, validator.ExchangeRate())
-	newShares := new(big.Int)
-	newDelegatorshares.Int(newShares)
-
-	// add shares to delegator dividend account
-	oldShares, _ := big.NewInt(0).SetString(dividendAccount.Shares, 10)
-	dividendAccount.Shares = big.NewInt(0).Add(oldShares, newShares).String()
-
-	// 6. TotalDelegatorShares of bonded validator is updated.
-	oldTotalDelegatorShares, _ := big.NewInt(0).SetString(validator.TotalDelegatorShares, 10)
-	validator.TotalDelegatorShares = big.NewInt(0).Add(oldTotalDelegatorShares, newShares).String()
+	addShares(amount, &dividendAccount, &validator)
 
 	p, err := helper.GetPowerFromAmount(amount)
 	if err != nil {
@@ -528,6 +514,7 @@ func (k *Keeper) BondDelegator(ctx sdk.Context, delegatorID hmTypes.DelegatorID,
 
 	validator.VotingPower += p.Int64()
 
+	k.Logger(ctx).Info("voting power after bond", "power", validator.VotingPower)
 	// 7. DelegatedPower of bonded validator is updated.
 	validator.DelegatedPower += p.Int64()
 
@@ -545,6 +532,51 @@ func (k *Keeper) BondDelegator(ctx sdk.Context, delegatorID hmTypes.DelegatorID,
 		return errors.New("Validator updation failed")
 	}
 	return nil
+}
+
+func addShares(stakeAmount *big.Int, delegatorDivAccount *hmTypes.DividendAccount, validator *hmTypes.Validator) {
+	// add shares to Delegator proportional to his stake and exchange rate.
+	// newDelegatorshares = (delegatorstake / exchangeRate)
+	delegatorStake := big.NewFloat(0).SetInt(stakeAmount)
+	newDelegatorshares := new(big.Float).Quo(delegatorStake, validator.ExchangeRate())
+	newShares := new(big.Int)
+	newShares, _ = newDelegatorshares.Int(newShares)
+
+	oldShares, _ := big.NewInt(0).SetString(delegatorDivAccount.Shares, 10)
+	delegatorDivAccount.Shares = big.NewInt(0).Add(oldShares, newShares).String()
+
+	// update TotalDelegatorShares of bonded validator
+	oldTotalDelegatorShares, _ := big.NewInt(0).SetString(validator.TotalDelegatorShares, 10)
+	validator.TotalDelegatorShares = big.NewInt(0).Add(oldTotalDelegatorShares, newShares).String()
+}
+
+func withdrawRewardsFromPool(stakeAmount *big.Int, delegatorDivAccount *hmTypes.DividendAccount, validator *hmTypes.Validator) {
+	// Get shares of delegator account
+	delegatorshares, _ := big.NewFloat(0).SetString(delegatorDivAccount.Shares)
+
+	// // calculate rewards.
+	totalDelegatorReturns := big.NewFloat(0).Mul(validator.ExchangeRate(), delegatorshares)
+	totalDelegatorReturnsInt := big.NewInt(0)
+	totalDelegatorReturnsInt, _ = totalDelegatorReturns.Int(totalDelegatorReturnsInt)
+	rewardAmount := big.NewInt(0).Sub(totalDelegatorReturnsInt, stakeAmount)
+
+	// withdraw from delegator reward pool
+	delegatorRewardPool, _ := big.NewInt(0).SetString(validator.DelgatorRewardPool, 10)
+	validator.DelgatorRewardPool = big.NewInt(0).Sub(delegatorRewardPool, rewardAmount).String()
+	prevRewardAmount, _ := big.NewInt(0).SetString(delegatorDivAccount.RewardAmount, 10)
+	delegatorDivAccount.RewardAmount = big.NewInt(0).Add(prevRewardAmount, rewardAmount).String()
+
+}
+
+func burnShares(stakeAmount *big.Int, delegatorDivAccount *hmTypes.DividendAccount, validator *hmTypes.Validator) {
+	// Burn TotalDelegatorShares of validator
+	delegatorsharesInt, _ := big.NewInt(0).SetString(delegatorDivAccount.Shares, 10)
+	totalDelegatorShares, _ := big.NewInt(0).SetString(validator.TotalDelegatorShares, 10)
+	validator.TotalDelegatorShares = big.NewInt(0).Sub(totalDelegatorShares, delegatorsharesInt).String()
+
+	// Burn shares of Delegator dividend account
+	delegatorDivAccount.Shares = big.NewInt(0).String()
+
 }
 
 // HandleMsgDelegatorUnBond msg delegator unbond with validator
@@ -578,46 +610,14 @@ func (k *Keeper) UnBondDelegator(ctx sdk.Context, delegatorID hmTypes.DelegatorI
 		return errors.New("Validator not found")
 	}
 
-	// Get shares of delegator account
-	delegatorshares, ok := big.NewFloat(0).SetString(delegatorAccount.Shares)
-	if !ok {
-		return errors.New("unable to convert string to big float")
-	}
-	delegatorsharesInt, ok := big.NewInt(0).SetString(delegatorAccount.Shares, 10)
+	withdrawRewardsFromPool(amount, &delegatorAccount, &validator)
+	burnShares(amount, &delegatorAccount, &validator)
 
-	// validator.VotingPower -= delegator.VotingPower
-
-	// // calculate rewards.
-	totalDelegatorReturns := big.NewFloat(0).Mul(validator.ExchangeRate(), delegatorshares)
-	totalDelegatorReturnsInt := big.NewInt(0)
-	totalDelegatorReturnsInt, _ = totalDelegatorReturns.Int(totalDelegatorReturnsInt)
-	rewardAmount := big.NewInt(0).Sub(totalDelegatorReturnsInt, amount)
-
-	prevRewardAmount, ok := big.NewInt(0).SetString(delegatorAccount.RewardAmount, 10)
-	if !ok {
-		errors.New("cannot convert delegator reward amount to string")
-	}
-	delegatorAccount.RewardAmount = big.NewInt(0).Add(prevRewardAmount, rewardAmount).String()
-	delegatorAccount.Shares = big.NewInt(0).String()
-
-	delegatorRewardPool, ok := big.NewInt(0).SetString(validator.DelgatorRewardPool, 10)
-	if !ok {
-		return errors.New("cannot convert delegator reward pool to big int")
-	}
-	validator.DelgatorRewardPool = big.NewInt(0).Sub(delegatorRewardPool, rewardAmount).String()
-
-	// // 6. TotalDelegatorShares of bonded validator is updated.
-	// validator.TotalDelegatorShares -= delegatorshares
-	totalDelegatorShares, ok := big.NewInt(0).SetString(validator.TotalDelegatorShares, 10)
-	if !ok {
-		return errors.New("cannot convert TotalDelegatorShares to big int")
-	}
-
-	validator.TotalDelegatorShares = big.NewInt(0).Sub(totalDelegatorShares, delegatorsharesInt).String()
-
-	// // 7. DelegatedPower of bonded validator is updated.
+	// DelegatedPower of bonded validator is updated.
 	delPow, err := helper.GetPowerFromAmount(amount)
 	validator.DelegatedPower -= delPow.Int64()
+	validator.VotingPower -= delPow.Int64()
+	k.Logger(ctx).Info("voting power after unbond", "power", validator.VotingPower)
 
 	// save validator
 	err = k.AddValidator(ctx, validator)
@@ -636,8 +636,33 @@ func (k *Keeper) UnBondDelegator(ctx sdk.Context, delegatorID hmTypes.DelegatorI
 	return nil
 }
 
-func (k *Keeper) DelStakeUpdate(delegatorID hmTypes.DelegatorID, oldAmount *big.Int, newAmount *big.Int) {
+// ReBondDelegator - Delegator re bond to new validator
+func (k *Keeper) ReBondDelegator(ctx sdk.Context, delegatorID hmTypes.DelegatorID, stakeAmount *big.Int, oldValID hmTypes.ValidatorID, newValID hmTypes.ValidatorID) (err error) {
 
+	stake, _ := big.NewInt(0).SetString(stakeAmount.String(), 10)
+	err = k.UnBondDelegator(ctx, delegatorID, oldValID, stake)
+	if err != nil {
+		k.Logger(ctx).Error("Error while rebonding. unbond failed", "error", err, "DelegatorID", delegatorID)
+		return errors.New("Error while rebonding")
+	}
+
+	stake, _ = big.NewInt(0).SetString(stakeAmount.String(), 10)
+	err = k.BondDelegator(ctx, delegatorID, newValID, stake)
+	if err != nil {
+		k.Logger(ctx).Error("Error while rebonding. bond failed", "error", err, "DelegatorID", delegatorID)
+		return errors.New("Error while rebonding")
+	}
+
+	return err
+}
+
+// DelStakeUpdate - Delegator stake update
+func (k *Keeper) DelStakeUpdate(ctx sdk.Context, delegatorID hmTypes.DelegatorID, valID hmTypes.ValidatorID, oldAmount *big.Int, newAmount *big.Int) (err error) {
+	if oldAmount.Cmp(newAmount) == -1 {
+		// new stake added by delegator
+		return k.BondDelegator(ctx, delegatorID, valID, newAmount.Sub(newAmount, oldAmount))
+	}
+	return nil
 }
 
 // RewardValidator will update validator dividend account with new reward

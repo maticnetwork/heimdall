@@ -630,6 +630,7 @@ func (syncer *Syncer) processDelegatorUnBondEvent(eventName string, abiObject *a
 			"event", eventName,
 			"DelegatorId", event.DelegatorId,
 			"ValidatorId", event.ValidatorId,
+			"Amount", event.Amount,
 		)
 		msg := stakingTypes.NewMsgDelegatorUnBond(
 			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),

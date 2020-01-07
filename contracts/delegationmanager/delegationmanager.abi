@@ -711,11 +711,17 @@
 			{
 				"indexed": true,
 				"internalType": "uint256",
-				"name": "oldAmount",
+				"name": "validatorId",
 				"type": "uint256"
 			},
 			{
 				"indexed": true,
+				"internalType": "uint256",
+				"name": "oldAmount",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
 				"internalType": "uint256",
 				"name": "newAmount",
 				"type": "uint256"
@@ -812,6 +818,12 @@
 				"indexed": true,
 				"internalType": "uint256",
 				"name": "newValidatorId",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
 				"type": "uint256"
 			}
 		],

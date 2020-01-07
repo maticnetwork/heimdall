@@ -2,7 +2,6 @@ package staking
 
 import (
 	"bytes"
-	"math/big"
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -33,6 +32,8 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 			return HandleMsgDelegatorUnBond(ctx, msg, k, contractCaller)
 		case types.MsgDelegatorReBond:
 			return HandleMsgDelegatorReBond(ctx, msg, k, contractCaller)
+		case types.MsgDelStakeUpdate:
+			return HandleMsgDelStakeUpdate(ctx, msg, k, contractCaller)
 		default:
 			return sdk.ErrTxDecode("Invalid message in checkpoint module").Result()
 		}
@@ -434,7 +435,7 @@ func HandleMsgDelegatorBond(ctx sdk.Context, msg types.MsgDelegatorBond, k Keepe
 	}
 
 	if eventLog.DelegatorId.Uint64() != msg.ID.Uint64() {
-		k.Logger(ctx).Error("Delegator ID in message doesnt match delegaot id in logs", "MsgID", msg.ID, "IdFromTx", eventLog.DelegatorId.Uint64())
+		k.Logger(ctx).Error("Delegator ID in message doesnt match delegator id in logs", "MsgID", msg.ID, "IdFromTx", eventLog.DelegatorId.Uint64())
 		return hmCommon.ErrInvalidMsg(k.Codespace(), "Invalid txhash, id's dont match. Id from tx hash is %v", eventLog.DelegatorId.Uint64()).Result()
 	}
 
@@ -447,7 +448,10 @@ func HandleMsgDelegatorBond(ctx sdk.Context, msg types.MsgDelegatorBond, k Keepe
 		return hmCommon.ErrOldTx(k.Codespace()).Result()
 	}
 
-	k.BondDelegator(ctx, msg.ID, hmTypes.ValidatorID(eventLog.ValidatorId.Uint64()), eventLog.Amount)
+	err = k.BondDelegator(ctx, msg.ID, hmTypes.ValidatorID(eventLog.ValidatorId.Uint64()), eventLog.Amount)
+	if err != nil {
+		return hmCommon.ErrDelegatorBond(k.Codespace()).Result()
+	}
 
 	// save staking sequence
 	k.SetStakingSequence(ctx, sequence)
@@ -510,7 +514,10 @@ func HandleMsgDelegatorUnBond(ctx sdk.Context, msg types.MsgDelegatorUnBond, k K
 		return hmCommon.ErrOldTx(k.Codespace()).Result()
 	}
 
-	k.UnBondDelegator(ctx, msg.ID, hmTypes.ValidatorID(eventLog.ValidatorId.Uint64()), eventLog.Amount)
+	err = k.UnBondDelegator(ctx, msg.ID, hmTypes.ValidatorID(eventLog.ValidatorId.Uint64()), eventLog.Amount)
+	if err != nil {
+		return hmCommon.ErrDelegatorUnBond(k.Codespace()).Result()
+	}
 	// save staking sequence
 	k.SetStakingSequence(ctx, sequence)
 
@@ -560,11 +567,10 @@ func HandleMsgDelegatorReBond(ctx sdk.Context, msg types.MsgDelegatorReBond, k K
 		return hmCommon.ErrOldTx(k.Codespace()).Result()
 	}
 
-	// k.UnBondDelegator(ctx, msg.ID, hmTypes.ValidatorID(eventLog.OldValidatorId.Uint64()), eventLog.Amount)
-	// k.BondDelegator(ctx, msg.ID, hmTypes.ValidatorID(eventLog.NewValidatorId.Uint64()), eventLog.Amount)
-
-	k.UnBondDelegator(ctx, msg.ID, hmTypes.ValidatorID(eventLog.OldValidatorId.Uint64()), big.NewInt(0))
-	k.BondDelegator(ctx, msg.ID, hmTypes.ValidatorID(eventLog.NewValidatorId.Uint64()), big.NewInt(0))
+	err = k.ReBondDelegator(ctx, msg.ID, eventLog.Amount, hmTypes.ValidatorID(eventLog.OldValidatorId.Uint64()), hmTypes.ValidatorID(eventLog.NewValidatorId.Uint64()))
+	if err != nil {
+		return hmCommon.ErrDelegatorUnBond(k.Codespace()).Result()
+	}
 
 	// save staking sequence
 	k.SetStakingSequence(ctx, sequence)
@@ -588,7 +594,7 @@ func HandleMsgDelegatorReBond(ctx sdk.Context, msg types.MsgDelegatorReBond, k K
 // 1. if old amount is greater than new amount, It's becoz of slashing. Burn shares. Update slashed amount. No change of rewards
 // 2. if old amount is lesser than new amount, It's becoz of new stake added. Add shares.
 func HandleMsgDelStakeUpdate(ctx sdk.Context, msg types.MsgDelStakeUpdate, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
-	k.Logger(ctx).Debug("Handling delegator rebond", "msg", msg)
+	k.Logger(ctx).Debug("Handling delegator stake update", "msg", msg)
 
 	// get main tx receipt
 	receipt, err := contractCaller.GetConfirmedTxReceipt(msg.TxHash.EthHash())
@@ -616,8 +622,10 @@ func HandleMsgDelStakeUpdate(ctx sdk.Context, msg types.MsgDelStakeUpdate, k Kee
 		return hmCommon.ErrOldTx(k.Codespace()).Result()
 	}
 
-	// k.UnBondDelegator(ctx, msg.ID, hmTypes.ValidatorID(eventLog.OldValidatorId.Uint64()), eventLog.Amount)
-	// k.BondDelegator(ctx, msg.ID, hmTypes.ValidatorID(eventLog.NewValidatorId.Uint64()), eventLog.Amount)
+	err = k.DelStakeUpdate(ctx, msg.ID, hmTypes.ValidatorID(eventLog.ValidatorId.Uint64()), eventLog.OldAmount, eventLog.NewAmount)
+	if err != nil {
+		return hmCommon.ErrDelegatorStakeUpdate(k.Codespace()).Result()
+	}
 
 	// save staking sequence
 	k.SetStakingSequence(ctx, sequence)

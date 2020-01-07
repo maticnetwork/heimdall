@@ -223,6 +223,11 @@ func ValToMinVal(vals []Validator) (minVals []MinimalVal) {
 // ExchangeRate = (delegatedpower + delegatorRewardPool) / totaldelegatorshares
 func (v *Validator) ExchangeRate() *big.Float {
 
+	// First time when delegator stake happens
+	if v.DelegatedPower == 0 {
+		return big.NewFloat(1)
+	}
+
 	pow, _ := GetAmountFromPower(v.DelegatedPower)
 	reward, _ := big.NewInt(0).SetString(v.DelgatorRewardPool, 10)
 	totalAssets := big.NewInt(0).Add(pow, reward)

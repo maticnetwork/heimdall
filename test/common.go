@@ -3,6 +3,7 @@ package test
 import (
 	"bytes"
 	"encoding/hex"
+	"math/big"
 	"math/rand"
 	"os"
 	"testing"
@@ -16,12 +17,13 @@ import (
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
-	dbm "github.com/tendermint/tm-db"
 	"github.com/tendermint/tendermint/libs/log"
+	dbm "github.com/tendermint/tm-db"
 
 	"github.com/cosmos/cosmos-sdk/x/params/subspace"
 	bankTypes "github.com/maticnetwork/heimdall/bank/types"
-	"github.com/maticnetwork/heimdall/bor"
+
+	borTypes "github.com/maticnetwork/heimdall/bor/types"
 
 	"github.com/maticnetwork/heimdall/checkpoint"
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
@@ -41,9 +43,9 @@ func MakeTestCodec() *codec.Codec {
 	bankTypes.RegisterCodec(cdc)
 
 	// custom types
-	bor.RegisterCodec(cdc)
-	checkpoint.RegisterCodec(cdc)
-	staking.RegisterCodec(cdc)
+	borTypes.RegisterCodec(cdc)
+	checkpointTypes.RegisterCodec(cdc)
+	stakingTypes.RegisterCodec(cdc)
 
 	cdc.Seal()
 	return cdc
@@ -77,16 +79,16 @@ func CreateTestInput(t *testing.T, isCheckTx bool) (sdk.Context, staking.Keeper,
 	ctx := sdk.NewContext(ms, abci.Header{ChainID: "foochainid"}, isCheckTx, log.NewNopLogger())
 	cdc := MakeTestCodec()
 	//pulp := MakeTestPulp()
-	paramsKeeper := params.NewKeeper(cdc, keyParams, tKeyParams)
+	paramsKeeper := params.NewKeeper(cdc, keyParams, tKeyParams, common.DefaultCodespace)
 
 	dummyStakingKeeper := staking.Keeper{}
 
 	checkpointKeeper := checkpoint.NewKeeper(
 		cdc,
-		dummyStakingKeeper,
 		keyCheckpoint,
 		paramsKeeper.Subspace(checkpointTypes.DefaultParamspace),
 		common.DefaultCodespace,
+		dummyStakingKeeper,
 	)
 
 	stakingKeeper := staking.NewKeeper(
@@ -103,7 +105,7 @@ func CreateTestInput(t *testing.T, isCheckTx bool) (sdk.Context, staking.Keeper,
 func GenRandCheckpointHeader(start int, headerSize int) (headerBlock types.CheckpointBlockHeader, err error) {
 	start = start
 	end := start + headerSize
-	roothash, err := checkpoint.GetHeaders(uint64(start), uint64(end))
+	roothash, err := checkpointTypes.GetHeaders(uint64(start), uint64(end))
 	if err != nil {
 		return headerBlock, err
 	}
@@ -140,6 +142,27 @@ func GenRandomVal(count int, startBlock uint64, power int64, timeAlive uint64, r
 			ProposerPriority: 0,
 		}
 		validators = append(validators, newVal)
+	}
+	return
+}
+
+// GenRandomDividendAccount random dividend accounts
+func GenRandomDividendAccount(count int, startID uint64, randomise bool) (dividendAccounts []types.DividendAccount) {
+	for i := 0; i < count; i++ {
+
+		if randomise {
+			reward := big.NewInt(int64(rand.Intn(100))).String()
+			slashedAmount := big.NewInt(int64(rand.Intn(100))).String()
+			shares := big.NewInt(int64(rand.Intn(100))).String()
+
+			newAcc := types.DividendAccount{
+				ID:            types.NewDividendAccountID(startID + uint64(i)),
+				RewardAmount:  reward,
+				Shares:        shares,
+				SlashedAmount: slashedAmount,
+			}
+			dividendAccounts = append(dividendAccounts, newAcc)
+		}
 	}
 	return
 }
