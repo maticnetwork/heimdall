@@ -14,7 +14,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/store"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethCommon "github.com/maticnetwork/bor/common"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -361,15 +360,9 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 				var privObject secp256k1.PrivKeySecp256k1
 				cdc.MustUnmarshalBinaryBare(privKeys[i].Bytes(), &privObject)
 				signers[i] = ValidatorAccountFormatter{
-					Address:          ethCommon.BytesToAddress(valPubKeys[i].Address().Bytes()).String(),
-					PubKey:           newPubkey.String(),
-					PrivKey:          "0x" + hex.EncodeToString(privObject[:]),
-					AccountAddress:   sdk.AccAddress(valPubKeys[i].Address().Bytes()).String(),
-					AccountPubKey:    sdk.MustBech32ifyAccPub(valPubKeys[i]),
-					ValidatorAddress: sdk.ValAddress(valPubKeys[i].Address().Bytes()).String(),
-					ValidatorPubKey:  sdk.MustBech32ifyValPub(valPubKeys[i]),
-					ConsensusAddress: sdk.ConsAddress(valPubKeys[i].Address().Bytes()).String(),
-					ConsensusPubKey:  sdk.MustBech32ifyConsPub(valPubKeys[i]),
+					Address: ethCommon.BytesToAddress(valPubKeys[i].Address().Bytes()).String(),
+					PubKey:  newPubkey.String(),
+					PrivKey: "0x" + hex.EncodeToString(privObject[:]),
 				}
 
 				heimdallConf := helper.GetDefaultHeimdallConfig()
