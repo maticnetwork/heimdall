@@ -2,6 +2,7 @@ package bor
 
 import (
 	"errors"
+	"fmt"
 	"math/big"
 	"strconv"
 
@@ -193,26 +194,32 @@ func (k *Keeper) SelectNextProducers(ctx sdk.Context) (vals []types.Validator, e
 	if err != nil {
 		return vals, err
 	}
+	fmt.Println("==> producer count", producerCount)
+	fmt.Println("==> span Eligible vals", spanEligibleVals)
+	fmt.Println("==> last eth block", lastEthBlock)
 
 	// if producers to be selected is more than current validators no need to select/shuffle
 	if len(spanEligibleVals) <= int(producerCount) {
 		return spanEligibleVals, nil
 	}
-
+	fmt.Println("==> going beyond condition")
 	// increment last processed header block number
 	newEthBlock := lastEthBlock.Add(lastEthBlock, big.NewInt(1))
-
+	fmt.Println("newEthBlock", newEthBlock)
 	// fetch block header from mainchain
 	blockHeader, err := k.contractCaller.GetMainChainBlock(newEthBlock)
 	if err != nil {
 		return vals, err
 	}
+	fmt.Println("==> blockheader", blockHeader)
 
 	// select next producers using seed as blockheader hash
 	newProducersIds, err := SelectNextProducers(blockHeader.Hash(), spanEligibleVals, producerCount)
 	if err != nil {
 		return vals, err
 	}
+
+	fmt.Println("==> newproducer IDS", newProducersIds)
 
 	IDToPower := make(map[uint64]uint64)
 	for _, ID := range newProducersIds {
@@ -225,6 +232,7 @@ func (k *Keeper) SelectNextProducers(ctx sdk.Context) (vals []types.Validator, e
 			vals = append(vals, val)
 		}
 	}
+	fmt.Println("==> vals final", vals)
 
 	return vals, nil
 }

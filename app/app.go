@@ -325,41 +325,41 @@ func (app *HeimdallApp) beginBlocker(_ sdk.Context, _ abci.RequestBeginBlock) ab
 // EndBlocker executes on each end block
 func (app *HeimdallApp) endBlocker(ctx sdk.Context, x abci.RequestEndBlock) abci.ResponseEndBlock {
 	var tmValUpdates []abci.ValidatorUpdate
-	if ctx.BlockHeader().NumTxs > 0 {
-		// --- Start update to new validators
-		currentValidatorSet := app.stakingKeeper.GetValidatorSet(ctx)
-		allValidators := app.stakingKeeper.GetAllValidators(ctx)
-		ackCount := app.checkpointKeeper.GetACKCount(ctx)
+	// if ctx.BlockHeader().NumTxs > 0 {
+	// 	// --- Start update to new validators
+	// 	currentValidatorSet := app.stakingKeeper.GetValidatorSet(ctx)
+	// 	allValidators := app.stakingKeeper.GetAllValidators(ctx)
+	// 	ackCount := app.checkpointKeeper.GetACKCount(ctx)
 
-		// get validator updates
-		setUpdates := helper.GetUpdatedValidators(
-			&currentValidatorSet, // pointer to current validator set -- UpdateValidators will modify it
-			allValidators,        // All validators
-			ackCount,             // ack count
-		)
+	// 	// get validator updates
+	// 	setUpdates := helper.GetUpdatedValidators(
+	// 		&currentValidatorSet, // pointer to current validator set -- UpdateValidators will modify it
+	// 		allValidators,        // All validators
+	// 		ackCount,             // ack count
+	// 	)
 
-		// create new validator set
-		if err := currentValidatorSet.UpdateWithChangeSet(setUpdates); err != nil {
-			// return with nothing
-			logger.Error("Unable to update current validator set", "Error", err)
-			return abci.ResponseEndBlock{}
-		}
+	// 	// create new validator set
+	// 	if err := currentValidatorSet.UpdateWithChangeSet(setUpdates); err != nil {
+	// 		// return with nothing
+	// 		logger.Error("Unable to update current validator set", "Error", err)
+	// 		return abci.ResponseEndBlock{}
+	// 	}
 
-		// save set in store
-		if err := app.stakingKeeper.UpdateValidatorSetInStore(ctx, currentValidatorSet); err != nil {
-			// return with nothing
-			logger.Error("Unable to update current validator set in state", "Error", err)
-			return abci.ResponseEndBlock{}
-		}
+	// 	// save set in store
+	// 	if err := app.stakingKeeper.UpdateValidatorSetInStore(ctx, currentValidatorSet); err != nil {
+	// 		// return with nothing
+	// 		logger.Error("Unable to update current validator set in state", "Error", err)
+	// 		return abci.ResponseEndBlock{}
+	// 	}
 
-		// convert updates from map to array
-		for _, v := range setUpdates {
-			tmValUpdates = append(tmValUpdates, abci.ValidatorUpdate{
-				Power:  int64(v.VotingPower),
-				PubKey: v.PubKey.ABCIPubKey(),
-			})
-		}
-	}
+	// 	// convert updates from map to array
+	// 	for _, v := range setUpdates {
+	// 		tmValUpdates = append(tmValUpdates, abci.ValidatorUpdate{
+	// 			Power:  int64(v.VotingPower),
+	// 			PubKey: v.PubKey.ABCIPubKey(),
+	// 		})
+	// 	}
+	// }
 
 	// send validator updates to peppermint
 	return abci.ResponseEndBlock{
