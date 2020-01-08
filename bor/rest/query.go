@@ -294,6 +294,8 @@ func prepareNextSpanHandlerFn(
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
+		// sort by address
+		selectedProducers = types.SortValidatorByAddress(selectedProducers)
 
 		// draft a propose span message
 		msg := types.NewSpan(

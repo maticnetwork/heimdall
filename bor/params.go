@@ -19,7 +19,7 @@ const (
 	SlotCost int64 = 1
 
 	// Number of Producers to be selected per span
-	DefaultProducerCount uint64 = 5
+	DefaultProducerCount uint64 = 4
 )
 
 // ParamStoreKeySprintDuration is store's key for SprintDuration
