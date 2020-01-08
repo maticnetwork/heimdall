@@ -225,7 +225,8 @@ func (k *Keeper) SelectNextProducers(ctx sdk.Context) (vals []hmTypes.Validator,
 			val.VotingPower = int64(value)
 			vals = append(vals, val)
 		}
-	}
+	} // sort by address
+	vals = hmTypes.SortValidatorByAddress(vals)
 
 	return vals, nil
 }
