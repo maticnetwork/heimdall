@@ -1,9 +1,11 @@
 package bor
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"math/big"
+	"sort"
 	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -233,6 +235,9 @@ func (k *Keeper) SelectNextProducers(ctx sdk.Context) (vals []types.Validator, e
 		}
 	}
 	fmt.Println("==> vals final", vals)
+	sort.Slice(vals, func(i, j int) bool {
+		return bytes.Compare(vals[i].Signer.Bytes(), vals[j].Signer.Bytes()) < 0
+	})
 
 	return vals, nil
 }
