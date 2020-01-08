@@ -1,6 +1,7 @@
 package checkpoint
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 
@@ -9,6 +10,7 @@ import (
 
 	"github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/common"
+	"github.com/maticnetwork/heimdall/helper"
 )
 
 // NewQuerier creates a querier for auth REST endpoints
@@ -55,36 +57,25 @@ func handleDividendAccountRoot(ctx sdk.Context, req abci.RequestQuery, keeper Ke
 
 func handleQueryAccountProof(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	// 1. Fetch AccountRoot a1 present on RootChainContract
-	// 2. Fetch AccountRoot a2 present in latest checkpoint
+	// 2. Fetch AccountRoot a2 from current account
 	// 3. if a1 == a2, Calculate merkle path using GetAllDividendAccounts
-	// 4. if a1 != a2, Calculate merkle path using GetAllPrevDividendAccounts
 
-	// contractCallerObj, err := helper.NewContractCaller()
-	// if err != nil {
+	contractCallerObj, err := helper.NewContractCaller()
+	accountRootOnChain, err := contractCallerObj.CurrentAccountStateRoot()
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not fetch account root from onchain ", err.Error()))
+	}
 
-	// }
+	dividendAccounts := keeper.sk.GetAllDividendAccounts(ctx)
+	currentStateAccountRoot, err := types.GetAccountRootHash(dividendAccounts)
 
-	// accountRootOnChain, err := contractCallerObj.CurrentAccountStateRoot()
-	// if err != nil {
-	// 	RestLogger.Error("Unable to get current account state root caller object ", "Error", err.Error())
-	// }
-
-	// lastCheckpoint, err := keeper.GetLastCheckpoint(ctx)
-	// var dividendAccounts []hmTypes.DividendAccount
-
-	// if accountRootOnChain == lastCheckpoint.AccountRootHash {
-	// 	dividendAccounts = keeper.sk.GetAllDividendAccounts(ctx)
-	// } else {
-	// 	dividendAccounts = keeper.sk.GetAllPrevDividendAccounts(ctx)
-	// }
-	// // Calculate new account root hash
-	// merkleProof, index, err := types.GetAccountProof(dividendAccounts)
-	// if err != nil {
-	// 	return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not fetch merkle proof ", err.Error()))
-	// }
-	// return merkleProof, index, err
-
-	return nil, nil
+	if bytes.Compare(accountRootOnChain[:], currentStateAccountRoot) == 0 {
+		// Calculate new account root hash
+		merkleProof, _ := types.GetAccountProof(dividendAccounts, 1)
+		return merkleProof, nil
+	} else {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not fetch merkle proof ", err.Error()))
+	}
 }
 
 func handleQueryCheckpoint(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {

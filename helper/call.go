@@ -45,7 +45,7 @@ type IContractCaller interface {
 	DecodeDelegatorUnBondEvent(*ethTypes.Receipt, uint64) (*delegationmanager.DelegationmanagerUnBonding, error)
 	DecodeDelegatorReBondEvent(*ethTypes.Receipt, uint64) (*delegationmanager.DelegationmanagerReBonding, error)
 	DecodeDelStakeUpdateEvent(*ethTypes.Receipt, uint64) (*delegationmanager.DelegationmanagerDelStakeUpdate, error)
-	// CurrentAccountStateRoot() ([32]byte, error)
+	CurrentAccountStateRoot() ([32]byte, error)
 
 	// bor related contracts
 	CurrentSpanNumber() (Number *big.Int)
@@ -504,17 +504,18 @@ func (c *ContractCaller) DecodeCommissionRateUpdateEvent(receipt *ethTypes.Recei
 	return event, nil
 }
 
-// // CurrentSpanNumber get current span
-// func (c *ContractCaller) CurrentAccountStateRoot() ([32]byte, error) {
-// 	accountStateRoot, err := c.StakeManagerInstance.AccountStateRoot(nil)
+// CurrentAccountStateRoot get current account root from on chain
+func (c *ContractCaller) CurrentAccountStateRoot() ([32]byte, error) {
+	accountStateRoot, err := c.StakeManagerInstance.AccountStateRoot(nil)
 
-// 	if err != nil {
-// 		Logger.Error("Unable to get current account state roor", "Error", err)
-// 		return []byte, err
-// 	}
+	if err != nil {
+		Logger.Error("Unable to get current account state roor", "Error", err)
+		var emptyArr [32]byte
+		return emptyArr, err
+	}
 
-// 	return accountStateRoot
-// }
+	return accountStateRoot, nil
+}
 
 // CurrentSpanNumber get current span
 func (c *ContractCaller) CurrentSpanNumber() (Number *big.Int) {
