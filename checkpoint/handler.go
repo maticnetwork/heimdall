@@ -6,11 +6,9 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ethCmn "github.com/maticnetwork/bor/common"
 
 	"github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/common"
-	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
@@ -84,31 +82,26 @@ func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, con
 				"startBlock", msg.StartBlock)
 			return common.ErrDisCountinuousCheckpoint(k.Codespace()).Result()
 		}
-		// make sure latest AccountRootHash matches
-		if !bytes.Equal(lastCheckpoint.AccountRootHash.Bytes(), msg.AccountRootHash.Bytes()) {
-			k.Logger(ctx).Error("AccountRootHash of LastCheckpoint", lastCheckpoint.AccountRootHash,
-				"doesn't match with AccountRootHash of msg", msg.AccountRootHash)
-			return common.ErrBadBlockDetails(k.Codespace()).Result()
-		}
 	} else if err.Error() == common.ErrNoCheckpointFound(k.Codespace()).Error() && msg.StartBlock != 0 {
 		k.Logger(ctx).Error("First checkpoint to start from block 1", "Error", err)
 		return common.ErrBadBlockDetails(k.Codespace()).Result()
-	} else if err.Error() == common.ErrNoCheckpointFound(k.Codespace()).Error() && msg.StartBlock == 0 {
-		// Check if genesis DividendAccountRootHash matches
-		genesisDividendAccounts := k.sk.GetAllDividendAccounts(ctx)
-		genesisaccountRootHash, err := types.GetAccountRootHash(genesisDividendAccounts)
-		if err != nil {
-			k.Logger(ctx).Error("Error calculating genesis accountroothash", err)
-			return common.ErrComputeGenesisAccountRoot(k.Codespace()).Result()
-		}
-		if !bytes.Equal(genesisaccountRootHash, msg.AccountRootHash.Bytes()) {
-			k.Logger(ctx).Error("Genesis AccountRootHash", hmTypes.BytesToHeimdallHash(genesisaccountRootHash).String(),
-				"doesn't match with Genesis AccountRootHash of msg", msg.AccountRootHash)
-			return common.ErrAccountRootMismatch(k.Codespace()).Result()
-		}
 	}
 	k.Logger(ctx).Debug("Valid checkpoint tip")
-	k.Logger(ctx).Debug("RewardRootHash matches")
+
+	// make sure latest AccountRootHash matches
+	// Calculate new account root hash
+	dividendAccounts := k.sk.GetAllDividendAccounts(ctx)
+	k.Logger(ctx).Debug("dividendAccounts of all validators", "dividendAccounts", dividendAccounts)
+	accountRoot, err := types.GetAccountRootHash(dividendAccounts)
+	k.Logger(ctx).Info("Validator Account root hash generated", "AccountRootHash", hmTypes.BytesToHeimdallHash(accountRoot).String())
+
+	if !bytes.Equal(accountRoot, msg.AccountRootHash.Bytes()) {
+		k.Logger(ctx).Error("AccountRootHash of current state", hmTypes.BytesToHeimdallHash(accountRoot).String(),
+			"doesn't match with AccountRootHash of msg", msg.AccountRootHash)
+		return common.ErrAccountRootMismatch(k.Codespace()).Result()
+	}
+
+	k.Logger(ctx).Debug("AccountRootHash matches")
 
 	// check proposer in message
 	if !bytes.Equal(msg.Proposer.Bytes(), k.sk.GetValidatorSet(ctx).Proposer.Signer.Bytes()) {
@@ -213,57 +206,6 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg types.MsgCheckpointAck, k Keepe
 		headerBlock.RootHash = hmTypes.HeimdallHash(root)
 		// TODO proposer also needs to be changed
 	}
-
-	// Copy Dividend Account to Prev Account Map before reward allocation.
-	// PrevAccountMap will be used in RewardProofGeneration.
-	err = k.sk.CopyToPrevDividendAccounts(ctx)
-	if err != nil {
-		k.Logger(ctx).Error("Error while copying Dividend Accounts to Prev Divident Account Map.", "error", err)
-	}
-
-	// Get Tx hash from ack msg
-	txHash := msg.TxHash
-
-	// Fetch all the signatures from tx input data and calculate signer rewards
-	voteBytes, sigInput, _, err := contractCaller.GetCheckpointSign(ethCmn.Hash(txHash))
-	if err != nil {
-		k.Logger(ctx).Error("Error while fetching signers from transaction", "error", err)
-		return common.ErrFetchCheckpointSigners(k.Codespace()).Result()
-	}
-
-	// get main tx receipt
-	receipt, err := contractCaller.GetConfirmedTxReceipt(msg.TxHash.EthHash())
-	if err != nil || receipt == nil {
-		return hmCommon.ErrWaitForConfirmation(k.Codespace()).Result()
-	}
-
-	eventLog, err := contractCaller.DecodeNewHeaderBlockEvent(receipt, msg.LogIndex)
-	if err != nil || eventLog == nil {
-		k.Logger(ctx).Error("Error fetching log from txhash")
-		return hmCommon.ErrInvalidMsg(k.Codespace(), "Unable to fetch logs for txHash").Result()
-	}
-
-	k.Logger(ctx).Info("Fetched checkpoint reward from event", eventLog.Reward)
-
-	// Calculate Signer Rewards
-	signerRewards, err := k.sk.CalculateSignerRewards(ctx, voteBytes, sigInput, eventLog.Reward)
-	if err != nil {
-		k.Logger(ctx).Error("Error while calculating Signer Rewards", "error", err)
-		return common.ErrComputeCheckpointRewards(k.Codespace()).Result()
-	}
-
-	// update store with new rewards
-	k.sk.UpdateValidatorRewards(ctx, signerRewards)
-	k.Logger(ctx).Info("Signer Rewards updated to store")
-
-	// Calculate new account root hash
-	dividendAccounts := k.sk.GetAllDividendAccounts(ctx)
-	k.Logger(ctx).Debug("dividendAccounts of all validators and delegators", "dividendAccounts", dividendAccounts)
-	accountRoot, err := types.GetAccountRootHash(dividendAccounts)
-	k.Logger(ctx).Info("Validator Account root hash generated", "AccountRootHash", hmTypes.BytesToHeimdallHash(accountRoot).String())
-
-	// Add new AccountRootHash root hash to bufferedcheckpoint header block
-	headerBlock.AccountRootHash = hmTypes.BytesToHeimdallHash(accountRoot)
 
 	// Add checkpoint to headerBlocks
 	k.AddCheckpoint(ctx, msg.HeaderBlock, *headerBlock)

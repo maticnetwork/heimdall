@@ -412,10 +412,10 @@ func (c *Checkpointer) fetchCheckpoint(url string) (checkpoint hmtypes.Checkpoin
 	return checkpoint, nil
 }
 
-// fetches initial genesis accountroothash
-func (c *Checkpointer) fetchInitialAccountRoot() (accountroothash hmtypes.HeimdallHash, err error) {
-	c.Logger.Info("Sending Rest call to Get Initial AccountRootHash")
-	response, err := FetchFromAPI(c.cliCtx, GetHeimdallServerEndpoint(InitialAccountRootURL))
+// fetches dividend accountroothash
+func (c *Checkpointer) fetchDividendAccountRoot() (accountroothash hmtypes.HeimdallHash, err error) {
+	c.Logger.Info("Sending Rest call to Get Dividend AccountRootHash")
+	response, err := FetchFromAPI(c.cliCtx, GetHeimdallServerEndpoint(DividendAccountRootURL))
 	if err != nil {
 		c.Logger.Error("Error Fetching accountroothash from HeimdallServer ", "error", err)
 		return accountroothash, err
@@ -442,20 +442,10 @@ func (c *Checkpointer) sendCheckpointToHeimdall(start uint64, end uint64) error 
 	}
 
 	accountRootHash := hmtypes.ZeroHeimdallHash
-	// Check if it is firstcheckpoint, if so Get InitialAccountRoot from HeimdallServer
-	if start == uint64(0) {
-		if accountRootHash, err = c.fetchInitialAccountRoot(); err != nil {
-			c.Logger.Info("Error while fetching initial account root hash from HeimdallServer", "err", err)
-			return err
-		}
-	} else {
-		// Get Latest Account Root Hash through rest call
-		latestCheckpoint, err := c.fetchCheckpoint(GetHeimdallServerEndpoint(LatestCheckpointURL))
-		if err != nil {
-			c.Logger.Info("Error while fetching Latest Checkpoint from HeimdallServer", "err", err)
-			return err
-		}
-		accountRootHash = latestCheckpoint.AccountRootHash
+	//Get DividendAccountRoot from HeimdallServer
+	if accountRootHash, err = c.fetchDividendAccountRoot(); err != nil {
+		c.Logger.Info("Error while fetching initial account root hash from HeimdallServer", "err", err)
+		return err
 	}
 
 	c.Logger.Info("Creating and broadcasting new checkpoint",

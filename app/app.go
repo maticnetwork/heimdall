@@ -216,6 +216,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		app.subspaces[bankTypes.ModuleName],
 		bankTypes.DefaultCodespace,
 		app.AccountKeeper,
+		app.StakingKeeper,
 	)
 
 	// bank keeper

@@ -46,8 +46,8 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 		slashValidatorHandlerFn(cliCtx),
 	).Methods("GET")
 	r.HandleFunc(
-		"/staking/initial-account-root",
-		initialAccountRootHandlerFn(cliCtx),
+		"/staking/dividend-account-root",
+		dividendAccountRootHandlerFn(cliCtx),
 	).Methods("GET")
 	r.HandleFunc(
 		"/staking/proposer-bonus-percent",
@@ -323,8 +323,8 @@ func slashValidatorHandlerFn(
 	}
 }
 
-// initialAccountRootHandlerFn returns genesis accountroothash
-func initialAccountRootHandlerFn(
+// dividendAccountRootHandlerFn returns genesis accountroothash
+func dividendAccountRootHandlerFn(
 	cliCtx context.CLIContext,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -333,23 +333,23 @@ func initialAccountRootHandlerFn(
 			return
 		}
 
-		res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryInitialAccountRoot), nil)
-		RestLogger.Debug("initial accountRootHash querier response", "res", res)
+		res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryDividendAccountRoot), nil)
+		RestLogger.Debug("accountRootHash querier response", "res", res)
 
 		if err != nil {
-			RestLogger.Error("Error while calculating Initial AccountRoot  ", "Error", err.Error())
+			RestLogger.Error("Error while calculating dividend AccountRoot  ", "Error", err.Error())
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		// error if no checkpoint found
-		if ok := hmRest.ReturnNotFoundIfNoContent(w, res, "AccountRoot not found"); !ok {
+		if ok := hmRest.ReturnNotFoundIfNoContent(w, res, "Dividend AccountRoot not found"); !ok {
 			RestLogger.Error("AccountRoot not found ", "Error", err.Error())
 			return
 		}
 
 		var accountRootHash = hmTypes.BytesToHeimdallHash(res)
-		RestLogger.Debug("Fetched initial accountRootHash ", "AccountRootHash", accountRootHash)
+		RestLogger.Debug("Fetched Dividend accountRootHash ", "AccountRootHash", accountRootHash)
 
 		result, err := json.Marshal(&accountRootHash)
 		if err != nil {

@@ -48,20 +48,18 @@ func NewGenesisState(
 	validators []*hmTypes.Validator,
 	currentValSet hmTypes.ValidatorSet,
 	dividentAccounts []hmTypes.DividendAccount,
-	proposerBonusPercent int64,
 
 ) GenesisState {
 	return GenesisState{
-		Validators:           validators,
-		CurrentValSet:        currentValSet,
-		DividentAccounts:     dividentAccounts,
-		ProposerBonusPercent: proposerBonusPercent,
+		Validators:       validators,
+		CurrentValSet:    currentValSet,
+		DividentAccounts: dividentAccounts,
 	}
 }
 
 // DefaultGenesisState returns a default genesis state
 func DefaultGenesisState() GenesisState {
-	return NewGenesisState(nil, hmTypes.ValidatorSet{}, nil, DefaultProposerBonusPercent)
+	return NewGenesisState(nil, hmTypes.ValidatorSet{}, nil)
 }
 
 // ValidateGenesis performs basic validation of bor genesis data returning an

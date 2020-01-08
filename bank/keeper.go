@@ -3,6 +3,7 @@ package bank
 import (
 	"encoding/hex"
 	"fmt"
+	"math/big"
 	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/maticnetwork/heimdall/auth"
 	"github.com/maticnetwork/heimdall/bank/types"
+	"github.com/maticnetwork/heimdall/staking"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -36,6 +38,8 @@ type Keeper struct {
 	paramSpace params.Subspace
 	// account keeper
 	ak auth.AccountKeeper
+	// staking keeper
+	sk staking.Keeper
 }
 
 // NewKeeper returns a new Keeper
@@ -45,6 +49,7 @@ func NewKeeper(
 	paramSpace params.Subspace,
 	codespace sdk.CodespaceType,
 	ak auth.AccountKeeper,
+	sk staking.Keeper,
 ) Keeper {
 	ps := paramSpace.WithKeyTable(types.ParamKeyTable())
 	return Keeper{
@@ -53,6 +58,7 @@ func NewKeeper(
 		codespace:  codespace,
 		paramSpace: ps,
 		ak:         ak,
+		sk:         sk,
 	}
 }
 
@@ -86,6 +92,29 @@ func (keeper Keeper) SetCoins(
 		panic(err)
 	}
 	keeper.ak.SetAccount(ctx, acc)
+	return nil
+}
+
+// AddFeeToDividendAccount adds fee to dividend account for withdrawal
+func (keeper Keeper) AddFeeToDividendAccount(ctx sdk.Context, valID hmTypes.ValidatorID, fee *big.Int) sdk.Error {
+	// Get or create dividend account
+	var dividendAccount hmTypes.DividendAccount
+	if keeper.sk.CheckIfDividendAccountExists(ctx, hmTypes.DividendAccountID(valID)) {
+		dividendAccount, _ = keeper.sk.GetDividendAccountByID(ctx, hmTypes.DividendAccountID(valID))
+	} else {
+		dividendAccount = hmTypes.DividendAccount{
+			ID:            hmTypes.DividendAccountID(valID),
+			FeeAmount:     big.NewInt(0).String(),
+			SlashedAmount: big.NewInt(0).String(),
+		}
+	}
+
+	// update fee
+	oldFee, _ := big.NewInt(0).SetString(dividendAccount.FeeAmount, 10)
+	totalFee := big.NewInt(0).Add(oldFee, fee).String()
+	dividendAccount.FeeAmount = totalFee
+
+	keeper.sk.AddDividendAccount(ctx, dividendAccount)
 	return nil
 }
 

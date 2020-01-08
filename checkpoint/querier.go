@@ -17,8 +17,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 		switch path[0] {
 		case types.QueryAckCount:
 			return handleQueryAckCount(ctx, req, keeper)
-		case types.QueryInitialAccountRoot:
-			return handleInitialAccountRoot(ctx, req, keeper)
+		case types.QueryDividendAccountRoot:
+			return handleDividendAccountRoot(ctx, req, keeper)
 		case types.QueryCheckpoint:
 			return handleQueryCheckpoint(ctx, req, keeper)
 		case types.QueryCheckpointBuffer:
@@ -43,12 +43,12 @@ func handleQueryAckCount(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) 
 	return bz, nil
 }
 
-func handleInitialAccountRoot(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+func handleDividendAccountRoot(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	// Calculate new account root hash
 	dividendAccounts := keeper.sk.GetAllDividendAccounts(ctx)
 	accountRoot, err := types.GetAccountRootHash(dividendAccounts)
 	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not fetch genesis accountroothash ", err.Error()))
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not fetch accountroothash ", err.Error()))
 	}
 	return accountRoot, nil
 }

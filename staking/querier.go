@@ -27,8 +27,6 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return handleQueryProposer(ctx, req, keeper)
 		case types.QueryCurrentProposer:
 			return handleQueryCurrentProposer(ctx, req, keeper)
-		case types.QueryProposerBonusPercent:
-			return handleQueryProposerBonusPercent(ctx, req, keeper)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown staking query endpoint")
 		}
@@ -139,18 +137,6 @@ func handleQueryCurrentProposer(ctx sdk.Context, req abci.RequestQuery, keeper K
 	proposer := keeper.GetCurrentProposer(ctx)
 
 	bz, err := json.Marshal(proposer)
-	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
-	}
-	return bz, nil
-}
-
-func handleQueryProposerBonusPercent(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	// GetProposerBonusPercent
-	proposerBonusPercent := keeper.GetProposerBonusPercent(ctx)
-
-	// json record
-	bz, err := json.Marshal(proposerBonusPercent)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}

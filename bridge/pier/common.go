@@ -36,16 +36,16 @@ const (
 	// TxsURL represents txs url
 	TxsURL = "/txs"
 
-	AccountDetailsURL     = "/auth/accounts/%v"
-	LastNoAckURL          = "/checkpoint/last-no-ack"
-	ProposersURL          = "/staking/proposer/%v"
-	BufferedCheckpointURL = "/checkpoint/buffer"
-	LatestCheckpointURL   = "/checkpoint/latest-checkpoint"
-	CurrentProposerURL    = "/staking/current-proposer"
-	LatestSpanURL         = "/bor/latest-span"
-	NextSpanInfoURL       = "/bor/prepare-next-span"
-	InitialAccountRootURL = "/staking/initial-account-root"
-	ValidatorURL          = "/staking/validator/%v"
+	AccountDetailsURL      = "/auth/accounts/%v"
+	LastNoAckURL           = "/checkpoint/last-no-ack"
+	ProposersURL           = "/staking/proposer/%v"
+	BufferedCheckpointURL  = "/checkpoint/buffer"
+	LatestCheckpointURL    = "/checkpoint/latest-checkpoint"
+	CurrentProposerURL     = "/staking/current-proposer"
+	LatestSpanURL          = "/bor/latest-span"
+	NextSpanInfoURL        = "/bor/prepare-next-span"
+	DividendAccountRootURL = "/staking/dividend-account-root"
+	ValidatorURL           = "/staking/validator/%v"
 
 	TransactionTimeout = 1 * time.Minute
 	CommitTimeout      = 2 * time.Minute

@@ -15,8 +15,7 @@ import (
 // DividendAccount contains Rewards, Shares, Slashed Amount
 type DividendAccount struct {
 	ID            DividendAccountID `json:"ID"`
-	Shares        string            `json:"shares"`        // string representation of big.Int
-	RewardAmount  string            `json:"rewardAmount"`  // string representation of big.Int
+	FeeAmount     string            `json:"feeAmount"`     // string representation of big.Int
 	SlashedAmount string            `json:"slashedAmount"` // string representation of big.Int
 }
 
@@ -50,8 +49,7 @@ func (da *DividendAccount) String() string {
 
 	return fmt.Sprintf("DividendAccount{%v %v %v %v}",
 		da.ID,
-		da.Shares,
-		da.RewardAmount,
+		da.FeeAmount,
 		da.SlashedAmount)
 }
 
@@ -85,7 +83,7 @@ func SortDividendAccountByID(dividendAccounts []DividendAccount) []DividendAccou
 //CalculateHash hashes the values of a DividendAccount
 func (da DividendAccount) CalculateHash() ([]byte, error) {
 	h := sha256.New()
-	reward, _ := big.NewInt(0).SetString(da.RewardAmount, 10)
+	reward, _ := big.NewInt(0).SetString(da.FeeAmount, 10)
 	slashAmount, _ := big.NewInt(0).SetString(da.SlashedAmount, 10)
 	divAccountHash := crypto.Keccak256(appendBytes32(
 		new(big.Int).SetUint64(uint64(da.ID)).Bytes(),

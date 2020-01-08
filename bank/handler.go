@@ -177,28 +177,22 @@ func handleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCalle
 
 // Handle MsgWithdrawTopup.
 func handleMsgWithdrawTopup(ctx sdk.Context, k Keeper, msg types.MsgWithdrawTopup) sdk.Result {
-	if !k.GetSendEnabled(ctx) {
-		return types.ErrSendDisabled(k.Codespace()).Result()
-	}
-
 	// check if topup is already withdrawn
-	coinBalance := k.GetCoins(ctx, msg.FromAddress)
-	if coinBalance.IsZero() {
+	coins := k.GetCoins(ctx, msg.FromAddress)
+	veticBalance := coins.AmountOf("vetic")
+	if veticBalance.IsZero() {
 		return types.ErrTopupAlreadyWithdrawn(k.Codespace()).Result()
 	}
 
 	// withdraw coins of validator.
-	balanceLeft, err := k.SubtractCoins(ctx, msg.FromAddress, coinBalance)
-	if err != nil {
+	zeroVetic := hmTypes.Coins{hmTypes.Coin{Denom: "vetic", Amount: hmTypes.NewInt(0)}}
+	if err := k.SetCoins(ctx, msg.FromAddress, zeroVetic); err != nil {
 		return err.Result()
 	}
 
-	// balance should not be left after withdrawal
-	if !balanceLeft.IsZero() {
-		return hmCommon.ErrSignerUpdateError(k.Codespace()).Result()
-	}
-
 	// Add topup to Dividend Account
+	feeAmount := veticBalance.BigInt()
+	k.AddFeeToDividendAccount(ctx, msg.ID, feeAmount)
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(

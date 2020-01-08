@@ -16,7 +16,7 @@ const (
 	QueryProposer             = "proposer"
 	QueryCurrentProposer      = "current-proposer"
 	QueryProposerBonusPercent = "proposer-bonus-percent"
-	QueryInitialAccountRoot   = "initial-account-root"
+	QueryDividendAccountRoot  = "dividend-account-root"
 	QueryAccountProof         = "dividend-account-proof"
 	QuerySlashValidator       = "slash-validator"
 )
