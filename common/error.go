@@ -47,15 +47,8 @@ const (
 	CodeProducerMisMatch   CodeType = 3505
 
 	CodeFetchCheckpointSigners       CodeType = 4501
-	CodeErrComputeSignerRewards      CodeType = 4502
 	CodeErrComputeGenesisAccountRoot CodeType = 4503
 	CodeAccountRootMismatch          CodeType = 4504
-	CodeErrComputeCheckpointReward   CodeType = 4505
-
-	CodeDelegatorBond        CodeType = 5501
-	CodeDelegatorUnBond      CodeType = 5502
-	CodeDelegatorRnBond      CodeType = 5503
-	CodeDelegatorStakeUpdate CodeType = 5504
 )
 
 // -------- Invalid msg
@@ -166,39 +159,6 @@ func ErrValidatorNotDeactivated(codespace sdk.CodespaceType) sdk.Error {
 
 func ErrValidatorAlreadyJoined(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeValAlreadyJoined, "Validator already joined")
-}
-
-// ----------- Reward Errors
-func ErrFetchCheckpointSigners(codespace sdk.CodespaceType) sdk.Error {
-	return newError(codespace, CodeFetchCheckpointSigners, "Error Fetching checkpoint signatures from tx")
-}
-
-func ErrComputeCheckpointRewards(codespace sdk.CodespaceType) sdk.Error {
-	return newError(codespace, CodeErrComputeCheckpointReward, "Error while computing checkpoint reward")
-}
-
-func ErrComputeGenesisAccountRoot(codespace sdk.CodespaceType) sdk.Error {
-	return newError(codespace, CodeErrComputeGenesisAccountRoot, "Error while computing Genesis Account Root")
-}
-
-func ErrAccountRootMismatch(codespace sdk.CodespaceType) sdk.Error {
-	return newError(codespace, CodeAccountRootMismatch, "Account Root hash mismatch")
-}
-
-func ErrDelegatorBond(codespace sdk.CodespaceType) sdk.Error {
-	return newError(codespace, CodeDelegatorBond, "Delegator Bond Failed")
-}
-
-func ErrDelegatorUnBond(codespace sdk.CodespaceType) sdk.Error {
-	return newError(codespace, CodeDelegatorUnBond, "Delegator UnBond Failed")
-}
-
-func ErrDelegatorRnBond(codespace sdk.CodespaceType) sdk.Error {
-	return newError(codespace, CodeDelegatorRnBond, "Delegator RnBond Failed")
-}
-
-func ErrDelegatorStakeUpdate(codespace sdk.CodespaceType) sdk.Error {
-	return newError(codespace, CodeDelegatorStakeUpdate, "Delegator StakeUpdate Failed")
 }
 
 // Bor Errors --------------------------------

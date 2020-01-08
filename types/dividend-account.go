@@ -12,7 +12,7 @@ import (
 	"github.com/maticnetwork/bor/crypto"
 )
 
-// DividendAccount contains Rewards, Shares, Slashed Amount
+// DividendAccount contains Fee, Slashed amount
 type DividendAccount struct {
 	ID            DividendAccountID `json:"ID"`
 	FeeAmount     string            `json:"feeAmount"`     // string representation of big.Int
@@ -83,11 +83,11 @@ func SortDividendAccountByID(dividendAccounts []DividendAccount) []DividendAccou
 //CalculateHash hashes the values of a DividendAccount
 func (da DividendAccount) CalculateHash() ([]byte, error) {
 	h := sha256.New()
-	reward, _ := big.NewInt(0).SetString(da.FeeAmount, 10)
+	fee, _ := big.NewInt(0).SetString(da.FeeAmount, 10)
 	slashAmount, _ := big.NewInt(0).SetString(da.SlashedAmount, 10)
 	divAccountHash := crypto.Keccak256(appendBytes32(
 		new(big.Int).SetUint64(uint64(da.ID)).Bytes(),
-		reward.Bytes(),
+		fee.Bytes(),
 		slashAmount.Bytes(),
 	))
 	var arr [32]byte

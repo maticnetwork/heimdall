@@ -3,7 +3,6 @@ package checkpoint
 import (
 	"bytes"
 	"encoding/hex"
-	"math/big"
 	"math/rand"
 	"os"
 	"testing"
@@ -37,8 +36,8 @@ import (
 	// "github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 	// "github.com/tendermint/tendermint/crypto/secp256k1"
-	dbm "github.com/tendermint/tm-db"
 	"github.com/tendermint/tendermint/libs/log"
+	dbm "github.com/tendermint/tm-db"
 
 	bankTypes "github.com/maticnetwork/heimdall/bank/types"
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
@@ -174,11 +173,6 @@ func LoadValidatorSet(count int, t *testing.T, keeper staking.Keeper, ctx sdk.Co
 
 	err := keeper.UpdateValidatorSetInStore(ctx, valSet)
 	require.Empty(t, err, "Unable to update validator set")
-	validatorRewards := make(map[types.ValidatorID]*big.Int)
-	for _, val := range validators {
-		validatorRewards[val.ID] = big.NewInt(0)
-	}
-	keeper.UpdateValidatorRewards(ctx, validatorRewards)
 
 	vals := keeper.GetAllValidators(ctx)
 	t.Log("Vals added to store", len(vals))

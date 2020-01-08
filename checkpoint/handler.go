@@ -98,7 +98,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, con
 	if !bytes.Equal(accountRoot, msg.AccountRootHash.Bytes()) {
 		k.Logger(ctx).Error("AccountRootHash of current state", hmTypes.BytesToHeimdallHash(accountRoot).String(),
 			"doesn't match with AccountRootHash of msg", msg.AccountRootHash)
-		return common.ErrAccountRootMismatch(k.Codespace()).Result()
+		return common.ErrBadBlockDetails(k.Codespace()).Result()
 	}
 
 	k.Logger(ctx).Debug("AccountRootHash matches")
