@@ -193,6 +193,7 @@ func prepareNextSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
+		selectedProducers = hmTypes.SortValidatorByAddress(selectedProducers)
 
 		// draft a propose span message
 		msg := hmTypes.NewSpan(
