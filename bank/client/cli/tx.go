@@ -132,3 +132,40 @@ func TopupTxCmd(cdc *codec.Codec) *cobra.Command {
 	cmd.MarkFlagRequired(FlagLogIndex)
 	return cmd
 }
+
+// TopupWithdrawTxCmd will create a topup withdraw tx
+func TopupWithdrawTxCmd(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "topup",
+		Short: "Topup tokens withdraw for validators",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			// get proposer
+			proposer := types.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
+			if proposer.Empty() {
+				proposer = helper.GetFromAddress(cliCtx)
+			}
+
+			validatorID := viper.GetInt64(FlagValidatorID)
+			if validatorID == 0 {
+				return fmt.Errorf("Validator ID cannot be zero")
+			}
+
+			// get msg
+			msg := bankTypes.NewMsgWithdrawTopup(
+				proposer,
+				uint64(validatorID),
+			)
+
+			// broadcast msg with cli
+			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
+		},
+	}
+
+	cmd.Flags().Int(FlagProposerAddress, 0, "--validator-address=<validator address here>")
+	cmd.Flags().Int(FlagValidatorID, 0, "--validator-id=<validator ID here>")
+	cmd.MarkFlagRequired(FlagValidatorID)
+	cmd.MarkFlagRequired(FlagProposerAddress)
+	return cmd
+}
