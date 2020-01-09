@@ -31,10 +31,9 @@ func (v *GenesisValidator) HeimdallValidator() hmTypes.Validator {
 
 // GenesisState is the checkpoint state that must be provided at genesis.
 type GenesisState struct {
-	Validators           []*hmTypes.Validator      `json:"validators" yaml:"validators"`
-	CurrentValSet        hmTypes.ValidatorSet      `json:"current_val_set" yaml:"current_val_set"`
-	DividentAccounts     []hmTypes.DividendAccount `json:"dividend_accounts" yaml:"dividend_accounts"`
-	ProposerBonusPercent int64                     `json:"proposer_bonus_percent" yaml:"proposer_bonus_percent"`
+	Validators       []*hmTypes.Validator      `json:"validators" yaml:"validators"`
+	CurrentValSet    hmTypes.ValidatorSet      `json:"current_val_set" yaml:"current_val_set"`
+	DividentAccounts []hmTypes.DividendAccount `json:"dividend_accounts" yaml:"dividend_accounts"`
 }
 
 // NewGenesisState creates a new genesis state.

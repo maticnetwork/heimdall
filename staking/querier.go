@@ -1,12 +1,15 @@
 package staking
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 
+	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
+	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
@@ -27,6 +30,10 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return handleQueryProposer(ctx, req, keeper)
 		case types.QueryCurrentProposer:
 			return handleQueryCurrentProposer(ctx, req, keeper)
+		case types.QueryDividendAccountRoot:
+			return handleDividendAccountRoot(ctx, req, keeper)
+		case types.QueryAccountProof:
+			return handleQueryAccountProof(ctx, req, keeper)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown staking query endpoint")
 		}
@@ -141,4 +148,37 @@ func handleQueryCurrentProposer(ctx sdk.Context, req abci.RequestQuery, keeper K
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
 	return bz, nil
+}
+
+func handleDividendAccountRoot(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	// Calculate new account root hash
+	dividendAccounts := keeper.GetAllDividendAccounts(ctx)
+	accountRoot, err := checkpointTypes.GetAccountRootHash(dividendAccounts)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not fetch accountroothash ", err.Error()))
+	}
+	return accountRoot, nil
+}
+
+func handleQueryAccountProof(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	// 1. Fetch AccountRoot a1 present on RootChainContract
+	// 2. Fetch AccountRoot a2 from current account
+	// 3. if a1 == a2, Calculate merkle path using GetAllDividendAccounts
+
+	contractCallerObj, err := helper.NewContractCaller()
+	accountRootOnChain, err := contractCallerObj.CurrentAccountStateRoot()
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not fetch account root from onchain ", err.Error()))
+	}
+
+	dividendAccounts := keeper.GetAllDividendAccounts(ctx)
+	currentStateAccountRoot, err := checkpointTypes.GetAccountRootHash(dividendAccounts)
+
+	if bytes.Compare(accountRootOnChain[:], currentStateAccountRoot) == 0 {
+		// Calculate new account root hash
+		merkleProof, _ := checkpointTypes.GetAccountProof(dividendAccounts, 1)
+		return merkleProof, nil
+	} else {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not fetch merkle proof ", err.Error()))
+	}
 }

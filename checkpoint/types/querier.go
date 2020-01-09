@@ -2,13 +2,11 @@ package types
 
 // query endpoints supported by the auth Querier
 const (
-	QueryAckCount            = "ack-count"
-	QueryDividendAccountRoot = "dividend-account-root"
-	QueryAccountProof        = "dividend-account-proof"
-	QueryCheckpoint          = "checkpoint"
-	QueryCheckpointBuffer    = "checkpoint-buffer"
-	QueryLastNoAck           = "last-no-ack"
-	QueryCheckpointList      = "checkpoint-list"
+	QueryAckCount         = "ack-count"
+	QueryCheckpoint       = "checkpoint"
+	QueryCheckpointBuffer = "checkpoint-buffer"
+	QueryLastNoAck        = "last-no-ack"
+	QueryCheckpointList   = "checkpoint-list"
 )
 
 // QueryCheckpointParams defines the params for querying accounts.
