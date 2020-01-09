@@ -59,16 +59,19 @@ const (
 	DefaultHeimdallServerURL = "http://0.0.0.0:1317"
 	DefaultTendermintNodeURL = "http://0.0.0.0:26657"
 
-	NoACKWaitTime                   = 1800 * time.Second // Time ack service waits to clear buffer and elect new proposer (1800 seconds ~ 30 mins)
-	CheckpointBufferTime            = 1000 * time.Second // Time checkpoint is allowed to stay in buffer (1000 seconds ~ 17 mins)
-	DefaultCheckpointerPollInterval = 5 * time.Minute    // 1 minute in milliseconds
-	DefaultSyncerPollInterval       = 1 * time.Minute    // 0.5 seconds in milliseconds
+	NoACKWaitTime        = 1800 * time.Second // Time ack service waits to clear buffer and elect new proposer (1800 seconds ~ 30 mins)
+	CheckpointBufferTime = 1000 * time.Second // Time checkpoint is allowed to stay in buffer (1000 seconds ~ 17 mins)
+
+	DefaultCheckpointerPollInterval = 5 * time.Minute // 1 minute in milliseconds
+	DefaultSyncerPollInterval       = 1 * time.Minute // 0.5 seconds in milliseconds
 	DefaultNoACKPollInterval        = 1010 * time.Second
-	DefaultClerkPollingInterval     = 5 * time.Minute
-	DefaultCheckpointLength         = 256   // checkpoint number 	 with 0, so length = defaultCheckpointLength -1
-	MaxCheckpointLength             = 1024  // max blocks in one checkpoint
-	DefaultChildBlockInterval       = 10000 // difference between 2 indexes of header blocks
-	ConfirmationBlocks              = 6
+	DefaultClerkPollingInterval     = 10 * time.Second
+	DefaultSpanPollingInterval      = 5 * time.Minute
+
+	DefaultCheckpointLength   = 256   // checkpoint number 	 with 0, so length = defaultCheckpointLength -1
+	MaxCheckpointLength       = 1024  // max blocks in one checkpoint
+	DefaultChildBlockInterval = 10000 // difference between 2 indexes of header blocks
+	ConfirmationBlocks        = 6
 
 	DefaultBorChainID           = 15001
 	DefaultValidatorSetAddress  = "0000000000000000000000000000000000001000"
@@ -113,6 +116,7 @@ type Configuration struct {
 	SyncerPollInterval       time.Duration `mapstructure:"syncer_poll_interval"`     // Poll interval for syncher service to sync for changes on main chain
 	NoACKPollInterval        time.Duration `mapstructure:"noack_poll_interval"`      // Poll interval for ack service to send no-ack in case of no checkpoints
 	ClerkPollingInterval     time.Duration `mapstructure:"clerk_polling_interval"`
+	SpanPollingInterval      time.Duration `mapstructure:"span_polling_interval"`
 
 	// checkpoint length related options
 	AvgCheckpointLength uint64 `mapstructure:"avg_checkpoint_length"` // Average number of blocks checkpoint would contain
@@ -240,6 +244,7 @@ func GetDefaultHeimdallConfig() Configuration {
 		SyncerPollInterval:       DefaultSyncerPollInterval,
 		NoACKPollInterval:        DefaultNoACKPollInterval,
 		ClerkPollingInterval:     DefaultClerkPollingInterval,
+		SpanPollingInterval:      DefaultSpanPollingInterval,
 
 		AvgCheckpointLength: DefaultCheckpointLength,
 		MaxCheckpointLength: MaxCheckpointLength,

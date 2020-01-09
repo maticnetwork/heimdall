@@ -23,9 +23,6 @@ import (
 
 const (
 	lastSpanKey = "span-key" // storage key
-
-	// polling
-	spanPolling = 20 * time.Second
 )
 
 // SpanService service spans
@@ -91,7 +88,7 @@ func (s *SpanService) OnStart() error {
 	s.cancelSpanService = cancelSpanService
 
 	// start polling for checkpoint in buffer
-	go s.startPolling(spanCtx, spanPolling)
+	go s.startPolling(spanCtx, helper.GetConfig().SpanPollingInterval)
 
 	// subscribed to new head
 	s.Logger.Debug("Started Span service")
