@@ -458,7 +458,7 @@ func (c *Checkpointer) sendCheckpointToHeimdall(start uint64, end uint64) error 
 		rewardRootHash = latestCheckpoint.RewardRootHash
 	}
 
-	c.Logger.Info("Creating and broadcasting new checkpoint",
+	c.Logger.Info("✅Creating and broadcasting new checkpoint",
 		"start", start,
 		"end", end,
 		"root", hmtypes.BytesToHeimdallHash(root),

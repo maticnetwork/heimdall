@@ -315,7 +315,7 @@ func (syncer *Syncer) processCheckpointEvent(eventName string, abiObject *abi.AB
 		logEventParseError(syncer.Logger, eventName, err)
 	} else {
 		syncer.Logger.Info(
-			"New event found",
+			"⬜ New event found",
 			"event", eventName,
 			"start", event.Start,
 			"end", event.End,
@@ -337,7 +337,7 @@ func (syncer *Syncer) processStakedEvent(eventName string, abiObject *abi.ABI, v
 		logEventParseError(syncer.Logger, eventName, err)
 	} else {
 		syncer.Logger.Debug(
-			"New event found",
+			"⬜ New event found",
 			"event", eventName,
 			"validator", event.User.Hex(),
 			"ID", event.ValidatorId,
@@ -368,7 +368,7 @@ func (syncer *Syncer) processUnstakeInitEvent(eventName string, abiObject *abi.A
 		logEventParseError(syncer.Logger, eventName, err)
 	} else {
 		syncer.Logger.Debug(
-			"New event found",
+			"⬜ New event found",
 			"event", eventName,
 			"validator", event.User.Hex(),
 			"validatorID", event.ValidatorId,
@@ -397,7 +397,7 @@ func (syncer *Syncer) processStakeUpdateEvent(eventName string, abiObject *abi.A
 		logEventParseError(syncer.Logger, eventName, err)
 	} else {
 		syncer.Logger.Debug(
-			"New event found",
+			"⬜ New event found",
 			"event", eventName,
 			"validatorID", event.ValidatorId,
 			"oldAmount", event.OldAmount,
@@ -425,7 +425,7 @@ func (syncer *Syncer) processSignerChangeEvent(eventName string, abiObject *abi.
 		logEventParseError(syncer.Logger, eventName, err)
 	} else {
 		syncer.Logger.Debug(
-			"New event found",
+			"⬜ New event found",
 			"event", eventName,
 			"validatorID", event.ValidatorId,
 			"newSigner", event.NewSigner.Hex(),
@@ -455,7 +455,7 @@ func (syncer *Syncer) processReStakedEvent(eventName string, abiObject *abi.ABI,
 		logEventParseError(syncer.Logger, eventName, err)
 	} else {
 		syncer.Logger.Debug(
-			"New event found",
+			"⬜ New event found",
 			"event", eventName,
 			"user", event.User.Hex(),
 			"validatorId", event.ValidatorId,
@@ -481,7 +481,7 @@ func (syncer *Syncer) processJailedEvent(eventName string, abiObject *abi.ABI, v
 		logEventParseError(syncer.Logger, eventName, err)
 	} else {
 		syncer.Logger.Debug(
-			"New event found",
+			"⬜ New event found",
 			"event", eventName,
 			"validatorID", event.ValidatorId,
 			"exitEpoch", event.ExitEpoch,
@@ -530,7 +530,7 @@ func (syncer *Syncer) processStateSyncedEvent(eventName string, abiObject *abi.A
 		logEventParseError(syncer.Logger, eventName, err)
 	} else {
 		syncer.Logger.Debug(
-			"New event found",
+			"⬜ New event found",
 			"event", eventName,
 			"id", event.Id,
 			"contract", event.ContractAddress,
