@@ -23,7 +23,6 @@ import (
 	bankTypes "github.com/maticnetwork/heimdall/bank/types"
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
-	"github.com/maticnetwork/heimdall/contracts/delegationmanager"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 	"github.com/maticnetwork/heimdall/contracts/statesender"
@@ -88,7 +87,6 @@ func NewSyncer(cdc *codec.Codec, queueConnector *QueueConnector, httpClient *htt
 		&contractCaller.RootChainABI,
 		&contractCaller.StakeManagerABI,
 		&contractCaller.StateSenderABI,
-		&contractCaller.DelegationManagerABI,
 	}
 
 	cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
@@ -268,7 +266,6 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 			helper.GetRootChainAddress(),
 			helper.GetStakeManagerAddress(),
 			helper.GetStateSenderAddress(),
-			helper.GetDelegationManagerAddress(),
 		},
 	}
 
@@ -307,16 +304,6 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 					syncer.processStateSyncedEvent(selectedEvent.Name, abiObject, &vLog)
 				case "TopUpFee":
 					syncer.processTopupFeeEvent(selectedEvent.Name, abiObject, &vLog)
-				case "UpdateCommission":
-					syncer.processCommissionUpdateEvent(selectedEvent.Name, abiObject, &vLog)
-				case "Bonding":
-					syncer.processDelegatorBondEvent(selectedEvent.Name, abiObject, &vLog)
-				case "UnBonding":
-					syncer.processDelegatorUnBondEvent(selectedEvent.Name, abiObject, &vLog)
-				case "ReBonding":
-					syncer.processDelegatorReBondEvent(selectedEvent.Name, abiObject, &vLog)
-				case "DelStakeUpdate":
-					syncer.processDelStakeUpdateEvent(selectedEvent.Name, abiObject, &vLog)
 					// case "Withdraw":
 					// 	syncer.processWithdrawEvent(selectedEvent.Name, abiObject, &vLog)
 				}
@@ -433,33 +420,6 @@ func (syncer *Syncer) processStakeUpdateEvent(eventName string, abiObject *abi.A
 			// broadcast heimdall
 			syncer.queueConnector.BroadcastToHeimdall(msg)
 		}
-	}
-}
-
-func (syncer *Syncer) processCommissionUpdateEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
-	event := new(delegationmanager.DelegationmanagerUpdateCommission)
-	if err := helper.UnpackLog(abiObject, event, eventName, vLog); err != nil {
-		logEventParseError(syncer.Logger, eventName, err)
-	} else {
-		syncer.Logger.Debug(
-			"New event found",
-			"event", eventName,
-			"validatorID", event.ValidatorId,
-			"commission rate", event.Rate,
-		)
-
-		// msg update commission rate
-
-		msg := stakingTypes.NewMsgCommissionRateUpdate(
-			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
-			event.ValidatorId.Uint64(),
-			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
-			uint64(vLog.Index),
-		)
-
-		// broadcast heimdall
-		syncer.queueConnector.BroadcastToHeimdall(msg)
-
 	}
 }
 
@@ -593,114 +553,6 @@ func (syncer *Syncer) processStateSyncedEvent(eventName string, abiObject *abi.A
 	}
 }
 
-// processDelegatorBondEvent
-func (syncer *Syncer) processDelegatorBondEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
-	event := new(delegationmanager.DelegationmanagerBonding)
-	if err := helper.UnpackLog(abiObject, event, eventName, vLog); err != nil {
-		logEventParseError(syncer.Logger, eventName, err)
-	} else {
-		syncer.Logger.Debug(
-			"New delegator bond event found",
-			"event", eventName,
-			"DelegatorId", event.DelegatorId,
-			"ValidatorId", event.ValidatorId,
-			"Amount", event.Amount,
-		)
-
-		msg := stakingTypes.NewMsgDelegatorBond(
-			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
-			hmTypes.DelegatorID(event.DelegatorId.Uint64()),
-			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
-			uint64(vLog.Index),
-		)
-
-		// broadcast to heimdall
-		syncer.queueConnector.BroadcastToHeimdall(msg)
-
-	}
-}
-
-// processDelegatorUnBondEvent
-func (syncer *Syncer) processDelegatorUnBondEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
-
-	event := new(delegationmanager.DelegationmanagerUnBonding)
-
-	if err := helper.UnpackLog(abiObject, event, eventName, vLog); err != nil {
-		logEventParseError(syncer.Logger, eventName, err)
-	} else {
-		syncer.Logger.Debug(
-			"New event found",
-			"event", eventName,
-			"DelegatorId", event.DelegatorId,
-			"ValidatorId", event.ValidatorId,
-			"Amount", event.Amount,
-		)
-		msg := stakingTypes.NewMsgDelegatorUnBond(
-			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
-			hmTypes.DelegatorID(event.DelegatorId.Uint64()),
-			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
-			uint64(vLog.Index),
-		)
-
-		// broadcast to heimdall
-		syncer.queueConnector.BroadcastToHeimdall(msg)
-	}
-}
-
-// processDelegatorReBondEvent
-func (syncer *Syncer) processDelegatorReBondEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
-
-	event := new(delegationmanager.DelegationmanagerReBonding)
-
-	if err := helper.UnpackLog(abiObject, event, eventName, vLog); err != nil {
-		logEventParseError(syncer.Logger, eventName, err)
-	} else {
-		syncer.Logger.Debug(
-			"New event found",
-			"event", eventName,
-			"DelegatorId", event.DelegatorId,
-			"OldValidatorId", event.OldValidatorId,
-			"NewValidatorID", event.NewValidatorId,
-		)
-		msg := stakingTypes.NewMsgDelegatorReBond(
-			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
-			hmTypes.DelegatorID(event.DelegatorId.Uint64()),
-			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
-			uint64(vLog.Index),
-		)
-
-		// broadcast to heimdall
-		syncer.queueConnector.BroadcastToHeimdall(msg)
-	}
-}
-
-// processDelStakeUpdateEvent
-func (syncer *Syncer) processDelStakeUpdateEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
-
-	event := new(delegationmanager.DelegationmanagerDelStakeUpdate)
-
-	if err := helper.UnpackLog(abiObject, event, eventName, vLog); err != nil {
-		logEventParseError(syncer.Logger, eventName, err)
-	} else {
-		syncer.Logger.Debug(
-			"New event found",
-			"event", eventName,
-			"DelegatorId", event.DelegatorId,
-			"OldAmount", event.OldAmount,
-			"NewAmount", event.NewAmount,
-		)
-		msg := stakingTypes.NewMsgDelStakeUpdate(
-			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
-			hmTypes.DelegatorID(event.DelegatorId.Uint64()),
-			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
-			uint64(vLog.Index),
-		)
-
-		// broadcast to heimdall
-		syncer.queueConnector.BroadcastToHeimdall(msg)
-	}
-}
-
 // processTopupFeeEvent
 func (syncer *Syncer) processTopupFeeEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
 
@@ -720,7 +572,6 @@ func (syncer *Syncer) processTopupFeeEvent(eventName string, abiObject *abi.ABI,
 		syncer.queueConnector.BroadcastToHeimdall(msg)
 	}
 }
-
 
 //
 // Utils

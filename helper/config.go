@@ -22,7 +22,6 @@ import (
 	logger "github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/privval"
 
-	"github.com/maticnetwork/heimdall/contracts/delegationmanager"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 
@@ -100,12 +99,11 @@ type Configuration struct {
 	AmqpURL           string `mapstructure:"amqp_url"`             // amqp url
 	HeimdallServerURL string `mapstructure:"heimdall_rest_server"` // heimdall server url
 
-	StakeManagerAddress      string `mapstructure:"stakemanager_contract"`      // Stake manager address on main chain
-	DelegationManagerAddress string `mapstructure:"delegationmanager_contract"` // Delegation manager address on main chain
-	RootchainAddress         string `mapstructure:"rootchain_contract"`         // Rootchain contract address on main chain
-	StateSenderAddress       string `mapstructure:"state_sender_contract"`      // main
-	StateReceiverAddress     string `mapstructure:"state_receiver_contract"`    // matic
-	ValidatorSetAddress      string `mapstructure:"validator_set_contract"`     // Validator Set contract address on bor chain
+	StakeManagerAddress  string `mapstructure:"stakemanager_contract"`   // Stake manager address on main chain
+	RootchainAddress     string `mapstructure:"rootchain_contract"`      // Rootchain contract address on main chain
+	StateSenderAddress   string `mapstructure:"state_sender_contract"`   // main
+	StateReceiverAddress string `mapstructure:"state_receiver_contract"` // matic
+	ValidatorSetAddress  string `mapstructure:"validator_set_contract"`  // Validator Set contract address on bor chain
 
 	ChildBlockInterval uint64 `mapstructure:"child_chain_block_interval"` // Difference between header index of 2 child blocks submitted on main chain
 
@@ -228,12 +226,11 @@ func GetDefaultHeimdallConfig() Configuration {
 		AmqpURL:           DefaultAmqpURL,
 		HeimdallServerURL: DefaultHeimdallServerURL,
 
-		StakeManagerAddress:      (common.Address{}).Hex(),
-		RootchainAddress:         (common.Address{}).Hex(),
-		DelegationManagerAddress: (common.Address{}).Hex(),
-		StateSenderAddress:       (common.Address{}).Hex(),
-		StateReceiverAddress:     DefaultStateReceiverAddress,
-		ValidatorSetAddress:      DefaultValidatorSetAddress,
+		StakeManagerAddress:  (common.Address{}).Hex(),
+		RootchainAddress:     (common.Address{}).Hex(),
+		StateSenderAddress:   (common.Address{}).Hex(),
+		StateReceiverAddress: DefaultStateReceiverAddress,
+		ValidatorSetAddress:  DefaultValidatorSetAddress,
 
 		ChildBlockInterval: DefaultChildBlockInterval,
 
@@ -313,25 +310,6 @@ func GetStakeManagerInstance() (*stakemanager.Stakemanager, error) {
 // GetStakeManagerABI returns ABI for StakeManager contract
 func GetStakeManagerABI() (abi.ABI, error) {
 	return abi.JSON(strings.NewReader(stakemanager.StakemanagerABI))
-}
-
-//
-// Delegation manager
-//
-
-// GetDelegationManagerAddress returns DelegationManager contract address for selected base chain
-func GetDelegationManagerAddress() common.Address {
-	return common.HexToAddress(GetConfig().DelegationManagerAddress)
-}
-
-// GetDelegationManagerInstance returns DelegationManager contract instance for selected base chain
-func GetDelegationManagerInstance() (*delegationmanager.Delegationmanager, error) {
-	return delegationmanager.NewDelegationmanager(GetDelegationManagerAddress(), mainChainClient)
-}
-
-// GetDelegationManagerABI returns ABI for Delegationmanager contract
-func GetDelegationManagerABI() (abi.ABI, error) {
-	return abi.JSON(strings.NewReader(delegationmanager.DelegationmanagerABI))
 }
 
 //
