@@ -648,14 +648,6 @@ func GetPowerFromAmount(amount *big.Int) (*big.Int, error) {
 	return amount.Div(amount, decimals18), nil
 }
 
-// GetAmountFromPower returns amount from power
-func GetAmountFromPower(power int64) (*big.Int, error) {
-	decimals18 := big.NewInt(10).Exp(big.NewInt(10), big.NewInt(18), nil)
-	pow := big.NewInt(power)
-	amount := pow.Mul(pow, decimals18)
-	return amount, nil
-}
-
 // GetAmountFromString converts string to its big Int
 func GetAmountFromString(amount string) (*big.Int, error) {
 	amountInDecimals, ok := big.NewInt(0).SetString(amount, 10)

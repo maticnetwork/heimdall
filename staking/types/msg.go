@@ -141,58 +141,6 @@ func (msg MsgStakeUpdate) ValidateBasic() sdk.Error {
 	return nil
 }
 
-var _ sdk.Msg = &MsgCommissionRateUpdate{}
-
-// MsgCommissionRateUpdate represents commission rate update
-type MsgCommissionRateUpdate struct {
-	From     hmTypes.HeimdallAddress `json:"from"`
-	ID       hmTypes.ValidatorID     `json:"id"`
-	TxHash   hmTypes.HeimdallHash    `json:"tx_hash"`
-	LogIndex uint64                  `json:"log_index"`
-}
-
-// NewMsgCommissionRateUpdate represents stake update
-func NewMsgCommissionRateUpdate(from hmTypes.HeimdallAddress, id uint64, txhash hmTypes.HeimdallHash, logIndex uint64) MsgCommissionRateUpdate {
-	return MsgCommissionRateUpdate{
-		From:     from,
-		ID:       hmTypes.NewValidatorID(id),
-		TxHash:   txhash,
-		LogIndex: logIndex,
-	}
-}
-
-func (msg MsgCommissionRateUpdate) Type() string {
-	return "validator-commission-rate-update"
-}
-
-func (msg MsgCommissionRateUpdate) Route() string {
-	return RouterKey
-}
-
-func (msg MsgCommissionRateUpdate) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{hmTypes.HeimdallAddressToAccAddress(msg.From)}
-}
-
-func (msg MsgCommissionRateUpdate) GetSignBytes() []byte {
-	b, err := cdc.MarshalJSON(msg)
-	if err != nil {
-		panic(err)
-	}
-	return sdk.MustSortJSON(b)
-}
-
-func (msg MsgCommissionRateUpdate) ValidateBasic() sdk.Error {
-	if msg.ID <= 0 {
-		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator ID %v", msg.ID)
-	}
-
-	if msg.From.Empty() {
-		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.From.String())
-	}
-
-	return nil
-}
-
 //
 // validator update
 //

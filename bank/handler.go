@@ -194,12 +194,14 @@ func handleMsgWithdrawTopup(ctx sdk.Context, k Keeper, msg types.MsgWithdrawTopu
 	feeAmount := veticBalance.BigInt()
 	k.AddFeeToDividendAccount(ctx, msg.ID, feeAmount)
 
-	ctx.EventManager().EmitEvent(
+	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
-			sdk.EventTypeMessage,
+			types.EventTypeTopupWithdraw,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(uint64(msg.ID), 10)),
+			sdk.NewAttribute(types.AttributeKeyTopupWithdrawAmount, strconv.FormatUint(feeAmount.Uint64(), 10)),
 		),
-	)
+	})
 
 	return sdk.Result{
 		Events: ctx.EventManager().Events(),

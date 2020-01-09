@@ -19,7 +19,7 @@ func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc("/bank/accounts/{address}/transfers", SendRequestHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/bank/accounts/topup", TopupHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/bank/balances/{address}", QueryBalancesRequestHandlerFn(cliCtx)).Methods("GET")
-	r.HandleFunc("/bank/accounts/withdrawtopup", WithdrawTopupHandlerFn(cliCtx)).Methods("POST")
+	r.HandleFunc("/bank/accounts/topup/withdraw", WithdrawTopupHandlerFn(cliCtx)).Methods("POST")
 }
 
 // SendReq defines the properties of a send request's body.

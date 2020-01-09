@@ -214,11 +214,3 @@ func ValToMinVal(vals []Validator) (minVals []MinimalVal) {
 	}
 	return
 }
-
-// GetAmountFromPower returns amount from power
-func GetAmountFromPower(power int64) (*big.Int, error) {
-	decimals18 := big.NewInt(10).Exp(big.NewInt(10), big.NewInt(18), nil)
-	pow := big.NewInt(power)
-	amount := pow.Mul(pow, decimals18)
-	return amount, nil
-}
