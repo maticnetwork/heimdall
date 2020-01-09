@@ -5,8 +5,8 @@ package mocks
 import (
 	big "math/big"
 
-	cosmos_sdktypes "github.com/cosmos/cosmos-sdk/types"
 	common "github.com/maticnetwork/bor/common"
+	delegationmanager "github.com/maticnetwork/heimdall/contracts/delegationmanager"
 
 	heimdalltypes "github.com/maticnetwork/heimdall/types"
 
@@ -79,6 +79,121 @@ func (_m *IContractCaller) CurrentStateCounter() *big.Int {
 	return r0
 }
 
+// DecodeCommissionRateUpdateEvent provides a mock function with given fields: _a0, _a1
+func (_m *IContractCaller) DecodeCommissionRateUpdateEvent(_a0 *types.Receipt, _a1 uint64) (*delegationmanager.DelegationmanagerUpdateCommission, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *delegationmanager.DelegationmanagerUpdateCommission
+	if rf, ok := ret.Get(0).(func(*types.Receipt, uint64) *delegationmanager.DelegationmanagerUpdateCommission); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*delegationmanager.DelegationmanagerUpdateCommission)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*types.Receipt, uint64) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// DecodeDelStakeUpdateEvent provides a mock function with given fields: _a0, _a1
+func (_m *IContractCaller) DecodeDelStakeUpdateEvent(_a0 *types.Receipt, _a1 uint64) (*delegationmanager.DelegationmanagerDelStakeUpdate, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *delegationmanager.DelegationmanagerDelStakeUpdate
+	if rf, ok := ret.Get(0).(func(*types.Receipt, uint64) *delegationmanager.DelegationmanagerDelStakeUpdate); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*delegationmanager.DelegationmanagerDelStakeUpdate)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*types.Receipt, uint64) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// DecodeDelegatorBondEvent provides a mock function with given fields: _a0, _a1
+func (_m *IContractCaller) DecodeDelegatorBondEvent(_a0 *types.Receipt, _a1 uint64) (*delegationmanager.DelegationmanagerBonding, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *delegationmanager.DelegationmanagerBonding
+	if rf, ok := ret.Get(0).(func(*types.Receipt, uint64) *delegationmanager.DelegationmanagerBonding); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*delegationmanager.DelegationmanagerBonding)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*types.Receipt, uint64) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// DecodeDelegatorReBondEvent provides a mock function with given fields: _a0, _a1
+func (_m *IContractCaller) DecodeDelegatorReBondEvent(_a0 *types.Receipt, _a1 uint64) (*delegationmanager.DelegationmanagerReBonding, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *delegationmanager.DelegationmanagerReBonding
+	if rf, ok := ret.Get(0).(func(*types.Receipt, uint64) *delegationmanager.DelegationmanagerReBonding); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*delegationmanager.DelegationmanagerReBonding)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*types.Receipt, uint64) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// DecodeDelegatorUnBondEvent provides a mock function with given fields: _a0, _a1
+func (_m *IContractCaller) DecodeDelegatorUnBondEvent(_a0 *types.Receipt, _a1 uint64) (*delegationmanager.DelegationmanagerUnBonding, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *delegationmanager.DelegationmanagerUnBonding
+	if rf, ok := ret.Get(0).(func(*types.Receipt, uint64) *delegationmanager.DelegationmanagerUnBonding); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*delegationmanager.DelegationmanagerUnBonding)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*types.Receipt, uint64) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // DecodeNewHeaderBlockEvent provides a mock function with given fields: _a0, _a1
 func (_m *IContractCaller) DecodeNewHeaderBlockEvent(_a0 *types.Receipt, _a1 uint64) (*rootchain.RootchainNewHeaderBlock, error) {
 	ret := _m.Called(_a0, _a1)
@@ -149,15 +264,15 @@ func (_m *IContractCaller) DecodeValidatorStakeUpdateEvent(_a0 *types.Receipt, _
 }
 
 // DecodeValidatorTopupFeesEvent provides a mock function with given fields: _a0, _a1
-func (_m *IContractCaller) DecodeValidatorTopupFeesEvent(_a0 *types.Receipt, _a1 uint64) (*stakemanager.StakemanagerTopupFees, error) {
+func (_m *IContractCaller) DecodeValidatorTopupFeesEvent(_a0 *types.Receipt, _a1 uint64) (*stakemanager.StakemanagerTopUpFee, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *stakemanager.StakemanagerTopupFees
-	if rf, ok := ret.Get(0).(func(*types.Receipt, uint64) *stakemanager.StakemanagerTopupFees); ok {
+	var r0 *stakemanager.StakemanagerTopUpFee
+	if rf, ok := ret.Get(0).(func(*types.Receipt, uint64) *stakemanager.StakemanagerTopUpFee); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*stakemanager.StakemanagerTopupFees)
+			r0 = ret.Get(0).(*stakemanager.StakemanagerTopUpFee)
 		}
 	}
 
@@ -240,13 +355,13 @@ func (_m *IContractCaller) GetBlockNumberFromTxHash(_a0 common.Hash) (*big.Int, 
 	return r0, r1
 }
 
-// GetCheckpointSign provides a mock function with given fields: ctx, txHash
-func (_m *IContractCaller) GetCheckpointSign(ctx cosmos_sdktypes.Context, txHash common.Hash) ([]byte, []byte, []byte, error) {
-	ret := _m.Called(ctx, txHash)
+// GetCheckpointSign provides a mock function with given fields: txHash
+func (_m *IContractCaller) GetCheckpointSign(txHash common.Hash) ([]byte, []byte, []byte, error) {
+	ret := _m.Called(txHash)
 
 	var r0 []byte
-	if rf, ok := ret.Get(0).(func(cosmos_sdktypes.Context, common.Hash) []byte); ok {
-		r0 = rf(ctx, txHash)
+	if rf, ok := ret.Get(0).(func(common.Hash) []byte); ok {
+		r0 = rf(txHash)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]byte)
@@ -254,8 +369,8 @@ func (_m *IContractCaller) GetCheckpointSign(ctx cosmos_sdktypes.Context, txHash
 	}
 
 	var r1 []byte
-	if rf, ok := ret.Get(1).(func(cosmos_sdktypes.Context, common.Hash) []byte); ok {
-		r1 = rf(ctx, txHash)
+	if rf, ok := ret.Get(1).(func(common.Hash) []byte); ok {
+		r1 = rf(txHash)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).([]byte)
@@ -263,8 +378,8 @@ func (_m *IContractCaller) GetCheckpointSign(ctx cosmos_sdktypes.Context, txHash
 	}
 
 	var r2 []byte
-	if rf, ok := ret.Get(2).(func(cosmos_sdktypes.Context, common.Hash) []byte); ok {
-		r2 = rf(ctx, txHash)
+	if rf, ok := ret.Get(2).(func(common.Hash) []byte); ok {
+		r2 = rf(txHash)
 	} else {
 		if ret.Get(2) != nil {
 			r2 = ret.Get(2).([]byte)
@@ -272,8 +387,8 @@ func (_m *IContractCaller) GetCheckpointSign(ctx cosmos_sdktypes.Context, txHash
 	}
 
 	var r3 error
-	if rf, ok := ret.Get(3).(func(cosmos_sdktypes.Context, common.Hash) error); ok {
-		r3 = rf(ctx, txHash)
+	if rf, ok := ret.Get(3).(func(common.Hash) error); ok {
+		r3 = rf(txHash)
 	} else {
 		r3 = ret.Error(3)
 	}

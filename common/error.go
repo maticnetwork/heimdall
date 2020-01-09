@@ -46,10 +46,16 @@ const (
 	CodeValSetMisMatch     CodeType = 3504
 	CodeProducerMisMatch   CodeType = 3505
 
-	CodeFetchCheckpointSigners  CodeType = 4501
-	CodeErrComputeSignerRewards CodeType = 4502
-	CodeErrComputeGenesisReward CodeType = 4503
-	CodeRewardRootMismatch      CodeType = 4504
+	CodeFetchCheckpointSigners       CodeType = 4501
+	CodeErrComputeSignerRewards      CodeType = 4502
+	CodeErrComputeGenesisAccountRoot CodeType = 4503
+	CodeAccountRootMismatch          CodeType = 4504
+	CodeErrComputeCheckpointReward   CodeType = 4505
+
+	CodeDelegatorBond        CodeType = 5501
+	CodeDelegatorUnBond      CodeType = 5502
+	CodeDelegatorRnBond      CodeType = 5503
+	CodeDelegatorStakeUpdate CodeType = 5504
 )
 
 // -------- Invalid msg
@@ -168,15 +174,31 @@ func ErrFetchCheckpointSigners(codespace sdk.CodespaceType) sdk.Error {
 }
 
 func ErrComputeCheckpointRewards(codespace sdk.CodespaceType) sdk.Error {
-	return newError(codespace, CodeErrComputeGenesisReward, "Error while computing signer rewards")
+	return newError(codespace, CodeErrComputeCheckpointReward, "Error while computing checkpoint reward")
 }
 
-func ErrComputeGenesisRewardRoot(codespace sdk.CodespaceType) sdk.Error {
-	return newError(codespace, CodeErrComputeGenesisReward, "Error which computing Genesis Reward Root")
+func ErrComputeGenesisAccountRoot(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeErrComputeGenesisAccountRoot, "Error while computing Genesis Account Root")
 }
 
-func ErrRewardRootMismatch(codespace sdk.CodespaceType) sdk.Error {
-	return newError(codespace, CodeRewardRootMismatch, "Reward Root hash mismatch")
+func ErrAccountRootMismatch(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeAccountRootMismatch, "Account Root hash mismatch")
+}
+
+func ErrDelegatorBond(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeDelegatorBond, "Delegator Bond Failed")
+}
+
+func ErrDelegatorUnBond(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeDelegatorUnBond, "Delegator UnBond Failed")
+}
+
+func ErrDelegatorRnBond(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeDelegatorRnBond, "Delegator RnBond Failed")
+}
+
+func ErrDelegatorStakeUpdate(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeDelegatorStakeUpdate, "Delegator StakeUpdate Failed")
 }
 
 // Bor Errors --------------------------------

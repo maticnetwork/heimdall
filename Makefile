@@ -33,6 +33,7 @@ contracts:
 	abigen --abi=contracts/stakemanager/stakemanager.abi --pkg=stakemanager --out=contracts/stakemanager/stakemanager.go
 	abigen --abi=contracts/statereceiver/statereceiver.abi --pkg=statereceiver --out=contracts/statereceiver/statereceiver.go
 	abigen --abi=contracts/statesender/statesender.abi --pkg=statesender --out=contracts/statesender/statesender.go
+	abigen --abi=contracts/delegationmanager/delegationmanager.abi --pkg=delegationmanager --out=contracts/delegationmanager/delegationmanager.go
 	
 	abigen --abi=contracts/validatorset/validatorset.abi --pkg=validatorset --out=contracts/validatorset/validatorset.go
 
@@ -50,7 +51,7 @@ run-heimdall:
 
 start-heimdall:
 	mkdir -p ./logs &
-	./build/heimdalld start > ./logs/heimdalld.log &
+	./build/heimdalld start --log_level=debug > ./logs/heimdalld.log &
 
 reset-heimdall:
 	./build/heimdalld unsafe-reset-all 

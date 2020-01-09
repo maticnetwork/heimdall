@@ -127,7 +127,7 @@ func handleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCalle
 	}
 
 	// create topup amount
-	topupAmount := hmTypes.Coins{hmTypes.Coin{Denom: "vetic", Amount: hmTypes.NewIntFromBigInt(eventLog.Amount)}}
+	topupAmount := hmTypes.Coins{hmTypes.Coin{Denom: "vetic", Amount: hmTypes.NewIntFromBigInt(eventLog.Fee)}}
 
 	// sequence id
 	sequence := (receipt.BlockNumber.Uint64() * hmTypes.DefaultLogIndexUnit) + msg.LogIndex
@@ -164,7 +164,7 @@ func handleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCalle
 			types.EventTypeTopup,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(uint64(msg.ID), 10)),
-			sdk.NewAttribute(types.AttributeKeyTopupAmount, strconv.FormatUint(eventLog.Amount.Uint64(), 10)),
+			sdk.NewAttribute(types.AttributeKeyTopupAmount, strconv.FormatUint(eventLog.Fee.Uint64(), 10)),
 		),
 	})
 

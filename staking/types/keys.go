@@ -18,4 +18,7 @@ const (
 
 	// DefaultValPower default validator power
 	DefaultValPower = 10
+
+	// DefaultDelPower default delegator power
+	DefaultDelPower = 0
 )

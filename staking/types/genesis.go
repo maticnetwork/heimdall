@@ -3,53 +3,58 @@ package types
 import (
 	"encoding/json"
 	"errors"
-	"math/big"
 
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 // GenesisValidator genesis validator
 type GenesisValidator struct {
-	ID         hmTypes.ValidatorID     `json:"id"`
-	StartEpoch uint64                  `json:"start_epoch"`
-	EndEpoch   uint64                  `json:"end_epoch"`
-	Power      uint64                  `json:"power"` // aka Amount
-	PubKey     hmTypes.PubKey          `json:"pub_key"`
-	Signer     hmTypes.HeimdallAddress `json:"signer"`
+	ID                   hmTypes.ValidatorID     `json:"id"`
+	StartEpoch           uint64                  `json:"start_epoch"`
+	EndEpoch             uint64                  `json:"end_epoch"`
+	Power                uint64                  `json:"power"` // aka Amount
+	DelegatedPower       int64                   `json:"delegatedpower"`
+	DelgatorRewardPool   string                  `json:delegatorRewardPool`
+	TotalDelegatorShares string                  `json:totalDelegatorShares`
+	PubKey               hmTypes.PubKey          `json:"pub_key"`
+	Signer               hmTypes.HeimdallAddress `json:"signer"`
 }
 
 // HeimdallValidator converts genesis validator validator to Heimdall validator
 func (v *GenesisValidator) HeimdallValidator() hmTypes.Validator {
 	return hmTypes.Validator{
-		ID:          v.ID,
-		PubKey:      v.PubKey,
-		VotingPower: int64(v.Power),
-		StartEpoch:  v.StartEpoch,
-		EndEpoch:    v.EndEpoch,
-		Signer:      v.Signer,
+		ID:                   v.ID,
+		PubKey:               v.PubKey,
+		VotingPower:          int64(v.Power),
+		DelegatedPower:       int64(v.DelegatedPower),
+		DelgatorRewardPool:   v.DelgatorRewardPool,
+		TotalDelegatorShares: v.TotalDelegatorShares,
+		StartEpoch:           v.StartEpoch,
+		EndEpoch:             v.EndEpoch,
+		Signer:               v.Signer,
 	}
 }
 
 // GenesisState is the checkpoint state that must be provided at genesis.
 type GenesisState struct {
-	Validators           []*hmTypes.Validator             `json:"validators" yaml:"validators"`
-	CurrentValSet        hmTypes.ValidatorSet             `json:"current_val_set" yaml:"current_val_set"`
-	ValidatorRewards     map[hmTypes.ValidatorID]*big.Int `json:"val_rewards" yaml:"val_rewards"`
-	ProposerBonusPercent int64                            `json:"proposer_bonus_percent" yaml:"proposer_bonus_percent"`
+	Validators           []*hmTypes.Validator      `json:"validators" yaml:"validators"`
+	CurrentValSet        hmTypes.ValidatorSet      `json:"current_val_set" yaml:"current_val_set"`
+	DividentAccounts     []hmTypes.DividendAccount `json:"dividend_accounts" yaml:"dividend_accounts"`
+	ProposerBonusPercent int64                     `json:"proposer_bonus_percent" yaml:"proposer_bonus_percent"`
 }
 
 // NewGenesisState creates a new genesis state.
 func NewGenesisState(
 	validators []*hmTypes.Validator,
 	currentValSet hmTypes.ValidatorSet,
-	validatorRewards map[hmTypes.ValidatorID]*big.Int,
+	dividentAccounts []hmTypes.DividendAccount,
 	proposerBonusPercent int64,
 
 ) GenesisState {
 	return GenesisState{
 		Validators:           validators,
 		CurrentValSet:        currentValSet,
-		ValidatorRewards:     validatorRewards,
+		DividentAccounts:     dividentAccounts,
 		ProposerBonusPercent: proposerBonusPercent,
 	}
 }
@@ -86,16 +91,11 @@ func GetGenesisStateFromAppState(appState map[string]json.RawMessage) GenesisSta
 
 // SetGenesisStateToAppState sets state into app state
 func SetGenesisStateToAppState(appState map[string]json.RawMessage, validators []*hmTypes.Validator, currentValSet hmTypes.ValidatorSet) (map[string]json.RawMessage, error) {
-	validatorRewards := make(map[hmTypes.ValidatorID]*big.Int)
-	for _, val := range validators {
-		validatorRewards[val.ID] = big.NewInt(0)
-	}
-
 	// set state to staking state
 	stakingState := GetGenesisStateFromAppState(appState)
 	stakingState.Validators = validators
 	stakingState.CurrentValSet = currentValSet
-	stakingState.ValidatorRewards = validatorRewards
+	stakingState.DividentAccounts = make([]hmTypes.DividendAccount, 0)
 
 	var err error
 	appState[ModuleName], err = json.Marshal(stakingState)

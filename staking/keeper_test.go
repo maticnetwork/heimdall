@@ -7,10 +7,10 @@ import (
 	"testing"
 
 	"github.com/maticnetwork/bor/accounts/abi"
-	"github.com/maticnetwork/heimdall/checkpoint"
+	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/staking"
+	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
 	cmn "github.com/maticnetwork/heimdall/test"
 	"github.com/maticnetwork/heimdall/types"
 	"github.com/stretchr/testify/require"
@@ -280,47 +280,47 @@ func TestValidatorSetChange(t *testing.T) {
 
 }
 
-// Tests setters and getters for validator reward
-func TestValidatorRewards(t *testing.T) {
-	ctx, keeper, _ := cmn.CreateTestInput(t, false)
-	cmn.LoadValidatorSet(4, t, keeper, ctx, false, 10)
-	curVal := keeper.GetCurrentValidators(ctx)
-	// check initial reward
-	initReward := big.NewInt(100)
-	keeper.SetValidatorIDToReward(ctx, curVal[0].ID, initReward)
-	valReward := keeper.GetRewardByValidatorID(ctx, curVal[0].ID)
-	require.Equal(t, initReward, valReward, "Validator Initial Reward should be %v but it is %v", initReward, valReward)
-	// check updated reward
-	rewardAdded := big.NewInt(50)
-	keeper.SetValidatorIDToReward(ctx, curVal[0].ID, rewardAdded)
-	updatedReward := keeper.GetRewardByValidatorID(ctx, curVal[0].ID)
-	rewardSum := big.NewInt(0).Add(initReward, rewardAdded)
-	require.Equal(t, rewardSum, updatedReward, "Validator Updated Reward should be %v but it is %v", rewardSum, updatedReward)
-	// zero reward for Invalid Validator ID
-	rewardNonValId := keeper.GetRewardByValidatorID(ctx, curVal[1].ID)
-	require.Equal(t, big.NewInt(0), rewardNonValId, "Reward should be zero but it is %v", rewardNonValId)
-	// check validator reward map
-	keeper.SetValidatorIDToReward(ctx, curVal[1].ID, big.NewInt(35))
-	keeper.SetValidatorIDToReward(ctx, curVal[2].ID, big.NewInt(45))
-	valRewardMap := keeper.GetAllValidatorRewards(ctx)
-	t.Log("Validator Reward Map - ", valRewardMap)
-	require.Equal(t, 3, len(valRewardMap), "Validator Reward map size should be %v but it is %v", 3, len(valRewardMap))
-	require.Equal(t, rewardSum, valRewardMap[curVal[0].ID], "Validator Reward should be %v but it is %v", rewardSum, valRewardMap[curVal[0].ID])
-	require.Equal(t, big.NewInt(35), valRewardMap[curVal[1].ID], "Validator Reward should be %v but it is %v", big.NewInt(35), valRewardMap[curVal[0].ID])
-	require.Equal(t, big.NewInt(45), valRewardMap[curVal[2].ID], "Validator Reward should be %v but it is %v", big.NewInt(45), valRewardMap[curVal[0].ID])
+// // Tests setters and getters for validator reward
+// func TestValidatorRewards(t *testing.T) {
+// 	ctx, keeper, _ := cmn.CreateTestInput(t, false)
+// 	cmn.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+// 	curVal := keeper.GetCurrentValidators(ctx)
+// 	// check initial reward
+// 	initReward := big.NewInt(100)
+// 	keeper.SetValidatorIDToReward(ctx, curVal[0].ID, initReward)
+// 	valReward, err := keeper.GetRewardByDividendAccountID(ctx, types.DividendAccountID(curVal[0].ID))
+// 	require.Equal(t, initReward, valReward, "Validator Initial Reward should be %v but it is %v", initReward, valReward)
+// 	// check updated reward
+// 	rewardAdded := big.NewInt(50)
+// 	keeper.SetValidatorIDToReward(ctx, curVal[0].ID, rewardAdded)
+// 	updatedReward, err := keeper.GetRewardByDividendAccountID(ctx, types.DividendAccountID(curVal[0].ID))
+// 	rewardSum := big.NewInt(0).Add(initReward, rewardAdded)
+// 	require.Equal(t, rewardSum, updatedReward, "Validator Updated Reward should be %v but it is %v", rewardSum, updatedReward)
+// 	// zero reward for Invalid Validator ID
+// 	rewardNonValId, err := keeper.GetRewardByDividendAccountID(ctx, types.DividendAccountID(curVal[1].ID))
+// 	require.Equal(t, big.NewInt(0), rewardNonValId, "Reward should be zero but it is %v", rewardNonValId)
+// 	// check validator reward map
+// 	keeper.SetValidatorIDToReward(ctx, curVal[1].ID, big.NewInt(35))
+// 	keeper.SetValidatorIDToReward(ctx, curVal[2].ID, big.NewInt(45))
+// 	valRewardMap := keeper.GetAllDividendAccounts(ctx)
+// 	t.Log("Validator Reward Map - ", valRewardMap)
+// 	require.Equal(t, 3, len(valRewardMap), "Validator Reward map size should be %v but it is %v", 3, len(valRewardMap))
+// 	require.Equal(t, rewardSum, valRewardMap[curVal[0].ID], "Validator Reward should be %v but it is %v", rewardSum, valRewardMap[curVal[0].ID])
+// 	require.Equal(t, big.NewInt(35), valRewardMap[curVal[1].ID], "Validator Reward should be %v but it is %v", big.NewInt(35), valRewardMap[curVal[0].ID])
+// 	require.Equal(t, big.NewInt(45), valRewardMap[curVal[2].ID], "Validator Reward should be %v but it is %v", big.NewInt(45), valRewardMap[curVal[0].ID])
 
-	// Generate Merkle Root Out of Rewards after sorting by valID
-	rewardRootHash, err := checkpoint.GetRewardRootHash(valRewardMap)
-	require.Empty(t, err, "Error when generating reward root hash from validator reward state tree")
-	t.Log("Reward root hash - ", types.BytesToHeimdallHash(rewardRootHash))
+// 	// Generate Merkle Root Out of Rewards after sorting by valID
+// 	rewardRootHash, err := checkpointTypes.GetRewardRootHash(valRewardMap)
+// 	require.Empty(t, err, "Error when generating reward root hash from validator reward state tree")
+// 	t.Log("Reward root hash - ", types.BytesToHeimdallHash(rewardRootHash))
 
-}
+// }
 
 func TestCalculateSignerRewards(t *testing.T) {
 	ctx, keeper, _ := cmn.CreateTestInput(t, false)
 	checkpointReward := big.NewInt(0).Exp(big.NewInt(10), big.NewInt(22), nil)
 	t.Log("checkpoint reward - ", checkpointReward)
-	keeper.SetProposerBonusPercent(ctx, staking.DefaultProposerBonusPercent)
+	keeper.SetProposerBonusPercent(ctx, stakingTypes.DefaultProposerBonusPercent)
 	var valSet = types.ValidatorSet{}
 	var newVal = types.Validator{}
 	signerRewardshouldbe := make(map[types.ValidatorID]*big.Int)
@@ -384,4 +384,244 @@ func TestCalculateSignerRewards(t *testing.T) {
 		require.Empty(t, err, "Error while getting val info for signer -", types.HexToHeimdallAddress(signerAddresses[i]).Bytes())
 		require.Equal(t, signerRewardshouldbe[val.ID], signerRewardMap[val.ID], "Reward for valId %v should be %v but it %v", val.ID, signerRewardshouldbe[val.ID], signerRewardMap[val.ID])
 	}
+}
+
+func TestDelegatorBonding(t *testing.T) {
+	type TestDataItem struct {
+		name                          string
+		ValId                         types.ValidatorID
+		VotingPower                   int64
+		VotingPowerAfterBond          int64
+		DelegatedPower                int64
+		DelegatedPowerAfterBond       int64
+		DelgatorRewardPool            string
+		TotalDelegatorShares          string
+		TotalDelegatorSharesAfterBond string
+		CommissionRate                uint64
+		delID                         types.DelegatorID
+		delstakeAmount                string
+		delSharesAfterBond            string
+		resultmsg                     string
+	}
+
+	dataItems := []TestDataItem{
+		{"Bond with validator first time", types.NewValidatorID(1), int64(100), int64(150), int64(0), int64(50), "0", "0", "50000000000000000000", uint64(0), types.NewDelegatorID(2), "50000000000000000000", "50000000000000000000", "Error when delegator bonds to validator first time"},
+		{"Bond with validator who has delegated power", types.NewValidatorID(1), int64(150), int64(220), int64(50), int64(120), "0", "50000000000000000000", "120000000000000000000", uint64(0), types.NewDelegatorID(3), "70000000000000000000", "70000000000000000000", "Error when delegator bonds to already bonded validator"},
+		{"Bond With validator who has delegated power and delegator reward", types.NewValidatorID(1), int64(150), int64(250), int64(50), int64(150), "50000000000000000000", "50000000000000000000", "100000000000000000000", uint64(0), types.NewDelegatorID(4), "100000000000000000000", "50000000000000000000", "Error when delegator bonds to already bonded validator"},
+	}
+
+	ctx, stakingKeeper, _ := cmn.CreateTestInput(t, false)
+	for _, item := range dataItems {
+		t.Run(item.name, func(t *testing.T) {
+			// Create a Validator
+			newVal := types.Validator{
+				ID:                   item.ValId,
+				VotingPower:          item.VotingPower,
+				DelegatedPower:       item.DelegatedPower,
+				DelgatorRewardPool:   item.DelgatorRewardPool,
+				TotalDelegatorShares: item.TotalDelegatorShares,
+				CommissionRate:       item.CommissionRate,
+			}
+			// check current validator
+			stakingKeeper.AddValidator(ctx, newVal)
+			delStake, _ := big.NewInt(0).SetString(item.delstakeAmount, 10)
+			stakingKeeper.BondDelegator(ctx, item.delID, item.ValId, delStake)
+
+			// After delegator bond
+			valAfterBond, _ := stakingKeeper.GetValidatorFromValID(ctx, item.ValId)
+			delDividendAccount, _ := stakingKeeper.GetDividendAccountByID(ctx, types.DividendAccountID(item.delID))
+			require.Equal(t, item.VotingPowerAfterBond, valAfterBond.VotingPower, item.resultmsg)
+			require.Equal(t, item.DelegatedPowerAfterBond, valAfterBond.DelegatedPower, item.resultmsg)
+			require.Equal(t, item.TotalDelegatorSharesAfterBond, valAfterBond.TotalDelegatorShares, item.resultmsg)
+			require.Equal(t, item.delSharesAfterBond, delDividendAccount.Shares, item.resultmsg)
+
+		})
+	}
+}
+
+func TestDelegatorUnBonding(t *testing.T) {
+	type TestDataItem struct {
+		name                            string
+		ValId                           types.ValidatorID
+		VotingPower                     int64
+		VotingPowerAfterUnBond          int64
+		DelegatedPower                  int64
+		DelegatedPowerAfterUnBond       int64
+		DelgatorRewardPool              string
+		DelgatorRewardPoolAfterUnbond   string
+		TotalDelegatorShares            string
+		TotalDelegatorSharesAfterUnBond string
+		CommissionRate                  uint64
+		delID                           types.DelegatorID
+		delstakeAmount                  string
+		delShares                       string
+		delSharesAfterUnBond            string
+		delReward                       string
+		delRewardAfterUnBond            string
+		resultmsg                       string
+	}
+
+	dataItems := []TestDataItem{
+		{"UnBond with validator", types.NewValidatorID(1), int64(150), int64(100), int64(50), int64(0), "50000000000000000000", "0", "50000000000000000000", "0", uint64(0), types.NewDelegatorID(2), "50000000000000000000", "50000000000000000000", "0", "0", "50000000000000000000", "Error when delegator bonds to validator first time"},
+		{"UnBond with validator who has multiple delegators annd exchange rate is one", types.NewValidatorID(1), int64(200), int64(150), int64(100), int64(50), "100000000000000000000", "50000000000000000000", "100000000000000000000", "50000000000000000000", uint64(0), types.NewDelegatorID(2), "50000000000000000000", "50000000000000000000", "0", "0", "50000000000000000000", "Error when delegator bonds to validator first time"},
+	}
+
+	ctx, stakingKeeper, _ := cmn.CreateTestInput(t, false)
+	for _, item := range dataItems {
+		t.Run(item.name, func(t *testing.T) {
+			// Create a Validator
+			newVal := types.Validator{
+				ID:                   item.ValId,
+				VotingPower:          item.VotingPower,
+				DelegatedPower:       item.DelegatedPower,
+				DelgatorRewardPool:   item.DelgatorRewardPool,
+				TotalDelegatorShares: item.TotalDelegatorShares,
+				CommissionRate:       item.CommissionRate,
+			}
+
+			delDivAccount := types.DividendAccount{
+				ID:           types.DividendAccountID(item.delID),
+				Shares:       item.delShares,
+				RewardAmount: item.delReward,
+			}
+			// check current validator
+			stakingKeeper.AddValidator(ctx, newVal)
+			stakingKeeper.AddDividendAccount(ctx, delDivAccount)
+
+			delStake, _ := big.NewInt(0).SetString(item.delstakeAmount, 10)
+			stakingKeeper.UnBondDelegator(ctx, item.delID, item.ValId, delStake)
+
+			// After delegator unbond
+			valAfterBond, _ := stakingKeeper.GetValidatorFromValID(ctx, item.ValId)
+			delDividendAccount, _ := stakingKeeper.GetDividendAccountByID(ctx, types.DividendAccountID(item.delID))
+			require.Equal(t, item.VotingPowerAfterUnBond, valAfterBond.VotingPower, item.resultmsg)
+			require.Equal(t, item.DelegatedPowerAfterUnBond, valAfterBond.DelegatedPower, item.resultmsg)
+			require.Equal(t, item.DelgatorRewardPoolAfterUnbond, valAfterBond.DelgatorRewardPool, item.resultmsg)
+			require.Equal(t, item.TotalDelegatorSharesAfterUnBond, valAfterBond.TotalDelegatorShares, item.resultmsg)
+			require.Equal(t, item.delSharesAfterUnBond, delDividendAccount.Shares, item.resultmsg)
+			require.Equal(t, item.delRewardAfterUnBond, delDividendAccount.RewardAmount, item.resultmsg)
+
+		})
+	}
+}
+
+func TestDelegatorReBonding(t *testing.T) {
+	type TestDataItem struct {
+		name                              string
+		V1Id                              types.ValidatorID
+		V1VotingPower                     int64
+		V1VotingPowerAfterReBond          int64
+		V1DelegatedPower                  int64
+		V1DelegatedPowerAfterReBond       int64
+		V1DelgatorRewardPool              string
+		V1DelgatorRewardPoolAfterRebond   string
+		V1TotalDelegatorShares            string
+		V1TotalDelegatorSharesAfterReBond string
+		V1CommissionRate                  uint64
+
+		delID                types.DelegatorID
+		delstakeAmount       string
+		delShares            string
+		delSharesAfterReBond string
+		delReward            string
+		delRewardAfterReBond string
+
+		V2Id                              types.ValidatorID
+		V2VotingPower                     int64
+		V2VotingPowerAfterReBond          int64
+		V2DelegatedPower                  int64
+		V2DelegatedPowerAfterReBond       int64
+		V2DelgatorRewardPool              string
+		V2DelgatorRewardPoolAfterRebond   string
+		V2TotalDelegatorShares            string
+		V2TotalDelegatorSharesAfterReBond string
+		V2CommissionRate                  uint64
+		resultmsg                         string
+	}
+
+	dataItems := []TestDataItem{
+		{"ReBond from V1(exchangerate=1) to V2(exchangerate=1)", types.NewValidatorID(1), int64(150), int64(100), int64(50), int64(0), "50000000000000000000", "0", "50000000000000000000", "0", uint64(0), types.NewDelegatorID(2), "50000000000000000000", "50000000000000000000", "50000000000000000000", "0", "50000000000000000000", types.NewValidatorID(3), int64(100), int64(150), int64(0), int64(50), "0", "0", "0", "50000000000000000000", uint64(0), "Error when delegator rebonds"},
+	}
+
+	t.Log(dataItems[0])
+	ctx, stakingKeeper, _ := cmn.CreateTestInput(t, false)
+	for _, item := range dataItems {
+		t.Run(item.name, func(t *testing.T) {
+			privKey1 := secp256k1.GenPrivKey()
+			pubkey1 := types.NewPubKey(privKey1.PubKey().Bytes())
+			// Create a Validator
+			val1 := types.Validator{
+				ID:                   item.V1Id,
+				VotingPower:          item.V1VotingPower,
+				Signer:               types.HexToHeimdallAddress(pubkey1.Address().String()),
+				DelegatedPower:       item.V1DelegatedPower,
+				DelgatorRewardPool:   item.V1DelgatorRewardPool,
+				TotalDelegatorShares: item.V1TotalDelegatorShares,
+				CommissionRate:       item.V1CommissionRate,
+			}
+
+			privKey2 := secp256k1.GenPrivKey()
+			pubkey2 := types.NewPubKey(privKey2.PubKey().Bytes())
+
+			// Create a Validator
+			val2 := types.Validator{
+				ID:                   item.V2Id,
+				VotingPower:          item.V2VotingPower,
+				Signer:               types.HexToHeimdallAddress(pubkey2.Address().String()),
+				DelegatedPower:       item.V2DelegatedPower,
+				DelgatorRewardPool:   item.V2DelgatorRewardPool,
+				TotalDelegatorShares: item.V2TotalDelegatorShares,
+				CommissionRate:       item.V2CommissionRate,
+			}
+
+			delDivAccount := types.DividendAccount{
+				ID:           types.DividendAccountID(item.delID),
+				Shares:       item.delShares,
+				RewardAmount: item.delReward,
+			}
+			// check current validator
+			stakingKeeper.AddValidator(ctx, val1)
+			stakingKeeper.AddValidator(ctx, val2)
+			stakingKeeper.AddDividendAccount(ctx, delDivAccount)
+
+			delStake, _ := big.NewInt(0).SetString(item.delstakeAmount, 10)
+			stakingKeeper.ReBondDelegator(ctx, item.delID, delStake, val1.ID, val2.ID)
+
+			// After delegator Rebond
+			val1AfterReBond, _ := stakingKeeper.GetValidatorFromValID(ctx, val1.ID)
+			val2AfterReBond, _ := stakingKeeper.GetValidatorFromValID(ctx, val2.ID)
+			delDividendAccount, _ := stakingKeeper.GetDividendAccountByID(ctx, types.DividendAccountID(item.delID))
+
+			require.Equal(t, item.V1VotingPowerAfterReBond, val1AfterReBond.VotingPower, item.resultmsg)
+			require.Equal(t, item.V1DelegatedPowerAfterReBond, val1AfterReBond.DelegatedPower, item.resultmsg)
+			require.Equal(t, item.V1DelgatorRewardPoolAfterRebond, val1AfterReBond.DelgatorRewardPool, item.resultmsg)
+			require.Equal(t, item.V1TotalDelegatorSharesAfterReBond, val1AfterReBond.TotalDelegatorShares, item.resultmsg)
+
+			require.Equal(t, item.V2VotingPowerAfterReBond, val2AfterReBond.VotingPower, item.resultmsg)
+			require.Equal(t, item.V2DelegatedPowerAfterReBond, val2AfterReBond.DelegatedPower, item.resultmsg)
+			require.Equal(t, item.V2DelgatorRewardPoolAfterRebond, val2AfterReBond.DelgatorRewardPool, item.resultmsg)
+			require.Equal(t, item.V2TotalDelegatorSharesAfterReBond, val2AfterReBond.TotalDelegatorShares, item.resultmsg)
+
+			require.Equal(t, item.delSharesAfterReBond, delDividendAccount.Shares, item.resultmsg)
+			require.Equal(t, item.delRewardAfterReBond, delDividendAccount.RewardAmount, item.resultmsg)
+
+		})
+	}
+}
+
+func TestDividendAccountTree(t *testing.T) {
+
+	divAccounts := cmn.GenRandomDividendAccount(3, 1, true)
+	accounthash, _ := divAccounts[0].CalculateHash()
+	t.Log("account hash", types.BytesToHeimdallHash(accounthash))
+	accountRoot, err := checkpointTypes.GetAccountRootHash(divAccounts)
+	accountProof, err := checkpointTypes.GetAccountProof(divAccounts, types.NewDividendAccountID(1))
+	// accountVerified, err := checkpointTypes.VerifyAccountProof(divAccounts, types.NewDividendAccountID(1))
+
+	t.Log("dividend Accounts - ", divAccounts)
+	t.Log("account root", types.BytesToHeimdallHash(accountRoot))
+
+	t.Log("account proof", types.BytesToHeimdallHash(accountProof))
+	require.Empty(t, err, "Error getting account root hash")
+	require.NotEmpty(t, accountRoot, "Account root cannot be empty")
 }

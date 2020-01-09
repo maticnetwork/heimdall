@@ -174,11 +174,14 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 
 			// create validator
 			validator := hmTypes.Validator{
-				ID:          hmTypes.NewValidatorID(uint64(validatorID)),
-				PubKey:      newPubkey,
-				StartEpoch:  0,
-				Signer:      hmTypes.BytesToHeimdallAddress(valPubKey.Address().Bytes()),
-				VotingPower: stakingTypes.DefaultValPower,
+				ID:                   hmTypes.NewValidatorID(uint64(validatorID)),
+				PubKey:               newPubkey,
+				StartEpoch:           0,
+				Signer:               hmTypes.BytesToHeimdallAddress(valPubKey.Address().Bytes()),
+				VotingPower:          stakingTypes.DefaultValPower,
+				DelegatedPower:       0,
+				DelgatorRewardPool:   "",
+				TotalDelegatorShares: "",
 			}
 
 			vals := []*hmTypes.Validator{&validator}

@@ -8,6 +8,7 @@ import (
 
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -141,6 +142,58 @@ func (msg MsgStakeUpdate) ValidateBasic() sdk.Error {
 	return nil
 }
 
+var _ sdk.Msg = &MsgCommissionRateUpdate{}
+
+// MsgCommissionRateUpdate represents commission rate update
+type MsgCommissionRateUpdate struct {
+	From     hmTypes.HeimdallAddress `json:"from"`
+	ID       hmTypes.ValidatorID     `json:"id"`
+	TxHash   hmTypes.HeimdallHash    `json:"tx_hash"`
+	LogIndex uint64                  `json:"log_index"`
+}
+
+// NewMsgCommissionRateUpdate represents stake update
+func NewMsgCommissionRateUpdate(from hmTypes.HeimdallAddress, id uint64, txhash hmTypes.HeimdallHash, logIndex uint64) MsgCommissionRateUpdate {
+	return MsgCommissionRateUpdate{
+		From:     from,
+		ID:       hmTypes.NewValidatorID(id),
+		TxHash:   txhash,
+		LogIndex: logIndex,
+	}
+}
+
+func (msg MsgCommissionRateUpdate) Type() string {
+	return "validator-commission-rate-update"
+}
+
+func (msg MsgCommissionRateUpdate) Route() string {
+	return RouterKey
+}
+
+func (msg MsgCommissionRateUpdate) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{hmTypes.HeimdallAddressToAccAddress(msg.From)}
+}
+
+func (msg MsgCommissionRateUpdate) GetSignBytes() []byte {
+	b, err := cdc.MarshalJSON(msg)
+	if err != nil {
+		panic(err)
+	}
+	return sdk.MustSortJSON(b)
+}
+
+func (msg MsgCommissionRateUpdate) ValidateBasic() sdk.Error {
+	if msg.ID <= 0 {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator ID %v", msg.ID)
+	}
+
+	if msg.From.Empty() {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.From.String())
+	}
+
+	return nil
+}
+
 //
 // validator update
 //
@@ -253,6 +306,241 @@ func (msg MsgValidatorExit) GetSignBytes() []byte {
 func (msg MsgValidatorExit) ValidateBasic() sdk.Error {
 	if msg.ID <= 0 {
 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator ID %v", msg.ID)
+	}
+
+	if msg.From.Empty() {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.From.String())
+	}
+
+	return nil
+}
+
+// //
+// Delegator Bond
+//
+
+var _ sdk.Msg = &MsgDelegatorBond{}
+
+type MsgDelegatorBond struct {
+	From     types.HeimdallAddress `json:"from"`
+	ID       types.DelegatorID     `json:"id"`
+	TxHash   types.HeimdallHash    `json:"tx_hash"`
+	LogIndex uint64                `json:"log_index"`
+}
+
+// NewMsgDelegatorBond creates new delegator-bond
+func NewMsgDelegatorBond(
+	from hmTypes.HeimdallAddress,
+	id hmTypes.DelegatorID,
+	txhash hmTypes.HeimdallHash,
+	logIndex uint64,
+) MsgDelegatorBond {
+
+	return MsgDelegatorBond{
+		From:     from,
+		ID:       id,
+		TxHash:   txhash,
+		LogIndex: logIndex,
+	}
+}
+
+func (msg MsgDelegatorBond) Type() string {
+	return "delegator-bond"
+}
+
+func (msg MsgDelegatorBond) Route() string {
+	return RouterKey
+}
+
+func (msg MsgDelegatorBond) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.From)}
+}
+
+func (msg MsgDelegatorBond) GetSignBytes() []byte {
+	b, err := cdc.MarshalJSON(msg)
+	if err != nil {
+		panic(err)
+	}
+	return sdk.MustSortJSON(b)
+}
+
+func (msg MsgDelegatorBond) ValidateBasic() sdk.Error {
+	if msg.ID <= 0 {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid delegator ID %v", msg.ID)
+	}
+
+	if msg.From.Empty() {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.From.String())
+	}
+
+	return nil
+}
+
+// //
+// Delegator unbond
+//
+
+var _ sdk.Msg = &MsgDelegatorUnBond{}
+
+type MsgDelegatorUnBond struct {
+	From     types.HeimdallAddress `json:"from"`
+	ID       types.DelegatorID     `json:"id"`
+	TxHash   types.HeimdallHash    `json:"tx_hash"`
+	LogIndex uint64                `json:"log_index"`
+}
+
+// NewMsgDelegatorUnBond creates new delegator-unbond
+func NewMsgDelegatorUnBond(
+	from hmTypes.HeimdallAddress,
+	id hmTypes.DelegatorID,
+	txhash hmTypes.HeimdallHash,
+	logIndex uint64,
+) MsgDelegatorUnBond {
+
+	return MsgDelegatorUnBond{
+		From:     from,
+		ID:       id,
+		TxHash:   txhash,
+		LogIndex: logIndex,
+	}
+}
+
+func (msg MsgDelegatorUnBond) Type() string {
+	return "delegator-unbond"
+}
+
+func (msg MsgDelegatorUnBond) Route() string {
+	return RouterKey
+}
+
+func (msg MsgDelegatorUnBond) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.From)}
+}
+
+func (msg MsgDelegatorUnBond) GetSignBytes() []byte {
+	b, err := cdc.MarshalJSON(msg)
+	if err != nil {
+		panic(err)
+	}
+	return sdk.MustSortJSON(b)
+}
+
+func (msg MsgDelegatorUnBond) ValidateBasic() sdk.Error {
+	if msg.ID <= 0 {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid delegator ID %v", msg.ID)
+	}
+
+	if msg.From.Empty() {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.From.String())
+	}
+
+	return nil
+}
+
+// //
+// Delegator rebond
+//
+
+var _ sdk.Msg = &MsgDelegatorReBond{}
+
+type MsgDelegatorReBond struct {
+	From     types.HeimdallAddress `json:"from"`
+	ID       types.DelegatorID     `json:"id"`
+	TxHash   types.HeimdallHash    `json:"tx_hash"`
+	LogIndex uint64                `json:"log_index"`
+}
+
+// NewMsgDelegatorReBond creates new delegator-rebond
+func NewMsgDelegatorReBond(
+	from hmTypes.HeimdallAddress,
+	id hmTypes.DelegatorID,
+	txhash hmTypes.HeimdallHash,
+	logIndex uint64,
+) MsgDelegatorReBond {
+
+	return MsgDelegatorReBond{
+		From:     from,
+		ID:       id,
+		TxHash:   txhash,
+		LogIndex: logIndex,
+	}
+}
+
+func (msg MsgDelegatorReBond) Type() string {
+	return "delegator-rebond"
+}
+
+func (msg MsgDelegatorReBond) Route() string {
+	return RouterKey
+}
+
+func (msg MsgDelegatorReBond) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.From)}
+}
+
+func (msg MsgDelegatorReBond) GetSignBytes() []byte {
+	b, err := cdc.MarshalJSON(msg)
+	if err != nil {
+		panic(err)
+	}
+	return sdk.MustSortJSON(b)
+}
+
+func (msg MsgDelegatorReBond) ValidateBasic() sdk.Error {
+	if msg.ID <= 0 {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid delegator ID %v", msg.ID)
+	}
+
+	if msg.From.Empty() {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.From.String())
+	}
+
+	return nil
+}
+
+var _ sdk.Msg = &MsgDelStakeUpdate{}
+
+// MsgDelStakeUpdate represents stake update
+type MsgDelStakeUpdate struct {
+	From     hmTypes.HeimdallAddress `json:"from"`
+	ID       types.DelegatorID       `json:"id"`
+	TxHash   hmTypes.HeimdallHash    `json:"tx_hash"`
+	LogIndex uint64                  `json:"log_index"`
+}
+
+// NewMsgStakeUpdate represents stake update
+func NewMsgDelStakeUpdate(from hmTypes.HeimdallAddress, id hmTypes.DelegatorID, txhash hmTypes.HeimdallHash, logIndex uint64) MsgDelStakeUpdate {
+	return MsgDelStakeUpdate{
+		From:     from,
+		ID:       id,
+		TxHash:   txhash,
+		LogIndex: logIndex,
+	}
+}
+
+func (msg MsgDelStakeUpdate) Type() string {
+	return "delegator-stake-update"
+}
+
+func (msg MsgDelStakeUpdate) Route() string {
+	return RouterKey
+}
+
+func (msg MsgDelStakeUpdate) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{hmTypes.HeimdallAddressToAccAddress(msg.From)}
+}
+
+func (msg MsgDelStakeUpdate) GetSignBytes() []byte {
+	b, err := cdc.MarshalJSON(msg)
+	if err != nil {
+		panic(err)
+	}
+	return sdk.MustSortJSON(b)
+}
+
+func (msg MsgDelStakeUpdate) ValidateBasic() sdk.Error {
+	if msg.ID <= 0 {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid delegator ID %v", msg.ID)
 	}
 
 	if msg.From.Empty() {
