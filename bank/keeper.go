@@ -77,7 +77,7 @@ func (keeper Keeper) SetCoins(
 	ctx sdk.Context, addr hmTypes.HeimdallAddress, amt hmTypes.Coins,
 ) sdk.Error {
 
-	if !amt.IsValid() {
+	if !amt.IsValid() && !amt.IsZero() {
 		return sdk.ErrInvalidCoins(amt.String())
 	}
 
@@ -99,6 +99,7 @@ func (keeper Keeper) SetCoins(
 func (keeper Keeper) AddFeeToDividendAccount(ctx sdk.Context, valID hmTypes.ValidatorID, fee *big.Int) sdk.Error {
 	// Get or create dividend account
 	var dividendAccount hmTypes.DividendAccount
+
 	if keeper.sk.CheckIfDividendAccountExists(ctx, hmTypes.DividendAccountID(valID)) {
 		dividendAccount, _ = keeper.sk.GetDividendAccountByID(ctx, hmTypes.DividendAccountID(valID))
 	} else {
@@ -114,6 +115,7 @@ func (keeper Keeper) AddFeeToDividendAccount(ctx sdk.Context, valID hmTypes.Vali
 	totalFee := big.NewInt(0).Add(oldFee, fee).String()
 	dividendAccount.FeeAmount = totalFee
 
+	keeper.Logger(ctx).Info("Dividend Account fee of validator ", "ID", dividendAccount.ID, "Fee", dividendAccount.FeeAmount)
 	keeper.sk.AddDividendAccount(ctx, dividendAccount)
 	return nil
 }

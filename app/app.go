@@ -209,6 +209,14 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		authTypes.ProtoBaseAccount, // prototype
 	)
 
+	app.StakingKeeper = staking.NewKeeper(
+		app.cdc,
+		keys[stakingTypes.StoreKey], // target store
+		app.subspaces[stakingTypes.ModuleName],
+		common.DefaultCodespace,
+		crossCommunicator,
+	)
+
 	// bank keeper
 	app.BankKeeper = bank.NewKeeper(
 		app.cdc,
@@ -238,14 +246,6 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	// 	&stakingKeeper,
 	// 	gov.DefaultCodespace,
 	// )
-
-	app.StakingKeeper = staking.NewKeeper(
-		app.cdc,
-		keys[stakingTypes.StoreKey], // target store
-		app.subspaces[stakingTypes.ModuleName],
-		common.DefaultCodespace,
-		crossCommunicator,
-	)
 
 	app.CheckpointKeeper = checkpoint.NewKeeper(
 		app.cdc,

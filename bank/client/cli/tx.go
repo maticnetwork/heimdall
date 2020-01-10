@@ -32,6 +32,7 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 		client.PostCommands(
 			SendTxCmd(cdc),
 			TopupTxCmd(cdc),
+			TopupWithdrawTxCmd(cdc),
 		)...,
 	)
 	return txCmd
@@ -136,7 +137,7 @@ func TopupTxCmd(cdc *codec.Codec) *cobra.Command {
 // TopupWithdrawTxCmd will create a topup withdraw tx
 func TopupWithdrawTxCmd(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "topup",
+		Use:   "withdraw-topup",
 		Short: "Topup tokens withdraw for validators",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -163,7 +164,7 @@ func TopupWithdrawTxCmd(cdc *codec.Codec) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().Int(FlagProposerAddress, 0, "--validator-address=<validator address here>")
+	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
 	cmd.Flags().Int(FlagValidatorID, 0, "--validator-id=<validator ID here>")
 	cmd.MarkFlagRequired(FlagValidatorID)
 	cmd.MarkFlagRequired(FlagProposerAddress)

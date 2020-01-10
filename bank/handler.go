@@ -124,7 +124,7 @@ func handleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCalle
 	if topupObject == nil {
 		topupObject = &types.ValidatorTopup{
 			ID:          validator.ID,
-			TotalTopups: hmTypes.Coins{hmTypes.Coin{Denom: "vetic", Amount: hmTypes.NewInt(1)}},
+			TotalTopups: hmTypes.Coins{hmTypes.Coin{Denom: "vetic", Amount: hmTypes.NewInt(0)}},
 		}
 	}
 
@@ -177,9 +177,11 @@ func handleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCalle
 
 // Handle MsgWithdrawTopup.
 func handleMsgWithdrawTopup(ctx sdk.Context, k Keeper, msg types.MsgWithdrawTopup) sdk.Result {
+
 	// check if topup is already withdrawn
 	coins := k.GetCoins(ctx, msg.FromAddress)
 	veticBalance := coins.AmountOf("vetic")
+	k.Logger(ctx).Info("Topup balance for ", "from address", msg.FromAddress, "validatorId", msg.ID, "balance", veticBalance.BigInt().String())
 	if veticBalance.IsZero() {
 		return types.ErrTopupAlreadyWithdrawn(k.Codespace()).Result()
 	}
@@ -187,6 +189,7 @@ func handleMsgWithdrawTopup(ctx sdk.Context, k Keeper, msg types.MsgWithdrawTopu
 	// withdraw coins of validator.
 	zeroVetic := hmTypes.Coins{hmTypes.Coin{Denom: "vetic", Amount: hmTypes.NewInt(0)}}
 	if err := k.SetCoins(ctx, msg.FromAddress, zeroVetic); err != nil {
+		k.Logger(ctx).Error("Error while setting Topup balance to zero ", "from address", msg.FromAddress, "validatorId", msg.ID, "err", err)
 		return err.Result()
 	}
 
