@@ -31,12 +31,11 @@ func NewSpan(id uint64, startBlock uint64, endBlock uint64, validatorSet Validat
 // String returns the string representatin of span
 func (s *Span) String() string {
 	return fmt.Sprintf(
-		"Span %v {%v (%d:%d) %v %v}",
+		"Span %v {%v (%d:%d) %v}",
 		s.ID,
 		s.ChainID,
 		s.StartBlock,
 		s.EndBlock,
-		s.ValidatorSet,
 		s.SelectedProducers,
 	)
 }
