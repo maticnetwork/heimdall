@@ -18,10 +18,10 @@ import (
 	"github.com/tendermint/tendermint/libs/common"
 	httpClient "github.com/tendermint/tendermint/rpc/client"
 
+	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/helper"
 	hmtypes "github.com/maticnetwork/heimdall/types"
-	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 )
 
 // Result represents single req result
@@ -187,7 +187,7 @@ func (ackService *AckService) processCheckpoint(lastCreatedAt int64) {
 	// check if same checkpoint still exists
 	if ackService.isValidProposer(uint64(index), helper.GetAddress()) {
 		ackService.Logger.Debug(
-			"Sending NO ACK message",
+			"⛑ Sending NO ACK message",
 			"currentTime", currentTime.String(),
 			"proposerCount", index,
 		)

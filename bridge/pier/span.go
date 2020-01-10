@@ -23,9 +23,6 @@ import (
 
 const (
 	lastSpanKey = "span-key" // storage key
-
-	// polling
-	spanPolling = 20 * time.Second
 )
 
 // SpanService service spans
@@ -91,7 +88,7 @@ func (s *SpanService) OnStart() error {
 	s.cancelSpanService = cancelSpanService
 
 	// start polling for checkpoint in buffer
-	go s.startPolling(spanCtx, spanPolling)
+	go s.startPolling(spanCtx, helper.GetConfig().SpanPollingInterval)
 
 	// subscribed to new head
 	s.Logger.Debug("Started Span service")
@@ -150,7 +147,7 @@ func (s *SpanService) propose(lastSpan *types.Span, nextSpanMsg *types.Span) {
 
 	if lastSpan.StartBlock <= currentBlock && currentBlock <= lastSpan.EndBlock {
 		// log new span
-		s.Logger.Info("Proposing new span", "spanId", nextSpanMsg.ID, "startBlock", nextSpanMsg.StartBlock, "endBlock", nextSpanMsg.EndBlock)
+		s.Logger.Info("✅Proposing new span", "spanId", nextSpanMsg.ID, "startBlock", nextSpanMsg.StartBlock, "endBlock", nextSpanMsg.EndBlock)
 
 		// broadcast to heimdall
 		msg := borTypes.MsgProposeSpan{
@@ -253,6 +250,6 @@ func (s *SpanService) fetchNextSpanDetails(id uint64, start uint64) (*types.Span
 		return nil, err
 	}
 
-	s.Logger.Debug("Generated proposer span msg", "msg", msg)
+	s.Logger.Debug("◽ Generated proposer span msg", "msg", msg.String())
 	return &msg, nil
 }

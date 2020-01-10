@@ -30,11 +30,6 @@ import (
 // storage key
 var lastEventRecordKey = []byte("clerk-event-record-key")
 
-const (
-	// polling
-	clerkPolling = 20 * time.Second
-)
-
 // ClerkService service spans
 type ClerkService struct {
 	// Base service
@@ -98,7 +93,7 @@ func (s *ClerkService) OnStart() error {
 	s.cancel = cancel
 
 	// start polling for checkpoint in buffer
-	go s.startPolling(clerkCtx, clerkPolling)
+	go s.startPolling(clerkCtx, helper.GetConfig().ClerkPollingInterval)
 
 	// subscribed to new head
 	s.Logger.Debug("Started Span service")
