@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/big"
 	"os"
 	"path/filepath"
 	"strings"
@@ -191,6 +192,15 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			vals := []*hmTypes.Validator{&validator}
 			validatorSet := hmTypes.NewValidatorSet(vals)
 
+			// create dividend account
+			dividendAccount := hmTypes.DividendAccount{
+				ID:            hmTypes.NewDividendAccountID(uint64(validatorID)),
+				FeeAmount:     big.NewInt(0).String(),
+				SlashedAmount: big.NewInt(0).String(),
+			}
+
+			dividendAccounts := []hmTypes.DividendAccount{dividendAccount}
+
 			// create genesis state
 			appStateBytes := app.NewDefaultGenesisState()
 
@@ -204,7 +214,7 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			}
 
 			// staking state change
-			appStateBytes, err = stakingTypes.SetGenesisStateToAppState(appStateBytes, vals, *validatorSet)
+			appStateBytes, err = stakingTypes.SetGenesisStateToAppState(appStateBytes, vals, *validatorSet, dividendAccounts)
 			if err != nil {
 				return err
 			}
@@ -315,6 +325,7 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 			valPubKeys := make([]crypto.PubKey, totalValidators)
 			privKeys := make([]crypto.PrivKey, totalValidators)
 			validators := make([]*hmTypes.Validator, totalValidators)
+			dividendAccounts := make([]hmTypes.DividendAccount, totalValidators)
 			genFiles := make([]string, totalValidators)
 			var err error
 			// create chain id
@@ -364,6 +375,12 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 					VotingPower: 1,
 				}
 
+				dividendAccounts[i] = hmTypes.DividendAccount{
+					ID:            hmTypes.NewDividendAccountID(uint64(validators[i].ID)),
+					FeeAmount:     big.NewInt(0).String(),
+					SlashedAmount: big.NewInt(0).String(),
+				}
+
 				var privObject secp256k1.PrivKeySecp256k1
 				cdc.MustUnmarshalBinaryBare(privKeys[i].Bytes(), &privObject)
 				signers[i] = ValidatorAccountFormatter{
@@ -401,7 +418,7 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 			}
 
 			// staking state change
-			appStateBytes, err = stakingTypes.SetGenesisStateToAppState(appStateBytes, validators, *validatorSet)
+			appStateBytes, err = stakingTypes.SetGenesisStateToAppState(appStateBytes, validators, *validatorSet, dividendAccounts)
 			if err != nil {
 				return err
 			}

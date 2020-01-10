@@ -81,12 +81,12 @@ func GetGenesisStateFromAppState(appState map[string]json.RawMessage) GenesisSta
 }
 
 // SetGenesisStateToAppState sets state into app state
-func SetGenesisStateToAppState(appState map[string]json.RawMessage, validators []*hmTypes.Validator, currentValSet hmTypes.ValidatorSet) (map[string]json.RawMessage, error) {
+func SetGenesisStateToAppState(appState map[string]json.RawMessage, validators []*hmTypes.Validator, currentValSet hmTypes.ValidatorSet, dividendAccounts []hmTypes.DividendAccount) (map[string]json.RawMessage, error) {
 	// set state to staking state
 	stakingState := GetGenesisStateFromAppState(appState)
 	stakingState.Validators = validators
 	stakingState.CurrentValSet = currentValSet
-	stakingState.DividentAccounts = make([]hmTypes.DividendAccount, 0)
+	stakingState.DividentAccounts = dividendAccounts
 
 	var err error
 	appState[ModuleName], err = json.Marshal(stakingState)
