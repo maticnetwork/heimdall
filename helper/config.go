@@ -62,8 +62,8 @@ const (
 	NoACKWaitTime        = 1800 * time.Second // Time ack service waits to clear buffer and elect new proposer (1800 seconds ~ 30 mins)
 	CheckpointBufferTime = 1000 * time.Second // Time checkpoint is allowed to stay in buffer (1000 seconds ~ 17 mins)
 
-	DefaultCheckpointerPollInterval = 5 * time.Minute // 1 minute in milliseconds
-	DefaultSyncerPollInterval       = 1 * time.Minute // 0.5 seconds in milliseconds
+	DefaultCheckpointerPollInterval = 5 * time.Minute
+	DefaultSyncerPollInterval       = 1 * time.Minute
 	DefaultNoACKPollInterval        = 1010 * time.Second
 	DefaultClerkPollingInterval     = 10 * time.Second
 	DefaultSpanPollingInterval      = 5 * time.Minute
