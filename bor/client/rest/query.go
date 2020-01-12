@@ -18,10 +18,55 @@ import (
 )
 
 func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
-	// Get span details from start block
+	r.HandleFunc("/bor/span/list", spanListHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/bor/span/{id}", spanHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/bor/latest-span", latestSpanHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/bor/prepare-next-span", prepareNextSpanHandlerFn(cliCtx)).Methods("GET")
+}
+
+func spanListHandlerFn(
+	cliCtx context.CLIContext,
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := r.URL.Query()
+
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		// get page
+		page, ok := rest.ParseUint64OrReturnBadRequest(w, vars.Get("page"))
+		if !ok {
+			return
+		}
+
+		// get limit
+		limit, ok := rest.ParseUint64OrReturnBadRequest(w, vars.Get("limit"))
+		if !ok {
+			return
+		}
+
+		// get query params
+		queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQuerySpanListParams(page, limit))
+		if err != nil {
+			return
+		}
+
+		// query spans
+		res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QuerySpanList), queryParams)
+		if err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		// check content
+		if ok := hmRest.ReturnNotFoundIfNoContent(w, res, "No spans found"); !ok {
+			return
+		}
+
+		rest.PostProcessResponse(w, cliCtx, res)
+	}
 }
 
 func spanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {

@@ -18,6 +18,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return queryParams(ctx, path[1:], req, keeper)
 		case types.QuerySpan:
 			return handleQuerySpan(ctx, req, keeper)
+		case types.QuerySpanList:
+			return handleQuerySpanList(ctx, req, keeper)
 		case types.QueryLatestSpan:
 			return handleQueryLatestSpan(ctx, req, keeper)
 		case types.QueryNextProducers:
@@ -82,6 +84,24 @@ func handleQuerySpan(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]b
 
 	// json record
 	bz, err := json.Marshal(span)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
+	return bz, nil
+}
+
+func handleQuerySpanList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	var params types.QuerySpanListParams
+	if err := keeper.cdc.UnmarshalJSON(req.Data, &params); err != nil {
+		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
+	}
+
+	res, err := keeper.GetSpanList(ctx, params.Page, params.Limit)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr(fmt.Sprintf("could not fetch span list with page %v and limit %v", params.Page, params.Limit), err.Error()))
+	}
+
+	bz, err := json.Marshal(res)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}

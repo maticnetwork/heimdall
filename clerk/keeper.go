@@ -10,7 +10,7 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/maticnetwork/heimdall/clerk/types"
-	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 var (
@@ -51,11 +51,11 @@ func (k Keeper) Codespace() sdk.CodespaceType {
 
 // Logger returns a module-specific logger
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
-	return ctx.Logger().With("module", clerkTypes.ModuleName)
+	return ctx.Logger().With("module", types.ModuleName)
 }
 
 // SetEventRecord adds record to store
-func (k *Keeper) SetEventRecord(ctx sdk.Context, record clerkTypes.EventRecord) error {
+func (k *Keeper) SetEventRecord(ctx sdk.Context, record types.EventRecord) error {
 	store := ctx.KVStore(k.storeKey)
 	key := GetEventRecordKey(record.ID)
 
@@ -81,13 +81,13 @@ func (k *Keeper) SetEventRecord(ctx sdk.Context, record clerkTypes.EventRecord) 
 }
 
 // GetEventRecord returns record from store
-func (k *Keeper) GetEventRecord(ctx sdk.Context, stateId uint64) (*clerkTypes.EventRecord, error) {
+func (k *Keeper) GetEventRecord(ctx sdk.Context, stateId uint64) (*types.EventRecord, error) {
 	store := ctx.KVStore(k.storeKey)
 	key := GetEventRecordKey(stateId)
 
 	// check store has data
 	if store.Has(key) {
-		var _record clerkTypes.EventRecord
+		var _record types.EventRecord
 		err := k.cdc.UnmarshalBinaryBare(store.Get(key), &_record)
 		if err != nil {
 			return nil, err
@@ -117,6 +117,32 @@ func (k *Keeper) GetAllEventRecords(ctx sdk.Context) (records []*types.EventReco
 	})
 
 	return
+}
+
+// GetEventRecordList returns all records with params like page and limit
+func (k *Keeper) GetEventRecordList(ctx sdk.Context, page uint64, limit uint64) ([]types.EventRecord, error) {
+	store := ctx.KVStore(k.storeKey)
+
+	// create records
+	var records []types.EventRecord
+
+	// have max limit
+	if limit > 20 {
+		limit = 20
+	}
+
+	// get paginated iterator
+	iterator := hmTypes.KVStorePrefixIteratorPaginated(store, StateRecordPrefixKey, uint(page), uint(limit))
+
+	// loop through validators to get valid validators
+	for ; iterator.Valid(); iterator.Next() {
+		var record types.EventRecord
+		if err := k.cdc.UnmarshalBinaryBare(iterator.Value(), &record); err == nil {
+			records = append(records, record)
+		}
+	}
+
+	return records, nil
 }
 
 //

@@ -14,13 +14,18 @@ import (
 
 func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc(
+		"/clerk/event-record/list",
+		recordListHandlerFn(cliCtx),
+	).Methods("GET")
+
+	r.HandleFunc(
 		"/clerk/event-record/{recordId}",
-		handlerRecordFn(cliCtx),
+		recordHandlerFn(cliCtx),
 	).Methods("GET")
 }
 
-// handlerRecordFn returns record by record id
-func handlerRecordFn(cliCtx context.CLIContext) http.HandlerFunc {
+// recordHandlerFn returns record by record id
+func recordHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 
@@ -54,5 +59,50 @@ func handlerRecordFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		hmRest.PostProcessResponse(w, cliCtx, res)
+	}
+}
+
+func recordListHandlerFn(
+	cliCtx context.CLIContext,
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := r.URL.Query()
+
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		// get page
+		page, ok := rest.ParseUint64OrReturnBadRequest(w, vars.Get("page"))
+		if !ok {
+			return
+		}
+
+		// get limit
+		limit, ok := rest.ParseUint64OrReturnBadRequest(w, vars.Get("limit"))
+		if !ok {
+			return
+		}
+
+		// get query params
+		queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQueryRecordListParams(page, limit))
+		if err != nil {
+			return
+		}
+
+		// query records
+		res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryRecordList), queryParams)
+		if err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		// check content
+		if ok := hmRest.ReturnNotFoundIfNoContent(w, res, "No records found"); !ok {
+			return
+		}
+
+		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
