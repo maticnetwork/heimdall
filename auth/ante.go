@@ -10,6 +10,7 @@ import (
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
+	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
 )
 
@@ -55,12 +56,21 @@ type FeeCollector interface {
 	) sdk.Error
 }
 
+//
+// MainTxMsg tx hash
+//
+type MainTxMsg interface {
+	GetTxHash() types.HeimdallHash
+	GetLogIndex() uint64
+}
+
 // NewAnteHandler returns an AnteHandler that checks and increments sequence
 // numbers, checks signatures & account numbers, and deducts fees from the first
 // signer.
 func NewAnteHandler(
 	ak AccountKeeper,
 	feeCollector FeeCollector,
+	contractCaller helper.IContractCaller,
 	sigGasConsumer SignatureVerificationGasConsumer,
 ) sdk.AnteHandler {
 	return func(ctx sdk.Context, tx sdk.Tx, simulate bool) (newCtx sdk.Context, res sdk.Result, abort bool) {
@@ -146,6 +156,12 @@ func NewAnteHandler(
 
 			// reload the account as fees have been deducted
 			signerAccs[0] = ak.GetAccount(newCtx, signerAccs[0].GetAddress())
+		}
+
+		// check main chain tx is confirmed transaction
+		mainTxMsg, ok := stdTx.Msg.(MainTxMsg)
+		if ok && !contractCaller.IsTxConfirmed(mainTxMsg.GetTxHash().EthHash()) {
+			return newCtx, sdk.ErrInternal(fmt.Sprintf("Not enough tx confirmations for %s", mainTxMsg.GetTxHash().Hex())).Result(), true
 		}
 
 		// stdSigs contains the sequence number, account number, and signatures.
