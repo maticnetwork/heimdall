@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"math/big"
@@ -483,8 +484,9 @@ func dividendAccountProofHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		merkleProof := hex.EncodeToString(res)
 		// return result
 		cliCtx = cliCtx.WithHeight(height)
-		rest.PostProcessResponse(w, cliCtx, res)
+		rest.PostProcessResponse(w, cliCtx, merkleProof)
 	}
 }
