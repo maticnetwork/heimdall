@@ -87,7 +87,7 @@ func GetHeaders(start uint64, end uint64) ([]byte, error) {
 	return tree.Root().Hash, nil
 }
 
-// GetAccountRootHash returns roothash of Validator, Delegator Account State Tree
+// GetAccountRootHash returns roothash of Validator Account State Tree
 func GetAccountRootHash(dividendAccounts []hmTypes.DividendAccount) ([]byte, error) {
 	tree, err := GetAccountTree(dividendAccounts)
 	if err != nil {
@@ -97,7 +97,7 @@ func GetAccountRootHash(dividendAccounts []hmTypes.DividendAccount) ([]byte, err
 	return tree.Root.Hash, nil
 }
 
-// GetAccountTree returns roothash of Validator, Delegator Account State Tree
+// GetAccountTree returns roothash of Validator Account State Tree
 func GetAccountTree(dividendAccounts []hmTypes.DividendAccount) (*merkletree.MerkleTree, error) {
 	// Sort the dividendAccounts by ID
 	dividendAccounts = hmTypes.SortDividendAccountByID(dividendAccounts)

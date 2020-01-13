@@ -16,6 +16,7 @@ const (
 	QueryProposer             = "proposer"
 	QueryCurrentProposer      = "current-proposer"
 	QueryProposerBonusPercent = "proposer-bonus-percent"
+	QueryDividendAccount      = "dividend-account"
 	QueryDividendAccountRoot  = "dividend-account-root"
 	QueryAccountProof         = "dividend-account-proof"
 	QuerySlashValidator       = "slash-validator"
@@ -41,9 +42,19 @@ func NewQueryValidatorParams(validatorID types.ValidatorID) QueryValidatorParams
 	return QueryValidatorParams{ValidatorID: validatorID}
 }
 
+// QueryDividendAccountParams defines the params for querying dividend account status.
+type QueryDividendAccountParams struct {
+	DividendAccountID types.DividendAccountID `json:"dividend_account_id"`
+}
+
+// NewQueryDividendAccountParams creates a new instance of QueryDividendAccountParams.
+func NewQueryDividendAccountParams(dividendAccountID types.DividendAccountID) QueryDividendAccountParams {
+	return QueryDividendAccountParams{DividendAccountID: dividendAccountID}
+}
+
 // QueryAccountProofParams defines the params for querying account proof.
 type QueryAccountProofParams struct {
-	DividendAccountID types.DividendAccountID `json:"dividendaccount_id"`
+	DividendAccountID types.DividendAccountID `json:"dividend_account_id"`
 }
 
 // NewQueryAccountProofParams creates a new instance of QueryAccountProofParams.

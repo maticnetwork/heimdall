@@ -30,6 +30,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return handleQueryProposer(ctx, req, keeper)
 		case types.QueryCurrentProposer:
 			return handleQueryCurrentProposer(ctx, req, keeper)
+		case types.QueryDividendAccount:
+			return handleQueryDividendAccount(ctx, req, keeper)
 		case types.QueryDividendAccountRoot:
 			return handleDividendAccountRoot(ctx, req, keeper)
 		case types.QueryAccountProof:
@@ -144,6 +146,26 @@ func handleQueryCurrentProposer(ctx sdk.Context, req abci.RequestQuery, keeper K
 	proposer := keeper.GetCurrentProposer(ctx)
 
 	bz, err := json.Marshal(proposer)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
+	return bz, nil
+}
+
+func handleQueryDividendAccount(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	var params types.QueryDividendAccountParams
+	if err := keeper.cdc.UnmarshalJSON(req.Data, &params); err != nil {
+		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
+	}
+
+	// get dividend account info
+	dividendAccount, err := keeper.GetDividendAccountByID(ctx, params.DividendAccountID)
+	if err != nil {
+		return nil, sdk.ErrUnknownRequest("No dividend account found")
+	}
+
+	// json record
+	bz, err := json.Marshal(dividendAccount)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}

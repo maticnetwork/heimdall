@@ -4,6 +4,7 @@ import (
 	"math/big"
 	"testing"
 
+	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/helper"
 	cmn "github.com/maticnetwork/heimdall/test"
 	"github.com/maticnetwork/heimdall/types"
@@ -291,21 +292,22 @@ func TestDividendAccount(t *testing.T) {
 	t.Log(dividendAccountInStore)
 }
 
-// func TestDividendAccountTree(t *testing.T) {
+func TestDividendAccountTree(t *testing.T) {
 
-// 	divAccounts := cmn.GenRandomDividendAccount(4, 1, true)
+	divAccounts := cmn.GenRandomDividendAccount(1, 1, true)
 
-// 	accountRoot, err := checkpointTypes.GetAccountRootHash(divAccounts)
-// 	rewardRoot, err := checkpointTypes.GetRewardRootHash(divAccounts)
-// 	// accountProof, err := checkpointTypes.GetAccountProof(divAccounts, types.NewDividendAccountID(1))
-// 	// accountVerified, err := checkpointTypes.VerifyAccountProof(divAccounts, types.NewDividendAccountID(1))
+	accountRoot, err := checkpointTypes.GetAccountRootHash(divAccounts)
+	// rewardRoot, err := checkpointTypes.GetRewardRootHash(divAccounts)
+	accountProof, err := checkpointTypes.GetAccountProof(divAccounts, types.NewDividendAccountID(1))
+	// accountVerified, err := checkpointTypes.VerifyAccountProof(divAccounts, types.NewDividendAccountID(1))
 
-// 	t.Log("account root", types.BytesToHeimdallHash(accountRoot))
-// 	t.Log("rewardRoot root", types.BytesToHeimdallHash(rewardRoot))
-// 	// t.Log("account proof", types.BytesToHeimdallHash(accountProof))
-// 	require.Empty(t, err, "Error getting account root hash")
-// 	require.NotEmpty(t, accountRoot, "Account root cannot be empty")
-// }
+	t.Log("account root", types.BytesToHeimdallHash(accountRoot))
+	t.Log("account proof", accountProof)
+	// t.Log("rewardRoot root", types.BytesToHeimdallHash(rewardRoot))
+	// t.Log("account proof", types.BytesToHeimdallHash(accountProof))
+	require.Empty(t, err, "Error getting account root hash")
+	require.NotEmpty(t, accountRoot, "Account root cannot be empty")
+}
 
 // func TestDividendAccountHash(t *testing.T) {
 

@@ -46,6 +46,10 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 		slashValidatorHandlerFn(cliCtx),
 	).Methods("GET")
 	r.HandleFunc(
+		"/staking/dividend-account/{id}",
+		dividendAccountByIDHandlerFn(cliCtx),
+	).Methods("GET")
+	r.HandleFunc(
 		"/staking/dividend-account-root",
 		dividendAccountRootHandlerFn(cliCtx),
 	).Methods("GET")
@@ -319,6 +323,47 @@ func slashValidatorHandlerFn(
 		RestLogger.Info("Slashed validator successfully ", "res", res)
 
 		cliCtx.WithHeight(height)
+		rest.PostProcessResponse(w, cliCtx, res)
+	}
+}
+
+// Returns Dividend Account information by ID
+func dividendAccountByIDHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		// get id
+		id, ok := rest.ParseUint64OrReturnBadRequest(w, vars["id"])
+		if !ok {
+			return
+		}
+
+		// get query params
+		queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQueryDividendAccountParams(hmTypes.DividendAccountID(id)))
+		if err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryDividendAccount), queryParams)
+		if err != nil {
+			RestLogger.Error("Error while fetching Dividend account", "Error", err.Error())
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		// error if no dividend account found
+		if ok := hmRest.ReturnNotFoundIfNoContent(w, res, "No Dividend Account found"); !ok {
+			return
+		}
+
+		// return result
+		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
