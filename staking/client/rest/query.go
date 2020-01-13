@@ -316,7 +316,7 @@ func slashValidatorHandlerFn(
 			return
 		}
 
-		RestLogger.Info("slashedd validator successfully ", "res", res)
+		RestLogger.Info("Slashed validator successfully ", "res", res)
 
 		cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, res)
