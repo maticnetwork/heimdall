@@ -1,7 +1,6 @@
 package types
 
 import (
-	"crypto/sha256"
 	"fmt"
 	"math/big"
 	"sort"
@@ -82,7 +81,6 @@ func SortDividendAccountByID(dividendAccounts []DividendAccount) []DividendAccou
 
 //CalculateHash hashes the values of a DividendAccount
 func (da DividendAccount) CalculateHash() ([]byte, error) {
-	h := sha256.New()
 	fee, _ := big.NewInt(0).SetString(da.FeeAmount, 10)
 	slashAmount, _ := big.NewInt(0).SetString(da.SlashedAmount, 10)
 	divAccountHash := crypto.Keccak256(appendBytes32(
@@ -90,14 +88,8 @@ func (da DividendAccount) CalculateHash() ([]byte, error) {
 		fee.Bytes(),
 		slashAmount.Bytes(),
 	))
-	var arr [32]byte
-	copy(arr[:], divAccountHash)
 
-	if _, err := h.Write(arr[:]); err != nil {
-		return nil, err
-	}
-
-	return h.Sum(nil), nil
+	return divAccountHash, nil
 }
 
 func appendBytes32(data ...[]byte) []byte {

@@ -107,7 +107,7 @@ func GetAccountTree(dividendAccounts []hmTypes.DividendAccount) (*merkletree.Mer
 		list = append(list, dividendAccounts[i])
 	}
 
-	tree, err := merkletree.NewTree(list)
+	tree, err := merkletree.NewTreeWithHashStrategy(list, sha3.NewLegacyKeccak256)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +129,7 @@ func GetAccountProof(dividendAccounts []hmTypes.DividendAccount, dividendAccount
 		}
 	}
 
-	tree, err := merkletree.NewTree(list)
+	tree, err := merkletree.NewTreeWithHashStrategy(list, sha3.NewLegacyKeccak256)
 	if err != nil {
 		return nil, err
 	}

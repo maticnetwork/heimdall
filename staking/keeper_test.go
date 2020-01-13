@@ -1,15 +1,15 @@
 package staking_test
 
 import (
-	"math/big"
-	"testing"
-
+	"encoding/hex"
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/helper"
 	cmn "github.com/maticnetwork/heimdall/test"
 	"github.com/maticnetwork/heimdall/types"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
+	"math/big"
+	"testing"
 )
 
 // tests setter/getters for validatorSignerMaps , validator set/get
@@ -294,19 +294,19 @@ func TestDividendAccount(t *testing.T) {
 
 func TestDividendAccountTree(t *testing.T) {
 
-	divAccounts := cmn.GenRandomDividendAccount(1, 1, true)
+	divAccounts := cmn.GenRandomDividendAccount(3, 1, true)
 
-	accountRoot, err := checkpointTypes.GetAccountRootHash(divAccounts)
-	// rewardRoot, err := checkpointTypes.GetRewardRootHash(divAccounts)
-	accountProof, err := checkpointTypes.GetAccountProof(divAccounts, types.NewDividendAccountID(1))
-	// accountVerified, err := checkpointTypes.VerifyAccountProof(divAccounts, types.NewDividendAccountID(1))
-
+	accountRoot, _ := checkpointTypes.GetAccountRootHash(divAccounts)
+	accountProof, _ := checkpointTypes.GetAccountProof(divAccounts, types.NewDividendAccountID(1))
+	leafHash, _ := divAccounts[0].CalculateHash()
+	t.Log("accounts", divAccounts)
 	t.Log("account root", types.BytesToHeimdallHash(accountRoot))
-	t.Log("account proof", accountProof)
-	// t.Log("rewardRoot root", types.BytesToHeimdallHash(rewardRoot))
-	// t.Log("account proof", types.BytesToHeimdallHash(accountProof))
-	require.Empty(t, err, "Error getting account root hash")
-	require.NotEmpty(t, accountRoot, "Account root cannot be empty")
+	t.Log("leaf hash", leafHash)
+	t.Log("leaf hash hex", hex.EncodeToString(leafHash))
+	t.Log("leaf hash hex bytes", types.BytesToHexBytes(leafHash))
+	t.Log("leaft hash heimdall", types.BytesToHeimdallHash(leafHash))
+	t.Log("account proof", hex.EncodeToString(accountProof))
+
 }
 
 // func TestDividendAccountHash(t *testing.T) {
