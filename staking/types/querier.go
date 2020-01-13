@@ -41,6 +41,16 @@ func NewQueryValidatorParams(validatorID types.ValidatorID) QueryValidatorParams
 	return QueryValidatorParams{ValidatorID: validatorID}
 }
 
+// QueryAccountProofParams defines the params for querying account proof.
+type QueryAccountProofParams struct {
+	DividendAccountID types.DividendAccountID `json:"dividendaccount_id"`
+}
+
+// NewQueryAccountProofParams creates a new instance of QueryAccountProofParams.
+func NewQueryAccountProofParams(dividendAccountID types.DividendAccountID) QueryAccountProofParams {
+	return QueryAccountProofParams{DividendAccountID: dividendAccountID}
+}
+
 // QueryProposerParams defines the params for querying val status.
 type QueryProposerParams struct {
 	Times uint64 `json:"times"`

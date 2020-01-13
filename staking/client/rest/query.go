@@ -54,7 +54,7 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 		proposerBonusPercentHandlerFn(cliCtx),
 	).Methods("GET")
 	r.HandleFunc(
-		"/staking/account-proof",
+		"/staking/account-proof/{id}",
 		dividendAccountProofHandlerFn(cliCtx),
 	).Methods("GET")
 }
@@ -405,19 +405,41 @@ func proposerBonusPercentHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 // Returns Merkle path for dividendAccountID using dividend Account Tree
 func dividendAccountProofHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+
+		vars := mux.Vars(r)
+
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
 			return
 		}
 
-		// fetch state reocrd
-		merkleProof, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryAccountProof), nil)
+		// get id
+		id, ok := rest.ParseUint64OrReturnBadRequest(w, vars["id"])
+		if !ok {
+			return
+		}
+
+		// get query params
+		queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQueryAccountProofParams(hmTypes.DividendAccountID(id)))
 		if err != nil {
-			RestLogger.Error("Error while fetching merkle proof", "Error", err.Error())
 			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
-		rest.PostProcessResponse(w, cliCtx, merkleProof)
+		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryAccountProof), queryParams)
+		if err != nil {
+			RestLogger.Error("Error while fetching merkle proof", "Error", err.Error())
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		// error if account proof  not found
+		if ok := hmRest.ReturnNotFoundIfNoContent(w, res, "No proof found"); !ok {
+			return
+		}
+
+		// return result
+		cliCtx = cliCtx.WithHeight(height)
+		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }

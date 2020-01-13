@@ -165,6 +165,11 @@ func handleQueryAccountProof(ctx sdk.Context, req abci.RequestQuery, keeper Keep
 	// 2. Fetch AccountRoot a2 from current account
 	// 3. if a1 == a2, Calculate merkle path using GetAllDividendAccounts
 
+	var params types.QueryAccountProofParams
+	if err := keeper.cdc.UnmarshalJSON(req.Data, &params); err != nil {
+		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
+	}
+
 	contractCallerObj, err := helper.NewContractCaller()
 	accountRootOnChain, err := contractCallerObj.CurrentAccountStateRoot()
 	if err != nil {
@@ -176,7 +181,7 @@ func handleQueryAccountProof(ctx sdk.Context, req abci.RequestQuery, keeper Keep
 
 	if bytes.Compare(accountRootOnChain[:], currentStateAccountRoot) == 0 {
 		// Calculate new account root hash
-		merkleProof, _ := checkpointTypes.GetAccountProof(dividendAccounts, 1)
+		merkleProof, _ := checkpointTypes.GetAccountProof(dividendAccounts, params.DividendAccountID)
 		return merkleProof, nil
 	} else {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not fetch merkle proof ", err.Error()))
