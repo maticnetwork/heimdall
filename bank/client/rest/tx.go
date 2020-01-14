@@ -19,7 +19,7 @@ func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc("/bank/accounts/{address}/transfers", SendRequestHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/bank/accounts/topup", TopupHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/bank/balances/{address}", QueryBalancesRequestHandlerFn(cliCtx)).Methods("GET")
-	r.HandleFunc("/bank/accounts/topup/withdraw", WithdrawTopupHandlerFn(cliCtx)).Methods("POST")
+	r.HandleFunc("/bank/accounts/fee/withdraw", WithdrawFeeHandlerFn(cliCtx)).Methods("POST")
 }
 
 // SendReq defines the properties of a send request's body.
@@ -96,20 +96,20 @@ func TopupHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 //
-// Withdraw Topup req
+// Withdraw Fee req
 //
 
-// WithdrawTopupReq defines the properties of a withdraw topup request's body.
-type WithdrawTopupReq struct {
+// WithdrawFeeReq defines the properties of a withdraw fee request's body.
+type WithdrawFeeReq struct {
 	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
 
 	ID uint64 `json:"id" yaml:"id"`
 }
 
-// WithdrawTopupHandlerFn - http request handler to withdraw topup coins from a address.
-func WithdrawTopupHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+// WithdrawFeeHandlerFn - http request handler to withdraw fee coins from a address.
+func WithdrawFeeHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req WithdrawTopupReq
+		var req WithdrawFeeReq
 		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
 			return
 		}
@@ -123,7 +123,7 @@ func WithdrawTopupHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		fromAddr := types.HexToHeimdallAddress(req.BaseReq.From)
 
 		// get msg
-		msg := bankTypes.NewMsgWithdrawTopup(
+		msg := bankTypes.NewMsgWithdrawFee(
 			fromAddr,
 			req.ID,
 		)

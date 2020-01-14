@@ -37,7 +37,7 @@ func ErrNoValidatorTopup(codespace sdk.CodespaceType) sdk.Error {
 	return sdk.NewError(codespace, CodeNoValidatorTopup, "no validator topup")
 }
 
-// ErrTopupAlreadyWithdrawn is an error for validator topup withdraw
-func ErrTopupAlreadyWithdrawn(codespace sdk.CodespaceType) sdk.Error {
+// ErrFeeAlreadyWithdrawn is an error for validator topup withdraw
+func ErrFeeAlreadyWithdrawn(codespace sdk.CodespaceType) sdk.Error {
 	return sdk.NewError(codespace, CodeAlreadyWtihdrawn, "Topup Already withdrawn")
 }

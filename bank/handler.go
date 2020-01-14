@@ -24,8 +24,8 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 			return handleMsgMultiSend(ctx, k, msg)
 		case types.MsgTopup:
 			return handleMsgTopup(ctx, k, msg, contractCaller)
-		case types.MsgWithdrawTopup:
-			return handleMsgWithdrawTopup(ctx, k, msg)
+		case types.MsgWithdrawFee:
+			return handleMsgWithdrawFee(ctx, k, msg)
 		default:
 			errMsg := "Unrecognized bank Msg type: %s" + msg.Type()
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -175,34 +175,34 @@ func handleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCalle
 	}
 }
 
-// Handle MsgWithdrawTopup.
-func handleMsgWithdrawTopup(ctx sdk.Context, k Keeper, msg types.MsgWithdrawTopup) sdk.Result {
+// Handle MsgWithdrawFee.
+func handleMsgWithdrawFee(ctx sdk.Context, k Keeper, msg types.MsgWithdrawFee) sdk.Result {
 
-	// check if topup is already withdrawn
+	// check if fee is already withdrawn
 	coins := k.GetCoins(ctx, msg.FromAddress)
 	veticBalance := coins.AmountOf("vetic")
-	k.Logger(ctx).Info("Topup balance for ", "from address", msg.FromAddress, "validatorId", msg.ID, "balance", veticBalance.BigInt().String())
+	k.Logger(ctx).Info("Fee balance for ", "from address", msg.FromAddress, "validatorId", msg.ID, "balance", veticBalance.BigInt().String())
 	if veticBalance.IsZero() {
-		return types.ErrTopupAlreadyWithdrawn(k.Codespace()).Result()
+		return types.ErrFeeAlreadyWithdrawn(k.Codespace()).Result()
 	}
 
 	// withdraw coins of validator.
 	zeroVetic := hmTypes.Coins{hmTypes.Coin{Denom: "vetic", Amount: hmTypes.NewInt(0)}}
 	if err := k.SetCoins(ctx, msg.FromAddress, zeroVetic); err != nil {
-		k.Logger(ctx).Error("Error while setting Topup balance to zero ", "from address", msg.FromAddress, "validatorId", msg.ID, "err", err)
+		k.Logger(ctx).Error("Error while setting Fee balance to zero ", "from address", msg.FromAddress, "validatorId", msg.ID, "err", err)
 		return err.Result()
 	}
 
-	// Add topup to Dividend Account
+	// Add Fee to Dividend Account
 	feeAmount := veticBalance.BigInt()
 	k.AddFeeToDividendAccount(ctx, msg.ID, feeAmount)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
-			types.EventTypeTopupWithdraw,
+			types.EventTypeFeeWithdraw,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(uint64(msg.ID), 10)),
-			sdk.NewAttribute(types.AttributeKeyTopupWithdrawAmount, strconv.FormatUint(feeAmount.Uint64(), 10)),
+			sdk.NewAttribute(types.AttributeKeyFeeWithdrawAmount, strconv.FormatUint(feeAmount.Uint64(), 10)),
 		),
 	})
 

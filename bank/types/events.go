@@ -2,15 +2,15 @@ package types
 
 // bank module event types
 const (
-	EventTypeTopup         = "topup"
-	EventTypeTopupWithdraw = "topup-withdraw"
-	EventTypeTransfer      = "transfer"
+	EventTypeTopup       = "topup"
+	EventTypeFeeWithdraw = "fee-withdraw"
+	EventTypeTransfer    = "transfer"
 
-	AttributeKeyRecipient           = "recipient"
-	AttributeKeySender              = "sender"
-	AttributeKeyValidatorID         = "validator-id"
-	AttributeKeyTopupAmount         = "topup-amount"
-	AttributeKeyTopupWithdrawAmount = "topup-withdraw-amount"
+	AttributeKeyRecipient         = "recipient"
+	AttributeKeySender            = "sender"
+	AttributeKeyValidatorID       = "validator-id"
+	AttributeKeyTopupAmount       = "topup-amount"
+	AttributeKeyFeeWithdrawAmount = "fee-withdraw-amount"
 
 	AttributeValueCategory = ModuleName
 )

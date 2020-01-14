@@ -258,33 +258,33 @@ func (msg MsgTopup) GetSigners() []sdk.AccAddress {
 // Fee token withdrawal
 //
 
-// MsgWithdrawTopup - high level transaction of the fee coin withdrawal module
-type MsgWithdrawTopup struct {
+// MsgWithdrawFee - high level transaction of the fee coin withdrawal module
+type MsgWithdrawFee struct {
 	FromAddress types.HeimdallAddress `json:"from_address"`
 	ID          types.ValidatorID     `json:"id"`
 }
 
-var _ sdk.Msg = MsgWithdrawTopup{}
+var _ sdk.Msg = MsgWithdrawFee{}
 
-// NewMsgWithdrawTopup - construct arbitrary topup withdraw msg
-func NewMsgWithdrawTopup(
+// NewMsgWithdrawFee - construct arbitrary fee withdraw msg
+func NewMsgWithdrawFee(
 	fromAddr types.HeimdallAddress,
 	id uint64,
-) MsgWithdrawTopup {
-	return MsgWithdrawTopup{
+) MsgWithdrawFee {
+	return MsgWithdrawFee{
 		FromAddress: fromAddr,
 		ID:          types.NewValidatorID(id),
 	}
 }
 
 // Route Implements Msg.
-func (msg MsgWithdrawTopup) Route() string { return RouterKey }
+func (msg MsgWithdrawFee) Route() string { return RouterKey }
 
 // Type Implements Msg.
-func (msg MsgWithdrawTopup) Type() string { return "withdraw-topup" }
+func (msg MsgWithdrawFee) Type() string { return "withdraw-fee" }
 
 // ValidateBasic Implements Msg.
-func (msg MsgWithdrawTopup) ValidateBasic() sdk.Error {
+func (msg MsgWithdrawFee) ValidateBasic() sdk.Error {
 	if msg.FromAddress.Empty() {
 		return sdk.ErrInvalidAddress("missing sender address")
 	}
@@ -301,11 +301,11 @@ func (msg MsgWithdrawTopup) ValidateBasic() sdk.Error {
 }
 
 // GetSignBytes Implements Msg.
-func (msg MsgWithdrawTopup) GetSignBytes() []byte {
+func (msg MsgWithdrawFee) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
 // GetSigners Implements Msg.
-func (msg MsgWithdrawTopup) GetSigners() []sdk.AccAddress {
+func (msg MsgWithdrawFee) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.FromAddress)}
 }

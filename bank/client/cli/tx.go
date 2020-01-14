@@ -32,7 +32,7 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 		client.PostCommands(
 			SendTxCmd(cdc),
 			TopupTxCmd(cdc),
-			TopupWithdrawTxCmd(cdc),
+			WithdrawFeeTxCmd(cdc),
 		)...,
 	)
 	return txCmd
@@ -134,11 +134,11 @@ func TopupTxCmd(cdc *codec.Codec) *cobra.Command {
 	return cmd
 }
 
-// TopupWithdrawTxCmd will create a topup withdraw tx
-func TopupWithdrawTxCmd(cdc *codec.Codec) *cobra.Command {
+// WithdrawFeeTxCmd will create a fee withdraw tx
+func WithdrawFeeTxCmd(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "withdraw-topup",
-		Short: "Topup tokens withdraw for validators",
+		Use:   "withdraw-fee",
+		Short: "Fee token withdrawal for validators",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
@@ -154,7 +154,7 @@ func TopupWithdrawTxCmd(cdc *codec.Codec) *cobra.Command {
 			}
 
 			// get msg
-			msg := bankTypes.NewMsgWithdrawTopup(
+			msg := bankTypes.NewMsgWithdrawFee(
 				proposer,
 				uint64(validatorID),
 			)
