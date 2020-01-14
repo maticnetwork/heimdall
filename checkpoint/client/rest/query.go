@@ -510,7 +510,7 @@ func checkpointListhandlerFn(
 		}
 
 		// get query params
-		queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQueryCheckpointListParams(page, limit))
+		queryParams, err := cliCtx.Codec.MarshalJSON(hmTypes.NewQueryPaginationParams(page, limit))
 		if err != nil {
 			return
 		}

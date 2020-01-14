@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/maticnetwork/heimdall/clerk/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmRest "github.com/maticnetwork/heimdall/types/rest"
 )
 
@@ -86,7 +87,7 @@ func recordListHandlerFn(
 		}
 
 		// get query params
-		queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQueryRecordListParams(page, limit))
+		queryParams, err := cliCtx.Codec.MarshalJSON(hmTypes.NewQueryPaginationParams(page, limit))
 		if err != nil {
 			return
 		}

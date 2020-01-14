@@ -154,7 +154,7 @@ func (k *Keeper) GetSpanList(ctx sdk.Context, page uint64, limit uint64) ([]hmTy
 	// loop through validators to get valid validators
 	for ; iterator.Valid(); iterator.Next() {
 		var span hmTypes.Span
-		if err := k.cdc.UnmarshalBinaryBare(iterator.Value(), &record); err == nil {
+		if err := k.cdc.UnmarshalBinaryBare(iterator.Value(), &span); err == nil {
 			spans = append(spans, span)
 		}
 	}
