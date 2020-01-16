@@ -58,3 +58,13 @@ func (msg MsgEventRecord) GetSignBytes() []byte {
 func (msg MsgEventRecord) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.From)}
 }
+
+// GetTxHash Returns tx hash
+func (msg MsgEventRecord) GetTxHash() types.HeimdallHash {
+	return msg.TxHash
+}
+
+// GetLogIndex Returns log index
+func (msg MsgEventRecord) GetLogIndex() uint64 {
+	return msg.LogIndex
+}
