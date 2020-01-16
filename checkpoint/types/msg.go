@@ -140,6 +140,16 @@ func (msg MsgCheckpointAck) ValidateBasic() sdk.Error {
 	return nil
 }
 
+// GetTxHash Returns tx hash
+func (msg MsgCheckpointAck) GetTxHash() types.HeimdallHash {
+	return msg.TxHash
+}
+
+// GetLogIndex Returns log index
+func (msg MsgCheckpointAck) GetLogIndex() uint64 {
+	return msg.LogIndex
+}
+
 //
 // Msg Checkpoint No Ack
 //

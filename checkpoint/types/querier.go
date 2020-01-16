@@ -18,14 +18,3 @@ type QueryCheckpointParams struct {
 func NewQueryCheckpointParams(headerIndex uint64) QueryCheckpointParams {
 	return QueryCheckpointParams{HeaderIndex: headerIndex}
 }
-
-// QueryCheckpointListParams defines the params for querying accounts.
-type QueryCheckpointListParams struct {
-	Page  uint64
-	Limit uint64
-}
-
-// NewQueryCheckpointListParams creates a new instance of QueryCheckpointHeaderIndex.
-func NewQueryCheckpointListParams(page uint64, limit uint64) QueryCheckpointListParams {
-	return QueryCheckpointListParams{Page: page, Limit: limit}
-}

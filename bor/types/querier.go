@@ -4,6 +4,7 @@ package types
 const (
 	QueryParams        = "params"
 	QuerySpan          = "span"
+	QuerySpanList      = "span-list"
 	QueryLatestSpan    = "latest-span"
 	QueryNextSpan      = "next-span"
 	QueryNextProducers = "next-producers"

@@ -8,6 +8,7 @@ import (
 
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -81,6 +82,16 @@ func (msg MsgValidatorJoin) ValidateBasic() sdk.Error {
 	return nil
 }
 
+// GetTxHash Returns tx hash
+func (msg MsgValidatorJoin) GetTxHash() types.HeimdallHash {
+	return msg.TxHash
+}
+
+// GetLogIndex Returns log index
+func (msg MsgValidatorJoin) GetLogIndex() uint64 {
+	return msg.LogIndex
+}
+
 //
 // Stake update
 //
@@ -139,6 +150,16 @@ func (msg MsgStakeUpdate) ValidateBasic() sdk.Error {
 	}
 
 	return nil
+}
+
+// GetTxHash Returns tx hash
+func (msg MsgStakeUpdate) GetTxHash() types.HeimdallHash {
+	return msg.TxHash
+}
+
+// GetLogIndex Returns log index
+func (msg MsgStakeUpdate) GetLogIndex() uint64 {
+	return msg.LogIndex
 }
 
 //
@@ -208,6 +229,16 @@ func (msg MsgSignerUpdate) ValidateBasic() sdk.Error {
 	return nil
 }
 
+// GetTxHash Returns tx hash
+func (msg MsgSignerUpdate) GetTxHash() types.HeimdallHash {
+	return msg.TxHash
+}
+
+// GetLogIndex Returns log index
+func (msg MsgSignerUpdate) GetLogIndex() uint64 {
+	return msg.LogIndex
+}
+
 //
 // validator exit
 //
@@ -260,4 +291,14 @@ func (msg MsgValidatorExit) ValidateBasic() sdk.Error {
 	}
 
 	return nil
+}
+
+// GetTxHash Returns tx hash
+func (msg MsgValidatorExit) GetTxHash() types.HeimdallHash {
+	return msg.TxHash
+}
+
+// GetLogIndex Returns log index
+func (msg MsgValidatorExit) GetLogIndex() uint64 {
+	return msg.LogIndex
 }
