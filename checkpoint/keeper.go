@@ -128,8 +128,13 @@ func (k *Keeper) GetCheckpointList(ctx sdk.Context, page uint64, limit uint64) (
 	// create headers
 	var headers []hmTypes.CheckpointBlockHeader
 
+	// have max limit
+	if limit > 20 {
+		limit = 20
+	}
+
 	// get paginated iterator
-	iterator := hmTypes.KVStorePrefixIteratorPaginated(store, HeaderBlockKey, uint(page), uint(page))
+	iterator := hmTypes.KVStorePrefixIteratorPaginated(store, HeaderBlockKey, uint(page), uint(limit))
 
 	// loop through validators to get valid validators
 	for ; iterator.Valid(); iterator.Next() {

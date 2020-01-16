@@ -490,7 +490,7 @@ func checkpointListhandlerFn(
 	cliCtx context.CLIContext,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
+		vars := r.URL.Query()
 
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
@@ -498,19 +498,19 @@ func checkpointListhandlerFn(
 		}
 
 		// get page
-		page, ok := rest.ParseUint64OrReturnBadRequest(w, vars["page"])
+		page, ok := rest.ParseUint64OrReturnBadRequest(w, vars.Get("page"))
 		if !ok {
 			return
 		}
 
 		// get limit
-		limit, ok := rest.ParseUint64OrReturnBadRequest(w, vars["limit"])
+		limit, ok := rest.ParseUint64OrReturnBadRequest(w, vars.Get("limit"))
 		if !ok {
 			return
 		}
 
 		// get query params
-		queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQueryCheckpointListParams(page, limit))
+		queryParams, err := cliCtx.Codec.MarshalJSON(hmTypes.NewQueryPaginationParams(page, limit))
 		if err != nil {
 			return
 		}

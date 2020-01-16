@@ -136,6 +136,32 @@ func (k *Keeper) GetAllSpans(ctx sdk.Context) (spans []*hmTypes.Span) {
 	return
 }
 
+// GetSpanList returns all spans with params like page and limit
+func (k *Keeper) GetSpanList(ctx sdk.Context, page uint64, limit uint64) ([]hmTypes.Span, error) {
+	store := ctx.KVStore(k.storeKey)
+
+	// create spans
+	var spans []hmTypes.Span
+
+	// have max limit
+	if limit > 20 {
+		limit = 20
+	}
+
+	// get paginated iterator
+	iterator := hmTypes.KVStorePrefixIteratorPaginated(store, SpanPrefixKey, uint(page), uint(limit))
+
+	// loop through validators to get valid validators
+	for ; iterator.Valid(); iterator.Next() {
+		var span hmTypes.Span
+		if err := k.cdc.UnmarshalBinaryBare(iterator.Value(), &span); err == nil {
+			spans = append(spans, span)
+		}
+	}
+
+	return spans, nil
+}
+
 // GetLastSpan fetches last span using lastStartBlock
 func (k *Keeper) GetLastSpan(ctx sdk.Context) (*hmTypes.Span, error) {
 	store := ctx.KVStore(k.storeKey)
