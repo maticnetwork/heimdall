@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/crypto"
@@ -27,8 +28,10 @@ var (
 	gasWantedPerCheckpoinTx sdk.Gas = 10000000
 	gasUsedPerCheckpointTx  sdk.Gas = gasWantedPerCheckpoinTx - 1000000
 
+	oneVetic, _ = big.NewInt(0).SetString("1000000000000000000", 10)
+
 	// FeeWantedPerTx fee wanted per tx
-	FeeWantedPerTx = types.Coins{types.Coin{Denom: "vetic", Amount: types.NewInt(1)}}
+	FeeWantedPerTx = types.Coins{types.Coin{Denom: "vetic", Amount: types.NewIntFromBigInt(oneVetic)}}
 )
 
 func init() {

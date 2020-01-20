@@ -84,10 +84,10 @@ func SendCheckpointTx(cdc *codec.Codec) *cobra.Command {
 				return fmt.Errorf("root hash cannot be empty")
 			}
 
-			// Reward Root Hash
-			rewardRootHashStr := viper.GetString(FlagRewardRootHash)
-			if rewardRootHashStr == "" {
-				return fmt.Errorf("reward root hash cannot be empty")
+			// Account Root Hash
+			accountRootHashStr := viper.GetString(FlagAccountRootHash)
+			if accountRootHashStr == "" {
+				return fmt.Errorf("account root hash cannot be empty")
 			}
 
 			msg := types.NewMsgCheckpointBlock(
@@ -95,7 +95,7 @@ func SendCheckpointTx(cdc *codec.Codec) *cobra.Command {
 				startBlock,
 				endBlock,
 				hmTypes.HexToHeimdallHash(rootHashStr),
-				hmTypes.HexToHeimdallHash(rewardRootHashStr),
+				hmTypes.HexToHeimdallHash(accountRootHashStr),
 				uint64(time.Now().UTC().Unix()),
 			)
 
@@ -106,11 +106,11 @@ func SendCheckpointTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(FlagStartBlock, "", "--start-block=<start-block-number>")
 	cmd.Flags().String(FlagEndBlock, "", "--end-block=<end-block-number>")
 	cmd.Flags().StringP(FlagRootHash, "r", "", "--root-hash=<root-hash>")
-	cmd.Flags().String(FlagRewardRootHash, "", "--reward-root=<reward-root>")
+	cmd.Flags().String(FlagAccountRootHash, "", "--account-root=<account-root>")
 	cmd.MarkFlagRequired(FlagStartBlock)
 	cmd.MarkFlagRequired(FlagEndBlock)
 	cmd.MarkFlagRequired(FlagRootHash)
-	cmd.MarkFlagRequired(FlagRewardRootHash)
+	cmd.MarkFlagRequired(FlagAccountRootHash)
 
 	return cmd
 }

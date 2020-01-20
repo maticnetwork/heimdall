@@ -36,16 +36,16 @@ const (
 	// TxsURL represents txs url
 	TxsURL = "/txs"
 
-	AccountDetailsURL     = "/auth/accounts/%v"
-	LastNoAckURL          = "/checkpoint/last-no-ack"
-	ProposersURL          = "/staking/proposer/%v"
-	BufferedCheckpointURL = "/checkpoint/buffer"
-	LatestCheckpointURL   = "/checkpoint/latest-checkpoint"
-	CurrentProposerURL    = "/staking/current-proposer"
-	LatestSpanURL         = "/bor/latest-span"
-	NextSpanInfoURL       = "/bor/prepare-next-span"
-	InitialRewardRootURL  = "/staking/initial-reward-root"
-	ValidatorURL          = "/staking/validator/%v"
+	AccountDetailsURL      = "/auth/accounts/%v"
+	LastNoAckURL           = "/checkpoint/last-no-ack"
+	ProposersURL           = "/staking/proposer/%v"
+	BufferedCheckpointURL  = "/checkpoint/buffer"
+	LatestCheckpointURL    = "/checkpoint/latest-checkpoint"
+	CurrentProposerURL     = "/staking/current-proposer"
+	LatestSpanURL          = "/bor/latest-span"
+	NextSpanInfoURL        = "/bor/prepare-next-span"
+	DividendAccountRootURL = "/staking/dividend-account-root"
+	ValidatorURL           = "/staking/validator/%v"
 
 	TransactionTimeout = 1 * time.Minute
 	CommitTimeout      = 2 * time.Minute
@@ -72,6 +72,8 @@ func isProposer(cliCtx cliContext.CLIContext) bool {
 		return false
 	}
 
+	Logger.Info("validator fetched isProposer - ", "result", result.Result)
+
 	err = json.Unmarshal(result.Result, &proposers)
 	if err != nil {
 		Logger.Error("error unmarshalling proposer slice", "error", err)
@@ -97,6 +99,8 @@ func isEventSender(cliCtx cliContext.CLIContext, validatorID uint64) bool {
 		Logger.Error("Error fetching proposers", "error", err)
 		return false
 	}
+
+	Logger.Info("validator fetched isEventSender - ", "result", result)
 
 	err = json.Unmarshal(result.Result, &validator)
 	if err != nil {

@@ -64,6 +64,10 @@ func GetValidatorInfo(cdc *codec.Codec) *cobra.Command {
 			return nil
 		},
 	}
+
+
+
+	
 	cmd.Flags().Int(FlagValidatorID, 0, "--id=<validator ID here>")
 	cmd.MarkFlagRequired(FlagValidatorID)
 	return cmd

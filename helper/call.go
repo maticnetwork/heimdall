@@ -33,12 +33,14 @@ type IContractCaller interface {
 	IsTxConfirmed(common.Hash) bool
 	GetConfirmedTxReceipt(common.Hash) (*ethTypes.Receipt, error)
 	GetBlockNumberFromTxHash(common.Hash) (*big.Int, error)
-	DecodeValidatorTopupFeesEvent(*ethTypes.Receipt, uint64) (*stakemanager.StakemanagerTopupFees, error)
+	DecodeValidatorTopupFeesEvent(*ethTypes.Receipt, uint64) (*stakemanager.StakemanagerTopUpFee, error)
 	DecodeValidatorStakeUpdateEvent(*ethTypes.Receipt, uint64) (*stakemanager.StakemanagerStakeUpdate, error)
 	DecodeNewHeaderBlockEvent(*ethTypes.Receipt, uint64) (*rootchain.RootchainNewHeaderBlock, error)
 	DecodeSignerUpdateEvent(*ethTypes.Receipt, uint64) (*stakemanager.StakemanagerSignerChange, error)
 	GetMainTxReceipt(common.Hash) (*ethTypes.Receipt, error)
 	GetMaticTxReceipt(common.Hash) (*ethTypes.Receipt, error)
+
+	CurrentAccountStateRoot() ([32]byte, error)
 
 	// bor related contracts
 	CurrentSpanNumber() (Number *big.Int)
@@ -290,14 +292,14 @@ func (c *ContractCaller) GetConfirmedTxReceipt(tx common.Hash) (*ethTypes.Receip
 }
 
 // DecodeValidatorTopupFeesEvent represents topup for fees tokens
-func (c *ContractCaller) DecodeValidatorTopupFeesEvent(receipt *ethTypes.Receipt, logIndex uint64) (*stakemanager.StakemanagerTopupFees, error) {
-	event := new(stakemanager.StakemanagerTopupFees)
+func (c *ContractCaller) DecodeValidatorTopupFeesEvent(receipt *ethTypes.Receipt, logIndex uint64) (*stakemanager.StakemanagerTopUpFee, error) {
+	event := new(stakemanager.StakemanagerTopUpFee)
 
 	found := false
 	for _, vLog := range receipt.Logs {
 		if uint64(vLog.Index) == logIndex {
 			found = true
-			if err := UnpackLog(&c.StakeManagerABI, event, "TopupFees", vLog); err != nil {
+			if err := UnpackLog(&c.StakeManagerABI, event, "TopUpFee", vLog); err != nil {
 				return nil, err
 			}
 			break
@@ -375,6 +377,19 @@ func (c *ContractCaller) DecodeSignerUpdateEvent(receipt *ethTypes.Receipt, logI
 	}
 
 	return event, nil
+}
+
+// CurrentAccountStateRoot get current account root from on chain
+func (c *ContractCaller) CurrentAccountStateRoot() ([32]byte, error) {
+	accountStateRoot, err := c.StakeManagerInstance.AccountStateRoot(nil)
+
+	if err != nil {
+		Logger.Error("Unable to get current account state roor", "Error", err)
+		var emptyArr [32]byte
+		return emptyArr, err
+	}
+
+	return accountStateRoot, nil
 }
 
 // CurrentSpanNumber get current span
