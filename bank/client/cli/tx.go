@@ -164,9 +164,8 @@ func WithdrawFeeTxCmd(cdc *codec.Codec) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
 	cmd.Flags().Int(FlagValidatorID, 0, "--validator-id=<validator ID here>")
 	cmd.MarkFlagRequired(FlagValidatorID)
-	cmd.MarkFlagRequired(FlagProposerAddress)
+
 	return cmd
 }

@@ -9,7 +9,7 @@ const (
 	CodeSendDisabled         sdk.CodeType = 101
 	CodeInvalidInputsOutputs sdk.CodeType = 102
 	CodeNoValidatorTopup     sdk.CodeType = 103
-	CodeAlreadyWtihdrawn     sdk.CodeType = 104
+	CodeNoBalanceToWithdraw  sdk.CodeType = 104
 )
 
 // ErrNoInputs is an error
@@ -37,7 +37,7 @@ func ErrNoValidatorTopup(codespace sdk.CodespaceType) sdk.Error {
 	return sdk.NewError(codespace, CodeNoValidatorTopup, "no validator topup")
 }
 
-// ErrFeeAlreadyWithdrawn is an error for validator topup withdraw
-func ErrFeeAlreadyWithdrawn(codespace sdk.CodespaceType) sdk.Error {
-	return sdk.NewError(codespace, CodeAlreadyWtihdrawn, "Topup Already withdrawn")
+// ErrNoBalanceToWithdraw is an error for validator topup withdraw
+func ErrNoBalanceToWithdraw(codespace sdk.CodespaceType) sdk.Error {
+	return sdk.NewError(codespace, CodeNoBalanceToWithdraw, "No balance to withdraw")
 }

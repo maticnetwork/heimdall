@@ -2,6 +2,7 @@ package types
 
 import (
 	"bytes"
+	"encoding/hex"
 	"errors"
 	"math/big"
 
@@ -142,26 +143,18 @@ func GetAccountProof(dividendAccounts []hmTypes.DividendAccount, dividendAccount
 }
 
 // VerifyAccountProof returns proof of dividend Account
-func VerifyAccountProof(dividendAccounts []hmTypes.DividendAccount, dividendAccountID hmTypes.DividendAccountID) (bool, error) {
-	// Sort the dividendAccounts by ID
-	dividendAccounts = hmTypes.SortDividendAccountByID(dividendAccounts)
-	var list []merkletree.Content
-	var account hmTypes.DividendAccount
+func VerifyAccountProof(dividendAccounts []hmTypes.DividendAccount, dividendAccountID hmTypes.DividendAccountID, proofToVerify string) (bool, error) {
 
-	for i := 0; i < len(dividendAccounts); i++ {
-		list = append(list, dividendAccounts[i])
-		if dividendAccounts[i].ID == dividendAccountID {
-			account = dividendAccounts[i]
-		}
-	}
-
-	tree, err := merkletree.NewTree(list)
+	proof, err := GetAccountProof(dividendAccounts, dividendAccountID)
 	if err != nil {
-		return false, err
+		return false, nil
 	}
 
-	return tree.VerifyContent(account)
+	if proofToVerify == hex.EncodeToString(proof) {
+		return true, nil
+	}
 
+	return false, nil
 }
 
 func convert(input []([32]byte)) [][]byte {

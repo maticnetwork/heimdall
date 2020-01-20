@@ -181,15 +181,15 @@ func handleMsgWithdrawFee(ctx sdk.Context, k Keeper, msg types.MsgWithdrawFee) s
 	// check if fee is already withdrawn
 	coins := k.GetCoins(ctx, msg.FromAddress)
 	veticBalance := coins.AmountOf("vetic")
-	k.Logger(ctx).Info("Fee balance for ", "from address", msg.FromAddress, "validatorId", msg.ID, "balance", veticBalance.BigInt().String())
+	k.Logger(ctx).Info("Fee balance for ", "fromAddress", msg.FromAddress, "validatorId", msg.ID, "balance", veticBalance.BigInt().String())
 	if veticBalance.IsZero() {
-		return types.ErrFeeAlreadyWithdrawn(k.Codespace()).Result()
+		return types.ErrNoBalanceToWithdraw(k.Codespace()).Result()
 	}
 
 	// withdraw coins of validator.
 	zeroVetic := hmTypes.Coins{hmTypes.Coin{Denom: "vetic", Amount: hmTypes.NewInt(0)}}
 	if err := k.SetCoins(ctx, msg.FromAddress, zeroVetic); err != nil {
-		k.Logger(ctx).Error("Error while setting Fee balance to zero ", "from address", msg.FromAddress, "validatorId", msg.ID, "err", err)
+		k.Logger(ctx).Error("Error while setting Fee balance to zero ", "fromAddress", msg.FromAddress, "validatorId", msg.ID, "err", err)
 		return err.Result()
 	}
 

@@ -19,6 +19,7 @@ const (
 	QueryDividendAccount      = "dividend-account"
 	QueryDividendAccountRoot  = "dividend-account-root"
 	QueryAccountProof         = "dividend-account-proof"
+	QueryVerifyAccountProof   = "verify-account-proof"
 	QuerySlashValidator       = "slash-validator"
 )
 
@@ -60,6 +61,17 @@ type QueryAccountProofParams struct {
 // NewQueryAccountProofParams creates a new instance of QueryAccountProofParams.
 func NewQueryAccountProofParams(dividendAccountID types.DividendAccountID) QueryAccountProofParams {
 	return QueryAccountProofParams{DividendAccountID: dividendAccountID}
+}
+
+// QueryVerifyAccountProofParams defines the params for verifying account proof.
+type QueryVerifyAccountProofParams struct {
+	DividendAccountID types.DividendAccountID `json:"dividend_account_id"`
+	AccountProof      string                  `json:"account_proof"`
+}
+
+// NewQueryVerifyAccountProofParams creates a new instance of QueryVerifyAccountProofParams.
+func NewQueryVerifyAccountProofParams(dividendAccountID types.DividendAccountID, accountProof string) QueryVerifyAccountProofParams {
+	return QueryVerifyAccountProofParams{DividendAccountID: dividendAccountID, AccountProof: accountProof}
 }
 
 // QueryProposerParams defines the params for querying val status.

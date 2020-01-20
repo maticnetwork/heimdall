@@ -62,6 +62,10 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 		"/staking/account-proof/{id}",
 		dividendAccountProofHandlerFn(cliCtx),
 	).Methods("GET")
+	r.HandleFunc(
+		"/staking/account-proof/verify/",
+		VerifyAccountProofHandlerFn(cliCtx),
+	).Methods("GET")
 }
 
 // Returns validator information by signer address
@@ -488,5 +492,56 @@ func dividendAccountProofHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		// return result
 		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, merkleProof)
+	}
+}
+
+// VerifyAccountProofHandlerFn - Returns true if given Merkle path for dividendAccountID is valid
+func VerifyAccountProofHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		// get id
+		id, ok := rest.ParseUint64OrReturnBadRequest(w, vars["id"])
+		if !ok {
+			return
+		}
+
+		accountProof := vars["proof"]
+
+		// get query params
+		queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQueryVerifyAccountProofParams(hmTypes.DividendAccountID(id), accountProof))
+		if err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryVerifyAccountProof), queryParams)
+		if err != nil {
+			RestLogger.Error("Error while verifying merkle proof", "Error", err.Error())
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		var accountProofStatus bool
+		if err := json.Unmarshal(res, &accountProofStatus); err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		res, err = json.Marshal(map[string]interface{}{"result": accountProofStatus})
+		if err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		// return result
+		cliCtx = cliCtx.WithHeight(height)
+		rest.PostProcessResponse(w, cliCtx, res)
+
 	}
 }

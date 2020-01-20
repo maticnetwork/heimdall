@@ -36,6 +36,9 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return handleDividendAccountRoot(ctx, req, keeper)
 		case types.QueryAccountProof:
 			return handleQueryAccountProof(ctx, req, keeper)
+		case types.QueryVerifyAccountProof:
+			return handleQueryVerifyAccountProof(ctx, req, keeper)
+
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown staking query endpoint")
 		}
@@ -208,4 +211,27 @@ func handleQueryAccountProof(ctx sdk.Context, req abci.RequestQuery, keeper Keep
 	} else {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not fetch merkle proof ", err.Error()))
 	}
+}
+
+func handleQueryVerifyAccountProof(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+
+	var params types.QueryVerifyAccountProofParams
+	if err := keeper.cdc.UnmarshalJSON(req.Data, &params); err != nil {
+		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
+	}
+
+	dividendAccounts := keeper.GetAllDividendAccounts(ctx)
+
+	// Verify account proof
+	accountProofStatus, err := checkpointTypes.VerifyAccountProof(dividendAccounts, params.DividendAccountID, params.AccountProof)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not verify merkle proof ", err.Error()))
+	}
+
+	// json record
+	bz, err := json.Marshal(accountProofStatus)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
+	return bz, nil
 }
