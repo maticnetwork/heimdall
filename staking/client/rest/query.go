@@ -498,20 +498,20 @@ func dividendAccountProofHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 // VerifyAccountProofHandlerFn - Returns true if given Merkle path for dividendAccountID is valid
 func VerifyAccountProofHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
 			return
 		}
 
-		// get id
-		id, ok := rest.ParseUint64OrReturnBadRequest(w, vars["id"])
+		params := r.URL.Query()
+		id, ok := rest.ParseUint64OrReturnBadRequest(w, params.Get("id"))
 		if !ok {
 			return
 		}
 
-		accountProof := vars["proof"]
+		accountProof := params.Get("proof")
+
+		RestLogger.Info("Verify Account Proof- ", "valID", id, "accountProof", accountProof)
 
 		// get query params
 		queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQueryVerifyAccountProofParams(hmTypes.DividendAccountID(id), accountProof))
