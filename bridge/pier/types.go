@@ -3,6 +3,8 @@ package pier
 import (
 	"fmt"
 	"math/big"
+
+	"github.com/maticnetwork/heimdall/types"
 )
 
 // HeaderBlock header block
@@ -26,9 +28,10 @@ func (c ContractCheckpoint) String() string {
 
 // HeimdallCheckpoint heimdall checkpoint
 type HeimdallCheckpoint struct {
-	start uint64
-	end   uint64
-	found bool
+	start    uint64
+	end      uint64
+	proposer types.HeimdallAddress
+	found    bool
 }
 
 // NewContractCheckpoint creates contract checkpoint
@@ -41,9 +44,10 @@ func NewContractCheckpoint(_newStart uint64, _newEnd uint64, _currentHeaderBlock
 }
 
 // NewHeimdallCheckpoint creates new heimdall checkpoint object
-func NewHeimdallCheckpoint(_start uint64, _end uint64) *HeimdallCheckpoint {
+func NewHeimdallCheckpoint(_start uint64, _end uint64, _proposer types.HeimdallAddress) *HeimdallCheckpoint {
 	return &HeimdallCheckpoint{
-		start: _start,
-		end:   _end,
+		start:    _start,
+		end:      _end,
+		proposer: _proposer,
 	}
 }

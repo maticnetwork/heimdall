@@ -280,6 +280,12 @@ func (c *Checkpointer) sendRequest(newHeader *types.Header) {
 
 	start := expectedCheckpointState.newStart
 	end := expectedCheckpointState.newEnd
+
+	if bufferedCheckpoint != nil && bufferedCheckpoint.proposer.Equals(hmtypes.BytesToHeimdallAddress(helper.GetAddress())) && bufferedCheckpoint.start == start {
+		c.Logger.Info("Checkpoint already proposed by current validator with same start block", "validatorAddress", bufferedCheckpoint.proposer, "startBlock", start)
+		return
+	}
+
 	if err := c.sendCheckpointToHeimdall(start, end); err != nil {
 		c.Logger.Error("Error while sending checkpoint", "error", err)
 	}
@@ -381,7 +387,7 @@ func (c *Checkpointer) fetchBufferedCheckpoint() (*HeimdallCheckpoint, error) {
 		return nil, err
 	}
 
-	bufferedCheckpoint := NewHeimdallCheckpoint(_checkpoint.StartBlock, _checkpoint.EndBlock)
+	bufferedCheckpoint := NewHeimdallCheckpoint(_checkpoint.StartBlock, _checkpoint.EndBlock, _checkpoint.Proposer)
 	return bufferedCheckpoint, nil
 }
 
@@ -394,7 +400,7 @@ func (c *Checkpointer) fetchCommittedCheckpoint() (*HeimdallCheckpoint, error) {
 		return nil, err
 	}
 
-	return NewHeimdallCheckpoint(_checkpoint.StartBlock, _checkpoint.EndBlock), nil
+	return NewHeimdallCheckpoint(_checkpoint.StartBlock, _checkpoint.EndBlock, _checkpoint.Proposer), nil
 }
 
 // fetches checkpoint from given URL
