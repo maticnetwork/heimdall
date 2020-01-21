@@ -1,25 +1,22 @@
 package main
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"math/big"
 	"os"
 	"path/filepath"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
-	ethCommon "github.com/maticnetwork/bor/common"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/crypto"
-	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"github.com/tendermint/tendermint/libs/common"
 
 	"github.com/maticnetwork/heimdall/app"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
+	borTypes "github.com/maticnetwork/heimdall/bor/types"
 	"github.com/maticnetwork/heimdall/helper"
 	stakingcli "github.com/maticnetwork/heimdall/staking/client/cli"
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
@@ -44,14 +41,33 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 		RunE: func(_ *cobra.Command, _ []string) error {
 			config := ctx.Config
 			outDir := viper.GetString(flagOutputDir)
+
+			// create chain id
+			chainID := viper.GetString(client.FlagChainID)
+			if chainID == "" {
+				chainID = fmt.Sprintf("heimdall-%v", common.RandStr(6))
+			}
+
+			// num of validators = validators in genesis files
 			numValidators := viper.GetInt(flagNumValidators)
+
+			// num of non validators = accounts not in config file but present in the testnets package main
+			// and can be made validator later by staking on-chain
 			numNonValidators := viper.GetInt(flagNumNonValidators)
+
+			// get total number of validators to be generated
+			totalValidators := totalValidators()
+
+			// first validators start ID
 			startID := viper.GetInt64(stakingcli.FlagValidatorID)
 			if startID == 0 {
 				startID = 1
 			}
-			totalValidators := totalValidators()
+
+			// signers data to dump in the signer-dump file
 			signers := make([]ValidatorAccountFormatter, totalValidators)
+
+			// Initialise variables for all validators
 			nodeIDs := make([]string, totalValidators)
 			valPubKeys := make([]crypto.PubKey, totalValidators)
 			privKeys := make([]crypto.PrivKey, totalValidators)
@@ -59,20 +75,22 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 			dividendAccounts := make([]hmTypes.DividendAccount, totalValidators)
 			genFiles := make([]string, totalValidators)
 			var err error
-			// create chain id
-			chainID := viper.GetString(client.FlagChainID)
-			if chainID == "" {
-				chainID = fmt.Sprintf("heimdall-%v", common.RandStr(6))
-			}
 
-			for i := 0; i < numValidators+numNonValidators; i++ {
+			nodeDaemonHomeName := viper.GetString(flagNodeDaemonHome)
+			nodeCliHomeName := viper.GetString(flagNodeCliHome)
+
+			for i := 0; i < totalValidators; i++ {
+				// get node dir name = PREFIX+INDEX
 				nodeDirName := fmt.Sprintf("%s%d", viper.GetString(flagNodeDirPrefix), i)
-				nodeDaemonHomeName := viper.GetString(flagNodeDaemonHome)
-				nodeCliHomeName := viper.GetString(flagNodeCliHome)
+
+				// generate node and client dir
 				nodeDir := filepath.Join(outDir, nodeDirName, nodeDaemonHomeName)
 				clientDir := filepath.Join(outDir, nodeDirName, nodeCliHomeName)
+
+				// set root in config
 				config.SetRoot(nodeDir)
 
+				// create config folder
 				err := os.MkdirAll(filepath.Join(nodeDir, "config"), nodeDirPerm)
 				if err != nil {
 					_ = os.RemoveAll(outDir)
@@ -91,34 +109,19 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 				}
 
 				genFiles[i] = config.GenesisFile()
-				//
-				// Genesis file
-				//
-				validatorPublicKey := helper.GetPubObjects(valPubKeys[i])
-				newPubkey := hmTypes.NewPubKey(validatorPublicKey[:])
 
-				// create validator
-				validators[i] = &hmTypes.Validator{
-					ID:          hmTypes.NewValidatorID(uint64(startID + int64(i))),
-					PubKey:      newPubkey,
-					StartEpoch:  0,
-					Signer:      hmTypes.BytesToHeimdallAddress(valPubKeys[i].Address().Bytes()),
-					VotingPower: 1,
-				}
+				newPubkey := CryptoKeyToPubkey(valPubKeys[i])
 
-				dividendAccounts[i] = hmTypes.DividendAccount{
-					ID:            hmTypes.NewDividendAccountID(uint64(validators[i].ID)),
-					FeeAmount:     big.NewInt(0).String(),
-					SlashedAmount: big.NewInt(0).String(),
-				}
+				// create validator account
+				validators[i] = hmTypes.NewValidator(hmTypes.NewValidatorID(uint64(startID+int64(i))),
+					0, 0, 1, newPubkey,
+					hmTypes.BytesToHeimdallAddress(valPubKeys[i].Address().Bytes()))
 
-				var privObject secp256k1.PrivKeySecp256k1
-				cdc.MustUnmarshalBinaryBare(privKeys[i].Bytes(), &privObject)
-				signers[i] = ValidatorAccountFormatter{
-					Address: ethCommon.BytesToAddress(valPubKeys[i].Address().Bytes()).String(),
-					PubKey:  newPubkey.String(),
-					PrivKey: "0x" + hex.EncodeToString(privObject[:]),
-				}
+				// create dividend account for validator
+				dividendAccounts[i] = hmTypes.NewDividendAccount(hmTypes.NewDividendAccountID(uint64(validators[i].ID)), ZeroIntString, ZeroIntString)
+
+				signers[i] = GetSignerInfo(valPubKeys[i], privKeys[i].Bytes(), cdc)
+
 				WriteDefaultHeimdallConfig(filepath.Join(config.RootDir, "config/heimdall-config.toml"), helper.GetDefaultHeimdallConfig())
 			}
 
@@ -142,6 +145,12 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 
 			// staking state change
 			appStateBytes, err = stakingTypes.SetGenesisStateToAppState(appStateBytes, validators, *validatorSet, dividendAccounts)
+			if err != nil {
+				return err
+			}
+
+			// bor state change
+			appStateBytes, err = borTypes.SetGenesisStateToAppState(appStateBytes, *validatorSet)
 			if err != nil {
 				return err
 			}

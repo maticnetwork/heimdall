@@ -20,6 +20,7 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	cfg "github.com/tendermint/tendermint/config"
 	"github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
@@ -45,13 +46,28 @@ var (
 	flagNodeHostPrefix   = "node-host-prefix"
 )
 
-const nodeDirPerm = 0755
+const (
+	nodeDirPerm = 0755
+)
+
+var ZeroIntString = big.NewInt(0).String()
 
 // ValidatorAccountFormatter helps to print local validator account information
 type ValidatorAccountFormatter struct {
 	Address string `json:"address" yaml:"address"`
 	PrivKey string `json:"priv_key" yaml:"priv_key"`
 	PubKey  string `json:"pub_key" yaml:"pub_key"`
+}
+
+// GetSignerInfo returns signer information
+func GetSignerInfo(pub crypto.PubKey, priv []byte, cdc *codec.Codec) ValidatorAccountFormatter {
+	var privObject secp256k1.PrivKeySecp256k1
+	cdc.MustUnmarshalBinaryBare(priv, &privObject)
+	return ValidatorAccountFormatter{
+		Address: ethCommon.BytesToAddress(pub.Address().Bytes()).String(),
+		PubKey:  CryptoKeyToPubkey(pub).String(),
+		PrivKey: "0x" + hex.EncodeToString(privObject[:]),
+	}
 }
 
 func main() {
@@ -273,4 +289,9 @@ func InitializeNodeValidatorFiles(
 func WriteDefaultHeimdallConfig(path string, conf helper.Configuration) {
 	heimdallConf := helper.GetDefaultHeimdallConfig()
 	helper.WriteConfigFile(path, &heimdallConf)
+}
+
+func CryptoKeyToPubkey(key crypto.PubKey) hmTypes.PubKey {
+	validatorPublicKey := helper.GetPubObjects(key)
+	return hmTypes.NewPubKey(validatorPublicKey[:])
 }

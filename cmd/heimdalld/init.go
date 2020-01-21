@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"math/big"
 	"os"
 	"path/filepath"
 
@@ -48,30 +47,19 @@ func initCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 
 			WriteDefaultHeimdallConfig(filepath.Join(config.RootDir, "config/heimdall-config.toml"), helper.GetDefaultHeimdallConfig())
 
-			//
-			// Genesis file
-			//
-			validatorPublicKey := helper.GetPubObjects(valPubKey)
-			newPubkey := hmTypes.NewPubKey(validatorPublicKey[:])
+			// get pubkey
+			newPubkey := CryptoKeyToPubkey(valPubKey)
 
-			// create validator
-			validator := hmTypes.Validator{
-				ID:          hmTypes.NewValidatorID(uint64(validatorID)),
-				PubKey:      newPubkey,
-				StartEpoch:  0,
-				Signer:      hmTypes.BytesToHeimdallAddress(valPubKey.Address().Bytes()),
-				VotingPower: stakingTypes.DefaultValPower,
-			}
+			// create validator account
+			validator := hmTypes.NewValidator(hmTypes.NewValidatorID(uint64(validatorID)),
+				0, 0, 1, newPubkey,
+				hmTypes.BytesToHeimdallAddress(valPubKey.Address().Bytes()))
 
-			vals := []*hmTypes.Validator{&validator}
+			// create dividend account for validator
+			dividendAccount := hmTypes.NewDividendAccount(hmTypes.NewDividendAccountID(uint64(validatorID)), ZeroIntString, ZeroIntString)
+
+			vals := []*hmTypes.Validator{validator}
 			validatorSet := hmTypes.NewValidatorSet(vals)
-
-			// create dividend account
-			dividendAccount := hmTypes.DividendAccount{
-				ID:            hmTypes.NewDividendAccountID(uint64(validatorID)),
-				FeeAmount:     big.NewInt(0).String(),
-				SlashedAmount: big.NewInt(0).String(),
-			}
 
 			dividendAccounts := []hmTypes.DividendAccount{dividendAccount}
 
