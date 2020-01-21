@@ -82,9 +82,9 @@ func main() {
 	server.AddCommands(ctx, cdc, rootCmd, newApp, exportAppStateAndTMValidators)
 	rootCmd.AddCommand(newAccountCmd())
 	rootCmd.AddCommand(hmserver.ServeCommands(cdc, hmserver.RegisterRoutes))
-	rootCmd.AddCommand(InitCmd(ctx, cdc))
-	rootCmd.AddCommand(TestnetCmd(ctx, cdc))
 	rootCmd.AddCommand(VerifyGenesis(ctx, cdc))
+	rootCmd.AddCommand(initCmd(ctx, cdc))
+	rootCmd.AddCommand(testnetCmd(ctx, cdc))
 
 	// prepare and add flags
 	executor := cli.PrepareBaseCmd(rootCmd, "HD", os.ExpandEnv("$HOME/.heimdalld"))
@@ -267,4 +267,10 @@ func InitializeNodeValidatorFiles(
 	FilePv := privval.LoadOrGenFilePV(pvKeyFile, pvStateFile)
 	valPubKey = FilePv.GetPubKey()
 	return nodeID, valPubKey, FilePv.Key.PrivKey, nil
+}
+
+// WriteDefaultHeimdallConfig writes default heimdall config to the given path
+func WriteDefaultHeimdallConfig(path string, conf helper.Configuration) {
+	heimdallConf := helper.GetDefaultHeimdallConfig()
+	helper.WriteConfigFile(path, &heimdallConf)
 }

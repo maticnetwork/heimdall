@@ -25,7 +25,7 @@ import (
 )
 
 // InitCmd initialises files required to start heimdall
-func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
+func initCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init",
 		Short: "Initialize genesis config, priv-validator file, and p2p-node file",
@@ -46,9 +46,7 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			// Heimdall config file
-			heimdallConf := helper.GetDefaultHeimdallConfig()
-			helper.WriteConfigFile(filepath.Join(config.RootDir, "config/heimdall-config.toml"), &heimdallConf)
+			WriteDefaultHeimdallConfig(filepath.Join(config.RootDir, "config/heimdall-config.toml"), helper.GetDefaultHeimdallConfig())
 
 			//
 			// Genesis file

@@ -27,7 +27,7 @@ import (
 )
 
 // TestnetCmd initialises files required to start heimdall testnet
-func TestnetCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
+func testnetCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create-testnet",
 		Short: "Initialize files for a Heimdall testnet",
@@ -119,9 +119,7 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 					PubKey:  newPubkey.String(),
 					PrivKey: "0x" + hex.EncodeToString(privObject[:]),
 				}
-
-				heimdallConf := helper.GetDefaultHeimdallConfig()
-				helper.WriteConfigFile(filepath.Join(config.RootDir, "config/heimdall-config.toml"), &heimdallConf)
+				WriteDefaultHeimdallConfig(filepath.Join(config.RootDir, "config/heimdall-config.toml"), helper.GetDefaultHeimdallConfig())
 			}
 
 			// other data
