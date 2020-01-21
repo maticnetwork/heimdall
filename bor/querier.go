@@ -110,6 +110,19 @@ func handleQuerySpanList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) 
 }
 
 func handleQueryLatestSpan(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	var defaultSpan hmTypes.Span
+	spans := keeper.GetAllSpans(ctx)
+	// if this is the first span return empty span
+	if len(spans) == 0 {
+		// json record
+		bz, err := json.Marshal(defaultSpan)
+		if err != nil {
+			return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+		}
+		return bz, nil
+	}
+
+	// explcitly fetch the last span
 	span, err := keeper.GetLastSpan(ctx)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not get span", err.Error()))
