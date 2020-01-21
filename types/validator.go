@@ -24,6 +24,17 @@ type Validator struct {
 	ProposerPriority int64 `json:"accum"`
 }
 
+func NewValidator(id ValidatorID, startEpoch uint64, endEpoch uint64, power int64, pubKey PubKey, signer HeimdallAddress) *Validator {
+	return &Validator{
+		ID:          id,
+		StartEpoch:  startEpoch,
+		EndEpoch:    endEpoch,
+		VotingPower: power,
+		PubKey:      pubKey,
+		Signer:      signer,
+	}
+}
+
 // SortValidatorByAddress sorts a slice of validators by address
 func SortValidatorByAddress(a []Validator) []Validator {
 	sort.Slice(a, func(i, j int) bool {

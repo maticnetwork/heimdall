@@ -18,6 +18,14 @@ type DividendAccount struct {
 	SlashedAmount string            `json:"slashedAmount"` // string representation of big.Int
 }
 
+func NewDividendAccount(id DividendAccountID, fee string, slashedAmount string) DividendAccount {
+	return DividendAccount{
+		ID:            id,
+		FeeAmount:     fee,
+		SlashedAmount: slashedAmount,
+	}
+}
+
 // DividendAccountID  dividend account ID and helper functions
 type DividendAccountID uint64
 
