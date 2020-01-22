@@ -282,7 +282,7 @@ func (c *Checkpointer) sendRequest(newHeader *types.Header) {
 	end := expectedCheckpointState.newEnd
 
 	if bufferedCheckpoint != nil && bufferedCheckpoint.proposer.Equals(hmtypes.BytesToHeimdallAddress(helper.GetAddress())) && bufferedCheckpoint.start == start {
-		c.Logger.Info("Checkpoint already proposed by current validator with same start block", "validatorAddress", bufferedCheckpoint.proposer, "startBlock", start)
+		c.Logger.Info("Checkpoint already proposed to heimdall by us", "proposer", bufferedCheckpoint.proposer, "startBlock", start, "endBlock", end)
 		return
 	}
 
