@@ -19,17 +19,42 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
-func ValidateCheckpoint(start uint64, end uint64, rootHash hmTypes.HeimdallHash) bool {
+// ValidateCheckpoint - Validates if checkpoint rootHash matches or not
+func ValidateCheckpoint(start uint64, end uint64, rootHash hmTypes.HeimdallHash) (bool, error) {
+	// Check if blocks exist locally
+	if !CheckIfBlocksExist(end) {
+		return false, errors.New("blocks not found locally")
+	}
+
+	// Compare RootHash
 	root, err := GetHeaders(start, end)
+	if err != nil {
+		return false, err
+	}
+
+	if bytes.Equal(root, rootHash.Bytes()) {
+		return true, nil
+	}
+
+	return false, nil
+}
+
+// CheckIfBlocksExist - check if latest block number is greater than end block
+func CheckIfBlocksExist(end uint64) bool {
+	// Get Latest block number.
+	rpcClient := helper.GetMaticRPCClient()
+	var latestBlock *types.Header
+
+	err := rpcClient.Call(&latestBlock, "eth_getBlockByNumber", "latest", false)
 	if err != nil {
 		return false
 	}
 
-	if bytes.Equal(root, rootHash.Bytes()) {
-		return true
+	if end > latestBlock.Number.Uint64() {
+		return false
 	}
 
-	return false
+	return true
 }
 
 func GetHeaders(start uint64, end uint64) ([]byte, error) {

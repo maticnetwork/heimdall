@@ -57,7 +57,16 @@ func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, con
 	// k.Logger(ctx).Debug("Received checkpoint from buffer", "Checkpoint", checkpointBuffer.String())
 
 	// validate checkpoint
-	if !types.ValidateCheckpoint(msg.StartBlock, msg.EndBlock, msg.RootHash) {
+	validCheckpoint, err := types.ValidateCheckpoint(msg.StartBlock, msg.EndBlock, msg.RootHash)
+	if err != nil {
+		k.Logger(ctx).Error("Error validating checkpoint",
+			"Error", err,
+			"StartBlock", msg.StartBlock,
+			"EndBlock", msg.EndBlock)
+		return common.ErrBadBlockDetails(k.Codespace()).Result()
+	}
+
+	if !validCheckpoint {
 		k.Logger(ctx).Error("RootHash is not valid",
 			"StartBlock", msg.StartBlock,
 			"EndBlock", msg.EndBlock,
