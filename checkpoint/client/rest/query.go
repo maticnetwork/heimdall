@@ -258,11 +258,11 @@ func noackHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 type stateDump struct {
-	ACKCount         uint64                        `json:"ack_count"`
-	CheckpointBuffer hmTypes.CheckpointBlockHeader `json:"checkpoint_buffer"`
-	ValidatorCount   int                           `json:"validator_count"`
-	ValidatorSet     hmTypes.ValidatorSet          `json:"validator_set"`
-	LastNoACK        time.Time                     `json:"last_noack_time"`
+	ACKCount         uint64                         `json:"ack_count"`
+	CheckpointBuffer *hmTypes.CheckpointBlockHeader `json:"checkpoint_buffer"`
+	ValidatorCount   int                            `json:"validator_count"`
+	ValidatorSet     hmTypes.ValidatorSet           `json:"validator_set"`
+	LastNoACK        time.Time                      `json:"last_noack_time"`
 }
 
 // get all state-dump of heimdall
@@ -280,36 +280,27 @@ func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		var ackCountInt uint64
 		ackCountBytes, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryAckCount), nil)
-		if err != nil {
-			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		// check content
-		if ok := hmRest.ReturnNotFoundIfNoContent(w, ackCountBytes, "No ack count found"); !ok {
-			return
-		}
-
-		if err := json.Unmarshal(ackCountBytes, &ackCountInt); err != nil {
-			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
+		if err == nil {
+			// check content
+			if ok := hmRest.ReturnNotFoundIfNoContent(w, ackCountBytes, "No ack count found"); ok {
+				if err := json.Unmarshal(ackCountBytes, &ackCountInt); err != nil {
+					// ignore
+				}
+			}
 		}
 
 		//
 		// Checkpoint buffer
 		//
 
-		var _checkpoint hmTypes.CheckpointBlockHeader
+		var _checkpoint *hmTypes.CheckpointBlockHeader
 		checkpointBufferBytes, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCheckpointBuffer), nil)
-		if err != nil {
-			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		if len(checkpointBufferBytes) != 0 {
-			if err = json.Unmarshal(checkpointBufferBytes, &_checkpoint); err != nil {
-				hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-				return
+		if err == nil {
+			if len(checkpointBufferBytes) != 0 {
+				_checkpoint = new(hmTypes.CheckpointBlockHeader)
+				if err = json.Unmarshal(checkpointBufferBytes, _checkpoint); err != nil {
+					// ignore
+				}
 			}
 		}
 
@@ -319,14 +310,10 @@ func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		var validatorSet hmTypes.ValidatorSet
 		validatorSetBytes, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", stakingTypes.QuerierRoute, stakingTypes.QueryCurrentValidatorSet), nil)
-		if err != nil {
-			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		if err := json.Unmarshal(validatorSetBytes, &validatorSet); err != nil {
-			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
+		if err == nil {
+			if err := json.Unmarshal(validatorSetBytes, &validatorSet); err != nil {
+				// ignore
+			}
 		}
 
 		// validator count
@@ -339,19 +326,13 @@ func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		// last no ack
 		var lastNoACKTime uint64
 		lastNoACKBytes, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryLastNoAck), nil)
-		if err != nil {
-			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		// check content
-		if ok := hmRest.ReturnNotFoundIfNoContent(w, lastNoACKBytes, "No last-no-ack count found"); !ok {
-			return
-		}
-
-		if err := json.Unmarshal(lastNoACKBytes, &lastNoACKTime); err != nil {
-			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
+		if err == nil {
+			// check content
+			if ok := hmRest.ReturnNotFoundIfNoContent(w, lastNoACKBytes, "No last-no-ack count found"); ok {
+				if err := json.Unmarshal(lastNoACKBytes, &lastNoACKTime); err != nil {
+					// ignore
+				}
+			}
 		}
 
 		//
