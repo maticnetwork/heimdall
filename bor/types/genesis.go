@@ -38,9 +38,17 @@ func ValidateGenesis(data GenesisState) error { return nil }
 func genFirstSpan(valset hmTypes.ValidatorSet) []*hmTypes.Span {
 	var firstSpan []*hmTypes.Span
 	var selectedProducers []hmTypes.Validator
-	for _, val := range valset.Validators {
-		selectedProducers = append(selectedProducers, *val)
+	if len(valset.Validators) > int(DefaultProducerCount) {
+		// pop top validators and select
+		for i := 0; uint64(i) < DefaultProducerCount; i++ {
+			selectedProducers = append(selectedProducers, *valset.Validators[i])
+		}
+	} else {
+		for _, val := range valset.Validators {
+			selectedProducers = append(selectedProducers, *val)
+		}
 	}
+
 	newSpan := hmTypes.NewSpan(0, 0, 0+DefaultSpanDuration-1, valset, selectedProducers, helper.GetConfig().BorChainID)
 	firstSpan = append(firstSpan, &newSpan)
 	return firstSpan
