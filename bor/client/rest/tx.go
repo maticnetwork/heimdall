@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -61,7 +62,7 @@ func postProposeSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var spanDuration uint64
-		if err := cliCtx.Codec.UnmarshalJSON(res, &spanDuration); err != nil {
+		if err := json.Unmarshal(res, &spanDuration); err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
