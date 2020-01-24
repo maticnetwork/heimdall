@@ -111,10 +111,6 @@ func ErrBadTimeStamp(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeBadTimeStamp, "Invalid time stamp. It must be in near past.")
 }
 
-func ErrLowBalance(codespace sdk.CodespaceType, address string) sdk.Error {
-	return newError(codespace, CodeLowBal, fmt.Sprintf("Min bal %v required for sending checkpoint TX for address %v", helper.MinBalance, address))
-}
-
 // ----------- Staking Errors
 
 func ErrOldValidator(codespace sdk.CodespaceType) sdk.Error {
