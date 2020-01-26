@@ -36,16 +36,16 @@ const (
 	// TxsURL represents txs url
 	TxsURL = "/txs"
 
-	AccountDetailsURL     = "/auth/accounts/%v"
-	LastNoAckURL          = "/checkpoint/last-no-ack"
-	ProposersURL          = "/staking/proposer/%v"
-	BufferedCheckpointURL = "/checkpoint/buffer"
-	LatestCheckpointURL   = "/checkpoint/latest-checkpoint"
-	CurrentProposerURL    = "/staking/current-proposer"
-	LatestSpanURL         = "/bor/latest-span"
-	NextSpanInfoURL       = "/bor/prepare-next-span"
-	InitialRewardRootURL  = "/staking/initial-reward-root"
-	ValidatorURL          = "/staking/validator/%v"
+	AccountDetailsURL      = "/auth/accounts/%v"
+	LastNoAckURL           = "/checkpoint/last-no-ack"
+	ProposersURL           = "/staking/proposer/%v"
+	BufferedCheckpointURL  = "/checkpoint/buffer"
+	LatestCheckpointURL    = "/checkpoint/latest-checkpoint"
+	CurrentProposerURL     = "/staking/current-proposer"
+	LatestSpanURL          = "/bor/latest-span"
+	NextSpanInfoURL        = "/bor/prepare-next-span"
+	DividendAccountRootURL = "/staking/dividend-account-root"
+	ValidatorURL           = "/staking/validator/%v"
 
 	TransactionTimeout = 1 * time.Minute
 	CommitTimeout      = 2 * time.Minute
@@ -71,12 +71,12 @@ func isProposer(cliCtx cliContext.CLIContext) bool {
 		Logger.Error("Error fetching proposers", "error", err)
 		return false
 	}
-
 	err = json.Unmarshal(result.Result, &proposers)
 	if err != nil {
 		Logger.Error("error unmarshalling proposer slice", "error", err)
 		return false
 	}
+	Logger.Debug("Current proposer fetched", "validator", proposers[0].String())
 
 	if bytes.Equal(proposers[0].Signer.Bytes(), helper.GetAddress()) {
 		return true
@@ -97,12 +97,12 @@ func isEventSender(cliCtx cliContext.CLIContext, validatorID uint64) bool {
 		Logger.Error("Error fetching proposers", "error", err)
 		return false
 	}
-
 	err = json.Unmarshal(result.Result, &validator)
 	if err != nil {
 		Logger.Error("error unmarshalling proposer slice", "error", err)
 		return false
 	}
+	Logger.Debug("Current event sender received", "validator", validator.String())
 
 	if bytes.Equal(validator.Signer.Bytes(), helper.GetAddress()) {
 		return true
@@ -134,7 +134,6 @@ func FetchFromAPI(cliCtx cliContext.CLIContext, URL string) (result rest.Respons
 			return result, err
 		}
 		// unmarshall data from buffer
-		// var proposers []hmtypes.Validator
 		var response rest.ResponseWithHeight
 		if err := cliCtx.Codec.UnmarshalJSON(body, &response); err != nil {
 			return result, err

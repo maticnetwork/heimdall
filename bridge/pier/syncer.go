@@ -20,6 +20,7 @@ import (
 	"github.com/tendermint/tendermint/libs/common"
 	httpClient "github.com/tendermint/tendermint/rpc/client"
 
+	bankTypes "github.com/maticnetwork/heimdall/bank/types"
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
@@ -283,6 +284,7 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 		for _, abiObject := range syncer.abis {
 			selectedEvent := EventByID(abiObject, topic)
 			if selectedEvent != nil {
+				syncer.Logger.Debug("selectedEvent ", " event name -", selectedEvent.Name)
 				switch selectedEvent.Name {
 				case "NewHeaderBlock":
 					syncer.processCheckpointEvent(selectedEvent.Name, abiObject, &vLog)
@@ -300,6 +302,8 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 					syncer.processJailedEvent(selectedEvent.Name, abiObject, &vLog)
 				case "StateSynced":
 					syncer.processStateSyncedEvent(selectedEvent.Name, abiObject, &vLog)
+				case "TopUpFee":
+					syncer.processTopupFeeEvent(selectedEvent.Name, abiObject, &vLog)
 					// case "Withdraw":
 					// 	syncer.processWithdrawEvent(selectedEvent.Name, abiObject, &vLog)
 				}
@@ -339,7 +343,7 @@ func (syncer *Syncer) processStakedEvent(eventName string, abiObject *abi.ABI, v
 		syncer.Logger.Debug(
 			"⬜ New event found",
 			"event", eventName,
-			"validator", event.User.Hex(),
+			"validator", event.Signer.Hex(),
 			"ID", event.ValidatorId,
 			"activatonEpoch", event.ActivationEpoch,
 			"amount", event.Amount,
@@ -349,7 +353,7 @@ func (syncer *Syncer) processStakedEvent(eventName string, abiObject *abi.ABI, v
 		if isEventSender(syncer.cliCtx, event.ValidatorId.Uint64()) {
 			pubkey := helper.GetPubKey()
 			msg := stakingTypes.NewMsgValidatorJoin(
-				hmTypes.BytesToHeimdallAddress(event.User.Bytes()),
+				hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
 				event.ValidatorId.Uint64(),
 				hmTypes.NewPubKey(pubkey[:]),
 				hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
@@ -457,7 +461,7 @@ func (syncer *Syncer) processReStakedEvent(eventName string, abiObject *abi.ABI,
 		syncer.Logger.Debug(
 			"⬜ New event found",
 			"event", eventName,
-			"user", event.User.Hex(),
+			"signer", event.Signer.Hex(),
 			"validatorId", event.ValidatorId,
 			"activationEpoch", event.ActivationEpoch,
 			"amount", event.Amount,
@@ -545,6 +549,26 @@ func (syncer *Syncer) processStateSyncedEvent(eventName string, abiObject *abi.A
 		)
 
 		// broadcast to heimdall
+		syncer.queueConnector.BroadcastToHeimdall(msg)
+	}
+}
+
+// processTopupFeeEvent
+func (syncer *Syncer) processTopupFeeEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
+
+	event := new(stakemanager.StakemanagerTopUpFee)
+	if err := helper.UnpackLog(abiObject, event, eventName, vLog); err != nil {
+		logEventParseError(syncer.Logger, eventName, err)
+	} else {
+		syncer.Logger.Info(
+			"New event found",
+			"event", eventName,
+			"validatorId", event.ValidatorId,
+			"Fee", event.Fee,
+		)
+
+		// create msg checkpoint ack message
+		msg := bankTypes.NewMsgTopup(helper.GetFromAddress(syncer.cliCtx), event.ValidatorId.Uint64(), hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()), uint64(vLog.Index))
 		syncer.queueConnector.BroadcastToHeimdall(msg)
 	}
 }

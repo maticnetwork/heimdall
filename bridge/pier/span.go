@@ -97,9 +97,9 @@ func (s *SpanService) OnStart() error {
 
 // OnStop stops all necessary go routines
 func (s *SpanService) OnStop() {
+	s.Logger.Info("Terminating span service")
 	s.BaseService.OnStop()
 	s.httpClient.Stop()
-
 	// cancel ack process
 	s.cancelSpanService()
 	// close bridge db instance
@@ -132,6 +132,8 @@ func (s *SpanService) checkAndPropose() {
 		// check if current user is among next span producers
 		if err == nil && s.isSpanProposer(nextSpanMsg.SelectedProducers) {
 			go s.propose(lastSpan, nextSpanMsg)
+		} else {
+			s.Logger.Error("Unable to fetch next span details")
 		}
 	}
 }
@@ -192,14 +194,12 @@ func (s *SpanService) getLastSpan() (*types.Span, error) {
 		s.Logger.Error("Error while fetching latest span")
 		return nil, err
 	}
-
 	var lastSpan types.Span
 	err = json.Unmarshal(result.Result, &lastSpan)
 	if err != nil {
 		s.Logger.Error("Error unmarshalling", "error", err)
 		return nil, err
 	}
-
 	return &lastSpan, nil
 }
 

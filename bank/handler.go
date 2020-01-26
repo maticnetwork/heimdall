@@ -24,6 +24,8 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 			return handleMsgMultiSend(ctx, k, msg)
 		case types.MsgTopup:
 			return handleMsgTopup(ctx, k, msg, contractCaller)
+		case types.MsgWithdrawFee:
+			return handleMsgWithdrawFee(ctx, k, msg)
 		default:
 			errMsg := "Unrecognized bank Msg type: %s" + msg.Type()
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -122,12 +124,12 @@ func handleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCalle
 	if topupObject == nil {
 		topupObject = &types.ValidatorTopup{
 			ID:          validator.ID,
-			TotalTopups: hmTypes.Coins{hmTypes.Coin{Denom: "matic", Amount: hmTypes.NewInt(1)}},
+			TotalTopups: hmTypes.Coins{hmTypes.Coin{Denom: "matic", Amount: hmTypes.NewInt(0)}},
 		}
 	}
 
 	// create topup amount
-	topupAmount := hmTypes.Coins{hmTypes.Coin{Denom: "matic", Amount: hmTypes.NewIntFromBigInt(eventLog.Amount)}}
+	topupAmount := hmTypes.Coins{hmTypes.Coin{Denom: "matic", Amount: hmTypes.NewIntFromBigInt(eventLog.Fee)}}
 
 	// sequence id
 	sequence := (receipt.BlockNumber.Uint64() * hmTypes.DefaultLogIndexUnit) + msg.LogIndex
@@ -164,7 +166,43 @@ func handleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCalle
 			types.EventTypeTopup,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(uint64(msg.ID), 10)),
-			sdk.NewAttribute(types.AttributeKeyTopupAmount, strconv.FormatUint(eventLog.Amount.Uint64(), 10)),
+			sdk.NewAttribute(types.AttributeKeyTopupAmount, strconv.FormatUint(eventLog.Fee.Uint64(), 10)),
+		),
+	})
+
+	return sdk.Result{
+		Events: ctx.EventManager().Events(),
+	}
+}
+
+// Handle MsgWithdrawFee.
+func handleMsgWithdrawFee(ctx sdk.Context, k Keeper, msg types.MsgWithdrawFee) sdk.Result {
+
+	// check if fee is already withdrawn
+	coins := k.GetCoins(ctx, msg.FromAddress)
+	veticBalance := coins.AmountOf("matic")
+	k.Logger(ctx).Info("Fee balance for ", "fromAddress", msg.FromAddress, "validatorId", msg.ID, "balance", veticBalance.BigInt().String())
+	if veticBalance.IsZero() {
+		return types.ErrNoBalanceToWithdraw(k.Codespace()).Result()
+	}
+
+	// withdraw coins of validator.
+	zeroVetic := hmTypes.Coins{hmTypes.Coin{Denom: "matic", Amount: hmTypes.NewInt(0)}}
+	if err := k.SetCoins(ctx, msg.FromAddress, zeroVetic); err != nil {
+		k.Logger(ctx).Error("Error while setting Fee balance to zero ", "fromAddress", msg.FromAddress, "validatorId", msg.ID, "err", err)
+		return err.Result()
+	}
+
+	// Add Fee to Dividend Account
+	feeAmount := veticBalance.BigInt()
+	k.AddFeeToDividendAccount(ctx, msg.ID, feeAmount)
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeFeeWithdraw,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(uint64(msg.ID), 10)),
+			sdk.NewAttribute(types.AttributeKeyFeeWithdrawAmount, strconv.FormatUint(feeAmount.Uint64(), 10)),
 		),
 	})
 

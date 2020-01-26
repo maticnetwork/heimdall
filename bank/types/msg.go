@@ -254,12 +254,58 @@ func (msg MsgTopup) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.FromAddress)}
 }
 
-// GetTxHash Returns tx hash
-func (msg MsgTopup) GetTxHash() types.HeimdallHash {
-	return msg.TxHash
+//
+// Fee token withdrawal
+//
+
+// MsgWithdrawFee - high level transaction of the fee coin withdrawal module
+type MsgWithdrawFee struct {
+	FromAddress types.HeimdallAddress `json:"from_address"`
+	ID          types.ValidatorID     `json:"id"`
 }
 
-// GetLogIndex Returns log index
-func (msg MsgTopup) GetLogIndex() uint64 {
-	return msg.LogIndex
+var _ sdk.Msg = MsgWithdrawFee{}
+
+// NewMsgWithdrawFee - construct arbitrary fee withdraw msg
+func NewMsgWithdrawFee(
+	fromAddr types.HeimdallAddress,
+	id uint64,
+) MsgWithdrawFee {
+	return MsgWithdrawFee{
+		FromAddress: fromAddr,
+		ID:          types.NewValidatorID(id),
+	}
+}
+
+// Route Implements Msg.
+func (msg MsgWithdrawFee) Route() string { return RouterKey }
+
+// Type Implements Msg.
+func (msg MsgWithdrawFee) Type() string { return "withdraw-fee" }
+
+// ValidateBasic Implements Msg.
+func (msg MsgWithdrawFee) ValidateBasic() sdk.Error {
+	if msg.FromAddress.Empty() {
+		return sdk.ErrInvalidAddress("missing sender address")
+	}
+
+	if msg.ID <= 0 {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator ID %v", msg.ID)
+	}
+
+	if msg.FromAddress.Empty() {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.FromAddress.String())
+	}
+
+	return nil
+}
+
+// GetSignBytes Implements Msg.
+func (msg MsgWithdrawFee) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+// GetSigners Implements Msg.
+func (msg MsgWithdrawFee) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.FromAddress)}
 }

@@ -3,7 +3,6 @@ package staking
 import (
 	"encoding/hex"
 	"errors"
-	"math/big"
 	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -12,7 +11,6 @@ import (
 	"github.com/maticnetwork/bor/common"
 	"github.com/tendermint/tendermint/libs/log"
 
-	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -21,11 +19,12 @@ import (
 var (
 	DefaultValue = []byte{0x01} // Value to store in CacheCheckpoint and CacheCheckpointACK & ValidatorSetChange Flag
 
-	ValidatorsKey          = []byte{0x21} // prefix for each key to a validator
-	ValidatorMapKey        = []byte{0x22} // prefix for each key for validator map
-	CurrentValidatorSetKey = []byte{0x23} // Key to store current validator set
-	ValidatorRewardMapKey  = []byte{0x16} // prefix for each key for Validator Reward Map
-	StakingSequenceKey     = []byte{0x24} // prefix for each key for staking sequence map
+	ValidatorsKey             = []byte{0x21} // prefix for each key to a validator
+	ValidatorMapKey           = []byte{0x22} // prefix for each key for validator map
+	CurrentValidatorSetKey    = []byte{0x23} // Key to store current validator set
+	PrevDividendAccountMapKey = []byte{0x41} // store for dividend accounts before checkpoint ack.
+	DividendAccountMapKey     = []byte{0x42} // prefix for each key for Dividend Account Map
+	StakingSequenceKey        = []byte{0x24} // prefix for each key for staking sequence map
 )
 
 type AckRetriever interface {
@@ -81,11 +80,6 @@ func GetValidatorKey(address []byte) []byte {
 // GetValidatorMapKey returns validator map
 func GetValidatorMapKey(address []byte) []byte {
 	return append(ValidatorMapKey, address...)
-}
-
-// GetValidatorRewardMapKey returns validator reward map
-func GetValidatorRewardMapKey(valID []byte) []byte {
-	return append(ValidatorRewardMapKey, valID...)
 }
 
 // GetStakingSequenceKey returns staking sequence key
@@ -361,149 +355,90 @@ func (k *Keeper) GetLastUpdated(ctx sdk.Context, valID hmTypes.ValidatorID) (upd
 	return validator.LastUpdated, true
 }
 
-// SetValidatorIDToReward will update valid with new reward
-func (k *Keeper) SetValidatorIDToReward(ctx sdk.Context, valID hmTypes.ValidatorID, reward *big.Int) {
-	// Add reward to reward balance
-	store := ctx.KVStore(k.storeKey)
-	rewardBalance := k.GetRewardByValidatorID(ctx, valID)
-	totalReward := big.NewInt(0).Add(reward, rewardBalance)
-	store.Set(GetValidatorRewardMapKey(valID.Bytes()), totalReward.Bytes())
+// GetDividendAccountMapKey returns dividend account map
+func GetDividendAccountMapKey(id []byte) []byte {
+	return append(DividendAccountMapKey, id...)
 }
 
-// GetRewardByValidatorID Returns Total Rewards of Validator
-func (k *Keeper) GetRewardByValidatorID(ctx sdk.Context, valID hmTypes.ValidatorID) *big.Int {
+// GetPrevDividendAccountMapKey returns prev dividend account map
+func GetPrevDividendAccountMapKey(id []byte) []byte {
+	return append(PrevDividendAccountMapKey, id...)
+}
+
+// AddDividendAccount adds DividendAccount index with DividendID
+func (k *Keeper) AddDividendAccount(ctx sdk.Context, dividendAccount hmTypes.DividendAccount) error {
 	store := ctx.KVStore(k.storeKey)
-	key := GetValidatorRewardMapKey(valID.Bytes())
-	if store.Has(key) {
-		// get current reward for validatorId
-		rewardBalance := big.NewInt(0).SetBytes(store.Get(key))
-		return rewardBalance
+	// marshall dividend account
+	bz, err := hmTypes.MarshallDividendAccount(k.cdc, dividendAccount)
+	if err != nil {
+		return err
 	}
-	return big.NewInt(0)
+
+	store.Set(GetDividendAccountMapKey(dividendAccount.ID.Bytes()), bz)
+	k.Logger(ctx).Debug("DividendAccount Stored", "key", hex.EncodeToString(GetDividendAccountMapKey(dividendAccount.ID.Bytes())), "dividendAccount", dividendAccount.String())
+	return nil
 }
 
-// GetAllValidatorRewards returns validator reward map
-func (k *Keeper) GetAllValidatorRewards(ctx sdk.Context) map[hmTypes.ValidatorID]*big.Int {
+// GetDividendAccountByID will return DividendAccount of valID
+func (k *Keeper) GetDividendAccountByID(ctx sdk.Context, dividendID hmTypes.DividendAccountID) (dividendAccount hmTypes.DividendAccount, err error) {
+
+	// check if dividend account exists
+	if !k.CheckIfDividendAccountExists(ctx, dividendID) {
+		return dividendAccount, errors.New("Dividend Account not found")
+	}
+
+	// Get DividendAccount key
 	store := ctx.KVStore(k.storeKey)
-	valRewardMap := make(map[hmTypes.ValidatorID]*big.Int)
-	iterator := sdk.KVStorePrefixIterator(store, ValidatorRewardMapKey)
+	key := GetDividendAccountMapKey(dividendID.Bytes())
+
+	// unmarshall dividend account and return
+	dividendAccount, err = hmTypes.UnMarshallDividendAccount(k.cdc, store.Get(key))
+	if err != nil {
+		return dividendAccount, err
+	}
+
+	return dividendAccount, nil
+}
+
+// CheckIfDividendAccountExists will return true if dividend account exists
+func (k *Keeper) CheckIfDividendAccountExists(ctx sdk.Context, dividendID hmTypes.DividendAccountID) (ok bool) {
+	store := ctx.KVStore(k.storeKey)
+	key := GetDividendAccountMapKey(dividendID.Bytes())
+	if !store.Has(key) {
+		return false
+	}
+	return true
+}
+
+// GetAllDividendAccounts returns all DividendAccountss
+func (k *Keeper) GetAllDividendAccounts(ctx sdk.Context) (dividendAccounts []hmTypes.DividendAccount) {
+	// iterate through dividendAccounts and create dividendAccounts update array
+	k.IterateDividendAccountsByPrefixAndApplyFn(ctx, DividendAccountMapKey, func(dividendAccount hmTypes.DividendAccount) error {
+		// append to list of dividendUpdates
+		dividendAccounts = append(dividendAccounts, dividendAccount)
+		return nil
+	})
+
+	return
+}
+
+// IterateDividendAccountsByPrefixAndApplyFn iterate dividendAccounts and apply the given function.
+func (k *Keeper) IterateDividendAccountsByPrefixAndApplyFn(ctx sdk.Context, prefix []byte, f func(dividendAccount hmTypes.DividendAccount) error) {
+	store := ctx.KVStore(k.storeKey)
+
+	// get validator iterator
+	iterator := sdk.KVStorePrefixIterator(store, prefix)
 	defer iterator.Close()
+
+	// loop through dividendAccounts
 	for ; iterator.Valid(); iterator.Next() {
-		val := iterator.Value()
-		// // unmarshalling val
-		reward := big.NewInt(0).SetBytes(val)
-
-		// unmarshalling key
-		valID, err := strconv.ParseUint(string(iterator.Key()[len(ValidatorRewardMapKey):]), 10, 64)
-		if err != nil {
-			k.Logger(ctx).Debug("Error while parsing ValId",
-				"valID", string(iterator.Key()[len(ValidatorRewardMapKey):]),
-			)
+		// unmarshall dividendAccount
+		dividendAccount, _ := hmTypes.UnMarshallDividendAccount(k.cdc, iterator.Value())
+		// call function and return if required
+		if err := f(dividendAccount); err != nil {
+			return
 		}
-		valRewardMap[hmTypes.ValidatorID(valID)] = reward
 	}
-	return valRewardMap
-}
-
-// CalculateSignerRewards calculates new rewards for signers
-func (k *Keeper) CalculateSignerRewards(ctx sdk.Context, voteBytes []byte, sigInput []byte, checkpointReward *big.Int) (map[hmTypes.ValidatorID]*big.Int, error) {
-	signerRewards := make(map[hmTypes.ValidatorID]*big.Int)
-	signerPower := make(map[hmTypes.ValidatorID]int64)
-
-	const sigLength = 65
-	totalSignerPower := int64(0)
-
-	// Calculate total stake Power of all Signers.
-	for i := 0; i < len(sigInput); i += sigLength {
-		signature := sigInput[i : i+sigLength]
-		pKey, err := authTypes.RecoverPubkey(voteBytes, []byte(signature))
-		if err != nil {
-			k.Logger(ctx).Error("Error Recovering PubKey", "Error", err)
-			return nil, err
-		}
-
-		pubKey := hmTypes.NewPubKey(pKey)
-		signerAddress := pubKey.Address().Bytes()
-		valInfo, err := k.GetValidatorInfo(ctx, signerAddress)
-
-		if err != nil {
-			k.Logger(ctx).Error("No Validator Found for", "SignerAddress", signerAddress, "Error", err)
-			return nil, err
-		}
-		totalSignerPower += valInfo.VotingPower
-		signerPower[valInfo.ID] = valInfo.VotingPower
-	}
-
-	currentCheckpointReward := new(big.Float)
-	currentCheckpointReward.SetInt(checkpointReward)
-	totalSignerReward := k.ComputeTotalSignerReward(ctx, currentCheckpointReward)
-
-	// Weighted Distribution of totalSignerReward for signers
-	for valID, pow := range signerPower {
-		bigpow := new(big.Float)
-		bigpow.SetInt(big.NewInt(pow))
-		bigval := big.NewFloat(0).Mul(totalSignerReward, bigpow)
-
-		bigfloatval := new(big.Float)
-		bigfloatval.SetFloat64(float64(totalSignerPower))
-
-		signerReward := new(big.Float).Quo(bigval, bigfloatval)
-
-		signerRewards[valID], _ = signerReward.Int(signerRewards[valID])
-		k.Logger(ctx).Debug("Updated Reward for Validator", "ValidatorId", valID, "Reward", signerRewards[valID])
-	}
-
-	// Proposer Bonus Reward
-	proposer := k.GetCurrentProposer(ctx)
-	proposerReward := k.ComputeProposerReward(ctx, currentCheckpointReward)
-	proposerBonus := big.NewInt(0)
-	proposerReward.Int(proposerBonus)
-	signerRewards[proposer.ID] = big.NewInt(0).Add(signerRewards[proposer.ID], proposerBonus)
-	k.Logger(ctx).Debug("Updated Reward for Validator with proposer bonus", "ValidatorId", proposer.ID, "Reward", signerRewards[proposer.ID])
-
-	return signerRewards, nil
-}
-
-// UpdateValidatorRewards Updates validators with Rewards
-func (k *Keeper) UpdateValidatorRewards(ctx sdk.Context, valrewards map[hmTypes.ValidatorID]*big.Int) {
-	for valID, reward := range valrewards {
-		k.SetValidatorIDToReward(ctx, valID, reward)
-	}
-}
-
-// ComputeTotalSignerReward returns total reward of all signer
-func (k *Keeper) ComputeTotalSignerReward(ctx sdk.Context, currentCheckpointReward *big.Float) *big.Float {
-	proposerBonusPercent := k.GetProposerBonusPercent(ctx)
-	totalSignerRewardPercent := 100 - proposerBonusPercent
-	signerRewardToFloat := new(big.Float)
-	signerRewardToFloat.SetInt(big.NewInt(totalSignerRewardPercent))
-	bigval := big.NewFloat(0).Mul(currentCheckpointReward, signerRewardToFloat)
-	bigfloatval := new(big.Float)
-	bigfloatval.SetFloat64(float64(100))
-	return new(big.Float).Quo(bigval, bigfloatval)
-}
-
-// ComputeProposerReward returns the proposer reward
-func (k *Keeper) ComputeProposerReward(ctx sdk.Context, currentCheckpointReward *big.Float) *big.Float {
-	proposerBonus := k.GetProposerBonusPercent(ctx)
-	proposerBonusToFloat := new(big.Float)
-	proposerBonusToFloat.SetInt(big.NewInt(proposerBonus))
-	bigval := big.NewFloat(0).Mul(currentCheckpointReward, proposerBonusToFloat)
-	bigfloatval := new(big.Float)
-	bigfloatval.SetFloat64(float64(100))
-	return new(big.Float).Quo(bigval, bigfloatval)
-}
-
-// GetProposerBonusPercent returns the proposer to signer reward
-func (k *Keeper) GetProposerBonusPercent(ctx sdk.Context) int64 {
-	var proposerBonusPercent int64
-	k.paramSpace.Get(ctx, types.ParamStoreKeyProposerBonusPercent, &proposerBonusPercent)
-	return proposerBonusPercent
-}
-
-// SetProposerBonusPercent sets the Proposer to signer reward
-func (k *Keeper) SetProposerBonusPercent(ctx sdk.Context, proposerBonusPercent int64) {
-	k.paramSpace.Set(ctx, types.ParamStoreKeyProposerBonusPercent, proposerBonusPercent)
 }
 
 //

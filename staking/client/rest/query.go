@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -11,7 +12,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/maticnetwork/bor/common"
 
-	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/staking/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmRest "github.com/maticnetwork/heimdall/types/rest"
@@ -43,12 +43,28 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 		currentProposerHandlerFn(cliCtx),
 	).Methods("GET")
 	r.HandleFunc(
-		"/staking/initial-reward-root",
-		initialRewardRootHandlerFn(cliCtx),
+		"/staking/slash-validator",
+		slashValidatorHandlerFn(cliCtx),
+	).Methods("GET")
+	r.HandleFunc(
+		"/staking/dividend-account/{id}",
+		dividendAccountByIDHandlerFn(cliCtx),
+	).Methods("GET")
+	r.HandleFunc(
+		"/staking/dividend-account-root",
+		dividendAccountRootHandlerFn(cliCtx),
 	).Methods("GET")
 	r.HandleFunc(
 		"/staking/proposer-bonus-percent",
 		proposerBonusPercentHandlerFn(cliCtx),
+	).Methods("GET")
+	r.HandleFunc(
+		"/staking/account-proof/{id}",
+		dividendAccountProofHandlerFn(cliCtx),
+	).Methods("GET")
+	r.HandleFunc(
+		"/staking/account-proof/verify/",
+		VerifyAccountProofHandlerFn(cliCtx),
 	).Methods("GET")
 }
 
@@ -270,38 +286,129 @@ func currentProposerHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-// initialRewardRootHandlerFn returns genesis rewardroothash
-func initialRewardRootHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func slashValidatorHandlerFn(
+	cliCtx context.CLIContext,
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		params := r.URL.Query()
+		valID, ok := rest.ParseUint64OrReturnBadRequest(w, params.Get("val_id"))
+		if !ok {
+			return
+		}
+
+		slashAmount, ok := big.NewInt(0).SetString(params.Get("slash_amount"), 10)
+		if !ok {
+			return
+		}
+
+		RestLogger.Info("Slashing validator - ", "valID", valID, "slashAmount", slashAmount)
+
+		slashingParams := types.NewValidatorSlashParams(hmTypes.ValidatorID(valID), slashAmount)
+
+		bz, err := cliCtx.Codec.MarshalJSON(slashingParams)
+		if err != nil {
+			RestLogger.Info("Error marshallingSlashing Params - ", "err", err)
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QuerySlashValidator), bz)
+		if err != nil {
+			RestLogger.Info("Error query data - ", "err", err)
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		RestLogger.Info("Slashed validator successfully ", "res", res)
+
+		cliCtx.WithHeight(height)
+		rest.PostProcessResponse(w, cliCtx, res)
+	}
+}
+
+// Returns Dividend Account information by ID
+func dividendAccountByIDHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		// get id
+		id, ok := rest.ParseUint64OrReturnBadRequest(w, vars["id"])
+		if !ok {
+			return
+		}
+
+		// get query params
+		queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQueryDividendAccountParams(hmTypes.DividendAccountID(id)))
+		if err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryDividendAccount), queryParams)
+		if err != nil {
+			RestLogger.Error("Error while fetching Dividend account", "Error", err.Error())
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		// error if no dividend account found
+		if ok := hmRest.ReturnNotFoundIfNoContent(w, res, "No Dividend Account found"); !ok {
+			return
+		}
+
+		// return result
+		cliCtx = cliCtx.WithHeight(height)
+		rest.PostProcessResponse(w, cliCtx, res)
+	}
+}
+
+// dividendAccountRootHandlerFn returns genesis accountroothash
+func dividendAccountRootHandlerFn(
+	cliCtx context.CLIContext,
+) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
 			return
 		}
 
-		res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", checkpointTypes.QuerierRoute, checkpointTypes.QueryInitialRewardRoot), nil)
-		RestLogger.Debug("initial rewardRootHash querier response", "res", hex.EncodeToString(res))
+		res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryDividendAccountRoot), nil)
+		RestLogger.Debug("accountRootHash querier response", "res", res)
 
 		if err != nil {
-			RestLogger.Error("Error while calculating Initial Rewardroot ", "Error", err.Error())
-			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			RestLogger.Error("Error while calculating dividend AccountRoot  ", "Error", err.Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		// error if no checkpoint found
-		if ok := hmRest.ReturnNotFoundIfNoContent(w, res, "RewardRootHash not found"); !ok {
-			RestLogger.Error("RewardRootHash not found ", "Error", err.Error())
+		if ok := hmRest.ReturnNotFoundIfNoContent(w, res, "Dividend AccountRoot not found"); !ok {
+			RestLogger.Error("AccountRoot not found ", "Error", err.Error())
 			return
 		}
 
-		rewardRootHash := hmTypes.BytesToHeimdallHash(res)
-		RestLogger.Debug("Fetched initial rewardRootHash ", "rewardRootHash", rewardRootHash)
+		var accountRootHash = hmTypes.BytesToHeimdallHash(res)
+		RestLogger.Debug("Fetched Dividend accountRootHash ", "AccountRootHash", accountRootHash)
 
-		result, err := json.Marshal(&rewardRootHash)
+		result, err := json.Marshal(&accountRootHash)
 		if err != nil {
 			RestLogger.Error("Error while marshalling response to Json", "error", err)
-			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
+
+		// return result
 
 		rest.PostProcessResponse(w, cliCtx, result)
 	}
@@ -342,5 +449,99 @@ func proposerBonusPercentHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 		rest.PostProcessResponse(w, cliCtx, result)
+	}
+}
+
+// Returns Merkle path for dividendAccountID using dividend Account Tree
+func dividendAccountProofHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		vars := mux.Vars(r)
+
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		// get id
+		id, ok := rest.ParseUint64OrReturnBadRequest(w, vars["id"])
+		if !ok {
+			return
+		}
+
+		// get query params
+		queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQueryAccountProofParams(hmTypes.DividendAccountID(id)))
+		if err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryAccountProof), queryParams)
+		if err != nil {
+			RestLogger.Error("Error while fetching merkle proof", "Error", err.Error())
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		// error if account proof  not found
+		if ok := hmRest.ReturnNotFoundIfNoContent(w, res, "No proof found"); !ok {
+			return
+		}
+
+		merkleProof := hex.EncodeToString(res)
+		// return result
+		cliCtx = cliCtx.WithHeight(height)
+		rest.PostProcessResponse(w, cliCtx, merkleProof)
+	}
+}
+
+// VerifyAccountProofHandlerFn - Returns true if given Merkle path for dividendAccountID is valid
+func VerifyAccountProofHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		params := r.URL.Query()
+		id, ok := rest.ParseUint64OrReturnBadRequest(w, params.Get("id"))
+		if !ok {
+			return
+		}
+
+		accountProof := params.Get("proof")
+
+		RestLogger.Info("Verify Account Proof- ", "valID", id, "accountProof", accountProof)
+
+		// get query params
+		queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQueryVerifyAccountProofParams(hmTypes.DividendAccountID(id), accountProof))
+		if err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryVerifyAccountProof), queryParams)
+		if err != nil {
+			RestLogger.Error("Error while verifying merkle proof", "Error", err.Error())
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		var accountProofStatus bool
+		if err := json.Unmarshal(res, &accountProofStatus); err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		res, err = json.Marshal(map[string]interface{}{"result": accountProofStatus})
+		if err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		// return result
+		cliCtx = cliCtx.WithHeight(height)
+		rest.PostProcessResponse(w, cliCtx, res)
+
 	}
 }

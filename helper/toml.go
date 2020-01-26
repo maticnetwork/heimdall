@@ -43,7 +43,7 @@ heimdall_rest_server = "{{ .HeimdallServerURL }}"
 
 ### Eth Chain Contracts 
 stakemanager_contract = "{{ .StakeManagerAddress }}" 
-rootchain_contract = "{{ .RootchainAddress }}" 
+rootchain_contract = "{{ .RootchainAddress }}"
 state_sender_contract = "{{ .StateSenderAddress }}" 
 
 ### Bor Chain Contracts
@@ -58,6 +58,8 @@ child_chain_block_interval = "{{ .ChildBlockInterval }}"
 checkpoint_poll_interval = "{{ .CheckpointerPollInterval }}" 
 syncer_poll_interval = "{{ .SyncerPollInterval }}"
 noack_poll_interval = "{{ .NoACKPollInterval }}"
+clerk_polling_interval = "{{ .ClerkPollingInterval }}" 
+span_polling_interval = "{{ .SpanPollingInterval }}" 
 
 
 ##### Checkpoint Length Config #####

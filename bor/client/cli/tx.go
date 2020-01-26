@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -43,7 +44,6 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 		Short: "send propose span tx",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
 			chainID := viper.GetString(FlagBorChainId)
 			if chainID == "" {
 				return fmt.Errorf("ChainID cannot be empty")
@@ -93,7 +93,7 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 			}
 
 			var spanDuration uint64
-			if err := cliCtx.Codec.UnmarshalJSON(res, &spanDuration); err != nil {
+			if err := json.Unmarshal(res, &spanDuration); err != nil {
 				return err
 			}
 

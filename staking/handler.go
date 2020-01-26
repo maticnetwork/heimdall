@@ -34,7 +34,7 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 
 // HandleMsgValidatorJoin msg validator join
 func HandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
-	k.Logger(ctx).Debug("Handing new validator join", "msg", msg)
+	k.Logger(ctx).Info("Handing new validator join", "msg", msg)
 
 	if confirmed := contractCaller.IsTxConfirmed(msg.TxHash.EthHash()); !confirmed {
 		return hmCommon.ErrWaitForConfirmation(k.Codespace()).Result()
