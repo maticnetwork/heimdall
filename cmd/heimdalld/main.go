@@ -499,7 +499,7 @@ func populatePersistentPeersInConfigAndWriteIt(config *cfg.Config) {
 
 func getGenesisAccount(address []byte) authTypes.GenesisAccount {
 	acc := authTypes.NewBaseAccountWithAddress(hmTypes.BytesToHeimdallAddress(address))
-	acc.SetCoins(hmTypes.Coins{hmTypes.Coin{Denom: "vetic", Amount: hmTypes.NewInt(1000)}})
+	acc.SetCoins(hmTypes.Coins{hmTypes.Coin{Denom: "matic", Amount: hmTypes.NewInt(1000)}})
 	return authTypes.BaseToGenesisAccount(acc)
 }
 
