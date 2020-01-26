@@ -122,12 +122,12 @@ func handleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCalle
 	if topupObject == nil {
 		topupObject = &types.ValidatorTopup{
 			ID:          validator.ID,
-			TotalTopups: hmTypes.Coins{hmTypes.Coin{Denom: "vetic", Amount: hmTypes.NewInt(1)}},
+			TotalTopups: hmTypes.Coins{hmTypes.Coin{Denom: "matic", Amount: hmTypes.NewInt(1)}},
 		}
 	}
 
 	// create topup amount
-	topupAmount := hmTypes.Coins{hmTypes.Coin{Denom: "vetic", Amount: hmTypes.NewIntFromBigInt(eventLog.Amount)}}
+	topupAmount := hmTypes.Coins{hmTypes.Coin{Denom: "matic", Amount: hmTypes.NewIntFromBigInt(eventLog.Amount)}}
 
 	// sequence id
 	sequence := (receipt.BlockNumber.Uint64() * hmTypes.DefaultLogIndexUnit) + msg.LogIndex
