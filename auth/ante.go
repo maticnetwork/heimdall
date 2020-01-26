@@ -28,10 +28,10 @@ var (
 	gasWantedPerCheckpoinTx sdk.Gas = 10000000
 	gasUsedPerCheckpointTx  sdk.Gas = gasWantedPerCheckpoinTx - 1000000
 
-	oneVetic, _ = big.NewInt(0).SetString("1000000000000000000", 10)
+	oneMatic, _ = big.NewInt(0).SetString("1000000000000000000", 10)
 
 	// FeeWantedPerTx fee wanted per tx
-	FeeWantedPerTx = types.Coins{types.Coin{Denom: "vetic", Amount: types.NewIntFromBigInt(oneVetic)}}
+	FeeWantedPerTx = types.Coins{types.Coin{Denom: "matic", Amount: types.NewIntFromBigInt(oneMatic)}}
 )
 
 func init() {
