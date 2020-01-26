@@ -427,12 +427,27 @@ func (app *HeimdallApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) 
 
 // BeginBlocker application updates every begin block
 func (app *HeimdallApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
+	app.AccountKeeper.SetBlockProposer(
+		ctx,
+		types.BytesToHeimdallAddress(req.Header.GetProposerAddress()),
+	)
 	return app.mm.BeginBlock(ctx, req)
 }
 
 // EndBlocker executes on each end block
 func (app *HeimdallApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
-	// return app.mm.EndBlock(ctx, req)
+	// transfer fees to current proposer
+	if proposer, ok := app.AccountKeeper.GetBlockProposer(ctx); ok {
+		moduleAccount := app.SupplyKeeper.GetModuleAccount(ctx, authTypes.FeeCollectorName)
+		amount := moduleAccount.GetCoins().AmountOf("matic")
+		if !amount.IsZero() {
+			coins := types.Coins{types.Coin{Denom: "matic", Amount: amount}}
+			app.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, authTypes.FeeCollectorName, proposer, coins)
+		}
+
+		// remove block proposer
+		app.AccountKeeper.RemoveBlockProposer(ctx)
+	}
 
 	var tmValUpdates []abci.ValidatorUpdate
 	if ctx.BlockHeader().NumTxs > 0 {

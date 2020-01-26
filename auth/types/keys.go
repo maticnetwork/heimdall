@@ -31,6 +31,9 @@ var (
 	// AddressStoreKeyPrefix prefix for account-by-address store
 	AddressStoreKeyPrefix = []byte{0x01}
 
+	// ProposerKeyPrefix prefix for proposer
+	ProposerKeyPrefix = []byte("proposer")
+
 	// GlobalAccountNumberKey param key for global account number
 	GlobalAccountNumberKey = []byte("globalAccountNumber")
 )
@@ -38,4 +41,9 @@ var (
 // AddressStoreKey turn an address to key used to get it from the account store
 func AddressStoreKey(addr types.HeimdallAddress) []byte {
 	return append(AddressStoreKeyPrefix, addr.Bytes()...)
+}
+
+// ProposerKey returns proposer key
+func ProposerKey() []byte {
+	return ProposerKeyPrefix
 }
