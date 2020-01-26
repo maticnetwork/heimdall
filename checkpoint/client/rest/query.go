@@ -284,7 +284,8 @@ func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			// check content
 			if ok := hmRest.ReturnNotFoundIfNoContent(w, ackCountBytes, "No ack count found"); ok {
 				if err := json.Unmarshal(ackCountBytes, &ackCountInt); err != nil {
-					// ignore
+					// log and ignore
+					RestLogger.Error("Error while unmarshing no-ack count", "error", err)
 				}
 			}
 		}
@@ -299,7 +300,8 @@ func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			if len(checkpointBufferBytes) != 0 {
 				_checkpoint = new(hmTypes.CheckpointBlockHeader)
 				if err = json.Unmarshal(checkpointBufferBytes, _checkpoint); err != nil {
-					// ignore
+					// log and ignore
+					RestLogger.Error("Error while unmarshing checkpoint header", "error", err)
 				}
 			}
 		}
@@ -312,7 +314,8 @@ func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		validatorSetBytes, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", stakingTypes.QuerierRoute, stakingTypes.QueryCurrentValidatorSet), nil)
 		if err == nil {
 			if err := json.Unmarshal(validatorSetBytes, &validatorSet); err != nil {
-				// ignore
+				// log and ignore
+				RestLogger.Error("Error while unmarshing validator set", "error", err)
 			}
 		}
 
@@ -330,7 +333,8 @@ func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			// check content
 			if ok := hmRest.ReturnNotFoundIfNoContent(w, lastNoACKBytes, "No last-no-ack count found"); ok {
 				if err := json.Unmarshal(lastNoACKBytes, &lastNoACKTime); err != nil {
-					// ignore
+					// log and ignore
+					RestLogger.Error("Error while unmarshing last no-ack time", "error", err)
 				}
 			}
 		}
