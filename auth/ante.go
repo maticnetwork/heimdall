@@ -31,7 +31,7 @@ var (
 	oneMatic, _ = big.NewInt(0).SetString("1000000000000000000", 10)
 
 	// FeeWantedPerTx fee wanted per tx
-	FeeWantedPerTx = types.Coins{types.Coin{Denom: "matic", Amount: types.NewIntFromBigInt(oneMatic)}}
+	FeeWantedPerTx = types.Coins{types.Coin{Denom: authTypes.FeeToken, Amount: types.NewIntFromBigInt(oneMatic)}}
 )
 
 func init() {

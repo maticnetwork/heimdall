@@ -439,9 +439,9 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) ab
 	// transfer fees to current proposer
 	if proposer, ok := app.AccountKeeper.GetBlockProposer(ctx); ok {
 		moduleAccount := app.SupplyKeeper.GetModuleAccount(ctx, authTypes.FeeCollectorName)
-		amount := moduleAccount.GetCoins().AmountOf("matic")
+		amount := moduleAccount.GetCoins().AmountOf(authTypes.FeeToken)
 		if !amount.IsZero() {
-			coins := types.Coins{types.Coin{Denom: "matic", Amount: amount}}
+			coins := types.Coins{types.Coin{Denom: authTypes.FeeToken, Amount: amount}}
 			app.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, authTypes.FeeCollectorName, proposer, coins)
 		}
 

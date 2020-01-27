@@ -25,6 +25,9 @@ const (
 
 	// FeeCollectorName the root string for the fee collector account address
 	FeeCollectorName = "fee_collector"
+
+	// FeeToken fee token name
+	FeeToken = "matic"
 )
 
 var (
