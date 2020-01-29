@@ -128,6 +128,10 @@ func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 		return
 	}
 
+	if contractCallerObj.StakingInfoABI, err = getABI(string(stakinginfo.StakinginfoABI)); err != nil {
+		return
+	}
+
 	if contractCallerObj.ValidatorSetABI, err = getABI(string(validatorset.ValidatorsetABI)); err != nil {
 		return
 	}
