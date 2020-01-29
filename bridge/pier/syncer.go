@@ -87,6 +87,7 @@ func NewSyncer(cdc *codec.Codec, queueConnector *QueueConnector, httpClient *htt
 		&contractCaller.RootChainABI,
 		&contractCaller.StakeManagerABI,
 		&contractCaller.StateSenderABI,
+		&contractCaller.StakingInfoABI,
 	}
 
 	cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
@@ -265,6 +266,7 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 		Addresses: []ethCommon.Address{
 			helper.GetRootChainAddress(),
 			helper.GetStakeManagerAddress(),
+			helper.GetStakingInfoAddress(),
 			helper.GetStateSenderAddress(),
 		},
 	}

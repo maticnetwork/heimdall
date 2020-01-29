@@ -13,6 +13,7 @@ import (
 	"github.com/maticnetwork/bor/rpc"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
+	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
 	"github.com/maticnetwork/heimdall/contracts/statereceiver"
 	"github.com/maticnetwork/heimdall/contracts/statesender"
 	"github.com/maticnetwork/heimdall/contracts/validatorset"
@@ -33,10 +34,10 @@ type IContractCaller interface {
 	IsTxConfirmed(common.Hash) bool
 	GetConfirmedTxReceipt(common.Hash) (*ethTypes.Receipt, error)
 	GetBlockNumberFromTxHash(common.Hash) (*big.Int, error)
-	DecodeValidatorTopupFeesEvent(*ethTypes.Receipt, uint64) (*stakemanager.StakemanagerTopUpFee, error)
-	DecodeValidatorStakeUpdateEvent(*ethTypes.Receipt, uint64) (*stakemanager.StakemanagerStakeUpdate, error)
+	DecodeValidatorTopupFeesEvent(*ethTypes.Receipt, uint64) (*stakinginfo.StakinginfoTopUpFee, error)
+	DecodeValidatorStakeUpdateEvent(*ethTypes.Receipt, uint64) (*stakinginfo.StakinginfoStakeUpdate, error)
 	DecodeNewHeaderBlockEvent(*ethTypes.Receipt, uint64) (*rootchain.RootchainNewHeaderBlock, error)
-	DecodeSignerUpdateEvent(*ethTypes.Receipt, uint64) (*stakemanager.StakemanagerSignerChange, error)
+	DecodeSignerUpdateEvent(*ethTypes.Receipt, uint64) (*stakinginfo.StakinginfoSignerChange, error)
 	GetMainTxReceipt(common.Hash) (*ethTypes.Receipt, error)
 	GetMaticTxReceipt(common.Hash) (*ethTypes.Receipt, error)
 
@@ -57,12 +58,14 @@ type ContractCaller struct {
 
 	RootChainInstance     *rootchain.Rootchain
 	StakeManagerInstance  *stakemanager.Stakemanager
+	StakingInfoInstance   *stakinginfo.Stakinginfo
 	ValidatorSetInstance  *validatorset.Validatorset
 	StateSenderInstance   *statesender.Statesender
 	StateReceiverInstance *statereceiver.Statereceiver
 
 	RootChainABI     abi.ABI
 	StakeManagerABI  abi.ABI
+	StakingInfoABI   abi.ABI
 	ValidatorSetABI  abi.ABI
 	StateReceiverABI abi.ABI
 	StateSenderABI   abi.ABI
@@ -94,6 +97,10 @@ func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 	}
 
 	if contractCallerObj.StakeManagerInstance, err = stakemanager.NewStakemanager(GetStakeManagerAddress(), contractCallerObj.MainChainClient); err != nil {
+		return
+	}
+
+	if contractCallerObj.StakingInfoInstance, err = stakinginfo.NewStakinginfo(GetStakingInfoAddress(), contractCallerObj.MainChainClient); err != nil {
 		return
 	}
 
@@ -193,13 +200,14 @@ func (c *ContractCaller) GetBalance(address common.Address) (*big.Int, error) {
 
 // GetValidatorInfo get validator info
 func (c *ContractCaller) GetValidatorInfo(valID types.ValidatorID) (validator types.Validator, err error) {
-	amount, startEpoch, endEpoch, signer, status, err := c.StakeManagerInstance.GetStakerDetails(nil, big.NewInt(int64(valID)))
+	// amount, startEpoch, endEpoch, signer, status, err := c.StakingInfoInstance.GetStakerDetails(nil, big.NewInt(int64(valID)))
+	stakerDetails, err := c.StakingInfoInstance.GetStakerDetails(nil, big.NewInt(int64(valID)))
 	if err != nil {
-		Logger.Error("Error fetching validator information from stake manager", "error", err, "validatorId", valID, "status", status)
+		Logger.Error("Error fetching validator information from stake manager", "error", err, "validatorId", valID, "status", stakerDetails.Status)
 		return
 	}
 
-	newAmount, err := GetPowerFromAmount(amount)
+	newAmount, err := GetPowerFromAmount(stakerDetails.Amount)
 	if err != nil {
 		return
 	}
@@ -208,9 +216,9 @@ func (c *ContractCaller) GetValidatorInfo(valID types.ValidatorID) (validator ty
 	validator = types.Validator{
 		ID:          valID,
 		VotingPower: newAmount.Int64(),
-		StartEpoch:  startEpoch.Uint64(),
-		EndEpoch:    endEpoch.Uint64(),
-		Signer:      types.BytesToHeimdallAddress(signer.Bytes()),
+		StartEpoch:  stakerDetails.ActivationEpoch.Uint64(),
+		EndEpoch:    stakerDetails.DeactivationEpoch.Uint64(),
+		Signer:      types.BytesToHeimdallAddress(stakerDetails.Signer.Bytes()),
 	}
 
 	return validator, nil
@@ -292,14 +300,14 @@ func (c *ContractCaller) GetConfirmedTxReceipt(tx common.Hash) (*ethTypes.Receip
 }
 
 // DecodeValidatorTopupFeesEvent represents topup for fees tokens
-func (c *ContractCaller) DecodeValidatorTopupFeesEvent(receipt *ethTypes.Receipt, logIndex uint64) (*stakemanager.StakemanagerTopUpFee, error) {
-	event := new(stakemanager.StakemanagerTopUpFee)
+func (c *ContractCaller) DecodeValidatorTopupFeesEvent(receipt *ethTypes.Receipt, logIndex uint64) (*stakinginfo.StakinginfoTopUpFee, error) {
+	event := new(stakinginfo.StakinginfoTopUpFee)
 
 	found := false
 	for _, vLog := range receipt.Logs {
 		if uint64(vLog.Index) == logIndex {
 			found = true
-			if err := UnpackLog(&c.StakeManagerABI, event, "TopUpFee", vLog); err != nil {
+			if err := UnpackLog(&c.StakingInfoABI, event, "TopUpFee", vLog); err != nil {
 				return nil, err
 			}
 			break
@@ -314,8 +322,8 @@ func (c *ContractCaller) DecodeValidatorTopupFeesEvent(receipt *ethTypes.Receipt
 }
 
 // DecodeValidatorStakeUpdateEvent represents validator stake update event
-func (c *ContractCaller) DecodeValidatorStakeUpdateEvent(receipt *ethTypes.Receipt, logIndex uint64) (*stakemanager.StakemanagerStakeUpdate, error) {
-	event := new(stakemanager.StakemanagerStakeUpdate)
+func (c *ContractCaller) DecodeValidatorStakeUpdateEvent(receipt *ethTypes.Receipt, logIndex uint64) (*stakinginfo.StakinginfoStakeUpdate, error) {
+	event := new(stakinginfo.StakinginfoStakeUpdate)
 
 	found := false
 	for _, vLog := range receipt.Logs {
@@ -358,14 +366,14 @@ func (c *ContractCaller) DecodeNewHeaderBlockEvent(receipt *ethTypes.Receipt, lo
 }
 
 // DecodeSignerUpdateEvent represents sig update event
-func (c *ContractCaller) DecodeSignerUpdateEvent(receipt *ethTypes.Receipt, logIndex uint64) (*stakemanager.StakemanagerSignerChange, error) {
-	event := new(stakemanager.StakemanagerSignerChange)
+func (c *ContractCaller) DecodeSignerUpdateEvent(receipt *ethTypes.Receipt, logIndex uint64) (*stakinginfo.StakinginfoSignerChange, error) {
+	event := new(stakinginfo.StakinginfoSignerChange)
 
 	found := false
 	for _, vLog := range receipt.Logs {
 		if uint64(vLog.Index) == logIndex {
 			found = true
-			if err := UnpackLog(&c.StakeManagerABI, event, "SignerChange", vLog); err != nil {
+			if err := UnpackLog(&c.StakingInfoABI, event, "SignerChange", vLog); err != nil {
 				return nil, err
 			}
 			break
@@ -381,7 +389,7 @@ func (c *ContractCaller) DecodeSignerUpdateEvent(receipt *ethTypes.Receipt, logI
 
 // CurrentAccountStateRoot get current account root from on chain
 func (c *ContractCaller) CurrentAccountStateRoot() ([32]byte, error) {
-	accountStateRoot, err := c.StakeManagerInstance.AccountStateRoot(nil)
+	accountStateRoot, err := c.StakingInfoInstance.GetAccountStateRoot(nil)
 
 	if err != nil {
 		Logger.Error("Unable to get current account state roor", "Error", err)
