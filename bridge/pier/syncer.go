@@ -24,7 +24,7 @@ import (
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
-	"github.com/maticnetwork/heimdall/contracts/stakemanager"
+	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
 	"github.com/maticnetwork/heimdall/contracts/statesender"
 	"github.com/maticnetwork/heimdall/helper"
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
@@ -85,7 +85,6 @@ func NewSyncer(cdc *codec.Codec, queueConnector *QueueConnector, httpClient *htt
 
 	abis := []*abi.ABI{
 		&contractCaller.RootChainABI,
-		&contractCaller.StakeManagerABI,
 		&contractCaller.StateSenderABI,
 		&contractCaller.StakingInfoABI,
 	}
@@ -265,7 +264,6 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 		ToBlock:   toBlock,
 		Addresses: []ethCommon.Address{
 			helper.GetRootChainAddress(),
-			helper.GetStakeManagerAddress(),
 			helper.GetStakingInfoAddress(),
 			helper.GetStateSenderAddress(),
 		},
@@ -338,14 +336,14 @@ func (syncer *Syncer) processCheckpointEvent(eventName string, abiObject *abi.AB
 }
 
 func (syncer *Syncer) processStakedEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
-	event := new(stakemanager.StakemanagerStaked)
+	event := new(stakinginfo.StakinginfoStaked)
 	if err := helper.UnpackLog(abiObject, event, eventName, vLog); err != nil {
 		logEventParseError(syncer.Logger, eventName, err)
 	} else {
 		syncer.Logger.Debug(
 			"⬜ New event found",
 			"event", eventName,
-			"validator", event.Signer.Hex(),
+			"validator", event.Signer,
 			"ID", event.ValidatorId,
 			"activatonEpoch", event.ActivationEpoch,
 			"amount", event.Amount,
@@ -369,14 +367,14 @@ func (syncer *Syncer) processStakedEvent(eventName string, abiObject *abi.ABI, v
 }
 
 func (syncer *Syncer) processUnstakeInitEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
-	event := new(stakemanager.StakemanagerUnstakeInit)
+	event := new(stakinginfo.StakinginfoUnstakeInit)
 	if err := helper.UnpackLog(abiObject, event, eventName, vLog); err != nil {
 		logEventParseError(syncer.Logger, eventName, err)
 	} else {
 		syncer.Logger.Debug(
 			"⬜ New event found",
 			"event", eventName,
-			"validator", event.User.Hex(),
+			"validator", event.User,
 			"validatorID", event.ValidatorId,
 			"deactivatonEpoch", event.DeactivationEpoch,
 			"amount", event.Amount,
@@ -398,7 +396,7 @@ func (syncer *Syncer) processUnstakeInitEvent(eventName string, abiObject *abi.A
 }
 
 func (syncer *Syncer) processStakeUpdateEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
-	event := new(stakemanager.StakemanagerStakeUpdate)
+	event := new(stakinginfo.StakinginfoStakeUpdate)
 	if err := helper.UnpackLog(abiObject, event, eventName, vLog); err != nil {
 		logEventParseError(syncer.Logger, eventName, err)
 	} else {
@@ -406,7 +404,6 @@ func (syncer *Syncer) processStakeUpdateEvent(eventName string, abiObject *abi.A
 			"⬜ New event found",
 			"event", eventName,
 			"validatorID", event.ValidatorId,
-			"oldAmount", event.OldAmount,
 			"newAmount", event.NewAmount,
 		)
 
@@ -426,7 +423,7 @@ func (syncer *Syncer) processStakeUpdateEvent(eventName string, abiObject *abi.A
 }
 
 func (syncer *Syncer) processSignerChangeEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
-	event := new(stakemanager.StakemanagerSignerChange)
+	event := new(stakinginfo.StakinginfoSignerChange)
 	if err := helper.UnpackLog(abiObject, event, eventName, vLog); err != nil {
 		logEventParseError(syncer.Logger, eventName, err)
 	} else {
@@ -456,16 +453,14 @@ func (syncer *Syncer) processSignerChangeEvent(eventName string, abiObject *abi.
 }
 
 func (syncer *Syncer) processReStakedEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
-	event := new(stakemanager.StakemanagerStaked)
+	event := new(stakinginfo.StakinginfoReStaked)
 	if err := helper.UnpackLog(abiObject, event, eventName, vLog); err != nil {
 		logEventParseError(syncer.Logger, eventName, err)
 	} else {
 		syncer.Logger.Debug(
 			"⬜ New event found",
 			"event", eventName,
-			"signer", event.Signer.Hex(),
 			"validatorId", event.ValidatorId,
-			"activationEpoch", event.ActivationEpoch,
 			"amount", event.Amount,
 		)
 
@@ -482,7 +477,7 @@ func (syncer *Syncer) processReStakedEvent(eventName string, abiObject *abi.ABI,
 }
 
 func (syncer *Syncer) processJailedEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
-	event := new(stakemanager.StakemanagerJailed)
+	event := new(stakinginfo.StakinginfoJailed)
 	if err := helper.UnpackLog(abiObject, event, eventName, vLog); err != nil {
 		logEventParseError(syncer.Logger, eventName, err)
 	} else {
@@ -558,7 +553,7 @@ func (syncer *Syncer) processStateSyncedEvent(eventName string, abiObject *abi.A
 // processTopupFeeEvent
 func (syncer *Syncer) processTopupFeeEvent(eventName string, abiObject *abi.ABI, vLog *types.Log) {
 
-	event := new(stakemanager.StakemanagerTopUpFee)
+	event := new(stakinginfo.StakinginfoTopUpFee)
 	if err := helper.UnpackLog(abiObject, event, eventName, vLog); err != nil {
 		logEventParseError(syncer.Logger, eventName, err)
 	} else {
