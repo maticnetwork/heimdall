@@ -12,7 +12,6 @@ import (
 	"github.com/maticnetwork/bor/ethclient"
 	"github.com/maticnetwork/bor/rpc"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
-	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
 	"github.com/maticnetwork/heimdall/contracts/statereceiver"
 	"github.com/maticnetwork/heimdall/contracts/statesender"
@@ -57,14 +56,12 @@ type ContractCaller struct {
 	MaticChainClient *ethclient.Client
 
 	RootChainInstance     *rootchain.Rootchain
-	StakeManagerInstance  *stakemanager.Stakemanager
 	StakingInfoInstance   *stakinginfo.Stakinginfo
 	ValidatorSetInstance  *validatorset.Validatorset
 	StateSenderInstance   *statesender.Statesender
 	StateReceiverInstance *statereceiver.Statereceiver
 
 	RootChainABI     abi.ABI
-	StakeManagerABI  abi.ABI
 	StakingInfoABI   abi.ABI
 	ValidatorSetABI  abi.ABI
 	StateReceiverABI abi.ABI
@@ -96,10 +93,6 @@ func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 		return
 	}
 
-	if contractCallerObj.StakeManagerInstance, err = stakemanager.NewStakemanager(GetStakeManagerAddress(), contractCallerObj.MainChainClient); err != nil {
-		return
-	}
-
 	if contractCallerObj.StakingInfoInstance, err = stakinginfo.NewStakinginfo(GetStakingInfoAddress(), contractCallerObj.MainChainClient); err != nil {
 		return
 	}
@@ -121,10 +114,6 @@ func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 	//
 
 	if contractCallerObj.RootChainABI, err = getABI(string(rootchain.RootchainABI)); err != nil {
-		return
-	}
-
-	if contractCallerObj.StakeManagerABI, err = getABI(string(stakemanager.StakemanagerABI)); err != nil {
 		return
 	}
 
@@ -333,7 +322,7 @@ func (c *ContractCaller) DecodeValidatorStakeUpdateEvent(receipt *ethTypes.Recei
 	for _, vLog := range receipt.Logs {
 		if uint64(vLog.Index) == logIndex {
 			found = true
-			if err := UnpackLog(&c.StakeManagerABI, event, "StakeUpdate", vLog); err != nil {
+			if err := UnpackLog(&c.StakingInfoABI, event, "StakeUpdate", vLog); err != nil {
 				return nil, err
 			}
 			break

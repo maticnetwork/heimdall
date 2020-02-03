@@ -211,6 +211,7 @@ func (syncer *Syncer) startSubscription(ctx context.Context, subscription ethere
 
 func (syncer *Syncer) processHeader(newHeader *types.Header) {
 	syncer.Logger.Debug("New block detected", "blockNumber", newHeader.Number)
+
 	latestNumber := newHeader.Number
 
 	// confirmation
