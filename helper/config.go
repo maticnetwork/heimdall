@@ -23,7 +23,7 @@ import (
 	"github.com/tendermint/tendermint/privval"
 
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
-	"github.com/maticnetwork/heimdall/contracts/stakemanager"
+	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
 
 	tmTypes "github.com/tendermint/tendermint/types"
 )
@@ -103,7 +103,7 @@ type Configuration struct {
 	AmqpURL           string `mapstructure:"amqp_url"`             // amqp url
 	HeimdallServerURL string `mapstructure:"heimdall_rest_server"` // heimdall server url
 
-	StakeManagerAddress  string `mapstructure:"stakemanager_contract"`   // Stake manager address on main chain
+	StakingInfoAddress   string `mapstructure:"stakinginfo_contract"`    // Staking Info address on main chain
 	RootchainAddress     string `mapstructure:"rootchain_contract"`      // Rootchain contract address on main chain
 	StateSenderAddress   string `mapstructure:"state_sender_contract"`   // main
 	StateReceiverAddress string `mapstructure:"state_receiver_contract"` // matic
@@ -152,7 +152,6 @@ var GenesisDoc tmTypes.GenesisDoc
 
 // Contracts
 // var RootChain types.Contract
-// var StakeManager types.Contract
 // var DepositManager types.Contract
 
 // InitHeimdallConfig initializes with viper config (from heimdall configuration)
@@ -232,7 +231,7 @@ func GetDefaultHeimdallConfig() Configuration {
 		AmqpURL:           DefaultAmqpURL,
 		HeimdallServerURL: DefaultHeimdallServerURL,
 
-		StakeManagerAddress:  (common.Address{}).Hex(),
+		StakingInfoAddress:   (common.Address{}).Hex(),
 		RootchainAddress:     (common.Address{}).Hex(),
 		StateSenderAddress:   (common.Address{}).Hex(),
 		StateReceiverAddress: DefaultStateReceiverAddress,
@@ -302,22 +301,22 @@ func GetRootChainABI() (abi.ABI, error) {
 }
 
 //
-// Stake manager
+// Staking Info
 //
 
-// GetStakeManagerAddress returns StakeManager contract address for selected base chain
-func GetStakeManagerAddress() common.Address {
-	return common.HexToAddress(GetConfig().StakeManagerAddress)
+// GetStakingInfoAddress returns StakingInfo contract address for selected base chain
+func GetStakingInfoAddress() common.Address {
+	return common.HexToAddress(GetConfig().StakingInfoAddress)
 }
 
-// GetStakeManagerInstance returns StakeManager contract instance for selected base chain
-func GetStakeManagerInstance() (*stakemanager.Stakemanager, error) {
-	return stakemanager.NewStakemanager(GetStakeManagerAddress(), mainChainClient)
+// GetStakingInfoInstance returns stakinginfo contract instance for selected base chain
+func GetStakingInfoInstance() (*stakinginfo.Stakinginfo, error) {
+	return stakinginfo.NewStakinginfo(GetStakingInfoAddress(), mainChainClient)
 }
 
-// GetStakeManagerABI returns ABI for StakeManager contract
-func GetStakeManagerABI() (abi.ABI, error) {
-	return abi.JSON(strings.NewReader(stakemanager.StakemanagerABI))
+// GetStakingInfoABI returns ABI for StakingInfo contract
+func GetStakingInfoABI() (abi.ABI, error) {
+	return abi.JSON(strings.NewReader(stakinginfo.StakinginfoABI))
 }
 
 //
