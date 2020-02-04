@@ -10,6 +10,7 @@ const (
 	FlagAmount           = "staked-amount"
 	FlagTxHash           = "tx-hash"
 	FlagLogIndex         = "log-index"
+	FlagFeeAmount        = "fee-amount"
 
 	FlagStartEpoch = "start-epoch"
 	FlagEndEpoch   = "end-epoch"

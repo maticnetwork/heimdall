@@ -45,6 +45,7 @@ heimdall_rest_server = "{{ .HeimdallServerURL }}"
 stakinginfo_contract = "{{ .StakingInfoAddress }}" 
 rootchain_contract = "{{ .RootchainAddress }}"
 state_sender_contract = "{{ .StateSenderAddress }}" 
+stake_manager_contract = "{{ .StakeManagerAddress }}"
 
 ### Bor Chain Contracts
 state_receiver_contract = "{{ .StateReceiverAddress }}" 

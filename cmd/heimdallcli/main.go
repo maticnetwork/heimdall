@@ -87,6 +87,7 @@ func main() {
 		convertHexToAddressCmd(cdc),
 		client.LineBreak,
 		version.Cmd,
+		StakeCmd(),
 	)
 
 	// bind with-heimdall-config config with root cmd

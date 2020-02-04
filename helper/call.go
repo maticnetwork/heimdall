@@ -12,10 +12,12 @@ import (
 	"github.com/maticnetwork/bor/ethclient"
 	"github.com/maticnetwork/bor/rpc"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
+	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
 	"github.com/maticnetwork/heimdall/contracts/statereceiver"
 	"github.com/maticnetwork/heimdall/contracts/statesender"
 	"github.com/maticnetwork/heimdall/contracts/validatorset"
+
 	"github.com/maticnetwork/heimdall/types"
 )
 
@@ -60,12 +62,14 @@ type ContractCaller struct {
 	ValidatorSetInstance  *validatorset.Validatorset
 	StateSenderInstance   *statesender.Statesender
 	StateReceiverInstance *statereceiver.Statereceiver
+	StakeManagerInstance  *stakemanager.Stakemanager
 
 	RootChainABI     abi.ABI
 	StakingInfoABI   abi.ABI
 	ValidatorSetABI  abi.ABI
 	StateReceiverABI abi.ABI
 	StateSenderABI   abi.ABI
+	StakeManagerABI  abi.ABI
 }
 
 type txExtraInfo struct {
@@ -101,6 +105,10 @@ func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 		return
 	}
 
+	if contractCallerObj.StakeManagerInstance, err = stakemanager.NewStakemanager(GetStakeManagerAddress(), contractCallerObj.MainChainClient); err != nil {
+		return
+	}
+
 	if contractCallerObj.StateSenderInstance, err = statesender.NewStatesender(GetStateSenderAddress(), contractCallerObj.MainChainClient); err != nil {
 		return
 	}
@@ -130,6 +138,10 @@ func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 	}
 
 	if contractCallerObj.StateSenderABI, err = getABI(string(statesender.StatesenderABI)); err != nil {
+		return
+	}
+
+	if contractCallerObj.StakeManagerABI, err = getABI(string(stakemanager.StakemanagerABI)); err != nil {
 		return
 	}
 

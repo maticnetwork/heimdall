@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 	"math/big"
 
-	"github.com/maticnetwork/bor"
+	ethereum "github.com/maticnetwork/bor"
 	"github.com/maticnetwork/bor/accounts/abi/bind"
 	"github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/bor/crypto"
@@ -58,13 +58,8 @@ func (c *ContractCaller) SendCheckpoint(voteSignBytes []byte, sigs []byte, txDat
 	if err != nil {
 		Logger.Error("Unable to decode vote while sending checkpoint", "vote", hex.EncodeToString(voteSignBytes), "sigs", hex.EncodeToString(sigs), "txData", hex.EncodeToString(txData))
 	}
-	// submit checkpoint
-	rootchainABI, err := GetRootChainABI()
-	if err != nil {
-		return
-	}
 
-	data, err := rootchainABI.Pack("submitHeaderBlock", voteSignBytes, sigs, txData)
+	data, err := c.RootChainABI.Pack("submitHeaderBlock", voteSignBytes, sigs, txData)
 	if err != nil {
 		Logger.Error("Unable to pack tx for submitHeaderBlock", "error", err)
 		return
@@ -88,4 +83,33 @@ func (c *ContractCaller) SendCheckpoint(voteSignBytes []byte, sigs []byte, txDat
 	} else {
 		Logger.Info("Submitted new header successfully", "txHash", tx.Hash().String())
 	}
+}
+
+// StakeFor stakes for a validator
+func (c *ContractCaller) StakeFor(val common.Address, signer common.Address, stakeAmount int64, feeAmount int64) error {
+	stakeManagerAddress := GetStakeManagerAddress()
+
+	data, err := c.StakeManagerABI.Pack("stakeFor", val, stakeAmount, feeAmount, signer, false)
+	if err != nil {
+		Logger.Error("Unable to pack tx for submitHeaderBlock", "error", err)
+		return err
+	}
+
+	auth, err := GenerateAuthObj(GetMainClient(), ethereum.CallMsg{
+		To:   &stakeManagerAddress,
+		Data: data,
+	})
+	if err != nil {
+		Logger.Error("Unable to create auth object", "error", err)
+		return err
+	}
+
+	tx, err := c.StakeManagerInstance.StakeFor(auth, val, big.NewInt(stakeAmount), big.NewInt(feeAmount), signer, false)
+	if err != nil {
+		Logger.Error("Error while submitting stake", "error", err)
+		return err
+	}
+
+	Logger.Info("Submitted stake sucessfully", "txHash", tx.Hash().String())
+	return nil
 }
