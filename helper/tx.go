@@ -14,7 +14,13 @@ import (
 	"github.com/tendermint/tendermint/types"
 )
 
-func GenerateAuthObj(client *ethclient.Client, callMsg ethereum.CallMsg) (auth *bind.TransactOpts, err error) {
+func GenerateAuthObj(client *ethclient.Client, address common.Address, data []byte) (auth *bind.TransactOpts, err error) {
+	// generate call msg
+	callMsg := ethereum.CallMsg{
+		To:   &address,
+		Data: data,
+	}
+
 	// get priv key
 	pkObject := GetPrivKey()
 
@@ -57,6 +63,7 @@ func (c *ContractCaller) SendCheckpoint(voteSignBytes []byte, sigs []byte, txDat
 	err := rlp.DecodeBytes(voteSignBytes, &vote)
 	if err != nil {
 		Logger.Error("Unable to decode vote while sending checkpoint", "vote", hex.EncodeToString(voteSignBytes), "sigs", hex.EncodeToString(sigs), "txData", hex.EncodeToString(txData))
+		return
 	}
 
 	data, err := c.RootChainABI.Pack("submitHeaderBlock", voteSignBytes, sigs, txData)
@@ -66,10 +73,11 @@ func (c *ContractCaller) SendCheckpoint(voteSignBytes []byte, sigs []byte, txDat
 	}
 
 	rootChainAddress := GetRootChainAddress()
-	auth, err := GenerateAuthObj(GetMainClient(), ethereum.CallMsg{
-		To:   &rootChainAddress,
-		Data: data,
-	})
+	auth, err := GenerateAuthObj(GetMainClient(), rootChainAddress, data)
+	if err != nil {
+		Logger.Error("Unable to create auth object", "error", err)
+		return
+	}
 	GetPubKey().VerifyBytes(voteSignBytes, sigs)
 
 	Logger.Debug("Sending new checkpoint",
@@ -83,28 +91,57 @@ func (c *ContractCaller) SendCheckpoint(voteSignBytes []byte, sigs []byte, txDat
 	} else {
 		Logger.Info("Submitted new header successfully", "txHash", tx.Hash().String())
 	}
+
 }
 
 // StakeFor stakes for a validator
-func (c *ContractCaller) StakeFor(val common.Address, signer common.Address, stakeAmount int64, feeAmount int64) error {
+func (c *ContractCaller) StakeFor(val common.Address, stakeAmount int64, feeAmount int64) error {
+	// stake the amount
 	stakeManagerAddress := GetStakeManagerAddress()
 
-	data, err := c.StakeManagerABI.Pack("stakeFor", val, stakeAmount, feeAmount, signer, false)
+	signerPubkey := GetPubKey()
+	signerAddress := common.HexToAddress(signerPubkey.Address().String())
+
+	data, err := c.StakeManagerABI.Pack("stakeFor", val, stakeAmount, feeAmount, signerAddress, false)
 	if err != nil {
 		Logger.Error("Unable to pack tx for submitHeaderBlock", "error", err)
 		return err
 	}
 
-	auth, err := GenerateAuthObj(GetMainClient(), ethereum.CallMsg{
-		To:   &stakeManagerAddress,
-		Data: data,
-	})
+	auth, err := GenerateAuthObj(GetMainClient(), stakeManagerAddress, data)
 	if err != nil {
 		Logger.Error("Unable to create auth object", "error", err)
 		return err
 	}
 
-	tx, err := c.StakeManagerInstance.StakeFor(auth, val, big.NewInt(stakeAmount), big.NewInt(feeAmount), signer, false)
+	tx, err := c.StakeManagerInstance.StakeFor(auth, val, big.NewInt(stakeAmount), big.NewInt(feeAmount), signerAddress, false)
+	if err != nil {
+		Logger.Error("Error while submitting stake", "error", err)
+		return err
+	}
+
+	Logger.Info("Submitted stake sucessfully", "txHash", tx.Hash().String())
+	return nil
+}
+
+func (c *ContractCaller) ApproveTokens(amount int64) error {
+	tokenAddress := GetMaticTokenAddress()
+	signerPubkey := GetPubKey()
+	signerAddress := common.HexToAddress(signerPubkey.Address().String())
+
+	data, err := c.MaticTokenABI.Pack("approve", signerAddress, amount)
+	if err != nil {
+		Logger.Error("Unable to pack tx for submitHeaderBlock", "error", err)
+		return err
+	}
+
+	auth, err := GenerateAuthObj(GetMainClient(), tokenAddress, data)
+	if err != nil {
+		Logger.Error("Unable to create auth object", "error", err)
+		return err
+	}
+
+	tx, err := c.MaticTokenInstance.Approve(auth, signerAddress, big.NewInt(amount))
 	if err != nil {
 		Logger.Error("Error while submitting stake", "error", err)
 		return err

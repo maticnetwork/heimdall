@@ -108,6 +108,7 @@ type Configuration struct {
 	StateReceiverAddress string `mapstructure:"state_receiver_contract"` // matic
 	ValidatorSetAddress  string `mapstructure:"validator_set_contract"`  // Validator Set contract address on bor chain
 	StakeManagerAddress  string `mapstructure:"stake_manager_contract"`
+	MaticTokenAddress    string `mapstructure:"matic_token"`
 
 	ChildBlockInterval uint64 `mapstructure:"child_chain_block_interval"` // Difference between header index of 2 child blocks submitted on main chain
 
@@ -235,6 +236,7 @@ func GetDefaultHeimdallConfig() Configuration {
 		RootchainAddress:    (common.Address{}).Hex(),
 		StateSenderAddress:  (common.Address{}).Hex(),
 		StakeManagerAddress: (common.Address{}).Hex(),
+		MaticTokenAddress:   (common.Address{}).Hex(),
 
 		StateReceiverAddress: DefaultStateReceiverAddress,
 		ValidatorSetAddress:  DefaultValidatorSetAddress,
@@ -266,10 +268,6 @@ func GetGenesisDoc() tmTypes.GenesisDoc {
 	return GenesisDoc
 }
 
-//
-// Root chain
-//
-
 // GetRootChainAddress returns RootChain contract address for selected base chain
 func GetRootChainAddress() common.Address {
 	return common.HexToAddress(GetConfig().RootchainAddress)
@@ -285,10 +283,6 @@ func GetRootChainInstance() (*rootchain.Rootchain, error) {
 	return rootChainInstance, err
 }
 
-//
-// Staking Info
-//
-
 // GetStakingInfoAddress returns StakingInfo contract address for selected base chain
 func GetStakingInfoAddress() common.Address {
 	return common.HexToAddress(GetConfig().StakingInfoAddress)
@@ -299,40 +293,29 @@ func GetStakingInfoInstance() (*stakinginfo.Stakinginfo, error) {
 	return stakinginfo.NewStakinginfo(GetStakingInfoAddress(), mainChainClient)
 }
 
-//
-// Validator set
-//
-
 // GetValidatorSetAddress returns Validator set contract address for selected base chain
 func GetValidatorSetAddress() common.Address {
 	return common.HexToAddress(GetConfig().ValidatorSetAddress)
 }
-
-//
-// State sender
-//
 
 // GetStateSenderAddress returns state sender contract address for selected base chain
 func GetStateSenderAddress() common.Address {
 	return common.HexToAddress(GetConfig().StateSenderAddress)
 }
 
-//
-// State sender
-//
-
 // GetStateReceiverAddress returns state receiver contract address for selected child chain
 func GetStateReceiverAddress() common.Address {
 	return common.HexToAddress(GetConfig().StateReceiverAddress)
 }
 
-//
-// State sender
-//
-
 // GetStakeManagerAddress returns state receiver contract address for selected child chain
 func GetStakeManagerAddress() common.Address {
 	return common.HexToAddress(GetConfig().StakeManagerAddress)
+}
+
+// GetMaticTokenAddress
+func GetMaticTokenAddress() common.Address {
+	return common.HexToAddress(GetConfig().MaticTokenAddress)
 }
 
 //

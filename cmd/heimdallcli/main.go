@@ -88,6 +88,7 @@ func main() {
 		client.LineBreak,
 		version.Cmd,
 		StakeCmd(),
+		ApproveCmd(),
 	)
 
 	// bind with-heimdall-config config with root cmd
