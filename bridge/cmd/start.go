@@ -19,6 +19,9 @@ import (
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/bridge/pier"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/sethu/listener"
+	"github.com/maticnetwork/heimdall/sethu/processor"
+	"github.com/maticnetwork/heimdall/sethu/queue"
 )
 
 const (
@@ -38,10 +41,13 @@ func GetStartCmd() *cobra.Command {
 			app.MakePulp()
 			// queue connector & http client
 			_queueConnector := pier.NewQueueConnector(cdc, helper.GetConfig().AmqpURL)
+			_newQueueConnector := queue.NewQueueConnector(helper.GetConfig().AmqpURL)
+			_newQueueConnector.InitializeQueue()
+
 			_httpClient := httpClient.NewHTTP(helper.GetConfig().TendermintRPCUrl, "/websocket")
 
 			// selected services to start
-			services := SelectedServices(cdc, _httpClient, _queueConnector)
+			services := SelectedServices(cdc, _httpClient, _queueConnector, _newQueueConnector)
 			if len(services) == 0 {
 				panic(fmt.Sprintf("No services selected to start. select services using --all or --only flag"))
 			}
@@ -112,7 +118,7 @@ func GetStartCmd() *cobra.Command {
 }
 
 // SelectedServices will select services to start based on set flags --all, --only
-func SelectedServices(cdc *codec.Codec, _httpClient *httpClient.HTTP, _queueConnector *pier.QueueConnector) []common.Service {
+func SelectedServices(cdc *codec.Codec, _httpClient *httpClient.HTTP, _queueConnector *pier.QueueConnector, _newQueueConnector *queue.QueueConnector) []common.Service {
 	services := []common.Service{
 		pier.NewConsumerService(cdc, _queueConnector),
 	}
@@ -121,13 +127,17 @@ func SelectedServices(cdc *codec.Codec, _httpClient *httpClient.HTTP, _queueConn
 	onlyServices := viper.GetStringSlice("only")
 
 	if startAll {
+		// services = append(services,
+		// 	pier.NewCheckpointer(cdc, _queueConnector, _httpClient),
+		// 	pier.NewSyncer(cdc, _queueConnector, _httpClient),
+		// 	pier.NewAckService(cdc, _queueConnector, _httpClient),
+		// 	pier.NewSpanService(cdc, _queueConnector, _httpClient),
+		// 	pier.NewClerkService(cdc, _queueConnector, _httpClient),
+		// )
+
 		services = append(services,
-			pier.NewCheckpointer(cdc, _queueConnector, _httpClient),
-			pier.NewSyncer(cdc, _queueConnector, _httpClient),
-			pier.NewAckService(cdc, _queueConnector, _httpClient),
-			pier.NewSpanService(cdc, _queueConnector, _httpClient),
-			pier.NewClerkService(cdc, _queueConnector, _httpClient),
-		)
+			listener.NewListenerService(_newQueueConnector),
+			processor.NewProcessorService(_newQueueConnector))
 	} else {
 		for _, service := range onlyServices {
 			switch service {
