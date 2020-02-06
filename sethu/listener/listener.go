@@ -5,13 +5,15 @@ import (
 	"errors"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/client"
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/codec"
 	ethereum "github.com/maticnetwork/bor"
 	"github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/sethu/queue"
-	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/tendermint/tendermint/libs/log"
+
 	httpClient "github.com/tendermint/tendermint/rpc/client"
 )
 
@@ -39,57 +41,15 @@ type Listener interface {
 
 	ProcessHeader(*types.Header)
 
-	PublishEvent()
+	// PublishEvent()
 
-	Stop() error
+	// Stop() error
 
 	String() string
 
 	SetLogger(log.Logger)
 }
 
-/*
-Classical-inheritance-style service declarations. Services can be started, then
-stopped, then optionally restarted.
-
-Users can override the OnStart/OnStop methods. In the absence of errors, these
-methods are guaranteed to be called at most once. If OnStart returns an error,
-service won't be marked as started, so the user can call Start again.
-
-A call to Reset will panic, unless OnReset is overwritten, allowing
-OnStart/OnStop to be called again.
-
-The caller must ensure that Start and Stop are not called concurrently.
-
-It is ok to call Stop without calling Start first.
-
-Typical usage:
-
-	type FooService struct {
-		BaseService
-		// private fields
-	}
-
-	func NewFooService() *FooService {
-		fs := &FooService{
-			// init
-		}
-		fs.BaseService = *NewBaseService(log, "FooService", fs)
-		return fs
-	}
-
-	func (fs *FooService) OnStart() error {
-		fs.BaseService.OnStart() // Always call the overridden method.
-		// initialize private fields
-		// start subroutines, etc.
-	}
-
-	func (fs *FooService) OnStop() error {
-		fs.BaseService.OnStop() // Always call the overridden method.
-		// close/destroy private fields
-		// stop subroutines, etc.
-	}
-*/
 type BaseListener struct {
 	Logger  log.Logger
 	name    string
@@ -101,7 +61,7 @@ type BaseListener struct {
 	impl Listener
 
 	// storage client
-	storageClient *leveldb.DB
+	// storageClient *leveldb.DB
 
 	// contract caller
 	contractConnector helper.ContractCaller
@@ -126,16 +86,35 @@ type BaseListener struct {
 }
 
 // NewBaseListener creates a new BaseListener.
-func NewBaseListener(logger log.Logger, name string, impl Listener) *BaseListener {
+func NewBaseListener(cdc *codec.Codec, queueConnector *queue.QueueConnector, logger log.Logger, name string, impl Listener) *BaseListener {
+
+	contractCaller, err := helper.NewContractCaller()
+	if err != nil {
+		logger.Error("Error while getting root chain instance", "error", err)
+		panic(err)
+	}
+
+	cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
+	cliCtx.BroadcastMode = client.BroadcastAsync
+	cliCtx.TrustNode = true
+
 	if logger == nil {
 		logger = log.NewNopLogger()
 	}
 
+	// creating syncer object
 	return &BaseListener{
 		Logger: logger,
 		name:   name,
 		quit:   make(chan struct{}),
 		impl:   impl,
+		// storageClient: getBridgeDBInstance(viper.GetString(BridgeDBFlag)),
+
+		cliCtx:            cliCtx,
+		queueConnector:    queueConnector,
+		contractConnector: contractCaller,
+
+		HeaderChannel: make(chan *types.Header),
 	}
 }
 
@@ -146,7 +125,7 @@ func (bl *BaseListener) SetLogger(l log.Logger) {
 
 // OnStart starts new block subscription
 func (bl *BaseListener) Start() error {
-
+	bl.Logger.Info("Starting listener")
 	// create cancellable context
 	ctx, cancelSubscription := context.WithCancel(context.Background())
 	bl.cancelSubscription = cancelSubscription
@@ -156,20 +135,20 @@ func (bl *BaseListener) Start() error {
 	bl.cancelHeaderProcess = cancelHeaderProcess
 
 	// start header process
-	go bl.startHeaderProcess(headerCtx)
+	go bl.StartHeaderProcess(headerCtx)
 
-	// subscribe to new head
-	subscription, err := bl.contractConnector.MainChainClient.SubscribeNewHead(ctx, bl.HeaderChannel)
-	if err != nil {
-		// start go routine to poll for new header using client object
-		go bl.startPolling(ctx, helper.GetConfig().SyncerPollInterval)
-	} else {
-		// start go routine to listen new header using subscription
-		go bl.startSubscription(ctx, subscription)
-	}
+	// // subscribe to new head
+	// subscription, err := bl.contractConnector.MainChainClient.SubscribeNewHead(ctx, bl.HeaderChannel)
+	// if err != nil {
+	// 	// start go routine to poll for new header using client object
+	go bl.StartPolling(ctx, helper.GetConfig().SyncerPollInterval)
+	// } else {
+	// 	// start go routine to listen new header using subscription
+	// 	go bl.StartSubscription(ctx, subscription)
+	// }
 
 	// subscribed to new head
-	bl.Logger.Debug("Subscribed to new head")
+	bl.Logger.Info("Subscribed to new head")
 
 	return nil
 }
@@ -180,7 +159,8 @@ func (bl *BaseListener) String() string {
 }
 
 // startHeaderProcess starts header process when they get new header
-func (bl *BaseListener) startHeaderProcess(ctx context.Context) {
+func (bl *BaseListener) StartHeaderProcess(ctx context.Context) {
+	bl.Logger.Info("Starting header process")
 	for {
 		select {
 		case newHeader := <-bl.HeaderChannel:
@@ -192,10 +172,11 @@ func (bl *BaseListener) startHeaderProcess(ctx context.Context) {
 }
 
 // startPolling starts polling
-func (bl *BaseListener) startPolling(ctx context.Context, pollInterval time.Duration) {
+func (bl *BaseListener) StartPolling(ctx context.Context, pollInterval time.Duration) {
 	// How often to fire the passed in function in second
 	interval := pollInterval
 
+	bl.Logger.Info("Starting polling process")
 	// Setup the ticket and the channel to signal
 	// the ending of the interval
 	ticker := time.NewTicker(interval)
@@ -216,7 +197,7 @@ func (bl *BaseListener) startPolling(ctx context.Context, pollInterval time.Dura
 	}
 }
 
-func (bl *BaseListener) startSubscription(ctx context.Context, subscription ethereum.Subscription) {
+func (bl *BaseListener) StartSubscription(ctx context.Context, subscription ethereum.Subscription) {
 	for {
 		select {
 		case err := <-subscription.Err():
@@ -232,5 +213,3 @@ func (bl *BaseListener) startSubscription(ctx context.Context, subscription ethe
 		}
 	}
 }
-
-func (bl *BaseListener) processHeader(newHeader *types.Header) {}

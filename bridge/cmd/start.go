@@ -136,7 +136,7 @@ func SelectedServices(cdc *codec.Codec, _httpClient *httpClient.HTTP, _queueConn
 		// )
 
 		services = append(services,
-			listener.NewListenerService(_newQueueConnector),
+			listener.NewListenerService(cdc, _newQueueConnector),
 			processor.NewProcessorService(_newQueueConnector))
 	} else {
 		for _, service := range onlyServices {

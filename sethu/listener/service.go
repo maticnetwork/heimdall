@@ -1,6 +1,7 @@
 package listener
 
 import (
+	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/maticnetwork/heimdall/sethu/queue"
 	"github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
@@ -15,8 +16,8 @@ const (
 type ListenerService struct {
 	// Base service
 	common.BaseService
-
 	queueConnector *queue.QueueConnector
+	listeners      []Listener
 }
 
 // Global logger for bridge
@@ -27,7 +28,7 @@ func init() {
 }
 
 // NewListenerService returns new service object for listneing to events
-func NewListenerService(queueConnector *queue.QueueConnector) *ListenerService {
+func NewListenerService(cdc *codec.Codec, queueConnector *queue.QueueConnector) *ListenerService {
 	// create logger
 	logger := Logger.With("module", listenerServiceStr)
 
@@ -37,15 +38,23 @@ func NewListenerService(queueConnector *queue.QueueConnector) *ListenerService {
 	}
 
 	listenerService.BaseService = *common.NewBaseService(logger, listenerServiceStr, listenerService)
+
+	rootchainListener := &RootChainListener{}
+	rootchainListener.BaseListener = *NewBaseListener(cdc, queueConnector, logger, "rootchain-listener", rootchainListener)
+	listenerService.listeners = append(listenerService.listeners, rootchainListener)
+
 	return listenerService
 }
 
 // OnStart starts new block subscription
 func (listenerService *ListenerService) OnStart() error {
 	listenerService.BaseService.OnStart() // Always call the overridden method.
-	listenerService.Logger.Info("Listener Service Started")
+	listenerService.Logger.Info("Starting listeners", listenerService.listeners)
 
-	listenerService.queueConnector.PublishMsg([]byte("TestMessage"), "test")
+	// start chain listeners
+	for _, listener := range listenerService.listeners {
+		listener.Start()
+	}
 
 	return nil
 }
