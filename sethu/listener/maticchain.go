@@ -45,5 +45,5 @@ func (ml *MaticChainListener) Start() error {
 
 func (ml *MaticChainListener) ProcessHeader(newHeader *types.Header) {
 	ml.Logger.Info("Received Headerblock from maticchain", "header", newHeader)
-	ml.queueConnector.PublishMsg([]byte("Hello Matic"), queue.StakingQueueRoute, ml.String())
+	ml.queueConnector.PublishMsg([]byte("Checkpoint Msg"), queue.CheckpointQueueName, ml.String())
 }

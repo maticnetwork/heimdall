@@ -120,7 +120,7 @@ func (qc *QueueConnector) PublishMsg(data []byte, route string, appId string) er
 		return err
 	}
 
-	qc.logger.Info("published message to queue")
+	qc.logger.Info("published message to queue", "route", route)
 	return nil
 }
 

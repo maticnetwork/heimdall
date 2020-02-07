@@ -1,10 +1,12 @@
 package processor
 
 import (
+	"os"
+
+	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/maticnetwork/heimdall/sethu/queue"
 	"github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
-	"os"
 )
 
 // ProcessorService starts and stops all event processors
@@ -14,6 +16,8 @@ type ProcessorService struct {
 
 	// queue connector
 	queueConnector *queue.QueueConnector
+
+	processors []Processor
 }
 
 const (
@@ -28,7 +32,7 @@ func init() {
 }
 
 // NewProcessorService returns new service object for processing queue msg
-func NewProcessorService(queueConnector *queue.QueueConnector) *ProcessorService {
+func NewProcessorService(cdc *codec.Codec, queueConnector *queue.QueueConnector) *ProcessorService {
 	// create logger
 	logger := Logger.With("module", processorServiceStr)
 
@@ -38,6 +42,15 @@ func NewProcessorService(queueConnector *queue.QueueConnector) *ProcessorService
 	}
 
 	processorService.BaseService = *common.NewBaseService(logger, processorServiceStr, processorService)
+
+	stakingProcessor := &StakingProcessor{}
+	stakingProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, logger, "staking", stakingProcessor)
+	processorService.processors = append(processorService.processors, stakingProcessor)
+
+	checkpointProcessor := &CheckpointProcessor{}
+	checkpointProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, logger, "checkpoint", checkpointProcessor)
+	processorService.processors = append(processorService.processors, checkpointProcessor)
+
 	return processorService
 }
 
@@ -46,15 +59,12 @@ func (processorService *ProcessorService) OnStart() error {
 	processorService.BaseService.OnStart() // Always call the overridden method.
 	processorService.Logger.Info("Processor Service Started")
 
-	amqpMsgs, _ := processorService.queueConnector.ConsumeMsg(queue.StakingQueueName)
-	// handle all amqp messages
-	for amqpMsg := range amqpMsgs {
-		processorService.Logger.Info("Received Message", "Msg - ", string(amqpMsg.Body), "AppID", amqpMsg.AppId)
-
-		// send ack
-		amqpMsg.Ack(false)
-
+	// start chain listeners
+	for _, processor := range processorService.processors {
+		processorService.Logger.Info("Starting Processor", "name", processor.String())
+		processor.Start()
 	}
+
 	return nil
 }
 

@@ -45,5 +45,5 @@ func (rl *RootChainListener) Start() error {
 
 func (bl *RootChainListener) ProcessHeader(newHeader *types.Header) {
 	bl.Logger.Info("Received Headerblock from Rootchain", "header", newHeader)
-	bl.queueConnector.PublishMsg([]byte("Hello"), queue.StakingQueueRoute, bl.String())
+	bl.queueConnector.PublishMsg([]byte("StakingMsg"), queue.StakingQueueRoute, bl.String())
 }
