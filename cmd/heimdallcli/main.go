@@ -1,11 +1,16 @@
 package main
 
 import (
+	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/keys"
@@ -13,14 +18,20 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/maticnetwork/bor/accounts/keystore"
 	ethCommon "github.com/maticnetwork/bor/common"
+	"github.com/maticnetwork/bor/console"
+	"github.com/maticnetwork/bor/crypto"
 	"github.com/maticnetwork/heimdall/version"
+	"github.com/pborman/uuid"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tendermint/go-amino"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
+	"github.com/tendermint/tendermint/privval"
 	tmTypes "github.com/tendermint/tendermint/types"
 
 	"github.com/maticnetwork/heimdall/app"
@@ -85,6 +96,8 @@ func main() {
 		exportCmd(ctx, cdc),
 		convertAddressToHexCmd(cdc),
 		convertHexToAddressCmd(cdc),
+		generateKeystore(cdc),
+		generateValidatorKey(cdc),
 		client.LineBreak,
 		version.Cmd,
 	)
@@ -219,6 +232,89 @@ func exportCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 	return cmd
 }
 
+// generateKeystore generate keystore file from private key
+func generateKeystore(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "generate-keystore <private-key>",
+		Short: "Generates keystore file using private key",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			s := strings.ReplaceAll(args[0], "0x", "")
+			pk, err := crypto.HexToECDSA(s)
+			if err != nil {
+				return err
+			}
+
+			id := uuid.NewRandom()
+			if err != nil {
+				return err
+			}
+			key := &keystore.Key{
+				Id:         id,
+				Address:    crypto.PubkeyToAddress(pk.PublicKey),
+				PrivateKey: pk,
+			}
+
+			passphrase, err := promptPassphrase(true)
+			if err != nil {
+				return err
+			}
+
+			keyjson, err := keystore.EncryptKey(key, passphrase, keystore.StandardScryptN, keystore.StandardScryptP)
+			if err != nil {
+				return err
+			}
+
+			// Then write the new keyfile in place of the old one.
+			if err := ioutil.WriteFile(keyFileName(key.Address), keyjson, 0644); err != nil {
+				return err
+			}
+			return nil
+		},
+	}
+	return client.GetCommands(cmd)[0]
+}
+
+// generateValidatorKey generate validator key
+func generateValidatorKey(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "generate-validatorkey <private-key>",
+		Short: "Generate validator key file using private key",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			s := strings.ReplaceAll(args[0], "0x", "")
+			ds, err := hex.DecodeString(s)
+			if err != nil {
+				return err
+			}
+
+			// set private object
+			var privObject secp256k1.PrivKeySecp256k1
+			copy(privObject[:], ds)
+
+			// node key
+			nodeKey := privval.FilePVKey{
+				Address: privObject.PubKey().Address(),
+				PubKey:  privObject.PubKey(),
+				PrivKey: privObject,
+			}
+
+			jsonBytes, err := cdc.MarshalJSONIndent(nodeKey, "", "  ")
+			if err != nil {
+				return err
+			}
+
+			err = ioutil.WriteFile("priv_validator_key.json", jsonBytes, 0644)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		},
+	}
+	return client.GetCommands(cmd)[0]
+}
+
 //
 // Internal functions
 //
@@ -241,4 +337,45 @@ func rootify(path, root string) string {
 		return path
 	}
 	return filepath.Join(root, path)
+}
+
+// keyFileName implements the naming convention for keyfiles:
+// UTC--<created_at UTC ISO8601>-<address hex>
+func keyFileName(keyAddr ethCommon.Address) string {
+	ts := time.Now().UTC()
+	return fmt.Sprintf("UTC--%s--%s", toISO8601(ts), hex.EncodeToString(keyAddr[:]))
+}
+
+func toISO8601(t time.Time) string {
+	var tz string
+	name, offset := t.Zone()
+	if name == "UTC" {
+		tz = "Z"
+	} else {
+		tz = fmt.Sprintf("%03d00", offset/3600)
+	}
+	return fmt.Sprintf("%04d-%02d-%02dT%02d-%02d-%02d.%09d%s",
+		t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second(), t.Nanosecond(), tz)
+}
+
+// promptPassphrase prompts the user for a passphrase.  Set confirmation to true
+// to require the user to confirm the passphrase.
+func promptPassphrase(confirmation bool) (string, error) {
+	passphrase, err := console.Stdin.PromptPassword("Passphrase: ")
+	if err != nil {
+		return "", err
+	}
+
+	if confirmation {
+		confirm, err := console.Stdin.PromptPassword("Repeat passphrase: ")
+		if err != nil {
+			return "", err
+		}
+
+		if passphrase != confirm {
+			return "", errors.New("Passphrases do not match")
+		}
+	}
+
+	return passphrase, nil
 }
