@@ -2,7 +2,6 @@ package listener
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -10,23 +9,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	ethereum "github.com/maticnetwork/bor"
 	"github.com/maticnetwork/bor/core/types"
+	"github.com/maticnetwork/bor/ethclient"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/sethu/queue"
 	"github.com/tendermint/tendermint/libs/log"
 
 	httpClient "github.com/tendermint/tendermint/rpc/client"
-)
-
-var (
-	// ErrAlreadyStarted is returned when somebody tries to start an already
-	// running service.
-	ErrAlreadyStarted = errors.New("already started")
-	// ErrAlreadyStopped is returned when somebody tries to stop an already
-	// stopped service (without resetting it).
-	ErrAlreadyStopped = errors.New("already stopped")
-	// ErrNotStarted is returned when somebody tries to stop a not running
-	// service.
-	ErrNotStarted = errors.New("not started")
 )
 
 // Listener defines a block header listerner for Rootchain, Maticchain, Heimdall
@@ -43,7 +31,7 @@ type Listener interface {
 
 	// PublishEvent()
 
-	// Stop() error
+	Stop()
 
 	String() string
 
@@ -66,6 +54,8 @@ type BaseListener struct {
 	// contract caller
 	contractConnector helper.ContractCaller
 
+	chainClient *ethclient.Client
+
 	// header channel
 	HeaderChannel chan *types.Header
 
@@ -86,7 +76,7 @@ type BaseListener struct {
 }
 
 // NewBaseListener creates a new BaseListener.
-func NewBaseListener(cdc *codec.Codec, queueConnector *queue.QueueConnector, logger log.Logger, name string, impl Listener) *BaseListener {
+func NewBaseListener(cdc *codec.Codec, queueConnector *queue.QueueConnector, chainClient *ethclient.Client, logger log.Logger, name string, impl Listener) *BaseListener {
 
 	contractCaller, err := helper.NewContractCaller()
 	if err != nil {
@@ -113,6 +103,7 @@ func NewBaseListener(cdc *codec.Codec, queueConnector *queue.QueueConnector, log
 		cliCtx:            cliCtx,
 		queueConnector:    queueConnector,
 		contractConnector: contractCaller,
+		chainClient:       chainClient,
 
 		HeaderChannel: make(chan *types.Header),
 	}
@@ -123,35 +114,35 @@ func (bl *BaseListener) SetLogger(l log.Logger) {
 	bl.Logger = l
 }
 
-// OnStart starts new block subscription
-func (bl *BaseListener) Start() error {
-	bl.Logger.Info("Starting listener")
-	// create cancellable context
-	ctx, cancelSubscription := context.WithCancel(context.Background())
-	bl.cancelSubscription = cancelSubscription
+// // Start starts new block subscription
+// func (bl *BaseListener) Start() error {
+// 	bl.Logger.Info("Starting listener", "name", bl.String())
+// 	// create cancellable context
+// 	ctx, cancelSubscription := context.WithCancel(context.Background())
+// 	bl.cancelSubscription = cancelSubscription
 
-	// create cancellable context
-	headerCtx, cancelHeaderProcess := context.WithCancel(context.Background())
-	bl.cancelHeaderProcess = cancelHeaderProcess
+// 	// create cancellable context
+// 	headerCtx, cancelHeaderProcess := context.WithCancel(context.Background())
+// 	bl.cancelHeaderProcess = cancelHeaderProcess
 
-	// start header process
-	go bl.StartHeaderProcess(headerCtx)
+// 	// start header process
+// 	go bl.StartHeaderProcess(headerCtx)
 
-	// subscribe to new head
-	subscription, err := bl.contractConnector.MainChainClient.SubscribeNewHead(ctx, bl.HeaderChannel)
-	if err != nil {
-		// start go routine to poll for new header using client object
-		go bl.StartPolling(ctx, helper.GetConfig().SyncerPollInterval)
-	} else {
-		// start go routine to listen new header using subscription
-		go bl.StartSubscription(ctx, subscription)
-	}
+// 	// subscribe to new head
+// 	subscription, err := bl.contractConnector.MainChainClient.SubscribeNewHead(ctx, bl.HeaderChannel)
+// 	if err != nil {
+// 		// start go routine to poll for new header using client object
+// 		go bl.StartPolling(ctx, helper.GetConfig().SyncerPollInterval)
+// 	} else {
+// 		// start go routine to listen new header using subscription
+// 		go bl.StartSubscription(ctx, subscription)
+// 	}
 
-	// subscribed to new head
-	bl.Logger.Info("Subscribed to new head")
+// 	// subscribed to new head
+// 	bl.Logger.Info("Subscribed to new head")
 
-	return nil
-}
+// 	return nil
+// }
 
 // String implements Service by returning a string representation of the service.
 func (bl *BaseListener) String() string {
@@ -185,7 +176,7 @@ func (bl *BaseListener) StartPolling(ctx context.Context, pollInterval time.Dura
 	for {
 		select {
 		case <-ticker.C:
-			header, err := bl.contractConnector.MainChainClient.HeaderByNumber(ctx, nil)
+			header, err := bl.chainClient.HeaderByNumber(ctx, nil)
 			if err == nil && header != nil {
 				// send data to channel
 				bl.HeaderChannel <- header
@@ -212,4 +203,14 @@ func (bl *BaseListener) StartSubscription(ctx context.Context, subscription ethe
 			return
 		}
 	}
+}
+
+// OnStop stops all necessary go routines
+func (bl *BaseListener) Stop() {
+
+	// cancel subscription if any
+	bl.cancelSubscription()
+
+	// cancel header process
+	bl.cancelHeaderProcess()
 }

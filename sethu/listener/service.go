@@ -2,6 +2,7 @@ package listener
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/sethu/queue"
 	"github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
@@ -40,8 +41,12 @@ func NewListenerService(cdc *codec.Codec, queueConnector *queue.QueueConnector) 
 	listenerService.BaseService = *common.NewBaseService(logger, listenerServiceStr, listenerService)
 
 	rootchainListener := &RootChainListener{}
-	rootchainListener.BaseListener = *NewBaseListener(cdc, queueConnector, logger, "rootchain", rootchainListener)
+	rootchainListener.BaseListener = *NewBaseListener(cdc, queueConnector, helper.GetMainClient(), logger, "rootchain", rootchainListener)
 	listenerService.listeners = append(listenerService.listeners, rootchainListener)
+
+	maticchainListener := &MaticChainListener{}
+	maticchainListener.BaseListener = *NewBaseListener(cdc, queueConnector, helper.GetMaticClient(), logger, "maticchain", maticchainListener)
+	listenerService.listeners = append(listenerService.listeners, maticchainListener)
 
 	return listenerService
 }
@@ -62,6 +67,10 @@ func (listenerService *ListenerService) OnStart() error {
 // OnStop stops all necessary go routines
 func (listenerService *ListenerService) OnStop() {
 	listenerService.BaseService.OnStop() // Always call the overridden method.
+	// start chain listeners
+	for _, listener := range listenerService.listeners {
+		listener.Stop()
+	}
 	listenerService.Logger.Info("Listener Service Stopped")
 
 }
