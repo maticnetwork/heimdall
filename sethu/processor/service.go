@@ -43,13 +43,17 @@ func NewProcessorService(cdc *codec.Codec, queueConnector *queue.QueueConnector)
 
 	processorService.BaseService = *common.NewBaseService(logger, processorServiceStr, processorService)
 
-	stakingProcessor := &StakingProcessor{}
-	stakingProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, logger, "staking", stakingProcessor)
-	processorService.processors = append(processorService.processors, stakingProcessor)
+	// stakingProcessor := &StakingProcessor{}
+	// stakingProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, logger, "staking", stakingProcessor)
+	// processorService.processors = append(processorService.processors, stakingProcessor)
 
 	checkpointProcessor := &CheckpointProcessor{}
 	checkpointProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, logger, "checkpoint", checkpointProcessor)
 	processorService.processors = append(processorService.processors, checkpointProcessor)
+
+	stakingProcessor := &StakingProcessor{}
+	stakingProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, logger, "staking", stakingProcessor)
+	processorService.processors = append(processorService.processors, stakingProcessor)
 
 	return processorService
 }
@@ -59,10 +63,9 @@ func (processorService *ProcessorService) OnStart() error {
 	processorService.BaseService.OnStart() // Always call the overridden method.
 	processorService.Logger.Info("Processor Service Started")
 
-	// start chain listeners
+	// start processors
 	for _, processor := range processorService.processors {
-		processorService.Logger.Info("Starting Processor", "name", processor.String())
-		processor.Start()
+		go processor.Start()
 	}
 
 	return nil
