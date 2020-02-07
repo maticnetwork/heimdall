@@ -42,7 +42,7 @@ func GetStartCmd() *cobra.Command {
 			// queue connector & http client
 			_queueConnector := pier.NewQueueConnector(cdc, helper.GetConfig().AmqpURL)
 			_newQueueConnector := queue.NewQueueConnector(helper.GetConfig().AmqpURL)
-			_newQueueConnector.InitializeQueue()
+			_newQueueConnector.InitializeQueues()
 
 			_httpClient := httpClient.NewHTTP(helper.GetConfig().TendermintRPCUrl, "/websocket")
 

@@ -40,7 +40,7 @@ func NewListenerService(cdc *codec.Codec, queueConnector *queue.QueueConnector) 
 	listenerService.BaseService = *common.NewBaseService(logger, listenerServiceStr, listenerService)
 
 	rootchainListener := &RootChainListener{}
-	rootchainListener.BaseListener = *NewBaseListener(cdc, queueConnector, logger, "rootchain-listener", rootchainListener)
+	rootchainListener.BaseListener = *NewBaseListener(cdc, queueConnector, logger, "rootchain", rootchainListener)
 	listenerService.listeners = append(listenerService.listeners, rootchainListener)
 
 	return listenerService

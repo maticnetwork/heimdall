@@ -46,10 +46,11 @@ func (processorService *ProcessorService) OnStart() error {
 	processorService.BaseService.OnStart() // Always call the overridden method.
 	processorService.Logger.Info("Processor Service Started")
 
-	amqpMsgs, _ := processorService.queueConnector.ConsumeMsg("test-queue")
+	amqpMsgs, _ := processorService.queueConnector.ConsumeMsg(queue.StakingQueueName)
 	// handle all amqp messages
 	for amqpMsg := range amqpMsgs {
-		processorService.Logger.Info("Received Message", "Msg - ", string(amqpMsg.Body))
+		processorService.Logger.Info("Received Message", "Msg - ", string(amqpMsg.Body), "AppID", amqpMsg.AppId)
+
 		// send ack
 		amqpMsg.Ack(false)
 

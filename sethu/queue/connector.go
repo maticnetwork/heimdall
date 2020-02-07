@@ -32,15 +32,15 @@ func NewQueueConnector(dialer string) *QueueConnector {
 	// queue connector
 	connector := QueueConnector{
 		connection:        conn,
-		broadcastExchange: "broadcastexchange",
-		logger:            Logger.With("module", "queue-connector"),
+		broadcastExchange: BroadcastExchange,
+		logger:            Logger.With("module", Connector),
 	}
 
 	// connector
 	return &connector
 }
 
-func (qc *QueueConnector) InitializeQueue() error {
+func (qc *QueueConnector) InitializeQueues() error {
 	// initialize exchange
 	channel, err := qc.connection.Channel()
 	if err != nil {
@@ -62,24 +62,32 @@ func (qc *QueueConnector) InitializeQueue() error {
 
 	qc.logger.Info("Exchange Declared")
 
+	qc.InitializeQueue(channel, CheckpointQueueName, CheckpointQueueRoute)
+	qc.InitializeQueue(channel, StakingQueueName, StakingQueueRoute)
+	qc.InitializeQueue(channel, SpanQueueName, SpanQueueRoute)
+	qc.InitializeQueue(channel, ClerkQueueName, ClerkQueueRoute)
+	return nil
+}
+
+func (qc *QueueConnector) InitializeQueue(channel *amqp.Channel, queueName string, queueRoute string) error {
 	// queue declare
 	if _, err := channel.QueueDeclare(
-		"test-queue", // name
-		true,         // durable
-		false,        // delete when usused
-		false,        // exclusive
-		false,        // no-wait
-		nil,          // arguments
+		queueName, // name
+		true,      // durable
+		false,     // delete when usused
+		false,     // exclusive
+		false,     // no-wait
+		nil,       // arguments
 	); err != nil {
 		return err
 	}
 
-	qc.logger.Info("Queue Declared")
+	qc.logger.Info("Queue Declared", "queuename", queueName)
 
 	// bind queue
 	if err := channel.QueueBind(
-		"test-queue",         // queue name
-		"test",               // routing key
+		queueName,            // queue name
+		queueRoute,           // routing key
 		qc.broadcastExchange, // exchange
 		false,
 		nil,
@@ -87,13 +95,12 @@ func (qc *QueueConnector) InitializeQueue() error {
 		return err
 	}
 
-	qc.logger.Info("Queue Bind")
-
+	qc.logger.Info("Queue Bind", "queuename", queueName, "queueroute", queueRoute)
 	return nil
 }
 
 // PublishBytes publishes messages to queue
-func (qc *QueueConnector) PublishMsg(data []byte, route string) error {
+func (qc *QueueConnector) PublishMsg(data []byte, route string, appId string) error {
 	// initialize exchange
 	channel, err := qc.connection.Channel()
 	if err != nil {
@@ -106,6 +113,7 @@ func (qc *QueueConnector) PublishMsg(data []byte, route string) error {
 		false,                // mandatory
 		false,                // immediate
 		amqp.Publishing{
+			AppId:       appId,
 			ContentType: "text/plain",
 			Body:        data,
 		}); err != nil {
@@ -116,7 +124,7 @@ func (qc *QueueConnector) PublishMsg(data []byte, route string) error {
 	return nil
 }
 
-func (qc *QueueConnector) ConsumeMsg(queue string) (<-chan amqp.Delivery, error) {
+func (qc *QueueConnector) ConsumeMsg(queueName string) (<-chan amqp.Delivery, error) {
 	// initialize exchange
 	channel, err := qc.connection.Channel()
 	if err != nil {
@@ -124,13 +132,13 @@ func (qc *QueueConnector) ConsumeMsg(queue string) (<-chan amqp.Delivery, error)
 	}
 	// start consuming
 	msgs, err := channel.Consume(
-		queue, // queue
-		queue, // consumer  -- consumer identifier
-		false, // auto-ack
-		false, // exclusive
-		false, // no-local
-		false, // no-wait
-		nil,   // args
+		queueName, // queue
+		queueName, // consumer  -- consumer identifier
+		false,     // auto-ack
+		false,     // exclusive
+		false,     // no-local
+		false,     // no-wait
+		nil,       // args
 	)
 	if err != nil {
 		return nil, err

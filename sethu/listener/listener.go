@@ -137,15 +137,15 @@ func (bl *BaseListener) Start() error {
 	// start header process
 	go bl.StartHeaderProcess(headerCtx)
 
-	// // subscribe to new head
-	// subscription, err := bl.contractConnector.MainChainClient.SubscribeNewHead(ctx, bl.HeaderChannel)
-	// if err != nil {
-	// 	// start go routine to poll for new header using client object
-	go bl.StartPolling(ctx, helper.GetConfig().SyncerPollInterval)
-	// } else {
-	// 	// start go routine to listen new header using subscription
-	// 	go bl.StartSubscription(ctx, subscription)
-	// }
+	// subscribe to new head
+	subscription, err := bl.contractConnector.MainChainClient.SubscribeNewHead(ctx, bl.HeaderChannel)
+	if err != nil {
+		// start go routine to poll for new header using client object
+		go bl.StartPolling(ctx, helper.GetConfig().SyncerPollInterval)
+	} else {
+		// start go routine to listen new header using subscription
+		go bl.StartSubscription(ctx, subscription)
+	}
 
 	// subscribed to new head
 	bl.Logger.Info("Subscribed to new head")
