@@ -11,7 +11,10 @@ type CheckpointProcessor struct {
 func (cp *CheckpointProcessor) Start() error {
 	cp.Logger.Info("Starting Processor", "name", cp.String())
 
-	amqpMsgs, _ := cp.queueConnector.ConsumeMsg(queue.CheckpointQueueName)
+	amqpMsgs, err := cp.queueConnector.ConsumeMsg(queue.CheckpointQueueName)
+	if err != nil {
+		cp.Logger.Info("error consuming msg", "error", err)
+	}
 	// handle all amqp messages
 	for amqpMsg := range amqpMsgs {
 		cp.Logger.Info("Received Message from checkpoint queue", "Msg - ", string(amqpMsg.Body), "AppID", amqpMsg.AppId)

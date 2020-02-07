@@ -43,10 +43,6 @@ func NewProcessorService(cdc *codec.Codec, queueConnector *queue.QueueConnector)
 
 	processorService.BaseService = *common.NewBaseService(logger, processorServiceStr, processorService)
 
-	// stakingProcessor := &StakingProcessor{}
-	// stakingProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, logger, "staking", stakingProcessor)
-	// processorService.processors = append(processorService.processors, stakingProcessor)
-
 	checkpointProcessor := &CheckpointProcessor{}
 	checkpointProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, logger, "checkpoint", checkpointProcessor)
 	processorService.processors = append(processorService.processors, checkpointProcessor)

@@ -31,7 +31,7 @@ func (ml *MaticChainListener) Start() error {
 	subscription, err := ml.contractConnector.MaticChainClient.SubscribeNewHead(ctx, ml.HeaderChannel)
 	if err != nil {
 		// start go routine to poll for new header using client object
-		go ml.StartPolling(ctx, helper.GetConfig().SyncerPollInterval)
+		go ml.StartPolling(ctx, helper.GetConfig().CheckpointerPollInterval)
 	} else {
 		// start go routine to listen new header using subscription
 		go ml.StartSubscription(ctx, subscription)
@@ -45,5 +45,5 @@ func (ml *MaticChainListener) Start() error {
 
 func (ml *MaticChainListener) ProcessHeader(newHeader *types.Header) {
 	ml.Logger.Info("Received Headerblock from maticchain", "header", newHeader)
-	ml.queueConnector.PublishMsg([]byte("Checkpoint Msg"), queue.CheckpointQueueName, ml.String())
+	ml.queueConnector.PublishMsg([]byte("Checkpoint Msg"), queue.CheckpointQueueRoute, ml.String())
 }
