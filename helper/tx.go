@@ -58,7 +58,7 @@ func (c *ContractCaller) SendCheckpoint(voteSignBytes []byte, sigs []byte, txDat
 	if err != nil {
 		Logger.Error("Unable to decode vote while sending checkpoint", "vote", hex.EncodeToString(voteSignBytes), "sigs", hex.EncodeToString(sigs), "txData", hex.EncodeToString(txData))
 	}
-	// get stakeManager Instance
+	// submit checkpoint
 	rootchainABI, err := GetRootChainABI()
 	if err != nil {
 		return
