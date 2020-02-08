@@ -7,7 +7,12 @@ ldflags = -X github.com/maticnetwork/heimdall/version.Name=heimdall \
 		  -X github.com/maticnetwork/heimdall/version.ServerName=heimdalld \
 		  -X github.com/maticnetwork/heimdall/version.ClientName=heimdallcli \
 		  -X github.com/maticnetwork/heimdall/version.Version=$(VERSION) \
-		  -X github.com/maticnetwork/heimdall/version.Commit=$(COMMIT)
+		  -X github.com/maticnetwork/heimdall/version.Commit=$(COMMIT) \
+			-X github.com/cosmos/cosmos-sdk/version.Name=heimdall \
+		  -X github.com/cosmos/cosmos-sdk/version.ServerName=heimdalld \
+		  -X github.com/cosmos/cosmos-sdk/version.ClientName=heimdallcli \
+		  -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
+		  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT)
 
 BUILD_FLAGS := -ldflags '$(ldflags)'
 
