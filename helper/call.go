@@ -11,11 +11,14 @@ import (
 	ethTypes "github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/bor/ethclient"
 	"github.com/maticnetwork/bor/rpc"
+	"github.com/maticnetwork/heimdall/contracts/erc20"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
+	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
 	"github.com/maticnetwork/heimdall/contracts/statereceiver"
 	"github.com/maticnetwork/heimdall/contracts/statesender"
 	"github.com/maticnetwork/heimdall/contracts/validatorset"
+
 	"github.com/maticnetwork/heimdall/types"
 )
 
@@ -39,6 +42,8 @@ type IContractCaller interface {
 	DecodeSignerUpdateEvent(*ethTypes.Receipt, uint64) (*stakinginfo.StakinginfoSignerChange, error)
 	GetMainTxReceipt(common.Hash) (*ethTypes.Receipt, error)
 	GetMaticTxReceipt(common.Hash) (*ethTypes.Receipt, error)
+	ApproveTokens(int64) error
+	StakeFor(common.Address, int64, int64) error
 
 	CurrentAccountStateRoot() ([32]byte, error)
 
@@ -60,12 +65,16 @@ type ContractCaller struct {
 	ValidatorSetInstance  *validatorset.Validatorset
 	StateSenderInstance   *statesender.Statesender
 	StateReceiverInstance *statereceiver.Statereceiver
+	StakeManagerInstance  *stakemanager.Stakemanager
+	MaticTokenInstance    *erc20.Erc20
 
 	RootChainABI     abi.ABI
 	StakingInfoABI   abi.ABI
 	ValidatorSetABI  abi.ABI
 	StateReceiverABI abi.ABI
 	StateSenderABI   abi.ABI
+	StakeManagerABI  abi.ABI
+	MaticTokenABI    abi.ABI
 }
 
 type txExtraInfo struct {
@@ -101,11 +110,19 @@ func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 		return
 	}
 
+	if contractCallerObj.StakeManagerInstance, err = stakemanager.NewStakemanager(GetStakeManagerAddress(), contractCallerObj.MainChainClient); err != nil {
+		return
+	}
+
 	if contractCallerObj.StateSenderInstance, err = statesender.NewStatesender(GetStateSenderAddress(), contractCallerObj.MainChainClient); err != nil {
 		return
 	}
 
 	if contractCallerObj.StateReceiverInstance, err = statereceiver.NewStatereceiver(GetStateReceiverAddress(), contractCallerObj.MaticChainClient); err != nil {
+		return
+	}
+
+	if contractCallerObj.MaticTokenInstance, err = erc20.NewErc20(GetMaticTokenAddress(), contractCallerObj.MainChainClient); err != nil {
 		return
 	}
 
@@ -130,6 +147,10 @@ func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 	}
 
 	if contractCallerObj.StateSenderABI, err = getABI(string(statesender.StatesenderABI)); err != nil {
+		return
+	}
+
+	if contractCallerObj.StakeManagerABI, err = getABI(string(stakemanager.StakemanagerABI)); err != nil {
 		return
 	}
 

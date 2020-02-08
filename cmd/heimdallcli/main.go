@@ -100,6 +100,8 @@ func main() {
 		generateValidatorKey(cdc),
 		client.LineBreak,
 		version.Cmd,
+		StakeCmd(),
+		ApproveCmd(),
 	)
 
 	// bind with-heimdall-config config with root cmd

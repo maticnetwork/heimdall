@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/common"
 	ethCrypto "github.com/maticnetwork/bor/crypto"
 	"github.com/maticnetwork/bor/ethclient"
@@ -108,6 +107,8 @@ type Configuration struct {
 	StateSenderAddress   string `mapstructure:"state_sender_contract"`   // main
 	StateReceiverAddress string `mapstructure:"state_receiver_contract"` // matic
 	ValidatorSetAddress  string `mapstructure:"validator_set_contract"`  // Validator Set contract address on bor chain
+	StakeManagerAddress  string `mapstructure:"stake_manager_contract"`
+	MaticTokenAddress    string `mapstructure:"matic_token"`
 
 	ChildBlockInterval uint64 `mapstructure:"child_chain_block_interval"` // Difference between header index of 2 child blocks submitted on main chain
 
@@ -231,9 +232,12 @@ func GetDefaultHeimdallConfig() Configuration {
 		AmqpURL:           DefaultAmqpURL,
 		HeimdallServerURL: DefaultHeimdallServerURL,
 
-		StakingInfoAddress:   (common.Address{}).Hex(),
-		RootchainAddress:     (common.Address{}).Hex(),
-		StateSenderAddress:   (common.Address{}).Hex(),
+		StakingInfoAddress:  (common.Address{}).Hex(),
+		RootchainAddress:    (common.Address{}).Hex(),
+		StateSenderAddress:  (common.Address{}).Hex(),
+		StakeManagerAddress: (common.Address{}).Hex(),
+		MaticTokenAddress:   (common.Address{}).Hex(),
+
 		StateReceiverAddress: DefaultStateReceiverAddress,
 		ValidatorSetAddress:  DefaultValidatorSetAddress,
 
@@ -264,22 +268,6 @@ func GetGenesisDoc() tmTypes.GenesisDoc {
 	return GenesisDoc
 }
 
-// func initContracts() error {
-// 	rootChainInstance, err := rootchain.NewRootchain(GetRootChainAddress(), mainChainClient)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	rootchainABI, err := abi.JSON(strings.NewReader(rootchain.RootchainABI))
-// 	if err != nil {
-// 		return err
-// 	}
-// 	RootChain = types.NewContract("rootchain", common.HexToAddress(GetConfig().RootchainAddress), rootchainABI, 0, rootChainInstance)
-// }
-
-//
-// Root chain
-//
-
 // GetRootChainAddress returns RootChain contract address for selected base chain
 func GetRootChainAddress() common.Address {
 	return common.HexToAddress(GetConfig().RootchainAddress)
@@ -295,15 +283,6 @@ func GetRootChainInstance() (*rootchain.Rootchain, error) {
 	return rootChainInstance, err
 }
 
-// GetRootChainABI returns ABI for RootChain contract
-func GetRootChainABI() (abi.ABI, error) {
-	return abi.JSON(strings.NewReader(rootchain.RootchainABI))
-}
-
-//
-// Staking Info
-//
-
 // GetStakingInfoAddress returns StakingInfo contract address for selected base chain
 func GetStakingInfoAddress() common.Address {
 	return common.HexToAddress(GetConfig().StakingInfoAddress)
@@ -314,36 +293,29 @@ func GetStakingInfoInstance() (*stakinginfo.Stakinginfo, error) {
 	return stakinginfo.NewStakinginfo(GetStakingInfoAddress(), mainChainClient)
 }
 
-// GetStakingInfoABI returns ABI for StakingInfo contract
-func GetStakingInfoABI() (abi.ABI, error) {
-	return abi.JSON(strings.NewReader(stakinginfo.StakinginfoABI))
-}
-
-//
-// Validator set
-//
-
 // GetValidatorSetAddress returns Validator set contract address for selected base chain
 func GetValidatorSetAddress() common.Address {
 	return common.HexToAddress(GetConfig().ValidatorSetAddress)
 }
-
-//
-// State sender
-//
 
 // GetStateSenderAddress returns state sender contract address for selected base chain
 func GetStateSenderAddress() common.Address {
 	return common.HexToAddress(GetConfig().StateSenderAddress)
 }
 
-//
-// State sender
-//
-
 // GetStateReceiverAddress returns state receiver contract address for selected child chain
 func GetStateReceiverAddress() common.Address {
 	return common.HexToAddress(GetConfig().StateReceiverAddress)
+}
+
+// GetStakeManagerAddress returns state receiver contract address for selected child chain
+func GetStakeManagerAddress() common.Address {
+	return common.HexToAddress(GetConfig().StakeManagerAddress)
+}
+
+// GetMaticTokenAddress
+func GetMaticTokenAddress() common.Address {
+	return common.HexToAddress(GetConfig().MaticTokenAddress)
 }
 
 //
