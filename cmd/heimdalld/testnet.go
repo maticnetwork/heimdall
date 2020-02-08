@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/libs/common"
+	tmtime "github.com/tendermint/tendermint/types/time"
 
 	"github.com/maticnetwork/heimdall/app"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
@@ -78,6 +79,9 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 
 			nodeDaemonHomeName := viper.GetString(flagNodeDaemonHome)
 			nodeCliHomeName := viper.GetString(flagNodeCliHome)
+
+			// get genesis time
+			genesisTime := tmtime.Now()
 
 			for i := 0; i < totalValidators; i++ {
 				// get node dir name = PREFIX+INDEX
@@ -160,7 +164,7 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 			}
 
 			for i := 0; i < len(validators); i++ {
-				writeGenesisFile(genFiles[i], chainID, appStateJSON)
+				writeGenesisFile(genesisTime, genFiles[i], chainID, appStateJSON)
 			}
 
 			// dump signer information in a json file
