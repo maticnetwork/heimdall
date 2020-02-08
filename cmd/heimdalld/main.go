@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -27,6 +28,7 @@ import (
 	"github.com/tendermint/tendermint/p2p"
 	"github.com/tendermint/tendermint/privval"
 	tmTypes "github.com/tendermint/tendermint/types"
+	tmtime "github.com/tendermint/tendermint/types/time"
 	dbm "github.com/tendermint/tm-db"
 
 	"github.com/maticnetwork/heimdall/app"
@@ -269,10 +271,15 @@ func getGenesisAccount(address []byte) authTypes.GenesisAccount {
 // WriteGenesisFile creates and writes the genesis configuration to disk. An
 // error is returned if building or writing the configuration to file fails.
 // nolint: unparam
-func writeGenesisFile(genesisFile, chainID string, appState json.RawMessage) error {
+func writeGenesisFile(genesisTime time.Time, genesisFile, chainID string, appState json.RawMessage) error {
 	genDoc := tmTypes.GenesisDoc{
-		ChainID:  chainID,
-		AppState: appState,
+		GenesisTime: genesisTime,
+		ChainID:     chainID,
+		AppState:    appState,
+	}
+
+	if genDoc.GenesisTime.IsZero() {
+		genDoc.GenesisTime = tmtime.Now()
 	}
 
 	if err := genDoc.ValidateAndComplete(); err != nil {
