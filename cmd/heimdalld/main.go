@@ -54,9 +54,9 @@ var ZeroIntString = big.NewInt(0).String()
 
 // ValidatorAccountFormatter helps to print local validator account information
 type ValidatorAccountFormatter struct {
-	Address string `json:"address" yaml:"address"`
-	PrivKey string `json:"priv_key" yaml:"priv_key"`
-	PubKey  string `json:"pub_key" yaml:"pub_key"`
+	Address string `json:"address,omitempty" yaml:"address"`
+	PrivKey string `json:"priv_key,omitempty" yaml:"priv_key"`
+	PubKey  string `json:"pub_key,omitempty" yaml:"pub_key"`
 }
 
 // GetSignerInfo returns signer information
@@ -96,7 +96,8 @@ func main() {
 		rootCmd.Flags().Lookup(helper.WithHeimdallConfigFlag),
 	)
 	server.AddCommands(ctx, cdc, rootCmd, newApp, exportAppStateAndTMValidators)
-	rootCmd.AddCommand(newAccountCmd())
+	rootCmd.AddCommand(showAccountCmd())
+	rootCmd.AddCommand(showPrivateKeyCmd())
 	rootCmd.AddCommand(hmserver.ServeCommands(cdc, hmserver.RegisterRoutes))
 	rootCmd.AddCommand(VerifyGenesis(ctx, cdc))
 	rootCmd.AddCommand(initCmd(ctx, cdc))
@@ -123,22 +124,46 @@ func exportAppStateAndTMValidators(logger log.Logger, db dbm.DB, storeTracer io.
 	return bapp.ExportAppStateAndValidators()
 }
 
-func newAccountCmd() *cobra.Command {
+func showAccountCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "show-account",
-		Short: "Print the account's private key and public key",
+		Short: "Print the account's address and public key",
+		Run: func(cmd *cobra.Command, args []string) {
+			// init heimdall config
+			helper.InitHeimdallConfig("")
+
+			// get public keys
+			pubObject := helper.GetPubKey()
+
+			account := &ValidatorAccountFormatter{
+				Address: ethCommon.BytesToAddress(pubObject.Address().Bytes()).String(),
+				PubKey:  "0x" + hex.EncodeToString(pubObject[:]),
+			}
+
+			b, err := json.MarshalIndent(account, "", "    ")
+			if err != nil {
+				panic(err)
+			}
+
+			// prints json info
+			fmt.Printf("%s", string(b))
+		},
+	}
+}
+
+func showPrivateKeyCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "show-privatekey",
+		Short: "Print the account's private key",
 		Run: func(cmd *cobra.Command, args []string) {
 			// init heimdall config
 			helper.InitHeimdallConfig("")
 
 			// get private and public keys
 			privObject := helper.GetPrivKey()
-			pubObject := helper.GetPubKey()
 
 			account := &ValidatorAccountFormatter{
-				Address: ethCommon.BytesToAddress(pubObject.Address().Bytes()).String(),
 				PrivKey: "0x" + hex.EncodeToString(privObject[:]),
-				PubKey:  "0x" + hex.EncodeToString(pubObject[:]),
 			}
 
 			b, err := json.MarshalIndent(account, "", "    ")
