@@ -289,8 +289,9 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 				switch selectedEvent.Name {
 				case "NewHeaderBlock":
 					syncer.processCheckpointEvent(selectedEvent.Name, abiObject, &vLog)
-				case "Staked":
-					syncer.processStakedEvent(selectedEvent.Name, abiObject, &vLog)
+				// TODO remove post new bridge design
+				// case "Staked":
+				// 	syncer.processStakedEvent(selectedEvent.Name, abiObject, &vLog)
 				case "UnstakeInit":
 					syncer.processUnstakeInitEvent(selectedEvent.Name, abiObject, &vLog)
 				case "StakeUpdate":
