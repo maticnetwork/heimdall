@@ -283,7 +283,7 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 	for _, vLog := range logs {
 		topic := vLog.Topics[0].Bytes()
 		for _, abiObject := range syncer.abis {
-			selectedEvent := EventByID(abiObject, topic)
+			selectedEvent := helper.EventByID(abiObject, topic)
 			if selectedEvent != nil {
 				syncer.Logger.Debug("selectedEvent ", " event name -", selectedEvent.Name)
 				switch selectedEvent.Name {
@@ -569,18 +569,4 @@ func (syncer *Syncer) processTopupFeeEvent(eventName string, abiObject *abi.ABI,
 		msg := bankTypes.NewMsgTopup(helper.GetFromAddress(syncer.cliCtx), event.ValidatorId.Uint64(), hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()), uint64(vLog.Index))
 		syncer.queueConnector.BroadcastToHeimdall(msg)
 	}
-}
-
-//
-// Utils
-//
-
-// EventByID looks up a event by the topic id
-func EventByID(abiObject *abi.ABI, sigdata []byte) *abi.Event {
-	for _, event := range abiObject.Events {
-		if bytes.Equal(event.Id().Bytes(), sigdata) {
-			return &event
-		}
-	}
-	return nil
 }
