@@ -100,6 +100,9 @@ func main() {
 		generateValidatorKey(cdc),
 		client.LineBreak,
 		version.Cmd,
+		client.LineBreak,
+
+		// approve and stake on mainnet
 		StakeCmd(),
 		ApproveCmd(),
 	)

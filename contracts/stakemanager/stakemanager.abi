@@ -1,349 +1,5 @@
 [
 	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "validatorId",
-				"type": "uint256"
-			},
-			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "amount",
-				"type": "uint256"
-			},
-			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "totalAmount",
-				"type": "uint256"
-			}
-		],
-		"name": "ClaimRewards",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "newValidatorId",
-				"type": "uint256"
-			},
-			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "oldValidatorId",
-				"type": "uint256"
-			},
-			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "amount",
-				"type": "uint256"
-			}
-		],
-		"name": "ConfirmAuction",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "newDynasty",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "oldDynasty",
-				"type": "uint256"
-			}
-		],
-		"name": "DynastyValueChange",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "validatorId",
-				"type": "uint256"
-			},
-			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "exitEpoch",
-				"type": "uint256"
-			}
-		],
-		"name": "Jailed",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "validatorId",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "amount",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "total",
-				"type": "uint256"
-			}
-		],
-		"name": "ReStaked",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "newReward",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "oldReward",
-				"type": "uint256"
-			}
-		],
-		"name": "RewardUpdate",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "validatorId",
-				"type": "uint256"
-			},
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "oldSigner",
-				"type": "address"
-			},
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "newSigner",
-				"type": "address"
-			}
-		],
-		"name": "SignerChange",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "validatorId",
-				"type": "uint256"
-			},
-			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "oldAmount",
-				"type": "uint256"
-			},
-			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "newAmount",
-				"type": "uint256"
-			}
-		],
-		"name": "StakeUpdate",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "signer",
-				"type": "address"
-			},
-			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "validatorId",
-				"type": "uint256"
-			},
-			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "activationEpoch",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "amount",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "total",
-				"type": "uint256"
-			}
-		],
-		"name": "Staked",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "validatorId",
-				"type": "uint256"
-			},
-			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "amount",
-				"type": "uint256"
-			},
-			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "auctionAmount",
-				"type": "uint256"
-			}
-		],
-		"name": "StartAuction",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "newThreshold",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "oldThreshold",
-				"type": "uint256"
-			}
-		],
-		"name": "ThresholdChange",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "validatorId",
-				"type": "uint256"
-			},
-			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "fee",
-				"type": "uint256"
-			}
-		],
-		"name": "TopUpFee",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "user",
-				"type": "address"
-			},
-			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "validatorId",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "deactivationEpoch",
-				"type": "uint256"
-			},
-			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "amount",
-				"type": "uint256"
-			}
-		],
-		"name": "UnstakeInit",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "user",
-				"type": "address"
-			},
-			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "validatorId",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "amount",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "total",
-				"type": "uint256"
-			}
-		],
-		"name": "Unstaked",
-		"type": "event"
-	},
-	{
 		"constant": true,
 		"inputs": [],
 		"name": "WITHDRAWAL_DELAY",
@@ -376,6 +32,11 @@
 	{
 		"constant": false,
 		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "stakePower",
+				"type": "uint256"
+			},
 			{
 				"internalType": "uint256",
 				"name": "blockInterval",
@@ -419,7 +80,7 @@
 			},
 			{
 				"internalType": "uint256",
-				"name": "commissionRate",
+				"name": "heimdallFee",
 				"type": "uint256"
 			},
 			{
@@ -429,7 +90,7 @@
 			},
 			{
 				"internalType": "bool",
-				"name": "isContract",
+				"name": "needDelegation",
 				"type": "bool"
 			}
 		],
@@ -459,6 +120,11 @@
 		"inputs": [
 			{
 				"internalType": "uint256",
+				"name": "validatorId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
 				"name": "amount",
 				"type": "uint256"
 			},
@@ -468,78 +134,10 @@
 				"type": "address"
 			}
 		],
-		"name": "delegatorWithdrawal",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			}
-		],
+		"name": "delegationTransfer",
+		"outputs": [],
 		"payable": false,
 		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "validatorId",
-				"type": "uint256"
-			}
-		],
-		"name": "getStakerDetails",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			},
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "validatorId",
-				"type": "uint256"
-			}
-		],
-		"name": "isValidator",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
 		"type": "function"
 	},
 	{
@@ -552,7 +150,7 @@
 			},
 			{
 				"internalType": "uint256",
-				"name": "commissionRate",
+				"name": "heimdallFee",
 				"type": "uint256"
 			},
 			{
@@ -562,7 +160,7 @@
 			},
 			{
 				"internalType": "bool",
-				"name": "acceptDelegation",
+				"name": "needDelegation",
 				"type": "bool"
 			}
 		],
@@ -587,7 +185,7 @@
 			},
 			{
 				"internalType": "uint256",
-				"name": "commissionRate",
+				"name": "heimdallFee",
 				"type": "uint256"
 			},
 			{
@@ -597,7 +195,7 @@
 			},
 			{
 				"internalType": "bool",
-				"name": "acceptDelegation",
+				"name": "needDelegation",
 				"type": "bool"
 			}
 		],
@@ -683,33 +281,7 @@
 		"inputs": [
 			{
 				"internalType": "uint256",
-				"name": "_reward",
-				"type": "uint256"
-			}
-		],
-		"name": "updateTotalRewardsLiquidated",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [
-			{
-				"internalType": "uint256",
 				"name": "validatorId",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "epoch",
 				"type": "uint256"
 			},
 			{

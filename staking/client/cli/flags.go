@@ -8,6 +8,7 @@ const (
 	FlagSignerPubkey     = "signer-pubkey"
 	FlagNewSignerPubkey  = "new-pubkey"
 	FlagAmount           = "staked-amount"
+	FlagAcceptDelegation = "accept-delegation"
 	FlagTxHash           = "tx-hash"
 	FlagLogIndex         = "log-index"
 	FlagFeeAmount        = "fee-amount"
