@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/common"
+	tmtime "github.com/tendermint/tendermint/types/time"
 
 	"github.com/maticnetwork/heimdall/app"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
@@ -107,7 +108,7 @@ func initCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			}
 
 			fmt.Fprintf(os.Stderr, "%s\n", string(out))
-			return writeGenesisFile(config.GenesisFile(), chainID, appStateJSON)
+			return writeGenesisFile(tmtime.Now(), config.GenesisFile(), chainID, appStateJSON)
 		},
 	}
 

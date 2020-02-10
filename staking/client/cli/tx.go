@@ -1,7 +1,9 @@
 package cli
 
 import (
+	"bytes"
 	"encoding/hex"
+	"errors"
 	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -11,7 +13,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/maticnetwork/bor/common"
 	hmClient "github.com/maticnetwork/heimdall/client"
+	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -52,34 +56,65 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 				proposer = helper.GetFromAddress(cliCtx)
 			}
 
-			validatorID := viper.GetInt64(FlagValidatorID)
-			if validatorID == 0 {
-				return fmt.Errorf("Validator ID cannot be zero")
+			txhash := viper.GetString(FlagTxHash)
+			if txhash == "" {
+				return fmt.Errorf("transaction hash is required")
 			}
 
 			pubkeyStr := viper.GetString(FlagSignerPubkey)
 			if pubkeyStr == "" {
-				return fmt.Errorf("pubkey has to be supplied")
+				return fmt.Errorf("pubkey is required")
 			}
 
-			txhash := viper.GetString(FlagTxHash)
-			if txhash == "" {
-				return fmt.Errorf("transaction hash has to be supplied")
+			pubkeyBytes := common.FromHex(pubkeyStr)
+			if len(pubkeyBytes) != 65 {
+				return fmt.Errorf("Invalid public key length")
 			}
+			pubkey := hmTypes.NewPubKey(pubkeyBytes)
 
-			pubkeyBytes, err := hex.DecodeString(pubkeyStr)
+			contractCallerObj, err := helper.NewContractCaller()
 			if err != nil {
 				return err
 			}
-			pubkey := hmTypes.NewPubKey(pubkeyBytes)
+
+			// get main tx receipt
+			receipt, err := contractCallerObj.GetConfirmedTxReceipt(hmTypes.HexToHeimdallHash(txhash).EthHash())
+			if err != nil || receipt == nil {
+				return errors.New("Transaction is not confirmed yet. Please for sometime and try again")
+			}
+
+			abiObject := &contractCallerObj.StakingInfoABI
+			eventName := "Staked"
+			event := new(stakinginfo.StakinginfoStaked)
+			logIndex := -1
+			for i, vLog := range receipt.Logs {
+				topic := vLog.Topics[0].Bytes()
+				selectedEvent := helper.EventByID(abiObject, topic)
+				if selectedEvent != nil && selectedEvent.Name == eventName {
+					if err := helper.UnpackLog(abiObject, event, eventName, vLog); err != nil {
+						return err
+					}
+
+					logIndex = i
+					break
+				}
+			}
+
+			if logIndex == -1 {
+				return fmt.Errorf("Invalid tx for validator join")
+			}
+
+			if !bytes.Equal(event.Signer.Bytes(), pubkey.Address().Bytes()) {
+				return fmt.Errorf("Invalid public key. Signer address and pubkey are not related")
+			}
 
 			// msg
 			msg := types.NewMsgValidatorJoin(
 				proposer,
-				uint64(validatorID),
+				event.ValidatorId.Uint64(),
 				pubkey,
 				hmTypes.HexToHeimdallHash(txhash),
-				uint64(viper.GetInt64(FlagLogIndex)),
+				uint64(logIndex),
 			)
 
 			// broadcast messages
@@ -88,18 +123,14 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 	}
 
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
-	cmd.Flags().Int(FlagValidatorID, 0, "--id=<validator ID here>")
 	cmd.Flags().String(FlagSignerPubkey, "", "--signer-pubkey=<signer pubkey here>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
-	cmd.Flags().String(FlagLogIndex, "", "--log-index=<log-index>")
-	cmd.MarkFlagRequired(FlagValidatorID)
 	cmd.MarkFlagRequired(FlagSignerPubkey)
 	cmd.MarkFlagRequired(FlagTxHash)
-	cmd.MarkFlagRequired(FlagLogIndex)
 	return cmd
 }
 
-// send validator exit transaction
+// SendValidatorExitTx sends validator exit transaction
 func SendValidatorExitTx(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "validator-exit",
