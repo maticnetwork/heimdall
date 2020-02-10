@@ -1,11 +1,36 @@
 [
 	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "amount",
+				"type": "uint256"
+			},
+			{
+				"name": "heimdallFee",
+				"type": "uint256"
+			},
+			{
+				"name": "signer",
+				"type": "address"
+			},
+			{
+				"name": "acceptDelegation",
+				"type": "bool"
+			}
+		],
+		"name": "stake",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
 		"constant": true,
 		"inputs": [],
 		"name": "WITHDRAWAL_DELAY",
 		"outputs": [
 			{
-				"internalType": "uint256",
 				"name": "",
 				"type": "uint256"
 			}
@@ -20,7 +45,6 @@
 		"name": "accountStateRoot",
 		"outputs": [
 			{
-				"internalType": "bytes32",
 				"name": "",
 				"type": "bytes32"
 			}
@@ -33,239 +57,6 @@
 		"constant": false,
 		"inputs": [
 			{
-				"internalType": "uint256",
-				"name": "stakePower",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "blockInterval",
-				"type": "uint256"
-			},
-			{
-				"internalType": "bytes32",
-				"name": "voteHash",
-				"type": "bytes32"
-			},
-			{
-				"internalType": "bytes32",
-				"name": "stateRoot",
-				"type": "bytes32"
-			},
-			{
-				"internalType": "bytes",
-				"name": "sigs",
-				"type": "bytes"
-			}
-		],
-		"name": "checkSignatures",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "validatorId",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "heimdallFee",
-				"type": "uint256"
-			},
-			{
-				"internalType": "address",
-				"name": "signer",
-				"type": "address"
-			},
-			{
-				"internalType": "bool",
-				"name": "needDelegation",
-				"type": "bool"
-			}
-		],
-		"name": "confirmAuctionBid",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [],
-		"name": "currentEpoch",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "validatorId",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "amount",
-				"type": "uint256"
-			},
-			{
-				"internalType": "address",
-				"name": "delegator",
-				"type": "address"
-			}
-		],
-		"name": "delegationTransfer",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "amount",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "heimdallFee",
-				"type": "uint256"
-			},
-			{
-				"internalType": "address",
-				"name": "signer",
-				"type": "address"
-			},
-			{
-				"internalType": "bool",
-				"name": "needDelegation",
-				"type": "bool"
-			}
-		],
-		"name": "stake",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "user",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "amount",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "heimdallFee",
-				"type": "uint256"
-			},
-			{
-				"internalType": "address",
-				"name": "signer",
-				"type": "address"
-			},
-			{
-				"internalType": "bool",
-				"name": "needDelegation",
-				"type": "bool"
-			}
-		],
-		"name": "stakeFor",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "validatorId",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "amount",
-				"type": "uint256"
-			}
-		],
-		"name": "startAuction",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [],
-		"name": "supportsHistory",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"payable": false,
-		"stateMutability": "pure",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "addr",
-				"type": "address"
-			}
-		],
-		"name": "totalStakedFor",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [
-			{
-				"internalType": "uint256",
 				"name": "validatorId",
 				"type": "uint256"
 			}
@@ -280,12 +71,188 @@
 		"constant": false,
 		"inputs": [
 			{
-				"internalType": "uint256",
 				"name": "validatorId",
 				"type": "uint256"
 			},
 			{
-				"internalType": "int256",
+				"name": "amount",
+				"type": "uint256"
+			},
+			{
+				"name": "delegator",
+				"type": "address"
+			}
+		],
+		"name": "delegationTransfer",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "addr",
+				"type": "address"
+			}
+		],
+		"name": "totalStakedFor",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "validatorId",
+				"type": "uint256"
+			},
+			{
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "startAuction",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "stakePower",
+				"type": "uint256"
+			},
+			{
+				"name": "blockInterval",
+				"type": "uint256"
+			},
+			{
+				"name": "voteHash",
+				"type": "bytes32"
+			},
+			{
+				"name": "stateRoot",
+				"type": "bytes32"
+			},
+			{
+				"name": "sigs",
+				"type": "bytes"
+			}
+		],
+		"name": "checkSignatures",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "supportsHistory",
+		"outputs": [
+			{
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"payable": false,
+		"stateMutability": "pure",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "user",
+				"type": "address"
+			},
+			{
+				"name": "amount",
+				"type": "uint256"
+			},
+			{
+				"name": "heimdallFee",
+				"type": "uint256"
+			},
+			{
+				"name": "signer",
+				"type": "address"
+			},
+			{
+				"name": "acceptDelegation",
+				"type": "bool"
+			}
+		],
+		"name": "stakeFor",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "currentEpoch",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "validatorId",
+				"type": "uint256"
+			},
+			{
+				"name": "heimdallFee",
+				"type": "uint256"
+			},
+			{
+				"name": "signer",
+				"type": "address"
+			},
+			{
+				"name": "acceptDelegation",
+				"type": "bool"
+			}
+		],
+		"name": "confirmAuctionBid",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "validatorId",
+				"type": "uint256"
+			},
+			{
 				"name": "amount",
 				"type": "int256"
 			}

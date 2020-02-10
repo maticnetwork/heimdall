@@ -28,7 +28,7 @@ var (
 )
 
 // StakemanagerABI is the input ABI used to generate the binding from.
-const StakemanagerABI = "[{\"constant\":true,\"inputs\":[],\"name\":\"WITHDRAWAL_DELAY\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"accountStateRoot\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"stakePower\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"blockInterval\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"voteHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"stateRoot\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"sigs\",\"type\":\"bytes\"}],\"name\":\"checkSignatures\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"heimdallFee\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"needDelegation\",\"type\":\"bool\"}],\"name\":\"confirmAuctionBid\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"currentEpoch\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"delegator\",\"type\":\"address\"}],\"name\":\"delegationTransfer\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"heimdallFee\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"needDelegation\",\"type\":\"bool\"}],\"name\":\"stake\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"heimdallFee\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"needDelegation\",\"type\":\"bool\"}],\"name\":\"stakeFor\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"startAuction\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"supportsHistory\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"pure\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"}],\"name\":\"totalStakedFor\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"}],\"name\":\"unstake\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"},{\"internalType\":\"int256\",\"name\":\"amount\",\"type\":\"int256\"}],\"name\":\"updateValidatorState\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
+const StakemanagerABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"amount\",\"type\":\"uint256\"},{\"name\":\"heimdallFee\",\"type\":\"uint256\"},{\"name\":\"signer\",\"type\":\"address\"},{\"name\":\"acceptDelegation\",\"type\":\"bool\"}],\"name\":\"stake\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"WITHDRAWAL_DELAY\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"accountStateRoot\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"validatorId\",\"type\":\"uint256\"}],\"name\":\"unstake\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"validatorId\",\"type\":\"uint256\"},{\"name\":\"amount\",\"type\":\"uint256\"},{\"name\":\"delegator\",\"type\":\"address\"}],\"name\":\"delegationTransfer\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"addr\",\"type\":\"address\"}],\"name\":\"totalStakedFor\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"validatorId\",\"type\":\"uint256\"},{\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"startAuction\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"stakePower\",\"type\":\"uint256\"},{\"name\":\"blockInterval\",\"type\":\"uint256\"},{\"name\":\"voteHash\",\"type\":\"bytes32\"},{\"name\":\"stateRoot\",\"type\":\"bytes32\"},{\"name\":\"sigs\",\"type\":\"bytes\"}],\"name\":\"checkSignatures\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"supportsHistory\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"pure\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"user\",\"type\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\"},{\"name\":\"heimdallFee\",\"type\":\"uint256\"},{\"name\":\"signer\",\"type\":\"address\"},{\"name\":\"acceptDelegation\",\"type\":\"bool\"}],\"name\":\"stakeFor\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"currentEpoch\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"validatorId\",\"type\":\"uint256\"},{\"name\":\"heimdallFee\",\"type\":\"uint256\"},{\"name\":\"signer\",\"type\":\"address\"},{\"name\":\"acceptDelegation\",\"type\":\"bool\"}],\"name\":\"confirmAuctionBid\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"validatorId\",\"type\":\"uint256\"},{\"name\":\"amount\",\"type\":\"int256\"}],\"name\":\"updateValidatorState\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
 
 // Stakemanager is an auto generated Go binding around an Ethereum contract.
 type Stakemanager struct {
@@ -325,23 +325,23 @@ func (_Stakemanager *StakemanagerTransactorSession) CheckSignatures(stakePower *
 
 // ConfirmAuctionBid is a paid mutator transaction binding the contract method 0x7d4bd608.
 //
-// Solidity: function confirmAuctionBid(uint256 validatorId, uint256 heimdallFee, address signer, bool needDelegation) returns()
-func (_Stakemanager *StakemanagerTransactor) ConfirmAuctionBid(opts *bind.TransactOpts, validatorId *big.Int, heimdallFee *big.Int, signer common.Address, needDelegation bool) (*types.Transaction, error) {
-	return _Stakemanager.contract.Transact(opts, "confirmAuctionBid", validatorId, heimdallFee, signer, needDelegation)
+// Solidity: function confirmAuctionBid(uint256 validatorId, uint256 heimdallFee, address signer, bool acceptDelegation) returns()
+func (_Stakemanager *StakemanagerTransactor) ConfirmAuctionBid(opts *bind.TransactOpts, validatorId *big.Int, heimdallFee *big.Int, signer common.Address, acceptDelegation bool) (*types.Transaction, error) {
+	return _Stakemanager.contract.Transact(opts, "confirmAuctionBid", validatorId, heimdallFee, signer, acceptDelegation)
 }
 
 // ConfirmAuctionBid is a paid mutator transaction binding the contract method 0x7d4bd608.
 //
-// Solidity: function confirmAuctionBid(uint256 validatorId, uint256 heimdallFee, address signer, bool needDelegation) returns()
-func (_Stakemanager *StakemanagerSession) ConfirmAuctionBid(validatorId *big.Int, heimdallFee *big.Int, signer common.Address, needDelegation bool) (*types.Transaction, error) {
-	return _Stakemanager.Contract.ConfirmAuctionBid(&_Stakemanager.TransactOpts, validatorId, heimdallFee, signer, needDelegation)
+// Solidity: function confirmAuctionBid(uint256 validatorId, uint256 heimdallFee, address signer, bool acceptDelegation) returns()
+func (_Stakemanager *StakemanagerSession) ConfirmAuctionBid(validatorId *big.Int, heimdallFee *big.Int, signer common.Address, acceptDelegation bool) (*types.Transaction, error) {
+	return _Stakemanager.Contract.ConfirmAuctionBid(&_Stakemanager.TransactOpts, validatorId, heimdallFee, signer, acceptDelegation)
 }
 
 // ConfirmAuctionBid is a paid mutator transaction binding the contract method 0x7d4bd608.
 //
-// Solidity: function confirmAuctionBid(uint256 validatorId, uint256 heimdallFee, address signer, bool needDelegation) returns()
-func (_Stakemanager *StakemanagerTransactorSession) ConfirmAuctionBid(validatorId *big.Int, heimdallFee *big.Int, signer common.Address, needDelegation bool) (*types.Transaction, error) {
-	return _Stakemanager.Contract.ConfirmAuctionBid(&_Stakemanager.TransactOpts, validatorId, heimdallFee, signer, needDelegation)
+// Solidity: function confirmAuctionBid(uint256 validatorId, uint256 heimdallFee, address signer, bool acceptDelegation) returns()
+func (_Stakemanager *StakemanagerTransactorSession) ConfirmAuctionBid(validatorId *big.Int, heimdallFee *big.Int, signer common.Address, acceptDelegation bool) (*types.Transaction, error) {
+	return _Stakemanager.Contract.ConfirmAuctionBid(&_Stakemanager.TransactOpts, validatorId, heimdallFee, signer, acceptDelegation)
 }
 
 // DelegationTransfer is a paid mutator transaction binding the contract method 0x4777fb42.
@@ -367,44 +367,44 @@ func (_Stakemanager *StakemanagerTransactorSession) DelegationTransfer(validator
 
 // Stake is a paid mutator transaction binding the contract method 0x06254a9c.
 //
-// Solidity: function stake(uint256 amount, uint256 heimdallFee, address signer, bool needDelegation) returns()
-func (_Stakemanager *StakemanagerTransactor) Stake(opts *bind.TransactOpts, amount *big.Int, heimdallFee *big.Int, signer common.Address, needDelegation bool) (*types.Transaction, error) {
-	return _Stakemanager.contract.Transact(opts, "stake", amount, heimdallFee, signer, needDelegation)
+// Solidity: function stake(uint256 amount, uint256 heimdallFee, address signer, bool acceptDelegation) returns()
+func (_Stakemanager *StakemanagerTransactor) Stake(opts *bind.TransactOpts, amount *big.Int, heimdallFee *big.Int, signer common.Address, acceptDelegation bool) (*types.Transaction, error) {
+	return _Stakemanager.contract.Transact(opts, "stake", amount, heimdallFee, signer, acceptDelegation)
 }
 
 // Stake is a paid mutator transaction binding the contract method 0x06254a9c.
 //
-// Solidity: function stake(uint256 amount, uint256 heimdallFee, address signer, bool needDelegation) returns()
-func (_Stakemanager *StakemanagerSession) Stake(amount *big.Int, heimdallFee *big.Int, signer common.Address, needDelegation bool) (*types.Transaction, error) {
-	return _Stakemanager.Contract.Stake(&_Stakemanager.TransactOpts, amount, heimdallFee, signer, needDelegation)
+// Solidity: function stake(uint256 amount, uint256 heimdallFee, address signer, bool acceptDelegation) returns()
+func (_Stakemanager *StakemanagerSession) Stake(amount *big.Int, heimdallFee *big.Int, signer common.Address, acceptDelegation bool) (*types.Transaction, error) {
+	return _Stakemanager.Contract.Stake(&_Stakemanager.TransactOpts, amount, heimdallFee, signer, acceptDelegation)
 }
 
 // Stake is a paid mutator transaction binding the contract method 0x06254a9c.
 //
-// Solidity: function stake(uint256 amount, uint256 heimdallFee, address signer, bool needDelegation) returns()
-func (_Stakemanager *StakemanagerTransactorSession) Stake(amount *big.Int, heimdallFee *big.Int, signer common.Address, needDelegation bool) (*types.Transaction, error) {
-	return _Stakemanager.Contract.Stake(&_Stakemanager.TransactOpts, amount, heimdallFee, signer, needDelegation)
+// Solidity: function stake(uint256 amount, uint256 heimdallFee, address signer, bool acceptDelegation) returns()
+func (_Stakemanager *StakemanagerTransactorSession) Stake(amount *big.Int, heimdallFee *big.Int, signer common.Address, acceptDelegation bool) (*types.Transaction, error) {
+	return _Stakemanager.Contract.Stake(&_Stakemanager.TransactOpts, amount, heimdallFee, signer, acceptDelegation)
 }
 
 // StakeFor is a paid mutator transaction binding the contract method 0x76324ea5.
 //
-// Solidity: function stakeFor(address user, uint256 amount, uint256 heimdallFee, address signer, bool needDelegation) returns()
-func (_Stakemanager *StakemanagerTransactor) StakeFor(opts *bind.TransactOpts, user common.Address, amount *big.Int, heimdallFee *big.Int, signer common.Address, needDelegation bool) (*types.Transaction, error) {
-	return _Stakemanager.contract.Transact(opts, "stakeFor", user, amount, heimdallFee, signer, needDelegation)
+// Solidity: function stakeFor(address user, uint256 amount, uint256 heimdallFee, address signer, bool acceptDelegation) returns()
+func (_Stakemanager *StakemanagerTransactor) StakeFor(opts *bind.TransactOpts, user common.Address, amount *big.Int, heimdallFee *big.Int, signer common.Address, acceptDelegation bool) (*types.Transaction, error) {
+	return _Stakemanager.contract.Transact(opts, "stakeFor", user, amount, heimdallFee, signer, acceptDelegation)
 }
 
 // StakeFor is a paid mutator transaction binding the contract method 0x76324ea5.
 //
-// Solidity: function stakeFor(address user, uint256 amount, uint256 heimdallFee, address signer, bool needDelegation) returns()
-func (_Stakemanager *StakemanagerSession) StakeFor(user common.Address, amount *big.Int, heimdallFee *big.Int, signer common.Address, needDelegation bool) (*types.Transaction, error) {
-	return _Stakemanager.Contract.StakeFor(&_Stakemanager.TransactOpts, user, amount, heimdallFee, signer, needDelegation)
+// Solidity: function stakeFor(address user, uint256 amount, uint256 heimdallFee, address signer, bool acceptDelegation) returns()
+func (_Stakemanager *StakemanagerSession) StakeFor(user common.Address, amount *big.Int, heimdallFee *big.Int, signer common.Address, acceptDelegation bool) (*types.Transaction, error) {
+	return _Stakemanager.Contract.StakeFor(&_Stakemanager.TransactOpts, user, amount, heimdallFee, signer, acceptDelegation)
 }
 
 // StakeFor is a paid mutator transaction binding the contract method 0x76324ea5.
 //
-// Solidity: function stakeFor(address user, uint256 amount, uint256 heimdallFee, address signer, bool needDelegation) returns()
-func (_Stakemanager *StakemanagerTransactorSession) StakeFor(user common.Address, amount *big.Int, heimdallFee *big.Int, signer common.Address, needDelegation bool) (*types.Transaction, error) {
-	return _Stakemanager.Contract.StakeFor(&_Stakemanager.TransactOpts, user, amount, heimdallFee, signer, needDelegation)
+// Solidity: function stakeFor(address user, uint256 amount, uint256 heimdallFee, address signer, bool acceptDelegation) returns()
+func (_Stakemanager *StakemanagerTransactorSession) StakeFor(user common.Address, amount *big.Int, heimdallFee *big.Int, signer common.Address, acceptDelegation bool) (*types.Transaction, error) {
+	return _Stakemanager.Contract.StakeFor(&_Stakemanager.TransactOpts, user, amount, heimdallFee, signer, acceptDelegation)
 }
 
 // StartAuction is a paid mutator transaction binding the contract method 0x4fee13fc.
