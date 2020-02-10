@@ -15,7 +15,7 @@
 				"type": "address"
 			},
 			{
-				"name": "needDelegation",
+				"name": "acceptDelegation",
 				"type": "bool"
 			}
 		],
@@ -195,7 +195,7 @@
 				"type": "address"
 			},
 			{
-				"name": "needDelegation",
+				"name": "acceptDelegation",
 				"type": "bool"
 			}
 		],
@@ -235,7 +235,7 @@
 				"type": "address"
 			},
 			{
-				"name": "isContract",
+				"name": "acceptDelegation",
 				"type": "bool"
 			}
 		],
