@@ -7,7 +7,12 @@ ldflags = -X github.com/maticnetwork/heimdall/version.Name=heimdall \
 		  -X github.com/maticnetwork/heimdall/version.ServerName=heimdalld \
 		  -X github.com/maticnetwork/heimdall/version.ClientName=heimdallcli \
 		  -X github.com/maticnetwork/heimdall/version.Version=$(VERSION) \
-		  -X github.com/maticnetwork/heimdall/version.Commit=$(COMMIT)
+		  -X github.com/maticnetwork/heimdall/version.Commit=$(COMMIT) \
+			-X github.com/cosmos/cosmos-sdk/version.Name=heimdall \
+		  -X github.com/cosmos/cosmos-sdk/version.ServerName=heimdalld \
+		  -X github.com/cosmos/cosmos-sdk/version.ClientName=heimdallcli \
+		  -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
+		  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT)
 
 BUILD_FLAGS := -ldflags '$(ldflags)'
 
@@ -33,8 +38,10 @@ contracts:
 	abigen --abi=contracts/stakemanager/stakemanager.abi --pkg=stakemanager --out=contracts/stakemanager/stakemanager.go
 	abigen --abi=contracts/statereceiver/statereceiver.abi --pkg=statereceiver --out=contracts/statereceiver/statereceiver.go
 	abigen --abi=contracts/statesender/statesender.abi --pkg=statesender --out=contracts/statesender/statesender.go
-	
+	abigen --abi=contracts/stakinginfo/stakinginfo.abi --pkg=stakinginfo --out=contracts/stakinginfo/stakinginfo.go
 	abigen --abi=contracts/validatorset/validatorset.abi --pkg=validatorset --out=contracts/validatorset/validatorset.go
+	abigen --abi=contracts/erc20/erc20.abi --pkg=erc20 --out=contracts/erc20/erc20.go
+
 
 init-heimdall:
 	./build/heimdalld init

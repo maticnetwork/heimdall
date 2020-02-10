@@ -673,3 +673,13 @@ func UnpackSigAndVotes(payload []byte, abi abi.ABI) (votes []byte, sigs []byte, 
 	votes = inputDataMap["vote"].([]byte)
 	return
 }
+
+// EventByID looks up a event by the topic id
+func EventByID(abiObject *abi.ABI, sigdata []byte) *abi.Event {
+	for _, event := range abiObject.Events {
+		if bytes.Equal(event.Id().Bytes(), sigdata) {
+			return &event
+		}
+	}
+	return nil
+}

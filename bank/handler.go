@@ -6,6 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/maticnetwork/heimdall/auth"
+	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/bank/types"
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
@@ -124,12 +125,12 @@ func handleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCalle
 	if topupObject == nil {
 		topupObject = &types.ValidatorTopup{
 			ID:          validator.ID,
-			TotalTopups: hmTypes.Coins{hmTypes.Coin{Denom: "matic", Amount: hmTypes.NewInt(0)}},
+			TotalTopups: hmTypes.Coins{hmTypes.Coin{Denom: authTypes.FeeToken, Amount: hmTypes.NewInt(0)}},
 		}
 	}
 
 	// create topup amount
-	topupAmount := hmTypes.Coins{hmTypes.Coin{Denom: "matic", Amount: hmTypes.NewIntFromBigInt(eventLog.Fee)}}
+	topupAmount := hmTypes.Coins{hmTypes.Coin{Denom: authTypes.FeeToken, Amount: hmTypes.NewIntFromBigInt(eventLog.Fee)}}
 
 	// sequence id
 	sequence := (receipt.BlockNumber.Uint64() * hmTypes.DefaultLogIndexUnit) + msg.LogIndex
@@ -180,14 +181,14 @@ func handleMsgWithdrawFee(ctx sdk.Context, k Keeper, msg types.MsgWithdrawFee) s
 
 	// check if fee is already withdrawn
 	coins := k.GetCoins(ctx, msg.FromAddress)
-	veticBalance := coins.AmountOf("matic")
+	veticBalance := coins.AmountOf(authTypes.FeeToken)
 	k.Logger(ctx).Info("Fee balance for ", "fromAddress", msg.FromAddress, "validatorId", msg.ID, "balance", veticBalance.BigInt().String())
 	if veticBalance.IsZero() {
 		return types.ErrNoBalanceToWithdraw(k.Codespace()).Result()
 	}
 
 	// withdraw coins of validator.
-	zeroVetic := hmTypes.Coins{hmTypes.Coin{Denom: "matic", Amount: hmTypes.NewInt(0)}}
+	zeroVetic := hmTypes.Coins{hmTypes.Coin{Denom: authTypes.FeeToken, Amount: hmTypes.NewInt(0)}}
 	if err := k.SetCoins(ctx, msg.FromAddress, zeroVetic); err != nil {
 		k.Logger(ctx).Error("Error while setting Fee balance to zero ", "fromAddress", msg.FromAddress, "validatorId", msg.ID, "err", err)
 		return err.Result()
