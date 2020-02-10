@@ -1,7 +1,8 @@
 package main
 
 import (
-	"os"
+	"errors"
+	"math/big"
 
 	"github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/heimdall/helper"
@@ -17,40 +18,86 @@ func StakeCmd() *cobra.Command {
 		Short: "Stake matic tokens for your account",
 		Args:  cobra.NoArgs,
 		RunE: func(_ *cobra.Command, _ []string) error {
-			validatorStr := viper.GetString(stakingcli.FlagValidatorAddress)
-			stakeAmount := viper.GetInt(stakingcli.FlagAmount)
-			feeAmount := viper.GetInt(stakingcli.FlagFeeAmount)
+			helper.InitHeimdallConfig("")
 
-			helper.InitHeimdallConfig(os.ExpandEnv("$HOME/.heimdalld"))
+			validatorStr := viper.GetString(stakingcli.FlagValidatorAddress)
+			stakeAmountStr := viper.GetString(stakingcli.FlagAmount)
+			feeAmountStr := viper.GetString(stakingcli.FlagFeeAmount)
+			acceptDelegation := viper.GetBool(stakingcli.FlagAcceptDelegation)
+
+			// validator str
+			if validatorStr == "" {
+				return errors.New("Validator address is required")
+			}
+
+			// stake amount
+			stakeAmount, ok := big.NewInt(0).SetString(stakeAmountStr, 10)
+			if !ok {
+				return errors.New("Invalid stake amount")
+			}
+
+			// fee amount
+			feeAmount, ok := big.NewInt(0).SetString(feeAmountStr, 10)
+			if !ok {
+				return errors.New("Invalid fee amount")
+			}
+
+			// contract caller
 			contractCaller, err := helper.NewContractCaller()
 			if err != nil {
 				return err
 			}
 
-			return contractCaller.StakeFor(common.HexToAddress(validatorStr), int64(stakeAmount), int64(feeAmount))
+			return contractCaller.StakeFor(
+				common.HexToAddress(validatorStr),
+				stakeAmount,
+				feeAmount,
+				acceptDelegation,
+			)
 		},
 	}
 
-	cmd.Flags().Int(stakingcli.FlagValidatorAddress, 1, "--id=<validator ID here>, if left blank will be assigned 1")
+	cmd.Flags().String(stakingcli.FlagValidatorAddress, "", "--validator=<validator address here>")
+	cmd.Flags().String(stakingcli.FlagAmount, "10000000000000000000", "--staked-amount=<stake amount>, if left blank it will be assigned as 10 matic tokens")
+	cmd.Flags().String(stakingcli.FlagFeeAmount, "5000000000000000000", "--fee-amount=<heimdall fee amount>, if left blank will be assigned as 5 matic tokens")
+	cmd.Flags().Bool(stakingcli.FlagAcceptDelegation, false, "--accept-delegation=<accept delegation>, if left blank will be assigned as false")
 	return cmd
 }
 
+// ApproveCmd approves tokens for a validator
 func ApproveCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "approve",
 		Short: "Approve the tokens to stake",
 		Args:  cobra.NoArgs,
 		RunE: func(_ *cobra.Command, _ []string) error {
-			stakeAmount := viper.GetInt(stakingcli.FlagAmount)
-			feeAmount := viper.GetInt(stakingcli.FlagFeeAmount)
-			helper.InitHeimdallConfig(os.ExpandEnv("$HOME/.heimdalld"))
+			helper.InitHeimdallConfig("")
+
+			stakeAmountStr := viper.GetString(stakingcli.FlagAmount)
+			feeAmountStr := viper.GetString(stakingcli.FlagFeeAmount)
+
+			// stake amount
+			stakeAmount, ok := big.NewInt(0).SetString(stakeAmountStr, 10)
+			if !ok {
+				return errors.New("Invalid stake amount")
+			}
+
+			// fee amount
+			feeAmount, ok := big.NewInt(0).SetString(feeAmountStr, 10)
+			if !ok {
+				return errors.New("Invalid fee amount")
+			}
+
 			contractCaller, err := helper.NewContractCaller()
 			if err != nil {
 				return err
 			}
 
-			return contractCaller.ApproveTokens(int64(stakeAmount + feeAmount))
+			return contractCaller.ApproveTokens(stakeAmount.Add(stakeAmount, feeAmount))
 		},
 	}
+
+	cmd.Flags().String(stakingcli.FlagAmount, "10000000000000000000", "--staked-amount=<stake amount>, if left blank will be assigned as 10 matic tokens")
+	cmd.Flags().String(stakingcli.FlagFeeAmount, "5000000000000000000", "--fee-amount=<heimdall fee amount>, if left blank will be assigned as 5 matic tokens")
 	return cmd
 }

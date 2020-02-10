@@ -95,16 +95,16 @@ func (c *ContractCaller) SendCheckpoint(voteSignBytes []byte, sigs []byte, txDat
 }
 
 // StakeFor stakes for a validator
-func (c *ContractCaller) StakeFor(val common.Address, stakeAmount int64, feeAmount int64) error {
+func (c *ContractCaller) StakeFor(val common.Address, stakeAmount *big.Int, feeAmount *big.Int, acceptDelegation bool) error {
 	// stake the amount
 	stakeManagerAddress := GetStakeManagerAddress()
 
 	signerPubkey := GetPubKey()
 	signerAddress := common.HexToAddress(signerPubkey.Address().String())
 
-	data, err := c.StakeManagerABI.Pack("stakeFor", val, stakeAmount, feeAmount, signerAddress, false)
+	data, err := c.StakeManagerABI.Pack("stakeFor", val, stakeAmount, feeAmount, signerAddress, acceptDelegation)
 	if err != nil {
-		Logger.Error("Unable to pack tx for submitHeaderBlock", "error", err)
+		Logger.Error("Unable to pack tx for stakeFor", "error", err)
 		return err
 	}
 
@@ -114,7 +114,16 @@ func (c *ContractCaller) StakeFor(val common.Address, stakeAmount int64, feeAmou
 		return err
 	}
 
-	tx, err := c.StakeManagerInstance.StakeFor(auth, val, big.NewInt(stakeAmount), big.NewInt(feeAmount), signerAddress, false)
+	// stake for stake manager
+	tx, err := c.StakeManagerInstance.StakeFor(
+		auth,
+		val,
+		stakeAmount,
+		feeAmount,
+		signerAddress,
+		acceptDelegation,
+	)
+
 	if err != nil {
 		Logger.Error("Error while submitting stake", "error", err)
 		return err
@@ -124,14 +133,14 @@ func (c *ContractCaller) StakeFor(val common.Address, stakeAmount int64, feeAmou
 	return nil
 }
 
-func (c *ContractCaller) ApproveTokens(amount int64) error {
+// ApproveTokens approves matic token for stake
+func (c *ContractCaller) ApproveTokens(amount *big.Int) error {
 	tokenAddress := GetMaticTokenAddress()
-	signerPubkey := GetPubKey()
-	signerAddress := common.HexToAddress(signerPubkey.Address().String())
+	stakeManager := GetStakeManagerAddress()
 
-	data, err := c.MaticTokenABI.Pack("approve", signerAddress, amount)
+	data, err := c.MaticTokenABI.Pack("approve", stakeManager, amount)
 	if err != nil {
-		Logger.Error("Unable to pack tx for submitHeaderBlock", "error", err)
+		Logger.Error("Unable to pack tx for approve", "error", err)
 		return err
 	}
 
@@ -141,12 +150,12 @@ func (c *ContractCaller) ApproveTokens(amount int64) error {
 		return err
 	}
 
-	tx, err := c.MaticTokenInstance.Approve(auth, signerAddress, big.NewInt(amount))
+	tx, err := c.MaticTokenInstance.Approve(auth, stakeManager, amount)
 	if err != nil {
-		Logger.Error("Error while submitting stake", "error", err)
+		Logger.Error("Error while approving approve", "error", err)
 		return err
 	}
 
-	Logger.Info("Submitted stake sucessfully", "txHash", tx.Hash().String())
+	Logger.Info("Sent approve tx sucessfully", "txHash", tx.Hash().String())
 	return nil
 }

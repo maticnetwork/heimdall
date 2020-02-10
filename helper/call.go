@@ -42,8 +42,8 @@ type IContractCaller interface {
 	DecodeSignerUpdateEvent(*ethTypes.Receipt, uint64) (*stakinginfo.StakinginfoSignerChange, error)
 	GetMainTxReceipt(common.Hash) (*ethTypes.Receipt, error)
 	GetMaticTxReceipt(common.Hash) (*ethTypes.Receipt, error)
-	ApproveTokens(int64) error
-	StakeFor(common.Address, int64, int64) error
+	ApproveTokens(*big.Int) error
+	StakeFor(common.Address, *big.Int, *big.Int, bool) error
 
 	CurrentAccountStateRoot() ([32]byte, error)
 
@@ -151,6 +151,10 @@ func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 	}
 
 	if contractCallerObj.StakeManagerABI, err = getABI(string(stakemanager.StakemanagerABI)); err != nil {
+		return
+	}
+
+	if contractCallerObj.MaticTokenABI, err = getABI(string(erc20.Erc20ABI)); err != nil {
 		return
 	}
 
