@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/maticnetwork/bor/common"
 	hmClient "github.com/maticnetwork/heimdall/client"
 	"github.com/maticnetwork/heimdall/staking/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -36,40 +37,49 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 	return supplyQueryCmd
 }
 
-// GetValidatorInfo validator information via address
+// GetValidatorInfo validator information via id or address
 func GetValidatorInfo(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "validator-info",
-		Short: "show validator information via validator address",
+		Short: "show validator information via validator id",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			validatorID := viper.GetInt64(FlagValidatorID)
-			if validatorID == 0 {
-				return fmt.Errorf("validator ID cannot be 0")
+			validatorAddressStr := viper.GetString(FlagValidatorAddress)
+			if validatorID == 0 && validatorAddressStr == "" {
+				return fmt.Errorf("validator ID or validator address required")
 			}
 
-			// get query params
-			queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQueryValidatorParams(hmTypes.ValidatorID(validatorID)))
-			if err != nil {
-				return err
+			var queryParams []byte
+			var err error = nil
+			var t string = ""
+			if validatorAddressStr != "" {
+				queryParams, err = cliCtx.Codec.MarshalJSON(types.NewQuerySignerParams(common.FromHex(validatorAddressStr)))
+				if err != nil {
+					return err
+				}
+				t = types.QuerySigner
+			} else if validatorID != 0 {
+				queryParams, err = cliCtx.Codec.MarshalJSON(types.NewQueryValidatorParams(hmTypes.ValidatorID(validatorID)))
+				if err != nil {
+					return err
+				}
+				t = types.QueryValidator
 			}
 
 			// get validator
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryValidator), queryParams)
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, t), queryParams)
 			if err != nil {
 				return err
 			}
 
-			fmt.Println(res)
+			fmt.Println(string(res))
 			return nil
 		},
 	}
 
-
-
-	
 	cmd.Flags().Int(FlagValidatorID, 0, "--id=<validator ID here>")
-	cmd.MarkFlagRequired(FlagValidatorID)
+	cmd.Flags().String(FlagValidatorAddress, "", "--validator=<validator address here>")
 	return cmd
 }
 
