@@ -90,7 +90,7 @@ func NewSyncer(cdc *codec.Codec, queueConnector *QueueConnector, httpClient *htt
 	}
 
 	cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
-	cliCtx.BroadcastMode = client.BroadcastAsync
+	cliCtx.BroadcastMode = client.BroadcastSync
 	cliCtx.TrustNode = true
 
 	// creating syncer object
