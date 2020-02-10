@@ -63,6 +63,7 @@ func (c *ContractCaller) SendCheckpoint(voteSignBytes []byte, sigs []byte, txDat
 	err := rlp.DecodeBytes(voteSignBytes, &vote)
 	if err != nil {
 		Logger.Error("Unable to decode vote while sending checkpoint", "vote", hex.EncodeToString(voteSignBytes), "sigs", hex.EncodeToString(sigs), "txData", hex.EncodeToString(txData))
+		return
 	}
 
 	data, err := c.RootChainABI.Pack("submitHeaderBlock", voteSignBytes, sigs, txData)
