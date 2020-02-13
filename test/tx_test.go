@@ -11,7 +11,9 @@ import (
 	"github.com/stretchr/testify/require"
 	tmerkel "github.com/tendermint/tendermint/crypto/merkle"
 
+	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/helper"
+	tmTypes "github.com/tendermint/tendermint/types"
 )
 
 func TestTxDecode(t *testing.T) {
@@ -24,7 +26,30 @@ func TestTxDecode(t *testing.T) {
 	}
 }
 
+func TestTxDecodeToStdTx(t *testing.T) {
+	// cdc := app.MakeCodec() // This needs to have every single module codec registered!!!
+	txStr := "AANQR/im+GCUHE8PBUoNahQVOC3A/YPGU1GIsiCAggP/oAUa5K2J62X6bWX065hIawNsvuv3z2qU4ObSU8l7Mgm0oMCuqfNQzHmirstq75vRV+hkFczlWh9VjSGNn8JQCo3YhF5C8VG4QZGyoPc937dVz4DrkdYdDRwnigW0qiIE+yMVS/Drcdt9FXol4Tzegb+1qIQbP+EXUnnFLFAuaeUF7A3Rs8WajjUBgA=="
+
+	txBz, err := helper.TendermintTxDecode(txStr)
+	require.NoError(t, err)
+
+	pulp := app.MakePulp()
+	tx, _ := pulp.DecodeBytes(txBz)
+	t.Error(tx)
+}
+
 func TestTxHash(t *testing.T) {
+	txStr := "AANQR/im+GCUHE8PBUoNahQVOC3A/YPGU1GIsiCAggP/oAUa5K2J62X6bWX065hIawNsvuv3z2qU4ObSU8l7Mgm0oMCuqfNQzHmirstq75vRV+hkFczlWh9VjSGNn8JQCo3YhF5C8VG4QZGyoPc937dVz4DrkdYdDRwnigW0qiIE+yMVS/Drcdt9FXol4Tzegb+1qIQbP+EXUnnFLFAuaeUF7A3Rs8WajjUBgA=="
+
+	txBz, err := helper.TendermintTxDecode(txStr)
+	require.NoError(t, err)
+
+	var tx tmTypes.Tx
+	tx = txBz
+	t.Error(hex.EncodeToString(tx.Hash()))
+}
+
+func TestTxsHash(t *testing.T) {
 	// These allocations will be removed once Txs is switched to [][]byte,
 	// ref #2603. This i[s because golang does not allow type casting slices without unsafe
 	txs := []string{
