@@ -11,8 +11,8 @@ import (
 	"github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/bor/crypto"
 	"github.com/maticnetwork/bor/rpc"
+	"github.com/tendermint/crypto/sha3"
 	"github.com/xsleonard/go-merkle"
-	"golang.org/x/crypto/sha3"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/maticnetwork/heimdall/helper"
