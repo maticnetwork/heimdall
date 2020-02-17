@@ -59,6 +59,7 @@ var (
 		checkpoint.AppModuleBasic{},
 		bor.AppModuleBasic{},
 		clerk.AppModuleBasic{},
+		// gov.NewAppModuleBasic(paramsClient.ProposalHandler),
 	)
 
 	// module account permissions
@@ -96,7 +97,7 @@ type HeimdallApp struct {
 	// param keeper
 	ParamsKeeper params.Keeper
 
-	// masterKeeper common.Keeper
+	// contract keeper
 	caller helper.ContractCaller
 
 	//  total coins supply
