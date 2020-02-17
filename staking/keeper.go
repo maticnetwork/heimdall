@@ -7,11 +7,11 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/maticnetwork/bor/common"
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/params/subspace"
 	"github.com/maticnetwork/heimdall/staking/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
@@ -39,7 +39,7 @@ type Keeper struct {
 	// codespacecodespace
 	codespace sdk.CodespaceType
 	// param space
-	paramSpace params.Subspace
+	paramSpace subspace.Subspace
 	// ack retriever
 	ackRetriever AckRetriever
 }
@@ -48,7 +48,7 @@ type Keeper struct {
 func NewKeeper(
 	cdc *codec.Codec,
 	storeKey sdk.StoreKey,
-	paramSpace params.Subspace,
+	paramSpace subspace.Subspace,
 	codespace sdk.CodespaceType,
 	ackRetriever AckRetriever,
 ) Keeper {

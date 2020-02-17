@@ -9,9 +9,8 @@ import (
 
 // InitGenesis sets distribution information for genesis.
 func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
-	keeper.SetSprintDuration(ctx, data.SprintDuration)
-	keeper.SetSpanDuration(ctx, data.SpanDuration)
-	keeper.SetProducerCount(ctx, data.ProducerCount)
+	keeper.SetParams(ctx, data.Params)
+
 	if len(data.Spans) > 0 {
 		// sort data spans before inserting to ensure lastspanId fetched is correct
 		hmTypes.SortSpanByID(data.Spans)
@@ -27,13 +26,12 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 
 // ExportGenesis returns a GenesisState for a given context and keeper.
 func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
-	producerCount, _ := keeper.GetProducerCount(ctx)
+	params := keeper.GetParams(ctx)
+
 	allSpans := keeper.GetAllSpans(ctx)
 	hmTypes.SortSpanByID(allSpans)
 	return types.NewGenesisState(
-		keeper.GetSprintDuration(ctx),
-		keeper.GetSpanDuration(ctx),
-		producerCount,
+		params,
 		// TODO think better way to export all spans
 		allSpans,
 	)

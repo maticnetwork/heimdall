@@ -8,7 +8,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/gov"
-	"github.com/cosmos/cosmos-sdk/x/params"
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
@@ -26,6 +25,9 @@ import (
 	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
 	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/params"
+	"github.com/maticnetwork/heimdall/params/subspace"
+	paramsTypes "github.com/maticnetwork/heimdall/params/types"
 	"github.com/maticnetwork/heimdall/staking"
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
 	"github.com/maticnetwork/heimdall/supply"
@@ -49,6 +51,7 @@ var (
 	// non-dependant module elements, such as codec registration
 	// and genesis verification.
 	ModuleBasics = module.NewBasicManager(
+		params.AppModuleBasic{},
 		auth.AppModuleBasic{},
 		bank.AppModuleBasic{},
 		supply.AppModuleBasic{},
@@ -78,7 +81,7 @@ type HeimdallApp struct {
 	tkeys map[string]*sdk.TransientStoreKey
 
 	// subspaces
-	subspaces map[string]params.Subspace
+	subspaces map[string]subspace.Subspace
 
 	// keepers
 	AccountKeeper    auth.AccountKeeper
@@ -156,9 +159,9 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		checkpointTypes.StoreKey,
 		borTypes.StoreKey,
 		clerkTypes.StoreKey,
-		params.StoreKey,
+		paramsTypes.StoreKey,
 	)
-	tkeys := sdk.NewTransientStoreKeys(params.TStoreKey)
+	tkeys := sdk.NewTransientStoreKeys(paramsTypes.TStoreKey)
 
 	// create heimdall app
 	var app = &HeimdallApp{
@@ -166,11 +169,11 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		BaseApp:   bApp,
 		keys:      keys,
 		tkeys:     tkeys,
-		subspaces: make(map[string]params.Subspace),
+		subspaces: make(map[string]subspace.Subspace),
 	}
 
 	// init params keeper and subspaces
-	app.ParamsKeeper = params.NewKeeper(app.cdc, keys[params.StoreKey], tkeys[params.TStoreKey], params.DefaultCodespace)
+	app.ParamsKeeper = params.NewKeeper(app.cdc, keys[paramsTypes.StoreKey], tkeys[paramsTypes.TStoreKey], paramsTypes.DefaultCodespace)
 	app.subspaces[authTypes.ModuleName] = app.ParamsKeeper.Subspace(authTypes.DefaultParamspace)
 	app.subspaces[bankTypes.ModuleName] = app.ParamsKeeper.Subspace(bankTypes.DefaultParamspace)
 	app.subspaces[supplyTypes.ModuleName] = app.ParamsKeeper.Subspace(supplyTypes.DefaultParamspace)
@@ -586,7 +589,7 @@ func (app *HeimdallApp) GetTKey(storeKey string) *sdk.TransientStoreKey {
 // GetSubspace returns a param subspace for a given module name.
 //
 // NOTE: This is solely to be used for testing purposes.
-func (app *HeimdallApp) GetSubspace(moduleName string) params.Subspace {
+func (app *HeimdallApp) GetSubspace(moduleName string) subspace.Subspace {
 	return app.subspaces[moduleName]
 }
 

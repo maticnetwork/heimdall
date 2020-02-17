@@ -5,12 +5,12 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/params/subspace"
 	"github.com/tendermint/tendermint/libs/log"
 
 	auth "github.com/maticnetwork/heimdall/auth"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	bank "github.com/maticnetwork/heimdall/bank"
+	"github.com/maticnetwork/heimdall/params/subspace"
 	supplyTypes "github.com/maticnetwork/heimdall/supply/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
