@@ -9,8 +9,10 @@ const (
 	DefaultSprintDuration uint64 = 64
 
 	// DefaultSpanDuration number of blocks for which span is frozen on heimdall
-	// DefaultSpanDuration uint64 = 100 * DefaultSprintDuration
-	DefaultSpanDuration uint64 = 256
+	DefaultSpanDuration uint64 = 100 * DefaultSprintDuration
+
+	// DefaultFirstSpanDuration first span duration
+	DefaultFirstSpanDuration uint64 = 256
 
 	// Slot cost for validator
 	SlotCost int64 = 1

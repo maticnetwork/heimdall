@@ -49,7 +49,7 @@ func genFirstSpan(valset hmTypes.ValidatorSet) []*hmTypes.Span {
 		}
 	}
 
-	newSpan := hmTypes.NewSpan(0, 0, 0+DefaultSpanDuration-1, valset, selectedProducers, helper.GetConfig().BorChainID)
+	newSpan := hmTypes.NewSpan(0, 0, 0+DefaultFirstSpanDuration-1, valset, selectedProducers, helper.GetConfig().BorChainID)
 	firstSpan = append(firstSpan, &newSpan)
 	return firstSpan
 }
