@@ -148,7 +148,14 @@ func BytesToPubkey(pubKey []byte) secp256k1.PubKeySecp256k1 {
 }
 
 // GetSigs returns sigs bytes from vote
-func GetSigs(votes []*tmTypes.CommitSig) (sigs []byte) {
+func GetSigs(unFilteredVotes []*tmTypes.CommitSig) (sigs []byte) {
+	votes := make([]*tmTypes.CommitSig, 0)
+	for _, item := range unFilteredVotes {
+		if item != nil {
+			votes = append(votes, item)
+		}
+	}
+
 	sort.Slice(votes, func(i, j int) bool {
 		return bytes.Compare(votes[i].ValidatorAddress.Bytes(), votes[j].ValidatorAddress.Bytes()) < 0
 	})
@@ -672,4 +679,14 @@ func UnpackSigAndVotes(payload []byte, abi abi.ABI) (votes []byte, sigs []byte, 
 	checkpointData = inputDataMap["txData"].([]byte)
 	votes = inputDataMap["vote"].([]byte)
 	return
+}
+
+// EventByID looks up a event by the topic id
+func EventByID(abiObject *abi.ABI, sigdata []byte) *abi.Event {
+	for _, event := range abiObject.Events {
+		if bytes.Equal(event.Id().Bytes(), sigdata) {
+			return &event
+		}
+	}
+	return nil
 }

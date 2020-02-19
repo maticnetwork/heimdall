@@ -60,7 +60,7 @@ func NewCheckpointer(cdc *codec.Codec, queueConnector *QueueConnector, httpClien
 
 	// cli context
 	cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
-	cliCtx.BroadcastMode = client.BroadcastAsync
+	cliCtx.BroadcastMode = client.BroadcastSync
 	cliCtx.TrustNode = true
 
 	contractCaller, err := helper.NewContractCaller()

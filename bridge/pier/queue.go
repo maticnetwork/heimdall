@@ -310,7 +310,7 @@ func (qc *QueueConnector) handleBorBroadcastMsgs(amqpMsgs <-chan amqp.Delivery) 
 		}
 
 		// get auth
-		auth, err := helper.GenerateAuthObj(maticClient, msg)
+		auth, err := helper.GenerateAuthObj(maticClient, *msg.To, msg.Data)
 		if err != nil {
 			amqpMsg.Reject(false)
 			qc.logger.Error("Error while fetching the transaction param details", "error", err)

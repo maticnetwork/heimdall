@@ -42,7 +42,8 @@ heimdall_rest_server = "{{ .HeimdallServerURL }}"
 ##### Contract Addresses #####
 
 ### Eth Chain Contracts 
-stakemanager_contract = "{{ .StakeManagerAddress }}" 
+stakinginfo_contract = "{{ .StakingInfoAddress }}" 
+stake_manager_contract = "{{ .StakeManagerAddress }}" 
 rootchain_contract = "{{ .RootchainAddress }}"
 state_sender_contract = "{{ .StateSenderAddress }}" 
 

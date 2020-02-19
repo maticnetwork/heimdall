@@ -61,7 +61,7 @@ func NewSpanService(cdc *codec.Codec, queueConnector *QueueConnector, httpClient
 	}
 
 	cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
-	cliCtx.BroadcastMode = client.BroadcastAsync
+	cliCtx.BroadcastMode = client.BroadcastSync
 	cliCtx.TrustNode = true
 
 	// creating checkpointer object
@@ -233,7 +233,7 @@ func (s *SpanService) fetchNextSpanDetails(id uint64, start uint64) (*types.Span
 	q := req.URL.Query()
 	q.Add("span_id", strconv.FormatUint(id, 10))
 	q.Add("start_block", strconv.FormatUint(start, 10))
-	q.Add("chain_id", viper.GetString("bor-chain-id"))
+	q.Add("chain_id", helper.GetConfig().BorChainID)
 	q.Add("proposer", helper.GetFromAddress(s.cliCtx).String())
 	req.URL.RawQuery = q.Encode()
 
