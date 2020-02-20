@@ -65,7 +65,7 @@ const (
 	DefaultSyncerPollInterval       = 1 * time.Minute
 	DefaultNoACKPollInterval        = 1010 * time.Second
 	DefaultClerkPollingInterval     = 10 * time.Second
-	DefaultSpanPollingInterval      = 5 * time.Minute
+	DefaultSpanPollingInterval      = 1 * time.Minute
 
 	DefaultCheckpointLength   = 256   // checkpoint number 	 with 0, so length = defaultCheckpointLength -1
 	MaxCheckpointLength       = 1024  // max blocks in one checkpoint
