@@ -5,6 +5,7 @@ import (
 
 	"github.com/tendermint/tendermint/libs/log"
 
+	"github.com/maticnetwork/heimdall/sethu/util"
 	"github.com/streadway/amqp"
 )
 
@@ -32,8 +33,8 @@ func NewQueueConnector(dialer string) *QueueConnector {
 	// queue connector
 	connector := QueueConnector{
 		connection:        conn,
-		broadcastExchange: BroadcastExchange,
-		logger:            Logger.With("module", Connector),
+		broadcastExchange: util.BroadcastExchange,
+		logger:            Logger.With("module", util.Connector),
 	}
 
 	// connector
@@ -62,10 +63,10 @@ func (qc *QueueConnector) InitializeQueues() error {
 
 	qc.logger.Info("Exchange Declared")
 
-	qc.InitializeQueue(channel, CheckpointQueueName, CheckpointQueueRoute)
-	qc.InitializeQueue(channel, StakingQueueName, StakingQueueRoute)
-	qc.InitializeQueue(channel, SpanQueueName, SpanQueueRoute)
-	qc.InitializeQueue(channel, ClerkQueueName, ClerkQueueRoute)
+	qc.InitializeQueue(channel, util.CheckpointQueueName, util.CheckpointQueueRoute)
+	qc.InitializeQueue(channel, util.StakingQueueName, util.StakingQueueRoute)
+	qc.InitializeQueue(channel, util.SpanQueueName, util.SpanQueueRoute)
+	qc.InitializeQueue(channel, util.ClerkQueueName, util.ClerkQueueRoute)
 	return nil
 }
 
@@ -100,7 +101,7 @@ func (qc *QueueConnector) InitializeQueue(channel *amqp.Channel, queueName strin
 }
 
 // PublishBytes publishes messages to queue
-func (qc *QueueConnector) PublishMsg(data []byte, route string, appId string) error {
+func (qc *QueueConnector) PublishMsg(data []byte, route string, appId string, msgType string) error {
 	// initialize exchange
 	channel, err := qc.connection.Channel()
 	if err != nil {
@@ -114,6 +115,7 @@ func (qc *QueueConnector) PublishMsg(data []byte, route string, appId string) er
 		false,                // immediate
 		amqp.Publishing{
 			AppId:       appId,
+			Type:        msgType,
 			ContentType: "text/plain",
 			Body:        data,
 		}); err != nil {

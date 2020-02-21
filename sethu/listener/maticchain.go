@@ -5,7 +5,7 @@ import (
 
 	"github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/sethu/queue"
+	"github.com/maticnetwork/heimdall/sethu/util"
 )
 
 // MaticChainListener syncs validators and checkpoints
@@ -45,5 +45,11 @@ func (ml *MaticChainListener) Start() error {
 
 func (ml *MaticChainListener) ProcessHeader(newHeader *types.Header) {
 	ml.Logger.Info("Received Headerblock from maticchain", "header", newHeader)
-	ml.queueConnector.PublishMsg([]byte("Checkpoint Msg"), queue.CheckpointQueueRoute, ml.String())
+	// Marshall header block and publish to queue
+	headerBytes, err := newHeader.MarshalJSON()
+	if err != nil {
+		ml.Logger.Error("✅Error marshalling header block", "error", err)
+	}
+
+	ml.queueConnector.PublishMsg(headerBytes, util.CheckpointQueueRoute, ml.String(), "")
 }

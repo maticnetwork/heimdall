@@ -27,6 +27,15 @@ func getBridgeDBInstance(filePath string) *leveldb.DB {
 	return bridgeDB
 }
 
+// GetSethuDBInstance get sington object for bridge-db
+func GetSethuDBInstance(filePath string) *leveldb.DB {
+	bridgeDBOnce.Do(func() {
+		bridgeDB, _ = leveldb.OpenFile(filePath, nil)
+	})
+
+	return bridgeDB
+}
+
 // CloseBridgeDBInstance closes bridge-db instance
 func closeBridgeDBInstance() {
 	bridgeDBCloseOnce.Do(func() {

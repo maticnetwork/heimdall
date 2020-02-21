@@ -10,8 +10,11 @@ import (
 	ethereum "github.com/maticnetwork/bor"
 	"github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/bor/ethclient"
+	"github.com/maticnetwork/heimdall/bridge/pier"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/sethu/queue"
+	"github.com/spf13/viper"
+	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/tendermint/tendermint/libs/log"
 
 	httpClient "github.com/tendermint/tendermint/rpc/client"
@@ -73,6 +76,9 @@ type BaseListener struct {
 
 	// http client to subscribe to
 	httpClient *httpClient.HTTP
+
+	// storage client
+	storageClient *leveldb.DB
 }
 
 // NewBaseListener creates a new BaseListener.
@@ -94,11 +100,11 @@ func NewBaseListener(cdc *codec.Codec, queueConnector *queue.QueueConnector, cha
 
 	// creating syncer object
 	return &BaseListener{
-		Logger: logger,
-		name:   name,
-		quit:   make(chan struct{}),
-		impl:   impl,
-		// storageClient: getBridgeDBInstance(viper.GetString(BridgeDBFlag)),
+		Logger:        logger,
+		name:          name,
+		quit:          make(chan struct{}),
+		impl:          impl,
+		storageClient: pier.GetSethuDBInstance(viper.GetString(pier.BridgeDBFlag)),
 
 		cliCtx:            cliCtx,
 		queueConnector:    queueConnector,

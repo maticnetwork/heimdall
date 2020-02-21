@@ -19,6 +19,7 @@ import (
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/bridge/pier"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/sethu/broadcaster"
 	"github.com/maticnetwork/heimdall/sethu/listener"
 	"github.com/maticnetwork/heimdall/sethu/processor"
 	"github.com/maticnetwork/heimdall/sethu/queue"
@@ -44,10 +45,11 @@ func GetStartCmd() *cobra.Command {
 			_newQueueConnector := queue.NewQueueConnector(helper.GetConfig().AmqpURL)
 			_newQueueConnector.InitializeQueues()
 
+			_txBroadcaster := broadcaster.NewTxBroadcaster(cdc)
 			_httpClient := httpClient.NewHTTP(helper.GetConfig().TendermintRPCUrl, "/websocket")
 
 			// selected services to start
-			services := SelectedServices(cdc, _httpClient, _queueConnector, _newQueueConnector)
+			services := SelectedServices(cdc, _httpClient, _queueConnector, _newQueueConnector, _txBroadcaster)
 			if len(services) == 0 {
 				panic(fmt.Sprintf("No services selected to start. select services using --all or --only flag"))
 			}
@@ -118,7 +120,7 @@ func GetStartCmd() *cobra.Command {
 }
 
 // SelectedServices will select services to start based on set flags --all, --only
-func SelectedServices(cdc *codec.Codec, _httpClient *httpClient.HTTP, _queueConnector *pier.QueueConnector, _newQueueConnector *queue.QueueConnector) []common.Service {
+func SelectedServices(cdc *codec.Codec, _httpClient *httpClient.HTTP, _queueConnector *pier.QueueConnector, _newQueueConnector *queue.QueueConnector, _txBroadcaster *broadcaster.TxBroadcaster) []common.Service {
 	services := []common.Service{
 		pier.NewConsumerService(cdc, _queueConnector),
 	}
@@ -137,7 +139,7 @@ func SelectedServices(cdc *codec.Codec, _httpClient *httpClient.HTTP, _queueConn
 
 		services = append(services,
 			listener.NewListenerService(cdc, _newQueueConnector),
-			processor.NewProcessorService(cdc, _newQueueConnector))
+			processor.NewProcessorService(cdc, _newQueueConnector,_httpClient,  _txBroadcaster))
 	} else {
 		for _, service := range onlyServices {
 			switch service {

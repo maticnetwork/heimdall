@@ -1,7 +1,9 @@
-package queue
+package util
 
 const (
 	Connector = "queue-connector"
+
+	Broadcaster = "tx-broadcaster"
 
 	BroadcastExchange = "sethu.exchange.broadcast"
 

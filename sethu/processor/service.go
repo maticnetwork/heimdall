@@ -4,9 +4,12 @@ import (
 	"os"
 
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/maticnetwork/heimdall/sethu/broadcaster"
 	"github.com/maticnetwork/heimdall/sethu/queue"
 	"github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
+
+	httpClient "github.com/tendermint/tendermint/rpc/client"
 )
 
 // ProcessorService starts and stops all event processors
@@ -16,6 +19,9 @@ type ProcessorService struct {
 
 	// queue connector
 	queueConnector *queue.QueueConnector
+
+	// tx broadcaster
+	txBroadcsater *broadcaster.TxBroadcaster
 
 	processors []Processor
 }
@@ -32,7 +38,7 @@ func init() {
 }
 
 // NewProcessorService returns new service object for processing queue msg
-func NewProcessorService(cdc *codec.Codec, queueConnector *queue.QueueConnector) *ProcessorService {
+func NewProcessorService(cdc *codec.Codec, queueConnector *queue.QueueConnector, httpClient *httpClient.HTTP, txBroadcaster *broadcaster.TxBroadcaster) *ProcessorService {
 	// create logger
 	logger := Logger.With("module", processorServiceStr)
 
@@ -43,12 +49,12 @@ func NewProcessorService(cdc *codec.Codec, queueConnector *queue.QueueConnector)
 
 	processorService.BaseService = *common.NewBaseService(logger, processorServiceStr, processorService)
 
-	checkpointProcessor := &CheckpointProcessor{}
-	checkpointProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, logger, "checkpoint", checkpointProcessor)
+	checkpointProcessor := NewCheckpointProcessor()
+	checkpointProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, httpClient, txBroadcaster, logger, "checkpoint", checkpointProcessor)
 	processorService.processors = append(processorService.processors, checkpointProcessor)
 
 	stakingProcessor := &StakingProcessor{}
-	stakingProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, logger, "staking", stakingProcessor)
+	stakingProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, httpClient, txBroadcaster, logger, "staking", stakingProcessor)
 	processorService.processors = append(processorService.processors, stakingProcessor)
 
 	return processorService
