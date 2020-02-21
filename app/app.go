@@ -7,7 +7,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/cosmos-sdk/x/gov"
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
@@ -24,6 +23,8 @@ import (
 	"github.com/maticnetwork/heimdall/clerk"
 	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
 	"github.com/maticnetwork/heimdall/common"
+	gov "github.com/maticnetwork/heimdall/gov"
+	govTypes "github.com/maticnetwork/heimdall/gov/types"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/params"
 	"github.com/maticnetwork/heimdall/params/subspace"
@@ -59,7 +60,7 @@ var (
 		checkpoint.AppModuleBasic{},
 		bor.AppModuleBasic{},
 		clerk.AppModuleBasic{},
-		// gov.NewAppModuleBasic(paramsClient.ProposalHandler),
+		gov.NewAppModuleBasic(paramsClient.ProposalHandler),
 	)
 
 	// module account permissions
@@ -155,7 +156,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		authTypes.StoreKey,
 		bankTypes.StoreKey,
 		supplyTypes.StoreKey,
-		// gov.StoreKey,
+		govTypes.StoreKey,
 		stakingTypes.StoreKey,
 		checkpointTypes.StoreKey,
 		borTypes.StoreKey,
@@ -178,7 +179,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.subspaces[authTypes.ModuleName] = app.ParamsKeeper.Subspace(authTypes.DefaultParamspace)
 	app.subspaces[bankTypes.ModuleName] = app.ParamsKeeper.Subspace(bankTypes.DefaultParamspace)
 	app.subspaces[supplyTypes.ModuleName] = app.ParamsKeeper.Subspace(supplyTypes.DefaultParamspace)
-	// app.subspaces[gov.ModuleName] = app.ParamsKeeper.Subspace(gov.DefaultParamspace).WithKeyTable(gov.ParamKeyTable())
+	app.subspaces[govTypes.ModuleName] = app.ParamsKeeper.Subspace(govTypes.DefaultParamspace).WithKeyTable(govTypes.ParamKeyTable())
 	app.subspaces[stakingTypes.ModuleName] = app.ParamsKeeper.Subspace(stakingTypes.DefaultParamspace)
 	app.subspaces[checkpointTypes.ModuleName] = app.ParamsKeeper.Subspace(checkpointTypes.DefaultParamspace)
 	app.subspaces[borTypes.ModuleName] = app.ParamsKeeper.Subspace(borTypes.DefaultParamspace)
@@ -241,15 +242,15 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		app.BankKeeper,
 	)
 
-	// app.GovKeeper = gov.NewKeeper(
-	// 	app.cdc,
-	// 	keys[govTypes.StoreKey],
-	// 	app.ParamsKeeper,
-	// 	app.paramsKeeper.Subspace(gov.DefaultParamspace),
-	// 	app.bankKeeper,
-	// 	&stakingKeeper,
-	// 	gov.DefaultCodespace,
-	// )
+	app.GovKeeper = gov.NewKeeper(
+		app.cdc,
+		keys[govTypes.StoreKey],
+		app.ParamsKeeper,
+		app.paramsKeeper.Subspace(govTypes.DefaultParamspace),
+		app.bankKeeper,
+		&stakingKeeper,
+		govTypes.DefaultCodespace,
+	)
 
 	app.CheckpointKeeper = checkpoint.NewKeeper(
 		app.cdc,
@@ -281,6 +282,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		auth.NewAppModule(app.AccountKeeper, &app.caller),
 		bank.NewAppModule(app.BankKeeper, &app.caller),
 		supply.NewAppModule(app.SupplyKeeper, &app.caller),
+		gov.NewAppModule(app.GovKeeper, app.AccountKeeper, app.BankKeeper, app.SupplyKeeper),
 		staking.NewAppModule(app.StakingKeeper, &app.caller),
 		checkpoint.NewAppModule(app.CheckpointKeeper, &app.caller),
 		bor.NewAppModule(app.BorKeeper, &app.caller),
@@ -292,6 +294,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.mm.SetOrderInitGenesis(
 		authTypes.ModuleName,
 		bankTypes.ModuleName,
+		govTypes.ModuleName,
 		supplyTypes.ModuleName,
 		stakingTypes.ModuleName,
 		checkpointTypes.ModuleName,

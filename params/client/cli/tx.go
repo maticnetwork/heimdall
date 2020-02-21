@@ -11,8 +11,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
-	"github.com/cosmos/cosmos-sdk/x/gov"
 
+	govTypes "github.com/maticnetwork/heimdall/gov/types"
 	paramscutils "github.com/maticnetwork/heimdall/params/client/utils"
 	"github.com/maticnetwork/heimdall/params/types"
 )
@@ -74,7 +74,7 @@ Where proposal.json contains:
 			from := cliCtx.GetFromAddress()
 			content := types.NewParameterChangeProposal(proposal.Title, proposal.Description, proposal.Changes.ToParamChanges())
 
-			msg := gov.NewMsgSubmitProposal(content, proposal.Deposit, from)
+			msg := govTypes.NewMsgSubmitProposal(content, proposal.Deposit, from)
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}

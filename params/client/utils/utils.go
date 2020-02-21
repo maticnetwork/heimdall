@@ -5,9 +5,9 @@ import (
 	"io/ioutil"
 
 	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/maticnetwork/heimdall/params/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/types/rest"
 )
 
@@ -31,18 +31,18 @@ type (
 		Title       string           `json:"title" yaml:"title"`
 		Description string           `json:"description" yaml:"description"`
 		Changes     ParamChangesJSON `json:"changes" yaml:"changes"`
-		Deposit     sdk.Coins        `json:"deposit" yaml:"deposit"`
+		Deposit     hmTypes.Coins    `json:"deposit" yaml:"deposit"`
 	}
 
 	// ParamChangeProposalReq defines a parameter change proposal request body.
 	ParamChangeProposalReq struct {
 		BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
 
-		Title       string           `json:"title" yaml:"title"`
-		Description string           `json:"description" yaml:"description"`
-		Changes     ParamChangesJSON `json:"changes" yaml:"changes"`
-		Proposer    sdk.AccAddress   `json:"proposer" yaml:"proposer"`
-		Deposit     sdk.Coins        `json:"deposit" yaml:"deposit"`
+		Title       string                  `json:"title" yaml:"title"`
+		Description string                  `json:"description" yaml:"description"`
+		Changes     ParamChangesJSON        `json:"changes" yaml:"changes"`
+		Proposer    hmTypes.HeimdallAddress `json:"proposer" yaml:"proposer"`
+		Deposit     hmTypes.Coins           `json:"deposit" yaml:"deposit"`
 	}
 )
 

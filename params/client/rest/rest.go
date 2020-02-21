@@ -7,8 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
-	"github.com/cosmos/cosmos-sdk/x/gov"
-	govrest "github.com/cosmos/cosmos-sdk/x/gov/client/rest"
+	"github.com/maticnetwork/heimdall/gov"
+	govrest "github.com/maticnetwork/heimdall/gov/client/rest"
 
 	paramsUtils "github.com/maticnetwork/heimdall/params/client/utils"
 	paramsTypes "github.com/maticnetwork/heimdall/params/types"

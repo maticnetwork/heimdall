@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govtypes "github.com/maticnetwork/heimdall/gov/types"
 	"github.com/maticnetwork/heimdall/params/types"
 )
 
