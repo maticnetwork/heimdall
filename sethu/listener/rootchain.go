@@ -137,19 +137,13 @@ func (rl *RootChainListener) ProcessHeader(newHeader *types.Header) {
 
 	// log
 	rl.Logger.Info("Querying event logs", "fromBlock", fromBlock, "toBlock", toBlock)
+	rl.queryAndFilterLogs(fromBlock, toBlock)
+}
 
+func (rl *RootChainListener) queryAndFilterLogs(fromBlock *big.Int, toBlock *big.Int) {
 	// draft a query
-	query := ethereum.FilterQuery{
-		FromBlock: fromBlock,
-		ToBlock:   toBlock,
-		Addresses: []ethCommon.Address{
-			helper.GetRootChainAddress(),
-			helper.GetStakingInfoAddress(),
-			helper.GetStateSenderAddress(),
-		},
-	}
-
-	// get all logs
+	query := ethereum.FilterQuery{FromBlock: fromBlock, ToBlock: toBlock, Addresses: []ethCommon.Address{helper.GetRootChainAddress(), helper.GetStakingInfoAddress(), helper.GetStateSenderAddress()}}
+	// get logs from rootchain by filter
 	logs, err := rl.contractConnector.MainChainClient.FilterLogs(context.Background(), query)
 	if err != nil {
 		rl.Logger.Error("Error while filtering logs from syncer", "error", err)
@@ -158,19 +152,21 @@ func (rl *RootChainListener) ProcessHeader(newHeader *types.Header) {
 		rl.Logger.Debug("New logs found", "numberOfLogs", len(logs))
 	}
 
-	// log
+	// process filtered log
 	for _, vLog := range logs {
 		topic := vLog.Topics[0].Bytes()
 		for _, abiObject := range rl.abis {
 			selectedEvent := helper.EventByID(abiObject, topic)
 			if selectedEvent != nil {
 				rl.Logger.Debug("selectedEvent ", " event name -", selectedEvent.Name)
+
 				switch selectedEvent.Name {
 				case "NewHeaderBlock":
 					logBytes, _ := json.Marshal(vLog)
 					rl.queueConnector.PublishMsg(logBytes, util.CheckpointQueueRoute, rl.String(), selectedEvent.Name)
 					break
 				}
+
 			}
 		}
 	}

@@ -18,8 +18,7 @@ const (
 type ListenerService struct {
 	// Base service
 	common.BaseService
-	queueConnector *queue.QueueConnector
-	listeners      []Listener
+	listeners []Listener
 }
 
 // Global logger for bridge
@@ -35,9 +34,7 @@ func NewListenerService(cdc *codec.Codec, queueConnector *queue.QueueConnector) 
 	logger := Logger.With("module", listenerServiceStr)
 
 	// creating listener object
-	listenerService := &ListenerService{
-		queueConnector: queueConnector,
-	}
+	listenerService := &ListenerService{}
 
 	listenerService.BaseService = *common.NewBaseService(logger, listenerServiceStr, listenerService)
 
