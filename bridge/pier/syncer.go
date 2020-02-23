@@ -538,13 +538,16 @@ func (syncer *Syncer) processStateSyncedEvent(eventName string, abiObject *abi.A
 			"id", event.Id,
 			"contract", event.ContractAddress,
 			"data", hex.EncodeToString(event.Data),
+			"borChainId", helper.GetConfig().BorChainID,
 		)
 
+		// create clerk event record
 		msg := clerkTypes.NewMsgEventRecord(
 			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
 			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			uint64(vLog.Index),
 			event.Id.Uint64(),
+			helper.GetConfig().BorChainID,
 		)
 
 		// broadcast to heimdall

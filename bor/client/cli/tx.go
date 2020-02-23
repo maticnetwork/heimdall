@@ -44,9 +44,9 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 		Short: "send propose span tx",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			chainID := viper.GetString(FlagBorChainId)
-			if chainID == "" {
-				return fmt.Errorf("ChainID cannot be empty")
+			borChainID := viper.GetString(FlagBorChainId)
+			if borChainID == "" {
+				return fmt.Errorf("BorChainID cannot be empty")
 			}
 
 			// get proposer
@@ -102,7 +102,7 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 				proposer,
 				startBlock,
 				startBlock+spanDuration,
-				chainID,
+				borChainID,
 			)
 
 			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
