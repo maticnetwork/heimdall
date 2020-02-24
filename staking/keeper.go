@@ -441,6 +441,16 @@ func (k *Keeper) IterateDividendAccountsByPrefixAndApplyFn(ctx sdk.Context, pref
 	}
 }
 
+// IterateCurrentValidatorsAndApplyFn iterate through current validators
+func (k *Keeper) IterateCurrentValidatorsAndApplyFn(ctx sdk.Context, f func(validator *hmTypes.Validator) bool) {
+	currentValidatorSet := k.GetValidatorSet(ctx)
+	for _, v := range currentValidatorSet.Validators {
+		if stop := f(v); stop {
+			return
+		}
+	}
+}
+
 //
 // Staking sequence
 //

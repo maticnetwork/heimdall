@@ -23,6 +23,7 @@ import (
 	supplyexported "github.com/cosmos/cosmos-sdk/x/supply/exported"
 
 	"github.com/maticnetwork/heimdall/gov/types"
+	govTypes "github.com/maticnetwork/heimdall/gov/types"
 )
 
 var (
@@ -46,15 +47,15 @@ func getMockApp(t *testing.T, numGenAccs int, genState GenesisState, genAccs []a
 	mApp := mock.NewApp()
 
 	staking.RegisterCodec(mApp.Cdc)
-	types.RegisterCodec(mApp.Cdc)
+	govTypes.RegisterCodec(mApp.Cdc)
 	supply.RegisterCodec(mApp.Cdc)
 
 	keyStaking := sdk.NewKVStoreKey(staking.StoreKey)
 	tKeyStaking := sdk.NewTransientStoreKey(staking.TStoreKey)
-	keyGov := sdk.NewKVStoreKey(StoreKey)
+	keyGov := sdk.NewKVStoreKey(govTypes.StoreKey)
 	keySupply := sdk.NewKVStoreKey(supply.StoreKey)
 
-	govAcc := supply.NewEmptyModuleAccount(types.ModuleName, supply.Burner)
+	govAcc := supply.NewEmptyModuleAccount(govTypes.ModuleName, supply.Burner)
 	notBondedPool := supply.NewEmptyModuleAccount(staking.NotBondedPoolName, supply.Burner, supply.Staking)
 	bondPool := supply.NewEmptyModuleAccount(staking.BondedPoolName, supply.Burner, supply.Staking)
 
@@ -66,7 +67,7 @@ func getMockApp(t *testing.T, numGenAccs int, genState GenesisState, genAccs []a
 	pk := mApp.ParamsKeeper
 
 	rtr := NewRouter().
-		AddRoute(RouterKey, ProposalHandler)
+		AddRoute(govTypes.RouterKey, govTypes.ProposalHandler)
 
 	bk := bank.NewBaseKeeper(mApp.AccountKeeper, mApp.ParamsKeeper.Subspace(bank.DefaultParamspace), bank.DefaultCodespace, blacklistedAddrs)
 
@@ -78,10 +79,10 @@ func getMockApp(t *testing.T, numGenAccs int, genState GenesisState, genAccs []a
 	supplyKeeper := supply.NewKeeper(mApp.Cdc, keySupply, mApp.AccountKeeper, bk, maccPerms)
 	sk := staking.NewKeeper(mApp.Cdc, keyStaking, tKeyStaking, supplyKeeper, pk.Subspace(staking.DefaultParamspace), staking.DefaultCodespace)
 
-	keeper := NewKeeper(mApp.Cdc, keyGov, pk, pk.Subspace(DefaultParamspace), supplyKeeper, sk, DefaultCodespace, rtr)
+	keeper := NewKeeper(mApp.Cdc, keyGov, pk, pk.Subspace(govTypes.DefaultParamspace), supplyKeeper, sk, govTypes.DefaultCodespace, rtr)
 
-	mApp.Router().AddRoute(RouterKey, NewHandler(keeper))
-	mApp.QueryRouter().AddRoute(QuerierRoute, NewQuerier(keeper))
+	mApp.Router().AddRoute(govTypes.RouterKey, NewHandler(keeper))
+	mApp.QueryRouter().AddRoute(govTypes.QuerierRoute, NewQuerier(keeper))
 
 	mApp.SetEndBlocker(getEndBlocker(keeper))
 	mApp.SetInitChainer(getInitChainer(mApp, keeper, sk, supplyKeeper, genAccs, genState,

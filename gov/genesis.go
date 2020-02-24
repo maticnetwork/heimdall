@@ -144,7 +144,7 @@ func ExportGenesis(ctx sdk.Context, k Keeper) GenesisState {
 	votingParams := k.GetVotingParams(ctx)
 	tallyParams := k.GetTallyParams(ctx)
 
-	proposals := k.GetProposalsFiltered(ctx, nil, nil, types.StatusNil, 0)
+	proposals := k.GetProposalsFiltered(ctx, hmTypes.HeimdallAddress{}, hmTypes.HeimdallAddress{}, types.StatusNil, 0)
 
 	var proposalsDeposits types.Deposits
 	var proposalsVotes types.Votes

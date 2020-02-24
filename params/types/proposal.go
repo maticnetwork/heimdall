@@ -17,9 +17,8 @@ const (
 var _ govtypes.Content = ParameterChangeProposal{}
 
 func init() {
-	// TODO uncomment
-	// govtypes.RegisterProposalType(ProposalTypeChange)
-	// govtypes.RegisterProposalTypeCodec(ParameterChangeProposal{}, "heimdall/ParameterChangeProposal")
+	govtypes.RegisterProposalType(ProposalTypeChange)
+	govtypes.RegisterProposalTypeCodec(ParameterChangeProposal{}, "heimdall/ParameterChangeProposal")
 }
 
 // ParameterChangeProposal defines a proposal which contains multiple parameter

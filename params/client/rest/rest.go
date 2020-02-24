@@ -7,17 +7,17 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
-	"github.com/maticnetwork/heimdall/gov"
-	govrest "github.com/maticnetwork/heimdall/gov/client/rest"
 
+	govRest "github.com/maticnetwork/heimdall/gov/client/rest"
+	govTypes "github.com/maticnetwork/heimdall/gov/types"
 	paramsUtils "github.com/maticnetwork/heimdall/params/client/utils"
 	paramsTypes "github.com/maticnetwork/heimdall/params/types"
 )
 
 // ProposalRESTHandler returns a ProposalRESTHandler that exposes the param
 // change REST handler with a given sub-route.
-func ProposalRESTHandler(cliCtx context.CLIContext) govrest.ProposalRESTHandler {
-	return govrest.ProposalRESTHandler{
+func ProposalRESTHandler(cliCtx context.CLIContext) govRest.ProposalRESTHandler {
+	return govRest.ProposalRESTHandler{
 		SubRoute: "param_change",
 		Handler:  postProposalHandlerFn(cliCtx),
 	}
@@ -37,7 +37,7 @@ func postProposalHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		content := paramsTypes.NewParameterChangeProposal(req.Title, req.Description, req.Changes.ToParamChanges())
 
-		msg := gov.NewMsgSubmitProposal(content, req.Deposit, req.Proposer)
+		msg := govTypes.NewMsgSubmitProposal(content, req.Deposit, req.Proposer)
 		if err := msg.ValidateBasic(); err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return

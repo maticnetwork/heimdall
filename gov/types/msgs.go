@@ -5,7 +5,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/maticnetwork/heimdall/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -75,7 +74,7 @@ func (msg MsgSubmitProposal) GetSignBytes() []byte {
 
 // Implements Msg.
 func (msg MsgSubmitProposal) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.Proposer)}
+	return []sdk.AccAddress{hmTypes.HeimdallAddressToAccAddress(msg.Proposer)}
 }
 
 // MsgDeposit
@@ -125,7 +124,7 @@ func (msg MsgDeposit) GetSignBytes() []byte {
 
 // Implements Msg.
 func (msg MsgDeposit) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.Depositor)}
+	return []sdk.AccAddress{hmTypes.HeimdallAddressToAccAddress(msg.Depositor)}
 }
 
 // MsgVote
@@ -170,5 +169,5 @@ func (msg MsgVote) GetSignBytes() []byte {
 
 // Implements Msg.
 func (msg MsgVote) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.Voter)}
+	return []sdk.AccAddress{hmTypes.HeimdallAddressToAccAddress(msg.Voter)}
 }

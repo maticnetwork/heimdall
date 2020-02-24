@@ -198,13 +198,13 @@ func (status ProposalStatus) Format(s fmt.State, verb rune) {
 
 // Tally Results
 type TallyResult struct {
-	Yes        sdk.Int `json:"yes" yaml:"yes"`
-	Abstain    sdk.Int `json:"abstain" yaml:"abstain"`
-	No         sdk.Int `json:"no" yaml:"no"`
-	NoWithVeto sdk.Int `json:"no_with_veto" yaml:"no_with_veto"`
+	Yes        hmTypes.Int `json:"yes" yaml:"yes"`
+	Abstain    hmTypes.Int `json:"abstain" yaml:"abstain"`
+	No         hmTypes.Int `json:"no" yaml:"no"`
+	NoWithVeto hmTypes.Int `json:"no_with_veto" yaml:"no_with_veto"`
 }
 
-func NewTallyResult(yes, abstain, no, noWithVeto sdk.Int) TallyResult {
+func NewTallyResult(yes, abstain, no, noWithVeto hmTypes.Int) TallyResult {
 	return TallyResult{
 		Yes:        yes,
 		Abstain:    abstain,
@@ -213,7 +213,7 @@ func NewTallyResult(yes, abstain, no, noWithVeto sdk.Int) TallyResult {
 	}
 }
 
-func NewTallyResultFromMap(results map[VoteOption]sdk.Dec) TallyResult {
+func NewTallyResultFromMap(results map[VoteOption]hmTypes.Dec) TallyResult {
 	return TallyResult{
 		Yes:        results[OptionYes].TruncateInt(),
 		Abstain:    results[OptionAbstain].TruncateInt(),
@@ -225,10 +225,10 @@ func NewTallyResultFromMap(results map[VoteOption]sdk.Dec) TallyResult {
 // EmptyTallyResult returns an empty TallyResult.
 func EmptyTallyResult() TallyResult {
 	return TallyResult{
-		Yes:        sdk.ZeroInt(),
-		Abstain:    sdk.ZeroInt(),
-		No:         sdk.ZeroInt(),
-		NoWithVeto: sdk.ZeroInt(),
+		Yes:        hmTypes.ZeroInt(),
+		Abstain:    hmTypes.ZeroInt(),
+		No:         hmTypes.ZeroInt(),
+		NoWithVeto: hmTypes.ZeroInt(),
 	}
 }
 

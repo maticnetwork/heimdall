@@ -8,7 +8,7 @@ import (
 	"github.com/maticnetwork/heimdall/gov/types"
 )
 
-// Handle all "gov" type messages.
+// NewHandler handle all "gov" type messages.
 func NewHandler(keeper Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
