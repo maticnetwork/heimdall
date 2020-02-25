@@ -71,7 +71,7 @@ Where proposal.json contains:
 				return err
 			}
 
-			from := cliCtx.GetFromAddress()
+			from := helper.GetFromAddress(cliCtx)
 			content := types.NewParameterChangeProposal(proposal.Title, proposal.Description, proposal.Changes.ToParamChanges())
 
 			msg := govTypes.NewMsgSubmitProposal(content, proposal.Deposit, from)

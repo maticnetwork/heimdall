@@ -6,10 +6,11 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/maticnetwork/heimdall/gov/types"
+	"github.com/maticnetwork/heimdall/params"
+	"github.com/maticnetwork/heimdall/params/subspace"
 	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/supply"
 	supplyTypes "github.com/maticnetwork/heimdall/supply/types"
@@ -21,7 +22,7 @@ type Keeper struct {
 	paramsKeeper params.Keeper
 
 	// The reference to the Paramstore to get and set gov specific params
-	paramSpace params.Subspace
+	paramSpace subspace.Subspace
 
 	// The SupplyKeeper to reduce the supply of the network
 	supplyKeeper supply.Keeper
@@ -51,7 +52,7 @@ func NewKeeper(
 	cdc *codec.Codec,
 	key sdk.StoreKey,
 	paramsKeeper params.Keeper,
-	paramSpace params.Subspace,
+	paramSpace subspace.Subspace,
 	supplyKeeper supply.Keeper,
 	sk staking.Keeper,
 	codespace sdk.CodespaceType,

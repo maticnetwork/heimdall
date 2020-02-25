@@ -13,7 +13,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	paramsTypes "github.com/maticnetwork/heimdall/params/types"
 )
 
 // Keys for parameter access
@@ -24,8 +23,8 @@ const (
 // Returns components for testing
 func DefaultTestComponents(t *testing.T) (sdk.Context, Subspace, func() sdk.CommitID) {
 	cdc := codec.New()
-	key := sdk.NewKVStoreKey(paramsTypes.StoreKey)
-	tkey := sdk.NewTransientStoreKey(paramsTypes.TStoreKey)
+	key := sdk.NewKVStoreKey(StoreKey)
+	tkey := sdk.NewTransientStoreKey(TStoreKey)
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
 	ms.SetTracer(os.Stdout)

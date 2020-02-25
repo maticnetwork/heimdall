@@ -27,6 +27,7 @@ import (
 	govTypes "github.com/maticnetwork/heimdall/gov/types"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/params"
+	paramsClient "github.com/maticnetwork/heimdall/params/client"
 	"github.com/maticnetwork/heimdall/params/subspace"
 	paramsTypes "github.com/maticnetwork/heimdall/params/types"
 	"github.com/maticnetwork/heimdall/staking"
@@ -246,7 +247,8 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		app.cdc,
 		keys[govTypes.StoreKey],
 		app.ParamsKeeper,
-		app.paramsKeeper.Subspace(govTypes.DefaultParamspace),
+		// app.paramsKeeper.Subspace(govTypes.DefaultParamspace),
+		app.subspaces[govTypes.ModuleName],
 		app.bankKeeper,
 		&stakingKeeper,
 		govTypes.DefaultCodespace,

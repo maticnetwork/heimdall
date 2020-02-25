@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	params "github.com/cosmos/cosmos-sdk/x/params/subspace"
+	"github.com/maticnetwork/heimdall/params/subspace"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -16,8 +16,8 @@ var (
 )
 
 // Key declaration for parameters
-func ParamKeyTable() params.KeyTable {
-	return params.NewKeyTable(
+func ParamKeyTable() subspace.KeyTable {
+	return subspace.NewKeyTable(
 		ParamStoreKeyDepositParams, DepositParams{},
 		ParamStoreKeyVotingParams, VotingParams{},
 		ParamStoreKeyTallyParams, TallyParams{},

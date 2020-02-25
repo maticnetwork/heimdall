@@ -5,13 +5,13 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/rest"
-	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 
+	restClient "github.com/maticnetwork/heimdall/client/rest"
 	govRest "github.com/maticnetwork/heimdall/gov/client/rest"
 	govTypes "github.com/maticnetwork/heimdall/gov/types"
 	paramsUtils "github.com/maticnetwork/heimdall/params/client/utils"
 	paramsTypes "github.com/maticnetwork/heimdall/params/types"
+	"github.com/maticnetwork/heimdall/types/rest"
 )
 
 // ProposalRESTHandler returns a ProposalRESTHandler that exposes the param
@@ -43,6 +43,6 @@ func postProposalHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		utils.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+		restClient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
 	}
 }
