@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"math/big"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -124,6 +125,31 @@ func (d CrossCommunicator) IsCurrentValidatorByAddress(ctx sdk.Context, address 
 	return d.App.StakingKeeper.IsCurrentValidatorByAddress(ctx, address)
 }
 
+// AddFeeToDividendAccount add fee to dividend account
+func (d CrossCommunicator) AddFeeToDividendAccount(ctx sdk.Context, valID types.ValidatorID, fee *big.Int) sdk.Error {
+	return d.App.StakingKeeper.AddFeeToDividendAccount(ctx, valID, fee)
+}
+
+// GetValidatorFromValID get validator from validator id
+func (d CrossCommunicator) GetValidatorFromValID(ctx sdk.Context, valID types.ValidatorID) (validator types.Validator, ok bool) {
+	return d.App.StakingKeeper.GetValidatorFromValID(ctx, valID)
+}
+
+// SetCoins sets coins
+func (d CrossCommunicator) SetCoins(ctx sdk.Context, addr types.HeimdallAddress, amt types.Coins) sdk.Error {
+	return d.App.BankKeeper.SetCoins(ctx, addr, amt)
+}
+
+// GetCoins gets coins
+func (d CrossCommunicator) GetCoins(ctx sdk.Context, addr types.HeimdallAddress) types.Coins {
+	return d.App.BankKeeper.GetCoins(ctx, addr)
+}
+
+// SendCoins transfers coins
+func (d CrossCommunicator) SendCoins(ctx sdk.Context, fromAddr types.HeimdallAddress, toAddr types.HeimdallAddress, amt types.Coins) sdk.Error {
+	return d.App.BankKeeper.SendCoins(ctx, fromAddr, toAddr, amt)
+}
+
 //
 // Heimdall app
 //
@@ -224,7 +250,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		app.subspaces[bankTypes.ModuleName],
 		bankTypes.DefaultCodespace,
 		app.AccountKeeper,
-		app.StakingKeeper,
+		crossCommunicator,
 	)
 
 	// bank keeper

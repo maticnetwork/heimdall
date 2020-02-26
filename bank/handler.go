@@ -105,18 +105,16 @@ func handleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCalle
 		return hmCommon.ErrInvalidMsg(k.Codespace(), "Invalid txhash and id don't match. Id from tx hash is %v", eventLog.ValidatorId.Uint64()).Result()
 	}
 
-	// fetch validator from mainchain
-	validator, err := contractCaller.GetValidatorInfo(msg.ID)
-	if err != nil {
-		k.Logger(ctx).Error(
-			"Unable to fetch validator from rootchain",
-			"error", err,
-		)
-		return hmCommon.ErrNoValidator(k.Codespace()).Result()
+	// use event log signer
+	signer := hmTypes.BytesToHeimdallAddress(eventLog.Signer.Bytes())
+	// if validator exists use siger from local state
+	validator, found := k.vm.GetValidatorFromValID(ctx, msg.ID)
+	if found {
+		signer = validator.Signer
 	}
 
 	// validator topup
-	topupObject, err := k.GetValidatorTopup(ctx, validator.Signer)
+	topupObject, err := k.GetValidatorTopup(ctx, signer)
 	if err != nil {
 		return types.ErrNoValidatorTopup(k.Codespace()).Result()
 	}
@@ -124,7 +122,7 @@ func handleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCalle
 	// create topup object
 	if topupObject == nil {
 		topupObject = &types.ValidatorTopup{
-			ID:          validator.ID,
+			ID:          msg.ID,
 			TotalTopups: hmTypes.Coins{hmTypes.Coin{Denom: authTypes.FeeToken, Amount: hmTypes.NewInt(0)}},
 		}
 	}
@@ -145,18 +143,18 @@ func handleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCalle
 	topupObject.TotalTopups = topupObject.TotalTopups.Add(topupAmount)
 
 	// increase coins in account
-	if _, ec := k.AddCoins(ctx, validator.Signer, topupAmount); ec != nil {
+	if _, ec := k.AddCoins(ctx, signer, topupAmount); ec != nil {
 		return ec.Result()
 	}
 
 	// transfer fees to sender (proposer)
-	if ec := k.SendCoins(ctx, validator.Signer, msg.FromAddress, auth.FeeWantedPerTx); ec != nil {
+	if ec := k.SendCoins(ctx, signer, msg.FromAddress, auth.FeeWantedPerTx); ec != nil {
 		return ec.Result()
 	}
 
 	// save old validator
-	if err := k.SetValidatorTopup(ctx, validator.Signer, *topupObject); err != nil {
-		k.Logger(ctx).Error("Unable to update signer", "error", err, "validatorId", validator.ID)
+	if err := k.SetValidatorTopup(ctx, signer, *topupObject); err != nil {
+		k.Logger(ctx).Error("Unable to update signer", "error", err, "validatorId", msg.ID.String())
 		return hmCommon.ErrSignerUpdateError(k.Codespace()).Result()
 	}
 	// save topup
@@ -167,6 +165,7 @@ func handleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCalle
 			types.EventTypeTopup,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(uint64(msg.ID), 10)),
+			sdk.NewAttribute(types.AttributeKeyValidatorSigner, signer.String()),
 			sdk.NewAttribute(types.AttributeKeyTopupAmount, strconv.FormatUint(eventLog.Fee.Uint64(), 10)),
 		),
 	})
@@ -181,22 +180,22 @@ func handleMsgWithdrawFee(ctx sdk.Context, k Keeper, msg types.MsgWithdrawFee) s
 
 	// check if fee is already withdrawn
 	coins := k.GetCoins(ctx, msg.FromAddress)
-	veticBalance := coins.AmountOf(authTypes.FeeToken)
-	k.Logger(ctx).Info("Fee balance for ", "fromAddress", msg.FromAddress, "validatorId", msg.ID, "balance", veticBalance.BigInt().String())
-	if veticBalance.IsZero() {
+	maticBalance := coins.AmountOf(authTypes.FeeToken)
+	k.Logger(ctx).Info("Fee balance for ", "fromAddress", msg.FromAddress, "validatorId", msg.ID, "balance", maticBalance.BigInt().String())
+	if maticBalance.IsZero() {
 		return types.ErrNoBalanceToWithdraw(k.Codespace()).Result()
 	}
 
-	// withdraw coins of validator.
-	zeroVetic := hmTypes.Coins{hmTypes.Coin{Denom: authTypes.FeeToken, Amount: hmTypes.NewInt(0)}}
-	if err := k.SetCoins(ctx, msg.FromAddress, zeroVetic); err != nil {
+	// withdraw coins of validator
+	maticCoins := hmTypes.Coins{hmTypes.Coin{Denom: authTypes.FeeToken, Amount: maticBalance}}
+	if _, err := k.SubtractCoins(ctx, msg.FromAddress, maticCoins); err != nil {
 		k.Logger(ctx).Error("Error while setting Fee balance to zero ", "fromAddress", msg.FromAddress, "validatorId", msg.ID, "err", err)
 		return err.Result()
 	}
 
 	// Add Fee to Dividend Account
-	feeAmount := veticBalance.BigInt()
-	k.AddFeeToDividendAccount(ctx, msg.ID, feeAmount)
+	feeAmount := maticBalance.BigInt()
+	k.vm.AddFeeToDividendAccount(ctx, msg.ID, feeAmount)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(

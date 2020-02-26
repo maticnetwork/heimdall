@@ -6,6 +6,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking/types"
@@ -251,7 +252,7 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper,
 	k.Logger(ctx).Debug("Removing old validator", "validator", oldValidator.String())
 
 	// remove old validator from HM
-	oldValidator.EndEpoch = k.ackRetriever.GetACKCount(ctx)
+	oldValidator.EndEpoch = k.moduleCommunicator.GetACKCount(ctx)
 
 	// remove old validator from TM
 	oldValidator.VotingPower = 0
@@ -284,6 +285,22 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper,
 			sdk.NewAttribute(types.AttributeKeyUpdatedAt, strconv.FormatUint(validator.LastUpdated, 10)),
 		),
 	})
+
+	//
+	// Move heimdall fee to new signer
+	//
+
+	// check if fee is already withdrawn
+	coins := k.moduleCommunicator.GetCoins(ctx, oldValidator.Signer)
+	maticBalance := coins.AmountOf(authTypes.FeeToken)
+	if !maticBalance.IsZero() {
+		k.Logger(ctx).Info("Transferring fee", "from", oldValidator.Signer.String(), "to", validator.Signer.String(), "balance", maticBalance.String())
+		maticCoins := hmTypes.Coins{hmTypes.Coin{Denom: authTypes.FeeToken, Amount: maticBalance}}
+		if err := k.moduleCommunicator.SendCoins(ctx, oldValidator.Signer, validator.Signer, maticCoins); err != nil {
+			k.Logger(ctx).Info("Error while transferring fee", "from", oldValidator.Signer.String(), "to", validator.Signer.String(), "balance", maticBalance.String())
+			return err.Result()
+		}
+	}
 
 	return sdk.Result{
 		Events: ctx.EventManager().Events(),
