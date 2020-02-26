@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	govtypes "github.com/maticnetwork/heimdall/gov/types"
+	govTypes "github.com/maticnetwork/heimdall/gov/types"
 )
 
 const (
@@ -14,11 +14,11 @@ const (
 )
 
 // Assert ParameterChangeProposal implements govtypes.Content at compile-time
-var _ govtypes.Content = ParameterChangeProposal{}
+var _ govTypes.Content = ParameterChangeProposal{}
 
 func init() {
-	govtypes.RegisterProposalType(ProposalTypeChange)
-	govtypes.RegisterProposalTypeCodec(ParameterChangeProposal{}, "heimdall/ParameterChangeProposal")
+	govTypes.RegisterProposalType(ProposalTypeChange)
+	govTypes.RegisterProposalTypeCodec(ParameterChangeProposal{}, "heimdall/ParameterChangeProposal")
 }
 
 // ParameterChangeProposal defines a proposal which contains multiple parameter
@@ -47,7 +47,7 @@ func (pcp ParameterChangeProposal) ProposalType() string { return ProposalTypeCh
 
 // ValidateBasic validates the parameter change proposal
 func (pcp ParameterChangeProposal) ValidateBasic() sdk.Error {
-	err := govtypes.ValidateAbstract(DefaultCodespace, pcp)
+	err := govTypes.ValidateAbstract(DefaultCodespace, pcp)
 	if err != nil {
 		return err
 	}

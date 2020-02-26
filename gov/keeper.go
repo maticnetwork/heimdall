@@ -9,18 +9,14 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/maticnetwork/heimdall/gov/types"
-	"github.com/maticnetwork/heimdall/params"
 	"github.com/maticnetwork/heimdall/params/subspace"
 	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/supply"
 	supplyTypes "github.com/maticnetwork/heimdall/supply/types"
 )
 
-// Governance Keeper
+// Keeper governance Keeper
 type Keeper struct {
-	// The reference to the Param Keeper to get and set Global Params
-	paramsKeeper params.Keeper
-
 	// The reference to the Paramstore to get and set gov specific params
 	paramSpace subspace.Subspace
 
@@ -51,7 +47,6 @@ type Keeper struct {
 func NewKeeper(
 	cdc *codec.Codec,
 	key sdk.StoreKey,
-	paramsKeeper params.Keeper,
 	paramSpace subspace.Subspace,
 	supplyKeeper supply.Keeper,
 	sk staking.Keeper,
@@ -71,7 +66,6 @@ func NewKeeper(
 
 	return Keeper{
 		storeKey:     key,
-		paramsKeeper: paramsKeeper,
 		paramSpace:   paramSpace.WithKeyTable(types.ParamKeyTable()),
 		supplyKeeper: supplyKeeper,
 		sk:           sk,

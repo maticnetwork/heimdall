@@ -17,5 +17,4 @@ type SupplyKeeper interface {
 
 	SendCoinsFromModuleToAccount(ctx sdk.Context, senderModule string, recipientAddr hmTypes.HeimdallAddress, amt hmTypes.Coins) sdk.Error
 	SendCoinsFromAccountToModule(ctx sdk.Context, senderAddr hmTypes.HeimdallAddress, recipientModule string, amt hmTypes.Coins) sdk.Error
-	BurnCoins(ctx sdk.Context, name string, amt sdk.Coins) sdk.Error
 }

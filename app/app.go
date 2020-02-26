@@ -243,15 +243,20 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		app.BankKeeper,
 	)
 
+	// register the proposal types
+	govRouter := gov.NewRouter()
+	govRouter.
+		AddRoute(govTypes.RouterKey, govTypes.ProposalHandler).
+		AddRoute(paramsTypes.RouterKey, params.NewParamChangeProposalHandler(app.ParamsKeeper))
+
 	app.GovKeeper = gov.NewKeeper(
 		app.cdc,
 		keys[govTypes.StoreKey],
-		app.ParamsKeeper,
-		// app.paramsKeeper.Subspace(govTypes.DefaultParamspace),
 		app.subspaces[govTypes.ModuleName],
-		app.bankKeeper,
-		&stakingKeeper,
+		app.SupplyKeeper,
+		app.StakingKeeper,
 		govTypes.DefaultCodespace,
+		govRouter,
 	)
 
 	app.CheckpointKeeper = checkpoint.NewKeeper(
@@ -284,7 +289,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		auth.NewAppModule(app.AccountKeeper, &app.caller),
 		bank.NewAppModule(app.BankKeeper, &app.caller),
 		supply.NewAppModule(app.SupplyKeeper, &app.caller),
-		gov.NewAppModule(app.GovKeeper, app.AccountKeeper, app.BankKeeper, app.SupplyKeeper),
+		gov.NewAppModule(app.GovKeeper, app.SupplyKeeper),
 		staking.NewAppModule(app.StakingKeeper, &app.caller),
 		checkpoint.NewAppModule(app.CheckpointKeeper, &app.caller),
 		bor.NewAppModule(app.BorKeeper, &app.caller),
