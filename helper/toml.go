@@ -46,6 +46,7 @@ stakinginfo_contract = "{{ .StakingInfoAddress }}"
 stake_manager_contract = "{{ .StakeManagerAddress }}" 
 rootchain_contract = "{{ .RootchainAddress }}"
 state_sender_contract = "{{ .StateSenderAddress }}" 
+matic_token = "{{ .MaticTokenAddress }}"
 
 ### Bor Chain Contracts
 state_receiver_contract = "{{ .StateReceiverAddress }}" 
