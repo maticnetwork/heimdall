@@ -11,7 +11,11 @@ import (
 )
 
 const (
-	listenerServiceStr = "listener-service"
+	ListenerServiceStr = "listener"
+
+	RootChainListenerStr  = "rootchain"
+	HeimdallListenerStr   = "heimdall"
+	MaticChainListenerStr = "maticchain"
 )
 
 // ListenerService starts and stops all chain event listeners
@@ -31,23 +35,23 @@ func init() {
 // NewListenerService returns new service object for listneing to events
 func NewListenerService(cdc *codec.Codec, queueConnector *queue.QueueConnector) *ListenerService {
 	// create logger
-	logger := Logger.With("module", listenerServiceStr)
+	logger := Logger.With("service", ListenerServiceStr)
 
 	// creating listener object
 	listenerService := &ListenerService{}
 
-	listenerService.BaseService = *common.NewBaseService(logger, listenerServiceStr, listenerService)
+	listenerService.BaseService = *common.NewBaseService(logger, ListenerServiceStr, listenerService)
 
 	rootchainListener := NewRootChainListener()
-	rootchainListener.BaseListener = *NewBaseListener(cdc, queueConnector, helper.GetMainClient(), logger, "rootchain", rootchainListener)
+	rootchainListener.BaseListener = *NewBaseListener(cdc, queueConnector, helper.GetMainClient(), RootChainListenerStr, rootchainListener)
 	listenerService.listeners = append(listenerService.listeners, rootchainListener)
 
 	maticchainListener := &MaticChainListener{}
-	maticchainListener.BaseListener = *NewBaseListener(cdc, queueConnector, helper.GetMaticClient(), logger, "maticchain", maticchainListener)
+	maticchainListener.BaseListener = *NewBaseListener(cdc, queueConnector, helper.GetMaticClient(), MaticChainListenerStr, maticchainListener)
 	listenerService.listeners = append(listenerService.listeners, maticchainListener)
 
 	heimdallListener := &HeimdallListener{}
-	heimdallListener.BaseListener = *NewBaseListener(cdc, queueConnector, nil, logger, "heimdall", heimdallListener)
+	heimdallListener.BaseListener = *NewBaseListener(cdc, queueConnector, nil, HeimdallListenerStr, heimdallListener)
 	listenerService.listeners = append(listenerService.listeners, heimdallListener)
 
 	return listenerService
@@ -56,7 +60,7 @@ func NewListenerService(cdc *codec.Codec, queueConnector *queue.QueueConnector) 
 // OnStart starts new block subscription
 func (listenerService *ListenerService) OnStart() error {
 	listenerService.BaseService.OnStart() // Always call the overridden method.
-	listenerService.Logger.Info("Starting listeners", listenerService.listeners)
+	listenerService.Logger.Info("Starting all the listeners", listenerService.listeners)
 
 	// start chain listeners
 	for _, listener := range listenerService.listeners {

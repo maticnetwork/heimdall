@@ -5,7 +5,6 @@ import (
 
 	"github.com/tendermint/tendermint/libs/log"
 
-	"github.com/maticnetwork/heimdall/sethu/util"
 	"github.com/streadway/amqp"
 )
 
@@ -33,8 +32,8 @@ func NewQueueConnector(dialer string) *QueueConnector {
 	// queue connector
 	connector := QueueConnector{
 		connection:        conn,
-		broadcastExchange: util.BroadcastExchange,
-		logger:            Logger.With("module", util.Connector),
+		broadcastExchange: BroadcastExchange,
+		logger:            Logger.With("module", Connector),
 	}
 
 	// connector
@@ -63,10 +62,10 @@ func (qc *QueueConnector) InitializeQueues() error {
 
 	qc.logger.Info("Exchange Declared")
 
-	qc.InitializeQueue(channel, util.CheckpointQueueName, util.CheckpointQueueRoute)
-	qc.InitializeQueue(channel, util.StakingQueueName, util.StakingQueueRoute)
-	qc.InitializeQueue(channel, util.SpanQueueName, util.SpanQueueRoute)
-	qc.InitializeQueue(channel, util.ClerkQueueName, util.ClerkQueueRoute)
+	qc.InitializeQueue(channel, CheckpointQueueName, CheckpointQueueRoute)
+	qc.InitializeQueue(channel, StakingQueueName, StakingQueueRoute)
+	qc.InitializeQueue(channel, SpanQueueName, SpanQueueRoute)
+	qc.InitializeQueue(channel, ClerkQueueName, ClerkQueueRoute)
 	return nil
 }
 

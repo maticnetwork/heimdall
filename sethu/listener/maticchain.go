@@ -5,17 +5,22 @@ import (
 
 	"github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/sethu/util"
+	"github.com/maticnetwork/heimdall/sethu/queue"
 )
 
-// MaticChainListener syncs validators and checkpoints
+// MaticChainListener - Listens to and process headerblocks from maticchain
 type MaticChainListener struct {
 	BaseListener
 }
 
+// NewMaticChainListener - constructor func
+func NewMaticChainListener() *MaticChainListener {
+	return &MaticChainListener{}
+}
+
 // Start starts new block subscription
 func (ml *MaticChainListener) Start() error {
-	ml.Logger.Info("Starting listener", "name", ml.String())
+	ml.Logger.Info("Starting listener")
 	// create cancellable context
 	ctx, cancelSubscription := context.WithCancel(context.Background())
 	ml.cancelSubscription = cancelSubscription
@@ -43,13 +48,16 @@ func (ml *MaticChainListener) Start() error {
 	return nil
 }
 
+// ProcessHeader - process headerblock from maticchain
 func (ml *MaticChainListener) ProcessHeader(newHeader *types.Header) {
-	ml.Logger.Info("Received Headerblock from maticchain", "header", newHeader)
+	ml.Logger.Info("Received Headerblock", "blockNumber", newHeader)
 	// Marshall header block and publish to queue
 	headerBytes, err := newHeader.MarshalJSON()
 	if err != nil {
-		ml.Logger.Error("✅Error marshalling header block", "error", err)
+		ml.Logger.Error("Error marshalling header block", "error", err)
 	}
 
-	ml.queueConnector.PublishMsg(headerBytes, util.CheckpointQueueRoute, ml.String(), "")
+	if err := ml.queueConnector.PublishMsg(headerBytes, queue.CheckpointQueueRoute, ml.String(), "Headerblock"); err != nil {
+		ml.Logger.Error("Error publish headerblock to checkpoint queue", "error", err)
+	}
 }

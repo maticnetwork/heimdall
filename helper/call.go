@@ -29,7 +29,7 @@ type IContractCaller interface {
 	GetLastChildBlock() (uint64, error)
 	CurrentHeaderBlock() (uint64, error)
 	GetBalance(address common.Address) (*big.Int, error)
-	SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte)
+	SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte) error
 	GetCheckpointSign(txHash common.Hash) ([]byte, []byte, []byte, error)
 	GetMainChainBlock(*big.Int) (*ethTypes.Header, error)
 	GetMaticChainBlock(*big.Int) (*ethTypes.Header, error)

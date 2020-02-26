@@ -10,9 +10,9 @@ import (
 	ethereum "github.com/maticnetwork/bor"
 	"github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/bor/ethclient"
-	"github.com/maticnetwork/heimdall/bridge/pier"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/sethu/queue"
+	"github.com/maticnetwork/heimdall/sethu/util"
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/tendermint/tendermint/libs/log"
@@ -82,8 +82,9 @@ type BaseListener struct {
 }
 
 // NewBaseListener creates a new BaseListener.
-func NewBaseListener(cdc *codec.Codec, queueConnector *queue.QueueConnector, chainClient *ethclient.Client, logger log.Logger, name string, impl Listener) *BaseListener {
+func NewBaseListener(cdc *codec.Codec, queueConnector *queue.QueueConnector, chainClient *ethclient.Client, name string, impl Listener) *BaseListener {
 
+	logger := Logger.With("service", "listener", "module", name)
 	contractCaller, err := helper.NewContractCaller()
 	if err != nil {
 		logger.Error("Error while getting root chain instance", "error", err)
@@ -94,17 +95,13 @@ func NewBaseListener(cdc *codec.Codec, queueConnector *queue.QueueConnector, cha
 	cliCtx.BroadcastMode = client.BroadcastAsync
 	cliCtx.TrustNode = true
 
-	if logger == nil {
-		logger = log.NewNopLogger()
-	}
-
 	// creating syncer object
 	return &BaseListener{
 		Logger:        logger,
 		name:          name,
 		quit:          make(chan struct{}),
 		impl:          impl,
-		storageClient: pier.GetSethuDBInstance(viper.GetString(pier.BridgeDBFlag)),
+		storageClient: util.GetBridgeDBInstance(viper.GetString(util.BridgeDBFlag)),
 
 		cliCtx:            cliCtx,
 		queueConnector:    queueConnector,

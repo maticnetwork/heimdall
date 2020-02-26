@@ -139,7 +139,7 @@ func SelectedServices(cdc *codec.Codec, _httpClient *httpClient.HTTP, _queueConn
 
 		services = append(services,
 			listener.NewListenerService(cdc, _newQueueConnector),
-			processor.NewProcessorService(cdc, _newQueueConnector,_httpClient,  _txBroadcaster))
+			processor.NewProcessorService(cdc, _newQueueConnector, _httpClient, _txBroadcaster))
 	} else {
 		for _, service := range onlyServices {
 			switch service {

@@ -13,10 +13,10 @@ import (
 	"github.com/maticnetwork/bor/core/types"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/sethu/queue"
 	"github.com/maticnetwork/heimdall/sethu/util"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 
-	"github.com/maticnetwork/heimdall/bridge/pier"
 	"github.com/tendermint/tendermint/libs/log"
 )
 
@@ -41,16 +41,15 @@ func NewTxBroadcaster(cdc *codec.Codec) *TxBroadcaster {
 	cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
 	cliCtx.BroadcastMode = client.BroadcastAsync
 	cliCtx.TrustNode = true
-
 	txBroadcaster := TxBroadcaster{
-		logger: Logger.With("module", util.Broadcaster),
+		logger: Logger.With("module", queue.Broadcaster),
 		cliCtx: cliCtx,
 	}
 
 	return &txBroadcaster
 }
 
-func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg) bool {
+func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg) error {
 	// tx encoder
 	txEncoder := helper.GetTxEncoder()
 	// chain id
@@ -59,10 +58,11 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg) bool {
 	address := hmTypes.BytesToHeimdallAddress(helper.GetAddress())
 	// fetch from APIs
 	var account authTypes.Account
-	response, err := pier.FetchFromAPI(tb.cliCtx, pier.GetHeimdallServerEndpoint(fmt.Sprintf(pier.AccountDetailsURL, address)))
+	response, err := util.FetchFromAPI(tb.cliCtx, util.GetHeimdallServerEndpoint(fmt.Sprintf(util.AccountDetailsURL, address)))
 	if err != nil {
-		tb.logger.Error("Error fetching account from rest-api", "url", pier.GetHeimdallServerEndpoint(fmt.Sprintf(pier.AccountDetailsURL, address)))
+		tb.logger.Error("Error fetching account from rest-api", "url", util.GetHeimdallServerEndpoint(fmt.Sprintf(util.AccountDetailsURL, address)))
 		panic("Error connecting to rest-server, please start server before bridge")
+		return err
 	}
 
 	// get proposer from response
@@ -79,26 +79,28 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg) bool {
 		WithAccountNumber(accNum).
 		WithSequence(accSeq).
 		WithChainID(chainID)
-	if _, err := helper.BuildAndBroadcastMsgs(tb.cliCtx, txBldr, []sdk.Msg{msg}); err != nil {
+
+	txResponse, err := helper.BuildAndBroadcastMsgs(tb.cliCtx, txBldr, []sdk.Msg{msg})
+	if err != nil {
 		tb.logger.Error("Error while broadcasting the heimdall transaction", "error", err)
-		return false
+		return err
 	}
 
 	// increment account sequence
-	accSeq = accSeq + 1
-
-	return true
+	// accSeq = accSeq + 1
+	tb.logger.Debug("Tx successful on heimdall", "txResponse", txResponse)
+	return nil
 }
 
-func (tb *TxBroadcaster) BroadcastToMatic(msg bor.CallMsg) bool {
+func (tb *TxBroadcaster) BroadcastToMatic(msg bor.CallMsg) error {
 	maticClient := helper.GetMaticClient()
 
 	// get auth
 	auth, err := helper.GenerateAuthObj(maticClient, *msg.To, msg.Data)
 
 	if err != nil {
-		tb.logger.Error("Error while fetching the transaction param details", "error", err)
-		return false
+		tb.logger.Error("Error generating auth object", "error", err)
+		return err
 	}
 
 	// Create the transaction, sign it and schedule it for execution
@@ -106,20 +108,18 @@ func (tb *TxBroadcaster) BroadcastToMatic(msg bor.CallMsg) bool {
 	// signer
 	signedTx, err := auth.Signer(types.HomesteadSigner{}, auth.From, rawTx)
 	if err != nil {
-		tb.logger.Error("Error while signing the transaction", "error", err)
-		return false
+		tb.logger.Error("Error signing the transaction", "error", err)
+		return err
 	}
 
 	tb.logger.Debug("Sending transaction to bor", "TxHash", signedTx.Hash())
 
 	// broadcast transaction
 	if err := maticClient.SendTransaction(context.Background(), signedTx); err != nil {
-		tb.logger.Error("Error while broadcasting the transaction", "error", err)
-		return false
+		tb.logger.Error("Error while broadcasting the transaction to maticchain", "txHash", signedTx.Hash(), "error", err)
+		return err
 	}
-
-	// amqp msg
-	return true
+	return nil
 }
 
 func (tb *TxBroadcaster) BroadcastToRootchain() {

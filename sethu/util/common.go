@@ -1,4 +1,4 @@
-package helper
+package util
 
 import (
 	"bytes"
@@ -61,7 +61,7 @@ func init() {
 }
 
 // checks if we are proposer
-func isProposer(cliCtx cliContext.CLIContext) bool {
+func IsProposer(cliCtx cliContext.CLIContext) (bool, error) {
 	var proposers []hmtypes.Validator
 	count := uint64(1)
 	result, err := FetchFromAPI(cliCtx,
@@ -69,24 +69,46 @@ func isProposer(cliCtx cliContext.CLIContext) bool {
 	)
 	if err != nil {
 		Logger.Error("Error fetching proposers", "error", err)
-		return false
+		return false, err
 	}
 	err = json.Unmarshal(result.Result, &proposers)
 	if err != nil {
 		Logger.Error("error unmarshalling proposer slice", "error", err)
-		return false
+		return false, err
 	}
 	Logger.Debug("Current proposer fetched", "validator", proposers[0].String())
 
 	if bytes.Equal(proposers[0].Signer.Bytes(), helper.GetAddress()) {
-		return true
+		return true, nil
 	}
 
-	return false
+	return false, nil
+}
+
+// checks if we are current proposer
+func IsCurrentProposer(cliCtx cliContext.CLIContext) (bool, error) {
+	var proposer hmtypes.Validator
+	result, err := FetchFromAPI(cliCtx, GetHeimdallServerEndpoint(CurrentProposerURL))
+	if err != nil {
+		Logger.Error("Error fetching proposers", "error", err)
+		return false, err
+	}
+	err = json.Unmarshal(result.Result, &proposer)
+	if err != nil {
+		Logger.Error("error unmarshalling validator", "error", err)
+		return false, err
+	}
+	Logger.Debug("Current proposer fetched", "validator", proposer.String())
+
+	if bytes.Equal(proposer.Signer.Bytes(), helper.GetAddress()) {
+		return true, nil
+	}
+
+	return false, nil
 }
 
 // check if we are the EventSender
-func isEventSender(cliCtx cliContext.CLIContext, validatorID uint64) bool {
+func IsEventSender(cliCtx cliContext.CLIContext, validatorID uint64) bool {
 
 	var validator hmtypes.Validator
 

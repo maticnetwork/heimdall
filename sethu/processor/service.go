@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/sethu/broadcaster"
 	"github.com/maticnetwork/heimdall/sethu/queue"
 	"github.com/tendermint/tendermint/libs/common"
@@ -47,15 +48,37 @@ func NewProcessorService(cdc *codec.Codec, queueConnector *queue.QueueConnector,
 		queueConnector: queueConnector,
 	}
 
+	contractCaller, err := helper.NewContractCaller()
+	if err != nil {
+		panic(err)
+	}
+
 	processorService.BaseService = *common.NewBaseService(logger, processorServiceStr, processorService)
 
+	// initialize checkpoint processor
 	checkpointProcessor := NewCheckpointProcessor()
-	checkpointProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, httpClient, txBroadcaster, logger, "checkpoint", checkpointProcessor)
+	checkpointProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, httpClient, txBroadcaster, &contractCaller.RootChainABI, "checkpoint", checkpointProcessor)
 	processorService.processors = append(processorService.processors, checkpointProcessor)
 
+	// initialize staking processor
 	stakingProcessor := &StakingProcessor{}
-	stakingProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, httpClient, txBroadcaster, logger, "staking", stakingProcessor)
+	stakingProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, httpClient, txBroadcaster, &contractCaller.RootChainABI, "staking", stakingProcessor)
 	processorService.processors = append(processorService.processors, stakingProcessor)
+
+	// initialize clerk processor
+	clerkProcessor := &ClerkProcessor{}
+	clerkProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, httpClient, txBroadcaster, &contractCaller.RootChainABI, "clerk", clerkProcessor)
+	processorService.processors = append(processorService.processors, clerkProcessor)
+
+	// initialize fee processor
+	feeProcessor := &FeeProcessor{}
+	stakingProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, httpClient, txBroadcaster, &contractCaller.RootChainABI, "fee", feeProcessor)
+	processorService.processors = append(processorService.processors, feeProcessor)
+
+	// initialize span processor
+	spanProcessor := &SpanProcessor{}
+	stakingProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, httpClient, txBroadcaster, &contractCaller.RootChainABI, "span", spanProcessor)
+	processorService.processors = append(processorService.processors, spanProcessor)
 
 	return processorService
 }

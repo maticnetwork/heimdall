@@ -4,10 +4,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/spf13/viper"
+	"github.com/syndtr/goleveldb/leveldb"
 
+	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/sethu/broadcaster"
 	"github.com/maticnetwork/heimdall/sethu/queue"
+	"github.com/maticnetwork/heimdall/sethu/util"
 	"github.com/tendermint/tendermint/libs/log"
 	httpClient "github.com/tendermint/tendermint/rpc/client"
 )
@@ -46,13 +50,16 @@ type BaseProcessor struct {
 	// http client to subscribe to
 	httpClient *httpClient.HTTP
 
-	// storage client
-	// storageClient *leveldb.DB
+	rootchainAbi *abi.ABI
 
+	// storage client
+	storageClient *leveldb.DB
 }
 
 // NewBaseProcessor creates a new BaseProcessor.
-func NewBaseProcessor(cdc *codec.Codec, queueConnector *queue.QueueConnector, httpClient *httpClient.HTTP, txBroadcaster *broadcaster.TxBroadcaster, logger log.Logger, name string, impl Processor) *BaseProcessor {
+func NewBaseProcessor(cdc *codec.Codec, queueConnector *queue.QueueConnector, httpClient *httpClient.HTTP, txBroadcaster *broadcaster.TxBroadcaster, rootchainAbi *abi.ABI, name string, impl Processor) *BaseProcessor {
+
+	logger := Logger.With("service", "processor", "module", name)
 
 	cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
 	cliCtx.BroadcastMode = client.BroadcastAsync
@@ -80,7 +87,8 @@ func NewBaseProcessor(cdc *codec.Codec, queueConnector *queue.QueueConnector, ht
 		contractConnector: contractCaller,
 		txBroadcaster:     txBroadcaster,
 		httpClient:        httpClient,
-		// storageClient: getBridgeDBInstance(viper.GetString(BridgeDBFlag)),
+		rootchainAbi:      rootchainAbi,
+		storageClient:     util.GetBridgeDBInstance(viper.GetString(util.BridgeDBFlag)),
 	}
 }
 
