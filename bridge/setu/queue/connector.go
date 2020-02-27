@@ -1,24 +1,16 @@
 package queue
 
 import (
-	"os"
-
+	"github.com/streadway/amqp"
 	"github.com/tendermint/tendermint/libs/log"
 
-	"github.com/streadway/amqp"
+	"github.com/maticnetwork/heimdall/bridge/setu/util"
 )
 
 type QueueConnector struct {
 	connection        *amqp.Connection
 	broadcastExchange string
 	logger            log.Logger
-}
-
-// Global logger for bridge
-var Logger log.Logger
-
-func init() {
-	Logger = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
 }
 
 func NewQueueConnector(dialer string) *QueueConnector {
@@ -32,7 +24,7 @@ func NewQueueConnector(dialer string) *QueueConnector {
 	connector := QueueConnector{
 		connection:        conn,
 		broadcastExchange: BroadcastExchange,
-		logger:            Logger.With("module", Connector),
+		logger:            util.Logger().With("module", Connector),
 	}
 
 	// connector
@@ -82,7 +74,7 @@ func (qc *QueueConnector) InitializeQueue(channel *amqp.Channel, queueName strin
 		return err
 	}
 
-	qc.logger.Info("Queue Declared", "queuename", queueName)
+	qc.logger.Debug("Queue Declared", "queuename", queueName)
 
 	// bind queue
 	if err := channel.QueueBind(
@@ -95,7 +87,7 @@ func (qc *QueueConnector) InitializeQueue(channel *amqp.Channel, queueName strin
 		return err
 	}
 
-	qc.logger.Info("Queue Bind", "queuename", queueName, "queueroute", queueRoute)
+	qc.logger.Debug("Queue Bind", "queuename", queueName, "queueroute", queueRoute)
 	return nil
 }
 

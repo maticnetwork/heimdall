@@ -26,7 +26,8 @@ import (
 )
 
 const (
-	WaitDuration = 1 * time.Minute
+	waitDuration = 1 * time.Minute
+	logLevel     = "log_level"
 )
 
 // GetStartCmd returns the start command to start bridge
@@ -35,7 +36,7 @@ func GetStartCmd() *cobra.Command {
 		Use:   "start",
 		Short: "Start bridge server",
 		Run: func(cmd *cobra.Command, args []string) {
-			logger := util.Logger.With("module", "bridge")
+			logger := util.Logger().With("module", "bridge")
 
 			// create codec
 			cdc := app.MakeCodec()
@@ -94,7 +95,7 @@ func GetStartCmd() *cobra.Command {
 				} else {
 					logger.Info("Waiting for heimdall to be synced")
 				}
-				time.Sleep(WaitDuration)
+				time.Sleep(waitDuration)
 			}
 
 			// strt all processes
@@ -110,6 +111,10 @@ func GetStartCmd() *cobra.Command {
 			wg.Add(len(services))
 			wg.Wait()
 		}}
+
+	// log level
+	startCmd.Flags().String(logLevel, "info", "Log level for bridge")
+	viper.BindPFlag(logLevel, startCmd.Flags().Lookup(logLevel))
 
 	startCmd.Flags().Bool("all", false, "start all bridge services")
 	viper.BindPFlag("all", startCmd.Flags().Lookup("all"))
