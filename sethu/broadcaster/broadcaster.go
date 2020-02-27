@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sync"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
@@ -25,8 +26,11 @@ type TxBroadcaster struct {
 	// logger
 	logger log.Logger
 
-	// tx encoder
 	cliCtx cliContext.CLIContext
+
+	heimdallMutex sync.Mutex
+
+	maticMutex sync.Mutex
 }
 
 // Global logger for bridge
@@ -50,6 +54,8 @@ func NewTxBroadcaster(cdc *codec.Codec) *TxBroadcaster {
 }
 
 func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg) error {
+
+	tb.heimdallMutex.Lock()
 	// tx encoder
 	txEncoder := helper.GetTxEncoder()
 	// chain id
@@ -62,11 +68,14 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg) error {
 	if err != nil {
 		tb.logger.Error("Error fetching account from rest-api", "url", util.GetHeimdallServerEndpoint(fmt.Sprintf(util.AccountDetailsURL, address)))
 		panic("Error connecting to rest-server, please start server before bridge")
+		tb.heimdallMutex.Unlock()
 		return err
 	}
 
 	// get proposer from response
 	if err := tb.cliCtx.Codec.UnmarshalJSON(response.Result, &account); err != nil && len(response.Result) != 0 {
+		tb.heimdallMutex.Unlock()
+		tb.logger.Error("Error unmarshalling account details", "url", util.GetHeimdallServerEndpoint(fmt.Sprintf(util.AccountDetailsURL, address)))
 		panic(err)
 	}
 
@@ -83,16 +92,19 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg) error {
 	txResponse, err := helper.BuildAndBroadcastMsgs(tb.cliCtx, txBldr, []sdk.Msg{msg})
 	if err != nil {
 		tb.logger.Error("Error while broadcasting the heimdall transaction", "error", err)
+		tb.heimdallMutex.Unlock()
 		return err
 	}
 
 	// increment account sequence
 	// accSeq = accSeq + 1
 	tb.logger.Debug("Tx successful on heimdall", "txResponse", txResponse)
+	tb.heimdallMutex.Unlock()
 	return nil
 }
 
 func (tb *TxBroadcaster) BroadcastToMatic(msg bor.CallMsg) error {
+	tb.maticMutex.Lock()
 	maticClient := helper.GetMaticClient()
 
 	// get auth
@@ -100,6 +112,7 @@ func (tb *TxBroadcaster) BroadcastToMatic(msg bor.CallMsg) error {
 
 	if err != nil {
 		tb.logger.Error("Error generating auth object", "error", err)
+		tb.maticMutex.Unlock()
 		return err
 	}
 
@@ -109,6 +122,7 @@ func (tb *TxBroadcaster) BroadcastToMatic(msg bor.CallMsg) error {
 	signedTx, err := auth.Signer(types.HomesteadSigner{}, auth.From, rawTx)
 	if err != nil {
 		tb.logger.Error("Error signing the transaction", "error", err)
+		tb.maticMutex.Unlock()
 		return err
 	}
 
@@ -117,8 +131,10 @@ func (tb *TxBroadcaster) BroadcastToMatic(msg bor.CallMsg) error {
 	// broadcast transaction
 	if err := maticClient.SendTransaction(context.Background(), signedTx); err != nil {
 		tb.logger.Error("Error while broadcasting the transaction to maticchain", "txHash", signedTx.Hash(), "error", err)
+		tb.maticMutex.Unlock()
 		return err
 	}
+	tb.maticMutex.Unlock()
 	return nil
 }
 

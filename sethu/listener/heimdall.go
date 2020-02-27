@@ -3,6 +3,8 @@ package listener
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/maticnetwork/bor/core/types"
@@ -13,6 +15,10 @@ import (
 
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
+)
+
+const (
+	heimdallLastBlockKey = "heimdall-last-block" // storage key
 )
 
 // HeimdallListener - Listens to and process events from heimdall
@@ -66,29 +72,60 @@ func (hl *HeimdallListener) StartPolling(ctx context.Context, pollInterval time.
 	for {
 		select {
 		case <-ticker.C:
-			for _, eventType := range eventTypes {
-				searchResult, err := helper.QueryTxsByEvents(hl.cliCtx, []string{eventType}, 1, 50)
-				if err != nil {
-					hl.Logger.Error("Error searching for heimdall events", "eventType", eventType, "error", err)
-				}
-				hl.Logger.Info(" heimdall event search result", "searchResultCount", searchResult.Count)
-				for _, tx := range searchResult.Txs {
-					for _, log := range tx.Logs {
-						event := helper.FilterEvents(log.Events, func(et sdk.StringEvent) bool {
-							return et.Type == checkpointTypes.EventTypeCheckpoint || et.Type == checkpointTypes.EventTypeCheckpointAck || et.Type == clerkTypes.EventTypeRecord
-						})
-						if event != nil {
-							hl.ProcessEvent(*event)
+			fromBlock, toBlock := hl.fetchFromAndToBlock()
+			if fromBlock < toBlock {
+				for _, eventType := range eventTypes {
+					var query []string
+					query = append(query, eventType)
+					query = append(query, fmt.Sprintf("tx.height>=%v", fromBlock))
+					query = append(query, fmt.Sprintf("tx.height<=%v", toBlock))
+
+					searchResult, err := helper.QueryTxsByEvents(hl.cliCtx, query, 1, 50)
+					if err != nil {
+						hl.Logger.Error("Error searching for heimdall events", "eventType", eventType, "error", err)
+					}
+					hl.Logger.Debug(" heimdall event search result", "searchResultCount", searchResult.Count)
+					for _, tx := range searchResult.Txs {
+						for _, log := range tx.Logs {
+							event := helper.FilterEvents(log.Events, func(et sdk.StringEvent) bool {
+								return et.Type == checkpointTypes.EventTypeCheckpoint || et.Type == checkpointTypes.EventTypeCheckpointAck || et.Type == clerkTypes.EventTypeRecord
+							})
+							if event != nil {
+								hl.ProcessEvent(*event)
+							}
 						}
 					}
 				}
-
+				// set last block to storage
+				hl.storageClient.Put([]byte(heimdallLastBlockKey), []byte(string(toBlock)), nil)
 			}
+
 		case <-ctx.Done():
 			ticker.Stop()
 			return
 		}
 	}
+}
+
+func (hl *HeimdallListener) fetchFromAndToBlock() (fromBlock int64, toBlock int64) {
+	// toBlock - get latest blockheight from heimdall node
+	nodeStatus, _ := helper.GetNodeStatus(hl.cliCtx)
+	toBlock = nodeStatus.SyncInfo.LatestBlockHeight
+
+	// fromBlock - get last block from storage
+	hasLastBlock, _ := hl.storageClient.Has([]byte(heimdallLastBlockKey), nil)
+	if hasLastBlock {
+		lastBlockBytes, err := hl.storageClient.Get([]byte(heimdallLastBlockKey), nil)
+		if err != nil {
+			hl.Logger.Info("Error while fetching last block bytes from storage", "error", err)
+			return
+		}
+		hl.Logger.Debug("Got last block from bridge storage", "lastBlock", string(lastBlockBytes))
+		if result, err := strconv.ParseUint(string(lastBlockBytes), 10, 64); err == nil {
+			fromBlock = int64(result) + 1
+		}
+	}
+	return
 }
 
 // ProcessEvent - process event from heimdall.

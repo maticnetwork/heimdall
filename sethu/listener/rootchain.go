@@ -22,7 +22,7 @@ type RootChainListener struct {
 }
 
 const (
-	lastBlockKey = "last-block" // storage key
+	lastRootBlockKey = "rootchain-last-block" // storage key
 )
 
 // NewRootChainListener - constructor func
@@ -87,9 +87,9 @@ func (rl *RootChainListener) ProcessHeader(newHeader *types.Header) {
 	// default fromBlock
 	fromBlock := latestNumber
 	// get last block from storage
-	hasLastBlock, _ := rl.storageClient.Has([]byte(lastBlockKey), nil)
+	hasLastBlock, _ := rl.storageClient.Has([]byte(lastRootBlockKey), nil)
 	if hasLastBlock {
-		lastBlockBytes, err := rl.storageClient.Get([]byte(lastBlockKey), nil)
+		lastBlockBytes, err := rl.storageClient.Get([]byte(lastRootBlockKey), nil)
 		if err != nil {
 			rl.Logger.Info("Error while fetching last block bytes from storage", "error", err)
 			return
@@ -111,7 +111,7 @@ func (rl *RootChainListener) ProcessHeader(newHeader *types.Header) {
 	}
 
 	// set last block to storage
-	rl.storageClient.Put([]byte(lastBlockKey), []byte(toBlock.String()), nil)
+	rl.storageClient.Put([]byte(lastRootBlockKey), []byte(toBlock.String()), nil)
 
 	// query log
 	rl.Logger.Info("Query event logs", "fromBlock", fromBlock, "toBlock", toBlock)
