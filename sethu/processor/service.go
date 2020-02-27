@@ -72,12 +72,12 @@ func NewProcessorService(cdc *codec.Codec, queueConnector *queue.QueueConnector,
 
 	// initialize fee processor
 	feeProcessor := &FeeProcessor{}
-	stakingProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, httpClient, txBroadcaster, &contractCaller.RootChainABI, "fee", feeProcessor)
+	feeProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, httpClient, txBroadcaster, &contractCaller.RootChainABI, "fee", feeProcessor)
 	processorService.processors = append(processorService.processors, feeProcessor)
 
 	// initialize span processor
 	spanProcessor := &SpanProcessor{}
-	stakingProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, httpClient, txBroadcaster, &contractCaller.RootChainABI, "span", spanProcessor)
+	spanProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, httpClient, txBroadcaster, &contractCaller.RootChainABI, "span", spanProcessor)
 	processorService.processors = append(processorService.processors, spanProcessor)
 
 	return processorService

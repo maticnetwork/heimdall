@@ -76,7 +76,6 @@ func IsProposer(cliCtx cliContext.CLIContext) (bool, error) {
 		Logger.Error("error unmarshalling proposer slice", "error", err)
 		return false, err
 	}
-	Logger.Debug("Current proposer fetched", "validator", proposers[0].String())
 
 	if bytes.Equal(proposers[0].Signer.Bytes(), helper.GetAddress()) {
 		return true, nil

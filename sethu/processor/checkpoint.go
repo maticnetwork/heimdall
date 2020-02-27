@@ -202,7 +202,7 @@ func (cp *CheckpointProcessor) HandleCheckpointConfirmation(event sdk.StringEven
 			return err
 		}
 	} else {
-		cp.Logger.Info("i am not the current proposer. skipping checkpoint confirmation", "eventtype", event.Type)
+		cp.Logger.Info("i am not the current proposer. skipping checkpoint confirmation", "eventType", event.Type)
 		return nil
 	}
 	return nil
@@ -211,7 +211,6 @@ func (cp *CheckpointProcessor) HandleCheckpointConfirmation(event sdk.StringEven
 // HandleCheckpointAck - handles checkpointAck event from rootchain
 // 1. create and broadcast checkpointAck msg to heimdall.
 func (cp *CheckpointProcessor) HandleCheckpointAck(eventName string, vLog types.Log) error {
-	cp.Logger.Info("Processing checkpoint ack event", "vlog", vLog, "eventName", eventName)
 	event := new(rootchain.RootchainNewHeaderBlock)
 	if err := helper.UnpackLog(cp.rootchainAbi, event, eventName, &vLog); err != nil {
 		cp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
@@ -366,7 +365,7 @@ func (cp *CheckpointProcessor) sendCheckpointToHeimdall(start uint64, end uint64
 	if err != nil {
 		return err
 	}
-	cp.Logger.Info("Root hash calculated", "rootHash", root)
+	cp.Logger.Info("Root hash calculated", "rootHash", hmTypes.BytesToHeimdallHash(root))
 	accountRootHash := hmTypes.ZeroHeimdallHash
 	//Get DividendAccountRoot from HeimdallServer
 	if accountRootHash, err = cp.fetchDividendAccountRoot(); err != nil {

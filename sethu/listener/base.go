@@ -32,8 +32,6 @@ type Listener interface {
 
 	ProcessHeader(*types.Header)
 
-	// PublishEvent()
-
 	Stop()
 
 	String() string

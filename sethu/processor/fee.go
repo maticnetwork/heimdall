@@ -64,8 +64,8 @@ func (fp *FeeProcessor) processTopupFeeEvent(eventName string, vLog *types.Log) 
 	if err := helper.UnpackLog(fp.rootchainAbi, event, eventName, vLog); err != nil {
 		fp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
 	} else {
-		fp.Logger.Info(
-			"New event found",
+
+		fp.Logger.Info("✅Creating and broadcasting topup",
 			"event", eventName,
 			"validatorId", event.ValidatorId,
 			"Fee", event.Fee,

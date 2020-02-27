@@ -49,7 +49,7 @@ func (hl *HeimdallListener) Start() error {
 		pollInterval = helper.GetConfig().CheckpointerPollInterval
 	}
 
-	hl.Logger.Info("Start polling for heimdall events", "pollInterval", pollInterval)
+	hl.Logger.Info("Start polling for events", "pollInterval", pollInterval)
 	hl.StartPolling(headerCtx, pollInterval)
 	return nil
 }
@@ -85,7 +85,7 @@ func (hl *HeimdallListener) StartPolling(ctx context.Context, pollInterval time.
 					query = append(query, fmt.Sprintf("tx.height>=%v", fromBlock))
 					query = append(query, fmt.Sprintf("tx.height<=%v", toBlock))
 
-					hl.Logger.Info(" heimdall event search query", "query", query)
+					hl.Logger.Debug(" heimdall event search query", "query", query)
 					searchResult, err := helper.QueryTxsByEvents(hl.cliCtx, query, 1, 50)
 					if err != nil {
 						hl.Logger.Error("Error while searching events", "eventType", eventType, "error", err)
