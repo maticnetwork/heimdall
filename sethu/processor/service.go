@@ -86,13 +86,13 @@ func NewProcessorService(cdc *codec.Codec, queueConnector *queue.QueueConnector,
 // OnStart starts new block subscription
 func (processorService *ProcessorService) OnStart() error {
 	processorService.BaseService.OnStart() // Always call the overridden method.
-	processorService.Logger.Info("Processor Service Started")
 
 	// start processors
 	for _, processor := range processorService.processors {
 		go processor.Start()
 	}
 
+	processorService.Logger.Info("all processors Started")
 	return nil
 }
 
@@ -103,6 +103,7 @@ func (processorService *ProcessorService) OnStop() {
 	for _, processor := range processorService.processors {
 		processor.Stop()
 	}
-	processorService.Logger.Info("Processor Service Stopped")
+
+	processorService.Logger.Info("all processors stopped")
 	return
 }

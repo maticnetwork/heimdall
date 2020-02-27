@@ -56,12 +56,15 @@ func NewCheckpointProcessor() *CheckpointProcessor {
 
 // Start - consumes messages from checkpoint queue and call processMsg
 func (cp *CheckpointProcessor) Start() error {
-	cp.Logger.Info("Starting Processor")
-	// create cancellable context
+	cp.Logger.Info("Starting")
+
+	// no-ack
 	ackCtx, cancelNoACKPolling := context.WithCancel(context.Background())
 	cp.cancelNoACKPolling = cancelNoACKPolling
+	cp.Logger.Info("Start polling for no-ack", "pollInterval", helper.GetConfig().NoACKPollInterval)
 	go cp.startPollingForNoAck(ackCtx, helper.GetConfig().NoACKPollInterval)
 
+	// consume queue msgs
 	amqpMsgs, err := cp.queueConnector.ConsumeMsg(queue.CheckpointQueueName)
 	if err != nil {
 		cp.Logger.Info("error consuming checkpoint msg", "error", err)
@@ -69,7 +72,7 @@ func (cp *CheckpointProcessor) Start() error {
 	}
 	// handle all amqp messages
 	for amqpMsg := range amqpMsgs {
-		cp.Logger.Info("Received Message from checkpoint queue", "Msg - ", string(amqpMsg.Body), "AppID", amqpMsg.AppId)
+		cp.Logger.Debug("Received Message", "msgBody", string(amqpMsg.Body), "AppID", amqpMsg.AppId)
 		go cp.ProcessMsg(amqpMsg)
 	}
 	return nil
@@ -77,7 +80,6 @@ func (cp *CheckpointProcessor) Start() error {
 
 // ProcessMsg - identify checkpoint msg type and delegate to msg/event handlers
 func (cp *CheckpointProcessor) ProcessMsg(amqpMsg amqp.Delivery) {
-	cp.Logger.Info("Processing msg from queue", "sender", amqpMsg.AppId)
 	switch amqpMsg.AppId {
 	case "maticchain":
 		var header = types.Header{}
@@ -86,7 +88,6 @@ func (cp *CheckpointProcessor) ProcessMsg(amqpMsg amqp.Delivery) {
 			amqpMsg.Reject(false)
 			return
 		}
-		cp.Logger.Info("Processing new header", "headerNumber", header.Number)
 		if err := cp.HandleHeaderBlock(&header); err != nil {
 			cp.Logger.Error("Error while processing the header block", "error", err)
 			amqpMsg.Reject(true)
@@ -144,6 +145,7 @@ func (cp *CheckpointProcessor) startPollingForNoAck(ctx context.Context, interva
 // 2. check if checkpoint has to be proposed for given headerblock
 // 3. if so, propose checkpoint to heimdall.
 func (cp *CheckpointProcessor) HandleHeaderBlock(newHeader *types.Header) (err error) {
+	cp.Logger.Info("Processing new header", "headerNumber", newHeader.Number)
 	var isProposer bool
 	if isProposer, err = util.IsProposer(cp.cliCtx); err != nil {
 		cp.Logger.Error("Error checking isProposer in HeaderBlock handler", "error", err)
@@ -164,7 +166,11 @@ func (cp *CheckpointProcessor) HandleHeaderBlock(newHeader *types.Header) (err e
 			cp.Logger.Error("Error sending checkpoint to heimdall", "error", err)
 			return err
 		}
+	} else {
+		cp.Logger.Info("i am not the proposer. skipping newheader", "headerNumber", newHeader.Number)
+		return
 	}
+
 	return nil
 }
 
@@ -195,6 +201,9 @@ func (cp *CheckpointProcessor) HandleCheckpointConfirmation(event sdk.StringEven
 			cp.Logger.Error("Error sending checkpoint to rootchain", "error", err)
 			return err
 		}
+	} else {
+		cp.Logger.Info("i am not the current proposer. skipping checkpoint confirmation", "eventtype", event.Type)
+		return nil
 	}
 	return nil
 }

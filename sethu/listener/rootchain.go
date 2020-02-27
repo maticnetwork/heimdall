@@ -44,7 +44,7 @@ func NewRootChainListener() *RootChainListener {
 
 // Start starts new block subscription
 func (rl *RootChainListener) Start() error {
-	rl.Logger.Info("Starting listener")
+	rl.Logger.Info("Starting")
 	// create cancellable context
 	ctx, cancelSubscription := context.WithCancel(context.Background())
 	rl.cancelSubscription = cancelSubscription
@@ -60,6 +60,7 @@ func (rl *RootChainListener) Start() error {
 	subscription, err := rl.contractConnector.MainChainClient.SubscribeNewHead(ctx, rl.HeaderChannel)
 	if err != nil {
 		// start go routine to poll for new header using client object
+		rl.Logger.Info("Start polling for rootchain header blocks", "pollInterval", helper.GetConfig().SyncerPollInterval)
 		go rl.StartPolling(ctx, helper.GetConfig().SyncerPollInterval)
 	} else {
 		// start go routine to listen new header using subscription
@@ -124,7 +125,7 @@ func (rl *RootChainListener) queryAndBroadcastEvents(fromBlock *big.Int, toBlock
 	// get logs from rootchain by filter
 	logs, err := rl.contractConnector.MainChainClient.FilterLogs(context.Background(), query)
 	if err != nil {
-		rl.Logger.Error("Error while filtering logs from syncer", "error", err)
+		rl.Logger.Error("Error while filtering logs", "error", err)
 		return
 	} else if len(logs) > 0 {
 		rl.Logger.Debug("New logs found", "numberOfLogs", len(logs))

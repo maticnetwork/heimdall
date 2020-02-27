@@ -33,7 +33,7 @@ func NewHeimdallListener() *HeimdallListener {
 
 // Start starts new block subscription
 func (hl *HeimdallListener) Start() error {
-	hl.Logger.Info("Starting listener")
+	hl.Logger.Info("Starting")
 
 	// create cancellable context
 	_, cancelSubscription := context.WithCancel(context.Background())
@@ -49,6 +49,7 @@ func (hl *HeimdallListener) Start() error {
 		pollInterval = helper.GetConfig().CheckpointerPollInterval
 	}
 
+	hl.Logger.Info("Start polling for heimdall events", "pollInterval", pollInterval)
 	hl.StartPolling(headerCtx, pollInterval)
 	return nil
 }
@@ -63,7 +64,6 @@ func (hl *HeimdallListener) StartPolling(ctx context.Context, pollInterval time.
 	// How often to fire the passed in function in second
 	interval := pollInterval
 
-	hl.Logger.Info("Starting polling process")
 	// Setup the ticket and the channel to signal
 	// the ending of the interval
 	ticker := time.NewTicker(interval)
@@ -85,11 +85,13 @@ func (hl *HeimdallListener) StartPolling(ctx context.Context, pollInterval time.
 					query = append(query, fmt.Sprintf("tx.height>=%v", fromBlock))
 					query = append(query, fmt.Sprintf("tx.height<=%v", toBlock))
 
+					hl.Logger.Info(" heimdall event search query", "query", query)
 					searchResult, err := helper.QueryTxsByEvents(hl.cliCtx, query, 1, 50)
 					if err != nil {
-						hl.Logger.Error("Error searching for heimdall events", "eventType", eventType, "error", err)
+						hl.Logger.Error("Error while searching events", "eventType", eventType, "error", err)
+						break
 					}
-					hl.Logger.Debug(" heimdall event search result", "searchResultCount", searchResult.Count)
+
 					for _, tx := range searchResult.Txs {
 						for _, log := range tx.Logs {
 							event := helper.FilterEvents(log.Events, func(et sdk.StringEvent) bool {

@@ -24,7 +24,7 @@ type ClerkProcessor struct {
 
 // Start starts new block subscription
 func (cp *ClerkProcessor) Start() error {
-	cp.Logger.Info("Starting Processor")
+	cp.Logger.Info("Starting")
 	amqpMsgs, err := cp.queueConnector.ConsumeMsg(queue.ClerkQueueName)
 	if err != nil {
 		cp.Logger.Info("Error consuming statesync msg", "error", err)
@@ -32,7 +32,7 @@ func (cp *ClerkProcessor) Start() error {
 	}
 	// handle all amqp messages
 	for amqpMsg := range amqpMsgs {
-		cp.Logger.Info("Received Message from clerk queue", "Msg - ", string(amqpMsg.Body), "AppID", amqpMsg.AppId)
+		cp.Logger.Debug("Received Message", "msgBody", string(amqpMsg.Body), "AppID", amqpMsg.AppId)
 		go cp.ProcessMsg(amqpMsg)
 	}
 	return nil
@@ -40,7 +40,6 @@ func (cp *ClerkProcessor) Start() error {
 
 // ProcessMsg - identify clerk msg type and delegate to msg/event handlers
 func (cp *ClerkProcessor) ProcessMsg(amqpMsg amqp.Delivery) {
-	cp.Logger.Info("Processing msg", "sender", amqpMsg.AppId)
 	switch amqpMsg.AppId {
 	case "rootchain":
 		var vLog = types.Log{}

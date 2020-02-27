@@ -60,23 +60,25 @@ func NewListenerService(cdc *codec.Codec, queueConnector *queue.QueueConnector) 
 // OnStart starts new block subscription
 func (listenerService *ListenerService) OnStart() error {
 	listenerService.BaseService.OnStart() // Always call the overridden method.
-	listenerService.Logger.Info("Starting all the listeners", listenerService.listeners)
 
 	// start chain listeners
 	for _, listener := range listenerService.listeners {
 		listener.Start()
 	}
 
+	listenerService.Logger.Info("all listeners Started")
 	return nil
 }
 
 // OnStop stops all necessary go routines
 func (listenerService *ListenerService) OnStop() {
 	listenerService.BaseService.OnStop() // Always call the overridden method.
+
 	// start chain listeners
 	for _, listener := range listenerService.listeners {
 		listener.Stop()
 	}
-	listenerService.Logger.Info("Listener Service Stopped")
+
+	listenerService.Logger.Info("all listeners stopped")
 
 }

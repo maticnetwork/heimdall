@@ -19,7 +19,7 @@ type FeeProcessor struct {
 
 // Start starts new block subscription
 func (fp *FeeProcessor) Start() error {
-	fp.Logger.Info("Starting Processor")
+	fp.Logger.Info("Starting")
 
 	amqpMsgs, err := fp.queueConnector.ConsumeMsg(queue.FeeQueueName)
 	if err != nil {
@@ -28,7 +28,7 @@ func (fp *FeeProcessor) Start() error {
 	}
 	// handle all amqp messages
 	for amqpMsg := range amqpMsgs {
-		fp.Logger.Info("Received Message from Fee queue", "Msg - ", string(amqpMsg.Body), "AppID", amqpMsg.AppId)
+		fp.Logger.Debug("Received Message", "msgBody", string(amqpMsg.Body), "AppID", amqpMsg.AppId)
 		go fp.ProcessMsg(amqpMsg)
 	}
 	return nil
@@ -36,7 +36,6 @@ func (fp *FeeProcessor) Start() error {
 
 // ProcessMsg - identify Topup msg type and delegate to msg/event handlers
 func (fp *FeeProcessor) ProcessMsg(amqpMsg amqp.Delivery) {
-	fp.Logger.Info("Processing msg", "sender", amqpMsg.AppId)
 	switch amqpMsg.AppId {
 	case "rootchain":
 		var vLog = types.Log{}

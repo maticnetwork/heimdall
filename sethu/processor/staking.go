@@ -21,7 +21,7 @@ type StakingProcessor struct {
 
 // Start starts new block subscription
 func (sp *StakingProcessor) Start() error {
-	sp.Logger.Info("Starting Processor")
+	sp.Logger.Info("Starting")
 	amqpMsgs, err := sp.queueConnector.ConsumeMsg(queue.StakingQueueName)
 	if err != nil {
 		sp.Logger.Info("error consuming staking msg", "error", err)
@@ -29,7 +29,7 @@ func (sp *StakingProcessor) Start() error {
 	}
 	// handle all amqp messages
 	for amqpMsg := range amqpMsgs {
-		sp.Logger.Info("Received Message from staking queue", "Msg - ", string(amqpMsg.Body), "AppID", amqpMsg.AppId)
+		sp.Logger.Debug("Received Message", "msgBody", string(amqpMsg.Body), "AppID", amqpMsg.AppId)
 		go sp.ProcessMsg(amqpMsg)
 	}
 	return nil
@@ -37,7 +37,6 @@ func (sp *StakingProcessor) Start() error {
 
 // ProcessMsg - identify staking msg type and delegate to msg/event handlers
 func (sp *StakingProcessor) ProcessMsg(amqpMsg amqp.Delivery) {
-	sp.Logger.Info("Processing msg", "sender", amqpMsg.AppId)
 	switch amqpMsg.AppId {
 	case "rootchain":
 		var vLog = types.Log{}
