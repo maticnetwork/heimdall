@@ -17,12 +17,12 @@ import (
 
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/maticnetwork/heimdall/app"
-	"github.com/maticnetwork/heimdall/bridge/pier"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/sethu/broadcaster"
 	"github.com/maticnetwork/heimdall/sethu/listener"
 	"github.com/maticnetwork/heimdall/sethu/processor"
 	"github.com/maticnetwork/heimdall/sethu/queue"
+	"github.com/maticnetwork/heimdall/sethu/util"
 )
 
 const (
@@ -35,21 +35,20 @@ func GetStartCmd() *cobra.Command {
 		Use:   "start",
 		Short: "Start bridge server",
 		Run: func(cmd *cobra.Command, args []string) {
-			logger := pier.Logger.With("module", "bridge")
+			logger := util.Logger.With("module", "bridge")
 
 			// create codec
 			cdc := app.MakeCodec()
 			app.MakePulp()
 			// queue connector & http client
-			_queueConnector := pier.NewQueueConnector(cdc, helper.GetConfig().AmqpURL)
-			_newQueueConnector := queue.NewQueueConnector(helper.GetConfig().AmqpURL)
-			_newQueueConnector.InitializeQueues()
+			_queueConnector := queue.NewQueueConnector(helper.GetConfig().AmqpURL)
+			_queueConnector.InitializeQueues()
 
 			_txBroadcaster := broadcaster.NewTxBroadcaster(cdc)
 			_httpClient := httpClient.NewHTTP(helper.GetConfig().TendermintRPCUrl, "/websocket")
 
 			// selected services to start
-			services := SelectedServices(cdc, _httpClient, _queueConnector, _newQueueConnector, _txBroadcaster)
+			services := SelectedServices(cdc, _httpClient, _queueConnector, _txBroadcaster)
 			if len(services) == 0 {
 				panic(fmt.Sprintf("No services selected to start. select services using --all or --only flag"))
 			}
@@ -89,7 +88,7 @@ func GetStartCmd() *cobra.Command {
 
 			// start bridge services only when node fully synced
 			for {
-				if !pier.IsCatchingUp(cliCtx) {
+				if !util.IsCatchingUp(cliCtx) {
 					logger.Info("Node upto date, starting bridge services")
 					break
 				} else {
@@ -120,41 +119,14 @@ func GetStartCmd() *cobra.Command {
 }
 
 // SelectedServices will select services to start based on set flags --all, --only
-func SelectedServices(cdc *codec.Codec, _httpClient *httpClient.HTTP, _queueConnector *pier.QueueConnector, _newQueueConnector *queue.QueueConnector, _txBroadcaster *broadcaster.TxBroadcaster) []common.Service {
-	services := []common.Service{
-		pier.NewConsumerService(cdc, _queueConnector),
-	}
+func SelectedServices(cdc *codec.Codec, _httpClient *httpClient.HTTP, _newQueueConnector *queue.QueueConnector, _txBroadcaster *broadcaster.TxBroadcaster) []common.Service {
+	services := []common.Service{}
 
 	startAll := viper.GetBool("all")
-	onlyServices := viper.GetStringSlice("only")
-
 	if startAll {
-		// services = append(services,
-		// 	pier.NewCheckpointer(cdc, _queueConnector, _httpClient),
-		// 	pier.NewSyncer(cdc, _queueConnector, _httpClient),
-		// 	pier.NewAckService(cdc, _queueConnector, _httpClient),
-		// 	pier.NewSpanService(cdc, _queueConnector, _httpClient),
-		// 	pier.NewClerkService(cdc, _queueConnector, _httpClient),
-		// )
-
 		services = append(services,
 			listener.NewListenerService(cdc, _newQueueConnector),
 			processor.NewProcessorService(cdc, _newQueueConnector, _httpClient, _txBroadcaster))
-	} else {
-		for _, service := range onlyServices {
-			switch service {
-			case "checkpoint":
-				services = append(services, pier.NewCheckpointer(cdc, _queueConnector, _httpClient))
-			case "syncer":
-				services = append(services, pier.NewSyncer(cdc, _queueConnector, _httpClient))
-			case "ack":
-				services = append(services, pier.NewAckService(cdc, _queueConnector, _httpClient))
-			case "span":
-				services = append(services, pier.NewSpanService(cdc, _queueConnector, _httpClient))
-			case "clerk":
-				services = append(services, pier.NewClerkService(cdc, _queueConnector, _httpClient))
-			}
-		}
 	}
 	return services
 }

@@ -104,7 +104,7 @@ func (hl *HeimdallListener) StartPolling(ctx context.Context, pollInterval time.
 					}
 				}
 				// set last block to storage
-				hl.storageClient.Put([]byte(heimdallLastBlockKey), []byte(string(toBlock)), nil)
+				hl.storageClient.Put([]byte(heimdallLastBlockKey), []byte(strconv.FormatUint(toBlock, 10)), nil)
 			}
 
 		case <-ctx.Done():
@@ -114,10 +114,10 @@ func (hl *HeimdallListener) StartPolling(ctx context.Context, pollInterval time.
 	}
 }
 
-func (hl *HeimdallListener) fetchFromAndToBlock() (fromBlock int64, toBlock int64) {
+func (hl *HeimdallListener) fetchFromAndToBlock() (fromBlock uint64, toBlock uint64) {
 	// toBlock - get latest blockheight from heimdall node
 	nodeStatus, _ := helper.GetNodeStatus(hl.cliCtx)
-	toBlock = nodeStatus.SyncInfo.LatestBlockHeight
+	toBlock = uint64(nodeStatus.SyncInfo.LatestBlockHeight)
 
 	// fromBlock - get last block from storage
 	hasLastBlock, _ := hl.storageClient.Has([]byte(heimdallLastBlockKey), nil)
@@ -127,9 +127,14 @@ func (hl *HeimdallListener) fetchFromAndToBlock() (fromBlock int64, toBlock int6
 			hl.Logger.Info("Error while fetching last block bytes from storage", "error", err)
 			return
 		}
-		hl.Logger.Debug("Got last block from bridge storage", "lastBlock", string(lastBlockBytes))
+
 		if result, err := strconv.ParseUint(string(lastBlockBytes), 10, 64); err == nil {
-			fromBlock = int64(result) + 1
+			hl.Logger.Debug("Got last block from bridge storage", "lastBlock", uint64(result))
+			fromBlock = uint64(result) + 1
+		} else {
+			hl.Logger.Info("Error parsing last block bytes from storage", "error", err)
+			toBlock = 0
+			return
 		}
 	}
 	return
