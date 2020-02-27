@@ -68,7 +68,7 @@ func IsProposer(cliCtx cliContext.CLIContext) (bool, error) {
 		GetHeimdallServerEndpoint(fmt.Sprintf(ProposersURL, strconv.FormatUint(count, 10))),
 	)
 	if err != nil {
-		Logger.Error("Error fetching proposers", "error", err)
+		Logger.Error("Error fetching proposers", "url", ProposersURL, "error", err)
 		return false, err
 	}
 	err = json.Unmarshal(result.Result, &proposers)
@@ -82,6 +82,33 @@ func IsProposer(cliCtx cliContext.CLIContext) (bool, error) {
 		return true, nil
 	}
 
+	return false, nil
+}
+
+func IsInProposerList(cliCtx cliContext.CLIContext, count uint64) (bool, error) {
+	Logger.Debug("Skipping proposers", "count", strconv.FormatUint(count, 10))
+	response, err := FetchFromAPI(
+		cliCtx,
+		GetHeimdallServerEndpoint(fmt.Sprintf(ProposersURL, strconv.FormatUint(count, 10))),
+	)
+	if err != nil {
+		Logger.Error("Unable to send request for next proposers", "url", ProposersURL, "error", err)
+		return false, err
+	}
+
+	// unmarshall data from buffer
+	var proposers []hmtypes.Validator
+	if err := json.Unmarshal(response.Result, &proposers); err != nil {
+		Logger.Error("Error unmarshalling validator data ", "error", err)
+		return false, err
+	}
+
+	Logger.Debug("Fetched proposers list", "numberOfProposers", count)
+	for _, proposer := range proposers {
+		if bytes.Equal(proposer.Signer.Bytes(), helper.GetAddress()) {
+			return true, nil
+		}
+	}
 	return false, nil
 }
 

@@ -247,13 +247,24 @@ func (cp *CheckpointProcessor) HandleCheckpointNoAck() {
 	lastCreatedAt, err := cp.getLatestCheckpointTime()
 	if err != nil {
 		cp.Logger.Error("Error fetching latest checkpoint time from rootchain", "error", err)
+		return
 	}
 
-	isNoAckRequired := cp.checkIfNoAckIsRequired(lastCreatedAt)
+	isNoAckRequired, count := cp.checkIfNoAckIsRequired(lastCreatedAt)
 
-	if isNoAckRequired {
+	var isProposer bool
+	if isProposer, err = util.IsInProposerList(cp.cliCtx, count); err != nil {
+		cp.Logger.Error("Error checking IsInProposerList while proposing Checkpoint No-Ack ", "error", err)
+		return
+	}
+
+	// if i am the proposer and NoAck is required, then propose No-Ack
+	if isNoAckRequired && isProposer {
 		// send Checkpoint No-Ack to heimdall
-		// cp.proposeCheckpointNoAck()
+		if err := cp.proposeCheckpointNoAck(); err != nil {
+			cp.Logger.Error("Error proposing Checkpoint No-Ack ", "error", err)
+			return
+		}
 	}
 }
 
@@ -520,7 +531,7 @@ func (cp *CheckpointProcessor) getLastNoAckTime() uint64 {
 }
 
 // checkIfNoAckIsRequired - check if NoAck has to be sent or not
-func (cp *CheckpointProcessor) checkIfNoAckIsRequired(lastCreatedAt int64) bool {
+func (cp *CheckpointProcessor) checkIfNoAckIsRequired(lastCreatedAt int64) (bool, uint64) {
 	var index float64
 	// if last created at ==0 , no checkpoint yet
 	if lastCreatedAt == 0 {
@@ -536,7 +547,7 @@ func (cp *CheckpointProcessor) checkIfNoAckIsRequired(lastCreatedAt int64) bool 
 	}
 
 	if index == 0 {
-		return false
+		return false, uint64(index)
 	}
 
 	// check if difference between no-ack time and current time
@@ -547,35 +558,25 @@ func (cp *CheckpointProcessor) checkIfNoAckIsRequired(lastCreatedAt int64) bool 
 	// if last no ack == 0 , first no-ack to be sent
 	if currentTime.Sub(lastNoAckTime).Seconds() < helper.GetConfig().CheckpointBufferTime.Seconds() && lastNoAck != 0 {
 		cp.Logger.Debug("Cannot send multiple no-ack in short time", "timeDiff", currentTime.Sub(lastNoAckTime).Seconds(), "ExpectedDiff", helper.GetConfig().CheckpointBufferTime.Seconds())
-		return false
+		return false, uint64(index)
 	}
-	return true
+	return true, uint64(index)
 }
 
-// // proposeCheckpointNoAck - sends Checkpoint NoAck to heimdall
-// func (cp *CheckpointProcessor) proposeCheckpointNoAck() error {
-// 	// check if same checkpoint still exists
-// 	if cp.isValidProposer(uint64(index), helper.GetAddress()) {
-// 		cp.Logger.Debug(
-// 			"⛑ Sending NO ACK message",
-// 			"currentTime", currentTime.String(),
-// 			"proposerCount", index,
-// 		)
+// proposeCheckpointNoAck - sends Checkpoint NoAck to heimdall
+func (cp *CheckpointProcessor) proposeCheckpointNoAck() (err error) {
+	// send NO ACK
+	msg := checkpointTypes.NewMsgCheckpointNoAck(
+		hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
+		uint64(time.Now().UTC().Unix()),
+	)
 
-// 		// send NO ACK
-// 		msg := checkpointTypes.NewMsgCheckpointNoAck(
-// 			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
-// 			uint64(time.Now().UTC().Unix()),
-// 		)
+	// return broadcast to heimdall
+	if err := cp.txBroadcaster.BroadcastToHeimdall(msg); err != nil {
+		cp.Logger.Error("Error while broadcasting checkpoint-no-ack to heimdall", "error", err)
+		return err
+	}
 
-// 		// return broadcast to heimdall
-// 		if err := cp.txBroadcaster.BroadcastToHeimdall(msg); err != nil {
-// 			cp.Logger.Error("Error while broadcasting checkpoint-no-ack to heimdall", "error", err)
-// 			return err
-// 		}
-
-// 		cp.Logger.Info("No-ack transaction sent successfully", "index", index)
-
-// 		return nil
-// 	}
-// }
+	cp.Logger.Info("No-ack transaction sent successfully")
+	return nil
+}
