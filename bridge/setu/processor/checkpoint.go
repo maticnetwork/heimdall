@@ -10,18 +10,17 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/maticnetwork/bor/core/types"
-	"github.com/maticnetwork/heimdall/contracts/rootchain"
-	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/sethu/queue"
-	"github.com/maticnetwork/heimdall/sethu/util"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/streadway/amqp"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
-	hmTypes "github.com/maticnetwork/heimdall/types"
-
+	"github.com/maticnetwork/bor/core/types"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
+	"github.com/maticnetwork/heimdall/bridge/setu/queue"
+	"github.com/maticnetwork/heimdall/bridge/setu/util"
+	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
+	"github.com/maticnetwork/heimdall/contracts/rootchain"
+	"github.com/maticnetwork/heimdall/helper"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 // CheckpointProcessor - processor for checkpoint queue.
@@ -446,7 +445,7 @@ func (cp *CheckpointProcessor) commitCheckpoint(height int64, txHash []byte, sta
 	}
 
 	// get votes
-	votes, sigs, chainID, err := util.FetchVotes(height, cp.httpClient)
+	votes, sigs, chainID, err := helper.FetchVotes(cp.httpClient, height)
 	if err != nil {
 		cp.Logger.Error("Error fetching votes for checkpoint tx", "height", height)
 		return err

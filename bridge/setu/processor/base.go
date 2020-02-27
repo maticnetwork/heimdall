@@ -8,10 +8,10 @@ import (
 	"github.com/syndtr/goleveldb/leveldb"
 
 	"github.com/maticnetwork/bor/accounts/abi"
+	"github.com/maticnetwork/heimdall/bridge/setu/broadcaster"
+	"github.com/maticnetwork/heimdall/bridge/setu/queue"
+	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/sethu/broadcaster"
-	"github.com/maticnetwork/heimdall/sethu/queue"
-	"github.com/maticnetwork/heimdall/sethu/util"
 	"github.com/tendermint/tendermint/libs/log"
 	httpClient "github.com/tendermint/tendermint/rpc/client"
 )

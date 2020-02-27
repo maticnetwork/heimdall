@@ -17,12 +17,12 @@ import (
 
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/maticnetwork/heimdall/app"
+	"github.com/maticnetwork/heimdall/bridge/setu/broadcaster"
+	"github.com/maticnetwork/heimdall/bridge/setu/listener"
+	"github.com/maticnetwork/heimdall/bridge/setu/processor"
+	"github.com/maticnetwork/heimdall/bridge/setu/queue"
+	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/sethu/broadcaster"
-	"github.com/maticnetwork/heimdall/sethu/listener"
-	"github.com/maticnetwork/heimdall/sethu/processor"
-	"github.com/maticnetwork/heimdall/sethu/queue"
-	"github.com/maticnetwork/heimdall/sethu/util"
 )
 
 const (
@@ -110,6 +110,7 @@ func GetStartCmd() *cobra.Command {
 			wg.Add(len(services))
 			wg.Wait()
 		}}
+
 	startCmd.Flags().Bool("all", false, "start all bridge services")
 	viper.BindPFlag("all", startCmd.Flags().Lookup("all"))
 

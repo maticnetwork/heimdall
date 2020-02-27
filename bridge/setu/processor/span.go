@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/sethu/util"
 
 	borTypes "github.com/maticnetwork/heimdall/bor/types"
 

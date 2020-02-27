@@ -5,9 +5,9 @@ import (
 
 	"github.com/maticnetwork/bor/core/types"
 	bankTypes "github.com/maticnetwork/heimdall/bank/types"
+	"github.com/maticnetwork/heimdall/bridge/setu/queue"
 	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/sethu/queue"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/streadway/amqp"
 )

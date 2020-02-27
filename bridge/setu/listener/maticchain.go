@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/maticnetwork/bor/core/types"
+	"github.com/maticnetwork/heimdall/bridge/setu/queue"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/sethu/queue"
 )
 
 // MaticChainListener - Listens to and process headerblocks from maticchain

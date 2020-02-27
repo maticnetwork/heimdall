@@ -13,9 +13,9 @@ import (
 	bor "github.com/maticnetwork/bor"
 	"github.com/maticnetwork/bor/core/types"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
+	"github.com/maticnetwork/heimdall/bridge/setu/queue"
+	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/sethu/queue"
-	"github.com/maticnetwork/heimdall/sethu/util"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 
 	"github.com/tendermint/tendermint/libs/log"

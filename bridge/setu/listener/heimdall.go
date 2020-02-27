@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/maticnetwork/bor/core/types"
+	"github.com/maticnetwork/heimdall/bridge/setu/queue"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/sethu/queue"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 

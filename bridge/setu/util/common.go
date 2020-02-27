@@ -224,31 +224,6 @@ func WaitForOneEvent(tx tmTypes.Tx, client *httpClient.HTTP) (tmTypes.TMEventDat
 	}
 }
 
-// FetchVotes fetches votes and extracts sigs from it
-func FetchVotes(
-	height int64,
-	client *httpClient.HTTP,
-) (votes []*tmTypes.CommitSig, sigs []byte, chainID string, err error) {
-	// get block client
-	blockDetails, err := helper.GetBlockWithClient(client, height+1)
-
-	if err != nil {
-		return nil, nil, "", err
-	}
-
-	// extract votes from response
-	preCommits := blockDetails.LastCommit.Precommits
-
-	// extract signs from votes
-	valSigs := helper.GetSigs(preCommits)
-
-	// extract chainID
-	chainID = blockDetails.ChainID
-
-	// return
-	return preCommits, valSigs, chainID, nil
-}
-
 // IsCatchingUp checks if the heimdall node you are connected to is fully synced or not
 // returns true when synced
 func IsCatchingUp(cliCtx cliContext.CLIContext) bool {
