@@ -51,9 +51,6 @@ type BaseListener struct {
 	// The "subclass" of BaseService
 	impl Listener
 
-	// storage client
-	// storageClient *leveldb.DB
-
 	// contract caller
 	contractConnector helper.ContractCaller
 

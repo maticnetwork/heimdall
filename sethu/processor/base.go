@@ -22,6 +22,8 @@ type Processor interface {
 
 	String() string
 
+	Stop()
+
 	SetLogger(log.Logger)
 }
 
@@ -100,4 +102,9 @@ func (bp *BaseProcessor) SetLogger(l log.Logger) {
 // String implements Service by returning a string representation of the service.
 func (bp *BaseProcessor) String() string {
 	return bp.name
+}
+
+// OnStop stops all necessary go routines
+func (bp *BaseProcessor) Stop() {
+	// override to stop any go-routines in individual processors
 }

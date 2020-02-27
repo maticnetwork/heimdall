@@ -28,7 +28,7 @@ func GetBridgeDBInstance(filePath string) *leveldb.DB {
 }
 
 // CloseBridgeDBInstance closes bridge-db instance
-func closeBridgeDBInstance() {
+func CloseBridgeDBInstance() {
 	bridgeDBCloseOnce.Do(func() {
 		if bridgeDB != nil {
 			bridgeDB.Close()

@@ -22,7 +22,6 @@ func init() {
 }
 
 func NewQueueConnector(dialer string) *QueueConnector {
-
 	// amqp dialer
 	conn, err := amqp.Dial(dialer)
 	if err != nil {
@@ -64,6 +63,7 @@ func (qc *QueueConnector) InitializeQueues() error {
 
 	qc.InitializeQueue(channel, CheckpointQueueName, CheckpointQueueRoute)
 	qc.InitializeQueue(channel, StakingQueueName, StakingQueueRoute)
+	qc.InitializeQueue(channel, FeeQueueName, FeeQueueRoute)
 	qc.InitializeQueue(channel, SpanQueueName, SpanQueueRoute)
 	qc.InitializeQueue(channel, ClerkQueueName, ClerkQueueRoute)
 	return nil

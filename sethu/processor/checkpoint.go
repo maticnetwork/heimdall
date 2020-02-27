@@ -29,7 +29,7 @@ type CheckpointProcessor struct {
 	BaseProcessor
 
 	// header listener subscription
-	cancelACKProcess context.CancelFunc
+	cancelNoACKPolling context.CancelFunc
 
 	// Rootchain instance
 	rootChainInstance *rootchain.Rootchain
@@ -58,8 +58,8 @@ func NewCheckpointProcessor() *CheckpointProcessor {
 func (cp *CheckpointProcessor) Start() error {
 	cp.Logger.Info("Starting Processor")
 	// create cancellable context
-	ackCtx, cancelACKProcess := context.WithCancel(context.Background())
-	cp.cancelACKProcess = cancelACKProcess
+	ackCtx, cancelNoACKPolling := context.WithCancel(context.Background())
+	cp.cancelNoACKPolling = cancelNoACKPolling
 	go cp.startPollingForNoAck(ackCtx, helper.GetConfig().NoACKPollInterval)
 
 	amqpMsgs, err := cp.queueConnector.ConsumeMsg(queue.CheckpointQueueName)
@@ -579,4 +579,12 @@ func (cp *CheckpointProcessor) proposeCheckpointNoAck() (err error) {
 
 	cp.Logger.Info("No-ack transaction sent successfully")
 	return nil
+}
+
+// OnStop stops all necessary go routines
+func (bp *CheckpointProcessor) Stop() {
+
+	// cancel No-Ack polling
+	bp.cancelNoACKPolling()
+
 }

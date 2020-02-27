@@ -99,6 +99,10 @@ func (processorService *ProcessorService) OnStart() error {
 // OnStop stops all necessary go routines
 func (processorService *ProcessorService) OnStop() {
 	processorService.BaseService.OnStop() // Always call the overridden method.
+	// start chain listeners
+	for _, processor := range processorService.processors {
+		processor.Stop()
+	}
 	processorService.Logger.Info("Processor Service Stopped")
-
+	return
 }
