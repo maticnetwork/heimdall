@@ -34,42 +34,37 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 
 // HandleMsgValidatorJoin msg validator join
 func HandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
-	k.Logger(ctx).Info("Handing new validator join", "msg", msg)
+	k.Logger(ctx).Info("Handling new validator join", "msg", msg)
 
-	if confirmed := contractCaller.IsTxConfirmed(msg.TxHash.EthHash()); !confirmed {
+	// get main tx receipt
+	receipt, err := contractCaller.GetConfirmedTxReceipt(msg.TxHash.EthHash())
+	if err != nil || receipt == nil {
 		return hmCommon.ErrWaitForConfirmation(k.Codespace()).Result()
 	}
 
-	// fetch validator from mainchain
-	validator, err := contractCaller.GetValidatorInfo(msg.ID)
-	if err != nil {
-		k.Logger(ctx).Error(
-			"Unable to fetch validator from rootchain",
-			"error", err,
-		)
-		return hmCommon.ErrNoValidator(k.Codespace()).Result()
+	// TODO remove this block in next release and use msg.LogIndex -- start
+	logIndex, found := contractCaller.FindStakedEventLogIndex(receipt)
+	if !found {
+		return hmCommon.ErrInvalidMsg(k.Codespace(), "Unable to find validator join log from txHash").Result()
 	}
+	// -- END
 
-	if bytes.Equal(validator.Signer.Bytes(), helper.ZeroAddress.Bytes()) {
-		k.Logger(ctx).Error(
-			"No validator signer found",
-			"msgValidator", msg.ID,
-		)
-		return hmCommon.ErrNoValidator(k.Codespace()).Result()
+	// decode validator join event
+	eventLog, err := contractCaller.DecodeValidatorJoinEvent(receipt, logIndex)
+	if err != nil || eventLog == nil {
+		return hmCommon.ErrInvalidMsg(k.Codespace(), "Unable to fetch logs for txHash").Result()
 	}
-
-	k.Logger(ctx).Debug("Fetched validator from rootchain successfully", "validator", validator.String())
 
 	// Generate PubKey from Pubkey in message and signer
 	pubkey := msg.SignerPubKey
 	signer := pubkey.Address()
 
 	// check signer in message corresponds
-	if !bytes.Equal(signer.Bytes(), validator.Signer.Bytes()) {
+	if !bytes.Equal(signer.Bytes(), eventLog.Signer.Bytes()) {
 		k.Logger(ctx).Error(
 			"Signer Address does not match",
 			"msgValidator", signer.String(),
-			"mainchainValidator", validator.Signer.String(),
+			"mainchainValidator", eventLog.Signer.Hex(),
 		)
 		return hmCommon.ErrNoValidator(k.Codespace()).Result()
 	}
@@ -86,14 +81,20 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k Keepe
 		return hmCommon.ErrValidatorAlreadyJoined(k.Codespace()).Result()
 	}
 
+	// get voting power from amount
+	votingPower, err := helper.GetPowerFromAmount(eventLog.Amount)
+	if err != nil {
+		return hmCommon.ErrInvalidMsg(k.Codespace(), "Invalid amount for validator: %v", msg.ID).Result()
+	}
+
 	// create new validator
 	newValidator := hmTypes.Validator{
-		ID:          validator.ID,
-		StartEpoch:  validator.StartEpoch,
-		EndEpoch:    validator.EndEpoch,
-		VotingPower: validator.VotingPower,
+		ID:          msg.ID,
+		StartEpoch:  eventLog.ActivationEpoch.Uint64(),
+		EndEpoch:    0,
+		VotingPower: votingPower.Int64(),
 		PubKey:      pubkey,
-		Signer:      validator.Signer,
+		Signer:      hmTypes.BytesToHeimdallAddress(signer.Bytes()),
 		LastUpdated: 0,
 	}
 

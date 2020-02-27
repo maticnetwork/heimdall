@@ -86,8 +86,9 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 			abiObject := &contractCallerObj.StakingInfoABI
 			eventName := "Staked"
 			event := new(stakinginfo.StakinginfoStaked)
-			logIndex := -1
-			for i, vLog := range receipt.Logs {
+			var logIndex uint
+			found := false
+			for _, vLog := range receipt.Logs {
 				topic := vLog.Topics[0].Bytes()
 				selectedEvent := helper.EventByID(abiObject, topic)
 				if selectedEvent != nil && selectedEvent.Name == eventName {
@@ -95,12 +96,13 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 						return err
 					}
 
-					logIndex = i
+					logIndex = vLog.Index
+					found = true
 					break
 				}
 			}
 
-			if logIndex == -1 {
+			if !found {
 				return fmt.Errorf("Invalid tx for validator join")
 			}
 
