@@ -67,7 +67,7 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k Keepe
 			"msgValidator", signer.String(),
 			"mainchainValidator", eventLog.Signer.Hex(),
 		)
-		return hmCommon.ErrNoValidator(k.Codespace()).Result()
+		return hmCommon.ErrValSignerMismatch(k.Codespace()).Result()
 	}
 
 	// Check if validator has been validator before
