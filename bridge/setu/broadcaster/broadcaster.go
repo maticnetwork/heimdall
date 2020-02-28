@@ -3,7 +3,6 @@ package broadcaster
 import (
 	"context"
 	"fmt"
-	"os"
 	"sync"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -21,62 +20,54 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 )
 
+// TxBroadcaster uses to broadcast transaction to each chain
 type TxBroadcaster struct {
-
-	// logger
 	logger log.Logger
 
 	cliCtx cliContext.CLIContext
 
 	heimdallMutex sync.Mutex
-
-	maticMutex sync.Mutex
+	maticMutex    sync.Mutex
 }
 
-// Global logger for bridge
-var Logger log.Logger
-
-func init() {
-	Logger = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
-}
-
+// NewTxBroadcaster creates new broadcaster
 func NewTxBroadcaster(cdc *codec.Codec) *TxBroadcaster {
-
 	cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
-	cliCtx.BroadcastMode = client.BroadcastAsync
+	cliCtx.BroadcastMode = client.BroadcastSync
 	cliCtx.TrustNode = true
+
 	txBroadcaster := TxBroadcaster{
-		logger: Logger.With("module", queue.Broadcaster),
+		logger: util.Logger().With("module", queue.Broadcaster),
 		cliCtx: cliCtx,
 	}
 
 	return &txBroadcaster
 }
 
+// BroadcastToHeimdall broadcast to heimdall
 func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg) error {
-
 	tb.heimdallMutex.Lock()
+	defer tb.heimdallMutex.Unlock()
+
 	// tx encoder
 	txEncoder := helper.GetTxEncoder()
 	// chain id
 	chainID := helper.GetGenesisDoc().ChainID
 	// current address
 	address := hmTypes.BytesToHeimdallAddress(helper.GetAddress())
+
 	// fetch from APIs
 	var account authTypes.Account
 	response, err := util.FetchFromAPI(tb.cliCtx, util.GetHeimdallServerEndpoint(fmt.Sprintf(util.AccountDetailsURL, address)))
 	if err != nil {
 		tb.logger.Error("Error fetching account from rest-api", "url", util.GetHeimdallServerEndpoint(fmt.Sprintf(util.AccountDetailsURL, address)))
-		panic("Error connecting to rest-server, please start server before bridge")
-		tb.heimdallMutex.Unlock()
-		return err
+		panic("Error connecting to rest-server, please start server before bridge.")
 	}
 
 	// get proposer from response
 	if err := tb.cliCtx.Codec.UnmarshalJSON(response.Result, &account); err != nil && len(response.Result) != 0 {
-		tb.heimdallMutex.Unlock()
 		tb.logger.Error("Error unmarshalling account details", "url", util.GetHeimdallServerEndpoint(fmt.Sprintf(util.AccountDetailsURL, address)))
-		panic(err)
+		return err
 	}
 
 	// get account number and sequence
@@ -92,19 +83,22 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg) error {
 	txResponse, err := helper.BuildAndBroadcastMsgs(tb.cliCtx, txBldr, []sdk.Msg{msg})
 	if err != nil {
 		tb.logger.Error("Error while broadcasting the heimdall transaction", "error", err)
-		tb.heimdallMutex.Unlock()
 		return err
 	}
 
 	// increment account sequence
 	// accSeq = accSeq + 1
+	tb.logger.Info("Tx sent on heimdall", "txHash", txResponse.TxHash, "accSeq", accSeq, "accNum", accNum)
 	tb.logger.Debug("Tx successful on heimdall", "txResponse", txResponse)
-	tb.heimdallMutex.Unlock()
 	return nil
 }
 
+// BroadcastToMatic broadcast to matic
 func (tb *TxBroadcaster) BroadcastToMatic(msg bor.CallMsg) error {
 	tb.maticMutex.Lock()
+	defer tb.maticMutex.Unlock()
+
+	// get matic client
 	maticClient := helper.GetMaticClient()
 
 	// get auth
@@ -112,32 +106,29 @@ func (tb *TxBroadcaster) BroadcastToMatic(msg bor.CallMsg) error {
 
 	if err != nil {
 		tb.logger.Error("Error generating auth object", "error", err)
-		tb.maticMutex.Unlock()
 		return err
 	}
 
 	// Create the transaction, sign it and schedule it for execution
 	rawTx := types.NewTransaction(auth.Nonce.Uint64(), *msg.To, msg.Value, auth.GasLimit, auth.GasPrice, msg.Data)
+
 	// signer
 	signedTx, err := auth.Signer(types.HomesteadSigner{}, auth.From, rawTx)
 	if err != nil {
 		tb.logger.Error("Error signing the transaction", "error", err)
-		tb.maticMutex.Unlock()
 		return err
 	}
 
-	tb.logger.Debug("Sending transaction to bor", "TxHash", signedTx.Hash())
+	tb.logger.Info("Sending transaction to bor", "txHash", signedTx.Hash())
 
 	// broadcast transaction
 	if err := maticClient.SendTransaction(context.Background(), signedTx); err != nil {
 		tb.logger.Error("Error while broadcasting the transaction to maticchain", "txHash", signedTx.Hash(), "error", err)
-		tb.maticMutex.Unlock()
 		return err
 	}
-	tb.maticMutex.Unlock()
+
 	return nil
 }
 
-func (tb *TxBroadcaster) BroadcastToRootchain() {
-
-}
+// BroadcastToRootchain broadcast to rootchain
+func (tb *TxBroadcaster) BroadcastToRootchain() {}
