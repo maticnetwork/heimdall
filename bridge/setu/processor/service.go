@@ -1,16 +1,15 @@
 package processor
 
 import (
-	"os"
-
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/spf13/viper"
+	"github.com/tendermint/tendermint/libs/common"
+	httpClient "github.com/tendermint/tendermint/rpc/client"
+
 	"github.com/maticnetwork/heimdall/bridge/setu/broadcaster"
 	"github.com/maticnetwork/heimdall/bridge/setu/queue"
+	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/tendermint/tendermint/libs/common"
-	"github.com/tendermint/tendermint/libs/log"
-
-	httpClient "github.com/tendermint/tendermint/rpc/client"
 )
 
 // ProcessorService starts and stops all event processors
@@ -31,17 +30,15 @@ const (
 	processorServiceStr = "processor-service"
 )
 
-// Global logger for bridge
-var Logger log.Logger
-
-func init() {
-	Logger = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
-}
-
 // NewProcessorService returns new service object for processing queue msg
-func NewProcessorService(cdc *codec.Codec, queueConnector *queue.QueueConnector, httpClient *httpClient.HTTP, txBroadcaster *broadcaster.TxBroadcaster) *ProcessorService {
+func NewProcessorService(
+	cdc *codec.Codec,
+	queueConnector *queue.QueueConnector,
+	httpClient *httpClient.HTTP,
+	txBroadcaster *broadcaster.TxBroadcaster,
+) *ProcessorService {
 	// create logger
-	logger := Logger.With("module", processorServiceStr)
+	logger := util.Logger().With("module", processorServiceStr)
 
 	// creating processor object
 	processorService := &ProcessorService{
@@ -55,30 +52,62 @@ func NewProcessorService(cdc *codec.Codec, queueConnector *queue.QueueConnector,
 
 	processorService.BaseService = *common.NewBaseService(logger, processorServiceStr, processorService)
 
+	//
+	// Intitialize processors
+	//
+
 	// initialize checkpoint processor
 	checkpointProcessor := NewCheckpointProcessor()
 	checkpointProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, httpClient, txBroadcaster, &contractCaller.RootChainABI, "checkpoint", checkpointProcessor)
-	processorService.processors = append(processorService.processors, checkpointProcessor)
 
 	// initialize staking processor
 	stakingProcessor := &StakingProcessor{}
 	stakingProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, httpClient, txBroadcaster, &contractCaller.RootChainABI, "staking", stakingProcessor)
-	processorService.processors = append(processorService.processors, stakingProcessor)
 
 	// initialize clerk processor
 	clerkProcessor := &ClerkProcessor{}
 	clerkProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, httpClient, txBroadcaster, &contractCaller.RootChainABI, "clerk", clerkProcessor)
-	processorService.processors = append(processorService.processors, clerkProcessor)
 
 	// initialize fee processor
 	feeProcessor := &FeeProcessor{}
 	feeProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, httpClient, txBroadcaster, &contractCaller.RootChainABI, "fee", feeProcessor)
-	processorService.processors = append(processorService.processors, feeProcessor)
 
 	// initialize span processor
 	spanProcessor := &SpanProcessor{}
 	spanProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, httpClient, txBroadcaster, &contractCaller.RootChainABI, "span", spanProcessor)
-	processorService.processors = append(processorService.processors, spanProcessor)
+
+	//
+	// Select processors
+	//
+
+	// add into processor list
+	startAll := viper.GetBool("all")
+	onlyServices := viper.GetStringSlice("only")
+
+	if startAll {
+		processorService.processors = append(processorService.processors,
+			checkpointProcessor,
+			stakingProcessor,
+			clerkProcessor,
+			feeProcessor,
+			spanProcessor,
+		)
+	} else {
+		for _, service := range onlyServices {
+			switch service {
+			case "checkpoint":
+				processorService.processors = append(processorService.processors, checkpointProcessor)
+			case "staking":
+				processorService.processors = append(processorService.processors, stakingProcessor)
+			case "clerk":
+				processorService.processors = append(processorService.processors, clerkProcessor)
+			case "fee":
+				processorService.processors = append(processorService.processors, feeProcessor)
+			case "span":
+				processorService.processors = append(processorService.processors, spanProcessor)
+			}
+		}
+	}
 
 	return processorService
 }

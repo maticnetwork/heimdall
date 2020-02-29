@@ -157,7 +157,7 @@ func (cp *ClerkProcessor) encodeProposeStateData(stateID uint64) ([]byte, error)
 	// commit state
 	data, err := stateReceiverABI.Pack("proposeState", big.NewInt(0).SetUint64(stateID))
 	if err != nil {
-		Logger.Error("Error unpacking tx for commit state", "error", err)
+		cp.Logger.Error("Error unpacking tx for commit state", "error", err)
 		return nil, err
 	}
 	// return data

@@ -60,8 +60,7 @@ type BaseProcessor struct {
 
 // NewBaseProcessor creates a new BaseProcessor.
 func NewBaseProcessor(cdc *codec.Codec, queueConnector *queue.QueueConnector, httpClient *httpClient.HTTP, txBroadcaster *broadcaster.TxBroadcaster, rootchainAbi *abi.ABI, name string, impl Processor) *BaseProcessor {
-
-	logger := Logger.With("service", "processor", "module", name)
+	logger := util.Logger().With("service", "processor", "module", name)
 
 	cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
 	cliCtx.BroadcastMode = client.BroadcastAsync

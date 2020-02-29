@@ -10,7 +10,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/spf13/cobra"
 
-	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/common"
 	httpClient "github.com/tendermint/tendermint/rpc/client"
@@ -49,10 +48,15 @@ func GetStartCmd() *cobra.Command {
 			_httpClient := httpClient.NewHTTP(helper.GetConfig().TendermintRPCUrl, "/websocket")
 
 			// selected services to start
-			services := SelectedServices(cdc, _httpClient, _queueConnector, _txBroadcaster)
-			if len(services) == 0 {
-				panic(fmt.Sprintf("No services selected to start. select services using --all or --only flag"))
-			}
+			services := []common.Service{}
+			services = append(services,
+				listener.NewListenerService(cdc, _queueConnector),
+				processor.NewProcessorService(cdc, _queueConnector, _httpClient, _txBroadcaster),
+			)
+
+			// if len(services) == 0 {
+			// 	panic(fmt.Sprintf("No services selected to start. select services using --all or --only flag"))
+			// }
 
 			// sync group
 			var wg sync.WaitGroup
@@ -122,19 +126,6 @@ func GetStartCmd() *cobra.Command {
 	startCmd.Flags().StringSlice("only", []string{}, "comma separated bridge services to start")
 	viper.BindPFlag("only", startCmd.Flags().Lookup("only"))
 	return startCmd
-}
-
-// SelectedServices will select services to start based on set flags --all, --only
-func SelectedServices(cdc *codec.Codec, _httpClient *httpClient.HTTP, _newQueueConnector *queue.QueueConnector, _txBroadcaster *broadcaster.TxBroadcaster) []common.Service {
-	services := []common.Service{}
-
-	startAll := viper.GetBool("all")
-	if startAll {
-		services = append(services,
-			listener.NewListenerService(cdc, _newQueueConnector),
-			processor.NewProcessorService(cdc, _newQueueConnector, _httpClient, _txBroadcaster))
-	}
-	return services
 }
 
 func init() {
