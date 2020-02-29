@@ -35,8 +35,6 @@ type Listener interface {
 	Stop()
 
 	String() string
-
-	SetLogger(log.Logger)
 }
 
 type BaseListener struct {
@@ -79,7 +77,7 @@ type BaseListener struct {
 // NewBaseListener creates a new BaseListener.
 func NewBaseListener(cdc *codec.Codec, queueConnector *queue.QueueConnector, chainClient *ethclient.Client, name string, impl Listener) *BaseListener {
 
-	logger := Logger.With("service", "listener", "module", name)
+	logger := util.Logger().With("service", "listener", "module", name)
 	contractCaller, err := helper.NewContractCaller()
 	if err != nil {
 		logger.Error("Error while getting root chain instance", "error", err)
@@ -105,11 +103,6 @@ func NewBaseListener(cdc *codec.Codec, queueConnector *queue.QueueConnector, cha
 
 		HeaderChannel: make(chan *types.Header),
 	}
-}
-
-// SetLogger implements Service by setting a logger.
-func (bl *BaseListener) SetLogger(l log.Logger) {
-	bl.Logger = l
 }
 
 // // Start starts new block subscription

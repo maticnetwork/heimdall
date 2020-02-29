@@ -54,10 +54,6 @@ func GetStartCmd() *cobra.Command {
 				processor.NewProcessorService(cdc, _queueConnector, _httpClient, _txBroadcaster),
 			)
 
-			// if len(services) == 0 {
-			// 	panic(fmt.Sprintf("No services selected to start. select services using --all or --only flag"))
-			// }
-
 			// sync group
 			var wg sync.WaitGroup
 

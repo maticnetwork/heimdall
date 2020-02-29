@@ -23,8 +23,6 @@ type Processor interface {
 	String() string
 
 	Stop()
-
-	SetLogger(log.Logger)
 }
 
 type BaseProcessor struct {
@@ -91,11 +89,6 @@ func NewBaseProcessor(cdc *codec.Codec, queueConnector *queue.QueueConnector, ht
 		rootchainAbi:      rootchainAbi,
 		storageClient:     util.GetBridgeDBInstance(viper.GetString(util.BridgeDBFlag)),
 	}
-}
-
-// SetLogger implements Service by setting a logger.
-func (bp *BaseProcessor) SetLogger(l log.Logger) {
-	bp.Logger = l
 }
 
 // String implements Service by returning a string representation of the service.
