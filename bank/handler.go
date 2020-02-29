@@ -148,7 +148,7 @@ func handleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCalle
 	}
 
 	// transfer fees to sender (proposer)
-	if ec := k.SendCoins(ctx, signer, msg.FromAddress, auth.FeeWantedPerTx); ec != nil {
+	if ec := k.SendCoins(ctx, signer, msg.FromAddress, auth.DefaultFeeWantedPerTx); ec != nil {
 		return ec.Result()
 	}
 
