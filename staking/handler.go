@@ -2,6 +2,7 @@ package staking
 
 import (
 	"bytes"
+	"fmt"
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -70,6 +71,12 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k Keepe
 		return hmCommon.ErrValSignerMismatch(k.Codespace()).Result()
 	}
 
+	// check msg id
+	if eventLog.ValidatorId.Uint64() != msg.ID.Uint64() {
+		k.Logger(ctx).Error("ID in message doesn't match with id in log", "msgId", msg.ID, "validatorIdFromTx", eventLog.ValidatorId)
+		return hmCommon.ErrInvalidMsg(k.Codespace(), "ID in message doesn't match with id in log. msgId %v validatorIdFromTx %v", msg.ID, eventLog.ValidatorId).Result()
+	}
+
 	// Check if validator has been validator before
 	if _, ok := k.GetSignerFromValidatorID(ctx, msg.ID); ok {
 		k.Logger(ctx).Error("Validator has been validator before, cannot join with same ID", "validatorId", msg.ID)
@@ -85,7 +92,7 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k Keepe
 	// get voting power from amount
 	votingPower, err := helper.GetPowerFromAmount(eventLog.Amount)
 	if err != nil {
-		return hmCommon.ErrInvalidMsg(k.Codespace(), "Invalid amount for validator: %v", msg.ID).Result()
+		return hmCommon.ErrInvalidMsg(k.Codespace(), fmt.Sprintf("Invalid amount %v for validator %v", eventLog.Amount, msg.ID)).Result()
 	}
 
 	// create new validator
@@ -138,8 +145,8 @@ func HandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keeper, c
 	}
 
 	if eventLog.ValidatorId.Uint64() != msg.ID.Uint64() {
-		k.Logger(ctx).Error("ID in message doesnt match id in logs", "MsgID", msg.ID, "IdFromTx", eventLog.ValidatorId)
-		return hmCommon.ErrInvalidMsg(k.Codespace(), "Invalid txhash, id's dont match. Id from tx hash is %v", eventLog.ValidatorId.Uint64()).Result()
+		k.Logger(ctx).Error("ID in message doesn't match with id in log", "msgId", msg.ID, "validatorIdFromTx", eventLog.ValidatorId)
+		return hmCommon.ErrInvalidMsg(k.Codespace(), "ID in message doesn't match with id in log. msgId %v validatorIdFromTx %v", msg.ID, eventLog.ValidatorId).Result()
 	}
 
 	// pull validator from store
@@ -164,7 +171,7 @@ func HandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keeper, c
 	// set validator amount
 	p, err := helper.GetPowerFromAmount(eventLog.NewAmount)
 	if err != nil {
-		return hmCommon.ErrInvalidMsg(k.Codespace(), "Invalid amount for validator: %v", msg.ID).Result()
+		return hmCommon.ErrInvalidMsg(k.Codespace(), fmt.Sprintf("Invalid amount %v for validator %v", eventLog.NewAmount, msg.ID)).Result()
 	}
 	validator.VotingPower = p.Int64()
 
@@ -212,12 +219,12 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper,
 	}
 
 	if eventLog.ValidatorId.Uint64() != msg.ID.Uint64() {
-		k.Logger(ctx).Error("ID in message doesnt match id in logs", "MsgID", msg.ID, "IdFromTx", eventLog.ValidatorId.Uint64())
-		return hmCommon.ErrInvalidMsg(k.Codespace(), "Invalid txhash, id's dont match. Id from tx hash is %v", eventLog.ValidatorId.Uint64()).Result()
+		k.Logger(ctx).Error("ID in message doesn't match with id in log", "msgId", msg.ID, "validatorIdFromTx", eventLog.ValidatorId)
+		return hmCommon.ErrInvalidMsg(k.Codespace(), "ID in message doesn't match with id in log. msgId %v validatorIdFromTx %v", msg.ID, eventLog.ValidatorId).Result()
 	}
 
 	if bytes.Compare(eventLog.NewSigner.Bytes(), newSigner.Bytes()) != 0 {
-		k.Logger(ctx).Error("Signer in txhash and msg dont match", "MsgSigner", newSigner.String(), "SignerTx", eventLog.NewSigner.String())
+		k.Logger(ctx).Error("Signer in txhash and msg dont match", "msgSigner", newSigner.String(), "signerTx", eventLog.NewSigner.String())
 		return hmCommon.ErrInvalidMsg(k.Codespace(), "Signer in txhash and msg dont match").Result()
 	}
 
