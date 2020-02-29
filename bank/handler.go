@@ -166,7 +166,7 @@ func handleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCalle
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(uint64(msg.ID), 10)),
 			sdk.NewAttribute(types.AttributeKeyValidatorSigner, signer.String()),
-			sdk.NewAttribute(types.AttributeKeyTopupAmount, strconv.FormatUint(eventLog.Fee.Uint64(), 10)),
+			sdk.NewAttribute(types.AttributeKeyTopupAmount, eventLog.Fee.String()),
 		),
 	})
 
@@ -202,7 +202,7 @@ func handleMsgWithdrawFee(ctx sdk.Context, k Keeper, msg types.MsgWithdrawFee) s
 			types.EventTypeFeeWithdraw,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(uint64(msg.ID), 10)),
-			sdk.NewAttribute(types.AttributeKeyFeeWithdrawAmount, strconv.FormatUint(feeAmount.Uint64(), 10)),
+			sdk.NewAttribute(types.AttributeKeyFeeWithdrawAmount, feeAmount.String()),
 		),
 	})
 

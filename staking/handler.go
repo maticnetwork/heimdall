@@ -281,7 +281,7 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper,
 		sdk.NewEvent(
 			types.EventTypeSignerUpdate,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(validator.ID.Uint64(), 10)),
+			sdk.NewAttribute(types.AttributeKeyValidatorID, validator.ID.String()),
 			sdk.NewAttribute(types.AttributeKeyUpdatedAt, strconv.FormatUint(validator.LastUpdated, 10)),
 		),
 	})
