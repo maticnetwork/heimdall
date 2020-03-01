@@ -19,7 +19,7 @@ type FeeProcessor struct {
 
 // Start starts new block subscription
 func (fp *FeeProcessor) Start() error {
-	fp.Logger.Info("Starting")
+	fp.Logger.Info("Starting fee processor")
 
 	amqpMsgs, err := fp.queueConnector.ConsumeMsg(queue.FeeQueueName)
 	if err != nil {
@@ -65,7 +65,7 @@ func (fp *FeeProcessor) processTopupFeeEvent(eventName string, vLog *types.Log) 
 		fp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
 	} else {
 
-		fp.Logger.Info("✅Creating and broadcasting topup",
+		fp.Logger.Info("✅ Creating and broadcasting topup",
 			"event", eventName,
 			"validatorId", event.ValidatorId,
 			"Fee", event.Fee,

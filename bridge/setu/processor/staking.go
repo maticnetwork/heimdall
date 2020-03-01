@@ -21,7 +21,8 @@ type StakingProcessor struct {
 
 // Start starts new block subscription
 func (sp *StakingProcessor) Start() error {
-	sp.Logger.Info("Starting")
+	sp.Logger.Info("Starting staking processor")
+
 	amqpMsgs, err := sp.queueConnector.ConsumeMsg(queue.StakingQueueName)
 	if err != nil {
 		sp.Logger.Info("error consuming staking msg", "error", err)

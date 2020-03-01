@@ -24,7 +24,8 @@ type ClerkProcessor struct {
 
 // Start starts new block subscription
 func (cp *ClerkProcessor) Start() error {
-	cp.Logger.Info("Starting")
+	cp.Logger.Info("Starting clerk processor")
+
 	amqpMsgs, err := cp.queueConnector.ConsumeMsg(queue.ClerkQueueName)
 	if err != nil {
 		cp.Logger.Info("Error consuming statesync msg", "error", err)
@@ -108,12 +109,12 @@ func (cp *ClerkProcessor) HandleStateSyncEvent(eventName string, vLog *types.Log
 // 1. check if this record has to be broadcasted to maticchain
 // 2. create and broadcast  record transaction to maticchain
 func (cp *ClerkProcessor) HandleRecordConfirmation(event sdk.StringEvent) (err error) {
-	cp.Logger.Info("processing record confirmation event", "eventtype", event.Type)
+	cp.Logger.Info("Processing record confirmation event", "eventType", event.Type)
 	var recordID uint64
 	for _, attr := range event.Attributes {
 		if attr.Key == clerkTypes.AttributeKeyRecordID {
 			if recordID, err = strconv.ParseUint(attr.Value, 10, 64); err != nil {
-				cp.Logger.Error("Error parsing recordId", "eventtype", event.Type)
+				cp.Logger.Error("Error parsing recordId", "eventType", event.Type)
 				return err
 			}
 			break

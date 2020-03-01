@@ -55,7 +55,7 @@ func NewCheckpointProcessor() *CheckpointProcessor {
 
 // Start - consumes messages from checkpoint queue and call processMsg
 func (cp *CheckpointProcessor) Start() error {
-	cp.Logger.Info("Starting")
+	cp.Logger.Info("Starting checkpoint processor")
 
 	// no-ack
 	ackCtx, cancelNoACKPolling := context.WithCancel(context.Background())
@@ -71,7 +71,7 @@ func (cp *CheckpointProcessor) Start() error {
 	}
 	// handle all amqp messages
 	for amqpMsg := range amqpMsgs {
-		cp.Logger.Debug("Received Message", "msgBody", string(amqpMsg.Body), "AppID", amqpMsg.AppId)
+		cp.Logger.Debug("Received Message", "appId", amqpMsg.AppId)
 		go cp.ProcessMsg(amqpMsg)
 	}
 	return nil
@@ -89,7 +89,11 @@ func (cp *CheckpointProcessor) ProcessMsg(amqpMsg amqp.Delivery) {
 		}
 		if err := cp.HandleHeaderBlock(&header); err != nil {
 			cp.Logger.Error("Error while processing the header block", "error", err)
-			amqpMsg.Reject(true)
+			if err.Error() == "no contract code at given address" {
+				amqpMsg.Reject(false)
+			} else {
+				amqpMsg.Reject(true)
+			}
 			return
 		}
 	case "heimdall":
@@ -354,6 +358,8 @@ func (cp *CheckpointProcessor) nextExpectedCheckpoint(latestChildBlock uint64) (
 
 // sendCheckpointToHeimdall - creates checkpoint msg and broadcasts to heimdall
 func (cp *CheckpointProcessor) sendCheckpointToHeimdall(start uint64, end uint64) error {
+	cp.Logger.Debug("Initiating checkpoint to Heimdall", "start", start, "end", end)
+
 	if end == 0 || start >= end {
 		cp.Logger.Info("Waiting for blocks or invalid start end formation", "start", start, "end", end)
 		return nil
@@ -372,7 +378,7 @@ func (cp *CheckpointProcessor) sendCheckpointToHeimdall(start uint64, end uint64
 		return err
 	}
 
-	cp.Logger.Info("✅Creating and broadcasting new checkpoint",
+	cp.Logger.Info("✅ Creating and broadcasting new checkpoint",
 		"start", start,
 		"end", end,
 		"root", hmTypes.BytesToHeimdallHash(root),
@@ -588,9 +594,8 @@ func (cp *CheckpointProcessor) proposeCheckpointNoAck() (err error) {
 	return nil
 }
 
-// OnStop stops all necessary go routines
-func (bp *CheckpointProcessor) Stop() {
-
+// Stop stops all necessary go routines
+func (cp *CheckpointProcessor) Stop() {
 	// cancel No-Ack polling
 	bp.cancelNoACKPolling()
 

@@ -109,6 +109,10 @@ func NewProcessorService(
 		}
 	}
 
+	if len(processorService.processors) == 0 {
+		panic("No processors selected. Use --all or --only <coma-seprated processors>")
+	}
+
 	return processorService
 }
 

@@ -20,7 +20,8 @@ func NewMaticChainListener() *MaticChainListener {
 
 // Start starts new block subscription
 func (ml *MaticChainListener) Start() error {
-	ml.Logger.Info("Starting")
+	ml.Logger.Info("Starting matic chain listener")
+
 	// create cancellable context
 	ctx, cancelSubscription := context.WithCancel(context.Background())
 	ml.cancelSubscription = cancelSubscription
@@ -51,7 +52,7 @@ func (ml *MaticChainListener) Start() error {
 
 // ProcessHeader - process headerblock from maticchain
 func (ml *MaticChainListener) ProcessHeader(newHeader *types.Header) {
-	ml.Logger.Info("Received Headerblock. publishing to checkpoint queue", "blockNumber", newHeader.Number)
+	ml.Logger.Info("Publishing received headerblock to checkpoint queue", "blockNumber", newHeader.Number)
 	// Marshall header block and publish to queue
 	headerBytes, err := newHeader.MarshalJSON()
 	if err != nil {
