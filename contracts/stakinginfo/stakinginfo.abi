@@ -399,6 +399,11 @@
 			},
 			{
 				"indexed": true,
+				"name": "signer",
+				"type": "address"
+			},
+			{
+				"indexed": true,
 				"name": "fee",
 				"type": "uint256"
 			}
