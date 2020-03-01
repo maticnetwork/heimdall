@@ -597,6 +597,5 @@ func (cp *CheckpointProcessor) proposeCheckpointNoAck() (err error) {
 // Stop stops all necessary go routines
 func (cp *CheckpointProcessor) Stop() {
 	// cancel No-Ack polling
-	bp.cancelNoACKPolling()
-
+	cp.cancelNoACKPolling()
 }
