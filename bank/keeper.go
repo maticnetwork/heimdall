@@ -13,7 +13,6 @@ import (
 
 	"github.com/maticnetwork/heimdall/auth"
 	"github.com/maticnetwork/heimdall/bank/types"
-	"github.com/maticnetwork/heimdall/staking"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -25,6 +24,14 @@ var (
 	// TopupSequencePrefixKey represents topup sequence prefix key
 	TopupSequencePrefixKey = []byte{0x81}
 )
+
+// ModuleCommunicator manager to access validator info
+type ModuleCommunicator interface {
+	// AddFeeToDividendAccount add fee to dividend account
+	AddFeeToDividendAccount(ctx sdk.Context, valID hmTypes.ValidatorID, fee *big.Int) sdk.Error
+	// GetValidatorFromValID get validator from validator id
+	GetValidatorFromValID(ctx sdk.Context, valID hmTypes.ValidatorID) (validator hmTypes.Validator, ok bool)
+}
 
 // Keeper manages transfers between accounts
 type Keeper struct {
@@ -38,8 +45,8 @@ type Keeper struct {
 	paramSpace params.Subspace
 	// account keeper
 	ak auth.AccountKeeper
-	// staking keeper
-	sk staking.Keeper
+	// module manager
+	vm ModuleCommunicator
 }
 
 // NewKeeper returns a new Keeper
@@ -49,7 +56,7 @@ func NewKeeper(
 	paramSpace params.Subspace,
 	codespace sdk.CodespaceType,
 	ak auth.AccountKeeper,
-	sk staking.Keeper,
+	vm ModuleCommunicator,
 ) Keeper {
 	ps := paramSpace.WithKeyTable(types.ParamKeyTable())
 	return Keeper{
@@ -58,7 +65,7 @@ func NewKeeper(
 		codespace:  codespace,
 		paramSpace: ps,
 		ak:         ak,
-		sk:         sk,
+		vm:         vm,
 	}
 }
 
@@ -92,31 +99,6 @@ func (keeper Keeper) SetCoins(
 		panic(err)
 	}
 	keeper.ak.SetAccount(ctx, acc)
-	return nil
-}
-
-// AddFeeToDividendAccount adds fee to dividend account for withdrawal
-func (keeper Keeper) AddFeeToDividendAccount(ctx sdk.Context, valID hmTypes.ValidatorID, fee *big.Int) sdk.Error {
-	// Get or create dividend account
-	var dividendAccount hmTypes.DividendAccount
-
-	if keeper.sk.CheckIfDividendAccountExists(ctx, hmTypes.DividendAccountID(valID)) {
-		dividendAccount, _ = keeper.sk.GetDividendAccountByID(ctx, hmTypes.DividendAccountID(valID))
-	} else {
-		dividendAccount = hmTypes.DividendAccount{
-			ID:            hmTypes.DividendAccountID(valID),
-			FeeAmount:     big.NewInt(0).String(),
-			SlashedAmount: big.NewInt(0).String(),
-		}
-	}
-
-	// update fee
-	oldFee, _ := big.NewInt(0).SetString(dividendAccount.FeeAmount, 10)
-	totalFee := big.NewInt(0).Add(oldFee, fee).String()
-	dividendAccount.FeeAmount = totalFee
-
-	keeper.Logger(ctx).Info("Dividend Account fee of validator ", "ID", dividendAccount.ID, "Fee", dividendAccount.FeeAmount)
-	keeper.sk.AddDividendAccount(ctx, dividendAccount)
 	return nil
 }
 

@@ -648,7 +648,7 @@ func GetReceiptLogData(log *ethTypes.Log) []byte {
 // GetPowerFromAmount returns power from amount -- note that this will polute amount object
 func GetPowerFromAmount(amount *big.Int) (*big.Int, error) {
 	decimals18 := big.NewInt(10).Exp(big.NewInt(10), big.NewInt(18), nil)
-	if amount.Uint64() < decimals18.Uint64() {
+	if amount.Cmp(decimals18) == -1 {
 		return nil, errors.New("amount must be more than 1 token")
 	}
 
