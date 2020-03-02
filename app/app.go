@@ -107,46 +107,46 @@ type HeimdallApp struct {
 var logger = helper.Logger.With("module", "app")
 
 //
-// Cross communicator
+// Module communicator
 //
 
-// CrossCommunicator retriever
-type CrossCommunicator struct {
+// ModuleCommunicator retriever
+type ModuleCommunicator struct {
 	App *HeimdallApp
 }
 
 // GetACKCount returns ack count
-func (d CrossCommunicator) GetACKCount(ctx sdk.Context) uint64 {
+func (d ModuleCommunicator) GetACKCount(ctx sdk.Context) uint64 {
 	return d.App.CheckpointKeeper.GetACKCount(ctx)
 }
 
 // IsCurrentValidatorByAddress check if validator is current validator
-func (d CrossCommunicator) IsCurrentValidatorByAddress(ctx sdk.Context, address []byte) bool {
+func (d ModuleCommunicator) IsCurrentValidatorByAddress(ctx sdk.Context, address []byte) bool {
 	return d.App.StakingKeeper.IsCurrentValidatorByAddress(ctx, address)
 }
 
 // AddFeeToDividendAccount add fee to dividend account
-func (d CrossCommunicator) AddFeeToDividendAccount(ctx sdk.Context, valID types.ValidatorID, fee *big.Int) sdk.Error {
+func (d ModuleCommunicator) AddFeeToDividendAccount(ctx sdk.Context, valID types.ValidatorID, fee *big.Int) sdk.Error {
 	return d.App.StakingKeeper.AddFeeToDividendAccount(ctx, valID, fee)
 }
 
 // GetValidatorFromValID get validator from validator id
-func (d CrossCommunicator) GetValidatorFromValID(ctx sdk.Context, valID types.ValidatorID) (validator types.Validator, ok bool) {
+func (d ModuleCommunicator) GetValidatorFromValID(ctx sdk.Context, valID types.ValidatorID) (validator types.Validator, ok bool) {
 	return d.App.StakingKeeper.GetValidatorFromValID(ctx, valID)
 }
 
 // SetCoins sets coins
-func (d CrossCommunicator) SetCoins(ctx sdk.Context, addr types.HeimdallAddress, amt types.Coins) sdk.Error {
+func (d ModuleCommunicator) SetCoins(ctx sdk.Context, addr types.HeimdallAddress, amt types.Coins) sdk.Error {
 	return d.App.BankKeeper.SetCoins(ctx, addr, amt)
 }
 
 // GetCoins gets coins
-func (d CrossCommunicator) GetCoins(ctx sdk.Context, addr types.HeimdallAddress) types.Coins {
+func (d ModuleCommunicator) GetCoins(ctx sdk.Context, addr types.HeimdallAddress) types.Coins {
 	return d.App.BankKeeper.GetCoins(ctx, addr)
 }
 
 // SendCoins transfers coins
-func (d CrossCommunicator) SendCoins(ctx sdk.Context, fromAddr types.HeimdallAddress, toAddr types.HeimdallAddress, amt types.Coins) sdk.Error {
+func (d ModuleCommunicator) SendCoins(ctx sdk.Context, fromAddr types.HeimdallAddress, toAddr types.HeimdallAddress, amt types.Coins) sdk.Error {
 	return d.App.BankKeeper.SendCoins(ctx, fromAddr, toAddr, amt)
 }
 
@@ -218,10 +218,10 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.caller = contractCallerObj
 
 	//
-	// cross communicator
+	// module communicator
 	//
 
-	crossCommunicator := CrossCommunicator{App: app}
+	moduleCommunicator := ModuleCommunicator{App: app}
 
 	//
 	// keepers
@@ -240,7 +240,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		keys[stakingTypes.StoreKey], // target store
 		app.subspaces[stakingTypes.ModuleName],
 		common.DefaultCodespace,
-		crossCommunicator,
+		moduleCommunicator,
 	)
 
 	// bank keeper
@@ -250,7 +250,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		app.subspaces[bankTypes.ModuleName],
 		bankTypes.DefaultCodespace,
 		app.AccountKeeper,
-		crossCommunicator,
+		moduleCommunicator,
 	)
 
 	// bank keeper

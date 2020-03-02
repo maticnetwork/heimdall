@@ -25,8 +25,8 @@ var (
 	TopupSequencePrefixKey = []byte{0x81}
 )
 
-// ValidatorManager manager to access validator info
-type ValidatorManager interface {
+// ModuleCommunicator manager to access validator info
+type ModuleCommunicator interface {
 	// AddFeeToDividendAccount add fee to dividend account
 	AddFeeToDividendAccount(ctx sdk.Context, valID hmTypes.ValidatorID, fee *big.Int) sdk.Error
 	// GetValidatorFromValID get validator from validator id
@@ -45,8 +45,8 @@ type Keeper struct {
 	paramSpace params.Subspace
 	// account keeper
 	ak auth.AccountKeeper
-	// validator manager
-	vm ValidatorManager
+	// module manager
+	vm ModuleCommunicator
 }
 
 // NewKeeper returns a new Keeper
@@ -56,7 +56,7 @@ func NewKeeper(
 	paramSpace params.Subspace,
 	codespace sdk.CodespaceType,
 	ak auth.AccountKeeper,
-	vm ValidatorManager,
+	vm ModuleCommunicator,
 ) Keeper {
 	ps := paramSpace.WithKeyTable(types.ParamKeyTable())
 	return Keeper{
