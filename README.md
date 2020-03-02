@@ -1,6 +1,6 @@
 # Heimdall
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/maticnework/heimdall)](https://goreportcard.com/report/github.com/maticnetwork/heimdall)
+[![Go Report Card](https://goreportcard.com/badge/github.com/maticnetwork/heimdall)](https://goreportcard.com/report/github.com/maticnetwork/heimdall)
 
 Validator node for Matic Network. It uses peppermint, customized [Tendermint](https://github.com/tendermint/tendermint).
 
