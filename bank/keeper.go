@@ -25,6 +25,7 @@ var (
 	TopupSequencePrefixKey = []byte{0x81}
 )
 
+// TODO: Remove this later
 // ModuleCommunicator manager to access validator info
 type ModuleCommunicator interface {
 	// AddFeeToDividendAccount add fee to dividend account
