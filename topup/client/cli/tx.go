@@ -10,17 +10,17 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	bankTypes "github.com/maticnetwork/heimdall/bank/types"
 	hmClient "github.com/maticnetwork/heimdall/client"
 	"github.com/maticnetwork/heimdall/helper"
+	topupTypes "github.com/maticnetwork/heimdall/topup/types"
 	"github.com/maticnetwork/heimdall/types"
 )
 
 // GetTxCmd returns the transaction commands for this module
 func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 	txCmd := &cobra.Command{
-		Use:                        bankTypes.ModuleName,
-		Short:                      "Bank transaction subcommands",
+		Use:                        topupTypes.ModuleName,
+		Short:                      "Topup transaction subcommands",
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       hmClient.ValidateCmd,
@@ -60,7 +60,7 @@ func TopupTxCmd(cdc *codec.Codec) *cobra.Command {
 			}
 
 			// build and sign the transaction, then broadcast to Tendermint
-			msg := bankTypes.NewMsgTopup(
+			msg := topupTypes.NewMsgTopup(
 				proposer,
 				uint64(validatorID),
 				types.HexToHeimdallHash(txhash),
@@ -101,7 +101,7 @@ func WithdrawFeeTxCmd(cdc *codec.Codec) *cobra.Command {
 			}
 
 			// get msg
-			msg := bankTypes.NewMsgWithdrawFee(
+			msg := topupTypes.NewMsgWithdrawFee(
 				proposer,
 				uint64(validatorID),
 			)

@@ -76,19 +76,6 @@ func (keeper Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", types.ModuleName)
 }
 
-// GetSendEnabled returns the current SendEnabled
-// nolint: errcheck
-func (keeper Keeper) GetSendEnabled(ctx sdk.Context) bool {
-	var enabled bool
-	keeper.paramSpace.Get(ctx, types.ParamStoreKeySendEnabled, &enabled)
-	return enabled
-}
-
-// SetSendEnabled sets the send enabled
-func (keeper Keeper) SetSendEnabled(ctx sdk.Context, enabled bool) {
-	keeper.paramSpace.Set(ctx, types.ParamStoreKeySendEnabled, &enabled)
-}
-
 //
 // Topup methods
 //

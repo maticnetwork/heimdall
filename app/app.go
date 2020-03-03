@@ -305,7 +305,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.TopupKeeper = topup.NewKeeper(
 		app.cdc,
 		keys[topupTypes.StoreKey],
-		app.subspaces[borTypes.ModuleName],
+		app.subspaces[topupTypes.ModuleName],
 		topupTypes.DefaultCodespace,
 		app.BankKeeper,
 		moduleCommunicator,
