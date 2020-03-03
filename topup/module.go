@@ -23,7 +23,6 @@ var (
 	_ module.AppModule            = AppModule{}
 	_ module.AppModuleBasic       = AppModuleBasic{}
 	_ hmTypes.HeimdallModuleBasic = AppModule{}
-	// _ module.AppModuleSimulation = AppModule{}
 )
 
 // AppModuleBasic defines the basic application module used by the auth module.

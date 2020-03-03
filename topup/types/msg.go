@@ -40,7 +40,7 @@ func NewMsgTopup(
 func (msg MsgTopup) Route() string { return RouterKey }
 
 // Type Implements Msg.
-func (msg MsgTopup) Type() string { return "topup" }
+func (msg MsgTopup) Type() string { return ModuleName }
 
 // ValidateBasic Implements Msg.
 func (msg MsgTopup) ValidateBasic() sdk.Error {

@@ -16,8 +16,8 @@ import (
 
 // RegisterRoutes - Central function to define routes that get registered by the main application
 func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router) {
-	r.HandleFunc("/bank/accounts/topup", TopupHandlerFn(cliCtx)).Methods("POST")
-	r.HandleFunc("/bank/accounts/fee/withdraw", WithdrawFeeHandlerFn(cliCtx)).Methods("POST")
+	r.HandleFunc("/topup/accounts/topup", TopupHandlerFn(cliCtx)).Methods("POST")
+	r.HandleFunc("/topup/accounts/fee/withdraw", WithdrawFeeHandlerFn(cliCtx)).Methods("POST")
 }
 
 //

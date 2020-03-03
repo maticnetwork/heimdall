@@ -13,7 +13,7 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
-// NewHandler returns a handler for "bank" type messages.
+// NewHandler returns a handler for "topup" type messages.
 func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
@@ -24,7 +24,7 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 		case types.MsgWithdrawFee:
 			return handleMsgWithdrawFee(ctx, k, msg)
 		default:
-			errMsg := "Unrecognized bank Msg type: %s" + msg.Type()
+			errMsg := "Unrecognized topup Msg type: %s" + msg.Type()
 			return sdk.ErrUnknownRequest(errMsg).Result()
 		}
 	}
