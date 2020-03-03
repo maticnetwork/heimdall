@@ -47,7 +47,6 @@ type IContractCaller interface {
 	StakeFor(common.Address, *big.Int, *big.Int, bool) error
 
 	CurrentAccountStateRoot() ([32]byte, error)
-	FindStakedEventLogIndex(*ethTypes.Receipt) (uint64, bool)
 
 	// bor related contracts
 	CurrentSpanNumber() (Number *big.Int)
@@ -496,25 +495,6 @@ func (c *ContractCaller) EncodeStateSyncedEvent(log *ethTypes.Log) (*statesender
 		return nil, err
 	}
 	return event, nil
-}
-
-// FindStakedEventLogIndex find log index for staked event
-func (c *ContractCaller) FindStakedEventLogIndex(receipt *ethTypes.Receipt) (uint64, bool) {
-	abiObject := &c.StakingInfoABI
-	eventName := "Staked"
-	var logIndex uint64 = 0
-	found := false
-	for _, vLog := range receipt.Logs {
-		topic := vLog.Topics[0].Bytes()
-		selectedEvent := EventByID(abiObject, topic)
-		if selectedEvent != nil && selectedEvent.Name == eventName {
-			logIndex = uint64(vLog.Index)
-			found = true
-			break
-		}
-	}
-
-	return logIndex, found
 }
 
 //

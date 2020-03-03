@@ -44,15 +44,8 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k Keepe
 		return hmCommon.ErrWaitForConfirmation(k.Codespace()).Result()
 	}
 
-	// TODO remove this block in next release and use msg.LogIndex -- start
-	logIndex, found := contractCaller.FindStakedEventLogIndex(receipt)
-	if !found {
-		return hmCommon.ErrInvalidMsg(k.Codespace(), "Unable to find validator join log from txHash").Result()
-	}
-	// -- END
-
 	// decode validator join event
-	eventLog, err := contractCaller.DecodeValidatorJoinEvent(receipt, logIndex)
+	eventLog, err := contractCaller.DecodeValidatorJoinEvent(receipt, msg.LogIndex)
 	if err != nil || eventLog == nil {
 		return hmCommon.ErrInvalidMsg(k.Codespace(), "Unable to fetch logs for txHash").Result()
 	}
