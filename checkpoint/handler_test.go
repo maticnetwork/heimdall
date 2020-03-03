@@ -13,7 +13,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/params/subspace"
-	"github.com/maticnetwork/heimdall/bor"
 	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/helper/mocks"
@@ -22,16 +21,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
-	// "testing"
-	// "bytes"
-	// "encoding/hex"
-	// "math/rand"
-	// "os"
-	// "time"
-	// "github.com/maticnetwork/heimdall/helper/mocks"
-	// "github.com/cosmos/cosmos-sdk/codec"
-	// "github.com/cosmos/cosmos-sdk/store"
-	// "github.com/cosmos/cosmos-sdk/x/params"
 	ethcmn "github.com/maticnetwork/bor/common"
 	// "github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -40,7 +29,9 @@ import (
 	dbm "github.com/tendermint/tm-db"
 
 	bankTypes "github.com/maticnetwork/heimdall/bank/types"
+	borTypes "github.com/maticnetwork/heimdall/bor/types"
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
+
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
 )
 
@@ -53,9 +44,9 @@ func MakeTestCodec() *codec.Codec {
 	bankTypes.RegisterCodec(cdc)
 
 	// custom types
-	bor.RegisterCodec(cdc)
-	RegisterCodec(cdc)
-	staking.RegisterCodec(cdc)
+	borTypes.RegisterCodec(cdc)
+	checkpointTypes.RegisterCodec(cdc)
+	stakingTypes.RegisterCodec(cdc)
 
 	cdc.Seal()
 	return cdc
@@ -89,16 +80,16 @@ func CreateTestInput(t *testing.T, isCheckTx bool) (sdk.Context, staking.Keeper,
 	ctx := sdk.NewContext(ms, abci.Header{ChainID: "foochainid"}, isCheckTx, log.NewNopLogger())
 	cdc := MakeTestCodec()
 	//pulp := MakeTestPulp()
-	paramsKeeper := params.NewKeeper(cdc, keyParams, tKeyParams)
+	paramsKeeper := params.NewKeeper(cdc, keyParams, tKeyParams, common.DefaultCodespace)
 
 	dummyStakingKeeper := staking.Keeper{}
 
 	checkpointKeeper := NewKeeper(
 		cdc,
-		dummyStakingKeeper,
 		keyCheckpoint,
 		paramsKeeper.Subspace(checkpointTypes.DefaultParamspace),
 		common.DefaultCodespace,
+		dummyStakingKeeper,
 	)
 
 	stakingKeeper := staking.NewKeeper(
