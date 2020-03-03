@@ -11,7 +11,7 @@ const (
 	// Queue & Routes
 	Connector         = "queue-connector"
 	Broadcaster       = "tx-broadcaster"
-	BroadcastExchange = "sethu.exchange.broadcast"
+	BroadcastExchange = "setu.exchange.broadcast"
 
 	StakingQueueName  = "queue.name.staking"
 	StakingQueueRoute = "queue.route.staking"

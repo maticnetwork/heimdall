@@ -8,10 +8,10 @@ import (
 	"github.com/syndtr/goleveldb/leveldb"
 
 	"github.com/maticnetwork/bor/accounts/abi"
+	"github.com/maticnetwork/heimdall/bridge/setu/broadcaster"
+	"github.com/maticnetwork/heimdall/bridge/setu/queue"
+	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/sethu/broadcaster"
-	"github.com/maticnetwork/heimdall/sethu/queue"
-	"github.com/maticnetwork/heimdall/sethu/util"
 	"github.com/tendermint/tendermint/libs/log"
 	httpClient "github.com/tendermint/tendermint/rpc/client"
 )
@@ -23,8 +23,6 @@ type Processor interface {
 	String() string
 
 	Stop()
-
-	SetLogger(log.Logger)
 }
 
 type BaseProcessor struct {
@@ -60,8 +58,7 @@ type BaseProcessor struct {
 
 // NewBaseProcessor creates a new BaseProcessor.
 func NewBaseProcessor(cdc *codec.Codec, queueConnector *queue.QueueConnector, httpClient *httpClient.HTTP, txBroadcaster *broadcaster.TxBroadcaster, rootchainAbi *abi.ABI, name string, impl Processor) *BaseProcessor {
-
-	logger := Logger.With("service", "processor", "module", name)
+	logger := util.Logger().With("service", "processor", "module", name)
 
 	cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
 	cliCtx.BroadcastMode = client.BroadcastAsync
@@ -92,11 +89,6 @@ func NewBaseProcessor(cdc *codec.Codec, queueConnector *queue.QueueConnector, ht
 		rootchainAbi:      rootchainAbi,
 		storageClient:     util.GetBridgeDBInstance(viper.GetString(util.BridgeDBFlag)),
 	}
-}
-
-// SetLogger implements Service by setting a logger.
-func (bp *BaseProcessor) SetLogger(l log.Logger) {
-	bp.Logger = l
 }
 
 // String implements Service by returning a string representation of the service.

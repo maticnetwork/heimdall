@@ -12,10 +12,12 @@ import (
 	"os"
 	"path"
 	"strconv"
+	"sync"
 	"time"
 
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/pkg/errors"
+	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/log"
 	httpClient "github.com/tendermint/tendermint/rpc/client"
 	tmTypes "github.com/tendermint/tendermint/types"
@@ -32,9 +34,6 @@ const (
 	SpanServiceStr       = "span-service"
 	ClerkServiceStr      = "clerk-service"
 	AMQPConsumerService  = "amqp-consumer-service"
-
-	// TxsURL represents txs url
-	TxsURL = "/txs"
 
 	AccountDetailsURL      = "/auth/accounts/%v"
 	LastNoAckURL           = "/checkpoint/last-no-ack"
@@ -53,27 +52,36 @@ const (
 	BridgeDBFlag = "bridge-db"
 )
 
-// Global logger for bridge
-var Logger log.Logger
+var logger log.Logger
+var loggerOnce sync.Once
 
-func init() {
-	Logger = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
+// Logger returns logger singleton instance
+func Logger() log.Logger {
+	loggerOnce.Do(func() {
+		logger = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
+		option, _ := log.AllowLevel(viper.GetString("log_level"))
+		logger = log.NewFilter(logger, option)
+	})
+
+	return logger
 }
 
-// checks if we are proposer
+// IsProposer  checks if we are proposer
 func IsProposer(cliCtx cliContext.CLIContext) (bool, error) {
 	var proposers []hmtypes.Validator
 	count := uint64(1)
 	result, err := FetchFromAPI(cliCtx,
 		GetHeimdallServerEndpoint(fmt.Sprintf(ProposersURL, strconv.FormatUint(count, 10))),
 	)
+
 	if err != nil {
-		Logger.Error("Error fetching proposers", "url", ProposersURL, "error", err)
+		logger.Error("Error fetching proposers", "url", ProposersURL, "error", err)
 		return false, err
 	}
+
 	err = json.Unmarshal(result.Result, &proposers)
 	if err != nil {
-		Logger.Error("error unmarshalling proposer slice", "error", err)
+		logger.Error("error unmarshalling proposer slice", "error", err)
 		return false, err
 	}
 
@@ -84,25 +92,27 @@ func IsProposer(cliCtx cliContext.CLIContext) (bool, error) {
 	return false, nil
 }
 
+// IsInProposerList checks if we are in current proposer
 func IsInProposerList(cliCtx cliContext.CLIContext, count uint64) (bool, error) {
-	Logger.Debug("Skipping proposers", "count", strconv.FormatUint(count, 10))
+	logger.Debug("Skipping proposers", "count", strconv.FormatUint(count, 10))
+
 	response, err := FetchFromAPI(
 		cliCtx,
 		GetHeimdallServerEndpoint(fmt.Sprintf(ProposersURL, strconv.FormatUint(count, 10))),
 	)
 	if err != nil {
-		Logger.Error("Unable to send request for next proposers", "url", ProposersURL, "error", err)
+		logger.Error("Unable to send request for next proposers", "url", ProposersURL, "error", err)
 		return false, err
 	}
 
 	// unmarshall data from buffer
 	var proposers []hmtypes.Validator
 	if err := json.Unmarshal(response.Result, &proposers); err != nil {
-		Logger.Error("Error unmarshalling validator data ", "error", err)
+		logger.Error("Error unmarshalling validator data ", "error", err)
 		return false, err
 	}
 
-	Logger.Debug("Fetched proposers list", "numberOfProposers", count)
+	logger.Debug("Fetched proposers list", "numberOfProposers", count)
 	for _, proposer := range proposers {
 		if bytes.Equal(proposer.Signer.Bytes(), helper.GetAddress()) {
 			return true, nil
@@ -111,20 +121,21 @@ func IsInProposerList(cliCtx cliContext.CLIContext, count uint64) (bool, error) 
 	return false, nil
 }
 
-// checks if we are current proposer
+// IsCurrentProposer checks if we are current proposer
 func IsCurrentProposer(cliCtx cliContext.CLIContext) (bool, error) {
 	var proposer hmtypes.Validator
 	result, err := FetchFromAPI(cliCtx, GetHeimdallServerEndpoint(CurrentProposerURL))
 	if err != nil {
-		Logger.Error("Error fetching proposers", "error", err)
+		logger.Error("Error fetching proposers", "error", err)
 		return false, err
 	}
+
 	err = json.Unmarshal(result.Result, &proposer)
 	if err != nil {
-		Logger.Error("error unmarshalling validator", "error", err)
+		logger.Error("error unmarshalling validator", "error", err)
 		return false, err
 	}
-	Logger.Debug("Current proposer fetched", "validator", proposer.String())
+	logger.Debug("Current proposer fetched", "validator", proposer.String())
 
 	if bytes.Equal(proposer.Signer.Bytes(), helper.GetAddress()) {
 		return true, nil
@@ -133,31 +144,30 @@ func IsCurrentProposer(cliCtx cliContext.CLIContext) (bool, error) {
 	return false, nil
 }
 
-// check if we are the EventSender
+// IsEventSender check if we are the EventSender
 func IsEventSender(cliCtx cliContext.CLIContext, validatorID uint64) bool {
-
 	var validator hmtypes.Validator
 
 	result, err := FetchFromAPI(cliCtx,
 		GetHeimdallServerEndpoint(fmt.Sprintf(ValidatorURL, strconv.FormatUint(validatorID, 10))),
 	)
 	if err != nil {
-		Logger.Error("Error fetching proposers", "error", err)
+		logger.Error("Error fetching proposers", "error", err)
 		return false
 	}
+
 	err = json.Unmarshal(result.Result, &validator)
 	if err != nil {
-		Logger.Error("error unmarshalling proposer slice", "error", err)
+		logger.Error("error unmarshalling proposer slice", "error", err)
 		return false
 	}
-	Logger.Debug("Current event sender received", "validator", validator.String())
+	logger.Debug("Current event sender received", "validator", validator.String())
 
 	if bytes.Equal(validator.Signer.Bytes(), helper.GetAddress()) {
 		return true
 	}
 
 	return false
-
 }
 
 // GetHeimdallServerEndpoint returns heimdall server endpoint
@@ -189,7 +199,7 @@ func FetchFromAPI(cliCtx cliContext.CLIContext, URL string) (result rest.Respons
 		return response, nil
 	}
 
-	Logger.Debug("Error while fetching data from URL", "status", resp.StatusCode, "URL", URL)
+	logger.Debug("Error while fetching data from URL", "status", resp.StatusCode, "URL", URL)
 	return result, fmt.Errorf("Error while fetching data from url: %v, status: %v", URL, resp.StatusCode)
 }
 
@@ -222,31 +232,6 @@ func WaitForOneEvent(tx tmTypes.Tx, client *httpClient.HTTP) (tmTypes.TMEventDat
 	case <-ctx.Done():
 		return nil, errors.New("timed out waiting for event")
 	}
-}
-
-// FetchVotes fetches votes and extracts sigs from it
-func FetchVotes(
-	height int64,
-	client *httpClient.HTTP,
-) (votes []*tmTypes.CommitSig, sigs []byte, chainID string, err error) {
-	// get block client
-	blockDetails, err := helper.GetBlockWithClient(client, height+1)
-
-	if err != nil {
-		return nil, nil, "", err
-	}
-
-	// extract votes from response
-	preCommits := blockDetails.LastCommit.Precommits
-
-	// extract signs from votes
-	valSigs := helper.GetSigs(preCommits)
-
-	// extract chainID
-	chainID = blockDetails.ChainID
-
-	// return
-	return preCommits, valSigs, chainID, nil
 }
 
 // IsCatchingUp checks if the heimdall node you are connected to is fully synced or not

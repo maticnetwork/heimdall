@@ -10,23 +10,23 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/spf13/cobra"
 
-	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/common"
 	httpClient "github.com/tendermint/tendermint/rpc/client"
 
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/maticnetwork/heimdall/app"
+	"github.com/maticnetwork/heimdall/bridge/setu/broadcaster"
+	"github.com/maticnetwork/heimdall/bridge/setu/listener"
+	"github.com/maticnetwork/heimdall/bridge/setu/processor"
+	"github.com/maticnetwork/heimdall/bridge/setu/queue"
+	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/sethu/broadcaster"
-	"github.com/maticnetwork/heimdall/sethu/listener"
-	"github.com/maticnetwork/heimdall/sethu/processor"
-	"github.com/maticnetwork/heimdall/sethu/queue"
-	"github.com/maticnetwork/heimdall/sethu/util"
 )
 
 const (
-	WaitDuration = 1 * time.Minute
+	waitDuration = 1 * time.Minute
+	logLevel     = "log_level"
 )
 
 // GetStartCmd returns the start command to start bridge
@@ -35,7 +35,7 @@ func GetStartCmd() *cobra.Command {
 		Use:   "start",
 		Short: "Start bridge server",
 		Run: func(cmd *cobra.Command, args []string) {
-			logger := util.Logger.With("module", "bridge")
+			logger := util.Logger().With("module", "bridge")
 
 			// create codec
 			cdc := app.MakeCodec()
@@ -48,10 +48,11 @@ func GetStartCmd() *cobra.Command {
 			_httpClient := httpClient.NewHTTP(helper.GetConfig().TendermintRPCUrl, "/websocket")
 
 			// selected services to start
-			services := SelectedServices(cdc, _httpClient, _queueConnector, _txBroadcaster)
-			if len(services) == 0 {
-				panic(fmt.Sprintf("No services selected to start. select services using --all or --only flag"))
-			}
+			services := []common.Service{}
+			services = append(services,
+				listener.NewListenerService(cdc, _queueConnector),
+				processor.NewProcessorService(cdc, _queueConnector, _httpClient, _txBroadcaster),
+			)
 
 			// sync group
 			var wg sync.WaitGroup
@@ -94,7 +95,7 @@ func GetStartCmd() *cobra.Command {
 				} else {
 					logger.Info("Waiting for heimdall to be synced")
 				}
-				time.Sleep(WaitDuration)
+				time.Sleep(waitDuration)
 			}
 
 			// strt all processes
@@ -110,25 +111,17 @@ func GetStartCmd() *cobra.Command {
 			wg.Add(len(services))
 			wg.Wait()
 		}}
+
+	// log level
+	startCmd.Flags().String(logLevel, "info", "Log level for bridge")
+	viper.BindPFlag(logLevel, startCmd.Flags().Lookup(logLevel))
+
 	startCmd.Flags().Bool("all", false, "start all bridge services")
 	viper.BindPFlag("all", startCmd.Flags().Lookup("all"))
 
 	startCmd.Flags().StringSlice("only", []string{}, "comma separated bridge services to start")
 	viper.BindPFlag("only", startCmd.Flags().Lookup("only"))
 	return startCmd
-}
-
-// SelectedServices will select services to start based on set flags --all, --only
-func SelectedServices(cdc *codec.Codec, _httpClient *httpClient.HTTP, _newQueueConnector *queue.QueueConnector, _txBroadcaster *broadcaster.TxBroadcaster) []common.Service {
-	services := []common.Service{}
-
-	startAll := viper.GetBool("all")
-	if startAll {
-		services = append(services,
-			listener.NewListenerService(cdc, _newQueueConnector),
-			processor.NewProcessorService(cdc, _newQueueConnector, _httpClient, _txBroadcaster))
-	}
-	return services
 }
 
 func init() {

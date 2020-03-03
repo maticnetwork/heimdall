@@ -1,24 +1,16 @@
 package queue
 
 import (
-	"os"
-
+	"github.com/streadway/amqp"
 	"github.com/tendermint/tendermint/libs/log"
 
-	"github.com/streadway/amqp"
+	"github.com/maticnetwork/heimdall/bridge/setu/util"
 )
 
 type QueueConnector struct {
 	connection        *amqp.Connection
 	broadcastExchange string
 	logger            log.Logger
-}
-
-// Global logger for bridge
-var Logger log.Logger
-
-func init() {
-	Logger = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
 }
 
 func NewQueueConnector(dialer string) *QueueConnector {
@@ -32,13 +24,14 @@ func NewQueueConnector(dialer string) *QueueConnector {
 	connector := QueueConnector{
 		connection:        conn,
 		broadcastExchange: BroadcastExchange,
-		logger:            Logger.With("module", Connector),
+		logger:            util.Logger().With("module", Connector),
 	}
 
 	// connector
 	return &connector
 }
 
+// InitializeQueues initiates multiple queues and exchange
 func (qc *QueueConnector) InitializeQueues() error {
 	// initialize exchange
 	channel, err := qc.connection.Channel()
@@ -59,7 +52,7 @@ func (qc *QueueConnector) InitializeQueues() error {
 		return err
 	}
 
-	qc.logger.Info("Exchange Declared")
+	qc.logger.Debug("AMQP exchange declared", "exchange", qc.broadcastExchange)
 
 	qc.InitializeQueue(channel, CheckpointQueueName, CheckpointQueueRoute)
 	qc.InitializeQueue(channel, StakingQueueName, StakingQueueRoute)
@@ -69,6 +62,7 @@ func (qc *QueueConnector) InitializeQueues() error {
 	return nil
 }
 
+// InitializeQueue initialize individual queue
 func (qc *QueueConnector) InitializeQueue(channel *amqp.Channel, queueName string, queueRoute string) error {
 	// queue declare
 	if _, err := channel.QueueDeclare(
@@ -82,8 +76,6 @@ func (qc *QueueConnector) InitializeQueue(channel *amqp.Channel, queueName strin
 		return err
 	}
 
-	qc.logger.Info("Queue Declared", "queuename", queueName)
-
 	// bind queue
 	if err := channel.QueueBind(
 		queueName,            // queue name
@@ -95,12 +87,13 @@ func (qc *QueueConnector) InitializeQueue(channel *amqp.Channel, queueName strin
 		return err
 	}
 
-	qc.logger.Info("Queue Bind", "queuename", queueName, "queueroute", queueRoute)
+	qc.logger.Debug("AMQP queue declared", "queue", queueName, "route", queueRoute)
+
 	return nil
 }
 
-// PublishBytes publishes messages to queue
-func (qc *QueueConnector) PublishMsg(data []byte, route string, appId string, msgType string) error {
+// PublishMsg publishes messages to queue
+func (qc *QueueConnector) PublishMsg(data []byte, route string, appID string, msgType string) error {
 	// initialize exchange
 	channel, err := qc.connection.Channel()
 	if err != nil {
@@ -113,7 +106,7 @@ func (qc *QueueConnector) PublishMsg(data []byte, route string, appId string, ms
 		false,                // mandatory
 		false,                // immediate
 		amqp.Publishing{
-			AppId:       appId,
+			AppId:       appID,
 			Type:        msgType,
 			ContentType: "text/plain",
 			Body:        data,
@@ -121,16 +114,18 @@ func (qc *QueueConnector) PublishMsg(data []byte, route string, appId string, ms
 		return err
 	}
 
-	qc.logger.Info("published message to queue", "route", route)
+	qc.logger.Debug("Published message to queue", "appID", appID, "route", route, "msgType", msgType)
 	return nil
 }
 
+// ConsumeMsg consume messages
 func (qc *QueueConnector) ConsumeMsg(queueName string) (<-chan amqp.Delivery, error) {
 	// initialize exchange
 	channel, err := qc.connection.Channel()
 	if err != nil {
 		panic(err)
 	}
+
 	// start consuming
 	msgs, err := channel.Consume(
 		queueName, // queue

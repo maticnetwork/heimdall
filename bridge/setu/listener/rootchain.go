@@ -10,8 +10,8 @@ import (
 	"github.com/maticnetwork/bor/accounts/abi"
 	ethCommon "github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/bor/core/types"
+	"github.com/maticnetwork/heimdall/bridge/setu/queue"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/sethu/queue"
 )
 
 // RootChainListener - Listens to and process events from rootchain
@@ -44,7 +44,8 @@ func NewRootChainListener() *RootChainListener {
 
 // Start starts new block subscription
 func (rl *RootChainListener) Start() error {
-	rl.Logger.Info("Starting")
+	rl.Logger.Info("Starting rootchain listener")
+
 	// create cancellable context
 	ctx, cancelSubscription := context.WithCancel(context.Background())
 	rl.cancelSubscription = cancelSubscription
@@ -115,11 +116,12 @@ func (rl *RootChainListener) ProcessHeader(newHeader *types.Header) {
 	rl.storageClient.Put([]byte(lastRootBlockKey), []byte(toBlock.String()), nil)
 
 	// query log
-	rl.Logger.Info("Query event logs", "fromBlock", fromBlock, "toBlock", toBlock)
 	rl.queryAndBroadcastEvents(fromBlock, toBlock)
 }
 
 func (rl *RootChainListener) queryAndBroadcastEvents(fromBlock *big.Int, toBlock *big.Int) {
+	rl.Logger.Info("Query rootchain event logs", "fromBlock", fromBlock, "toBlock", toBlock)
+
 	// draft a query
 	query := ethereum.FilterQuery{FromBlock: fromBlock, ToBlock: toBlock, Addresses: []ethCommon.Address{helper.GetRootChainAddress(), helper.GetStakingInfoAddress(), helper.GetStateSenderAddress()}}
 	// get logs from rootchain by filter
@@ -163,7 +165,6 @@ func (rl *RootChainListener) queryAndBroadcastEvents(fromBlock *big.Int, toBlock
 					if err := rl.queueConnector.PublishMsg(logBytes, queue.FeeQueueRoute, rl.String(), selectedEvent.Name); err != nil {
 						rl.Logger.Error("Error publishing msg to topup queue", "error", err)
 					}
-
 				}
 			}
 		}

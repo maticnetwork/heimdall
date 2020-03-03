@@ -1,13 +1,11 @@
 package listener
 
 import (
-	"os"
-
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/maticnetwork/heimdall/bridge/setu/queue"
+	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/sethu/queue"
 	"github.com/tendermint/tendermint/libs/common"
-	"github.com/tendermint/tendermint/libs/log"
 )
 
 const (
@@ -25,17 +23,10 @@ type ListenerService struct {
 	listeners []Listener
 }
 
-// Global logger for bridge
-var Logger log.Logger
-
-func init() {
-	Logger = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
-}
-
 // NewListenerService returns new service object for listneing to events
 func NewListenerService(cdc *codec.Codec, queueConnector *queue.QueueConnector) *ListenerService {
 	// create logger
-	logger := Logger.With("service", ListenerServiceStr)
+	logger := util.Logger().With("service", ListenerServiceStr)
 
 	// creating listener object
 	listenerService := &ListenerService{}

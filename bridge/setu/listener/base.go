@@ -7,17 +7,17 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
-	ethereum "github.com/maticnetwork/bor"
-	"github.com/maticnetwork/bor/core/types"
-	"github.com/maticnetwork/bor/ethclient"
-	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/sethu/queue"
-	"github.com/maticnetwork/heimdall/sethu/util"
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/tendermint/tendermint/libs/log"
-
 	httpClient "github.com/tendermint/tendermint/rpc/client"
+
+	ethereum "github.com/maticnetwork/bor"
+	"github.com/maticnetwork/bor/core/types"
+	"github.com/maticnetwork/bor/ethclient"
+	"github.com/maticnetwork/heimdall/bridge/setu/queue"
+	"github.com/maticnetwork/heimdall/bridge/setu/util"
+	"github.com/maticnetwork/heimdall/helper"
 )
 
 // Listener defines a block header listerner for Rootchain, Maticchain, Heimdall
@@ -35,8 +35,6 @@ type Listener interface {
 	Stop()
 
 	String() string
-
-	SetLogger(log.Logger)
 }
 
 type BaseListener struct {
@@ -79,7 +77,7 @@ type BaseListener struct {
 // NewBaseListener creates a new BaseListener.
 func NewBaseListener(cdc *codec.Codec, queueConnector *queue.QueueConnector, chainClient *ethclient.Client, name string, impl Listener) *BaseListener {
 
-	logger := Logger.With("service", "listener", "module", name)
+	logger := util.Logger().With("service", "listener", "module", name)
 	contractCaller, err := helper.NewContractCaller()
 	if err != nil {
 		logger.Error("Error while getting root chain instance", "error", err)
@@ -105,11 +103,6 @@ func NewBaseListener(cdc *codec.Codec, queueConnector *queue.QueueConnector, cha
 
 		HeaderChannel: make(chan *types.Header),
 	}
-}
-
-// SetLogger implements Service by setting a logger.
-func (bl *BaseListener) SetLogger(l log.Logger) {
-	bl.Logger = l
 }
 
 // // Start starts new block subscription

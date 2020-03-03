@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 
 	"github.com/maticnetwork/bor/core/types"
+	"github.com/maticnetwork/heimdall/bridge/setu/queue"
+	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/sethu/queue"
-	"github.com/maticnetwork/heimdall/sethu/util"
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/streadway/amqp"
@@ -21,7 +21,8 @@ type StakingProcessor struct {
 
 // Start starts new block subscription
 func (sp *StakingProcessor) Start() error {
-	sp.Logger.Info("Starting")
+	sp.Logger.Info("Starting staking processor")
+
 	amqpMsgs, err := sp.queueConnector.ConsumeMsg(queue.StakingQueueName)
 	if err != nil {
 		sp.Logger.Info("error consuming staking msg", "error", err)

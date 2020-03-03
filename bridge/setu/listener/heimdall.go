@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/maticnetwork/bor/core/types"
+	"github.com/maticnetwork/heimdall/bridge/setu/queue"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/sethu/queue"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -33,7 +33,7 @@ func NewHeimdallListener() *HeimdallListener {
 
 // Start starts new block subscription
 func (hl *HeimdallListener) Start() error {
-	hl.Logger.Info("Starting")
+	hl.Logger.Info("Starting heimdall listener")
 
 	// create cancellable context
 	_, cancelSubscription := context.WithCancel(context.Background())
@@ -85,21 +85,31 @@ func (hl *HeimdallListener) StartPolling(ctx context.Context, pollInterval time.
 					query = append(query, fmt.Sprintf("tx.height>=%v", fromBlock))
 					query = append(query, fmt.Sprintf("tx.height<=%v", toBlock))
 
-					hl.Logger.Debug(" heimdall event search query", "query", query)
-					searchResult, err := helper.QueryTxsByEvents(hl.cliCtx, query, 1, 50)
-					if err != nil {
-						hl.Logger.Error("Error while searching events", "eventType", eventType, "error", err)
-						break
-					}
+					limit := 50
+					for page := 1; page > 0; {
+						searchResult, err := helper.QueryTxsByEvents(hl.cliCtx, query, page, limit)
+						hl.Logger.Debug("Fetching new events using search query", "query", query, "page", page, "limit", limit)
 
-					for _, tx := range searchResult.Txs {
-						for _, log := range tx.Logs {
-							event := helper.FilterEvents(log.Events, func(et sdk.StringEvent) bool {
-								return et.Type == checkpointTypes.EventTypeCheckpoint || et.Type == checkpointTypes.EventTypeCheckpointAck || et.Type == clerkTypes.EventTypeRecord
-							})
-							if event != nil {
-								hl.ProcessEvent(*event)
+						if err != nil {
+							hl.Logger.Error("Error while searching events", "eventType", eventType, "error", err)
+							break
+						}
+
+						for _, tx := range searchResult.Txs {
+							for _, log := range tx.Logs {
+								event := helper.FilterEvents(log.Events, func(et sdk.StringEvent) bool {
+									return et.Type == checkpointTypes.EventTypeCheckpoint || et.Type == checkpointTypes.EventTypeCheckpointAck || et.Type == clerkTypes.EventTypeRecord
+								})
+								if event != nil {
+									hl.ProcessEvent(*event)
+								}
 							}
+						}
+
+						if len(searchResult.Txs) == limit {
+							page = page + 1
+						} else {
+							page = 0
 						}
 					}
 				}
@@ -129,7 +139,7 @@ func (hl *HeimdallListener) fetchFromAndToBlock() (fromBlock uint64, toBlock uin
 		}
 
 		if result, err := strconv.ParseUint(string(lastBlockBytes), 10, 64); err == nil {
-			hl.Logger.Debug("Got last block from bridge storage", "lastBlock", uint64(result))
+			hl.Logger.Debug("Got last block from bridge storage", "lastBlock", result)
 			fromBlock = uint64(result) + 1
 		} else {
 			hl.Logger.Info("Error parsing last block bytes from storage", "error", err)
@@ -142,19 +152,23 @@ func (hl *HeimdallListener) fetchFromAndToBlock() (fromBlock uint64, toBlock uin
 
 // ProcessEvent - process event from heimdall.
 func (hl *HeimdallListener) ProcessEvent(event sdk.StringEvent) {
-	hl.Logger.Info("Received Event", "EventType", event.Type)
-	eventBytes, _ := json.Marshal(event)
+	hl.Logger.Info("Process received event from Heimdall", "eventType", event.Type)
+	eventBytes, err := json.Marshal(event)
+	if err != nil {
+		hl.Logger.Error("Error while parsing event", "error", err, "eventType", event.Type)
+		return
+	}
 
 	switch event.Type {
 
 	case clerkTypes.EventTypeRecord:
 		if err := hl.queueConnector.PublishMsg(eventBytes, queue.ClerkQueueRoute, hl.String(), event.Type); err != nil {
-			hl.Logger.Error("Error publishing msg to clerk queue", "EventType", event.Type)
+			hl.Logger.Error("Error publishing msg to clerk queue", "eventType", event.Type)
 		}
 
 	case checkpointTypes.EventTypeCheckpoint, checkpointTypes.EventTypeCheckpointAck:
 		if err := hl.queueConnector.PublishMsg(eventBytes, queue.CheckpointQueueRoute, hl.String(), event.Type); err != nil {
-			hl.Logger.Error("Error publishing msg to checkpoint queue", "EventType", event.Type)
+			hl.Logger.Error("Error publishing msg to checkpoint queue", "eventType", event.Type)
 		}
 
 	default:

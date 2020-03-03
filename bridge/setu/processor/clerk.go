@@ -9,10 +9,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethereum "github.com/maticnetwork/bor"
 	"github.com/maticnetwork/bor/core/types"
+	"github.com/maticnetwork/heimdall/bridge/setu/queue"
 	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
 	"github.com/maticnetwork/heimdall/contracts/statesender"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/sethu/queue"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/streadway/amqp"
 )
@@ -24,7 +24,8 @@ type ClerkProcessor struct {
 
 // Start starts new block subscription
 func (cp *ClerkProcessor) Start() error {
-	cp.Logger.Info("Starting")
+	cp.Logger.Info("Starting clerk processor")
+
 	amqpMsgs, err := cp.queueConnector.ConsumeMsg(queue.ClerkQueueName)
 	if err != nil {
 		cp.Logger.Info("Error consuming statesync msg", "error", err)
@@ -108,12 +109,12 @@ func (cp *ClerkProcessor) HandleStateSyncEvent(eventName string, vLog *types.Log
 // 1. check if this record has to be broadcasted to maticchain
 // 2. create and broadcast  record transaction to maticchain
 func (cp *ClerkProcessor) HandleRecordConfirmation(event sdk.StringEvent) (err error) {
-	cp.Logger.Info("processing record confirmation event", "eventtype", event.Type)
+	cp.Logger.Info("Processing record confirmation event", "eventType", event.Type)
 	var recordID uint64
 	for _, attr := range event.Attributes {
 		if attr.Key == clerkTypes.AttributeKeyRecordID {
 			if recordID, err = strconv.ParseUint(attr.Value, 10, 64); err != nil {
-				cp.Logger.Error("Error parsing recordId", "eventtype", event.Type)
+				cp.Logger.Error("Error parsing recordId", "eventType", event.Type)
 				return err
 			}
 			break
@@ -157,7 +158,7 @@ func (cp *ClerkProcessor) encodeProposeStateData(stateID uint64) ([]byte, error)
 	// commit state
 	data, err := stateReceiverABI.Pack("proposeState", big.NewInt(0).SetUint64(stateID))
 	if err != nil {
-		Logger.Error("Error unpacking tx for commit state", "error", err)
+		cp.Logger.Error("Error unpacking tx for commit state", "error", err)
 		return nil, err
 	}
 	// return data

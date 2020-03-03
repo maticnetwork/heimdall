@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/sethu/util"
 
 	borTypes "github.com/maticnetwork/heimdall/bor/types"
 
@@ -26,7 +26,8 @@ type SpanProcessor struct {
 
 // Start starts new block subscription
 func (sp *SpanProcessor) Start() error {
-	sp.Logger.Info("Starting")
+	sp.Logger.Info("Starting span processor")
+
 	// create cancellable context
 	spanCtx, cancelSpanService := context.WithCancel(context.Background())
 
@@ -59,6 +60,7 @@ func (sp *SpanProcessor) startPolling(ctx context.Context, interval time.Duratio
 func (sp *SpanProcessor) checkAndPropose() {
 	lastSpan, err := sp.getLastSpan()
 	if err == nil && lastSpan != nil {
+		sp.Logger.Debug("Found last span", "lastSpan", lastSpan.ID, "startBlock", lastSpan.StartBlock, "endBlock", lastSpan.EndBlock)
 		nextSpanMsg, err := sp.fetchNextSpanDetails(lastSpan.ID+1, lastSpan.EndBlock+1)
 
 		// check if current user is among next span producers
@@ -82,7 +84,7 @@ func (sp *SpanProcessor) propose(lastSpan *types.Span, nextSpanMsg *types.Span) 
 
 	if lastSpan.StartBlock <= currentBlock && currentBlock <= lastSpan.EndBlock {
 		// log new span
-		sp.Logger.Info("✅Proposing new span", "spanId", nextSpanMsg.ID, "startBlock", nextSpanMsg.StartBlock, "endBlock", nextSpanMsg.EndBlock)
+		sp.Logger.Info("✅ Proposing new span", "spanId", nextSpanMsg.ID, "startBlock", nextSpanMsg.StartBlock, "endBlock", nextSpanMsg.EndBlock)
 
 		// broadcast to heimdall
 		msg := borTypes.MsgProposeSpan{
