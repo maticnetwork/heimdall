@@ -8,16 +8,16 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	bankTypes "github.com/maticnetwork/heimdall/bank/types"
 	restClient "github.com/maticnetwork/heimdall/client/rest"
+	topupTypes "github.com/maticnetwork/heimdall/topup/types"
 	"github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/types/rest"
 )
 
 // RegisterRoutes - Central function to define routes that get registered by the main application
 func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router) {
-	r.HandleFunc("/topup/accounts/topup", TopupHandlerFn(cliCtx)).Methods("POST")
-	r.HandleFunc("/topup/accounts/fee/withdraw", WithdrawFeeHandlerFn(cliCtx)).Methods("POST")
+	r.HandleFunc("/topup/fee", TopupHandlerFn(cliCtx)).Methods("POST")
+	r.HandleFunc("/topup/withdraw", WithdrawFeeHandlerFn(cliCtx)).Methods("POST")
 }
 
 //
@@ -50,7 +50,7 @@ func TopupHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		fromAddr := types.HexToHeimdallAddress(req.BaseReq.From)
 
 		// get msg
-		msg := bankTypes.NewMsgTopup(
+		msg := topupTypes.NewMsgTopup(
 			fromAddr,
 			req.ID,
 			types.HexToHeimdallHash(req.TxHash),
@@ -88,7 +88,7 @@ func WithdrawFeeHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		fromAddr := types.HexToHeimdallAddress(req.BaseReq.From)
 
 		// get msg
-		msg := bankTypes.NewMsgWithdrawFee(
+		msg := topupTypes.NewMsgWithdrawFee(
 			fromAddr,
 			req.ID,
 		)

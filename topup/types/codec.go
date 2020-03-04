@@ -9,7 +9,7 @@ import (
 // RegisterCodec registers concrete types on codec codec
 func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(MsgTopup{}, "topup/MsgTopup", nil)
-	cdc.RegisterConcrete(MsgWithdrawFee{}, "bank/MsgWithdrawFee", nil)
+	cdc.RegisterConcrete(MsgWithdrawFee{}, "topup/MsgWithdrawFee", nil)
 }
 
 // RegisterPulp register pulp
