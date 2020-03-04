@@ -1,7 +1,6 @@
 package topup
 
 import (
-	"encoding/hex"
 	"math/big"
 	"strconv"
 
@@ -88,43 +87,6 @@ func GetTopupKey(address []byte) []byte {
 // GetTopupSequenceKey drafts topup sequence for address
 func GetTopupSequenceKey(sequence uint64) []byte {
 	return append(TopupSequencePrefixKey, []byte(strconv.FormatUint(sequence, 10))...)
-}
-
-// GetValidatorTopup returns validator toptup information
-func (keeper Keeper) GetValidatorTopup(ctx sdk.Context, addr hmTypes.HeimdallAddress) (*types.ValidatorTopup, error) {
-	store := ctx.KVStore(keeper.key)
-
-	// check if topup exists
-	key := GetTopupKey(addr.Bytes())
-	if !store.Has(key) {
-		return nil, nil
-	}
-
-	// unmarshall validator and return
-	validatorTopup, err := types.UnmarshallValidatorTopup(keeper.cdc, store.Get(key))
-	if err != nil {
-		return nil, err
-	}
-
-	// return true if validator
-	return &validatorTopup, nil
-}
-
-// SetValidatorTopup sets validator topup object
-func (keeper Keeper) SetValidatorTopup(ctx sdk.Context, addr hmTypes.HeimdallAddress, validatorTopup types.ValidatorTopup) error {
-	store := ctx.KVStore(keeper.key)
-
-	// validator topup
-	bz, err := types.MarshallValidatorTopup(keeper.cdc, validatorTopup)
-	if err != nil {
-		return err
-	}
-
-	// store validator with address prefixed with validator key as index
-	store.Set(GetTopupKey(addr.Bytes()), bz)
-	keeper.Logger(ctx).Debug("Validator topup stored", "key", hex.EncodeToString(GetTopupKey(addr.Bytes())), "totalTopups", validatorTopup.Copy().TotalTopups)
-
-	return nil
 }
 
 // GetTopupSequence checks if topup already exists

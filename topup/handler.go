@@ -62,20 +62,6 @@ func handleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCalle
 		signer = validator.Signer
 	}
 
-	// validator topup
-	topupObject, err := k.GetValidatorTopup(ctx, signer)
-	if err != nil {
-		return types.ErrNoValidatorTopup(k.Codespace()).Result()
-	}
-
-	// create topup object
-	if topupObject == nil {
-		topupObject = &types.ValidatorTopup{
-			ID:          msg.ID,
-			TotalTopups: hmTypes.Coins{hmTypes.Coin{Denom: authTypes.FeeToken, Amount: hmTypes.NewInt(0)}},
-		}
-	}
-
 	// create topup amount
 	topupAmount := hmTypes.Coins{hmTypes.Coin{Denom: authTypes.FeeToken, Amount: hmTypes.NewIntFromBigInt(eventLog.Fee)}}
 
@@ -88,9 +74,6 @@ func handleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCalle
 		return hmCommon.ErrOldTx(k.Codespace()).Result()
 	}
 
-	// add total topups amount
-	topupObject.TotalTopups = topupObject.TotalTopups.Add(topupAmount)
-
 	// increase coins in account
 	if _, ec := k.bk.AddCoins(ctx, signer, topupAmount); ec != nil {
 		return ec.Result()
@@ -101,11 +84,6 @@ func handleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCalle
 		return ec.Result()
 	}
 
-	// save old validator
-	if err := k.SetValidatorTopup(ctx, signer, *topupObject); err != nil {
-		k.Logger(ctx).Error("Unable to update signer", "error", err, "validatorId", msg.ID.String())
-		return hmCommon.ErrSignerUpdateError(k.Codespace()).Result()
-	}
 	// save topup
 	k.SetTopupSequence(ctx, sequence)
 
