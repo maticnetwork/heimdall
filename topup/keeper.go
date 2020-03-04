@@ -16,8 +16,6 @@ import (
 var (
 	// DefaultValue default value
 	DefaultValue = []byte{0x01}
-	// ValidatorTopupKey represents validator topup key
-	ValidatorTopupKey = []byte{0x80} // prefix for each key to a validator
 	// TopupSequencePrefixKey represents topup sequence prefix key
 	TopupSequencePrefixKey = []byte{0x81}
 )
@@ -79,27 +77,38 @@ func (keeper Keeper) Logger(ctx sdk.Context) log.Logger {
 // Topup methods
 //
 
-// GetTopupKey drafts the topup key for address
-func GetTopupKey(address []byte) []byte {
-	return append(ValidatorTopupKey, address...)
-}
-
 // GetTopupSequenceKey drafts topup sequence for address
 func GetTopupSequenceKey(sequence uint64) []byte {
 	return append(TopupSequencePrefixKey, []byte(strconv.FormatUint(sequence, 10))...)
 }
 
-// GetTopupSequence checks if topup already exists
-func (keeper Keeper) GetTopupSequence(ctx sdk.Context, sequence uint64) uint64 {
+// GetTopupSequences checks if topup already exists
+func (keeper Keeper) GetTopupSequences(ctx sdk.Context) (sequences []*uint64) {
+	keeper.IterateTopupSequencesAndApplyFn(ctx, func(sequence uint64) error {
+		sequences = append(sequences, &sequence)
+		return nil
+	})
+	return
+}
+
+// IterateTopupSequencesAndApplyFn interate validators and apply the given function.
+func (keeper Keeper) IterateTopupSequencesAndApplyFn(ctx sdk.Context, f func(sequence uint64) error) {
 	store := ctx.KVStore(keeper.key)
-	sequenceKey := GetTopupSequenceKey(sequence)
-	if store.Has(sequenceKey) {
-		result, err := strconv.ParseUint(string(store.Get(sequenceKey)), 10, 64)
-		if err == nil {
-			return uint64(result)
+
+	// get sequence iterator
+	iterator := sdk.KVStorePrefixIterator(store, TopupSequencePrefixKey)
+	defer iterator.Close()
+
+	// loop through validators to get valid validators
+	for ; iterator.Valid(); iterator.Next() {
+		sequence, _ := strconv.ParseUint(string(iterator.Key()[len(TopupSequencePrefixKey):]), 10, 64)
+
+		// call function and return if required
+		if err := f(sequence); err != nil {
+			return
 		}
 	}
-	return 0
+	return
 }
 
 // SetTopupSequence sets mapping for sequence id to bool

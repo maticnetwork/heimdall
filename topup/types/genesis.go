@@ -2,19 +2,21 @@ package types
 
 // GenesisState is the bank state that must be provided at genesis.
 type GenesisState struct {
-	// TopupSequences map[uint256]bool `json:"topup_sequence" yaml:"topup_sequence"`
+	TopupSequences []*uint64 `json:"tx_sequences" yaml:"tx_sequences"`
 }
 
 // NewGenesisState creates a new genesis state.
-func NewGenesisState() GenesisState {
+func NewGenesisState(topupSequence []*uint64) GenesisState {
 	return GenesisState{
-		// TopupSequence: topupSequence,
+		TopupSequences: topupSequence,
 	}
 }
 
 // DefaultGenesisState returns a default genesis state
-func DefaultGenesisState() GenesisState { return NewGenesisState() }
+func DefaultGenesisState() GenesisState {
+	return NewGenesisState(nil)
+}
 
-// ValidateGenesis performs basic validation of bank genesis data returning an
+// ValidateGenesis performs basic validation of topup genesis data returning an
 // error for any failed validation criteria.
 func ValidateGenesis(data GenesisState) error { return nil }
