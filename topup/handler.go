@@ -75,13 +75,13 @@ func handleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCalle
 	}
 
 	// increase coins in account
-	if _, ec := k.bk.AddCoins(ctx, signer, topupAmount); ec != nil {
-		return ec.Result()
+	if _, err := k.bk.AddCoins(ctx, signer, topupAmount); err != nil {
+		return err.Result()
 	}
 
 	// transfer fees to sender (proposer)
-	if ec := k.bk.SendCoins(ctx, signer, msg.FromAddress, auth.DefaultFeeWantedPerTx); ec != nil {
-		return ec.Result()
+	if err := k.bk.SendCoins(ctx, signer, msg.FromAddress, auth.DefaultFeeWantedPerTx); err != nil {
+		return err.Result()
 	}
 
 	// save topup
