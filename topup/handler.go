@@ -1,8 +1,6 @@
 package topup
 
 import (
-	"strconv"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/maticnetwork/heimdall/auth"
@@ -111,35 +109,36 @@ func handleMsgWithdrawFee(ctx sdk.Context, k Keeper, msg types.MsgWithdrawFee) s
 
 	validator, err := k.sk.GetValidatorInfo(ctx, msg.ValidatorAddress.Bytes())
 	if err != nil {
-		k.Logger(ctx).Info("Fee balance for ", "fromAddress", msg.ValidatorAddress, "validatorId", validator.ID, "balance", maticBalance.BigInt().String())
-		if maticBalance.IsZero() {
-			return types.ErrNoBalanceToWithdraw(k.Codespace()).Result()
-		}
-
-		// withdraw coins of validator
-		maticCoins := hmTypes.Coins{hmTypes.Coin{Denom: authTypes.FeeToken, Amount: maticBalance}}
-		if _, err := k.bk.SubtractCoins(ctx, msg.ValidatorAddress, maticCoins); err != nil {
-			k.Logger(ctx).Error("Error while setting Fee balance to zero ", "fromAddress", msg.ValidatorAddress, "validatorId", validator.ID, "err", err)
-			return err.Result()
-		}
-
-		// Add Fee to Dividend Account
-		feeAmount := maticBalance.BigInt()
-		k.vm.AddFeeToDividendAccount(ctx, validator.ID, feeAmount)
-
-		ctx.EventManager().EmitEvents(sdk.Events{
-			sdk.NewEvent(
-				types.EventTypeFeeWithdraw,
-				sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-				sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(uint64(validator.ID), 10)),
-				// sdk.NewAttribute(types.AttributeKeyValidatorSigner, msg.ValidatorAddress.String()),
-				sdk.NewAttribute(types.AttributeKeyFeeWithdrawAmount, feeAmount.String()),
-			),
-		})
-
-		return sdk.Result{
-			Events: ctx.EventManager().Events(),
-		}
+		return hmCommon.ErrInvalidMsg(k.Codespace(), "No validator found with signer %s", msg.ValidatorAddress.String()).Result()
 	}
-	return sdk.Result{}
+
+	k.Logger(ctx).Info("Fee balance for ", "fromAddress", msg.ValidatorAddress, "validatorId", validator.ID, "balance", maticBalance.BigInt().String())
+	if maticBalance.IsZero() {
+		return types.ErrNoBalanceToWithdraw(k.Codespace()).Result()
+	}
+
+	// withdraw coins of validator
+	maticCoins := hmTypes.Coins{hmTypes.Coin{Denom: authTypes.FeeToken, Amount: maticBalance}}
+	if _, err := k.bk.SubtractCoins(ctx, msg.ValidatorAddress, maticCoins); err != nil {
+		k.Logger(ctx).Error("Error while setting Fee balance to zero ", "fromAddress", msg.ValidatorAddress, "validatorId", validator.ID, "err", err)
+		return err.Result()
+	}
+
+	// Add Fee to Dividend Account
+	feeAmount := maticBalance.BigInt()
+	k.vm.AddFeeToDividendAccount(ctx, validator.ID, feeAmount)
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeFeeWithdraw,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(types.AttributeKeyValidatorID, validator.ID.String()),
+			sdk.NewAttribute(types.AttributeKeyValidatorSigner, msg.ValidatorAddress.String()),
+			sdk.NewAttribute(types.AttributeKeyFeeWithdrawAmount, feeAmount.String()),
+		),
+	})
+
+	return sdk.Result{
+		Events: ctx.EventManager().Events(),
+	}
 }
