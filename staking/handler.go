@@ -44,15 +44,8 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k Keepe
 		return hmCommon.ErrWaitForConfirmation(k.Codespace()).Result()
 	}
 
-	// TODO remove this block in next release and use msg.LogIndex -- start
-	logIndex, found := contractCaller.FindStakedEventLogIndex(receipt)
-	if !found {
-		return hmCommon.ErrInvalidMsg(k.Codespace(), "Unable to find validator join log from txHash").Result()
-	}
-	// -- END
-
 	// decode validator join event
-	eventLog, err := contractCaller.DecodeValidatorJoinEvent(receipt, logIndex)
+	eventLog, err := contractCaller.DecodeValidatorJoinEvent(helper.GetStakingInfoAddress(), receipt, msg.LogIndex)
 	if err != nil || eventLog == nil {
 		return hmCommon.ErrInvalidMsg(k.Codespace(), "Unable to fetch logs for txHash").Result()
 	}
@@ -138,7 +131,7 @@ func HandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keeper, c
 		return hmCommon.ErrWaitForConfirmation(k.Codespace()).Result()
 	}
 
-	eventLog, err := contractCaller.DecodeValidatorStakeUpdateEvent(receipt, msg.LogIndex)
+	eventLog, err := contractCaller.DecodeValidatorStakeUpdateEvent(helper.GetStakingInfoAddress(), receipt, msg.LogIndex)
 	if err != nil || eventLog == nil {
 		k.Logger(ctx).Error("Error fetching log from txhash")
 		return hmCommon.ErrInvalidMsg(k.Codespace(), "Unable to fetch logs for txHash").Result()
@@ -212,7 +205,7 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper,
 	newPubKey := msg.NewSignerPubKey
 	newSigner := newPubKey.Address()
 
-	eventLog, err := contractCaller.DecodeSignerUpdateEvent(receipt, msg.LogIndex)
+	eventLog, err := contractCaller.DecodeSignerUpdateEvent(helper.GetStakingInfoAddress(), receipt, msg.LogIndex)
 	if err != nil || eventLog == nil {
 		k.Logger(ctx).Error("Error fetching log from txhash")
 		return hmCommon.ErrInvalidMsg(k.Codespace(), "Unable to fetch signer update log for txHash").Result()
@@ -318,9 +311,24 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper,
 func HandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	k.Logger(ctx).Info("Handling validator exit", "ValidatorID", msg.ID)
 
-	if confirmed := contractCaller.IsTxConfirmed(msg.TxHash.EthHash()); !confirmed {
+	// get main tx receipt
+	receipt, err := contractCaller.GetConfirmedTxReceipt(msg.TxHash.EthHash())
+	if err != nil || receipt == nil {
 		return hmCommon.ErrWaitForConfirmation(k.Codespace()).Result()
 	}
+
+	// decode validator exit
+	eventLog, err := contractCaller.DecodeValidatorExitEvent(helper.GetStakingInfoAddress(), receipt, msg.LogIndex)
+	if err != nil || eventLog == nil {
+		k.Logger(ctx).Error("Error fetching log from txhash")
+		return hmCommon.ErrInvalidMsg(k.Codespace(), "Unable to fetch unstake log for txHash").Result()
+	}
+
+	if eventLog.ValidatorId.Uint64() != msg.ID.Uint64() {
+		k.Logger(ctx).Error("ID in message doesn't match with id in log", "msgId", msg.ID, "validatorIdFromTx", eventLog.ValidatorId)
+		return hmCommon.ErrInvalidMsg(k.Codespace(), "ID in message doesn't match with id in log. msgId %v validatorIdFromTx %v", msg.ID, eventLog.ValidatorId).Result()
+	}
+
 	validator, ok := k.GetValidatorFromValID(ctx, msg.ID)
 	if !ok {
 		k.Logger(ctx).Error("Fetching of validator from store failed", "validatorID", msg.ID)
@@ -334,16 +342,12 @@ func HandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k Keepe
 		return hmCommon.ErrValUnbonded(k.Codespace()).Result()
 	}
 
-	// get validator from mainchain
-	updatedVal, err := contractCaller.GetValidatorInfo(validator.ID)
-	if err != nil {
-		k.Logger(ctx).Error("Cannot fetch validator info while unstaking", "Error", err, "validatorID", validator.ID)
-		return hmCommon.ErrNoValidator(k.Codespace()).Result()
-	}
+	// set end epoch
+	validator.EndEpoch = eventLog.DeactivationEpoch.Uint64()
 
 	// Add deactivation time for validator
-	if err := k.AddDeactivationEpoch(ctx, validator, updatedVal); err != nil {
-		k.Logger(ctx).Error("Error while setting deactivation epoch to validator", "error", err, "validatorID", validator.ID)
+	if err := k.AddValidator(ctx, validator); err != nil {
+		k.Logger(ctx).Error("Error while setting deactivation epoch to validator", "error", err, "validatorID", validator.ID.String())
 		return hmCommon.ErrValidatorNotDeactivated(k.Codespace()).Result()
 	}
 
@@ -351,7 +355,7 @@ func HandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k Keepe
 		sdk.NewEvent(
 			types.EventTypeValidatorExit,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(validator.ID.Uint64(), 10)),
+			sdk.NewAttribute(types.AttributeKeyValidatorID, validator.ID.String()),
 		),
 	})
 

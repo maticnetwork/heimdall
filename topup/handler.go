@@ -43,7 +43,7 @@ func handleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCalle
 	}
 
 	// get event log for topup
-	eventLog, err := contractCaller.DecodeValidatorTopupFeesEvent(receipt, msg.LogIndex)
+	eventLog, err := contractCaller.DecodeValidatorTopupFeesEvent(helper.GetStakingInfoAddress(), receipt, msg.LogIndex)
 	if err != nil || eventLog == nil {
 		k.Logger(ctx).Error("Error fetching log from txhash")
 		return hmCommon.ErrInvalidMsg(k.Codespace(), "Unable to fetch logs for txHash").Result()
@@ -91,7 +91,7 @@ func handleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCalle
 		sdk.NewEvent(
 			types.EventTypeTopup,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(uint64(msg.ID), 10)),
+			sdk.NewAttribute(types.AttributeKeyValidatorID, msg.ID.String()),
 			sdk.NewAttribute(types.AttributeKeyValidatorSigner, signer.String()),
 			sdk.NewAttribute(types.AttributeKeyTopupAmount, eventLog.Fee.String()),
 		),

@@ -168,8 +168,20 @@ func GetSigs(unFilteredVotes []*tmTypes.CommitSig) (sigs []byte) {
 }
 
 // GetVoteBytes returns vote bytes
-func GetVoteBytes(votes []*tmTypes.CommitSig, chainID string) []byte {
-	vote := votes[0]
+func GetVoteBytes(unFilteredVotes []*tmTypes.CommitSig, chainID string) []byte {
+	var vote *tmTypes.CommitSig
+	for _, item := range unFilteredVotes {
+		if item != nil {
+			vote = item
+			break
+		}
+	}
+
+	// if vote not found, return empty bytes
+	if vote == nil {
+		return []byte{}
+	}
+
 	v := tmTypes.Vote(*vote)
 	// sign bytes for vote
 	return v.SignBytes(chainID)
