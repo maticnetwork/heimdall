@@ -37,10 +37,14 @@ func NewMsgTopup(
 }
 
 // Route Implements Msg.
-func (msg MsgTopup) Route() string { return RouterKey }
+func (msg MsgTopup) Route() string {
+	return RouterKey
+}
 
 // Type Implements Msg.
-func (msg MsgTopup) Type() string { return ModuleName }
+func (msg MsgTopup) Type() string {
+	return "deposit"
+}
 
 // ValidateBasic Implements Msg.
 func (msg MsgTopup) ValidateBasic() sdk.Error {
@@ -90,10 +94,14 @@ func NewMsgWithdrawFee(
 }
 
 // Route Implements Msg.
-func (msg MsgWithdrawFee) Route() string { return RouterKey }
+func (msg MsgWithdrawFee) Route() string {
+	return RouterKey
+}
 
 // Type Implements Msg.
-func (msg MsgWithdrawFee) Type() string { return ModuleName }
+func (msg MsgWithdrawFee) Type() string {
+	return "withdraw"
+}
 
 // ValidateBasic Implements Msg.
 func (msg MsgWithdrawFee) ValidateBasic() sdk.Error {
