@@ -8,6 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/maticnetwork/heimdall/bank"
+	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/topup/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/tendermint/tendermint/libs/log"
@@ -40,6 +41,8 @@ type Keeper struct {
 	paramSpace params.Subspace
 	// bank keeper
 	bk bank.Keeper
+	// staking keeper
+	sk staking.Keeper
 	// module manager
 	vm ModuleCommunicator
 }
@@ -51,6 +54,7 @@ func NewKeeper(
 	paramSpace params.Subspace,
 	codespace sdk.CodespaceType,
 	bankKeeper bank.Keeper,
+	stakingKeeper staking.Keeper,
 	vm ModuleCommunicator,
 ) Keeper {
 	return Keeper{
@@ -59,6 +63,7 @@ func NewKeeper(
 		paramSpace: paramSpace,
 		codespace:  codespace,
 		bk:         bankKeeper,
+		sk:         stakingKeeper,
 		vm:         vm,
 	}
 }

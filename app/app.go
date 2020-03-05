@@ -308,6 +308,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		app.subspaces[topupTypes.ModuleName],
 		topupTypes.DefaultCodespace,
 		app.BankKeeper,
+		app.StakingKeeper,
 		moduleCommunicator,
 	)
 

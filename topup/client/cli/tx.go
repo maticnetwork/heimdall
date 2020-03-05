@@ -84,7 +84,7 @@ func TopupTxCmd(cdc *codec.Codec) *cobra.Command {
 // WithdrawFeeTxCmd will create a fee withdraw tx
 func WithdrawFeeTxCmd(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "withdraw-fee",
+		Use:   "withdraw",
 		Short: "Fee token withdrawal for validators",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -95,24 +95,14 @@ func WithdrawFeeTxCmd(cdc *codec.Codec) *cobra.Command {
 				proposer = helper.GetFromAddress(cliCtx)
 			}
 
-			validatorID := viper.GetInt64(FlagValidatorID)
-			if validatorID == 0 {
-				return fmt.Errorf("Validator ID cannot be zero")
-			}
-
 			// get msg
 			msg := topupTypes.NewMsgWithdrawFee(
 				proposer,
-				uint64(validatorID),
 			)
-
 			// broadcast msg with cli
 			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
 		},
 	}
-
-	cmd.Flags().Int(FlagValidatorID, 0, "--validator-id=<validator ID here>")
-	cmd.MarkFlagRequired(FlagValidatorID)
 
 	return cmd
 }

@@ -67,8 +67,6 @@ func TopupHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 // WithdrawFeeReq defines the properties of a withdraw fee request's body.
 type WithdrawFeeReq struct {
 	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
-
-	ID uint64 `json:"id" yaml:"id"`
 }
 
 // WithdrawFeeHandlerFn - http request handler to withdraw fee coins from a address.
@@ -90,7 +88,6 @@ func WithdrawFeeHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		// get msg
 		msg := topupTypes.NewMsgWithdrawFee(
 			fromAddr,
-			req.ID,
 		)
 		restClient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
 	}
