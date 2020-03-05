@@ -1,6 +1,8 @@
 package topup
 
 import (
+	"math/big"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/maticnetwork/heimdall/auth"
@@ -103,29 +105,34 @@ func handleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCalle
 // Handle MsgWithdrawFee.
 func handleMsgWithdrawFee(ctx sdk.Context, k Keeper, msg types.MsgWithdrawFee) sdk.Result {
 
-	// check if fee is already withdrawn
-	coins := k.bk.GetCoins(ctx, msg.ValidatorAddress)
-	maticBalance := coins.AmountOf(authTypes.FeeToken)
+	amount := hmTypes.Int{I: msg.Amount}
 
 	validator, err := k.sk.GetValidatorInfo(ctx, msg.ValidatorAddress.Bytes())
 	if err != nil {
 		return hmCommon.ErrInvalidMsg(k.Codespace(), "No validator found with signer %s", msg.ValidatorAddress.String()).Result()
 	}
 
-	k.Logger(ctx).Info("Fee balance for ", "fromAddress", msg.ValidatorAddress, "validatorId", validator.ID, "balance", maticBalance.BigInt().String())
-	if maticBalance.IsZero() {
+	if msg.Amount.String() == big.NewInt(0).String() {
+		// fetch balance
+		// check if fee is already withdrawn
+		coins := k.bk.GetCoins(ctx, msg.ValidatorAddress)
+		amount = coins.AmountOf(authTypes.FeeToken)
+	}
+
+	k.Logger(ctx).Info("Fee amount for ", "fromAddress", msg.ValidatorAddress, "validatorId", validator.ID, "balance", amount.BigInt().String())
+	if amount.IsZero() {
 		return types.ErrNoBalanceToWithdraw(k.Codespace()).Result()
 	}
 
 	// withdraw coins of validator
-	maticCoins := hmTypes.Coins{hmTypes.Coin{Denom: authTypes.FeeToken, Amount: maticBalance}}
+	maticCoins := hmTypes.Coins{hmTypes.Coin{Denom: authTypes.FeeToken, Amount: amount}}
 	if _, err := k.bk.SubtractCoins(ctx, msg.ValidatorAddress, maticCoins); err != nil {
 		k.Logger(ctx).Error("Error while setting Fee balance to zero ", "fromAddress", msg.ValidatorAddress, "validatorId", validator.ID, "err", err)
 		return err.Result()
 	}
 
 	// Add Fee to Dividend Account
-	feeAmount := maticBalance.BigInt()
+	feeAmount := amount.BigInt()
 	k.vm.AddFeeToDividendAccount(ctx, validator.ID, feeAmount)
 
 	ctx.EventManager().EmitEvents(sdk.Events{

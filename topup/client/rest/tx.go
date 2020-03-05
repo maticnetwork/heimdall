@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"math/big"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -67,6 +68,7 @@ func TopupHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 // WithdrawFeeReq defines the properties of a withdraw fee request's body.
 type WithdrawFeeReq struct {
 	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
+	Amount  string       `json:"amount" yaml:"amount"`
 }
 
 // WithdrawFeeHandlerFn - http request handler to withdraw fee coins from a address.
@@ -74,20 +76,32 @@ func WithdrawFeeHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req WithdrawFeeReq
 		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "Bad request")
 			return
 		}
 
 		req.BaseReq = req.BaseReq.Sanitize()
 		if !req.BaseReq.ValidateBasic(w) {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "Request validation failed")
 			return
 		}
 
 		// get from address
 		fromAddr := types.HexToHeimdallAddress(req.BaseReq.From)
+		amountStr := "0"
+		if req.Amount != "" {
+			amountStr = req.Amount
+		}
+		amount, ok := big.NewInt(0).SetString(amountStr, 10)
+		if !ok {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "Bad amount")
+			return
+		}
 
 		// get msg
 		msg := topupTypes.NewMsgWithdrawFee(
 			fromAddr,
+			amount,
 		)
 		restClient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
 	}

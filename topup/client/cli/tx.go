@@ -1,7 +1,9 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
+	"math/big"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -95,14 +97,24 @@ func WithdrawFeeTxCmd(cdc *codec.Codec) *cobra.Command {
 				proposer = helper.GetFromAddress(cliCtx)
 			}
 
+			// withdraw amount
+			amountStr := viper.GetString(FlagAmount)
+
+			amount, ok := big.NewInt(0).SetString(amountStr, 10)
+			if !ok {
+				return errors.New("Invalid withdraw amount")
+			}
+
 			// get msg
 			msg := topupTypes.NewMsgWithdrawFee(
 				proposer,
+				amount,
 			)
 			// broadcast msg with cli
 			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
 		},
 	}
+	cmd.Flags().String(FlagAmount, "0", "--amount=<withdraw-amount>")
 
 	return cmd
 }
