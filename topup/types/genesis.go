@@ -1,5 +1,7 @@
 package types
 
+import "errors"
+
 // GenesisState is the bank state that must be provided at genesis.
 type GenesisState struct {
 	TopupSequences []*uint64 `json:"tx_sequences" yaml:"tx_sequences"`
@@ -19,4 +21,11 @@ func DefaultGenesisState() GenesisState {
 
 // ValidateGenesis performs basic validation of topup genesis data returning an
 // error for any failed validation criteria.
-func ValidateGenesis(data GenesisState) error { return nil }
+func ValidateGenesis(data GenesisState) error {
+	for _, sq := range data.TopupSequences {
+		if sq == nil {
+			return errors.New("Invalid Sequence")
+		}
+	}
+	return nil
+}
