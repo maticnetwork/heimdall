@@ -31,6 +31,8 @@ import (
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
 	"github.com/maticnetwork/heimdall/supply"
 	supplyTypes "github.com/maticnetwork/heimdall/supply/types"
+	"github.com/maticnetwork/heimdall/topup"
+	topupTypes "github.com/maticnetwork/heimdall/topup/types"
 	"github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/version"
 )
@@ -57,6 +59,7 @@ var (
 		checkpoint.AppModuleBasic{},
 		bor.AppModuleBasic{},
 		clerk.AppModuleBasic{},
+		topup.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -90,7 +93,7 @@ type HeimdallApp struct {
 	StakingKeeper    staking.Keeper
 	BorKeeper        bor.Keeper
 	ClerkKeeper      clerk.Keeper
-
+	TopupKeeper      topup.Keeper
 	// param keeper
 	ParamsKeeper params.Keeper
 
@@ -183,6 +186,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		borTypes.StoreKey,
 		clerkTypes.StoreKey,
 		params.StoreKey,
+		topupTypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(params.TStoreKey)
 
@@ -205,7 +209,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.subspaces[checkpointTypes.ModuleName] = app.ParamsKeeper.Subspace(checkpointTypes.DefaultParamspace)
 	app.subspaces[borTypes.ModuleName] = app.ParamsKeeper.Subspace(borTypes.DefaultParamspace)
 	app.subspaces[clerkTypes.ModuleName] = app.ParamsKeeper.Subspace(clerkTypes.DefaultParamspace)
-
+	app.subspaces[topupTypes.ModuleName] = app.ParamsKeeper.Subspace(topupTypes.DefaultParamspace)
 	//
 	// Contract caller
 	//
@@ -297,6 +301,16 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		common.DefaultCodespace,
 	)
 
+	// may be need signer
+	app.TopupKeeper = topup.NewKeeper(
+		app.cdc,
+		keys[topupTypes.StoreKey],
+		app.subspaces[topupTypes.ModuleName],
+		topupTypes.DefaultCodespace,
+		app.BankKeeper,
+		app.StakingKeeper,
+	)
+
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
 	app.mm = module.NewManager(
@@ -307,6 +321,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		checkpoint.NewAppModule(app.CheckpointKeeper, &app.caller),
 		bor.NewAppModule(app.BorKeeper, &app.caller),
 		clerk.NewAppModule(app.ClerkKeeper, &app.caller),
+		topup.NewAppModule(app.TopupKeeper, &app.caller),
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -319,6 +334,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		checkpointTypes.ModuleName,
 		borTypes.ModuleName,
 		clerkTypes.ModuleName,
+		topupTypes.ModuleName,
 	)
 
 	// register message routes and query routes
@@ -382,7 +398,7 @@ func MakeCodec() *codec.Codec {
 	stakingTypes.RegisterCodec(cdc)
 	borTypes.RegisterCodec(cdc)
 	clerkTypes.RegisterCodec(cdc)
-
+	topupTypes.RegisterCodec(cdc)
 	cdc.Seal()
 	return cdc
 }
@@ -397,7 +413,7 @@ func MakePulp() *authTypes.Pulp {
 	checkpointTypes.RegisterPulp(pulp)
 	borTypes.RegisterPulp(pulp)
 	clerkTypes.RegisterPulp(pulp)
-
+	topupTypes.RegisterPulp(pulp)
 	return pulp
 }
 
