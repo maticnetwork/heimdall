@@ -309,7 +309,6 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		topupTypes.DefaultCodespace,
 		app.BankKeeper,
 		app.StakingKeeper,
-		moduleCommunicator,
 	)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
