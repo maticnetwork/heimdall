@@ -2,9 +2,10 @@ package listener
 
 import (
 	"context"
+	"time"
 
+	"github.com/RichardKnop/machinery/v1/tasks"
 	"github.com/maticnetwork/bor/core/types"
-	"github.com/maticnetwork/heimdall/bridge/setu/queue"
 	"github.com/maticnetwork/heimdall/helper"
 )
 
@@ -20,7 +21,7 @@ func NewMaticChainListener() *MaticChainListener {
 
 // Start starts new block subscription
 func (ml *MaticChainListener) Start() error {
-	ml.Logger.Info("Starting matic chain listener")
+	ml.Logger.Info("Starting")
 
 	// create cancellable context
 	ctx, cancelSubscription := context.WithCancel(context.Background())
@@ -58,8 +59,27 @@ func (ml *MaticChainListener) ProcessHeader(newHeader *types.Header) {
 	if err != nil {
 		ml.Logger.Error("Error marshalling header block", "error", err)
 	}
+	ml.sendTask("sendCheckpointToHeimdall", headerBytes)
+}
 
-	if err := ml.queueConnector.PublishMsg(headerBytes, queue.CheckpointQueueRoute, ml.String(), "Headerblock"); err != nil {
-		ml.Logger.Error("Error publish headerblock to checkpoint queue", "error", err)
+func (ml *MaticChainListener) sendTask(taskName string, headerBytes []byte) {
+	// create machinery task
+	signature := &tasks.Signature{
+		Name: taskName,
+		Args: []tasks.Arg{
+			{
+				Type:  "string",
+				Value: string(headerBytes),
+			},
+		},
+	}
+	signature.RetryCount = 3
+	// Delay the task by 5 seconds
+	eta := time.Now().UTC().Add(time.Second * 5)
+	signature.ETA = &eta
+	// send task
+	_, err := ml.queueConnector.Server.SendTask(signature)
+	if err != nil {
+		ml.Logger.Error("Error sending task", "taskName", taskName)
 	}
 }

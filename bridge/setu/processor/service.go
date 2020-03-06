@@ -122,6 +122,7 @@ func (processorService *ProcessorService) OnStart() error {
 
 	// start processors
 	for _, processor := range processorService.processors {
+		processor.RegisterTasks()
 		go processor.Start()
 	}
 

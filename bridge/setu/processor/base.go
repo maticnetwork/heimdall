@@ -20,6 +20,8 @@ import (
 type Processor interface {
 	Start() error
 
+	RegisterTasks()
+
 	String() string
 
 	Stop()

@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/RichardKnop/machinery/v1/tasks"
 	"github.com/maticnetwork/bor/core/types"
-	"github.com/maticnetwork/heimdall/bridge/setu/queue"
 	"github.com/maticnetwork/heimdall/helper"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -33,7 +33,7 @@ func NewHeimdallListener() *HeimdallListener {
 
 // Start starts new block subscription
 func (hl *HeimdallListener) Start() error {
-	hl.Logger.Info("Starting heimdall listener")
+	hl.Logger.Info("Starting")
 
 	// create cancellable context
 	_, cancelSubscription := context.WithCancel(context.Background())
@@ -70,7 +70,6 @@ func (hl *HeimdallListener) StartPolling(ctx context.Context, pollInterval time.
 
 	var eventTypes []string
 	eventTypes = append(eventTypes, "message.action='checkpoint'")
-	eventTypes = append(eventTypes, "message.action='checkpoint-ack'")
 	eventTypes = append(eventTypes, "message.action='event-record'")
 
 	// start listening
@@ -98,7 +97,7 @@ func (hl *HeimdallListener) StartPolling(ctx context.Context, pollInterval time.
 						for _, tx := range searchResult.Txs {
 							for _, log := range tx.Logs {
 								event := helper.FilterEvents(log.Events, func(et sdk.StringEvent) bool {
-									return et.Type == checkpointTypes.EventTypeCheckpoint || et.Type == checkpointTypes.EventTypeCheckpointAck || et.Type == clerkTypes.EventTypeRecord
+									return et.Type == checkpointTypes.EventTypeCheckpoint || et.Type == clerkTypes.EventTypeRecord
 								})
 								if event != nil {
 									hl.ProcessEvent(*event)
@@ -118,6 +117,7 @@ func (hl *HeimdallListener) StartPolling(ctx context.Context, pollInterval time.
 			}
 
 		case <-ctx.Done():
+			hl.Logger.Info("Polling stopped")
 			ticker.Stop()
 			return
 		}
@@ -160,19 +160,33 @@ func (hl *HeimdallListener) ProcessEvent(event sdk.StringEvent) {
 	}
 
 	switch event.Type {
-
 	case clerkTypes.EventTypeRecord:
-		if err := hl.queueConnector.PublishMsg(eventBytes, queue.ClerkQueueRoute, hl.String(), event.Type); err != nil {
-			hl.Logger.Error("Error publishing msg to clerk queue", "eventType", event.Type)
-		}
-
-	case checkpointTypes.EventTypeCheckpoint, checkpointTypes.EventTypeCheckpointAck:
-		if err := hl.queueConnector.PublishMsg(eventBytes, queue.CheckpointQueueRoute, hl.String(), event.Type); err != nil {
-			hl.Logger.Error("Error publishing msg to checkpoint queue", "eventType", event.Type)
-		}
-
+		hl.sendTask("sendDepositRecordToMatic", eventBytes)
+	case checkpointTypes.EventTypeCheckpoint:
+		hl.sendTask("sendCheckpointToRootchain", eventBytes)
 	default:
 		hl.Logger.Info("EventType mismatch", "eventType", event.Type)
+	}
+}
 
+func (hl *HeimdallListener) sendTask(taskName string, eventBytes []byte) {
+	// create machinery task
+	signature := &tasks.Signature{
+		Name: taskName,
+		Args: []tasks.Arg{
+			{
+				Type:  "string",
+				Value: string(eventBytes),
+			},
+		},
+	}
+	signature.RetryCount = 3
+	// Delay the task by 5 seconds
+	eta := time.Now().UTC().Add(time.Second * 5)
+	signature.ETA = &eta
+	// send task
+	_, err := hl.queueConnector.Server.SendTask(signature)
+	if err != nil {
+		hl.Logger.Error("Error sending task", "taskName", taskName)
 	}
 }

@@ -26,7 +26,7 @@ type SpanProcessor struct {
 
 // Start starts new block subscription
 func (sp *SpanProcessor) Start() error {
-	sp.Logger.Info("Starting span processor")
+	sp.Logger.Info("Starting")
 
 	// create cancellable context
 	spanCtx, cancelSpanService := context.WithCancel(context.Background())
@@ -37,6 +37,11 @@ func (sp *SpanProcessor) Start() error {
 	sp.Logger.Info("Start polling for span", "pollInterval", helper.GetConfig().SpanPollingInterval)
 	go sp.startPolling(spanCtx, helper.GetConfig().SpanPollingInterval)
 	return nil
+}
+
+// RegisterTasks - nil
+func (sp *SpanProcessor) RegisterTasks() {
+
 }
 
 // startPolling - polls heimdall and checks if new span needs to be proposed
@@ -50,6 +55,7 @@ func (sp *SpanProcessor) startPolling(ctx context.Context, interval time.Duratio
 		case <-ticker.C:
 			sp.checkAndPropose()
 		case <-ctx.Done():
+			sp.Logger.Info("Polling stopped")
 			ticker.Stop()
 			return
 		}
@@ -100,7 +106,6 @@ func (sp *SpanProcessor) propose(lastSpan *types.Span, nextSpanMsg *types.Span) 
 			sp.Logger.Error("Error while broadcasting span to heimdall", "spanId", nextSpanMsg.ID, "startBlock", nextSpanMsg.StartBlock, "endBlock", nextSpanMsg.EndBlock, "error", err)
 			return
 		}
-
 	}
 }
 

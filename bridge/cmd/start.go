@@ -42,7 +42,7 @@ func GetStartCmd() *cobra.Command {
 			app.MakePulp()
 			// queue connector & http client
 			_queueConnector := queue.NewQueueConnector(helper.GetConfig().AmqpURL)
-			_queueConnector.InitializeQueues()
+			_queueConnector.StartWorker()
 
 			_txBroadcaster := broadcaster.NewTxBroadcaster(cdc)
 			_httpClient := httpClient.NewHTTP(helper.GetConfig().TendermintRPCUrl, "/websocket")
@@ -64,12 +64,18 @@ func GetStartCmd() *cobra.Command {
 				// sig is a ^C, handle it
 				for range catchSignal {
 					// stop processes
+					logger.Info("Received stop signal - Stopping all services")
+
 					for _, service := range services {
+						logger.Info("Stopping all services")
 						service.Stop()
 					}
 
 					// stop http client
 					_httpClient.Stop()
+
+					// stop db instance
+					util.CloseBridgeDBInstance()
 
 					// exit
 					os.Exit(1)

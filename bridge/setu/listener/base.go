@@ -148,6 +148,7 @@ func (bl *BaseListener) StartHeaderProcess(ctx context.Context) {
 		case newHeader := <-bl.HeaderChannel:
 			bl.impl.ProcessHeader(newHeader)
 		case <-ctx.Done():
+			bl.Logger.Info("Header process stopped")
 			return
 		}
 	}
@@ -172,6 +173,7 @@ func (bl *BaseListener) StartPolling(ctx context.Context, pollInterval time.Dura
 				bl.HeaderChannel <- header
 			}
 		case <-ctx.Done():
+			bl.Logger.Info("Polling stopped")
 			ticker.Stop()
 			return
 		}
@@ -190,6 +192,7 @@ func (bl *BaseListener) StartSubscription(ctx context.Context, subscription ethe
 			bl.cancelSubscription()
 			return
 		case <-ctx.Done():
+			bl.Logger.Info("Subscription stopped")
 			return
 		}
 	}

@@ -5,12 +5,13 @@ import (
 	"encoding/json"
 	"math/big"
 	"strconv"
+	"time"
 
+	"github.com/RichardKnop/machinery/v1/tasks"
 	ethereum "github.com/maticnetwork/bor"
 	"github.com/maticnetwork/bor/accounts/abi"
 	ethCommon "github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/bor/core/types"
-	"github.com/maticnetwork/heimdall/bridge/setu/queue"
 	"github.com/maticnetwork/heimdall/helper"
 )
 
@@ -44,7 +45,7 @@ func NewRootChainListener() *RootChainListener {
 
 // Start starts new block subscription
 func (rl *RootChainListener) Start() error {
-	rl.Logger.Info("Starting rootchain listener")
+	rl.Logger.Info("Starting")
 
 	// create cancellable context
 	ctx, cancelSubscription := context.WithCancel(context.Background())
@@ -138,35 +139,51 @@ func (rl *RootChainListener) queryAndBroadcastEvents(fromBlock *big.Int, toBlock
 		topic := vLog.Topics[0].Bytes()
 		for _, abiObject := range rl.abis {
 			selectedEvent := helper.EventByID(abiObject, topic)
+			logBytes, _ := json.Marshal(vLog)
 			if selectedEvent != nil {
 				rl.Logger.Debug("ReceivedEvent", "eventname", selectedEvent.Name)
 				switch selectedEvent.Name {
-
 				case "NewHeaderBlock":
-					logBytes, _ := json.Marshal(vLog)
-					if err := rl.queueConnector.PublishMsg(logBytes, queue.CheckpointQueueRoute, rl.String(), selectedEvent.Name); err != nil {
-						rl.Logger.Error("Error publishing msg to checkpoint queue", "error", err)
-					}
-
-				case "StakeUpdate", "SignerChange", "UnstakeInit", "ReStaked":
-					logBytes, _ := json.Marshal(vLog)
-					if err := rl.queueConnector.PublishMsg(logBytes, queue.StakingQueueRoute, rl.String(), selectedEvent.Name); err != nil {
-						rl.Logger.Error("Error publishing msg to staking queue", "error", err)
-					}
-
+					rl.sendTask("sendCheckpointAckToHeimdall", selectedEvent.Name, logBytes)
+				case "StakeUpdate":
+					rl.sendTask("sendStakeUpdateToHeimdall", selectedEvent.Name, logBytes)
+				case "SignerChange":
+					rl.sendTask("sendSignerChangeToHeimdall", selectedEvent.Name, logBytes)
+				case "UnstakeInit":
+					rl.sendTask("sendUnstakeInitToHeimdall", selectedEvent.Name, logBytes)
+				case "ReStaked":
+					rl.sendTask("sendReStakedToHeimdall", selectedEvent.Name, logBytes)
 				case "StateSynced":
-					logBytes, _ := json.Marshal(vLog)
-					if err := rl.queueConnector.PublishMsg(logBytes, queue.ClerkQueueRoute, rl.String(), selectedEvent.Name); err != nil {
-						rl.Logger.Error("Error publishing msg to clerk queue", "error", err)
-					}
-
+					rl.sendTask("sendStateSyncedToHeimdall", selectedEvent.Name, logBytes)
 				case "TopUpFee":
-					logBytes, _ := json.Marshal(vLog)
-					if err := rl.queueConnector.PublishMsg(logBytes, queue.FeeQueueRoute, rl.String(), selectedEvent.Name); err != nil {
-						rl.Logger.Error("Error publishing msg to topup queue", "error", err)
-					}
+					rl.sendTask("sendTopUpFeeToHeimdall", selectedEvent.Name, logBytes)
 				}
 			}
 		}
+	}
+}
+
+func (rl *RootChainListener) sendTask(taskName string, eventName string, logBytes []byte) {
+	signature := &tasks.Signature{
+		Name: taskName,
+		Args: []tasks.Arg{
+			{
+				Type:  "string",
+				Value: eventName,
+			},
+			{
+				Type:  "string",
+				Value: string(logBytes),
+			},
+		},
+	}
+	signature.RetryCount = 3
+	// Delay the task by 5 seconds
+	eta := time.Now().UTC().Add(time.Second * 5)
+	signature.ETA = &eta
+
+	_, err := rl.queueConnector.Server.SendTask(signature)
+	if err != nil {
+		rl.Logger.Error("Error sending checkpoint task")
 	}
 }

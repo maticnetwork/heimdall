@@ -9,12 +9,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethereum "github.com/maticnetwork/bor"
 	"github.com/maticnetwork/bor/core/types"
-	"github.com/maticnetwork/heimdall/bridge/setu/queue"
 	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
 	"github.com/maticnetwork/heimdall/contracts/statesender"
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
-	"github.com/streadway/amqp"
 )
 
 // ClerkProcessor - sync state/deposit events
@@ -24,61 +22,64 @@ type ClerkProcessor struct {
 
 // Start starts new block subscription
 func (cp *ClerkProcessor) Start() error {
-	cp.Logger.Info("Starting clerk processor")
-
-	amqpMsgs, err := cp.queueConnector.ConsumeMsg(queue.ClerkQueueName)
-	if err != nil {
-		cp.Logger.Info("Error consuming statesync msg", "error", err)
-		panic(err)
-	}
-	// handle all amqp messages
-	for amqpMsg := range amqpMsgs {
-		cp.Logger.Debug("Received Message", "msgBody", string(amqpMsg.Body), "AppID", amqpMsg.AppId)
-		go cp.ProcessMsg(amqpMsg)
-	}
+	cp.Logger.Info("Starting")
 	return nil
 }
 
-// ProcessMsg - identify clerk msg type and delegate to msg/event handlers
-func (cp *ClerkProcessor) ProcessMsg(amqpMsg amqp.Delivery) {
-	switch amqpMsg.AppId {
-	case "rootchain":
-		var vLog = types.Log{}
-		if err := json.Unmarshal(amqpMsg.Body, &vLog); err != nil {
-			cp.Logger.Error("Error while unmarshalling event from rootchain", "error", err)
-			amqpMsg.Reject(false)
-			return
-		}
-		if err := cp.HandleStateSyncEvent(amqpMsg.Type, &vLog); err != nil {
-			cp.Logger.Error("Error while processing Statesync event from rootchain", "error", err)
-			amqpMsg.Reject(true)
-			return
-		}
-	case "heimdall":
-		var event = sdk.StringEvent{}
-		if err := json.Unmarshal(amqpMsg.Body, &event); err != nil {
-			cp.Logger.Error("Error unmarshalling event from heimdall", "error", err)
-			amqpMsg.Reject(false)
-			return
-		}
-		if err := cp.HandleRecordConfirmation(event); err != nil {
-			cp.Logger.Error("Error while processing record event from heimdall", "error", err)
-			amqpMsg.Reject(true)
-			return
-		}
-	default:
-		cp.Logger.Info("AppID mismatch", "appId", amqpMsg.AppId)
-	}
-	// send ack
-	amqpMsg.Ack(false)
+// RegisterTasks - Registers clerk related tasks with machinery
+func (cp *ClerkProcessor) RegisterTasks() {
+	cp.Logger.Info("Registering clerk tasks")
+	cp.queueConnector.Server.RegisterTask("sendStateSyncedToHeimdall", cp.sendStateSyncedToHeimdall)
+	cp.queueConnector.Server.RegisterTask("sendDepositRecordToMatic", cp.sendDepositRecordToMatic)
+
 }
+
+// // ProcessMsg - identify clerk msg type and delegate to msg/event handlers
+// func (cp *ClerkProcessor) ProcessMsg(amqpMsg amqp.Delivery) {
+// 	switch amqpMsg.AppId {
+// 	case "rootchain":
+// 		var vLog = types.Log{}
+// 		if err := json.Unmarshal(amqpMsg.Body, &vLog); err != nil {
+// 			cp.Logger.Error("Error while unmarshalling event from rootchain", "error", err)
+// 			amqpMsg.Reject(false)
+// 			return
+// 		}
+// 		if err := cp.HandleStateSyncEvent(amqpMsg.Type, &vLog); err != nil {
+// 			cp.Logger.Error("Error while processing Statesync event from rootchain", "error", err)
+// 			amqpMsg.Reject(true)
+// 			return
+// 		}
+// 	case "heimdall":
+// 		var event = sdk.StringEvent{}
+// 		if err := json.Unmarshal(amqpMsg.Body, &event); err != nil {
+// 			cp.Logger.Error("Error unmarshalling event from heimdall", "error", err)
+// 			amqpMsg.Reject(false)
+// 			return
+// 		}
+// 		if err := cp.HandleRecordConfirmation(event); err != nil {
+// 			cp.Logger.Error("Error while processing record event from heimdall", "error", err)
+// 			amqpMsg.Reject(true)
+// 			return
+// 		}
+// 	default:
+// 		cp.Logger.Info("AppID mismatch", "appId", amqpMsg.AppId)
+// 	}
+// 	// send ack
+// 	amqpMsg.Ack(false)
+// }
 
 // HandleStateSyncEvent - handle state sync event from rootchain
 // 1. check if this deposit event has to be broadcasted to heimdall
 // 2. create and broadcast  record transaction to heimdall
-func (cp *ClerkProcessor) HandleStateSyncEvent(eventName string, vLog *types.Log) error {
+func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes string) error {
+	var vLog = types.Log{}
+	if err := json.Unmarshal([]byte(logBytes), &vLog); err != nil {
+		cp.Logger.Error("Error while unmarshalling event from rootchain", "error", err)
+		return err
+	}
+
 	event := new(statesender.StatesenderStateSynced)
-	if err := helper.UnpackLog(cp.rootchainAbi, event, eventName, vLog); err != nil {
+	if err := helper.UnpackLog(cp.rootchainAbi, event, eventName, &vLog); err != nil {
 		cp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
 	} else {
 		cp.Logger.Debug(
@@ -108,7 +109,13 @@ func (cp *ClerkProcessor) HandleStateSyncEvent(eventName string, vLog *types.Log
 // HandleRecordConfirmation - handles clerk record confirmation event from heimdall.
 // 1. check if this record has to be broadcasted to maticchain
 // 2. create and broadcast  record transaction to maticchain
-func (cp *ClerkProcessor) HandleRecordConfirmation(event sdk.StringEvent) (err error) {
+func (cp *ClerkProcessor) sendDepositRecordToMatic(eventBytes string) (err error) {
+	var event = sdk.StringEvent{}
+	if err := json.Unmarshal([]byte(eventBytes), &event); err != nil {
+		cp.Logger.Error("Error unmarshalling event from heimdall", "error", err)
+		return err
+	}
+
 	cp.Logger.Info("Processing record confirmation event", "eventType", event.Type)
 	var recordID uint64
 	for _, attr := range event.Attributes {
