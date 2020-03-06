@@ -9,7 +9,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	bankTypes "github.com/maticnetwork/heimdall/bank/types"
@@ -31,8 +30,6 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 	txCmd.AddCommand(
 		client.PostCommands(
 			SendTxCmd(cdc),
-			TopupTxCmd(cdc),
-			WithdrawFeeTxCmd(cdc),
 		)...,
 	)
 	return txCmd
@@ -84,88 +81,6 @@ func SendTxCmd(cdc *codec.Codec) *cobra.Command {
 			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
 		},
 	}
-
-	return cmd
-}
-
-// TopupTxCmd will create a topup tx
-func TopupTxCmd(cdc *codec.Codec) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "topup",
-		Short: "Topup tokens for validators",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			// get proposer
-			proposer := types.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
-			if proposer.Empty() {
-				proposer = helper.GetFromAddress(cliCtx)
-			}
-
-			validatorID := viper.GetInt64(FlagValidatorID)
-			if validatorID == 0 {
-				return fmt.Errorf("Validator ID cannot be zero")
-			}
-
-			txhash := viper.GetString(FlagTxHash)
-			if txhash == "" {
-				return fmt.Errorf("transaction hash has to be supplied")
-			}
-
-			// build and sign the transaction, then broadcast to Tendermint
-			msg := bankTypes.NewMsgTopup(
-				proposer,
-				uint64(validatorID),
-				types.HexToHeimdallHash(txhash),
-				uint64(viper.GetInt64(FlagLogIndex)),
-			)
-
-			// broadcast msg with cli
-			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
-		},
-	}
-
-	cmd.Flags().Int(FlagValidatorID, 0, "--validator-id=<validator ID here>")
-	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
-	cmd.Flags().String(FlagLogIndex, "", "--log-index=<log-index>")
-	cmd.MarkFlagRequired(FlagValidatorID)
-	cmd.MarkFlagRequired(FlagTxHash)
-	cmd.MarkFlagRequired(FlagLogIndex)
-	return cmd
-}
-
-// WithdrawFeeTxCmd will create a fee withdraw tx
-func WithdrawFeeTxCmd(cdc *codec.Codec) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "withdraw-fee",
-		Short: "Fee token withdrawal for validators",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			// get proposer
-			proposer := types.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
-			if proposer.Empty() {
-				proposer = helper.GetFromAddress(cliCtx)
-			}
-
-			validatorID := viper.GetInt64(FlagValidatorID)
-			if validatorID == 0 {
-				return fmt.Errorf("Validator ID cannot be zero")
-			}
-
-			// get msg
-			msg := bankTypes.NewMsgWithdrawFee(
-				proposer,
-				uint64(validatorID),
-			)
-
-			// broadcast msg with cli
-			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
-		},
-	}
-
-	cmd.Flags().Int(FlagValidatorID, 0, "--validator-id=<validator ID here>")
-	cmd.MarkFlagRequired(FlagValidatorID)
 
 	return cmd
 }

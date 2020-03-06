@@ -8,14 +8,14 @@ import (
 
 // RegisterCodec registers concrete types on codec codec
 func RegisterCodec(cdc *codec.Codec) {
-	cdc.RegisterConcrete(MsgSend{}, "bank/MsgSend", nil)
-	cdc.RegisterConcrete(MsgMultiSend{}, "bank/MsgMultiSend", nil)
+	cdc.RegisterConcrete(MsgTopup{}, "topup/MsgTopup", nil)
+	cdc.RegisterConcrete(MsgWithdrawFee{}, "topup/MsgWithdrawFee", nil)
 }
 
 // RegisterPulp register pulp
 func RegisterPulp(pulp *authTypes.Pulp) {
-	pulp.RegisterConcrete(MsgSend{})
-	pulp.RegisterConcrete(MsgMultiSend{})
+	pulp.RegisterConcrete(MsgTopup{})
+	pulp.RegisterConcrete(MsgWithdrawFee{})
 }
 
 // ModuleCdc module cdc

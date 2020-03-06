@@ -219,18 +219,6 @@ func (k *Keeper) IterateValidatorsAndApplyFn(ctx sdk.Context, f func(validator h
 	}
 }
 
-// AddDeactivationEpoch adds deactivation epoch
-func (k *Keeper) AddDeactivationEpoch(ctx sdk.Context, validator hmTypes.Validator, updatedVal hmTypes.Validator) error {
-	// check if validator has unstaked
-	if updatedVal.EndEpoch != 0 {
-		validator.EndEpoch = updatedVal.EndEpoch
-		// update validator in store
-		return k.AddValidator(ctx, validator)
-	}
-
-	return errors.New("Deactivation period not set")
-}
-
 // UpdateSigner updates validator with signer and pubkey + validator => signer map
 func (k *Keeper) UpdateSigner(ctx sdk.Context, newSigner hmTypes.HeimdallAddress, newPubkey hmTypes.PubKey, prevSigner hmTypes.HeimdallAddress) error {
 	// get old validator from state and make power 0
