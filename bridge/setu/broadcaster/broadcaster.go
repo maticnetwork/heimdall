@@ -12,7 +12,6 @@ import (
 	bor "github.com/maticnetwork/bor"
 	"github.com/maticnetwork/bor/core/types"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
-	"github.com/maticnetwork/heimdall/bridge/setu/queue"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -37,7 +36,7 @@ func NewTxBroadcaster(cdc *codec.Codec) *TxBroadcaster {
 	cliCtx.TrustNode = true
 
 	txBroadcaster := TxBroadcaster{
-		logger: util.Logger().With("module", queue.Broadcaster),
+		logger: util.Logger().With("module", "txBroadcaster"),
 		cliCtx: cliCtx,
 	}
 
