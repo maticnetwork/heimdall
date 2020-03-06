@@ -91,33 +91,28 @@ func GetCmdQueryProposals(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			fmt.Sprintf(`Query for a all proposals. You can filter the returns with the following flags.
 
 Example:
-$ %s query gov proposals --depositor cosmos1skjwj5whet0lpe65qaq4rpq03hjxlwd9nf39lk
-$ %s query gov proposals --voter cosmos1skjwj5whet0lpe65qaq4rpq03hjxlwd9nf39lk
+$ %s query gov proposals --depositor 2
+$ %s query gov proposals --voter 2
 $ %s query gov proposals --status (DepositPeriod|VotingPeriod|Passed|Rejected)
 `,
 				version.ClientName, version.ClientName, version.ClientName,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			bechDepositorAddr := viper.GetString(flagDepositor)
-			bechVoterAddr := viper.GetString(flagVoter)
+			depositorID := viper.GetUint64(flagDepositor)
+			voterID := viper.GetUint64(flagVoter)
 			strProposalStatus := viper.GetString(flagStatus)
 			numLimit := uint64(viper.GetInt64(flagNumLimit))
 
-			var depositorAddr hmTypes.HeimdallAddress
-			var voterAddr hmTypes.HeimdallAddress
 			var proposalStatus types.ProposalStatus
 
-			params := types.NewQueryProposalsParams(proposalStatus, numLimit, voterAddr, depositorAddr)
-
-			if len(bechDepositorAddr) != 0 {
-				depositorAddr := hmTypes.HexToHeimdallAddress(bechDepositorAddr)
-				params.Depositor = depositorAddr
-			}
-
-			if len(bechVoterAddr) != 0 {
-				voterAddr := hmTypes.HexToHeimdallAddress(bechVoterAddr)
-				params.Voter = voterAddr
+			params := types.NewQueryProposalsParams(proposalStatus, numLimit, hmTypes.NewValidatorID(voterID), hmTypes.NewValidatorID(depositorID))
+			if len(strProposalStatus) != 0 {
+				proposalStatus, err := types.ProposalStatusFromString(gcutils.NormalizeProposalStatus(strProposalStatus))
+				if err != nil {
+					return err
+				}
+				params.ProposalStatus = proposalStatus
 			}
 
 			if len(strProposalStatus) != 0 {
@@ -155,8 +150,8 @@ $ %s query gov proposals --status (DepositPeriod|VotingPeriod|Passed|Rejected)
 	}
 
 	cmd.Flags().String(flagNumLimit, "", "(optional) limit to latest [number] proposals. Defaults to all proposals")
-	cmd.Flags().String(flagDepositor, "", "(optional) filter by proposals deposited on by depositor")
-	cmd.Flags().String(flagVoter, "", "(optional) filter by proposals voted on by voted")
+	cmd.Flags().Uint64(flagDepositor, 0, "(optional) filter by proposals deposited on by depositor's validator id")
+	cmd.Flags().Uint64(flagVoter, 0, "(optional) filter by proposals voted on by voter's validator id")
 	cmd.Flags().String(flagStatus, "", "(optional) filter proposals by proposal status, status: deposit_period/voting_period/passed/rejected")
 
 	return cmd
@@ -165,15 +160,15 @@ $ %s query gov proposals --status (DepositPeriod|VotingPeriod|Passed|Rejected)
 // Command to Get a Proposal Information
 // GetCmdQueryVote implements the query proposal vote command.
 func GetCmdQueryVote(queryRoute string, cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
-		Use:   "vote [proposal-id] [voter-addr]",
+	cmd := &cobra.Command{
+		Use:   "vote [proposal-id] [voter-id]",
 		Args:  cobra.ExactArgs(2),
 		Short: "Query details of a single vote",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Query details for a single vote on a proposal given its identifier.
 
 Example:
-$ %s query gov vote 1 cosmos1skjwj5whet0lpe65qaq4rpq03hjxlwd9nf39lk
+$ %s query gov vote 1 3
 `,
 				version.ClientName,
 			),
@@ -187,14 +182,19 @@ $ %s query gov vote 1 cosmos1skjwj5whet0lpe65qaq4rpq03hjxlwd9nf39lk
 				return fmt.Errorf("proposal-id %s not a valid int, please input a valid proposal-id", args[0])
 			}
 
+			// validate that the voter id is a uint
+			voterID, err := strconv.ParseUint(args[1], 10, 64)
+			if err != nil {
+				return fmt.Errorf("voter-id %s not a valid int, please input a valid voter-id", args[1])
+			}
+
 			// check to see if the proposal is in the store
 			_, err = gcutils.QueryProposalByID(proposalID, cliCtx, queryRoute)
 			if err != nil {
 				return fmt.Errorf("failed to fetch proposal-id %d: %s", proposalID, err)
 			}
 
-			voterAddr := hmTypes.HexToHeimdallAddress(args[1])
-			params := types.NewQueryVoteParams(proposalID, voterAddr)
+			params := types.NewQueryVoteParams(proposalID, hmTypes.NewValidatorID(voterID))
 			bz, err := cdc.MarshalJSON(params)
 			if err != nil {
 				return err
@@ -226,6 +226,8 @@ $ %s query gov vote 1 cosmos1skjwj5whet0lpe65qaq4rpq03hjxlwd9nf39lk
 			return cliCtx.PrintOutput(vote)
 		},
 	}
+
+	return cmd
 }
 
 // GetCmdQueryVotes implements the command to query for proposal votes.
@@ -310,14 +312,19 @@ $ %s query gov deposit 1 cosmos1skjwj5whet0lpe65qaq4rpq03hjxlwd9nf39lk
 				return fmt.Errorf("proposal-id %s not a valid uint, please input a valid proposal-id", args[0])
 			}
 
+			// validate that the voter id is a uint
+			depositorID, err := strconv.ParseUint(args[1], 10, 64)
+			if err != nil {
+				return fmt.Errorf("depositor-id %s not a valid int, please input a valid depositor-id", args[1])
+			}
+
 			// check to see if the proposal is in the store
 			_, err = gcutils.QueryProposalByID(proposalID, cliCtx, queryRoute)
 			if err != nil {
 				return fmt.Errorf("Failed to fetch proposal-id %d: %s", proposalID, err)
 			}
 
-			depositorAddr := hmTypes.HexToHeimdallAddress(args[1])
-			params := types.NewQueryDepositParams(proposalID, depositorAddr)
+			params := types.NewQueryDepositParams(proposalID, hmTypes.NewValidatorID(depositorID))
 			bz, err := cdc.MarshalJSON(params)
 			if err != nil {
 				return err

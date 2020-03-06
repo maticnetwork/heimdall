@@ -4,12 +4,13 @@ import (
 	"testing"
 	"time"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
-	"github.com/tendermint/tendermint/crypto/ed25519"
+
+	hmTypes "github.com/maticnetwork/heimdall/types"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 )
 
-var addr = sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+var addr = hmTypes.BytesToHeimdallAddress(secp256k1.GenPrivKey().PubKey().Address())
 
 func TestProposalKeys(t *testing.T) {
 	// key proposal
@@ -47,7 +48,7 @@ func TestDepositKeys(t *testing.T) {
 	require.Equal(t, addr, depositorAddr)
 
 	// invalid key
-	addr2 := sdk.AccAddress("test1")
+	addr2 := hmTypes.SampleHeimdallAddress("test1")
 	key = DepositKey(5, addr2)
 	require.Panics(t, func() { SplitKeyDeposit(key) })
 }
@@ -64,7 +65,7 @@ func TestVoteKeys(t *testing.T) {
 	require.Equal(t, addr, voterAddr)
 
 	// invalid key
-	addr2 := sdk.AccAddress("test1")
+	addr2 := hmTypes.SampleHeimdallAddress("test1")
 	key = VoteKey(5, addr2)
 	require.Panics(t, func() { SplitKeyVote(key) })
 }

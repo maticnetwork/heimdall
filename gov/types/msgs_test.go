@@ -6,17 +6,18 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	authTypes "github.com/maticnetwork/heimdall/auth/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 var (
-	coinsPos         = sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 1000))
-	coinsZero        = sdk.NewCoins()
-	coinsPosNotAtoms = sdk.NewCoins(sdk.NewInt64Coin("foo", 10000))
-	coinsMulti       = sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 1000), sdk.NewInt64Coin("foo", 10000))
-	addrs            = []sdk.AccAddress{
-		sdk.AccAddress("test1"),
-		sdk.AccAddress("test2"),
+	coinsPos         = hmTypes.NewCoins(hmTypes.NewInt64Coin(authTypes.FeeToken, 1000))
+	coinsZero        = hmTypes.NewCoins()
+	coinsPosNotMatic = hmTypes.NewCoins(hmTypes.NewInt64Coin("foo", 10000))
+	coinsMulti       = hmTypes.NewCoins(hmTypes.NewInt64Coin(authTypes.FeeToken, 1000), hmTypes.NewInt64Coin("foo", 10000))
+	addrs            = []hmTypes.HeimdallAddress{
+		hmTypes.SampleHeimdallAddress("test1"),
+		hmTypes.SampleHeimdallAddress("test2"),
 	}
 )
 
@@ -29,15 +30,15 @@ func TestMsgSubmitProposal(t *testing.T) {
 	tests := []struct {
 		title, description string
 		proposalType       string
-		proposerAddr       sdk.AccAddress
-		initialDeposit     sdk.Coins
+		proposerAddr       hmTypes.HeimdallAddress
+		initialDeposit     hmTypes.Coins
 		expectPass         bool
 	}{
 		{"Test Proposal", "the purpose of this proposal is to test", ProposalTypeText, addrs[0], coinsPos, true},
 		{"", "the purpose of this proposal is to test", ProposalTypeText, addrs[0], coinsPos, false},
 		{"Test Proposal", "", ProposalTypeText, addrs[0], coinsPos, false},
 		{"Test Proposal", "the purpose of this proposal is to test", ProposalTypeSoftwareUpgrade, addrs[0], coinsPos, false},
-		{"Test Proposal", "the purpose of this proposal is to test", ProposalTypeText, sdk.AccAddress{}, coinsPos, false},
+		{"Test Proposal", "the purpose of this proposal is to test", ProposalTypeText, hmTypes.HeimdallAddress{}, coinsPos, false},
 		{"Test Proposal", "the purpose of this proposal is to test", ProposalTypeText, addrs[0], coinsZero, true},
 		{"Test Proposal", "the purpose of this proposal is to test", ProposalTypeText, addrs[0], coinsMulti, true},
 		{strings.Repeat("#", MaxTitleLength*2), "the purpose of this proposal is to test", ProposalTypeText, addrs[0], coinsMulti, false},
@@ -60,11 +61,11 @@ func TestMsgSubmitProposal(t *testing.T) {
 }
 
 func TestMsgDepositGetSignBytes(t *testing.T) {
-	addr := sdk.AccAddress("addr1")
+	addr := hmTypes.SampleHeimdallAddress("addr1")
 	msg := NewMsgDeposit(addr, 0, coinsPos)
 	res := msg.GetSignBytes()
 
-	expected := `{"type":"cosmos-sdk/MsgDeposit","value":{"amount":[{"amount":"1000","denom":"stake"}],"depositor":"cosmos1v9jxgu33kfsgr5","proposal_id":"0"}}`
+	expected := `{"type":"heimdall/MsgDeposit","value":{"amount":[{"amount":"1000","denom":"matic"}],"depositor":"0x0000000000000000000000000000006164647231","proposal_id":"0"}}`
 	require.Equal(t, expected, string(res))
 }
 
@@ -72,12 +73,12 @@ func TestMsgDepositGetSignBytes(t *testing.T) {
 func TestMsgDeposit(t *testing.T) {
 	tests := []struct {
 		proposalID    uint64
-		depositorAddr sdk.AccAddress
-		depositAmount sdk.Coins
+		depositorAddr hmTypes.HeimdallAddress
+		depositAmount hmTypes.Coins
 		expectPass    bool
 	}{
 		{0, addrs[0], coinsPos, true},
-		{1, sdk.AccAddress{}, coinsPos, false},
+		{1, hmTypes.HeimdallAddress{}, coinsPos, false},
 		{1, addrs[0], coinsZero, true},
 		{1, addrs[0], coinsMulti, true},
 	}
@@ -96,12 +97,12 @@ func TestMsgDeposit(t *testing.T) {
 func TestMsgVote(t *testing.T) {
 	tests := []struct {
 		proposalID uint64
-		voterAddr  sdk.AccAddress
+		voterAddr  hmTypes.HeimdallAddress
 		option     VoteOption
 		expectPass bool
 	}{
 		{0, addrs[0], OptionYes, true},
-		{0, sdk.AccAddress{}, OptionYes, false},
+		{0, hmTypes.HeimdallAddress{}, OptionYes, false},
 		{0, addrs[0], OptionNo, true},
 		{0, addrs[0], OptionNoWithVeto, true},
 		{0, addrs[0], OptionAbstain, true},

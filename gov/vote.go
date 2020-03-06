@@ -9,7 +9,7 @@ import (
 )
 
 // AddVote Adds a vote on a specific proposal
-func (keeper Keeper) AddVote(ctx sdk.Context, proposalID uint64, voterAddr hmTypes.HeimdallAddress, option types.VoteOption) sdk.Error {
+func (keeper Keeper) AddVote(ctx sdk.Context, proposalID uint64, voter hmTypes.HeimdallAddress, option types.VoteOption, validator hmTypes.ValidatorID) sdk.Error {
 	proposal, ok := keeper.GetProposal(ctx, proposalID)
 	if !ok {
 		return types.ErrUnknownProposal(keeper.codespace, proposalID)
@@ -22,8 +22,8 @@ func (keeper Keeper) AddVote(ctx sdk.Context, proposalID uint64, voterAddr hmTyp
 		return types.ErrInvalidVote(keeper.codespace, option)
 	}
 
-	vote := types.NewVote(proposalID, voterAddr, option)
-	keeper.setVote(ctx, proposalID, voterAddr, vote)
+	vote := types.NewVote(proposalID, validator, option)
+	keeper.setVote(ctx, proposalID, validator, vote)
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
@@ -55,9 +55,9 @@ func (keeper Keeper) GetVotes(ctx sdk.Context, proposalID uint64) (votes types.V
 }
 
 // GetVote gets the vote from an address on a specific proposal
-func (keeper Keeper) GetVote(ctx sdk.Context, proposalID uint64, voterAddr hmTypes.HeimdallAddress) (vote types.Vote, found bool) {
+func (keeper Keeper) GetVote(ctx sdk.Context, proposalID uint64, voter hmTypes.ValidatorID) (vote types.Vote, found bool) {
 	store := ctx.KVStore(keeper.storeKey)
-	bz := store.Get(types.VoteKey(proposalID, voterAddr))
+	bz := store.Get(types.VoteKey(proposalID, voter))
 	if bz == nil {
 		return vote, false
 	}
@@ -66,10 +66,10 @@ func (keeper Keeper) GetVote(ctx sdk.Context, proposalID uint64, voterAddr hmTyp
 	return vote, true
 }
 
-func (keeper Keeper) setVote(ctx sdk.Context, proposalID uint64, voterAddr hmTypes.HeimdallAddress, vote types.Vote) {
+func (keeper Keeper) setVote(ctx sdk.Context, proposalID uint64, voter hmTypes.ValidatorID, vote types.Vote) {
 	store := ctx.KVStore(keeper.storeKey)
 	bz := keeper.cdc.MustMarshalBinaryLengthPrefixed(vote)
-	store.Set(types.VoteKey(proposalID, voterAddr), bz)
+	store.Set(types.VoteKey(proposalID, voter), bz)
 }
 
 // GetVotesIterator gets all the votes on a specific proposal as an sdk.Iterator
@@ -78,7 +78,7 @@ func (keeper Keeper) GetVotesIterator(ctx sdk.Context, proposalID uint64) sdk.It
 	return sdk.KVStorePrefixIterator(store, types.VotesKey(proposalID))
 }
 
-func (keeper Keeper) deleteVote(ctx sdk.Context, proposalID uint64, voterAddr hmTypes.HeimdallAddress) {
+func (keeper Keeper) deleteVote(ctx sdk.Context, proposalID uint64, voter hmTypes.ValidatorID) {
 	store := ctx.KVStore(keeper.storeKey)
-	store.Delete(types.VoteKey(proposalID, voterAddr))
+	store.Delete(types.VoteKey(proposalID, voter))
 }

@@ -92,7 +92,7 @@ func (keeper Keeper) GetProposals(ctx sdk.Context) (proposals types.Proposals) {
 // depositorAddr will filter proposals by whether or not that address has deposited to them
 // status will filter proposals by status
 // numLatest will fetch a specified number of the most recent proposals, or 0 for all proposals
-func (keeper Keeper) GetProposalsFiltered(ctx sdk.Context, voterAddr hmTypes.HeimdallAddress, depositorAddr hmTypes.HeimdallAddress, status types.ProposalStatus, numLatest uint64) []types.Proposal {
+func (keeper Keeper) GetProposalsFiltered(ctx sdk.Context, voterID hmTypes.ValidatorID, depositorID hmTypes.ValidatorID, status types.ProposalStatus, numLatest uint64) []types.Proposal {
 
 	maxProposalID, err := keeper.GetProposalID(ctx)
 	if err != nil {
@@ -106,15 +106,15 @@ func (keeper Keeper) GetProposalsFiltered(ctx sdk.Context, voterAddr hmTypes.Hei
 	}
 
 	for proposalID := maxProposalID - numLatest; proposalID < maxProposalID; proposalID++ {
-		if !voterAddr.Empty() && len(voterAddr) != 0 {
-			_, found := keeper.GetVote(ctx, proposalID, voterAddr)
+		if voterID.Uint64() != 0 {
+			_, found := keeper.GetVote(ctx, proposalID, voterID)
 			if !found {
 				continue
 			}
 		}
 
-		if !depositorAddr.Empty() && len(depositorAddr) != 0 {
-			_, found := keeper.GetDeposit(ctx, proposalID, depositorAddr)
+		if depositorID != 0 {
+			_, found := keeper.GetDeposit(ctx, proposalID, depositorID)
 			if !found {
 				continue
 			}

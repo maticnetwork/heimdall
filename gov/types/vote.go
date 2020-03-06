@@ -7,20 +7,20 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
-// Vote
+// Vote represents vote from validator
 type Vote struct {
-	ProposalID uint64                  `json:"proposal_id" yaml:"proposal_id"` //  proposalID of the proposal
-	Voter      hmTypes.HeimdallAddress `json:"voter" yaml:"voter"`             //  address of the voter
-	Option     VoteOption              `json:"option" yaml:"option"`           //  option from OptionSet chosen by the voter
+	ProposalID uint64              `json:"proposal_id" yaml:"proposal_id"` //  proposalID of the proposal
+	Voter      hmTypes.ValidatorID `json:"voter" yaml:"voter"`             //  id of the voter
+	Option     VoteOption          `json:"option" yaml:"option"`           //  option from OptionSet chosen by the voter
 }
 
 // NewVote creates a new Vote instance
-func NewVote(proposalID uint64, voter hmTypes.HeimdallAddress, option VoteOption) Vote {
+func NewVote(proposalID uint64, voter hmTypes.ValidatorID, option VoteOption) Vote {
 	return Vote{proposalID, voter, option}
 }
 
 func (v Vote) String() string {
-	return fmt.Sprintf("voter %s voted with option %s on proposal %d", v.Voter, v.Option, v.ProposalID)
+	return fmt.Sprintf("voter %s voted with option %s on proposal %d", v.Voter.String(), v.Option, v.ProposalID)
 }
 
 // Votes is a collection of Vote objects
@@ -32,14 +32,14 @@ func (v Votes) String() string {
 	}
 	out := fmt.Sprintf("Votes for Proposal %d:", v[0].ProposalID)
 	for _, vot := range v {
-		out += fmt.Sprintf("\n  %s: %s", vot.Voter, vot.Option)
+		out += fmt.Sprintf("\n  %s: %s", vot.Voter.String(), vot.Option)
 	}
 	return out
 }
 
 // Equals returns whether two votes are equal.
 func (v Vote) Equals(comp Vote) bool {
-	return v.Voter.Equals(comp.Voter) &&
+	return v.Voter == comp.Voter &&
 		v.ProposalID == comp.ProposalID &&
 		v.Option == comp.Option
 }
@@ -104,7 +104,7 @@ func (vo *VoteOption) Unmarshal(data []byte) error {
 	return nil
 }
 
-// Marshals to JSON using string.
+// MarshalJSON marshals to JSON using string.
 func (vo VoteOption) MarshalJSON() ([]byte, error) {
 	return json.Marshal(vo.String())
 }

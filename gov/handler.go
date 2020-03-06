@@ -36,7 +36,7 @@ func handleMsgSubmitProposal(ctx sdk.Context, keeper Keeper, msg types.MsgSubmit
 		return err.Result()
 	}
 
-	err, votingStarted := keeper.AddDeposit(ctx, proposal.ProposalID, msg.Proposer, msg.InitialDeposit)
+	err, votingStarted := keeper.AddDeposit(ctx, proposal.ProposalID, msg.Proposer, msg.InitialDeposit, msg.Validator)
 	if err != nil {
 		return err.Result()
 	}
@@ -65,7 +65,7 @@ func handleMsgSubmitProposal(ctx sdk.Context, keeper Keeper, msg types.MsgSubmit
 }
 
 func handleMsgDeposit(ctx sdk.Context, keeper Keeper, msg types.MsgDeposit) sdk.Result {
-	err, votingStarted := keeper.AddDeposit(ctx, msg.ProposalID, msg.Depositor, msg.Amount)
+	err, votingStarted := keeper.AddDeposit(ctx, msg.ProposalID, msg.Depositor, msg.Amount, msg.Validator)
 	if err != nil {
 		return err.Result()
 	}
@@ -91,7 +91,7 @@ func handleMsgDeposit(ctx sdk.Context, keeper Keeper, msg types.MsgDeposit) sdk.
 }
 
 func handleMsgVote(ctx sdk.Context, keeper Keeper, msg types.MsgVote) sdk.Result {
-	err := keeper.AddVote(ctx, msg.ProposalID, msg.Voter, msg.Option)
+	err := keeper.AddVote(ctx, msg.ProposalID, msg.Voter, msg.Option, msg.Validator)
 	if err != nil {
 		return err.Result()
 	}

@@ -5,6 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	hmCommon "github.com/maticnetwork/heimdall/common"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -17,15 +18,17 @@ const (
 
 var _, _, _ sdk.Msg = MsgSubmitProposal{}, MsgDeposit{}, MsgVote{}
 
-// MsgSubmitProposal
+// MsgSubmitProposal represents submit proposal message
 type MsgSubmitProposal struct {
 	Content        Content                 `json:"content" yaml:"content"`
 	InitialDeposit hmTypes.Coins           `json:"initial_deposit" yaml:"initial_deposit"` //  Initial deposit paid by sender. Must be strictly positive
 	Proposer       hmTypes.HeimdallAddress `json:"proposer" yaml:"proposer"`               //  Address of the proposer
+	Validator      hmTypes.ValidatorID     `json:"validator" yaml:"validator"`             //  Validator id
 }
 
-func NewMsgSubmitProposal(content Content, initialDeposit hmTypes.Coins, proposer hmTypes.HeimdallAddress) MsgSubmitProposal {
-	return MsgSubmitProposal{content, initialDeposit, proposer}
+// NewMsgSubmitProposal creates new submit proposal
+func NewMsgSubmitProposal(content Content, initialDeposit hmTypes.Coins, proposer hmTypes.HeimdallAddress, validator hmTypes.ValidatorID) MsgSubmitProposal {
+	return MsgSubmitProposal{content, initialDeposit, proposer, validator}
 }
 
 //nolint
@@ -55,6 +58,9 @@ func (msg MsgSubmitProposal) ValidateBasic() sdk.Error {
 	if !IsValidProposalType(msg.Content.ProposalType()) {
 		return ErrInvalidProposalType(DefaultCodespace, msg.Content.ProposalType())
 	}
+	if msg.Validator == 0 {
+		return hmCommon.ErrInvalidMsg(DefaultCodespace, "Invalid validator id", "proposalType", msg.Content.ProposalType())
+	}
 
 	return msg.Content.ValidateBasic()
 }
@@ -63,7 +69,8 @@ func (msg MsgSubmitProposal) String() string {
 	return fmt.Sprintf(`Submit Proposal Message:
   Content:         %s
   Initial Deposit: %s
-`, msg.Content.String(), msg.InitialDeposit)
+  Validator: %s
+`, msg.Content.String(), msg.InitialDeposit, msg.Validator.String())
 }
 
 // Implements Msg.
@@ -77,15 +84,16 @@ func (msg MsgSubmitProposal) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{hmTypes.HeimdallAddressToAccAddress(msg.Proposer)}
 }
 
-// MsgDeposit
+// MsgDeposit represents deposit message
 type MsgDeposit struct {
 	ProposalID uint64                  `json:"proposal_id" yaml:"proposal_id"` // ID of the proposal
 	Depositor  hmTypes.HeimdallAddress `json:"depositor" yaml:"depositor"`     // Address of the depositor
 	Amount     hmTypes.Coins           `json:"amount" yaml:"amount"`           // Coins to add to the proposal's deposit
+	Validator  hmTypes.ValidatorID     `json:"validator" yaml:"validator"`     //  Validator id
 }
 
-func NewMsgDeposit(depositor hmTypes.HeimdallAddress, proposalID uint64, amount hmTypes.Coins) MsgDeposit {
-	return MsgDeposit{proposalID, depositor, amount}
+func NewMsgDeposit(depositor hmTypes.HeimdallAddress, proposalID uint64, amount hmTypes.Coins, validator hmTypes.ValidatorID) MsgDeposit {
+	return MsgDeposit{proposalID, depositor, amount, validator}
 }
 
 // Implements Msg.
@@ -104,6 +112,9 @@ func (msg MsgDeposit) ValidateBasic() sdk.Error {
 	if msg.Amount.IsAnyNegative() {
 		return sdk.ErrInvalidCoins(msg.Amount.String())
 	}
+	if msg.Validator == 0 {
+		return hmCommon.ErrInvalidMsg(DefaultCodespace, "Invalid validator id")
+	}
 
 	return nil
 }
@@ -113,7 +124,8 @@ func (msg MsgDeposit) String() string {
   Depositer:   %s
   Proposal ID: %d
   Amount:      %s
-`, msg.Depositor, msg.ProposalID, msg.Amount)
+  Validator:      %s
+`, msg.Depositor, msg.ProposalID, msg.Amount, msg.Validator.String())
 }
 
 // Implements Msg.
@@ -132,10 +144,12 @@ type MsgVote struct {
 	ProposalID uint64                  `json:"proposal_id" yaml:"proposal_id"` // ID of the proposal
 	Voter      hmTypes.HeimdallAddress `json:"voter" yaml:"voter"`             //  address of the voter
 	Option     VoteOption              `json:"option" yaml:"option"`           //  option from OptionSet chosen by the voter
+	Validator  hmTypes.ValidatorID     `json:"validator" yaml:"validator"`     //  validator id of the voter
 }
 
-func NewMsgVote(voter hmTypes.HeimdallAddress, proposalID uint64, option VoteOption) MsgVote {
-	return MsgVote{proposalID, voter, option}
+// NewMsgVote new msg vote
+func NewMsgVote(voter hmTypes.HeimdallAddress, proposalID uint64, option VoteOption, validator hmTypes.ValidatorID) MsgVote {
+	return MsgVote{proposalID, voter, option, validator}
 }
 
 // Implements Msg.
@@ -150,6 +164,9 @@ func (msg MsgVote) ValidateBasic() sdk.Error {
 	if !ValidVoteOption(msg.Option) {
 		return ErrInvalidVote(DefaultCodespace, msg.Option)
 	}
+	if msg.Validator == 0 {
+		return hmCommon.ErrInvalidMsg(DefaultCodespace, "Invalid validator id")
+	}
 
 	return nil
 }
@@ -158,7 +175,8 @@ func (msg MsgVote) String() string {
 	return fmt.Sprintf(`Vote Message:
   Proposal ID: %d
   Option:      %s
-`, msg.ProposalID, msg.Option)
+  Validator:   %s
+`, msg.ProposalID, msg.Option, msg.Validator.String())
 }
 
 // Implements Msg.

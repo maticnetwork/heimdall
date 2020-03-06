@@ -6,6 +6,7 @@ import (
 
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -15,6 +16,7 @@ import (
 	govTypes "github.com/maticnetwork/heimdall/gov/types"
 	paramscutils "github.com/maticnetwork/heimdall/params/client/utils"
 	"github.com/maticnetwork/heimdall/params/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 // GetCmdSubmitProposal implements a command handler for submitting a parameter
@@ -71,10 +73,15 @@ Where proposal.json contains:
 				return err
 			}
 
+			validatorID := viper.GetInt64(FlagValidatorID)
+			if validatorID == 0 {
+				return fmt.Errorf("Valid validator ID required")
+			}
+
 			from := helper.GetFromAddress(cliCtx)
 			content := types.NewParameterChangeProposal(proposal.Title, proposal.Description, proposal.Changes.ToParamChanges())
 
-			msg := govTypes.NewMsgSubmitProposal(content, proposal.Deposit, from)
+			msg := govTypes.NewMsgSubmitProposal(content, proposal.Deposit, from, hmTypes.ValidatorID(validatorID))
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}
@@ -82,6 +89,9 @@ Where proposal.json contains:
 			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
 		},
 	}
+
+	cmd.Flags().Int(FlagValidatorID, 0, "--validator-id=<validator ID here>")
+	cmd.MarkFlagRequired(FlagValidatorID)
 
 	return cmd
 }

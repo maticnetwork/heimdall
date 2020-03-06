@@ -28,10 +28,11 @@ type (
 	// ParamChangeProposalJSON defines a ParameterChangeProposal with a deposit used
 	// to parse parameter change proposals from a JSON file.
 	ParamChangeProposalJSON struct {
-		Title       string           `json:"title" yaml:"title"`
-		Description string           `json:"description" yaml:"description"`
-		Changes     ParamChangesJSON `json:"changes" yaml:"changes"`
-		Deposit     hmTypes.Coins    `json:"deposit" yaml:"deposit"`
+		Title       string              `json:"title" yaml:"title"`
+		Description string              `json:"description" yaml:"description"`
+		Changes     ParamChangesJSON    `json:"changes" yaml:"changes"`
+		Deposit     hmTypes.Coins       `json:"deposit" yaml:"deposit"`
+		Validator   hmTypes.ValidatorID `json:"validator" yaml:"validator"`
 	}
 
 	// ParamChangeProposalReq defines a parameter change proposal request body.
@@ -43,6 +44,7 @@ type (
 		Changes     ParamChangesJSON        `json:"changes" yaml:"changes"`
 		Proposer    hmTypes.HeimdallAddress `json:"proposer" yaml:"proposer"`
 		Deposit     hmTypes.Coins           `json:"deposit" yaml:"deposit"`
+		Validator   hmTypes.ValidatorID     `json:"validator" yaml:"validator"`
 	}
 )
 

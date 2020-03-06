@@ -1,6 +1,7 @@
 package gov
 
 import (
+	"errors"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -10,9 +11,9 @@ import (
 )
 
 // GetDeposit gets the deposit of a specific depositor on a specific proposal
-func (keeper Keeper) GetDeposit(ctx sdk.Context, proposalID uint64, depositorAddr hmTypes.HeimdallAddress) (deposit types.Deposit, found bool) {
+func (keeper Keeper) GetDeposit(ctx sdk.Context, proposalID uint64, validator hmTypes.ValidatorID) (deposit types.Deposit, found bool) {
 	store := ctx.KVStore(keeper.storeKey)
-	bz := store.Get(types.DepositKey(proposalID, depositorAddr))
+	bz := store.Get(types.DepositKey(proposalID, validator))
 	if bz == nil {
 		return deposit, false
 	}
@@ -21,15 +22,15 @@ func (keeper Keeper) GetDeposit(ctx sdk.Context, proposalID uint64, depositorAdd
 	return deposit, true
 }
 
-func (keeper Keeper) setDeposit(ctx sdk.Context, proposalID uint64, depositorAddr hmTypes.HeimdallAddress, deposit types.Deposit) {
+func (keeper Keeper) setDeposit(ctx sdk.Context, proposalID uint64, validator hmTypes.ValidatorID, deposit types.Deposit) {
 	store := ctx.KVStore(keeper.storeKey)
 	bz := keeper.cdc.MustMarshalBinaryLengthPrefixed(deposit)
-	store.Set(types.DepositKey(proposalID, depositorAddr), bz)
+	store.Set(types.DepositKey(proposalID, validator), bz)
 }
 
 // AddDeposit adds or updates a deposit of a specific depositor on a specific proposal
 // Activates voting period when appropriate
-func (keeper Keeper) AddDeposit(ctx sdk.Context, proposalID uint64, depositorAddr hmTypes.HeimdallAddress, depositAmount hmTypes.Coins) (sdk.Error, bool) {
+func (keeper Keeper) AddDeposit(ctx sdk.Context, proposalID uint64, depositorAddr hmTypes.HeimdallAddress, depositAmount hmTypes.Coins, validator hmTypes.ValidatorID) (sdk.Error, bool) {
 	// Checks to see if proposal exists
 	proposal, ok := keeper.GetProposal(ctx, proposalID)
 	if !ok {
@@ -59,11 +60,11 @@ func (keeper Keeper) AddDeposit(ctx sdk.Context, proposalID uint64, depositorAdd
 	}
 
 	// Add or update deposit object
-	deposit, found := keeper.GetDeposit(ctx, proposalID, depositorAddr)
+	deposit, found := keeper.GetDeposit(ctx, proposalID, validator)
 	if found {
 		deposit.Amount = deposit.Amount.Add(depositAmount)
 	} else {
-		deposit = types.NewDeposit(proposalID, depositorAddr, depositAmount)
+		deposit = types.NewDeposit(proposalID, depositAmount, validator)
 	}
 
 	ctx.EventManager().EmitEvent(
@@ -74,7 +75,7 @@ func (keeper Keeper) AddDeposit(ctx sdk.Context, proposalID uint64, depositorAdd
 		),
 	)
 
-	keeper.setDeposit(ctx, proposalID, depositorAddr, deposit)
+	keeper.setDeposit(ctx, proposalID, validator, deposit)
 	return nil, activatedVotingPeriod
 }
 
@@ -107,7 +108,12 @@ func (keeper Keeper) RefundDeposits(ctx sdk.Context, proposalID uint64) {
 	store := ctx.KVStore(keeper.storeKey)
 
 	keeper.IterateDeposits(ctx, proposalID, func(deposit types.Deposit) bool {
-		err := keeper.supplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, deposit.Depositor, deposit.Amount)
+		v, ok := keeper.sk.GetValidatorFromValID(ctx, deposit.Depositor)
+		if !ok {
+			panic(errors.New("Not able to find validator by validator id"))
+		}
+
+		err := keeper.supplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, v.Signer, deposit.Amount)
 		if err != nil {
 			panic(err)
 		}

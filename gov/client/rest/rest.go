@@ -9,12 +9,12 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/rest"
-	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 
+	restClient "github.com/maticnetwork/heimdall/client/rest"
 	gcutils "github.com/maticnetwork/heimdall/gov/client/utils"
 	"github.com/maticnetwork/heimdall/gov/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
+	"github.com/maticnetwork/heimdall/types/rest"
 )
 
 // REST Variable names
@@ -66,26 +66,32 @@ func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router, phs []ProposalREST
 
 // PostProposalReq defines the properties of a proposal request's body.
 type PostProposalReq struct {
-	BaseReq        rest.BaseReq            `json:"base_req" yaml:"base_req"`
+	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
+
 	Title          string                  `json:"title" yaml:"title"`                     // Title of the proposal
 	Description    string                  `json:"description" yaml:"description"`         // Description of the proposal
 	ProposalType   string                  `json:"proposal_type" yaml:"proposal_type"`     // Type of proposal. Initial set {PlainTextProposal, SoftwareUpgradeProposal}
 	Proposer       hmTypes.HeimdallAddress `json:"proposer" yaml:"proposer"`               // Address of the proposer
+	Validator      hmTypes.ValidatorID     `json:"validator" yaml:"validator"`             // id of the validator
 	InitialDeposit hmTypes.Coins           `json:"initial_deposit" yaml:"initial_deposit"` // Coins to add to the proposal's deposit
 }
 
 // DepositReq defines the properties of a deposit request's body.
 type DepositReq struct {
-	BaseReq   rest.BaseReq            `json:"base_req" yaml:"base_req"`
+	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
+
 	Depositor hmTypes.HeimdallAddress `json:"depositor" yaml:"depositor"` // Address of the depositor
 	Amount    hmTypes.Coins           `json:"amount" yaml:"amount"`       // Coins to add to the proposal's deposit
+	Validator hmTypes.ValidatorID     `json:"validator" yaml:"validator"` // id of the validator
 }
 
 // VoteReq defines the properties of a vote request's body.
 type VoteReq struct {
-	BaseReq rest.BaseReq            `json:"base_req" yaml:"base_req"`
-	Voter   hmTypes.HeimdallAddress `json:"voter" yaml:"voter"`   // address of the voter
-	Option  string                  `json:"option" yaml:"option"` // option from OptionSet chosen by the voter
+	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
+
+	Voter     hmTypes.HeimdallAddress `json:"voter" yaml:"voter"`         // address of the voter
+	Option    string                  `json:"option" yaml:"option"`       // option from OptionSet chosen by the voter
+	Validator hmTypes.ValidatorID     `json:"validator" yaml:"validator"` // id of the validator
 }
 
 func postProposalHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
@@ -103,13 +109,13 @@ func postProposalHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		proposalType := gcutils.NormalizeProposalType(req.ProposalType)
 		content := types.ContentFromProposalType(req.Title, req.Description, proposalType)
 
-		msg := types.NewMsgSubmitProposal(content, req.InitialDeposit, req.Proposer)
+		msg := types.NewMsgSubmitProposal(content, req.InitialDeposit, req.Proposer, req.Validator)
 		if err := msg.ValidateBasic(); err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		utils.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+		restClient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
 	}
 }
 
@@ -140,13 +146,13 @@ func depositHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		// create the message
-		msg := types.NewMsgDeposit(req.Depositor, proposalID, req.Amount)
+		msg := types.NewMsgDeposit(req.Depositor, proposalID, req.Amount, req.Validator)
 		if err := msg.ValidateBasic(); err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		utils.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+		restClient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
 	}
 }
 
@@ -183,25 +189,25 @@ func voteHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		// create the message
-		msg := types.NewMsgVote(req.Voter, proposalID, voteOption)
+		msg := types.NewMsgVote(req.Voter, proposalID, voteOption, req.Validator)
 		if err := msg.ValidateBasic(); err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		utils.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+		restClient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
 	}
 }
 
 func queryParamsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		paramType := vars[RestParamsType]
-
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
 			return
 		}
+
+		vars := mux.Vars(r)
+		paramType := vars[RestParamsType]
 
 		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/gov/%s/%s", types.QueryParams, paramType), nil)
 		if err != nil {
@@ -216,6 +222,11 @@ func queryParamsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 func queryProposalHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
 		vars := mux.Vars(r)
 		strProposalID := vars[RestProposalID]
 
@@ -226,11 +237,6 @@ func queryProposalHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		proposalID, ok := rest.ParseUint64OrReturnBadRequest(w, strProposalID)
-		if !ok {
-			return
-		}
-
-		cliCtx, ok = rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
 			return
 		}
@@ -256,15 +262,15 @@ func queryProposalHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 func queryDepositsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		strProposalID := vars[RestProposalID]
-
-		proposalID, ok := rest.ParseUint64OrReturnBadRequest(w, strProposalID)
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
 			return
 		}
 
-		cliCtx, ok = rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		vars := mux.Vars(r)
+		strProposalID := vars[RestProposalID]
+
+		proposalID, ok := rest.ParseUint64OrReturnBadRequest(w, strProposalID)
 		if !ok {
 			return
 		}
@@ -309,15 +315,15 @@ func queryDepositsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 func queryProposerHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		strProposalID := vars[RestProposalID]
-
-		proposalID, ok := rest.ParseUint64OrReturnBadRequest(w, strProposalID)
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
 			return
 		}
 
-		cliCtx, ok = rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		vars := mux.Vars(r)
+		strProposalID := vars[RestProposalID]
+
+		proposalID, ok := rest.ParseUint64OrReturnBadRequest(w, strProposalID)
 		if !ok {
 			return
 		}
@@ -334,12 +340,23 @@ func queryProposerHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 func queryDepositHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
 		vars := mux.Vars(r)
 		strProposalID := vars[RestProposalID]
-		depositorAddrStr := vars[RestDepositor]
+		strDepositorID := vars[RestDepositor]
 
 		if len(strProposalID) == 0 {
 			err := errors.New("proposalId required but not specified")
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		if len(strDepositorID) == 0 {
+			err := errors.New("depositorId required but not specified")
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -349,20 +366,12 @@ func queryDepositHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		if len(depositorAddrStr) == 0 {
-			err := errors.New("depositor address required but not specified")
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		depositorAddr := hmTypes.HexToHeimdallAddress(depositorAddrStr)
-
-		cliCtx, ok = rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		depositorID, ok := rest.ParseUint64OrReturnBadRequest(w, strDepositorID)
 		if !ok {
 			return
 		}
 
-		params := types.NewQueryDepositParams(proposalID, depositorAddr)
+		params := types.NewQueryDepositParams(proposalID, hmTypes.NewValidatorID(depositorID))
 
 		bz, err := cliCtx.Codec.MarshalJSON(params)
 		if err != nil {
@@ -412,12 +421,23 @@ func queryDepositHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 func queryVoteHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
 		vars := mux.Vars(r)
 		strProposalID := vars[RestProposalID]
-		bechVoterAddr := vars[RestVoter]
+		strVoterID := vars[RestDepositor]
 
 		if len(strProposalID) == 0 {
 			err := errors.New("proposalId required but not specified")
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		if len(strVoterID) == 0 {
+			err := errors.New("voterId required but not specified")
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -427,20 +447,12 @@ func queryVoteHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		if len(bechVoterAddr) == 0 {
-			err := errors.New("voter address required but not specified")
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		voterAddr := hmTypes.HexToHeimdallAddress(bechVoterAddr)
-
-		cliCtx, ok = rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		voterID, ok := rest.ParseUint64OrReturnBadRequest(w, strVoterID)
 		if !ok {
 			return
 		}
 
-		params := types.NewQueryVoteParams(proposalID, voterAddr)
+		params := types.NewQueryVoteParams(proposalID, hmTypes.NewValidatorID(voterID))
 
 		bz, err := cliCtx.Codec.MarshalJSON(params)
 		if err != nil {
@@ -491,6 +503,11 @@ func queryVoteHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 // todo: Split this functionality into helper functions to remove the above
 func queryVotesOnProposalHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
 		vars := mux.Vars(r)
 		strProposalID := vars[RestProposalID]
 
@@ -501,11 +518,6 @@ func queryVotesOnProposalHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		proposalID, ok := rest.ParseUint64OrReturnBadRequest(w, strProposalID)
-		if !ok {
-			return
-		}
-
-		cliCtx, ok = rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
 			return
 		}
@@ -551,21 +563,30 @@ func queryVotesOnProposalHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 // todo: Split this functionality into helper functions to remove the above
 func queryProposalsWithParameterFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		bechVoterAddr := r.URL.Query().Get(RestVoter)
-		bechDepositorAddr := r.URL.Query().Get(RestDepositor)
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		strVoterID := r.URL.Query().Get(RestVoter)
+		strDepositorID := r.URL.Query().Get(RestDepositor)
 		strProposalStatus := r.URL.Query().Get(RestProposalStatus)
 		strNumLimit := r.URL.Query().Get(RestNumLimit)
 
 		params := types.QueryProposalsParams{}
 
-		if len(bechVoterAddr) != 0 {
-			voterAddr := hmTypes.HexToHeimdallAddress(bechVoterAddr)
-			params.Voter = voterAddr
+		if len(strVoterID) != 0 {
+			voterID, ok := rest.ParseUint64OrReturnBadRequest(w, strVoterID)
+			if ok {
+				params.Voter = hmTypes.NewValidatorID(voterID)
+			}
 		}
 
-		if len(bechDepositorAddr) != 0 {
-			depositorAddr := hmTypes.HexToHeimdallAddress(bechDepositorAddr)
-			params.Depositor = depositorAddr
+		if len(strDepositorID) != 0 {
+			depositorID, ok := rest.ParseUint64OrReturnBadRequest(w, strDepositorID)
+			if ok {
+				params.Depositor = hmTypes.NewValidatorID(depositorID)
+			}
 		}
 
 		if len(strProposalStatus) != 0 {
@@ -576,17 +597,13 @@ func queryProposalsWithParameterFn(cliCtx context.CLIContext) http.HandlerFunc {
 			}
 			params.ProposalStatus = proposalStatus
 		}
+
 		if len(strNumLimit) != 0 {
 			numLimit, ok := rest.ParseUint64OrReturnBadRequest(w, strNumLimit)
 			if !ok {
 				return
 			}
 			params.Limit = numLimit
-		}
-
-		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
-		if !ok {
-			return
 		}
 
 		bz, err := cliCtx.Codec.MarshalJSON(params)
@@ -609,6 +626,11 @@ func queryProposalsWithParameterFn(cliCtx context.CLIContext) http.HandlerFunc {
 // todo: Split this functionality into helper functions to remove the above
 func queryTallyOnProposalHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
 		vars := mux.Vars(r)
 		strProposalID := vars[RestProposalID]
 
@@ -619,11 +641,6 @@ func queryTallyOnProposalHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		proposalID, ok := rest.ParseUint64OrReturnBadRequest(w, strProposalID)
-		if !ok {
-			return
-		}
-
-		cliCtx, ok = rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
 			return
 		}

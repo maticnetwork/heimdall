@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -30,6 +31,7 @@ const (
 	flagStatus       = "status"
 	flagNumLimit     = "limit"
 	FlagProposal     = "proposal"
+	FlagValidatorID  = "validator-id"
 )
 
 type proposal struct {
@@ -118,10 +120,15 @@ $ %s tx gov submit-proposal --title="Test Proposal" --description="My awesome pr
 				return err
 			}
 
+			validatorID := viper.GetInt64(FlagValidatorID)
+			if validatorID == 0 {
+				return fmt.Errorf("Valid validator ID required")
+			}
+
 			content := types.ContentFromProposalType(proposal.Title, proposal.Description, proposal.Type)
 			from := helper.GetFromAddress(cliCtx)
 
-			msg := types.NewMsgSubmitProposal(content, amount, from)
+			msg := types.NewMsgSubmitProposal(content, amount, from, hmTypes.ValidatorID(validatorID))
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}
@@ -135,13 +142,15 @@ $ %s tx gov submit-proposal --title="Test Proposal" --description="My awesome pr
 	cmd.Flags().String(flagProposalType, "", "proposalType of proposal, types: text/parameter_change/software_upgrade")
 	cmd.Flags().String(FlagDeposit, "", "deposit of proposal")
 	cmd.Flags().String(FlagProposal, "", "proposal file path (if this path is given, other proposal flags are ignored)")
+	cmd.Flags().Int(FlagValidatorID, 0, "--validator-id=<validator ID here>")
+	cmd.MarkFlagRequired(FlagValidatorID)
 
 	return cmd
 }
 
 // GetCmdDeposit implements depositing tokens for an active proposal.
 func GetCmdDeposit(cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "deposit [proposal-id] [deposit]",
 		Args:  cobra.ExactArgs(2),
 		Short: "Deposit tokens for an active proposal",
@@ -173,7 +182,12 @@ $ %s tx gov deposit 1 10stake --from mykey
 				return err
 			}
 
-			msg := types.NewMsgDeposit(from, proposalID, amount)
+			validatorID := viper.GetInt64(FlagValidatorID)
+			if validatorID == 0 {
+				return fmt.Errorf("Valid validator ID required")
+			}
+
+			msg := types.NewMsgDeposit(from, proposalID, amount, hmTypes.ValidatorID(validatorID))
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
@@ -182,11 +196,16 @@ $ %s tx gov deposit 1 10stake --from mykey
 			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
 		},
 	}
+
+	cmd.Flags().Int(FlagValidatorID, 0, "--validator-id=<validator ID here>")
+	cmd.MarkFlagRequired(FlagValidatorID)
+
+	return cmd
 }
 
 // GetCmdVote implements creating a new vote command.
 func GetCmdVote(cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "vote [proposal-id] [option]",
 		Args:  cobra.ExactArgs(2),
 		Short: "Vote for an active proposal, options: yes/no/no_with_veto/abstain",
@@ -213,6 +232,11 @@ $ %s tx gov vote 1 yes --from mykey
 				return fmt.Errorf("proposal-id %s not a valid int, please input a valid proposal-id", args[0])
 			}
 
+			validatorID := viper.GetInt64(FlagValidatorID)
+			if validatorID == 0 {
+				return fmt.Errorf("Valid validator ID required")
+			}
+
 			// Find out which vote option user chose
 			byteVoteOption, err := types.VoteOptionFromString(govutils.NormalizeVoteOption(args[1]))
 			if err != nil {
@@ -220,7 +244,7 @@ $ %s tx gov vote 1 yes --from mykey
 			}
 
 			// Build vote message and run basic validation
-			msg := types.NewMsgVote(from, proposalID, byteVoteOption)
+			msg := types.NewMsgVote(from, proposalID, byteVoteOption, hmTypes.ValidatorID(validatorID))
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
@@ -229,6 +253,11 @@ $ %s tx gov vote 1 yes --from mykey
 			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
 		},
 	}
+
+	cmd.Flags().Int(FlagValidatorID, 0, "--validator-id=<validator ID here>")
+	cmd.MarkFlagRequired(FlagValidatorID)
+
+	return cmd
 }
 
 // DONTCOVER

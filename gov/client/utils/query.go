@@ -8,6 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 
 	"github.com/maticnetwork/heimdall/gov/types"
+	"github.com/maticnetwork/heimdall/helper"
 )
 
 const (
@@ -58,7 +59,7 @@ func QueryDepositsByTxQuery(cliCtx context.CLIContext, params types.QueryProposa
 				depMsg := msg.(types.MsgDeposit)
 
 				deposits = append(deposits, types.Deposit{
-					Depositor:  depMsg.Depositor,
+					Depositor:  depMsg.Validator,
 					ProposalID: params.ProposalID,
 					Amount:     depMsg.Amount,
 				})
@@ -87,7 +88,7 @@ func QueryVotesByTxQuery(cliCtx context.CLIContext, params types.QueryProposalPa
 
 	// NOTE: SearchTxs is used to facilitate the txs query which does not currently
 	// support configurable pagination.
-	searchResult, err := utils.QueryTxsByEvents(cliCtx, events, defaultPage, defaultLimit)
+	searchResult, err := helper.QueryTxsByEvents(cliCtx, events, defaultPage, defaultLimit)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +101,7 @@ func QueryVotesByTxQuery(cliCtx context.CLIContext, params types.QueryProposalPa
 				voteMsg := msg.(types.MsgVote)
 
 				votes = append(votes, types.Vote{
-					Voter:      voteMsg.Voter,
+					Voter:      voteMsg.Validator,
 					ProposalID: params.ProposalID,
 					Option:     voteMsg.Option,
 				})
@@ -125,7 +126,7 @@ func QueryVoteByTxQuery(cliCtx context.CLIContext, params types.QueryVoteParams)
 
 	// NOTE: SearchTxs is used to facilitate the txs query which does not currently
 	// support configurable pagination.
-	searchResult, err := utils.QueryTxsByEvents(cliCtx, events, defaultPage, defaultLimit)
+	searchResult, err := helper.QueryTxsByEvents(cliCtx, events, defaultPage, defaultLimit)
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +138,7 @@ func QueryVoteByTxQuery(cliCtx context.CLIContext, params types.QueryVoteParams)
 				voteMsg := msg.(types.MsgVote)
 
 				vote := types.Vote{
-					Voter:      voteMsg.Voter,
+					Voter:      voteMsg.Validator,
 					ProposalID: params.ProposalID,
 					Option:     voteMsg.Option,
 				}
@@ -165,7 +166,7 @@ func QueryDepositByTxQuery(cliCtx context.CLIContext, params types.QueryDepositP
 
 	// NOTE: SearchTxs is used to facilitate the txs query which does not currently
 	// support configurable pagination.
-	searchResult, err := utils.QueryTxsByEvents(cliCtx, events, defaultPage, defaultLimit)
+	searchResult, err := helper.QueryTxsByEvents(cliCtx, events, defaultPage, defaultLimit)
 	if err != nil {
 		return nil, err
 	}
@@ -177,7 +178,7 @@ func QueryDepositByTxQuery(cliCtx context.CLIContext, params types.QueryDepositP
 				depMsg := msg.(types.MsgDeposit)
 
 				deposit := types.Deposit{
-					Depositor:  depMsg.Depositor,
+					Depositor:  depMsg.Validator,
 					ProposalID: params.ProposalID,
 					Amount:     depMsg.Amount,
 				}
@@ -204,7 +205,7 @@ func QueryProposerByTxQuery(cliCtx context.CLIContext, proposalID uint64) (Propo
 
 	// NOTE: SearchTxs is used to facilitate the txs query which does not currently
 	// support configurable pagination.
-	searchResult, err := utils.QueryTxsByEvents(cliCtx, events, defaultPage, defaultLimit)
+	searchResult, err := helper.QueryTxsByEvents(cliCtx, events, defaultPage, defaultLimit)
 	if err != nil {
 		return Proposer{}, err
 	}

@@ -39,11 +39,11 @@ func NewQueryProposalParams(proposalID uint64) QueryProposalParams {
 // Params for query 'custom/gov/deposit'
 type QueryDepositParams struct {
 	ProposalID uint64
-	Depositor  hmTypes.HeimdallAddress
+	Depositor  hmTypes.ValidatorID
 }
 
 // creates a new instance of QueryDepositParams
-func NewQueryDepositParams(proposalID uint64, depositor hmTypes.HeimdallAddress) QueryDepositParams {
+func NewQueryDepositParams(proposalID uint64, depositor hmTypes.ValidatorID) QueryDepositParams {
 	return QueryDepositParams{
 		ProposalID: proposalID,
 		Depositor:  depositor,
@@ -53,11 +53,11 @@ func NewQueryDepositParams(proposalID uint64, depositor hmTypes.HeimdallAddress)
 // Params for query 'custom/gov/vote'
 type QueryVoteParams struct {
 	ProposalID uint64
-	Voter      hmTypes.HeimdallAddress
+	Voter      hmTypes.ValidatorID
 }
 
 // creates a new instance of QueryVoteParams
-func NewQueryVoteParams(proposalID uint64, voter hmTypes.HeimdallAddress) QueryVoteParams {
+func NewQueryVoteParams(proposalID uint64, voter hmTypes.ValidatorID) QueryVoteParams {
 	return QueryVoteParams{
 		ProposalID: proposalID,
 		Voter:      voter,
@@ -66,14 +66,14 @@ func NewQueryVoteParams(proposalID uint64, voter hmTypes.HeimdallAddress) QueryV
 
 // Params for query 'custom/gov/proposals'
 type QueryProposalsParams struct {
-	Voter          hmTypes.HeimdallAddress
-	Depositor      hmTypes.HeimdallAddress
+	Voter          hmTypes.ValidatorID
+	Depositor      hmTypes.ValidatorID
 	ProposalStatus ProposalStatus
 	Limit          uint64
 }
 
 // creates a new instance of QueryProposalsParams
-func NewQueryProposalsParams(status ProposalStatus, limit uint64, voter, depositor hmTypes.HeimdallAddress) QueryProposalsParams {
+func NewQueryProposalsParams(status ProposalStatus, limit uint64, voter hmTypes.ValidatorID, depositor hmTypes.ValidatorID) QueryProposalsParams {
 	return QueryProposalsParams{
 		Voter:          voter,
 		Depositor:      depositor,
