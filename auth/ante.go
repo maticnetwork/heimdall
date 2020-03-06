@@ -99,6 +99,13 @@ func NewAnteHandler(
 		gasForTx := gasWantedPerTx        // stdTx.Fee.Gas
 		feeForTx := DefaultFeeWantedPerTx // stdTx.Fee.Amount
 
+		// TODO Just for cs-2003-1
+		// -- start
+		if ctx.BlockHeight() > 86000 {
+			gasForTx = 1000000 // 1M
+		}
+		// -- end
+
 		// checkpoint gas limit
 		if stdTx.Msg.Type() == "checkpoint" && stdTx.Msg.Route() == "checkpoint" {
 			gasForTx = gasWantedPerCheckpoinTx // stdTx.Fee.Gas
