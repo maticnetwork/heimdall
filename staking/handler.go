@@ -2,10 +2,12 @@ package staking
 
 import (
 	"bytes"
+	"fmt"
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking/types"
@@ -34,44 +36,38 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 
 // HandleMsgValidatorJoin msg validator join
 func HandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
-	k.Logger(ctx).Info("Handing new validator join", "msg", msg)
+	k.Logger(ctx).Info("Handling new validator join", "msg", msg)
 
-	if confirmed := contractCaller.IsTxConfirmed(msg.TxHash.EthHash()); !confirmed {
+	// get main tx receipt
+	receipt, err := contractCaller.GetConfirmedTxReceipt(msg.TxHash.EthHash())
+	if err != nil || receipt == nil {
 		return hmCommon.ErrWaitForConfirmation(k.Codespace()).Result()
 	}
 
-	// fetch validator from mainchain
-	validator, err := contractCaller.GetValidatorInfo(msg.ID)
-	if err != nil {
-		k.Logger(ctx).Error(
-			"Unable to fetch validator from rootchain",
-			"error", err,
-		)
-		return hmCommon.ErrNoValidator(k.Codespace()).Result()
+	// decode validator join event
+	eventLog, err := contractCaller.DecodeValidatorJoinEvent(receipt, msg.LogIndex)
+	if err != nil || eventLog == nil {
+		return hmCommon.ErrInvalidMsg(k.Codespace(), "Unable to fetch logs for txHash").Result()
 	}
-
-	if bytes.Equal(validator.Signer.Bytes(), helper.ZeroAddress.Bytes()) {
-		k.Logger(ctx).Error(
-			"No validator signer found",
-			"msgValidator", msg.ID,
-		)
-		return hmCommon.ErrNoValidator(k.Codespace()).Result()
-	}
-
-	k.Logger(ctx).Debug("Fetched validator from rootchain successfully", "validator", validator.String())
 
 	// Generate PubKey from Pubkey in message and signer
 	pubkey := msg.SignerPubKey
 	signer := pubkey.Address()
 
 	// check signer in message corresponds
-	if !bytes.Equal(signer.Bytes(), validator.Signer.Bytes()) {
+	if !bytes.Equal(signer.Bytes(), eventLog.Signer.Bytes()) {
 		k.Logger(ctx).Error(
 			"Signer Address does not match",
 			"msgValidator", signer.String(),
-			"mainchainValidator", validator.Signer.String(),
+			"mainchainValidator", eventLog.Signer.Hex(),
 		)
-		return hmCommon.ErrNoValidator(k.Codespace()).Result()
+		return hmCommon.ErrValSignerMismatch(k.Codespace()).Result()
+	}
+
+	// check msg id
+	if eventLog.ValidatorId.Uint64() != msg.ID.Uint64() {
+		k.Logger(ctx).Error("ID in message doesn't match with id in log", "msgId", msg.ID, "validatorIdFromTx", eventLog.ValidatorId)
+		return hmCommon.ErrInvalidMsg(k.Codespace(), "ID in message doesn't match with id in log. msgId %v validatorIdFromTx %v", msg.ID, eventLog.ValidatorId).Result()
 	}
 
 	// Check if validator has been validator before
@@ -86,14 +82,20 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k Keepe
 		return hmCommon.ErrValidatorAlreadyJoined(k.Codespace()).Result()
 	}
 
+	// get voting power from amount
+	votingPower, err := helper.GetPowerFromAmount(eventLog.Amount)
+	if err != nil {
+		return hmCommon.ErrInvalidMsg(k.Codespace(), fmt.Sprintf("Invalid amount %v for validator %v", eventLog.Amount, msg.ID)).Result()
+	}
+
 	// create new validator
 	newValidator := hmTypes.Validator{
-		ID:          validator.ID,
-		StartEpoch:  validator.StartEpoch,
-		EndEpoch:    validator.EndEpoch,
-		VotingPower: validator.VotingPower,
+		ID:          msg.ID,
+		StartEpoch:  eventLog.ActivationEpoch.Uint64(),
+		EndEpoch:    0,
+		VotingPower: votingPower.Int64(),
 		PubKey:      pubkey,
-		Signer:      validator.Signer,
+		Signer:      hmTypes.BytesToHeimdallAddress(signer.Bytes()),
 		LastUpdated: 0,
 	}
 
@@ -136,8 +138,8 @@ func HandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keeper, c
 	}
 
 	if eventLog.ValidatorId.Uint64() != msg.ID.Uint64() {
-		k.Logger(ctx).Error("ID in message doesnt match id in logs", "MsgID", msg.ID, "IdFromTx", eventLog.ValidatorId)
-		return hmCommon.ErrInvalidMsg(k.Codespace(), "Invalid txhash, id's dont match. Id from tx hash is %v", eventLog.ValidatorId.Uint64()).Result()
+		k.Logger(ctx).Error("ID in message doesn't match with id in log", "msgId", msg.ID, "validatorIdFromTx", eventLog.ValidatorId)
+		return hmCommon.ErrInvalidMsg(k.Codespace(), "ID in message doesn't match with id in log. msgId %v validatorIdFromTx %v", msg.ID, eventLog.ValidatorId).Result()
 	}
 
 	// pull validator from store
@@ -162,7 +164,7 @@ func HandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keeper, c
 	// set validator amount
 	p, err := helper.GetPowerFromAmount(eventLog.NewAmount)
 	if err != nil {
-		return hmCommon.ErrInvalidMsg(k.Codespace(), "Invalid amount for validator: %v", msg.ID).Result()
+		return hmCommon.ErrInvalidMsg(k.Codespace(), fmt.Sprintf("Invalid amount %v for validator %v", eventLog.NewAmount, msg.ID)).Result()
 	}
 	validator.VotingPower = p.Int64()
 
@@ -210,12 +212,12 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper,
 	}
 
 	if eventLog.ValidatorId.Uint64() != msg.ID.Uint64() {
-		k.Logger(ctx).Error("ID in message doesnt match id in logs", "MsgID", msg.ID, "IdFromTx", eventLog.ValidatorId.Uint64())
-		return hmCommon.ErrInvalidMsg(k.Codespace(), "Invalid txhash, id's dont match. Id from tx hash is %v", eventLog.ValidatorId.Uint64()).Result()
+		k.Logger(ctx).Error("ID in message doesn't match with id in log", "msgId", msg.ID, "validatorIdFromTx", eventLog.ValidatorId)
+		return hmCommon.ErrInvalidMsg(k.Codespace(), "ID in message doesn't match with id in log. msgId %v validatorIdFromTx %v", msg.ID, eventLog.ValidatorId).Result()
 	}
 
 	if bytes.Compare(eventLog.NewSigner.Bytes(), newSigner.Bytes()) != 0 {
-		k.Logger(ctx).Error("Signer in txhash and msg dont match", "MsgSigner", newSigner.String(), "SignerTx", eventLog.NewSigner.String())
+		k.Logger(ctx).Error("Signer in txhash and msg dont match", "msgSigner", newSigner.String(), "signerTx", eventLog.NewSigner.String())
 		return hmCommon.ErrInvalidMsg(k.Codespace(), "Signer in txhash and msg dont match").Result()
 	}
 
@@ -250,7 +252,7 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper,
 	k.Logger(ctx).Debug("Removing old validator", "validator", oldValidator.String())
 
 	// remove old validator from HM
-	oldValidator.EndEpoch = k.ackRetriever.GetACKCount(ctx)
+	oldValidator.EndEpoch = k.moduleCommunicator.GetACKCount(ctx)
 
 	// remove old validator from TM
 	oldValidator.VotingPower = 0
@@ -279,10 +281,26 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper,
 		sdk.NewEvent(
 			types.EventTypeSignerUpdate,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(validator.ID.Uint64(), 10)),
+			sdk.NewAttribute(types.AttributeKeyValidatorID, validator.ID.String()),
 			sdk.NewAttribute(types.AttributeKeyUpdatedAt, strconv.FormatUint(validator.LastUpdated, 10)),
 		),
 	})
+
+	//
+	// Move heimdall fee to new signer
+	//
+
+	// check if fee is already withdrawn
+	coins := k.moduleCommunicator.GetCoins(ctx, oldValidator.Signer)
+	maticBalance := coins.AmountOf(authTypes.FeeToken)
+	if !maticBalance.IsZero() {
+		k.Logger(ctx).Info("Transferring fee", "from", oldValidator.Signer.String(), "to", validator.Signer.String(), "balance", maticBalance.String())
+		maticCoins := hmTypes.Coins{hmTypes.Coin{Denom: authTypes.FeeToken, Amount: maticBalance}}
+		if err := k.moduleCommunicator.SendCoins(ctx, oldValidator.Signer, validator.Signer, maticCoins); err != nil {
+			k.Logger(ctx).Info("Error while transferring fee", "from", oldValidator.Signer.String(), "to", validator.Signer.String(), "balance", maticBalance.String())
+			return err.Result()
+		}
+	}
 
 	return sdk.Result{
 		Events: ctx.EventManager().Events(),

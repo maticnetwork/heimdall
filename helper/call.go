@@ -37,6 +37,7 @@ type IContractCaller interface {
 	GetConfirmedTxReceipt(common.Hash) (*ethTypes.Receipt, error)
 	GetBlockNumberFromTxHash(common.Hash) (*big.Int, error)
 	DecodeValidatorTopupFeesEvent(*ethTypes.Receipt, uint64) (*stakinginfo.StakinginfoTopUpFee, error)
+	DecodeValidatorJoinEvent(*ethTypes.Receipt, uint64) (*stakinginfo.StakinginfoStaked, error)
 	DecodeValidatorStakeUpdateEvent(*ethTypes.Receipt, uint64) (*stakinginfo.StakinginfoStakeUpdate, error)
 	DecodeNewHeaderBlockEvent(*ethTypes.Receipt, uint64) (*rootchain.RootchainNewHeaderBlock, error)
 	DecodeSignerUpdateEvent(*ethTypes.Receipt, uint64) (*stakinginfo.StakinginfoSignerChange, error)
@@ -348,6 +349,28 @@ func (c *ContractCaller) DecodeValidatorStakeUpdateEvent(receipt *ethTypes.Recei
 		if uint64(vLog.Index) == logIndex {
 			found = true
 			if err := UnpackLog(&c.StakingInfoABI, event, "StakeUpdate", vLog); err != nil {
+				return nil, err
+			}
+			break
+		}
+	}
+
+	if !found {
+		return nil, errors.New("Event not found")
+	}
+
+	return event, nil
+}
+
+// DecodeValidatorJoinEvent represents validator staked event
+func (c *ContractCaller) DecodeValidatorJoinEvent(receipt *ethTypes.Receipt, logIndex uint64) (*stakinginfo.StakinginfoStaked, error) {
+	event := new(stakinginfo.StakinginfoStaked)
+
+	found := false
+	for _, vLog := range receipt.Logs {
+		if uint64(vLog.Index) == logIndex {
+			found = true
+			if err := UnpackLog(&c.StakingInfoABI, event, "Staked", vLog); err != nil {
 				return nil, err
 			}
 			break
