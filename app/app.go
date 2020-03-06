@@ -71,10 +71,7 @@ var (
 	// module account permissions
 	maccPerms = map[string][]string{
 		authTypes.FeeCollectorName: nil,
-		// mint.ModuleName:           {supply.Minter},
-		// staking.BondedPoolName:    {supply.Burner, supply.Staking},
-		// staking.NotBondedPoolName: {supply.Burner, supply.Staking},
-		// gov.ModuleName:            {supply.Burner},
+		govTypes.ModuleName:        {},
 	}
 )
 

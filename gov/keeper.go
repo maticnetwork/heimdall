@@ -66,7 +66,7 @@ func NewKeeper(
 
 	return Keeper{
 		storeKey:     key,
-		paramSpace:   paramSpace.WithKeyTable(types.ParamKeyTable()),
+		paramSpace:   paramSpace,
 		supplyKeeper: supplyKeeper,
 		sk:           sk,
 		cdc:          cdc,
