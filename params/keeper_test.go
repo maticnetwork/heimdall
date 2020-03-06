@@ -4,10 +4,11 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
+
+	subspace "github.com/maticnetwork/heimdall/params/subspace"
 )
 
 func TestKeeper(t *testing.T) {
@@ -24,7 +25,7 @@ func TestKeeper(t *testing.T) {
 		{"key7", 9058701},
 	}
 
-	table := NewKeyTable(
+	table := subspace.NewKeyTable(
 		[]byte("key1"), int64(0),
 		[]byte("key2"), int64(0),
 		[]byte("key3"), int64(0),
@@ -126,7 +127,7 @@ func TestSubspace(t *testing.T) {
 		{"struct", s{1}, s{0}, new(s)},
 	}
 
-	table := NewKeyTable(
+	table := subspace.NewKeyTable(
 		[]byte("string"), string(""),
 		[]byte("bool"), bool(false),
 		[]byte("int16"), int16(0),
@@ -190,7 +191,7 @@ func TestJSONUpdate(t *testing.T) {
 
 	key := []byte("key")
 
-	space := keeper.Subspace("test").WithKeyTable(NewKeyTable(key, paramJSON{}))
+	space := keeper.Subspace("test").WithKeyTable(subspace.NewKeyTable(key, paramJSON{}))
 
 	var param paramJSON
 

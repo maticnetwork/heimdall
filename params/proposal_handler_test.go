@@ -3,18 +3,18 @@ package params_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
-	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/libs/log"
-
-	dbm "github.com/tendermint/tm-db"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/params"
-	"github.com/cosmos/cosmos-sdk/x/params/subspace"
-	"github.com/cosmos/cosmos-sdk/x/params/types"
+	"github.com/stretchr/testify/require"
+	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/libs/log"
+	dbm "github.com/tendermint/tm-db"
+
+	"github.com/maticnetwork/heimdall/params"
+	"github.com/maticnetwork/heimdall/params/subspace"
+	"github.com/maticnetwork/heimdall/params/types"
+	paramTypes "github.com/maticnetwork/heimdall/params/types"
 )
 
 type testInput struct {
@@ -48,8 +48,8 @@ func (tp *testParams) ParamSetPairs() subspace.ParamSetPairs {
 	}
 }
 
-func testProposal(changes ...params.ParamChange) params.ParameterChangeProposal {
-	return params.NewParameterChangeProposal(
+func testProposal(changes ...paramTypes.ParamChange) paramTypes.ParameterChangeProposal {
+	return paramTypes.NewParameterChangeProposal(
 		"Test",
 		"description",
 		changes,
@@ -72,7 +72,7 @@ func newTestInput(t *testing.T) testInput {
 	err := cms.LoadLatestVersion()
 	require.Nil(t, err)
 
-	keeper := params.NewKeeper(cdc, keyParams, tKeyParams, params.DefaultCodespace)
+	keeper := params.NewKeeper(cdc, keyParams, tKeyParams, paramTypes.DefaultCodespace)
 	ctx := sdk.NewContext(cms, abci.Header{}, false, log.NewNopLogger())
 
 	return testInput{ctx, cdc, keeper}
@@ -81,10 +81,10 @@ func newTestInput(t *testing.T) testInput {
 func TestProposalHandlerPassed(t *testing.T) {
 	input := newTestInput(t)
 	ss := input.keeper.Subspace(testSubspace).WithKeyTable(
-		params.NewKeyTable().RegisterParamSet(&testParams{}),
+		subspace.NewKeyTable().RegisterParamSet(&testParams{}),
 	)
 
-	tp := testProposal(params.NewParamChange(testSubspace, keyMaxValidators, "1"))
+	tp := testProposal(paramTypes.NewParamChange(testSubspace, keyMaxValidators, "1"))
 	hdlr := params.NewParamChangeProposalHandler(input.keeper)
 	require.NoError(t, hdlr(input.ctx, tp))
 
@@ -96,10 +96,10 @@ func TestProposalHandlerPassed(t *testing.T) {
 func TestProposalHandlerFailed(t *testing.T) {
 	input := newTestInput(t)
 	ss := input.keeper.Subspace(testSubspace).WithKeyTable(
-		params.NewKeyTable().RegisterParamSet(&testParams{}),
+		subspace.NewKeyTable().RegisterParamSet(&testParams{}),
 	)
 
-	tp := testProposal(params.NewParamChange(testSubspace, keyMaxValidators, "invalidType"))
+	tp := testProposal(paramTypes.NewParamChange(testSubspace, keyMaxValidators, "invalidType"))
 	hdlr := params.NewParamChangeProposalHandler(input.keeper)
 	require.Error(t, hdlr(input.ctx, tp))
 
@@ -109,19 +109,19 @@ func TestProposalHandlerFailed(t *testing.T) {
 func TestProposalHandlerUpdateOmitempty(t *testing.T) {
 	input := newTestInput(t)
 	ss := input.keeper.Subspace(testSubspace).WithKeyTable(
-		params.NewKeyTable().RegisterParamSet(&testParams{}),
+		subspace.NewKeyTable().RegisterParamSet(&testParams{}),
 	)
 
 	hdlr := params.NewParamChangeProposalHandler(input.keeper)
 	var param testParamsSlashingRate
 
-	tp := testProposal(params.NewParamChange(testSubspace, keySlashingRate, `{"downtime": 7}`))
+	tp := testProposal(paramTypes.NewParamChange(testSubspace, keySlashingRate, `{"downtime": 7}`))
 	require.NoError(t, hdlr(input.ctx, tp))
 
 	ss.Get(input.ctx, []byte(keySlashingRate), &param)
 	require.Equal(t, testParamsSlashingRate{0, 7}, param)
 
-	tp = testProposal(params.NewParamChange(testSubspace, keySlashingRate, `{"double_sign": 10}`))
+	tp = testProposal(paramTypes.NewParamChange(testSubspace, keySlashingRate, `{"double_sign": 10}`))
 	require.NoError(t, hdlr(input.ctx, tp))
 
 	ss.Get(input.ctx, []byte(keySlashingRate), &param)
