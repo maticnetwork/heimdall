@@ -3,6 +3,7 @@ package types
 import (
 	"encoding/json"
 	"errors"
+	"math/big"
 
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
@@ -34,6 +35,7 @@ type GenesisState struct {
 	Validators       []*hmTypes.Validator      `json:"validators" yaml:"validators"`
 	CurrentValSet    hmTypes.ValidatorSet      `json:"current_val_set" yaml:"current_val_set"`
 	DividentAccounts []hmTypes.DividendAccount `json:"dividend_accounts" yaml:"dividend_accounts"`
+	StakingSequences []*big.Int                `json:"staking_sequences" yaml:"staking_sequences"`
 }
 
 // NewGenesisState creates a new genesis state.
@@ -41,18 +43,19 @@ func NewGenesisState(
 	validators []*hmTypes.Validator,
 	currentValSet hmTypes.ValidatorSet,
 	dividentAccounts []hmTypes.DividendAccount,
-
+	stakingSequences []*big.Int,
 ) GenesisState {
 	return GenesisState{
 		Validators:       validators,
 		CurrentValSet:    currentValSet,
 		DividentAccounts: dividentAccounts,
+		StakingSequences: stakingSequences,
 	}
 }
 
 // DefaultGenesisState returns a default genesis state
 func DefaultGenesisState() GenesisState {
-	return NewGenesisState(nil, hmTypes.ValidatorSet{}, nil)
+	return NewGenesisState(nil, hmTypes.ValidatorSet{}, nil, nil)
 }
 
 // ValidateGenesis performs basic validation of bor genesis data returning an
@@ -61,6 +64,11 @@ func ValidateGenesis(data GenesisState) error {
 	for _, validator := range data.Validators {
 		if !validator.ValidateBasic() {
 			return errors.New("Invalid validator")
+		}
+	}
+	for _, sq := range data.StakingSequences {
+		if sq == nil {
+			return errors.New("Invalid Sequence")
 		}
 	}
 

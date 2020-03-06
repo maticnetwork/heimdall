@@ -3,6 +3,7 @@ package staking
 import (
 	"bytes"
 	"fmt"
+	"math/big"
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -150,7 +151,10 @@ func HandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keeper, c
 	}
 
 	// sequence id
-	sequence := (receipt.BlockNumber.Uint64() * hmTypes.DefaultLogIndexUnit) + msg.LogIndex
+	sequenceBn := new(big.Int)
+
+	sequence := sequenceBn.Mul(receipt.BlockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
+	sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))
 
 	// check if incoming tx is older
 	if k.HasStakingSequence(ctx, sequence) {
@@ -159,7 +163,7 @@ func HandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keeper, c
 	}
 
 	// update last updated
-	validator.LastUpdated = sequence
+	validator.LastUpdated = sequence.Uint64()
 
 	// set validator amount
 	p, err := helper.GetPowerFromAmount(eventLog.NewAmount)
@@ -176,7 +180,8 @@ func HandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keeper, c
 	}
 
 	// save staking sequence
-	k.SetStakingSequence(ctx, sequence)
+
+	k.SetStakingSequence(ctx, sequenceBn)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -231,9 +236,10 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper,
 
 	// sequence id
 	sequence := (receipt.BlockNumber.Uint64() * hmTypes.DefaultLogIndexUnit) + msg.LogIndex
+	sequenceBn := new(big.Int).SetUint64(sequence)
 
 	// check if incoming tx is older
-	if k.HasStakingSequence(ctx, sequence) {
+	if k.HasStakingSequence(ctx, sequenceBn) {
 		k.Logger(ctx).Error("Older invalid tx found")
 		return hmCommon.ErrOldTx(k.Codespace()).Result()
 	}
@@ -275,7 +281,7 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper,
 		return hmCommon.ErrSignerUpdateError(k.Codespace()).Result()
 	}
 	// save staking sequence
-	k.SetStakingSequence(ctx, sequence)
+	k.SetStakingSequence(ctx, sequenceBn)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(

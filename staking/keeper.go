@@ -4,7 +4,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"math/big"
-	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -88,8 +87,8 @@ func GetValidatorMapKey(address []byte) []byte {
 }
 
 // GetStakingSequenceKey returns staking sequence key
-func GetStakingSequenceKey(sequence uint64) []byte {
-	return append(StakingSequenceKey, []byte(strconv.FormatUint(sequence, 10))...)
+func GetStakingSequenceKey(sequence big.Int) []byte {
+	return append(StakingSequenceKey, sequence.Bytes()...)
 }
 
 // AddValidator adds validator indexed with address
@@ -464,13 +463,44 @@ func (k *Keeper) IterateDividendAccountsByPrefixAndApplyFn(ctx sdk.Context, pref
 //
 
 // SetStakingSequence sets staking sequence
-func (k *Keeper) SetStakingSequence(ctx sdk.Context, sequence uint64) {
+func (k *Keeper) SetStakingSequence(ctx sdk.Context, sequence *big.Int) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(GetStakingSequenceKey(sequence), DefaultValue)
+
+	store.Set(GetStakingSequenceKey(*sequence), DefaultValue)
 }
 
 // HasStakingSequence checks if staking sequence already exists
-func (k *Keeper) HasStakingSequence(ctx sdk.Context, sequence uint64) bool {
+func (k *Keeper) HasStakingSequence(ctx sdk.Context, sequence *big.Int) bool {
 	store := ctx.KVStore(k.storeKey)
-	return store.Has(GetStakingSequenceKey(sequence))
+	return store.Has(GetStakingSequenceKey(*sequence))
+}
+
+// GetStakingSequences checks if Staking already exists
+func (k *Keeper) GetStakingSequences(ctx sdk.Context) (sequences []*big.Int) {
+	k.IterateStakingSequencesAndApplyFn(ctx, func(sequence big.Int) error {
+		sequences = append(sequences, &sequence)
+		return nil
+	})
+	return
+}
+
+// IterateStakingSequencesAndApplyFn interate validators and apply the given function.
+func (k *Keeper) IterateStakingSequencesAndApplyFn(ctx sdk.Context, f func(sequence big.Int) error) {
+	store := ctx.KVStore(k.storeKey)
+
+	// get sequence iterator
+	iterator := sdk.KVStorePrefixIterator(store, StakingSequenceKey)
+	defer iterator.Close()
+
+	// loop through validators to get valid validators
+	for ; iterator.Valid(); iterator.Next() {
+		bn := new(big.Int)
+		bn.SetBytes(iterator.Key()[len(StakingSequenceKey):])
+
+		// call function and return if required
+		if err := f(*bn); err != nil {
+			return
+		}
+	}
+	return
 }
