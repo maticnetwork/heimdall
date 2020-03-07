@@ -151,6 +151,23 @@ func (k *Keeper) GetValidatorInfo(ctx sdk.Context, address []byte) (validator hm
 	return validator, nil
 }
 
+// GetActiveValidatorInfo returns active validator
+func (k *Keeper) GetActiveValidatorInfo(ctx sdk.Context, address []byte) (validator hmTypes.Validator, err error) {
+	validator, err = k.GetValidatorInfo(ctx, address)
+	if err != nil {
+		return validator, err
+	}
+
+	// get ack count
+	ackCount := k.moduleCommunicator.GetACKCount(ctx)
+	if !validator.IsCurrentValidator(ackCount) {
+		return validator, errors.New("Validator is not active")
+	}
+
+	// return true if validator
+	return validator, nil
+}
+
 // GetCurrentValidators returns all validators who are in validator set
 func (k *Keeper) GetCurrentValidators(ctx sdk.Context) (validators []hmTypes.Validator) {
 	// get ack count

@@ -73,7 +73,7 @@ Where proposal.json contains:
 				return err
 			}
 
-			validatorID := viper.GetInt64(FlagValidatorID)
+			validatorID := viper.GetUint64(FlagValidatorID)
 			if validatorID == 0 {
 				return fmt.Errorf("Valid validator ID required")
 			}
@@ -81,7 +81,8 @@ Where proposal.json contains:
 			from := helper.GetFromAddress(cliCtx)
 			content := types.NewParameterChangeProposal(proposal.Title, proposal.Description, proposal.Changes.ToParamChanges())
 
-			msg := govTypes.NewMsgSubmitProposal(content, proposal.Deposit, from, hmTypes.ValidatorID(validatorID))
+			// create submit proposal
+			msg := govTypes.NewMsgSubmitProposal(content, proposal.Deposit, from, hmTypes.NewValidatorID(validatorID))
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}
