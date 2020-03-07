@@ -9,18 +9,18 @@ import (
 
 // validatorGovInfo used for tallying
 type validatorGovInfo struct {
-	Address     hmTypes.HeimdallAddress // address of the validator operator
-	VotingPower int64                   // voting power
-	Vote        types.VoteOption        // Vote of the validator
+	Validator   hmTypes.ValidatorID // id of the validator operator
+	VotingPower int64               // voting power
+	Vote        types.VoteOption    // Vote of the validator
 }
 
 func newValidatorGovInfo(
-	address hmTypes.HeimdallAddress,
+	validator hmTypes.ValidatorID,
 	votingPower int64,
 	vote types.VoteOption,
 ) validatorGovInfo {
 	return validatorGovInfo{
-		Address:     address,
+		Validator:   validator,
 		VotingPower: votingPower,
 		Vote:        vote,
 	}
@@ -36,12 +36,12 @@ func tally(ctx sdk.Context, keeper Keeper, proposal types.Proposal) (passes bool
 
 	totalBondedTokens := hmTypes.ZeroDec()
 	totalVotingPower := hmTypes.ZeroDec()
-	currValidators := make(map[string]validatorGovInfo)
+	currValidators := make(map[hmTypes.ValidatorID]validatorGovInfo)
 
 	// fetch all the bonded validators, insert them into currValidators
 	keeper.sk.IterateCurrentValidatorsAndApplyFn(ctx, func(validator *hmTypes.Validator) bool {
-		currValidators[validator.Signer.String()] = newValidatorGovInfo(
-			validator.Signer,
+		currValidators[validator.ID] = newValidatorGovInfo(
+			validator.ID,
 			validator.VotingPower,
 			types.OptionEmpty,
 		)
@@ -51,9 +51,9 @@ func tally(ctx sdk.Context, keeper Keeper, proposal types.Proposal) (passes bool
 
 	keeper.IterateVotes(ctx, proposal.ProposalID, func(vote types.Vote) bool {
 		// if validator, just record it in the map
-		if val, ok := currValidators[vote.Voter.String()]; ok {
+		if val, ok := currValidators[vote.Voter]; ok {
 			val.Vote = vote.Option
-			currValidators[vote.Voter.String()] = val
+			currValidators[vote.Voter] = val
 		}
 
 		keeper.deleteVote(ctx, vote.ProposalID, vote.Voter)

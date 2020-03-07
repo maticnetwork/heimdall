@@ -428,7 +428,7 @@ func queryVoteHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		vars := mux.Vars(r)
 		strProposalID := vars[RestProposalID]
-		strVoterID := vars[RestDepositor]
+		strVoterID := vars[RestVoter]
 
 		if len(strProposalID) == 0 {
 			err := errors.New("proposalId required but not specified")

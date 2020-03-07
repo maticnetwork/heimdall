@@ -173,7 +173,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	config.Seal()
 
 	// base app
-	bApp := bam.NewBaseApp(AppName, logger, db, authTypes.RLPTxDecoder(pulp), baseAppOptions...)
+	bApp := bam.NewBaseApp(AppName, logger, db, authTypes.RLPTxDecoder(cdc, pulp), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(nil)
 	bApp.SetAppVersion(version.Version)
 
@@ -401,15 +401,8 @@ func MakeCodec() *codec.Codec {
 
 	codec.RegisterCrypto(cdc)
 	sdk.RegisterCodec(cdc)
+	ModuleBasics.RegisterCodec(cdc)
 
-	authTypes.RegisterCodec(cdc)
-	bankTypes.RegisterCodec(cdc)
-	supplyTypes.RegisterCodec(cdc)
-	checkpointTypes.RegisterCodec(cdc)
-	stakingTypes.RegisterCodec(cdc)
-	borTypes.RegisterCodec(cdc)
-	clerkTypes.RegisterCodec(cdc)
-	topupTypes.RegisterCodec(cdc)
 	cdc.Seal()
 	return cdc
 }
@@ -419,12 +412,8 @@ func MakePulp() *authTypes.Pulp {
 	pulp := authTypes.GetPulpInstance()
 
 	// register custom type
-	bankTypes.RegisterPulp(pulp)
-	stakingTypes.RegisterPulp(pulp)
 	checkpointTypes.RegisterPulp(pulp)
-	borTypes.RegisterPulp(pulp)
-	clerkTypes.RegisterPulp(pulp)
-	topupTypes.RegisterPulp(pulp)
+
 	return pulp
 }
 
@@ -546,6 +535,9 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) ab
 			}
 		}
 	}
+
+	// end block
+	app.mm.EndBlock(ctx, req)
 
 	// send validator updates to peppermint
 	return abci.ResponseEndBlock{

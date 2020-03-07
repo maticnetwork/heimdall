@@ -74,7 +74,7 @@ func NewCheckpointer(cdc *codec.Codec, queueConnector *QueueConnector, httpClien
 		storageClient:     getBridgeDBInstance(viper.GetString(BridgeDBFlag)),
 		HeaderChannel:     make(chan *types.Header),
 		contractConnector: contractCaller,
-		txEncoder:         authTypes.NewTxBuilderFromCLI().WithTxEncoder(helper.GetTxEncoder()).WithChainID(helper.GetGenesisDoc().ChainID),
+		txEncoder:         authTypes.NewTxBuilderFromCLI().WithTxEncoder(helper.GetTxEncoder(cdc)).WithChainID(helper.GetGenesisDoc().ChainID),
 
 		cliCtx:         cliCtx,
 		queueConnector: queueConnector,

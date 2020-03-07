@@ -3,6 +3,7 @@ package types
 import (
 	"encoding/json"
 
+	"github.com/maticnetwork/heimdall/gov/types"
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
@@ -60,12 +61,8 @@ func genFirstSpan(valset hmTypes.ValidatorSet) []*hmTypes.Span {
 func GetGenesisStateFromAppState(appState map[string]json.RawMessage) GenesisState {
 	var genesisState GenesisState
 	if appState[ModuleName] != nil {
-		err := json.Unmarshal(appState[ModuleName], &genesisState)
-		if err != nil {
-			panic(err)
-		}
+		types.ModuleCdc.MustUnmarshalJSON(appState[ModuleName], &genesisState)
 	}
-
 	return genesisState
 }
 
@@ -75,10 +72,6 @@ func SetGenesisStateToAppState(appState map[string]json.RawMessage, currentValSe
 	borState := GetGenesisStateFromAppState(appState)
 	borState.Spans = genFirstSpan(currentValSet)
 
-	var err error
-	appState[ModuleName], err = json.Marshal(borState)
-	if err != nil {
-		return appState, err
-	}
+	appState[ModuleName] = types.ModuleCdc.MustMarshalJSON(borState)
 	return appState, nil
 }

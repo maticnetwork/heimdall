@@ -17,6 +17,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/input"
 	"github.com/cosmos/cosmos-sdk/client/keys"
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/common"
@@ -188,30 +189,30 @@ func GetVoteBytes(unFilteredVotes []*tmTypes.CommitSig, chainID string) []byte {
 }
 
 // GetTxEncoder returns tx encoder
-func GetTxEncoder() sdk.TxEncoder {
-	return authTypes.RLPTxEncoder(authTypes.GetPulpInstance())
+func GetTxEncoder(cdc *codec.Codec) sdk.TxEncoder {
+	return authTypes.RLPTxEncoder(cdc, authTypes.GetPulpInstance())
 }
 
 // GetTxDecoder returns tx decoder
-func GetTxDecoder() sdk.TxDecoder {
-	return authTypes.RLPTxDecoder(authTypes.GetPulpInstance())
+func GetTxDecoder(cdc *codec.Codec) sdk.TxDecoder {
+	return authTypes.RLPTxDecoder(cdc, authTypes.GetPulpInstance())
 }
 
 // GetStdTxBytes get tx bytes
 func GetStdTxBytes(cliCtx context.CLIContext, tx authTypes.StdTx) ([]byte, error) {
-	txBldr := authTypes.NewTxBuilderFromCLI().WithTxEncoder(GetTxEncoder())
+	txBldr := authTypes.NewTxBuilderFromCLI().WithTxEncoder(GetTxEncoder(cliCtx.Codec))
 	return txBldr.GetStdTxBytes(tx)
 }
 
 // BroadcastMsgs creates transaction and broadcasts it
 func BroadcastMsgs(cliCtx context.CLIContext, msgs []sdk.Msg) (sdk.TxResponse, error) {
-	txBldr := authTypes.NewTxBuilderFromCLI().WithTxEncoder(GetTxEncoder())
+	txBldr := authTypes.NewTxBuilderFromCLI().WithTxEncoder(GetTxEncoder(cliCtx.Codec))
 	return BuildAndBroadcastMsgs(cliCtx, txBldr, msgs)
 }
 
 // BroadcastTx broadcasts transaction
 func BroadcastTx(cliCtx context.CLIContext, tx authTypes.StdTx, mode string) (res sdk.TxResponse, err error) {
-	txBldr := authTypes.NewTxBuilderFromCLI().WithTxEncoder(GetTxEncoder())
+	txBldr := authTypes.NewTxBuilderFromCLI().WithTxEncoder(GetTxEncoder(cliCtx.Codec))
 
 	var txBytes []byte
 	txBytes, err = txBldr.GetStdTxBytes(tx)
@@ -225,7 +226,7 @@ func BroadcastTx(cliCtx context.CLIContext, tx authTypes.StdTx, mode string) (re
 // BroadcastMsgsWithCLI creates message and sends tx
 // Used from cli- waits till transaction is included in block
 func BroadcastMsgsWithCLI(cliCtx context.CLIContext, msgs []sdk.Msg) error {
-	txBldr := authTypes.NewTxBuilderFromCLI().WithTxEncoder(GetTxEncoder())
+	txBldr := authTypes.NewTxBuilderFromCLI().WithTxEncoder(GetTxEncoder(cliCtx.Codec))
 
 	if cliCtx.GenerateOnly {
 		return PrintUnsignedStdTx(cliCtx, txBldr, msgs)
@@ -428,7 +429,7 @@ func PrintUnsignedStdTx(cliCtx context.CLIContext, txBldr authTypes.TxBuilder, m
 func SignStdTx(
 	cliCtx context.CLIContext, stdTx authTypes.StdTx, appendSig bool, offline bool,
 ) (authTypes.StdTx, error) {
-	txBldr := authTypes.NewTxBuilderFromCLI().WithTxEncoder(GetTxEncoder())
+	txBldr := authTypes.NewTxBuilderFromCLI().WithTxEncoder(GetTxEncoder(cliCtx.Codec))
 
 	var signedStdTx authTypes.StdTx
 

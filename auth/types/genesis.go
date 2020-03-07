@@ -55,12 +55,8 @@ func DefaultGenesisState() GenesisState {
 func GetGenesisStateFromAppState(appState map[string]json.RawMessage) GenesisState {
 	var genesisState GenesisState
 	if appState[ModuleName] != nil {
-		err := json.Unmarshal(appState[ModuleName], &genesisState)
-		if err != nil {
-			panic(err)
-		}
+		ModuleCdc.MustUnmarshalJSON(appState[ModuleName], &genesisState)
 	}
-
 	return genesisState
 }
 
@@ -68,11 +64,8 @@ func GetGenesisStateFromAppState(appState map[string]json.RawMessage) GenesisSta
 func SetGenesisStateToAppState(appState map[string]json.RawMessage, accounts []GenesisAccount) (map[string]json.RawMessage, error) {
 	authState := GetGenesisStateFromAppState(appState)
 	authState.Accounts = accounts
-	var err error
-	appState[ModuleName], err = json.Marshal(authState)
-	if err != nil {
-		return appState, err
-	}
+
+	appState[ModuleName] = ModuleCdc.MustMarshalJSON(authState)
 	return appState, nil
 }
 

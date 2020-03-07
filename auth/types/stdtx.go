@@ -1,6 +1,7 @@
 package types
 
 import (
+	"bytes"
 	"encoding/json"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -190,22 +191,39 @@ func (fee StdFee) GasPrices() types.DecCoins {
 // Decoders
 //
 
+var emptyPrefix = make([]byte, 4)
+
 // RLPTxDecoder decodes the txBytes to a StdTX
-func RLPTxDecoder(pulp *Pulp) sdk.TxDecoder {
+func RLPTxDecoder(cdc *codec.Codec, pulp *Pulp) sdk.TxDecoder {
+	defaultDecoder := DefaultTxDecoder(cdc)
+
 	return func(txBytes []byte) (sdk.Tx, sdk.Error) {
-		tx, err := pulp.DecodeBytes(txBytes)
-		if err != nil {
-			return nil, sdk.ErrTxDecode(err.Error())
+		if !bytes.Equal(txBytes[:4], emptyPrefix) {
+			tx, err := pulp.DecodeBytes(txBytes)
+			if err != nil {
+				return nil, sdk.ErrTxDecode(err.Error())
+			}
+
+			return tx.(sdk.Tx), nil
 		}
 
-		return tx.(sdk.Tx), nil
+		return defaultDecoder(txBytes[4:])
 	}
 }
 
 // RLPTxEncoder logic for RLP transaction encoding
-func RLPTxEncoder(pulp *Pulp) sdk.TxEncoder {
+func RLPTxEncoder(cdc *codec.Codec, pulp *Pulp) sdk.TxEncoder {
+	defaultEncoder := DefaultTxEncoder(cdc)
+
 	return func(tx sdk.Tx) ([]byte, error) {
-		return pulp.EncodeToBytes(tx.(StdTx))
+		msgs := tx.GetMsgs()
+		if len(msgs) > 0 && msgs[0].Type() == "checkpoint" && msgs[0].Route() == "checkpoint" {
+			return pulp.EncodeToBytes(tx.(StdTx))
+		}
+
+		result, err := defaultEncoder(tx)
+		result = append(emptyPrefix, result...)
+		return result, err
 	}
 }
 

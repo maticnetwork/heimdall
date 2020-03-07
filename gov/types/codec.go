@@ -14,9 +14,9 @@ var ModuleCdc = codec.New()
 func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterInterface((*Content)(nil), nil)
 
-	cdc.RegisterConcrete(MsgSubmitProposal{}, "heimdall/MsgSubmitProposal", nil)
-	cdc.RegisterConcrete(MsgDeposit{}, "heimdall/MsgDeposit", nil)
-	cdc.RegisterConcrete(MsgVote{}, "heimdall/MsgVote", nil)
+	cdc.RegisterConcrete(MsgSubmitProposal{}, "gov/MsgSubmitProposal", nil)
+	cdc.RegisterConcrete(MsgDeposit{}, "gov/MsgDeposit", nil)
+	cdc.RegisterConcrete(MsgVote{}, "gov/MsgVote", nil)
 
 	cdc.RegisterConcrete(TextProposal{}, "heimdall/TextProposal", nil)
 	cdc.RegisterConcrete(SoftwareUpgradeProposal{}, "heimdall/SoftwareUpgradeProposal", nil)
