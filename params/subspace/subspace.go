@@ -1,7 +1,6 @@
 package subspace
 
 import (
-	"errors"
 	"reflect"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -82,14 +81,6 @@ func (s Subspace) transientStore(ctx sdk.Context) sdk.KVStore {
 	return prefix.NewStore(ctx.TransientStore(s.tkey), append(s.name, '/'))
 }
 
-func concatKeys(key, subkey []byte) (res []byte) {
-	res = make([]byte, len(key)+1+len(subkey))
-	copy(res, key)
-	res[len(key)] = '/'
-	copy(res[len(key)+1:], subkey)
-	return
-}
-
 // Get parameter from store
 func (s Subspace) Get(ctx sdk.Context, key []byte, ptr interface{}) {
 	store := s.kvStore(ctx)
@@ -111,17 +102,6 @@ func (s Subspace) GetIfExists(ctx sdk.Context, key []byte, ptr interface{}) {
 	if err != nil {
 		panic(err)
 	}
-}
-
-// GetWithSubkey returns a parameter with a given key and a subkey.
-func (s Subspace) GetWithSubkey(ctx sdk.Context, key, subkey []byte, ptr interface{}) {
-	s.Get(ctx, concatKeys(key, subkey), ptr)
-}
-
-// GetWithSubkeyIfExists  returns a parameter with a given key and a subkey but does not
-// modify ptr if the stored parameter is nil.
-func (s Subspace) GetWithSubkeyIfExists(ctx sdk.Context, key, subkey []byte, ptr interface{}) {
-	s.GetIfExists(ctx, concatKeys(key, subkey), ptr)
 }
 
 // Get raw bytes of parameter from store
@@ -197,50 +177,6 @@ func (s Subspace) Update(ctx sdk.Context, key []byte, param []byte) error {
 	s.Set(ctx, key, dest)
 	tStore := s.transientStore(ctx)
 	tStore.Set(key, []byte{})
-
-	return nil
-}
-
-// SetWithSubkey set a parameter with a key and subkey
-// Checks parameter type only over the key
-func (s Subspace) SetWithSubkey(ctx sdk.Context, key []byte, subkey []byte, param interface{}) {
-	store := s.kvStore(ctx)
-
-	s.checkType(store, key, param)
-
-	newkey := concatKeys(key, subkey)
-
-	bz, err := s.cdc.MarshalJSON(param)
-	if err != nil {
-		panic(err)
-	}
-	store.Set(newkey, bz)
-
-	tstore := s.transientStore(ctx)
-	tstore.Set(newkey, []byte{})
-}
-
-// UpdateWithSubkey stores raw parameter bytes  with a key and subkey. It checks
-// the parameter type only over the key.
-func (s Subspace) UpdateWithSubkey(ctx sdk.Context, key []byte, subkey []byte, param []byte) error {
-	concatkey := concatKeys(key, subkey)
-
-	attr, ok := s.table.m[string(concatkey)]
-	if !ok {
-		return errors.New("parameter not registered")
-	}
-
-	ty := attr.ty
-	dest := reflect.New(ty).Interface()
-	s.GetWithSubkeyIfExists(ctx, key, subkey, dest)
-	err := s.cdc.UnmarshalJSON(param, dest)
-	if err != nil {
-		return err
-	}
-
-	s.SetWithSubkey(ctx, key, subkey, dest)
-	tStore := s.transientStore(ctx)
-	tStore.Set(concatkey, []byte{})
 
 	return nil
 }

@@ -21,7 +21,6 @@ type (
 	ParamChangeJSON struct {
 		Subspace string          `json:"subspace" yaml:"subspace"`
 		Key      string          `json:"key" yaml:"key"`
-		Subkey   string          `json:"subkey,omitempty" yaml:"subkey,omitempty"`
 		Value    json.RawMessage `json:"value" yaml:"value"`
 	}
 
@@ -48,13 +47,13 @@ type (
 	}
 )
 
-func NewParamChangeJSON(subspace, key, subkey string, value json.RawMessage) ParamChangeJSON {
-	return ParamChangeJSON{subspace, key, subkey, value}
+func NewParamChangeJSON(subspace string, key string, value json.RawMessage) ParamChangeJSON {
+	return ParamChangeJSON{subspace, key, value}
 }
 
 // ToParamChange converts a ParamChangeJSON object to ParamChange.
 func (pcj ParamChangeJSON) ToParamChange() types.ParamChange {
-	return types.NewParamChangeWithSubkey(pcj.Subspace, pcj.Key, pcj.Subkey, string(pcj.Value))
+	return types.NewParamChange(pcj.Subspace, pcj.Key, string(pcj.Value))
 }
 
 // ToParamChanges converts a slice of ParamChangeJSON objects to a slice of

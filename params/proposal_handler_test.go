@@ -48,6 +48,15 @@ func (tp *testParams) ParamSetPairs() subspace.ParamSetPairs {
 	}
 }
 
+type invalidParamProposal struct{}
+
+func (invalidParamProposal) GetTitle() string         { return "" }
+func (invalidParamProposal) GetDescription() string   { return "" }
+func (invalidParamProposal) ProposalRoute() string    { return "" }
+func (invalidParamProposal) ProposalType() string     { return "" }
+func (invalidParamProposal) ValidateBasic() sdk.Error { return nil }
+func (invalidParamProposal) String() string           { return "" }
+
 func testProposal(changes ...paramTypes.ParamChange) paramTypes.ParameterChangeProposal {
 	return paramTypes.NewParameterChangeProposal(
 		"Test",
@@ -104,6 +113,17 @@ func TestProposalHandlerFailed(t *testing.T) {
 	require.Error(t, hdlr(input.ctx, tp))
 
 	require.False(t, ss.Has(input.ctx, []byte(keyMaxValidators)))
+
+	require.Error(t, hdlr(input.ctx, invalidParamProposal{}))
+}
+
+func TestProposalHandlerSubspaceFailed(t *testing.T) {
+	input := newTestInput(t)
+
+	// without subspace
+	tp := testProposal(paramTypes.NewParamChange(testSubspace, keySlashingRate, `{"downtime": 7}`))
+	hdlr := params.NewParamChangeProposalHandler(input.keeper)
+	require.Error(t, hdlr(input.ctx, tp))
 }
 
 func TestProposalHandlerUpdateOmitempty(t *testing.T) {

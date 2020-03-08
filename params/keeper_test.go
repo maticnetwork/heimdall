@@ -104,6 +104,18 @@ func indirect(ptr interface{}) interface{} {
 	return reflect.ValueOf(ptr).Elem().Interface()
 }
 
+func TestSubspaceCreation(t *testing.T) {
+	_, _, _, _, keeper := testComponents()
+	require.Panics(t, func() { keeper.Subspace("") }, "creating subspace with empty should panic")
+
+	// create keeper
+	_ = keeper.Subspace("test")
+	require.Panics(t, func() { keeper.Subspace("test") }, "creating subspace with same key should panic")
+
+	_, ok := keeper.GetSubspace("test1")
+	require.False(t, ok, "getting subspace with no key not return not-ok result")
+}
+
 func TestSubspace(t *testing.T) {
 	cdc, ctx, key, _, keeper := testComponents()
 
