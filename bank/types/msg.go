@@ -254,6 +254,16 @@ func (msg MsgTopup) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.FromAddress)}
 }
 
+// GetTxHash Returns tx hash
+func (msg MsgTopup) GetTxHash() types.HeimdallHash {
+	return msg.TxHash
+}
+
+// GetLogIndex Returns log index
+func (msg MsgTopup) GetLogIndex() uint64 {
+	return msg.LogIndex
+}
+
 //
 // Fee token withdrawal
 //
