@@ -90,7 +90,7 @@ func (c *ContractCaller) SendCheckpoint(voteSignBytes []byte, sigs []byte, txDat
 		Logger.Error("Error while submitting checkpoint", "error", err)
 		return err
 	} else {
-		Logger.Info("Submitted new header successfully", "txHash", tx.Hash().String())
+		Logger.Info("Submitted new checkpoint to rootchain successfully", "txHash", tx.Hash().String())
 	}
 	return nil
 }

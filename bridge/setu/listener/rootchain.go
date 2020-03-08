@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"math/big"
 	"strconv"
-	"time"
 
 	"github.com/RichardKnop/machinery/v1/tasks"
 	ethereum "github.com/maticnetwork/bor"
@@ -178,9 +177,6 @@ func (rl *RootChainListener) sendTask(taskName string, eventName string, logByte
 		},
 	}
 	signature.RetryCount = 3
-	// Delay the task by 5 seconds
-	eta := time.Now().UTC().Add(time.Second * 5)
-	signature.ETA = &eta
 
 	_, err := rl.queueConnector.Server.SendTask(signature)
 	if err != nil {

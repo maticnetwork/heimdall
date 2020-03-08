@@ -181,9 +181,7 @@ func (hl *HeimdallListener) sendTask(taskName string, eventBytes []byte) {
 		},
 	}
 	signature.RetryCount = 3
-	// Delay the task by 5 seconds
-	eta := time.Now().UTC().Add(time.Second * 5)
-	signature.ETA = &eta
+
 	// send task
 	_, err := hl.queueConnector.Server.SendTask(signature)
 	if err != nil {

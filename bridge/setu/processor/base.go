@@ -7,7 +7,6 @@ import (
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb"
 
-	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/heimdall/bridge/setu/broadcaster"
 	"github.com/maticnetwork/heimdall/bridge/setu/queue"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
@@ -52,14 +51,12 @@ type BaseProcessor struct {
 	// http client to subscribe to
 	httpClient *httpClient.HTTP
 
-	rootchainAbi *abi.ABI
-
 	// storage client
 	storageClient *leveldb.DB
 }
 
 // NewBaseProcessor creates a new BaseProcessor.
-func NewBaseProcessor(cdc *codec.Codec, queueConnector *queue.QueueConnector, httpClient *httpClient.HTTP, txBroadcaster *broadcaster.TxBroadcaster, rootchainAbi *abi.ABI, name string, impl Processor) *BaseProcessor {
+func NewBaseProcessor(cdc *codec.Codec, queueConnector *queue.QueueConnector, httpClient *httpClient.HTTP, txBroadcaster *broadcaster.TxBroadcaster, name string, impl Processor) *BaseProcessor {
 	logger := util.Logger().With("service", "processor", "module", name)
 
 	cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
@@ -88,7 +85,6 @@ func NewBaseProcessor(cdc *codec.Codec, queueConnector *queue.QueueConnector, ht
 		contractConnector: contractCaller,
 		txBroadcaster:     txBroadcaster,
 		httpClient:        httpClient,
-		rootchainAbi:      rootchainAbi,
 		storageClient:     util.GetBridgeDBInstance(viper.GetString(util.BridgeDBFlag)),
 	}
 }

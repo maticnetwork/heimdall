@@ -57,24 +57,24 @@ func NewProcessorService(
 	//
 
 	// initialize checkpoint processor
-	checkpointProcessor := NewCheckpointProcessor()
-	checkpointProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, httpClient, txBroadcaster, &contractCaller.RootChainABI, "checkpoint", checkpointProcessor)
-
-	// initialize staking processor
-	stakingProcessor := &StakingProcessor{}
-	stakingProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, httpClient, txBroadcaster, &contractCaller.RootChainABI, "staking", stakingProcessor)
-
-	// initialize clerk processor
-	clerkProcessor := &ClerkProcessor{}
-	clerkProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, httpClient, txBroadcaster, &contractCaller.RootChainABI, "clerk", clerkProcessor)
+	checkpointProcessor := NewCheckpointProcessor(&contractCaller.RootChainABI)
+	checkpointProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, httpClient, txBroadcaster, "checkpoint", checkpointProcessor)
 
 	// initialize fee processor
-	feeProcessor := &FeeProcessor{}
-	feeProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, httpClient, txBroadcaster, &contractCaller.RootChainABI, "fee", feeProcessor)
+	feeProcessor := NewFeeProcessor(&contractCaller.StakingInfoABI)
+	feeProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, httpClient, txBroadcaster, "fee", feeProcessor)
+
+	// initialize staking processor
+	stakingProcessor := NewStakingProcessor(&contractCaller.StakingInfoABI)
+	stakingProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, httpClient, txBroadcaster, "staking", stakingProcessor)
+
+	// initialize clerk processor
+	clerkProcessor := NewClerkProcessor(&contractCaller.StateSenderABI)
+	clerkProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, httpClient, txBroadcaster, "clerk", clerkProcessor)
 
 	// initialize span processor
 	spanProcessor := &SpanProcessor{}
-	spanProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, httpClient, txBroadcaster, &contractCaller.RootChainABI, "span", spanProcessor)
+	spanProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, httpClient, txBroadcaster, "span", spanProcessor)
 
 	//
 	// Select processors

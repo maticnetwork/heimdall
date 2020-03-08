@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 
+	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
@@ -15,6 +16,15 @@ import (
 // StakingProcessor - process staking related events
 type StakingProcessor struct {
 	BaseProcessor
+	stakingInfoAbi *abi.ABI
+}
+
+// NewStakingProcessor - add  abi to staking processor
+func NewStakingProcessor(stakingInfoAbi *abi.ABI) *StakingProcessor {
+	stakingProcessor := &StakingProcessor{
+		stakingInfoAbi: stakingInfoAbi,
+	}
+	return stakingProcessor
 }
 
 // Start starts new block subscription
@@ -39,10 +49,10 @@ func (sp *StakingProcessor) sendUnstakeInitToHeimdall(eventName string, logBytes
 	}
 
 	event := new(stakinginfo.StakinginfoUnstakeInit)
-	if err := helper.UnpackLog(sp.rootchainAbi, event, eventName, &vLog); err != nil {
+	if err := helper.UnpackLog(sp.stakingInfoAbi, event, eventName, &vLog); err != nil {
 		sp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
 	} else {
-		sp.Logger.Debug(
+		sp.Logger.Info(
 			"✅ Received task to send unstake-init to heimdall",
 			"event", eventName,
 			"validator", event.User,
@@ -78,10 +88,10 @@ func (sp *StakingProcessor) sendStakeUpdateToHeimdall(eventName string, logBytes
 	}
 
 	event := new(stakinginfo.StakinginfoStakeUpdate)
-	if err := helper.UnpackLog(sp.rootchainAbi, event, eventName, &vLog); err != nil {
+	if err := helper.UnpackLog(sp.stakingInfoAbi, event, eventName, &vLog); err != nil {
 		sp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
 	} else {
-		sp.Logger.Debug(
+		sp.Logger.Info(
 			"✅ Received task to send stake-update to heimdall",
 			"event", eventName,
 			"validatorID", event.ValidatorId,
@@ -115,10 +125,10 @@ func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logByte
 	}
 
 	event := new(stakinginfo.StakinginfoSignerChange)
-	if err := helper.UnpackLog(sp.rootchainAbi, event, eventName, &vLog); err != nil {
+	if err := helper.UnpackLog(sp.stakingInfoAbi, event, eventName, &vLog); err != nil {
 		sp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
 	} else {
-		sp.Logger.Debug(
+		sp.Logger.Info(
 			"✅ Received task to send signer-change to heimdall",
 			"event", eventName,
 			"validatorID", event.ValidatorId,

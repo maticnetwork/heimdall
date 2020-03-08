@@ -13,6 +13,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	// "github.com/streadway/amqp"
 
+	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/core/types"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 
@@ -33,6 +34,9 @@ type CheckpointProcessor struct {
 
 	// Rootchain instance
 	rootChainInstance *rootchain.Rootchain
+
+	// Rootchain abi
+	rootchainAbi *abi.ABI
 }
 
 // Result represents single req result
@@ -41,7 +45,7 @@ type Result struct {
 }
 
 // NewCheckpointProcessor - add rootchain abi to checkpoint processor
-func NewCheckpointProcessor() *CheckpointProcessor {
+func NewCheckpointProcessor(rootchainAbi *abi.ABI) *CheckpointProcessor {
 	// root chain instance
 	rootchainInstance, err := helper.GetRootChainInstance()
 	if err != nil {
@@ -49,6 +53,7 @@ func NewCheckpointProcessor() *CheckpointProcessor {
 	}
 	checkpointProcessor := &CheckpointProcessor{
 		rootChainInstance: rootchainInstance,
+		rootchainAbi:      rootchainAbi,
 	}
 	return checkpointProcessor
 }

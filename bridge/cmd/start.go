@@ -65,9 +65,7 @@ func GetStartCmd() *cobra.Command {
 				for range catchSignal {
 					// stop processes
 					logger.Info("Received stop signal - Stopping all services")
-
 					for _, service := range services {
-						logger.Info("Stopping all services")
 						service.Stop()
 					}
 

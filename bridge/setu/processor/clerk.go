@@ -8,6 +8,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethereum "github.com/maticnetwork/bor"
+	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/core/types"
 	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
 	"github.com/maticnetwork/heimdall/contracts/statesender"
@@ -18,6 +19,15 @@ import (
 // ClerkProcessor - sync state/deposit events
 type ClerkProcessor struct {
 	BaseProcessor
+	stateSenderAbi *abi.ABI
+}
+
+// NewClerkProcessor - add statesender abi to clerk processor
+func NewClerkProcessor(stateSenderAbi *abi.ABI) *ClerkProcessor {
+	clerkProcessor := &ClerkProcessor{
+		stateSenderAbi: stateSenderAbi,
+	}
+	return clerkProcessor
 }
 
 // Start starts new block subscription
@@ -34,40 +44,6 @@ func (cp *ClerkProcessor) RegisterTasks() {
 
 }
 
-// // ProcessMsg - identify clerk msg type and delegate to msg/event handlers
-// func (cp *ClerkProcessor) ProcessMsg(amqpMsg amqp.Delivery) {
-// 	switch amqpMsg.AppId {
-// 	case "rootchain":
-// 		var vLog = types.Log{}
-// 		if err := json.Unmarshal(amqpMsg.Body, &vLog); err != nil {
-// 			cp.Logger.Error("Error while unmarshalling event from rootchain", "error", err)
-// 			amqpMsg.Reject(false)
-// 			return
-// 		}
-// 		if err := cp.HandleStateSyncEvent(amqpMsg.Type, &vLog); err != nil {
-// 			cp.Logger.Error("Error while processing Statesync event from rootchain", "error", err)
-// 			amqpMsg.Reject(true)
-// 			return
-// 		}
-// 	case "heimdall":
-// 		var event = sdk.StringEvent{}
-// 		if err := json.Unmarshal(amqpMsg.Body, &event); err != nil {
-// 			cp.Logger.Error("Error unmarshalling event from heimdall", "error", err)
-// 			amqpMsg.Reject(false)
-// 			return
-// 		}
-// 		if err := cp.HandleRecordConfirmation(event); err != nil {
-// 			cp.Logger.Error("Error while processing record event from heimdall", "error", err)
-// 			amqpMsg.Reject(true)
-// 			return
-// 		}
-// 	default:
-// 		cp.Logger.Info("AppID mismatch", "appId", amqpMsg.AppId)
-// 	}
-// 	// send ack
-// 	amqpMsg.Ack(false)
-// }
-
 // HandleStateSyncEvent - handle state sync event from rootchain
 // 1. check if this deposit event has to be broadcasted to heimdall
 // 2. create and broadcast  record transaction to heimdall
@@ -79,7 +55,7 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 	}
 
 	event := new(statesender.StatesenderStateSynced)
-	if err := helper.UnpackLog(cp.rootchainAbi, event, eventName, &vLog); err != nil {
+	if err := helper.UnpackLog(cp.stateSenderAbi, event, eventName, &vLog); err != nil {
 		cp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
 	} else {
 		cp.Logger.Debug(

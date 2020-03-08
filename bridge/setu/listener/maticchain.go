@@ -2,7 +2,6 @@ package listener
 
 import (
 	"context"
-	"time"
 
 	"github.com/RichardKnop/machinery/v1/tasks"
 	"github.com/maticnetwork/bor/core/types"
@@ -74,9 +73,7 @@ func (ml *MaticChainListener) sendTask(taskName string, headerBytes []byte) {
 		},
 	}
 	signature.RetryCount = 3
-	// Delay the task by 5 seconds
-	eta := time.Now().UTC().Add(time.Second * 5)
-	signature.ETA = &eta
+
 	// send task
 	_, err := ml.queueConnector.Server.SendTask(signature)
 	if err != nil {

@@ -3,6 +3,7 @@ package processor
 import (
 	"encoding/json"
 
+	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/core/types"
 	bankTypes "github.com/maticnetwork/heimdall/bank/types"
 	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
@@ -13,6 +14,15 @@ import (
 // FeeProcessor - process fee related events
 type FeeProcessor struct {
 	BaseProcessor
+	stakingInfoAbi *abi.ABI
+}
+
+// NewFeeProcessor - add  abi to clerk processor
+func NewFeeProcessor(stakingInfoAbi *abi.ABI) *FeeProcessor {
+	feeProcessor := &FeeProcessor{
+		stakingInfoAbi: stakingInfoAbi,
+	}
+	return feeProcessor
 }
 
 // Start starts new block subscription
@@ -27,29 +37,6 @@ func (fp *FeeProcessor) RegisterTasks() {
 	fp.queueConnector.Server.RegisterTask("sendTopUpFeeToHeimdall", fp.sendTopUpFeeToHeimdall)
 }
 
-// // ProcessMsg - identify Topup msg type and delegate to msg/event handlers
-// func (fp *FeeProcessor) ProcessMsg(amqpMsg amqp.Delivery) {
-// 	switch amqpMsg.AppId {
-// 	case "rootchain":
-// 		var vLog = types.Log{}
-// 		if err := json.Unmarshal(amqpMsg.Body, &vLog); err != nil {
-// 			fp.Logger.Error("Error while unmarshalling event from rootchain", "error", err)
-// 			amqpMsg.Reject(false)
-// 			return
-// 		}
-// 		if err := fp.processTopupFeeEvent(amqpMsg.Type, &vLog); err != nil {
-// 			fp.Logger.Error("Error while processing topup event from rootchain", "error", err)
-// 			amqpMsg.Reject(true)
-// 			return
-// 		}
-// 	default:
-// 		fp.Logger.Info("AppID mismatch", "appId", amqpMsg.AppId)
-// 	}
-
-// 	// send ack
-// 	amqpMsg.Ack(false)
-// }
-
 // processTopupFeeEvent - processes topup fee event
 func (fp *FeeProcessor) sendTopUpFeeToHeimdall(eventName string, logBytes string) error {
 	var vLog = types.Log{}
@@ -59,7 +46,7 @@ func (fp *FeeProcessor) sendTopUpFeeToHeimdall(eventName string, logBytes string
 	}
 
 	event := new(stakinginfo.StakinginfoTopUpFee)
-	if err := helper.UnpackLog(fp.rootchainAbi, event, eventName, &vLog); err != nil {
+	if err := helper.UnpackLog(fp.stakingInfoAbi, event, eventName, &vLog); err != nil {
 		fp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
 	} else {
 
