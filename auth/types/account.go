@@ -13,6 +13,7 @@ import (
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	yaml "gopkg.in/yaml.v2"
 
+	"github.com/maticnetwork/heimdall/auth/exported"
 	"github.com/maticnetwork/heimdall/types"
 )
 
@@ -29,29 +30,9 @@ func init() {
 // and a pubkey for authentication purposes.
 //
 // Many complex conditions can be used in the concrete struct which implements Account.
-type Account interface {
-	GetAddress() types.HeimdallAddress
-	SetAddress(types.HeimdallAddress) error // errors if already set.
-
-	GetPubKey() crypto.PubKey // can return nil.
-	SetPubKey(crypto.PubKey) error
-
-	GetAccountNumber() uint64
-	SetAccountNumber(uint64) error
-
-	GetSequence() uint64
-	SetSequence(uint64) error
-
-	GetCoins() types.Coins
-	SetCoins(types.Coins) error
-
-	// Calculates the amount of coins that can be sent to other accounts given
-	// the current time.
-	SpendableCoins(blockTime time.Time) types.Coins
-
-	// Ensure that account implements stringer
-	String() string
-}
+type (
+	Account = exported.Account
+)
 
 //-----------------------------------------------------------------------------
 // BaseAccount
@@ -71,8 +52,13 @@ type BaseAccount struct {
 }
 
 // NewBaseAccount creates a new BaseAccount object
-func NewBaseAccount(address types.HeimdallAddress, coins types.Coins,
-	pubKey crypto.PubKey, accountNumber uint64, sequence uint64) *BaseAccount {
+func NewBaseAccount(
+	address types.HeimdallAddress,
+	coins types.Coins,
+	pubKey crypto.PubKey,
+	accountNumber uint64,
+	sequence uint64,
+) *BaseAccount {
 
 	return &BaseAccount{
 		Address:       address,

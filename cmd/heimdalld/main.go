@@ -265,7 +265,8 @@ func getGenesisAccount(address []byte) authTypes.GenesisAccount {
 	acc := authTypes.NewBaseAccountWithAddress(hmTypes.BytesToHeimdallAddress(address))
 	genesisBalance, _ := big.NewInt(0).SetString("1000000000000000000000", 10)
 	acc.SetCoins(hmTypes.Coins{hmTypes.Coin{Denom: authTypes.FeeToken, Amount: hmTypes.NewIntFromBigInt(genesisBalance)}})
-	return authTypes.BaseToGenesisAccount(acc)
+	result, _ := authTypes.NewGenesisAccountI(&acc)
+	return result
 }
 
 // WriteGenesisFile creates and writes the genesis configuration to disk. An

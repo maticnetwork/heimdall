@@ -4,28 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
-
-	"github.com/maticnetwork/heimdall/types"
 )
-
-//
-// Genesis accounts
-//
-
-// GenesisAccounts defines a slice of GenesisAccount objects
-type GenesisAccounts []GenesisAccount
-
-// Contains returns true if the given address exists in a slice of GenesisAccount
-// objects.
-func (accounts GenesisAccounts) Contains(addr types.HeimdallAddress) bool {
-	for _, acc := range accounts {
-		if acc.GetAddress().Equals(addr) {
-			return true
-		}
-	}
-
-	return false
-}
 
 //
 // Gensis state
@@ -61,7 +40,7 @@ func GetGenesisStateFromAppState(appState map[string]json.RawMessage) GenesisSta
 }
 
 // SetGenesisStateToAppState sets state into app state
-func SetGenesisStateToAppState(appState map[string]json.RawMessage, accounts []GenesisAccount) (map[string]json.RawMessage, error) {
+func SetGenesisStateToAppState(appState map[string]json.RawMessage, accounts GenesisAccounts) (map[string]json.RawMessage, error) {
 	authState := GetGenesisStateFromAppState(appState)
 	authState.Accounts = accounts
 
@@ -82,13 +61,11 @@ func ValidateGenesis(data GenesisState) error {
 // SanitizeGenesisAccounts sorts accounts and coin sets.
 func SanitizeGenesisAccounts(genAccs GenesisAccounts) GenesisAccounts {
 	sort.Slice(genAccs, func(i, j int) bool {
-		return genAccs[i].GetAccountNumber() < genAccs[j].GetAccountNumber()
+		return genAccs[i].AccountNumber < genAccs[j].AccountNumber
 	})
 
 	for _, acc := range genAccs {
-		if err := acc.SetCoins(acc.GetCoins().Sort()); err != nil {
-			panic(err)
-		}
+		acc.Coins = acc.Coins.Sort()
 	}
 
 	return genAccs
@@ -100,7 +77,7 @@ func ValidateGenAccounts(accounts GenesisAccounts) error {
 	for _, acc := range accounts {
 
 		// check for duplicated accounts
-		addrStr := acc.GetAddress().String()
+		addrStr := acc.Address.String()
 		if _, ok := addrMap[addrStr]; ok {
 			return fmt.Errorf("duplicate account found in genesis state; address: %s", addrStr)
 		}
@@ -113,18 +90,4 @@ func ValidateGenAccounts(accounts GenesisAccounts) error {
 		}
 	}
 	return nil
-}
-
-// GenesisAccountIterator implements genesis account iteration.
-type GenesisAccountIterator struct{}
-
-// IterateGenesisAccounts iterates over all the genesis accounts found in
-// appGenesis and invokes a callback on each genesis account. If any call
-// returns true, iteration stops.
-func (GenesisAccountIterator) IterateGenesisAccounts(appGenesis map[string]json.RawMessage, cb func(Account) (stop bool)) {
-	for _, genAcc := range GetGenesisStateFromAppState(appGenesis).Accounts {
-		if cb(&genAcc) {
-			break
-		}
-	}
 }

@@ -323,7 +323,9 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
 	app.mm = module.NewManager(
-		auth.NewAppModule(app.AccountKeeper, &app.caller),
+		auth.NewAppModule(app.AccountKeeper, &app.caller, []authTypes.AccountProcessor{
+			supplyTypes.AccountProcessor,
+		}),
 		bank.NewAppModule(app.BankKeeper, &app.caller),
 		supply.NewAppModule(app.SupplyKeeper, &app.caller),
 		gov.NewAppModule(app.GovKeeper, app.SupplyKeeper),
