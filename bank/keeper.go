@@ -1,10 +1,8 @@
 package bank
 
 import (
-	"encoding/hex"
 	"fmt"
 	"math/big"
-	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -13,7 +11,6 @@ import (
 
 	"github.com/maticnetwork/heimdall/auth"
 	"github.com/maticnetwork/heimdall/bank/types"
-	"github.com/maticnetwork/heimdall/staking"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -25,6 +22,15 @@ var (
 	// TopupSequencePrefixKey represents topup sequence prefix key
 	TopupSequencePrefixKey = []byte{0x81}
 )
+
+// TODO: Remove this later
+// ModuleCommunicator manager to access validator info
+type ModuleCommunicator interface {
+	// AddFeeToDividendAccount add fee to dividend account
+	AddFeeToDividendAccount(ctx sdk.Context, valID hmTypes.ValidatorID, fee *big.Int) sdk.Error
+	// GetValidatorFromValID get validator from validator id
+	GetValidatorFromValID(ctx sdk.Context, valID hmTypes.ValidatorID) (validator hmTypes.Validator, ok bool)
+}
 
 // Keeper manages transfers between accounts
 type Keeper struct {
@@ -38,8 +44,8 @@ type Keeper struct {
 	paramSpace params.Subspace
 	// account keeper
 	ak auth.AccountKeeper
-	// staking keeper
-	sk staking.Keeper
+	// module manager
+	vm ModuleCommunicator
 }
 
 // NewKeeper returns a new Keeper
@@ -49,7 +55,7 @@ func NewKeeper(
 	paramSpace params.Subspace,
 	codespace sdk.CodespaceType,
 	ak auth.AccountKeeper,
-	sk staking.Keeper,
+	vm ModuleCommunicator,
 ) Keeper {
 	ps := paramSpace.WithKeyTable(types.ParamKeyTable())
 	return Keeper{
@@ -58,7 +64,7 @@ func NewKeeper(
 		codespace:  codespace,
 		paramSpace: ps,
 		ak:         ak,
-		sk:         sk,
+		vm:         vm,
 	}
 }
 
@@ -92,31 +98,6 @@ func (keeper Keeper) SetCoins(
 		panic(err)
 	}
 	keeper.ak.SetAccount(ctx, acc)
-	return nil
-}
-
-// AddFeeToDividendAccount adds fee to dividend account for withdrawal
-func (keeper Keeper) AddFeeToDividendAccount(ctx sdk.Context, valID hmTypes.ValidatorID, fee *big.Int) sdk.Error {
-	// Get or create dividend account
-	var dividendAccount hmTypes.DividendAccount
-
-	if keeper.sk.CheckIfDividendAccountExists(ctx, hmTypes.DividendAccountID(valID)) {
-		dividendAccount, _ = keeper.sk.GetDividendAccountByID(ctx, hmTypes.DividendAccountID(valID))
-	} else {
-		dividendAccount = hmTypes.DividendAccount{
-			ID:            hmTypes.DividendAccountID(valID),
-			FeeAmount:     big.NewInt(0).String(),
-			SlashedAmount: big.NewInt(0).String(),
-		}
-	}
-
-	// update fee
-	oldFee, _ := big.NewInt(0).SetString(dividendAccount.FeeAmount, 10)
-	totalFee := big.NewInt(0).Add(oldFee, fee).String()
-	dividendAccount.FeeAmount = totalFee
-
-	keeper.Logger(ctx).Info("Dividend Account fee of validator ", "ID", dividendAccount.ID, "Fee", dividendAccount.FeeAmount)
-	keeper.sk.AddDividendAccount(ctx, dividendAccount)
 	return nil
 }
 
@@ -268,67 +249,4 @@ func (keeper Keeper) GetCoins(ctx sdk.Context, addr hmTypes.HeimdallAddress) hmT
 // HasCoins returns whether or not an account has at least amt coins.
 func (keeper Keeper) HasCoins(ctx sdk.Context, addr hmTypes.HeimdallAddress, amt hmTypes.Coins) bool {
 	return keeper.GetCoins(ctx, addr).IsAllGTE(amt)
-}
-
-//
-// Topup methods
-//
-
-// GetTopupKey drafts the topup key for address
-func GetTopupKey(address []byte) []byte {
-	return append(ValidatorTopupKey, address...)
-}
-
-// GetTopupSequenceKey drafts topup sequence for address
-func GetTopupSequenceKey(sequence uint64) []byte {
-	return append(TopupSequencePrefixKey, []byte(strconv.FormatUint(sequence, 10))...)
-}
-
-// GetValidatorTopup returns validator toptup information
-func (keeper Keeper) GetValidatorTopup(ctx sdk.Context, addr hmTypes.HeimdallAddress) (*types.ValidatorTopup, error) {
-	store := ctx.KVStore(keeper.key)
-
-	// check if topup exists
-	key := GetTopupKey(addr.Bytes())
-	if !store.Has(key) {
-		return nil, nil
-	}
-
-	// unmarshall validator and return
-	validatorTopup, err := types.UnmarshallValidatorTopup(keeper.cdc, store.Get(key))
-	if err != nil {
-		return nil, err
-	}
-
-	// return true if validator
-	return &validatorTopup, nil
-}
-
-// SetValidatorTopup sets validator topup object
-func (keeper Keeper) SetValidatorTopup(ctx sdk.Context, addr hmTypes.HeimdallAddress, validatorTopup types.ValidatorTopup) error {
-	store := ctx.KVStore(keeper.key)
-
-	// validator topup
-	bz, err := types.MarshallValidatorTopup(keeper.cdc, validatorTopup)
-	if err != nil {
-		return err
-	}
-
-	// store validator with address prefixed with validator key as index
-	store.Set(GetTopupKey(addr.Bytes()), bz)
-	keeper.Logger(ctx).Debug("Validator topup stored", "key", hex.EncodeToString(GetTopupKey(addr.Bytes())), "totalTopups", validatorTopup.Copy().TotalTopups)
-
-	return nil
-}
-
-// SetTopupSequence sets mapping for sequence id to bool
-func (keeper Keeper) SetTopupSequence(ctx sdk.Context, sequence uint64) {
-	store := ctx.KVStore(keeper.key)
-	store.Set(GetTopupSequenceKey(sequence), DefaultValue)
-}
-
-// HasTopupSequence checks if topup already exists
-func (keeper Keeper) HasTopupSequence(ctx sdk.Context, sequence uint64) bool {
-	store := ctx.KVStore(keeper.key)
-	return store.Has(GetTopupSequenceKey(sequence))
 }

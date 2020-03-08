@@ -54,7 +54,7 @@ func (da *DividendAccount) String() string {
 		return "nil-DividendAccount"
 	}
 
-	return fmt.Sprintf("DividendAccount{%v %v %v %v}",
+	return fmt.Sprintf("DividendAccount{%v %v %v}",
 		da.ID,
 		da.FeeAmount,
 		da.SlashedAmount)

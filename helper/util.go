@@ -168,8 +168,20 @@ func GetSigs(unFilteredVotes []*tmTypes.CommitSig) (sigs []byte) {
 }
 
 // GetVoteBytes returns vote bytes
-func GetVoteBytes(votes []*tmTypes.CommitSig, chainID string) []byte {
-	vote := votes[0]
+func GetVoteBytes(unFilteredVotes []*tmTypes.CommitSig, chainID string) []byte {
+	var vote *tmTypes.CommitSig
+	for _, item := range unFilteredVotes {
+		if item != nil {
+			vote = item
+			break
+		}
+	}
+
+	// if vote not found, return empty bytes
+	if vote == nil {
+		return []byte{}
+	}
+
 	v := tmTypes.Vote(*vote)
 	// sign bytes for vote
 	return v.SignBytes(chainID)
@@ -648,7 +660,7 @@ func GetReceiptLogData(log *ethTypes.Log) []byte {
 // GetPowerFromAmount returns power from amount -- note that this will polute amount object
 func GetPowerFromAmount(amount *big.Int) (*big.Int, error) {
 	decimals18 := big.NewInt(10).Exp(big.NewInt(10), big.NewInt(18), nil)
-	if amount.Uint64() < decimals18.Uint64() {
+	if amount.Cmp(decimals18) == -1 {
 		return nil, errors.New("amount must be more than 1 token")
 	}
 

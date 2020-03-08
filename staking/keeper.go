@@ -3,6 +3,7 @@ package staking
 import (
 	"encoding/hex"
 	"errors"
+	"math/big"
 	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -27,8 +28,12 @@ var (
 	StakingSequenceKey        = []byte{0x24} // prefix for each key for staking sequence map
 )
 
-type AckRetriever interface {
+// ModuleCommunicator manages different module interaction
+type ModuleCommunicator interface {
 	GetACKCount(ctx sdk.Context) uint64
+	SetCoins(ctx sdk.Context, addr hmTypes.HeimdallAddress, amt hmTypes.Coins) sdk.Error
+	GetCoins(ctx sdk.Context, addr hmTypes.HeimdallAddress) hmTypes.Coins
+	SendCoins(ctx sdk.Context, from hmTypes.HeimdallAddress, to hmTypes.HeimdallAddress, amt hmTypes.Coins) sdk.Error
 }
 
 // Keeper stores all related data
@@ -40,8 +45,8 @@ type Keeper struct {
 	codespace sdk.CodespaceType
 	// param space
 	paramSpace params.Subspace
-	// ack retriever
-	ackRetriever AckRetriever
+	// module communicator
+	moduleCommunicator ModuleCommunicator
 }
 
 // NewKeeper create new keeper
@@ -50,14 +55,14 @@ func NewKeeper(
 	storeKey sdk.StoreKey,
 	paramSpace params.Subspace,
 	codespace sdk.CodespaceType,
-	ackRetriever AckRetriever,
+	moduleCommunicator ModuleCommunicator,
 ) Keeper {
 	keeper := Keeper{
-		cdc:          cdc,
-		storeKey:     storeKey,
-		paramSpace:   paramSpace.WithKeyTable(types.ParamKeyTable()),
-		codespace:    codespace,
-		ackRetriever: ackRetriever,
+		cdc:                cdc,
+		storeKey:           storeKey,
+		paramSpace:         paramSpace.WithKeyTable(types.ParamKeyTable()),
+		codespace:          codespace,
+		moduleCommunicator: moduleCommunicator,
 	}
 	return keeper
 }
@@ -114,7 +119,7 @@ func (k *Keeper) AddValidator(ctx sdk.Context, validator hmTypes.Validator) erro
 // IsCurrentValidatorByAddress check if validator is in current validator set by signer address
 func (k *Keeper) IsCurrentValidatorByAddress(ctx sdk.Context, address []byte) bool {
 	// get ack count
-	ackCount := k.ackRetriever.GetACKCount(ctx)
+	ackCount := k.moduleCommunicator.GetACKCount(ctx)
 
 	// get validator info
 	validator, err := k.GetValidatorInfo(ctx, address)
@@ -149,7 +154,7 @@ func (k *Keeper) GetValidatorInfo(ctx sdk.Context, address []byte) (validator hm
 // GetCurrentValidators returns all validators who are in validator set
 func (k *Keeper) GetCurrentValidators(ctx sdk.Context) (validators []hmTypes.Validator) {
 	// get ack count
-	ackCount := k.ackRetriever.GetACKCount(ctx)
+	ackCount := k.moduleCommunicator.GetACKCount(ctx)
 
 	// Get validators
 	// iterate through validator list
@@ -168,7 +173,7 @@ func (k *Keeper) GetCurrentValidators(ctx sdk.Context) (validators []hmTypes.Val
 // GetSpanEligibleValidators returns current validators who are not getting deactivated in between next span
 func (k *Keeper) GetSpanEligibleValidators(ctx sdk.Context) (validators []hmTypes.Validator) {
 	// get ack count
-	ackCount := k.ackRetriever.GetACKCount(ctx)
+	ackCount := k.moduleCommunicator.GetACKCount(ctx)
 
 	// Get validators and iterate through validator list
 	k.IterateValidatorsAndApplyFn(ctx, func(validator hmTypes.Validator) error {
@@ -212,18 +217,6 @@ func (k *Keeper) IterateValidatorsAndApplyFn(ctx sdk.Context, f func(validator h
 			return
 		}
 	}
-}
-
-// AddDeactivationEpoch adds deactivation epoch
-func (k *Keeper) AddDeactivationEpoch(ctx sdk.Context, validator hmTypes.Validator, updatedVal hmTypes.Validator) error {
-	// check if validator has unstaked
-	if updatedVal.EndEpoch != 0 {
-		validator.EndEpoch = updatedVal.EndEpoch
-		// update validator in store
-		return k.AddValidator(ctx, validator)
-	}
-
-	return errors.New("Deactivation period not set")
 }
 
 // UpdateSigner updates validator with signer and pubkey + validator => signer map
@@ -420,6 +413,31 @@ func (k *Keeper) GetAllDividendAccounts(ctx sdk.Context) (dividendAccounts []hmT
 	})
 
 	return
+}
+
+// AddFeeToDividendAccount adds fee to dividend account for withdrawal
+func (k *Keeper) AddFeeToDividendAccount(ctx sdk.Context, valID hmTypes.ValidatorID, fee *big.Int) sdk.Error {
+	// Get or create dividend account
+	var dividendAccount hmTypes.DividendAccount
+
+	if k.CheckIfDividendAccountExists(ctx, hmTypes.DividendAccountID(valID)) {
+		dividendAccount, _ = k.GetDividendAccountByID(ctx, hmTypes.DividendAccountID(valID))
+	} else {
+		dividendAccount = hmTypes.DividendAccount{
+			ID:            hmTypes.DividendAccountID(valID),
+			FeeAmount:     big.NewInt(0).String(),
+			SlashedAmount: big.NewInt(0).String(),
+		}
+	}
+
+	// update fee
+	oldFee, _ := big.NewInt(0).SetString(dividendAccount.FeeAmount, 10)
+	totalFee := big.NewInt(0).Add(oldFee, fee).String()
+	dividendAccount.FeeAmount = totalFee
+
+	k.Logger(ctx).Info("Dividend Account fee of validator ", "ID", dividendAccount.ID, "Fee", dividendAccount.FeeAmount)
+	k.AddDividendAccount(ctx, dividendAccount)
+	return nil
 }
 
 // IterateDividendAccountsByPrefixAndApplyFn iterate dividendAccounts and apply the given function.

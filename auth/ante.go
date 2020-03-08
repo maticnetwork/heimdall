@@ -28,11 +28,11 @@ var (
 	gasWantedPerCheckpoinTx sdk.Gas = 10000000
 	gasUsedPerCheckpointTx  sdk.Gas = gasWantedPerCheckpoinTx - 1000000
 
-	// feeInMatic, _ = big.NewInt(0).SetString("1000000000000000000", 10)
-	feeInMatic, _ = big.NewInt(0).SetString("1000000000000000", 10)
+	// DefaultFeeInMatic represents default fee in matic
+	DefaultFeeInMatic = big.NewInt(10).Exp(big.NewInt(10), big.NewInt(15), nil)
 
-	// FeeWantedPerTx fee wanted per tx
-	FeeWantedPerTx = types.Coins{types.Coin{Denom: authTypes.FeeToken, Amount: types.NewIntFromBigInt(feeInMatic)}}
+	// DefaultFeeWantedPerTx fee wanted per tx
+	DefaultFeeWantedPerTx = types.Coins{types.Coin{Denom: authTypes.FeeToken, Amount: types.NewIntFromBigInt(DefaultFeeInMatic)}}
 )
 
 func init() {
@@ -96,8 +96,8 @@ func NewAnteHandler(
 		params := ak.GetParams(ctx)
 
 		// gas for tx
-		gasForTx := gasWantedPerTx // stdTx.Fee.Gas
-		feeForTx := FeeWantedPerTx // stdTx.Fee.Amount
+		gasForTx := gasWantedPerTx        // stdTx.Fee.Gas
+		feeForTx := DefaultFeeWantedPerTx // stdTx.Fee.Amount
 
 		// checkpoint gas limit
 		if stdTx.Msg.Type() == "checkpoint" && stdTx.Msg.Route() == "checkpoint" {

@@ -31,4 +31,3 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, ak auth.AccountKeeper, data typ
 func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
 	return types.NewGenesisState(keeper.GetSupply(ctx))
 }
-

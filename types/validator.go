@@ -182,7 +182,7 @@ func NewValidatorID(id uint64) ValidatorID {
 
 // Bytes get bytes of validatorID
 func (valID ValidatorID) Bytes() []byte {
-	return []byte(strconv.Itoa(valID.Int()))
+	return []byte(strconv.FormatUint(valID.Uint64(), 10))
 }
 
 // Int converts validator ID to int
@@ -197,7 +197,7 @@ func (valID ValidatorID) Uint64() uint64 {
 
 // Uint64 converts validator ID to int
 func (valID ValidatorID) String() string {
-	return string(valID)
+	return strconv.FormatUint(valID.Uint64(), 10)
 }
 
 // --------

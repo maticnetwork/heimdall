@@ -2,10 +2,12 @@ package staking
 
 import (
 	"bytes"
+	"fmt"
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking/types"
@@ -42,15 +44,8 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k Keepe
 		return hmCommon.ErrWaitForConfirmation(k.Codespace()).Result()
 	}
 
-	// TODO remove this block in next release and use msg.LogIndex -- start
-	logIndex, found := contractCaller.FindStakedEventLogIndex(receipt)
-	if !found {
-		return hmCommon.ErrInvalidMsg(k.Codespace(), "Unable to find validator join log from txHash").Result()
-	}
-	// -- END
-
 	// decode validator join event
-	eventLog, err := contractCaller.DecodeValidatorJoinEvent(receipt, logIndex)
+	eventLog, err := contractCaller.DecodeValidatorJoinEvent(helper.GetStakingInfoAddress(), receipt, msg.LogIndex)
 	if err != nil || eventLog == nil {
 		return hmCommon.ErrInvalidMsg(k.Codespace(), "Unable to fetch logs for txHash").Result()
 	}
@@ -66,7 +61,13 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k Keepe
 			"msgValidator", signer.String(),
 			"mainchainValidator", eventLog.Signer.Hex(),
 		)
-		return hmCommon.ErrNoValidator(k.Codespace()).Result()
+		return hmCommon.ErrValSignerMismatch(k.Codespace()).Result()
+	}
+
+	// check msg id
+	if eventLog.ValidatorId.Uint64() != msg.ID.Uint64() {
+		k.Logger(ctx).Error("ID in message doesn't match with id in log", "msgId", msg.ID, "validatorIdFromTx", eventLog.ValidatorId)
+		return hmCommon.ErrInvalidMsg(k.Codespace(), "ID in message doesn't match with id in log. msgId %v validatorIdFromTx %v", msg.ID, eventLog.ValidatorId).Result()
 	}
 
 	// Check if validator has been validator before
@@ -84,7 +85,7 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k Keepe
 	// get voting power from amount
 	votingPower, err := helper.GetPowerFromAmount(eventLog.Amount)
 	if err != nil {
-		return hmCommon.ErrInvalidMsg(k.Codespace(), "Invalid amount for validator: %v", msg.ID).Result()
+		return hmCommon.ErrInvalidMsg(k.Codespace(), fmt.Sprintf("Invalid amount %v for validator %v", eventLog.Amount, msg.ID)).Result()
 	}
 
 	// create new validator
@@ -130,15 +131,15 @@ func HandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keeper, c
 		return hmCommon.ErrWaitForConfirmation(k.Codespace()).Result()
 	}
 
-	eventLog, err := contractCaller.DecodeValidatorStakeUpdateEvent(receipt, msg.LogIndex)
+	eventLog, err := contractCaller.DecodeValidatorStakeUpdateEvent(helper.GetStakingInfoAddress(), receipt, msg.LogIndex)
 	if err != nil || eventLog == nil {
 		k.Logger(ctx).Error("Error fetching log from txhash")
 		return hmCommon.ErrInvalidMsg(k.Codespace(), "Unable to fetch logs for txHash").Result()
 	}
 
 	if eventLog.ValidatorId.Uint64() != msg.ID.Uint64() {
-		k.Logger(ctx).Error("ID in message doesnt match id in logs", "MsgID", msg.ID, "IdFromTx", eventLog.ValidatorId)
-		return hmCommon.ErrInvalidMsg(k.Codespace(), "Invalid txhash, id's dont match. Id from tx hash is %v", eventLog.ValidatorId.Uint64()).Result()
+		k.Logger(ctx).Error("ID in message doesn't match with id in log", "msgId", msg.ID, "validatorIdFromTx", eventLog.ValidatorId)
+		return hmCommon.ErrInvalidMsg(k.Codespace(), "ID in message doesn't match with id in log. msgId %v validatorIdFromTx %v", msg.ID, eventLog.ValidatorId).Result()
 	}
 
 	// pull validator from store
@@ -163,7 +164,7 @@ func HandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keeper, c
 	// set validator amount
 	p, err := helper.GetPowerFromAmount(eventLog.NewAmount)
 	if err != nil {
-		return hmCommon.ErrInvalidMsg(k.Codespace(), "Invalid amount for validator: %v", msg.ID).Result()
+		return hmCommon.ErrInvalidMsg(k.Codespace(), fmt.Sprintf("Invalid amount %v for validator %v", eventLog.NewAmount, msg.ID)).Result()
 	}
 	validator.VotingPower = p.Int64()
 
@@ -204,19 +205,19 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper,
 	newPubKey := msg.NewSignerPubKey
 	newSigner := newPubKey.Address()
 
-	eventLog, err := contractCaller.DecodeSignerUpdateEvent(receipt, msg.LogIndex)
+	eventLog, err := contractCaller.DecodeSignerUpdateEvent(helper.GetStakingInfoAddress(), receipt, msg.LogIndex)
 	if err != nil || eventLog == nil {
 		k.Logger(ctx).Error("Error fetching log from txhash")
 		return hmCommon.ErrInvalidMsg(k.Codespace(), "Unable to fetch signer update log for txHash").Result()
 	}
 
 	if eventLog.ValidatorId.Uint64() != msg.ID.Uint64() {
-		k.Logger(ctx).Error("ID in message doesnt match id in logs", "MsgID", msg.ID, "IdFromTx", eventLog.ValidatorId.Uint64())
-		return hmCommon.ErrInvalidMsg(k.Codespace(), "Invalid txhash, id's dont match. Id from tx hash is %v", eventLog.ValidatorId.Uint64()).Result()
+		k.Logger(ctx).Error("ID in message doesn't match with id in log", "msgId", msg.ID, "validatorIdFromTx", eventLog.ValidatorId)
+		return hmCommon.ErrInvalidMsg(k.Codespace(), "ID in message doesn't match with id in log. msgId %v validatorIdFromTx %v", msg.ID, eventLog.ValidatorId).Result()
 	}
 
 	if bytes.Compare(eventLog.NewSigner.Bytes(), newSigner.Bytes()) != 0 {
-		k.Logger(ctx).Error("Signer in txhash and msg dont match", "MsgSigner", newSigner.String(), "SignerTx", eventLog.NewSigner.String())
+		k.Logger(ctx).Error("Signer in txhash and msg dont match", "msgSigner", newSigner.String(), "signerTx", eventLog.NewSigner.String())
 		return hmCommon.ErrInvalidMsg(k.Codespace(), "Signer in txhash and msg dont match").Result()
 	}
 
@@ -251,7 +252,7 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper,
 	k.Logger(ctx).Debug("Removing old validator", "validator", oldValidator.String())
 
 	// remove old validator from HM
-	oldValidator.EndEpoch = k.ackRetriever.GetACKCount(ctx)
+	oldValidator.EndEpoch = k.moduleCommunicator.GetACKCount(ctx)
 
 	// remove old validator from TM
 	oldValidator.VotingPower = 0
@@ -280,10 +281,26 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper,
 		sdk.NewEvent(
 			types.EventTypeSignerUpdate,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(validator.ID.Uint64(), 10)),
+			sdk.NewAttribute(types.AttributeKeyValidatorID, validator.ID.String()),
 			sdk.NewAttribute(types.AttributeKeyUpdatedAt, strconv.FormatUint(validator.LastUpdated, 10)),
 		),
 	})
+
+	//
+	// Move heimdall fee to new signer
+	//
+
+	// check if fee is already withdrawn
+	coins := k.moduleCommunicator.GetCoins(ctx, oldValidator.Signer)
+	maticBalance := coins.AmountOf(authTypes.FeeToken)
+	if !maticBalance.IsZero() {
+		k.Logger(ctx).Info("Transferring fee", "from", oldValidator.Signer.String(), "to", validator.Signer.String(), "balance", maticBalance.String())
+		maticCoins := hmTypes.Coins{hmTypes.Coin{Denom: authTypes.FeeToken, Amount: maticBalance}}
+		if err := k.moduleCommunicator.SendCoins(ctx, oldValidator.Signer, validator.Signer, maticCoins); err != nil {
+			k.Logger(ctx).Info("Error while transferring fee", "from", oldValidator.Signer.String(), "to", validator.Signer.String(), "balance", maticBalance.String())
+			return err.Result()
+		}
+	}
 
 	return sdk.Result{
 		Events: ctx.EventManager().Events(),
@@ -294,9 +311,24 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper,
 func HandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	k.Logger(ctx).Info("Handling validator exit", "ValidatorID", msg.ID)
 
-	if confirmed := contractCaller.IsTxConfirmed(msg.TxHash.EthHash()); !confirmed {
+	// get main tx receipt
+	receipt, err := contractCaller.GetConfirmedTxReceipt(msg.TxHash.EthHash())
+	if err != nil || receipt == nil {
 		return hmCommon.ErrWaitForConfirmation(k.Codespace()).Result()
 	}
+
+	// decode validator exit
+	eventLog, err := contractCaller.DecodeValidatorExitEvent(helper.GetStakingInfoAddress(), receipt, msg.LogIndex)
+	if err != nil || eventLog == nil {
+		k.Logger(ctx).Error("Error fetching log from txhash")
+		return hmCommon.ErrInvalidMsg(k.Codespace(), "Unable to fetch unstake log for txHash").Result()
+	}
+
+	if eventLog.ValidatorId.Uint64() != msg.ID.Uint64() {
+		k.Logger(ctx).Error("ID in message doesn't match with id in log", "msgId", msg.ID, "validatorIdFromTx", eventLog.ValidatorId)
+		return hmCommon.ErrInvalidMsg(k.Codespace(), "ID in message doesn't match with id in log. msgId %v validatorIdFromTx %v", msg.ID, eventLog.ValidatorId).Result()
+	}
+
 	validator, ok := k.GetValidatorFromValID(ctx, msg.ID)
 	if !ok {
 		k.Logger(ctx).Error("Fetching of validator from store failed", "validatorID", msg.ID)
@@ -310,16 +342,12 @@ func HandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k Keepe
 		return hmCommon.ErrValUnbonded(k.Codespace()).Result()
 	}
 
-	// get validator from mainchain
-	updatedVal, err := contractCaller.GetValidatorInfo(validator.ID)
-	if err != nil {
-		k.Logger(ctx).Error("Cannot fetch validator info while unstaking", "Error", err, "validatorID", validator.ID)
-		return hmCommon.ErrNoValidator(k.Codespace()).Result()
-	}
+	// set end epoch
+	validator.EndEpoch = eventLog.DeactivationEpoch.Uint64()
 
 	// Add deactivation time for validator
-	if err := k.AddDeactivationEpoch(ctx, validator, updatedVal); err != nil {
-		k.Logger(ctx).Error("Error while setting deactivation epoch to validator", "error", err, "validatorID", validator.ID)
+	if err := k.AddValidator(ctx, validator); err != nil {
+		k.Logger(ctx).Error("Error while setting deactivation epoch to validator", "error", err, "validatorID", validator.ID.String())
 		return hmCommon.ErrValidatorNotDeactivated(k.Codespace()).Result()
 	}
 
@@ -327,7 +355,7 @@ func HandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k Keepe
 		sdk.NewEvent(
 			types.EventTypeValidatorExit,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(validator.ID.Uint64(), 10)),
+			sdk.NewAttribute(types.AttributeKeyValidatorID, validator.ID.String()),
 		),
 	})
 
