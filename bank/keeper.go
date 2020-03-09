@@ -17,8 +17,6 @@ import (
 var (
 	// DefaultValue default value
 	DefaultValue = []byte{0x01}
-	// ValidatorTopupKey represents validator topup key
-	ValidatorTopupKey = []byte{0x80} // prefix for each key to a validator
 )
 
 // TODO: Remove this later
