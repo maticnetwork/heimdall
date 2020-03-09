@@ -97,7 +97,7 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k Keepe
 		VotingPower: votingPower.Int64(),
 		PubKey:      pubkey,
 		Signer:      hmTypes.BytesToHeimdallAddress(signer.Bytes()),
-		LastUpdated: "0",
+		LastUpdated: "",
 	}
 
 	// add validator to store

@@ -44,9 +44,8 @@ func querySequence(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, sd
 	}
 
 	// sequence id
-	sequenceBn := new(big.Int)
 
-	sequence := sequenceBn.Mul(receipt.BlockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
+	sequence := new(big.Int).Mul(receipt.BlockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
 	sequence.Add(sequence, new(big.Int).SetUint64(params.LogIndex))
 
 	// check if incoming tx already exists
