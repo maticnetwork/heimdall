@@ -3,7 +3,6 @@ package types
 import (
 	"encoding/json"
 	"errors"
-	"math/big"
 
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
@@ -35,7 +34,7 @@ type GenesisState struct {
 	Validators       []*hmTypes.Validator      `json:"validators" yaml:"validators"`
 	CurrentValSet    hmTypes.ValidatorSet      `json:"current_val_set" yaml:"current_val_set"`
 	DividentAccounts []hmTypes.DividendAccount `json:"dividend_accounts" yaml:"dividend_accounts"`
-	StakingSequences []*big.Int                `json:"staking_sequences" yaml:"staking_sequences"`
+	StakingSequences []string                  `json:"staking_sequences" yaml:"staking_sequences"`
 }
 
 // NewGenesisState creates a new genesis state.
@@ -43,7 +42,7 @@ func NewGenesisState(
 	validators []*hmTypes.Validator,
 	currentValSet hmTypes.ValidatorSet,
 	dividentAccounts []hmTypes.DividendAccount,
-	stakingSequences []*big.Int,
+	stakingSequences []string,
 ) GenesisState {
 	return GenesisState{
 		Validators:       validators,
@@ -67,7 +66,7 @@ func ValidateGenesis(data GenesisState) error {
 		}
 	}
 	for _, sq := range data.StakingSequences {
-		if sq == nil {
+		if sq == "" {
 			return errors.New("Invalid Sequence")
 		}
 	}

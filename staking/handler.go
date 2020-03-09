@@ -151,13 +151,12 @@ func HandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keeper, c
 	}
 
 	// sequence id
-	sequenceBn := new(big.Int)
 
-	sequence := sequenceBn.Mul(receipt.BlockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
+	sequence := new(big.Int).Mul(receipt.BlockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
 	sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))
 
 	// check if incoming tx is older
-	if k.HasStakingSequence(ctx, sequence) {
+	if k.HasStakingSequence(ctx, sequence.String()) {
 		k.Logger(ctx).Error("Older invalid tx found")
 		return hmCommon.ErrOldTx(k.Codespace()).Result()
 	}
@@ -182,7 +181,7 @@ func HandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keeper, c
 
 	// save staking sequence
 
-	k.SetStakingSequence(ctx, sequenceBn)
+	k.SetStakingSequence(ctx, sequence.String())
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -236,13 +235,12 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper,
 	oldValidator := validator.Copy()
 
 	// sequence id
-	sequenceBn := new(big.Int)
 
-	sequence := sequenceBn.Mul(receipt.BlockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
+	sequence := new(big.Int).Mul(receipt.BlockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
 	sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))
 
 	// check if incoming tx is older
-	if k.HasStakingSequence(ctx, sequenceBn) {
+	if k.HasStakingSequence(ctx, sequence.String()) {
 		k.Logger(ctx).Error("Older invalid tx found")
 		return hmCommon.ErrOldTx(k.Codespace()).Result()
 	}
@@ -284,7 +282,7 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper,
 		return hmCommon.ErrSignerUpdateError(k.Codespace()).Result()
 	}
 	// save staking sequence
-	k.SetStakingSequence(ctx, sequenceBn)
+	k.SetStakingSequence(ctx, sequence.String())
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(

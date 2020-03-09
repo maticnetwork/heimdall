@@ -87,8 +87,8 @@ func GetValidatorMapKey(address []byte) []byte {
 }
 
 // GetStakingSequenceKey returns staking sequence key
-func GetStakingSequenceKey(sequence big.Int) []byte {
-	return append(StakingSequenceKey, sequence.Bytes()...)
+func GetStakingSequenceKey(sequence string) []byte {
+	return append(StakingSequenceKey, []byte(sequence)...)
 }
 
 // AddValidator adds validator indexed with address
@@ -463,29 +463,29 @@ func (k *Keeper) IterateDividendAccountsByPrefixAndApplyFn(ctx sdk.Context, pref
 //
 
 // SetStakingSequence sets staking sequence
-func (k *Keeper) SetStakingSequence(ctx sdk.Context, sequence *big.Int) {
+func (k *Keeper) SetStakingSequence(ctx sdk.Context, sequence string) {
 	store := ctx.KVStore(k.storeKey)
 
-	store.Set(GetStakingSequenceKey(*sequence), DefaultValue)
+	store.Set(GetStakingSequenceKey(sequence), DefaultValue)
 }
 
 // HasStakingSequence checks if staking sequence already exists
-func (k *Keeper) HasStakingSequence(ctx sdk.Context, sequence *big.Int) bool {
+func (k *Keeper) HasStakingSequence(ctx sdk.Context, sequence string) bool {
 	store := ctx.KVStore(k.storeKey)
-	return store.Has(GetStakingSequenceKey(*sequence))
+	return store.Has(GetStakingSequenceKey(sequence))
 }
 
 // GetStakingSequences checks if Staking already exists
-func (k *Keeper) GetStakingSequences(ctx sdk.Context) (sequences []*big.Int) {
-	k.IterateStakingSequencesAndApplyFn(ctx, func(sequence big.Int) error {
-		sequences = append(sequences, &sequence)
+func (k *Keeper) GetStakingSequences(ctx sdk.Context) (sequences []string) {
+	k.IterateStakingSequencesAndApplyFn(ctx, func(sequence string) error {
+		sequences = append(sequences, sequence)
 		return nil
 	})
 	return
 }
 
 // IterateStakingSequencesAndApplyFn interate validators and apply the given function.
-func (k *Keeper) IterateStakingSequencesAndApplyFn(ctx sdk.Context, f func(sequence big.Int) error) {
+func (k *Keeper) IterateStakingSequencesAndApplyFn(ctx sdk.Context, f func(sequence string) error) {
 	store := ctx.KVStore(k.storeKey)
 
 	// get sequence iterator
@@ -494,11 +494,10 @@ func (k *Keeper) IterateStakingSequencesAndApplyFn(ctx sdk.Context, f func(seque
 
 	// loop through validators to get valid validators
 	for ; iterator.Valid(); iterator.Next() {
-		bn := new(big.Int)
-		bn.SetBytes(iterator.Key()[len(StakingSequenceKey):])
+		sequence := string(iterator.Key()[len(StakingSequenceKey):])
 
 		// call function and return if required
-		if err := f(*bn); err != nil {
+		if err := f(sequence); err != nil {
 			return
 		}
 	}
