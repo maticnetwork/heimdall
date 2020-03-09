@@ -133,13 +133,15 @@ func CalculateTaskDelay(cliCtx cliContext.CLIContext) (bool, time.Duration) {
 		return isCurrentValidator, 0
 	}
 	// unmarshall data from buffer
-	var currentValidators []hmtypes.Validator
-	if err := json.Unmarshal(response.Result, &currentValidators); err != nil {
+	var validatorSet hmtypes.ValidatorSet
+	err = json.Unmarshal(response.Result, &validatorSet)
+	if err != nil {
 		logger.Error("Error unmarshalling current validatorset data ", "error", err)
 		return isCurrentValidator, 0
 	}
-	logger.Debug("Fetched current validatorset list", "currentValidatorcount", len(currentValidators))
-	for i, validator := range currentValidators {
+
+	logger.Info("Fetched current validatorset list", "currentValidatorcount", len(validatorSet.Validators))
+	for i, validator := range validatorSet.Validators {
 		if bytes.Equal(validator.Signer.Bytes(), helper.GetAddress()) {
 			valPosition = i
 			isCurrentValidator = true

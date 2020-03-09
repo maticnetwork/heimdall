@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -59,7 +60,7 @@ func GetStartCmd() *cobra.Command {
 
 			// go routine to catch signal
 			catchSignal := make(chan os.Signal, 1)
-			signal.Notify(catchSignal, os.Interrupt)
+			signal.Notify(catchSignal, os.Interrupt, syscall.SIGTERM)
 			go func() {
 				// sig is a ^C, handle it
 				for range catchSignal {
