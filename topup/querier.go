@@ -2,6 +2,7 @@ package topup
 
 import (
 	"fmt"
+	"math/big"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -43,10 +44,12 @@ func querySequence(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, sd
 	}
 
 	// sequence id
-	sequence := (receipt.BlockNumber.Uint64() * hmTypes.DefaultLogIndexUnit) + params.LogIndex
+
+	sequence := new(big.Int).Mul(receipt.BlockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
+	sequence.Add(sequence, new(big.Int).SetUint64(params.LogIndex))
 
 	// check if incoming tx already exists
-	if !k.HasTopupSequence(ctx, sequence) {
+	if !k.HasTopupSequence(ctx, sequence.String()) {
 		k.Logger(ctx).Error("No sequence exist: %s %s", params.TxHash, params.LogIndex)
 		return nil, sdk.ErrInternal(fmt.Sprintf("no sequence exist:: %s", params.TxHash))
 	}
