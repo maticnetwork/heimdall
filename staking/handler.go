@@ -97,7 +97,7 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k Keepe
 		VotingPower: votingPower.Int64(),
 		PubKey:      pubkey,
 		Signer:      hmTypes.BytesToHeimdallAddress(signer.Bytes()),
-		LastUpdated: 0,
+		LastUpdated: "0",
 	}
 
 	// add validator to store
@@ -151,20 +151,19 @@ func HandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keeper, c
 	}
 
 	// sequence id
-	sequenceBn := new(big.Int)
 
-	sequence := sequenceBn.Mul(receipt.BlockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
+	sequence := new(big.Int).Mul(receipt.BlockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
 	sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))
 
 	// check if incoming tx is older
-	if k.HasStakingSequence(ctx, sequence) {
+	if k.HasStakingSequence(ctx, sequence.String()) {
 		k.Logger(ctx).Error("Older invalid tx found")
 		return hmCommon.ErrOldTx(k.Codespace()).Result()
 	}
 
 	// update last updated
 	// TODO: Refactor later
-	validator.LastUpdated = sequence.Uint64()
+	validator.LastUpdated = sequence.String()
 
 	// set validator amount
 	p, err := helper.GetPowerFromAmount(eventLog.NewAmount)
@@ -182,14 +181,14 @@ func HandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keeper, c
 
 	// save staking sequence
 
-	k.SetStakingSequence(ctx, sequenceBn)
+	k.SetStakingSequence(ctx, sequence.String())
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeStakeUpdate,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(validator.ID.Uint64(), 10)),
-			sdk.NewAttribute(types.AttributeKeyUpdatedAt, strconv.FormatUint(validator.LastUpdated, 10)),
+			sdk.NewAttribute(types.AttributeKeyUpdatedAt, validator.LastUpdated),
 		),
 	})
 
@@ -236,19 +235,18 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper,
 	oldValidator := validator.Copy()
 
 	// sequence id
-	sequenceBn := new(big.Int)
 
-	sequence := sequenceBn.Mul(receipt.BlockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
+	sequence := new(big.Int).Mul(receipt.BlockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
 	sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))
 
 	// check if incoming tx is older
-	if k.HasStakingSequence(ctx, sequenceBn) {
+	if k.HasStakingSequence(ctx, sequence.String()) {
 		k.Logger(ctx).Error("Older invalid tx found")
 		return hmCommon.ErrOldTx(k.Codespace()).Result()
 	}
 
 	// update last udpated
-	validator.LastUpdated = sequence.Uint64()
+	validator.LastUpdated = sequence.String()
 
 	// check if we are actually updating signer
 	if !bytes.Equal(newSigner.Bytes(), validator.Signer.Bytes()) {
@@ -266,7 +264,7 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper,
 	// remove old validator from TM
 	oldValidator.VotingPower = 0
 	// updated last
-	oldValidator.LastUpdated = sequence.Uint64()
+	oldValidator.LastUpdated = sequence.String()
 
 	// save old validator
 	if err := k.AddValidator(ctx, *oldValidator); err != nil {
@@ -284,14 +282,14 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper,
 		return hmCommon.ErrSignerUpdateError(k.Codespace()).Result()
 	}
 	// save staking sequence
-	k.SetStakingSequence(ctx, sequenceBn)
+	k.SetStakingSequence(ctx, sequence.String())
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeSignerUpdate,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			sdk.NewAttribute(types.AttributeKeyValidatorID, validator.ID.String()),
-			sdk.NewAttribute(types.AttributeKeyUpdatedAt, strconv.FormatUint(validator.LastUpdated, 10)),
+			sdk.NewAttribute(types.AttributeKeyUpdatedAt, validator.LastUpdated),
 		),
 	})
 

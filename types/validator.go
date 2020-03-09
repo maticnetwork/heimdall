@@ -19,7 +19,7 @@ type Validator struct {
 	VotingPower int64           `json:"power"` // TODO add 10^-18 here so that we dont overflow easily
 	PubKey      PubKey          `json:"pubKey"`
 	Signer      HeimdallAddress `json:"signer"`
-	LastUpdated uint64          `json:"last_updated"`
+	LastUpdated string          `json:"last_updated"`
 
 	ProposerPriority int64 `json:"accum"`
 }
@@ -157,7 +157,7 @@ func (v *Validator) Bytes() []byte {
 }
 
 // UpdatedAt returns block number of last validator update
-func (v *Validator) UpdatedAt() uint64 {
+func (v *Validator) UpdatedAt() string {
 	return v.LastUpdated
 }
 

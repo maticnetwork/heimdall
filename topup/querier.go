@@ -50,7 +50,7 @@ func querySequence(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, sd
 	sequence.Add(sequence, new(big.Int).SetUint64(params.LogIndex))
 
 	// check if incoming tx already exists
-	if !k.HasTopupSequence(ctx, sequence) {
+	if !k.HasTopupSequence(ctx, sequence.String()) {
 		k.Logger(ctx).Error("No sequence exist: %s %s", params.TxHash, params.LogIndex)
 		return nil, sdk.ErrInternal(fmt.Sprintf("no sequence exist:: %s", params.TxHash))
 	}
