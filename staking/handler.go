@@ -163,6 +163,7 @@ func HandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keeper, c
 	}
 
 	// update last updated
+	// TODO: Refactor later
 	validator.LastUpdated = sequence.Uint64()
 
 	// set validator amount
@@ -235,8 +236,10 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper,
 	oldValidator := validator.Copy()
 
 	// sequence id
-	sequence := (receipt.BlockNumber.Uint64() * hmTypes.DefaultLogIndexUnit) + msg.LogIndex
-	sequenceBn := new(big.Int).SetUint64(sequence)
+	sequenceBn := new(big.Int)
+
+	sequence := sequenceBn.Mul(receipt.BlockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
+	sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))
 
 	// check if incoming tx is older
 	if k.HasStakingSequence(ctx, sequenceBn) {
@@ -245,7 +248,7 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper,
 	}
 
 	// update last udpated
-	validator.LastUpdated = sequence
+	validator.LastUpdated = sequence.Uint64()
 
 	// check if we are actually updating signer
 	if !bytes.Equal(newSigner.Bytes(), validator.Signer.Bytes()) {
@@ -263,7 +266,7 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper,
 	// remove old validator from TM
 	oldValidator.VotingPower = 0
 	// updated last
-	oldValidator.LastUpdated = sequence
+	oldValidator.LastUpdated = sequence.Uint64()
 
 	// save old validator
 	if err := k.AddValidator(ctx, *oldValidator); err != nil {
