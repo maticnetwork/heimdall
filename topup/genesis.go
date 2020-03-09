@@ -8,7 +8,7 @@ import (
 // InitGenesis sets distribution information for genesis.
 func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 	for _, sequence := range data.TopupSequences {
-		keeper.SetTopupSequence(ctx, *sequence)
+		keeper.SetTopupSequence(ctx, sequence)
 	}
 }
 

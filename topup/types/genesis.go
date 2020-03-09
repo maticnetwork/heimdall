@@ -1,14 +1,17 @@
 package types
 
-import "errors"
+import (
+	"errors"
+	"math/big"
+)
 
 // GenesisState is the bank state that must be provided at genesis.
 type GenesisState struct {
-	TopupSequences []*uint64 `json:"tx_sequences" yaml:"tx_sequences"`
+	TopupSequences []*big.Int `json:"tx_sequences" yaml:"tx_sequences"`
 }
 
 // NewGenesisState creates a new genesis state.
-func NewGenesisState(topupSequence []*uint64) GenesisState {
+func NewGenesisState(topupSequence []*big.Int) GenesisState {
 	return GenesisState{
 		TopupSequences: topupSequence,
 	}
