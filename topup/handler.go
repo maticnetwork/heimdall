@@ -57,7 +57,7 @@ func handleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCalle
 	// use event log signer
 	signer := hmTypes.BytesToHeimdallAddress(eventLog.Signer.Bytes())
 	// if validator exists use siger from local state
-	validator, found := k.vm.GetValidatorFromValID(ctx, msg.ID)
+	validator, found := k.sk.GetValidatorFromValID(ctx, msg.ID)
 	if found {
 		signer = validator.Signer
 	}
@@ -136,7 +136,7 @@ func handleMsgWithdrawFee(ctx sdk.Context, k Keeper, msg types.MsgWithdrawFee) s
 
 	// Add Fee to Dividend Account
 	feeAmount := amount.BigInt()
-	k.vm.AddFeeToDividendAccount(ctx, validator.ID, feeAmount)
+	k.sk.AddFeeToDividendAccount(ctx, validator.ID, feeAmount)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(

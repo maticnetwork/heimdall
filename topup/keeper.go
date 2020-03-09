@@ -6,10 +6,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
+
 	"github.com/maticnetwork/heimdall/bank"
 	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/topup/types"
-	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/tendermint/tendermint/libs/log"
 )
 
@@ -19,14 +19,6 @@ var (
 	// TopupSequencePrefixKey represents topup sequence prefix key
 	TopupSequencePrefixKey = []byte{0x81}
 )
-
-// ModuleCommunicator manager to access validator info
-type ModuleCommunicator interface {
-	// AddFeeToDividendAccount add fee to dividend account
-	AddFeeToDividendAccount(ctx sdk.Context, valID hmTypes.ValidatorID, fee *big.Int) sdk.Error
-	// GetValidatorFromValID get validator from validator id
-	GetValidatorFromValID(ctx sdk.Context, valID hmTypes.ValidatorID) (validator hmTypes.Validator, ok bool)
-}
 
 // Keeper stores all related data
 type Keeper struct {
@@ -42,8 +34,6 @@ type Keeper struct {
 	bk bank.Keeper
 	// staking keeper
 	sk staking.Keeper
-	// module manager
-	vm ModuleCommunicator
 }
 
 // NewKeeper create new keeper
@@ -54,7 +44,6 @@ func NewKeeper(
 	codespace sdk.CodespaceType,
 	bankKeeper bank.Keeper,
 	stakingKeeper staking.Keeper,
-	vm ModuleCommunicator,
 ) Keeper {
 	return Keeper{
 		cdc:        cdc,
@@ -63,7 +52,6 @@ func NewKeeper(
 		codespace:  codespace,
 		bk:         bankKeeper,
 		sk:         stakingKeeper,
-		vm:         vm,
 	}
 }
 

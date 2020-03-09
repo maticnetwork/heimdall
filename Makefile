@@ -86,6 +86,17 @@ start-all:
 	bash docker/start-heimdall.sh
 
 #
+# Code quality
+#
+
+LINT_COMMAND := $(shell command -v golangci-lint 2> /dev/null)
+lint:
+ifndef LINT_COMMAND
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(GOPATH)/bin v1.23.8
+endif
+	golangci-lint run
+
+#
 # docker commands
 #
 
