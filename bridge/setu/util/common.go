@@ -45,6 +45,7 @@ const (
 	NextSpanInfoURL        = "/bor/prepare-next-span"
 	DividendAccountRootURL = "/staking/dividend-account-root"
 	ValidatorURL           = "/staking/validator/%v"
+	CurrentValidatorSetURL = "staking/validator-set"
 
 	TransactionTimeout = 1 * time.Minute
 	CommitTimeout      = 2 * time.Minute
@@ -95,7 +96,6 @@ func IsProposer(cliCtx cliContext.CLIContext) (bool, error) {
 // IsInProposerList checks if we are in current proposer
 func IsInProposerList(cliCtx cliContext.CLIContext, count uint64) (bool, error) {
 	logger.Debug("Skipping proposers", "count", strconv.FormatUint(count, 10))
-
 	response, err := FetchFromAPI(
 		cliCtx,
 		GetHeimdallServerEndpoint(fmt.Sprintf(ProposersURL, strconv.FormatUint(count, 10))),
@@ -119,6 +119,38 @@ func IsInProposerList(cliCtx cliContext.CLIContext, count uint64) (bool, error) 
 		}
 	}
 	return false, nil
+}
+
+// CalculateTaskDelay calculates delay required for current validator to propose the tx
+// It solves for multiple validators sending same transaction.
+func CalculateTaskDelay(cliCtx cliContext.CLIContext) (bool, time.Duration) {
+	// calculate validator position
+	valPosition := 0
+	isCurrentValidator := false
+	response, err := FetchFromAPI(cliCtx, GetHeimdallServerEndpoint(CurrentValidatorSetURL))
+	if err != nil {
+		logger.Error("Unable to send request for current validatorset", "url", CurrentValidatorSetURL, "error", err)
+		return isCurrentValidator, 0
+	}
+	// unmarshall data from buffer
+	var currentValidators []hmtypes.Validator
+	if err := json.Unmarshal(response.Result, &currentValidators); err != nil {
+		logger.Error("Error unmarshalling current validatorset data ", "error", err)
+		return isCurrentValidator, 0
+	}
+	logger.Debug("Fetched current validatorset list", "currentValidatorcount", len(currentValidators))
+	for i, validator := range currentValidators {
+		if bytes.Equal(validator.Signer.Bytes(), helper.GetAddress()) {
+			valPosition = i
+			isCurrentValidator = true
+			break
+		}
+	}
+
+	// calculate delay
+	delayBetweenEachVal := 3 * time.Second
+	taskDelay := time.Duration(valPosition) * delayBetweenEachVal
+	return isCurrentValidator, taskDelay
 }
 
 // IsCurrentProposer checks if we are current proposer

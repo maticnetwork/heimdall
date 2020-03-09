@@ -5,12 +5,14 @@ import (
 	"encoding/json"
 	"math/big"
 	"strconv"
+	"time"
 
 	"github.com/RichardKnop/machinery/v1/tasks"
 	ethereum "github.com/maticnetwork/bor"
 	"github.com/maticnetwork/bor/accounts/abi"
 	ethCommon "github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/bor/core/types"
+	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
 )
 
@@ -155,7 +157,11 @@ func (rl *RootChainListener) queryAndBroadcastEvents(fromBlock *big.Int, toBlock
 				case "StateSynced":
 					rl.sendTask("sendStateSyncedToHeimdall", selectedEvent.Name, logBytes)
 				case "TopUpFee":
-					rl.sendTask("sendTopUpFeeToHeimdall", selectedEvent.Name, logBytes)
+					if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx); isCurrentValidator {
+						rl.sendTaskWithDelay("sendTopUpFeeToHeimdall", selectedEvent.Name, logBytes, delay)
+					} else {
+						rl.Logger.Info("i am not present in current validatorset. ignore sending topup task")
+					}
 				}
 			}
 		}
@@ -181,5 +187,31 @@ func (rl *RootChainListener) sendTask(taskName string, eventName string, logByte
 	_, err := rl.queueConnector.Server.SendTask(signature)
 	if err != nil {
 		rl.Logger.Error("Error sending checkpoint task")
+	}
+}
+
+func (rl *RootChainListener) sendTaskWithDelay(taskName string, eventName string, logBytes []byte, delay time.Duration) {
+	signature := &tasks.Signature{
+		Name: taskName,
+		Args: []tasks.Arg{
+			{
+				Type:  "string",
+				Value: eventName,
+			},
+			{
+				Type:  "string",
+				Value: string(logBytes),
+			},
+		},
+	}
+	signature.RetryCount = 3
+
+	// add delay for task so that multiple validators won't send same transaction at same time
+	eta := time.Now().Add(delay)
+	signature.ETA = &eta
+	rl.Logger.Info("sending topup task", "currenttime", time.Now(), "delaytime", eta)
+	_, err := rl.queueConnector.Server.SendTask(signature)
+	if err != nil {
+		rl.Logger.Error("Error while sending task")
 	}
 }
