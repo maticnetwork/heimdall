@@ -162,7 +162,6 @@ func HandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keeper, c
 	}
 
 	// update last updated
-	// TODO: Refactor later
 	validator.LastUpdated = sequence.String()
 
 	// set validator amount
