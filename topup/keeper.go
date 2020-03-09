@@ -1,8 +1,6 @@
 package topup
 
 import (
-	"strconv"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -70,21 +68,21 @@ func (keeper Keeper) Logger(ctx sdk.Context) log.Logger {
 //
 
 // GetTopupSequenceKey drafts topup sequence for address
-func GetTopupSequenceKey(sequence uint64) []byte {
-	return append(TopupSequencePrefixKey, []byte(strconv.FormatUint(sequence, 10))...)
+func GetTopupSequenceKey(sequence string) []byte {
+	return append(TopupSequencePrefixKey, []byte(sequence)...)
 }
 
 // GetTopupSequences checks if topup already exists
-func (keeper Keeper) GetTopupSequences(ctx sdk.Context) (sequences []*uint64) {
-	keeper.IterateTopupSequencesAndApplyFn(ctx, func(sequence uint64) error {
-		sequences = append(sequences, &sequence)
+func (keeper Keeper) GetTopupSequences(ctx sdk.Context) (sequences []string) {
+	keeper.IterateTopupSequencesAndApplyFn(ctx, func(sequence string) error {
+		sequences = append(sequences, sequence)
 		return nil
 	})
 	return
 }
 
 // IterateTopupSequencesAndApplyFn interate validators and apply the given function.
-func (keeper Keeper) IterateTopupSequencesAndApplyFn(ctx sdk.Context, f func(sequence uint64) error) {
+func (keeper Keeper) IterateTopupSequencesAndApplyFn(ctx sdk.Context, f func(sequence string) error) {
 	store := ctx.KVStore(keeper.key)
 
 	// get sequence iterator
@@ -93,7 +91,7 @@ func (keeper Keeper) IterateTopupSequencesAndApplyFn(ctx sdk.Context, f func(seq
 
 	// loop through validators to get valid validators
 	for ; iterator.Valid(); iterator.Next() {
-		sequence, _ := strconv.ParseUint(string(iterator.Key()[len(TopupSequencePrefixKey):]), 10, 64)
+		sequence := string(iterator.Key()[len(TopupSequencePrefixKey):])
 
 		// call function and return if required
 		if err := f(sequence); err != nil {
@@ -104,13 +102,13 @@ func (keeper Keeper) IterateTopupSequencesAndApplyFn(ctx sdk.Context, f func(seq
 }
 
 // SetTopupSequence sets mapping for sequence id to bool
-func (keeper Keeper) SetTopupSequence(ctx sdk.Context, sequence uint64) {
+func (keeper Keeper) SetTopupSequence(ctx sdk.Context, sequence string) {
 	store := ctx.KVStore(keeper.key)
 	store.Set(GetTopupSequenceKey(sequence), DefaultValue)
 }
 
 // HasTopupSequence checks if topup already exists
-func (keeper Keeper) HasTopupSequence(ctx sdk.Context, sequence uint64) bool {
+func (keeper Keeper) HasTopupSequence(ctx sdk.Context, sequence string) bool {
 	store := ctx.KVStore(keeper.key)
 	return store.Has(GetTopupSequenceKey(sequence))
 }
