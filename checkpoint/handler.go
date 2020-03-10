@@ -161,18 +161,6 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg types.MsgCheckpointAck, k Keepe
 		return common.ErrBadAck(k.Codespace()).Result()
 	}
 
-	// check confirmation
-	latestBlock, err := contractCaller.GetMainChainBlock(nil)
-	if err != nil {
-		k.Logger(ctx).Error("Unable to connect to mainchain", "Error", err)
-		return common.ErrNoConn(k.Codespace()).Result()
-	}
-
-	if latestBlock.Number.Uint64()-createdAt < helper.GetConfig().ConfirmationBlocks {
-		k.Logger(ctx).Error("Not enough confirmations", "latestBlock", latestBlock.Number.Uint64(), "txBlock", createdAt)
-		return common.ErrWaitForConfirmation(k.Codespace()).Result()
-	}
-
 	k.Logger(ctx).Debug("HeaderBlock fetched",
 		"headerBlock", msg.HeaderBlock,
 		"start", start,
