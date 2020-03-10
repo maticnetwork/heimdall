@@ -168,7 +168,6 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg types.MsgCheckpointAck, k Keepe
 		"roothash", root,
 		"proposer", proposer,
 		"createdAt", createdAt,
-		"latest", latestBlock.Number.Uint64(),
 	)
 
 	// get last checkpoint from buffer
