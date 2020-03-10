@@ -47,8 +47,9 @@ const (
 	ValidatorURL           = "/staking/validator/%v"
 	CurrentValidatorSetURL = "staking/validator-set"
 
-	TransactionTimeout = 1 * time.Minute
-	CommitTimeout      = 2 * time.Minute
+	TransactionTimeout      = 1 * time.Minute
+	CommitTimeout           = 2 * time.Minute
+	TaskDelayBetweenEachVal = 3 * time.Second
 
 	BridgeDBFlag = "bridge-db"
 )
@@ -150,8 +151,7 @@ func CalculateTaskDelay(cliCtx cliContext.CLIContext) (bool, time.Duration) {
 	}
 
 	// calculate delay
-	delayBetweenEachVal := 3 * time.Second
-	taskDelay := time.Duration(valPosition) * delayBetweenEachVal
+	taskDelay := time.Duration(valPosition) * TaskDelayBetweenEachVal
 	return isCurrentValidator, taskDelay
 }
 
