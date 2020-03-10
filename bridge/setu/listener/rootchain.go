@@ -155,7 +155,11 @@ func (rl *RootChainListener) queryAndBroadcastEvents(fromBlock *big.Int, toBlock
 				case "ReStaked":
 					rl.sendTask("sendReStakedToHeimdall", selectedEvent.Name, logBytes)
 				case "StateSynced":
-					rl.sendTask("sendStateSyncedToHeimdall", selectedEvent.Name, logBytes)
+					if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx); isCurrentValidator {
+						rl.sendTaskWithDelay("sendStateSyncedToHeimdall", selectedEvent.Name, logBytes, delay)
+					} else {
+						rl.Logger.Info("i am not present in current validatorset. ignore sending state sync task")
+					}
 				case "TopUpFee":
 					if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx); isCurrentValidator {
 						rl.sendTaskWithDelay("sendTopUpFeeToHeimdall", selectedEvent.Name, logBytes, delay)
