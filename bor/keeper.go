@@ -2,7 +2,6 @@ package bor
 
 import (
 	"errors"
-	"fmt"
 	"math/big"
 	"strconv"
 
@@ -218,7 +217,6 @@ func (k *Keeper) SelectNextProducers(ctx sdk.Context) (vals []hmTypes.Validator,
 	// spanEligibleVals are current validators who are not getting deactivated in between next span
 	spanEligibleVals := k.sk.GetSpanEligibleValidators(ctx)
 	producerCount := k.GetParams(ctx).ProducerCount
-	fmt.Println("producerCount", producerCount)
 	if err != nil {
 		return vals, err
 	}

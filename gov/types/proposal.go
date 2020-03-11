@@ -248,73 +248,73 @@ func (tr TallyResult) String() string {
   NoWithVeto: %s`, tr.Yes, tr.Abstain, tr.No, tr.NoWithVeto)
 }
 
-// Proposal types
-const (
-	ProposalTypeText            string = "Text"
-	ProposalTypeSoftwareUpgrade string = "SoftwareUpgrade"
-)
+// // Proposal types
+// const (
+// 	ProposalTypeText            string = "Text"
+// 	ProposalTypeSoftwareUpgrade string = "SoftwareUpgrade"
+// )
 
-// Text Proposal
-type TextProposal struct {
-	Title       string `json:"title" yaml:"title"`
-	Description string `json:"description" yaml:"description"`
-}
+// // Text Proposal
+// type TextProposal struct {
+// 	Title       string `json:"title" yaml:"title"`
+// 	Description string `json:"description" yaml:"description"`
+// }
 
-func NewTextProposal(title, description string) Content {
-	return TextProposal{title, description}
-}
+// func NewTextProposal(title, description string) Content {
+// 	return TextProposal{title, description}
+// }
 
-// Implements Proposal Interface
-var _ Content = TextProposal{}
+// // Implements Proposal Interface
+// var _ Content = TextProposal{}
 
-// nolint
-func (tp TextProposal) GetTitle() string         { return tp.Title }
-func (tp TextProposal) GetDescription() string   { return tp.Description }
-func (tp TextProposal) ProposalRoute() string    { return RouterKey }
-func (tp TextProposal) ProposalType() string     { return ProposalTypeText }
-func (tp TextProposal) ValidateBasic() sdk.Error { return ValidateAbstract(DefaultCodespace, tp) }
+// // nolint
+// func (tp TextProposal) GetTitle() string         { return tp.Title }
+// func (tp TextProposal) GetDescription() string   { return tp.Description }
+// func (tp TextProposal) ProposalRoute() string    { return RouterKey }
+// func (tp TextProposal) ProposalType() string     { return ProposalTypeText }
+// func (tp TextProposal) ValidateBasic() sdk.Error { return ValidateAbstract(DefaultCodespace, tp) }
 
-func (tp TextProposal) String() string {
-	return fmt.Sprintf(`Text Proposal:
-  Title:       %s
-  Description: %s
-`, tp.Title, tp.Description)
-}
+// func (tp TextProposal) String() string {
+// 	return fmt.Sprintf(`Text Proposal:
+//   Title:       %s
+//   Description: %s
+// `, tp.Title, tp.Description)
+// }
 
-// Software Upgrade Proposals
-// TODO: We have to add fields for SUP specific arguments e.g. commit hash,
-// upgrade date, etc.
-type SoftwareUpgradeProposal struct {
-	Title       string `json:"title" yaml:"title"`
-	Description string `json:"description" yaml:"description"`
-}
+// // Software Upgrade Proposals
+// // TODO: We have to add fields for SUP specific arguments e.g. commit hash,
+// // upgrade date, etc.
+// type SoftwareUpgradeProposal struct {
+// 	Title       string `json:"title" yaml:"title"`
+// 	Description string `json:"description" yaml:"description"`
+// }
 
-func NewSoftwareUpgradeProposal(title, description string) Content {
-	return SoftwareUpgradeProposal{title, description}
-}
+// func NewSoftwareUpgradeProposal(title, description string) Content {
+// 	return SoftwareUpgradeProposal{title, description}
+// }
 
-// Implements Proposal Interface
-var _ Content = SoftwareUpgradeProposal{}
+// // Implements Proposal Interface
+// var _ Content = SoftwareUpgradeProposal{}
 
-// nolint
-func (sup SoftwareUpgradeProposal) GetTitle() string       { return sup.Title }
-func (sup SoftwareUpgradeProposal) GetDescription() string { return sup.Description }
-func (sup SoftwareUpgradeProposal) ProposalRoute() string  { return RouterKey }
-func (sup SoftwareUpgradeProposal) ProposalType() string   { return ProposalTypeSoftwareUpgrade }
-func (sup SoftwareUpgradeProposal) ValidateBasic() sdk.Error {
-	return ValidateAbstract(DefaultCodespace, sup)
-}
+// // nolint
+// func (sup SoftwareUpgradeProposal) GetTitle() string       { return sup.Title }
+// func (sup SoftwareUpgradeProposal) GetDescription() string { return sup.Description }
+// func (sup SoftwareUpgradeProposal) ProposalRoute() string  { return RouterKey }
+// func (sup SoftwareUpgradeProposal) ProposalType() string   { return ProposalTypeSoftwareUpgrade }
+// func (sup SoftwareUpgradeProposal) ValidateBasic() sdk.Error {
+// 	return ValidateAbstract(DefaultCodespace, sup)
+// }
 
-func (sup SoftwareUpgradeProposal) String() string {
-	return fmt.Sprintf(`Software Upgrade Proposal:
-  Title:       %s
-  Description: %s
-`, sup.Title, sup.Description)
-}
+// func (sup SoftwareUpgradeProposal) String() string {
+// 	return fmt.Sprintf(`Software Upgrade Proposal:
+//   Title:       %s
+//   Description: %s
+// `, sup.Title, sup.Description)
+// }
 
 var validProposalTypes = map[string]struct{}{
-	ProposalTypeText:            {},
-	ProposalTypeSoftwareUpgrade: {},
+	// ProposalTypeText:            {},
+	// ProposalTypeSoftwareUpgrade: {},
 }
 
 // RegisterProposalType registers a proposal type. It will panic if the type is
@@ -330,11 +330,11 @@ func RegisterProposalType(ty string) {
 // ContentFromProposalType returns a Content object based on the proposal type.
 func ContentFromProposalType(title, desc, ty string) Content {
 	switch ty {
-	case ProposalTypeText:
-		return NewTextProposal(title, desc)
+	// case ProposalTypeText:
+	// 	return NewTextProposal(title, desc)
 
-	case ProposalTypeSoftwareUpgrade:
-		return NewSoftwareUpgradeProposal(title, desc)
+	// case ProposalTypeSoftwareUpgrade:
+	// 	return NewSoftwareUpgradeProposal(title, desc)
 
 	default:
 		return nil
@@ -356,9 +356,9 @@ func IsValidProposalType(ty string) bool {
 // performs a no-op.
 func ProposalHandler(_ sdk.Context, c Content) sdk.Error {
 	switch c.ProposalType() {
-	case ProposalTypeText, ProposalTypeSoftwareUpgrade:
-		// both proposal types do not change state so this performs a no-op
-		return nil
+	// case ProposalTypeText, ProposalTypeSoftwareUpgrade:
+	// 	// both proposal types do not change state so this performs a no-op
+	// 	return nil
 
 	default:
 		errMsg := fmt.Sprintf("unrecognized gov proposal type: %s", c.ProposalType())
