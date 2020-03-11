@@ -2,6 +2,7 @@ package pier
 
 import (
 	"bytes"
+	"container/list"
 	"context"
 	"encoding/hex"
 	"math/big"
@@ -40,6 +41,12 @@ const (
 	lastBlockKey = "last-block" // storage key
 )
 
+// LightHeader represent light header for in-memory queue
+type LightHeader struct {
+	Number *big.Int `json:"number"           gencodec:"required"`
+	Time   uint64   `json:"timestamp"        gencodec:"required"`
+}
+
 // Syncer syncs validators and checkpoints
 type Syncer struct {
 	// Base service
@@ -70,6 +77,12 @@ type Syncer struct {
 
 	// http client to subscribe to
 	httpClient *httpClient.HTTP
+
+	// queue
+	headerQueue *list.List
+
+	// confirmation time
+	txConfirmationTime uint64
 }
 
 // NewSyncer returns new service object for syncing events
@@ -104,6 +117,9 @@ func NewSyncer(cdc *codec.Codec, queueConnector *QueueConnector, httpClient *htt
 
 		abis:          abis,
 		HeaderChannel: make(chan *types.Header),
+
+		headerQueue:        list.New(),
+		txConfirmationTime: uint64(helper.GetConfig().TxConfirmationTime.Seconds()),
 	}
 
 	syncer.BaseService = *common.NewBaseService(logger, ChainSyncer, syncer)
@@ -212,17 +228,40 @@ func (syncer *Syncer) startSubscription(ctx context.Context, subscription ethere
 func (syncer *Syncer) processHeader(newHeader *types.Header) {
 	syncer.Logger.Debug("New block detected", "blockNumber", newHeader.Number)
 
-	latestNumber := newHeader.Number
+	// adding into queue
+	syncer.headerQueue.PushBack(&LightHeader{
+		Number: newHeader.Number,
+		Time:   newHeader.Time,
+	})
 
-	// confirmation
-	confirmationBlocks := big.NewInt(0).SetUint64(helper.GetConfig().ConfirmationBlocks)
-	confirmationBlocks = confirmationBlocks.Add(confirmationBlocks, big.NewInt(1))
-	if latestNumber.Uint64() > confirmationBlocks.Uint64() {
-		latestNumber = latestNumber.Sub(latestNumber, confirmationBlocks)
+	// current time
+	currentTime := uint64(time.Now().UTC().Unix())
+
+	var start *big.Int
+	var end *big.Int
+
+	// check start and end header
+	for syncer.headerQueue.Len() > 0 {
+		e := syncer.headerQueue.Front() // First element
+		h := e.Value.(*LightHeader)
+		if h.Time+syncer.txConfirmationTime > currentTime {
+			break
+		}
+
+		if start == nil {
+			start = h.Number
+		}
+		end = h.Number
+
+		syncer.headerQueue.Remove(e) // Dequeue
+	}
+
+	if start == nil {
+		return
 	}
 
 	// default fromBlock
-	fromBlock := latestNumber
+	fromBlock := start
 	// get last block from storage
 	hasLastBlock, _ := syncer.storageClient.Has([]byte(lastBlockKey), nil)
 	if hasLastBlock {
@@ -234,8 +273,8 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 
 		syncer.Logger.Debug("Got last block from bridge storage", "lastBlock", string(lastBlockBytes))
 		if result, err := strconv.ParseUint(string(lastBlockBytes), 10, 64); err == nil {
-			if result >= newHeader.Number.Uint64() {
-				return
+			if result > fromBlock.Uint64() {
+				fromBlock = big.NewInt(0).SetUint64(result)
 			}
 
 			fromBlock = big.NewInt(0).SetUint64(result + 1)
@@ -243,15 +282,10 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 	}
 
 	// to block
-	toBlock := latestNumber
+	toBlock := end
 
 	// debug log
-	syncer.Logger.Debug("Processing header", "fromBlock", fromBlock, "toBlock", toBlock)
-
-	// set diff
-	if toBlock.Uint64() < fromBlock.Uint64() {
-		fromBlock = toBlock
-	}
+	syncer.Logger.Info("Processing header", "fromBlock", fromBlock, "toBlock", toBlock)
 
 	// set last block to storage
 	syncer.storageClient.Put([]byte(lastBlockKey), []byte(toBlock.String()), nil)
