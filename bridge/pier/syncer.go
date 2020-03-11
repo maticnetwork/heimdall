@@ -80,6 +80,9 @@ type Syncer struct {
 
 	// queue
 	headerQueue *list.List
+
+	// confirmation time
+	txConfirmationTime uint64
 }
 
 // NewSyncer returns new service object for syncing events
@@ -115,7 +118,8 @@ func NewSyncer(cdc *codec.Codec, queueConnector *QueueConnector, httpClient *htt
 		abis:          abis,
 		HeaderChannel: make(chan *types.Header),
 
-		headerQueue: list.New(),
+		headerQueue:        list.New(),
+		txConfirmationTime: uint64(helper.GetConfig().TxConfirmationTime.Seconds()),
 	}
 
 	syncer.BaseService = *common.NewBaseService(logger, ChainSyncer, syncer)
@@ -232,7 +236,6 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 
 	// current time
 	currentTime := uint64(time.Now().UTC().Unix())
-	confirmationTime := uint64(helper.GetConfig().TxConfirmationTime.Seconds())
 
 	var start *big.Int
 	var end *big.Int
@@ -241,7 +244,7 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 	for syncer.headerQueue.Len() > 0 {
 		e := syncer.headerQueue.Front() // First element
 		h := e.Value.(*LightHeader)
-		if h.Time+confirmationTime > currentTime {
+		if h.Time+syncer.txConfirmationTime > currentTime {
 			break
 		}
 
@@ -283,11 +286,6 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 
 	// debug log
 	syncer.Logger.Info("Processing header", "fromBlock", fromBlock, "toBlock", toBlock)
-
-	// set diff
-	if toBlock.Cmp(fromBlock) == -1 {
-		fromBlock = toBlock
-	}
 
 	// set last block to storage
 	syncer.storageClient.Put([]byte(lastBlockKey), []byte(toBlock.String()), nil)
