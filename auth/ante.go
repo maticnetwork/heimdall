@@ -164,7 +164,7 @@ func NewAnteHandler(
 
 		// check main chain tx is confirmed transaction
 		mainTxMsg, ok := stdTx.Msg.(MainTxMsg)
-		if ok && !contractCaller.IsTxConfirmed(mainTxMsg.GetTxHash().EthHash()) {
+		if ok && !contractCaller.IsTxConfirmed(ctx.BlockTime(), mainTxMsg.GetTxHash().EthHash()) {
 			return newCtx, sdk.ErrInternal(fmt.Sprintf("Not enough tx confirmations for %s", mainTxMsg.GetTxHash().Hex())).Result(), true
 		}
 
