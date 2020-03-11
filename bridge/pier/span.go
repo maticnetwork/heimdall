@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -129,8 +128,6 @@ func (s *SpanService) checkAndPropose() {
 	lastSpan, err := s.getLastSpan()
 	if err == nil && lastSpan != nil {
 		nextSpanMsg, err := s.fetchNextSpanDetails(lastSpan.ID+1, lastSpan.EndBlock+1)
-
-		fmt.Println("nextSpanMsg", nextSpanMsg.SelectedProducers)
 
 		// check if current user is among next span producers
 		if err == nil && s.isSpanProposer(nextSpanMsg.SelectedProducers) {
