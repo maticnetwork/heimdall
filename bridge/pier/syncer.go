@@ -41,6 +41,12 @@ const (
 	lastBlockKey = "last-block" // storage key
 )
 
+// LightHeader represent light header for in-memory queue
+type LightHeader struct {
+	Number *big.Int `json:"number"           gencodec:"required"`
+	Time   uint64   `json:"timestamp"        gencodec:"required"`
+}
+
 // Syncer syncs validators and checkpoints
 type Syncer struct {
 	// Base service
@@ -219,7 +225,10 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 	syncer.Logger.Debug("New block detected", "blockNumber", newHeader.Number)
 
 	// adding into queue
-	syncer.headerQueue.PushBack(newHeader)
+	syncer.headerQueue.PushBack(&LightHeader{
+		Number: newHeader.Number,
+		Time:   newHeader.Time,
+	})
 
 	// current time
 	currentTime := uint64(time.Now().UTC().Unix())
@@ -231,7 +240,7 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 	// check start and end header
 	for syncer.headerQueue.Len() > 0 {
 		e := syncer.headerQueue.Front() // First element
-		h := e.Value.(*types.Header)
+		h := e.Value.(*LightHeader)
 		if h.Time+confirmationTime > currentTime {
 			break
 		}
