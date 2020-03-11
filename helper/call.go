@@ -6,6 +6,7 @@ import (
 	"errors"
 	"math/big"
 	"strings"
+	"time"
 
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/common"
@@ -34,8 +35,8 @@ type IContractCaller interface {
 	GetCheckpointSign(txHash common.Hash) ([]byte, []byte, []byte, error)
 	GetMainChainBlock(*big.Int) (*ethTypes.Header, error)
 	GetMaticChainBlock(*big.Int) (*ethTypes.Header, error)
-	IsTxConfirmed(common.Hash) bool
-	GetConfirmedTxReceipt(common.Hash) (*ethTypes.Receipt, error)
+	IsTxConfirmed(time.Time, common.Hash) bool
+	GetConfirmedTxReceipt(time.Time, common.Hash) (*ethTypes.Receipt, error)
 	GetBlockNumberFromTxHash(common.Hash) (*big.Int, error)
 
 	// decode header event
@@ -289,9 +290,9 @@ func (c *ContractCaller) GetBlockNumberFromTxHash(tx common.Hash) (*big.Int, err
 }
 
 // IsTxConfirmed is tx confirmed
-func (c *ContractCaller) IsTxConfirmed(tx common.Hash) bool {
+func (c *ContractCaller) IsTxConfirmed(currentTime time.Time, tx common.Hash) bool {
 	// get main tx receipt
-	receipt, err := c.GetConfirmedTxReceipt(tx)
+	receipt, err := c.GetConfirmedTxReceipt(currentTime, tx)
 	if receipt == nil || err != nil {
 		return false
 	}
@@ -300,7 +301,7 @@ func (c *ContractCaller) IsTxConfirmed(tx common.Hash) bool {
 }
 
 // GetConfirmedTxReceipt returns confirmed tx receipt
-func (c *ContractCaller) GetConfirmedTxReceipt(tx common.Hash) (*ethTypes.Receipt, error) {
+func (c *ContractCaller) GetConfirmedTxReceipt(currentTime time.Time, tx common.Hash) (*ethTypes.Receipt, error) {
 	// get main tx receipt
 	receipt, err := c.GetMainTxReceipt(tx)
 	if err != nil {
@@ -309,15 +310,17 @@ func (c *ContractCaller) GetConfirmedTxReceipt(tx common.Hash) (*ethTypes.Receip
 	Logger.Debug("Tx included in block", "block", receipt.BlockNumber.Uint64(), "tx", tx)
 
 	// get main chain block
-	latestBlk, err := c.GetMainChainBlock(nil)
+	receiptBlock, err := c.GetMainChainBlock(receipt.BlockNumber)
 	if err != nil {
-		Logger.Error("error getting latest block from main chain", "Error", err)
+		Logger.Error("error getting receipt block from main chain", "Error", err)
 		return nil, err
 	}
-	Logger.Debug("Latest block on main chain obtained", "Block", latestBlk.Number.Uint64())
+	Logger.Debug("Receipt block on main chain obtained", "Block", receiptBlock.Number.Uint64())
 
-	diff := latestBlk.Number.Uint64() - receipt.BlockNumber.Uint64()
-	if diff < GetConfig().ConfirmationBlocks {
+	// check if current time is greater than buffer time
+	bufferTime := receiptBlock.Time + uint64(GetConfig().TxConfirmationTime.Seconds())
+
+	if uint64(currentTime.Unix()) < bufferTime {
 		return nil, errors.New("Not enough confirmations")
 	}
 

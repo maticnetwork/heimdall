@@ -88,7 +88,7 @@ func ErrNoConn(codespace sdk.CodespaceType) sdk.Error {
 }
 
 func ErrWaitForConfirmation(codespace sdk.CodespaceType) sdk.Error {
-	return newError(codespace, CodeWaitFrConfirmation, fmt.Sprintf("Please wait for %v confirmations before sending transaction", helper.GetConfig().ConfirmationBlocks))
+	return newError(codespace, CodeWaitFrConfirmation, fmt.Sprintf("Please wait for %v confirmation time before sending transaction", helper.GetConfig().TxConfirmationTime))
 }
 
 func ErrNoCheckpointFound(codespace sdk.CodespaceType) sdk.Error {

@@ -40,7 +40,7 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k Keepe
 	k.Logger(ctx).Info("Handling new validator join", "msg", msg)
 
 	// get main tx receipt
-	receipt, err := contractCaller.GetConfirmedTxReceipt(msg.TxHash.EthHash())
+	receipt, err := contractCaller.GetConfirmedTxReceipt(ctx.BlockTime(), msg.TxHash.EthHash())
 	if err != nil || receipt == nil {
 		return hmCommon.ErrWaitForConfirmation(k.Codespace()).Result()
 	}
@@ -127,7 +127,7 @@ func HandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keeper, c
 	k.Logger(ctx).Debug("Handling stake update", "Validator", msg.ID)
 
 	// get main tx receipt
-	receipt, err := contractCaller.GetConfirmedTxReceipt(msg.TxHash.EthHash())
+	receipt, err := contractCaller.GetConfirmedTxReceipt(ctx.BlockTime(), msg.TxHash.EthHash())
 	if err != nil || receipt == nil {
 		return hmCommon.ErrWaitForConfirmation(k.Codespace()).Result()
 	}
@@ -201,7 +201,7 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper,
 	k.Logger(ctx).Debug("Handling signer update", "Validator", msg.ID, "Signer", msg.NewSignerPubKey.Address())
 
 	// get main tx receipt
-	receipt, err := contractCaller.GetConfirmedTxReceipt(msg.TxHash.EthHash())
+	receipt, err := contractCaller.GetConfirmedTxReceipt(ctx.BlockTime(), msg.TxHash.EthHash())
 	if err != nil || receipt == nil {
 		return hmCommon.ErrWaitForConfirmation(k.Codespace()).Result()
 	}
@@ -318,7 +318,7 @@ func HandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k Keepe
 	k.Logger(ctx).Info("Handling validator exit", "ValidatorID", msg.ID)
 
 	// get main tx receipt
-	receipt, err := contractCaller.GetConfirmedTxReceipt(msg.TxHash.EthHash())
+	receipt, err := contractCaller.GetConfirmedTxReceipt(ctx.BlockTime(), msg.TxHash.EthHash())
 	if err != nil || receipt == nil {
 		return hmCommon.ErrWaitForConfirmation(k.Codespace()).Result()
 	}

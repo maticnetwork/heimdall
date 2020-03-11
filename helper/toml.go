@@ -75,7 +75,7 @@ checkpoint_buffer_time = "{{ .CheckpointBufferTime }}"
 
 ##### Transaction Confirmations  #####
 
-confirmation_blocks = "{{ .ConfirmationBlocks }}"
+tx_confirmation_time = "{{ .TxConfirmationTime }}"
 
 `
 
