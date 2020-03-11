@@ -305,7 +305,7 @@ func (c *ContractCaller) GetConfirmedTxReceipt(currentTime time.Time, tx common.
 	// get main tx receipt
 	receipt, err := c.GetMainTxReceipt(tx)
 	if err != nil {
-		Logger.Error("Error while fetching mainchain receipt", "error", err)
+		Logger.Error("Error while fetching mainchain receipt", "error", err, "txHash", tx.Hex())
 		return nil, err
 	}
 	Logger.Debug("Tx included in block", "block", receipt.BlockNumber.Uint64(), "tx", tx)
