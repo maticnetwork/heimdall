@@ -14,7 +14,7 @@ json_path=$(pwd)
 echo $json_path
 
 ## Enabling Prometheus for Heimdall
-sudo sed -i 's/prometheus = false/prometheus = true/' /home/ubuntu/.heimdalld/config/config.toml
+sudo sed -i 's/prometheus = false/prometheus = true/' $HOME/.heimdalld/config/config.toml
 ## Restaring Heimdalld
 sudo service heimdalld restart
 
@@ -91,6 +91,7 @@ sudo systemctl enable grafana-server.service
 #Adding prometheus DB as Datasourse for grafana
 curl -k -X POST  http://admin:admin@localhost:3000/api/datasources -H 'Content-Type: application/json' -H 'Accept: application/json' -d "$(cat $json_path/datasource.json)"
 
-
 #creating grafana dashboard for heimdall
 curl -k -X POST http://admin:admin@localhost:3000/api/dashboards/db -H 'Content-Type: application/json' -H 'Accept: application/json' -d "$(cat $json_path/dashboard.json)"
+
+
