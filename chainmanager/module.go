@@ -1,4 +1,4 @@
-package auth
+package chainmanager
 
 import (
 	"encoding/json"
@@ -11,9 +11,9 @@ import (
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	authCli "github.com/maticnetwork/heimdall/auth/client/cli"
-	authRest "github.com/maticnetwork/heimdall/auth/client/rest"
-	"github.com/maticnetwork/heimdall/auth/types"
+	chainmanagerCli "github.com/maticnetwork/heimdall/chainmanager/client/cli"
+	chainmanagerRest "github.com/maticnetwork/heimdall/chainmanager/client/rest"
+	"github.com/maticnetwork/heimdall/chainmanager/types"
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
@@ -55,43 +55,41 @@ func (AppModuleBasic) ValidateGenesis(bz json.RawMessage) error {
 }
 
 // VerifyGenesis performs verification on auth module state.
-func (AppModuleBasic) VerifyGenesis(map[string]json.RawMessage) error {
+func (AppModuleBasic) VerifyGenesis(bz map[string]json.RawMessage) error {
 	return nil
 }
 
 // RegisterRESTRoutes registers the REST routes for the auth module.
 func (AppModuleBasic) RegisterRESTRoutes(ctx context.CLIContext, rtr *mux.Router) {
-	authRest.RegisterRoutes(ctx, rtr)
+	chainmanagerRest.RegisterRoutes(ctx, rtr)
 }
 
 // GetTxCmd returns the root tx command for the auth module.
 func (AppModuleBasic) GetTxCmd(cdc *codec.Codec) *cobra.Command {
-	return authCli.GetTxCmd(cdc)
+	return nil
 }
 
 // GetQueryCmd returns the root query command for the auth module.
 func (AppModuleBasic) GetQueryCmd(cdc *codec.Codec) *cobra.Command {
-	return authCli.GetQueryCmd(cdc)
+	return chainmanagerCli.GetQueryCmd(cdc)
 }
 
 //____________________________________________________________________________
 
-// AppModule implements an application module for the auth module.
+// AppModule implements an application module for the supply module.
 type AppModule struct {
 	AppModuleBasic
 
-	accountKeeper  AccountKeeper
+	keeper         Keeper
 	contractCaller helper.IContractCaller
-	processors     []types.AccountProcessor
 }
 
 // NewAppModule creates a new AppModule object
-func NewAppModule(accountKeeper AccountKeeper, contractCaller helper.IContractCaller, processors []types.AccountProcessor) AppModule {
+func NewAppModule(keeper Keeper, contractCaller helper.IContractCaller) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{},
-		accountKeeper:  accountKeeper,
+		keeper:         keeper,
 		contractCaller: contractCaller,
-		processors:     processors,
 	}
 }
 
@@ -108,8 +106,8 @@ func (AppModule) Route() string {
 	return types.RouterKey
 }
 
-// NewHandler returns an sdk.Handler for the auth module.
-func (AppModule) NewHandler() sdk.Handler {
+// NewHandler returns an sdk.Handler for the module.
+func (am AppModule) NewHandler() sdk.Handler {
 	return nil
 }
 
@@ -120,7 +118,7 @@ func (AppModule) QuerierRoute() string {
 
 // NewQuerierHandler returns the auth module sdk.Querier.
 func (am AppModule) NewQuerierHandler() sdk.Querier {
-	return NewQuerier(am.accountKeeper)
+	return NewQuerier(am.keeper)
 }
 
 // InitGenesis performs genesis initialization for the auth module. It returns
@@ -128,14 +126,14 @@ func (am AppModule) NewQuerierHandler() sdk.Querier {
 func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.ValidatorUpdate {
 	var genesisState types.GenesisState
 	types.ModuleCdc.MustUnmarshalJSON(data, &genesisState)
-	InitGenesis(ctx, am.accountKeeper, am.processors, genesisState)
+	InitGenesis(ctx, am.keeper, genesisState)
 	return []abci.ValidatorUpdate{}
 }
 
 // ExportGenesis returns the exported genesis state as raw bytes for the auth
 // module.
 func (am AppModule) ExportGenesis(ctx sdk.Context) json.RawMessage {
-	gs := ExportGenesis(ctx, am.accountKeeper)
+	gs := ExportGenesis(ctx, am.keeper)
 	return types.ModuleCdc.MustMarshalJSON(gs)
 }
 
