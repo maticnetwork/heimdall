@@ -431,6 +431,9 @@ func (app *HeimdallApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) 
 	}
 
 	// get validator updates
+	if err := ModuleBasics.ValidateGenesis(genesisState); err != nil {
+		panic(err)
+	}
 	app.mm.InitGenesis(ctx, genesisState)
 
 	stakingState := stakingTypes.GetGenesisStateFromAppState(genesisState)
