@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cosmos/cosmos-sdk/x/params/subspace"
+	"github.com/maticnetwork/heimdall/params/subspace"
 )
 
 // Default parameter values

@@ -240,7 +240,7 @@ func (qc *QueueConnector) BroadcastToBor(data []byte) error {
 
 func (qc *QueueConnector) handleHeimdallBroadcastMsgs(amqpMsgs <-chan amqp.Delivery) {
 	// tx encoder
-	txEncoder := helper.GetTxEncoder()
+	txEncoder := helper.GetTxEncoder(qc.cliCtx.Codec)
 	// chain id
 	chainID := helper.GetGenesisDoc().ChainID
 	// current address

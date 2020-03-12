@@ -7,11 +7,11 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/maticnetwork/bor/common"
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/params/subspace"
 	"github.com/maticnetwork/heimdall/staking/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
@@ -43,7 +43,7 @@ type Keeper struct {
 	// codespacecodespace
 	codespace sdk.CodespaceType
 	// param space
-	paramSpace params.Subspace
+	paramSpace subspace.Subspace
 	// module communicator
 	moduleCommunicator ModuleCommunicator
 }
@@ -52,7 +52,7 @@ type Keeper struct {
 func NewKeeper(
 	cdc *codec.Codec,
 	storeKey sdk.StoreKey,
-	paramSpace params.Subspace,
+	paramSpace subspace.Subspace,
 	codespace sdk.CodespaceType,
 	moduleCommunicator ModuleCommunicator,
 ) Keeper {
@@ -144,6 +144,23 @@ func (k *Keeper) GetValidatorInfo(ctx sdk.Context, address []byte) (validator hm
 	validator, err = hmTypes.UnmarshallValidator(k.cdc, store.Get(key))
 	if err != nil {
 		return validator, err
+	}
+
+	// return true if validator
+	return validator, nil
+}
+
+// GetActiveValidatorInfo returns active validator
+func (k *Keeper) GetActiveValidatorInfo(ctx sdk.Context, address []byte) (validator hmTypes.Validator, err error) {
+	validator, err = k.GetValidatorInfo(ctx, address)
+	if err != nil {
+		return validator, err
+	}
+
+	// get ack count
+	ackCount := k.moduleCommunicator.GetACKCount(ctx)
+	if !validator.IsCurrentValidator(ackCount) {
+		return validator, errors.New("Validator is not active")
 	}
 
 	// return true if validator
@@ -453,6 +470,16 @@ func (k *Keeper) IterateDividendAccountsByPrefixAndApplyFn(ctx sdk.Context, pref
 		dividendAccount, _ := hmTypes.UnMarshallDividendAccount(k.cdc, iterator.Value())
 		// call function and return if required
 		if err := f(dividendAccount); err != nil {
+			return
+		}
+	}
+}
+
+// IterateCurrentValidatorsAndApplyFn iterate through current validators
+func (k *Keeper) IterateCurrentValidatorsAndApplyFn(ctx sdk.Context, f func(validator *hmTypes.Validator) bool) {
+	currentValidatorSet := k.GetValidatorSet(ctx)
+	for _, v := range currentValidatorSet.Validators {
+		if stop := f(v); stop {
 			return
 		}
 	}

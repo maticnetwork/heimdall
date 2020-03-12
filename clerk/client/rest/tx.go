@@ -24,9 +24,10 @@ func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
 type AddRecordReq struct {
 	BaseReq rest.BaseReq `json:"base_req"`
 
-	TxHash   types.HeimdallHash `json:"tx_hash"`
-	LogIndex uint64             `json:"log_index"`
-	ID       uint64             `json:"id"`
+	TxHash     types.HeimdallHash `json:"tx_hash"`
+	LogIndex   uint64             `json:"log_index"`
+	ID         uint64             `json:"id"`
+	BorChainID string             `json:"bor_chain_id"`
 }
 
 func newEventRecordHandler(cliCtx context.CLIContext) http.HandlerFunc {
@@ -48,6 +49,7 @@ func newEventRecordHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			req.TxHash,
 			req.LogIndex,
 			req.ID,
+			req.BorChainID,
 		)
 
 		// send response

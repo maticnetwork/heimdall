@@ -6,6 +6,7 @@ import (
 
 // query endpoints supported by the auth Querier
 const (
+	QueryParams  = "params"
 	QueryAccount = "account"
 )
 

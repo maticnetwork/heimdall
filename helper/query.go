@@ -8,6 +8,7 @@ import (
 	"time"
 
 	cosmosContext "github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
 	httpClient "github.com/tendermint/tendermint/rpc/client"
@@ -74,7 +75,7 @@ func QueryTxsByEvents(cliCtx cosmosContext.CLIContext, tags []string, page, limi
 		return nil, err
 	}
 
-	txs, err := formatTxResults(resTxs.Txs, resBlocks)
+	txs, err := formatTxResults(cliCtx.Codec, resTxs.Txs, resBlocks)
 	if err != nil {
 		return nil, err
 	}
@@ -85,11 +86,11 @@ func QueryTxsByEvents(cliCtx cosmosContext.CLIContext, tags []string, page, limi
 }
 
 // formatTxResults parses the indexed txs into a slice of TxResponse objects.
-func formatTxResults(resTxs []*ctypes.ResultTx, resBlocks map[int64]*ctypes.ResultBlock) ([]sdk.TxResponse, error) {
+func formatTxResults(cdc *codec.Codec, resTxs []*ctypes.ResultTx, resBlocks map[int64]*ctypes.ResultBlock) ([]sdk.TxResponse, error) {
 	var err error
 	out := make([]sdk.TxResponse, len(resTxs))
 	for i := range resTxs {
-		out[i], err = formatTxResult(resTxs[i], resBlocks[resTxs[i].Height])
+		out[i], err = formatTxResult(cdc, resTxs[i], resBlocks[resTxs[i].Height])
 		if err != nil {
 			return nil, err
 		}
@@ -135,8 +136,8 @@ func getBlocksForTxResults(cliCtx cosmosContext.CLIContext, resTxs []*ctypes.Res
 	return resBlocks, nil
 }
 
-func formatTxResult(resTx *ctypes.ResultTx, resBlock *ctypes.ResultBlock) (sdk.TxResponse, error) {
-	tx, err := parseTx(resTx.Tx)
+func formatTxResult(cdc *codec.Codec, resTx *ctypes.ResultTx, resBlock *ctypes.ResultBlock) (sdk.TxResponse, error) {
+	tx, err := parseTx(cdc, resTx.Tx)
 	if err != nil {
 		return sdk.TxResponse{}, err
 	}
@@ -144,8 +145,8 @@ func formatTxResult(resTx *ctypes.ResultTx, resBlock *ctypes.ResultBlock) (sdk.T
 	return sdk.NewResponseResultTx(resTx, tx, resBlock.Block.Time.Format(time.RFC3339)), nil
 }
 
-func parseTx(txBytes []byte) (sdk.Tx, error) {
-	decoder := GetTxDecoder()
+func parseTx(cdc *codec.Codec, txBytes []byte) (sdk.Tx, error) {
+	decoder := GetTxDecoder(cdc)
 	return decoder(txBytes)
 }
 
@@ -177,7 +178,7 @@ func QueryTx(cliCtx cosmosContext.CLIContext, hashHexStr string) (sdk.TxResponse
 		return sdk.TxResponse{}, err
 	}
 
-	out, err := formatTxResult(resTx, resBlocks[resTx.Height])
+	out, err := formatTxResult(cliCtx.Codec, resTx, resBlocks[resTx.Height])
 	if err != nil {
 		return out, err
 	}

@@ -43,6 +43,12 @@ func CreateNewStateRecord(cdc *codec.Codec) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
+			// bor chain id
+			borChainID := viper.GetString(FlagBorChainId)
+			if borChainID == "" {
+				return fmt.Errorf("BorChainID cannot be empty")
+			}
+
 			// get proposer
 			proposer := types.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
 			if proposer.Empty() {
@@ -83,6 +89,7 @@ func CreateNewStateRecord(cdc *codec.Codec) *cobra.Command {
 				types.HexToHeimdallHash(txHashStr),
 				logIndex,
 				recordID,
+				borChainID,
 			)
 
 			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
@@ -91,10 +98,12 @@ func CreateNewStateRecord(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<tx-hash>")
 	cmd.Flags().String(FlagLogIndex, "", "--log-index=<log-index>")
 	cmd.Flags().String(FlagRecordID, "", "--id=<record-id>")
+	cmd.Flags().String(FlagBorChainId, "", "--bor-chain-id=<bor-chain-id>")
 	cmd.MarkFlagRequired(FlagProposerAddress)
 	cmd.MarkFlagRequired(FlagRecordID)
 	cmd.MarkFlagRequired(FlagTxHash)
 	cmd.MarkFlagRequired(FlagLogIndex)
+	cmd.MarkFlagRequired(FlagBorChainId)
 
 	return cmd
 }

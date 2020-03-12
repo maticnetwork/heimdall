@@ -3,9 +3,9 @@ package topup
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/params"
 
 	"github.com/maticnetwork/heimdall/bank"
+	"github.com/maticnetwork/heimdall/params/subspace"
 	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/topup/types"
 	"github.com/tendermint/tendermint/libs/log"
@@ -27,7 +27,7 @@ type Keeper struct {
 	// code space
 	codespace sdk.CodespaceType
 	// param subspace
-	paramSpace params.Subspace
+	paramSpace subspace.Subspace
 	// bank keeper
 	bk bank.Keeper
 	// staking keeper
@@ -38,7 +38,7 @@ type Keeper struct {
 func NewKeeper(
 	cdc *codec.Codec,
 	storeKey sdk.StoreKey,
-	paramSpace params.Subspace,
+	paramSpace subspace.Subspace,
 	codespace sdk.CodespaceType,
 	bankKeeper bank.Keeper,
 	stakingKeeper staking.Keeper,

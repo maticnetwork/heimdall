@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 
+	"github.com/maticnetwork/heimdall/bor/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -78,12 +79,8 @@ func ValidateGenesis(data GenesisState) error {
 func GetGenesisStateFromAppState(appState map[string]json.RawMessage) GenesisState {
 	var genesisState GenesisState
 	if appState[ModuleName] != nil {
-		err := json.Unmarshal(appState[ModuleName], &genesisState)
-		if err != nil {
-			panic(err)
-		}
+		types.ModuleCdc.MustUnmarshalJSON(appState[ModuleName], &genesisState)
 	}
-
 	return genesisState
 }
 
@@ -95,10 +92,6 @@ func SetGenesisStateToAppState(appState map[string]json.RawMessage, validators [
 	stakingState.CurrentValSet = currentValSet
 	stakingState.DividentAccounts = dividendAccounts
 
-	var err error
-	appState[ModuleName], err = json.Marshal(stakingState)
-	if err != nil {
-		return appState, err
-	}
+	appState[ModuleName] = types.ModuleCdc.MustMarshalJSON(stakingState)
 	return appState, nil
 }

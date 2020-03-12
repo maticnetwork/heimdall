@@ -6,6 +6,9 @@ import (
 
 // RegisterCodec registers concrete types on the codec
 func RegisterCodec(cdc *codec.Codec) {
+	// TODO figure out the way to not to make authTypes.ModuleCdc global codec
+	ModuleCdc = cdc
+
 	cdc.RegisterInterface((*Account)(nil), nil)
 	cdc.RegisterConcrete(&BaseAccount{}, "auth/Account", nil)
 	cdc.RegisterConcrete(&GenesisAccount{}, "auth/GenesisAccount", nil)

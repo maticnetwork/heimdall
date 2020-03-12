@@ -16,6 +16,9 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) ([]byte, sdk.Error) {
 		switch path[0] {
 		case types.QueryParams:
+			if len(path) == 1 {
+				return queryParams(ctx, nil, req, keeper)
+			}
 			return queryParams(ctx, path[1:], req, keeper)
 		case types.QuerySpan:
 			return handleQuerySpan(ctx, req, keeper)
@@ -32,26 +35,29 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 }
 
 func queryParams(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	if path == nil || len(path) == 0 {
+		bz, err := json.Marshal(keeper.GetParams(ctx))
+		if err != nil {
+			return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+		}
+		return bz, nil
+	}
+
 	switch path[0] {
 	case types.ParamSpan:
-		bz, err := json.Marshal(keeper.GetSpanDuration(ctx))
+		bz, err := json.Marshal(keeper.GetParams(ctx).SpanDuration)
 		if err != nil {
 			return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 		}
 		return bz, nil
 	case types.ParamSprint:
-		bz, err := json.Marshal(keeper.GetSprintDuration(ctx))
+		bz, err := json.Marshal(keeper.GetParams(ctx).SprintDuration)
 		if err != nil {
 			return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 		}
 		return bz, nil
 	case types.ParamProducerCount:
-		var bz []byte
-		count, err := keeper.GetProducerCount(ctx)
-		if err != nil {
-			return bz, sdk.ErrInternal(sdk.AppendMsgToErr("cannot fetch producer count from keeper", err.Error()))
-		}
-		bz, err = json.Marshal(count)
+		bz, err := json.Marshal(keeper.GetParams(ctx).ProducerCount)
 		if err != nil {
 			return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 		}

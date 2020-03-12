@@ -57,6 +57,7 @@ func handleMsgEventRecord(ctx sdk.Context, msg types.MsgEventRecord, k Keeper, c
 		eventLog.Id.Uint64(),
 		hmTypes.BytesToHeimdallAddress(eventLog.ContractAddress.Bytes()),
 		eventLog.Data,
+		msg.ChainID,
 	)
 
 	// save event into state
