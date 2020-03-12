@@ -25,12 +25,6 @@ func NormalizeVoteOption(option string) string {
 //NormalizeProposalType - normalize user specified proposal type
 func NormalizeProposalType(proposalType string) string {
 	switch proposalType {
-	// case "Text", "text":
-	// 	return types.ProposalTypeText
-
-	// case "SoftwareUpgrade", "software_upgrade":
-	// 	return types.ProposalTypeSoftwareUpgrade
-
 	default:
 		return ""
 	}
