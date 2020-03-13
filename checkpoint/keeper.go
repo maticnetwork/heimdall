@@ -49,7 +49,7 @@ func NewKeeper(
 	keeper := Keeper{
 		cdc:        cdc,
 		storeKey:   storeKey,
-		paramSpace: paramSpace,
+		paramSpace: paramSpace.WithKeyTable(types.ParamKeyTable()),
 		codespace:  codespace,
 		sk:         stakingKeeper,
 	}

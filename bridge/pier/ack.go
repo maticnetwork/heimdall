@@ -171,14 +171,19 @@ func (ackService *AckService) processCheckpoint(lastCreatedAt int64) {
 		return
 	}
 
+	params, err := ackService.getCheckpointParams()
+	if err != nil {
+		return
+	}
+
 	// check if difference between no-ack time and current time
 	lastNoAck := ackService.getLastNoAckTime()
 
 	lastNoAckTime := time.Unix(int64(lastNoAck), 0)
 	timeDiff = currentTime.Sub(lastNoAckTime)
 	// if last no ack == 0 , first no-ack to be sent
-	if currentTime.Sub(lastNoAckTime).Seconds() < helper.GetConfig().CheckpointBufferTime.Seconds() && lastNoAck != 0 {
-		ackService.Logger.Debug("Cannot send multiple no-ack in short time", "timeDiff", currentTime.Sub(lastNoAckTime).Seconds(), "ExpectedDiff", helper.GetConfig().CheckpointBufferTime.Seconds())
+	if currentTime.Sub(lastNoAckTime).Seconds() < params.CheckpointBufferTime.Seconds() && lastNoAck != 0 {
+		ackService.Logger.Debug("Cannot send multiple no-ack in short time", "timeDiff", currentTime.Sub(lastNoAckTime).Seconds(), "ExpectedDiff", params.CheckpointBufferTime.Seconds())
 		return
 	}
 
@@ -251,4 +256,23 @@ func (ackService *AckService) isValidProposer(count uint64, address []byte) bool
 	}
 
 	return false
+}
+
+func (ackService *AckService) getCheckpointParams() (*checkpointTypes.Params, error) {
+	response, err := FetchFromAPI(
+		ackService.cliCtx,
+		GetHeimdallServerEndpoint(CheckpointParamsURL),
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var params checkpointTypes.Params
+	if err := json.Unmarshal(response.Result, &params); err != nil {
+		ackService.Logger.Error("Error unmarshalling checkpoint params", "error", err)
+		return nil, err
+	}
+
+	return &params, nil
 }
