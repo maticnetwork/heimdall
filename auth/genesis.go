@@ -17,7 +17,7 @@ func InitGenesis(ctx sdk.Context, ak AccountKeeper, processors []authTypes.Accou
 		// convert to base account
 		d := acc.(*authTypes.BaseAccount)
 
-		// // execute account processors
+		// execute account processors
 		for _, p := range processors {
 			acc = p(&gacc, d)
 		}
