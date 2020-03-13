@@ -1,8 +1,10 @@
 package cli
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -13,6 +15,7 @@ import (
 
 	"github.com/maticnetwork/heimdall/checkpoint/types"
 	hmClient "github.com/maticnetwork/heimdall/client"
+	"github.com/maticnetwork/heimdall/version"
 )
 
 // GetQueryCmd returns the cli query commands for this module
@@ -29,6 +32,7 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 	// supply query command
 	supplyQueryCmd.AddCommand(
 		client.GetCommands(
+			GetQueryParams(cdc),
 			GetCheckpointBuffer(cdc),
 			GetLastNoACK(cdc),
 			GetHeaderFromIndex(cdc),
@@ -37,6 +41,37 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 	)
 
 	return supplyQueryCmd
+}
+
+// GetQueryParams implements the params query command.
+func GetQueryParams(cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "params",
+		Args:  cobra.NoArgs,
+		Short: "show the current checkpoint parameters information",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Query values set as checkpoint parameters.
+
+Example:
+$ %s query checkpoint params
+`,
+				version.ClientName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryParams)
+			bz, _, err := cliCtx.QueryWithData(route, nil)
+			if err != nil {
+				return err
+			}
+
+			var params types.Params
+			json.Unmarshal(bz, &params)
+			return cliCtx.PrintOutput(params)
+		},
+	}
 }
 
 // GetCheckpointBuffer get checkpoint present in buffer

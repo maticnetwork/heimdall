@@ -58,8 +58,7 @@ const (
 	DefaultHeimdallServerURL = "http://0.0.0.0:1317"
 	DefaultTendermintNodeURL = "http://0.0.0.0:26657"
 
-	NoACKWaitTime        = 1800 * time.Second // Time ack service waits to clear buffer and elect new proposer (1800 seconds ~ 30 mins)
-	CheckpointBufferTime = 1000 * time.Second // Time checkpoint is allowed to stay in buffer (1000 seconds ~ 17 mins)
+	NoACKWaitTime = 1800 * time.Second // Time ack service waits to clear buffer and elect new proposer (1800 seconds ~ 30 mins)
 
 	DefaultCheckpointerPollInterval = 5 * time.Minute
 	DefaultSyncerPollInterval       = 1 * time.Minute
@@ -124,8 +123,7 @@ type Configuration struct {
 	MaxCheckpointLength uint64 `mapstructure:"max_checkpoint_length"` // Maximium number of blocks checkpoint would contain
 
 	// wait time related options
-	NoACKWaitTime        time.Duration `mapstructure:"no_ack_wait_time"`       // Time ack service waits to clear buffer and elect new proposer
-	CheckpointBufferTime time.Duration `mapstructure:"checkpoint_buffer_time"` // Time checkpoint is allowed to stay in buffer
+	NoACKWaitTime time.Duration `mapstructure:"no_ack_wait_time"` // Time ack service waits to clear buffer and elect new proposer
 
 	TxConfirmationTime time.Duration `mapstructure:"tx_confirmation_time"` // Tx confirmation time in seconds (6 * 14 sec per block)
 }
@@ -252,8 +250,7 @@ func GetDefaultHeimdallConfig() Configuration {
 		AvgCheckpointLength: DefaultCheckpointLength,
 		MaxCheckpointLength: MaxCheckpointLength,
 
-		NoACKWaitTime:        NoACKWaitTime,
-		CheckpointBufferTime: CheckpointBufferTime,
+		NoACKWaitTime: NoACKWaitTime,
 
 		TxConfirmationTime: DefaultTxConfirmationTime,
 	}
