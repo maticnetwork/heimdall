@@ -6,12 +6,12 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/maticnetwork/heimdall/checkpoint/types"
 	cmn "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/params/subspace"
 	"github.com/maticnetwork/heimdall/staking"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
@@ -35,21 +35,21 @@ type Keeper struct {
 	// codespace
 	codespace sdk.CodespaceType
 	// param space
-	paramSpace params.Subspace
+	paramSpace subspace.Subspace
 }
 
 // NewKeeper create new keeper
 func NewKeeper(
 	cdc *codec.Codec,
 	storeKey sdk.StoreKey,
-	paramSpace params.Subspace,
+	paramSpace subspace.Subspace,
 	codespace sdk.CodespaceType,
 	stakingKeeper staking.Keeper,
 ) Keeper {
 	keeper := Keeper{
 		cdc:        cdc,
 		storeKey:   storeKey,
-		paramSpace: paramSpace,
+		paramSpace: paramSpace.WithKeyTable(types.ParamKeyTable()),
 		codespace:  codespace,
 		sk:         stakingKeeper,
 	}
@@ -299,4 +299,18 @@ func (k Keeper) UpdateACKCount(ctx sdk.Context) {
 
 	// update
 	store.Set(ACKCountKey, ACKs)
+}
+
+// -----------------------------------------------------------------------------
+// Params
+
+// SetParams sets the auth module's parameters.
+func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
+	k.paramSpace.SetParamSet(ctx, &params)
+}
+
+// GetParams gets the auth module's parameters.
+func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
+	k.paramSpace.GetParamSet(ctx, &params)
+	return
 }

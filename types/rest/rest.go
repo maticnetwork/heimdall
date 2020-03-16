@@ -25,6 +25,13 @@ const (
 	DefaultLimit = 30 // should be consistent with tendermint/tendermint/rpc/core/pipe.go:19
 )
 
+var (
+	ParseFloat64OrReturnBadRequest     = rest.ParseFloat64OrReturnBadRequest
+	ParseQueryHeightOrReturnBadRequest = rest.ParseQueryHeightOrReturnBadRequest
+	ParseUint64OrReturnBadRequest      = rest.ParseUint64OrReturnBadRequest
+	ParseInt64OrReturnBadRequest       = rest.ParseInt64OrReturnBadRequest
+)
+
 // ResponseWithHeight defines a response object type that wraps an original
 // response with a height.
 type ResponseWithHeight struct {

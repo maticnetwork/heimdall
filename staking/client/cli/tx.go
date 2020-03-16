@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -78,7 +79,7 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 			}
 
 			// get main tx receipt
-			receipt, err := contractCallerObj.GetConfirmedTxReceipt(hmTypes.HexToHeimdallHash(txhash).EthHash())
+			receipt, err := contractCallerObj.GetConfirmedTxReceipt(time.Now().UTC(), hmTypes.HexToHeimdallHash(txhash).EthHash())
 			if err != nil || receipt == nil {
 				return errors.New("Transaction is not confirmed yet. Please for sometime and try again")
 			}

@@ -525,14 +525,19 @@ func (cp *CheckpointProcessor) checkIfNoAckIsRequired(lastCreatedAt int64) (bool
 		return false, uint64(index)
 	}
 
+	params, err := cp.getCheckpointParams()
+	if err != nil {
+		return false, uint64(index)
+	}
+
 	// check if difference between no-ack time and current time
 	lastNoAck := cp.getLastNoAckTime()
 
 	lastNoAckTime := time.Unix(int64(lastNoAck), 0)
 	timeDiff = currentTime.Sub(lastNoAckTime)
 	// if last no ack == 0 , first no-ack to be sent
-	if currentTime.Sub(lastNoAckTime).Seconds() < helper.GetConfig().CheckpointBufferTime.Seconds() && lastNoAck != 0 {
-		cp.Logger.Debug("Cannot send multiple no-ack in short time", "timeDiff", currentTime.Sub(lastNoAckTime).Seconds(), "ExpectedDiff", helper.GetConfig().CheckpointBufferTime.Seconds())
+	if currentTime.Sub(lastNoAckTime).Seconds() < params.CheckpointBufferTime.Seconds() && lastNoAck != 0 {
+		cp.Logger.Debug("Cannot send multiple no-ack in short time", "timeDiff", currentTime.Sub(lastNoAckTime).Seconds(), "ExpectedDiff", params.CheckpointBufferTime.Seconds())
 		return false, uint64(index)
 	}
 	return true, uint64(index)
@@ -554,6 +559,25 @@ func (cp *CheckpointProcessor) proposeCheckpointNoAck() (err error) {
 
 	cp.Logger.Info("No-ack transaction sent successfully")
 	return nil
+}
+
+func (cp *CheckpointProcessor) getCheckpointParams() (*checkpointTypes.Params, error) {
+	response, err := util.FetchFromAPI(
+		cp.cliCtx,
+		util.GetHeimdallServerEndpoint(util.CheckpointParamsURL),
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var params checkpointTypes.Params
+	if err := json.Unmarshal(response.Result, &params); err != nil {
+		cp.Logger.Error("Error unmarshalling checkpoint params", "error", err)
+		return nil, err
+	}
+
+	return &params, nil
 }
 
 // Stop stops all necessary go routines

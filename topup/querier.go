@@ -2,6 +2,8 @@ package topup
 
 import (
 	"fmt"
+	"math/big"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -37,16 +39,18 @@ func querySequence(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, sd
 	}
 
 	// get main tx receipt
-	receipt, _ := contractCallerObj.GetConfirmedTxReceipt(hmTypes.HexToHeimdallHash(params.TxHash).EthHash())
+	receipt, _ := contractCallerObj.GetConfirmedTxReceipt(time.Now().UTC(), hmTypes.HexToHeimdallHash(params.TxHash).EthHash())
 	if err != nil || receipt == nil {
 		return nil, sdk.ErrInternal(fmt.Sprintf("Transaction is not confirmed yet. Please for sometime and try again"))
 	}
 
 	// sequence id
-	sequence := (receipt.BlockNumber.Uint64() * hmTypes.DefaultLogIndexUnit) + params.LogIndex
+
+	sequence := new(big.Int).Mul(receipt.BlockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
+	sequence.Add(sequence, new(big.Int).SetUint64(params.LogIndex))
 
 	// check if incoming tx already exists
-	if !k.HasTopupSequence(ctx, sequence) {
+	if !k.HasTopupSequence(ctx, sequence.String()) {
 		k.Logger(ctx).Error("No sequence exist: %s %s", params.TxHash, params.LogIndex)
 		return nil, sdk.ErrInternal(fmt.Sprintf("no sequence exist:: %s", params.TxHash))
 	}

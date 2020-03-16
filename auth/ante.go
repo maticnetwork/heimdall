@@ -20,10 +20,6 @@ var (
 	simSecp256k1Pubkey secp256k1.PubKeySecp256k1
 	simSecp256k1Sig    [64]byte
 
-	// fees wanted for normal transaction
-	gasWantedPerTx sdk.Gas = 300000
-	gasUsedPerTx   sdk.Gas = gasWantedPerTx - 100000 // TODO use proposer amount per tx
-
 	// fee wanted for checkpoint transaction
 	gasWantedPerCheckpoinTx sdk.Gas = 10000000
 	gasUsedPerCheckpointTx  sdk.Gas = gasWantedPerCheckpoinTx - 1000000
@@ -96,8 +92,13 @@ func NewAnteHandler(
 		params := ak.GetParams(ctx)
 
 		// gas for tx
-		gasForTx := gasWantedPerTx        // stdTx.Fee.Gas
-		feeForTx := DefaultFeeWantedPerTx // stdTx.Fee.Amount
+		gasForTx := params.MaxTxGas // stdTx.Fee.Gas
+
+		amount, ok := types.NewIntFromString(params.TxFees)
+		if !ok {
+			return newCtx, sdk.ErrInternal("Invalid param tx fees").Result(), true
+		}
+		feeForTx := types.Coins{types.Coin{Denom: authTypes.FeeToken, Amount: amount}} // stdTx.Fee.Amount
 
 		// checkpoint gas limit
 		if stdTx.Msg.Type() == "checkpoint" && stdTx.Msg.Route() == "checkpoint" {
@@ -164,7 +165,7 @@ func NewAnteHandler(
 
 		// check main chain tx is confirmed transaction
 		mainTxMsg, ok := stdTx.Msg.(MainTxMsg)
-		if ok && !contractCaller.IsTxConfirmed(mainTxMsg.GetTxHash().EthHash()) {
+		if ok && !contractCaller.IsTxConfirmed(ctx.BlockTime(), mainTxMsg.GetTxHash().EthHash()) {
 			return newCtx, sdk.ErrInternal(fmt.Sprintf("Not enough tx confirmations for %s", mainTxMsg.GetTxHash().Hex())).Result(), true
 		}
 

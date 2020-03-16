@@ -1,0 +1,665 @@
+package rest
+
+import (
+	"errors"
+	"fmt"
+	"net/http"
+
+	"github.com/gorilla/mux"
+
+	"github.com/cosmos/cosmos-sdk/client/context"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	restClient "github.com/maticnetwork/heimdall/client/rest"
+	gcutils "github.com/maticnetwork/heimdall/gov/client/utils"
+	"github.com/maticnetwork/heimdall/gov/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
+	"github.com/maticnetwork/heimdall/types/rest"
+)
+
+// REST Variable names
+// nolint
+const (
+	RestParamsType     = "type"
+	RestProposalID     = "proposal-id"
+	RestDepositor      = "depositor"
+	RestVoter          = "voter"
+	RestProposalStatus = "status"
+	RestNumLimit       = "limit"
+)
+
+// ProposalRESTHandler defines a REST handler implemented in another module. The
+// sub-route is mounted on the governance REST handler.
+type ProposalRESTHandler struct {
+	SubRoute string
+	Handler  func(http.ResponseWriter, *http.Request)
+}
+
+// RegisterRoutes - Central function to define routes that get registered by the main application
+func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router, phs []ProposalRESTHandler) {
+	propSubRtr := r.PathPrefix("/gov/proposals").Subrouter()
+	for _, ph := range phs {
+		propSubRtr.HandleFunc(fmt.Sprintf("/%s", ph.SubRoute), ph.Handler).Methods("POST")
+	}
+
+	r.HandleFunc("/gov/proposals", postProposalHandlerFn(cliCtx)).Methods("POST")
+	r.HandleFunc(fmt.Sprintf("/gov/proposals/{%s}/deposits", RestProposalID), depositHandlerFn(cliCtx)).Methods("POST")
+	r.HandleFunc(fmt.Sprintf("/gov/proposals/{%s}/votes", RestProposalID), voteHandlerFn(cliCtx)).Methods("POST")
+
+	r.HandleFunc(
+		fmt.Sprintf("/gov/parameters/{%s}", RestParamsType),
+		queryParamsHandlerFn(cliCtx),
+	).Methods("GET")
+
+	r.HandleFunc("/gov/proposals", queryProposalsWithParameterFn(cliCtx)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/gov/proposals/{%s}", RestProposalID), queryProposalHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc(
+		fmt.Sprintf("/gov/proposals/{%s}/proposer", RestProposalID),
+		queryProposerHandlerFn(cliCtx),
+	).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/gov/proposals/{%s}/deposits", RestProposalID), queryDepositsHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/gov/proposals/{%s}/deposits/{%s}", RestProposalID, RestDepositor), queryDepositHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/gov/proposals/{%s}/tally", RestProposalID), queryTallyOnProposalHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/gov/proposals/{%s}/votes", RestProposalID), queryVotesOnProposalHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/gov/proposals/{%s}/votes/{%s}", RestProposalID, RestVoter), queryVoteHandlerFn(cliCtx)).Methods("GET")
+}
+
+// PostProposalReq defines the properties of a proposal request's body.
+type PostProposalReq struct {
+	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
+
+	Title          string                  `json:"title" yaml:"title"`                     // Title of the proposal
+	Description    string                  `json:"description" yaml:"description"`         // Description of the proposal
+	ProposalType   string                  `json:"proposal_type" yaml:"proposal_type"`     // Type of proposal. Initial set {PlainTextProposal, SoftwareUpgradeProposal}
+	Proposer       hmTypes.HeimdallAddress `json:"proposer" yaml:"proposer"`               // Address of the proposer
+	Validator      hmTypes.ValidatorID     `json:"validator" yaml:"validator"`             // id of the validator
+	InitialDeposit hmTypes.Coins           `json:"initial_deposit" yaml:"initial_deposit"` // Coins to add to the proposal's deposit
+}
+
+// DepositReq defines the properties of a deposit request's body.
+type DepositReq struct {
+	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
+
+	Depositor hmTypes.HeimdallAddress `json:"depositor" yaml:"depositor"` // Address of the depositor
+	Amount    hmTypes.Coins           `json:"amount" yaml:"amount"`       // Coins to add to the proposal's deposit
+	Validator hmTypes.ValidatorID     `json:"validator" yaml:"validator"` // id of the validator
+}
+
+// VoteReq defines the properties of a vote request's body.
+type VoteReq struct {
+	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
+
+	Voter     hmTypes.HeimdallAddress `json:"voter" yaml:"voter"`         // address of the voter
+	Option    string                  `json:"option" yaml:"option"`       // option from OptionSet chosen by the voter
+	Validator hmTypes.ValidatorID     `json:"validator" yaml:"validator"` // id of the validator
+}
+
+func postProposalHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req PostProposalReq
+		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+			return
+		}
+
+		req.BaseReq = req.BaseReq.Sanitize()
+		if !req.BaseReq.ValidateBasic(w) {
+			return
+		}
+
+		proposalType := gcutils.NormalizeProposalType(req.ProposalType)
+		content := types.ContentFromProposalType(req.Title, req.Description, proposalType)
+
+		msg := types.NewMsgSubmitProposal(content, req.InitialDeposit, req.Proposer, req.Validator)
+		if err := msg.ValidateBasic(); err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		restClient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+	}
+}
+
+func depositHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		strProposalID := vars[RestProposalID]
+
+		if len(strProposalID) == 0 {
+			err := errors.New("proposalId required but not specified")
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		proposalID, ok := rest.ParseUint64OrReturnBadRequest(w, strProposalID)
+		if !ok {
+			return
+		}
+
+		var req DepositReq
+		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+			return
+		}
+
+		req.BaseReq = req.BaseReq.Sanitize()
+		if !req.BaseReq.ValidateBasic(w) {
+			return
+		}
+
+		// create the message
+		msg := types.NewMsgDeposit(req.Depositor, proposalID, req.Amount, req.Validator)
+		if err := msg.ValidateBasic(); err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		restClient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+	}
+}
+
+func voteHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		strProposalID := vars[RestProposalID]
+
+		if len(strProposalID) == 0 {
+			err := errors.New("proposalId required but not specified")
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		proposalID, ok := rest.ParseUint64OrReturnBadRequest(w, strProposalID)
+		if !ok {
+			return
+		}
+
+		var req VoteReq
+		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+			return
+		}
+
+		req.BaseReq = req.BaseReq.Sanitize()
+		if !req.BaseReq.ValidateBasic(w) {
+			return
+		}
+
+		voteOption, err := types.VoteOptionFromString(gcutils.NormalizeVoteOption(req.Option))
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		// create the message
+		msg := types.NewMsgVote(req.Voter, proposalID, voteOption, req.Validator)
+		if err := msg.ValidateBasic(); err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		restClient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+	}
+}
+
+func queryParamsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		vars := mux.Vars(r)
+		paramType := vars[RestParamsType]
+
+		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/gov/%s/%s", types.QueryParams, paramType), nil)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
+			return
+		}
+
+		cliCtx = cliCtx.WithHeight(height)
+		rest.PostProcessResponse(w, cliCtx, res)
+	}
+}
+
+func queryProposalHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		vars := mux.Vars(r)
+		strProposalID := vars[RestProposalID]
+
+		if len(strProposalID) == 0 {
+			err := errors.New("proposalId required but not specified")
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		proposalID, ok := rest.ParseUint64OrReturnBadRequest(w, strProposalID)
+		if !ok {
+			return
+		}
+
+		params := types.NewQueryProposalParams(proposalID)
+
+		bz, err := cliCtx.Codec.MarshalJSON(params)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		res, height, err := cliCtx.QueryWithData("custom/gov/proposal", bz)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		cliCtx = cliCtx.WithHeight(height)
+		rest.PostProcessResponse(w, cliCtx, res)
+	}
+}
+
+func queryDepositsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		vars := mux.Vars(r)
+		strProposalID := vars[RestProposalID]
+
+		proposalID, ok := rest.ParseUint64OrReturnBadRequest(w, strProposalID)
+		if !ok {
+			return
+		}
+
+		params := types.NewQueryProposalParams(proposalID)
+
+		bz, err := cliCtx.Codec.MarshalJSON(params)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		res, _, err := cliCtx.QueryWithData("custom/gov/proposal", bz)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		var proposal types.Proposal
+		if err := cliCtx.Codec.UnmarshalJSON(res, &proposal); err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		// For inactive proposals we must query the txs directly to get the deposits
+		// as they're no longer in state.
+		propStatus := proposal.Status
+		if !(propStatus == types.StatusVotingPeriod || propStatus == types.StatusDepositPeriod) {
+			res, err = gcutils.QueryDepositsByTxQuery(cliCtx, params)
+		} else {
+			res, _, err = cliCtx.QueryWithData("custom/gov/deposits", bz)
+		}
+
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		rest.PostProcessResponse(w, cliCtx, res)
+	}
+}
+
+func queryProposerHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		vars := mux.Vars(r)
+		strProposalID := vars[RestProposalID]
+
+		proposalID, ok := rest.ParseUint64OrReturnBadRequest(w, strProposalID)
+		if !ok {
+			return
+		}
+
+		res, err := gcutils.QueryProposerByTxQuery(cliCtx, proposalID)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		rest.PostProcessResponse(w, cliCtx, res)
+	}
+}
+
+func queryDepositHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		vars := mux.Vars(r)
+		strProposalID := vars[RestProposalID]
+		strDepositorID := vars[RestDepositor]
+
+		if len(strProposalID) == 0 {
+			err := errors.New("proposalId required but not specified")
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		if len(strDepositorID) == 0 {
+			err := errors.New("depositorId required but not specified")
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		proposalID, ok := rest.ParseUint64OrReturnBadRequest(w, strProposalID)
+		if !ok {
+			return
+		}
+
+		depositorID, ok := rest.ParseUint64OrReturnBadRequest(w, strDepositorID)
+		if !ok {
+			return
+		}
+
+		params := types.NewQueryDepositParams(proposalID, hmTypes.NewValidatorID(depositorID))
+
+		bz, err := cliCtx.Codec.MarshalJSON(params)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		res, _, err := cliCtx.QueryWithData("custom/gov/deposit", bz)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		var deposit types.Deposit
+		if err := cliCtx.Codec.UnmarshalJSON(res, &deposit); err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		// For an empty deposit, either the proposal does not exist or is inactive in
+		// which case the deposit would be removed from state and should be queried
+		// for directly via a txs query.
+		if deposit.Empty() {
+			bz, err := cliCtx.Codec.MarshalJSON(types.NewQueryProposalParams(proposalID))
+			if err != nil {
+				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+				return
+			}
+
+			res, _, err = cliCtx.QueryWithData("custom/gov/proposal", bz)
+			if err != nil || len(res) == 0 {
+				err := fmt.Errorf("proposalID %d does not exist", proposalID)
+				rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
+				return
+			}
+
+			res, err = gcutils.QueryDepositByTxQuery(cliCtx, params)
+			if err != nil {
+				rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+				return
+			}
+		}
+
+		rest.PostProcessResponse(w, cliCtx, res)
+	}
+}
+
+func queryVoteHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		vars := mux.Vars(r)
+		strProposalID := vars[RestProposalID]
+		strVoterID := vars[RestVoter]
+
+		if len(strProposalID) == 0 {
+			err := errors.New("proposalId required but not specified")
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		if len(strVoterID) == 0 {
+			err := errors.New("voterId required but not specified")
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		proposalID, ok := rest.ParseUint64OrReturnBadRequest(w, strProposalID)
+		if !ok {
+			return
+		}
+
+		voterID, ok := rest.ParseUint64OrReturnBadRequest(w, strVoterID)
+		if !ok {
+			return
+		}
+
+		params := types.NewQueryVoteParams(proposalID, hmTypes.NewValidatorID(voterID))
+
+		bz, err := cliCtx.Codec.MarshalJSON(params)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		res, _, err := cliCtx.QueryWithData("custom/gov/vote", bz)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		var vote types.Vote
+		if err := cliCtx.Codec.UnmarshalJSON(res, &vote); err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		// For an empty vote, either the proposal does not exist or is inactive in
+		// which case the vote would be removed from state and should be queried for
+		// directly via a txs query.
+		if vote.Empty() {
+			bz, err := cliCtx.Codec.MarshalJSON(types.NewQueryProposalParams(proposalID))
+			if err != nil {
+				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+				return
+			}
+
+			res, _, err = cliCtx.QueryWithData("custom/gov/proposal", bz)
+			if err != nil || len(res) == 0 {
+				err := fmt.Errorf("proposalID %d does not exist", proposalID)
+				rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
+				return
+			}
+
+			res, err = gcutils.QueryVoteByTxQuery(cliCtx, params)
+			if err != nil {
+				rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+				return
+			}
+		}
+
+		rest.PostProcessResponse(w, cliCtx, res)
+	}
+}
+
+// todo: Split this functionality into helper functions to remove the above
+func queryVotesOnProposalHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		vars := mux.Vars(r)
+		strProposalID := vars[RestProposalID]
+
+		if len(strProposalID) == 0 {
+			err := errors.New("proposalId required but not specified")
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		proposalID, ok := rest.ParseUint64OrReturnBadRequest(w, strProposalID)
+		if !ok {
+			return
+		}
+
+		params := types.NewQueryProposalParams(proposalID)
+
+		bz, err := cliCtx.Codec.MarshalJSON(params)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		res, _, err := cliCtx.QueryWithData("custom/gov/proposal", bz)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		var proposal types.Proposal
+		if err := cliCtx.Codec.UnmarshalJSON(res, &proposal); err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		// For inactive proposals we must query the txs directly to get the votes
+		// as they're no longer in state.
+		propStatus := proposal.Status
+		if !(propStatus == types.StatusVotingPeriod || propStatus == types.StatusDepositPeriod) {
+			res, err = gcutils.QueryVotesByTxQuery(cliCtx, params)
+		} else {
+			res, _, err = cliCtx.QueryWithData("custom/gov/votes", bz)
+		}
+
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		rest.PostProcessResponse(w, cliCtx, res)
+	}
+}
+
+// todo: Split this functionality into helper functions to remove the above
+func queryProposalsWithParameterFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		strVoterID := r.URL.Query().Get(RestVoter)
+		strDepositorID := r.URL.Query().Get(RestDepositor)
+		strProposalStatus := r.URL.Query().Get(RestProposalStatus)
+		strNumLimit := r.URL.Query().Get(RestNumLimit)
+
+		params := types.QueryProposalsParams{}
+
+		if len(strVoterID) != 0 {
+			voterID, ok := rest.ParseUint64OrReturnBadRequest(w, strVoterID)
+			if ok {
+				params.Voter = hmTypes.NewValidatorID(voterID)
+			}
+		}
+
+		if len(strDepositorID) != 0 {
+			depositorID, ok := rest.ParseUint64OrReturnBadRequest(w, strDepositorID)
+			if ok {
+				params.Depositor = hmTypes.NewValidatorID(depositorID)
+			}
+		}
+
+		if len(strProposalStatus) != 0 {
+			proposalStatus, err := types.ProposalStatusFromString(gcutils.NormalizeProposalStatus(strProposalStatus))
+			if err != nil {
+				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+				return
+			}
+			params.ProposalStatus = proposalStatus
+		}
+
+		if len(strNumLimit) != 0 {
+			numLimit, ok := rest.ParseUint64OrReturnBadRequest(w, strNumLimit)
+			if !ok {
+				return
+			}
+			params.Limit = numLimit
+		}
+
+		bz, err := cliCtx.Codec.MarshalJSON(params)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		res, height, err := cliCtx.QueryWithData("custom/gov/proposals", bz)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		cliCtx = cliCtx.WithHeight(height)
+		rest.PostProcessResponse(w, cliCtx, res)
+	}
+}
+
+// todo: Split this functionality into helper functions to remove the above
+func queryTallyOnProposalHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		vars := mux.Vars(r)
+		strProposalID := vars[RestProposalID]
+
+		if len(strProposalID) == 0 {
+			err := errors.New("proposalId required but not specified")
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		proposalID, ok := rest.ParseUint64OrReturnBadRequest(w, strProposalID)
+		if !ok {
+			return
+		}
+
+		params := types.NewQueryProposalParams(proposalID)
+
+		bz, err := cliCtx.Codec.MarshalJSON(params)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		res, height, err := cliCtx.QueryWithData("custom/gov/tally", bz)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		cliCtx = cliCtx.WithHeight(height)
+		rest.PostProcessResponse(w, cliCtx, res)
+	}
+}

@@ -32,7 +32,7 @@ func handleMsgEventRecord(ctx sdk.Context, msg types.MsgEventRecord, k Keeper, c
 	}
 
 	// get confirmed tx receipt
-	receipt, err := contractCaller.GetConfirmedTxReceipt(msg.TxHash.EthHash())
+	receipt, err := contractCaller.GetConfirmedTxReceipt(ctx.BlockTime(), msg.TxHash.EthHash())
 	if receipt == nil || err != nil {
 		return common.ErrWaitForConfirmation(k.Codespace()).Result()
 	}
@@ -57,6 +57,7 @@ func handleMsgEventRecord(ctx sdk.Context, msg types.MsgEventRecord, k Keeper, c
 		eventLog.Id.Uint64(),
 		hmTypes.BytesToHeimdallAddress(eventLog.ContractAddress.Bytes()),
 		eventLog.Data,
+		msg.ChainID,
 	)
 
 	// save event into state

@@ -1,6 +1,7 @@
 package listener
 
 import (
+	"container/list"
 	"context"
 	"encoding/json"
 	"math/big"
@@ -21,6 +22,9 @@ type RootChainListener struct {
 	BaseListener
 	// ABIs
 	abis []*abi.ABI
+
+	// queue
+	headerQueue *list.List
 }
 
 const (
@@ -39,7 +43,8 @@ func NewRootChainListener() *RootChainListener {
 		&contractCaller.StakingInfoABI,
 	}
 	rootchainListener := &RootChainListener{
-		abis: abis,
+		abis:        abis,
+		headerQueue: list.New(),
 	}
 	return rootchainListener
 }
@@ -78,18 +83,38 @@ func (rl *RootChainListener) Start() error {
 
 // ProcessHeader - process headerblock from rootchain
 func (rl *RootChainListener) ProcessHeader(newHeader *types.Header) {
-	rl.Logger.Info("Received Headerblock", "blockNumber", newHeader.Number)
-	latestNumber := newHeader.Number
+	rl.Logger.Debug("New block detected", "blockNumber", newHeader.Number)
 
-	// confirmation
-	confirmationBlocks := big.NewInt(0).SetUint64(helper.GetConfig().ConfirmationBlocks)
-	confirmationBlocks = confirmationBlocks.Add(confirmationBlocks, big.NewInt(1))
-	if latestNumber.Uint64() > confirmationBlocks.Uint64() {
-		latestNumber = latestNumber.Sub(latestNumber, confirmationBlocks)
+	// adding into queue
+	rl.headerQueue.PushBack(newHeader)
+
+	// current time
+	currentTime := uint64(time.Now().UTC().Unix())
+	confirmationTime := uint64(helper.GetConfig().TxConfirmationTime.Seconds())
+
+	var start *big.Int
+	var end *big.Int
+
+	// check start and end header
+	for rl.headerQueue.Len() > 0 {
+		e := rl.headerQueue.Front() // First element
+		h := e.Value.(*types.Header)
+		if h.Time+confirmationTime > currentTime {
+			break
+		}
+		if start == nil {
+			start = h.Number
+		}
+		end = h.Number
+		rl.headerQueue.Remove(e) // Dequeue
+	}
+
+	if start == nil {
+		return
 	}
 
 	// default fromBlock
-	fromBlock := latestNumber
+	fromBlock := start
 	// get last block from storage
 	hasLastBlock, _ := rl.storageClient.Has([]byte(lastRootBlockKey), nil)
 	if hasLastBlock {
@@ -100,17 +125,20 @@ func (rl *RootChainListener) ProcessHeader(newHeader *types.Header) {
 		}
 		rl.Logger.Debug("Got last block from bridge storage", "lastBlock", string(lastBlockBytes))
 		if result, err := strconv.ParseUint(string(lastBlockBytes), 10, 64); err == nil {
-			if result >= newHeader.Number.Uint64() {
-				return
+			if result > fromBlock.Uint64() {
+				fromBlock = big.NewInt(0).SetUint64(result)
 			}
 			fromBlock = big.NewInt(0).SetUint64(result + 1)
 		}
 	}
 
 	// to block
-	toBlock := latestNumber
-	// set diff
-	if toBlock.Uint64() < fromBlock.Uint64() {
+	toBlock := end
+
+	// debug log
+	rl.Logger.Info("Processing header", "fromBlock", fromBlock, "toBlock", toBlock)
+
+	if toBlock.Cmp(fromBlock) == -1 {
 		fromBlock = toBlock
 	}
 

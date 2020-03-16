@@ -8,8 +8,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/cosmos-sdk/x/gov"
-	"github.com/cosmos/cosmos-sdk/x/params"
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
@@ -26,7 +24,13 @@ import (
 	"github.com/maticnetwork/heimdall/clerk"
 	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
 	"github.com/maticnetwork/heimdall/common"
+	gov "github.com/maticnetwork/heimdall/gov"
+	govTypes "github.com/maticnetwork/heimdall/gov/types"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/params"
+	paramsClient "github.com/maticnetwork/heimdall/params/client"
+	"github.com/maticnetwork/heimdall/params/subspace"
+	paramsTypes "github.com/maticnetwork/heimdall/params/types"
 	"github.com/maticnetwork/heimdall/staking"
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
 	"github.com/maticnetwork/heimdall/supply"
@@ -52,6 +56,7 @@ var (
 	// non-dependant module elements, such as codec registration
 	// and genesis verification.
 	ModuleBasics = module.NewBasicManager(
+		params.AppModuleBasic{},
 		auth.AppModuleBasic{},
 		bank.AppModuleBasic{},
 		supply.AppModuleBasic{},
@@ -60,15 +65,13 @@ var (
 		bor.AppModuleBasic{},
 		clerk.AppModuleBasic{},
 		topup.AppModuleBasic{},
+		gov.NewAppModuleBasic(paramsClient.ProposalHandler),
 	)
 
 	// module account permissions
 	maccPerms = map[string][]string{
 		authTypes.FeeCollectorName: nil,
-		// mint.ModuleName:           {supply.Minter},
-		// staking.BondedPoolName:    {supply.Burner, supply.Staking},
-		// staking.NotBondedPoolName: {supply.Burner, supply.Staking},
-		// gov.ModuleName:            {supply.Burner},
+		govTypes.ModuleName:        {},
 	}
 )
 
@@ -82,7 +85,7 @@ type HeimdallApp struct {
 	tkeys map[string]*sdk.TransientStoreKey
 
 	// subspaces
-	subspaces map[string]params.Subspace
+	subspaces map[string]subspace.Subspace
 
 	// keepers
 	AccountKeeper    auth.AccountKeeper
@@ -97,7 +100,7 @@ type HeimdallApp struct {
 	// param keeper
 	ParamsKeeper params.Keeper
 
-	// masterKeeper common.Keeper
+	// contract keeper
 	caller helper.ContractCaller
 
 	//  total coins supply
@@ -170,7 +173,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	config.Seal()
 
 	// base app
-	bApp := bam.NewBaseApp(AppName, logger, db, authTypes.RLPTxDecoder(pulp), baseAppOptions...)
+	bApp := bam.NewBaseApp(AppName, logger, db, authTypes.RLPTxDecoder(cdc, pulp), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(nil)
 	bApp.SetAppVersion(version.Version)
 
@@ -180,15 +183,15 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		authTypes.StoreKey,
 		bankTypes.StoreKey,
 		supplyTypes.StoreKey,
-		// gov.StoreKey,
+		govTypes.StoreKey,
 		stakingTypes.StoreKey,
 		checkpointTypes.StoreKey,
 		borTypes.StoreKey,
 		clerkTypes.StoreKey,
-		params.StoreKey,
 		topupTypes.StoreKey,
+		paramsTypes.StoreKey,
 	)
-	tkeys := sdk.NewTransientStoreKeys(params.TStoreKey)
+	tkeys := sdk.NewTransientStoreKeys(paramsTypes.TStoreKey)
 
 	// create heimdall app
 	var app = &HeimdallApp{
@@ -196,15 +199,15 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		BaseApp:   bApp,
 		keys:      keys,
 		tkeys:     tkeys,
-		subspaces: make(map[string]params.Subspace),
+		subspaces: make(map[string]subspace.Subspace),
 	}
 
 	// init params keeper and subspaces
-	app.ParamsKeeper = params.NewKeeper(app.cdc, keys[params.StoreKey], tkeys[params.TStoreKey], params.DefaultCodespace)
+	app.ParamsKeeper = params.NewKeeper(app.cdc, keys[paramsTypes.StoreKey], tkeys[paramsTypes.TStoreKey], paramsTypes.DefaultCodespace)
 	app.subspaces[authTypes.ModuleName] = app.ParamsKeeper.Subspace(authTypes.DefaultParamspace)
 	app.subspaces[bankTypes.ModuleName] = app.ParamsKeeper.Subspace(bankTypes.DefaultParamspace)
 	app.subspaces[supplyTypes.ModuleName] = app.ParamsKeeper.Subspace(supplyTypes.DefaultParamspace)
-	// app.subspaces[gov.ModuleName] = app.ParamsKeeper.Subspace(gov.DefaultParamspace).WithKeyTable(gov.ParamKeyTable())
+	app.subspaces[govTypes.ModuleName] = app.ParamsKeeper.Subspace(govTypes.DefaultParamspace).WithKeyTable(govTypes.ParamKeyTable())
 	app.subspaces[stakingTypes.ModuleName] = app.ParamsKeeper.Subspace(stakingTypes.DefaultParamspace)
 	app.subspaces[checkpointTypes.ModuleName] = app.ParamsKeeper.Subspace(checkpointTypes.DefaultParamspace)
 	app.subspaces[borTypes.ModuleName] = app.ParamsKeeper.Subspace(borTypes.DefaultParamspace)
@@ -267,15 +270,21 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		app.BankKeeper,
 	)
 
-	// app.GovKeeper = gov.NewKeeper(
-	// 	app.cdc,
-	// 	keys[govTypes.StoreKey],
-	// 	app.ParamsKeeper,
-	// 	app.paramsKeeper.Subspace(gov.DefaultParamspace),
-	// 	app.bankKeeper,
-	// 	&stakingKeeper,
-	// 	gov.DefaultCodespace,
-	// )
+	// register the proposal types
+	govRouter := gov.NewRouter()
+	govRouter.
+		AddRoute(govTypes.RouterKey, govTypes.ProposalHandler).
+		AddRoute(paramsTypes.RouterKey, params.NewParamChangeProposalHandler(app.ParamsKeeper))
+
+	app.GovKeeper = gov.NewKeeper(
+		app.cdc,
+		keys[govTypes.StoreKey],
+		app.subspaces[govTypes.ModuleName],
+		app.SupplyKeeper,
+		app.StakingKeeper,
+		govTypes.DefaultCodespace,
+		govRouter,
+	)
 
 	app.CheckpointKeeper = checkpoint.NewKeeper(
 		app.cdc,
@@ -314,9 +323,12 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
 	app.mm = module.NewManager(
-		auth.NewAppModule(app.AccountKeeper, &app.caller),
+		auth.NewAppModule(app.AccountKeeper, &app.caller, []authTypes.AccountProcessor{
+			supplyTypes.AccountProcessor,
+		}),
 		bank.NewAppModule(app.BankKeeper, &app.caller),
 		supply.NewAppModule(app.SupplyKeeper, &app.caller),
+		gov.NewAppModule(app.GovKeeper, app.SupplyKeeper),
 		staking.NewAppModule(app.StakingKeeper, &app.caller),
 		checkpoint.NewAppModule(app.CheckpointKeeper, &app.caller),
 		bor.NewAppModule(app.BorKeeper, &app.caller),
@@ -329,6 +341,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.mm.SetOrderInitGenesis(
 		authTypes.ModuleName,
 		bankTypes.ModuleName,
+		govTypes.ModuleName,
 		supplyTypes.ModuleName,
 		stakingTypes.ModuleName,
 		checkpointTypes.ModuleName,
@@ -390,15 +403,8 @@ func MakeCodec() *codec.Codec {
 
 	codec.RegisterCrypto(cdc)
 	sdk.RegisterCodec(cdc)
+	ModuleBasics.RegisterCodec(cdc)
 
-	authTypes.RegisterCodec(cdc)
-	bankTypes.RegisterCodec(cdc)
-	supplyTypes.RegisterCodec(cdc)
-	checkpointTypes.RegisterCodec(cdc)
-	stakingTypes.RegisterCodec(cdc)
-	borTypes.RegisterCodec(cdc)
-	clerkTypes.RegisterCodec(cdc)
-	topupTypes.RegisterCodec(cdc)
 	cdc.Seal()
 	return cdc
 }
@@ -408,12 +414,8 @@ func MakePulp() *authTypes.Pulp {
 	pulp := authTypes.GetPulpInstance()
 
 	// register custom type
-	bankTypes.RegisterPulp(pulp)
-	stakingTypes.RegisterPulp(pulp)
 	checkpointTypes.RegisterPulp(pulp)
-	borTypes.RegisterPulp(pulp)
-	clerkTypes.RegisterPulp(pulp)
-	topupTypes.RegisterPulp(pulp)
+
 	return pulp
 }
 
@@ -429,6 +431,9 @@ func (app *HeimdallApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) 
 	}
 
 	// get validator updates
+	if err := ModuleBasics.ValidateGenesis(genesisState); err != nil {
+		panic(err)
+	}
 	app.mm.InitGenesis(ctx, genesisState)
 
 	stakingState := stakingTypes.GetGenesisStateFromAppState(genesisState)
@@ -536,6 +541,9 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) ab
 		}
 	}
 
+	// end block
+	app.mm.EndBlock(ctx, req)
+
 	// send validator updates to peppermint
 	return abci.ResponseEndBlock{
 		ValidatorUpdates: tmValUpdates,
@@ -636,7 +644,7 @@ func (app *HeimdallApp) GetTKey(storeKey string) *sdk.TransientStoreKey {
 // GetSubspace returns a param subspace for a given module name.
 //
 // NOTE: This is solely to be used for testing purposes.
-func (app *HeimdallApp) GetSubspace(moduleName string) params.Subspace {
+func (app *HeimdallApp) GetSubspace(moduleName string) subspace.Subspace {
 	return app.subspaces[moduleName]
 }
 

@@ -38,7 +38,7 @@ func WriteGenerateStdTxResponse(
 	}
 
 	txBldr := authTypes.NewTxBuilder(
-		helper.GetTxEncoder(), br.AccountNumber, br.Sequence, gas, gasAdj,
+		helper.GetTxEncoder(cliCtx.Codec), br.AccountNumber, br.Sequence, gas, gasAdj,
 		br.Simulate, br.ChainID, br.Memo, br.Fees, br.GasPrices,
 	)
 

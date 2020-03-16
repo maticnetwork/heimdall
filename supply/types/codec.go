@@ -4,12 +4,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
+	exported "github.com/maticnetwork/heimdall/supply/exported"
 )
 
 // RegisterCodec registers the account types and interface
 func RegisterCodec(cdc *codec.Codec) {
-	cdc.RegisterInterface((*ModuleAccountInterface)(nil), nil)
-	cdc.RegisterConcrete(&ModuleAccount{}, "cosmos-sdk/ModuleAccount", nil)
+	cdc.RegisterInterface((*exported.ModuleAccountI)(nil), nil)
+	cdc.RegisterConcrete(&ModuleAccount{}, "supply/ModuleAccount", nil)
 }
 
 // RegisterPulp register pulp

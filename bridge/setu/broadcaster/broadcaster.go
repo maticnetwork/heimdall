@@ -49,7 +49,7 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg) error {
 	defer tb.heimdallMutex.Unlock()
 
 	// tx encoder
-	txEncoder := helper.GetTxEncoder()
+	txEncoder := helper.GetTxEncoder(tb.cliCtx.Codec)
 	// chain id
 	chainID := helper.GetGenesisDoc().ChainID
 	// current address

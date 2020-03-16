@@ -4,15 +4,14 @@ import (
 	"encoding/hex"
 	"errors"
 	"math/big"
-	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/maticnetwork/bor/common"
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/params/subspace"
 	"github.com/maticnetwork/heimdall/staking/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
@@ -44,7 +43,7 @@ type Keeper struct {
 	// codespacecodespace
 	codespace sdk.CodespaceType
 	// param space
-	paramSpace params.Subspace
+	paramSpace subspace.Subspace
 	// module communicator
 	moduleCommunicator ModuleCommunicator
 }
@@ -53,7 +52,7 @@ type Keeper struct {
 func NewKeeper(
 	cdc *codec.Codec,
 	storeKey sdk.StoreKey,
-	paramSpace params.Subspace,
+	paramSpace subspace.Subspace,
 	codespace sdk.CodespaceType,
 	moduleCommunicator ModuleCommunicator,
 ) Keeper {
@@ -88,8 +87,8 @@ func GetValidatorMapKey(address []byte) []byte {
 }
 
 // GetStakingSequenceKey returns staking sequence key
-func GetStakingSequenceKey(sequence uint64) []byte {
-	return append(StakingSequenceKey, []byte(strconv.FormatUint(sequence, 10))...)
+func GetStakingSequenceKey(sequence string) []byte {
+	return append(StakingSequenceKey, []byte(sequence)...)
 }
 
 // AddValidator adds validator indexed with address
@@ -145,6 +144,23 @@ func (k *Keeper) GetValidatorInfo(ctx sdk.Context, address []byte) (validator hm
 	validator, err = hmTypes.UnmarshallValidator(k.cdc, store.Get(key))
 	if err != nil {
 		return validator, err
+	}
+
+	// return true if validator
+	return validator, nil
+}
+
+// GetActiveValidatorInfo returns active validator
+func (k *Keeper) GetActiveValidatorInfo(ctx sdk.Context, address []byte) (validator hmTypes.Validator, err error) {
+	validator, err = k.GetValidatorInfo(ctx, address)
+	if err != nil {
+		return validator, err
+	}
+
+	// get ack count
+	ackCount := k.moduleCommunicator.GetACKCount(ctx)
+	if !validator.IsCurrentValidator(ackCount) {
+		return validator, errors.New("Validator is not active")
 	}
 
 	// return true if validator
@@ -339,11 +355,11 @@ func (k *Keeper) GetValidatorFromValID(ctx sdk.Context, valID hmTypes.ValidatorI
 }
 
 // GetLastUpdated get last updated at for validator
-func (k *Keeper) GetLastUpdated(ctx sdk.Context, valID hmTypes.ValidatorID) (updatedAt uint64, found bool) {
+func (k *Keeper) GetLastUpdated(ctx sdk.Context, valID hmTypes.ValidatorID) (updatedAt string, found bool) {
 	// get validator
 	validator, ok := k.GetValidatorFromValID(ctx, valID)
 	if !ok {
-		return 0, false
+		return "", false
 	}
 	return validator.LastUpdated, true
 }
@@ -459,18 +475,58 @@ func (k *Keeper) IterateDividendAccountsByPrefixAndApplyFn(ctx sdk.Context, pref
 	}
 }
 
+// IterateCurrentValidatorsAndApplyFn iterate through current validators
+func (k *Keeper) IterateCurrentValidatorsAndApplyFn(ctx sdk.Context, f func(validator *hmTypes.Validator) bool) {
+	currentValidatorSet := k.GetValidatorSet(ctx)
+	for _, v := range currentValidatorSet.Validators {
+		if stop := f(v); stop {
+			return
+		}
+	}
+}
+
 //
 // Staking sequence
 //
 
 // SetStakingSequence sets staking sequence
-func (k *Keeper) SetStakingSequence(ctx sdk.Context, sequence uint64) {
+func (k *Keeper) SetStakingSequence(ctx sdk.Context, sequence string) {
 	store := ctx.KVStore(k.storeKey)
+
 	store.Set(GetStakingSequenceKey(sequence), DefaultValue)
 }
 
 // HasStakingSequence checks if staking sequence already exists
-func (k *Keeper) HasStakingSequence(ctx sdk.Context, sequence uint64) bool {
+func (k *Keeper) HasStakingSequence(ctx sdk.Context, sequence string) bool {
 	store := ctx.KVStore(k.storeKey)
 	return store.Has(GetStakingSequenceKey(sequence))
+}
+
+// GetStakingSequences checks if Staking already exists
+func (k *Keeper) GetStakingSequences(ctx sdk.Context) (sequences []string) {
+	k.IterateStakingSequencesAndApplyFn(ctx, func(sequence string) error {
+		sequences = append(sequences, sequence)
+		return nil
+	})
+	return
+}
+
+// IterateStakingSequencesAndApplyFn interate validators and apply the given function.
+func (k *Keeper) IterateStakingSequencesAndApplyFn(ctx sdk.Context, f func(sequence string) error) {
+	store := ctx.KVStore(k.storeKey)
+
+	// get sequence iterator
+	iterator := sdk.KVStorePrefixIterator(store, StakingSequenceKey)
+	defer iterator.Close()
+
+	// loop through validators to get valid validators
+	for ; iterator.Valid(); iterator.Next() {
+		sequence := string(iterator.Key()[len(StakingSequenceKey):])
+
+		// call function and return if required
+		if err := f(sequence); err != nil {
+			return
+		}
+	}
+	return
 }

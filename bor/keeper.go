@@ -7,11 +7,11 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/maticnetwork/heimdall/bor/types"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/params/subspace"
 	"github.com/maticnetwork/heimdall/staking"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
@@ -36,7 +36,7 @@ type Keeper struct {
 	// codespace
 	codespace sdk.CodespaceType
 	// param space
-	paramSpace params.Subspace
+	paramSpace subspace.Subspace
 	// contract caller
 	contractCaller helper.ContractCaller
 }
@@ -45,7 +45,7 @@ type Keeper struct {
 func NewKeeper(
 	cdc *codec.Codec,
 	storeKey sdk.StoreKey,
-	paramSpace params.Subspace,
+	paramSpace subspace.Subspace,
 	codespace sdk.CodespaceType,
 	stakingKeeper staking.Keeper,
 	caller helper.ContractCaller,
@@ -181,7 +181,7 @@ func (k *Keeper) GetLastSpan(ctx sdk.Context) (*hmTypes.Span, error) {
 
 // FreezeSet freezes validator set for next span
 func (k *Keeper) FreezeSet(ctx sdk.Context, id uint64, startBlock uint64, borChainID string) error {
-	duration := k.GetSpanDuration(ctx)
+	duration := k.GetParams(ctx).SpanDuration
 	endBlock := startBlock
 	if duration > 0 {
 		endBlock = endBlock + duration - 1
@@ -216,7 +216,7 @@ func (k *Keeper) SelectNextProducers(ctx sdk.Context) (vals []hmTypes.Validator,
 
 	// spanEligibleVals are current validators who are not getting deactivated in between next span
 	spanEligibleVals := k.sk.GetSpanEligibleValidators(ctx)
-	producerCount, err := k.GetProducerCount(ctx)
+	producerCount := k.GetParams(ctx).ProducerCount
 	if err != nil {
 		return vals, err
 	}
@@ -289,48 +289,18 @@ func (k *Keeper) GetLastEthBlock(ctx sdk.Context) *big.Int {
 	return lastEthBlock
 }
 
-//
-//  Params
-//
+// -----------------------------------------------------------------------------
+// Params
 
-// GetSpanDuration returns the span duration
-func (k *Keeper) GetSpanDuration(ctx sdk.Context) uint64 {
-	var duration uint64
-	k.paramSpace.Get(ctx, types.ParamStoreKeySpanDuration, &duration)
-	return duration
+// SetParams sets the bor module's parameters.
+func (k *Keeper) SetParams(ctx sdk.Context, params types.Params) {
+	k.paramSpace.SetParamSet(ctx, &params)
 }
 
-// SetSpanDuration sets the span duration
-func (k *Keeper) SetSpanDuration(ctx sdk.Context, duration uint64) {
-	k.paramSpace.Set(ctx, types.ParamStoreKeySpanDuration, duration)
-}
-
-// GetSprintDuration returns the span duration
-func (k *Keeper) GetSprintDuration(ctx sdk.Context) uint64 {
-	var duration uint64
-	k.paramSpace.Get(ctx, types.ParamStoreKeySprintDuration, &duration)
-	return duration
-}
-
-// SetSprintDuration sets the sprint duration
-func (k *Keeper) SetSprintDuration(ctx sdk.Context, duration uint64) {
-	k.paramSpace.Set(ctx, types.ParamStoreKeySprintDuration, duration)
-}
-
-// GetProducerCount returns the numeber of producers per span
-func (k *Keeper) GetProducerCount(ctx sdk.Context) (uint64, error) {
-	var count uint64
-	if k.paramSpace.Has(ctx, types.ParamStoreKeyNumOfProducers) {
-		k.paramSpace.Get(ctx, types.ParamStoreKeyNumOfProducers, &count)
-	} else {
-		return count, errors.New("producer count store key not found")
-	}
-	return count, nil
-}
-
-// SetProducerCount sets the number of producers selected per span
-func (k *Keeper) SetProducerCount(ctx sdk.Context, count uint64) {
-	k.paramSpace.Set(ctx, types.ParamStoreKeyNumOfProducers, count)
+// GetParams gets the bor module's parameters.
+func (k *Keeper) GetParams(ctx sdk.Context) (params types.Params) {
+	k.paramSpace.GetParamSet(ctx, &params)
+	return
 }
 
 //

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 
+	"github.com/maticnetwork/heimdall/bor/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -34,6 +35,7 @@ type GenesisState struct {
 	Validators       []*hmTypes.Validator      `json:"validators" yaml:"validators"`
 	CurrentValSet    hmTypes.ValidatorSet      `json:"current_val_set" yaml:"current_val_set"`
 	DividentAccounts []hmTypes.DividendAccount `json:"dividend_accounts" yaml:"dividend_accounts"`
+	StakingSequences []string                  `json:"staking_sequences" yaml:"staking_sequences"`
 }
 
 // NewGenesisState creates a new genesis state.
@@ -41,18 +43,19 @@ func NewGenesisState(
 	validators []*hmTypes.Validator,
 	currentValSet hmTypes.ValidatorSet,
 	dividentAccounts []hmTypes.DividendAccount,
-
+	stakingSequences []string,
 ) GenesisState {
 	return GenesisState{
 		Validators:       validators,
 		CurrentValSet:    currentValSet,
 		DividentAccounts: dividentAccounts,
+		StakingSequences: stakingSequences,
 	}
 }
 
 // DefaultGenesisState returns a default genesis state
 func DefaultGenesisState() GenesisState {
-	return NewGenesisState(nil, hmTypes.ValidatorSet{}, nil)
+	return NewGenesisState(nil, hmTypes.ValidatorSet{}, nil, nil)
 }
 
 // ValidateGenesis performs basic validation of bor genesis data returning an
@@ -63,6 +66,11 @@ func ValidateGenesis(data GenesisState) error {
 			return errors.New("Invalid validator")
 		}
 	}
+	for _, sq := range data.StakingSequences {
+		if sq == "" {
+			return errors.New("Invalid Sequence")
+		}
+	}
 
 	return nil
 }
@@ -71,12 +79,8 @@ func ValidateGenesis(data GenesisState) error {
 func GetGenesisStateFromAppState(appState map[string]json.RawMessage) GenesisState {
 	var genesisState GenesisState
 	if appState[ModuleName] != nil {
-		err := json.Unmarshal(appState[ModuleName], &genesisState)
-		if err != nil {
-			panic(err)
-		}
+		types.ModuleCdc.MustUnmarshalJSON(appState[ModuleName], &genesisState)
 	}
-
 	return genesisState
 }
 
@@ -88,10 +92,6 @@ func SetGenesisStateToAppState(appState map[string]json.RawMessage, validators [
 	stakingState.CurrentValSet = currentValSet
 	stakingState.DividentAccounts = dividendAccounts
 
-	var err error
-	appState[ModuleName], err = json.Marshal(stakingState)
-	if err != nil {
-		return appState, err
-	}
+	appState[ModuleName] = types.ModuleCdc.MustMarshalJSON(stakingState)
 	return appState, nil
 }

@@ -1,7 +1,7 @@
 package types
 
 import (
-	"github.com/cosmos/cosmos-sdk/x/params"
+	"github.com/maticnetwork/heimdall/params/subspace"
 )
 
 const (
@@ -13,8 +13,8 @@ const (
 var ParamStoreKeySendEnabled = []byte("sendenabled")
 
 // ParamKeyTable type declaration for parameters
-func ParamKeyTable() params.KeyTable {
-	return params.NewKeyTable(
+func ParamKeyTable() subspace.KeyTable {
+	return subspace.NewKeyTable(
 		ParamStoreKeySendEnabled, false,
 	)
 }
