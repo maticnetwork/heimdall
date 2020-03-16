@@ -1,3 +1,8 @@
+# Simple usage with a mounted data directory:
+# > docker build -t haimdall .
+# > docker run -it -p 46657:46657 -p 46656:46656 -v ~/.haimdalld:/root/.haimdalld haimdall haimdalld init
+# > docker run -it -p 46657:46657 -p 46656:46656 -v ~/.haimdalld:/root/.haimdalld haimdall haimdalld start
+
 # Start from a Debian image with the latest version of Go installed
 # and a workspace (GOPATH) configured at /go.
 FROM golang:latest
@@ -16,9 +21,6 @@ ADD . /go/src/github.com/maticnetwork/heimdall/
 
 # change work directory
 WORKDIR /go/src/github.com/maticnetwork/heimdall
-
-# run dep
-# RUN make dep
 
 # run build
 RUN make build
