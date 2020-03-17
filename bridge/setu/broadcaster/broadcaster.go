@@ -32,7 +32,7 @@ type TxBroadcaster struct {
 // NewTxBroadcaster creates new broadcaster
 func NewTxBroadcaster(cdc *codec.Codec) *TxBroadcaster {
 	cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
-	cliCtx.BroadcastMode = client.BroadcastSync
+	cliCtx.BroadcastMode = client.BroadcastBlock
 	cliCtx.TrustNode = true
 
 	txBroadcaster := TxBroadcaster{
@@ -54,7 +54,6 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg) error {
 	chainID := helper.GetGenesisDoc().ChainID
 	// current address
 	address := hmTypes.BytesToHeimdallAddress(helper.GetAddress())
-
 	// fetch from APIs
 	var account authTypes.Account
 	response, err := util.FetchFromAPI(tb.cliCtx, util.GetHeimdallServerEndpoint(fmt.Sprintf(util.AccountDetailsURL, address)))
@@ -72,7 +71,6 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg) error {
 	// get account number and sequence
 	accNum := account.GetAccountNumber()
 	accSeq := account.GetSequence()
-
 	txBldr := authTypes.NewTxBuilderFromCLI().
 		WithTxEncoder(txEncoder).
 		WithAccountNumber(accNum).
