@@ -73,7 +73,6 @@ func newCheckpointHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			req.EndBlock,
 			req.RootHash,
 			req.AccountRootHash,
-			uint64(time.Now().UTC().Unix()),
 		)
 
 		// send response

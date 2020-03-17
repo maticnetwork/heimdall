@@ -35,8 +35,8 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	k.Logger(ctx).Debug("Validating checkpoint data", "TxData", msg)
 
-	if msg.TimeStamp == 0 || msg.TimeStamp > uint64(time.Now().UTC().Unix()) {
-		k.Logger(ctx).Error("Checkpoint timestamp must be in near past", "CurrentTime", time.Now().UTC().Unix(), "CheckpointTime", msg.TimeStamp, "Condition", msg.TimeStamp >= uint64(time.Now().UTC().Unix()))
+	if uint64(ctx.BlockTime().Unix()) == 0 || uint64(ctx.BlockTime().Unix()) > uint64(time.Now().UTC().Unix()) {
+		k.Logger(ctx).Error("Checkpoint timestamp must be in near past", "CurrentTime", time.Now().UTC().Unix(), "CheckpointTime", uint64(ctx.BlockTime().Unix()), "Condition", uint64(ctx.BlockTime().Unix()) >= uint64(time.Now().UTC().Unix()))
 		return common.ErrBadTimeStamp(k.Codespace()).Result()
 	}
 
@@ -44,8 +44,8 @@ func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, con
 
 	checkpointBuffer, err := k.GetCheckpointFromBuffer(ctx)
 	if err == nil {
-		if msg.TimeStamp == 0 || checkpointBuffer.TimeStamp == 0 || ((msg.TimeStamp > checkpointBuffer.TimeStamp) && msg.TimeStamp-checkpointBuffer.TimeStamp >= uint64(params.CheckpointBufferTime.Seconds())) {
-			k.Logger(ctx).Debug("Checkpoint has been timed out, flushing buffer", "CheckpointTimestamp", msg.TimeStamp, "PrevCheckpointTimestamp", checkpointBuffer.TimeStamp)
+		if uint64(ctx.BlockTime().Unix()) == 0 || checkpointBuffer.TimeStamp == 0 || ((uint64(ctx.BlockTime().Unix()) > checkpointBuffer.TimeStamp) && uint64(ctx.BlockTime().Unix())-checkpointBuffer.TimeStamp >= uint64(params.CheckpointBufferTime.Seconds())) {
+			k.Logger(ctx).Debug("Checkpoint has been timed out, flushing buffer", "CheckpointTimestamp", uint64(ctx.BlockTime().Unix()), "PrevCheckpointTimestamp", checkpointBuffer.TimeStamp)
 			k.FlushCheckpointBuffer(ctx)
 		} else {
 			// calulates remaining time for buffer to be flushed
@@ -131,7 +131,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, con
 		RootHash:        msg.RootHash,
 		AccountRootHash: msg.AccountRootHash,
 		Proposer:        msg.Proposer,
-		TimeStamp:       msg.TimeStamp,
+		TimeStamp:       uint64(ctx.BlockTime().Unix()),
 	})
 
 	checkpoint, _ := k.GetCheckpointFromBuffer(ctx)

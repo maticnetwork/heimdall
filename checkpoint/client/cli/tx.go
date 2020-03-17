@@ -96,7 +96,6 @@ func SendCheckpointTx(cdc *codec.Codec) *cobra.Command {
 				endBlock,
 				hmTypes.HexToHeimdallHash(rootHashStr),
 				hmTypes.HexToHeimdallHash(accountRootHashStr),
-				uint64(time.Now().UTC().Unix()),
 			)
 
 			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})

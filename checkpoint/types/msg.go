@@ -24,7 +24,6 @@ type MsgCheckpoint struct {
 	EndBlock        uint64                `json:"endBlock"`
 	RootHash        types.HeimdallHash    `json:"rootHash"`
 	AccountRootHash types.HeimdallHash    `json:"accountRootHash"`
-	TimeStamp       uint64                `json:"timestamp"`
 }
 
 // NewMsgCheckpointBlock creates new checkpoint message using mentioned arguments
@@ -34,7 +33,6 @@ func NewMsgCheckpointBlock(
 	endBlock uint64,
 	roothash types.HeimdallHash,
 	accountRootHash types.HeimdallHash,
-	timestamp uint64,
 ) MsgCheckpoint {
 	return MsgCheckpoint{
 		Proposer:        proposer,
@@ -42,7 +40,6 @@ func NewMsgCheckpointBlock(
 		EndBlock:        endBlock,
 		RootHash:        roothash,
 		AccountRootHash: accountRootHash,
-		TimeStamp:       timestamp,
 	}
 }
 

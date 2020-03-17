@@ -462,7 +462,6 @@ func (c *Checkpointer) sendCheckpointToHeimdall(start uint64, end uint64) error 
 		end,
 		hmtypes.BytesToHeimdallHash(root),
 		accountRootHash,
-		uint64(time.Now().UTC().Unix()),
 	)
 
 	// return broadcast to heimdall
