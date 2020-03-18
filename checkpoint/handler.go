@@ -34,18 +34,13 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 // handleMsgCheckpoint Validates checkpoint transaction
 func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	k.Logger(ctx).Debug("Validating checkpoint data", "TxData", msg)
-
-	if uint64(ctx.BlockTime().Unix()) == 0 || uint64(ctx.BlockTime().Unix()) > uint64(time.Now().UTC().Unix()) {
-		k.Logger(ctx).Error("Checkpoint timestamp must be in near past", "CurrentTime", time.Now().UTC().Unix(), "CheckpointTime", uint64(ctx.BlockTime().Unix()), "Condition", uint64(ctx.BlockTime().Unix()) >= uint64(time.Now().UTC().Unix()))
-		return common.ErrBadTimeStamp(k.Codespace()).Result()
-	}
-
+	timeStamp := uint64(ctx.BlockTime().Unix())
 	params := k.GetParams(ctx)
 
 	checkpointBuffer, err := k.GetCheckpointFromBuffer(ctx)
 	if err == nil {
-		if uint64(ctx.BlockTime().Unix()) == 0 || checkpointBuffer.TimeStamp == 0 || ((uint64(ctx.BlockTime().Unix()) > checkpointBuffer.TimeStamp) && uint64(ctx.BlockTime().Unix())-checkpointBuffer.TimeStamp >= uint64(params.CheckpointBufferTime.Seconds())) {
-			k.Logger(ctx).Debug("Checkpoint has been timed out, flushing buffer", "CheckpointTimestamp", uint64(ctx.BlockTime().Unix()), "PrevCheckpointTimestamp", checkpointBuffer.TimeStamp)
+		if checkpointBuffer.TimeStamp == 0 || ((timeStamp > checkpointBuffer.TimeStamp) && timeStamp-checkpointBuffer.TimeStamp >= uint64(params.CheckpointBufferTime.Seconds())) {
+			k.Logger(ctx).Debug("Checkpoint has been timed out, flushing buffer", "CheckpointTimestamp", timeStamp, "PrevCheckpointTimestamp", checkpointBuffer.TimeStamp)
 			k.FlushCheckpointBuffer(ctx)
 		} else {
 			// calulates remaining time for buffer to be flushed
@@ -131,7 +126,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, con
 		RootHash:        msg.RootHash,
 		AccountRootHash: msg.AccountRootHash,
 		Proposer:        msg.Proposer,
-		TimeStamp:       uint64(ctx.BlockTime().Unix()),
+		TimeStamp:       timeStamp,
 	})
 
 	checkpoint, _ := k.GetCheckpointFromBuffer(ctx)
