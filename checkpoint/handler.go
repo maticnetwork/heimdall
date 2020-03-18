@@ -237,7 +237,8 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg types.MsgCheckpointAck, k Keepe
 func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k Keeper) sdk.Result {
 	k.Logger(ctx).Debug("Validating checkpoint no-ack", "TxData", msg)
 	// current time
-	currentTime := time.Unix(int64(msg.TimeStamp), 0) // buffer time
+	currentTime := ctx.BlockTime()
+
 	bufferTime := k.GetParams(ctx).CheckpointBufferTime
 
 	// fetch last checkpoint from store

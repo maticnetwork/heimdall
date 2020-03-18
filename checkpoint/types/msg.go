@@ -2,7 +2,6 @@ package types
 
 import (
 	"bytes"
-	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -154,14 +153,12 @@ func (msg MsgCheckpointAck) GetLogIndex() uint64 {
 var _ sdk.Msg = &MsgCheckpointNoAck{}
 
 type MsgCheckpointNoAck struct {
-	From      types.HeimdallAddress `json:"from"`
-	TimeStamp uint64                `json:"timestamp"`
+	From types.HeimdallAddress `json:"from"`
 }
 
 func NewMsgCheckpointNoAck(from types.HeimdallAddress, timestamp uint64) MsgCheckpointNoAck {
 	return MsgCheckpointNoAck{
-		From:      from,
-		TimeStamp: timestamp,
+		From: from,
 	}
 }
 
@@ -186,10 +183,6 @@ func (msg MsgCheckpointNoAck) GetSignBytes() []byte {
 }
 
 func (msg MsgCheckpointNoAck) ValidateBasic() sdk.Error {
-	if msg.TimeStamp == 0 || msg.TimeStamp > uint64(time.Now().UTC().Unix()) {
-		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid timestamp %d", msg.TimeStamp)
-	}
-
 	if msg.From.Empty() {
 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid from %v", msg.From.String())
 	}
