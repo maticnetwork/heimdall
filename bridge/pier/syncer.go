@@ -2,6 +2,7 @@ package pier
 
 import (
 	"bytes"
+	"container/list"
 	"context"
 	"encoding/hex"
 	"math/big"
@@ -20,7 +21,6 @@ import (
 	"github.com/tendermint/tendermint/libs/common"
 	httpClient "github.com/tendermint/tendermint/rpc/client"
 
-	bankTypes "github.com/maticnetwork/heimdall/bank/types"
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
@@ -28,6 +28,7 @@ import (
 	"github.com/maticnetwork/heimdall/contracts/statesender"
 	"github.com/maticnetwork/heimdall/helper"
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
+	topupTypes "github.com/maticnetwork/heimdall/topup/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -39,6 +40,12 @@ const (
 
 	lastBlockKey = "last-block" // storage key
 )
+
+// LightHeader represent light header for in-memory queue
+type LightHeader struct {
+	Number *big.Int `json:"number"           gencodec:"required"`
+	Time   uint64   `json:"timestamp"        gencodec:"required"`
+}
 
 // Syncer syncs validators and checkpoints
 type Syncer struct {
@@ -70,6 +77,12 @@ type Syncer struct {
 
 	// http client to subscribe to
 	httpClient *httpClient.HTTP
+
+	// queue
+	headerQueue *list.List
+
+	// confirmation time
+	txConfirmationTime uint64
 }
 
 // NewSyncer returns new service object for syncing events
@@ -104,6 +117,9 @@ func NewSyncer(cdc *codec.Codec, queueConnector *QueueConnector, httpClient *htt
 
 		abis:          abis,
 		HeaderChannel: make(chan *types.Header),
+
+		headerQueue:        list.New(),
+		txConfirmationTime: uint64(helper.GetConfig().TxConfirmationTime.Seconds()),
 	}
 
 	syncer.BaseService = *common.NewBaseService(logger, ChainSyncer, syncer)
@@ -212,17 +228,40 @@ func (syncer *Syncer) startSubscription(ctx context.Context, subscription ethere
 func (syncer *Syncer) processHeader(newHeader *types.Header) {
 	syncer.Logger.Debug("New block detected", "blockNumber", newHeader.Number)
 
-	latestNumber := newHeader.Number
+	// adding into queue
+	syncer.headerQueue.PushBack(&LightHeader{
+		Number: newHeader.Number,
+		Time:   newHeader.Time,
+	})
 
-	// confirmation
-	confirmationBlocks := big.NewInt(0).SetUint64(helper.GetConfig().ConfirmationBlocks)
-	confirmationBlocks = confirmationBlocks.Add(confirmationBlocks, big.NewInt(1))
-	if latestNumber.Uint64() > confirmationBlocks.Uint64() {
-		latestNumber = latestNumber.Sub(latestNumber, confirmationBlocks)
+	// current time
+	currentTime := uint64(time.Now().UTC().Unix())
+
+	var start *big.Int
+	var end *big.Int
+
+	// check start and end header
+	for syncer.headerQueue.Len() > 0 {
+		e := syncer.headerQueue.Front() // First element
+		h := e.Value.(*LightHeader)
+		if h.Time+syncer.txConfirmationTime > currentTime {
+			break
+		}
+
+		if start == nil {
+			start = h.Number
+		}
+		end = h.Number
+
+		syncer.headerQueue.Remove(e) // Dequeue
+	}
+
+	if start == nil {
+		return
 	}
 
 	// default fromBlock
-	fromBlock := latestNumber
+	fromBlock := start
 	// get last block from storage
 	hasLastBlock, _ := syncer.storageClient.Has([]byte(lastBlockKey), nil)
 	if hasLastBlock {
@@ -234,8 +273,8 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 
 		syncer.Logger.Debug("Got last block from bridge storage", "lastBlock", string(lastBlockBytes))
 		if result, err := strconv.ParseUint(string(lastBlockBytes), 10, 64); err == nil {
-			if result >= newHeader.Number.Uint64() {
-				return
+			if result > fromBlock.Uint64() {
+				fromBlock = big.NewInt(0).SetUint64(result)
 			}
 
 			fromBlock = big.NewInt(0).SetUint64(result + 1)
@@ -243,15 +282,10 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 	}
 
 	// to block
-	toBlock := latestNumber
+	toBlock := end
 
 	// debug log
-	syncer.Logger.Debug("Processing header", "fromBlock", fromBlock, "toBlock", toBlock)
-
-	// set diff
-	if toBlock.Uint64() < fromBlock.Uint64() {
-		fromBlock = toBlock
-	}
+	syncer.Logger.Info("Processing header", "fromBlock", fromBlock, "toBlock", toBlock)
 
 	// set last block to storage
 	syncer.storageClient.Put([]byte(lastBlockKey), []byte(toBlock.String()), nil)
@@ -538,13 +572,16 @@ func (syncer *Syncer) processStateSyncedEvent(eventName string, abiObject *abi.A
 			"id", event.Id,
 			"contract", event.ContractAddress,
 			"data", hex.EncodeToString(event.Data),
+			"borChainId", helper.GetConfig().BorChainID,
 		)
 
+		// create clerk event record
 		msg := clerkTypes.NewMsgEventRecord(
 			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
 			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			uint64(vLog.Index),
 			event.Id.Uint64(),
+			helper.GetConfig().BorChainID,
 		)
 
 		// broadcast to heimdall
@@ -567,7 +604,7 @@ func (syncer *Syncer) processTopupFeeEvent(eventName string, abiObject *abi.ABI,
 		)
 
 		// create msg checkpoint ack message
-		msg := bankTypes.NewMsgTopup(helper.GetFromAddress(syncer.cliCtx), event.ValidatorId.Uint64(), hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()), uint64(vLog.Index))
+		msg := topupTypes.NewMsgTopup(helper.GetFromAddress(syncer.cliCtx), event.ValidatorId.Uint64(), hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()), uint64(vLog.Index))
 		syncer.queueConnector.BroadcastToHeimdall(msg)
 	}
 }

@@ -14,6 +14,7 @@ import (
 	authCli "github.com/maticnetwork/heimdall/auth/client/cli"
 	authRest "github.com/maticnetwork/heimdall/auth/client/rest"
 	"github.com/maticnetwork/heimdall/auth/types"
+	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
@@ -41,17 +42,13 @@ func (AppModuleBasic) RegisterCodec(cdc *codec.Codec) {
 // DefaultGenesis returns default genesis state as raw bytes for the auth
 // module.
 func (AppModuleBasic) DefaultGenesis() json.RawMessage {
-	result, err := json.Marshal(types.DefaultGenesisState())
-	if err != nil {
-		panic(err)
-	}
-	return result
+	return types.ModuleCdc.MustMarshalJSON(types.DefaultGenesisState())
 }
 
 // ValidateGenesis performs genesis state validation for the auth module.
 func (AppModuleBasic) ValidateGenesis(bz json.RawMessage) error {
 	var data types.GenesisState
-	err := json.Unmarshal(bz, &data)
+	err := types.ModuleCdc.UnmarshalJSON(bz, &data)
 	if err != nil {
 		return err
 	}
@@ -86,14 +83,16 @@ type AppModule struct {
 
 	accountKeeper  AccountKeeper
 	contractCaller helper.IContractCaller
+	processors     []authTypes.AccountProcessor
 }
 
 // NewAppModule creates a new AppModule object
-func NewAppModule(accountKeeper AccountKeeper, contractCaller helper.IContractCaller) AppModule {
+func NewAppModule(accountKeeper AccountKeeper, contractCaller helper.IContractCaller, processors []authTypes.AccountProcessor) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{},
 		accountKeeper:  accountKeeper,
 		contractCaller: contractCaller,
+		processors:     processors,
 	}
 }
 
@@ -129,11 +128,8 @@ func (am AppModule) NewQuerierHandler() sdk.Querier {
 // no validator updates.
 func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.ValidatorUpdate {
 	var genesisState types.GenesisState
-	err := json.Unmarshal(data, &genesisState)
-	if err != nil {
-		panic(err)
-	}
-	InitGenesis(ctx, am.accountKeeper, genesisState)
+	types.ModuleCdc.MustUnmarshalJSON(data, &genesisState)
+	InitGenesis(ctx, am.accountKeeper, am.processors, genesisState)
 	return []abci.ValidatorUpdate{}
 }
 
@@ -141,11 +137,7 @@ func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.Va
 // module.
 func (am AppModule) ExportGenesis(ctx sdk.Context) json.RawMessage {
 	gs := ExportGenesis(ctx, am.accountKeeper)
-	res, err := json.Marshal(gs)
-	if err != nil {
-		panic(err)
-	}
-	return res
+	return types.ModuleCdc.MustMarshalJSON(gs)
 }
 
 // BeginBlock returns the begin blocker for the auth module.

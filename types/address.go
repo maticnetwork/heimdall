@@ -142,3 +142,8 @@ func AccAddressToHeimdallAddress(b sdk.AccAddress) HeimdallAddress {
 func HeimdallAddressToAccAddress(b HeimdallAddress) sdk.AccAddress {
 	return sdk.AccAddress(b.Bytes())
 }
+
+// SampleHeimdallAddress returns sample address
+func SampleHeimdallAddress(s string) HeimdallAddress {
+	return BytesToHeimdallAddress([]byte(s))
+}

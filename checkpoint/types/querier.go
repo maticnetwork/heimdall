@@ -2,6 +2,7 @@ package types
 
 // query endpoints supported by the auth Querier
 const (
+	QueryParams           = "params"
 	QueryAckCount         = "ack-count"
 	QueryCheckpoint       = "checkpoint"
 	QueryCheckpointBuffer = "checkpoint-buffer"

@@ -38,6 +38,7 @@ const (
 
 	AccountDetailsURL      = "/auth/accounts/%v"
 	LastNoAckURL           = "/checkpoint/last-no-ack"
+	CheckpointParamsURL    = "/checkpoint/params"
 	ProposersURL           = "/staking/proposer/%v"
 	BufferedCheckpointURL  = "/checkpoint/buffer"
 	LatestCheckpointURL    = "/checkpoint/latest-checkpoint"

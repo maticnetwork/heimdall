@@ -5,4 +5,5 @@ const (
 	FlagTxHash          = "tx-hash"
 	FlagLogIndex        = "log-index"
 	FlagRecordID        = "id"
+	FlagBorChainId      = "bor-chain-id"
 )

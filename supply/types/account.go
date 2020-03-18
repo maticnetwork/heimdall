@@ -6,20 +6,23 @@ import (
 	"github.com/tendermint/tendermint/crypto"
 	yaml "gopkg.in/yaml.v2"
 
+	authExported "github.com/maticnetwork/heimdall/auth/exported"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
+	"github.com/maticnetwork/heimdall/supply/exported"
 	"github.com/maticnetwork/heimdall/types"
 )
 
-var _ ModuleAccountInterface = (*ModuleAccount)(nil)
+//
+// Module account
+//
 
-// ModuleAccountInterface defines an account interface for modules that hold tokens in an escrow
-type ModuleAccountInterface interface {
-	authTypes.Account
+var _ exported.ModuleAccountI = (*ModuleAccount)(nil)
+var _ authTypes.Account = (*ModuleAccount)(nil)
 
-	GetName() string
-	GetPermissions() []string
-	HasPermission(string) bool
-}
+type (
+	// ModuleAccountInterface exported module account interface
+	ModuleAccountInterface = exported.ModuleAccountI
+)
 
 // ModuleAccount defines an account for modules that holds coins on a pool
 type ModuleAccount struct {
@@ -145,4 +148,18 @@ func (ma ModuleAccount) MarshalYAML() (interface{}, error) {
 	}
 
 	return string(bs), nil
+}
+
+//
+// Account processor
+//
+
+// AccountProcessor process supply's module account
+func AccountProcessor(ga *authTypes.GenesisAccount, ba *authTypes.BaseAccount) authExported.Account {
+	// module accounts
+	if ga.ModuleName != "" {
+		return NewModuleAccount(ba, ga.ModuleName, ga.ModulePermissions...)
+	}
+
+	return ba
 }

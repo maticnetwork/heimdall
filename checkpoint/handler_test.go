@@ -13,7 +13,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/params/subspace"
-	"github.com/maticnetwork/heimdall/bor"
 	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/helper/mocks"
@@ -53,7 +52,7 @@ func MakeTestCodec() *codec.Codec {
 	bankTypes.RegisterCodec(cdc)
 
 	// custom types
-	bor.RegisterCodec(cdc)
+	borTypes.RegisterCodec(cdc)
 	RegisterCodec(cdc)
 	staking.RegisterCodec(cdc)
 

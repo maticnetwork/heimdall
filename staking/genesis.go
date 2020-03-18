@@ -42,6 +42,9 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 	if len(data.CurrentValSet.Validators) == 0 {
 		keeper.IncrementAccum(ctx, 1)
 	}
+	for _, sequence := range data.StakingSequences {
+		keeper.SetStakingSequence(ctx, sequence)
+	}
 }
 
 // ExportGenesis returns a GenesisState for a given context and keeper.
@@ -51,5 +54,6 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
 		keeper.GetAllValidators(ctx),
 		keeper.GetValidatorSet(ctx),
 		keeper.GetAllDividendAccounts(ctx),
+		keeper.GetStakingSequences(ctx),
 	)
 }

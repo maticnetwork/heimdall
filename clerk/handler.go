@@ -7,7 +7,6 @@ import (
 
 	"github.com/maticnetwork/heimdall/clerk/types"
 	"github.com/maticnetwork/heimdall/common"
-	"github.com/maticnetwork/heimdall/contracts/statesender"
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
@@ -33,36 +32,32 @@ func handleMsgEventRecord(ctx sdk.Context, msg types.MsgEventRecord, k Keeper, c
 	}
 
 	// get confirmed tx receipt
-	receipt, err := contractCaller.GetConfirmedTxReceipt(msg.TxHash.EthHash())
+	receipt, err := contractCaller.GetConfirmedTxReceipt(ctx.BlockTime(), msg.TxHash.EthHash())
 	if receipt == nil || err != nil {
 		return common.ErrWaitForConfirmation(k.Codespace()).Result()
 	}
 
-	var parsedLog *statesender.StatesenderStateSynced
-	for _, log := range receipt.Logs {
-		if uint64(log.Index) == msg.LogIndex && len(log.Topics) == 3 {
-			p, err := contractCaller.EncodeStateSyncedEvent(log)
-			if err != nil {
-				break
-			}
-
-			if p != nil && msg.ID == p.Id.Uint64() {
-				parsedLog = p
-			}
-		}
+	// get event log for topup
+	eventLog, err := contractCaller.DecodeStateSyncedEvent(helper.GetStateSenderAddress(), receipt, msg.LogIndex)
+	if err != nil || eventLog == nil {
+		k.Logger(ctx).Error("Error fetching log from txhash")
+		return common.ErrInvalidMsg(k.Codespace(), "Unable to fetch log for txHash").Result()
 	}
 
-	if parsedLog == nil {
-		return types.ErrEventRecordInvalid(k.Codespace()).Result()
+	// check if message and event log matches
+	if eventLog.Id.Uint64() != msg.ID {
+		k.Logger(ctx).Error("ID in message doesn't match with id in log", "msgId", msg.ID, "stateIdFromTx", eventLog.Id)
+		return common.ErrInvalidMsg(k.Codespace(), "ID in message doesn't match with id in log. msgId %v stateIdFromTx %v", msg.ID, eventLog.Id).Result()
 	}
 
 	// create event record
 	record := types.NewEventRecord(
 		msg.TxHash,
 		msg.LogIndex,
-		msg.ID,
-		hmTypes.BytesToHeimdallAddress(parsedLog.ContractAddress.Bytes()),
-		parsedLog.Data,
+		eventLog.Id.Uint64(),
+		hmTypes.BytesToHeimdallAddress(eventLog.ContractAddress.Bytes()),
+		eventLog.Data,
+		msg.ChainID,
 	)
 
 	// save event into state
@@ -77,7 +72,7 @@ func handleMsgEventRecord(ctx sdk.Context, msg types.MsgEventRecord, k Keeper, c
 			types.EventTypeRecord,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			sdk.NewAttribute(types.AttributeKeyRecordID, strconv.FormatUint(msg.ID, 10)),
-			sdk.NewAttribute(types.AttributeKeyRecordContract, parsedLog.ContractAddress.String()),
+			sdk.NewAttribute(types.AttributeKeyRecordContract, eventLog.ContractAddress.String()),
 			sdk.NewAttribute(types.AttributeKeyRecordTxHash, msg.TxHash.String()),
 			sdk.NewAttribute(types.AttributeKeyRecordTxLogIndex, strconv.FormatUint(msg.LogIndex, 10)),
 		),

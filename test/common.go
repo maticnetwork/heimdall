@@ -12,7 +12,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/params"
 	ethcmn "github.com/maticnetwork/bor/common"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -20,15 +19,14 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
 
-	"github.com/cosmos/cosmos-sdk/x/params/subspace"
 	bankTypes "github.com/maticnetwork/heimdall/bank/types"
-
 	borTypes "github.com/maticnetwork/heimdall/bor/types"
-
 	"github.com/maticnetwork/heimdall/checkpoint"
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/params"
+	paramsTypes "github.com/maticnetwork/heimdall/params/types"
 	"github.com/maticnetwork/heimdall/staking"
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
 	"github.com/maticnetwork/heimdall/types"
@@ -63,8 +61,8 @@ func CreateTestInput(t *testing.T, isCheckTx bool) (sdk.Context, staking.Keeper,
 	keyCheckpoint := sdk.NewKVStoreKey("checkpoint")
 	keyStaking := sdk.NewKVStoreKey("staking")
 	keyMaster := sdk.NewKVStoreKey("master")
-	keyParams := sdk.NewKVStoreKey(subspace.StoreKey)
-	tKeyParams := sdk.NewTransientStoreKey(subspace.TStoreKey)
+	keyParams := sdk.NewKVStoreKey(paramsTypes.StoreKey)
+	tKeyParams := sdk.NewTransientStoreKey(paramsTypes.TStoreKey)
 
 	// mount all
 	ms.MountStoreWithDB(keyCheckpoint, sdk.StoreTypeIAVL, db)

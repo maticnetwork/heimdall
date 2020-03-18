@@ -34,21 +34,18 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 // handleMsgCheckpoint Validates checkpoint transaction
 func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	k.Logger(ctx).Debug("Validating checkpoint data", "TxData", msg)
-
-	if msg.TimeStamp == 0 || msg.TimeStamp > uint64(time.Now().UTC().Unix()) {
-		k.Logger(ctx).Error("Checkpoint timestamp must be in near past", "CurrentTime", time.Now().UTC().Unix(), "CheckpointTime", msg.TimeStamp, "Condition", msg.TimeStamp >= uint64(time.Now().UTC().Unix()))
-		return common.ErrBadTimeStamp(k.Codespace()).Result()
-	}
+	timeStamp := uint64(ctx.BlockTime().Unix())
+	params := k.GetParams(ctx)
 
 	checkpointBuffer, err := k.GetCheckpointFromBuffer(ctx)
 	if err == nil {
-		if msg.TimeStamp == 0 || checkpointBuffer.TimeStamp == 0 || ((msg.TimeStamp > checkpointBuffer.TimeStamp) && msg.TimeStamp-checkpointBuffer.TimeStamp >= uint64(helper.GetConfig().CheckpointBufferTime.Seconds())) {
-			k.Logger(ctx).Debug("Checkpoint has been timed out, flushing buffer", "CheckpointTimestamp", msg.TimeStamp, "PrevCheckpointTimestamp", checkpointBuffer.TimeStamp)
+		if checkpointBuffer.TimeStamp == 0 || ((timeStamp > checkpointBuffer.TimeStamp) && timeStamp-checkpointBuffer.TimeStamp >= uint64(params.CheckpointBufferTime.Seconds())) {
+			k.Logger(ctx).Debug("Checkpoint has been timed out, flushing buffer", "CheckpointTimestamp", timeStamp, "PrevCheckpointTimestamp", checkpointBuffer.TimeStamp)
 			k.FlushCheckpointBuffer(ctx)
 		} else {
 			// calulates remaining time for buffer to be flushed
 			checkpointTime := time.Unix(int64(checkpointBuffer.TimeStamp), 0)
-			expiryTime := checkpointTime.Add(helper.GetConfig().CheckpointBufferTime)
+			expiryTime := checkpointTime.Add(params.CheckpointBufferTime)
 			diff := expiryTime.Sub(time.Now().UTC()).Seconds()
 			k.Logger(ctx).Error("Checkpoint already exits in buffer", "Checkpoint", checkpointBuffer.String(), "Expires", expiryTime)
 			return common.ErrNoACK(k.Codespace(), diff).Result()
@@ -129,7 +126,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, con
 		RootHash:        msg.RootHash,
 		AccountRootHash: msg.AccountRootHash,
 		Proposer:        msg.Proposer,
-		TimeStamp:       msg.TimeStamp,
+		TimeStamp:       timeStamp,
 	})
 
 	checkpoint, _ := k.GetCheckpointFromBuffer(ctx)
@@ -161,18 +158,6 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg types.MsgCheckpointAck, k Keepe
 		return common.ErrBadAck(k.Codespace()).Result()
 	}
 
-	// check confirmation
-	latestBlock, err := contractCaller.GetMainChainBlock(nil)
-	if err != nil {
-		k.Logger(ctx).Error("Unable to connect to mainchain", "Error", err)
-		return common.ErrNoConn(k.Codespace()).Result()
-	}
-
-	if latestBlock.Number.Uint64()-createdAt < helper.GetConfig().ConfirmationBlocks {
-		k.Logger(ctx).Error("Not enough confirmations", "latestBlock", latestBlock.Number.Uint64(), "txBlock", createdAt)
-		return common.ErrWaitForConfirmation(k.Codespace()).Result()
-	}
-
 	k.Logger(ctx).Debug("HeaderBlock fetched",
 		"headerBlock", msg.HeaderBlock,
 		"start", start,
@@ -180,7 +165,6 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg types.MsgCheckpointAck, k Keepe
 		"roothash", root,
 		"proposer", proposer,
 		"createdAt", createdAt,
-		"latest", latestBlock.Number.Uint64(),
 	)
 
 	// get last checkpoint from buffer
@@ -253,8 +237,9 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg types.MsgCheckpointAck, k Keepe
 func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k Keeper) sdk.Result {
 	k.Logger(ctx).Debug("Validating checkpoint no-ack", "TxData", msg)
 	// current time
-	currentTime := time.Unix(int64(msg.TimeStamp), 0) // buffer time
-	bufferTime := helper.GetConfig().CheckpointBufferTime
+	currentTime := ctx.BlockTime()
+
+	bufferTime := k.GetParams(ctx).CheckpointBufferTime
 
 	// fetch last checkpoint from store
 	// TODO figure out how to handle this error

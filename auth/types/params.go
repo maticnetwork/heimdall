@@ -3,9 +3,10 @@ package types
 import (
 	"bytes"
 	"fmt"
+	"math/big"
 	"strings"
 
-	"github.com/cosmos/cosmos-sdk/x/params/subspace"
+	"github.com/maticnetwork/heimdall/params/subspace"
 )
 
 // Default parameter values
@@ -15,6 +16,9 @@ const (
 	DefaultTxSizeCostPerByte      uint64 = 10
 	DefaultSigVerifyCostED25519   uint64 = 590
 	DefaultSigVerifyCostSecp256k1 uint64 = 1000
+
+	DefaultMaxTxGas uint64 = 1000000
+	DefaultTxFees   string = "1000000000000000"
 )
 
 // Parameter keys
@@ -24,6 +28,9 @@ var (
 	KeyTxSizeCostPerByte      = []byte("TxSizeCostPerByte")
 	KeySigVerifyCostED25519   = []byte("SigVerifyCostED25519")
 	KeySigVerifyCostSecp256k1 = []byte("SigVerifyCostSecp256k1")
+
+	KeyMaxTxGas = []byte("MaxTxGas")
+	KeyTxFees   = []byte("TxFees")
 )
 
 var _ subspace.ParamSet = &Params{}
@@ -35,11 +42,22 @@ type Params struct {
 	TxSizeCostPerByte      uint64 `json:"tx_size_cost_per_byte" yaml:"tx_size_cost_per_byte"`
 	SigVerifyCostED25519   uint64 `json:"sig_verify_cost_ed25519" yaml:"sig_verify_cost_ed25519"`
 	SigVerifyCostSecp256k1 uint64 `json:"sig_verify_cost_secp256k1" yaml:"sig_verify_cost_secp256k1"`
+
+	MaxTxGas uint64 `json:"max_tx_gas" yaml:"max_tx_gas"`
+	TxFees   string `json:"tx_fees" yaml:"tx_fees"`
 }
 
 // NewParams creates a new Params object
-func NewParams(maxMemoCharacters, txSigLimit, txSizeCostPerByte,
-	sigVerifyCostED25519, sigVerifyCostSecp256k1 uint64) Params {
+func NewParams(
+	maxMemoCharacters uint64,
+	txSigLimit uint64,
+	txSizeCostPerByte uint64,
+	sigVerifyCostED25519 uint64,
+	sigVerifyCostSecp256k1 uint64,
+
+	maxTxGas uint64,
+	txFees string,
+) Params {
 
 	return Params{
 		MaxMemoCharacters:      maxMemoCharacters,
@@ -47,6 +65,9 @@ func NewParams(maxMemoCharacters, txSigLimit, txSizeCostPerByte,
 		TxSizeCostPerByte:      txSizeCostPerByte,
 		SigVerifyCostED25519:   sigVerifyCostED25519,
 		SigVerifyCostSecp256k1: sigVerifyCostSecp256k1,
+
+		MaxTxGas: maxTxGas,
+		TxFees:   txFees,
 	}
 }
 
@@ -65,6 +86,9 @@ func (p *Params) ParamSetPairs() subspace.ParamSetPairs {
 		{KeyTxSizeCostPerByte, &p.TxSizeCostPerByte},
 		{KeySigVerifyCostED25519, &p.SigVerifyCostED25519},
 		{KeySigVerifyCostSecp256k1, &p.SigVerifyCostSecp256k1},
+
+		{KeyMaxTxGas, &p.MaxTxGas},
+		{KeyTxFees, &p.TxFees},
 	}
 }
 
@@ -83,6 +107,9 @@ func DefaultParams() Params {
 		TxSizeCostPerByte:      DefaultTxSizeCostPerByte,
 		SigVerifyCostED25519:   DefaultSigVerifyCostED25519,
 		SigVerifyCostSecp256k1: DefaultSigVerifyCostSecp256k1,
+
+		MaxTxGas: DefaultMaxTxGas,
+		TxFees:   DefaultTxFees,
 	}
 }
 
@@ -95,6 +122,8 @@ func (p Params) String() string {
 	sb.WriteString(fmt.Sprintf("TxSizeCostPerByte: %d\n", p.TxSizeCostPerByte))
 	sb.WriteString(fmt.Sprintf("SigVerifyCostED25519: %d\n", p.SigVerifyCostED25519))
 	sb.WriteString(fmt.Sprintf("SigVerifyCostSecp256k1: %d\n", p.SigVerifyCostSecp256k1))
+	sb.WriteString(fmt.Sprintf("MaxTxGas: %d\n", p.MaxTxGas))
+	sb.WriteString(fmt.Sprintf("TxFees: %s\n", p.TxFees))
 	return sb.String()
 }
 
@@ -163,6 +192,31 @@ func validateTxSizeCostPerByte(i interface{}) error {
 	return nil
 }
 
+func validateMaxTxGas(i interface{}) error {
+	v, ok := i.(uint64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v == 0 {
+		return fmt.Errorf("invalid max tx gas: %d", v)
+	}
+
+	return nil
+}
+
+func validateTxFees(v string) error {
+	if strings.TrimSpace(v) == "" {
+		return fmt.Errorf("invalid tx fees: %s", v)
+	}
+
+	if _, ok := big.NewInt(0).SetString(v, 10); !ok {
+		return fmt.Errorf("invalid tx fees: %s, should be valid big integer", v)
+	}
+
+	return nil
+}
+
 // Validate checks that the parameters have valid values.
 func (p Params) Validate() error {
 	if err := validateTxSigLimit(p.TxSigLimit); err != nil {
@@ -178,6 +232,12 @@ func (p Params) Validate() error {
 		return err
 	}
 	if err := validateTxSizeCostPerByte(p.TxSizeCostPerByte); err != nil {
+		return err
+	}
+	if err := validateMaxTxGas(p.MaxTxGas); err != nil {
+		return err
+	}
+	if err := validateTxFees(p.TxFees); err != nil {
 		return err
 	}
 

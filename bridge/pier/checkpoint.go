@@ -74,7 +74,7 @@ func NewCheckpointer(cdc *codec.Codec, queueConnector *QueueConnector, httpClien
 		storageClient:     getBridgeDBInstance(viper.GetString(BridgeDBFlag)),
 		HeaderChannel:     make(chan *types.Header),
 		contractConnector: contractCaller,
-		txEncoder:         authTypes.NewTxBuilderFromCLI().WithTxEncoder(helper.GetTxEncoder()).WithChainID(helper.GetGenesisDoc().ChainID),
+		txEncoder:         authTypes.NewTxBuilderFromCLI().WithTxEncoder(helper.GetTxEncoder(cdc)).WithChainID(helper.GetGenesisDoc().ChainID),
 
 		cliCtx:         cliCtx,
 		queueConnector: queueConnector,
@@ -462,7 +462,6 @@ func (c *Checkpointer) sendCheckpointToHeimdall(start uint64, end uint64) error 
 		end,
 		hmtypes.BytesToHeimdallHash(root),
 		accountRootHash,
-		uint64(time.Now().UTC().Unix()),
 	)
 
 	// return broadcast to heimdall
