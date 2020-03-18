@@ -71,10 +71,6 @@ func (c *ContractCaller) SendCheckpoint(voteSignBytes []byte, sigs []byte, txDat
 		Logger.Error("Unable to pack tx for submitHeaderBlock", "error", err)
 		return
 	}
-	Logger.Debug("Sending new checkpoint",
-		"vote", hex.EncodeToString(voteSignBytes),
-		"sigs", hex.EncodeToString(sigs),
-		"txData", hex.EncodeToString(txData))
 
 	rootChainAddress := GetRootChainAddress()
 	auth, err := GenerateAuthObj(GetMainClient(), rootChainAddress, data)
