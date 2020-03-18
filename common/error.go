@@ -101,7 +101,7 @@ func ErrNoCheckpointBufferFound(codespace sdk.CodespaceType) sdk.Error {
 }
 
 func ErrInvalidNoACK(codespace sdk.CodespaceType) sdk.Error {
-	return newError(codespace, CodeInvalidNoACK, "Invalid no-ack")
+	return newError(codespace, CodeInvalidNoACK, "Invalid No ACK -- Waiting for last checkpoint ACK")
 }
 
 func ErrTooManyNoACK(codespace sdk.CodespaceType) sdk.Error {
