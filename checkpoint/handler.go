@@ -34,18 +34,13 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 // handleMsgCheckpoint Validates checkpoint transaction
 func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	k.Logger(ctx).Debug("Validating checkpoint data", "TxData", msg)
-
-	if msg.TimeStamp == 0 || msg.TimeStamp > uint64(time.Now().UTC().Unix()) {
-		k.Logger(ctx).Error("Checkpoint timestamp must be in near past", "CurrentTime", time.Now().UTC().Unix(), "CheckpointTime", msg.TimeStamp, "Condition", msg.TimeStamp >= uint64(time.Now().UTC().Unix()))
-		return common.ErrBadTimeStamp(k.Codespace()).Result()
-	}
-
+	timeStamp := uint64(ctx.BlockTime().Unix())
 	params := k.GetParams(ctx)
 
 	checkpointBuffer, err := k.GetCheckpointFromBuffer(ctx)
 	if err == nil {
-		if msg.TimeStamp == 0 || checkpointBuffer.TimeStamp == 0 || ((msg.TimeStamp > checkpointBuffer.TimeStamp) && msg.TimeStamp-checkpointBuffer.TimeStamp >= uint64(params.CheckpointBufferTime.Seconds())) {
-			k.Logger(ctx).Debug("Checkpoint has been timed out, flushing buffer", "CheckpointTimestamp", msg.TimeStamp, "PrevCheckpointTimestamp", checkpointBuffer.TimeStamp)
+		if checkpointBuffer.TimeStamp == 0 || ((timeStamp > checkpointBuffer.TimeStamp) && timeStamp-checkpointBuffer.TimeStamp >= uint64(params.CheckpointBufferTime.Seconds())) {
+			k.Logger(ctx).Debug("Checkpoint has been timed out, flushing buffer", "CheckpointTimestamp", timeStamp, "PrevCheckpointTimestamp", checkpointBuffer.TimeStamp)
 			k.FlushCheckpointBuffer(ctx)
 		} else {
 			// calulates remaining time for buffer to be flushed
@@ -131,7 +126,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, con
 		RootHash:        msg.RootHash,
 		AccountRootHash: msg.AccountRootHash,
 		Proposer:        msg.Proposer,
-		TimeStamp:       msg.TimeStamp,
+		TimeStamp:       timeStamp,
 	})
 
 	checkpoint, _ := k.GetCheckpointFromBuffer(ctx)
@@ -242,7 +237,8 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg types.MsgCheckpointAck, k Keepe
 func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k Keeper) sdk.Result {
 	k.Logger(ctx).Debug("Validating checkpoint no-ack", "TxData", msg)
 	// current time
-	currentTime := time.Unix(int64(msg.TimeStamp), 0) // buffer time
+	currentTime := ctx.BlockTime()
+
 	bufferTime := k.GetParams(ctx).CheckpointBufferTime
 
 	// fetch last checkpoint from store

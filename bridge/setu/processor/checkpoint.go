@@ -356,7 +356,6 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToHeimdall(start uint64, e
 		end,
 		hmTypes.BytesToHeimdallHash(root),
 		accountRootHash,
-		uint64(time.Now().UTC().Unix()),
 	)
 
 	// return broadcast to heimdall
@@ -550,7 +549,6 @@ func (cp *CheckpointProcessor) proposeCheckpointNoAck() (err error) {
 	// send NO ACK
 	msg := checkpointTypes.NewMsgCheckpointNoAck(
 		hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
-		uint64(time.Now().UTC().Unix()),
 	)
 
 	// return broadcast to heimdall
