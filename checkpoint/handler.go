@@ -39,19 +39,17 @@ func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, con
 
 	checkpointBuffer, err := k.GetCheckpointFromBuffer(ctx)
 	if err == nil {
-		if checkpointBuffer.TimeStamp == 0 || ((timeStamp > checkpointBuffer.TimeStamp) && timeStamp-checkpointBuffer.TimeStamp >= uint64(params.CheckpointBufferTime.Seconds())) {
+		checkpointBufferTime := uint64(params.CheckpointBufferTime.Seconds())
+
+		if checkpointBuffer.TimeStamp == 0 || ((timeStamp > checkpointBuffer.TimeStamp) && timeStamp-checkpointBuffer.TimeStamp >= checkpointBufferTime) {
 			k.Logger(ctx).Debug("Checkpoint has been timed out, flushing buffer", "CheckpointTimestamp", timeStamp, "PrevCheckpointTimestamp", checkpointBuffer.TimeStamp)
 			k.FlushCheckpointBuffer(ctx)
 		} else {
-			// calulates remaining time for buffer to be flushed
-			checkpointTime := time.Unix(int64(checkpointBuffer.TimeStamp), 0)
-			expiryTime := checkpointTime.Add(params.CheckpointBufferTime)
-			diff := expiryTime.Sub(time.Now().UTC()).Seconds()
+			expiryTime := checkpointBuffer.TimeStamp + checkpointBufferTime
 			k.Logger(ctx).Error("Checkpoint already exits in buffer", "Checkpoint", checkpointBuffer.String(), "Expires", expiryTime)
-			return common.ErrNoACK(k.Codespace(), diff).Result()
+			return common.ErrNoACK(k.Codespace(), expiryTime).Result()
 		}
 	}
-	// k.Logger(ctx).Debug("Received checkpoint from buffer", "Checkpoint", checkpointBuffer.String())
 
 	// validate checkpoint
 	validCheckpoint, err := types.ValidateCheckpoint(msg.StartBlock, msg.EndBlock, msg.RootHash)

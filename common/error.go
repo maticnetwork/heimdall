@@ -2,6 +2,7 @@ package common
 
 import (
 	"fmt"
+	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/helper"
@@ -79,8 +80,8 @@ func ErrDisCountinuousCheckpoint(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeDisCountinuousCheckpoint, "Checkpoint not in countinuity")
 }
 
-func ErrNoACK(codespace sdk.CodespaceType, timeRemaining float64) sdk.Error {
-	return newError(codespace, CodeNoACK, fmt.Sprintf("Checkpoint Already Exists In Buffer, ACK expected ,expires %v", timeRemaining))
+func ErrNoACK(codespace sdk.CodespaceType, expiresAt uint64) sdk.Error {
+	return newError(codespace, CodeNoACK, fmt.Sprintf("Checkpoint Already Exists In Buffer, ACK expected, expires at %s", strconv.FormatUint(expiresAt, 10)))
 }
 
 func ErrNoConn(codespace sdk.CodespaceType) sdk.Error {
