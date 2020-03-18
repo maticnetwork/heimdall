@@ -28,6 +28,7 @@ type TxBroadcaster struct {
 	maticMutex    sync.Mutex
 
 	lastSeqNo uint64
+	accNum    uint64
 }
 
 // NewTxBroadcaster creates new broadcaster
@@ -45,6 +46,7 @@ func NewTxBroadcaster(cdc *codec.Codec) *TxBroadcaster {
 		logger:    util.Logger().With("module", "txBroadcaster"),
 		cliCtx:    cliCtx,
 		lastSeqNo: account.GetSequence(),
+		accNum:    account.GetAccountNumber(),
 	}
 
 	return &txBroadcaster
@@ -60,17 +62,10 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg) error {
 	// chain id
 	chainID := helper.GetGenesisDoc().ChainID
 
-	// fetch from APIs
-	account, err := util.GetAccount(tb.cliCtx)
-	if err != nil {
-		tb.logger.Error("Error fetching account from rest-api", "url", util.GetHeimdallServerEndpoint(fmt.Sprintf(util.AccountDetailsURL, helper.GetAddress())))
-		return err
-	}
 	// get account number and sequence
-	accNum := account.GetAccountNumber()
 	txBldr := authTypes.NewTxBuilderFromCLI().
 		WithTxEncoder(txEncoder).
-		WithAccountNumber(accNum).
+		WithAccountNumber(tb.accNum).
 		WithSequence(tb.lastSeqNo).
 		WithChainID(chainID)
 
@@ -78,13 +73,21 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg) error {
 	if err != nil {
 		tb.logger.Error("Error while broadcasting the heimdall transaction", "error", err)
 
+		// fetch from APIs
+		account, errAcc := util.GetAccount(tb.cliCtx)
+		if errAcc != nil {
+			tb.logger.Error("Error fetching account from rest-api", "url", util.GetHeimdallServerEndpoint(fmt.Sprintf(util.AccountDetailsURL, helper.GetAddress())))
+			return errAcc
+		}
+
 		// update seqNo for safety
 		tb.lastSeqNo = account.GetSequence()
+		tb.accNum = account.GetAccountNumber()
 
 		return err
 	}
 
-	tb.logger.Info("Tx sent on heimdall", "txHash", txResponse.TxHash, "accSeq", tb.lastSeqNo, "accNum", accNum)
+	tb.logger.Info("Tx sent on heimdall", "txHash", txResponse.TxHash, "accSeq", tb.lastSeqNo, "accNum", tb.accNum)
 	tb.logger.Debug("Tx successful on heimdall", "txResponse", txResponse)
 	// increment account sequence
 	tb.lastSeqNo += 1

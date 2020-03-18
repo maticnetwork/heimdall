@@ -3,7 +3,6 @@ package broadcaster
 import (
 	"os"
 	"testing"
-	"time"
 
 	"github.com/maticnetwork/heimdall/app"
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
@@ -29,10 +28,10 @@ func TestBroadcastToHeimdall(t *testing.T) {
 	_txBroadcaster := NewTxBroadcaster(cdc)
 
 	testData := []checkpointTypes.MsgCheckpoint{
-		{Proposer: hmTypes.BytesToHeimdallAddress(helper.GetAddress()), StartBlock: 0, EndBlock: 63, RootHash: hmTypes.HexToHeimdallHash("0x5bd83f679c8ce7c48d6fa52ce41532fcacfbbd99d5dab415585f397bf44a0b6e"), AccountRootHash: hmTypes.HexToHeimdallHash("0xd10b5c16c25efe0b0f5b3d75038834223934ae8c2ec2b63a62bbe42aa21e2d2d"), TimeStamp: uint64(time.Now().UTC().Unix())},
-		{Proposer: hmTypes.BytesToHeimdallAddress(helper.GetAddress()), StartBlock: 64, EndBlock: 1024, RootHash: hmTypes.HexToHeimdallHash("0x5bd83f679c8ce7c48d6fa52ce41532fcacfbbd99d5dab415585f397bf44a0b6e"), AccountRootHash: hmTypes.HexToHeimdallHash("0xd10b5c16c25efe0b0f5b3d75038834223934ae8c2ec2b63a62bbe42aa21e2d2d"), TimeStamp: uint64(time.Now().UTC().Unix())},
-		{Proposer: hmTypes.BytesToHeimdallAddress(helper.GetAddress()), StartBlock: 1025, EndBlock: 2048, RootHash: hmTypes.HexToHeimdallHash("0x5bd83f679c8ce7c48d6fa52ce41532fcacfbbd99d5dab415585f397bf44a0b6e"), AccountRootHash: hmTypes.HexToHeimdallHash("0xd10b5c16c25efe0b0f5b3d75038834223934ae8c2ec2b63a62bbe42aa21e2d2d"), TimeStamp: uint64(time.Now().UTC().Unix())},
-		{Proposer: hmTypes.BytesToHeimdallAddress(helper.GetAddress()), StartBlock: 2049, EndBlock: 3124, RootHash: hmTypes.HexToHeimdallHash("0x5bd83f679c8ce7c48d6fa52ce41532fcacfbbd99d5dab415585f397bf44a0b6e"), AccountRootHash: hmTypes.HexToHeimdallHash("0xd10b5c16c25efe0b0f5b3d75038834223934ae8c2ec2b63a62bbe42aa21e2d2d"), TimeStamp: uint64(time.Now().UTC().Unix())},
+		{Proposer: hmTypes.BytesToHeimdallAddress(helper.GetAddress()), StartBlock: 0, EndBlock: 63, RootHash: hmTypes.HexToHeimdallHash("0x5bd83f679c8ce7c48d6fa52ce41532fcacfbbd99d5dab415585f397bf44a0b6e"), AccountRootHash: hmTypes.HexToHeimdallHash("0xd10b5c16c25efe0b0f5b3d75038834223934ae8c2ec2b63a62bbe42aa21e2d2d")},
+		{Proposer: hmTypes.BytesToHeimdallAddress(helper.GetAddress()), StartBlock: 64, EndBlock: 1024, RootHash: hmTypes.HexToHeimdallHash("0x5bd83f679c8ce7c48d6fa52ce41532fcacfbbd99d5dab415585f397bf44a0b6e"), AccountRootHash: hmTypes.HexToHeimdallHash("0xd10b5c16c25efe0b0f5b3d75038834223934ae8c2ec2b63a62bbe42aa21e2d2d")},
+		{Proposer: hmTypes.BytesToHeimdallAddress(helper.GetAddress()), StartBlock: 1025, EndBlock: 2048, RootHash: hmTypes.HexToHeimdallHash("0x5bd83f679c8ce7c48d6fa52ce41532fcacfbbd99d5dab415585f397bf44a0b6e"), AccountRootHash: hmTypes.HexToHeimdallHash("0xd10b5c16c25efe0b0f5b3d75038834223934ae8c2ec2b63a62bbe42aa21e2d2d")},
+		{Proposer: hmTypes.BytesToHeimdallAddress(helper.GetAddress()), StartBlock: 2049, EndBlock: 3124, RootHash: hmTypes.HexToHeimdallHash("0x5bd83f679c8ce7c48d6fa52ce41532fcacfbbd99d5dab415585f397bf44a0b6e"), AccountRootHash: hmTypes.HexToHeimdallHash("0xd10b5c16c25efe0b0f5b3d75038834223934ae8c2ec2b63a62bbe42aa21e2d2d")},
 	}
 
 	for index, test := range testData {
@@ -44,7 +43,6 @@ func TestBroadcastToHeimdall(t *testing.T) {
 				test.EndBlock,
 				test.RootHash,
 				test.AccountRootHash,
-				test.TimeStamp,
 			)
 
 			err := _txBroadcaster.BroadcastToHeimdall(msg)
