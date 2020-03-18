@@ -16,6 +16,7 @@ import (
 	"time"
 
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
+	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/log"
@@ -277,4 +278,21 @@ func IsCatchingUp(cliCtx cliContext.CLIContext) bool {
 		return true
 	}
 	return resp.SyncInfo.CatchingUp
+}
+
+// Returns heimdall auth account
+func GetAccount(cliCtx cliContext.CLIContext) (account authTypes.Account, err error) {
+	// current address
+	address := hmtypes.BytesToHeimdallAddress(helper.GetAddress())
+	url := GetHeimdallServerEndpoint(fmt.Sprintf(AccountDetailsURL, address))
+	// call account rest api
+	response, err := FetchFromAPI(cliCtx, url)
+	if err != nil {
+		return
+	}
+	if cliCtx.Codec.UnmarshalJSON(response.Result, &account); err != nil {
+		logger.Error("Error unmarshalling account details", "url", url)
+		return
+	}
+	return
 }

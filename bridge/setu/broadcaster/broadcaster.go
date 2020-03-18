@@ -14,7 +14,6 @@ import (
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
-	hmTypes "github.com/maticnetwork/heimdall/types"
 
 	"github.com/tendermint/tendermint/libs/log"
 )
@@ -27,17 +26,25 @@ type TxBroadcaster struct {
 
 	heimdallMutex sync.Mutex
 	maticMutex    sync.Mutex
+
+	lastSeqNo uint64
 }
 
 // NewTxBroadcaster creates new broadcaster
 func NewTxBroadcaster(cdc *codec.Codec) *TxBroadcaster {
 	cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
-	cliCtx.BroadcastMode = client.BroadcastBlock
+	cliCtx.BroadcastMode = client.BroadcastSync
 	cliCtx.TrustNode = true
 
+	account, err := util.GetAccount(cliCtx)
+	if err != nil {
+		panic("Error connecting to rest-server, please start server before bridge.")
+	}
+
 	txBroadcaster := TxBroadcaster{
-		logger: util.Logger().With("module", "txBroadcaster"),
-		cliCtx: cliCtx,
+		logger:    util.Logger().With("module", "txBroadcaster"),
+		cliCtx:    cliCtx,
+		lastSeqNo: account.GetSequence(),
 	}
 
 	return &txBroadcaster
@@ -52,41 +59,35 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg) error {
 	txEncoder := helper.GetTxEncoder(tb.cliCtx.Codec)
 	// chain id
 	chainID := helper.GetGenesisDoc().ChainID
-	// current address
-	address := hmTypes.BytesToHeimdallAddress(helper.GetAddress())
-	// fetch from APIs
-	var account authTypes.Account
-	response, err := util.FetchFromAPI(tb.cliCtx, util.GetHeimdallServerEndpoint(fmt.Sprintf(util.AccountDetailsURL, address)))
-	if err != nil {
-		tb.logger.Error("Error fetching account from rest-api", "url", util.GetHeimdallServerEndpoint(fmt.Sprintf(util.AccountDetailsURL, address)))
-		panic("Error connecting to rest-server, please start server before bridge.")
-	}
 
-	// get proposer from response
-	if err := tb.cliCtx.Codec.UnmarshalJSON(response.Result, &account); err != nil && len(response.Result) != 0 {
-		tb.logger.Error("Error unmarshalling account details", "url", util.GetHeimdallServerEndpoint(fmt.Sprintf(util.AccountDetailsURL, address)))
+	// fetch from APIs
+	account, err := util.GetAccount(tb.cliCtx)
+	if err != nil {
+		tb.logger.Error("Error fetching account from rest-api", "url", util.GetHeimdallServerEndpoint(fmt.Sprintf(util.AccountDetailsURL, helper.GetAddress())))
 		return err
 	}
-
 	// get account number and sequence
 	accNum := account.GetAccountNumber()
-	accSeq := account.GetSequence()
 	txBldr := authTypes.NewTxBuilderFromCLI().
 		WithTxEncoder(txEncoder).
 		WithAccountNumber(accNum).
-		WithSequence(accSeq).
+		WithSequence(tb.lastSeqNo).
 		WithChainID(chainID)
 
 	txResponse, err := helper.BuildAndBroadcastMsgs(tb.cliCtx, txBldr, []sdk.Msg{msg})
 	if err != nil {
 		tb.logger.Error("Error while broadcasting the heimdall transaction", "error", err)
+
+		// update seqNo for safety
+		tb.lastSeqNo = account.GetSequence()
+
 		return err
 	}
 
-	// increment account sequence
-	// accSeq = accSeq + 1
-	tb.logger.Info("Tx sent on heimdall", "txHash", txResponse.TxHash, "accSeq", accSeq, "accNum", accNum)
+	tb.logger.Info("Tx sent on heimdall", "txHash", txResponse.TxHash, "accSeq", tb.lastSeqNo, "accNum", accNum)
 	tb.logger.Debug("Tx successful on heimdall", "txResponse", txResponse)
+	// increment account sequence
+	tb.lastSeqNo += 1
 	return nil
 }
 
