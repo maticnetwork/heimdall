@@ -200,7 +200,6 @@ func (ackService *AckService) processCheckpoint(lastCreatedAt int64) {
 		// send NO ACK
 		msg := checkpointTypes.NewMsgCheckpointNoAck(
 			hmtypes.BytesToHeimdallAddress(helper.GetAddress()),
-			uint64(time.Now().UTC().Unix()),
 		)
 
 		// send
