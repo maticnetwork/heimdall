@@ -2,7 +2,6 @@ package rest
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -115,7 +114,6 @@ func newCheckpointNoACKHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		// draft a message and send response
 		msg := types.NewMsgCheckpointNoAck(
 			req.Proposer,
-			uint64(time.Now().UTC().Unix()),
 		)
 
 		// send response

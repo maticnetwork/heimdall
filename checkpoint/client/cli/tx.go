@@ -3,7 +3,6 @@ package cli
 import (
 	"fmt"
 	"strconv"
-	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -182,7 +181,6 @@ func SendCheckpointNoACKTx(cdc *codec.Codec) *cobra.Command {
 			// create new checkpoint no-ack
 			msg := types.NewMsgCheckpointNoAck(
 				proposer,
-				uint64(time.Now().UTC().Unix()),
 			)
 
 			// broadcast messages

@@ -156,7 +156,7 @@ type MsgCheckpointNoAck struct {
 	From types.HeimdallAddress `json:"from"`
 }
 
-func NewMsgCheckpointNoAck(from types.HeimdallAddress, timestamp uint64) MsgCheckpointNoAck {
+func NewMsgCheckpointNoAck(from types.HeimdallAddress) MsgCheckpointNoAck {
 	return MsgCheckpointNoAck{
 		From: from,
 	}
