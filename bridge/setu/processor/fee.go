@@ -54,6 +54,8 @@ func (fp *FeeProcessor) sendTopUpFeeToHeimdall(eventName string, logBytes string
 			"event", eventName,
 			"validatorId", event.ValidatorId,
 			"Fee", event.Fee,
+			"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
+			"logIndex", uint64(vLog.Index),
 		)
 
 		// create msg checkpoint ack message

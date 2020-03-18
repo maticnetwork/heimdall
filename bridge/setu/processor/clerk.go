@@ -65,6 +65,8 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 			"contract", event.ContractAddress,
 			"data", hex.EncodeToString(event.Data),
 			"borChainId", helper.GetConfig().BorChainID,
+			"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
+			"logIndex", uint64(vLog.Index),
 		)
 
 		msg := clerkTypes.NewMsgEventRecord(

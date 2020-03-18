@@ -195,6 +195,8 @@ func (cp *CheckpointProcessor) sendCheckpointAckToHeimdall(eventName string, che
 			"root", "0x"+hex.EncodeToString(event.Root[:]),
 			"proposer", event.Proposer.Hex(),
 			"headerNumber", event.HeaderBlockId,
+			"txHash", hmTypes.BytesToHeimdallHash(log.TxHash.Bytes()),
+			"logIndex", uint64(log.Index),
 		)
 
 		// TODO - check if this ack is already processed on heimdall or not.

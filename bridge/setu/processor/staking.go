@@ -59,6 +59,8 @@ func (sp *StakingProcessor) sendUnstakeInitToHeimdall(eventName string, logBytes
 			"validatorID", event.ValidatorId,
 			"deactivatonEpoch", event.DeactivationEpoch,
 			"amount", event.Amount,
+			"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
+			"logIndex", uint64(vLog.Index),
 		)
 
 		// msg validator exit
@@ -96,6 +98,8 @@ func (sp *StakingProcessor) sendStakeUpdateToHeimdall(eventName string, logBytes
 			"event", eventName,
 			"validatorID", event.ValidatorId,
 			"newAmount", event.NewAmount,
+			"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
+			"logIndex", uint64(vLog.Index),
 		)
 
 		// msg validator exit
@@ -134,6 +138,8 @@ func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logByte
 			"validatorID", event.ValidatorId,
 			"newSigner", event.NewSigner.Hex(),
 			"oldSigner", event.OldSigner.Hex(),
+			"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
+			"logIndex", uint64(vLog.Index),
 		)
 
 		// signer change
