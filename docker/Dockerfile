@@ -1,3 +1,7 @@
+# Simple usage with a mounted data directory:
+# > docker build -t heimdall .
+# > docker run -it -p 46657:46657 -p 46656:46656 -v ~/.heimdalld:/root/.heimdalld heimdall heimdalld init
+
 # Start from a Debian image with the latest version of Go installed
 # and a workspace (GOPATH) configured at /go.
 FROM golang:latest
@@ -17,9 +21,6 @@ ADD . /go/src/github.com/maticnetwork/heimdall/
 # change work directory
 WORKDIR /go/src/github.com/maticnetwork/heimdall
 
-# run dep
-RUN make dep
-
 # GOBIN required for go install
 ENV GOBIN $GOPATH/bin
 
@@ -27,7 +28,7 @@ ENV GOBIN $GOPATH/bin
 RUN make install
 
 # add volumes
-VOLUME ["/root/.heimdalld", "./logs", "./build"]
+VOLUME [ "/root/.heimdalld", "./logs" ]
 
 # expose ports
 EXPOSE 1317 26656 26657
