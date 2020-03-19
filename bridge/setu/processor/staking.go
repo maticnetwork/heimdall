@@ -1,12 +1,10 @@
 package processor
 
 import (
-	"bytes"
 	"encoding/json"
 
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/core/types"
-	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
 	"github.com/maticnetwork/heimdall/helper"
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
@@ -64,19 +62,17 @@ func (sp *StakingProcessor) sendUnstakeInitToHeimdall(eventName string, logBytes
 		)
 
 		// msg validator exit
-		if util.IsEventSender(sp.cliCtx, event.ValidatorId.Uint64()) {
-			msg := stakingTypes.NewMsgValidatorExit(
-				hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
-				event.ValidatorId.Uint64(),
-				hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
-				uint64(vLog.Index),
-			)
+		msg := stakingTypes.NewMsgValidatorExit(
+			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
+			event.ValidatorId.Uint64(),
+			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
+			uint64(vLog.Index),
+		)
 
-			// return broadcast to heimdall
-			if err := sp.txBroadcaster.BroadcastToHeimdall(msg); err != nil {
-				sp.Logger.Error("Error while broadcasting unstakeInit to heimdall", "validatorId", event.ValidatorId.Uint64(), "error", err)
-				return err
-			}
+		// return broadcast to heimdall
+		if err := sp.txBroadcaster.BroadcastToHeimdall(msg); err != nil {
+			sp.Logger.Error("Error while broadcasting unstakeInit to heimdall", "validatorId", event.ValidatorId.Uint64(), "error", err)
+			return err
 		}
 	}
 	return nil
@@ -103,19 +99,17 @@ func (sp *StakingProcessor) sendStakeUpdateToHeimdall(eventName string, logBytes
 		)
 
 		// msg validator exit
-		if util.IsEventSender(sp.cliCtx, event.ValidatorId.Uint64()) {
-			msg := stakingTypes.NewMsgStakeUpdate(
-				hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
-				event.ValidatorId.Uint64(),
-				hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
-				uint64(vLog.Index),
-			)
+		msg := stakingTypes.NewMsgStakeUpdate(
+			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
+			event.ValidatorId.Uint64(),
+			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
+			uint64(vLog.Index),
+		)
 
-			// return broadcast to heimdall
-			if err := sp.txBroadcaster.BroadcastToHeimdall(msg); err != nil {
-				sp.Logger.Error("Error while broadcasting stakeupdate to heimdall", "validatorId", event.ValidatorId.Uint64(), "error", err)
-				return err
-			}
+		// return broadcast to heimdall
+		if err := sp.txBroadcaster.BroadcastToHeimdall(msg); err != nil {
+			sp.Logger.Error("Error while broadcasting stakeupdate to heimdall", "validatorId", event.ValidatorId.Uint64(), "error", err)
+			return err
 		}
 	}
 	return nil
@@ -143,21 +137,19 @@ func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logByte
 		)
 
 		// signer change
-		if bytes.Compare(event.NewSigner.Bytes(), helper.GetAddress()) == 0 {
-			pubkey := helper.GetPubKey()
-			msg := stakingTypes.NewMsgSignerUpdate(
-				hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
-				event.ValidatorId.Uint64(),
-				hmTypes.NewPubKey(pubkey[:]),
-				hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
-				uint64(vLog.Index),
-			)
+		pubkey := helper.GetPubKey()
+		msg := stakingTypes.NewMsgSignerUpdate(
+			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
+			event.ValidatorId.Uint64(),
+			hmTypes.NewPubKey(pubkey[:]),
+			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
+			uint64(vLog.Index),
+		)
 
-			// return broadcast to heimdall
-			if err := sp.txBroadcaster.BroadcastToHeimdall(msg); err != nil {
-				sp.Logger.Error("Error while broadcasting signerChainge to heimdall", "validatorId", event.ValidatorId.Uint64(), "error", err)
-				return err
-			}
+		// return broadcast to heimdall
+		if err := sp.txBroadcaster.BroadcastToHeimdall(msg); err != nil {
+			sp.Logger.Error("Error while broadcasting signerChainge to heimdall", "validatorId", event.ValidatorId.Uint64(), "error", err)
+			return err
 		}
 	}
 	return nil
