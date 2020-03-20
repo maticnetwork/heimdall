@@ -1,8 +1,6 @@
 package types
 
 import (
-	"math/big"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	hmCommon "github.com/maticnetwork/heimdall/common"
@@ -92,7 +90,7 @@ func (msg MsgTopup) GetLogIndex() uint64 {
 // MsgWithdrawFee - high level transaction of the fee coin withdrawal module
 type MsgWithdrawFee struct {
 	ValidatorAddress types.HeimdallAddress `json:"from_address"`
-	Amount           *big.Int              `json:"amount"`
+	Amount           types.Int             `json:"amount"`
 }
 
 var _ sdk.Msg = MsgWithdrawFee{}
@@ -100,7 +98,7 @@ var _ sdk.Msg = MsgWithdrawFee{}
 // NewMsgWithdrawFee - construct arbitrary fee withdraw msg
 func NewMsgWithdrawFee(
 	fromAddr types.HeimdallAddress,
-	amount *big.Int,
+	amount types.Int,
 ) MsgWithdrawFee {
 	return MsgWithdrawFee{
 		ValidatorAddress: fromAddr,
