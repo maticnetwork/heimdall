@@ -1,7 +1,8 @@
-name: Docker CI
+name: Docker Image CI
 
 on:
   push:
+    branches: [ master, develop ]
     tags: 
       - 'v*.*.*'
   
