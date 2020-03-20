@@ -1,409 +1,22 @@
 [
 	{
-		"constant": true,
-		"inputs": [
-			{
-				"name": "validatorId",
-				"type": "uint256"
-			}
-		],
-		"name": "getValidatorContractAddress",
-		"outputs": [
-			{
-				"name": "ValidatorContract",
-				"type": "address"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [],
-		"name": "getAccountStateRoot",
-		"outputs": [
-			{
-				"name": "accountStateRoot",
-				"type": "bytes32"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [
-			{
-				"name": "validatorId",
-				"type": "uint256"
-			}
-		],
-		"name": "getStakerDetails",
-		"outputs": [
-			{
-				"name": "amount",
-				"type": "uint256"
-			},
-			{
-				"name": "activationEpoch",
-				"type": "uint256"
-			},
-			{
-				"name": "deactivationEpoch",
-				"type": "uint256"
-			},
-			{
-				"name": "signer",
-				"type": "address"
-			},
-			{
-				"name": "_status",
-				"type": "uint256"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [
-			{
-				"name": "validatorId",
-				"type": "uint256"
-			}
-		],
-		"name": "totalValidatorStake",
-		"outputs": [
-			{
-				"name": "validatorStake",
-				"type": "uint256"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
 		"anonymous": false,
 		"inputs": [
 			{
 				"indexed": true,
+				"internalType": "uint256",
+				"name": "validatorId",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
 				"name": "signer",
 				"type": "address"
 			},
 			{
 				"indexed": true,
-				"name": "validatorId",
-				"type": "uint256"
-			},
-			{
-				"indexed": true,
-				"name": "activationEpoch",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"name": "amount",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"name": "total",
-				"type": "uint256"
-			}
-		],
-		"name": "Staked",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"name": "user",
-				"type": "address"
-			},
-			{
-				"indexed": true,
-				"name": "validatorId",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"name": "amount",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"name": "total",
-				"type": "uint256"
-			}
-		],
-		"name": "Unstaked",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"name": "user",
-				"type": "address"
-			},
-			{
-				"indexed": true,
-				"name": "validatorId",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"name": "deactivationEpoch",
-				"type": "uint256"
-			},
-			{
-				"indexed": true,
-				"name": "amount",
-				"type": "uint256"
-			}
-		],
-		"name": "UnstakeInit",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"name": "validatorId",
-				"type": "uint256"
-			},
-			{
-				"indexed": true,
-				"name": "oldSigner",
-				"type": "address"
-			},
-			{
-				"indexed": true,
-				"name": "newSigner",
-				"type": "address"
-			}
-		],
-		"name": "SignerChange",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"name": "validatorId",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"name": "amount",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"name": "total",
-				"type": "uint256"
-			}
-		],
-		"name": "ReStaked",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"name": "validatorId",
-				"type": "uint256"
-			},
-			{
-				"indexed": true,
-				"name": "exitEpoch",
-				"type": "uint256"
-			}
-		],
-		"name": "Jailed",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": false,
-				"name": "newThreshold",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"name": "oldThreshold",
-				"type": "uint256"
-			}
-		],
-		"name": "ThresholdChange",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": false,
-				"name": "newDynasty",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"name": "oldDynasty",
-				"type": "uint256"
-			}
-		],
-		"name": "DynastyValueChange",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": false,
-				"name": "newReward",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"name": "oldReward",
-				"type": "uint256"
-			}
-		],
-		"name": "RewardUpdate",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"name": "validatorId",
-				"type": "uint256"
-			},
-			{
-				"indexed": true,
-				"name": "newAmount",
-				"type": "uint256"
-			}
-		],
-		"name": "StakeUpdate",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"name": "validatorId",
-				"type": "uint256"
-			},
-			{
-				"indexed": true,
-				"name": "amount",
-				"type": "uint256"
-			},
-			{
-				"indexed": true,
-				"name": "totalAmount",
-				"type": "uint256"
-			}
-		],
-		"name": "ClaimRewards",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"name": "validatorId",
-				"type": "uint256"
-			},
-			{
-				"indexed": true,
-				"name": "amount",
-				"type": "uint256"
-			},
-			{
-				"indexed": true,
-				"name": "auctionAmount",
-				"type": "uint256"
-			}
-		],
-		"name": "StartAuction",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"name": "newValidatorId",
-				"type": "uint256"
-			},
-			{
-				"indexed": true,
-				"name": "oldValidatorId",
-				"type": "uint256"
-			},
-			{
-				"indexed": true,
-				"name": "amount",
-				"type": "uint256"
-			}
-		],
-		"name": "ConfirmAuction",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"name": "validatorId",
-				"type": "uint256"
-			},
-			{
-				"indexed": true,
-				"name": "signer",
-				"type": "address"
-			},
-			{
-				"indexed": true,
-				"name": "fee",
-				"type": "uint256"
-			}
-		],
-		"name": "TopUpFee",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"name": "validatorId",
-				"type": "uint256"
-			},
-			{
-				"indexed": true,
-				"name": "signer",
-				"type": "address"
-			},
-			{
-				"indexed": true,
+				"internalType": "uint256",
 				"name": "fee",
 				"type": "uint256"
 			}
@@ -416,26 +29,24 @@
 		"inputs": [
 			{
 				"indexed": true,
+				"internalType": "uint256",
 				"name": "validatorId",
 				"type": "uint256"
 			},
 			{
 				"indexed": true,
-				"name": "user",
-				"type": "address"
-			},
-			{
-				"indexed": true,
+				"internalType": "uint256",
 				"name": "amount",
 				"type": "uint256"
 			},
 			{
-				"indexed": false,
-				"name": "tokens",
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "totalAmount",
 				"type": "uint256"
 			}
 		],
-		"name": "ShareMinted",
+		"name": "ClaimRewards",
 		"type": "event"
 	},
 	{
@@ -443,21 +54,157 @@
 		"inputs": [
 			{
 				"indexed": true,
+				"internalType": "uint256",
+				"name": "newValidatorId",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "oldValidatorId",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "ConfirmAuction",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
 				"name": "validatorId",
 				"type": "uint256"
 			},
 			{
 				"indexed": true,
-				"name": "user",
-				"type": "address"
+				"internalType": "uint256",
+				"name": "rewards",
+				"type": "uint256"
 			},
 			{
 				"indexed": true,
+				"internalType": "uint256",
+				"name": "tokens",
+				"type": "uint256"
+			}
+		],
+		"name": "DelClaimRewards",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "newDynasty",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "oldDynasty",
+				"type": "uint256"
+			}
+		],
+		"name": "DynastyValueChange",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "validatorId",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "exitEpoch",
+				"type": "uint256"
+			}
+		],
+		"name": "Jailed",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "validatorId",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
 				"name": "amount",
 				"type": "uint256"
 			},
 			{
 				"indexed": false,
+				"internalType": "uint256",
+				"name": "total",
+				"type": "uint256"
+			}
+		],
+		"name": "ReStaked",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "newReward",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "oldReward",
+				"type": "uint256"
+			}
+		],
+		"name": "RewardUpdate",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "validatorId",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "user",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
 				"name": "tokens",
 				"type": "uint256"
 			}
@@ -470,21 +217,30 @@
 		"inputs": [
 			{
 				"indexed": true,
+				"internalType": "uint256",
 				"name": "validatorId",
 				"type": "uint256"
 			},
 			{
 				"indexed": true,
-				"name": "rewards",
-				"type": "uint256"
+				"internalType": "address",
+				"name": "user",
+				"type": "address"
 			},
 			{
 				"indexed": true,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
 				"name": "tokens",
 				"type": "uint256"
 			}
 		],
-		"name": "DelClaimRewards",
+		"name": "ShareMinted",
 		"type": "event"
 	},
 	{
@@ -492,21 +248,331 @@
 		"inputs": [
 			{
 				"indexed": true,
+				"internalType": "uint256",
 				"name": "validatorId",
 				"type": "uint256"
 			},
 			{
 				"indexed": true,
+				"internalType": "address",
+				"name": "oldSigner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "newSigner",
+				"type": "address"
+			}
+		],
+		"name": "SignerChange",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "validatorId",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "newAmount",
+				"type": "uint256"
+			}
+		],
+		"name": "StakeUpdate",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "signer",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "validatorId",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "activationEpoch",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "total",
+				"type": "uint256"
+			}
+		],
+		"name": "Staked",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "validatorId",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "auctionAmount",
+				"type": "uint256"
+			}
+		],
+		"name": "StartAuction",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "newThreshold",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "oldThreshold",
+				"type": "uint256"
+			}
+		],
+		"name": "ThresholdChange",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "validatorId",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "signer",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "fee",
+				"type": "uint256"
+			}
+		],
+		"name": "TopUpFee",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "user",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "validatorId",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "deactivationEpoch",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "UnstakeInit",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "user",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "validatorId",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "total",
+				"type": "uint256"
+			}
+		],
+		"name": "Unstaked",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "validatorId",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
 				"name": "newCommissionRate",
 				"type": "uint256"
 			},
 			{
 				"indexed": true,
+				"internalType": "uint256",
 				"name": "oldCommissionRate",
 				"type": "uint256"
 			}
 		],
 		"name": "UpdateCommissionRate",
 		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "getAccountStateRoot",
+		"outputs": [
+			{
+				"internalType": "bytes32",
+				"name": "accountStateRoot",
+				"type": "bytes32"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "validatorId",
+				"type": "uint256"
+			}
+		],
+		"name": "getStakerDetails",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "reward",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "activationEpoch",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "deactivationEpoch",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "signer",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_status",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "validatorId",
+				"type": "uint256"
+			}
+		],
+		"name": "getValidatorContractAddress",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "ValidatorContract",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "validatorId",
+				"type": "uint256"
+			}
+		],
+		"name": "totalValidatorStake",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "validatorStake",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
 	}
 ]
