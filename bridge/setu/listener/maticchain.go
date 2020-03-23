@@ -2,6 +2,7 @@ package listener
 
 import (
 	"context"
+	"time"
 
 	"github.com/RichardKnop/machinery/v1/tasks"
 	"github.com/maticnetwork/bor/core/types"
@@ -58,10 +59,11 @@ func (ml *MaticChainListener) ProcessHeader(newHeader *types.Header) {
 	if err != nil {
 		ml.Logger.Error("Error marshalling header block", "error", err)
 	}
-	ml.sendTask("sendCheckpointToHeimdall", headerBytes)
+	confirmationTime := helper.GetConfig().TxConfirmationTime
+	ml.sendTaskWithDelay("sendCheckpointToHeimdall", headerBytes, confirmationTime)
 }
 
-func (ml *MaticChainListener) sendTask(taskName string, headerBytes []byte) {
+func (ml *MaticChainListener) sendTaskWithDelay(taskName string, headerBytes []byte, delay time.Duration) {
 	// create machinery task
 	signature := &tasks.Signature{
 		Name: taskName,
@@ -74,9 +76,12 @@ func (ml *MaticChainListener) sendTask(taskName string, headerBytes []byte) {
 	}
 	signature.RetryCount = 3
 
-	// send task
+	// add delay for task so that multiple validators won't send same transaction at same time
+	eta := time.Now().Add(delay)
+	signature.ETA = &eta
+	ml.Logger.Info("sending task", "taskname-", taskName, "currenttime-", time.Now(), "delaytime", eta)
 	_, err := ml.queueConnector.Server.SendTask(signature)
 	if err != nil {
-		ml.Logger.Error("Error sending task", "taskName", taskName)
+		ml.Logger.Error("Error while sending task")
 	}
 }
