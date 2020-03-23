@@ -21,6 +21,7 @@ const (
 	QueryAccountProof         = "dividend-account-proof"
 	QueryVerifyAccountProof   = "verify-account-proof"
 	QuerySlashValidator       = "slash-validator"
+	QueryStakingSequence      = "staking-sequence"
 )
 
 // QuerySignerParams defines the params for querying by address
@@ -89,6 +90,17 @@ type QueryValidatorStatusParams struct {
 	SignerAddress []byte
 }
 
+// QueryStakingSequenceParams defines the params for querying an account Sequence.
+type QueryStakingSequenceParams struct {
+	TxHash   string
+	LogIndex uint64
+}
+
+// NewQuerySequenceParams creates a new instance of QuerySequenceParams.
+func NewQuerySequenceParams(txHash string, logIndex uint64) QueryStakingSequenceParams {
+	return QueryStakingSequenceParams{TxHash: txHash, LogIndex: logIndex}
+}
+
 // ValidatorSlashParams defines the params for slashing a validator
 type ValidatorSlashParams struct {
 	ValID       hmTypes.ValidatorID
@@ -98,6 +110,11 @@ type ValidatorSlashParams struct {
 // NewQueryValidatorStatusParams creates a new instance of QueryValidatorStatusParams.
 func NewQueryValidatorStatusParams(signerAddress []byte) QueryValidatorStatusParams {
 	return QueryValidatorStatusParams{SignerAddress: signerAddress}
+}
+
+// NewQueryStakingSequenceParams creates a new instance of QueryStakingSequenceParams.
+func NewQueryStakingSequenceParams(txHash string, logIndex uint64) QueryStakingSequenceParams {
+	return QueryStakingSequenceParams{TxHash: txHash, LogIndex: logIndex}
 }
 
 // NewValidatorSlashParams creates a new instance of ValidatorSlashParams.
