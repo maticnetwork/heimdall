@@ -164,33 +164,33 @@ func TestHandleMsgCheckpoint(t *testing.T) {
 		SentValidCheckpoint(header, ck, sk, ctx, contractCallerObj, t)
 	})
 
-	// // check invalid proposer
-	// t.Run("invalidProposer", func(t *testing.T) {
-	// 	ctx, sk, ck := CreateTestInput(t, false)
-	// 	// generate proposer for validator set
-	// 	LoadValidatorSet(4, t, sk, ctx, false, 10)
-	// 	sk.IncrementAccum(ctx, 1)
-	// 	header, err := GenRandCheckpointHeader(0, 10)
-	// 	require.Empty(t, err, "Unable to create random header block, Error:%v", err)
+	// check invalid proposer
+	t.Run("invalidProposer", func(t *testing.T) {
+		ctx, sk, ck := CreateTestInput(t, false)
+		// generate proposer for validator set
+		LoadValidatorSet(4, t, sk, ctx, false, 10)
+		sk.IncrementAccum(ctx, 1)
+		header, err := GenRandCheckpointHeader(0, 10)
+		require.Empty(t, err, "Unable to create random header block, Error:%v", err)
 
-	// 	// add wrong proposer to header
-	// 	header.Proposer = sk.GetValidatorSet(ctx).Validators[2].Signer
-	// 	// make sure proposer has min ether
-	// 	contractCallerObj.On("GetBalance", header.Proposer).Return(helper.MinBalance, nil)
-	// 	// create checkpoint msg
-	// 	genesisValidatorRewards := sk.GetAllValidatorRewards(ctx)
-	// 	genesisrewardRootHash, _ := GetRewardRootHash(genesisValidatorRewards)
-	// 	header.RewardRootHash = types.BytesToHeimdallHash(genesisrewardRootHash)
-	// 	// create checkpoint msg
-	// 	msgCheckpoint := NewMsgCheckpointBlock(header.Proposer,
-	// 		header.StartBlock,
-	// 		header.EndBlock,
-	// 		header.RootHash,
-	// 		header.RewardRootHash,
-	// 		header.TimeStamp) // send checkpoint to handler
-	// 	got := handleMsgCheckpoint(ctx, msgCheckpoint, ck, &contractCallerObj)
-	// 	require.True(t, !got.IsOK(), "expected send-checkpoint to be not ok, got %v", got.IsOK())
-	// })
+		// add wrong proposer to header
+		header.Proposer = sk.GetValidatorSet(ctx).Validators[2].Signer
+
+		accs := sk.GetAllDividendAccounts(ctx)
+		root, err := checkpointTypes.GetAccountRootHash(accs)
+
+		header.AccountRootHash = types.BytesToHeimdallHash(root)
+
+		// create checkpoint msg
+		msgCheckpoint := checkpointTypes.NewMsgCheckpointBlock(header.Proposer,
+			header.StartBlock,
+			header.EndBlock,
+			header.RootHash,
+			header.AccountRootHash,
+			header.TimeStamp) // send checkpoint to handler
+		got := handleMsgCheckpoint(ctx, msgCheckpoint, ck, &contractCallerObj)
+		require.True(t, !got.IsOK(), "expected send-checkpoint to be not ok, got %v", got.IsOK())
+	})
 
 	// t.Run("multipleCheckpoint", func(t *testing.T) {
 	// 	t.Run("afterTimeout", func(t *testing.T) {
