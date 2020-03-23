@@ -3,6 +3,7 @@ package checkpoint
 import (
 	"bytes"
 	"encoding/hex"
+	"math/big"
 	"math/rand"
 	"os"
 	"testing"
@@ -100,51 +101,6 @@ func CreateTestInput(t *testing.T, isCheckTx bool) (sdk.Context, staking.Keeper,
 	return ctx, stakingKeeper, checkpointKeeper
 }
 
-// create random header block
-func GenRandCheckpointHeader(start int, headerSize int) (headerBlock types.CheckpointBlockHeader, err error) {
-	start = start
-	end := start + headerSize
-	roothash, err := checkpointTypes.GetHeaders(uint64(start), uint64(end))
-	if err != nil {
-		return headerBlock, err
-	}
-	proposer := ethcmn.Address{}
-	headerBlock = types.CreateBlock(uint64(start), uint64(end), types.HexToHeimdallHash(hex.EncodeToString(roothash)), types.HexToHeimdallHash(hex.EncodeToString(roothash)), types.HexToHeimdallAddress(proposer.String()), uint64(time.Now().Unix()))
-
-	return headerBlock, nil
-}
-
-// Generate random validators
-func GenRandomVal(count int, startBlock uint64, power int64, timeAlive uint64, randomise bool, startID uint64) (validators []types.Validator) {
-	for i := 0; i < count; i++ {
-		privKey1 := secp256k1.GenPrivKey()
-		pubkey := types.NewPubKey(privKey1.PubKey().Bytes())
-		if randomise {
-			startBlock := uint64(rand.Intn(10))
-			// todo find a way to genrate non zero random number
-			if startBlock == 0 {
-				startBlock = 1
-			}
-			power := uint64(rand.Intn(100))
-			if power == 0 {
-				power = 1
-			}
-		}
-
-		newVal := types.Validator{
-			ID:               types.NewValidatorID(startID + uint64(i)),
-			StartEpoch:       startBlock,
-			EndEpoch:         startBlock + timeAlive,
-			VotingPower:      power,
-			Signer:           types.HexToHeimdallAddress(pubkey.Address().String()),
-			PubKey:           pubkey,
-			ProposerPriority: 0,
-		}
-		validators = append(validators, newVal)
-	}
-	return
-}
-
 // Load Validator Set
 func LoadValidatorSet(count int, t *testing.T, keeper staking.Keeper, ctx sdk.Context, randomise bool, timeAlive int) types.ValidatorSet {
 	// create 4 validators
@@ -153,6 +109,12 @@ func LoadValidatorSet(count int, t *testing.T, keeper staking.Keeper, ctx sdk.Co
 	// add validators to new Validator set and state
 	for _, validator := range validators {
 		err := keeper.AddValidator(ctx, validator)
+		dividendAccount := types.DividendAccount{
+			ID:            types.NewDividendAccountID(uint64(validator.ID)),
+			FeeAmount:     big.NewInt(0).String(),
+			SlashedAmount: big.NewInt(0).String(),
+		}
+		keeper.AddDividendAccount(ctx, dividendAccount)
 		require.Empty(t, err, "Unable to set validator, Error: %v", err)
 		// add validator to validator set
 		// valSet.Add(&validator)
@@ -311,10 +273,61 @@ func SentValidCheckpoint(header types.CheckpointBlockHeader, ck Keeper, sk staki
 		header.TimeStamp,
 	)
 
+	t.Log("Checkpoint msg created", msgCheckpoint)
+
 	// send checkpoint to handler
 	got := handleMsgCheckpoint(ctx, msgCheckpoint, ck, &contractCallerObj)
 	require.True(t, got.IsOK(), "expected send-checkpoint to be ok, got %v", got)
 	storedHeader, err := ck.GetCheckpointFromBuffer(ctx)
 	t.Log("Header added to buffer", storedHeader.String())
 	require.Empty(t, err, "Unable to set checkpoint from buffer, Error: %v", err)
+}
+
+//
+// Utils
+//
+
+// create random header block
+func GenRandCheckpointHeader(start int, headerSize int) (headerBlock types.CheckpointBlockHeader, err error) {
+	start = start
+	end := start + headerSize
+	roothash, err := checkpointTypes.GetHeaders(uint64(start), uint64(end))
+	if err != nil {
+		return headerBlock, err
+	}
+	proposer := ethcmn.Address{}
+	headerBlock = types.CreateBlock(uint64(start), uint64(end), types.HexToHeimdallHash(hex.EncodeToString(roothash)), types.HexToHeimdallHash(hex.EncodeToString(roothash)), types.HexToHeimdallAddress(proposer.String()), uint64(time.Now().Unix()))
+
+	return headerBlock, nil
+}
+
+// Generate random validators
+func GenRandomVal(count int, startBlock uint64, power int64, timeAlive uint64, randomise bool, startID uint64) (validators []types.Validator) {
+	for i := 0; i < count; i++ {
+		privKey1 := secp256k1.GenPrivKey()
+		pubkey := types.NewPubKey(privKey1.PubKey().Bytes())
+		if randomise {
+			startBlock := uint64(rand.Intn(10))
+			// todo find a way to genrate non zero random number
+			if startBlock == 0 {
+				startBlock = 1
+			}
+			power := uint64(rand.Intn(100))
+			if power == 0 {
+				power = 1
+			}
+		}
+
+		newVal := types.Validator{
+			ID:               types.NewValidatorID(startID + uint64(i)),
+			StartEpoch:       startBlock,
+			EndEpoch:         startBlock + timeAlive,
+			VotingPower:      power,
+			Signer:           types.HexToHeimdallAddress(pubkey.Address().String()),
+			PubKey:           pubkey,
+			ProposerPriority: 0,
+		}
+		validators = append(validators, newVal)
+	}
+	return
 }
