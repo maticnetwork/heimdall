@@ -253,6 +253,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		keys[stakingTypes.StoreKey], // target store
 		app.subspaces[stakingTypes.ModuleName],
 		common.DefaultCodespace,
+		app.ChainKeeper,
 		moduleCommunicator,
 	)
 
