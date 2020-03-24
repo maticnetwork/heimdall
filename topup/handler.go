@@ -42,8 +42,11 @@ func handleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCalle
 		return hmCommon.ErrWaitForConfirmation(k.Codespace()).Result()
 	}
 
+	// chain params
+	chainParams := k.chainKeeper.GetParams(ctx).ChainParams
+
 	// get event log for topup
-	eventLog, err := contractCaller.DecodeValidatorTopupFeesEvent(helper.GetStakingInfoAddress(), receipt, msg.LogIndex)
+	eventLog, err := contractCaller.DecodeValidatorTopupFeesEvent(chainParams.StakingInfoAddress.EthAddress(), receipt, msg.LogIndex)
 	if err != nil || eventLog == nil {
 		k.Logger(ctx).Error("Error fetching log from txhash")
 		return hmCommon.ErrInvalidMsg(k.Codespace(), "Unable to fetch logs for txHash").Result()

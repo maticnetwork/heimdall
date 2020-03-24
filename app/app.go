@@ -331,6 +331,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		keys[topupTypes.StoreKey],
 		app.subspaces[topupTypes.ModuleName],
 		topupTypes.DefaultCodespace,
+		app.ChainKeeper,
 		app.BankKeeper,
 		app.StakingKeeper,
 	)

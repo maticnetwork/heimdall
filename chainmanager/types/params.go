@@ -25,6 +25,7 @@ var _ subspace.ParamSet = &Params{}
 
 // ChainParams chain related params
 type ChainParams struct {
+	BorChainID            string                  `json:"bor_chain_id" yaml:"bor_chain_id"`
 	MaticTokenAddress     hmTypes.HeimdallAddress `json:"matic_token_address" yaml:"matic_token_address"`
 	StakingManagerAddress hmTypes.HeimdallAddress `json:"staking_manager_address" yaml:"staking_manager_address"`
 	RootChainAddress      hmTypes.HeimdallAddress `json:"root_chain_address" yaml:"root_chain_address"`
@@ -34,22 +35,23 @@ type ChainParams struct {
 
 func (cp ChainParams) String() string {
 	return fmt.Sprintf(`
+	BorChainID: 									%s
   MaticTokenAddress:            %s
 	StakingManagerAddress:        %s
 	RootChainAddress:             %s
   StakingInfoAddress:           %s
   StateSenderAddress:           %s`,
-		cp.MaticTokenAddress, cp.StakingManagerAddress, cp.RootChainAddress, cp.StakingInfoAddress, cp.StateSenderAddress)
+		cp.BorChainID, cp.MaticTokenAddress, cp.StakingManagerAddress, cp.RootChainAddress, cp.StakingInfoAddress, cp.StateSenderAddress)
 }
 
 // Params defines the parameters for the auth module.
 type Params struct {
-	TxConfirmationTime time.Duration          `json:"tx_confirmation_time" yaml:"tx_confirmation_time"` // tx confirmation duration
-	ChainParams        map[string]ChainParams `json:"chain_params" yaml:"chain_params"`
+	TxConfirmationTime time.Duration `json:"tx_confirmation_time" yaml:"tx_confirmation_time"` // tx confirmation duration
+	ChainParams        ChainParams   `json:"chain_params" yaml:"chain_params"`
 }
 
 // NewParams creates a new Params object
-func NewParams(txConfirmationTime time.Duration, chainParams map[string]ChainParams) Params {
+func NewParams(txConfirmationTime time.Duration, chainParams ChainParams) Params {
 	return Params{
 		TxConfirmationTime: txConfirmationTime,
 		ChainParams:        chainParams,
@@ -78,16 +80,40 @@ func (p Params) String() string {
 	var sb strings.Builder
 	sb.WriteString("Params: \n")
 	sb.WriteString(fmt.Sprintf("TxConfirmationTime: %d\n", p.TxConfirmationTime))
-	sb.WriteString("ChainParams: \n")
-	for key, val := range p.ChainParams {
-		sb.WriteString(fmt.Sprintf(" %s:\n", key))
-		sb.WriteString(fmt.Sprintf("     %s:\n", val.String()))
-	}
+	sb.WriteString(fmt.Sprintf("ChainParams: %s\n", p.ChainParams.String()))
 	return sb.String()
 }
 
 // Validate checks that the parameters have valid values.
 func (p Params) Validate() error {
+	if err := validateHeimdallAddress(p.ChainParams.MaticTokenAddress, "matic_token_address"); err != nil {
+		return err
+	}
+
+	if err := validateHeimdallAddress(p.ChainParams.StakingManagerAddress, "staking_manager_address"); err != nil {
+		return err
+	}
+
+	if err := validateHeimdallAddress(p.ChainParams.RootChainAddress, "root_chain_address"); err != nil {
+		return err
+	}
+
+	if err := validateHeimdallAddress(p.ChainParams.StakingInfoAddress, "staking_info_address"); err != nil {
+		return err
+	}
+
+	if err := validateHeimdallAddress(p.ChainParams.StateSenderAddress, "state_sender_address"); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func validateHeimdallAddress(value hmTypes.HeimdallAddress, key string) error {
+	if value.String() == "" {
+		return fmt.Errorf("Invalid value %s in chain_params", key)
+	}
+
 	return nil
 }
 
