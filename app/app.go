@@ -323,6 +323,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		keys[clerkTypes.StoreKey], // target store
 		app.subspaces[clerkTypes.ModuleName],
 		common.DefaultCodespace,
+		app.ChainKeeper,
 	)
 
 	// may be need signer

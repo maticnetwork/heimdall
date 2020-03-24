@@ -37,8 +37,11 @@ func handleMsgEventRecord(ctx sdk.Context, msg types.MsgEventRecord, k Keeper, c
 		return common.ErrWaitForConfirmation(k.Codespace()).Result()
 	}
 
+	// chain params
+	chainParams := k.chainKeeper.GetParams(ctx).ChainParams
+
 	// get event log for topup
-	eventLog, err := contractCaller.DecodeStateSyncedEvent(helper.GetStateSenderAddress(), receipt, msg.LogIndex)
+	eventLog, err := contractCaller.DecodeStateSyncedEvent(chainParams.StateSenderAddress.EthAddress(), receipt, msg.LogIndex)
 	if err != nil || eventLog == nil {
 		k.Logger(ctx).Error("Error fetching log from txhash")
 		return common.ErrInvalidMsg(k.Codespace(), "Unable to fetch log for txHash").Result()
