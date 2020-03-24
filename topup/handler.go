@@ -107,7 +107,7 @@ func handleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCalle
 // Handle MsgWithdrawFee.
 func handleMsgWithdrawFee(ctx sdk.Context, k Keeper, msg types.MsgWithdrawFee) sdk.Result {
 
-	amount := hmTypes.Int{I: msg.Amount}
+	amount := msg.Amount
 
 	validator, err := k.sk.GetValidatorInfo(ctx, msg.ValidatorAddress.Bytes())
 	if err != nil {

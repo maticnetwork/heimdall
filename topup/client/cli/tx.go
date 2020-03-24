@@ -108,7 +108,7 @@ func WithdrawFeeTxCmd(cdc *codec.Codec) *cobra.Command {
 			// get msg
 			msg := topupTypes.NewMsgWithdrawFee(
 				proposer,
-				amount,
+				types.NewIntFromBigInt(amount),
 			)
 			// broadcast msg with cli
 			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})

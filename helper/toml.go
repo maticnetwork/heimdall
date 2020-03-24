@@ -71,7 +71,6 @@ max_checkpoint_length = "{{ .MaxCheckpointLength }}"
 ##### Timeout Config #####
 
 no_ack_wait_time = "{{ .NoACKWaitTime }}"
-checkpoint_buffer_time = "{{ .CheckpointBufferTime }}"
 
 ##### Transaction Confirmations  #####
 

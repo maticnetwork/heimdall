@@ -7,15 +7,17 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/common"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 // NewQuerier creates a querier for auth REST endpoints
 func NewQuerier(keeper Keeper) sdk.Querier {
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) ([]byte, sdk.Error) {
 		switch path[0] {
+		case types.QueryParams:
+			return handleQueryParams(ctx, req, keeper)
 		case types.QueryAckCount:
 			return handleQueryAckCount(ctx, req, keeper)
 		case types.QueryCheckpoint:
@@ -30,6 +32,14 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return nil, sdk.ErrUnknownRequest("unknown auth query endpoint")
 		}
 	}
+}
+
+func handleQueryParams(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	bz, err := json.Marshal(keeper.GetParams(ctx))
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
+	return bz, nil
 }
 
 func handleQueryAckCount(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {

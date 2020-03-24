@@ -12,6 +12,8 @@ import (
 
 // InitGenesis sets distribution information for genesis.
 func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
+	keeper.SetParams(ctx, data.Params)
+
 	// Set last no-ack
 	if data.LastNoACK > 0 {
 		keeper.SetLastNoAck(ctx, data.LastNoACK)
@@ -44,8 +46,11 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 
 // ExportGenesis returns a GenesisState for a given context and keeper.
 func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
+	params := keeper.GetParams(ctx)
+
 	bufferedCheckpoint, _ := keeper.GetCheckpointFromBuffer(ctx)
 	return types.NewGenesisState(
+		params,
 		bufferedCheckpoint,
 		keeper.GetLastNoAck(ctx),
 		keeper.GetACKCount(ctx),

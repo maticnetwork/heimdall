@@ -2,7 +2,6 @@ package types
 
 import (
 	"bytes"
-	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -24,7 +23,6 @@ type MsgCheckpoint struct {
 	EndBlock        uint64                `json:"endBlock"`
 	RootHash        types.HeimdallHash    `json:"rootHash"`
 	AccountRootHash types.HeimdallHash    `json:"accountRootHash"`
-	TimeStamp       uint64                `json:"timestamp"`
 }
 
 // NewMsgCheckpointBlock creates new checkpoint message using mentioned arguments
@@ -34,7 +32,6 @@ func NewMsgCheckpointBlock(
 	endBlock uint64,
 	roothash types.HeimdallHash,
 	accountRootHash types.HeimdallHash,
-	timestamp uint64,
 ) MsgCheckpoint {
 	return MsgCheckpoint{
 		Proposer:        proposer,
@@ -42,7 +39,6 @@ func NewMsgCheckpointBlock(
 		EndBlock:        endBlock,
 		RootHash:        roothash,
 		AccountRootHash: accountRootHash,
-		TimeStamp:       timestamp,
 	}
 }
 
@@ -157,14 +153,12 @@ func (msg MsgCheckpointAck) GetLogIndex() uint64 {
 var _ sdk.Msg = &MsgCheckpointNoAck{}
 
 type MsgCheckpointNoAck struct {
-	From      types.HeimdallAddress `json:"from"`
-	TimeStamp uint64                `json:"timestamp"`
+	From types.HeimdallAddress `json:"from"`
 }
 
-func NewMsgCheckpointNoAck(from types.HeimdallAddress, timestamp uint64) MsgCheckpointNoAck {
+func NewMsgCheckpointNoAck(from types.HeimdallAddress) MsgCheckpointNoAck {
 	return MsgCheckpointNoAck{
-		From:      from,
-		TimeStamp: timestamp,
+		From: from,
 	}
 }
 
@@ -189,10 +183,6 @@ func (msg MsgCheckpointNoAck) GetSignBytes() []byte {
 }
 
 func (msg MsgCheckpointNoAck) ValidateBasic() sdk.Error {
-	if msg.TimeStamp == 0 || msg.TimeStamp > uint64(time.Now().UTC().Unix()) {
-		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid timestamp %d", msg.TimeStamp)
-	}
-
 	if msg.From.Empty() {
 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid from %v", msg.From.String())
 	}
