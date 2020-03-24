@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	lru "github.com/hashicorp/golang-lru"
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/common"
 	ethTypes "github.com/maticnetwork/bor/core/types"
@@ -83,6 +84,9 @@ type ContractCaller struct {
 	StateSenderABI   abi.ABI
 	StakeManagerABI  abi.ABI
 	MaticTokenABI    abi.ABI
+
+	ReceiptCache   *lru.Cache
+	BlockTimeCache *lru.Cache
 }
 
 type txExtraInfo struct {
@@ -101,6 +105,8 @@ func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 	contractCallerObj.MainChainClient = GetMainClient()
 	contractCallerObj.MaticChainClient = GetMaticClient()
 	contractCallerObj.MainChainRPC = GetMainChainRPCClient()
+	contractCallerObj.ReceiptCache = NewLru(100)
+	contractCallerObj.BlockTimeCache = NewLru(100)
 
 	//
 	// Root chain instance
@@ -167,6 +173,11 @@ func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 	}
 
 	return
+}
+
+func NewLru(size int) *lru.Cache {
+	lruObj, _ := lru.New(size)
+	return lruObj
 }
 
 // GetHeaderInfo get header info from header id
@@ -302,24 +313,42 @@ func (c *ContractCaller) IsTxConfirmed(currentTime time.Time, tx common.Hash) bo
 
 // GetConfirmedTxReceipt returns confirmed tx receipt
 func (c *ContractCaller) GetConfirmedTxReceipt(currentTime time.Time, tx common.Hash) (*ethTypes.Receipt, error) {
-	// get main tx receipt
-	receipt, err := c.GetMainTxReceipt(tx)
-	if err != nil {
-		Logger.Error("Error while fetching mainchain receipt", "error", err, "txHash", tx.Hex())
-		return nil, err
+	err := error(nil)
+	ok := false
+	time := uint64(0)
+	receipt := &ethTypes.Receipt{}
+	receiptCache, ok := c.ReceiptCache.Get(tx.String())
+
+	if ok == false {
+		// get main tx receipt
+		receipt, err = c.GetMainTxReceipt(tx)
+		if err != nil {
+			Logger.Error("Error while fetching mainchain receipt", "error", err, "txHash", tx.Hex())
+			return nil, err
+		}
+		c.ReceiptCache.Add(tx.String(), receipt)
+	} else {
+		receipt, ok = receiptCache.(*ethTypes.Receipt)
 	}
+
 	Logger.Debug("Tx included in block", "block", receipt.BlockNumber.Uint64(), "tx", tx)
 
-	// get main chain block
-	receiptBlock, err := c.GetMainChainBlock(receipt.BlockNumber)
-	if err != nil {
-		Logger.Error("error getting receipt block from main chain", "Error", err)
-		return nil, err
-	}
-	Logger.Debug("Receipt block on main chain obtained", "Block", receiptBlock.Number.Uint64())
+	blockCache, ok := c.BlockTimeCache.Get(receipt.BlockNumber.Uint64())
+	if ok == false {
+		// get main chain block
+		receiptBlock, err := c.GetMainChainBlock(receipt.BlockNumber)
+		if err != nil {
+			Logger.Error("error getting receipt block from main chain", "Error", err)
+			return nil, err
+		}
+		Logger.Debug("Receipt block on main chain obtained", "Block", receiptBlock.Number.Uint64())
 
+		c.BlockTimeCache.Add(receipt.BlockNumber.Uint64(), receiptBlock.Time)
+	} else {
+		time = blockCache.(uint64)
+	}
 	// check if current time is greater than buffer time
-	bufferTime := receiptBlock.Time + uint64(GetConfig().TxConfirmationTime.Seconds())
+	bufferTime := time + uint64(GetConfig().TxConfirmationTime.Seconds())
 
 	if uint64(currentTime.Unix()) < bufferTime {
 		return nil, errors.New("Not enough confirmations")
