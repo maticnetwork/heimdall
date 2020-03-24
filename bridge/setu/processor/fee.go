@@ -3,8 +3,10 @@ package processor
 import (
 	"encoding/json"
 
+	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/core/types"
+	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
 	"github.com/maticnetwork/heimdall/helper"
 	topupTypes "github.com/maticnetwork/heimdall/topup/types"
@@ -49,8 +51,18 @@ func (fp *FeeProcessor) sendTopUpFeeToHeimdall(eventName string, logBytes string
 	if err := helper.UnpackLog(fp.stakingInfoAbi, event, eventName, &vLog); err != nil {
 		fp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
 	} else {
+		if isOld, _ := fp.isOldTx(fp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index)); isOld {
+			fp.Logger.Info("Ignoring task to send topup to heimdall as already processed",
+				"event", eventName,
+				"validatorId", event.ValidatorId,
+				"Fee", event.Fee,
+				"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
+				"logIndex", uint64(vLog.Index),
+			)
+			return nil
+		}
 
-		fp.Logger.Info("✅ Received task to send topup to heimdall",
+		fp.Logger.Info("✅ sending topup to heimdall",
 			"event", eventName,
 			"validatorId", event.ValidatorId,
 			"Fee", event.Fee,
@@ -68,4 +80,29 @@ func (fp *FeeProcessor) sendTopUpFeeToHeimdall(eventName string, logBytes string
 		}
 	}
 	return nil
+}
+
+// isOldTx  checks if tx is already processed or not
+func (fp *FeeProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, logIndex uint64) (bool, error) {
+	queryParam := map[string]interface{}{
+		"txhash":   txHash,
+		"logindex": logIndex,
+	}
+
+	endpoint := util.GetHeimdallServerEndpoint(util.TopupTxStatusURL)
+	url, err := util.CreateURLWithQuery(endpoint, queryParam)
+
+	res, err := util.FetchFromAPI(fp.cliCtx, url)
+	if err != nil {
+		fp.Logger.Error("Error fetching tx status", "url", url, "error", err)
+		return false, err
+	}
+
+	var status bool
+	if err := json.Unmarshal(res.Result, &status); err != nil {
+		fp.Logger.Error("Error unmarshalling tx status received from Heimdall Server", "error", err)
+		return false, err
+	}
+
+	return status, nil
 }

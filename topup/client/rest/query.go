@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -24,7 +23,6 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 func TopupTxStatusHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := r.URL.Query()
-
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
 			return
@@ -37,7 +35,6 @@ func TopupTxStatusHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		txHash := vars.Get("txhash")
-
 		if txHash == "" {
 			return
 		}
@@ -60,11 +57,7 @@ func TopupTxStatusHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		res, err := json.Marshal(map[string]interface{}{"result": true})
-		if err != nil {
-			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
+		res := true
 
 		// return result
 		cliCtx = cliCtx.WithHeight(height)

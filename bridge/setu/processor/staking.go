@@ -3,8 +3,10 @@ package processor
 import (
 	"encoding/json"
 
+	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/core/types"
+	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
 	"github.com/maticnetwork/heimdall/helper"
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
@@ -50,6 +52,19 @@ func (sp *StakingProcessor) sendUnstakeInitToHeimdall(eventName string, logBytes
 	if err := helper.UnpackLog(sp.stakingInfoAbi, event, eventName, &vLog); err != nil {
 		sp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
 	} else {
+		if isOld, _ := sp.isOldTx(sp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index)); isOld {
+			sp.Logger.Info("Ignoring task to send unstakeinit to heimdall as already processed",
+				"event", eventName,
+				"validator", event.User,
+				"validatorID", event.ValidatorId,
+				"deactivatonEpoch", event.DeactivationEpoch,
+				"amount", event.Amount,
+				"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
+				"logIndex", uint64(vLog.Index),
+			)
+			return nil
+		}
+
 		sp.Logger.Info(
 			"✅ Received task to send unstake-init to heimdall",
 			"event", eventName,
@@ -89,6 +104,16 @@ func (sp *StakingProcessor) sendStakeUpdateToHeimdall(eventName string, logBytes
 	if err := helper.UnpackLog(sp.stakingInfoAbi, event, eventName, &vLog); err != nil {
 		sp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
 	} else {
+		if isOld, _ := sp.isOldTx(sp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index)); isOld {
+			sp.Logger.Info("Ignoring task to send unstakeinit to heimdall as already processed",
+				"event", eventName,
+				"validatorID", event.ValidatorId,
+				"newAmount", event.NewAmount,
+				"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
+				"logIndex", uint64(vLog.Index),
+			)
+			return nil
+		}
 		sp.Logger.Info(
 			"✅ Received task to send stake-update to heimdall",
 			"event", eventName,
@@ -126,6 +151,17 @@ func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logByte
 	if err := helper.UnpackLog(sp.stakingInfoAbi, event, eventName, &vLog); err != nil {
 		sp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
 	} else {
+		if isOld, _ := sp.isOldTx(sp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index)); isOld {
+			sp.Logger.Info("Ignoring task to send unstakeinit to heimdall as already processed",
+				"event", eventName,
+				"validatorID", event.ValidatorId,
+				"newSigner", event.NewSigner.Hex(),
+				"oldSigner", event.OldSigner.Hex(),
+				"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
+				"logIndex", uint64(vLog.Index),
+			)
+			return nil
+		}
 		sp.Logger.Info(
 			"✅ Received task to send signer-change to heimdall",
 			"event", eventName,
@@ -153,4 +189,29 @@ func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logByte
 		}
 	}
 	return nil
+}
+
+// isOldTx  checks if tx is already processed or not
+func (sp *StakingProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, logIndex uint64) (bool, error) {
+	queryParam := map[string]interface{}{
+		"txhash":   txHash,
+		"logindex": logIndex,
+	}
+
+	endpoint := util.GetHeimdallServerEndpoint(util.StakingTxStatusURL)
+	url, err := util.CreateURLWithQuery(endpoint, queryParam)
+
+	res, err := util.FetchFromAPI(sp.cliCtx, url)
+	if err != nil {
+		sp.Logger.Error("Error fetching tx status", "url", url, "error", err)
+		return false, err
+	}
+
+	var status bool
+	if err := json.Unmarshal(res.Result, &status); err != nil {
+		sp.Logger.Error("Error unmarshalling tx status received from Heimdall Server", "error", err)
+		return false, err
+	}
+
+	return status, nil
 }

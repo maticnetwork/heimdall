@@ -591,11 +591,7 @@ func StakingTxStatusHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		res, err := json.Marshal(map[string]interface{}{"result": true})
-		if err != nil {
-			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
+		res := true
 
 		// return result
 		cliCtx = cliCtx.WithHeight(height)

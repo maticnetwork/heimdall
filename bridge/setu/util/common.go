@@ -48,6 +48,8 @@ const (
 	DividendAccountRootURL = "/staking/dividend-account-root"
 	ValidatorURL           = "/staking/validator/%v"
 	CurrentValidatorSetURL = "staking/validator-set"
+	StakingTxStatusURL     = "/staking/isoldtx"
+	TopupTxStatusURL       = "/topup/isoldtx"
 
 	TransactionTimeout      = 1 * time.Minute
 	CommitTimeout           = 2 * time.Minute
@@ -211,6 +213,23 @@ func GetHeimdallServerEndpoint(endpoint string) string {
 	u, _ := url.Parse(helper.GetConfig().HeimdallServerURL)
 	u.Path = path.Join(u.Path, endpoint)
 	return u.String()
+}
+
+//CreateURLWithQuery receives the uri and parameters in key value form
+//it will return the new url with the given query from the parameter
+func CreateURLWithQuery(uri string, param map[string]interface{}) (string, error) {
+	urlObj, err := url.Parse(uri)
+	if err != nil {
+		return uri, err
+	}
+
+	query := urlObj.Query()
+	for k, v := range param {
+		query.Set(k, fmt.Sprintf("%v", v))
+	}
+
+	urlObj.RawQuery = query.Encode()
+	return urlObj.String(), nil
 }
 
 // FetchFromAPI fetches data from any URL
