@@ -18,7 +18,7 @@ import (
 func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 	txCmd := &cobra.Command{
 		Use:                        types.ModuleName,
-		Short:                      "Chain manager transaction subcommands",
+		Short:                      "Querying commands for the chainmanager module",
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
