@@ -59,6 +59,7 @@ func SendCheckpointTx(cdc *codec.Codec) *cobra.Command {
 					return err
 				}
 
+				// broadcast this checkpoint
 				return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{newCheckpointMsg})
 			}
 
