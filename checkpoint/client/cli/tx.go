@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -45,6 +46,21 @@ func SendCheckpointTx(cdc *codec.Codec) *cobra.Command {
 		Short: "send checkpoint to tendermint and ethereum chain ",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			if viper.GetBool(FlagAutoConfigure) {
+				// fetch msg checkpoint
+				result, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNextCheckpoint))
+				if err != nil {
+					return err
+				}
+
+				// unmarsall the checkpoint msg
+				var newCheckpointMsg types.MsgCheckpoint
+				if err := json.Unmarshal(result, &newCheckpointMsg); err != nil {
+					return err
+				}
+
+				return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{newCheckpointMsg})
+			}
 
 			// get proposer
 			proposer := hmTypes.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
@@ -105,10 +121,7 @@ func SendCheckpointTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(FlagEndBlock, "", "--end-block=<end-block-number>")
 	cmd.Flags().StringP(FlagRootHash, "r", "", "--root-hash=<root-hash>")
 	cmd.Flags().String(FlagAccountRootHash, "", "--account-root=<account-root>")
-	cmd.MarkFlagRequired(FlagStartBlock)
-	cmd.MarkFlagRequired(FlagEndBlock)
-	cmd.MarkFlagRequired(FlagRootHash)
-	cmd.MarkFlagRequired(FlagAccountRootHash)
+	cmd.Flags().Bool(FlagAutoConfigure, false, "--auto-configure=true/false")
 
 	return cmd
 }

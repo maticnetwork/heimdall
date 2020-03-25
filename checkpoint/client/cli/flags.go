@@ -9,4 +9,5 @@ const (
 	FlagHeaderNumber       = "header"
 	FlagCheckpointTxHash   = "txhash"
 	FlagCheckpointLogIndex = "log-index"
+	FlagAutoConfigure      = "auto-configure"
 )
