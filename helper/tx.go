@@ -45,13 +45,14 @@ func GenerateAuthObj(client *ethclient.Client, address common.Address, data []by
 
 	// fetch gas limit
 	callMsg.From = fromAddress
-	gasLimit, err := client.EstimateGas(context.Background(), callMsg)
+	// gasLimit, err := client.EstimateGas(context.Background(), callMsg)
 
 	// create auth
 	auth = bind.NewKeyedTransactor(ecdsaPrivateKey)
 	auth.GasPrice = gasprice
 	auth.Nonce = big.NewInt(int64(nonce))
-	auth.GasLimit = uint64(gasLimit) // uint64(gasLimit)
+	// auth.GasLimit = uint64(gasLimit) // uint64(gasLimit)
+	auth.GasLimit = GetConfig().MainchainGasLimit
 
 	return
 }
