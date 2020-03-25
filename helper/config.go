@@ -2,7 +2,6 @@ package helper
 
 import (
 	"crypto/ecdsa"
-	"fmt"
 	"log"
 	"math/big"
 	"os"
@@ -230,12 +229,6 @@ func GetDefaultHeimdallConfig() Configuration {
 		AmqpURL:           DefaultAmqpURL,
 		HeimdallServerURL: DefaultHeimdallServerURL,
 
-		StakingInfoAddress:  (common.Address{}).Hex(),
-		RootchainAddress:    (common.Address{}).Hex(),
-		StateSenderAddress:  (common.Address{}).Hex(),
-		StakeManagerAddress: (common.Address{}).Hex(),
-		MaticTokenAddress:   (common.Address{}).Hex(),
-
 		StateReceiverAddress: DefaultStateReceiverAddress,
 		ValidatorSetAddress:  DefaultValidatorSetAddress,
 
@@ -265,54 +258,14 @@ func GetGenesisDoc() tmTypes.GenesisDoc {
 	return GenesisDoc
 }
 
-// GetRootChainAddress returns RootChain contract address for selected base chain
-func GetRootChainAddress() common.Address {
-	return common.HexToAddress(GetConfig().RootchainAddress)
-}
-
 // GetRootChainInstance returns RootChain contract instance for selected base chain
-func GetRootChainInstance() (*rootchain.Rootchain, error) {
-	rootChainInstance, err := rootchain.NewRootchain(GetRootChainAddress(), mainChainClient)
-	if err != nil {
-		fmt.Println("Unable to create root chain instance", "error", err)
-	}
-
-	return rootChainInstance, err
-}
-
-// GetStakingInfoAddress returns StakingInfo contract address for selected base chain
-func GetStakingInfoAddress() common.Address {
-	return common.HexToAddress(GetConfig().StakingInfoAddress)
+func GetRootChainInstance(rootchainAddress common.Address) (*rootchain.Rootchain, error) {
+	return rootchain.NewRootchain(rootchainAddress, mainChainClient)
 }
 
 // GetStakingInfoInstance returns stakinginfo contract instance for selected base chain
-func GetStakingInfoInstance() (*stakinginfo.Stakinginfo, error) {
-	return stakinginfo.NewStakinginfo(GetStakingInfoAddress(), mainChainClient)
-}
-
-// GetValidatorSetAddress returns Validator set contract address for selected base chain
-func GetValidatorSetAddress() common.Address {
-	return common.HexToAddress(GetConfig().ValidatorSetAddress)
-}
-
-// GetStateSenderAddress returns state sender contract address for selected base chain
-func GetStateSenderAddress() common.Address {
-	return common.HexToAddress(GetConfig().StateSenderAddress)
-}
-
-// GetStateReceiverAddress returns state receiver contract address for selected child chain
-func GetStateReceiverAddress() common.Address {
-	return common.HexToAddress(GetConfig().StateReceiverAddress)
-}
-
-// GetStakeManagerAddress returns state receiver contract address for selected child chain
-func GetStakeManagerAddress() common.Address {
-	return common.HexToAddress(GetConfig().StakeManagerAddress)
-}
-
-// GetMaticTokenAddress
-func GetMaticTokenAddress() common.Address {
-	return common.HexToAddress(GetConfig().MaticTokenAddress)
+func GetStakingInfoInstance(stakingInfoAddress common.Address) (*stakinginfo.Stakinginfo, error) {
+	return stakinginfo.NewStakinginfo(stakingInfoAddress, mainChainClient)
 }
 
 //

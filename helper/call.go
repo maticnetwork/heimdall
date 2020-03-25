@@ -68,13 +68,8 @@ type ContractCaller struct {
 	MainChainRPC     *rpc.Client
 	MaticChainClient *ethclient.Client
 
-	RootChainInstance     *rootchain.Rootchain
-	StakingInfoInstance   *stakinginfo.Stakinginfo
 	ValidatorSetInstance  *validatorset.Validatorset
-	StateSenderInstance   *statesender.Statesender
 	StateReceiverInstance *statereceiver.Statereceiver
-	StakeManagerInstance  *stakemanager.Stakemanager
-	MaticTokenInstance    *erc20.Erc20
 
 	RootChainABI     abi.ABI
 	StakingInfoABI   abi.ABI
@@ -101,38 +96,6 @@ func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 	contractCallerObj.MainChainClient = GetMainClient()
 	contractCallerObj.MaticChainClient = GetMaticClient()
 	contractCallerObj.MainChainRPC = GetMainChainRPCClient()
-
-	//
-	// Root chain instance
-	//
-
-	if contractCallerObj.RootChainInstance, err = rootchain.NewRootchain(GetRootChainAddress(), contractCallerObj.MainChainClient); err != nil {
-		return
-	}
-
-	if contractCallerObj.StakingInfoInstance, err = stakinginfo.NewStakinginfo(GetStakingInfoAddress(), contractCallerObj.MainChainClient); err != nil {
-		return
-	}
-
-	if contractCallerObj.ValidatorSetInstance, err = validatorset.NewValidatorset(GetValidatorSetAddress(), contractCallerObj.MaticChainClient); err != nil {
-		return
-	}
-
-	if contractCallerObj.StakeManagerInstance, err = stakemanager.NewStakemanager(GetStakeManagerAddress(), contractCallerObj.MainChainClient); err != nil {
-		return
-	}
-
-	if contractCallerObj.StateSenderInstance, err = statesender.NewStatesender(GetStateSenderAddress(), contractCallerObj.MainChainClient); err != nil {
-		return
-	}
-
-	if contractCallerObj.StateReceiverInstance, err = statereceiver.NewStatereceiver(GetStateReceiverAddress(), contractCallerObj.MaticChainClient); err != nil {
-		return
-	}
-
-	if contractCallerObj.MaticTokenInstance, err = erc20.NewErc20(GetMaticTokenAddress(), contractCallerObj.MainChainClient); err != nil {
-		return
-	}
 
 	//
 	// ABIs
