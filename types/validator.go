@@ -49,7 +49,7 @@ func (v *Validator) IsCurrentValidator(ackCount uint64) bool {
 	currentEpoch := ackCount + 1
 
 	// validator hasnt initialised unstake
-	if v.StartEpoch <= currentEpoch && (v.EndEpoch == 0 || v.EndEpoch >= currentEpoch) && v.VotingPower > 0 {
+	if v.StartEpoch <= currentEpoch && (v.EndEpoch == 0 || v.EndEpoch > currentEpoch) && v.VotingPower > 0 {
 		return true
 	}
 
