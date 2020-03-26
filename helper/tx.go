@@ -75,8 +75,11 @@ func (c *ContractCaller) SendCheckpoint(voteSignBytes []byte, sigs []byte, txDat
 	rootChainAddress := GetRootChainAddress()
 	auth, err := GenerateAuthObj(GetMainClient(), rootChainAddress, data)
 	if err != nil {
-		Logger.Error("Unable to create auth object", "error", err)
-		return
+		if auth == nil {
+			Logger.Error("Unable to create auth object", "error", err)
+			return
+		}
+		auth.GasLimit = uint64(5000000)
 	}
 	GetPubKey().VerifyBytes(voteSignBytes, sigs)
 
