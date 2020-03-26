@@ -255,9 +255,9 @@ func (rl *RootChainListener) sendTaskWithDelay(taskName string, eventName string
 	// add delay for task so that multiple validators won't send same transaction at same time
 	eta := time.Now().Add(delay)
 	signature.ETA = &eta
-	rl.Logger.Info("sending topup task", "currenttime", time.Now(), "delaytime", eta)
+	rl.Logger.Info("sending task", "taskname-", taskName, "currenttime-", time.Now(), "delaytime", eta)
 	_, err := rl.queueConnector.Server.SendTask(signature)
 	if err != nil {
-		rl.Logger.Error("Error while sending task")
+		rl.Logger.Error("Error sending task", "taskName", taskName, "error", err)
 	}
 }

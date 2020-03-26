@@ -181,10 +181,10 @@ func (hl *HeimdallListener) sendTask(taskName string, eventBytes []byte) {
 		},
 	}
 	signature.RetryCount = 3
-
+	hl.Logger.Info("sending task", "taskname-", taskName, "currenttime-", time.Now())
 	// send task
 	_, err := hl.queueConnector.Server.SendTask(signature)
 	if err != nil {
-		hl.Logger.Error("Error sending task", "taskName", taskName)
+		hl.Logger.Error("Error sending task", "taskName", taskName, "error", err)
 	}
 }

@@ -53,7 +53,7 @@ func (ml *MaticChainListener) Start() error {
 
 // ProcessHeader - process headerblock from maticchain
 func (ml *MaticChainListener) ProcessHeader(newHeader *types.Header) {
-	ml.Logger.Info("Publishing received headerblock to checkpoint queue", "blockNumber", newHeader.Number)
+	ml.Logger.Debug("New block detected", "blockNumber", newHeader.Number)
 	// Marshall header block and publish to queue
 	headerBytes, err := newHeader.MarshalJSON()
 	if err != nil {
@@ -82,6 +82,6 @@ func (ml *MaticChainListener) sendTaskWithDelay(taskName string, headerBytes []b
 	ml.Logger.Info("sending task", "taskname-", taskName, "currenttime-", time.Now(), "delaytime", eta)
 	_, err := ml.queueConnector.Server.SendTask(signature)
 	if err != nil {
-		ml.Logger.Error("Error while sending task")
+		ml.Logger.Error("Error sending task", "taskName", taskName, "error", err)
 	}
 }
