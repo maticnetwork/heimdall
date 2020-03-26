@@ -40,6 +40,7 @@ func NewTxBroadcaster(cdc *codec.Codec) *TxBroadcaster {
 	account, err := util.GetAccount(cliCtx)
 	if err != nil {
 		panic("Error connecting to rest-server, please start server before bridge.")
+
 	}
 
 	txBroadcaster := TxBroadcaster{
@@ -82,7 +83,6 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg) error {
 
 		// update seqNo for safety
 		tb.lastSeqNo = account.GetSequence()
-		tb.accNum = account.GetAccountNumber()
 
 		return err
 	}
@@ -124,7 +124,7 @@ func (tb *TxBroadcaster) BroadcastToMatic(msg bor.CallMsg) error {
 
 	// broadcast transaction
 	if err := maticClient.SendTransaction(context.Background(), signedTx); err != nil {
-		tb.logger.Error("Error while broadcasting the transaction to maticchain", "txHash", signedTx.Hash(), "error", err)
+		tb.logger.Error("Error while broadcasting the transaction to maticchain", "error", err)
 		return err
 	}
 

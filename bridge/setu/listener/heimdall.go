@@ -36,10 +36,6 @@ func (hl *HeimdallListener) Start() error {
 	hl.Logger.Info("Starting")
 
 	// create cancellable context
-	_, cancelSubscription := context.WithCancel(context.Background())
-	hl.cancelSubscription = cancelSubscription
-
-	// create cancellable context
 	headerCtx, cancelHeaderProcess := context.WithCancel(context.Background())
 	hl.cancelHeaderProcess = cancelHeaderProcess
 

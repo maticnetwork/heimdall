@@ -2,14 +2,16 @@ package staking_test
 
 import (
 	"encoding/hex"
+	"fmt"
+	"math/big"
+	"testing"
+
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/helper"
 	cmn "github.com/maticnetwork/heimdall/test"
 	"github.com/maticnetwork/heimdall/types"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
-	"math/big"
-	"testing"
 )
 
 // tests setter/getters for validatorSignerMaps , validator set/get
@@ -297,7 +299,7 @@ func TestDividendAccountTree(t *testing.T) {
 	divAccounts := cmn.GenRandomDividendAccount(3, 1, true)
 
 	accountRoot, _ := checkpointTypes.GetAccountRootHash(divAccounts)
-	accountProof, _ := checkpointTypes.GetAccountProof(divAccounts, types.NewDividendAccountID(1))
+	accountProof, _, _ := checkpointTypes.GetAccountProof(divAccounts, types.NewDividendAccountID(1))
 	leafHash, _ := divAccounts[0].CalculateHash()
 	t.Log("accounts", divAccounts)
 	t.Log("account root", types.BytesToHeimdallHash(accountRoot))
@@ -318,3 +320,10 @@ func TestDividendAccountTree(t *testing.T) {
 // 	_, _ = checkpointTypes.GetRewardRootHash(divAccounts)
 
 // }
+
+func TestGetValidatorsFromSigs(t *testing.T) {
+	ctx, keeper, _ := cmn.CreateTestInput(t, false)
+
+	validatorAddresses := keeper.GetValidatorsFromSigs(ctx, voteSignBytes, inputSigs)
+	fmt.Println(validatorAddresses)
+}

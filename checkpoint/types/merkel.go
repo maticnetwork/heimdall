@@ -142,35 +142,36 @@ func GetAccountTree(dividendAccounts []hmTypes.DividendAccount) (*merkletree.Mer
 }
 
 // GetAccountProof returns proof of dividend Account
-func GetAccountProof(dividendAccounts []hmTypes.DividendAccount, dividendAccountID hmTypes.DividendAccountID) ([]byte, error) {
+func GetAccountProof(dividendAccounts []hmTypes.DividendAccount, dividendAccountID hmTypes.DividendAccountID) ([]byte, uint64, error) {
 	// Sort the dividendAccounts by ID
 	dividendAccounts = hmTypes.SortDividendAccountByID(dividendAccounts)
 	var list []merkletree.Content
 	var account hmTypes.DividendAccount
-
+	index := uint64(0)
 	for i := 0; i < len(dividendAccounts); i++ {
 		list = append(list, dividendAccounts[i])
 		if dividendAccounts[i].ID == dividendAccountID {
 			account = dividendAccounts[i]
+			index = uint64(i)
 		}
 	}
 
 	tree, err := merkletree.NewTreeWithHashStrategy(list, sha3.NewLegacyKeccak256)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	branchArray, _, err := tree.GetMerklePath(account)
 
 	// concatenate branch array
 	proof := appendBytes32(branchArray...)
-	return proof, err
+	return proof, index, err
 }
 
 // VerifyAccountProof returns proof of dividend Account
 func VerifyAccountProof(dividendAccounts []hmTypes.DividendAccount, dividendAccountID hmTypes.DividendAccountID, proofToVerify string) (bool, error) {
 
-	proof, err := GetAccountProof(dividendAccounts, dividendAccountID)
+	proof, _, err := GetAccountProof(dividendAccounts, dividendAccountID)
 	if err != nil {
 		return false, nil
 	}

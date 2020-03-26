@@ -211,8 +211,15 @@ func handleQueryAccountProof(ctx sdk.Context, req abci.RequestQuery, keeper Keep
 
 	if bytes.Compare(accountRootOnChain[:], currentStateAccountRoot) == 0 {
 		// Calculate new account root hash
-		merkleProof, _ := checkpointTypes.GetAccountProof(dividendAccounts, params.DividendAccountID)
-		return merkleProof, nil
+		merkleProof, index, _ := checkpointTypes.GetAccountProof(dividendAccounts, params.DividendAccountID)
+		accountProof := hmTypes.NewDividendAccountProof(params.DividendAccountID, merkleProof, index)
+		// json record
+		bz, err := json.Marshal(accountProof)
+		if err != nil {
+			return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+		}
+		return bz, nil
+
 	} else {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not fetch merkle proof ", err.Error()))
 	}
