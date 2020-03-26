@@ -15,6 +15,11 @@ type QueueConnector struct {
 	Server *machinery.Server
 }
 
+const (
+	// machinery task queue
+	QueueName = "machinery_tasks"
+)
+
 func NewQueueConnector(dialer string) *QueueConnector {
 	// amqp dialer
 	_, err := amqp.Dial(dialer)
@@ -24,7 +29,7 @@ func NewQueueConnector(dialer string) *QueueConnector {
 
 	var cnf = &config.Config{
 		Broker:        dialer,
-		DefaultQueue:  "machinery_tasks",
+		DefaultQueue:  QueueName,
 		ResultBackend: dialer,
 		AMQP: &config.AMQPConfig{
 			Exchange:     "machinery_exchange",
