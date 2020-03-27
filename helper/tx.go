@@ -58,9 +58,9 @@ func GenerateAuthObj(client *ethclient.Client, address common.Address, data []by
 
 // SendCheckpoint sends checkpoint to rootchain contract
 // todo return err
-func (c *ContractCaller) SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte) {
+func (c *ContractCaller) SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte) (err error) {
 	var vote types.CanonicalRLPVote
-	err := rlp.DecodeBytes(voteSignBytes, &vote)
+	err = rlp.DecodeBytes(voteSignBytes, &vote)
 	if err != nil {
 		Logger.Error("Unable to decode vote while sending checkpoint", "vote", hex.EncodeToString(voteSignBytes), "sigs", hex.EncodeToString(sigs), "txData", hex.EncodeToString(txData))
 		return
@@ -75,11 +75,8 @@ func (c *ContractCaller) SendCheckpoint(voteSignBytes []byte, sigs []byte, txDat
 	rootChainAddress := GetRootChainAddress()
 	auth, err := GenerateAuthObj(GetMainClient(), rootChainAddress, data)
 	if err != nil {
-		if auth == nil {
-			Logger.Error("Unable to create auth object", "error", err)
-			return
-		}
-		auth.GasLimit = uint64(5000000)
+		Logger.Error("Unable to create auth object", "error", err)
+		return
 	}
 	GetPubKey().VerifyBytes(voteSignBytes, sigs)
 
@@ -94,7 +91,7 @@ func (c *ContractCaller) SendCheckpoint(voteSignBytes []byte, sigs []byte, txDat
 	} else {
 		Logger.Info("Submitted new header successfully", "txHash", tx.Hash().String())
 	}
-
+	return
 }
 
 // StakeFor stakes for a validator

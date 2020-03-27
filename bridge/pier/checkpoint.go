@@ -586,13 +586,17 @@ func (c *Checkpointer) dispatchCheckpoint(height int64, txHash []byte, start uin
 
 	// check if we are current proposer
 	if !bytes.Equal(proposer.Signer.Bytes(), validatorAddress.Bytes()) {
-		return errors.New("We are not proposer, aborting dispatch to mainchain")
+		c.Logger.Info("We are not proposer, aborting dispatch to mainchain")
+		return nil
 	} else {
 		c.Logger.Info("We are proposer! Validating if checkpoint needs to be pushed", "commitedLastBlock", currentChildBlock, "startBlock", start)
 		// check if we need to send checkpoint or not
 		if ((currentChildBlock + 1) == start) || (currentChildBlock == 0 && start == 0) {
 			c.Logger.Info("Checkpoint Valid", "startBlock", start)
-			c.contractConnector.SendCheckpoint(helper.GetVoteBytes(votes, chainID), sigs, tx.Tx[authTypes.PulpHashLength:])
+			if err := c.contractConnector.SendCheckpoint(helper.GetVoteBytes(votes, chainID), sigs, tx.Tx[authTypes.PulpHashLength:]); err != nil {
+				c.Logger.Info("Error submitting checkpoint to rootchain", "error", err)
+				return err
+			}
 		} else if currentChildBlock > start {
 			c.Logger.Info("Start block does not match, checkpoint already sent", "commitedLastBlock", currentChildBlock, "startBlock", start)
 		} else if currentChildBlock > end {
