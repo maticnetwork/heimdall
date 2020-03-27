@@ -70,6 +70,7 @@ const (
 	MaxCheckpointLength       = 1024  // max blocks in one checkpoint
 	DefaultChildBlockInterval = 10000 // difference between 2 indexes of header blocks
 	DefaultTxConfirmationTime = 6 * 14 * time.Second
+	DefaultMainchainGasLimit  = uint64(5000000)
 
 	DefaultBorChainID           = 15001
 	DefaultValidatorSetAddress  = "0000000000000000000000000000000000001000"
@@ -110,6 +111,7 @@ type Configuration struct {
 	MaticTokenAddress    string `mapstructure:"matic_token"`
 
 	ChildBlockInterval uint64 `mapstructure:"child_chain_block_interval"` // Difference between header index of 2 child blocks submitted on main chain
+	MainchainGasLimit  uint64 `mapstructure:"main_chain_gas_limit"`       // gas limit to mainchain transaction. eg....submit checkpoint.
 
 	// config related to bridge
 	CheckpointerPollInterval time.Duration `mapstructure:"checkpoint_poll_interval"` // Poll interval for checkpointer service to send new checkpoints or missing ACK
@@ -240,6 +242,7 @@ func GetDefaultHeimdallConfig() Configuration {
 		ValidatorSetAddress:  DefaultValidatorSetAddress,
 
 		ChildBlockInterval: DefaultChildBlockInterval,
+		MainchainGasLimit:  DefaultMainchainGasLimit,
 
 		CheckpointerPollInterval: DefaultCheckpointerPollInterval,
 		SyncerPollInterval:       DefaultSyncerPollInterval,

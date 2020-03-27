@@ -4,7 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"math/big"
+	"time"
 
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 
@@ -38,6 +41,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return handleQueryAccountProof(ctx, req, keeper)
 		case types.QueryVerifyAccountProof:
 			return handleQueryVerifyAccountProof(ctx, req, keeper)
+		case types.QueryStakingSequence:
+			return handleQueryStakingSequence(ctx, req, keeper)
 
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown staking query endpoint")
@@ -206,8 +211,15 @@ func handleQueryAccountProof(ctx sdk.Context, req abci.RequestQuery, keeper Keep
 
 	if bytes.Compare(accountRootOnChain[:], currentStateAccountRoot) == 0 {
 		// Calculate new account root hash
-		merkleProof, _ := checkpointTypes.GetAccountProof(dividendAccounts, params.DividendAccountID)
-		return merkleProof, nil
+		merkleProof, index, _ := checkpointTypes.GetAccountProof(dividendAccounts, params.DividendAccountID)
+		accountProof := hmTypes.NewDividendAccountProof(params.DividendAccountID, merkleProof, index)
+		// json record
+		bz, err := json.Marshal(accountProof)
+		if err != nil {
+			return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+		}
+		return bz, nil
+
 	} else {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not fetch merkle proof ", err.Error()))
 	}
@@ -233,5 +245,42 @@ func handleQueryVerifyAccountProof(ctx sdk.Context, req abci.RequestQuery, keepe
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
+	return bz, nil
+}
+
+func handleQueryStakingSequence(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	var params types.QueryStakingSequenceParams
+
+	if err := types.ModuleCdc.UnmarshalJSON(req.Data, &params); err != nil {
+		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
+	}
+
+	contractCallerObj, err := helper.NewContractCaller()
+	if err != nil {
+		return nil, sdk.ErrInternal(fmt.Sprintf(err.Error()))
+	}
+
+	// get main tx receipt
+	receipt, _ := contractCallerObj.GetConfirmedTxReceipt(time.Now().UTC(), hmTypes.HexToHeimdallHash(params.TxHash).EthHash())
+	if err != nil || receipt == nil {
+		return nil, sdk.ErrInternal(fmt.Sprintf("Transaction is not confirmed yet. Please for sometime and try again"))
+	}
+
+	// sequence id
+
+	sequence := new(big.Int).Mul(receipt.BlockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
+	sequence.Add(sequence, new(big.Int).SetUint64(params.LogIndex))
+
+	// check if incoming tx already exists
+	if !keeper.HasStakingSequence(ctx, sequence.String()) {
+		keeper.Logger(ctx).Error("No staking sequence exist: %s %s", params.TxHash, params.LogIndex)
+		return nil, sdk.ErrInternal(fmt.Sprintf("no sequence exist:: %s", params.TxHash))
+	}
+
+	bz, err := codec.MarshalJSONIndent(types.ModuleCdc, sequence)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
+
 	return bz, nil
 }
