@@ -183,7 +183,7 @@ func (cp *CheckpointProcessor) sendCheckpointToRootchain(eventBytes string, txBy
 			return err
 		}
 	} else {
-		cp.Logger.Info("i am not the current proposer or checkpoint already sent. Ignoring", "eventType", event.Type)
+		cp.Logger.Info("I am not the current proposer or checkpoint already sent. Ignoring", "eventType", event.Type)
 		return nil
 	}
 	return nil
@@ -549,6 +549,7 @@ func (cp *CheckpointProcessor) getCheckpointParams() (*checkpointTypes.Params, e
 	return &params, nil
 }
 
+// shouldSendCheckpoint checks if checkpoint with given start,end should be sent to rootchain or not.
 func (cp *CheckpointProcessor) shouldSendCheckpoint(start uint64, end uint64) (shouldSend bool, err error) {
 	// current child block from contract
 	currentChildBlock, err := cp.contractConnector.GetLastChildBlock()

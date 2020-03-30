@@ -96,12 +96,6 @@ func (cp *ClerkProcessor) sendDepositRecordToMatic(eventBytes string, txBytes st
 		return err
 	}
 
-	var tx = sdk.TxResponse{}
-	if err := json.Unmarshal([]byte(txBytes), &tx); err != nil {
-		cp.Logger.Error("Error unmarshalling txResponse", "error", err)
-		return err
-	}
-
 	cp.Logger.Info("Processing record confirmation event", "eventType", event.Type)
 	var recordID uint64
 	for _, attr := range event.Attributes {
