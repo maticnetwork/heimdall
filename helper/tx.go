@@ -45,14 +45,13 @@ func GenerateAuthObj(client *ethclient.Client, address common.Address, data []by
 
 	// fetch gas limit
 	callMsg.From = fromAddress
-	// gasLimit, err := client.EstimateGas(context.Background(), callMsg)
+	gasLimit, err := client.EstimateGas(context.Background(), callMsg)
 
 	// create auth
 	auth = bind.NewKeyedTransactor(ecdsaPrivateKey)
 	auth.GasPrice = gasprice
 	auth.Nonce = big.NewInt(int64(nonce))
-	// auth.GasLimit = uint64(gasLimit) // uint64(gasLimit)
-	auth.GasLimit = GetConfig().MainchainGasLimit
+	auth.GasLimit = uint64(gasLimit) // uint64(gasLimit)
 
 	return
 }
@@ -77,7 +76,8 @@ func (c *ContractCaller) SendCheckpoint(voteSignBytes []byte, sigs []byte, txDat
 	auth, err := GenerateAuthObj(GetMainClient(), rootChainAddress, data)
 	if err != nil {
 		Logger.Error("Unable to create auth object", "error", err)
-		return err
+		Logger.Info("Setting custom gaslimit", "gaslimit", GetConfig().MainchainGasLimit)
+		auth.GasLimit = GetConfig().MainchainGasLimit
 	}
 	GetPubKey().VerifyBytes(voteSignBytes, sigs)
 

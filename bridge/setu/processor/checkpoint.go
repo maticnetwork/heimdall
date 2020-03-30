@@ -151,23 +151,24 @@ func (cp *CheckpointProcessor) sendCheckpointToRootchain(checkpointStr string) e
 		return err
 	}
 
-	if isCurrentProposer {
-		var startBlock uint64
-		var endBlock uint64
-		for _, attr := range event.Attributes {
-			if attr.Key == checkpointTypes.AttributeKeyStartBlock {
-				startBlock, _ = strconv.ParseUint(attr.Value, 10, 64)
-			}
-			if attr.Key == checkpointTypes.AttributeKeyEndBlock {
-				endBlock, _ = strconv.ParseUint(attr.Value, 10, 64)
-			}
+	var startBlock uint64
+	var endBlock uint64
+	for _, attr := range event.Attributes {
+		if attr.Key == checkpointTypes.AttributeKeyStartBlock {
+			startBlock, _ = strconv.ParseUint(attr.Value, 10, 64)
 		}
+		if attr.Key == checkpointTypes.AttributeKeyEndBlock {
+			endBlock, _ = strconv.ParseUint(attr.Value, 10, 64)
+		}
+	}
+
+	if !cp.isAlreadySent(startBlock) && isCurrentProposer {
 		if err := cp.createAndSendCheckpointToRootchain(startBlock, endBlock); err != nil {
 			cp.Logger.Error("Error sending checkpoint to rootchain", "error", err)
 			return err
 		}
 	} else {
-		cp.Logger.Info("i am not the current proposer. skipping checkpoint confirmation", "eventType", event.Type)
+		cp.Logger.Info("i am not the current proposer or checkpoint already sent. Ignoring", "eventType", event.Type)
 		return nil
 	}
 	return nil
@@ -390,9 +391,14 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToRootchain(startBlock uin
 				cp.Logger.Error("Error searching checkpoint txs by events", "startBlock", startBlock, "endBlock", endBlock, "error", err)
 				return err
 			} else {
-				if err := cp.commitCheckpoint(tx.Height, txHash, startBlock, endBlock); err != nil {
+				if err := cp.commitCheckpoint(tx.Height, txHash, startBlock, endBlock); err == nil {
+					if !cp.isAlreadySent(startBlock) {
+						cp.Logger.Error("checkpoint reverted on rootchain contract", "startBlock", startBlock, "endBlock", endBlock, "txHash", txHash, "blockHeight", tx.Height)
+						continue // Process other checkpoint tx's with same startblock and endblock.
+					}
+				} else {
 					cp.Logger.Error("Error commiting checkpoint to rootchain", "startBlock", startBlock, "endBlock", endBlock, "error", err)
-					return err
+					return err // will retry the task
 				}
 				break
 			}
@@ -578,6 +584,29 @@ func (cp *CheckpointProcessor) getCheckpointParams() (*checkpointTypes.Params, e
 	}
 
 	return &params, nil
+}
+
+func (cp *CheckpointProcessor) isAlreadySent(startBlock uint64) bool {
+	// fetch current header block from mainchain contract
+	_currentHeaderBlock, err := cp.contractConnector.CurrentHeaderBlock()
+	if err != nil {
+		cp.Logger.Error("Error while fetching current header block number from rootchain", "error", err)
+		return false
+	}
+	// current header block
+	currentHeaderBlockNumber := big.NewInt(0).SetUint64(_currentHeaderBlock)
+
+	// get header info
+	// currentHeaderBlock = currentHeaderBlock.Sub(currentHeaderBlock, helper.GetConfig().ChildBlockInterval)
+	_, currentStart, _, _, _, err := cp.contractConnector.GetHeaderInfo(currentHeaderBlockNumber.Uint64())
+	if err != nil {
+		cp.Logger.Error("Error while fetching current header block object from rootchain", "error", err)
+		return false
+	}
+	if startBlock == currentStart {
+		return true
+	}
+	return false
 }
 
 // Stop stops all necessary go routines
