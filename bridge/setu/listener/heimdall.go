@@ -96,7 +96,7 @@ func (hl *HeimdallListener) StartPolling(ctx context.Context, pollInterval time.
 									return et.Type == checkpointTypes.EventTypeCheckpoint || et.Type == clerkTypes.EventTypeRecord
 								})
 								if event != nil {
-									hl.ProcessEvent(*event)
+									hl.ProcessEvent(*event, tx)
 								}
 							}
 						}
@@ -147,7 +147,7 @@ func (hl *HeimdallListener) fetchFromAndToBlock() (fromBlock uint64, toBlock uin
 }
 
 // ProcessEvent - process event from heimdall.
-func (hl *HeimdallListener) ProcessEvent(event sdk.StringEvent) {
+func (hl *HeimdallListener) ProcessEvent(event sdk.StringEvent, tx sdk.TxResponse) {
 	hl.Logger.Info("Process received event from Heimdall", "eventType", event.Type)
 	eventBytes, err := json.Marshal(event)
 	if err != nil {
@@ -155,17 +155,23 @@ func (hl *HeimdallListener) ProcessEvent(event sdk.StringEvent) {
 		return
 	}
 
+	txBytes, err := json.Marshal(tx)
+	if err != nil {
+		hl.Logger.Error("Error while parsing tx", "error", err, "txHash", tx.TxHash)
+		return
+	}
+
 	switch event.Type {
 	case clerkTypes.EventTypeRecord:
-		hl.sendTask("sendDepositRecordToMatic", eventBytes)
+		hl.sendTask("sendDepositRecordToMatic", eventBytes, txBytes)
 	case checkpointTypes.EventTypeCheckpoint:
-		hl.sendTask("sendCheckpointToRootchain", eventBytes)
+		hl.sendTask("sendCheckpointToRootchain", eventBytes, txBytes)
 	default:
 		hl.Logger.Info("EventType mismatch", "eventType", event.Type)
 	}
 }
 
-func (hl *HeimdallListener) sendTask(taskName string, eventBytes []byte) {
+func (hl *HeimdallListener) sendTask(taskName string, eventBytes []byte, txBytes []byte) {
 	// create machinery task
 	signature := &tasks.Signature{
 		Name: taskName,
@@ -173,6 +179,10 @@ func (hl *HeimdallListener) sendTask(taskName string, eventBytes []byte) {
 			{
 				Type:  "string",
 				Value: string(eventBytes),
+			},
+			{
+				Type:  "string",
+				Value: string(txBytes),
 			},
 		},
 	}
