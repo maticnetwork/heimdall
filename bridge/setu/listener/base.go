@@ -189,7 +189,9 @@ func (bl *BaseListener) StartSubscription(ctx context.Context, subscription ethe
 			// bl.Stop()
 
 			// cancel subscription
-			bl.cancelSubscription()
+			if bl.cancelSubscription != nil {
+				bl.cancelSubscription()
+			}
 			return
 		case <-ctx.Done():
 			bl.Logger.Info("Subscription stopped")
@@ -202,7 +204,9 @@ func (bl *BaseListener) StartSubscription(ctx context.Context, subscription ethe
 func (bl *BaseListener) Stop() {
 
 	// cancel subscription if any
-	bl.cancelSubscription()
+	if bl.cancelSubscription != nil {
+		bl.cancelSubscription()
+	}
 
 	// cancel header process
 	bl.cancelHeaderProcess()
