@@ -9,6 +9,7 @@ const (
 	QueryLastNoAck        = "last-no-ack"
 	QueryCheckpointList   = "checkpoint-list"
 	QueryNextCheckpoint   = "next-checkpoint"
+	QueryProposer         = "is-proposer"
 )
 
 // QueryCheckpointParams defines the params for querying accounts.

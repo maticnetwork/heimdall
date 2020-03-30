@@ -2,6 +2,7 @@ package cli
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -47,6 +48,19 @@ func SendCheckpointTx(cdc *codec.Codec) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			if viper.GetBool(FlagAutoConfigure) {
+				isProposerBytes, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryProposer))
+				if err != nil {
+					return err
+				}
+
+				var isProposer bool
+				if err := json.Unmarshal(isProposerBytes, &isProposer); err != nil {
+					return err
+				}
+				if !isProposer {
+					return errors.New("You are not proposer for this checkpoint, please wait for your turn")
+				}
+
 				// fetch msg checkpoint
 				result, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNextCheckpoint))
 				if err != nil {
