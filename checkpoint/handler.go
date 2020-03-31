@@ -150,7 +150,11 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg types.MsgCheckpointAck, k Keepe
 	k.Logger(ctx).Debug("Validating Checkpoint ACK", "Tx", msg)
 
 	// make call to headerBlock with header number
-	root, start, end, createdAt, proposer, err := contractCaller.GetHeaderInfo(msg.HeaderBlock)
+	chainParams := k.ck.GetParams(ctx).ChainParams
+
+	rootChainInstance, _ := contractCaller.GetRootChainInstance(chainParams.RootChainAddress.EthAddress())
+
+	root, start, end, createdAt, proposer, err := contractCaller.GetHeaderInfo(msg.HeaderBlock, rootChainInstance)
 	if err != nil {
 		k.Logger(ctx).Error("Unable to fetch header from rootchain contract", "Error", err, "headerBlockIndex", msg.HeaderBlock)
 		return common.ErrBadAck(k.Codespace()).Result()

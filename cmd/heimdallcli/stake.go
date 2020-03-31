@@ -1,18 +1,25 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"math/big"
 
+	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/maticnetwork/bor/common"
+	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	"github.com/maticnetwork/heimdall/helper"
+
 	stakingcli "github.com/maticnetwork/heimdall/staking/client/cli"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
+var checkpointEndpoint = "/chainmanager/params"
+
 // StakeCmd stakes for a validator
-func StakeCmd() *cobra.Command {
+func StakeCmd(cliCtx cliContext.CLIContext) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "stake",
 		Short: "Stake matic tokens for your account",
@@ -48,11 +55,26 @@ func StakeCmd() *cobra.Command {
 				return err
 			}
 
+			route := fmt.Sprintf("custom/%s", checkpointEndpoint)
+
+			bz, _, err := cliCtx.QueryWithData(route, nil)
+			if err != nil {
+				return err
+			}
+
+			var params chainmanagerTypes.Params
+			json.Unmarshal(bz, &params)
+
+			stakingManagerAddress := params.ChainParams.StakingManagerAddress.EthAddress()
+			stakeManagerInstance, err := contractCaller.GetStakeManagerInstance(stakingManagerAddress)
+
 			return contractCaller.StakeFor(
 				common.HexToAddress(validatorStr),
 				stakeAmount,
 				feeAmount,
 				acceptDelegation,
+				stakingManagerAddress,
+				stakeManagerInstance,
 			)
 		},
 	}
@@ -65,7 +87,7 @@ func StakeCmd() *cobra.Command {
 }
 
 // ApproveCmd approves tokens for a validator
-func ApproveCmd() *cobra.Command {
+func ApproveCmd(cliCtx cliContext.CLIContext) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "approve",
 		Short: "Approve the tokens to stake",
@@ -92,8 +114,22 @@ func ApproveCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			route := fmt.Sprintf("custom/%s", checkpointEndpoint)
 
-			return contractCaller.ApproveTokens(stakeAmount.Add(stakeAmount, feeAmount))
+			bz, _, err := cliCtx.QueryWithData(route, nil)
+			if err != nil {
+				return err
+			}
+
+			var params chainmanagerTypes.Params
+			json.Unmarshal(bz, &params)
+
+			stakingManagerAddress := params.ChainParams.StakingManagerAddress.EthAddress()
+			maticTokenAddress := params.ChainParams.MaticTokenAddress.EthAddress()
+
+			maticTokenInstance, err := contractCaller.GetMaticTokenInstance(maticTokenAddress)
+
+			return contractCaller.ApproveTokens(stakeAmount.Add(stakeAmount, feeAmount), stakingManagerAddress, maticTokenAddress, maticTokenInstance)
 		},
 	}
 

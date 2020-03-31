@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/maticnetwork/bor/common"
 	ethCrypto "github.com/maticnetwork/bor/crypto"
 	"github.com/maticnetwork/bor/ethclient"
 	"github.com/maticnetwork/bor/rpc"
@@ -19,9 +18,6 @@ import (
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	logger "github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/privval"
-
-	"github.com/maticnetwork/heimdall/contracts/rootchain"
-	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
 
 	tmTypes "github.com/tendermint/tendermint/types"
 )
@@ -100,6 +96,7 @@ type Configuration struct {
 	AmqpURL           string `mapstructure:"amqp_url"`             // amqp url
 	HeimdallServerURL string `mapstructure:"heimdall_rest_server"` // heimdall server url
 
+	// TODO: Remove contract addresses from here
 	StakingInfoAddress   string `mapstructure:"stakinginfo_contract"`    // Staking Info address on main chain
 	RootchainAddress     string `mapstructure:"rootchain_contract"`      // Rootchain contract address on main chain
 	StateSenderAddress   string `mapstructure:"state_sender_contract"`   // main
@@ -256,16 +253,6 @@ func GetConfig() Configuration {
 
 func GetGenesisDoc() tmTypes.GenesisDoc {
 	return GenesisDoc
-}
-
-// GetRootChainInstance returns RootChain contract instance for selected base chain
-func GetRootChainInstance(rootchainAddress common.Address) (*rootchain.Rootchain, error) {
-	return rootchain.NewRootchain(rootchainAddress, mainChainClient)
-}
-
-// GetStakingInfoInstance returns stakinginfo contract instance for selected base chain
-func GetStakingInfoInstance(stakingInfoAddress common.Address) (*stakinginfo.Stakinginfo, error) {
-	return stakinginfo.NewStakinginfo(stakingInfoAddress, mainChainClient)
 }
 
 //

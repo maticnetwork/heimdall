@@ -307,6 +307,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		app.subspaces[checkpointTypes.ModuleName],
 		common.DefaultCodespace,
 		app.StakingKeeper,
+		app.ChainKeeper,
 	)
 
 	app.BorKeeper = bor.NewKeeper(

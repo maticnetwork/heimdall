@@ -65,7 +65,7 @@ func NewCheckpointer(cdc *codec.Codec, queueConnector *QueueConnector, httpClien
 
 	contractCaller, err := helper.NewContractCaller()
 	if err != nil {
-		logger.Error("Error while getting root chain instance", "error", err)
+		logger.Error("Error while getting contract instance", "error", err)
 		panic(err)
 	}
 
@@ -288,7 +288,14 @@ func (c *Checkpointer) sendRequest(newHeader *types.Header) {
 // fetched contract checkpoint state and returns the next probable checkpoint that needs to be sent
 func (c *Checkpointer) nextExpectedCheckpoint(latestChildBlock uint64) (*ContractCheckpoint, error) {
 	// fetch current header block from mainchain contract
-	_currentHeaderBlock, err := c.contractConnector.CurrentHeaderBlock()
+	configParams, _ := GetConfigManagerParams(c.cliCtx)
+
+	rootChainInstance, err := c.contractConnector.GetRootChainInstance(configParams.ChainParams.RootChainAddress.EthAddress())
+	if err != nil {
+		return nil, err
+	}
+
+	_currentHeaderBlock, err := c.contractConnector.CurrentHeaderBlock(rootChainInstance)
 	if err != nil {
 		c.Logger.Error("Error while fetching current header block number from rootchain", "error", err)
 		return nil, err
@@ -299,7 +306,7 @@ func (c *Checkpointer) nextExpectedCheckpoint(latestChildBlock uint64) (*Contrac
 
 	// get header info
 	// currentHeaderBlock = currentHeaderBlock.Sub(currentHeaderBlock, helper.GetConfig().ChildBlockInterval)
-	_, currentStart, currentEnd, lastCheckpointTime, _, err := c.contractConnector.GetHeaderInfo(currentHeaderBlockNumber.Uint64())
+	_, currentStart, currentEnd, lastCheckpointTime, _, err := c.contractConnector.GetHeaderInfo(currentHeaderBlockNumber.Uint64(), rootChainInstance)
 	if err != nil {
 		c.Logger.Error("Error while fetching current header block object from rootchain", "error", err)
 		return nil, err
@@ -376,7 +383,7 @@ func (c *Checkpointer) nextExpectedCheckpoint(latestChildBlock uint64) (*Contrac
 func (c *Checkpointer) fetchBufferedCheckpoint() (*HeimdallCheckpoint, error) {
 	c.Logger.Info("Fetching checkpoint in buffer")
 
-	_checkpoint, err := c.fetchCheckpoint(GetHeimdallServerEndpoint(BufferedCheckpointURL))
+	_checkpoint, err := c.fetchCheckpoint(helper.GetHeimdallServerEndpoint(BufferedCheckpointURL))
 	if err != nil {
 		return nil, err
 	}
@@ -389,7 +396,7 @@ func (c *Checkpointer) fetchBufferedCheckpoint() (*HeimdallCheckpoint, error) {
 func (c *Checkpointer) fetchCommittedCheckpoint() (*HeimdallCheckpoint, error) {
 	c.Logger.Info("Fetching last committed checkpoint")
 
-	_checkpoint, err := c.fetchCheckpoint(GetHeimdallServerEndpoint(LatestCheckpointURL))
+	_checkpoint, err := c.fetchCheckpoint(helper.GetHeimdallServerEndpoint(LatestCheckpointURL))
 	if err != nil {
 		return nil, err
 	}
@@ -399,7 +406,7 @@ func (c *Checkpointer) fetchCommittedCheckpoint() (*HeimdallCheckpoint, error) {
 
 // fetches checkpoint from given URL
 func (c *Checkpointer) fetchCheckpoint(url string) (checkpoint hmtypes.CheckpointBlockHeader, err error) {
-	response, err := FetchFromAPI(c.cliCtx, url)
+	response, err := helper.FetchFromAPI(c.cliCtx, url)
 	if err != nil {
 		return checkpoint, err
 	}
@@ -415,7 +422,7 @@ func (c *Checkpointer) fetchCheckpoint(url string) (checkpoint hmtypes.Checkpoin
 // fetches dividend accountroothash
 func (c *Checkpointer) fetchDividendAccountRoot() (accountroothash hmtypes.HeimdallHash, err error) {
 	c.Logger.Info("Sending Rest call to Get Dividend AccountRootHash")
-	response, err := FetchFromAPI(c.cliCtx, GetHeimdallServerEndpoint(DividendAccountRootURL))
+	response, err := helper.FetchFromAPI(c.cliCtx, helper.GetHeimdallServerEndpoint(DividendAccountRootURL))
 	if err != nil {
 		c.Logger.Error("Error Fetching accountroothash from HeimdallServer ", "error", err)
 		return accountroothash, err
@@ -559,8 +566,16 @@ func (c *Checkpointer) dispatchCheckpoint(height int64, txHash []byte, start uin
 		return err
 	}
 
+	configParams, _ := GetConfigManagerParams(c.cliCtx)
+
+	rootChainAddress := configParams.ChainParams.RootChainAddress.EthAddress()
+	rootChainInstance, err := c.contractConnector.GetRootChainInstance(rootChainAddress)
+	if err != nil {
+		return err
+	}
+
 	// current child block from contract
-	currentChildBlock, err := c.contractConnector.GetLastChildBlock()
+	currentChildBlock, err := c.contractConnector.GetLastChildBlock(rootChainInstance)
 	if err != nil {
 		return err
 	}
@@ -571,7 +586,7 @@ func (c *Checkpointer) dispatchCheckpoint(height int64, txHash []byte, start uin
 	var proposer hmtypes.Validator
 
 	// fetch latest start block from heimdall via rest query
-	response, err := FetchFromAPI(c.cliCtx, GetHeimdallServerEndpoint(CurrentProposerURL))
+	response, err := helper.FetchFromAPI(c.cliCtx, helper.GetHeimdallServerEndpoint(CurrentProposerURL))
 	if err != nil {
 		c.Logger.Error("Failed to get current proposer through rest")
 		return err
@@ -591,7 +606,7 @@ func (c *Checkpointer) dispatchCheckpoint(height int64, txHash []byte, start uin
 		// check if we need to send checkpoint or not
 		if ((currentChildBlock + 1) == start) || (currentChildBlock == 0 && start == 0) {
 			c.Logger.Info("Checkpoint Valid", "startBlock", start)
-			c.contractConnector.SendCheckpoint(helper.GetVoteBytes(votes, chainID), sigs, tx.Tx[authTypes.PulpHashLength:])
+			c.contractConnector.SendCheckpoint(helper.GetVoteBytes(votes, chainID), sigs, tx.Tx[authTypes.PulpHashLength:], rootChainAddress, rootChainInstance)
 		} else if currentChildBlock > start {
 			c.Logger.Info("Start block does not match, checkpoint already sent", "commitedLastBlock", currentChildBlock, "startBlock", start)
 		} else if currentChildBlock > end {

@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	lru "github.com/hashicorp/golang-lru"
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/common"
 	ethTypes "github.com/maticnetwork/bor/core/types"
@@ -26,12 +27,12 @@ import (
 
 // IContractCaller represents contract caller
 type IContractCaller interface {
-	GetHeaderInfo(headerID uint64) (root common.Hash, start, end, createdAt uint64, proposer types.HeimdallAddress, err error)
-	GetValidatorInfo(valID types.ValidatorID) (validator types.Validator, err error)
-	GetLastChildBlock() (uint64, error)
-	CurrentHeaderBlock() (uint64, error)
+	GetHeaderInfo(headerID uint64, rootChainInstance *rootchain.Rootchain) (root common.Hash, start, end, createdAt uint64, proposer types.HeimdallAddress, err error)
+	GetValidatorInfo(valID types.ValidatorID, stakingInfoInstance *stakinginfo.Stakinginfo) (validator types.Validator, err error)
+	GetLastChildBlock(rootChainInstance *rootchain.Rootchain) (uint64, error)
+	CurrentHeaderBlock(rootChainInstance *rootchain.Rootchain) (uint64, error)
 	GetBalance(address common.Address) (*big.Int, error)
-	SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte)
+	SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte, rootchainAddress common.Address, rootChainInstance *rootchain.Rootchain)
 	GetCheckpointSign(txHash common.Hash) ([]byte, []byte, []byte, error)
 	GetMainChainBlock(*big.Int) (*ethTypes.Header, error)
 	GetMaticChainBlock(*big.Int) (*ethTypes.Header, error)
@@ -52,14 +53,22 @@ type IContractCaller interface {
 
 	GetMainTxReceipt(common.Hash) (*ethTypes.Receipt, error)
 	GetMaticTxReceipt(common.Hash) (*ethTypes.Receipt, error)
-	ApproveTokens(*big.Int) error
-	StakeFor(common.Address, *big.Int, *big.Int, bool) error
-	CurrentAccountStateRoot() ([32]byte, error)
+	ApproveTokens(*big.Int, common.Address, common.Address, *erc20.Erc20) error
+	StakeFor(common.Address, *big.Int, *big.Int, bool, common.Address, *stakemanager.Stakemanager) error
+	CurrentAccountStateRoot(stakingInfoInstance *stakinginfo.Stakinginfo) ([32]byte, error)
 
 	// bor related contracts
-	CurrentSpanNumber() (Number *big.Int)
-	GetSpanDetails(id *big.Int) (*big.Int, *big.Int, *big.Int, error)
-	CurrentStateCounter() (Number *big.Int)
+	CurrentSpanNumber(validatorset *validatorset.Validatorset) (Number *big.Int)
+	GetSpanDetails(id *big.Int, validatorset *validatorset.Validatorset) (*big.Int, *big.Int, *big.Int, error)
+	CurrentStateCounter(stateSenderInstance *statesender.Statesender) (Number *big.Int)
+
+	GetRootChainInstance(rootchainAddress common.Address) (*rootchain.Rootchain, error)
+	GetStakingInfoInstance(stakingInfoAddress common.Address) (*stakinginfo.Stakinginfo, error)
+	GetValidatorSetInstance(validatorSetAddress common.Address) (*validatorset.Validatorset, error)
+	GetStakeManagerInstance(stakingManagerAddress common.Address) (*stakemanager.Stakemanager, error)
+	GetStateSenderInstance(stateSenderAddress common.Address) (*statesender.Statesender, error)
+	GetStateReceiverInstance(stateReceiverAddress common.Address) (*statereceiver.Statereceiver, error)
+	GetMaticTokenInstance(maticTokenAddress common.Address) (*erc20.Erc20, error)
 }
 
 // ContractCaller contract caller
@@ -68,9 +77,6 @@ type ContractCaller struct {
 	MainChainRPC     *rpc.Client
 	MaticChainClient *ethclient.Client
 
-	ValidatorSetInstance  *validatorset.Validatorset
-	StateReceiverInstance *statereceiver.Statereceiver
-
 	RootChainABI     abi.ABI
 	StakingInfoABI   abi.ABI
 	ValidatorSetABI  abi.ABI
@@ -78,6 +84,8 @@ type ContractCaller struct {
 	StateSenderABI   abi.ABI
 	StakeManagerABI  abi.ABI
 	MaticTokenABI    abi.ABI
+
+	ContractInstanceCache *lru.Cache
 }
 
 type txExtraInfo struct {
@@ -129,11 +137,86 @@ func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 		return
 	}
 
+	contractCallerObj.ContractInstanceCache = NewLru(10)
+
 	return
 }
 
+// NewLru returns instance of lru cache
+func NewLru(size int) *lru.Cache {
+	lruObj, _ := lru.New(size)
+	return lruObj
+}
+
+// GetRootChainInstance returns RootChain contract instance for selected base chain
+func (c *ContractCaller) GetRootChainInstance(rootchainAddress common.Address) (*rootchain.Rootchain, error) {
+	contractInstance, ok := c.ContractInstanceCache.Get(rootchainAddress)
+	if ok == false {
+		return rootchain.NewRootchain(rootchainAddress, mainChainClient)
+	}
+	return contractInstance.(*rootchain.Rootchain), errors.New("Failed to create contract instance")
+}
+
+// GetStakingInfoInstance returns stakinginfo contract instance for selected base chain
+func (c *ContractCaller) GetStakingInfoInstance(stakingInfoAddress common.Address) (*stakinginfo.Stakinginfo, error) {
+	contractInstance, ok := c.ContractInstanceCache.Get(stakingInfoAddress)
+	if ok == false {
+		return stakinginfo.NewStakinginfo(stakingInfoAddress, mainChainClient)
+	}
+	return contractInstance.(*stakinginfo.Stakinginfo), errors.New("Failed to create contract instance")
+}
+
+// GetValidatorSetInstance returns stakinginfo contract instance for selected base chain
+func (c *ContractCaller) GetValidatorSetInstance(validatorSetAddress common.Address) (*validatorset.Validatorset, error) {
+	contractInstance, ok := c.ContractInstanceCache.Get(validatorSetAddress)
+	if ok == false {
+		return validatorset.NewValidatorset(validatorSetAddress, mainChainClient)
+
+	}
+	return contractInstance.(*validatorset.Validatorset), errors.New("Failed to create contract instance")
+}
+
+// GetStakeManagerInstance returns stakinginfo contract instance for selected base chain
+func (c *ContractCaller) GetStakeManagerInstance(stakingManagerAddress common.Address) (*stakemanager.Stakemanager, error) {
+	contractInstance, ok := c.ContractInstanceCache.Get(stakingManagerAddress)
+	if ok == false {
+		return stakemanager.NewStakemanager(stakingManagerAddress, mainChainClient)
+
+	}
+	return contractInstance.(*stakemanager.Stakemanager), errors.New("Failed to create contract instance")
+}
+
+// GetStateSenderInstance returns stakinginfo contract instance for selected base chain
+func (c *ContractCaller) GetStateSenderInstance(stateSenderAddress common.Address) (*statesender.Statesender, error) {
+	contractInstance, ok := c.ContractInstanceCache.Get(stateSenderAddress)
+	if ok == false {
+		return statesender.NewStatesender(stateSenderAddress, mainChainClient)
+
+	}
+	return contractInstance.(*statesender.Statesender), errors.New("Failed to create contract instance")
+}
+
+// GetStateReceiverInstance returns stakinginfo contract instance for selected base chain
+func (c *ContractCaller) GetStateReceiverInstance(stateReceiverAddress common.Address) (*statereceiver.Statereceiver, error) {
+	contractInstance, ok := c.ContractInstanceCache.Get(stateReceiverAddress)
+	if ok == false {
+		return statereceiver.NewStatereceiver(stateReceiverAddress, mainChainClient)
+	}
+	return contractInstance.(*statereceiver.Statereceiver), errors.New("Failed to create contract instance")
+}
+
+// GetMaticTokenInstance returns stakinginfo contract instance for selected base chain
+func (c *ContractCaller) GetMaticTokenInstance(maticTokenAddress common.Address) (*erc20.Erc20, error) {
+	contractInstance, ok := c.ContractInstanceCache.Get(maticTokenAddress)
+	if ok == false {
+		return erc20.NewErc20(maticTokenAddress, mainChainClient)
+
+	}
+	return contractInstance.(*erc20.Erc20), errors.New("Failed to create contract instance")
+}
+
 // GetHeaderInfo get header info from header id
-func (c *ContractCaller) GetHeaderInfo(headerID uint64) (
+func (c *ContractCaller) GetHeaderInfo(headerID uint64, rootChainInstance *rootchain.Rootchain) (
 	root common.Hash,
 	start uint64,
 	end uint64,
@@ -142,7 +225,7 @@ func (c *ContractCaller) GetHeaderInfo(headerID uint64) (
 	err error,
 ) {
 	// get header from rootchain
-	headerBlock, err := c.RootChainInstance.HeaderBlocks(nil, big.NewInt(0).SetUint64(headerID))
+	headerBlock, err := rootChainInstance.HeaderBlocks(nil, big.NewInt(0).SetUint64(headerID))
 	if err != nil {
 		Logger.Error("Unable to fetch header block from rootchain", "headerBlockIndex", headerID)
 		return root, start, end, createdAt, proposer, errors.New("Unable to fetch header block")
@@ -157,8 +240,8 @@ func (c *ContractCaller) GetHeaderInfo(headerID uint64) (
 }
 
 // GetLastChildBlock fetch current child block
-func (c *ContractCaller) GetLastChildBlock() (uint64, error) {
-	GetLastChildBlock, err := c.RootChainInstance.GetLastChildBlock(nil)
+func (c *ContractCaller) GetLastChildBlock(rootChainInstance *rootchain.Rootchain) (uint64, error) {
+	GetLastChildBlock, err := rootChainInstance.GetLastChildBlock(nil)
 	if err != nil {
 		Logger.Error("Could not fetch current child block from rootchain contract", "Error", err)
 		return 0, err
@@ -167,8 +250,8 @@ func (c *ContractCaller) GetLastChildBlock() (uint64, error) {
 }
 
 // CurrentHeaderBlock fetches current header block
-func (c *ContractCaller) CurrentHeaderBlock() (uint64, error) {
-	currentHeaderBlock, err := c.RootChainInstance.CurrentHeaderBlock(nil)
+func (c *ContractCaller) CurrentHeaderBlock(rootChainInstance *rootchain.Rootchain) (uint64, error) {
+	currentHeaderBlock, err := rootChainInstance.CurrentHeaderBlock(nil)
 	if err != nil {
 		Logger.Error("Could not fetch current header block from rootchain contract", "Error", err)
 		return 0, err
@@ -188,9 +271,9 @@ func (c *ContractCaller) GetBalance(address common.Address) (*big.Int, error) {
 }
 
 // GetValidatorInfo get validator info
-func (c *ContractCaller) GetValidatorInfo(valID types.ValidatorID) (validator types.Validator, err error) {
+func (c *ContractCaller) GetValidatorInfo(valID types.ValidatorID, stakingInfoInstance *stakinginfo.Stakinginfo) (validator types.Validator, err error) {
 	// amount, startEpoch, endEpoch, signer, status, err := c.StakingInfoInstance.GetStakerDetails(nil, big.NewInt(int64(valID)))
-	stakerDetails, err := c.StakingInfoInstance.GetStakerDetails(nil, big.NewInt(int64(valID)))
+	stakerDetails, err := stakingInfoInstance.GetStakerDetails(nil, big.NewInt(int64(valID)))
 	if err != nil {
 		Logger.Error("Error fetching validator information from stake manager", "error", err, "validatorId", valID, "status", stakerDetails.Status)
 		return
@@ -454,8 +537,8 @@ func (c *ContractCaller) DecodeStateSyncedEvent(contractAddress common.Address, 
 //
 
 // CurrentAccountStateRoot get current account root from on chain
-func (c *ContractCaller) CurrentAccountStateRoot() ([32]byte, error) {
-	accountStateRoot, err := c.StakingInfoInstance.GetAccountStateRoot(nil)
+func (c *ContractCaller) CurrentAccountStateRoot(stakingInfoInstance *stakinginfo.Stakinginfo) ([32]byte, error) {
+	accountStateRoot, err := stakingInfoInstance.GetAccountStateRoot(nil)
 
 	if err != nil {
 		Logger.Error("Unable to get current account state roor", "Error", err)
@@ -471,8 +554,8 @@ func (c *ContractCaller) CurrentAccountStateRoot() ([32]byte, error) {
 //
 
 // CurrentSpanNumber get current span
-func (c *ContractCaller) CurrentSpanNumber() (Number *big.Int) {
-	result, err := c.ValidatorSetInstance.CurrentSpanNumber(nil)
+func (c *ContractCaller) CurrentSpanNumber(validatorSetInstance *validatorset.Validatorset) (Number *big.Int) {
+	result, err := validatorSetInstance.CurrentSpanNumber(nil)
 	if err != nil {
 		Logger.Error("Unable to get current span number", "Error", err)
 		return nil
@@ -482,19 +565,19 @@ func (c *ContractCaller) CurrentSpanNumber() (Number *big.Int) {
 }
 
 // GetSpanDetails get span details
-func (c *ContractCaller) GetSpanDetails(id *big.Int) (
+func (c *ContractCaller) GetSpanDetails(id *big.Int, validatorSetInstance *validatorset.Validatorset) (
 	*big.Int,
 	*big.Int,
 	*big.Int,
 	error,
 ) {
-	d, err := c.ValidatorSetInstance.GetSpan(nil, id)
+	d, err := validatorSetInstance.GetSpan(nil, id)
 	return d.Number, d.StartBlock, d.EndBlock, err
 }
 
 // CurrentStateCounter get state counter
-func (c *ContractCaller) CurrentStateCounter() (Number *big.Int) {
-	result, err := c.StateSenderInstance.Counter(nil)
+func (c *ContractCaller) CurrentStateCounter(stateSenderInstance *statesender.Statesender) (Number *big.Int) {
+	result, err := stateSenderInstance.Counter(nil)
 	if err != nil {
 		Logger.Error("Unable to get current counter number", "Error", err)
 		return nil

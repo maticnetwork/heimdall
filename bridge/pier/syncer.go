@@ -119,7 +119,7 @@ func NewSyncer(cdc *codec.Codec, queueConnector *QueueConnector, httpClient *htt
 		HeaderChannel: make(chan *types.Header),
 
 		headerQueue:        list.New(),
-		txConfirmationTime: uint64(helper.GetConfig().TxConfirmationTime.Seconds()),
+		txConfirmationTime: uint64(helper.GetConfig().TxConfirmationTime.Seconds()), // TOOD use from config params
 	}
 
 	syncer.BaseService = *common.NewBaseService(logger, ChainSyncer, syncer)
@@ -293,14 +293,17 @@ func (syncer *Syncer) processHeader(newHeader *types.Header) {
 	// log
 	syncer.Logger.Info("Querying event logs", "fromBlock", fromBlock, "toBlock", toBlock)
 
+	// Fetch contract addresses from configManager
+	configParams, _ := GetConfigManagerParams(syncer.cliCtx)
+
 	// draft a query
 	query := ethereum.FilterQuery{
 		FromBlock: fromBlock,
 		ToBlock:   toBlock,
 		Addresses: []ethCommon.Address{
-			helper.GetRootChainAddress(),
-			helper.GetStakingInfoAddress(),
-			helper.GetStateSenderAddress(),
+			configParams.ChainParams.RootChainAddress.EthAddress(),
+			configParams.ChainParams.StakingInfoAddress.EthAddress(),
+			configParams.ChainParams.StateSenderAddress.EthAddress(),
 		},
 	}
 

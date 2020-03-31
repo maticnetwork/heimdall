@@ -130,7 +130,14 @@ func (s *ClerkService) startPolling(ctx context.Context, interval time.Duration)
 
 func (s *ClerkService) commit() {
 	// get current span number from bor chain
-	currentStateCounter := s.contractConnector.CurrentStateCounter()
+	configParams, _ := GetConfigManagerParams(s.cliCtx)
+
+	stateSenderInstance, err := s.contractConnector.GetStateSenderInstance(configParams.ChainParams.StateSenderAddress.EthAddress())
+	if err != nil {
+		return
+	}
+
+	currentStateCounter := s.contractConnector.CurrentStateCounter(stateSenderInstance)
 	if currentStateCounter == nil {
 		currentStateCounter = big.NewInt(0)
 	}
@@ -225,7 +232,7 @@ func (s *ClerkService) saveLastEventRecordID(result uint64) {
 // checks state counter
 func (s *ClerkService) getStateSyncerCounter() (*hmTypes.Span, error) {
 	// fetch latest start block from heimdall via rest query
-	result, err := FetchFromAPI(s.cliCtx, GetHeimdallServerEndpoint(LatestSpanURL))
+	result, err := helper.FetchFromAPI(s.cliCtx, helper.GetHeimdallServerEndpoint(LatestSpanURL))
 	if err != nil {
 		s.Logger.Error("Error while fetching latest span")
 		return nil, err
@@ -259,7 +266,10 @@ func (s *ClerkService) broadcastToBor(stateID uint64) error {
 	encodedData := s.encodeProposeStateData(stateID)
 
 	// get validator address
-	stateReceiverAddress := helper.GetStateReceiverAddress()
+	configParams, _ := GetConfigManagerParams(s.cliCtx)
+
+	stateReceiverAddress := configParams.ChainParams.StateReceiverAddress.EthAddress()
+
 	msg := ethereum.CallMsg{
 		To:   &stateReceiverAddress,
 		Data: encodedData,

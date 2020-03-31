@@ -31,6 +31,10 @@ type ChainParams struct {
 	RootChainAddress      hmTypes.HeimdallAddress `json:"root_chain_address" yaml:"root_chain_address"`
 	StakingInfoAddress    hmTypes.HeimdallAddress `json:"staking_info_address" yaml:"staking_info_address"`
 	StateSenderAddress    hmTypes.HeimdallAddress `json:"state_sender_address" yaml:"state_sender_address"`
+
+	// Bor Chain Contracts
+	StateReceiverAddress hmTypes.HeimdallAddress `json:"state_receiver_address" yaml:"state_receiver_address"`
+	ValidatorSetAddress  hmTypes.HeimdallAddress `json:"validator_set_address" yaml:"validator_set_address"`
 }
 
 func (cp ChainParams) String() string {
@@ -40,8 +44,10 @@ func (cp ChainParams) String() string {
 	StakingManagerAddress:        %s
 	RootChainAddress:             %s
   StakingInfoAddress:           %s
-  StateSenderAddress:           %s`,
-		cp.BorChainID, cp.MaticTokenAddress, cp.StakingManagerAddress, cp.RootChainAddress, cp.StakingInfoAddress, cp.StateSenderAddress)
+	StateSenderAddress:           %s
+	StateReceiverAddress: 				%s
+	ValidatorSetAddress:					%s`,
+		cp.BorChainID, cp.MaticTokenAddress, cp.StakingManagerAddress, cp.RootChainAddress, cp.StakingInfoAddress, cp.StateSenderAddress, cp.StateReceiverAddress, cp.ValidatorSetAddress)
 }
 
 // Params defines the parameters for the auth module.
@@ -103,6 +109,14 @@ func (p Params) Validate() error {
 	}
 
 	if err := validateHeimdallAddress(p.ChainParams.StateSenderAddress, "state_sender_address"); err != nil {
+		return err
+	}
+
+	if err := validateHeimdallAddress(p.ChainParams.StateReceiverAddress, "state_receiver_address"); err != nil {
+		return err
+	}
+
+	if err := validateHeimdallAddress(p.ChainParams.ValidatorSetAddress, "validator_set_address"); err != nil {
 		return err
 	}
 

@@ -247,9 +247,9 @@ func (qc *QueueConnector) handleHeimdallBroadcastMsgs(amqpMsgs <-chan amqp.Deliv
 	address := hmTypes.BytesToHeimdallAddress(helper.GetAddress())
 	// fetch from APIs
 	var account authTypes.Account
-	response, err := FetchFromAPI(qc.cliCtx, GetHeimdallServerEndpoint(fmt.Sprintf(AccountDetailsURL, address)))
+	response, err := helper.FetchFromAPI(qc.cliCtx, helper.GetHeimdallServerEndpoint(fmt.Sprintf(AccountDetailsURL, address)))
 	if err != nil {
-		qc.logger.Error("Error fetching account from rest-api", "url", GetHeimdallServerEndpoint(fmt.Sprintf(AccountDetailsURL, address)))
+		qc.logger.Error("Error fetching account from rest-api", "url", helper.GetHeimdallServerEndpoint(fmt.Sprintf(AccountDetailsURL, address)))
 		panic("Error connecting to rest-server, please start server before bridge")
 	}
 

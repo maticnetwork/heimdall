@@ -6,22 +6,20 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
-	"math/big"
 	"strconv"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
+	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
+	hmtypes "github.com/maticnetwork/heimdall/types"
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/tendermint/tendermint/libs/common"
 	httpClient "github.com/tendermint/tendermint/rpc/client"
 
-	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
-	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/helper"
-	hmtypes "github.com/maticnetwork/heimdall/types"
 )
 
 // Result represents single req result
@@ -36,9 +34,6 @@ type AckService struct {
 	// storage client
 	storageClient *leveldb.DB
 
-	// Rootchain instance
-	rootChainInstance *rootchain.Rootchain
-
 	// header listener subscription
 	cancelACKProcess context.CancelFunc
 
@@ -50,6 +45,9 @@ type AckService struct {
 
 	// http client to subscribe to
 	httpClient *httpClient.HTTP
+
+	// contract caller
+	contractConnector helper.ContractCaller
 }
 
 // NewAckService returns new service object
@@ -57,25 +55,23 @@ func NewAckService(cdc *codec.Codec, queueConnector *QueueConnector, httpClient 
 	// create logger
 	logger := Logger.With("module", NoackService)
 
-	// root chain instance
-	rootchainInstance, err := helper.GetRootChainInstance()
-	if err != nil {
-		logger.Error("Error while getting root chain instance", "error", err)
-		panic(err)
-	}
-
 	cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
 	cliCtx.BroadcastMode = client.BroadcastSync
 	cliCtx.TrustNode = true
+	contractCaller, err := helper.NewContractCaller()
 
+	if err != nil {
+		logger.Error("Error while getting contract instance", "error", err)
+		panic(err)
+	}
 	// creating checkpointer object
 	ackservice := &AckService{
-		storageClient:     getBridgeDBInstance(viper.GetString(BridgeDBFlag)),
-		rootChainInstance: rootchainInstance,
+		storageClient: getBridgeDBInstance(viper.GetString(BridgeDBFlag)),
 
-		cliCtx:         cliCtx,
-		queueConnector: queueConnector,
-		httpClient:     httpClient,
+		cliCtx:            cliCtx,
+		queueConnector:    queueConnector,
+		httpClient:        httpClient,
+		contractConnector: contractCaller,
 	}
 
 	ackservice.BaseService = *common.NewBaseService(logger, NoackService, ackservice)
@@ -125,31 +121,34 @@ func (ackService *AckService) startPollingCheckpoint(ctx context.Context, interv
 }
 
 func (ackService *AckService) checkForCheckpoint() {
-	currentHeaderNumber, err := ackService.rootChainInstance.CurrentHeaderBlock(nil)
+	configParams, _ := GetConfigManagerParams(ackService.cliCtx)
+
+	rootChainInstance, err := ackService.contractConnector.GetRootChainInstance(configParams.ChainParams.RootChainAddress.EthAddress())
+	if err != nil {
+		return
+	}
+
+	lastHeaderNumber, err := ackService.contractConnector.CurrentHeaderBlock(rootChainInstance)
 	if err != nil {
 		ackService.Logger.Error("Error while fetching current header block number", "error", err)
 		return
 	}
 
-	// fetch last header number
-	lastHeaderNumber := currentHeaderNumber.Uint64() // - helper.GetConfig().ChildBlockInterval
 	if lastHeaderNumber == 0 {
 		// First checkpoint required
 		return
 	}
 	// get big int header number
-	headerNumber := big.NewInt(0)
-	headerNumber.SetUint64(lastHeaderNumber)
 
 	// header block
-	headerObject, err := ackService.rootChainInstance.HeaderBlocks(nil, headerNumber)
+	_, _, _, createdAt, _, err := ackService.contractConnector.GetHeaderInfo(lastHeaderNumber, rootChainInstance)
 	if err != nil {
 		ackService.Logger.Error("Error while fetching header block object", "error", err)
 		return
 	}
 
 	// process checkpoint
-	go ackService.processCheckpoint(headerObject.CreatedAt.Int64())
+	go ackService.processCheckpoint(int64(createdAt))
 }
 
 func (ackService *AckService) processCheckpoint(lastCreatedAt int64) {
@@ -214,7 +213,7 @@ func (ackService *AckService) processCheckpoint(lastCreatedAt int64) {
 }
 
 func (ackService *AckService) getLastNoAckTime() uint64 {
-	response, err := FetchFromAPI(ackService.cliCtx, GetHeimdallServerEndpoint(LastNoAckURL))
+	response, err := helper.FetchFromAPI(ackService.cliCtx, helper.GetHeimdallServerEndpoint(LastNoAckURL))
 	if err != nil {
 		ackService.Logger.Error("Unable to send request for checkpoint buffer", "Error", err)
 		return 0
@@ -231,9 +230,9 @@ func (ackService *AckService) getLastNoAckTime() uint64 {
 
 func (ackService *AckService) isValidProposer(count uint64, address []byte) bool {
 	ackService.Logger.Debug("Skipping proposers", "count", strconv.FormatUint(count, 10))
-	response, err := FetchFromAPI(
+	response, err := helper.FetchFromAPI(
 		ackService.cliCtx,
-		GetHeimdallServerEndpoint(fmt.Sprintf(ProposersURL, strconv.FormatUint(count, 10))),
+		helper.GetHeimdallServerEndpoint(fmt.Sprintf(ProposersURL, strconv.FormatUint(count, 10))),
 	)
 	if err != nil {
 		ackService.Logger.Error("Unable to send request for next proposers", "Error", err)
@@ -258,9 +257,9 @@ func (ackService *AckService) isValidProposer(count uint64, address []byte) bool
 }
 
 func (ackService *AckService) getCheckpointParams() (*checkpointTypes.Params, error) {
-	response, err := FetchFromAPI(
+	response, err := helper.FetchFromAPI(
 		ackService.cliCtx,
-		GetHeimdallServerEndpoint(CheckpointParamsURL),
+		helper.GetHeimdallServerEndpoint(CheckpointParamsURL),
 	)
 
 	if err != nil {
