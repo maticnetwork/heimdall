@@ -1,9 +1,7 @@
 package checkpoint
 
 import (
-	"bytes"
 	"encoding/json"
-	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -157,47 +155,48 @@ func (AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.Validato
 // Internal methods
 //
 func verifyGenesis(state types.GenesisState) error {
-	contractCaller, err := helper.NewContractCaller()
-	if err != nil {
-		return err
-	}
-
+	// contractCaller, err := helper.NewContractCaller()
+	// if err != nil {
+	// 	return err
+	// }
+	// TODO: figure out maybe fetch address from chainmanager genesis itself
 	// check header count
-	currentHeaderIndex, err := contractCaller.CurrentHeaderBlock()
-	if err != nil {
-		return nil
-	}
 
-	if state.AckCount*helper.GetConfig().ChildBlockInterval != currentHeaderIndex {
-		fmt.Println("Header Count doesn't match",
-			"ExpectedHeader", currentHeaderIndex,
-			"HeaderIndexFound", state.AckCount*helper.GetConfig().ChildBlockInterval)
-		return nil
-	}
+	// currentHeaderIndex, err := contractCaller.CurrentHeaderBlock()
+	// if err != nil {
+	// 	return nil
+	// }
 
-	fmt.Println("ACK count valid:", "count", currentHeaderIndex)
+	// if state.AckCount*helper.GetConfig().ChildBlockInterval != currentHeaderIndex {
+	// 	fmt.Println("Header Count doesn't match",
+	// 		"ExpectedHeader", currentHeaderIndex,
+	// 		"HeaderIndexFound", state.AckCount*helper.GetConfig().ChildBlockInterval)
+	// 	return nil
+	// }
 
-	// check all headers
-	for i, header := range state.Headers {
-		ackCount := uint64(i + 1)
-		root, start, end, _, _, err := contractCaller.GetHeaderInfo(ackCount * helper.GetConfig().ChildBlockInterval)
-		if err != nil {
-			return err
-		}
+	// fmt.Println("ACK count valid:", "count", currentHeaderIndex)
 
-		if header.StartBlock != start || header.EndBlock != end || !bytes.Equal(header.RootHash.Bytes(), root.Bytes()) {
-			return fmt.Errorf(
-				"Checkpoint block doesnt match: startExpected %v, startReceived %v, endExpected %v, endReceived %v, rootHashExpected %v, rootHashReceived %v",
-				header.StartBlock,
-				start,
-				header.EndBlock,
-				header.EndBlock,
-				header.RootHash.String(),
-				root.String(),
-			)
-		}
-		fmt.Println("Checkpoint block valid:", "start", start, "end", end, "root", root.String())
-	}
+	// // check all headers
+	// for i, header := range state.Headers {
+	// 	ackCount := uint64(i + 1)
+	// 	root, start, end, _, _, err := contractCaller.GetHeaderInfo(ackCount * helper.GetConfig().ChildBlockInterval)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+
+	// 	if header.StartBlock != start || header.EndBlock != end || !bytes.Equal(header.RootHash.Bytes(), root.Bytes()) {
+	// 		return fmt.Errorf(
+	// 			"Checkpoint block doesnt match: startExpected %v, startReceived %v, endExpected %v, endReceived %v, rootHashExpected %v, rootHashReceived %v",
+	// 			header.StartBlock,
+	// 			start,
+	// 			header.EndBlock,
+	// 			header.EndBlock,
+	// 			header.RootHash.String(),
+	// 			root.String(),
+	// 		)
+	// 	}
+	// 	fmt.Println("Checkpoint block valid:", "start", start, "end", end, "root", root.String())
+	// }
 
 	return nil
 }

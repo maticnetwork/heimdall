@@ -2,7 +2,6 @@ package staking
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -57,29 +56,29 @@ func (AppModuleBasic) ValidateGenesis(bz json.RawMessage) error {
 
 // VerifyGenesis performs verification on auth module state.
 func (AppModuleBasic) VerifyGenesis(bz map[string]json.RawMessage) error {
-	var data types.GenesisState
-	err := json.Unmarshal(bz[types.ModuleName], &data)
-	if err != nil {
-		return err
-	}
+	// var data types.GenesisState
+	// err := json.Unmarshal(bz[types.ModuleName], &data)
+	// if err != nil {
+	// 	return err
+	// }
 
-	contractCaller, err := helper.NewContractCaller()
-	if err != nil {
-		return err
-	}
+	// contractCaller, err := helper.NewContractCaller()
+	// if err != nil {
+	// 	return err
+	// }
 
-	// validate validators
-	validators := data.Validators
-	for _, v := range validators {
-		val, err := contractCaller.GetValidatorInfo(v.ID)
-		if err != nil {
-			return err
-		}
+	// // validate validators
+	// validators := data.Validators
+	// for _, v := range validators {
+	// 	val, err := contractCaller.GetValidatorInfo(v.ID)
+	// 	if err != nil {
+	// 		return err
+	// 	}
 
-		if val.VotingPower != v.VotingPower {
-			return fmt.Errorf("Voting power mismatch. Expected: %v Received: %v ValID: %v", val.VotingPower, v.VotingPower, v.ID)
-		}
-	}
+	// 	if val.VotingPower != v.VotingPower {
+	// 		return fmt.Errorf("Voting power mismatch. Expected: %v Received: %v ValID: %v", val.VotingPower, v.VotingPower, v.ID)
+	// 	}
+	// }
 
 	return nil
 }
