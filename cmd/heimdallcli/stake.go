@@ -16,7 +16,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-var checkpointEndpoint = "/chainmanager/params"
+var checkpointEndpoint = "chainmanager/params"
 
 // StakeCmd stakes for a validator
 func StakeCmd(cliCtx cliContext.CLIContext) *cobra.Command {
