@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"math/big"
@@ -65,6 +64,10 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc(
 		"/staking/account-proof/verify/",
 		VerifyAccountProofHandlerFn(cliCtx),
+	).Methods("GET")
+	r.HandleFunc(
+		"/staking/isoldtx",
+		StakingTxStatusHandlerFn(cliCtx),
 	).Methods("GET")
 }
 
@@ -488,10 +491,9 @@ func dividendAccountProofHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		merkleProof := hex.EncodeToString(res)
 		// return result
 		cliCtx = cliCtx.WithHeight(height)
-		rest.PostProcessResponse(w, cliCtx, merkleProof)
+		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
 
@@ -543,5 +545,54 @@ func VerifyAccountProofHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, res)
 
+	}
+}
+
+// Returns staking tx status information
+func StakingTxStatusHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := r.URL.Query()
+
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		// get logIndex
+		logindex, ok := rest.ParseUint64OrReturnBadRequest(w, vars.Get("logindex"))
+		if !ok {
+			return
+		}
+
+		txHash := vars.Get("txhash")
+
+		if txHash == "" {
+			return
+		}
+
+		// get query params
+		queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQueryStakingSequenceParams(txHash, logindex))
+		if err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		seqNo, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryStakingSequence), queryParams)
+		if err != nil {
+			RestLogger.Error("Error while fetching staking sequence", "Error", err.Error())
+			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		// error if no tx status found
+		if ok := hmRest.ReturnNotFoundIfNoContent(w, seqNo, "No sequence found"); !ok {
+			return
+		}
+
+		res := true
+
+		// return result
+		cliCtx = cliCtx.WithHeight(height)
+		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }

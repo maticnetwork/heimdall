@@ -66,19 +66,20 @@ func (c *ContractCaller) SendCheckpoint(voteSignBytes []byte, sigs []byte, txDat
 	err := rlp.DecodeBytes(voteSignBytes, &vote)
 	if err != nil {
 		Logger.Error("Unable to decode vote while sending checkpoint", "vote", hex.EncodeToString(voteSignBytes), "sigs", hex.EncodeToString(sigs), "txData", hex.EncodeToString(txData))
-		return
+		return err
 	}
 
 	data, err := c.RootChainABI.Pack("submitHeaderBlock", voteSignBytes, sigs, txData)
 	if err != nil {
 		Logger.Error("Unable to pack tx for submitHeaderBlock", "error", err)
-		return
+		return err
 	}
 
 	auth, err := GenerateAuthObj(GetMainClient(), rootChainAddress, data)
 	if err != nil {
 		Logger.Error("Unable to create auth object", "error", err)
-		return
+		Logger.Info("Setting custom gaslimit", "gaslimit", GetConfig().MainchainGasLimit)
+		auth.GasLimit = GetConfig().MainchainGasLimit
 	}
 	GetPubKey().VerifyBytes(voteSignBytes, sigs)
 
@@ -90,10 +91,11 @@ func (c *ContractCaller) SendCheckpoint(voteSignBytes []byte, sigs []byte, txDat
 	tx, err := rootChainInstance.SubmitHeaderBlock(auth, voteSignBytes, sigs, txData)
 	if err != nil {
 		Logger.Error("Error while submitting checkpoint", "error", err)
+		return err
 	} else {
-		Logger.Info("Submitted new header successfully", "txHash", tx.Hash().String())
+		Logger.Info("Submitted new checkpoint to rootchain successfully", "txHash", tx.Hash().String())
 	}
-
+	return nil
 }
 
 // StakeFor stakes for a validator

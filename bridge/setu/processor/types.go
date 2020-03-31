@@ -1,4 +1,4 @@
-package pier
+package processor
 
 import (
 	"fmt"

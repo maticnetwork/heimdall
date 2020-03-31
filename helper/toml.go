@@ -63,6 +63,8 @@ noack_poll_interval = "{{ .NoACKPollInterval }}"
 clerk_polling_interval = "{{ .ClerkPollingInterval }}" 
 span_polling_interval = "{{ .SpanPollingInterval }}" 
 
+#### gas limits ####
+main_chain_gas_limit = "{{ .MainchainGasLimit }}"
 
 ##### Checkpoint Length Config #####
 avg_checkpoint_length = "{{ .AvgCheckpointLength }}"
