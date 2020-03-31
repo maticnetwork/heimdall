@@ -199,10 +199,6 @@ func (rl *RootChainListener) queryAndBroadcastEvents(fromBlock *big.Int, toBlock
 					}
 					if bytes.Compare(event.NewSigner.Bytes(), helper.GetAddress()) == 0 {
 						rl.sendTaskWithDelay("sendSignerChangeToHeimdall", selectedEvent.Name, logBytes, 0)
-					} else if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx); isCurrentValidator {
-						// Adding extra delay so that validator from event log will process first
-						delay = delay + util.TaskDelayBetweenEachVal
-						rl.sendTaskWithDelay("sendSignerChangeToHeimdall", selectedEvent.Name, logBytes, delay)
 					}
 
 				case "UnstakeInit":
@@ -218,16 +214,21 @@ func (rl *RootChainListener) queryAndBroadcastEvents(fromBlock *big.Int, toBlock
 						rl.sendTaskWithDelay("sendUnstakeInitToHeimdall", selectedEvent.Name, logBytes, delay)
 					}
 
-				case "ReStaked":
-					rl.sendTaskWithDelay("sendReStakedToHeimdall", selectedEvent.Name, logBytes, 0)
-
 				case "StateSynced":
 					if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx); isCurrentValidator {
 						rl.sendTaskWithDelay("sendStateSyncedToHeimdall", selectedEvent.Name, logBytes, delay)
 					}
 
 				case "TopUpFee":
-					if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx); isCurrentValidator {
+					event := new(stakinginfo.StakinginfoTopUpFee)
+					if err := helper.UnpackLog(rl.stakingInfoAbi, event, selectedEvent.Name, &vLog); err != nil {
+						rl.Logger.Error("Error while parsing event", "name", selectedEvent.Name, "error", err)
+					}
+					if util.IsEventSender(rl.cliCtx, event.ValidatorId.Uint64()) {
+						rl.sendTaskWithDelay("sendTopUpFeeToHeimdall", selectedEvent.Name, logBytes, 0)
+					} else if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx); isCurrentValidator {
+						// Adding extra delay so that validator from event log will process first
+						delay = delay + util.TaskDelayBetweenEachVal
 						rl.sendTaskWithDelay("sendTopUpFeeToHeimdall", selectedEvent.Name, logBytes, delay)
 					}
 				}

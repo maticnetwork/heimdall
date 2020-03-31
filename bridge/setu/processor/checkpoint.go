@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"math"
 	"math/big"
 	"strconv"
@@ -126,7 +125,7 @@ func (cp *CheckpointProcessor) sendCheckpointToHeimdall(headerBlockStr string) (
 			return err
 		}
 	} else {
-		cp.Logger.Info("i am not the proposer. skipping newheader", "headerNumber", header.Number)
+		cp.Logger.Info("I am not the proposer. skipping newheader", "headerNumber", header.Number)
 		return
 	}
 
@@ -137,10 +136,16 @@ func (cp *CheckpointProcessor) sendCheckpointToHeimdall(headerBlockStr string) (
 // 1. check if i am the current proposer.
 // 2. check if this checkpoint has to be submitted to rootchain
 // 3. if so, create and broadcast checkpoint transaction to rootchain
-func (cp *CheckpointProcessor) sendCheckpointToRootchain(checkpointStr string) error {
+func (cp *CheckpointProcessor) sendCheckpointToRootchain(eventBytes string, txBytes string) error {
 	var event = sdk.StringEvent{}
-	if err := json.Unmarshal([]byte(checkpointStr), &event); err != nil {
+	if err := json.Unmarshal([]byte(eventBytes), &event); err != nil {
 		cp.Logger.Error("Error unmarshalling event from heimdall", "error", err)
+		return err
+	}
+
+	var tx = sdk.TxResponse{}
+	if err := json.Unmarshal([]byte(txBytes), &tx); err != nil {
+		cp.Logger.Error("Error unmarshalling txResponse", "error", err)
 		return err
 	}
 
@@ -151,23 +156,34 @@ func (cp *CheckpointProcessor) sendCheckpointToRootchain(checkpointStr string) e
 		return err
 	}
 
-	if isCurrentProposer {
-		var startBlock uint64
-		var endBlock uint64
-		for _, attr := range event.Attributes {
-			if attr.Key == checkpointTypes.AttributeKeyStartBlock {
-				startBlock, _ = strconv.ParseUint(attr.Value, 10, 64)
-			}
-			if attr.Key == checkpointTypes.AttributeKeyEndBlock {
-				endBlock, _ = strconv.ParseUint(attr.Value, 10, 64)
-			}
+	var startBlock uint64
+	var endBlock uint64
+	for _, attr := range event.Attributes {
+		if attr.Key == checkpointTypes.AttributeKeyStartBlock {
+			startBlock, _ = strconv.ParseUint(attr.Value, 10, 64)
 		}
-		if err := cp.createAndSendCheckpointToRootchain(startBlock, endBlock); err != nil {
+		if attr.Key == checkpointTypes.AttributeKeyEndBlock {
+			endBlock, _ = strconv.ParseUint(attr.Value, 10, 64)
+		}
+	}
+
+	shouldSend, err := cp.shouldSendCheckpoint(startBlock, endBlock)
+	if err != nil {
+		return err
+	}
+
+	if shouldSend && isCurrentProposer {
+		txHash, err := hex.DecodeString(tx.TxHash)
+		if err != nil {
+			cp.Logger.Error("Error decoding txHash while sending checkpoint to rootchain", "txHash", tx.TxHash, "error", err)
+			return err
+		}
+		if err := cp.createAndSendCheckpointToRootchain(startBlock, endBlock, tx.Height, txHash); err != nil {
 			cp.Logger.Error("Error sending checkpoint to rootchain", "error", err)
 			return err
 		}
 	} else {
-		cp.Logger.Info("i am not the current proposer. skipping checkpoint confirmation", "eventType", event.Type)
+		cp.Logger.Info("I am not the current proposer or checkpoint already sent. Ignoring", "eventType", event.Type)
 		return nil
 	}
 	return nil
@@ -367,45 +383,10 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToHeimdall(start uint64, e
 	return nil
 }
 
-// verify event on heimdall and fetch checkpoint details
-func (cp *CheckpointProcessor) createAndSendCheckpointToRootchain(startBlock uint64, endBlock uint64) error {
-	// create tag query
-	var tags []string
-	tags = append(tags, fmt.Sprintf("checkpoint.start-block='%v'", startBlock))
-	tags = append(tags, fmt.Sprintf("checkpoint.end-block='%v'", endBlock))
-	tags = append(tags, "message.action='checkpoint'")
-
-	// search txs
-	searchResult, err := helper.QueryTxsByEvents(cp.cliCtx, tags, 1, 1) // first page, 1 limit
-	if err != nil {
-		cp.Logger.Error("Error searching checkpoint txs by events", "startBlock", startBlock, "endBlock", endBlock, "error", err)
-		return err
-	}
-
-	// loop through tx
-	if searchResult.Count > 0 {
-		for _, tx := range searchResult.Txs {
-			txHash, err := hex.DecodeString(tx.TxHash)
-			if err != nil {
-				cp.Logger.Error("Error searching checkpoint txs by events", "startBlock", startBlock, "endBlock", endBlock, "error", err)
-				return err
-			} else {
-				if err := cp.commitCheckpoint(tx.Height, txHash, startBlock, endBlock); err != nil {
-					cp.Logger.Error("Error commiting checkpoint to rootchain", "startBlock", startBlock, "endBlock", endBlock, "error", err)
-					return err
-				}
-				break
-			}
-		}
-	}
-	return nil
-}
-
-// dispatchCheckpoint prepares the data required for rootchain checkpoint submission
+// createAndSendCheckpointToRootchain prepares the data required for rootchain checkpoint submission
 // and sends a transaction to rootchain
-func (cp *CheckpointProcessor) commitCheckpoint(height int64, txHash []byte, start uint64, end uint64) error {
+func (cp *CheckpointProcessor) createAndSendCheckpointToRootchain(start uint64, end uint64, height int64, txHash []byte) error {
 	cp.Logger.Info("Preparing checkpoint to be pushed on chain", "height", height, "txHash", hmTypes.BytesToHeimdallHash(txHash), "start", start, "end", end)
-
 	// proof
 	tx, err := helper.QueryTxWithProof(cp.cliCtx, txHash)
 	if err != nil {
@@ -420,30 +401,18 @@ func (cp *CheckpointProcessor) commitCheckpoint(height int64, txHash []byte, sta
 		return err
 	}
 
-	// current child block from contract
-	currentChildBlock, err := cp.contractConnector.GetLastChildBlock()
+	shouldSend, err := cp.shouldSendCheckpoint(start, end)
 	if err != nil {
-		cp.Logger.Info("Error fetching current child block", "currentChildBlock", currentChildBlock)
 		return err
 	}
-	cp.Logger.Info("Fetched current child block", "currentChildBlock", currentChildBlock)
 
-	// validate if checkpoint needs to be pushed to rootchain and submit
-	cp.Logger.Info("We are proposer! Validating if checkpoint needs to be pushed", "commitedLastBlock", currentChildBlock, "startBlock", start)
-	// check if we need to send checkpoint or not
-	if ((currentChildBlock + 1) == start) || (currentChildBlock == 0 && start == 0) {
-		cp.Logger.Info("Checkpoint Valid", "startBlock", start)
+	if shouldSend {
 		if err := cp.contractConnector.SendCheckpoint(helper.GetVoteBytes(votes, chainID), sigs, tx.Tx[authTypes.PulpHashLength:]); err != nil {
 			cp.Logger.Info("Error submitting checkpoint to rootchain", "error", err)
 			return err
 		}
-	} else if currentChildBlock > start {
-		cp.Logger.Info("Start block does not match, checkpoint already sent", "commitedLastBlock", currentChildBlock, "startBlock", start)
-	} else if currentChildBlock > end {
-		cp.Logger.Info("Checkpoint already sent", "commitedLastBlock", currentChildBlock, "startBlock", start)
-	} else {
-		cp.Logger.Info("No need to send checkpoint")
 	}
+
 	return nil
 }
 
@@ -578,6 +547,32 @@ func (cp *CheckpointProcessor) getCheckpointParams() (*checkpointTypes.Params, e
 	}
 
 	return &params, nil
+}
+
+// shouldSendCheckpoint checks if checkpoint with given start,end should be sent to rootchain or not.
+func (cp *CheckpointProcessor) shouldSendCheckpoint(start uint64, end uint64) (shouldSend bool, err error) {
+	// current child block from contract
+	currentChildBlock, err := cp.contractConnector.GetLastChildBlock()
+	if err != nil {
+		cp.Logger.Info("Error fetching current child block", "currentChildBlock", currentChildBlock)
+		return
+	}
+	cp.Logger.Info("Fetched current child block", "currentChildBlock", currentChildBlock)
+
+	// validate if checkpoint needs to be pushed to rootchain and submit
+	cp.Logger.Info("Validating if checkpoint needs to be pushed", "commitedLastBlock", currentChildBlock, "startBlock", start)
+	// check if we need to send checkpoint or not
+	if ((currentChildBlock + 1) == start) || (currentChildBlock == 0 && start == 0) {
+		cp.Logger.Info("Checkpoint Valid", "startBlock", start)
+		shouldSend = true
+	} else if currentChildBlock > start {
+		cp.Logger.Info("Start block does not match, checkpoint already sent", "commitedLastBlock", currentChildBlock, "startBlock", start)
+	} else if currentChildBlock > end {
+		cp.Logger.Info("Checkpoint already sent", "commitedLastBlock", currentChildBlock, "startBlock", start)
+	} else {
+		cp.Logger.Info("No need to send checkpoint")
+	}
+	return
 }
 
 // Stop stops all necessary go routines
