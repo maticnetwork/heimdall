@@ -155,23 +155,23 @@ func (hl *HeimdallListener) ProcessEvent(event sdk.StringEvent, tx sdk.TxRespons
 		return
 	}
 
-	txBytes, err := json.Marshal(tx)
-	if err != nil {
-		hl.Logger.Error("Error while parsing tx", "error", err, "txHash", tx.TxHash)
-		return
-	}
+	// txBytes, err := json.Marshal(tx)
+	// if err != nil {
+	// 	hl.Logger.Error("Error while parsing tx", "error", err, "txHash", tx.TxHash)
+	// 	return
+	// }
 
 	switch event.Type {
 	case clerkTypes.EventTypeRecord:
-		hl.sendTask("sendDepositRecordToMatic", eventBytes, txBytes)
+		hl.sendTask("sendDepositRecordToMatic", eventBytes, tx.Height, tx.TxHash)
 	case checkpointTypes.EventTypeCheckpoint:
-		hl.sendTask("sendCheckpointToRootchain", eventBytes, txBytes)
+		hl.sendTask("sendCheckpointToRootchain", eventBytes, tx.Height, tx.TxHash)
 	default:
 		hl.Logger.Info("EventType mismatch", "eventType", event.Type)
 	}
 }
 
-func (hl *HeimdallListener) sendTask(taskName string, eventBytes []byte, txBytes []byte) {
+func (hl *HeimdallListener) sendTask(taskName string, eventBytes []byte, txHeight int64, txHash string) {
 	// create machinery task
 	signature := &tasks.Signature{
 		Name: taskName,
@@ -181,8 +181,12 @@ func (hl *HeimdallListener) sendTask(taskName string, eventBytes []byte, txBytes
 				Value: string(eventBytes),
 			},
 			{
+				Type:  "int64",
+				Value: txHeight,
+			},
+			{
 				Type:  "string",
-				Value: string(txBytes),
+				Value: txHash,
 			},
 		},
 	}
