@@ -40,6 +40,7 @@ const (
 	CodeSignerUpdateError  CodeType = 2508
 	CodeNoConn             CodeType = 2509
 	CodeWaitFrConfirmation CodeType = 2510
+	CodeValPubkeyMismatch  CodeType = 2511
 
 	CodeSpanNotCountinuous CodeType = 3501
 	CodeUnableToFreezeSet  CodeType = 3502
@@ -123,7 +124,11 @@ func ErrNoValidator(codespace sdk.CodespaceType) sdk.Error {
 }
 
 func ErrValSignerPubKeyMismatch(codespace sdk.CodespaceType) sdk.Error {
-	return newError(codespace, CodeValSignerMismatch, "Signer Pubkey mismatch between event and msg")
+	return newError(codespace, CodeValPubkeyMismatch, "Signer Pubkey mismatch between event and msg")
+}
+
+func ErrValSignerMismatch(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeValSignerMismatch, "Signer Address doesnt match pubkey address")
 }
 
 func ErrValIsNotCurrentVal(codespace sdk.CodespaceType) sdk.Error {

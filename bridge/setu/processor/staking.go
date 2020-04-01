@@ -211,7 +211,7 @@ func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logByte
 	if err := helper.UnpackLog(sp.stakingInfoAbi, event, eventName, &vLog); err != nil {
 		sp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
 	} else {
-		newSignerPubKey := event.NewSignerPubkey
+		newSignerPubKey := event.SignerPubkey
 		if len(newSignerPubKey) == 64 {
 			newSignerPubKey = util.AppendPrefix(newSignerPubKey)
 		}
@@ -222,6 +222,7 @@ func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logByte
 				"validatorID", event.ValidatorId,
 				"NewSignerPubkey", hmTypes.NewPubKey(newSignerPubKey).String(),
 				"oldSigner", event.OldSigner.Hex(),
+				"newSigner", event.NewSigner.Hex(),
 				"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 				"logIndex", uint64(vLog.Index),
 			)
@@ -233,6 +234,7 @@ func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logByte
 			"validatorID", event.ValidatorId,
 			"NewSignerPubkey", hmTypes.NewPubKey(newSignerPubKey).String(),
 			"oldSigner", event.OldSigner.Hex(),
+			"newSigner", event.NewSigner.Hex(),
 			"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			"logIndex", uint64(vLog.Index),
 		)

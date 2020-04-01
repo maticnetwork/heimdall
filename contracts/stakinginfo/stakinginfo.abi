@@ -70,31 +70,6 @@
 		"type": "function"
 	},
 	{
-		"constant": false,
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "validatorId",
-				"type": "uint256"
-			},
-			{
-				"internalType": "address",
-				"name": "oldSigner",
-				"type": "address"
-			},
-			{
-				"internalType": "bytes",
-				"name": "signerPubkey",
-				"type": "bytes"
-			}
-		],
-		"name": "logSignerChange",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
 		"constant": true,
 		"inputs": [
 			{
@@ -185,6 +160,46 @@
 			}
 		],
 		"name": "logClaimFee",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "signer",
+				"type": "address"
+			},
+			{
+				"internalType": "bytes",
+				"name": "signerPubkey",
+				"type": "bytes"
+			},
+			{
+				"internalType": "uint256",
+				"name": "validatorId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "activationEpoch",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "total",
+				"type": "uint256"
+			}
+		],
+		"name": "logStaked",
 		"outputs": [],
 		"payable": false,
 		"stateMutability": "nonpayable",
@@ -335,41 +350,6 @@
 		"constant": false,
 		"inputs": [
 			{
-				"internalType": "bytes",
-				"name": "signerPubkey",
-				"type": "bytes"
-			},
-			{
-				"internalType": "uint256",
-				"name": "validatorId",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "activationEpoch",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "amount",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "total",
-				"type": "uint256"
-			}
-		],
-		"name": "logStaked",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [
-			{
 				"internalType": "address",
 				"name": "user",
 				"type": "address"
@@ -466,6 +446,36 @@
 			}
 		],
 		"name": "logRewardUpdate",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "validatorId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "oldSigner",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "newSigner",
+				"type": "address"
+			},
+			{
+				"internalType": "bytes",
+				"name": "signerPubkey",
+				"type": "bytes"
+			}
+		],
+		"name": "logSignerChange",
 		"outputs": [],
 		"payable": false,
 		"stateMutability": "nonpayable",
@@ -639,6 +649,12 @@
 		"inputs": [
 			{
 				"indexed": true,
+				"internalType": "address",
+				"name": "signer",
+				"type": "address"
+			},
+			{
+				"indexed": true,
 				"internalType": "uint256",
 				"name": "validatorId",
 				"type": "uint256"
@@ -749,9 +765,15 @@
 				"type": "address"
 			},
 			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "newSigner",
+				"type": "address"
+			},
+			{
 				"indexed": false,
 				"internalType": "bytes",
-				"name": "newSignerPubkey",
+				"name": "signerPubkey",
 				"type": "bytes"
 			}
 		],

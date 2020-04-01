@@ -211,7 +211,7 @@ func (rl *RootChainListener) queryAndBroadcastEvents(fromBlock *big.Int, toBlock
 					if err := helper.UnpackLog(rl.stakingInfoAbi, event, selectedEvent.Name, &vLog); err != nil {
 						rl.Logger.Error("Error while parsing event", "name", selectedEvent.Name, "error", err)
 					}
-					if bytes.Compare(event.NewSignerPubkey, helper.GetPubKey().Bytes()[1:]) == 0 {
+					if bytes.Compare(event.SignerPubkey, helper.GetPubKey().Bytes()[1:]) == 0 {
 						rl.Logger.Error("Public key matched")
 						rl.sendTaskWithDelay("sendSignerChangeToHeimdall", selectedEvent.Name, logBytes, 0)
 					} else if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx); isCurrentValidator {

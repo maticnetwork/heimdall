@@ -1229,7 +1229,7 @@
 		"outputs": [
 			{
 				"internalType": "address",
-				"name": "addr",
+				"name": "",
 				"type": "address"
 			}
 		],
