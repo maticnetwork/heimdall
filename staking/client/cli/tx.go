@@ -107,7 +107,7 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 				return fmt.Errorf("Invalid tx for validator join")
 			}
 
-			if !bytes.Equal(event.SignerPubkey, pubkey.Bytes()) {
+			if !bytes.Equal(event.SignerPubkey, pubkey.Bytes()[1:]) {
 				return fmt.Errorf("Public key mismatch with event log")
 			}
 

@@ -53,6 +53,10 @@ func (sp *StakingProcessor) sendValidatorJoinToHeimdall(eventName string, logByt
 	if err := helper.UnpackLog(sp.stakingInfoAbi, event, eventName, &vLog); err != nil {
 		sp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
 	} else {
+		signerPubKey := event.SignerPubkey
+		if len(signerPubKey) == 64 {
+			signerPubKey = util.AppendPrefix(signerPubKey)
+		}
 		if isOld, _ := sp.isOldTx(sp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index)); isOld {
 			sp.Logger.Info("Ignoring task to send validatorjoin to heimdall as already processed",
 				"event", eventName,
@@ -60,7 +64,7 @@ func (sp *StakingProcessor) sendValidatorJoinToHeimdall(eventName string, logByt
 				"activationEpoch", event.ActivationEpoch,
 				"amount", event.Amount,
 				"totalAmount", event.Total,
-				"SignerPubkey", hmTypes.NewPubKey(event.SignerPubkey[:]).String(),
+				"SignerPubkey", hmTypes.NewPubKey(signerPubKey).String(),
 				"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 				"logIndex", uint64(vLog.Index),
 			)
@@ -68,13 +72,13 @@ func (sp *StakingProcessor) sendValidatorJoinToHeimdall(eventName string, logByt
 		}
 
 		sp.Logger.Info(
-			"✅ Received task to send unstake-init to heimdall",
+			"✅ Received task to send validatorjoin to heimdall",
 			"event", eventName,
 			"validatorID", event.ValidatorId,
 			"activationEpoch", event.ActivationEpoch,
 			"amount", event.Amount,
 			"totalAmount", event.Total,
-			"SignerPubkey", hmTypes.NewPubKey(event.SignerPubkey[:]).String(),
+			"SignerPubkey", hmTypes.NewPubKey(signerPubKey).String(),
 			"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			"logIndex", uint64(vLog.Index),
 		)
@@ -83,7 +87,7 @@ func (sp *StakingProcessor) sendValidatorJoinToHeimdall(eventName string, logByt
 		msg := stakingTypes.NewMsgValidatorJoin(
 			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
 			event.ValidatorId.Uint64(),
-			hmTypes.NewPubKey(event.SignerPubkey[:]),
+			hmTypes.NewPubKey(signerPubKey),
 			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			uint64(vLog.Index),
 		)
@@ -207,11 +211,16 @@ func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logByte
 	if err := helper.UnpackLog(sp.stakingInfoAbi, event, eventName, &vLog); err != nil {
 		sp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
 	} else {
+		newSignerPubKey := event.NewSignerPubkey
+		if len(newSignerPubKey) == 64 {
+			newSignerPubKey = util.AppendPrefix(newSignerPubKey)
+		}
+
 		if isOld, _ := sp.isOldTx(sp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index)); isOld {
 			sp.Logger.Info("Ignoring task to send unstakeinit to heimdall as already processed",
 				"event", eventName,
 				"validatorID", event.ValidatorId,
-				"NewSignerPubkey", hmTypes.NewPubKey(event.NewSignerPubkey[:]).String(),
+				"NewSignerPubkey", hmTypes.NewPubKey(newSignerPubKey).String(),
 				"oldSigner", event.OldSigner.Hex(),
 				"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 				"logIndex", uint64(vLog.Index),
@@ -222,18 +231,17 @@ func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logByte
 			"✅ Received task to send signer-change to heimdall",
 			"event", eventName,
 			"validatorID", event.ValidatorId,
-			"NewSignerPubkey", hmTypes.NewPubKey(event.NewSignerPubkey[:]).String(),
+			"NewSignerPubkey", hmTypes.NewPubKey(newSignerPubKey).String(),
 			"oldSigner", event.OldSigner.Hex(),
 			"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			"logIndex", uint64(vLog.Index),
 		)
 
 		// signer change
-		pubkey := event.NewSignerPubkey
 		msg := stakingTypes.NewMsgSignerUpdate(
 			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
 			event.ValidatorId.Uint64(),
-			hmTypes.NewPubKey(pubkey[:]),
+			hmTypes.NewPubKey(newSignerPubKey),
 			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			uint64(vLog.Index),
 		)
