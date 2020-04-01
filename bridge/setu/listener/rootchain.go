@@ -213,6 +213,10 @@ func (rl *RootChainListener) queryAndBroadcastEvents(fromBlock *big.Int, toBlock
 					}
 					if bytes.Compare(event.NewSignerPubkey, helper.GetPubKey().Bytes()) == 0 {
 						rl.sendTaskWithDelay("sendSignerChangeToHeimdall", selectedEvent.Name, logBytes, 0)
+					} else if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx); isCurrentValidator {
+						// Adding extra delay so that validator from event log will process first
+						delay = delay + util.TaskDelayBetweenEachVal
+						rl.sendTaskWithDelay("sendSignerChangeToHeimdall", selectedEvent.Name, logBytes, delay)
 					}
 
 				case "UnstakeInit":
