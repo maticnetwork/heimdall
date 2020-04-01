@@ -55,14 +55,14 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k Keepe
 	pubkey := msg.SignerPubKey
 	signer := pubkey.Address()
 
-	// check signer in message corresponds
-	if !bytes.Equal(signer.Bytes(), eventLog.Signer.Bytes()) {
+	// check signer pubkey in message corresponds
+	if !bytes.Equal(pubkey.Bytes(), eventLog.SignerPubkey) {
 		k.Logger(ctx).Error(
-			"Signer Address does not match",
-			"msgValidator", signer.String(),
-			"mainchainValidator", eventLog.Signer.Hex(),
+			"Signer Pubkey does not match",
+			"msgValidator", pubkey.String(),
+			"mainchainValidator", hmTypes.NewPubKey(eventLog.SignerPubkey[:]).String(),
 		)
-		return hmCommon.ErrValSignerMismatch(k.Codespace()).Result()
+		return hmCommon.ErrValSignerPubKeyMismatch(k.Codespace()).Result()
 	}
 
 	// check msg id
@@ -220,9 +220,9 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper,
 		return hmCommon.ErrInvalidMsg(k.Codespace(), "ID in message doesn't match with id in log. msgId %v validatorIdFromTx %v", msg.ID, eventLog.ValidatorId).Result()
 	}
 
-	if bytes.Compare(eventLog.NewSigner.Bytes(), newSigner.Bytes()) != 0 {
-		k.Logger(ctx).Error("Signer in txhash and msg dont match", "msgSigner", newSigner.String(), "signerTx", eventLog.NewSigner.String())
-		return hmCommon.ErrInvalidMsg(k.Codespace(), "Signer in txhash and msg dont match").Result()
+	if bytes.Compare(eventLog.NewSignerPubkey, newPubKey.Bytes()) != 0 {
+		k.Logger(ctx).Error("Newsigner pubkey in txhash and msg dont match", "msgPubKey", newPubKey.String(), "pubkeyTx", hmTypes.NewPubKey(eventLog.NewSignerPubkey[:]).String())
+		return hmCommon.ErrInvalidMsg(k.Codespace(), "Newsigner pubkey in txhash and msg dont match").Result()
 	}
 
 	// pull validator from store

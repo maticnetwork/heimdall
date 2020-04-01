@@ -122,8 +122,8 @@ func ErrNoValidator(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeNoValidator, "Validator information not found")
 }
 
-func ErrValSignerMismatch(codespace sdk.CodespaceType) sdk.Error {
-	return newError(codespace, CodeValSignerMismatch, "Signer Address doesnt match pubkey address")
+func ErrValSignerPubKeyMismatch(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeValSignerMismatch, "Signer Pubkey mismatch between event and msg")
 }
 
 func ErrValIsNotCurrentVal(codespace sdk.CodespaceType) sdk.Error {
