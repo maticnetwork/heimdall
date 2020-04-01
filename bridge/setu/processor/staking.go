@@ -198,10 +198,10 @@ func (sp *StakingProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string,
 		"logindex": logIndex,
 	}
 
-	endpoint := util.GetHeimdallServerEndpoint(util.StakingTxStatusURL)
+	endpoint := helper.GetHeimdallServerEndpoint(util.StakingTxStatusURL)
 	url, err := util.CreateURLWithQuery(endpoint, queryParam)
 
-	res, err := util.FetchFromAPI(sp.cliCtx, url)
+	res, err := helper.FetchFromAPI(sp.cliCtx, url)
 	if err != nil {
 		sp.Logger.Error("Error fetching tx status", "url", url, "error", err)
 		return false, err

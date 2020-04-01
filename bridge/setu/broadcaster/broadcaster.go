@@ -77,7 +77,7 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg) error {
 		// fetch from APIs
 		account, errAcc := util.GetAccount(tb.cliCtx)
 		if errAcc != nil {
-			tb.logger.Error("Error fetching account from rest-api", "url", util.GetHeimdallServerEndpoint(fmt.Sprintf(util.AccountDetailsURL, helper.GetAddress())))
+			tb.logger.Error("Error fetching account from rest-api", "url", helper.GetHeimdallServerEndpoint(fmt.Sprintf(util.AccountDetailsURL, helper.GetAddress())))
 			return errAcc
 		}
 

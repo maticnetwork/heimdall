@@ -10,6 +10,7 @@ import (
 	ethereum "github.com/maticnetwork/bor"
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/core/types"
+	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
 	"github.com/maticnetwork/heimdall/contracts/statesender"
 	"github.com/maticnetwork/heimdall/helper"
@@ -125,7 +126,9 @@ func (cp *ClerkProcessor) commitRecordID(stateID uint64) error {
 		return err
 	}
 	// get validator address
-	stateReceiverAddress := helper.GetStateReceiverAddress()
+	configParams, _ := util.GetConfigManagerParams(cp.cliCtx)
+
+	stateReceiverAddress := configParams.ChainParams.StateReceiverAddress.EthAddress()
 	msg := ethereum.CallMsg{
 		To:   &stateReceiverAddress,
 		Data: encodedData,

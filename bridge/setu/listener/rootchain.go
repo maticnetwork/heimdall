@@ -156,8 +156,14 @@ func (rl *RootChainListener) ProcessHeader(newHeader *types.Header) {
 func (rl *RootChainListener) queryAndBroadcastEvents(fromBlock *big.Int, toBlock *big.Int) {
 	rl.Logger.Info("Query rootchain event logs", "fromBlock", fromBlock, "toBlock", toBlock)
 
+	configParams, _ := util.GetConfigManagerParams(rl.BaseListener.cliCtx)
+
 	// draft a query
-	query := ethereum.FilterQuery{FromBlock: fromBlock, ToBlock: toBlock, Addresses: []ethCommon.Address{helper.GetRootChainAddress(), helper.GetStakingInfoAddress(), helper.GetStateSenderAddress()}}
+	query := ethereum.FilterQuery{FromBlock: fromBlock, ToBlock: toBlock, Addresses: []ethCommon.Address{
+		configParams.ChainParams.RootChainAddress.EthAddress(),
+		configParams.ChainParams.StakingInfoAddress.EthAddress(),
+		configParams.ChainParams.StateSenderAddress.EthAddress(),
+	}}
 	// get logs from rootchain by filter
 	logs, err := rl.contractConnector.MainChainClient.FilterLogs(context.Background(), query)
 	if err != nil {

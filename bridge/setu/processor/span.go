@@ -112,7 +112,7 @@ func (sp *SpanProcessor) propose(lastSpan *types.Span, nextSpanMsg *types.Span) 
 // checks span status
 func (sp *SpanProcessor) getLastSpan() (*types.Span, error) {
 	// fetch latest start block from heimdall via rest query
-	result, err := util.FetchFromAPI(sp.cliCtx, util.GetHeimdallServerEndpoint(util.LatestSpanURL))
+	result, err := helper.FetchFromAPI(sp.cliCtx, helper.GetHeimdallServerEndpoint(util.LatestSpanURL))
 	if err != nil {
 		sp.Logger.Error("Error while fetching latest span")
 		return nil, err
@@ -148,7 +148,7 @@ func (sp *SpanProcessor) isSpanProposer(nextSpanProducers []types.Validator) boo
 
 // fetch next span details from heimdall.
 func (sp *SpanProcessor) fetchNextSpanDetails(id uint64, start uint64) (*types.Span, error) {
-	req, err := http.NewRequest("GET", util.GetHeimdallServerEndpoint(util.NextSpanInfoURL), nil)
+	req, err := http.NewRequest("GET", helper.GetHeimdallServerEndpoint(util.NextSpanInfoURL), nil)
 	if err != nil {
 		sp.Logger.Error("Error creating a new request", "error", err)
 		return nil, err
@@ -162,7 +162,7 @@ func (sp *SpanProcessor) fetchNextSpanDetails(id uint64, start uint64) (*types.S
 	req.URL.RawQuery = q.Encode()
 
 	// fetch next span details
-	result, err := util.FetchFromAPI(sp.cliCtx, req.URL.String())
+	result, err := helper.FetchFromAPI(sp.cliCtx, req.URL.String())
 	if err != nil {
 		sp.Logger.Error("Error fetching proposers", "error", err)
 		return nil, err
