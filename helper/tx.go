@@ -61,18 +61,18 @@ func GenerateAuthObj(client *ethclient.Client, address common.Address, data []by
 
 // SendCheckpoint sends checkpoint to rootchain contract
 // todo return err
-func (c *ContractCaller) SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte, rootChainAddress common.Address, rootChainInstance *rootchain.Rootchain) {
+func (c *ContractCaller) SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte, rootChainAddress common.Address, rootChainInstance *rootchain.Rootchain) (er error) {
 	var vote types.CanonicalRLPVote
 	err := rlp.DecodeBytes(voteSignBytes, &vote)
 	if err != nil {
 		Logger.Error("Unable to decode vote while sending checkpoint", "vote", hex.EncodeToString(voteSignBytes), "sigs", hex.EncodeToString(sigs), "txData", hex.EncodeToString(txData))
-		return
+		return err
 	}
 
 	data, err := c.RootChainABI.Pack("submitHeaderBlock", voteSignBytes, sigs, txData)
 	if err != nil {
 		Logger.Error("Unable to pack tx for submitHeaderBlock", "error", err)
-		return
+		return err
 	}
 
 	auth, err := GenerateAuthObj(GetMainClient(), rootChainAddress, data)
@@ -91,10 +91,9 @@ func (c *ContractCaller) SendCheckpoint(voteSignBytes []byte, sigs []byte, txDat
 	tx, err := rootChainInstance.SubmitHeaderBlock(auth, voteSignBytes, sigs, txData)
 	if err != nil {
 		Logger.Error("Error while submitting checkpoint", "error", err)
-		return
-	} else {
-		Logger.Info("Submitted new checkpoint to rootchain successfully", "txHash", tx.Hash().String())
+		return err
 	}
+	Logger.Info("Submitted new checkpoint to rootchain successfully", "txHash", tx.Hash().String())
 	return
 }
 

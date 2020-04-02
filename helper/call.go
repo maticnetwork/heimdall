@@ -32,7 +32,7 @@ type IContractCaller interface {
 	GetLastChildBlock(rootChainInstance *rootchain.Rootchain) (uint64, error)
 	CurrentHeaderBlock(rootChainInstance *rootchain.Rootchain) (uint64, error)
 	GetBalance(address common.Address) (*big.Int, error)
-	SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte, rootchainAddress common.Address, rootChainInstance *rootchain.Rootchain)
+	SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte, rootchainAddress common.Address, rootChainInstance *rootchain.Rootchain) (err error)
 	GetCheckpointSign(txHash common.Hash) ([]byte, []byte, []byte, error)
 	GetMainChainBlock(*big.Int) (*ethTypes.Header, error)
 	GetMaticChainBlock(*big.Int) (*ethTypes.Header, error)
