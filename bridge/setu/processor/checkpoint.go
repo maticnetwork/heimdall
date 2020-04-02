@@ -136,18 +136,19 @@ func (cp *CheckpointProcessor) sendCheckpointToHeimdall(headerBlockStr string) (
 // 1. check if i am the current proposer.
 // 2. check if this checkpoint has to be submitted to rootchain
 // 3. if so, create and broadcast checkpoint transaction to rootchain
-func (cp *CheckpointProcessor) sendCheckpointToRootchain(eventBytes string, txBytes string) error {
+func (cp *CheckpointProcessor) sendCheckpointToRootchain(eventBytes string, txHeight int64, txHash string) error {
+	cp.Logger.Info("Recevied sendCheckpointToRootchain request", "eventBytes", eventBytes, "txHeight", txHeight, "txHash", txHash)
 	var event = sdk.StringEvent{}
 	if err := json.Unmarshal([]byte(eventBytes), &event); err != nil {
 		cp.Logger.Error("Error unmarshalling event from heimdall", "error", err)
 		return err
 	}
 
-	var tx = sdk.TxResponse{}
-	if err := json.Unmarshal([]byte(txBytes), &tx); err != nil {
-		cp.Logger.Error("Error unmarshalling txResponse", "error", err)
-		return err
-	}
+	// var tx = sdk.TxResponse{}
+	// if err := json.Unmarshal([]byte(txBytes), &tx); err != nil {
+	// 	cp.Logger.Error("Error unmarshalling txResponse", "error", err)
+	// 	return err
+	// }
 
 	cp.Logger.Info("processing checkpoint confirmation event", "eventtype", event.Type)
 	isCurrentProposer, err := util.IsCurrentProposer(cp.cliCtx)
@@ -173,12 +174,12 @@ func (cp *CheckpointProcessor) sendCheckpointToRootchain(eventBytes string, txBy
 	}
 
 	if shouldSend && isCurrentProposer {
-		txHash, err := hex.DecodeString(tx.TxHash)
+		txHash, err := hex.DecodeString(txHash)
 		if err != nil {
-			cp.Logger.Error("Error decoding txHash while sending checkpoint to rootchain", "txHash", tx.TxHash, "error", err)
+			cp.Logger.Error("Error decoding txHash while sending checkpoint to rootchain", "txHash", txHash, "error", err)
 			return err
 		}
-		if err := cp.createAndSendCheckpointToRootchain(startBlock, endBlock, tx.Height, txHash); err != nil {
+		if err := cp.createAndSendCheckpointToRootchain(startBlock, endBlock, txHeight, txHash); err != nil {
 			cp.Logger.Error("Error sending checkpoint to rootchain", "error", err)
 			return err
 		}
