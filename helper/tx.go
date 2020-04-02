@@ -123,8 +123,8 @@ func (c *ContractCaller) StakeFor(val common.Address, stakeAmount *big.Int, feeA
 		val,
 		stakeAmount,
 		feeAmount,
-		signerAddress,
 		acceptDelegation,
+		signerPubkey.Bytes(),
 	)
 
 	if err != nil {

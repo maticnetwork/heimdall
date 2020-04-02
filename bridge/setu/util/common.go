@@ -300,3 +300,13 @@ func GetConfigManagerParams(cliCtx cliContext.CLIContext) (*chainManagerTypes.Pa
 
 	return &params, nil
 }
+
+// appendPrefix - returns publickey in uncompressed format
+func AppendPrefix(signerPubKey []byte) []byte {
+	// append prefix - "0x04" as heimdall uses publickey in uncompressed format. Refer below link
+	// https://superuser.com/questions/1465455/what-is-the-size-of-public-key-for-ecdsa-spec256r1
+	prefix := make([]byte, 1)
+	prefix[0] = byte(0x04)
+	signerPubKey = append(prefix[:], signerPubKey[:]...)
+	return signerPubKey
+}
