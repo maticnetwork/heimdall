@@ -57,7 +57,8 @@ func (AppModuleBasic) ValidateGenesis(bz json.RawMessage) error {
 // VerifyGenesis performs verification on auth module state.
 func (AppModuleBasic) VerifyGenesis(bz map[string]json.RawMessage) error {
 	var data types.GenesisState
-	err := json.Unmarshal(bz[types.ModuleName], &data)
+	err := types.ModuleCdc.UnmarshalJSON(bz[types.ModuleName], &data)
+
 	if err != nil {
 		return err
 	}
