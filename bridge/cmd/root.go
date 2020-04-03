@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strconv"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -77,7 +76,7 @@ func init() {
 	// bridge chain id
 	rootCmd.PersistentFlags().String(
 		borChainIDFlag,
-		strconv.Itoa(helper.DefaultBorChainID),
+		helper.DefaultBorChainID,
 		"Bor chain id",
 	)
 

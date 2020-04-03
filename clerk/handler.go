@@ -35,6 +35,12 @@ func handleMsgEventRecord(ctx sdk.Context, msg types.MsgEventRecord, k Keeper, c
 	params := k.chainKeeper.GetParams(ctx)
 	chainParams := params.ChainParams
 
+	// check chain id
+	if chainParams.BorChainID != msg.ChainID {
+		k.Logger(ctx).Error("Invalid Bor chain id", "msgChainID", msg.ChainID)
+		return common.ErrInvalidBorChainID(k.Codespace()).Result()
+	}
+
 	// get confirmed tx receipt
 	receipt, err := contractCaller.GetConfirmedTxReceipt(ctx.BlockTime(), msg.TxHash.EthHash(), params.TxConfirmationTime)
 	if receipt == nil || err != nil {

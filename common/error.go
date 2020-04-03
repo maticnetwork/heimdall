@@ -47,6 +47,7 @@ const (
 	CodeSpanNotFound       CodeType = 3503
 	CodeValSetMisMatch     CodeType = 3504
 	CodeProducerMisMatch   CodeType = 3505
+	CodeInvalidBorChainID  CodeType = 3506
 
 	CodeFetchCheckpointSigners       CodeType = 4501
 	CodeErrComputeGenesisAccountRoot CodeType = 4503
@@ -164,6 +165,10 @@ func ErrValidatorAlreadyJoined(codespace sdk.CodespaceType) sdk.Error {
 }
 
 // Bor Errors --------------------------------
+
+func ErrInvalidBorChainID(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeInvalidBorChainID, "Invalid Bor chain id")
+}
 
 func ErrSpanNotInCountinuity(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeSpanNotCountinuous, "Span not countinuous")
