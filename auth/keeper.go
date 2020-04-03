@@ -5,7 +5,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/maticnetwork/heimdall/chainmanager"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -27,15 +26,13 @@ type AccountKeeper struct {
 	cdc *codec.Codec
 
 	paramSubspace subspace.Subspace
-
-	chainKeeper chainmanager.Keeper
 }
 
 // NewAccountKeeper returns a new sdk.AccountKeeper that uses go-amino to
 // (binary) encode and decode concrete sdk.Accounts.
 // nolint
 func NewAccountKeeper(
-	cdc *codec.Codec, key sdk.StoreKey, paramstore subspace.Subspace, proto func() types.Account, chainKeeper chainmanager.Keeper,
+	cdc *codec.Codec, key sdk.StoreKey, paramstore subspace.Subspace, proto func() types.Account,
 ) AccountKeeper {
 
 	return AccountKeeper{
@@ -43,7 +40,6 @@ func NewAccountKeeper(
 		proto:         proto,
 		cdc:           cdc,
 		paramSubspace: paramstore.WithKeyTable(types.ParamKeyTable()),
-		chainKeeper:   chainKeeper,
 	}
 }
 

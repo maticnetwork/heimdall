@@ -11,6 +11,7 @@ import (
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
+	"github.com/maticnetwork/heimdall/chainmanager"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
 )
@@ -69,6 +70,7 @@ type MainTxMsg interface {
 // signer.
 func NewAnteHandler(
 	ak AccountKeeper,
+	chainKeeper chainmanager.Keeper,
 	feeCollector FeeCollector,
 	contractCaller helper.IContractCaller,
 	sigGasConsumer SignatureVerificationGasConsumer,
@@ -163,7 +165,8 @@ func NewAnteHandler(
 			signerAccs[0] = ak.GetAccount(newCtx, signerAccs[0].GetAddress())
 		}
 
-		chainParams := ak.chainKeeper.GetParams(ctx)
+		// get chain manager params
+		chainParams := chainKeeper.GetParams(ctx)
 
 		// check main chain tx is confirmed transaction
 		mainTxMsg, ok := stdTx.Msg.(MainTxMsg)
