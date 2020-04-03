@@ -1,5 +1,9 @@
 package types
 
+import (
+	"encoding/json"
+)
+
 //
 // Gensis state
 //
@@ -25,4 +29,13 @@ func DefaultGenesisState() GenesisState {
 // error for any failed validation criteria.
 func ValidateGenesis(data GenesisState) error {
 	return nil
+}
+
+// GetGenesisStateFromAppState returns staking GenesisState given raw application genesis state
+func GetGenesisStateFromAppState(appState map[string]json.RawMessage) GenesisState {
+	var genesisState GenesisState
+	if appState[ModuleName] != nil {
+		ModuleCdc.MustUnmarshalJSON(appState[ModuleName], &genesisState)
+	}
+	return genesisState
 }

@@ -457,10 +457,6 @@ func (cp *CheckpointProcessor) getLatestCheckpointTime() (int64, error) {
 		return 0, err
 	}
 
-	// get big int header number
-	headerNumber := big.NewInt(0)
-	headerNumber.SetUint64(lastHeaderNumber)
-
 	// header block
 	_, _, _, createdAt, _, err := cp.contractConnector.GetHeaderInfo(lastHeaderNumber, rootChainInstance)
 
