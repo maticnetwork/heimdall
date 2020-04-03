@@ -92,38 +92,38 @@ func (p Params) String() string {
 
 // Validate checks that the parameters have valid values.
 func (p Params) Validate() error {
-	if err := validateHeimdallAddress(p.ChainParams.MaticTokenAddress, "matic_token_address"); err != nil {
+	if err := validateHeimdallAddress("matic_token_address", p.ChainParams.MaticTokenAddress); err != nil {
 		return err
 	}
 
-	if err := validateHeimdallAddress(p.ChainParams.StakingManagerAddress, "staking_manager_address"); err != nil {
+	if err := validateHeimdallAddress("staking_manager_address", p.ChainParams.StakingManagerAddress); err != nil {
 		return err
 	}
 
-	if err := validateHeimdallAddress(p.ChainParams.RootChainAddress, "root_chain_address"); err != nil {
+	if err := validateHeimdallAddress("root_chain_address", p.ChainParams.RootChainAddress); err != nil {
 		return err
 	}
 
-	if err := validateHeimdallAddress(p.ChainParams.StakingInfoAddress, "staking_info_address"); err != nil {
+	if err := validateHeimdallAddress("staking_info_address", p.ChainParams.StakingInfoAddress); err != nil {
 		return err
 	}
 
-	if err := validateHeimdallAddress(p.ChainParams.StateSenderAddress, "state_sender_address"); err != nil {
+	if err := validateHeimdallAddress("state_sender_address", p.ChainParams.StateSenderAddress); err != nil {
 		return err
 	}
 
-	if err := validateHeimdallAddress(p.ChainParams.StateReceiverAddress, "state_receiver_address"); err != nil {
+	if err := validateHeimdallAddress("state_receiver_address", p.ChainParams.StateReceiverAddress); err != nil {
 		return err
 	}
 
-	if err := validateHeimdallAddress(p.ChainParams.ValidatorSetAddress, "validator_set_address"); err != nil {
+	if err := validateHeimdallAddress("validator_set_address", p.ChainParams.ValidatorSetAddress); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func validateHeimdallAddress(value hmTypes.HeimdallAddress, key string) error {
+func validateHeimdallAddress(key string, value hmTypes.HeimdallAddress) error {
 	if value.String() == "" {
 		return fmt.Errorf("Invalid value %s in chain_params", key)
 	}
