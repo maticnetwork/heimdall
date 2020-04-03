@@ -113,8 +113,6 @@ type Configuration struct {
 
 	// wait time related options
 	NoACKWaitTime time.Duration `mapstructure:"no_ack_wait_time"` // Time ack service waits to clear buffer and elect new proposer
-
-	TxConfirmationTime time.Duration `mapstructure:"tx_confirmation_time"` // Tx confirmation time in seconds (6 * 14 sec per block)
 }
 
 var conf Configuration
@@ -232,8 +230,6 @@ func GetDefaultHeimdallConfig() Configuration {
 		MaxCheckpointLength: MaxCheckpointLength,
 
 		NoACKWaitTime: NoACKWaitTime,
-
-		TxConfirmationTime: DefaultTxConfirmationTime,
 	}
 }
 

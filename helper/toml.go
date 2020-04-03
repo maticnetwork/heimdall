@@ -61,10 +61,6 @@ max_checkpoint_length = "{{ .MaxCheckpointLength }}"
 
 no_ack_wait_time = "{{ .NoACKWaitTime }}"
 
-##### Transaction Confirmations  #####
-
-tx_confirmation_time = "{{ .TxConfirmationTime }}"
-
 `
 
 var configTemplate *template.Template

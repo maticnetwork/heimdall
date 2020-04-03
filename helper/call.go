@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"math/big"
 	"strings"
 	"time"
@@ -35,8 +36,8 @@ type IContractCaller interface {
 	GetCheckpointSign(txHash common.Hash) ([]byte, []byte, []byte, error)
 	GetMainChainBlock(*big.Int) (*ethTypes.Header, error)
 	GetMaticChainBlock(*big.Int) (*ethTypes.Header, error)
-	IsTxConfirmed(time.Time, common.Hash) bool
-	GetConfirmedTxReceipt(time.Time, common.Hash) (*ethTypes.Receipt, error)
+	IsTxConfirmed(time.Time, common.Hash, time.Duration) bool
+	GetConfirmedTxReceipt(time.Time, common.Hash, time.Duration) (*ethTypes.Receipt, error)
 	GetBlockNumberFromTxHash(common.Hash) (*big.Int, error)
 
 	// decode header event
@@ -340,9 +341,9 @@ func (c *ContractCaller) GetBlockNumberFromTxHash(tx common.Hash) (*big.Int, err
 }
 
 // IsTxConfirmed is tx confirmed
-func (c *ContractCaller) IsTxConfirmed(currentTime time.Time, tx common.Hash) bool {
+func (c *ContractCaller) IsTxConfirmed(currentTime time.Time, tx common.Hash, txConfirmationTime time.Duration) bool {
 	// get main tx receipt
-	receipt, err := c.GetConfirmedTxReceipt(currentTime, tx)
+	receipt, err := c.GetConfirmedTxReceipt(currentTime, tx, txConfirmationTime)
 	if receipt == nil || err != nil {
 		return false
 	}
@@ -351,7 +352,7 @@ func (c *ContractCaller) IsTxConfirmed(currentTime time.Time, tx common.Hash) bo
 }
 
 // GetConfirmedTxReceipt returns confirmed tx receipt
-func (c *ContractCaller) GetConfirmedTxReceipt(currentTime time.Time, tx common.Hash) (*ethTypes.Receipt, error) {
+func (c *ContractCaller) GetConfirmedTxReceipt(currentTime time.Time, tx common.Hash, txConfirmationTime time.Duration) (*ethTypes.Receipt, error) {
 	// get main tx receipt
 	receipt, err := c.GetMainTxReceipt(tx)
 	if err != nil {
@@ -369,7 +370,8 @@ func (c *ContractCaller) GetConfirmedTxReceipt(currentTime time.Time, tx common.
 	Logger.Debug("Receipt block on main chain obtained", "Block", receiptBlock.Number.Uint64())
 
 	// check if current time is greater than buffer time
-	bufferTime := receiptBlock.Time + uint64(GetConfig().TxConfirmationTime.Seconds())
+	fmt.Println("bufferTime", receiptBlock.Time, txConfirmationTime.Seconds(), uint64(txConfirmationTime.Seconds()))
+	bufferTime := receiptBlock.Time + uint64(txConfirmationTime.Seconds())
 
 	if uint64(currentTime.Unix()) < bufferTime {
 		return nil, errors.New("Not enough confirmations")

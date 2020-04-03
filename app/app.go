@@ -246,6 +246,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		keys[authTypes.StoreKey], // target store
 		app.subspaces[authTypes.ModuleName],
 		authTypes.ProtoBaseAccount, // prototype
+		app.ChainKeeper,
 	)
 
 	app.StakingKeeper = staking.NewKeeper(

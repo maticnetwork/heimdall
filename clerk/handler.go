@@ -31,14 +31,15 @@ func handleMsgEventRecord(ctx sdk.Context, msg types.MsgEventRecord, k Keeper, c
 		return types.ErrEventRecordAlreadySynced(k.Codespace()).Result()
 	}
 
-	// get confirmed tx receipt
-	receipt, err := contractCaller.GetConfirmedTxReceipt(ctx.BlockTime(), msg.TxHash.EthHash())
-	if receipt == nil || err != nil {
-		return common.ErrWaitForConfirmation(k.Codespace()).Result()
-	}
+	// chainManager params
+	params := k.chainKeeper.GetParams(ctx)
+	chainParams := params.ChainParams
 
-	// chain params
-	chainParams := k.chainKeeper.GetParams(ctx).ChainParams
+	// get confirmed tx receipt
+	receipt, err := contractCaller.GetConfirmedTxReceipt(ctx.BlockTime(), msg.TxHash.EthHash(), params.TxConfirmationTime)
+	if receipt == nil || err != nil {
+		return common.ErrWaitForConfirmation(k.Codespace(), params.TxConfirmationTime).Result()
+	}
 
 	// get event log for topup
 	eventLog, err := contractCaller.DecodeStateSyncedEvent(chainParams.StateSenderAddress.EthAddress(), receipt, msg.LogIndex)

@@ -94,7 +94,9 @@ func (rl *RootChainListener) ProcessHeader(newHeader *types.Header) {
 
 	// current time
 	currentTime := uint64(time.Now().UTC().Unix())
-	confirmationTime := uint64(helper.GetConfig().TxConfirmationTime.Seconds())
+
+	configParams, _ := util.GetConfigManagerParams(rl.cliCtx)
+	confirmationTime := uint64(configParams.TxConfirmationTime.Seconds())
 
 	var start *big.Int
 	var end *big.Int
