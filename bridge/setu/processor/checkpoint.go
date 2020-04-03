@@ -567,7 +567,7 @@ func (cp *CheckpointProcessor) shouldSendCheckpoint(start uint64, end uint64) (s
 
 	rootChainInstance, err := cp.contractConnector.GetRootChainInstance(configParams.ChainParams.RootChainAddress.EthAddress())
 	if err != nil {
-		cp.Logger.Info("Error while creating rootchain instance")
+		cp.Logger.Info("Error while creating rootchain instance", err)
 
 		return
 	}

@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	lru "github.com/hashicorp/golang-lru"
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/common"
 	ethTypes "github.com/maticnetwork/bor/core/types"
@@ -85,7 +84,7 @@ type ContractCaller struct {
 	StakeManagerABI  abi.ABI
 	MaticTokenABI    abi.ABI
 
-	ContractInstanceCache *lru.Cache
+	ContractInstanceCache map[common.Address]interface{}
 }
 
 type txExtraInfo struct {
@@ -137,82 +136,87 @@ func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 		return
 	}
 
-	contractCallerObj.ContractInstanceCache = NewLru(10)
+	contractCallerObj.ContractInstanceCache = make(map[common.Address]interface{})
 
 	return
 }
 
-// NewLru returns instance of lru cache
-func NewLru(size int) *lru.Cache {
-	lruObj, _ := lru.New(size)
-	return lruObj
-}
-
 // GetRootChainInstance returns RootChain contract instance for selected base chain
 func (c *ContractCaller) GetRootChainInstance(rootchainAddress common.Address) (*rootchain.Rootchain, error) {
-	contractInstance, ok := c.ContractInstanceCache.Get(rootchainAddress)
+	contractInstance, ok := c.ContractInstanceCache[rootchainAddress]
 	if ok == false {
-		return rootchain.NewRootchain(rootchainAddress, mainChainClient)
+		ci, err := rootchain.NewRootchain(rootchainAddress, mainChainClient)
+		c.ContractInstanceCache[rootchainAddress] = ci
+		return ci, err
 	}
-	return contractInstance.(*rootchain.Rootchain), errors.New("Failed to create contract instance")
+	return contractInstance.(*rootchain.Rootchain), nil
 }
 
 // GetStakingInfoInstance returns stakinginfo contract instance for selected base chain
 func (c *ContractCaller) GetStakingInfoInstance(stakingInfoAddress common.Address) (*stakinginfo.Stakinginfo, error) {
-	contractInstance, ok := c.ContractInstanceCache.Get(stakingInfoAddress)
+	contractInstance, ok := c.ContractInstanceCache[stakingInfoAddress]
 	if ok == false {
-		return stakinginfo.NewStakinginfo(stakingInfoAddress, mainChainClient)
+		ci, err := stakinginfo.NewStakinginfo(stakingInfoAddress, mainChainClient)
+		c.ContractInstanceCache[stakingInfoAddress] = ci
+		return ci, err
 	}
-	return contractInstance.(*stakinginfo.Stakinginfo), errors.New("Failed to create contract instance")
+	return contractInstance.(*stakinginfo.Stakinginfo), nil
 }
 
 // GetValidatorSetInstance returns stakinginfo contract instance for selected base chain
 func (c *ContractCaller) GetValidatorSetInstance(validatorSetAddress common.Address) (*validatorset.Validatorset, error) {
-	contractInstance, ok := c.ContractInstanceCache.Get(validatorSetAddress)
+	contractInstance, ok := c.ContractInstanceCache[validatorSetAddress]
 	if ok == false {
-		return validatorset.NewValidatorset(validatorSetAddress, mainChainClient)
+		ci, err := validatorset.NewValidatorset(validatorSetAddress, mainChainClient)
+		c.ContractInstanceCache[validatorSetAddress] = ci
+		return ci, err
 
 	}
-	return contractInstance.(*validatorset.Validatorset), errors.New("Failed to create contract instance")
+	return contractInstance.(*validatorset.Validatorset), nil
 }
 
 // GetStakeManagerInstance returns stakinginfo contract instance for selected base chain
 func (c *ContractCaller) GetStakeManagerInstance(stakingManagerAddress common.Address) (*stakemanager.Stakemanager, error) {
-	contractInstance, ok := c.ContractInstanceCache.Get(stakingManagerAddress)
+	contractInstance, ok := c.ContractInstanceCache[stakingManagerAddress]
 	if ok == false {
-		return stakemanager.NewStakemanager(stakingManagerAddress, mainChainClient)
-
+		ci, err := stakemanager.NewStakemanager(stakingManagerAddress, mainChainClient)
+		c.ContractInstanceCache[stakingManagerAddress] = ci
+		return ci, err
 	}
-	return contractInstance.(*stakemanager.Stakemanager), errors.New("Failed to create contract instance")
+	return contractInstance.(*stakemanager.Stakemanager), nil
 }
 
 // GetStateSenderInstance returns stakinginfo contract instance for selected base chain
 func (c *ContractCaller) GetStateSenderInstance(stateSenderAddress common.Address) (*statesender.Statesender, error) {
-	contractInstance, ok := c.ContractInstanceCache.Get(stateSenderAddress)
+	contractInstance, ok := c.ContractInstanceCache[stateSenderAddress]
 	if ok == false {
-		return statesender.NewStatesender(stateSenderAddress, mainChainClient)
-
+		ci, err := statesender.NewStatesender(stateSenderAddress, mainChainClient)
+		c.ContractInstanceCache[stateSenderAddress] = ci
+		return ci, err
 	}
-	return contractInstance.(*statesender.Statesender), errors.New("Failed to create contract instance")
+	return contractInstance.(*statesender.Statesender), nil
 }
 
 // GetStateReceiverInstance returns stakinginfo contract instance for selected base chain
 func (c *ContractCaller) GetStateReceiverInstance(stateReceiverAddress common.Address) (*statereceiver.Statereceiver, error) {
-	contractInstance, ok := c.ContractInstanceCache.Get(stateReceiverAddress)
+	contractInstance, ok := c.ContractInstanceCache[stateReceiverAddress]
 	if ok == false {
-		return statereceiver.NewStatereceiver(stateReceiverAddress, mainChainClient)
+		ci, err := statereceiver.NewStatereceiver(stateReceiverAddress, mainChainClient)
+		c.ContractInstanceCache[stateReceiverAddress] = ci
+		return ci, err
 	}
-	return contractInstance.(*statereceiver.Statereceiver), errors.New("Failed to create contract instance")
+	return contractInstance.(*statereceiver.Statereceiver), nil
 }
 
 // GetMaticTokenInstance returns stakinginfo contract instance for selected base chain
 func (c *ContractCaller) GetMaticTokenInstance(maticTokenAddress common.Address) (*erc20.Erc20, error) {
-	contractInstance, ok := c.ContractInstanceCache.Get(maticTokenAddress)
+	contractInstance, ok := c.ContractInstanceCache[maticTokenAddress]
 	if ok == false {
-		return erc20.NewErc20(maticTokenAddress, mainChainClient)
-
+		ci, err := erc20.NewErc20(maticTokenAddress, mainChainClient)
+		c.ContractInstanceCache[maticTokenAddress] = ci
+		return ci, err
 	}
-	return contractInstance.(*erc20.Erc20), errors.New("Failed to create contract instance")
+	return contractInstance.(*erc20.Erc20), nil
 }
 
 // GetHeaderInfo get header info from header id
