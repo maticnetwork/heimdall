@@ -97,15 +97,6 @@ type Configuration struct {
 	AmqpURL           string `mapstructure:"amqp_url"`             // amqp url
 	HeimdallServerURL string `mapstructure:"heimdall_rest_server"` // heimdall server url
 
-	// TODO: Remove contract addresses from here
-	StakingInfoAddress   string `mapstructure:"stakinginfo_contract"`    // Staking Info address on main chain
-	RootchainAddress     string `mapstructure:"rootchain_contract"`      // Rootchain contract address on main chain
-	StateSenderAddress   string `mapstructure:"state_sender_contract"`   // main
-	StateReceiverAddress string `mapstructure:"state_receiver_contract"` // matic
-	ValidatorSetAddress  string `mapstructure:"validator_set_contract"`  // Validator Set contract address on bor chain
-	StakeManagerAddress  string `mapstructure:"stake_manager_contract"`
-	MaticTokenAddress    string `mapstructure:"matic_token"`
-
 	ChildBlockInterval uint64 `mapstructure:"child_chain_block_interval"` // Difference between header index of 2 child blocks submitted on main chain
 	MainchainGasLimit  uint64 `mapstructure:"main_chain_gas_limit"`       // gas limit to mainchain transaction. eg....submit checkpoint.
 
@@ -227,9 +218,6 @@ func GetDefaultHeimdallConfig() Configuration {
 
 		AmqpURL:           DefaultAmqpURL,
 		HeimdallServerURL: DefaultHeimdallServerURL,
-
-		StateReceiverAddress: DefaultStateReceiverAddress,
-		ValidatorSetAddress:  DefaultValidatorSetAddress,
 
 		ChildBlockInterval: DefaultChildBlockInterval,
 		MainchainGasLimit:  DefaultMainchainGasLimit,

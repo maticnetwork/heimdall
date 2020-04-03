@@ -2,20 +2,21 @@ package staking
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/gorilla/mux"
-	"github.com/spf13/cobra"
-	abci "github.com/tendermint/tendermint/abci/types"
-
+	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	"github.com/maticnetwork/heimdall/helper"
 	stakingCli "github.com/maticnetwork/heimdall/staking/client/cli"
 	stakingRest "github.com/maticnetwork/heimdall/staking/client/rest"
 	"github.com/maticnetwork/heimdall/staking/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
+	"github.com/spf13/cobra"
+	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 var (
@@ -56,29 +57,38 @@ func (AppModuleBasic) ValidateGenesis(bz json.RawMessage) error {
 
 // VerifyGenesis performs verification on auth module state.
 func (AppModuleBasic) VerifyGenesis(bz map[string]json.RawMessage) error {
-	// var data types.GenesisState
-	// err := json.Unmarshal(bz[types.ModuleName], &data)
-	// if err != nil {
-	// 	return err
-	// }
+	var chainManagertData chainmanagerTypes.GenesisState
+	errcm := chainmanagerTypes.ModuleCdc.UnmarshalJSON(bz[chainmanagerTypes.ModuleName], &chainManagertData)
+	if errcm != nil {
+		return errcm
+	}
 
-	// contractCaller, err := helper.NewContractCaller()
-	// if err != nil {
-	// 	return err
-	// }
+	var data types.GenesisState
+	err := types.ModuleCdc.UnmarshalJSON(bz[types.ModuleName], &data)
+	if err != nil {
+		return err
+	}
 
-	// // validate validators
-	// validators := data.Validators
-	// for _, v := range validators {
-	// 	val, err := contractCaller.GetValidatorInfo(v.ID)
-	// 	if err != nil {
-	// 		return err
-	// 	}
+	contractCaller, err := helper.NewContractCaller()
+	if err != nil {
+		return err
+	}
 
-	// 	if val.VotingPower != v.VotingPower {
-	// 		return fmt.Errorf("Voting power mismatch. Expected: %v Received: %v ValID: %v", val.VotingPower, v.VotingPower, v.ID)
-	// 	}
-	// }
+	stakingInfoAddress := chainManagertData.Params.ChainParams.StakingInfoAddress.EthAddress()
+	stakingInfoInstance, _ := contractCaller.GetStakingInfoInstance(stakingInfoAddress)
+
+	// validate validators
+	validators := data.Validators
+	for _, v := range validators {
+		val, err := contractCaller.GetValidatorInfo(v.ID, stakingInfoInstance)
+		if err != nil {
+			return err
+		}
+
+		if val.VotingPower != v.VotingPower {
+			return fmt.Errorf("Voting power mismatch. Expected: %v Received: %v ValID: %v", val.VotingPower, v.VotingPower, v.ID)
+		}
+	}
 
 	return nil
 }

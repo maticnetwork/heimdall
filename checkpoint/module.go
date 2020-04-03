@@ -1,13 +1,16 @@
 package checkpoint
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/gorilla/mux"
+	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
 
@@ -56,13 +59,19 @@ func (AppModuleBasic) ValidateGenesis(bz json.RawMessage) error {
 
 // VerifyGenesis performs verification on auth module state.
 func (AppModuleBasic) VerifyGenesis(bz map[string]json.RawMessage) error {
+	var chainManagertData chainmanagerTypes.GenesisState
+	errcm := chainmanagerTypes.ModuleCdc.UnmarshalJSON(bz[chainmanagerTypes.ModuleName], &chainManagertData)
+	if errcm != nil {
+		return errcm
+	}
+
 	var data types.GenesisState
 	err := types.ModuleCdc.UnmarshalJSON(bz[types.ModuleName], &data)
 
 	if err != nil {
 		return err
 	}
-	return verifyGenesis(data)
+	return verifyGenesis(data, chainManagertData)
 }
 
 // RegisterRESTRoutes registers the REST routes for the auth module.
@@ -155,49 +164,51 @@ func (AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.Validato
 //
 // Internal methods
 //
-func verifyGenesis(state types.GenesisState) error {
-	// contractCaller, err := helper.NewContractCaller()
-	// if err != nil {
-	// 	return err
-	// }
-	// TODO: figure out maybe fetch address from chainmanager genesis itself
+func verifyGenesis(state types.GenesisState, chainManagerState chainmanagerTypes.GenesisState) error {
+	contractCaller, err := helper.NewContractCaller()
+	if err != nil {
+		return err
+	}
+
+	rootChainAddress := chainManagerState.Params.ChainParams.RootChainAddress.EthAddress()
+	rootChainInstance, _ := contractCaller.GetRootChainInstance(rootChainAddress)
+
 	// check header count
+	currentHeaderIndex, err := contractCaller.CurrentHeaderBlock(rootChainInstance)
+	if err != nil {
+		return nil
+	}
 
-	// currentHeaderIndex, err := contractCaller.CurrentHeaderBlock()
-	// if err != nil {
-	// 	return nil
-	// }
+	if state.AckCount*helper.GetConfig().ChildBlockInterval != currentHeaderIndex {
+		fmt.Println("Header Count doesn't match",
+			"ExpectedHeader", currentHeaderIndex,
+			"HeaderIndexFound", state.AckCount*helper.GetConfig().ChildBlockInterval)
+		return nil
+	}
 
-	// if state.AckCount*helper.GetConfig().ChildBlockInterval != currentHeaderIndex {
-	// 	fmt.Println("Header Count doesn't match",
-	// 		"ExpectedHeader", currentHeaderIndex,
-	// 		"HeaderIndexFound", state.AckCount*helper.GetConfig().ChildBlockInterval)
-	// 	return nil
-	// }
+	fmt.Println("ACK count valid:", "count", currentHeaderIndex)
 
-	// fmt.Println("ACK count valid:", "count", currentHeaderIndex)
+	// check all headers
+	for i, header := range state.Headers {
+		ackCount := uint64(i + 1)
+		root, start, end, _, _, err := contractCaller.GetHeaderInfo(ackCount*helper.GetConfig().ChildBlockInterval, rootChainInstance)
+		if err != nil {
+			return err
+		}
 
-	// // check all headers
-	// for i, header := range state.Headers {
-	// 	ackCount := uint64(i + 1)
-	// 	root, start, end, _, _, err := contractCaller.GetHeaderInfo(ackCount * helper.GetConfig().ChildBlockInterval)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-
-	// 	if header.StartBlock != start || header.EndBlock != end || !bytes.Equal(header.RootHash.Bytes(), root.Bytes()) {
-	// 		return fmt.Errorf(
-	// 			"Checkpoint block doesnt match: startExpected %v, startReceived %v, endExpected %v, endReceived %v, rootHashExpected %v, rootHashReceived %v",
-	// 			header.StartBlock,
-	// 			start,
-	// 			header.EndBlock,
-	// 			header.EndBlock,
-	// 			header.RootHash.String(),
-	// 			root.String(),
-	// 		)
-	// 	}
-	// 	fmt.Println("Checkpoint block valid:", "start", start, "end", end, "root", root.String())
-	// }
+		if header.StartBlock != start || header.EndBlock != end || !bytes.Equal(header.RootHash.Bytes(), root.Bytes()) {
+			return fmt.Errorf(
+				"Checkpoint block doesnt match: startExpected %v, startReceived %v, endExpected %v, endReceived %v, rootHashExpected %v, rootHashReceived %v",
+				header.StartBlock,
+				start,
+				header.EndBlock,
+				header.EndBlock,
+				header.RootHash.String(),
+				root.String(),
+			)
+		}
+		fmt.Println("Checkpoint block valid:", "start", start, "end", end, "root", root.String())
+	}
 
 	return nil
 }
