@@ -330,7 +330,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		supply.NewAppModule(app.SupplyKeeper, &app.caller),
 		gov.NewAppModule(app.GovKeeper, app.SupplyKeeper),
 		staking.NewAppModule(app.StakingKeeper, &app.caller),
-		checkpoint.NewAppModule(app.CheckpointKeeper, &app.caller),
+		checkpoint.NewAppModule(app.CheckpointKeeper, app.StakingKeeper, &app.caller),
 		bor.NewAppModule(app.BorKeeper, &app.caller),
 		clerk.NewAppModule(app.ClerkKeeper, &app.caller),
 		topup.NewAppModule(app.TopupKeeper, &app.caller),
@@ -352,23 +352,6 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 
 	// register message routes and query routes
 	app.mm.RegisterRoutes(app.Router(), app.QueryRouter())
-
-	// register message routes
-	// app.Router().
-	// 	AddRoute(bankTypes.RouterKey, bank.NewHandler(app.bankKeeper, &app.caller)).
-	// 	AddRoute(checkpointTypes.RouterKey, checkpoint.NewHandler(app.checkpointKeeper, &app.caller)).
-	// 	AddRoute(stakingTypes.RouterKey, staking.NewHandler(app.stakingKeeper, &app.caller)).
-	// 	AddRoute(borTypes.RouterKey, bor.NewHandler(app.borKeeper)).
-	// 	AddRoute(clerkTypes.RouterKey, clerk.NewHandler(app.clerkKeeper, &app.caller))
-
-	// app.QueryRouter().
-	// 	AddRoute(authTypes.QuerierRoute, auth.NewQuerier(app.AccountKeeper)).
-	// 	AddRoute(bankTypes.QuerierRoute, bank.NewQuerier(app.bankKeeper)).
-	// 	AddRoute(supplyTypes.QuerierRoute, supply.NewQuerier(app.supplyKeeper)).
-	// 	AddRoute(stakingTypes.QuerierRoute, staking.NewQuerier(app.stakingKeeper)).
-	// 	AddRoute(checkpointTypes.QuerierRoute, checkpoint.NewQuerier(app.checkpointKeeper)).
-	// 	AddRoute(borTypes.QuerierRoute, bor.NewQuerier(app.borKeeper)).
-	// 	AddRoute(clerkTypes.QuerierRoute, clerk.NewQuerier(app.clerkKeeper))
 
 	// mount the multistore and load the latest state
 	app.MountKVStores(keys)

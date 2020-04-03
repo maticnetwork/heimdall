@@ -17,6 +17,7 @@ import (
 	checkpointRest "github.com/maticnetwork/heimdall/checkpoint/client/rest"
 	"github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/staking"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -88,14 +89,16 @@ type AppModule struct {
 	AppModuleBasic
 
 	keeper         Keeper
+	stakingKeeper  staking.Keeper
 	contractCaller helper.IContractCaller
 }
 
 // NewAppModule creates a new AppModule object
-func NewAppModule(keeper Keeper, contractCaller helper.IContractCaller) AppModule {
+func NewAppModule(keeper Keeper, sk staking.Keeper, contractCaller helper.IContractCaller) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{},
 		keeper:         keeper,
+		stakingKeeper:  sk,
 		contractCaller: contractCaller,
 	}
 }
@@ -125,7 +128,7 @@ func (AppModule) QuerierRoute() string {
 
 // NewQuerierHandler returns the auth module sdk.Querier.
 func (am AppModule) NewQuerierHandler() sdk.Querier {
-	return NewQuerier(am.keeper)
+	return NewQuerier(am.keeper, am.stakingKeeper)
 }
 
 // InitGenesis performs genesis initialization for the auth module. It returns
