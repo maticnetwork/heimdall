@@ -1,7 +1,6 @@
 package checkpoint
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 
@@ -20,8 +19,6 @@ func NewQuerier(keeper Keeper, stakingKeeper staking.Keeper) sdk.Querier {
 		switch path[0] {
 		case types.QueryParams:
 			return handleQueryParams(ctx, req, keeper)
-		case types.QueryProposer:
-			return handleQueryIsCheckpointProposer(ctx, req, stakingKeeper)
 		case types.QueryAckCount:
 			return handleQueryAckCount(ctx, req, keeper)
 		case types.QueryCheckpoint:
@@ -149,21 +146,6 @@ func handleQueryNextCheckpoint(ctx sdk.Context, req abci.RequestQuery, keeper Ke
 	bz, err := json.Marshal(checkpointMsg)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr(fmt.Sprintf("could not marshall checkpoint msg. Error:%v", err), err.Error()))
-	}
-	return bz, nil
-}
-
-func handleQueryIsCheckpointProposer(ctx sdk.Context, req abci.RequestQuery, sk staking.Keeper) ([]byte, sdk.Error) {
-	// get validator set
-	validatorSet := sk.GetValidatorSet(ctx)
-	proposer := validatorSet.GetProposer()
-	var isProposer bool
-	if bytes.Compare(proposer.Bytes(), helper.GetAddress()) == 0 {
-		isProposer = true
-	}
-	bz, err := json.Marshal(isProposer)
-	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr(fmt.Sprintf("cannot not marshall. Error %v", err), err.Error()))
 	}
 	return bz, nil
 }

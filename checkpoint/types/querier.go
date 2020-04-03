@@ -10,6 +10,8 @@ const (
 	QueryCheckpointList   = "checkpoint-list"
 	QueryNextCheckpoint   = "next-checkpoint"
 	QueryProposer         = "is-proposer"
+	QueryCurrentProposer  = "current-proposer"
+	StakingQuerierRoute   = "staking"
 )
 
 // QueryCheckpointParams defines the params for querying accounts.
