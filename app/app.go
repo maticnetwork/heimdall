@@ -240,6 +240,14 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	// keepers
 	//
 
+	app.ChainKeeper = chainmanager.NewKeeper(
+		app.cdc,
+		keys[chainmanagerTypes.StoreKey], // target store
+		app.subspaces[chainmanagerTypes.ModuleName],
+		common.DefaultCodespace,
+		app.caller,
+	)
+
 	// account keeper
 	app.AccountKeeper = auth.NewAccountKeeper(
 		app.cdc,
@@ -292,14 +300,6 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		app.StakingKeeper,
 		govTypes.DefaultCodespace,
 		govRouter,
-	)
-
-	app.ChainKeeper = chainmanager.NewKeeper(
-		app.cdc,
-		keys[chainmanagerTypes.StoreKey], // target store
-		app.subspaces[chainmanagerTypes.ModuleName],
-		common.DefaultCodespace,
-		app.caller,
 	)
 
 	app.CheckpointKeeper = checkpoint.NewKeeper(
