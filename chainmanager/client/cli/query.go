@@ -36,7 +36,7 @@ func GetQueryParams(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "params",
 		Args:  cobra.NoArgs,
-		Short: "show the current auth parameters information",
+		Short: "show the current chainmanager parameters information",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Query values set as chain manager parameters.
 
