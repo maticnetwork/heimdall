@@ -25,11 +25,6 @@ bor_RPC_URL = "{{ .BorRPCUrl }}"
 # RPC endpoint for tendermint
 tendermint_RPC_URL = "{{ .TendermintRPCUrl }}"
 
-##### Chain ID configration #####
-
-# Bor chain ID
-bor_chain_id = "{{ .BorChainID }}"
-
 
 ##### MQTT and Rest Server Config #####
 

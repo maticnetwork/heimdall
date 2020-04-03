@@ -6,7 +6,6 @@ import (
 	"math/big"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
@@ -66,10 +65,6 @@ const (
 	DefaultChildBlockInterval = 10000 // difference between 2 indexes of header blocks
 	DefaultTxConfirmationTime = 6 * 14 * time.Second
 	DefaultMainchainGasLimit  = uint64(5000000)
-
-	DefaultBorChainID           = 15001
-	DefaultValidatorSetAddress  = "0000000000000000000000000000000000001000"
-	DefaultStateReceiverAddress = "0000000000000000000000000000000000001001"
 )
 
 var (
@@ -91,8 +86,6 @@ type Configuration struct {
 	EthRPCUrl        string `mapstructure:"eth_RPC_URL"`        // RPC endpoint for main chain
 	BorRPCUrl        string `mapstructure:"bor_RPC_URL"`        // RPC endpoint for bor chain
 	TendermintRPCUrl string `mapstructure:"tendermint_RPC_URL"` // tendemint node url
-
-	BorChainID string `mapstructure:"bor_chain_id"` // bor chain id
 
 	AmqpURL           string `mapstructure:"amqp_url"`             // amqp url
 	HeimdallServerURL string `mapstructure:"heimdall_rest_server"` // heimdall server url
@@ -212,7 +205,6 @@ func GetDefaultHeimdallConfig() Configuration {
 		EthRPCUrl:        DefaultMainRPCUrl,
 		BorRPCUrl:        DefaultBorRPCUrl,
 		TendermintRPCUrl: DefaultTendermintNodeURL,
-		BorChainID:       strconv.Itoa(DefaultBorChainID),
 
 		AmqpURL:           DefaultAmqpURL,
 		HeimdallServerURL: DefaultHeimdallServerURL,

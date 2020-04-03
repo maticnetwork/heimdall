@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 
 	"github.com/maticnetwork/heimdall/gov/types"
-	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -40,20 +39,20 @@ func ValidateGenesis(data GenesisState) error {
 // genFirstSpan generates default first valdiator producer set
 func genFirstSpan(valset hmTypes.ValidatorSet) []*hmTypes.Span {
 	var firstSpan []*hmTypes.Span
-	var selectedProducers []hmTypes.Validator
-	if len(valset.Validators) > int(DefaultProducerCount) {
-		// pop top validators and select
-		for i := 0; uint64(i) < DefaultProducerCount; i++ {
-			selectedProducers = append(selectedProducers, *valset.Validators[i])
-		}
-	} else {
-		for _, val := range valset.Validators {
-			selectedProducers = append(selectedProducers, *val)
-		}
-	}
-
-	newSpan := hmTypes.NewSpan(0, 0, 0+DefaultFirstSpanDuration-1, valset, selectedProducers, helper.GetConfig().BorChainID)
-	firstSpan = append(firstSpan, &newSpan)
+	// var selectedProducers []hmTypes.Validator
+	// if len(valset.Validators) > int(DefaultProducerCount) {
+	// 	// pop top validators and select
+	// 	for i := 0; uint64(i) < DefaultProducerCount; i++ {
+	// 		selectedProducers = append(selectedProducers, *valset.Validators[i])
+	// 	}
+	// } else {
+	// 	for _, val := range valset.Validators {
+	// 		selectedProducers = append(selectedProducers, *val)
+	// 	}
+	// }
+	// TODO: Fetch BorChainID
+	// newSpan := hmTypes.NewSpan(0, 0, 0+DefaultFirstSpanDuration-1, valset, selectedProducers, helper.GetConfig().BorChainID)
+	// firstSpan = append(firstSpan, &newSpan)
 	return firstSpan
 }
 
