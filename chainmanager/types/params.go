@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/params/subspace"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
@@ -13,6 +14,11 @@ import (
 // Default parameter values
 const (
 	DefaultTxConfirmationTime time.Duration = 6 * 14 * time.Second
+)
+
+var (
+	DefaultStateReceiverAddress hmTypes.HeimdallAddress = hmTypes.HexToHeimdallAddress("0x0000000000000000000000000000000000001001")
+	DefaultValidatorSetAddress  hmTypes.HeimdallAddress = hmTypes.HexToHeimdallAddress("0x0000000000000000000000000000000000001000")
 )
 
 // Parameter keys
@@ -144,5 +150,10 @@ func ParamKeyTable() subspace.KeyTable {
 func DefaultParams() Params {
 	return Params{
 		TxConfirmationTime: DefaultTxConfirmationTime,
+		ChainParams: ChainParams{
+			BorChainID:           helper.DefaultBorChainID,
+			StateReceiverAddress: DefaultStateReceiverAddress,
+			ValidatorSetAddress:  DefaultValidatorSetAddress,
+		},
 	}
 }
