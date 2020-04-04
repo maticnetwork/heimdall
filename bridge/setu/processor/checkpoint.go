@@ -415,8 +415,7 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToRootchain(start uint64, 
 		if err != nil {
 			panic(err)
 		}
-		// TODO: check why error check not accepting
-		// cp.contractConnector.SendCheckpoint(helper.GetVoteBytes(votes, chainID), sigs, tx.Tx[authTypes.PulpHashLength:], rootChainAddress, rootChainInstance)
+
 		if err := cp.contractConnector.SendCheckpoint(helper.GetVoteBytes(votes, chainID), sigs, tx.Tx[authTypes.PulpHashLength:], rootChainAddress, rootChainInstance); err != nil {
 			cp.Logger.Info("Error submitting checkpoint to rootchain", "error", err)
 			return err
