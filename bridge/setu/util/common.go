@@ -49,6 +49,7 @@ const (
 	CurrentValidatorSetURL = "staking/validator-set"
 	StakingTxStatusURL     = "/staking/isoldtx"
 	TopupTxStatusURL       = "/topup/isoldtx"
+	ClerkTxStatusURL       = "/clerk/isoldtx"
 
 	TransactionTimeout      = 1 * time.Minute
 	CommitTimeout           = 2 * time.Minute
