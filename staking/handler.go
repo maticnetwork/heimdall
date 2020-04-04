@@ -110,6 +110,20 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k Keepe
 		LastUpdated: "",
 	}
 
+	// sequence id
+
+	sequence := new(big.Int).Mul(receipt.BlockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
+	sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))
+
+	// check if incoming tx is older
+	if k.HasStakingSequence(ctx, sequence.String()) {
+		k.Logger(ctx).Error("Older invalid tx found")
+		return hmCommon.ErrOldTx(k.Codespace()).Result()
+	}
+
+	// update last updated
+	newValidator.LastUpdated = sequence.String()
+
 	// add validator to store
 	k.Logger(ctx).Debug("Adding new validator to state", "validator", newValidator.String())
 	err = k.AddValidator(ctx, newValidator)
@@ -117,6 +131,9 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k Keepe
 		k.Logger(ctx).Error("Unable to add validator to state", "error", err, "validator", newValidator.String())
 		return hmCommon.ErrValidatorSave(k.Codespace()).Result()
 	}
+
+	// save staking sequence
+	k.SetStakingSequence(ctx, sequence.String())
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -366,6 +383,19 @@ func HandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k Keepe
 
 	// set end epoch
 	validator.EndEpoch = eventLog.DeactivationEpoch.Uint64()
+
+	// sequence id
+	sequence := new(big.Int).Mul(receipt.BlockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
+	sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))
+
+	// check if incoming tx is older
+	if k.HasStakingSequence(ctx, sequence.String()) {
+		k.Logger(ctx).Error("Older invalid tx found")
+		return hmCommon.ErrOldTx(k.Codespace()).Result()
+	}
+
+	// update last updated
+	validator.LastUpdated = sequence.String()
 
 	// Add deactivation time for validator
 	if err := k.AddValidator(ctx, validator); err != nil {
