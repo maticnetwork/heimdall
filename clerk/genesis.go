@@ -14,9 +14,14 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 			keeper.SetEventRecord(ctx, *record)
 		}
 	}
+
+	for _, sequence := range data.RecordSequences {
+		keeper.SetRecordSequence(ctx, sequence)
+	}
+
 }
 
 // ExportGenesis returns a GenesisState for a given context and keeper.
 func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
-	return types.NewGenesisState(keeper.GetAllEventRecords(ctx))
+	return types.NewGenesisState(keeper.GetAllEventRecords(ctx), keeper.GetRecordSequences(ctx))
 }

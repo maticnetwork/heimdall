@@ -1,6 +1,7 @@
 package clerk
 
 import (
+	"math/big"
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -50,6 +51,17 @@ func handleMsgEventRecord(ctx sdk.Context, msg types.MsgEventRecord, k Keeper, c
 		return common.ErrInvalidMsg(k.Codespace(), "ID in message doesn't match with id in log. msgId %v stateIdFromTx %v", msg.ID, eventLog.Id).Result()
 	}
 
+	// sequence id
+
+	sequence := new(big.Int).Mul(receipt.BlockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
+	sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))
+
+	// check if incoming tx is older
+	if k.HasRecordSequence(ctx, sequence.String()) {
+		k.Logger(ctx).Error("Older invalid tx found")
+		return common.ErrOldTx(k.Codespace()).Result()
+	}
+
 	// create event record
 	record := types.NewEventRecord(
 		msg.TxHash,
@@ -65,6 +77,9 @@ func handleMsgEventRecord(ctx sdk.Context, msg types.MsgEventRecord, k Keeper, c
 		k.Logger(ctx).Error("Unable to update event record", "error", err, "id", msg.ID)
 		return types.ErrEventUpdate(k.Codespace()).Result()
 	}
+
+	// save record sequence
+	k.SetRecordSequence(ctx, sequence.String())
 
 	// add events
 	ctx.EventManager().EmitEvents(sdk.Events{
