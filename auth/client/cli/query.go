@@ -19,7 +19,7 @@ import (
 func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 	txCmd := &cobra.Command{
 		Use:                        types.ModuleName,
-		Short:                      "Auth transaction subcommands",
+		Short:                      "Querying commands for the auth module",
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,

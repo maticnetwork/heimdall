@@ -8,6 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/libs/log"
 
+	"github.com/maticnetwork/heimdall/chainmanager"
 	"github.com/maticnetwork/heimdall/clerk/types"
 	"github.com/maticnetwork/heimdall/params/subspace"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -32,6 +33,8 @@ type Keeper struct {
 	codespace sdk.CodespaceType
 	// param space
 	paramSpace subspace.Subspace
+	// chain param keeper
+	chainKeeper chainmanager.Keeper
 }
 
 // NewKeeper create new keeper
@@ -40,12 +43,14 @@ func NewKeeper(
 	storeKey sdk.StoreKey,
 	paramSpace subspace.Subspace,
 	codespace sdk.CodespaceType,
+	chainKeeper chainmanager.Keeper,
 ) Keeper {
 	keeper := Keeper{
-		cdc:        cdc,
-		storeKey:   storeKey,
-		paramSpace: paramSpace,
-		codespace:  codespace,
+		cdc:         cdc,
+		storeKey:    storeKey,
+		paramSpace:  paramSpace,
+		codespace:   codespace,
+		chainKeeper: chainKeeper,
 	}
 	return keeper
 }

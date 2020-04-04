@@ -5,6 +5,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/maticnetwork/heimdall/bank"
+	"github.com/maticnetwork/heimdall/chainmanager"
 	"github.com/maticnetwork/heimdall/params/subspace"
 	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/topup/types"
@@ -28,6 +29,8 @@ type Keeper struct {
 	codespace sdk.CodespaceType
 	// param subspace
 	paramSpace subspace.Subspace
+	// chain keeper
+	chainKeeper chainmanager.Keeper
 	// bank keeper
 	bk bank.Keeper
 	// staking keeper
@@ -40,16 +43,18 @@ func NewKeeper(
 	storeKey sdk.StoreKey,
 	paramSpace subspace.Subspace,
 	codespace sdk.CodespaceType,
+	chainKeeper chainmanager.Keeper,
 	bankKeeper bank.Keeper,
 	stakingKeeper staking.Keeper,
 ) Keeper {
 	return Keeper{
-		cdc:        cdc,
-		key:        storeKey,
-		paramSpace: paramSpace,
-		codespace:  codespace,
-		bk:         bankKeeper,
-		sk:         stakingKeeper,
+		cdc:         cdc,
+		key:         storeKey,
+		paramSpace:  paramSpace,
+		codespace:   codespace,
+		chainKeeper: chainKeeper,
+		bk:          bankKeeper,
+		sk:          stakingKeeper,
 	}
 }
 

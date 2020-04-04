@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
+	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -75,6 +76,10 @@ func main() {
 	cdc := app.MakeCodec()
 	ctx := server.NewDefaultContext()
 
+	cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
+	cliCtx.BroadcastMode = client.BroadcastSync
+	cliCtx.TrustNode = true
+
 	// just make pulp :)
 	app.MakePulp()
 
@@ -103,8 +108,8 @@ func main() {
 		client.LineBreak,
 
 		// approve and stake on mainnet
-		StakeCmd(),
-		ApproveCmd(),
+		StakeCmd(cliCtx),
+		ApproveCmd(cliCtx),
 	)
 
 	// bind with-heimdall-config config with root cmd

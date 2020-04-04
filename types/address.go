@@ -99,10 +99,6 @@ func (aa HeimdallAddress) Bytes() []byte {
 
 // String implements the Stringer interface.
 func (aa HeimdallAddress) String() string {
-	if aa.Empty() {
-		return ""
-	}
-
 	return "0x" + hex.EncodeToString(aa.Bytes())
 }
 

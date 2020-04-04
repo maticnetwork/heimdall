@@ -3,9 +3,9 @@ package common
 import (
 	"fmt"
 	"strconv"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
 )
 
@@ -47,6 +47,7 @@ const (
 	CodeSpanNotFound       CodeType = 3503
 	CodeValSetMisMatch     CodeType = 3504
 	CodeProducerMisMatch   CodeType = 3505
+	CodeInvalidBorChainID  CodeType = 3506
 
 	CodeFetchCheckpointSigners       CodeType = 4501
 	CodeErrComputeGenesisAccountRoot CodeType = 4503
@@ -89,8 +90,8 @@ func ErrNoConn(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeNoConn, "Unable to connect to chain")
 }
 
-func ErrWaitForConfirmation(codespace sdk.CodespaceType) sdk.Error {
-	return newError(codespace, CodeWaitFrConfirmation, fmt.Sprintf("Please wait for %v confirmation time before sending transaction", helper.GetConfig().TxConfirmationTime))
+func ErrWaitForConfirmation(codespace sdk.CodespaceType, txConfirmationTime time.Duration) sdk.Error {
+	return newError(codespace, CodeWaitFrConfirmation, fmt.Sprintf("Please wait for %v confirmation time before sending transaction", txConfirmationTime))
 }
 
 func ErrNoCheckpointFound(codespace sdk.CodespaceType) sdk.Error {
@@ -164,6 +165,10 @@ func ErrValidatorAlreadyJoined(codespace sdk.CodespaceType) sdk.Error {
 }
 
 // Bor Errors --------------------------------
+
+func ErrInvalidBorChainID(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeInvalidBorChainID, "Invalid Bor chain id")
+}
 
 func ErrSpanNotInCountinuity(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeSpanNotCountinuous, "Span not countinuous")
