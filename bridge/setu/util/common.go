@@ -6,17 +6,16 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"net/url"
 	"os"
-	"path"
 	"strconv"
 	"sync"
 	"time"
 
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
+	chainManagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
+
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/log"
@@ -25,7 +24,6 @@ import (
 
 	"github.com/maticnetwork/heimdall/helper"
 	hmtypes "github.com/maticnetwork/heimdall/types"
-	rest "github.com/maticnetwork/heimdall/types/rest"
 )
 
 const (
@@ -39,6 +37,7 @@ const (
 	AccountDetailsURL      = "/auth/accounts/%v"
 	LastNoAckURL           = "/checkpoint/last-no-ack"
 	CheckpointParamsURL    = "/checkpoint/params"
+	ChainManagerParamsURL  = "/chainmanager/params"
 	ProposersURL           = "/staking/proposer/%v"
 	BufferedCheckpointURL  = "/checkpoint/buffer"
 	LatestCheckpointURL    = "/checkpoint/latest-checkpoint"
@@ -76,8 +75,8 @@ func Logger() log.Logger {
 func IsProposer(cliCtx cliContext.CLIContext) (bool, error) {
 	var proposers []hmtypes.Validator
 	count := uint64(1)
-	result, err := FetchFromAPI(cliCtx,
-		GetHeimdallServerEndpoint(fmt.Sprintf(ProposersURL, strconv.FormatUint(count, 10))),
+	result, err := helper.FetchFromAPI(cliCtx,
+		helper.GetHeimdallServerEndpoint(fmt.Sprintf(ProposersURL, strconv.FormatUint(count, 10))),
 	)
 
 	if err != nil {
@@ -101,9 +100,9 @@ func IsProposer(cliCtx cliContext.CLIContext) (bool, error) {
 // IsInProposerList checks if we are in current proposer
 func IsInProposerList(cliCtx cliContext.CLIContext, count uint64) (bool, error) {
 	logger.Debug("Skipping proposers", "count", strconv.FormatUint(count, 10))
-	response, err := FetchFromAPI(
+	response, err := helper.FetchFromAPI(
 		cliCtx,
-		GetHeimdallServerEndpoint(fmt.Sprintf(ProposersURL, strconv.FormatUint(count, 10))),
+		helper.GetHeimdallServerEndpoint(fmt.Sprintf(ProposersURL, strconv.FormatUint(count, 10))),
 	)
 	if err != nil {
 		logger.Error("Unable to send request for next proposers", "url", ProposersURL, "error", err)
@@ -132,7 +131,7 @@ func CalculateTaskDelay(cliCtx cliContext.CLIContext) (bool, time.Duration) {
 	// calculate validator position
 	valPosition := 0
 	isCurrentValidator := false
-	response, err := FetchFromAPI(cliCtx, GetHeimdallServerEndpoint(CurrentValidatorSetURL))
+	response, err := helper.FetchFromAPI(cliCtx, helper.GetHeimdallServerEndpoint(CurrentValidatorSetURL))
 	if err != nil {
 		logger.Error("Unable to send request for current validatorset", "url", CurrentValidatorSetURL, "error", err)
 		return isCurrentValidator, 0
@@ -162,7 +161,7 @@ func CalculateTaskDelay(cliCtx cliContext.CLIContext) (bool, time.Duration) {
 // IsCurrentProposer checks if we are current proposer
 func IsCurrentProposer(cliCtx cliContext.CLIContext) (bool, error) {
 	var proposer hmtypes.Validator
-	result, err := FetchFromAPI(cliCtx, GetHeimdallServerEndpoint(CurrentProposerURL))
+	result, err := helper.FetchFromAPI(cliCtx, helper.GetHeimdallServerEndpoint(CurrentProposerURL))
 	if err != nil {
 		logger.Error("Error fetching proposers", "error", err)
 		return false, err
@@ -186,8 +185,8 @@ func IsCurrentProposer(cliCtx cliContext.CLIContext) (bool, error) {
 func IsEventSender(cliCtx cliContext.CLIContext, validatorID uint64) bool {
 	var validator hmtypes.Validator
 
-	result, err := FetchFromAPI(cliCtx,
-		GetHeimdallServerEndpoint(fmt.Sprintf(ValidatorURL, strconv.FormatUint(validatorID, 10))),
+	result, err := helper.FetchFromAPI(cliCtx,
+		helper.GetHeimdallServerEndpoint(fmt.Sprintf(ValidatorURL, strconv.FormatUint(validatorID, 10))),
 	)
 	if err != nil {
 		logger.Error("Error fetching proposers", "error", err)
@@ -208,13 +207,6 @@ func IsEventSender(cliCtx cliContext.CLIContext, validatorID uint64) bool {
 	return false
 }
 
-// GetHeimdallServerEndpoint returns heimdall server endpoint
-func GetHeimdallServerEndpoint(endpoint string) string {
-	u, _ := url.Parse(helper.GetConfig().HeimdallServerURL)
-	u.Path = path.Join(u.Path, endpoint)
-	return u.String()
-}
-
 //CreateURLWithQuery receives the uri and parameters in key value form
 //it will return the new url with the given query from the parameter
 func CreateURLWithQuery(uri string, param map[string]interface{}) (string, error) {
@@ -230,32 +222,6 @@ func CreateURLWithQuery(uri string, param map[string]interface{}) (string, error
 
 	urlObj.RawQuery = query.Encode()
 	return urlObj.String(), nil
-}
-
-// FetchFromAPI fetches data from any URL
-func FetchFromAPI(cliCtx cliContext.CLIContext, URL string) (result rest.ResponseWithHeight, err error) {
-	resp, err := http.Get(URL)
-	if err != nil {
-		return result, err
-	}
-	defer resp.Body.Close()
-
-	// response
-	if resp.StatusCode == 200 {
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return result, err
-		}
-		// unmarshall data from buffer
-		var response rest.ResponseWithHeight
-		if err := cliCtx.Codec.UnmarshalJSON(body, &response); err != nil {
-			return result, err
-		}
-		return response, nil
-	}
-
-	logger.Debug("Error while fetching data from URL", "status", resp.StatusCode, "URL", URL)
-	return result, fmt.Errorf("Error while fetching data from url: %v, status: %v", URL, resp.StatusCode)
 }
 
 // WaitForOneEvent subscribes to a websocket event for the given
@@ -303,9 +269,9 @@ func IsCatchingUp(cliCtx cliContext.CLIContext) bool {
 func GetAccount(cliCtx cliContext.CLIContext) (account authTypes.Account, err error) {
 	// current address
 	address := hmtypes.BytesToHeimdallAddress(helper.GetAddress())
-	url := GetHeimdallServerEndpoint(fmt.Sprintf(AccountDetailsURL, address))
+	url := helper.GetHeimdallServerEndpoint(fmt.Sprintf(AccountDetailsURL, address))
 	// call account rest api
-	response, err := FetchFromAPI(cliCtx, url)
+	response, err := helper.FetchFromAPI(cliCtx, url)
 	if err != nil {
 		return
 	}
@@ -314,6 +280,25 @@ func GetAccount(cliCtx cliContext.CLIContext) (account authTypes.Account, err er
 		return
 	}
 	return
+}
+
+// GetConfigManagerParams return configManager params
+func GetConfigManagerParams(cliCtx cliContext.CLIContext) (*chainManagerTypes.Params, error) {
+	response, err := helper.FetchFromAPI(
+		cliCtx,
+		helper.GetHeimdallServerEndpoint(ChainManagerParamsURL),
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var params chainManagerTypes.Params
+	if err := json.Unmarshal(response.Result, &params); err != nil {
+		return nil, err
+	}
+
+	return &params, nil
 }
 
 // appendPrefix - returns publickey in uncompressed format

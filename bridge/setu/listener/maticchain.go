@@ -6,6 +6,7 @@ import (
 
 	"github.com/RichardKnop/machinery/v1/tasks"
 	"github.com/maticnetwork/bor/core/types"
+	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
 )
 
@@ -59,7 +60,9 @@ func (ml *MaticChainListener) ProcessHeader(newHeader *types.Header) {
 	if err != nil {
 		ml.Logger.Error("Error marshalling header block", "error", err)
 	}
-	confirmationTime := helper.GetConfig().TxConfirmationTime
+	configParams, _ := util.GetConfigManagerParams(ml.cliCtx)
+
+	confirmationTime := configParams.TxConfirmationTime
 	ml.sendTaskWithDelay("sendCheckpointToHeimdall", headerBytes, confirmationTime)
 }
 

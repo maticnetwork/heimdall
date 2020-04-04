@@ -10,6 +10,7 @@ import (
 	"github.com/maticnetwork/bor/common"
 	"github.com/tendermint/tendermint/libs/log"
 
+	"github.com/maticnetwork/heimdall/chainmanager"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/params/subspace"
 	"github.com/maticnetwork/heimdall/staking/types"
@@ -44,6 +45,8 @@ type Keeper struct {
 	codespace sdk.CodespaceType
 	// param space
 	paramSpace subspace.Subspace
+	// chain manager keeper
+	chainKeeper chainmanager.Keeper
 	// module communicator
 	moduleCommunicator ModuleCommunicator
 }
@@ -54,6 +57,7 @@ func NewKeeper(
 	storeKey sdk.StoreKey,
 	paramSpace subspace.Subspace,
 	codespace sdk.CodespaceType,
+	chainKeeper chainmanager.Keeper,
 	moduleCommunicator ModuleCommunicator,
 ) Keeper {
 	keeper := Keeper{
@@ -61,6 +65,7 @@ func NewKeeper(
 		storeKey:           storeKey,
 		paramSpace:         paramSpace.WithKeyTable(types.ParamKeyTable()),
 		codespace:          codespace,
+		chainKeeper:        chainKeeper,
 		moduleCommunicator: moduleCommunicator,
 	}
 	return keeper

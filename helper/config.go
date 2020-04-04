@@ -2,16 +2,13 @@ package helper
 
 import (
 	"crypto/ecdsa"
-	"fmt"
 	"log"
 	"math/big"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
-	"github.com/maticnetwork/bor/common"
 	ethCrypto "github.com/maticnetwork/bor/crypto"
 	"github.com/maticnetwork/bor/ethclient"
 	"github.com/maticnetwork/bor/rpc"
@@ -20,9 +17,6 @@ import (
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	logger "github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/privval"
-
-	"github.com/maticnetwork/heimdall/contracts/rootchain"
-	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
 
 	tmTypes "github.com/tendermint/tendermint/types"
 )
@@ -72,9 +66,7 @@ const (
 	DefaultTxConfirmationTime = 6 * 14 * time.Second
 	DefaultMainchainGasLimit  = uint64(5000000)
 
-	DefaultBorChainID           = 15001
-	DefaultValidatorSetAddress  = "0000000000000000000000000000000000001000"
-	DefaultStateReceiverAddress = "0000000000000000000000000000000000001001"
+	DefaultBorChainID string = "15001"
 )
 
 var (
@@ -97,18 +89,8 @@ type Configuration struct {
 	BorRPCUrl        string `mapstructure:"bor_RPC_URL"`        // RPC endpoint for bor chain
 	TendermintRPCUrl string `mapstructure:"tendermint_RPC_URL"` // tendemint node url
 
-	BorChainID string `mapstructure:"bor_chain_id"` // bor chain id
-
 	AmqpURL           string `mapstructure:"amqp_url"`             // amqp url
 	HeimdallServerURL string `mapstructure:"heimdall_rest_server"` // heimdall server url
-
-	StakingInfoAddress   string `mapstructure:"stakinginfo_contract"`    // Staking Info address on main chain
-	RootchainAddress     string `mapstructure:"rootchain_contract"`      // Rootchain contract address on main chain
-	StateSenderAddress   string `mapstructure:"state_sender_contract"`   // main
-	StateReceiverAddress string `mapstructure:"state_receiver_contract"` // matic
-	ValidatorSetAddress  string `mapstructure:"validator_set_contract"`  // Validator Set contract address on bor chain
-	StakeManagerAddress  string `mapstructure:"stake_manager_contract"`
-	MaticTokenAddress    string `mapstructure:"matic_token"`
 
 	ChildBlockInterval uint64 `mapstructure:"child_chain_block_interval"` // Difference between header index of 2 child blocks submitted on main chain
 	MainchainGasLimit  uint64 `mapstructure:"main_chain_gas_limit"`       // gas limit to mainchain transaction. eg....submit checkpoint.
@@ -126,8 +108,6 @@ type Configuration struct {
 
 	// wait time related options
 	NoACKWaitTime time.Duration `mapstructure:"no_ack_wait_time"` // Time ack service waits to clear buffer and elect new proposer
-
-	TxConfirmationTime time.Duration `mapstructure:"tx_confirmation_time"` // Tx confirmation time in seconds (6 * 14 sec per block)
 }
 
 var conf Configuration
@@ -227,19 +207,9 @@ func GetDefaultHeimdallConfig() Configuration {
 		EthRPCUrl:        DefaultMainRPCUrl,
 		BorRPCUrl:        DefaultBorRPCUrl,
 		TendermintRPCUrl: DefaultTendermintNodeURL,
-		BorChainID:       strconv.Itoa(DefaultBorChainID),
 
 		AmqpURL:           DefaultAmqpURL,
 		HeimdallServerURL: DefaultHeimdallServerURL,
-
-		StakingInfoAddress:  (common.Address{}).Hex(),
-		RootchainAddress:    (common.Address{}).Hex(),
-		StateSenderAddress:  (common.Address{}).Hex(),
-		StakeManagerAddress: (common.Address{}).Hex(),
-		MaticTokenAddress:   (common.Address{}).Hex(),
-
-		StateReceiverAddress: DefaultStateReceiverAddress,
-		ValidatorSetAddress:  DefaultValidatorSetAddress,
 
 		ChildBlockInterval: DefaultChildBlockInterval,
 		MainchainGasLimit:  DefaultMainchainGasLimit,
@@ -254,8 +224,6 @@ func GetDefaultHeimdallConfig() Configuration {
 		MaxCheckpointLength: MaxCheckpointLength,
 
 		NoACKWaitTime: NoACKWaitTime,
-
-		TxConfirmationTime: DefaultTxConfirmationTime,
 	}
 }
 
@@ -266,56 +234,6 @@ func GetConfig() Configuration {
 
 func GetGenesisDoc() tmTypes.GenesisDoc {
 	return GenesisDoc
-}
-
-// GetRootChainAddress returns RootChain contract address for selected base chain
-func GetRootChainAddress() common.Address {
-	return common.HexToAddress(GetConfig().RootchainAddress)
-}
-
-// GetRootChainInstance returns RootChain contract instance for selected base chain
-func GetRootChainInstance() (*rootchain.Rootchain, error) {
-	rootChainInstance, err := rootchain.NewRootchain(GetRootChainAddress(), mainChainClient)
-	if err != nil {
-		fmt.Println("Unable to create root chain instance", "error", err)
-	}
-
-	return rootChainInstance, err
-}
-
-// GetStakingInfoAddress returns StakingInfo contract address for selected base chain
-func GetStakingInfoAddress() common.Address {
-	return common.HexToAddress(GetConfig().StakingInfoAddress)
-}
-
-// GetStakingInfoInstance returns stakinginfo contract instance for selected base chain
-func GetStakingInfoInstance() (*stakinginfo.Stakinginfo, error) {
-	return stakinginfo.NewStakinginfo(GetStakingInfoAddress(), mainChainClient)
-}
-
-// GetValidatorSetAddress returns Validator set contract address for selected base chain
-func GetValidatorSetAddress() common.Address {
-	return common.HexToAddress(GetConfig().ValidatorSetAddress)
-}
-
-// GetStateSenderAddress returns state sender contract address for selected base chain
-func GetStateSenderAddress() common.Address {
-	return common.HexToAddress(GetConfig().StateSenderAddress)
-}
-
-// GetStateReceiverAddress returns state receiver contract address for selected child chain
-func GetStateReceiverAddress() common.Address {
-	return common.HexToAddress(GetConfig().StateReceiverAddress)
-}
-
-// GetStakeManagerAddress returns state receiver contract address for selected child chain
-func GetStakeManagerAddress() common.Address {
-	return common.HexToAddress(GetConfig().StakeManagerAddress)
-}
-
-// GetMaticTokenAddress
-func GetMaticTokenAddress() common.Address {
-	return common.HexToAddress(GetConfig().MaticTokenAddress)
 }
 
 //

@@ -38,15 +38,18 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 // HandleMsgValidatorJoin msg validator join
 func HandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	k.Logger(ctx).Info("Handling new validator join", "msg", msg)
+	// chainManager params
+	params := k.chainKeeper.GetParams(ctx)
+	chainParams := params.ChainParams
 
 	// get main tx receipt
-	receipt, err := contractCaller.GetConfirmedTxReceipt(ctx.BlockTime(), msg.TxHash.EthHash())
+	receipt, err := contractCaller.GetConfirmedTxReceipt(ctx.BlockTime(), msg.TxHash.EthHash(), params.TxConfirmationTime)
 	if err != nil || receipt == nil {
-		return hmCommon.ErrWaitForConfirmation(k.Codespace()).Result()
+		return hmCommon.ErrWaitForConfirmation(k.Codespace(), params.TxConfirmationTime).Result()
 	}
 
 	// decode validator join event
-	eventLog, err := contractCaller.DecodeValidatorJoinEvent(helper.GetStakingInfoAddress(), receipt, msg.LogIndex)
+	eventLog, err := contractCaller.DecodeValidatorJoinEvent(chainParams.StakingInfoAddress.EthAddress(), receipt, msg.LogIndex)
 	if err != nil || eventLog == nil {
 		return hmCommon.ErrInvalidMsg(k.Codespace(), "Unable to fetch logs for txHash").Result()
 	}
@@ -136,13 +139,17 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k Keepe
 func HandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	k.Logger(ctx).Debug("Handling stake update", "Validator", msg.ID)
 
+	// chainManager params
+	params := k.chainKeeper.GetParams(ctx)
+	chainParams := params.ChainParams
+
 	// get main tx receipt
-	receipt, err := contractCaller.GetConfirmedTxReceipt(ctx.BlockTime(), msg.TxHash.EthHash())
+	receipt, err := contractCaller.GetConfirmedTxReceipt(ctx.BlockTime(), msg.TxHash.EthHash(), params.TxConfirmationTime)
 	if err != nil || receipt == nil {
-		return hmCommon.ErrWaitForConfirmation(k.Codespace()).Result()
+		return hmCommon.ErrWaitForConfirmation(k.Codespace(), params.TxConfirmationTime).Result()
 	}
 
-	eventLog, err := contractCaller.DecodeValidatorStakeUpdateEvent(helper.GetStakingInfoAddress(), receipt, msg.LogIndex)
+	eventLog, err := contractCaller.DecodeValidatorStakeUpdateEvent(chainParams.StakingInfoAddress.EthAddress(), receipt, msg.LogIndex)
 	if err != nil || eventLog == nil {
 		k.Logger(ctx).Error("Error fetching log from txhash")
 		return hmCommon.ErrInvalidMsg(k.Codespace(), "Unable to fetch logs for txHash").Result()
@@ -209,17 +216,19 @@ func HandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keeper, c
 // HandleMsgSignerUpdate handles signer update message
 func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	k.Logger(ctx).Debug("Handling signer update", "Validator", msg.ID, "Signer", msg.NewSignerPubKey.Address())
-
+	// chainManager params
+	params := k.chainKeeper.GetParams(ctx)
+	chainParams := params.ChainParams
 	// get main tx receipt
-	receipt, err := contractCaller.GetConfirmedTxReceipt(ctx.BlockTime(), msg.TxHash.EthHash())
+	receipt, err := contractCaller.GetConfirmedTxReceipt(ctx.BlockTime(), msg.TxHash.EthHash(), params.TxConfirmationTime)
 	if err != nil || receipt == nil {
-		return hmCommon.ErrWaitForConfirmation(k.Codespace()).Result()
+		return hmCommon.ErrWaitForConfirmation(k.Codespace(), params.TxConfirmationTime).Result()
 	}
 
 	newPubKey := msg.NewSignerPubKey
 	newSigner := newPubKey.Address()
 
-	eventLog, err := contractCaller.DecodeSignerUpdateEvent(helper.GetStakingInfoAddress(), receipt, msg.LogIndex)
+	eventLog, err := contractCaller.DecodeSignerUpdateEvent(chainParams.StakingInfoAddress.EthAddress(), receipt, msg.LogIndex)
 	if err != nil || eventLog == nil {
 		k.Logger(ctx).Error("Error fetching log from txhash")
 		return hmCommon.ErrInvalidMsg(k.Codespace(), "Unable to fetch signer update log for txHash").Result()
@@ -333,14 +342,18 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper,
 func HandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	k.Logger(ctx).Info("Handling validator exit", "ValidatorID", msg.ID)
 
+	// chainManager params
+	params := k.chainKeeper.GetParams(ctx)
+	chainParams := params.ChainParams
+
 	// get main tx receipt
-	receipt, err := contractCaller.GetConfirmedTxReceipt(ctx.BlockTime(), msg.TxHash.EthHash())
+	receipt, err := contractCaller.GetConfirmedTxReceipt(ctx.BlockTime(), msg.TxHash.EthHash(), params.TxConfirmationTime)
 	if err != nil || receipt == nil {
-		return hmCommon.ErrWaitForConfirmation(k.Codespace()).Result()
+		return hmCommon.ErrWaitForConfirmation(k.Codespace(), params.TxConfirmationTime).Result()
 	}
 
 	// decode validator exit
-	eventLog, err := contractCaller.DecodeValidatorExitEvent(helper.GetStakingInfoAddress(), receipt, msg.LogIndex)
+	eventLog, err := contractCaller.DecodeValidatorExitEvent(chainParams.StakingInfoAddress.EthAddress(), receipt, msg.LogIndex)
 	if err != nil || eventLog == nil {
 		k.Logger(ctx).Error("Error fetching log from txhash")
 		return hmCommon.ErrInvalidMsg(k.Codespace(), "Unable to fetch unstake log for txHash").Result()

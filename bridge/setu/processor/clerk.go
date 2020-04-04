@@ -10,6 +10,7 @@ import (
 	ethereum "github.com/maticnetwork/bor"
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/core/types"
+	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
 	"github.com/maticnetwork/heimdall/contracts/statesender"
 	"github.com/maticnetwork/heimdall/helper"
@@ -54,6 +55,8 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 		return err
 	}
 
+	configParams, _ := util.GetConfigManagerParams(cp.cliCtx)
+
 	event := new(statesender.StatesenderStateSynced)
 	if err := helper.UnpackLog(cp.stateSenderAbi, event, eventName, &vLog); err != nil {
 		cp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
@@ -64,7 +67,7 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 			"id", event.Id,
 			"contract", event.ContractAddress,
 			"data", hex.EncodeToString(event.Data),
-			"borChainId", helper.GetConfig().BorChainID,
+			"borChainId", configParams.ChainParams.BorChainID,
 			"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			"logIndex", uint64(vLog.Index),
 		)
@@ -74,7 +77,7 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			uint64(vLog.Index),
 			event.Id.Uint64(),
-			helper.GetConfig().BorChainID,
+			configParams.ChainParams.BorChainID,
 		)
 
 		// return broadcast to heimdall
@@ -125,7 +128,9 @@ func (cp *ClerkProcessor) commitRecordID(stateID uint64) error {
 		return err
 	}
 	// get validator address
-	stateReceiverAddress := helper.GetStateReceiverAddress()
+	configParams, _ := util.GetConfigManagerParams(cp.cliCtx)
+
+	stateReceiverAddress := configParams.ChainParams.StateReceiverAddress.EthAddress()
 	msg := ethereum.CallMsg{
 		To:   &stateReceiverAddress,
 		Data: encodedData,

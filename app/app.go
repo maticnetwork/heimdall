@@ -19,6 +19,8 @@ import (
 	bankTypes "github.com/maticnetwork/heimdall/bank/types"
 	"github.com/maticnetwork/heimdall/bor"
 	borTypes "github.com/maticnetwork/heimdall/bor/types"
+	"github.com/maticnetwork/heimdall/chainmanager"
+	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	"github.com/maticnetwork/heimdall/checkpoint"
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/clerk"
@@ -60,6 +62,7 @@ var (
 		auth.AppModuleBasic{},
 		bank.AppModuleBasic{},
 		supply.AppModuleBasic{},
+		chainmanager.AppModuleBasic{},
 		staking.AppModuleBasic{},
 		checkpoint.AppModuleBasic{},
 		bor.AppModuleBasic{},
@@ -92,6 +95,7 @@ type HeimdallApp struct {
 	BankKeeper       bank.Keeper
 	SupplyKeeper     supply.Keeper
 	GovKeeper        gov.Keeper
+	ChainKeeper      chainmanager.Keeper
 	CheckpointKeeper checkpoint.Keeper
 	StakingKeeper    staking.Keeper
 	BorKeeper        bor.Keeper
@@ -184,6 +188,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		bankTypes.StoreKey,
 		supplyTypes.StoreKey,
 		govTypes.StoreKey,
+		chainmanagerTypes.StoreKey,
 		stakingTypes.StoreKey,
 		checkpointTypes.StoreKey,
 		borTypes.StoreKey,
@@ -208,6 +213,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.subspaces[bankTypes.ModuleName] = app.ParamsKeeper.Subspace(bankTypes.DefaultParamspace)
 	app.subspaces[supplyTypes.ModuleName] = app.ParamsKeeper.Subspace(supplyTypes.DefaultParamspace)
 	app.subspaces[govTypes.ModuleName] = app.ParamsKeeper.Subspace(govTypes.DefaultParamspace).WithKeyTable(govTypes.ParamKeyTable())
+	app.subspaces[chainmanagerTypes.ModuleName] = app.ParamsKeeper.Subspace(chainmanagerTypes.DefaultParamspace)
 	app.subspaces[stakingTypes.ModuleName] = app.ParamsKeeper.Subspace(stakingTypes.DefaultParamspace)
 	app.subspaces[checkpointTypes.ModuleName] = app.ParamsKeeper.Subspace(checkpointTypes.DefaultParamspace)
 	app.subspaces[borTypes.ModuleName] = app.ParamsKeeper.Subspace(borTypes.DefaultParamspace)
@@ -247,6 +253,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		keys[stakingTypes.StoreKey], // target store
 		app.subspaces[stakingTypes.ModuleName],
 		common.DefaultCodespace,
+		app.ChainKeeper,
 		moduleCommunicator,
 	)
 
@@ -268,6 +275,15 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		maccPerms,
 		app.AccountKeeper,
 		app.BankKeeper,
+	)
+
+	// create chain keeper
+	app.ChainKeeper = chainmanager.NewKeeper(
+		app.cdc,
+		keys[chainmanagerTypes.StoreKey], // target store
+		app.subspaces[chainmanagerTypes.ModuleName],
+		common.DefaultCodespace,
+		app.caller,
 	)
 
 	// register the proposal types
@@ -292,6 +308,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		app.subspaces[checkpointTypes.ModuleName],
 		common.DefaultCodespace,
 		app.StakingKeeper,
+		app.ChainKeeper,
 	)
 
 	app.BorKeeper = bor.NewKeeper(
@@ -299,6 +316,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		keys[borTypes.StoreKey], // target store
 		app.subspaces[borTypes.ModuleName],
 		common.DefaultCodespace,
+		app.ChainKeeper,
 		app.StakingKeeper,
 		app.caller,
 	)
@@ -308,6 +326,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		keys[clerkTypes.StoreKey], // target store
 		app.subspaces[clerkTypes.ModuleName],
 		common.DefaultCodespace,
+		app.ChainKeeper,
 	)
 
 	// may be need signer
@@ -316,6 +335,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		keys[topupTypes.StoreKey],
 		app.subspaces[topupTypes.ModuleName],
 		topupTypes.DefaultCodespace,
+		app.ChainKeeper,
 		app.BankKeeper,
 		app.StakingKeeper,
 	)
@@ -329,6 +349,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		bank.NewAppModule(app.BankKeeper, &app.caller),
 		supply.NewAppModule(app.SupplyKeeper, &app.caller),
 		gov.NewAppModule(app.GovKeeper, app.SupplyKeeper),
+		chainmanager.NewAppModule(app.ChainKeeper, &app.caller),
 		staking.NewAppModule(app.StakingKeeper, &app.caller),
 		checkpoint.NewAppModule(app.CheckpointKeeper, app.StakingKeeper, &app.caller),
 		bor.NewAppModule(app.BorKeeper, &app.caller),
@@ -342,6 +363,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		authTypes.ModuleName,
 		bankTypes.ModuleName,
 		govTypes.ModuleName,
+		chainmanagerTypes.ModuleName,
 		supplyTypes.ModuleName,
 		stakingTypes.ModuleName,
 		checkpointTypes.ModuleName,
@@ -364,6 +386,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.SetAnteHandler(
 		auth.NewAnteHandler(
 			app.AccountKeeper,
+			app.ChainKeeper,
 			app.SupplyKeeper,
 			&app.caller,
 			auth.DefaultSigVerificationGasConsumer,

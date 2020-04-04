@@ -200,7 +200,13 @@ func handleQueryAccountProof(ctx sdk.Context, req abci.RequestQuery, keeper Keep
 	}
 
 	contractCallerObj, err := helper.NewContractCaller()
-	accountRootOnChain, err := contractCallerObj.CurrentAccountStateRoot()
+
+	chainParams := keeper.chainKeeper.GetParams(ctx)
+
+	stakingInfoAddress := chainParams.ChainParams.StakingInfoAddress.EthAddress()
+	stakingInfoInstance, _ := contractCallerObj.GetStakingInfoInstance(stakingInfoAddress)
+
+	accountRootOnChain, err := contractCallerObj.CurrentAccountStateRoot(stakingInfoInstance)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not fetch account root from onchain ", err.Error()))
 	}
@@ -254,13 +260,15 @@ func handleQueryStakingSequence(ctx sdk.Context, req abci.RequestQuery, keeper K
 		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
 	}
 
+	chainParams := keeper.chainKeeper.GetParams(ctx)
+
 	contractCallerObj, err := helper.NewContractCaller()
 	if err != nil {
 		return nil, sdk.ErrInternal(fmt.Sprintf(err.Error()))
 	}
 
 	// get main tx receipt
-	receipt, _ := contractCallerObj.GetConfirmedTxReceipt(time.Now().UTC(), hmTypes.HexToHeimdallHash(params.TxHash).EthHash())
+	receipt, _ := contractCallerObj.GetConfirmedTxReceipt(time.Now().UTC(), hmTypes.HexToHeimdallHash(params.TxHash).EthHash(), chainParams.TxConfirmationTime)
 	if err != nil || receipt == nil {
 		return nil, sdk.ErrInternal(fmt.Sprintf("Transaction is not confirmed yet. Please for sometime and try again"))
 	}

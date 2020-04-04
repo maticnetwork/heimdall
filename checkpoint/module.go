@@ -10,6 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/gorilla/mux"
+	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
 
@@ -59,12 +60,19 @@ func (AppModuleBasic) ValidateGenesis(bz json.RawMessage) error {
 
 // VerifyGenesis performs verification on auth module state.
 func (AppModuleBasic) VerifyGenesis(bz map[string]json.RawMessage) error {
+	var chainManagertData chainmanagerTypes.GenesisState
+	errcm := chainmanagerTypes.ModuleCdc.UnmarshalJSON(bz[chainmanagerTypes.ModuleName], &chainManagertData)
+	if errcm != nil {
+		return errcm
+	}
+
 	var data types.GenesisState
-	err := json.Unmarshal(bz[types.ModuleName], &data)
+	err := types.ModuleCdc.UnmarshalJSON(bz[types.ModuleName], &data)
+
 	if err != nil {
 		return err
 	}
-	return verifyGenesis(data)
+	return verifyGenesis(data, chainManagertData)
 }
 
 // RegisterRESTRoutes registers the REST routes for the auth module.
@@ -159,14 +167,17 @@ func (AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.Validato
 //
 // Internal methods
 //
-func verifyGenesis(state types.GenesisState) error {
+func verifyGenesis(state types.GenesisState, chainManagerState chainmanagerTypes.GenesisState) error {
 	contractCaller, err := helper.NewContractCaller()
 	if err != nil {
 		return err
 	}
 
+	rootChainAddress := chainManagerState.Params.ChainParams.RootChainAddress.EthAddress()
+	rootChainInstance, _ := contractCaller.GetRootChainInstance(rootChainAddress)
+
 	// check header count
-	currentHeaderIndex, err := contractCaller.CurrentHeaderBlock()
+	currentHeaderIndex, err := contractCaller.CurrentHeaderBlock(rootChainInstance)
 	if err != nil {
 		return nil
 	}
@@ -183,7 +194,7 @@ func verifyGenesis(state types.GenesisState) error {
 	// check all headers
 	for i, header := range state.Headers {
 		ackCount := uint64(i + 1)
-		root, start, end, _, _, err := contractCaller.GetHeaderInfo(ackCount * helper.GetConfig().ChildBlockInterval)
+		root, start, end, _, _, err := contractCaller.GetHeaderInfo(ackCount*helper.GetConfig().ChildBlockInterval, rootChainInstance)
 		if err != nil {
 			return err
 		}

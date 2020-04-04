@@ -1,22 +1,21 @@
-package staking
+package chainmanager
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/gorilla/mux"
-	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
-	"github.com/maticnetwork/heimdall/helper"
-	stakingCli "github.com/maticnetwork/heimdall/staking/client/cli"
-	stakingRest "github.com/maticnetwork/heimdall/staking/client/rest"
-	"github.com/maticnetwork/heimdall/staking/types"
-	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
+
+	chainmanagerCli "github.com/maticnetwork/heimdall/chainmanager/client/cli"
+	chainmanagerRest "github.com/maticnetwork/heimdall/chainmanager/client/rest"
+	"github.com/maticnetwork/heimdall/chainmanager/types"
+	"github.com/maticnetwork/heimdall/helper"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 var (
@@ -57,55 +56,22 @@ func (AppModuleBasic) ValidateGenesis(bz json.RawMessage) error {
 
 // VerifyGenesis performs verification on auth module state.
 func (AppModuleBasic) VerifyGenesis(bz map[string]json.RawMessage) error {
-	var chainManagertData chainmanagerTypes.GenesisState
-	errcm := chainmanagerTypes.ModuleCdc.UnmarshalJSON(bz[chainmanagerTypes.ModuleName], &chainManagertData)
-	if errcm != nil {
-		return errcm
-	}
-
-	var data types.GenesisState
-	err := types.ModuleCdc.UnmarshalJSON(bz[types.ModuleName], &data)
-	if err != nil {
-		return err
-	}
-
-	contractCaller, err := helper.NewContractCaller()
-	if err != nil {
-		return err
-	}
-
-	stakingInfoAddress := chainManagertData.Params.ChainParams.StakingInfoAddress.EthAddress()
-	stakingInfoInstance, _ := contractCaller.GetStakingInfoInstance(stakingInfoAddress)
-
-	// validate validators
-	validators := data.Validators
-	for _, v := range validators {
-		val, err := contractCaller.GetValidatorInfo(v.ID, stakingInfoInstance)
-		if err != nil {
-			return err
-		}
-
-		if val.VotingPower != v.VotingPower {
-			return fmt.Errorf("Voting power mismatch. Expected: %v Received: %v ValID: %v", val.VotingPower, v.VotingPower, v.ID)
-		}
-	}
-
 	return nil
 }
 
 // RegisterRESTRoutes registers the REST routes for the auth module.
 func (AppModuleBasic) RegisterRESTRoutes(ctx context.CLIContext, rtr *mux.Router) {
-	stakingRest.RegisterRoutes(ctx, rtr)
+	chainmanagerRest.RegisterRoutes(ctx, rtr)
 }
 
 // GetTxCmd returns the root tx command for the auth module.
 func (AppModuleBasic) GetTxCmd(cdc *codec.Codec) *cobra.Command {
-	return stakingCli.GetTxCmd(cdc)
+	return nil
 }
 
 // GetQueryCmd returns the root query command for the auth module.
 func (AppModuleBasic) GetQueryCmd(cdc *codec.Codec) *cobra.Command {
-	return stakingCli.GetQueryCmd(cdc)
+	return chainmanagerCli.GetQueryCmd(cdc)
 }
 
 //____________________________________________________________________________
@@ -127,7 +93,7 @@ func NewAppModule(keeper Keeper, contractCaller helper.IContractCaller) AppModul
 	}
 }
 
-// Name returns the module's name.
+// Name returns the auth module's name.
 func (AppModule) Name() string {
 	return types.ModuleName
 }
@@ -135,17 +101,17 @@ func (AppModule) Name() string {
 // RegisterInvariants performs a no-op.
 func (AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
-// Route returns the message routing key for the module.
+// Route returns the message routing key for the auth module.
 func (AppModule) Route() string {
 	return types.RouterKey
 }
 
 // NewHandler returns an sdk.Handler for the module.
 func (am AppModule) NewHandler() sdk.Handler {
-	return NewHandler(am.keeper, am.contractCaller)
+	return nil
 }
 
-// QuerierRoute returns the staking module's querier route name.
+// QuerierRoute returns the auth module's querier route name.
 func (AppModule) QuerierRoute() string {
 	return types.QuerierRoute
 }
