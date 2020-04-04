@@ -91,7 +91,7 @@ func handleQueryRecordSequence(ctx sdk.Context, req abci.RequestQuery, keeper Ke
 	// get main tx receipt
 	receipt, _ := contractCallerObj.GetConfirmedTxReceipt(time.Now().UTC(), hmTypes.HexToHeimdallHash(params.TxHash).EthHash(), chainParams.TxConfirmationTime)
 	if err != nil || receipt == nil {
-		return nil, sdk.ErrInternal(fmt.Sprintf("Transaction is not confirmed yet. Please for sometime and try again"))
+		return nil, sdk.ErrInternal(fmt.Sprintf("Transaction is not confirmed yet. Please wait for sometime and try again"))
 	}
 
 	// sequence id
@@ -102,7 +102,7 @@ func handleQueryRecordSequence(ctx sdk.Context, req abci.RequestQuery, keeper Ke
 	// check if incoming tx already exists
 	if !keeper.HasRecordSequence(ctx, sequence.String()) {
 		keeper.Logger(ctx).Error("No record sequence exist: %s %s", params.TxHash, params.LogIndex)
-		return nil, sdk.ErrInternal(fmt.Sprintf("no record exist:: %s", params.TxHash))
+		return nil, nil
 	}
 
 	bz, err := codec.MarshalJSONIndent(types.ModuleCdc, sequence)

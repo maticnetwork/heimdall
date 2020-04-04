@@ -84,7 +84,7 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 			// get main tx receipt
 			receipt, err := contractCallerObj.GetConfirmedTxReceipt(time.Now().UTC(), hmTypes.HexToHeimdallHash(txhash).EthHash(), configParams.TxConfirmationTime)
 			if err != nil || receipt == nil {
-				return errors.New("Transaction is not confirmed yet. Please for sometime and try again")
+				return errors.New("Transaction is not confirmed yet. Please wait for sometime and try again")
 			}
 
 			abiObject := &contractCallerObj.StakingInfoABI

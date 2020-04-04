@@ -240,6 +240,15 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	// keepers
 	//
 
+	// create chain keeper
+	app.ChainKeeper = chainmanager.NewKeeper(
+		app.cdc,
+		keys[chainmanagerTypes.StoreKey], // target store
+		app.subspaces[chainmanagerTypes.ModuleName],
+		common.DefaultCodespace,
+		app.caller,
+	)
+
 	// account keeper
 	app.AccountKeeper = auth.NewAccountKeeper(
 		app.cdc,
@@ -275,15 +284,6 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		maccPerms,
 		app.AccountKeeper,
 		app.BankKeeper,
-	)
-
-	// create chain keeper
-	app.ChainKeeper = chainmanager.NewKeeper(
-		app.cdc,
-		keys[chainmanagerTypes.StoreKey], // target store
-		app.subspaces[chainmanagerTypes.ModuleName],
-		common.DefaultCodespace,
-		app.caller,
 	)
 
 	// register the proposal types
