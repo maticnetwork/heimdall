@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"strconv"
 
+	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethereum "github.com/maticnetwork/bor"
 	"github.com/maticnetwork/bor/accounts/abi"
@@ -61,6 +62,19 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 	if err := helper.UnpackLog(cp.stateSenderAbi, event, eventName, &vLog); err != nil {
 		cp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
 	} else {
+		if isOld, _ := cp.isOldTx(cp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index)); isOld {
+			cp.Logger.Info("Ignoring task to send deposit to heimdall as already processed",
+				"event", eventName,
+				"id", event.Id,
+				"contract", event.ContractAddress,
+				"data", hex.EncodeToString(event.Data),
+				"borChainId", configParams.ChainParams.BorChainID,
+				"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
+				"logIndex", uint64(vLog.Index),
+			)
+			return nil
+		}
+
 		cp.Logger.Debug(
 			"⬜ New event found",
 			"event", eventName,
@@ -155,4 +169,29 @@ func (cp *ClerkProcessor) encodeProposeStateData(stateID uint64) ([]byte, error)
 	}
 	// return data
 	return data, nil
+}
+
+// isOldTx  checks if tx is already processed or not
+func (cp *ClerkProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, logIndex uint64) (bool, error) {
+	queryParam := map[string]interface{}{
+		"txhash":   txHash,
+		"logindex": logIndex,
+	}
+
+	endpoint := helper.GetHeimdallServerEndpoint(util.ClerkTxStatusURL)
+	url, err := util.CreateURLWithQuery(endpoint, queryParam)
+
+	res, err := helper.FetchFromAPI(cp.cliCtx, url)
+	if err != nil {
+		cp.Logger.Error("Error fetching tx status", "url", url, "error", err)
+		return false, err
+	}
+
+	var status bool
+	if err := json.Unmarshal(res.Result, &status); err != nil {
+		cp.Logger.Error("Error unmarshalling tx status received from Heimdall Server", "error", err)
+		return false, err
+	}
+
+	return status, nil
 }

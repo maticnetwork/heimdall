@@ -23,6 +23,10 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 		"/clerk/event-record/{recordId}",
 		recordHandlerFn(cliCtx),
 	).Methods("GET")
+	r.HandleFunc(
+		"/clerk/isoldtx",
+		DepositTxStatusHandlerFn(cliCtx),
+	).Methods("GET")
 }
 
 // recordHandlerFn returns record by record id
@@ -104,6 +108,52 @@ func recordListHandlerFn(
 			return
 		}
 
+		rest.PostProcessResponse(w, cliCtx, res)
+	}
+}
+
+// Returns deposit tx status information
+func DepositTxStatusHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := r.URL.Query()
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		// get logIndex
+		logindex, ok := rest.ParseUint64OrReturnBadRequest(w, vars.Get("logindex"))
+		if !ok {
+			return
+		}
+
+		txHash := vars.Get("txhash")
+		if txHash == "" {
+			return
+		}
+
+		// get query params
+		queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQueryRecordSequenceParams(txHash, logindex))
+		if err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		seqNo, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryRecordSequence), queryParams)
+		if err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		// error if no tx status found
+		if ok := hmRest.ReturnNotFoundIfNoContent(w, seqNo, "No sequence found"); !ok {
+			return
+		}
+
+		res := true
+
+		// return result
+		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }

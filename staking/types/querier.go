@@ -96,10 +96,10 @@ type QueryStakingSequenceParams struct {
 	LogIndex uint64
 }
 
-// NewQuerySequenceParams creates a new instance of QuerySequenceParams.
-func NewQuerySequenceParams(txHash string, logIndex uint64) QueryStakingSequenceParams {
-	return QueryStakingSequenceParams{TxHash: txHash, LogIndex: logIndex}
-}
+// // NewQuerySequenceParams creates a new instance of QuerySequenceParams.
+// func NewQuerySequenceParams(txHash string, logIndex uint64) QueryStakingSequenceParams {
+// 	return QueryStakingSequenceParams{TxHash: txHash, LogIndex: logIndex}
+// }
 
 // ValidatorSlashParams defines the params for slashing a validator
 type ValidatorSlashParams struct {
