@@ -5,6 +5,13 @@ volumes:
 
 services:
 
+  node-exporter:
+    image: prom/node-exporter
+    container_name: node-exporter
+    network_mode: host
+    ports:
+      - 9100:9100
+
   prometheus:
     image: prom/prometheus
     container_name: prometheus
