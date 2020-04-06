@@ -16,7 +16,7 @@ import (
 )
 
 // RegisterRoutes - Central function to define routes that get registered by the main application
-func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router) {
+func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc("/topup/fee", TopupHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/topup/withdraw", WithdrawFeeHandlerFn(cliCtx)).Methods("POST")
 }
@@ -101,7 +101,7 @@ func WithdrawFeeHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		// get msg
 		msg := topupTypes.NewMsgWithdrawFee(
 			fromAddr,
-			amount,
+			types.NewIntFromBigInt(amount),
 		)
 		restClient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
 	}

@@ -4,7 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"math/big"
+	"time"
 
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 
@@ -38,6 +41,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return handleQueryAccountProof(ctx, req, keeper)
 		case types.QueryVerifyAccountProof:
 			return handleQueryVerifyAccountProof(ctx, req, keeper)
+		case types.QueryStakingSequence:
+			return handleQueryStakingSequence(ctx, req, keeper)
 
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown staking query endpoint")
@@ -147,7 +152,6 @@ func handleQueryProposer(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) 
 
 func handleQueryCurrentProposer(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	proposer := keeper.GetCurrentProposer(ctx)
-
 	bz, err := json.Marshal(proposer)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
@@ -196,7 +200,13 @@ func handleQueryAccountProof(ctx sdk.Context, req abci.RequestQuery, keeper Keep
 	}
 
 	contractCallerObj, err := helper.NewContractCaller()
-	accountRootOnChain, err := contractCallerObj.CurrentAccountStateRoot()
+
+	chainParams := keeper.chainKeeper.GetParams(ctx)
+
+	stakingInfoAddress := chainParams.ChainParams.StakingInfoAddress.EthAddress()
+	stakingInfoInstance, _ := contractCallerObj.GetStakingInfoInstance(stakingInfoAddress)
+
+	accountRootOnChain, err := contractCallerObj.CurrentAccountStateRoot(stakingInfoInstance)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not fetch account root from onchain ", err.Error()))
 	}
@@ -206,8 +216,15 @@ func handleQueryAccountProof(ctx sdk.Context, req abci.RequestQuery, keeper Keep
 
 	if bytes.Compare(accountRootOnChain[:], currentStateAccountRoot) == 0 {
 		// Calculate new account root hash
-		merkleProof, _ := checkpointTypes.GetAccountProof(dividendAccounts, params.DividendAccountID)
-		return merkleProof, nil
+		merkleProof, index, _ := checkpointTypes.GetAccountProof(dividendAccounts, params.DividendAccountID)
+		accountProof := hmTypes.NewDividendAccountProof(params.DividendAccountID, merkleProof, index)
+		// json record
+		bz, err := json.Marshal(accountProof)
+		if err != nil {
+			return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+		}
+		return bz, nil
+
 	} else {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not fetch merkle proof ", err.Error()))
 	}
@@ -233,5 +250,44 @@ func handleQueryVerifyAccountProof(ctx sdk.Context, req abci.RequestQuery, keepe
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
+	return bz, nil
+}
+
+func handleQueryStakingSequence(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	var params types.QueryStakingSequenceParams
+
+	if err := types.ModuleCdc.UnmarshalJSON(req.Data, &params); err != nil {
+		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
+	}
+
+	chainParams := keeper.chainKeeper.GetParams(ctx)
+
+	contractCallerObj, err := helper.NewContractCaller()
+	if err != nil {
+		return nil, sdk.ErrInternal(fmt.Sprintf(err.Error()))
+	}
+
+	// get main tx receipt
+	receipt, _ := contractCallerObj.GetConfirmedTxReceipt(time.Now().UTC(), hmTypes.HexToHeimdallHash(params.TxHash).EthHash(), chainParams.TxConfirmationTime)
+	if err != nil || receipt == nil {
+		return nil, sdk.ErrInternal(fmt.Sprintf("Transaction is not confirmed yet. Please wait for sometime and try again"))
+	}
+
+	// sequence id
+
+	sequence := new(big.Int).Mul(receipt.BlockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
+	sequence.Add(sequence, new(big.Int).SetUint64(params.LogIndex))
+
+	// check if incoming tx already exists
+	if !keeper.HasStakingSequence(ctx, sequence.String()) {
+		keeper.Logger(ctx).Error("No staking sequence exist: %s %s", params.TxHash, params.LogIndex)
+		return nil, nil
+	}
+
+	bz, err := codec.MarshalJSONIndent(types.ModuleCdc, sequence)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
+
 	return bz, nil
 }

@@ -14,7 +14,6 @@ import (
 	authCli "github.com/maticnetwork/heimdall/auth/client/cli"
 	authRest "github.com/maticnetwork/heimdall/auth/client/rest"
 	"github.com/maticnetwork/heimdall/auth/types"
-	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
@@ -83,11 +82,11 @@ type AppModule struct {
 
 	accountKeeper  AccountKeeper
 	contractCaller helper.IContractCaller
-	processors     []authTypes.AccountProcessor
+	processors     []types.AccountProcessor
 }
 
 // NewAppModule creates a new AppModule object
-func NewAppModule(accountKeeper AccountKeeper, contractCaller helper.IContractCaller, processors []authTypes.AccountProcessor) AppModule {
+func NewAppModule(accountKeeper AccountKeeper, contractCaller helper.IContractCaller, processors []types.AccountProcessor) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{},
 		accountKeeper:  accountKeeper,

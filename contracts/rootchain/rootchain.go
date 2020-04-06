@@ -445,3 +445,14 @@ func (_Rootchain *RootchainFilterer) WatchNewHeaderBlock(opts *bind.WatchOpts, s
 		}
 	}), nil
 }
+
+// ParseNewHeaderBlock is a log parse operation binding the contract event 0xba5de06d22af2685c6c7765f60067f7d2b08c2d29f53cdf14d67f6d1c9bfb527.
+//
+// Solidity: event NewHeaderBlock(address indexed proposer, uint256 indexed headerBlockId, uint256 indexed reward, uint256 start, uint256 end, bytes32 root)
+func (_Rootchain *RootchainFilterer) ParseNewHeaderBlock(log types.Log) (*RootchainNewHeaderBlock, error) {
+	event := new(RootchainNewHeaderBlock)
+	if err := _Rootchain.contract.UnpackLog(event, "NewHeaderBlock", log); err != nil {
+		return nil, err
+	}
+	return event, nil
+}

@@ -8,6 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/libs/log"
 
+	"github.com/maticnetwork/heimdall/chainmanager"
 	"github.com/maticnetwork/heimdall/clerk/types"
 	"github.com/maticnetwork/heimdall/params/subspace"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -15,6 +16,12 @@ import (
 
 var (
 	StateRecordPrefixKey = []byte{0x11} // prefix key for when storing state
+
+	// DefaultValue default value
+	DefaultValue = []byte{0x01}
+
+	// RecordSequencePrefixKey represents record sequence prefix key
+	RecordSequencePrefixKey = []byte{0x12}
 )
 
 // Keeper stores all related data
@@ -26,6 +33,8 @@ type Keeper struct {
 	codespace sdk.CodespaceType
 	// param space
 	paramSpace subspace.Subspace
+	// chain param keeper
+	chainKeeper chainmanager.Keeper
 }
 
 // NewKeeper create new keeper
@@ -34,12 +43,14 @@ func NewKeeper(
 	storeKey sdk.StoreKey,
 	paramSpace subspace.Subspace,
 	codespace sdk.CodespaceType,
+	chainKeeper chainmanager.Keeper,
 ) Keeper {
 	keeper := Keeper{
-		cdc:        cdc,
-		storeKey:   storeKey,
-		paramSpace: paramSpace,
-		codespace:  codespace,
+		cdc:         cdc,
+		storeKey:    storeKey,
+		paramSpace:  paramSpace,
+		codespace:   codespace,
+		chainKeeper: chainKeeper,
 	}
 	return keeper
 }
@@ -177,4 +188,51 @@ func (k *Keeper) IterateRecordsAndApplyFn(ctx sdk.Context, f func(record types.E
 			return
 		}
 	}
+}
+
+// Sequence
+// GetRecordSequenceKey returns record sequence key
+func GetRecordSequenceKey(sequence string) []byte {
+	return append(RecordSequencePrefixKey, []byte(sequence)...)
+}
+
+// GetRecordSequences checks if record already exists
+func (keeper Keeper) GetRecordSequences(ctx sdk.Context) (sequences []string) {
+	keeper.IterateRecordSequencesAndApplyFn(ctx, func(sequence string) error {
+		sequences = append(sequences, sequence)
+		return nil
+	})
+	return
+}
+
+// IterateRecordSequencesAndApplyFn interate validators and apply the given function.
+func (keeper Keeper) IterateRecordSequencesAndApplyFn(ctx sdk.Context, f func(sequence string) error) {
+	store := ctx.KVStore(keeper.storeKey)
+
+	// get sequence iterator
+	iterator := sdk.KVStorePrefixIterator(store, RecordSequencePrefixKey)
+	defer iterator.Close()
+
+	// loop through sequences
+	for ; iterator.Valid(); iterator.Next() {
+		sequence := string(iterator.Key()[len(RecordSequencePrefixKey):])
+
+		// call function and return if required
+		if err := f(sequence); err != nil {
+			return
+		}
+	}
+	return
+}
+
+// SetRecordSequence sets mapping for sequence id to bool
+func (keeper Keeper) SetRecordSequence(ctx sdk.Context, sequence string) {
+	store := ctx.KVStore(keeper.storeKey)
+	store.Set(GetRecordSequenceKey(sequence), DefaultValue)
+}
+
+// HasRecordSequence checks if record already exists
+func (keeper Keeper) HasRecordSequence(ctx sdk.Context, sequence string) bool {
+	store := ctx.KVStore(keeper.storeKey)
+	return store.Has(GetRecordSequenceKey(sequence))
 }

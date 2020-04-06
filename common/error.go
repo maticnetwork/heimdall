@@ -2,9 +2,10 @@ package common
 
 import (
 	"fmt"
+	"strconv"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
 )
 
@@ -39,12 +40,14 @@ const (
 	CodeSignerUpdateError  CodeType = 2508
 	CodeNoConn             CodeType = 2509
 	CodeWaitFrConfirmation CodeType = 2510
+	CodeValPubkeyMismatch  CodeType = 2511
 
 	CodeSpanNotCountinuous CodeType = 3501
 	CodeUnableToFreezeSet  CodeType = 3502
 	CodeSpanNotFound       CodeType = 3503
 	CodeValSetMisMatch     CodeType = 3504
 	CodeProducerMisMatch   CodeType = 3505
+	CodeInvalidBorChainID  CodeType = 3506
 
 	CodeFetchCheckpointSigners       CodeType = 4501
 	CodeErrComputeGenesisAccountRoot CodeType = 4503
@@ -79,16 +82,16 @@ func ErrDisCountinuousCheckpoint(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeDisCountinuousCheckpoint, "Checkpoint not in countinuity")
 }
 
-func ErrNoACK(codespace sdk.CodespaceType, timeRemaining float64) sdk.Error {
-	return newError(codespace, CodeNoACK, fmt.Sprintf("Checkpoint Already Exists In Buffer, ACK expected ,expires %v", timeRemaining))
+func ErrNoACK(codespace sdk.CodespaceType, expiresAt uint64) sdk.Error {
+	return newError(codespace, CodeNoACK, fmt.Sprintf("Checkpoint Already Exists In Buffer, ACK expected, expires at %s", strconv.FormatUint(expiresAt, 10)))
 }
 
 func ErrNoConn(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeNoConn, "Unable to connect to chain")
 }
 
-func ErrWaitForConfirmation(codespace sdk.CodespaceType) sdk.Error {
-	return newError(codespace, CodeWaitFrConfirmation, fmt.Sprintf("Please wait for %v confirmation time before sending transaction", helper.GetConfig().TxConfirmationTime))
+func ErrWaitForConfirmation(codespace sdk.CodespaceType, txConfirmationTime time.Duration) sdk.Error {
+	return newError(codespace, CodeWaitFrConfirmation, fmt.Sprintf("Please wait for %v confirmation time before sending transaction", txConfirmationTime))
 }
 
 func ErrNoCheckpointFound(codespace sdk.CodespaceType) sdk.Error {
@@ -100,7 +103,7 @@ func ErrNoCheckpointBufferFound(codespace sdk.CodespaceType) sdk.Error {
 }
 
 func ErrInvalidNoACK(codespace sdk.CodespaceType) sdk.Error {
-	return newError(codespace, CodeInvalidNoACK, "Invalid no-ack")
+	return newError(codespace, CodeInvalidNoACK, "Invalid No ACK -- Waiting for last checkpoint ACK")
 }
 
 func ErrTooManyNoACK(codespace sdk.CodespaceType) sdk.Error {
@@ -119,6 +122,10 @@ func ErrOldValidator(codespace sdk.CodespaceType) sdk.Error {
 
 func ErrNoValidator(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeNoValidator, "Validator information not found")
+}
+
+func ErrValSignerPubKeyMismatch(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeValPubkeyMismatch, "Signer Pubkey mismatch between event and msg")
 }
 
 func ErrValSignerMismatch(codespace sdk.CodespaceType) sdk.Error {
@@ -158,6 +165,10 @@ func ErrValidatorAlreadyJoined(codespace sdk.CodespaceType) sdk.Error {
 }
 
 // Bor Errors --------------------------------
+
+func ErrInvalidBorChainID(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeInvalidBorChainID, "Invalid Bor chain id")
+}
 
 func ErrSpanNotInCountinuity(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeSpanNotCountinuous, "Span not countinuous")

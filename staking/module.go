@@ -9,14 +9,14 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/gorilla/mux"
-	"github.com/spf13/cobra"
-	abci "github.com/tendermint/tendermint/abci/types"
-
+	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	"github.com/maticnetwork/heimdall/helper"
 	stakingCli "github.com/maticnetwork/heimdall/staking/client/cli"
 	stakingRest "github.com/maticnetwork/heimdall/staking/client/rest"
 	"github.com/maticnetwork/heimdall/staking/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
+	"github.com/spf13/cobra"
+	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 var (
@@ -57,8 +57,14 @@ func (AppModuleBasic) ValidateGenesis(bz json.RawMessage) error {
 
 // VerifyGenesis performs verification on auth module state.
 func (AppModuleBasic) VerifyGenesis(bz map[string]json.RawMessage) error {
+	var chainManagertData chainmanagerTypes.GenesisState
+	errcm := chainmanagerTypes.ModuleCdc.UnmarshalJSON(bz[chainmanagerTypes.ModuleName], &chainManagertData)
+	if errcm != nil {
+		return errcm
+	}
+
 	var data types.GenesisState
-	err := json.Unmarshal(bz[types.ModuleName], &data)
+	err := types.ModuleCdc.UnmarshalJSON(bz[types.ModuleName], &data)
 	if err != nil {
 		return err
 	}
@@ -68,10 +74,13 @@ func (AppModuleBasic) VerifyGenesis(bz map[string]json.RawMessage) error {
 		return err
 	}
 
+	stakingInfoAddress := chainManagertData.Params.ChainParams.StakingInfoAddress.EthAddress()
+	stakingInfoInstance, _ := contractCaller.GetStakingInfoInstance(stakingInfoAddress)
+
 	// validate validators
 	validators := data.Validators
 	for _, v := range validators {
-		val, err := contractCaller.GetValidatorInfo(v.ID)
+		val, err := contractCaller.GetValidatorInfo(v.ID, stakingInfoInstance)
 		if err != nil {
 			return err
 		}

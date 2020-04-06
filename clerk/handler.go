@@ -1,6 +1,7 @@
 package clerk
 
 import (
+	"math/big"
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -31,14 +32,24 @@ func handleMsgEventRecord(ctx sdk.Context, msg types.MsgEventRecord, k Keeper, c
 		return types.ErrEventRecordAlreadySynced(k.Codespace()).Result()
 	}
 
+	// chainManager params
+	params := k.chainKeeper.GetParams(ctx)
+	chainParams := params.ChainParams
+
+	// check chain id
+	if chainParams.BorChainID != msg.ChainID {
+		k.Logger(ctx).Error("Invalid Bor chain id", "msgChainID", msg.ChainID)
+		return common.ErrInvalidBorChainID(k.Codespace()).Result()
+	}
+
 	// get confirmed tx receipt
-	receipt, err := contractCaller.GetConfirmedTxReceipt(ctx.BlockTime(), msg.TxHash.EthHash())
+	receipt, err := contractCaller.GetConfirmedTxReceipt(ctx.BlockTime(), msg.TxHash.EthHash(), params.TxConfirmationTime)
 	if receipt == nil || err != nil {
-		return common.ErrWaitForConfirmation(k.Codespace()).Result()
+		return common.ErrWaitForConfirmation(k.Codespace(), params.TxConfirmationTime).Result()
 	}
 
 	// get event log for topup
-	eventLog, err := contractCaller.DecodeStateSyncedEvent(helper.GetStateSenderAddress(), receipt, msg.LogIndex)
+	eventLog, err := contractCaller.DecodeStateSyncedEvent(chainParams.StateSenderAddress.EthAddress(), receipt, msg.LogIndex)
 	if err != nil || eventLog == nil {
 		k.Logger(ctx).Error("Error fetching log from txhash")
 		return common.ErrInvalidMsg(k.Codespace(), "Unable to fetch log for txHash").Result()
@@ -48,6 +59,17 @@ func handleMsgEventRecord(ctx sdk.Context, msg types.MsgEventRecord, k Keeper, c
 	if eventLog.Id.Uint64() != msg.ID {
 		k.Logger(ctx).Error("ID in message doesn't match with id in log", "msgId", msg.ID, "stateIdFromTx", eventLog.Id)
 		return common.ErrInvalidMsg(k.Codespace(), "ID in message doesn't match with id in log. msgId %v stateIdFromTx %v", msg.ID, eventLog.Id).Result()
+	}
+
+	// sequence id
+
+	sequence := new(big.Int).Mul(receipt.BlockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
+	sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))
+
+	// check if incoming tx is older
+	if k.HasRecordSequence(ctx, sequence.String()) {
+		k.Logger(ctx).Error("Older invalid tx found")
+		return common.ErrOldTx(k.Codespace()).Result()
 	}
 
 	// create event record
@@ -65,6 +87,9 @@ func handleMsgEventRecord(ctx sdk.Context, msg types.MsgEventRecord, k Keeper, c
 		k.Logger(ctx).Error("Unable to update event record", "error", err, "id", msg.ID)
 		return types.ErrEventUpdate(k.Codespace()).Result()
 	}
+
+	// save record sequence
+	k.SetRecordSequence(ctx, sequence.String())
 
 	// add events
 	ctx.EventManager().EmitEvents(sdk.Events{

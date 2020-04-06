@@ -3,11 +3,15 @@ package clerk
 import (
 	"encoding/json"
 	"fmt"
+	"math/big"
+	"time"
 
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/maticnetwork/heimdall/clerk/types"
+	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -19,6 +23,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return handleQueryRecord(ctx, req, keeper)
 		case types.QueryRecordList:
 			return handleQueryRecordList(ctx, req, keeper)
+		case types.QueryRecordSequence:
+			return handleQueryRecordSequence(ctx, req, keeper)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown auth query endpoint")
 		}
@@ -65,5 +71,44 @@ func handleQueryRecordList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
+	return bz, nil
+}
+
+func handleQueryRecordSequence(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	var params types.QueryRecordSequenceParams
+
+	if err := types.ModuleCdc.UnmarshalJSON(req.Data, &params); err != nil {
+		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
+	}
+
+	chainParams := keeper.chainKeeper.GetParams(ctx)
+
+	contractCallerObj, err := helper.NewContractCaller()
+	if err != nil {
+		return nil, sdk.ErrInternal(fmt.Sprintf(err.Error()))
+	}
+
+	// get main tx receipt
+	receipt, _ := contractCallerObj.GetConfirmedTxReceipt(time.Now().UTC(), hmTypes.HexToHeimdallHash(params.TxHash).EthHash(), chainParams.TxConfirmationTime)
+	if err != nil || receipt == nil {
+		return nil, sdk.ErrInternal(fmt.Sprintf("Transaction is not confirmed yet. Please wait for sometime and try again"))
+	}
+
+	// sequence id
+
+	sequence := new(big.Int).Mul(receipt.BlockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
+	sequence.Add(sequence, new(big.Int).SetUint64(params.LogIndex))
+
+	// check if incoming tx already exists
+	if !keeper.HasRecordSequence(ctx, sequence.String()) {
+		keeper.Logger(ctx).Error("No record sequence exist: %s %s", params.TxHash, params.LogIndex)
+		return nil, nil
+	}
+
+	bz, err := codec.MarshalJSONIndent(types.ModuleCdc, sequence)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
+
 	return bz, nil
 }

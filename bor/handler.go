@@ -27,6 +27,16 @@ func NewHandler(k Keeper) sdk.Handler {
 func HandleMsgProposeSpan(ctx sdk.Context, msg types.MsgProposeSpan, k Keeper) sdk.Result {
 	k.Logger(ctx).Debug("Proposing span", "TxData", msg)
 
+	// chainManager params
+	params := k.chainKeeper.GetParams(ctx)
+	chainParams := params.ChainParams
+
+	// check chain id
+	if chainParams.BorChainID != msg.ChainID {
+		k.Logger(ctx).Error("Invalid Bor chain id", "msgChainID", msg.ChainID)
+		return common.ErrInvalidBorChainID(k.Codespace()).Result()
+	}
+
 	// check if last span is up or if greater diff than threshold is found between validator set
 	lastSpan, err := k.GetLastSpan(ctx)
 	if err != nil {

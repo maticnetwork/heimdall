@@ -60,7 +60,8 @@ start-heimdall:
 	./build/heimdalld start > ./logs/heimdalld.log &
 
 reset-heimdall:
-	./build/heimdalld unsafe-reset-all 
+	./build/heimdalld unsafe-reset-all
+	./build/bridge purge-queue 
 	rm -rf ~/.heimdalld/bridge
 	
 run-server:

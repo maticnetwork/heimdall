@@ -8,6 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/libs/log"
 
+	"github.com/maticnetwork/heimdall/chainmanager"
 	"github.com/maticnetwork/heimdall/checkpoint/types"
 	cmn "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
@@ -30,6 +31,7 @@ type Keeper struct {
 	cdc *codec.Codec
 	// staking keeper
 	sk staking.Keeper
+	ck chainmanager.Keeper
 	// The (unexposed) keys used to access the stores from the Context.
 	storeKey sdk.StoreKey
 	// codespace
@@ -45,6 +47,7 @@ func NewKeeper(
 	paramSpace subspace.Subspace,
 	codespace sdk.CodespaceType,
 	stakingKeeper staking.Keeper,
+	chainKeeper chainmanager.Keeper,
 ) Keeper {
 	keeper := Keeper{
 		cdc:        cdc,
@@ -52,6 +55,7 @@ func NewKeeper(
 		paramSpace: paramSpace.WithKeyTable(types.ParamKeyTable()),
 		codespace:  codespace,
 		sk:         stakingKeeper,
+		ck:         chainKeeper,
 	}
 	return keeper
 }

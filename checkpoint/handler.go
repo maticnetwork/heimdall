@@ -17,7 +17,6 @@ import (
 func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
-
 		switch msg := msg.(type) {
 		case types.MsgCheckpoint:
 			return handleMsgCheckpoint(ctx, msg, k, contractCaller)
@@ -39,19 +38,17 @@ func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, con
 
 	checkpointBuffer, err := k.GetCheckpointFromBuffer(ctx)
 	if err == nil {
-		if checkpointBuffer.TimeStamp == 0 || ((timeStamp > checkpointBuffer.TimeStamp) && timeStamp-checkpointBuffer.TimeStamp >= uint64(params.CheckpointBufferTime.Seconds())) {
+		checkpointBufferTime := uint64(params.CheckpointBufferTime.Seconds())
+
+		if checkpointBuffer.TimeStamp == 0 || ((timeStamp > checkpointBuffer.TimeStamp) && timeStamp-checkpointBuffer.TimeStamp >= checkpointBufferTime) {
 			k.Logger(ctx).Debug("Checkpoint has been timed out, flushing buffer", "CheckpointTimestamp", timeStamp, "PrevCheckpointTimestamp", checkpointBuffer.TimeStamp)
 			k.FlushCheckpointBuffer(ctx)
 		} else {
-			// calulates remaining time for buffer to be flushed
-			checkpointTime := time.Unix(int64(checkpointBuffer.TimeStamp), 0)
-			expiryTime := checkpointTime.Add(params.CheckpointBufferTime)
-			diff := expiryTime.Sub(time.Now().UTC()).Seconds()
+			expiryTime := checkpointBuffer.TimeStamp + checkpointBufferTime
 			k.Logger(ctx).Error("Checkpoint already exits in buffer", "Checkpoint", checkpointBuffer.String(), "Expires", expiryTime)
-			return common.ErrNoACK(k.Codespace(), diff).Result()
+			return common.ErrNoACK(k.Codespace(), expiryTime).Result()
 		}
 	}
-	// k.Logger(ctx).Debug("Received checkpoint from buffer", "Checkpoint", checkpointBuffer.String())
 
 	// validate checkpoint
 	validCheckpoint, err := types.ValidateCheckpoint(msg.StartBlock, msg.EndBlock, msg.RootHash)
@@ -152,7 +149,14 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg types.MsgCheckpointAck, k Keepe
 	k.Logger(ctx).Debug("Validating Checkpoint ACK", "Tx", msg)
 
 	// make call to headerBlock with header number
-	root, start, end, createdAt, proposer, err := contractCaller.GetHeaderInfo(msg.HeaderBlock)
+	chainParams := k.ck.GetParams(ctx).ChainParams
+
+	rootChainInstance, err := contractCaller.GetRootChainInstance(chainParams.RootChainAddress.EthAddress())
+	if err != nil {
+		k.Logger(ctx).Error("Unable to fetch rootchain contract instance", "Error", err)
+		return common.ErrBadAck(k.Codespace()).Result()
+	}
+	root, start, end, createdAt, proposer, err := contractCaller.GetHeaderInfo(msg.HeaderBlock, rootChainInstance)
 	if err != nil {
 		k.Logger(ctx).Error("Unable to fetch header from rootchain contract", "Error", err, "headerBlockIndex", msg.HeaderBlock)
 		return common.ErrBadAck(k.Codespace()).Result()
@@ -248,7 +252,7 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k K
 
 	// if last checkpoint is not present or last checkpoint happens before checkpoint buffer time -- thrown an error
 	if lastCheckpointTime.After(currentTime) || (currentTime.Sub(lastCheckpointTime) < bufferTime) {
-		k.Logger(ctx).Debug("Invalid No ACK -- ongoing buffer period")
+		k.Logger(ctx).Debug("Invalid No ACK -- Waiting for last checkpoint ACK")
 		return common.ErrInvalidNoACK(k.Codespace()).Result()
 	}
 
