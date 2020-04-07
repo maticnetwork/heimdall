@@ -15,6 +15,7 @@ import (
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	chainManagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
+	"github.com/maticnetwork/heimdall/types"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
@@ -53,7 +54,8 @@ const (
 
 	TransactionTimeout      = 1 * time.Minute
 	CommitTimeout           = 2 * time.Minute
-	TaskDelayBetweenEachVal = 3 * time.Second
+	TaskDelayBetweenEachVal = 6 * time.Second
+	RetryTaskDelay          = 12 * time.Second
 
 	BridgeDBFlag = "bridge-db"
 )
@@ -148,7 +150,7 @@ func CalculateTaskDelay(cliCtx cliContext.CLIContext) (bool, time.Duration) {
 	logger.Info("Fetched current validatorset list", "currentValidatorcount", len(validatorSet.Validators))
 	for i, validator := range validatorSet.Validators {
 		if bytes.Equal(validator.Signer.Bytes(), helper.GetAddress()) {
-			valPosition = i
+			valPosition = i + 1
 			isCurrentValidator = true
 			break
 		}
@@ -267,9 +269,7 @@ func IsCatchingUp(cliCtx cliContext.CLIContext) bool {
 }
 
 // Returns heimdall auth account
-func GetAccount(cliCtx cliContext.CLIContext) (account authTypes.Account, err error) {
-	// current address
-	address := hmtypes.BytesToHeimdallAddress(helper.GetAddress())
+func GetAccount(cliCtx cliContext.CLIContext, address types.HeimdallAddress) (account authTypes.Account, err error) {
 	url := helper.GetHeimdallServerEndpoint(fmt.Sprintf(AccountDetailsURL, address))
 	// call account rest api
 	response, err := helper.FetchFromAPI(cliCtx, url)

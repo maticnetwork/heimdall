@@ -15,6 +15,7 @@ import (
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
 
+	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/tendermint/tendermint/libs/log"
 )
 
@@ -37,7 +38,9 @@ func NewTxBroadcaster(cdc *codec.Codec) *TxBroadcaster {
 	cliCtx.BroadcastMode = client.BroadcastSync
 	cliCtx.TrustNode = true
 
-	account, err := util.GetAccount(cliCtx)
+	// current address
+	address := hmTypes.BytesToHeimdallAddress(helper.GetAddress())
+	account, err := util.GetAccount(cliCtx, address)
 	if err != nil {
 		panic("Error connecting to rest-server, please start server before bridge.")
 
@@ -74,8 +77,11 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg) error {
 	if err != nil {
 		tb.logger.Error("Error while broadcasting the heimdall transaction", "error", err)
 
+		// current address
+		address := hmTypes.BytesToHeimdallAddress(helper.GetAddress())
+
 		// fetch from APIs
-		account, errAcc := util.GetAccount(tb.cliCtx)
+		account, errAcc := util.GetAccount(tb.cliCtx, address)
 		if errAcc != nil {
 			tb.logger.Error("Error fetching account from rest-api", "url", helper.GetHeimdallServerEndpoint(fmt.Sprintf(util.AccountDetailsURL, helper.GetAddress())))
 			return errAcc

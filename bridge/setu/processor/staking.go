@@ -3,6 +3,7 @@ package processor
 import (
 	"encoding/json"
 
+	"github.com/RichardKnop/machinery/v1/tasks"
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/core/types"
@@ -69,6 +70,16 @@ func (sp *StakingProcessor) sendValidatorJoinToHeimdall(eventName string, logByt
 				"logIndex", uint64(vLog.Index),
 			)
 			return nil
+		}
+
+		// if account doesn't exists Retry with delay for topup to process first.
+		if _, err := util.GetAccount(sp.cliCtx, hmTypes.HeimdallAddress(event.Signer)); err != nil {
+			sp.Logger.Info(
+				"Heimdall Account doesn't exist. Retrying validator-join after 10 seconds",
+				"event", eventName,
+				"signer", event.Signer,
+			)
+			return tasks.NewErrRetryTaskLater("account doesn't exist", util.RetryTaskDelay)
 		}
 
 		sp.Logger.Info(
