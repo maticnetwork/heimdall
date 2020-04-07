@@ -150,7 +150,7 @@ func CalculateTaskDelay(cliCtx cliContext.CLIContext) (bool, time.Duration) {
 	logger.Info("Fetched current validatorset list", "currentValidatorcount", len(validatorSet.Validators))
 	for i, validator := range validatorSet.Validators {
 		if bytes.Equal(validator.Signer.Bytes(), helper.GetAddress()) {
-			valPosition = i
+			valPosition = i + 1
 			isCurrentValidator = true
 			break
 		}
