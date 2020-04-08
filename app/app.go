@@ -41,6 +41,8 @@ import (
 	topupTypes "github.com/maticnetwork/heimdall/topup/types"
 	"github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/version"
+
+	"github.com/maticnetwork/heimdall/slashing"
 )
 
 const (
@@ -68,6 +70,7 @@ var (
 		bor.AppModuleBasic{},
 		clerk.AppModuleBasic{},
 		topup.AppModuleBasic{},
+		slashing.AppModuleBasic{},
 		gov.NewAppModuleBasic(paramsClient.ProposalHandler),
 	)
 
