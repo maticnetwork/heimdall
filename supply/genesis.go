@@ -6,7 +6,6 @@ import (
 	auth "github.com/maticnetwork/heimdall/auth"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/supply/types"
-	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 // InitGenesis sets supply information for genesis.
@@ -15,7 +14,7 @@ import (
 func InitGenesis(ctx sdk.Context, keeper Keeper, ak auth.AccountKeeper, data types.GenesisState) {
 	// manually set the total supply based on accounts if not provided
 	if data.Supply.Total.Empty() {
-		var totalSupply hmTypes.Coins
+		var totalSupply sdk.Coins
 		ak.IterateAccounts(ctx,
 			func(acc authTypes.Account) (stop bool) {
 				totalSupply = totalSupply.Add(acc.GetCoins())

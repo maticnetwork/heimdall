@@ -41,20 +41,20 @@ func NewGenesisState(startingProposalID uint64, dp types.DepositParams, vp types
 
 // DefaultGenesisState get raw genesis raw message for testing
 func DefaultGenesisState() GenesisState {
-	minDepositTokens := hmTypes.NewIntFromBigInt(new(big.Int).Mul(big.NewInt(10), hmTypes.CoinDecimals))
+	minDepositTokens := sdk.NewIntFromBigInt(new(big.Int).Mul(big.NewInt(10), hmTypes.CoinDecimals))
 	return GenesisState{
 		StartingProposalID: 1,
 		DepositParams: types.DepositParams{
-			MinDeposit:       hmTypes.Coins{hmTypes.NewCoin(authTypes.FeeToken, minDepositTokens)},
+			MinDeposit:       sdk.Coins{sdk.NewCoin(authTypes.FeeToken, minDepositTokens)},
 			MaxDepositPeriod: DefaultPeriod,
 		},
 		VotingParams: types.VotingParams{
 			VotingPeriod: DefaultPeriod,
 		},
 		TallyParams: types.TallyParams{
-			Quorum:    hmTypes.NewDecWithPrec(334, 3),
-			Threshold: hmTypes.NewDecWithPrec(5, 1),
-			Veto:      hmTypes.NewDecWithPrec(334, 3),
+			Quorum:    sdk.NewDecWithPrec(334, 3),
+			Threshold: sdk.NewDecWithPrec(5, 1),
+			Veto:      sdk.NewDecWithPrec(334, 3),
 		},
 	}
 }
@@ -75,19 +75,19 @@ func (data GenesisState) IsEmpty() bool {
 // ValidateGenesis checks if parameters are within valid ranges
 func ValidateGenesis(data GenesisState) error {
 	threshold := data.TallyParams.Threshold
-	if threshold.IsNegative() || threshold.GT(hmTypes.OneDec()) {
+	if threshold.IsNegative() || threshold.GT(sdk.OneDec()) {
 		return fmt.Errorf("Governance vote threshold should be positive and less or equal to one, is %s",
 			threshold.String())
 	}
 
 	veto := data.TallyParams.Veto
-	if veto.IsNegative() || veto.GT(hmTypes.OneDec()) {
+	if veto.IsNegative() || veto.GT(sdk.OneDec()) {
 		return fmt.Errorf("Governance vote veto threshold should be positive and less or equal to one, is %s",
 			veto.String())
 	}
 
 	if !data.DepositParams.MinDeposit.IsValid() {
-		return fmt.Errorf("Governance deposit amount must be a valid hmTypes.Coins amount, is %s",
+		return fmt.Errorf("Governance deposit amount must be a valid sdk.Coins amount, is %s",
 			data.DepositParams.MinDeposit.String())
 	}
 
@@ -108,7 +108,7 @@ func InitGenesis(ctx sdk.Context, k Keeper, supplyKeeper SupplyKeeper, data Gene
 		panic(fmt.Sprintf("%s module account has not been set", types.ModuleName))
 	}
 
-	var totalDeposits hmTypes.Coins
+	var totalDeposits sdk.Coins
 	for _, deposit := range data.Deposits {
 		k.setDeposit(ctx, deposit.ProposalID, deposit.Depositor, deposit)
 		totalDeposits = totalDeposits.Add(deposit.Amount)

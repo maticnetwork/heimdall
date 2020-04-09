@@ -45,7 +45,7 @@ var _ Account = (*BaseAccount)(nil)
 // implements Account.
 type BaseAccount struct {
 	Address       types.HeimdallAddress `json:"address" yaml:"address"`
-	Coins         types.Coins           `json:"coins" yaml:"coins"`
+	Coins         sdk.Coins             `json:"coins" yaml:"coins"`
 	PubKey        crypto.PubKey         `json:"public_key" yaml:"public_key"`
 	AccountNumber uint64                `json:"account_number" yaml:"account_number"`
 	Sequence      uint64                `json:"sequence" yaml:"sequence"`
@@ -54,7 +54,7 @@ type BaseAccount struct {
 // NewBaseAccount creates a new BaseAccount object
 func NewBaseAccount(
 	address types.HeimdallAddress,
-	coins types.Coins,
+	coins sdk.Coins,
 	pubKey crypto.PubKey,
 	accountNumber uint64,
 	sequence uint64,
@@ -128,12 +128,12 @@ func (acc *BaseAccount) SetPubKey(pubKey crypto.PubKey) error {
 }
 
 // GetCoins - Implements sdk.Account.
-func (acc *BaseAccount) GetCoins() types.Coins {
+func (acc *BaseAccount) GetCoins() sdk.Coins {
 	return acc.Coins
 }
 
 // SetCoins - Implements sdk.Account.
-func (acc *BaseAccount) SetCoins(coins types.Coins) error {
+func (acc *BaseAccount) SetCoins(coins sdk.Coins) error {
 	acc.Coins = coins
 	return nil
 }
@@ -162,7 +162,7 @@ func (acc *BaseAccount) SetSequence(seq uint64) error {
 
 // SpendableCoins returns the total set of spendable coins. For a base account,
 // this is simply the base coins.
-func (acc *BaseAccount) SpendableCoins(_ time.Time) types.Coins {
+func (acc *BaseAccount) SpendableCoins(_ time.Time) sdk.Coins {
 	return acc.GetCoins()
 }
 
@@ -191,7 +191,7 @@ func (acc BaseAccount) MarshalYAML() (interface{}, error) {
 
 	bs, err = yaml.Marshal(struct {
 		Address       types.HeimdallAddress
-		Coins         types.Coins
+		Coins         sdk.Coins
 		PubKey        string
 		AccountNumber uint64
 		Sequence      uint64

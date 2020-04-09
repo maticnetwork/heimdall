@@ -90,7 +90,7 @@ func (msg MsgTopup) GetLogIndex() uint64 {
 // MsgWithdrawFee - high level transaction of the fee coin withdrawal module
 type MsgWithdrawFee struct {
 	ValidatorAddress types.HeimdallAddress `json:"from_address"`
-	Amount           types.Int             `json:"amount"`
+	Amount           sdk.Int               `json:"amount"`
 }
 
 var _ sdk.Msg = MsgWithdrawFee{}
@@ -98,7 +98,7 @@ var _ sdk.Msg = MsgWithdrawFee{}
 // NewMsgWithdrawFee - construct arbitrary fee withdraw msg
 func NewMsgWithdrawFee(
 	fromAddr types.HeimdallAddress,
-	amount types.Int,
+	amount sdk.Int,
 ) MsgWithdrawFee {
 	return MsgWithdrawFee{
 		ValidatorAddress: fromAddr,

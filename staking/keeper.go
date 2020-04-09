@@ -31,9 +31,9 @@ var (
 // ModuleCommunicator manages different module interaction
 type ModuleCommunicator interface {
 	GetACKCount(ctx sdk.Context) uint64
-	SetCoins(ctx sdk.Context, addr hmTypes.HeimdallAddress, amt hmTypes.Coins) sdk.Error
-	GetCoins(ctx sdk.Context, addr hmTypes.HeimdallAddress) hmTypes.Coins
-	SendCoins(ctx sdk.Context, from hmTypes.HeimdallAddress, to hmTypes.HeimdallAddress, amt hmTypes.Coins) sdk.Error
+	SetCoins(ctx sdk.Context, addr hmTypes.HeimdallAddress, amt sdk.Coins) sdk.Error
+	GetCoins(ctx sdk.Context, addr hmTypes.HeimdallAddress) sdk.Coins
+	SendCoins(ctx sdk.Context, from hmTypes.HeimdallAddress, to hmTypes.HeimdallAddress, amt sdk.Coins) sdk.Error
 }
 
 // Keeper stores all related data

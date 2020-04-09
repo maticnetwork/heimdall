@@ -7,7 +7,6 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 // Proposal defines a struct used by the governance module to allow for voting
@@ -19,9 +18,9 @@ type Proposal struct {
 	Status           ProposalStatus `json:"proposal_status" yaml:"proposal_status"`       // Status of the Proposal {Pending, Active, Passed, Rejected}
 	FinalTallyResult TallyResult    `json:"final_tally_result" yaml:"final_tally_result"` // Result of Tallys
 
-	SubmitTime     time.Time     `json:"submit_time" yaml:"submit_time"`           // Time of the block where TxGovSubmitProposal was included
-	DepositEndTime time.Time     `json:"deposit_end_time" yaml:"deposit_end_time"` // Time that the Proposal would expire if deposit amount isn't met
-	TotalDeposit   hmTypes.Coins `json:"total_deposit" yaml:"total_deposit"`       // Current deposit on this proposal. Initial value is set at InitialDeposit
+	SubmitTime     time.Time `json:"submit_time" yaml:"submit_time"`           // Time of the block where TxGovSubmitProposal was included
+	DepositEndTime time.Time `json:"deposit_end_time" yaml:"deposit_end_time"` // Time that the Proposal would expire if deposit amount isn't met
+	TotalDeposit   sdk.Coins `json:"total_deposit" yaml:"total_deposit"`       // Current deposit on this proposal. Initial value is set at InitialDeposit
 
 	VotingStartTime time.Time `json:"voting_start_time" yaml:"voting_start_time"` // Time of the block where MinDeposit was reached. -1 if MinDeposit is not reached
 	VotingEndTime   time.Time `json:"voting_end_time" yaml:"voting_end_time"`     // Time that the VotingPeriod for this proposal will end and votes will be tallied
@@ -33,7 +32,7 @@ func NewProposal(content Content, id uint64, submitTime, depositEndTime time.Tim
 		ProposalID:       id,
 		Status:           StatusDepositPeriod,
 		FinalTallyResult: EmptyTallyResult(),
-		TotalDeposit:     hmTypes.NewCoins(),
+		TotalDeposit:     sdk.NewCoins(),
 		SubmitTime:       submitTime,
 		DepositEndTime:   depositEndTime,
 	}
@@ -198,13 +197,13 @@ func (status ProposalStatus) Format(s fmt.State, verb rune) {
 
 // Tally Results
 type TallyResult struct {
-	Yes        hmTypes.Int `json:"yes" yaml:"yes"`
-	Abstain    hmTypes.Int `json:"abstain" yaml:"abstain"`
-	No         hmTypes.Int `json:"no" yaml:"no"`
-	NoWithVeto hmTypes.Int `json:"no_with_veto" yaml:"no_with_veto"`
+	Yes        sdk.Int `json:"yes" yaml:"yes"`
+	Abstain    sdk.Int `json:"abstain" yaml:"abstain"`
+	No         sdk.Int `json:"no" yaml:"no"`
+	NoWithVeto sdk.Int `json:"no_with_veto" yaml:"no_with_veto"`
 }
 
-func NewTallyResult(yes, abstain, no, noWithVeto hmTypes.Int) TallyResult {
+func NewTallyResult(yes, abstain, no, noWithVeto sdk.Int) TallyResult {
 	return TallyResult{
 		Yes:        yes,
 		Abstain:    abstain,
@@ -213,7 +212,7 @@ func NewTallyResult(yes, abstain, no, noWithVeto hmTypes.Int) TallyResult {
 	}
 }
 
-func NewTallyResultFromMap(results map[VoteOption]hmTypes.Dec) TallyResult {
+func NewTallyResultFromMap(results map[VoteOption]sdk.Dec) TallyResult {
 	return TallyResult{
 		Yes:        results[OptionYes].TruncateInt(),
 		Abstain:    results[OptionAbstain].TruncateInt(),
@@ -225,10 +224,10 @@ func NewTallyResultFromMap(results map[VoteOption]hmTypes.Dec) TallyResult {
 // EmptyTallyResult returns an empty TallyResult.
 func EmptyTallyResult() TallyResult {
 	return TallyResult{
-		Yes:        hmTypes.ZeroInt(),
-		Abstain:    hmTypes.ZeroInt(),
-		No:         hmTypes.ZeroInt(),
-		NoWithVeto: hmTypes.ZeroInt(),
+		Yes:        sdk.ZeroInt(),
+		Abstain:    sdk.ZeroInt(),
+		No:         sdk.ZeroInt(),
+		NoWithVeto: sdk.ZeroInt(),
 	}
 }
 
