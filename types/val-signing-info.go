@@ -2,6 +2,7 @@ package types
 
 // ValidatorSigningInfo defines the signing info for a validator
 type ValidatorSigningInfo struct {
+	Signer HeimdallAddress `json:"signer"`
 	// Address github_com_cosmos_cosmos_sdk_types.ConsAddress `protobuf:"bytes,1,opt,name=address,proto3,casttype=github.com/cosmos/cosmos-sdk/types.ConsAddress" json:"address,omitempty"`
 	// // height at which validator was first a candidate OR was unjailed
 	// StartHeight int64 `protobuf:"varint,2,opt,name=start_height,json=startHeight,proto3" json:"start_height,omitempty" yaml:"start_height"`

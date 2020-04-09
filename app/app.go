@@ -33,16 +33,17 @@ import (
 	paramsClient "github.com/maticnetwork/heimdall/params/client"
 	"github.com/maticnetwork/heimdall/params/subspace"
 	paramsTypes "github.com/maticnetwork/heimdall/params/types"
+	"github.com/maticnetwork/heimdall/slashing"
+	slashingTypes "github.com/maticnetwork/heimdall/slashing/types"
 	"github.com/maticnetwork/heimdall/staking"
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
 	"github.com/maticnetwork/heimdall/supply"
 	supplyTypes "github.com/maticnetwork/heimdall/supply/types"
 	"github.com/maticnetwork/heimdall/topup"
 	topupTypes "github.com/maticnetwork/heimdall/topup/types"
+
 	"github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/version"
-
-	"github.com/maticnetwork/heimdall/slashing"
 )
 
 const (
@@ -374,6 +375,8 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		clerkTypes.ModuleName,
 		topupTypes.ModuleName,
 	)
+
+	app.mm.SetOrderBeginBlockers(slashingTypes.ModuleName)
 
 	// register message routes and query routes
 	app.mm.RegisterRoutes(app.Router(), app.QueryRouter())
