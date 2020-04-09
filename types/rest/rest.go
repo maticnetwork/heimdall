@@ -14,6 +14,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	tmTypes "github.com/tendermint/tendermint/types"
 
@@ -55,22 +56,22 @@ type GasEstimateResponse struct {
 // BaseReq defines a structure that can be embedded in other request structures
 // that all share common "base" fields.
 type BaseReq struct {
-	From          string         `json:"from"`
-	Memo          string         `json:"memo"`
-	ChainID       string         `json:"chain_id"`
-	AccountNumber uint64         `json:"account_number"`
-	Sequence      uint64         `json:"sequence"`
-	Fees          types.Coins    `json:"fees"`
-	GasPrices     types.DecCoins `json:"gas_prices"`
-	Gas           string         `json:"gas"`
-	GasAdjustment string         `json:"gas_adjustment"`
-	Simulate      bool           `json:"simulate"`
+	From          string       `json:"from"`
+	Memo          string       `json:"memo"`
+	ChainID       string       `json:"chain_id"`
+	AccountNumber uint64       `json:"account_number"`
+	Sequence      uint64       `json:"sequence"`
+	Fees          sdk.Coins    `json:"fees"`
+	GasPrices     sdk.DecCoins `json:"gas_prices"`
+	Gas           string       `json:"gas"`
+	GasAdjustment string       `json:"gas_adjustment"`
+	Simulate      bool         `json:"simulate"`
 }
 
 // NewBaseReq creates a new basic request instance and sanitizes its values
 func NewBaseReq(
 	from, memo, chainID string, gas, gasAdjustment string, accNumber, seq uint64,
-	fees types.Coins, gasPrices types.DecCoins, simulate bool,
+	fees sdk.Coins, gasPrices sdk.DecCoins, simulate bool,
 ) BaseReq {
 
 	return BaseReq{

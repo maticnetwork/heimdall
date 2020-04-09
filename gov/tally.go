@@ -28,14 +28,14 @@ func newValidatorGovInfo(
 
 // TODO: Break into several smaller functions for clarity
 func tally(ctx sdk.Context, keeper Keeper, proposal types.Proposal) (passes bool, burnDeposits bool, tallyResults types.TallyResult) {
-	results := make(map[types.VoteOption]hmTypes.Dec)
-	results[types.OptionYes] = hmTypes.ZeroDec()
-	results[types.OptionAbstain] = hmTypes.ZeroDec()
-	results[types.OptionNo] = hmTypes.ZeroDec()
-	results[types.OptionNoWithVeto] = hmTypes.ZeroDec()
+	results := make(map[types.VoteOption]sdk.Dec)
+	results[types.OptionYes] = sdk.ZeroDec()
+	results[types.OptionAbstain] = sdk.ZeroDec()
+	results[types.OptionNo] = sdk.ZeroDec()
+	results[types.OptionNoWithVeto] = sdk.ZeroDec()
 
-	totalBondedTokens := hmTypes.ZeroDec()
-	totalVotingPower := hmTypes.ZeroDec()
+	totalBondedTokens := sdk.ZeroDec()
+	totalVotingPower := sdk.ZeroDec()
 	currValidators := make(map[hmTypes.ValidatorID]validatorGovInfo)
 
 	// fetch all the bonded validators, insert them into currValidators
@@ -62,7 +62,7 @@ func tally(ctx sdk.Context, keeper Keeper, proposal types.Proposal) (passes bool
 
 	// iterate over the validators again to tally their voting power
 	for _, val := range currValidators {
-		votingPower := hmTypes.NewDec(val.VotingPower)
+		votingPower := sdk.NewDec(val.VotingPower)
 		totalBondedTokens = totalBondedTokens.Add(votingPower)
 
 		if val.Vote == types.OptionEmpty {
@@ -89,7 +89,7 @@ func tally(ctx sdk.Context, keeper Keeper, proposal types.Proposal) (passes bool
 	}
 
 	// If no one votes (everyone abstains), proposal fails
-	if totalVotingPower.Sub(results[types.OptionAbstain]).Equal(hmTypes.ZeroDec()) {
+	if totalVotingPower.Sub(results[types.OptionAbstain]).Equal(sdk.ZeroDec()) {
 		return false, false, tallyResults
 	}
 
