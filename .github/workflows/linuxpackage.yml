@@ -3,7 +3,7 @@ name: Linux package
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - "v*.*.*"
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -19,7 +19,7 @@ jobs:
         uses: actions/setup-ruby@v1
         with:
           ruby-version: 2.6
-      
+
       - name: Retrieve release version
         run: echo "::set-env name=RELEASE_VERSION::${GITHUB_REF/refs\/tags\/v/}"
 
@@ -31,7 +31,10 @@ jobs:
           gem install --no-document fpm
           fpm --version
 
-          make build
+          make install
+          mkdir -p build
+          export GOBIN=$(go env GOPATH)/bin
+          cp -rf $GOBIN/* build/
 
           cat > heimdalld.service <<- "EOF"
           [Unit]
@@ -82,7 +85,7 @@ jobs:
             build/bridge=/usr/bin/ \
             build/heimdallcli=/usr/bin/ \
             build/heimdalld=/usr/bin/ 
-          
+
           mkdir packages-v${{ env.RELEASE_VERSION }}
 
           mv matic-heimdall_${{ env.RELEASE_VERSION }}_amd64.deb packages-v${{ env.RELEASE_VERSION }}/
@@ -97,14 +100,14 @@ jobs:
           AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: 'us-east-1'   # optional: defaults to us-east-1
-          SOURCE_DIR: 'packages-v${{ env.RELEASE_VERSION }}'
-          DEST_DIR: 'v${{ env.RELEASE_VERSION }}'
+          AWS_REGION: "us-east-1" # optional: defaults to us-east-1
+          SOURCE_DIR: "packages-v${{ env.RELEASE_VERSION }}"
+          DEST_DIR: "v${{ env.RELEASE_VERSION }}"
 
       - name: Slack Notification
         uses: rtCamp/action-slack-notify@v2.0.0
         env:
           SLACK_CHANNEL: code-releases
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          SLACK_TITLE: 'New linux package for Heimdall v${{ env.RELEASE_VERSION }} just got released'
-          SLACK_MESSAGE: 'Package has been uploaded to S3 bucket for public use and available at https://matic-public.s3.amazonaws.com/v${{ env.RELEASE_VERSION }}/matic-heimdall_${{ env.RELEASE_VERSION }}_amd64.deb'
+          SLACK_TITLE: "New linux package for Heimdall v${{ env.RELEASE_VERSION }} just got released"
+          SLACK_MESSAGE: "Package has been uploaded to S3 bucket for public use and available at https://matic-public.s3.amazonaws.com/v${{ env.RELEASE_VERSION }}/matic-heimdall_${{ env.RELEASE_VERSION }}_amd64.deb"
