@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 
 	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/maticnetwork/heimdall/params/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -30,7 +31,7 @@ type (
 		Title       string              `json:"title" yaml:"title"`
 		Description string              `json:"description" yaml:"description"`
 		Changes     ParamChangesJSON    `json:"changes" yaml:"changes"`
-		Deposit     hmTypes.Coins       `json:"deposit" yaml:"deposit"`
+		Deposit     sdk.Coins           `json:"deposit" yaml:"deposit"`
 		Validator   hmTypes.ValidatorID `json:"validator" yaml:"validator"`
 	}
 
@@ -42,7 +43,7 @@ type (
 		Description string                  `json:"description" yaml:"description"`
 		Changes     ParamChangesJSON        `json:"changes" yaml:"changes"`
 		Proposer    hmTypes.HeimdallAddress `json:"proposer" yaml:"proposer"`
-		Deposit     hmTypes.Coins           `json:"deposit" yaml:"deposit"`
+		Deposit     sdk.Coins               `json:"deposit" yaml:"deposit"`
 		Validator   hmTypes.ValidatorID     `json:"validator" yaml:"validator"`
 	}
 )

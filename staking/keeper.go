@@ -10,6 +10,7 @@ import (
 	"github.com/maticnetwork/bor/common"
 	"github.com/tendermint/tendermint/libs/log"
 
+	"github.com/maticnetwork/heimdall/chainmanager"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/params/subspace"
 	"github.com/maticnetwork/heimdall/staking/types"
@@ -30,9 +31,9 @@ var (
 // ModuleCommunicator manages different module interaction
 type ModuleCommunicator interface {
 	GetACKCount(ctx sdk.Context) uint64
-	SetCoins(ctx sdk.Context, addr hmTypes.HeimdallAddress, amt hmTypes.Coins) sdk.Error
-	GetCoins(ctx sdk.Context, addr hmTypes.HeimdallAddress) hmTypes.Coins
-	SendCoins(ctx sdk.Context, from hmTypes.HeimdallAddress, to hmTypes.HeimdallAddress, amt hmTypes.Coins) sdk.Error
+	SetCoins(ctx sdk.Context, addr hmTypes.HeimdallAddress, amt sdk.Coins) sdk.Error
+	GetCoins(ctx sdk.Context, addr hmTypes.HeimdallAddress) sdk.Coins
+	SendCoins(ctx sdk.Context, from hmTypes.HeimdallAddress, to hmTypes.HeimdallAddress, amt sdk.Coins) sdk.Error
 }
 
 // Keeper stores all related data
@@ -44,6 +45,8 @@ type Keeper struct {
 	codespace sdk.CodespaceType
 	// param space
 	paramSpace subspace.Subspace
+	// chain manager keeper
+	chainKeeper chainmanager.Keeper
 	// module communicator
 	moduleCommunicator ModuleCommunicator
 }
@@ -54,6 +57,7 @@ func NewKeeper(
 	storeKey sdk.StoreKey,
 	paramSpace subspace.Subspace,
 	codespace sdk.CodespaceType,
+	chainKeeper chainmanager.Keeper,
 	moduleCommunicator ModuleCommunicator,
 ) Keeper {
 	keeper := Keeper{
@@ -61,6 +65,7 @@ func NewKeeper(
 		storeKey:           storeKey,
 		paramSpace:         paramSpace.WithKeyTable(types.ParamKeyTable()),
 		codespace:          codespace,
+		chainKeeper:        chainKeeper,
 		moduleCommunicator: moduleCommunicator,
 	}
 	return keeper

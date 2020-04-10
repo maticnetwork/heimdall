@@ -11,6 +11,9 @@ import (
 	"github.com/maticnetwork/bor/crypto"
 	"github.com/maticnetwork/bor/ethclient"
 	"github.com/maticnetwork/bor/rlp"
+	"github.com/maticnetwork/heimdall/contracts/erc20"
+	"github.com/maticnetwork/heimdall/contracts/rootchain"
+	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 	"github.com/tendermint/tendermint/types"
 )
 
@@ -58,25 +61,25 @@ func GenerateAuthObj(client *ethclient.Client, address common.Address, data []by
 
 // SendCheckpoint sends checkpoint to rootchain contract
 // todo return err
-func (c *ContractCaller) SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte) {
+func (c *ContractCaller) SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte, rootChainAddress common.Address, rootChainInstance *rootchain.Rootchain) (er error) {
 	var vote types.CanonicalRLPVote
 	err := rlp.DecodeBytes(voteSignBytes, &vote)
 	if err != nil {
 		Logger.Error("Unable to decode vote while sending checkpoint", "vote", hex.EncodeToString(voteSignBytes), "sigs", hex.EncodeToString(sigs), "txData", hex.EncodeToString(txData))
-		return
+		return err
 	}
 
 	data, err := c.RootChainABI.Pack("submitHeaderBlock", voteSignBytes, sigs, txData)
 	if err != nil {
 		Logger.Error("Unable to pack tx for submitHeaderBlock", "error", err)
-		return
+		return err
 	}
 
-	rootChainAddress := GetRootChainAddress()
 	auth, err := GenerateAuthObj(GetMainClient(), rootChainAddress, data)
 	if err != nil {
 		Logger.Error("Unable to create auth object", "error", err)
-		return
+		Logger.Info("Setting custom gaslimit", "gaslimit", GetConfig().MainchainGasLimit)
+		auth.GasLimit = GetConfig().MainchainGasLimit
 	}
 	GetPubKey().VerifyBytes(voteSignBytes, sigs)
 
@@ -85,19 +88,18 @@ func (c *ContractCaller) SendCheckpoint(voteSignBytes []byte, sigs []byte, txDat
 		"sigs", hex.EncodeToString(sigs),
 		"txData", hex.EncodeToString(txData))
 
-	tx, err := c.RootChainInstance.SubmitHeaderBlock(auth, voteSignBytes, sigs, txData)
+	tx, err := rootChainInstance.SubmitHeaderBlock(auth, voteSignBytes, sigs, txData)
 	if err != nil {
 		Logger.Error("Error while submitting checkpoint", "error", err)
-	} else {
-		Logger.Info("Submitted new header successfully", "txHash", tx.Hash().String())
+		return err
 	}
-
+	Logger.Info("Submitted new checkpoint to rootchain successfully", "txHash", tx.Hash().String())
+	return
 }
 
 // StakeFor stakes for a validator
-func (c *ContractCaller) StakeFor(val common.Address, stakeAmount *big.Int, feeAmount *big.Int, acceptDelegation bool) error {
+func (c *ContractCaller) StakeFor(val common.Address, stakeAmount *big.Int, feeAmount *big.Int, acceptDelegation bool, stakeManagerAddress common.Address, stakeManagerInstance *stakemanager.Stakemanager) error {
 	// stake the amount
-	stakeManagerAddress := GetStakeManagerAddress()
 
 	signerPubkey := GetPubKey()
 	signerAddress := common.HexToAddress(signerPubkey.Address().String())
@@ -115,13 +117,13 @@ func (c *ContractCaller) StakeFor(val common.Address, stakeAmount *big.Int, feeA
 	}
 
 	// stake for stake manager
-	tx, err := c.StakeManagerInstance.StakeFor(
+	tx, err := stakeManagerInstance.StakeFor(
 		auth,
 		val,
 		stakeAmount,
 		feeAmount,
-		signerAddress,
 		acceptDelegation,
+		signerPubkey.Bytes(),
 	)
 
 	if err != nil {
@@ -134,10 +136,7 @@ func (c *ContractCaller) StakeFor(val common.Address, stakeAmount *big.Int, feeA
 }
 
 // ApproveTokens approves matic token for stake
-func (c *ContractCaller) ApproveTokens(amount *big.Int) error {
-	tokenAddress := GetMaticTokenAddress()
-	stakeManager := GetStakeManagerAddress()
-
+func (c *ContractCaller) ApproveTokens(amount *big.Int, stakeManager common.Address, tokenAddress common.Address, maticTokenInstance *erc20.Erc20) error {
 	data, err := c.MaticTokenABI.Pack("approve", stakeManager, amount)
 	if err != nil {
 		Logger.Error("Unable to pack tx for approve", "error", err)
@@ -150,7 +149,7 @@ func (c *ContractCaller) ApproveTokens(amount *big.Int) error {
 		return err
 	}
 
-	tx, err := c.MaticTokenInstance.Approve(auth, stakeManager, amount)
+	tx, err := maticTokenInstance.Approve(auth, stakeManager, amount)
 	if err != nil {
 		Logger.Error("Error while approving approve", "error", err)
 		return err

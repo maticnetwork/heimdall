@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/gorilla/mux"
 
@@ -41,7 +42,7 @@ func QueryBalancesRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		// the query will return empty if there is no data for this account
 		if len(res) == 0 {
-			rest.PostProcessResponse(w, cliCtx, types.Coins{})
+			rest.PostProcessResponse(w, cliCtx, sdk.Coins{})
 			return
 		}
 

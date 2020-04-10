@@ -38,10 +38,12 @@ func querySequence(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, sd
 		return nil, sdk.ErrInternal(fmt.Sprintf(err.Error()))
 	}
 
+	chainParams := k.chainKeeper.GetParams(ctx)
+
 	// get main tx receipt
-	receipt, _ := contractCallerObj.GetConfirmedTxReceipt(time.Now().UTC(), hmTypes.HexToHeimdallHash(params.TxHash).EthHash())
+	receipt, _ := contractCallerObj.GetConfirmedTxReceipt(time.Now().UTC(), hmTypes.HexToHeimdallHash(params.TxHash).EthHash(), chainParams.TxConfirmationTime)
 	if err != nil || receipt == nil {
-		return nil, sdk.ErrInternal(fmt.Sprintf("Transaction is not confirmed yet. Please for sometime and try again"))
+		return nil, sdk.ErrInternal(fmt.Sprintf("Transaction is not confirmed yet. Please wait for sometime and try again"))
 	}
 
 	// sequence id
@@ -52,7 +54,7 @@ func querySequence(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, sd
 	// check if incoming tx already exists
 	if !k.HasTopupSequence(ctx, sequence.String()) {
 		k.Logger(ctx).Error("No sequence exist: %s %s", params.TxHash, params.LogIndex)
-		return nil, sdk.ErrInternal(fmt.Sprintf("no sequence exist:: %s", params.TxHash))
+		return nil, nil
 	}
 
 	bz, err := codec.MarshalJSONIndent(types.ModuleCdc, sequence)

@@ -245,3 +245,28 @@ func GetBlockWithClient(client *httpClient.HTTP, height int64) (*tmTypes.Block, 
 		return nil, errors.New("timed out waiting for event")
 	}
 }
+
+// FetchVotes fetches votes and extracts sigs from it
+func FetchVotes(
+	client *httpClient.HTTP,
+	height int64,
+) (votes []*tmTypes.CommitSig, sigs []byte, chainID string, err error) {
+	// get block client
+	blockDetails, err := GetBlockWithClient(client, height+1)
+
+	if err != nil {
+		return nil, nil, "", err
+	}
+
+	// extract votes from response
+	preCommits := blockDetails.LastCommit.Precommits
+
+	// extract signs from votes
+	valSigs := GetSigs(preCommits)
+
+	// extract chainID
+	chainID = blockDetails.ChainID
+
+	// return
+	return preCommits, valSigs, chainID, nil
+}

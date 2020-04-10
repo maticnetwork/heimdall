@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/json"
+
 	"github.com/cosmos/cosmos-sdk/types/module"
 )
 

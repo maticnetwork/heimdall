@@ -15,6 +15,6 @@ type SupplyKeeper interface {
 	// TODO remove with genesis 2-phases refactor https://github.com/cosmos/cosmos-sdk/issues/2862
 	SetModuleAccount(sdk.Context, supplyTypes.ModuleAccountInterface)
 
-	SendCoinsFromModuleToAccount(ctx sdk.Context, senderModule string, recipientAddr hmTypes.HeimdallAddress, amt hmTypes.Coins) sdk.Error
-	SendCoinsFromAccountToModule(ctx sdk.Context, senderAddr hmTypes.HeimdallAddress, recipientModule string, amt hmTypes.Coins) sdk.Error
+	SendCoinsFromModuleToAccount(ctx sdk.Context, senderModule string, recipientAddr hmTypes.HeimdallAddress, amt sdk.Coins) sdk.Error
+	SendCoinsFromAccountToModule(ctx sdk.Context, senderAddr hmTypes.HeimdallAddress, recipientModule string, amt sdk.Coins) sdk.Error
 }

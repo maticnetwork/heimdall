@@ -15,6 +15,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/store"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethCommon "github.com/maticnetwork/bor/common"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -264,7 +265,7 @@ func populatePersistentPeersInConfigAndWriteIt(config *cfg.Config) {
 func getGenesisAccount(address []byte) authTypes.GenesisAccount {
 	acc := authTypes.NewBaseAccountWithAddress(hmTypes.BytesToHeimdallAddress(address))
 	genesisBalance, _ := big.NewInt(0).SetString("1000000000000000000000", 10)
-	acc.SetCoins(hmTypes.Coins{hmTypes.Coin{Denom: authTypes.FeeToken, Amount: hmTypes.NewIntFromBigInt(genesisBalance)}})
+	acc.SetCoins(sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: sdk.NewIntFromBigInt(genesisBalance)}})
 	result, _ := authTypes.NewGenesisAccountI(&acc)
 	return result
 }

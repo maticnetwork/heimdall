@@ -36,14 +36,18 @@ func handleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCalle
 		return types.ErrSendDisabled(k.Codespace()).Result()
 	}
 
+	// chainManager params
+	params := k.chainKeeper.GetParams(ctx)
+	chainParams := params.ChainParams
+
 	// get main tx receipt
-	receipt, err := contractCaller.GetConfirmedTxReceipt(ctx.BlockTime(), msg.TxHash.EthHash())
+	receipt, err := contractCaller.GetConfirmedTxReceipt(ctx.BlockTime(), msg.TxHash.EthHash(), params.TxConfirmationTime)
 	if err != nil || receipt == nil {
-		return hmCommon.ErrWaitForConfirmation(k.Codespace()).Result()
+		return hmCommon.ErrWaitForConfirmation(k.Codespace(), params.TxConfirmationTime).Result()
 	}
 
 	// get event log for topup
-	eventLog, err := contractCaller.DecodeValidatorTopupFeesEvent(helper.GetStakingInfoAddress(), receipt, msg.LogIndex)
+	eventLog, err := contractCaller.DecodeValidatorTopupFeesEvent(chainParams.StakingInfoAddress.EthAddress(), receipt, msg.LogIndex)
 	if err != nil || eventLog == nil {
 		k.Logger(ctx).Error("Error fetching log from txhash")
 		return hmCommon.ErrInvalidMsg(k.Codespace(), "Unable to fetch logs for txHash").Result()
@@ -63,7 +67,7 @@ func handleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCalle
 	}
 
 	// create topup amount
-	topupAmount := hmTypes.Coins{hmTypes.Coin{Denom: authTypes.FeeToken, Amount: hmTypes.NewIntFromBigInt(eventLog.Fee)}}
+	topupAmount := sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: sdk.NewIntFromBigInt(eventLog.Fee)}}
 
 	// sequence id
 
@@ -127,7 +131,7 @@ func handleMsgWithdrawFee(ctx sdk.Context, k Keeper, msg types.MsgWithdrawFee) s
 	}
 
 	// withdraw coins of validator
-	maticCoins := hmTypes.Coins{hmTypes.Coin{Denom: authTypes.FeeToken, Amount: amount}}
+	maticCoins := sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: amount}}
 	if _, err := k.bk.SubtractCoins(ctx, msg.ValidatorAddress, maticCoins); err != nil {
 		k.Logger(ctx).Error("Error while setting Fee balance to zero ", "fromAddress", msg.ValidatorAddress, "validatorId", validator.ID, "err", err)
 		return err.Result()

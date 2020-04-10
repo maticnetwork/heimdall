@@ -5,7 +5,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/gov/types"
-	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 // RegisterInvariants registers all governance invariants
@@ -24,7 +23,7 @@ func AllInvariants(keeper Keeper) sdk.Invariant {
 // deposit amounts held on store
 func ModuleAccountInvariant(keeper Keeper) sdk.Invariant {
 	return func(ctx sdk.Context) (string, bool) {
-		var expectedDeposits hmTypes.Coins
+		var expectedDeposits sdk.Coins
 
 		keeper.IterateAllDeposits(ctx, func(deposit types.Deposit) bool {
 			expectedDeposits = expectedDeposits.Add(deposit.Amount)

@@ -25,44 +25,28 @@ bor_RPC_URL = "{{ .BorRPCUrl }}"
 # RPC endpoint for tendermint
 tendermint_RPC_URL = "{{ .TendermintRPCUrl }}"
 
-##### Chain ID configration #####
-
-# Bor chain ID
-bor_chain_id = "{{ .BorChainID }}" 
-
 
 ##### MQTT and Rest Server Config #####
 
 # MQTT endpoint
-amqp_url = "{{ .AmqpURL }}" 
+amqp_url = "{{ .AmqpURL }}"
 
 # Heimdall REST server endpoint
-heimdall_rest_server = "{{ .HeimdallServerURL }}" 
-
-##### Contract Addresses #####
-
-### Eth Chain Contracts 
-stakinginfo_contract = "{{ .StakingInfoAddress }}" 
-stake_manager_contract = "{{ .StakeManagerAddress }}" 
-rootchain_contract = "{{ .RootchainAddress }}"
-state_sender_contract = "{{ .StateSenderAddress }}" 
-matic_token = "{{ .MaticTokenAddress }}"
-
-### Bor Chain Contracts
-state_receiver_contract = "{{ .StateReceiverAddress }}" 
-validator_set_contract = "{{ .ValidatorSetAddress }}" 
+heimdall_rest_server = "{{ .HeimdallServerURL }}"
 
 
 ##### Intervals #####
-child_chain_block_interval = "{{ .ChildBlockInterval }}" 
+child_chain_block_interval = "{{ .ChildBlockInterval }}"
 
-## Bridge Poll Intervals 
-checkpoint_poll_interval = "{{ .CheckpointerPollInterval }}" 
+## Bridge Poll Intervals
+checkpoint_poll_interval = "{{ .CheckpointerPollInterval }}"
 syncer_poll_interval = "{{ .SyncerPollInterval }}"
 noack_poll_interval = "{{ .NoACKPollInterval }}"
-clerk_polling_interval = "{{ .ClerkPollingInterval }}" 
-span_polling_interval = "{{ .SpanPollingInterval }}" 
+clerk_polling_interval = "{{ .ClerkPollingInterval }}"
+span_polling_interval = "{{ .SpanPollingInterval }}"
 
+#### gas limits ####
+main_chain_gas_limit = "{{ .MainchainGasLimit }}"
 
 ##### Checkpoint Length Config #####
 avg_checkpoint_length = "{{ .AvgCheckpointLength }}"
@@ -71,10 +55,6 @@ max_checkpoint_length = "{{ .MaxCheckpointLength }}"
 ##### Timeout Config #####
 
 no_ack_wait_time = "{{ .NoACKWaitTime }}"
-
-##### Transaction Confirmations  #####
-
-tx_confirmation_time = "{{ .TxConfirmationTime }}"
 
 `
 

@@ -10,11 +10,15 @@ import (
 	"io/ioutil"
 	"math/big"
 	"math/bits"
+	"net/http"
+	"net/url"
 	"os"
+	"path"
 	"sort"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
+	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/input"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -33,6 +37,7 @@ import (
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
+	"github.com/maticnetwork/heimdall/types/rest"
 )
 
 // ZeroHash represents empty hash
@@ -702,4 +707,37 @@ func EventByID(abiObject *abi.ABI, sigdata []byte) *abi.Event {
 		}
 	}
 	return nil
+}
+
+// GetHeimdallServerEndpoint returns heimdall server endpoint
+func GetHeimdallServerEndpoint(endpoint string) string {
+	u, _ := url.Parse(GetConfig().HeimdallServerURL)
+	u.Path = path.Join(u.Path, endpoint)
+	return u.String()
+}
+
+// FetchFromAPI fetches data from any URL
+func FetchFromAPI(cliCtx cliContext.CLIContext, URL string) (result rest.ResponseWithHeight, err error) {
+	resp, err := http.Get(URL)
+	if err != nil {
+		return result, err
+	}
+	defer resp.Body.Close()
+
+	// response
+	if resp.StatusCode == 200 {
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return result, err
+		}
+		// unmarshall data from buffer
+		var response rest.ResponseWithHeight
+		if err := cliCtx.Codec.UnmarshalJSON(body, &response); err != nil {
+			return result, err
+		}
+		return response, nil
+	}
+
+	Logger.Debug("Error while fetching data from URL", "status", resp.StatusCode, "URL", URL)
+	return result, fmt.Errorf("Error while fetching data from url: %v, status: %v", URL, resp.StatusCode)
 }

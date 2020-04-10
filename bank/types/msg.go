@@ -14,13 +14,13 @@ import (
 type MsgSend struct {
 	FromAddress types.HeimdallAddress `json:"from_address"`
 	ToAddress   types.HeimdallAddress `json:"to_address"`
-	Amount      types.Coins           `json:"amount"`
+	Amount      sdk.Coins             `json:"amount"`
 }
 
 var _ sdk.Msg = MsgSend{}
 
 // NewMsgSend - construct arbitrary multi-in, multi-out send msg.
-func NewMsgSend(fromAddr, toAddr types.HeimdallAddress, amount types.Coins) MsgSend {
+func NewMsgSend(fromAddr, toAddr types.HeimdallAddress, amount sdk.Coins) MsgSend {
 	return MsgSend{FromAddress: fromAddr, ToAddress: toAddr, Amount: amount}
 }
 
@@ -111,7 +111,7 @@ func (msg MsgMultiSend) GetSigners() []sdk.AccAddress {
 // Input models transaction input
 type Input struct {
 	Address types.HeimdallAddress `json:"address"`
-	Coins   types.Coins           `json:"coins"`
+	Coins   sdk.Coins             `json:"coins"`
 }
 
 // ValidateBasic - validate transaction input
@@ -129,7 +129,7 @@ func (in Input) ValidateBasic() sdk.Error {
 }
 
 // NewInput - create a transaction input, used with MsgMultiSend
-func NewInput(addr types.HeimdallAddress, coins types.Coins) Input {
+func NewInput(addr types.HeimdallAddress, coins sdk.Coins) Input {
 	return Input{
 		Address: addr,
 		Coins:   coins,
@@ -139,7 +139,7 @@ func NewInput(addr types.HeimdallAddress, coins types.Coins) Input {
 // Output models transaction outputs
 type Output struct {
 	Address types.HeimdallAddress `json:"address"`
-	Coins   types.Coins           `json:"coins"`
+	Coins   sdk.Coins             `json:"coins"`
 }
 
 // ValidateBasic - validate transaction output
@@ -157,7 +157,7 @@ func (out Output) ValidateBasic() sdk.Error {
 }
 
 // NewOutput - create a transaction output, used with MsgMultiSend
-func NewOutput(addr types.HeimdallAddress, coins types.Coins) Output {
+func NewOutput(addr types.HeimdallAddress, coins sdk.Coins) Output {
 	return Output{
 		Address: addr,
 		Coins:   coins,
@@ -167,7 +167,7 @@ func NewOutput(addr types.HeimdallAddress, coins types.Coins) Output {
 // ValidateInputsOutputs validates that each respective input and output is
 // valid and that the sum of inputs is equal to the sum of outputs.
 func ValidateInputsOutputs(inputs []Input, outputs []Output) sdk.Error {
-	var totalIn, totalOut types.Coins
+	var totalIn, totalOut sdk.Coins
 
 	for _, in := range inputs {
 		if err := in.ValidateBasic(); err != nil {

@@ -8,7 +8,6 @@ import (
 
 	"github.com/maticnetwork/heimdall/helper"
 	supplyTypes "github.com/maticnetwork/heimdall/supply/types"
-	"github.com/maticnetwork/heimdall/types"
 )
 
 // NewQuerier creates a querier for supply REST endpoints
@@ -37,7 +36,7 @@ func queryTotalSupply(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte,
 
 	start, end := helper.Paginate(len(totalSupply), params.Page, params.Limit, 100)
 	if start < 0 || end < 0 {
-		totalSupply = types.Coins{}
+		totalSupply = sdk.Coins{}
 	} else {
 		totalSupply = totalSupply[start:end]
 	}

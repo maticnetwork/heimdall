@@ -17,7 +17,6 @@ import (
 func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
-
 		switch msg := msg.(type) {
 		case types.MsgCheckpoint:
 			return handleMsgCheckpoint(ctx, msg, k, contractCaller)
@@ -150,7 +149,14 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg types.MsgCheckpointAck, k Keepe
 	k.Logger(ctx).Debug("Validating Checkpoint ACK", "Tx", msg)
 
 	// make call to headerBlock with header number
-	root, start, end, createdAt, proposer, err := contractCaller.GetHeaderInfo(msg.HeaderBlock)
+	chainParams := k.ck.GetParams(ctx).ChainParams
+
+	rootChainInstance, err := contractCaller.GetRootChainInstance(chainParams.RootChainAddress.EthAddress())
+	if err != nil {
+		k.Logger(ctx).Error("Unable to fetch rootchain contract instance", "Error", err)
+		return common.ErrBadAck(k.Codespace()).Result()
+	}
+	root, start, end, createdAt, proposer, err := contractCaller.GetHeaderInfo(msg.HeaderBlock, rootChainInstance)
 	if err != nil {
 		k.Logger(ctx).Error("Unable to fetch header from rootchain contract", "Error", err, "headerBlockIndex", msg.HeaderBlock)
 		return common.ErrBadAck(k.Codespace()).Result()

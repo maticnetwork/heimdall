@@ -19,6 +19,8 @@ import (
 	bankTypes "github.com/maticnetwork/heimdall/bank/types"
 	"github.com/maticnetwork/heimdall/bor"
 	borTypes "github.com/maticnetwork/heimdall/bor/types"
+	"github.com/maticnetwork/heimdall/chainmanager"
+	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	"github.com/maticnetwork/heimdall/checkpoint"
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/clerk"
@@ -60,6 +62,7 @@ var (
 		auth.AppModuleBasic{},
 		bank.AppModuleBasic{},
 		supply.AppModuleBasic{},
+		chainmanager.AppModuleBasic{},
 		staking.AppModuleBasic{},
 		checkpoint.AppModuleBasic{},
 		bor.AppModuleBasic{},
@@ -92,6 +95,7 @@ type HeimdallApp struct {
 	BankKeeper       bank.Keeper
 	SupplyKeeper     supply.Keeper
 	GovKeeper        gov.Keeper
+	ChainKeeper      chainmanager.Keeper
 	CheckpointKeeper checkpoint.Keeper
 	StakingKeeper    staking.Keeper
 	BorKeeper        bor.Keeper
@@ -104,7 +108,7 @@ type HeimdallApp struct {
 	caller helper.ContractCaller
 
 	//  total coins supply
-	TotalCoinsSupply types.Coins
+	TotalCoinsSupply sdk.Coins
 
 	// the module manager
 	mm *module.Manager
@@ -142,17 +146,17 @@ func (d ModuleCommunicator) GetValidatorFromValID(ctx sdk.Context, valID types.V
 }
 
 // SetCoins sets coins
-func (d ModuleCommunicator) SetCoins(ctx sdk.Context, addr types.HeimdallAddress, amt types.Coins) sdk.Error {
+func (d ModuleCommunicator) SetCoins(ctx sdk.Context, addr types.HeimdallAddress, amt sdk.Coins) sdk.Error {
 	return d.App.BankKeeper.SetCoins(ctx, addr, amt)
 }
 
 // GetCoins gets coins
-func (d ModuleCommunicator) GetCoins(ctx sdk.Context, addr types.HeimdallAddress) types.Coins {
+func (d ModuleCommunicator) GetCoins(ctx sdk.Context, addr types.HeimdallAddress) sdk.Coins {
 	return d.App.BankKeeper.GetCoins(ctx, addr)
 }
 
 // SendCoins transfers coins
-func (d ModuleCommunicator) SendCoins(ctx sdk.Context, fromAddr types.HeimdallAddress, toAddr types.HeimdallAddress, amt types.Coins) sdk.Error {
+func (d ModuleCommunicator) SendCoins(ctx sdk.Context, fromAddr types.HeimdallAddress, toAddr types.HeimdallAddress, amt sdk.Coins) sdk.Error {
 	return d.App.BankKeeper.SendCoins(ctx, fromAddr, toAddr, amt)
 }
 
@@ -184,6 +188,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		bankTypes.StoreKey,
 		supplyTypes.StoreKey,
 		govTypes.StoreKey,
+		chainmanagerTypes.StoreKey,
 		stakingTypes.StoreKey,
 		checkpointTypes.StoreKey,
 		borTypes.StoreKey,
@@ -208,6 +213,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.subspaces[bankTypes.ModuleName] = app.ParamsKeeper.Subspace(bankTypes.DefaultParamspace)
 	app.subspaces[supplyTypes.ModuleName] = app.ParamsKeeper.Subspace(supplyTypes.DefaultParamspace)
 	app.subspaces[govTypes.ModuleName] = app.ParamsKeeper.Subspace(govTypes.DefaultParamspace).WithKeyTable(govTypes.ParamKeyTable())
+	app.subspaces[chainmanagerTypes.ModuleName] = app.ParamsKeeper.Subspace(chainmanagerTypes.DefaultParamspace)
 	app.subspaces[stakingTypes.ModuleName] = app.ParamsKeeper.Subspace(stakingTypes.DefaultParamspace)
 	app.subspaces[checkpointTypes.ModuleName] = app.ParamsKeeper.Subspace(checkpointTypes.DefaultParamspace)
 	app.subspaces[borTypes.ModuleName] = app.ParamsKeeper.Subspace(borTypes.DefaultParamspace)
@@ -234,6 +240,15 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	// keepers
 	//
 
+	// create chain keeper
+	app.ChainKeeper = chainmanager.NewKeeper(
+		app.cdc,
+		keys[chainmanagerTypes.StoreKey], // target store
+		app.subspaces[chainmanagerTypes.ModuleName],
+		common.DefaultCodespace,
+		app.caller,
+	)
+
 	// account keeper
 	app.AccountKeeper = auth.NewAccountKeeper(
 		app.cdc,
@@ -247,6 +262,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		keys[stakingTypes.StoreKey], // target store
 		app.subspaces[stakingTypes.ModuleName],
 		common.DefaultCodespace,
+		app.ChainKeeper,
 		moduleCommunicator,
 	)
 
@@ -292,6 +308,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		app.subspaces[checkpointTypes.ModuleName],
 		common.DefaultCodespace,
 		app.StakingKeeper,
+		app.ChainKeeper,
 	)
 
 	app.BorKeeper = bor.NewKeeper(
@@ -299,6 +316,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		keys[borTypes.StoreKey], // target store
 		app.subspaces[borTypes.ModuleName],
 		common.DefaultCodespace,
+		app.ChainKeeper,
 		app.StakingKeeper,
 		app.caller,
 	)
@@ -308,6 +326,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		keys[clerkTypes.StoreKey], // target store
 		app.subspaces[clerkTypes.ModuleName],
 		common.DefaultCodespace,
+		app.ChainKeeper,
 	)
 
 	// may be need signer
@@ -316,6 +335,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		keys[topupTypes.StoreKey],
 		app.subspaces[topupTypes.ModuleName],
 		topupTypes.DefaultCodespace,
+		app.ChainKeeper,
 		app.BankKeeper,
 		app.StakingKeeper,
 	)
@@ -329,8 +349,9 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		bank.NewAppModule(app.BankKeeper, &app.caller),
 		supply.NewAppModule(app.SupplyKeeper, &app.caller),
 		gov.NewAppModule(app.GovKeeper, app.SupplyKeeper),
+		chainmanager.NewAppModule(app.ChainKeeper, &app.caller),
 		staking.NewAppModule(app.StakingKeeper, &app.caller),
-		checkpoint.NewAppModule(app.CheckpointKeeper, &app.caller),
+		checkpoint.NewAppModule(app.CheckpointKeeper, app.StakingKeeper, &app.caller),
 		bor.NewAppModule(app.BorKeeper, &app.caller),
 		clerk.NewAppModule(app.ClerkKeeper, &app.caller),
 		topup.NewAppModule(app.TopupKeeper, &app.caller),
@@ -342,6 +363,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		authTypes.ModuleName,
 		bankTypes.ModuleName,
 		govTypes.ModuleName,
+		chainmanagerTypes.ModuleName,
 		supplyTypes.ModuleName,
 		stakingTypes.ModuleName,
 		checkpointTypes.ModuleName,
@@ -352,23 +374,6 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 
 	// register message routes and query routes
 	app.mm.RegisterRoutes(app.Router(), app.QueryRouter())
-
-	// register message routes
-	// app.Router().
-	// 	AddRoute(bankTypes.RouterKey, bank.NewHandler(app.bankKeeper, &app.caller)).
-	// 	AddRoute(checkpointTypes.RouterKey, checkpoint.NewHandler(app.checkpointKeeper, &app.caller)).
-	// 	AddRoute(stakingTypes.RouterKey, staking.NewHandler(app.stakingKeeper, &app.caller)).
-	// 	AddRoute(borTypes.RouterKey, bor.NewHandler(app.borKeeper)).
-	// 	AddRoute(clerkTypes.RouterKey, clerk.NewHandler(app.clerkKeeper, &app.caller))
-
-	// app.QueryRouter().
-	// 	AddRoute(authTypes.QuerierRoute, auth.NewQuerier(app.AccountKeeper)).
-	// 	AddRoute(bankTypes.QuerierRoute, bank.NewQuerier(app.bankKeeper)).
-	// 	AddRoute(supplyTypes.QuerierRoute, supply.NewQuerier(app.supplyKeeper)).
-	// 	AddRoute(stakingTypes.QuerierRoute, staking.NewQuerier(app.stakingKeeper)).
-	// 	AddRoute(checkpointTypes.QuerierRoute, checkpoint.NewQuerier(app.checkpointKeeper)).
-	// 	AddRoute(borTypes.QuerierRoute, bor.NewQuerier(app.borKeeper)).
-	// 	AddRoute(clerkTypes.QuerierRoute, clerk.NewQuerier(app.clerkKeeper))
 
 	// mount the multistore and load the latest state
 	app.MountKVStores(keys)
@@ -381,6 +386,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.SetAnteHandler(
 		auth.NewAnteHandler(
 			app.AccountKeeper,
+			app.ChainKeeper,
 			app.SupplyKeeper,
 			&app.caller,
 			auth.DefaultSigVerificationGasConsumer,
@@ -488,7 +494,7 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) ab
 		moduleAccount := app.SupplyKeeper.GetModuleAccount(ctx, authTypes.FeeCollectorName)
 		amount := moduleAccount.GetCoins().AmountOf(authTypes.FeeToken)
 		if !amount.IsZero() {
-			coins := types.Coins{types.Coin{Denom: authTypes.FeeToken, Amount: amount}}
+			coins := sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: amount}}
 			app.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, authTypes.FeeCollectorName, proposer, coins)
 		}
 

@@ -34,6 +34,9 @@ func (AppModuleBasic) DefaultGenesis() json.RawMessage { return nil }
 // ValidateGenesis module validate genesis
 func (AppModuleBasic) ValidateGenesis(_ json.RawMessage) error { return nil }
 
+// VerifyGenesis module
+func (AppModuleBasic) VerifyGenesis(bz map[string]json.RawMessage) error { return nil }
+
 // RegisterRESTRoutes register rest routes
 func (AppModuleBasic) RegisterRESTRoutes(_ context.CLIContext, _ *mux.Router) {}
 

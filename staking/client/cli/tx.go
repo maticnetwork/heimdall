@@ -15,6 +15,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/maticnetwork/bor/common"
+	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	hmClient "github.com/maticnetwork/heimdall/client"
 	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
 	"github.com/maticnetwork/heimdall/helper"
@@ -78,10 +79,12 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
+			configParams, _ := util.GetConfigManagerParams(cliCtx)
+
 			// get main tx receipt
-			receipt, err := contractCallerObj.GetConfirmedTxReceipt(time.Now().UTC(), hmTypes.HexToHeimdallHash(txhash).EthHash())
+			receipt, err := contractCallerObj.GetConfirmedTxReceipt(time.Now().UTC(), hmTypes.HexToHeimdallHash(txhash).EthHash(), configParams.TxConfirmationTime)
 			if err != nil || receipt == nil {
-				return errors.New("Transaction is not confirmed yet. Please for sometime and try again")
+				return errors.New("Transaction is not confirmed yet. Please wait for sometime and try again")
 			}
 
 			abiObject := &contractCallerObj.StakingInfoABI
@@ -107,8 +110,8 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 				return fmt.Errorf("Invalid tx for validator join")
 			}
 
-			if !bytes.Equal(event.Signer.Bytes(), pubkey.Address().Bytes()) {
-				return fmt.Errorf("Invalid public key. Signer address and pubkey are not related")
+			if !bytes.Equal(event.SignerPubkey, pubkey.Bytes()[1:]) {
+				return fmt.Errorf("Public key mismatch with event log")
 			}
 
 			// msg

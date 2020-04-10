@@ -76,7 +76,7 @@ func (keeper Keeper) Logger(ctx sdk.Context) log.Logger {
 
 // SetCoins sets the coins at the addr.
 func (keeper Keeper) SetCoins(
-	ctx sdk.Context, addr hmTypes.HeimdallAddress, amt hmTypes.Coins,
+	ctx sdk.Context, addr hmTypes.HeimdallAddress, amt sdk.Coins,
 ) sdk.Error {
 
 	if !amt.IsValid() && !amt.IsZero() {
@@ -99,14 +99,14 @@ func (keeper Keeper) SetCoins(
 
 // SubtractCoins subtracts amt from the coins at the addr.
 func (keeper Keeper) SubtractCoins(
-	ctx sdk.Context, addr hmTypes.HeimdallAddress, amt hmTypes.Coins,
-) (hmTypes.Coins, sdk.Error) {
+	ctx sdk.Context, addr hmTypes.HeimdallAddress, amt sdk.Coins,
+) (sdk.Coins, sdk.Error) {
 
 	if !amt.IsValid() {
 		return nil, sdk.ErrInvalidCoins(amt.String())
 	}
 
-	oldCoins, spendableCoins := hmTypes.NewCoins(), hmTypes.NewCoins()
+	oldCoins, spendableCoins := sdk.NewCoins(), sdk.NewCoins()
 
 	acc := keeper.ak.GetAccount(ctx, addr)
 	if acc != nil {
@@ -130,8 +130,8 @@ func (keeper Keeper) SubtractCoins(
 
 // AddCoins adds amt to the coins at the addr.
 func (keeper Keeper) AddCoins(
-	ctx sdk.Context, addr hmTypes.HeimdallAddress, amt hmTypes.Coins,
-) (hmTypes.Coins, sdk.Error) {
+	ctx sdk.Context, addr hmTypes.HeimdallAddress, amt sdk.Coins,
+) (sdk.Coins, sdk.Error) {
 
 	if !amt.IsValid() {
 		return nil, sdk.ErrInvalidCoins(amt.String())
@@ -193,7 +193,7 @@ func (keeper Keeper) InputOutputCoins(
 
 // SendCoins moves coins from one account to another
 func (keeper Keeper) SendCoins(
-	ctx sdk.Context, fromAddr hmTypes.HeimdallAddress, toAddr hmTypes.HeimdallAddress, amt hmTypes.Coins,
+	ctx sdk.Context, fromAddr hmTypes.HeimdallAddress, toAddr hmTypes.HeimdallAddress, amt sdk.Coins,
 ) sdk.Error {
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -234,15 +234,15 @@ func (keeper Keeper) SetSendEnabled(ctx sdk.Context, enabled bool) {
 }
 
 // GetCoins returns the coins at the addr.
-func (keeper Keeper) GetCoins(ctx sdk.Context, addr hmTypes.HeimdallAddress) hmTypes.Coins {
+func (keeper Keeper) GetCoins(ctx sdk.Context, addr hmTypes.HeimdallAddress) sdk.Coins {
 	acc := keeper.ak.GetAccount(ctx, addr)
 	if acc == nil {
-		return hmTypes.NewCoins()
+		return sdk.NewCoins()
 	}
 	return acc.GetCoins()
 }
 
 // HasCoins returns whether or not an account has at least amt coins.
-func (keeper Keeper) HasCoins(ctx sdk.Context, addr hmTypes.HeimdallAddress, amt hmTypes.Coins) bool {
+func (keeper Keeper) HasCoins(ctx sdk.Context, addr hmTypes.HeimdallAddress, amt sdk.Coins) bool {
 	return keeper.GetCoins(ctx, addr).IsAllGTE(amt)
 }

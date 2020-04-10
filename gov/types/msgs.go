@@ -21,13 +21,13 @@ var _, _, _ sdk.Msg = MsgSubmitProposal{}, MsgDeposit{}, MsgVote{}
 // MsgSubmitProposal represents submit proposal message
 type MsgSubmitProposal struct {
 	Content        Content                 `json:"content" yaml:"content"`
-	InitialDeposit hmTypes.Coins           `json:"initial_deposit" yaml:"initial_deposit"` //  Initial deposit paid by sender. Must be strictly positive
+	InitialDeposit sdk.Coins               `json:"initial_deposit" yaml:"initial_deposit"` //  Initial deposit paid by sender. Must be strictly positive
 	Proposer       hmTypes.HeimdallAddress `json:"proposer" yaml:"proposer"`               //  Address of the proposer
 	Validator      hmTypes.ValidatorID     `json:"validator" yaml:"validator"`             //  Validator id
 }
 
 // NewMsgSubmitProposal creates new submit proposal
-func NewMsgSubmitProposal(content Content, initialDeposit hmTypes.Coins, proposer hmTypes.HeimdallAddress, validator hmTypes.ValidatorID) MsgSubmitProposal {
+func NewMsgSubmitProposal(content Content, initialDeposit sdk.Coins, proposer hmTypes.HeimdallAddress, validator hmTypes.ValidatorID) MsgSubmitProposal {
 	return MsgSubmitProposal{content, initialDeposit, proposer, validator}
 }
 
@@ -83,11 +83,11 @@ func (msg MsgSubmitProposal) GetSigners() []sdk.AccAddress {
 type MsgDeposit struct {
 	ProposalID uint64                  `json:"proposal_id" yaml:"proposal_id"` // ID of the proposal
 	Depositor  hmTypes.HeimdallAddress `json:"depositor" yaml:"depositor"`     // Address of the depositor
-	Amount     hmTypes.Coins           `json:"amount" yaml:"amount"`           // Coins to add to the proposal's deposit
+	Amount     sdk.Coins               `json:"amount" yaml:"amount"`           // Coins to add to the proposal's deposit
 	Validator  hmTypes.ValidatorID     `json:"validator" yaml:"validator"`     //  Validator id
 }
 
-func NewMsgDeposit(depositor hmTypes.HeimdallAddress, proposalID uint64, amount hmTypes.Coins, validator hmTypes.ValidatorID) MsgDeposit {
+func NewMsgDeposit(depositor hmTypes.HeimdallAddress, proposalID uint64, amount sdk.Coins, validator hmTypes.ValidatorID) MsgDeposit {
 	return MsgDeposit{proposalID, depositor, amount, validator}
 }
 
