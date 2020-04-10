@@ -31,9 +31,9 @@ jobs:
           gem install --no-document fpm
           fpm --version
 
+          export GOBIN=$(go env GOPATH)/bin
           make install
           mkdir -p build
-          export GOBIN=$(go env GOPATH)/bin
           cp -rf $GOBIN/* build/
 
           cat > heimdalld.service <<- "EOF"
