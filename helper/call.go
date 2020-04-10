@@ -369,11 +369,12 @@ func (c *ContractCaller) IsTxConfirmed(currentTime time.Time, tx common.Hash, tx
 func (c *ContractCaller) GetConfirmedTxReceipt(currentTime time.Time, tx common.Hash, txConfirmationTime time.Duration) (*ethTypes.Receipt, error) {
 	time := uint64(0)
 	var receipt *ethTypes.Receipt = nil
-	var err error
 
 	receiptCache, ok := c.ReceiptCache.Get(tx.String())
 
 	if !ok {
+		var err error
+
 		// get main tx receipt
 		receipt, err = c.GetMainTxReceipt(tx)
 		if err != nil {
