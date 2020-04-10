@@ -606,3 +606,12 @@ func (app *HeimdallApp) GetSubspace(moduleName string) subspace.Subspace {
 func (app *HeimdallApp) GetModuleManager() *module.Manager {
 	return app.mm
 }
+
+// GetMaccPerms returns a copy of the module account permissions
+func GetMaccPerms() map[string][]string {
+	dupMaccPerms := make(map[string][]string)
+	for k, v := range maccPerms {
+		dupMaccPerms[k] = v
+	}
+	return dupMaccPerms
+}
