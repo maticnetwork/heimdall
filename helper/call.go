@@ -368,21 +368,22 @@ func (c *ContractCaller) IsTxConfirmed(currentTime time.Time, tx common.Hash, tx
 // GetConfirmedTxReceipt returns confirmed tx receipt
 func (c *ContractCaller) GetConfirmedTxReceipt(currentTime time.Time, tx common.Hash, txConfirmationTime time.Duration) (*ethTypes.Receipt, error) {
 	time := uint64(0)
-	receipt := &ethTypes.Receipt{}
+	var receipt *ethTypes.Receipt = nil
+	var err error
+
 	receiptCache, ok := c.ReceiptCache.Get(tx.String())
 
 	if !ok {
 		// get main tx receipt
-		fetchedReceipt, err := c.GetMainTxReceipt(tx)
-		receipt = fetchedReceipt
+		receipt, err = c.GetMainTxReceipt(tx)
 		if err != nil {
 			Logger.Error("Error while fetching mainchain receipt", "error", err, "txHash", tx.Hex())
 			return nil, err
 		}
+
 		c.ReceiptCache.Add(tx.String(), receipt)
 	} else {
-		receiptCache, _ := receiptCache.(*ethTypes.Receipt)
-		receipt = receiptCache
+		receipt, _ = receiptCache.(*ethTypes.Receipt)
 	}
 
 	Logger.Debug("Tx included in block", "block", receipt.BlockNumber.Uint64(), "tx", tx)
