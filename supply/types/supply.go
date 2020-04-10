@@ -3,29 +3,28 @@ package types
 import (
 	"fmt"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	yaml "gopkg.in/yaml.v2"
-
-	"github.com/maticnetwork/heimdall/types"
 )
 
 // Supply represents a struct that passively keeps track of the total supply amounts in the network
 type Supply struct {
-	Total types.Coins `json:"total" yaml:"total"` // total supply of tokens registered on the chain
+	Total sdk.Coins `json:"total" yaml:"total"` // total supply of tokens registered on the chain
 }
 
 // NewSupply creates a new Supply instance
-func NewSupply(total types.Coins) Supply { return Supply{total} }
+func NewSupply(total sdk.Coins) Supply { return Supply{total} }
 
 // DefaultSupply creates an empty Supply
-func DefaultSupply() Supply { return NewSupply(types.NewCoins()) }
+func DefaultSupply() Supply { return NewSupply(sdk.NewCoins()) }
 
 // Inflate adds coins to the total supply
-func (supply *Supply) Inflate(amount types.Coins) {
+func (supply *Supply) Inflate(amount sdk.Coins) {
 	supply.Total = supply.Total.Add(amount)
 }
 
 // Deflate subtracts coins from the total supply
-func (supply *Supply) Deflate(amount types.Coins) {
+func (supply *Supply) Deflate(amount sdk.Coins) {
 	supply.Total = supply.Total.Sub(amount)
 }
 

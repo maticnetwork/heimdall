@@ -3,6 +3,8 @@ package types
 import (
 	"fmt"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -10,11 +12,11 @@ import (
 type Deposit struct {
 	ProposalID uint64              `json:"proposal_id" yaml:"proposal_id"` //  proposalID of the proposal
 	Depositor  hmTypes.ValidatorID `json:"depositor" yaml:"depositor"`     //  id of the depositor validator
-	Amount     hmTypes.Coins       `json:"amount" yaml:"amount"`           //  Deposit amount
+	Amount     sdk.Coins           `json:"amount" yaml:"amount"`           //  Deposit amount
 }
 
 // NewDeposit creates a new Deposit instance
-func NewDeposit(proposalID uint64, amount hmTypes.Coins, validator hmTypes.ValidatorID) Deposit {
+func NewDeposit(proposalID uint64, amount sdk.Coins, validator hmTypes.ValidatorID) Deposit {
 	return Deposit{proposalID, validator, amount}
 }
 

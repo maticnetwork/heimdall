@@ -3,6 +3,7 @@ package exported
 import (
 	"time"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/crypto"
 
 	"github.com/maticnetwork/heimdall/types"
@@ -27,12 +28,12 @@ type Account interface {
 	GetSequence() uint64
 	SetSequence(uint64) error
 
-	GetCoins() types.Coins
-	SetCoins(types.Coins) error
+	GetCoins() sdk.Coins
+	SetCoins(sdk.Coins) error
 
 	// Calculates the amount of coins that can be sent to other accounts given
 	// the current time.
-	SpendableCoins(blockTime time.Time) types.Coins
+	SpendableCoins(blockTime time.Time) sdk.Coins
 
 	// Ensure that account implements stringer
 	String() string

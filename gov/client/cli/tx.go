@@ -115,7 +115,7 @@ $ %s tx gov submit-proposal --title="Test Proposal" --description="My awesome pr
 				return err
 			}
 
-			amount, err := hmTypes.ParseCoins(proposal.Deposit)
+			amount, err := sdk.ParseCoins(proposal.Deposit)
 			if err != nil {
 				return err
 			}
@@ -177,7 +177,7 @@ $ %s tx gov deposit 1 10stake --from mykey
 			from := helper.GetFromAddress(cliCtx)
 
 			// Get amount of coins
-			amount, err := hmTypes.ParseCoins(args[1])
+			amount, err := sdk.ParseCoins(args[1])
 			if err != nil {
 				return err
 			}
