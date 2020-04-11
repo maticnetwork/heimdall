@@ -1,6 +1,6 @@
 # Simple usage with a mounted data directory:
 # > docker build -t maticnetwork/heimdall:develop .
-# > docker run -it -p 46657:46657 -p 46656:46656 -v ~/.heimdalld:/root/.heimdalld maticnetwork/heimdall:develop heimdalld init
+# > docker run -it -p 26657:26657 -p 26656:26656 -v ~/.heimdalld:/root/.heimdalld maticnetwork/heimdall:develop heimdalld init
 
 # Start from a Debian image with the latest version of Go installed
 # and a workspace (GOPATH) configured at /go.
