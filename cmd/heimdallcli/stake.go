@@ -7,16 +7,16 @@ import (
 	"math/big"
 
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+
 	"github.com/maticnetwork/bor/common"
 	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	"github.com/maticnetwork/heimdall/helper"
-
 	stakingcli "github.com/maticnetwork/heimdall/staking/client/cli"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
-var checkpointEndpoint = "chainmanager/params"
+var checkpointEndpoint = "/chainmanager/params"
 
 // StakeCmd stakes for a validator
 func StakeCmd(cliCtx cliContext.CLIContext) *cobra.Command {
@@ -114,20 +114,20 @@ func ApproveCmd(cliCtx cliContext.CLIContext) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			route := fmt.Sprintf("custom/%s", checkpointEndpoint)
 
-			bz, _, err := cliCtx.QueryWithData(route, nil)
+			params, err := getConfigManagerParams(cliCtx)
 			if err != nil {
 				return err
 			}
 
-			var params chainmanagerTypes.Params
-			json.Unmarshal(bz, &params)
-
 			stakingManagerAddress := params.ChainParams.StakingManagerAddress.EthAddress()
 			maticTokenAddress := params.ChainParams.MaticTokenAddress.EthAddress()
 
+			// create matic token instance
 			maticTokenInstance, err := contractCaller.GetMaticTokenInstance(maticTokenAddress)
+			if err != nil {
+				return err
+			}
 
 			return contractCaller.ApproveTokens(stakeAmount.Add(stakeAmount, feeAmount), stakingManagerAddress, maticTokenAddress, maticTokenInstance)
 		},
@@ -136,4 +136,23 @@ func ApproveCmd(cliCtx cliContext.CLIContext) *cobra.Command {
 	cmd.Flags().String(stakingcli.FlagAmount, "10000000000000000000", "--staked-amount=<stake amount>, if left blank will be assigned as 10 matic tokens")
 	cmd.Flags().String(stakingcli.FlagFeeAmount, "5000000000000000000", "--fee-amount=<heimdall fee amount>, if left blank will be assigned as 5 matic tokens")
 	return cmd
+}
+
+// getConfigManagerParams return configManager params
+func getConfigManagerParams(cliCtx cliContext.CLIContext) (*chainmanagerTypes.Params, error) {
+	response, err := helper.FetchFromAPI(
+		cliCtx,
+		helper.GetHeimdallServerEndpoint(checkpointEndpoint),
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var params chainmanagerTypes.Params
+	if err := json.Unmarshal(response.Result, &params); err != nil {
+		return nil, err
+	}
+
+	return &params, nil
 }
