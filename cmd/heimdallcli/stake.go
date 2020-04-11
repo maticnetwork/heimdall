@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"math/big"
 
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
@@ -55,18 +54,16 @@ func StakeCmd(cliCtx cliContext.CLIContext) *cobra.Command {
 				return err
 			}
 
-			route := fmt.Sprintf("custom/%s", checkpointEndpoint)
-
-			bz, _, err := cliCtx.QueryWithData(route, nil)
+			params, err := getConfigManagerParams(cliCtx)
 			if err != nil {
 				return err
 			}
 
-			var params chainmanagerTypes.Params
-			json.Unmarshal(bz, &params)
-
 			stakingManagerAddress := params.ChainParams.StakingManagerAddress.EthAddress()
 			stakeManagerInstance, err := contractCaller.GetStakeManagerInstance(stakingManagerAddress)
+			if err != nil {
+				return err
+			}
 
 			return contractCaller.StakeFor(
 				common.HexToAddress(validatorStr),
