@@ -92,9 +92,10 @@ func (sm *SimulationManager) GenerateParamChanges(seed int64) (paramChanges []si
 // SimulationState is the input parameters used on each of the module's randomized
 // GenesisState generator function
 type SimulationState struct {
+	AppParams        simulation.AppParams
 	Cdc              *codec.Codec                         // application codec
 	Rand             *rand.Rand                           // random number
-	GenesisState     map[string]json.RawMessage           // genesis state
+	GenState         map[string]json.RawMessage           // genesis state
 	Accounts         []simulation.Account                 // simulation accounts
 	GenesisTimestamp time.Time                            // genesis timestamp
 	ParamChanges     []simulation.ParamChange             // simulated parameter changes from modules
