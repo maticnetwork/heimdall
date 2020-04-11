@@ -99,12 +99,11 @@ func (c *ContractCaller) SendCheckpoint(voteSignBytes []byte, sigs []byte, txDat
 
 // StakeFor stakes for a validator
 func (c *ContractCaller) StakeFor(val common.Address, stakeAmount *big.Int, feeAmount *big.Int, acceptDelegation bool, stakeManagerAddress common.Address, stakeManagerInstance *stakemanager.Stakemanager) error {
-	// stake the amount
-
 	signerPubkey := GetPubKey()
-	signerAddress := common.HexToAddress(signerPubkey.Address().String())
+	signerPubkeyBytes := signerPubkey[1:] // remove 04 prefix
 
-	data, err := c.StakeManagerABI.Pack("stakeFor", val, stakeAmount, feeAmount, signerAddress, acceptDelegation)
+	// pack data based on method definition
+	data, err := c.StakeManagerABI.Pack("stakeFor", val, stakeAmount, feeAmount, acceptDelegation, signerPubkeyBytes)
 	if err != nil {
 		Logger.Error("Unable to pack tx for stakeFor", "error", err)
 		return err
@@ -123,7 +122,7 @@ func (c *ContractCaller) StakeFor(val common.Address, stakeAmount *big.Int, feeA
 		stakeAmount,
 		feeAmount,
 		acceptDelegation,
-		signerPubkey.Bytes(),
+		signerPubkeyBytes,
 	)
 
 	if err != nil {
