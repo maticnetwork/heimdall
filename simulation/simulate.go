@@ -252,50 +252,53 @@ func createBlockSimulator(testingMode bool, tb testing.TB, t *testing.T, w io.Wr
 		)
 		lastBlockSizeState, blocksize = getBlockSize(r, params, lastBlockSizeState, config.BlockSize)
 
-		type opAndR struct {
-			op   simulation.Operation
-			rand *rand.Rand
-		}
-
-		opAndRz := make([]opAndR, 0, blocksize)
-
-		// Predetermine the blocksize slice so that we can do things like block
-		// out certain operations without changing the ops that follow.
-		for i := 0; i < blocksize; i++ {
-			opAndRz = append(opAndRz, opAndR{
-				op:   selectOp(r),
-				rand: simulation.DeriveRand(r),
-			})
-		}
-
-		for i := 0; i < blocksize; i++ {
-			// NOTE: the Rand 'r' should not be used here.
-			opAndR := opAndRz[i]
-			op, r2 := opAndR.op, opAndR.rand
-			opMsg, futureOps, err := op(r2, app, ctx, accounts, config.ChainID)
-			opMsg.LogEvent(event)
-
-			if !config.Lean || opMsg.OK {
-				logWriter.AddEntry(MsgEntry(header.Height, int64(i), opMsg))
+		if ops.totalWeight() > 0 {
+			type opAndR struct {
+				op   simulation.Operation
+				rand *rand.Rand
 			}
 
-			if err != nil {
-				logWriter.PrintLogs()
-				tb.Fatalf(`error on block  %d/%d, operation (%d/%d) from x/%s:
+			opAndRz := make([]opAndR, 0, blocksize)
+
+			// Predetermine the blocksize slice so that we can do things like block
+			// out certain operations without changing the ops that follow.
+			for i := 0; i < blocksize; i++ {
+				opAndRz = append(opAndRz, opAndR{
+					op:   selectOp(r),
+					rand: simulation.DeriveRand(r),
+				})
+			}
+
+			for i := 0; i < blocksize; i++ {
+				// NOTE: the Rand 'r' should not be used here.
+				opAndR := opAndRz[i]
+				op, r2 := opAndR.op, opAndR.rand
+				opMsg, futureOps, err := op(r2, app, ctx, accounts, config.ChainID)
+				opMsg.LogEvent(event)
+
+				if !config.Lean || opMsg.OK {
+					logWriter.AddEntry(MsgEntry(header.Height, int64(i), opMsg))
+				}
+
+				if err != nil {
+					logWriter.PrintLogs()
+					tb.Fatalf(`error on block  %d/%d, operation (%d/%d) from x/%s:
 %v
 Comment: %s`,
-					header.Height, config.NumBlocks, opCount, blocksize, opMsg.Route, err, opMsg.Comment)
+						header.Height, config.NumBlocks, opCount, blocksize, opMsg.Route, err, opMsg.Comment)
+				}
+
+				queueOperations(operationQueue, timeOperationQueue, futureOps)
+
+				if testingMode && opCount%50 == 0 {
+					fmt.Fprintf(w, "\rSimulating... block %d/%d, operation %d/%d. ",
+						header.Height, config.NumBlocks, opCount, blocksize)
+				}
+
+				opCount++
 			}
-
-			queueOperations(operationQueue, timeOperationQueue, futureOps)
-
-			if testingMode && opCount%50 == 0 {
-				fmt.Fprintf(w, "\rSimulating... block %d/%d, operation %d/%d. ",
-					header.Height, config.NumBlocks, opCount, blocksize)
-			}
-
-			opCount++
 		}
+
 		return opCount
 	}
 }

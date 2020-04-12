@@ -55,9 +55,6 @@ func TestFullAppSimulation(t *testing.T) {
 	}()
 
 	app := NewHeimdallApp(logger, db)
-	if err := app.LoadLatestVersion(app.keys[bam.MainStoreKey]); err != nil {
-		require.NoError(t, err)
-	}
 	require.Equal(t, AppName, app.Name())
 
 	// run randomized simulation
