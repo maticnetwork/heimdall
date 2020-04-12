@@ -40,6 +40,7 @@ import (
 	"github.com/maticnetwork/heimdall/topup"
 	topupTypes "github.com/maticnetwork/heimdall/topup/types"
 	"github.com/maticnetwork/heimdall/types"
+	hmModule "github.com/maticnetwork/heimdall/types/module"
 	"github.com/maticnetwork/heimdall/version"
 )
 
@@ -52,6 +53,9 @@ const (
 	maxGasPerBlock   int64 = 10000000 // 10 Million
 	maxBytesPerBlock int64 = 22020096 // 21 MB
 )
+
+// Assertion for Heimdall app
+var _ App = &HeimdallApp{}
 
 var (
 	// ModuleBasics defines the module BasicManager is in charge of setting up basic,
@@ -112,6 +116,9 @@ type HeimdallApp struct {
 
 	// the module manager
 	mm *module.Manager
+
+	// simulation module manager
+	sm *hmModule.SimulationManager
 }
 
 var logger = helper.Logger.With("module", "app")
@@ -375,6 +382,17 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	// register message routes and query routes
 	app.mm.RegisterRoutes(app.Router(), app.QueryRouter())
 
+	// create the simulation manager and define the order of the modules for deterministic simulations
+	//
+	// NOTE: this is not required apps that don't use the simulator for fuzz testing
+	// transactions
+	app.sm = hmModule.NewSimulationManager(
+		auth.NewAppModule(app.AccountKeeper, &app.caller, []authTypes.AccountProcessor{
+			supplyTypes.AccountProcessor,
+		}),
+	)
+	app.sm.RegisterStoreDecoders()
+
 	// mount the multistore and load the latest state
 	app.MountKVStores(keys)
 	app.MountTransientStores(tkeys)
@@ -605,6 +623,11 @@ func (app *HeimdallApp) GetSubspace(moduleName string) subspace.Subspace {
 // NOTE: This is solely to be used for testing purposes.
 func (app *HeimdallApp) GetModuleManager() *module.Manager {
 	return app.mm
+}
+
+// SimulationManager implements the SimulationApp interface
+func (app *HeimdallApp) SimulationManager() *hmModule.SimulationManager {
+	return app.sm
 }
 
 // GetMaccPerms returns a copy of the module account permissions

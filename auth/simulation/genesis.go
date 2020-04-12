@@ -8,6 +8,8 @@ import (
 	"math/rand"
 
 	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/types/module"
 	"github.com/maticnetwork/heimdall/types/simulation"
@@ -129,9 +131,13 @@ func RandomizedGenState(simState *module.SimulationState) {
 
 // RandomGenesisAccounts returns randomly generated genesis accounts
 func RandomGenesisAccounts(simState *module.SimulationState) (genesisAccs types.GenesisAccounts) {
-	for i, acc := range simState.Accounts {
+	base, _ := big.NewInt(0).SetString("1000000000000000000", 10)
+	for _, acc := range simState.Accounts {
 		bacc := types.NewBaseAccountWithAddress(acc.Address)
-		var gacc types.GenesisAccount = bacc
+		t := simulation.RandIntBetween(simState.Rand, 500, 1000)
+		amt := big.NewInt(0).Mul(big.NewInt(0).SetInt64(int64(t)), base)
+		bacc.Coins = sdk.Coins{sdk.Coin{Denom: types.FeeToken, Amount: sdk.NewIntFromBigInt(amt)}}
+		gacc, _ := types.NewGenesisAccountI(&bacc)
 		genesisAccs = append(genesisAccs, gacc)
 	}
 

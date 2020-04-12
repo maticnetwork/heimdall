@@ -89,15 +89,25 @@ func (sm *SimulationManager) GenerateParamChanges(seed int64) (paramChanges []si
 	return
 }
 
+// WeightedOperations returns all the modules' weighted operations of an application
+func (sm *SimulationManager) WeightedOperations(simState SimulationState) []simulation.WeightedOperation {
+	wOps := make([]simulation.WeightedOperation, 0, len(sm.Modules))
+	for _, module := range sm.Modules {
+		wOps = append(wOps, module.WeightedOperations(simState)...)
+	}
+
+	return wOps
+}
+
 // SimulationState is the input parameters used on each of the module's randomized
 // GenesisState generator function
 type SimulationState struct {
-	AppParams        simulation.AppParams
-	Cdc              *codec.Codec                         // application codec
-	Rand             *rand.Rand                           // random number
-	GenState         map[string]json.RawMessage           // genesis state
-	Accounts         []simulation.Account                 // simulation accounts
-	GenesisTimestamp time.Time                            // genesis timestamp
-	ParamChanges     []simulation.ParamChange             // simulated parameter changes from modules
-	Contents         []simulation.WeightedProposalContent // proposal content generator functions with their default weight and app sim key
+	AppParams    simulation.AppParams
+	Cdc          *codec.Codec                         // application codec
+	Rand         *rand.Rand                           // random number
+	GenState     map[string]json.RawMessage           // genesis state
+	Accounts     []simulation.Account                 // simulation accounts
+	GenTimestamp time.Time                            // genesis timestamp
+	ParamChanges []simulation.ParamChange             // simulated parameter changes from modules
+	Contents     []simulation.WeightedProposalContent // proposal content generator functions with their default weight and app sim key
 }
