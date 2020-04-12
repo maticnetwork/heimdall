@@ -87,9 +87,6 @@ func TestAppImportExport(t *testing.T) {
 	}()
 
 	app := NewHeimdallApp(logger, db)
-	if err := app.LoadLatestVersion(app.keys[bam.MainStoreKey]); err != nil {
-		require.NoError(t, err)
-	}
 	require.Equal(t, AppName, app.Name())
 
 	// Run randomized simulation
@@ -98,6 +95,8 @@ func TestAppImportExport(t *testing.T) {
 		SimulationOperations(app, app.Codec(), config),
 		app.ModuleAccountAddrs(), config,
 	)
+
+	app.Commit()
 
 	// export state and simParams before the simulation error is checked
 	err = CheckExportSimulation(app, config, simParams)
@@ -123,10 +122,7 @@ func TestAppImportExport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(newDir))
 	}()
 
-	newApp := NewHeimdallApp(logger, newDB, nil)
-	if err := newApp.LoadLatestVersion(app.keys[bam.MainStoreKey]); err != nil {
-		require.NoError(t, err)
-	}
+	newApp := NewHeimdallApp(logger, newDB)
 	require.Equal(t, AppName, newApp.Name())
 
 	var genesisState GenesisState
@@ -170,9 +166,6 @@ func TestAppSimulationAfterImport(t *testing.T) {
 	}()
 
 	app := NewHeimdallApp(logger, db)
-	if err := app.LoadLatestVersion(app.keys[bam.MainStoreKey]); err != nil {
-		require.NoError(t, err)
-	}
 	require.Equal(t, AppName, app.Name())
 
 	// Run randomized simulation
