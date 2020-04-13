@@ -145,6 +145,11 @@ func NewAnteHandler(
 		// stdSigs contains the sequence number, account number, and signatures.
 		// When simulating, this would just be a 0-length slice.
 		signerAddrs := stdTx.GetSigners()
+
+		if len(signerAddrs) < 0 {
+			return newCtx, sdk.ErrUnauthorized("no signer exists").Result(), true
+		}
+
 		signerAccs := make([]authTypes.Account, len(signerAddrs))
 		isGenesis := ctx.BlockHeight() == 0
 
