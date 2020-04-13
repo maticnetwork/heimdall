@@ -24,7 +24,7 @@ import (
 // Setup initializes a new App. A Nop logger is set in App.
 func Setup(isCheckTx bool) *HeimdallApp {
 	db := dbm.NewMemDB()
-	app := NewHeimdallApp(log.NewNopLogger(), db, nil)
+	app := NewHeimdallApp(log.NewNopLogger(), db)
 	if !isCheckTx {
 		// init chain must be called to stop deliverState from being nil
 		genesisState := NewDefaultGenesisState()
@@ -49,7 +49,7 @@ func Setup(isCheckTx bool) *HeimdallApp {
 // accounts and possible balances.
 func SetupWithGenesisAccounts(genAccs []authTypes.GenesisAccount) *HeimdallApp {
 	db := dbm.NewMemDB()
-	app := NewHeimdallApp(log.NewNopLogger(), db, nil)
+	app := NewHeimdallApp(log.NewNopLogger(), db)
 
 	// initialize the chain with the passed in genesis accounts
 	genesisState := NewDefaultGenesisState()
