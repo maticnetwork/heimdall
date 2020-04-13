@@ -1,12 +1,14 @@
 package simulation
 
 import (
+	"math/big"
 	"math/rand"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
+	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -83,4 +85,21 @@ func RandomFees(r *rand.Rand, ctx sdk.Context, spendableCoins sdk.Coins) (sdk.Co
 	// balance.
 	fees := sdk.NewCoins(sdk.NewCoin(randCoin.Denom, amt))
 	return fees, nil
+}
+
+// RandomFeeCoins returns random fee coins
+func RandomFeeCoins() sdk.Coins {
+	base, _ := big.NewInt(0).SetString("1000000000000000000", 10)
+	amt := big.NewInt(0).Mul(big.NewInt(0).SetInt64(int64(rand.Intn(1000000))), base)
+	return sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: sdk.NewIntFromBigInt(amt)}}
+}
+
+// NewFooCoin returns foo coin
+func NewFooCoin(amt int64) sdk.Coin {
+	return sdk.NewInt64Coin("foo", amt)
+}
+
+// NewBarCoin returns bar coin
+func NewBarCoin(amt int64) sdk.Coin {
+	return sdk.NewInt64Coin("bar", amt)
 }
