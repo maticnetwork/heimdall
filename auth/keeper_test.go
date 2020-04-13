@@ -1,15 +1,18 @@
 package auth_test
 
 import (
+	"fmt"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkAuth "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/auth/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
+	"github.com/maticnetwork/heimdall/types/simulation"
 )
 
 //
@@ -57,14 +60,23 @@ func (suite *KeeperTestSuite) TestAccountMapperGetSet() {
 
 	// set some values on the account and save it
 	newSequence := uint64(20)
-	err := acc.SetSequence(newSequence)
-	require.NoError(t, err)
+	require.NoError(t, acc.SetSequence(newSequence))
 	app.AccountKeeper.SetAccount(ctx, acc)
 
 	// check the new values
 	acc = app.AccountKeeper.GetAccount(ctx, addr)
 	require.NotNil(t, acc)
 	require.Equal(t, newSequence, acc.GetSequence())
+
+	// set coins values on the account and save it
+	coins := simulation.RandomFeeCoins()
+	require.NoError(t, acc.SetCoins(coins)) // set and check error
+	app.AccountKeeper.SetAccount(ctx, acc)
+
+	// check the new values
+	acc = app.AccountKeeper.GetAccount(ctx, addr)
+	require.NotNil(t, acc)
+	require.True(t, coins.IsEqual(acc.GetCoins()))
 }
 
 func (suite *KeeperTestSuite) TestAccountMapperRemoveAccount() {
@@ -110,4 +122,94 @@ func (suite *KeeperTestSuite) TestGetSetParams() {
 
 	actualParams := app.AccountKeeper.GetParams(ctx)
 	require.Equal(t, params, actualParams)
+}
+
+func (suite *KeeperTestSuite) TestLogger() {
+	t, app, ctx := suite.T(), suite.app, suite.ctx
+
+	logger := app.AccountKeeper.Logger(ctx)
+	require.NotNil(t, logger)
+}
+
+func (suite *KeeperTestSuite) TestGetSequence() {
+	t, app, ctx := suite.T(), suite.app, suite.ctx
+
+	addr1 := hmTypes.BytesToHeimdallAddress([]byte("addr1"))
+	addr2 := hmTypes.BytesToHeimdallAddress([]byte("addr2"))
+
+	// create accounts
+	acc1 := app.AccountKeeper.NewAccountWithAddress(ctx, addr1)
+	acc2 := app.AccountKeeper.NewAccountWithAddress(ctx, addr2)
+
+	accSeq1 := uint64(20)
+	accSeq2 := uint64(40)
+
+	err := acc1.SetSequence(accSeq1)
+	require.NoError(t, err)
+	err = acc2.SetSequence(accSeq2)
+	require.NoError(t, err)
+	app.AccountKeeper.SetAccount(ctx, acc1)
+	app.AccountKeeper.SetAccount(ctx, acc2)
+
+	sequence, err := app.AccountKeeper.GetSequence(ctx, addr1)
+	require.NoError(t, err)
+	require.Equal(t, accSeq1, sequence)
+
+	sequence, err = app.AccountKeeper.GetSequence(ctx, addr2)
+	require.NoError(t, err)
+	require.Equal(t, accSeq2, sequence)
+
+	_, err = app.AccountKeeper.GetSequence(ctx, hmTypes.BytesToHeimdallAddress([]byte("addr3")))
+	require.Error(t, err)
+}
+
+func (suite *KeeperTestSuite) TestGetPubKey() {
+	t, app, ctx := suite.T(), suite.app, suite.ctx
+
+	_, pubkey, addr := sdkAuth.KeyTestPubAddr()
+
+	addr1 := hmTypes.AccAddressToHeimdallAddress(addr)
+	acc1 := app.AccountKeeper.NewAccountWithAddress(ctx, addr1)
+	acc1.SetPubKey(pubkey)
+	app.AccountKeeper.SetAccount(ctx, acc1)
+	pubkey1, err := app.AccountKeeper.GetPubKey(ctx, addr1)
+	require.Nil(t, err)
+	require.NotEqual(t, 0, len(pubkey.Bytes()))
+	require.Equal(t, pubkey, pubkey1)
+
+	_, err = app.AccountKeeper.GetPubKey(ctx, hmTypes.BytesToHeimdallAddress([]byte("addr3")))
+	require.Error(t, err)
+}
+
+func (suite *KeeperTestSuite) TestGetAllAccounts() {
+	t, app, ctx := suite.T(), suite.app, suite.ctx
+
+	accounts := app.AccountKeeper.GetAllAccounts(ctx) // module accounts
+	require.True(t, len(accounts) > 0)
+}
+
+func (suite *KeeperTestSuite) TestIterateAccounts() {
+	t, app, ctx := suite.T(), suite.app, suite.ctx
+
+	newAccounts := 10
+	beforeAccounts := app.AccountKeeper.GetAllAccounts(ctx) // current accounts
+	for i := 0; i < newAccounts; i++ {
+		addr := hmTypes.BytesToHeimdallAddress([]byte(fmt.Sprintf("address-%v", i)))
+		acc := app.AccountKeeper.NewAccountWithAddress(ctx, addr)
+		acc.SetCoins(simulation.RandomFeeCoins())
+		app.AccountKeeper.SetAccount(ctx, acc)
+	}
+	afterAccounts := app.AccountKeeper.GetAllAccounts(ctx) // current accounts
+	require.Equal(t, newAccounts, len(afterAccounts)-len(beforeAccounts))
+
+	var filteredAccounts []types.Account
+	app.AccountKeeper.IterateAccounts(ctx, func(acc types.Account) bool {
+		filteredAccounts = append(filteredAccounts, acc)
+
+		if acc.GetAccountNumber() > 5 {
+			return true
+		}
+		return false
+	})
+	require.Equal(t, 5, len(filteredAccounts))
 }
