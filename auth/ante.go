@@ -146,7 +146,7 @@ func NewAnteHandler(
 		// When simulating, this would just be a 0-length slice.
 		signerAddrs := stdTx.GetSigners()
 
-		if len(signerAddrs) < 0 {
+		if len(signerAddrs) <= 0 {
 			return newCtx, sdk.ErrUnauthorized("no signer exists").Result(), true
 		}
 
