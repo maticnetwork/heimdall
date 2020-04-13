@@ -99,7 +99,7 @@ func (suite *QuerierTestSuite) TestQueryAccount() {
 	var account exported.Account
 	err2 := cdc.UnmarshalJSON(res, &account)
 	require.Nil(t, err2)
-	require.True(t, account.GetAddress().Equals(addr))
+	require.Equal(t, account.GetAddress().Bytes(), addr.Bytes())
 
 	{
 		// setting tnil to account
@@ -128,16 +128,23 @@ func (suite *QuerierTestSuite) TestQueryParams() {
 	require.NoError(t, err)
 	require.NotNil(t, res)
 
+	// default params
+	defaultParams := authTypes.DefaultParams()
+
 	var params types.Params
 	err2 := json.Unmarshal(res, &params)
 	require.Nil(t, err2)
-	require.True(t, params.MaxTxGas > 0)
-	require.True(t, params.MaxMemoCharacters > 0)
-	require.True(t, params.TxSigLimit > 0)
-	require.True(t, params.TxSizeCostPerByte > 0)
+	require.Equal(t, defaultParams.MaxMemoCharacters, params.MaxMemoCharacters)
+	require.Equal(t, defaultParams.TxSigLimit, params.TxSigLimit)
+	require.Equal(t, defaultParams.TxSizeCostPerByte, params.TxSizeCostPerByte)
+	require.Equal(t, defaultParams.SigVerifyCostED25519, params.SigVerifyCostED25519)
+	require.Equal(t, defaultParams.SigVerifyCostSecp256k1, params.SigVerifyCostSecp256k1)
+	require.Equal(t, defaultParams.MaxTxGas, params.MaxTxGas)
+	require.Equal(t, defaultParams.TxFees, params.TxFees)
 
 	// set max characters
 	params.MaxMemoCharacters = 10
+	params.TxSizeCostPerByte = 8
 	happ.AccountKeeper.SetParams(ctx, params)
 	res, err = querier(ctx, path, req)
 	require.NoError(t, err)
@@ -146,7 +153,8 @@ func (suite *QuerierTestSuite) TestQueryParams() {
 	var params3 types.Params
 	err3 := json.Unmarshal(res, &params3)
 	require.NoError(t, err3)
-	require.True(t, params.MaxMemoCharacters == 10)
+	require.Equal(t, uint64(10), params.MaxMemoCharacters)
+	require.Equal(t, uint64(8), params.TxSizeCostPerByte)
 
 	{
 		happ := app.Setup(true)
