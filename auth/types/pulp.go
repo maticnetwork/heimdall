@@ -76,7 +76,7 @@ func (p *Pulp) DecodeBytes(data []byte) (interface{}, error) {
 	var txRaw StdTxRaw
 
 	if len(data) <= PulpHashLength {
-		return nil, errors.New("Invalid data size")
+		return nil, errors.New("Invalid data length, should be greater than PulpPrefix")
 	}
 
 	if err := rlp.DecodeBytes(data[PulpHashLength:], &txRaw); err != nil {
