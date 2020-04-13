@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"reflect"
 	"sync"
@@ -73,6 +74,11 @@ func (p *Pulp) EncodeToBytes(tx StdTx) ([]byte, error) {
 // DecodeBytes decodes bytes to msg
 func (p *Pulp) DecodeBytes(data []byte) (interface{}, error) {
 	var txRaw StdTxRaw
+
+	if len(data) <= PulpHashLength {
+		return nil, errors.New("Invalid data size")
+	}
+
 	if err := rlp.DecodeBytes(data[PulpHashLength:], &txRaw); err != nil {
 		return nil, err
 	}
