@@ -213,3 +213,26 @@ func (suite *KeeperTestSuite) TestIterateAccounts() {
 	})
 	require.Equal(t, 5, len(filteredAccounts))
 }
+
+func (suite *KeeperTestSuite) TestProposer() {
+	t, happ, ctx := suite.T(), suite.app, suite.ctx
+
+	proposer, ok := happ.AccountKeeper.GetBlockProposer(ctx)
+	require.False(t, ok)
+	require.Equal(t, hmTypes.ZeroHeimdallAddress.Bytes(), proposer.Bytes())
+
+	// set addr as proposer
+	addr := hmTypes.BytesToHeimdallAddress([]byte("some-address"))
+	happ.AccountKeeper.SetBlockProposer(ctx, addr)
+
+	proposer, ok = happ.AccountKeeper.GetBlockProposer(ctx)
+	require.True(t, ok)
+	require.Equal(t, addr.Bytes(), proposer.Bytes())
+
+	// remove block proposer
+	happ.AccountKeeper.RemoveBlockProposer(ctx)
+
+	proposer, ok = happ.AccountKeeper.GetBlockProposer(ctx)
+	require.False(t, ok)
+	require.Equal(t, hmTypes.ZeroHeimdallAddress.Bytes(), proposer.Bytes())
+}
