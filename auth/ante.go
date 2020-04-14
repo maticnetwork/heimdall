@@ -147,7 +147,7 @@ func NewAnteHandler(
 		signerAddrs := stdTx.GetSigners()
 
 		if len(signerAddrs) == 0 {
-			return newCtx, sdk.ErrUnauthorized("no signer exists").Result(), true
+			return newCtx, sdk.ErrNoSignatures("no signers").Result(), true
 		}
 
 		signerAccs := make([]authTypes.Account, len(signerAddrs))
