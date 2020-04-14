@@ -106,6 +106,49 @@ func (suite *AnteTestSuite) TestGasLimit() {
 	checkInvalidTx(t, anteHandler, ctx, tx, false, sdk.CodeOutOfGas)
 }
 
+func (suite *AnteTestSuite) TestCheckpointGasLimit() {
+	t, happ, ctx, anteHandler := suite.T(), suite.app, suite.ctx, suite.anteHandler
+	ctx = ctx.WithBlockHeight(1)
+
+	// keys and addresses
+	priv1, _, addr1 := sdkAuth.KeyTestPubAddr()
+	priv2, _, addr2 := sdkAuth.KeyTestPubAddr()
+
+	// set the accounts
+	acc1 := happ.AccountKeeper.NewAccountWithAddress(ctx, hmTypes.AccAddressToHeimdallAddress(addr1))
+	amt1, _ := sdk.NewIntFromString(authTypes.DefaultTxFees)
+	acc1.SetCoins(sdk.NewCoins(sdk.NewCoin(authTypes.FeeToken, amt1)))
+	happ.AccountKeeper.SetAccount(ctx, acc1)
+	acc1 = happ.AccountKeeper.GetAccount(ctx, acc1.GetAddress()) // get stored account
+
+	acc2 := happ.AccountKeeper.NewAccountWithAddress(ctx, hmTypes.AccAddressToHeimdallAddress(addr2))
+	amt2, _ := sdk.NewIntFromString(authTypes.DefaultTxFees)
+	acc2.SetCoins(sdk.NewCoins(sdk.NewCoin(authTypes.FeeToken, amt2)))
+	happ.AccountKeeper.SetAccount(ctx, acc2)
+	acc2 = happ.AccountKeeper.GetAccount(ctx, acc2.GetAddress()) // get stored account
+
+	// msg and signatures
+	var tx sdk.Tx
+	msg := sdkAuth.NewTestMsg(addr1)
+
+	// test good tx from one signer
+	tx = types.NewTestTx(ctx, msg, priv1, acc1.GetAccountNumber(), uint64(0))
+	_, result, _ := checkValidTx(t, anteHandler, ctx, tx, false)
+
+	// get params
+	params := happ.AccountKeeper.GetParams(ctx)
+	require.Equal(t, params.MaxTxGas, result.GasWanted)
+
+	// checkpoint msg
+
+	cmsg := TestCheckpointMsg{*sdkAuth.NewTestMsg(addr2)}
+	// test good tx from one signer
+	tx = types.NewTestTx(ctx, sdk.Msg(&cmsg), priv2, acc2.GetAccountNumber(), uint64(0))
+	_, result, _ = checkValidTx(t, anteHandler, ctx, tx, false)
+	// check gas wanted for checkpoint msg
+	require.Equal(t, uint64(10000000), uint64(result.GasWanted))
+}
+
 func (suite *AnteTestSuite) TestStdTx() {
 	t, happ, ctx, anteHandler := suite.T(), suite.app, suite.ctx, suite.anteHandler
 
@@ -365,3 +408,17 @@ func checkInvalidTx(t *testing.T, anteHandler sdk.AnteHandler, ctx sdk.Context, 
 
 	return newCtx, result, abort
 }
+
+//
+// Test checkpoint
+//
+
+var _ sdk.Msg = (*TestCheckpointMsg)(nil)
+
+// msg type for testing
+type TestCheckpointMsg struct {
+	sdk.TestMsg
+}
+
+func (msg *TestCheckpointMsg) Route() string { return "checkpoint" }
+func (msg *TestCheckpointMsg) Type() string  { return "checkpoint" }
