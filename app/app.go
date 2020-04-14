@@ -462,9 +462,7 @@ func (app *HeimdallApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) 
 
 	// check fee collector module account
 	if moduleAcc := app.SupplyKeeper.GetModuleAccount(ctx, authTypes.FeeCollectorName); moduleAcc == nil {
-		if moduleAcc == nil {
-			panic(fmt.Sprintf("%s module account has not been set", authTypes.FeeCollectorName))
-		}
+		panic(fmt.Sprintf("%s module account has not been set", authTypes.FeeCollectorName))
 	}
 
 	// init genesis
