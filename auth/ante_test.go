@@ -73,6 +73,39 @@ func (suite *AnteTestSuite) TestAnteValidation() {
 	require.Contains(t, result1.Log, "fee_collector module account has not been set")
 }
 
+func (suite *AnteTestSuite) TestGasLimit() {
+	t, happ, ctx, anteHandler := suite.T(), suite.app, suite.ctx, suite.anteHandler
+	ctx = ctx.WithBlockHeight(1)
+
+	// keys and addresses
+	priv1, _, addr1 := sdkAuth.KeyTestPubAddr()
+
+	// set the accounts
+	acc1 := happ.AccountKeeper.NewAccountWithAddress(ctx, hmTypes.AccAddressToHeimdallAddress(addr1))
+	happ.AccountKeeper.SetAccount(ctx, acc1)
+
+	// set default amount for one tx
+	amt, _ := sdk.NewIntFromString(authTypes.DefaultTxFees)
+	acc1.SetCoins(sdk.NewCoins(sdk.NewCoin(authTypes.FeeToken, amt)))
+	happ.AccountKeeper.SetAccount(ctx, acc1)
+
+	// get stored account
+	acc1 = happ.AccountKeeper.GetAccount(ctx, acc1.GetAddress())
+
+	// msg and signatures
+	var tx sdk.Tx
+	msg := sdkAuth.NewTestMsg(addr1)
+
+	// get params
+	params := happ.AccountKeeper.GetParams(ctx)
+	params.MaxTxGas = params.SigVerifyCostSecp256k1 - 1
+	happ.AccountKeeper.SetParams(ctx, params)
+
+	// test good tx from one signer
+	tx = types.NewTestTx(ctx, msg, priv1, acc1.GetAccountNumber(), uint64(0))
+	checkInvalidTx(t, anteHandler, ctx, tx, false, sdk.CodeOutOfGas)
+}
+
 func (suite *AnteTestSuite) TestStdTx() {
 	t, happ, ctx, anteHandler := suite.T(), suite.app, suite.ctx, suite.anteHandler
 
@@ -110,8 +143,6 @@ func (suite *AnteTestSuite) TestStdTx() {
 
 	_, result2, _ := checkInvalidTx(t, anteHandler, ctx, tx2, false, sdk.CodeInternal)
 	require.Contains(t, result2.Log, "Invalid param tx fees")
-
-	// gas wanted
 }
 
 func (suite *AnteTestSuite) TestSigErrors() {
@@ -275,7 +306,6 @@ func (suite *AnteTestSuite) TestFees() {
 
 	// set the accounts
 	acc1 := happ.AccountKeeper.NewAccountWithAddress(ctx, hmTypes.AccAddressToHeimdallAddress(addr1))
-	// acc1.SetCoins(simulation.RandomFeeCoins())
 	happ.AccountKeeper.SetAccount(ctx, acc1)
 
 	// msg and signatures
