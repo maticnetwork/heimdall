@@ -11,6 +11,7 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	db "github.com/tendermint/tm-db"
 
+	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/simulation"
 	simTypes "github.com/maticnetwork/heimdall/types/simulation"
 )
@@ -86,6 +87,46 @@ func TestHeimdallAppExportWithRand(t *testing.T) {
 	exportedState, _, err := newHapp.ExportAppStateAndValidators()
 	require.NoError(t, err, "ExportAppStateAndValidators should not have an error")
 	require.NotEmpty(t, string(exportedState))
+}
+
+func TestSetup(t *testing.T) {
+	happ := Setup(false)
+	ctx := happ.BaseApp.NewContext(false, abci.Header{})
+
+	require.NotNil(t, happ.GetModuleManager())
+	require.LessOrEqual(t, 0, happ.AccountKeeper.GetAllAccounts(ctx))
+}
+
+func TestSetupWithGenesisAccounts(t *testing.T) {
+	r := rand.New(rand.NewSource(42))          // seed = 42
+	accounts := simTypes.RandomAccounts(r, 10) // create 10 accounts
+
+	// genesis accounts
+	var genesisAccs authTypes.GenesisAccounts
+	for _, acc := range accounts {
+		bacc := authTypes.NewBaseAccountWithAddress(acc.Address)
+		gacc, _ := authTypes.NewGenesisAccountI(&bacc)
+		genesisAccs = append(genesisAccs, gacc)
+	}
+
+	happ := SetupWithGenesisAccounts(genesisAccs)
+	ctx := happ.BaseApp.NewContext(false, abci.Header{})
+	require.NotNil(t, happ.GetModuleManager())
+	require.LessOrEqual(t, 10, len(happ.AccountKeeper.GetAllAccounts(ctx)))
+}
+
+func TestValidateGenesis(t *testing.T) {
+	happ := Setup(false)
+
+	// not validate app state
+	require.Panics(t, func() {
+		happ.InitChain(
+			abci.RequestInitChain{
+				Validators:    []abci.ValidatorUpdate{},
+				AppStateBytes: []byte("{}"),
+			},
+		)
+	})
 }
 
 func TestMakePulp(t *testing.T) {
