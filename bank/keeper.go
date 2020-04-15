@@ -150,47 +150,6 @@ func (keeper Keeper) AddCoins(
 	return newCoins, err
 }
 
-// InputOutputCoins handles a list of inputs and outputs
-func (keeper Keeper) InputOutputCoins(
-	ctx sdk.Context, inputs []types.Input, outputs []types.Output,
-) sdk.Error {
-	// Safety check ensuring that when sending coins the keeper must maintain the
-	// Check supply invariant and validity of Coins.
-	if err := types.ValidateInputsOutputs(inputs, outputs); err != nil {
-		return err
-	}
-
-	for _, in := range inputs {
-		_, err := keeper.SubtractCoins(ctx, in.Address, in.Coins)
-		if err != nil {
-			return err
-		}
-
-		ctx.EventManager().EmitEvent(
-			sdk.NewEvent(
-				sdk.EventTypeMessage,
-				sdk.NewAttribute(types.AttributeKeySender, in.Address.String()),
-			),
-		)
-	}
-
-	for _, out := range outputs {
-		_, err := keeper.AddCoins(ctx, out.Address, out.Coins)
-		if err != nil {
-			return err
-		}
-
-		ctx.EventManager().EmitEvent(
-			sdk.NewEvent(
-				types.EventTypeTransfer,
-				sdk.NewAttribute(types.AttributeKeyRecipient, out.Address.String()),
-			),
-		)
-	}
-
-	return nil
-}
-
 // SendCoins moves coins from one account to another
 func (keeper Keeper) SendCoins(
 	ctx sdk.Context, fromAddr hmTypes.HeimdallAddress, toAddr hmTypes.HeimdallAddress, amt sdk.Coins,

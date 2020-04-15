@@ -150,6 +150,10 @@ func NewAnteHandler(
 			return newCtx, sdk.ErrUnauthorized("no signer exists").Result(), true
 		}
 
+		if len(signerAddrs) > 1 {
+			return newCtx, sdk.ErrUnauthorized("wrong number of signers").Result(), true
+		}
+
 		signerAccs := make([]authTypes.Account, len(signerAddrs))
 		isGenesis := ctx.BlockHeight() == 0
 
