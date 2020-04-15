@@ -193,7 +193,7 @@ func (suite *AnteTestSuite) TestSigErrors() {
 
 	// keys and addresses
 	priv1, _, addr1 := sdkAuth.KeyTestPubAddr()
-	priv2, _, _ := sdkAuth.KeyTestPubAddr()
+	priv2, _, addr2 := sdkAuth.KeyTestPubAddr()
 
 	// test no signers
 	msg1 := sdkAuth.NewTestMsg()
@@ -208,6 +208,13 @@ func (suite *AnteTestSuite) TestSigErrors() {
 
 	// Check no signatures fails
 	checkInvalidTx(t, anteHandler, ctx, tx2, false, sdk.CodeUnknownAddress)
+
+	// multi signers
+	msg3 := sdkAuth.NewTestMsg(addr1, addr2) // using first address
+	tx3 := types.NewTestTx(ctx, msg3, priv1, uint64(0), uint64(0))
+
+	// Check no signatures fails
+	checkInvalidTx(t, anteHandler, ctx, tx3, false, sdk.CodeUnauthorized)
 }
 
 func (suite *AnteTestSuite) TestAccountNumbers() {
