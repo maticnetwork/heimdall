@@ -131,7 +131,7 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr []byte, power int
 //
 // TODO: Some of the invalid constraints listed above may need to be reconsidered
 // in the case of a lunatic attack.
-/* func (k Keeper) HandleDoubleSign(ctx sdk.Context, evidence types.Equivocation) {
+func (k Keeper) HandleDoubleSign(ctx sdk.Context, evidence types.Equivocation) {
 	logger := k.Logger(ctx)
 	consAddr := evidence.GetConsensusAddress()
 	infractionHeight := evidence.GetHeight()
@@ -139,44 +139,47 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr []byte, power int
 	// calculate the age of the evidence
 	blockTime := ctx.BlockHeader().Time
 	age := blockTime.Sub(evidence.GetTime())
+	params := k.GetParams(ctx)
 
-	if _, err := k.slashingKeeper.GetPubkey(ctx, consAddr.Bytes()); err != nil {
-		// Ignore evidence that cannot be handled.
-		//
-		// NOTE: We used to panic with:
-		// `panic(fmt.Sprintf("Validator consensus-address %v not found", consAddr))`,
-		// but this couples the expectations of the app to both Tendermint and
-		// the simulator.  Both are expected to provide the full range of
-		// allowable but none of the disallowed evidence types.  Instead of
-		// getting this coordination right, it is easier to relax the
-		// constraints and ignore evidence that cannot be handled.
-		return
-	}
+	// if _, err := k.slashingKeeper.GetPubkey(ctx, consAddr.Bytes()); err != nil {
+	// 	// Ignore evidence that cannot be handled.
+	// 	//
+	// 	// NOTE: We used to panic with:
+	// 	// `panic(fmt.Sprintf("Validator consensus-address %v not found", consAddr))`,
+	// 	// but this couples the expectations of the app to both Tendermint and
+	// 	// the simulator.  Both are expected to provide the full range of
+	// 	// allowable but none of the disallowed evidence types.  Instead of
+	// 	// getting this coordination right, it is easier to relax the
+	// 	// constraints and ignore evidence that cannot be handled.
+	// 	return
+	// }
 
 	// reject evidence if the double-sign is too old
-	if age > k.MaxEvidenceAge(ctx) {
+	if age > params.MaxEvidenceAge {
 		logger.Info(
 			fmt.Sprintf(
 				"ignored double sign from %s at height %d, age of %d past max age of %d",
-				consAddr, infractionHeight, age, k.MaxEvidenceAge(ctx),
+				consAddr, infractionHeight, age, params.MaxEvidenceAge,
 			),
 		)
 		return
 	}
 
-	validator := k.stakingKeeper.ValidatorByConsAddr(ctx, consAddr)
-	if validator == nil || validator.IsUnbonded() {
-		// Defensive: Simulation doesn't take unbonding periods into account, and
-		// Tendermint might break this assumption at some point.
-		return
-	}
+	// validator, _ := k.sk.GetValidatorInfo(ctx, consAddr)
+	// TODO - slashing
+	// if validator == nil || validator.IsUnbonded() {
+	// 	// Defensive: Simulation doesn't take unbonding periods into account, and
+	// 	// Tendermint might break this assumption at some point.
+	// 	return
+	// }
 
-	if ok := k.slashingKeeper.HasValidatorSigningInfo(ctx, consAddr); !ok {
+	if ok := k.HasValidatorSigningInfo(ctx, consAddr); !ok {
 		panic(fmt.Sprintf("expected signing info for validator %s but not found", consAddr))
 	}
 
 	// ignore if the validator is already tombstoned
-	if k.slashingKeeper.IsTombstoned(ctx, consAddr) {
+	// TODO - slashing
+	/* 	if k.IsTombstoned(ctx, consAddr) {
 		logger.Info(
 			fmt.Sprintf(
 				"ignored double sign from %s at height %d, validator already tombstoned",
@@ -184,7 +187,7 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr []byte, power int
 			),
 		)
 		return
-	}
+	} */
 
 	logger.Info(fmt.Sprintf("confirmed double sign from %s at height %d, age of %d", consAddr, infractionHeight, age))
 
@@ -200,20 +203,20 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr []byte, power int
 	// to/by Tendermint. This value is validator.Tokens as sent to Tendermint via
 	// ABCI, and now received as evidence. The fraction is passed in to separately
 	// to slash unbonding and rebonding delegations.
-	k.slashingKeeper.Slash(
+	k.Slash(
 		ctx,
 		consAddr,
-		k.slashingKeeper.SlashFractionDoubleSign(ctx),
+		params.SlashFractionDoubleSign,
 		evidence.GetValidatorPower(), distributionHeight,
 	)
 
 	// Jail the validator if not already jailed. This will begin unbonding the
 	// validator if not already unbonding (tombstoned).
-	if !validator.IsJailed() {
-		k.slashingKeeper.Jail(ctx, consAddr)
-	}
+	// TODO - slashing
+	/* 	if !validator.IsJailed() {
+	   		k.Jail(ctx, consAddr)
+	   	}
 
-	k.slashingKeeper.JailUntil(ctx, consAddr, types.DoubleSignJailEndTime)
-	k.slashingKeeper.Tombstone(ctx, consAddr)
+	   	k.JailUntil(ctx, consAddr, params.DoubleSignJailEndTime)
+	   	k.slashingKeeper.Tombstone(ctx, consAddr) */
 }
-*/

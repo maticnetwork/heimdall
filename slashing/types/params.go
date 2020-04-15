@@ -19,6 +19,7 @@ var (
 	DefaultMinSignedPerWindow      = sdk.NewDecWithPrec(5, 1)
 	DefaultSlashFractionDoubleSign = sdk.NewDec(1).Quo(sdk.NewDec(20))
 	DefaultSlashFractionDowntime   = sdk.NewDec(1).Quo(sdk.NewDec(100))
+	DefaultMaxEvidenceAge          = 60 * 2 * time.Second
 )
 
 // Parameter store keys
@@ -28,6 +29,7 @@ var (
 	KeyDowntimeJailDuration    = []byte("DowntimeJailDuration")
 	KeySlashFractionDoubleSign = []byte("SlashFractionDoubleSign")
 	KeySlashFractionDowntime   = []byte("SlashFractionDowntime")
+	KeyMaxEvidenceAge          = []byte("MaxEvidenceAge")
 )
 
 // ParamKeyTable for slashing module
@@ -42,12 +44,13 @@ type Params struct {
 	DowntimeJailDuration    time.Duration `json:"downtime_jail_duration" yaml:"downtime_jail_duration"`
 	SlashFractionDoubleSign sdk.Dec       `json:"slash_fraction_double_sign" yaml:"slash_fraction_double_sign"`
 	SlashFractionDowntime   sdk.Dec       `json:"slash_fraction_downtime" yaml:"slash_fraction_downtime"`
+	MaxEvidenceAge          time.Duration `json:"max_evidence_age" yaml:"max_evidence_age"`
 }
 
 // NewParams creates a new Params object
 func NewParams(
 	signedBlocksWindow int64, minSignedPerWindow sdk.Dec, downtimeJailDuration time.Duration,
-	slashFractionDoubleSign, slashFractionDowntime sdk.Dec,
+	slashFractionDoubleSign, slashFractionDowntime sdk.Dec, maxEvidenceAge time.Duration,
 ) Params {
 
 	return Params{
@@ -56,6 +59,7 @@ func NewParams(
 		DowntimeJailDuration:    downtimeJailDuration,
 		SlashFractionDoubleSign: slashFractionDoubleSign,
 		SlashFractionDowntime:   slashFractionDowntime,
+		MaxEvidenceAge:          maxEvidenceAge,
 	}
 }
 
@@ -66,9 +70,10 @@ func (p Params) String() string {
   MinSignedPerWindow:      %s
   DowntimeJailDuration:    %s
   SlashFractionDoubleSign: %s
+  MaxEvidenceAge: %s
   SlashFractionDowntime:   %s`,
 		p.SignedBlocksWindow, p.MinSignedPerWindow,
-		p.DowntimeJailDuration, p.SlashFractionDoubleSign,
+		p.DowntimeJailDuration, p.SlashFractionDoubleSign, p.MaxEvidenceAge,
 		p.SlashFractionDowntime)
 }
 
@@ -82,7 +87,7 @@ func (p *Params) ParamSetPairs() subspace.ParamSetPairs {
 func DefaultParams() Params {
 	return NewParams(
 		DefaultSignedBlocksWindow, DefaultMinSignedPerWindow, DefaultDowntimeJailDuration,
-		DefaultSlashFractionDoubleSign, DefaultSlashFractionDowntime,
+		DefaultSlashFractionDoubleSign, DefaultSlashFractionDowntime, DefaultMaxEvidenceAge,
 	)
 }
 
