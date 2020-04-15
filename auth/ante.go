@@ -154,24 +154,23 @@ func NewAnteHandler(
 			return newCtx, sdk.ErrUnauthorized("wrong number of signers").Result(), true
 		}
 
-		signerAccs := make([]authTypes.Account, len(signerAddrs))
 		isGenesis := ctx.BlockHeight() == 0
 
 		// fetch first signer, who's going to pay the fees
-		signerAccs[0], res = GetSignerAcc(newCtx, ak, types.AccAddressToHeimdallAddress(signerAddrs[0]))
+		signerAcc, res := GetSignerAcc(newCtx, ak, types.AccAddressToHeimdallAddress(signerAddrs[0]))
 		if !res.IsOK() {
 			return newCtx, res, true
 		}
 
 		// deduct the fees
 		if !feeForTx.IsZero() {
-			res = DeductFees(feeCollector, newCtx, signerAccs[0], feeForTx)
+			res = DeductFees(feeCollector, newCtx, signerAcc, feeForTx)
 			if !res.IsOK() {
 				return newCtx, res, true
 			}
 
 			// reload the account as fees have been deducted
-			signerAccs[0] = ak.GetAccount(newCtx, signerAccs[0].GetAddress())
+			signerAcc = ak.GetAccount(newCtx, signerAcc.GetAddress())
 		}
 
 		// get chain manager params
@@ -187,24 +186,14 @@ func NewAnteHandler(
 		// When simulating, this would just be a 0-length slice.
 		stdSigs := stdTx.GetSignatures()
 
-		for i := 0; i < len(stdSigs); i++ {
-			// skip the fee payer, account is cached and fees were deducted already
-			if i != 0 {
-				signerAccs[i], res = GetSignerAcc(newCtx, ak, types.AccAddressToHeimdallAddress(signerAddrs[i]))
-				if !res.IsOK() {
-					return newCtx, res, true
-				}
-			}
-
-			// check signature, return account with incremented nonce
-			signBytes := GetSignBytes(newCtx.ChainID(), stdTx, signerAccs[i], isGenesis)
-			signerAccs[i], res = processSig(newCtx, signerAccs[i], stdSigs[i], signBytes, simulate, params, sigGasConsumer)
-			if !res.IsOK() {
-				return newCtx, res, true
-			}
-
-			ak.SetAccount(newCtx, signerAccs[i])
+		// check signature, return account with incremented nonce
+		signBytes := GetSignBytes(newCtx.ChainID(), stdTx, signerAcc, isGenesis)
+		signerAcc, res = processSig(newCtx, signerAcc, stdSigs[0], signBytes, simulate, params, sigGasConsumer)
+		if !res.IsOK() {
+			return newCtx, res, true
 		}
+
+		ak.SetAccount(newCtx, signerAcc)
 
 		// TODO: tx tags (?)
 		return newCtx, sdk.Result{GasWanted: gasForTx}, false // continue...
