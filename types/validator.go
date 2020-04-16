@@ -24,6 +24,8 @@ type Validator struct {
 	ProposerPriority int64 `json:"accum"`
 }
 
+// NewValidator func creates a new validator,
+// the HeimdallAddress field is generated using Address i.e. [20]byte
 func NewValidator(id ValidatorID, startEpoch uint64, endEpoch uint64, power int64, pubKey PubKey, signer HeimdallAddress) *Validator {
 	return &Validator{
 		ID:          id,
@@ -36,6 +38,7 @@ func NewValidator(id ValidatorID, startEpoch uint64, endEpoch uint64, power int6
 }
 
 // SortValidatorByAddress sorts a slice of validators by address
+// to sort it we compare the values of the Signer(HeimdallAddress i.e. [20]byte)
 func SortValidatorByAddress(a []Validator) []Validator {
 	sort.Slice(a, func(i, j int) bool {
 		return bytes.Compare(a[i].Signer.Bytes(), a[j].Signer.Bytes()) < 0
