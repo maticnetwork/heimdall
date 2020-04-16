@@ -50,6 +50,7 @@ func Setup(isCheckTx bool) *HeimdallApp {
 // SetupWithGenesisAccounts initializes a new Heimdall with the provided genesis
 // accounts and possible balances.
 func SetupWithGenesisAccounts(genAccs []authTypes.GenesisAccount) *HeimdallApp {
+	// setup with isCheckTx
 	app := Setup(true)
 
 	// initialize the chain with the passed in genesis accounts
