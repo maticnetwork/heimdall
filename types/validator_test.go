@@ -110,11 +110,11 @@ func TestValidateBasic(t *testing.T) {
 			msg: "Invalid PubKey",
 		},
 
-		{
-			in:  Validator{StartEpoch: uNeg1, EndEpoch: 5, PubKey: NewPubKey([]byte("nonZeroTestPubKey")), Signer: BytesToHeimdallAddress([]byte("3"))},
-			out: false,
-			msg: "Invalid StartEpoch",
-		},
+		//		{
+		//			in:  Validator{StartEpoch: uNeg1, EndEpoch: 5, PubKey: NewPubKey([]byte("nonZeroTestPubKey")), Signer: BytesToHeimdallAddress([]byte("3"))},
+		//			out: false,
+		//			msg: "Invalid StartEpoch",
+		//		},
 		{
 			// do we allow for endEpoch to be smaller than startEpoch ??
 			in:  Validator{StartEpoch: 1, EndEpoch: uNeg1, PubKey: NewPubKey([]byte("nonZeroTestPubKey")), Signer: BytesToHeimdallAddress([]byte("3"))},
