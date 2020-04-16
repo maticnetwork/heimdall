@@ -56,7 +56,7 @@ func (cp ChainParams) String() string {
 		cp.BorChainID, cp.MaticTokenAddress, cp.StakingManagerAddress, cp.RootChainAddress, cp.StakingInfoAddress, cp.StateSenderAddress, cp.StateReceiverAddress, cp.ValidatorSetAddress)
 }
 
-// Params defines the parameters for the auth module.
+// Params defines the parameters for the chainmanager module.
 type Params struct {
 	TxConfirmationTime time.Duration `json:"tx_confirmation_time" yaml:"tx_confirmation_time"` // tx confirmation duration
 	ChainParams        ChainParams   `json:"chain_params" yaml:"chain_params"`

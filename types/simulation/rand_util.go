@@ -1,6 +1,7 @@
 package simulation
 
 import (
+	cRand "crypto/rand"
 	"errors"
 	"math/big"
 	"math/rand"
@@ -137,6 +138,13 @@ func DeriveRand(r *rand.Rand) *rand.Rand {
 		ms[i] = rand.NewSource(r.Int63())
 	}
 	return rand.New(ms)
+}
+
+//RandHex generates random hex string of given lenght
+func RandHex(length int) []byte {
+	bytes := make([]byte, length)
+	cRand.Read(bytes)
+	return bytes
 }
 
 type multiSource []rand.Source
