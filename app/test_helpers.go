@@ -18,7 +18,8 @@ import (
 
 	"github.com/maticnetwork/heimdall/app/helpers"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
-	topupTypes "github.com/maticnetwork/heimdall/topup/types"
+	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
+
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -49,8 +50,8 @@ func Setup(isCheckTx bool) *HeimdallApp {
 // SetupWithGenesisAccounts initializes a new Heimdall with the provided genesis
 // accounts and possible balances.
 func SetupWithGenesisAccounts(genAccs []authTypes.GenesisAccount) *HeimdallApp {
-	db := dbm.NewMemDB()
-	app := NewHeimdallApp(log.NewNopLogger(), db)
+	// setup with isCheckTx
+	app := Setup(true)
 
 	// initialize the chain with the passed in genesis accounts
 	genesisState := NewDefaultGenesisState()
@@ -290,15 +291,15 @@ func NewPubKeyFromHex(pk string) (res crypto.PubKey) {
 	return pkEd
 }
 
-// setupTopupGenesis initializes a new Heimdall with the default genesis data.
-func SetupTopupGenesis() *HeimdallApp {
+// SetupChainManagerGenesis initializes a new Heimdall with the provided genesis data.
+func SetupChainManagerGenesis() *HeimdallApp {
 	app := Setup(true)
 
 	// initialize the chain with the default genesis state
 	genesisState := NewDefaultGenesisState()
 
-	topupGenesis := topupTypes.NewGenesisState(topupTypes.DefaultGenesisState().TopupSequences)
-	genesisState[topupTypes.ModuleName] = app.Codec().MustMarshalJSON(topupGenesis)
+	chainManagerGenesis := chainmanagerTypes.NewGenesisState(chainmanagerTypes.DefaultParams())
+	genesisState[chainmanagerTypes.ModuleName] = app.Codec().MustMarshalJSON(chainManagerGenesis)
 
 	stateBytes, err := codec.MarshalJSONIndent(app.Codec(), genesisState)
 	if err != nil {
