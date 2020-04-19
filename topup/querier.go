@@ -14,34 +14,29 @@ import (
 )
 
 // NewQuerier returns a new sdk.Keeper instance.
-func NewQuerier(k Keeper) sdk.Querier {
+func NewQuerier(k Keeper, contractCaller helper.IContractCaller) sdk.Querier {
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) ([]byte, sdk.Error) {
 		switch path[0] {
 		case types.QuerySequence:
-			return querySequence(ctx, req, k)
-
+			return querySequence(ctx, req, k, contractCaller)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown topup query endpoint")
 		}
 	}
 }
 
-func querySequence(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, sdk.Error) {
+func querySequence(ctx sdk.Context, req abci.RequestQuery, k Keeper, contractCallerObj helper.IContractCaller) ([]byte, sdk.Error) {
 	var params types.QuerySequenceParams
 
 	if err := types.ModuleCdc.UnmarshalJSON(req.Data, &params); err != nil {
 		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
 	}
 
-	contractCallerObj, err := helper.NewContractCaller()
-	if err != nil {
-		return nil, sdk.ErrInternal(fmt.Sprintf(err.Error()))
-	}
-
 	chainParams := k.chainKeeper.GetParams(ctx)
 
 	// get main tx receipt
-	receipt, _ := contractCallerObj.GetConfirmedTxReceipt(time.Now().UTC(), hmTypes.HexToHeimdallHash(params.TxHash).EthHash(), chainParams.TxConfirmationTime)
+	// TODO: change time.Unix(0, 0) back to time.Now().UTC()
+	receipt, err := contractCallerObj.GetConfirmedTxReceipt(time.Unix(0, 0), hmTypes.HexToHeimdallHash(params.TxHash).EthHash(), chainParams.TxConfirmationTime)
 	if err != nil || receipt == nil {
 		return nil, sdk.ErrInternal(fmt.Sprintf("Transaction is not confirmed yet. Please wait for sometime and try again"))
 	}
