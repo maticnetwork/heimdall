@@ -18,6 +18,8 @@ import (
 
 	"github.com/maticnetwork/heimdall/app/helpers"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
+	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
+
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -287,4 +289,32 @@ func NewPubKeyFromHex(pk string) (res crypto.PubKey) {
 	var pkEd secp256k1.PubKeySecp256k1
 	copy(pkEd[:], pkBytes)
 	return pkEd
+}
+
+// SetupChainManagerGenesis initializes a new Heimdall with the provided genesis data.
+func SetupChainManagerGenesis() *HeimdallApp {
+	app := Setup(true)
+
+	// initialize the chain with the default genesis state
+	genesisState := NewDefaultGenesisState()
+
+	chainManagerGenesis := chainmanagerTypes.NewGenesisState(chainmanagerTypes.DefaultParams())
+	genesisState[chainmanagerTypes.ModuleName] = app.Codec().MustMarshalJSON(chainManagerGenesis)
+
+	stateBytes, err := codec.MarshalJSONIndent(app.Codec(), genesisState)
+	if err != nil {
+		panic(err)
+	}
+
+	app.InitChain(
+		abci.RequestInitChain{
+			Validators:    []abci.ValidatorUpdate{},
+			AppStateBytes: stateBytes,
+		},
+	)
+
+	app.Commit()
+	app.BeginBlock(abci.RequestBeginBlock{Header: abci.Header{Height: app.LastBlockHeight() + 1}})
+
+	return app
 }
