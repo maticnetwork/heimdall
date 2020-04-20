@@ -12,6 +12,7 @@ import (
 	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
 	"github.com/maticnetwork/heimdall/topup/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/helper/mocks"
@@ -71,7 +72,7 @@ func (suite *HandlerTestSuite) TestHandleMsgTopup() {
 	stakinginfoTopUpFee := &stakinginfo.StakinginfoTopUpFee{
 		ValidatorId: new(big.Int).SetUint64(validatorId),
 		Signer:      pAddress.EthAddress(),
-		Fee:         big.NewInt(100000000),
+		Fee:         big.NewInt(0),
 	}
 
 	suite.contractCaller.On("GetConfirmedTxReceipt", mock.Anything, txHash.EthHash(), chainParams.TxConfirmationTime).Return(txreceipt, nil)
@@ -80,4 +81,41 @@ func (suite *HandlerTestSuite) TestHandleMsgTopup() {
 	result := topup.HandleMsgTopup(ctx, app.TopupKeeper, msgTopup, &suite.contractCaller)
 	// TODO: send coin error {10 sdk [] {"codespace":"sdk","code":10,"message":"insufficient account funds; 100000000matic < 1000000000000000matic"} 0 0 []}
 	require.True(t, result.IsOK(), "expected topup to be done, got %v", result)
+}
+
+func (suite *HandlerTestSuite) TestHandleMsgWithdrawFee() {
+	t, app, ctx := suite.T(), suite.app, suite.ctx
+	amount, _ := big.NewInt(0).SetString("0", 10)
+	s1 := rand.NewSource(time.Now().UnixNano())
+	r1 := rand.New(s1)
+	validatorId := uint64(simulation.RandIntBetween(r1, 0, 100))
+
+	privKey1 := secp256k1.GenPrivKey()
+	pubkey := hmTypes.NewPubKey(privKey1.PubKey().Bytes())
+	validatorAddress := pubkey.Address()
+
+	startBlock := uint64(simulation.RandIntBetween(r1, 1, 100))
+
+	power := simulation.RandIntBetween(r1, 1, 100)
+
+	timeAlive := uint64(10)
+
+	newVal := hmTypes.Validator{
+		ID:               hmTypes.NewValidatorID(validatorId),
+		StartEpoch:       startBlock,
+		EndEpoch:         startBlock + timeAlive,
+		VotingPower:      int64(power),
+		Signer:           hmTypes.HexToHeimdallAddress(pubkey.Address().String()),
+		PubKey:           pubkey,
+		ProposerPriority: 0,
+	}
+	app.StakingKeeper.AddValidator(ctx, newVal)
+
+	msgWithdrawFee := types.NewMsgWithdrawFee(
+		hmTypes.BytesToHeimdallAddress(validatorAddress.Bytes()),
+		sdk.NewIntFromBigInt(amount),
+	)
+	result := topup.HandleMsgWithdrawFee(ctx, app.TopupKeeper, msgWithdrawFee)
+
+	require.True(t, result.IsOK(), "expected withdraw tobe done, git %v", result)
 }
