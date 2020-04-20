@@ -35,8 +35,7 @@ func querySequence(ctx sdk.Context, req abci.RequestQuery, k Keeper, contractCal
 	chainParams := k.chainKeeper.GetParams(ctx)
 
 	// get main tx receipt
-	// TODO: change time.Unix(0, 0) back to time.Now().UTC()
-	receipt, err := contractCallerObj.GetConfirmedTxReceipt(time.Unix(0, 0), hmTypes.HexToHeimdallHash(params.TxHash).EthHash(), chainParams.TxConfirmationTime)
+	receipt, err := contractCallerObj.GetConfirmedTxReceipt(time.Now().UTC(), hmTypes.HexToHeimdallHash(params.TxHash).EthHash(), chainParams.TxConfirmationTime)
 	if err != nil || receipt == nil {
 		return nil, sdk.ErrInternal(fmt.Sprintf("Transaction is not confirmed yet. Please wait for sometime and try again"))
 	}

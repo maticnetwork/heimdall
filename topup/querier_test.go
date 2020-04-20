@@ -17,6 +17,7 @@ import (
 	"github.com/maticnetwork/heimdall/topup"
 	"github.com/maticnetwork/heimdall/topup/types"
 	"github.com/maticnetwork/heimdall/types/simulation"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -81,9 +82,7 @@ func (suite *QuerierTestSuite) TestQuerySequence() {
 	sequence.Add(sequence, new(big.Int).SetUint64(logIndex))
 	app.TopupKeeper.SetTopupSequence(ctx, sequence.String())
 
-	//NEEDHELP: Here time.Now().UTC() does not maches with time.Now().UTC() in querySequence
-	// for now, have changed querySequence time to time.Unix(0, 0)
-	suite.contractCaller.On("GetConfirmedTxReceipt", time.Unix(0, 0), txHash.EthHash(), chainParams.TxConfirmationTime).Return(txreceipt, nil)
+	suite.contractCaller.On("GetConfirmedTxReceipt", mock.Anything, txHash.EthHash(), chainParams.TxConfirmationTime).Return(txreceipt, nil)
 
 	path := []string{types.QuerySequence}
 
