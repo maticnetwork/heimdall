@@ -144,6 +144,7 @@ func (k Keeper) clearValidatorMissedBlockBitArray(ctx sdk.Context, address sdk.C
 func (k Keeper) MinSignedPerWindow(ctx sdk.Context) int64 {
 	var minSignedPerWindow sdk.Dec
 	params := k.GetParams(ctx)
+	// minSignedPerWindow = percent
 	minSignedPerWindow = params.MinSignedPerWindow
 	signedBlocksWindow := params.SignedBlocksWindow
 
@@ -350,13 +351,13 @@ func (k Keeper) UpdateTotalSlashedAmount(ctx sdk.Context, amount string) {
 	slashedAmount, _ := big.NewInt(0).SetString(amount, 10)
 	if store.Has(types.TotalSlashedAmountKey) {
 		bz := store.Get(types.TotalSlashedAmountKey)
-		var prevAmountStr string
-		k.cdc.MustUnmarshalBinaryBare(bz, &prevAmountStr)
+		prevAmountStr := string(bz)
 		prevAmount, _ := big.NewInt(0).SetString(prevAmountStr, 10)
 		slashedAmount = big.NewInt(0).Add(prevAmount, slashedAmount)
 	}
-	// TODO - slashing. check how to unmarshall big int
-	store.Set(types.TotalSlashedAmountKey, slashedAmount.Bytes())
+
+	k.Logger(ctx).Debug("Total Slashed Amount Updated", "amount", slashedAmount)
+	store.Set(types.TotalSlashedAmountKey, []byte(slashedAmount.String()))
 
 	// -slashing. emit event if total amount exceed limit
 	ctx.EventManager().EmitEvent(

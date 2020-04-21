@@ -26,6 +26,8 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr []byte, power int
 		panic(fmt.Sprintf("Expected signing info for validator %s but not found", addr))
 	}
 
+	k.Logger(ctx).Debug("sigInfo found for validator", "info", signInfo)
+
 	params := k.GetParams(ctx)
 	// this is a relative index, so it counts blocks the validator *should* have signed
 	// will use the 0-value default signing info if not present, except for start height
@@ -36,22 +38,25 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr []byte, power int
 	// This counter just tracks the sum of the bit array
 	// That way we avoid needing to read/write the whole array each time
 	previous := k.GetValidatorMissedBlockBitArray(ctx, addr, index)
+	k.Logger(ctx).Debug("signing status", "previous", previous)
 	missed := !signed
 	switch {
 	case !previous && missed:
 		// Array value has changed from not missed to missed, increment counter
 		k.SetValidatorMissedBlockBitArray(ctx, addr, index, true)
 		signInfo.MissedBlocksCounter++
+		k.Logger(ctx).Debug("Array value has changed from not missed to missed, increment counter", "missedBlocksCounter", signInfo.MissedBlocksCounter)
 	case previous && !missed:
 		// Array value has changed from missed to not missed, decrement counter
 		k.SetValidatorMissedBlockBitArray(ctx, addr, index, false)
 		signInfo.MissedBlocksCounter--
+		k.Logger(ctx).Debug("Array value has changed from missed to not missed, decrement counter", "missedBlocksCounter", signInfo.MissedBlocksCounter)
 	default:
 		// Array value at this index has not changed, no need to update counter
+		k.Logger(ctx).Debug("Array value has not changed. missedBlocksCounter remains same", "signingInfo", signInfo)
 	}
 
 	if missed {
-		fmt.Println("Entered23")
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
 				types.EventTypeLiveness,
@@ -61,7 +66,7 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr []byte, power int
 			),
 		)
 
-		logger.Info(
+		k.Logger(ctx).Info(
 			fmt.Sprintf("Absent validator %s at height %d, %d missed, threshold %d", address, height, signInfo.MissedBlocksCounter, k.MinSignedPerWindow(ctx)))
 	}
 
@@ -74,8 +79,7 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr []byte, power int
 		if err != nil {
 			logger.Error("Error fetching validator")
 		}
-		logger.Error("Error fetching validator", validator)
-		if err == nil /* && !validator.IsJailed()  */ {
+		if err == nil && !validator.Jailed {
 
 			// Downtime confirmed: slash and jail the validator
 			logger.Info(fmt.Sprintf("Validator %s past min height of %d and below signed blocks threshold of %d",
@@ -86,7 +90,7 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr []byte, power int
 			// Note that this *can* result in a negative "distributionHeight" up to -ValidatorUpdateDelay-1,
 			// i.e. at the end of the pre-genesis block (none) = at the beginning of the genesis block.
 			// That's fine since this is just used to filter unbonding delegations & redelegations.
-			distributionHeight := height - sdk.ValidatorUpdateDelay - 1
+			// distributionHeight := height - sdk.ValidatorUpdateDelay - 1
 
 			ctx.EventManager().EmitEvent(
 				sdk.NewEvent(
@@ -100,12 +104,12 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr []byte, power int
 
 			// update slash buffer present in slash keeper. Also add slashedAmount totalSlashedAmount.
 			val, _ := k.sk.GetValidatorInfo(ctx, signInfo.Signer.Bytes())
-			amount := ""
+			amount := "10000"
 			k.SlashInterim(ctx, val.ID, amount)
+			k.Logger(ctx).Debug("Interim uptime slashing successful", "slashedAmount", amount, "valID", val.ID)
 
-			k.sk.Slash(ctx, addr, distributionHeight, power, params.SlashFractionDowntime)
-			k.sk.Jail(ctx, addr)
-
+			// k.sk.Slash(ctx, addr, distributionHeight, power, params.SlashFractionDowntime)
+			// k.sk.Jail(ctx, addr)
 			// signInfo.JailedUntil = ctx.BlockHeader().Time.Add(params.DowntimeJailDuration)
 
 			// We need to reset the counter & array so that the validator won't be immediately slashed for downtime upon rebonding.
