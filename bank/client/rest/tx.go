@@ -24,7 +24,7 @@ func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router) {
 type SendReq struct {
 	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
 
-	Amount types.Coins `json:"amount" yaml:"amount"`
+	Amount sdk.Coins `json:"amount" yaml:"amount"`
 }
 
 // SendRequestHandlerFn - http request handler to send coins to a address.

@@ -11,7 +11,6 @@ import (
 
 	hmClient "github.com/maticnetwork/heimdall/client"
 	supplyTypes "github.com/maticnetwork/heimdall/supply/types"
-	"github.com/maticnetwork/heimdall/types"
 )
 
 // GetQueryCmd returns the cli query commands for this module
@@ -64,7 +63,7 @@ func queryTotalSupply(cliCtx context.CLIContext, cdc *codec.Codec) error {
 		return err
 	}
 
-	var totalSupply types.Coins
+	var totalSupply sdk.Coins
 	err = cdc.UnmarshalJSON(res, &totalSupply)
 	if err != nil {
 		return err

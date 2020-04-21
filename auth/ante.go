@@ -29,7 +29,7 @@ var (
 	DefaultFeeInMatic = big.NewInt(10).Exp(big.NewInt(10), big.NewInt(15), nil)
 
 	// DefaultFeeWantedPerTx fee wanted per tx
-	DefaultFeeWantedPerTx = types.Coins{types.Coin{Denom: authTypes.FeeToken, Amount: types.NewIntFromBigInt(DefaultFeeInMatic)}}
+	DefaultFeeWantedPerTx = sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: sdk.NewIntFromBigInt(DefaultFeeInMatic)}}
 )
 
 func init() {
@@ -53,7 +53,7 @@ type FeeCollector interface {
 		sdk.Context,
 		types.HeimdallAddress,
 		string,
-		types.Coins,
+		sdk.Coins,
 	) sdk.Error
 }
 
@@ -96,11 +96,11 @@ func NewAnteHandler(
 		// gas for tx
 		gasForTx := params.MaxTxGas // stdTx.Fee.Gas
 
-		amount, ok := types.NewIntFromString(params.TxFees)
+		amount, ok := sdk.NewIntFromString(params.TxFees)
 		if !ok {
 			return newCtx, sdk.ErrInternal("Invalid param tx fees").Result(), true
 		}
-		feeForTx := types.Coins{types.Coin{Denom: authTypes.FeeToken, Amount: amount}} // stdTx.Fee.Amount
+		feeForTx := sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: amount}} // stdTx.Fee.Amount
 
 		// checkpoint gas limit
 		if stdTx.Msg.Type() == "checkpoint" && stdTx.Msg.Route() == "checkpoint" {
@@ -145,24 +145,32 @@ func NewAnteHandler(
 		// stdSigs contains the sequence number, account number, and signatures.
 		// When simulating, this would just be a 0-length slice.
 		signerAddrs := stdTx.GetSigners()
-		signerAccs := make([]authTypes.Account, len(signerAddrs))
+
+		if len(signerAddrs) == 0 {
+			return newCtx, sdk.ErrUnauthorized("no signer exists").Result(), true
+		}
+
+		if len(signerAddrs) > 1 {
+			return newCtx, sdk.ErrUnauthorized("wrong number of signers").Result(), true
+		}
+
 		isGenesis := ctx.BlockHeight() == 0
 
 		// fetch first signer, who's going to pay the fees
-		signerAccs[0], res = GetSignerAcc(newCtx, ak, types.AccAddressToHeimdallAddress(signerAddrs[0]))
+		signerAcc, res := GetSignerAcc(newCtx, ak, types.AccAddressToHeimdallAddress(signerAddrs[0]))
 		if !res.IsOK() {
 			return newCtx, res, true
 		}
 
 		// deduct the fees
 		if !feeForTx.IsZero() {
-			res = DeductFees(feeCollector, newCtx, signerAccs[0], feeForTx)
+			res = DeductFees(feeCollector, newCtx, signerAcc, feeForTx)
 			if !res.IsOK() {
 				return newCtx, res, true
 			}
 
 			// reload the account as fees have been deducted
-			signerAccs[0] = ak.GetAccount(newCtx, signerAccs[0].GetAddress())
+			signerAcc = ak.GetAccount(newCtx, signerAcc.GetAddress())
 		}
 
 		// get chain manager params
@@ -178,24 +186,14 @@ func NewAnteHandler(
 		// When simulating, this would just be a 0-length slice.
 		stdSigs := stdTx.GetSignatures()
 
-		for i := 0; i < len(stdSigs); i++ {
-			// skip the fee payer, account is cached and fees were deducted already
-			if i != 0 {
-				signerAccs[i], res = GetSignerAcc(newCtx, ak, types.AccAddressToHeimdallAddress(signerAddrs[i]))
-				if !res.IsOK() {
-					return newCtx, res, true
-				}
-			}
-
-			// check signature, return account with incremented nonce
-			signBytes := GetSignBytes(newCtx.ChainID(), stdTx, signerAccs[i], isGenesis)
-			signerAccs[i], res = processSig(newCtx, signerAccs[i], stdSigs[i], signBytes, simulate, params, sigGasConsumer)
-			if !res.IsOK() {
-				return newCtx, res, true
-			}
-
-			ak.SetAccount(newCtx, signerAccs[i])
+		// check signature, return account with incremented nonce
+		signBytes := GetSignBytes(newCtx.ChainID(), stdTx, signerAcc, isGenesis)
+		signerAcc, res = processSig(newCtx, signerAcc, stdSigs[0], signBytes, simulate, params, sigGasConsumer)
+		if !res.IsOK() {
+			return newCtx, res, true
 		}
+
+		ak.SetAccount(newCtx, signerAcc)
 
 		// TODO: tx tags (?)
 		return newCtx, sdk.Result{GasWanted: gasForTx}, false // continue...
@@ -284,7 +282,7 @@ func DefaultSigVerificationGasConsumer(
 //
 // NOTE: We could use the CoinKeeper (in addition to the AccountKeeper, because
 // the CoinKeeper doesn't give us accounts), but it seems easier to do this.
-func DeductFees(feeCollector FeeCollector, ctx sdk.Context, acc authTypes.Account, fees types.Coins) sdk.Result {
+func DeductFees(feeCollector FeeCollector, ctx sdk.Context, acc authTypes.Account, fees sdk.Coins) sdk.Result {
 	blockTime := ctx.BlockHeader().Time
 	coins := acc.GetCoins()
 

@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"math/big"
 	"strings"
 	"time"
 
+	lru "github.com/hashicorp/golang-lru"
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/common"
 	ethTypes "github.com/maticnetwork/bor/core/types"
@@ -85,6 +85,9 @@ type ContractCaller struct {
 	StakeManagerABI  abi.ABI
 	MaticTokenABI    abi.ABI
 
+	ReceiptCache   *lru.Cache
+	BlockTimeCache *lru.Cache
+
 	ContractInstanceCache map[common.Address]interface{}
 }
 
@@ -104,6 +107,8 @@ func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 	contractCallerObj.MainChainClient = GetMainClient()
 	contractCallerObj.MaticChainClient = GetMaticClient()
 	contractCallerObj.MainChainRPC = GetMainChainRPCClient()
+	contractCallerObj.ReceiptCache, _ = NewLru(1000)
+	contractCallerObj.BlockTimeCache, _ = NewLru(1000)
 
 	//
 	// ABIs
@@ -145,7 +150,7 @@ func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 // GetRootChainInstance returns RootChain contract instance for selected base chain
 func (c *ContractCaller) GetRootChainInstance(rootchainAddress common.Address) (*rootchain.Rootchain, error) {
 	contractInstance, ok := c.ContractInstanceCache[rootchainAddress]
-	if ok == false {
+	if !ok {
 		ci, err := rootchain.NewRootchain(rootchainAddress, mainChainClient)
 		c.ContractInstanceCache[rootchainAddress] = ci
 		return ci, err
@@ -156,7 +161,7 @@ func (c *ContractCaller) GetRootChainInstance(rootchainAddress common.Address) (
 // GetStakingInfoInstance returns stakinginfo contract instance for selected base chain
 func (c *ContractCaller) GetStakingInfoInstance(stakingInfoAddress common.Address) (*stakinginfo.Stakinginfo, error) {
 	contractInstance, ok := c.ContractInstanceCache[stakingInfoAddress]
-	if ok == false {
+	if !ok {
 		ci, err := stakinginfo.NewStakinginfo(stakingInfoAddress, mainChainClient)
 		c.ContractInstanceCache[stakingInfoAddress] = ci
 		return ci, err
@@ -167,7 +172,7 @@ func (c *ContractCaller) GetStakingInfoInstance(stakingInfoAddress common.Addres
 // GetValidatorSetInstance returns stakinginfo contract instance for selected base chain
 func (c *ContractCaller) GetValidatorSetInstance(validatorSetAddress common.Address) (*validatorset.Validatorset, error) {
 	contractInstance, ok := c.ContractInstanceCache[validatorSetAddress]
-	if ok == false {
+	if !ok {
 		ci, err := validatorset.NewValidatorset(validatorSetAddress, mainChainClient)
 		c.ContractInstanceCache[validatorSetAddress] = ci
 		return ci, err
@@ -179,7 +184,7 @@ func (c *ContractCaller) GetValidatorSetInstance(validatorSetAddress common.Addr
 // GetStakeManagerInstance returns stakinginfo contract instance for selected base chain
 func (c *ContractCaller) GetStakeManagerInstance(stakingManagerAddress common.Address) (*stakemanager.Stakemanager, error) {
 	contractInstance, ok := c.ContractInstanceCache[stakingManagerAddress]
-	if ok == false {
+	if !ok {
 		ci, err := stakemanager.NewStakemanager(stakingManagerAddress, mainChainClient)
 		c.ContractInstanceCache[stakingManagerAddress] = ci
 		return ci, err
@@ -190,7 +195,7 @@ func (c *ContractCaller) GetStakeManagerInstance(stakingManagerAddress common.Ad
 // GetStateSenderInstance returns stakinginfo contract instance for selected base chain
 func (c *ContractCaller) GetStateSenderInstance(stateSenderAddress common.Address) (*statesender.Statesender, error) {
 	contractInstance, ok := c.ContractInstanceCache[stateSenderAddress]
-	if ok == false {
+	if !ok {
 		ci, err := statesender.NewStatesender(stateSenderAddress, mainChainClient)
 		c.ContractInstanceCache[stateSenderAddress] = ci
 		return ci, err
@@ -201,7 +206,7 @@ func (c *ContractCaller) GetStateSenderInstance(stateSenderAddress common.Addres
 // GetStateReceiverInstance returns stakinginfo contract instance for selected base chain
 func (c *ContractCaller) GetStateReceiverInstance(stateReceiverAddress common.Address) (*statereceiver.Statereceiver, error) {
 	contractInstance, ok := c.ContractInstanceCache[stateReceiverAddress]
-	if ok == false {
+	if !ok {
 		ci, err := statereceiver.NewStatereceiver(stateReceiverAddress, mainChainClient)
 		c.ContractInstanceCache[stateReceiverAddress] = ci
 		return ci, err
@@ -212,12 +217,21 @@ func (c *ContractCaller) GetStateReceiverInstance(stateReceiverAddress common.Ad
 // GetMaticTokenInstance returns stakinginfo contract instance for selected base chain
 func (c *ContractCaller) GetMaticTokenInstance(maticTokenAddress common.Address) (*erc20.Erc20, error) {
 	contractInstance, ok := c.ContractInstanceCache[maticTokenAddress]
-	if ok == false {
+	if !ok {
 		ci, err := erc20.NewErc20(maticTokenAddress, mainChainClient)
 		c.ContractInstanceCache[maticTokenAddress] = ci
 		return ci, err
 	}
 	return contractInstance.(*erc20.Erc20), nil
+}
+
+// NewLru create instance of lru
+func NewLru(size int) (*lru.Cache, error) {
+	lruObj, err := lru.New(size)
+	if err != nil {
+		return nil, err
+	}
+	return lruObj, nil
 }
 
 // GetHeaderInfo get header info from header id
@@ -301,7 +315,7 @@ func (c *ContractCaller) GetValidatorInfo(valID types.ValidatorID, stakingInfoIn
 	return validator, nil
 }
 
-// get main chain block header
+// GetMainChainBlock returns main chain block header
 func (c *ContractCaller) GetMainChainBlock(blockNum *big.Int) (header *ethTypes.Header, err error) {
 	latestBlock, err := c.MainChainClient.HeaderByNumber(context.Background(), blockNum)
 	if err != nil {
@@ -311,7 +325,7 @@ func (c *ContractCaller) GetMainChainBlock(blockNum *big.Int) (header *ethTypes.
 	return latestBlock, nil
 }
 
-// get child chain block header
+// GetMaticChainBlock returns child chain block header
 func (c *ContractCaller) GetMaticChainBlock(blockNum *big.Int) (header *ethTypes.Header, err error) {
 	latestBlock, err := c.MaticChainClient.HeaderByNumber(context.Background(), blockNum)
 	if err != nil {
@@ -353,25 +367,45 @@ func (c *ContractCaller) IsTxConfirmed(currentTime time.Time, tx common.Hash, tx
 
 // GetConfirmedTxReceipt returns confirmed tx receipt
 func (c *ContractCaller) GetConfirmedTxReceipt(currentTime time.Time, tx common.Hash, txConfirmationTime time.Duration) (*ethTypes.Receipt, error) {
-	// get main tx receipt
-	receipt, err := c.GetMainTxReceipt(tx)
-	if err != nil {
-		Logger.Error("Error while fetching mainchain receipt", "error", err, "txHash", tx.Hex())
-		return nil, err
+	time := uint64(0)
+	var receipt *ethTypes.Receipt = nil
+
+	receiptCache, ok := c.ReceiptCache.Get(tx.String())
+
+	if !ok {
+		var err error
+
+		// get main tx receipt
+		receipt, err = c.GetMainTxReceipt(tx)
+		if err != nil {
+			Logger.Error("Error while fetching mainchain receipt", "error", err, "txHash", tx.Hex())
+			return nil, err
+		}
+
+		c.ReceiptCache.Add(tx.String(), receipt)
+	} else {
+		receipt, _ = receiptCache.(*ethTypes.Receipt)
 	}
+
 	Logger.Debug("Tx included in block", "block", receipt.BlockNumber.Uint64(), "tx", tx)
 
-	// get main chain block
-	receiptBlock, err := c.GetMainChainBlock(receipt.BlockNumber)
-	if err != nil {
-		Logger.Error("error getting receipt block from main chain", "Error", err)
-		return nil, err
-	}
-	Logger.Debug("Receipt block on main chain obtained", "Block", receiptBlock.Number.Uint64())
+	blockCache, ok := c.BlockTimeCache.Get(receipt.BlockNumber.Uint64())
+	if !ok {
+		// get main chain block
+		receiptBlock, err := c.GetMainChainBlock(receipt.BlockNumber)
+		if err != nil {
+			Logger.Error("error getting receipt block from main chain", "Error", err)
+			return nil, err
+		}
+		Logger.Debug("Receipt block on main chain obtained", "Block", receiptBlock.Number.Uint64())
 
+		time = receiptBlock.Time
+		c.BlockTimeCache.Add(receipt.BlockNumber.Uint64(), receiptBlock.Time)
+	} else {
+		time = blockCache.(uint64)
+	}
 	// check if current time is greater than buffer time
-	fmt.Println("bufferTime", receiptBlock.Time, txConfirmationTime.Seconds(), uint64(txConfirmationTime.Seconds()))
-	bufferTime := receiptBlock.Time + uint64(txConfirmationTime.Seconds())
+	bufferTime := time + uint64(txConfirmationTime.Seconds())
 
 	if uint64(currentTime.Unix()) < bufferTime {
 		return nil, errors.New("Not enough confirmations")

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strings"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	supplyExported "github.com/maticnetwork/heimdall/supply/exported"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
@@ -11,7 +12,7 @@ import (
 // GenesisAccount is a struct for account initialization used exclusively during genesis
 type GenesisAccount struct {
 	Address       hmTypes.HeimdallAddress `json:"address" yaml:"address"`
-	Coins         hmTypes.Coins           `json:"coins" yaml:"coins"`
+	Coins         sdk.Coins               `json:"coins" yaml:"coins"`
 	Sequence      uint64                  `json:"sequence_number" yaml:"sequence_number"`
 	AccountNumber uint64                  `json:"account_number" yaml:"account_number"`
 
@@ -33,7 +34,7 @@ func (ga GenesisAccount) Validate() error {
 // NewGenesisAccountRaw creates a new GenesisAccount object
 func NewGenesisAccountRaw(
 	address hmTypes.HeimdallAddress,
-	coins hmTypes.Coins,
+	coins sdk.Coins,
 	module string,
 	permissions ...string,
 ) GenesisAccount {

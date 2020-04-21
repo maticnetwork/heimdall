@@ -112,7 +112,7 @@ type HeimdallApp struct {
 	caller helper.ContractCaller
 
 	//  total coins supply
-	TotalCoinsSupply types.Coins
+	TotalCoinsSupply sdk.Coins
 
 	// the module manager
 	mm *module.Manager
@@ -150,17 +150,17 @@ func (d ModuleCommunicator) GetValidatorFromValID(ctx sdk.Context, valID types.V
 }
 
 // SetCoins sets coins
-func (d ModuleCommunicator) SetCoins(ctx sdk.Context, addr types.HeimdallAddress, amt types.Coins) sdk.Error {
+func (d ModuleCommunicator) SetCoins(ctx sdk.Context, addr types.HeimdallAddress, amt sdk.Coins) sdk.Error {
 	return d.App.BankKeeper.SetCoins(ctx, addr, amt)
 }
 
 // GetCoins gets coins
-func (d ModuleCommunicator) GetCoins(ctx sdk.Context, addr types.HeimdallAddress) types.Coins {
+func (d ModuleCommunicator) GetCoins(ctx sdk.Context, addr types.HeimdallAddress) sdk.Coins {
 	return d.App.BankKeeper.GetCoins(ctx, addr)
 }
 
 // SendCoins transfers coins
-func (d ModuleCommunicator) SendCoins(ctx sdk.Context, fromAddr types.HeimdallAddress, toAddr types.HeimdallAddress, amt types.Coins) sdk.Error {
+func (d ModuleCommunicator) SendCoins(ctx sdk.Context, fromAddr types.HeimdallAddress, toAddr types.HeimdallAddress, amt sdk.Coins) sdk.Error {
 	return d.App.BankKeeper.SendCoins(ctx, fromAddr, toAddr, amt)
 }
 
@@ -500,7 +500,7 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) ab
 		moduleAccount := app.SupplyKeeper.GetModuleAccount(ctx, authTypes.FeeCollectorName)
 		amount := moduleAccount.GetCoins().AmountOf(authTypes.FeeToken)
 		if !amount.IsZero() {
-			coins := types.Coins{types.Coin{Denom: authTypes.FeeToken, Amount: amount}}
+			coins := sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: amount}}
 			app.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, authTypes.FeeCollectorName, proposer, coins)
 		}
 

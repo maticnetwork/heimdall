@@ -101,7 +101,7 @@ func WithdrawFeeHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		// get msg
 		msg := topupTypes.NewMsgWithdrawFee(
 			fromAddr,
-			types.NewIntFromBigInt(amount),
+			sdk.NewIntFromBigInt(amount),
 		)
 		restClient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
 	}

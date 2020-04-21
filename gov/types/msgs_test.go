@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
@@ -11,10 +12,10 @@ import (
 )
 
 var (
-	coinsPos         = hmTypes.NewCoins(hmTypes.NewInt64Coin(authTypes.FeeToken, 1000))
-	coinsZero        = hmTypes.NewCoins()
-	coinsPosNotMatic = hmTypes.NewCoins(hmTypes.NewInt64Coin("foo", 10000))
-	coinsMulti       = hmTypes.NewCoins(hmTypes.NewInt64Coin(authTypes.FeeToken, 1000), hmTypes.NewInt64Coin("foo", 10000))
+	coinsPos         = sdk.NewCoins(hmTypes.NewInt64Coin(authTypes.FeeToken, 1000))
+	coinsZero        = sdk.NewCoins()
+	coinsPosNotMatic = sdk.NewCoins(hmTypes.NewInt64Coin("foo", 10000))
+	coinsMulti       = sdk.NewCoins(hmTypes.NewInt64Coin(authTypes.FeeToken, 1000), hmTypes.NewInt64Coin("foo", 10000))
 	addrs            = []hmTypes.HeimdallAddress{
 		hmTypes.SampleHeimdallAddress("test1"),
 		hmTypes.SampleHeimdallAddress("test2"),
@@ -31,7 +32,7 @@ func TestMsgSubmitProposal(t *testing.T) {
 		title, description string
 		proposalType       string
 		proposerAddr       hmTypes.HeimdallAddress
-		initialDeposit     hmTypes.Coins
+		initialDeposit     sdk.Coins
 		expectPass         bool
 	}{
 		{"Test Proposal", "the purpose of this proposal is to test", ProposalTypeText, addrs[0], coinsPos, true},
@@ -74,7 +75,7 @@ func TestMsgDeposit(t *testing.T) {
 	tests := []struct {
 		proposalID    uint64
 		depositorAddr hmTypes.HeimdallAddress
-		depositAmount hmTypes.Coins
+		depositAmount sdk.Coins
 		expectPass    bool
 	}{
 		{0, addrs[0], coinsPos, true},

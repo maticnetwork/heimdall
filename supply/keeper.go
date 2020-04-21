@@ -161,7 +161,7 @@ func (k Keeper) SendCoinsFromModuleToAccount(
 	ctx sdk.Context,
 	senderModule string,
 	recipientAddr hmTypes.HeimdallAddress,
-	amt hmTypes.Coins,
+	amt sdk.Coins,
 ) sdk.Error {
 	senderAddr := k.GetModuleAddress(senderModule)
 	if senderAddr.Empty() {
@@ -177,7 +177,7 @@ func (k Keeper) SendCoinsFromModuleToModule(
 	ctx sdk.Context,
 	senderModule string,
 	recipientModule string,
-	amt hmTypes.Coins,
+	amt sdk.Coins,
 ) sdk.Error {
 
 	senderAddr := k.GetModuleAddress(senderModule)
@@ -199,7 +199,7 @@ func (k Keeper) SendCoinsFromAccountToModule(
 	ctx sdk.Context,
 	senderAddr hmTypes.HeimdallAddress,
 	recipientModule string,
-	amt hmTypes.Coins,
+	amt sdk.Coins,
 ) sdk.Error {
 
 	// create the account if it doesn't yet exist

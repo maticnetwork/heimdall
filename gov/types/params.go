@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"time"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/maticnetwork/heimdall/params/subspace"
-	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 // Parameter store key
@@ -26,12 +27,12 @@ func ParamKeyTable() subspace.KeyTable {
 
 // Param around deposits for governance
 type DepositParams struct {
-	MinDeposit       hmTypes.Coins `json:"min_deposit,omitempty" yaml:"min_deposit,omitempty"`               //  Minimum deposit for a proposal to enter voting period.
+	MinDeposit       sdk.Coins     `json:"min_deposit,omitempty" yaml:"min_deposit,omitempty"`               //  Minimum deposit for a proposal to enter voting period.
 	MaxDepositPeriod time.Duration `json:"max_deposit_period,omitempty" yaml:"max_deposit_period,omitempty"` //  Maximum period for Atom holders to deposit on a proposal. Initial value: 2 months
 }
 
 // NewDepositParams creates a new DepositParams object
-func NewDepositParams(minDeposit hmTypes.Coins, maxDepositPeriod time.Duration) DepositParams {
+func NewDepositParams(minDeposit sdk.Coins, maxDepositPeriod time.Duration) DepositParams {
 	return DepositParams{
 		MinDeposit:       minDeposit,
 		MaxDepositPeriod: maxDepositPeriod,
@@ -51,13 +52,13 @@ func (dp DepositParams) Equal(dp2 DepositParams) bool {
 
 // Param around Tallying votes in governance
 type TallyParams struct {
-	Quorum    hmTypes.Dec `json:"quorum,omitempty" yaml:"quorum,omitempty"`       //  Minimum percentage of total stake needed to vote for a result to be considered valid
-	Threshold hmTypes.Dec `json:"threshold,omitempty" yaml:"threshold,omitempty"` //  Minimum proportion of Yes votes for proposal to pass. Initial value: 0.5
-	Veto      hmTypes.Dec `json:"veto,omitempty" yaml:"veto,omitempty"`           //  Minimum value of Veto votes to Total votes ratio for proposal to be vetoed. Initial value: 1/3
+	Quorum    sdk.Dec `json:"quorum,omitempty" yaml:"quorum,omitempty"`       //  Minimum percentage of total stake needed to vote for a result to be considered valid
+	Threshold sdk.Dec `json:"threshold,omitempty" yaml:"threshold,omitempty"` //  Minimum proportion of Yes votes for proposal to pass. Initial value: 0.5
+	Veto      sdk.Dec `json:"veto,omitempty" yaml:"veto,omitempty"`           //  Minimum value of Veto votes to Total votes ratio for proposal to be vetoed. Initial value: 1/3
 }
 
 // NewTallyParams creates a new TallyParams object
-func NewTallyParams(quorum, threshold, veto hmTypes.Dec) TallyParams {
+func NewTallyParams(quorum, threshold, veto sdk.Dec) TallyParams {
 	return TallyParams{
 		Quorum:    quorum,
 		Threshold: threshold,

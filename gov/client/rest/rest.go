@@ -73,7 +73,7 @@ type PostProposalReq struct {
 	ProposalType   string                  `json:"proposal_type" yaml:"proposal_type"`     // Type of proposal. Initial set {PlainTextProposal, SoftwareUpgradeProposal}
 	Proposer       hmTypes.HeimdallAddress `json:"proposer" yaml:"proposer"`               // Address of the proposer
 	Validator      hmTypes.ValidatorID     `json:"validator" yaml:"validator"`             // id of the validator
-	InitialDeposit hmTypes.Coins           `json:"initial_deposit" yaml:"initial_deposit"` // Coins to add to the proposal's deposit
+	InitialDeposit sdk.Coins               `json:"initial_deposit" yaml:"initial_deposit"` // Coins to add to the proposal's deposit
 }
 
 // DepositReq defines the properties of a deposit request's body.
@@ -81,7 +81,7 @@ type DepositReq struct {
 	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
 
 	Depositor hmTypes.HeimdallAddress `json:"depositor" yaml:"depositor"` // Address of the depositor
-	Amount    hmTypes.Coins           `json:"amount" yaml:"amount"`       // Coins to add to the proposal's deposit
+	Amount    sdk.Coins               `json:"amount" yaml:"amount"`       // Coins to add to the proposal's deposit
 	Validator hmTypes.ValidatorID     `json:"validator" yaml:"validator"` // id of the validator
 }
 
