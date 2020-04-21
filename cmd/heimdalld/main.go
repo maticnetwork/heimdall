@@ -37,6 +37,7 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 	hmserver "github.com/maticnetwork/heimdall/server"
 	hmTypes "github.com/maticnetwork/heimdall/types"
+	hmModule "github.com/maticnetwork/heimdall/types/module"
 )
 
 var (
@@ -206,7 +207,7 @@ func VerifyGenesis(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 
 			// verify genesis
 			for _, b := range app.ModuleBasics {
-				m := b.(hmTypes.HeimdallModuleBasic)
+				m := b.(hmModule.HeimdallModuleBasic)
 				if err := m.VerifyGenesis(genesisState); err != nil {
 					return err
 				}

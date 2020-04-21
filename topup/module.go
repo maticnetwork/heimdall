@@ -16,13 +16,13 @@ import (
 	topupRest "github.com/maticnetwork/heimdall/topup/client/rest"
 
 	"github.com/maticnetwork/heimdall/topup/types"
-	hmTypes "github.com/maticnetwork/heimdall/types"
+	hmModule "github.com/maticnetwork/heimdall/types/module"
 )
 
 var (
-	_ module.AppModule            = AppModule{}
-	_ module.AppModuleBasic       = AppModuleBasic{}
-	_ hmTypes.HeimdallModuleBasic = AppModule{}
+	_ module.AppModule             = AppModule{}
+	_ module.AppModuleBasic        = AppModuleBasic{}
+	_ hmModule.HeimdallModuleBasic = AppModule{}
 )
 
 // AppModuleBasic defines the basic application module used by the auth module.

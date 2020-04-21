@@ -15,13 +15,13 @@ import (
 	clerkRest "github.com/maticnetwork/heimdall/clerk/client/rest"
 	"github.com/maticnetwork/heimdall/clerk/types"
 	"github.com/maticnetwork/heimdall/helper"
-	hmTypes "github.com/maticnetwork/heimdall/types"
+	hmModule "github.com/maticnetwork/heimdall/types/module"
 )
 
 var (
-	_ module.AppModule            = AppModule{}
-	_ module.AppModuleBasic       = AppModuleBasic{}
-	_ hmTypes.HeimdallModuleBasic = AppModule{}
+	_ module.AppModule             = AppModule{}
+	_ module.AppModuleBasic        = AppModuleBasic{}
+	_ hmModule.HeimdallModuleBasic = AppModule{}
 	// _ module.AppModuleSimulation = AppModule{}
 )
 
