@@ -2,6 +2,7 @@ package chainmanager
 
 import (
 	"encoding/json"
+	"math/rand"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -13,9 +14,11 @@ import (
 
 	chainmanagerCli "github.com/maticnetwork/heimdall/chainmanager/client/cli"
 	chainmanagerRest "github.com/maticnetwork/heimdall/chainmanager/client/rest"
+	"github.com/maticnetwork/heimdall/chainmanager/simulation"
 	"github.com/maticnetwork/heimdall/chainmanager/types"
 	"github.com/maticnetwork/heimdall/helper"
 	hmModule "github.com/maticnetwork/heimdall/types/module"
+	simTypes "github.com/maticnetwork/heimdall/types/simulation"
 )
 
 var (
@@ -144,4 +147,29 @@ func (AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
 // updates.
 func (AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
 	return []abci.ValidatorUpdate{}
+}
+
+// GenerateGenesisState creates a randomized GenState of the chainManager module
+func (AppModule) GenerateGenesisState(simState *hmModule.SimulationState) {
+	simulation.RandomizedGenState(simState)
+}
+
+// ProposalContents doesn't return any content functions.
+func (AppModule) ProposalContents(simState hmModule.SimulationState) []simTypes.WeightedProposalContent {
+	return nil
+}
+
+// RandomizedParams creates randomized param changes for the simulator.
+func (AppModule) RandomizedParams(r *rand.Rand) []simTypes.ParamChange {
+	return simulation.ParamChanges(r)
+}
+
+// RegisterStoreDecoder registers a decoder for chainmanager module's types
+func (AppModule) RegisterStoreDecoder(sdr hmModule.StoreDecoderRegistry) {
+	return
+}
+
+// WeightedOperations doesn't return any chainmanager module operation.
+func (AppModule) WeightedOperations(_ hmModule.SimulationState) []simTypes.WeightedOperation {
+	return nil
 }

@@ -107,6 +107,16 @@ func (k Keeper) GetModuleAddress(moduleName string) (addr hmTypes.HeimdallAddres
 	return
 }
 
+// RemoveModuleAddress removes module address
+func (k Keeper) RemoveModuleAddress(moduleName string) bool {
+	_, ok := k.permAddrs[moduleName]
+	if !ok {
+		return false
+	}
+	delete(k.permAddrs, moduleName)
+	return true
+}
+
 // GetModuleAddressAndPermissions returns an address and permissions based on the module name
 func (k Keeper) GetModuleAddressAndPermissions(moduleName string) (addr hmTypes.HeimdallAddress, permissions []string) {
 	permAddr, ok := k.permAddrs[moduleName]
