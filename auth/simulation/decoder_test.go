@@ -32,9 +32,9 @@ func TestDecodeStore(t *testing.T) {
 	globalAccNumber := uint64(10)
 
 	kvPairs := []sdk.KVPair{
-		sdk.KVPair{Key: types.AddressStoreKey(delAddr1), Value: cdc.MustMarshalBinaryBare(acc)},
-		sdk.KVPair{Key: types.GlobalAccountNumberKey, Value: cdc.MustMarshalBinaryBare(globalAccNumber)},
-		sdk.KVPair{Key: []byte{0x99}, Value: []byte{0x99}},
+		{Key: types.AddressStoreKey(delAddr1), Value: cdc.MustMarshalBinaryBare(acc)},
+		{Key: types.GlobalAccountNumberKey, Value: cdc.MustMarshalBinaryBare(globalAccNumber)},
+		{Key: []byte{0x99}, Value: []byte{0x99}},
 	}
 	tests := []struct {
 		name        string

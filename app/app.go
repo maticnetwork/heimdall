@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"fmt"
 	"math/big"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
@@ -415,6 +416,8 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		}),
 
 		slashing.NewAppModule(app.SlashingKeeper, app.StakingKeeper, &app.caller),
+		chainmanager.NewAppModule(app.ChainKeeper, &app.caller),
+		topup.NewAppModule(app.TopupKeeper, &app.caller),
 	)
 	app.sm.RegisterStoreDecoders()
 
@@ -483,6 +486,13 @@ func (app *HeimdallApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) 
 	if err := ModuleBasics.ValidateGenesis(genesisState); err != nil {
 		panic(err)
 	}
+
+	// check fee collector module account
+	if moduleAcc := app.SupplyKeeper.GetModuleAccount(ctx, authTypes.FeeCollectorName); moduleAcc == nil {
+		panic(fmt.Sprintf("%s module account has not been set", authTypes.FeeCollectorName))
+	}
+
+	// init genesis
 	app.mm.InitGenesis(ctx, genesisState)
 
 	stakingState := stakingTypes.GetGenesisStateFromAppState(genesisState)
