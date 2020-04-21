@@ -1,6 +1,7 @@
 package app
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"math/big"
@@ -34,6 +35,8 @@ import (
 	paramsClient "github.com/maticnetwork/heimdall/params/client"
 	"github.com/maticnetwork/heimdall/params/subspace"
 	paramsTypes "github.com/maticnetwork/heimdall/params/types"
+	"github.com/maticnetwork/heimdall/sidechannel"
+	sidechannelTypes "github.com/maticnetwork/heimdall/sidechannel/types"
 	"github.com/maticnetwork/heimdall/staking"
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
 	"github.com/maticnetwork/heimdall/supply"
@@ -64,6 +67,7 @@ var (
 	// and genesis verification.
 	ModuleBasics = module.NewBasicManager(
 		params.AppModuleBasic{},
+		sidechannel.AppModuleBasic{},
 		auth.AppModuleBasic{},
 		bank.AppModuleBasic{},
 		supply.AppModuleBasic{},
@@ -96,16 +100,17 @@ type HeimdallApp struct {
 	subspaces map[string]subspace.Subspace
 
 	// keepers
-	AccountKeeper    auth.AccountKeeper
-	BankKeeper       bank.Keeper
-	SupplyKeeper     supply.Keeper
-	GovKeeper        gov.Keeper
-	ChainKeeper      chainmanager.Keeper
-	CheckpointKeeper checkpoint.Keeper
-	StakingKeeper    staking.Keeper
-	BorKeeper        bor.Keeper
-	ClerkKeeper      clerk.Keeper
-	TopupKeeper      topup.Keeper
+	SidechannelKeeper sidechannel.Keeper
+	AccountKeeper     auth.AccountKeeper
+	BankKeeper        bank.Keeper
+	SupplyKeeper      supply.Keeper
+	GovKeeper         gov.Keeper
+	ChainKeeper       chainmanager.Keeper
+	CheckpointKeeper  checkpoint.Keeper
+	StakingKeeper     staking.Keeper
+	BorKeeper         bor.Keeper
+	ClerkKeeper       clerk.Keeper
+	TopupKeeper       topup.Keeper
 	// param keeper
 	ParamsKeeper params.Keeper
 
@@ -192,6 +197,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	// keys
 	keys := sdk.NewKVStoreKeys(
 		bam.MainStoreKey,
+		sidechannelTypes.StoreKey,
 		authTypes.StoreKey,
 		bankTypes.StoreKey,
 		supplyTypes.StoreKey,
@@ -217,6 +223,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 
 	// init params keeper and subspaces
 	app.ParamsKeeper = params.NewKeeper(app.cdc, keys[paramsTypes.StoreKey], tkeys[paramsTypes.TStoreKey], paramsTypes.DefaultCodespace)
+	app.subspaces[sidechannelTypes.ModuleName] = app.ParamsKeeper.Subspace(sidechannelTypes.DefaultParamspace)
 	app.subspaces[authTypes.ModuleName] = app.ParamsKeeper.Subspace(authTypes.DefaultParamspace)
 	app.subspaces[bankTypes.ModuleName] = app.ParamsKeeper.Subspace(bankTypes.DefaultParamspace)
 	app.subspaces[supplyTypes.ModuleName] = app.ParamsKeeper.Subspace(supplyTypes.DefaultParamspace)
@@ -247,6 +254,14 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	//
 	// keepers
 	//
+
+	// create side channel keeper
+	app.SidechannelKeeper = sidechannel.NewKeeper(
+		app.cdc,
+		keys[sidechannelTypes.StoreKey], // target store
+		app.subspaces[sidechannelTypes.ModuleName],
+		common.DefaultCodespace,
+	)
 
 	// create chain keeper
 	app.ChainKeeper = chainmanager.NewKeeper(
@@ -351,6 +366,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
 	app.mm = module.NewManager(
+		sidechannel.NewAppModule(app.SidechannelKeeper),
 		auth.NewAppModule(app.AccountKeeper, &app.caller, []authTypes.AccountProcessor{
 			supplyTypes.AccountProcessor,
 		}),
@@ -368,6 +384,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	// NOTE: The genutils module must occur after staking so that pools are
 	// properly initialized with tokens from genesis accounts.
 	app.mm.SetOrderInitGenesis(
+		sidechannelTypes.ModuleName,
 		authTypes.ModuleName,
 		bankTypes.ModuleName,
 		govTypes.ModuleName,
@@ -413,6 +430,9 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 			auth.DefaultSigVerificationGasConsumer,
 		),
 	)
+	// side-tx processor
+	app.SetBeginSideBlocker(app.BeginSideBlocker)
+	app.SetDeliverSideTxHandler(app.DeliverSideTxHandler)
 
 	// load latest version
 	err = app.LoadLatestVersion(app.keys[bam.MainStoreKey])
@@ -581,6 +601,42 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) ab
 	// send validator updates to peppermint
 	return abci.ResponseEndBlock{
 		ValidatorUpdates: tmValUpdates,
+	}
+}
+
+// BeginSideBlocker runs before side block
+func (app *HeimdallApp) BeginSideBlocker(ctx sdk.Context, req abci.RequestBeginSideBlock) (res abci.ResponseBeginSideBlock) {
+	fmt.Println("[sidechannel] BeginSideBlock",
+		"height", req.Header.Height,
+	)
+
+	for _, r := range req.SideTxResults {
+		fmt.Println("                              ", "txHash", hex.EncodeToString(r.TxHash))
+		for _, s := range r.Sigs {
+			fmt.Println("                                 ", "result", s.Result, "sig", hex.EncodeToString(s.Sig))
+		}
+	}
+
+	return res
+}
+
+// DeliverSideTxHandler runs for each side tx
+func (app *HeimdallApp) DeliverSideTxHandler(ctx sdk.Context, tx sdk.Tx, req abci.RequestDeliverSideTx) (res abci.ResponseDeliverSideTx) {
+	fmt.Println("[sidechannel] DeliverSideTx",
+		"tx", hex.EncodeToString(req.Tx),
+		"msgRoute", tx.GetMsgs()[0].Route(),
+		"msgType", tx.GetMsgs()[0].Type(),
+	)
+
+	var result sdk.Result
+
+	return abci.ResponseDeliverSideTx{
+		Code:      uint32(result.Code),
+		Codespace: string(result.Codespace),
+		Data:      result.Data,
+
+		// yes vote
+		Result: abci.SideTxResultType_Yes,
 	}
 }
 
