@@ -171,6 +171,12 @@ func (d ModuleCommunicator) SendCoins(ctx sdk.Context, fromAddr types.HeimdallAd
 	return d.App.BankKeeper.SendCoins(ctx, fromAddr, toAddr, amt)
 }
 
+// Create ValidatorSigningInfo used by slashing module
+func (d ModuleCommunicator) CreateValiatorSigningInfo(ctx sdk.Context, valAddr []byte, valSigningInfo types.ValidatorSigningInfo) {
+	d.App.SlashingKeeper.SetValidatorSigningInfo(ctx, valAddr, valSigningInfo)
+	return
+}
+
 //
 // Heimdall app
 //

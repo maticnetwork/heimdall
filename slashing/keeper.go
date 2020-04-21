@@ -228,12 +228,13 @@ func (k Keeper) deleteAddrPubkeyRelation(ctx sdk.Context, addr crypto.Address) {
 // -----------------------------------------------------------------------------
 // Params
 
-// SetParams sets the bor module's parameters.
+// SetParams sets the slashing module's parameters.
 func (k *Keeper) SetParams(ctx sdk.Context, params types.Params) {
+	fmt.Println("Setting params")
 	k.paramSpace.SetParamSet(ctx, &params)
 }
 
-// GetParams gets the bor module's parameters.
+// GetParams gets the slashing module's parameters.
 func (k *Keeper) GetParams(ctx sdk.Context) (params types.Params) {
 	k.paramSpace.GetParamSet(ctx, &params)
 	return

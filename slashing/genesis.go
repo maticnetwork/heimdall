@@ -29,6 +29,7 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 	}
 
 	keeper.SetParams(ctx, data.Params)
+
 }
 
 // ExportGenesis writes the current store values

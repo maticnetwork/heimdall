@@ -1,10 +1,12 @@
 package types
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/maticnetwork/heimdall/bor/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -78,4 +80,23 @@ func ValidateGenesis(data GenesisState) error {
 	}
 
 	return nil
+}
+
+// GetGenesisStateFromAppState returns staking GenesisState given raw application genesis state
+func GetGenesisStateFromAppState(appState map[string]json.RawMessage) GenesisState {
+	var genesisState GenesisState
+	if appState[ModuleName] != nil {
+		types.ModuleCdc.MustUnmarshalJSON(appState[ModuleName], &genesisState)
+	}
+	return genesisState
+}
+
+// SetGenesisStateToAppState sets state into app state
+func SetGenesisStateToAppState(appState map[string]json.RawMessage, valSigningInfo map[string]hmTypes.ValidatorSigningInfo) (map[string]json.RawMessage, error) {
+	// set state to staking state
+	slashingState := GetGenesisStateFromAppState(appState)
+	slashingState.SigningInfos = valSigningInfo
+
+	appState[ModuleName] = types.ModuleCdc.MustMarshalJSON(slashingState)
+	return appState, nil
 }

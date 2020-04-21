@@ -2,7 +2,6 @@ package types
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 )
@@ -16,7 +15,7 @@ type ValidatorSigningInfo struct {
 	// index offset into signed block bit array
 	IndexOffset int64 `json:"indexOffset"`
 	// timestamp validator cannot be unjailed until
-	JailedUntil time.Time `json:"jailedUntil"`
+	// JailedUntil time.Time `json:"jailedUntil"`
 	// whether or not a validator has been tombstoned (killed out of validator set)
 	// Tombstoned bool `protobuf:"varint,5,opt,name=tombstoned,proto3" json:"tombstoned,omitempty"`
 	// missed blocks counter (to avoid scanning the array every time)
@@ -26,14 +25,14 @@ type ValidatorSigningInfo struct {
 // NewValidatorSigningInfo creates a new ValidatorSigningInfo instance
 func NewValidatorSigningInfo(
 	condAddr HeimdallAddress, startHeight, indexOffset int64,
-	jailedUntil time.Time, tombstoned bool, missedBlocksCounter int64,
+	missedBlocksCounter int64,
 ) ValidatorSigningInfo {
 
 	return ValidatorSigningInfo{
 		Signer:      condAddr,
 		StartHeight: startHeight,
 		IndexOffset: indexOffset,
-		JailedUntil: jailedUntil,
+		// JailedUntil: jailedUntil,
 		// Tombstoned:          tombstoned,
 		MissedBlocksCounter: missedBlocksCounter,
 	}
@@ -44,10 +43,9 @@ func (i ValidatorSigningInfo) String() string {
 	return fmt.Sprintf(`Validator Signing Info:
   Address:               %s
   Start Height:          %d
-  Index Offset:          %d
-  Jailed Until:          %v
+  Index Offset:          %d  
   Missed Blocks Counter: %d`,
-		i.Signer, i.StartHeight, i.IndexOffset, i.JailedUntil,
+		i.Signer, i.StartHeight, i.IndexOffset,
 		i.MissedBlocksCounter)
 }
 

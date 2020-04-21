@@ -32,10 +32,7 @@ var (
 	KeyMaxEvidenceAge          = []byte("MaxEvidenceAge")
 )
 
-// ParamKeyTable for slashing module
-func ParamKeyTable() subspace.KeyTable {
-	return subspace.NewKeyTable().RegisterParamSet(&Params{})
-}
+var _ subspace.ParamSet = &Params{}
 
 // Params - used for initializing default parameter for slashing at genesis
 type Params struct {
@@ -63,6 +60,11 @@ func NewParams(
 	}
 }
 
+// ParamKeyTable for slashing module
+func ParamKeyTable() subspace.KeyTable {
+	return subspace.NewKeyTable().RegisterParamSet(&Params{})
+}
+
 // String implements the stringer interface for Params
 func (p Params) String() string {
 	return fmt.Sprintf(`Slashing Params:
@@ -79,8 +81,14 @@ func (p Params) String() string {
 
 // ParamSetPairs - Implements params.ParamSet
 func (p *Params) ParamSetPairs() subspace.ParamSetPairs {
-	// TODO - slashing add params
-	return subspace.ParamSetPairs{}
+	return subspace.ParamSetPairs{
+		{KeySignedBlocksWindow, &p.SignedBlocksWindow},
+		{KeyMinSignedPerWindow, &p.MinSignedPerWindow},
+		{KeyDowntimeJailDuration, &p.DowntimeJailDuration},
+		{KeySlashFractionDoubleSign, &p.SlashFractionDoubleSign},
+		{KeySlashFractionDowntime, &p.SlashFractionDowntime},
+		{KeyMaxEvidenceAge, &p.MaxEvidenceAge},
+	}
 }
 
 // DefaultParams defines the parameters for this module

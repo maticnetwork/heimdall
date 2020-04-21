@@ -34,6 +34,7 @@ type ModuleCommunicator interface {
 	SetCoins(ctx sdk.Context, addr hmTypes.HeimdallAddress, amt sdk.Coins) sdk.Error
 	GetCoins(ctx sdk.Context, addr hmTypes.HeimdallAddress) sdk.Coins
 	SendCoins(ctx sdk.Context, from hmTypes.HeimdallAddress, to hmTypes.HeimdallAddress, amt sdk.Coins) sdk.Error
+	CreateValiatorSigningInfo(ctx sdk.Context, valAddr []byte, valSigningInfo hmTypes.ValidatorSigningInfo)
 }
 
 // Keeper stores all related data
@@ -545,6 +546,12 @@ func (k *Keeper) IterateStakingSequencesAndApplyFn(ctx sdk.Context, f func(seque
 // CONTRACT:
 //    Infraction was committed at the current height or at a past height,
 //    not at a height in the future
+
+func (k Keeper) AddValidatorSigningInfo(ctx sdk.Context, signerAddr []byte, valSigningInfo hmTypes.ValidatorSigningInfo) error {
+	k.moduleCommunicator.CreateValiatorSigningInfo(ctx, signerAddr, valSigningInfo)
+	return nil
+}
+
 func (k Keeper) Slash(ctx sdk.Context, consAddr sdk.ConsAddress, infractionHeight int64, power int64, slashFactor sdk.Dec) {
 
 }

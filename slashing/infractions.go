@@ -102,11 +102,11 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr []byte, power int
 			val, _ := k.sk.GetValidatorInfo(ctx, signInfo.Signer.Bytes())
 			amount := ""
 			k.SlashInterim(ctx, val.ID, amount)
-			
+
 			k.sk.Slash(ctx, addr, distributionHeight, power, params.SlashFractionDowntime)
 			k.sk.Jail(ctx, addr)
 
-			signInfo.JailedUntil = ctx.BlockHeader().Time.Add(params.DowntimeJailDuration)
+			// signInfo.JailedUntil = ctx.BlockHeader().Time.Add(params.DowntimeJailDuration)
 
 			// We need to reset the counter & array so that the validator won't be immediately slashed for downtime upon rebonding.
 			signInfo.MissedBlocksCounter = 0

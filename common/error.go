@@ -52,6 +52,8 @@ const (
 	CodeFetchCheckpointSigners       CodeType = 4501
 	CodeErrComputeGenesisAccountRoot CodeType = 4503
 	CodeAccountRootMismatch          CodeType = 4504
+
+	CodeValSigningInfoSave CodeType = 5501
 )
 
 // -------- Invalid msg
@@ -209,4 +211,9 @@ func msgOrDefaultMsg(msg string, code CodeType) string {
 func newError(codespace sdk.CodespaceType, code CodeType, msg string) sdk.Error {
 	msg = msgOrDefaultMsg(msg, code)
 	return sdk.NewError(codespace, code, msg)
+}
+
+// Slashing errors
+func ErrValidatorSigningInfoSave(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeValSigningInfoSave, "Cannot save validator signing info")
 }
