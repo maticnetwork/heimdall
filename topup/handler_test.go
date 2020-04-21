@@ -39,7 +39,6 @@ type HandlerTestSuite struct {
 func (suite *HandlerTestSuite) SetupTest() {
 	suite.app, suite.ctx, suite.cliCtx = createTestApp(false)
 	suite.contractCaller = mocks.IContractCaller{}
-	suite.querier = topup.NewQuerier(suite.app.TopupKeeper, &suite.contractCaller)
 	suite.handler = topup.NewHandler(suite.app.TopupKeeper, &suite.contractCaller)
 }
 
@@ -76,8 +75,7 @@ func (suite *HandlerTestSuite) TestHandleMsgTopup() {
 	suite.contractCaller.On("GetConfirmedTxReceipt", mock.Anything, txHash.EthHash(), chainParams.TxConfirmationTime).Return(txreceipt, nil)
 
 	suite.contractCaller.On("DecodeValidatorTopupFeesEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), mock.Anything, msgTopup.LogIndex).Return(stakinginfoTopUpFee, nil)
-	result := topup.HandleMsgTopup(ctx, app.TopupKeeper, msgTopup, &suite.contractCaller)
-
+	result := suite.handler(ctx, msgTopup)
 	require.True(t, result.IsOK(), "expected topup to be done, got %v", result)
 }
 
@@ -113,7 +111,7 @@ func (suite *HandlerTestSuite) TestHandleMsgWithdrawFee() {
 	suite.contractCaller.On("GetConfirmedTxReceipt", mock.Anything, txHash.EthHash(), chainParams.TxConfirmationTime).Return(txreceipt, nil)
 
 	suite.contractCaller.On("DecodeValidatorTopupFeesEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), mock.Anything, msgTopup.LogIndex).Return(stakinginfoTopUpFee, nil)
-	topupResult := topup.HandleMsgTopup(ctx, app.TopupKeeper, msgTopup, &suite.contractCaller)
+	topupResult := suite.handler(ctx, msgTopup)
 
 	require.True(t, topupResult.IsOK(), "expected topup to be done, got %v", topupResult)
 
@@ -139,7 +137,6 @@ func (suite *HandlerTestSuite) TestHandleMsgWithdrawFee() {
 		hmTypes.BytesToHeimdallAddress(validatorAddress.Bytes()),
 		sdk.NewIntFromBigInt(amount),
 	)
-	withdrawResult := topup.HandleMsgWithdrawFee(ctx, app.TopupKeeper, msgWithdrawFee)
-
+	withdrawResult := suite.handler(ctx, msgWithdrawFee)
 	require.True(t, withdrawResult.IsOK(), "expected withdraw tobe done, got %v", withdrawResult)
 }
