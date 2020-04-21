@@ -43,6 +43,7 @@ import (
 	topupTypes "github.com/maticnetwork/heimdall/topup/types"
 
 	"github.com/maticnetwork/heimdall/types"
+	hmModule "github.com/maticnetwork/heimdall/types/module"
 	"github.com/maticnetwork/heimdall/version"
 )
 
@@ -55,6 +56,9 @@ const (
 	maxGasPerBlock   int64 = 10000000 // 10 Million
 	maxBytesPerBlock int64 = 22020096 // 21 MB
 )
+
+// Assertion for Heimdall app
+var _ App = &HeimdallApp{}
 
 var (
 	// ModuleBasics defines the module BasicManager is in charge of setting up basic,
@@ -116,6 +120,9 @@ type HeimdallApp struct {
 
 	// the module manager
 	mm *module.Manager
+
+	// simulation module manager
+	sm *hmModule.SimulationManager
 }
 
 var logger = helper.Logger.With("module", "app")
@@ -381,6 +388,17 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	// register message routes and query routes
 	app.mm.RegisterRoutes(app.Router(), app.QueryRouter())
 
+	// create the simulation manager and define the order of the modules for deterministic simulations
+	//
+	// NOTE: this is not required apps that don't use the simulator for fuzz testing
+	// transactions
+	app.sm = hmModule.NewSimulationManager(
+		auth.NewAppModule(app.AccountKeeper, &app.caller, []authTypes.AccountProcessor{
+			supplyTypes.AccountProcessor,
+		}),
+	)
+	app.sm.RegisterStoreDecoders()
+
 	// mount the multistore and load the latest state
 	app.MountKVStores(keys)
 	app.MountTransientStores(tkeys)
@@ -562,60 +580,6 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) ab
 	}
 }
 
-// initialize store from a genesis state
-// func (app *HeimdallApp) initFromGenesisState(ctx sdk.Context, genesisState GenesisState) []abci.ValidatorUpdate {
-
-// 	// Load the genesis accounts
-// 	for _, genacc := range genesisState.Accounts {
-// 		acc := app.accountKeeper.NewAccountWithAddress(ctx, types.BytesToHeimdallAddress(genacc.Address.Bytes()))
-// 		acc.SetCoins(genacc.Coins)
-// 		acc.SetSequence(genacc.Sequence)
-// 		app.accountKeeper.SetAccount(ctx, acc)
-// 	}
-
-// 	//
-// 	// InitGenesis
-// 	//
-// 	auth.InitGenesis(ctx, app.accountKeeper, genesisState.AuthData)
-// 	bank.InitGenesis(ctx, app.bankKeeper, genesisState.BankData)
-// 	supply.InitGenesis(ctx, app.supplyKeeper, app.accountKeeper, genesisState.SupplyData)
-// 	bor.InitGenesis(ctx, app.borKeeper, genesisState.BorData)
-// 	// staking should be initialized before checkpoint as checkpoint genesis initialization may depend on staking genesis. [eg.. rewardroot calculation]
-// 	staking.InitGenesis(ctx, app.stakingKeeper, genesisState.StakingData)
-// 	checkpoint.InitGenesis(ctx, app.checkpointKeeper, genesisState.CheckpointData)
-// 	clerk.InitGenesis(ctx, app.clerkKeeper, genesisState.ClerkData)
-// 	// validate genesis state
-// 	if err := ValidateGenesisState(genesisState); err != nil {
-// 		panic(err) // TODO find a way to do this w/o panics
-// 	}
-
-// 	// increment accumulator if starting from genesis
-// 	if isGenesis {
-// 		app.StakingKeeper.IncrementAccum(ctx, 1)
-// 	}
-
-// 	//
-// 	// get val updates
-// 	//
-
-// 	var valUpdates []abci.ValidatorUpdate
-
-// 	// check if validator is current validator
-// 	// add to val updates else skip
-// 	for _, validator := range genesisState.StakingData.Validators {
-// 		if validator.IsCurrentValidator(genesisState.CheckpointData.AckCount) {
-// 			// convert to Validator Update
-// 			updateVal := abci.ValidatorUpdate{
-// 				Power:  int64(validator.VotingPower),
-// 				PubKey: validator.PubKey.ABCIPubKey(),
-// 			}
-// 			// Add validator to validator updated to be processed below
-// 			valUpdates = append(valUpdates, updateVal)
-// 		}
-// 	}
-// 	return valUpdates
-// }
-
 // LoadHeight loads a particular height
 func (app *HeimdallApp) LoadHeight(height int64) error {
 	return app.LoadVersion(height, app.keys[bam.MainStoreKey])
@@ -658,6 +622,18 @@ func (app *HeimdallApp) GetTKey(storeKey string) *sdk.TransientStoreKey {
 // NOTE: This is solely to be used for testing purposes.
 func (app *HeimdallApp) GetSubspace(moduleName string) subspace.Subspace {
 	return app.subspaces[moduleName]
+}
+
+// GetModuleManager returns module manager
+//
+// NOTE: This is solely to be used for testing purposes.
+func (app *HeimdallApp) GetModuleManager() *module.Manager {
+	return app.mm
+}
+
+// SimulationManager implements the SimulationApp interface
+func (app *HeimdallApp) SimulationManager() *hmModule.SimulationManager {
+	return app.sm
 }
 
 // GetMaccPerms returns a copy of the module account permissions
