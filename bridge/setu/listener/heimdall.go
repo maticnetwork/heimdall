@@ -15,6 +15,7 @@ import (
 
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
+	slashingTypes "github.com/maticnetwork/heimdall/slashing/types"
 )
 
 const (
@@ -67,6 +68,8 @@ func (hl *HeimdallListener) StartPolling(ctx context.Context, pollInterval time.
 	var eventTypes []string
 	eventTypes = append(eventTypes, "message.action='checkpoint'")
 	eventTypes = append(eventTypes, "message.action='event-record'")
+	eventTypes = append(eventTypes, "message.action='tick'")
+	// ADD EVENT TYPE for SLASH-LIMIT
 
 	// start listening
 	for {
@@ -93,7 +96,7 @@ func (hl *HeimdallListener) StartPolling(ctx context.Context, pollInterval time.
 						for _, tx := range searchResult.Txs {
 							for _, log := range tx.Logs {
 								event := helper.FilterEvents(log.Events, func(et sdk.StringEvent) bool {
-									return et.Type == checkpointTypes.EventTypeCheckpoint || et.Type == clerkTypes.EventTypeRecord
+									return et.Type == checkpointTypes.EventTypeCheckpoint || et.Type == clerkTypes.EventTypeRecord || et.Type == slashingTypes.EventTypeLiveness || et.Type == slashingTypes.EventTypeSlashLimit
 								})
 								if event != nil {
 									hl.ProcessEvent(*event, tx)
@@ -166,6 +169,10 @@ func (hl *HeimdallListener) ProcessEvent(event sdk.StringEvent, tx sdk.TxRespons
 		hl.sendTask("sendDepositRecordToMatic", eventBytes, tx.Height, tx.TxHash)
 	case checkpointTypes.EventTypeCheckpoint:
 		hl.sendTask("sendCheckpointToRootchain", eventBytes, tx.Height, tx.TxHash)
+	case slashingTypes.EventTypeSlashLimit:
+		hl.sendTask("sendTickToHeimdall", eventBytes, tx.Height, tx.TxHash)
+	case slashingTypes.EventTypeTickConfirm:
+		hl.sendTask("sendTickToRootchain", eventBytes, tx.Height, tx.TxHash)
 	default:
 		hl.Logger.Info("EventType mismatch", "eventType", event.Type)
 	}

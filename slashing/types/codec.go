@@ -6,7 +6,7 @@ import (
 
 // RegisterCodec registers concrete types on codec
 func RegisterCodec(cdc *codec.Codec) {
-	cdc.RegisterConcrete(MsgUnjail{}, "cosmos-sdk/MsgUnjail", nil)
+	cdc.RegisterConcrete(MsgUnjail{}, "slashing/MsgUnjail", nil)
 }
 
 // ModuleCdc generic sealed codec to be used throughout module

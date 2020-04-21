@@ -41,7 +41,6 @@ import (
 	supplyTypes "github.com/maticnetwork/heimdall/supply/types"
 	"github.com/maticnetwork/heimdall/topup"
 	topupTypes "github.com/maticnetwork/heimdall/topup/types"
-
 	"github.com/maticnetwork/heimdall/types"
 	hmModule "github.com/maticnetwork/heimdall/types/module"
 	"github.com/maticnetwork/heimdall/version"
@@ -109,6 +108,7 @@ type HeimdallApp struct {
 	BorKeeper        bor.Keeper
 	ClerkKeeper      clerk.Keeper
 	TopupKeeper      topup.Keeper
+	SlashingKeeper   slashing.Keeper
 	// param keeper
 	ParamsKeeper params.Keeper
 
@@ -201,6 +201,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		govTypes.StoreKey,
 		chainmanagerTypes.StoreKey,
 		stakingTypes.StoreKey,
+		slashingTypes.StoreKey,
 		checkpointTypes.StoreKey,
 		borTypes.StoreKey,
 		clerkTypes.StoreKey,
@@ -226,6 +227,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.subspaces[govTypes.ModuleName] = app.ParamsKeeper.Subspace(govTypes.DefaultParamspace).WithKeyTable(govTypes.ParamKeyTable())
 	app.subspaces[chainmanagerTypes.ModuleName] = app.ParamsKeeper.Subspace(chainmanagerTypes.DefaultParamspace)
 	app.subspaces[stakingTypes.ModuleName] = app.ParamsKeeper.Subspace(stakingTypes.DefaultParamspace)
+	app.subspaces[slashingTypes.ModuleName] = app.ParamsKeeper.Subspace(slashingTypes.DefaultParamspace)
 	app.subspaces[checkpointTypes.ModuleName] = app.ParamsKeeper.Subspace(checkpointTypes.DefaultParamspace)
 	app.subspaces[borTypes.ModuleName] = app.ParamsKeeper.Subspace(borTypes.DefaultParamspace)
 	app.subspaces[clerkTypes.ModuleName] = app.ParamsKeeper.Subspace(clerkTypes.DefaultParamspace)
@@ -275,6 +277,13 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		common.DefaultCodespace,
 		app.ChainKeeper,
 		moduleCommunicator,
+	)
+
+	app.SlashingKeeper = slashing.NewKeeper(
+		app.cdc,
+		keys[slashingTypes.StoreKey], // target store
+		app.StakingKeeper,
+		app.subspaces[slashingTypes.ModuleName],
 	)
 
 	// bank keeper
@@ -362,11 +371,14 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		gov.NewAppModule(app.GovKeeper, app.SupplyKeeper),
 		chainmanager.NewAppModule(app.ChainKeeper, &app.caller),
 		staking.NewAppModule(app.StakingKeeper, &app.caller),
+		slashing.NewAppModule(app.SlashingKeeper, app.StakingKeeper, &app.caller),
 		checkpoint.NewAppModule(app.CheckpointKeeper, app.StakingKeeper, &app.caller),
 		bor.NewAppModule(app.BorKeeper, &app.caller),
 		clerk.NewAppModule(app.ClerkKeeper, &app.caller),
 		topup.NewAppModule(app.TopupKeeper, &app.caller),
 	)
+
+	app.mm.SetOrderBeginBlockers(slashingTypes.ModuleName)
 
 	// NOTE: The genutils module must occur after staking so that pools are
 	// properly initialized with tokens from genesis accounts.
@@ -377,13 +389,12 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		chainmanagerTypes.ModuleName,
 		supplyTypes.ModuleName,
 		stakingTypes.ModuleName,
+		slashingTypes.ModuleName,
 		checkpointTypes.ModuleName,
 		borTypes.ModuleName,
 		clerkTypes.ModuleName,
 		topupTypes.ModuleName,
 	)
-
-	app.mm.SetOrderBeginBlockers(slashingTypes.ModuleName)
 
 	// register message routes and query routes
 	app.mm.RegisterRoutes(app.Router(), app.QueryRouter())
@@ -396,6 +407,8 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		auth.NewAppModule(app.AccountKeeper, &app.caller, []authTypes.AccountProcessor{
 			supplyTypes.AccountProcessor,
 		}),
+
+		slashing.NewAppModule(app.SlashingKeeper, app.StakingKeeper, &app.caller),
 	)
 	app.sm.RegisterStoreDecoders()
 

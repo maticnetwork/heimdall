@@ -51,6 +51,7 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr []byte, power int
 	}
 
 	if missed {
+		fmt.Println("Entered23")
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
 				types.EventTypeLiveness,
@@ -96,6 +97,12 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr []byte, power int
 					sdk.NewAttribute(types.AttributeKeyJailed, address.String()),
 				),
 			)
+
+			// update slash buffer present in slash keeper. Also add slashedAmount totalSlashedAmount.
+			val, _ := k.sk.GetValidatorInfo(ctx, signInfo.Signer.Bytes())
+			amount := ""
+			k.SlashInterim(ctx, val.ID, amount)
+			
 			k.sk.Slash(ctx, addr, distributionHeight, power, params.SlashFractionDowntime)
 			k.sk.Jail(ctx, addr)
 

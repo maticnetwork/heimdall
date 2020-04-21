@@ -16,6 +16,7 @@ func BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock, k Keeper) {
 	for _, tmEvidence := range req.ByzantineValidators {
 		switch tmEvidence.Type {
 		case tmtypes.ABCIEvidenceTypeDuplicateVote:
+			fmt.Println("Entered1")
 			evidence := types.ConvertDuplicateVoteEvidence(tmEvidence)
 			k.HandleDoubleSign(ctx, evidence.(types.Equivocation))
 

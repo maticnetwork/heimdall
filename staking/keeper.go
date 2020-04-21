@@ -20,12 +20,12 @@ import (
 var (
 	DefaultValue = []byte{0x01} // Value to store in CacheCheckpoint and CacheCheckpointACK & ValidatorSetChange Flag
 
-	ValidatorsKey             = []byte{0x21} // prefix for each key to a validator
-	ValidatorMapKey           = []byte{0x22} // prefix for each key for validator map
-	CurrentValidatorSetKey    = []byte{0x23} // Key to store current validator set
-	PrevDividendAccountMapKey = []byte{0x41} // store for dividend accounts before checkpoint ack.
-	DividendAccountMapKey     = []byte{0x42} // prefix for each key for Dividend Account Map
-	StakingSequenceKey        = []byte{0x24} // prefix for each key for staking sequence map
+	ValidatorsKey          = []byte{0x21} // prefix for each key to a validator
+	ValidatorMapKey        = []byte{0x22} // prefix for each key for validator map
+	CurrentValidatorSetKey = []byte{0x23} // Key to store current validator set
+	StakingSequenceKey     = []byte{0x24} // prefix for each key for staking sequence map
+	DividendAccountMapKey  = []byte{0x25} // prefix for each key for Dividend Account Map
+
 )
 
 // ModuleCommunicator manages different module interaction
@@ -372,11 +372,6 @@ func (k *Keeper) GetLastUpdated(ctx sdk.Context, valID hmTypes.ValidatorID) (upd
 // GetDividendAccountMapKey returns dividend account map
 func GetDividendAccountMapKey(id []byte) []byte {
 	return append(DividendAccountMapKey, id...)
-}
-
-// GetPrevDividendAccountMapKey returns prev dividend account map
-func GetPrevDividendAccountMapKey(id []byte) []byte {
-	return append(PrevDividendAccountMapKey, id...)
 }
 
 // AddDividendAccount adds DividendAccount index with DividendID
