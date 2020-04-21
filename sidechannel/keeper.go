@@ -84,6 +84,12 @@ func (keeper Keeper) GetTxs(ctx sdk.Context, height int64) (txs tmTypes.Txs) {
 	return
 }
 
+// RemoveTx removes tx per height and hash
+func (keeper Keeper) RemoveTx(ctx sdk.Context, height int64, hash []byte) {
+	store := ctx.KVStore(keeper.key)
+	store.Delete(types.TxStoreKey(height, hash))
+}
+
 //
 // Validators methods
 //
@@ -118,6 +124,12 @@ func (keeper Keeper) GetValidators(ctx sdk.Context, height int64) (validators []
 func (keeper Keeper) HasValidators(ctx sdk.Context, height int64) bool {
 	store := ctx.KVStore(keeper.key)
 	return store.Has(types.ValidatorsKey(height))
+}
+
+// RemoveValidators removes validators per height
+func (keeper Keeper) RemoveValidators(ctx sdk.Context, height int64) {
+	store := ctx.KVStore(keeper.key)
+	store.Delete(types.ValidatorsKey(height))
 }
 
 //

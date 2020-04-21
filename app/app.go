@@ -1,7 +1,6 @@
 package app
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"math/big"
@@ -431,6 +430,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		),
 	)
 	// side-tx processor
+	app.SetPostDeliverTxHandler(app.PostDeliverTxHandler)
 	app.SetBeginSideBlocker(app.BeginSideBlocker)
 	app.SetDeliverSideTxHandler(app.DeliverSideTxHandler)
 
@@ -601,42 +601,6 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) ab
 	// send validator updates to peppermint
 	return abci.ResponseEndBlock{
 		ValidatorUpdates: tmValUpdates,
-	}
-}
-
-// BeginSideBlocker runs before side block
-func (app *HeimdallApp) BeginSideBlocker(ctx sdk.Context, req abci.RequestBeginSideBlock) (res abci.ResponseBeginSideBlock) {
-	fmt.Println("[sidechannel] BeginSideBlock",
-		"height", req.Header.Height,
-	)
-
-	for _, r := range req.SideTxResults {
-		fmt.Println("                              ", "txHash", hex.EncodeToString(r.TxHash))
-		for _, s := range r.Sigs {
-			fmt.Println("                                 ", "result", s.Result, "sig", hex.EncodeToString(s.Sig))
-		}
-	}
-
-	return res
-}
-
-// DeliverSideTxHandler runs for each side tx
-func (app *HeimdallApp) DeliverSideTxHandler(ctx sdk.Context, tx sdk.Tx, req abci.RequestDeliverSideTx) (res abci.ResponseDeliverSideTx) {
-	fmt.Println("[sidechannel] DeliverSideTx",
-		"tx", hex.EncodeToString(req.Tx),
-		"msgRoute", tx.GetMsgs()[0].Route(),
-		"msgType", tx.GetMsgs()[0].Type(),
-	)
-
-	var result sdk.Result
-
-	return abci.ResponseDeliverSideTx{
-		Code:      uint32(result.Code),
-		Codespace: string(result.Codespace),
-		Data:      result.Data,
-
-		// yes vote
-		Result: abci.SideTxResultType_Yes,
 	}
 }
 

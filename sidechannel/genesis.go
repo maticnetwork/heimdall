@@ -1,6 +1,8 @@
 package sidechannel
 
 import (
+	"sort"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmTypes "github.com/tendermint/tendermint/types"
@@ -45,7 +47,9 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
 
 	result := make([]types.PastCommit, 0)
 	for height := range mappedResult {
-		ty := types.PastCommit{}
+		ty := types.PastCommit{
+			Height: height,
+		}
 		if r, ok := txs[height]; ok {
 			ty.Txs = r
 		}
@@ -55,6 +59,11 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
 		}
 		result = append(result, ty)
 	}
+
+	// sort result slice
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Height < result[j].Height
+	})
 
 	return types.NewGenesisState(result)
 }
