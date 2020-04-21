@@ -20,9 +20,9 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 
 		switch msg := msg.(type) {
 		case types.MsgTopup:
-			return handleMsgTopup(ctx, k, msg, contractCaller)
+			return HandleMsgTopup(ctx, k, msg, contractCaller)
 		case types.MsgWithdrawFee:
-			return handleMsgWithdrawFee(ctx, k, msg)
+			return HandleMsgWithdrawFee(ctx, k, msg)
 		default:
 			errMsg := "Unrecognized topup Msg type: %s" + msg.Type()
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -30,8 +30,8 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 	}
 }
 
-// Handle MsgMintFeeToken
-func handleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCaller helper.IContractCaller) sdk.Result {
+// HandleMsgTopup handles topup event
+func HandleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCaller helper.IContractCaller) sdk.Result {
 	if !k.bk.GetSendEnabled(ctx) {
 		return types.ErrSendDisabled(k.Codespace()).Result()
 	}
@@ -108,8 +108,8 @@ func handleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCalle
 	}
 }
 
-// Handle MsgWithdrawFee.
-func handleMsgWithdrawFee(ctx sdk.Context, k Keeper, msg types.MsgWithdrawFee) sdk.Result {
+// HandleMsgWithdrawFee handle withdraw fee event
+func HandleMsgWithdrawFee(ctx sdk.Context, k Keeper, msg types.MsgWithdrawFee) sdk.Result {
 
 	amount := msg.Amount
 

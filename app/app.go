@@ -392,6 +392,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 			supplyTypes.AccountProcessor,
 		}),
 		chainmanager.NewAppModule(app.ChainKeeper, &app.caller),
+		topup.NewAppModule(app.TopupKeeper, &app.caller),
 	)
 	app.sm.RegisterStoreDecoders()
 
