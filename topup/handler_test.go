@@ -63,8 +63,6 @@ func (suite *HandlerTestSuite) TestHandleMsgTopup() {
 	chainParams := app.ChainKeeper.GetParams(ctx)
 	txreceipt := &ethTypes.Receipt{
 		BlockNumber: big.NewInt(10),
-		// Index:       uint(index),
-		// Address:     chainParams.ChainParams.StakingInfoAddress.EthAddress(),
 	}
 
 	msgTopup := types.NewMsgTopup(pAddress, validatorId, txHash, logIndex)
@@ -72,14 +70,14 @@ func (suite *HandlerTestSuite) TestHandleMsgTopup() {
 	stakinginfoTopUpFee := &stakinginfo.StakinginfoTopUpFee{
 		ValidatorId: new(big.Int).SetUint64(validatorId),
 		Signer:      pAddress.EthAddress(),
-		Fee:         big.NewInt(0),
+		Fee:         big.NewInt(100000000000000000),
 	}
 
 	suite.contractCaller.On("GetConfirmedTxReceipt", mock.Anything, txHash.EthHash(), chainParams.TxConfirmationTime).Return(txreceipt, nil)
 
 	suite.contractCaller.On("DecodeValidatorTopupFeesEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), mock.Anything, msgTopup.LogIndex).Return(stakinginfoTopUpFee, nil)
 	result := topup.HandleMsgTopup(ctx, app.TopupKeeper, msgTopup, &suite.contractCaller)
-	// TODO: send coin error {10 sdk [] {"codespace":"sdk","code":10,"message":"insufficient account funds; 100000000matic < 1000000000000000matic"} 0 0 []}
+
 	require.True(t, result.IsOK(), "expected topup to be done, got %v", result)
 }
 
@@ -88,12 +86,38 @@ func (suite *HandlerTestSuite) TestHandleMsgWithdrawFee() {
 	amount, _ := big.NewInt(0).SetString("0", 10)
 	s1 := rand.NewSource(time.Now().UnixNano())
 	r1 := rand.New(s1)
+
+	txHash := hmTypes.HexToHeimdallHash("123")
+	logIndex := simulation.RandIntBetween(r1, 0, 100)
+
 	validatorId := uint64(simulation.RandIntBetween(r1, 0, 100))
 
 	privKey1 := secp256k1.GenPrivKey()
 	pubkey := hmTypes.NewPubKey(privKey1.PubKey().Bytes())
 	validatorAddress := pubkey.Address()
 
+	chainParams := app.ChainKeeper.GetParams(ctx)
+
+	txreceipt := &ethTypes.Receipt{
+		BlockNumber: big.NewInt(10),
+	}
+
+	msgTopup := types.NewMsgTopup(hmTypes.BytesToHeimdallAddress(validatorAddress.Bytes()), validatorId, txHash, uint64(logIndex))
+
+	stakinginfoTopUpFee := &stakinginfo.StakinginfoTopUpFee{
+		ValidatorId: new(big.Int).SetUint64(validatorId),
+		Signer:      validatorAddress,
+		Fee:         big.NewInt(100000000000000000),
+	}
+
+	suite.contractCaller.On("GetConfirmedTxReceipt", mock.Anything, txHash.EthHash(), chainParams.TxConfirmationTime).Return(txreceipt, nil)
+
+	suite.contractCaller.On("DecodeValidatorTopupFeesEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), mock.Anything, msgTopup.LogIndex).Return(stakinginfoTopUpFee, nil)
+	topupResult := topup.HandleMsgTopup(ctx, app.TopupKeeper, msgTopup, &suite.contractCaller)
+
+	require.True(t, topupResult.IsOK(), "expected topup to be done, got %v", topupResult)
+
+	// start Withdraw fees
 	startBlock := uint64(simulation.RandIntBetween(r1, 1, 100))
 
 	power := simulation.RandIntBetween(r1, 1, 100)
@@ -115,7 +139,7 @@ func (suite *HandlerTestSuite) TestHandleMsgWithdrawFee() {
 		hmTypes.BytesToHeimdallAddress(validatorAddress.Bytes()),
 		sdk.NewIntFromBigInt(amount),
 	)
-	result := topup.HandleMsgWithdrawFee(ctx, app.TopupKeeper, msgWithdrawFee)
+	withdrawResult := topup.HandleMsgWithdrawFee(ctx, app.TopupKeeper, msgWithdrawFee)
 
-	require.True(t, result.IsOK(), "expected withdraw tobe done, git %v", result)
+	require.True(t, withdrawResult.IsOK(), "expected withdraw tobe done, got %v", withdrawResult)
 }
