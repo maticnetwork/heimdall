@@ -13,6 +13,11 @@ import (
 
 // PostDeliverTxHandler runs after deliver tx handler
 func (app *HeimdallApp) PostDeliverTxHandler(ctx sdk.Context, tx sdk.Tx, result sdk.Result) {
+	height := ctx.BlockHeader().Height
+	if height <= 2 {
+		return
+	}
+
 	if result.IsOK() {
 		anySideMsg := false
 		for _, msg := range tx.GetMsgs() {
