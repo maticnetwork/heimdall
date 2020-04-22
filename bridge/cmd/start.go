@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/spf13/cobra"
 
 	"github.com/spf13/viper"
@@ -28,7 +29,11 @@ import (
 const (
 	waitDuration = 1 * time.Minute
 	logLevel     = "log_level"
+	userOnlyPerm = 0600 // to add a layer of security as per audit
 )
+
+// secretFilesToCheck is initilized in init. it contains the list of files whos permissions are to be checked.
+var secretFilesToCheck []string
 
 // GetStartCmd returns the start command to start bridge
 func GetStartCmd() *cobra.Command {
@@ -54,6 +59,12 @@ func GetStartCmd() *cobra.Command {
 				listener.NewListenerService(cdc, _queueConnector),
 				processor.NewProcessorService(cdc, _queueConnector, _httpClient, _txBroadcaster),
 			)
+
+			// TODO validate secret files
+			// ignoring errors returned
+			for _, fName := range secretFilesToCheck {
+				permCheck(fName, userOnlyPerm)
+			}
 
 			// sync group
 			var wg sync.WaitGroup
@@ -131,4 +142,8 @@ func GetStartCmd() *cobra.Command {
 
 func init() {
 	rootCmd.AddCommand(GetStartCmd())
+	// add secret files whos permissions need to be checked
+	conf := server.NewDefaultContext().Config
+	secretFilesToCheck = []string{conf.PrivValidatorKeyFile()}
+	// add keystore files to list
 }
