@@ -15,7 +15,7 @@ func TestFetchHeaders(t *testing.T) {
 	helper.InitHeimdallConfig(os.ExpandEnv("$HOME/.heimdalld"))
 	start := uint64(0)
 	end := uint64(300)
-	maxCheckpointLength := uint(1024)
+	maxCheckpointLength := uint64(1024)
 
 	result, err := checkpointTypes.GetHeaders(start, end, maxCheckpointLength)
 	require.Empty(t, err, "Unable to fetch headers, Error:%v", err)

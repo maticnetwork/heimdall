@@ -134,9 +134,9 @@ func handleQueryNextCheckpoint(ctx sdk.Context, req abci.RequestQuery, keeper Ke
 	}
 
 	params := keeper.GetParams(ctx)
-	end := start + helper.GetConfig().AvgCheckpointLength
+	end := start + params.AvgCheckpointLength
 
-	rootHash, err := types.GetHeaders(start, end, params.CheckpointLength)
+	rootHash, err := types.GetHeaders(start, end, params.AvgCheckpointLength)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr(fmt.Sprintf("could not fetch headers for start:%v end:%v error:%v", start, end, err), err.Error()))
 	}
@@ -147,7 +147,7 @@ func handleQueryNextCheckpoint(ctx sdk.Context, req abci.RequestQuery, keeper Ke
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr(fmt.Sprintf("could not get generate account root hash. Error:%v", err), err.Error()))
 	}
 
-	checkpointMsg := types.NewMsgCheckpointBlock(proposer.Signer, start, start+helper.GetConfig().AvgCheckpointLength, hmTypes.BytesToHeimdallHash(rootHash), hmTypes.BytesToHeimdallHash(accRootHash))
+	checkpointMsg := types.NewMsgCheckpointBlock(proposer.Signer, start, start+params.AvgCheckpointLength, hmTypes.BytesToHeimdallHash(rootHash), hmTypes.BytesToHeimdallHash(accRootHash))
 	bz, err := json.Marshal(checkpointMsg)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr(fmt.Sprintf("could not marshall checkpoint msg. Error:%v", err), err.Error()))
