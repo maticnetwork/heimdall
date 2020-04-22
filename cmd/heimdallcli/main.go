@@ -276,7 +276,7 @@ func generateKeystore(cdc *codec.Codec) *cobra.Command {
 			}
 
 			// Then write the new keyfile in place of the old one.
-			if err := ioutil.WriteFile(keyFileName(key.Address), keyjson, 0644); err != nil {
+			if err := ioutil.WriteFile(keyFileName(key.Address), keyjson, 0600); err != nil {
 				return err
 			}
 			return nil
@@ -314,7 +314,7 @@ func generateValidatorKey(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			err = ioutil.WriteFile("priv_validator_key.json", jsonBytes, 0644)
+			err = ioutil.WriteFile("priv_validator_key.json", jsonBytes, 0600)
 			if err != nil {
 				return err
 			}

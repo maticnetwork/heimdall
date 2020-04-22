@@ -23,6 +23,7 @@ import (
 	"github.com/maticnetwork/heimdall/bridge/setu/processor"
 	"github.com/maticnetwork/heimdall/bridge/setu/queue"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
+	"github.com/maticnetwork/heimdall/file"
 	"github.com/maticnetwork/heimdall/helper"
 )
 
@@ -63,7 +64,11 @@ func GetStartCmd() *cobra.Command {
 			// TODO validate secret files
 			// ignoring errors returned
 			for _, fName := range secretFilesToCheck {
-				permCheck(fName, userOnlyPerm)
+				logger.Info("checking permissions for " + fName)
+				err := file.PermCheck(fName, userOnlyPerm)
+				if err != nil {
+					logger.Error(err.Error())
+				}
 			}
 
 			// sync group
