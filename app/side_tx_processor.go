@@ -1,17 +1,31 @@
 package app
 
 import (
+	"bytes"
 	"encoding/hex"
-	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
+
+	authTypes "github.com/maticnetwork/heimdall/auth/types"
+	"github.com/maticnetwork/heimdall/types"
 )
 
 // PostDeliverTxHandler runs after deliver tx handler
 func (app *HeimdallApp) PostDeliverTxHandler(ctx sdk.Context, tx sdk.Tx, result sdk.Result) {
 	if result.IsOK() {
-		app.SidechannelKeeper.SetTx(ctx, ctx.BlockHeader().Height, ctx.TxBytes())
+		anySideMsg := false
+		for _, msg := range tx.GetMsgs() {
+			if _, ok := msg.(types.SideTxMsg); ok {
+				anySideMsg = true
+				break
+			}
+		}
+
+		// save tx bytes if any tx-msg is side-tx msg
+		if anySideMsg {
+			app.SidechannelKeeper.SetTx(ctx, ctx.BlockHeader().Height, ctx.TxBytes())
+		}
 	}
 }
 
@@ -24,23 +38,7 @@ func (app *HeimdallApp) BeginSideBlocker(ctx sdk.Context, req abci.RequestBeginS
 
 	targetHeight := height - 2 // sidechannel takes 2 blocks to process
 
-	fmt.Println("[sidechannel] Processing side block",
-		"height", height,
-		"targetHeight", targetHeight,
-	)
-
-	// get all txs
-	txs := app.SidechannelKeeper.GetTxs(ctx, targetHeight)
-	if len(txs) == 0 {
-		return
-	}
-
-	// remove all txs before exiting
-	defer func() {
-		for _, tx := range txs {
-			app.SidechannelKeeper.RemoveTx(ctx, targetHeight, tx.Hash())
-		}
-	}()
+	app.Logger().Debug("[sidechannel] Processing side block", "height", height, "targetHeight", targetHeight)
 
 	// get all validators
 	validators := app.SidechannelKeeper.GetValidators(ctx, targetHeight)
@@ -54,11 +52,66 @@ func (app *HeimdallApp) BeginSideBlocker(ctx sdk.Context, req abci.RequestBeginS
 		totalPower = totalPower + v.Power
 	}
 
-	for _, r := range req.SideTxResults {
-		fmt.Println("                              ", "txHash", hex.EncodeToString(r.TxHash), "totalPower", totalPower)
-		for _, s := range r.Sigs {
-			fmt.Println("                                 ", "result", s.Result, "sig", hex.EncodeToString(s.Sig))
+	for _, sideTxResult := range req.SideTxResults {
+		txHash := sideTxResult.TxHash
+		// get tx from the store
+		tx := app.SidechannelKeeper.GetTx(ctx, targetHeight, txHash)
+		if tx != nil {
+			// remove tx to avoid duplicate execution
+			app.SidechannelKeeper.RemoveTx(ctx, targetHeight, txHash)
+
+			usedValidator := make(map[int]bool)
+
+			// signed power
+			signedPower := make(map[abci.SideTxResultType]int64)
+			signedPower[abci.SideTxResultType_Yes] = 0
+			signedPower[abci.SideTxResultType_Skip] = 0
+			signedPower[abci.SideTxResultType_No] = 0
+
+			for _, sigObj := range sideTxResult.Sigs {
+				// get validator by sig address
+				if i := getValidatorIndexByAddress(sigObj.Address, validators); i != -1 {
+					// check if validator already voted on tx
+					if _, ok := usedValidator[i]; !ok {
+						signedPower[sigObj.Result] = signedPower[sigObj.Result] + validators[i].Power
+						usedValidator[i] = true
+					}
+				}
+			}
+
+			// check vote majority
+			if signedPower[abci.SideTxResultType_Yes] >= (totalPower*2/3 + 1) {
+				// approved
+				app.Logger().Debug("[sidechannel] Approved side-tx", "txHash", hex.EncodeToString(tx.Hash()))
+
+				// execute tx with `yes`
+				app.runTx(ctx, tx, abci.SideTxResultType_Yes)
+			} else if signedPower[abci.SideTxResultType_No] >= (totalPower*2/3 + 1) {
+				// rejected
+				app.Logger().Debug("[sidechannel] Rejected side-tx", "txHash", hex.EncodeToString(tx.Hash()))
+
+				// execute tx with `no`
+				app.runTx(ctx, tx, abci.SideTxResultType_No)
+			} else {
+				// skipped
+				app.Logger().Debug("[sidechannel] Skipped side-tx", "txHash", hex.EncodeToString(tx.Hash()))
+
+				// execute tx with `skip`
+				app.runTx(ctx, tx, abci.SideTxResultType_Skip)
+			}
 		}
+	}
+
+	// remove all pending txs before exiting
+	txs := app.SidechannelKeeper.GetTxs(ctx, targetHeight)
+	for _, tx := range txs {
+		app.SidechannelKeeper.RemoveTx(ctx, targetHeight, tx.Hash())
+
+		// skipped
+		app.Logger().Debug("[sidechannel] Skipped side-tx", "txHash", hex.EncodeToString(tx.Hash()))
+
+		// execute tx with `skip`
+		app.runTx(ctx, tx, abci.SideTxResultType_Skip)
 	}
 
 	return res
@@ -66,20 +119,144 @@ func (app *HeimdallApp) BeginSideBlocker(ctx sdk.Context, req abci.RequestBeginS
 
 // DeliverSideTxHandler runs for each side tx
 func (app *HeimdallApp) DeliverSideTxHandler(ctx sdk.Context, tx sdk.Tx, req abci.RequestDeliverSideTx) (res abci.ResponseDeliverSideTx) {
-	fmt.Println("[sidechannel] DeliverSideTx",
-		"tx", hex.EncodeToString(req.Tx),
-		"msgRoute", tx.GetMsgs()[0].Route(),
-		"msgType", tx.GetMsgs()[0].Type(),
-	)
+	var code uint32
+	var codespace string
 
-	var result sdk.Result
+	result := abci.SideTxResultType_Skip
+	data := make([]byte, 0)
+
+	for _, msg := range tx.GetMsgs() {
+		// match message route
+		msgRoute := msg.Route()
+		handlers := app.sideRouter.GetRoute(msgRoute)
+		if handlers != nil && handlers.SideTxHandler != nil {
+			// execute side-tx handler
+			msgResult := handlers.SideTxHandler(ctx, msg)
+
+			// stop execution and return on first failed message
+			if msgResult.Code != uint32(sdk.CodeOK) {
+				// set data to empty if error
+				data = make([]byte, 0)
+
+				code = msgResult.Code
+				codespace = msgResult.Codespace
+				// skip side-tx if result is error
+				result = abci.SideTxResultType_Skip
+				break
+			}
+
+			// Each message result's Data must be length prefixed in order to separate
+			// each result.
+			data = append(data, msgResult.Data...)
+			result = msgResult.Result
+		}
+	}
 
 	return abci.ResponseDeliverSideTx{
-		Code:      uint32(result.Code),
-		Codespace: string(result.Codespace),
-		Data:      result.Data,
-
-		// yes vote
-		Result: abci.SideTxResultType_Yes,
+		Code:      uint32(code),
+		Codespace: string(codespace),
+		Data:      data,
+		Result:    result,
 	}
+}
+
+//
+// Internal functions
+//
+
+func (app *HeimdallApp) runTx(ctx sdk.Context, txBytes []byte, sideTxResult abci.SideTxResultType) (result sdk.Result) {
+	decoder := authTypes.DefaultTxDecoder(app.cdc)
+	tx, err := decoder(txBytes)
+	if err != nil {
+		return
+	}
+	// get context with tx bytes
+	ctx = ctx.WithTxBytes(txBytes)
+	// Create a new context based off of the existing context with a cache wrapped
+	// multi-store in case message processing fails.
+	runMsgCtx, msCache := app.cacheTxContext(ctx, txBytes)
+	result = app.runMsgs(runMsgCtx, tx.GetMsgs(), sideTxResult)
+	// only update state if all messages pass
+	if result.IsOK() {
+		msCache.Write()
+	}
+
+	return
+}
+
+/// runMsgs iterates through all the messages and executes them.
+func (app *HeimdallApp) runMsgs(ctx sdk.Context, msgs []sdk.Msg, sideTxResult abci.SideTxResultType) sdk.Result {
+	data := make([]byte, 0, len(msgs))
+
+	var (
+		code      sdk.CodeType
+		codespace sdk.CodespaceType
+	)
+
+	// get empty events
+	events := sdk.EmptyEvents()
+
+	for _, msg := range msgs {
+		_, isSideTxMsg := msg.(types.SideTxMsg)
+
+		// match message route
+		msgRoute := msg.Route()
+		handler := app.sideRouter.GetRoute(msgRoute)
+		if handler != nil && handler.PostTxHandler != nil && isSideTxMsg {
+			msgResult := handler.PostTxHandler(ctx, msg, sideTxResult)
+
+			// Each message result's Data must be length prefixed in order to separate
+			// each result.
+			data = append(data, msgResult.Data...)
+
+			// msg events
+			msgEvents := msgResult.Events
+
+			// append events from the message's execution and a message action event
+			msgEvents = msgEvents.AppendEvent(
+				sdk.NewEvent(sdk.EventTypeMessage, sdk.NewAttribute(sdk.AttributeKeyAction, msg.Type())),
+			)
+
+			events = events.AppendEvents(msgEvents)
+
+			// stop execution and return on first failed message
+			if !msgResult.IsOK() {
+				code = msgResult.Code
+				codespace = msgResult.Codespace
+				break
+			}
+		}
+	}
+
+	return sdk.Result{
+		Code:      code,
+		Codespace: codespace,
+		Data:      data,
+		Events:    events,
+	}
+}
+
+// cacheTxContext returns a new context based off of the provided context with
+// a cache wrapped multi-store.
+func (app *HeimdallApp) cacheTxContext(ctx sdk.Context, txBytes []byte) (
+	sdk.Context, sdk.CacheMultiStore) {
+
+	ms := ctx.MultiStore()
+	msCache := ms.CacheMultiStore()
+
+	return ctx.WithMultiStore(msCache), msCache
+}
+
+//
+// utils
+//
+
+func getValidatorIndexByAddress(address []byte, validators []abci.Validator) int {
+	for i, v := range validators {
+		if bytes.Equal(address, v.Address) {
+			return i
+		}
+	}
+
+	return -1
 }

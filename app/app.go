@@ -98,6 +98,9 @@ type HeimdallApp struct {
 	// subspaces
 	subspaces map[string]subspace.Subspace
 
+	// side router
+	sideRouter types.Router
+
 	// keepers
 	SidechannelKeeper sidechannel.Keeper
 	AccountKeeper     auth.AccountKeeper
@@ -399,6 +402,19 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	// register message routes and query routes
 	app.mm.RegisterRoutes(app.Router(), app.QueryRouter())
 
+	// side router
+	app.sideRouter = types.NewRouter()
+	for _, m := range app.mm.Modules {
+		if m.Route() != "" {
+			if sm, ok := m.(hmModule.SideModule); ok {
+				app.sideRouter.AddRoute(m.Route(), &types.SideHandlers{
+					sm.NewSideTxHandler(), sm.NewPostTxHandler(),
+				})
+			}
+		}
+	}
+	app.sideRouter.Seal()
+
 	// create the simulation manager and define the order of the modules for deterministic simulations
 	//
 	// NOTE: this is not required apps that don't use the simulator for fuzz testing
@@ -646,6 +662,11 @@ func (app *HeimdallApp) GetTKey(storeKey string) *sdk.TransientStoreKey {
 // NOTE: This is solely to be used for testing purposes.
 func (app *HeimdallApp) GetSubspace(moduleName string) subspace.Subspace {
 	return app.subspaces[moduleName]
+}
+
+// GetSideRouter returns side-tx router
+func (app *HeimdallApp) GetSideRouter() types.Router {
+	return app.sideRouter
 }
 
 // GetModuleManager returns module manager
