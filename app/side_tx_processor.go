@@ -52,6 +52,9 @@ func (app *HeimdallApp) BeginSideBlocker(ctx sdk.Context, req abci.RequestBeginS
 		totalPower = totalPower + v.Power
 	}
 
+	// get empty events
+	events := sdk.EmptyEvents()
+
 	for _, sideTxResult := range req.SideTxResults {
 		txHash := sideTxResult.TxHash
 		// get tx from the store
@@ -79,26 +82,31 @@ func (app *HeimdallApp) BeginSideBlocker(ctx sdk.Context, req abci.RequestBeginS
 				}
 			}
 
+			var result sdk.Result
+
 			// check vote majority
 			if signedPower[abci.SideTxResultType_Yes] >= (totalPower*2/3 + 1) {
 				// approved
 				app.Logger().Debug("[sidechannel] Approved side-tx", "txHash", hex.EncodeToString(tx.Hash()))
 
 				// execute tx with `yes`
-				app.runTx(ctx, tx, abci.SideTxResultType_Yes)
+				result = app.runTx(ctx, tx, abci.SideTxResultType_Yes)
 			} else if signedPower[abci.SideTxResultType_No] >= (totalPower*2/3 + 1) {
 				// rejected
 				app.Logger().Debug("[sidechannel] Rejected side-tx", "txHash", hex.EncodeToString(tx.Hash()))
 
 				// execute tx with `no`
-				app.runTx(ctx, tx, abci.SideTxResultType_No)
+				result = app.runTx(ctx, tx, abci.SideTxResultType_No)
 			} else {
 				// skipped
 				app.Logger().Debug("[sidechannel] Skipped side-tx", "txHash", hex.EncodeToString(tx.Hash()))
 
 				// execute tx with `skip`
-				app.runTx(ctx, tx, abci.SideTxResultType_Skip)
+				result = app.runTx(ctx, tx, abci.SideTxResultType_Skip)
 			}
+
+			// add events
+			events = events.AppendEvents(result.Events)
 		}
 	}
 
@@ -111,8 +119,14 @@ func (app *HeimdallApp) BeginSideBlocker(ctx sdk.Context, req abci.RequestBeginS
 		app.Logger().Debug("[sidechannel] Skipped side-tx", "txHash", hex.EncodeToString(tx.Hash()))
 
 		// execute tx with `skip`
-		app.runTx(ctx, tx, abci.SideTxResultType_Skip)
+		result := app.runTx(ctx, tx, abci.SideTxResultType_Skip)
+
+		// add events
+		events = events.AppendEvents(result.Events)
 	}
+
+	// set event to response
+	res.Events = events.ToABCIEvents()
 
 	return res
 }
@@ -126,10 +140,12 @@ func (app *HeimdallApp) DeliverSideTxHandler(ctx sdk.Context, tx sdk.Tx, req abc
 	data := make([]byte, 0)
 
 	for _, msg := range tx.GetMsgs() {
+		sideMsg, isSideTxMsg := msg.(types.SideTxMsg)
+
 		// match message route
 		msgRoute := msg.Route()
 		handlers := app.sideRouter.GetRoute(msgRoute)
-		if handlers != nil && handlers.SideTxHandler != nil {
+		if handlers != nil && handlers.SideTxHandler != nil && isSideTxMsg {
 			// execute side-tx handler
 			msgResult := handlers.SideTxHandler(ctx, msg)
 
@@ -149,6 +165,11 @@ func (app *HeimdallApp) DeliverSideTxHandler(ctx sdk.Context, tx sdk.Tx, req abc
 			// each result.
 			data = append(data, msgResult.Data...)
 			result = msgResult.Result
+
+			// msg result is empty, get side sign bytes and append into data
+			if len(msgResult.Data) == 0 {
+				data = append(data, sideMsg.GetSideSignBytes()...)
+			}
 		}
 	}
 
@@ -165,7 +186,8 @@ func (app *HeimdallApp) DeliverSideTxHandler(ctx sdk.Context, tx sdk.Tx, req abc
 //
 
 func (app *HeimdallApp) runTx(ctx sdk.Context, txBytes []byte, sideTxResult abci.SideTxResultType) (result sdk.Result) {
-	decoder := authTypes.DefaultTxDecoder(app.cdc)
+	// get decoder
+	decoder := authTypes.RLPTxDecoder(app.cdc, authTypes.GetPulpInstance())
 	tx, err := decoder(txBytes)
 	if err != nil {
 		return
