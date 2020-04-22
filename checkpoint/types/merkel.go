@@ -62,7 +62,7 @@ func GetHeaders(start uint64, end uint64, checkpointLength uint) ([]byte, error)
 	noOfBlock := end - start
 
 	if noOfBlock >= uint64(checkpointLength) {
-		return nil, errors.New("maximum limit of requested block exceeds")
+		return nil, errors.New("number of headers requested exceeds")
 	}
 
 	if start > end {
