@@ -20,14 +20,14 @@ import (
 )
 
 // ValidateCheckpoint - Validates if checkpoint rootHash matches or not
-func ValidateCheckpoint(start uint64, end uint64, rootHash hmTypes.HeimdallHash) (bool, error) {
+func ValidateCheckpoint(start uint64, end uint64, rootHash hmTypes.HeimdallHash, maxCheckpointLength uint) (bool, error) {
 	// Check if blocks exist locally
 	if !CheckIfBlocksExist(end) {
 		return false, errors.New("blocks not found locally")
 	}
 
 	// Compare RootHash
-	root, err := GetHeaders(start, end)
+	root, err := GetHeaders(start, end, maxCheckpointLength)
 	if err != nil {
 		return false, err
 	}
@@ -57,8 +57,13 @@ func CheckIfBlocksExist(end uint64) bool {
 	return true
 }
 
-func GetHeaders(start uint64, end uint64) ([]byte, error) {
+func GetHeaders(start uint64, end uint64, checkpointLength uint) ([]byte, error) {
 	rpcClient := helper.GetMaticRPCClient()
+	noOfBlock := end - start
+
+	if noOfBlock >= uint64(checkpointLength) {
+		return nil, errors.New("maximum limit of requested block exceeds")
+	}
 
 	if start > end {
 		return nil, errors.New("start is greater than end")
