@@ -346,7 +346,10 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToHeimdall(start uint64, e
 		return nil
 	}
 
-	configParams, _ := util.GetCheckpointParams(cp.cliCtx)
+	configParams, err := util.GetCheckpointParams(cp.cliCtx)
+	if err != nil {
+		return err
+	}
 
 	// Get root hash
 	root, err := checkpointTypes.GetHeaders(start, end, configParams.CheckpointLength)
