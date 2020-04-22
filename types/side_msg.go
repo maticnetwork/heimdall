@@ -1,6 +1,5 @@
 package types
 
-
 //
 // SideTxMsg tx message
 //
