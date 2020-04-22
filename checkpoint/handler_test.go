@@ -295,7 +295,8 @@ func SentValidCheckpoint(header types.CheckpointBlockHeader, ck Keeper, sk staki
 func GenRandCheckpointHeader(start int, headerSize int) (headerBlock types.CheckpointBlockHeader, err error) {
 	start = start
 	end := start + headerSize
-	roothash, err := checkpointTypes.GetHeaders(uint64(start), uint64(end))
+	maxCheckpointLength := uint(1024)
+	roothash, err := checkpointTypes.GetHeaders(uint64(start), uint64(end), maxCheckpointLength)
 	if err != nil {
 		return headerBlock, err
 	}

@@ -15,8 +15,10 @@ func TestFetchHeaders(t *testing.T) {
 	helper.InitHeimdallConfig(os.ExpandEnv("$HOME/.heimdalld"))
 	start := uint64(0)
 	end := uint64(300)
-	result, err := checkpointTypes.GetHeaders(start, end)
+	maxCheckpointLength := uint(1024)
+
+	result, err := checkpointTypes.GetHeaders(start, end, maxCheckpointLength)
 	require.Empty(t, err, "Unable to fetch headers, Error:%v", err)
-	ok, err := checkpointTypes.ValidateCheckpoint(start, end, types.HeimdallHash(common.BytesToHash(result)))
+	ok, err := checkpointTypes.ValidateCheckpoint(start, end, types.HeimdallHash(common.BytesToHash(result)), maxCheckpointLength)
 	require.Equal(t, true, ok, "Root hash should match ")
 }

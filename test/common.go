@@ -103,7 +103,8 @@ func CreateTestInput(t *testing.T, isCheckTx bool) (sdk.Context, staking.Keeper,
 func GenRandCheckpointHeader(start int, headerSize int) (headerBlock types.CheckpointBlockHeader, err error) {
 	start = start
 	end := start + headerSize
-	roothash, err := checkpointTypes.GetHeaders(uint64(start), uint64(end))
+	maxCheckpointLenght := uint(1024)
+	roothash, err := checkpointTypes.GetHeaders(uint64(start), uint64(end), maxCheckpointLenght)
 	if err != nil {
 		return headerBlock, err
 	}
