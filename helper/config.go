@@ -12,6 +12,7 @@ import (
 	ethCrypto "github.com/maticnetwork/bor/crypto"
 	"github.com/maticnetwork/bor/ethclient"
 	"github.com/maticnetwork/bor/rpc"
+	"github.com/maticnetwork/heimdall/file"
 	"github.com/spf13/viper"
 	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -67,6 +68,8 @@ const (
 	DefaultMainchainGasLimit  = uint64(5000000)
 
 	DefaultBorChainID string = "15001"
+
+	secretFilePerm = 0600
 )
 
 var (
@@ -196,6 +199,10 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 	GenesisDoc = *genDoc
 
 	// load pv file, unmarshall and set to privObject
+	err = file.PermCheck(file.Rootify("priv_validator_key.json", configDir), secretFilePerm)
+	if err != nil {
+		Logger.Error(err.Error())
+	}
 	privVal := privval.LoadFilePV(filepath.Join(configDir, "priv_validator_key.json"), filepath.Join(configDir, "priv_validator_key.json"))
 	cdc.MustUnmarshalBinaryBare(privVal.Key.PrivKey.Bytes(), &privObject)
 	cdc.MustUnmarshalBinaryBare(privObject.PubKey().Bytes(), &pubObject)

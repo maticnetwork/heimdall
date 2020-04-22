@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -23,6 +22,7 @@ import (
 	ethCommon "github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/bor/console"
 	"github.com/maticnetwork/bor/crypto"
+	"github.com/maticnetwork/heimdall/file"
 	"github.com/maticnetwork/heimdall/version"
 	"github.com/pborman/uuid"
 	"github.com/spf13/cobra"
@@ -229,9 +229,9 @@ func exportCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 				panic(err)
 			}
 
-			err = writeGenesisFile(rootify("config/dump-genesis.json", config.RootDir), chainID, appState)
+			err = writeGenesisFile(file.Rootify("config/dump-genesis.json", config.RootDir), chainID, appState)
 			if err == nil {
-				fmt.Println("New genesis json file created:", rootify("config/dump-genesis.json", config.RootDir))
+				fmt.Println("New genesis json file created:", file.Rootify("config/dump-genesis.json", config.RootDir))
 			}
 			return err
 		},
@@ -340,13 +340,6 @@ func writeGenesisFile(genesisFile, chainID string, appState json.RawMessage) err
 	}
 
 	return genDoc.SaveAs(genesisFile)
-}
-
-func rootify(path, root string) string {
-	if filepath.IsAbs(path) {
-		return path
-	}
-	return filepath.Join(root, path)
 }
 
 // keyFileName implements the naming convention for keyfiles:

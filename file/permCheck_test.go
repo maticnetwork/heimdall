@@ -28,7 +28,7 @@ func TestPermCheck(t *testing.T) {
 			msg:       "test for invalid permission",
 		},
 		{
-			filePath:  "/tmp/heimdall_test",
+			filePath:  "/tmp/heimdall_test/test.json",
 			perm:      0600,
 			validPerm: 0600,
 			msg:       "success",
@@ -48,5 +48,7 @@ func TestPermCheck(t *testing.T) {
 		// check file perm for secret file
 		err = PermCheck(c.filePath, c.validPerm)
 		assert.Equal(t, c.expErr, err)
+
+		os.Remove(c.filePath) // cleen up
 	}
 }
