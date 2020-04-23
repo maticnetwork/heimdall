@@ -15,6 +15,8 @@ import (
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	chainManagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
+	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
+
 	"github.com/maticnetwork/heimdall/types"
 
 	"github.com/pkg/errors"
@@ -295,6 +297,25 @@ func GetConfigManagerParams(cliCtx cliContext.CLIContext) (*chainManagerTypes.Pa
 	}
 
 	var params chainManagerTypes.Params
+	if err := json.Unmarshal(response.Result, &params); err != nil {
+		return nil, err
+	}
+
+	return &params, nil
+}
+
+// GetCheckpointParams return params
+func GetCheckpointParams(cliCtx cliContext.CLIContext) (*checkpointTypes.Params, error) {
+	response, err := helper.FetchFromAPI(
+		cliCtx,
+		helper.GetHeimdallServerEndpoint(CheckpointParamsURL),
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var params checkpointTypes.Params
 	if err := json.Unmarshal(response.Result, &params); err != nil {
 		return nil, err
 	}
