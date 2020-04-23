@@ -1,6 +1,8 @@
 package types
 
 import (
+	"fmt"
+
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmTypes "github.com/tendermint/tendermint/types"
 )
@@ -26,11 +28,20 @@ func NewGenesisState(pastCommits []PastCommit) GenesisState {
 
 // DefaultGenesisState returns a default genesis state
 func DefaultGenesisState() GenesisState {
-	return NewGenesisState(nil)
+	return NewGenesisState(make([]PastCommit, 0))
 }
 
 // ValidateGenesis performs basic validation of topup genesis data returning an
 // error for any failed validation criteria.
 func ValidateGenesis(data GenesisState) error {
+	for _, pastCommit := range data.PastCommits {
+		if pastCommit.Height <= 2 {
+			return fmt.Errorf("Past commit height must be greater 2")
+		}
+
+		if len(pastCommit.Txs) == 0 && len(pastCommit.Validators) == 0 {
+			return fmt.Errorf("Txs or validators must be present")
+		}
+	}
 	return nil
 }

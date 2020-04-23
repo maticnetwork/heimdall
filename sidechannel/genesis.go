@@ -14,10 +14,15 @@ import (
 func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 	for _, pastCommit := range data.PastCommits {
 		// set validators
-		keeper.SetValidators(ctx, pastCommit.Height, pastCommit.Validators)
+		if len(pastCommit.Validators) > 0 {
+			keeper.SetValidators(ctx, pastCommit.Height, pastCommit.Validators)
+		}
+
 		// set all txs
-		for _, tx := range pastCommit.Txs {
-			keeper.SetTx(ctx, pastCommit.Height, tx)
+		if len(pastCommit.Txs) > 0 {
+			for _, tx := range pastCommit.Txs {
+				keeper.SetTx(ctx, pastCommit.Height, tx)
+			}
 		}
 	}
 }

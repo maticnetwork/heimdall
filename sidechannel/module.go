@@ -35,7 +35,7 @@ func (AppModuleBasic) Name() string {
 
 // RegisterCodec registers the auth module's types for the given codec.
 func (AppModuleBasic) RegisterCodec(cdc *codec.Codec) {
-	types.RegisterCodec(cdc)
+	// types.RegisterCodec(cdc)
 }
 
 // DefaultGenesis returns default genesis state as raw bytes for the auth
