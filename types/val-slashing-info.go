@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 )
@@ -28,6 +29,12 @@ func (v ValidatorSlashingInfo) String() string {
 	SlashedAmount:    %s
 	IsJailed:         %v`,
 		v.ID, v.SlashedAmount, v.IsJailed)
+}
+
+// SortValidatorSlashingInfoByID - Sorts ValidatorSlashingInfo By ID
+func SortValidatorSlashingInfoByID(slashingInfos []*ValidatorSlashingInfo) []*ValidatorSlashingInfo {
+	sort.Slice(slashingInfos, func(i, j int) bool { return slashingInfos[i].ID < slashingInfos[j].ID })
+	return slashingInfos
 }
 
 // amino marshall validator slashing info

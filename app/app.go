@@ -173,8 +173,8 @@ func (d ModuleCommunicator) SendCoins(ctx sdk.Context, fromAddr types.HeimdallAd
 }
 
 // Create ValidatorSigningInfo used by slashing module
-func (d ModuleCommunicator) CreateValiatorSigningInfo(ctx sdk.Context, valAddr []byte, valSigningInfo types.ValidatorSigningInfo) {
-	d.App.SlashingKeeper.SetValidatorSigningInfo(ctx, valAddr, valSigningInfo)
+func (d ModuleCommunicator) CreateValiatorSigningInfo(ctx sdk.Context, valID types.ValidatorID, valSigningInfo types.ValidatorSigningInfo) {
+	d.App.SlashingKeeper.SetValidatorSigningInfo(ctx, valID, valSigningInfo)
 	return
 }
 
@@ -291,6 +291,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		keys[slashingTypes.StoreKey], // target store
 		app.StakingKeeper,
 		app.subspaces[slashingTypes.ModuleName],
+		common.DefaultCodespace,
 	)
 
 	// bank keeper

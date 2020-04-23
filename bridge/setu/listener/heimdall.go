@@ -96,7 +96,7 @@ func (hl *HeimdallListener) StartPolling(ctx context.Context, pollInterval time.
 						for _, tx := range searchResult.Txs {
 							for _, log := range tx.Logs {
 								event := helper.FilterEvents(log.Events, func(et sdk.StringEvent) bool {
-									return et.Type == checkpointTypes.EventTypeCheckpoint || et.Type == clerkTypes.EventTypeRecord || et.Type == slashingTypes.EventTypeLiveness || et.Type == slashingTypes.EventTypeSlashLimit
+									return et.Type == checkpointTypes.EventTypeCheckpoint || et.Type == clerkTypes.EventTypeRecord || et.Type == slashingTypes.EventTypeTickConfirm || et.Type == slashingTypes.EventTypeSlashLimit
 								})
 								if event != nil {
 									hl.ProcessEvent(*event, tx)

@@ -15,9 +15,11 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/slashing/client/rest"
 	"github.com/maticnetwork/heimdall/slashing/simulation"
 	"github.com/maticnetwork/heimdall/slashing/types"
 	"github.com/maticnetwork/heimdall/staking"
+	slashingCli "github.com/maticnetwork/heimdall/staking/client/cli"
 	hmModule "github.com/maticnetwork/heimdall/types/module"
 	simTypes "github.com/maticnetwork/heimdall/types/simulation"
 )
@@ -81,21 +83,18 @@ func (AppModuleBasic) VerifyGenesis(bz map[string]json.RawMessage) error {
 
 // RegisterRESTRoutes registers the REST routes for the slashing module.
 func (AppModuleBasic) RegisterRESTRoutes(ctx context.CLIContext, rtr *mux.Router) {
-	// rest.RegisterRoutes(ctx, rtr)
+	rest.RegisterRoutes(ctx, rtr)
 }
 
 // GetTxCmd returns the root tx command for the slashing module.
 func (AppModuleBasic) GetTxCmd(cdc *codec.Codec) *cobra.Command {
-	// return cli.GetTxCmd(cdc)
-	// TODO - slashing
-	return nil
+	return slashingCli.GetTxCmd(cdc)
 }
 
 // GetQueryCmd returns no root query command for the slashing module.
 func (AppModuleBasic) GetQueryCmd(cdc *codec.Codec) *cobra.Command {
-	// return cli.GetQueryCmd(StoreKey, cdc)
-	// TODO - slashing
-	return nil
+	return slashingCli.GetQueryCmd(cdc)
+
 }
 
 //____________________________________________________________________________
@@ -144,9 +143,7 @@ func (AppModule) QuerierRoute() string {
 
 // NewQuerierHandler returns the slashing module sdk.Querier.
 func (am AppModule) NewQuerierHandler() sdk.Querier {
-	// return NewQuerier(am.keeper)
-	// TODO - slashing
-	return nil
+	return NewQuerier(am.keeper)
 }
 
 // InitGenesis performs genesis initialization for the slashing module. It returns

@@ -1,6 +1,8 @@
 package slashing
 
 import (
+	"strconv"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/slashing/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -16,15 +18,14 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 	// 	},
 	// )
 
-	for addr, info := range data.SigningInfos {
-		address := hmTypes.HexToHeimdallAddress(addr)
-		keeper.SetValidatorSigningInfo(ctx, address.Bytes(), info)
+	for _, info := range data.SigningInfos {
+		keeper.SetValidatorSigningInfo(ctx, info.ValID, info)
 	}
 
-	for addr, array := range data.MissedBlocks {
-		address := hmTypes.HexToHeimdallAddress(addr)
+	for valIDStr, array := range data.MissedBlocks {
 		for _, missed := range array {
-			keeper.SetValidatorMissedBlockBitArray(ctx, address.Bytes(), missed.Index, missed.Missed)
+			valID, _ := strconv.ParseUint(valIDStr, 10, 64)
+			keeper.SetValidatorMissedBlockBitArray(ctx, hmTypes.ValidatorID(valID), missed.Index, missed.Missed)
 		}
 	}
 
@@ -39,16 +40,15 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) (data types.GenesisState) {
 	params := keeper.GetParams(ctx)
 	signingInfos := make(map[string]hmTypes.ValidatorSigningInfo)
 	missedBlocks := make(map[string][]types.MissedBlock)
-	keeper.IterateValidatorSigningInfos(ctx, func(address []byte, info hmTypes.ValidatorSigningInfo) (stop bool) {
-		bechAddr := hmTypes.BytesToHeimdallAddress(address).String()
-		signingInfos[bechAddr] = info
+	keeper.IterateValidatorSigningInfos(ctx, func(valID hmTypes.ValidatorID, info hmTypes.ValidatorSigningInfo) (stop bool) {
+		signingInfos[valID.String()] = info
 		localMissedBlocks := []types.MissedBlock{}
 
-		keeper.IterateValidatorMissedBlockBitArray(ctx, address, func(index int64, missed bool) (stop bool) {
+		keeper.IterateValidatorMissedBlockBitArray(ctx, valID, func(index int64, missed bool) (stop bool) {
 			localMissedBlocks = append(localMissedBlocks, types.NewMissedBlock(index, missed))
 			return false
 		})
-		missedBlocks[bechAddr] = localMissedBlocks
+		missedBlocks[valID.String()] = localMissedBlocks
 
 		return false
 	})

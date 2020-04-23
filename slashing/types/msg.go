@@ -52,14 +52,12 @@ func (msg MsgUnjail) ValidateBasic() sdk.Error {
 type MsgTick struct {
 	Proposer         types.HeimdallAddress `json:"proposer"`
 	SlashingInfoHash types.HeimdallHash    `json:"accountRootHash"`
-	Index            uint64                `json:"index"`
 }
 
-func NewMsgtick(proposer types.HeimdallAddress, slashingInfoHash types.HeimdallHash, index uint64) MsgTick {
+func NewMsgtick(proposer types.HeimdallAddress, slashingInfoHash types.HeimdallHash) MsgTick {
 	return MsgTick{
 		Proposer:         proposer,
 		SlashingInfoHash: slashingInfoHash,
-		Index:            index,
 	}
 }
 

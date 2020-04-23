@@ -1,10 +1,11 @@
 package slashing
 
 import (
-	"fmt"
+	"bytes"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/slashing/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -81,17 +82,27 @@ func handlerMsgTick(ctx sdk.Context, msg types.MsgTick, k Keeper, contractCaller
 	// if err != nil {
 	// 	return nil, err
 	// }
-	valSlashingInfos := k.GetAllBufferValSlashingInfos(ctx)
-	slashingInfoHash, err := GetSlashingInfoHash(valSlashingInfos)
-
+	valSlashingInfos := k.GetBufferValSlashingInfos(ctx)
+	slashingInfoHash, err := types.GetSlashingInfoHash(valSlashingInfos)
 	if err != nil {
-		// compare slashingInfoHash with msg hash
-		fmt.Println(slashingInfoHash)
+		k.Logger(ctx).Info("Error generating slashing info hash", "error", err)
+	}
+	// compare slashingInfoHash with msg hash
+	k.Logger(ctx).Info("SlashInfo hash generated", "SlashInfoHash", hmTypes.BytesToHeimdallHash(slashingInfoHash).String())
+
+	if !bytes.Equal(slashingInfoHash, msg.SlashingInfoHash.Bytes()) {
+		k.Logger(ctx).Error("SlashInfoHash of current buffer state", hmTypes.BytesToHeimdallHash(slashingInfoHash).String(),
+			"doesn't match with SlashInfoHash of msg", msg.SlashingInfoHash)
+		return common.ErrBadBlockDetails(k.Codespace()).Result()
 	}
 
-	// Validate nonce index of slashing message
+	k.Logger(ctx).Debug("SlashInfoHash matches")
 
 	// ensure latestTickData is empty
+	tickSlashingInfos := k.GetTickValSlashingInfos(ctx)
+	if tickSlashingInfos != nil && len(tickSlashingInfos) > 0 {
+		k.Logger(ctx).Error("Waiting for tick data to be pushed to contract", "tickSlashingInfo", tickSlashingInfos)
+	}
 
 	// copy slashBuffer into latestTickData
 	k.CopyBufferValSlashingInfosToTickData(ctx)
@@ -100,6 +111,7 @@ func handlerMsgTick(ctx sdk.Context, msg types.MsgTick, k Keeper, contractCaller
 	k.FlushBufferValSlashingInfos(ctx)
 
 	// Flush TotalSlashedAmount
+	k.FlushTotalSlashedAmount(ctx)
 
 	// slash validator - Iterate lastTickData and reduce power of each validator along with jailing if needed
 	k.SlashAndJailTickValSlashingInfos(ctx)
@@ -108,17 +120,12 @@ func handlerMsgTick(ctx sdk.Context, msg types.MsgTick, k Keeper, contractCaller
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeTickConfirm,
-			sdk.NewAttribute(types.AttributeKeySlashedAmount, fmt.Sprintf("%d", 10)),
+			sdk.NewAttribute(types.AttributeKeyProposer, msg.Proposer.String()),
+			sdk.NewAttribute(types.AttributeKeySlashInfoHash, msg.SlashingInfoHash.String()),
 		),
 	)
 
 	return sdk.Result{
 		Events: ctx.EventManager().Events(),
 	}
-}
-
-// GetSlashingInfoHash returns hash of Validator slashing Info
-func GetSlashingInfoHash(validatorSlashingInfos []*hmTypes.ValidatorSlashingInfo) ([]byte, error) {
-	// TODO - Adding hashing logic
-	return nil, nil
 }

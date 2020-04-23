@@ -137,7 +137,7 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k Keepe
 
 	// Add Validator signing info. It is required for slashing module
 	valSigningInfo := hmTypes.ValidatorSigningInfo{}
-	err = k.AddValidatorSigningInfo(ctx, newValidator.Signer.Bytes(), valSigningInfo)
+	err = k.AddValidatorSigningInfo(ctx, newValidator.ID, valSigningInfo)
 	if err != nil {
 		k.Logger(ctx).Error("Unable to add validator signing info to state", "error", err, "valSigningInfo", valSigningInfo.String())
 		return hmCommon.ErrValidatorSigningInfoSave(k.Codespace()).Result()

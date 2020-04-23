@@ -2,8 +2,6 @@ package types
 
 import (
 	"encoding/binary"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 const (
@@ -37,35 +35,21 @@ var (
 	TickValSlashingInfoKey          = []byte{0x06} // Prefix for Slashing Info stored after tick tx
 )
 
-// GetValidatorSigningInfoKey - stored by *Consensus* address (not operator address)
-func GetValidatorSigningInfoKey(address []byte) []byte {
-	return append(ValidatorSigningInfoKey, address...)
-}
-
-// GetValidatorSigningInfoAddress - extract the address from a validator signing info key
-func GetValidatorSigningInfoAddress(key []byte) (v sdk.ConsAddress) {
-	addr := key[1:]
-	if len(addr) != sdk.AddrLen {
-		panic("unexpected key length")
-	}
-	return sdk.ConsAddress(addr)
+// GetValidatorSigningInfoKey - stored by *valID*
+func GetValidatorSigningInfoKey(valID []byte) []byte {
+	return append(ValidatorSigningInfoKey, valID...)
 }
 
 // GetValidatorMissedBlockBitArrayPrefixKey - stored by *Consensus* address (not operator address)
-func GetValidatorMissedBlockBitArrayPrefixKey(v sdk.ConsAddress) []byte {
-	return append(ValidatorMissedBlockBitArrayKey, v.Bytes()...)
+func GetValidatorMissedBlockBitArrayPrefixKey(valID []byte) []byte {
+	return append(ValidatorMissedBlockBitArrayKey, valID...)
 }
 
 // GetValidatorMissedBlockBitArrayKey - stored by *Consensus* address (not operator address)
-func GetValidatorMissedBlockBitArrayKey(v sdk.ConsAddress, i int64) []byte {
+func GetValidatorMissedBlockBitArrayKey(valID []byte, i int64) []byte {
 	b := make([]byte, 8)
 	binary.LittleEndian.PutUint64(b, uint64(i))
-	return append(GetValidatorMissedBlockBitArrayPrefixKey(v), b...)
-}
-
-// GetAddrPubkeyRelationKey gets pubkey relation key used to get the pubkey from the address
-func GetAddrPubkeyRelationKey(address []byte) []byte {
-	return append(AddrPubkeyRelationKey, address...)
+	return append(GetValidatorMissedBlockBitArrayPrefixKey(valID), b...)
 }
 
 // GetBufferValSlashingInfoKey - gets buffer val slashing info key

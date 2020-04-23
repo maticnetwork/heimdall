@@ -66,9 +66,9 @@ func initCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			dividendAccounts := []hmTypes.DividendAccount{dividendAccount}
 
 			// create validator signing info
-			valSigningInfo := hmTypes.NewValidatorSigningInfo(validator.Signer, 0, 0, 0)
+			valSigningInfo := hmTypes.NewValidatorSigningInfo(validator.ID, 0, 0, 0)
 			valSigningInfoMap := make(map[string]hmTypes.ValidatorSigningInfo)
-			valSigningInfoMap[valSigningInfo.Signer.String()] = valSigningInfo
+			valSigningInfoMap[valSigningInfo.ValID.String()] = valSigningInfo
 
 			// create genesis state
 			appStateBytes := app.NewDefaultGenesisState()

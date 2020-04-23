@@ -34,7 +34,7 @@ type ModuleCommunicator interface {
 	SetCoins(ctx sdk.Context, addr hmTypes.HeimdallAddress, amt sdk.Coins) sdk.Error
 	GetCoins(ctx sdk.Context, addr hmTypes.HeimdallAddress) sdk.Coins
 	SendCoins(ctx sdk.Context, from hmTypes.HeimdallAddress, to hmTypes.HeimdallAddress, amt sdk.Coins) sdk.Error
-	CreateValiatorSigningInfo(ctx sdk.Context, valAddr []byte, valSigningInfo hmTypes.ValidatorSigningInfo)
+	CreateValiatorSigningInfo(ctx sdk.Context, valID hmTypes.ValidatorID, valSigningInfo hmTypes.ValidatorSigningInfo)
 }
 
 // Keeper stores all related data
@@ -547,13 +547,33 @@ func (k *Keeper) IterateStakingSequencesAndApplyFn(ctx sdk.Context, f func(seque
 //    Infraction was committed at the current height or at a past height,
 //    not at a height in the future
 
-func (k Keeper) AddValidatorSigningInfo(ctx sdk.Context, signerAddr []byte, valSigningInfo hmTypes.ValidatorSigningInfo) error {
-	k.moduleCommunicator.CreateValiatorSigningInfo(ctx, signerAddr, valSigningInfo)
+func (k Keeper) AddValidatorSigningInfo(ctx sdk.Context, valID hmTypes.ValidatorID, valSigningInfo hmTypes.ValidatorSigningInfo) error {
+	k.moduleCommunicator.CreateValiatorSigningInfo(ctx, valID, valSigningInfo)
 	return nil
 }
 
-func (k Keeper) Slash(ctx sdk.Context, consAddr sdk.ConsAddress, infractionHeight int64, power int64, slashFactor sdk.Dec) {
+// UpdatePower updates validator with signer and pubkey + validator => signer map
+func (k *Keeper) Slash(ctx sdk.Context, valSlashingInfo hmTypes.ValidatorSlashingInfo) error {
+	// get validator from state
+	validator, found := k.GetValidatorFromValID(ctx, valSlashingInfo.ID)
+	if !found {
+		k.Logger(ctx).Error("Unable to fetch valiator from store")
+		// TODO slashing - return proper error
+		return nil
+	}
 
+	// calculate power after slash
+	slashAmount, _ := helper.GetAmountFromString(valSlashingInfo.SlashedAmount)
+	slashPower, _ := helper.GetPowerFromAmount(slashAmount)
+	updatedPower := validator.VotingPower - slashPower.Int64()
+
+	// update power and jail status
+	validator.VotingPower = updatedPower
+	validator.Jailed = valSlashingInfo.IsJailed
+
+	// add updated validator to store with new key
+	k.AddValidator(ctx, validator)
+	return nil
 }
 
 // jail a validator

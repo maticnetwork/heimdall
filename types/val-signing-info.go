@@ -8,7 +8,7 @@ import (
 
 // ValidatorSigningInfo defines the signing info for a validator
 type ValidatorSigningInfo struct {
-	Signer HeimdallAddress `json:"signer"`
+	ValID ValidatorID `json:"valID"`
 
 	// height at which validator was first a candidate OR was unjailed
 	StartHeight int64 `json:"startHeight"`
@@ -24,12 +24,12 @@ type ValidatorSigningInfo struct {
 
 // NewValidatorSigningInfo creates a new ValidatorSigningInfo instance
 func NewValidatorSigningInfo(
-	condAddr HeimdallAddress, startHeight, indexOffset int64,
+	valID ValidatorID, startHeight, indexOffset int64,
 	missedBlocksCounter int64,
 ) ValidatorSigningInfo {
 
 	return ValidatorSigningInfo{
-		Signer:      condAddr,
+		ValID:       valID,
 		StartHeight: startHeight,
 		IndexOffset: indexOffset,
 		// JailedUntil: jailedUntil,
@@ -41,11 +41,11 @@ func NewValidatorSigningInfo(
 // String implements the stringer interface for ValidatorSigningInfo
 func (i ValidatorSigningInfo) String() string {
 	return fmt.Sprintf(`Validator Signing Info:
-  Address:               %s
+  valID:               %d
   Start Height:          %d
   Index Offset:          %d  
   Missed Blocks Counter: %d`,
-		i.Signer, i.StartHeight, i.IndexOffset,
+		i.ValID, i.StartHeight, i.IndexOffset,
 		i.MissedBlocksCounter)
 }
 
