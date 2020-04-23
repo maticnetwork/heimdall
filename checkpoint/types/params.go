@@ -82,7 +82,7 @@ func (p Params) String() string {
 	var sb strings.Builder
 	sb.WriteString("Params: \n")
 	sb.WriteString(fmt.Sprintf("CheckpointBufferTime: %s\n", p.CheckpointBufferTime))
-	sb.WriteString(fmt.Sprintf("CheckpointLength: %s\n", string(p.AvgCheckpointLength)))
+	sb.WriteString(fmt.Sprintf("AvgCheckpointLength: %s\n", string(p.AvgCheckpointLength)))
 	sb.WriteString(fmt.Sprintf("MaxCheckpointLength: %s\n", string(p.MaxCheckpointLength)))
 	return sb.String()
 }
