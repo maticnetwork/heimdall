@@ -361,7 +361,7 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToHeimdall(start uint64, e
 	}
 
 	// Get root hash
-	root, err := checkpointTypes.GetHeaders(start, end, configParams.AvgCheckpointLength)
+	root, err := checkpointTypes.GetHeaders(start, end, configParams.MaxCheckpointLength)
 	if err != nil {
 		return err
 	}

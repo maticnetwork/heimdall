@@ -62,7 +62,7 @@ func GetHeaders(start uint64, end uint64, checkpointLength uint64) ([]byte, erro
 	rpcClient := helper.GetMaticRPCClient()
 	noOfBlock := end - start + 1
 
-	if noOfBlock > uint64(checkpointLength) {
+	if noOfBlock > checkpointLength {
 		return nil, errors.New("number of headers requested exceeds")
 	}
 
