@@ -589,12 +589,24 @@ func (k Keeper) Jail(ctx sdk.Context, addr []byte) {
 }
 
 // unjail a validator
-func (k Keeper) Unjail(ctx sdk.Context, addr []byte) {
-	// validator, err := k.GetValidatorInfo(ctx, addr)
-	// if err != nil {
+func (k Keeper) Unjail(ctx sdk.Context, valID hmTypes.ValidatorID) (ok bool) {
 
-	// }
-	// k.unjailValidator(ctx, validator)
-	// logger := k.Logger(ctx)
-	// logger.Info(fmt.Sprintf("validator %s unjailed", consAddr))
+	// get validator from state and make jailed = false
+	validator, found := k.GetValidatorFromValID(ctx, valID)
+	if !found {
+		k.Logger(ctx).Error("Unable to fetch valiator from store")
+		return
+	}
+
+	if !validator.Jailed {
+		k.Logger(ctx).Info("Already unjailed.")
+		return
+	}
+	// unjail validator
+	validator.Jailed = false
+
+	// add updated validator to store with new key
+	k.AddValidator(ctx, validator)
+	return true
+
 }

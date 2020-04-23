@@ -7,6 +7,7 @@ import (
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 // verify interface at compile time
@@ -14,13 +15,18 @@ var _ sdk.Msg = &MsgUnjail{}
 
 // MsgUnjail - struct for unjailing jailed validator
 type MsgUnjail struct {
-	ValidatorAddr types.HeimdallAddress `json:"validatorAddr"`
+	From     types.HeimdallAddress `json:"from"`
+	ID       hmTypes.ValidatorID   `json:"id"`
+	TxHash   types.HeimdallHash    `json:"tx_hash"`
+	LogIndex uint64                `json:"log_index"`
 }
 
-// NewMsgUnjail creates a new MsgUnjail instance
-func NewMsgUnjail(validatorAddr types.HeimdallAddress) MsgUnjail {
+func NewMsgUnjail(from types.HeimdallAddress, id uint64, txHash types.HeimdallHash, logIndex uint64) MsgUnjail {
 	return MsgUnjail{
-		ValidatorAddr: validatorAddr,
+		From:     from,
+		ID:       hmTypes.NewValidatorID(id),
+		TxHash:   txHash,
+		LogIndex: logIndex,
 	}
 }
 
@@ -28,21 +34,27 @@ func NewMsgUnjail(validatorAddr types.HeimdallAddress) MsgUnjail {
 func (msg MsgUnjail) Route() string { return RouterKey }
 func (msg MsgUnjail) Type() string  { return "unjail" }
 func (msg MsgUnjail) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.ValidatorAddr)}
+	return []sdk.AccAddress{hmTypes.HeimdallAddressToAccAddress(msg.From)}
 }
 
 // GetSignBytes gets the bytes for the message signer to sign on
 func (msg MsgUnjail) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
+	b, err := ModuleCdc.MarshalJSON(msg)
+	if err != nil {
+		panic(err)
+	}
+	return sdk.MustSortJSON(b)
 }
 
 // ValidateBasic validity check for the AnteHandler
 func (msg MsgUnjail) ValidateBasic() sdk.Error {
-	if msg.ValidatorAddr.Empty() {
-		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid from %v", msg.ValidatorAddr.String())
+	if msg.ID <= 0 {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator ID %v", msg.ID)
 	}
 
+	if msg.From.Empty() {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.From.String())
+	}
 	return nil
 }
 

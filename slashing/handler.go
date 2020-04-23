@@ -38,11 +38,44 @@ func handleMsgUnjail(ctx sdk.Context, msg types.MsgUnjail, k Keeper, contractCal
 	// 	return nil, err
 	// }
 
+	k.Logger(ctx).Info("Handling unjail event", "msg", msg)
+	// chainManager params
+	params := k.chainKeeper.GetParams(ctx)
+	chainParams := params.ChainParams
+
+	// get main tx receipt
+	receipt, err := contractCaller.GetConfirmedTxReceipt(ctx.BlockTime(), msg.TxHash.EthHash(), params.TxConfirmationTime)
+	if err != nil || receipt == nil {
+		return hmCommon.ErrWaitForConfirmation(k.Codespace(), params.TxConfirmationTime).Result()
+	}
+
+	// decode unjail event
+	eventLog, err := contractCaller.DecodeUnJailedEvent(chainParams.StakingInfoAddress.EthAddress(), receipt, msg.LogIndex)
+	if err != nil || eventLog == nil {
+		return hmCommon.ErrInvalidMsg(k.Codespace(), "Unable to fetch logs for txHash").Result()
+	}
+
+	// sequence id
+
+	sequence := new(big.Int).Mul(receipt.BlockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
+	sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))
+
+	// check if incoming tx is older
+	if k.HasSlashingSequence(ctx, sequence.String()) {
+		k.Logger(ctx).Error("Older invalid tx found")
+		return hmCommon.ErrOldTx(k.Codespace()).Result()
+	}
+
+	// unjail validator
+	k.sk.Unjail(ctx, msg.ID)
+
+	// save staking sequence
+	k.SetSlashingSequence(ctx, sequence.String())
+
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
-			sdk.EventTypeMessage,
+			types.EventTypeTickAck,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.ValidatorAddr.String()),
 		),
 	)
 
@@ -129,7 +162,7 @@ func handleMsgTickAck(ctx sdk.Context, msg types.MsgTickAck, k Keeper, contractC
 		return hmCommon.ErrWaitForConfirmation(k.Codespace(), params.TxConfirmationTime).Result()
 	}
 
-	// get event log for topup
+	// get event log for slashed event
 	eventLog, err := contractCaller.DecodeSlashedEvent(chainParams.StakingInfoAddress.EthAddress(), receipt, msg.LogIndex)
 	if err != nil || eventLog == nil {
 		k.Logger(ctx).Error("Error fetching log from txhash")

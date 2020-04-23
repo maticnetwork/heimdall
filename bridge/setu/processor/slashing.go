@@ -44,6 +44,7 @@ func (sp *SlashingProcessor) RegisterTasks() {
 	sp.queueConnector.Server.RegisterTask("sendTickToHeimdall", sp.sendTickToHeimdall)
 	sp.queueConnector.Server.RegisterTask("sendTickToRootchain", sp.sendTickToRootchain)
 	sp.queueConnector.Server.RegisterTask("sendTickAckToHeimdall", sp.sendTickAckToHeimdall)
+	sp.queueConnector.Server.RegisterTask("sendUnjailToHeimdall", sp.sendUnjailToHeimdall)
 
 }
 
@@ -193,6 +194,57 @@ func (sp *SlashingProcessor) sendTickAckToHeimdall(eventName string, logBytes st
 		// return broadcast to heimdall
 		if err := sp.txBroadcaster.BroadcastToHeimdall(msg); err != nil {
 			sp.Logger.Error("Error while broadcasting tick-ack to heimdall", "error", err)
+			return err
+		}
+	}
+	return nil
+}
+
+/*
+sendUnjailToHeimdall - sends unjail msg to heimdall
+*/
+func (sp *SlashingProcessor) sendUnjailToHeimdall(eventName string, logBytes string) error {
+	var vLog = types.Log{}
+	if err := json.Unmarshal([]byte(logBytes), &vLog); err != nil {
+		sp.Logger.Error("Error while unmarshalling event from rootchain", "error", err)
+		return err
+	}
+
+	event := new(stakinginfo.StakinginfoUnJailed)
+	if err := helper.UnpackLog(sp.stakingInfoAbi, event, eventName, &vLog); err != nil {
+		sp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
+	} else {
+
+		if isOld, _ := sp.isOldTx(sp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index)); isOld {
+			sp.Logger.Info("Ignoring sending unjail to heimdall as already processed",
+				"event", eventName,
+				"ValidatorID", event.ValidatorId,
+				"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
+				"logIndex", uint64(vLog.Index),
+			)
+			return nil
+		}
+		sp.Logger.Info(
+			"✅ Received task to send unjail to heimdall",
+			"event", eventName,
+			"ValidatorID", event.ValidatorId,
+			"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
+			"logIndex", uint64(vLog.Index),
+		)
+
+		// TODO - check if i am the proposer of unjail or not.
+
+		// msg unjail
+		msg := slashingTypes.NewMsgUnjail(
+			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
+			event.ValidatorId.Uint64(),
+			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
+			uint64(vLog.Index),
+		)
+
+		// return broadcast to heimdall
+		if err := sp.txBroadcaster.BroadcastToHeimdall(msg); err != nil {
+			sp.Logger.Error("Error while broadcasting unjail to heimdall", "error", err)
 			return err
 		}
 	}

@@ -53,6 +53,7 @@ type IContractCaller interface {
 
 	// decode slashing events
 	DecodeSlashedEvent(common.Address, *ethTypes.Receipt, uint64) (*stakinginfo.StakinginfoSlashed, error)
+	DecodeUnJailedEvent(common.Address, *ethTypes.Receipt, uint64) (*stakinginfo.StakinginfoUnJailed, error)
 
 	GetMainTxReceipt(common.Hash) (*ethTypes.Receipt, error)
 	GetMaticTxReceipt(common.Hash) (*ethTypes.Receipt, error)
@@ -586,6 +587,28 @@ func (c *ContractCaller) DecodeSlashedEvent(contractAddress common.Address, rece
 		if uint64(vLog.Index) == logIndex && bytes.Equal(vLog.Address.Bytes(), contractAddress.Bytes()) {
 			found = true
 			if err := UnpackLog(&c.StakingInfoABI, event, "Slashed", vLog); err != nil {
+				return nil, err
+			}
+			break
+		}
+	}
+
+	if !found {
+		return nil, errors.New("Event not found")
+	}
+
+	return event, nil
+}
+
+// DecodeUnJailedEvent represents unjail on contract
+func (c *ContractCaller) DecodeUnJailedEvent(contractAddress common.Address, receipt *ethTypes.Receipt, logIndex uint64) (*stakinginfo.StakinginfoUnJailed, error) {
+	event := new(stakinginfo.StakinginfoUnJailed)
+
+	found := false
+	for _, vLog := range receipt.Logs {
+		if uint64(vLog.Index) == logIndex && bytes.Equal(vLog.Address.Bytes(), contractAddress.Bytes()) {
+			found = true
+			if err := UnpackLog(&c.StakingInfoABI, event, "UnJailed", vLog); err != nil {
 				return nil, err
 			}
 			break
