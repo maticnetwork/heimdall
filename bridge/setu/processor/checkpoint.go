@@ -255,7 +255,15 @@ func (cp *CheckpointProcessor) HandleCheckpointNoAck() {
 
 // nextExpectedCheckpoint - fetched contract checkpoint state and returns the next probable checkpoint that needs to be sent
 func (cp *CheckpointProcessor) nextExpectedCheckpoint(latestChildBlock uint64) (*ContractCheckpoint, error) {
-	configParams, _ := util.GetConfigManagerParams(cp.cliCtx)
+	configParams, err := util.GetConfigManagerParams(cp.cliCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	checkpointParams, err := util.GetCheckpointParams(cp.cliCtx)
+	if err != nil {
+		return nil, err
+	}
 
 	rootChainInstance, err := cp.contractConnector.GetRootChainInstance(configParams.ChainParams.RootChainAddress.EthAddress())
 	if err != nil {
@@ -268,6 +276,7 @@ func (cp *CheckpointProcessor) nextExpectedCheckpoint(latestChildBlock uint64) (
 		cp.Logger.Error("Error while fetching current header block number from rootchain", "error", err)
 		return nil, err
 	}
+
 	// current header block
 	currentHeaderBlockNumber := big.NewInt(0).SetUint64(_currentHeaderBlock)
 
@@ -292,13 +301,13 @@ func (cp *CheckpointProcessor) nextExpectedCheckpoint(latestChildBlock uint64) (
 	diff := latestChildBlock - start + 1
 	// process if diff > 0 (positive)
 	if diff > 0 {
-		expectedDiff := diff - diff%helper.GetConfig().AvgCheckpointLength
+		expectedDiff := diff - diff%checkpointParams.AvgCheckpointLength
 		if expectedDiff > 0 {
 			expectedDiff = expectedDiff - 1
 		}
 		// cap with max checkpoint length
-		if expectedDiff > helper.GetConfig().MaxCheckpointLength-1 {
-			expectedDiff = helper.GetConfig().MaxCheckpointLength - 1
+		if expectedDiff > checkpointParams.MaxCheckpointLength-1 {
+			expectedDiff = checkpointParams.MaxCheckpointLength - 1
 		}
 		// get end result
 		end = expectedDiff + start
@@ -310,11 +319,11 @@ func (cp *CheckpointProcessor) nextExpectedCheckpoint(latestChildBlock uint64) (
 	}
 
 	// Handle when block producers go down
-	if end == 0 || end == start || (0 < diff && diff < helper.GetConfig().AvgCheckpointLength) {
+	if end == 0 || end == start || (0 < diff && diff < checkpointParams.AvgCheckpointLength) {
 		cp.Logger.Debug("Fetching last header block to calculate time")
 
 		currentTime := time.Now().UTC().Unix()
-		defaultForcePushInterval := helper.GetConfig().MaxCheckpointLength * 2 // in seconds (1024 * 2 seconds)
+		defaultForcePushInterval := checkpointParams.MaxCheckpointLength * 2 // in seconds (1024 * 2 seconds)
 		if currentTime-int64(lastCheckpointTime) > int64(defaultForcePushInterval) {
 			end = latestChildBlock
 			cp.Logger.Info("Force push checkpoint",
@@ -346,8 +355,13 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToHeimdall(start uint64, e
 		return nil
 	}
 
+	configParams, err := util.GetCheckpointParams(cp.cliCtx)
+	if err != nil {
+		return err
+	}
+
 	// Get root hash
-	root, err := checkpointTypes.GetHeaders(start, end)
+	root, err := checkpointTypes.GetHeaders(start, end, configParams.MaxCheckpointLength)
 	if err != nil {
 		return err
 	}

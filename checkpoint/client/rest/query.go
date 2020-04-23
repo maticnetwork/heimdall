@@ -200,8 +200,17 @@ func checkpointHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryParams), nil)
+		if err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			RestLogger.Error("Unable to get checkpoint params", "Error", err)
+			return
+		}
+		var params types.Params
+		json.Unmarshal(res, &params)
+
 		// get headers
-		roothash, err := types.GetHeaders(uint64(start), uint64(end))
+		roothash, err := types.GetHeaders(uint64(start), uint64(end), params.MaxCheckpointLength)
 		if err != nil {
 			RestLogger.Error("Unable to get header", "Start", start, "End", end, "Error", err)
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -215,7 +224,7 @@ func checkpointHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		var validatorSet hmTypes.ValidatorSet
 		validatorSetBytes, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", stakingTypes.QuerierRoute, stakingTypes.QueryCurrentValidatorSet), nil)
 		if err == nil {
-			err := cliCtx.Codec.UnmarshalJSON(validatorSetBytes, &validatorSet)
+			err := json.Unmarshal(validatorSetBytes, &validatorSet)
 			if err != nil {
 				hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 				RestLogger.Error("Unable to get validator set to form proposer", "Error", err)
