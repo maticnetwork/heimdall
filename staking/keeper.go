@@ -589,7 +589,7 @@ func (k Keeper) Jail(ctx sdk.Context, addr []byte) {
 }
 
 // unjail a validator
-func (k Keeper) Unjail(ctx sdk.Context, valID hmTypes.ValidatorID) (ok bool) {
+func (k Keeper) Unjail(ctx sdk.Context, valID hmTypes.ValidatorID) {
 
 	// get validator from state and make jailed = false
 	validator, found := k.GetValidatorFromValID(ctx, valID)
@@ -607,6 +607,6 @@ func (k Keeper) Unjail(ctx sdk.Context, valID hmTypes.ValidatorID) (ok bool) {
 
 	// add updated validator to store with new key
 	k.AddValidator(ctx, validator)
-	return true
+	return
 
 }

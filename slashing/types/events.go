@@ -7,6 +7,7 @@ const (
 	EventTypeSlashLimit  = "slash-limit"
 	EventTypeTickConfirm = "tick-confirm"
 	EventTypeTickAck     = "tick-ack"
+	EventTypeUnjail      = "unjail"
 	EventTypeLiveness    = "liveness"
 
 	AttributeKeyAddress       = "address"

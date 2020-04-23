@@ -54,6 +54,7 @@ const (
 	CodeAccountRootMismatch          CodeType = 4504
 
 	CodeValSigningInfoSave CodeType = 5501
+	CodeErrValUnjail       CodeType = 5502
 )
 
 // -------- Invalid msg
@@ -216,4 +217,8 @@ func newError(codespace sdk.CodespaceType, code CodeType, msg string) sdk.Error 
 // Slashing errors
 func ErrValidatorSigningInfoSave(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeValSigningInfoSave, "Cannot save validator signing info")
+}
+
+func ErrUnjailValidator(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeErrValUnjail, "Error while unJail validator")
 }

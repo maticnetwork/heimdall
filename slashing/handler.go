@@ -56,7 +56,6 @@ func handleMsgUnjail(ctx sdk.Context, msg types.MsgUnjail, k Keeper, contractCal
 	}
 
 	// sequence id
-
 	sequence := new(big.Int).Mul(receipt.BlockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
 	sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))
 
@@ -69,12 +68,19 @@ func handleMsgUnjail(ctx sdk.Context, msg types.MsgUnjail, k Keeper, contractCal
 	// unjail validator
 	k.sk.Unjail(ctx, msg.ID)
 
+	// check if unjail is successful or not
+	val, _ := k.sk.GetValidatorFromValID(ctx, msg.ID)
+	if val.Jailed {
+		k.Logger(ctx).Error("Error unjailing validator", "validatorId", msg.ID, "jailStatus", val.Jailed)
+		return hmCommon.ErrUnjailValidator(k.Codespace()).Result()
+	}
+
 	// save staking sequence
 	k.SetSlashingSequence(ctx, sequence.String())
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
-			types.EventTypeTickAck,
+			types.EventTypeUnjail,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 		),
 	)
