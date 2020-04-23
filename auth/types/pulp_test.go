@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"gotest.tools/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGetPulpHash(t *testing.T) {
