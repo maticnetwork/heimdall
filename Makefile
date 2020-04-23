@@ -22,7 +22,7 @@ clean:
 tests:
 	go test  -v ./...
 
-build: clean lint
+build: clean
 	mkdir -p build
 	go build -o build/heimdalld ./cmd/heimdalld
 	go build -o build/heimdallcli ./cmd/heimdallcli
