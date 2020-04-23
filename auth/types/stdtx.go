@@ -219,6 +219,9 @@ func RLPTxEncoder(cdc *codec.Codec, pulp *Pulp) sdk.TxEncoder {
 			return pulp.EncodeToBytes(tx.(StdTx))
 		}
 
+		if len(msgs) > 0 && msgs[0].Type() == "tick" && msgs[0].Route() == "slashing" {
+			return pulp.EncodeToBytes(tx.(StdTx))
+		}
 		result, err := defaultEncoder(tx)
 		result = append(emptyPrefix, result...)
 		return result, err

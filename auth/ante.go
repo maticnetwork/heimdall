@@ -23,7 +23,10 @@ var (
 
 	// fee wanted for checkpoint transaction
 	gasWantedPerCheckpoinTx sdk.Gas = 10000000
-	gasUsedPerCheckpointTx  sdk.Gas = gasWantedPerCheckpoinTx - 1000000
+
+	// fee wanted for tick transaction
+	gasWantedPerTickTx     sdk.Gas = 10000000
+	gasUsedPerCheckpointTx sdk.Gas = gasWantedPerCheckpoinTx - 1000000
 
 	// DefaultFeeInMatic represents default fee in matic
 	DefaultFeeInMatic = big.NewInt(10).Exp(big.NewInt(10), big.NewInt(15), nil)
@@ -105,6 +108,11 @@ func NewAnteHandler(
 		// checkpoint gas limit
 		if stdTx.Msg.Type() == "checkpoint" && stdTx.Msg.Route() == "checkpoint" {
 			gasForTx = gasWantedPerCheckpoinTx // stdTx.Fee.Gas
+		}
+
+		// tick gas limit
+		if stdTx.Msg.Type() == "tick" && stdTx.Msg.Route() == "tick" {
+			gasForTx = gasWantedPerTickTx // stdTx.Fee.Gas
 		}
 
 		// new gas meter
