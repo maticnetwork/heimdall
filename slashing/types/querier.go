@@ -15,6 +15,7 @@ const (
 	QuerySlashingInfos       = "slashingInfos"
 	QueryLatestSlashInfoHash = "slashingInfoHash"
 	QueryTickSlashingInfos   = "tickSlashingInfos"
+	QuerySlashingSequence    = "slashing-sequence"
 )
 
 // QuerySigningInfoParams defines the params for the following queries:
@@ -70,4 +71,15 @@ type QueryTickSlashingInfosParams struct {
 // NewQueryTickSlashingInfosParams creates a new QueryTickSlashingInfosParams instance
 func NewQueryTickSlashingInfosParams(page, limit int) QueryTickSlashingInfosParams {
 	return QueryTickSlashingInfosParams{page, limit}
+}
+
+// QuerySlashingSequenceParams defines the params for querying an account Sequence.
+type QuerySlashingSequenceParams struct {
+	TxHash   string
+	LogIndex uint64
+}
+
+// NewQuerySlashingSequenceParams creates a new instance of QuerySlashingSequenceParams.
+func NewQuerySlashingSequenceParams(txHash string, logIndex uint64) QuerySlashingSequenceParams {
+	return QuerySlashingSequenceParams{TxHash: txHash, LogIndex: logIndex}
 }

@@ -51,6 +51,11 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 		"/slashing/parameters",
 		queryParamsHandlerFn(cliCtx),
 	).Methods("GET")
+
+	r.HandleFunc(
+		"/slashing/isoldtx",
+		SlashingTxStatusHandlerFn(cliCtx),
+	).Methods("GET")
 }
 
 // http request handler to query signing info
@@ -279,6 +284,55 @@ func tickSlashInfoHandlerListFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		cliCtx = cliCtx.WithHeight(height)
+		rest.PostProcessResponse(w, cliCtx, res)
+	}
+}
+
+// Returns slashing tx status information
+func SlashingTxStatusHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := r.URL.Query()
+
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		// get logIndex
+		logindex, ok := rest.ParseUint64OrReturnBadRequest(w, vars.Get("logindex"))
+		if !ok {
+			return
+		}
+
+		txHash := vars.Get("txhash")
+
+		if txHash == "" {
+			return
+		}
+
+		// get query params
+		queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQuerySlashingSequenceParams(txHash, logindex))
+		if err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		seqNo, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QuerySlashingSequence), queryParams)
+		if err != nil {
+			RestLogger.Error("Error while fetching staking sequence", "Error", err.Error())
+			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		// error if no tx status found
+		if ok := hmRest.ReturnNotFoundIfNoContent(w, seqNo, "No sequence found"); !ok {
+			return
+		}
+
+		res := true
+
+		// return result
 		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, res)
 	}

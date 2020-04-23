@@ -9,6 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gogotypes "github.com/gogo/protobuf/types"
+	"github.com/maticnetwork/heimdall/chainmanager"
 	"github.com/maticnetwork/heimdall/params/subspace"
 	"github.com/maticnetwork/heimdall/slashing/types"
 	"github.com/maticnetwork/heimdall/staking"
@@ -23,16 +24,20 @@ type Keeper struct {
 	// codespace
 	codespace  sdk.CodespaceType
 	paramSpace subspace.Subspace
+
+	// chain manager keeper
+	chainKeeper chainmanager.Keeper
 }
 
 // NewKeeper creates a slashing keeper
-func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, sk staking.Keeper, paramSpace subspace.Subspace, codespace sdk.CodespaceType) Keeper {
+func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, sk staking.Keeper, paramSpace subspace.Subspace, codespace sdk.CodespaceType, chainKeeper chainmanager.Keeper) Keeper {
 	return Keeper{
-		storeKey:   key,
-		cdc:        cdc,
-		sk:         sk,
-		paramSpace: paramSpace.WithKeyTable(types.ParamKeyTable()),
-		codespace:  codespace,
+		storeKey:    key,
+		cdc:         cdc,
+		sk:          sk,
+		paramSpace:  paramSpace.WithKeyTable(types.ParamKeyTable()),
+		codespace:   codespace,
+		chainKeeper: chainKeeper,
 	}
 }
 
@@ -191,7 +196,7 @@ func (k Keeper) GetPubkey(ctx sdk.Context, address crypto.Address) (crypto.PubKe
 	return pkStr, nil
 } */
 
-// Slash attempts to slash a validator. The slash is delegated to the staking
+// Slash attempts to slash a validator. The slash is delegated to the Slashing
 // module to make the necessary validator changes.
 func (k Keeper) Slash(ctx sdk.Context, valID hmTypes.ValidatorID, fraction sdk.Dec, power, distributionHeight int64) {
 	ctx.EventManager().EmitEvent(
@@ -207,7 +212,7 @@ func (k Keeper) Slash(ctx sdk.Context, valID hmTypes.ValidatorID, fraction sdk.D
 
 }
 
-// Jail attempts to jail a validator. The slash is delegated to the staking module
+// Jail attempts to jail a validator. The slash is delegated to the Slashing module
 // to make the necessary validator changes.
 func (k Keeper) Jail(ctx sdk.Context, valID hmTypes.ValidatorID) {
 	// ctx.EventManager().EmitEvent(
@@ -491,5 +496,51 @@ func (k *Keeper) FlushTickValSlashingInfos(ctx sdk.Context) {
 		k.RemoveTickValSlashingInfo(ctx, valSlashingInfo.ID)
 		return nil
 	})
+	return
+}
+
+//
+// Slashing sequence
+//
+
+// SetSlashingSequence sets Slashing sequence
+func (k *Keeper) SetSlashingSequence(ctx sdk.Context, sequence string) {
+	store := ctx.KVStore(k.storeKey)
+
+	store.Set(types.GetSlashingSequenceKey(sequence), types.DefaultValue)
+}
+
+// HasSlashingSequence checks if Slashing sequence already exists
+func (k *Keeper) HasSlashingSequence(ctx sdk.Context, sequence string) bool {
+	store := ctx.KVStore(k.storeKey)
+	return store.Has(types.GetSlashingSequenceKey(sequence))
+}
+
+// GetSlashingSequences checks if Slashing already exists
+func (k *Keeper) GetSlashingSequences(ctx sdk.Context) (sequences []string) {
+	k.IterateSlashingSequencesAndApplyFn(ctx, func(sequence string) error {
+		sequences = append(sequences, sequence)
+		return nil
+	})
+	return
+}
+
+// IterateSlashingSequencesAndApplyFn interate validators and apply the given function.
+func (k *Keeper) IterateSlashingSequencesAndApplyFn(ctx sdk.Context, f func(sequence string) error) {
+	store := ctx.KVStore(k.storeKey)
+
+	// get sequence iterator
+	iterator := sdk.KVStorePrefixIterator(store, types.SlashingSequenceKey)
+	defer iterator.Close()
+
+	// loop through validators to get valid validators
+	for ; iterator.Valid(); iterator.Next() {
+		sequence := string(iterator.Key()[len(types.SlashingSequenceKey):])
+
+		// call function and return if required
+		if err := f(sequence); err != nil {
+			return
+		}
+	}
 	return
 }

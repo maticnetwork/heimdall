@@ -3,11 +3,15 @@ package slashing
 import (
 	"encoding/json"
 	"fmt"
+	"math/big"
+	"time"
 
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/slashing/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
@@ -36,6 +40,9 @@ func NewQuerier(k Keeper) sdk.Querier {
 
 		case types.QueryTickSlashingInfos:
 			return queryTickSlashingInfos(ctx, req, k)
+
+		case types.QuerySlashingSequence:
+			return querySlashingSequence(ctx, req, k)
 
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown slashing query endpoint")
@@ -187,5 +194,44 @@ func queryTickSlashingInfos(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
+	return bz, nil
+}
+
+func querySlashingSequence(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	var params types.QuerySlashingSequenceParams
+
+	if err := types.ModuleCdc.UnmarshalJSON(req.Data, &params); err != nil {
+		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
+	}
+
+	chainParams := keeper.chainKeeper.GetParams(ctx)
+
+	contractCallerObj, err := helper.NewContractCaller()
+	if err != nil {
+		return nil, sdk.ErrInternal(fmt.Sprintf(err.Error()))
+	}
+
+	// get main tx receipt
+	receipt, _ := contractCallerObj.GetConfirmedTxReceipt(time.Now().UTC(), hmTypes.HexToHeimdallHash(params.TxHash).EthHash(), chainParams.TxConfirmationTime)
+	if err != nil || receipt == nil {
+		return nil, sdk.ErrInternal(fmt.Sprintf("Transaction is not confirmed yet. Please wait for sometime and try again"))
+	}
+
+	// sequence id
+
+	sequence := new(big.Int).Mul(receipt.BlockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
+	sequence.Add(sequence, new(big.Int).SetUint64(params.LogIndex))
+
+	// check if incoming tx already exists
+	if !keeper.HasSlashingSequence(ctx, sequence.String()) {
+		keeper.Logger(ctx).Error("No slashing sequence exist: %s %s", params.TxHash, params.LogIndex)
+		return nil, nil
+	}
+
+	bz, err := codec.MarshalJSONIndent(types.ModuleCdc, sequence)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
+
 	return bz, nil
 }

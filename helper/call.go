@@ -51,6 +51,9 @@ type IContractCaller interface {
 	// decode state events
 	DecodeStateSyncedEvent(common.Address, *ethTypes.Receipt, uint64) (*statesender.StatesenderStateSynced, error)
 
+	// decode slashing events
+	DecodeSlashedEvent(common.Address, *ethTypes.Receipt, uint64) (*stakinginfo.StakinginfoSlashed, error)
+
 	GetMainTxReceipt(common.Hash) (*ethTypes.Receipt, error)
 	GetMaticTxReceipt(common.Hash) (*ethTypes.Receipt, error)
 	ApproveTokens(*big.Int, common.Address, common.Address, *erc20.Erc20) error
@@ -559,6 +562,30 @@ func (c *ContractCaller) DecodeStateSyncedEvent(contractAddress common.Address, 
 		if uint64(vLog.Index) == logIndex && bytes.Equal(vLog.Address.Bytes(), contractAddress.Bytes()) {
 			found = true
 			if err := UnpackLog(&c.StateSenderABI, event, "StateSynced", vLog); err != nil {
+				return nil, err
+			}
+			break
+		}
+	}
+
+	if !found {
+		return nil, errors.New("Event not found")
+	}
+
+	return event, nil
+}
+
+// decode slashing events
+
+// DecodeSlashedEvent represents tick ack on contract
+func (c *ContractCaller) DecodeSlashedEvent(contractAddress common.Address, receipt *ethTypes.Receipt, logIndex uint64) (*stakinginfo.StakinginfoSlashed, error) {
+	event := new(stakinginfo.StakinginfoSlashed)
+
+	found := false
+	for _, vLog := range receipt.Logs {
+		if uint64(vLog.Index) == logIndex && bytes.Equal(vLog.Address.Bytes(), contractAddress.Bytes()) {
+			found = true
+			if err := UnpackLog(&c.StakingInfoABI, event, "Slashed", vLog); err != nil {
 				return nil, err
 			}
 			break

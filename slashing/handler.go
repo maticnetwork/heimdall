@@ -2,6 +2,7 @@ package slashing
 
 import (
 	"bytes"
+	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -9,6 +10,8 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/slashing/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
+
+	hmCommon "github.com/maticnetwork/heimdall/common"
 )
 
 // NewHandler creates an sdk.Handler for all the slashing type messages
@@ -40,28 +43,6 @@ func handleMsgUnjail(ctx sdk.Context, msg types.MsgUnjail, k Keeper, contractCal
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			sdk.NewAttribute(sdk.AttributeKeySender, msg.ValidatorAddr.String()),
-		),
-	)
-
-	return sdk.Result{
-		Events: ctx.EventManager().Events(),
-	}
-}
-
-/*
-	handleMsgTickAck - handle msg tick ack event
-	1. validate the tx hash in the event
-	2. flush the last tick slashing info
-*/
-func handleMsgTickAck(ctx sdk.Context, msg types.MsgTickAck, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
-
-	// remove validator slashing infos from tick data
-	k.FlushBufferValSlashingInfos(ctx)
-
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 		),
 	)
 
@@ -122,6 +103,60 @@ func handlerMsgTick(ctx sdk.Context, msg types.MsgTick, k Keeper, contractCaller
 			types.EventTypeTickConfirm,
 			sdk.NewAttribute(types.AttributeKeyProposer, msg.Proposer.String()),
 			sdk.NewAttribute(types.AttributeKeySlashInfoHash, msg.SlashingInfoHash.String()),
+		),
+	)
+
+	return sdk.Result{
+		Events: ctx.EventManager().Events(),
+	}
+}
+
+/*
+	handleMsgTickAck - handle msg tick ack event
+	1. validate the tx hash in the event
+	2. flush the last tick slashing info
+*/
+func handleMsgTickAck(ctx sdk.Context, msg types.MsgTickAck, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
+	k.Logger(ctx).Info("Handling TickAck", "msg", msg)
+
+	// chainManager params
+	params := k.chainKeeper.GetParams(ctx)
+	chainParams := params.ChainParams
+
+	// get main tx receipt
+	receipt, err := contractCaller.GetConfirmedTxReceipt(ctx.BlockTime(), msg.TxHash.EthHash(), params.TxConfirmationTime)
+	if err != nil || receipt == nil {
+		return hmCommon.ErrWaitForConfirmation(k.Codespace(), params.TxConfirmationTime).Result()
+	}
+
+	// get event log for topup
+	eventLog, err := contractCaller.DecodeSlashedEvent(chainParams.StakingInfoAddress.EthAddress(), receipt, msg.LogIndex)
+	if err != nil || eventLog == nil {
+		k.Logger(ctx).Error("Error fetching log from txhash")
+		return hmCommon.ErrInvalidMsg(k.Codespace(), "Unable to fetch logs for txHash").Result()
+	}
+
+	// sequence id
+
+	sequence := new(big.Int).Mul(receipt.BlockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
+	sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))
+
+	// check if incoming tx is older
+	if k.HasSlashingSequence(ctx, sequence.String()) {
+		k.Logger(ctx).Error("Older invalid tx found")
+		return hmCommon.ErrOldTx(k.Codespace()).Result()
+	}
+
+	// remove validator slashing infos from tick data
+	k.FlushBufferValSlashingInfos(ctx)
+
+	// save staking sequence
+	k.SetSlashingSequence(ctx, sequence.String())
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeTickAck,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 		),
 	)
 
