@@ -13,6 +13,7 @@ import (
 	"github.com/maticnetwork/bor/rlp"
 	"github.com/maticnetwork/heimdall/contracts/erc20"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
+	"github.com/maticnetwork/heimdall/contracts/slashmanager"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 	"github.com/tendermint/tendermint/types"
 )
@@ -94,6 +95,44 @@ func (c *ContractCaller) SendCheckpoint(voteSignBytes []byte, sigs []byte, txDat
 		return err
 	}
 	Logger.Info("Submitted new checkpoint to rootchain successfully", "txHash", tx.Hash().String())
+	return
+}
+
+// SendTick sends slash tick to rootchain contract
+func (c *ContractCaller) SendTick(voteSignBytes []byte, sigs []byte, slashInfoList []byte, proposer common.Address, slashManagerAddress common.Address, slashManagerInstance *slashmanager.Slashmanager) (er error) {
+	var vote types.CanonicalRLPVote
+	err := rlp.DecodeBytes(voteSignBytes, &vote)
+	if err != nil {
+		Logger.Error("Unable to decode vote while sending tick", "vote", hex.EncodeToString(voteSignBytes), "sigs", hex.EncodeToString(sigs), "slashInfoList", hex.EncodeToString(slashInfoList), "proposer", proposer)
+		return err
+	}
+
+	data, err := c.RootChainABI.Pack("updateSlashedAmounts", voteSignBytes, sigs, slashInfoList)
+	if err != nil {
+		Logger.Error("Unable to pack tx for updateSlashedAmounts", "error", err)
+		return err
+	}
+
+	auth, err := GenerateAuthObj(GetMainClient(), slashManagerAddress, data)
+	if err != nil {
+		Logger.Error("Unable to create auth object", "error", err)
+		Logger.Info("Setting custom gaslimit", "gaslimit", GetConfig().MainchainGasLimit)
+		auth.GasLimit = GetConfig().MainchainGasLimit
+	}
+	GetPubKey().VerifyBytes(voteSignBytes, sigs)
+
+	Logger.Debug("Sending new tick",
+		"vote", hex.EncodeToString(voteSignBytes),
+		"sigs", hex.EncodeToString(sigs),
+		"slashInfoList", hex.EncodeToString(slashInfoList),
+		"proposer", proposer)
+
+	tx, err := slashManagerInstance.UpdateSlashedAmounts(auth, proposer, voteSignBytes, sigs, slashInfoList)
+	if err != nil {
+		Logger.Error("Error while submitting tick", "error", err)
+		return err
+	}
+	Logger.Info("Submitted new tick to slashmanager successfully", "txHash", tx.Hash().String())
 	return
 }
 

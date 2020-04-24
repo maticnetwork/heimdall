@@ -113,11 +113,11 @@ func (sp *SlashingProcessor) sendTickToRootchain(eventBytes string, txHeight int
 	// TODO - slashing...who should submit tick to rootchain??
 	isCurrentProposer, err := util.IsCurrentProposer(sp.cliCtx)
 	if err != nil {
-		sp.Logger.Error("Error checking isCurrentProposer in CheckpointConfirmation handler", "error", err)
+		sp.Logger.Error("Error checking isCurrentProposer", "error", err)
 		return err
 	}
 
-	// TODO - replace below nonce variable with actual slash tx nonce
+	// Validates tx Height with rootchain contract
 	shouldSend, err := sp.shouldSendTickToRootchain(uint64(txHeight))
 	if err != nil {
 		return err
@@ -143,7 +143,7 @@ func (sp *SlashingProcessor) sendTickToRootchain(eventBytes string, txHeight int
 			sp.Logger.Error("Error decoding txHash while sending Tick to rootchain", "txHash", txHash, "error", err)
 			return err
 		}
-		if err := sp.createAndSendTickToRootchain(txHeight, txHash); err != nil {
+		if err := sp.createAndSendTickToRootchain(txHeight, txHash, tickSlashInfoList, proposerAddr); err != nil {
 			sp.Logger.Error("Error sending tick to rootchain", "error", err)
 			return err
 		}
@@ -264,7 +264,49 @@ func (sp *SlashingProcessor) shouldSendTickToRootchain(tickNonce uint64) (should
 
 // createAndSendTickToRootchain prepares the data required for rootchain tick submission
 // and sends a transaction to rootchain
-func (sp *SlashingProcessor) createAndSendTickToRootchain(height int64, txHash []byte) error {
+func (sp *SlashingProcessor) createAndSendTickToRootchain(height int64, txHash []byte, slashInfoList []*hmTypes.ValidatorSlashingInfo, proposerAddr hmTypes.HeimdallAddress) error {
+	sp.Logger.Info("Preparing tick to be pushed on chain", "height", height, "txHash", hmTypes.BytesToHeimdallHash(txHash))
+
+	// proof
+	tx, err := helper.QueryTxWithProof(sp.cliCtx, txHash)
+	if err != nil {
+		sp.Logger.Error("Error querying tick tx proof", "txHash", txHash)
+		return err
+	}
+
+	// get votes
+	votes, sigs, chainID, err := helper.FetchVotes(sp.httpClient, height)
+	if err != nil {
+		sp.Logger.Error("Error fetching votes for tick tx", "height", height)
+		return err
+	}
+
+	shouldSend, err := sp.shouldSendTickToRootchain(uint64(tx.Height))
+	if err != nil {
+		return err
+	}
+
+	if shouldSend {
+
+		configParams, _ := util.GetConfigManagerParams(sp.cliCtx)
+		slashManagerAddress := configParams.ChainParams.SlashManagerAddress.EthAddress()
+		// slashmanage instance
+		slashManagerInstance, err := sp.contractConnector.GetSlashManagerInstance(slashManagerAddress)
+		if err != nil {
+			panic(err)
+		}
+
+		slashInfoBytes, err := slashingTypes.SortAndRLPEncodeSlashInfos(slashInfoList)
+		if err != nil {
+			sp.Logger.Error("Error rlp encoding slashInfos", "error", err)
+			return err
+		}
+
+		if err := sp.contractConnector.SendTick(helper.GetVoteBytes(votes, chainID), sigs, slashInfoBytes, proposerAddr.EthAddress(), slashManagerAddress, slashManagerInstance); err != nil {
+			sp.Logger.Info("Error submitting tick to slashManager contract", "error", err)
+			return err
+		}
+	}
 
 	return nil
 }
@@ -309,7 +351,6 @@ func (sp *SlashingProcessor) validateTickSlashInfo(slashInfoList []*hmTypes.Vali
 	}
 	// compare tickSlashInfoHash with slashInfoHash
 	if bytes.Compare(tickSlashInfoHash, slashInfoHash.Bytes()) == 0 {
-
 		return true, nil
 	} else {
 		sp.Logger.Info("SlashingInfoHash mismatch", "tickSlashInfoHash", tickSlashInfoHash, "slashInfoHash", slashInfoHash)

@@ -1,6 +1,7 @@
 package types
 
 import (
+	"github.com/maticnetwork/bor/rlp"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -16,9 +17,30 @@ func GetSlashingInfoHash(valSlashingInfos []*hmTypes.ValidatorSlashingInfo) ([]b
 
 // GetAccountTree returns roothash of Validator Account State Tree
 func GenerateInfoHash(slashingInfos []*hmTypes.ValidatorSlashingInfo) ([]byte, error) {
-	// Sort the dividendAccounts by ID
+	encodedSlashInfo, err := SortAndRLPEncodeSlashInfos(slashingInfos)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO slashing - Generate Hash of encodedData
+	return encodedSlashInfo, nil
+}
+
+// SortAndRLPEncodeSlashInfos  - RLP encoded slashing infos
+func SortAndRLPEncodeSlashInfos(slashingInfos []*hmTypes.ValidatorSlashingInfo) ([]byte, error) {
+
+	// Sort the slashingInfos by ID
 	slashingInfos = hmTypes.SortValidatorSlashingInfoByID(slashingInfos)
 
-	// TODO - add logic to generate hash
-	return nil, nil
+	// Encode slashInfos
+	encodedSlashInfos, err := rlp.EncodeToBytes(slashingInfos)
+
+	return encodedSlashInfos, err
+}
+
+func RLPDecodeSlashInfos(encodedSlashInfo []byte) ([]hmTypes.ValidatorSlashingInfo, error) {
+	var slashingInfoList []hmTypes.ValidatorSlashingInfo
+	err := rlp.DecodeBytes(encodedSlashInfo, &slashingInfoList)
+	return slashingInfoList, err
 }

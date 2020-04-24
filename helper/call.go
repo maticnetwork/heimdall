@@ -16,6 +16,7 @@ import (
 	"github.com/maticnetwork/bor/rpc"
 	"github.com/maticnetwork/heimdall/contracts/erc20"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
+	"github.com/maticnetwork/heimdall/contracts/slashmanager"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
 	"github.com/maticnetwork/heimdall/contracts/statereceiver"
@@ -33,6 +34,7 @@ type IContractCaller interface {
 	CurrentHeaderBlock(rootChainInstance *rootchain.Rootchain) (uint64, error)
 	GetBalance(address common.Address) (*big.Int, error)
 	SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte, rootchainAddress common.Address, rootChainInstance *rootchain.Rootchain) (err error)
+	SendTick(voteSignBytes []byte, sigs []byte, slashInfoList []byte, proposer common.Address, slashManagerAddress common.Address, slashManagerInstance *slashmanager.Slashmanager) (er error)
 	GetCheckpointSign(txHash common.Hash) ([]byte, []byte, []byte, error)
 	GetMainChainBlock(*big.Int) (*ethTypes.Header, error)
 	GetMaticChainBlock(*big.Int) (*ethTypes.Header, error)
@@ -70,6 +72,7 @@ type IContractCaller interface {
 	GetStakingInfoInstance(stakingInfoAddress common.Address) (*stakinginfo.Stakinginfo, error)
 	GetValidatorSetInstance(validatorSetAddress common.Address) (*validatorset.Validatorset, error)
 	GetStakeManagerInstance(stakingManagerAddress common.Address) (*stakemanager.Stakemanager, error)
+	GetSlashManagerInstance(slashManagerAddress common.Address) (*slashmanager.Slashmanager, error)
 	GetStateSenderInstance(stateSenderAddress common.Address) (*statesender.Statesender, error)
 	GetStateReceiverInstance(stateReceiverAddress common.Address) (*statereceiver.Statereceiver, error)
 	GetMaticTokenInstance(maticTokenAddress common.Address) (*erc20.Erc20, error)
@@ -194,6 +197,17 @@ func (c *ContractCaller) GetStakeManagerInstance(stakingManagerAddress common.Ad
 		return ci, err
 	}
 	return contractInstance.(*stakemanager.Stakemanager), nil
+}
+
+// GetSlashManagerInstance returns slashManager contract instance for selected base chain
+func (c *ContractCaller) GetSlashManagerInstance(slashManagerAddress common.Address) (*slashmanager.Slashmanager, error) {
+	contractInstance, ok := c.ContractInstanceCache[slashManagerAddress]
+	if !ok {
+		ci, err := slashmanager.NewSlashmanager(slashManagerAddress, mainChainClient)
+		c.ContractInstanceCache[slashManagerAddress] = ci
+		return ci, err
+	}
+	return contractInstance.(*slashmanager.Slashmanager), nil
 }
 
 // GetStateSenderInstance returns stakinginfo contract instance for selected base chain

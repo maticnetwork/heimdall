@@ -34,6 +34,7 @@ type ChainParams struct {
 	BorChainID            string                  `json:"bor_chain_id" yaml:"bor_chain_id"`
 	MaticTokenAddress     hmTypes.HeimdallAddress `json:"matic_token_address" yaml:"matic_token_address"`
 	StakingManagerAddress hmTypes.HeimdallAddress `json:"staking_manager_address" yaml:"staking_manager_address"`
+	SlashManagerAddress   hmTypes.HeimdallAddress `json:"slash_manager_address" yaml:"slash_manager_address"`
 	RootChainAddress      hmTypes.HeimdallAddress `json:"root_chain_address" yaml:"root_chain_address"`
 	StakingInfoAddress    hmTypes.HeimdallAddress `json:"staking_info_address" yaml:"staking_info_address"`
 	StateSenderAddress    hmTypes.HeimdallAddress `json:"state_sender_address" yaml:"state_sender_address"`
@@ -48,12 +49,13 @@ func (cp ChainParams) String() string {
 	BorChainID: 									%s
   MaticTokenAddress:            %s
 	StakingManagerAddress:        %s
+	SlashManagerAddress:        %s
 	RootChainAddress:             %s
   StakingInfoAddress:           %s
 	StateSenderAddress:           %s
 	StateReceiverAddress: 				%s
 	ValidatorSetAddress:					%s`,
-		cp.BorChainID, cp.MaticTokenAddress, cp.StakingManagerAddress, cp.RootChainAddress, cp.StakingInfoAddress, cp.StateSenderAddress, cp.StateReceiverAddress, cp.ValidatorSetAddress)
+		cp.BorChainID, cp.MaticTokenAddress, cp.StakingManagerAddress, cp.SlashManagerAddress, cp.RootChainAddress, cp.StakingInfoAddress, cp.StateSenderAddress, cp.StateReceiverAddress, cp.ValidatorSetAddress)
 }
 
 // Params defines the parameters for the chainmanager module.
@@ -103,6 +105,10 @@ func (p Params) Validate() error {
 	}
 
 	if err := validateHeimdallAddress("staking_manager_address", p.ChainParams.StakingManagerAddress); err != nil {
+		return err
+	}
+
+	if err := validateHeimdallAddress("slash_manager_address", p.ChainParams.SlashManagerAddress); err != nil {
 		return err
 	}
 

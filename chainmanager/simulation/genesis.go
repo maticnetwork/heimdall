@@ -19,6 +19,7 @@ const (
 	BorChainID            = "bor_chain_id"
 	MaticTokenAddress     = "matic_token_address"
 	StakingManagerAddress = "staking_manager_address"
+	SlashManagerAddress   = "slash_manager_address"
 	RootChainAddress      = "root_chain_address"
 	StakingInfoAddress    = "staking_info_address"
 	StateSenderAddress    = "state_sender_address"
@@ -56,6 +57,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 
 	var maticTokenAddress = GenHeimdallAddress()
 	var stakingManagerAddress = GenHeimdallAddress()
+	var slashManagerAddress = GenHeimdallAddress()
 	var rootChainAddress = GenHeimdallAddress()
 	var stakingInfoAddress = GenHeimdallAddress()
 	var stateSenderAddress = GenHeimdallAddress()
@@ -65,6 +67,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 		BorChainID:            borChainID,
 		MaticTokenAddress:     maticTokenAddress,
 		StakingManagerAddress: stakingManagerAddress,
+		SlashManagerAddress:   slashManagerAddress,
 		RootChainAddress:      rootChainAddress,
 		StakingInfoAddress:    stakingInfoAddress,
 		StateSenderAddress:    stateSenderAddress,
