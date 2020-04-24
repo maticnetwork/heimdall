@@ -89,11 +89,11 @@ func (p Params) String() string {
 
 // Validate checks that the parameters have valid values.
 func (p Params) Validate() error {
-	if p.MaxCheckpointLength < 0 || p.AvgCheckpointLength < 0 {
-		return fmt.Errorf("invalid parameter MaxCheckpointLength: %d or AvgCheckpointLength: %d", p.MaxCheckpointLength, p.AvgCheckpointLength)
+	if p.MaxCheckpointLength == 0 || p.AvgCheckpointLength == 0 {
+		return fmt.Errorf("maxCheckpointLength, avgCheckpointLength should be non-zero")
 	}
 
-	if (p.MaxCheckpointLength - p.AvgCheckpointLength) < 0 {
+	if p.MaxCheckpointLength < p.AvgCheckpointLength {
 		return fmt.Errorf("maxCheckpointLength should be grater than avgCheckpointLength")
 	}
 	return nil
