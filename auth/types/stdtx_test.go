@@ -39,8 +39,11 @@ func TestTxValidateBasic(t *testing.T) {
 	msg1 := sdk.NewTestMsg(addr1)
 	tx := NewTestTx(ctx, msg1, priv1, uint64(0), uint64(0))
 
+	require.NotNil(t, msg1)
 	err := tx.ValidateBasic()
+	require.Nil(t, err)
 	require.NoError(t, err)
+	require.NotPanics(t, func() { msg1.GetSignBytes() })
 }
 
 func TestDefaultTxEncoder(t *testing.T) {
