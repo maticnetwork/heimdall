@@ -48,10 +48,6 @@ span_polling_interval = "{{ .SpanPollingInterval }}"
 #### gas limits ####
 main_chain_gas_limit = "{{ .MainchainGasLimit }}"
 
-##### Checkpoint Length Config #####
-avg_checkpoint_length = "{{ .AvgCheckpointLength }}"
-max_checkpoint_length = "{{ .MaxCheckpointLength }}"
-
 ##### Timeout Config #####
 
 no_ack_wait_time = "{{ .NoACKWaitTime }}"
