@@ -106,9 +106,8 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr []byte, power int
 
 			// update slash buffer present in slash keeper. Also add slashedAmount totalSlashedAmount.
 
-			amount := "10000"
-			k.SlashInterim(ctx, validator.ID, amount)
-			k.Logger(ctx).Debug("Interim uptime slashing successful", "slashedAmount", amount, "valID", validator.ID)
+			slashedAmount := k.SlashInterim(ctx, validator.ID, params.SlashFractionDowntime)
+			k.Logger(ctx).Debug("Interim uptime slashing successful", "slashedAmount", slashedAmount, "valID", validator.ID)
 
 			// k.sk.Slash(ctx, addr, distributionHeight, power, params.SlashFractionDowntime)
 			// k.sk.Jail(ctx, addr)
@@ -234,9 +233,8 @@ func (k Keeper) HandleDoubleSign(ctx sdk.Context, evidence types.Equivocation) e
 	// 	evidence.GetValidatorPower(), distributionHeight,
 	// )
 
-	amount := "50000"
-	k.SlashInterim(ctx, val.ID, amount)
-
+	slashedAmount := k.SlashInterim(ctx, val.ID, params.SlashFractionDoubleSign)
+	logger.Debug("Interim slashing success", "slashedAmount", slashedAmount)
 	// Jail the validator if not already jailed. This will begin unbonding the
 	// validator if not already unbonding (tombstoned).
 	// TODO - slashing

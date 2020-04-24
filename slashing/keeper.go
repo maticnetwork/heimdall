@@ -10,6 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gogotypes "github.com/gogo/protobuf/types"
 	"github.com/maticnetwork/heimdall/chainmanager"
+	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/params/subspace"
 	"github.com/maticnetwork/heimdall/slashing/types"
 	"github.com/maticnetwork/heimdall/staking"
@@ -256,22 +257,33 @@ func (k *Keeper) GetParams(ctx sdk.Context) (params types.Params) {
 
 // Slashing Info api's
 
-func (k *Keeper) SlashInterim(ctx sdk.Context, valID hmTypes.ValidatorID, amount string) {
+func (k *Keeper) SlashInterim(ctx sdk.Context, valID hmTypes.ValidatorID, slashPercent sdk.Dec) string {
+	if slashPercent.IsNegative() {
+		panic(fmt.Errorf("attempted to slash with a negative slash factor: %v", slashPercent))
+	}
+
+	validator, _ := k.sk.GetValidatorFromValID(ctx, valID)
+	powerInDecimal, _ := helper.GetAmountFromPower(validator.VotingPower)
+
+	slashAmountDec := sdk.NewDecFromBigInt(powerInDecimal).Mul(slashPercent)
+	slashAmountInt := slashAmountDec.TruncateInt()
+	slashAmount := slashAmountInt.BigInt()
+
 	// add slash to buffer
 	valSlashingInfo, found := k.GetBufferValSlashingInfo(ctx, valID)
 	if found {
 		// Add or Update Slash Amount
 		prevAmount, _ := big.NewInt(0).SetString(valSlashingInfo.SlashedAmount, 10)
-		amountToAdd, _ := big.NewInt(0).SetString(amount, 10)
-		updatedSlashAmount := big.NewInt(0).Add(prevAmount, amountToAdd)
+		updatedSlashAmount := big.NewInt(0).Add(prevAmount, slashAmount)
 		valSlashingInfo.SlashedAmount = updatedSlashAmount.String()
 	} else {
 		// create slashing info
-		valSlashingInfo = hmTypes.NewValidatorSlashingInfo(valID, amount, false)
+		valSlashingInfo = hmTypes.NewValidatorSlashingInfo(valID, slashAmount.String(), false)
 	}
 
 	k.SetBufferValSlashingInfo(ctx, valID, valSlashingInfo)
-	k.UpdateTotalSlashedAmount(ctx, amount)
+	k.UpdateTotalSlashedAmount(ctx, slashAmount.String())
+	return slashAmount.String()
 }
 
 // GetBufferValSlashingInfo gets the validator slashing info for a validator ID key
