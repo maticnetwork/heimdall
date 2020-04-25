@@ -37,3 +37,22 @@ func RandomPastCommits(r *rand.Rand, n int, txsN int, validatorsN int) []types.P
 
 	return result
 }
+
+// RandomLastCommitInfo returns random last commit info
+func RandomLastCommitInfo(r *rand.Rand, votesN int) abci.LastCommitInfo {
+	votes := make([]abci.VoteInfo, votesN)
+
+	for i := 0; i < votesN; i++ {
+		votes[i] = abci.VoteInfo{
+			Validator: abci.Validator{
+				Address: []byte("validator" + string(i+1)),
+				Power:   r.Int63n(100000),
+			},
+			SignedLastBlock: r.Int()%2 == 0,
+		}
+	}
+
+	return abci.LastCommitInfo{
+		Votes: votes,
+	}
+}

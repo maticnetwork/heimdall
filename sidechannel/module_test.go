@@ -2,6 +2,7 @@ package sidechannel_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"math/rand"
 	"testing"
 	"time"
@@ -9,6 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	abci "github.com/tendermint/tendermint/abci/types"
 	tmTypes "github.com/tendermint/tendermint/types"
 
 	"github.com/maticnetwork/heimdall/app"
@@ -46,6 +48,18 @@ func TestModuleTestSuite(t *testing.T) {
 //
 // Tests
 //
+
+func (suite *ModuleTestSuite) TestGetTxCmd() {
+	t, module := suite.T(), suite.module
+
+	require.Nil(t, module.GetTxCmd(sidechannelTypes.ModuleCdc))
+}
+
+func (suite *ModuleTestSuite) GetQueryCmd() {
+	t, module := suite.T(), suite.module
+
+	require.Nil(t, module.GetQueryCmd(sidechannelTypes.ModuleCdc))
+}
 
 func (suite *ModuleTestSuite) TestInitGenesis() {
 	t, ctx, module := suite.T(), suite.ctx, suite.module
@@ -110,4 +124,70 @@ func (suite *ModuleTestSuite) TestExportGenesis() {
 	// check with empty genesis state
 	require.Equal(t, len(gs.PastCommits), len(gs3.PastCommits))
 	require.Equal(t, 2, len(gs3.PastCommits))
+}
+
+func (suite *ModuleTestSuite) TestBeginEndBlock() {
+	t, r, app, ctx, module := suite.T(), suite.r, suite.app, suite.ctx, suite.module
+
+	{
+		// test start block
+
+		var height int64 = 2
+		ctx = ctx.WithBlockHeight(height)
+
+		validators := app.SidechannelKeeper.GetValidators(ctx, height)
+		require.Equal(t, 0, len(validators), fmt.Sprintf("Validator should be empty for height %d", height))
+		module.BeginBlock(ctx, abci.RequestBeginBlock{
+			Header: abci.Header{
+				Height: height,
+			},
+			LastCommitInfo: simulation.RandomLastCommitInfo(r, 10),
+		})
+
+		validators = app.SidechannelKeeper.GetValidators(ctx, height)
+		require.Equal(t, 0, len(validators), fmt.Sprintf("Validator should be empty for height %d after begin block", height))
+	}
+
+	{
+		// test start block
+
+		var height int64 = 20
+		ctx = ctx.WithBlockHeight(height)
+
+		validators := app.SidechannelKeeper.GetValidators(ctx, height)
+		require.Equal(t, 0, len(validators), fmt.Sprintf("Validator should be empty for height %d", height))
+		module.BeginBlock(ctx, abci.RequestBeginBlock{
+			Header: abci.Header{
+				Height: height,
+			},
+			LastCommitInfo: simulation.RandomLastCommitInfo(r, 10),
+		})
+
+		validators = app.SidechannelKeeper.GetValidators(ctx, height)
+		require.Equal(t, 10, len(validators), fmt.Sprintf("Validator should be empty for height %d after begin block", height))
+
+		// test end block
+
+		height = 20
+		ctx = ctx.WithBlockHeight(height)
+
+		module.EndBlock(ctx, abci.RequestEndBlock{
+			Height: height,
+		})
+
+		validators = app.SidechannelKeeper.GetValidators(ctx, height)
+		require.Equal(t, 10, len(validators), fmt.Sprintf("Validator should be same as before for height %d after end block", height))
+
+		// test end block
+
+		height = 22
+		ctx = ctx.WithBlockHeight(height)
+
+		module.EndBlock(ctx, abci.RequestEndBlock{
+			Height: height,
+		})
+
+		validators = app.SidechannelKeeper.GetValidators(ctx, height)
+		require.Equal(t, 0, len(validators), "Validator should be empty after end block after 2 blocks")
+	}
 }
