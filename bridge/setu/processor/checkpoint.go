@@ -428,7 +428,7 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToRootchain(checkpointCont
 	}
 
 	// fetch side txs sigs
-	decoder := authTypes.DefaultTxDecoder(authTypes.ModuleCdc)
+	decoder := helper.GetTxDecoder(authTypes.ModuleCdc)
 	stdTx, err := decoder(tx.Tx)
 	if err != nil {
 		cp.Logger.Error("Error while decoding checkpoint tx", "txHash", tx.Tx.Hash(), "error", err)

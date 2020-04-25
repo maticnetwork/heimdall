@@ -301,7 +301,7 @@ func QuerySideTxRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		// fetch side txs sigs
-		decoder := authTypes.DefaultTxDecoder(authTypes.ModuleCdc)
+		decoder := helper.GetTxDecoder(authTypes.ModuleCdc)
 		stdTx, err := decoder(tx.Tx)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
