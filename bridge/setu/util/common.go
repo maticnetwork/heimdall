@@ -15,6 +15,8 @@ import (
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	chainManagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
+	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
+
 	"github.com/maticnetwork/heimdall/types"
 
 	"github.com/pkg/errors"
@@ -271,7 +273,7 @@ func IsCatchingUp(cliCtx cliContext.CLIContext) bool {
 	return resp.SyncInfo.CatchingUp
 }
 
-// Returns heimdall auth account
+// GetAccount returns heimdall auth account
 func GetAccount(cliCtx cliContext.CLIContext, address types.HeimdallAddress) (account authTypes.Account, err error) {
 	url := helper.GetHeimdallServerEndpoint(fmt.Sprintf(AccountDetailsURL, address))
 	// call account rest api
@@ -286,8 +288,8 @@ func GetAccount(cliCtx cliContext.CLIContext, address types.HeimdallAddress) (ac
 	return
 }
 
-// GetConfigManagerParams return configManager params
-func GetConfigManagerParams(cliCtx cliContext.CLIContext) (*chainManagerTypes.Params, error) {
+// GetChainmanagerParams return chain manager params
+func GetChainmanagerParams(cliCtx cliContext.CLIContext) (*chainManagerTypes.Params, error) {
 	response, err := helper.FetchFromAPI(
 		cliCtx,
 		helper.GetHeimdallServerEndpoint(ChainManagerParamsURL),
@@ -305,7 +307,26 @@ func GetConfigManagerParams(cliCtx cliContext.CLIContext) (*chainManagerTypes.Pa
 	return &params, nil
 }
 
-// appendPrefix - returns publickey in uncompressed format
+// GetCheckpointParams return params
+func GetCheckpointParams(cliCtx cliContext.CLIContext) (*checkpointTypes.Params, error) {
+	response, err := helper.FetchFromAPI(
+		cliCtx,
+		helper.GetHeimdallServerEndpoint(CheckpointParamsURL),
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var params checkpointTypes.Params
+	if err := json.Unmarshal(response.Result, &params); err != nil {
+		return nil, err
+	}
+
+	return &params, nil
+}
+
+// AppendPrefix returns publickey in uncompressed format
 func AppendPrefix(signerPubKey []byte) []byte {
 	// append prefix - "0x04" as heimdall uses publickey in uncompressed format. Refer below link
 	// https://superuser.com/questions/1465455/what-is-the-size-of-public-key-for-ecdsa-spec256r1

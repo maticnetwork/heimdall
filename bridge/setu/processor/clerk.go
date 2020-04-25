@@ -12,11 +12,17 @@ import (
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
+	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
 	"github.com/maticnetwork/heimdall/contracts/statesender"
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
+
+// ClerkContext for bridge
+type ClerkContext struct {
+	ChainmanagerParams *chainmanagerTypes.Params
+}
 
 // ClerkProcessor - sync state/deposit events
 type ClerkProcessor struct {
@@ -56,7 +62,12 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 		return err
 	}
 
-	configParams, _ := util.GetConfigManagerParams(cp.cliCtx)
+	clerkContext, err := cp.getClerkContext()
+	if err != nil {
+		return err
+	}
+
+	chainParams := clerkContext.ChainmanagerParams.ChainParams
 
 	event := new(statesender.StatesenderStateSynced)
 	if err := helper.UnpackLog(cp.stateSenderAbi, event, eventName, &vLog); err != nil {
@@ -68,7 +79,7 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 				"id", event.Id,
 				"contract", event.ContractAddress,
 				"data", hex.EncodeToString(event.Data),
-				"borChainId", configParams.ChainParams.BorChainID,
+				"borChainId", chainParams.BorChainID,
 				"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 				"logIndex", uint64(vLog.Index),
 			)
@@ -81,7 +92,7 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 			"id", event.Id,
 			"contract", event.ContractAddress,
 			"data", hex.EncodeToString(event.Data),
-			"borChainId", configParams.ChainParams.BorChainID,
+			"borChainId", chainParams.BorChainID,
 			"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			"logIndex", uint64(vLog.Index),
 		)
@@ -91,7 +102,7 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			uint64(vLog.Index),
 			event.Id.Uint64(),
-			configParams.ChainParams.BorChainID,
+			chainParams.BorChainID,
 		)
 
 		// return broadcast to heimdall
@@ -125,8 +136,14 @@ func (cp *ClerkProcessor) sendDepositRecordToMatic(eventBytes string, txHeight i
 		}
 	}
 
+	// get clerk context
+	clerkContext, err := cp.getClerkContext()
+	if err != nil {
+		return err
+	}
+
 	// TODO - query on heimdall for recordID check status.
-	if err := cp.commitRecordID(recordID); err != nil {
+	if err := cp.commitRecordID(clerkContext, recordID); err != nil {
 		cp.Logger.Error("Error commit recordId to maticchain", "recordID", recordID)
 		return err
 	}
@@ -134,17 +151,18 @@ func (cp *ClerkProcessor) sendDepositRecordToMatic(eventBytes string, txHeight i
 }
 
 // broadcastToBor - propose state to bor
-func (cp *ClerkProcessor) commitRecordID(stateID uint64) error {
+func (cp *ClerkProcessor) commitRecordID(clerkContext *ClerkContext, stateID uint64) error {
 	// encode commit span
 	encodedData, err := cp.encodeProposeStateData(stateID)
 	if err != nil {
 		cp.Logger.Error("Error encoding state data", "recordID", stateID)
 		return err
 	}
-	// get validator address
-	configParams, _ := util.GetConfigManagerParams(cp.cliCtx)
 
-	stateReceiverAddress := configParams.ChainParams.StateReceiverAddress.EthAddress()
+	// get chain params
+	chainParams := clerkContext.ChainmanagerParams.ChainParams
+
+	stateReceiverAddress := chainParams.StateReceiverAddress.EthAddress()
 	msg := ethereum.CallMsg{
 		To:   &stateReceiverAddress,
 		Data: encodedData,
@@ -194,4 +212,20 @@ func (cp *ClerkProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, l
 	}
 
 	return status, nil
+}
+
+//
+// utils
+//
+
+func (cp *ClerkProcessor) getClerkContext() (*ClerkContext, error) {
+	chainmanagerParams, err := util.GetChainmanagerParams(cp.cliCtx)
+	if err != nil {
+		cp.Logger.Error("Error while fetching chain manager params", "error", err)
+		return nil, err
+	}
+
+	return &ClerkContext{
+		ChainmanagerParams: chainmanagerParams,
+	}, nil
 }

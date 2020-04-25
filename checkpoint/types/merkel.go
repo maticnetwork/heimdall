@@ -20,14 +20,14 @@ import (
 )
 
 // ValidateCheckpoint - Validates if checkpoint rootHash matches or not
-func ValidateCheckpoint(start uint64, end uint64, rootHash hmTypes.HeimdallHash) (bool, error) {
+func ValidateCheckpoint(start uint64, end uint64, rootHash hmTypes.HeimdallHash, checkpointLength uint64) (bool, error) {
 	// Check if blocks exist locally
 	if !CheckIfBlocksExist(end) {
 		return false, errors.New("blocks not found locally")
 	}
 
 	// Compare RootHash
-	root, err := GetHeaders(start, end)
+	root, err := GetHeaders(start, end, checkpointLength)
 	if err != nil {
 		return false, err
 	}
@@ -57,8 +57,14 @@ func CheckIfBlocksExist(end uint64) bool {
 	return true
 }
 
-func GetHeaders(start uint64, end uint64) ([]byte, error) {
+// GetHeaders returns header data
+func GetHeaders(start uint64, end uint64, checkpointLength uint64) ([]byte, error) {
 	rpcClient := helper.GetMaticRPCClient()
+	noOfBlock := end - start + 1
+
+	if noOfBlock > checkpointLength {
+		return nil, errors.New("number of headers requested exceeds")
+	}
 
 	if start > end {
 		return nil, errors.New("start is greater than end")
@@ -77,7 +83,7 @@ func GetHeaders(start uint64, end uint64) ([]byte, error) {
 	}
 
 	// Batch call
-	err := fetchBatchElements(rpcClient, batchElements)
+	err := fetchBatchElements(rpcClient, batchElements, checkpointLength)
 	if err != nil {
 		return nil, err
 	}
@@ -231,8 +237,8 @@ func nextPowerOfTwo(n uint64) uint64 {
 }
 
 // spins go-routines to fetch batch elements to allow creation of large merkle trees
-func fetchBatchElements(rpcClient *rpc.Client, elements []rpc.BatchElem) (err error) {
-	var batchLength = int(helper.GetConfig().AvgCheckpointLength)
+func fetchBatchElements(rpcClient *rpc.Client, elements []rpc.BatchElem, checkpointLength uint64) (err error) {
+	var batchLength = int(checkpointLength)
 	// group
 	var g errgroup.Group
 

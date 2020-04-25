@@ -51,7 +51,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, con
 	}
 
 	// validate checkpoint
-	validCheckpoint, err := types.ValidateCheckpoint(msg.StartBlock, msg.EndBlock, msg.RootHash)
+	validCheckpoint, err := types.ValidateCheckpoint(msg.StartBlock, msg.EndBlock, msg.RootHash, params.MaxCheckpointLength)
 	if err != nil {
 		k.Logger(ctx).Error("Error validating checkpoint",
 			"Error", err,
