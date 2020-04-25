@@ -29,7 +29,7 @@ func (app *HeimdallApp) PostDeliverTxHandler(ctx sdk.Context, tx sdk.Tx, result 
 		}
 
 		// save tx bytes if any tx-msg is side-tx msg
-		if anySideMsg {
+		if anySideMsg && ctx.TxBytes() != nil {
 			app.SidechannelKeeper.SetTx(ctx, ctx.BlockHeader().Height, ctx.TxBytes())
 		}
 	}
