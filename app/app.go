@@ -400,12 +400,13 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.mm.RegisterRoutes(app.Router(), app.QueryRouter())
 
 	// side router
-	app.sideRouter = types.NewRouter()
+	app.sideRouter = types.NewSideRouter()
 	for _, m := range app.mm.Modules {
 		if m.Route() != "" {
 			if sm, ok := m.(hmModule.SideModule); ok {
 				app.sideRouter.AddRoute(m.Route(), &types.SideHandlers{
-					sm.NewSideTxHandler(), sm.NewPostTxHandler(),
+					SideTxHandler: sm.NewSideTxHandler(),
+					PostTxHandler: sm.NewPostTxHandler(),
 				})
 			}
 		}
@@ -628,6 +629,14 @@ func (app *HeimdallApp) ModuleAccountAddrs() map[string]bool {
 // for modules to register their own custom testing types.
 func (app *HeimdallApp) Codec() *codec.Codec {
 	return app.cdc
+}
+
+// SetCodec set codec to app
+//
+// NOTE: This is solely to be used for testing purposes as it may be desirable
+// for modules to register their own custom testing types.
+func (app *HeimdallApp) SetCodec(cdc *codec.Codec) {
+	app.cdc = cdc
 }
 
 // GetKey returns the KVStoreKey for the provided store key.

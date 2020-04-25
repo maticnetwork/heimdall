@@ -30,8 +30,8 @@ type router struct {
 	sealed bool
 }
 
-// NewRouter new router
-func NewRouter() SideRouter {
+// NewSideRouter new router
+func NewSideRouter() SideRouter {
 	return &router{
 		routes: make(map[string]*SideHandlers),
 	}

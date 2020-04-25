@@ -152,8 +152,10 @@ func (app *HeimdallApp) DeliverSideTxHandler(ctx sdk.Context, tx sdk.Tx, req abc
 		msgRoute := msg.Route()
 		handlers := app.sideRouter.GetRoute(msgRoute)
 		if handlers != nil && handlers.SideTxHandler != nil && isSideTxMsg {
+			// Create a new context based off of the existing context with a cache wrapped multi-store (for state-less execution)
+			runMsgCtx, _ := app.cacheTxContext(ctx, req.Tx)
 			// execute side-tx handler
-			msgResult := handlers.SideTxHandler(ctx, msg)
+			msgResult := handlers.SideTxHandler(runMsgCtx, msg)
 
 			// stop execution and return on first failed message
 			if msgResult.Code != uint32(sdk.CodeOK) {
@@ -172,6 +174,7 @@ func (app *HeimdallApp) DeliverSideTxHandler(ctx sdk.Context, tx sdk.Tx, req abc
 			data = append(data, msgResult.Data...)
 			result = msgResult.Result
 
+			// TODO sidechannel - remove comments
 			fmt.Println("msgResult.Data", len(msgResult.Data), hex.EncodeToString(msgResult.Data))
 			fmt.Println("sideMsg.GetSideSignBytes()", len(sideMsg.GetSideSignBytes()), hex.EncodeToString(sideMsg.GetSideSignBytes()))
 
@@ -269,9 +272,7 @@ func (app *HeimdallApp) runMsgs(ctx sdk.Context, msgs []sdk.Msg, sideTxResult ab
 
 // cacheTxContext returns a new context based off of the provided context with
 // a cache wrapped multi-store.
-func (app *HeimdallApp) cacheTxContext(ctx sdk.Context, txBytes []byte) (
-	sdk.Context, sdk.CacheMultiStore) {
-
+func (app *HeimdallApp) cacheTxContext(ctx sdk.Context, txBytes []byte) (sdk.Context, sdk.CacheMultiStore) {
 	ms := ctx.MultiStore()
 	msCache := ms.CacheMultiStore()
 
