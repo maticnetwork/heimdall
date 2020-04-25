@@ -59,10 +59,16 @@ func (ml *MaticChainListener) ProcessHeader(newHeader *types.Header) {
 	headerBytes, err := newHeader.MarshalJSON()
 	if err != nil {
 		ml.Logger.Error("Error marshalling header block", "error", err)
+		return
 	}
-	configParams, _ := util.GetConfigManagerParams(ml.cliCtx)
 
-	confirmationTime := configParams.TxConfirmationTime
+	chainmanagerParams, err := util.GetChainmanagerParams(ml.cliCtx)
+	if err != nil {
+		ml.Logger.Error("Error fetching chain manager params", "error", err)
+		return
+	}
+
+	confirmationTime := chainmanagerParams.TxConfirmationTime
 	ml.sendTaskWithDelay("sendCheckpointToHeimdall", headerBytes, confirmationTime)
 }
 

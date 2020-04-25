@@ -15,9 +15,15 @@ import (
 	ethCommon "github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
+	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
 	"github.com/maticnetwork/heimdall/helper"
 )
+
+// RootChainListenerContext root chain listener context
+type RootChainListenerContext struct {
+	ChainmanagerParams *chainmanagerTypes.Params
+}
 
 // RootChainListener - Listens to and process events from rootchain
 type RootChainListener struct {
@@ -95,8 +101,12 @@ func (rl *RootChainListener) ProcessHeader(newHeader *types.Header) {
 	// current time
 	currentTime := uint64(time.Now().UTC().Unix())
 
-	configParams, _ := util.GetConfigManagerParams(rl.cliCtx)
-	confirmationTime := uint64(configParams.TxConfirmationTime.Seconds())
+	// fetch context
+	rootchainContext, err := rl.getRootChainContext()
+	if err != nil {
+		return
+	}
+	confirmationTime := uint64(rootchainContext.ChainmanagerParams.TxConfirmationTime.Seconds())
 
 	var start *big.Int
 	var end *big.Int
@@ -152,23 +162,24 @@ func (rl *RootChainListener) ProcessHeader(newHeader *types.Header) {
 	rl.storageClient.Put([]byte(lastRootBlockKey), []byte(toBlock.String()), nil)
 
 	// query log
-	rl.queryAndBroadcastEvents(fromBlock, toBlock)
+	rl.queryAndBroadcastEvents(rootchainContext, fromBlock, toBlock)
 }
 
-func (rl *RootChainListener) queryAndBroadcastEvents(fromBlock *big.Int, toBlock *big.Int) {
+func (rl *RootChainListener) queryAndBroadcastEvents(rootchainContext *RootChainListenerContext, fromBlock *big.Int, toBlock *big.Int) {
 	rl.Logger.Info("Query rootchain event logs", "fromBlock", fromBlock, "toBlock", toBlock)
 
 	// current public key
 	pubkey := helper.GetPubKey()
 	pubkeyBytes := pubkey[1:]
 
-	configParams, _ := util.GetConfigManagerParams(rl.BaseListener.cliCtx)
+	// get chain params
+	chainParams := rootchainContext.ChainmanagerParams.ChainParams
 
 	// draft a query
 	query := ethereum.FilterQuery{FromBlock: fromBlock, ToBlock: toBlock, Addresses: []ethCommon.Address{
-		configParams.ChainParams.RootChainAddress.EthAddress(),
-		configParams.ChainParams.StakingInfoAddress.EthAddress(),
-		configParams.ChainParams.StateSenderAddress.EthAddress(),
+		chainParams.RootChainAddress.EthAddress(),
+		chainParams.StakingInfoAddress.EthAddress(),
+		chainParams.StateSenderAddress.EthAddress(),
 	}}
 	// get logs from rootchain by filter
 	logs, err := rl.contractConnector.MainChainClient.FilterLogs(context.Background(), query)
@@ -283,4 +294,20 @@ func (rl *RootChainListener) sendTaskWithDelay(taskName string, eventName string
 	if err != nil {
 		rl.Logger.Error("Error sending task", "taskName", taskName, "error", err)
 	}
+}
+
+//
+// utils
+//
+
+func (rl *RootChainListener) getRootChainContext() (*RootChainListenerContext, error) {
+	chainmanagerParams, err := util.GetChainmanagerParams(rl.cliCtx)
+	if err != nil {
+		rl.Logger.Error("Error while fetching chain manager params", "error", err)
+		return nil, err
+	}
+
+	return &RootChainListenerContext{
+		ChainmanagerParams: chainmanagerParams,
+	}, nil
 }
