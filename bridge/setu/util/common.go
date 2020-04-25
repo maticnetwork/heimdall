@@ -270,7 +270,7 @@ func IsCatchingUp(cliCtx cliContext.CLIContext) bool {
 	return resp.SyncInfo.CatchingUp
 }
 
-// Returns heimdall auth account
+// GetAccount returns heimdall auth account
 func GetAccount(cliCtx cliContext.CLIContext, address types.HeimdallAddress) (account authTypes.Account, err error) {
 	url := helper.GetHeimdallServerEndpoint(fmt.Sprintf(AccountDetailsURL, address))
 	// call account rest api
@@ -285,8 +285,8 @@ func GetAccount(cliCtx cliContext.CLIContext, address types.HeimdallAddress) (ac
 	return
 }
 
-// GetConfigManagerParams return configManager params
-func GetConfigManagerParams(cliCtx cliContext.CLIContext) (*chainManagerTypes.Params, error) {
+// GetChainmanagerParams return chain manager params
+func GetChainmanagerParams(cliCtx cliContext.CLIContext) (*chainManagerTypes.Params, error) {
 	response, err := helper.FetchFromAPI(
 		cliCtx,
 		helper.GetHeimdallServerEndpoint(ChainManagerParamsURL),
@@ -323,7 +323,7 @@ func GetCheckpointParams(cliCtx cliContext.CLIContext) (*checkpointTypes.Params,
 	return &params, nil
 }
 
-// appendPrefix - returns publickey in uncompressed format
+// AppendPrefix returns publickey in uncompressed format
 func AppendPrefix(signerPubKey []byte) []byte {
 	// append prefix - "0x04" as heimdall uses publickey in uncompressed format. Refer below link
 	// https://superuser.com/questions/1465455/what-is-the-size-of-public-key-for-ecdsa-spec256r1

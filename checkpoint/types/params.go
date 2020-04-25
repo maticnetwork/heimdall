@@ -82,12 +82,19 @@ func (p Params) String() string {
 	var sb strings.Builder
 	sb.WriteString("Params: \n")
 	sb.WriteString(fmt.Sprintf("CheckpointBufferTime: %s\n", p.CheckpointBufferTime))
-	sb.WriteString(fmt.Sprintf("AvgCheckpointLength: %s\n", string(p.AvgCheckpointLength)))
-	sb.WriteString(fmt.Sprintf("MaxCheckpointLength: %s\n", string(p.MaxCheckpointLength)))
+	sb.WriteString(fmt.Sprintf("AvgCheckpointLength: %d\n", p.AvgCheckpointLength))
+	sb.WriteString(fmt.Sprintf("MaxCheckpointLength: %d\n", p.MaxCheckpointLength))
 	return sb.String()
 }
 
 // Validate checks that the parameters have valid values.
 func (p Params) Validate() error {
+	if p.MaxCheckpointLength == 0 || p.AvgCheckpointLength == 0 {
+		return fmt.Errorf("MaxCheckpointLength, AvgCheckpointLength should be non-zero")
+	}
+
+	if p.MaxCheckpointLength < p.AvgCheckpointLength {
+		return fmt.Errorf("AvgCheckpointLength should not be greater than MaxCheckpointLength")
+	}
 	return nil
 }
