@@ -10,6 +10,7 @@ import (
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
+	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
 	"github.com/maticnetwork/heimdall/helper"
 	slashingTypes "github.com/maticnetwork/heimdall/slashing/types"
@@ -20,6 +21,11 @@ import (
 type SlashingProcessor struct {
 	BaseProcessor
 	stakingInfoAbi *abi.ABI
+}
+
+// SlashingContext represents slashing context
+type SlashingContext struct {
+	ChainmanagerParams *chainmanagerTypes.Params
 }
 
 // NewSlashingProcessor - add  abi to slashing processor
@@ -288,8 +294,14 @@ func (sp *SlashingProcessor) createAndSendTickToRootchain(height int64, txHash [
 
 	if shouldSend {
 
-		configParams, _ := util.GetConfigManagerParams(sp.cliCtx)
-		slashManagerAddress := configParams.ChainParams.SlashManagerAddress.EthAddress()
+		slashingContrext, err := sp.getSlashingContext()
+		if err != nil {
+			return err
+		}
+
+		chainParams := slashingContrext.ChainmanagerParams.ChainParams
+		slashManagerAddress := chainParams.SlashManagerAddress.EthAddress()
+
 		// slashmanage instance
 		slashManagerInstance, err := sp.contractConnector.GetSlashManagerInstance(slashManagerAddress)
 		if err != nil {
@@ -382,4 +394,20 @@ func (sp *SlashingProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string
 	}
 
 	return status, nil
+}
+
+//
+// utils
+//
+
+func (sp *SlashingProcessor) getSlashingContext() (*SlashingContext, error) {
+	chainmanagerParams, err := util.GetChainmanagerParams(sp.cliCtx)
+	if err != nil {
+		sp.Logger.Error("Error while fetching chain manager params", "error", err)
+		return nil, err
+	}
+
+	return &SlashingContext{
+		ChainmanagerParams: chainmanagerParams,
+	}, nil
 }

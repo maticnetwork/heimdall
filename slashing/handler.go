@@ -24,6 +24,8 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 			return handleMsgUnjail(ctx, msg, k, contractCaller)
 		case types.MsgTick:
 			return handlerMsgTick(ctx, msg, k, contractCaller)
+		case types.MsgTickAck:
+			return handleMsgTickAck(ctx, msg, k, contractCaller)
 		default:
 			return sdk.ErrTxDecode("Invalid message in slashing module").Result()
 		}
@@ -91,6 +93,7 @@ func handleMsgUnjail(ctx sdk.Context, msg types.MsgUnjail, k Keeper, contractCal
 }
 
 // handlerMsgTick  - handles slashing of validators
+// 0. check if slashLimit is exceeded or not.
 // 1. Validate input slashing info hash data
 // 2. If hash matches, copy slashBuffer into latestTickData
 // 3. flushes slashBuffer, totalSlashedAmount
@@ -102,6 +105,13 @@ func handlerMsgTick(ctx sdk.Context, msg types.MsgTick, k Keeper, contractCaller
 	// if err != nil {
 	// 	return nil, err
 	// }
+
+	// check if slash limit is exceeded or not
+	if !k.IsSlashedLimitExceeped(ctx) {
+		k.Logger(ctx).Error("TotalSlashedAmount is less than SlashLimit")
+		return common.ErrBadBlockDetails(k.Codespace()).Result()
+	}
+
 	valSlashingInfos := k.GetBufferValSlashingInfos(ctx)
 	slashingInfoHash, err := types.GetSlashingInfoHash(valSlashingInfos)
 	if err != nil {

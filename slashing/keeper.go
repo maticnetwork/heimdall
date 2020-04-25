@@ -286,6 +286,27 @@ func (k *Keeper) SlashInterim(ctx sdk.Context, valID hmTypes.ValidatorID, slashP
 	return slashAmount.String()
 }
 
+func (k *Keeper) GetTotalSlashedAmount(ctx sdk.Context) *big.Int {
+	store := ctx.KVStore(k.storeKey)
+	if store.Has(types.TotalSlashedAmountKey) {
+		bz := store.Get(types.TotalSlashedAmountKey)
+		totalSlashedAmountStr := string(bz)
+		totalSlashedAmount, _ := big.NewInt(0).SetString(totalSlashedAmountStr, 10)
+		return totalSlashedAmount
+	}
+
+	return big.NewInt(0)
+}
+
+func (k *Keeper) IsSlashedLimitExceeped(ctx sdk.Context) bool {
+	slashedAmount := k.GetTotalSlashedAmount(ctx)
+	params := k.GetParams(ctx)
+	if params.SlashFractionLimit.CmpAbs(slashedAmount) < 0 {
+		return true
+	}
+	return false
+}
+
 // GetBufferValSlashingInfo gets the validator slashing info for a validator ID key
 func (k *Keeper) GetBufferValSlashingInfo(ctx sdk.Context, valId hmTypes.ValidatorID) (info hmTypes.ValidatorSlashingInfo, found bool) {
 	store := ctx.KVStore(k.storeKey)
@@ -393,13 +414,17 @@ func (k Keeper) UpdateTotalSlashedAmount(ctx sdk.Context, amount string) {
 	store.Set(types.TotalSlashedAmountKey, []byte(slashedAmount.String()))
 	k.Logger(ctx).Debug("Updated Total Slashed Amount ", "amount", slashedAmount)
 
-	// -slashing. emit event if total amount exceed limit
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			types.EventTypeSlashLimit,
-			sdk.NewAttribute(types.AttributeKeySlashedAmount, fmt.Sprintf("%d", slashedAmount)),
-		),
-	)
+	if k.IsSlashedLimitExceeped(ctx) {
+		k.Logger(ctx).Info("TotalSlashedAmountKey exceeded SlashLimit, Emitting event")
+		// -slashing. emit event if total amount exceed limit
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				types.EventTypeSlashLimit,
+				sdk.NewAttribute(types.AttributeKeySlashedAmount, fmt.Sprintf("%d", slashedAmount)),
+			),
+		)
+	}
+
 }
 
 // GetTickValSlashingInfo gets the validator slashing info for a validator ID key
