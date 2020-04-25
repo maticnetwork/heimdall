@@ -99,7 +99,7 @@ type HeimdallApp struct {
 	subspaces map[string]subspace.Subspace
 
 	// side router
-	sideRouter types.Router
+	sideRouter types.SideRouter
 
 	// keepers
 	SidechannelKeeper sidechannel.Keeper
@@ -665,8 +665,14 @@ func (app *HeimdallApp) GetSubspace(moduleName string) subspace.Subspace {
 }
 
 // GetSideRouter returns side-tx router
-func (app *HeimdallApp) GetSideRouter() types.Router {
+func (app *HeimdallApp) GetSideRouter() types.SideRouter {
 	return app.sideRouter
+}
+
+// SetSideRouter sets side-tx router
+// Testing ONLYgit status
+func (app *HeimdallApp) SetSideRouter(r types.SideRouter) {
+	app.sideRouter = r
 }
 
 // GetModuleManager returns module manager

@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	_ Router = (*router)(nil)
+	_ SideRouter = (*router)(nil)
 
 	isAlphaNumeric = regexp.MustCompile(`^[a-zA-Z0-9]+$`).MatchString
 )
@@ -17,9 +17,9 @@ type SideHandlers struct {
 	PostTxHandler PostTxHandler
 }
 
-// Router implements router.
-type Router interface {
-	AddRoute(r string, h *SideHandlers) (rtr Router)
+// SideRouter implements router.
+type SideRouter interface {
+	AddRoute(r string, h *SideHandlers) (rtr SideRouter)
 	HasRoute(r string) bool
 	GetRoute(path string) (h *SideHandlers)
 	Seal()
@@ -31,7 +31,7 @@ type router struct {
 }
 
 // NewRouter new router
-func NewRouter() Router {
+func NewRouter() SideRouter {
 	return &router{
 		routes: make(map[string]*SideHandlers),
 	}
@@ -48,7 +48,7 @@ func (rtr *router) Seal() {
 
 // AddRoute adds a governance handler for a given path. It returns the Router
 // so AddRoute calls can be linked. It will panic if the router is sealed.
-func (rtr *router) AddRoute(path string, h *SideHandlers) Router {
+func (rtr *router) AddRoute(path string, h *SideHandlers) SideRouter {
 	if rtr.sealed {
 		panic("router sealed; cannot add route handler")
 	}
