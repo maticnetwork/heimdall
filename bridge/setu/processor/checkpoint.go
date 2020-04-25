@@ -395,6 +395,8 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToHeimdall(checkpointConte
 		"accountRoot", accountRootHash,
 	)
 
+	chainParams := checkpointContext.ChainmanagerParams.ChainParams
+
 	// create and send checkpoint message
 	msg := checkpointTypes.NewMsgCheckpointBlock(
 		hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
@@ -402,6 +404,7 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToHeimdall(checkpointConte
 		end,
 		hmTypes.BytesToHeimdallHash(root),
 		accountRootHash,
+		chainParams.BorChainID,
 	)
 
 	// return broadcast to heimdall
@@ -424,8 +427,26 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToRootchain(checkpointCont
 		return err
 	}
 
-	// get votes
-	votes, sigs, chainID, err := helper.FetchVotes(cp.httpClient, height)
+	// fetch side txs sigs
+	decoder := authTypes.DefaultTxDecoder(authTypes.ModuleCdc)
+	stdTx, err := decoder(tx.Tx)
+	if err != nil {
+		cp.Logger.Error("Error while decoding checkpoint tx", "txHash", tx.Tx.Hash(), "error", err)
+		return err
+	}
+
+	cmsg := stdTx.GetMsgs()[0]
+	sideMsg, ok := cmsg.(hmTypes.SideTxMsg)
+	if !ok {
+		cp.Logger.Error("Invalid side-tx msg", "txHash", tx.Tx.Hash())
+		return err
+	}
+
+	// side-tx data
+	sideTxData := sideMsg.GetSideSignBytes()
+
+	// get sigs
+	sigs, err := helper.FetchSideTxSigs(cp.httpClient, height, tx.Tx.Hash(), sideTxData)
 	if err != nil {
 		cp.Logger.Error("Error fetching votes for checkpoint tx", "height", height)
 		return err
@@ -448,7 +469,7 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToRootchain(checkpointCont
 			return err
 		}
 
-		if err := cp.contractConnector.SendCheckpoint(helper.GetVoteBytes(votes, chainID), sigs, tx.Tx[authTypes.PulpHashLength:], rootChainAddress, rootChainInstance); err != nil {
+		if err := cp.contractConnector.SendCheckpoint(sideTxData, sigs, rootChainAddress, rootChainInstance); err != nil {
 			cp.Logger.Info("Error submitting checkpoint to rootchain", "error", err)
 			return err
 		}

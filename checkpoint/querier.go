@@ -118,6 +118,11 @@ func handleQueryCheckpointList(ctx sdk.Context, req abci.RequestQuery, keeper Ke
 }
 
 func handleQueryNextCheckpoint(ctx sdk.Context, req abci.RequestQuery, keeper Keeper, sk staking.Keeper) ([]byte, sdk.Error) {
+	var queryParams types.QueryBorChainID
+	if err := keeper.cdc.UnmarshalJSON(req.Data, &queryParams); err != nil {
+		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse query params: %s", err))
+	}
+
 	// get validator set
 	validatorSet := sk.GetValidatorSet(ctx)
 	proposer := validatorSet.GetProposer()
@@ -147,7 +152,14 @@ func handleQueryNextCheckpoint(ctx sdk.Context, req abci.RequestQuery, keeper Ke
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr(fmt.Sprintf("could not get generate account root hash. Error:%v", err), err.Error()))
 	}
 
-	checkpointMsg := types.NewMsgCheckpointBlock(proposer.Signer, start, start+params.AvgCheckpointLength, hmTypes.BytesToHeimdallHash(rootHash), hmTypes.BytesToHeimdallHash(accRootHash))
+	checkpointMsg := types.NewMsgCheckpointBlock(
+		proposer.Signer,
+		start,
+		start+params.AvgCheckpointLength,
+		hmTypes.BytesToHeimdallHash(rootHash),
+		hmTypes.BytesToHeimdallHash(accRootHash),
+		queryParams.BorChainID,
+	)
 	bz, err := json.Marshal(checkpointMsg)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr(fmt.Sprintf("could not marshall checkpoint msg. Error:%v", err), err.Error()))

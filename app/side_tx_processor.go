@@ -3,6 +3,7 @@ package app
 import (
 	"bytes"
 	"encoding/hex"
+	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -171,6 +172,9 @@ func (app *HeimdallApp) DeliverSideTxHandler(ctx sdk.Context, tx sdk.Tx, req abc
 			data = append(data, msgResult.Data...)
 			result = msgResult.Result
 
+			fmt.Println("msgResult.Data", len(msgResult.Data), hex.EncodeToString(msgResult.Data))
+			fmt.Println("sideMsg.GetSideSignBytes()", len(sideMsg.GetSideSignBytes()), hex.EncodeToString(sideMsg.GetSideSignBytes()))
+
 			// msg result is empty, get side sign bytes and append into data
 			if len(msgResult.Data) == 0 {
 				data = append(data, sideMsg.GetSideSignBytes()...)
@@ -192,7 +196,7 @@ func (app *HeimdallApp) DeliverSideTxHandler(ctx sdk.Context, tx sdk.Tx, req abc
 
 func (app *HeimdallApp) runTx(ctx sdk.Context, txBytes []byte, sideTxResult abci.SideTxResultType) (result sdk.Result) {
 	// get decoder
-	decoder := authTypes.RLPTxDecoder(app.cdc, authTypes.GetPulpInstance())
+	decoder := authTypes.DefaultTxDecoder(app.cdc)
 	tx, err := decoder(txBytes)
 	if err != nil {
 		return

@@ -78,9 +78,6 @@ func main() {
 	cdc := app.MakeCodec()
 	ctx := server.NewDefaultContext()
 
-	// just make pulp :)
-	app.MakePulp()
-
 	rootCmd := &cobra.Command{
 		Use:               "heimdalld",
 		Short:             "Heimdall Daemon (server)",

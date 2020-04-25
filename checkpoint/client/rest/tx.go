@@ -28,10 +28,11 @@ type (
 		BaseReq rest.BaseReq `json:"base_req"`
 
 		Proposer        hmTypes.HeimdallAddress `json:"proposer"`
-		RootHash        hmTypes.HeimdallHash    `json:"rootHash"`
-		AccountRootHash hmTypes.HeimdallHash    `json:"accountRootHash"`
-		StartBlock      uint64                  `json:"startBlock"`
-		EndBlock        uint64                  `json:"endBlock"`
+		RootHash        hmTypes.HeimdallHash    `json:"root_Hash"`
+		AccountRootHash hmTypes.HeimdallHash    `json:"account_root_hash"`
+		StartBlock      uint64                  `json:"start_block"`
+		EndBlock        uint64                  `json:"end_block"`
+		BorChainID      string                  `json:"bor_chain_id"`
 	}
 
 	// HeaderACKReq struct for sending ACK for a new headers
@@ -40,7 +41,7 @@ type (
 		BaseReq rest.BaseReq `json:"base_req"`
 
 		Proposer    hmTypes.HeimdallAddress `json:"proposer"`
-		HeaderBlock uint64                  `json:"headerBlock"`
+		HeaderBlock uint64                  `json:"header_block"`
 		TxHash      hmTypes.HeimdallHash    `json:"tx_hash"`
 		LogIndex    uint64                  `json:"log_index"`
 	}
@@ -72,6 +73,7 @@ func newCheckpointHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			req.EndBlock,
 			req.RootHash,
 			req.AccountRootHash,
+			req.BorChainID,
 		)
 
 		// send response

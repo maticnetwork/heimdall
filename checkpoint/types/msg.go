@@ -2,9 +2,11 @@ package types
 
 import (
 	"bytes"
+	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/maticnetwork/bor/crypto"
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
@@ -19,10 +21,11 @@ var _ sdk.Msg = &MsgCheckpoint{}
 // MsgCheckpoint represents checkpoint
 type MsgCheckpoint struct {
 	Proposer        types.HeimdallAddress `json:"proposer"`
-	StartBlock      uint64                `json:"startBlock"`
-	EndBlock        uint64                `json:"endBlock"`
-	RootHash        types.HeimdallHash    `json:"rootHash"`
-	AccountRootHash types.HeimdallHash    `json:"accountRootHash"`
+	StartBlock      uint64                `json:"start_block"`
+	EndBlock        uint64                `json:"end_block"`
+	RootHash        types.HeimdallHash    `json:"root_hash"`
+	AccountRootHash types.HeimdallHash    `json:"account_root_hash"`
+	BorChainID      string                `json:"bor_chain_id"`
 }
 
 // NewMsgCheckpointBlock creates new checkpoint message using mentioned arguments
@@ -32,6 +35,7 @@ func NewMsgCheckpointBlock(
 	endBlock uint64,
 	roothash types.HeimdallHash,
 	accountRootHash types.HeimdallHash,
+	borChainID string,
 ) MsgCheckpoint {
 	return MsgCheckpoint{
 		Proposer:        proposer,
@@ -39,6 +43,7 @@ func NewMsgCheckpointBlock(
 		EndBlock:        endBlock,
 		RootHash:        roothash,
 		AccountRootHash: accountRootHash,
+		BorChainID:      borChainID,
 	}
 }
 
@@ -80,6 +85,19 @@ func (msg MsgCheckpoint) ValidateBasic() sdk.Error {
 	return nil
 }
 
+// GetSideSignBytes returns side sign bytes
+func (msg MsgCheckpoint) GetSideSignBytes() []byte {
+	// keccak256(abi.encoded(proposer, startBlock, endBlock, rootHash, accountRootHash, bor chain id))
+	return appendBytes32(
+		msg.Proposer.Bytes(),
+		new(big.Int).SetUint64(msg.StartBlock).Bytes(),
+		new(big.Int).SetUint64(msg.EndBlock).Bytes(),
+		msg.RootHash.Bytes(),
+		msg.AccountRootHash.Bytes(),
+		crypto.Keccak256([]byte(msg.BorChainID)),
+	)
+}
+
 //
 // Msg Checkpoint Ack
 //
@@ -111,10 +129,12 @@ func (msg MsgCheckpointAck) Route() string {
 	return RouterKey
 }
 
+// GetSigners returns signers
 func (msg MsgCheckpointAck) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.From)}
 }
 
+// GetSignBytes returns sign bytes
 func (msg MsgCheckpointAck) GetSignBytes() []byte {
 	b, err := ModuleCdc.MarshalJSON(msg)
 	if err != nil {
@@ -123,6 +143,7 @@ func (msg MsgCheckpointAck) GetSignBytes() []byte {
 	return sdk.MustSortJSON(b)
 }
 
+// ValidateBasic validate basic
 func (msg MsgCheckpointAck) ValidateBasic() sdk.Error {
 	if msg.From.Empty() {
 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid from %v", msg.From.String())
@@ -144,6 +165,11 @@ func (msg MsgCheckpointAck) GetTxHash() types.HeimdallHash {
 // GetLogIndex Returns log index
 func (msg MsgCheckpointAck) GetLogIndex() uint64 {
 	return msg.LogIndex
+}
+
+// GetSideSignBytes returns side sign bytes
+func (msg MsgCheckpointAck) GetSideSignBytes() []byte {
+	return nil
 }
 
 //

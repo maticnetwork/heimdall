@@ -19,6 +19,7 @@ import (
 
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/helper"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmRest "github.com/maticnetwork/heimdall/types/rest"
 )
 
@@ -255,7 +256,7 @@ func QueryCommitTxRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		blockDetails, err := helper.GetBlock(cliCtx, tx.Height+1)
 
 		// extract signs from votes
-		sigs := helper.GetSigs(blockDetails.Block.LastCommit.Precommits)
+		sigs := helper.GetVoteSigs(blockDetails.Block.LastCommit.Precommits)
 
 		// proof
 		proofList := helper.GetMerkleProofList(&tx.Proof.Proof)
@@ -268,6 +269,77 @@ func QueryCommitTxRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			Tx:    hex.EncodeToString(tx.Tx[authTypes.PulpHashLength:]),
 			Proof: hex.EncodeToString(proof),
 		}
+
+		rest.PostProcessResponse(w, cliCtx, result)
+	}
+}
+
+// QuerySideTxRequestHandlerFn implements a REST handler that queries sigs, side-tx bytes committed block
+func QuerySideTxRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		hash, err := hex.DecodeString(vars["hash"])
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		tx, err := helper.QueryTxWithProof(cliCtx, hash)
+		if err != nil {
+			if strings.Contains(err.Error(), vars["hash"]) {
+				rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
+				return
+			}
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		// fetch side txs sigs
+		decoder := authTypes.DefaultTxDecoder(authTypes.ModuleCdc)
+		stdTx, err := decoder(tx.Tx)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		cmsg := stdTx.GetMsgs()[0] // get first message
+		sideMsg, ok := cmsg.(hmTypes.SideTxMsg)
+		if !ok {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "Invalid side-tx msg")
+			return
+		}
+
+		// side-tx data
+		sideTxData := sideMsg.GetSideSignBytes()
+
+		// get block details
+		blockDetails, err := helper.GetBlock(cliCtx, tx.Height+2) // side-tx take 2 blocks to process
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "Side-tx is not processed yet.")
+			return
+		}
+
+		// extract votes from response
+		preCommits := blockDetails.Block.LastCommit.Precommits
+
+		// extract side-tx signs from votes
+		sigs := helper.GetSideTxSigs(tx.Tx.Hash(), sideTxData, preCommits)
+
+		// commit tx proof
+		result := hmRest.SideTxProof{
+			Sigs: hex.EncodeToString(sigs),
+			Tx:   hex.EncodeToString(tx.Tx),
+			Data: hex.EncodeToString(sideTxData),
+		}
+
+		// cli ctx with height
+		cliCtx.WithHeight(tx.Height + 2)
 
 		rest.PostProcessResponse(w, cliCtx, result)
 	}

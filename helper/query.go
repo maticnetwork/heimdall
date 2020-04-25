@@ -232,17 +232,21 @@ func GetBlockWithClient(client *httpClient.HTTP, height int64) (*tmTypes.Block, 
 	// unsubscribe query
 	defer client.Unsubscribe(c, subscriber, query)
 
-	select {
-	case event := <-eventCh:
-		eventData := event.Data.(tmTypes.TMEventData)
-		switch t := eventData.(type) {
-		case tmTypes.EventDataNewBlock:
-			return t.Block, nil
-		default:
+	for {
+		select {
+		case event := <-eventCh:
+			eventData := event.Data.(tmTypes.TMEventData)
+			switch t := eventData.(type) {
+			case tmTypes.EventDataNewBlock:
+				if t.Block.Height == height {
+					return t.Block, nil
+				}
+			default:
+				return nil, errors.New("timed out waiting for event")
+			}
+		case <-c.Done():
 			return nil, errors.New("timed out waiting for event")
 		}
-	case <-c.Done():
-		return nil, errors.New("timed out waiting for event")
 	}
 }
 
@@ -262,11 +266,35 @@ func FetchVotes(
 	preCommits := blockDetails.LastCommit.Precommits
 
 	// extract signs from votes
-	valSigs := GetSigs(preCommits)
+	valSigs := GetVoteSigs(preCommits)
 
 	// extract chainID
 	chainID = blockDetails.ChainID
 
 	// return
 	return preCommits, valSigs, chainID, nil
+}
+
+// FetchSideTxSigs fetches side tx sigs from it
+func FetchSideTxSigs(
+	client *httpClient.HTTP,
+	height int64,
+	txHash []byte,
+	sideTxData []byte,
+) ([]byte, error) {
+	// get block client
+	blockDetails, err := GetBlockWithClient(client, height+2) // side-tx takes 2 blocks for votes
+
+	if err != nil {
+		return nil, err
+	}
+
+	// extract votes from response
+	preCommits := blockDetails.LastCommit.Precommits
+
+	// extract side-tx signs from votes
+	sigs := GetSideTxSigs(txHash, sideTxData, preCommits)
+
+	// return
+	return sigs, nil
 }

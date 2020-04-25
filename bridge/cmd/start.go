@@ -40,7 +40,7 @@ func GetStartCmd() *cobra.Command {
 
 			// create codec
 			cdc := app.MakeCodec()
-			app.MakePulp()
+
 			// queue connector & http client
 			_queueConnector := queue.NewQueueConnector(helper.GetConfig().AmqpURL)
 			_queueConnector.StartWorker()

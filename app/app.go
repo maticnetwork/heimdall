@@ -184,15 +184,12 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	// create and register app-level codec for TXs and accounts
 	cdc := MakeCodec()
 
-	// create and register pulp codec
-	pulp := authTypes.GetPulpInstance()
-
 	// set prefix
 	config := sdk.GetConfig()
 	config.Seal()
 
 	// base app
-	bApp := bam.NewBaseApp(AppName, logger, db, authTypes.RLPTxDecoder(cdc, pulp), baseAppOptions...)
+	bApp := bam.NewBaseApp(AppName, logger, db, authTypes.DefaultTxDecoder(cdc), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(nil)
 	bApp.SetAppVersion(version.Version)
 
@@ -470,16 +467,6 @@ func MakeCodec() *codec.Codec {
 
 	cdc.Seal()
 	return cdc
-}
-
-// MakePulp creates pulp codec and registers custom types for decoder
-func MakePulp() *authTypes.Pulp {
-	pulp := authTypes.GetPulpInstance()
-
-	// register custom type
-	checkpointTypes.RegisterPulp(pulp)
-
-	return pulp
 }
 
 // Name returns the name of the App
