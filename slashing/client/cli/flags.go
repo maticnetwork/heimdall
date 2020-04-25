@@ -1,6 +1,10 @@
 package cli
 
-// nolint
 const (
-	FlagAddressValidator = "validator"
+	FlagProposerAddress  = "proposer"
+	FlagValidatorAddress = "validator"
+	FlagValidatorID      = "id"
+	FlagTxHash           = "tx-hash"
+	FlagLogIndex         = "log-index"
+	FlagSlashInfoHash    = "slashinfo-hash"
 )

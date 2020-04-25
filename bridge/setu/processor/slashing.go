@@ -70,7 +70,7 @@ func (sp *SlashingProcessor) sendTickToHeimdall(eventBytes string, txHeight int6
 	)
 
 	// create msg Tick message
-	msg := slashingTypes.NewMsgtick(
+	msg := slashingTypes.NewMsgTick(
 		hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
 		latestSlashInfoHash,
 	)
@@ -189,7 +189,7 @@ func (sp *SlashingProcessor) sendTickAckToHeimdall(eventName string, logBytes st
 		// TODO - check if i am the proposer of this ack or not.
 
 		// create msg checkpoint ack message
-		msg := slashingTypes.NewMsgtickAck(helper.GetFromAddress(sp.cliCtx), hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()), uint64(vLog.Index))
+		msg := slashingTypes.NewMsgTickAck(helper.GetFromAddress(sp.cliCtx), hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()), uint64(vLog.Index))
 
 		// return broadcast to heimdall
 		if err := sp.txBroadcaster.BroadcastToHeimdall(msg); err != nil {

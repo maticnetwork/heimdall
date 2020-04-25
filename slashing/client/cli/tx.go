@@ -1,70 +1,20 @@
 package cli
 
 import (
-	"bufio"
-
-	"github.com/spf13/cobra"
+	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	authclient "github.com/cosmos/cosmos-sdk/x/auth/client"
-	"github.com/cosmos/cosmos-sdk/x/slashing/types"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+
+	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/slashing/types"
 )
 
-// NewTxCmd returns a root CLI command handler for all x/slashing transaction commands.
-func NewTxCmd(m codec.Marshaler, txg tx.Generator, ar tx.AccountRetriever) *cobra.Command {
-	slashingTxCmd := &cobra.Command{
-		Use:                        types.ModuleName,
-		Short:                      "Bank transaction subcommands",
-		DisableFlagParsing:         true,
-		SuggestionsMinimumDistance: 2,
-		RunE:                       client.ValidateCmd,
-	}
-
-	slashingTxCmd.AddCommand(NewUnjailTxCmd(m, txg, ar))
-	return slashingTxCmd
-}
-
-func NewUnjailTxCmd(m codec.Marshaler, txg tx.Generator, ar tx.AccountRetriever) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "unjail",
-		Args:  cobra.NoArgs,
-		Short: "unjail validator previously jailed for downtime",
-		Long: `unjail a jailed validator:
-
-$ <appcli> tx slashing unjail --from mykey
-`,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txf := tx.NewFactoryFromCLI(inBuf).
-				WithTxGenerator(txg).
-				WithAccountRetriever(ar)
-
-			cliCtx := context.NewCLIContextWithInputAndFrom(inBuf, args[0]).WithMarshaler(m)
-
-			valAddr := cliCtx.GetFromAddress()
-			msg := types.NewMsgUnjail(sdk.ValAddress(valAddr))
-			return tx.GenerateOrBroadcastTx(cliCtx, txf, msg)
-		},
-	}
-	return flags.PostCommands(cmd)[0]
-}
-
-// ---------------------------------------------------------------------------
-// Deprecated
-//
-// TODO: Remove once client-side Protobuf migration has been completed.
-// ---------------------------------------------------------------------------
-
-// GetTxCmd returns the transaction commands for this module
-//
-// TODO: Remove once client-side Protobuf migration has been completed.
-// ref: https://github.com/cosmos/cosmos-sdk/issues/5864
 func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 	slashingTxCmd := &cobra.Command{
 		Use:                        types.ModuleName,
@@ -81,28 +31,130 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 	return slashingTxCmd
 }
 
-// GetCmdUnjail implements the create unjail validator command.
-//
-// TODO: Remove once client-side Protobuf migration has been completed.
-// ref: https://github.com/cosmos/cosmos-sdk/issues/5864
 func GetCmdUnjail(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "unjail",
 		Args:  cobra.NoArgs,
-		Short: "unjail validator previously jailed for downtime",
+		Short: "unjail validator previously jailed",
 		Long: `unjail a jailed validator:
 
 $ <appcli> tx slashing unjail --from mykey
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(authclient.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			valAddr := cliCtx.GetFromAddress()
+			// get proposer
+			proposer := hmTypes.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
+			if proposer.Empty() {
+				proposer = helper.GetFromAddress(cliCtx)
+			}
 
-			msg := types.NewMsgUnjail(sdk.ValAddress(valAddr))
-			return authclient.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			validator := viper.GetInt64(FlagValidatorID)
+			if validator == 0 {
+				return fmt.Errorf("validator ID cannot be 0")
+			}
+
+			txHash := viper.GetString(FlagTxHash)
+			if txhash == "" {
+				return fmt.Errorf("transaction hash is required")
+			}
+
+			msg := types.NewMsgUnjail(
+				proposer,
+				uint64(validator),
+				hmTypes.HexToHeimdallHash(txhash),
+				uint64(viper.GetInt64(FlagLogIndex)),
+			)
+
+			// broadcast messages
+			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk{msg})
 		},
 	}
+	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
+	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
+	cmd.MarkFlagRequired(FlagProposerAddress)
+	cmd.MarkFlagRequired(FlagTxHash)
+}
+
+func GetCmdTick(cdc *codec.Codec) *cobra.Command {
+
+	cmd := &cobra.Command{
+		Use:   "tick",
+		Short: "send slash tick when total slashedamount exceeds limit",
+		Long:  "<appcli>",
+
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			// get proposer
+			proposer := hmTypes.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
+			if proposer.Empty() {
+				proposer = helper.GetFromAddress(cliCtx)
+			}
+
+			txhash := viper.GetString(FlagSlashInfoHash)
+			if txhash == "" {
+				return fmt.Errorf("slashinfo hash has to be supplied")
+			}
+
+			msg := types.NewMsgTick(
+				proposer,
+				hmTypes.HexToHeimdallHash(slashInfoHash),
+			)
+
+			// braodcast messages
+			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
+		},
+	}
+
+	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
+	cmd.Flags().String(FlagSlashInfoHash, "", "--slashinfo-hash=<slashinfo-hash>")
+	cmd.Flags().String(FlagLogIndex, "", "--log-index=<log-index>")
+	cmd.MarkFlagRequired(FlagTxHash)
+	cmd.MarkFlagRequired(FlagLogIndex)
+
+	return cmd
+}
+
+func GetCmdTickAck(cdc *codec.Codec) *cobra.Command {
+
+	cmd := *&cobra.Command{
+		Use:   "tick-ack",
+		Short: "send tick ack",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			// get proposer
+			proposer := hmTypes.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
+			if proposer.Empty() {
+				proposer = helper.GetFromAddress(cliCtx)
+			}
+
+			validator := viper.GetInt64(FlagValidatorID)
+			if validator == 0 {
+				return fmt.Errorf("validator ID cannot be 0")
+			}
+
+			txHash := viper.GetString(FlagTxHash)
+			if txhash == "" {
+				return fmt.Errorf("transaction hash is required")
+			}
+
+			msg := types.NewMsgTickAck(
+				proposer,
+				hmTypes.HexToHeimdallHash(txhash),
+				uint64(viper.GetInt64(FlagLogIndex)),
+			)
+
+			// broadcast messages
+			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk{msg})
+		},
+	}
+
+	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
+	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
+	cmd.MarkFlagRequired(FlagProposerAddress)
+	cmd.MarkFlagRequired(FlagTxHash)
+
+	return cmd
 }

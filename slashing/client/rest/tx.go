@@ -1,118 +1,122 @@
 package rest
 
-// import (
-// 	"bytes"
-// 	"net/http"
+import (
+	"net/http"
 
-// 	"github.com/cosmos/cosmos-sdk/client/context"
-// 	sdk "github.com/cosmos/cosmos-sdk/types"
-// 	"github.com/gorilla/mux"
+	"github.com/cosmos/cosmos-sdk/client/context"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/gorilla/mux"
 
-// 	"github.com/maticnetwork/heimdall/staking/types"
-// 	"github.com/maticnetwork/heimdall/types/rest"
-// )
+	"github.com/maticnetwork/heimdall/slashing/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
+	"github.com/maticnetwork/heimdall/types/rest"
 
-// func registerTxHandlers(ctx context.CLIContext, m codec.Marshaler, txg tx.Generator, r *mux.Router) {
-// 	r.HandleFunc("/slashing/validators/{validatorAddr}/unjail", NewUnjailRequestHandlerFn(ctx, m, txg)).Methods("POST")
-// }
+	restClient "github.com/maticnetwork/heimdall/client/rest"
+)
 
-// // Unjail TX body
-// type UnjailReq struct {
-// 	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
-// }
+func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
+	r.HandleFunc(
+		"/slashing/validators/{validatorAddr}/unjail",
+		newUnjailRequestHandlerFn(cliCtx),
+	).Methods("POST")
 
-// // NewUnjailRequestHandlerFn returns an HTTP REST handler for creating a MsgUnjail
-// // transaction.
-// func NewUnjailRequestHandlerFn(ctx context.CLIContext, m codec.Marshaler, txg tx.Generator) http.HandlerFunc {
-// 	return func(w http.ResponseWriter, r *http.Request) {
-// 		ctx = ctx.WithMarshaler(m)
-// 		vars := mux.Vars(r)
-// 		bech32Validator := vars["validatorAddr"]
+	r.HandleFunc(
+		"/slashing/tick",
+		newTickRequestHandlerFn(cliCtx),
+	).Methods("POST")
 
-// 		var req UnjailReq
-// 		if !rest.ReadRESTReq(w, r, ctx.Marshaler, &req) {
-// 			return
-// 		}
+	r.HandleFunc(
+		"/slashing/tick-ack",
+		newTickAckHandler(cliCtx),
+	).Methods("POST")
+}
 
-// 		req.BaseReq = req.BaseReq.Sanitize()
-// 		if !req.BaseReq.ValidateBasic(w) {
-// 			return
-// 		}
+// Unjail TX body
+type UnjailReq struct {
+	BaseReq rest.BaseReq `json:"base_req"`
 
-// 		fromAddr, err := sdk.AccAddressFromBech32(req.BaseReq.From)
-// 		if err != nil {
-// 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-// 			return
-// 		}
+	ID       uint64 `json:"ID"`
+	TxHash   string `json:"tx_hash"`
+	LogIndex uint64 `json:"log_index"`
+}
 
-// 		valAddr, err := sdk.ValAddressFromBech32(bech32Validator)
-// 		if err != nil {
-// 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-// 			return
-// 		}
+type TickReq struct {
+	BaseReq rest.BaseReq `json:"ID"`
 
-// 		if !bytes.Equal(fromAddr, valAddr) {
-// 			rest.WriteErrorResponse(w, http.StatusUnauthorized, "must use own validator address")
-// 			return
-// 		}
+	Proposer         string `json:"proposer"`
+	SlashingInfoHash string `json:"slashing_info_hash"`
+}
 
-// 		msg := types.NewMsgUnjail(valAddr)
-// 		err = msg.ValidateBasic()
-// 		if err != nil {
-// 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-// 			return
-// 		}
-// 		tx.WriteGeneratedTxResponse(ctx, w, txg, req.BaseReq, msg)
-// 	}
-// }
+type TickAckReq struct {
+	BaseReq rest.BaseReq `json:"base_req"`
 
-// func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
-// 	r.HandleFunc(
-// 		"/slashing/validators/{validatorAddr}/unjail",
-// 		unjailRequestHandlerFn(cliCtx),
-// 	).Methods("POST")
-// }
+	TxHash   string `json:"tx_hash"`
+	LogIndex uint64 `json:"log_index"`
+}
 
-// func unjailRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
-// 	return func(w http.ResponseWriter, r *http.Request) {
-// 		vars := mux.Vars(r)
+func newUnjailRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// read req from Request
+		var req UnjailReq
 
-// 		bech32validator := vars["validatorAddr"]
+		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+			return
+		}
 
-// 		var req UnjailReq
-// 		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
-// 			return
-// 		}
+		req.BaseReq = req.BaseReq.Sanitize()
+		if !req.BaseReq.ValidateBasic(w) {
+			return
+		}
 
-// 		req.BaseReq = req.BaseReq.Sanitize()
-// 		if !req.BaseReq.ValidateBasic(w) {
-// 			return
-// 		}
+		msg := types.NewMsgUnjail(
+			hmTypes.HexToHeimdallAddress(req.BaseReq.From),
+			req.ID,
+			hmTypes.HexToHeimdallHash(req.TxHash),
+			req.LogIndex,
+		)
+		err := msg.ValidateBasic()
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
 
-// 		valAddr, err := sdk.ValAddressFromBech32(bech32validator)
-// 		if err != nil {
-// 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-// 			return
-// 		}
+		restClient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+	}
+}
 
-// 		fromAddr, err := sdk.AccAddressFromBech32(req.BaseReq.From)
-// 		if err != nil {
-// 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-// 			return
-// 		}
+func newTickRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
-// 		if !bytes.Equal(fromAddr, valAddr) {
-// 			rest.WriteErrorResponse(w, http.StatusUnauthorized, "must use own validator address")
-// 			return
-// 		}
+	return func(w http.ResponseWriter, r *http.Request) {
+		// read req from Request
+		var req TickReq
+		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+			return
+		}
 
-// 		msg := types.NewMsgUnjail(valAddr)
-// 		err = msg.ValidateBasic()
-// 		if err != nil {
-// 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-// 			return
-// 		}
+		msg := types.NewMsgTick(
+			hmTypes.HexToHeimdallAddress(req.Proposer),
+			hmTypes.HexToHeimdallHash(req.SlashingInfoHash),
+		)
 
-// 		authclient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
-// 	}
-// }
+		restClient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+
+	}
+}
+
+func newTickAckHandler(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		var req TickAckReq
+		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+			return
+		}
+
+		msg := types.NewMsgTickAck(
+			hmTypes.HexToHeimdallAddress(req.BaseReq.From),
+			hmTypes.HexToHeimdallHash(req.TxHash),
+			req.LogIndex,
+		)
+
+		restClient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+	}
+}

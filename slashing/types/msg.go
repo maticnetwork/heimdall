@@ -66,7 +66,7 @@ type MsgTick struct {
 	SlashingInfoHash types.HeimdallHash    `json:"accountRootHash"`
 }
 
-func NewMsgtick(proposer types.HeimdallAddress, slashingInfoHash types.HeimdallHash) MsgTick {
+func NewMsgTick(proposer types.HeimdallAddress, slashingInfoHash types.HeimdallHash) MsgTick {
 	return MsgTick{
 		Proposer:         proposer,
 		SlashingInfoHash: slashingInfoHash,
@@ -116,7 +116,7 @@ type MsgTickAck struct {
 	LogIndex uint64                `json:"log_index"`
 }
 
-func NewMsgtickAck(from types.HeimdallAddress, txHash types.HeimdallHash, logIndex uint64) MsgTickAck {
+func NewMsgTickAck(from types.HeimdallAddress, txHash types.HeimdallHash, logIndex uint64) MsgTickAck {
 	return MsgTickAck{
 		From:     from,
 		TxHash:   txHash,
