@@ -3,11 +3,13 @@ package checkpoint
 import (
 	"encoding/hex"
 	"fmt"
+	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/maticnetwork/heimdall/checkpoint/types"
+	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
@@ -15,6 +17,8 @@ import (
 // NewSideTxHandler returns a side handler for "bank" type messages.
 func NewSideTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.SideTxHandler {
 	return func(ctx sdk.Context, msg sdk.Msg) abci.ResponseDeliverSideTx {
+		ctx = ctx.WithEventManager(sdk.NewEventManager())
+
 		switch msg := msg.(type) {
 		case types.MsgCheckpoint:
 			return SideHandleMsgCheckpoint(ctx, k, msg)
@@ -28,13 +32,40 @@ func NewSideTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.S
 	}
 }
 
-// SideHandleMsgCheckpoint handles MsgCheckpointAck message for external call
+// SideHandleMsgCheckpoint handles MsgCheckpoint message for external call
 func SideHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint) (result abci.ResponseDeliverSideTx) {
-	fmt.Println("[==] In SideHandleMsgCheckpoint doing external call")
-	fmt.Println("[==] In SideHandleMsgCheckpoint  txbytes", hex.EncodeToString(ctx.TxBytes()), "isChckTx", ctx.IsCheckTx())
+	// get params
+	params := k.GetParams(ctx)
 
-	// say `yes`
-	result.Result = abci.SideTxResultType_Yes
+	// logger
+	logger := k.Logger(ctx)
+
+	// validate checkpoint
+	validCheckpoint, err := types.ValidateCheckpoint(msg.StartBlock, msg.EndBlock, msg.RootHash, params.MaxCheckpointLength)
+	if err != nil {
+		logger.Error("Error validating checkpoint",
+			"error", err,
+			"startBlock", msg.StartBlock,
+			"endBlock", msg.EndBlock,
+		)
+	} else if validCheckpoint {
+		// vote `yes` if checkpoint is valid
+		result.Result = abci.SideTxResultType_Yes
+		return
+	}
+
+	logger.Error(
+		"RootHash is not valid",
+		"startBlock", msg.StartBlock,
+		"endBlock", msg.EndBlock,
+		"rootHash", msg.RootHash,
+	)
+
+	// vote `skip`
+	result.Result = abci.SideTxResultType_Skip
+	// set code and codespace
+	result.Code = uint32(common.CodeInvalidBlockInput)
+	result.Codespace = string(k.Codespace())
 
 	return
 }
@@ -73,12 +104,43 @@ func NewPostTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.P
 
 // PostHandleMsgCheckpoint handles msg checkpoint
 func PostHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint, sideTxResult abci.SideTxResultType) sdk.Result {
-	ctx.EventManager().EmitEvent(
+	logger := k.Logger(ctx)
+
+	// Skip handler if checkpoint is not approved
+	if sideTxResult != abci.SideTxResultType_Yes {
+		logger.Debug("Skipping new checkpoint since side-tx didn't get yes votes", "startBlock", msg.StartBlock, "endBlock", msg.EndBlock, "rootHash", msg.RootHash)
+		return common.ErrBadBlockDetails(k.Codespace()).Result()
+	}
+
+	//
+	// Save checkpoint to buffer store
+	//
+
+	timeStamp := uint64(ctx.BlockTime().Unix())
+
+	// Add checkpoint to buffer with root hash and account hash
+	k.SetCheckpointBuffer(ctx, hmTypes.CheckpointBlockHeader{
+		StartBlock:      msg.StartBlock,
+		EndBlock:        msg.EndBlock,
+		RootHash:        msg.RootHash,
+		AccountRootHash: msg.AccountRootHash,
+		Proposer:        msg.Proposer,
+		BorChainID:      msg.BorChainID,
+		TimeStamp:       timeStamp,
+	})
+
+	logger.Debug("Save new checkpoint into buffer", "startBlock", msg.StartBlock, "endBlock", msg.EndBlock, "rootHash", msg.RootHash)
+
+	// Emit events for checkpoints
+	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
-			sdk.EventTypeMessage,
+			types.EventTypeCheckpoint,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(types.AttributeKeyProposer, msg.Proposer.String()),
+			sdk.NewAttribute(types.AttributeKeyStartBlock, strconv.FormatUint(uint64(msg.StartBlock), 10)),
+			sdk.NewAttribute(types.AttributeKeyEndBlock, strconv.FormatUint(uint64(msg.EndBlock), 10)),
 		),
-	)
+	})
 
 	return sdk.Result{
 		Events: ctx.EventManager().Events(),

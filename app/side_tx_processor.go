@@ -44,7 +44,10 @@ func (app *HeimdallApp) BeginSideBlocker(ctx sdk.Context, req abci.RequestBeginS
 
 	targetHeight := height - 2 // sidechannel takes 2 blocks to process
 
-	app.Logger().Debug("[sidechannel] Processing side block", "height", height, "targetHeight", targetHeight)
+	// get logger
+	logger := app.Logger()
+
+	logger.Debug("[sidechannel] Processing side block", "height", height, "targetHeight", targetHeight)
 
 	// get all validators
 	validators := app.SidechannelKeeper.GetValidators(ctx, targetHeight)
@@ -93,19 +96,19 @@ func (app *HeimdallApp) BeginSideBlocker(ctx sdk.Context, req abci.RequestBeginS
 			// check vote majority
 			if signedPower[abci.SideTxResultType_Yes] >= (totalPower*2/3 + 1) {
 				// approved
-				app.Logger().Debug("[sidechannel] Approved side-tx", "txHash", hex.EncodeToString(tx.Hash()))
+				logger.Debug("[sidechannel] Approved side-tx", "txHash", hex.EncodeToString(tx.Hash()))
 
 				// execute tx with `yes`
 				result = app.runTx(ctx, tx, abci.SideTxResultType_Yes)
 			} else if signedPower[abci.SideTxResultType_No] >= (totalPower*2/3 + 1) {
 				// rejected
-				app.Logger().Debug("[sidechannel] Rejected side-tx", "txHash", hex.EncodeToString(tx.Hash()))
+				logger.Debug("[sidechannel] Rejected side-tx", "txHash", hex.EncodeToString(tx.Hash()))
 
 				// execute tx with `no`
 				result = app.runTx(ctx, tx, abci.SideTxResultType_No)
 			} else {
 				// skipped
-				app.Logger().Debug("[sidechannel] Skipped side-tx", "txHash", hex.EncodeToString(tx.Hash()))
+				logger.Debug("[sidechannel] Skipped side-tx", "txHash", hex.EncodeToString(tx.Hash()))
 
 				// execute tx with `skip`
 				result = app.runTx(ctx, tx, abci.SideTxResultType_Skip)
@@ -122,7 +125,7 @@ func (app *HeimdallApp) BeginSideBlocker(ctx sdk.Context, req abci.RequestBeginS
 		app.SidechannelKeeper.RemoveTx(ctx, targetHeight, tx.Hash())
 
 		// skipped
-		app.Logger().Debug("[sidechannel] Skipped side-tx", "txHash", hex.EncodeToString(tx.Hash()))
+		logger.Debug("[sidechannel] Skipped side-tx", "txHash", hex.EncodeToString(tx.Hash()))
 
 		// execute tx with `skip`
 		result := app.runTx(ctx, tx, abci.SideTxResultType_Skip)

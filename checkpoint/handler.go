@@ -32,112 +32,102 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 
 // handleMsgCheckpoint Validates checkpoint transaction
 func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
-	k.Logger(ctx).Debug("Validating checkpoint data", "TxData", msg)
+	logger := k.Logger(ctx)
+
 	timeStamp := uint64(ctx.BlockTime().Unix())
 	params := k.GetParams(ctx)
+
+	//
+	// Check checkpoint buffer
+	//
 
 	checkpointBuffer, err := k.GetCheckpointFromBuffer(ctx)
 	if err == nil {
 		checkpointBufferTime := uint64(params.CheckpointBufferTime.Seconds())
 
 		if checkpointBuffer.TimeStamp == 0 || ((timeStamp > checkpointBuffer.TimeStamp) && timeStamp-checkpointBuffer.TimeStamp >= checkpointBufferTime) {
-			k.Logger(ctx).Debug("Checkpoint has been timed out, flushing buffer", "CheckpointTimestamp", timeStamp, "PrevCheckpointTimestamp", checkpointBuffer.TimeStamp)
+			logger.Debug("Checkpoint has been timed out. Flushing buffer.", "checkpointTimestamp", timeStamp, "prevCheckpointTimestamp", checkpointBuffer.TimeStamp)
 			k.FlushCheckpointBuffer(ctx)
 		} else {
 			expiryTime := checkpointBuffer.TimeStamp + checkpointBufferTime
-			k.Logger(ctx).Error("Checkpoint already exits in buffer", "Checkpoint", checkpointBuffer.String(), "Expires", expiryTime)
+			logger.Error("Checkpoint already exits in buffer", "Checkpoint", checkpointBuffer.String(), "Expires", expiryTime)
 			return common.ErrNoACK(k.Codespace(), expiryTime).Result()
 		}
 	}
 
-	// validate checkpoint
-	validCheckpoint, err := types.ValidateCheckpoint(msg.StartBlock, msg.EndBlock, msg.RootHash, params.MaxCheckpointLength)
-	if err != nil {
-		k.Logger(ctx).Error("Error validating checkpoint",
-			"Error", err,
-			"StartBlock", msg.StartBlock,
-			"EndBlock", msg.EndBlock)
-		return common.ErrBadBlockDetails(k.Codespace()).Result()
-	}
-
-	if !validCheckpoint {
-		k.Logger(ctx).Error("RootHash is not valid",
-			"StartBlock", msg.StartBlock,
-			"EndBlock", msg.EndBlock,
-			"RootHash", msg.RootHash)
-		return common.ErrBadBlockDetails(k.Codespace()).Result()
-	}
-
-	k.Logger(ctx).Debug("Valid Roothash in checkpoint", "StartBlock", msg.StartBlock, "EndBlock", msg.EndBlock)
+	//
+	// Validate last checkpoint
+	//
 
 	// fetch last checkpoint from store
 	if lastCheckpoint, err := k.GetLastCheckpoint(ctx); err == nil {
 		// make sure new checkpoint is after tip
 		if lastCheckpoint.EndBlock > msg.StartBlock {
-			k.Logger(ctx).Error("Checkpoint already exists",
+			logger.Error("Checkpoint already exists",
 				"currentTip", lastCheckpoint.EndBlock,
-				"startBlock", msg.StartBlock)
+				"startBlock", msg.StartBlock,
+			)
 			return common.ErrOldCheckpoint(k.Codespace()).Result()
 		}
+
+		// check if new checkpoint's start block start from current tip
 		if lastCheckpoint.EndBlock+1 != msg.StartBlock {
-			k.Logger(ctx).Error("Checkpoint not in countinuity",
+			logger.Error("Checkpoint not in countinuity",
 				"currentTip", lastCheckpoint.EndBlock,
 				"startBlock", msg.StartBlock)
 			return common.ErrDisCountinuousCheckpoint(k.Codespace()).Result()
 		}
 	} else if err.Error() == common.ErrNoCheckpointFound(k.Codespace()).Error() && msg.StartBlock != 0 {
-		k.Logger(ctx).Error("First checkpoint to start from block 1", "Error", err)
+		logger.Error("First checkpoint to start from block 0", "Error", err)
 		return common.ErrBadBlockDetails(k.Codespace()).Result()
 	}
-	k.Logger(ctx).Debug("Valid checkpoint tip")
 
-	// make sure latest AccountRootHash matches
+	//
+	// Validate account hash
+	//
+
+	// Make sure latest AccountRootHash matches
 	// Calculate new account root hash
 	dividendAccounts := k.sk.GetAllDividendAccounts(ctx)
-	k.Logger(ctx).Debug("DividendAccounts of all validators", "dividendAccounts", dividendAccounts)
-	accountRoot, err := types.GetAccountRootHash(dividendAccounts)
-	k.Logger(ctx).Info("Validator Account root hash generated", "AccountRootHash", hmTypes.BytesToHeimdallHash(accountRoot).String())
+	logger.Debug("DividendAccounts of all validators", "dividendAccountsLength", len(dividendAccounts))
 
+	// Get account root has from dividend accounts
+	accountRoot, err := types.GetAccountRootHash(dividendAccounts)
+	if err != nil {
+		logger.Error("Error while fetching account root hash", "error", err)
+		return common.ErrBadBlockDetails(k.Codespace()).Result()
+	}
+	logger.Debug("Validator account root hash generated", "accountRootHash", hmTypes.BytesToHeimdallHash(accountRoot).String())
+
+	// Compare stored root hash to msg root hash
 	if !bytes.Equal(accountRoot, msg.AccountRootHash.Bytes()) {
-		k.Logger(ctx).Error("AccountRootHash of current state", hmTypes.BytesToHeimdallHash(accountRoot).String(),
-			"doesn't match with AccountRootHash of msg", msg.AccountRootHash)
+		logger.Error(
+			"AccountRootHash of current state doesn't match from msg",
+			"hash", hmTypes.BytesToHeimdallHash(accountRoot).String(),
+			"msgHash", msg.AccountRootHash,
+		)
 		return common.ErrBadBlockDetails(k.Codespace()).Result()
 	}
 
-	k.Logger(ctx).Debug("AccountRootHash matches")
+	//
+	// Validate proposer
+	//
 
-	// check proposer in message
-	if !bytes.Equal(msg.Proposer.Bytes(), k.sk.GetValidatorSet(ctx).Proposer.Signer.Bytes()) {
-		k.Logger(ctx).Error("Invalid proposer in message",
-			"currentProposer", k.sk.GetValidatorSet(ctx).Proposer.Signer.String(),
-			"checkpointProposer", msg.Proposer.String())
-		return common.ErrBadProposerDetails(k.Codespace(), k.sk.GetValidatorSet(ctx).Proposer.Signer).Result()
+	// Check proposer in message
+	validatorSet := k.sk.GetValidatorSet(ctx)
+	if validatorSet.Proposer == nil {
+		logger.Error("No proposer in validator set", "msgProposer", msg.Proposer.String())
+		return common.ErrInvalidMsg(k.Codespace(), "No proposer in stored validator set").Result()
 	}
-	k.Logger(ctx).Debug("Valid proposer in checkpoint")
 
-	// add checkpoint to buffer
-	// Add AccountRootHash to CheckpointBuffer
-	k.SetCheckpointBuffer(ctx, hmTypes.CheckpointBlockHeader{
-		StartBlock:      msg.StartBlock,
-		EndBlock:        msg.EndBlock,
-		RootHash:        msg.RootHash,
-		AccountRootHash: msg.AccountRootHash,
-		Proposer:        msg.Proposer,
-		TimeStamp:       timeStamp,
-	})
-
-	checkpoint, _ := k.GetCheckpointFromBuffer(ctx)
-	k.Logger(ctx).Debug("Adding good checkpoint to buffer to await ACK", "checkpointStored", checkpoint.String())
-
-	ctx.EventManager().EmitEvents(sdk.Events{
-		sdk.NewEvent(
-			types.EventTypeCheckpoint,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(types.AttributeKeyProposer, msg.Proposer.String()),
-			sdk.NewAttribute(types.AttributeKeyStartBlock, strconv.FormatUint(uint64(msg.StartBlock), 10)),
-			sdk.NewAttribute(types.AttributeKeyEndBlock, strconv.FormatUint(uint64(msg.EndBlock), 10)),
-		),
-	})
+	if !bytes.Equal(msg.Proposer.Bytes(), validatorSet.Proposer.Signer.Bytes()) {
+		logger.Error(
+			"Invalid proposer in msg",
+			"proposer", validatorSet.Proposer.Signer.String(),
+			"msgProposer", msg.Proposer.String(),
+		)
+		return common.ErrInvalidMsg(k.Codespace(), "Invalid proposer in msg").Result()
+	}
 
 	return sdk.Result{
 		Events: ctx.EventManager().Events(),
