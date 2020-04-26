@@ -330,7 +330,7 @@ func (suite *SideTxProcessorTestSuite) TestBeginSideBlocker() {
 						},
 					},
 				})
-				require.Equal(t, 1, len(res.Events), "It should have one event")
+				require.Equal(t, 0, len(res.Events), "It should have no event")
 				require.Nil(t, happ.SidechannelKeeper.GetTx(ctx, height-2, txHash), "Tx should not be present in store after begin block")
 			})
 		}
@@ -339,10 +339,7 @@ func (suite *SideTxProcessorTestSuite) TestBeginSideBlocker() {
 			// skip without any power calculation
 			happ.SidechannelKeeper.SetTx(ctx, height-2, txBytes)
 			res = happ.BeginSideBlocker(ctx, abci.RequestBeginSideBlock{})
-			require.Equal(t, 1, len(res.Events), "It should have one event with validators")
-			require.Equal(t, 1, len(res.Events[0].Attributes))
-			require.Equal(t, "action", string(res.Events[0].Attributes[0].GetKey()))
-			require.Equal(t, "counter1", string(res.Events[0].Attributes[0].GetValue()))
+			require.Equal(t, 0, len(res.Events), "It should have no event with validators")
 			require.Nil(t, happ.SidechannelKeeper.GetTx(ctx, height-2, txHash), "Tx should not be present in store after begin block")
 		})
 	})
@@ -428,7 +425,7 @@ func (suite *SideTxProcessorTestSuite) TestBeginSideBlocker() {
 
 			happ.SidechannelKeeper.SetTx(ctx, height-2, txBytes) // set tx in the store for process
 			res := happ.BeginSideBlocker(ctx, req)
-			require.Equal(t, 3, len(res.Events), "It should include correct emitted events")
+			require.Equal(t, 2, len(res.Events), "It should include correct emitted events")
 			require.Nil(t, happ.SidechannelKeeper.GetTx(ctx, height-2, txHash), "Tx should not be present in store after begin block")
 
 			// check if it saved the data
@@ -465,7 +462,7 @@ func (suite *SideTxProcessorTestSuite) TestBeginSideBlocker() {
 
 			happ.SidechannelKeeper.SetTx(ctx, height-2, txBytes) // set tx in the store for process
 			res := happ.BeginSideBlocker(ctx, req)
-			require.Equal(t, 1, len(res.Events), "It should have only one event")
+			require.Equal(t, 0, len(res.Events), "It should have 0 events")
 			require.Nil(t, happ.SidechannelKeeper.GetTx(ctx, height-2, txHash), "Tx should not be present in store after begin block")
 
 			// check if it saved the data

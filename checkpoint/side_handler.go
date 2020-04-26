@@ -134,6 +134,10 @@ func PostHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint,
 	// Emit events for checkpoints
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyAction, msg.Type()),
+		),
+		sdk.NewEvent(
 			types.EventTypeCheckpoint,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			sdk.NewAttribute(types.AttributeKeyProposer, msg.Proposer.String()),

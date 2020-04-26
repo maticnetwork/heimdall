@@ -247,14 +247,7 @@ func (app *HeimdallApp) runMsgs(ctx sdk.Context, msgs []sdk.Msg, sideTxResult ab
 			data = append(data, msgResult.Data...)
 
 			// msg events
-			msgEvents := msgResult.Events
-
-			// append events from the message's execution and a message action event
-			msgEvents = msgEvents.AppendEvent(
-				sdk.NewEvent(sdk.EventTypeMessage, sdk.NewAttribute(sdk.AttributeKeyAction, msg.Type())),
-			)
-
-			events = events.AppendEvents(msgEvents)
+			events = events.AppendEvents(msgResult.Events)
 
 			// stop execution and return on first failed message
 			if !msgResult.IsOK() {
