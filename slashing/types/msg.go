@@ -63,7 +63,7 @@ func (msg MsgUnjail) ValidateBasic() sdk.Error {
 // TickMsg - struct for unjailing jailed validator
 type MsgTick struct {
 	Proposer         types.HeimdallAddress `json:"proposer"`
-	SlashingInfoHash types.HeimdallHash    `json:"accountRootHash"`
+	SlashingInfoHash types.HeimdallHash    `json:"slashInfoHash"`
 }
 
 func NewMsgTick(proposer types.HeimdallAddress, slashingInfoHash types.HeimdallHash) MsgTick {

@@ -13,6 +13,7 @@ import (
 
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/slashing/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 func GetTxCmd(cdc *codec.Codec) *cobra.Command {
@@ -26,13 +27,15 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 
 	slashingTxCmd.AddCommand(flags.PostCommands(
 		GetCmdUnjail(cdc),
+		GetCmdTick(cdc),
+		GetCmdTickAck(cdc),
 	)...)
 
 	return slashingTxCmd
 }
 
 func GetCmdUnjail(cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "unjail",
 		Args:  cobra.NoArgs,
 		Short: "unjail validator previously jailed",
@@ -55,25 +58,27 @@ $ <appcli> tx slashing unjail --from mykey
 			}
 
 			txHash := viper.GetString(FlagTxHash)
-			if txhash == "" {
+			if txHash == "" {
 				return fmt.Errorf("transaction hash is required")
 			}
 
 			msg := types.NewMsgUnjail(
 				proposer,
 				uint64(validator),
-				hmTypes.HexToHeimdallHash(txhash),
+				hmTypes.HexToHeimdallHash(txHash),
 				uint64(viper.GetInt64(FlagLogIndex)),
 			)
 
 			// broadcast messages
-			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk{msg})
+			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
 		},
 	}
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
 	cmd.MarkFlagRequired(FlagProposerAddress)
 	cmd.MarkFlagRequired(FlagTxHash)
+
+	return cmd
 }
 
 func GetCmdTick(cdc *codec.Codec) *cobra.Command {
@@ -92,8 +97,8 @@ func GetCmdTick(cdc *codec.Codec) *cobra.Command {
 				proposer = helper.GetFromAddress(cliCtx)
 			}
 
-			txhash := viper.GetString(FlagSlashInfoHash)
-			if txhash == "" {
+			slashInfoHash := viper.GetString(FlagSlashInfoHash)
+			if slashInfoHash == "" {
 				return fmt.Errorf("slashinfo hash has to be supplied")
 			}
 
@@ -109,16 +114,15 @@ func GetCmdTick(cdc *codec.Codec) *cobra.Command {
 
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
 	cmd.Flags().String(FlagSlashInfoHash, "", "--slashinfo-hash=<slashinfo-hash>")
-	cmd.Flags().String(FlagLogIndex, "", "--log-index=<log-index>")
-	cmd.MarkFlagRequired(FlagTxHash)
-	cmd.MarkFlagRequired(FlagLogIndex)
+	cmd.MarkFlagRequired(FlagProposerAddress)
+	cmd.MarkFlagRequired(FlagSlashInfoHash)
 
 	return cmd
 }
 
 func GetCmdTickAck(cdc *codec.Codec) *cobra.Command {
 
-	cmd := *&cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "tick-ack",
 		Short: "send tick ack",
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -136,18 +140,18 @@ func GetCmdTickAck(cdc *codec.Codec) *cobra.Command {
 			}
 
 			txHash := viper.GetString(FlagTxHash)
-			if txhash == "" {
+			if txHash == "" {
 				return fmt.Errorf("transaction hash is required")
 			}
 
 			msg := types.NewMsgTickAck(
 				proposer,
-				hmTypes.HexToHeimdallHash(txhash),
+				hmTypes.HexToHeimdallHash(txHash),
 				uint64(viper.GetInt64(FlagLogIndex)),
 			)
 
 			// broadcast messages
-			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk{msg})
+			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
 		},
 	}
 

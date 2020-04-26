@@ -469,6 +469,7 @@ func MakePulp() *authTypes.Pulp {
 
 	// register custom type
 	checkpointTypes.RegisterPulp(pulp)
+	slashingTypes.RegisterPulp(pulp)
 
 	return pulp
 }

@@ -118,7 +118,7 @@ func querySlashingInfo(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte
 	// get validator slashing info
 	slashingInfo, found := k.GetBufferValSlashingInfo(ctx, params.ValidatorID)
 	if !found {
-		return nil, sdk.ErrInternal("Error while getting validator signing info")
+		return nil, sdk.ErrInternal(" slashing info not found for given val")
 	}
 
 	// json record
@@ -160,7 +160,11 @@ func querySlashingInfos(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byt
 
 func querySlashingInfoHash(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	// Calculate new slashInfo hash
-	slashingInfos := keeper.GetBufferValSlashingInfos(ctx)
+	slashingInfos, err := keeper.GetBufferValSlashingInfos(ctx)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("no slash infos in buffer", err.Error()))
+	}
+
 	slashingInfoHash, err := types.GetSlashingInfoHash(slashingInfos)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not fetch slashingInfoHash ", err.Error()))

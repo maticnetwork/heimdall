@@ -11,6 +11,7 @@ import (
 const (
 	QueryCurrentValidatorSet  = "current-validator-set"
 	QuerySigner               = "signer"
+	QueryTotalValidatorPower  = "total-val-power"
 	QueryValidator            = "validator"
 	QueryValidatorStatus      = "validator-status"
 	QueryProposer             = "proposer"

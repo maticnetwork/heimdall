@@ -18,6 +18,10 @@ import (
 
 func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc(
+		"/staking/totalpower",
+		getTotalValidatorPower(cliCtx),
+	).Methods("GET")
+	r.HandleFunc(
 		"/staking/signer/{address}",
 		validatorByAddressHandlerFn(cliCtx),
 	).Methods("GET")
@@ -69,6 +73,46 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 		"/staking/isoldtx",
 		StakingTxStatusHandlerFn(cliCtx),
 	).Methods("GET")
+}
+
+// Returns total power of current validator set
+func getTotalValidatorPower(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		RestLogger.Debug("Fetching total validator power")
+		totalPowerBytes, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryTotalValidatorPower), nil)
+		if err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		// check content
+		if ok := hmRest.ReturnNotFoundIfNoContent(w, totalPowerBytes, "total power not found"); !ok {
+			return
+		}
+
+		var totalPower uint64
+		if err := json.Unmarshal(totalPowerBytes, &totalPower); err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		result, err := json.Marshal(map[string]interface{}{"result": totalPower})
+		if err != nil {
+			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		cliCtx = cliCtx.WithHeight(height)
+		rest.PostProcessResponse(w, cliCtx, result)
+
+	}
+
 }
 
 // Returns validator information by signer address

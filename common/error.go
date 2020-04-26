@@ -55,6 +55,7 @@ const (
 
 	CodeValSigningInfoSave CodeType = 5501
 	CodeErrValUnjail       CodeType = 5502
+	CodeSlashInfoDetails   CodeType = 5503
 )
 
 // -------- Invalid msg
@@ -221,4 +222,8 @@ func ErrValidatorSigningInfoSave(codespace sdk.CodespaceType) sdk.Error {
 
 func ErrUnjailValidator(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeErrValUnjail, "Error while unJail validator")
+}
+
+func ErrSlashInfoDetails(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeSlashInfoDetails, "Wrong slash info details")
 }

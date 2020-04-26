@@ -1,6 +1,8 @@
 package types
 
 import (
+	"crypto/sha256"
+
 	"github.com/maticnetwork/bor/rlp"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
@@ -23,8 +25,14 @@ func GenerateInfoHash(slashingInfos []*hmTypes.ValidatorSlashingInfo) ([]byte, e
 		return nil, err
 	}
 
-	// TODO slashing - Generate Hash of encodedData
-	return encodedSlashInfo, nil
+	// calculate hash of encoded slash info
+	h := sha256.New()
+	_, err = h.Write(encodedSlashInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	return h.Sum(nil), nil
 }
 
 // SortAndRLPEncodeSlashInfos  - RLP encoded slashing infos

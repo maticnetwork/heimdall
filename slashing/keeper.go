@@ -281,8 +281,17 @@ func (k *Keeper) SlashInterim(ctx sdk.Context, valID hmTypes.ValidatorID, slashP
 		valSlashingInfo = hmTypes.NewValidatorSlashingInfo(valID, slashAmount.String(), false)
 	}
 
-	k.SetBufferValSlashingInfo(ctx, valID, valSlashingInfo)
-	k.UpdateTotalSlashedAmount(ctx, slashAmount.String())
+	// TODO - slashing Add jail Status by checking jail limit
+
+	// TODO - slashing -- remove this if state. only for testing purpose
+	if !k.IsSlashedLimitExceeded(ctx) {
+		k.Logger(ctx).Info("Slash limit not exceeded. slashing until tick for testing purpose ")
+		k.SetBufferValSlashingInfo(ctx, valID, valSlashingInfo)
+		k.UpdateTotalSlashedAmount(ctx, slashAmount.String())
+	}
+
+	// k.SetBufferValSlashingInfo(ctx, valID, valSlashingInfo)
+	// k.UpdateTotalSlashedAmount(ctx, slashAmount.String())
 	return slashAmount.String()
 }
 
@@ -298,12 +307,22 @@ func (k *Keeper) GetTotalSlashedAmount(ctx sdk.Context) *big.Int {
 	return big.NewInt(0)
 }
 
-func (k *Keeper) IsSlashedLimitExceeped(ctx sdk.Context) bool {
-	slashedAmount := k.GetTotalSlashedAmount(ctx)
+func (k *Keeper) IsSlashedLimitExceeded(ctx sdk.Context) bool {
 	params := k.GetParams(ctx)
-	if params.SlashFractionLimit.CmpAbs(slashedAmount) < 0 {
+	k.Logger(ctx).Debug("checking if slash limit exceeded")
+	slashedAmount := k.GetTotalSlashedAmount(ctx)
+	totalPower := k.sk.GetTotalPower(ctx)
+	k.Logger(ctx).Debug("slashedAmount and totalPower", "slashAmount", slashedAmount, "totalPower", totalPower)
+	totalPowerInDec, _ := helper.GetAmountFromPower(totalPower)
+
+	slashLimitDec := sdk.NewDecFromBigInt(totalPowerInDec).Mul(params.SlashFractionLimit)
+	slashLimit := slashLimitDec.TruncateInt().BigInt()
+	k.Logger(ctx).Debug("limit calculates", "slashlimit", slashLimit)
+	if slashLimit.CmpAbs(slashedAmount) < 0 {
+		k.Logger(ctx).Debug("slash limit exceeded")
 		return true
 	}
+	k.Logger(ctx).Debug("slash limit not exceeded")
 	return false
 }
 
@@ -351,14 +370,14 @@ func (k Keeper) IterateBufferValSlashingInfos(ctx sdk.Context,
 }
 
 // FlushBufferValSlashingInfos removes all validator slashing infos in buffer
-func (k *Keeper) FlushBufferValSlashingInfos(ctx sdk.Context) {
+func (k *Keeper) FlushBufferValSlashingInfos(ctx sdk.Context) error {
 	// iterate through validator slashing info and create validator slashing info update array
-	k.IterateBufferValSlashingInfosAndApplyFn(ctx, func(valSlashingInfo hmTypes.ValidatorSlashingInfo) error {
+	err := k.IterateBufferValSlashingInfosAndApplyFn(ctx, func(valSlashingInfo hmTypes.ValidatorSlashingInfo) error {
 		// remove from buffer data
 		k.RemoveBufferValSlashingInfo(ctx, valSlashingInfo.ID)
 		return nil
 	})
-	return
+	return err
 }
 
 // FlushBufferValSlashingInfos removes all validator slashing infos in buffer
@@ -371,7 +390,7 @@ func (k *Keeper) FlushTotalSlashedAmount(ctx sdk.Context) {
 }
 
 // IterateBufferValSlashingInfosAndApplyFn interate ValidatorSlashingInfo and apply the given function.
-func (k *Keeper) IterateBufferValSlashingInfosAndApplyFn(ctx sdk.Context, f func(slashingInfo hmTypes.ValidatorSlashingInfo) error) {
+func (k *Keeper) IterateBufferValSlashingInfosAndApplyFn(ctx sdk.Context, f func(slashingInfo hmTypes.ValidatorSlashingInfo) error) error {
 	store := ctx.KVStore(k.storeKey)
 
 	// get validator iterator
@@ -384,15 +403,17 @@ func (k *Keeper) IterateBufferValSlashingInfosAndApplyFn(ctx sdk.Context, f func
 		slashingInfo, _ := hmTypes.UnmarshallValSlashingInfo(k.cdc, iterator.Value())
 		// call function and return if required
 		if err := f(slashingInfo); err != nil {
-			return
+			return err
 		}
 	}
+
+	return nil
 }
 
 // GetBufferValSlashingInfos returns all validator slashing infos in buffer
-func (k *Keeper) GetBufferValSlashingInfos(ctx sdk.Context) (valSlashingInfos []*hmTypes.ValidatorSlashingInfo) {
+func (k *Keeper) GetBufferValSlashingInfos(ctx sdk.Context) (valSlashingInfos []*hmTypes.ValidatorSlashingInfo, err error) {
 	// iterate through validators and create validator update array
-	k.IterateBufferValSlashingInfosAndApplyFn(ctx, func(valSlashingInfo hmTypes.ValidatorSlashingInfo) error {
+	err = k.IterateBufferValSlashingInfosAndApplyFn(ctx, func(valSlashingInfo hmTypes.ValidatorSlashingInfo) error {
 		// append to list of valSlashingInfos
 		valSlashingInfos = append(valSlashingInfos, &valSlashingInfo)
 		return nil
@@ -414,7 +435,7 @@ func (k Keeper) UpdateTotalSlashedAmount(ctx sdk.Context, amount string) {
 	store.Set(types.TotalSlashedAmountKey, []byte(slashedAmount.String()))
 	k.Logger(ctx).Debug("Updated Total Slashed Amount ", "amount", slashedAmount)
 
-	if k.IsSlashedLimitExceeped(ctx) {
+	if k.IsSlashedLimitExceeded(ctx) {
 		k.Logger(ctx).Info("TotalSlashedAmountKey exceeded SlashLimit, Emitting event")
 		// -slashing. emit event if total amount exceed limit
 		ctx.EventManager().EmitEvent(
@@ -442,9 +463,9 @@ func (k *Keeper) GetTickValSlashingInfo(ctx sdk.Context, valId hmTypes.Validator
 }
 
 // GetTickValSlashingInfos returns all validator slashing infos in tick
-func (k *Keeper) GetTickValSlashingInfos(ctx sdk.Context) (valSlashingInfos []*hmTypes.ValidatorSlashingInfo) {
+func (k *Keeper) GetTickValSlashingInfos(ctx sdk.Context) (valSlashingInfos []*hmTypes.ValidatorSlashingInfo, err error) {
 	// iterate through validators and create slashing info update array
-	k.IterateTickValSlashingInfosAndApplyFn(ctx, func(valSlashingInfo hmTypes.ValidatorSlashingInfo) error {
+	err = k.IterateTickValSlashingInfosAndApplyFn(ctx, func(valSlashingInfo hmTypes.ValidatorSlashingInfo) error {
 		// append to list of valSlashingInfos
 		valSlashingInfos = append(valSlashingInfos, &valSlashingInfo)
 		return nil
@@ -483,19 +504,19 @@ func (k Keeper) IterateTickValSlashingInfos(ctx sdk.Context,
 }
 
 // CopyValSlashingInfosToTickData copies all validator slashing infos in buffer to tickdata
-func (k *Keeper) CopyBufferValSlashingInfosToTickData(ctx sdk.Context) {
+func (k *Keeper) CopyBufferValSlashingInfosToTickData(ctx sdk.Context) error {
 	// iterate through validators and create validator slashing info update array
-	k.IterateBufferValSlashingInfosAndApplyFn(ctx, func(valSlashingInfo hmTypes.ValidatorSlashingInfo) error {
+	err := k.IterateBufferValSlashingInfosAndApplyFn(ctx, func(valSlashingInfo hmTypes.ValidatorSlashingInfo) error {
 		// store to tick data
 		k.SetTickValSlashingInfo(ctx, valSlashingInfo.ID, valSlashingInfo)
 		return nil
 	})
 
-	return
+	return err
 }
 
 // IterateTickValSlashingInfosAndApplyFn interate ValidatorSlashingInfo and apply the given function.
-func (k *Keeper) IterateTickValSlashingInfosAndApplyFn(ctx sdk.Context, f func(slashingInfo hmTypes.ValidatorSlashingInfo) error) {
+func (k *Keeper) IterateTickValSlashingInfosAndApplyFn(ctx sdk.Context, f func(slashingInfo hmTypes.ValidatorSlashingInfo) error) error {
 	store := ctx.KVStore(k.storeKey)
 
 	// get validator iterator
@@ -506,34 +527,36 @@ func (k *Keeper) IterateTickValSlashingInfosAndApplyFn(ctx sdk.Context, f func(s
 	for ; iterator.Valid(); iterator.Next() {
 		// unmarshall validator
 		slashingInfo, _ := hmTypes.UnmarshallValSlashingInfo(k.cdc, iterator.Value())
+		k.Logger(ctx).Debug("slashing the validator", "slashingInfo", slashingInfo)
 		// call function and return if required
 		if err := f(slashingInfo); err != nil {
 			// Error slashing validator
 			k.Logger(ctx).Error("Error slashing the validator", "error", err)
-			return
+			return err
 		}
 	}
+	return nil
 }
 
 // SlashAndJailTickValSlashingInfos reduces power of all validator slashing infos in tick data
-func (k *Keeper) SlashAndJailTickValSlashingInfos(ctx sdk.Context) {
+func (k *Keeper) SlashAndJailTickValSlashingInfos(ctx sdk.Context) error {
 	// iterate through validator slashing info and create validator slashing info update array
-	k.IterateTickValSlashingInfosAndApplyFn(ctx, func(valSlashingInfo hmTypes.ValidatorSlashingInfo) error {
+	err := k.IterateTickValSlashingInfosAndApplyFn(ctx, func(valSlashingInfo hmTypes.ValidatorSlashingInfo) error {
 		err := k.sk.Slash(ctx, valSlashingInfo)
 		return err
 	})
-	return
+	return err
 }
 
 // FlushTickValSlashingInfos removes all validator slashing infos in last Tick
-func (k *Keeper) FlushTickValSlashingInfos(ctx sdk.Context) {
+func (k *Keeper) FlushTickValSlashingInfos(ctx sdk.Context) error {
 	// iterate through validator slashing info and create validator slashing info update array
-	k.IterateTickValSlashingInfosAndApplyFn(ctx, func(valSlashingInfo hmTypes.ValidatorSlashingInfo) error {
+	err := k.IterateTickValSlashingInfosAndApplyFn(ctx, func(valSlashingInfo hmTypes.ValidatorSlashingInfo) error {
 		// remove from tick data
 		k.RemoveTickValSlashingInfo(ctx, valSlashingInfo.ID)
 		return nil
 	})
-	return
+	return err
 }
 
 //

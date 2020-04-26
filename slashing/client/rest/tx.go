@@ -41,7 +41,7 @@ type UnjailReq struct {
 }
 
 type TickReq struct {
-	BaseReq rest.BaseReq `json:"ID"`
+	BaseReq rest.BaseReq `json:"base_req"`
 
 	Proposer         string `json:"proposer"`
 	SlashingInfoHash string `json:"slashing_info_hash"`

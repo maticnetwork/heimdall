@@ -21,6 +21,8 @@ import (
 func NewQuerier(keeper Keeper) sdk.Querier {
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) ([]byte, sdk.Error) {
 		switch path[0] {
+		case types.QueryTotalValidatorPower:
+			return handleQueryTotalValidatorPower(ctx, req, keeper)
 		case types.QueryCurrentValidatorSet:
 			return handleQueryCurrentValidatorSet(ctx, req, keeper)
 		case types.QuerySigner:
@@ -48,6 +50,16 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return nil, sdk.ErrUnknownRequest("unknown staking query endpoint")
 		}
 	}
+}
+
+func handleQueryTotalValidatorPower(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+
+	bz, err := json.Marshal(keeper.GetTotalPower(ctx))
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
+	return bz, nil
+
 }
 
 func handleQueryCurrentValidatorSet(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {

@@ -192,6 +192,14 @@ func (k *Keeper) GetCurrentValidators(ctx sdk.Context) (validators []hmTypes.Val
 	return
 }
 
+func (k *Keeper) GetTotalPower(ctx sdk.Context) (totalPower int64) {
+	k.IterateCurrentValidatorsAndApplyFn(ctx, func(validator *hmTypes.Validator) bool {
+		totalPower += validator.VotingPower
+		return true
+	})
+	return
+}
+
 // GetSpanEligibleValidators returns current validators who are not getting deactivated in between next span
 func (k *Keeper) GetSpanEligibleValidators(ctx sdk.Context) (validators []hmTypes.Validator) {
 	// get ack count
@@ -532,21 +540,7 @@ func (k *Keeper) IterateStakingSequencesAndApplyFn(ctx sdk.Context, f func(seque
 	return
 }
 
-// Slash a validator for an infraction committed at a known height
-// Find the contributing stake at that height and burn the specified slashFactor
-// of it, updating unbonding delegations & redelegations appropriately
-//
-// CONTRACT:
-//    slashFactor is non-negative
-// CONTRACT:
-//    Infraction was committed equal to or less than an unbonding period in the past,
-//    so all unbonding delegations and redelegations from that height are stored
-// CONTRACT:
-//    Slash will not slash unbonded validators (for the above reason)
-// CONTRACT:
-//    Infraction was committed at the current height or at a past height,
-//    not at a height in the future
-
+// AddValidatorSigningInfo creates a signing info for validator
 func (k Keeper) AddValidatorSigningInfo(ctx sdk.Context, valID hmTypes.ValidatorID, valSigningInfo hmTypes.ValidatorSigningInfo) error {
 	k.moduleCommunicator.CreateValiatorSigningInfo(ctx, valID, valSigningInfo)
 	return nil
@@ -556,6 +550,7 @@ func (k Keeper) AddValidatorSigningInfo(ctx sdk.Context, valID hmTypes.Validator
 func (k *Keeper) Slash(ctx sdk.Context, valSlashingInfo hmTypes.ValidatorSlashingInfo) error {
 	// get validator from state
 	validator, found := k.GetValidatorFromValID(ctx, valSlashingInfo.ID)
+	k.Logger(ctx).Debug("validator fetched", "validator", validator)
 	if !found {
 		k.Logger(ctx).Error("Unable to fetch valiator from store")
 		// TODO slashing - return proper error
@@ -564,28 +559,25 @@ func (k *Keeper) Slash(ctx sdk.Context, valSlashingInfo hmTypes.ValidatorSlashin
 
 	// calculate power after slash
 	slashAmount, _ := helper.GetAmountFromString(valSlashingInfo.SlashedAmount)
-	slashPower, _ := helper.GetPowerFromAmount(slashAmount)
-	updatedPower := validator.VotingPower - slashPower.Int64()
+	valAmount, _ := helper.GetAmountFromPower(validator.VotingPower)
+	slashedValAmount := valAmount.Sub(valAmount, slashAmount)
+	updatedPower, _ := helper.GetPowerFromAmount(slashedValAmount)
 
-	// update power and jail status
-	validator.VotingPower = updatedPower
+	if updatedPower == nil {
+		// After slashing, updated power is less than 1 MATIC
+		updatedPower = big.NewInt(0)
+	}
+
+	k.Logger(ctx).Info("slashAmount", slashAmount, "prevPower", validator.VotingPower, "updatedPower", updatedPower.Int64)
+
+	// update power and jail status.
+	validator.VotingPower = updatedPower.Int64()
 	validator.Jailed = valSlashingInfo.IsJailed
 
 	// add updated validator to store with new key
 	k.AddValidator(ctx, validator)
+	k.Logger(ctx).Debug("updated validator with slashed voting power and jail status", "validator", validator)
 	return nil
-}
-
-// jail a validator
-func (k Keeper) Jail(ctx sdk.Context, addr []byte) {
-	// validator, err := k.GetValidatorInfo(ctx, addr)
-	// if err != nil {
-
-	// }
-
-	// logger := k.Logger(ctx)
-	// logger.Info(fmt.Sprintf("validator %s jailed", consAddr))
-
 }
 
 // unjail a validator

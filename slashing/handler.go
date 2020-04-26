@@ -107,44 +107,65 @@ func handlerMsgTick(ctx sdk.Context, msg types.MsgTick, k Keeper, contractCaller
 	// }
 
 	// check if slash limit is exceeded or not
-	if !k.IsSlashedLimitExceeped(ctx) {
+	if !k.IsSlashedLimitExceeded(ctx) {
 		k.Logger(ctx).Error("TotalSlashedAmount is less than SlashLimit")
 		return common.ErrBadBlockDetails(k.Codespace()).Result()
 	}
 
-	valSlashingInfos := k.GetBufferValSlashingInfos(ctx)
+	valSlashingInfos, err := k.GetBufferValSlashingInfos(ctx)
+	if err != nil {
+		k.Logger(ctx).Error("Error fetching slash Info list from buffer", "error", err)
+		return common.ErrSlashInfoDetails(k.Codespace()).Result()
+	}
+
 	slashingInfoHash, err := types.GetSlashingInfoHash(valSlashingInfos)
 	if err != nil {
 		k.Logger(ctx).Info("Error generating slashing info hash", "error", err)
+		return common.ErrSlashInfoDetails(k.Codespace()).Result()
 	}
+
 	// compare slashingInfoHash with msg hash
 	k.Logger(ctx).Info("SlashInfo hash generated", "SlashInfoHash", hmTypes.BytesToHeimdallHash(slashingInfoHash).String())
 
 	if !bytes.Equal(slashingInfoHash, msg.SlashingInfoHash.Bytes()) {
-		k.Logger(ctx).Error("SlashInfoHash of current buffer state", hmTypes.BytesToHeimdallHash(slashingInfoHash).String(),
-			"doesn't match with SlashInfoHash of msg", msg.SlashingInfoHash)
-		return common.ErrBadBlockDetails(k.Codespace()).Result()
+		k.Logger(ctx).Error("SlashInfoHash of current buffer state", "bufferSlashInfoHash", hmTypes.BytesToHeimdallHash(slashingInfoHash).String(),
+			"doesn't match with SlashInfoHash of msg", "msgSlashInfoHash", msg.SlashingInfoHash)
+		return common.ErrSlashInfoDetails(k.Codespace()).Result()
 	}
 
 	k.Logger(ctx).Debug("SlashInfoHash matches")
 
 	// ensure latestTickData is empty
-	tickSlashingInfos := k.GetTickValSlashingInfos(ctx)
+	tickSlashingInfos, err := k.GetTickValSlashingInfos(ctx)
+	if err != nil {
+		k.Logger(ctx).Error("Error fetching slash Info list from tick", "error", err)
+		return common.ErrSlashInfoDetails(k.Codespace()).Result()
+	}
+
 	if tickSlashingInfos != nil && len(tickSlashingInfos) > 0 {
 		k.Logger(ctx).Error("Waiting for tick data to be pushed to contract", "tickSlashingInfo", tickSlashingInfos)
 	}
 
 	// copy slashBuffer into latestTickData
-	k.CopyBufferValSlashingInfosToTickData(ctx)
+	if err := k.CopyBufferValSlashingInfosToTickData(ctx); err != nil {
+		k.Logger(ctx).Error("Error copying bufferSlashInfo to tickSlashInfo", "error", err)
+		return common.ErrSlashInfoDetails(k.Codespace()).Result()
+	}
 
 	// Flush slashBuffer
-	k.FlushBufferValSlashingInfos(ctx)
+	if err := k.FlushBufferValSlashingInfos(ctx); err != nil {
+		k.Logger(ctx).Error("Error flushing buffer slash info in tick handler", "error", err)
+		return common.ErrSlashInfoDetails(k.Codespace()).Result()
+	}
 
 	// Flush TotalSlashedAmount
 	k.FlushTotalSlashedAmount(ctx)
 
 	// slash validator - Iterate lastTickData and reduce power of each validator along with jailing if needed
-	k.SlashAndJailTickValSlashingInfos(ctx)
+	if err := k.SlashAndJailTickValSlashingInfos(ctx); err != nil {
+		k.Logger(ctx).Error("Error slashing and jailing validator in tick handler", "error", err)
+		return common.ErrSlashInfoDetails(k.Codespace()).Result()
+	}
 
 	// -slashing.  Emit TickConfirmation Event
 	ctx.EventManager().EmitEvent(
