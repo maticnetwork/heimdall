@@ -56,8 +56,8 @@ func (sp *SlashingProcessor) RegisterTasks() {
 }
 
 // processSlashLimitEvent - processes slash limit event
-func (sp *SlashingProcessor) sendTickToHeimdall(eventBytes string, txHeight int64, txHash string) (err error) {
-	sp.Logger.Info("Recevied sendTickToHeimdall request", "eventBytes", eventBytes, "txHeight", txHeight, "txHash", txHash)
+func (sp *SlashingProcessor) sendTickToHeimdall(eventBytes string) (err error) {
+	sp.Logger.Info("Recevied sendTickToHeimdall request", "eventBytes", eventBytes)
 	var event = sdk.StringEvent{}
 	if err := json.Unmarshal([]byte(eventBytes), &event); err != nil {
 		sp.Logger.Error("Error unmarshalling event from heimdall", "error", err)
@@ -70,6 +70,8 @@ func (sp *SlashingProcessor) sendTickToHeimdall(eventBytes string, txHeight int6
 		sp.Logger.Info("Error while fetching latest slashinfo hash from HeimdallServer", "err", err)
 		return err
 	}
+
+	sp.Logger.Info("processing slash-limit event", "eventtype", event.Type)
 
 	sp.Logger.Info("✅ Creating and broadcasting Tick tx",
 		"From", hmTypes.BytesToHeimdallAddress(helper.GetAddress()),

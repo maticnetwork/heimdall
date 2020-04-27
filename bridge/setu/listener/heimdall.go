@@ -79,6 +79,19 @@ func (hl *HeimdallListener) StartPolling(ctx context.Context, pollInterval time.
 			if err != nil {
 				hl.Logger.Error("Error fetching fromBlock and toBlock...skipping events query", "error", err)
 			} else if fromBlock < toBlock {
+
+				// Querying and processing Begin events
+				for i := fromBlock; i <= toBlock; i++ {
+					events, err := helper.GetBeginBlockEvents(hl.httpClient, int64(i))
+					if err != nil {
+						hl.Logger.Error("Error fetching begin block events", "error", err)
+					}
+					for _, event := range events {
+						hl.ProcessBlockEvent(sdk.StringifyEvent(event))
+					}
+				}
+
+				// Querying and processing tx Events
 				for _, eventType := range eventTypes {
 					var query []string
 					query = append(query, eventType)
@@ -178,12 +191,28 @@ func (hl *HeimdallListener) ProcessEvent(event sdk.StringEvent, tx sdk.TxRespons
 		hl.sendTask("sendDepositRecordToMatic", eventBytes, tx.Height, tx.TxHash)
 	case checkpointTypes.EventTypeCheckpoint:
 		hl.sendTask("sendCheckpointToRootchain", eventBytes, tx.Height, tx.TxHash)
-	case slashingTypes.EventTypeSlashLimit:
-		hl.sendTask("sendTickToHeimdall", eventBytes, tx.Height, tx.TxHash)
 	case slashingTypes.EventTypeTickConfirm:
 		hl.sendTask("sendTickToRootchain", eventBytes, tx.Height, tx.TxHash)
 	default:
 		hl.Logger.Info("EventType mismatch", "eventType", event.Type)
+	}
+}
+
+// ProcessBlockEvent - process Blockevent from heimdall.
+func (hl *HeimdallListener) ProcessBlockEvent(event sdk.StringEvent) {
+	hl.Logger.Info("Process received block event from Heimdall", "eventType", event.Type)
+	eventBytes, err := json.Marshal(event)
+	if err != nil {
+		hl.Logger.Error("Error while parsing block event", "error", err, "eventType", event.Type)
+		return
+	}
+
+	switch event.Type {
+	case slashingTypes.EventTypeSlashLimit:
+		hl.sendBlockTask("sendTickToHeimdall", eventBytes)
+
+	default:
+		hl.Logger.Info("BlockEvent Type mismatch", "eventType", event.Type)
 	}
 }
 
@@ -212,5 +241,25 @@ func (hl *HeimdallListener) sendTask(taskName string, eventBytes []byte, txHeigh
 	_, err := hl.queueConnector.Server.SendTask(signature)
 	if err != nil {
 		hl.Logger.Error("Error sending task", "taskName", taskName, "error", err)
+	}
+}
+
+func (hl *HeimdallListener) sendBlockTask(taskName string, eventBytes []byte) {
+	// create machinery task
+	signature := &tasks.Signature{
+		Name: taskName,
+		Args: []tasks.Arg{
+			{
+				Type:  "string",
+				Value: string(eventBytes),
+			},
+		},
+	}
+	signature.RetryCount = 3
+	hl.Logger.Info("Sending block level task", "taskName", taskName, "currentTime", time.Now())
+	// send task
+	_, err := hl.queueConnector.Server.SendTask(signature)
+	if err != nil {
+		hl.Logger.Error("Error sending block level task", "taskName", taskName, "error", err)
 	}
 }

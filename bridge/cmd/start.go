@@ -51,7 +51,7 @@ func GetStartCmd() *cobra.Command {
 			// selected services to start
 			services := []common.Service{}
 			services = append(services,
-				listener.NewListenerService(cdc, _queueConnector),
+				listener.NewListenerService(cdc, _queueConnector, _httpClient),
 				processor.NewProcessorService(cdc, _queueConnector, _httpClient, _txBroadcaster),
 			)
 
