@@ -14,7 +14,7 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 )
 
-var logger = helper.Logger.With("module", "auth/client/cli/txn_sign")
+var logger = helper.Logger.With("module", "auth/client/cli")
 
 // GetSignCommand returns the transaction sign command.
 func GetSignCommand(codec *amino.Codec) *cobra.Command {
