@@ -82,7 +82,7 @@ func GetSpan(cdc *codec.Codec) *cobra.Command {
 
 	cmd.Flags().Uint64(FlagSpanId, 0, "--id=<span ID here>")
 	if err := cmd.MarkFlagRequired(FlagSpanId); err != nil {
-		cliLogger.Error("PostSendProposeSpanTx | MarkFlagRequired | FlagSpanId", "Error", err)
+		cliLogger.Error("GetSpan | MarkFlagRequired | FlagSpanId", "Error", err)
 	}
 
 	return cmd
