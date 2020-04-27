@@ -16,7 +16,6 @@ func BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock, k Keeper) {
 	for _, tmEvidence := range req.ByzantineValidators {
 		switch tmEvidence.Type {
 		case tmtypes.ABCIEvidenceTypeDuplicateVote:
-			fmt.Println("Entered1")
 			evidence := types.ConvertDuplicateVoteEvidence(tmEvidence)
 			k.HandleDoubleSign(ctx, evidence.(types.Equivocation))
 
@@ -25,7 +24,7 @@ func BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock, k Keeper) {
 		}
 	}
 	// TODO - slashing remove below for loop. only for testing purpose
-	for _, voteInfo := range req.LastCommitInfo.GetVotes() {
+	/* 	for _, voteInfo := range req.LastCommitInfo.GetVotes() {
 		k.HandleValidatorSignature(ctx, voteInfo.Validator.Address, voteInfo.Validator.Power, voteInfo.SignedLastBlock)
 		evidence := types.Equivocation{
 			ConsensusAddress: voteInfo.Validator.GetAddress(),
@@ -36,7 +35,7 @@ func BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock, k Keeper) {
 
 		k.Logger(ctx).Debug("Sending fake evidence", "validatorAddr", evidence.GetConsensusAddress())
 		k.HandleDoubleSign(ctx, evidence)
-	}
+	} */
 
 	// Iterate over all the validators which *should* have signed this block
 	// store whether or not they have actually signed it and slash/unbond any

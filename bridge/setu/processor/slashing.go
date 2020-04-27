@@ -40,8 +40,6 @@ func NewSlashingProcessor(stakingInfoAbi *abi.ABI) *SlashingProcessor {
 // Start starts new block subscription
 func (sp *SlashingProcessor) Start() error {
 	sp.Logger.Info("Starting")
-	// TODO - slashing. remove this. just for testing
-	// sp.sendTickToHeimdall()
 	return nil
 }
 
@@ -195,7 +193,7 @@ func (sp *SlashingProcessor) sendTickAckToHeimdall(eventName string, logBytes st
 			"logIndex", uint64(vLog.Index),
 		)
 
-		// TODO - check if i am the proposer of this ack or not.
+		// TODO - check if i am the proposer of this tick ack or not.
 
 		// create msg checkpoint ack message
 		msg := slashingTypes.NewMsgTickAck(helper.GetFromAddress(sp.cliCtx), hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()), uint64(vLog.Index))

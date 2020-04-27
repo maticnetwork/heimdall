@@ -22,6 +22,8 @@ import (
 	"github.com/maticnetwork/heimdall/staking"
 	hmModule "github.com/maticnetwork/heimdall/types/module"
 	simTypes "github.com/maticnetwork/heimdall/types/simulation"
+
+	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 )
 
 var (
@@ -64,20 +66,18 @@ func (AppModuleBasic) ValidateGenesis(bz json.RawMessage) error {
 
 // VerifyGenesis performs verification on slashing module state.
 func (AppModuleBasic) VerifyGenesis(bz map[string]json.RawMessage) error {
-	// var chainManagertData chainmanagerTypes.GenesisState
-	// errcm := chainmanagerTypes.ModuleCdc.UnmarshalJSON(bz[chainmanagerTypes.ModuleName], &chainManagertData)
-	// if errcm != nil {
-	// 	return errcm
-	// }
+	var chainManagertData chainmanagerTypes.GenesisState
+	errcm := chainmanagerTypes.ModuleCdc.UnmarshalJSON(bz[chainmanagerTypes.ModuleName], &chainManagertData)
+	if errcm != nil {
+		return errcm
+	}
 
-	// var data types.GenesisState
-	// err := types.ModuleCdc.UnmarshalJSON(bz[types.ModuleName], &data)
+	var data types.GenesisState
+	err := types.ModuleCdc.UnmarshalJSON(bz[types.ModuleName], &data)
 
-	// if err != nil {
-	// 	return err
-	// }
-	// return verifyGenesis(data, chainManagertData)
-	// TODO - slashing changes
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

@@ -553,8 +553,7 @@ func (k *Keeper) Slash(ctx sdk.Context, valSlashingInfo hmTypes.ValidatorSlashin
 	k.Logger(ctx).Debug("validator fetched", "validator", validator)
 	if !found {
 		k.Logger(ctx).Error("Unable to fetch valiator from store")
-		// TODO slashing - return proper error
-		return nil
+		return errors.New("validator not found")
 	}
 
 	// calculate power after slash

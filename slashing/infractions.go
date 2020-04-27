@@ -13,12 +13,12 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr []byte, power int
 	logger := k.Logger(ctx)
 	height := ctx.BlockHeight()
 	signerAddress := hmTypes.BytesToHeimdallAddress(addr)
-	k.Logger(ctx).Debug("Received HandleValidatorSignature reques for validator", "address", signerAddress)
+	k.Logger(ctx).Debug("Received HandleValidatorSignature request for validator", "address", signerAddress)
 
 	// fetch validator Info
 	validator, err := k.sk.GetValidatorInfo(ctx, signerAddress.Bytes())
 	if err != nil {
-		// TOOD - slashing Add proper error message
+		k.Logger(ctx).Error("validator info not found", "address", signerAddress)
 		return err
 	}
 
@@ -178,13 +178,10 @@ func (k Keeper) HandleDoubleSign(ctx sdk.Context, evidence types.Equivocation) e
 
 	// reject evidence if the double-sign is too old
 	if age > params.MaxEvidenceAge {
-		logger.Info(
-			fmt.Sprintf(
-				"ignored double sign from %s at height %d, age of %d past max age of %d",
-				signerAddress, infractionHeight, age, params.MaxEvidenceAge,
-			),
-		)
+
 		// TODO - slashing return DoubleSignTooOld error
+		k.Logger(ctx).Error("ignored double sign from %s at height %d, age of %d past max age of %d",
+			signerAddress, infractionHeight, age, params.MaxEvidenceAge)
 		return nil
 	}
 
@@ -234,7 +231,7 @@ func (k Keeper) HandleDoubleSign(ctx sdk.Context, evidence types.Equivocation) e
 	// )
 
 	slashedAmount := k.SlashInterim(ctx, val.ID, params.SlashFractionDoubleSign)
-	logger.Debug("Interim slashing success", "slashedAmount", slashedAmount)
+	logger.Debug("Interim slashing success", "totalSlashedAmount", slashedAmount)
 	// Jail the validator if not already jailed. This will begin unbonding the
 	// validator if not already unbonding (tombstoned).
 	// TODO - slashing
