@@ -81,7 +81,9 @@ func GetSpan(cdc *codec.Codec) *cobra.Command {
 	}
 
 	cmd.Flags().Uint64(FlagSpanId, 0, "--id=<span ID here>")
-	cmd.MarkFlagRequired(FlagSpanId)
+	if err := cmd.MarkFlagRequired(FlagSpanId); err != nil {
+		cliLogger.Error("PostSendProposeSpanTx | MarkFlagRequired | FlagSpanId", "Error", err)
+	}
 
 	return cmd
 }
@@ -139,7 +141,10 @@ $ %s query bor params
 			}
 
 			var params types.Params
-			json.Unmarshal(bz, &params)
+			err = json.Unmarshal(bz, &params)
+			if err != nil {
+				return err
+			}
 			return cliCtx.PrintOutput(params)
 		},
 	}

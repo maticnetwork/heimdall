@@ -16,7 +16,9 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 		hmTypes.SortSpanByID(data.Spans)
 		// add new span
 		for _, span := range data.Spans {
-			keeper.AddNewRawSpan(ctx, *span)
+			if err := keeper.AddNewRawSpan(ctx, *span); err != nil {
+				keeper.Logger(ctx).Error("Error AddNewRawSpan", "error", err)
+			}
 		}
 
 		// update last span
