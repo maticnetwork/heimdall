@@ -24,6 +24,7 @@ const (
 	SlashFractionDoubleSign = "slash_fraction_double_sign"
 	SlashFractionDowntime   = "slash_fraction_downtime"
 	SlashFractionLimit      = "slash_fraction_limit"
+	JailFractionLimit       = "jail_fraction_limit"
 	MaxEvidenceAge          = "max_evidence_age"
 )
 
@@ -54,6 +55,11 @@ func GenSlashFractionDowntime(r *rand.Rand) sdk.Dec {
 
 // GenSlashFractionLimit randomized SlashFractionLimit
 func GenSlashFractionLimit(r *rand.Rand) sdk.Dec {
+	return sdk.NewDec(1).Quo(sdk.NewDec(int64(r.Intn(200) + 1)))
+}
+
+// GenJailFractionLimit randomized JailFractionLimit
+func GenJailFractionLimit(r *rand.Rand) sdk.Dec {
 	return sdk.NewDec(1).Quo(sdk.NewDec(int64(r.Intn(200) + 1)))
 }
 
@@ -100,6 +106,12 @@ func RandomizedGenState(simState *module.SimulationState) {
 		func(r *rand.Rand) { slashFractionLimit = GenSlashFractionLimit(r) },
 	)
 
+	var jailFractionLimit sdk.Dec
+	simState.AppParams.GetOrGenerate(
+		simState.Cdc, JailFractionLimit, &jailFractionLimit, simState.Rand,
+		func(r *rand.Rand) { jailFractionLimit = GenJailFractionLimit(r) },
+	)
+
 	var maxEvidenceAge time.Duration
 	simState.AppParams.GetOrGenerate(
 		simState.Cdc, MaxEvidenceAge, &maxEvidenceAge, simState.Rand,
@@ -108,7 +120,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 
 	params := types.NewParams(
 		signedBlocksWindow, minSignedPerWindow, downtimeJailDuration,
-		slashFractionDoubleSign, slashFractionDowntime, slashFractionLimit, maxEvidenceAge,
+		slashFractionDoubleSign, slashFractionDowntime, slashFractionLimit, jailFractionLimit, maxEvidenceAge,
 	)
 
 	slashingGenesis := types.NewGenesisState(params, nil, nil)

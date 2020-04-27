@@ -80,6 +80,8 @@ func (hl *HeimdallListener) StartPolling(ctx context.Context, pollInterval time.
 				hl.Logger.Error("Error fetching fromBlock and toBlock...skipping events query", "error", err)
 			} else if fromBlock < toBlock {
 
+				hl.Logger.Info("Fetching new events between", "fromBlock", fromBlock, "toBlock", toBlock)
+
 				// Querying and processing Begin events
 				for i := fromBlock; i <= toBlock; i++ {
 					events, err := helper.GetBeginBlockEvents(hl.httpClient, int64(i))
@@ -111,7 +113,7 @@ func (hl *HeimdallListener) StartPolling(ctx context.Context, pollInterval time.
 						for _, tx := range searchResult.Txs {
 							for _, log := range tx.Logs {
 								event := helper.FilterEvents(log.Events, func(et sdk.StringEvent) bool {
-									return et.Type == checkpointTypes.EventTypeCheckpoint || et.Type == clerkTypes.EventTypeRecord || et.Type == slashingTypes.EventTypeTickConfirm || et.Type == slashingTypes.EventTypeSlashLimit
+									return et.Type == checkpointTypes.EventTypeCheckpoint || et.Type == clerkTypes.EventTypeRecord || et.Type == slashingTypes.EventTypeTickConfirm
 								})
 								if event != nil {
 									hl.ProcessEvent(*event, tx)
