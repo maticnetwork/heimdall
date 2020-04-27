@@ -138,29 +138,25 @@ func (am AppModule) ExportGenesis(ctx sdk.Context) json.RawMessage {
 }
 
 // BeginBlock returns the begin blocker for the auth module.
-// Side channel module's begin block will save all current validators to process side-txs after 2 blocks
+// Side channel module's begin block will save all current validators to process side-txs in begin side-block
 func (am AppModule) BeginBlock(ctx sdk.Context, req abci.RequestBeginBlock) {
-	height := ctx.BlockHeader().Height
-	if height > 2 {
+	if len(req.LastCommitInfo.Votes) > 0 {
+		height := ctx.BlockHeader().Height
 		validators := make([]abci.Validator, len(req.LastCommitInfo.Votes))
 		for i, v := range req.LastCommitInfo.Votes {
 			validators[i] = v.Validator
 		}
 
 		// set validators for height
-		am.keeper.SetValidators(ctx, req.Header.Height, validators)
+		am.keeper.SetValidators(ctx, height, validators)
 	}
 }
 
 // EndBlock returns the end blocker for the auth module. It returns no validator updates.
-// Side channel module's end block will remove all validators for `height-2` block
+// Side channel module's end block will remove all validators for `height` block
 func (am AppModule) EndBlock(ctx sdk.Context, req abci.RequestEndBlock) []abci.ValidatorUpdate {
 	height := ctx.BlockHeader().Height
-	if height > 2 {
-		// remove validators for older height
-		am.keeper.RemoveValidators(ctx, height-2)
-	}
-
+	am.keeper.RemoveValidators(ctx, height)
 	return []abci.ValidatorUpdate{}
 }
 

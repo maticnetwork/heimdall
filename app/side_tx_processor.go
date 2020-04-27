@@ -50,7 +50,8 @@ func (app *HeimdallApp) BeginSideBlocker(ctx sdk.Context, req abci.RequestBeginS
 	logger.Debug("[sidechannel] Processing side block", "height", height, "targetHeight", targetHeight)
 
 	// get all validators
-	validators := app.SidechannelKeeper.GetValidators(ctx, targetHeight)
+	// begin-block stores validators and end-block removes validators for each height - check sidechannel module.go
+	validators := app.SidechannelKeeper.GetValidators(ctx, height)
 	if len(validators) == 0 {
 		return
 	}
