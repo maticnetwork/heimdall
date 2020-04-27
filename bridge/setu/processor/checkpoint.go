@@ -18,6 +18,7 @@ import (
 
 	// "github.com/maticnetwork/heimdall/bridge/setu/queue"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
+	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/helper"
@@ -40,6 +41,12 @@ type CheckpointProcessor struct {
 // Result represents single req result
 type Result struct {
 	Result uint64 `json:"result"`
+}
+
+// CheckpointContext represents checkpoint context
+type CheckpointContext struct {
+	ChainmanagerParams *chainmanagerTypes.Params
+	CheckpointParams   *checkpointTypes.Params
 }
 
 // NewCheckpointProcessor - add rootchain abi to checkpoint processor
@@ -76,7 +83,7 @@ func (cp *CheckpointProcessor) startPollingForNoAck(ctx context.Context, interva
 	for {
 		select {
 		case <-ticker.C:
-			go cp.HandleCheckpointNoAck()
+			go cp.handleCheckpointNoAck()
 		case <-ctx.Done():
 			cp.Logger.Info("No-ack Polling stopped")
 			ticker.Stop()
@@ -104,7 +111,13 @@ func (cp *CheckpointProcessor) sendCheckpointToHeimdall(headerBlockStr string) (
 	}
 
 	if isProposer {
-		expectedCheckpointState, err := cp.nextExpectedCheckpoint(header.Number.Uint64())
+		// fetch checkpoint context
+		checkpointContext, err := cp.getCheckpointContext()
+		if err != nil {
+			return err
+		}
+
+		expectedCheckpointState, err := cp.nextExpectedCheckpoint(checkpointContext, header.Number.Uint64())
 		if err != nil {
 			cp.Logger.Error("Error while calculate next expected checkpoint", "error", err)
 			return err
@@ -113,7 +126,7 @@ func (cp *CheckpointProcessor) sendCheckpointToHeimdall(headerBlockStr string) (
 		end := expectedCheckpointState.newEnd
 		// TODO - add a check to see if this checkpoint has to be proposed or not.
 		// Fetch latest checkpoint from buffer. if expectedCheckpointState.newStart == start, don't send checkpoint
-		if err := cp.createAndSendCheckpointToHeimdall(start, end); err != nil {
+		if err := cp.createAndSendCheckpointToHeimdall(checkpointContext, start, end); err != nil {
 			cp.Logger.Error("Error sending checkpoint to heimdall", "error", err)
 			return err
 		}
@@ -130,7 +143,7 @@ func (cp *CheckpointProcessor) sendCheckpointToHeimdall(headerBlockStr string) (
 // 2. check if this checkpoint has to be submitted to rootchain
 // 3. if so, create and broadcast checkpoint transaction to rootchain
 func (cp *CheckpointProcessor) sendCheckpointToRootchain(eventBytes string, txHeight int64, txHash string) error {
-	cp.Logger.Info("Recevied sendCheckpointToRootchain request", "eventBytes", eventBytes, "txHeight", txHeight, "txHash", txHash)
+	cp.Logger.Info("Received sendCheckpointToRootchain request", "eventBytes", eventBytes, "txHeight", txHeight, "txHash", txHash)
 	var event = sdk.StringEvent{}
 	if err := json.Unmarshal([]byte(eventBytes), &event); err != nil {
 		cp.Logger.Error("Error unmarshalling event from heimdall", "error", err)
@@ -161,7 +174,12 @@ func (cp *CheckpointProcessor) sendCheckpointToRootchain(eventBytes string, txHe
 		}
 	}
 
-	shouldSend, err := cp.shouldSendCheckpoint(startBlock, endBlock)
+	checkpointContext, err := cp.getCheckpointContext()
+	if err != nil {
+		return err
+	}
+
+	shouldSend, err := cp.shouldSendCheckpoint(checkpointContext, startBlock, endBlock)
 	if err != nil {
 		return err
 	}
@@ -172,7 +190,7 @@ func (cp *CheckpointProcessor) sendCheckpointToRootchain(eventBytes string, txHe
 			cp.Logger.Error("Error decoding txHash while sending checkpoint to rootchain", "txHash", txHash, "error", err)
 			return err
 		}
-		if err := cp.createAndSendCheckpointToRootchain(startBlock, endBlock, txHeight, txHash); err != nil {
+		if err := cp.createAndSendCheckpointToRootchain(checkpointContext, startBlock, endBlock, txHeight, txHash); err != nil {
 			cp.Logger.Error("Error sending checkpoint to rootchain", "error", err)
 			return err
 		}
@@ -224,18 +242,24 @@ func (cp *CheckpointProcessor) sendCheckpointAckToHeimdall(eventName string, che
 	return nil
 }
 
-// HandleCheckpointNoAck - Checkpoint No-Ack handler
+// handleCheckpointNoAck - Checkpoint No-Ack handler
 // 1. Fetch latest checkpoint time from rootchain
 // 2. check if elapsed time is more than NoAck Wait time.
 // 3. Send NoAck to heimdall if required.
-func (cp *CheckpointProcessor) HandleCheckpointNoAck() {
-	lastCreatedAt, err := cp.getLatestCheckpointTime()
+func (cp *CheckpointProcessor) handleCheckpointNoAck() {
+	// fetch fresh checkpoint context
+	checkpointContext, err := cp.getCheckpointContext()
+	if err != nil {
+		return
+	}
+
+	lastCreatedAt, err := cp.getLatestCheckpointTime(checkpointContext)
 	if err != nil {
 		cp.Logger.Error("Error fetching latest checkpoint time from rootchain", "error", err)
 		return
 	}
 
-	isNoAckRequired, count := cp.checkIfNoAckIsRequired(lastCreatedAt)
+	isNoAckRequired, count := cp.checkIfNoAckIsRequired(checkpointContext, lastCreatedAt)
 
 	var isProposer bool
 	if isProposer, err = util.IsInProposerList(cp.cliCtx, count); err != nil {
@@ -254,10 +278,11 @@ func (cp *CheckpointProcessor) HandleCheckpointNoAck() {
 }
 
 // nextExpectedCheckpoint - fetched contract checkpoint state and returns the next probable checkpoint that needs to be sent
-func (cp *CheckpointProcessor) nextExpectedCheckpoint(latestChildBlock uint64) (*ContractCheckpoint, error) {
-	configParams, _ := util.GetConfigManagerParams(cp.cliCtx)
+func (cp *CheckpointProcessor) nextExpectedCheckpoint(checkpointContext *CheckpointContext, latestChildBlock uint64) (*ContractCheckpoint, error) {
+	chainmanagerParams := checkpointContext.ChainmanagerParams
+	checkpointParams := checkpointContext.CheckpointParams
 
-	rootChainInstance, err := cp.contractConnector.GetRootChainInstance(configParams.ChainParams.RootChainAddress.EthAddress())
+	rootChainInstance, err := cp.contractConnector.GetRootChainInstance(chainmanagerParams.ChainParams.RootChainAddress.EthAddress())
 	if err != nil {
 		return nil, err
 	}
@@ -268,6 +293,7 @@ func (cp *CheckpointProcessor) nextExpectedCheckpoint(latestChildBlock uint64) (
 		cp.Logger.Error("Error while fetching current header block number from rootchain", "error", err)
 		return nil, err
 	}
+
 	// current header block
 	currentHeaderBlockNumber := big.NewInt(0).SetUint64(_currentHeaderBlock)
 
@@ -292,13 +318,13 @@ func (cp *CheckpointProcessor) nextExpectedCheckpoint(latestChildBlock uint64) (
 	diff := latestChildBlock - start + 1
 	// process if diff > 0 (positive)
 	if diff > 0 {
-		expectedDiff := diff - diff%helper.GetConfig().AvgCheckpointLength
+		expectedDiff := diff - diff%checkpointParams.AvgCheckpointLength
 		if expectedDiff > 0 {
 			expectedDiff = expectedDiff - 1
 		}
 		// cap with max checkpoint length
-		if expectedDiff > helper.GetConfig().MaxCheckpointLength-1 {
-			expectedDiff = helper.GetConfig().MaxCheckpointLength - 1
+		if expectedDiff > checkpointParams.MaxCheckpointLength-1 {
+			expectedDiff = checkpointParams.MaxCheckpointLength - 1
 		}
 		// get end result
 		end = expectedDiff + start
@@ -310,11 +336,11 @@ func (cp *CheckpointProcessor) nextExpectedCheckpoint(latestChildBlock uint64) (
 	}
 
 	// Handle when block producers go down
-	if end == 0 || end == start || (0 < diff && diff < helper.GetConfig().AvgCheckpointLength) {
+	if end == 0 || end == start || (0 < diff && diff < checkpointParams.AvgCheckpointLength) {
 		cp.Logger.Debug("Fetching last header block to calculate time")
 
 		currentTime := time.Now().UTC().Unix()
-		defaultForcePushInterval := helper.GetConfig().MaxCheckpointLength * 2 // in seconds (1024 * 2 seconds)
+		defaultForcePushInterval := checkpointParams.MaxCheckpointLength * 2 // in seconds (1024 * 2 seconds)
 		if currentTime-int64(lastCheckpointTime) > int64(defaultForcePushInterval) {
 			end = latestChildBlock
 			cp.Logger.Info("Force push checkpoint",
@@ -338,7 +364,7 @@ func (cp *CheckpointProcessor) nextExpectedCheckpoint(latestChildBlock uint64) (
 }
 
 // sendCheckpointToHeimdall - creates checkpoint msg and broadcasts to heimdall
-func (cp *CheckpointProcessor) createAndSendCheckpointToHeimdall(start uint64, end uint64) error {
+func (cp *CheckpointProcessor) createAndSendCheckpointToHeimdall(checkpointContext *CheckpointContext, start uint64, end uint64) error {
 	cp.Logger.Debug("Initiating checkpoint to Heimdall", "start", start, "end", end)
 
 	if end == 0 || start >= end {
@@ -346,8 +372,11 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToHeimdall(start uint64, e
 		return nil
 	}
 
+	// get checkpoint params
+	checkpointParams := checkpointContext.CheckpointParams
+
 	// Get root hash
-	root, err := checkpointTypes.GetHeaders(start, end)
+	root, err := checkpointTypes.GetHeaders(start, end, checkpointParams.MaxCheckpointLength)
 	if err != nil {
 		return err
 	}
@@ -386,7 +415,7 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToHeimdall(start uint64, e
 
 // createAndSendCheckpointToRootchain prepares the data required for rootchain checkpoint submission
 // and sends a transaction to rootchain
-func (cp *CheckpointProcessor) createAndSendCheckpointToRootchain(start uint64, end uint64, height int64, txHash []byte) error {
+func (cp *CheckpointProcessor) createAndSendCheckpointToRootchain(checkpointContext *CheckpointContext, start uint64, end uint64, height int64, txHash []byte) error {
 	cp.Logger.Info("Preparing checkpoint to be pushed on chain", "height", height, "txHash", hmTypes.BytesToHeimdallHash(txHash), "start", start, "end", end)
 	// proof
 	tx, err := helper.QueryTxWithProof(cp.cliCtx, txHash)
@@ -402,18 +431,21 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToRootchain(start uint64, 
 		return err
 	}
 
-	shouldSend, err := cp.shouldSendCheckpoint(start, end)
+	shouldSend, err := cp.shouldSendCheckpoint(checkpointContext, start, end)
 	if err != nil {
 		return err
 	}
 
 	if shouldSend {
-		configParams, _ := util.GetConfigManagerParams(cp.cliCtx)
-		rootChainAddress := configParams.ChainParams.RootChainAddress.EthAddress()
+		// chain manager params
+		chainParams := checkpointContext.ChainmanagerParams.ChainParams
+		// root chain address
+		rootChainAddress := chainParams.RootChainAddress.EthAddress()
 		// root chain instance
 		rootChainInstance, err := cp.contractConnector.GetRootChainInstance(rootChainAddress)
 		if err != nil {
-			panic(err)
+			cp.Logger.Info("Error while creating rootchain instance", "error", err)
+			return err
 		}
 
 		if err := cp.contractConnector.SendCheckpoint(helper.GetVoteBytes(votes, chainID), sigs, tx.Tx[authTypes.PulpHashLength:], rootChainAddress, rootChainInstance); err != nil {
@@ -442,9 +474,11 @@ func (cp *CheckpointProcessor) fetchDividendAccountRoot() (accountroothash hmTyp
 }
 
 // fetchLatestCheckpointTime - get latest checkpoint time from rootchain
-func (cp *CheckpointProcessor) getLatestCheckpointTime() (int64, error) {
-	configParams, _ := util.GetConfigManagerParams(cp.cliCtx)
-	rootChainInstance, err := cp.contractConnector.GetRootChainInstance(configParams.ChainParams.RootChainAddress.EthAddress())
+func (cp *CheckpointProcessor) getLatestCheckpointTime(checkpointContext *CheckpointContext) (int64, error) {
+	// get chain params
+	chainParams := checkpointContext.ChainmanagerParams.ChainParams
+
+	rootChainInstance, err := cp.contractConnector.GetRootChainInstance(chainParams.RootChainAddress.EthAddress())
 	if err != nil {
 		return 0, err
 	}
@@ -458,7 +492,6 @@ func (cp *CheckpointProcessor) getLatestCheckpointTime() (int64, error) {
 
 	// header block
 	_, _, _, createdAt, _, err := cp.contractConnector.GetHeaderInfo(lastHeaderNumber, rootChainInstance)
-
 	if err != nil {
 		cp.Logger.Error("Error while fetching header block object", "error", err)
 		return 0, err
@@ -483,7 +516,7 @@ func (cp *CheckpointProcessor) getLastNoAckTime() uint64 {
 }
 
 // checkIfNoAckIsRequired - check if NoAck has to be sent or not
-func (cp *CheckpointProcessor) checkIfNoAckIsRequired(lastCreatedAt int64) (bool, uint64) {
+func (cp *CheckpointProcessor) checkIfNoAckIsRequired(checkpointContext *CheckpointContext, lastCreatedAt int64) (bool, uint64) {
 	var index float64
 	// if last created at ==0 , no checkpoint yet
 	if lastCreatedAt == 0 {
@@ -502,18 +535,16 @@ func (cp *CheckpointProcessor) checkIfNoAckIsRequired(lastCreatedAt int64) (bool
 		return false, uint64(index)
 	}
 
-	params, err := cp.getCheckpointParams()
-	if err != nil {
-		return false, uint64(index)
-	}
+	// checkpoint params
+	checkpointParams := checkpointContext.CheckpointParams
 
 	// check if difference between no-ack time and current time
 	lastNoAck := cp.getLastNoAckTime()
 
 	lastNoAckTime := time.Unix(int64(lastNoAck), 0)
 	// if last no ack == 0 , first no-ack to be sent
-	if currentTime.Sub(lastNoAckTime).Seconds() < params.CheckpointBufferTime.Seconds() && lastNoAck != 0 {
-		cp.Logger.Debug("Cannot send multiple no-ack in short time", "timeDiff", currentTime.Sub(lastNoAckTime).Seconds(), "ExpectedDiff", params.CheckpointBufferTime.Seconds())
+	if currentTime.Sub(lastNoAckTime).Seconds() < checkpointParams.CheckpointBufferTime.Seconds() && lastNoAck != 0 {
+		cp.Logger.Debug("Cannot send multiple no-ack in short time", "timeDiff", currentTime.Sub(lastNoAckTime).Seconds(), "ExpectedDiff", checkpointParams.CheckpointBufferTime.Seconds())
 		return false, uint64(index)
 	}
 	return true, uint64(index)
@@ -536,44 +567,26 @@ func (cp *CheckpointProcessor) proposeCheckpointNoAck() (err error) {
 	return nil
 }
 
-func (cp *CheckpointProcessor) getCheckpointParams() (*checkpointTypes.Params, error) {
-	response, err := helper.FetchFromAPI(
-		cp.cliCtx,
-		helper.GetHeimdallServerEndpoint(util.CheckpointParamsURL),
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	var params checkpointTypes.Params
-	if err := json.Unmarshal(response.Result, &params); err != nil {
-		cp.Logger.Error("Error unmarshalling checkpoint params", "error", err)
-		return nil, err
-	}
-
-	return &params, nil
-}
-
 // shouldSendCheckpoint checks if checkpoint with given start,end should be sent to rootchain or not.
-func (cp *CheckpointProcessor) shouldSendCheckpoint(start uint64, end uint64) (shouldSend bool, err error) {
-	configParams, _ := util.GetConfigManagerParams(cp.cliCtx)
+func (cp *CheckpointProcessor) shouldSendCheckpoint(checkpointContext *CheckpointContext, start uint64, end uint64) (bool, error) {
+	chainmanagerParams := checkpointContext.ChainmanagerParams
 
-	rootChainInstance, err := cp.contractConnector.GetRootChainInstance(configParams.ChainParams.RootChainAddress.EthAddress())
+	rootChainInstance, err := cp.contractConnector.GetRootChainInstance(chainmanagerParams.ChainParams.RootChainAddress.EthAddress())
 	if err != nil {
-		cp.Logger.Info("Error while creating rootchain instance", err)
-
-		return
+		cp.Logger.Error("Error while creating rootchain instance", "error", err)
+		return false, err
 	}
 
 	// current child block from contract
 	currentChildBlock, err := cp.contractConnector.GetLastChildBlock(rootChainInstance)
 	if err != nil {
-		cp.Logger.Info("Error fetching current child block", "currentChildBlock", currentChildBlock)
-		return
+		cp.Logger.Error("Error fetching current child block", "currentChildBlock", currentChildBlock, "error", err)
+		return false, err
 	}
-	cp.Logger.Info("Fetched current child block", "currentChildBlock", currentChildBlock)
 
+	cp.Logger.Debug("Fetched current child block", "currentChildBlock", currentChildBlock)
+
+	shouldSend := false
 	// validate if checkpoint needs to be pushed to rootchain and submit
 	cp.Logger.Info("Validating if checkpoint needs to be pushed", "commitedLastBlock", currentChildBlock, "startBlock", start)
 	// check if we need to send checkpoint or not
@@ -587,11 +600,35 @@ func (cp *CheckpointProcessor) shouldSendCheckpoint(start uint64, end uint64) (s
 	} else {
 		cp.Logger.Info("No need to send checkpoint")
 	}
-	return
+
+	return shouldSend, nil
 }
 
 // Stop stops all necessary go routines
 func (cp *CheckpointProcessor) Stop() {
 	// cancel No-Ack polling
 	cp.cancelNoACKPolling()
+}
+
+//
+// utils
+//
+
+func (cp *CheckpointProcessor) getCheckpointContext() (*CheckpointContext, error) {
+	chainmanagerParams, err := util.GetChainmanagerParams(cp.cliCtx)
+	if err != nil {
+		cp.Logger.Error("Error while fetching chain manager params", "error", err)
+		return nil, err
+	}
+
+	checkpointParams, err := util.GetCheckpointParams(cp.cliCtx)
+	if err != nil {
+		cp.Logger.Error("Error while fetching checkpoint params", "error", err)
+		return nil, err
+	}
+
+	return &CheckpointContext{
+		ChainmanagerParams: chainmanagerParams,
+		CheckpointParams:   checkpointParams,
+	}, nil
 }

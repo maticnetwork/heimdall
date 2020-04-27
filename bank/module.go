@@ -15,14 +15,14 @@ import (
 	bankRest "github.com/maticnetwork/heimdall/bank/client/rest"
 	"github.com/maticnetwork/heimdall/bank/types"
 	"github.com/maticnetwork/heimdall/helper"
-	hmTypes "github.com/maticnetwork/heimdall/types"
+	hmModule "github.com/maticnetwork/heimdall/types/module"
 )
 
 var (
-	_ module.AppModule            = AppModule{}
-	_ module.AppModuleBasic       = AppModuleBasic{}
-	_ hmTypes.HeimdallModuleBasic = AppModule{}
-	// _ module.AppModuleSimulation = AppModule{}
+	_ module.AppModule             = AppModule{}
+	_ module.AppModuleBasic        = AppModuleBasic{}
+	_ hmModule.HeimdallModuleBasic = AppModule{}
+	// _ hmModule.AppModuleSimulation = AppModule{}
 )
 
 // AppModuleBasic defines the basic application module used by the auth module.

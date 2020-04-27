@@ -60,8 +60,6 @@ const (
 	DefaultClerkPollingInterval     = 10 * time.Second
 	DefaultSpanPollingInterval      = 1 * time.Minute
 
-	DefaultCheckpointLength   = 256   // checkpoint number 	 with 0, so length = defaultCheckpointLength -1
-	MaxCheckpointLength       = 1024  // max blocks in one checkpoint
 	DefaultChildBlockInterval = 10000 // difference between 2 indexes of header blocks
 	DefaultTxConfirmationTime = 6 * 14 * time.Second
 	DefaultMainchainGasLimit  = uint64(5000000)
@@ -101,10 +99,6 @@ type Configuration struct {
 	NoACKPollInterval        time.Duration `mapstructure:"noack_poll_interval"`      // Poll interval for ack service to send no-ack in case of no checkpoints
 	ClerkPollingInterval     time.Duration `mapstructure:"clerk_polling_interval"`
 	SpanPollingInterval      time.Duration `mapstructure:"span_polling_interval"`
-
-	// checkpoint length related options
-	AvgCheckpointLength uint64 `mapstructure:"avg_checkpoint_length"` // Average number of blocks checkpoint would contain
-	MaxCheckpointLength uint64 `mapstructure:"max_checkpoint_length"` // Maximium number of blocks checkpoint would contain
 
 	// wait time related options
 	NoACKWaitTime time.Duration `mapstructure:"no_ack_wait_time"` // Time ack service waits to clear buffer and elect new proposer
@@ -219,9 +213,6 @@ func GetDefaultHeimdallConfig() Configuration {
 		NoACKPollInterval:        DefaultNoACKPollInterval,
 		ClerkPollingInterval:     DefaultClerkPollingInterval,
 		SpanPollingInterval:      DefaultSpanPollingInterval,
-
-		AvgCheckpointLength: DefaultCheckpointLength,
-		MaxCheckpointLength: MaxCheckpointLength,
 
 		NoACKWaitTime: NoACKWaitTime,
 	}

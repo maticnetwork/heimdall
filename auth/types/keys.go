@@ -8,13 +8,13 @@ const (
 	// ModuleName is the name of the module
 	ModuleName = "auth"
 
-	// StoreKey is the store key string for bor
+	// StoreKey is the store key string for auth
 	StoreKey = ModuleName
 
-	// RouterKey is the message route for bor
+	// RouterKey is the message route for auth
 	RouterKey = ModuleName
 
-	// QuerierRoute is the querier route for bor
+	// QuerierRoute is the querier route for auth
 	QuerierRoute = ModuleName
 
 	// DefaultParamspace default name for parameter store
