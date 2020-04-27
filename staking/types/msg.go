@@ -67,7 +67,7 @@ func (msg MsgValidatorJoin) GetSignBytes() []byte {
 }
 
 func (msg MsgValidatorJoin) ValidateBasic() sdk.Error {
-	if msg.ID <= 0 {
+	if msg.ID == 0 {
 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator ID %v", msg.ID)
 	}
 
@@ -141,7 +141,7 @@ func (msg MsgStakeUpdate) GetSignBytes() []byte {
 }
 
 func (msg MsgStakeUpdate) ValidateBasic() sdk.Error {
-	if msg.ID <= 0 {
+	if msg.ID == 0 {
 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator ID %v", msg.ID)
 	}
 
@@ -214,7 +214,7 @@ func (msg MsgSignerUpdate) GetSignBytes() []byte {
 }
 
 func (msg MsgSignerUpdate) ValidateBasic() sdk.Error {
-	if msg.ID <= 0 {
+	if msg.ID == 0 {
 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator ID %v", msg.ID)
 	}
 
@@ -282,7 +282,7 @@ func (msg MsgValidatorExit) GetSignBytes() []byte {
 }
 
 func (msg MsgValidatorExit) ValidateBasic() sdk.Error {
-	if msg.ID <= 0 {
+	if msg.ID == 0 {
 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator ID %v", msg.ID)
 	}
 

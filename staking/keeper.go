@@ -254,7 +254,9 @@ func (k *Keeper) UpdateSigner(ctx sdk.Context, newSigner hmTypes.HeimdallAddress
 	validator.VotingPower = 0
 
 	// update validator
-	k.AddValidator(ctx, validator)
+	if err := k.AddValidator(ctx, validator); err != nil {
+		k.Logger(ctx).Error("UpdateSigner | AddValidator", "error", err)
+	}
 
 	//update signer in prev Validator
 	validator.Signer = newSigner
@@ -262,7 +264,9 @@ func (k *Keeper) UpdateSigner(ctx sdk.Context, newSigner hmTypes.HeimdallAddress
 	validator.VotingPower = validatorPower
 
 	// add updated validator to store with new key
-	k.AddValidator(ctx, validator)
+	if err := k.AddValidator(ctx, validator); err != nil {
+		k.Logger(ctx).Error("UpdateSigner | AddValidator", "error", err)
+	}
 	return nil
 }
 
@@ -288,7 +292,10 @@ func (k *Keeper) GetValidatorSet(ctx sdk.Context) (validatorSet hmTypes.Validato
 	// get current validator set from store
 	bz := store.Get(CurrentValidatorSetKey)
 	// unmarhsall
-	k.cdc.UnmarshalBinaryBare(bz, &validatorSet)
+
+	if err := k.cdc.UnmarshalBinaryBare(bz, &validatorSet); err != nil {
+		k.Logger(ctx).Error("GetValidatorSet | UnmarshalBinaryBare", "error", err)
+	}
 
 	// return validator set
 	return validatorSet
@@ -303,7 +310,10 @@ func (k *Keeper) IncrementAccum(ctx sdk.Context, times int) {
 	validatorSet.IncrementProposerPriority(times)
 
 	// replace
-	k.UpdateValidatorSetInStore(ctx, validatorSet)
+
+	if err := k.UpdateValidatorSetInStore(ctx, validatorSet); err != nil {
+		k.Logger(ctx).Error("IncrementAccum | IncrementAccum", "error", err)
+	}
 }
 
 // GetNextProposer returns next proposer
@@ -418,10 +428,7 @@ func (k *Keeper) GetDividendAccountByID(ctx sdk.Context, dividendID hmTypes.Divi
 func (k *Keeper) CheckIfDividendAccountExists(ctx sdk.Context, dividendID hmTypes.DividendAccountID) (ok bool) {
 	store := ctx.KVStore(k.storeKey)
 	key := GetDividendAccountMapKey(dividendID.Bytes())
-	if !store.Has(key) {
-		return false
-	}
-	return true
+	return store.Has(key)
 }
 
 // GetAllDividendAccounts returns all DividendAccountss
@@ -457,7 +464,9 @@ func (k *Keeper) AddFeeToDividendAccount(ctx sdk.Context, valID hmTypes.Validato
 	dividendAccount.FeeAmount = totalFee
 
 	k.Logger(ctx).Info("Dividend Account fee of validator ", "ID", dividendAccount.ID, "Fee", dividendAccount.FeeAmount)
-	k.AddDividendAccount(ctx, dividendAccount)
+	if err := k.AddDividendAccount(ctx, dividendAccount); err != nil {
+		k.Logger(ctx).Error("AddFeeToDividendAccount | AddDividendAccount", "error", err)
+	}
 	return nil
 }
 
@@ -533,5 +542,4 @@ func (k *Keeper) IterateStakingSequencesAndApplyFn(ctx sdk.Context, f func(seque
 			return
 		}
 	}
-	return
 }

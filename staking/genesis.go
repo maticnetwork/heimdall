@@ -22,7 +22,9 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 	// add validators in store
 	for _, validator := range resultValSet.Validators {
 		// Add individual validator to state
-		keeper.AddValidator(ctx, *validator)
+		if err := keeper.AddValidator(ctx, *validator); err != nil {
+			keeper.Logger(ctx).Error("Error InitGenesis", "error", err)
+		}
 
 	}
 
