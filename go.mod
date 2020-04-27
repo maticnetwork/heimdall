@@ -7,6 +7,7 @@ require (
 	github.com/allegro/bigcache v1.2.1 // indirect
 	github.com/apilayer/freegeoip v3.5.0+incompatible // indirect
 	github.com/aristanetworks/goarista v0.0.0-20191206003309-5d8d36c240c9 // indirect
+	github.com/attic-labs/testify v1.1.3
 	github.com/btcsuite/btcd v0.0.0-20190629003639-c26ffa870fd8 // indirect
 	github.com/cbergoon/merkletree v0.2.0
 	github.com/cespare/cp v1.1.1 // indirect
@@ -62,7 +63,6 @@ require (
 	gopkg.in/sourcemap.v1 v1.0.5 // indirect
 	gopkg.in/urfave/cli.v1 v1.20.0 // indirect
 	gopkg.in/yaml.v2 v2.2.8
-	gotest.tools v2.2.0+incompatible
 )
 
 replace github.com/tendermint/tendermint => github.com/maticnetwork/tendermint v0.26.0-dev0.0.20200105181728-9b2d312d5d14
