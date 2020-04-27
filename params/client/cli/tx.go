@@ -19,6 +19,8 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
+var logger = helper.Logger.With("module", "params/client/cli")
+
 // GetCmdSubmitProposal implements a command handler for submitting a parameter
 // change proposal transaction.
 func GetCmdSubmitProposal(cdc *codec.Codec) *cobra.Command {
@@ -92,7 +94,9 @@ Where proposal.json contains:
 	}
 
 	cmd.Flags().Int(FlagValidatorID, 0, "--validator-id=<validator ID here>")
-	cmd.MarkFlagRequired(FlagValidatorID)
+	if err := cmd.MarkFlagRequired(FlagValidatorID); err != nil {
+		logger.Error("GetCmdSubmitProposal | MarkFlagRequired | FlagValidatorID", "Error", err)
+	}
 
 	return cmd
 }
