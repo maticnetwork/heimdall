@@ -182,7 +182,9 @@ func (k *Keeper) IterateRecordsAndApplyFn(ctx sdk.Context, f func(record types.E
 	for ; iterator.Valid(); iterator.Next() {
 		// unmarshall span
 		var result types.EventRecord
-		k.cdc.UnmarshalBinaryBare(iterator.Value(), &result)
+		if err := k.cdc.UnmarshalBinaryBare(iterator.Value(), &result); err != nil {
+			k.Logger(ctx).Error("IterateRecordsAndApplyFn | UnmarshalBinaryBare", "error", err)
+		}
 		// call function and return if required
 		if err := f(result); err != nil {
 			return
@@ -222,7 +224,6 @@ func (keeper Keeper) IterateRecordSequencesAndApplyFn(ctx sdk.Context, f func(se
 			return
 		}
 	}
-	return
 }
 
 // SetRecordSequence sets mapping for sequence id to bool
