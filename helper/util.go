@@ -192,23 +192,12 @@ func GetSideTxSigs(txHash []byte, sideTxData []byte, unFilteredVotes []*tmTypes.
 
 	// draft signed data
 	signedData := sideTxResultWithData.GetBytes()
-	fmt.Println("sideTxData ==>", hex.EncodeToString(sideTxData))
-	fmt.Println("signedData ==>", hex.EncodeToString(signedData))
-	fmt.Println("txHash ==>", hex.EncodeToString(txHash))
 
 	sideTxSigs := make([]*sideTxSig, 0)
 	for _, vote := range unFilteredVotes {
 		if vote != nil {
 			// iterate through all side-tx results
 			for _, sideTxResult := range vote.SideTxResults {
-
-				fmt.Println("vote ==> ", vote)
-				fmt.Println("sideTxResult.TxHash ==> ", hex.EncodeToString(sideTxResult.TxHash))
-				fmt.Println("sideTxResult.Result ==> ", sideTxResult.Result)
-				fmt.Println("abci.SideTxResultType_Yes ==> ", abci.SideTxResultType_Yes)
-				fmt.Println("sideTxResult.Sig ==> ", hex.EncodeToString(sideTxResult.Sig))
-				fmt.Println("vote.ValidatorAddress ==> ", hex.EncodeToString(vote.ValidatorAddress.Bytes()))
-
 				// find side-tx result by tx-hash
 				if bytes.Equal(sideTxResult.TxHash, txHash) &&
 					len(sideTxResult.Sig) == 65 &&
@@ -217,8 +206,6 @@ func GetSideTxSigs(txHash []byte, sideTxData []byte, unFilteredVotes []*tmTypes.
 					var pk secp256k1.PubKeySecp256k1
 					if p, err := authTypes.RecoverPubkey(signedData, sideTxResult.Sig); err == nil {
 						copy(pk[:], p[:])
-
-						fmt.Println("pk address ==> ", hex.EncodeToString(pk.Address().Bytes()))
 
 						// if it has valid sig, add it into side-tx sig array
 						if bytes.Equal(vote.ValidatorAddress.Bytes(), pk.Address().Bytes()) {
@@ -233,8 +220,6 @@ func GetSideTxSigs(txHash []byte, sideTxData []byte, unFilteredVotes []*tmTypes.
 			}
 		}
 	}
-
-	fmt.Println("sideTxSigs ==>", sideTxSigs)
 
 	if len(sideTxSigs) > 0 {
 		// sort sigs by address
