@@ -68,7 +68,9 @@ $ %s query checkpoint params
 			}
 
 			var params types.Params
-			json.Unmarshal(bz, &params)
+			if err := json.Unmarshal(bz, &params); err != nil {
+				return nil
+			}
 			return cliCtx.PrintOutput(params)
 		},
 	}
@@ -154,7 +156,10 @@ func GetHeaderFromIndex(cdc *codec.Codec) *cobra.Command {
 			return nil
 		},
 	}
-	cmd.MarkFlagRequired(FlagHeaderNumber)
+
+	if err := cmd.MarkFlagRequired(FlagHeaderNumber); err != nil {
+		logger.Error("preSignCmd | MarkFlagRequired | FlagHeaderNumber", "Error", err)
+	}
 
 	return cmd
 }
