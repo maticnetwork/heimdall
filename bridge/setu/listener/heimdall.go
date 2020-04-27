@@ -75,8 +75,10 @@ func (hl *HeimdallListener) StartPolling(ctx context.Context, pollInterval time.
 	for {
 		select {
 		case <-ticker.C:
-			fromBlock, toBlock := hl.fetchFromAndToBlock()
-			if fromBlock < toBlock {
+			fromBlock, toBlock, err := hl.fetchFromAndToBlock()
+			if err != nil {
+				hl.Logger.Error("Error fetching fromBlock and toBlock...skipping events query", "error", err)
+			} else if fromBlock < toBlock {
 				for _, eventType := range eventTypes {
 					var query []string
 					query = append(query, eventType)
@@ -123,9 +125,16 @@ func (hl *HeimdallListener) StartPolling(ctx context.Context, pollInterval time.
 	}
 }
 
-func (hl *HeimdallListener) fetchFromAndToBlock() (fromBlock uint64, toBlock uint64) {
+func (hl *HeimdallListener) fetchFromAndToBlock() (uint64, uint64, error) {
 	// toBlock - get latest blockheight from heimdall node
-	nodeStatus, _ := helper.GetNodeStatus(hl.cliCtx)
+	fromBlock := uint64(0)
+	toBlock := uint64(0)
+
+	nodeStatus, err := helper.GetNodeStatus(hl.cliCtx)
+	if err != nil {
+		hl.Logger.Error("Error while fetching heimdall node status", "error", err)
+		return fromBlock, toBlock, err
+	}
 	toBlock = uint64(nodeStatus.SyncInfo.LatestBlockHeight)
 
 	// fromBlock - get last block from storage
@@ -134,7 +143,7 @@ func (hl *HeimdallListener) fetchFromAndToBlock() (fromBlock uint64, toBlock uin
 		lastBlockBytes, err := hl.storageClient.Get([]byte(heimdallLastBlockKey), nil)
 		if err != nil {
 			hl.Logger.Info("Error while fetching last block bytes from storage", "error", err)
-			return
+			return fromBlock, toBlock, err
 		}
 
 		if result, err := strconv.ParseUint(string(lastBlockBytes), 10, 64); err == nil {
@@ -143,10 +152,10 @@ func (hl *HeimdallListener) fetchFromAndToBlock() (fromBlock uint64, toBlock uin
 		} else {
 			hl.Logger.Info("Error parsing last block bytes from storage", "error", err)
 			toBlock = 0
-			return
+			return fromBlock, toBlock, err
 		}
 	}
-	return
+	return fromBlock, toBlock, err
 }
 
 // ProcessEvent - process event from heimdall.

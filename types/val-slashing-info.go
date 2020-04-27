@@ -24,7 +24,7 @@ func NewValidatorSlashingInfo(id ValidatorID, slashedAmount string, isJailed boo
 }
 
 func (v ValidatorSlashingInfo) String() string {
-	return fmt.Sprintf(`Validator Signing Info:
+	return fmt.Sprintf(`Validator Slashing Info:
 	ID:               %d
 	SlashedAmount:    %s
 	IsJailed:         %v`,

@@ -34,7 +34,7 @@ type IContractCaller interface {
 	CurrentHeaderBlock(rootChainInstance *rootchain.Rootchain) (uint64, error)
 	GetBalance(address common.Address) (*big.Int, error)
 	SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte, rootchainAddress common.Address, rootChainInstance *rootchain.Rootchain) (err error)
-	SendTick(voteSignBytes []byte, sigs []byte, slashInfoList []byte, proposer common.Address, slashManagerAddress common.Address, slashManagerInstance *slashmanager.Slashmanager) (er error)
+	SendTick(voteSignBytes []byte, sigs []byte, slashInfoList []byte, txData []byte, proposer common.Address, slashManagerAddress common.Address, slashManagerInstance *slashmanager.Slashmanager) (er error)
 	GetCheckpointSign(txHash common.Hash) ([]byte, []byte, []byte, error)
 	GetMainChainBlock(*big.Int) (*ethTypes.Header, error)
 	GetMaticChainBlock(*big.Int) (*ethTypes.Header, error)
@@ -90,6 +90,7 @@ type ContractCaller struct {
 	StateReceiverABI abi.ABI
 	StateSenderABI   abi.ABI
 	StakeManagerABI  abi.ABI
+	SlashManagerABI  abi.ABI
 	MaticTokenABI    abi.ABI
 
 	ReceiptCache   *lru.Cache
@@ -142,6 +143,10 @@ func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 	}
 
 	if contractCallerObj.StakeManagerABI, err = getABI(string(stakemanager.StakemanagerABI)); err != nil {
+		return
+	}
+
+	if contractCallerObj.SlashManagerABI, err = getABI(string(slashmanager.SlashmanagerABI)); err != nil {
 		return
 	}
 

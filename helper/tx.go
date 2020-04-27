@@ -99,7 +99,7 @@ func (c *ContractCaller) SendCheckpoint(voteSignBytes []byte, sigs []byte, txDat
 }
 
 // SendTick sends slash tick to rootchain contract
-func (c *ContractCaller) SendTick(voteSignBytes []byte, sigs []byte, slashInfoList []byte, proposer common.Address, slashManagerAddress common.Address, slashManagerInstance *slashmanager.Slashmanager) (er error) {
+func (c *ContractCaller) SendTick(voteSignBytes []byte, sigs []byte, slashInfoList []byte, txData []byte, proposer common.Address, slashManagerAddress common.Address, slashManagerInstance *slashmanager.Slashmanager) (er error) {
 	var vote types.CanonicalRLPVote
 	err := rlp.DecodeBytes(voteSignBytes, &vote)
 	if err != nil {
@@ -107,11 +107,18 @@ func (c *ContractCaller) SendTick(voteSignBytes []byte, sigs []byte, slashInfoLi
 		return err
 	}
 
-	data, err := c.RootChainABI.Pack("updateSlashedAmounts", voteSignBytes, sigs, slashInfoList)
+	data, err := c.SlashManagerABI.Pack("updateSlashedAmounts", proposer, voteSignBytes, sigs, slashInfoList, txData)
 	if err != nil {
 		Logger.Error("Unable to pack tx for updateSlashedAmounts", "error", err)
 		return err
 	}
+
+	Logger.Debug("Sending new tick",
+		"vote", hex.EncodeToString(voteSignBytes),
+		"sigs", hex.EncodeToString(sigs),
+		"slashInfoList", hex.EncodeToString(slashInfoList),
+		"txData", hex.EncodeToString(txData),
+		"proposer", proposer)
 
 	auth, err := GenerateAuthObj(GetMainClient(), slashManagerAddress, data)
 	if err != nil {
@@ -121,13 +128,7 @@ func (c *ContractCaller) SendTick(voteSignBytes []byte, sigs []byte, slashInfoLi
 	}
 	GetPubKey().VerifyBytes(voteSignBytes, sigs)
 
-	Logger.Debug("Sending new tick",
-		"vote", hex.EncodeToString(voteSignBytes),
-		"sigs", hex.EncodeToString(sigs),
-		"slashInfoList", hex.EncodeToString(slashInfoList),
-		"proposer", proposer)
-
-	tx, err := slashManagerInstance.UpdateSlashedAmounts(auth, proposer, voteSignBytes, sigs, slashInfoList)
+	tx, err := slashManagerInstance.UpdateSlashedAmounts(auth, proposer, voteSignBytes, sigs, slashInfoList, txData)
 	if err != nil {
 		Logger.Error("Error while submitting tick", "error", err)
 		return err

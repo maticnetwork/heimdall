@@ -134,11 +134,6 @@ func GetCmdTickAck(cdc *codec.Codec) *cobra.Command {
 				proposer = helper.GetFromAddress(cliCtx)
 			}
 
-			validator := viper.GetInt64(FlagValidatorID)
-			if validator == 0 {
-				return fmt.Errorf("validator ID cannot be 0")
-			}
-
 			txHash := viper.GetString(FlagTxHash)
 			if txHash == "" {
 				return fmt.Errorf("transaction hash is required")
@@ -157,8 +152,10 @@ func GetCmdTickAck(cdc *codec.Codec) *cobra.Command {
 
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
+	cmd.Flags().String(FlagLogIndex, "", "--log-index=<log-index>")
 	cmd.MarkFlagRequired(FlagProposerAddress)
 	cmd.MarkFlagRequired(FlagTxHash)
+	cmd.MarkFlagRequired(FlagLogIndex)
 
 	return cmd
 }

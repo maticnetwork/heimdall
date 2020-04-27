@@ -9,6 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/core/types"
+	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
@@ -176,7 +177,7 @@ func (sp *SlashingProcessor) sendTickAckToHeimdall(eventName string, logBytes st
 	} else {
 
 		if isOld, _ := sp.isOldTx(sp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index)); isOld {
-			sp.Logger.Info("Ignoring task to tick ack to heimdall as already processed",
+			sp.Logger.Info("Ignoring task to send tick ack to heimdall as already processed",
 				"event", eventName,
 				"totalSlashedAmount", event.Amount,
 				"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
@@ -264,7 +265,7 @@ func (sp *SlashingProcessor) shouldSendTickToRootchain(tickNonce uint64) (should
 		2.
 
 	*/
-
+	shouldSend = true
 	return
 }
 
@@ -314,7 +315,9 @@ func (sp *SlashingProcessor) createAndSendTickToRootchain(height int64, txHash [
 			return err
 		}
 
-		if err := sp.contractConnector.SendTick(helper.GetVoteBytes(votes, chainID), sigs, slashInfoBytes, proposerAddr.EthAddress(), slashManagerAddress, slashManagerInstance); err != nil {
+		sp.Logger.Info("Tx data", "txPulpData", tx.Tx[:])
+
+		if err := sp.contractConnector.SendTick(helper.GetVoteBytes(votes, chainID), sigs, slashInfoBytes, tx.Tx[authTypes.PulpHashLength:], proposerAddr.EthAddress(), slashManagerAddress, slashManagerInstance); err != nil {
 			sp.Logger.Info("Error submitting tick to slashManager contract", "error", err)
 			return err
 		}

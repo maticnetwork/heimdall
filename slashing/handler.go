@@ -101,6 +101,7 @@ func handleMsgUnjail(ctx sdk.Context, msg types.MsgUnjail, k Keeper, contractCal
 // 5. Also update the jailStatus of Validator
 // 6. emit event TickConfirmation
 func handlerMsgTick(ctx sdk.Context, msg types.MsgTick, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
+	k.Logger(ctx).Debug("Handling Tick", "msg", msg)
 	// err := k.Unjail(ctx, msg.ValidatorAddr)
 	// if err != nil {
 	// 	return nil, err
@@ -167,6 +168,8 @@ func handlerMsgTick(ctx sdk.Context, msg types.MsgTick, k Keeper, contractCaller
 		return common.ErrSlashInfoDetails(k.Codespace()).Result()
 	}
 
+	k.Logger(ctx).Debug("Successfully slashed and jailed")
+
 	// -slashing.  Emit TickConfirmation Event
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
@@ -206,8 +209,9 @@ func handleMsgTickAck(ctx sdk.Context, msg types.MsgTickAck, k Keeper, contractC
 		return hmCommon.ErrInvalidMsg(k.Codespace(), "Unable to fetch logs for txHash").Result()
 	}
 
-	// sequence id
+	k.Logger(ctx).Info("Fetched slashed event log", "eventLog", eventLog)
 
+	// sequence id
 	sequence := new(big.Int).Mul(receipt.BlockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
 	sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))
 
@@ -218,7 +222,12 @@ func handleMsgTickAck(ctx sdk.Context, msg types.MsgTickAck, k Keeper, contractC
 	}
 
 	// remove validator slashing infos from tick data
-	k.FlushBufferValSlashingInfos(ctx)
+	if err := k.FlushTickValSlashingInfos(ctx); err != nil {
+		k.Logger(ctx).Error("Error flushing tick slash info in tick-ack handler", "error", err)
+		return common.ErrSlashInfoDetails(k.Codespace()).Result()
+	}
+
+	k.Logger(ctx).Debug("Successfully flushed tick slash info in tick-ack handler")
 
 	// save staking sequence
 	k.SetSlashingSequence(ctx, sequence.String())

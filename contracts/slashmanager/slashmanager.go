@@ -28,7 +28,7 @@ var (
 )
 
 // SlashmanagerABI is the input ABI used to generate the binding from.
-const SlashmanagerABI = "[{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"proposer\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"vote\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"sigs\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"slashingInfoList\",\"type\":\"bytes\"}],\"name\":\"updateSlashedAmounts\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"jailCheckpoints\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"registry\",\"outputs\":[{\"internalType\":\"contractRegistry\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"isOwner\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"slashingNonce\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"newReportRate\",\"type\":\"uint256\"}],\"name\":\"updateReportRate\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"reportRate\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"VOTE_TYPE\",\"outputs\":[{\"internalType\":\"uint8\",\"name\":\"\",\"type\":\"uint8\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"logger\",\"outputs\":[{\"internalType\":\"contractStakingInfo\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"heimdallId\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_registry\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_logger\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"}]"
+const SlashmanagerABI = "[{\"constant\":true,\"inputs\":[],\"name\":\"jailCheckpoints\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"proposer\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"vote\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"sigs\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"slashingInfoList\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"txData\",\"type\":\"bytes\"}],\"name\":\"updateSlashedAmounts\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"registry\",\"outputs\":[{\"internalType\":\"contractRegistry\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"isOwner\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"slashingNonce\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"newReportRate\",\"type\":\"uint256\"}],\"name\":\"updateReportRate\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"reportRate\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"VOTE_TYPE\",\"outputs\":[{\"internalType\":\"uint8\",\"name\":\"\",\"type\":\"uint8\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"string\",\"name\":\"_heimdallId\",\"type\":\"string\"}],\"name\":\"setHeimdallId\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"logger\",\"outputs\":[{\"internalType\":\"contractStakingInfo\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"heimdallId\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_registry\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_logger\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"}]"
 
 // Slashmanager is an auto generated Go binding around an Ethereum contract.
 type Slashmanager struct {
@@ -427,6 +427,27 @@ func (_Slashmanager *SlashmanagerTransactorSession) RenounceOwnership() (*types.
 	return _Slashmanager.Contract.RenounceOwnership(&_Slashmanager.TransactOpts)
 }
 
+// SetHeimdallId is a paid mutator transaction binding the contract method 0xea0688b3.
+//
+// Solidity: function setHeimdallId(string _heimdallId) returns()
+func (_Slashmanager *SlashmanagerTransactor) SetHeimdallId(opts *bind.TransactOpts, _heimdallId string) (*types.Transaction, error) {
+	return _Slashmanager.contract.Transact(opts, "setHeimdallId", _heimdallId)
+}
+
+// SetHeimdallId is a paid mutator transaction binding the contract method 0xea0688b3.
+//
+// Solidity: function setHeimdallId(string _heimdallId) returns()
+func (_Slashmanager *SlashmanagerSession) SetHeimdallId(_heimdallId string) (*types.Transaction, error) {
+	return _Slashmanager.Contract.SetHeimdallId(&_Slashmanager.TransactOpts, _heimdallId)
+}
+
+// SetHeimdallId is a paid mutator transaction binding the contract method 0xea0688b3.
+//
+// Solidity: function setHeimdallId(string _heimdallId) returns()
+func (_Slashmanager *SlashmanagerTransactorSession) SetHeimdallId(_heimdallId string) (*types.Transaction, error) {
+	return _Slashmanager.Contract.SetHeimdallId(&_Slashmanager.TransactOpts, _heimdallId)
+}
+
 // TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
 //
 // Solidity: function transferOwnership(address newOwner) returns()
@@ -469,25 +490,25 @@ func (_Slashmanager *SlashmanagerTransactorSession) UpdateReportRate(newReportRa
 	return _Slashmanager.Contract.UpdateReportRate(&_Slashmanager.TransactOpts, newReportRate)
 }
 
-// UpdateSlashedAmounts is a paid mutator transaction binding the contract method 0x0c30c56a.
+// UpdateSlashedAmounts is a paid mutator transaction binding the contract method 0x67833c1f.
 //
-// Solidity: function updateSlashedAmounts(address proposer, bytes vote, bytes sigs, bytes slashingInfoList) returns()
-func (_Slashmanager *SlashmanagerTransactor) UpdateSlashedAmounts(opts *bind.TransactOpts, proposer common.Address, vote []byte, sigs []byte, slashingInfoList []byte) (*types.Transaction, error) {
-	return _Slashmanager.contract.Transact(opts, "updateSlashedAmounts", proposer, vote, sigs, slashingInfoList)
+// Solidity: function updateSlashedAmounts(address proposer, bytes vote, bytes sigs, bytes slashingInfoList, bytes txData) returns()
+func (_Slashmanager *SlashmanagerTransactor) UpdateSlashedAmounts(opts *bind.TransactOpts, proposer common.Address, vote []byte, sigs []byte, slashingInfoList []byte, txData []byte) (*types.Transaction, error) {
+	return _Slashmanager.contract.Transact(opts, "updateSlashedAmounts", proposer, vote, sigs, slashingInfoList, txData)
 }
 
-// UpdateSlashedAmounts is a paid mutator transaction binding the contract method 0x0c30c56a.
+// UpdateSlashedAmounts is a paid mutator transaction binding the contract method 0x67833c1f.
 //
-// Solidity: function updateSlashedAmounts(address proposer, bytes vote, bytes sigs, bytes slashingInfoList) returns()
-func (_Slashmanager *SlashmanagerSession) UpdateSlashedAmounts(proposer common.Address, vote []byte, sigs []byte, slashingInfoList []byte) (*types.Transaction, error) {
-	return _Slashmanager.Contract.UpdateSlashedAmounts(&_Slashmanager.TransactOpts, proposer, vote, sigs, slashingInfoList)
+// Solidity: function updateSlashedAmounts(address proposer, bytes vote, bytes sigs, bytes slashingInfoList, bytes txData) returns()
+func (_Slashmanager *SlashmanagerSession) UpdateSlashedAmounts(proposer common.Address, vote []byte, sigs []byte, slashingInfoList []byte, txData []byte) (*types.Transaction, error) {
+	return _Slashmanager.Contract.UpdateSlashedAmounts(&_Slashmanager.TransactOpts, proposer, vote, sigs, slashingInfoList, txData)
 }
 
-// UpdateSlashedAmounts is a paid mutator transaction binding the contract method 0x0c30c56a.
+// UpdateSlashedAmounts is a paid mutator transaction binding the contract method 0x67833c1f.
 //
-// Solidity: function updateSlashedAmounts(address proposer, bytes vote, bytes sigs, bytes slashingInfoList) returns()
-func (_Slashmanager *SlashmanagerTransactorSession) UpdateSlashedAmounts(proposer common.Address, vote []byte, sigs []byte, slashingInfoList []byte) (*types.Transaction, error) {
-	return _Slashmanager.Contract.UpdateSlashedAmounts(&_Slashmanager.TransactOpts, proposer, vote, sigs, slashingInfoList)
+// Solidity: function updateSlashedAmounts(address proposer, bytes vote, bytes sigs, bytes slashingInfoList, bytes txData) returns()
+func (_Slashmanager *SlashmanagerTransactorSession) UpdateSlashedAmounts(proposer common.Address, vote []byte, sigs []byte, slashingInfoList []byte, txData []byte) (*types.Transaction, error) {
+	return _Slashmanager.Contract.UpdateSlashedAmounts(&_Slashmanager.TransactOpts, proposer, vote, sigs, slashingInfoList, txData)
 }
 
 // SlashmanagerOwnershipTransferredIterator is returned from FilterOwnershipTransferred and is used to iterate over the raw logs and unpacked data for OwnershipTransferred events raised by the Slashmanager contract.

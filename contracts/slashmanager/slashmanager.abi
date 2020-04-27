@@ -1,5 +1,20 @@
 [
 	{
+		"constant": true,
+		"inputs": [],
+		"name": "jailCheckpoints",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
 		"constant": false,
 		"inputs": [
 			{
@@ -21,27 +36,17 @@
 				"internalType": "bytes",
 				"name": "slashingInfoList",
 				"type": "bytes"
+			},
+			{
+				"internalType": "bytes",
+				"name": "txData",
+				"type": "bytes"
 			}
 		],
 		"name": "updateSlashedAmounts",
 		"outputs": [],
 		"payable": false,
 		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [],
-		"name": "jailCheckpoints",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
 		"type": "function"
 	},
 	{
@@ -156,6 +161,21 @@
 		],
 		"payable": false,
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_heimdallId",
+				"type": "string"
+			}
+		],
+		"name": "setHeimdallId",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
