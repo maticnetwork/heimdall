@@ -158,7 +158,7 @@ func GetHeaderFromIndex(cdc *codec.Codec) *cobra.Command {
 	}
 
 	if err := cmd.MarkFlagRequired(FlagHeaderNumber); err != nil {
-		logger.Error("preSignCmd | MarkFlagRequired | FlagHeaderNumber", "Error", err)
+		logger.Error("GetHeaderFromIndex | MarkFlagRequired | FlagHeaderNumber", "Error", err)
 	}
 
 	return cmd

@@ -189,13 +189,13 @@ func SendCheckpointACKTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(FlagCheckpointLogIndex, "", "--log-index=<log-index>")
 
 	if err := cmd.MarkFlagRequired(FlagHeaderNumber); err != nil {
-		logger.Error("preSignCmd | MarkFlagRequired | FlagHeaderNumber", "Error", err)
+		logger.Error("SendCheckpointACKTx | MarkFlagRequired | FlagHeaderNumber", "Error", err)
 	}
 	if err := cmd.MarkFlagRequired(FlagCheckpointTxHash); err != nil {
-		logger.Error("preSignCmd | MarkFlagRequired | FlagCheckpointTxHash", "Error", err)
+		logger.Error("SendCheckpointACKTx | MarkFlagRequired | FlagCheckpointTxHash", "Error", err)
 	}
 	if err := cmd.MarkFlagRequired(FlagCheckpointLogIndex); err != nil {
-		logger.Error("preSignCmd | MarkFlagRequired | FlagCheckpointLogIndex", "Error", err)
+		logger.Error("SendCheckpointACKTx | MarkFlagRequired | FlagCheckpointLogIndex", "Error", err)
 	}
 
 	return cmd
