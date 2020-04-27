@@ -278,7 +278,7 @@ func (suite *SideTxProcessorTestSuite) TestBeginSideBlocker() {
 		addr3 := []byte("hello-3")
 		addr4 := []byte("hello-4")
 		// set validators
-		happ.SidechannelKeeper.SetValidators(ctx, height-2, []abci.Validator{
+		happ.SidechannelKeeper.SetValidators(ctx, height, []abci.Validator{
 			{Address: addr1, Power: 10},
 			{Address: addr2, Power: 20},
 			{Address: addr3, Power: 30},
@@ -353,7 +353,7 @@ func (suite *SideTxProcessorTestSuite) TestBeginSideBlocker() {
 		addr3 := []byte("hello-3")
 		addr4 := []byte("hello-4")
 		// set validators
-		happ.SidechannelKeeper.SetValidators(ctx, height-2, []abci.Validator{
+		happ.SidechannelKeeper.SetValidators(ctx, height, []abci.Validator{
 			{Address: addr1, Power: 10},
 			{Address: addr2, Power: 20},
 			{Address: addr3, Power: 30},
