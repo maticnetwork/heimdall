@@ -91,6 +91,10 @@ func (fp *FeeProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, log
 
 	endpoint := helper.GetHeimdallServerEndpoint(util.TopupTxStatusURL)
 	url, err := util.CreateURLWithQuery(endpoint, queryParam)
+	if err != nil {
+		fp.Logger.Error("Error in creating url", "endpoint", endpoint, "error", err)
+		return false, err
+	}
 
 	res, err := helper.FetchFromAPI(fp.cliCtx, url)
 	if err != nil {

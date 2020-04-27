@@ -10,7 +10,6 @@ import (
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/tendermint/tendermint/libs/log"
-	httpClient "github.com/tendermint/tendermint/rpc/client"
 
 	ethereum "github.com/maticnetwork/bor"
 	"github.com/maticnetwork/bor/core/types"
@@ -38,11 +37,9 @@ type Listener interface {
 }
 
 type BaseListener struct {
-	Logger  log.Logger
-	name    string
-	started uint32 // atomic
-	stopped uint32 // atomic
-	quit    chan struct{}
+	Logger log.Logger
+	name   string
+	quit   chan struct{}
 
 	// The "subclass" of BaseService
 	impl Listener
@@ -66,9 +63,6 @@ type BaseListener struct {
 
 	// queue connector
 	queueConnector *queue.QueueConnector
-
-	// http client to subscribe to
-	httpClient *httpClient.HTTP
 
 	// storage client
 	storageClient *leveldb.DB

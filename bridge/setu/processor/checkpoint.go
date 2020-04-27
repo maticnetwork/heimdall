@@ -352,7 +352,7 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToHeimdall(start uint64, e
 		return err
 	}
 	cp.Logger.Info("Root hash calculated", "rootHash", hmTypes.BytesToHeimdallHash(root))
-	accountRootHash := hmTypes.ZeroHeimdallHash
+	var accountRootHash hmTypes.HeimdallHash
 	//Get DividendAccountRoot from HeimdallServer
 	if accountRootHash, err = cp.fetchDividendAccountRoot(); err != nil {
 		cp.Logger.Info("Error while fetching initial account root hash from HeimdallServer", "err", err)
@@ -511,7 +511,6 @@ func (cp *CheckpointProcessor) checkIfNoAckIsRequired(lastCreatedAt int64) (bool
 	lastNoAck := cp.getLastNoAckTime()
 
 	lastNoAckTime := time.Unix(int64(lastNoAck), 0)
-	timeDiff = currentTime.Sub(lastNoAckTime)
 	// if last no ack == 0 , first no-ack to be sent
 	if currentTime.Sub(lastNoAckTime).Seconds() < params.CheckpointBufferTime.Seconds() && lastNoAck != 0 {
 		cp.Logger.Debug("Cannot send multiple no-ack in short time", "timeDiff", currentTime.Sub(lastNoAckTime).Seconds(), "ExpectedDiff", params.CheckpointBufferTime.Seconds())

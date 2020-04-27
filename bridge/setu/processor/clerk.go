@@ -180,6 +180,10 @@ func (cp *ClerkProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, l
 
 	endpoint := helper.GetHeimdallServerEndpoint(util.ClerkTxStatusURL)
 	url, err := util.CreateURLWithQuery(endpoint, queryParam)
+	if err != nil {
+		cp.Logger.Error("Error in creating url", "endpoint", endpoint, "error", err)
+		return false, err
+	}
 
 	res, err := helper.FetchFromAPI(cp.cliCtx, url)
 	if err != nil {

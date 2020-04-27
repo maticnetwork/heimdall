@@ -20,9 +20,6 @@ type ProcessorService struct {
 	// queue connector
 	queueConnector *queue.QueueConnector
 
-	// tx broadcaster
-	txBroadcsater *broadcaster.TxBroadcaster
-
 	processors []Processor
 }
 
@@ -139,5 +136,4 @@ func (processorService *ProcessorService) OnStop() {
 	}
 
 	processorService.Logger.Info("all processors stopped")
-	return
 }

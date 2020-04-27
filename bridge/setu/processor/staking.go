@@ -277,6 +277,10 @@ func (sp *StakingProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string,
 
 	endpoint := helper.GetHeimdallServerEndpoint(util.StakingTxStatusURL)
 	url, err := util.CreateURLWithQuery(endpoint, queryParam)
+	if err != nil {
+		sp.Logger.Error("Error in creating url", "endpoint", endpoint, "error", err)
+		return false, err
+	}
 
 	res, err := helper.FetchFromAPI(sp.cliCtx, url)
 	if err != nil {

@@ -203,11 +203,7 @@ func IsEventSender(cliCtx cliContext.CLIContext, validatorID uint64) bool {
 	}
 	logger.Debug("Current event sender received", "validator", validator.String())
 
-	if bytes.Equal(validator.Signer.Bytes(), helper.GetAddress()) {
-		return true
-	}
-
-	return false
+	return bytes.Equal(validator.Signer.Bytes(), helper.GetAddress())
 }
 
 //CreateURLWithQuery receives the uri and parameters in key value form

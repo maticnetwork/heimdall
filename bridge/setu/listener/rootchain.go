@@ -131,9 +131,6 @@ func (rl *RootChainListener) ProcessHeader(newHeader *types.Header) {
 		}
 		rl.Logger.Debug("Got last block from bridge storage", "lastBlock", string(lastBlockBytes))
 		if result, err := strconv.ParseUint(string(lastBlockBytes), 10, 64); err == nil {
-			if result > fromBlock.Uint64() {
-				fromBlock = big.NewInt(0).SetUint64(result)
-			}
 			fromBlock = big.NewInt(0).SetUint64(result + 1)
 		}
 	}
@@ -195,7 +192,7 @@ func (rl *RootChainListener) queryAndBroadcastEvents(fromBlock *big.Int, toBlock
 					if err := helper.UnpackLog(rl.stakingInfoAbi, event, selectedEvent.Name, &vLog); err != nil {
 						rl.Logger.Error("Error while parsing event", "name", selectedEvent.Name, "error", err)
 					}
-					if bytes.Compare(event.SignerPubkey, pubkeyBytes) == 0 {
+					if bytes.Equal(event.SignerPubkey, pubkeyBytes) {
 						// topup has to be processed first before validator join. so adding delay.
 						delay := util.TaskDelayBetweenEachVal
 						rl.sendTaskWithDelay("sendValidatorJoinToHeimdall", selectedEvent.Name, logBytes, delay)
@@ -221,7 +218,7 @@ func (rl *RootChainListener) queryAndBroadcastEvents(fromBlock *big.Int, toBlock
 					if err := helper.UnpackLog(rl.stakingInfoAbi, event, selectedEvent.Name, &vLog); err != nil {
 						rl.Logger.Error("Error while parsing event", "name", selectedEvent.Name, "error", err)
 					}
-					if bytes.Compare(event.SignerPubkey, pubkeyBytes) == 0 {
+					if bytes.Equal(event.SignerPubkey, pubkeyBytes) {
 						rl.sendTaskWithDelay("sendSignerChangeToHeimdall", selectedEvent.Name, logBytes, 0)
 					} else if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx); isCurrentValidator {
 						rl.sendTaskWithDelay("sendSignerChangeToHeimdall", selectedEvent.Name, logBytes, delay)
