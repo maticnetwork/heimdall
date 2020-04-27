@@ -7,6 +7,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
+	tmTypes "github.com/tendermint/tendermint/types"
 
 	"github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/common"
@@ -116,6 +117,18 @@ func PostHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint,
 	// Save checkpoint to buffer store
 	//
 
+	checkpointBuffer, err := k.GetCheckpointFromBuffer(ctx)
+	if err == nil && checkpointBuffer != nil {
+		logger.Debug("Checkpoint already exists in buffer")
+
+		// get checkpoint buffer time from params
+		params := k.GetParams(ctx)
+		expiryTime := checkpointBuffer.TimeStamp + uint64(params.CheckpointBufferTime.Seconds())
+
+		// return with error (ack is required)
+		return common.ErrNoACK(k.Codespace(), expiryTime).Result()
+	}
+
 	timeStamp := uint64(ctx.BlockTime().Unix())
 
 	// Add checkpoint to buffer with root hash and account hash
@@ -131,18 +144,21 @@ func PostHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint,
 
 	logger.Debug("Save new checkpoint into buffer", "startBlock", msg.StartBlock, "endBlock", msg.EndBlock, "rootHash", msg.RootHash)
 
-	// Emit events for checkpoints
+	// TX bytes
+	txBytes := ctx.TxBytes()
+	hash := tmTypes.Tx(txBytes).Hash()
+
+	// Emit event for checkpoints
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyAction, msg.Type()),
-		),
-		sdk.NewEvent(
-			types.EventTypeCheckpoint,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeyAction, msg.Type()),                                  // action
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),                // module name
+			sdk.NewAttribute(hmTypes.AttributeKeyTxHash, hmTypes.BytesToHeimdallHash(hash).Hex()), // tx hash
+			sdk.NewAttribute(hmTypes.AttributeKeySideTxResult, sideTxResult.String()),             // result
 			sdk.NewAttribute(types.AttributeKeyProposer, msg.Proposer.String()),
-			sdk.NewAttribute(types.AttributeKeyStartBlock, strconv.FormatUint(uint64(msg.StartBlock), 10)),
-			sdk.NewAttribute(types.AttributeKeyEndBlock, strconv.FormatUint(uint64(msg.EndBlock), 10)),
+			sdk.NewAttribute(types.AttributeKeyStartBlock, strconv.FormatUint(msg.StartBlock, 10)),
+			sdk.NewAttribute(types.AttributeKeyEndBlock, strconv.FormatUint(msg.EndBlock, 10)),
 		),
 	})
 

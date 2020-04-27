@@ -122,8 +122,18 @@ func (hl *HeimdallListener) StartPolling(ctx context.Context, pollInterval time.
 
 func (hl *HeimdallListener) fetchFromAndToBlock() (fromBlock uint64, toBlock uint64) {
 	// toBlock - get latest blockheight from heimdall node
-	nodeStatus, _ := helper.GetNodeStatus(hl.cliCtx)
+	nodeStatus, err := helper.GetNodeStatus(hl.cliCtx)
+	if err != nil {
+		hl.Logger.Error("Error while fetching latest block", "error", err)
+		return
+	}
 	toBlock = uint64(nodeStatus.SyncInfo.LatestBlockHeight)
+
+	// Process them after two blocks since side-tx takes 2 block to process
+	if toBlock <= 2 {
+		return
+	}
+	toBlock = toBlock - 2
 
 	// fromBlock - get last block from storage
 	hasLastBlock, _ := hl.storageClient.Has([]byte(heimdallLastBlockKey), nil)
