@@ -213,7 +213,6 @@ func HandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keeper, c
 	}
 
 	// save staking sequence
-
 	k.SetStakingSequence(ctx, sequence.String())
 
 	ctx.EventManager().EmitEvents(sdk.Events{
@@ -322,6 +321,7 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper,
 		k.Logger(ctx).Error("Unable to update signer", "error", err, "ValidatorID", validator.ID)
 		return hmCommon.ErrSignerUpdateError(k.Codespace()).Result()
 	}
+
 	// save staking sequence
 	k.SetStakingSequence(ctx, sequence.String())
 
@@ -415,6 +415,9 @@ func HandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k Keepe
 		k.Logger(ctx).Error("Error while setting deactivation epoch to validator", "error", err, "validatorID", validator.ID.String())
 		return hmCommon.ErrValidatorNotDeactivated(k.Codespace()).Result()
 	}
+
+	// save staking sequence
+	k.SetStakingSequence(ctx, sequence.String())
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(

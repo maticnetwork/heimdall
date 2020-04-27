@@ -14,13 +14,13 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 	supplyCli "github.com/maticnetwork/heimdall/supply/client/cli"
 	"github.com/maticnetwork/heimdall/supply/types"
-	hmTypes "github.com/maticnetwork/heimdall/types"
+	hmModule "github.com/maticnetwork/heimdall/types/module"
 )
 
 var (
-	_ module.AppModule            = AppModule{}
-	_ module.AppModuleBasic       = AppModuleBasic{}
-	_ hmTypes.HeimdallModuleBasic = AppModule{}
+	_ module.AppModule             = AppModule{}
+	_ module.AppModuleBasic        = AppModuleBasic{}
+	_ hmModule.HeimdallModuleBasic = AppModule{}
 	// _ module.AppModuleSimulation = AppModule{}
 )
 

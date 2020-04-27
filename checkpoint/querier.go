@@ -123,6 +123,7 @@ func handleQueryNextCheckpoint(ctx sdk.Context, req abci.RequestQuery, keeper Ke
 	proposer := validatorSet.GetProposer()
 	ackCount := keeper.GetACKCount(ctx)
 	var start uint64
+
 	if ackCount != 0 {
 		headerIndex := (ackCount) * (helper.GetConfig().ChildBlockInterval)
 		lastCheckpoint, err := keeper.GetCheckpointByIndex(ctx, headerIndex)
@@ -132,17 +133,21 @@ func handleQueryNextCheckpoint(ctx sdk.Context, req abci.RequestQuery, keeper Ke
 		start = lastCheckpoint.EndBlock + 1
 	}
 
-	end := start + helper.GetConfig().AvgCheckpointLength
-	rootHash, err := types.GetHeaders(start, end)
+	params := keeper.GetParams(ctx)
+	end := start + params.AvgCheckpointLength
+
+	rootHash, err := types.GetHeaders(start, end, params.MaxCheckpointLength)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr(fmt.Sprintf("could not fetch headers for start:%v end:%v error:%v", start, end, err), err.Error()))
 	}
+
 	accs := sk.GetAllDividendAccounts(ctx)
 	accRootHash, err := types.GetAccountRootHash(accs)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr(fmt.Sprintf("could not get generate account root hash. Error:%v", err), err.Error()))
 	}
-	checkpointMsg := types.NewMsgCheckpointBlock(proposer.Signer, start, start+helper.GetConfig().AvgCheckpointLength, hmTypes.BytesToHeimdallHash(rootHash), hmTypes.BytesToHeimdallHash(accRootHash))
+
+	checkpointMsg := types.NewMsgCheckpointBlock(proposer.Signer, start, start+params.AvgCheckpointLength, hmTypes.BytesToHeimdallHash(rootHash), hmTypes.BytesToHeimdallHash(accRootHash))
 	bz, err := json.Marshal(checkpointMsg)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr(fmt.Sprintf("could not marshall checkpoint msg. Error:%v", err), err.Error()))

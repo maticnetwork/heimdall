@@ -2,6 +2,7 @@ package topup
 
 import (
 	"encoding/json"
+	"math/rand"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -12,17 +13,20 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/topup/simulation"
+
 	topupCli "github.com/maticnetwork/heimdall/topup/client/cli"
 	topupRest "github.com/maticnetwork/heimdall/topup/client/rest"
 
 	"github.com/maticnetwork/heimdall/topup/types"
-	hmTypes "github.com/maticnetwork/heimdall/types"
+	hmModule "github.com/maticnetwork/heimdall/types/module"
+	simTypes "github.com/maticnetwork/heimdall/types/simulation"
 )
 
 var (
-	_ module.AppModule            = AppModule{}
-	_ module.AppModuleBasic       = AppModuleBasic{}
-	_ hmTypes.HeimdallModuleBasic = AppModule{}
+	_ module.AppModule             = AppModule{}
+	_ module.AppModuleBasic        = AppModuleBasic{}
+	_ hmModule.HeimdallModuleBasic = AppModule{}
 )
 
 // AppModuleBasic defines the basic application module used by the auth module.
@@ -118,7 +122,7 @@ func (AppModule) QuerierRoute() string {
 
 // NewQuerierHandler returns the auth module sdk.Querier.
 func (am AppModule) NewQuerierHandler() sdk.Querier {
-	return NewQuerier(am.keeper)
+	return NewQuerier(am.keeper, am.contractCaller)
 }
 
 // InitGenesis performs genesis initialization for the auth module. It returns
@@ -144,4 +148,29 @@ func (AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
 // updates.
 func (AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
 	return []abci.ValidatorUpdate{}
+}
+
+// GenerateGenesisState creates a randomized GenState of the chainManager module
+func (AppModule) GenerateGenesisState(simState *hmModule.SimulationState) {
+	simulation.RandomizeGenState(simState)
+}
+
+// ProposalContents doesn't return any content functions.
+func (AppModule) ProposalContents(simState hmModule.SimulationState) []simTypes.WeightedProposalContent {
+	return nil
+}
+
+// RandomizedParams creates randomized param changes for the simulator.
+func (AppModule) RandomizedParams(r *rand.Rand) []simTypes.ParamChange {
+	return nil
+}
+
+// RegisterStoreDecoder registers a decoder for chainmanager module's types
+func (AppModule) RegisterStoreDecoder(sdr hmModule.StoreDecoderRegistry) {
+	return
+}
+
+// WeightedOperations doesn't return any chainmanager module operation.
+func (AppModule) WeightedOperations(_ hmModule.SimulationState) []simTypes.WeightedOperation {
+	return nil
 }

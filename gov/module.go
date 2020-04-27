@@ -17,13 +17,13 @@ import (
 	"github.com/maticnetwork/heimdall/gov/client/cli"
 	"github.com/maticnetwork/heimdall/gov/client/rest"
 	"github.com/maticnetwork/heimdall/gov/types"
-	hmTypes "github.com/maticnetwork/heimdall/types"
+	hmModule "github.com/maticnetwork/heimdall/types/module"
 )
 
 var (
-	_ module.AppModule            = AppModule{}
-	_ module.AppModuleBasic       = AppModuleBasic{}
-	_ hmTypes.HeimdallModuleBasic = AppModule{}
+	_ module.AppModule             = AppModule{}
+	_ module.AppModuleBasic        = AppModuleBasic{}
+	_ hmModule.HeimdallModuleBasic = AppModule{}
 )
 
 // app module basics object
