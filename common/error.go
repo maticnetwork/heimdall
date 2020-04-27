@@ -6,6 +6,8 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	abci "github.com/tendermint/tendermint/abci/types"
+
 	"github.com/maticnetwork/heimdall/types"
 )
 
@@ -189,6 +191,22 @@ func ErrValSetMisMatch(codespace sdk.CodespaceType) sdk.Error {
 func ErrProducerMisMatch(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeProducerMisMatch, "Producer set mismatch")
 }
+
+//
+// Side-tx errors
+//
+
+// ErrorSideTx represents side-tx error
+func ErrorSideTx(codespace sdk.CodespaceType, code CodeType) (res abci.ResponseDeliverSideTx) {
+	res.Code = uint32(code)
+	res.Codespace = string(codespace)
+	res.Result = abci.SideTxResultType_Skip // skip side-tx vote in-case of error
+	return
+}
+
+//
+// Private methods
+//
 
 func codeToDefaultMsg(code CodeType) string {
 	switch code {

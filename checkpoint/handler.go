@@ -147,83 +147,32 @@ func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, con
 
 // handleMsgCheckpointAck Validates if checkpoint submitted on chain is valid
 func handleMsgCheckpointAck(ctx sdk.Context, msg types.MsgCheckpointAck, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
-	k.Logger(ctx).Debug("Validating Checkpoint ACK", "Tx", msg)
+	logger := k.Logger(ctx)
 
-	// make call to headerBlock with header number
-	chainParams := k.ck.GetParams(ctx).ChainParams
-
-	rootChainInstance, err := contractCaller.GetRootChainInstance(chainParams.RootChainAddress.EthAddress())
-	if err != nil {
-		k.Logger(ctx).Error("Unable to fetch rootchain contract instance", "Error", err)
-		return common.ErrBadAck(k.Codespace()).Result()
-	}
-	root, start, end, createdAt, proposer, err := contractCaller.GetHeaderInfo(msg.HeaderBlock, rootChainInstance)
-	if err != nil {
-		k.Logger(ctx).Error("Unable to fetch header from rootchain contract", "Error", err, "headerBlockIndex", msg.HeaderBlock)
-		return common.ErrBadAck(k.Codespace()).Result()
-	}
-
-	k.Logger(ctx).Debug("HeaderBlock fetched",
-		"headerBlock", msg.HeaderBlock,
-		"start", start,
-		"end", end,
-		"roothash", root,
-		"proposer", proposer,
-		"createdAt", createdAt,
-	)
-
-	// get last checkpoint from buffer
+	// Get last checkpoint from buffer
 	headerBlock, err := k.GetCheckpointFromBuffer(ctx)
 	if err != nil {
-		k.Logger(ctx).Error("Unable to get checkpoint", "error", err)
+		logger.Error("Unable to get checkpoint", "error", err)
 		return common.ErrBadAck(k.Codespace()).Result()
 	}
-	if start != headerBlock.StartBlock {
-		k.Logger(ctx).Error("Invalid start block", "startExpected", headerBlock.StartBlock, "startReceived", start)
+
+	if msg.StartBlock != headerBlock.StartBlock {
+		logger.Error("Invalid start block", "startExpected", headerBlock.StartBlock, "startReceived", msg.StartBlock)
 		return common.ErrBadAck(k.Codespace()).Result()
-	} else if start == headerBlock.StartBlock && end == headerBlock.EndBlock && !bytes.Equal(root.Bytes(), headerBlock.RootHash.Bytes()) {
-		k.Logger(ctx).Error("Invalid ACK",
+	}
+
+	// Return err if start and end matches but contract root hash doesn't match
+	if msg.StartBlock == headerBlock.StartBlock && msg.EndBlock == headerBlock.EndBlock && !msg.RootHash.Equals(headerBlock.RootHash) {
+		logger.Error("Invalid ACK",
 			"startExpected", headerBlock.StartBlock,
-			"startReceived", start,
+			"startReceived", msg.StartBlock,
 			"endExpected", headerBlock.EndBlock,
-			"endReceived", end,
+			"endReceived", msg.StartBlock,
 			"rootExpected", headerBlock.RootHash.String(),
-			"rootRecieved", root.String())
+			"rootRecieved", msg.RootHash.String(),
+		)
 		return common.ErrBadAck(k.Codespace()).Result()
 	}
-	if headerBlock.EndBlock > end {
-		k.Logger(ctx).Info("Adjusting endBlock to one already submitted on chain", "OldEndBlock", headerBlock.EndBlock, "AdjustedEndBlock", end)
-		headerBlock.EndBlock = end
-		headerBlock.RootHash = hmTypes.HeimdallHash(root)
-		// TODO proposer also needs to be changed
-	}
-
-	// Add checkpoint to headerBlocks
-	k.AddCheckpoint(ctx, msg.HeaderBlock, *headerBlock)
-	k.Logger(ctx).Info("Checkpoint added to store", "headerBlock", headerBlock.String())
-
-	// flush buffer
-	k.FlushCheckpointBuffer(ctx)
-	k.Logger(ctx).Debug("Checkpoint buffer flushed after receiving checkpoint ack", "checkpoint", headerBlock)
-
-	// update ack count
-	k.UpdateACKCount(ctx)
-	k.Logger(ctx).Debug("Valid ack received", "CurrentACKCount", k.GetACKCount(ctx)-1, "UpdatedACKCount", k.GetACKCount(ctx))
-
-	// --- Update to new proposer
-
-	// increment accum
-	k.sk.IncrementAccum(ctx, 1)
-
-	//log new proposer
-	vs := k.sk.GetValidatorSet(ctx)
-	newProposer := vs.GetProposer()
-	k.Logger(ctx).Debug(
-		"New proposer selected",
-		"validator", newProposer.Signer.String(),
-		"signer", newProposer.Signer.String(),
-		"power", newProposer.VotingPower,
-	)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -238,47 +187,52 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg types.MsgCheckpointAck, k Keepe
 	}
 }
 
-// Validate checkpoint no-ack transaction
+// Handles checkpoint no-ack transaction
 func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k Keeper) sdk.Result {
-	k.Logger(ctx).Debug("Validating checkpoint no-ack", "TxData", msg)
-	// current time
+	logger := k.Logger(ctx)
+
+	// Get current block time
 	currentTime := ctx.BlockTime()
 
+	// Get buffer time from params
 	bufferTime := k.GetParams(ctx).CheckpointBufferTime
 
-	// fetch last checkpoint from store
+	// Fetch last checkpoint from store
 	// TODO figure out how to handle this error
 	lastCheckpoint, _ := k.GetLastCheckpoint(ctx)
 	lastCheckpointTime := time.Unix(int64(lastCheckpoint.TimeStamp), 0)
 
-	// if last checkpoint is not present or last checkpoint happens before checkpoint buffer time -- thrown an error
+	// If last checkpoint is not present or last checkpoint happens before checkpoint buffer time -- thrown an error
 	if lastCheckpointTime.After(currentTime) || (currentTime.Sub(lastCheckpointTime) < bufferTime) {
-		k.Logger(ctx).Debug("Invalid No ACK -- Waiting for last checkpoint ACK")
+		logger.Debug("Invalid No ACK -- Waiting for last checkpoint ACK")
 		return common.ErrInvalidNoACK(k.Codespace()).Result()
 	}
 
-	// check last no ack - prevents repetitive no-ack
-	lastAck := k.GetLastNoAck(ctx)
-	lastAckTime := time.Unix(int64(lastAck), 0)
+	// Check last no ack - prevents repetitive no-ack
+	lastNoAck := k.GetLastNoAck(ctx)
+	lastNoAckTime := time.Unix(int64(lastNoAck), 0)
 
-	if lastAckTime.After(currentTime) || (currentTime.Sub(lastAckTime) < bufferTime) {
-		k.Logger(ctx).Debug("Too many no-ack")
+	if lastNoAckTime.After(currentTime) || (currentTime.Sub(lastNoAckTime) < bufferTime) {
+		logger.Debug("Too many no-ack")
 		return common.ErrTooManyNoACK(k.Codespace()).Result()
 	}
 
-	// set last no ack
-	k.SetLastNoAck(ctx, uint64(currentTime.Unix()))
-	k.Logger(ctx).Debug("Last No-ACK time set", "LastNoAck", k.GetLastNoAck(ctx))
+	// Set new last no-ack
+	newLastNoAck := uint64(currentTime.Unix())
+	k.SetLastNoAck(ctx, newLastNoAck)
+	logger.Debug("Last No-ACK time set", "lastNoAck", newLastNoAck)
 
-	// --- Update to new proposer
+	//
+	// Update to new proposer
+	//
 
-	// increment accum
+	// Increment accum (selects new proposer)
 	k.sk.IncrementAccum(ctx, 1)
 
-	//log new proposer
+	// Get new proposer
 	vs := k.sk.GetValidatorSet(ctx)
 	newProposer := vs.GetProposer()
-	k.Logger(ctx).Debug(
+	logger.Debug(
 		"New proposer selected",
 		"validator", newProposer.Signer.String(),
 		"signer", newProposer.Signer.String(),

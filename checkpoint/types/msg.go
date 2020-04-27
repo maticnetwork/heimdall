@@ -108,14 +108,32 @@ var _ sdk.Msg = &MsgCheckpointAck{}
 type MsgCheckpointAck struct {
 	From        types.HeimdallAddress `json:"from"`
 	HeaderBlock uint64                `json:"headerBlock"`
+	Proposer    types.HeimdallAddress `json:"proposer"`
+	StartBlock  uint64                `json:"start_block"`
+	EndBlock    uint64                `json:"end_block"`
+	RootHash    types.HeimdallHash    `json:"root_hash"`
 	TxHash      types.HeimdallHash    `json:"tx_hash"`
 	LogIndex    uint64                `json:"log_index"`
 }
 
-func NewMsgCheckpointAck(from types.HeimdallAddress, headerBlock uint64, txHash types.HeimdallHash, logIndex uint64) MsgCheckpointAck {
+func NewMsgCheckpointAck(
+	from types.HeimdallAddress,
+	headerBlock uint64,
+	proposer types.HeimdallAddress,
+	startBlock uint64,
+	endBlock uint64,
+	rootHash types.HeimdallHash,
+	txHash types.HeimdallHash,
+	logIndex uint64,
+) MsgCheckpointAck {
+
 	return MsgCheckpointAck{
 		From:        from,
 		HeaderBlock: headerBlock,
+		Proposer:    proposer,
+		StartBlock:  startBlock,
+		EndBlock:    endBlock,
+		RootHash:    rootHash,
 		TxHash:      txHash,
 		LogIndex:    logIndex,
 	}
@@ -152,6 +170,14 @@ func (msg MsgCheckpointAck) ValidateBasic() sdk.Error {
 	childBlockInterval := helper.GetConfig().ChildBlockInterval
 	if msg.HeaderBlock > 0 && msg.HeaderBlock%childBlockInterval != 0 {
 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid header block %d", msg.HeaderBlock)
+	}
+
+	if msg.Proposer.Empty() {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid empty proposer")
+	}
+
+	if msg.RootHash.Empty() {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid empty root hash")
 	}
 
 	return nil

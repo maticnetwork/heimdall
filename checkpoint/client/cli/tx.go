@@ -3,8 +3,10 @@ package cli
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -14,6 +16,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/maticnetwork/bor/common"
+	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	types "github.com/maticnetwork/heimdall/checkpoint/types"
 	hmClient "github.com/maticnetwork/heimdall/client"
 	"github.com/maticnetwork/heimdall/helper"
@@ -186,15 +189,54 @@ func SendCheckpointACKTx(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			checkpointTxHashStr := viper.GetString(FlagCheckpointTxHash)
-			if checkpointTxHashStr == "" {
+			txHashStr := viper.GetString(FlagCheckpointTxHash)
+			if txHashStr == "" {
 				return fmt.Errorf("checkpoint tx hash cannot be empty")
 			}
 
-			checkpointTxHash := hmTypes.BytesToHeimdallHash(common.FromHex(checkpointTxHashStr))
+			txHash := hmTypes.BytesToHeimdallHash(common.FromHex(txHashStr))
 
-			// new checkpoint
-			msg := types.NewMsgCheckpointAck(proposer, headerBlock, checkpointTxHash, uint64(viper.GetInt64(FlagCheckpointLogIndex)))
+			//
+			// Get header details
+			//
+
+			contractCallerObj, err := helper.NewContractCaller()
+			if err != nil {
+				return err
+			}
+
+			chainmanagerParams, err := util.GetChainmanagerParams(cliCtx)
+			if err != nil {
+				return err
+			}
+
+			// get main tx receipt
+			receipt, err := contractCallerObj.GetConfirmedTxReceipt(time.Now().UTC(), txHash.EthHash(), chainmanagerParams.TxConfirmationTime)
+			if err != nil || receipt == nil {
+				return errors.New("Transaction is not confirmed yet. Please wait for sometime and try again")
+			}
+
+			// decode new header block event
+			res, err := contractCallerObj.DecodeNewHeaderBlockEvent(
+				chainmanagerParams.ChainParams.RootChainAddress.EthAddress(),
+				receipt,
+				uint64(viper.GetInt64(FlagCheckpointLogIndex)),
+			)
+			if err != nil {
+				return errors.New("Invalid transaction for header block")
+			}
+
+			// draft new checkpoint no-ack msg
+			msg := types.NewMsgCheckpointAck(
+				proposer, // ack tx sender
+				headerBlock,
+				hmTypes.BytesToHeimdallAddress(res.Proposer.Bytes()),
+				res.Start.Uint64(),
+				res.End.Uint64(),
+				res.Root,
+				txHash,
+				uint64(viper.GetInt64(FlagCheckpointLogIndex)),
+			)
 
 			// msg
 			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})

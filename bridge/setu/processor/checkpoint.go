@@ -231,7 +231,16 @@ func (cp *CheckpointProcessor) sendCheckpointAckToHeimdall(eventName string, che
 		// TODO - check if i am the proposer of this ack or not.
 
 		// create msg checkpoint ack message
-		msg := checkpointTypes.NewMsgCheckpointAck(helper.GetFromAddress(cp.cliCtx), event.HeaderBlockId.Uint64(), hmTypes.BytesToHeimdallHash(log.TxHash.Bytes()), uint64(log.Index))
+		msg := checkpointTypes.NewMsgCheckpointAck(
+			helper.GetFromAddress(cp.cliCtx),
+			event.HeaderBlockId.Uint64(),
+			hmTypes.BytesToHeimdallAddress(event.Proposer.Bytes()),
+			event.Start.Uint64(),
+			event.End.Uint64(),
+			event.Root,
+			hmTypes.BytesToHeimdallHash(log.TxHash.Bytes()),
+			uint64(log.Index),
+		)
 
 		// return broadcast to heimdall
 		if err := cp.txBroadcaster.BroadcastToHeimdall(msg); err != nil {

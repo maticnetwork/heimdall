@@ -1,6 +1,7 @@
 package checkpoint
 
 import (
+	"bytes"
 	"encoding/hex"
 	"fmt"
 	"strconv"
@@ -24,7 +25,7 @@ func NewSideTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.S
 		case types.MsgCheckpoint:
 			return SideHandleMsgCheckpoint(ctx, k, msg)
 		case types.MsgCheckpointAck:
-			return SideHandleMsgCheckpointAck(ctx, k, msg)
+			return SideHandleMsgCheckpointAck(ctx, k, msg, contractCaller)
 		default:
 			return abci.ResponseDeliverSideTx{
 				Code: uint32(sdk.CodeUnknownRequest),
@@ -62,19 +63,44 @@ func SideHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint)
 		"rootHash", msg.RootHash,
 	)
 
-	// vote `skip`
-	result.Result = abci.SideTxResultType_Skip
-	// set code and codespace
-	result.Code = uint32(common.CodeInvalidBlockInput)
-	result.Codespace = string(k.Codespace())
-
-	return
+	return common.ErrorSideTx(k.Codespace(), common.CodeInvalidBlockInput)
 }
 
 // SideHandleMsgCheckpointAck handles MsgCheckpointAck message for external call
-func SideHandleMsgCheckpointAck(ctx sdk.Context, k Keeper, msg types.MsgCheckpointAck) (result abci.ResponseDeliverSideTx) {
+func SideHandleMsgCheckpointAck(ctx sdk.Context, k Keeper, msg types.MsgCheckpointAck, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
 	fmt.Println("[==] In SideHandleMsgCheckpointAck doing external call")
 	fmt.Println("[==] In SideHandleMsgCheckpointAck  txbytes", hex.EncodeToString(ctx.TxBytes()), "isChckTx", ctx.IsCheckTx())
+
+	logger := k.Logger(ctx)
+
+	// make call to headerBlock with header number
+	chainParams := k.ck.GetParams(ctx).ChainParams
+
+	//
+	// Validate data from root chain
+	//
+
+	rootChainInstance, err := contractCaller.GetRootChainInstance(chainParams.RootChainAddress.EthAddress())
+	if err != nil {
+		logger.Error("Unable to fetch rootchain contract instance", "error", err)
+		return common.ErrorSideTx(k.Codespace(), common.CodeInvalidACK)
+	}
+
+	root, start, end, _, proposer, err := contractCaller.GetHeaderInfo(msg.HeaderBlock, rootChainInstance)
+	if err != nil {
+		logger.Error("Unable to fetch header from rootchain contract", "error", err, "headerBlock", msg.HeaderBlock)
+		return common.ErrorSideTx(k.Codespace(), common.CodeInvalidACK)
+	}
+
+	// check if message data matches with contract data
+	if msg.StartBlock != start ||
+		msg.EndBlock != end ||
+		!msg.Proposer.Equals(proposer) ||
+		!bytes.Equal(msg.RootHash.Bytes(), root.Bytes()) {
+
+		logger.Error("Invalid message. It doesn't match with contract state", "error", err, "headerBlock", msg.HeaderBlock)
+		return common.ErrorSideTx(k.Codespace(), common.CodeInvalidACK)
+	}
 
 	// say `yes`
 	result.Result = abci.SideTxResultType_Yes
@@ -133,16 +159,19 @@ func PostHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint,
 
 	// Add checkpoint to buffer with root hash and account hash
 	k.SetCheckpointBuffer(ctx, hmTypes.CheckpointBlockHeader{
-		StartBlock:      msg.StartBlock,
-		EndBlock:        msg.EndBlock,
-		RootHash:        msg.RootHash,
-		AccountRootHash: msg.AccountRootHash,
-		Proposer:        msg.Proposer,
-		BorChainID:      msg.BorChainID,
-		TimeStamp:       timeStamp,
+		StartBlock: msg.StartBlock,
+		EndBlock:   msg.EndBlock,
+		RootHash:   msg.RootHash,
+		Proposer:   msg.Proposer,
+		BorChainID: msg.BorChainID,
+		TimeStamp:  timeStamp,
 	})
 
-	logger.Debug("Save new checkpoint into buffer", "startBlock", msg.StartBlock, "endBlock", msg.EndBlock, "rootHash", msg.RootHash)
+	logger.Debug("New checkpoint into buffer stored",
+		"startBlock", msg.StartBlock,
+		"endBlock", msg.EndBlock,
+		"rootHash", msg.RootHash,
+	)
 
 	// TX bytes
 	txBytes := ctx.TxBytes()
@@ -169,12 +198,63 @@ func PostHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint,
 
 // PostHandleMsgCheckpointAck handles msg checkpoint ack
 func PostHandleMsgCheckpointAck(ctx sdk.Context, k Keeper, msg types.MsgCheckpointAck, sideTxResult abci.SideTxResultType) sdk.Result {
-	ctx.EventManager().EmitEvent(
+	logger := k.Logger(ctx)
+
+	// Skip handler if checkpoint-ack is not approved
+	if sideTxResult != abci.SideTxResultType_Yes {
+		logger.Debug("Skipping new checkpoint-ack since side-tx didn't get yes votes", "headerBlock", msg.HeaderBlock)
+		return common.ErrBadBlockDetails(k.Codespace()).Result()
+	}
+
+	// get last checkpoint from buffer
+	headerBlock, err := k.GetCheckpointFromBuffer(ctx)
+	if err != nil {
+		logger.Error("Unable to get checkpoint buffer", "error", err)
+		return common.ErrBadAck(k.Codespace()).Result()
+	}
+
+	// adjust checkpoint data if latest checkpoint is already submitted
+	if headerBlock.EndBlock > msg.EndBlock {
+		logger.Info("Adjusting endBlock to one already submitted on chain", "endBlock", headerBlock.EndBlock, "adjustedEndBlock", msg.EndBlock)
+		headerBlock.EndBlock = msg.EndBlock
+		headerBlock.RootHash = msg.RootHash
+		headerBlock.Proposer = msg.Proposer
+	}
+
+	//
+	// Update checkpoint state
+	//
+
+	// Add checkpoint to headerBlocks
+	k.AddCheckpoint(ctx, msg.HeaderBlock, *headerBlock)
+	logger.Debug("Checkpoint added to store", "headerBlock", msg.HeaderBlock)
+
+	// Flush buffer
+	k.FlushCheckpointBuffer(ctx)
+	logger.Debug("Checkpoint buffer flushed after receiving checkpoint ack")
+
+	// Update ack count in staking module
+	k.UpdateACKCount(ctx)
+	logger.Debug("Valid ack received", "CurrentACKCount", k.GetACKCount(ctx)-1, "UpdatedACKCount", k.GetACKCount(ctx))
+
+	// Increment accum (selects new proposer)
+	k.sk.IncrementAccum(ctx, 1)
+
+	// TX bytes
+	txBytes := ctx.TxBytes()
+	hash := tmTypes.Tx(txBytes).Hash()
+
+	// Emit event for checkpoints
+	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeyAction, msg.Type()),                                  // action
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),                // module name
+			sdk.NewAttribute(hmTypes.AttributeKeyTxHash, hmTypes.BytesToHeimdallHash(hash).Hex()), // tx hash
+			sdk.NewAttribute(hmTypes.AttributeKeySideTxResult, sideTxResult.String()),             // result
+			sdk.NewAttribute(types.AttributeKeyHeaderIndex, strconv.FormatUint(uint64(msg.HeaderBlock), 10)),
 		),
-	)
+	})
 
 	return sdk.Result{
 		Events: ctx.EventManager().Events(),
