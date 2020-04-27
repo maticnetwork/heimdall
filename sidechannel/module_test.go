@@ -136,7 +136,7 @@ func (suite *ModuleTestSuite) TestBeginEndBlock() {
 		ctx = ctx.WithBlockHeight(height)
 
 		validators := app.SidechannelKeeper.GetValidators(ctx, height)
-		require.Equal(t, 0, len(validators), fmt.Sprintf("Validator should be empty for height %d", height))
+		require.Equal(t, 0, len(validators), fmt.Sprintf("It should have no validators before height %d", height))
 		module.BeginBlock(ctx, abci.RequestBeginBlock{
 			Header: abci.Header{
 				Height: height,
@@ -145,7 +145,7 @@ func (suite *ModuleTestSuite) TestBeginEndBlock() {
 		})
 
 		validators = app.SidechannelKeeper.GetValidators(ctx, height)
-		require.Equal(t, 0, len(validators), fmt.Sprintf("Validator should be empty for height %d after begin block", height))
+		require.Equal(t, 10, len(validators), fmt.Sprintf("It should have valid validators at height %d", height))
 	}
 
 	{
@@ -155,7 +155,7 @@ func (suite *ModuleTestSuite) TestBeginEndBlock() {
 		ctx = ctx.WithBlockHeight(height)
 
 		validators := app.SidechannelKeeper.GetValidators(ctx, height)
-		require.Equal(t, 0, len(validators), fmt.Sprintf("Validator should be empty for height %d", height))
+		require.Equal(t, 0, len(validators), fmt.Sprintf("It should have no validators before height %d", height))
 		module.BeginBlock(ctx, abci.RequestBeginBlock{
 			Header: abci.Header{
 				Height: height,
@@ -164,7 +164,7 @@ func (suite *ModuleTestSuite) TestBeginEndBlock() {
 		})
 
 		validators = app.SidechannelKeeper.GetValidators(ctx, height)
-		require.Equal(t, 10, len(validators), fmt.Sprintf("Validator should be empty for height %d after begin block", height))
+		require.Equal(t, 10, len(validators), fmt.Sprintf("It should have valid validators after begin block at height %d ", height))
 
 		// test end block
 
@@ -176,18 +176,6 @@ func (suite *ModuleTestSuite) TestBeginEndBlock() {
 		})
 
 		validators = app.SidechannelKeeper.GetValidators(ctx, height)
-		require.Equal(t, 10, len(validators), fmt.Sprintf("Validator should be same as before for height %d after end block", height))
-
-		// test end block
-
-		height = 22
-		ctx = ctx.WithBlockHeight(height)
-
-		module.EndBlock(ctx, abci.RequestEndBlock{
-			Height: height,
-		})
-
-		validators = app.SidechannelKeeper.GetValidators(ctx, height)
-		require.Equal(t, 0, len(validators), "Validator should be empty after end block after 2 blocks")
+		require.Equal(t, 0, len(validators), fmt.Sprintf("Validator should be empty after end block at height %d", height))
 	}
 }
