@@ -47,9 +47,12 @@ func (cp *ClerkProcessor) Start() error {
 // RegisterTasks - Registers clerk related tasks with machinery
 func (cp *ClerkProcessor) RegisterTasks() {
 	cp.Logger.Info("Registering clerk tasks")
-	cp.queueConnector.Server.RegisterTask("sendStateSyncedToHeimdall", cp.sendStateSyncedToHeimdall)
-	cp.queueConnector.Server.RegisterTask("sendDepositRecordToMatic", cp.sendDepositRecordToMatic)
-
+	if err := cp.queueConnector.Server.RegisterTask("sendStateSyncedToHeimdall", cp.sendStateSyncedToHeimdall); err != nil {
+		cp.Logger.Error("RegisterTasks | sendStateSyncedToHeimdall", "error", err)
+	}
+	if err := cp.queueConnector.Server.RegisterTask("sendDepositRecordToMatic", cp.sendDepositRecordToMatic); err != nil {
+		cp.Logger.Error("RegisterTasks | sendDepositRecordToMatic", "error", err)
+	}
 }
 
 // HandleStateSyncEvent - handle state sync event from rootchain

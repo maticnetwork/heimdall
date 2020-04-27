@@ -36,7 +36,9 @@ func (fp *FeeProcessor) Start() error {
 // RegisterTasks - Registers clerk related tasks with machinery
 func (fp *FeeProcessor) RegisterTasks() {
 	fp.Logger.Info("Registering fee related tasks")
-	fp.queueConnector.Server.RegisterTask("sendTopUpFeeToHeimdall", fp.sendTopUpFeeToHeimdall)
+	if err := fp.queueConnector.Server.RegisterTask("sendTopUpFeeToHeimdall", fp.sendTopUpFeeToHeimdall); err != nil {
+		fp.Logger.Error("RegisterTasks | sendTopUpFeeToHeimdall", "error", err)
+	}
 }
 
 // processTopupFeeEvent - processes topup fee event

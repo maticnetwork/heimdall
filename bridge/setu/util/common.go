@@ -247,7 +247,12 @@ func WaitForOneEvent(tx tmTypes.Tx, client *httpClient.HTTP) (tmTypes.TMEventDat
 	}
 
 	// make sure to unregister after the test is over
-	defer client.UnsubscribeAll(ctx, subscriber)
+	defer func() {
+		if err := client.UnsubscribeAll(ctx, subscriber); err != nil {
+			logger.Error("WaitForOneEvent | UnsubscribeAll", "Error", err)
+		}
+	}()
+
 	select {
 	case event := <-eventCh:
 		return event.Data.(tmTypes.TMEventData), nil
@@ -274,7 +279,7 @@ func GetAccount(cliCtx cliContext.CLIContext, address types.HeimdallAddress) (ac
 	if err != nil {
 		return
 	}
-	if cliCtx.Codec.UnmarshalJSON(response.Result, &account); err != nil {
+	if err = cliCtx.Codec.UnmarshalJSON(response.Result, &account); err != nil {
 		logger.Error("Error unmarshalling account details", "url", url)
 		return
 	}

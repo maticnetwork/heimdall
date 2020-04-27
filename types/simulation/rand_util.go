@@ -8,6 +8,7 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/maticnetwork/heimdall/helper"
 )
 
 const (
@@ -16,6 +17,8 @@ const (
 	letterIdxMask = 1<<letterIdxBits - 1 // All 1-bits, as many as letterIdxBits
 	letterIdxMax  = 63 / letterIdxBits   // # of letter indices fitting in 63 bits
 )
+
+var logger = helper.Logger.With("module", "types/simulation")
 
 // shamelessly copied from
 // https://stackoverflow.com/questions/22892120/how-to-generate-a-random-string-of-a-fixed-length-in-golang#31832326
@@ -143,7 +146,9 @@ func DeriveRand(r *rand.Rand) *rand.Rand {
 //RandHex generates random hex string of given lenght
 func RandHex(length int) []byte {
 	bytes := make([]byte, length)
-	cRand.Read(bytes)
+	if _, err := cRand.Read(bytes); err != nil {
+		logger.Error("RandHex | Read", "Error", err)
+	}
 	return bytes
 }
 

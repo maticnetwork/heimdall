@@ -156,7 +156,9 @@ func (rl *RootChainListener) ProcessHeader(newHeader *types.Header) {
 	}
 
 	// set last block to storage
-	rl.storageClient.Put([]byte(lastRootBlockKey), []byte(toBlock.String()), nil)
+	if err := rl.storageClient.Put([]byte(lastRootBlockKey), []byte(toBlock.String()), nil); err != nil {
+		rl.Logger.Error("rl.storageClient.Put", "Error", err)
+	}
 
 	// query log
 	rl.queryAndBroadcastEvents(rootchainContext, fromBlock, toBlock)

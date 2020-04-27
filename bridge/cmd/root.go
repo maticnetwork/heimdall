@@ -81,5 +81,7 @@ func init() {
 	)
 
 	// bind all flags with viper
-	viper.BindPFlags(rootCmd.Flags())
+	if err := viper.BindPFlags(rootCmd.Flags()); err != nil {
+		logger.Error("init | BindPFlag | rootCmd.Flags", "Error", err)
+	}
 }

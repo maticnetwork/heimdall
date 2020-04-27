@@ -71,9 +71,15 @@ func (cp *CheckpointProcessor) Start() error {
 // RegisterTasks - Registers checkpoint related tasks with machinery
 func (cp *CheckpointProcessor) RegisterTasks() {
 	cp.Logger.Info("Registering checkpoint tasks")
-	cp.queueConnector.Server.RegisterTask("sendCheckpointToHeimdall", cp.sendCheckpointToHeimdall)
-	cp.queueConnector.Server.RegisterTask("sendCheckpointToRootchain", cp.sendCheckpointToRootchain)
-	cp.queueConnector.Server.RegisterTask("sendCheckpointAckToHeimdall", cp.sendCheckpointAckToHeimdall)
+	if err := cp.queueConnector.Server.RegisterTask("sendCheckpointToHeimdall", cp.sendCheckpointToHeimdall); err != nil {
+		cp.Logger.Error("RegisterTasks | sendCheckpointToHeimdall", "error", err)
+	}
+	if err := cp.queueConnector.Server.RegisterTask("sendCheckpointToRootchain", cp.sendCheckpointToRootchain); err != nil {
+		cp.Logger.Error("RegisterTasks | sendCheckpointToRootchain", "error", err)
+	}
+	if err := cp.queueConnector.Server.RegisterTask("sendCheckpointAckToHeimdall", cp.sendCheckpointAckToHeimdall); err != nil {
+		cp.Logger.Error("RegisterTasks | sendCheckpointAckToHeimdall", "error", err)
+	}
 }
 
 func (cp *CheckpointProcessor) startPollingForNoAck(ctx context.Context, interval time.Duration) {

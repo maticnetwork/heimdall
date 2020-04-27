@@ -37,10 +37,18 @@ func (sp *StakingProcessor) Start() error {
 // RegisterTasks - Registers staking tasks with machinery
 func (sp *StakingProcessor) RegisterTasks() {
 	sp.Logger.Info("Registering staking related tasks")
-	sp.queueConnector.Server.RegisterTask("sendValidatorJoinToHeimdall", sp.sendValidatorJoinToHeimdall)
-	sp.queueConnector.Server.RegisterTask("sendUnstakeInitToHeimdall", sp.sendUnstakeInitToHeimdall)
-	sp.queueConnector.Server.RegisterTask("sendStakeUpdateToHeimdall", sp.sendStakeUpdateToHeimdall)
-	sp.queueConnector.Server.RegisterTask("sendSignerChangeToHeimdall", sp.sendSignerChangeToHeimdall)
+	if err := sp.queueConnector.Server.RegisterTask("sendValidatorJoinToHeimdall", sp.sendValidatorJoinToHeimdall); err != nil {
+		sp.Logger.Error("RegisterTasks | sendValidatorJoinToHeimdall", "error", err)
+	}
+	if err := sp.queueConnector.Server.RegisterTask("sendUnstakeInitToHeimdall", sp.sendUnstakeInitToHeimdall); err != nil {
+		sp.Logger.Error("RegisterTasks | sendUnstakeInitToHeimdall", "error", err)
+	}
+	if err := sp.queueConnector.Server.RegisterTask("sendStakeUpdateToHeimdall", sp.sendStakeUpdateToHeimdall); err != nil {
+		sp.Logger.Error("RegisterTasks | sendStakeUpdateToHeimdall", "error", err)
+	}
+	if err := sp.queueConnector.Server.RegisterTask("sendSignerChangeToHeimdall", sp.sendSignerChangeToHeimdall); err != nil {
+		sp.Logger.Error("RegisterTasks | sendSignerChangeToHeimdall", "error", err)
+	}
 }
 
 func (sp *StakingProcessor) sendValidatorJoinToHeimdall(eventName string, logBytes string) error {
