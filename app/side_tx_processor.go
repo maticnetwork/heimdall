@@ -179,10 +179,6 @@ func (app *HeimdallApp) DeliverSideTxHandler(ctx sdk.Context, tx sdk.Tx, req abc
 			data = append(data, msgResult.Data...)
 			result = msgResult.Result
 
-			// TODO sidechannel - remove comments
-			fmt.Println("msgResult.Data", len(msgResult.Data), hex.EncodeToString(msgResult.Data))
-			fmt.Println("sideMsg.GetSideSignBytes()", len(sideMsg.GetSideSignBytes()), hex.EncodeToString(sideMsg.GetSideSignBytes()))
-
 			// msg result is empty, get side sign bytes and append into data
 			if len(msgResult.Data) == 0 {
 				data = append(data, sideMsg.GetSideSignBytes()...)
