@@ -226,7 +226,10 @@ func PostHandleMsgCheckpointAck(ctx sdk.Context, k Keeper, msg types.MsgCheckpoi
 	//
 
 	// Add checkpoint to headerBlocks
-	k.AddCheckpoint(ctx, msg.HeaderBlock, *headerBlock)
+	if err := k.AddCheckpoint(ctx, msg.HeaderBlock, *headerBlock); err != nil {
+		logger.Error("Error while adding checkpoint into store", "headerBlock", msg.HeaderBlock)
+		return sdk.ErrInternal("Failed to add checkpoint into store").Result()
+	}
 	logger.Debug("Checkpoint added to store", "headerBlock", msg.HeaderBlock)
 
 	// Flush buffer
@@ -235,7 +238,7 @@ func PostHandleMsgCheckpointAck(ctx sdk.Context, k Keeper, msg types.MsgCheckpoi
 
 	// Update ack count in staking module
 	k.UpdateACKCount(ctx)
-	logger.Debug("Valid ack received", "CurrentACKCount", k.GetACKCount(ctx)-1, "UpdatedACKCount", k.GetACKCount(ctx))
+	logger.Info("Valid ack received", "CurrentACKCount", k.GetACKCount(ctx)-1, "UpdatedACKCount", k.GetACKCount(ctx))
 
 	// Increment accum (selects new proposer)
 	k.sk.IncrementAccum(ctx, 1)

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"runtime/debug"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -208,6 +209,15 @@ func (app *HeimdallApp) runTx(ctx sdk.Context, txBytes []byte, sideTxResult abci
 	if err != nil {
 		return
 	}
+
+	// recover if runMsgs fails
+	defer func() {
+		if r := recover(); r != nil {
+			log := fmt.Sprintf("recovered: %v\nstack:\n%v", r, string(debug.Stack()))
+			result = sdk.ErrInternal(log).Result()
+		}
+	}()
+
 	// get context with tx bytes
 	ctx = ctx.WithTxBytes(txBytes)
 	// Create a new context based off of the existing context with a cache wrapped

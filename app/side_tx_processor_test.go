@@ -468,6 +468,38 @@ func (suite *SideTxProcessorTestSuite) TestBeginSideBlocker() {
 			// check if it saved the data
 			require.Equal(t, 0, len(happ.SidechannelKeeper.GetTxs(ctx, 900)), "It shouldn't save state after failed post-tx execution")
 		}
+
+		// shouldn't save state on failed execution of post-tx handler
+		{
+			// context with new event manager
+			ctx = ctx.WithEventManager(sdk.NewEventManager())
+
+			// setup router and handler
+			router := hmTypes.NewSideRouter()
+			handler := &hmTypes.SideHandlers{
+				SideTxHandler: func(ctx sdk.Context, msg sdk.Msg) abci.ResponseDeliverSideTx {
+					return abci.ResponseDeliverSideTx{}
+				},
+				PostTxHandler: func(ctx sdk.Context, msg sdk.Msg, sideTxResult abci.SideTxResultType) sdk.Result {
+					require.Equal(t, abci.SideTxResultType_Yes, sideTxResult, "Result `sideTxResult` should be `yes`")
+
+					// try to set random state data to store
+					happ.SidechannelKeeper.SetTx(ctx, 900, testTxStateData1)
+
+					panic("Paniced in handler")
+				},
+			}
+			router.AddRoute(routeMsgSideCounter, handler)
+			happ.SetSideRouter(router)
+
+			happ.SidechannelKeeper.SetTx(ctx, height-2, txBytes) // set tx in the store for process
+			res := happ.BeginSideBlocker(ctx, req)
+			require.Equal(t, 0, len(res.Events), "It should have 0 events")
+			require.Nil(t, happ.SidechannelKeeper.GetTx(ctx, height-2, txHash), "Tx should not be present in store after begin block")
+
+			// check if it saved the data
+			require.Equal(t, 0, len(happ.SidechannelKeeper.GetTxs(ctx, 900)), "It shouldn't save state after failed post-tx execution")
+		}
 	})
 }
 

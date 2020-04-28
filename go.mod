@@ -64,7 +64,6 @@ require (
 	gopkg.in/yaml.v2 v2.2.8
 )
 
-// replace github.com/tendermint/tendermint => github.com/maticnetwork/tendermint v0.26.0-dev0.0.20200105181728-9b2d312d5d14
-replace github.com/tendermint/tendermint => github.com/maticnetwork/tendermint v0.26.0-dev0.0.20200423091224-5b449d95ede7
+replace github.com/tendermint/tendermint => github.com/maticnetwork/tendermint v0.26.0-dev0.0.20200424192220-565f65589887
 
-replace github.com/cosmos/cosmos-sdk => github.com/maticnetwork/cosmos-sdk v0.37.5-0.20200423113542-0d528522cd33
+replace github.com/cosmos/cosmos-sdk => github.com/maticnetwork/cosmos-sdk v0.37.5-0.20200424192414-8a3ebcbf4947
