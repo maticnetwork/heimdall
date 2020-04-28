@@ -306,13 +306,13 @@ func InitializeNodeValidatorFiles(
 	server.UpgradeOldPrivValFile(config)
 
 	pvKeyFile := config.PrivValidatorKeyFile()
-	if err := common.EnsureDir(filepath.Dir(pvKeyFile), 0600); err != nil {
-		return nodeID, valPubKey, priv, nil
+	if err := common.EnsureDir(filepath.Dir(pvKeyFile), 0777); err != nil {
+		return nodeID, valPubKey, priv, err
 	}
 
 	pvStateFile := config.PrivValidatorStateFile()
 	if err := common.EnsureDir(filepath.Dir(pvStateFile), 0777); err != nil {
-		return nodeID, valPubKey, priv, nil
+		return nodeID, valPubKey, priv, err
 	}
 
 	FilePv := privval.LoadOrGenFilePV(pvKeyFile, pvStateFile)

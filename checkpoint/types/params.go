@@ -12,11 +12,15 @@ import (
 // Default parameter values
 const (
 	DefaultCheckpointBufferTime time.Duration = 1000 * time.Second // Time checkpoint is allowed to stay in buffer (1000 seconds ~ 17 mins)
+	DefaultAvgCheckpointLength  uint64        = 256
+	DefaultMaxCheckpointLength  uint64        = 1024
 )
 
 // Parameter keys
 var (
 	KeyCheckpointBufferTime = []byte("CheckpointBufferTime")
+	KeyAvgCheckpointLength  = []byte("AvgCheckpointLength")
+	KeyMaxCheckpointLength  = []byte("MaxCheckpointLength")
 )
 
 var _ subspace.ParamSet = &Params{}
@@ -24,14 +28,20 @@ var _ subspace.ParamSet = &Params{}
 // Params defines the parameters for the auth module.
 type Params struct {
 	CheckpointBufferTime time.Duration `json:"checkpoint_buffer_time" yaml:"checkpoint_buffer_time"`
+	AvgCheckpointLength  uint64        `json:"avg_checkpoint_length" yaml:"avg_checkpoint_length"`
+	MaxCheckpointLength  uint64        `json:"max_checkpoint_length" yaml:"max_checkpoint_length"`
 }
 
 // NewParams creates a new Params object
 func NewParams(
 	checkpointBufferTime time.Duration,
+	checkpointLength uint64,
+	maxCheckpointLength uint64,
 ) Params {
 	return Params{
 		CheckpointBufferTime: checkpointBufferTime,
+		AvgCheckpointLength:  checkpointLength,
+		MaxCheckpointLength:  maxCheckpointLength,
 	}
 }
 
@@ -46,6 +56,8 @@ func ParamKeyTable() subspace.KeyTable {
 func (p *Params) ParamSetPairs() subspace.ParamSetPairs {
 	return subspace.ParamSetPairs{
 		{KeyCheckpointBufferTime, &p.CheckpointBufferTime},
+		{KeyAvgCheckpointLength, &p.AvgCheckpointLength},
+		{KeyMaxCheckpointLength, &p.MaxCheckpointLength},
 	}
 }
 
@@ -60,6 +72,8 @@ func (p Params) Equal(p2 Params) bool {
 func DefaultParams() Params {
 	return Params{
 		CheckpointBufferTime: DefaultCheckpointBufferTime,
+		AvgCheckpointLength:  DefaultAvgCheckpointLength,
+		MaxCheckpointLength:  DefaultMaxCheckpointLength,
 	}
 }
 
@@ -68,10 +82,19 @@ func (p Params) String() string {
 	var sb strings.Builder
 	sb.WriteString("Params: \n")
 	sb.WriteString(fmt.Sprintf("CheckpointBufferTime: %s\n", p.CheckpointBufferTime))
+	sb.WriteString(fmt.Sprintf("AvgCheckpointLength: %d\n", p.AvgCheckpointLength))
+	sb.WriteString(fmt.Sprintf("MaxCheckpointLength: %d\n", p.MaxCheckpointLength))
 	return sb.String()
 }
 
 // Validate checks that the parameters have valid values.
 func (p Params) Validate() error {
+	if p.MaxCheckpointLength == 0 || p.AvgCheckpointLength == 0 {
+		return fmt.Errorf("MaxCheckpointLength, AvgCheckpointLength should be non-zero")
+	}
+
+	if p.MaxCheckpointLength < p.AvgCheckpointLength {
+		return fmt.Errorf("AvgCheckpointLength should not be greater than MaxCheckpointLength")
+	}
 	return nil
 }

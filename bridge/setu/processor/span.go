@@ -153,7 +153,11 @@ func (sp *SpanProcessor) fetchNextSpanDetails(id uint64, start uint64) (*types.S
 		sp.Logger.Error("Error creating a new request", "error", err)
 		return nil, err
 	}
-	configParams, _ := util.GetConfigManagerParams(sp.cliCtx)
+	configParams, err := util.GetChainmanagerParams(sp.cliCtx)
+	if err != nil {
+		sp.Logger.Error("Error while fetching chainmanager params", "error", err)
+		return nil, err
+	}
 
 	q := req.URL.Query()
 	q.Add("span_id", strconv.FormatUint(id, 10))

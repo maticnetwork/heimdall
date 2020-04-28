@@ -47,6 +47,16 @@ func (tx StdTx) GetMsgs() []sdk.Msg {
 // ValidateBasic does a simple and lightweight validation check that doesn't
 // require access to any other information.
 func (tx StdTx) ValidateBasic() sdk.Error {
+	stdSigs := tx.GetSignatures()
+
+	if tx.Signature.Empty() {
+		return sdk.ErrNoSignatures("No signers")
+	}
+
+	if len(stdSigs) != 1 || len(stdSigs) != len(tx.GetSigners()) {
+		return sdk.ErrUnauthorized("wrong number of signers")
+	}
+
 	return nil
 }
 
