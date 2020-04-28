@@ -3,8 +3,8 @@ package types
 import (
 	"testing"
 
-	assert "github.com/attic-labs/testify/require"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	assert "github.com/stretchr/testify/require"
 )
 
 func TestGetPulpHash(t *testing.T) {

@@ -53,8 +53,6 @@ github.com/aristanetworks/goarista v0.0.0-20191206003309-5d8d36c240c9 h1:/UAGJh5
 github.com/aristanetworks/goarista v0.0.0-20191206003309-5d8d36c240c9/go.mod h1:Z4RTxGAuYhPzcq8+EdRM+R8M48Ssle2TsWtwRKa+vns=
 github.com/aristanetworks/splunk-hec-go v0.3.3/go.mod h1:1VHO9r17b0K7WmOlLb9nTk/2YanvOEnLMUgsFrxBROc=
 github.com/armon/consul-api v0.0.0-20180202201655-eb2c6b5be1b6/go.mod h1:grANhF5doyWs3UAsr3K4I6qtAmlQcZDesFNEHPZAzj8=
-github.com/attic-labs/testify v1.1.3 h1:g/Hy6LRwcwo/E3nvOs4jCZskhkalCcloOTGaH2nE/Vk=
-github.com/attic-labs/testify v1.1.3/go.mod h1:KgDe6nqmQ5eiHpXQtTMByMydKFDK+amSgA1LVtmHvaM=
 github.com/aws/aws-sdk-go v1.29.15 h1:0ms/213murpsujhsnxnNKNeVouW60aJqSd992Ks3mxs=
 github.com/aws/aws-sdk-go v1.29.15/go.mod h1:1KvfttTE3SPKMpo8g2c6jL3ZKfXtFvKscTgahTma5Xg=
 github.com/bartekn/go-bip39 v0.0.0-20171116152956-a05967ea095d h1:1aAija9gr0Hyv4KfQcRcwlmFIrhkDmIj2dz5bkg/s/8=
