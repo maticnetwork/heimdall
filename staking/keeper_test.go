@@ -2,7 +2,6 @@ package staking_test
 
 import (
 	"encoding/hex"
-	"fmt"
 	"math/big"
 	"math/rand"
 	"testing"
@@ -439,8 +438,9 @@ func (suite *KeeperTestSuite) TestGetSpanEligibleValidators() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	keeper := app.StakingKeeper
 	cmn.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	app.CheckpointKeeper.UpdateACKCountWithValue(ctx, 20)
+
 	validators := keeper.GetSpanEligibleValidators(ctx)
-	fmt.Println("validators", len(validators))
-	// TODO: Change this later
-	// require.LessOrEqual(t, 4, len(validators))
+	require.LessOrEqual(t, 0, len(validators))
+	// add positive testcase
 }
