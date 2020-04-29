@@ -1,16 +1,25 @@
 package staking_test
 
 import (
+	"encoding/json"
 	"fmt"
+	"math/big"
+	"math/rand"
 	"testing"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	ethTypes "github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/heimdall/app"
+	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
 	"github.com/maticnetwork/heimdall/helper/mocks"
 	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/staking/types"
 	cmn "github.com/maticnetwork/heimdall/test"
+	hmTypes "github.com/maticnetwork/heimdall/types"
+	"github.com/maticnetwork/heimdall/types/simulation"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -31,7 +40,7 @@ type QuerierTestSuite struct {
 func (suite *QuerierTestSuite) SetupTest() {
 	suite.app, suite.ctx, suite.cliCtx = createTestApp(false)
 	suite.contractCaller = mocks.IContractCaller{}
-	suite.querier = staking.NewQuerier(suite.app.StakingKeeper)
+	suite.querier = staking.NewQuerier(suite.app.StakingKeeper, &suite.contractCaller)
 }
 
 // TestQuerierTestSuite
@@ -187,20 +196,20 @@ func (suite *QuerierTestSuite) TestHandleQueryCurrentProposer() {
 }
 
 func (suite *QuerierTestSuite) TestHandleQueryDividendAccount() {
-	t, _, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
-
+	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
+	var divAcc hmTypes.DividendAccount
 	path := []string{types.QueryDividendAccount}
 
 	route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryDividendAccount)
-	// dividendAccount := hmTypes.NewDividendAccount(
-	// 	hmTypes.NewDividendAccountID(uint64(1)),
-	// 	big.NewInt(0).String(),
-	// 	big.NewInt(0).String(),
-	// )
+	dividendAccount := hmTypes.NewDividendAccount(
+		hmTypes.NewDividendAccountID(uint64(1)),
+		big.NewInt(0).String(),
+		big.NewInt(0).String(),
+	)
+	app.StakingKeeper.AddDividendAccount(ctx, dividendAccount)
 	req := abci.RequestQuery{
 		Path: route,
-		Data: []byte{},
-		// Data: app.Codec().MustMarshalJSON(types.NewQueryDividendAccountParams(hmTypes.NewDividendAccountID(1))),
+		Data: app.Codec().MustMarshalJSON(types.NewQueryDividendAccountParams(dividendAccount.ID)),
 	}
 	res, err := querier(ctx, path, req)
 	// check no error found
@@ -208,12 +217,19 @@ func (suite *QuerierTestSuite) TestHandleQueryDividendAccount() {
 
 	// check response is not nil
 	require.NotNil(t, res)
+	json.Unmarshal(res, &divAcc)
+	require.Equal(t, dividendAccount, divAcc)
 }
 
 func (suite *QuerierTestSuite) TestHandleDividendAccountRoot() {
 	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
 	keeper := app.StakingKeeper
-	cmn.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	dividendAccount := hmTypes.NewDividendAccount(
+		hmTypes.NewDividendAccountID(uint64(1)),
+		big.NewInt(0).String(),
+		big.NewInt(0).String(),
+	)
+	keeper.AddDividendAccount(ctx, dividendAccount)
 
 	path := []string{types.QueryDividendAccountRoot}
 
@@ -233,16 +249,26 @@ func (suite *QuerierTestSuite) TestHandleDividendAccountRoot() {
 
 func (suite *QuerierTestSuite) TestHandleQueryAccountProof() {
 	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
-	keeper := app.StakingKeeper
-	cmn.LoadValidatorSet(4, t, keeper, ctx, false, 10)
 
+	key := new([32]byte)
 	path := []string{types.QueryAccountProof}
 
 	route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryAccountProof)
+	stakingInfo := &stakinginfo.Stakinginfo{}
+	suite.contractCaller.On("GetStakingInfoInstance", mock.Anything).Return(stakingInfo, nil)
+
+	suite.contractCaller.On("CurrentAccountStateRoot", mock.Anything).Return(key, nil)
+
+	dividendAccount := hmTypes.NewDividendAccount(
+		hmTypes.NewDividendAccountID(uint64(1)),
+		big.NewInt(0).String(),
+		big.NewInt(0).String(),
+	)
+	app.StakingKeeper.AddDividendAccount(ctx, dividendAccount)
 
 	req := abci.RequestQuery{
 		Path: route,
-		Data: []byte{},
+		Data: app.Codec().MustMarshalJSON(dividendAccount),
 	}
 	res, err := querier(ctx, path, req)
 	// check no error found
@@ -254,8 +280,13 @@ func (suite *QuerierTestSuite) TestHandleQueryAccountProof() {
 
 func (suite *QuerierTestSuite) TestHandleQueryVerifyAccountProof() {
 	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
-	keeper := app.StakingKeeper
-	cmn.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+
+	dividendAccount := hmTypes.NewDividendAccount(
+		hmTypes.NewDividendAccountID(uint64(1)),
+		big.NewInt(0).String(),
+		big.NewInt(0).String(),
+	)
+	app.StakingKeeper.AddDividendAccount(ctx, dividendAccount)
 
 	path := []string{types.QueryVerifyAccountProof}
 
@@ -263,7 +294,7 @@ func (suite *QuerierTestSuite) TestHandleQueryVerifyAccountProof() {
 
 	req := abci.RequestQuery{
 		Path: route,
-		Data: []byte{},
+		Data: app.Codec().MustMarshalJSON(dividendAccount),
 	}
 	res, err := querier(ctx, path, req)
 	// check no error found
@@ -271,12 +302,30 @@ func (suite *QuerierTestSuite) TestHandleQueryVerifyAccountProof() {
 
 	// check response is not nil
 	require.NotNil(t, res)
+	require.Equal(t, "true", string(res))
 }
 
 func (suite *QuerierTestSuite) TestHandleQueryStakingSequence() {
 	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
-	keeper := app.StakingKeeper
-	cmn.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	s1 := rand.NewSource(time.Now().UnixNano())
+	r1 := rand.New(s1)
+
+	chainParams := app.ChainKeeper.GetParams(ctx)
+
+	txHash := hmTypes.HexToHeimdallHash("123")
+
+	txreceipt := &ethTypes.Receipt{BlockNumber: big.NewInt(10)}
+
+	logIndex := uint64(simulation.RandIntBetween(r1, 0, 100))
+
+	msg := types.NewQueryStakingSequenceParams(txHash.String(), logIndex)
+
+	sequence := new(big.Int).Mul(txreceipt.BlockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
+	sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))
+
+	app.StakingKeeper.SetStakingSequence(ctx, sequence.String())
+
+	suite.contractCaller.On("GetConfirmedTxReceipt", mock.Anything, txHash.EthHash(), chainParams.TxConfirmationTime).Return(txreceipt, nil)
 
 	path := []string{types.QueryStakingSequence}
 
@@ -284,12 +333,14 @@ func (suite *QuerierTestSuite) TestHandleQueryStakingSequence() {
 
 	req := abci.RequestQuery{
 		Path: route,
-		Data: []byte{},
+		Data: app.Codec().MustMarshalJSON(msg),
 	}
+
 	res, err := querier(ctx, path, req)
 	// check no error found
 	require.NoError(t, err)
 
 	// check response is not nil
 	require.NotNil(t, res)
+	require.Equal(t, sequence.String(), string(res))
 }

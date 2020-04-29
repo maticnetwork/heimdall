@@ -215,17 +215,8 @@ func (suite *KeeperTestSuite) TestRemoveValidatorSetChange() {
 
 	currentValSet := initValSet.Copy()
 	prevValidatorSet := initValSet.Copy()
-	fmt.Println("currentValSet", len(currentValSet.Validators))
-	fmt.Println("prevValidatorSet", len(prevValidatorSet.Validators))
-
-	// remove validator (making IsCurrentValidator return false)
-	fmt.Println("Updating", prevValidatorSet.Validators[0].ID.String(), prevValidatorSet.Validators[0].StartEpoch)
 
 	prevValidatorSet.Validators[0].StartEpoch = 20
-	fmt.Println("remove validator  currentValSet", len(currentValSet.Validators))
-	fmt.Println("remove validator  prevValidatorSet", len(prevValidatorSet.Validators))
-	fmt.Println("--->1 keeper.GetAllValidators(ctx)", len(keeper.GetAllValidators(ctx)))
-	fmt.Println("Updated Validators in state", prevValidatorSet.Validators[0].ID.String(), prevValidatorSet.Validators[0].StartEpoch)
 
 	t.Log("Updated Validators in state")
 	for _, v := range prevValidatorSet.Validators {
@@ -235,28 +226,15 @@ func (suite *KeeperTestSuite) TestRemoveValidatorSetChange() {
 	err := keeper.AddValidator(ctx, *prevValidatorSet.Validators[0])
 	require.Empty(t, err, "Unable to update validator set")
 
-	// apply updates
-	// helper.UpdateValidators(
-	// 	currentValSet,                // pointer to current validator set -- UpdateValidators will modify it
-	// 	keeper.GetAllValidators(ctx), // All validators
-	// 	5,                            // ack count
-	// )
-	fmt.Println("------------------------------------------------")
-	fmt.Println("urrentValSet", currentValSet.Validators)
-	fmt.Println("------------------------------------------------")
-
 	setUpdates := helper.GetUpdatedValidators(currentValSet, keeper.GetAllValidators(ctx), 5)
 	currentValSet.UpdateWithChangeSet(setUpdates)
-	fmt.Println("------------------------------------------------")
-	fmt.Println("round 2 urrentValSet", len(currentValSet.Validators), len(setUpdates), currentValSet.Validators)
-	fmt.Println("------------------------------------------------")
+
 	updatedValSet := currentValSet
 	t.Log("Validators in updated validator set")
 	for _, v := range updatedValSet.Validators {
 		t.Log("-->", "Address", v.Signer.String(), "StartEpoch", v.StartEpoch, "EndEpoch", v.EndEpoch, "VotingPower", v.VotingPower)
 	}
 	// check if 1 validator is removed
-	fmt.Println("ohh fuck", len(prevValidatorSet.Validators)-1, len(updatedValSet.Validators))
 	require.Equal(t, len(prevValidatorSet.Validators)-1, len(updatedValSet.Validators), "Validator set should be reduced by one ")
 	// remove first validator from initial validator set and equate with new
 	t.Log("appended set-", updatedValSet, "one", prevValidatorSet.Validators[1:])
@@ -279,29 +257,14 @@ func (suite *KeeperTestSuite) TestAddValidatorSetChange() {
 
 	validators := cmn.GenRandomVal(1, 0, 10, 10, false, 1)
 	prevValSet := initValSet.Copy()
-	fmt.Println("in add keeper.GetAllValidators(ctx)", len(initValSet.Validators))
 
 	valToBeAdded := validators[0]
 	currentValSet := initValSet.Copy()
-	//prevValidatorSet := initValSet.Copy()
-	keeper.AddValidator(ctx, valToBeAdded)
-	fmt.Println("currentValSet new added keeper.GetAllValidators(ctx)", len(keeper.GetValidatorSet(ctx).Validators))
-	fmt.Println("Val to be Added")
-	fmt.Println("-->", "Address", valToBeAdded.Signer.String(), "StartEpoch", valToBeAdded.StartEpoch, "EndEpoch", valToBeAdded.EndEpoch, "VotingPower", valToBeAdded.VotingPower)
 
-	// helper.UpdateValidators(
-	// 	currentValSet,                // pointer to current validator set -- UpdateValidators will modify it
-	// 	keeper.GetAllValidators(ctx), // All validators
-	// 	5,                            // ack count
-	// )
+	keeper.AddValidator(ctx, valToBeAdded)
+
 	setUpdates := helper.GetUpdatedValidators(currentValSet, keeper.GetAllValidators(ctx), 5)
 	currentValSet.UpdateWithChangeSet(setUpdates)
-
-	fmt.Println("Validators in updated validator set", len(currentValSet.Validators))
-	// for _, v := range currentValSet.Validators {
-	// 	fmt.Println("-->", "Address", v.Signer.String(), "StartEpoch", v.StartEpoch, "EndEpoch", v.EndEpoch, "VotingPower", v.VotingPower)
-	// }
-	fmt.Println("venky currentValSet GetUpdatedValidators", len(prevValSet.Validators)+1, len(currentValSet.Validators))
 
 	require.Equal(t, len(prevValSet.Validators)+1, len(currentValSet.Validators), "Number of validators should be increased by 1")
 	require.Equal(t, true, currentValSet.HasAddress(valToBeAdded.Signer.Bytes()), "New Validator should be added")
@@ -318,25 +281,26 @@ func (suite *KeeperTestSuite) TestUpdateValidatorSetChange() {
 	cmn.LoadValidatorSet(4, t, keeper, ctx, false, 10)
 	initValSet := keeper.GetValidatorSet(ctx)
 	t.Log("init val set-", initValSet)
+
 	keeper.IncrementAccum(ctx, 2)
 	prevValSet := initValSet.Copy()
 	currentValSet := keeper.GetValidatorSet(ctx)
 	t.Log("current Val set - ", currentValSet)
+
 	valToUpdate := currentValSet.Validators[0]
 	newSigner := cmn.GenRandomVal(1, 0, 10, 10, false, 1)
 	t.Log("Validators in old validator set")
+
 	for _, v := range currentValSet.Validators {
 		t.Log("-->", "Address", v.Signer.String(), "ProposerPriority", v.ProposerPriority, "Signer", v.Signer.String(), "Total VotingPower", currentValSet.TotalVotingPower())
 	}
+
 	keeper.UpdateSigner(ctx, newSigner[0].Signer, newSigner[0].PubKey, valToUpdate.Signer)
-	// helper.UpdateValidators(
-	// 	&currentValSet,               // pointer to current validator set -- UpdateValidators will modify it
-	// 	keeper.GetAllValidators(ctx), // All validators
-	// 	5,                            // ack count
-	// )
+
 	setUpdates := helper.GetUpdatedValidators(&currentValSet, keeper.GetAllValidators(ctx), 5)
 	currentValSet.UpdateWithChangeSet(setUpdates)
 	t.Log("Validators in updated validator set")
+
 	for _, v := range currentValSet.Validators {
 		t.Log("-->", "Address", v.Signer.String(), "ProposerPriority", v.ProposerPriority, "Signer", v.Signer.String(), "Total VotingPower", currentValSet.TotalVotingPower())
 	}
@@ -347,13 +311,11 @@ func (suite *KeeperTestSuite) TestUpdateValidatorSetChange() {
 	require.Equal(t, -1, index, "Prev Validator should not be present in CurrentValSet")
 	index, val := currentValSet.GetByAddress(newSigner[0].Signer.Bytes())
 	t.Log("currentValSet - ", currentValSet)
-	// require.Equal(t, 0, index, "New Signer should be present in Current val set")
+
 	require.Equal(t, newSigner[0].Signer, val.Signer, "Signer address should change")
 	require.Equal(t, newSigner[0].PubKey, val.PubKey, "Signer pubkey should change")
-	// require.Equal(t, valToUpdate.ProposerPriority, val.ProposerPriority, "Validator ProposerPriority should not change")
+
 	require.Equal(t, prevValSet.TotalVotingPower(), currentValSet.TotalVotingPower(), "Total VotingPower should not change")
-	// TODO not sure if proposer check is needed
-	//require.Equal(t, &initValSet.Proposer.Address, &currentValSet.Proposer.Address, "Proposer should not change")
 
 	/* Validator Set changes When
 		1. When ackCount changes
