@@ -9,6 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethTypes "github.com/maticnetwork/bor/core/types"
+	errs "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
@@ -189,8 +190,7 @@ func (suite *HandlerTestSuite) TestHandleMsgValidatorExit() {
 	require.True(t, found, "Validator should be present even after deactivation")
 
 	got = suite.handler(ctx, msg)
-	require.True(t, !got.IsOK(), "validator already exited. cannot exit again")
-
+	require.True(t, !got.IsOK(), errs.CodeToDefaultMsg(got.Code))
 	currentVals := keeper.GetCurrentValidators(ctx)
 	require.Equal(t, 4, len(currentVals), "No of current validators should exist before epoch passes")
 
