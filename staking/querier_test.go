@@ -12,6 +12,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethTypes "github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/heimdall/app"
+	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
 	"github.com/maticnetwork/heimdall/helper/mocks"
 	"github.com/maticnetwork/heimdall/staking"
@@ -249,15 +250,12 @@ func (suite *QuerierTestSuite) TestHandleDividendAccountRoot() {
 
 func (suite *QuerierTestSuite) TestHandleQueryAccountProof() {
 	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
+	var accountRoot [32]byte
 
-	key := new([32]byte)
 	path := []string{types.QueryAccountProof}
 
 	route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryAccountProof)
 	stakingInfo := &stakinginfo.Stakinginfo{}
-	suite.contractCaller.On("GetStakingInfoInstance", mock.Anything).Return(stakingInfo, nil)
-
-	suite.contractCaller.On("CurrentAccountStateRoot", mock.Anything).Return(key, nil)
 
 	dividendAccount := hmTypes.NewDividendAccount(
 		hmTypes.NewDividendAccountID(uint64(1)),
@@ -265,6 +263,13 @@ func (suite *QuerierTestSuite) TestHandleQueryAccountProof() {
 		big.NewInt(0).String(),
 	)
 	app.StakingKeeper.AddDividendAccount(ctx, dividendAccount)
+	dividendAccounts := app.StakingKeeper.GetAllDividendAccounts(ctx)
+
+	accRoot, err := checkpointTypes.GetAccountRootHash(dividendAccounts)
+	copy(accountRoot[:], accRoot)
+	suite.contractCaller.On("GetStakingInfoInstance", mock.Anything).Return(stakingInfo, nil)
+
+	suite.contractCaller.On("CurrentAccountStateRoot", stakingInfo).Return(accountRoot, nil)
 
 	req := abci.RequestQuery{
 		Path: route,
