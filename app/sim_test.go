@@ -96,8 +96,6 @@ func TestAppImportExport(t *testing.T) {
 		app.ModuleAccountAddrs(), config,
 	)
 
-	app.Commit()
-
 	// export state and simParams before the simulation error is checked
 	err = CheckExportSimulation(app, config, simParams)
 	require.NoError(t, err)
@@ -128,7 +126,7 @@ func TestAppImportExport(t *testing.T) {
 	var genesisState GenesisState
 	err = app.Codec().UnmarshalJSON(appState, &genesisState)
 	require.NoError(t, err)
-
+	fmt.Println("app.LastBlockHeight()", app.LastBlockHeight())
 	ctxA := app.NewContext(true, abci.Header{Height: app.LastBlockHeight()})
 	ctxB := newApp.NewContext(true, abci.Header{Height: app.LastBlockHeight()})
 	newApp.mm.InitGenesis(ctxB, genesisState)
