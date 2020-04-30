@@ -48,7 +48,7 @@ func GetSequence(cdc *codec.Codec) *cobra.Command {
 			}
 
 			var queryParams []byte
-			var err error = nil
+			var err error
 			var t string = ""
 			if txHashStr != "" {
 				queryParams, err = cliCtx.Codec.MarshalJSON(types.NewQuerySequenceParams(txHashStr, logIndex))
@@ -71,7 +71,11 @@ func GetSequence(cdc *codec.Codec) *cobra.Command {
 
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
 	cmd.Flags().String(FlagLogIndex, "", "--log-index=<log-index>")
-	cmd.MarkFlagRequired(FlagTxHash)
-	cmd.MarkFlagRequired(FlagLogIndex)
+	if err := cmd.MarkFlagRequired(FlagTxHash); err != nil {
+		cliLogger.Error("GetSequence | MarkFlagRequired | FlagTxHash", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagLogIndex); err != nil {
+		cliLogger.Error("GetSequence | MarkFlagRequired | FlagLogIndex", "Error", err)
+	}
 	return cmd
 }

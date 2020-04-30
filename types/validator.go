@@ -61,16 +61,10 @@ func (v *Validator) IsCurrentValidator(ackCount uint64) bool {
 
 // Validates validator
 func (v *Validator) ValidateBasic() bool {
-	if v.StartEpoch < 0 || v.EndEpoch < 0 {
-		return false
-	}
 	if bytes.Equal(v.PubKey.Bytes(), ZeroPubKey.Bytes()) {
 		return false
 	}
 	if bytes.Equal(v.Signer.Bytes(), []byte("")) {
-		return false
-	}
-	if v.ID < 0 {
 		return false
 	}
 	return true

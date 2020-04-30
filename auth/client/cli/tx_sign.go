@@ -3,21 +3,18 @@ package cli
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	amino "github.com/tendermint/go-amino"
-	"github.com/tendermint/tendermint/crypto/multisig"
 
 	"github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/helper"
-	hmTypes "github.com/maticnetwork/heimdall/types"
 )
+
+var logger = helper.Logger.With("module", "auth/client/cli")
 
 // GetSignCommand returns the transaction sign command.
 func GetSignCommand(codec *amino.Codec) *cobra.Command {
@@ -60,8 +57,12 @@ func preSignCmd(cmd *cobra.Command, _ []string) {
 	// Conditionally mark the account and sequence numbers required as no RPC
 	// query will be done.
 	if viper.GetBool(flagOffline) {
-		cmd.MarkFlagRequired(client.FlagAccountNumber)
-		cmd.MarkFlagRequired(client.FlagSequence)
+		if err := cmd.MarkFlagRequired(client.FlagAccountNumber); err != nil {
+			logger.Error("preSignCmd | MarkFlagRequired | FlagAccountNumber", "Error", err)
+		}
+		if err := cmd.MarkFlagRequired(client.FlagSequence); err != nil {
+			logger.Error("preSignCmd | MarkFlagRequired | FlagSequence", "Error", err)
+		}
 	}
 }
 
@@ -129,88 +130,4 @@ func makeSignCmd(cdc *amino.Codec) func(cmd *cobra.Command, args []string) error
 
 		return
 	}
-}
-
-// printAndValidateSigs will validate the signatures of a given transaction over
-// its expected signers. In addition, if offline has not been supplied, the
-// signature is verified over the transaction sign bytes.
-func printAndValidateSigs(
-	cliCtx context.CLIContext, chainID string, stdTx auth.StdTx, offline bool,
-) bool {
-
-	fmt.Println("Signers:")
-
-	signers := stdTx.GetSigners()
-	for i, signer := range signers {
-		fmt.Printf("  %v: %v\n", i, signer.String())
-	}
-
-	success := true
-	sigs := stdTx.GetSignatures()
-
-	fmt.Println("")
-	fmt.Println("Signatures:")
-
-	if len(sigs) != len(signers) {
-		success = false
-	}
-
-	for i, sig := range sigs {
-		sigAddr := hmTypes.BytesToHeimdallAddress(sig.Address().Bytes())
-		sigSanity := "OK"
-
-		var (
-			multiSigHeader string
-			multiSigMsg    string
-		)
-
-		if i >= len(signers) || !sigAddr.Equals(signers[i]) {
-			sigSanity = "ERROR: signature does not match its respective signer"
-			success = false
-		}
-
-		// Validate the actual signature over the transaction bytes since we can
-		// reach out to a full node to query accounts.
-		if !offline && success {
-			acc, err := types.NewAccountRetriever(cliCtx).GetAccount(sigAddr)
-			if err != nil {
-				fmt.Printf("failed to get account: %s\n", sigAddr)
-				return false
-			}
-
-			sigBytes := auth.StdSignBytes(
-				chainID, acc.GetAccountNumber(), acc.GetSequence(),
-				stdTx.Fee, stdTx.GetMsgs(), stdTx.GetMemo(),
-			)
-
-			if ok := sig.VerifyBytes(sigBytes, sig.Signature); !ok {
-				sigSanity = "ERROR: signature invalid"
-				success = false
-			}
-		}
-
-		multiPK, ok := sig.PubKey.(multisig.PubKeyMultisigThreshold)
-		if ok {
-			var multiSig multisig.Multisignature
-			cliCtx.Codec.MustUnmarshalBinaryBare(sig.Signature, &multiSig)
-
-			var b strings.Builder
-			b.WriteString("\n  MultiSig Signatures:\n")
-
-			for i := 0; i < multiSig.BitArray.Size(); i++ {
-				if multiSig.BitArray.GetIndex(i) {
-					addr := sdk.AccAddress(multiPK.PubKeys[i].Address().Bytes())
-					b.WriteString(fmt.Sprintf("    %d: %s (weight: %d)\n", i, addr, 1))
-				}
-			}
-
-			multiSigHeader = fmt.Sprintf(" [multisig threshold: %d/%d]", multiPK.K, len(multiPK.PubKeys))
-			multiSigMsg = b.String()
-		}
-
-		fmt.Printf("  %d: %s\t\t\t[%s]%s%s\n", i, sigAddr.String(), sigSanity, multiSigHeader, multiSigMsg)
-	}
-
-	fmt.Println("")
-	return success
 }

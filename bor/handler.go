@@ -63,7 +63,7 @@ func HandleMsgProposeSpan(ctx sdk.Context, msg types.MsgProposeSpan, k Keeper) s
 	}
 
 	// get last span
-	lastSpan, err = k.GetLastSpan(ctx)
+	_, err = k.GetLastSpan(ctx)
 	if err != nil {
 		k.Logger(ctx).Error("Unable to fetch last span", "Error", err)
 		return common.ErrSpanNotFound(k.Codespace()).Result()

@@ -40,6 +40,8 @@ import (
 	hmModule "github.com/maticnetwork/heimdall/types/module"
 )
 
+var logger = helper.Logger.With("module", "cmd/heimdalld")
+
 var (
 	flagNodeDirPrefix    = "node-dir-prefix"
 	flagNumValidators    = "v"
@@ -95,10 +97,9 @@ func main() {
 	)
 
 	// bind with-heimdall-config config with root cmd
-	viper.BindPFlag(
-		helper.WithHeimdallConfigFlag,
-		rootCmd.Flags().Lookup(helper.WithHeimdallConfigFlag),
-	)
+	if err := viper.BindPFlag(helper.WithHeimdallConfigFlag, rootCmd.Flags().Lookup(helper.WithHeimdallConfigFlag)); err != nil {
+		logger.Error("main | BindPFlag | helper.WithHeimdallConfigFlag", "Error", err)
+	}
 	server.AddCommands(ctx, cdc, rootCmd, newApp, exportAppStateAndTMValidators)
 	rootCmd.AddCommand(showAccountCmd())
 	rootCmd.AddCommand(showPrivateKeyCmd())
@@ -266,7 +267,9 @@ func populatePersistentPeersInConfigAndWriteIt(config *cfg.Config) {
 func getGenesisAccount(address []byte) authTypes.GenesisAccount {
 	acc := authTypes.NewBaseAccountWithAddress(hmTypes.BytesToHeimdallAddress(address))
 	genesisBalance, _ := big.NewInt(0).SetString("1000000000000000000000", 10)
-	acc.SetCoins(sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: sdk.NewIntFromBigInt(genesisBalance)}})
+	if err := acc.SetCoins(sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: sdk.NewIntFromBigInt(genesisBalance)}}); err != nil {
+		logger.Error("getGenesisAccount | SetCoins", "Error", err)
+	}
 	result, _ := authTypes.NewGenesisAccountI(&acc)
 	return result
 }
