@@ -41,16 +41,15 @@ func NewPulp() *Pulp {
 }
 
 // GetPulpHash returns string hash
-func GetPulpHash(name string) []byte {
-	return crypto.Keccak256([]byte(name))[:PulpHashLength]
+func GetPulpHash(msg sdk.Msg) []byte {
+	return crypto.Keccak256([]byte(fmt.Sprintf("%s::%s", msg.Route(), msg.Type())))[:PulpHashLength]
 }
 
 // RegisterConcrete should be used to register concrete types that will appear in
 // interface fields/elements to be encoded/decoded by pulp.
 func (p *Pulp) RegisterConcrete(msg sdk.Msg) {
 	rtype := reflect.TypeOf(msg)
-	name := fmt.Sprintf("%s::%s", msg.Route(), msg.Type())
-	p.typeInfos[hex.EncodeToString(GetPulpHash(name))] = rtype
+	p.typeInfos[hex.EncodeToString(GetPulpHash(msg))] = rtype
 }
 
 // GetMsgTxInstance get new instance associated with base tx
@@ -62,13 +61,12 @@ func (p *Pulp) GetMsgTxInstance(hash []byte) interface{} {
 // EncodeToBytes encodes msg to bytes
 func (p *Pulp) EncodeToBytes(tx StdTx) ([]byte, error) {
 	msg := tx.GetMsgs()[0]
-	name := fmt.Sprintf("%s::%s", msg.Route(), msg.Type())
 	txBytes, err := rlp.EncodeToBytes(tx)
 	if err != nil {
 		return nil, err
 	}
 
-	return append(GetPulpHash(name), txBytes[:]...), nil
+	return append(GetPulpHash(msg), txBytes[:]...), nil
 }
 
 // DecodeBytes decodes bytes to msg

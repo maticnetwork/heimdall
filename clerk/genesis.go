@@ -11,7 +11,9 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 	// add checkpoint headers
 	if len(data.EventRecords) != 0 {
 		for _, record := range data.EventRecords {
-			keeper.SetEventRecord(ctx, *record)
+			if err := keeper.SetEventRecord(ctx, *record); err != nil {
+				keeper.Logger(ctx).Error("InitGenesis | SetEventRecord", "error", err)
+			}
 		}
 	}
 

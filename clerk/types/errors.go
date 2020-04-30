@@ -7,8 +7,8 @@ import (
 // Bank errors reserve 5400 ~ 5499.
 const (
 	CodeEventRecordAlreadySynced sdk.CodeType = 5400
-	CodeEventRecordInvalid                    = 5401
-	CodeEventRecordUpdate                     = 5402
+	CodeEventRecordInvalid       sdk.CodeType = 5401
+	CodeEventRecordUpdate        sdk.CodeType = 5402
 )
 
 // ErrEventRecordAlreadySynced represents event sync error

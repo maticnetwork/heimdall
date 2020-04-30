@@ -200,6 +200,9 @@ func handleQueryAccountProof(ctx sdk.Context, req abci.RequestQuery, keeper Keep
 	}
 
 	contractCallerObj, err := helper.NewContractCaller()
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("handleQueryAccountProof | NewContractCaller ", err.Error()))
+	}
 
 	chainParams := keeper.chainKeeper.GetParams(ctx)
 
@@ -214,7 +217,7 @@ func handleQueryAccountProof(ctx sdk.Context, req abci.RequestQuery, keeper Keep
 	dividendAccounts := keeper.GetAllDividendAccounts(ctx)
 	currentStateAccountRoot, err := checkpointTypes.GetAccountRootHash(dividendAccounts)
 
-	if bytes.Compare(accountRootOnChain[:], currentStateAccountRoot) == 0 {
+	if bytes.Equal(accountRootOnChain[:], currentStateAccountRoot) {
 		// Calculate new account root hash
 		merkleProof, index, _ := checkpointTypes.GetAccountProof(dividendAccounts, params.DividendAccountID)
 		accountProof := hmTypes.NewDividendAccountProof(params.DividendAccountID, merkleProof, index)

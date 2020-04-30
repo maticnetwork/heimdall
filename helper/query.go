@@ -230,7 +230,11 @@ func GetBlockWithClient(client *httpClient.HTTP, height int64) (*tmTypes.Block, 
 	}
 
 	// unsubscribe query
-	defer client.Unsubscribe(c, subscriber, query)
+	defer func() {
+		if err := client.Unsubscribe(c, subscriber, query); err != nil {
+			Logger.Error("GetBlockWithClient | Unsubscribe", "Error", err)
+		}
+	}()
 
 	for {
 		select {

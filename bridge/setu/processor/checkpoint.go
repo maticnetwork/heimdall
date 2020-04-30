@@ -71,9 +71,15 @@ func (cp *CheckpointProcessor) Start() error {
 // RegisterTasks - Registers checkpoint related tasks with machinery
 func (cp *CheckpointProcessor) RegisterTasks() {
 	cp.Logger.Info("Registering checkpoint tasks")
-	cp.queueConnector.Server.RegisterTask("sendCheckpointToHeimdall", cp.sendCheckpointToHeimdall)
-	cp.queueConnector.Server.RegisterTask("sendCheckpointToRootchain", cp.sendCheckpointToRootchain)
-	cp.queueConnector.Server.RegisterTask("sendCheckpointAckToHeimdall", cp.sendCheckpointAckToHeimdall)
+	if err := cp.queueConnector.Server.RegisterTask("sendCheckpointToHeimdall", cp.sendCheckpointToHeimdall); err != nil {
+		cp.Logger.Error("RegisterTasks | sendCheckpointToHeimdall", "error", err)
+	}
+	if err := cp.queueConnector.Server.RegisterTask("sendCheckpointToRootchain", cp.sendCheckpointToRootchain); err != nil {
+		cp.Logger.Error("RegisterTasks | sendCheckpointToRootchain", "error", err)
+	}
+	if err := cp.queueConnector.Server.RegisterTask("sendCheckpointAckToHeimdall", cp.sendCheckpointAckToHeimdall); err != nil {
+		cp.Logger.Error("RegisterTasks | sendCheckpointAckToHeimdall", "error", err)
+	}
 }
 
 func (cp *CheckpointProcessor) startPollingForNoAck(ctx context.Context, interval time.Duration) {
@@ -390,7 +396,7 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToHeimdall(checkpointConte
 		return err
 	}
 	cp.Logger.Info("Root hash calculated", "rootHash", hmTypes.BytesToHeimdallHash(root))
-	accountRootHash := hmTypes.ZeroHeimdallHash
+	var accountRootHash hmTypes.HeimdallHash
 	//Get DividendAccountRoot from HeimdallServer
 	if accountRootHash, err = cp.fetchDividendAccountRoot(); err != nil {
 		cp.Logger.Info("Error while fetching initial account root hash from HeimdallServer", "err", err)
@@ -572,7 +578,6 @@ func (cp *CheckpointProcessor) checkIfNoAckIsRequired(checkpointContext *Checkpo
 	lastNoAck := cp.getLastNoAckTime()
 
 	lastNoAckTime := time.Unix(int64(lastNoAck), 0)
-	timeDiff = currentTime.Sub(lastNoAckTime)
 	// if last no ack == 0 , first no-ack to be sent
 	if currentTime.Sub(lastNoAckTime).Seconds() < checkpointParams.CheckpointBufferTime.Seconds() && lastNoAck != 0 {
 		cp.Logger.Debug("Cannot send multiple no-ack in short time", "timeDiff", currentTime.Sub(lastNoAckTime).Seconds(), "ExpectedDiff", checkpointParams.CheckpointBufferTime.Seconds())

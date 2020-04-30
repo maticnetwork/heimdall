@@ -132,17 +132,6 @@ func capitalise(input string) string {
 	return toCamelCase(strings.ToUpper(input[:1]) + input[1:])
 }
 
-// decapitalise makes a camel-case string which starts with a lower case character.
-func decapitalise(input string) string {
-	for len(input) > 0 && input[0] == '_' {
-		input = input[1:]
-	}
-	if len(input) == 0 {
-		return ""
-	}
-	return toCamelCase(strings.ToLower(input[:1]) + input[1:])
-}
-
 // toCamelCase converts an under-score string to a camel-case string
 func toCamelCase(input string) string {
 	toupper := false

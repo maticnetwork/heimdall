@@ -35,7 +35,7 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 }
 
 func queryParams(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	if path == nil || len(path) == 0 {
+	if len(path) == 0 {
 		bz, err := json.Marshal(keeper.GetParams(ctx))
 		if err != nil {
 			return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))

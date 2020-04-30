@@ -98,7 +98,6 @@ type txExtraInfo struct {
 }
 
 type rpcTransaction struct {
-	tx *ethTypes.Transaction
 	txExtraInfo
 }
 
