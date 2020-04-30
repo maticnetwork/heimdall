@@ -55,9 +55,11 @@ func (fp *FeeProcessor) sendTopUpFeeToHeimdall(eventName string, logBytes string
 			fp.Logger.Info("Ignoring task to send topup to heimdall as already processed",
 				"event", eventName,
 				"validatorId", event.ValidatorId,
+				"Signer", event.Signer,
 				"Fee", event.Fee,
 				"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 				"logIndex", uint64(vLog.Index),
+				"blockNumber", vLog.BlockNumber,
 			)
 			return nil
 		}
@@ -65,13 +67,15 @@ func (fp *FeeProcessor) sendTopUpFeeToHeimdall(eventName string, logBytes string
 		fp.Logger.Info("✅ sending topup to heimdall",
 			"event", eventName,
 			"validatorId", event.ValidatorId,
+			"Signer", event.Signer,
 			"Fee", event.Fee,
 			"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			"logIndex", uint64(vLog.Index),
+			"blockNumber", vLog.BlockNumber,
 		)
 
 		// create msg checkpoint ack message
-		msg := topupTypes.NewMsgTopup(helper.GetFromAddress(fp.cliCtx), event.ValidatorId.Uint64(), hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()), uint64(vLog.Index))
+		msg := topupTypes.NewMsgTopup(helper.GetFromAddress(fp.cliCtx), event.ValidatorId.Uint64(), hmTypes.BytesToHeimdallAddress(event.Signer.Bytes()), event.Fee, hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()), uint64(vLog.Index), vLog.BlockNumber)
 
 		// return broadcast to heimdall
 		if err := fp.txBroadcaster.BroadcastToHeimdall(msg); err != nil {

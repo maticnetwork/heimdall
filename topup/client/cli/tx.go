@@ -56,6 +56,19 @@ func TopupTxCmd(cdc *codec.Codec) *cobra.Command {
 				return fmt.Errorf("Validator ID cannot be zero")
 			}
 
+			// get signer
+			signer := types.HexToHeimdallAddress(viper.GetString(FlagSignerAddress))
+			if signer.Empty() {
+				return fmt.Errorf("Signer address cannot be zero")
+			}
+
+			feeAmountStr := viper.GetString(FlagFeeAmount)
+			// fee amount
+			feeAmount, ok := big.NewInt(0).SetString(feeAmountStr, 10)
+			if !ok {
+				return errors.New("Invalid fee amount")
+			}
+
 			txhash := viper.GetString(FlagTxHash)
 			if txhash == "" {
 				return fmt.Errorf("transaction hash has to be supplied")
@@ -65,8 +78,11 @@ func TopupTxCmd(cdc *codec.Codec) *cobra.Command {
 			msg := topupTypes.NewMsgTopup(
 				proposer,
 				uint64(validatorID),
+				signer,
+				feeAmount,
 				types.HexToHeimdallHash(txhash),
 				uint64(viper.GetInt64(FlagLogIndex)),
+				uint64(viper.GetInt64(FlagBlockNumber)),
 			)
 
 			// broadcast msg with cli
@@ -76,10 +92,17 @@ func TopupTxCmd(cdc *codec.Codec) *cobra.Command {
 
 	cmd.Flags().Int(FlagValidatorID, 0, "--validator-id=<validator ID here>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
-	cmd.Flags().String(FlagLogIndex, "", "--log-index=<log-index>")
+	cmd.Flags().String(FlagSignerAddress, "", "--signer=<signer>")
+	cmd.Flags().String(FlagFeeAmount, "", "--topup-amount=<topup-amount>")
+	cmd.Flags().Int(FlagLogIndex, 0, "--log-index=<log-index>")
+	cmd.Flags().Int(FlagBlockNumber, 0, "--block-number=<block-number>")
+
 	cmd.MarkFlagRequired(FlagValidatorID)
 	cmd.MarkFlagRequired(FlagTxHash)
+	cmd.MarkFlagRequired(FlagSignerAddress)
+	cmd.MarkFlagRequired(FlagFeeAmount)
 	cmd.MarkFlagRequired(FlagLogIndex)
+	cmd.MarkFlagRequired(FlagBlockNumber)
 	return cmd
 }
 

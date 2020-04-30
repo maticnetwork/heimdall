@@ -19,6 +19,7 @@ import (
 	topupRest "github.com/maticnetwork/heimdall/topup/client/rest"
 
 	"github.com/maticnetwork/heimdall/topup/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmModule "github.com/maticnetwork/heimdall/types/module"
 	simTypes "github.com/maticnetwork/heimdall/types/simulation"
 )
@@ -173,4 +174,13 @@ func (AppModule) RegisterStoreDecoder(sdr hmModule.StoreDecoderRegistry) {
 // WeightedOperations doesn't return any chainmanager module operation.
 func (AppModule) WeightedOperations(_ hmModule.SimulationState) []simTypes.WeightedOperation {
 	return nil
+}
+
+func (am AppModule) NewSideTxHandler() hmTypes.SideTxHandler {
+	return NewSideTxHandler(am.keeper, am.contractCaller)
+}
+
+// NewPostTxHandler side tx handler
+func (am AppModule) NewPostTxHandler() hmTypes.PostTxHandler {
+	return NewPostTxHandler(am.keeper, am.contractCaller)
 }

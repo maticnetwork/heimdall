@@ -2,6 +2,7 @@ package types
 
 import (
 	"bytes"
+	"math/big"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -21,28 +22,37 @@ var cdc = codec.New()
 var _ sdk.Msg = &MsgValidatorJoin{}
 
 type MsgValidatorJoin struct {
-	From         hmTypes.HeimdallAddress `json:"from"`
-	ID           hmTypes.ValidatorID     `json:"id"`
-	SignerPubKey hmTypes.PubKey          `json:"pub_key"`
-	TxHash       hmTypes.HeimdallHash    `json:"tx_hash"`
-	LogIndex     uint64                  `json:"log_index"`
+	From            hmTypes.HeimdallAddress `json:"from"`
+	ID              hmTypes.ValidatorID     `json:"id"`
+	ActivationEpoch uint64                  `json:"activationEpoch"`
+	Amount          *big.Int                `json:"amount"`
+	SignerPubKey    hmTypes.PubKey          `json:"pub_key"`
+	TxHash          hmTypes.HeimdallHash    `json:"tx_hash"`
+	LogIndex        uint64                  `json:"log_index"`
+	BlockNumber     uint64                  `json:"block_number"`
 }
 
 // NewMsgValidatorJoin creates new validator-join
 func NewMsgValidatorJoin(
 	from hmTypes.HeimdallAddress,
 	id uint64,
+	activationEpoch uint64,
+	amount *big.Int,
 	pubkey hmTypes.PubKey,
 	txhash hmTypes.HeimdallHash,
 	logIndex uint64,
+	blockNumber uint64,
 ) MsgValidatorJoin {
 
 	return MsgValidatorJoin{
-		From:         from,
-		ID:           hmTypes.NewValidatorID(id),
-		SignerPubKey: pubkey,
-		TxHash:       txhash,
-		LogIndex:     logIndex,
+		From:            from,
+		ID:              hmTypes.NewValidatorID(id),
+		ActivationEpoch: activationEpoch,
+		Amount:          amount,
+		SignerPubKey:    pubkey,
+		TxHash:          txhash,
+		LogIndex:        logIndex,
+		BlockNumber:     blockNumber,
 	}
 }
 
@@ -92,6 +102,11 @@ func (msg MsgValidatorJoin) GetLogIndex() uint64 {
 	return msg.LogIndex
 }
 
+// GetSideSignBytes returns side sign bytes
+func (msg MsgValidatorJoin) GetSideSignBytes() []byte {
+	return nil
+}
+
 //
 // Stake update
 //
@@ -104,19 +119,23 @@ var _ sdk.Msg = &MsgStakeUpdate{}
 
 // MsgStakeUpdate represents stake update
 type MsgStakeUpdate struct {
-	From     hmTypes.HeimdallAddress `json:"from"`
-	ID       hmTypes.ValidatorID     `json:"id"`
-	TxHash   hmTypes.HeimdallHash    `json:"tx_hash"`
-	LogIndex uint64                  `json:"log_index"`
+	From        hmTypes.HeimdallAddress `json:"from"`
+	ID          hmTypes.ValidatorID     `json:"id"`
+	NewAmount   *big.Int                `json:"amount"`
+	TxHash      hmTypes.HeimdallHash    `json:"tx_hash"`
+	LogIndex    uint64                  `json:"log_index"`
+	BlockNumber uint64                  `json:"block_number"`
 }
 
 // NewMsgStakeUpdate represents stake update
-func NewMsgStakeUpdate(from hmTypes.HeimdallAddress, id uint64, txhash hmTypes.HeimdallHash, logIndex uint64) MsgStakeUpdate {
+func NewMsgStakeUpdate(from hmTypes.HeimdallAddress, id uint64, newAmount *big.Int, txhash hmTypes.HeimdallHash, logIndex uint64, blockNumber uint64) MsgStakeUpdate {
 	return MsgStakeUpdate{
-		From:     from,
-		ID:       hmTypes.NewValidatorID(id),
-		TxHash:   txhash,
-		LogIndex: logIndex,
+		From:        from,
+		ID:          hmTypes.NewValidatorID(id),
+		NewAmount:   newAmount,
+		TxHash:      txhash,
+		LogIndex:    logIndex,
+		BlockNumber: blockNumber,
 	}
 }
 
@@ -162,6 +181,11 @@ func (msg MsgStakeUpdate) GetLogIndex() uint64 {
 	return msg.LogIndex
 }
 
+// GetSideSignBytes returns side sign bytes
+func (msg MsgStakeUpdate) GetSideSignBytes() []byte {
+	return nil
+}
+
 //
 // validator update
 //
@@ -175,6 +199,7 @@ type MsgSignerUpdate struct {
 	NewSignerPubKey hmTypes.PubKey          `json:"pubKey"`
 	TxHash          hmTypes.HeimdallHash    `json:"tx_hash"`
 	LogIndex        uint64                  `json:"log_index"`
+	BlockNumber     uint64                  `json:"block_number"`
 }
 
 func NewMsgSignerUpdate(
@@ -183,6 +208,7 @@ func NewMsgSignerUpdate(
 	pubKey hmTypes.PubKey,
 	txhash hmTypes.HeimdallHash,
 	logIndex uint64,
+	blockNumber uint64,
 ) MsgSignerUpdate {
 	return MsgSignerUpdate{
 		From:            from,
@@ -190,6 +216,7 @@ func NewMsgSignerUpdate(
 		NewSignerPubKey: pubKey,
 		TxHash:          txhash,
 		LogIndex:        logIndex,
+		BlockNumber:     blockNumber,
 	}
 }
 
@@ -239,6 +266,11 @@ func (msg MsgSignerUpdate) GetLogIndex() uint64 {
 	return msg.LogIndex
 }
 
+// GetSideSignBytes returns side sign bytes
+func (msg MsgSignerUpdate) GetSideSignBytes() []byte {
+	return nil
+}
+
 //
 // validator exit
 //
@@ -246,18 +278,22 @@ func (msg MsgSignerUpdate) GetLogIndex() uint64 {
 var _ sdk.Msg = &MsgValidatorExit{}
 
 type MsgValidatorExit struct {
-	From     hmTypes.HeimdallAddress `json:"from"`
-	ID       hmTypes.ValidatorID     `json:"id"`
-	TxHash   hmTypes.HeimdallHash    `json:"tx_hash"`
-	LogIndex uint64                  `json:"log_index"`
+	From              hmTypes.HeimdallAddress `json:"from"`
+	ID                hmTypes.ValidatorID     `json:"id"`
+	DeactivationEpoch uint64                  `json:"deactivationEpoch"`
+	TxHash            hmTypes.HeimdallHash    `json:"tx_hash"`
+	LogIndex          uint64                  `json:"log_index"`
+	BlockNumber       uint64                  `json:"block_number"`
 }
 
-func NewMsgValidatorExit(from hmTypes.HeimdallAddress, id uint64, txhash hmTypes.HeimdallHash, logIndex uint64) MsgValidatorExit {
+func NewMsgValidatorExit(from hmTypes.HeimdallAddress, id uint64, deactivationEpoch uint64, txhash hmTypes.HeimdallHash, logIndex uint64, blockNumber uint64) MsgValidatorExit {
 	return MsgValidatorExit{
-		From:     from,
-		ID:       hmTypes.NewValidatorID(id),
-		TxHash:   txhash,
-		LogIndex: logIndex,
+		From:              from,
+		ID:                hmTypes.NewValidatorID(id),
+		DeactivationEpoch: deactivationEpoch,
+		TxHash:            txhash,
+		LogIndex:          logIndex,
+		BlockNumber:       blockNumber,
 	}
 }
 
@@ -301,4 +337,9 @@ func (msg MsgValidatorExit) GetTxHash() types.HeimdallHash {
 // GetLogIndex Returns log index
 func (msg MsgValidatorExit) GetLogIndex() uint64 {
 	return msg.LogIndex
+}
+
+// GetSideSignBytes returns side sign bytes
+func (msg MsgValidatorExit) GetSideSignBytes() []byte {
+	return nil
 }

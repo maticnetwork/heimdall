@@ -72,6 +72,12 @@ func CreateNewStateRecord(cdc *codec.Codec) *cobra.Command {
 				return fmt.Errorf("record id cannot be empty")
 			}
 
+			// get contract Addr
+			contractAddr := types.HexToHeimdallAddress(viper.GetString(FlagContractAddress))
+			if contractAddr.Empty() {
+				return fmt.Errorf("contract Address cannot be empty")
+			}
+
 			// log index
 			logIndexStr := viper.GetString(FlagLogIndex)
 			if logIndexStr == "" {
@@ -80,7 +86,18 @@ func CreateNewStateRecord(cdc *codec.Codec) *cobra.Command {
 
 			logIndex, err := strconv.ParseUint(logIndexStr, 10, 64)
 			if err != nil {
-				return fmt.Errorf("log index cannot be empty")
+				return fmt.Errorf("log index cannot be parsed")
+			}
+
+			// log index
+			dataStr := viper.GetString(FlagData)
+			if dataStr == "" {
+				return fmt.Errorf("data cannot be empty")
+			}
+
+			data := types.HexToHexBytes(dataStr)
+			if dataStr == "" {
+				return fmt.Errorf("data should be hex string")
 			}
 
 			// create new state record
@@ -88,7 +105,10 @@ func CreateNewStateRecord(cdc *codec.Codec) *cobra.Command {
 				proposer,
 				types.HexToHeimdallHash(txHashStr),
 				logIndex,
+				uint64(viper.GetInt64(FlagBlockNumber)),
 				recordID,
+				contractAddr,
+				data,
 				borChainID,
 			)
 
@@ -99,11 +119,18 @@ func CreateNewStateRecord(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(FlagLogIndex, "", "--log-index=<log-index>")
 	cmd.Flags().String(FlagRecordID, "", "--id=<record-id>")
 	cmd.Flags().String(FlagBorChainId, "", "--bor-chain-id=<bor-chain-id>")
+	cmd.Flags().Int(FlagBlockNumber, 0, "--block-number=<block-number>")
+	cmd.Flags().String(FlagContractAddress, "", "--contract-addr=<contract-addr>")
+	cmd.Flags().String(FlagData, "", "--data=<data>")
+
 	cmd.MarkFlagRequired(FlagProposerAddress)
 	cmd.MarkFlagRequired(FlagRecordID)
 	cmd.MarkFlagRequired(FlagTxHash)
 	cmd.MarkFlagRequired(FlagLogIndex)
 	cmd.MarkFlagRequired(FlagBorChainId)
+	cmd.MarkFlagRequired(FlagBlockNumber)
+	cmd.MarkFlagRequired(FlagContractAddress)
+	cmd.MarkFlagRequired(FlagData)
 
 	return cmd
 }

@@ -24,10 +24,13 @@ func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
 type AddRecordReq struct {
 	BaseReq rest.BaseReq `json:"base_req"`
 
-	TxHash     types.HeimdallHash `json:"tx_hash"`
-	LogIndex   uint64             `json:"log_index"`
-	ID         uint64             `json:"id"`
-	BorChainID string             `json:"bor_chain_id"`
+	TxHash          types.HeimdallHash `json:"tx_hash"`
+	LogIndex        uint64             `json:"log_index"`
+	BlockNumber     uint64             `json:"block_number" yaml:"block_number"`
+	ID              uint64             `json:"id"`
+	ContractAddress string             `json:"contract_address" yaml:"contract_address"`
+	BorChainID      string             `json:"bor_chain_id"`
+	DataStr         string             `json:"data"`
 }
 
 func newEventRecordHandler(cliCtx context.CLIContext) http.HandlerFunc {
@@ -43,12 +46,20 @@ func newEventRecordHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		// get ContractAddress
+		contractAddress := types.HexToHeimdallAddress(req.ContractAddress)
+
+		data := types.HexToHexBytes(req.DataStr)
+
 		// create new msg
 		msg := clerkTypes.NewMsgEventRecord(
 			types.HexToHeimdallAddress(req.BaseReq.From),
 			req.TxHash,
 			req.LogIndex,
+			req.BlockNumber,
 			req.ID,
+			contractAddress,
+			data,
 			req.BorChainID,
 		)
 

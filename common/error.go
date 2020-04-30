@@ -43,6 +43,7 @@ const (
 	CodeNoConn             CodeType = 2509
 	CodeWaitFrConfirmation CodeType = 2510
 	CodeValPubkeyMismatch  CodeType = 2511
+	CodeErrDecodeEvent     CodeType = 2512
 
 	CodeSpanNotCountinuous CodeType = 3501
 	CodeUnableToFreezeSet  CodeType = 3502
@@ -54,6 +55,9 @@ const (
 	CodeFetchCheckpointSigners       CodeType = 4501
 	CodeErrComputeGenesisAccountRoot CodeType = 4503
 	CodeAccountRootMismatch          CodeType = 4504
+
+	CodeInvalidReceipt         CodeType = 5501
+	CodeSideTxValidationFailed CodeType = 5502
 )
 
 // -------- Invalid msg
@@ -202,6 +206,10 @@ func ErrorSideTx(codespace sdk.CodespaceType, code CodeType) (res abci.ResponseD
 	res.Codespace = string(codespace)
 	res.Result = abci.SideTxResultType_Skip // skip side-tx vote in-case of error
 	return
+}
+
+func ErrSideTxValidation(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeSideTxValidationFailed, "External call majority validation failed. ")
 }
 
 //
