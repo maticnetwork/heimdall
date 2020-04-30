@@ -19,6 +19,8 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
+var cliLogger = helper.Logger.With("module", "bor/client/cli")
+
 // GetTxCmd returns the transaction commands for this module
 func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 	txCmd := &cobra.Command{
@@ -113,8 +115,12 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(FlagSpanId, "", "--span-id=<span-id>")
 	cmd.Flags().String(FlagBorChainId, "", "--bor-chain-id=<bor-chain-id>")
 	cmd.Flags().String(FlagStartBlock, "", "--start-block=<start-block-number>")
-	cmd.MarkFlagRequired(FlagBorChainId)
-	cmd.MarkFlagRequired(FlagStartBlock)
+	if err := cmd.MarkFlagRequired(FlagBorChainId); err != nil {
+		cliLogger.Error("PostSendProposeSpanTx | MarkFlagRequired | FlagBorChainId", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagStartBlock); err != nil {
+		cliLogger.Error("PostSendProposeSpanTx | MarkFlagRequired | FlagStartBlock", "Error", err)
+	}
 
 	return cmd
 }

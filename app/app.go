@@ -559,7 +559,9 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) ab
 		amount := moduleAccount.GetCoins().AmountOf(authTypes.FeeToken)
 		if !amount.IsZero() {
 			coins := sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: amount}}
-			app.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, authTypes.FeeCollectorName, proposer, coins)
+			if err := app.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, authTypes.FeeCollectorName, proposer, coins); err != nil {
+				logger.Error("EndBlocker | SendCoinsFromModuleToAccount", "Error", err)
+			}
 		}
 
 		// remove block proposer

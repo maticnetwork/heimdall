@@ -139,7 +139,10 @@ func HandleMsgWithdrawFee(ctx sdk.Context, k Keeper, msg types.MsgWithdrawFee) s
 
 	// Add Fee to Dividend Account
 	feeAmount := amount.BigInt()
-	k.sk.AddFeeToDividendAccount(ctx, validator.ID, feeAmount)
+	if err := k.sk.AddFeeToDividendAccount(ctx, validator.ID, feeAmount); err != nil {
+		k.Logger(ctx).Error("handleMsgWithdrawFee | AddFeeToDividendAccount", "fromAddress", msg.ValidatorAddress, "validatorId", validator.ID, "err", err)
+		return err.Result()
+	}
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
