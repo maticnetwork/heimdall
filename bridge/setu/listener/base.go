@@ -75,7 +75,7 @@ type BaseListener struct {
 }
 
 // NewBaseListener creates a new BaseListener.
-func NewBaseListener(cdc *codec.Codec, queueConnector *queue.QueueConnector, chainClient *ethclient.Client, name string, impl Listener) *BaseListener {
+func NewBaseListener(cdc *codec.Codec, queueConnector *queue.QueueConnector, httpClient *httpClient.HTTP, chainClient *ethclient.Client, name string, impl Listener) *BaseListener {
 
 	logger := util.Logger().With("service", "listener", "module", name)
 	contractCaller, err := helper.NewContractCaller()
@@ -98,6 +98,7 @@ func NewBaseListener(cdc *codec.Codec, queueConnector *queue.QueueConnector, cha
 
 		cliCtx:            cliCtx,
 		queueConnector:    queueConnector,
+		httpClient:        httpClient,
 		contractConnector: contractCaller,
 		chainClient:       chainClient,
 
