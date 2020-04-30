@@ -99,6 +99,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, con
 	accountRoot, err = types.GetAccountRootHash(dividendAccounts)
 	if err != nil {
 		k.Logger(ctx).Error("handleMsgCheckpoint | GetAccountRootHash", "Error", err)
+		return common.ErrBadAccountRootHash(k.Codespace()).Result()
 	}
 	k.Logger(ctx).Info("Validator Account root hash generated", "AccountRootHash", hmTypes.BytesToHeimdallHash(accountRoot).String())
 
@@ -130,6 +131,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, con
 		TimeStamp:       timeStamp,
 	}); err != nil {
 		k.Logger(ctx).Error("handleMsgCheckpoint | SetCheckpointBuffer", "Error", err)
+		return common.ErrSetCheckpointBuffer(k.Codespace()).Result()
 	}
 
 	checkpoint, _ := k.GetCheckpointFromBuffer(ctx)
@@ -206,6 +208,7 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg types.MsgCheckpointAck, k Keepe
 	// Add checkpoint to headerBlocks
 	if err := k.AddCheckpoint(ctx, msg.HeaderBlock, *headerBlock); err != nil {
 		k.Logger(ctx).Error("handleMsgCheckpointAck | AddCheckpoint", "error", err)
+		return common.ErrAddCheckpoint(k.Codespace()).Result()
 	}
 	k.Logger(ctx).Info("Checkpoint added to store", "headerBlock", headerBlock.String())
 

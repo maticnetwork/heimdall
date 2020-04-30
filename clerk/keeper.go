@@ -184,6 +184,7 @@ func (k *Keeper) IterateRecordsAndApplyFn(ctx sdk.Context, f func(record types.E
 		var result types.EventRecord
 		if err := k.cdc.UnmarshalBinaryBare(iterator.Value(), &result); err != nil {
 			k.Logger(ctx).Error("IterateRecordsAndApplyFn | UnmarshalBinaryBare", "error", err)
+			return
 		}
 		// call function and return if required
 		if err := f(result); err != nil {
