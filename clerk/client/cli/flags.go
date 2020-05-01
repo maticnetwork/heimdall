@@ -2,7 +2,7 @@ package cli
 
 const (
 	FlagProposerAddress = "proposer"
-	FlagContractAddress = "contract-addr"
+	FlagContractAddress = "contract"
 	FlagTxHash          = "tx-hash"
 	FlagBlockNumber     = "block-number"
 	FlagLogIndex        = "log-index"
