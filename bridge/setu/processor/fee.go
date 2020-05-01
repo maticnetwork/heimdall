@@ -11,6 +11,8 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 	topupTypes "github.com/maticnetwork/heimdall/topup/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // FeeProcessor - process fee related events
@@ -75,7 +77,7 @@ func (fp *FeeProcessor) sendTopUpFeeToHeimdall(eventName string, logBytes string
 		)
 
 		// create msg checkpoint ack message
-		msg := topupTypes.NewMsgTopup(helper.GetFromAddress(fp.cliCtx), event.ValidatorId.Uint64(), hmTypes.BytesToHeimdallAddress(event.Signer.Bytes()), event.Fee, hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()), uint64(vLog.Index), vLog.BlockNumber)
+		msg := topupTypes.NewMsgTopup(helper.GetFromAddress(fp.cliCtx), event.ValidatorId.Uint64(), hmTypes.BytesToHeimdallAddress(event.Signer.Bytes()), sdk.NewIntFromBigInt(event.Fee), hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()), uint64(vLog.Index), vLog.BlockNumber)
 
 		// return broadcast to heimdall
 		if err := fp.txBroadcaster.BroadcastToHeimdall(msg); err != nil {

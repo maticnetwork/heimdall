@@ -30,7 +30,7 @@ type AddRecordReq struct {
 	ID              uint64             `json:"id"`
 	ContractAddress string             `json:"contract_address" yaml:"contract_address"`
 	BorChainID      string             `json:"bor_chain_id"`
-	Data         string             `json:"data"`
+	Data            string             `json:"data"`
 }
 
 func newEventRecordHandler(cliCtx context.CLIContext) http.HandlerFunc {
@@ -49,8 +49,6 @@ func newEventRecordHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		// get ContractAddress
 		contractAddress := types.HexToHeimdallAddress(req.ContractAddress)
 
-		data := types.HexToHexBytes(req.DataStr)
-
 		// create new msg
 		msg := clerkTypes.NewMsgEventRecord(
 			types.HexToHeimdallAddress(req.BaseReq.From),
@@ -59,7 +57,7 @@ func newEventRecordHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			req.BlockNumber,
 			req.ID,
 			contractAddress,
-			data,
+			types.HexToHexBytes(req.Data),
 			req.BorChainID,
 		)
 

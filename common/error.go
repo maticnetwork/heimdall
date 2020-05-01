@@ -31,19 +31,20 @@ const (
 	CodeDisCountinuousCheckpoint CodeType = 1510
 	CodeNoCheckpointBuffer       CodeType = 1511
 
-	CodeOldValidator       CodeType = 2500
-	CodeNoValidator        CodeType = 2501
-	CodeValSignerMismatch  CodeType = 2502
-	CodeValidatorExitDeny  CodeType = 2503
-	CodeValAlreadyUnbonded CodeType = 2504
-	CodeSignerSynced       CodeType = 2505
-	CodeValSave            CodeType = 2506
-	CodeValAlreadyJoined   CodeType = 2507
-	CodeSignerUpdateError  CodeType = 2508
-	CodeNoConn             CodeType = 2509
-	CodeWaitFrConfirmation CodeType = 2510
-	CodeValPubkeyMismatch  CodeType = 2511
-	CodeErrDecodeEvent     CodeType = 2512
+	CodeOldValidator        CodeType = 2500
+	CodeNoValidator         CodeType = 2501
+	CodeValSignerMismatch   CodeType = 2502
+	CodeValidatorExitDeny   CodeType = 2503
+	CodeValAlreadyUnbonded  CodeType = 2504
+	CodeSignerSynced        CodeType = 2505
+	CodeValSave             CodeType = 2506
+	CodeValAlreadyJoined    CodeType = 2507
+	CodeSignerUpdateError   CodeType = 2508
+	CodeNoConn              CodeType = 2509
+	CodeWaitFrConfirmation  CodeType = 2510
+	CodeValPubkeyMismatch   CodeType = 2511
+	CodeErrDecodeEvent      CodeType = 2512
+	CodeNoSignerChangeError CodeType = 2513
 
 	CodeSpanNotCountinuous CodeType = 3501
 	CodeUnableToFreezeSet  CodeType = 3502
@@ -148,6 +149,10 @@ func ErrValUnbonded(codespace sdk.CodespaceType) sdk.Error {
 
 func ErrSignerUpdateError(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeSignerUpdateError, "Signer update error")
+}
+
+func ErrNoSignerChange(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeNoSignerChangeError, "New signer same as old signer")
 }
 
 func ErrOldTx(codespace sdk.CodespaceType) sdk.Error {

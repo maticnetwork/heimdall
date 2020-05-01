@@ -45,7 +45,6 @@ func NewSideTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.S
 func NewPostTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.PostTxHandler {
 	return func(ctx sdk.Context, msg sdk.Msg, sideTxResult abci.SideTxResultType) sdk.Result {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
-		fmt.Println("Staking PostTxHandler invoked", "msgType", msg.Type())
 
 		switch msg := msg.(type) {
 		case types.MsgValidatorJoin:
@@ -118,7 +117,7 @@ func SideHandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k K
 	}
 
 	// check Amount
-	if eventLog.Amount.Cmp(msg.Amount) != 0 {
+	if eventLog.Amount.Cmp(msg.Amount.BigInt()) != 0 {
 		k.Logger(ctx).Error("Amount in message doesn't match Amount in event logs", "MsgAmount", msg.Amount, "AmountFromEvent", eventLog.Amount)
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
@@ -162,7 +161,7 @@ func SideHandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keepe
 	}
 
 	// check Amount
-	if eventLog.NewAmount.Cmp(msg.NewAmount) != 0 {
+	if eventLog.NewAmount.Cmp(msg.NewAmount.BigInt()) != 0 {
 		k.Logger(ctx).Error("NewAmount in message doesn't match NewAmount in event logs", "MsgNewAmount", msg.NewAmount, "NewAmountFromEvent", eventLog.NewAmount)
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
@@ -274,7 +273,7 @@ func PostHandleMsgValidatorJoin(ctx sdk.Context, k Keeper, msg types.MsgValidato
 	signer := pubkey.Address()
 
 	// get voting power from amount
-	votingPower, err := helper.GetPowerFromAmount(msg.Amount)
+	votingPower, err := helper.GetPowerFromAmount(msg.Amount.BigInt())
 	if err != nil {
 		return hmCommon.ErrInvalidMsg(k.Codespace(), fmt.Sprintf("Invalid amount %v for validator %v", msg.Amount, msg.ID)).Result()
 	}
@@ -351,7 +350,7 @@ func PostHandleMsgStakeUpdate(ctx sdk.Context, k Keeper, msg types.MsgStakeUpdat
 	validator.LastUpdated = sequence.String()
 
 	// set validator amount
-	p, err := helper.GetPowerFromAmount(msg.NewAmount)
+	p, err := helper.GetPowerFromAmount(msg.NewAmount.BigInt())
 	if err != nil {
 		return hmCommon.ErrInvalidMsg(k.Codespace(), fmt.Sprintf("Invalid amount %v for validator %v", msg.NewAmount, msg.ID)).Result()
 	}
@@ -420,7 +419,10 @@ func PostHandleMsgSignerUpdate(ctx sdk.Context, k Keeper, msg types.MsgSignerUpd
 		// Update signer in prev Validator
 		validator.Signer = hmTypes.HeimdallAddress(newSigner)
 		validator.PubKey = newPubKey
-		k.Logger(ctx).Debug("Updating new signer", "signer", newSigner.String(), "oldSigner", oldValidator.Signer.String(), "validatorID", msg.ID)
+		k.Logger(ctx).Debug("Updating new signer", "newSigner", newSigner.String(), "oldSigner", oldValidator.Signer.String(), "validatorID", msg.ID)
+	} else {
+		k.Logger(ctx).Error("No signer change", "newSigner", newSigner.String(), "oldSigner", oldValidator.Signer.String(), "validatorID", msg.ID)
+		return hmCommon.ErrSignerUpdateError(k.Codespace()).Result()
 	}
 
 	k.Logger(ctx).Debug("Removing old validator", "validator", oldValidator.String())

@@ -57,13 +57,16 @@ func TopupHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		signer := types.HexToHeimdallAddress(req.Signer)
 
 		// fee amount
-		feeAmount, _ := big.NewInt(0).SetString(req.Fee, 10)
+		fee, ok := sdk.NewIntFromString(req.Fee)
+		if !ok {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "invalid amount")
+		}
 
 		msg := topupTypes.NewMsgTopup(
 			fromAddr,
 			req.ID,
 			signer,
-			feeAmount,
+			fee,
 			types.HexToHeimdallHash(req.TxHash),
 			req.LogIndex,
 			req.BlockNumber,

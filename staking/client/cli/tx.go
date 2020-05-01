@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"math/big"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -76,11 +75,9 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 			pubkey := hmTypes.NewPubKey(pubkeyBytes)
 
 			// total stake amount
-			amountStr := viper.GetString(FlagAmount)
-
-			amount, ok := big.NewInt(0).SetString(amountStr, 10)
+			amount, ok := sdk.NewIntFromString(viper.GetString(FlagAmount))
 			if !ok {
-				return errors.New("Invalid new amount")
+				return errors.New("Invalid stake amount")
 			}
 
 			contractCallerObj, err := helper.NewContractCaller()
@@ -301,11 +298,9 @@ func SendValidatorStakeUpdateTx(cdc *codec.Codec) *cobra.Command {
 			}
 
 			// total stake amount
-			amountStr := viper.GetString(FlagAmount)
-
-			amount, ok := big.NewInt(0).SetString(amountStr, 10)
+			amount, ok := sdk.NewIntFromString(viper.GetString(FlagAmount))
 			if !ok {
-				return errors.New("Invalid new amount")
+				return errors.New("Invalid new stake amount")
 			}
 
 			msg := types.NewMsgStakeUpdate(

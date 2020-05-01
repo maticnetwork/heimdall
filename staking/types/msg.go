@@ -2,7 +2,6 @@ package types
 
 import (
 	"bytes"
-	"math/big"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -25,7 +24,7 @@ type MsgValidatorJoin struct {
 	From            hmTypes.HeimdallAddress `json:"from"`
 	ID              hmTypes.ValidatorID     `json:"id"`
 	ActivationEpoch uint64                  `json:"activationEpoch"`
-	Amount          sdk.Int                `json:"amount"`
+	Amount          sdk.Int                 `json:"amount"`
 	SignerPubKey    hmTypes.PubKey          `json:"pub_key"`
 	TxHash          hmTypes.HeimdallHash    `json:"tx_hash"`
 	LogIndex        uint64                  `json:"log_index"`
@@ -121,7 +120,7 @@ var _ sdk.Msg = &MsgStakeUpdate{}
 type MsgStakeUpdate struct {
 	From        hmTypes.HeimdallAddress `json:"from"`
 	ID          hmTypes.ValidatorID     `json:"id"`
-	NewAmount   sdk.Int                `json:"amount"`
+	NewAmount   sdk.Int                 `json:"amount"`
 	TxHash      hmTypes.HeimdallHash    `json:"tx_hash"`
 	LogIndex    uint64                  `json:"log_index"`
 	BlockNumber uint64                  `json:"block_number"`

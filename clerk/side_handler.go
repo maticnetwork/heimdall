@@ -2,7 +2,6 @@ package clerk
 
 import (
 	"bytes"
-	"fmt"
 	"math/big"
 	"strconv"
 

@@ -105,7 +105,7 @@ func CreateNewStateRecord(cdc *codec.Codec) *cobra.Command {
 				proposer,
 				types.HexToHeimdallHash(txHashStr),
 				logIndex,
-				viper.GetUInt64(FlagBlockNumber),
+				viper.GetUint64(FlagBlockNumber),
 				recordID,
 				contractAddr,
 				data,

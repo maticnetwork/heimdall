@@ -1,8 +1,6 @@
 package types
 
 import (
-	"math/big"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	hmCommon "github.com/maticnetwork/heimdall/common"
@@ -18,7 +16,7 @@ type MsgTopup struct {
 	FromAddress types.HeimdallAddress `json:"from_address"`
 	ID          types.ValidatorID     `json:"id"`
 	Signer      types.HeimdallAddress `json:"signer"`
-	Fee         sdk.Int              `json:"fee"`
+	Fee         sdk.Int               `json:"fee"`
 	TxHash      types.HeimdallHash    `json:"tx_hash"`
 	LogIndex    uint64                `json:"log_index"`
 	BlockNumber uint64                `json:"block_number"`
@@ -31,7 +29,7 @@ func NewMsgTopup(
 	fromAddr types.HeimdallAddress,
 	id uint64,
 	signer types.HeimdallAddress,
-	fee *big.Int,
+	fee sdk.Int,
 	txhash types.HeimdallHash,
 	logIndex uint64,
 	blockNumber uint64,

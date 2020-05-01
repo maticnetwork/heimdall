@@ -87,7 +87,7 @@ func SideHandleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractC
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
 
-	if eventLog.Fee.Cmp(msg.Fee) != 0 {
+	if eventLog.Fee.Cmp(msg.Fee.BigInt()) != 0 {
 		k.Logger(ctx).Error("Fee in message doesn't match Fee in event logs", "MsgFee", msg.Fee, "FeeFromEvent", eventLog.Fee)
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
@@ -113,7 +113,7 @@ func PostHandleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, sideTxRes
 	}
 
 	// create topup amount
-	topupAmount := sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: sdk.NewIntFromBigInt(msg.Fee)}}
+	topupAmount := sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: msg.Fee}}
 
 	// sequence id
 	blockNumber := new(big.Int).SetUint64(msg.BlockNumber)

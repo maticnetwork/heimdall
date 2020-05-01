@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"math/big"
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -85,7 +84,10 @@ func newValidatorJoinHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		amount, _ := big.NewInt(0).SetString(req.Amount, 10)
+		amount, ok := sdk.NewIntFromString(req.Amount)
+		if !ok {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "invalid amount")
+		}
 
 		// create new msg
 		msg := types.NewMsgValidatorJoin(
@@ -173,7 +175,10 @@ func newValidatorStakeUpdateHandler(cliCtx context.CLIContext) http.HandlerFunc 
 			return
 		}
 
-		amount, _ := big.NewInt(0).SetString(req.Amount, 10)
+		amount, ok := sdk.NewIntFromString(req.Amount)
+		if !ok {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "invalid amount")
+		}
 
 		// create msg validator update
 		msg := types.NewMsgStakeUpdate(

@@ -5,6 +5,7 @@ import (
 
 	"github.com/RichardKnop/machinery/v1/tasks"
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
@@ -101,7 +102,7 @@ func (sp *StakingProcessor) sendValidatorJoinToHeimdall(eventName string, logByt
 			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
 			event.ValidatorId.Uint64(),
 			event.ActivationEpoch.Uint64(),
-			event.Amount,
+			sdk.NewIntFromBigInt(event.Amount),
 			hmTypes.NewPubKey(signerPubKey),
 			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			uint64(vLog.Index),
@@ -209,7 +210,7 @@ func (sp *StakingProcessor) sendStakeUpdateToHeimdall(eventName string, logBytes
 		msg := stakingTypes.NewMsgStakeUpdate(
 			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
 			event.ValidatorId.Uint64(),
-			event.NewAmount,
+			sdk.NewIntFromBigInt(event.NewAmount),
 			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			uint64(vLog.Index),
 			vLog.BlockNumber,

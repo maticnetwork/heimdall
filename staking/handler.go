@@ -52,7 +52,7 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k Keepe
 	}
 
 	// validate voting power
-	_, err = helper.GetPowerFromAmount(msg.Amount)
+	_, err = helper.GetPowerFromAmount(msg.Amount.BigInt())
 	if err != nil {
 		return hmCommon.ErrInvalidMsg(k.Codespace(), fmt.Sprintf("Invalid amount %v for validator %v", msg.Amount, msg.ID)).Result()
 	}
@@ -94,7 +94,7 @@ func HandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keeper, c
 	}
 
 	// set validator amount
-	_, err := helper.GetPowerFromAmount(msg.NewAmount)
+	_, err := helper.GetPowerFromAmount(msg.NewAmount.BigInt())
 	if err != nil {
 		return hmCommon.ErrInvalidMsg(k.Codespace(), fmt.Sprintf("Invalid newamount %v for validator %v", msg.NewAmount, msg.ID)).Result()
 	}
@@ -116,7 +116,6 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper,
 		k.Logger(ctx).Error("Fetching of validator from store failed", "validatorId", msg.ID)
 		return hmCommon.ErrNoValidator(k.Codespace()).Result()
 	}
-	oldValidator := validator.Copy()
 
 	// sequence id
 	blockNumber := new(big.Int).SetUint64(msg.BlockNumber)
@@ -129,15 +128,11 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper,
 		return hmCommon.ErrOldTx(k.Codespace()).Result()
 	}
 
-	// update last udpated
-	validator.LastUpdated = sequence.String()
-
-	// check if we are actually updating signer
-	if !bytes.Equal(newSigner.Bytes(), validator.Signer.Bytes()) {
-		// Update signer in prev Validator
-		validator.Signer = hmTypes.HeimdallAddress(newSigner)
-		validator.PubKey = newPubKey
-		k.Logger(ctx).Debug("Updating new signer", "signer", newSigner.String(), "oldSigner", oldValidator.Signer.String(), "validatorID", msg.ID)
+	// check if new signer address is same as existing signer
+	if bytes.Equal(newSigner.Bytes(), validator.Signer.Bytes()) {
+		// No signer change
+		k.Logger(ctx).Error("NewSigner same as OldSigner.")
+		return hmCommon.ErrNoSignerChange(k.Codespace()).Result()
 	}
 
 	return sdk.Result{
