@@ -81,7 +81,7 @@ func TopupTxCmd(cdc *codec.Codec) *cobra.Command {
 				signer,
 				feeAmount,
 				types.HexToHeimdallHash(txhash),
-				uint64(viper.GetInt64(FlagLogIndex)),
+				viper.GetUInt64(FlagLogIndex),
 				uint64(viper.GetInt64(FlagBlockNumber)),
 			)
 
