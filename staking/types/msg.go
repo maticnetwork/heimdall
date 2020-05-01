@@ -128,7 +128,7 @@ type MsgStakeUpdate struct {
 }
 
 // NewMsgStakeUpdate represents stake update
-func NewMsgStakeUpdate(from hmTypes.HeimdallAddress, id uint64, newAmount *big.Int, txhash hmTypes.HeimdallHash, logIndex uint64, blockNumber uint64) MsgStakeUpdate {
+func NewMsgStakeUpdate(from hmTypes.HeimdallAddress, id uint64, newAmount sdk.Int, txhash hmTypes.HeimdallHash, logIndex uint64, blockNumber uint64) MsgStakeUpdate {
 	return MsgStakeUpdate{
 		From:        from,
 		ID:          hmTypes.NewValidatorID(id),
