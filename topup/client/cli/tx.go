@@ -94,8 +94,8 @@ func TopupTxCmd(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
 	cmd.Flags().String(FlagSignerAddress, "", "--signer=<signer>")
 	cmd.Flags().String(FlagFeeAmount, "", "--topup-amount=<topup-amount>")
-	cmd.Flags().Int(FlagLogIndex, 0, "--log-index=<log-index>")
-	cmd.Flags().Int(FlagBlockNumber, 0, "--block-number=<block-number>")
+	cmd.Flags().UInt64(FlagLogIndex, 0, "--log-index=<log-index>")
+	cmd.Flags().UInt64(FlagBlockNumber, 0, "--block-number=<block-number>")
 
 	cmd.MarkFlagRequired(FlagValidatorID)
 	cmd.MarkFlagRequired(FlagTxHash)
