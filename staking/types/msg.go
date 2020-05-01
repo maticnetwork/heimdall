@@ -37,7 +37,7 @@ func NewMsgValidatorJoin(
 	from hmTypes.HeimdallAddress,
 	id uint64,
 	activationEpoch uint64,
-	amount *big.Int,
+	amount sdk.Int,
 	pubkey hmTypes.PubKey,
 	txhash hmTypes.HeimdallHash,
 	logIndex uint64,
