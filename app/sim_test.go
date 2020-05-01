@@ -202,20 +202,19 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(newDir))
 	}()
 
-	newApp := NewHeimdallApp(logger, db)
+	newApp := NewHeimdallApp(logger, newDB)
 	require.Equal(t, AppName, app.Name())
 
 	newApp.InitChain(abci.RequestInitChain{
 		AppStateBytes: appState,
 	})
-
-	require.Panics(t, func() {
-		simulation.SimulateFromSeed(
-			t, os.Stdout, newApp.BaseApp, AppStateFn(app.Codec(), app.SimulationManager()),
-			SimulationOperations(newApp, newApp.Codec(), config),
-			newApp.ModuleAccountAddrs(), config,
-		)
-	})
+	stopEarly, _, err = simulation.SimulateFromSeed(
+		t, os.Stdout, newApp.BaseApp, AppStateFn(app.Codec(), app.SimulationManager()),
+		SimulationOperations(newApp, newApp.Codec(), config),
+		newApp.ModuleAccountAddrs(), config,
+	)
+	require.False(t, stopEarly)
+	require.NoError(t, err)
 }
 
 // TODO: Make another test for the fuzzer itself, which just has noOp txs
