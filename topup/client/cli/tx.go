@@ -82,7 +82,7 @@ func TopupTxCmd(cdc *codec.Codec) *cobra.Command {
 				feeAmount,
 				types.HexToHeimdallHash(txhash),
 				viper.GetUInt64(FlagLogIndex),
-				uint64(viper.GetInt64(FlagBlockNumber)),
+				viper.GetUInt64(FlagBlockNumber),
 			)
 
 			// broadcast msg with cli
