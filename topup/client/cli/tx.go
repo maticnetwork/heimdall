@@ -90,7 +90,7 @@ func TopupTxCmd(cdc *codec.Codec) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().Int(FlagValidatorID, 0, "--validator-id=<validator ID here>")
+	cmd.Flags().UInt64(FlagValidatorID, 0, "--validator-id=<validator ID here>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
 	cmd.Flags().String(FlagSignerAddress, "", "--signer=<signer>")
 	cmd.Flags().String(FlagFeeAmount, "", "--topup-amount=<topup-amount>")
