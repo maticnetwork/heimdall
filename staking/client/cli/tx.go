@@ -135,7 +135,7 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 				pubkey,
 				hmTypes.HexToHeimdallHash(txhash),
 				uint64(logIndex),
-				uint64(viper.GetInt64(FlagBlockNumber)),
+				viper.GetUint64(FlagBlockNumber),
 			)
 
 			// broadcast messages
