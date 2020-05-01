@@ -25,7 +25,7 @@ type MsgValidatorJoin struct {
 	From            hmTypes.HeimdallAddress `json:"from"`
 	ID              hmTypes.ValidatorID     `json:"id"`
 	ActivationEpoch uint64                  `json:"activationEpoch"`
-	Amount          *big.Int                `json:"amount"`
+	Amount          sdk.Int                `json:"amount"`
 	SignerPubKey    hmTypes.PubKey          `json:"pub_key"`
 	TxHash          hmTypes.HeimdallHash    `json:"tx_hash"`
 	LogIndex        uint64                  `json:"log_index"`
