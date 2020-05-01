@@ -23,6 +23,8 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
+var logger = helper.Logger.With("module", "staking/client/cli")
+
 // GetTxCmd returns the transaction commands for this module
 func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 	txCmd := &cobra.Command{
@@ -147,11 +149,24 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(FlagAmount, "0", "--amount=<amount>")
 	cmd.Flags().String(FlagActivationEpoch, "", "--activation-epoch=<activation-epoch>")
 
-	cmd.MarkFlagRequired(FlagSignerPubkey)
-	cmd.MarkFlagRequired(FlagTxHash)
-	cmd.MarkFlagRequired(FlagBlockNumber)
-	cmd.MarkFlagRequired(FlagActivationEpoch)
-	cmd.MarkFlagRequired(FlagAmount)
+	if err := cmd.MarkFlagRequired(FlagProposerAddress); err != nil {
+		logger.Error("SendValidatorJoinTx | MarkFlagRequired | FlagProposerAddress", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagBlockNumber); err != nil {
+		logger.Error("SendValidatorJoinTx | MarkFlagRequired | FlagBlockNumber", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagActivationEpoch); err != nil {
+		logger.Error("SendValidatorJoinTx | MarkFlagRequired | FlagActivationEpoch", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagAmount); err != nil {
+		logger.Error("SendValidatorJoinTx | MarkFlagRequired | FlagAmount", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagSignerPubkey); err != nil {
+		logger.Error("SendValidatorJoinTx | MarkFlagRequired | FlagSignerPubkey", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagTxHash); err != nil {
+		logger.Error("SendValidatorJoinTx | MarkFlagRequired | FlagTxHash", "Error", err)
+	}
 	return cmd
 }
 
@@ -201,10 +216,18 @@ func SendValidatorExitTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(FlagDeactivationEpoch, "", "--deactivation-epoch=<deactivation-epoch>")
 	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
 
-	cmd.MarkFlagRequired(FlagValidatorID)
-	cmd.MarkFlagRequired(FlagTxHash)
-	cmd.MarkFlagRequired(FlagLogIndex)
-	cmd.MarkFlagRequired(FlagBlockNumber)
+	if err := cmd.MarkFlagRequired(FlagValidatorID); err != nil {
+		logger.Error("SendValidatorExitTx | MarkFlagRequired | FlagValidatorID", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagTxHash); err != nil {
+		logger.Error("SendValidatorExitTx | MarkFlagRequired | FlagTxHash", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagLogIndex); err != nil {
+		logger.Error("SendValidatorExitTx | MarkFlagRequired | FlagLogIndex", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagBlockNumber); err != nil {
+		logger.Error("SendValidatorExitTx | MarkFlagRequired | FlagBlockNumber", "Error", err)
+	}
 
 	return cmd
 }
@@ -265,10 +288,24 @@ func SendValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(FlagLogIndex, "", "--log-index=<log-index>")
 	cmd.Flags().Int(FlagBlockNumber, 0, "--block-number=<block-number>")
 
-	cmd.MarkFlagRequired(FlagTxHash)
-	cmd.MarkFlagRequired(FlagNewSignerPubkey)
-	cmd.MarkFlagRequired(FlagLogIndex)
-	cmd.MarkFlagRequired(FlagBlockNumber)
+	if err := cmd.MarkFlagRequired(FlagProposerAddress); err != nil {
+		logger.Error("SendValidatorUpdateTx | MarkFlagRequired | FlagProposerAddress", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagValidatorID); err != nil {
+		logger.Error("SendValidatorUpdateTx | MarkFlagRequired | FlagValidatorID", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagTxHash); err != nil {
+		logger.Error("SendValidatorUpdateTx | MarkFlagRequired | FlagTxHash", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagNewSignerPubkey); err != nil {
+		logger.Error("SendValidatorUpdateTx | MarkFlagRequired | FlagNewSignerPubkey", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagLogIndex); err != nil {
+		logger.Error("SendValidatorUpdateTx | MarkFlagRequired | FlagLogIndex", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagBlockNumber); err != nil {
+		logger.Error("SendValidatorUpdateTx | MarkFlagRequired | FlagBlockNumber", "Error", err)
+	}
 
 	return cmd
 }
@@ -324,11 +361,22 @@ func SendValidatorStakeUpdateTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(FlagLogIndex, "", "--log-index=<log-index>")
 	cmd.Flags().Int(FlagBlockNumber, 0, "--block-number=<block-number>")
 
-	cmd.MarkFlagRequired(FlagValidatorID)
-	cmd.MarkFlagRequired(FlagTxHash)
-	cmd.MarkFlagRequired(FlagLogIndex)
-	cmd.MarkFlagRequired(FlagBlockNumber)
-	cmd.MarkFlagRequired(FlagAmount)
+	if err := cmd.MarkFlagRequired(FlagTxHash); err != nil {
+		logger.Error("SendValidatorStakeUpdateTx | MarkFlagRequired | FlagTxHash", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagLogIndex); err != nil {
+		logger.Error("SendValidatorStakeUpdateTx | MarkFlagRequired | FlagLogIndex", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagValidatorID); err != nil {
+		logger.Error("SendValidatorStakeUpdateTx | MarkFlagRequired | FlagValidatorID", "Error", err)
+	}
+
+	if err := cmd.MarkFlagRequired(FlagBlockNumber); err != nil {
+		logger.Error("SendValidatorStakeUpdateTx | MarkFlagRequired | FlagBlockNumber", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagAmount); err != nil {
+		logger.Error("SendValidatorStakeUpdateTx | MarkFlagRequired | FlagAmount", "Error", err)
+	}
 
 	return cmd
 }

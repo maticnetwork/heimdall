@@ -89,7 +89,9 @@ $ %s query auth params
 			}
 
 			var params types.Params
-			json.Unmarshal(bz, &params)
+			if err := json.Unmarshal(bz, &params); err != nil {
+				return err
+			}
 			return cliCtx.PrintOutput(params)
 		},
 	}

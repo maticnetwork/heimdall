@@ -18,6 +18,8 @@ import (
 	"github.com/maticnetwork/heimdall/types"
 )
 
+var cliLogger = helper.Logger.With("module", "topup/client/cli")
+
 // GetTxCmd returns the transaction commands for this module
 func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 	txCmd := &cobra.Command{
@@ -96,12 +98,25 @@ func TopupTxCmd(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().Uint64(FlagLogIndex, 0, "--log-index=<log-index>")
 	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
 
-	cmd.MarkFlagRequired(FlagValidatorID)
-	cmd.MarkFlagRequired(FlagTxHash)
-	cmd.MarkFlagRequired(FlagSignerAddress)
-	cmd.MarkFlagRequired(FlagFeeAmount)
-	cmd.MarkFlagRequired(FlagLogIndex)
-	cmd.MarkFlagRequired(FlagBlockNumber)
+	if err := cmd.MarkFlagRequired(FlagValidatorID); err != nil {
+		cliLogger.Error("TopupTxCmd | MarkFlagRequired | FlagValidatorID", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagTxHash); err != nil {
+		cliLogger.Error("TopupTxCmd | MarkFlagRequired | FlagTxHash", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagLogIndex); err != nil {
+		cliLogger.Error("TopupTxCmd | MarkFlagRequired | FlagLogIndex", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagSignerAddress); err != nil {
+		cliLogger.Error("TopupTxCmd | MarkFlagRequired | FlagSignerAddress", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagFeeAmount); err != nil {
+		cliLogger.Error("TopupTxCmd | MarkFlagRequired | FlagFeeAmount", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagBlockNumber); err != nil {
+		cliLogger.Error("TopupTxCmd | MarkFlagRequired | FlagBlockNumber", "Error", err)
+	}
+
 	return cmd
 }
 

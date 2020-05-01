@@ -28,7 +28,6 @@ func (c ContractCheckpoint) String() string {
 type HeimdallCheckpoint struct {
 	start uint64
 	end   uint64
-	found bool
 }
 
 // NewContractCheckpoint creates contract checkpoint

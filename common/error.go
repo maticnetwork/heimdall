@@ -57,6 +57,10 @@ const (
 	CodeErrComputeGenesisAccountRoot CodeType = 4503
 	CodeAccountRootMismatch          CodeType = 4504
 
+	CodeErrAccountRootHash     CodeType = 4505
+	CodeErrSetCheckpointBuffer CodeType = 4506
+	CodeErrAddCheckpoint       CodeType = 4507
+
 	CodeInvalidReceipt         CodeType = 5501
 	CodeSideTxValidationFailed CodeType = 5502
 )
@@ -75,6 +79,18 @@ func ErrBadProposerDetails(codespace sdk.CodespaceType, proposer types.HeimdallA
 
 func ErrBadBlockDetails(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeInvalidBlockInput, "Wrong roothash for given start and end block numbers")
+}
+
+func ErrSetCheckpointBuffer(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeErrSetCheckpointBuffer, "Account Root Hash not added to Checkpoint Buffer")
+}
+
+func ErrAddCheckpoint(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeErrAddCheckpoint, "Err in adding checkpoint to header blocks")
+}
+
+func ErrBadAccountRootHash(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeErrAccountRootHash, "Wrong roothash for given dividend accounts")
 }
 
 func ErrBadAck(codespace sdk.CodespaceType) sdk.Error {

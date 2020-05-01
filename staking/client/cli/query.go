@@ -51,7 +51,7 @@ func GetValidatorInfo(cdc *codec.Codec) *cobra.Command {
 			}
 
 			var queryParams []byte
-			var err error = nil
+			var err error
 			var t string = ""
 			if validatorAddressStr != "" {
 				queryParams, err = cliCtx.Codec.MarshalJSON(types.NewQuerySignerParams(common.FromHex(validatorAddressStr)))

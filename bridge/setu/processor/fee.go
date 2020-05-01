@@ -38,7 +38,9 @@ func (fp *FeeProcessor) Start() error {
 // RegisterTasks - Registers clerk related tasks with machinery
 func (fp *FeeProcessor) RegisterTasks() {
 	fp.Logger.Info("Registering fee related tasks")
-	fp.queueConnector.Server.RegisterTask("sendTopUpFeeToHeimdall", fp.sendTopUpFeeToHeimdall)
+	if err := fp.queueConnector.Server.RegisterTask("sendTopUpFeeToHeimdall", fp.sendTopUpFeeToHeimdall); err != nil {
+		fp.Logger.Error("RegisterTasks | sendTopUpFeeToHeimdall", "error", err)
+	}
 }
 
 // processTopupFeeEvent - processes topup fee event
@@ -97,6 +99,10 @@ func (fp *FeeProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, log
 
 	endpoint := helper.GetHeimdallServerEndpoint(util.TopupTxStatusURL)
 	url, err := util.CreateURLWithQuery(endpoint, queryParam)
+	if err != nil {
+		fp.Logger.Error("Error in creating url", "endpoint", endpoint, "error", err)
+		return false, err
+	}
 
 	res, err := helper.FetchFromAPI(fp.cliCtx, url)
 	if err != nil {

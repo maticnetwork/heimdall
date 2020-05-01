@@ -41,6 +41,8 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 )
 
+var logger = helper.Logger.With("module", "cmd/heimdallcli")
+
 // rootCmd is the entry point for this binary
 var (
 	rootCmd = &cobra.Command{
@@ -110,10 +112,9 @@ func main() {
 	)
 
 	// bind with-heimdall-config config with root cmd
-	viper.BindPFlag(
-		helper.WithHeimdallConfigFlag,
-		rootCmd.Flags().Lookup(helper.WithHeimdallConfigFlag),
-	)
+	if err := viper.BindPFlag(helper.WithHeimdallConfigFlag, rootCmd.Flags().Lookup(helper.WithHeimdallConfigFlag)); err != nil {
+		logger.Error("main | BindPFlag | helper.WithHeimdallConfigFlag", "Error", err)
+	}
 
 	// prepare and add flags
 	executor := cli.PrepareMainCmd(rootCmd, "HD", os.ExpandEnv("$HOME/.heimdalld"))

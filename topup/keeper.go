@@ -103,7 +103,6 @@ func (keeper Keeper) IterateTopupSequencesAndApplyFn(ctx sdk.Context, f func(seq
 			return
 		}
 	}
-	return
 }
 
 // SetTopupSequence sets mapping for sequence id to bool

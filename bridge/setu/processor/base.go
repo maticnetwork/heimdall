@@ -27,11 +27,9 @@ type Processor interface {
 }
 
 type BaseProcessor struct {
-	Logger  log.Logger
-	name    string
-	started uint32 // atomic
-	stopped uint32 // atomic
-	quit    chan struct{}
+	Logger log.Logger
+	name   string
+	quit   chan struct{}
 
 	// queue connector
 	queueConnector *queue.QueueConnector

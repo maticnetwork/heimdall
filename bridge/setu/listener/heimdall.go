@@ -127,7 +127,9 @@ func (hl *HeimdallListener) StartPolling(ctx context.Context, pollInterval time.
 					}
 				} */
 				// set last block to storage
-				hl.storageClient.Put([]byte(heimdallLastBlockKey), []byte(strconv.FormatUint(toBlock, 10)), nil)
+				if err := hl.storageClient.Put([]byte(heimdallLastBlockKey), []byte(strconv.FormatUint(toBlock, 10)), nil); err != nil {
+					hl.Logger.Error("hl.storageClient.Put", "Error", err)
+				}
 			}
 
 		case <-ctx.Done():

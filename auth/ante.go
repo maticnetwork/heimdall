@@ -19,11 +19,9 @@ import (
 var (
 	// simulation signature values used to estimate gas consumption
 	simSecp256k1Pubkey secp256k1.PubKeySecp256k1
-	simSecp256k1Sig    [64]byte
 
 	// fee wanted for checkpoint transaction
 	gasWantedPerCheckpoinTx sdk.Gas = 10000000
-	gasUsedPerCheckpointTx  sdk.Gas = gasWantedPerCheckpoinTx - 1000000
 
 	// DefaultFeeInMatic represents default fee in matic
 	DefaultFeeInMatic = big.NewInt(10).Exp(big.NewInt(10), big.NewInt(15), nil)
@@ -171,15 +169,6 @@ func NewAnteHandler(
 
 			// reload the account as fees have been deducted
 			signerAcc = ak.GetAccount(newCtx, signerAcc.GetAddress())
-		}
-
-		// get chain manager params
-		chainParams := chainKeeper.GetParams(ctx)
-
-		// check main chain tx is confirmed transaction
-		mainTxMsg, ok := stdTx.Msg.(MainTxMsg)
-		if ok && !contractCaller.IsTxConfirmed(ctx.BlockTime(), mainTxMsg.GetTxHash().EthHash(), chainParams.TxConfirmationTime) {
-			return newCtx, sdk.ErrInternal(fmt.Sprintf("Not enough tx confirmations for %s", mainTxMsg.GetTxHash().Hex())).Result(), true
 		}
 
 		// stdSigs contains the sequence number, account number, and signatures.

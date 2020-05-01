@@ -653,16 +653,6 @@ func populateAccountFromState(txBldr authTypes.TxBuilder, cliCtx context.CLICont
 	return txBldr.WithAccountNumber(accNum).WithSequence(accSeq), nil
 }
 
-func isTxSigner(user sdk.AccAddress, signers []sdk.AccAddress) bool {
-	for _, s := range signers {
-		if bytes.Equal(user.Bytes(), s.Bytes()) {
-			return true
-		}
-	}
-
-	return false
-}
-
 func buildUnsignedStdTxOffline(txBldr authTypes.TxBuilder, cliCtx context.CLIContext, msgs []sdk.Msg) (stdTx authTypes.StdTx, err error) {
 	stdSignMsg, err := txBldr.BuildSignMsg(msgs)
 	if err != nil {
@@ -688,17 +678,11 @@ func getSplitPoint(length int) int {
 
 // TODO: make these have a large predefined capacity
 var (
-	leafPrefix  = []byte{0}
 	innerPrefix = []byte{1}
 
 	leftPrefix  = []byte{0}
 	rightPrefix = []byte{1}
 )
-
-// returns tmhash(0x00 || leaf)
-func leafHash(leaf []byte) []byte {
-	return tmhash.Sum(append(leafPrefix, leaf...))
-}
 
 // returns tmhash(0x01 || left || right)
 func innerHash(left []byte, right []byte) []byte {

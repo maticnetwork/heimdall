@@ -10,7 +10,6 @@ import (
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/tendermint/tendermint/libs/log"
-	httpClient "github.com/tendermint/tendermint/rpc/client"
 
 	ethereum "github.com/maticnetwork/bor"
 	"github.com/maticnetwork/bor/core/types"
@@ -18,6 +17,8 @@ import (
 	"github.com/maticnetwork/heimdall/bridge/setu/queue"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
+
+	httpClient "github.com/tendermint/tendermint/rpc/client"
 )
 
 // Listener defines a block header listerner for Rootchain, Maticchain, Heimdall
@@ -38,11 +39,9 @@ type Listener interface {
 }
 
 type BaseListener struct {
-	Logger  log.Logger
-	name    string
-	started uint32 // atomic
-	stopped uint32 // atomic
-	quit    chan struct{}
+	Logger log.Logger
+	name   string
+	quit   chan struct{}
 
 	// The "subclass" of BaseService
 	impl Listener
