@@ -2,7 +2,6 @@ package topup
 
 import (
 	"bytes"
-	"fmt"
 	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -37,7 +36,6 @@ func NewSideTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.S
 func NewPostTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.PostTxHandler {
 	return func(ctx sdk.Context, msg sdk.Msg, sideTxResult abci.SideTxResultType) sdk.Result {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
-		fmt.Println("Topup PostTxHandler invoked", "msgType", msg.Type())
 		switch msg := msg.(type) {
 		case types.MsgTopup:
 			return PostHandleMsgTopup(ctx, k, msg, sideTxResult)

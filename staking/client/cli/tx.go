@@ -145,9 +145,9 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
 	cmd.Flags().String(FlagSignerPubkey, "", "--signer-pubkey=<signer pubkey here>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
-	cmd.Flags().Int(FlagBlockNumber, 0, "--block-number=<block-number>")
+	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
 	cmd.Flags().String(FlagAmount, "0", "--amount=<amount>")
-	cmd.Flags().String(FlagActivationEpoch, "", "--activation-epoch=<activation-epoch>")
+	cmd.Flags().Uint64(FlagActivationEpoch, 0, "--activation-epoch=<activation-epoch>")
 
 	if err := cmd.MarkFlagRequired(FlagProposerAddress); err != nil {
 		logger.Error("SendValidatorJoinTx | MarkFlagRequired | FlagProposerAddress", "Error", err)
@@ -198,10 +198,10 @@ func SendValidatorExitTx(cdc *codec.Codec) *cobra.Command {
 			msg := types.NewMsgValidatorExit(
 				proposer,
 				uint64(validator),
-				uint64(viper.GetInt64(FlagDeactivationEpoch)),
+				viper.GetUint64(FlagDeactivationEpoch),
 				hmTypes.HexToHeimdallHash(txhash),
-				uint64(viper.GetInt64(FlagLogIndex)),
-				uint64(viper.GetInt64(FlagBlockNumber)),
+				viper.GetUint64(FlagLogIndex),
+				viper.GetUint64(FlagBlockNumber),
 			)
 
 			// broadcast messages
@@ -212,8 +212,8 @@ func SendValidatorExitTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
 	cmd.Flags().Uint64(FlagValidatorID, 0, "--id=<validator ID here>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
-	cmd.Flags().String(FlagLogIndex, "", "--log-index=<log-index>")
-	cmd.Flags().String(FlagDeactivationEpoch, "", "--deactivation-epoch=<deactivation-epoch>")
+	cmd.Flags().Uint64(FlagLogIndex, 0, "--log-index=<log-index>")
+	cmd.Flags().Uint64(FlagDeactivationEpoch, 0, "--deactivation-epoch=<deactivation-epoch>")
 	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
 
 	if err := cmd.MarkFlagRequired(FlagValidatorID); err != nil {
@@ -272,8 +272,8 @@ func SendValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 				uint64(validator),
 				pubkey,
 				hmTypes.HexToHeimdallHash(txhash),
-				uint64(viper.GetInt64(FlagLogIndex)),
-				uint64(viper.GetInt64(FlagBlockNumber)),
+				viper.GetUint64(FlagLogIndex),
+				viper.GetUint64(FlagBlockNumber),
 			)
 
 			// broadcast messages
@@ -285,8 +285,8 @@ func SendValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().Int(FlagValidatorID, 0, "--id=<validator-id>")
 	cmd.Flags().String(FlagNewSignerPubkey, "", "--new-pubkey=<new-signer-pubkey>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
-	cmd.Flags().String(FlagLogIndex, "", "--log-index=<log-index>")
-	cmd.Flags().Int(FlagBlockNumber, 0, "--block-number=<block-number>")
+	cmd.Flags().Uint64(FlagLogIndex, 0, "--log-index=<log-index>")
+	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
 
 	if err := cmd.MarkFlagRequired(FlagProposerAddress); err != nil {
 		logger.Error("SendValidatorUpdateTx | MarkFlagRequired | FlagProposerAddress", "Error", err)
@@ -345,8 +345,8 @@ func SendValidatorStakeUpdateTx(cdc *codec.Codec) *cobra.Command {
 				uint64(validator),
 				amount,
 				hmTypes.HexToHeimdallHash(txhash),
-				uint64(viper.GetInt64(FlagLogIndex)),
-				uint64(viper.GetInt64(FlagBlockNumber)),
+				viper.GetUint64(FlagLogIndex),
+				viper.GetUint64(FlagBlockNumber),
 			)
 
 			// broadcast messages
@@ -358,8 +358,8 @@ func SendValidatorStakeUpdateTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().Int(FlagValidatorID, 0, "--id=<validator-id>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
 	cmd.Flags().String(FlagAmount, "", "--amount=<amount>")
-	cmd.Flags().String(FlagLogIndex, "", "--log-index=<log-index>")
-	cmd.Flags().Int(FlagBlockNumber, 0, "--block-number=<block-number>")
+	cmd.Flags().Uint64(FlagLogIndex, 0, "--log-index=<log-index>")
+	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
 
 	if err := cmd.MarkFlagRequired(FlagTxHash); err != nil {
 		logger.Error("SendValidatorStakeUpdateTx | MarkFlagRequired | FlagTxHash", "Error", err)
