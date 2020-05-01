@@ -21,7 +21,6 @@ import (
 func NewSideTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.SideTxHandler {
 	return func(ctx sdk.Context, msg sdk.Msg) abci.ResponseDeliverSideTx {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
-		fmt.Println("clerk sideTxHandler invoked", "msgType", msg.Type())
 		switch msg := msg.(type) {
 		case types.MsgEventRecord:
 			return SideHandleMsgEventRecord(ctx, k, msg, contractCaller)
