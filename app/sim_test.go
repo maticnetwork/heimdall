@@ -126,7 +126,7 @@ func TestAppImportExport(t *testing.T) {
 	var genesisState GenesisState
 	err = app.Codec().UnmarshalJSON(appState, &genesisState)
 	require.NoError(t, err)
-	fmt.Println("app.LastBlockHeight()", app.LastBlockHeight())
+
 	ctxA := app.NewContext(true, abci.Header{Height: app.LastBlockHeight()})
 	ctxB := newApp.NewContext(true, abci.Header{Height: app.LastBlockHeight()})
 	newApp.mm.InitGenesis(ctxB, genesisState)
@@ -202,22 +202,20 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(newDir))
 	}()
 
-	newApp := NewHeimdallApp(logger, db, nil)
-	if err := newApp.LoadLatestVersion(newApp.keys[bam.MainStoreKey]); err != nil {
-		require.NoError(t, err)
-	}
+	newApp := NewHeimdallApp(logger, db)
 	require.Equal(t, AppName, app.Name())
 
 	newApp.InitChain(abci.RequestInitChain{
 		AppStateBytes: appState,
 	})
 
-	_, _, err = simulation.SimulateFromSeed(
-		t, os.Stdout, newApp.BaseApp, AppStateFn(app.Codec(), app.SimulationManager()),
-		SimulationOperations(newApp, newApp.Codec(), config),
-		newApp.ModuleAccountAddrs(), config,
-	)
-	require.NoError(t, err)
+	require.Panics(t, func() {
+		simulation.SimulateFromSeed(
+			t, os.Stdout, newApp.BaseApp, AppStateFn(app.Codec(), app.SimulationManager()),
+			SimulationOperations(newApp, newApp.Codec(), config),
+			newApp.ModuleAccountAddrs(), config,
+		)
+	})
 }
 
 // TODO: Make another test for the fuzzer itself, which just has noOp txs
