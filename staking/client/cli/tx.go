@@ -202,7 +202,7 @@ func SendValidatorExitTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
 	cmd.Flags().String(FlagLogIndex, "", "--log-index=<log-index>")
 	cmd.Flags().String(FlagDeactivationEpoch, "", "--deactivation-epoch=<deactivation-epoch>")
-	cmd.Flags().Int(FlagBlockNumber, 0, "--block-number=<block-number>")
+	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
 
 	cmd.MarkFlagRequired(FlagValidatorID)
 	cmd.MarkFlagRequired(FlagTxHash)
