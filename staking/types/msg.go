@@ -121,7 +121,7 @@ var _ sdk.Msg = &MsgStakeUpdate{}
 type MsgStakeUpdate struct {
 	From        hmTypes.HeimdallAddress `json:"from"`
 	ID          hmTypes.ValidatorID     `json:"id"`
-	NewAmount   *big.Int                `json:"amount"`
+	NewAmount   sdk.Int                `json:"amount"`
 	TxHash      hmTypes.HeimdallHash    `json:"tx_hash"`
 	LogIndex    uint64                  `json:"log_index"`
 	BlockNumber uint64                  `json:"block_number"`
