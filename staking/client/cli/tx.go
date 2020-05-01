@@ -130,7 +130,7 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 			msg := types.NewMsgValidatorJoin(
 				proposer,
 				event.ValidatorId.Uint64(),
-				uint64(viper.GetInt64(FlagActivationEpoch)),
+				viper.GetUint64(FlagActivationEpoch),
 				amount,
 				pubkey,
 				hmTypes.HexToHeimdallHash(txhash),
