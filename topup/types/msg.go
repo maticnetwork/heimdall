@@ -18,7 +18,7 @@ type MsgTopup struct {
 	FromAddress types.HeimdallAddress `json:"from_address"`
 	ID          types.ValidatorID     `json:"id"`
 	Signer      types.HeimdallAddress `json:"signer"`
-	Fee         *big.Int              `json:"fee"`
+	Fee         sdk.Int              `json:"fee"`
 	TxHash      types.HeimdallHash    `json:"tx_hash"`
 	LogIndex    uint64                `json:"log_index"`
 	BlockNumber uint64                `json:"block_number"`
