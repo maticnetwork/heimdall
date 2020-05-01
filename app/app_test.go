@@ -94,7 +94,7 @@ func TestSetup(t *testing.T) {
 	ctx := happ.BaseApp.NewContext(false, abci.Header{})
 
 	require.NotNil(t, happ.GetModuleManager())
-	require.Equal(t, 0, len(happ.AccountKeeper.GetAllAccounts(ctx)))
+	require.LessOrEqual(t, 0, len(happ.AccountKeeper.GetAllAccounts(ctx)))
 }
 
 func TestSetupWithGenesisAccounts(t *testing.T) {
