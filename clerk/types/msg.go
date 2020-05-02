@@ -36,6 +36,7 @@ func NewMsgEventRecord(
 		From:            from,
 		TxHash:          txHash,
 		LogIndex:        logIndex,
+		BlockNumber:     blockNumber,
 		ID:              id,
 		ContractAddress: contractAddress,
 		Data:            data,

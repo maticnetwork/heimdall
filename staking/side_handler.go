@@ -37,7 +37,6 @@ func NewSideTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.S
 				Code: uint32(sdk.CodeUnknownRequest),
 			}
 		}
-
 	}
 }
 
@@ -64,6 +63,13 @@ func NewPostTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.P
 
 // SideHandleMsgValidatorJoin side msg validator join
 func SideHandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k Keeper, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
+
+	k.Logger(ctx).Debug("✅ Validating External call for validator join msg",
+		"txHash", hmTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
+		"logIndex", uint64(msg.LogIndex),
+		"blockNumber", msg.BlockNumber,
+	)
+
 	// chainManager params
 	params := k.chainKeeper.GetParams(ctx)
 	chainParams := params.ChainParams
@@ -128,12 +134,19 @@ func SideHandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k K
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
 
+	k.Logger(ctx).Debug("✅ Succesfully validated External call for validator join msg")
 	result.Result = abci.SideTxResultType_Yes
 	return
 }
 
 // SideHandleMsgStakeUpdate handles stake update message
 func SideHandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keeper, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
+	k.Logger(ctx).Debug("✅ Validating External call for stake update msg",
+		"txHash", hmTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
+		"logIndex", uint64(msg.LogIndex),
+		"blockNumber", msg.BlockNumber,
+	)
+
 	// chainManager params
 	params := k.chainKeeper.GetParams(ctx)
 	chainParams := params.ChainParams
@@ -166,13 +179,19 @@ func SideHandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keepe
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
 
+	k.Logger(ctx).Debug("✅ Succesfully validated External call for stake update msg")
 	result.Result = abci.SideTxResultType_Yes
 	return
 }
 
 // SideHandleMsgSignerUpdate handles signer update message
 func SideHandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
-	k.Logger(ctx).Debug("Handling signer update", "Validator", msg.ID, "Signer", msg.NewSignerPubKey.Address())
+	k.Logger(ctx).Debug("✅ Validating External call for signer update msg",
+		"txHash", hmTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
+		"logIndex", uint64(msg.LogIndex),
+		"blockNumber", msg.BlockNumber,
+	)
+
 	// chainManager params
 	params := k.chainKeeper.GetParams(ctx)
 	chainParams := params.ChainParams
@@ -213,12 +232,19 @@ func SideHandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Kee
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
 
+	k.Logger(ctx).Debug("✅ Succesfully validated External call for signer update msg")
 	result.Result = abci.SideTxResultType_Yes
 	return
 }
 
 // SideHandleMsgValidatorExit  handle  side msg validator exit
 func SideHandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k Keeper, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
+	k.Logger(ctx).Debug("✅ Validating External call for validator exit msg",
+		"txHash", hmTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
+		"logIndex", uint64(msg.LogIndex),
+		"blockNumber", msg.BlockNumber,
+	)
+
 	// chainManager params
 	params := k.chainKeeper.GetParams(ctx)
 	chainParams := params.ChainParams
@@ -251,6 +277,7 @@ func SideHandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k K
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
 
+	k.Logger(ctx).Debug("✅ Succesfully validated External call for validator exit msg")
 	result.Result = abci.SideTxResultType_Yes
 	return
 }
@@ -267,6 +294,8 @@ func PostHandleMsgValidatorJoin(ctx sdk.Context, k Keeper, msg types.MsgValidato
 		k.Logger(ctx).Debug("Skipping new validator-join since side-tx didn't get yes votes")
 		return common.ErrSideTxValidation(k.Codespace()).Result()
 	}
+
+	k.Logger(ctx).Debug("Adding validator to state", "sideTxResult", sideTxResult)
 
 	// Generate PubKey from Pubkey in message and signer
 	pubkey := msg.SignerPubKey
@@ -332,7 +361,13 @@ func PostHandleMsgValidatorJoin(ctx sdk.Context, k Keeper, msg types.MsgValidato
 
 // PostHandleMsgStakeUpdate handles stake update message
 func PostHandleMsgStakeUpdate(ctx sdk.Context, k Keeper, msg types.MsgStakeUpdate, sideTxResult abci.SideTxResultType) sdk.Result {
-	k.Logger(ctx).Debug("Handling stake update", "Validator", msg.ID)
+	// Skip handler if stakeUpdate is not approved
+	if sideTxResult != abci.SideTxResultType_Yes {
+		k.Logger(ctx).Debug("Skipping stake update since side-tx didn't get yes votes")
+		return common.ErrSideTxValidation(k.Codespace()).Result()
+	}
+
+	k.Logger(ctx).Debug("Updating validator stake", "sideTxResult", sideTxResult)
 
 	// pull validator from store
 	validator, ok := k.GetValidatorFromValID(ctx, msg.ID)
@@ -394,6 +429,8 @@ func PostHandleMsgSignerUpdate(ctx sdk.Context, k Keeper, msg types.MsgSignerUpd
 		k.Logger(ctx).Debug("Skipping signer update since side-tx didn't get yes votes")
 		return common.ErrSideTxValidation(k.Codespace()).Result()
 	}
+
+	k.Logger(ctx).Debug("Persisting signer update", "sideTxResult", sideTxResult)
 
 	newPubKey := msg.NewSignerPubKey
 	newSigner := newPubKey.Address()
@@ -498,6 +535,8 @@ func PostHandleMsgValidatorExit(ctx sdk.Context, k Keeper, msg types.MsgValidato
 		k.Logger(ctx).Debug("Skipping validator exit since side-tx didn't get yes votes")
 		return common.ErrSideTxValidation(k.Codespace()).Result()
 	}
+
+	k.Logger(ctx).Debug("Persisting validator exit", "sideTxResult", sideTxResult)
 
 	// sequence id
 	blockNumber := new(big.Int).SetUint64(msg.BlockNumber)

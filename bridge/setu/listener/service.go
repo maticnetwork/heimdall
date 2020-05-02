@@ -28,8 +28,6 @@ type ListenerService struct {
 
 // NewListenerService returns new service object for listneing to events
 func NewListenerService(cdc *codec.Codec, queueConnector *queue.QueueConnector, httpClient *httpClient.HTTP) *ListenerService {
-	// create logger
-	logger := util.Logger().With("service", ListenerServiceStr)
 
 	// creating listener object
 	listenerService := &ListenerService{}

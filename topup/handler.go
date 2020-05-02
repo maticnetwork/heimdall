@@ -31,6 +31,16 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 
 // HandleMsgTopup handles topup event
 func HandleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCaller helper.IContractCaller) sdk.Result {
+
+	k.Logger(ctx).Debug("✅ Validating topup msg",
+		"validatorId", msg.ID,
+		"Signer", msg.Signer,
+		"Fee", msg.Fee,
+		"txHash", hmTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
+		"logIndex", uint64(msg.LogIndex),
+		"blockNumber", msg.BlockNumber,
+	)
+
 	if !k.bk.GetSendEnabled(ctx) {
 		return types.ErrSendDisabled(k.Codespace()).Result()
 	}

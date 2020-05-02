@@ -35,6 +35,17 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 
 // HandleMsgValidatorJoin msg validator join
 func HandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
+
+	k.Logger(ctx).Debug("✅ Validating validator join msg",
+		"validatorId", msg.ID,
+		"activationEpoch", msg.ActivationEpoch,
+		"amount", msg.Amount,
+		"SignerPubkey", msg.SignerPubKey.String(),
+		"txHash", msg.TxHash,
+		"logIndex", msg.LogIndex,
+		"blockNumber", msg.BlockNumber,
+	)
+
 	// Generate PubKey from Pubkey in message and signer
 	pubkey := msg.SignerPubKey
 	signer := pubkey.Address()
@@ -75,6 +86,15 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k Keepe
 
 // HandleMsgStakeUpdate handles stake update message
 func HandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
+
+	k.Logger(ctx).Debug("✅ Validating stake update msg",
+		"validatorID", msg.ID,
+		"newAmount", msg.NewAmount,
+		"txHash", msg.TxHash,
+		"logIndex", msg.LogIndex,
+		"blockNumber", msg.BlockNumber,
+	)
+
 	// pull validator from store
 	_, ok := k.GetValidatorFromValID(ctx, msg.ID)
 	if !ok {
@@ -106,6 +126,14 @@ func HandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keeper, c
 
 // HandleMsgSignerUpdate handles signer update message
 func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
+
+	k.Logger(ctx).Debug("✅ Validating signer update msg",
+		"validatorID", msg.ID,
+		"NewSignerPubkey", msg.NewSignerPubKey.String(),
+		"txHash", msg.TxHash,
+		"logIndex", msg.LogIndex,
+		"blockNumber", msg.BlockNumber,
+	)
 
 	newPubKey := msg.NewSignerPubKey
 	newSigner := newPubKey.Address()
@@ -142,6 +170,15 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper,
 
 // HandleMsgValidatorExit handle msg validator exit
 func HandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
+
+	k.Logger(ctx).Debug("✅ Validating validator exit msg",
+		"validatorID", msg.ID,
+		"deactivatonEpoch", msg.DeactivationEpoch,
+		"txHash", msg.TxHash,
+		"logIndex", msg.LogIndex,
+		"blockNumber", msg.BlockNumber,
+	)
+
 	validator, ok := k.GetValidatorFromValID(ctx, msg.ID)
 	if !ok {
 		k.Logger(ctx).Error("Fetching of validator from store failed", "validatorID", msg.ID)

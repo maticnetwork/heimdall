@@ -47,6 +47,12 @@ func NewPostTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.P
 
 func SideHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecord, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
 
+	k.Logger(ctx).Debug("✅ Validating External call for clerk msg",
+		"txHash", hmTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
+		"logIndex", uint64(msg.LogIndex),
+		"blockNumber", msg.BlockNumber,
+	)
+
 	// chainManager params
 	params := k.chainKeeper.GetParams(ctx)
 	chainParams := params.ChainParams
@@ -104,6 +110,8 @@ func PostHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecor
 		k.Logger(ctx).Debug("Skipping new clerk since side-tx didn't get yes votes")
 		return common.ErrSideTxValidation(k.Codespace()).Result()
 	}
+
+	k.Logger(ctx).Debug("Persisting clerk state", "sideTxResult", sideTxResult)
 
 	// sequence id
 	blockNumber := new(big.Int).SetUint64(msg.BlockNumber)

@@ -49,6 +49,12 @@ func NewPostTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.P
 // SideHandleMsgTopup handles MsgTopup message for external call
 func SideHandleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
 
+	k.Logger(ctx).Debug("✅ Validating External call for topup msg",
+		"txHash", hmTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
+		"logIndex", uint64(msg.LogIndex),
+		"blockNumber", msg.BlockNumber,
+	)
+
 	// chainManager params
 	params := k.chainKeeper.GetParams(ctx)
 	chainParams := params.ChainParams
@@ -90,6 +96,7 @@ func SideHandleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractC
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
 
+	k.Logger(ctx).Debug("✅ Succesfully validated External call for topup msg")
 	result.Result = abci.SideTxResultType_Yes
 	return
 }
@@ -101,6 +108,8 @@ func PostHandleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, sideTxRes
 		k.Logger(ctx).Debug("Skipping new topup since side-tx didn't get yes votes")
 		return common.ErrSideTxValidation(k.Codespace()).Result()
 	}
+
+	k.Logger(ctx).Debug("Persisting topup state", "sideTxResult", sideTxResult)
 
 	// use event log signer
 	signer := msg.Signer
@@ -120,6 +129,7 @@ func PostHandleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, sideTxRes
 
 	// increase coins in account
 	if _, err := k.bk.AddCoins(ctx, signer, topupAmount); err != nil {
+		k.Logger(ctx).Error("Error while adding coins to signer", "signer", signer, "topupAmount", topupAmount, "error", err)
 		return err.Result()
 	}
 
