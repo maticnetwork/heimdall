@@ -53,7 +53,7 @@ func TopupTxCmd(cdc *codec.Codec) *cobra.Command {
 				proposer = helper.GetFromAddress(cliCtx)
 			}
 
-			validatorID := viper.GetInt64(FlagValidatorID)
+			validatorID := viper.GetUint64(FlagValidatorID)
 			if validatorID == 0 {
 				return fmt.Errorf("Validator ID cannot be zero")
 			}
@@ -78,7 +78,7 @@ func TopupTxCmd(cdc *codec.Codec) *cobra.Command {
 			// build and sign the transaction, then broadcast to Tendermint
 			msg := topupTypes.NewMsgTopup(
 				proposer,
-				uint64(validatorID),
+				validatorID,
 				signer,
 				fee,
 				types.HexToHeimdallHash(txhash),

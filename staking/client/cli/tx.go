@@ -184,7 +184,7 @@ func SendValidatorExitTx(cdc *codec.Codec) *cobra.Command {
 				proposer = helper.GetFromAddress(cliCtx)
 			}
 
-			validator := viper.GetInt64(FlagValidatorID)
+			validator := viper.GetUint64(FlagValidatorID)
 			if validator == 0 {
 				return fmt.Errorf("validator ID cannot be 0")
 			}
@@ -197,7 +197,7 @@ func SendValidatorExitTx(cdc *codec.Codec) *cobra.Command {
 			// draf msg
 			msg := types.NewMsgValidatorExit(
 				proposer,
-				uint64(validator),
+				validator,
 				viper.GetUint64(FlagDeactivationEpoch),
 				hmTypes.HexToHeimdallHash(txhash),
 				viper.GetUint64(FlagLogIndex),
@@ -246,7 +246,7 @@ func SendValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 				proposer = helper.GetFromAddress(cliCtx)
 			}
 
-			validator := viper.GetInt64(FlagValidatorID)
+			validator := viper.GetUint64(FlagValidatorID)
 			if validator == 0 {
 				return fmt.Errorf("validator ID cannot be 0")
 			}
@@ -269,7 +269,7 @@ func SendValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 
 			msg := types.NewMsgSignerUpdate(
 				proposer,
-				uint64(validator),
+				validator,
 				pubkey,
 				hmTypes.HexToHeimdallHash(txhash),
 				viper.GetUint64(FlagLogIndex),
@@ -282,7 +282,7 @@ func SendValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 	}
 
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
-	cmd.Flags().Int(FlagValidatorID, 0, "--id=<validator-id>")
+	cmd.Flags().Uint64(FlagValidatorID, 0, "--id=<validator-id>")
 	cmd.Flags().String(FlagNewSignerPubkey, "", "--new-pubkey=<new-signer-pubkey>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
 	cmd.Flags().Uint64(FlagLogIndex, 0, "--log-index=<log-index>")
@@ -324,7 +324,7 @@ func SendValidatorStakeUpdateTx(cdc *codec.Codec) *cobra.Command {
 				proposer = helper.GetFromAddress(cliCtx)
 			}
 
-			validator := viper.GetInt64(FlagValidatorID)
+			validator := viper.GetUint64(FlagValidatorID)
 			if validator == 0 {
 				return fmt.Errorf("validator ID cannot be 0")
 			}
@@ -342,7 +342,7 @@ func SendValidatorStakeUpdateTx(cdc *codec.Codec) *cobra.Command {
 
 			msg := types.NewMsgStakeUpdate(
 				proposer,
-				uint64(validator),
+				validator,
 				amount,
 				hmTypes.HexToHeimdallHash(txhash),
 				viper.GetUint64(FlagLogIndex),
@@ -355,7 +355,7 @@ func SendValidatorStakeUpdateTx(cdc *codec.Codec) *cobra.Command {
 	}
 
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
-	cmd.Flags().Int(FlagValidatorID, 0, "--id=<validator-id>")
+	cmd.Flags().Uint64(FlagValidatorID, 0, "--id=<validator-id>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
 	cmd.Flags().String(FlagAmount, "", "--amount=<amount>")
 	cmd.Flags().Uint64(FlagLogIndex, 0, "--log-index=<log-index>")
