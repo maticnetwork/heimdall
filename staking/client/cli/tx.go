@@ -101,7 +101,7 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 			abiObject := &contractCallerObj.StakingInfoABI
 			eventName := "Staked"
 			event := new(stakinginfo.StakinginfoStaked)
-			var logIndex uint
+			var logIndex uint64
 			found := false
 			for _, vLog := range receipt.Logs {
 				topic := vLog.Topics[0].Bytes()
@@ -111,7 +111,7 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 						return err
 					}
 
-					logIndex = vLog.Index
+					logIndex = uint64(vLog.Index)
 					found = true
 					break
 				}
@@ -133,7 +133,7 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 				amount,
 				pubkey,
 				hmTypes.HexToHeimdallHash(txhash),
-				uint64(logIndex),
+				logIndex,
 				viper.GetUint64(FlagBlockNumber),
 			)
 
