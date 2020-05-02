@@ -148,8 +148,9 @@ func (cp *CheckpointProcessor) sendCheckpointToHeimdall(headerBlockStr string) (
 // 1. check if i am the current proposer.
 // 2. check if this checkpoint has to be submitted to rootchain
 // 3. if so, create and broadcast checkpoint transaction to rootchain
-func (cp *CheckpointProcessor) sendCheckpointToRootchain(eventBytes string, txHeight int64, txHash string) error {
-	cp.Logger.Info("Received sendCheckpointToRootchain request", "eventBytes", eventBytes, "txHeight", txHeight, "txHash", txHash)
+func (cp *CheckpointProcessor) sendCheckpointToRootchain(eventBytes string, blockHeight int64) error {
+
+	cp.Logger.Info("Received sendCheckpointToRootchain request", "eventBytes", eventBytes, "blockHeight", blockHeight)
 	var event = sdk.StringEvent{}
 	if err := json.Unmarshal([]byte(eventBytes), &event); err != nil {
 		cp.Logger.Error("Error unmarshalling event from heimdall", "error", err)
@@ -171,12 +172,17 @@ func (cp *CheckpointProcessor) sendCheckpointToRootchain(eventBytes string, txHe
 
 	var startBlock uint64
 	var endBlock uint64
+	var txHash string
+
 	for _, attr := range event.Attributes {
 		if attr.Key == checkpointTypes.AttributeKeyStartBlock {
 			startBlock, _ = strconv.ParseUint(attr.Value, 10, 64)
 		}
 		if attr.Key == checkpointTypes.AttributeKeyEndBlock {
 			endBlock, _ = strconv.ParseUint(attr.Value, 10, 64)
+		}
+		if attr.Key == hmTypes.AttributeKeyTxHash {
+			txHash = attr.Value
 		}
 	}
 
@@ -196,7 +202,7 @@ func (cp *CheckpointProcessor) sendCheckpointToRootchain(eventBytes string, txHe
 			cp.Logger.Error("Error decoding txHash while sending checkpoint to rootchain", "txHash", txHash, "error", err)
 			return err
 		}
-		if err := cp.createAndSendCheckpointToRootchain(checkpointContext, startBlock, endBlock, txHeight, txHash); err != nil {
+		if err := cp.createAndSendCheckpointToRootchain(checkpointContext, startBlock, endBlock, blockHeight, txHash); err != nil {
 			cp.Logger.Error("Error sending checkpoint to rootchain", "error", err)
 			return err
 		}

@@ -11,6 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
+	abci "github.com/tendermint/tendermint/abci/types"
 	httpClient "github.com/tendermint/tendermint/rpc/client"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmTypes "github.com/tendermint/tendermint/types"
@@ -254,6 +255,50 @@ func GetBlockWithClient(client *httpClient.HTTP, height int64) (*tmTypes.Block, 
 	}
 }
 
+// GetBeginBlockEvents get block through per height
+func GetBeginBlockEvents(client *httpClient.HTTP, height int64) ([]abci.Event, error) {
+	c, cancel := context.WithTimeout(context.Background(), CommitTimeout)
+	defer cancel()
+
+	// get block using client
+	blockResults, err := client.BlockResults(&height)
+	if err == nil && blockResults != nil {
+		return blockResults.Results.BeginBlock.GetEvents(), nil
+	}
+
+	// subscriber
+	subscriber := fmt.Sprintf("new-block-%v", height)
+
+	// query for event
+	query := tmTypes.QueryForEvent(tmTypes.EventNewBlock).String()
+
+	// register for the next event of this type
+	eventCh, err := client.Subscribe(c, subscriber, query)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to subscribe")
+	}
+
+	// unsubscribe query
+	defer client.Unsubscribe(c, subscriber, query)
+
+	for {
+		select {
+		case event := <-eventCh:
+			eventData := event.Data.(tmTypes.TMEventData)
+			switch t := eventData.(type) {
+			case tmTypes.EventDataNewBlock:
+				if t.Block.Height == height {
+					return t.ResultBeginBlock.GetEvents(), nil
+				}
+			default:
+				return nil, errors.New("timed out waiting for event")
+			}
+		case <-c.Done():
+			return nil, errors.New("timed out waiting for event")
+		}
+	}
+}
+
 // FetchVotes fetches votes and extracts sigs from it
 func FetchVotes(
 	client *httpClient.HTTP,
@@ -287,7 +332,7 @@ func FetchSideTxSigs(
 	sideTxData []byte,
 ) ([]byte, error) {
 	// get block client
-	blockDetails, err := GetBlockWithClient(client, height+2) // side-tx takes 2 blocks for votes
+	blockDetails, err := GetBlockWithClient(client, height)
 
 	if err != nil {
 		return nil, err

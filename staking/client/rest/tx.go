@@ -28,10 +28,13 @@ type (
 	AddValidatorReq struct {
 		BaseReq rest.BaseReq `json:"base_req"`
 
-		ID           uint64         `json:"ID"`
-		SignerPubKey hmTypes.PubKey `json:"pubKey"`
-		TxHash       string         `json:"tx_hash"`
-		LogIndex     uint64         `json:"log_index"`
+		ID              uint64         `json:"ID"`
+		ActivationEpoch uint64         `json:"activationEpoch"`
+		Amount          string         `json:"amount"`
+		SignerPubKey    hmTypes.PubKey `json:"pubKey"`
+		TxHash          string         `json:"tx_hash"`
+		LogIndex        uint64         `json:"log_index"`
+		BlockNumber     uint64         `json:"block_number" yaml:"block_number"`
 	}
 
 	// UpdateSignerReq update validator signer request object
@@ -42,24 +45,29 @@ type (
 		NewSignerPubKey hmTypes.PubKey `json:"pubKey"`
 		TxHash          string         `json:"tx_hash"`
 		LogIndex        uint64         `json:"log_index"`
+		BlockNumber     uint64         `json:"block_number" yaml:"block_number"`
 	}
 
 	// UpdateValidatorStakeReq update validator stake request object
 	UpdateValidatorStakeReq struct {
 		BaseReq rest.BaseReq `json:"base_req"`
 
-		ID       uint64 `json:"ID"`
-		TxHash   string `json:"tx_hash"`
-		LogIndex uint64 `json:"log_index"`
+		ID          uint64 `json:"ID"`
+		Amount      string `json:"amount"`
+		TxHash      string `json:"tx_hash"`
+		LogIndex    uint64 `json:"log_index"`
+		BlockNumber uint64 `json:"block_number" yaml:"block_number"`
 	}
 
 	// RemoveValidatorReq remove validator request object
 	RemoveValidatorReq struct {
 		BaseReq rest.BaseReq `json:"base_req"`
 
-		ID       uint64 `json:"ID"`
-		TxHash   string `json:"tx_hash"`
-		LogIndex uint64 `json:"log_index"`
+		ID                uint64 `json:"ID"`
+		DeactivationEpoch uint64 `json:"deactivationEpoch"`
+		TxHash            string `json:"tx_hash"`
+		LogIndex          uint64 `json:"log_index"`
+		BlockNumber       uint64 `json:"block_number" yaml:"block_number"`
 	}
 )
 
@@ -76,13 +84,21 @@ func newValidatorJoinHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		amount, ok := sdk.NewIntFromString(req.Amount)
+		if !ok {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "invalid amount")
+		}
+
 		// create new msg
 		msg := types.NewMsgValidatorJoin(
 			hmTypes.HexToHeimdallAddress(req.BaseReq.From),
 			req.ID,
+			req.ActivationEpoch,
+			amount,
 			req.SignerPubKey,
 			hmTypes.HexToHeimdallHash(req.TxHash),
 			req.LogIndex,
+			req.BlockNumber,
 		)
 
 		// send response
@@ -107,8 +123,10 @@ func newValidatorExitHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		msg := types.NewMsgValidatorExit(
 			hmTypes.HexToHeimdallAddress(req.BaseReq.From),
 			req.ID,
+			req.DeactivationEpoch,
 			hmTypes.HexToHeimdallHash(req.TxHash),
 			req.LogIndex,
+			req.BlockNumber,
 		)
 
 		// send response
@@ -136,6 +154,7 @@ func newValidatorUpdateHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			req.NewSignerPubKey,
 			hmTypes.HexToHeimdallHash(req.TxHash),
 			req.LogIndex,
+			req.BlockNumber,
 		)
 
 		// send response
@@ -156,12 +175,19 @@ func newValidatorStakeUpdateHandler(cliCtx context.CLIContext) http.HandlerFunc 
 			return
 		}
 
+		amount, ok := sdk.NewIntFromString(req.Amount)
+		if !ok {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "invalid amount")
+		}
+
 		// create msg validator update
 		msg := types.NewMsgStakeUpdate(
 			hmTypes.HexToHeimdallAddress(req.BaseReq.From),
 			req.ID,
+			amount,
 			hmTypes.HexToHeimdallHash(req.TxHash),
 			req.LogIndex,
+			req.BlockNumber,
 		)
 
 		// send response
