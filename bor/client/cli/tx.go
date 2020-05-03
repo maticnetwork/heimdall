@@ -99,12 +99,24 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
+			res, _, err = cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNextSpanSeed), nil)
+			if err != nil {
+				return err
+			}
+
+			if len(res) == 0 {
+				return errors.New("next span seed not found")
+			}
+
+			var seed = hmTypes.BytesToHeimdallHash(res)
+
 			msg := types.NewMsgProposeSpan(
 				spanID,
 				proposer,
 				startBlock,
 				startBlock+spanDuration,
 				borChainID,
+				seed,
 			)
 
 			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})

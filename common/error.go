@@ -46,12 +46,13 @@ const (
 	CodeErrDecodeEvent      CodeType = 2512
 	CodeNoSignerChangeError CodeType = 2513
 
-	CodeSpanNotCountinuous CodeType = 3501
-	CodeUnableToFreezeSet  CodeType = 3502
-	CodeSpanNotFound       CodeType = 3503
-	CodeValSetMisMatch     CodeType = 3504
-	CodeProducerMisMatch   CodeType = 3505
-	CodeInvalidBorChainID  CodeType = 3506
+	CodeSpanNotCountinuous  CodeType = 3501
+	CodeUnableToFreezeSet   CodeType = 3502
+	CodeSpanNotFound        CodeType = 3503
+	CodeValSetMisMatch      CodeType = 3504
+	CodeProducerMisMatch    CodeType = 3505
+	CodeInvalidBorChainID   CodeType = 3506
+	CodeInvalidSpanDuration CodeType = 3507
 
 	CodeFetchCheckpointSigners       CodeType = 4501
 	CodeErrComputeGenesisAccountRoot CodeType = 4503
@@ -199,6 +200,10 @@ func ErrInvalidBorChainID(codespace sdk.CodespaceType) sdk.Error {
 
 func ErrSpanNotInCountinuity(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeSpanNotCountinuous, "Span not countinuous")
+}
+
+func ErrInvalidSpanDuration(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeInvalidSpanDuration, "wrong span duration")
 }
 
 func ErrSpanNotFound(codespace sdk.CodespaceType) sdk.Error {

@@ -67,6 +67,16 @@ func postProposeSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		// fetch seed
+		res, _, err = cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNextSpanSeed), nil)
+		if err != nil {
+			RestLogger.Error("Error while fetching next span seed  ", "Error", err.Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		var seed = hmTypes.BytesToHeimdallHash(res)
+
 		// draft a propose span message
 		msg := types.NewMsgProposeSpan(
 			req.ID,
@@ -74,6 +84,7 @@ func postProposeSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			req.StartBlock,
 			req.StartBlock+spanDuration,
 			req.BorChainID,
+			seed,
 		)
 
 		// send response

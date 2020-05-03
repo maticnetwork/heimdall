@@ -18,6 +18,7 @@ type MsgProposeSpan struct {
 	StartBlock uint64                  `json:"start_block"`
 	EndBlock   uint64                  `json:"end_block"`
 	ChainID    string                  `json:"bor_chain_id"`
+	Seed       hmTypes.HeimdallHash    `json:"seed"`
 }
 
 // NewMsgProposeSpan creates new propose span message
@@ -27,6 +28,7 @@ func NewMsgProposeSpan(
 	startBlock uint64,
 	endBlock uint64,
 	chainID string,
+	seed hmTypes.HeimdallHash,
 ) MsgProposeSpan {
 	return MsgProposeSpan{
 		ID:         id,
@@ -34,6 +36,7 @@ func NewMsgProposeSpan(
 		StartBlock: startBlock,
 		EndBlock:   endBlock,
 		ChainID:    chainID,
+		Seed:       seed,
 	}
 }
 
