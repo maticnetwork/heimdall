@@ -10,6 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gorilla/mux"
 
+	"github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/heimdall/bor/types"
 	restClient "github.com/maticnetwork/heimdall/client/rest"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -75,7 +76,7 @@ func postProposeSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		var seed = hmTypes.BytesToHeimdallHash(res)
+		var seed = common.BytesToHash(res)
 
 		// draft a propose span message
 		msg := types.NewMsgProposeSpan(

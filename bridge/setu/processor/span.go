@@ -8,9 +8,9 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
-	hmTypes "github.com/maticnetwork/heimdall/types"
 
 	borTypes "github.com/maticnetwork/heimdall/bor/types"
 
@@ -93,9 +93,8 @@ func (sp *SpanProcessor) propose(lastSpan *types.Span, nextSpanMsg *types.Span) 
 		// log new span
 		sp.Logger.Info("✅ Proposing new span", "spanId", nextSpanMsg.ID, "startBlock", nextSpanMsg.StartBlock, "endBlock", nextSpanMsg.EndBlock)
 
-		// fetch seed for next span
 		//Get NextSpanSeed from HeimdallServer
-		var seed hmTypes.HeimdallHash
+		var seed common.Hash
 		if seed, err = sp.fetchNextSpanSeed(); err != nil {
 			sp.Logger.Info("Error while fetching next span seed from HeimdallServer", "err", err)
 			return
@@ -194,7 +193,7 @@ func (sp *SpanProcessor) fetchNextSpanDetails(id uint64, start uint64) (*types.S
 }
 
 // fetchNextSpanSeed - fetches seed for next span
-func (sp *SpanProcessor) fetchNextSpanSeed() (nextSpanSeed hmTypes.HeimdallHash, err error) {
+func (sp *SpanProcessor) fetchNextSpanSeed() (nextSpanSeed common.Hash, err error) {
 	sp.Logger.Info("Sending Rest call to Get Seed for next span")
 	response, err := helper.FetchFromAPI(sp.cliCtx, helper.GetHeimdallServerEndpoint(util.NextSpanSeedURL))
 	if err != nil {

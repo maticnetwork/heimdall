@@ -2,6 +2,7 @@ package types
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/maticnetwork/bor/common"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -18,7 +19,7 @@ type MsgProposeSpan struct {
 	StartBlock uint64                  `json:"start_block"`
 	EndBlock   uint64                  `json:"end_block"`
 	ChainID    string                  `json:"bor_chain_id"`
-	Seed       hmTypes.HeimdallHash    `json:"seed"`
+	Seed       common.Hash             `json:"seed"`
 }
 
 // NewMsgProposeSpan creates new propose span message
@@ -28,7 +29,7 @@ func NewMsgProposeSpan(
 	startBlock uint64,
 	endBlock uint64,
 	chainID string,
-	seed hmTypes.HeimdallHash,
+	seed common.Hash,
 ) MsgProposeSpan {
 	return MsgProposeSpan{
 		ID:         id,

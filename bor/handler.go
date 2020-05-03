@@ -27,6 +27,7 @@ func HandleMsgProposeSpan(ctx sdk.Context, msg types.MsgProposeSpan, k Keeper) s
 		"spanId", msg.ID,
 		"startBlock", msg.StartBlock,
 		"endBlock", msg.EndBlock,
+		"seed", msg.Seed.String(),
 	)
 
 	// chainManager params

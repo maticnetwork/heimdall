@@ -47,7 +47,9 @@ func NewPostTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.P
 
 // SideHandleMsgSpan validates external calls required for processing proposed span
 func SideHandleMsgSpan(ctx sdk.Context, k Keeper, msg types.MsgProposeSpan, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
-	k.Logger(ctx).Debug("Proposing span", "TxData", msg)
+	k.Logger(ctx).Debug("✅ Validating External call for topup msg",
+		"msgSeed", msg.Seed.String(),
+	)
 
 	// calculate next span seed locally
 	nextSpanSeed, err := k.GetNextSpanSeed(ctx)
@@ -101,7 +103,7 @@ func PostHandleMsgEventSpan(ctx sdk.Context, k Keeper, msg types.MsgProposeSpan,
 	k.Logger(ctx).Debug("Persisting span state", "sideTxResult", sideTxResult)
 
 	// freeze for new span
-	err := k.FreezeSet(ctx, msg.ID, msg.StartBlock, msg.EndBlock, msg.ChainID, msg.Seed.EthHash())
+	err := k.FreezeSet(ctx, msg.ID, msg.StartBlock, msg.EndBlock, msg.ChainID, msg.Seed)
 	if err != nil {
 		k.Logger(ctx).Error("Unable to freeze validator set for span", "Error", err)
 		return common.ErrUnableToFreezeValSet(k.Codespace()).Result()

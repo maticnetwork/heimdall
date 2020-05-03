@@ -10,6 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/gorilla/mux"
 
+	"github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/heimdall/bor/types"
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
@@ -51,7 +52,7 @@ func fetchNextSpanSeedHandlerFn(
 			return
 		}
 
-		var nextSpanSeed = hmTypes.BytesToHeimdallHash(res)
+		var nextSpanSeed = common.BytesToHash(res)
 		RestLogger.Debug("Fetched next span seed ", "NextSpanSeed", nextSpanSeed)
 
 		result, err := json.Marshal(&nextSpanSeed)

@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/heimdall/bor/types"
 	hmClient "github.com/maticnetwork/heimdall/client"
 	"github.com/maticnetwork/heimdall/helper"
@@ -108,7 +109,7 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 				return errors.New("next span seed not found")
 			}
 
-			var seed = hmTypes.BytesToHeimdallHash(res)
+			var seed = common.BytesToHash(res)
 
 			msg := types.NewMsgProposeSpan(
 				spanID,
