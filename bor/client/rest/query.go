@@ -50,16 +50,6 @@ func fetchNextSpanSeedHandlerFn(
 			RestLogger.Error("NextSpanSeed not found ", "Error", err.Error())
 			return
 		}
-		/*
-			var nextSpanSeed = common.BytesToHash(res)
-			RestLogger.Debug("Fetched next span seed ", "NextSpanSeed", nextSpanSeed)
-
-			result, err := json.Marshal(&nextSpanSeed)
-			if err != nil {
-				RestLogger.Error("Error while marshalling response to Json", "error", err)
-				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-				return
-			} */
 
 		// return result
 		rest.PostProcessResponse(w, cliCtx, res)
@@ -287,7 +277,7 @@ func prepareNextSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		msg := hmTypes.NewSpan(
 			spanID,
 			startBlock,
-			startBlock+spanDuration,
+			startBlock+spanDuration-1,
 			_validatorSet,
 			selectedProducers,
 			chainID,

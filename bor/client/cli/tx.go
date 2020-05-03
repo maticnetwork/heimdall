@@ -118,7 +118,7 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 				spanID,
 				proposer,
 				startBlock,
-				startBlock+spanDuration,
+				startBlock+spanDuration-1,
 				borChainID,
 				seed,
 			)

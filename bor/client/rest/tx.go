@@ -86,7 +86,7 @@ func postProposeSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			req.ID,
 			hmTypes.HexToHeimdallAddress(req.BaseReq.From),
 			req.StartBlock,
-			req.StartBlock+spanDuration,
+			req.StartBlock+spanDuration-1,
 			req.BorChainID,
 			seed,
 		)

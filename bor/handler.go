@@ -62,9 +62,9 @@ func HandleMsgProposeSpan(ctx sdk.Context, msg types.MsgProposeSpan, k Keeper) s
 
 	// Validate Span duration
 	spanDuration := k.GetParams(ctx).SpanDuration
-	if spanDuration != (msg.EndBlock - msg.StartBlock) {
+	if spanDuration != (msg.EndBlock - msg.StartBlock + 1) {
 		k.Logger(ctx).Error("Span duration of proposed span is wrong",
-			"proposedSpanDuration", (msg.EndBlock - msg.StartBlock),
+			"proposedSpanDuration", (msg.EndBlock - msg.StartBlock + 1),
 			"paramsSpanDuration", spanDuration,
 		)
 		return common.ErrInvalidSpanDuration(k.Codespace()).Result()
