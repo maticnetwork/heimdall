@@ -164,7 +164,9 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 			}
 
 			for i := 0; i < len(validators); i++ {
-				writeGenesisFile(genesisTime, genFiles[i], chainID, appStateJSON)
+				if err = writeGenesisFile(genesisTime, genFiles[i], chainID, appStateJSON); err != nil {
+					return err
+				}
 			}
 
 			// dump signer information in a json file

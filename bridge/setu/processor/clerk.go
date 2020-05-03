@@ -47,9 +47,12 @@ func (cp *ClerkProcessor) Start() error {
 // RegisterTasks - Registers clerk related tasks with machinery
 func (cp *ClerkProcessor) RegisterTasks() {
 	cp.Logger.Info("Registering clerk tasks")
-	cp.queueConnector.Server.RegisterTask("sendStateSyncedToHeimdall", cp.sendStateSyncedToHeimdall)
-	cp.queueConnector.Server.RegisterTask("sendDepositRecordToMatic", cp.sendDepositRecordToMatic)
-
+	if err := cp.queueConnector.Server.RegisterTask("sendStateSyncedToHeimdall", cp.sendStateSyncedToHeimdall); err != nil {
+		cp.Logger.Error("RegisterTasks | sendStateSyncedToHeimdall", "error", err)
+	}
+	if err := cp.queueConnector.Server.RegisterTask("sendDepositRecordToMatic", cp.sendDepositRecordToMatic); err != nil {
+		cp.Logger.Error("RegisterTasks | sendDepositRecordToMatic", "error", err)
+	}
 }
 
 // HandleStateSyncEvent - handle state sync event from rootchain
@@ -198,6 +201,10 @@ func (cp *ClerkProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, l
 
 	endpoint := helper.GetHeimdallServerEndpoint(util.ClerkTxStatusURL)
 	url, err := util.CreateURLWithQuery(endpoint, queryParam)
+	if err != nil {
+		cp.Logger.Error("Error in creating url", "endpoint", endpoint, "error", err)
+		return false, err
+	}
 
 	res, err := helper.FetchFromAPI(cp.cliCtx, url)
 	if err != nil {

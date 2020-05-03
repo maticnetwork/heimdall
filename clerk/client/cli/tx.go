@@ -99,11 +99,21 @@ func CreateNewStateRecord(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(FlagLogIndex, "", "--log-index=<log-index>")
 	cmd.Flags().String(FlagRecordID, "", "--id=<record-id>")
 	cmd.Flags().String(FlagBorChainId, "", "--bor-chain-id=<bor-chain-id>")
-	cmd.MarkFlagRequired(FlagProposerAddress)
-	cmd.MarkFlagRequired(FlagRecordID)
-	cmd.MarkFlagRequired(FlagTxHash)
-	cmd.MarkFlagRequired(FlagLogIndex)
-	cmd.MarkFlagRequired(FlagBorChainId)
+	if err := cmd.MarkFlagRequired(FlagProposerAddress); err != nil {
+		logger.Error("CreateNewStateRecord | MarkFlagRequired | FlagProposerAddress", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagRecordID); err != nil {
+		logger.Error("CreateNewStateRecord | MarkFlagRequired | FlagRecordID", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagTxHash); err != nil {
+		logger.Error("CreateNewStateRecord | MarkFlagRequired | FlagTxHash", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagLogIndex); err != nil {
+		logger.Error("CreateNewStateRecord | MarkFlagRequired | FlagLogIndex", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagBorChainId); err != nil {
+		logger.Error("CreateNewStateRecord | MarkFlagRequired | FlagBorChainId", "Error", err)
+	}
 
 	return cmd
 }

@@ -52,7 +52,7 @@ func (msg MsgTopup) ValidateBasic() sdk.Error {
 		return sdk.ErrInvalidAddress("missing sender address")
 	}
 
-	if msg.ID <= 0 {
+	if msg.ID == 0 {
 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator ID %v", msg.ID)
 	}
 

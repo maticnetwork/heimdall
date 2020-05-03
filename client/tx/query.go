@@ -97,14 +97,19 @@ $ gaiacli query txs --tags '<tag1>:<value1>&<tag2>:<value2>' --page 1 --limit 30
 	}
 
 	cmd.Flags().StringP(client.FlagNode, "n", "tcp://localhost:26657", "Node to connect to")
-	viper.BindPFlag(client.FlagNode, cmd.Flags().Lookup(client.FlagNode))
+	if err := viper.BindPFlag(client.FlagNode, cmd.Flags().Lookup(client.FlagNode)); err != nil {
+		logger.Error("QueryTxsByEventsCmd | BindPFlag | client.FlagNode", "Error", err)
+	}
 	cmd.Flags().Bool(client.FlagTrustNode, false, "Trust connected full node (don't verify proofs for responses)")
-	viper.BindPFlag(client.FlagTrustNode, cmd.Flags().Lookup(client.FlagTrustNode))
-
+	if err := viper.BindPFlag(client.FlagTrustNode, cmd.Flags().Lookup(client.FlagTrustNode)); err != nil {
+		logger.Error("QueryTxsByEventsCmd | BindPFlag | client.FlagTrustNode", "Error", err)
+	}
 	cmd.Flags().String(flagTags, "", "tag:value list of tags that must match")
 	cmd.Flags().Uint32(flagPage, rest.DefaultPage, "Query a specific page of paginated results")
 	cmd.Flags().Uint32(flagLimit, rest.DefaultLimit, "Query number of transactions results per page returned")
-	cmd.MarkFlagRequired(flagTags)
+	if err := cmd.MarkFlagRequired(flagTags); err != nil {
+		logger.Error("QueryTxsByEventsCmd | MarkFlagRequired | flagTags", "Error", err)
+	}
 
 	return cmd
 }
@@ -132,10 +137,13 @@ func QueryTxCmd(cdc *codec.Codec) *cobra.Command {
 	}
 
 	cmd.Flags().StringP(client.FlagNode, "n", "tcp://localhost:26657", "Node to connect to")
-	viper.BindPFlag(client.FlagNode, cmd.Flags().Lookup(client.FlagNode))
+	if err := viper.BindPFlag(client.FlagNode, cmd.Flags().Lookup(client.FlagNode)); err != nil {
+		logger.Error("QueryTxCmd | BindPFlag | client.FlagNode", "Error", err)
+	}
 	cmd.Flags().Bool(client.FlagTrustNode, false, "Trust connected full node (don't verify proofs for responses)")
-	viper.BindPFlag(client.FlagTrustNode, cmd.Flags().Lookup(client.FlagTrustNode))
-
+	if err := viper.BindPFlag(client.FlagTrustNode, cmd.Flags().Lookup(client.FlagTrustNode)); err != nil {
+		logger.Error("QueryTxCmd | BindPFlag | client.FlagTrustNode", "Error", err)
+	}
 	return cmd
 }
 
@@ -253,6 +261,10 @@ func QueryCommitTxRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		// get block client
 		blockDetails, err := helper.GetBlock(cliCtx, tx.Height+1)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
 
 		// extract signs from votes
 		sigs := helper.GetSigs(blockDetails.Block.LastCommit.Precommits)

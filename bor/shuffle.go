@@ -81,7 +81,7 @@ func innerShuffledIndex(index uint64, indexCount uint64, seed [32]byte, shuffle 
 		// effectively un-shuffling the list.
 		round = rounds - 1
 	}
-	buf := make([]byte, totalSize, totalSize)
+	buf := make([]byte, totalSize)
 	// Seed is always the first 32 bytes of the hash input, we never have to change this part of the buffer.
 	copy(buf[:32], seed[:])
 	for {
@@ -175,7 +175,7 @@ func innerShuffleList(input []uint64, seed [32]byte, shuffle bool) ([]uint64, er
 		return input, nil
 	}
 	listSize := uint64(len(input))
-	buf := make([]byte, totalSize, totalSize)
+	buf := make([]byte, totalSize)
 	r := uint8(0)
 	if !shuffle {
 		r = rounds - 1

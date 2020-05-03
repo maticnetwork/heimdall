@@ -20,6 +20,8 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
+var logger = helper.Logger.With("module", "gov/client/cli")
+
 // Proposal flags
 const (
 	FlagTitle        = "title"
@@ -143,7 +145,9 @@ $ %s tx gov submit-proposal --title="Test Proposal" --description="My awesome pr
 	cmd.Flags().String(FlagDeposit, "", "deposit of proposal")
 	cmd.Flags().String(FlagProposal, "", "proposal file path (if this path is given, other proposal flags are ignored)")
 	cmd.Flags().Int(FlagValidatorID, 0, "--validator-id=<validator ID here>")
-	cmd.MarkFlagRequired(FlagValidatorID)
+	if err := cmd.MarkFlagRequired(FlagValidatorID); err != nil {
+		logger.Error("GetCmdSubmitProposal | MarkFlagRequired | FlagValidatorID", "Error", err)
+	}
 
 	return cmd
 }
@@ -198,7 +202,9 @@ $ %s tx gov deposit 1 10stake --from mykey
 	}
 
 	cmd.Flags().Int(FlagValidatorID, 0, "--validator-id=<validator ID here>")
-	cmd.MarkFlagRequired(FlagValidatorID)
+	if err := cmd.MarkFlagRequired(FlagValidatorID); err != nil {
+		logger.Error("GetCmdDeposit | MarkFlagRequired | FlagValidatorID", "Error", err)
+	}
 
 	return cmd
 }
@@ -255,7 +261,9 @@ $ %s tx gov vote 1 yes --from mykey
 	}
 
 	cmd.Flags().Int(FlagValidatorID, 0, "--validator-id=<validator ID here>")
-	cmd.MarkFlagRequired(FlagValidatorID)
+	if err := cmd.MarkFlagRequired(FlagValidatorID); err != nil {
+		logger.Error("GetCmdVote | MarkFlagRequired | FlagValidatorID", "Error", err)
+	}
 
 	return cmd
 }

@@ -31,13 +31,17 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 		// load checkpoints to state
 		for i, header := range data.Headers {
 			checkpointHeaderIndex := helper.GetConfig().ChildBlockInterval * (uint64(i) + 1)
-			keeper.AddCheckpoint(ctx, checkpointHeaderIndex, header)
+			if err := keeper.AddCheckpoint(ctx, checkpointHeaderIndex, header); err != nil {
+				keeper.Logger(ctx).Error("InitGenesis | AddCheckpoint", "error", err)
+			}
 		}
 	}
 
 	// Add checkpoint in buffer
 	if data.BufferedCheckpoint != nil {
-		keeper.SetCheckpointBuffer(ctx, *data.BufferedCheckpoint)
+		if err := keeper.SetCheckpointBuffer(ctx, *data.BufferedCheckpoint); err != nil {
+			keeper.Logger(ctx).Error("InitGenesis | SetCheckpointBuffer", "error", err)
+		}
 	}
 
 	// Set initial ack count

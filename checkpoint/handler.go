@@ -95,7 +95,12 @@ func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, con
 	// Calculate new account root hash
 	dividendAccounts := k.sk.GetAllDividendAccounts(ctx)
 	k.Logger(ctx).Debug("DividendAccounts of all validators", "dividendAccounts", dividendAccounts)
-	accountRoot, err := types.GetAccountRootHash(dividendAccounts)
+	var accountRoot []byte
+	accountRoot, err = types.GetAccountRootHash(dividendAccounts)
+	if err != nil {
+		k.Logger(ctx).Error("handleMsgCheckpoint | GetAccountRootHash", "Error", err)
+		return common.ErrBadAccountRootHash(k.Codespace()).Result()
+	}
 	k.Logger(ctx).Info("Validator Account root hash generated", "AccountRootHash", hmTypes.BytesToHeimdallHash(accountRoot).String())
 
 	if !bytes.Equal(accountRoot, msg.AccountRootHash.Bytes()) {
@@ -117,14 +122,17 @@ func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, con
 
 	// add checkpoint to buffer
 	// Add AccountRootHash to CheckpointBuffer
-	k.SetCheckpointBuffer(ctx, hmTypes.CheckpointBlockHeader{
+	if err := k.SetCheckpointBuffer(ctx, hmTypes.CheckpointBlockHeader{
 		StartBlock:      msg.StartBlock,
 		EndBlock:        msg.EndBlock,
 		RootHash:        msg.RootHash,
 		AccountRootHash: msg.AccountRootHash,
 		Proposer:        msg.Proposer,
 		TimeStamp:       timeStamp,
-	})
+	}); err != nil {
+		k.Logger(ctx).Error("handleMsgCheckpoint | SetCheckpointBuffer", "Error", err)
+		return common.ErrSetCheckpointBuffer(k.Codespace()).Result()
+	}
 
 	checkpoint, _ := k.GetCheckpointFromBuffer(ctx)
 	k.Logger(ctx).Debug("Adding good checkpoint to buffer to await ACK", "checkpointStored", checkpoint.String())
@@ -198,7 +206,10 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg types.MsgCheckpointAck, k Keepe
 	}
 
 	// Add checkpoint to headerBlocks
-	k.AddCheckpoint(ctx, msg.HeaderBlock, *headerBlock)
+	if err := k.AddCheckpoint(ctx, msg.HeaderBlock, *headerBlock); err != nil {
+		k.Logger(ctx).Error("handleMsgCheckpointAck | AddCheckpoint", "error", err)
+		return common.ErrAddCheckpoint(k.Codespace()).Result()
+	}
 	k.Logger(ctx).Info("Checkpoint added to store", "headerBlock", headerBlock.String())
 
 	// flush buffer

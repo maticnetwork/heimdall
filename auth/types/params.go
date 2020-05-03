@@ -166,19 +166,6 @@ func validateSigVerifyCostSecp256k1(i interface{}) error {
 	return nil
 }
 
-func validateMaxMemoCharacters(i interface{}) error {
-	v, ok := i.(uint64)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-
-	if v == 0 {
-		return fmt.Errorf("invalid max memo characters: %d", v)
-	}
-
-	return nil
-}
-
 func validateTxSizeCostPerByte(i interface{}) error {
 	v, ok := i.(uint64)
 	if !ok {

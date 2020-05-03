@@ -324,7 +324,9 @@ func (k *Keeper) IterateSpansAndApplyFn(ctx sdk.Context, f func(span hmTypes.Spa
 	for ; iterator.Valid(); iterator.Next() {
 		// unmarshall span
 		var result hmTypes.Span
-		k.cdc.UnmarshalBinaryBare(iterator.Value(), &result)
+		if err := k.cdc.UnmarshalBinaryBare(iterator.Value(), &result); err != nil {
+			k.Logger(ctx).Error("Error UnmarshalBinaryBare", "error", err)
+		}
 		// call function and return if required
 		if err := f(result); err != nil {
 			return
