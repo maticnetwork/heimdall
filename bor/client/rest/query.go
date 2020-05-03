@@ -10,7 +10,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/gorilla/mux"
 
-	"github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/heimdall/bor/types"
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
@@ -51,19 +50,19 @@ func fetchNextSpanSeedHandlerFn(
 			RestLogger.Error("NextSpanSeed not found ", "Error", err.Error())
 			return
 		}
+		/*
+			var nextSpanSeed = common.BytesToHash(res)
+			RestLogger.Debug("Fetched next span seed ", "NextSpanSeed", nextSpanSeed)
 
-		var nextSpanSeed = common.BytesToHash(res)
-		RestLogger.Debug("Fetched next span seed ", "NextSpanSeed", nextSpanSeed)
-
-		result, err := json.Marshal(&nextSpanSeed)
-		if err != nil {
-			RestLogger.Error("Error while marshalling response to Json", "error", err)
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
+			result, err := json.Marshal(&nextSpanSeed)
+			if err != nil {
+				RestLogger.Error("Error while marshalling response to Json", "error", err)
+				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+				return
+			} */
 
 		// return result
-		rest.PostProcessResponse(w, cliCtx, result)
+		rest.PostProcessResponse(w, cliCtx, res)
 
 	}
 }
@@ -288,7 +287,7 @@ func prepareNextSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		msg := hmTypes.NewSpan(
 			spanID,
 			startBlock,
-			startBlock+spanDuration-1,
+			startBlock+spanDuration,
 			_validatorSet,
 			selectedProducers,
 			chainID,

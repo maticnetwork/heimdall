@@ -109,7 +109,10 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 				return errors.New("next span seed not found")
 			}
 
-			var seed = common.BytesToHash(res)
+			var seed common.Hash
+			if err := json.Unmarshal(res, &seed); err != nil {
+				return err
+			}
 
 			msg := types.NewMsgProposeSpan(
 				spanID,

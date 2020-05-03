@@ -282,6 +282,7 @@ func (k Keeper) GetNextSpanSeed(ctx sdk.Context) (common.Hash, error) {
 
 	// increment last processed header block number
 	newEthBlock := lastEthBlock.Add(lastEthBlock, big.NewInt(1))
+	k.Logger(ctx).Debug("newEthBlock to generate seed", "newEthBlock", newEthBlock)
 
 	// fetch block header from mainchain
 	blockHeader, err := k.contractCaller.GetMainChainBlock(newEthBlock)

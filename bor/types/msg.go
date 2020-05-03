@@ -73,3 +73,8 @@ func (msg MsgProposeSpan) ValidateBasic() sdk.Error {
 
 	return nil
 }
+
+// GetSideSignBytes returns side sign bytes
+func (msg MsgProposeSpan) GetSideSignBytes() []byte {
+	return nil
+}

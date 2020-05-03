@@ -47,7 +47,7 @@ func NewPostTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.P
 
 // SideHandleMsgSpan validates external calls required for processing proposed span
 func SideHandleMsgSpan(ctx sdk.Context, k Keeper, msg types.MsgProposeSpan, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
-	k.Logger(ctx).Debug("✅ Validating External call for topup msg",
+	k.Logger(ctx).Debug("✅ Validating External call for span msg",
 		"msgSeed", msg.Seed.String(),
 	)
 
@@ -69,17 +69,23 @@ func SideHandleMsgSpan(ctx sdk.Context, k Keeper, msg types.MsgProposeSpan, cont
 	}
 
 	// fetch current child block
-	childBlock, err := contractCaller.GetMainChainBlock(nil)
+	childBlock, err := contractCaller.GetMaticChainBlock(nil)
 	if err != nil {
 		k.Logger(ctx).Error("Error fetching current child block", "error", err)
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
 
+	lastSpan, err := k.GetLastSpan(ctx)
+	if err != nil {
+		k.Logger(ctx).Error("Error fetching last span", "error", err)
+		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
+	}
+
 	currentBlock := childBlock.Number.Uint64()
 	// check if span proposed is in-turn or not
-	if !(msg.StartBlock <= currentBlock && currentBlock <= msg.EndBlock) {
+	if !(lastSpan.StartBlock <= currentBlock && currentBlock <= lastSpan.EndBlock) {
 		k.Logger(ctx).Error(
-			"Span proposed in not in-turn",
+			"Span proposed is not in-turn",
 			"currentChildBlock", currentBlock,
 			"msgStartblock", msg.StartBlock,
 			"msgEndBlock", msg.EndBlock,

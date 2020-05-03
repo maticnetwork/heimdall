@@ -76,7 +76,10 @@ func postProposeSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		var seed = common.BytesToHash(res)
+		var seed common.Hash
+		if err := json.Unmarshal(res, &seed); err != nil {
+			return
+		}
 
 		// draft a propose span message
 		msg := types.NewMsgProposeSpan(
