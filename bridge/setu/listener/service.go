@@ -16,7 +16,7 @@ const (
 	MaticChainListenerStr = "maticchain"
 )
 
-var logger = util.Logger().With("service", ListenerServiceStr)
+// var logger = util.Logger().With("service", ListenerServiceStr)
 
 // ListenerService starts and stops all chain event listeners
 type ListenerService struct {
@@ -27,6 +27,8 @@ type ListenerService struct {
 
 // NewListenerService returns new service object for listneing to events
 func NewListenerService(cdc *codec.Codec, queueConnector *queue.QueueConnector) *ListenerService {
+
+	var logger = util.Logger().With("service", ListenerServiceStr)
 
 	// creating listener object
 	listenerService := &ListenerService{}
@@ -51,13 +53,13 @@ func NewListenerService(cdc *codec.Codec, queueConnector *queue.QueueConnector) 
 // OnStart starts new block subscription
 func (listenerService *ListenerService) OnStart() error {
 	if err := listenerService.BaseService.OnStart(); err != nil {
-		logger.Error("OnStart | OnStart", "Error", err)
+		listenerService.Logger.Error("OnStart | OnStart", "Error", err)
 	} // Always call the overridden method.
 
 	// start chain listeners
 	for _, listener := range listenerService.listeners {
 		if err := listener.Start(); err != nil {
-			logger.Error("OnStart | Start", "Error", err)
+			listenerService.Logger.Error("OnStart | Start", "Error", err)
 		}
 	}
 
