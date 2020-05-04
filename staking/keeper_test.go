@@ -335,7 +335,7 @@ func (suite *KeeperTestSuite) TestDividendAccountTree() {
 	divAccounts := make([]hmTypes.DividendAccount, 5)
 	for i := 0; i < len(divAccounts); i++ {
 		divAccounts[i] = hmTypes.NewDividendAccount(
-			hmTypes.NewDividendAccountID(uint64(1)),
+			hmTypes.NewDividendAccountID(uint64(i)),
 			big.NewInt(0).String(),
 			big.NewInt(0).String(),
 		)
