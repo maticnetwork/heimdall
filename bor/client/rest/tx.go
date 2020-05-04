@@ -10,6 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gorilla/mux"
 
+	"github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/heimdall/bor/types"
 	restClient "github.com/maticnetwork/heimdall/client/rest"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -67,13 +68,27 @@ func postProposeSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		// fetch seed
+		res, _, err = cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNextSpanSeed), nil)
+		if err != nil {
+			RestLogger.Error("Error while fetching next span seed  ", "Error", err.Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		var seed common.Hash
+		if err := json.Unmarshal(res, &seed); err != nil {
+			return
+		}
+
 		// draft a propose span message
 		msg := types.NewMsgProposeSpan(
 			req.ID,
 			hmTypes.HexToHeimdallAddress(req.BaseReq.From),
 			req.StartBlock,
-			req.StartBlock+spanDuration,
+			req.StartBlock+spanDuration-1,
 			req.BorChainID,
+			seed,
 		)
 
 		// send response

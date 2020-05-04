@@ -1,8 +1,6 @@
 package bor
 
 import (
-	"strconv"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/maticnetwork/heimdall/bor/types"
@@ -25,7 +23,12 @@ func NewHandler(k Keeper) sdk.Handler {
 
 // HandleMsgProposeSpan handles proposeSpan msg
 func HandleMsgProposeSpan(ctx sdk.Context, msg types.MsgProposeSpan, k Keeper) sdk.Result {
-	k.Logger(ctx).Debug("Proposing span", "TxData", msg)
+	k.Logger(ctx).Debug("✅ Validating proposed span msg",
+		"spanId", msg.ID,
+		"startBlock", msg.StartBlock,
+		"endBlock", msg.EndBlock,
+		"seed", msg.Seed.String(),
+	)
 
 	// chainManager params
 	params := k.chainKeeper.GetParams(ctx)
@@ -44,42 +47,28 @@ func HandleMsgProposeSpan(ctx sdk.Context, msg types.MsgProposeSpan, k Keeper) s
 		return common.ErrSpanNotFound(k.Codespace()).Result()
 	}
 
-	// check all conditions
-	if lastSpan.ID+1 != msg.ID || msg.StartBlock < lastSpan.StartBlock || msg.EndBlock < msg.StartBlock {
+	// Validate span continuity
+	if lastSpan.ID+1 != msg.ID || msg.StartBlock != lastSpan.EndBlock+1 || msg.EndBlock < msg.StartBlock {
 		k.Logger(ctx).Error("Blocks not in countinuity",
 			"lastSpanId", lastSpan.ID,
-			"lastSpanStartBlock", lastSpan.StartBlock,
 			"spanId", msg.ID,
+			"lastSpanStartBlock", lastSpan.StartBlock,
+			"lastSpanEndBlock", lastSpan.EndBlock,
 			"spanStartBlock", msg.StartBlock,
+			"spanEndBlock", msg.EndBlock,
 		)
 		return common.ErrSpanNotInCountinuity(k.Codespace()).Result()
 	}
 
-	// freeze for new span
-	err = k.FreezeSet(ctx, msg.ID, msg.StartBlock, msg.ChainID)
-	if err != nil {
-		k.Logger(ctx).Error("Unable to freeze validator set for span", "Error", err)
-		return common.ErrUnableToFreezeValSet(k.Codespace()).Result()
+	// Validate Span duration
+	spanDuration := k.GetParams(ctx).SpanDuration
+	if spanDuration != (msg.EndBlock - msg.StartBlock + 1) {
+		k.Logger(ctx).Error("Span duration of proposed span is wrong",
+			"proposedSpanDuration", (msg.EndBlock - msg.StartBlock + 1),
+			"paramsSpanDuration", spanDuration,
+		)
+		return common.ErrInvalidSpanDuration(k.Codespace()).Result()
 	}
-
-	// get last span
-	_, err = k.GetLastSpan(ctx)
-	if err != nil {
-		k.Logger(ctx).Error("Unable to fetch last span", "Error", err)
-		return common.ErrSpanNotFound(k.Codespace()).Result()
-	}
-
-	// add events
-	ctx.EventManager().EmitEvents(sdk.Events{
-		sdk.NewEvent(
-			types.EventTypeProposeSpan,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(types.AttributeKeySuccess, "true"),
-			sdk.NewAttribute(types.AttributeKeyBorSyncID, strconv.FormatUint(uint64(msg.ID), 10)),
-			sdk.NewAttribute(sdk.AttributeKeyAmount, strconv.FormatUint(uint64(msg.ID), 10)),
-			sdk.NewAttribute(types.AttributeKeySpanStartBlock, strconv.FormatUint(uint64(msg.StartBlock), 10)),
-		),
-	})
 
 	// draft result with events
 	return sdk.Result{
