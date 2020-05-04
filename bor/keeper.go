@@ -83,7 +83,11 @@ func GetSpanKey(id uint64) []byte {
 }
 
 // AddNewSpan adds new span for bor to store
-func (k *Keeper) AddNewSpan(ctx sdk.Context, span hmTypes.Span) error {
+func (k *Keeper) AddNewSpan(ctx sdk.Context, span hmTypes.Span) (err error) {
+	//	if ctx.MultiStore() == nil {
+	//		err := errors.New("Invalid Context, multi store cannot be nil")
+	//		return err
+	//	}
 	store := ctx.KVStore(k.storeKey)
 	out, err := k.cdc.MarshalBinaryBare(span)
 	if err != nil {
@@ -142,11 +146,8 @@ func (k *Keeper) GetAllSpans(ctx sdk.Context) (spans []*hmTypes.Span) {
 }
 
 // GetSpanList returns all spans with params like page and limit
-func (k *Keeper) GetSpanList(ctx sdk.Context, page uint64, limit uint64) ([]hmTypes.Span, error) {
+func (k *Keeper) GetSpanList(ctx sdk.Context, page uint64, limit uint64) (spans []hmTypes.Span, err error) {
 	store := ctx.KVStore(k.storeKey)
-
-	// create spans
-	var spans []hmTypes.Span
 
 	// have max limit
 	if limit > 20 {
@@ -159,7 +160,7 @@ func (k *Keeper) GetSpanList(ctx sdk.Context, page uint64, limit uint64) ([]hmTy
 	// loop through validators to get valid validators
 	for ; iterator.Valid(); iterator.Next() {
 		var span hmTypes.Span
-		if err := k.cdc.UnmarshalBinaryBare(iterator.Value(), &span); err == nil {
+		if err = k.cdc.UnmarshalBinaryBare(iterator.Value(), &span); err == nil {
 			spans = append(spans, span)
 		}
 	}

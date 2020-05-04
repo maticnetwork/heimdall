@@ -8,9 +8,11 @@ import (
 	sdkAuth "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/auth/types"
+	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/types/simulation"
 )
@@ -28,7 +30,10 @@ type KeeperTestSuite struct {
 }
 
 func (suite *KeeperTestSuite) SetupTest() {
-	suite.app, suite.ctx = createTestApp(false)
+	isCheckTx := false
+	suite.app = app.Setup(isCheckTx)
+	suite.ctx = suite.app.BaseApp.NewContext(isCheckTx, abci.Header{})
+	suite.app.AccountKeeper.SetParams(suite.ctx, authTypes.DefaultParams())
 }
 
 func TestKeeperTestSuite(t *testing.T) {
