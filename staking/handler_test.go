@@ -230,5 +230,72 @@ func (suite *HandlerTestSuite) TestHandleMsgStakeUpdate() {
 	updatedVal, err := keeper.GetValidatorInfo(ctx, oldVal.Signer.Bytes())
 	require.Empty(t, err, "unable to fetch validator info %v-", err)
 	require.Equal(t, stakinginfoStakeUpdate.NewAmount.Int64(), updatedVal.VotingPower, "Validator VotingPower should be updated to %v", stakinginfoStakeUpdate.NewAmount.Uint64())
+}
 
+func (suite *HandlerTestSuite) TestExitedValidatorJoiningAgain() {
+	t, app, ctx := suite.T(), suite.app, suite.ctx
+
+	s1 := rand.NewSource(time.Now().UnixNano())
+	r1 := rand.New(s1)
+
+	accounts := simulation.RandomAccounts(r1, 1)
+	pubKey := hmTypes.NewPubKey(accounts[0].PubKey.Bytes())
+	signerAddress := hmTypes.HexToHeimdallAddress(pubKey.Address().Hex())
+
+	txHash := hmTypes.HexToHeimdallHash("123")
+	index := simulation.RandIntBetween(r1, 0, 100)
+	logIndex := uint64(index)
+	amount, _ := big.NewInt(0).SetString("10000000000000000000", 10)
+
+	app.CheckpointKeeper.UpdateACKCountWithValue(ctx, 20)
+
+	validatorId := hmTypes.NewValidatorID(uint64(1))
+	validator := hmTypes.NewValidator(
+		validatorId,
+		10,
+		15,
+		int64(0), // power
+		pubKey,
+		signerAddress,
+	)
+
+	err := app.StakingKeeper.AddValidator(ctx, *validator)
+	if err != nil {
+		t.Error("Error while adding validator to store", err)
+	}
+
+	isCurrentValidator := validator.IsCurrentValidator(14)
+	require.False(t, isCurrentValidator)
+
+	totalValidators := app.StakingKeeper.GetAllValidators(ctx)
+	require.Equal(t, totalValidators[0].Signer, signerAddress)
+
+	chainParams := app.ChainKeeper.GetParams(ctx)
+
+	txreceipt := &ethTypes.Receipt{
+		BlockNumber: big.NewInt(10),
+	}
+	msgValJoin := stakingTypes.NewMsgValidatorJoin(
+		signerAddress,
+		validatorId.Uint64(),
+		pubKey,
+		txHash,
+		logIndex,
+	)
+
+	stakinginfoStaked := &stakinginfo.StakinginfoStaked{
+		Signer:          signerAddress.EthAddress(),
+		ValidatorId:     new(big.Int).SetUint64(validatorId.Uint64()),
+		ActivationEpoch: big.NewInt(1),
+		Amount:          amount,
+		Total:           big.NewInt(10),
+		SignerPubkey:    pubKey.Bytes()[1:],
+	}
+
+	suite.contractCaller.On("GetConfirmedTxReceipt", mock.Anything, txHash.EthHash(), chainParams.TxConfirmationTime).Return(txreceipt, nil)
+
+	suite.contractCaller.On("DecodeValidatorJoinEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), txreceipt, msgValJoin.LogIndex).Return(stakinginfoStaked, nil)
+
+	result := suite.handler(ctx, msgValJoin)
+	require.True(t, !result.IsOK(), errs.CodeToDefaultMsg(result.Code))
 }
