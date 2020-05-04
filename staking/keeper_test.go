@@ -70,18 +70,23 @@ func (suite *KeeperTestSuite) TestValidator() {
 		}
 	}
 
+	// Get random validator ID
+	valId := simulation.RandIntBetween(r1, 0, n)
+
 	// Get Validator Info from state
-	valInfo, err := app.StakingKeeper.GetValidatorInfo(ctx, validators[0].Signer.Bytes())
+	valInfo, err := app.StakingKeeper.GetValidatorInfo(ctx, validators[valId].Signer.Bytes())
 	if err != nil {
 		t.Error("Error while fetching Validator", err)
 	}
+
 	// Get Signer Address mapped with ValidatorId
 	mappedSignerAddress, isMapped := app.StakingKeeper.GetSignerFromValidatorID(ctx, validators[0].ID)
 	if !isMapped {
 		t.Error("Signer Address not mapped to Validator Id")
 	}
+
 	// Check if Validator matches in state
-	require.Equal(t, valInfo, *validators[0], "Validators in state doesnt match")
+	require.Equal(t, valInfo, *validators[valId], "Validators in state doesnt match")
 	require.Equal(t, types.HexToHeimdallAddress(mappedSignerAddress.Hex()), validators[0].Signer, "Signer address doesn't match")
 }
 
