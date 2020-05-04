@@ -13,9 +13,11 @@ import (
 	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
-	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
+	"github.com/maticnetwork/heimdall/staking/types"
+	topupTypes "github.com/maticnetwork/heimdall/topup/types"
+
 	cmn "github.com/maticnetwork/heimdall/test"
-	"github.com/maticnetwork/heimdall/types"
+	"github.com/maticnetwork/heimdall/topup"
 
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/helper/mocks"
@@ -36,6 +38,7 @@ type HandlerTestSuite struct {
 	cliCtx context.CLIContext
 
 	handler        sdk.Handler
+	toptupHandler  sdk.Handler
 	contractCaller mocks.IContractCaller
 }
 
@@ -43,6 +46,7 @@ func (suite *HandlerTestSuite) SetupTest() {
 	suite.app, suite.ctx, suite.cliCtx = createTestApp(false)
 	suite.contractCaller = mocks.IContractCaller{}
 	suite.handler = staking.NewHandler(suite.app.StakingKeeper, &suite.contractCaller)
+	suite.toptupHandler = topup.NewHandler(suite.app.TopupKeeper, &suite.contractCaller)
 }
 
 func TestHandlerTestSuite(t *testing.T) {
@@ -69,7 +73,7 @@ func (suite *HandlerTestSuite) TestHandleMsgValidatorJoin() {
 		BlockNumber: big.NewInt(10),
 	}
 
-	msgValJoin := stakingTypes.NewMsgValidatorJoin(
+	msgValJoin := types.NewMsgValidatorJoin(
 		hmTypes.BytesToHeimdallAddress(address.Bytes()),
 		validatorId,
 		pubkey,
@@ -114,8 +118,8 @@ func (suite *HandlerTestSuite) TestHandleMsgValidatorUpdate() {
 	chainParams := app.ChainKeeper.GetParams(ctx)
 
 	// gen msg
-	msgTxHash := types.HexToHeimdallHash("123")
-	msg := stakingTypes.NewMsgSignerUpdate(newSigner[0].Signer, uint64(newSigner[0].ID), newSigner[0].PubKey, msgTxHash, 0)
+	msgTxHash := hmTypes.HexToHeimdallHash("123")
+	msg := types.NewMsgSignerUpdate(newSigner[0].Signer, uint64(newSigner[0].ID), newSigner[0].PubKey, msgTxHash, 0)
 
 	txreceipt := &ethTypes.Receipt{BlockNumber: big.NewInt(10)}
 	suite.contractCaller.On("GetConfirmedTxReceipt", mock.Anything, msgTxHash.EthHash(), chainParams.TxConfirmationTime).Return(txreceipt, nil)
@@ -155,7 +159,7 @@ func (suite *HandlerTestSuite) TestHandleMsgValidatorExit() {
 	// pass 0 as time alive to generate non de-activated validators
 	cmn.LoadValidatorSet(4, t, keeper, ctx, false, 0)
 	validators := keeper.GetCurrentValidators(ctx)
-	msgTxHash := types.HexToHeimdallHash("123")
+	msgTxHash := hmTypes.HexToHeimdallHash("123")
 	chainParams := app.ChainKeeper.GetParams(ctx)
 	logIndex := uint64(0)
 
@@ -176,7 +180,7 @@ func (suite *HandlerTestSuite) TestHandleMsgValidatorExit() {
 	suite.contractCaller.On("DecodeValidatorExitEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), txreceipt, logIndex).Return(stakinginfoUnstakeInit, nil)
 
 	validators[0].EndEpoch = 10
-	msg := stakingTypes.NewMsgValidatorExit(validators[0].Signer, uint64(validators[0].ID), msgTxHash, 0)
+	msg := types.NewMsgValidatorExit(validators[0].Signer, uint64(validators[0].ID), msgTxHash, 0)
 
 	got := suite.handler(ctx, msg)
 
@@ -212,8 +216,8 @@ func (suite *HandlerTestSuite) TestHandleMsgStakeUpdate() {
 
 	chainParams := app.ChainKeeper.GetParams(ctx)
 
-	msgTxHash := types.HexToHeimdallHash("123")
-	msg := stakingTypes.NewMsgStakeUpdate(oldVal.Signer, oldVal.ID.Uint64(), msgTxHash, 0)
+	msgTxHash := hmTypes.HexToHeimdallHash("123")
+	msg := types.NewMsgStakeUpdate(oldVal.Signer, oldVal.ID.Uint64(), msgTxHash, 0)
 
 	txreceipt := &ethTypes.Receipt{BlockNumber: big.NewInt(10)}
 	suite.contractCaller.On("GetConfirmedTxReceipt", mock.Anything, msgTxHash.EthHash(), chainParams.TxConfirmationTime).Return(txreceipt, nil)
@@ -275,7 +279,7 @@ func (suite *HandlerTestSuite) TestExitedValidatorJoiningAgain() {
 	txreceipt := &ethTypes.Receipt{
 		BlockNumber: big.NewInt(10),
 	}
-	msgValJoin := stakingTypes.NewMsgValidatorJoin(
+	msgValJoin := types.NewMsgValidatorJoin(
 		signerAddress,
 		validatorId.Uint64(),
 		pubKey,
@@ -298,4 +302,61 @@ func (suite *HandlerTestSuite) TestExitedValidatorJoiningAgain() {
 
 	result := suite.handler(ctx, msgValJoin)
 	require.True(t, !result.IsOK(), errs.CodeToDefaultMsg(result.Code))
+}
+
+func (suite *HandlerTestSuite) TestTopupSuccessBeforeValidatorJoin() {
+	t, app, ctx := suite.T(), suite.app, suite.ctx
+
+	pubKey := hmTypes.NewPubKey([]byte{123})
+	signerAddress := hmTypes.HexToHeimdallAddress(pubKey.Address().Hex())
+
+	txHash := hmTypes.HexToHeimdallHash("123")
+	logIndex := uint64(2)
+	amount, _ := big.NewInt(0).SetString("10000000000000000000", 10)
+
+	validatorId := hmTypes.NewValidatorID(uint64(1))
+
+	chainParams := app.ChainKeeper.GetParams(ctx)
+
+	msgTopup := topupTypes.NewMsgTopup(signerAddress, uint64(validatorId), txHash, logIndex)
+
+	stakinginfoTopUpFee := &stakinginfo.StakinginfoTopUpFee{
+		ValidatorId: new(big.Int).SetUint64(validatorId.Uint64()),
+		Signer:      signerAddress.EthAddress(),
+		Fee:         big.NewInt(100000000000000000),
+	}
+
+	txreceipt := &ethTypes.Receipt{
+		BlockNumber: big.NewInt(10),
+	}
+
+	stakinginfoStaked := &stakinginfo.StakinginfoStaked{
+		Signer:          signerAddress.EthAddress(),
+		ValidatorId:     new(big.Int).SetUint64(validatorId.Uint64()),
+		ActivationEpoch: big.NewInt(1),
+		Amount:          amount,
+		Total:           big.NewInt(10),
+		SignerPubkey:    pubKey.Bytes()[1:],
+	}
+
+	msgValJoin := types.NewMsgValidatorJoin(
+		signerAddress,
+		validatorId.Uint64(),
+		pubKey,
+		txHash,
+		logIndex,
+	)
+
+	suite.contractCaller.On("GetConfirmedTxReceipt", mock.Anything, txHash.EthHash(), chainParams.TxConfirmationTime).Return(txreceipt, nil)
+
+	suite.contractCaller.On("DecodeValidatorJoinEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), txreceipt, msgValJoin.LogIndex).Return(stakinginfoStaked, nil)
+
+	suite.contractCaller.On("DecodeValidatorTopupFeesEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), mock.Anything, msgTopup.LogIndex).Return(stakinginfoTopUpFee, nil)
+
+	topupResult := suite.toptupHandler(ctx, msgTopup)
+	require.True(t, topupResult.IsOK(), "expected topup to be done, got %v", topupResult)
+
+	result := suite.handler(ctx, msgValJoin)
+	require.True(t, result.IsOK(), "expected validator stake update to be ok, got %v", result)
+
 }
