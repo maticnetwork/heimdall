@@ -163,6 +163,10 @@ func (suite *KeeperTestSuite) TestUpdateSigner() {
 	// Check total Validators
 	totalValidators := app.StakingKeeper.GetAllValidators(ctx)
 	require.LessOrEqual(t, 6, len(totalValidators), "Total Validators should be six.")
+
+	// Check current Validators
+	currentValidators := app.StakingKeeper.GetCurrentValidators(ctx)
+	require.LessOrEqual(t, 5, len(currentValidators), "Current Validators should be five.")
 }
 
 func (suite *KeeperTestSuite) TestCurrentValidator() {
