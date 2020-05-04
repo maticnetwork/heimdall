@@ -422,10 +422,16 @@ func (suite *KeeperTestSuite) TestAddFeeToDividendAccount() {
 func (suite *KeeperTestSuite) TestGetSpanEligibleValidators() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	keeper := app.StakingKeeper
-	cmn.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	cmn.LoadValidatorSet(4, t, keeper, ctx, false, 0)
+
+	// Test ActCount = 0
+	app.CheckpointKeeper.UpdateACKCountWithValue(ctx, 0)
+
+	valActCount0 := keeper.GetSpanEligibleValidators(ctx)
+	require.LessOrEqual(t, len(valActCount0), 4)
+
 	app.CheckpointKeeper.UpdateACKCountWithValue(ctx, 20)
 
 	validators := keeper.GetSpanEligibleValidators(ctx)
-	require.LessOrEqual(t, 0, len(validators))
-	// add positive testcase
+	require.LessOrEqual(t, len(validators), 4)
 }
