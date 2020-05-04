@@ -77,7 +77,7 @@ func (suite *HandlerTestSuite) TestHandleMsgValidatorJoin() {
 		logIndex,
 	)
 
-	stakinginfoTopUpFee := &stakinginfo.StakinginfoStaked{
+	stakinginfoStaked := &stakinginfo.StakinginfoStaked{
 		Signer:          address,
 		ValidatorId:     new(big.Int).SetUint64(validatorId),
 		ActivationEpoch: big.NewInt(1),
@@ -88,7 +88,7 @@ func (suite *HandlerTestSuite) TestHandleMsgValidatorJoin() {
 
 	suite.contractCaller.On("GetConfirmedTxReceipt", mock.Anything, txHash.EthHash(), chainParams.TxConfirmationTime).Return(txreceipt, nil)
 
-	suite.contractCaller.On("DecodeValidatorJoinEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), txreceipt, msgValJoin.LogIndex).Return(stakinginfoTopUpFee, nil)
+	suite.contractCaller.On("DecodeValidatorJoinEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), txreceipt, msgValJoin.LogIndex).Return(stakinginfoStaked, nil)
 
 	result := suite.handler(ctx, msgValJoin)
 	require.True(t, result.IsOK(), "expected validator join to be ok, got %v", result)
