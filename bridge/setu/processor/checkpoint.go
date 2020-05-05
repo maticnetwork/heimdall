@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"math"
 	"math/big"
 	"strconv"
@@ -123,7 +124,16 @@ func (cp *CheckpointProcessor) sendCheckpointToHeimdall(headerBlockStr string) (
 			return err
 		}
 
-		expectedCheckpointState, err := cp.nextExpectedCheckpoint(checkpointContext, header.Number.Uint64())
+		// Get and process latest confirmed child block only
+		checkpointParams := checkpointContext.CheckpointParams
+		cp.Logger.Debug("no of checkpoint confirmations required", "checkpointConfirmations", checkpointParams.CheckpointConfirmations)
+		latestConfirmedChildBlock := header.Number.Uint64() - checkpointParams.CheckpointConfirmations
+		if latestConfirmedChildBlock <= 0 {
+			cp.Logger.Error("no of blocks on childchain is less than confirmations required", "childChainBlocks", header.Number.Uint64(), "confirmationsRequired", checkpointParams.CheckpointConfirmations)
+			return errors.New("no of blocks on childchain is less than confirmations required")
+		}
+
+		expectedCheckpointState, err := cp.nextExpectedCheckpoint(checkpointContext, latestConfirmedChildBlock)
 		if err != nil {
 			cp.Logger.Error("Error while calculate next expected checkpoint", "error", err)
 			return err
@@ -304,7 +314,7 @@ func (cp *CheckpointProcessor) nextExpectedCheckpoint(checkpointContext *Checkpo
 	currentHeaderBlockNumber := big.NewInt(0).SetUint64(_currentHeaderBlock)
 
 	// get header info
-	// currentHeaderBlock = currentHeaderBlock.Sub(currentHeaderBlock, helper.GetConfig().ChildBlockInterval)
+	currentHeaderBlock = currentHeaderBlock.Sub(currentHeaderBlock, helper.GetConfig().ChildBlockInterval)
 	_, currentStart, currentEnd, lastCheckpointTime, _, err := cp.contractConnector.GetHeaderInfo(currentHeaderBlockNumber.Uint64(), rootChainInstance)
 	if err != nil {
 		cp.Logger.Error("Error while fetching current header block object from rootchain", "error", err)
