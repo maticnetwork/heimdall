@@ -25,8 +25,6 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 )
 
-var logger = util.Logger().With("module", "bridge/cmd")
-
 const (
 	waitDuration = 1 * time.Minute
 	logLevel     = "log_level"
@@ -34,6 +32,7 @@ const (
 
 // GetStartCmd returns the start command to start bridge
 func GetStartCmd() *cobra.Command {
+	var logger = helper.Logger.With("module", "bridge/cmd/")
 	startCmd := &cobra.Command{
 		Use:   "start",
 		Short: "Start bridge server",
