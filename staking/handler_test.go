@@ -38,7 +38,7 @@ type HandlerTestSuite struct {
 	cliCtx context.CLIContext
 
 	handler        sdk.Handler
-	toptupHandler  sdk.Handler
+	topupHandler   sdk.Handler
 	contractCaller mocks.IContractCaller
 }
 
@@ -46,7 +46,7 @@ func (suite *HandlerTestSuite) SetupTest() {
 	suite.app, suite.ctx, suite.cliCtx = createTestApp(false)
 	suite.contractCaller = mocks.IContractCaller{}
 	suite.handler = staking.NewHandler(suite.app.StakingKeeper, &suite.contractCaller)
-	suite.toptupHandler = topup.NewHandler(suite.app.TopupKeeper, &suite.contractCaller)
+	suite.topupHandler = topup.NewHandler(suite.app.TopupKeeper, &suite.contractCaller)
 }
 
 func TestHandlerTestSuite(t *testing.T) {
@@ -353,7 +353,7 @@ func (suite *HandlerTestSuite) TestTopupSuccessBeforeValidatorJoin() {
 
 	suite.contractCaller.On("DecodeValidatorTopupFeesEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), mock.Anything, msgTopup.LogIndex).Return(stakinginfoTopUpFee, nil)
 
-	topupResult := suite.toptupHandler(ctx, msgTopup)
+	topupResult := suite.topupHandler(ctx, msgTopup)
 	require.True(t, topupResult.IsOK(), "expected topup to be done, got %v", topupResult)
 
 	result := suite.handler(ctx, msgValJoin)
