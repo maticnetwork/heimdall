@@ -41,6 +41,7 @@ const (
 	CodeNoConn             CodeType = 2509
 	CodeWaitFrConfirmation CodeType = 2510
 	CodeValPubkeyMismatch  CodeType = 2511
+	CodeNonce              CodeType = 2512
 
 	CodeSpanNotCountinuous CodeType = 3501
 	CodeUnableToFreezeSet  CodeType = 3502
@@ -137,6 +138,10 @@ func ErrOldValidator(codespace sdk.CodespaceType) sdk.Error {
 
 func ErrNoValidator(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeNoValidator, "Validator information not found")
+}
+
+func ErrNonce(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeNonce, "Incorrect validator nonce")
 }
 
 func ErrValSignerPubKeyMismatch(codespace sdk.CodespaceType) sdk.Error {

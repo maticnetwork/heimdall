@@ -28,7 +28,7 @@ func TestHandleMsgValidatorJoin(t *testing.T) {
 	// msgTxHash := types.HeimdallHash("123")
 	msgTxHash := types.HexToHeimdallHash("123")
 	contractCallerObj.On("IsTxConfirmed", msgTxHash.EthHash()).Return(true)
-	msgValJoin := stakingTypes.NewMsgValidatorJoin(mockVal.Signer, uint64(mockVal.ID), mockVal.PubKey, msgTxHash, 0)
+	msgValJoin := stakingTypes.NewMsgValidatorJoin(mockVal.Signer, uint64(mockVal.ID), mockVal.PubKey, msgTxHash, 0, 0)
 	t.Log("msg val join", msgValJoin)
 	got := staking.HandleMsgValidatorJoin(ctx, msgValJoin, keeper, &contractCallerObj)
 	require.True(t, got.IsOK(), "expected validator join to be ok, got %v", got)
@@ -64,7 +64,7 @@ func TestHandleMsgValidatorUpdate(t *testing.T) {
 	t.Log("To be Updated ===>", "Validator", newSigner[0].String())
 	// gen msg
 	msgTxHash := types.HexToHeimdallHash("123")
-	msg := stakingTypes.NewMsgSignerUpdate(newSigner[0].Signer, uint64(newSigner[0].ID), newSigner[0].PubKey, msgTxHash, 0)
+	msg := stakingTypes.NewMsgSignerUpdate(newSigner[0].Signer, uint64(newSigner[0].ID), newSigner[0].PubKey, msgTxHash, 0, 0)
 	txreceipt := &ethTypes.Receipt{BlockNumber: big.NewInt(10)}
 	contractCallerObj.On("GetConfirmedTxReceipt", msgTxHash.EthHash()).Return(txreceipt, nil)
 	signerUpdateEvent := &stakemanager.StakemanagerSignerChange{
@@ -109,7 +109,7 @@ func TestHandleMsgValidatorExit(t *testing.T) {
 	contractCallerObj.On("IsTxConfirmed", msgTxHash.EthHash()).Return(true)
 
 	validators[0].EndEpoch = 10
-	msg := stakingTypes.NewMsgValidatorExit(validators[0].Signer, uint64(validators[0].ID), msgTxHash, 0)
+	msg := stakingTypes.NewMsgValidatorExit(validators[0].Signer, uint64(validators[0].ID), msgTxHash, 0, 0)
 	contractCallerObj.On("GetValidatorInfo", validators[0].ID).Return(validators[0], nil)
 	got := staking.HandleMsgValidatorExit(ctx, msg, keeper, &contractCallerObj)
 	require.True(t, got.IsOK(), "expected validator exit to be ok, got %v", got)
@@ -141,7 +141,7 @@ func TestHandleMsgStakeUpdate(t *testing.T) {
 	t.Log("To be Updated ===>", "Validator", oldVal.String())
 	// gen msg
 	msgTxHash := types.HexToHeimdallHash("123")
-	msg := stakingTypes.NewMsgStakeUpdate(oldVal.Signer, oldVal.ID.Uint64(), msgTxHash, 0)
+	msg := stakingTypes.NewMsgStakeUpdate(oldVal.Signer, oldVal.ID.Uint64(), msgTxHash, 0, 0)
 	txreceipt := &ethTypes.Receipt{BlockNumber: big.NewInt(10)}
 	contractCallerObj.On("GetConfirmedTxReceipt", msgTxHash.EthHash()).Return(txreceipt, nil)
 	stakeUpdateEvent := &stakemanager.StakemanagerStakeUpdate{

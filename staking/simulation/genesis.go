@@ -12,6 +12,7 @@ package simulation
 // 				hmTypes.NewValidatorID(uint64(int64(i))),
 // 				0,
 // 				0,
+//              0,
 // 				RandIntBetween(r, 10, 100), // power
 // 				accounts[i].PubKey,
 // 				accounts[i].Address(),
