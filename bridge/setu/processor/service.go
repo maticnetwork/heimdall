@@ -16,8 +16,6 @@ const (
 	processorServiceStr = "processor-service"
 )
 
-var logger = util.Logger().With("module", processorServiceStr)
-
 // ProcessorService starts and stops all event processors
 type ProcessorService struct {
 	// Base service
@@ -36,6 +34,7 @@ func NewProcessorService(
 	httpClient *httpClient.HTTP,
 	txBroadcaster *broadcaster.TxBroadcaster,
 ) *ProcessorService {
+	var logger = util.Logger().With("module", processorServiceStr)
 	// creating processor object
 	processorService := &ProcessorService{
 		queueConnector: queueConnector,
@@ -115,7 +114,7 @@ func NewProcessorService(
 // OnStart starts new block subscription
 func (processorService *ProcessorService) OnStart() error {
 	if err := processorService.BaseService.OnStart(); err != nil {
-		logger.Error("OnStart | OnStart", "Error", err)
+		processorService.Logger.Error("OnStart | OnStart", "Error", err)
 	} // Always call the overridden method.
 
 	// start processors
