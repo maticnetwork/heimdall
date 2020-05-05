@@ -73,7 +73,13 @@ func (suite *GenesisTestSuite) TestInitExportGenesis() {
 	)
 
 	checkpoint.InitGenesis(ctx, app.CheckpointKeeper, genesisState)
+
 	actualParams := checkpoint.ExportGenesis(ctx, app.CheckpointKeeper)
 
-	require.Equal(t, genesisState, actualParams)
+	require.Equal(t, genesisState.AckCount, actualParams.AckCount)
+	require.Equal(t, genesisState.BufferedCheckpoint, actualParams.BufferedCheckpoint)
+	require.Equal(t, genesisState.LastNoACK, actualParams.LastNoACK)
+	require.Equal(t, genesisState.Params, actualParams.Params)
+	require.LessOrEqual(t, len(actualParams.Headers), len(genesisState.Headers))
+
 }
