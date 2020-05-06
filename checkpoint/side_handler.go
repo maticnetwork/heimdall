@@ -2,8 +2,6 @@ package checkpoint
 
 import (
 	"bytes"
-	"encoding/hex"
-	"fmt"
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -68,9 +66,6 @@ func SideHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint)
 
 // SideHandleMsgCheckpointAck handles MsgCheckpointAck message for external call
 func SideHandleMsgCheckpointAck(ctx sdk.Context, k Keeper, msg types.MsgCheckpointAck, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
-	fmt.Println("[==] In SideHandleMsgCheckpointAck doing external call")
-	fmt.Println("[==] In SideHandleMsgCheckpointAck  txbytes", hex.EncodeToString(ctx.TxBytes()), "isChckTx", ctx.IsCheckTx())
-
 	logger := k.Logger(ctx)
 
 	// make call to headerBlock with header number
@@ -180,7 +175,7 @@ func PostHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint,
 	// Emit event for checkpoints
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
-			sdk.EventTypeMessage,
+			types.EventTypeCheckpoint,
 			sdk.NewAttribute(sdk.AttributeKeyAction, msg.Type()),                                  // action
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),                // module name
 			sdk.NewAttribute(hmTypes.AttributeKeyTxHash, hmTypes.BytesToHeimdallHash(hash).Hex()), // tx hash
@@ -250,7 +245,7 @@ func PostHandleMsgCheckpointAck(ctx sdk.Context, k Keeper, msg types.MsgCheckpoi
 	// Emit event for checkpoints
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
-			sdk.EventTypeMessage,
+			types.EventTypeCheckpointAck,
 			sdk.NewAttribute(sdk.AttributeKeyAction, msg.Type()),                                  // action
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),                // module name
 			sdk.NewAttribute(hmTypes.AttributeKeyTxHash, hmTypes.BytesToHeimdallHash(hash).Hex()), // tx hash

@@ -10,13 +10,11 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	// "github.com/streadway/amqp"
 
 	"github.com/maticnetwork/bor/accounts/abi"
+	"github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/bor/core/types"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
-
-	// "github.com/maticnetwork/heimdall/bridge/setu/queue"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
@@ -197,11 +195,7 @@ func (cp *CheckpointProcessor) sendCheckpointToRootchain(eventBytes string, bloc
 	}
 
 	if shouldSend && isCurrentProposer {
-		txHash, err := hex.DecodeString(txHash)
-		if err != nil {
-			cp.Logger.Error("Error decoding txHash while sending checkpoint to rootchain", "txHash", txHash, "error", err)
-			return err
-		}
+		txHash := common.FromHex(txHash)
 		if err := cp.createAndSendCheckpointToRootchain(checkpointContext, startBlock, endBlock, blockHeight, txHash); err != nil {
 			cp.Logger.Error("Error sending checkpoint to rootchain", "error", err)
 			return err
