@@ -12,6 +12,7 @@ import (
 	"github.com/maticnetwork/heimdall/bor/types"
 	chainmanager "github.com/maticnetwork/heimdall/chainmanager"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/merr"
 	"github.com/maticnetwork/heimdall/params/subspace"
 	"github.com/maticnetwork/heimdall/staking"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -65,6 +66,13 @@ func NewKeeper(
 		contractCaller: caller,
 	}
 	return keeper
+}
+
+func (k Keeper) Valid() error {
+	if k.cdc == nil {
+		return merr.VErr{Field: "cdc"}
+	}
+	return nil
 }
 
 // Codespace returns the codespace
