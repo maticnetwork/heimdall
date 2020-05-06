@@ -1,8 +1,6 @@
 package clerk_test
 
 import (
-	"errors"
-	// "fmt"
 	"math/big"
 	"math/rand"
 	"testing"
@@ -11,7 +9,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethTypes "github.com/maticnetwork/bor/core/types"
-	// "github.com/maticnetwork/heimdall/contracts/stakinginfo"
 	statesender "github.com/maticnetwork/heimdall/contracts/statesender"
 
 	"github.com/maticnetwork/heimdall/clerk"

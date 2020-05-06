@@ -16,22 +16,22 @@ import (
 )
 
 // NewQuerier creates a querier for auth REST endpoints
-func NewQuerier(keeper Keeper) sdk.Querier {
+func NewQuerier(keeper Keeper, contractCaller helper.IContractCaller) sdk.Querier {
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) ([]byte, sdk.Error) {
 		switch path[0] {
 		case types.QueryRecord:
-			return handleQueryRecord(ctx, req, keeper)
+			return handleQueryRecord(ctx, req, keeper, contractCaller)
 		case types.QueryRecordList:
-			return handleQueryRecordList(ctx, req, keeper)
+			return handleQueryRecordList(ctx, req, keeper, contractCaller)
 		case types.QueryRecordSequence:
-			return handleQueryRecordSequence(ctx, req, keeper)
+			return handleQueryRecordSequence(ctx, req, keeper, contractCaller)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown auth query endpoint")
 		}
 	}
 }
 
-func handleQueryRecord(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+func handleQueryRecord(ctx sdk.Context, req abci.RequestQuery, keeper Keeper, contractCallerObj helper.IContractCaller) ([]byte, sdk.Error) {
 	var params types.QueryRecordParams
 	if err := keeper.cdc.UnmarshalJSON(req.Data, &params); err != nil {
 		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
@@ -43,11 +43,6 @@ func handleQueryRecord(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not get state record", err.Error()))
 	}
 
-	// return error if record doesn't exist
-	if record == nil {
-		return nil, sdk.ErrInternal(fmt.Sprintf("record %v does not exist", params.RecordID))
-	}
-
 	// json record
 	bz, err := json.Marshal(record)
 	if err != nil {
@@ -56,7 +51,7 @@ func handleQueryRecord(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([
 	return bz, nil
 }
 
-func handleQueryRecordList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+func handleQueryRecordList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper, contractCallerObj helper.IContractCaller) ([]byte, sdk.Error) {
 	var params hmTypes.QueryPaginationParams
 	if err := keeper.cdc.UnmarshalJSON(req.Data, &params); err != nil {
 		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
@@ -74,7 +69,7 @@ func handleQueryRecordList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper
 	return bz, nil
 }
 
-func handleQueryRecordSequence(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+func handleQueryRecordSequence(ctx sdk.Context, req abci.RequestQuery, keeper Keeper, contractCallerObj helper.IContractCaller) ([]byte, sdk.Error) {
 	var params types.QueryRecordSequenceParams
 
 	if err := types.ModuleCdc.UnmarshalJSON(req.Data, &params); err != nil {
@@ -83,13 +78,8 @@ func handleQueryRecordSequence(ctx sdk.Context, req abci.RequestQuery, keeper Ke
 
 	chainParams := keeper.chainKeeper.GetParams(ctx)
 
-	contractCallerObj, err := helper.NewContractCaller()
-	if err != nil {
-		return nil, sdk.ErrInternal(fmt.Sprintf(err.Error()))
-	}
-
 	// get main tx receipt
-	receipt, _ := contractCallerObj.GetConfirmedTxReceipt(time.Now().UTC(), hmTypes.HexToHeimdallHash(params.TxHash).EthHash(), chainParams.TxConfirmationTime)
+	receipt, err := contractCallerObj.GetConfirmedTxReceipt(time.Now().UTC(), hmTypes.HexToHeimdallHash(params.TxHash).EthHash(), chainParams.TxConfirmationTime)
 	if err != nil || receipt == nil {
 		return nil, sdk.ErrInternal(fmt.Sprintf("Transaction is not confirmed yet. Please wait for sometime and try again"))
 	}
