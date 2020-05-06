@@ -3,10 +3,10 @@ package types
 import (
 	"bytes"
 	"math/big"
+	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/maticnetwork/bor/crypto"
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
@@ -88,13 +88,14 @@ func (msg MsgCheckpoint) ValidateBasic() sdk.Error {
 // GetSideSignBytes returns side sign bytes
 func (msg MsgCheckpoint) GetSideSignBytes() []byte {
 	// keccak256(abi.encoded(proposer, startBlock, endBlock, rootHash, accountRootHash, bor chain id))
+	borChainID, _ := strconv.ParseUint(msg.BorChainID, 10, 64)
 	return appendBytes32(
 		msg.Proposer.Bytes(),
 		new(big.Int).SetUint64(msg.StartBlock).Bytes(),
 		new(big.Int).SetUint64(msg.EndBlock).Bytes(),
 		msg.RootHash.Bytes(),
 		msg.AccountRootHash.Bytes(),
-		crypto.Keccak256([]byte(msg.BorChainID)),
+		new(big.Int).SetUint64(borChainID).Bytes(),
 	)
 }
 
