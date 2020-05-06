@@ -43,7 +43,7 @@ func (msg MsgTopup) Route() string {
 
 // Type Implements Msg.
 func (msg MsgTopup) Type() string {
-	return "deposit"
+	return ModuleName
 }
 
 // ValidateBasic Implements Msg.
