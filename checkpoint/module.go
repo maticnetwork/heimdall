@@ -137,7 +137,7 @@ func (AppModule) QuerierRoute() string {
 
 // NewQuerierHandler returns the auth module sdk.Querier.
 func (am AppModule) NewQuerierHandler() sdk.Querier {
-	return NewQuerier(am.keeper, am.stakingKeeper)
+	return NewQuerier(am.keeper, am.stakingKeeper, am.contractCaller)
 }
 
 // InitGenesis performs genesis initialization for the auth module. It returns

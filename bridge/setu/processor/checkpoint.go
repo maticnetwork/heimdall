@@ -391,7 +391,7 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToHeimdall(checkpointConte
 	checkpointParams := checkpointContext.CheckpointParams
 
 	// Get root hash
-	root, err := checkpointTypes.GetHeaders(start, end, checkpointParams.MaxCheckpointLength)
+	root, err := cp.contractConnector.GetRootHash(start, end, checkpointParams.MaxCheckpointLength)
 	if err != nil {
 		return err
 	}
