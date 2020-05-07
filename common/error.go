@@ -242,10 +242,75 @@ func ErrSideTxValidation(codespace sdk.CodespaceType) sdk.Error {
 // Private methods
 //
 
-func codeToDefaultMsg(code CodeType) string {
+func CodeToDefaultMsg(code CodeType) string {
 	switch code {
+	// case CodeInvalidBlockInput:
+	// 	return "Invalid Block Input"
+
+	case CodeInvalidMsg:
+		return "Invalid Message"
+
+	case CodeInvalidProposerInput:
+		return "Proposer is not valid"
 	case CodeInvalidBlockInput:
-		return "Invalid Block Input"
+		return "Wrong roothash for given start and end block numbers"
+	case CodeInvalidACK:
+		return "Ack Not Valid"
+	case CodeNoACK:
+		return "Checkpoint Already Exists In Buffer, ACK expected"
+	case CodeBadTimeStamp:
+		return "Invalid time stamp. It must be in near past."
+	case CodeInvalidNoACK:
+		return "Invalid No ACK -- Waiting for last checkpoint ACK"
+	case CodeTooManyNoAck:
+		return "Too many no-acks"
+	case CodeLowBal:
+		return "Insufficient balance"
+	case CodeNoCheckpoint:
+		return "Checkpoint Not Found"
+	case CodeOldCheckpoint:
+		return "Checkpoint already received for given start and end block"
+	case CodeDisCountinuousCheckpoint:
+		return "Checkpoint not in countinuity"
+	case CodeNoCheckpointBuffer:
+		return "Checkpoint buffer Not Found"
+
+	case CodeOldValidator:
+		return "Start Epoch behind Current Epoch"
+	case CodeNoValidator:
+		return "Validator information not found"
+	case CodeValSignerMismatch:
+		return "Signer Address doesnt match pubkey address"
+	case CodeValidatorExitDeny:
+		return "Validator is not in validator set, exit not possible"
+	case CodeValAlreadyUnbonded:
+		return "Validator already unbonded , cannot exit"
+	case CodeSignerSynced:
+		return "No signer update found, invalid message"
+	case CodeValSave:
+		return "Cannot save validator"
+	case CodeValAlreadyJoined:
+		return "Validator already joined"
+	case CodeSignerUpdateError:
+		return "Signer update error"
+	case CodeNoConn:
+		return "Unable to connect to chain"
+	case CodeWaitFrConfirmation:
+		return "wait for confirmation time before sending transaction"
+	case CodeValPubkeyMismatch:
+		return "Signer Pubkey mismatch between event and msg"
+	case CodeSpanNotCountinuous:
+		return "Span not countinuous"
+	case CodeUnableToFreezeSet:
+		return "Unable to freeze validator set for next span"
+	case CodeSpanNotFound:
+		return "Span not found"
+	case CodeValSetMisMatch:
+		return "Validator set mismatch"
+	case CodeProducerMisMatch:
+		return "Producer set mismatch"
+	case CodeInvalidBorChainID:
+		return "Invalid Bor chain id"
 	default:
 		return sdk.CodeToDefaultMsg(code)
 	}
@@ -255,7 +320,7 @@ func msgOrDefaultMsg(msg string, code CodeType) string {
 	if msg != "" {
 		return msg
 	}
-	return codeToDefaultMsg(code)
+	return CodeToDefaultMsg(code)
 }
 
 func newError(codespace sdk.CodespaceType, code CodeType, msg string) sdk.Error {
