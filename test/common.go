@@ -5,28 +5,18 @@ import (
 	"encoding/hex"
 	"math/big"
 	"math/rand"
-	"os"
 	"testing"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethcmn "github.com/maticnetwork/bor/common"
 	"github.com/stretchr/testify/require"
-	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
-	"github.com/tendermint/tendermint/libs/log"
-	dbm "github.com/tendermint/tm-db"
 
 	bankTypes "github.com/maticnetwork/heimdall/bank/types"
 	borTypes "github.com/maticnetwork/heimdall/bor/types"
-	"github.com/maticnetwork/heimdall/checkpoint"
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
-	"github.com/maticnetwork/heimdall/common"
-	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/params"
-	paramsTypes "github.com/maticnetwork/heimdall/params/types"
 	"github.com/maticnetwork/heimdall/staking"
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
 	"github.com/maticnetwork/heimdall/types"
@@ -47,56 +37,6 @@ func MakeTestCodec() *codec.Codec {
 
 	cdc.Seal()
 	return cdc
-}
-
-// init for test cases
-func CreateTestInput(t *testing.T, isCheckTx bool) (sdk.Context, staking.Keeper, checkpoint.Keeper) {
-	//t.Parallel()
-	helper.InitHeimdallConfig(os.ExpandEnv("$HOME/.heimdalld"))
-
-	db := dbm.NewMemDB()
-	ms := store.NewCommitMultiStore(db)
-
-	// TODO create more keys like borKey etc
-	keyCheckpoint := sdk.NewKVStoreKey("checkpoint")
-	keyStaking := sdk.NewKVStoreKey("staking")
-	keyMaster := sdk.NewKVStoreKey("master")
-	keyParams := sdk.NewKVStoreKey(paramsTypes.StoreKey)
-	tKeyParams := sdk.NewTransientStoreKey(paramsTypes.TStoreKey)
-
-	// mount all
-	ms.MountStoreWithDB(keyCheckpoint, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(keyStaking, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(keyMaster, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(keyParams, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(tKeyParams, sdk.StoreTypeTransient, db)
-
-	err := ms.LoadLatestVersion()
-	require.Nil(t, err)
-
-	ctx := sdk.NewContext(ms, abci.Header{ChainID: "foochainid"}, isCheckTx, log.NewNopLogger())
-	cdc := MakeTestCodec()
-	//pulp := MakeTestPulp()
-	paramsKeeper := params.NewKeeper(cdc, keyParams, tKeyParams, common.DefaultCodespace)
-
-	dummyStakingKeeper := staking.Keeper{}
-
-	checkpointKeeper := checkpoint.NewKeeper(
-		cdc,
-		keyCheckpoint,
-		paramsKeeper.Subspace(checkpointTypes.DefaultParamspace),
-		common.DefaultCodespace,
-		dummyStakingKeeper,
-	)
-
-	stakingKeeper := staking.NewKeeper(
-		cdc,
-		keyStaking,
-		paramsKeeper.Subspace(stakingTypes.DefaultParamspace),
-		common.DefaultCodespace,
-		checkpointKeeper,
-	)
-	return ctx, stakingKeeper, checkpointKeeper
 }
 
 // create random header block
