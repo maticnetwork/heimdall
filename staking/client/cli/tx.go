@@ -149,9 +149,6 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(FlagAmount, "0", "--amount=<amount>")
 	cmd.Flags().Uint64(FlagActivationEpoch, 0, "--activation-epoch=<activation-epoch>")
 
-	if err := cmd.MarkFlagRequired(FlagProposerAddress); err != nil {
-		logger.Error("SendValidatorJoinTx | MarkFlagRequired | FlagProposerAddress", "Error", err)
-	}
 	if err := cmd.MarkFlagRequired(FlagBlockNumber); err != nil {
 		logger.Error("SendValidatorJoinTx | MarkFlagRequired | FlagBlockNumber", "Error", err)
 	}
@@ -288,9 +285,6 @@ func SendValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().Uint64(FlagLogIndex, 0, "--log-index=<log-index>")
 	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
 
-	if err := cmd.MarkFlagRequired(FlagProposerAddress); err != nil {
-		logger.Error("SendValidatorUpdateTx | MarkFlagRequired | FlagProposerAddress", "Error", err)
-	}
 	if err := cmd.MarkFlagRequired(FlagValidatorID); err != nil {
 		logger.Error("SendValidatorUpdateTx | MarkFlagRequired | FlagValidatorID", "Error", err)
 	}

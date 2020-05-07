@@ -91,6 +91,7 @@ func TopupTxCmd(cdc *codec.Codec) *cobra.Command {
 		},
 	}
 
+	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
 	cmd.Flags().Uint64(FlagValidatorID, 0, "--validator-id=<validator ID here>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
 	cmd.Flags().String(FlagSignerAddress, "", "--signer=<signer>")
@@ -151,6 +152,8 @@ func WithdrawFeeTxCmd(cdc *codec.Codec) *cobra.Command {
 			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
 		},
 	}
+
+	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
 	cmd.Flags().String(FlagAmount, "0", "--amount=<withdraw-amount>")
 
 	return cmd
