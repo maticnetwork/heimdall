@@ -5,7 +5,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/maticnetwork/heimdall/auth"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
@@ -32,46 +31,23 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 
 // HandleMsgTopup handles topup event
 func HandleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCaller helper.IContractCaller) sdk.Result {
+
+	k.Logger(ctx).Debug("✅ Validating topup msg",
+		"validatorId", msg.ID,
+		"Signer", msg.Signer,
+		"Fee", msg.Fee,
+		"txHash", hmTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
+		"logIndex", uint64(msg.LogIndex),
+		"blockNumber", msg.BlockNumber,
+	)
+
 	if !k.bk.GetSendEnabled(ctx) {
 		return types.ErrSendDisabled(k.Codespace()).Result()
 	}
 
-	// chainManager params
-	params := k.chainKeeper.GetParams(ctx)
-	chainParams := params.ChainParams
-
-	// get main tx receipt
-	receipt, err := contractCaller.GetConfirmedTxReceipt(ctx.BlockTime(), msg.TxHash.EthHash(), params.TxConfirmationTime)
-	if err != nil || receipt == nil {
-		return hmCommon.ErrWaitForConfirmation(k.Codespace(), params.TxConfirmationTime).Result()
-	}
-
-	// get event log for topup
-	eventLog, err := contractCaller.DecodeValidatorTopupFeesEvent(chainParams.StakingInfoAddress.EthAddress(), receipt, msg.LogIndex)
-	if err != nil || eventLog == nil {
-		k.Logger(ctx).Error("Error fetching log from txhash")
-		return hmCommon.ErrInvalidMsg(k.Codespace(), "Unable to fetch logs for txHash").Result()
-	}
-
-	if eventLog.ValidatorId.Uint64() != msg.ID.Uint64() {
-		k.Logger(ctx).Error("ID in message doesn't match id in logs", "MsgID", msg.ID, "IdFromTx", eventLog.ValidatorId)
-		return hmCommon.ErrInvalidMsg(k.Codespace(), "Invalid txhash and id don't match. Id from tx hash is %v", eventLog.ValidatorId.Uint64()).Result()
-	}
-
-	// use event log signer
-	signer := hmTypes.BytesToHeimdallAddress(eventLog.Signer.Bytes())
-	// if validator exists use siger from local state
-	validator, found := k.sk.GetValidatorFromValID(ctx, msg.ID)
-	if found {
-		signer = validator.Signer
-	}
-
-	// create topup amount
-	topupAmount := sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: sdk.NewIntFromBigInt(eventLog.Fee)}}
-
 	// sequence id
-
-	sequence := new(big.Int).Mul(receipt.BlockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
+	blockNumber := new(big.Int).SetUint64(msg.BlockNumber)
+	sequence := new(big.Int).Mul(blockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
 	sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))
 
 	// check if incoming tx already exists
@@ -79,29 +55,6 @@ func HandleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCalle
 		k.Logger(ctx).Error("Older invalid tx found")
 		return hmCommon.ErrOldTx(k.Codespace()).Result()
 	}
-
-	// increase coins in account
-	if _, err := k.bk.AddCoins(ctx, signer, topupAmount); err != nil {
-		return err.Result()
-	}
-
-	// transfer fees to sender (proposer)
-	if err := k.bk.SendCoins(ctx, signer, msg.FromAddress, auth.DefaultFeeWantedPerTx); err != nil {
-		return err.Result()
-	}
-
-	// save topup
-	k.SetTopupSequence(ctx, sequence.String())
-
-	ctx.EventManager().EmitEvents(sdk.Events{
-		sdk.NewEvent(
-			types.EventTypeTopup,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(types.AttributeKeyValidatorID, msg.ID.String()),
-			sdk.NewAttribute(types.AttributeKeyValidatorSigner, signer.String()),
-			sdk.NewAttribute(types.AttributeKeyTopupAmount, eventLog.Fee.String()),
-		),
-	})
 
 	return sdk.Result{
 		Events: ctx.EventManager().Events(),

@@ -15,8 +15,11 @@ import (
 type MsgTopup struct {
 	FromAddress types.HeimdallAddress `json:"from_address"`
 	ID          types.ValidatorID     `json:"id"`
+	Signer      types.HeimdallAddress `json:"signer"`
+	Fee         sdk.Int               `json:"fee"`
 	TxHash      types.HeimdallHash    `json:"tx_hash"`
 	LogIndex    uint64                `json:"log_index"`
+	BlockNumber uint64                `json:"block_number"`
 }
 
 var _ sdk.Msg = MsgTopup{}
@@ -25,14 +28,20 @@ var _ sdk.Msg = MsgTopup{}
 func NewMsgTopup(
 	fromAddr types.HeimdallAddress,
 	id uint64,
+	signer types.HeimdallAddress,
+	fee sdk.Int,
 	txhash types.HeimdallHash,
 	logIndex uint64,
+	blockNumber uint64,
 ) MsgTopup {
 	return MsgTopup{
 		FromAddress: fromAddr,
 		ID:          types.NewValidatorID(id),
+		Signer:      signer,
+		Fee:         fee,
 		TxHash:      txhash,
 		LogIndex:    logIndex,
+		BlockNumber: blockNumber,
 	}
 }
 
@@ -81,6 +90,10 @@ func (msg MsgTopup) GetTxHash() types.HeimdallHash {
 // GetLogIndex Returns log index
 func (msg MsgTopup) GetLogIndex() uint64 {
 	return msg.LogIndex
+}
+
+func (msg MsgTopup) GetSideSignBytes() []byte {
+	return nil
 }
 
 //

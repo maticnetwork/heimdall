@@ -3,6 +3,8 @@ package app
 import (
 	"bytes"
 	"encoding/hex"
+	"fmt"
+	"runtime/debug"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -28,7 +30,7 @@ func (app *HeimdallApp) PostDeliverTxHandler(ctx sdk.Context, tx sdk.Tx, result 
 		}
 
 		// save tx bytes if any tx-msg is side-tx msg
-		if anySideMsg {
+		if anySideMsg && ctx.TxBytes() != nil {
 			app.SidechannelKeeper.SetTx(ctx, ctx.BlockHeader().Height, ctx.TxBytes())
 		}
 	}
@@ -43,7 +45,10 @@ func (app *HeimdallApp) BeginSideBlocker(ctx sdk.Context, req abci.RequestBeginS
 
 	targetHeight := height - 2 // sidechannel takes 2 blocks to process
 
-	app.Logger().Debug("[sidechannel] Processing side block", "height", height, "targetHeight", targetHeight)
+	// get logger
+	logger := app.Logger()
+
+	logger.Debug("[sidechannel] Processing side block", "height", height, "targetHeight", targetHeight)
 
 	// get all validators
 	// begin-block stores validators and end-block removes validators for each height - check sidechannel module.go
@@ -93,19 +98,19 @@ func (app *HeimdallApp) BeginSideBlocker(ctx sdk.Context, req abci.RequestBeginS
 			// check vote majority
 			if signedPower[abci.SideTxResultType_Yes] >= (totalPower*2/3 + 1) {
 				// approved
-				app.Logger().Debug("[sidechannel] Approved side-tx", "txHash", hex.EncodeToString(tx.Hash()))
+				logger.Debug("[sidechannel] Approved side-tx", "txHash", hex.EncodeToString(tx.Hash()))
 
 				// execute tx with `yes`
 				result = app.runTx(ctx, tx, abci.SideTxResultType_Yes)
 			} else if signedPower[abci.SideTxResultType_No] >= (totalPower*2/3 + 1) {
 				// rejected
-				app.Logger().Debug("[sidechannel] Rejected side-tx", "txHash", hex.EncodeToString(tx.Hash()))
+				logger.Debug("[sidechannel] Rejected side-tx", "txHash", hex.EncodeToString(tx.Hash()))
 
 				// execute tx with `no`
 				result = app.runTx(ctx, tx, abci.SideTxResultType_No)
 			} else {
 				// skipped
-				app.Logger().Debug("[sidechannel] Skipped side-tx", "txHash", hex.EncodeToString(tx.Hash()))
+				logger.Debug("[sidechannel] Skipped side-tx", "txHash", hex.EncodeToString(tx.Hash()))
 
 				// execute tx with `skip`
 				result = app.runTx(ctx, tx, abci.SideTxResultType_Skip)
@@ -122,7 +127,7 @@ func (app *HeimdallApp) BeginSideBlocker(ctx sdk.Context, req abci.RequestBeginS
 		app.SidechannelKeeper.RemoveTx(ctx, targetHeight, tx.Hash())
 
 		// skipped
-		app.Logger().Debug("[sidechannel] Skipped side-tx", "txHash", hex.EncodeToString(tx.Hash()))
+		logger.Debug("[sidechannel] Skipped side-tx", "txHash", hex.EncodeToString(tx.Hash()))
 
 		// execute tx with `skip`
 		result := app.runTx(ctx, tx, abci.SideTxResultType_Skip)
@@ -152,8 +157,10 @@ func (app *HeimdallApp) DeliverSideTxHandler(ctx sdk.Context, tx sdk.Tx, req abc
 		msgRoute := msg.Route()
 		handlers := app.sideRouter.GetRoute(msgRoute)
 		if handlers != nil && handlers.SideTxHandler != nil && isSideTxMsg {
+			// Create a new context based off of the existing context with a cache wrapped multi-store (for state-less execution)
+			runMsgCtx, _ := app.cacheTxContext(ctx, req.Tx)
 			// execute side-tx handler
-			msgResult := handlers.SideTxHandler(ctx, msg)
+			msgResult := handlers.SideTxHandler(runMsgCtx, msg)
 
 			// stop execution and return on first failed message
 			if msgResult.Code != uint32(sdk.CodeOK) {
@@ -193,11 +200,20 @@ func (app *HeimdallApp) DeliverSideTxHandler(ctx sdk.Context, tx sdk.Tx, req abc
 
 func (app *HeimdallApp) runTx(ctx sdk.Context, txBytes []byte, sideTxResult abci.SideTxResultType) (result sdk.Result) {
 	// get decoder
-	decoder := authTypes.RLPTxDecoder(app.cdc, authTypes.GetPulpInstance())
+	decoder := authTypes.DefaultTxDecoder(app.cdc)
 	tx, err := decoder(txBytes)
 	if err != nil {
 		return
 	}
+
+	// recover if runMsgs fails
+	defer func() {
+		if r := recover(); r != nil {
+			log := fmt.Sprintf("recovered: %v\nstack:\n%v", r, string(debug.Stack()))
+			result = sdk.ErrInternal(log).Result()
+		}
+	}()
+
 	// get context with tx bytes
 	ctx = ctx.WithTxBytes(txBytes)
 	// Create a new context based off of the existing context with a cache wrapped
@@ -238,14 +254,7 @@ func (app *HeimdallApp) runMsgs(ctx sdk.Context, msgs []sdk.Msg, sideTxResult ab
 			data = append(data, msgResult.Data...)
 
 			// msg events
-			msgEvents := msgResult.Events
-
-			// append events from the message's execution and a message action event
-			msgEvents = msgEvents.AppendEvent(
-				sdk.NewEvent(sdk.EventTypeMessage, sdk.NewAttribute(sdk.AttributeKeyAction, msg.Type())),
-			)
-
-			events = events.AppendEvents(msgEvents)
+			events = events.AppendEvents(msgResult.Events)
 
 			// stop execution and return on first failed message
 			if !msgResult.IsOK() {
@@ -266,9 +275,7 @@ func (app *HeimdallApp) runMsgs(ctx sdk.Context, msgs []sdk.Msg, sideTxResult ab
 
 // cacheTxContext returns a new context based off of the provided context with
 // a cache wrapped multi-store.
-func (app *HeimdallApp) cacheTxContext(ctx sdk.Context, txBytes []byte) (
-	sdk.Context, sdk.CacheMultiStore) {
-
+func (app *HeimdallApp) cacheTxContext(ctx sdk.Context, txBytes []byte) (sdk.Context, sdk.CacheMultiStore) {
 	ms := ctx.MultiStore()
 	msCache := ms.CacheMultiStore()
 

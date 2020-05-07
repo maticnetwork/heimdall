@@ -5,6 +5,7 @@ import (
 
 	"github.com/RichardKnop/machinery/v1/tasks"
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
@@ -76,6 +77,7 @@ func (sp *StakingProcessor) sendValidatorJoinToHeimdall(eventName string, logByt
 				"SignerPubkey", hmTypes.NewPubKey(signerPubKey).String(),
 				"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 				"logIndex", uint64(vLog.Index),
+				"blockNumber", vLog.BlockNumber,
 			)
 			return nil
 		}
@@ -100,15 +102,19 @@ func (sp *StakingProcessor) sendValidatorJoinToHeimdall(eventName string, logByt
 			"SignerPubkey", hmTypes.NewPubKey(signerPubKey).String(),
 			"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			"logIndex", uint64(vLog.Index),
+			"blockNumber", vLog.BlockNumber,
 		)
 
 		// msg validator exit
 		msg := stakingTypes.NewMsgValidatorJoin(
 			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
 			event.ValidatorId.Uint64(),
+			event.ActivationEpoch.Uint64(),
+			sdk.NewIntFromBigInt(event.Amount),
 			hmTypes.NewPubKey(signerPubKey),
 			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			uint64(vLog.Index),
+			vLog.BlockNumber,
 		)
 
 		// return broadcast to heimdall
@@ -140,6 +146,7 @@ func (sp *StakingProcessor) sendUnstakeInitToHeimdall(eventName string, logBytes
 				"amount", event.Amount,
 				"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 				"logIndex", uint64(vLog.Index),
+				"blockNumber", vLog.BlockNumber,
 			)
 			return nil
 		}
@@ -153,14 +160,17 @@ func (sp *StakingProcessor) sendUnstakeInitToHeimdall(eventName string, logBytes
 			"amount", event.Amount,
 			"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			"logIndex", uint64(vLog.Index),
+			"blockNumber", vLog.BlockNumber,
 		)
 
 		// msg validator exit
 		msg := stakingTypes.NewMsgValidatorExit(
 			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
 			event.ValidatorId.Uint64(),
+			event.DeactivationEpoch.Uint64(),
 			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			uint64(vLog.Index),
+			vLog.BlockNumber,
 		)
 
 		// return broadcast to heimdall
@@ -190,6 +200,7 @@ func (sp *StakingProcessor) sendStakeUpdateToHeimdall(eventName string, logBytes
 				"newAmount", event.NewAmount,
 				"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 				"logIndex", uint64(vLog.Index),
+				"blockNumber", vLog.BlockNumber,
 			)
 			return nil
 		}
@@ -200,14 +211,17 @@ func (sp *StakingProcessor) sendStakeUpdateToHeimdall(eventName string, logBytes
 			"newAmount", event.NewAmount,
 			"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			"logIndex", uint64(vLog.Index),
+			"blockNumber", vLog.BlockNumber,
 		)
 
 		// msg validator exit
 		msg := stakingTypes.NewMsgStakeUpdate(
 			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
 			event.ValidatorId.Uint64(),
+			sdk.NewIntFromBigInt(event.NewAmount),
 			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			uint64(vLog.Index),
+			vLog.BlockNumber,
 		)
 
 		// return broadcast to heimdall
@@ -244,6 +258,7 @@ func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logByte
 				"newSigner", event.NewSigner.Hex(),
 				"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 				"logIndex", uint64(vLog.Index),
+				"blockNumber", vLog.BlockNumber,
 			)
 			return nil
 		}
@@ -256,6 +271,7 @@ func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logByte
 			"newSigner", event.NewSigner.Hex(),
 			"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			"logIndex", uint64(vLog.Index),
+			"blockNumber", vLog.BlockNumber,
 		)
 
 		// signer change
@@ -265,6 +281,7 @@ func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logByte
 			hmTypes.NewPubKey(newSignerPubKey),
 			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			uint64(vLog.Index),
+			vLog.BlockNumber,
 		)
 
 		// return broadcast to heimdall

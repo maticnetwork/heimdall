@@ -82,9 +82,6 @@ func main() {
 	cliCtx.BroadcastMode = client.BroadcastSync
 	cliCtx.TrustNode = true
 
-	// just make pulp :)
-	app.MakePulp()
-
 	// TODO: Setup keybase, viper object, etc. to be passed into
 	// the below functions and eliminate global vars, like we do
 	// with the cdc.

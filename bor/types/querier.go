@@ -8,6 +8,7 @@ const (
 	QueryLatestSpan    = "latest-span"
 	QueryNextSpan      = "next-span"
 	QueryNextProducers = "next-producers"
+	QueryNextSpanSeed  = "next-span-seed"
 
 	ParamSpan          = "span"
 	ParamSprint        = "sprint"
