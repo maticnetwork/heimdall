@@ -18,7 +18,7 @@ import (
 )
 
 // NewQuerier returns querier for staking Rest endpoints
-func NewQuerier(keeper Keeper) sdk.Querier {
+func NewQuerier(keeper Keeper, contractCaller helper.IContractCaller) sdk.Querier {
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) ([]byte, sdk.Error) {
 		switch path[0] {
 		case types.QueryCurrentValidatorSet:
@@ -38,11 +38,11 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 		case types.QueryDividendAccountRoot:
 			return handleDividendAccountRoot(ctx, req, keeper)
 		case types.QueryAccountProof:
-			return handleQueryAccountProof(ctx, req, keeper)
+			return handleQueryAccountProof(ctx, req, keeper, contractCaller)
 		case types.QueryVerifyAccountProof:
 			return handleQueryVerifyAccountProof(ctx, req, keeper)
 		case types.QueryStakingSequence:
-			return handleQueryStakingSequence(ctx, req, keeper)
+			return handleQueryStakingSequence(ctx, req, keeper, contractCaller)
 
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown staking query endpoint")
@@ -189,7 +189,7 @@ func handleDividendAccountRoot(ctx sdk.Context, req abci.RequestQuery, keeper Ke
 	return accountRoot, nil
 }
 
-func handleQueryAccountProof(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+func handleQueryAccountProof(ctx sdk.Context, req abci.RequestQuery, keeper Keeper, contractCallerObj helper.IContractCaller) ([]byte, sdk.Error) {
 	// 1. Fetch AccountRoot a1 present on RootChainContract
 	// 2. Fetch AccountRoot a2 from current account
 	// 3. if a1 == a2, Calculate merkle path using GetAllDividendAccounts
@@ -197,11 +197,6 @@ func handleQueryAccountProof(ctx sdk.Context, req abci.RequestQuery, keeper Keep
 	var params types.QueryAccountProofParams
 	if err := keeper.cdc.UnmarshalJSON(req.Data, &params); err != nil {
 		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
-	}
-
-	contractCallerObj, err := helper.NewContractCaller()
-	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("handleQueryAccountProof | NewContractCaller ", err.Error()))
 	}
 
 	chainParams := keeper.chainKeeper.GetParams(ctx)
@@ -256,7 +251,7 @@ func handleQueryVerifyAccountProof(ctx sdk.Context, req abci.RequestQuery, keepe
 	return bz, nil
 }
 
-func handleQueryStakingSequence(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+func handleQueryStakingSequence(ctx sdk.Context, req abci.RequestQuery, keeper Keeper, contractCallerObj helper.IContractCaller) ([]byte, sdk.Error) {
 	var params types.QueryStakingSequenceParams
 
 	if err := types.ModuleCdc.UnmarshalJSON(req.Data, &params); err != nil {
@@ -265,13 +260,8 @@ func handleQueryStakingSequence(ctx sdk.Context, req abci.RequestQuery, keeper K
 
 	chainParams := keeper.chainKeeper.GetParams(ctx)
 
-	contractCallerObj, err := helper.NewContractCaller()
-	if err != nil {
-		return nil, sdk.ErrInternal(fmt.Sprintf(err.Error()))
-	}
-
 	// get main tx receipt
-	receipt, _ := contractCallerObj.GetConfirmedTxReceipt(time.Now().UTC(), hmTypes.HexToHeimdallHash(params.TxHash).EthHash(), chainParams.TxConfirmationTime)
+	receipt, err := contractCallerObj.GetConfirmedTxReceipt(time.Now().UTC(), hmTypes.HexToHeimdallHash(params.TxHash).EthHash(), chainParams.TxConfirmationTime)
 	if err != nil || receipt == nil {
 		return nil, sdk.ErrInternal(fmt.Sprintf("Transaction is not confirmed yet. Please wait for sometime and try again"))
 	}

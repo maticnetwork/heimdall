@@ -96,8 +96,6 @@ func TestAppImportExport(t *testing.T) {
 		app.ModuleAccountAddrs(), config,
 	)
 
-	app.Commit()
-
 	// export state and simParams before the simulation error is checked
 	err = CheckExportSimulation(app, config, simParams)
 	require.NoError(t, err)
@@ -204,21 +202,18 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(newDir))
 	}()
 
-	newApp := NewHeimdallApp(logger, db, nil)
-	if err := newApp.LoadLatestVersion(newApp.keys[bam.MainStoreKey]); err != nil {
-		require.NoError(t, err)
-	}
+	newApp := NewHeimdallApp(logger, newDB)
 	require.Equal(t, AppName, app.Name())
 
 	newApp.InitChain(abci.RequestInitChain{
 		AppStateBytes: appState,
 	})
-
-	_, _, err = simulation.SimulateFromSeed(
+	stopEarly, _, err = simulation.SimulateFromSeed(
 		t, os.Stdout, newApp.BaseApp, AppStateFn(app.Codec(), app.SimulationManager()),
 		SimulationOperations(newApp, newApp.Codec(), config),
 		newApp.ModuleAccountAddrs(), config,
 	)
+	require.False(t, stopEarly)
 	require.NoError(t, err)
 }
 

@@ -32,6 +32,7 @@ type (
 		SignerPubKey hmTypes.PubKey `json:"pubKey"`
 		TxHash       string         `json:"tx_hash"`
 		LogIndex     uint64         `json:"log_index"`
+		Nonce        uint64         `json:"nonce"`
 	}
 
 	// UpdateSignerReq update validator signer request object
@@ -42,6 +43,7 @@ type (
 		NewSignerPubKey hmTypes.PubKey `json:"pubKey"`
 		TxHash          string         `json:"tx_hash"`
 		LogIndex        uint64         `json:"log_index"`
+		Nonce           uint64         `json:"nonce"`
 	}
 
 	// UpdateValidatorStakeReq update validator stake request object
@@ -51,6 +53,7 @@ type (
 		ID       uint64 `json:"ID"`
 		TxHash   string `json:"tx_hash"`
 		LogIndex uint64 `json:"log_index"`
+		Nonce    uint64 `json:"nonce"`
 	}
 
 	// RemoveValidatorReq remove validator request object
@@ -60,6 +63,7 @@ type (
 		ID       uint64 `json:"ID"`
 		TxHash   string `json:"tx_hash"`
 		LogIndex uint64 `json:"log_index"`
+		Nonce    uint64 `json:"nonce"`
 	}
 )
 
@@ -83,6 +87,7 @@ func newValidatorJoinHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			req.SignerPubKey,
 			hmTypes.HexToHeimdallHash(req.TxHash),
 			req.LogIndex,
+			req.Nonce,
 		)
 
 		// send response
@@ -109,6 +114,7 @@ func newValidatorExitHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			req.ID,
 			hmTypes.HexToHeimdallHash(req.TxHash),
 			req.LogIndex,
+			req.Nonce,
 		)
 
 		// send response
@@ -136,6 +142,7 @@ func newValidatorUpdateHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			req.NewSignerPubKey,
 			hmTypes.HexToHeimdallHash(req.TxHash),
 			req.LogIndex,
+			req.Nonce,
 		)
 
 		// send response
@@ -162,6 +169,7 @@ func newValidatorStakeUpdateHandler(cliCtx context.CLIContext) http.HandlerFunc 
 			req.ID,
 			hmTypes.HexToHeimdallHash(req.TxHash),
 			req.LogIndex,
+			req.Nonce,
 		)
 
 		// send response

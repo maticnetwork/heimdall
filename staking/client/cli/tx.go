@@ -126,6 +126,7 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 				pubkey,
 				hmTypes.HexToHeimdallHash(txhash),
 				uint64(logIndex),
+				event.Nonce.Uint64(),
 			)
 
 			// broadcast messages
@@ -169,12 +170,15 @@ func SendValidatorExitTx(cdc *codec.Codec) *cobra.Command {
 				return fmt.Errorf("transaction hash has to be supplied")
 			}
 
+			nonce := viper.GetInt64(FlagNonce)
+
 			// draf msg
 			msg := types.NewMsgValidatorExit(
 				proposer,
 				uint64(validator),
 				hmTypes.HexToHeimdallHash(txhash),
 				uint64(viper.GetInt64(FlagLogIndex)),
+				uint64(nonce),
 			)
 
 			// broadcast messages
@@ -186,6 +190,7 @@ func SendValidatorExitTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().Int(FlagValidatorID, 0, "--id=<validator ID here>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
 	cmd.Flags().String(FlagLogIndex, "", "--log-index=<log-index>")
+	cmd.Flags().String(FlagNonce, "", "--nonce=<nonce>")
 	if err := cmd.MarkFlagRequired(FlagValidatorID); err != nil {
 		logger.Error("SendValidatorExitTx | MarkFlagRequired | FlagValidatorID", "Error", err)
 	}
@@ -194,6 +199,9 @@ func SendValidatorExitTx(cdc *codec.Codec) *cobra.Command {
 	}
 	if err := cmd.MarkFlagRequired(FlagLogIndex); err != nil {
 		logger.Error("SendValidatorExitTx | MarkFlagRequired | FlagLogIndex", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagNonce); err != nil {
+		logger.Error("SendValidatorExitTx | MarkFlagRequired | FlagNonce", "Error", err)
 	}
 
 	return cmd
@@ -240,6 +248,7 @@ func SendValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 				pubkey,
 				hmTypes.HexToHeimdallHash(txhash),
 				uint64(viper.GetInt64(FlagLogIndex)),
+				uint64(viper.GetInt64(FlagNonce)),
 			)
 
 			// broadcast messages
@@ -294,6 +303,7 @@ func SendValidatorStakeUpdateTx(cdc *codec.Codec) *cobra.Command {
 				uint64(validator),
 				hmTypes.HexToHeimdallHash(txhash),
 				uint64(viper.GetInt64(FlagLogIndex)),
+				uint64(viper.GetInt64(FlagNonce)),
 			)
 
 			// broadcast messages
@@ -305,11 +315,15 @@ func SendValidatorStakeUpdateTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().Int(FlagValidatorID, 0, "--id=<validator-id>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
 	cmd.Flags().String(FlagLogIndex, "", "--log-index=<log-index>")
+	cmd.Flags().String(FlagNonce, "", "--nonce=<nonce>")
 	if err := cmd.MarkFlagRequired(FlagTxHash); err != nil {
 		logger.Error("SendValidatorStakeUpdateTx | MarkFlagRequired | FlagTxHash", "Error", err)
 	}
 	if err := cmd.MarkFlagRequired(FlagLogIndex); err != nil {
 		logger.Error("SendValidatorStakeUpdateTx | MarkFlagRequired | FlagLogIndex", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagNonce); err != nil {
+		logger.Error("SendValidatorStakeUpdateTx | MarkFlagRequired | FlagNonce", "Error", err)
 	}
 
 	return cmd
