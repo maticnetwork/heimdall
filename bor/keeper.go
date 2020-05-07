@@ -12,6 +12,7 @@ import (
 	"github.com/maticnetwork/heimdall/bor/types"
 	chainmanager "github.com/maticnetwork/heimdall/chainmanager"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/merr"
 	"github.com/maticnetwork/heimdall/params/subspace"
 	"github.com/maticnetwork/heimdall/staking"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -186,6 +187,10 @@ func (k *Keeper) GetLastSpan(ctx sdk.Context) (*hmTypes.Span, error) {
 
 // FreezeSet freezes validator set for next span
 func (k *Keeper) FreezeSet(ctx sdk.Context, id uint64, startBlock uint64, borChainID string) error {
+	if id == 0 {
+		return merr.ValErr{Field: "id", Module: types.ModuleName}
+	}
+
 	duration := k.GetParams(ctx).SpanDuration
 	endBlock := startBlock
 	if duration > 0 {

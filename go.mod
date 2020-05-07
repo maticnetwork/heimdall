@@ -27,6 +27,7 @@ require (
 	github.com/influxdata/influxdb v1.2.3-0.20171009172446-a55dd0f50edd // indirect
 	github.com/jackpal/go-nat-pmp v1.0.2 // indirect
 	github.com/karalabe/usb v0.0.0-20191104083709-911d15fe12a9 // indirect
+	github.com/magiconair/properties v1.8.1
 	github.com/maticnetwork/bor v0.0.0-20191204165821-bd9cd503a1b3
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
 	github.com/olekukonko/tablewriter v0.0.4 // indirect
