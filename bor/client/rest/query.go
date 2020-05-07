@@ -151,7 +151,11 @@ func prepareNextSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		if !ok {
 			return
 		}
-		chainID := params.Get("chain_id")
+
+		chainID, ok := rest.ParseUint64OrReturnBadRequest(w, params.Get("chain_id"))
+		if !ok {
+			return
+		}
 
 		//
 		// Get span duration

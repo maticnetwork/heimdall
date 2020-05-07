@@ -64,7 +64,7 @@ const (
 	DefaultTxConfirmationTime = 6 * 14 * time.Second
 	DefaultMainchainGasLimit  = uint64(5000000)
 
-	DefaultBorChainID string = "15001"
+	DefaultBorChainID uint64 = 15001
 )
 
 var (

@@ -38,7 +38,7 @@ func ValidateGenesis(data GenesisState) error {
 }
 
 // genFirstSpan generates default first valdiator producer set
-func genFirstSpan(valset hmTypes.ValidatorSet, chainId string) []*hmTypes.Span {
+func genFirstSpan(valset hmTypes.ValidatorSet, chainId uint64) []*hmTypes.Span {
 	var firstSpan []*hmTypes.Span
 	var selectedProducers []hmTypes.Validator
 	if len(valset.Validators) > int(DefaultProducerCount) {

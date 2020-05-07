@@ -31,7 +31,7 @@ var _ subspace.ParamSet = &Params{}
 
 // ChainParams chain related params
 type ChainParams struct {
-	BorChainID            string                  `json:"bor_chain_id" yaml:"bor_chain_id"`
+	BorChainID            uint64                  `json:"bor_chain_id" yaml:"bor_chain_id"`
 	MaticTokenAddress     hmTypes.HeimdallAddress `json:"matic_token_address" yaml:"matic_token_address"`
 	StakingManagerAddress hmTypes.HeimdallAddress `json:"staking_manager_address" yaml:"staking_manager_address"`
 	RootChainAddress      hmTypes.HeimdallAddress `json:"root_chain_address" yaml:"root_chain_address"`
@@ -45,7 +45,7 @@ type ChainParams struct {
 
 func (cp ChainParams) String() string {
 	return fmt.Sprintf(`
-	BorChainID: 									%s
+	BorChainID: 									%d
   MaticTokenAddress:            %s
 	StakingManagerAddress:        %s
 	RootChainAddress:             %s

@@ -3,7 +3,6 @@ package simulation
 import (
 	"fmt"
 	"math/rand"
-	"strconv"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -39,8 +38,8 @@ func GenHeimdallAddress() hmTypes.HeimdallAddress {
 }
 
 // GenBorChainId returns randomc chainID
-func GenBorChainId(r *rand.Rand) string {
-	return strconv.Itoa(simulation.RandIntBetween(r, 0, 4294967295))
+func GenBorChainId(r *rand.Rand) uint64 {
+	return uint64(simulation.RandIntBetween(r, 0, 4294967295))
 }
 
 func RandomizedGenState(simState *module.SimulationState) {
@@ -49,7 +48,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 		func(r *rand.Rand) { txConfirmationTime = GenTxConfirmationTime() },
 	)
 
-	var borChainID string
+	var borChainID uint64
 	simState.AppParams.GetOrGenerate(simState.Cdc, BorChainID, &borChainID, simState.Rand,
 		func(r *rand.Rand) { borChainID = GenBorChainId(r) },
 	)

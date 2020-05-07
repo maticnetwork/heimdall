@@ -27,7 +27,7 @@ type AddRecordReq struct {
 	TxHash     types.HeimdallHash `json:"tx_hash"`
 	LogIndex   uint64             `json:"log_index"`
 	ID         uint64             `json:"id"`
-	BorChainID string             `json:"bor_chain_id"`
+	BorChainID uint64             `json:"bor_chain_id"`
 }
 
 func newEventRecordHandler(cliCtx context.CLIContext) http.HandlerFunc {

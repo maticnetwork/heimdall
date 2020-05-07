@@ -44,8 +44,13 @@ func CreateNewStateRecord(cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			// bor chain id
-			borChainID := viper.GetString(FlagBorChainId)
-			if borChainID == "" {
+			borChainIDStr := viper.GetString(FlagBorChainId)
+			if borChainIDStr == "" {
+				return fmt.Errorf("BorChainID cannot be empty")
+			}
+
+			borChainID, err := strconv.ParseUint(borChainIDStr, 10, 64)
+			if err != nil {
 				return fmt.Errorf("BorChainID cannot be empty")
 			}
 
@@ -99,6 +104,7 @@ func CreateNewStateRecord(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(FlagLogIndex, "", "--log-index=<log-index>")
 	cmd.Flags().String(FlagRecordID, "", "--id=<record-id>")
 	cmd.Flags().String(FlagBorChainId, "", "--bor-chain-id=<bor-chain-id>")
+
 	if err := cmd.MarkFlagRequired(FlagProposerAddress); err != nil {
 		logger.Error("CreateNewStateRecord | MarkFlagRequired | FlagProposerAddress", "Error", err)
 	}

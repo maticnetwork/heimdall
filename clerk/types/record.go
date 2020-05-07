@@ -13,7 +13,7 @@ type EventRecord struct {
 	Data     types.HexBytes        `json:"data" yaml:"data"`
 	TxHash   types.HeimdallHash    `json:"tx_hash" yaml:"tx_hash"`
 	LogIndex uint64                `json:"log_index" yaml:"log_index"`
-	ChainID  string                `json:"bor_chain_id" yaml:"bor_chain_id"`
+	ChainID  uint64                `json:"bor_chain_id" yaml:"bor_chain_id"`
 }
 
 // NewEventRecord creates new record
@@ -23,7 +23,7 @@ func NewEventRecord(
 	id uint64,
 	contract types.HeimdallAddress,
 	data types.HexBytes,
-	chainID string,
+	chainID uint64,
 ) EventRecord {
 	return EventRecord{
 		ID:       id,

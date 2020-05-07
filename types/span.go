@@ -13,11 +13,11 @@ type Span struct {
 	EndBlock          uint64       `json:"end_block" yaml:"end_block"`
 	ValidatorSet      ValidatorSet `json:"validator_set" yaml:"validator_set"`
 	SelectedProducers []Validator  `json:"selected_producers" yaml:"selected_producers"`
-	ChainID           string       `json:"bor_chain_id" yaml:"bor_chain_id"`
+	ChainID           uint64       `json:"bor_chain_id" yaml:"bor_chain_id"`
 }
 
 // NewSpan creates new span
-func NewSpan(id uint64, startBlock uint64, endBlock uint64, validatorSet ValidatorSet, selectedProducers []Validator, chainID string) Span {
+func NewSpan(id uint64, startBlock uint64, endBlock uint64, validatorSet ValidatorSet, selectedProducers []Validator, chainID uint64) Span {
 	return Span{
 		ID:                id,
 		StartBlock:        startBlock,

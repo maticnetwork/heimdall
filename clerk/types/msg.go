@@ -12,7 +12,7 @@ type MsgEventRecord struct {
 	TxHash   types.HeimdallHash    `json:"tx_hash"`
 	LogIndex uint64                `json:"log_index"`
 	ID       uint64                `json:"id"`
-	ChainID  string                `json:"bor_chain_id"`
+	ChainID  uint64                `json:"bor_chain_id"`
 }
 
 var _ sdk.Msg = MsgEventRecord{}
@@ -23,7 +23,7 @@ func NewMsgEventRecord(
 	txHash types.HeimdallHash,
 	logIndex uint64,
 	id uint64,
-	chainID string,
+	chainID uint64,
 ) MsgEventRecord {
 	return MsgEventRecord{
 		From:     from,

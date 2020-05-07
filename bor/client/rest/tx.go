@@ -29,7 +29,7 @@ type ProposeSpanReq struct {
 
 	ID         uint64 `json:"span_id"`
 	StartBlock uint64 `json:"start_block"`
-	BorChainID string `json:"bor_chain_id"`
+	BorChainID uint64 `json:"bor_chain_id"`
 }
 
 func postProposeSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
