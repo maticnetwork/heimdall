@@ -18,6 +18,7 @@ var purgeCmd = &cobra.Command{
 }
 
 func purgeQueue() {
+	var logger = helper.Logger.With("module", "bridge/cmd/")
 	dialer := helper.GetConfig().AmqpURL
 
 	// amqp dialer

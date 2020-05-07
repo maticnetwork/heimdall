@@ -60,6 +60,7 @@ func Execute() {
 }
 
 func init() {
+	var logger = helper.Logger.With("module", "bridge/cmd/")
 	rootCmd.PersistentFlags().StringP(helper.NodeFlag, "n", "tcp://localhost:26657", "Node to connect to")
 	rootCmd.PersistentFlags().String(helper.HomeFlag, os.ExpandEnv("$HOME/.heimdalld"), "directory for config and data")
 	rootCmd.PersistentFlags().String(

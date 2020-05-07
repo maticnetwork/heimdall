@@ -52,10 +52,6 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 			// num of validators = validators in genesis files
 			numValidators := viper.GetInt(flagNumValidators)
 
-			// num of non validators = accounts not in config file but present in the testnets package main
-			// and can be made validator later by staking on-chain
-			numNonValidators := viper.GetInt(flagNumNonValidators)
-
 			// get total number of validators to be generated
 			totalValidators := totalValidators()
 
@@ -72,8 +68,8 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 			nodeIDs := make([]string, totalValidators)
 			valPubKeys := make([]crypto.PubKey, totalValidators)
 			privKeys := make([]crypto.PrivKey, totalValidators)
-			validators := make([]*hmTypes.Validator, totalValidators)
-			dividendAccounts := make([]hmTypes.DividendAccount, totalValidators)
+			validators := make([]*hmTypes.Validator, numValidators)
+			dividendAccounts := make([]hmTypes.DividendAccount, numValidators)
 			genFiles := make([]string, totalValidators)
 			var err error
 
@@ -115,13 +111,20 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 				genFiles[i] = config.GenesisFile()
 				newPubkey := CryptoKeyToPubkey(valPubKeys[i])
 
-				// create validator account
-				validators[i] = hmTypes.NewValidator(hmTypes.NewValidatorID(uint64(startID+int64(i))),
-					0, 0, 1, newPubkey,
-					hmTypes.BytesToHeimdallAddress(valPubKeys[i].Address().Bytes()))
+				if i < numValidators {
+					// create validator account
+					validators[i] = hmTypes.NewValidator(
+						hmTypes.NewValidatorID(uint64(startID+int64(i))),
+						0,
+						0,
+						10000,
+						newPubkey,
+						hmTypes.BytesToHeimdallAddress(valPubKeys[i].Address().Bytes()),
+					)
 
-				// create dividend account for validator
-				dividendAccounts[i] = hmTypes.NewDividendAccount(hmTypes.NewDividendAccountID(uint64(validators[i].ID)), ZeroIntString, ZeroIntString)
+					// create dividend account for validator
+					dividendAccounts[i] = hmTypes.NewDividendAccount(hmTypes.NewDividendAccountID(uint64(validators[i].ID)), ZeroIntString, ZeroIntString)
+				}
 
 				signers[i] = GetSignerInfo(valPubKeys[i], privKeys[i].Bytes(), cdc)
 
@@ -133,7 +136,7 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 			for i := 0; i < totalValidators; i++ {
 				populatePersistentPeersInConfigAndWriteIt(config)
 				// genesis account
-				accounts[i] = getGenesisAccount(validators[i].Signer.Bytes())
+				accounts[i] = getGenesisAccount(valPubKeys[i].Address().Bytes())
 			}
 			validatorSet := hmTypes.NewValidatorSet(validators)
 
@@ -163,7 +166,7 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 				return err
 			}
 
-			for i := 0; i < len(validators); i++ {
+			for i := 0; i < totalValidators; i++ {
 				if err = writeGenesisFile(genesisTime, genFiles[i], chainID, appStateJSON); err != nil {
 					return err
 				}
@@ -184,7 +187,7 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 				}
 			}
 
-			fmt.Printf("Successfully initialized %d node directories\n", numValidators+numNonValidators)
+			fmt.Printf("Successfully initialized %d node directories\n", totalValidators)
 			return nil
 		},
 	}
