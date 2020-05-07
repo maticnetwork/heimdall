@@ -52,10 +52,6 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 			// num of validators = validators in genesis files
 			numValidators := viper.GetInt(flagNumValidators)
 
-			// num of non validators = accounts not in config file but present in the testnets package main
-			// and can be made validator later by staking on-chain
-			numNonValidators := viper.GetInt(flagNumNonValidators)
-
 			// get total number of validators to be generated
 			totalValidators := totalValidators()
 
@@ -170,7 +166,7 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 				return err
 			}
 
-			for i := 0; i < len(validators); i++ {
+			for i := 0; i < totalValidators; i++ {
 				if err = writeGenesisFile(genesisTime, genFiles[i], chainID, appStateJSON); err != nil {
 					return err
 				}
@@ -191,7 +187,7 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 				}
 			}
 
-			fmt.Printf("Successfully initialized %d node directories\n", numValidators+numNonValidators)
+			fmt.Printf("Successfully initialized %d node directories\n", totalValidators)
 			return nil
 		},
 	}
