@@ -190,7 +190,7 @@ func SendValidatorExitTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().Int(FlagValidatorID, 0, "--id=<validator ID here>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
 	cmd.Flags().String(FlagLogIndex, "", "--log-index=<log-index>")
-	cmd.Flags().Int(FlagNonce, "", "--nonce=<nonce>")
+	cmd.Flags().Int(FlagNonce, 0, "--nonce=<nonce>")
 	if err := cmd.MarkFlagRequired(FlagValidatorID); err != nil {
 		logger.Error("SendValidatorExitTx | MarkFlagRequired | FlagValidatorID", "Error", err)
 	}
@@ -261,6 +261,7 @@ func SendValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(FlagNewSignerPubkey, "", "--new-pubkey=<new-signer-pubkey>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
 	cmd.Flags().String(FlagLogIndex, "", "--log-index=<log-index>")
+	cmd.Flags().Int(FlagNonce, 0, "--nonce=<nonce>")
 	if err := cmd.MarkFlagRequired(FlagTxHash); err != nil {
 		logger.Error("SendValidatorUpdateTx | MarkFlagRequired | FlagTxHash", "Error", err)
 	}
@@ -269,6 +270,9 @@ func SendValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 	}
 	if err := cmd.MarkFlagRequired(FlagLogIndex); err != nil {
 		logger.Error("SendValidatorUpdateTx | MarkFlagRequired | FlagLogIndex", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagNonce); err != nil {
+		logger.Error("SendValidatorUpdateTx | MarkFlagRequired | FlagNonce", "Error", err)
 	}
 
 	return cmd
@@ -315,7 +319,7 @@ func SendValidatorStakeUpdateTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().Int(FlagValidatorID, 0, "--id=<validator-id>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
 	cmd.Flags().String(FlagLogIndex, "", "--log-index=<log-index>")
-	cmd.Flags().Int(FlagNonce, "", "--nonce=<nonce>")
+	cmd.Flags().Int(FlagNonce, 0, "--nonce=<nonce>")
 	if err := cmd.MarkFlagRequired(FlagTxHash); err != nil {
 		logger.Error("SendValidatorStakeUpdateTx | MarkFlagRequired | FlagTxHash", "Error", err)
 	}
