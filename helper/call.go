@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"math/big"
-	"strconv"
 	"strings"
 	"time"
 
@@ -263,26 +262,22 @@ func (c *ContractCaller) GetHeaderInfo(headerID uint64, rootChainInstance *rootc
 
 // GetRootHash get root hash from bor chain
 func (c *ContractCaller) GetRootHash(start uint64, end uint64, checkpointLength uint64) ([]byte, error) {
-	var rootHash []byte
-
 	noOfBlock := end - start + 1
-
-	if noOfBlock > checkpointLength {
-		return nil, errors.New("number of headers requested exceeds")
-	}
 
 	if start > end {
 		return nil, errors.New("start is greater than end")
 	}
 
-	startBlockNumber := "0x" + strconv.FormatUint(start, 16)
-	endBlockNumer := "0x" + strconv.FormatUint(end, 16)
-
-	if err := c.MaticRPCClient.CallContext(context.Background(), &rootHash, "eth_getRootHash", startBlockNumber, endBlockNumer); err != nil {
-		return nil, err
+	if noOfBlock > checkpointLength {
+		return nil, errors.New("number of headers requested exceeds")
 	}
 
-	return rootHash, nil
+	rootHash, err := c.MaticChainClient.GetRootHash(context.Background(), start, end)
+	if err != nil {
+		return nil, errors.New("Could not fetch roothash from matic chain")
+	}
+
+	return common.FromHex(rootHash), nil
 }
 
 // GetLastChildBlock fetch current child block

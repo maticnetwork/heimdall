@@ -360,6 +360,8 @@ github.com/maticnetwork/bor v0.0.0-20191204165821-bd9cd503a1b3 h1:KhlP5W7sxwgk/z
 github.com/maticnetwork/bor v0.0.0-20191204165821-bd9cd503a1b3/go.mod h1:Bdz1Wi8GdWw8sXeXhUhQtTFMi+jolJdyjejdXc5fks4=
 github.com/maticnetwork/bor v0.1.7-0.20200506114752-27f9dbd14fd6 h1:6+XrxQg8sgbhp+k709eQZUI4k+4XkoixTBUrBgSkTkw=
 github.com/maticnetwork/bor v0.1.7-0.20200506114752-27f9dbd14fd6/go.mod h1:c76dXbEJU7pBRO6p5gztfwECkeBB3ruiLM9J/aksmYU=
+github.com/maticnetwork/bor v0.1.7-0.20200507151553-e03cd94ed12b h1:+9mCgLfmo7C5klWJKUqI4CM5LCjnQFt9D93gOSJHoYw=
+github.com/maticnetwork/bor v0.1.7-0.20200507151553-e03cd94ed12b/go.mod h1:c76dXbEJU7pBRO6p5gztfwECkeBB3ruiLM9J/aksmYU=
 github.com/maticnetwork/cosmos-sdk v0.37.5-0.20200423113542-0d528522cd33 h1:gPj917ZoXKhvbmiS75Pi7JgV1UEZ1DhGCfTRx/OtQnI=
 github.com/maticnetwork/cosmos-sdk v0.37.5-0.20200423113542-0d528522cd33/go.mod h1:go5LmGti8ilGzRXgniyljsoEh/LsrA0DKyV1b7VtN2M=
 github.com/maticnetwork/cosmos-sdk v0.37.5-0.20200503092858-55131f25dd9d h1:CNa7LAzdix+GXV7GyTk7efFlwei4pTAKLniSh2g/suw=

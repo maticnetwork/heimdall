@@ -24,7 +24,7 @@ require (
 	github.com/huin/goupnp v1.0.0 // indirect
 	github.com/jackpal/go-nat-pmp v1.0.2 // indirect
 	github.com/karalabe/usb v0.0.0-20191104083709-911d15fe12a9 // indirect
-	github.com/maticnetwork/bor v0.1.7-0.20200506114752-27f9dbd14fd6
+	github.com/maticnetwork/bor v0.1.7-0.20200507151553-e03cd94ed12b
 	github.com/olekukonko/tablewriter v0.0.4 // indirect
 	github.com/pborman/uuid v1.2.0
 	github.com/peterh/liner v1.2.0 // indirect
