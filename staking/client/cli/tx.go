@@ -170,7 +170,7 @@ func SendValidatorExitTx(cdc *codec.Codec) *cobra.Command {
 				return fmt.Errorf("transaction hash has to be supplied")
 			}
 
-			nonce := viper.GetInt64(FlagNonce)
+			nonce := viper.GetUint64(FlagNonce)
 
 			// draf msg
 			msg := types.NewMsgValidatorExit(
