@@ -190,7 +190,7 @@ func SendValidatorExitTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().Int(FlagValidatorID, 0, "--id=<validator ID here>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
 	cmd.Flags().String(FlagLogIndex, "", "--log-index=<log-index>")
-	cmd.Flags().String(FlagNonce, "", "--nonce=<nonce>")
+	cmd.Flags().Int(FlagNonce, "", "--nonce=<nonce>")
 	if err := cmd.MarkFlagRequired(FlagValidatorID); err != nil {
 		logger.Error("SendValidatorExitTx | MarkFlagRequired | FlagValidatorID", "Error", err)
 	}
