@@ -248,7 +248,7 @@ func SendValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 				pubkey,
 				hmTypes.HexToHeimdallHash(txhash),
 				uint64(viper.GetInt64(FlagLogIndex)),
-				uint64(viper.GetInt64(FlagNonce)),
+				viper.GetUint64(FlagNonce),
 			)
 
 			// broadcast messages
