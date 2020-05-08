@@ -315,7 +315,7 @@ func SendValidatorStakeUpdateTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().Int(FlagValidatorID, 0, "--id=<validator-id>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
 	cmd.Flags().String(FlagLogIndex, "", "--log-index=<log-index>")
-	cmd.Flags().String(FlagNonce, "", "--nonce=<nonce>")
+	cmd.Flags().Int(FlagNonce, "", "--nonce=<nonce>")
 	if err := cmd.MarkFlagRequired(FlagTxHash); err != nil {
 		logger.Error("SendValidatorStakeUpdateTx | MarkFlagRequired | FlagTxHash", "Error", err)
 	}
