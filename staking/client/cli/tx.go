@@ -303,7 +303,7 @@ func SendValidatorStakeUpdateTx(cdc *codec.Codec) *cobra.Command {
 				uint64(validator),
 				hmTypes.HexToHeimdallHash(txhash),
 				uint64(viper.GetInt64(FlagLogIndex)),
-				uint64(viper.GetInt64(FlagNonce)),
+				viper.GetUint64(FlagNonce),
 			)
 
 			// broadcast messages
