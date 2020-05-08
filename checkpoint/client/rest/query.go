@@ -213,7 +213,7 @@ func checkpointHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		// get headers
 		roothash, err := contractCallerObj.GetRootHash(uint64(start), uint64(end), params.MaxCheckpointLength)
 		if err != nil {
-			RestLogger.Error("Unable to get header", "Start", start, "End", end, "Error", err)
+			RestLogger.Error("Unable to get roothash", "Start", start, "End", end, "Error", err)
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}

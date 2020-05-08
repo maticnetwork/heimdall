@@ -143,7 +143,7 @@ func handleQueryNextCheckpoint(ctx sdk.Context, req abci.RequestQuery, keeper Ke
 
 	rootHash, err := contractCaller.GetRootHash(start, end, params.MaxCheckpointLength)
 	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr(fmt.Sprintf("could not fetch headers for start:%v end:%v error:%v", start, end, err), err.Error()))
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr(fmt.Sprintf("could not fetch roothash for start:%v end:%v error:%v", start, end, err), err.Error()))
 	}
 
 	accs := sk.GetAllDividendAccounts(ctx)
