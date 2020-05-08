@@ -115,6 +115,7 @@ func CreateNewStateRecord(cdc *codec.Codec) *cobra.Command {
 			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
 		},
 	}
+	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<tx-hash>")
 	cmd.Flags().String(FlagLogIndex, "", "--log-index=<log-index>")
 	cmd.Flags().String(FlagRecordID, "", "--id=<record-id>")
@@ -123,9 +124,6 @@ func CreateNewStateRecord(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(FlagContractAddress, "", "--contract-addr=<contract-addr>")
 	cmd.Flags().String(FlagData, "", "--data=<data>")
 
-	if err := cmd.MarkFlagRequired(FlagProposerAddress); err != nil {
-		logger.Error("CreateNewStateRecord | MarkFlagRequired | FlagProposerAddress", "Error", err)
-	}
 	if err := cmd.MarkFlagRequired(FlagRecordID); err != nil {
 		logger.Error("CreateNewStateRecord | MarkFlagRequired | FlagRecordID", "Error", err)
 	}
