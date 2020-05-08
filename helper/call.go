@@ -77,7 +77,6 @@ type ContractCaller struct {
 	MainChainClient  *ethclient.Client
 	MainChainRPC     *rpc.Client
 	MaticChainClient *ethclient.Client
-	MaticRPCClient   *rpc.Client
 
 	RootChainABI     abi.ABI
 	StakingInfoABI   abi.ABI
@@ -108,7 +107,6 @@ func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 	contractCallerObj.MainChainClient = GetMainClient()
 	contractCallerObj.MaticChainClient = GetMaticClient()
 	contractCallerObj.MainChainRPC = GetMainChainRPCClient()
-	contractCallerObj.MaticRPCClient = GetMaticRPCClient()
 	contractCallerObj.ReceiptCache, _ = NewLru(1000)
 	contractCallerObj.BlockTimeCache, _ = NewLru(1000)
 
