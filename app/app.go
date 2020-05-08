@@ -669,7 +669,7 @@ func (app *HeimdallApp) GetSideRouter() types.SideRouter {
 }
 
 // SetSideRouter sets side-tx router
-// Testing ONLYgit status
+// Testing ONLY
 func (app *HeimdallApp) SetSideRouter(r types.SideRouter) {
 	app.sideRouter = r
 }
