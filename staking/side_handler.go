@@ -319,6 +319,17 @@ func PostHandleMsgValidatorJoin(ctx sdk.Context, k Keeper, msg types.MsgValidato
 		return common.ErrSideTxValidation(k.Codespace()).Result()
 	}
 
+	// Check for replay attack
+	blockNumber := new(big.Int).SetUint64(msg.BlockNumber)
+	sequence := new(big.Int).Mul(blockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
+	sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))
+
+	// check if incoming tx is older
+	if k.HasStakingSequence(ctx, sequence.String()) {
+		k.Logger(ctx).Error("Older invalid tx found")
+		return hmCommon.ErrOldTx(k.Codespace()).Result()
+	}
+
 	k.Logger(ctx).Debug("Adding validator to state", "sideTxResult", sideTxResult)
 
 	// Generate PubKey from Pubkey in message and signer
@@ -342,11 +353,6 @@ func PostHandleMsgValidatorJoin(ctx sdk.Context, k Keeper, msg types.MsgValidato
 		Signer:      hmTypes.BytesToHeimdallAddress(signer.Bytes()),
 		LastUpdated: "",
 	}
-
-	// sequence id
-	blockNumber := new(big.Int).SetUint64(msg.BlockNumber)
-	sequence := new(big.Int).Mul(blockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
-	sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))
 
 	// update last updated
 	newValidator.LastUpdated = sequence.String()
@@ -392,6 +398,17 @@ func PostHandleMsgStakeUpdate(ctx sdk.Context, k Keeper, msg types.MsgStakeUpdat
 		return common.ErrSideTxValidation(k.Codespace()).Result()
 	}
 
+	// Check for replay attack
+	blockNumber := new(big.Int).SetUint64(msg.BlockNumber)
+	sequence := new(big.Int).Mul(blockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
+	sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))
+
+	// check if incoming tx is older
+	if k.HasStakingSequence(ctx, sequence.String()) {
+		k.Logger(ctx).Error("Older invalid tx found")
+		return hmCommon.ErrOldTx(k.Codespace()).Result()
+	}
+
 	k.Logger(ctx).Debug("Updating validator stake", "sideTxResult", sideTxResult)
 
 	// pull validator from store
@@ -400,11 +417,6 @@ func PostHandleMsgStakeUpdate(ctx sdk.Context, k Keeper, msg types.MsgStakeUpdat
 		k.Logger(ctx).Error("Fetching of validator from store failed", "validatorId", msg.ID)
 		return hmCommon.ErrNoValidator(k.Codespace()).Result()
 	}
-
-	// sequence id
-	blockNumber := new(big.Int).SetUint64(msg.BlockNumber)
-	sequence := new(big.Int).Mul(blockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
-	sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))
 
 	// update last updated
 	validator.LastUpdated = sequence.String()
@@ -458,6 +470,16 @@ func PostHandleMsgSignerUpdate(ctx sdk.Context, k Keeper, msg types.MsgSignerUpd
 		return common.ErrSideTxValidation(k.Codespace()).Result()
 	}
 
+	// Check for replay attack
+	blockNumber := new(big.Int).SetUint64(msg.BlockNumber)
+	sequence := new(big.Int).Mul(blockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
+	sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))
+	// check if incoming tx is older
+	if k.HasStakingSequence(ctx, sequence.String()) {
+		k.Logger(ctx).Error("Older invalid tx found")
+		return hmCommon.ErrOldTx(k.Codespace()).Result()
+	}
+
 	k.Logger(ctx).Debug("Persisting signer update", "sideTxResult", sideTxResult)
 
 	newPubKey := msg.NewSignerPubKey
@@ -470,11 +492,6 @@ func PostHandleMsgSignerUpdate(ctx sdk.Context, k Keeper, msg types.MsgSignerUpd
 		return hmCommon.ErrNoValidator(k.Codespace()).Result()
 	}
 	oldValidator := validator.Copy()
-
-	// sequence id
-	blockNumber := new(big.Int).SetUint64(msg.BlockNumber)
-	sequence := new(big.Int).Mul(blockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
-	sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))
 
 	// update last udpated
 	validator.LastUpdated = sequence.String()
@@ -504,7 +521,7 @@ func PostHandleMsgSignerUpdate(ctx sdk.Context, k Keeper, msg types.MsgSignerUpd
 	oldValidator.LastUpdated = sequence.String()
 
 	// updated nonce
-	validator.Nonce = msg.Nonce
+	oldValidator.Nonce = msg.Nonce
 
 	// save old validator
 	if err := k.AddValidator(ctx, *oldValidator); err != nil {
@@ -570,12 +587,18 @@ func PostHandleMsgValidatorExit(ctx sdk.Context, k Keeper, msg types.MsgValidato
 		return common.ErrSideTxValidation(k.Codespace()).Result()
 	}
 
-	k.Logger(ctx).Debug("Persisting validator exit", "sideTxResult", sideTxResult)
-
-	// sequence id
+	// Check for replay attack
 	blockNumber := new(big.Int).SetUint64(msg.BlockNumber)
 	sequence := new(big.Int).Mul(blockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
 	sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))
+
+	// check if incoming tx is older
+	if k.HasStakingSequence(ctx, sequence.String()) {
+		k.Logger(ctx).Error("Older invalid tx found")
+		return hmCommon.ErrOldTx(k.Codespace()).Result()
+	}
+
+	k.Logger(ctx).Debug("Persisting validator exit", "sideTxResult", sideTxResult)
 
 	validator, ok := k.GetValidatorFromValID(ctx, msg.ID)
 	if !ok {

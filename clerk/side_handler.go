@@ -111,6 +111,12 @@ func PostHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecor
 		return common.ErrSideTxValidation(k.Codespace()).Result()
 	}
 
+	// check for replay
+	if k.HasEventRecord(ctx, msg.ID) {
+		k.Logger(ctx).Debug("Skipping new clerk record as it's already processed")
+		return hmCommon.ErrOldTx(k.Codespace()).Result()
+	}
+
 	k.Logger(ctx).Debug("Persisting clerk state", "sideTxResult", sideTxResult)
 
 	// sequence id
