@@ -134,6 +134,12 @@ func SideHandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k K
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
 
+	// check nonce
+	if eventLog.Nonce.Uint64() != msg.Nonce {
+		k.Logger(ctx).Error("Nonce in message doesn't match with nonce in log", "msgNonce", msg.Nonce, "nonceFromTx", eventLog.Nonce)
+		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
+	}
+
 	k.Logger(ctx).Debug("✅ Succesfully validated External call for validator join msg")
 	result.Result = abci.SideTxResultType_Yes
 	return
@@ -176,6 +182,12 @@ func SideHandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keepe
 	// check Amount
 	if eventLog.NewAmount.Cmp(msg.NewAmount.BigInt()) != 0 {
 		k.Logger(ctx).Error("NewAmount in message doesn't match NewAmount in event logs", "MsgNewAmount", msg.NewAmount, "NewAmountFromEvent", eventLog.NewAmount)
+		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
+	}
+
+	// check nonce
+	if eventLog.Nonce.Uint64() != msg.Nonce {
+		k.Logger(ctx).Error("Nonce in message doesn't match with nonce in log", "msgNonce", msg.Nonce, "nonceFromTx", eventLog.Nonce)
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
 
@@ -232,6 +244,12 @@ func SideHandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Kee
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
 
+	// check nonce
+	if eventLog.Nonce.Uint64() != msg.Nonce {
+		k.Logger(ctx).Error("Nonce in message doesn't match with nonce in log", "msgNonce", msg.Nonce, "nonceFromTx", eventLog.Nonce)
+		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
+	}
+
 	k.Logger(ctx).Debug("✅ Succesfully validated External call for signer update msg")
 	result.Result = abci.SideTxResultType_Yes
 	return
@@ -277,6 +295,12 @@ func SideHandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k K
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
 
+	// check nonce
+	if eventLog.Nonce.Uint64() != msg.Nonce {
+		k.Logger(ctx).Error("Nonce in message doesn't match with nonce in log", "msgNonce", msg.Nonce, "nonceFromTx", eventLog.Nonce)
+		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
+	}
+
 	k.Logger(ctx).Debug("✅ Succesfully validated External call for validator exit msg")
 	result.Result = abci.SideTxResultType_Yes
 	return
@@ -312,6 +336,7 @@ func PostHandleMsgValidatorJoin(ctx sdk.Context, k Keeper, msg types.MsgValidato
 		ID:          msg.ID,
 		StartEpoch:  msg.ActivationEpoch,
 		EndEpoch:    0,
+		Nonce:       0,
 		VotingPower: votingPower.Int64(),
 		PubKey:      pubkey,
 		Signer:      hmTypes.BytesToHeimdallAddress(signer.Bytes()),
@@ -384,6 +409,9 @@ func PostHandleMsgStakeUpdate(ctx sdk.Context, k Keeper, msg types.MsgStakeUpdat
 	// update last updated
 	validator.LastUpdated = sequence.String()
 
+	// update nonce
+	validator.Nonce = msg.Nonce
+
 	// set validator amount
 	p, err := helper.GetPowerFromAmount(msg.NewAmount.BigInt())
 	if err != nil {
@@ -451,6 +479,9 @@ func PostHandleMsgSignerUpdate(ctx sdk.Context, k Keeper, msg types.MsgSignerUpd
 	// update last udpated
 	validator.LastUpdated = sequence.String()
 
+	// update nonce
+	validator.Nonce = msg.Nonce
+
 	// check if we are actually updating signer
 	if !bytes.Equal(newSigner.Bytes(), validator.Signer.Bytes()) {
 		// Update signer in prev Validator
@@ -471,6 +502,9 @@ func PostHandleMsgSignerUpdate(ctx sdk.Context, k Keeper, msg types.MsgSignerUpd
 	oldValidator.VotingPower = 0
 	// updated last
 	oldValidator.LastUpdated = sequence.String()
+
+	// updated nonce
+	validator.Nonce = msg.Nonce
 
 	// save old validator
 	if err := k.AddValidator(ctx, *oldValidator); err != nil {
@@ -554,6 +588,9 @@ func PostHandleMsgValidatorExit(ctx sdk.Context, k Keeper, msg types.MsgValidato
 
 	// update last updated
 	validator.LastUpdated = sequence.String()
+
+	// update nonce
+	validator.Nonce = msg.Nonce
 
 	// Add deactivation time for validator
 	if err := k.AddValidator(ctx, validator); err != nil {

@@ -113,6 +113,18 @@ func HandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keeper, c
 		return hmCommon.ErrOldTx(k.Codespace()).Result()
 	}
 
+	// pull validator from store
+	validator, ok := k.GetValidatorFromValID(ctx, msg.ID)
+	if !ok {
+		k.Logger(ctx).Error("Fetching of validator from store failed", "validatorId", msg.ID)
+		return hmCommon.ErrNoValidator(k.Codespace()).Result()
+	}
+
+	if msg.Nonce != validator.Nonce+1 {
+		k.Logger(ctx).Error("Incorrect validator nonce")
+		return hmCommon.ErrNonce(k.Codespace()).Result()
+	}
+
 	// set validator amount
 	_, err := helper.GetPowerFromAmount(msg.NewAmount.BigInt())
 	if err != nil {
@@ -163,6 +175,12 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper,
 		return hmCommon.ErrNoSignerChange(k.Codespace()).Result()
 	}
 
+	// check nonce validity
+	if msg.Nonce != validator.Nonce+1 {
+		k.Logger(ctx).Error("Incorrect validator nonce")
+		return hmCommon.ErrNonce(k.Codespace()).Result()
+	}
+
 	return sdk.Result{
 		Events: ctx.EventManager().Events(),
 	}
@@ -201,6 +219,12 @@ func HandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k Keepe
 	if k.HasStakingSequence(ctx, sequence.String()) {
 		k.Logger(ctx).Error("Older invalid tx found")
 		return hmCommon.ErrOldTx(k.Codespace()).Result()
+	}
+
+	// check nonce validity
+	if msg.Nonce != validator.Nonce+1 {
+		k.Logger(ctx).Error("Incorrect validator nonce")
+		return hmCommon.ErrNonce(k.Codespace()).Result()
 	}
 
 	return sdk.Result{

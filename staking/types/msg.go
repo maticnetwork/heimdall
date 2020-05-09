@@ -29,6 +29,7 @@ type MsgValidatorJoin struct {
 	TxHash          hmTypes.HeimdallHash    `json:"tx_hash"`
 	LogIndex        uint64                  `json:"log_index"`
 	BlockNumber     uint64                  `json:"block_number"`
+	Nonce           uint64                  `json:"nonce"`
 }
 
 // NewMsgValidatorJoin creates new validator-join
@@ -41,6 +42,7 @@ func NewMsgValidatorJoin(
 	txhash hmTypes.HeimdallHash,
 	logIndex uint64,
 	blockNumber uint64,
+	nonce uint64,
 ) MsgValidatorJoin {
 
 	return MsgValidatorJoin{
@@ -52,6 +54,7 @@ func NewMsgValidatorJoin(
 		TxHash:          txhash,
 		LogIndex:        logIndex,
 		BlockNumber:     blockNumber,
+		Nonce:           nonce,
 	}
 }
 
@@ -106,6 +109,11 @@ func (msg MsgValidatorJoin) GetSideSignBytes() []byte {
 	return nil
 }
 
+// GetNonce Returns nonce
+func (msg MsgValidatorJoin) GetNonce() uint64 {
+	return msg.Nonce
+}
+
 //
 // Stake update
 //
@@ -124,10 +132,11 @@ type MsgStakeUpdate struct {
 	TxHash      hmTypes.HeimdallHash    `json:"tx_hash"`
 	LogIndex    uint64                  `json:"log_index"`
 	BlockNumber uint64                  `json:"block_number"`
+	Nonce       uint64                  `json:"nonce"`
 }
 
 // NewMsgStakeUpdate represents stake update
-func NewMsgStakeUpdate(from hmTypes.HeimdallAddress, id uint64, newAmount sdk.Int, txhash hmTypes.HeimdallHash, logIndex uint64, blockNumber uint64) MsgStakeUpdate {
+func NewMsgStakeUpdate(from hmTypes.HeimdallAddress, id uint64, newAmount sdk.Int, txhash hmTypes.HeimdallHash, logIndex uint64, blockNumber uint64, nonce uint64) MsgStakeUpdate {
 	return MsgStakeUpdate{
 		From:        from,
 		ID:          hmTypes.NewValidatorID(id),
@@ -135,6 +144,7 @@ func NewMsgStakeUpdate(from hmTypes.HeimdallAddress, id uint64, newAmount sdk.In
 		TxHash:      txhash,
 		LogIndex:    logIndex,
 		BlockNumber: blockNumber,
+		Nonce:       nonce,
 	}
 }
 
@@ -185,6 +195,11 @@ func (msg MsgStakeUpdate) GetSideSignBytes() []byte {
 	return nil
 }
 
+// GetNonce Returns nonce
+func (msg MsgStakeUpdate) GetNonce() uint64 {
+	return msg.Nonce
+}
+
 //
 // validator update
 //
@@ -199,6 +214,7 @@ type MsgSignerUpdate struct {
 	TxHash          hmTypes.HeimdallHash    `json:"tx_hash"`
 	LogIndex        uint64                  `json:"log_index"`
 	BlockNumber     uint64                  `json:"block_number"`
+	Nonce           uint64                  `json:"nonce"`
 }
 
 func NewMsgSignerUpdate(
@@ -208,6 +224,7 @@ func NewMsgSignerUpdate(
 	txhash hmTypes.HeimdallHash,
 	logIndex uint64,
 	blockNumber uint64,
+	nonce uint64,
 ) MsgSignerUpdate {
 	return MsgSignerUpdate{
 		From:            from,
@@ -216,6 +233,7 @@ func NewMsgSignerUpdate(
 		TxHash:          txhash,
 		LogIndex:        logIndex,
 		BlockNumber:     blockNumber,
+		Nonce:           nonce,
 	}
 }
 
@@ -270,6 +288,11 @@ func (msg MsgSignerUpdate) GetSideSignBytes() []byte {
 	return nil
 }
 
+// GetNonce Returns nonce
+func (msg MsgSignerUpdate) GetNonce() uint64 {
+	return msg.Nonce
+}
+
 //
 // validator exit
 //
@@ -283,9 +306,10 @@ type MsgValidatorExit struct {
 	TxHash            hmTypes.HeimdallHash    `json:"tx_hash"`
 	LogIndex          uint64                  `json:"log_index"`
 	BlockNumber       uint64                  `json:"block_number"`
+	Nonce             uint64                  `json:"nonce"`
 }
 
-func NewMsgValidatorExit(from hmTypes.HeimdallAddress, id uint64, deactivationEpoch uint64, txhash hmTypes.HeimdallHash, logIndex uint64, blockNumber uint64) MsgValidatorExit {
+func NewMsgValidatorExit(from hmTypes.HeimdallAddress, id uint64, deactivationEpoch uint64, txhash hmTypes.HeimdallHash, logIndex uint64, blockNumber uint64, nonce uint64) MsgValidatorExit {
 	return MsgValidatorExit{
 		From:              from,
 		ID:                hmTypes.NewValidatorID(id),
@@ -293,6 +317,7 @@ func NewMsgValidatorExit(from hmTypes.HeimdallAddress, id uint64, deactivationEp
 		TxHash:            txhash,
 		LogIndex:          logIndex,
 		BlockNumber:       blockNumber,
+		Nonce:             nonce,
 	}
 }
 
@@ -341,4 +366,9 @@ func (msg MsgValidatorExit) GetLogIndex() uint64 {
 // GetSideSignBytes returns side sign bytes
 func (msg MsgValidatorExit) GetSideSignBytes() []byte {
 	return nil
+}
+
+// GetNonce Returns nonce
+func (msg MsgValidatorExit) GetNonce() uint64 {
+	return msg.Nonce
 }

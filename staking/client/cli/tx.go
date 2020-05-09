@@ -135,6 +135,7 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 				hmTypes.HexToHeimdallHash(txhash),
 				logIndex,
 				viper.GetUint64(FlagBlockNumber),
+				event.Nonce.Uint64(),
 			)
 
 			// broadcast messages
@@ -191,6 +192,8 @@ func SendValidatorExitTx(cdc *codec.Codec) *cobra.Command {
 				return fmt.Errorf("transaction hash has to be supplied")
 			}
 
+			nonce := viper.GetUint64(FlagNonce)
+
 			// draf msg
 			msg := types.NewMsgValidatorExit(
 				proposer,
@@ -199,6 +202,7 @@ func SendValidatorExitTx(cdc *codec.Codec) *cobra.Command {
 				hmTypes.HexToHeimdallHash(txhash),
 				viper.GetUint64(FlagLogIndex),
 				viper.GetUint64(FlagBlockNumber),
+				nonce,
 			)
 
 			// broadcast messages
@@ -212,6 +216,7 @@ func SendValidatorExitTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().Uint64(FlagLogIndex, 0, "--log-index=<log-index>")
 	cmd.Flags().Uint64(FlagDeactivationEpoch, 0, "--deactivation-epoch=<deactivation-epoch>")
 	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
+	cmd.Flags().Int(FlagNonce, 0, "--nonce=<nonce>")
 
 	if err := cmd.MarkFlagRequired(FlagValidatorID); err != nil {
 		logger.Error("SendValidatorExitTx | MarkFlagRequired | FlagValidatorID", "Error", err)
@@ -224,6 +229,9 @@ func SendValidatorExitTx(cdc *codec.Codec) *cobra.Command {
 	}
 	if err := cmd.MarkFlagRequired(FlagBlockNumber); err != nil {
 		logger.Error("SendValidatorExitTx | MarkFlagRequired | FlagBlockNumber", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagNonce); err != nil {
+		logger.Error("SendValidatorExitTx | MarkFlagRequired | FlagNonce", "Error", err)
 	}
 
 	return cmd
@@ -271,6 +279,7 @@ func SendValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 				hmTypes.HexToHeimdallHash(txhash),
 				viper.GetUint64(FlagLogIndex),
 				viper.GetUint64(FlagBlockNumber),
+				viper.GetUint64(FlagNonce),
 			)
 
 			// broadcast messages
@@ -284,6 +293,7 @@ func SendValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
 	cmd.Flags().Uint64(FlagLogIndex, 0, "--log-index=<log-index>")
 	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
+	cmd.Flags().Int(FlagNonce, 0, "--nonce=<nonce>")
 
 	if err := cmd.MarkFlagRequired(FlagValidatorID); err != nil {
 		logger.Error("SendValidatorUpdateTx | MarkFlagRequired | FlagValidatorID", "Error", err)
@@ -299,6 +309,9 @@ func SendValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 	}
 	if err := cmd.MarkFlagRequired(FlagBlockNumber); err != nil {
 		logger.Error("SendValidatorUpdateTx | MarkFlagRequired | FlagBlockNumber", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagNonce); err != nil {
+		logger.Error("SendValidatorUpdateTx | MarkFlagRequired | FlagNonce", "Error", err)
 	}
 
 	return cmd
@@ -341,6 +354,7 @@ func SendValidatorStakeUpdateTx(cdc *codec.Codec) *cobra.Command {
 				hmTypes.HexToHeimdallHash(txhash),
 				viper.GetUint64(FlagLogIndex),
 				viper.GetUint64(FlagBlockNumber),
+				viper.GetUint64(FlagNonce),
 			)
 
 			// broadcast messages
@@ -354,6 +368,7 @@ func SendValidatorStakeUpdateTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(FlagAmount, "", "--amount=<amount>")
 	cmd.Flags().Uint64(FlagLogIndex, 0, "--log-index=<log-index>")
 	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
+	cmd.Flags().Int(FlagNonce, 0, "--nonce=<nonce>")
 
 	if err := cmd.MarkFlagRequired(FlagTxHash); err != nil {
 		logger.Error("SendValidatorStakeUpdateTx | MarkFlagRequired | FlagTxHash", "Error", err)
@@ -364,12 +379,14 @@ func SendValidatorStakeUpdateTx(cdc *codec.Codec) *cobra.Command {
 	if err := cmd.MarkFlagRequired(FlagValidatorID); err != nil {
 		logger.Error("SendValidatorStakeUpdateTx | MarkFlagRequired | FlagValidatorID", "Error", err)
 	}
-
 	if err := cmd.MarkFlagRequired(FlagBlockNumber); err != nil {
 		logger.Error("SendValidatorStakeUpdateTx | MarkFlagRequired | FlagBlockNumber", "Error", err)
 	}
 	if err := cmd.MarkFlagRequired(FlagAmount); err != nil {
 		logger.Error("SendValidatorStakeUpdateTx | MarkFlagRequired | FlagAmount", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagNonce); err != nil {
+		logger.Error("SendValidatorStakeUpdateTx | MarkFlagRequired | FlagNonce", "Error", err)
 	}
 
 	return cmd

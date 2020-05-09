@@ -12,7 +12,6 @@ import (
 	"github.com/maticnetwork/heimdall/types/simulation"
 )
 
-// RandomizedGenState generates a random GenesisState for staking
 func RandomizedGenState(simState *module.SimulationState) {
 	s1 := rand.NewSource(time.Now().UnixNano())
 	r1 := rand.New(s1)
@@ -31,6 +30,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 		// validator
 		validators[i] = hmTypes.NewValidator(
 			hmTypes.NewValidatorID(uint64(int64(i))),
+			0,
 			0,
 			0,
 			int64(simulation.RandIntBetween(r1, 10, 100)), // power

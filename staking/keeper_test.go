@@ -174,6 +174,7 @@ func (suite *KeeperTestSuite) TestCurrentValidator() {
 		name        string
 		startblock  uint64
 		endblock    uint64
+		nonce       uint64
 		VotingPower int64
 		ackcount    uint64
 		result      bool
@@ -182,7 +183,7 @@ func (suite *KeeperTestSuite) TestCurrentValidator() {
 
 	dataItems := []TestDataItem{
 		{"VotingPower zero", uint64(0), uint64(0), int64(0), uint64(1), false, "should not be current validator as VotingPower is zero."},
-		{"start epoch greater than ackcount", uint64(3), uint64(0), int64(10), uint64(1), false, "should not be current validator as start epoch greater than ackcount."},
+		{"start epoch greater than ackcount", uint64(3), uint64(0), 0, int64(10), uint64(1), false, "should not be current validator as start epoch greater than ackcount."},
 	}
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 
@@ -196,6 +197,7 @@ func (suite *KeeperTestSuite) TestCurrentValidator() {
 				ID:               types.NewValidatorID(1 + uint64(i)),
 				StartEpoch:       item.startblock,
 				EndEpoch:         item.startblock,
+				Nonce:            0,
 				VotingPower:      item.VotingPower,
 				Signer:           types.HexToHeimdallAddress(pubkey.Address().String()),
 				PubKey:           pubkey,

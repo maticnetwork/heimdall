@@ -72,6 +72,7 @@ func (sp *StakingProcessor) sendValidatorJoinToHeimdall(eventName string, logByt
 				"event", eventName,
 				"validatorID", event.ValidatorId,
 				"activationEpoch", event.ActivationEpoch,
+				"nonce", event.Nonce,
 				"amount", event.Amount,
 				"totalAmount", event.Total,
 				"SignerPubkey", hmTypes.NewPubKey(signerPubKey).String(),
@@ -97,6 +98,7 @@ func (sp *StakingProcessor) sendValidatorJoinToHeimdall(eventName string, logByt
 			"event", eventName,
 			"validatorID", event.ValidatorId,
 			"activationEpoch", event.ActivationEpoch,
+			"nonce", event.Nonce,
 			"amount", event.Amount,
 			"totalAmount", event.Total,
 			"SignerPubkey", hmTypes.NewPubKey(signerPubKey).String(),
@@ -115,6 +117,7 @@ func (sp *StakingProcessor) sendValidatorJoinToHeimdall(eventName string, logByt
 			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			uint64(vLog.Index),
 			vLog.BlockNumber,
+			event.Nonce.Uint64(),
 		)
 
 		// return broadcast to heimdall
@@ -142,6 +145,7 @@ func (sp *StakingProcessor) sendUnstakeInitToHeimdall(eventName string, logBytes
 				"event", eventName,
 				"validator", event.User,
 				"validatorID", event.ValidatorId,
+				"nonce", event.Nonce,
 				"deactivatonEpoch", event.DeactivationEpoch,
 				"amount", event.Amount,
 				"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
@@ -156,6 +160,7 @@ func (sp *StakingProcessor) sendUnstakeInitToHeimdall(eventName string, logBytes
 			"event", eventName,
 			"validator", event.User,
 			"validatorID", event.ValidatorId,
+			"nonce", event.Nonce,
 			"deactivatonEpoch", event.DeactivationEpoch,
 			"amount", event.Amount,
 			"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
@@ -171,6 +176,7 @@ func (sp *StakingProcessor) sendUnstakeInitToHeimdall(eventName string, logBytes
 			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			uint64(vLog.Index),
 			vLog.BlockNumber,
+			event.Nonce.Uint64(),
 		)
 
 		// return broadcast to heimdall
@@ -197,6 +203,7 @@ func (sp *StakingProcessor) sendStakeUpdateToHeimdall(eventName string, logBytes
 			sp.Logger.Info("Ignoring task to send unstakeinit to heimdall as already processed",
 				"event", eventName,
 				"validatorID", event.ValidatorId,
+				"nonce", event.Nonce,
 				"newAmount", event.NewAmount,
 				"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 				"logIndex", uint64(vLog.Index),
@@ -208,6 +215,7 @@ func (sp *StakingProcessor) sendStakeUpdateToHeimdall(eventName string, logBytes
 			"✅ Received task to send stake-update to heimdall",
 			"event", eventName,
 			"validatorID", event.ValidatorId,
+			"nonce", event.Nonce,
 			"newAmount", event.NewAmount,
 			"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			"logIndex", uint64(vLog.Index),
@@ -222,6 +230,7 @@ func (sp *StakingProcessor) sendStakeUpdateToHeimdall(eventName string, logBytes
 			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			uint64(vLog.Index),
 			vLog.BlockNumber,
+			event.Nonce.Uint64(),
 		)
 
 		// return broadcast to heimdall
@@ -253,6 +262,7 @@ func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logByte
 			sp.Logger.Info("Ignoring task to send unstakeinit to heimdall as already processed",
 				"event", eventName,
 				"validatorID", event.ValidatorId,
+				"nonce", event.Nonce,
 				"NewSignerPubkey", hmTypes.NewPubKey(newSignerPubKey).String(),
 				"oldSigner", event.OldSigner.Hex(),
 				"newSigner", event.NewSigner.Hex(),
@@ -266,6 +276,7 @@ func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logByte
 			"✅ Received task to send signer-change to heimdall",
 			"event", eventName,
 			"validatorID", event.ValidatorId,
+			"nonce", event.Nonce,
 			"NewSignerPubkey", hmTypes.NewPubKey(newSignerPubKey).String(),
 			"oldSigner", event.OldSigner.Hex(),
 			"newSigner", event.NewSigner.Hex(),
@@ -282,6 +293,7 @@ func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logByte
 			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			uint64(vLog.Index),
 			vLog.BlockNumber,
+			event.Nonce.Uint64(),
 		)
 
 		// return broadcast to heimdall
