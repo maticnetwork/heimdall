@@ -3,7 +3,6 @@ package common
 import (
 	"fmt"
 	"strconv"
-	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -113,10 +112,6 @@ func ErrNoACK(codespace sdk.CodespaceType, expiresAt uint64) sdk.Error {
 
 func ErrNoConn(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeNoConn, "Unable to connect to chain")
-}
-
-func ErrWaitForConfirmation(codespace sdk.CodespaceType, txConfirmationTime time.Duration) sdk.Error {
-	return newError(codespace, CodeWaitFrConfirmation, fmt.Sprintf("Please wait for %v confirmation time before sending transaction", txConfirmationTime))
 }
 
 func ErrNoCheckpointFound(codespace sdk.CodespaceType) sdk.Error {
