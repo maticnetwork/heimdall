@@ -13,6 +13,7 @@ type GenesisValidator struct {
 	ID         hmTypes.ValidatorID     `json:"id"`
 	StartEpoch uint64                  `json:"start_epoch"`
 	EndEpoch   uint64                  `json:"end_epoch"`
+	Nonce      uint64                  `json:"nonce"`
 	Power      uint64                  `json:"power"` // aka Amount
 	PubKey     hmTypes.PubKey          `json:"pub_key"`
 	Signer     hmTypes.HeimdallAddress `json:"signer"`
@@ -26,6 +27,7 @@ func (v *GenesisValidator) HeimdallValidator() hmTypes.Validator {
 		VotingPower: int64(v.Power),
 		StartEpoch:  v.StartEpoch,
 		EndEpoch:    v.EndEpoch,
+		Nonce:       v.Nonce,
 		Signer:      v.Signer,
 	}
 }

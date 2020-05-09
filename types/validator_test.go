@@ -13,6 +13,7 @@ type valInput struct {
 	id         ValidatorID
 	startEpoch uint64
 	endEpoch   uint64
+	nonce      uint64
 	power      int64
 	pubKey     PubKey
 	signer     HeimdallAddress
@@ -54,7 +55,7 @@ func TestNewValidator(t *testing.T) {
 		},
 	}
 	for _, c := range tc {
-		out := NewValidator(c.in.id, c.in.startEpoch, c.in.endEpoch, c.in.power, c.in.pubKey, c.in.signer)
+		out := NewValidator(c.in.id, c.in.startEpoch, c.in.endEpoch, 0, c.in.power, c.in.pubKey, c.in.signer)
 		assert.Equal(t, c.out, out)
 	}
 }
@@ -95,17 +96,17 @@ func TestValidateBasic(t *testing.T) {
 		msg string
 	}{
 		{
-			in:  Validator{StartEpoch: 1, EndEpoch: 5, PubKey: NewPubKey([]byte("nonZeroTestPubKey")), Signer: BytesToHeimdallAddress([]byte("3"))},
+			in:  Validator{StartEpoch: 1, EndEpoch: 5, Nonce: 0, PubKey: NewPubKey([]byte("nonZeroTestPubKey")), Signer: BytesToHeimdallAddress([]byte("3"))},
 			out: true,
 			msg: "Valid basic validator test",
 		},
 		{
-			in:  Validator{StartEpoch: 1, EndEpoch: 5, PubKey: NewPubKey([]byte("")), Signer: BytesToHeimdallAddress([]byte("3"))},
+			in:  Validator{StartEpoch: 1, EndEpoch: 5, Nonce: 0, PubKey: NewPubKey([]byte("")), Signer: BytesToHeimdallAddress([]byte("3"))},
 			out: false,
 			msg: "Invalid PubKey \"\"",
 		},
 		{
-			in:  Validator{StartEpoch: 1, EndEpoch: 5, PubKey: ZeroPubKey, Signer: BytesToHeimdallAddress([]byte("3"))},
+			in:  Validator{StartEpoch: 1, EndEpoch: 5, Nonce: 0, PubKey: ZeroPubKey, Signer: BytesToHeimdallAddress([]byte("3"))},
 			out: false,
 			msg: "Invalid PubKey",
 		},
@@ -117,13 +118,13 @@ func TestValidateBasic(t *testing.T) {
 		//		},
 		{
 			// do we allow for endEpoch to be smaller than startEpoch ??
-			in:  Validator{StartEpoch: 1, EndEpoch: uNeg1, PubKey: NewPubKey([]byte("nonZeroTestPubKey")), Signer: BytesToHeimdallAddress([]byte("3"))},
+			in:  Validator{StartEpoch: 1, EndEpoch: uNeg1, Nonce: 0, PubKey: NewPubKey([]byte("nonZeroTestPubKey")), Signer: BytesToHeimdallAddress([]byte("3"))},
 			out: false,
 			msg: "Invalid endEpoch",
 		},
 		{
 			// in:  Validator{StartEpoch: 1, EndEpoch: 1, PubKey: NewPubKey([]byte("nonZeroTestPubKey")), Signer: HeimdallAddress(BytesToHeimdallAddress([]byte(string(""))))},
-			in:  Validator{StartEpoch: 1, EndEpoch: 1, PubKey: NewPubKey([]byte("nonZeroTestPubKey")), Signer: BytesToHeimdallAddress([]byte(""))},
+			in:  Validator{StartEpoch: 1, EndEpoch: 1, Nonce: 0, PubKey: NewPubKey([]byte("nonZeroTestPubKey")), Signer: BytesToHeimdallAddress([]byte(""))},
 			out: false,
 			msg: "Invalid Signer",
 		},

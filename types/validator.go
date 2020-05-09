@@ -16,6 +16,7 @@ type Validator struct {
 	ID          ValidatorID     `json:"ID"`
 	StartEpoch  uint64          `json:"startEpoch"`
 	EndEpoch    uint64          `json:"endEpoch"`
+	Nonce       uint64          `json:"nonce"`
 	VotingPower int64           `json:"power"` // TODO add 10^-18 here so that we dont overflow easily
 	PubKey      PubKey          `json:"pubKey"`
 	Signer      HeimdallAddress `json:"signer"`
@@ -26,11 +27,20 @@ type Validator struct {
 
 // NewValidator func creates a new validator,
 // the HeimdallAddress field is generated using Address i.e. [20]byte
-func NewValidator(id ValidatorID, startEpoch uint64, endEpoch uint64, power int64, pubKey PubKey, signer HeimdallAddress) *Validator {
+func NewValidator(
+	id ValidatorID,
+	startEpoch uint64,
+	endEpoch uint64,
+	nonce uint64,
+	power int64,
+	pubKey PubKey,
+	signer HeimdallAddress,
+) *Validator {
 	return &Validator{
 		ID:          id,
 		StartEpoch:  startEpoch,
 		EndEpoch:    endEpoch,
+		Nonce:       nonce,
 		VotingPower: power,
 		PubKey:      pubKey,
 		Signer:      signer,

@@ -26,6 +26,7 @@ type MsgValidatorJoin struct {
 	SignerPubKey hmTypes.PubKey          `json:"pub_key"`
 	TxHash       hmTypes.HeimdallHash    `json:"tx_hash"`
 	LogIndex     uint64                  `json:"log_index"`
+	Nonce        uint64                  `json:"nonce"`
 }
 
 // NewMsgValidatorJoin creates new validator-join
@@ -35,6 +36,7 @@ func NewMsgValidatorJoin(
 	pubkey hmTypes.PubKey,
 	txhash hmTypes.HeimdallHash,
 	logIndex uint64,
+	nonce uint64,
 ) MsgValidatorJoin {
 
 	return MsgValidatorJoin{
@@ -43,6 +45,7 @@ func NewMsgValidatorJoin(
 		SignerPubKey: pubkey,
 		TxHash:       txhash,
 		LogIndex:     logIndex,
+		Nonce:        nonce,
 	}
 }
 
@@ -92,6 +95,12 @@ func (msg MsgValidatorJoin) GetLogIndex() uint64 {
 	return msg.LogIndex
 }
 
+// GetNonce Returns nonce
+func (msg MsgValidatorJoin) GetNonce() uint64 {
+	return msg.Nonce
+}
+
+
 //
 // Stake update
 //
@@ -108,15 +117,23 @@ type MsgStakeUpdate struct {
 	ID       hmTypes.ValidatorID     `json:"id"`
 	TxHash   hmTypes.HeimdallHash    `json:"tx_hash"`
 	LogIndex uint64                  `json:"log_index"`
+	Nonce    uint64                  `json:"nonce"`
 }
 
 // NewMsgStakeUpdate represents stake update
-func NewMsgStakeUpdate(from hmTypes.HeimdallAddress, id uint64, txhash hmTypes.HeimdallHash, logIndex uint64) MsgStakeUpdate {
+func NewMsgStakeUpdate(
+	from hmTypes.HeimdallAddress,
+	id uint64,
+	txhash hmTypes.HeimdallHash,
+	logIndex uint64,
+	nonce uint64,
+) MsgStakeUpdate {
 	return MsgStakeUpdate{
 		From:     from,
 		ID:       hmTypes.NewValidatorID(id),
 		TxHash:   txhash,
 		LogIndex: logIndex,
+		Nonce:    nonce,
 	}
 }
 
@@ -162,6 +179,11 @@ func (msg MsgStakeUpdate) GetLogIndex() uint64 {
 	return msg.LogIndex
 }
 
+// GetNonce Returns nonce
+func (msg MsgStakeUpdate) GetNonce() uint64 {
+	return msg.Nonce
+}
+
 //
 // validator update
 //
@@ -175,6 +197,7 @@ type MsgSignerUpdate struct {
 	NewSignerPubKey hmTypes.PubKey          `json:"pubKey"`
 	TxHash          hmTypes.HeimdallHash    `json:"tx_hash"`
 	LogIndex        uint64                  `json:"log_index"`
+	Nonce           uint64                  `json:"nonce"`
 }
 
 func NewMsgSignerUpdate(
@@ -183,6 +206,7 @@ func NewMsgSignerUpdate(
 	pubKey hmTypes.PubKey,
 	txhash hmTypes.HeimdallHash,
 	logIndex uint64,
+	nonce uint64,
 ) MsgSignerUpdate {
 	return MsgSignerUpdate{
 		From:            from,
@@ -190,6 +214,7 @@ func NewMsgSignerUpdate(
 		NewSignerPubKey: pubKey,
 		TxHash:          txhash,
 		LogIndex:        logIndex,
+		Nonce:           nonce,
 	}
 }
 
@@ -239,6 +264,11 @@ func (msg MsgSignerUpdate) GetLogIndex() uint64 {
 	return msg.LogIndex
 }
 
+// GetNonce Returns nonce
+func (msg MsgSignerUpdate) GetNonce() uint64 {
+	return msg.Nonce
+}
+
 //
 // validator exit
 //
@@ -250,14 +280,22 @@ type MsgValidatorExit struct {
 	ID       hmTypes.ValidatorID     `json:"id"`
 	TxHash   hmTypes.HeimdallHash    `json:"tx_hash"`
 	LogIndex uint64                  `json:"log_index"`
+	Nonce    uint64                  `json:"nonce"`
 }
 
-func NewMsgValidatorExit(from hmTypes.HeimdallAddress, id uint64, txhash hmTypes.HeimdallHash, logIndex uint64) MsgValidatorExit {
+func NewMsgValidatorExit(
+	from hmTypes.HeimdallAddress,
+	id uint64,
+	txhash hmTypes.HeimdallHash,
+	logIndex uint64,
+	nonce uint64,
+) MsgValidatorExit {
 	return MsgValidatorExit{
 		From:     from,
 		ID:       hmTypes.NewValidatorID(id),
 		TxHash:   txhash,
 		LogIndex: logIndex,
+		Nonce:    nonce,
 	}
 }
 
@@ -301,4 +339,9 @@ func (msg MsgValidatorExit) GetTxHash() types.HeimdallHash {
 // GetLogIndex Returns log index
 func (msg MsgValidatorExit) GetLogIndex() uint64 {
 	return msg.LogIndex
+}
+
+// GetNonce Returns nonce
+func (msg MsgValidatorExit) GetNonce() uint64 {
+	return msg.Nonce
 }
