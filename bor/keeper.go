@@ -130,6 +130,12 @@ func (k *Keeper) GetSpan(ctx sdk.Context, id uint64) (*hmTypes.Span, error) {
 	return &span, nil
 }
 
+func (k *Keeper) HasSpan(ctx sdk.Context, id uint64) bool {
+	store := ctx.KVStore(k.storeKey)
+	spanKey := GetSpanKey(id)
+	return store.Has(spanKey)
+}
+
 // GetAllSpans fetches all indexed by id from store
 func (k *Keeper) GetAllSpans(ctx sdk.Context) (spans []*hmTypes.Span) {
 	// iterate through spans and create span update array

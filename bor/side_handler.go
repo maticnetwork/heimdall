@@ -106,6 +106,12 @@ func PostHandleMsgEventSpan(ctx sdk.Context, k Keeper, msg types.MsgProposeSpan,
 		return common.ErrSideTxValidation(k.Codespace()).Result()
 	}
 
+	// check for replay
+	if k.HasSpan(ctx, msg.ID) {
+		k.Logger(ctx).Debug("Skipping new span as it's already processed")
+		return hmCommon.ErrOldTx(k.Codespace()).Result()
+	}
+
 	k.Logger(ctx).Debug("Persisting span state", "sideTxResult", sideTxResult)
 
 	// freeze for new span
