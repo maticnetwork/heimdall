@@ -28,6 +28,7 @@ import (
 // IContractCaller represents contract caller
 type IContractCaller interface {
 	GetHeaderInfo(headerID uint64, rootChainInstance *rootchain.Rootchain) (root common.Hash, start, end, createdAt uint64, proposer types.HeimdallAddress, err error)
+	GetRootHash(start uint64, end uint64, checkpointLength uint64) ([]byte, error)
 	GetValidatorInfo(valID types.ValidatorID, stakingInfoInstance *stakinginfo.Stakinginfo) (validator types.Validator, err error)
 	GetLastChildBlock(rootChainInstance *rootchain.Rootchain) (uint64, error)
 	CurrentHeaderBlock(rootChainInstance *rootchain.Rootchain) (uint64, error)
@@ -255,6 +256,26 @@ func (c *ContractCaller) GetHeaderInfo(headerID uint64, rootChainInstance *rootc
 		headerBlock.CreatedAt.Uint64(),
 		types.BytesToHeimdallAddress(headerBlock.Proposer.Bytes()),
 		nil
+}
+
+// GetRootHash get root hash from bor chain
+func (c *ContractCaller) GetRootHash(start uint64, end uint64, checkpointLength uint64) ([]byte, error) {
+	noOfBlock := end - start + 1
+
+	if start > end {
+		return nil, errors.New("start is greater than end")
+	}
+
+	if noOfBlock > checkpointLength {
+		return nil, errors.New("number of headers requested exceeds")
+	}
+
+	rootHash, err := c.MaticChainClient.GetRootHash(context.Background(), start, end)
+	if err != nil {
+		return nil, errors.New("Could not fetch roothash from matic chain")
+	}
+
+	return common.FromHex(rootHash), nil
 }
 
 // GetLastChildBlock fetch current child block

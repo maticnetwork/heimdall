@@ -21,7 +21,7 @@ func NewSideTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.S
 
 		switch msg := msg.(type) {
 		case types.MsgCheckpoint:
-			return SideHandleMsgCheckpoint(ctx, k, msg)
+			return SideHandleMsgCheckpoint(ctx, k, msg, contractCaller)
 		case types.MsgCheckpointAck:
 			return SideHandleMsgCheckpointAck(ctx, k, msg, contractCaller)
 		default:
@@ -33,7 +33,7 @@ func NewSideTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.S
 }
 
 // SideHandleMsgCheckpoint handles MsgCheckpoint message for external call
-func SideHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint) (result abci.ResponseDeliverSideTx) {
+func SideHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
 	// get params
 	params := k.GetParams(ctx)
 
@@ -41,7 +41,7 @@ func SideHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint)
 	logger := k.Logger(ctx)
 
 	// validate checkpoint
-	validCheckpoint, err := types.ValidateCheckpoint(msg.StartBlock, msg.EndBlock, msg.RootHash, params.MaxCheckpointLength)
+	validCheckpoint, err := types.ValidateCheckpoint(msg.StartBlock, msg.EndBlock, msg.RootHash, params.MaxCheckpointLength, contractCaller)
 	if err != nil {
 		logger.Error("Error validating checkpoint",
 			"error", err,
