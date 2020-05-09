@@ -53,7 +53,7 @@ func initCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 
 			// create validator account
 			validator := hmTypes.NewValidator(hmTypes.NewValidatorID(uint64(validatorID)),
-				0, 0, 0, 1, newPubkey,
+				0, 0, 1, 1, newPubkey,
 				hmTypes.BytesToHeimdallAddress(valPubKey.Address().Bytes()))
 
 			// create dividend account for validator

@@ -336,7 +336,7 @@ func PostHandleMsgValidatorJoin(ctx sdk.Context, k Keeper, msg types.MsgValidato
 		ID:          msg.ID,
 		StartEpoch:  msg.ActivationEpoch,
 		EndEpoch:    0,
-		Nonce:       0,
+		Nonce:       msg.Nonce,
 		VotingPower: votingPower.Int64(),
 		PubKey:      pubkey,
 		Signer:      hmTypes.BytesToHeimdallAddress(signer.Bytes()),
