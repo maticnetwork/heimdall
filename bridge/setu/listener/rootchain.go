@@ -98,15 +98,12 @@ func (rl *RootChainListener) ProcessHeader(newHeader *types.Header) {
 	// adding into queue
 	rl.headerQueue.PushBack(newHeader)
 
-	// current time
-	currentTime := uint64(time.Now().UTC().Unix())
-
 	// fetch context
 	rootchainContext, err := rl.getRootChainContext()
 	if err != nil {
 		return
 	}
-	confirmationTime := uint64(rootchainContext.ChainmanagerParams.TxConfirmationTime.Seconds())
+	requiredConfirmations := rootchainContext.ChainmanagerParams.MainchainTxConfirmations
 
 	var start *big.Int
 	var end *big.Int
@@ -115,7 +112,7 @@ func (rl *RootChainListener) ProcessHeader(newHeader *types.Header) {
 	for rl.headerQueue.Len() > 0 {
 		e := rl.headerQueue.Front() // First element
 		h := e.Value.(*types.Header)
-		if h.Time+confirmationTime > currentTime {
+		if newHeader.Number.Uint64()-h.Number.Uint64() > requiredConfirmations {
 			break
 		}
 		if start == nil {

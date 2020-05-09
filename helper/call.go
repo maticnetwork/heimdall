@@ -6,7 +6,6 @@ import (
 	"errors"
 	"math/big"
 	"strings"
-	"time"
 
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/maticnetwork/bor/accounts/abi"
@@ -37,8 +36,8 @@ type IContractCaller interface {
 	GetCheckpointSign(txHash common.Hash) ([]byte, []byte, []byte, error)
 	GetMainChainBlock(*big.Int) (*ethTypes.Header, error)
 	GetMaticChainBlock(*big.Int) (*ethTypes.Header, error)
-	IsTxConfirmed(time.Time, common.Hash, time.Duration) bool
-	GetConfirmedTxReceipt(time.Time, common.Hash, time.Duration) (*ethTypes.Receipt, error)
+	IsTxConfirmed(common.Hash, uint64) bool
+	GetConfirmedTxReceipt(common.Hash, uint64) (*ethTypes.Receipt, error)
 	GetBlockNumberFromTxHash(common.Hash) (*big.Int, error)
 
 	// decode header event
@@ -375,9 +374,9 @@ func (c *ContractCaller) GetBlockNumberFromTxHash(tx common.Hash) (*big.Int, err
 }
 
 // IsTxConfirmed is tx confirmed
-func (c *ContractCaller) IsTxConfirmed(currentTime time.Time, tx common.Hash, txConfirmationTime time.Duration) bool {
+func (c *ContractCaller) IsTxConfirmed(tx common.Hash, requiredConfirmations uint64) bool {
 	// get main tx receipt
-	receipt, err := c.GetConfirmedTxReceipt(currentTime, tx, txConfirmationTime)
+	receipt, err := c.GetConfirmedTxReceipt(tx, requiredConfirmations)
 	if receipt == nil || err != nil {
 		return false
 	}
@@ -386,48 +385,24 @@ func (c *ContractCaller) IsTxConfirmed(currentTime time.Time, tx common.Hash, tx
 }
 
 // GetConfirmedTxReceipt returns confirmed tx receipt
-func (c *ContractCaller) GetConfirmedTxReceipt(currentTime time.Time, tx common.Hash, txConfirmationTime time.Duration) (*ethTypes.Receipt, error) {
-	time := uint64(0)
-	var receipt *ethTypes.Receipt = nil
-
-	receiptCache, ok := c.ReceiptCache.Get(tx.String())
-
-	if !ok {
-		var err error
-
-		// get main tx receipt
-		receipt, err = c.GetMainTxReceipt(tx)
-		if err != nil {
-			Logger.Error("Error while fetching mainchain receipt", "error", err, "txHash", tx.Hex())
-			return nil, err
-		}
-
-		c.ReceiptCache.Add(tx.String(), receipt)
-	} else {
-		receipt, _ = receiptCache.(*ethTypes.Receipt)
+func (c *ContractCaller) GetConfirmedTxReceipt(tx common.Hash, requiredConfirmations uint64) (*ethTypes.Receipt, error) {
+	// get main tx receipt
+	receipt, err := c.GetMainTxReceipt(tx)
+	if err != nil {
+		return nil, err
 	}
-
 	Logger.Debug("Tx included in block", "block", receipt.BlockNumber.Uint64(), "tx", tx)
 
-	blockCache, ok := c.BlockTimeCache.Get(receipt.BlockNumber.Uint64())
-	if !ok {
-		// get main chain block
-		receiptBlock, err := c.GetMainChainBlock(receipt.BlockNumber)
-		if err != nil {
-			Logger.Error("error getting receipt block from main chain", "Error", err)
-			return nil, err
-		}
-		Logger.Debug("Receipt block on main chain obtained", "Block", receiptBlock.Number.Uint64())
-
-		time = receiptBlock.Time
-		c.BlockTimeCache.Add(receipt.BlockNumber.Uint64(), receiptBlock.Time)
-	} else {
-		time = blockCache.(uint64)
+	// get main chain block
+	latestBlk, err := c.GetMainChainBlock(nil)
+	if err != nil {
+		Logger.Error("error getting latest block from main chain", "Error", err)
+		return nil, err
 	}
-	// check if current time is greater than buffer time
-	bufferTime := time + uint64(txConfirmationTime.Seconds())
+	Logger.Debug("Latest block on main chain obtained", "Block", latestBlk.Number.Uint64())
 
-	if uint64(currentTime.Unix()) < bufferTime {
+	diff := latestBlk.Number.Uint64() - receipt.BlockNumber.Uint64()
+	if diff < requiredConfirmations {
 		return nil, errors.New("Not enough confirmations")
 	}
 

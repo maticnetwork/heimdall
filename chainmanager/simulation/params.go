@@ -10,17 +10,23 @@ import (
 )
 
 const (
-	KeyTxConfirmationTime = "TxConfirmationTime"
-	KeyChainParams        = "ChainParams"
+	KeyMainchainTxConfirmations  = "MainchainTxConfirmations"
+	KeyMaticchainTxConfirmations = "MaticchainTxConfirmations"
+	KeyChainParams               = "ChainParams"
 )
 
 // ParamChanges defines the parameters that can be modified by param change proposals
 // on the simulation
 func ParamChanges(r *rand.Rand) []simtypes.ParamChange {
 	return []simtypes.ParamChange{
-		simulation.NewSimParamChange(types.ModuleName, KeyTxConfirmationTime,
+		simulation.NewSimParamChange(types.ModuleName, KeyMainchainTxConfirmations,
 			func(r *rand.Rand) string {
-				return fmt.Sprintf("\"%d\"", GenTxConfirmationTime())
+				return fmt.Sprintf("\"%d\"", GenMainchainTxConfirmations(r))
+			},
+		),
+		simulation.NewSimParamChange(types.ModuleName, KeyMaticchainTxConfirmations,
+			func(r *rand.Rand) string {
+				return fmt.Sprintf("\"%d\"", GenMaticchainTxConfirmations(r))
 			},
 		),
 		simulation.NewSimParamChange(types.ModuleName, KeyChainParams,
