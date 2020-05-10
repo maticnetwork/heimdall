@@ -101,10 +101,12 @@ func (rl *RootChainListener) ProcessHeader(newHeader *types.Header) {
 
 	// confirmation
 	confirmationBlocks := big.NewInt(0).SetUint64(requiredConfirmations)
-	confirmationBlocks = confirmationBlocks.Add(confirmationBlocks, big.NewInt(1))
-	if latestNumber.Uint64() > confirmationBlocks.Uint64() {
-		latestNumber = latestNumber.Sub(latestNumber, confirmationBlocks)
+
+	if latestNumber.Cmp(confirmationBlocks) <= 0 {
+		rl.Logger.Error("Block number less than Confirmations required", "blockNumber", latestNumber.Uint64, "confirmationsRequired", confirmationBlocks.Uint64)
+		return
 	}
+	latestNumber = latestNumber.Sub(latestNumber, confirmationBlocks)
 
 	// default fromBlock
 	fromBlock := latestNumber
