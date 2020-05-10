@@ -85,8 +85,7 @@ type ContractCaller struct {
 	StakeManagerABI  abi.ABI
 	MaticTokenABI    abi.ABI
 
-	ReceiptCache   *lru.Cache
-	BlockTimeCache *lru.Cache
+	ReceiptCache *lru.Cache
 
 	ContractInstanceCache map[common.Address]interface{}
 }
@@ -107,7 +106,6 @@ func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 	contractCallerObj.MaticChainClient = GetMaticClient()
 	contractCallerObj.MainChainRPC = GetMainChainRPCClient()
 	contractCallerObj.ReceiptCache, _ = NewLru(1000)
-	contractCallerObj.BlockTimeCache, _ = NewLru(1000)
 
 	//
 	// ABIs
@@ -386,11 +384,25 @@ func (c *ContractCaller) IsTxConfirmed(tx common.Hash, requiredConfirmations uin
 
 // GetConfirmedTxReceipt returns confirmed tx receipt
 func (c *ContractCaller) GetConfirmedTxReceipt(tx common.Hash, requiredConfirmations uint64) (*ethTypes.Receipt, error) {
-	// get main tx receipt
-	receipt, err := c.GetMainTxReceipt(tx)
-	if err != nil {
-		return nil, err
+
+	var receipt *ethTypes.Receipt = nil
+	receiptCache, ok := c.ReceiptCache.Get(tx.String())
+
+	if !ok {
+		var err error
+
+		// get main tx receipt
+		receipt, err = c.GetMainTxReceipt(tx)
+		if err != nil {
+			Logger.Error("Error while fetching mainchain receipt", "error", err, "txHash", tx.Hex())
+			return nil, err
+		}
+
+		c.ReceiptCache.Add(tx.String(), receipt)
+	} else {
+		receipt, _ = receiptCache.(*ethTypes.Receipt)
 	}
+
 	Logger.Debug("Tx included in block", "block", receipt.BlockNumber.Uint64(), "tx", tx)
 
 	// get main chain block
