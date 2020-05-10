@@ -64,6 +64,7 @@ func HandleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCalle
 // HandleMsgWithdrawFee handle withdraw fee event
 func HandleMsgWithdrawFee(ctx sdk.Context, k Keeper, msg types.MsgWithdrawFee) sdk.Result {
 
+	// partial withdraw
 	amount := msg.Amount
 
 	validator, err := k.sk.GetValidatorInfo(ctx, msg.ValidatorAddress.Bytes())
@@ -71,9 +72,8 @@ func HandleMsgWithdrawFee(ctx sdk.Context, k Keeper, msg types.MsgWithdrawFee) s
 		return hmCommon.ErrInvalidMsg(k.Codespace(), "No validator found with signer %s", msg.ValidatorAddress.String()).Result()
 	}
 
+	// full withdraw
 	if msg.Amount.String() == big.NewInt(0).String() {
-		// fetch balance
-		// check if fee is already withdrawn
 		coins := k.bk.GetCoins(ctx, msg.ValidatorAddress)
 		amount = coins.AmountOf(authTypes.FeeToken)
 	}
@@ -92,7 +92,7 @@ func HandleMsgWithdrawFee(ctx sdk.Context, k Keeper, msg types.MsgWithdrawFee) s
 
 	// Add Fee to Dividend Account
 	feeAmount := amount.BigInt()
-	if err := k.sk.AddFeeToDividendAccount(ctx, validator.ID, feeAmount); err != nil {
+	if err := k.AddFeeToDividendAccount(ctx, validator.ID, feeAmount); err != nil {
 		k.Logger(ctx).Error("handleMsgWithdrawFee | AddFeeToDividendAccount", "fromAddress", msg.ValidatorAddress, "validatorId", validator.ID, "err", err)
 		return err.Result()
 	}
