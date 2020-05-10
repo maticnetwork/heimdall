@@ -6,7 +6,6 @@ import (
 
 	"github.com/RichardKnop/machinery/v1/tasks"
 	"github.com/maticnetwork/bor/core/types"
-	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
 )
 
@@ -62,14 +61,7 @@ func (ml *MaticChainListener) ProcessHeader(newHeader *types.Header) {
 		return
 	}
 
-	chainmanagerParams, err := util.GetChainmanagerParams(ml.cliCtx)
-	if err != nil {
-		ml.Logger.Error("Error fetching chain manager params", "error", err)
-		return
-	}
-
-	confirmationTime := chainmanagerParams.TxConfirmationTime
-	ml.sendTaskWithDelay("sendCheckpointToHeimdall", headerBytes, confirmationTime)
+	ml.sendTaskWithDelay("sendCheckpointToHeimdall", headerBytes, 0)
 }
 
 func (ml *MaticChainListener) sendTaskWithDelay(taskName string, headerBytes []byte, delay time.Duration) {

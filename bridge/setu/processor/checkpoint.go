@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"math"
 	"math/big"
 	"strconv"
@@ -121,7 +122,16 @@ func (cp *CheckpointProcessor) sendCheckpointToHeimdall(headerBlockStr string) (
 			return err
 		}
 
-		expectedCheckpointState, err := cp.nextExpectedCheckpoint(checkpointContext, header.Number.Uint64())
+		// process latest confirmed child block only
+		chainmanagerParams := checkpointContext.ChainmanagerParams
+		cp.Logger.Debug("no of checkpoint confirmations required", "maticchainTxConfirmations", chainmanagerParams.MaticchainTxConfirmations)
+		latestConfirmedChildBlock := header.Number.Uint64() - chainmanagerParams.MaticchainTxConfirmations
+		if latestConfirmedChildBlock <= 0 {
+			cp.Logger.Error("no of blocks on childchain is less than confirmations required", "childChainBlocks", header.Number.Uint64(), "confirmationsRequired", chainmanagerParams.MaticchainTxConfirmations)
+			return errors.New("no of blocks on childchain is less than confirmations required")
+		}
+
+		expectedCheckpointState, err := cp.nextExpectedCheckpoint(checkpointContext, latestConfirmedChildBlock)
 		if err != nil {
 			cp.Logger.Error("Error while calculate next expected checkpoint", "error", err)
 			return err

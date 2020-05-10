@@ -330,7 +330,7 @@ func (suite *QuerierTestSuite) TestHandleQueryStakingSequence() {
 
 	app.StakingKeeper.SetStakingSequence(ctx, sequence.String())
 
-	suite.contractCaller.On("GetConfirmedTxReceipt", mock.Anything, txHash.EthHash(), chainParams.TxConfirmationTime).Return(txreceipt, nil)
+	suite.contractCaller.On("GetConfirmedTxReceipt", mock.Anything, txHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
 
 	path := []string{types.QueryStakingSequence}
 

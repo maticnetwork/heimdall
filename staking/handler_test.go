@@ -91,7 +91,7 @@ func (suite *HandlerTestSuite) TestHandleMsgValidatorJoin() {
 		SignerPubkey:    pubkey.Bytes()[1:],
 	}
 
-	suite.contractCaller.On("GetConfirmedTxReceipt", mock.Anything, txHash.EthHash(), chainParams.TxConfirmationTime).Return(txreceipt, nil)
+	suite.contractCaller.On("GetConfirmedTxReceipt", mock.Anything, txHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
 
 	suite.contractCaller.On("DecodeValidatorJoinEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), txreceipt, msgValJoin.LogIndex).Return(stakinginfoStaked, nil)
 
@@ -123,7 +123,7 @@ func (suite *HandlerTestSuite) TestHandleMsgValidatorUpdate() {
 	msg := types.NewMsgSignerUpdate(newSigner[0].Signer, uint64(newSigner[0].ID), newSigner[0].PubKey, msgTxHash, 0, 0)
 
 	txreceipt := &ethTypes.Receipt{BlockNumber: big.NewInt(10)}
-	suite.contractCaller.On("GetConfirmedTxReceipt", mock.Anything, msgTxHash.EthHash(), chainParams.TxConfirmationTime).Return(txreceipt, nil)
+	suite.contractCaller.On("GetConfirmedTxReceipt", mock.Anything, msgTxHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
 
 	signerUpdateEvent := &stakinginfo.StakinginfoSignerChange{
 		ValidatorId:  new(big.Int).SetUint64(oldSigner.ID.Uint64()),
@@ -168,7 +168,7 @@ func (suite *HandlerTestSuite) TestHandleMsgValidatorExit() {
 		BlockNumber: big.NewInt(10),
 	}
 
-	suite.contractCaller.On("GetConfirmedTxReceipt", mock.Anything, msgTxHash.EthHash(), chainParams.TxConfirmationTime).Return(txreceipt, nil)
+	suite.contractCaller.On("GetConfirmedTxReceipt", mock.Anything, msgTxHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
 
 	amount, _ := big.NewInt(0).SetString("10000000000000000000", 10)
 	stakinginfoUnstakeInit := &stakinginfo.StakinginfoUnstakeInit{
@@ -220,7 +220,7 @@ func (suite *HandlerTestSuite) TestHandleMsgStakeUpdate() {
 	msg := types.NewMsgStakeUpdate(oldVal.Signer, oldVal.ID.Uint64(), msgTxHash, 0, 0)
 
 	txreceipt := &ethTypes.Receipt{BlockNumber: big.NewInt(10)}
-	suite.contractCaller.On("GetConfirmedTxReceipt", mock.Anything, msgTxHash.EthHash(), chainParams.TxConfirmationTime).Return(txreceipt, nil)
+	suite.contractCaller.On("GetConfirmedTxReceipt", mock.Anything, msgTxHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
 
 	stakinginfoStakeUpdate := &stakinginfo.StakinginfoStakeUpdate{
 		ValidatorId: new(big.Int).SetUint64(oldVal.ID.Uint64()),
@@ -298,7 +298,7 @@ func (suite *HandlerTestSuite) TestExitedValidatorJoiningAgain() {
 		SignerPubkey:    pubKey.Bytes()[1:],
 	}
 
-	suite.contractCaller.On("GetConfirmedTxReceipt", mock.Anything, txHash.EthHash(), chainParams.TxConfirmationTime).Return(txreceipt, nil)
+	suite.contractCaller.On("GetConfirmedTxReceipt", mock.Anything, txHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
 
 	suite.contractCaller.On("DecodeValidatorJoinEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), txreceipt, msgValJoin.LogIndex).Return(stakinginfoStaked, nil)
 
@@ -350,7 +350,7 @@ func (suite *HandlerTestSuite) TestTopupSuccessBeforeValidatorJoin() {
 		0,
 	)
 
-	suite.contractCaller.On("GetConfirmedTxReceipt", mock.Anything, txHash.EthHash(), chainParams.TxConfirmationTime).Return(txreceipt, nil)
+	suite.contractCaller.On("GetConfirmedTxReceipt", mock.Anything, txHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
 
 	suite.contractCaller.On("DecodeValidatorJoinEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), txreceipt, msgValJoin.LogIndex).Return(stakinginfoStaked, nil)
 

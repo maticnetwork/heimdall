@@ -3,7 +3,6 @@ package topup
 import (
 	"fmt"
 	"math/big"
-	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -35,7 +34,7 @@ func querySequence(ctx sdk.Context, req abci.RequestQuery, k Keeper, contractCal
 	chainParams := k.chainKeeper.GetParams(ctx)
 
 	// get main tx receipt
-	receipt, err := contractCallerObj.GetConfirmedTxReceipt(time.Now().UTC(), hmTypes.HexToHeimdallHash(params.TxHash).EthHash(), chainParams.TxConfirmationTime)
+	receipt, err := contractCallerObj.GetConfirmedTxReceipt(hmTypes.HexToHeimdallHash(params.TxHash).EthHash(), chainParams.MainchainTxConfirmations)
 	if err != nil || receipt == nil {
 		return nil, sdk.ErrInternal(fmt.Sprintf("Transaction is not confirmed yet. Please wait for sometime and try again"))
 	}

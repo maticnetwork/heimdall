@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
-	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -89,7 +88,7 @@ func handleQueryRecordSequence(ctx sdk.Context, req abci.RequestQuery, keeper Ke
 	}
 
 	// get main tx receipt
-	receipt, _ := contractCallerObj.GetConfirmedTxReceipt(time.Now().UTC(), hmTypes.HexToHeimdallHash(params.TxHash).EthHash(), chainParams.TxConfirmationTime)
+	receipt, _ := contractCallerObj.GetConfirmedTxReceipt(hmTypes.HexToHeimdallHash(params.TxHash).EthHash(), chainParams.MainchainTxConfirmations)
 	if err != nil || receipt == nil {
 		return nil, sdk.ErrInternal(fmt.Sprintf("Transaction is not confirmed yet. Please wait for sometime and try again"))
 	}
