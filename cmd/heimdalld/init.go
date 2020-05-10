@@ -21,6 +21,7 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 	stakingcli "github.com/maticnetwork/heimdall/staking/client/cli"
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
+	topupTypes "github.com/maticnetwork/heimdall/topup/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -77,13 +78,19 @@ func initCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			}
 
 			// staking state change
-			appStateBytes, err = stakingTypes.SetGenesisStateToAppState(appStateBytes, vals, *validatorSet, dividendAccounts)
+			appStateBytes, err = stakingTypes.SetGenesisStateToAppState(appStateBytes, vals, *validatorSet)
 			if err != nil {
 				return err
 			}
 
 			// bor state change
 			appStateBytes, err = borTypes.SetGenesisStateToAppState(appStateBytes, *validatorSet)
+			if err != nil {
+				return err
+			}
+
+			// topup state change
+			appStateBytes, err = topupTypes.SetGenesisStateToAppState(appStateBytes, dividendAccounts)
 			if err != nil {
 				return err
 			}

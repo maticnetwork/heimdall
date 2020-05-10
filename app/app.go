@@ -3,7 +3,6 @@ package app
 import (
 	"encoding/json"
 	"fmt"
-	"math/big"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -151,8 +150,8 @@ func (d ModuleCommunicator) IsCurrentValidatorByAddress(ctx sdk.Context, address
 }
 
 // AddFeeToDividendAccount add fee to dividend account
-func (d ModuleCommunicator) AddFeeToDividendAccount(ctx sdk.Context, valID types.ValidatorID, fee *big.Int) sdk.Error {
-	return d.App.StakingKeeper.AddFeeToDividendAccount(ctx, valID, fee)
+func (d ModuleCommunicator) GetAllDividendAccounts(ctx sdk.Context) []types.DividendAccount {
+	return d.App.TopupKeeper.GetAllDividendAccounts(ctx)
 }
 
 // GetValidatorFromValID get validator from validator id
@@ -331,6 +330,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		common.DefaultCodespace,
 		app.StakingKeeper,
 		app.ChainKeeper,
+		moduleCommunicator,
 	)
 
 	app.BorKeeper = bor.NewKeeper(
@@ -374,7 +374,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		gov.NewAppModule(app.GovKeeper, app.SupplyKeeper),
 		chainmanager.NewAppModule(app.ChainKeeper, &app.caller),
 		staking.NewAppModule(app.StakingKeeper, &app.caller),
-		checkpoint.NewAppModule(app.CheckpointKeeper, app.StakingKeeper, &app.caller),
+		checkpoint.NewAppModule(app.CheckpointKeeper, app.StakingKeeper, app.TopupKeeper, &app.caller),
 		bor.NewAppModule(app.BorKeeper, &app.caller),
 		clerk.NewAppModule(app.ClerkKeeper, &app.caller),
 		topup.NewAppModule(app.TopupKeeper, &app.caller),

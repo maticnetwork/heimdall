@@ -1,8 +1,10 @@
 package types
 
 import (
+	"encoding/json"
 	"errors"
 
+	"github.com/maticnetwork/heimdall/bor/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -34,4 +36,23 @@ func ValidateGenesis(data GenesisState) error {
 		}
 	}
 	return nil
+}
+
+// GetGenesisStateFromAppState returns staking GenesisState given raw application genesis state
+func GetGenesisStateFromAppState(appState map[string]json.RawMessage) GenesisState {
+	var genesisState GenesisState
+	if appState[ModuleName] != nil {
+		types.ModuleCdc.MustUnmarshalJSON(appState[ModuleName], &genesisState)
+	}
+	return genesisState
+}
+
+// SetGenesisStateToAppState sets state into app state
+func SetGenesisStateToAppState(appState map[string]json.RawMessage, dividendAccounts []hmTypes.DividendAccount) (map[string]json.RawMessage, error) {
+	// set state to staking state
+	topupState := GetGenesisStateFromAppState(appState)
+	topupState.DividentAccounts = dividendAccounts
+
+	appState[ModuleName] = types.ModuleCdc.MustMarshalJSON(topupState)
+	return appState, nil
 }
