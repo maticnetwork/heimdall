@@ -25,8 +25,6 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 )
 
-var logger = util.Logger().With("module", "bridge/cmd")
-
 const (
 	waitDuration = 1 * time.Minute
 	logLevel     = "log_level"
@@ -34,6 +32,7 @@ const (
 
 // GetStartCmd returns the start command to start bridge
 func GetStartCmd() *cobra.Command {
+	var logger = helper.Logger.With("module", "bridge/cmd/")
 	startCmd := &cobra.Command{
 		Use:   "start",
 		Short: "Start bridge server",
@@ -41,7 +40,6 @@ func GetStartCmd() *cobra.Command {
 
 			// create codec
 			cdc := app.MakeCodec()
-			app.MakePulp()
 			// queue connector & http client
 			_queueConnector := queue.NewQueueConnector(helper.GetConfig().AmqpURL)
 			_queueConnector.StartWorker()
@@ -52,7 +50,7 @@ func GetStartCmd() *cobra.Command {
 			// selected services to start
 			services := []common.Service{}
 			services = append(services,
-				listener.NewListenerService(cdc, _queueConnector),
+				listener.NewListenerService(cdc, _queueConnector, _httpClient),
 				processor.NewProcessorService(cdc, _queueConnector, _httpClient, _txBroadcaster),
 			)
 

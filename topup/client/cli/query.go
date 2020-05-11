@@ -41,7 +41,7 @@ func GetSequence(cdc *codec.Codec) *cobra.Command {
 		Short: "get sequence from txhash and logindex",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			logIndex := uint64(viper.GetInt64(FlagLogIndex))
+			logIndex := viper.GetUint64(FlagLogIndex)
 			txHashStr := viper.GetString(FlagTxHash)
 			if txHashStr == "" {
 				return fmt.Errorf("LogIndex and transaction hash required")
@@ -70,7 +70,7 @@ func GetSequence(cdc *codec.Codec) *cobra.Command {
 	}
 
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
-	cmd.Flags().String(FlagLogIndex, "", "--log-index=<log-index>")
+	cmd.Flags().Uint64(FlagLogIndex, 0, "--log-index=<log-index>")
 	if err := cmd.MarkFlagRequired(FlagTxHash); err != nil {
 		cliLogger.Error("GetSequence | MarkFlagRequired | FlagTxHash", "Error", err)
 	}

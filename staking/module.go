@@ -16,6 +16,7 @@ import (
 	stakingRest "github.com/maticnetwork/heimdall/staking/client/rest"
 	"github.com/maticnetwork/heimdall/staking/simulation"
 	"github.com/maticnetwork/heimdall/staking/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmModule "github.com/maticnetwork/heimdall/types/module"
 	simTypes "github.com/maticnetwork/heimdall/types/simulation"
 	"github.com/spf13/cobra"
@@ -181,6 +182,15 @@ func (AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
 // updates.
 func (AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
 	return []abci.ValidatorUpdate{}
+}
+
+func (am AppModule) NewSideTxHandler() hmTypes.SideTxHandler {
+	return NewSideTxHandler(am.keeper, am.contractCaller)
+}
+
+// NewPostTxHandler side tx handler
+func (am AppModule) NewPostTxHandler() hmTypes.PostTxHandler {
+	return NewPostTxHandler(am.keeper, am.contractCaller)
 }
 
 // GenerateGenesisState creates a randomized GenState of the Staking module
