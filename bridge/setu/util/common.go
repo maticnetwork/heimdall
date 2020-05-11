@@ -325,6 +325,25 @@ func GetCheckpointParams(cliCtx cliContext.CLIContext) (*checkpointTypes.Params,
 	return &params, nil
 }
 
+// GetBufferedCheckpoint return checkpoint from bueffer
+func GetBufferedCheckpoint(cliCtx cliContext.CLIContext) (*hmtypes.CheckpointBlockHeader, error) {
+	response, err := helper.FetchFromAPI(
+		cliCtx,
+		helper.GetHeimdallServerEndpoint(BufferedCheckpointURL),
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var blockHeader hmtypes.CheckpointBlockHeader
+	if err := json.Unmarshal(response.Result, &blockHeader); err != err {
+		return nil, err
+	}
+
+	return &blockHeader, nil
+}
+
 // AppendPrefix returns publickey in uncompressed format
 func AppendPrefix(signerPubKey []byte) []byte {
 	// append prefix - "0x04" as heimdall uses publickey in uncompressed format. Refer below link
