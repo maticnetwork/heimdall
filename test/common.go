@@ -91,12 +91,10 @@ func GenRandomDividendAccount(count int, startID uint64, randomise bool) (divide
 
 		if randomise {
 			fee := big.NewInt(int64(rand.Intn(100))).String()
-			slashedAmount := big.NewInt(int64(rand.Intn(100))).String()
 
 			newAcc := types.DividendAccount{
-				ID:            types.NewDividendAccountID(startID + uint64(i)),
-				FeeAmount:     fee,
-				SlashedAmount: slashedAmount,
+				ID:        types.NewDividendAccountID(startID + uint64(i)),
+				FeeAmount: fee,
 			}
 			dividendAccounts = append(dividendAccounts, newAcc)
 		}

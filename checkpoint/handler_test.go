@@ -3,7 +3,6 @@ package checkpoint
 import (
 	"bytes"
 	"encoding/hex"
-	"math/big"
 	"math/rand"
 	"os"
 	"testing"
@@ -109,12 +108,6 @@ func LoadValidatorSet(count int, t *testing.T, keeper staking.Keeper, ctx sdk.Co
 	// add validators to new Validator set and state
 	for _, validator := range validators {
 		err := keeper.AddValidator(ctx, validator)
-		dividendAccount := types.DividendAccount{
-			ID:            types.NewDividendAccountID(uint64(validator.ID)),
-			FeeAmount:     big.NewInt(0).String(),
-			SlashedAmount: big.NewInt(0).String(),
-		}
-		keeper.AddDividendAccount(ctx, dividendAccount)
 		require.Empty(t, err, "Unable to set validator, Error: %v", err)
 		// add validator to validator set
 		// valSet.Add(&validator)

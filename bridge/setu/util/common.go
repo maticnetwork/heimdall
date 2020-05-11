@@ -48,7 +48,7 @@ const (
 	LatestSpanURL          = "/bor/latest-span"
 	NextSpanInfoURL        = "/bor/prepare-next-span"
 	NextSpanSeedURL        = "/bor/next-span-seed"
-	DividendAccountRootURL = "/staking/dividend-account-root"
+	DividendAccountRootURL = "/topup/dividend-account-root"
 	ValidatorURL           = "/staking/validator/%v"
 	CurrentValidatorSetURL = "staking/validator-set"
 	StakingTxStatusURL     = "/staking/isoldtx"

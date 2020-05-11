@@ -9,12 +9,13 @@ import (
 	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
+	"github.com/maticnetwork/heimdall/topup"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 // NewQuerier creates a querier for auth REST endpoints
-func NewQuerier(keeper Keeper, stakingKeeper staking.Keeper, contractCaller helper.IContractCaller) sdk.Querier {
+func NewQuerier(keeper Keeper, stakingKeeper staking.Keeper, topupKeeper topup.Keeper, contractCaller helper.IContractCaller) sdk.Querier {
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) ([]byte, sdk.Error) {
 		switch path[0] {
 		case types.QueryParams:
@@ -30,7 +31,7 @@ func NewQuerier(keeper Keeper, stakingKeeper staking.Keeper, contractCaller help
 		case types.QueryCheckpointList:
 			return handleQueryCheckpointList(ctx, req, keeper)
 		case types.QueryNextCheckpoint:
-			return handleQueryNextCheckpoint(ctx, req, keeper, stakingKeeper, contractCaller)
+			return handleQueryNextCheckpoint(ctx, req, keeper, stakingKeeper, topupKeeper, contractCaller)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown auth query endpoint")
 		}
@@ -117,7 +118,7 @@ func handleQueryCheckpointList(ctx sdk.Context, req abci.RequestQuery, keeper Ke
 	return bz, nil
 }
 
-func handleQueryNextCheckpoint(ctx sdk.Context, req abci.RequestQuery, keeper Keeper, sk staking.Keeper, contractCaller helper.IContractCaller) ([]byte, sdk.Error) {
+func handleQueryNextCheckpoint(ctx sdk.Context, req abci.RequestQuery, keeper Keeper, sk staking.Keeper, tk topup.Keeper, contractCaller helper.IContractCaller) ([]byte, sdk.Error) {
 	var queryParams types.QueryBorChainID
 	if err := keeper.cdc.UnmarshalJSON(req.Data, &queryParams); err != nil {
 		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse query params: %s", err))
@@ -146,7 +147,7 @@ func handleQueryNextCheckpoint(ctx sdk.Context, req abci.RequestQuery, keeper Ke
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr(fmt.Sprintf("could not fetch roothash for start:%v end:%v error:%v", start, end, err), err.Error()))
 	}
 
-	accs := sk.GetAllDividendAccounts(ctx)
+	accs := tk.GetAllDividendAccounts(ctx)
 	accRootHash, err := types.GetAccountRootHash(accs)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr(fmt.Sprintf("could not get generate account root hash. Error:%v", err), err.Error()))
