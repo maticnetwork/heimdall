@@ -34,30 +34,27 @@ func (v *GenesisValidator) HeimdallValidator() hmTypes.Validator {
 
 // GenesisState is the checkpoint state that must be provided at genesis.
 type GenesisState struct {
-	Validators       []*hmTypes.Validator      `json:"validators" yaml:"validators"`
-	CurrentValSet    hmTypes.ValidatorSet      `json:"current_val_set" yaml:"current_val_set"`
-	DividentAccounts []hmTypes.DividendAccount `json:"dividend_accounts" yaml:"dividend_accounts"`
-	StakingSequences []string                  `json:"staking_sequences" yaml:"staking_sequences"`
+	Validators       []*hmTypes.Validator `json:"validators" yaml:"validators"`
+	CurrentValSet    hmTypes.ValidatorSet `json:"current_val_set" yaml:"current_val_set"`
+	StakingSequences []string             `json:"staking_sequences" yaml:"staking_sequences"`
 }
 
 // NewGenesisState creates a new genesis state.
 func NewGenesisState(
 	validators []*hmTypes.Validator,
 	currentValSet hmTypes.ValidatorSet,
-	dividentAccounts []hmTypes.DividendAccount,
 	stakingSequences []string,
 ) GenesisState {
 	return GenesisState{
 		Validators:       validators,
 		CurrentValSet:    currentValSet,
-		DividentAccounts: dividentAccounts,
 		StakingSequences: stakingSequences,
 	}
 }
 
 // DefaultGenesisState returns a default genesis state
 func DefaultGenesisState() GenesisState {
-	return NewGenesisState(nil, hmTypes.ValidatorSet{}, nil, nil)
+	return NewGenesisState(nil, hmTypes.ValidatorSet{}, nil)
 }
 
 // ValidateGenesis performs basic validation of bor genesis data returning an
@@ -87,12 +84,11 @@ func GetGenesisStateFromAppState(appState map[string]json.RawMessage) GenesisSta
 }
 
 // SetGenesisStateToAppState sets state into app state
-func SetGenesisStateToAppState(appState map[string]json.RawMessage, validators []*hmTypes.Validator, currentValSet hmTypes.ValidatorSet, dividendAccounts []hmTypes.DividendAccount) (map[string]json.RawMessage, error) {
+func SetGenesisStateToAppState(appState map[string]json.RawMessage, validators []*hmTypes.Validator, currentValSet hmTypes.ValidatorSet) (map[string]json.RawMessage, error) {
 	// set state to staking state
 	stakingState := GetGenesisStateFromAppState(appState)
 	stakingState.Validators = validators
 	stakingState.CurrentValSet = currentValSet
-	stakingState.DividentAccounts = dividendAccounts
 
 	appState[ModuleName] = types.ModuleCdc.MustMarshalJSON(stakingState)
 	return appState, nil

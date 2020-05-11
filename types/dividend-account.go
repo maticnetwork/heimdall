@@ -11,18 +11,16 @@ import (
 	"github.com/maticnetwork/bor/crypto"
 )
 
-// DividendAccount contains Fee, Slashed amount
+// DividendAccount contains burned Fee amount
 type DividendAccount struct {
-	ID            DividendAccountID `json:"ID"`
-	FeeAmount     string            `json:"feeAmount"`     // string representation of big.Int
-	SlashedAmount string            `json:"slashedAmount"` // string representation of big.Int
+	ID        DividendAccountID `json:"ID"`
+	FeeAmount string            `json:"feeAmount"` // string representation of big.Int
 }
 
-func NewDividendAccount(id DividendAccountID, fee string, slashedAmount string) DividendAccount {
+func NewDividendAccount(id DividendAccountID, fee string) DividendAccount {
 	return DividendAccount{
-		ID:            id,
-		FeeAmount:     fee,
-		SlashedAmount: slashedAmount,
+		ID:        id,
+		FeeAmount: fee,
 	}
 }
 
@@ -54,10 +52,9 @@ func (da *DividendAccount) String() string {
 		return "nil-DividendAccount"
 	}
 
-	return fmt.Sprintf("DividendAccount{%v %v %v}",
+	return fmt.Sprintf("DividendAccount{%v %v}",
 		da.ID,
-		da.FeeAmount,
-		da.SlashedAmount)
+		da.FeeAmount)
 }
 
 // MarshallDividendAccount - amino Marshall DividendAccount
@@ -90,11 +87,9 @@ func SortDividendAccountByID(dividendAccounts []DividendAccount) []DividendAccou
 //CalculateHash hashes the values of a DividendAccount
 func (da DividendAccount) CalculateHash() ([]byte, error) {
 	fee, _ := big.NewInt(0).SetString(da.FeeAmount, 10)
-	slashAmount, _ := big.NewInt(0).SetString(da.SlashedAmount, 10)
 	divAccountHash := crypto.Keccak256(appendBytes32(
 		new(big.Int).SetUint64(uint64(da.ID)).Bytes(),
 		fee.Bytes(),
-		slashAmount.Bytes(),
 	))
 
 	return divAccountHash, nil

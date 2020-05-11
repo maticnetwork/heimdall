@@ -1,7 +1,6 @@
 package simulation
 
 import (
-	"math/big"
 	"math/rand"
 	"strconv"
 	"time"
@@ -20,7 +19,6 @@ func RandomizedGenState(simState *module.SimulationState) {
 	stakingSequence := make([]string, n)
 
 	validators := make([]*hmTypes.Validator, n)
-	dividendAccounts := make([]hmTypes.DividendAccount, n)
 
 	for i := range stakingSequence {
 		stakingSequence[i] = strconv.Itoa(simulation.RandIntBetween(r1, 1000, 100000))
@@ -37,18 +35,11 @@ func RandomizedGenState(simState *module.SimulationState) {
 			hmTypes.NewPubKey(accounts[i].PubKey.Bytes()),
 			accounts[i].Address,
 		)
-
-		// create dividend account for validator
-		dividendAccounts[i] = hmTypes.NewDividendAccount(
-			hmTypes.NewDividendAccountID(uint64(validators[i].ID)),
-			big.NewInt(0).String(),
-			big.NewInt(0).String(),
-		)
 	}
 
 	// validator set
 	validatorSet := hmTypes.NewValidatorSet(validators)
 
-	genesisState := types.NewGenesisState(validators, *validatorSet, dividendAccounts, stakingSequence)
+	genesisState := types.NewGenesisState(validators, *validatorSet, stakingSequence)
 	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(genesisState)
 }

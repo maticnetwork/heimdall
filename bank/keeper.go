@@ -2,7 +2,6 @@ package bank
 
 import (
 	"fmt"
-	"math/big"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -22,8 +21,6 @@ var (
 // TODO: Remove this later
 // ModuleCommunicator manager to access validator info
 type ModuleCommunicator interface {
-	// AddFeeToDividendAccount add fee to dividend account
-	AddFeeToDividendAccount(ctx sdk.Context, valID hmTypes.ValidatorID, fee *big.Int) sdk.Error
 	// GetValidatorFromValID get validator from validator id
 	GetValidatorFromValID(ctx sdk.Context, valID hmTypes.ValidatorID) (validator hmTypes.Validator, ok bool)
 }

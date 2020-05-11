@@ -88,7 +88,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, con
 
 	// Make sure latest AccountRootHash matches
 	// Calculate new account root hash
-	dividendAccounts := k.sk.GetAllDividendAccounts(ctx)
+	dividendAccounts := k.moduleCommunicator.GetAllDividendAccounts(ctx)
 	logger.Debug("DividendAccounts of all validators", "dividendAccountsLength", len(dividendAccounts))
 
 	// Get account root has from dividend accounts
