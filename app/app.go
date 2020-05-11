@@ -149,7 +149,7 @@ func (d ModuleCommunicator) IsCurrentValidatorByAddress(ctx sdk.Context, address
 	return d.App.StakingKeeper.IsCurrentValidatorByAddress(ctx, address)
 }
 
-// AddFeeToDividendAccount add fee to dividend account
+// GetAllDividendAccounts fetches all dividend accounts from topup module
 func (d ModuleCommunicator) GetAllDividendAccounts(ctx sdk.Context) []types.DividendAccount {
 	return d.App.TopupKeeper.GetAllDividendAccounts(ctx)
 }

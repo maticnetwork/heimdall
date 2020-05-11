@@ -89,7 +89,6 @@ func SetGenesisStateToAppState(appState map[string]json.RawMessage, validators [
 	stakingState := GetGenesisStateFromAppState(appState)
 	stakingState.Validators = validators
 	stakingState.CurrentValSet = currentValSet
-	//  stakingState.DividentAccounts = dividendAccounts
 
 	appState[ModuleName] = types.ModuleCdc.MustMarshalJSON(stakingState)
 	return appState, nil

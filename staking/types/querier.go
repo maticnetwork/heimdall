@@ -1,10 +1,7 @@
 package types
 
 import (
-	"math/big"
-
 	"github.com/maticnetwork/heimdall/types"
-	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 // query endpoints supported by the staking Querier
@@ -65,12 +62,6 @@ type QueryStakingSequenceParams struct {
 // 	return QueryStakingSequenceParams{TxHash: txHash, LogIndex: logIndex}
 // }
 
-// ValidatorSlashParams defines the params for slashing a validator
-type ValidatorSlashParams struct {
-	ValID       hmTypes.ValidatorID
-	SlashAmount *big.Int
-}
-
 // NewQueryValidatorStatusParams creates a new instance of QueryValidatorStatusParams.
 func NewQueryValidatorStatusParams(signerAddress []byte) QueryValidatorStatusParams {
 	return QueryValidatorStatusParams{SignerAddress: signerAddress}
@@ -79,9 +70,4 @@ func NewQueryValidatorStatusParams(signerAddress []byte) QueryValidatorStatusPar
 // NewQueryStakingSequenceParams creates a new instance of QueryStakingSequenceParams.
 func NewQueryStakingSequenceParams(txHash string, logIndex uint64) QueryStakingSequenceParams {
 	return QueryStakingSequenceParams{TxHash: txHash, LogIndex: logIndex}
-}
-
-// NewValidatorSlashParams creates a new instance of ValidatorSlashParams.
-func NewValidatorSlashParams(validatorID hmTypes.ValidatorID, amountToSlash *big.Int) ValidatorSlashParams {
-	return ValidatorSlashParams{ValID: validatorID, SlashAmount: amountToSlash}
 }

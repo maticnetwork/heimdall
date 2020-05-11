@@ -192,9 +192,8 @@ func (k *Keeper) AddFeeToDividendAccount(ctx sdk.Context, valID hmTypes.Validato
 		dividendAccount, _ = k.GetDividendAccountByID(ctx, hmTypes.DividendAccountID(valID))
 	} else {
 		dividendAccount = hmTypes.DividendAccount{
-			ID:            hmTypes.DividendAccountID(valID),
-			FeeAmount:     big.NewInt(0).String(),
-			SlashedAmount: big.NewInt(0).String(),
+			ID:        hmTypes.DividendAccountID(valID),
+			FeeAmount: big.NewInt(0).String(),
 		}
 	}
 

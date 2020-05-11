@@ -205,9 +205,8 @@ func (suite *QuerierTestSuite) TestHandleQueryDividendAccount() {
 	dividendAccount := hmTypes.NewDividendAccount(
 		hmTypes.NewDividendAccountID(uint64(1)),
 		big.NewInt(0).String(),
-		big.NewInt(0).String(),
 	)
-	app.StakingKeeper.AddDividendAccount(ctx, dividendAccount)
+	app.TopupKeeper.AddDividendAccount(ctx, dividendAccount)
 	req := abci.RequestQuery{
 		Path: route,
 		Data: app.Codec().MustMarshalJSON(types.NewQueryDividendAccountParams(dividendAccount.ID)),

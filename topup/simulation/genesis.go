@@ -39,7 +39,6 @@ func RandomizeGenState(simState *module.SimulationState) {
 		dividendAccounts[i] = hmTypes.NewDividendAccount(
 			hmTypes.NewDividendAccountID(uint64(i)),
 			big.NewInt(0).String(),
-			big.NewInt(0).String(),
 		)
 	}
 
