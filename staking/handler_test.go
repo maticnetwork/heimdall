@@ -79,6 +79,7 @@ func (suite *HandlerTestSuite) TestHandleMsgValidatorJoin() {
 		pubkey,
 		txHash,
 		logIndex,
+		0,
 	)
 
 	stakinginfoStaked := &stakinginfo.StakinginfoStaked{
@@ -119,7 +120,7 @@ func (suite *HandlerTestSuite) TestHandleMsgValidatorUpdate() {
 
 	// gen msg
 	msgTxHash := hmTypes.HexToHeimdallHash("123")
-	msg := types.NewMsgSignerUpdate(newSigner[0].Signer, uint64(newSigner[0].ID), newSigner[0].PubKey, msgTxHash, 0)
+	msg := types.NewMsgSignerUpdate(newSigner[0].Signer, uint64(newSigner[0].ID), newSigner[0].PubKey, msgTxHash, 0, 0)
 
 	txreceipt := &ethTypes.Receipt{BlockNumber: big.NewInt(10)}
 	suite.contractCaller.On("GetConfirmedTxReceipt", mock.Anything, msgTxHash.EthHash(), chainParams.TxConfirmationTime).Return(txreceipt, nil)
@@ -180,7 +181,7 @@ func (suite *HandlerTestSuite) TestHandleMsgValidatorExit() {
 	suite.contractCaller.On("DecodeValidatorExitEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), txreceipt, logIndex).Return(stakinginfoUnstakeInit, nil)
 
 	validators[0].EndEpoch = 10
-	msg := types.NewMsgValidatorExit(validators[0].Signer, uint64(validators[0].ID), msgTxHash, 0)
+	msg := types.NewMsgValidatorExit(validators[0].Signer, uint64(validators[0].ID), msgTxHash, 0, 0)
 
 	got := suite.handler(ctx, msg)
 
@@ -213,11 +214,10 @@ func (suite *HandlerTestSuite) TestHandleMsgStakeUpdate() {
 	oldVal := oldValSet.Validators[0]
 
 	t.Log("To be Updated ===>", "Validator", oldVal.String())
-
 	chainParams := app.ChainKeeper.GetParams(ctx)
 
 	msgTxHash := hmTypes.HexToHeimdallHash("123")
-	msg := types.NewMsgStakeUpdate(oldVal.Signer, oldVal.ID.Uint64(), msgTxHash, 0)
+	msg := types.NewMsgStakeUpdate(oldVal.Signer, oldVal.ID.Uint64(), msgTxHash, 0, 0)
 
 	txreceipt := &ethTypes.Receipt{BlockNumber: big.NewInt(10)}
 	suite.contractCaller.On("GetConfirmedTxReceipt", mock.Anything, msgTxHash.EthHash(), chainParams.TxConfirmationTime).Return(txreceipt, nil)
@@ -258,6 +258,7 @@ func (suite *HandlerTestSuite) TestExitedValidatorJoiningAgain() {
 		validatorId,
 		10,
 		15,
+		0,
 		int64(0), // power
 		pubKey,
 		signerAddress,
@@ -285,6 +286,7 @@ func (suite *HandlerTestSuite) TestExitedValidatorJoiningAgain() {
 		pubKey,
 		txHash,
 		logIndex,
+		0,
 	)
 
 	stakinginfoStaked := &stakinginfo.StakinginfoStaked{
@@ -345,6 +347,7 @@ func (suite *HandlerTestSuite) TestTopupSuccessBeforeValidatorJoin() {
 		pubKey,
 		txHash,
 		logIndex,
+		0,
 	)
 
 	suite.contractCaller.On("GetConfirmedTxReceipt", mock.Anything, txHash.EthHash(), chainParams.TxConfirmationTime).Return(txreceipt, nil)

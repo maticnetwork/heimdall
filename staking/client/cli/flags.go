@@ -12,6 +12,7 @@ const (
 	FlagTxHash           = "tx-hash"
 	FlagLogIndex         = "log-index"
 	FlagFeeAmount        = "fee-amount"
+	FlagNonce            = "nonce"
 
 	FlagStartEpoch = "start-epoch"
 	FlagEndEpoch   = "end-epoch"

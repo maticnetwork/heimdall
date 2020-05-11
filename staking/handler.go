@@ -107,6 +107,7 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k Keepe
 		ID:          msg.ID,
 		StartEpoch:  eventLog.ActivationEpoch.Uint64(),
 		EndEpoch:    0,
+		Nonce:       0,
 		VotingPower: votingPower.Int64(),
 		PubKey:      pubkey,
 		Signer:      hmTypes.BytesToHeimdallAddress(signer.Bytes()),
@@ -195,8 +196,14 @@ func HandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keeper, c
 		return hmCommon.ErrOldTx(k.Codespace()).Result()
 	}
 
+	if msg.Nonce != validator.Nonce + 1 {
+		k.Logger(ctx).Error("Incorrect validator nonce")
+		return hmCommon.ErrNonce(k.Codespace()).Result()
+	}
+
 	// update last updated
 	validator.LastUpdated = sequence.String()
+	validator.Nonce++
 
 	// set validator amount
 	p, err := helper.GetPowerFromAmount(eventLog.NewAmount)
@@ -285,8 +292,14 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper,
 		return hmCommon.ErrOldTx(k.Codespace()).Result()
 	}
 
+	if msg.Nonce != validator.Nonce + 1 {
+		k.Logger(ctx).Error("Incorrect validator nonce")
+		return hmCommon.ErrNonce(k.Codespace()).Result()
+	}
+
 	// update last udpated
 	validator.LastUpdated = sequence.String()
+	validator.Nonce++
 
 	// check if we are actually updating signer
 	if !bytes.Equal(newSigner.Bytes(), validator.Signer.Bytes()) {
@@ -305,6 +318,7 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper,
 	oldValidator.VotingPower = 0
 	// updated last
 	oldValidator.LastUpdated = sequence.String()
+	oldValidator.Nonce++
 
 	// save old validator
 	if err := k.AddValidator(ctx, *oldValidator); err != nil {
@@ -407,8 +421,14 @@ func HandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k Keepe
 		return hmCommon.ErrOldTx(k.Codespace()).Result()
 	}
 
-	// update last updated
+	if msg.Nonce != validator.Nonce + 1 {
+		k.Logger(ctx).Error("Incorrect validator nonce")
+		return hmCommon.ErrNonce(k.Codespace()).Result()
+	}
+
+	// update last udpated
 	validator.LastUpdated = sequence.String()
+	validator.Nonce++
 
 	// Add deactivation time for validator
 	if err := k.AddValidator(ctx, validator); err != nil {
