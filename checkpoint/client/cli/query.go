@@ -68,7 +68,9 @@ $ %s query checkpoint params
 			}
 
 			var params types.Params
-			json.Unmarshal(bz, &params)
+			if err := json.Unmarshal(bz, &params); err != nil {
+				return nil
+			}
 			return cliCtx.PrintOutput(params)
 		},
 	}
@@ -136,10 +138,10 @@ func GetHeaderFromIndex(cdc *codec.Codec) *cobra.Command {
 		Short: "get checkpoint (header) from index",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			headerNumber := viper.GetInt(FlagHeaderNumber)
+			headerNumber := viper.GetUint64(FlagHeaderNumber)
 
 			// get query params
-			queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQueryCheckpointParams(uint64(headerNumber)))
+			queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQueryCheckpointParams(headerNumber))
 			if err != nil {
 				return err
 			}
@@ -154,7 +156,11 @@ func GetHeaderFromIndex(cdc *codec.Codec) *cobra.Command {
 			return nil
 		},
 	}
-	cmd.MarkFlagRequired(FlagHeaderNumber)
+
+	cmd.Flags().Uint64(FlagHeaderNumber, 0, "--header=<header-number>")
+	if err := cmd.MarkFlagRequired(FlagHeaderNumber); err != nil {
+		logger.Error("GetHeaderFromIndex | MarkFlagRequired | FlagHeaderNumber", "Error", err)
+	}
 
 	return cmd
 }

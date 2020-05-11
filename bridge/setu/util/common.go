@@ -47,7 +47,8 @@ const (
 	CurrentProposerURL     = "/staking/current-proposer"
 	LatestSpanURL          = "/bor/latest-span"
 	NextSpanInfoURL        = "/bor/prepare-next-span"
-	DividendAccountRootURL = "/staking/dividend-account-root"
+	NextSpanSeedURL        = "/bor/next-span-seed"
+	DividendAccountRootURL = "/topup/dividend-account-root"
 	ValidatorURL           = "/staking/validator/%v"
 	CurrentValidatorSetURL = "staking/validator-set"
 	StakingTxStatusURL     = "/staking/isoldtx"
@@ -205,11 +206,7 @@ func IsEventSender(cliCtx cliContext.CLIContext, validatorID uint64) bool {
 	}
 	logger.Debug("Current event sender received", "validator", validator.String())
 
-	if bytes.Equal(validator.Signer.Bytes(), helper.GetAddress()) {
-		return true
-	}
-
-	return false
+	return bytes.Equal(validator.Signer.Bytes(), helper.GetAddress())
 }
 
 //CreateURLWithQuery receives the uri and parameters in key value form
@@ -251,7 +248,12 @@ func WaitForOneEvent(tx tmTypes.Tx, client *httpClient.HTTP) (tmTypes.TMEventDat
 	}
 
 	// make sure to unregister after the test is over
-	defer client.UnsubscribeAll(ctx, subscriber)
+	defer func() {
+		if err := client.UnsubscribeAll(ctx, subscriber); err != nil {
+			logger.Error("WaitForOneEvent | UnsubscribeAll", "Error", err)
+		}
+	}()
+
 	select {
 	case event := <-eventCh:
 		return event.Data.(tmTypes.TMEventData), nil
@@ -278,7 +280,7 @@ func GetAccount(cliCtx cliContext.CLIContext, address types.HeimdallAddress) (ac
 	if err != nil {
 		return
 	}
-	if cliCtx.Codec.UnmarshalJSON(response.Result, &account); err != nil {
+	if err = cliCtx.Codec.UnmarshalJSON(response.Result, &account); err != nil {
 		logger.Error("Error unmarshalling account details", "url", url)
 		return
 	}

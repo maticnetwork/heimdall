@@ -13,11 +13,14 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/heimdall/bor/types"
 	hmClient "github.com/maticnetwork/heimdall/client"
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
+
+var cliLogger = helper.Logger.With("module", "bor/client/cli")
 
 // GetTxCmd returns the transaction commands for this module
 func GetTxCmd(cdc *codec.Codec) *cobra.Command {
@@ -97,12 +100,27 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
+			res, _, err = cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNextSpanSeed), nil)
+			if err != nil {
+				return err
+			}
+
+			if len(res) == 0 {
+				return errors.New("next span seed not found")
+			}
+
+			var seed common.Hash
+			if err := json.Unmarshal(res, &seed); err != nil {
+				return err
+			}
+
 			msg := types.NewMsgProposeSpan(
 				spanID,
 				proposer,
 				startBlock,
-				startBlock+spanDuration,
+				startBlock+spanDuration-1,
 				borChainID,
+				seed,
 			)
 
 			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
@@ -113,8 +131,12 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(FlagSpanId, "", "--span-id=<span-id>")
 	cmd.Flags().String(FlagBorChainId, "", "--bor-chain-id=<bor-chain-id>")
 	cmd.Flags().String(FlagStartBlock, "", "--start-block=<start-block-number>")
-	cmd.MarkFlagRequired(FlagBorChainId)
-	cmd.MarkFlagRequired(FlagStartBlock)
+	if err := cmd.MarkFlagRequired(FlagBorChainId); err != nil {
+		cliLogger.Error("PostSendProposeSpanTx | MarkFlagRequired | FlagBorChainId", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagStartBlock); err != nil {
+		cliLogger.Error("PostSendProposeSpanTx | MarkFlagRequired | FlagStartBlock", "Error", err)
+	}
 
 	return cmd
 }

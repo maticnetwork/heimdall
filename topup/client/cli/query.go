@@ -41,14 +41,14 @@ func GetSequence(cdc *codec.Codec) *cobra.Command {
 		Short: "get sequence from txhash and logindex",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			logIndex := uint64(viper.GetInt64(FlagLogIndex))
+			logIndex := viper.GetUint64(FlagLogIndex)
 			txHashStr := viper.GetString(FlagTxHash)
 			if txHashStr == "" {
 				return fmt.Errorf("LogIndex and transaction hash required")
 			}
 
 			var queryParams []byte
-			var err error = nil
+			var err error
 			var t string = ""
 			if txHashStr != "" {
 				queryParams, err = cliCtx.Codec.MarshalJSON(types.NewQuerySequenceParams(txHashStr, logIndex))
@@ -70,8 +70,12 @@ func GetSequence(cdc *codec.Codec) *cobra.Command {
 	}
 
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
-	cmd.Flags().String(FlagLogIndex, "", "--log-index=<log-index>")
-	cmd.MarkFlagRequired(FlagTxHash)
-	cmd.MarkFlagRequired(FlagLogIndex)
+	cmd.Flags().Uint64(FlagLogIndex, 0, "--log-index=<log-index>")
+	if err := cmd.MarkFlagRequired(FlagTxHash); err != nil {
+		cliLogger.Error("GetSequence | MarkFlagRequired | FlagTxHash", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagLogIndex); err != nil {
+		cliLogger.Error("GetSequence | MarkFlagRequired | FlagLogIndex", "Error", err)
+	}
 	return cmd
 }

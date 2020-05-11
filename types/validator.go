@@ -16,6 +16,7 @@ type Validator struct {
 	ID          ValidatorID     `json:"ID"`
 	StartEpoch  uint64          `json:"startEpoch"`
 	EndEpoch    uint64          `json:"endEpoch"`
+	Nonce       uint64          `json:"nonce"`
 	VotingPower int64           `json:"power"` // TODO add 10^-18 here so that we dont overflow easily
 	PubKey      PubKey          `json:"pubKey"`
 	Signer      HeimdallAddress `json:"signer"`
@@ -24,11 +25,22 @@ type Validator struct {
 	ProposerPriority int64 `json:"accum"`
 }
 
-func NewValidator(id ValidatorID, startEpoch uint64, endEpoch uint64, power int64, pubKey PubKey, signer HeimdallAddress) *Validator {
+// NewValidator func creates a new validator,
+// the HeimdallAddress field is generated using Address i.e. [20]byte
+func NewValidator(
+	id ValidatorID,
+	startEpoch uint64,
+	endEpoch uint64,
+	nonce uint64,
+	power int64,
+	pubKey PubKey,
+	signer HeimdallAddress,
+) *Validator {
 	return &Validator{
 		ID:          id,
 		StartEpoch:  startEpoch,
 		EndEpoch:    endEpoch,
+		Nonce:       nonce,
 		VotingPower: power,
 		PubKey:      pubKey,
 		Signer:      signer,
@@ -36,6 +48,7 @@ func NewValidator(id ValidatorID, startEpoch uint64, endEpoch uint64, power int6
 }
 
 // SortValidatorByAddress sorts a slice of validators by address
+// to sort it we compare the values of the Signer(HeimdallAddress i.e. [20]byte)
 func SortValidatorByAddress(a []Validator) []Validator {
 	sort.Slice(a, func(i, j int) bool {
 		return bytes.Compare(a[i].Signer.Bytes(), a[j].Signer.Bytes()) < 0
@@ -58,16 +71,10 @@ func (v *Validator) IsCurrentValidator(ackCount uint64) bool {
 
 // Validates validator
 func (v *Validator) ValidateBasic() bool {
-	if v.StartEpoch < 0 || v.EndEpoch < 0 {
-		return false
-	}
 	if bytes.Equal(v.PubKey.Bytes(), ZeroPubKey.Bytes()) {
 		return false
 	}
 	if bytes.Equal(v.Signer.Bytes(), []byte("")) {
-		return false
-	}
-	if v.ID < 0 {
 		return false
 	}
 	return true

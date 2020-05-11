@@ -82,10 +82,14 @@ If you supply a dash (-) argument in place of an input filename, the command rea
 
 			stdTx, err := helper.ReadStdTxFromFile(cliCtx.Codec, args[0])
 			if err != nil {
-				return
+				return err
 			}
 
 			txBytes, err := helper.GetStdTxBytes(cliCtx, stdTx)
+			if err != nil {
+				return err
+			}
+
 			response := hex.EncodeToString(txBytes)
 			fmt.Println("Tx:", "0x"+response)
 

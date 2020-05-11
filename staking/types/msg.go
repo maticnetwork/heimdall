@@ -21,28 +21,40 @@ var cdc = codec.New()
 var _ sdk.Msg = &MsgValidatorJoin{}
 
 type MsgValidatorJoin struct {
-	From         hmTypes.HeimdallAddress `json:"from"`
-	ID           hmTypes.ValidatorID     `json:"id"`
-	SignerPubKey hmTypes.PubKey          `json:"pub_key"`
-	TxHash       hmTypes.HeimdallHash    `json:"tx_hash"`
-	LogIndex     uint64                  `json:"log_index"`
+	From            hmTypes.HeimdallAddress `json:"from"`
+	ID              hmTypes.ValidatorID     `json:"id"`
+	ActivationEpoch uint64                  `json:"activationEpoch"`
+	Amount          sdk.Int                 `json:"amount"`
+	SignerPubKey    hmTypes.PubKey          `json:"pub_key"`
+	TxHash          hmTypes.HeimdallHash    `json:"tx_hash"`
+	LogIndex        uint64                  `json:"log_index"`
+	BlockNumber     uint64                  `json:"block_number"`
+	Nonce           uint64                  `json:"nonce"`
 }
 
 // NewMsgValidatorJoin creates new validator-join
 func NewMsgValidatorJoin(
 	from hmTypes.HeimdallAddress,
 	id uint64,
+	activationEpoch uint64,
+	amount sdk.Int,
 	pubkey hmTypes.PubKey,
 	txhash hmTypes.HeimdallHash,
 	logIndex uint64,
+	blockNumber uint64,
+	nonce uint64,
 ) MsgValidatorJoin {
 
 	return MsgValidatorJoin{
-		From:         from,
-		ID:           hmTypes.NewValidatorID(id),
-		SignerPubKey: pubkey,
-		TxHash:       txhash,
-		LogIndex:     logIndex,
+		From:            from,
+		ID:              hmTypes.NewValidatorID(id),
+		ActivationEpoch: activationEpoch,
+		Amount:          amount,
+		SignerPubKey:    pubkey,
+		TxHash:          txhash,
+		LogIndex:        logIndex,
+		BlockNumber:     blockNumber,
+		Nonce:           nonce,
 	}
 }
 
@@ -67,7 +79,7 @@ func (msg MsgValidatorJoin) GetSignBytes() []byte {
 }
 
 func (msg MsgValidatorJoin) ValidateBasic() sdk.Error {
-	if msg.ID <= 0 {
+	if msg.ID == 0 {
 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator ID %v", msg.ID)
 	}
 
@@ -92,6 +104,16 @@ func (msg MsgValidatorJoin) GetLogIndex() uint64 {
 	return msg.LogIndex
 }
 
+// GetSideSignBytes returns side sign bytes
+func (msg MsgValidatorJoin) GetSideSignBytes() []byte {
+	return nil
+}
+
+// GetNonce Returns nonce
+func (msg MsgValidatorJoin) GetNonce() uint64 {
+	return msg.Nonce
+}
+
 //
 // Stake update
 //
@@ -104,19 +126,25 @@ var _ sdk.Msg = &MsgStakeUpdate{}
 
 // MsgStakeUpdate represents stake update
 type MsgStakeUpdate struct {
-	From     hmTypes.HeimdallAddress `json:"from"`
-	ID       hmTypes.ValidatorID     `json:"id"`
-	TxHash   hmTypes.HeimdallHash    `json:"tx_hash"`
-	LogIndex uint64                  `json:"log_index"`
+	From        hmTypes.HeimdallAddress `json:"from"`
+	ID          hmTypes.ValidatorID     `json:"id"`
+	NewAmount   sdk.Int                 `json:"amount"`
+	TxHash      hmTypes.HeimdallHash    `json:"tx_hash"`
+	LogIndex    uint64                  `json:"log_index"`
+	BlockNumber uint64                  `json:"block_number"`
+	Nonce       uint64                  `json:"nonce"`
 }
 
 // NewMsgStakeUpdate represents stake update
-func NewMsgStakeUpdate(from hmTypes.HeimdallAddress, id uint64, txhash hmTypes.HeimdallHash, logIndex uint64) MsgStakeUpdate {
+func NewMsgStakeUpdate(from hmTypes.HeimdallAddress, id uint64, newAmount sdk.Int, txhash hmTypes.HeimdallHash, logIndex uint64, blockNumber uint64, nonce uint64) MsgStakeUpdate {
 	return MsgStakeUpdate{
-		From:     from,
-		ID:       hmTypes.NewValidatorID(id),
-		TxHash:   txhash,
-		LogIndex: logIndex,
+		From:        from,
+		ID:          hmTypes.NewValidatorID(id),
+		NewAmount:   newAmount,
+		TxHash:      txhash,
+		LogIndex:    logIndex,
+		BlockNumber: blockNumber,
+		Nonce:       nonce,
 	}
 }
 
@@ -141,7 +169,7 @@ func (msg MsgStakeUpdate) GetSignBytes() []byte {
 }
 
 func (msg MsgStakeUpdate) ValidateBasic() sdk.Error {
-	if msg.ID <= 0 {
+	if msg.ID == 0 {
 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator ID %v", msg.ID)
 	}
 
@@ -162,6 +190,16 @@ func (msg MsgStakeUpdate) GetLogIndex() uint64 {
 	return msg.LogIndex
 }
 
+// GetSideSignBytes returns side sign bytes
+func (msg MsgStakeUpdate) GetSideSignBytes() []byte {
+	return nil
+}
+
+// GetNonce Returns nonce
+func (msg MsgStakeUpdate) GetNonce() uint64 {
+	return msg.Nonce
+}
+
 //
 // validator update
 //
@@ -175,6 +213,8 @@ type MsgSignerUpdate struct {
 	NewSignerPubKey hmTypes.PubKey          `json:"pubKey"`
 	TxHash          hmTypes.HeimdallHash    `json:"tx_hash"`
 	LogIndex        uint64                  `json:"log_index"`
+	BlockNumber     uint64                  `json:"block_number"`
+	Nonce           uint64                  `json:"nonce"`
 }
 
 func NewMsgSignerUpdate(
@@ -183,6 +223,8 @@ func NewMsgSignerUpdate(
 	pubKey hmTypes.PubKey,
 	txhash hmTypes.HeimdallHash,
 	logIndex uint64,
+	blockNumber uint64,
+	nonce uint64,
 ) MsgSignerUpdate {
 	return MsgSignerUpdate{
 		From:            from,
@@ -190,6 +232,8 @@ func NewMsgSignerUpdate(
 		NewSignerPubKey: pubKey,
 		TxHash:          txhash,
 		LogIndex:        logIndex,
+		BlockNumber:     blockNumber,
+		Nonce:           nonce,
 	}
 }
 
@@ -214,7 +258,7 @@ func (msg MsgSignerUpdate) GetSignBytes() []byte {
 }
 
 func (msg MsgSignerUpdate) ValidateBasic() sdk.Error {
-	if msg.ID <= 0 {
+	if msg.ID == 0 {
 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator ID %v", msg.ID)
 	}
 
@@ -239,6 +283,16 @@ func (msg MsgSignerUpdate) GetLogIndex() uint64 {
 	return msg.LogIndex
 }
 
+// GetSideSignBytes returns side sign bytes
+func (msg MsgSignerUpdate) GetSideSignBytes() []byte {
+	return nil
+}
+
+// GetNonce Returns nonce
+func (msg MsgSignerUpdate) GetNonce() uint64 {
+	return msg.Nonce
+}
+
 //
 // validator exit
 //
@@ -246,18 +300,24 @@ func (msg MsgSignerUpdate) GetLogIndex() uint64 {
 var _ sdk.Msg = &MsgValidatorExit{}
 
 type MsgValidatorExit struct {
-	From     hmTypes.HeimdallAddress `json:"from"`
-	ID       hmTypes.ValidatorID     `json:"id"`
-	TxHash   hmTypes.HeimdallHash    `json:"tx_hash"`
-	LogIndex uint64                  `json:"log_index"`
+	From              hmTypes.HeimdallAddress `json:"from"`
+	ID                hmTypes.ValidatorID     `json:"id"`
+	DeactivationEpoch uint64                  `json:"deactivationEpoch"`
+	TxHash            hmTypes.HeimdallHash    `json:"tx_hash"`
+	LogIndex          uint64                  `json:"log_index"`
+	BlockNumber       uint64                  `json:"block_number"`
+	Nonce             uint64                  `json:"nonce"`
 }
 
-func NewMsgValidatorExit(from hmTypes.HeimdallAddress, id uint64, txhash hmTypes.HeimdallHash, logIndex uint64) MsgValidatorExit {
+func NewMsgValidatorExit(from hmTypes.HeimdallAddress, id uint64, deactivationEpoch uint64, txhash hmTypes.HeimdallHash, logIndex uint64, blockNumber uint64, nonce uint64) MsgValidatorExit {
 	return MsgValidatorExit{
-		From:     from,
-		ID:       hmTypes.NewValidatorID(id),
-		TxHash:   txhash,
-		LogIndex: logIndex,
+		From:              from,
+		ID:                hmTypes.NewValidatorID(id),
+		DeactivationEpoch: deactivationEpoch,
+		TxHash:            txhash,
+		LogIndex:          logIndex,
+		BlockNumber:       blockNumber,
+		Nonce:             nonce,
 	}
 }
 
@@ -282,7 +342,7 @@ func (msg MsgValidatorExit) GetSignBytes() []byte {
 }
 
 func (msg MsgValidatorExit) ValidateBasic() sdk.Error {
-	if msg.ID <= 0 {
+	if msg.ID == 0 {
 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator ID %v", msg.ID)
 	}
 
@@ -301,4 +361,14 @@ func (msg MsgValidatorExit) GetTxHash() types.HeimdallHash {
 // GetLogIndex Returns log index
 func (msg MsgValidatorExit) GetLogIndex() uint64 {
 	return msg.LogIndex
+}
+
+// GetSideSignBytes returns side sign bytes
+func (msg MsgValidatorExit) GetSideSignBytes() []byte {
+	return nil
+}
+
+// GetNonce Returns nonce
+func (msg MsgValidatorExit) GetNonce() uint64 {
+	return msg.Nonce
 }

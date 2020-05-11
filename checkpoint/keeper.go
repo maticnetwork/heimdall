@@ -26,6 +26,11 @@ var (
 	LastNoACKKey        = []byte{0x14} // key to store last no-ack
 )
 
+// ModuleCommunicator manages different module interaction
+type ModuleCommunicator interface {
+	GetAllDividendAccounts(ctx sdk.Context) []hmTypes.DividendAccount
+}
+
 // Keeper stores all related data
 type Keeper struct {
 	cdc *codec.Codec
@@ -38,6 +43,9 @@ type Keeper struct {
 	codespace sdk.CodespaceType
 	// param space
 	paramSpace subspace.Subspace
+
+	// module communicator
+	moduleCommunicator ModuleCommunicator
 }
 
 // NewKeeper create new keeper
@@ -48,14 +56,16 @@ func NewKeeper(
 	codespace sdk.CodespaceType,
 	stakingKeeper staking.Keeper,
 	chainKeeper chainmanager.Keeper,
+	moduleCommunicator ModuleCommunicator,
 ) Keeper {
 	keeper := Keeper{
-		cdc:        cdc,
-		storeKey:   storeKey,
-		paramSpace: paramSpace.WithKeyTable(types.ParamKeyTable()),
-		codespace:  codespace,
-		sk:         stakingKeeper,
-		ck:         chainKeeper,
+		cdc:                cdc,
+		storeKey:           storeKey,
+		paramSpace:         paramSpace.WithKeyTable(types.ParamKeyTable()),
+		codespace:          codespace,
+		sk:                 stakingKeeper,
+		ck:                 chainKeeper,
+		moduleCommunicator: moduleCommunicator,
 	}
 	return keeper
 }
@@ -163,17 +173,15 @@ func (k *Keeper) GetLastCheckpoint(ctx sdk.Context) (hmTypes.CheckpointBlockHead
 	var _checkpoint hmTypes.CheckpointBlockHeader
 
 	// no checkpoint received
-	if acksCount >= 0 {
-		// header key
-		headerKey := GetHeaderKey(lastCheckpointKey)
-		if store.Has(headerKey) {
-			err := k.cdc.UnmarshalBinaryBare(store.Get(headerKey), &_checkpoint)
-			if err != nil {
-				k.Logger(ctx).Error("Unable to fetch last checkpoint from store", "key", lastCheckpointKey, "acksCount", acksCount)
-				return _checkpoint, err
-			} else {
-				return _checkpoint, nil
-			}
+	// header key
+	headerKey := GetHeaderKey(lastCheckpointKey)
+	if store.Has(headerKey) {
+		err := k.cdc.UnmarshalBinaryBare(store.Get(headerKey), &_checkpoint)
+		if err != nil {
+			k.Logger(ctx).Error("Unable to fetch last checkpoint from store", "key", lastCheckpointKey, "acksCount", acksCount)
+			return _checkpoint, err
+		} else {
+			return _checkpoint, nil
 		}
 	}
 	return _checkpoint, cmn.ErrNoCheckpointFound(k.Codespace())
@@ -188,10 +196,7 @@ func GetHeaderKey(headerNumber uint64) []byte {
 // HasStoreValue check if value exists in store or not
 func (k *Keeper) HasStoreValue(ctx sdk.Context, key []byte) bool {
 	store := ctx.KVStore(k.storeKey)
-	if store.Has(key) {
-		return true
-	}
-	return false
+	return store.Has(key)
 }
 
 // FlushCheckpointBuffer flushes Checkpoint Buffer

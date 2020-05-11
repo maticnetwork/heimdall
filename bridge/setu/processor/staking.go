@@ -5,6 +5,7 @@ import (
 
 	"github.com/RichardKnop/machinery/v1/tasks"
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
@@ -37,10 +38,18 @@ func (sp *StakingProcessor) Start() error {
 // RegisterTasks - Registers staking tasks with machinery
 func (sp *StakingProcessor) RegisterTasks() {
 	sp.Logger.Info("Registering staking related tasks")
-	sp.queueConnector.Server.RegisterTask("sendValidatorJoinToHeimdall", sp.sendValidatorJoinToHeimdall)
-	sp.queueConnector.Server.RegisterTask("sendUnstakeInitToHeimdall", sp.sendUnstakeInitToHeimdall)
-	sp.queueConnector.Server.RegisterTask("sendStakeUpdateToHeimdall", sp.sendStakeUpdateToHeimdall)
-	sp.queueConnector.Server.RegisterTask("sendSignerChangeToHeimdall", sp.sendSignerChangeToHeimdall)
+	if err := sp.queueConnector.Server.RegisterTask("sendValidatorJoinToHeimdall", sp.sendValidatorJoinToHeimdall); err != nil {
+		sp.Logger.Error("RegisterTasks | sendValidatorJoinToHeimdall", "error", err)
+	}
+	if err := sp.queueConnector.Server.RegisterTask("sendUnstakeInitToHeimdall", sp.sendUnstakeInitToHeimdall); err != nil {
+		sp.Logger.Error("RegisterTasks | sendUnstakeInitToHeimdall", "error", err)
+	}
+	if err := sp.queueConnector.Server.RegisterTask("sendStakeUpdateToHeimdall", sp.sendStakeUpdateToHeimdall); err != nil {
+		sp.Logger.Error("RegisterTasks | sendStakeUpdateToHeimdall", "error", err)
+	}
+	if err := sp.queueConnector.Server.RegisterTask("sendSignerChangeToHeimdall", sp.sendSignerChangeToHeimdall); err != nil {
+		sp.Logger.Error("RegisterTasks | sendSignerChangeToHeimdall", "error", err)
+	}
 }
 
 func (sp *StakingProcessor) sendValidatorJoinToHeimdall(eventName string, logBytes string) error {
@@ -63,11 +72,13 @@ func (sp *StakingProcessor) sendValidatorJoinToHeimdall(eventName string, logByt
 				"event", eventName,
 				"validatorID", event.ValidatorId,
 				"activationEpoch", event.ActivationEpoch,
+				"nonce", event.Nonce,
 				"amount", event.Amount,
 				"totalAmount", event.Total,
 				"SignerPubkey", hmTypes.NewPubKey(signerPubKey).String(),
 				"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 				"logIndex", uint64(vLog.Index),
+				"blockNumber", vLog.BlockNumber,
 			)
 			return nil
 		}
@@ -87,20 +98,26 @@ func (sp *StakingProcessor) sendValidatorJoinToHeimdall(eventName string, logByt
 			"event", eventName,
 			"validatorID", event.ValidatorId,
 			"activationEpoch", event.ActivationEpoch,
+			"nonce", event.Nonce,
 			"amount", event.Amount,
 			"totalAmount", event.Total,
 			"SignerPubkey", hmTypes.NewPubKey(signerPubKey).String(),
 			"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			"logIndex", uint64(vLog.Index),
+			"blockNumber", vLog.BlockNumber,
 		)
 
 		// msg validator exit
 		msg := stakingTypes.NewMsgValidatorJoin(
 			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
 			event.ValidatorId.Uint64(),
+			event.ActivationEpoch.Uint64(),
+			sdk.NewIntFromBigInt(event.Amount),
 			hmTypes.NewPubKey(signerPubKey),
 			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			uint64(vLog.Index),
+			vLog.BlockNumber,
+			event.Nonce.Uint64(),
 		)
 
 		// return broadcast to heimdall
@@ -128,10 +145,12 @@ func (sp *StakingProcessor) sendUnstakeInitToHeimdall(eventName string, logBytes
 				"event", eventName,
 				"validator", event.User,
 				"validatorID", event.ValidatorId,
+				"nonce", event.Nonce,
 				"deactivatonEpoch", event.DeactivationEpoch,
 				"amount", event.Amount,
 				"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 				"logIndex", uint64(vLog.Index),
+				"blockNumber", vLog.BlockNumber,
 			)
 			return nil
 		}
@@ -141,18 +160,23 @@ func (sp *StakingProcessor) sendUnstakeInitToHeimdall(eventName string, logBytes
 			"event", eventName,
 			"validator", event.User,
 			"validatorID", event.ValidatorId,
+			"nonce", event.Nonce,
 			"deactivatonEpoch", event.DeactivationEpoch,
 			"amount", event.Amount,
 			"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			"logIndex", uint64(vLog.Index),
+			"blockNumber", vLog.BlockNumber,
 		)
 
 		// msg validator exit
 		msg := stakingTypes.NewMsgValidatorExit(
 			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
 			event.ValidatorId.Uint64(),
+			event.DeactivationEpoch.Uint64(),
 			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			uint64(vLog.Index),
+			vLog.BlockNumber,
+			event.Nonce.Uint64(),
 		)
 
 		// return broadcast to heimdall
@@ -179,9 +203,11 @@ func (sp *StakingProcessor) sendStakeUpdateToHeimdall(eventName string, logBytes
 			sp.Logger.Info("Ignoring task to send unstakeinit to heimdall as already processed",
 				"event", eventName,
 				"validatorID", event.ValidatorId,
+				"nonce", event.Nonce,
 				"newAmount", event.NewAmount,
 				"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 				"logIndex", uint64(vLog.Index),
+				"blockNumber", vLog.BlockNumber,
 			)
 			return nil
 		}
@@ -189,17 +215,22 @@ func (sp *StakingProcessor) sendStakeUpdateToHeimdall(eventName string, logBytes
 			"✅ Received task to send stake-update to heimdall",
 			"event", eventName,
 			"validatorID", event.ValidatorId,
+			"nonce", event.Nonce,
 			"newAmount", event.NewAmount,
 			"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			"logIndex", uint64(vLog.Index),
+			"blockNumber", vLog.BlockNumber,
 		)
 
 		// msg validator exit
 		msg := stakingTypes.NewMsgStakeUpdate(
 			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
 			event.ValidatorId.Uint64(),
+			sdk.NewIntFromBigInt(event.NewAmount),
 			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			uint64(vLog.Index),
+			vLog.BlockNumber,
+			event.Nonce.Uint64(),
 		)
 
 		// return broadcast to heimdall
@@ -231,11 +262,13 @@ func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logByte
 			sp.Logger.Info("Ignoring task to send unstakeinit to heimdall as already processed",
 				"event", eventName,
 				"validatorID", event.ValidatorId,
+				"nonce", event.Nonce,
 				"NewSignerPubkey", hmTypes.NewPubKey(newSignerPubKey).String(),
 				"oldSigner", event.OldSigner.Hex(),
 				"newSigner", event.NewSigner.Hex(),
 				"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 				"logIndex", uint64(vLog.Index),
+				"blockNumber", vLog.BlockNumber,
 			)
 			return nil
 		}
@@ -243,11 +276,13 @@ func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logByte
 			"✅ Received task to send signer-change to heimdall",
 			"event", eventName,
 			"validatorID", event.ValidatorId,
+			"nonce", event.Nonce,
 			"NewSignerPubkey", hmTypes.NewPubKey(newSignerPubKey).String(),
 			"oldSigner", event.OldSigner.Hex(),
 			"newSigner", event.NewSigner.Hex(),
 			"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			"logIndex", uint64(vLog.Index),
+			"blockNumber", vLog.BlockNumber,
 		)
 
 		// signer change
@@ -257,6 +292,8 @@ func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logByte
 			hmTypes.NewPubKey(newSignerPubKey),
 			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			uint64(vLog.Index),
+			vLog.BlockNumber,
+			event.Nonce.Uint64(),
 		)
 
 		// return broadcast to heimdall
@@ -277,6 +314,10 @@ func (sp *StakingProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string,
 
 	endpoint := helper.GetHeimdallServerEndpoint(util.StakingTxStatusURL)
 	url, err := util.CreateURLWithQuery(endpoint, queryParam)
+	if err != nil {
+		sp.Logger.Error("Error in creating url", "endpoint", endpoint, "error", err)
+		return false, err
+	}
 
 	res, err := helper.FetchFromAPI(sp.cliCtx, url)
 	if err != nil {

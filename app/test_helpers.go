@@ -329,7 +329,7 @@ func SetupTopupGenesis() *HeimdallApp {
 	// initialize the chain with the default genesis state
 	genesisState := NewDefaultGenesisState()
 
-	topupGenesis := topupTypes.NewGenesisState(topupTypes.DefaultGenesisState().TopupSequences)
+	topupGenesis := topupTypes.NewGenesisState(topupTypes.DefaultGenesisState().TopupSequences, topupTypes.DefaultGenesisState().DividentAccounts)
 	genesisState[topupTypes.ModuleName] = app.Codec().MustMarshalJSON(topupGenesis)
 
 	stateBytes, err := codec.MarshalJSONIndent(app.Codec(), genesisState)

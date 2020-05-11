@@ -8,12 +8,15 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/maticnetwork/heimdall/helper"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
 	hmClient "github.com/maticnetwork/heimdall/client"
 )
+
+var logger = helper.Logger.With("module", "clerk/client/cli")
 
 // GetQueryCmd returns the cli query commands for this module
 func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
@@ -80,7 +83,10 @@ func GetStateRecord(cdc *codec.Codec) *cobra.Command {
 	}
 
 	cmd.Flags().Uint64(FlagRecordID, 0, "--id=<record ID here>")
-	cmd.MarkFlagRequired(FlagRecordID)
+
+	if err := cmd.MarkFlagRequired(FlagRecordID); err != nil {
+		logger.Error("GetStateRecord | MarkFlagRequired | FlagRecordID", "Error", err)
+	}
 
 	return cmd
 }

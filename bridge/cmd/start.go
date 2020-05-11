@@ -32,15 +32,14 @@ const (
 
 // GetStartCmd returns the start command to start bridge
 func GetStartCmd() *cobra.Command {
+	var logger = helper.Logger.With("module", "bridge/cmd/")
 	startCmd := &cobra.Command{
 		Use:   "start",
 		Short: "Start bridge server",
 		Run: func(cmd *cobra.Command, args []string) {
-			logger := util.Logger().With("module", "bridge")
 
 			// create codec
 			cdc := app.MakeCodec()
-			app.MakePulp()
 			// queue connector & http client
 			_queueConnector := queue.NewQueueConnector(helper.GetConfig().AmqpURL)
 			_queueConnector.StartWorker()
@@ -51,7 +50,7 @@ func GetStartCmd() *cobra.Command {
 			// selected services to start
 			services := []common.Service{}
 			services = append(services,
-				listener.NewListenerService(cdc, _queueConnector),
+				listener.NewListenerService(cdc, _queueConnector, _httpClient),
 				processor.NewProcessorService(cdc, _queueConnector, _httpClient, _txBroadcaster),
 			)
 
@@ -67,11 +66,15 @@ func GetStartCmd() *cobra.Command {
 					// stop processes
 					logger.Info("Received stop signal - Stopping all services")
 					for _, service := range services {
-						service.Stop()
+						if err := service.Stop(); err != nil {
+							logger.Error("GetStartCmd | service.Stop", "Error", err)
+						}
 					}
 
 					// stop http client
-					_httpClient.Stop()
+					if err := _httpClient.Stop(); err != nil {
+						logger.Error("GetStartCmd | _httpClient.Stop", "Error", err)
+					}
 
 					// stop db instance
 					util.CloseBridgeDBInstance()
@@ -108,7 +111,9 @@ func GetStartCmd() *cobra.Command {
 				go func(serv common.Service) {
 					defer wg.Done()
 					// TODO handle error while starting service
-					serv.Start()
+					if err := serv.Start(); err != nil {
+						logger.Error("GetStartCmd | serv.Start", "Error", err)
+					}
 					<-serv.Quit()
 				}(service)
 			}
@@ -119,13 +124,19 @@ func GetStartCmd() *cobra.Command {
 
 	// log level
 	startCmd.Flags().String(logLevel, "info", "Log level for bridge")
-	viper.BindPFlag(logLevel, startCmd.Flags().Lookup(logLevel))
+	if err := viper.BindPFlag(logLevel, startCmd.Flags().Lookup(logLevel)); err != nil {
+		logger.Error("GetStartCmd | BindPFlag | logLevel", "Error", err)
+	}
 
 	startCmd.Flags().Bool("all", false, "start all bridge services")
-	viper.BindPFlag("all", startCmd.Flags().Lookup("all"))
+	if err := viper.BindPFlag("all", startCmd.Flags().Lookup("all")); err != nil {
+		logger.Error("GetStartCmd | BindPFlag | all", "Error", err)
+	}
 
 	startCmd.Flags().StringSlice("only", []string{}, "comma separated bridge services to start")
-	viper.BindPFlag("only", startCmd.Flags().Lookup("only"))
+	if err := viper.BindPFlag("only", startCmd.Flags().Lookup("only")); err != nil {
+		logger.Error("GetStartCmd | BindPFlag | only", "Error", err)
+	}
 	return startCmd
 }
 

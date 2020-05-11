@@ -12,6 +12,10 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 )
 
+const (
+	processorServiceStr = "processor-service"
+)
+
 // ProcessorService starts and stops all event processors
 type ProcessorService struct {
 	// Base service
@@ -20,15 +24,8 @@ type ProcessorService struct {
 	// queue connector
 	queueConnector *queue.QueueConnector
 
-	// tx broadcaster
-	txBroadcsater *broadcaster.TxBroadcaster
-
 	processors []Processor
 }
-
-const (
-	processorServiceStr = "processor-service"
-)
 
 // NewProcessorService returns new service object for processing queue msg
 func NewProcessorService(
@@ -37,9 +34,7 @@ func NewProcessorService(
 	httpClient *httpClient.HTTP,
 	txBroadcaster *broadcaster.TxBroadcaster,
 ) *ProcessorService {
-	// create logger
-	logger := util.Logger().With("module", processorServiceStr)
-
+	var logger = util.Logger().With("module", processorServiceStr)
 	// creating processor object
 	processorService := &ProcessorService{
 		queueConnector: queueConnector,
@@ -118,7 +113,9 @@ func NewProcessorService(
 
 // OnStart starts new block subscription
 func (processorService *ProcessorService) OnStart() error {
-	processorService.BaseService.OnStart() // Always call the overridden method.
+	if err := processorService.BaseService.OnStart(); err != nil {
+		processorService.Logger.Error("OnStart | OnStart", "Error", err)
+	} // Always call the overridden method.
 
 	// start processors
 	for _, processor := range processorService.processors {
@@ -139,5 +136,4 @@ func (processorService *ProcessorService) OnStop() {
 	}
 
 	processorService.Logger.Info("all processors stopped")
-	return
 }

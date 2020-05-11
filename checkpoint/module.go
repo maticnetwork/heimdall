@@ -11,6 +11,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/gorilla/mux"
 	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
+	"github.com/maticnetwork/heimdall/topup"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
 
@@ -98,15 +100,17 @@ type AppModule struct {
 
 	keeper         Keeper
 	stakingKeeper  staking.Keeper
+	topupKeeper    topup.Keeper
 	contractCaller helper.IContractCaller
 }
 
 // NewAppModule creates a new AppModule object
-func NewAppModule(keeper Keeper, sk staking.Keeper, contractCaller helper.IContractCaller) AppModule {
+func NewAppModule(keeper Keeper, sk staking.Keeper, tk topup.Keeper, contractCaller helper.IContractCaller) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{},
 		keeper:         keeper,
 		stakingKeeper:  sk,
+		topupKeeper:    tk,
 		contractCaller: contractCaller,
 	}
 }
@@ -136,7 +140,7 @@ func (AppModule) QuerierRoute() string {
 
 // NewQuerierHandler returns the auth module sdk.Querier.
 func (am AppModule) NewQuerierHandler() sdk.Querier {
-	return NewQuerier(am.keeper, am.stakingKeeper)
+	return NewQuerier(am.keeper, am.stakingKeeper, am.topupKeeper, am.contractCaller)
 }
 
 // InitGenesis performs genesis initialization for the auth module. It returns
@@ -162,6 +166,20 @@ func (AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
 // updates.
 func (AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
 	return []abci.ValidatorUpdate{}
+}
+
+//
+// Side module
+//
+
+// NewSideTxHandler side tx handler
+func (am AppModule) NewSideTxHandler() hmTypes.SideTxHandler {
+	return NewSideTxHandler(am.keeper, am.contractCaller)
+}
+
+// NewPostTxHandler side tx handler
+func (am AppModule) NewPostTxHandler() hmTypes.PostTxHandler {
+	return NewPostTxHandler(am.keeper, am.contractCaller)
 }
 
 //

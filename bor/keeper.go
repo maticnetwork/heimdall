@@ -9,6 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/libs/log"
 
+	"github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/heimdall/bor/types"
 	chainmanager "github.com/maticnetwork/heimdall/chainmanager"
 	"github.com/maticnetwork/heimdall/helper"
@@ -129,6 +130,12 @@ func (k *Keeper) GetSpan(ctx sdk.Context, id uint64) (*hmTypes.Span, error) {
 	return &span, nil
 }
 
+func (k *Keeper) HasSpan(ctx sdk.Context, id uint64) bool {
+	store := ctx.KVStore(k.storeKey)
+	spanKey := GetSpanKey(id)
+	return store.Has(spanKey)
+}
+
 // GetAllSpans fetches all indexed by id from store
 func (k *Keeper) GetAllSpans(ctx sdk.Context) (spans []*hmTypes.Span) {
 	// iterate through spans and create span update array
@@ -185,15 +192,9 @@ func (k *Keeper) GetLastSpan(ctx sdk.Context) (*hmTypes.Span, error) {
 }
 
 // FreezeSet freezes validator set for next span
-func (k *Keeper) FreezeSet(ctx sdk.Context, id uint64, startBlock uint64, borChainID string) error {
-	duration := k.GetParams(ctx).SpanDuration
-	endBlock := startBlock
-	if duration > 0 {
-		endBlock = endBlock + duration - 1
-	}
-
+func (k *Keeper) FreezeSet(ctx sdk.Context, id uint64, startBlock uint64, endBlock uint64, borChainID string, seed common.Hash) error {
 	// select next producers
-	newProducers, err := k.SelectNextProducers(ctx)
+	newProducers, err := k.SelectNextProducers(ctx, seed)
 	if err != nil {
 		return err
 	}
@@ -215,10 +216,7 @@ func (k *Keeper) FreezeSet(ctx sdk.Context, id uint64, startBlock uint64, borCha
 }
 
 // SelectNextProducers selects producers for next span
-func (k *Keeper) SelectNextProducers(ctx sdk.Context) (vals []hmTypes.Validator, err error) {
-	// fetch last block used for seed
-	lastEthBlock := k.GetLastEthBlock(ctx)
-
+func (k *Keeper) SelectNextProducers(ctx sdk.Context, seed common.Hash) (vals []hmTypes.Validator, err error) {
 	// spanEligibleVals are current validators who are not getting deactivated in between next span
 	spanEligibleVals := k.sk.GetSpanEligibleValidators(ctx)
 	producerCount := k.GetParams(ctx).ProducerCount
@@ -231,17 +229,8 @@ func (k *Keeper) SelectNextProducers(ctx sdk.Context) (vals []hmTypes.Validator,
 		return spanEligibleVals, nil
 	}
 
-	// increment last processed header block number
-	newEthBlock := lastEthBlock.Add(lastEthBlock, big.NewInt(1))
-
-	// fetch block header from mainchain
-	blockHeader, err := k.contractCaller.GetMainChainBlock(newEthBlock)
-	if err != nil {
-		return vals, err
-	}
-
 	// select next producers using seed as blockheader hash
-	newProducersIds, err := SelectNextProducers(blockHeader.Hash(), spanEligibleVals, producerCount)
+	newProducersIds, err := SelectNextProducers(seed, spanEligibleVals, producerCount)
 	if err != nil {
 		return vals, err
 	}
@@ -294,6 +283,23 @@ func (k *Keeper) GetLastEthBlock(ctx sdk.Context) *big.Int {
 	return lastEthBlock
 }
 
+func (k Keeper) GetNextSpanSeed(ctx sdk.Context) (common.Hash, error) {
+	lastEthBlock := k.GetLastEthBlock(ctx)
+
+	// increment last processed header block number
+	newEthBlock := lastEthBlock.Add(lastEthBlock, big.NewInt(1))
+	k.Logger(ctx).Debug("newEthBlock to generate seed", "newEthBlock", newEthBlock)
+
+	// fetch block header from mainchain
+	blockHeader, err := k.contractCaller.GetMainChainBlock(newEthBlock)
+	if err != nil {
+		k.Logger(ctx).Error("Error fetching block header from mainchain while calculating next span seed", "error", err)
+		return common.Hash{}, err
+	}
+
+	return blockHeader.Hash(), nil
+}
+
 // -----------------------------------------------------------------------------
 // Params
 
@@ -324,7 +330,9 @@ func (k *Keeper) IterateSpansAndApplyFn(ctx sdk.Context, f func(span hmTypes.Spa
 	for ; iterator.Valid(); iterator.Next() {
 		// unmarshall span
 		var result hmTypes.Span
-		k.cdc.UnmarshalBinaryBare(iterator.Value(), &result)
+		if err := k.cdc.UnmarshalBinaryBare(iterator.Value(), &result); err != nil {
+			k.Logger(ctx).Error("Error UnmarshalBinaryBare", "error", err)
+		}
 		// call function and return if required
 		if err := f(result); err != nil {
 			return

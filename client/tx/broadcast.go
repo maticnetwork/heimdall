@@ -16,6 +16,8 @@ import (
 	"github.com/maticnetwork/heimdall/types/rest"
 )
 
+var logger = helper.Logger.With("module", "client/tx")
+
 // BroadcastReq defines a tx broadcasting request.
 type BroadcastReq struct {
 	Tx   authTypes.StdTx `json:"tx"`
@@ -75,13 +77,18 @@ $ gaiacli tx broadcast ./mytxn.json
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			stdTx, err := helper.ReadStdTxFromFile(cliCtx.Codec, args[0])
 			if err != nil {
-				return
+				return err
 			}
 
 			// brodcast tx
 			res, err := helper.BroadcastTx(cliCtx, stdTx, "")
-			cliCtx.PrintOutput(res)
-			return err
+			if err != nil {
+				return err
+			}
+			if err := cliCtx.PrintOutput(res); err != nil {
+				return err
+			}
+			return nil
 		},
 	}
 

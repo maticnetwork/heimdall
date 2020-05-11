@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -22,6 +21,8 @@ import (
 	"github.com/maticnetwork/heimdall/staking/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
+
+var logger = helper.Logger.With("module", "staking/client/cli")
 
 // GetTxCmd returns the transaction commands for this module
 func GetTxCmd(cdc *codec.Codec) *cobra.Command {
@@ -74,6 +75,12 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 			}
 			pubkey := hmTypes.NewPubKey(pubkeyBytes)
 
+			// total stake amount
+			amount, ok := sdk.NewIntFromString(viper.GetString(FlagAmount))
+			if !ok {
+				return errors.New("Invalid stake amount")
+			}
+
 			contractCallerObj, err := helper.NewContractCaller()
 			if err != nil {
 				return err
@@ -85,7 +92,7 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 			}
 
 			// get main tx receipt
-			receipt, err := contractCallerObj.GetConfirmedTxReceipt(time.Now().UTC(), hmTypes.HexToHeimdallHash(txhash).EthHash(), chainmanagerParams.TxConfirmationTime)
+			receipt, err := contractCallerObj.GetConfirmedTxReceipt(hmTypes.HexToHeimdallHash(txhash).EthHash(), chainmanagerParams.MainchainTxConfirmations)
 			if err != nil || receipt == nil {
 				return errors.New("Transaction is not confirmed yet. Please wait for sometime and try again")
 			}
@@ -93,7 +100,7 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 			abiObject := &contractCallerObj.StakingInfoABI
 			eventName := "Staked"
 			event := new(stakinginfo.StakinginfoStaked)
-			var logIndex uint
+			var logIndex uint64
 			found := false
 			for _, vLog := range receipt.Logs {
 				topic := vLog.Topics[0].Bytes()
@@ -103,7 +110,7 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 						return err
 					}
 
-					logIndex = vLog.Index
+					logIndex = uint64(vLog.Index)
 					found = true
 					break
 				}
@@ -121,9 +128,13 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 			msg := types.NewMsgValidatorJoin(
 				proposer,
 				event.ValidatorId.Uint64(),
+				viper.GetUint64(FlagActivationEpoch),
+				amount,
 				pubkey,
 				hmTypes.HexToHeimdallHash(txhash),
-				uint64(logIndex),
+				logIndex,
+				viper.GetUint64(FlagBlockNumber),
+				event.Nonce.Uint64(),
 			)
 
 			// broadcast messages
@@ -134,8 +145,25 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
 	cmd.Flags().String(FlagSignerPubkey, "", "--signer-pubkey=<signer pubkey here>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
-	cmd.MarkFlagRequired(FlagSignerPubkey)
-	cmd.MarkFlagRequired(FlagTxHash)
+	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
+	cmd.Flags().String(FlagAmount, "0", "--amount=<amount>")
+	cmd.Flags().Uint64(FlagActivationEpoch, 0, "--activation-epoch=<activation-epoch>")
+
+	if err := cmd.MarkFlagRequired(FlagBlockNumber); err != nil {
+		logger.Error("SendValidatorJoinTx | MarkFlagRequired | FlagBlockNumber", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagActivationEpoch); err != nil {
+		logger.Error("SendValidatorJoinTx | MarkFlagRequired | FlagActivationEpoch", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagAmount); err != nil {
+		logger.Error("SendValidatorJoinTx | MarkFlagRequired | FlagAmount", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagSignerPubkey); err != nil {
+		logger.Error("SendValidatorJoinTx | MarkFlagRequired | FlagSignerPubkey", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagTxHash); err != nil {
+		logger.Error("SendValidatorJoinTx | MarkFlagRequired | FlagTxHash", "Error", err)
+	}
 	return cmd
 }
 
@@ -153,7 +181,7 @@ func SendValidatorExitTx(cdc *codec.Codec) *cobra.Command {
 				proposer = helper.GetFromAddress(cliCtx)
 			}
 
-			validator := viper.GetInt64(FlagValidatorID)
+			validator := viper.GetUint64(FlagValidatorID)
 			if validator == 0 {
 				return fmt.Errorf("validator ID cannot be 0")
 			}
@@ -163,12 +191,17 @@ func SendValidatorExitTx(cdc *codec.Codec) *cobra.Command {
 				return fmt.Errorf("transaction hash has to be supplied")
 			}
 
+			nonce := viper.GetUint64(FlagNonce)
+
 			// draf msg
 			msg := types.NewMsgValidatorExit(
 				proposer,
-				uint64(validator),
+				validator,
+				viper.GetUint64(FlagDeactivationEpoch),
 				hmTypes.HexToHeimdallHash(txhash),
-				uint64(viper.GetInt64(FlagLogIndex)),
+				viper.GetUint64(FlagLogIndex),
+				viper.GetUint64(FlagBlockNumber),
+				nonce,
 			)
 
 			// broadcast messages
@@ -177,12 +210,28 @@ func SendValidatorExitTx(cdc *codec.Codec) *cobra.Command {
 	}
 
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
-	cmd.Flags().Int(FlagValidatorID, 0, "--id=<validator ID here>")
+	cmd.Flags().Uint64(FlagValidatorID, 0, "--id=<validator ID here>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
-	cmd.Flags().String(FlagLogIndex, "", "--log-index=<log-index>")
-	cmd.MarkFlagRequired(FlagValidatorID)
-	cmd.MarkFlagRequired(FlagTxHash)
-	cmd.MarkFlagRequired(FlagLogIndex)
+	cmd.Flags().Uint64(FlagLogIndex, 0, "--log-index=<log-index>")
+	cmd.Flags().Uint64(FlagDeactivationEpoch, 0, "--deactivation-epoch=<deactivation-epoch>")
+	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
+	cmd.Flags().Int(FlagNonce, 0, "--nonce=<nonce>")
+
+	if err := cmd.MarkFlagRequired(FlagValidatorID); err != nil {
+		logger.Error("SendValidatorExitTx | MarkFlagRequired | FlagValidatorID", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagTxHash); err != nil {
+		logger.Error("SendValidatorExitTx | MarkFlagRequired | FlagTxHash", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagLogIndex); err != nil {
+		logger.Error("SendValidatorExitTx | MarkFlagRequired | FlagLogIndex", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagBlockNumber); err != nil {
+		logger.Error("SendValidatorExitTx | MarkFlagRequired | FlagBlockNumber", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagNonce); err != nil {
+		logger.Error("SendValidatorExitTx | MarkFlagRequired | FlagNonce", "Error", err)
+	}
 
 	return cmd
 }
@@ -201,7 +250,7 @@ func SendValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 				proposer = helper.GetFromAddress(cliCtx)
 			}
 
-			validator := viper.GetInt64(FlagValidatorID)
+			validator := viper.GetUint64(FlagValidatorID)
 			if validator == 0 {
 				return fmt.Errorf("validator ID cannot be 0")
 			}
@@ -224,10 +273,12 @@ func SendValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 
 			msg := types.NewMsgSignerUpdate(
 				proposer,
-				uint64(validator),
+				validator,
 				pubkey,
 				hmTypes.HexToHeimdallHash(txhash),
-				uint64(viper.GetInt64(FlagLogIndex)),
+				viper.GetUint64(FlagLogIndex),
+				viper.GetUint64(FlagBlockNumber),
+				viper.GetUint64(FlagNonce),
 			)
 
 			// broadcast messages
@@ -236,13 +287,31 @@ func SendValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 	}
 
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
-	cmd.Flags().Int(FlagValidatorID, 0, "--id=<validator-id>")
+	cmd.Flags().Uint64(FlagValidatorID, 0, "--id=<validator-id>")
 	cmd.Flags().String(FlagNewSignerPubkey, "", "--new-pubkey=<new-signer-pubkey>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
-	cmd.Flags().String(FlagLogIndex, "", "--log-index=<log-index>")
-	cmd.MarkFlagRequired(FlagTxHash)
-	cmd.MarkFlagRequired(FlagNewSignerPubkey)
-	cmd.MarkFlagRequired(FlagLogIndex)
+	cmd.Flags().Uint64(FlagLogIndex, 0, "--log-index=<log-index>")
+	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
+	cmd.Flags().Int(FlagNonce, 0, "--nonce=<nonce>")
+
+	if err := cmd.MarkFlagRequired(FlagValidatorID); err != nil {
+		logger.Error("SendValidatorUpdateTx | MarkFlagRequired | FlagValidatorID", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagTxHash); err != nil {
+		logger.Error("SendValidatorUpdateTx | MarkFlagRequired | FlagTxHash", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagNewSignerPubkey); err != nil {
+		logger.Error("SendValidatorUpdateTx | MarkFlagRequired | FlagNewSignerPubkey", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagLogIndex); err != nil {
+		logger.Error("SendValidatorUpdateTx | MarkFlagRequired | FlagLogIndex", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagBlockNumber); err != nil {
+		logger.Error("SendValidatorUpdateTx | MarkFlagRequired | FlagBlockNumber", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagNonce); err != nil {
+		logger.Error("SendValidatorUpdateTx | MarkFlagRequired | FlagNonce", "Error", err)
+	}
 
 	return cmd
 }
@@ -261,7 +330,7 @@ func SendValidatorStakeUpdateTx(cdc *codec.Codec) *cobra.Command {
 				proposer = helper.GetFromAddress(cliCtx)
 			}
 
-			validator := viper.GetInt64(FlagValidatorID)
+			validator := viper.GetUint64(FlagValidatorID)
 			if validator == 0 {
 				return fmt.Errorf("validator ID cannot be 0")
 			}
@@ -271,11 +340,20 @@ func SendValidatorStakeUpdateTx(cdc *codec.Codec) *cobra.Command {
 				return fmt.Errorf("transaction hash has to be supplied")
 			}
 
+			// total stake amount
+			amount, ok := sdk.NewIntFromString(viper.GetString(FlagAmount))
+			if !ok {
+				return errors.New("Invalid new stake amount")
+			}
+
 			msg := types.NewMsgStakeUpdate(
 				proposer,
-				uint64(validator),
+				validator,
+				amount,
 				hmTypes.HexToHeimdallHash(txhash),
-				uint64(viper.GetInt64(FlagLogIndex)),
+				viper.GetUint64(FlagLogIndex),
+				viper.GetUint64(FlagBlockNumber),
+				viper.GetUint64(FlagNonce),
 			)
 
 			// broadcast messages
@@ -284,11 +362,31 @@ func SendValidatorStakeUpdateTx(cdc *codec.Codec) *cobra.Command {
 	}
 
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
-	cmd.Flags().Int(FlagValidatorID, 0, "--id=<validator-id>")
+	cmd.Flags().Uint64(FlagValidatorID, 0, "--id=<validator-id>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
-	cmd.Flags().String(FlagLogIndex, "", "--log-index=<log-index>")
-	cmd.MarkFlagRequired(FlagTxHash)
-	cmd.MarkFlagRequired(FlagLogIndex)
+	cmd.Flags().String(FlagAmount, "", "--amount=<amount>")
+	cmd.Flags().Uint64(FlagLogIndex, 0, "--log-index=<log-index>")
+	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
+	cmd.Flags().Int(FlagNonce, 0, "--nonce=<nonce>")
+
+	if err := cmd.MarkFlagRequired(FlagTxHash); err != nil {
+		logger.Error("SendValidatorStakeUpdateTx | MarkFlagRequired | FlagTxHash", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagLogIndex); err != nil {
+		logger.Error("SendValidatorStakeUpdateTx | MarkFlagRequired | FlagLogIndex", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagValidatorID); err != nil {
+		logger.Error("SendValidatorStakeUpdateTx | MarkFlagRequired | FlagValidatorID", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagBlockNumber); err != nil {
+		logger.Error("SendValidatorStakeUpdateTx | MarkFlagRequired | FlagBlockNumber", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagAmount); err != nil {
+		logger.Error("SendValidatorStakeUpdateTx | MarkFlagRequired | FlagAmount", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagNonce); err != nil {
+		logger.Error("SendValidatorStakeUpdateTx | MarkFlagRequired | FlagNonce", "Error", err)
+	}
 
 	return cmd
 }

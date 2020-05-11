@@ -22,24 +22,19 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 		// add validators in store
 		for _, validator := range resultValSet.Validators {
 			// Add individual validator to state
-			keeper.AddValidator(ctx, *validator)
-		}
+			if err := keeper.AddValidator(ctx, *validator); err != nil {
+				keeper.Logger(ctx).Error("Error InitGenesis", "error", err)
+			}
 
-		// update validator set in store
-		if err := keeper.UpdateValidatorSetInStore(ctx, *resultValSet); err != nil {
-			panic(err)
-		}
+			// update validator set in store
+			if err := keeper.UpdateValidatorSetInStore(ctx, *resultValSet); err != nil {
+				panic(err)
+			}
 
-		// increament accum if init validator set
-		if len(data.CurrentValSet.Validators) == 0 {
-			keeper.IncrementAccum(ctx, 1)
-		}
-	}
-
-	// Add genesis dividend accounts
-	for _, dividendAccount := range data.DividentAccounts {
-		if err := keeper.AddDividendAccount(ctx, dividendAccount); err != nil {
-			panic((err))
+			// increament accum if init validator set
+			if len(data.CurrentValSet.Validators) == 0 {
+				keeper.IncrementAccum(ctx, 1)
+			}
 		}
 	}
 
@@ -54,7 +49,6 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
 	return types.NewGenesisState(
 		keeper.GetAllValidators(ctx),
 		keeper.GetValidatorSet(ctx),
-		keeper.GetAllDividendAccounts(ctx),
 		keeper.GetStakingSequences(ctx),
 	)
 }

@@ -3,7 +3,6 @@ package staking
 import (
 	"encoding/hex"
 	"errors"
-	"math/big"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -20,12 +19,10 @@ import (
 var (
 	DefaultValue = []byte{0x01} // Value to store in CacheCheckpoint and CacheCheckpointACK & ValidatorSetChange Flag
 
-	ValidatorsKey             = []byte{0x21} // prefix for each key to a validator
-	ValidatorMapKey           = []byte{0x22} // prefix for each key for validator map
-	CurrentValidatorSetKey    = []byte{0x23} // Key to store current validator set
-	PrevDividendAccountMapKey = []byte{0x41} // store for dividend accounts before checkpoint ack.
-	DividendAccountMapKey     = []byte{0x42} // prefix for each key for Dividend Account Map
-	StakingSequenceKey        = []byte{0x24} // prefix for each key for staking sequence map
+	ValidatorsKey          = []byte{0x21} // prefix for each key to a validator
+	ValidatorMapKey        = []byte{0x22} // prefix for each key for validator map
+	CurrentValidatorSetKey = []byte{0x23} // Key to store current validator set
+	StakingSequenceKey     = []byte{0x24} // prefix for each key for staking sequence map
 )
 
 // ModuleCommunicator manages different module interaction
@@ -254,7 +251,9 @@ func (k *Keeper) UpdateSigner(ctx sdk.Context, newSigner hmTypes.HeimdallAddress
 	validator.VotingPower = 0
 
 	// update validator
-	k.AddValidator(ctx, validator)
+	if err := k.AddValidator(ctx, validator); err != nil {
+		k.Logger(ctx).Error("UpdateSigner | AddValidator", "error", err)
+	}
 
 	//update signer in prev Validator
 	validator.Signer = newSigner
@@ -262,7 +261,9 @@ func (k *Keeper) UpdateSigner(ctx sdk.Context, newSigner hmTypes.HeimdallAddress
 	validator.VotingPower = validatorPower
 
 	// add updated validator to store with new key
-	k.AddValidator(ctx, validator)
+	if err := k.AddValidator(ctx, validator); err != nil {
+		k.Logger(ctx).Error("UpdateSigner | AddValidator", "error", err)
+	}
 	return nil
 }
 
@@ -288,7 +289,10 @@ func (k *Keeper) GetValidatorSet(ctx sdk.Context) (validatorSet hmTypes.Validato
 	// get current validator set from store
 	bz := store.Get(CurrentValidatorSetKey)
 	// unmarhsall
-	k.cdc.UnmarshalBinaryBare(bz, &validatorSet)
+
+	if err := k.cdc.UnmarshalBinaryBare(bz, &validatorSet); err != nil {
+		k.Logger(ctx).Error("GetValidatorSet | UnmarshalBinaryBare", "error", err)
+	}
 
 	// return validator set
 	return validatorSet
@@ -303,7 +307,10 @@ func (k *Keeper) IncrementAccum(ctx sdk.Context, times int) {
 	validatorSet.IncrementProposerPriority(times)
 
 	// replace
-	k.UpdateValidatorSetInStore(ctx, validatorSet)
+
+	if err := k.UpdateValidatorSetInStore(ctx, validatorSet); err != nil {
+		k.Logger(ctx).Error("IncrementAccum | UpdateValidatorSetInStore", "error", err)
+	}
 }
 
 // GetNextProposer returns next proposer
@@ -369,117 +376,6 @@ func (k *Keeper) GetLastUpdated(ctx sdk.Context, valID hmTypes.ValidatorID) (upd
 	return validator.LastUpdated, true
 }
 
-// GetDividendAccountMapKey returns dividend account map
-func GetDividendAccountMapKey(id []byte) []byte {
-	return append(DividendAccountMapKey, id...)
-}
-
-// GetPrevDividendAccountMapKey returns prev dividend account map
-func GetPrevDividendAccountMapKey(id []byte) []byte {
-	return append(PrevDividendAccountMapKey, id...)
-}
-
-// AddDividendAccount adds DividendAccount index with DividendID
-func (k *Keeper) AddDividendAccount(ctx sdk.Context, dividendAccount hmTypes.DividendAccount) error {
-	store := ctx.KVStore(k.storeKey)
-	// marshall dividend account
-	bz, err := hmTypes.MarshallDividendAccount(k.cdc, dividendAccount)
-	if err != nil {
-		return err
-	}
-
-	store.Set(GetDividendAccountMapKey(dividendAccount.ID.Bytes()), bz)
-	k.Logger(ctx).Debug("DividendAccount Stored", "key", hex.EncodeToString(GetDividendAccountMapKey(dividendAccount.ID.Bytes())), "dividendAccount", dividendAccount.String())
-	return nil
-}
-
-// GetDividendAccountByID will return DividendAccount of valID
-func (k *Keeper) GetDividendAccountByID(ctx sdk.Context, dividendID hmTypes.DividendAccountID) (dividendAccount hmTypes.DividendAccount, err error) {
-
-	// check if dividend account exists
-	if !k.CheckIfDividendAccountExists(ctx, dividendID) {
-		return dividendAccount, errors.New("Dividend Account not found")
-	}
-
-	// Get DividendAccount key
-	store := ctx.KVStore(k.storeKey)
-	key := GetDividendAccountMapKey(dividendID.Bytes())
-
-	// unmarshall dividend account and return
-	dividendAccount, err = hmTypes.UnMarshallDividendAccount(k.cdc, store.Get(key))
-	if err != nil {
-		return dividendAccount, err
-	}
-
-	return dividendAccount, nil
-}
-
-// CheckIfDividendAccountExists will return true if dividend account exists
-func (k *Keeper) CheckIfDividendAccountExists(ctx sdk.Context, dividendID hmTypes.DividendAccountID) (ok bool) {
-	store := ctx.KVStore(k.storeKey)
-	key := GetDividendAccountMapKey(dividendID.Bytes())
-	if !store.Has(key) {
-		return false
-	}
-	return true
-}
-
-// GetAllDividendAccounts returns all DividendAccountss
-func (k *Keeper) GetAllDividendAccounts(ctx sdk.Context) (dividendAccounts []hmTypes.DividendAccount) {
-	// iterate through dividendAccounts and create dividendAccounts update array
-	k.IterateDividendAccountsByPrefixAndApplyFn(ctx, DividendAccountMapKey, func(dividendAccount hmTypes.DividendAccount) error {
-		// append to list of dividendUpdates
-		dividendAccounts = append(dividendAccounts, dividendAccount)
-		return nil
-	})
-
-	return
-}
-
-// AddFeeToDividendAccount adds fee to dividend account for withdrawal
-func (k *Keeper) AddFeeToDividendAccount(ctx sdk.Context, valID hmTypes.ValidatorID, fee *big.Int) sdk.Error {
-	// Get or create dividend account
-	var dividendAccount hmTypes.DividendAccount
-
-	if k.CheckIfDividendAccountExists(ctx, hmTypes.DividendAccountID(valID)) {
-		dividendAccount, _ = k.GetDividendAccountByID(ctx, hmTypes.DividendAccountID(valID))
-	} else {
-		dividendAccount = hmTypes.DividendAccount{
-			ID:            hmTypes.DividendAccountID(valID),
-			FeeAmount:     big.NewInt(0).String(),
-			SlashedAmount: big.NewInt(0).String(),
-		}
-	}
-
-	// update fee
-	oldFee, _ := big.NewInt(0).SetString(dividendAccount.FeeAmount, 10)
-	totalFee := big.NewInt(0).Add(oldFee, fee).String()
-	dividendAccount.FeeAmount = totalFee
-
-	k.Logger(ctx).Info("Dividend Account fee of validator ", "ID", dividendAccount.ID, "Fee", dividendAccount.FeeAmount)
-	k.AddDividendAccount(ctx, dividendAccount)
-	return nil
-}
-
-// IterateDividendAccountsByPrefixAndApplyFn iterate dividendAccounts and apply the given function.
-func (k *Keeper) IterateDividendAccountsByPrefixAndApplyFn(ctx sdk.Context, prefix []byte, f func(dividendAccount hmTypes.DividendAccount) error) {
-	store := ctx.KVStore(k.storeKey)
-
-	// get validator iterator
-	iterator := sdk.KVStorePrefixIterator(store, prefix)
-	defer iterator.Close()
-
-	// loop through dividendAccounts
-	for ; iterator.Valid(); iterator.Next() {
-		// unmarshall dividendAccount
-		dividendAccount, _ := hmTypes.UnMarshallDividendAccount(k.cdc, iterator.Value())
-		// call function and return if required
-		if err := f(dividendAccount); err != nil {
-			return
-		}
-	}
-}
-
 // IterateCurrentValidatorsAndApplyFn iterate through current validators
 func (k *Keeper) IterateCurrentValidatorsAndApplyFn(ctx sdk.Context, f func(validator *hmTypes.Validator) bool) {
 	currentValidatorSet := k.GetValidatorSet(ctx)
@@ -533,5 +429,4 @@ func (k *Keeper) IterateStakingSequencesAndApplyFn(ctx sdk.Context, f func(seque
 			return
 		}
 	}
-	return
 }

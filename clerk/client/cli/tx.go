@@ -72,6 +72,12 @@ func CreateNewStateRecord(cdc *codec.Codec) *cobra.Command {
 				return fmt.Errorf("record id cannot be empty")
 			}
 
+			// get contract Addr
+			contractAddr := types.HexToHeimdallAddress(viper.GetString(FlagContractAddress))
+			if contractAddr.Empty() {
+				return fmt.Errorf("contract Address cannot be empty")
+			}
+
 			// log index
 			logIndexStr := viper.GetString(FlagLogIndex)
 			if logIndexStr == "" {
@@ -80,7 +86,18 @@ func CreateNewStateRecord(cdc *codec.Codec) *cobra.Command {
 
 			logIndex, err := strconv.ParseUint(logIndexStr, 10, 64)
 			if err != nil {
-				return fmt.Errorf("log index cannot be empty")
+				return fmt.Errorf("log index cannot be parsed")
+			}
+
+			// log index
+			dataStr := viper.GetString(FlagData)
+			if dataStr == "" {
+				return fmt.Errorf("data cannot be empty")
+			}
+
+			data := types.HexToHexBytes(dataStr)
+			if dataStr == "" {
+				return fmt.Errorf("data should be hex string")
 			}
 
 			// create new state record
@@ -88,22 +105,46 @@ func CreateNewStateRecord(cdc *codec.Codec) *cobra.Command {
 				proposer,
 				types.HexToHeimdallHash(txHashStr),
 				logIndex,
+				viper.GetUint64(FlagBlockNumber),
 				recordID,
+				contractAddr,
+				data,
 				borChainID,
 			)
 
 			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
 		},
 	}
+	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<tx-hash>")
 	cmd.Flags().String(FlagLogIndex, "", "--log-index=<log-index>")
 	cmd.Flags().String(FlagRecordID, "", "--id=<record-id>")
 	cmd.Flags().String(FlagBorChainId, "", "--bor-chain-id=<bor-chain-id>")
-	cmd.MarkFlagRequired(FlagProposerAddress)
-	cmd.MarkFlagRequired(FlagRecordID)
-	cmd.MarkFlagRequired(FlagTxHash)
-	cmd.MarkFlagRequired(FlagLogIndex)
-	cmd.MarkFlagRequired(FlagBorChainId)
+	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
+	cmd.Flags().String(FlagContractAddress, "", "--contract-addr=<contract-addr>")
+	cmd.Flags().String(FlagData, "", "--data=<data>")
+
+	if err := cmd.MarkFlagRequired(FlagRecordID); err != nil {
+		logger.Error("CreateNewStateRecord | MarkFlagRequired | FlagRecordID", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagTxHash); err != nil {
+		logger.Error("CreateNewStateRecord | MarkFlagRequired | FlagTxHash", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagLogIndex); err != nil {
+		logger.Error("CreateNewStateRecord | MarkFlagRequired | FlagLogIndex", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagBorChainId); err != nil {
+		logger.Error("CreateNewStateRecord | MarkFlagRequired | FlagBorChainId", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagBlockNumber); err != nil {
+		logger.Error("CreateNewStateRecord | MarkFlagRequired | FlagBlockNumber", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagContractAddress); err != nil {
+		logger.Error("CreateNewStateRecord | MarkFlagRequired | FlagContractAddress", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagData); err != nil {
+		logger.Error("CreateNewStateRecord | MarkFlagRequired | FlagData", "Error", err)
+	}
 
 	return cmd
 }

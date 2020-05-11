@@ -10,8 +10,10 @@ import (
 	"time"
 
 	ethCrypto "github.com/maticnetwork/bor/crypto"
+	"github.com/maticnetwork/bor/eth"
 	"github.com/maticnetwork/bor/ethclient"
 	"github.com/maticnetwork/bor/rpc"
+	"github.com/maticnetwork/heimdall/file"
 	"github.com/spf13/viper"
 	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -61,10 +63,11 @@ const (
 	DefaultSpanPollingInterval      = 1 * time.Minute
 
 	DefaultChildBlockInterval = 10000 // difference between 2 indexes of header blocks
-	DefaultTxConfirmationTime = 6 * 14 * time.Second
 	DefaultMainchainGasLimit  = uint64(5000000)
 
 	DefaultBorChainID string = "15001"
+
+	secretFilePerm = 0600
 )
 
 var (
@@ -113,6 +116,8 @@ var mainRPCClient *rpc.Client
 // MaticClient stores eth/rpc client for Matic Network
 var maticClient *ethclient.Client
 var maticRPCClient *rpc.Client
+
+var maticEthClient *eth.EthAPIBackend
 
 // private key object
 var privObject secp256k1.PrivKeySecp256k1
@@ -190,6 +195,10 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 	GenesisDoc = *genDoc
 
 	// load pv file, unmarshall and set to privObject
+	err = file.PermCheck(file.Rootify("priv_validator_key.json", configDir), secretFilePerm)
+	if err != nil {
+		Logger.Error(err.Error())
+	}
 	privVal := privval.LoadFilePV(filepath.Join(configDir, "priv_validator_key.json"), filepath.Join(configDir, "priv_validator_key.json"))
 	cdc.MustUnmarshalBinaryBare(privVal.Key.PrivKey.Bytes(), &privObject)
 	cdc.MustUnmarshalBinaryBare(privObject.PubKey().Bytes(), &pubObject)
@@ -249,6 +258,11 @@ func GetMaticClient() *ethclient.Client {
 // GetMaticRPCClient returns matic's RPC client
 func GetMaticRPCClient() *rpc.Client {
 	return maticRPCClient
+}
+
+// GetMaticEthClient returns matic's Eth client
+func GetMaticEthClient() *eth.EthAPIBackend {
+	return maticEthClient
 }
 
 // GetPrivKey returns priv key object

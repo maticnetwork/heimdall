@@ -6,7 +6,6 @@ import (
 
 	"github.com/RichardKnop/machinery/v1/tasks"
 	"github.com/maticnetwork/bor/core/types"
-	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
 )
 
@@ -62,14 +61,7 @@ func (ml *MaticChainListener) ProcessHeader(newHeader *types.Header) {
 		return
 	}
 
-	chainmanagerParams, err := util.GetChainmanagerParams(ml.cliCtx)
-	if err != nil {
-		ml.Logger.Error("Error fetching chain manager params", "error", err)
-		return
-	}
-
-	confirmationTime := chainmanagerParams.TxConfirmationTime
-	ml.sendTaskWithDelay("sendCheckpointToHeimdall", headerBytes, confirmationTime)
+	ml.sendTaskWithDelay("sendCheckpointToHeimdall", headerBytes, 0)
 }
 
 func (ml *MaticChainListener) sendTaskWithDelay(taskName string, headerBytes []byte, delay time.Duration) {
@@ -88,7 +80,7 @@ func (ml *MaticChainListener) sendTaskWithDelay(taskName string, headerBytes []b
 	// add delay for task so that multiple validators won't send same transaction at same time
 	eta := time.Now().Add(delay)
 	signature.ETA = &eta
-	ml.Logger.Info("Sending task", "taskname", taskName, "currentTime", time.Now(), "delayTime", eta)
+	ml.Logger.Debug("Sending task", "taskname", taskName, "currentTime", time.Now(), "delayTime", eta)
 	_, err := ml.queueConnector.Server.SendTask(signature)
 	if err != nil {
 		ml.Logger.Error("Error sending task", "taskName", taskName, "error", err)

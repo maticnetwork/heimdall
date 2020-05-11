@@ -23,3 +23,13 @@ type QueryCheckpointParams struct {
 func NewQueryCheckpointParams(headerIndex uint64) QueryCheckpointParams {
 	return QueryCheckpointParams{HeaderIndex: headerIndex}
 }
+
+// QueryBorChainID defines the params for querying with bor chain id
+type QueryBorChainID struct {
+	BorChainID string
+}
+
+// NewQueryBorChainID creates a new instance of QueryBorChainID with give chain id
+func NewQueryBorChainID(chainID string) QueryBorChainID {
+	return QueryBorChainID{BorChainID: chainID}
+}

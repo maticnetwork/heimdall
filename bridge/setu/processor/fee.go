@@ -11,6 +11,8 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 	topupTypes "github.com/maticnetwork/heimdall/topup/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // FeeProcessor - process fee related events
@@ -36,7 +38,9 @@ func (fp *FeeProcessor) Start() error {
 // RegisterTasks - Registers clerk related tasks with machinery
 func (fp *FeeProcessor) RegisterTasks() {
 	fp.Logger.Info("Registering fee related tasks")
-	fp.queueConnector.Server.RegisterTask("sendTopUpFeeToHeimdall", fp.sendTopUpFeeToHeimdall)
+	if err := fp.queueConnector.Server.RegisterTask("sendTopUpFeeToHeimdall", fp.sendTopUpFeeToHeimdall); err != nil {
+		fp.Logger.Error("RegisterTasks | sendTopUpFeeToHeimdall", "error", err)
+	}
 }
 
 // processTopupFeeEvent - processes topup fee event
@@ -55,9 +59,11 @@ func (fp *FeeProcessor) sendTopUpFeeToHeimdall(eventName string, logBytes string
 			fp.Logger.Info("Ignoring task to send topup to heimdall as already processed",
 				"event", eventName,
 				"validatorId", event.ValidatorId,
+				"Signer", event.Signer,
 				"Fee", event.Fee,
 				"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 				"logIndex", uint64(vLog.Index),
+				"blockNumber", vLog.BlockNumber,
 			)
 			return nil
 		}
@@ -65,13 +71,15 @@ func (fp *FeeProcessor) sendTopUpFeeToHeimdall(eventName string, logBytes string
 		fp.Logger.Info("✅ sending topup to heimdall",
 			"event", eventName,
 			"validatorId", event.ValidatorId,
+			"Signer", event.Signer,
 			"Fee", event.Fee,
 			"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			"logIndex", uint64(vLog.Index),
+			"blockNumber", vLog.BlockNumber,
 		)
 
 		// create msg checkpoint ack message
-		msg := topupTypes.NewMsgTopup(helper.GetFromAddress(fp.cliCtx), event.ValidatorId.Uint64(), hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()), uint64(vLog.Index))
+		msg := topupTypes.NewMsgTopup(helper.GetFromAddress(fp.cliCtx), event.ValidatorId.Uint64(), hmTypes.BytesToHeimdallAddress(event.Signer.Bytes()), sdk.NewIntFromBigInt(event.Fee), hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()), uint64(vLog.Index), vLog.BlockNumber)
 
 		// return broadcast to heimdall
 		if err := fp.txBroadcaster.BroadcastToHeimdall(msg); err != nil {
@@ -91,6 +99,10 @@ func (fp *FeeProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, log
 
 	endpoint := helper.GetHeimdallServerEndpoint(util.TopupTxStatusURL)
 	url, err := util.CreateURLWithQuery(endpoint, queryParam)
+	if err != nil {
+		fp.Logger.Error("Error in creating url", "endpoint", endpoint, "error", err)
+		return false, err
+	}
 
 	res, err := helper.FetchFromAPI(fp.cliCtx, url)
 	if err != nil {

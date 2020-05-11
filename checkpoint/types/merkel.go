@@ -4,15 +4,11 @@ import (
 	"bytes"
 	"encoding/hex"
 	"errors"
-	"math/big"
 
 	"github.com/cbergoon/merkletree"
-	"github.com/maticnetwork/bor/common/hexutil"
 	"github.com/maticnetwork/bor/core/types"
-	"github.com/maticnetwork/bor/crypto"
 	"github.com/maticnetwork/bor/rpc"
 	"github.com/tendermint/crypto/sha3"
-	"github.com/xsleonard/go-merkle"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/maticnetwork/heimdall/helper"
@@ -20,14 +16,14 @@ import (
 )
 
 // ValidateCheckpoint - Validates if checkpoint rootHash matches or not
-func ValidateCheckpoint(start uint64, end uint64, rootHash hmTypes.HeimdallHash, checkpointLength uint64) (bool, error) {
+func ValidateCheckpoint(start uint64, end uint64, rootHash hmTypes.HeimdallHash, checkpointLength uint64, contractCaller helper.IContractCaller) (bool, error) {
 	// Check if blocks exist locally
 	if !CheckIfBlocksExist(end) {
 		return false, errors.New("blocks not found locally")
 	}
 
 	// Compare RootHash
-	root, err := GetHeaders(start, end, checkpointLength)
+	root, err := contractCaller.GetRootHash(start, end, checkpointLength)
 	if err != nil {
 		return false, err
 	}
@@ -55,68 +51,6 @@ func CheckIfBlocksExist(end uint64) bool {
 	}
 
 	return true
-}
-
-// GetHeaders returns header data
-func GetHeaders(start uint64, end uint64, checkpointLength uint64) ([]byte, error) {
-	rpcClient := helper.GetMaticRPCClient()
-	noOfBlock := end - start + 1
-
-	if noOfBlock > checkpointLength {
-		return nil, errors.New("number of headers requested exceeds")
-	}
-
-	if start > end {
-		return nil, errors.New("start is greater than end")
-	}
-
-	batchElements := make([]rpc.BatchElem, end-start+1)
-	for i := range batchElements {
-		param := new(big.Int)
-		param.SetUint64(uint64(i) + start)
-
-		batchElements[i] = rpc.BatchElem{
-			Method: "eth_getBlockByNumber",
-			Args:   []interface{}{hexutil.EncodeBig(param), true},
-			Result: &types.Header{},
-		}
-	}
-
-	// Batch call
-	err := fetchBatchElements(rpcClient, batchElements, checkpointLength)
-	if err != nil {
-		return nil, err
-	}
-
-	// Fetch result and draft header and add into tree
-	expectedLength := nextPowerOfTwo(end - start + 1)
-	headers := make([][32]byte, expectedLength)
-	for i, batchElement := range batchElements {
-		if batchElement.Error != nil {
-			return nil, batchElement.Error
-		}
-
-		blockHeader := batchElement.Result.(*types.Header)
-		header := crypto.Keccak256(appendBytes32(
-			blockHeader.Number.Bytes(),
-			new(big.Int).SetUint64(blockHeader.Time).Bytes(),
-			blockHeader.TxHash.Bytes(),
-			blockHeader.ReceiptHash.Bytes(),
-		))
-
-		var arr [32]byte
-		copy(arr[:], header)
-
-		// set header
-		headers[i] = arr
-	}
-
-	tree := merkle.NewTreeWithOpts(merkle.TreeOptions{EnableHashSorting: false, DisableHashLeaves: true})
-	if err := tree.Generate(convert(headers), sha3.NewLegacyKeccak256()); err != nil {
-		return nil, err
-	}
-
-	return tree.Root().Hash, nil
 }
 
 // GetAccountRootHash returns roothash of Validator Account State Tree

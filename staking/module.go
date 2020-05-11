@@ -3,6 +3,7 @@ package staking
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -13,8 +14,11 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 	stakingCli "github.com/maticnetwork/heimdall/staking/client/cli"
 	stakingRest "github.com/maticnetwork/heimdall/staking/client/rest"
+	"github.com/maticnetwork/heimdall/staking/simulation"
 	"github.com/maticnetwork/heimdall/staking/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmModule "github.com/maticnetwork/heimdall/types/module"
+	simTypes "github.com/maticnetwork/heimdall/types/simulation"
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
@@ -152,7 +156,7 @@ func (AppModule) QuerierRoute() string {
 
 // NewQuerierHandler returns the auth module sdk.Querier.
 func (am AppModule) NewQuerierHandler() sdk.Querier {
-	return NewQuerier(am.keeper)
+	return NewQuerier(am.keeper, am.contractCaller)
 }
 
 // InitGenesis performs genesis initialization for the auth module. It returns
@@ -178,4 +182,38 @@ func (AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
 // updates.
 func (AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
 	return []abci.ValidatorUpdate{}
+}
+
+func (am AppModule) NewSideTxHandler() hmTypes.SideTxHandler {
+	return NewSideTxHandler(am.keeper, am.contractCaller)
+}
+
+// NewPostTxHandler side tx handler
+func (am AppModule) NewPostTxHandler() hmTypes.PostTxHandler {
+	return NewPostTxHandler(am.keeper, am.contractCaller)
+}
+
+// GenerateGenesisState creates a randomized GenState of the Staking module
+func (AppModule) GenerateGenesisState(simState *hmModule.SimulationState) {
+	simulation.RandomizedGenState(simState)
+}
+
+// ProposalContents doesn't return any content functions.
+func (AppModule) ProposalContents(simState hmModule.SimulationState) []simTypes.WeightedProposalContent {
+	return nil
+}
+
+// RandomizedParams creates randomized param changes for the simulator.
+func (AppModule) RandomizedParams(r *rand.Rand) []simTypes.ParamChange {
+	return nil
+}
+
+// RegisterStoreDecoder registers a decoder for chainmanager module's types
+func (AppModule) RegisterStoreDecoder(sdr hmModule.StoreDecoderRegistry) {
+	return
+}
+
+// WeightedOperations doesn't return any chainmanager module operation.
+func (AppModule) WeightedOperations(_ hmModule.SimulationState) []simTypes.WeightedOperation {
+	return nil
 }

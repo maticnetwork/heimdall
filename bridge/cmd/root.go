@@ -60,6 +60,7 @@ func Execute() {
 }
 
 func init() {
+	var logger = helper.Logger.With("module", "bridge/cmd/")
 	rootCmd.PersistentFlags().StringP(helper.NodeFlag, "n", "tcp://localhost:26657", "Node to connect to")
 	rootCmd.PersistentFlags().String(helper.HomeFlag, os.ExpandEnv("$HOME/.heimdalld"), "directory for config and data")
 	rootCmd.PersistentFlags().String(
@@ -81,5 +82,7 @@ func init() {
 	)
 
 	// bind all flags with viper
-	viper.BindPFlags(rootCmd.Flags())
+	if err := viper.BindPFlags(rootCmd.Flags()); err != nil {
+		logger.Error("init | BindPFlag | rootCmd.Flags", "Error", err)
+	}
 }

@@ -3,7 +3,6 @@ package app
 import (
 	"encoding/json"
 	"fmt"
-	"math/big"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -34,6 +33,8 @@ import (
 	paramsClient "github.com/maticnetwork/heimdall/params/client"
 	"github.com/maticnetwork/heimdall/params/subspace"
 	paramsTypes "github.com/maticnetwork/heimdall/params/types"
+	"github.com/maticnetwork/heimdall/sidechannel"
+	sidechannelTypes "github.com/maticnetwork/heimdall/sidechannel/types"
 	"github.com/maticnetwork/heimdall/staking"
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
 	"github.com/maticnetwork/heimdall/supply"
@@ -64,6 +65,7 @@ var (
 	// and genesis verification.
 	ModuleBasics = module.NewBasicManager(
 		params.AppModuleBasic{},
+		sidechannel.AppModuleBasic{},
 		auth.AppModuleBasic{},
 		bank.AppModuleBasic{},
 		supply.AppModuleBasic{},
@@ -95,17 +97,21 @@ type HeimdallApp struct {
 	// subspaces
 	subspaces map[string]subspace.Subspace
 
+	// side router
+	sideRouter types.SideRouter
+
 	// keepers
-	AccountKeeper    auth.AccountKeeper
-	BankKeeper       bank.Keeper
-	SupplyKeeper     supply.Keeper
-	GovKeeper        gov.Keeper
-	ChainKeeper      chainmanager.Keeper
-	CheckpointKeeper checkpoint.Keeper
-	StakingKeeper    staking.Keeper
-	BorKeeper        bor.Keeper
-	ClerkKeeper      clerk.Keeper
-	TopupKeeper      topup.Keeper
+	SidechannelKeeper sidechannel.Keeper
+	AccountKeeper     auth.AccountKeeper
+	BankKeeper        bank.Keeper
+	SupplyKeeper      supply.Keeper
+	GovKeeper         gov.Keeper
+	ChainKeeper       chainmanager.Keeper
+	CheckpointKeeper  checkpoint.Keeper
+	StakingKeeper     staking.Keeper
+	BorKeeper         bor.Keeper
+	ClerkKeeper       clerk.Keeper
+	TopupKeeper       topup.Keeper
 	// param keeper
 	ParamsKeeper params.Keeper
 
@@ -143,9 +149,9 @@ func (d ModuleCommunicator) IsCurrentValidatorByAddress(ctx sdk.Context, address
 	return d.App.StakingKeeper.IsCurrentValidatorByAddress(ctx, address)
 }
 
-// AddFeeToDividendAccount add fee to dividend account
-func (d ModuleCommunicator) AddFeeToDividendAccount(ctx sdk.Context, valID types.ValidatorID, fee *big.Int) sdk.Error {
-	return d.App.StakingKeeper.AddFeeToDividendAccount(ctx, valID, fee)
+// GetAllDividendAccounts fetches all dividend accounts from topup module
+func (d ModuleCommunicator) GetAllDividendAccounts(ctx sdk.Context) []types.DividendAccount {
+	return d.App.TopupKeeper.GetAllDividendAccounts(ctx)
 }
 
 // GetValidatorFromValID get validator from validator id
@@ -177,21 +183,19 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	// create and register app-level codec for TXs and accounts
 	cdc := MakeCodec()
 
-	// create and register pulp codec
-	pulp := authTypes.GetPulpInstance()
-
 	// set prefix
 	config := sdk.GetConfig()
 	config.Seal()
 
 	// base app
-	bApp := bam.NewBaseApp(AppName, logger, db, authTypes.RLPTxDecoder(cdc, pulp), baseAppOptions...)
+	bApp := bam.NewBaseApp(AppName, logger, db, authTypes.DefaultTxDecoder(cdc), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(nil)
 	bApp.SetAppVersion(version.Version)
 
 	// keys
 	keys := sdk.NewKVStoreKeys(
 		bam.MainStoreKey,
+		sidechannelTypes.StoreKey,
 		authTypes.StoreKey,
 		bankTypes.StoreKey,
 		supplyTypes.StoreKey,
@@ -217,6 +221,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 
 	// init params keeper and subspaces
 	app.ParamsKeeper = params.NewKeeper(app.cdc, keys[paramsTypes.StoreKey], tkeys[paramsTypes.TStoreKey], paramsTypes.DefaultCodespace)
+	app.subspaces[sidechannelTypes.ModuleName] = app.ParamsKeeper.Subspace(sidechannelTypes.DefaultParamspace)
 	app.subspaces[authTypes.ModuleName] = app.ParamsKeeper.Subspace(authTypes.DefaultParamspace)
 	app.subspaces[bankTypes.ModuleName] = app.ParamsKeeper.Subspace(bankTypes.DefaultParamspace)
 	app.subspaces[supplyTypes.ModuleName] = app.ParamsKeeper.Subspace(supplyTypes.DefaultParamspace)
@@ -247,6 +252,14 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	//
 	// keepers
 	//
+
+	// create side channel keeper
+	app.SidechannelKeeper = sidechannel.NewKeeper(
+		app.cdc,
+		keys[sidechannelTypes.StoreKey], // target store
+		app.subspaces[sidechannelTypes.ModuleName],
+		common.DefaultCodespace,
+	)
 
 	// create chain keeper
 	app.ChainKeeper = chainmanager.NewKeeper(
@@ -317,6 +330,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		common.DefaultCodespace,
 		app.StakingKeeper,
 		app.ChainKeeper,
+		moduleCommunicator,
 	)
 
 	app.BorKeeper = bor.NewKeeper(
@@ -351,6 +365,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
 	app.mm = module.NewManager(
+		sidechannel.NewAppModule(app.SidechannelKeeper),
 		auth.NewAppModule(app.AccountKeeper, &app.caller, []authTypes.AccountProcessor{
 			supplyTypes.AccountProcessor,
 		}),
@@ -359,7 +374,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		gov.NewAppModule(app.GovKeeper, app.SupplyKeeper),
 		chainmanager.NewAppModule(app.ChainKeeper, &app.caller),
 		staking.NewAppModule(app.StakingKeeper, &app.caller),
-		checkpoint.NewAppModule(app.CheckpointKeeper, app.StakingKeeper, &app.caller),
+		checkpoint.NewAppModule(app.CheckpointKeeper, app.StakingKeeper, app.TopupKeeper, &app.caller),
 		bor.NewAppModule(app.BorKeeper, &app.caller),
 		clerk.NewAppModule(app.ClerkKeeper, &app.caller),
 		topup.NewAppModule(app.TopupKeeper, &app.caller),
@@ -368,6 +383,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	// NOTE: The genutils module must occur after staking so that pools are
 	// properly initialized with tokens from genesis accounts.
 	app.mm.SetOrderInitGenesis(
+		sidechannelTypes.ModuleName,
 		authTypes.ModuleName,
 		bankTypes.ModuleName,
 		govTypes.ModuleName,
@@ -383,6 +399,20 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	// register message routes and query routes
 	app.mm.RegisterRoutes(app.Router(), app.QueryRouter())
 
+	// side router
+	app.sideRouter = types.NewSideRouter()
+	for _, m := range app.mm.Modules {
+		if m.Route() != "" {
+			if sm, ok := m.(hmModule.SideModule); ok {
+				app.sideRouter.AddRoute(m.Route(), &types.SideHandlers{
+					SideTxHandler: sm.NewSideTxHandler(),
+					PostTxHandler: sm.NewPostTxHandler(),
+				})
+			}
+		}
+	}
+	app.sideRouter.Seal()
+
 	// create the simulation manager and define the order of the modules for deterministic simulations
 	//
 	// NOTE: this is not required apps that don't use the simulator for fuzz testing
@@ -393,6 +423,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		}),
 		chainmanager.NewAppModule(app.ChainKeeper, &app.caller),
 		topup.NewAppModule(app.TopupKeeper, &app.caller),
+		staking.NewAppModule(app.StakingKeeper, &app.caller),
 	)
 	app.sm.RegisterStoreDecoders()
 
@@ -413,6 +444,10 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 			auth.DefaultSigVerificationGasConsumer,
 		),
 	)
+	// side-tx processor
+	app.SetPostDeliverTxHandler(app.PostDeliverTxHandler)
+	app.SetBeginSideBlocker(app.BeginSideBlocker)
+	app.SetDeliverSideTxHandler(app.DeliverSideTxHandler)
 
 	// load latest version
 	err = app.LoadLatestVersion(app.keys[bam.MainStoreKey])
@@ -434,16 +469,6 @@ func MakeCodec() *codec.Codec {
 
 	cdc.Seal()
 	return cdc
-}
-
-// MakePulp creates pulp codec and registers custom types for decoder
-func MakePulp() *authTypes.Pulp {
-	pulp := authTypes.GetPulpInstance()
-
-	// register custom type
-	checkpointTypes.RegisterPulp(pulp)
-
-	return pulp
 }
 
 // Name returns the name of the App
@@ -523,7 +548,9 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) ab
 		amount := moduleAccount.GetCoins().AmountOf(authTypes.FeeToken)
 		if !amount.IsZero() {
 			coins := sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: amount}}
-			app.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, authTypes.FeeCollectorName, proposer, coins)
+			if err := app.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, authTypes.FeeCollectorName, proposer, coins); err != nil {
+				logger.Error("EndBlocker | SendCoinsFromModuleToAccount", "Error", err)
+			}
 		}
 
 		// remove block proposer
@@ -607,6 +634,14 @@ func (app *HeimdallApp) Codec() *codec.Codec {
 	return app.cdc
 }
 
+// SetCodec set codec to app
+//
+// NOTE: This is solely to be used for testing purposes as it may be desirable
+// for modules to register their own custom testing types.
+func (app *HeimdallApp) SetCodec(cdc *codec.Codec) {
+	app.cdc = cdc
+}
+
 // GetKey returns the KVStoreKey for the provided store key.
 //
 // NOTE: This is solely to be used for testing purposes.
@@ -626,6 +661,17 @@ func (app *HeimdallApp) GetTKey(storeKey string) *sdk.TransientStoreKey {
 // NOTE: This is solely to be used for testing purposes.
 func (app *HeimdallApp) GetSubspace(moduleName string) subspace.Subspace {
 	return app.subspaces[moduleName]
+}
+
+// GetSideRouter returns side-tx router
+func (app *HeimdallApp) GetSideRouter() types.SideRouter {
+	return app.sideRouter
+}
+
+// SetSideRouter sets side-tx router
+// Testing ONLY
+func (app *HeimdallApp) SetSideRouter(r types.SideRouter) {
+	app.sideRouter = r
 }
 
 // GetModuleManager returns module manager

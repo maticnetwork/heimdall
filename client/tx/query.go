@@ -19,6 +19,7 @@ import (
 
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/helper"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmRest "github.com/maticnetwork/heimdall/types/rest"
 )
 
@@ -97,14 +98,19 @@ $ gaiacli query txs --tags '<tag1>:<value1>&<tag2>:<value2>' --page 1 --limit 30
 	}
 
 	cmd.Flags().StringP(client.FlagNode, "n", "tcp://localhost:26657", "Node to connect to")
-	viper.BindPFlag(client.FlagNode, cmd.Flags().Lookup(client.FlagNode))
+	if err := viper.BindPFlag(client.FlagNode, cmd.Flags().Lookup(client.FlagNode)); err != nil {
+		logger.Error("QueryTxsByEventsCmd | BindPFlag | client.FlagNode", "Error", err)
+	}
 	cmd.Flags().Bool(client.FlagTrustNode, false, "Trust connected full node (don't verify proofs for responses)")
-	viper.BindPFlag(client.FlagTrustNode, cmd.Flags().Lookup(client.FlagTrustNode))
-
+	if err := viper.BindPFlag(client.FlagTrustNode, cmd.Flags().Lookup(client.FlagTrustNode)); err != nil {
+		logger.Error("QueryTxsByEventsCmd | BindPFlag | client.FlagTrustNode", "Error", err)
+	}
 	cmd.Flags().String(flagTags, "", "tag:value list of tags that must match")
 	cmd.Flags().Uint32(flagPage, rest.DefaultPage, "Query a specific page of paginated results")
 	cmd.Flags().Uint32(flagLimit, rest.DefaultLimit, "Query number of transactions results per page returned")
-	cmd.MarkFlagRequired(flagTags)
+	if err := cmd.MarkFlagRequired(flagTags); err != nil {
+		logger.Error("QueryTxsByEventsCmd | MarkFlagRequired | flagTags", "Error", err)
+	}
 
 	return cmd
 }
@@ -132,10 +138,13 @@ func QueryTxCmd(cdc *codec.Codec) *cobra.Command {
 	}
 
 	cmd.Flags().StringP(client.FlagNode, "n", "tcp://localhost:26657", "Node to connect to")
-	viper.BindPFlag(client.FlagNode, cmd.Flags().Lookup(client.FlagNode))
+	if err := viper.BindPFlag(client.FlagNode, cmd.Flags().Lookup(client.FlagNode)); err != nil {
+		logger.Error("QueryTxCmd | BindPFlag | client.FlagNode", "Error", err)
+	}
 	cmd.Flags().Bool(client.FlagTrustNode, false, "Trust connected full node (don't verify proofs for responses)")
-	viper.BindPFlag(client.FlagTrustNode, cmd.Flags().Lookup(client.FlagTrustNode))
-
+	if err := viper.BindPFlag(client.FlagTrustNode, cmd.Flags().Lookup(client.FlagTrustNode)); err != nil {
+		logger.Error("QueryTxCmd | BindPFlag | client.FlagTrustNode", "Error", err)
+	}
 	return cmd
 }
 
@@ -253,9 +262,13 @@ func QueryCommitTxRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		// get block client
 		blockDetails, err := helper.GetBlock(cliCtx, tx.Height+1)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
 
 		// extract signs from votes
-		sigs := helper.GetSigs(blockDetails.Block.LastCommit.Precommits)
+		sigs := helper.GetVoteSigs(blockDetails.Block.LastCommit.Precommits)
 
 		// proof
 		proofList := helper.GetMerkleProofList(&tx.Proof.Proof)
@@ -268,6 +281,77 @@ func QueryCommitTxRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			Tx:    hex.EncodeToString(tx.Tx[authTypes.PulpHashLength:]),
 			Proof: hex.EncodeToString(proof),
 		}
+
+		rest.PostProcessResponse(w, cliCtx, result)
+	}
+}
+
+// QuerySideTxRequestHandlerFn implements a REST handler that queries sigs, side-tx bytes committed block
+func QuerySideTxRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		hash, err := hex.DecodeString(vars["hash"])
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		tx, err := helper.QueryTxWithProof(cliCtx, hash)
+		if err != nil {
+			if strings.Contains(err.Error(), vars["hash"]) {
+				rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
+				return
+			}
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		// fetch side txs sigs
+		decoder := helper.GetTxDecoder(authTypes.ModuleCdc)
+		stdTx, err := decoder(tx.Tx)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		cmsg := stdTx.GetMsgs()[0] // get first message
+		sideMsg, ok := cmsg.(hmTypes.SideTxMsg)
+		if !ok {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "Invalid side-tx msg")
+			return
+		}
+
+		// side-tx data
+		sideTxData := sideMsg.GetSideSignBytes()
+
+		// get block details
+		blockDetails, err := helper.GetBlock(cliCtx, tx.Height+2) // side-tx take 2 blocks to process
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "Side-tx is not processed yet.")
+			return
+		}
+
+		// extract votes from response
+		preCommits := blockDetails.Block.LastCommit.Precommits
+
+		// extract side-tx signs from votes
+		sigs := helper.GetSideTxSigs(tx.Tx.Hash(), sideTxData, preCommits)
+
+		// commit tx proof
+		result := hmRest.SideTxProof{
+			Sigs: hex.EncodeToString(sigs),
+			Tx:   hex.EncodeToString(tx.Tx),
+			Data: hex.EncodeToString(sideTxData),
+		}
+
+		// cli ctx with height
+		cliCtx.WithHeight(tx.Height + 2)
 
 		rest.PostProcessResponse(w, cliCtx, result)
 	}

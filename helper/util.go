@@ -28,6 +28,7 @@ import (
 	ethTypes "github.com/maticnetwork/bor/core/types"
 	"github.com/spf13/viper"
 	"github.com/tendermint/go-amino"
+	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/merkle"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -153,8 +154,8 @@ func BytesToPubkey(pubKey []byte) secp256k1.PubKeySecp256k1 {
 	return pubkeyBytes
 }
 
-// GetSigs returns sigs bytes from vote
-func GetSigs(unFilteredVotes []*tmTypes.CommitSig) (sigs []byte) {
+// GetVoteSigs returns sigs bytes from vote
+func GetVoteSigs(unFilteredVotes []*tmTypes.CommitSig) (sigs []byte) {
 	votes := make([]*tmTypes.CommitSig, 0)
 	for _, item := range unFilteredVotes {
 		if item != nil {
@@ -170,6 +171,68 @@ func GetSigs(unFilteredVotes []*tmTypes.CommitSig) (sigs []byte) {
 	for _, vote := range votes {
 		sigs = append(sigs, vote.Signature...)
 	}
+	return
+}
+
+type sideTxSig struct {
+	Address []byte
+	Sig     []byte
+}
+
+// GetSideTxSigs returns sigs bytes from vote by tx hash
+func GetSideTxSigs(txHash []byte, sideTxData []byte, unFilteredVotes []*tmTypes.CommitSig) (sigs []byte) {
+	// side tx result with data
+	sideTxResultWithData := tmTypes.SideTxResultWithData{
+		SideTxResult: tmTypes.SideTxResult{
+			TxHash: txHash,
+			Result: int32(abci.SideTxResultType_Yes),
+		},
+		Data: sideTxData,
+	}
+
+	// draft signed data
+	signedData := sideTxResultWithData.GetBytes()
+
+	sideTxSigs := make([]*sideTxSig, 0)
+	for _, vote := range unFilteredVotes {
+		if vote != nil {
+			// iterate through all side-tx results
+			for _, sideTxResult := range vote.SideTxResults {
+				// find side-tx result by tx-hash
+				if bytes.Equal(sideTxResult.TxHash, txHash) &&
+					len(sideTxResult.Sig) == 65 &&
+					sideTxResult.Result == int32(abci.SideTxResultType_Yes) {
+					// validate sig
+					var pk secp256k1.PubKeySecp256k1
+					if p, err := authTypes.RecoverPubkey(signedData, sideTxResult.Sig); err == nil {
+						copy(pk[:], p[:])
+
+						// if it has valid sig, add it into side-tx sig array
+						if bytes.Equal(vote.ValidatorAddress.Bytes(), pk.Address().Bytes()) {
+							sideTxSigs = append(sideTxSigs, &sideTxSig{
+								Address: vote.ValidatorAddress.Bytes(),
+								Sig:     sideTxResult.Sig,
+							})
+						}
+					}
+				}
+				break
+			}
+		}
+	}
+
+	if len(sideTxSigs) > 0 {
+		// sort sigs by address
+		sort.Slice(sideTxSigs, func(i, j int) bool {
+			return bytes.Compare(sideTxSigs[i].Address, sideTxSigs[j].Address) < 0
+		})
+
+		// loop votes and append to sig to sigs
+		for _, sideTxSig := range sideTxSigs {
+			sigs = append(sigs, sideTxSig.Sig...)
+		}
+	}
+
 	return
 }
 
@@ -195,12 +258,12 @@ func GetVoteBytes(unFilteredVotes []*tmTypes.CommitSig, chainID string) []byte {
 
 // GetTxEncoder returns tx encoder
 func GetTxEncoder(cdc *codec.Codec) sdk.TxEncoder {
-	return authTypes.RLPTxEncoder(cdc, authTypes.GetPulpInstance())
+	return authTypes.DefaultTxEncoder(cdc)
 }
 
 // GetTxDecoder returns tx decoder
 func GetTxDecoder(cdc *codec.Codec) sdk.TxDecoder {
-	return authTypes.RLPTxDecoder(cdc, authTypes.GetPulpInstance())
+	return authTypes.DefaultTxDecoder(cdc)
 }
 
 // GetStdTxBytes get tx bytes
@@ -492,7 +555,7 @@ func ReadStdTxFromFile(cdc *amino.Codec, filename string) (stdTx authTypes.StdTx
 
 // BroadcastTxBytes sends request to tendermint using CLI
 func BroadcastTxBytes(cliCtx context.CLIContext, txBytes []byte, mode string) (sdk.TxResponse, error) {
-	Logger.Debug("Broadcasting tx bytes to Tendermint", "txBytes", hex.EncodeToString(txBytes), "txHash", hex.EncodeToString(tmhash.Sum(txBytes[4:])))
+	Logger.Debug("Broadcasting tx bytes to Tendermint", "txBytes", hex.EncodeToString(txBytes), "txHash", hex.EncodeToString(tmTypes.Tx(txBytes).Hash()))
 	if mode != "" {
 		cliCtx.BroadcastMode = mode
 	}
@@ -590,16 +653,6 @@ func populateAccountFromState(txBldr authTypes.TxBuilder, cliCtx context.CLICont
 	return txBldr.WithAccountNumber(accNum).WithSequence(accSeq), nil
 }
 
-func isTxSigner(user sdk.AccAddress, signers []sdk.AccAddress) bool {
-	for _, s := range signers {
-		if bytes.Equal(user.Bytes(), s.Bytes()) {
-			return true
-		}
-	}
-
-	return false
-}
-
 func buildUnsignedStdTxOffline(txBldr authTypes.TxBuilder, cliCtx context.CLIContext, msgs []sdk.Msg) (stdTx authTypes.StdTx, err error) {
 	stdSignMsg, err := txBldr.BuildSignMsg(msgs)
 	if err != nil {
@@ -625,17 +678,11 @@ func getSplitPoint(length int) int {
 
 // TODO: make these have a large predefined capacity
 var (
-	leafPrefix  = []byte{0}
 	innerPrefix = []byte{1}
 
 	leftPrefix  = []byte{0}
 	rightPrefix = []byte{1}
 )
-
-// returns tmhash(0x00 || leaf)
-func leafHash(leaf []byte) []byte {
-	return tmhash.Sum(append(leafPrefix, leaf...))
-}
 
 // returns tmhash(0x01 || left || right)
 func innerHash(left []byte, right []byte) []byte {

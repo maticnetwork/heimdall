@@ -76,5 +76,4 @@ func WriteGenerateStdTxResponse(
 	if _, err := w.Write(output); err != nil {
 		log.Printf("could not write response: %v", err)
 	}
-	return
 }
