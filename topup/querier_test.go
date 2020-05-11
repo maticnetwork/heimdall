@@ -82,7 +82,7 @@ func (suite *QuerierTestSuite) TestQuerySequence() {
 	sequence.Add(sequence, new(big.Int).SetUint64(logIndex))
 	app.TopupKeeper.SetTopupSequence(ctx, sequence.String())
 
-	suite.contractCaller.On("GetConfirmedTxReceipt", mock.Anything, txHash.EthHash(), chainParams.TxConfirmationTime).Return(txreceipt, nil)
+	suite.contractCaller.On("GetConfirmedTxReceipt", mock.Anything, txHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
 
 	path := []string{types.QuerySequence}
 

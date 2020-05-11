@@ -63,7 +63,6 @@ const (
 	DefaultSpanPollingInterval      = 1 * time.Minute
 
 	DefaultChildBlockInterval = 10000 // difference between 2 indexes of header blocks
-	DefaultTxConfirmationTime = 6 * 14 * time.Second
 	DefaultMainchainGasLimit  = uint64(5000000)
 
 	DefaultBorChainID string = "15001"
