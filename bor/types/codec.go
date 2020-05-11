@@ -2,16 +2,10 @@ package types
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
-
-	authTypes "github.com/maticnetwork/heimdall/auth/types"
 )
 
 func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(MsgProposeSpan{}, "bor/MsgProposeSpan", nil)
-}
-
-func RegisterPulp(pulp *authTypes.Pulp) {
-	pulp.RegisterConcrete(MsgProposeSpan{})
 }
 
 // ModuleCdc generic sealed codec to be used throughout module
