@@ -54,6 +54,9 @@ const (
 	StakingTxStatusURL     = "/staking/isoldtx"
 	TopupTxStatusURL       = "/topup/isoldtx"
 	ClerkTxStatusURL       = "/clerk/isoldtx"
+	LatestSlashInfoHashURL = "/slashing/latest_slash_info_hash"
+	TickSlashInfoListURL   = "/slashing/tick_slash_infos"
+	SlashingTxStatusURL    = "/slashing/isoldtx"
 
 	TransactionTimeout      = 1 * time.Minute
 	CommitTimeout           = 2 * time.Minute

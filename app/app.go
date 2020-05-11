@@ -35,6 +35,8 @@ import (
 	paramsTypes "github.com/maticnetwork/heimdall/params/types"
 	"github.com/maticnetwork/heimdall/sidechannel"
 	sidechannelTypes "github.com/maticnetwork/heimdall/sidechannel/types"
+	"github.com/maticnetwork/heimdall/slashing"
+	slashingTypes "github.com/maticnetwork/heimdall/slashing/types"
 	"github.com/maticnetwork/heimdall/staking"
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
 	"github.com/maticnetwork/heimdall/supply"
@@ -75,6 +77,7 @@ var (
 		bor.AppModuleBasic{},
 		clerk.AppModuleBasic{},
 		topup.AppModuleBasic{},
+		slashing.AppModuleBasic{},
 		gov.NewAppModuleBasic(paramsClient.ProposalHandler),
 	)
 
@@ -112,6 +115,8 @@ type HeimdallApp struct {
 	BorKeeper         bor.Keeper
 	ClerkKeeper       clerk.Keeper
 	TopupKeeper       topup.Keeper
+	SlashingKeeper    slashing.Keeper
+
 	// param keeper
 	ParamsKeeper params.Keeper
 
@@ -174,6 +179,12 @@ func (d ModuleCommunicator) SendCoins(ctx sdk.Context, fromAddr types.HeimdallAd
 	return d.App.BankKeeper.SendCoins(ctx, fromAddr, toAddr, amt)
 }
 
+// Create ValidatorSigningInfo used by slashing module
+func (d ModuleCommunicator) CreateValiatorSigningInfo(ctx sdk.Context, valID types.ValidatorID, valSigningInfo types.ValidatorSigningInfo) {
+	d.App.SlashingKeeper.SetValidatorSigningInfo(ctx, valID, valSigningInfo)
+	return
+}
+
 //
 // Heimdall app
 //
@@ -202,6 +213,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		govTypes.StoreKey,
 		chainmanagerTypes.StoreKey,
 		stakingTypes.StoreKey,
+		slashingTypes.StoreKey,
 		checkpointTypes.StoreKey,
 		borTypes.StoreKey,
 		clerkTypes.StoreKey,
@@ -228,6 +240,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.subspaces[govTypes.ModuleName] = app.ParamsKeeper.Subspace(govTypes.DefaultParamspace).WithKeyTable(govTypes.ParamKeyTable())
 	app.subspaces[chainmanagerTypes.ModuleName] = app.ParamsKeeper.Subspace(chainmanagerTypes.DefaultParamspace)
 	app.subspaces[stakingTypes.ModuleName] = app.ParamsKeeper.Subspace(stakingTypes.DefaultParamspace)
+	app.subspaces[slashingTypes.ModuleName] = app.ParamsKeeper.Subspace(slashingTypes.DefaultParamspace)
 	app.subspaces[checkpointTypes.ModuleName] = app.ParamsKeeper.Subspace(checkpointTypes.DefaultParamspace)
 	app.subspaces[borTypes.ModuleName] = app.ParamsKeeper.Subspace(borTypes.DefaultParamspace)
 	app.subspaces[clerkTypes.ModuleName] = app.ParamsKeeper.Subspace(clerkTypes.DefaultParamspace)
@@ -285,6 +298,15 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		common.DefaultCodespace,
 		app.ChainKeeper,
 		moduleCommunicator,
+	)
+
+	app.SlashingKeeper = slashing.NewKeeper(
+		app.cdc,
+		keys[slashingTypes.StoreKey], // target store
+		app.StakingKeeper,
+		app.subspaces[slashingTypes.ModuleName],
+		common.DefaultCodespace,
+		app.ChainKeeper,
 	)
 
 	// bank keeper
@@ -380,6 +402,8 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		topup.NewAppModule(app.TopupKeeper, &app.caller),
 	)
 
+	app.mm.SetOrderBeginBlockers(slashingTypes.ModuleName)
+
 	// NOTE: The genutils module must occur after staking so that pools are
 	// properly initialized with tokens from genesis accounts.
 	app.mm.SetOrderInitGenesis(
@@ -390,6 +414,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		chainmanagerTypes.ModuleName,
 		supplyTypes.ModuleName,
 		stakingTypes.ModuleName,
+		slashingTypes.ModuleName,
 		checkpointTypes.ModuleName,
 		borTypes.ModuleName,
 		clerkTypes.ModuleName,
@@ -421,6 +446,8 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		auth.NewAppModule(app.AccountKeeper, &app.caller, []authTypes.AccountProcessor{
 			supplyTypes.AccountProcessor,
 		}),
+
+		slashing.NewAppModule(app.SlashingKeeper, app.StakingKeeper, &app.caller),
 		chainmanager.NewAppModule(app.ChainKeeper, &app.caller),
 		topup.NewAppModule(app.TopupKeeper, &app.caller),
 		staking.NewAppModule(app.StakingKeeper, &app.caller),
