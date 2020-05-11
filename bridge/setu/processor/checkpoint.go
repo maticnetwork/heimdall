@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math"
 	"math/big"
 	"strconv"
@@ -138,8 +139,20 @@ func (cp *CheckpointProcessor) sendCheckpointToHeimdall(headerBlockStr string) (
 		}
 		start := expectedCheckpointState.newStart
 		end := expectedCheckpointState.newEnd
-		// TODO - add a check to see if this checkpoint has to be proposed or not.
-		// Fetch latest checkpoint from buffer. if expectedCheckpointState.newStart == start, don't send checkpoint
+
+		bufferedCheckpoint, err := util.GetBufferedCheckpoint(cp.cliCtx)
+		if err != nil {
+			cp.Logger.Error("No buffered checkpoint", "error", err)
+		}
+		fmt.Println("bufferedCheckpoint", bufferedCheckpoint, bufferedCheckpoint != nil)
+		if bufferedCheckpoint != nil {
+			fmt.Println("======>", bufferedCheckpoint.StartBlock, start, bufferedCheckpoint.StartBlock == start)
+			if bufferedCheckpoint.StartBlock == start {
+				cp.Logger.Error("Checkpoint already exits in buffer", "Checkpoint")
+				return err
+			}
+		}
+
 		if err := cp.createAndSendCheckpointToHeimdall(checkpointContext, start, end); err != nil {
 			cp.Logger.Error("Error sending checkpoint to heimdall", "error", err)
 			return err
