@@ -171,15 +171,6 @@ func NewAnteHandler(
 			signerAcc = ak.GetAccount(newCtx, signerAcc.GetAddress())
 		}
 
-		// get chain manager params
-		chainParams := chainKeeper.GetParams(ctx)
-
-		// check main chain tx is confirmed transaction
-		mainTxMsg, ok := stdTx.Msg.(MainTxMsg)
-		if ok && !contractCaller.IsTxConfirmed(ctx.BlockTime(), mainTxMsg.GetTxHash().EthHash(), chainParams.TxConfirmationTime) {
-			return newCtx, sdk.ErrInternal(fmt.Sprintf("Not enough tx confirmations for %s", mainTxMsg.GetTxHash().Hex())).Result(), true
-		}
-
 		// stdSigs contains the sequence number, account number, and signatures.
 		// When simulating, this would just be a 0-length slice.
 		stdSigs := stdTx.GetSignatures()

@@ -55,7 +55,7 @@ func TestNewValidator(t *testing.T) {
 		},
 	}
 	for _, c := range tc {
-		out := NewValidator(c.in.id, c.in.startEpoch, c.in.endEpoch, 0, c.in.power, c.in.pubKey, c.in.signer)
+		out := NewValidator(c.in.id, c.in.startEpoch, c.in.endEpoch, 1, c.in.power, c.in.pubKey, c.in.signer)
 		assert.Equal(t, c.out, out)
 	}
 }

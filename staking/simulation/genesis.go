@@ -32,7 +32,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 			hmTypes.NewValidatorID(uint64(int64(i))),
 			0,
 			0,
-			0,
+			1,
 			int64(simulation.RandIntBetween(r1, 10, 100)), // power
 			hmTypes.NewPubKey(accounts[i].PubKey.Bytes()),
 			accounts[i].Address,

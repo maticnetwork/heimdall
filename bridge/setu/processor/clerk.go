@@ -85,6 +85,7 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 				"borChainId", chainParams.BorChainID,
 				"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 				"logIndex", uint64(vLog.Index),
+				"blockNumber", vLog.BlockNumber,
 			)
 			return nil
 		}
@@ -98,13 +99,17 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 			"borChainId", chainParams.BorChainID,
 			"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			"logIndex", uint64(vLog.Index),
+			"blockNumber", vLog.BlockNumber,
 		)
 
 		msg := clerkTypes.NewMsgEventRecord(
 			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
 			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			uint64(vLog.Index),
+			vLog.BlockNumber,
 			event.Id.Uint64(),
+			hmTypes.BytesToHeimdallAddress(event.ContractAddress.Bytes()),
+			event.Data,
 			chainParams.BorChainID,
 		)
 
@@ -120,7 +125,7 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 // HandleRecordConfirmation - handles clerk record confirmation event from heimdall.
 // 1. check if this record has to be broadcasted to maticchain
 // 2. create and broadcast  record transaction to maticchain
-func (cp *ClerkProcessor) sendDepositRecordToMatic(eventBytes string, txHeight int64, txHash string) (err error) {
+func (cp *ClerkProcessor) sendDepositRecordToMatic(eventBytes string, blockHeight int64) (err error) {
 	var event = sdk.StringEvent{}
 	if err := json.Unmarshal([]byte(eventBytes), &event); err != nil {
 		cp.Logger.Error("Error unmarshalling event from heimdall", "error", err)

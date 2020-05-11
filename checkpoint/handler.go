@@ -32,118 +32,111 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 
 // handleMsgCheckpoint Validates checkpoint transaction
 func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
-	k.Logger(ctx).Debug("Validating checkpoint data", "TxData", msg)
+	logger := k.Logger(ctx)
+
 	timeStamp := uint64(ctx.BlockTime().Unix())
 	params := k.GetParams(ctx)
+
+	//
+	// Check checkpoint buffer
+	//
 
 	checkpointBuffer, err := k.GetCheckpointFromBuffer(ctx)
 	if err == nil {
 		checkpointBufferTime := uint64(params.CheckpointBufferTime.Seconds())
 
 		if checkpointBuffer.TimeStamp == 0 || ((timeStamp > checkpointBuffer.TimeStamp) && timeStamp-checkpointBuffer.TimeStamp >= checkpointBufferTime) {
-			k.Logger(ctx).Debug("Checkpoint has been timed out, flushing buffer", "CheckpointTimestamp", timeStamp, "PrevCheckpointTimestamp", checkpointBuffer.TimeStamp)
+			logger.Debug("Checkpoint has been timed out. Flushing buffer.", "checkpointTimestamp", timeStamp, "prevCheckpointTimestamp", checkpointBuffer.TimeStamp)
 			k.FlushCheckpointBuffer(ctx)
 		} else {
 			expiryTime := checkpointBuffer.TimeStamp + checkpointBufferTime
-			k.Logger(ctx).Error("Checkpoint already exits in buffer", "Checkpoint", checkpointBuffer.String(), "Expires", expiryTime)
+			logger.Error("Checkpoint already exits in buffer", "Checkpoint", checkpointBuffer.String(), "Expires", expiryTime)
 			return common.ErrNoACK(k.Codespace(), expiryTime).Result()
 		}
 	}
 
-	// validate checkpoint
-	validCheckpoint, err := types.ValidateCheckpoint(msg.StartBlock, msg.EndBlock, msg.RootHash, params.MaxCheckpointLength)
-	if err != nil {
-		k.Logger(ctx).Error("Error validating checkpoint",
-			"Error", err,
-			"StartBlock", msg.StartBlock,
-			"EndBlock", msg.EndBlock)
-		return common.ErrBadBlockDetails(k.Codespace()).Result()
-	}
-
-	if !validCheckpoint {
-		k.Logger(ctx).Error("RootHash is not valid",
-			"StartBlock", msg.StartBlock,
-			"EndBlock", msg.EndBlock,
-			"RootHash", msg.RootHash)
-		return common.ErrBadBlockDetails(k.Codespace()).Result()
-	}
-
-	k.Logger(ctx).Debug("Valid Roothash in checkpoint", "StartBlock", msg.StartBlock, "EndBlock", msg.EndBlock)
+	//
+	// Validate last checkpoint
+	//
 
 	// fetch last checkpoint from store
 	if lastCheckpoint, err := k.GetLastCheckpoint(ctx); err == nil {
 		// make sure new checkpoint is after tip
 		if lastCheckpoint.EndBlock > msg.StartBlock {
-			k.Logger(ctx).Error("Checkpoint already exists",
+			logger.Error("Checkpoint already exists",
 				"currentTip", lastCheckpoint.EndBlock,
-				"startBlock", msg.StartBlock)
+				"startBlock", msg.StartBlock,
+			)
 			return common.ErrOldCheckpoint(k.Codespace()).Result()
 		}
+
+		// check if new checkpoint's start block start from current tip
 		if lastCheckpoint.EndBlock+1 != msg.StartBlock {
-			k.Logger(ctx).Error("Checkpoint not in countinuity",
+			logger.Error("Checkpoint not in countinuity",
 				"currentTip", lastCheckpoint.EndBlock,
 				"startBlock", msg.StartBlock)
 			return common.ErrDisCountinuousCheckpoint(k.Codespace()).Result()
 		}
 	} else if err.Error() == common.ErrNoCheckpointFound(k.Codespace()).Error() && msg.StartBlock != 0 {
-		k.Logger(ctx).Error("First checkpoint to start from block 1", "Error", err)
+		logger.Error("First checkpoint to start from block 0", "Error", err)
 		return common.ErrBadBlockDetails(k.Codespace()).Result()
 	}
-	k.Logger(ctx).Debug("Valid checkpoint tip")
 
-	// make sure latest AccountRootHash matches
+	//
+	// Validate account hash
+	//
+
+	// Make sure latest AccountRootHash matches
 	// Calculate new account root hash
 	dividendAccounts := k.sk.GetAllDividendAccounts(ctx)
-	k.Logger(ctx).Debug("DividendAccounts of all validators", "dividendAccounts", dividendAccounts)
-	var accountRoot []byte
-	accountRoot, err = types.GetAccountRootHash(dividendAccounts)
-	if err != nil {
-		k.Logger(ctx).Error("handleMsgCheckpoint | GetAccountRootHash", "Error", err)
-		return common.ErrBadAccountRootHash(k.Codespace()).Result()
-	}
-	k.Logger(ctx).Info("Validator Account root hash generated", "AccountRootHash", hmTypes.BytesToHeimdallHash(accountRoot).String())
+	logger.Debug("DividendAccounts of all validators", "dividendAccountsLength", len(dividendAccounts))
 
+	// Get account root has from dividend accounts
+	accountRoot, err := types.GetAccountRootHash(dividendAccounts)
+	if err != nil {
+		logger.Error("Error while fetching account root hash", "error", err)
+		return common.ErrBadBlockDetails(k.Codespace()).Result()
+	}
+	logger.Debug("Validator account root hash generated", "accountRootHash", hmTypes.BytesToHeimdallHash(accountRoot).String())
+
+	// Compare stored root hash to msg root hash
 	if !bytes.Equal(accountRoot, msg.AccountRootHash.Bytes()) {
-		k.Logger(ctx).Error("AccountRootHash of current state", hmTypes.BytesToHeimdallHash(accountRoot).String(),
-			"doesn't match with AccountRootHash of msg", msg.AccountRootHash)
+		logger.Error(
+			"AccountRootHash of current state doesn't match from msg",
+			"hash", hmTypes.BytesToHeimdallHash(accountRoot).String(),
+			"msgHash", msg.AccountRootHash,
+		)
 		return common.ErrBadBlockDetails(k.Codespace()).Result()
 	}
 
-	k.Logger(ctx).Debug("AccountRootHash matches")
+	//
+	// Validate proposer
+	//
 
-	// check proposer in message
-	if !bytes.Equal(msg.Proposer.Bytes(), k.sk.GetValidatorSet(ctx).Proposer.Signer.Bytes()) {
-		k.Logger(ctx).Error("Invalid proposer in message",
-			"currentProposer", k.sk.GetValidatorSet(ctx).Proposer.Signer.String(),
-			"checkpointProposer", msg.Proposer.String())
-		return common.ErrBadProposerDetails(k.Codespace(), k.sk.GetValidatorSet(ctx).Proposer.Signer).Result()
-	}
-	k.Logger(ctx).Debug("Valid proposer in checkpoint")
-
-	// add checkpoint to buffer
-	// Add AccountRootHash to CheckpointBuffer
-	if err := k.SetCheckpointBuffer(ctx, hmTypes.CheckpointBlockHeader{
-		StartBlock:      msg.StartBlock,
-		EndBlock:        msg.EndBlock,
-		RootHash:        msg.RootHash,
-		AccountRootHash: msg.AccountRootHash,
-		Proposer:        msg.Proposer,
-		TimeStamp:       timeStamp,
-	}); err != nil {
-		k.Logger(ctx).Error("handleMsgCheckpoint | SetCheckpointBuffer", "Error", err)
-		return common.ErrSetCheckpointBuffer(k.Codespace()).Result()
+	// Check proposer in message
+	validatorSet := k.sk.GetValidatorSet(ctx)
+	if validatorSet.Proposer == nil {
+		logger.Error("No proposer in validator set", "msgProposer", msg.Proposer.String())
+		return common.ErrInvalidMsg(k.Codespace(), "No proposer in stored validator set").Result()
 	}
 
-	checkpoint, _ := k.GetCheckpointFromBuffer(ctx)
-	k.Logger(ctx).Debug("Adding good checkpoint to buffer to await ACK", "checkpointStored", checkpoint.String())
+	if !bytes.Equal(msg.Proposer.Bytes(), validatorSet.Proposer.Signer.Bytes()) {
+		logger.Error(
+			"Invalid proposer in msg",
+			"proposer", validatorSet.Proposer.Signer.String(),
+			"msgProposer", msg.Proposer.String(),
+		)
+		return common.ErrInvalidMsg(k.Codespace(), "Invalid proposer in msg").Result()
+	}
 
+	// Emit event for checkpoint
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeCheckpoint,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			sdk.NewAttribute(types.AttributeKeyProposer, msg.Proposer.String()),
-			sdk.NewAttribute(types.AttributeKeyStartBlock, strconv.FormatUint(uint64(msg.StartBlock), 10)),
-			sdk.NewAttribute(types.AttributeKeyEndBlock, strconv.FormatUint(uint64(msg.EndBlock), 10)),
+			sdk.NewAttribute(types.AttributeKeyStartBlock, strconv.FormatUint(msg.StartBlock, 10)),
+			sdk.NewAttribute(types.AttributeKeyEndBlock, strconv.FormatUint(msg.EndBlock, 10)),
 		),
 	})
 
@@ -154,86 +147,32 @@ func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, con
 
 // handleMsgCheckpointAck Validates if checkpoint submitted on chain is valid
 func handleMsgCheckpointAck(ctx sdk.Context, msg types.MsgCheckpointAck, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
-	k.Logger(ctx).Debug("Validating Checkpoint ACK", "Tx", msg)
+	logger := k.Logger(ctx)
 
-	// make call to headerBlock with header number
-	chainParams := k.ck.GetParams(ctx).ChainParams
-
-	rootChainInstance, err := contractCaller.GetRootChainInstance(chainParams.RootChainAddress.EthAddress())
-	if err != nil {
-		k.Logger(ctx).Error("Unable to fetch rootchain contract instance", "Error", err)
-		return common.ErrBadAck(k.Codespace()).Result()
-	}
-	root, start, end, createdAt, proposer, err := contractCaller.GetHeaderInfo(msg.HeaderBlock, rootChainInstance)
-	if err != nil {
-		k.Logger(ctx).Error("Unable to fetch header from rootchain contract", "Error", err, "headerBlockIndex", msg.HeaderBlock)
-		return common.ErrBadAck(k.Codespace()).Result()
-	}
-
-	k.Logger(ctx).Debug("HeaderBlock fetched",
-		"headerBlock", msg.HeaderBlock,
-		"start", start,
-		"end", end,
-		"roothash", root,
-		"proposer", proposer,
-		"createdAt", createdAt,
-	)
-
-	// get last checkpoint from buffer
+	// Get last checkpoint from buffer
 	headerBlock, err := k.GetCheckpointFromBuffer(ctx)
 	if err != nil {
-		k.Logger(ctx).Error("Unable to get checkpoint", "error", err)
+		logger.Error("Unable to get checkpoint", "error", err)
 		return common.ErrBadAck(k.Codespace()).Result()
 	}
-	if start != headerBlock.StartBlock {
-		k.Logger(ctx).Error("Invalid start block", "startExpected", headerBlock.StartBlock, "startReceived", start)
+
+	if msg.StartBlock != headerBlock.StartBlock {
+		logger.Error("Invalid start block", "startExpected", headerBlock.StartBlock, "startReceived", msg.StartBlock)
 		return common.ErrBadAck(k.Codespace()).Result()
-	} else if start == headerBlock.StartBlock && end == headerBlock.EndBlock && !bytes.Equal(root.Bytes(), headerBlock.RootHash.Bytes()) {
-		k.Logger(ctx).Error("Invalid ACK",
+	}
+
+	// Return err if start and end matches but contract root hash doesn't match
+	if msg.StartBlock == headerBlock.StartBlock && msg.EndBlock == headerBlock.EndBlock && !msg.RootHash.Equals(headerBlock.RootHash) {
+		logger.Error("Invalid ACK",
 			"startExpected", headerBlock.StartBlock,
-			"startReceived", start,
+			"startReceived", msg.StartBlock,
 			"endExpected", headerBlock.EndBlock,
-			"endReceived", end,
+			"endReceived", msg.StartBlock,
 			"rootExpected", headerBlock.RootHash.String(),
-			"rootRecieved", root.String())
+			"rootRecieved", msg.RootHash.String(),
+		)
 		return common.ErrBadAck(k.Codespace()).Result()
 	}
-	if headerBlock.EndBlock > end {
-		k.Logger(ctx).Info("Adjusting endBlock to one already submitted on chain", "OldEndBlock", headerBlock.EndBlock, "AdjustedEndBlock", end)
-		headerBlock.EndBlock = end
-		headerBlock.RootHash = hmTypes.HeimdallHash(root)
-		// TODO proposer also needs to be changed
-	}
-
-	// Add checkpoint to headerBlocks
-	if err := k.AddCheckpoint(ctx, msg.HeaderBlock, *headerBlock); err != nil {
-		k.Logger(ctx).Error("handleMsgCheckpointAck | AddCheckpoint", "error", err)
-		return common.ErrAddCheckpoint(k.Codespace()).Result()
-	}
-	k.Logger(ctx).Info("Checkpoint added to store", "headerBlock", headerBlock.String())
-
-	// flush buffer
-	k.FlushCheckpointBuffer(ctx)
-	k.Logger(ctx).Debug("Checkpoint buffer flushed after receiving checkpoint ack", "checkpoint", headerBlock)
-
-	// update ack count
-	k.UpdateACKCount(ctx)
-	k.Logger(ctx).Debug("Valid ack received", "CurrentACKCount", k.GetACKCount(ctx)-1, "UpdatedACKCount", k.GetACKCount(ctx))
-
-	// --- Update to new proposer
-
-	// increment accum
-	k.sk.IncrementAccum(ctx, 1)
-
-	//log new proposer
-	vs := k.sk.GetValidatorSet(ctx)
-	newProposer := vs.GetProposer()
-	k.Logger(ctx).Debug(
-		"New proposer selected",
-		"validator", newProposer.Signer.String(),
-		"signer", newProposer.Signer.String(),
-		"power", newProposer.VotingPower,
-	)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -248,47 +187,52 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg types.MsgCheckpointAck, k Keepe
 	}
 }
 
-// Validate checkpoint no-ack transaction
+// Handles checkpoint no-ack transaction
 func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k Keeper) sdk.Result {
-	k.Logger(ctx).Debug("Validating checkpoint no-ack", "TxData", msg)
-	// current time
+	logger := k.Logger(ctx)
+
+	// Get current block time
 	currentTime := ctx.BlockTime()
 
+	// Get buffer time from params
 	bufferTime := k.GetParams(ctx).CheckpointBufferTime
 
-	// fetch last checkpoint from store
+	// Fetch last checkpoint from store
 	// TODO figure out how to handle this error
 	lastCheckpoint, _ := k.GetLastCheckpoint(ctx)
 	lastCheckpointTime := time.Unix(int64(lastCheckpoint.TimeStamp), 0)
 
-	// if last checkpoint is not present or last checkpoint happens before checkpoint buffer time -- thrown an error
+	// If last checkpoint is not present or last checkpoint happens before checkpoint buffer time -- thrown an error
 	if lastCheckpointTime.After(currentTime) || (currentTime.Sub(lastCheckpointTime) < bufferTime) {
-		k.Logger(ctx).Debug("Invalid No ACK -- Waiting for last checkpoint ACK")
+		logger.Debug("Invalid No ACK -- Waiting for last checkpoint ACK")
 		return common.ErrInvalidNoACK(k.Codespace()).Result()
 	}
 
-	// check last no ack - prevents repetitive no-ack
-	lastAck := k.GetLastNoAck(ctx)
-	lastAckTime := time.Unix(int64(lastAck), 0)
+	// Check last no ack - prevents repetitive no-ack
+	lastNoAck := k.GetLastNoAck(ctx)
+	lastNoAckTime := time.Unix(int64(lastNoAck), 0)
 
-	if lastAckTime.After(currentTime) || (currentTime.Sub(lastAckTime) < bufferTime) {
-		k.Logger(ctx).Debug("Too many no-ack")
+	if lastNoAckTime.After(currentTime) || (currentTime.Sub(lastNoAckTime) < bufferTime) {
+		logger.Debug("Too many no-ack")
 		return common.ErrTooManyNoACK(k.Codespace()).Result()
 	}
 
-	// set last no ack
-	k.SetLastNoAck(ctx, uint64(currentTime.Unix()))
-	k.Logger(ctx).Debug("Last No-ACK time set", "LastNoAck", k.GetLastNoAck(ctx))
+	// Set new last no-ack
+	newLastNoAck := uint64(currentTime.Unix())
+	k.SetLastNoAck(ctx, newLastNoAck)
+	logger.Debug("Last No-ACK time set", "lastNoAck", newLastNoAck)
 
-	// --- Update to new proposer
+	//
+	// Update to new proposer
+	//
 
-	// increment accum
+	// Increment accum (selects new proposer)
 	k.sk.IncrementAccum(ctx, 1)
 
-	//log new proposer
+	// Get new proposer
 	vs := k.sk.GetValidatorSet(ctx)
 	newProposer := vs.GetProposer()
-	k.Logger(ctx).Debug(
+	logger.Debug(
 		"New proposer selected",
 		"validator", newProposer.Signer.String(),
 		"signer", newProposer.Signer.String(),
