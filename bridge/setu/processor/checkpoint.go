@@ -139,13 +139,19 @@ func (cp *CheckpointProcessor) sendCheckpointToHeimdall(headerBlockStr string) (
 		start := expectedCheckpointState.newStart
 		end := expectedCheckpointState.newEnd
 
+		//
+		// Check checkpoint buffer
+		//
+		timeStamp := uint64(time.Now().Unix())
+		checkpointBufferTime := uint64(checkpointContext.CheckpointParams.CheckpointBufferTime.Seconds())
+
 		bufferedCheckpoint, err := util.GetBufferedCheckpoint(cp.cliCtx)
 		if err != nil {
-			cp.Logger.Error("No buffered checkpoint", "error", err)
+			cp.Logger.Debug("No buffered checkpoint", "bufferedCheckpoint", bufferedCheckpoint)
 		}
 
-		if bufferedCheckpoint != nil && bufferedCheckpoint.StartBlock == start {
-			cp.Logger.Debug("Checkpoint already exits in buffer", "Checkpoint", bufferedCheckpoint.String())
+		if bufferedCheckpoint != nil && !(bufferedCheckpoint.TimeStamp == 0 || ((timeStamp > bufferedCheckpoint.TimeStamp) && timeStamp-bufferedCheckpoint.TimeStamp >= checkpointBufferTime)) {
+			cp.Logger.Info("Checkpoint already exits in buffer", "Checkpoint", bufferedCheckpoint.String())
 			return err
 		}
 
