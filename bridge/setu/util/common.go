@@ -295,11 +295,13 @@ func GetChainmanagerParams(cliCtx cliContext.CLIContext) (*chainManagerTypes.Par
 	)
 
 	if err != nil {
+		logger.Error("Error fetching chainmanager params", err)
 		return nil, err
 	}
 
 	var params chainManagerTypes.Params
 	if err := json.Unmarshal(response.Result, &params); err != nil {
+		logger.Error("Error unmarshalling chainmanager params", "url", ChainManagerParamsURL)
 		return nil, err
 	}
 
@@ -314,11 +316,13 @@ func GetCheckpointParams(cliCtx cliContext.CLIContext) (*checkpointTypes.Params,
 	)
 
 	if err != nil {
+		logger.Error("Error fetching Checkpoint params", err)
 		return nil, err
 	}
 
 	var params checkpointTypes.Params
 	if err := json.Unmarshal(response.Result, &params); err != nil {
+		logger.Error("Error unmarshalling Checkpoint params", "url", CheckpointParamsURL)
 		return nil, err
 	}
 
@@ -333,11 +337,13 @@ func GetBufferedCheckpoint(cliCtx cliContext.CLIContext) (*hmtypes.CheckpointBlo
 	)
 
 	if err != nil {
+		logger.Debug("Error fetching buffered checkpoint", err)
 		return nil, err
 	}
 
 	var blockHeader hmtypes.CheckpointBlockHeader
 	if err := json.Unmarshal(response.Result, &blockHeader); err != err {
+		logger.Error("Error unmarshalling buffered checkpoint", "url", BufferedCheckpointURL)
 		return nil, err
 	}
 
