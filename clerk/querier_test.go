@@ -17,7 +17,7 @@ import (
 	"github.com/maticnetwork/heimdall/types/simulation"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/mock"
+	// "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -152,7 +152,7 @@ func (suite *QuerierTestSuite) TestHandleQueryRecordSequence() {
 	txreceipt := &ethTypes.Receipt{
 		BlockNumber: big.NewInt(10),
 	}
-	suite.contractCaller.On("GetConfirmedTxReceipt", mock.Anything, txHash.EthHash(), chainParams.TxConfirmationTime).Return(nil, errors.New("err confirmed txn receipt"))
+	suite.contractCaller.On("GetConfirmedTxReceipt", txHash.EthHash(), chainParams.MainchainTxConfirmations).Return(nil, errors.New("err confirmed txn receipt"))
 
 	req = abci.RequestQuery{
 		Path: route,
@@ -164,7 +164,7 @@ func (suite *QuerierTestSuite) TestHandleQueryRecordSequence() {
 	index = simulation.RandIntBetween(r1, 0, 100)
 	logIndex = uint64(index)
 	txHash = hmTypes.HexToHeimdallHash("1234")
-	suite.contractCaller.On("GetConfirmedTxReceipt", mock.Anything, txHash.EthHash(), chainParams.TxConfirmationTime).Return(txreceipt, nil)
+	suite.contractCaller.On("GetConfirmedTxReceipt", txHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
 	req = abci.RequestQuery{
 		Path: route,
 		Data: app.Codec().MustMarshalJSON(types.NewQueryRecordSequenceParams("1234", logIndex)),
@@ -178,7 +178,7 @@ func (suite *QuerierTestSuite) TestHandleQueryRecordSequence() {
 	ck.SetRecordSequence(ctx, testSeq)
 	logIndex = uint64(10)
 	txHash = hmTypes.HexToHeimdallHash("12345")
-	suite.contractCaller.On("GetConfirmedTxReceipt", mock.Anything, txHash.EthHash(), chainParams.TxConfirmationTime).Return(txreceipt, nil)
+	suite.contractCaller.On("GetConfirmedTxReceipt", txHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
 	req = abci.RequestQuery{
 		Path: route,
 		Data: app.Codec().MustMarshalJSON(types.NewQueryRecordSequenceParams("12345", logIndex)),
