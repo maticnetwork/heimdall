@@ -36,16 +36,16 @@ func (suite *KeeperTestSuite) TestAddCheckpoint() {
 	startBlock := uint64(0)
 	endBlock := uint64(256)
 	rootHash := hmTypes.HexToHeimdallHash("123")
-	accountRootHash := hmTypes.HexToHeimdallHash("456")
 	proposerAddress := hmTypes.HexToHeimdallAddress("123")
 	timestamp := uint64(time.Now().Unix())
+	borChainId := "1234"
 
 	checkpointBlockHeader := hmTypes.CreateBlock(
 		startBlock,
 		endBlock,
 		rootHash,
-		accountRootHash,
 		proposerAddress,
+		borChainId,
 		timestamp,
 	)
 	err := keeper.AddCheckpoint(ctx, headerBlockNumber, checkpointBlockHeader)
@@ -56,7 +56,7 @@ func (suite *KeeperTestSuite) TestAddCheckpoint() {
 	require.Equal(t, startBlock, result.StartBlock)
 	require.Equal(t, endBlock, result.EndBlock)
 	require.Equal(t, rootHash, result.RootHash)
-	require.Equal(t, accountRootHash, result.AccountRootHash)
+	require.Equal(t, borChainId, result.BorChainID)
 	require.Equal(t, proposerAddress, result.Proposer)
 	require.Equal(t, timestamp, result.TimeStamp)
 }
@@ -77,16 +77,16 @@ func (suite *KeeperTestSuite) TestGetCheckpointList() {
 		startBlock = startBlock + endBlock
 		endBlock = endBlock + uint64(255)
 		rootHash := hmTypes.HexToHeimdallHash("123")
-		accountRootHash := hmTypes.HexToHeimdallHash("123")
 		proposerAddress := hmTypes.HexToHeimdallAddress("123")
 		timestamp := uint64(time.Now().Unix()) + uint64(i)
+		borChainId := "1234"
 
 		checkpointBlockHeader := hmTypes.CreateBlock(
 			startBlock,
 			endBlock,
 			rootHash,
-			accountRootHash,
 			proposerAddress,
+			borChainId,
 			timestamp,
 		)
 
