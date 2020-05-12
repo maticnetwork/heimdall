@@ -54,8 +54,8 @@ func (sp *SlashingProcessor) RegisterTasks() {
 }
 
 // processSlashLimitEvent - processes slash limit event
-func (sp *SlashingProcessor) sendTickToHeimdall(eventBytes string) (err error) {
-	sp.Logger.Info("Recevied sendTickToHeimdall request", "eventBytes", eventBytes)
+func (sp *SlashingProcessor) sendTickToHeimdall(eventBytes string, blockHeight int64) (err error) {
+	sp.Logger.Info("Recevied sendTickToHeimdall request", "eventBytes", eventBytes, "blockHeight", blockHeight)
 	var event = sdk.StringEvent{}
 	if err := json.Unmarshal([]byte(eventBytes), &event); err != nil {
 		sp.Logger.Error("Error unmarshalling event from heimdall", "error", err)
@@ -97,8 +97,8 @@ func (sp *SlashingProcessor) sendTickToHeimdall(eventBytes string) (err error) {
 	3. Verify if this tick tx is already submitted to rootchain using nonce data
 	4. create tick tx and submit to rootchain
 */
-func (sp *SlashingProcessor) sendTickToRootchain(eventBytes string, txHeight int64, txHash string) error {
-	sp.Logger.Info("Recevied sendTickToRootchain request", "eventBytes", eventBytes, "txHeight", txHeight, "txHash", txHash)
+func (sp *SlashingProcessor) sendTickToRootchain(eventBytes string, blockHeight int64) (err error) {
+	sp.Logger.Info("Recevied sendTickToRootchain request", "eventBytes", eventBytes, "blockHeight", blockHeight)
 	var event = sdk.StringEvent{}
 	if err := json.Unmarshal([]byte(eventBytes), &event); err != nil {
 		sp.Logger.Error("Error unmarshalling event from heimdall", "error", err)
@@ -125,7 +125,7 @@ func (sp *SlashingProcessor) sendTickToRootchain(eventBytes string, txHeight int
 	}
 
 	// Validates tx Height with rootchain contract
-	shouldSend, err := sp.shouldSendTickToRootchain(uint64(txHeight))
+	shouldSend, err := sp.shouldSendTickToRootchain(uint64(blockHeight))
 	if err != nil {
 		return err
 	}
@@ -144,13 +144,20 @@ func (sp *SlashingProcessor) sendTickToRootchain(eventBytes string, txHeight int
 		return err
 	}
 
+	var txHash string
+	for _, attr := range event.Attributes {
+		if attr.Key == hmTypes.AttributeKeyTxHash {
+			txHash = attr.Value
+		}
+	}
+
 	if shouldSend && isValidSlashInfo && isCurrentProposer {
 		txHash, err := hex.DecodeString(txHash)
 		if err != nil {
 			sp.Logger.Error("Error decoding txHash while sending Tick to rootchain", "txHash", txHash, "error", err)
 			return err
 		}
-		if err := sp.createAndSendTickToRootchain(txHeight, txHash, tickSlashInfoList, proposerAddr); err != nil {
+		if err := sp.createAndSendTickToRootchain(blockHeight, txHash, tickSlashInfoList, proposerAddr); err != nil {
 			sp.Logger.Error("Error sending tick to rootchain", "error", err)
 			return err
 		}

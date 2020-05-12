@@ -42,6 +42,8 @@ func NewPostTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.P
 			return PostHandleMsgTick(ctx, k, msg, sideTxResult)
 		case types.MsgTickAck:
 			return PostHandleMsgTickAck(ctx, k, msg, sideTxResult)
+		case types.MsgUnjail:
+			return PostHandleMsgUnjail(ctx, k, msg, sideTxResult)
 		default:
 			errMsg := "Unrecognized slash Msg type: %s" + msg.Type()
 			return sdk.ErrUnknownRequest(errMsg).Result()
