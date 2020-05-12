@@ -20,6 +20,7 @@ import (
 	"github.com/maticnetwork/heimdall/slashing/simulation"
 	"github.com/maticnetwork/heimdall/slashing/types"
 	"github.com/maticnetwork/heimdall/staking"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmModule "github.com/maticnetwork/heimdall/types/module"
 	simTypes "github.com/maticnetwork/heimdall/types/simulation"
 
@@ -149,6 +150,7 @@ func (am AppModule) NewQuerierHandler() sdk.Querier {
 // InitGenesis performs genesis initialization for the slashing module. It returns
 // no validator updates.
 func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.ValidatorUpdate {
+	fmt.Println("in slashing module - init genesis")
 	var genesisState types.GenesisState
 	types.ModuleCdc.MustUnmarshalJSON(data, &genesisState)
 	InitGenesis(ctx, am.keeper, genesisState)
@@ -201,4 +203,18 @@ func (AppModule) RegisterStoreDecoder(sdr hmModule.StoreDecoderRegistry) {
 // WeightedOperations doesn't return any auth module operation.
 func (AppModule) WeightedOperations(_ hmModule.SimulationState) []simTypes.WeightedOperation {
 	return nil
+}
+
+//
+// Side module
+//
+
+// NewSideTxHandler side tx handler
+func (am AppModule) NewSideTxHandler() hmTypes.SideTxHandler {
+	return NewSideTxHandler(am.keeper, am.contractCaller)
+}
+
+// NewPostTxHandler side tx handler
+func (am AppModule) NewPostTxHandler() hmTypes.PostTxHandler {
+	return NewPostTxHandler(am.keeper, am.contractCaller)
 }
