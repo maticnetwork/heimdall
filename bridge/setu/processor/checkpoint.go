@@ -152,7 +152,7 @@ func (cp *CheckpointProcessor) sendCheckpointToHeimdall(headerBlockStr string) (
 
 		if bufferedCheckpoint != nil && !(bufferedCheckpoint.TimeStamp == 0 || ((timeStamp > bufferedCheckpoint.TimeStamp) && timeStamp-bufferedCheckpoint.TimeStamp >= checkpointBufferTime)) {
 			cp.Logger.Info("Checkpoint already exits in buffer", "Checkpoint", bufferedCheckpoint.String())
-			return err
+			return nil
 		}
 
 		if err := cp.createAndSendCheckpointToHeimdall(checkpointContext, start, end); err != nil {
