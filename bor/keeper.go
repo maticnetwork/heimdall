@@ -13,6 +13,7 @@ import (
 	"github.com/maticnetwork/heimdall/bor/types"
 	chainmanager "github.com/maticnetwork/heimdall/chainmanager"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/merr"
 	"github.com/maticnetwork/heimdall/params/subspace"
 	"github.com/maticnetwork/heimdall/staking"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -92,8 +93,14 @@ func (k *Keeper) AddNewSpan(ctx sdk.Context, span hmTypes.Span) error {
 		return err
 	}
 
+	spanKey := GetSpanKey(span.ID)
+	if spanKey == nil {
+		k.Logger(ctx).Error("Error invalid span key")
+		return errors.New("Invalid span key")
+
+	}
 	// store set span id
-	store.Set(GetSpanKey(span.ID), out)
+	store.Set(spanKey, out)
 
 	// update last span
 	k.UpdateLastSpan(ctx, span.ID)
@@ -193,6 +200,11 @@ func (k *Keeper) GetLastSpan(ctx sdk.Context) (*hmTypes.Span, error) {
 
 // FreezeSet freezes validator set for next span
 func (k *Keeper) FreezeSet(ctx sdk.Context, id uint64, startBlock uint64, endBlock uint64, borChainID string, seed common.Hash) error {
+
+	if id == 0 {
+		return merr.ValErr{Field: "id", Module: types.ModuleName}
+	}
+
 	// select next producers
 	newProducers, err := k.SelectNextProducers(ctx, seed)
 	if err != nil {

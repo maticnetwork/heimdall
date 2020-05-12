@@ -46,3 +46,11 @@ func SortSpanByID(a []*Span) {
 		return a[i].ID < a[j].ID
 	})
 }
+
+// Valid is invoked to check validity of the span
+func (s *Span) Valid() (valid bool) {
+	if s.ID == 0 {
+		return
+	}
+	return true
+}
