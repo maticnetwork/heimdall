@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"math"
 	"math/big"
 	"strconv"
@@ -144,13 +143,10 @@ func (cp *CheckpointProcessor) sendCheckpointToHeimdall(headerBlockStr string) (
 		if err != nil {
 			cp.Logger.Error("No buffered checkpoint", "error", err)
 		}
-		fmt.Println("bufferedCheckpoint", bufferedCheckpoint, bufferedCheckpoint != nil)
-		if bufferedCheckpoint != nil {
-			fmt.Println("======>", bufferedCheckpoint.StartBlock, start, bufferedCheckpoint.StartBlock == start)
-			if bufferedCheckpoint.StartBlock == start {
-				cp.Logger.Error("Checkpoint already exits in buffer", "Checkpoint")
-				return err
-			}
+
+		if bufferedCheckpoint != nil && bufferedCheckpoint.StartBlock == start {
+			cp.Logger.Debug("Checkpoint already exits in buffer", "Checkpoint", bufferedCheckpoint.String())
+			return err
 		}
 
 		if err := cp.createAndSendCheckpointToHeimdall(checkpointContext, start, end); err != nil {
