@@ -37,6 +37,10 @@ func MakeTestCodec() *codec.Codec {
 	return cdc
 }
 
+// NOTE commented this out as it causes a build error
+// some of the functions are passed incorrect data. Should not effect any
+// functionality
+//
 // // create random header block
 // func GenRandCheckpointHeader(start int, headerSize int) (headerBlock types.CheckpointBlockHeader, err error) {
 // 	start = start
@@ -118,8 +122,6 @@ func LoadValidatorSet(count int, t *testing.T, keeper staking.Keeper, ctx sdk.Co
 
 	err := keeper.UpdateValidatorSetInStore(ctx, valSet)
 	require.Empty(t, err, "Unable to update validator set")
-	// vals := keeper.GetAllValidators(ctx)
-	// t.Log("Vals inserted", vals)
 	return valSet
 }
 

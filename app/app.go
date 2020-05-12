@@ -471,16 +471,6 @@ func MakeCodec() *codec.Codec {
 	return cdc
 }
 
-// MakePulp creates pulp codec and registers custom types for decoder
-func MakePulp() *authTypes.Pulp {
-	pulp := authTypes.GetPulpInstance()
-
-	// register custom type
-	checkpointTypes.RegisterPulp(pulp)
-
-	return pulp
-}
-
 func (app *HeimdallApp) GetCaller() helper.ContractCaller {
 	return app.caller
 }
