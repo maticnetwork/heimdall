@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/bor/common"
 	"gopkg.in/yaml.v2"
 )
@@ -25,8 +24,8 @@ func (aa HeimdallHash) EthHash() common.Hash {
 	return common.Hash(aa)
 }
 
-// Equals returns boolean for whether two AccAddresses are Equal
-func (aa HeimdallHash) Equals(aa2 sdk.Address) bool {
+// Equals returns boolean for whether two HeimdallHash are Equal
+func (aa HeimdallHash) Equals(aa2 HeimdallHash) bool {
 	if aa.Empty() && aa2.Empty() {
 		return true
 	}

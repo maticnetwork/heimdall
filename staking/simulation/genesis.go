@@ -1,32 +1,45 @@
 package simulation
 
-// RandomizedGenState generates a random GenesisState for staking
-// func RandomGenesisValidatorsData(r *rand.Rand, n int) ([]authTypes.GenesisAccount, []hmTypes.Validator, *hmTypes.ValidatorSet) {
-// 	accounts := RandomAccounts(r, n)
+import (
+	"math/rand"
+	"strconv"
+	"time"
 
-// 	validators := make([]*hmTypes.Validator, n)
-// 	dividendAccounts := make([]hmTypes.DividendAccount, n)
+	"github.com/maticnetwork/heimdall/staking/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
+	"github.com/maticnetwork/heimdall/types/module"
+	"github.com/maticnetwork/heimdall/types/simulation"
+)
 
-// 	for i = 0; i < n ; i++ {
-// 			validators[i] = hmTypes.NewValidator(
-// 				hmTypes.NewValidatorID(uint64(int64(i))),
-// 				0,
-// 				0,
-// 				RandIntBetween(r, 10, 100), // power
-// 				accounts[i].PubKey,
-// 				accounts[i].Address(),
-// 			)
+func RandomizedGenState(simState *module.SimulationState) {
+	s1 := rand.NewSource(time.Now().UnixNano())
+	r1 := rand.New(s1)
+	n := 5
+	accounts := simulation.RandomAccounts(r1, n)
+	stakingSequence := make([]string, n)
 
-// 			// create dividend account for validator
-// 			dividendAccounts[i] = hmTypes.NewDividendAccount(
-// 				hmTypes.NewDividendAccountID(uint64(validators[i].ID)),
-// 				big.NewInt(0).String(),
-// 				big.NewInt(0).String(),
-// 			)
-// 		}
-// 	}
+	validators := make([]*hmTypes.Validator, n)
 
-// 	// validator set
-// 	validatorSet := hmTypes.NewValidatorSet(validators)
-// 	return validators, validatorSet, accounts
-// }
+	for i := range stakingSequence {
+		stakingSequence[i] = strconv.Itoa(simulation.RandIntBetween(r1, 1000, 100000))
+	}
+
+	for i := 0; i < len(validators); i++ {
+		// validator
+		validators[i] = hmTypes.NewValidator(
+			hmTypes.NewValidatorID(uint64(int64(i))),
+			0,
+			0,
+			1,
+			int64(simulation.RandIntBetween(r1, 10, 100)), // power
+			hmTypes.NewPubKey(accounts[i].PubKey.Bytes()),
+			accounts[i].Address,
+		)
+	}
+
+	// validator set
+	validatorSet := hmTypes.NewValidatorSet(validators)
+
+	genesisState := types.NewGenesisState(validators, *validatorSet, stakingSequence)
+	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(genesisState)
+}

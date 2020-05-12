@@ -94,7 +94,7 @@ func TestSetup(t *testing.T) {
 	ctx := happ.BaseApp.NewContext(false, abci.Header{})
 
 	require.NotNil(t, happ.GetModuleManager())
-	require.LessOrEqual(t, 0, happ.AccountKeeper.GetAllAccounts(ctx))
+	require.LessOrEqual(t, 0, len(happ.AccountKeeper.GetAllAccounts(ctx)))
 }
 
 func TestSetupWithGenesisAccounts(t *testing.T) {
@@ -127,11 +127,6 @@ func TestValidateGenesis(t *testing.T) {
 			},
 		)
 	})
-}
-
-func TestMakePulp(t *testing.T) {
-	pulp := MakePulp()
-	require.NotNil(t, pulp, "Pulp should be nil")
 }
 
 func TestGetMaccPerms(t *testing.T) {

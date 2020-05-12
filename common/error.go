@@ -3,9 +3,10 @@ package common
 import (
 	"fmt"
 	"strconv"
-	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	abci "github.com/tendermint/tendermint/abci/types"
+
 	"github.com/maticnetwork/heimdall/types"
 )
 
@@ -29,32 +30,40 @@ const (
 	CodeDisCountinuousCheckpoint CodeType = 1510
 	CodeNoCheckpointBuffer       CodeType = 1511
 
-	CodeOldValidator       CodeType = 2500
-	CodeNoValidator        CodeType = 2501
-	CodeValSignerMismatch  CodeType = 2502
-	CodeValidatorExitDeny  CodeType = 2503
-	CodeValAlreadyUnbonded CodeType = 2504
-	CodeSignerSynced       CodeType = 2505
-	CodeValSave            CodeType = 2506
-	CodeValAlreadyJoined   CodeType = 2507
-	CodeSignerUpdateError  CodeType = 2508
-	CodeNoConn             CodeType = 2509
-	CodeWaitFrConfirmation CodeType = 2510
-	CodeValPubkeyMismatch  CodeType = 2511
+	CodeOldValidator        CodeType = 2500
+	CodeNoValidator         CodeType = 2501
+	CodeValSignerMismatch   CodeType = 2502
+	CodeValidatorExitDeny   CodeType = 2503
+	CodeValAlreadyUnbonded  CodeType = 2504
+	CodeSignerSynced        CodeType = 2505
+	CodeValSave             CodeType = 2506
+	CodeValAlreadyJoined    CodeType = 2507
+	CodeSignerUpdateError   CodeType = 2508
+	CodeNoConn              CodeType = 2509
+	CodeWaitFrConfirmation  CodeType = 2510
+	CodeValPubkeyMismatch   CodeType = 2511
+	CodeErrDecodeEvent      CodeType = 2512
+	CodeNoSignerChangeError CodeType = 2513
+	CodeNonce               CodeType = 2514
 
-	CodeSpanNotCountinuous CodeType = 3501
-	CodeUnableToFreezeSet  CodeType = 3502
-	CodeSpanNotFound       CodeType = 3503
-	CodeValSetMisMatch     CodeType = 3504
-	CodeProducerMisMatch   CodeType = 3505
-	CodeInvalidBorChainID  CodeType = 3506
+	CodeSpanNotCountinuous  CodeType = 3501
+	CodeUnableToFreezeSet   CodeType = 3502
+	CodeSpanNotFound        CodeType = 3503
+	CodeValSetMisMatch      CodeType = 3504
+	CodeProducerMisMatch    CodeType = 3505
+	CodeInvalidBorChainID   CodeType = 3506
+	CodeInvalidSpanDuration CodeType = 3507
 
 	CodeFetchCheckpointSigners       CodeType = 4501
 	CodeErrComputeGenesisAccountRoot CodeType = 4503
 	CodeAccountRootMismatch          CodeType = 4504
-	CodeErrAccountRootHash           CodeType = 4505
-	CodeErrSetCheckpointBuffer       CodeType = 4506
-	CodeErrAddCheckpoint             CodeType = 4507
+
+	CodeErrAccountRootHash     CodeType = 4505
+	CodeErrSetCheckpointBuffer CodeType = 4506
+	CodeErrAddCheckpoint       CodeType = 4507
+
+	CodeInvalidReceipt         CodeType = 5501
+	CodeSideTxValidationFailed CodeType = 5502
 )
 
 // -------- Invalid msg
@@ -105,10 +114,6 @@ func ErrNoConn(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeNoConn, "Unable to connect to chain")
 }
 
-func ErrWaitForConfirmation(codespace sdk.CodespaceType, txConfirmationTime time.Duration) sdk.Error {
-	return newError(codespace, CodeWaitFrConfirmation, fmt.Sprintf("Please wait for %v confirmation time before sending transaction", txConfirmationTime))
-}
-
 func ErrNoCheckpointFound(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeNoCheckpoint, "Checkpoint Not Found")
 }
@@ -139,6 +144,10 @@ func ErrNoValidator(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeNoValidator, "Validator information not found")
 }
 
+func ErrNonce(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeNonce, "Incorrect validator nonce")
+}
+
 func ErrValSignerPubKeyMismatch(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeValPubkeyMismatch, "Signer Pubkey mismatch between event and msg")
 }
@@ -157,6 +166,10 @@ func ErrValUnbonded(codespace sdk.CodespaceType) sdk.Error {
 
 func ErrSignerUpdateError(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeSignerUpdateError, "Signer update error")
+}
+
+func ErrNoSignerChange(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeNoSignerChangeError, "New signer same as old signer")
 }
 
 func ErrOldTx(codespace sdk.CodespaceType) sdk.Error {
@@ -189,6 +202,10 @@ func ErrSpanNotInCountinuity(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeSpanNotCountinuous, "Span not countinuous")
 }
 
+func ErrInvalidSpanDuration(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeInvalidSpanDuration, "wrong span duration")
+}
+
 func ErrSpanNotFound(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeSpanNotFound, "Span not found")
 }
@@ -205,10 +222,95 @@ func ErrProducerMisMatch(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeProducerMisMatch, "Producer set mismatch")
 }
 
-func codeToDefaultMsg(code CodeType) string {
+//
+// Side-tx errors
+//
+
+// ErrorSideTx represents side-tx error
+func ErrorSideTx(codespace sdk.CodespaceType, code CodeType) (res abci.ResponseDeliverSideTx) {
+	res.Code = uint32(code)
+	res.Codespace = string(codespace)
+	res.Result = abci.SideTxResultType_Skip // skip side-tx vote in-case of error
+	return
+}
+
+func ErrSideTxValidation(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeSideTxValidationFailed, "External call majority validation failed. ")
+}
+
+//
+// Private methods
+//
+
+func CodeToDefaultMsg(code CodeType) string {
 	switch code {
+	// case CodeInvalidBlockInput:
+	// 	return "Invalid Block Input"
+
+	case CodeInvalidMsg:
+		return "Invalid Message"
+
+	case CodeInvalidProposerInput:
+		return "Proposer is not valid"
 	case CodeInvalidBlockInput:
-		return "Invalid Block Input"
+		return "Wrong roothash for given start and end block numbers"
+	case CodeInvalidACK:
+		return "Ack Not Valid"
+	case CodeNoACK:
+		return "Checkpoint Already Exists In Buffer, ACK expected"
+	case CodeBadTimeStamp:
+		return "Invalid time stamp. It must be in near past."
+	case CodeInvalidNoACK:
+		return "Invalid No ACK -- Waiting for last checkpoint ACK"
+	case CodeTooManyNoAck:
+		return "Too many no-acks"
+	case CodeLowBal:
+		return "Insufficient balance"
+	case CodeNoCheckpoint:
+		return "Checkpoint Not Found"
+	case CodeOldCheckpoint:
+		return "Checkpoint already received for given start and end block"
+	case CodeDisCountinuousCheckpoint:
+		return "Checkpoint not in countinuity"
+	case CodeNoCheckpointBuffer:
+		return "Checkpoint buffer Not Found"
+
+	case CodeOldValidator:
+		return "Start Epoch behind Current Epoch"
+	case CodeNoValidator:
+		return "Validator information not found"
+	case CodeValSignerMismatch:
+		return "Signer Address doesnt match pubkey address"
+	case CodeValidatorExitDeny:
+		return "Validator is not in validator set, exit not possible"
+	case CodeValAlreadyUnbonded:
+		return "Validator already unbonded , cannot exit"
+	case CodeSignerSynced:
+		return "No signer update found, invalid message"
+	case CodeValSave:
+		return "Cannot save validator"
+	case CodeValAlreadyJoined:
+		return "Validator already joined"
+	case CodeSignerUpdateError:
+		return "Signer update error"
+	case CodeNoConn:
+		return "Unable to connect to chain"
+	case CodeWaitFrConfirmation:
+		return "wait for confirmation time before sending transaction"
+	case CodeValPubkeyMismatch:
+		return "Signer Pubkey mismatch between event and msg"
+	case CodeSpanNotCountinuous:
+		return "Span not countinuous"
+	case CodeUnableToFreezeSet:
+		return "Unable to freeze validator set for next span"
+	case CodeSpanNotFound:
+		return "Span not found"
+	case CodeValSetMisMatch:
+		return "Validator set mismatch"
+	case CodeProducerMisMatch:
+		return "Producer set mismatch"
+	case CodeInvalidBorChainID:
+		return "Invalid Bor chain id"
 	default:
 		return sdk.CodeToDefaultMsg(code)
 	}
@@ -218,7 +320,7 @@ func msgOrDefaultMsg(msg string, code CodeType) string {
 	if msg != "" {
 		return msg
 	}
-	return codeToDefaultMsg(code)
+	return CodeToDefaultMsg(code)
 }
 
 func newError(codespace sdk.CodespaceType, code CodeType, msg string) sdk.Error {

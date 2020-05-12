@@ -21,6 +21,7 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 	stakingcli "github.com/maticnetwork/heimdall/staking/client/cli"
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
+	topupTypes "github.com/maticnetwork/heimdall/topup/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -51,10 +52,6 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 
 			// num of validators = validators in genesis files
 			numValidators := viper.GetInt(flagNumValidators)
-
-			// num of non validators = accounts not in config file but present in the testnets package main
-			// and can be made validator later by staking on-chain
-			numNonValidators := viper.GetInt(flagNumNonValidators)
 
 			// get total number of validators to be generated
 			totalValidators := totalValidators()
@@ -121,13 +118,14 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 						hmTypes.NewValidatorID(uint64(startID+int64(i))),
 						0,
 						0,
+						1,
 						10000,
 						newPubkey,
 						hmTypes.BytesToHeimdallAddress(valPubKeys[i].Address().Bytes()),
 					)
 
 					// create dividend account for validator
-					dividendAccounts[i] = hmTypes.NewDividendAccount(hmTypes.NewDividendAccountID(uint64(validators[i].ID)), ZeroIntString, ZeroIntString)
+					dividendAccounts[i] = hmTypes.NewDividendAccount(hmTypes.NewDividendAccountID(uint64(validators[i].ID)), ZeroIntString)
 				}
 
 				signers[i] = GetSignerInfo(valPubKeys[i], privKeys[i].Bytes(), cdc)
@@ -154,7 +152,7 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 			}
 
 			// staking state change
-			appStateBytes, err = stakingTypes.SetGenesisStateToAppState(appStateBytes, validators, *validatorSet, dividendAccounts)
+			appStateBytes, err = stakingTypes.SetGenesisStateToAppState(appStateBytes, validators, *validatorSet)
 			if err != nil {
 				return err
 			}
@@ -165,12 +163,18 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 				return err
 			}
 
+			// topup state change
+			appStateBytes, err = topupTypes.SetGenesisStateToAppState(appStateBytes, dividendAccounts)
+			if err != nil {
+				return err
+			}
+
 			appStateJSON, err := json.Marshal(appStateBytes)
 			if err != nil {
 				return err
 			}
 
-			for i := 0; i < len(validators); i++ {
+			for i := 0; i < totalValidators; i++ {
 				if err = writeGenesisFile(genesisTime, genFiles[i], chainID, appStateJSON); err != nil {
 					return err
 				}
@@ -191,7 +195,7 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 				}
 			}
 
-			fmt.Printf("Successfully initialized %d node directories\n", numValidators+numNonValidators)
+			fmt.Printf("Successfully initialized %d node directories\n", totalValidators)
 			return nil
 		},
 	}

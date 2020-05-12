@@ -38,13 +38,6 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 		}
 	}
 
-	// Add genesis dividend accounts
-	for _, dividendAccount := range data.DividentAccounts {
-		if err := keeper.AddDividendAccount(ctx, dividendAccount); err != nil {
-			panic((err))
-		}
-	}
-
 	for _, sequence := range data.StakingSequences {
 		keeper.SetStakingSequence(ctx, sequence)
 	}
@@ -56,7 +49,6 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
 	return types.NewGenesisState(
 		keeper.GetAllValidators(ctx),
 		keeper.GetValidatorSet(ctx),
-		keeper.GetAllDividendAccounts(ctx),
 		keeper.GetStakingSequences(ctx),
 	)
 }

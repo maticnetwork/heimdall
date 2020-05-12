@@ -3,7 +3,6 @@ package app
 import (
 	"encoding/json"
 	"fmt"
-	"math/big"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -150,9 +149,9 @@ func (d ModuleCommunicator) IsCurrentValidatorByAddress(ctx sdk.Context, address
 	return d.App.StakingKeeper.IsCurrentValidatorByAddress(ctx, address)
 }
 
-// AddFeeToDividendAccount add fee to dividend account
-func (d ModuleCommunicator) AddFeeToDividendAccount(ctx sdk.Context, valID types.ValidatorID, fee *big.Int) sdk.Error {
-	return d.App.StakingKeeper.AddFeeToDividendAccount(ctx, valID, fee)
+// GetAllDividendAccounts fetches all dividend accounts from topup module
+func (d ModuleCommunicator) GetAllDividendAccounts(ctx sdk.Context) []types.DividendAccount {
+	return d.App.TopupKeeper.GetAllDividendAccounts(ctx)
 }
 
 // GetValidatorFromValID get validator from validator id
@@ -184,15 +183,12 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	// create and register app-level codec for TXs and accounts
 	cdc := MakeCodec()
 
-	// create and register pulp codec
-	pulp := authTypes.GetPulpInstance()
-
 	// set prefix
 	config := sdk.GetConfig()
 	config.Seal()
 
 	// base app
-	bApp := bam.NewBaseApp(AppName, logger, db, authTypes.RLPTxDecoder(cdc, pulp), baseAppOptions...)
+	bApp := bam.NewBaseApp(AppName, logger, db, authTypes.DefaultTxDecoder(cdc), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(nil)
 	bApp.SetAppVersion(version.Version)
 
@@ -334,6 +330,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		common.DefaultCodespace,
 		app.StakingKeeper,
 		app.ChainKeeper,
+		moduleCommunicator,
 	)
 
 	app.BorKeeper = bor.NewKeeper(
@@ -377,7 +374,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		gov.NewAppModule(app.GovKeeper, app.SupplyKeeper),
 		chainmanager.NewAppModule(app.ChainKeeper, &app.caller),
 		staking.NewAppModule(app.StakingKeeper, &app.caller),
-		checkpoint.NewAppModule(app.CheckpointKeeper, app.StakingKeeper, &app.caller),
+		checkpoint.NewAppModule(app.CheckpointKeeper, app.StakingKeeper, app.TopupKeeper, &app.caller),
 		bor.NewAppModule(app.BorKeeper, &app.caller),
 		clerk.NewAppModule(app.ClerkKeeper, &app.caller),
 		topup.NewAppModule(app.TopupKeeper, &app.caller),
@@ -403,12 +400,13 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.mm.RegisterRoutes(app.Router(), app.QueryRouter())
 
 	// side router
-	app.sideRouter = types.NewRouter()
+	app.sideRouter = types.NewSideRouter()
 	for _, m := range app.mm.Modules {
 		if m.Route() != "" {
 			if sm, ok := m.(hmModule.SideModule); ok {
 				app.sideRouter.AddRoute(m.Route(), &types.SideHandlers{
-					sm.NewSideTxHandler(), sm.NewPostTxHandler(),
+					SideTxHandler: sm.NewSideTxHandler(),
+					PostTxHandler: sm.NewPostTxHandler(),
 				})
 			}
 		}
@@ -425,6 +423,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		}),
 		chainmanager.NewAppModule(app.ChainKeeper, &app.caller),
 		topup.NewAppModule(app.TopupKeeper, &app.caller),
+		staking.NewAppModule(app.StakingKeeper, &app.caller),
 	)
 	app.sm.RegisterStoreDecoders()
 
@@ -470,16 +469,6 @@ func MakeCodec() *codec.Codec {
 
 	cdc.Seal()
 	return cdc
-}
-
-// MakePulp creates pulp codec and registers custom types for decoder
-func MakePulp() *authTypes.Pulp {
-	pulp := authTypes.GetPulpInstance()
-
-	// register custom type
-	checkpointTypes.RegisterPulp(pulp)
-
-	return pulp
 }
 
 // Name returns the name of the App
@@ -645,6 +634,14 @@ func (app *HeimdallApp) Codec() *codec.Codec {
 	return app.cdc
 }
 
+// SetCodec set codec to app
+//
+// NOTE: This is solely to be used for testing purposes as it may be desirable
+// for modules to register their own custom testing types.
+func (app *HeimdallApp) SetCodec(cdc *codec.Codec) {
+	app.cdc = cdc
+}
+
 // GetKey returns the KVStoreKey for the provided store key.
 //
 // NOTE: This is solely to be used for testing purposes.
@@ -672,7 +669,7 @@ func (app *HeimdallApp) GetSideRouter() types.SideRouter {
 }
 
 // SetSideRouter sets side-tx router
-// Testing ONLYgit status
+// Testing ONLY
 func (app *HeimdallApp) SetSideRouter(r types.SideRouter) {
 	app.sideRouter = r
 }

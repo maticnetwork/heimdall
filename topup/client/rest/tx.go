@@ -29,9 +29,12 @@ func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
 type TopupReq struct {
 	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
 
-	ID       uint64 `json:"id" yaml:"id"`
-	TxHash   string `json:"tx_hash" yaml:"tx_hash"`
-	LogIndex uint64 `json:"log_index" yaml:"log_index"`
+	ID          uint64 `json:"id" yaml:"id"`
+	TxHash      string `json:"tx_hash" yaml:"tx_hash"`
+	LogIndex    uint64 `json:"log_index" yaml:"log_index"`
+	Signer      string `json:"signer" yaml:"signer"`
+	Fee         string `json:"fee" yaml:"fee"`
+	BlockNumber uint64 `json:"block_number" yaml:"block_number"`
 }
 
 // TopupHandlerFn - http request handler to topup coins to a address.
@@ -50,13 +53,25 @@ func TopupHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		// get from address
 		fromAddr := types.HexToHeimdallAddress(req.BaseReq.From)
 
-		// get msg
+		// get signer
+		signer := types.HexToHeimdallAddress(req.Signer)
+
+		// fee amount
+		fee, ok := sdk.NewIntFromString(req.Fee)
+		if !ok {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "invalid amount")
+		}
+
 		msg := topupTypes.NewMsgTopup(
 			fromAddr,
 			req.ID,
+			signer,
+			fee,
 			types.HexToHeimdallHash(req.TxHash),
 			req.LogIndex,
+			req.BlockNumber,
 		)
+
 		restClient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
 	}
 }

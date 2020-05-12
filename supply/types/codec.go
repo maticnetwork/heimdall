@@ -3,7 +3,6 @@ package types
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
 
-	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	exported "github.com/maticnetwork/heimdall/supply/exported"
 )
 
@@ -11,11 +10,6 @@ import (
 func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterInterface((*exported.ModuleAccountI)(nil), nil)
 	cdc.RegisterConcrete(&ModuleAccount{}, "supply/ModuleAccount", nil)
-}
-
-// RegisterPulp register pulp
-func RegisterPulp(pulp *authTypes.Pulp) {
-	// pulp.RegisterConcrete(ModuleAccount{})
 }
 
 // ModuleCdc generic sealed codec to be used throughout module

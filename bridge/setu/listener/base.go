@@ -17,6 +17,8 @@ import (
 	"github.com/maticnetwork/heimdall/bridge/setu/queue"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
+
+	httpClient "github.com/tendermint/tendermint/rpc/client"
 )
 
 // Listener defines a block header listerner for Rootchain, Maticchain, Heimdall
@@ -64,12 +66,15 @@ type BaseListener struct {
 	// queue connector
 	queueConnector *queue.QueueConnector
 
+	// http client to subscribe to
+	httpClient *httpClient.HTTP
+
 	// storage client
 	storageClient *leveldb.DB
 }
 
 // NewBaseListener creates a new BaseListener.
-func NewBaseListener(cdc *codec.Codec, queueConnector *queue.QueueConnector, chainClient *ethclient.Client, name string, impl Listener) *BaseListener {
+func NewBaseListener(cdc *codec.Codec, queueConnector *queue.QueueConnector, httpClient *httpClient.HTTP, chainClient *ethclient.Client, name string, impl Listener) *BaseListener {
 
 	logger := util.Logger().With("service", "listener", "module", name)
 	contractCaller, err := helper.NewContractCaller()
@@ -92,6 +97,7 @@ func NewBaseListener(cdc *codec.Codec, queueConnector *queue.QueueConnector, cha
 
 		cliCtx:            cliCtx,
 		queueConnector:    queueConnector,
+		httpClient:        httpClient,
 		contractConnector: contractCaller,
 		chainClient:       chainClient,
 

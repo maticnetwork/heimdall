@@ -50,26 +50,6 @@
 		"type": "function"
 	},
 	{
-		"constant": false,
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "validatorId",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "exitEpoch",
-				"type": "uint256"
-			}
-		],
-		"name": "logJailed",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
 		"constant": true,
 		"inputs": [
 			{
@@ -331,6 +311,31 @@
 		"inputs": [
 			{
 				"internalType": "uint256",
+				"name": "validatorId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "exitEpoch",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "signer",
+				"type": "address"
+			}
+		],
+		"name": "logJailed",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"internalType": "uint256",
 				"name": "newDynasty",
 				"type": "uint256"
 			},
@@ -341,6 +346,41 @@
 			}
 		],
 		"name": "logDynastyValueChange",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "newProposerBonus",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "oldProposerBonus",
+				"type": "uint256"
+			}
+		],
+		"name": "logProposerBonusChange",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "logSlashed",
 		"outputs": [],
 		"payable": false,
 		"stateMutability": "nonpayable",
@@ -491,6 +531,26 @@
 			},
 			{
 				"internalType": "address",
+				"name": "signer",
+				"type": "address"
+			}
+		],
+		"name": "logUnJailed",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "validatorId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address",
 				"name": "user",
 				"type": "address"
 			},
@@ -562,6 +622,31 @@
 		"inputs": [
 			{
 				"internalType": "uint256",
+				"name": "validatorId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "user",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "logDelUnstaked",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"internalType": "uint256",
 				"name": "newValidatorId",
 				"type": "uint256"
 			},
@@ -580,6 +665,27 @@
 		"outputs": [],
 		"payable": false,
 		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "validatorNonce",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
 		"type": "function"
 	},
 	{
@@ -660,6 +766,12 @@
 				"type": "uint256"
 			},
 			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "nonce",
+				"type": "uint256"
+			},
+			{
 				"indexed": true,
 				"internalType": "uint256",
 				"name": "activationEpoch",
@@ -736,6 +848,12 @@
 			{
 				"indexed": false,
 				"internalType": "uint256",
+				"name": "nonce",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
 				"name": "deactivationEpoch",
 				"type": "uint256"
 			},
@@ -756,6 +874,12 @@
 				"indexed": true,
 				"internalType": "uint256",
 				"name": "validatorId",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "nonce",
 				"type": "uint256"
 			},
 			{
@@ -819,9 +943,47 @@
 				"internalType": "uint256",
 				"name": "exitEpoch",
 				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "signer",
+				"type": "address"
 			}
 		],
 		"name": "Jailed",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "validatorId",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "signer",
+				"type": "address"
+			}
+		],
+		"name": "UnJailed",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "Slashed",
 		"type": "event"
 	},
 	{
@@ -868,6 +1030,25 @@
 			{
 				"indexed": false,
 				"internalType": "uint256",
+				"name": "newProposerBonus",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "oldProposerBonus",
+				"type": "uint256"
+			}
+		],
+		"name": "ProposerBonusChange",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
 				"name": "newReward",
 				"type": "uint256"
 			},
@@ -888,6 +1069,12 @@
 				"indexed": true,
 				"internalType": "uint256",
 				"name": "validatorId",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "nonce",
 				"type": "uint256"
 			},
 			{
@@ -1141,6 +1328,31 @@
 			}
 		],
 		"name": "DelReStaked",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "validatorId",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "user",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "DelUnstaked",
 		"type": "event"
 	},
 	{

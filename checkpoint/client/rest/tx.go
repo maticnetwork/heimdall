@@ -28,10 +28,11 @@ type (
 		BaseReq rest.BaseReq `json:"base_req"`
 
 		Proposer        hmTypes.HeimdallAddress `json:"proposer"`
-		RootHash        hmTypes.HeimdallHash    `json:"rootHash"`
-		AccountRootHash hmTypes.HeimdallHash    `json:"accountRootHash"`
-		StartBlock      uint64                  `json:"startBlock"`
-		EndBlock        uint64                  `json:"endBlock"`
+		RootHash        hmTypes.HeimdallHash    `json:"root_Hash"`
+		AccountRootHash hmTypes.HeimdallHash    `json:"account_root_hash"`
+		StartBlock      uint64                  `json:"start_block"`
+		EndBlock        uint64                  `json:"end_block"`
+		BorChainID      string                  `json:"bor_chain_id"`
 	}
 
 	// HeaderACKReq struct for sending ACK for a new headers
@@ -39,8 +40,12 @@ type (
 	HeaderACKReq struct {
 		BaseReq rest.BaseReq `json:"base_req"`
 
+		From        hmTypes.HeimdallAddress `json:"proposer"`
+		HeaderBlock uint64                  `json:"header_block"`
+		StartBlock  uint64                  `json:"start_block"`
+		EndBlock    uint64                  `json:"end_block"`
 		Proposer    hmTypes.HeimdallAddress `json:"proposer"`
-		HeaderBlock uint64                  `json:"headerBlock"`
+		RootHash    hmTypes.HeimdallHash    `json:"root_Hash"`
 		TxHash      hmTypes.HeimdallHash    `json:"tx_hash"`
 		LogIndex    uint64                  `json:"log_index"`
 	}
@@ -72,6 +77,7 @@ func newCheckpointHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			req.EndBlock,
 			req.RootHash,
 			req.AccountRootHash,
+			req.BorChainID,
 		)
 
 		// send response
@@ -92,7 +98,16 @@ func newCheckpointACKHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		// draft a message and send response
-		msg := types.NewMsgCheckpointAck(req.Proposer, req.HeaderBlock, req.TxHash, req.LogIndex)
+		msg := types.NewMsgCheckpointAck(
+			req.From,
+			req.HeaderBlock,
+			req.Proposer,
+			req.StartBlock,
+			req.EndBlock,
+			req.RootHash,
+			req.TxHash,
+			req.LogIndex,
+		)
 
 		// send response
 		restClient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
