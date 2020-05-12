@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"math/big"
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -35,23 +36,24 @@ func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
 type UnjailReq struct {
 	BaseReq rest.BaseReq `json:"base_req"`
 
-	ID       uint64 `json:"ID"`
-	TxHash   string `json:"tx_hash"`
-	LogIndex uint64 `json:"log_index"`
+	ID          uint64 `json:"ID"`
+	TxHash      string `json:"tx_hash"`
+	LogIndex    uint64 `json:"log_index"`
+	BlockNumber uint64 `json:"block_number" yaml:"block_number"`
 }
 
 type TickReq struct {
-	BaseReq rest.BaseReq `json:"base_req"`
-
-	Proposer         string `json:"proposer"`
-	SlashingInfoHash string `json:"slashing_info_hash"`
+	BaseReq          rest.BaseReq `json:"base_req"`
+	Proposer         string       `json:"proposer"`
+	SlashingInfoHash string       `json:"slashing_info_hash"`
 }
 
 type TickAckReq struct {
-	BaseReq rest.BaseReq `json:"base_req"`
-
-	TxHash   string `json:"tx_hash"`
-	LogIndex uint64 `json:"log_index"`
+	BaseReq     rest.BaseReq `json:"base_req"`
+	Amount      string       `json:"amount"`
+	TxHash      string       `json:"tx_hash"`
+	LogIndex    uint64       `json:"log_index"`
+	BlockNumber uint64       `json:"block_number" yaml:"block_number"`
 }
 
 func newUnjailRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
@@ -73,6 +75,7 @@ func newUnjailRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			req.ID,
 			hmTypes.HexToHeimdallHash(req.TxHash),
 			req.LogIndex,
+			req.BlockNumber,
 		)
 		err := msg.ValidateBasic()
 		if err != nil {
@@ -111,10 +114,17 @@ func newTickAckHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		amount, ok := big.NewInt(0).SetString(req.Amount, 10)
+		if !ok {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "invalid amount")
+		}
+
 		msg := types.NewMsgTickAck(
 			hmTypes.HexToHeimdallAddress(req.BaseReq.From),
+			amount,
 			hmTypes.HexToHeimdallHash(req.TxHash),
 			req.LogIndex,
+			req.BlockNumber,
 		)
 
 		restClient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})

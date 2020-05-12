@@ -182,6 +182,7 @@ func (sp *SlashingProcessor) sendTickAckToHeimdall(eventName string, logBytes st
 				"totalSlashedAmount", event.Amount,
 				"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 				"logIndex", uint64(vLog.Index),
+				"blockNumber", vLog.BlockNumber,
 			)
 			return nil
 		}
@@ -191,12 +192,13 @@ func (sp *SlashingProcessor) sendTickAckToHeimdall(eventName string, logBytes st
 			"totalSlashedAmount", event.Amount,
 			"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			"logIndex", uint64(vLog.Index),
+			"blockNumber", vLog.BlockNumber,
 		)
 
 		// TODO - check if i am the proposer of this tick ack or not.
 
 		// create msg checkpoint ack message
-		msg := slashingTypes.NewMsgTickAck(helper.GetFromAddress(sp.cliCtx), hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()), uint64(vLog.Index))
+		msg := slashingTypes.NewMsgTickAck(helper.GetFromAddress(sp.cliCtx), event.Amount, hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()), uint64(vLog.Index), vLog.BlockNumber)
 
 		// return broadcast to heimdall
 		if err := sp.txBroadcaster.BroadcastToHeimdall(msg); err != nil {
@@ -228,6 +230,7 @@ func (sp *SlashingProcessor) sendUnjailToHeimdall(eventName string, logBytes str
 				"ValidatorID", event.ValidatorId,
 				"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 				"logIndex", uint64(vLog.Index),
+				"blockNumber", vLog.BlockNumber,
 			)
 			return nil
 		}
@@ -237,6 +240,7 @@ func (sp *SlashingProcessor) sendUnjailToHeimdall(eventName string, logBytes str
 			"ValidatorID", event.ValidatorId,
 			"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			"logIndex", uint64(vLog.Index),
+			"blockNumber", vLog.BlockNumber,
 		)
 
 		// TODO - check if i am the proposer of unjail or not.
@@ -247,6 +251,7 @@ func (sp *SlashingProcessor) sendUnjailToHeimdall(eventName string, logBytes str
 			event.ValidatorId.Uint64(),
 			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			uint64(vLog.Index),
+			vLog.BlockNumber,
 		)
 
 		// return broadcast to heimdall

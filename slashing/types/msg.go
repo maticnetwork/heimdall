@@ -2,6 +2,7 @@ package types
 
 import (
 	"bytes"
+	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	hmCommon "github.com/maticnetwork/heimdall/common"
@@ -15,18 +16,20 @@ var _ sdk.Msg = &MsgUnjail{}
 
 // MsgUnjail - struct for unjailing jailed validator
 type MsgUnjail struct {
-	From     types.HeimdallAddress `json:"from"`
-	ID       hmTypes.ValidatorID   `json:"id"`
-	TxHash   types.HeimdallHash    `json:"tx_hash"`
-	LogIndex uint64                `json:"log_index"`
+	From        types.HeimdallAddress `json:"from"`
+	ID          hmTypes.ValidatorID   `json:"id"`
+	TxHash      types.HeimdallHash    `json:"tx_hash"`
+	LogIndex    uint64                `json:"log_index"`
+	BlockNumber uint64                `json:"block_number"`
 }
 
-func NewMsgUnjail(from types.HeimdallAddress, id uint64, txHash types.HeimdallHash, logIndex uint64) MsgUnjail {
+func NewMsgUnjail(from types.HeimdallAddress, id uint64, txHash types.HeimdallHash, logIndex uint64, blockNumber uint64) MsgUnjail {
 	return MsgUnjail{
-		From:     from,
-		ID:       hmTypes.NewValidatorID(id),
-		TxHash:   txHash,
-		LogIndex: logIndex,
+		From:        from,
+		ID:          hmTypes.NewValidatorID(id),
+		TxHash:      txHash,
+		LogIndex:    logIndex,
+		BlockNumber: blockNumber,
 	}
 }
 
@@ -106,6 +109,17 @@ func (msg MsgTick) ValidateBasic() sdk.Error {
 	return nil
 }
 
+// GetSideSignBytes returns side sign bytes
+func (msg MsgTick) GetSideSignBytes() []byte {
+	// keccak256(abi.encoded(proposer, startBlock, endBlock, rootHash, accountRootHash, bor chain id))
+	/* 	return appendBytes32(
+	   		msg.Proposer.Bytes(),
+	   		msg.SlashingInfoHash.Bytes(),
+	   	)
+	*/
+	return nil
+}
+
 //
 // Msg Tick Ack
 //
@@ -113,16 +127,20 @@ func (msg MsgTick) ValidateBasic() sdk.Error {
 var _ sdk.Msg = &MsgTickAck{}
 
 type MsgTickAck struct {
-	From     types.HeimdallAddress `json:"from"`
-	TxHash   types.HeimdallHash    `json:"tx_hash"`
-	LogIndex uint64                `json:"log_index"`
+	From          types.HeimdallAddress `json:"from"`
+	SlashedAmount *big.Int              `json:"slashed_amount"`
+	TxHash        types.HeimdallHash    `json:"tx_hash"`
+	LogIndex      uint64                `json:"log_index"`
+	BlockNumber   uint64                `json:"block_number"`
 }
 
-func NewMsgTickAck(from types.HeimdallAddress, txHash types.HeimdallHash, logIndex uint64) MsgTickAck {
+func NewMsgTickAck(from types.HeimdallAddress, slashedAmount *big.Int, txHash types.HeimdallHash, logIndex uint64, blockNumber uint64) MsgTickAck {
 	return MsgTickAck{
-		From:     from,
-		TxHash:   txHash,
-		LogIndex: logIndex,
+		From:          from,
+		SlashedAmount: slashedAmount,
+		TxHash:        txHash,
+		BlockNumber:   blockNumber,
+		LogIndex:      logIndex,
 	}
 }
 
@@ -152,6 +170,20 @@ func (msg MsgTickAck) ValidateBasic() sdk.Error {
 	if msg.From.Empty() {
 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid from %v", msg.From.String())
 	}
+	return nil
+}
 
+// GetTxHash Returns tx hash
+func (msg MsgTickAck) GetTxHash() types.HeimdallHash {
+	return msg.TxHash
+}
+
+// GetLogIndex Returns log index
+func (msg MsgTickAck) GetLogIndex() uint64 {
+	return msg.LogIndex
+}
+
+// GetSideSignBytes returns side sign bytes
+func (msg MsgTickAck) GetSideSignBytes() []byte {
 	return nil
 }

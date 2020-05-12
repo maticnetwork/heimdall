@@ -6,5 +6,7 @@ const (
 	FlagValidatorID      = "id"
 	FlagTxHash           = "tx-hash"
 	FlagLogIndex         = "log-index"
+	FlagAmount           = "slashed-amount"
 	FlagSlashInfoHash    = "slashinfo-hash"
+	FlagBlockNumber      = "block-number"
 )

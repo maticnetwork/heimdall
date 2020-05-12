@@ -1,7 +1,9 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
+	"math/big"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -15,6 +17,8 @@ import (
 	"github.com/maticnetwork/heimdall/slashing/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
+
+var logger = helper.Logger.With("module", "staking/client/cli")
 
 func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 	slashingTxCmd := &cobra.Command{
@@ -67,6 +71,7 @@ $ <appcli> tx slashing unjail --from mykey
 				uint64(validator),
 				hmTypes.HexToHeimdallHash(txHash),
 				uint64(viper.GetInt64(FlagLogIndex)),
+				viper.GetUint64(FlagBlockNumber),
 			)
 
 			// broadcast messages
@@ -75,9 +80,12 @@ $ <appcli> tx slashing unjail --from mykey
 	}
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
+	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
 	cmd.MarkFlagRequired(FlagProposerAddress)
 	cmd.MarkFlagRequired(FlagTxHash)
-
+	if err := cmd.MarkFlagRequired(FlagBlockNumber); err != nil {
+		logger.Error("SendValidatorJoinTx | MarkFlagRequired | FlagBlockNumber", "Error", err)
+	}
 	return cmd
 }
 
@@ -139,10 +147,17 @@ func GetCmdTickAck(cdc *codec.Codec) *cobra.Command {
 				return fmt.Errorf("transaction hash is required")
 			}
 
+			amount, ok := big.NewInt(0).SetString(viper.GetString(FlagAmount), 10)
+			if !ok {
+				return errors.New("Invalid stake amount")
+			}
+
 			msg := types.NewMsgTickAck(
 				proposer,
+				amount,
 				hmTypes.HexToHeimdallHash(txHash),
 				uint64(viper.GetInt64(FlagLogIndex)),
+				viper.GetUint64(FlagBlockNumber),
 			)
 
 			// broadcast messages
@@ -152,10 +167,17 @@ func GetCmdTickAck(cdc *codec.Codec) *cobra.Command {
 
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
+	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
 	cmd.Flags().String(FlagLogIndex, "", "--log-index=<log-index>")
+	cmd.Flags().String(FlagAmount, "0", "--amount=<amount>")
+
+	if err := cmd.MarkFlagRequired(FlagBlockNumber); err != nil {
+		logger.Error("SendValidatorJoinTx | MarkFlagRequired | FlagBlockNumber", "Error", err)
+	}
 	cmd.MarkFlagRequired(FlagProposerAddress)
 	cmd.MarkFlagRequired(FlagTxHash)
 	cmd.MarkFlagRequired(FlagLogIndex)
+	cmd.MarkFlagRequired(FlagAmount)
 
 	return cmd
 }
