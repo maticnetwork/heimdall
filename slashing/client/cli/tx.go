@@ -105,14 +105,14 @@ func GetCmdTick(cdc *codec.Codec) *cobra.Command {
 				proposer = helper.GetFromAddress(cliCtx)
 			}
 
-			slashInfoHash := viper.GetString(FlagSlashInfoHash)
-			if slashInfoHash == "" {
-				return fmt.Errorf("slashinfo hash has to be supplied")
+			slashInfoBytes := viper.GetString(FlagSlashInfoBytes)
+			if slashInfoBytes == "" {
+				return fmt.Errorf("slashinfo bytes has to be supplied")
 			}
 
 			msg := types.NewMsgTick(
 				proposer,
-				hmTypes.HexToHeimdallHash(slashInfoHash),
+				hmTypes.HexToHexBytes(slashInfoBytes),
 			)
 
 			// braodcast messages
@@ -121,9 +121,9 @@ func GetCmdTick(cdc *codec.Codec) *cobra.Command {
 	}
 
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
-	cmd.Flags().String(FlagSlashInfoHash, "", "--slashinfo-hash=<slashinfo-hash>")
+	cmd.Flags().String(FlagSlashInfoBytes, "", "--slashinfo-bytes=<slashinfo-bytes>")
 	cmd.MarkFlagRequired(FlagProposerAddress)
-	cmd.MarkFlagRequired(FlagSlashInfoHash)
+	cmd.MarkFlagRequired(FlagSlashInfoBytes)
 
 	return cmd
 }

@@ -7,6 +7,6 @@ const (
 	FlagTxHash           = "tx-hash"
 	FlagLogIndex         = "log-index"
 	FlagAmount           = "slashed-amount"
-	FlagSlashInfoHash    = "slashinfo-hash"
+	FlagSlashInfoBytes   = "slashinfo-bytes"
 	FlagBlockNumber      = "block-number"
 )

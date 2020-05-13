@@ -34,8 +34,8 @@ func NewQuerier(k Keeper) sdk.Querier {
 		case types.QuerySlashingInfos:
 			return querySlashingInfos(ctx, req, k)
 
-		case types.QueryLatestSlashInfoHash:
-			return querySlashingInfoHash(ctx, req, k)
+		case types.QuerySlashingInfoBytes:
+			return querySlashingInfoBytes(ctx, req, k)
 
 		case types.QueryTickSlashingInfos:
 			return queryTickSlashingInfos(ctx, req, k)
@@ -157,18 +157,18 @@ func querySlashingInfos(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byt
 	return bz, nil
 }
 
-func querySlashingInfoHash(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	// Calculate new slashInfo hash
+func querySlashingInfoBytes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	// Calculate new slashInfo bytes
 	slashingInfos, err := keeper.GetBufferValSlashingInfos(ctx)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("no slash infos in buffer", err.Error()))
 	}
 
-	slashingInfoHash, err := types.GetSlashingInfoHash(slashingInfos)
+	slashingInfoBytes, err := types.SortAndRLPEncodeSlashInfos(slashingInfos)
 	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not fetch slashingInfoHash ", err.Error()))
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not fetch slashingInfoBytes ", err.Error()))
 	}
-	return slashingInfoHash, nil
+	return slashingInfoBytes, nil
 }
 
 func queryTickSlashingInfos(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, sdk.Error) {

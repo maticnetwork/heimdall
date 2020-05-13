@@ -8,14 +8,14 @@ import (
 
 // Query endpoints supported by the slashing querier
 const (
-	QueryParameters          = "parameters"
-	QuerySigningInfo         = "signingInfo"
-	QuerySigningInfos        = "signingInfos"
-	QuerySlashingInfo        = "slashingInfo"
-	QuerySlashingInfos       = "slashingInfos"
-	QueryLatestSlashInfoHash = "slashingInfoHash"
-	QueryTickSlashingInfos   = "tickSlashingInfos"
-	QuerySlashingSequence    = "slashing-sequence"
+	QueryParameters        = "parameters"
+	QuerySigningInfo       = "signingInfo"
+	QuerySigningInfos      = "signingInfos"
+	QuerySlashingInfo      = "slashingInfo"
+	QuerySlashingInfos     = "slashingInfos"
+	QuerySlashingInfoBytes = "slashingInfoBytes"
+	QueryTickSlashingInfos = "tickSlashingInfos"
+	QuerySlashingSequence  = "slashing-sequence"
 )
 
 // QuerySigningInfoParams defines the params for the following queries:

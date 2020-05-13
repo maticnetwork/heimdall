@@ -190,7 +190,7 @@ func PostHandleMsgTick(ctx sdk.Context, k Keeper, msg types.MsgTick, sideTxResul
 			sdk.NewAttribute(hmTypes.AttributeKeyTxHash, hmTypes.BytesToHeimdallHash(hash).Hex()), // tx hash
 			sdk.NewAttribute(hmTypes.AttributeKeySideTxResult, sideTxResult.String()),             // result
 			sdk.NewAttribute(types.AttributeKeyProposer, msg.Proposer.String()),
-			sdk.NewAttribute(types.AttributeKeySlashInfoHash, msg.SlashingInfoHash.String()),
+			sdk.NewAttribute(types.AttributeKeySlashInfoBytes, msg.SlashingInfoBytes.String()),
 		),
 	})
 

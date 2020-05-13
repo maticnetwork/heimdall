@@ -43,8 +43,8 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	).Methods("GET")
 
 	r.HandleFunc(
-		"/slashing/latest_slash_info_hash",
-		latestSlashInfoHashHandlerFn(cliCtx),
+		"/slashing/latest_slash_info_bytes",
+		latestSlashInfoBytesHandlerFn(cliCtx),
 	).Methods("GET")
 
 	r.HandleFunc(
@@ -197,32 +197,32 @@ func latestSlashInfoHandlerListFn(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 // http request handler to query signing info
-func latestSlashInfoHashHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func latestSlashInfoBytesHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
 			return
 		}
 
-		res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryLatestSlashInfoHash), nil)
-		RestLogger.Debug("slashInfoHash querier response", "res", res)
+		res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QuerySlashingInfoBytes), nil)
+		RestLogger.Debug("slashInfoBytes querier response", "res", res)
 
 		if err != nil {
-			RestLogger.Error("Error while calculating slashInfoHash  ", "Error", err.Error())
+			RestLogger.Error("Error while calculating slashInfoBytes  ", "Error", err.Error())
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		// error if no slashInfoHash found
-		if ok := hmRest.ReturnNotFoundIfNoContent(w, res, "SlashInfo Hash not found"); !ok {
-			RestLogger.Error("SlashInfoHash not found ", "Error", err.Error())
+		// error if no slashInfoBytes found
+		if ok := hmRest.ReturnNotFoundIfNoContent(w, res, "SlashInfoBytes not found"); !ok {
+			RestLogger.Error("SlashInfoBytes not found ", "Error", err.Error())
 			return
 		}
 
-		var slashInfoHash = hmTypes.BytesToHeimdallHash(res)
-		RestLogger.Debug("Fetched SlashInfoHash ", "SlashInfoHash", slashInfoHash)
+		var slashInfoBytes = hmTypes.BytesToHexBytes(res)
+		RestLogger.Debug("Fetched slashInfoBytes ", "SlashInfoBytes", slashInfoBytes.String())
 
-		result, err := json.Marshal(&slashInfoHash)
+		result, err := json.Marshal(&slashInfoBytes)
 		if err != nil {
 			RestLogger.Error("Error while marshalling response to Json", "error", err)
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -230,7 +230,6 @@ func latestSlashInfoHashHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		// return result
-
 		rest.PostProcessResponse(w, cliCtx, result)
 
 	}

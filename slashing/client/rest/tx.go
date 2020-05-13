@@ -43,9 +43,9 @@ type UnjailReq struct {
 }
 
 type TickReq struct {
-	BaseReq          rest.BaseReq `json:"base_req"`
-	Proposer         string       `json:"proposer"`
-	SlashingInfoHash string       `json:"slashing_info_hash"`
+	BaseReq           rest.BaseReq `json:"base_req"`
+	Proposer          string       `json:"proposer"`
+	SlashingInfoBytes string       `json:"slashing_info_bytes"`
 }
 
 type TickAckReq struct {
@@ -98,7 +98,7 @@ func newTickRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		msg := types.NewMsgTick(
 			hmTypes.HexToHeimdallAddress(req.Proposer),
-			hmTypes.HexToHeimdallHash(req.SlashingInfoHash),
+			hmTypes.HexToHexBytes(req.SlashingInfoBytes),
 		)
 
 		restClient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})

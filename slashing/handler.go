@@ -2,6 +2,7 @@ package slashing
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 
@@ -24,7 +25,7 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 		case types.MsgTick:
 			return handlerMsgTick(ctx, msg, k, contractCaller)
 		case types.MsgTickAck:
-			return handleMsgTickAck(ctx, msg, k, contractCaller) 
+			return handleMsgTickAck(ctx, msg, k, contractCaller)
 		case types.MsgUnjail:
 			return handleMsgUnjail(ctx, msg, k, contractCaller)
 		default:
@@ -32,7 +33,6 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 		}
 	}
 }
-
 
 // handlerMsgTick  - handles slashing of validators
 // 0. check if slashLimit is exceeded or not.
@@ -45,7 +45,7 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 func handlerMsgTick(ctx sdk.Context, msg types.MsgTick, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 
 	k.Logger(ctx).Debug("✅ Validating tick msg",
-		"SlashInfoHash", msg.SlashingInfoHash,
+		"SlashInfoBytes", msg.SlashingInfoBytes.String(),
 	)
 
 	// check if slash limit is exceeded or not
@@ -56,22 +56,22 @@ func handlerMsgTick(ctx sdk.Context, msg types.MsgTick, k Keeper, contractCaller
 
 	valSlashingInfos, err := k.GetBufferValSlashingInfos(ctx)
 	if err != nil {
-		k.Logger(ctx).Error("Error fetching slash Info list from buffer", "error", err)		
+		k.Logger(ctx).Error("Error fetching slash Info list from buffer", "error", err)
 		return hmCommon.ErrSlashInfoDetails(k.Codespace()).Result()
 	}
 
-	slashingInfoHash, err := types.GetSlashingInfoHash(valSlashingInfos)
+	slashingInfoBytes, err := types.SortAndRLPEncodeSlashInfos(valSlashingInfos)
 	if err != nil {
-		k.Logger(ctx).Info("Error generating slashing info hash", "error", err)
+		k.Logger(ctx).Info("Error generating slashing info bytes", "error", err)
 		return hmCommon.ErrSlashInfoDetails(k.Codespace()).Result()
 	}
 
 	// compare slashingInfoHash with msg hash
-	k.Logger(ctx).Info("SlashInfo hash generated", "SlashInfoHash", hmTypes.BytesToHeimdallHash(slashingInfoHash).String())
+	k.Logger(ctx).Info("SlashInfo bytes generated", "SlashInfoBytes", hex.EncodeToString(slashingInfoBytes))
 
-	if !bytes.Equal(slashingInfoHash, msg.SlashingInfoHash.Bytes()) {
-		k.Logger(ctx).Error("SlashInfoHash of current buffer state", "bufferSlashInfoHash", hmTypes.BytesToHeimdallHash(slashingInfoHash).String(),
-			"doesn't match with SlashInfoHash of msg", "msgSlashInfoHash", msg.SlashingInfoHash)
+	if !bytes.Equal(slashingInfoBytes, msg.SlashingInfoBytes) {
+		k.Logger(ctx).Error("slashingInfoBytes of current buffer state", "bufferSlashingInfoBytes", hex.EncodeToString(slashingInfoBytes),
+			"doesn't match with slashingInfoBytes of msg", "msgSlashInfoBytes", msg.SlashingInfoBytes.String())
 		return hmCommon.ErrSlashInfoDetails(k.Codespace()).Result()
 	}
 
@@ -99,11 +99,11 @@ func handlerMsgTick(ctx sdk.Context, msg types.MsgTick, k Keeper, contractCaller
 func handleMsgUnjail(ctx sdk.Context, msg types.MsgUnjail, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 
 	k.Logger(ctx).Debug("✅ Validating unjail msg",
-	"validatorId", msg.ID,
-	"txHash", hmTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
-	"logIndex", uint64(msg.LogIndex),
-	"blockNumber", msg.BlockNumber,
-)
+		"validatorId", msg.ID,
+		"txHash", hmTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
+		"logIndex", uint64(msg.LogIndex),
+		"blockNumber", msg.BlockNumber,
+	)
 
 	// sequence id
 	blockNumber := new(big.Int).SetUint64(msg.BlockNumber)
@@ -115,24 +115,22 @@ func handleMsgUnjail(ctx sdk.Context, msg types.MsgUnjail, k Keeper, contractCal
 		k.Logger(ctx).Error("Older invalid tx found")
 		return hmCommon.ErrOldTx(k.Codespace()).Result()
 	}
-	
-			// pull validator from store
-			validator, ok := k.sk.GetValidatorFromValID(ctx, msg.ID)
-			if !ok {
-				k.Logger(ctx).Error("Fetching of validator from store failed", "validatorId", msg.ID)
-				return hmCommon.ErrNoValidator(k.Codespace()).Result()
-			}
-	
-		
-		if !validator.Jailed {
-			k.Logger(ctx).Error("Fetching of validator from store failed", "validatorId", msg.ID)
-				return hmCommon.ErrNoValidator(k.Codespace()).Result()
-		}
+
+	// pull validator from store
+	validator, ok := k.sk.GetValidatorFromValID(ctx, msg.ID)
+	if !ok {
+		k.Logger(ctx).Error("Fetching of validator from store failed", "validatorId", msg.ID)
+		return hmCommon.ErrNoValidator(k.Codespace()).Result()
+	}
+
+	if !validator.Jailed {
+		k.Logger(ctx).Error("Fetching of validator from store failed", "validatorId", msg.ID)
+		return hmCommon.ErrNoValidator(k.Codespace()).Result()
+	}
 	return sdk.Result{
 		Events: ctx.EventManager().Events(),
 	}
 }
-
 
 /*
 	handleMsgTickAck - handle msg tick ack event
@@ -140,8 +138,8 @@ func handleMsgUnjail(ctx sdk.Context, msg types.MsgUnjail, k Keeper, contractCal
 	2. flush the last tick slashing info
 */
 func handleMsgTickAck(ctx sdk.Context, msg types.MsgTickAck, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
-	
-	k.Logger(ctx).Debug("✅ Validating TickAck msg",			
+
+	k.Logger(ctx).Debug("✅ Validating TickAck msg",
 		"SlashedAmount", msg.SlashedAmount,
 		"txHash", hmTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
 		"logIndex", uint64(msg.LogIndex),

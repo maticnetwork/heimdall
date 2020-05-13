@@ -1,13 +1,11 @@
 package types
 
 import (
-	"bytes"
 	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
+	"github.com/maticnetwork/bor/accounts/abi"
 	hmCommon "github.com/maticnetwork/heimdall/common"
-	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
@@ -66,14 +64,14 @@ func (msg MsgUnjail) ValidateBasic() sdk.Error {
 
 // TickMsg - struct for unjailing jailed validator
 type MsgTick struct {
-	Proposer         types.HeimdallAddress `json:"proposer"`
-	SlashingInfoHash types.HeimdallHash    `json:"slashInfoHash"`
+	Proposer          types.HeimdallAddress `json:"proposer"`
+	SlashingInfoBytes types.HexBytes        `json:"slashinginfobytes"`
 }
 
-func NewMsgTick(proposer types.HeimdallAddress, slashingInfoHash types.HeimdallHash) MsgTick {
+func NewMsgTick(proposer types.HeimdallAddress, slashingInfoBytes types.HexBytes) MsgTick {
 	return MsgTick{
-		Proposer:         proposer,
-		SlashingInfoHash: slashingInfoHash,
+		Proposer:          proposer,
+		SlashingInfoBytes: slashingInfoBytes,
 	}
 }
 
@@ -100,9 +98,6 @@ func (msg MsgTick) GetSignBytes() []byte {
 }
 
 func (msg MsgTick) ValidateBasic() sdk.Error {
-	if bytes.Equal(msg.SlashingInfoHash.Bytes(), helper.ZeroHash.Bytes()) {
-		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid slashing info hash %v", msg.SlashingInfoHash.String())
-	}
 
 	if msg.Proposer.Empty() {
 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.Proposer.String())
@@ -112,11 +107,22 @@ func (msg MsgTick) ValidateBasic() sdk.Error {
 
 // GetSideSignBytes returns side sign bytes
 func (msg MsgTick) GetSideSignBytes() []byte {
-	// keccak256(abi.encoded(proposer, startBlock, endBlock, rootHash, accountRootHash, bor chain id))
-	return checkpointTypes.AppendBytes32(
-		msg.Proposer.Bytes(),
-		msg.SlashingInfoHash.Bytes(),
+	addressType, _ := abi.NewType("address", nil)
+	bytesType, _ := abi.NewType("bytes", nil)
+	arguments := abi.Arguments{
+		{
+			Type: addressType,
+		},
+		{
+			Type: bytesType,
+		},
+	}
+
+	bytes, _ := arguments.Pack(
+		msg.Proposer,
+		msg.SlashingInfoBytes,
 	)
+	return bytes
 }
 
 //
