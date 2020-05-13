@@ -3,15 +3,13 @@ package types
 import (
 	"fmt"
 
-	abci "github.com/tendermint/tendermint/abci/types"
 	tmTypes "github.com/tendermint/tendermint/types"
 )
 
 // PastCommit represent past commit for the record and process side-txs
 type PastCommit struct {
-	Height     int64            `json:"height" yaml:"height"`
-	Validators []abci.Validator `json:"validators" yaml:"validators"`
-	Txs        tmTypes.Txs      `json:"txs" yaml:"txs"`
+	Height int64       `json:"height" yaml:"height"`
+	Txs    tmTypes.Txs `json:"txs" yaml:"txs"`
 }
 
 // GenesisState is the sidechannel state that must be provided at genesis.
@@ -39,8 +37,8 @@ func ValidateGenesis(data GenesisState) error {
 			return fmt.Errorf("Past commit height must be greater 2")
 		}
 
-		if len(pastCommit.Txs) == 0 && len(pastCommit.Validators) == 0 {
-			return fmt.Errorf("Txs or validators must be present")
+		if len(pastCommit.Txs) == 0 {
+			return fmt.Errorf("Txs must be present")
 		}
 	}
 	return nil
