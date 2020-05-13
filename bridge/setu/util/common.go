@@ -295,11 +295,13 @@ func GetChainmanagerParams(cliCtx cliContext.CLIContext) (*chainManagerTypes.Par
 	)
 
 	if err != nil {
+		logger.Error("Error fetching chainmanager params", "err", err)
 		return nil, err
 	}
 
 	var params chainManagerTypes.Params
 	if err := json.Unmarshal(response.Result, &params); err != nil {
+		logger.Error("Error unmarshalling chainmanager params", "url", ChainManagerParamsURL, "err", err)
 		return nil, err
 	}
 
@@ -314,15 +316,38 @@ func GetCheckpointParams(cliCtx cliContext.CLIContext) (*checkpointTypes.Params,
 	)
 
 	if err != nil {
+		logger.Error("Error fetching Checkpoint params", "err", err)
 		return nil, err
 	}
 
 	var params checkpointTypes.Params
 	if err := json.Unmarshal(response.Result, &params); err != nil {
+		logger.Error("Error unmarshalling Checkpoint params", "url", CheckpointParamsURL)
 		return nil, err
 	}
 
 	return &params, nil
+}
+
+// GetBufferedCheckpoint return checkpoint from bueffer
+func GetBufferedCheckpoint(cliCtx cliContext.CLIContext) (*hmtypes.CheckpointBlockHeader, error) {
+	response, err := helper.FetchFromAPI(
+		cliCtx,
+		helper.GetHeimdallServerEndpoint(BufferedCheckpointURL),
+	)
+
+	if err != nil {
+		logger.Debug("Error fetching buffered checkpoint", "err", err)
+		return nil, err
+	}
+
+	var blockHeader hmtypes.CheckpointBlockHeader
+	if err := json.Unmarshal(response.Result, &blockHeader); err != nil {
+		logger.Error("Error unmarshalling buffered checkpoint", "url", BufferedCheckpointURL, "err", err)
+		return nil, err
+	}
+
+	return &blockHeader, nil
 }
 
 // AppendPrefix returns publickey in uncompressed format
