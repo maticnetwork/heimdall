@@ -25,15 +25,11 @@ bor_RPC_URL = "{{ .BorRPCUrl }}"
 # RPC endpoint for tendermint
 tendermint_RPC_URL = "{{ .TendermintRPCUrl }}"
 
-
-##### MQTT and Rest Server Config #####
-
-# MQTT endpoint
-amqp_url = "{{ .AmqpURL }}"
-
 # Heimdall REST server endpoint
 heimdall_rest_server = "{{ .HeimdallServerURL }}"
 
+# AMQP endpoint for bridge
+amqp_url = "{{ .AmqpURL }}"
 
 ##### Intervals #####
 child_chain_block_interval = "{{ .ChildBlockInterval }}"
