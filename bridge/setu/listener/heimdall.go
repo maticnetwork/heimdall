@@ -193,7 +193,7 @@ func (hl *HeimdallListener) ProcessBlockEvent(event sdk.StringEvent, blockHeight
 	case slashingTypes.EventTypeTickConfirm:
 		hl.sendBlockTask("sendTickToRootchain", eventBytes, blockHeight)
 	default:
-		hl.Logger.Info("BlockEvent Type mismatch", "eventType", event.Type)
+		hl.Logger.Debug("BlockEvent Type mismatch", "eventType", event.Type)
 	}
 }
 

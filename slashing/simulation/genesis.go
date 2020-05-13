@@ -68,6 +68,11 @@ func GenMaxEvidenceAge(r *rand.Rand) time.Duration {
 	return time.Duration(simulation.RandIntBetween(r, 60, 60*60*24)) * time.Second
 }
 
+// GenMaxEvidenceAge randomized MaxEvidenceAge
+func GenEnableslashing(r *rand.Rand) bool {
+	return (r.Intn(200)%10 == 0)
+}
+
 // RandomizedGenState generates a random GenesisState for slashing
 func RandomizedGenState(simState *module.SimulationState) {
 	var signedBlocksWindow int64
@@ -118,9 +123,15 @@ func RandomizedGenState(simState *module.SimulationState) {
 		func(r *rand.Rand) { maxEvidenceAge = GenMaxEvidenceAge(r) },
 	)
 
+	var enableSlashing bool
+	simState.AppParams.GetOrGenerate(
+		simState.Cdc, MaxEvidenceAge, &maxEvidenceAge, simState.Rand,
+		func(r *rand.Rand) { enableSlashing = GenEnableslashing(r) },
+	)
+
 	params := types.NewParams(
 		signedBlocksWindow, minSignedPerWindow, downtimeJailDuration,
-		slashFractionDoubleSign, slashFractionDowntime, slashFractionLimit, jailFractionLimit, maxEvidenceAge,
+		slashFractionDoubleSign, slashFractionDowntime, slashFractionLimit, jailFractionLimit, maxEvidenceAge, enableSlashing,
 	)
 
 	slashingGenesis := types.NewGenesisState(params, nil, nil)

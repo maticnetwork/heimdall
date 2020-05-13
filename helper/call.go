@@ -34,7 +34,7 @@ type IContractCaller interface {
 	CurrentHeaderBlock(rootChainInstance *rootchain.Rootchain) (uint64, error)
 	GetBalance(address common.Address) (*big.Int, error)
 	SendCheckpoint(sigedData []byte, sigs []byte, rootchainAddress common.Address, rootChainInstance *rootchain.Rootchain) (err error)
-	SendTick(voteSignBytes []byte, sigs []byte, slashInfoList []byte, txData []byte, proposer common.Address, slashManagerAddress common.Address, slashManagerInstance *slashmanager.Slashmanager) (er error)
+	SendTick(sigedData []byte, sigs []byte, slashManagerAddress common.Address, slashManagerInstance *slashmanager.Slashmanager) (err error)
 	GetCheckpointSign(txHash common.Hash) ([]byte, []byte, []byte, error)
 	GetMainChainBlock(*big.Int) (*ethTypes.Header, error)
 	GetMaticChainBlock(*big.Int) (*ethTypes.Header, error)

@@ -10,12 +10,10 @@ import (
 	"github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/bor/crypto"
 	"github.com/maticnetwork/bor/ethclient"
-	"github.com/maticnetwork/bor/rlp"
 	"github.com/maticnetwork/heimdall/contracts/erc20"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/slashmanager"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
-	"github.com/tendermint/tendermint/types"
 )
 
 func GenerateAuthObj(client *ethclient.Client, address common.Address, data []byte) (auth *bind.TransactOpts, err error) {
@@ -91,26 +89,12 @@ func (c *ContractCaller) SendCheckpoint(signedData []byte, sigs []byte, rootChai
 }
 
 // SendTick sends slash tick to rootchain contract
-func (c *ContractCaller) SendTick(voteSignBytes []byte, sigs []byte, slashInfoList []byte, txData []byte, proposer common.Address, slashManagerAddress common.Address, slashManagerInstance *slashmanager.Slashmanager) (er error) {
-	var vote types.CanonicalRLPVote
-	err := rlp.DecodeBytes(voteSignBytes, &vote)
-	if err != nil {
-		Logger.Error("Unable to decode vote while sending tick", "vote", hex.EncodeToString(voteSignBytes), "sigs", hex.EncodeToString(sigs), "slashInfoList", hex.EncodeToString(slashInfoList), "proposer", proposer)
-		return err
-	}
-
-	data, err := c.SlashManagerABI.Pack("updateSlashedAmounts", proposer, voteSignBytes, sigs, slashInfoList, txData)
+func (c *ContractCaller) SendTick(signedData []byte, sigs []byte, slashManagerAddress common.Address, slashManagerInstance *slashmanager.Slashmanager) (er error) {
+	data, err := c.SlashManagerABI.Pack("updateSlashedAmounts", signedData, sigs)
 	if err != nil {
 		Logger.Error("Unable to pack tx for updateSlashedAmounts", "error", err)
 		return err
 	}
-
-	Logger.Debug("Sending new tick",
-		"vote", hex.EncodeToString(voteSignBytes),
-		"sigs", hex.EncodeToString(sigs),
-		"slashInfoList", hex.EncodeToString(slashInfoList),
-		"txData", hex.EncodeToString(txData),
-		"proposer", proposer)
 
 	auth, err := GenerateAuthObj(GetMainClient(), slashManagerAddress, data)
 	if err != nil {
@@ -118,9 +102,13 @@ func (c *ContractCaller) SendTick(voteSignBytes []byte, sigs []byte, slashInfoLi
 		Logger.Info("Setting custom gaslimit", "gaslimit", GetConfig().MainchainGasLimit)
 		auth.GasLimit = GetConfig().MainchainGasLimit
 	}
-	GetPubKey().VerifyBytes(voteSignBytes, sigs)
 
-	tx, err := slashManagerInstance.UpdateSlashedAmounts(auth, proposer, voteSignBytes, sigs, slashInfoList, txData)
+	Logger.Info("Sending new tick",
+		"sigs", hex.EncodeToString(sigs),
+		"data", hex.EncodeToString(signedData),
+	)
+
+	tx, err := slashManagerInstance.UpdateSlashedAmounts(auth, signedData, sigs)
 	if err != nil {
 		Logger.Error("Error while submitting tick", "error", err)
 		return err

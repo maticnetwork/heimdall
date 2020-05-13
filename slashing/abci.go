@@ -11,6 +11,12 @@ import (
 )
 
 func BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock, k Keeper) {
+
+	if !k.GetParams(ctx).EnableSlashing {
+		k.Logger(ctx).Debug("slashing is not enabled")
+		return
+	}
+
 	// BeginBlocker iterates through and handles any newly discovered evidence of
 	// misbehavior submitted by Tendermint. Currently, only equivocation is handled.
 	for _, tmEvidence := range req.ByzantineValidators {

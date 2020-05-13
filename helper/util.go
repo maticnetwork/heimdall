@@ -216,7 +216,7 @@ func GetSideTxSigs(txHash []byte, sideTxData []byte, unFilteredVotes []*tmTypes.
 						}
 					}
 				}
-				break
+				// break
 			}
 		}
 	}

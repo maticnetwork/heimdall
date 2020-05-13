@@ -22,6 +22,7 @@ var (
 	DefaultSlashFractionLimit      = sdk.NewDec(1).Quo(sdk.NewDec(3))
 	DefaultJailFractionLimit       = sdk.NewDec(1).Quo(sdk.NewDec(3))
 	DefaultMaxEvidenceAge          = 60 * 2 * time.Second
+	DefaultEnableSlashing          = false
 )
 
 // Parameter store keys
@@ -34,6 +35,7 @@ var (
 	KeySlashFractionLimit      = []byte("SlashFractionLimit")
 	KeyJailFractionLimit       = []byte("JailFractionLimit")
 	KeyMaxEvidenceAge          = []byte("MaxEvidenceAge")
+	KeyEnableSlashing          = []byte("EnableSlashing")
 )
 
 var _ subspace.ParamSet = &Params{}
@@ -48,12 +50,13 @@ type Params struct {
 	SlashFractionLimit      sdk.Dec       `json:"slash_fraction_limit" yaml:"slash_fraction_limit"`             // if totalSlashedAmount crossed SlashFraction of totalValidatorPower, emit Slash-limit event
 	JailFractionLimit       sdk.Dec       `json:"jail_fraction_limit" yaml:"jail_fraction_limit"`               // if slashedAmount crossed JailFraction of validatorPower, Jail him
 	MaxEvidenceAge          time.Duration `json:"max_evidence_age" yaml:"max_evidence_age"`
+	EnableSlashing          bool          `json:"enable_slashing" yaml:"enable_slashing"`
 }
 
 // NewParams creates a new Params object
 func NewParams(
 	signedBlocksWindow int64, minSignedPerWindow sdk.Dec, downtimeJailDuration time.Duration,
-	slashFractionDoubleSign, slashFractionDowntime sdk.Dec, slashFractionLimit sdk.Dec, jailFractionLimit sdk.Dec, maxEvidenceAge time.Duration,
+	slashFractionDoubleSign, slashFractionDowntime sdk.Dec, slashFractionLimit sdk.Dec, jailFractionLimit sdk.Dec, maxEvidenceAge time.Duration, enableSlashing bool,
 ) Params {
 
 	return Params{
@@ -65,6 +68,7 @@ func NewParams(
 		MaxEvidenceAge:          maxEvidenceAge,
 		SlashFractionLimit:      slashFractionLimit,
 		JailFractionLimit:       jailFractionLimit,
+		EnableSlashing:          enableSlashing,
 	}
 }
 
@@ -83,10 +87,11 @@ func (p Params) String() string {
   MaxEvidenceAge: %s
   SlashFractionDowntime:   %s
   SlashFractionLimit:   %s
-  JailFractionDowntime:   %s`,
+  JailFractionDowntime:   %s
+  EnableSlashing:   %s`,
 		p.SignedBlocksWindow, p.MinSignedPerWindow,
 		p.DowntimeJailDuration, p.SlashFractionDoubleSign, p.MaxEvidenceAge,
-		p.SlashFractionDowntime, p.SlashFractionLimit, p.JailFractionLimit)
+		p.SlashFractionDowntime, p.SlashFractionLimit, p.JailFractionLimit, p.EnableSlashing)
 }
 
 // ParamSetPairs - Implements params.ParamSet
@@ -100,6 +105,7 @@ func (p *Params) ParamSetPairs() subspace.ParamSetPairs {
 		{KeySlashFractionLimit, &p.SlashFractionLimit},
 		{KeyJailFractionLimit, &p.JailFractionLimit},
 		{KeyMaxEvidenceAge, &p.MaxEvidenceAge},
+		{KeyEnableSlashing, &p.EnableSlashing},
 	}
 }
 
@@ -107,7 +113,7 @@ func (p *Params) ParamSetPairs() subspace.ParamSetPairs {
 func DefaultParams() Params {
 	return NewParams(
 		DefaultSignedBlocksWindow, DefaultMinSignedPerWindow, DefaultDowntimeJailDuration,
-		DefaultSlashFractionDoubleSign, DefaultSlashFractionDowntime, DefaultSlashFractionLimit, DefaultJailFractionLimit, DefaultMaxEvidenceAge,
+		DefaultSlashFractionDoubleSign, DefaultSlashFractionDowntime, DefaultSlashFractionLimit, DefaultJailFractionLimit, DefaultMaxEvidenceAge, DefaultEnableSlashing,
 	)
 }
 

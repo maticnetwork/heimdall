@@ -58,28 +58,13 @@
 		"constant": false,
 		"inputs": [
 			{
-				"internalType": "address",
-				"name": "proposer",
-				"type": "address"
-			},
-			{
 				"internalType": "bytes",
-				"name": "vote",
+				"name": "data",
 				"type": "bytes"
 			},
 			{
 				"internalType": "bytes",
 				"name": "sigs",
-				"type": "bytes"
-			},
-			{
-				"internalType": "bytes",
-				"name": "slashingInfoList",
-				"type": "bytes"
-			},
-			{
-				"internalType": "bytes",
-				"name": "txData",
 				"type": "bytes"
 			}
 		],

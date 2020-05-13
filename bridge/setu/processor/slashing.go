@@ -8,6 +8,7 @@ import (
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/bor/accounts/abi"
+	"github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/bor/core/types"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
@@ -152,11 +153,7 @@ func (sp *SlashingProcessor) sendTickToRootchain(eventBytes string, blockHeight 
 	}
 
 	if shouldSend && isValidSlashInfo && isCurrentProposer {
-		txHash, err := hex.DecodeString(txHash)
-		if err != nil {
-			sp.Logger.Error("Error decoding txHash while sending Tick to rootchain", "txHash", txHash, "error", err)
-			return err
-		}
+		txHash := common.FromHex(txHash)
 		if err := sp.createAndSendTickToRootchain(blockHeight, txHash, tickSlashInfoList, proposerAddr); err != nil {
 			sp.Logger.Error("Error sending tick to rootchain", "error", err)
 			return err
@@ -293,8 +290,27 @@ func (sp *SlashingProcessor) createAndSendTickToRootchain(height int64, txHash [
 		return err
 	}
 
-	// get votes
-	votes, sigs, chainID, err := helper.FetchVotes(sp.httpClient, height)
+	// fetch side txs sigs
+	decoder := helper.GetTxDecoder(authTypes.ModuleCdc)
+	stdTx, err := decoder(tx.Tx)
+	if err != nil {
+		sp.Logger.Error("Error while decoding tick tx", "txHash", tx.Tx.Hash(), "error", err)
+		return err
+	}
+
+	cmsg := stdTx.GetMsgs()[0]
+	sideMsg, ok := cmsg.(hmTypes.SideTxMsg)
+	if !ok {
+		sp.Logger.Error("Invalid side-tx msg", "txHash", tx.Tx.Hash())
+		return err
+	}
+
+	// side-tx data
+	sideTxData := sideMsg.GetSideSignBytes()
+	sp.Logger.Info("sideTx data", "sideTxData", hex.EncodeToString(sideTxData))
+
+	// get sigs
+	sigs, err := helper.FetchSideTxSigs(sp.httpClient, height, tx.Tx.Hash(), sideTxData)
 	if err != nil {
 		sp.Logger.Error("Error fetching votes for tick tx", "height", height)
 		return err
@@ -306,30 +322,21 @@ func (sp *SlashingProcessor) createAndSendTickToRootchain(height int64, txHash [
 	}
 
 	if shouldSend {
-
 		slashingContrext, err := sp.getSlashingContext()
 		if err != nil {
 			return err
 		}
-
 		chainParams := slashingContrext.ChainmanagerParams.ChainParams
 		slashManagerAddress := chainParams.SlashManagerAddress.EthAddress()
 
 		// slashmanage instance
 		slashManagerInstance, err := sp.contractConnector.GetSlashManagerInstance(slashManagerAddress)
 		if err != nil {
-			panic(err)
-		}
-
-		slashInfoBytes, err := slashingTypes.SortAndRLPEncodeSlashInfos(slashInfoList)
-		if err != nil {
-			sp.Logger.Error("Error rlp encoding slashInfos", "error", err)
+			sp.Logger.Info("Error while creating slashmanager instance", "error", err)
 			return err
 		}
 
-		sp.Logger.Info("Tx data", "txPulpData", tx.Tx[:])
-
-		if err := sp.contractConnector.SendTick(helper.GetVoteBytes(votes, chainID), sigs, slashInfoBytes, tx.Tx[authTypes.PulpHashLength:], proposerAddr.EthAddress(), slashManagerAddress, slashManagerInstance); err != nil {
+		if err := sp.contractConnector.SendTick(sideTxData, sigs, slashManagerAddress, slashManagerInstance); err != nil {
 			sp.Logger.Info("Error submitting tick to slashManager contract", "error", err)
 			return err
 		}

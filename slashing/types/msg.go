@@ -5,6 +5,7 @@ import (
 	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
@@ -112,12 +113,10 @@ func (msg MsgTick) ValidateBasic() sdk.Error {
 // GetSideSignBytes returns side sign bytes
 func (msg MsgTick) GetSideSignBytes() []byte {
 	// keccak256(abi.encoded(proposer, startBlock, endBlock, rootHash, accountRootHash, bor chain id))
-	/* 	return appendBytes32(
-	   		msg.Proposer.Bytes(),
-	   		msg.SlashingInfoHash.Bytes(),
-	   	)
-	*/
-	return nil
+	return checkpointTypes.AppendBytes32(
+		msg.Proposer.Bytes(),
+		msg.SlashingInfoHash.Bytes(),
+	)
 }
 
 //
