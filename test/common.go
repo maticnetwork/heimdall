@@ -5,7 +5,6 @@ import (
 	"math/big"
 	"math/rand"
 	"testing"
-	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -16,7 +15,6 @@ import (
 	bankTypes "github.com/maticnetwork/heimdall/bank/types"
 	borTypes "github.com/maticnetwork/heimdall/bor/types"
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
-	"github.com/maticnetwork/heimdall/helper/mocks"
 	"github.com/maticnetwork/heimdall/staking"
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
 	"github.com/maticnetwork/heimdall/types"
@@ -37,28 +35,6 @@ func MakeTestCodec() *codec.Codec {
 
 	cdc.Seal()
 	return cdc
-}
-
-// GenRandCheckpointHeader create random header block
-func GenRandCheckpointHeader(start uint64, headerSize uint64, rootHash types.HeimdallHash, proposer types.HeimdallAddress, maxCheckpointLenght uint64, contractCaller mocks.IContractCaller) (headerBlock types.CheckpointBlockHeader, err error) {
-	end := start + headerSize
-	borChainID := "1234"
-
-	// contractCaller.On("GetRootHash", start, end, maxCheckpointLenght).Return([]byte{123}, nil)
-
-	// rootHash, err := contractCaller.GetRootHash(start, end, maxCheckpointLenght)
-	// if err != nil {
-	// 	return headerBlock, err
-	// }
-	headerBlock = types.CreateBlock(
-		start,
-		end,
-		rootHash,
-		proposer,
-		borChainID,
-		uint64(time.Now().UTC().Unix()))
-
-	return headerBlock, nil
 }
 
 // Generate random validators
