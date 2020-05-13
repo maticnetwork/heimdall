@@ -30,7 +30,7 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 
 	r.HandleFunc("/checkpoints/count", checkpointCountHandlerFn(cliCtx)).Methods("GET")
 
-	r.HandleFunc("/checkpoints/search", checkpointSearchHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc("/checkpoints/prepare", prepareCheckpointHandlerFn(cliCtx)).Methods("GET")
 
 	r.HandleFunc("/checkpoints/latest", latestCheckpointHandlerFunc(cliCtx)).Methods("GET")
 
@@ -118,7 +118,7 @@ func checkpointCountHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func checkpointSearchHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func prepareCheckpointHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
@@ -126,57 +126,34 @@ func checkpointSearchHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		// Get params
 		params := r.URL.Query()
 
-		var start uint64
-		var end uint64
-		var headerNumber uint64
-		var err error
 		var result []byte
 		var height int64
 		var validatorSetBytes []byte
 
-		// get header number
-		if params.Get("header-index") != "" {
-			headerNumber, err = strconv.ParseUint(params.Get("header-index"), 10, 64)
-			if err != nil {
-				hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-				return
-			}
-			// get query params
-			queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQueryCheckpointParams(headerNumber))
-			if err != nil {
-				return
-			}
-
-			// fetch checkpoint
-			result, height, err = cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCheckpoint), queryParams)
-			if err != nil {
-				hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-				return
-			}
-		}
-
-		// get start
-		// get end
+		// get start and start
 		if params.Get("start") != "" && params.Get("end") != "" {
-			start, err = strconv.ParseUint(params.Get("start"), 10, 64)
+			start, err := strconv.ParseUint(params.Get("start"), 10, 64)
 			if err != nil {
 				hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 				return
 			}
 
-			end, err = strconv.ParseUint(params.Get("end"), 10, 64)
+			end, err := strconv.ParseUint(params.Get("end"), 10, 64)
 			if err != nil {
 				hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 				return
 			}
+
 			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryParams), nil)
 			if err != nil {
 				hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 				RestLogger.Error("Unable to get checkpoint params", "Error", err)
 				return
 			}
+
 			var params types.Params
 			json.Unmarshal(res, &params)
 			contractCallerObj, err := helper.NewContractCaller()
@@ -218,7 +195,9 @@ func checkpointSearchHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 				hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 				return
 			}
-
+		} else {
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, "`start` and `end` query params required")
+			return
 		}
 
 		cliCtx = cliCtx.WithHeight(height)
