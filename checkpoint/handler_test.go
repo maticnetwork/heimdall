@@ -28,6 +28,8 @@ type HandlerTestSuite struct {
 	cliCtx context.CLIContext
 
 	handler        sdk.Handler
+	sideHandler    hmTypes.SideTxHandler
+	postHandler    hmTypes.PostTxHandler
 	contractCaller mocks.IContractCaller
 }
 
@@ -35,6 +37,8 @@ func (suite *HandlerTestSuite) SetupTest() {
 	suite.app, suite.ctx, suite.cliCtx = createTestApp(false)
 	suite.contractCaller = mocks.IContractCaller{}
 	suite.handler = checkpoint.NewHandler(suite.app.CheckpointKeeper, &suite.contractCaller)
+	suite.sideHandler = checkpoint.NewSideTxHandler(suite.app.CheckpointKeeper, &suite.contractCaller)
+	suite.postHandler = checkpoint.NewPostTxHandler(suite.app.CheckpointKeeper, &suite.contractCaller)
 }
 
 func TestHandlerTestSuite(t *testing.T) {
@@ -55,7 +59,6 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpoint() {
 		FeeAmount: big.NewInt(0).String(),
 	}
 	topupKeeper.AddDividendAccount(ctx, dividendAccount)
-	keeper.FlushCheckpointBuffer(ctx)
 
 	// check valid checkpoint
 	// generate proposer for validator set
@@ -68,19 +71,22 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpoint() {
 	}
 
 	header, err := suite.GenRandCheckpointHeader(start, maxSize, params.MaxCheckpointLength)
+
 	// add current proposer to header
 	header.Proposer = stakingKeeper.GetValidatorSet(ctx).Proposer.Signer
-	// keeper.SetCheckpointBuffer(ctx, header)
-	// require.Empty(t, err, "Unable to create random header block, Error:%v", err)
 
 	// make sure proposer has min ether
 	suite.contractCaller.On("GetBalance", stakingKeeper.GetValidatorSet(ctx).Proposer.Signer).Return(helper.MinBalance, nil)
 
 	got := suite.SendCheckpoint(header)
 	require.True(t, got.IsOK(), "expected send-checkpoint to be ok, got %v", got)
-	// storedHeader, err := keeper.GetCheckpointFromBuffer(ctx)
-	// t.Log("Header added to buffer", storedHeader.String())
-	// require.Empty(t, err, "Unable to set checkpoint from buffer, Error: %v", err)
+	bufferedHeader, err := keeper.GetCheckpointFromBuffer(ctx)
+	require.Equal(t, bufferedHeader.StartBlock, header.StartBlock)
+	require.Equal(t, bufferedHeader.EndBlock, header.EndBlock)
+	require.Equal(t, bufferedHeader.RootHash, header.RootHash)
+	require.Equal(t, bufferedHeader.Proposer, header.Proposer)
+	require.Equal(t, bufferedHeader.BorChainID, header.BorChainID)
+	require.Empty(t, err, "Unable to set checkpoint from buffer, Error: %v", err)
 }
 
 func (suite *HandlerTestSuite) TestHandleMsgCheckpointWithInvalidProposer() {
@@ -96,7 +102,6 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointWithInvalidProposer() {
 		FeeAmount: big.NewInt(0).String(),
 	}
 	topupKeeper.AddDividendAccount(ctx, dividendAccount)
-	keeper.FlushCheckpointBuffer(ctx)
 
 	// check invalid proposer
 	// generate proposer for validator set
@@ -125,12 +130,12 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointAfterBufferTimeOut() {
 	start := uint64(0)
 	maxSize := uint64(256)
 	params := keeper.GetParams(ctx)
+	checkpointBufferTime := params.CheckpointBufferTime
 	dividendAccount := hmTypes.DividendAccount{
 		ID:        hmTypes.NewDividendAccountID(1),
 		FeeAmount: big.NewInt(0).String(),
 	}
 	topupKeeper.AddDividendAccount(ctx, dividendAccount)
-	keeper.FlushCheckpointBuffer(ctx)
 
 	// generate proposer for validator set
 	cmn.LoadValidatorSet(4, t, stakingKeeper, ctx, false, 10)
@@ -147,23 +152,16 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointAfterBufferTimeOut() {
 	// make sure proposer has min ether
 	suite.contractCaller.On("GetBalance", header.Proposer).Return(helper.MinBalance, nil)
 
-	// create checkpoint `checkpointBufferTime` seconds prev to current time
-	checkpointBufferTime := params.CheckpointBufferTime
-
-	header.TimeStamp = uint64(time.Now().Add(-(checkpointBufferTime + time.Second)).Unix())
-	t.Log("Sending checkpoint with timestamp", "Timestamp", header.TimeStamp, "Current", time.Now().UTC().Unix())
 	// send old checkpoint
 	res := suite.SendCheckpoint(header)
 	require.True(t, res.IsOK(), "expected send-checkpoint to be  ok, got %v", res)
 
-	// lastCheckpoint, err := keeper.GetLastCheckpoint(ctx)
-	// if err == nil {
-	// 	start = start + lastCheckpoint.EndBlock + 1
-	// }
-	// header, err = suite.GenRandCheckpointHeader(0, maxSize, params.MaxCheckpointLength)
-	// header.Proposer = stakingKeeper.GetValidatorSet(ctx).Proposer.Signer
-	// create new checkpoint with current time
-	header.TimeStamp = uint64(time.Now().Unix())
+	checkpointBuffer, err := keeper.GetCheckpointFromBuffer(ctx)
+
+	// set time buffered checkpoint timestamp + checkpointBufferTime
+	newTime := checkpointBuffer.TimeStamp + uint64(checkpointBufferTime)
+
+	suite.ctx = ctx.WithBlockTime(time.Unix(0, int64(newTime)))
 
 	// send new checkpoint which should replace old one
 	got := suite.SendCheckpoint(header)
@@ -183,7 +181,6 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointExistInBuffer() {
 		FeeAmount: big.NewInt(0).String(),
 	}
 	topupKeeper.AddDividendAccount(ctx, dividendAccount)
-	keeper.FlushCheckpointBuffer(ctx)
 
 	cmn.LoadValidatorSet(4, t, stakingKeeper, ctx, false, 10)
 	stakingKeeper.IncrementAccum(ctx, 1)
@@ -201,13 +198,12 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointExistInBuffer() {
 
 	// send old checkpoint
 	res := suite.SendCheckpoint(header)
+
 	require.True(t, res.IsOK(), "expected send-checkpoint to be  ok, got %v", res)
 
-	// TODO: check why not adding to buffer
 	// send checkpoint to handler
-	// got := suite.SendCheckpoint(header)
-	// require.True(t, !got.IsOK(), errs.CodeToDefaultMsg(got.Code))
-
+	got := suite.SendCheckpoint(header)
+	require.True(t, !got.IsOK(), errs.CodeToDefaultMsg(got.Code))
 }
 
 // GenRandCheckpointHeader create random header block
@@ -254,8 +250,12 @@ func (suite *HandlerTestSuite) SendCheckpoint(header hmTypes.CheckpointBlockHead
 		borChainId,
 	)
 
-	t.Log("Checkpoint msg created", msgCheckpoint)
+	suite.contractCaller.On("CheckIfBlocksExist", header.EndBlock).Return(true)
+	suite.contractCaller.On("GetRootHash", header.StartBlock, header.EndBlock, uint64(1024)).Return(accRootHash, nil)
 
 	// send checkpoint to handler
-	return suite.handler(ctx, msgCheckpoint)
+	result := suite.handler(ctx, msgCheckpoint)
+	sideResult := suite.sideHandler(ctx, msgCheckpoint)
+	suite.postHandler(ctx, msgCheckpoint, sideResult.Result)
+	return result
 }
