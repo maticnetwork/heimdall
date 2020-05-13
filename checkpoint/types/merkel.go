@@ -6,7 +6,6 @@ import (
 	"errors"
 
 	"github.com/cbergoon/merkletree"
-	"github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/bor/rpc"
 	"github.com/tendermint/crypto/sha3"
 	"golang.org/x/sync/errgroup"
@@ -18,7 +17,7 @@ import (
 // ValidateCheckpoint - Validates if checkpoint rootHash matches or not
 func ValidateCheckpoint(start uint64, end uint64, rootHash hmTypes.HeimdallHash, checkpointLength uint64, contractCaller helper.IContractCaller) (bool, error) {
 	// Check if blocks exist locally
-	if !CheckIfBlocksExist(end) {
+	if !contractCaller.CheckIfBlocksExist(end) {
 		return false, errors.New("blocks not found locally")
 	}
 
@@ -33,24 +32,6 @@ func ValidateCheckpoint(start uint64, end uint64, rootHash hmTypes.HeimdallHash,
 	}
 
 	return false, nil
-}
-
-// CheckIfBlocksExist - check if latest block number is greater than end block
-func CheckIfBlocksExist(end uint64) bool {
-	// Get Latest block number.
-	rpcClient := helper.GetMaticRPCClient()
-	var latestBlock *types.Header
-
-	err := rpcClient.Call(&latestBlock, "eth_getBlockByNumber", "latest", false)
-	if err != nil {
-		return false
-	}
-
-	if end > latestBlock.Number.Uint64() {
-		return false
-	}
-
-	return true
 }
 
 // GetAccountRootHash returns roothash of Validator Account State Tree
