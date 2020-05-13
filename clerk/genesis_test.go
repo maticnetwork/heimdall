@@ -27,7 +27,7 @@ type GenesisTestSuite struct {
 
 // SetupTest setup necessary things for genesis test
 func (suite *GenesisTestSuite) SetupTest() {
-	suite.app = app.SetupClerkGenesis()
+	suite.app = setupClerkGenesis()
 	suite.ctx = suite.app.BaseApp.NewContext(true, abci.Header{})
 }
 

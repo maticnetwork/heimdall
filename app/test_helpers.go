@@ -20,7 +20,6 @@ import (
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
-	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
 	topupTypes "github.com/maticnetwork/heimdall/topup/types"
 
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -331,34 +330,6 @@ func SetupTopupGenesis() *HeimdallApp {
 
 	topupGenesis := topupTypes.NewGenesisState(topupTypes.DefaultGenesisState().TopupSequences, topupTypes.DefaultGenesisState().DividentAccounts)
 	genesisState[topupTypes.ModuleName] = app.Codec().MustMarshalJSON(topupGenesis)
-
-	stateBytes, err := codec.MarshalJSONIndent(app.Codec(), genesisState)
-	if err != nil {
-		panic(err)
-	}
-
-	app.InitChain(
-		abci.RequestInitChain{
-			Validators:    []abci.ValidatorUpdate{},
-			AppStateBytes: stateBytes,
-		},
-	)
-
-	app.Commit()
-	app.BeginBlock(abci.RequestBeginBlock{Header: abci.Header{Height: app.LastBlockHeight() + 1}})
-
-	return app
-}
-
-// SetupClerkGenesis initializes a new Heimdall with the default genesis data.
-func SetupClerkGenesis() *HeimdallApp {
-	app := Setup(true)
-
-	// initialize the chain with the default genesis state
-	genesisState := NewDefaultGenesisState()
-
-	clerkGenesis := clerkTypes.NewGenesisState(clerkTypes.DefaultGenesisState().EventRecords, clerkTypes.DefaultGenesisState().RecordSequences)
-	genesisState[clerkTypes.ModuleName] = app.Codec().MustMarshalJSON(clerkGenesis)
 
 	stateBytes, err := codec.MarshalJSONIndent(app.Codec(), genesisState)
 	if err != nil {

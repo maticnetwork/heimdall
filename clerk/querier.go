@@ -19,9 +19,9 @@ func NewQuerier(keeper Keeper, contractCaller helper.IContractCaller) sdk.Querie
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) ([]byte, sdk.Error) {
 		switch path[0] {
 		case types.QueryRecord:
-			return handleQueryRecord(ctx, req, keeper, contractCaller)
+			return handleQueryRecord(ctx, req, keeper)
 		case types.QueryRecordList:
-			return handleQueryRecordList(ctx, req, keeper, contractCaller)
+			return handleQueryRecordList(ctx, req, keeper)
 		case types.QueryRecordSequence:
 			return handleQueryRecordSequence(ctx, req, keeper, contractCaller)
 		default:
@@ -30,7 +30,7 @@ func NewQuerier(keeper Keeper, contractCaller helper.IContractCaller) sdk.Querie
 	}
 }
 
-func handleQueryRecord(ctx sdk.Context, req abci.RequestQuery, keeper Keeper, contractCallerObj helper.IContractCaller) ([]byte, sdk.Error) {
+func handleQueryRecord(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	var params types.QueryRecordParams
 	if err := keeper.cdc.UnmarshalJSON(req.Data, &params); err != nil {
 		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
@@ -50,7 +50,7 @@ func handleQueryRecord(ctx sdk.Context, req abci.RequestQuery, keeper Keeper, co
 	return bz, nil
 }
 
-func handleQueryRecordList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper, contractCallerObj helper.IContractCaller) ([]byte, sdk.Error) {
+func handleQueryRecordList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	var params hmTypes.QueryPaginationParams
 	if err := keeper.cdc.UnmarshalJSON(req.Data, &params); err != nil {
 		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
