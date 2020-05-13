@@ -18,7 +18,7 @@ import (
 // Create test app
 //
 
-// returns context and app
+// createTestApp returns context and app
 func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, context.CLIContext) {
 	s1 := rand.NewSource(time.Now().UnixNano())
 	r1 := rand.New(s1)
@@ -42,7 +42,7 @@ func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, context.CLICo
 		borChainId,
 		timestamp,
 	)
-	params := types.DefaultParams()
+	params := types.NewParams(5*time.Second, 256, 1024)
 
 	checkpointBlockHeaders := make([]hmTypes.CheckpointBlockHeader, ackCount)
 
@@ -77,6 +77,6 @@ func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, context.CLICo
 	)
 	app.Commit()
 	app.BeginBlock(abci.RequestBeginBlock{Header: abci.Header{Height: app.LastBlockHeight() + 1}})
-
+	app.CheckpointKeeper.SetParams(ctx, params)
 	return app, ctx, cliCtx
 }
