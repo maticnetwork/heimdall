@@ -29,7 +29,7 @@ func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, context.CLICo
 
 	// create checkpoint BlockHeader
 	startBlock := uint64(0)
-	endBlock := uint64(256)
+	endBlock := uint64(255)
 	rootHash := hmTypes.HexToHeimdallHash("123")
 	proposerAddress := hmTypes.HexToHeimdallAddress("123")
 	timestamp := uint64(time.Now().Unix())

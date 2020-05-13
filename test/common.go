@@ -2,7 +2,6 @@ package test
 
 import (
 	"bytes"
-	"encoding/hex"
 	"math/big"
 	"math/rand"
 	"testing"
@@ -17,6 +16,7 @@ import (
 	bankTypes "github.com/maticnetwork/heimdall/bank/types"
 	borTypes "github.com/maticnetwork/heimdall/bor/types"
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
+	"github.com/maticnetwork/heimdall/helper/mocks"
 	"github.com/maticnetwork/heimdall/staking"
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
 	"github.com/maticnetwork/heimdall/types"
@@ -39,17 +39,24 @@ func MakeTestCodec() *codec.Codec {
 	return cdc
 }
 
-// create random header block
-func GenRandCheckpointHeader(start int, headerSize int) (headerBlock types.CheckpointBlockHeader, err error) {
-	start = start
+// GenRandCheckpointHeader create random header block
+func GenRandCheckpointHeader(start uint64, headerSize uint64, rootHash types.HeimdallHash, proposer types.HeimdallAddress, maxCheckpointLenght uint64, contractCaller mocks.IContractCaller) (headerBlock types.CheckpointBlockHeader, err error) {
 	end := start + headerSize
-	maxCheckpointLenght := uint64(1024)
-	roothash, err := checkpointTypes.GetHeaders(uint64(start), uint64(end), maxCheckpointLenght)
-	if err != nil {
-		return headerBlock, err
-	}
-	proposer := ethcmn.Address{}
-	headerBlock = types.CreateBlock(uint64(start), uint64(end), types.HexToHeimdallHash(hex.EncodeToString(roothash)), types.HexToHeimdallHash(hex.EncodeToString(roothash)), types.HexToHeimdallAddress(proposer.String()), uint64(time.Now().UTC().Unix()))
+	borChainID := "1234"
+
+	// contractCaller.On("GetRootHash", start, end, maxCheckpointLenght).Return([]byte{123}, nil)
+
+	// rootHash, err := contractCaller.GetRootHash(start, end, maxCheckpointLenght)
+	// if err != nil {
+	// 	return headerBlock, err
+	// }
+	headerBlock = types.CreateBlock(
+		start,
+		end,
+		rootHash,
+		proposer,
+		borChainID,
+		uint64(time.Now().UTC().Unix()))
 
 	return headerBlock, nil
 }
