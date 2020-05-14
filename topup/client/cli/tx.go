@@ -58,10 +58,10 @@ func TopupTxCmd(cdc *codec.Codec) *cobra.Command {
 				return fmt.Errorf("Validator ID cannot be zero")
 			}
 
-			// get signer
-			signer := types.HexToHeimdallAddress(viper.GetString(FlagSignerAddress))
-			if signer.Empty() {
-				return fmt.Errorf("Signer address cannot be zero")
+			// get user
+			user := types.HexToHeimdallAddress(viper.GetString(FlagUserAddress))
+			if user.Empty() {
+				return fmt.Errorf("user address cannot be zero")
 			}
 
 			// fee amount
@@ -78,8 +78,7 @@ func TopupTxCmd(cdc *codec.Codec) *cobra.Command {
 			// build and sign the transaction, then broadcast to Tendermint
 			msg := topupTypes.NewMsgTopup(
 				proposer,
-				validatorID,
-				signer,
+				user,
 				fee,
 				types.HexToHeimdallHash(txhash),
 				viper.GetUint64(FlagLogIndex),
@@ -92,24 +91,20 @@ func TopupTxCmd(cdc *codec.Codec) *cobra.Command {
 	}
 
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
-	cmd.Flags().Uint64(FlagValidatorID, 0, "--validator-id=<validator ID here>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
-	cmd.Flags().String(FlagSignerAddress, "", "--signer=<signer>")
+	cmd.Flags().String(FlagUserAddress, "", "--user=<user>")
 	cmd.Flags().String(FlagFeeAmount, "", "--topup-amount=<topup-amount>")
 	cmd.Flags().Uint64(FlagLogIndex, 0, "--log-index=<log-index>")
 	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
 
-	if err := cmd.MarkFlagRequired(FlagValidatorID); err != nil {
-		cliLogger.Error("TopupTxCmd | MarkFlagRequired | FlagValidatorID", "Error", err)
-	}
 	if err := cmd.MarkFlagRequired(FlagTxHash); err != nil {
 		cliLogger.Error("TopupTxCmd | MarkFlagRequired | FlagTxHash", "Error", err)
 	}
 	if err := cmd.MarkFlagRequired(FlagLogIndex); err != nil {
 		cliLogger.Error("TopupTxCmd | MarkFlagRequired | FlagLogIndex", "Error", err)
 	}
-	if err := cmd.MarkFlagRequired(FlagSignerAddress); err != nil {
-		cliLogger.Error("TopupTxCmd | MarkFlagRequired | FlagSignerAddress", "Error", err)
+	if err := cmd.MarkFlagRequired(FlagUserAddress); err != nil {
+		cliLogger.Error("TopupTxCmd | MarkFlagRequired | FlagUserAddress", "Error", err)
 	}
 	if err := cmd.MarkFlagRequired(FlagFeeAmount); err != nil {
 		cliLogger.Error("TopupTxCmd | MarkFlagRequired | FlagFeeAmount", "Error", err)

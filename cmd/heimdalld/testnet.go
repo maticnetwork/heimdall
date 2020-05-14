@@ -131,7 +131,7 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 					)
 
 					// create dividend account for validator
-					dividendAccounts[i] = hmTypes.NewDividendAccount(hmTypes.NewDividendAccountID(uint64(validators[i].ID)), ZeroIntString)
+					dividendAccounts[i] = hmTypes.NewDividendAccount(validators[i].Signer, ZeroIntString)
 					valSigningInfoMap[validators[i].ID.String()] = hmTypes.NewValidatorSigningInfo(validators[i].ID, 0, 0, 0)
 					// bufValSlashInfos[i] = &hmTypes.NewValidatorSlashingInfo(validators[i].ID, uint64(0), false)
 				}

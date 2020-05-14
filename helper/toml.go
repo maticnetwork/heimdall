@@ -13,43 +13,39 @@ import (
 const defaultConfigTemplate = `# This is a TOML config file.
 # For more information, see https://github.com/toml-lang/toml
 
-##### RPC configrations #####
+##### RPC and REST configs #####
 
 # RPC endpoint for ethereum chain
-eth_RPC_URL = "{{ .EthRPCUrl }}"
+eth_rpc_url = "{{ .EthRPCUrl }}"
 
 # RPC endpoint for bor chain
-bor_RPC_URL = "{{ .BorRPCUrl }}"
-
+bor_rpc_url = "{{ .BorRPCUrl }}"
 
 # RPC endpoint for tendermint
-tendermint_RPC_URL = "{{ .TendermintRPCUrl }}"
-
-
-##### MQTT and Rest Server Config #####
-
-# MQTT endpoint
-amqp_url = "{{ .AmqpURL }}"
+tendermint_rpc_url = "{{ .TendermintRPCUrl }}"
 
 # Heimdall REST server endpoint
 heimdall_rest_server = "{{ .HeimdallServerURL }}"
 
+#### Bridge configs ####
+
+# AMQP endpoint
+amqp_url = "{{ .AmqpURL }}"
 
 ##### Intervals #####
 child_chain_block_interval = "{{ .ChildBlockInterval }}"
 
-## Bridge Poll Intervals
+## Poll intervals
 checkpoint_poll_interval = "{{ .CheckpointerPollInterval }}"
 syncer_poll_interval = "{{ .SyncerPollInterval }}"
 noack_poll_interval = "{{ .NoACKPollInterval }}"
-clerk_polling_interval = "{{ .ClerkPollingInterval }}"
-span_polling_interval = "{{ .SpanPollingInterval }}"
+clerk_poll_interval = "{{ .ClerkPollInterval }}"
+span_poll_interval = "{{ .SpanPollInterval }}"
 
 #### gas limits ####
 main_chain_gas_limit = "{{ .MainchainGasLimit }}"
 
 ##### Timeout Config #####
-
 no_ack_wait_time = "{{ .NoACKWaitTime }}"
 
 `

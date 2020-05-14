@@ -238,7 +238,7 @@ func (rl *RootChainListener) queryAndBroadcastEvents(rootchainContext *RootChain
 					if err := helper.UnpackLog(rl.stakingInfoAbi, event, selectedEvent.Name, &vLog); err != nil {
 						rl.Logger.Error("Error while parsing event", "name", selectedEvent.Name, "error", err)
 					}
-					if bytes.Equal(event.Signer.Bytes(), helper.GetAddress()) {
+					if bytes.Equal(event.User.Bytes(), helper.GetAddress()) {
 						rl.sendTaskWithDelay("sendTopUpFeeToHeimdall", selectedEvent.Name, logBytes, 0)
 					} else if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx); isCurrentValidator {
 						rl.sendTaskWithDelay("sendTopUpFeeToHeimdall", selectedEvent.Name, logBytes, delay)

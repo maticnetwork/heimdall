@@ -66,7 +66,7 @@ func GetAccountRootHash(dividendAccounts []hmTypes.DividendAccount) ([]byte, err
 // GetAccountTree returns roothash of Validator Account State Tree
 func GetAccountTree(dividendAccounts []hmTypes.DividendAccount) (*merkletree.MerkleTree, error) {
 	// Sort the dividendAccounts by ID
-	dividendAccounts = hmTypes.SortDividendAccountByID(dividendAccounts)
+	dividendAccounts = hmTypes.SortDividendAccountByAddress(dividendAccounts)
 	var list []merkletree.Content
 
 	for i := 0; i < len(dividendAccounts); i++ {
@@ -82,15 +82,15 @@ func GetAccountTree(dividendAccounts []hmTypes.DividendAccount) (*merkletree.Mer
 }
 
 // GetAccountProof returns proof of dividend Account
-func GetAccountProof(dividendAccounts []hmTypes.DividendAccount, dividendAccountID hmTypes.DividendAccountID) ([]byte, uint64, error) {
-	// Sort the dividendAccounts by ID
-	dividendAccounts = hmTypes.SortDividendAccountByID(dividendAccounts)
+func GetAccountProof(dividendAccounts []hmTypes.DividendAccount, userAddr hmTypes.HeimdallAddress) ([]byte, uint64, error) {
+	// Sort the dividendAccounts by user address
+	dividendAccounts = hmTypes.SortDividendAccountByAddress(dividendAccounts)
 	var list []merkletree.Content
 	var account hmTypes.DividendAccount
 	index := uint64(0)
 	for i := 0; i < len(dividendAccounts); i++ {
 		list = append(list, dividendAccounts[i])
-		if dividendAccounts[i].ID == dividendAccountID {
+		if dividendAccounts[i].User.Equals(userAddr) {
 			account = dividendAccounts[i]
 			index = uint64(i)
 		}
@@ -109,9 +109,9 @@ func GetAccountProof(dividendAccounts []hmTypes.DividendAccount, dividendAccount
 }
 
 // VerifyAccountProof returns proof of dividend Account
-func VerifyAccountProof(dividendAccounts []hmTypes.DividendAccount, dividendAccountID hmTypes.DividendAccountID, proofToVerify string) (bool, error) {
+func VerifyAccountProof(dividendAccounts []hmTypes.DividendAccount, userAddr hmTypes.HeimdallAddress, proofToVerify string) (bool, error) {
 
-	proof, _, err := GetAccountProof(dividendAccounts, dividendAccountID)
+	proof, _, err := GetAccountProof(dividendAccounts, userAddr)
 	if err != nil {
 		return false, nil
 	}
