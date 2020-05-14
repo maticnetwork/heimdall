@@ -13,7 +13,7 @@ import (
 func BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock, k Keeper) {
 
 	if !k.GetParams(ctx).EnableSlashing {
-		k.Logger(ctx).Debug("slashing is not enabled")
+		k.Logger(ctx).Debug("slashing is not enabled. To enable, send a proposal via governance")
 		return
 	}
 

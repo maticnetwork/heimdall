@@ -10,10 +10,9 @@ import (
 
 // HandleValidatorSignature handles a validator signature, must be called once per validator per block.
 func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr []byte, power int64, signed bool) error {
-	logger := k.Logger(ctx)
 	height := ctx.BlockHeight()
 	signerAddress := hmTypes.BytesToHeimdallAddress(addr)
-	k.Logger(ctx).Debug("Received HandleValidatorSignature request for validator", "address", signerAddress)
+	k.Logger(ctx).Debug("Processing uptime request for validator", "address", signerAddress, "signed", signed, "power", power)
 
 	// fetch validator Info
 	validator, err := k.sk.GetValidatorInfo(ctx, signerAddress.Bytes())
@@ -28,7 +27,7 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr []byte, power int
 		panic(fmt.Sprintf("Expected signing info for validator %s but not found", addr))
 	}
 
-	k.Logger(ctx).Debug("sigInfo found for validator", "info", signInfo)
+	k.Logger(ctx).Debug("validator signing info", "valID", validator.ID, "address", signerAddress, "signingInfo", signInfo)
 
 	params := k.GetParams(ctx)
 	// this is a relative index, so it counts blocks the validator *should* have signed
@@ -40,7 +39,7 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr []byte, power int
 	// This counter just tracks the sum of the bit array
 	// That way we avoid needing to read/write the whole array each time
 	previous := k.GetValidatorMissedBlockBitArray(ctx, validator.ID, index)
-	k.Logger(ctx).Debug("signing status", "previous", previous)
+	k.Logger(ctx).Debug("validator signing status", "valID", validator.ID, "address", signerAddress, "previous", previous, "current", signed)
 	missed := !signed
 	switch {
 	case !previous && missed:
@@ -59,15 +58,6 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr []byte, power int
 	}
 
 	if missed {
-		ctx.EventManager().EmitEvent(
-			sdk.NewEvent(
-				types.EventTypeLiveness,
-				sdk.NewAttribute(types.AttributeKeyAddress, validator.ID.String()),
-				sdk.NewAttribute(types.AttributeKeyMissedBlocks, fmt.Sprintf("%d", signInfo.MissedBlocksCounter)),
-				sdk.NewAttribute(types.AttributeKeyHeight, fmt.Sprintf("%d", height)),
-			),
-		)
-
 		k.Logger(ctx).Info(
 			fmt.Sprintf("Absent validator %s at height %d, %d missed, threshold %d", validator.ID, height, signInfo.MissedBlocksCounter, k.MinSignedPerWindow(ctx)))
 	}
@@ -75,44 +65,19 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr []byte, power int
 	minHeight := signInfo.StartHeight + params.SignedBlocksWindow
 	maxMissed := params.SignedBlocksWindow - k.MinSignedPerWindow(ctx)
 
-	// if we are past the minimum height and the validator has missed too many blocks, punish them
+	// SLASH - if we are past the minimum height and the validator has missed too many blocks, punish them
 	if height > minHeight && signInfo.MissedBlocksCounter > maxMissed {
-		validator, err := k.sk.GetValidatorInfo(ctx, addr)
-		if err != nil {
-			logger.Error("Error fetching validator")
-		}
 
 		valSlashInfo, _ := k.GetBufferValSlashingInfo(ctx, validator.ID)
-		if err == nil && !validator.Jailed && !valSlashInfo.IsJailed {
+		// if val is already in jailed state(in buffer or fixed), don't slash him anymore.
+		if err == nil && !valSlashInfo.IsJailed && !validator.Jailed {
 
 			// Downtime confirmed: slash and jail the validator
-			logger.Info(fmt.Sprintf("Validator %s past min height of %d and below signed blocks threshold of %d",
+			k.Logger(ctx).Info(fmt.Sprintf("Validator %s past min height of %d and below signed blocks threshold of %d",
 				validator.ID, minHeight, k.MinSignedPerWindow(ctx)))
 
-			// We need to retrieve the stake distribution which signed the block, so we subtract ValidatorUpdateDelay from the evidence height,
-			// and subtract an additional 1 since this is the LastCommit.
-			// Note that this *can* result in a negative "distributionHeight" up to -ValidatorUpdateDelay-1,
-			// i.e. at the end of the pre-genesis block (none) = at the beginning of the genesis block.
-			// That's fine since this is just used to filter unbonding delegations & redelegations.
-			// distributionHeight := height - sdk.ValidatorUpdateDelay - 1
-
-			ctx.EventManager().EmitEvent(
-				sdk.NewEvent(
-					types.EventTypeSlash,
-					sdk.NewAttribute(types.AttributeKeyAddress, validator.ID.String()),
-					sdk.NewAttribute(types.AttributeKeyPower, fmt.Sprintf("%d", power)),
-					sdk.NewAttribute(types.AttributeKeyReason, types.AttributeValueMissingSignature),
-					sdk.NewAttribute(types.AttributeKeyJailed, validator.ID.String()),
-				),
-			)
-
-			// update slash buffer present in slash keeper. Also add slashedAmount totalSlashedAmount.
 			slashedAmount := k.SlashInterim(ctx, validator.ID, params.SlashFractionDowntime)
-			k.Logger(ctx).Debug("Interim uptime slashing successful", "slashedAmount", slashedAmount, "valID", validator.ID)
-
-			// k.sk.Slash(ctx, addr, distributionHeight, power, params.SlashFractionDowntime)
-			// k.sk.Jail(ctx, addr)
-			// signInfo.JailedUntil = ctx.BlockHeader().Time.Add(params.DowntimeJailDuration)
+			k.Logger(ctx).Debug("Interim uptime slashing successful", "valID", validator.ID, "slashedAmount", slashedAmount)
 
 			// We need to reset the counter & array so that the validator won't be immediately slashed for downtime upon rebonding.
 			signInfo.MissedBlocksCounter = 0
@@ -120,7 +85,7 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr []byte, power int
 			k.clearValidatorMissedBlockBitArray(ctx, validator.ID)
 		} else {
 			// Validator was (a) not found or (b) already jailed, don't slash
-			logger.Info(
+			k.Logger(ctx).Info(
 				fmt.Sprintf("Validator %s would have been slashed for downtime, but was either not found in store or already jailed", validator.ID),
 			)
 		}

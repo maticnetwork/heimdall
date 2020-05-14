@@ -255,6 +255,7 @@ func (k *Keeper) GetParams(ctx sdk.Context) (params types.Params) {
 
 // Slashing Info api's
 
+// SlashInterim - Add slash amounts to a buffer and emit <slash-limit> event if exceeded
 func (k *Keeper) SlashInterim(ctx sdk.Context, valID hmTypes.ValidatorID, slashPercent sdk.Dec) uint64 {
 	if slashPercent.IsNegative() {
 		panic(fmt.Errorf("attempted to slash with a negative slash factor: %v", slashPercent))
@@ -264,12 +265,11 @@ func (k *Keeper) SlashInterim(ctx sdk.Context, valID hmTypes.ValidatorID, slashP
 	valPower := validator.VotingPower
 
 	slashAmountDec := sdk.NewDec(valPower).Mul(slashPercent)
-	k.Logger(ctx).Debug("slashAmountDec", slashAmountDec, "valPower", valPower, "slashPercent", slashPercent)
-
 	slashAmountInt := slashAmountDec.TruncateInt().Int64()
-	k.Logger(ctx).Debug("slashAmountInt", slashAmountInt)
 
-	// add slash to buffer
+	k.Logger(ctx).Info("Interim slashing the validator", "valID", valID, "valPower", valPower, "slashPercent", slashPercent, "slashAmountDec", slashAmountDec, "slashAmountInt", slashAmountInt)
+
+	// Add slash to buffer
 	valSlashingInfo, found := k.GetBufferValSlashingInfo(ctx, valID)
 	if found {
 		// Add or Update Slash Amount
@@ -281,13 +281,31 @@ func (k *Keeper) SlashInterim(ctx sdk.Context, valID hmTypes.ValidatorID, slashP
 		valSlashingInfo = hmTypes.NewValidatorSlashingInfo(valID, uint64(slashAmountInt), false)
 	}
 
-	// Add jail Status by checking jail limit
+	// Check if jailLimit is exceeded and update the jail status.
 	if k.IsJailLimitExceeded(ctx, valSlashingInfo) {
 		valSlashingInfo.IsJailed = true
 	}
 
+	k.Logger(ctx).Debug("After interim slashing the validator status", "valID", valID, "updatedSlashAmount", valSlashingInfo.SlashedAmount, "jailStatus", valSlashingInfo.IsJailed)
+
+	// Update buffer with val slashing info
 	k.SetBufferValSlashingInfo(ctx, valID, valSlashingInfo)
+
+	// Update total slashed amount
 	k.UpdateTotalSlashedAmount(ctx, uint64(slashAmountInt))
+
+	totalSlashedAmount := k.GetTotalSlashedAmount(ctx)
+	// Check if slash limit is exceeded and emit `slash-limit` event
+	if k.IsSlashedLimitExceeded(ctx) {
+		k.Logger(ctx).Info("TotalSlashedAmount exceeded SlashLimit, Emitting event", types.EventTypeSlashLimit)
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				types.EventTypeSlashLimit,
+				sdk.NewAttribute(types.AttributeKeySlashedAmount, fmt.Sprintf("%d", totalSlashedAmount)),
+			),
+		)
+		k.Logger(ctx).Info("Emitted SlashLimit event", "slashedAmountAttr", totalSlashedAmount)
+	}
 
 	return uint64(slashAmountInt)
 }
@@ -310,19 +328,18 @@ func (k *Keeper) GetTotalSlashedAmount(ctx sdk.Context) uint64 {
 // IsSlashedLimitExceeded - if total slashed amount exceeded slash limit or not
 func (k *Keeper) IsSlashedLimitExceeded(ctx sdk.Context) bool {
 	params := k.GetParams(ctx)
-	k.Logger(ctx).Debug("checking if slash limit exceeded")
 	slashedAmount := k.GetTotalSlashedAmount(ctx)
 	totalPower := k.sk.GetTotalPower(ctx)
-	k.Logger(ctx).Debug("slashedAmount and totalPower", "slashAmount", slashedAmount, "totalPower", totalPower)
 
 	slashLimitDec := sdk.NewDec(totalPower).Mul(params.SlashFractionLimit)
 	slashLimit := slashLimitDec.TruncateInt().Int64()
-	k.Logger(ctx).Debug("limit calculates", "slashlimit", slashLimit)
+
+	k.Logger(ctx).Info("checking if slash-limit exceeded", "totalPower", totalPower, "totalSlashedAmount", slashedAmount, "slashlimit", slashLimit)
 	if slashedAmount >= uint64(slashLimit) {
-		k.Logger(ctx).Debug("slash limit exceeded")
+		k.Logger(ctx).Debug("slash-limit  exceeded", "totalPower", totalPower, "totalSlashedAmount", slashedAmount, "slashlimit", slashLimit)
 		return true
 	}
-	k.Logger(ctx).Debug("slash limit not exceeded")
+	k.Logger(ctx).Debug("slash-limit not exceeded", "totalPower", totalPower, "totalSlashedAmount", slashedAmount, "slashlimit", slashLimit)
 	return false
 }
 
@@ -330,21 +347,19 @@ func (k *Keeper) IsSlashedLimitExceeded(ctx sdk.Context) bool {
 func (k *Keeper) IsJailLimitExceeded(ctx sdk.Context, valSlashingInfo hmTypes.ValidatorSlashingInfo) bool {
 	params := k.GetParams(ctx)
 	valID := valSlashingInfo.ID
-	k.Logger(ctx).Debug("checking if jail limit exceeded")
 
 	slashedAmount := valSlashingInfo.SlashedAmount
 	val, _ := k.sk.GetValidatorFromValID(ctx, valID)
 
-	k.Logger(ctx).Debug("slashedAmount and power", "slashAmount", slashedAmount, "power", val.VotingPower)
-
 	jailLimitDec := sdk.NewDec(val.VotingPower).Mul(params.JailFractionLimit)
 	jailLimit := jailLimitDec.TruncateInt().Int64()
-	k.Logger(ctx).Debug("limit calculates", "slashlimit", jailLimit)
+
+	k.Logger(ctx).Info("Checking if jail limit is exceeded", "valId", valID, "power", val.VotingPower, "slashedAmount", slashedAmount, "jailLimit", jailLimit, "jailLimitDec", jailLimitDec)
 	if slashedAmount >= uint64(jailLimit) {
-		k.Logger(ctx).Debug("jail limit exceeded")
+		k.Logger(ctx).Debug("Jail limit exceeded", "valId", valID, "power", val.VotingPower, "slashedAmount", slashedAmount, "jailLimit", jailLimit, "jailLimitDec", jailLimitDec)
 		return true
 	}
-	k.Logger(ctx).Debug("jail limit not exceeded")
+	k.Logger(ctx).Debug("Jail limit not exceeded", "valId", valID, "power", val.VotingPower, "slashedAmount", slashedAmount, "jailLimit", jailLimit, "jailLimitDec", jailLimitDec)
 	return false
 }
 
@@ -452,19 +467,7 @@ func (k Keeper) UpdateTotalSlashedAmount(ctx sdk.Context, slashedAmount uint64) 
 	// convert
 	totalSlashedAmount := []byte(strconv.FormatUint(updated, 10))
 	store.Set(types.TotalSlashedAmountKey, totalSlashedAmount)
-	k.Logger(ctx).Debug("Updated Total Slashed Amount ", "amount", updated)
-
-	if k.IsSlashedLimitExceeded(ctx) {
-		k.Logger(ctx).Info("TotalSlashedAmount exceeded SlashLimit, Emitting event", types.EventTypeSlashLimit)
-		// -slashing. emit event if total amount exceed limit
-		ctx.EventManager().EmitEvent(
-			sdk.NewEvent(
-				types.EventTypeSlashLimit,
-				sdk.NewAttribute(types.AttributeKeySlashedAmount, fmt.Sprintf("%d", slashedAmount)),
-			),
-		)
-		k.Logger(ctx).Info("Emitted SlashLimit event", "slashedAmountAttr", slashedAmount)
-	}
+	k.Logger(ctx).Debug("Updated Total Slashed Amount ", "oldAmount", current, "newAmount", updated)
 }
 
 // GetTickValSlashingInfo gets the validator slashing info for a validator ID key
