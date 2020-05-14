@@ -2,7 +2,7 @@ package cli
 
 const (
 	FlagProposerAddress = "proposer"
-	FlagSignerAddress   = "signer"
+	FlagUserAddress     = "user"
 	FlagValidatorID     = "validator-id"
 	FlagTxHash          = "tx-hash"
 	FlagLogIndex        = "log-index"

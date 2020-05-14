@@ -14,8 +14,7 @@ import (
 // MsgTopup - high level transaction of the fee coin module
 type MsgTopup struct {
 	FromAddress types.HeimdallAddress `json:"from_address"`
-	ID          types.ValidatorID     `json:"id"`
-	Signer      types.HeimdallAddress `json:"signer"`
+	User        types.HeimdallAddress `json:"user"`
 	Fee         sdk.Int               `json:"fee"`
 	TxHash      types.HeimdallHash    `json:"tx_hash"`
 	LogIndex    uint64                `json:"log_index"`
@@ -27,8 +26,7 @@ var _ sdk.Msg = MsgTopup{}
 // NewMsgTopup - construct arbitrary multi-in, multi-out send msg.
 func NewMsgTopup(
 	fromAddr types.HeimdallAddress,
-	id uint64,
-	signer types.HeimdallAddress,
+	user types.HeimdallAddress,
 	fee sdk.Int,
 	txhash types.HeimdallHash,
 	logIndex uint64,
@@ -36,8 +34,7 @@ func NewMsgTopup(
 ) MsgTopup {
 	return MsgTopup{
 		FromAddress: fromAddr,
-		ID:          types.NewValidatorID(id),
-		Signer:      signer,
+		User:        user,
 		Fee:         fee,
 		TxHash:      txhash,
 		LogIndex:    logIndex,
@@ -59,10 +56,6 @@ func (msg MsgTopup) Type() string {
 func (msg MsgTopup) ValidateBasic() sdk.Error {
 	if msg.FromAddress.Empty() {
 		return sdk.ErrInvalidAddress("missing sender address")
-	}
-
-	if msg.ID == 0 {
-		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator ID %v", msg.ID)
 	}
 
 	if msg.FromAddress.Empty() {
@@ -102,8 +95,8 @@ func (msg MsgTopup) GetSideSignBytes() []byte {
 
 // MsgWithdrawFee - high level transaction of the fee coin withdrawal module
 type MsgWithdrawFee struct {
-	ValidatorAddress types.HeimdallAddress `json:"from_address"`
-	Amount           sdk.Int               `json:"amount"`
+	UserAddress types.HeimdallAddress `json:"from_address"`
+	Amount      sdk.Int               `json:"amount"`
 }
 
 var _ sdk.Msg = MsgWithdrawFee{}
@@ -114,8 +107,8 @@ func NewMsgWithdrawFee(
 	amount sdk.Int,
 ) MsgWithdrawFee {
 	return MsgWithdrawFee{
-		ValidatorAddress: fromAddr,
-		Amount:           amount,
+		UserAddress: fromAddr,
+		Amount:      amount,
 	}
 }
 
@@ -131,12 +124,12 @@ func (msg MsgWithdrawFee) Type() string {
 
 // ValidateBasic Implements Msg.
 func (msg MsgWithdrawFee) ValidateBasic() sdk.Error {
-	if msg.ValidatorAddress.Empty() {
+	if msg.UserAddress.Empty() {
 		return sdk.ErrInvalidAddress("missing sender address")
 	}
 
-	if msg.ValidatorAddress.Empty() {
-		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.ValidatorAddress.String())
+	if msg.UserAddress.Empty() {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.UserAddress.String())
 	}
 
 	return nil
@@ -149,5 +142,5 @@ func (msg MsgWithdrawFee) GetSignBytes() []byte {
 
 // GetSigners Implements Msg.
 func (msg MsgWithdrawFee) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.ValidatorAddress)}
+	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.UserAddress)}
 }

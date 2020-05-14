@@ -125,8 +125,8 @@ func (keeper Keeper) HasTopupSequence(ctx sdk.Context, sequence string) bool {
 }
 
 // GetDividendAccountMapKey returns dividend account map
-func GetDividendAccountMapKey(id []byte) []byte {
-	return append(DividendAccountMapKey, id...)
+func GetDividendAccountMapKey(address []byte) []byte {
+	return append(DividendAccountMapKey, address...)
 }
 
 // AddDividendAccount adds DividendAccount index with DividendID
@@ -138,22 +138,22 @@ func (k *Keeper) AddDividendAccount(ctx sdk.Context, dividendAccount hmTypes.Div
 		return err
 	}
 
-	store.Set(GetDividendAccountMapKey(dividendAccount.ID.Bytes()), bz)
-	k.Logger(ctx).Debug("DividendAccount Stored", "key", hex.EncodeToString(GetDividendAccountMapKey(dividendAccount.ID.Bytes())), "dividendAccount", dividendAccount.String())
+	store.Set(GetDividendAccountMapKey(dividendAccount.User.Bytes()), bz)
+	k.Logger(ctx).Debug("DividendAccount Stored", "key", hex.EncodeToString(GetDividendAccountMapKey(dividendAccount.User.Bytes())), "dividendAccount", dividendAccount.String())
 	return nil
 }
 
-// GetDividendAccountByID will return DividendAccount of valID
-func (k *Keeper) GetDividendAccountByID(ctx sdk.Context, dividendID hmTypes.DividendAccountID) (dividendAccount hmTypes.DividendAccount, err error) {
+// GetDividendAccountByAddress will return DividendAccount of user
+func (k *Keeper) GetDividendAccountByAddress(ctx sdk.Context, address hmTypes.HeimdallAddress) (dividendAccount hmTypes.DividendAccount, err error) {
 
 	// check if dividend account exists
-	if !k.CheckIfDividendAccountExists(ctx, dividendID) {
+	if !k.CheckIfDividendAccountExists(ctx, address) {
 		return dividendAccount, errors.New("Dividend Account not found")
 	}
 
 	// Get DividendAccount key
 	store := ctx.KVStore(k.key)
-	key := GetDividendAccountMapKey(dividendID.Bytes())
+	key := GetDividendAccountMapKey(address.Bytes())
 
 	// unmarshall dividend account and return
 	dividendAccount, err = hmTypes.UnMarshallDividendAccount(k.cdc, store.Get(key))
@@ -165,9 +165,9 @@ func (k *Keeper) GetDividendAccountByID(ctx sdk.Context, dividendID hmTypes.Divi
 }
 
 // CheckIfDividendAccountExists will return true if dividend account exists
-func (k *Keeper) CheckIfDividendAccountExists(ctx sdk.Context, dividendID hmTypes.DividendAccountID) (ok bool) {
+func (k *Keeper) CheckIfDividendAccountExists(ctx sdk.Context, userAddr hmTypes.HeimdallAddress) (ok bool) {
 	store := ctx.KVStore(k.key)
-	key := GetDividendAccountMapKey(dividendID.Bytes())
+	key := GetDividendAccountMapKey(userAddr.Bytes())
 	return store.Has(key)
 }
 
@@ -184,15 +184,15 @@ func (k *Keeper) GetAllDividendAccounts(ctx sdk.Context) (dividendAccounts []hmT
 }
 
 // AddFeeToDividendAccount adds fee to dividend account for withdrawal
-func (k *Keeper) AddFeeToDividendAccount(ctx sdk.Context, valID hmTypes.ValidatorID, fee *big.Int) sdk.Error {
+func (k *Keeper) AddFeeToDividendAccount(ctx sdk.Context, userAddress hmTypes.HeimdallAddress, fee *big.Int) sdk.Error {
 	// Get or create dividend account
 	var dividendAccount hmTypes.DividendAccount
 
-	if k.CheckIfDividendAccountExists(ctx, hmTypes.DividendAccountID(valID)) {
-		dividendAccount, _ = k.GetDividendAccountByID(ctx, hmTypes.DividendAccountID(valID))
+	if k.CheckIfDividendAccountExists(ctx, hmTypes.HeimdallAddress(userAddress)) {
+		dividendAccount, _ = k.GetDividendAccountByAddress(ctx, userAddress)
 	} else {
 		dividendAccount = hmTypes.DividendAccount{
-			ID:        hmTypes.DividendAccountID(valID),
+			User:      userAddress,
 			FeeAmount: big.NewInt(0).String(),
 		}
 	}
@@ -202,7 +202,7 @@ func (k *Keeper) AddFeeToDividendAccount(ctx sdk.Context, valID hmTypes.Validato
 	totalFee := big.NewInt(0).Add(oldFee, fee).String()
 	dividendAccount.FeeAmount = totalFee
 
-	k.Logger(ctx).Info("Dividend Account fee of validator ", "ID", dividendAccount.ID, "Fee", dividendAccount.FeeAmount)
+	k.Logger(ctx).Info("Dividend Account fee of validator ", "User", dividendAccount.User, "Fee", dividendAccount.FeeAmount)
 	if err := k.AddDividendAccount(ctx, dividendAccount); err != nil {
 		k.Logger(ctx).Error("AddFeeToDividendAccount | AddDividendAccount", "error", err)
 	}
