@@ -16,6 +16,7 @@ const (
 	DefaultCodespace sdk.CodespaceType = "1"
 
 	CodeInvalidMsg CodeType = 1400
+	CodeOldTx      CodeType = 1401
 
 	CodeInvalidProposerInput     CodeType = 1500
 	CodeInvalidBlockInput        CodeType = 1501
@@ -173,7 +174,7 @@ func ErrNoSignerChange(codespace sdk.CodespaceType) sdk.Error {
 }
 
 func ErrOldTx(codespace sdk.CodespaceType) sdk.Error {
-	return newError(codespace, CodeSignerUpdateError, "Old txhash not allowed")
+	return newError(codespace, CodeOldTx, "Old txhash not allowed")
 }
 
 func ErrValidatorAlreadySynced(codespace sdk.CodespaceType) sdk.Error {

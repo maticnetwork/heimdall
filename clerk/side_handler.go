@@ -39,8 +39,7 @@ func NewPostTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.P
 		case types.MsgEventRecord:
 			return PostHandleMsgEventRecord(ctx, k, msg, sideTxResult)
 		default:
-			errMsg := "Unrecognized EventRecord Msg type: %s" + msg.Type()
-			return sdk.ErrUnknownRequest(errMsg).Result()
+			return sdk.ErrUnknownRequest("Unknown msg type").Result()
 		}
 	}
 }

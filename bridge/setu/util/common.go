@@ -12,31 +12,23 @@ import (
 	"sync"
 	"time"
 
+	mLog "github.com/RichardKnop/machinery/v1/log"
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
-	authTypes "github.com/maticnetwork/heimdall/auth/types"
-	chainManagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
-	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
-
-	"github.com/maticnetwork/heimdall/types"
-
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/log"
 	httpClient "github.com/tendermint/tendermint/rpc/client"
 	tmTypes "github.com/tendermint/tendermint/types"
 
+	authTypes "github.com/maticnetwork/heimdall/auth/types"
+	chainManagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
+	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/types"
 	hmtypes "github.com/maticnetwork/heimdall/types"
 )
 
 const (
-	ChainSyncer          = "chain-syncer"
-	HeimdallCheckpointer = "heimdall-checkpointer"
-	NoackService         = "checkpoint-no-ack"
-	SpanServiceStr       = "span-service"
-	ClerkServiceStr      = "clerk-service"
-	AMQPConsumerService  = "amqp-consumer-service"
-
 	AccountDetailsURL      = "/auth/accounts/%v"
 	LastNoAckURL           = "/checkpoints/last-no-ack"
 	CheckpointParamsURL    = "/checkpoints/params"
@@ -72,6 +64,11 @@ func Logger() log.Logger {
 		logger = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
 		option, _ := log.AllowLevel(viper.GetString("log_level"))
 		logger = log.NewFilter(logger, option)
+
+		// set no-op logger if log level is not debug for machinery
+		if viper.GetString("log_level") != "debug" {
+			mLog.SetDebug(NoopLogger{})
+		}
 	})
 
 	return logger
