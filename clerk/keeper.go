@@ -68,24 +68,47 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", types.ModuleName)
 }
 
-func (k Keeper) SetEventRecordWithTime(ctx sdk.Context, record types.EventRecord) error {
-	store := ctx.KVStore(k.storeKey)
+func (k *Keeper) SetEventRecordWithTime(ctx sdk.Context, record types.EventRecord) error {
 	key := GetEventRecordKeyWithTime(record.ID, record.RecordTime)
+	value, err := k.cdc.MarshalBinaryBare(record.ID)
+	if err != nil {
+		k.Logger(ctx).Error("Error marshalling record", "error", err)
+		return err
+	}
+	// TODO check state from mainchain
+	if err := k.SetEventRecordStore(ctx, key, value); err != nil {
+		return err
+	}
+	return nil
+}
 
+// SetEventRecord adds record to store with ID
+func (k *Keeper) SetEventRecordWithID(ctx sdk.Context, record types.EventRecord) error {
+
+	key := GetEventRecordKey(record.ID)
+	value, err := k.cdc.MarshalBinaryBare(record)
+	if err != nil {
+		k.Logger(ctx).Error("Error marshalling record", "error", err)
+		return err
+	}
+	// TODO check state from mainchain
+	if err := k.SetEventRecordStore(ctx, key, value); err != nil {
+		return err
+	}
+	return nil
+}
+
+// SetEventRecord adds record to store with ID
+func (k *Keeper) SetEventRecordStore(ctx sdk.Context, key, value []byte) error {
+
+	store := ctx.KVStore(k.storeKey)
 	// check if already set
 	if store.Has(key) {
 		return errors.New("State record already exists")
 	}
 
-	// create Checkpoint block and marshall
-	out, err := k.cdc.MarshalBinaryBare(record.ID)
-	if err != nil {
-		k.Logger(ctx).Error("Error marshalling record ID", "error", err)
-		return err
-	}
-
 	// store in key provided
-	store.Set(key, out)
+	store.Set(key, value)
 
 	// return
 	return nil
@@ -93,27 +116,12 @@ func (k Keeper) SetEventRecordWithTime(ctx sdk.Context, record types.EventRecord
 
 // SetEventRecord adds record to store
 func (k *Keeper) SetEventRecord(ctx sdk.Context, record types.EventRecord) error {
-	store := ctx.KVStore(k.storeKey)
-	key := GetEventRecordKey(record.ID)
-
-	// check if already set
-	if store.Has(key) {
-		return errors.New("State record already exists")
-	}
-
-	// TODO check state from mainchain
-
-	// create Checkpoint block and marshall
-	out, err := k.cdc.MarshalBinaryBare(record)
-	if err != nil {
-		k.Logger(ctx).Error("Error marshalling record", "error", err)
+	if err := k.SetEventRecordWithID(ctx, record); err != nil {
 		return err
 	}
-
-	// store in key provided
-	store.Set(key, out)
-
-	// return
+	if err := k.SetEventRecordWithTime(ctx, record); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -190,9 +198,7 @@ func (k *Keeper) GetEventRecordListWithTime(ctx sdk.Context, fromTime time.Time,
 	var records []types.EventRecord
 
 	// get range iterator
-	fromTimeBytes := sdk.FormatTimeBytes(fromTime)
-	toTimeBytes := sdk.FormatTimeBytes(toTime)
-	iterator := store.Iterator(append(StateRecordPrefixKeyWithTime, fromTimeBytes...), append(StateRecordPrefixKeyWithTime, toTimeBytes...))
+	iterator := store.Iterator(GetEventRecordKeyWithTimePrefix(fromTime), GetEventRecordKeyWithTimePrefix(toTime))
 	defer iterator.Close()
 	// loop through validators to get valid validators
 	for ; iterator.Valid(); iterator.Next() {
@@ -223,8 +229,13 @@ func GetEventRecordKey(stateID uint64) []byte {
 // GetEventRecordKeyWithTime appends prefix to state id and record time
 func GetEventRecordKeyWithTime(stateID uint64, recordTime time.Time) []byte {
 	stateIDBytes := []byte(strconv.FormatUint(stateID, 10))
+	return append(GetEventRecordKeyWithTimePrefix(recordTime), stateIDBytes...)
+}
+
+// GetEventRecordKeyWithTimePrefix gives prefix for record time key
+func GetEventRecordKeyWithTimePrefix(recordTime time.Time) []byte {
 	recordTimeBytes := sdk.FormatTimeBytes(recordTime)
-	return append(StateRecordPrefixKeyWithTime, append(recordTimeBytes, stateIDBytes...)...)
+	return append(StateRecordPrefixKeyWithTime, recordTimeBytes...)
 }
 
 //
