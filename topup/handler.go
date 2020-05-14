@@ -23,15 +23,13 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 		case types.MsgWithdrawFee:
 			return HandleMsgWithdrawFee(ctx, k, msg)
 		default:
-			errMsg := "Unrecognized topup Msg type: %s" + msg.Type()
-			return sdk.ErrUnknownRequest(errMsg).Result()
+			return sdk.ErrUnknownRequest("Unrecognized topup msg type").Result()
 		}
 	}
 }
 
 // HandleMsgTopup handles topup event
 func HandleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCaller helper.IContractCaller) sdk.Result {
-
 	k.Logger(ctx).Debug("✅ Validating topup msg",
 		"User", msg.User,
 		"Fee", msg.Fee,
@@ -62,7 +60,6 @@ func HandleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCalle
 
 // HandleMsgWithdrawFee handle withdraw fee event
 func HandleMsgWithdrawFee(ctx sdk.Context, k Keeper, msg types.MsgWithdrawFee) sdk.Result {
-
 	// partial withdraw
 	amount := msg.Amount
 
@@ -72,7 +69,7 @@ func HandleMsgWithdrawFee(ctx sdk.Context, k Keeper, msg types.MsgWithdrawFee) s
 		amount = coins.AmountOf(authTypes.FeeToken)
 	}
 
-	k.Logger(ctx).Info("Fee amount for ", "fromAddress", msg.UserAddress, "balance", amount.BigInt().String())
+	k.Logger(ctx).Debug("Fee amount", "fromAddress", msg.UserAddress, "balance", amount.BigInt().String())
 	if amount.IsZero() {
 		return types.ErrNoBalanceToWithdraw(k.Codespace()).Result()
 	}
