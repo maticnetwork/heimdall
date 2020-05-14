@@ -33,8 +33,7 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 func HandleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCaller helper.IContractCaller) sdk.Result {
 
 	k.Logger(ctx).Debug("✅ Validating topup msg",
-		"validatorId", msg.ID,
-		"Signer", msg.Signer,
+		"User", msg.User,
 		"Fee", msg.Fee,
 		"txHash", hmTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
 		"logIndex", uint64(msg.LogIndex),
@@ -102,7 +101,7 @@ func HandleMsgWithdrawFee(ctx sdk.Context, k Keeper, msg types.MsgWithdrawFee) s
 			types.EventTypeFeeWithdraw,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			sdk.NewAttribute(types.AttributeKeyValidatorID, validator.ID.String()),
-			sdk.NewAttribute(types.AttributeKeyValidatorSigner, msg.ValidatorAddress.String()),
+			sdk.NewAttribute(types.AttributeKeyValidatorUser, msg.ValidatorAddress.String()),
 			sdk.NewAttribute(types.AttributeKeyFeeWithdrawAmount, feeAmount.String()),
 		),
 	})
