@@ -126,12 +126,6 @@ func (sp *SlashingProcessor) sendTickToRootchain(eventBytes string, blockHeight 
 		return err
 	}
 
-	// Validates tx Height with rootchain contract
-	shouldSend, err := sp.shouldSendTickToRootchain(uint64(blockHeight))
-	if err != nil {
-		return err
-	}
-
 	// Fetch Tick val slashing info
 	tickSlashInfoList, err := sp.fetchTickSlashInfoList()
 	if err != nil {
@@ -153,7 +147,7 @@ func (sp *SlashingProcessor) sendTickToRootchain(eventBytes string, blockHeight 
 		}
 	}
 
-	if shouldSend && isValidSlashInfo && isCurrentProposer {
+	if isValidSlashInfo && isCurrentProposer {
 		txHash := common.FromHex(txHash)
 		if err := sp.createAndSendTickToRootchain(blockHeight, txHash, tickSlashInfoList, proposerAddr); err != nil {
 			sp.Logger.Error("Error sending tick to rootchain", "error", err)

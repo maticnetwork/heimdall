@@ -403,8 +403,6 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		topup.NewAppModule(app.TopupKeeper, &app.caller),
 	)
 
-	// app.mm.SetOrderBeginBlockers(sidechannelTypes.ModuleName, slashingTypes.ModuleName)
-
 	// NOTE: The genutils module must occur after staking so that pools are
 	// properly initialized with tokens from genesis accounts.
 	app.mm.SetOrderInitGenesis(
