@@ -55,5 +55,4 @@ func (suite *GenesisTestSuite) TestInitExportGenesis() {
 
 	require.Equal(t, len(genesisState.PastCommits), len(actualParams.PastCommits))
 	require.Equal(t, len(genesisState.PastCommits[0].Txs), len(actualParams.PastCommits[0].Txs))
-	require.Equal(t, len(genesisState.PastCommits[0].Validators), len(actualParams.PastCommits[0].Validators))
 }
