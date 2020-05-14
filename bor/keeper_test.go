@@ -136,6 +136,25 @@ func (suite *keeperTest) TestBorKeeperSelectNextProducers() {
 	}
 }
 
+func (suite *keeperTest) TestGetAllSpans() {
+	tc := []struct {
+		span *hmTypes.Span
+		msg  string
+	}{
+		{
+			span: &hmTypes.Span{ID: 666, StartBlock: 1, EndBlock: 1},
+			msg:  "happy flow",
+		},
+	}
+	for i, c := range tc {
+		c.msg = fmt.Sprintf("i: %v, msg: %v", i, c.msg)
+		err := suite.app.BorKeeper.AddNewSpan(suite.ctx, *c.span)
+		suite.Nil(err, c.msg)
+		out := suite.app.BorKeeper.GetAllSpans(suite.ctx)
+		suite.Equal([]*hmTypes.Span{c.span}, out, c.msg)
+	}
+}
+
 func (suite *keeperTest) TestGetLastEthBlock() {
 	tc := []struct {
 		msg                string

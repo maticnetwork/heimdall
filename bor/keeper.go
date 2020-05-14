@@ -50,8 +50,7 @@ type Keeper struct {
 func NewKeeper(
 	cdc *codec.Codec,
 	storeKey sdk.StoreKey,
-	paramSpace subspace.Subspace,
-	codespace sdk.CodespaceType,
+	paramSpace subspace.Subspace, codespace sdk.CodespaceType,
 	chainKeeper chainmanager.Keeper,
 	stakingKeeper staking.Keeper,
 	caller helper.ContractCaller,
