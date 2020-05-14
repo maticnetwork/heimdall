@@ -1,7 +1,6 @@
 package checkpoint_test
 
 import (
-	"math/rand"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -10,7 +9,6 @@ import (
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/checkpoint/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
-	"github.com/maticnetwork/heimdall/types/simulation"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 
@@ -20,47 +18,27 @@ import (
 
 // createTestApp returns context and app
 func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, context.CLIContext) {
-	s1 := rand.NewSource(time.Now().UnixNano())
-	r1 := rand.New(s1)
-
 	genesisState := app.NewDefaultGenesisState()
-	lastNoACK := simulation.RandIntBetween(r1, 1, 5)
-	ackCount := simulation.RandIntBetween(r1, 1, 5)
-
-	// create checkpoint BlockHeader
-	startBlock := uint64(0)
-	endBlock := uint64(255)
-	rootHash := hmTypes.HexToHeimdallHash("123")
-	proposerAddress := hmTypes.HexToHeimdallAddress("123")
-	timestamp := uint64(time.Now().Unix())
-	borChainId := "1234"
-	checkpointBlockHeader := hmTypes.CreateBlock(
-		startBlock,
-		endBlock,
-		rootHash,
-		proposerAddress,
-		borChainId,
-		timestamp,
-	)
-	params := types.NewParams(5*time.Second, 256, 1024)
-
-	checkpointBlockHeaders := make([]hmTypes.CheckpointBlockHeader, ackCount)
-
-	for i := range checkpointBlockHeaders {
-		checkpointBlockHeaders[i] = checkpointBlockHeader
-	}
-
-	checkpointGenesis := types.NewGenesisState(
-		params,
-		&checkpointBlockHeader,
-		uint64(lastNoACK),
-		uint64(ackCount),
-		checkpointBlockHeaders,
-	)
 
 	app := app.Setup(isCheckTx)
 	ctx := app.BaseApp.NewContext(isCheckTx, abci.Header{})
 	cliCtx := context.NewCLIContext().WithCodec(app.Codec())
+
+	params := types.NewParams(5*time.Second, 256, 1024)
+
+	checkpointBlockHeaders := make([]hmTypes.CheckpointBlockHeader, 0)
+
+	for i := range checkpointBlockHeaders {
+		checkpointBlockHeaders[i] = hmTypes.CheckpointBlockHeader{}
+	}
+
+	checkpointGenesis := types.NewGenesisState(
+		params,
+		nil,
+		uint64(0),
+		uint64(0),
+		nil,
+	)
 
 	genesisState[types.ModuleName] = app.Codec().MustMarshalJSON(checkpointGenesis)
 
