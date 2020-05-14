@@ -7,34 +7,6 @@ import (
 	tmTypes "github.com/tendermint/tendermint/types"
 )
 
-// GetSlashingInfoHash returns hash of latest slashing info
-// func GetSlashingInfoHash(valSlashingInfos []*hmTypes.ValidatorSlashingInfo) ([]byte, error) {
-// 	slashInfoHash, err := GenerateInfoHash(valSlashingInfos)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return slashInfoHash, nil
-// }
-
-// GetAccountTree returns roothash of Validator Account State Tree
-// func GenerateInfoHash(slashingInfos []*hmTypes.ValidatorSlashingInfo) ([]byte, error) {
-// 	encodedSlashInfo, err := SortAndRLPEncodeSlashInfos(slashingInfos)
-
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	// calculate hash of encoded slash info
-// 	h := sha256.New()
-// 	_, err = h.Write(encodedSlashInfo)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return h.Sum(nil), nil
-// }
-
 // SortAndRLPEncodeSlashInfos  - RLP encoded slashing infos
 func SortAndRLPEncodeSlashInfos(slashingInfos []*hmTypes.ValidatorSlashingInfo) ([]byte, error) {
 
