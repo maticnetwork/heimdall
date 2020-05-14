@@ -58,13 +58,13 @@ func (suite *HandlerTestSuite) TestHandleMsgTopup() {
 
 	pAddress := hmTypes.HexToHeimdallAddress("123")
 	validatorId := uint64(simulation.RandIntBetween(r1, 0, 100))
-
+	blockNumber := big.NewInt(10)
 	chainParams := app.ChainKeeper.GetParams(ctx)
 	txreceipt := &ethTypes.Receipt{
-		BlockNumber: big.NewInt(10),
+		BlockNumber: blockNumber,
 	}
 
-	msgTopup := types.NewMsgTopup(pAddress, validatorId, txHash, logIndex)
+	msgTopup := types.NewMsgTopup(pAddress, validatorId, pAddress, sdk.NewInt(1000000000000000000), txHash, logIndex, blockNumber.Uint64())
 
 	stakinginfoTopUpFee := &stakinginfo.StakinginfoTopUpFee{
 		ValidatorId: new(big.Int).SetUint64(validatorId),
@@ -72,7 +72,7 @@ func (suite *HandlerTestSuite) TestHandleMsgTopup() {
 		Fee:         big.NewInt(100000000000000000),
 	}
 
-	suite.contractCaller.On("GetConfirmedTxReceipt", mock.Anything, txHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
+	suite.contractCaller.On("GetConfirmedTxReceipt", txHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
 
 	suite.contractCaller.On("DecodeValidatorTopupFeesEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), mock.Anything, msgTopup.LogIndex).Return(stakinginfoTopUpFee, nil)
 	result := suite.handler(ctx, msgTopup)
@@ -95,12 +95,12 @@ func (suite *HandlerTestSuite) TestHandleMsgWithdrawFee() {
 	validatorAddress := pubkey.Address()
 
 	chainParams := app.ChainKeeper.GetParams(ctx)
-
+	blockNumber := big.NewInt(10)
 	txreceipt := &ethTypes.Receipt{
-		BlockNumber: big.NewInt(10),
+		BlockNumber: blockNumber,
 	}
-
-	msgTopup := types.NewMsgTopup(hmTypes.BytesToHeimdallAddress(validatorAddress.Bytes()), validatorId, txHash, uint64(logIndex))
+	signer := hmTypes.BytesToHeimdallAddress(validatorAddress.Bytes())
+	msgTopup := types.NewMsgTopup(signer, validatorId, signer, sdk.NewInt(1000000000000000000), txHash, uint64(logIndex), blockNumber.Uint64())
 
 	stakinginfoTopUpFee := &stakinginfo.StakinginfoTopUpFee{
 		ValidatorId: new(big.Int).SetUint64(validatorId),
@@ -108,7 +108,7 @@ func (suite *HandlerTestSuite) TestHandleMsgWithdrawFee() {
 		Fee:         big.NewInt(100000000000000000),
 	}
 
-	suite.contractCaller.On("GetConfirmedTxReceipt", mock.Anything, txHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
+	suite.contractCaller.On("GetConfirmedTxReceipt", txHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
 
 	suite.contractCaller.On("DecodeValidatorTopupFeesEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), mock.Anything, msgTopup.LogIndex).Return(stakinginfoTopUpFee, nil)
 	topupResult := suite.handler(ctx, msgTopup)
