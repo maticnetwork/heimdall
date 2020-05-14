@@ -2,8 +2,6 @@ package types
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
-
-	authTypes "github.com/maticnetwork/heimdall/auth/types"
 )
 
 // ModuleCdc module codec
@@ -24,13 +22,6 @@ func RegisterCodec(cdc *codec.Codec) {
 // to be correctly Amino encoded and decoded.
 func RegisterProposalTypeCodec(o interface{}, name string) {
 	ModuleCdc.RegisterConcrete(o, name, nil)
-}
-
-// RegisterPulp register pulp
-func RegisterPulp(pulp *authTypes.Pulp) {
-	pulp.RegisterConcrete(MsgSubmitProposal{})
-	pulp.RegisterConcrete(MsgDeposit{})
-	pulp.RegisterConcrete(MsgVote{})
 }
 
 // TODO determine a good place to seal this codec

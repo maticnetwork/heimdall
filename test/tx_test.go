@@ -27,15 +27,18 @@ func TestTxDecode(t *testing.T) {
 }
 
 func TestTxDecodeToStdTx(t *testing.T) {
-	// cdc := app.MakeCodec() // This needs to have every single module codec registered!!!
+	cdc := app.MakeCodec() // This needs to have every single module codec registered!!!
 	txStr := "AANQR/im+GCUHE8PBUoNahQVOC3A/YPGU1GIsiCAggP/oAUa5K2J62X6bWX065hIawNsvuv3z2qU4ObSU8l7Mgm0oMCuqfNQzHmirstq75vRV+hkFczlWh9VjSGNn8JQCo3YhF5C8VG4QZGyoPc937dVz4DrkdYdDRwnigW0qiIE+yMVS/Drcdt9FXol4Tzegb+1qIQbP+EXUnnFLFAuaeUF7A3Rs8WajjUBgA=="
 
 	txBz, err := helper.TendermintTxDecode(txStr)
 	require.NoError(t, err)
 
-	pulp := app.MakePulp()
-	tx, _ := pulp.DecodeBytes(txBz)
-	t.Error(tx)
+	decoder := helper.GetTxDecoder(cdc)
+	if tx, err := decoder(txBz); err != nil {
+		t.Log(tx)
+	} else {
+		t.FailNow()
+	}
 }
 
 func TestTxHash(t *testing.T) {

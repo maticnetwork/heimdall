@@ -12,43 +12,35 @@ import (
 	"sync"
 	"time"
 
+	mLog "github.com/RichardKnop/machinery/v1/log"
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
-	authTypes "github.com/maticnetwork/heimdall/auth/types"
-	chainManagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
-	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
-
-	"github.com/maticnetwork/heimdall/types"
-
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/log"
 	httpClient "github.com/tendermint/tendermint/rpc/client"
 	tmTypes "github.com/tendermint/tendermint/types"
 
+	authTypes "github.com/maticnetwork/heimdall/auth/types"
+	chainManagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
+	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/types"
 	hmtypes "github.com/maticnetwork/heimdall/types"
 )
 
 const (
-	ChainSyncer          = "chain-syncer"
-	HeimdallCheckpointer = "heimdall-checkpointer"
-	NoackService         = "checkpoint-no-ack"
-	SpanServiceStr       = "span-service"
-	ClerkServiceStr      = "clerk-service"
-	AMQPConsumerService  = "amqp-consumer-service"
-
 	AccountDetailsURL      = "/auth/accounts/%v"
-	LastNoAckURL           = "/checkpoint/last-no-ack"
-	CheckpointParamsURL    = "/checkpoint/params"
+	LastNoAckURL           = "/checkpoints/last-no-ack"
+	CheckpointParamsURL    = "/checkpoints/params"
 	ChainManagerParamsURL  = "/chainmanager/params"
 	ProposersURL           = "/staking/proposer/%v"
-	BufferedCheckpointURL  = "/checkpoint/buffer"
-	LatestCheckpointURL    = "/checkpoint/latest-checkpoint"
+	BufferedCheckpointURL  = "/checkpoints/buffer"
+	LatestCheckpointURL    = "/checkpoints/latest"
 	CurrentProposerURL     = "/staking/current-proposer"
 	LatestSpanURL          = "/bor/latest-span"
 	NextSpanInfoURL        = "/bor/prepare-next-span"
 	NextSpanSeedURL        = "/bor/next-span-seed"
-	DividendAccountRootURL = "/staking/dividend-account-root"
+	DividendAccountRootURL = "/topup/dividend-account-root"
 	ValidatorURL           = "/staking/validator/%v"
 	CurrentValidatorSetURL = "staking/validator-set"
 	StakingTxStatusURL     = "/staking/isoldtx"
@@ -72,6 +64,11 @@ func Logger() log.Logger {
 		logger = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
 		option, _ := log.AllowLevel(viper.GetString("log_level"))
 		logger = log.NewFilter(logger, option)
+
+		// set no-op logger if log level is not debug for machinery
+		if viper.GetString("log_level") != "debug" {
+			mLog.SetDebug(NoopLogger{})
+		}
 	})
 
 	return logger
@@ -295,11 +292,13 @@ func GetChainmanagerParams(cliCtx cliContext.CLIContext) (*chainManagerTypes.Par
 	)
 
 	if err != nil {
+		logger.Error("Error fetching chainmanager params", "err", err)
 		return nil, err
 	}
 
 	var params chainManagerTypes.Params
 	if err := json.Unmarshal(response.Result, &params); err != nil {
+		logger.Error("Error unmarshalling chainmanager params", "url", ChainManagerParamsURL, "err", err)
 		return nil, err
 	}
 
@@ -314,15 +313,38 @@ func GetCheckpointParams(cliCtx cliContext.CLIContext) (*checkpointTypes.Params,
 	)
 
 	if err != nil {
+		logger.Error("Error fetching Checkpoint params", "err", err)
 		return nil, err
 	}
 
 	var params checkpointTypes.Params
 	if err := json.Unmarshal(response.Result, &params); err != nil {
+		logger.Error("Error unmarshalling Checkpoint params", "url", CheckpointParamsURL)
 		return nil, err
 	}
 
 	return &params, nil
+}
+
+// GetBufferedCheckpoint return checkpoint from bueffer
+func GetBufferedCheckpoint(cliCtx cliContext.CLIContext) (*hmtypes.CheckpointBlockHeader, error) {
+	response, err := helper.FetchFromAPI(
+		cliCtx,
+		helper.GetHeimdallServerEndpoint(BufferedCheckpointURL),
+	)
+
+	if err != nil {
+		logger.Debug("Error fetching buffered checkpoint", "err", err)
+		return nil, err
+	}
+
+	var blockHeader hmtypes.CheckpointBlockHeader
+	if err := json.Unmarshal(response.Result, &blockHeader); err != nil {
+		logger.Error("Error unmarshalling buffered checkpoint", "url", BufferedCheckpointURL, "err", err)
+		return nil, err
+	}
+
+	return &blockHeader, nil
 }
 
 // AppendPrefix returns publickey in uncompressed format

@@ -44,8 +44,8 @@ const (
 	BroadcastAsync = "async"
 	// --
 
-	DefaultMainRPCUrl = "https://ropsten.infura.io"
-	DefaultBorRPCUrl  = "https://testnet2.matic.network"
+	DefaultMainRPCUrl = "http://localhost:9545"
+	DefaultBorRPCUrl  = "http://localhost:8545"
 
 	// Services
 
@@ -59,8 +59,8 @@ const (
 	DefaultCheckpointerPollInterval = 5 * time.Minute
 	DefaultSyncerPollInterval       = 1 * time.Minute
 	DefaultNoACKPollInterval        = 1010 * time.Second
-	DefaultClerkPollingInterval     = 10 * time.Second
-	DefaultSpanPollingInterval      = 1 * time.Minute
+	DefaultClerkPollInterval        = 10 * time.Second
+	DefaultSpanPollInterval         = 1 * time.Minute
 
 	DefaultChildBlockInterval = 10000 // difference between 2 indexes of header blocks
 	DefaultMainchainGasLimit  = uint64(5000000)
@@ -86,9 +86,9 @@ func init() {
 
 // Configuration represents heimdall config
 type Configuration struct {
-	EthRPCUrl        string `mapstructure:"eth_RPC_URL"`        // RPC endpoint for main chain
-	BorRPCUrl        string `mapstructure:"bor_RPC_URL"`        // RPC endpoint for bor chain
-	TendermintRPCUrl string `mapstructure:"tendermint_RPC_URL"` // tendemint node url
+	EthRPCUrl        string `mapstructure:"eth_rpc_url"`        // RPC endpoint for main chain
+	BorRPCUrl        string `mapstructure:"bor_rpc_url"`        // RPC endpoint for bor chain
+	TendermintRPCUrl string `mapstructure:"tendermint_rpc_url"` // tendemint node url
 
 	AmqpURL           string `mapstructure:"amqp_url"`             // amqp url
 	HeimdallServerURL string `mapstructure:"heimdall_rest_server"` // heimdall server url
@@ -100,8 +100,8 @@ type Configuration struct {
 	CheckpointerPollInterval time.Duration `mapstructure:"checkpoint_poll_interval"` // Poll interval for checkpointer service to send new checkpoints or missing ACK
 	SyncerPollInterval       time.Duration `mapstructure:"syncer_poll_interval"`     // Poll interval for syncher service to sync for changes on main chain
 	NoACKPollInterval        time.Duration `mapstructure:"noack_poll_interval"`      // Poll interval for ack service to send no-ack in case of no checkpoints
-	ClerkPollingInterval     time.Duration `mapstructure:"clerk_polling_interval"`
-	SpanPollingInterval      time.Duration `mapstructure:"span_polling_interval"`
+	ClerkPollInterval        time.Duration `mapstructure:"clerk_poll_interval"`
+	SpanPollInterval         time.Duration `mapstructure:"span_poll_interval"`
 
 	// wait time related options
 	NoACKWaitTime time.Duration `mapstructure:"no_ack_wait_time"` // Time ack service waits to clear buffer and elect new proposer
@@ -220,8 +220,8 @@ func GetDefaultHeimdallConfig() Configuration {
 		CheckpointerPollInterval: DefaultCheckpointerPollInterval,
 		SyncerPollInterval:       DefaultSyncerPollInterval,
 		NoACKPollInterval:        DefaultNoACKPollInterval,
-		ClerkPollingInterval:     DefaultClerkPollingInterval,
-		SpanPollingInterval:      DefaultSpanPollingInterval,
+		ClerkPollInterval:        DefaultClerkPollInterval,
+		SpanPollInterval:         DefaultSpanPollInterval,
 
 		NoACKWaitTime: NoACKWaitTime,
 	}
