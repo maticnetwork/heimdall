@@ -194,8 +194,8 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgEventRecord() {
 	_, _, addr1 := sdkAuth.KeyTestPubAddr()
 
 	id := r.Uint64()
-	logIndex := uint64(100)
-	blockNumber := uint64(510)
+	logIndex := r.Uint64()
+	blockNumber := r.Uint64()
 	txHash := hmTypes.HexToHeimdallHash("no log hash")
 
 	msg := types.NewMsgEventRecord(
@@ -237,5 +237,30 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgEventRecord() {
 		storedEventRecord, err := app.ClerkKeeper.GetEventRecord(ctx, id)
 		require.NotNil(t, storedEventRecord)
 		require.NoError(t, err)
+	})
+
+	t.Run("Replay", func(t *testing.T) {
+		id := r.Uint64()
+		logIndex := r.Uint64()
+		blockNumber := r.Uint64()
+		txHash := hmTypes.HexToHeimdallHash("replay hash")
+		_, _, addr2 := sdkAuth.KeyTestPubAddr()
+
+		msg := types.NewMsgEventRecord(
+			hmTypes.BytesToHeimdallAddress(addr1.Bytes()),
+			txHash,
+			logIndex,
+			blockNumber,
+			id,
+			hmTypes.BytesToHeimdallAddress(addr2.Bytes()),
+			make([]byte, 0),
+			suite.chainID,
+		)
+
+		result := suite.postHandler(ctx, msg, abci.SideTxResultType_Yes)
+		require.True(t, result.IsOK(), "post handler should succeed")
+
+		result = suite.postHandler(ctx, msg, abci.SideTxResultType_Yes)
+		require.False(t, result.IsOK(), "post handler should prevent replay attack")
 	})
 }
