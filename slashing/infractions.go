@@ -1,6 +1,7 @@
 package slashing
 
 import (
+	"errors"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -12,7 +13,7 @@ import (
 func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr []byte, power int64, signed bool) error {
 	height := ctx.BlockHeight()
 	signerAddress := hmTypes.BytesToHeimdallAddress(addr)
-	k.Logger(ctx).Debug("Processing uptime request for validator", "address", signerAddress, "signed", signed, "power", power)
+	k.Logger(ctx).Debug("Processing downtime request for validator", "address", signerAddress, "signed", signed, "power", power)
 
 	// fetch validator Info
 	validator, err := k.sk.GetValidatorInfo(ctx, signerAddress.Bytes())
@@ -68,10 +69,12 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr []byte, power int
 	// SLASH - if we are past the minimum height and the validator has missed too many blocks, punish them
 	if height > minHeight && signInfo.MissedBlocksCounter > maxMissed {
 
-		valSlashInfo, _ := k.GetBufferValSlashingInfo(ctx, validator.ID)
+		valSlashInfo, found := k.GetBufferValSlashingInfo(ctx, validator.ID)
 		// if val is already in jailed state(in buffer or fixed), don't slash him anymore.
-		if err == nil && !valSlashInfo.IsJailed && !validator.Jailed {
-
+		if validator.Jailed || (found && valSlashInfo.IsJailed) {
+			// Validator was (a) not found or (b) already jailed, don't slash
+			k.Logger(ctx).Info(fmt.Sprintf("Validator %s would have been slashed for downtime, but was either not found in store or already jailed", validator.ID))
+		} else {
 			// Downtime confirmed: slash and jail the validator
 			k.Logger(ctx).Info(fmt.Sprintf("Validator %s past min height of %d and below signed blocks threshold of %d",
 				validator.ID, minHeight, k.MinSignedPerWindow(ctx)))
@@ -83,11 +86,7 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr []byte, power int
 			signInfo.MissedBlocksCounter = 0
 			signInfo.IndexOffset = 0
 			k.clearValidatorMissedBlockBitArray(ctx, validator.ID)
-		} else {
-			// Validator was (a) not found or (b) already jailed, don't slash
-			k.Logger(ctx).Info(
-				fmt.Sprintf("Validator %s would have been slashed for downtime, but was either not found in store or already jailed", validator.ID),
-			)
+
 		}
 	}
 
@@ -98,114 +97,55 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr []byte, power int
 
 // HandleDoubleSign implements an equivocation evidence handler. Assuming the
 // evidence is valid, the validator committing the misbehavior will be slashed,
-// jailed and tombstoned. Once tombstoned, the validator will not be able to
-// recover. Note, the evidence contains the block time and height at the time of
-// the equivocation.
+// jailed
 //
 // The evidence is considered invalid if:
 // - the evidence is too old
-// - the validator is unbonded or does not exist
+// - the validator does not exist
 // - the signing info does not exist (will panic)
-// - is already tombstoned
-//
-// TODO: Some of the invalid constraints listed above may need to be reconsidered
-// in the case of a lunatic attack.
+// - is already jailed
 func (k Keeper) HandleDoubleSign(ctx sdk.Context, evidence types.Equivocation) error {
-	logger := k.Logger(ctx)
 	consAddr := evidence.GetConsensusAddress()
 	signerAddress := hmTypes.BytesToHeimdallAddress(consAddr)
 
-	val, err := k.sk.GetValidatorInfo(ctx, signerAddress.Bytes())
+	validator, err := k.sk.GetValidatorInfo(ctx, signerAddress.Bytes())
 	if err != nil {
 		k.Logger(ctx).Error("Error fetching validator", "signerAddress", signerAddress)
 		return err
 	}
-	k.Logger(ctx).Debug("Received HandleDoubleSign reques for validator", "address", signerAddress)
 
 	infractionHeight := evidence.GetHeight()
+	k.Logger(ctx).Debug("Processing doubleSign request for validator", "address", signerAddress, "height", infractionHeight)
 
 	// calculate the age of the evidence
 	blockTime := ctx.BlockHeader().Time
 	age := blockTime.Sub(evidence.GetTime())
 	params := k.GetParams(ctx)
 
-	// if _, err := k.slashingKeeper.GetPubkey(ctx, consAddr.Bytes()); err != nil {
-	// 	// Ignore evidence that cannot be handled.
-	// 	//
-	// 	// NOTE: We used to panic with:
-	// 	// `panic(fmt.Sprintf("Validator consensus-address %v not found", consAddr))`,
-	// 	// but this couples the expectations of the app to both Tendermint and
-	// 	// the simulator.  Both are expected to provide the full range of
-	// 	// allowable but none of the disallowed evidence types.  Instead of
-	// 	// getting this coordination right, it is easier to relax the
-	// 	// constraints and ignore evidence that cannot be handled.
-	// 	return
-	// }
-
 	// reject evidence if the double-sign is too old
 	if age > params.MaxEvidenceAge {
-
-		// TODO - slashing return DoubleSignTooOld error
-		k.Logger(ctx).Error("ignored double sign from %s at height %d, age of %d past max age of %d",
+		k.Logger(ctx).Error("Ignored double sign from %s at height %d, age of %d past max age of %d",
 			signerAddress, infractionHeight, age, params.MaxEvidenceAge)
-		return nil
+		return errors.New("double sign too old")
 	}
 
-	// validator, _ := k.sk.GetValidatorInfo(ctx, consAddr)
-	// TODO - slashing
-	// if validator == nil || validator.IsUnbonded() {
-	// 	// Defensive: Simulation doesn't take unbonding periods into account, and
-	// 	// Tendermint might break this assumption at some point.
-	// 	return
-	// }
-
-	if ok := k.HasValidatorSigningInfo(ctx, val.ID); !ok {
-		panic(fmt.Sprintf("expected signing info for validator %s but not found", val.ID))
+	if ok := k.HasValidatorSigningInfo(ctx, validator.ID); !ok {
+		panic(fmt.Sprintf("expected signing info for validator %s but not found", validator.ID))
 	}
 
-	// ignore if the validator is already tombstoned
-	// TODO - slashing
-	/* 	if k.IsTombstoned(ctx, consAddr) {
-		logger.Info(
-			fmt.Sprintf(
-				"ignored double sign from %s at height %d, validator already tombstoned",
-				consAddr, infractionHeight,
-			),
-		)
-		return
-	} */
-
-	logger.Info(fmt.Sprintf("confirmed double sign from %s at height %d, age of %d", val.ID, infractionHeight, age))
-
-	// We need to retrieve the stake distribution which signed the block, so we
-	// subtract ValidatorUpdateDelay from the evidence height.
-	// Note, that this *can* result in a negative "distributionHeight", up to
-	// -ValidatorUpdateDelay, i.e. at the end of the
-	// pre-genesis block (none) = at the beginning of the genesis block.
-	// That's fine since this is just used to filter unbonding delegations & redelegations.
-	// distributionHeight := infractionHeight - sdk.ValidatorUpdateDelay
+	k.Logger(ctx).Info(fmt.Sprintf("confirmed double sign from %s at height %d, age of %d", validator.ID, infractionHeight, age))
 
 	// Slash validator. The `power` is the int64 power of the validator as provided
-	// to/by Tendermint. This value is validator.Tokens as sent to Tendermint via
-	// ABCI, and now received as evidence. The fraction is passed in to separately
-	// to slash unbonding and rebonding delegations.
-	// k.Slash(
-	// 	ctx,
-	// 	consAddr,
-	// 	params.SlashFractionDoubleSign,
-	// 	evidence.GetValidatorPower(), distributionHeight,
-	// )
+	// to/by Tendermint.
+	valSlashInfo, found := k.GetBufferValSlashingInfo(ctx, validator.ID)
+	// if val is already in jailed state(in buffer or fixed), don't slash him anymore.
+	if validator.Jailed || (found && valSlashInfo.IsJailed) {
+		// Validator was (a) not found or (b) already jailed, don't slash
+		k.Logger(ctx).Info(fmt.Sprintf("Validator %s would have been slashed for double time, but was either not found in store or already jailed", validator.ID))
+	} else {
+		slashedAmount := k.SlashInterim(ctx, validator.ID, params.SlashFractionDoubleSign)
+		k.Logger(ctx).Debug("Interim uptime slashing successful", "valID", validator.ID, "slashedAmount", slashedAmount)
+	}
 
-	slashedAmount := k.SlashInterim(ctx, val.ID, params.SlashFractionDoubleSign)
-	logger.Debug("Interim slashing success", "totalSlashedAmount", slashedAmount)
-	// Jail the validator if not already jailed. This will begin unbonding the
-	// validator if not already unbonding (tombstoned).
-	// TODO - slashing
-	/* 	if !validator.IsJailed() {
-	   		k.Jail(ctx, consAddr)
-	   	}
-
-	   	k.JailUntil(ctx, consAddr, params.DoubleSignJailEndTime)
-		   k.slashingKeeper.Tombstone(ctx, consAddr) */
 	return nil
 }
