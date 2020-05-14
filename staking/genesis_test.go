@@ -57,6 +57,7 @@ func (suite *GenesisTestSuite) TestInitExportGenesis() {
 			hmTypes.NewValidatorID(uint64(int64(i))),
 			0,
 			0,
+			uint64(i),
 			int64(simulation.RandIntBetween(r1, 10, 100)), // power
 			hmTypes.NewPubKey(accounts[i].PubKey.Bytes()),
 			accounts[i].Address,
@@ -71,7 +72,7 @@ func (suite *GenesisTestSuite) TestInitExportGenesis() {
 	// validator set
 	validatorSet := hmTypes.NewValidatorSet(validators)
 
-	genesisState := types.NewGenesisState(validators, *validatorSet, dividendAccounts, stakingSequence)
+	genesisState := types.NewGenesisState(validators, *validatorSet, stakingSequence)
 	staking.InitGenesis(ctx, app.StakingKeeper, genesisState)
 
 	actualParams := staking.ExportGenesis(ctx, app.StakingKeeper)
