@@ -3,6 +3,7 @@ package rest
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/types/rest"
@@ -78,37 +79,72 @@ func recordListHandlerFn(
 			return
 		}
 
-		// get page
-		page, ok := rest.ParseUint64OrReturnBadRequest(w, vars.Get("page"))
-		if !ok {
-			return
-		}
+		if vars.Get("page") != "" && vars.Get("limit") != "" {
+			// get page
+			page, ok := rest.ParseUint64OrReturnBadRequest(w, vars.Get("page"))
+			if !ok {
+				return
+			}
 
-		// get limit
-		limit, ok := rest.ParseUint64OrReturnBadRequest(w, vars.Get("limit"))
-		if !ok {
-			return
-		}
+			// get limit
+			limit, ok := rest.ParseUint64OrReturnBadRequest(w, vars.Get("limit"))
+			if !ok {
+				return
+			}
 
-		// get query params
-		queryParams, err := cliCtx.Codec.MarshalJSON(hmTypes.NewQueryPaginationParams(page, limit))
-		if err != nil {
-			return
-		}
+			// get query params
+			queryParams, err := cliCtx.Codec.MarshalJSON(hmTypes.NewQueryPaginationParams(page, limit))
+			if err != nil {
+				return
+			}
 
-		// query records
-		res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryRecordList), queryParams)
-		if err != nil {
-			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
+			// query records
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryRecordList), queryParams)
+			if err != nil {
+				hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+				return
+			}
 
-		// check content
-		if ok := hmRest.ReturnNotFoundIfNoContent(w, res, "No records found"); !ok {
-			return
-		}
+			// check content
+			if ok := hmRest.ReturnNotFoundIfNoContent(w, res, "No records found"); !ok {
+				return
+			}
 
-		rest.PostProcessResponse(w, cliCtx, res)
+			rest.PostProcessResponse(w, cliCtx, res)
+		} else if vars.Get("from-time") != "" && vars.Get("to-time") != "" {
+			// get from time (epoch)
+			fromTime, ok := rest.ParseInt64OrReturnBadRequest(w, vars.Get("from-time"))
+			if !ok {
+				return
+			}
+
+			// get to time (epoch)
+			toTime, ok := rest.ParseInt64OrReturnBadRequest(w, vars.Get("to-time"))
+			if !ok {
+				return
+			}
+
+			// get query params
+			queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQueryTimeRangeParams(time.Unix(fromTime, 0), time.Unix(toTime, 0)))
+			if err != nil {
+				return
+			}
+
+			// query records
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryRecordListWithTime), queryParams)
+			if err != nil {
+				hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+				return
+			}
+
+			// check content
+			if ok := hmRest.ReturnNotFoundIfNoContent(w, res, "No records found"); !ok {
+				return
+			}
+
+			rest.PostProcessResponse(w, cliCtx, res)
+		}
+		return
 	}
 }
 

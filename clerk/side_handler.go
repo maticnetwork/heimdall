@@ -132,11 +132,18 @@ func PostHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecor
 		msg.ContractAddress,
 		msg.Data,
 		msg.ChainID,
+		ctx.BlockTime(),
 	)
 
 	// save event into state
 	if err := k.SetEventRecord(ctx, record); err != nil {
 		k.Logger(ctx).Error("Unable to update event record", "error", err, "id", msg.ID)
+		return types.ErrEventUpdate(k.Codespace()).Result()
+	}
+
+	// save event with time into state
+	if err := k.SetEventRecordWithTime(ctx, record); err != nil {
+		k.Logger(ctx).Error("Unable to update event record with time", "error", err, "id", msg.ID)
 		return types.ErrEventUpdate(k.Codespace()).Result()
 	}
 

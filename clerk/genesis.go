@@ -14,6 +14,9 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 			if err := keeper.SetEventRecord(ctx, *record); err != nil {
 				keeper.Logger(ctx).Error("InitGenesis | SetEventRecord", "error", err)
 			}
+			if err := keeper.SetEventRecordWithTime(ctx, *record); err != nil {
+				keeper.Logger(ctx).Error("InitGenesis | SetEventRecordWithTime", "error", err)
+			}
 		}
 	}
 

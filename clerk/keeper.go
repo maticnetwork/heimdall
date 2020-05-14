@@ -3,6 +3,7 @@ package clerk
 import (
 	"errors"
 	"strconv"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -22,6 +23,8 @@ var (
 
 	// RecordSequencePrefixKey represents record sequence prefix key
 	RecordSequencePrefixKey = []byte{0x12}
+
+	StateRecordPrefixKeyWithTime = []byte{0x13} // prefix key for when storing state with time
 )
 
 // Keeper stores all related data
@@ -63,6 +66,29 @@ func (k Keeper) Codespace() sdk.CodespaceType {
 // Logger returns a module-specific logger
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", types.ModuleName)
+}
+
+func (k Keeper) SetEventRecordWithTime(ctx sdk.Context, record types.EventRecord) error {
+	store := ctx.KVStore(k.storeKey)
+	key := GetEventRecordKeyWithTime(record.ID, record.RecordTime)
+
+	// check if already set
+	if store.Has(key) {
+		return errors.New("State record already exists")
+	}
+
+	// create Checkpoint block and marshall
+	out, err := k.cdc.MarshalBinaryBare(record.ID)
+	if err != nil {
+		k.Logger(ctx).Error("Error marshalling record ID", "error", err)
+		return err
+	}
+
+	// store in key provided
+	store.Set(key, out)
+
+	// return
+	return nil
 }
 
 // SetEventRecord adds record to store
@@ -156,6 +182,34 @@ func (k *Keeper) GetEventRecordList(ctx sdk.Context, page uint64, limit uint64) 
 	return records, nil
 }
 
+// GetEventRecordListWithTime returns all records with params like fromTime and toTime
+func (k *Keeper) GetEventRecordListWithTime(ctx sdk.Context, fromTime time.Time, toTime time.Time) ([]types.EventRecord, error) {
+	store := ctx.KVStore(k.storeKey)
+
+	// create records
+	var records []types.EventRecord
+
+	// get range iterator
+	fromTimeBytes := sdk.FormatTimeBytes(fromTime)
+	toTimeBytes := sdk.FormatTimeBytes(toTime)
+	iterator := store.Iterator(append(StateRecordPrefixKeyWithTime, fromTimeBytes...), append(StateRecordPrefixKeyWithTime, toTimeBytes...))
+	defer iterator.Close()
+	// loop through validators to get valid validators
+	for ; iterator.Valid(); iterator.Next() {
+		var stateID uint64
+		if err := k.cdc.UnmarshalBinaryBare(iterator.Value(), &stateID); err == nil {
+			record, err := k.GetEventRecord(ctx, stateID)
+			if err != nil {
+				k.Logger(ctx).Error("GetEventRecordListWithTime | GetEventRecord", "error", err)
+				continue
+			}
+			records = append(records, *record)
+		}
+	}
+
+	return records, nil
+}
+
 //
 // GetEventRecordKey returns key for state record
 //
@@ -164,6 +218,13 @@ func (k *Keeper) GetEventRecordList(ctx sdk.Context, page uint64, limit uint64) 
 func GetEventRecordKey(stateID uint64) []byte {
 	stateIDBytes := []byte(strconv.FormatUint(stateID, 10))
 	return append(StateRecordPrefixKey, stateIDBytes...)
+}
+
+// GetEventRecordKeyWithTime appends prefix to state id and record time
+func GetEventRecordKeyWithTime(stateID uint64, recordTime time.Time) []byte {
+	stateIDBytes := []byte(strconv.FormatUint(stateID, 10))
+	recordTimeBytes := sdk.FormatTimeBytes(recordTime)
+	return append(StateRecordPrefixKeyWithTime, append(recordTimeBytes, stateIDBytes...)...)
 }
 
 //
