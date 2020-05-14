@@ -66,33 +66,28 @@ func HandleMsgWithdrawFee(ctx sdk.Context, k Keeper, msg types.MsgWithdrawFee) s
 	// partial withdraw
 	amount := msg.Amount
 
-	validator, err := k.sk.GetValidatorInfo(ctx, msg.ValidatorAddress.Bytes())
-	if err != nil {
-		return hmCommon.ErrInvalidMsg(k.Codespace(), "No validator found with signer %s", msg.ValidatorAddress.String()).Result()
-	}
-
 	// full withdraw
 	if msg.Amount.String() == big.NewInt(0).String() {
-		coins := k.bk.GetCoins(ctx, msg.ValidatorAddress)
+		coins := k.bk.GetCoins(ctx, msg.UserAddress)
 		amount = coins.AmountOf(authTypes.FeeToken)
 	}
 
-	k.Logger(ctx).Info("Fee amount for ", "fromAddress", msg.ValidatorAddress, "validatorId", validator.ID, "balance", amount.BigInt().String())
+	k.Logger(ctx).Info("Fee amount for ", "fromAddress", msg.UserAddress, "balance", amount.BigInt().String())
 	if amount.IsZero() {
 		return types.ErrNoBalanceToWithdraw(k.Codespace()).Result()
 	}
 
 	// withdraw coins of validator
 	maticCoins := sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: amount}}
-	if _, err := k.bk.SubtractCoins(ctx, msg.ValidatorAddress, maticCoins); err != nil {
-		k.Logger(ctx).Error("Error while setting Fee balance to zero ", "fromAddress", msg.ValidatorAddress, "validatorId", validator.ID, "err", err)
+	if _, err := k.bk.SubtractCoins(ctx, msg.UserAddress, maticCoins); err != nil {
+		k.Logger(ctx).Error("Error while setting Fee balance to zero ", "fromAddress", msg.UserAddress, "err", err)
 		return err.Result()
 	}
 
 	// Add Fee to Dividend Account
 	feeAmount := amount.BigInt()
-	if err := k.AddFeeToDividendAccount(ctx, validator.ID, feeAmount); err != nil {
-		k.Logger(ctx).Error("handleMsgWithdrawFee | AddFeeToDividendAccount", "fromAddress", msg.ValidatorAddress, "validatorId", validator.ID, "err", err)
+	if err := k.AddFeeToDividendAccount(ctx, msg.UserAddress, feeAmount); err != nil {
+		k.Logger(ctx).Error("handleMsgWithdrawFee | AddFeeToDividendAccount", "fromAddress", msg.UserAddress, "err", err)
 		return err.Result()
 	}
 
@@ -100,8 +95,7 @@ func HandleMsgWithdrawFee(ctx sdk.Context, k Keeper, msg types.MsgWithdrawFee) s
 		sdk.NewEvent(
 			types.EventTypeFeeWithdraw,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(types.AttributeKeyValidatorID, validator.ID.String()),
-			sdk.NewAttribute(types.AttributeKeyValidatorUser, msg.ValidatorAddress.String()),
+			sdk.NewAttribute(types.AttributeKeyValidatorUser, msg.UserAddress.String()),
 			sdk.NewAttribute(types.AttributeKeyFeeWithdrawAmount, feeAmount.String()),
 		),
 	})
