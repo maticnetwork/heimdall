@@ -23,10 +23,12 @@ type QueryRecordSequenceParams struct {
 	LogIndex uint64
 }
 
-// QueryRecordTimeParams defines the params for querying records with time.
-type QueryRecordTimeParams struct {
+// QueryRecordTimePaginationParams defines the params for querying records with time.
+type QueryRecordTimePaginationParams struct {
 	FromTime time.Time
 	ToTime   time.Time
+	Page     uint64
+	Limit    uint64
 }
 
 // NewQueryRecordParams creates a new instance of QueryRecordParams.
@@ -39,7 +41,7 @@ func NewQueryRecordSequenceParams(txHash string, logIndex uint64) QueryRecordSeq
 	return QueryRecordSequenceParams{TxHash: txHash, LogIndex: logIndex}
 }
 
-// NewQueryTimeRangeParams creates a new instance of NewQueryTimeRangeParams.
-func NewQueryTimeRangeParams(fromTime time.Time, toTime time.Time) QueryRecordTimeParams {
-	return QueryRecordTimeParams{FromTime: fromTime, ToTime: toTime}
+// NewQueryTimeRangePaginationParams creates a new instance of NewQueryTimeRangePaginationParams.
+func NewQueryTimeRangePaginationParams(fromTime, toTime time.Time, page, limit uint64) QueryRecordTimePaginationParams {
+	return QueryRecordTimePaginationParams{FromTime: fromTime, ToTime: toTime, Page: page, Limit: limit}
 }

@@ -179,7 +179,7 @@ func (k *Keeper) GetEventRecordList(ctx sdk.Context, page uint64, limit uint64) 
 	// get paginated iterator
 	iterator := hmTypes.KVStorePrefixIteratorPaginated(store, StateRecordPrefixKey, uint(page), uint(limit))
 
-	// loop through validators to get valid validators
+	// loop through records to get valid records
 	for ; iterator.Valid(); iterator.Next() {
 		var record types.EventRecord
 		if err := k.cdc.UnmarshalBinaryBare(iterator.Value(), &record); err == nil {
@@ -191,16 +191,21 @@ func (k *Keeper) GetEventRecordList(ctx sdk.Context, page uint64, limit uint64) 
 }
 
 // GetEventRecordListWithTime returns all records with params like fromTime and toTime
-func (k *Keeper) GetEventRecordListWithTime(ctx sdk.Context, fromTime time.Time, toTime time.Time) ([]types.EventRecord, error) {
+func (k *Keeper) GetEventRecordListWithTime(ctx sdk.Context, fromTime, toTime time.Time, page, limit uint64) ([]types.EventRecord, error) {
+	var iterator sdk.Iterator
 	store := ctx.KVStore(k.storeKey)
 
 	// create records
 	var records []types.EventRecord
 
+	if page == 0 && limit == 0 {
+		iterator = store.Iterator(GetEventRecordKeyWithTimePrefix(fromTime), GetEventRecordKeyWithTimePrefix(toTime))
+	} else {
+		iterator = hmTypes.KVStorePrefixRangeIteratorPaginated(store, uint(page), uint(limit), GetEventRecordKeyWithTimePrefix(fromTime), GetEventRecordKeyWithTimePrefix(toTime))
+	}
 	// get range iterator
-	iterator := store.Iterator(GetEventRecordKeyWithTimePrefix(fromTime), GetEventRecordKeyWithTimePrefix(toTime))
 	defer iterator.Close()
-	// loop through validators to get valid validators
+	// loop through records to get valid records
 	for ; iterator.Valid(); iterator.Next() {
 		var stateID uint64
 		if err := k.cdc.UnmarshalBinaryBare(iterator.Value(), &stateID); err == nil {
@@ -280,7 +285,7 @@ func (keeper Keeper) GetRecordSequences(ctx sdk.Context) (sequences []string) {
 	return
 }
 
-// IterateRecordSequencesAndApplyFn interate validators and apply the given function.
+// IterateRecordSequencesAndApplyFn interate records and apply the given function.
 func (keeper Keeper) IterateRecordSequencesAndApplyFn(ctx sdk.Context, f func(sequence string) error) {
 	store := ctx.KVStore(keeper.storeKey)
 

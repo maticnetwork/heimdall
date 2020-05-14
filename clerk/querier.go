@@ -71,11 +71,11 @@ func handleQueryRecordList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper
 }
 
 func handleQueryRecordListWithTime(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	var params types.QueryRecordTimeParams
+	var params types.QueryRecordTimePaginationParams
 	if err := types.ModuleCdc.UnmarshalJSON(req.Data, &params); err != nil {
 		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
 	}
-	res, err := keeper.GetEventRecordListWithTime(ctx, params.FromTime, params.ToTime)
+	res, err := keeper.GetEventRecordListWithTime(ctx, params.FromTime, params.ToTime, params.Page, params.Limit)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr(fmt.Sprintf("could not fetch record list with fromTime %v and toTime %v", params.FromTime, params.ToTime), err.Error()))
 	}

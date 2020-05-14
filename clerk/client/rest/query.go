@@ -19,7 +19,6 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 		"/clerk/event-record/list",
 		recordListHandlerFn(cliCtx),
 	).Methods("GET")
-
 	r.HandleFunc(
 		"/clerk/event-record/{recordId}",
 		recordHandlerFn(cliCtx),
@@ -73,6 +72,8 @@ func recordListHandlerFn(
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := r.URL.Query()
+		var queryParams []byte
+		var err error
 
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
@@ -124,10 +125,28 @@ func recordListHandlerFn(
 				return
 			}
 
-			// get query params
-			queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQueryTimeRangeParams(time.Unix(fromTime, 0), time.Unix(toTime, 0)))
-			if err != nil {
-				return
+			if vars.Get("page") != "" && vars.Get("limit") != "" {
+				// get page
+				page, ok := rest.ParseUint64OrReturnBadRequest(w, vars.Get("page"))
+				if !ok {
+					return
+				}
+				// get limit
+				limit, ok := rest.ParseUint64OrReturnBadRequest(w, vars.Get("limit"))
+				if !ok {
+					return
+				}
+				// get query params
+				queryParams, err = cliCtx.Codec.MarshalJSON(types.NewQueryTimeRangePaginationParams(time.Unix(fromTime, 0), time.Unix(toTime, 0), page, limit))
+				if err != nil {
+					return
+				}
+			} else {
+				// get query params
+				queryParams, err = cliCtx.Codec.MarshalJSON(types.NewQueryTimeRangePaginationParams(time.Unix(fromTime, 0), time.Unix(toTime, 0), 0, 0))
+				if err != nil {
+					return
+				}
 			}
 
 			// query records
