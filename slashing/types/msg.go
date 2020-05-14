@@ -1,8 +1,6 @@
 package types
 
 import (
-	"math/big"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/bor/accounts/abi"
 	hmCommon "github.com/maticnetwork/heimdall/common"
@@ -133,13 +131,13 @@ var _ sdk.Msg = &MsgTickAck{}
 
 type MsgTickAck struct {
 	From          types.HeimdallAddress `json:"from"`
-	SlashedAmount *big.Int              `json:"slashed_amount"`
+	SlashedAmount uint64                `json:"slashed_amount"`
 	TxHash        types.HeimdallHash    `json:"tx_hash"`
 	LogIndex      uint64                `json:"log_index"`
 	BlockNumber   uint64                `json:"block_number"`
 }
 
-func NewMsgTickAck(from types.HeimdallAddress, slashedAmount *big.Int, txHash types.HeimdallHash, logIndex uint64, blockNumber uint64) MsgTickAck {
+func NewMsgTickAck(from types.HeimdallAddress, slashedAmount uint64, txHash types.HeimdallHash, logIndex uint64, blockNumber uint64) MsgTickAck {
 	return MsgTickAck{
 		From:          from,
 		SlashedAmount: slashedAmount,

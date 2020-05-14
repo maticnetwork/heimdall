@@ -71,6 +71,10 @@ func initCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			valSigningInfoMap := make(map[string]hmTypes.ValidatorSigningInfo)
 			valSigningInfoMap[valSigningInfo.ValID.String()] = valSigningInfo
 
+			valSlashingInfo := hmTypes.NewValidatorSlashingInfo(validator.ID, uint64(0), false)
+			// create buffer valSlashing infos
+			bufValSlashInfos := []*hmTypes.ValidatorSlashingInfo{&valSlashingInfo}
+
 			// create genesis state
 			appStateBytes := app.NewDefaultGenesisState()
 
@@ -90,7 +94,7 @@ func initCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			}
 
 			// slashing state change
-			appStateBytes, err = slashingTypes.SetGenesisStateToAppState(appStateBytes, valSigningInfoMap)
+			appStateBytes, err = slashingTypes.SetGenesisStateToAppState(appStateBytes, valSigningInfoMap, bufValSlashInfos)
 			if err != nil {
 				return err
 			}

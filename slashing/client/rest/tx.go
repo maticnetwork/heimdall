@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"math/big"
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -50,7 +49,7 @@ type TickReq struct {
 
 type TickAckReq struct {
 	BaseReq     rest.BaseReq `json:"base_req"`
-	Amount      string       `json:"amount"`
+	Amount      uint64       `json:"amount"`
 	TxHash      string       `json:"tx_hash"`
 	LogIndex    uint64       `json:"log_index"`
 	BlockNumber uint64       `json:"block_number" yaml:"block_number"`
@@ -114,14 +113,9 @@ func newTickAckHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		amount, ok := big.NewInt(0).SetString(req.Amount, 10)
-		if !ok {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, "invalid amount")
-		}
-
 		msg := types.NewMsgTickAck(
 			hmTypes.HexToHeimdallAddress(req.BaseReq.From),
-			amount,
+			req.Amount,
 			hmTypes.HexToHeimdallHash(req.TxHash),
 			req.LogIndex,
 			req.BlockNumber,

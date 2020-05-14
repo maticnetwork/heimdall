@@ -3,7 +3,6 @@ package staking
 import (
 	"encoding/hex"
 	"errors"
-	"math/big"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -459,20 +458,12 @@ func (k *Keeper) Slash(ctx sdk.Context, valSlashingInfo hmTypes.ValidatorSlashin
 	}
 
 	// calculate power after slash
-	slashAmount, _ := helper.GetAmountFromString(valSlashingInfo.SlashedAmount)
-	valAmount, _ := helper.GetAmountFromPower(validator.VotingPower)
-	slashedValAmount := valAmount.Sub(valAmount, slashAmount)
-	updatedPower, _ := helper.GetPowerFromAmount(slashedValAmount)
+	updatedPower := validator.VotingPower - int64(valSlashingInfo.SlashedAmount)
 
-	if updatedPower == nil {
-		// After slashing, updated power is less than 1 MATIC
-		updatedPower = big.NewInt(0)
-	}
-
-	k.Logger(ctx).Info("slashAmount", slashAmount, "prevPower", validator.VotingPower, "updatedPower", updatedPower.Int64)
+	k.Logger(ctx).Info("slashAmount", valSlashingInfo.SlashedAmount, "prevPower", validator.VotingPower, "updatedPower", updatedPower)
 
 	// update power and jail status.
-	validator.VotingPower = updatedPower.Int64()
+	validator.VotingPower = updatedPower
 	validator.Jailed = valSlashingInfo.IsJailed
 
 	// add updated validator to store with new key

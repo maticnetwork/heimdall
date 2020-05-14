@@ -2,7 +2,7 @@ package slashing
 
 import (
 	"fmt"
-	"math/big"
+	"strconv"
 
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -10,7 +10,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gogotypes "github.com/gogo/protobuf/types"
 	"github.com/maticnetwork/heimdall/chainmanager"
-	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/params/subspace"
 	"github.com/maticnetwork/heimdall/slashing/types"
 	"github.com/maticnetwork/heimdall/staking"
@@ -245,7 +244,6 @@ func (k Keeper) deleteAddrPubkeyRelation(ctx sdk.Context, addr crypto.Address) {
 
 // SetParams sets the slashing module's parameters.
 func (k *Keeper) SetParams(ctx sdk.Context, params types.Params) {
-	fmt.Println("Setting params")
 	k.paramSpace.SetParamSet(ctx, &params)
 }
 
@@ -257,28 +255,30 @@ func (k *Keeper) GetParams(ctx sdk.Context) (params types.Params) {
 
 // Slashing Info api's
 
-func (k *Keeper) SlashInterim(ctx sdk.Context, valID hmTypes.ValidatorID, slashPercent sdk.Dec) string {
+func (k *Keeper) SlashInterim(ctx sdk.Context, valID hmTypes.ValidatorID, slashPercent sdk.Dec) uint64 {
 	if slashPercent.IsNegative() {
 		panic(fmt.Errorf("attempted to slash with a negative slash factor: %v", slashPercent))
 	}
 
 	validator, _ := k.sk.GetValidatorFromValID(ctx, valID)
-	powerInDecimal, _ := helper.GetAmountFromPower(validator.VotingPower)
+	valPower := validator.VotingPower
 
-	slashAmountDec := sdk.NewDecFromBigInt(powerInDecimal).Mul(slashPercent)
-	slashAmountInt := slashAmountDec.TruncateInt()
-	slashAmount := slashAmountInt.BigInt()
+	slashAmountDec := sdk.NewDec(valPower).Mul(slashPercent)
+	k.Logger(ctx).Debug("slashAmountDec", slashAmountDec, "valPower", valPower, "slashPercent", slashPercent)
+
+	slashAmountInt := slashAmountDec.TruncateInt().Int64()
+	k.Logger(ctx).Debug("slashAmountInt", slashAmountInt)
 
 	// add slash to buffer
 	valSlashingInfo, found := k.GetBufferValSlashingInfo(ctx, valID)
 	if found {
 		// Add or Update Slash Amount
-		prevAmount, _ := big.NewInt(0).SetString(valSlashingInfo.SlashedAmount, 10)
-		updatedSlashAmount := big.NewInt(0).Add(prevAmount, slashAmount)
-		valSlashingInfo.SlashedAmount = updatedSlashAmount.String()
+		prevAmount := valSlashingInfo.SlashedAmount
+		updatedSlashAmount := prevAmount + uint64(slashAmountInt)
+		valSlashingInfo.SlashedAmount = updatedSlashAmount
 	} else {
 		// create slashing info
-		valSlashingInfo = hmTypes.NewValidatorSlashingInfo(valID, slashAmount.String(), false)
+		valSlashingInfo = hmTypes.NewValidatorSlashingInfo(valID, uint64(slashAmountInt), false)
 	}
 
 	// Add jail Status by checking jail limit
@@ -287,21 +287,24 @@ func (k *Keeper) SlashInterim(ctx sdk.Context, valID hmTypes.ValidatorID, slashP
 	}
 
 	k.SetBufferValSlashingInfo(ctx, valID, valSlashingInfo)
-	k.UpdateTotalSlashedAmount(ctx, slashAmount.String())
+	k.UpdateTotalSlashedAmount(ctx, uint64(slashAmountInt))
 
-	return slashAmount.String()
+	return uint64(slashAmountInt)
 }
 
-func (k *Keeper) GetTotalSlashedAmount(ctx sdk.Context) *big.Int {
+func (k *Keeper) GetTotalSlashedAmount(ctx sdk.Context) uint64 {
 	store := ctx.KVStore(k.storeKey)
 	if store.Has(types.TotalSlashedAmountKey) {
-		bz := store.Get(types.TotalSlashedAmountKey)
-		totalSlashedAmountStr := string(bz)
-		totalSlashedAmount, _ := big.NewInt(0).SetString(totalSlashedAmountStr, 10)
-		return totalSlashedAmount
+		// get current Total slashed amount
+		totalSlashedAmountKey, err := strconv.ParseUint(string(store.Get(types.TotalSlashedAmountKey)), 10, 64)
+		if err != nil {
+			k.Logger(ctx).Error("Unable to convert key to int")
+		} else {
+			return totalSlashedAmountKey
+		}
 	}
 
-	return big.NewInt(0)
+	return 0
 }
 
 // IsSlashedLimitExceeded - if total slashed amount exceeded slash limit or not
@@ -311,12 +314,11 @@ func (k *Keeper) IsSlashedLimitExceeded(ctx sdk.Context) bool {
 	slashedAmount := k.GetTotalSlashedAmount(ctx)
 	totalPower := k.sk.GetTotalPower(ctx)
 	k.Logger(ctx).Debug("slashedAmount and totalPower", "slashAmount", slashedAmount, "totalPower", totalPower)
-	totalPowerInDec, _ := helper.GetAmountFromPower(totalPower)
 
-	slashLimitDec := sdk.NewDecFromBigInt(totalPowerInDec).Mul(params.SlashFractionLimit)
-	slashLimit := slashLimitDec.TruncateInt().BigInt()
+	slashLimitDec := sdk.NewDec(totalPower).Mul(params.SlashFractionLimit)
+	slashLimit := slashLimitDec.TruncateInt().Int64()
 	k.Logger(ctx).Debug("limit calculates", "slashlimit", slashLimit)
-	if slashLimit.CmpAbs(slashedAmount) < 0 {
+	if slashedAmount >= uint64(slashLimit) {
 		k.Logger(ctx).Debug("slash limit exceeded")
 		return true
 	}
@@ -330,19 +332,15 @@ func (k *Keeper) IsJailLimitExceeded(ctx sdk.Context, valSlashingInfo hmTypes.Va
 	valID := valSlashingInfo.ID
 	k.Logger(ctx).Debug("checking if jail limit exceeded")
 
-	slashedAmount, _ := big.NewInt(0).SetString(valSlashingInfo.SlashedAmount, 10)
+	slashedAmount := valSlashingInfo.SlashedAmount
 	val, _ := k.sk.GetValidatorFromValID(ctx, valID)
-	powerInDec, err := helper.GetAmountFromPower(val.VotingPower)
-	if err != nil {
-		return false
-	}
 
-	k.Logger(ctx).Debug("slashedAmount and power", "slashAmount", slashedAmount, "power", powerInDec)
+	k.Logger(ctx).Debug("slashedAmount and power", "slashAmount", slashedAmount, "power", val.VotingPower)
 
-	jailLimitDec := sdk.NewDecFromBigInt(powerInDec).Mul(params.JailFractionLimit)
-	jailLimit := jailLimitDec.TruncateInt().BigInt()
+	jailLimitDec := sdk.NewDec(val.VotingPower).Mul(params.JailFractionLimit)
+	jailLimit := jailLimitDec.TruncateInt().Int64()
 	k.Logger(ctx).Debug("limit calculates", "slashlimit", jailLimit)
-	if jailLimit.CmpAbs(slashedAmount) < 0 {
+	if slashedAmount >= uint64(jailLimit) {
 		k.Logger(ctx).Debug("jail limit exceeded")
 		return true
 	}
@@ -446,18 +444,15 @@ func (k *Keeper) GetBufferValSlashingInfos(ctx sdk.Context) (valSlashingInfos []
 	return
 }
 
-func (k Keeper) UpdateTotalSlashedAmount(ctx sdk.Context, amount string) {
+func (k Keeper) UpdateTotalSlashedAmount(ctx sdk.Context, slashedAmount uint64) {
 	store := ctx.KVStore(k.storeKey)
-	slashedAmount, _ := big.NewInt(0).SetString(amount, 10)
-	if store.Has(types.TotalSlashedAmountKey) {
-		bz := store.Get(types.TotalSlashedAmountKey)
-		prevAmountStr := string(bz)
-		prevAmount, _ := big.NewInt(0).SetString(prevAmountStr, 10)
-		slashedAmount = big.NewInt(0).Add(prevAmount, slashedAmount)
-	}
+	current := k.GetTotalSlashedAmount(ctx)
+	updated := current + slashedAmount
 
-	store.Set(types.TotalSlashedAmountKey, []byte(slashedAmount.String()))
-	k.Logger(ctx).Debug("Updated Total Slashed Amount ", "amount", slashedAmount)
+	// convert
+	totalSlashedAmount := []byte(strconv.FormatUint(updated, 10))
+	store.Set(types.TotalSlashedAmountKey, totalSlashedAmount)
+	k.Logger(ctx).Debug("Updated Total Slashed Amount ", "amount", updated)
 
 	if k.IsSlashedLimitExceeded(ctx) {
 		k.Logger(ctx).Info("TotalSlashedAmount exceeded SlashLimit, Emitting event", types.EventTypeSlashLimit)

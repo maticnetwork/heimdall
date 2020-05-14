@@ -10,11 +10,11 @@ import (
 // ValidatorSlashingInfo - contains ID, slashingAmount, isJailed
 type ValidatorSlashingInfo struct {
 	ID            ValidatorID `json:"ID"`
-	SlashedAmount string      `json:"SlashedAmount"` // string representation of big.Int
+	SlashedAmount uint64      `json:"SlashedAmount"`
 	IsJailed      bool        `json:"IsJailed"`
 }
 
-func NewValidatorSlashingInfo(id ValidatorID, slashedAmount string, isJailed bool) ValidatorSlashingInfo {
+func NewValidatorSlashingInfo(id ValidatorID, slashedAmount uint64, isJailed bool) ValidatorSlashingInfo {
 
 	return ValidatorSlashingInfo{
 		ID:            id,
@@ -26,7 +26,7 @@ func NewValidatorSlashingInfo(id ValidatorID, slashedAmount string, isJailed boo
 func (v ValidatorSlashingInfo) String() string {
 	return fmt.Sprintf(`Validator Slashing Info:
 	ID:               %d
-	SlashedAmount:    %s
+	SlashedAmount:    %d
 	IsJailed:         %v`,
 		v.ID, v.SlashedAmount, v.IsJailed)
 }

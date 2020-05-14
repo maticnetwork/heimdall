@@ -19,6 +19,7 @@ import (
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	borTypes "github.com/maticnetwork/heimdall/bor/types"
 	"github.com/maticnetwork/heimdall/helper"
+	slashingTypes "github.com/maticnetwork/heimdall/slashing/types"
 	stakingcli "github.com/maticnetwork/heimdall/staking/client/cli"
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
 	topupTypes "github.com/maticnetwork/heimdall/topup/types"
@@ -71,6 +72,11 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 			privKeys := make([]crypto.PrivKey, totalValidators)
 			validators := make([]*hmTypes.Validator, numValidators)
 			dividendAccounts := make([]hmTypes.DividendAccount, numValidators)
+
+			// slashing
+			valSigningInfoMap := make(map[string]hmTypes.ValidatorSigningInfo)
+			bufValSlashInfos := make([]*hmTypes.ValidatorSlashingInfo, numValidators)
+
 			genFiles := make([]string, totalValidators)
 			var err error
 
@@ -126,6 +132,8 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 
 					// create dividend account for validator
 					dividendAccounts[i] = hmTypes.NewDividendAccount(hmTypes.NewDividendAccountID(uint64(validators[i].ID)), ZeroIntString)
+					valSigningInfoMap[validators[i].ID.String()] = hmTypes.NewValidatorSigningInfo(validators[i].ID, 0, 0, 0)
+					// bufValSlashInfos[i] = &hmTypes.NewValidatorSlashingInfo(validators[i].ID, uint64(0), false)
 				}
 
 				signers[i] = GetSignerInfo(valPubKeys[i], privKeys[i].Bytes(), cdc)
@@ -165,6 +173,12 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 
 			// topup state change
 			appStateBytes, err = topupTypes.SetGenesisStateToAppState(appStateBytes, dividendAccounts)
+			if err != nil {
+				return err
+			}
+
+			// slashing state change
+			appStateBytes, err = slashingTypes.SetGenesisStateToAppState(appStateBytes, valSigningInfoMap, bufValSlashInfos)
 			if err != nil {
 				return err
 			}

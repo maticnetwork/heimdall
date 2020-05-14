@@ -41,6 +41,7 @@ func NewSlashingProcessor(stakingInfoAbi *abi.ABI) *SlashingProcessor {
 // Start starts new block subscription
 func (sp *SlashingProcessor) Start() error {
 	sp.Logger.Info("Starting")
+
 	return nil
 }
 
@@ -63,10 +64,10 @@ func (sp *SlashingProcessor) sendTickToHeimdall(eventBytes string, blockHeight i
 		return err
 	}
 
-	latestSlashInfoHash := hmTypes.ZeroHeimdallHash
-	//Get DividendAccountRoot from HeimdallServer
-	if latestSlashInfoHash, err = sp.fetchLatestSlashInfoHash(); err != nil {
-		sp.Logger.Info("Error while fetching latest slashinfo hash from HeimdallServer", "err", err)
+	//Get latestSlashInoBytes from HeimdallServer
+	latestSlashInoBytes, err := sp.fetchLatestSlashInoBytes()
+	if err != nil {
+		sp.Logger.Info("Error while fetching latestSlashInoBytes from HeimdallServer", "err", err)
 		return err
 	}
 
@@ -74,13 +75,13 @@ func (sp *SlashingProcessor) sendTickToHeimdall(eventBytes string, blockHeight i
 
 	sp.Logger.Info("✅ Creating and broadcasting Tick tx",
 		"From", hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
-		"slashingInfoHash", latestSlashInfoHash,
+		"latestSlashInoBytes", latestSlashInoBytes.String(),
 	)
 
 	// create msg Tick message
 	msg := slashingTypes.NewMsgTick(
 		hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
-		latestSlashInfoHash,
+		latestSlashInoBytes,
 	)
 
 	// return broadcast to heimdall
@@ -106,18 +107,18 @@ func (sp *SlashingProcessor) sendTickToRootchain(eventBytes string, blockHeight 
 		return err
 	}
 
-	slashInfoHash := hmTypes.ZeroHeimdallHash
+	slashInfoBytes := hmTypes.HexBytes{}
 	proposerAddr := hmTypes.ZeroHeimdallAddress
 	for _, attr := range event.Attributes {
 		if attr.Key == slashingTypes.AttributeKeyProposer {
 			proposerAddr = hmTypes.HexToHeimdallAddress(attr.Value)
 		}
-		if attr.Key == slashingTypes.AttributeKeySlashInfoHash {
-			slashInfoHash = hmTypes.HexToHeimdallHash(attr.Value)
+		if attr.Key == slashingTypes.AttributeKeySlashInfoBytes {
+			slashInfoBytes = hmTypes.HexToHexBytes(attr.Value)
 		}
 	}
 
-	sp.Logger.Info("processing tick confirmation event", "eventtype", event.Type, "slashInfoHash", slashInfoHash, "proposer", proposerAddr)
+	sp.Logger.Info("processing tick confirmation event", "eventtype", event.Type, "slashInfoBytes", slashInfoBytes.String(), "proposer", proposerAddr)
 	// TODO - slashing...who should submit tick to rootchain??
 	isCurrentProposer, err := util.IsCurrentProposer(sp.cliCtx)
 	if err != nil {
@@ -139,7 +140,7 @@ func (sp *SlashingProcessor) sendTickToRootchain(eventBytes string, blockHeight 
 	}
 
 	// Validate tickSlashInfoList
-	isValidSlashInfo, err := sp.validateTickSlashInfo(tickSlashInfoList, slashInfoHash)
+	isValidSlashInfo, err := sp.validateTickSlashInfo(tickSlashInfoList, slashInfoBytes)
 	if err != nil {
 		sp.Logger.Error("Error validating tick slash info list", "error", err)
 		return err
@@ -183,7 +184,7 @@ func (sp *SlashingProcessor) sendTickAckToHeimdall(eventName string, logBytes st
 		if isOld, _ := sp.isOldTx(sp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index)); isOld {
 			sp.Logger.Info("Ignoring task to send tick ack to heimdall as already processed",
 				"event", eventName,
-				"totalSlashedAmount", event.Amount,
+				"totalSlashedAmount", event.Amount.Uint64(),
 				"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 				"logIndex", uint64(vLog.Index),
 				"blockNumber", vLog.BlockNumber,
@@ -193,7 +194,7 @@ func (sp *SlashingProcessor) sendTickAckToHeimdall(eventName string, logBytes st
 		sp.Logger.Info(
 			"✅ Received task to send tick-ack to heimdall",
 			"event", eventName,
-			"totalSlashedAmount", event.Amount,
+			"totalSlashedAmount", event.Amount.Uint64(),
 			"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			"logIndex", uint64(vLog.Index),
 			"blockNumber", vLog.BlockNumber,
@@ -202,7 +203,7 @@ func (sp *SlashingProcessor) sendTickAckToHeimdall(eventName string, logBytes st
 		// TODO - check if i am the proposer of this tick ack or not.
 
 		// create msg checkpoint ack message
-		msg := slashingTypes.NewMsgTickAck(helper.GetFromAddress(sp.cliCtx), event.Amount, hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()), uint64(vLog.Index), vLog.BlockNumber)
+		msg := slashingTypes.NewMsgTickAck(helper.GetFromAddress(sp.cliCtx), event.Amount.Uint64(), hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()), uint64(vLog.Index), vLog.BlockNumber)
 
 		// return broadcast to heimdall
 		if err := sp.txBroadcaster.BroadcastToHeimdall(msg); err != nil {
@@ -267,17 +268,6 @@ func (sp *SlashingProcessor) sendUnjailToHeimdall(eventName string, logBytes str
 	return nil
 }
 
-// shouldSendTickToRootchain - verifies if this tick is already submitted to rootchain
-func (sp *SlashingProcessor) shouldSendTickToRootchain(tickNonce uint64) (shouldSend bool, err error) {
-	/*
-		1. Fetch latest tick nonce processed on rootchain.
-		2.
-
-	*/
-	shouldSend = true
-	return
-}
-
 // createAndSendTickToRootchain prepares the data required for rootchain tick submission
 // and sends a transaction to rootchain
 func (sp *SlashingProcessor) createAndSendTickToRootchain(height int64, txHash []byte, slashInfoList []*hmTypes.ValidatorSlashingInfo, proposerAddr hmTypes.HeimdallAddress) error {
@@ -316,49 +306,43 @@ func (sp *SlashingProcessor) createAndSendTickToRootchain(height int64, txHash [
 		return err
 	}
 
-	shouldSend, err := sp.shouldSendTickToRootchain(uint64(tx.Height))
+	// send tick to rootchain
+	slashingContrext, err := sp.getSlashingContext()
 	if err != nil {
 		return err
 	}
+	chainParams := slashingContrext.ChainmanagerParams.ChainParams
+	slashManagerAddress := chainParams.SlashManagerAddress.EthAddress()
 
-	if shouldSend {
-		slashingContrext, err := sp.getSlashingContext()
-		if err != nil {
-			return err
-		}
-		chainParams := slashingContrext.ChainmanagerParams.ChainParams
-		slashManagerAddress := chainParams.SlashManagerAddress.EthAddress()
+	// slashmanage instance
+	slashManagerInstance, err := sp.contractConnector.GetSlashManagerInstance(slashManagerAddress)
+	if err != nil {
+		sp.Logger.Info("Error while creating slashmanager instance", "error", err)
+		return err
+	}
 
-		// slashmanage instance
-		slashManagerInstance, err := sp.contractConnector.GetSlashManagerInstance(slashManagerAddress)
-		if err != nil {
-			sp.Logger.Info("Error while creating slashmanager instance", "error", err)
-			return err
-		}
-
-		if err := sp.contractConnector.SendTick(sideTxData, sigs, slashManagerAddress, slashManagerInstance); err != nil {
-			sp.Logger.Info("Error submitting tick to slashManager contract", "error", err)
-			return err
-		}
+	if err := sp.contractConnector.SendTick(sideTxData, sigs, slashManagerAddress, slashManagerInstance); err != nil {
+		sp.Logger.Info("Error submitting tick to slashManager contract", "error", err)
+		return err
 	}
 
 	return nil
 }
 
-// fetchLatestSlashInfoHash - fetches latest slashInfoHash
-func (sp *SlashingProcessor) fetchLatestSlashInfoHash() (slashInfoHash hmTypes.HeimdallHash, err error) {
-	sp.Logger.Info("Sending Rest call to Get Latest SlashInfoHash")
-	response, err := helper.FetchFromAPI(sp.cliCtx, helper.GetHeimdallServerEndpoint(util.LatestSlashInfoHashURL))
+// fetchLatestSlashInoBytes - fetches latest slashInfoBytes
+func (sp *SlashingProcessor) fetchLatestSlashInoBytes() (slashInfoBytes hmTypes.HexBytes, err error) {
+	sp.Logger.Info("Sending Rest call to Get Latest SlashInfoBytes")
+	response, err := helper.FetchFromAPI(sp.cliCtx, helper.GetHeimdallServerEndpoint(util.LatestSlashInfoBytesURL))
 	if err != nil {
-		sp.Logger.Error("Error Fetching slashInfoHash from HeimdallServer ", "error", err)
-		return slashInfoHash, err
+		sp.Logger.Error("Error Fetching slashInfoBytes from HeimdallServer ", "error", err)
+		return slashInfoBytes, err
 	}
-	sp.Logger.Info("Latest SlashInfoHash fetched")
-	if err := json.Unmarshal(response.Result, &slashInfoHash); err != nil {
-		sp.Logger.Error("Error unmarshalling latest slashinfo hash received from Heimdall Server", "error", err)
-		return slashInfoHash, err
+	sp.Logger.Info("Latest slashInfoBytes fetched")
+	if err := json.Unmarshal(response.Result, &slashInfoBytes); err != nil {
+		sp.Logger.Error("Error unmarshalling latest slashInfoBytes received from Heimdall Server", "error", err)
+		return slashInfoBytes, err
 	}
-	return slashInfoHash, nil
+	return slashInfoBytes, nil
 }
 
 // fetchTickSlashInfoList - fetches tick slash Info list
@@ -377,17 +361,17 @@ func (sp *SlashingProcessor) fetchTickSlashInfoList() (slashInfoList []*hmTypes.
 	return slashInfoList, nil
 }
 
-func (sp *SlashingProcessor) validateTickSlashInfo(slashInfoList []*hmTypes.ValidatorSlashingInfo, slashInfoHash hmTypes.HeimdallHash) (isValid bool, err error) {
-	tickSlashInfoHash, err := slashingTypes.GenerateInfoHash(slashInfoList)
+func (sp *SlashingProcessor) validateTickSlashInfo(slashInfoList []*hmTypes.ValidatorSlashingInfo, slashInfoBytes hmTypes.HexBytes) (isValid bool, err error) {
+	tickSlashInfoBytes, err := slashingTypes.SortAndRLPEncodeSlashInfos(slashInfoList)
 	if err != nil {
-		sp.Logger.Error("Error generating tick slashinfo hash", "error", err)
+		sp.Logger.Error("Error generating tick slashinfo bytes", "error", err)
 		return
 	}
-	// compare tickSlashInfoHash with slashInfoHash
-	if bytes.Compare(tickSlashInfoHash, slashInfoHash.Bytes()) == 0 {
+	// compare tickSlashInfoBytes with slashInfoBytes
+	if bytes.Compare(tickSlashInfoBytes, slashInfoBytes) == 0 {
 		return true, nil
 	} else {
-		sp.Logger.Info("SlashingInfoHash mismatch", "tickSlashInfoHash", tickSlashInfoHash, "slashInfoHash", slashInfoHash)
+		sp.Logger.Info("SlashingInfoBytes mismatch", "tickSlashInfoBytes", tickSlashInfoBytes, "slashInfoBytes", slashInfoBytes)
 	}
 
 	return

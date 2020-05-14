@@ -89,7 +89,7 @@ func SideHandleMsgTickAck(ctx sdk.Context, k Keeper, msg types.MsgTickAck, contr
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
 
-	if eventLog.Amount.Cmp(msg.SlashedAmount) != 0 {
+	if eventLog.Amount.Uint64() != msg.SlashedAmount {
 		k.Logger(ctx).Error("SlashedAmount in message doesn't match SlashedAmount in event logs", "MsgSlashedAmount", msg.SlashedAmount, "SlashedAmountFromEvent", eventLog.Amount)
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
@@ -171,12 +171,6 @@ func PostHandleMsgTick(ctx sdk.Context, k Keeper, msg types.MsgTick, sideTxResul
 	// Flush TotalSlashedAmount
 	k.FlushTotalSlashedAmount(ctx)
 
-	// slash validator - Iterate lastTickData and reduce power of each validator along with jailing if needed
-	if err := k.SlashAndJailTickValSlashingInfos(ctx); err != nil {
-		k.Logger(ctx).Error("Error slashing and jailing validator in tick handler", "error", err)
-		return common.ErrSlashInfoDetails(k.Codespace()).Result()
-	}
-
 	k.Logger(ctx).Debug("Successfully slashed and jailed")
 	// TX bytes
 	txBytes := ctx.TxBytes()
@@ -221,6 +215,23 @@ func PostHandleMsgTickAck(ctx sdk.Context, k Keeper, msg types.MsgTickAck, sideT
 	if k.HasSlashingSequence(ctx, sequence.String()) {
 		k.Logger(ctx).Error("Older invalid tx found")
 		return hmCommon.ErrOldTx(k.Codespace()).Result()
+	}
+
+	tickSlashInfos, err := k.GetTickValSlashingInfos(ctx)
+	if err != nil {
+		k.Logger(ctx).Error("Error fetching tick slash infos", "error", err)
+		return common.ErrSlashInfoDetails(k.Codespace()).Result()
+	}
+
+	if tickSlashInfos == nil || len(tickSlashInfos) == 0 {
+		k.Logger(ctx).Error("tick ack already processed", "error", err)
+		return common.ErrSlashInfoDetails(k.Codespace()).Result()
+	}
+
+	// slash validator - Iterate lastTickData and reduce power of each validator along with jailing if needed
+	if err := k.SlashAndJailTickValSlashingInfos(ctx); err != nil {
+		k.Logger(ctx).Error("Error slashing and jailing validator in tick handler", "error", err)
+		return common.ErrSlashInfoDetails(k.Codespace()).Result()
 	}
 
 	// remove validator slashing infos from tick data

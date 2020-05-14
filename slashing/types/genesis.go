@@ -12,20 +12,24 @@ import (
 
 // GenesisState - all slashing state that must be provided at genesis
 type GenesisState struct {
-	Params       Params                                  `json:"params" yaml:"params"`
-	SigningInfos map[string]hmTypes.ValidatorSigningInfo `json:"signing_infos" yaml:"signing_infos"`
-	MissedBlocks map[string][]MissedBlock                `json:"missed_blocks" yaml:"missed_blocks"`
+	Params                Params                                  `json:"params" yaml:"params"`
+	SigningInfos          map[string]hmTypes.ValidatorSigningInfo `json:"signing_infos" yaml:"signing_infos"`
+	MissedBlocks          map[string][]MissedBlock                `json:"missed_blocks" yaml:"missed_blocks"`
+	BufferValSlashingInfo []*hmTypes.ValidatorSlashingInfo        `json:"buffer_val_slash_info" yaml:"buffer_val_slash_info"`
+	TickValSlashingInfo   []*hmTypes.ValidatorSlashingInfo        `json:"tick_val_slash_info" yaml:"tick_val_slash_info"`
 }
 
 // NewGenesisState creates a new GenesisState object
 func NewGenesisState(
-	params Params, signingInfos map[string]hmTypes.ValidatorSigningInfo, missedBlocks map[string][]MissedBlock,
+	params Params, signingInfos map[string]hmTypes.ValidatorSigningInfo, missedBlocks map[string][]MissedBlock, bufferValSlashingInfo []*hmTypes.ValidatorSlashingInfo, tickValSlashingInfo []*hmTypes.ValidatorSlashingInfo,
 ) GenesisState {
 
 	return GenesisState{
-		Params:       params,
-		SigningInfos: signingInfos,
-		MissedBlocks: missedBlocks,
+		Params:                params,
+		SigningInfos:          signingInfos,
+		MissedBlocks:          missedBlocks,
+		BufferValSlashingInfo: bufferValSlashingInfo,
+		TickValSlashingInfo:   tickValSlashingInfo,
 	}
 }
 
@@ -92,10 +96,11 @@ func GetGenesisStateFromAppState(appState map[string]json.RawMessage) GenesisSta
 }
 
 // SetGenesisStateToAppState sets state into app state
-func SetGenesisStateToAppState(appState map[string]json.RawMessage, valSigningInfo map[string]hmTypes.ValidatorSigningInfo) (map[string]json.RawMessage, error) {
+func SetGenesisStateToAppState(appState map[string]json.RawMessage, valSigningInfo map[string]hmTypes.ValidatorSigningInfo, bufferValSlashingInfo []*hmTypes.ValidatorSlashingInfo) (map[string]json.RawMessage, error) {
 	// set state to staking state
 	slashingState := GetGenesisStateFromAppState(appState)
 	slashingState.SigningInfos = valSigningInfo
+	slashingState.BufferValSlashingInfo = bufferValSlashingInfo
 
 	appState[ModuleName] = types.ModuleCdc.MustMarshalJSON(slashingState)
 	return appState, nil

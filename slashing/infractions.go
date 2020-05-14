@@ -81,7 +81,9 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr []byte, power int
 		if err != nil {
 			logger.Error("Error fetching validator")
 		}
-		if err == nil && !validator.Jailed {
+
+		valSlashInfo, _ := k.GetBufferValSlashingInfo(ctx, validator.ID)
+		if err == nil && !validator.Jailed && !valSlashInfo.IsJailed {
 
 			// Downtime confirmed: slash and jail the validator
 			logger.Info(fmt.Sprintf("Validator %s past min height of %d and below signed blocks threshold of %d",
@@ -105,7 +107,6 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr []byte, power int
 			)
 
 			// update slash buffer present in slash keeper. Also add slashedAmount totalSlashedAmount.
-
 			slashedAmount := k.SlashInterim(ctx, validator.ID, params.SlashFractionDowntime)
 			k.Logger(ctx).Debug("Interim uptime slashing successful", "slashedAmount", slashedAmount, "valID", validator.ID)
 

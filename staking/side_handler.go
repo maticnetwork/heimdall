@@ -366,7 +366,8 @@ func PostHandleMsgValidatorJoin(ctx sdk.Context, k Keeper, msg types.MsgValidato
 	}
 
 	// Add Validator signing info. It is required for slashing module
-	valSigningInfo := hmTypes.ValidatorSigningInfo{}
+	k.Logger(ctx).Debug("Adding signing info for new validator")
+	valSigningInfo := hmTypes.NewValidatorSigningInfo(newValidator.ID, ctx.BlockHeight(), int64(0), int64(0))
 	err = k.AddValidatorSigningInfo(ctx, newValidator.ID, valSigningInfo)
 	if err != nil {
 		k.Logger(ctx).Error("Unable to add validator signing info to state", "error", err, "valSigningInfo", valSigningInfo.String())
@@ -375,6 +376,7 @@ func PostHandleMsgValidatorJoin(ctx sdk.Context, k Keeper, msg types.MsgValidato
 
 	// save staking sequence
 	k.SetStakingSequence(ctx, sequence.String())
+	k.Logger(ctx).Debug("✅ Successfully joined new validator ")
 
 	// TX bytes
 	txBytes := ctx.TxBytes()

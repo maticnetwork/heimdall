@@ -29,6 +29,14 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 		}
 	}
 
+	for _, valSlashInfo := range data.BufferValSlashingInfo {
+		keeper.SetBufferValSlashingInfo(ctx, valSlashInfo.ID, *valSlashInfo)
+	}
+
+	for _, tickValSlashInfo := range data.TickValSlashingInfo {
+		keeper.SetTickValSlashingInfo(ctx, tickValSlashInfo.ID, *tickValSlashInfo)
+	}
+
 	keeper.SetParams(ctx, data.Params)
 
 }
@@ -49,9 +57,10 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) (data types.GenesisState) {
 			return false
 		})
 		missedBlocks[valID.String()] = localMissedBlocks
-
 		return false
 	})
 
-	return types.NewGenesisState(params, signingInfos, missedBlocks)
+	bufSlashInfos, _ := keeper.GetBufferValSlashingInfos(ctx)
+	tickSlashInfos, _ := keeper.GetTickValSlashingInfos(ctx)
+	return types.NewGenesisState(params, signingInfos, missedBlocks, bufSlashInfos, tickSlashInfos)
 }

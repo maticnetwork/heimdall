@@ -586,47 +586,46 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) ab
 	}
 
 	var tmValUpdates []abci.ValidatorUpdate
-	if ctx.BlockHeader().NumTxs > 0 {
-		// --- Start update to new validators
-		currentValidatorSet := app.StakingKeeper.GetValidatorSet(ctx)
-		allValidators := app.StakingKeeper.GetAllValidators(ctx)
-		ackCount := app.CheckpointKeeper.GetACKCount(ctx)
 
-		// get validator updates
-		setUpdates := helper.GetUpdatedValidators(
-			&currentValidatorSet, // pointer to current validator set -- UpdateValidators will modify it
-			allValidators,        // All validators
-			ackCount,             // ack count
-		)
+	// --- Start update to new validators
+	currentValidatorSet := app.StakingKeeper.GetValidatorSet(ctx)
+	allValidators := app.StakingKeeper.GetAllValidators(ctx)
+	ackCount := app.CheckpointKeeper.GetACKCount(ctx)
 
-		if len(setUpdates) > 0 {
-			// create new validator set
-			if err := currentValidatorSet.UpdateWithChangeSet(setUpdates); err != nil {
-				// return with nothing
-				logger.Error("Unable to update current validator set", "Error", err)
-				return abci.ResponseEndBlock{}
-			}
+	// get validator updates
+	setUpdates := helper.GetUpdatedValidators(
+		&currentValidatorSet, // pointer to current validator set -- UpdateValidators will modify it
+		allValidators,        // All validators
+		ackCount,             // ack count
+	)
 
-			// increment proposer priority
-			currentValidatorSet.IncrementProposerPriority(1)
+	if len(setUpdates) > 0 {
+		// create new validator set
+		if err := currentValidatorSet.UpdateWithChangeSet(setUpdates); err != nil {
+			// return with nothing
+			logger.Error("Unable to update current validator set", "Error", err)
+			return abci.ResponseEndBlock{}
+		}
 
-			// validator set change
-			logger.Debug("[ENDBLOCK] Updated current validator set", "proposer", currentValidatorSet.GetProposer())
+		// increment proposer priority
+		currentValidatorSet.IncrementProposerPriority(1)
 
-			// save set in store
-			if err := app.StakingKeeper.UpdateValidatorSetInStore(ctx, currentValidatorSet); err != nil {
-				// return with nothing
-				logger.Error("Unable to update current validator set in state", "Error", err)
-				return abci.ResponseEndBlock{}
-			}
+		// validator set change
+		logger.Debug("[ENDBLOCK] Updated current validator set", "proposer", currentValidatorSet.GetProposer())
 
-			// convert updates from map to array
-			for _, v := range setUpdates {
-				tmValUpdates = append(tmValUpdates, abci.ValidatorUpdate{
-					Power:  int64(v.VotingPower),
-					PubKey: v.PubKey.ABCIPubKey(),
-				})
-			}
+		// save set in store
+		if err := app.StakingKeeper.UpdateValidatorSetInStore(ctx, currentValidatorSet); err != nil {
+			// return with nothing
+			logger.Error("Unable to update current validator set in state", "Error", err)
+			return abci.ResponseEndBlock{}
+		}
+
+		// convert updates from map to array
+		for _, v := range setUpdates {
+			tmValUpdates = append(tmValUpdates, abci.ValidatorUpdate{
+				Power:  int64(v.VotingPower),
+				PubKey: v.PubKey.ABCIPubKey(),
+			})
 		}
 	}
 

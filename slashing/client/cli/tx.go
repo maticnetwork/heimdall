@@ -1,9 +1,7 @@
 package cli
 
 import (
-	"errors"
 	"fmt"
-	"math/big"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -147,14 +145,9 @@ func GetCmdTickAck(cdc *codec.Codec) *cobra.Command {
 				return fmt.Errorf("transaction hash is required")
 			}
 
-			amount, ok := big.NewInt(0).SetString(viper.GetString(FlagAmount), 10)
-			if !ok {
-				return errors.New("Invalid stake amount")
-			}
-
 			msg := types.NewMsgTickAck(
 				proposer,
-				amount,
+				viper.GetUint64(FlagAmount),
 				hmTypes.HexToHeimdallHash(txHash),
 				uint64(viper.GetInt64(FlagLogIndex)),
 				viper.GetUint64(FlagBlockNumber),
@@ -169,10 +162,10 @@ func GetCmdTickAck(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
 	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
 	cmd.Flags().String(FlagLogIndex, "", "--log-index=<log-index>")
-	cmd.Flags().String(FlagAmount, "0", "--amount=<amount>")
+	cmd.Flags().Uint64(FlagAmount, 0, "--amount=<amount>")
 
 	if err := cmd.MarkFlagRequired(FlagBlockNumber); err != nil {
-		logger.Error("SendValidatorJoinTx | MarkFlagRequired | FlagBlockNumber", "Error", err)
+		logger.Error("SendTickAckTx | MarkFlagRequired | FlagBlockNumber", "Error", err)
 	}
 	cmd.MarkFlagRequired(FlagProposerAddress)
 	cmd.MarkFlagRequired(FlagTxHash)
