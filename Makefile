@@ -20,7 +20,9 @@ clean:
 	rm -rf build
 
 tests:
-	go test  -v ./...
+	# go test  -v ./...
+	go test -v ./app/ ./auth/ ./clerk/ ./sidechannel/ ./bank/ ./chainmanager/
+	
 
 build: clean
 	mkdir -p build

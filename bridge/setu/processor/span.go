@@ -35,8 +35,8 @@ func (sp *SpanProcessor) Start() error {
 	sp.cancelSpanService = cancelSpanService
 
 	// start polling for span
-	sp.Logger.Info("Start polling for span", "pollInterval", helper.GetConfig().SpanPollingInterval)
-	go sp.startPolling(spanCtx, helper.GetConfig().SpanPollingInterval)
+	sp.Logger.Info("Start polling for span", "pollInterval", helper.GetConfig().SpanPollInterval)
+	go sp.startPolling(spanCtx, helper.GetConfig().SpanPollInterval)
 	return nil
 }
 

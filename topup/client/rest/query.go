@@ -135,7 +135,6 @@ func dividendAccountRootHandlerFn(
 		}
 
 		res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryDividendAccountRoot), nil)
-
 		if err != nil {
 			RestLogger.Error("Error while calculating dividend AccountRoot  ", "Error", err.Error())
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())

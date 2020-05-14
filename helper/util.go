@@ -138,7 +138,6 @@ func StringToPubkey(pubkeyStr string) (secp256k1.PubKeySecp256k1, error) {
 	var pubkeyBytes secp256k1.PubKeySecp256k1
 	_pubkey, err := hex.DecodeString(pubkeyStr)
 	if err != nil {
-		Logger.Error("Decoding of pubkey(string) to pubkey failed", "Error", err, "PubkeyString", pubkeyStr)
 		return pubkeyBytes, err
 	}
 	// copy

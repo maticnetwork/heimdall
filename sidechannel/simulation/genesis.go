@@ -29,9 +29,8 @@ func RandomPastCommits(r *rand.Rand, n int, txsN int, validatorsN int) []types.P
 		}
 
 		result[i] = types.PastCommit{
-			Height:     2 + r.Int63n(10000),
-			Txs:        txs,
-			Validators: validators,
+			Height: 2 + r.Int63n(10000),
+			Txs:    txs,
 		}
 	}
 

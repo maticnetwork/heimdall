@@ -200,7 +200,8 @@ func (suite *AnteTestSuite) TestSigErrors() {
 	tx1 := types.NewTestTx(ctx, msg1, priv1, uint64(0), uint64(0)) // use sdk's auth module for msg
 
 	// Check no signatures fails
-	checkInvalidTx(t, anteHandler, ctx, tx1, false, sdk.CodeNoSignatures)
+	require.Equal(t, 0, len(msg1.GetSigners()))
+	checkInvalidTx(t, anteHandler, ctx, tx1, false, sdk.CodeUnauthorized)
 
 	// unknown address error
 	msg2 := sdkAuth.NewTestMsg(addr1) // using first address
