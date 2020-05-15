@@ -442,7 +442,7 @@ func (k *Keeper) IterateStakingSequencesAndApplyFn(ctx sdk.Context, f func(seque
 
 // Slashing api's
 // AddValidatorSigningInfo creates a signing info for validator
-func (k Keeper) AddValidatorSigningInfo(ctx sdk.Context, valID hmTypes.ValidatorID, valSigningInfo hmTypes.ValidatorSigningInfo) error {
+func (k *Keeper) AddValidatorSigningInfo(ctx sdk.Context, valID hmTypes.ValidatorID, valSigningInfo hmTypes.ValidatorSigningInfo) error {
 	k.moduleCommunicator.CreateValiatorSigningInfo(ctx, valID, valSigningInfo)
 	return nil
 }
@@ -457,8 +457,11 @@ func (k *Keeper) Slash(ctx sdk.Context, valSlashingInfo hmTypes.ValidatorSlashin
 		return errors.New("validator not found")
 	}
 
+	updatedPower := int64(0)
 	// calculate power after slash
-	updatedPower := validator.VotingPower - int64(valSlashingInfo.SlashedAmount)
+	if validator.VotingPower >= int64(valSlashingInfo.SlashedAmount) {
+		updatedPower = validator.VotingPower - int64(valSlashingInfo.SlashedAmount)
+	}
 
 	k.Logger(ctx).Info("slashAmount", valSlashingInfo.SlashedAmount, "prevPower", validator.VotingPower, "updatedPower", updatedPower)
 
@@ -473,7 +476,7 @@ func (k *Keeper) Slash(ctx sdk.Context, valSlashingInfo hmTypes.ValidatorSlashin
 }
 
 // unjail a validator
-func (k Keeper) Unjail(ctx sdk.Context, valID hmTypes.ValidatorID) {
+func (k *Keeper) Unjail(ctx sdk.Context, valID hmTypes.ValidatorID) {
 
 	// get validator from state and make jailed = false
 	validator, found := k.GetValidatorFromValID(ctx, valID)

@@ -119,7 +119,6 @@ func GetCmdTick(cdc *codec.Codec) *cobra.Command {
 
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
 	cmd.Flags().String(FlagSlashInfoBytes, "", "--slashinfo-bytes=<slashinfo-bytes>")
-	cmd.MarkFlagRequired(FlagProposerAddress)
 	cmd.MarkFlagRequired(FlagSlashInfoBytes)
 
 	return cmd
@@ -166,7 +165,6 @@ func GetCmdTickAck(cdc *codec.Codec) *cobra.Command {
 	if err := cmd.MarkFlagRequired(FlagBlockNumber); err != nil {
 		logger.Error("SendTickAckTx | MarkFlagRequired | FlagBlockNumber", "Error", err)
 	}
-	cmd.MarkFlagRequired(FlagProposerAddress)
 	cmd.MarkFlagRequired(FlagTxHash)
 	cmd.MarkFlagRequired(FlagLogIndex)
 	cmd.MarkFlagRequired(FlagAmount)
