@@ -103,7 +103,7 @@ func (k *Keeper) setEventRecordStore(ctx sdk.Context, key, value []byte) error {
 	store := ctx.KVStore(k.storeKey)
 	// check if already set
 	if store.Has(key) {
-		return errors.New("State record already exists")
+		return errors.New("Key already exists")
 	}
 
 	// store value in provided key

@@ -79,7 +79,7 @@ func (suite *KeeperTestSuite) TestGetEventRecordList() {
 	hAddr := hmTypes.BytesToHeimdallAddress([]byte("some-address"))
 	hHash := hmTypes.BytesToHeimdallHash([]byte("some-address"))
 	ck := app.ClerkKeeper
-	for i = 0; i < 30; i++ {
+	for i = 0; i < 60; i++ {
 		testRecord := types.NewEventRecord(hHash, i, i, hAddr, make([]byte, 0), "1", time.Now())
 		ck.SetEventRecord(ctx, testRecord)
 	}
@@ -88,13 +88,16 @@ func (suite *KeeperTestSuite) TestGetEventRecordList() {
 	require.Len(t, recordList, 20)
 
 	recordList, _ = ck.GetEventRecordList(ctx, 2, 20)
-	require.Len(t, recordList, 10)
+	require.Len(t, recordList, 20)
 
-	recordList, _ = ck.GetEventRecordList(ctx, 3, 20)
+	recordList, _ = ck.GetEventRecordList(ctx, 3, 30)
 	require.Len(t, recordList, 0)
 
-	recordList, _ = ck.GetEventRecordList(ctx, 1, 30)
-	require.Len(t, recordList, 20)
+	recordList, _ = ck.GetEventRecordList(ctx, 1, 70)
+	require.Len(t, recordList, 50)
+
+	recordList, _ = ck.GetEventRecordList(ctx, 2, 60)
+	require.Len(t, recordList, 10)
 }
 
 func (suite *KeeperTestSuite) TestGetEventRecordListTime() {
