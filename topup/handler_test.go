@@ -8,19 +8,19 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ethTypes "github.com/maticnetwork/bor/core/types"
-	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
-	"github.com/maticnetwork/heimdall/topup/types"
-	hmTypes "github.com/maticnetwork/heimdall/types"
-	"github.com/tendermint/tendermint/crypto/secp256k1"
-
-	"github.com/maticnetwork/heimdall/app"
-	"github.com/maticnetwork/heimdall/helper/mocks"
-	"github.com/maticnetwork/heimdall/topup"
-	"github.com/maticnetwork/heimdall/types/simulation"
-	"github.com/stretchr/testify/mock"
+	sdkAuth "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/maticnetwork/heimdall/app"
+	authTypes "github.com/maticnetwork/heimdall/auth/types"
+	chainTypes "github.com/maticnetwork/heimdall/chainmanager/types"
+	"github.com/maticnetwork/heimdall/common"
+	"github.com/maticnetwork/heimdall/helper/mocks"
+	"github.com/maticnetwork/heimdall/topup"
+	"github.com/maticnetwork/heimdall/topup/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
+	"github.com/maticnetwork/heimdall/types/simulation"
 )
 
 // HandlerTestSuite integrate test suite context object
@@ -33,13 +33,16 @@ type HandlerTestSuite struct {
 	querier        sdk.Querier
 	handler        sdk.Handler
 	contractCaller mocks.IContractCaller
+	chainParams    chainTypes.Params
 }
 
 // SetupTest setup all necessary things for querier tesing
 func (suite *HandlerTestSuite) SetupTest() {
 	suite.app, suite.ctx, suite.cliCtx = createTestApp(false)
+
 	suite.contractCaller = mocks.IContractCaller{}
 	suite.handler = topup.NewHandler(suite.app.TopupKeeper, &suite.contractCaller)
+	suite.chainParams = suite.app.ChainKeeper.GetParams(suite.ctx)
 }
 
 // TestHandlerTestSuite
@@ -47,96 +50,146 @@ func TestHandlerTestSuite(t *testing.T) {
 	suite.Run(t, new(HandlerTestSuite))
 }
 
+func (suite *HandlerTestSuite) TestHandleMsgUnknown() {
+	t, _, ctx := suite.T(), suite.app, suite.ctx
+
+	result := suite.handler(ctx, nil)
+	require.False(t, result.IsOK())
+}
+
 func (suite *HandlerTestSuite) TestHandleMsgTopup() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
-
 	s1 := rand.NewSource(time.Now().UnixNano())
 	r1 := rand.New(s1)
-	txHash := hmTypes.HexToHeimdallHash("123")
-	index := simulation.RandIntBetween(r1, 0, 100)
-	logIndex := uint64(index)
 
-	pAddress := hmTypes.HexToHeimdallAddress("123")
-	validatorId := uint64(simulation.RandIntBetween(r1, 0, 100))
-	blockNumber := big.NewInt(10)
-	chainParams := app.ChainKeeper.GetParams(ctx)
-	txreceipt := &ethTypes.Receipt{
-		BlockNumber: blockNumber,
-	}
+	txHash := hmTypes.BytesToHeimdallHash([]byte("topup hash"))
+	logIndex := r1.Uint64()
+	blockNumber := r1.Uint64()
 
-	msgTopup := types.NewMsgTopup(pAddress, validatorId, pAddress, sdk.NewInt(1000000000000000000), txHash, logIndex, blockNumber.Uint64())
+	_, _, addr := sdkAuth.KeyTestPubAddr()
+	fee := sdk.NewInt(100000000000000000)
 
-	stakinginfoTopUpFee := &stakinginfo.StakinginfoTopUpFee{
-		ValidatorId: new(big.Int).SetUint64(validatorId),
-		Signer:      pAddress.EthAddress(),
-		Fee:         big.NewInt(100000000000000000),
-	}
+	t.Run("Success", func(t *testing.T) {
+		msg := types.NewMsgTopup(
+			hmTypes.BytesToHeimdallAddress(addr.Bytes()),
+			hmTypes.BytesToHeimdallAddress(addr.Bytes()),
+			fee,
+			txHash,
+			uint64(logIndex),
+			uint64(blockNumber),
+		)
 
-	suite.contractCaller.On("GetConfirmedTxReceipt", txHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
+		// handler
+		result := suite.handler(ctx, msg)
+		require.True(t, result.IsOK(), "Expected topup to be done, but failed")
+	})
 
-	suite.contractCaller.On("DecodeValidatorTopupFeesEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), mock.Anything, msgTopup.LogIndex).Return(stakinginfoTopUpFee, nil)
-	result := suite.handler(ctx, msgTopup)
-	require.True(t, result.IsOK(), "expected topup to be done, got %v", result)
+	t.Run("OlderTx", func(t *testing.T) {
+		msg := types.NewMsgTopup(
+			hmTypes.BytesToHeimdallAddress(addr.Bytes()),
+			hmTypes.BytesToHeimdallAddress(addr.Bytes()),
+			fee,
+			txHash,
+			uint64(logIndex),
+			uint64(blockNumber),
+		)
+
+		// sequence id
+		blockNumber := new(big.Int).SetUint64(msg.BlockNumber)
+		sequence := new(big.Int).Mul(blockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
+		sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))
+
+		// set sequence
+		app.TopupKeeper.SetTopupSequence(ctx, sequence.String())
+
+		// handler
+		result := suite.handler(ctx, msg)
+		require.False(t, result.IsOK(), "Expected topup to be failed, but succeeded")
+		require.Equal(t, common.CodeOldTx, result.Code)
+	})
 }
 
 func (suite *HandlerTestSuite) TestHandleMsgWithdrawFee() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
-	amount, _ := big.NewInt(0).SetString("0", 10)
-	s1 := rand.NewSource(time.Now().UnixNano())
-	r1 := rand.New(s1)
 
-	txHash := hmTypes.HexToHeimdallHash("123")
-	logIndex := simulation.RandIntBetween(r1, 0, 100)
+	t.Run("FullAmount", func(t *testing.T) {
+		_, _, addr := sdkAuth.KeyTestPubAddr()
 
-	validatorId := uint64(simulation.RandIntBetween(r1, 0, 100))
+		msg := types.NewMsgWithdrawFee(
+			hmTypes.BytesToHeimdallAddress(addr.Bytes()),
+			sdk.NewInt(0),
+		)
 
-	privKey1 := secp256k1.GenPrivKey()
-	pubkey := hmTypes.NewPubKey(privKey1.PubKey().Bytes())
-	validatorAddress := pubkey.Address()
+		// execute handler
+		result := suite.handler(ctx, msg)
+		require.False(t, result.IsOK(), "Expected topup to be failed without fee tokens, but succeeded")
+		require.Equal(t, types.CodeNoBalanceToWithdraw, result.Code)
 
-	chainParams := app.ChainKeeper.GetParams(ctx)
-	blockNumber := big.NewInt(10)
-	txreceipt := &ethTypes.Receipt{
-		BlockNumber: blockNumber,
-	}
-	signer := hmTypes.BytesToHeimdallAddress(validatorAddress.Bytes())
-	msgTopup := types.NewMsgTopup(signer, validatorId, signer, sdk.NewInt(1000000000000000000), txHash, uint64(logIndex), blockNumber.Uint64())
+		// set coins
+		coins := simulation.RandomFeeCoins()
+		acc1 := app.AccountKeeper.NewAccountWithAddress(ctx, hmTypes.AccAddressToHeimdallAddress(addr))
+		acc1.SetCoins(coins)
+		app.AccountKeeper.SetAccount(ctx, acc1)
 
-	stakinginfoTopUpFee := &stakinginfo.StakinginfoTopUpFee{
-		ValidatorId: new(big.Int).SetUint64(validatorId),
-		Signer:      validatorAddress,
-		Fee:         big.NewInt(100000000000000000),
-	}
+		// check if coins > 0
+		require.True(t, acc1.GetCoins().AmountOf(authTypes.FeeToken).GT(sdk.NewInt(0)))
 
-	suite.contractCaller.On("GetConfirmedTxReceipt", txHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
+		// execute handler
+		result = suite.handler(ctx, msg)
+		require.True(t, result.IsOK(), "Expected topup to be succeed with fee tokens, but failed")
+		require.Greater(t, len(result.Events), 0)
 
-	suite.contractCaller.On("DecodeValidatorTopupFeesEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), mock.Anything, msgTopup.LogIndex).Return(stakinginfoTopUpFee, nil)
-	topupResult := suite.handler(ctx, msgTopup)
+		// check if account has zero
+		acc1 = app.AccountKeeper.GetAccount(ctx, hmTypes.AccAddressToHeimdallAddress(addr))
+		require.True(t, acc1.GetCoins().AmountOf(authTypes.FeeToken).IsZero())
+	})
 
-	require.True(t, topupResult.IsOK(), "expected topup to be done, got %v", topupResult)
+	t.Run("PartialAmount", func(t *testing.T) {
+		_, _, addr := sdkAuth.KeyTestPubAddr()
 
-	// start Withdraw fees
-	startBlock := uint64(simulation.RandIntBetween(r1, 1, 100))
+		// set coins
+		coins := simulation.RandomFeeCoins()
+		acc1 := app.AccountKeeper.NewAccountWithAddress(ctx, hmTypes.AccAddressToHeimdallAddress(addr))
+		acc1.SetCoins(coins)
+		app.AccountKeeper.SetAccount(ctx, acc1)
 
-	power := simulation.RandIntBetween(r1, 1, 100)
+		// check if coins > 0
+		require.True(t, acc1.GetCoins().AmountOf(authTypes.FeeToken).GT(sdk.NewInt(0)))
 
-	timeAlive := uint64(10)
+		m, _ := sdk.NewIntFromString("2")
+		coins = coins.Sub(sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: m}})
+		msg := types.NewMsgWithdrawFee(
+			hmTypes.BytesToHeimdallAddress(addr.Bytes()),
+			coins.AmountOf(authTypes.FeeToken),
+		)
 
-	newVal := hmTypes.Validator{
-		ID:               hmTypes.NewValidatorID(validatorId),
-		StartEpoch:       startBlock,
-		EndEpoch:         startBlock + timeAlive,
-		VotingPower:      int64(power),
-		Signer:           hmTypes.HexToHeimdallAddress(pubkey.Address().String()),
-		PubKey:           pubkey,
-		ProposerPriority: 0,
-	}
-	app.StakingKeeper.AddValidator(ctx, newVal)
+		// execute handler
+		result := suite.handler(ctx, msg)
+		require.True(t, result.IsOK(), "Expected topup to be succeed with fee tokens (partial amount), but failed")
+		require.Greater(t, len(result.Events), 0)
 
-	msgWithdrawFee := types.NewMsgWithdrawFee(
-		hmTypes.BytesToHeimdallAddress(validatorAddress.Bytes()),
-		sdk.NewIntFromBigInt(amount),
-	)
-	withdrawResult := suite.handler(ctx, msgWithdrawFee)
-	require.True(t, withdrawResult.IsOK(), "expected withdraw tobe done, got %v", withdrawResult)
+		// check if account has 1 tok
+		acc1 = app.AccountKeeper.GetAccount(ctx, hmTypes.AccAddressToHeimdallAddress(addr))
+		require.True(t, acc1.GetCoins().AmountOf(authTypes.FeeToken).Equal(m))
+	})
+
+	t.Run("NotEnoughAmount", func(t *testing.T) {
+		_, _, addr := sdkAuth.KeyTestPubAddr()
+
+		// set coins
+		coins := simulation.RandomFeeCoins()
+		acc1 := app.AccountKeeper.NewAccountWithAddress(ctx, hmTypes.AccAddressToHeimdallAddress(addr))
+		acc1.SetCoins(coins)
+		app.AccountKeeper.SetAccount(ctx, acc1)
+
+		m, _ := sdk.NewIntFromString("1")
+		coins = coins.Add(sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: m}})
+		msg := types.NewMsgWithdrawFee(
+			hmTypes.BytesToHeimdallAddress(addr.Bytes()),
+			coins.AmountOf(authTypes.FeeToken),
+		)
+
+		result := suite.handler(ctx, msg)
+		require.False(t, result.IsOK(), "Expected withdraw to be failed while withdrawing more than account's coins")
+	})
 }
