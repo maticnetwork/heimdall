@@ -12,6 +12,7 @@ import (
 	"github.com/maticnetwork/bor/ethclient"
 	"github.com/maticnetwork/heimdall/contracts/erc20"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
+	"github.com/maticnetwork/heimdall/contracts/slashmanager"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 )
 
@@ -84,6 +85,35 @@ func (c *ContractCaller) SendCheckpoint(signedData []byte, sigs []byte, rootChai
 		return err
 	}
 	Logger.Info("Submitted new checkpoint to rootchain successfully", "txHash", tx.Hash().String())
+	return
+}
+
+// SendTick sends slash tick to rootchain contract
+func (c *ContractCaller) SendTick(signedData []byte, sigs []byte, slashManagerAddress common.Address, slashManagerInstance *slashmanager.Slashmanager) (er error) {
+	data, err := c.SlashManagerABI.Pack("updateSlashedAmounts", signedData, sigs)
+	if err != nil {
+		Logger.Error("Unable to pack tx for updateSlashedAmounts", "error", err)
+		return err
+	}
+
+	auth, err := GenerateAuthObj(GetMainClient(), slashManagerAddress, data)
+	if err != nil {
+		Logger.Error("Unable to create auth object", "error", err)
+		Logger.Info("Setting custom gaslimit", "gaslimit", GetConfig().MainchainGasLimit)
+		auth.GasLimit = GetConfig().MainchainGasLimit
+	}
+
+	Logger.Info("Sending new tick",
+		"sigs", hex.EncodeToString(sigs),
+		"data", hex.EncodeToString(signedData),
+	)
+
+	tx, err := slashManagerInstance.UpdateSlashedAmounts(auth, signedData, sigs)
+	if err != nil {
+		Logger.Error("Error while submitting tick", "error", err)
+		return err
+	}
+	Logger.Info("Submitted new tick to slashmanager successfully", "txHash", tx.Hash().String())
 	return
 }
 

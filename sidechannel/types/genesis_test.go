@@ -42,19 +42,11 @@ func TestValidateGenesis(t *testing.T) {
 
 	genesis = types.NewGenesisState(simulation.RandomPastCommits(r, 10, 0, 0))
 	err = types.ValidateGenesis(genesis)
-	require.Error(t, err, "PastCommit object without txs and validators should not be allowed")
+	require.Error(t, err, "PastCommit object without should not be allowed")
 
 	genesis = types.NewGenesisState(simulation.RandomPastCommits(r, 10, 5, 0))
 	err = types.ValidateGenesis(genesis)
 	require.Equal(t, 10, len(genesis.PastCommits))
 	require.Equal(t, 5, len(genesis.PastCommits[0].Txs))
 	require.Nil(t, err, "PastCommit object with txs should not throw an error")
-
-	genesis = types.NewGenesisState(simulation.RandomPastCommits(r, 10, 0, 10))
-	err = types.ValidateGenesis(genesis)
-	require.Nil(t, err, "PastCommit object with validators should not throw an error")
-
-	genesis = types.NewGenesisState(simulation.RandomPastCommits(r, 10, 5, 10))
-	err = types.ValidateGenesis(genesis)
-	require.Nil(t, err, "PastCommit object with txs and validators should not throw an error")
 }

@@ -5,6 +5,7 @@ import (
 	"math/big"
 	"math/rand"
 	"strconv"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/maticnetwork/heimdall/topup/types"
@@ -23,6 +24,11 @@ func GenSequenceNumber(r *rand.Rand) string {
 
 // RandomizeGenState returns topup genesis
 func RandomizeGenState(simState *module.SimulationState) {
+	s1 := rand.NewSource(time.Now().UnixNano())
+	r1 := rand.New(s1)
+	n := 5
+	accounts := simulation.RandomAccounts(r1, n)
+
 	var sequences []string
 	dividendAccounts := make([]hmTypes.DividendAccount, 5)
 
@@ -37,7 +43,7 @@ func RandomizeGenState(simState *module.SimulationState) {
 
 		// create dividend account for validator
 		dividendAccounts[i] = hmTypes.NewDividendAccount(
-			hmTypes.NewDividendAccountID(uint64(i)),
+			accounts[i].Address,
 			big.NewInt(0).String(),
 		)
 	}

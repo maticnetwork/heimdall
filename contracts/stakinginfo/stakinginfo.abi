@@ -50,6 +50,26 @@
 		"type": "function"
 	},
 	{
+		"constant": false,
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "user",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "fee",
+				"type": "uint256"
+			}
+		],
+		"name": "logClaimFee",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
 		"constant": true,
 		"inputs": [
 			{
@@ -79,31 +99,6 @@
 				"type": "uint256"
 			},
 			{
-				"internalType": "address",
-				"name": "signer",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "fee",
-				"type": "uint256"
-			}
-		],
-		"name": "logTopUpFee",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "validatorId",
-				"type": "uint256"
-			},
-			{
 				"internalType": "uint256",
 				"name": "amount",
 				"type": "uint256"
@@ -115,31 +110,6 @@
 			}
 		],
 		"name": "logReStaked",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "validatorId",
-				"type": "uint256"
-			},
-			{
-				"internalType": "address",
-				"name": "signer",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "fee",
-				"type": "uint256"
-			}
-		],
-		"name": "logClaimFee",
 		"outputs": [],
 		"payable": false,
 		"stateMutability": "nonpayable",
@@ -375,12 +345,17 @@
 		"constant": false,
 		"inputs": [
 			{
+				"internalType": "address",
+				"name": "user",
+				"type": "address"
+			},
+			{
 				"internalType": "uint256",
-				"name": "amount",
+				"name": "fee",
 				"type": "uint256"
 			}
 		],
-		"name": "logSlashed",
+		"name": "logTopUpFee",
 		"outputs": [],
 		"payable": false,
 		"stateMutability": "nonpayable",
@@ -739,6 +714,26 @@
 		"type": "function"
 	},
 	{
+		"constant": false,
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "nonce",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "logSlashed",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
 		"inputs": [
 			{
 				"internalType": "address",
@@ -979,6 +974,12 @@
 			{
 				"indexed": true,
 				"internalType": "uint256",
+				"name": "nonce",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
 				"name": "amount",
 				"type": "uint256"
 			}
@@ -1167,14 +1168,8 @@
 		"inputs": [
 			{
 				"indexed": true,
-				"internalType": "uint256",
-				"name": "validatorId",
-				"type": "uint256"
-			},
-			{
-				"indexed": true,
 				"internalType": "address",
-				"name": "signer",
+				"name": "user",
 				"type": "address"
 			},
 			{
@@ -1192,14 +1187,8 @@
 		"inputs": [
 			{
 				"indexed": true,
-				"internalType": "uint256",
-				"name": "validatorId",
-				"type": "uint256"
-			},
-			{
-				"indexed": true,
 				"internalType": "address",
-				"name": "signer",
+				"name": "user",
 				"type": "address"
 			},
 			{

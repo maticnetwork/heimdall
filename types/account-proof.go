@@ -8,14 +8,14 @@ import (
 
 // DividendAccount contains ID, merkle proof, leaf index in merketree
 type DividendAccountProof struct {
-	ID    DividendAccountID `json:"ID"`
-	Proof []byte            `json:"accountProof"`
-	Index uint64            `json:"index"`
+	User  HeimdallAddress `json:"user"`
+	Proof []byte          `json:"accountProof"`
+	Index uint64          `json:"index"`
 }
 
-func NewDividendAccountProof(id DividendAccountID, proof []byte, index uint64) DividendAccountProof {
+func NewDividendAccountProof(user HeimdallAddress, proof []byte, index uint64) DividendAccountProof {
 	return DividendAccountProof{
-		ID:    id,
+		User:  user,
 		Proof: proof,
 		Index: index,
 	}
@@ -27,7 +27,7 @@ func (ap *DividendAccountProof) String() string {
 	}
 
 	return fmt.Sprintf("DividendAccount{%v %v %v}",
-		ap.ID,
+		ap.User,
 		ap.Proof,
 		ap.Index)
 }

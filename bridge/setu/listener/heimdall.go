@@ -14,6 +14,7 @@ import (
 
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
+	slashingTypes "github.com/maticnetwork/heimdall/slashing/types"
 )
 
 const (
@@ -187,9 +188,12 @@ func (hl *HeimdallListener) ProcessBlockEvent(event sdk.StringEvent, blockHeight
 		hl.sendBlockTask("sendDepositRecordToMatic", eventBytes, blockHeight)
 	case checkpointTypes.EventTypeCheckpoint:
 		hl.sendBlockTask("sendCheckpointToRootchain", eventBytes, blockHeight)
-
+	case slashingTypes.EventTypeSlashLimit:
+		hl.sendBlockTask("sendTickToHeimdall", eventBytes, blockHeight)
+	case slashingTypes.EventTypeTickConfirm:
+		hl.sendBlockTask("sendTickToRootchain", eventBytes, blockHeight)
 	default:
-		hl.Logger.Info("BlockEvent Type mismatch", "eventType", event.Type)
+		hl.Logger.Debug("BlockEvent Type mismatch", "eventType", event.Type)
 	}
 }
 

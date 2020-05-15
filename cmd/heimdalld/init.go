@@ -19,6 +19,7 @@ import (
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	borTypes "github.com/maticnetwork/heimdall/bor/types"
 	"github.com/maticnetwork/heimdall/helper"
+	slashingTypes "github.com/maticnetwork/heimdall/slashing/types"
 	stakingcli "github.com/maticnetwork/heimdall/staking/client/cli"
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
 	topupTypes "github.com/maticnetwork/heimdall/topup/types"
@@ -58,12 +59,17 @@ func initCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 				hmTypes.BytesToHeimdallAddress(valPubKey.Address().Bytes()))
 
 			// create dividend account for validator
-			dividendAccount := hmTypes.NewDividendAccount(hmTypes.NewDividendAccountID(uint64(validatorID)), ZeroIntString)
+			dividendAccount := hmTypes.NewDividendAccount(validator.Signer, ZeroIntString)
 
 			vals := []*hmTypes.Validator{validator}
 			validatorSet := hmTypes.NewValidatorSet(vals)
 
 			dividendAccounts := []hmTypes.DividendAccount{dividendAccount}
+
+			// create validator signing info
+			valSigningInfo := hmTypes.NewValidatorSigningInfo(validator.ID, 0, 0, 0)
+			valSigningInfoMap := make(map[string]hmTypes.ValidatorSigningInfo)
+			valSigningInfoMap[valSigningInfo.ValID.String()] = valSigningInfo
 
 			// create genesis state
 			appStateBytes := app.NewDefaultGenesisState()
@@ -79,6 +85,12 @@ func initCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 
 			// staking state change
 			appStateBytes, err = stakingTypes.SetGenesisStateToAppState(appStateBytes, vals, *validatorSet)
+			if err != nil {
+				return err
+			}
+
+			// slashing state change
+			appStateBytes, err = slashingTypes.SetGenesisStateToAppState(appStateBytes, valSigningInfoMap)
 			if err != nil {
 				return err
 			}

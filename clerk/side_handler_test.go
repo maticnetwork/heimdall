@@ -70,7 +70,7 @@ func (suite *SideHandlerTestSuite) TestSideHandler() {
 	require.Equal(t, abci.SideTxResultType_Skip, result.Result)
 }
 
-func (suite *SideHandlerTestSuite) TestSideHandleMsgEventRecordSuccess() {
+func (suite *SideHandlerTestSuite) TestSideHandleMsgEventRecord() {
 	t, app, ctx, r := suite.T(), suite.app, suite.ctx, suite.r
 	chainParams := app.ChainKeeper.GetParams(suite.ctx)
 
@@ -110,8 +110,8 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgEventRecordSuccess() {
 
 		// execute handler
 		result := suite.sideHandler(ctx, msg)
-		require.Equal(t, uint32(sdk.CodeOK), result.Code, "side tx handler should be success")
-		require.Equal(t, abci.SideTxResultType_Yes, result.Result, "result should be `yes`")
+		require.Equal(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should be success")
+		require.Equal(t, abci.SideTxResultType_Yes, result.Result, "Result should be `yes`")
 
 		// there should be no stored event record
 		storedEventRecord, err := app.ClerkKeeper.GetEventRecord(ctx, id)
@@ -143,8 +143,8 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgEventRecordSuccess() {
 
 		// execute handler
 		result := suite.sideHandler(ctx, msg)
-		require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "side tx handler should fail")
-		require.Equal(t, abci.SideTxResultType_Skip, result.Result, "result should be `skip`")
+		require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should fail")
+		require.Equal(t, abci.SideTxResultType_Skip, result.Result, "Result should be `skip`")
 	})
 
 	t.Run("NoLog", func(t *testing.T) {
@@ -174,8 +174,8 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgEventRecordSuccess() {
 
 		// execute handler
 		result := suite.sideHandler(ctx, msg)
-		require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "side tx handler should fail")
-		require.Equal(t, abci.SideTxResultType_Skip, result.Result, "result should be `skip`")
+		require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should fail")
+		require.Equal(t, abci.SideTxResultType_Skip, result.Result, "Result should be `skip`")
 	})
 }
 
@@ -184,7 +184,7 @@ func (suite *SideHandlerTestSuite) TestPostHandler() {
 
 	// post tx handler
 	result := suite.postHandler(ctx, nil, abci.SideTxResultType_Yes)
-	require.False(t, result.IsOK(), "post handler should fail")
+	require.False(t, result.IsOK(), "Post handler should fail")
 	require.Equal(t, sdk.CodeUnknownRequest, result.Code)
 }
 
@@ -211,8 +211,9 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgEventRecord() {
 
 	t.Run("NoResult", func(t *testing.T) {
 		result := suite.postHandler(ctx, msg, abci.SideTxResultType_No)
-		require.False(t, result.IsOK(), "post handler should fail")
+		require.False(t, result.IsOK(), "Post handler should fail")
 		require.Equal(t, common.CodeSideTxValidationFailed, result.Code)
+		require.Equal(t, 0, len(result.Events), "No error should be emitted for failed post-tx")
 
 		// there should be no stored event record
 		storedEventRecord, err := app.ClerkKeeper.GetEventRecord(ctx, id)
@@ -222,7 +223,8 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgEventRecord() {
 
 	t.Run("YesResult", func(t *testing.T) {
 		result := suite.postHandler(ctx, msg, abci.SideTxResultType_Yes)
-		require.True(t, result.IsOK(), "post handler should succeed")
+		require.True(t, result.IsOK(), "Post handler should succeed")
+		require.Greater(t, len(result.Events), 0, "Events should be emitted for successful post-tx")
 
 		// sequence id
 		blockNumber := new(big.Int).SetUint64(msg.BlockNumber)
@@ -231,7 +233,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgEventRecord() {
 
 		// check sequence
 		hasSequence := app.ClerkKeeper.HasRecordSequence(ctx, sequence.String())
-		require.True(t, hasSequence, "sequence should be stored correctly")
+		require.True(t, hasSequence, "Sequence should be stored correctly")
 
 		// there should be no stored event record
 		storedEventRecord, err := app.ClerkKeeper.GetEventRecord(ctx, id)
@@ -243,7 +245,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgEventRecord() {
 		id := r.Uint64()
 		logIndex := r.Uint64()
 		blockNumber := r.Uint64()
-		txHash := hmTypes.HexToHeimdallHash("replay hash")
+		txHash := hmTypes.HexToHeimdallHash("Replay hash")
 		_, _, addr2 := sdkAuth.KeyTestPubAddr()
 
 		msg := types.NewMsgEventRecord(
@@ -258,9 +260,10 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgEventRecord() {
 		)
 
 		result := suite.postHandler(ctx, msg, abci.SideTxResultType_Yes)
-		require.True(t, result.IsOK(), "post handler should succeed")
+		require.True(t, result.IsOK(), "Post handler should succeed")
 
 		result = suite.postHandler(ctx, msg, abci.SideTxResultType_Yes)
-		require.False(t, result.IsOK(), "post handler should prevent replay attack")
+		require.False(t, result.IsOK(), "Post handler should prevent replay attack")
+		require.Equal(t, common.CodeOldTx, result.Code)
 	})
 }

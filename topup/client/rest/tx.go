@@ -29,10 +29,9 @@ func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
 type TopupReq struct {
 	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
 
-	ID          uint64 `json:"id" yaml:"id"`
 	TxHash      string `json:"tx_hash" yaml:"tx_hash"`
 	LogIndex    uint64 `json:"log_index" yaml:"log_index"`
-	Signer      string `json:"signer" yaml:"signer"`
+	User        string `json:"user" yaml:"user"`
 	Fee         string `json:"fee" yaml:"fee"`
 	BlockNumber uint64 `json:"block_number" yaml:"block_number"`
 }
@@ -54,7 +53,7 @@ func TopupHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		fromAddr := types.HexToHeimdallAddress(req.BaseReq.From)
 
 		// get signer
-		signer := types.HexToHeimdallAddress(req.Signer)
+		user := types.HexToHeimdallAddress(req.User)
 
 		// fee amount
 		fee, ok := sdk.NewIntFromString(req.Fee)
@@ -64,8 +63,7 @@ func TopupHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		msg := topupTypes.NewMsgTopup(
 			fromAddr,
-			req.ID,
-			signer,
+			user,
 			fee,
 			types.HexToHeimdallHash(req.TxHash),
 			req.LogIndex,
