@@ -111,11 +111,21 @@ func (suite *KeeperTestSuite) TestGetEventRecordListTime() {
 		testRecord := types.NewEventRecord(hHash, i, i, hAddr, make([]byte, 0), "1", time.Unix(int64(i), 0))
 		ck.SetEventRecord(ctx, testRecord)
 	}
-	recordList, _ := ck.GetEventRecordListWithTime(ctx, time.Unix(1, 0), time.Unix(6, 0), 0, 0)
-	require.Len(t, recordList, 5)
 
-	recordList, _ = ck.GetEventRecordListWithTime(ctx, time.Unix(1, 0), time.Unix(6, 0), 1, 1)
+	recordList, err := ck.GetEventRecordListWithTime(ctx, time.Unix(1, 0), time.Unix(6, 0), 0, 0)
+	require.NoError(t, err)
+	require.Len(t, recordList, 5)
+	require.Equal(t, int64(5), recordList[len(recordList)-1].RecordTime.Unix())
+
+	recordList, err = ck.GetEventRecordListWithTime(ctx, time.Unix(1, 0), time.Unix(6, 0), 1, 1)
+	require.NoError(t, err)
 	require.Len(t, recordList, 1)
+
+	recordList, err = ck.GetEventRecordListWithTime(ctx, time.Unix(10, 0), time.Unix(20, 0), 0, 0)
+	require.NoError(t, err)
+	require.Len(t, recordList, 10)
+	require.Equal(t, int64(10), recordList[0].RecordTime.Unix())
+	require.Equal(t, int64(19), recordList[len(recordList)-1].RecordTime.Unix())
 }
 
 func (suite *KeeperTestSuite) TestGetEventRecordKey() {
