@@ -20,9 +20,6 @@ var (
 	// simulation signature values used to estimate gas consumption
 	simSecp256k1Pubkey secp256k1.PubKeySecp256k1
 
-	// fee wanted for checkpoint transaction
-	gasWantedPerCheckpoinTx sdk.Gas = 10000000
-
 	// DefaultFeeInMatic represents default fee in matic
 	DefaultFeeInMatic = big.NewInt(10).Exp(big.NewInt(10), big.NewInt(15), nil)
 
@@ -99,11 +96,6 @@ func NewAnteHandler(
 			return newCtx, sdk.ErrInternal("Invalid param tx fees").Result(), true
 		}
 		feeForTx := sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: amount}} // stdTx.Fee.Amount
-
-		// checkpoint gas limit
-		if stdTx.Msg.Type() == "checkpoint" && stdTx.Msg.Route() == "checkpoint" {
-			gasForTx = gasWantedPerCheckpoinTx // stdTx.Fee.Gas
-		}
 
 		// new gas meter
 		newCtx = SetGasMeter(simulate, ctx, gasForTx)

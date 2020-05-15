@@ -243,6 +243,22 @@ func (rl *RootChainListener) queryAndBroadcastEvents(rootchainContext *RootChain
 					} else if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx); isCurrentValidator {
 						rl.sendTaskWithDelay("sendTopUpFeeToHeimdall", selectedEvent.Name, logBytes, delay)
 					}
+
+				case "Slashed":
+					if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx); isCurrentValidator {
+						rl.sendTaskWithDelay("sendTickAckToHeimdall", selectedEvent.Name, logBytes, delay)
+					}
+
+				case "UnJailed":
+					event := new(stakinginfo.StakinginfoUnJailed)
+					if err := helper.UnpackLog(rl.stakingInfoAbi, event, selectedEvent.Name, &vLog); err != nil {
+						rl.Logger.Error("Error while parsing event", "name", selectedEvent.Name, "error", err)
+					}
+					if util.IsEventSender(rl.cliCtx, event.ValidatorId.Uint64()) {
+						rl.sendTaskWithDelay("sendUnjailToHeimdall", selectedEvent.Name, logBytes, 0)
+					} else if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx); isCurrentValidator {
+						rl.sendTaskWithDelay("sendUnjailToHeimdall", selectedEvent.Name, logBytes, delay)
+					}
 				}
 			}
 		}

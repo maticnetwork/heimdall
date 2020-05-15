@@ -85,7 +85,7 @@ func GetTopupSequenceKey(sequence string) []byte {
 }
 
 // GetTopupSequences checks if topup already exists
-func (keeper Keeper) GetTopupSequences(ctx sdk.Context) (sequences []string) {
+func (keeper *Keeper) GetTopupSequences(ctx sdk.Context) (sequences []string) {
 	keeper.IterateTopupSequencesAndApplyFn(ctx, func(sequence string) error {
 		sequences = append(sequences, sequence)
 		return nil
@@ -94,7 +94,7 @@ func (keeper Keeper) GetTopupSequences(ctx sdk.Context) (sequences []string) {
 }
 
 // IterateTopupSequencesAndApplyFn interate validators and apply the given function.
-func (keeper Keeper) IterateTopupSequencesAndApplyFn(ctx sdk.Context, f func(sequence string) error) {
+func (keeper *Keeper) IterateTopupSequencesAndApplyFn(ctx sdk.Context, f func(sequence string) error) {
 	store := ctx.KVStore(keeper.key)
 
 	// get sequence iterator
@@ -113,13 +113,13 @@ func (keeper Keeper) IterateTopupSequencesAndApplyFn(ctx sdk.Context, f func(seq
 }
 
 // SetTopupSequence sets mapping for sequence id to bool
-func (keeper Keeper) SetTopupSequence(ctx sdk.Context, sequence string) {
+func (keeper *Keeper) SetTopupSequence(ctx sdk.Context, sequence string) {
 	store := ctx.KVStore(keeper.key)
 	store.Set(GetTopupSequenceKey(sequence), DefaultValue)
 }
 
 // HasTopupSequence checks if topup already exists
-func (keeper Keeper) HasTopupSequence(ctx sdk.Context, sequence string) bool {
+func (keeper *Keeper) HasTopupSequence(ctx sdk.Context, sequence string) bool {
 	store := ctx.KVStore(keeper.key)
 	return store.Has(GetTopupSequenceKey(sequence))
 }

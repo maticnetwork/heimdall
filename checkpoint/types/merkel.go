@@ -142,7 +142,6 @@ func convertTo32(input []byte) (output [32]byte, err error) {
 	copy(output[32-l:], input[:])
 	return
 }
-
 func appendBytes32(data ...[]byte) []byte {
 	var result []byte
 	for _, v := range data {
