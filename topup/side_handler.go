@@ -40,8 +40,7 @@ func NewPostTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.P
 		case types.MsgTopup:
 			return PostHandleMsgTopup(ctx, k, msg, sideTxResult)
 		default:
-			errMsg := "Unrecognized topup Msg type: %s" + msg.Type()
-			return sdk.ErrUnknownRequest(errMsg).Result()
+			return sdk.ErrUnknownRequest("Unrecognized topup msg type").Result()
 		}
 	}
 }

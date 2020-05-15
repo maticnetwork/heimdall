@@ -70,7 +70,7 @@ func (suite *SideHandlerTestSuite) TestSideHandler() {
 	require.Equal(t, abci.SideTxResultType_Skip, result.Result)
 }
 
-func (suite *SideHandlerTestSuite) TestSideHandleMsgEventRecordSuccess() {
+func (suite *SideHandlerTestSuite) TestSideHandleMsgEventRecord() {
 	t, app, ctx, r := suite.T(), suite.app, suite.ctx, suite.r
 	chainParams := app.ChainKeeper.GetParams(suite.ctx)
 
