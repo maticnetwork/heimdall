@@ -131,6 +131,7 @@ func PostHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecor
 		msg.ContractAddress,
 		msg.Data,
 		msg.ChainID,
+		ctx.BlockTime(),
 	)
 
 	// save event into state
