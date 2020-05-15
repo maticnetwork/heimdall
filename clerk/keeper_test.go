@@ -2,6 +2,7 @@ package clerk_test
 
 import (
 	"testing"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -42,7 +43,7 @@ func (suite *KeeperTestSuite) TestHasGetSetEventRecord() {
 
 	hAddr := hmTypes.BytesToHeimdallAddress([]byte("some-address"))
 	hHash := hmTypes.BytesToHeimdallHash([]byte("some-address"))
-	testRecord1 := types.NewEventRecord(hHash, 1, 1, hAddr, make([]byte, 0), "1")
+	testRecord1 := types.NewEventRecord(hHash, 1, 1, hAddr, make([]byte, 0), "1", time.Now())
 
 	// SetEventRecord
 	ck := app.ClerkKeeper
@@ -79,7 +80,7 @@ func (suite *KeeperTestSuite) TestGetEventRecordList() {
 	hHash := hmTypes.BytesToHeimdallHash([]byte("some-address"))
 	ck := app.ClerkKeeper
 	for i = 0; i < 30; i++ {
-		testRecord := types.NewEventRecord(hHash, i, i, hAddr, make([]byte, 0), "1")
+		testRecord := types.NewEventRecord(hHash, i, i, hAddr, make([]byte, 0), "1", time.Now())
 		ck.SetEventRecord(ctx, testRecord)
 	}
 
@@ -96,12 +97,30 @@ func (suite *KeeperTestSuite) TestGetEventRecordList() {
 	require.Len(t, recordList, 20)
 }
 
+func (suite *KeeperTestSuite) TestGetEventRecordListTime() {
+	t, app, ctx := suite.T(), suite.app, suite.ctx
+	var i uint64
+
+	hAddr := hmTypes.BytesToHeimdallAddress([]byte("some-address"))
+	hHash := hmTypes.BytesToHeimdallHash([]byte("some-address"))
+	ck := app.ClerkKeeper
+	for i = 0; i < 30; i++ {
+		testRecord := types.NewEventRecord(hHash, i, i, hAddr, make([]byte, 0), "1", time.Unix(int64(i), 0))
+		ck.SetEventRecord(ctx, testRecord)
+	}
+	recordList, _ := ck.GetEventRecordListWithTime(ctx, time.Unix(1, 0), time.Unix(6, 0), 0, 0)
+	require.Len(t, recordList, 5)
+
+	recordList, _ = ck.GetEventRecordListWithTime(ctx, time.Unix(1, 0), time.Unix(6, 0), 1, 1)
+	require.Len(t, recordList, 1)
+}
+
 func (suite *KeeperTestSuite) TestGetEventRecordKey() {
 	t, _, _ := suite.T(), suite.app, suite.ctx
 
 	hAddr := hmTypes.BytesToHeimdallAddress([]byte("some-address"))
 	hHash := hmTypes.BytesToHeimdallHash([]byte("some-address"))
-	testRecord1 := types.NewEventRecord(hHash, 1, 1, hAddr, make([]byte, 0), "1")
+	testRecord1 := types.NewEventRecord(hHash, 1, 1, hAddr, make([]byte, 0), "1", time.Now())
 
 	respKey := clerk.GetEventRecordKey(testRecord1.ID)
 	require.Equal(t, respKey, []byte{17, 49})
