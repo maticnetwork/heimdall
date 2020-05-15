@@ -16,6 +16,7 @@ const (
 	QuerySlashingInfoBytes = "slashingInfoBytes"
 	QueryTickSlashingInfos = "tickSlashingInfos"
 	QuerySlashingSequence  = "slashing-sequence"
+	QueryTickCount         = "tick-count"
 )
 
 // QuerySigningInfoParams defines the params for the following queries:

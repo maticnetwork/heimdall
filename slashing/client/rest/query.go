@@ -56,6 +56,11 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 		"/slashing/isoldtx",
 		SlashingTxStatusHandlerFn(cliCtx),
 	).Methods("GET")
+
+	r.HandleFunc(
+		"/slashing/tick-count",
+		tickCountHandlerFn(cliCtx),
+	).Methods("GET")
 }
 
 // http request handler to query signing info
@@ -334,5 +339,42 @@ func SlashingTxStatusHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		// return result
 		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, res)
+	}
+}
+
+func tickCountHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		RestLogger.Debug("Fetching number of ticks from state")
+		tickCountBytes, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryTickCount), nil)
+		if err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		// check content
+		if ok := hmRest.ReturnNotFoundIfNoContent(w, tickCountBytes, "No tick count found"); !ok {
+			return
+		}
+
+		var tickCount uint64
+		if err := json.Unmarshal(tickCountBytes, &tickCount); err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		result, err := json.Marshal(map[string]interface{}{"result": tickCount})
+		if err != nil {
+			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		cliCtx = cliCtx.WithHeight(height)
+		rest.PostProcessResponse(w, cliCtx, result)
 	}
 }

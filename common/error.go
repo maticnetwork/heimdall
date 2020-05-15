@@ -66,9 +66,11 @@ const (
 	CodeInvalidReceipt         CodeType = 5501
 	CodeSideTxValidationFailed CodeType = 5502
 
-	CodeValSigningInfoSave CodeType = 6501
-	CodeErrValUnjail       CodeType = 6502
-	CodeSlashInfoDetails   CodeType = 6503
+	CodeValSigningInfoSave     CodeType = 6501
+	CodeErrValUnjail           CodeType = 6502
+	CodeSlashInfoDetails       CodeType = 6503
+	CodeTickNotInContinuity    CodeType = 6504
+	CodeTickAckNotInContinuity CodeType = 6505
 )
 
 // -------- Invalid msg
@@ -344,4 +346,12 @@ func ErrUnjailValidator(codespace sdk.CodespaceType) sdk.Error {
 
 func ErrSlashInfoDetails(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeSlashInfoDetails, "Wrong slash info details")
+}
+
+func ErrTickNotInContinuity(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeTickNotInContinuity, "Tick not in countinuity")
+}
+
+func ErrTickAckNotInContinuity(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeTickAckNotInContinuity, "Tick-ack not in countinuity")
 }

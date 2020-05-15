@@ -71,15 +71,20 @@ func (sp *SlashingProcessor) sendTickToHeimdall(eventBytes string, blockHeight i
 		return err
 	}
 
+	//Get tickCount from HeimdallServer
+	tickCount := sp.fetchTickCount()
+
 	sp.Logger.Info("processing slash-limit event", "eventtype", event.Type)
 
 	sp.Logger.Info("✅ Creating and broadcasting Tick tx",
+		"id", tickCount+1,
 		"From", hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
 		"latestSlashInoBytes", latestSlashInoBytes.String(),
 	)
 
 	// create msg Tick message
 	msg := slashingTypes.NewMsgTick(
+		tickCount+1,
 		hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
 		latestSlashInoBytes,
 	)
@@ -178,6 +183,7 @@ func (sp *SlashingProcessor) sendTickAckToHeimdall(eventName string, logBytes st
 		if isOld, _ := sp.isOldTx(sp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index)); isOld {
 			sp.Logger.Info("Ignoring task to send tick ack to heimdall as already processed",
 				"event", eventName,
+				"tickID", event.Nonce,
 				"totalSlashedAmount", event.Amount.Uint64(),
 				"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 				"logIndex", uint64(vLog.Index),
@@ -188,6 +194,7 @@ func (sp *SlashingProcessor) sendTickAckToHeimdall(eventName string, logBytes st
 		sp.Logger.Info(
 			"✅ Received task to send tick-ack to heimdall",
 			"event", eventName,
+			"tickID", event.Nonce,
 			"totalSlashedAmount", event.Amount.Uint64(),
 			"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			"logIndex", uint64(vLog.Index),
@@ -197,7 +204,7 @@ func (sp *SlashingProcessor) sendTickAckToHeimdall(eventName string, logBytes st
 		// TODO - check if i am the proposer of this tick ack or not.
 
 		// create msg checkpoint ack message
-		msg := slashingTypes.NewMsgTickAck(helper.GetFromAddress(sp.cliCtx), event.Amount.Uint64(), hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()), uint64(vLog.Index), vLog.BlockNumber)
+		msg := slashingTypes.NewMsgTickAck(helper.GetFromAddress(sp.cliCtx), event.Nonce.Uint64(), event.Amount.Uint64(), hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()), uint64(vLog.Index), vLog.BlockNumber)
 
 		// return broadcast to heimdall
 		if err := sp.txBroadcaster.BroadcastToHeimdall(msg); err != nil {
@@ -337,6 +344,23 @@ func (sp *SlashingProcessor) fetchLatestSlashInoBytes() (slashInfoBytes hmTypes.
 		return slashInfoBytes, err
 	}
 	return slashInfoBytes, nil
+}
+
+// fetchTickCount - fetches tick count
+func (sp *SlashingProcessor) fetchTickCount() uint64 {
+	sp.Logger.Info("Sending Rest call to Get Tick count")
+	response, err := helper.FetchFromAPI(sp.cliCtx, helper.GetHeimdallServerEndpoint(util.SlashingTickCountURL))
+	if err != nil {
+		sp.Logger.Error("Error while sending request for tick count", "Error", err)
+		return 0
+	}
+
+	var tickCount uint64
+	if err := json.Unmarshal(response.Result, &tickCount); err != nil {
+		sp.Logger.Error("Error unmarshalling tick count data ", "error", err)
+		return 0
+	}
+	return tickCount
 }
 
 // fetchTickSlashInfoList - fetches tick slash Info list

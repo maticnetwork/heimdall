@@ -179,6 +179,52 @@ func (k *Keeper) GetParams(ctx sdk.Context) (params types.Params) {
 	return
 }
 
+//
+// Tick count
+//
+
+// GetTickCount returns current Tick count
+func (k Keeper) GetTickCount(ctx sdk.Context) uint64 {
+	store := ctx.KVStore(k.storeKey)
+	// check if tick count is there
+	if store.Has(types.TickCountKey) {
+		// get current tick count
+		tickCount, err := strconv.ParseUint(string(store.Get(types.TickCountKey)), 10, 64)
+		if err != nil {
+			k.Logger(ctx).Error("Unable to convert key to int")
+		} else {
+			return tickCount
+		}
+	}
+
+	return 0
+}
+
+// UpdateTickCountWithValue updates TickCount with value
+func (k Keeper) UpdateTickCountWithValue(ctx sdk.Context, value uint64) {
+	store := ctx.KVStore(k.storeKey)
+
+	// convert
+	tickCount := []byte(strconv.FormatUint(value, 10))
+
+	// update
+	store.Set(types.TickCountKey, tickCount)
+}
+
+// IncrementTickCount updates Tick count by 1
+func (k Keeper) IncrementTickCount(ctx sdk.Context) {
+	store := ctx.KVStore(k.storeKey)
+
+	// get current tick Count
+	tickCount := k.GetTickCount(ctx)
+
+	// increment by 1
+	tickCounts := []byte(strconv.FormatUint(tickCount+1, 10))
+
+	// update
+	store.Set(types.TickCountKey, tickCounts)
+}
+
 // Slashing Info api's
 
 // SlashInterim - Add slash amounts to a buffer and emit <slash-limit> event if exceeded

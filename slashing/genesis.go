@@ -39,6 +39,9 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 
 	keeper.SetParams(ctx, data.Params)
 
+	// Set initial tick count
+	keeper.UpdateTickCountWithValue(ctx, data.TickCount)
+
 }
 
 // ExportGenesis writes the current store values
@@ -62,5 +65,11 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) (data types.GenesisState) {
 
 	bufSlashInfos, _ := keeper.GetBufferValSlashingInfos(ctx)
 	tickSlashInfos, _ := keeper.GetTickValSlashingInfos(ctx)
-	return types.NewGenesisState(params, signingInfos, missedBlocks, bufSlashInfos, tickSlashInfos)
+	return types.NewGenesisState(
+		params,
+		signingInfos,
+		missedBlocks,
+		bufSlashInfos,
+		tickSlashInfos,
+		keeper.GetTickCount(ctx))
 }

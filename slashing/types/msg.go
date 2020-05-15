@@ -1,6 +1,8 @@
 package types
 
 import (
+	"math/big"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/bor/accounts/abi"
 	hmCommon "github.com/maticnetwork/heimdall/common"
@@ -62,12 +64,14 @@ func (msg MsgUnjail) ValidateBasic() sdk.Error {
 
 // TickMsg - struct for unjailing jailed validator
 type MsgTick struct {
+	ID                uint64                `json:"id"`
 	Proposer          types.HeimdallAddress `json:"proposer"`
 	SlashingInfoBytes types.HexBytes        `json:"slashinginfobytes"`
 }
 
-func NewMsgTick(proposer types.HeimdallAddress, slashingInfoBytes types.HexBytes) MsgTick {
+func NewMsgTick(id uint64, proposer types.HeimdallAddress, slashingInfoBytes types.HexBytes) MsgTick {
 	return MsgTick{
+		ID:                id,
 		Proposer:          proposer,
 		SlashingInfoBytes: slashingInfoBytes,
 	}
@@ -106,10 +110,14 @@ func (msg MsgTick) ValidateBasic() sdk.Error {
 // GetSideSignBytes returns side sign bytes
 func (msg MsgTick) GetSideSignBytes() []byte {
 	addressType, _ := abi.NewType("address", nil)
+	uintType, _ := abi.NewType("uint", nil)
 	bytesType, _ := abi.NewType("bytes", nil)
 	arguments := abi.Arguments{
 		{
 			Type: addressType,
+		},
+		{
+			Type: uintType,
 		},
 		{
 			Type: bytesType,
@@ -118,6 +126,7 @@ func (msg MsgTick) GetSideSignBytes() []byte {
 
 	bytes, _ := arguments.Pack(
 		msg.Proposer,
+		new(big.Int).SetUint64(msg.ID),
 		msg.SlashingInfoBytes,
 	)
 	return bytes
@@ -131,15 +140,17 @@ var _ sdk.Msg = &MsgTickAck{}
 
 type MsgTickAck struct {
 	From          types.HeimdallAddress `json:"from"`
+	ID            uint64                `json:"tick_id"`
 	SlashedAmount uint64                `json:"slashed_amount"`
 	TxHash        types.HeimdallHash    `json:"tx_hash"`
 	LogIndex      uint64                `json:"log_index"`
 	BlockNumber   uint64                `json:"block_number"`
 }
 
-func NewMsgTickAck(from types.HeimdallAddress, slashedAmount uint64, txHash types.HeimdallHash, logIndex uint64, blockNumber uint64) MsgTickAck {
+func NewMsgTickAck(from types.HeimdallAddress, id uint64, slashedAmount uint64, txHash types.HeimdallHash, logIndex uint64, blockNumber uint64) MsgTickAck {
 	return MsgTickAck{
 		From:          from,
+		ID:            id,
 		SlashedAmount: slashedAmount,
 		TxHash:        txHash,
 		BlockNumber:   blockNumber,

@@ -43,12 +43,14 @@ type UnjailReq struct {
 
 type TickReq struct {
 	BaseReq           rest.BaseReq `json:"base_req"`
+	ID                uint64       `json:"ID"`
 	Proposer          string       `json:"proposer"`
 	SlashingInfoBytes string       `json:"slashing_info_bytes"`
 }
 
 type TickAckReq struct {
 	BaseReq     rest.BaseReq `json:"base_req"`
+	ID          uint64       `json:"ID"`
 	Amount      uint64       `json:"amount"`
 	TxHash      string       `json:"tx_hash"`
 	LogIndex    uint64       `json:"log_index"`
@@ -95,7 +97,13 @@ func newTickRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		req.BaseReq = req.BaseReq.Sanitize()
+		if !req.BaseReq.ValidateBasic(w) {
+			return
+		}
+
 		msg := types.NewMsgTick(
+			req.ID,
 			hmTypes.HexToHeimdallAddress(req.Proposer),
 			hmTypes.HexToHexBytes(req.SlashingInfoBytes),
 		)
@@ -113,8 +121,14 @@ func newTickAckHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		req.BaseReq = req.BaseReq.Sanitize()
+		if !req.BaseReq.ValidateBasic(w) {
+			return
+		}
+
 		msg := types.NewMsgTickAck(
 			hmTypes.HexToHeimdallAddress(req.BaseReq.From),
+			req.ID,
 			req.Amount,
 			hmTypes.HexToHeimdallHash(req.TxHash),
 			req.LogIndex,

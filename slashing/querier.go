@@ -22,6 +22,9 @@ func NewQuerier(k Keeper) sdk.Querier {
 		case types.QueryParameters:
 			return queryParams(ctx, k)
 
+		case types.QueryTickCount:
+			return handleQueryTickCount(ctx, req, k)
+
 		case types.QuerySigningInfo:
 			return querySigningInfo(ctx, req, k)
 
@@ -101,6 +104,14 @@ func querySigningInfos(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte
 
 	// json record
 	bz, err := json.Marshal(signingInfos)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
+	return bz, nil
+}
+
+func handleQueryTickCount(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	bz, err := json.Marshal(keeper.GetTickCount(ctx))
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}

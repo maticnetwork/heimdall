@@ -154,6 +154,13 @@ func PostHandleMsgTick(ctx sdk.Context, k Keeper, msg types.MsgTick, sideTxResul
 		return common.ErrSideTxValidation(k.Codespace()).Result()
 	}
 
+	// check for replay - tick should be in conitunity
+	tickCount := k.GetTickCount(ctx)
+	if msg.ID != tickCount+1 {
+		k.Logger(ctx).Error("Tick not in countinuity. may be due to replay", "msgID", msg.ID, "expectedMsgID", tickCount+1)
+		return hmCommon.ErrTickNotInContinuity(k.Codespace()).Result()
+	}
+
 	k.Logger(ctx).Debug("Persisting tick state", "sideTxResult", sideTxResult)
 
 	// copy slashBuffer into latestTickData
@@ -170,6 +177,9 @@ func PostHandleMsgTick(ctx sdk.Context, k Keeper, msg types.MsgTick, sideTxResul
 
 	// Flush TotalSlashedAmount
 	k.FlushTotalSlashedAmount(ctx)
+
+	// Update Tick count
+	k.IncrementTickCount(ctx)
 
 	k.Logger(ctx).Debug("Successfully slashed and jailed")
 	// TX bytes
@@ -207,7 +217,14 @@ func PostHandleMsgTickAck(ctx sdk.Context, k Keeper, msg types.MsgTickAck, sideT
 		return common.ErrSideTxValidation(k.Codespace()).Result()
 	}
 
-	// check if incoming tx is older
+	// check if tick ack msgs are in continuity.
+	tickCount := k.GetTickCount(ctx)
+	if msg.ID != tickCount {
+		k.Logger(ctx).Error("Tick-ack not in countinuity.", "msgID", msg.ID, "expectedMsgID", tickCount)
+		return hmCommon.ErrTickAckNotInContinuity(k.Codespace()).Result()
+	}
+
+	// check for replay -  check if incoming tx is older
 	blockNumber := new(big.Int).SetUint64(msg.BlockNumber)
 	sequence := new(big.Int).Mul(blockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
 	sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))

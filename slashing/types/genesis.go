@@ -17,11 +17,17 @@ type GenesisState struct {
 	MissedBlocks          map[string][]MissedBlock                `json:"missed_blocks" yaml:"missed_blocks"`
 	BufferValSlashingInfo []*hmTypes.ValidatorSlashingInfo        `json:"buffer_val_slash_info" yaml:"buffer_val_slash_info"`
 	TickValSlashingInfo   []*hmTypes.ValidatorSlashingInfo        `json:"tick_val_slash_info" yaml:"tick_val_slash_info"`
+	TickCount             uint64                                  `json:"tick_count" yaml:"tick_count"`
 }
 
 // NewGenesisState creates a new GenesisState object
 func NewGenesisState(
-	params Params, signingInfos map[string]hmTypes.ValidatorSigningInfo, missedBlocks map[string][]MissedBlock, bufferValSlashingInfo []*hmTypes.ValidatorSlashingInfo, tickValSlashingInfo []*hmTypes.ValidatorSlashingInfo,
+	params Params,
+	signingInfos map[string]hmTypes.ValidatorSigningInfo,
+	missedBlocks map[string][]MissedBlock,
+	bufferValSlashingInfo []*hmTypes.ValidatorSlashingInfo,
+	tickValSlashingInfo []*hmTypes.ValidatorSlashingInfo,
+	tickCount uint64,
 ) GenesisState {
 
 	return GenesisState{
@@ -30,6 +36,7 @@ func NewGenesisState(
 		MissedBlocks:          missedBlocks,
 		BufferValSlashingInfo: bufferValSlashingInfo,
 		TickValSlashingInfo:   tickValSlashingInfo,
+		TickCount:             tickCount,
 	}
 }
 

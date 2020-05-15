@@ -49,6 +49,7 @@ const (
 	LatestSlashInfoBytesURL = "/slashing/latest_slash_info_bytes"
 	TickSlashInfoListURL    = "/slashing/tick_slash_infos"
 	SlashingTxStatusURL     = "/slashing/isoldtx"
+	SlashingTickCountURL    = "/slashing/tick-count"
 
 	TransactionTimeout      = 1 * time.Minute
 	CommitTimeout           = 2 * time.Minute

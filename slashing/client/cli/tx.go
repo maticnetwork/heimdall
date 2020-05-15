@@ -108,6 +108,7 @@ func GetCmdTick(cdc *codec.Codec) *cobra.Command {
 			}
 
 			msg := types.NewMsgTick(
+				viper.GetUint64(FlagTickID),
 				proposer,
 				hmTypes.HexToHexBytes(slashInfoBytes),
 			)
@@ -119,7 +120,10 @@ func GetCmdTick(cdc *codec.Codec) *cobra.Command {
 
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
 	cmd.Flags().String(FlagSlashInfoBytes, "", "--slashinfo-bytes=<slashinfo-bytes>")
+	cmd.Flags().Uint64(FlagTickID, 1, "--tick-id=<tick-id>")
+
 	cmd.MarkFlagRequired(FlagSlashInfoBytes)
+	cmd.MarkFlagRequired(FlagTickID)
 
 	return cmd
 }
@@ -145,6 +149,7 @@ func GetCmdTickAck(cdc *codec.Codec) *cobra.Command {
 
 			msg := types.NewMsgTickAck(
 				proposer,
+				viper.GetUint64(FlagTickID),
 				viper.GetUint64(FlagAmount),
 				hmTypes.HexToHeimdallHash(txHash),
 				uint64(viper.GetInt64(FlagLogIndex)),
@@ -161,6 +166,7 @@ func GetCmdTickAck(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
 	cmd.Flags().String(FlagLogIndex, "", "--log-index=<log-index>")
 	cmd.Flags().Uint64(FlagAmount, 0, "--amount=<amount>")
+	cmd.Flags().Uint64(FlagTickID, 1, "--tick-id=<tick-id>")
 
 	if err := cmd.MarkFlagRequired(FlagBlockNumber); err != nil {
 		logger.Error("SendTickAckTx | MarkFlagRequired | FlagBlockNumber", "Error", err)
@@ -168,6 +174,7 @@ func GetCmdTickAck(cdc *codec.Codec) *cobra.Command {
 	cmd.MarkFlagRequired(FlagTxHash)
 	cmd.MarkFlagRequired(FlagLogIndex)
 	cmd.MarkFlagRequired(FlagAmount)
+	cmd.MarkFlagRequired(FlagTickID)
 
 	return cmd
 }

@@ -36,6 +36,7 @@ var (
 	BufferValSlashingInfoKey        = []byte{0x05} // Prefix for Slashing Info stored in buffer
 	TickValSlashingInfoKey          = []byte{0x06} // Prefix for Slashing Info stored after tick tx
 	SlashingSequenceKey             = []byte{0x07} // prefix for each key for slashing sequence map
+	TickCountKey                    = []byte{0x08} // key to store Tick counts
 )
 
 // GetValidatorSigningInfoKey - stored by *valID*

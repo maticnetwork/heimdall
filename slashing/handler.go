@@ -45,6 +45,7 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 func handlerMsgTick(ctx sdk.Context, msg types.MsgTick, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 
 	k.Logger(ctx).Debug("✅ Validating tick msg",
+		"msgID", msg.ID,
 		"SlashInfoBytes", msg.SlashingInfoBytes.String(),
 	)
 
@@ -52,6 +53,13 @@ func handlerMsgTick(ctx sdk.Context, msg types.MsgTick, k Keeper, contractCaller
 	if !k.IsSlashedLimitExceeded(ctx) {
 		k.Logger(ctx).Error("TotalSlashedAmount is less than SlashLimit")
 		return hmCommon.ErrInvalidMsg(k.Codespace(), fmt.Sprintf("TotalSlashedAmount %v is less than SlashLimit", k.GetTotalSlashedAmount(ctx))).Result()
+	}
+
+	// check if tick msgs are in continuity
+	tickCount := k.GetTickCount(ctx)
+	if msg.ID != tickCount+1 {
+		k.Logger(ctx).Error("Tick not in countinuity", "msgID", msg.ID, "expectedMsgID", tickCount+1)
+		return hmCommon.ErrTickNotInContinuity(k.Codespace()).Result()
 	}
 
 	valSlashingInfos, err := k.GetBufferValSlashingInfos(ctx)
@@ -140,6 +148,7 @@ func handleMsgUnjail(ctx sdk.Context, msg types.MsgUnjail, k Keeper, contractCal
 func handleMsgTickAck(ctx sdk.Context, msg types.MsgTickAck, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 
 	k.Logger(ctx).Debug("✅ Validating TickAck msg",
+		"ID", msg.ID,
 		"SlashedAmount", msg.SlashedAmount,
 		"txHash", hmTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
 		"logIndex", uint64(msg.LogIndex),
@@ -155,6 +164,13 @@ func handleMsgTickAck(ctx sdk.Context, msg types.MsgTickAck, k Keeper, contractC
 	if k.HasSlashingSequence(ctx, sequence.String()) {
 		k.Logger(ctx).Error("Older invalid tx found")
 		return hmCommon.ErrOldTx(k.Codespace()).Result()
+	}
+
+	// check if tick ack msgs are in continuity
+	tickCount := k.GetTickCount(ctx)
+	if msg.ID != tickCount {
+		k.Logger(ctx).Error("Tick-ack not in countinuity", "msgID", msg.ID, "expectedMsgID", tickCount)
+		return hmCommon.ErrTickAckNotInContinuity(k.Codespace()).Result()
 	}
 
 	return sdk.Result{
