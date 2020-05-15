@@ -718,12 +718,12 @@
 		"inputs": [
 			{
 				"internalType": "uint256",
-				"name": "amount",
+				"name": "nonce",
 				"type": "uint256"
 			},
 			{
 				"internalType": "uint256",
-				"name": "nonce",
+				"name": "amount",
 				"type": "uint256"
 			}
 		],
@@ -974,13 +974,13 @@
 			{
 				"indexed": true,
 				"internalType": "uint256",
-				"name": "amount",
+				"name": "nonce",
 				"type": "uint256"
 			},
 			{
 				"indexed": true,
 				"internalType": "uint256",
-				"name": "nonce",
+				"name": "amount",
 				"type": "uint256"
 			}
 		],
