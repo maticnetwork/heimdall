@@ -74,45 +74,34 @@ func recordListHandlerFn(
 		vars := r.URL.Query()
 		var queryParams []byte
 		var err error
+		var query string
 
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
 			return
 		}
 
-		if vars.Get("page") != "" && vars.Get("limit") != "" {
-			// get page
-			page, ok := rest.ParseUint64OrReturnBadRequest(w, vars.Get("page"))
+		page := uint64(1) // default page
+		if vars.Get("page") != "" {
+			_page, ok := rest.ParseUint64OrReturnBadRequest(w, vars.Get("page"))
 			if !ok {
 				return
 			}
 
-			// get limit
-			limit, ok := rest.ParseUint64OrReturnBadRequest(w, vars.Get("limit"))
+			page = _page
+		}
+
+		limit := uint64(50) // default limit
+		if vars.Get("limit") != "" {
+			_limit, ok := rest.ParseUint64OrReturnBadRequest(w, vars.Get("limit"))
 			if !ok {
 				return
 			}
 
-			// get query params
-			queryParams, err := cliCtx.Codec.MarshalJSON(hmTypes.NewQueryPaginationParams(page, limit))
-			if err != nil {
-				return
-			}
+			limit = _limit
+		}
 
-			// query records
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryRecordList), queryParams)
-			if err != nil {
-				hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-				return
-			}
-
-			// check content
-			if ok := hmRest.ReturnNotFoundIfNoContent(w, res, "No records found"); !ok {
-				return
-			}
-
-			rest.PostProcessResponse(w, cliCtx, res)
-		} else if vars.Get("from-time") != "" && vars.Get("to-time") != "" {
+		if vars.Get("from-time") != "" && vars.Get("to-time") != "" {
 			// get from time (epoch)
 			fromTime, ok := rest.ParseInt64OrReturnBadRequest(w, vars.Get("from-time"))
 			if !ok {
@@ -125,49 +114,40 @@ func recordListHandlerFn(
 				return
 			}
 
-			if vars.Get("page") != "" && vars.Get("limit") != "" {
-				// get page
-				page, ok := rest.ParseUint64OrReturnBadRequest(w, vars.Get("page"))
-				if !ok {
-					return
-				}
-				// get limit
-				limit, ok := rest.ParseUint64OrReturnBadRequest(w, vars.Get("limit"))
-				if !ok {
-					return
-				}
-				// get query params
-				queryParams, err = cliCtx.Codec.MarshalJSON(types.NewQueryTimeRangePaginationParams(time.Unix(fromTime, 0), time.Unix(toTime, 0), page, limit))
-				if err != nil {
-					return
-				}
-			} else {
-				// get query params
-				queryParams, err = cliCtx.Codec.MarshalJSON(types.NewQueryTimeRangePaginationParams(time.Unix(fromTime, 0), time.Unix(toTime, 0), 0, 0))
-				if err != nil {
-					return
-				}
-			}
-
-			// query records
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryRecordListWithTime), queryParams)
+			// get query params
+			queryParams, err = cliCtx.Codec.MarshalJSON(types.NewQueryTimeRangePaginationParams(time.Unix(fromTime, 0), time.Unix(toTime, 0), page, limit))
 			if err != nil {
-				hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 				return
 			}
 
-			// check content
-			if ok := hmRest.ReturnNotFoundIfNoContent(w, res, "No records found"); !ok {
+			query = types.QueryRecordListWithTime
+		} else {
+			// get query params
+			queryParams, err = cliCtx.Codec.MarshalJSON(hmTypes.NewQueryPaginationParams(page, limit))
+			if err != nil {
 				return
 			}
 
-			rest.PostProcessResponse(w, cliCtx, res)
+			query = types.QueryRecordList
 		}
-		return
+
+		// query records
+		res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, query), queryParams)
+		if err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		// check content
+		if ok := hmRest.ReturnNotFoundIfNoContent(w, res, "No records found"); !ok {
+			return
+		}
+
+		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
 
-// Returns deposit tx status information
+// DepositTxStatusHandlerFn returns deposit tx status information
 func DepositTxStatusHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := r.URL.Query()

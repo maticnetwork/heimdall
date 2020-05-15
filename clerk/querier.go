@@ -109,7 +109,6 @@ func handleQueryRecordSequence(ctx sdk.Context, req abci.RequestQuery, keeper Ke
 
 	// check if incoming tx already exists
 	if !keeper.HasRecordSequence(ctx, sequence.String()) {
-		keeper.Logger(ctx).Error("No record sequence exist: %s %s", params.TxHash, params.LogIndex)
 		return nil, nil
 	}
 

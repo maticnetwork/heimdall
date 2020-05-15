@@ -68,6 +68,7 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", types.ModuleName)
 }
 
+// SetEventRecordWithTime sets event record id with time
 func (k *Keeper) SetEventRecordWithTime(ctx sdk.Context, record types.EventRecord) error {
 	key := GetEventRecordKeyWithTime(record.ID, record.RecordTime)
 	value, err := k.cdc.MarshalBinaryBare(record.ID)
@@ -75,39 +76,37 @@ func (k *Keeper) SetEventRecordWithTime(ctx sdk.Context, record types.EventRecor
 		k.Logger(ctx).Error("Error marshalling record", "error", err)
 		return err
 	}
-	// TODO check state from mainchain
-	if err := k.SetEventRecordStore(ctx, key, value); err != nil {
+
+	if err := k.setEventRecordStore(ctx, key, value); err != nil {
 		return err
 	}
 	return nil
 }
 
-// SetEventRecord adds record to store with ID
+// SetEventRecordWithID adds record to store with ID
 func (k *Keeper) SetEventRecordWithID(ctx sdk.Context, record types.EventRecord) error {
-
 	key := GetEventRecordKey(record.ID)
 	value, err := k.cdc.MarshalBinaryBare(record)
 	if err != nil {
 		k.Logger(ctx).Error("Error marshalling record", "error", err)
 		return err
 	}
-	// TODO check state from mainchain
-	if err := k.SetEventRecordStore(ctx, key, value); err != nil {
+
+	if err := k.setEventRecordStore(ctx, key, value); err != nil {
 		return err
 	}
 	return nil
 }
 
-// SetEventRecord adds record to store with ID
-func (k *Keeper) SetEventRecordStore(ctx sdk.Context, key, value []byte) error {
-
+// setEventRecordStore adds value to store by key
+func (k *Keeper) setEventRecordStore(ctx sdk.Context, key, value []byte) error {
 	store := ctx.KVStore(k.storeKey)
 	// check if already set
 	if store.Has(key) {
 		return errors.New("State record already exists")
 	}
 
-	// store in key provided
+	// store value in provided key
 	store.Set(key, value)
 
 	// return
@@ -126,9 +125,9 @@ func (k *Keeper) SetEventRecord(ctx sdk.Context, record types.EventRecord) error
 }
 
 // GetEventRecord returns record from store
-func (k *Keeper) GetEventRecord(ctx sdk.Context, stateId uint64) (*types.EventRecord, error) {
+func (k *Keeper) GetEventRecord(ctx sdk.Context, stateID uint64) (*types.EventRecord, error) {
 	store := ctx.KVStore(k.storeKey)
-	key := GetEventRecordKey(stateId)
+	key := GetEventRecordKey(stateID)
 
 	// check store has data
 	if store.Has(key) {
@@ -172,8 +171,8 @@ func (k *Keeper) GetEventRecordList(ctx sdk.Context, page uint64, limit uint64) 
 	var records []types.EventRecord
 
 	// have max limit
-	if limit > 20 {
-		limit = 20
+	if limit > 50 {
+		limit = 50
 	}
 
 	// get paginated iterator
@@ -198,11 +197,17 @@ func (k *Keeper) GetEventRecordListWithTime(ctx sdk.Context, fromTime, toTime ti
 	// create records
 	var records []types.EventRecord
 
+	// have max limit
+	if limit > 50 {
+		limit = 50
+	}
+
 	if page == 0 && limit == 0 {
 		iterator = store.Iterator(GetEventRecordKeyWithTimePrefix(fromTime), GetEventRecordKeyWithTimePrefix(toTime))
 	} else {
 		iterator = hmTypes.KVStorePrefixRangeIteratorPaginated(store, uint(page), uint(limit), GetEventRecordKeyWithTimePrefix(fromTime), GetEventRecordKeyWithTimePrefix(toTime))
 	}
+
 	// get range iterator
 	defer iterator.Close()
 	// loop through records to get valid records
@@ -243,6 +248,11 @@ func GetEventRecordKeyWithTimePrefix(recordTime time.Time) []byte {
 	return append(StateRecordPrefixKeyWithTime, recordTimeBytes...)
 }
 
+// GetRecordSequenceKey returns record sequence key
+func GetRecordSequenceKey(sequence string) []byte {
+	return append(RecordSequencePrefixKey, []byte(sequence)...)
+}
+
 //
 // Utils
 //
@@ -270,15 +280,9 @@ func (k *Keeper) IterateRecordsAndApplyFn(ctx sdk.Context, f func(record types.E
 	}
 }
 
-// Sequence
-// GetRecordSequenceKey returns record sequence key
-func GetRecordSequenceKey(sequence string) []byte {
-	return append(RecordSequencePrefixKey, []byte(sequence)...)
-}
-
 // GetRecordSequences checks if record already exists
-func (keeper Keeper) GetRecordSequences(ctx sdk.Context) (sequences []string) {
-	keeper.IterateRecordSequencesAndApplyFn(ctx, func(sequence string) error {
+func (k *Keeper) GetRecordSequences(ctx sdk.Context) (sequences []string) {
+	k.IterateRecordSequencesAndApplyFn(ctx, func(sequence string) error {
 		sequences = append(sequences, sequence)
 		return nil
 	})
@@ -286,8 +290,8 @@ func (keeper Keeper) GetRecordSequences(ctx sdk.Context) (sequences []string) {
 }
 
 // IterateRecordSequencesAndApplyFn interate records and apply the given function.
-func (keeper Keeper) IterateRecordSequencesAndApplyFn(ctx sdk.Context, f func(sequence string) error) {
-	store := ctx.KVStore(keeper.storeKey)
+func (k *Keeper) IterateRecordSequencesAndApplyFn(ctx sdk.Context, f func(sequence string) error) {
+	store := ctx.KVStore(k.storeKey)
 
 	// get sequence iterator
 	iterator := sdk.KVStorePrefixIterator(store, RecordSequencePrefixKey)
@@ -305,13 +309,13 @@ func (keeper Keeper) IterateRecordSequencesAndApplyFn(ctx sdk.Context, f func(se
 }
 
 // SetRecordSequence sets mapping for sequence id to bool
-func (keeper Keeper) SetRecordSequence(ctx sdk.Context, sequence string) {
-	store := ctx.KVStore(keeper.storeKey)
+func (k *Keeper) SetRecordSequence(ctx sdk.Context, sequence string) {
+	store := ctx.KVStore(k.storeKey)
 	store.Set(GetRecordSequenceKey(sequence), DefaultValue)
 }
 
 // HasRecordSequence checks if record already exists
-func (keeper Keeper) HasRecordSequence(ctx sdk.Context, sequence string) bool {
-	store := ctx.KVStore(keeper.storeKey)
+func (k *Keeper) HasRecordSequence(ctx sdk.Context, sequence string) bool {
+	store := ctx.KVStore(k.storeKey)
 	return store.Has(GetRecordSequenceKey(sequence))
 }
