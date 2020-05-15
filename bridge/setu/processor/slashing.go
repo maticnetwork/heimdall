@@ -71,8 +71,12 @@ func (sp *SlashingProcessor) sendTickToHeimdall(eventBytes string, blockHeight i
 		return err
 	}
 
+	var tickCount uint64
 	//Get tickCount from HeimdallServer
-	tickCount := sp.fetchTickCount()
+	if tickCount, err = sp.fetchTickCount(); err != nil {
+		sp.Logger.Info("Error while fetching tick count from HeimdallServer", "err", err)
+		return err
+	}
 
 	sp.Logger.Info("processing slash-limit event", "eventtype", event.Type)
 
@@ -347,20 +351,19 @@ func (sp *SlashingProcessor) fetchLatestSlashInoBytes() (slashInfoBytes hmTypes.
 }
 
 // fetchTickCount - fetches tick count
-func (sp *SlashingProcessor) fetchTickCount() uint64 {
+func (sp *SlashingProcessor) fetchTickCount() (tickCount uint64, err error) {
 	sp.Logger.Info("Sending Rest call to Get Tick count")
 	response, err := helper.FetchFromAPI(sp.cliCtx, helper.GetHeimdallServerEndpoint(util.SlashingTickCountURL))
 	if err != nil {
 		sp.Logger.Error("Error while sending request for tick count", "Error", err)
-		return 0
+		return tickCount, err
 	}
 
-	var tickCount uint64
 	if err := json.Unmarshal(response.Result, &tickCount); err != nil {
 		sp.Logger.Error("Error unmarshalling tick count data ", "error", err)
-		return 0
+		return tickCount, err
 	}
-	return tickCount
+	return tickCount, nil
 }
 
 // fetchTickSlashInfoList - fetches tick slash Info list

@@ -103,11 +103,10 @@ func GetGenesisStateFromAppState(appState map[string]json.RawMessage) GenesisSta
 }
 
 // SetGenesisStateToAppState sets state into app state
-func SetGenesisStateToAppState(appState map[string]json.RawMessage, valSigningInfo map[string]hmTypes.ValidatorSigningInfo, bufferValSlashingInfo []*hmTypes.ValidatorSlashingInfo) (map[string]json.RawMessage, error) {
+func SetGenesisStateToAppState(appState map[string]json.RawMessage, valSigningInfo map[string]hmTypes.ValidatorSigningInfo) (map[string]json.RawMessage, error) {
 	// set state to staking state
 	slashingState := GetGenesisStateFromAppState(appState)
 	slashingState.SigningInfos = valSigningInfo
-	slashingState.BufferValSlashingInfo = bufferValSlashingInfo
 
 	appState[ModuleName] = types.ModuleCdc.MustMarshalJSON(slashingState)
 	return appState, nil

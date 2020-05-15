@@ -367,7 +367,7 @@ func tickCountHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		result, err := json.Marshal(map[string]interface{}{"result": tickCount})
+		result, err := json.Marshal(&tickCount)
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())

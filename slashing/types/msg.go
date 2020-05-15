@@ -109,15 +109,16 @@ func (msg MsgTick) ValidateBasic() sdk.Error {
 
 // GetSideSignBytes returns side sign bytes
 func (msg MsgTick) GetSideSignBytes() []byte {
+	uintType, _ := abi.NewType("uint256", nil)
 	addressType, _ := abi.NewType("address", nil)
-	uintType, _ := abi.NewType("uint", nil)
 	bytesType, _ := abi.NewType("bytes", nil)
+
 	arguments := abi.Arguments{
 		{
-			Type: addressType,
+			Type: uintType,
 		},
 		{
-			Type: uintType,
+			Type: addressType,
 		},
 		{
 			Type: bytesType,
@@ -125,8 +126,8 @@ func (msg MsgTick) GetSideSignBytes() []byte {
 	}
 
 	bytes, _ := arguments.Pack(
-		msg.Proposer,
 		new(big.Int).SetUint64(msg.ID),
+		msg.Proposer,
 		msg.SlashingInfoBytes,
 	)
 	return bytes

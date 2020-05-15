@@ -4,32 +4,15 @@ import (
 	"encoding/hex"
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/helper"
 	slashingTypes "github.com/maticnetwork/heimdall/slashing/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
-	"github.com/stretchr/testify/suite"
 )
 
-type KeeperTestSuite struct {
-	suite.Suite
-
-	app *app.HeimdallApp
-	ctx sdk.Context
-}
-
-// Tests
-
-func TestKeeperTestSuite(t *testing.T) {
-	suite.Run(t, new(KeeperTestSuite))
-}
-
-func (suite *KeeperTestSuite) TestMsgTick() {
-	t, _, _ := suite.T(), suite.app, suite.ctx
-
+func TestMsgTick(t *testing.T) {
 	// create msg Tick message
 	msg := slashingTypes.NewMsgTick(
+		uint64(2),
 		hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
 		hmTypes.HexToHexBytes("0xox"),
 	)

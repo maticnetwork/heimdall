@@ -75,7 +75,6 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 
 			// slashing
 			valSigningInfoMap := make(map[string]hmTypes.ValidatorSigningInfo)
-			bufValSlashInfos := make([]*hmTypes.ValidatorSlashingInfo, numValidators)
 
 			genFiles := make([]string, totalValidators)
 			var err error
@@ -133,7 +132,6 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 					// create dividend account for validator
 					dividendAccounts[i] = hmTypes.NewDividendAccount(validators[i].Signer, ZeroIntString)
 					valSigningInfoMap[validators[i].ID.String()] = hmTypes.NewValidatorSigningInfo(validators[i].ID, 0, 0, 0)
-					// bufValSlashInfos[i] = &hmTypes.NewValidatorSlashingInfo(validators[i].ID, uint64(0), false)
 				}
 
 				signers[i] = GetSignerInfo(valPubKeys[i], privKeys[i].Bytes(), cdc)
@@ -178,7 +176,7 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 			}
 
 			// slashing state change
-			appStateBytes, err = slashingTypes.SetGenesisStateToAppState(appStateBytes, valSigningInfoMap, bufValSlashInfos)
+			appStateBytes, err = slashingTypes.SetGenesisStateToAppState(appStateBytes, valSigningInfoMap)
 			if err != nil {
 				return err
 			}
