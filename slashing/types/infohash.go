@@ -2,9 +2,7 @@ package types
 
 import (
 	"github.com/maticnetwork/bor/rlp"
-	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
-	tmTypes "github.com/tendermint/tendermint/types"
 )
 
 // SortAndRLPEncodeSlashInfos  - RLP encoded slashing infos
@@ -24,17 +22,4 @@ func RLPDecodeSlashInfos(encodedSlashInfo []byte) ([]*hmTypes.ValidatorSlashingI
 	err := rlp.DecodeBytes(encodedSlashInfo, &slashingInfoList)
 	return slashingInfoList, err
 
-}
-
-func RLPDeocdeTickVoteBytes(tickMsgVoteBytes []byte) (tmTypes.CanonicalRLPVote, error) {
-
-	var vote tmTypes.CanonicalRLPVote
-	err := rlp.DecodeBytes(tickMsgVoteBytes, &vote)
-	return vote, err
-}
-
-func RLPDeocdeStdTxBytes(stdTxBytes []byte) (authTypes.StdTx, error) {
-	var stdTx authTypes.StdTx
-	err := rlp.DecodeBytes(stdTxBytes, &stdTx)
-	return stdTx, err
 }

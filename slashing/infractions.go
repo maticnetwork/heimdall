@@ -10,7 +10,7 @@ import (
 )
 
 // HandleValidatorSignature handles a validator signature, must be called once per validator per block.
-func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr []byte, power int64, signed bool) error {
+func (k *Keeper) HandleValidatorSignature(ctx sdk.Context, addr []byte, power int64, signed bool) error {
 	height := ctx.BlockHeight()
 	signerAddress := hmTypes.BytesToHeimdallAddress(addr)
 	k.Logger(ctx).Debug("Processing downtime request for validator", "address", signerAddress, "signed", signed, "power", power)
@@ -104,7 +104,7 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr []byte, power int
 // - the validator does not exist
 // - the signing info does not exist (will panic)
 // - is already jailed
-func (k Keeper) HandleDoubleSign(ctx sdk.Context, evidence types.Equivocation) error {
+func (k *Keeper) HandleDoubleSign(ctx sdk.Context, evidence types.Equivocation) error {
 	consAddr := evidence.GetConsensusAddress()
 	signerAddress := hmTypes.BytesToHeimdallAddress(consAddr)
 

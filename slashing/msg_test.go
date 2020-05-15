@@ -31,16 +31,16 @@ func (suite *KeeperTestSuite) TestMsgTick() {
 	// create msg Tick message
 	msg := slashingTypes.NewMsgTick(
 		hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
-		hmTypes.ZeroHeimdallHash,
+		hmTypes.HexToHexBytes("0xox"),
 	)
 	t.Log(hmTypes.BytesToHeimdallAddress(helper.GetAddress()))
-	t.Log(hmTypes.ZeroHeimdallHash)
+	t.Log(hmTypes.HexToHexBytes("0xox"))
 
 	t.Log(msg.Proposer)
-	t.Log(msg.SlashingInfoHash)
+	t.Log(msg.SlashingInfoBytes)
 
 	t.Log(msg.Proposer.String())
-	t.Log(msg.SlashingInfoHash.String())
+	t.Log(msg.SlashingInfoBytes.String())
 
 	t.Log(hex.EncodeToString(msg.GetSideSignBytes()))
 }

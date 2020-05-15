@@ -1,4 +1,4 @@
-package app
+package slashing_test
 
 import (
 	"encoding/hex"

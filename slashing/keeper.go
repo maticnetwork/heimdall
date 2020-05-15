@@ -53,7 +53,7 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 
 // GetValidatorSigningInfo retruns the ValidatorSigningInfo for a specific validator
 // ConsAddress
-func (k Keeper) GetValidatorSigningInfo(ctx sdk.Context, valID hmTypes.ValidatorID) (info hmTypes.ValidatorSigningInfo, found bool) {
+func (k *Keeper) GetValidatorSigningInfo(ctx sdk.Context, valID hmTypes.ValidatorID) (info hmTypes.ValidatorSigningInfo, found bool) {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.GetValidatorSigningInfoKey(valID.Bytes()))
 	if bz == nil {
@@ -67,20 +67,20 @@ func (k Keeper) GetValidatorSigningInfo(ctx sdk.Context, valID hmTypes.Validator
 
 // HasValidatorSigningInfo returns if a given validator has signing information
 // persited.
-func (k Keeper) HasValidatorSigningInfo(ctx sdk.Context, valID hmTypes.ValidatorID) bool {
+func (k *Keeper) HasValidatorSigningInfo(ctx sdk.Context, valID hmTypes.ValidatorID) bool {
 	_, ok := k.GetValidatorSigningInfo(ctx, valID)
 	return ok
 }
 
 // SetValidatorSigningInfo sets the validator signing info to a consensus address key
-func (k Keeper) SetValidatorSigningInfo(ctx sdk.Context, valID hmTypes.ValidatorID, info hmTypes.ValidatorSigningInfo) {
+func (k *Keeper) SetValidatorSigningInfo(ctx sdk.Context, valID hmTypes.ValidatorID, info hmTypes.ValidatorSigningInfo) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinaryBare(&info)
 	store.Set(types.GetValidatorSigningInfoKey(valID.Bytes()), bz)
 }
 
 // IterateValidatorSigningInfos iterates over the stored ValidatorSigningInfo
-func (k Keeper) IterateValidatorSigningInfos(ctx sdk.Context,
+func (k *Keeper) IterateValidatorSigningInfos(ctx sdk.Context,
 	handler func(valID hmTypes.ValidatorID, info hmTypes.ValidatorSigningInfo) (stop bool)) {
 
 	store := ctx.KVStore(k.storeKey)
@@ -98,7 +98,7 @@ func (k Keeper) IterateValidatorSigningInfos(ctx sdk.Context,
 // signing info bit array
 
 // GetValidatorMissedBlockBitArray gets the bit for the missed blocks array
-func (k Keeper) GetValidatorMissedBlockBitArray(ctx sdk.Context, valID hmTypes.ValidatorID, index int64) bool {
+func (k *Keeper) GetValidatorMissedBlockBitArray(ctx sdk.Context, valID hmTypes.ValidatorID, index int64) bool {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.GetValidatorMissedBlockBitArrayKey(valID.Bytes(), index))
 	var missed gogotypes.BoolValue
@@ -113,7 +113,7 @@ func (k Keeper) GetValidatorMissedBlockBitArray(ctx sdk.Context, valID hmTypes.V
 
 // IterateValidatorMissedBlockBitArray iterates over the signed blocks window
 // and performs a callback function
-func (k Keeper) IterateValidatorMissedBlockBitArray(ctx sdk.Context,
+func (k *Keeper) IterateValidatorMissedBlockBitArray(ctx sdk.Context,
 	valID hmTypes.ValidatorID, handler func(index int64, missed bool) (stop bool)) {
 
 	store := ctx.KVStore(k.storeKey)
@@ -136,14 +136,14 @@ func (k Keeper) IterateValidatorMissedBlockBitArray(ctx sdk.Context,
 
 // SetValidatorMissedBlockBitArray sets the bit that checks if the validator has
 // missed a block in the current window
-func (k Keeper) SetValidatorMissedBlockBitArray(ctx sdk.Context, valID hmTypes.ValidatorID, index int64, missed bool) {
+func (k *Keeper) SetValidatorMissedBlockBitArray(ctx sdk.Context, valID hmTypes.ValidatorID, index int64, missed bool) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinaryBare(&gogotypes.BoolValue{Value: missed})
 	store.Set(types.GetValidatorMissedBlockBitArrayKey(valID.Bytes(), index), bz)
 }
 
 // clearValidatorMissedBlockBitArray deletes every instance of ValidatorMissedBlockBitArray in the store
-func (k Keeper) clearValidatorMissedBlockBitArray(ctx sdk.Context, valID hmTypes.ValidatorID) {
+func (k *Keeper) clearValidatorMissedBlockBitArray(ctx sdk.Context, valID hmTypes.ValidatorID) {
 	store := ctx.KVStore(k.storeKey)
 	iter := sdk.KVStorePrefixIterator(store, types.GetValidatorMissedBlockBitArrayPrefixKey(valID.Bytes()))
 	defer iter.Close()
@@ -153,7 +153,7 @@ func (k Keeper) clearValidatorMissedBlockBitArray(ctx sdk.Context, valID hmTypes
 }
 
 // MinSignedPerWindow - minimum blocks signed per window
-func (k Keeper) MinSignedPerWindow(ctx sdk.Context) int64 {
+func (k *Keeper) MinSignedPerWindow(ctx sdk.Context) int64 {
 	var minSignedPerWindow sdk.Dec
 	params := k.GetParams(ctx)
 	// minSignedPerWindow = percent
@@ -164,80 +164,6 @@ func (k Keeper) MinSignedPerWindow(ctx sdk.Context) int64 {
 	//       less than 1.
 	return minSignedPerWindow.MulInt64(signedBlocksWindow).RoundInt64()
 }
-
-/*
-// AddPubkey sets a address-pubkey relation
-func (k Keeper) AddPubkey(ctx sdk.Context, pubkey crypto.PubKey) {
-	addr := pubkey.Address()
-
-	pkStr, err := sdk.Bech32ifyPubKey(sdk.Bech32PubKeyTypeConsPub, pubkey)
-	if err != nil {
-		panic(fmt.Errorf("error while setting address-pubkey relation: %s", addr))
-	}
-
-	k.setAddrPubkeyRelation(ctx, addr, pkStr)
-}
-
-// GetPubkey returns the pubkey from the adddress-pubkey relation
-func (k Keeper) GetPubkey(ctx sdk.Context, address crypto.Address) (crypto.PubKey, error) {
-	store := ctx.KVStore(k.storeKey)
-
-	var pubkey gogotypes.StringValue
-	err := k.cdc.UnmarshalBinaryBare(store.Get(types.GetAddrPubkeyRelationKey(address)), &pubkey)
-	if err != nil {
-		return nil, fmt.Errorf("address %s not found", sdk.ConsAddress(address))
-	}
-
-	pkStr, err := sdk.GetPubKeyFromBech32(sdk.Bech32PubKeyTypeConsPub, pubkey.Value)
-	if err != nil {
-		return pkStr, err
-	}
-
-	return pkStr, nil
-} */
-
-// Slash attempts to slash a validator. The slash is delegated to the Slashing
-// module to make the necessary validator changes.
-func (k Keeper) Slash(ctx sdk.Context, valID hmTypes.ValidatorID, fraction sdk.Dec, power, distributionHeight int64) {
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			types.EventTypeSlash,
-			sdk.NewAttribute(types.AttributeKeyValID, valID.String()),
-			sdk.NewAttribute(types.AttributeKeyPower, fmt.Sprintf("%d", power)),
-			sdk.NewAttribute(types.AttributeKeyReason, types.AttributeValueDoubleSign),
-		),
-	)
-
-	// k.sk.Slash(ctx, addr, distributionHeight, power, fraction)
-
-}
-
-// Jail attempts to jail a validator. The slash is delegated to the Slashing module
-// to make the necessary validator changes.
-func (k Keeper) Jail(ctx sdk.Context, valID hmTypes.ValidatorID) {
-	// ctx.EventManager().EmitEvent(
-	// 	sdk.NewEvent(
-	// 		types.EventTypeSlash,
-	// 		sdk.NewAttribute(types.AttributeKeyJailed, hmTypes.BytesToHeimdallAddress(addr).String()),
-	// 	),
-	// )
-
-	// k.sk.Jail(ctx, addr)
-}
-
-/*
-func (k Keeper) setAddrPubkeyRelation(ctx sdk.Context, addr crypto.Address, pubkey string) {
-	store := ctx.KVStore(k.storeKey)
-
-	bz := k.cdc.MustMarshalBinaryBare(&gogotypes.StringValue{Value: pubkey})
-	store.Set(types.GetAddrPubkeyRelationKey(addr), bz)
-}
-
-func (k Keeper) deleteAddrPubkeyRelation(ctx sdk.Context, addr crypto.Address) {
-	store := ctx.KVStore(k.storeKey)
-	store.Delete(types.GetAddrPubkeyRelationKey(addr))
-}
-*/
 
 // -----------------------------------------------------------------------------
 // Params
@@ -261,7 +187,11 @@ func (k *Keeper) SlashInterim(ctx sdk.Context, valID hmTypes.ValidatorID, slashP
 		panic(fmt.Errorf("attempted to slash with a negative slash factor: %v", slashPercent))
 	}
 
-	validator, _ := k.sk.GetValidatorFromValID(ctx, valID)
+	validator, found := k.sk.GetValidatorFromValID(ctx, valID)
+	if !found {
+		k.Logger(ctx).Error("Interim slashing the validator. Validator not found", "valID", valID)
+		return uint64(0)
+	}
 	valPower := validator.VotingPower
 
 	slashAmountDec := sdk.NewDec(valPower).Mul(slashPercent)
@@ -378,20 +308,20 @@ func (k *Keeper) GetBufferValSlashingInfo(ctx sdk.Context, valId hmTypes.Validat
 }
 
 // SetBufferValSlashingInfo sets the validator slashing info to a validator ID key
-func (k Keeper) SetBufferValSlashingInfo(ctx sdk.Context, valID hmTypes.ValidatorID, info hmTypes.ValidatorSlashingInfo) {
+func (k *Keeper) SetBufferValSlashingInfo(ctx sdk.Context, valID hmTypes.ValidatorID, info hmTypes.ValidatorSlashingInfo) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinaryBare(&info)
 	store.Set(types.GetBufferValSlashingInfoKey(valID.Bytes()), bz)
 }
 
 // RemoveBufferValSlashingInfo removes the validator slashing info for a validator ID key
-func (k Keeper) RemoveBufferValSlashingInfo(ctx sdk.Context, valID hmTypes.ValidatorID) {
+func (k *Keeper) RemoveBufferValSlashingInfo(ctx sdk.Context, valID hmTypes.ValidatorID) {
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(types.GetBufferValSlashingInfoKey(valID.Bytes()))
 }
 
 // IterateBufferValSlashingInfos iterates over the stored ValidatorSlashingInfo
-func (k Keeper) IterateBufferValSlashingInfos(ctx sdk.Context,
+func (k *Keeper) IterateBufferValSlashingInfos(ctx sdk.Context,
 	handler func(slashingInfo hmTypes.ValidatorSlashingInfo) (stop bool)) {
 
 	store := ctx.KVStore(k.storeKey)
@@ -437,7 +367,12 @@ func (k *Keeper) IterateBufferValSlashingInfosAndApplyFn(ctx sdk.Context, f func
 	// loop through validators to get valid validators
 	for ; iterator.Valid(); iterator.Next() {
 		// unmarshall validator
-		slashingInfo, _ := hmTypes.UnmarshallValSlashingInfo(k.cdc, iterator.Value())
+		slashingInfo, err := hmTypes.UnmarshallValSlashingInfo(k.cdc, iterator.Value())
+		if err != nil {
+			k.Logger(ctx).Error("Error unmarshalling val slashing info")
+			return err
+		}
+
 		// call function and return if required
 		if err := f(slashingInfo); err != nil {
 			return err
@@ -459,7 +394,7 @@ func (k *Keeper) GetBufferValSlashingInfos(ctx sdk.Context) (valSlashingInfos []
 	return
 }
 
-func (k Keeper) UpdateTotalSlashedAmount(ctx sdk.Context, slashedAmount uint64) {
+func (k *Keeper) UpdateTotalSlashedAmount(ctx sdk.Context, slashedAmount uint64) {
 	store := ctx.KVStore(k.storeKey)
 	current := k.GetTotalSlashedAmount(ctx)
 	updated := current + slashedAmount
@@ -497,20 +432,20 @@ func (k *Keeper) GetTickValSlashingInfos(ctx sdk.Context) (valSlashingInfos []*h
 }
 
 // SetTickValSlashingInfo sets the validator slashing info to a validator ID key
-func (k Keeper) SetTickValSlashingInfo(ctx sdk.Context, valID hmTypes.ValidatorID, info hmTypes.ValidatorSlashingInfo) {
+func (k *Keeper) SetTickValSlashingInfo(ctx sdk.Context, valID hmTypes.ValidatorID, info hmTypes.ValidatorSlashingInfo) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinaryBare(&info)
 	store.Set(types.GetTickValSlashingInfoKey(valID.Bytes()), bz)
 }
 
 // RemoveTickValSlashingInfo removes the validator slashing info for a validator ID key
-func (k Keeper) RemoveTickValSlashingInfo(ctx sdk.Context, valID hmTypes.ValidatorID) {
+func (k *Keeper) RemoveTickValSlashingInfo(ctx sdk.Context, valID hmTypes.ValidatorID) {
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(types.GetTickValSlashingInfoKey(valID.Bytes()))
 }
 
 // IterateTickValSlashingInfos iterates over the stored ValidatorSlashingInfo
-func (k Keeper) IterateTickValSlashingInfos(ctx sdk.Context,
+func (k *Keeper) IterateTickValSlashingInfos(ctx sdk.Context,
 	handler func(slashingInfo hmTypes.ValidatorSlashingInfo) (stop bool)) {
 
 	store := ctx.KVStore(k.storeKey)
