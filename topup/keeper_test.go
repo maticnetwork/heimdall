@@ -10,6 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/types/simulation"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -50,14 +51,10 @@ func (suite *KeeperTestSuite) TestDividendAccount() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 
 	dividendAccount := types.DividendAccount{
-		ID:        types.NewDividendAccountID(1),
+		User:      hmTypes.BytesToHeimdallAddress([]byte("some-address")),
 		FeeAmount: big.NewInt(0).String(),
 	}
 	app.TopupKeeper.AddDividendAccount(ctx, dividendAccount)
-	ok := app.TopupKeeper.CheckIfDividendAccountExists(ctx, dividendAccount.ID)
+	ok := app.TopupKeeper.CheckIfDividendAccountExists(ctx, dividendAccount.User)
 	require.Equal(t, ok, true)
-
-	dividendAccountInStore, _ := app.TopupKeeper.GetDividendAccountByID(ctx, dividendAccount.ID)
-
-	require.Equal(t, dividendAccount, dividendAccountInStore)
 }
