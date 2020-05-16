@@ -47,5 +47,5 @@ func TestSlashingInfoRLPDecoding(t *testing.T) {
 	// decoding input
 	slashInfos, err := slashingTypes.RLPDecodeSlashInfos(slashInfoEncodedBytes)
 	require.Empty(t, err)
-	t.Log("RLP decoded data", "slashInfos", slashInfos)
+	t.Log("RLP decoded data", "slashInfos - ", slashInfos)
 }
