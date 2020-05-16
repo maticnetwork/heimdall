@@ -57,7 +57,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpoint() {
 	maxSize := uint64(256)
 	params := keeper.GetParams(ctx)
 	dividendAccount := hmTypes.DividendAccount{
-		ID:        hmTypes.NewDividendAccountID(1),
+		User:      hmTypes.HexToHeimdallAddress("123"),
 		FeeAmount: big.NewInt(0).String(),
 	}
 	topupKeeper.AddDividendAccount(ctx, dividendAccount)
@@ -100,7 +100,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointWithInvalidProposer() {
 	maxSize := uint64(256)
 	params := keeper.GetParams(ctx)
 	dividendAccount := hmTypes.DividendAccount{
-		ID:        hmTypes.NewDividendAccountID(1),
+		User:      hmTypes.HexToHeimdallAddress("123"),
 		FeeAmount: big.NewInt(0).String(),
 	}
 	topupKeeper.AddDividendAccount(ctx, dividendAccount)
@@ -134,7 +134,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointAfterBufferTimeOut() {
 	params := keeper.GetParams(ctx)
 	checkpointBufferTime := params.CheckpointBufferTime
 	dividendAccount := hmTypes.DividendAccount{
-		ID:        hmTypes.NewDividendAccountID(1),
+		User:      hmTypes.HexToHeimdallAddress("123"),
 		FeeAmount: big.NewInt(0).String(),
 	}
 	topupKeeper.AddDividendAccount(ctx, dividendAccount)
@@ -178,7 +178,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointExistInBuffer() {
 	maxSize := uint64(256)
 	params := keeper.GetParams(ctx)
 	dividendAccount := hmTypes.DividendAccount{
-		ID:        hmTypes.NewDividendAccountID(1),
+		User:      hmTypes.HexToHeimdallAddress("123"),
 		FeeAmount: big.NewInt(0).String(),
 	}
 	topupKeeper.AddDividendAccount(ctx, dividendAccount)
@@ -216,7 +216,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointAck() {
 	maxSize := uint64(256)
 	params := keeper.GetParams(ctx)
 	dividendAccount := hmTypes.DividendAccount{
-		ID:        hmTypes.NewDividendAccountID(1),
+		User:      hmTypes.HexToHeimdallAddress("123"),
 		FeeAmount: big.NewInt(0).String(),
 	}
 	topupKeeper.AddDividendAccount(ctx, dividendAccount)
@@ -283,7 +283,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointNoAck() {
 	checkpointBufferTime := params.CheckpointBufferTime
 
 	dividendAccount := hmTypes.DividendAccount{
-		ID:        hmTypes.NewDividendAccountID(1),
+		User:      hmTypes.HexToHeimdallAddress("123"),
 		FeeAmount: big.NewInt(0).String(),
 	}
 	topupKeeper.AddDividendAccount(ctx, dividendAccount)
@@ -325,7 +325,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointNoAckBeforeBufferTimeout()
 	maxSize := uint64(256)
 	params := keeper.GetParams(ctx)
 	dividendAccount := hmTypes.DividendAccount{
-		ID:        hmTypes.NewDividendAccountID(1),
+		User:      hmTypes.HexToHeimdallAddress("123"),
 		FeeAmount: big.NewInt(0).String(),
 	}
 	topupKeeper.AddDividendAccount(ctx, dividendAccount)
