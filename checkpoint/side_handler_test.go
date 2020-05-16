@@ -10,6 +10,7 @@ import (
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/checkpoint/types"
+	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/helper/mocks"
@@ -66,63 +67,141 @@ func (suite *SideHandlerTestSuite) TestSideHandler() {
 func (suite *SideHandlerTestSuite) TestSideHandleMsgCheckpoint() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	keeper := app.CheckpointKeeper
-	// stakingKeeper := app.StakingKeeper
+
 	start := uint64(0)
 	maxSize := uint64(256)
 	params := keeper.GetParams(ctx)
 
-	header, err := suite.GenRandCheckpointHeader(start, maxSize, params.MaxCheckpointLength)
+	header, err := cmn.GenRandCheckpointHeader(start, maxSize, params.MaxCheckpointLength)
 	require.NoError(t, err)
 	borChainId := "1234"
-	// create checkpoint msg
-	msgCheckpoint := types.NewMsgCheckpointBlock(
-		header.Proposer,
-		header.StartBlock,
-		header.EndBlock,
-		header.RootHash,
-		header.RootHash,
-		borChainId,
-	)
+	suite.Run("Success", func() {
+		suite.contractCaller = mocks.IContractCaller{}
 
-	suite.contractCaller.On("CheckIfBlocksExist", header.EndBlock).Return(true)
-	suite.contractCaller.On("GetRootHash", header.StartBlock, header.EndBlock, uint64(1024)).Return(header.RootHash.Bytes(), nil)
+		// create checkpoint msg
+		msgCheckpoint := types.NewMsgCheckpointBlock(
+			header.Proposer,
+			header.StartBlock,
+			header.EndBlock,
+			header.RootHash,
+			header.RootHash,
+			borChainId,
+		)
 
-	result := suite.sideHandler(ctx, msgCheckpoint)
-	require.Equal(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should be success")
+		suite.contractCaller.On("CheckIfBlocksExist", header.EndBlock).Return(true)
+		suite.contractCaller.On("GetRootHash", header.StartBlock, header.EndBlock, uint64(1024)).Return(header.RootHash.Bytes(), nil)
 
-	bufferedHeader, _ := keeper.GetCheckpointFromBuffer(ctx)
-	require.Nil(t, bufferedHeader, "Should not store state")
+		result := suite.sideHandler(ctx, msgCheckpoint)
+		require.Equal(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should be success")
+
+		bufferedHeader, _ := keeper.GetCheckpointFromBuffer(ctx)
+		require.Nil(t, bufferedHeader, "Should not store state")
+	})
+
+	suite.Run("No Roothash", func() {
+		suite.contractCaller = mocks.IContractCaller{}
+
+		// create checkpoint msg
+		msgCheckpoint := types.NewMsgCheckpointBlock(
+			header.Proposer,
+			header.StartBlock,
+			header.EndBlock,
+			header.RootHash,
+			header.RootHash,
+			borChainId,
+		)
+
+		suite.contractCaller.On("CheckIfBlocksExist", header.EndBlock).Return(true)
+		suite.contractCaller.On("GetRootHash", header.StartBlock, header.EndBlock, uint64(1024)).Return(nil, nil)
+
+		result := suite.sideHandler(ctx, msgCheckpoint)
+		require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should Fail")
+		require.Equal(t, abci.SideTxResultType_Skip, result.Result, "Result should be `skip`")
+		require.Equal(t, uint32(common.CodeInvalidBlockInput), result.Code)
+
+		bufferedHeader, _ := keeper.GetCheckpointFromBuffer(ctx)
+		require.Nil(t, bufferedHeader, "Should not store state")
+	})
+
+	suite.Run("invalid checkpoint", func() {
+		suite.contractCaller = mocks.IContractCaller{}
+
+		// create checkpoint msg
+		msgCheckpoint := types.NewMsgCheckpointBlock(
+			header.Proposer,
+			header.StartBlock,
+			header.EndBlock,
+			header.RootHash,
+			header.RootHash,
+			borChainId,
+		)
+
+		suite.contractCaller.On("CheckIfBlocksExist", header.EndBlock).Return(true)
+		suite.contractCaller.On("GetRootHash", header.StartBlock, header.EndBlock, uint64(1024)).Return([]byte{1}, nil)
+
+		result := suite.sideHandler(ctx, msgCheckpoint)
+		require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should fail")
+		require.Equal(t, uint32(common.CodeInvalidBlockInput), result.Code)
+	})
+
 }
 
-func (suite *SideHandlerTestSuite) TestHandleMsgCheckpointAck() {
+func (suite *SideHandlerTestSuite) TestSideHandleMsgCheckpointAck() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	keeper := app.CheckpointKeeper
 	start := uint64(0)
 	maxSize := uint64(256)
 	params := keeper.GetParams(ctx)
 
-	header, _ := suite.GenRandCheckpointHeader(start, maxSize, params.MaxCheckpointLength)
+	header, _ := cmn.GenRandCheckpointHeader(start, maxSize, params.MaxCheckpointLength)
 	headerId := uint64(1)
+	suite.Run("Success", func() {
+		suite.contractCaller = mocks.IContractCaller{}
 
-	// prepare ack msg
-	msgCheckpointAck := types.NewMsgCheckpointAck(
-		hmTypes.HexToHeimdallAddress("123"),
-		uint64(1),
-		header.Proposer,
-		header.StartBlock,
-		header.EndBlock,
-		header.RootHash,
-		hmTypes.HexToHeimdallHash("123123"),
-		uint64(1),
-	)
-	rootchainInstance := &rootchain.Rootchain{}
+		// prepare ack msg
+		msgCheckpointAck := types.NewMsgCheckpointAck(
+			hmTypes.HexToHeimdallAddress("123"),
+			uint64(1),
+			header.Proposer,
+			header.StartBlock,
+			header.EndBlock,
+			header.RootHash,
+			hmTypes.HexToHeimdallHash("123123"),
+			uint64(1),
+		)
+		rootchainInstance := &rootchain.Rootchain{}
 
-	suite.contractCaller.On("GetRootChainInstance", mock.Anything).Return(rootchainInstance, nil)
-	suite.contractCaller.On("GetHeaderInfo", headerId, rootchainInstance).Return(header.RootHash.EthHash(), header.StartBlock, header.EndBlock, header.TimeStamp, header.Proposer, nil)
+		suite.contractCaller.On("GetRootChainInstance", mock.Anything).Return(rootchainInstance, nil)
+		suite.contractCaller.On("GetHeaderInfo", headerId, rootchainInstance).Return(header.RootHash.EthHash(), header.StartBlock, header.EndBlock, header.TimeStamp, header.Proposer, nil)
 
-	result := suite.sideHandler(ctx, msgCheckpointAck)
-	require.Equal(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should be success")
-	require.Equal(t, abci.SideTxResultType_Yes, result.Result, "Result should be `yes`")
+		result := suite.sideHandler(ctx, msgCheckpointAck)
+		require.Equal(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should be success")
+		require.Equal(t, abci.SideTxResultType_Yes, result.Result, "Result should be `yes`")
+	})
+
+	suite.Run("No HeaderInfo", func() {
+		suite.contractCaller = mocks.IContractCaller{}
+
+		// prepare ack msg
+		msgCheckpointAck := types.NewMsgCheckpointAck(
+			hmTypes.HexToHeimdallAddress("123"),
+			uint64(1),
+			header.Proposer,
+			header.StartBlock,
+			header.EndBlock,
+			hmTypes.HexToHeimdallHash("123"),
+			hmTypes.HexToHeimdallHash("123123"),
+			uint64(1),
+		)
+		rootchainInstance := &rootchain.Rootchain{}
+
+		suite.contractCaller.On("GetRootChainInstance", mock.Anything).Return(rootchainInstance, nil)
+		suite.contractCaller.On("GetHeaderInfo", headerId, rootchainInstance).Return(nil, header.StartBlock, header.EndBlock, header.TimeStamp, header.Proposer, nil)
+
+		result := suite.sideHandler(ctx, msgCheckpointAck)
+		require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should fail")
+		require.Equal(t, abci.SideTxResultType_Skip, result.Result, "Result should skip")
+	})
 }
 
 func (suite *SideHandlerTestSuite) TestPostHandler() {
@@ -158,7 +237,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgCheckpoint() {
 		start = start + lastCheckpoint.EndBlock + 1
 	}
 
-	header, err := suite.GenRandCheckpointHeader(start, maxSize, params.MaxCheckpointLength)
+	header, err := cmn.GenRandCheckpointHeader(start, maxSize, params.MaxCheckpointLength)
 
 	// add current proposer to header
 	header.Proposer = stakingKeeper.GetValidatorSet(ctx).Proposer.Signer
@@ -198,10 +277,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgCheckpointAck() {
 	start := uint64(0)
 	maxSize := uint64(256)
 	params := keeper.GetParams(ctx)
-	header, _ := suite.GenRandCheckpointHeader(start, maxSize, params.MaxCheckpointLength)
-
-	// add current proposer to header
-	// header.Proposer = stakingKeeper.GetValidatorSet(ctx).Proposer.Signer
+	header, _ := cmn.GenRandCheckpointHeader(start, maxSize, params.MaxCheckpointLength)
 
 	// send ack
 	headerId := uint64(1)
@@ -224,28 +300,4 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgCheckpointAck() {
 	suite.postHandler(ctx, msgCheckpointAck, abci.SideTxResultType_Yes)
 	afterAckBufferedHeader, _ := keeper.GetCheckpointFromBuffer(ctx)
 	require.Nil(t, afterAckBufferedHeader)
-}
-
-//TODO: make it reusable
-// GenRandCheckpointHeader create random header block
-func (suite *SideHandlerTestSuite) GenRandCheckpointHeader(start uint64, headerSize uint64, maxCheckpointLenght uint64) (headerBlock hmTypes.CheckpointBlockHeader, err error) {
-	app, ctx := suite.app, suite.ctx
-
-	topupKeeper := app.TopupKeeper
-	end := start + headerSize
-	borChainID := "1234"
-
-	dividendAccounts := topupKeeper.GetAllDividendAccounts(ctx)
-	accRootHash, err := types.GetAccountRootHash(dividendAccounts)
-	rootHash := hmTypes.BytesToHeimdallHash(accRootHash)
-	proposer := hmTypes.HeimdallAddress{}
-	headerBlock = hmTypes.CreateBlock(
-		start,
-		end,
-		rootHash,
-		proposer,
-		borChainID,
-		uint64(time.Now().UTC().Unix()))
-
-	return headerBlock, nil
 }

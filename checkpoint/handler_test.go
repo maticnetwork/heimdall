@@ -10,14 +10,11 @@ import (
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/checkpoint/types"
 	errs "github.com/maticnetwork/heimdall/common"
-	"github.com/maticnetwork/heimdall/contracts/rootchain"
-	"github.com/maticnetwork/heimdall/helper"
 	cmn "github.com/maticnetwork/heimdall/test"
 
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/helper/mocks"
 	hmTypes "github.com/maticnetwork/heimdall/types"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -47,6 +44,14 @@ func TestHandlerTestSuite(t *testing.T) {
 	suite.Run(t, new(HandlerTestSuite))
 }
 
+func (suite *HandlerTestSuite) TestHandler() {
+	t, ctx := suite.T(), suite.ctx
+
+	// side handler
+	result := suite.handler(ctx, nil)
+	require.False(t, result.IsOK(), "Handler should fail")
+}
+
 // test handler for message
 func (suite *HandlerTestSuite) TestHandleMsgCheckpoint() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
@@ -55,6 +60,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpoint() {
 	topupKeeper := app.TopupKeeper
 	start := uint64(0)
 	maxSize := uint64(256)
+	borChainId := "1234"
 	params := keeper.GetParams(ctx)
 	dividendAccount := hmTypes.DividendAccount{
 		User:      hmTypes.HexToHeimdallAddress("123"),
@@ -72,56 +78,47 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpoint() {
 		start = start + lastCheckpoint.EndBlock + 1
 	}
 
-	header, err := suite.GenRandCheckpointHeader(start, maxSize, params.MaxCheckpointLength)
+	header, err := cmn.GenRandCheckpointHeader(start, maxSize, params.MaxCheckpointLength)
 
 	// add current proposer to header
 	header.Proposer = stakingKeeper.GetValidatorSet(ctx).Proposer.Signer
 
-	// make sure proposer has min ether
-	suite.contractCaller.On("GetBalance", stakingKeeper.GetValidatorSet(ctx).Proposer.Signer).Return(helper.MinBalance, nil)
+	dividendAccounts := topupKeeper.GetAllDividendAccounts(ctx)
+	accRootHash, err := types.GetAccountRootHash(dividendAccounts)
+	require.NoError(t, err)
+	accountRoot := hmTypes.BytesToHeimdallHash(accRootHash)
+	suite.Run("Success", func() {
+		msgCheckpoint := types.NewMsgCheckpointBlock(
+			header.Proposer,
+			header.StartBlock,
+			header.EndBlock,
+			header.RootHash,
+			accountRoot,
+			borChainId,
+		)
 
-	got := suite.SendCheckpoint(header)
-	require.True(t, got.IsOK(), "expected send-checkpoint to be ok, got %v", got)
-	bufferedHeader, err := keeper.GetCheckpointFromBuffer(ctx)
-	require.Equal(t, bufferedHeader.StartBlock, header.StartBlock)
-	require.Equal(t, bufferedHeader.EndBlock, header.EndBlock)
-	require.Equal(t, bufferedHeader.RootHash, header.RootHash)
-	require.Equal(t, bufferedHeader.Proposer, header.Proposer)
-	require.Equal(t, bufferedHeader.BorChainID, header.BorChainID)
-	require.Empty(t, err, "Unable to set checkpoint from buffer, Error: %v", err)
-}
+		// send checkpoint to handler
+		got := suite.handler(ctx, msgCheckpoint)
+		require.True(t, got.IsOK(), "expected send-checkpoint to be ok, got %v", got)
+		bufferedHeader, _ := keeper.GetCheckpointFromBuffer(ctx)
+		require.Empty(t, bufferedHeader, "Should not store state")
+	})
 
-func (suite *HandlerTestSuite) TestHandleMsgCheckpointWithInvalidProposer() {
-	t, app, ctx := suite.T(), suite.app, suite.ctx
-	keeper := app.CheckpointKeeper
-	stakingKeeper := app.StakingKeeper
-	topupKeeper := app.TopupKeeper
-	start := uint64(0)
-	maxSize := uint64(256)
-	params := keeper.GetParams(ctx)
-	dividendAccount := hmTypes.DividendAccount{
-		User:      hmTypes.HexToHeimdallAddress("123"),
-		FeeAmount: big.NewInt(0).String(),
-	}
-	topupKeeper.AddDividendAccount(ctx, dividendAccount)
+	suite.Run("Invalid Proposer", func() {
+		header.Proposer = hmTypes.HexToHeimdallAddress("1234")
+		msgCheckpoint := types.NewMsgCheckpointBlock(
+			header.Proposer,
+			header.StartBlock,
+			header.EndBlock,
+			header.RootHash,
+			accountRoot,
+			borChainId,
+		)
 
-	// check invalid proposer
-	// generate proposer for validator set
-	cmn.LoadValidatorSet(2, t, stakingKeeper, ctx, false, 10)
-	stakingKeeper.IncrementAccum(ctx, 1)
-
-	lastCheckpoint, err := keeper.GetLastCheckpoint(ctx)
-	if err == nil {
-		start = start + lastCheckpoint.EndBlock + 1
-	}
-
-	header, err := suite.GenRandCheckpointHeader(start, maxSize, params.MaxCheckpointLength)
-
-	// add wrong proposer to header
-	header.Proposer = hmTypes.HexToHeimdallAddress("1234")
-
-	got := suite.SendCheckpoint(header)
-	require.True(t, !got.IsOK(), errs.CodeToDefaultMsg(got.Code))
+		// send checkpoint to handler
+		got := suite.handler(ctx, msgCheckpoint)
+		require.True(t, !got.IsOK(), errs.CodeToDefaultMsg(got.Code))
+	})
 }
 
 func (suite *HandlerTestSuite) TestHandleMsgCheckpointAfterBufferTimeOut() {
@@ -147,12 +144,10 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointAfterBufferTimeOut() {
 		start = start + lastCheckpoint.EndBlock + 1
 	}
 
-	header, err := suite.GenRandCheckpointHeader(start, maxSize, params.MaxCheckpointLength)
+	header, err := cmn.GenRandCheckpointHeader(start, maxSize, params.MaxCheckpointLength)
+
 	// add current proposer to header
 	header.Proposer = stakingKeeper.GetValidatorSet(ctx).Proposer.Signer
-
-	// make sure proposer has min ether
-	suite.contractCaller.On("GetBalance", header.Proposer).Return(helper.MinBalance, nil)
 
 	// send old checkpoint
 	res := suite.SendCheckpoint(header)
@@ -190,12 +185,10 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointExistInBuffer() {
 		start = start + lastCheckpoint.EndBlock + 1
 	}
 
-	header, err := suite.GenRandCheckpointHeader(start, maxSize, params.MaxCheckpointLength)
+	header, err := cmn.GenRandCheckpointHeader(start, maxSize, params.MaxCheckpointLength)
+
 	// add current proposer to header
 	header.Proposer = stakingKeeper.GetValidatorSet(ctx).Proposer.Signer
-
-	// make sure proposer has min ether
-	suite.contractCaller.On("GetBalance", header.Proposer).Return(helper.MinBalance, nil)
 
 	// send old checkpoint
 	res := suite.SendCheckpoint(header)
@@ -231,13 +224,10 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointAck() {
 		start = start + lastCheckpoint.EndBlock + 1
 	}
 
-	header, err := suite.GenRandCheckpointHeader(start, maxSize, params.MaxCheckpointLength)
+	header, err := cmn.GenRandCheckpointHeader(start, maxSize, params.MaxCheckpointLength)
 
 	// add current proposer to header
 	header.Proposer = stakingKeeper.GetValidatorSet(ctx).Proposer.Signer
-
-	// make sure proposer has min ether
-	suite.contractCaller.On("GetBalance", stakingKeeper.GetValidatorSet(ctx).Proposer.Signer).Return(helper.MinBalance, nil)
 
 	got := suite.SendCheckpoint(header)
 	require.True(t, got.IsOK(), "expected send-checkpoint to be ok, got %v", got)
@@ -247,29 +237,54 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointAck() {
 
 	// send ack
 	headerId := uint64(1)
+	suite.Run("success", func() {
+		msgCheckpointAck := types.NewMsgCheckpointAck(
+			hmTypes.HexToHeimdallAddress("123"),
+			headerId,
+			header.Proposer,
+			header.StartBlock,
+			header.EndBlock,
+			header.RootHash,
+			hmTypes.HexToHeimdallHash("123123"),
+			uint64(1),
+		)
+		result := suite.handler(ctx, msgCheckpointAck)
+		require.True(t, result.IsOK(), "expected send-ack to be ok, got %v", result)
+		afterAckBufferedHeader, _ := keeper.GetCheckpointFromBuffer(ctx)
+		require.NotNil(t, afterAckBufferedHeader, "should not remove from buffer")
+	})
 
-	msgCheckpointAck := types.NewMsgCheckpointAck(
-		hmTypes.HexToHeimdallAddress("123"),
-		headerId,
-		header.Proposer,
-		header.StartBlock,
-		header.EndBlock,
-		header.RootHash,
-		hmTypes.HexToHeimdallHash("123123"),
-		uint64(1),
-	)
-	rootchainInstance := &rootchain.Rootchain{}
+	suite.Run("Invalid start", func() {
+		msgCheckpointAck := types.NewMsgCheckpointAck(
+			hmTypes.HexToHeimdallAddress("123"),
+			headerId,
+			header.Proposer,
+			uint64(123),
+			header.EndBlock,
+			header.RootHash,
+			hmTypes.HexToHeimdallHash("123123"),
+			uint64(1),
+		)
 
-	suite.contractCaller.On("GetRootChainInstance", mock.Anything).Return(rootchainInstance, nil)
-	suite.contractCaller.On("GetHeaderInfo", headerId, rootchainInstance).Return(header.RootHash.EthHash(), header.StartBlock, header.EndBlock, header.TimeStamp, header.Proposer, nil)
+		got := suite.handler(ctx, msgCheckpointAck)
+		require.True(t, !got.IsOK(), errs.CodeToDefaultMsg(got.Code))
+	})
 
-	result := suite.handler(ctx, msgCheckpointAck)
-	require.True(t, result.IsOK(), "expected send-ack to be ok, got %v", result)
+	suite.Run("Invalid Roothash", func() {
+		msgCheckpointAck := types.NewMsgCheckpointAck(
+			hmTypes.HexToHeimdallAddress("123"),
+			headerId,
+			header.Proposer,
+			header.StartBlock,
+			header.EndBlock,
+			hmTypes.HexToHeimdallHash("9887"),
+			hmTypes.HexToHeimdallHash("123123"),
+			uint64(1),
+		)
 
-	sideResult := suite.sideHandler(ctx, msgCheckpointAck)
-	suite.postHandler(ctx, msgCheckpointAck, sideResult.Result)
-	afterAckBufferedHeader, err := keeper.GetCheckpointFromBuffer(ctx)
-	require.Nil(t, afterAckBufferedHeader)
+		got := suite.handler(ctx, msgCheckpointAck)
+		require.True(t, !got.IsOK(), errs.CodeToDefaultMsg(got.Code))
+	})
 }
 
 func (suite *HandlerTestSuite) TestHandleMsgCheckpointNoAck() {
@@ -298,13 +313,10 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointNoAck() {
 		start = start + lastCheckpoint.EndBlock + 1
 	}
 
-	header, err := suite.GenRandCheckpointHeader(start, maxSize, params.MaxCheckpointLength)
+	header, err := cmn.GenRandCheckpointHeader(start, maxSize, params.MaxCheckpointLength)
 
 	// add current proposer to header
 	header.Proposer = stakingKeeper.GetValidatorSet(ctx).Proposer.Signer
-
-	// make sure proposer has min ether
-	suite.contractCaller.On("GetBalance", stakingKeeper.GetValidatorSet(ctx).Proposer.Signer).Return(helper.MinBalance, nil)
 
 	got := suite.SendCheckpoint(header)
 	require.True(t, got.IsOK(), "expected send-NoAck to be ok, got %v", got)
@@ -340,42 +352,16 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointNoAckBeforeBufferTimeout()
 		start = start + lastCheckpoint.EndBlock + 1
 	}
 
-	header, err := suite.GenRandCheckpointHeader(start, maxSize, params.MaxCheckpointLength)
+	header, err := cmn.GenRandCheckpointHeader(start, maxSize, params.MaxCheckpointLength)
 
 	// add current proposer to header
 	header.Proposer = stakingKeeper.GetValidatorSet(ctx).Proposer.Signer
-
-	// make sure proposer has min ether
-	suite.contractCaller.On("GetBalance", stakingKeeper.GetValidatorSet(ctx).Proposer.Signer).Return(helper.MinBalance, nil)
 
 	got := suite.SendCheckpoint(header)
 	require.True(t, got.IsOK(), "expected send-checkpoint to be ok, got %v", got)
 
 	result := suite.SendNoAck()
 	require.True(t, !result.IsOK(), errs.CodeToDefaultMsg(result.Code))
-}
-
-// GenRandCheckpointHeader create random header block
-func (suite *HandlerTestSuite) GenRandCheckpointHeader(start uint64, headerSize uint64, maxCheckpointLenght uint64) (headerBlock hmTypes.CheckpointBlockHeader, err error) {
-	app, ctx := suite.app, suite.ctx
-
-	topupKeeper := app.TopupKeeper
-	end := start + headerSize
-	borChainID := "1234"
-
-	dividendAccounts := topupKeeper.GetAllDividendAccounts(ctx)
-	accRootHash, err := types.GetAccountRootHash(dividendAccounts)
-	rootHash := hmTypes.BytesToHeimdallHash(accRootHash)
-	proposer := hmTypes.HeimdallAddress{}
-	headerBlock = hmTypes.CreateBlock(
-		start,
-		end,
-		rootHash,
-		proposer,
-		borChainID,
-		uint64(time.Now().UTC().Unix()))
-
-	return headerBlock, nil
 }
 
 func (suite *HandlerTestSuite) SendCheckpoint(header hmTypes.CheckpointBlockHeader) (res sdk.Result) {
@@ -400,7 +386,7 @@ func (suite *HandlerTestSuite) SendCheckpoint(header hmTypes.CheckpointBlockHead
 	)
 
 	suite.contractCaller.On("CheckIfBlocksExist", header.EndBlock).Return(true)
-	suite.contractCaller.On("GetRootHash", header.StartBlock, header.EndBlock, uint64(1024)).Return(accRootHash, nil)
+	suite.contractCaller.On("GetRootHash", header.StartBlock, header.EndBlock, uint64(1024)).Return(header.RootHash.Bytes(), nil)
 
 	// send checkpoint to handler
 	result := suite.handler(ctx, msgCheckpoint)
