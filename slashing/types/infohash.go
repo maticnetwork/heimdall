@@ -11,7 +11,7 @@ import (
 
 type ModifiedSlashInfo struct {
 	ID            hmTypes.ValidatorID `json:"ID"`
-	SlashedAmount string              `json:"SlashedAmount"`
+	SlashedAmount *big.Int            `json:"SlashedAmount"`
 	IsJailed      bool                `json:"IsJailed"`
 }
 
@@ -52,7 +52,7 @@ func slashInfoToModified(slashInfo *hmTypes.ValidatorSlashingInfo) (modifiedSlas
 	// convert slashing amount to 10^18. required for contracts.
 	modifiedSlashInfo = &ModifiedSlashInfo{
 		ID:            slashInfo.ID,
-		SlashedAmount: amount.String(),
+		SlashedAmount: amount,
 		IsJailed:      slashInfo.IsJailed,
 	}
 
@@ -79,7 +79,7 @@ func RLPDecodeSlashInfos(encodedSlashInfo []byte) ([]*hmTypes.ValidatorSlashingI
 }
 
 func modifiedToSlashInfo(modifiedSlashInfo *ModifiedSlashInfo) (slashInfo *hmTypes.ValidatorSlashingInfo, err error) {
-	amount, _ := big.NewInt(0).SetString(modifiedSlashInfo.SlashedAmount, 10)
+	amount := modifiedSlashInfo.SlashedAmount
 	power, err := helper.GetPowerFromAmount(amount)
 	if err != nil {
 		return slashInfo, err

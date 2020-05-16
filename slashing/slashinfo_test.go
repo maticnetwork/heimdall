@@ -40,7 +40,7 @@ func TestSlashingInfoRLPEncoding(t *testing.T) {
 
 func TestSlashingInfoRLPDecoding(t *testing.T) {
 	// input data
-	slashInfoEncodedBytesStr := "f3d901963130303030303030303030303030303030303030303080d8029532333430303030303030303030303030303030303001"
+	slashInfoEncodedBytesStr := "dacc01893635c9adc5dea0000080cc02890caf6700370168000001"
 	slashInfoEncodedBytes, err := hex.DecodeString(slashInfoEncodedBytesStr)
 	require.Empty(t, err)
 
