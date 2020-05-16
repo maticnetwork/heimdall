@@ -118,8 +118,7 @@ func NewPostTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.P
 		case types.MsgCheckpointAck:
 			return PostHandleMsgCheckpointAck(ctx, k, msg, sideTxResult)
 		default:
-			errMsg := "Unrecognized checkpoint Msg type: %s" + msg.Type()
-			return sdk.ErrUnknownRequest(errMsg).Result()
+			return sdk.ErrUnknownRequest("Unrecognized checkpoint Msg type").Result()
 		}
 	}
 }
