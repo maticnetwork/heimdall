@@ -381,6 +381,9 @@ func (suite *AnteTestSuite) TestFees() {
 
 	require.True(sdk.IntEq(t, happ.SupplyKeeper.GetModuleAccount(ctx, types.FeeCollectorName).GetCoins().AmountOf(authTypes.FeeToken), amt))
 	require.True(sdk.IntEq(t, happ.AccountKeeper.GetAccount(ctx, hmTypes.AccAddressToHeimdallAddress(addr1)).GetCoins().AmountOf(authTypes.FeeToken), sdk.NewInt(0)))
+
+	// try to send tx again
+	checkInvalidTx(t, anteHandler, ctx, tx, false, sdk.CodeInsufficientFunds)
 }
 
 //
