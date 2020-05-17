@@ -119,7 +119,7 @@ func GetLastNoACK(cdc *codec.Codec) *cobra.Command {
 			}
 
 			var lastNoAck uint64
-			if err := cliCtx.Codec.UnmarshalJSON(res, &lastNoAck); err != nil {
+			if err := json.Unmarshal(res, &lastNoAck); err != nil {
 				return err
 			}
 
