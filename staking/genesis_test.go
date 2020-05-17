@@ -1,7 +1,6 @@
 package staking_test
 
 import (
-	"math/big"
 	"math/rand"
 	"strconv"
 	"testing"
@@ -44,7 +43,6 @@ func (suite *GenesisTestSuite) TestInitExportGenesis() {
 
 	stakingSequence := make([]string, n)
 	accounts := simulation.RandomAccounts(r1, n)
-	dividendAccounts := make([]hmTypes.DividendAccount, n)
 
 	for i, _ := range stakingSequence {
 		stakingSequence[i] = strconv.Itoa(simulation.RandIntBetween(r1, 1000, 100000))
@@ -61,11 +59,6 @@ func (suite *GenesisTestSuite) TestInitExportGenesis() {
 			int64(simulation.RandIntBetween(r1, 10, 100)), // power
 			hmTypes.NewPubKey(accounts[i].PubKey.Bytes()),
 			accounts[i].Address,
-		)
-		// create dividend account for validator
-		dividendAccounts[i] = hmTypes.NewDividendAccount(
-			hmTypes.NewDividendAccountID(uint64(validators[i].ID)),
-			big.NewInt(0).String(),
 		)
 	}
 
