@@ -14,10 +14,10 @@ func TestMsgTick(t *testing.T) {
 	msg := slashingTypes.NewMsgTick(
 		uint64(2),
 		hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
-		hmTypes.HexToHexBytes("0xox"),
+		hmTypes.HexToHexBytes("0xdacc01893635c9adc5dea0000080cc02890caf6700370168000001"),
 	)
 	t.Log(hmTypes.BytesToHeimdallAddress(helper.GetAddress()))
-	t.Log(hmTypes.HexToHexBytes("0xox"))
+	t.Log(hmTypes.HexToHexBytes("0xdacc01893635c9adc5dea0000080cc02890caf6700370168000001"))
 
 	t.Log(msg.Proposer)
 	t.Log(msg.SlashingInfoBytes)
