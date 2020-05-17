@@ -2,10 +2,10 @@ package types
 
 import (
 	"bytes"
-	"encoding/hex"
 	"errors"
 
 	"github.com/cbergoon/merkletree"
+	"github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/bor/rpc"
 	"github.com/tendermint/crypto/sha3"
@@ -110,13 +110,13 @@ func GetAccountProof(dividendAccounts []hmTypes.DividendAccount, userAddr hmType
 
 // VerifyAccountProof returns proof of dividend Account
 func VerifyAccountProof(dividendAccounts []hmTypes.DividendAccount, userAddr hmTypes.HeimdallAddress, proofToVerify string) (bool, error) {
-
 	proof, _, err := GetAccountProof(dividendAccounts, userAddr)
 	if err != nil {
 		return false, nil
 	}
 
-	if proofToVerify == hex.EncodeToString(proof) {
+	// check proof bytes
+	if bytes.Equal(common.FromHex(proofToVerify), proof) {
 		return true, nil
 	}
 

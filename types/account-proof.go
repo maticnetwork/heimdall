@@ -6,14 +6,15 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 )
 
-// DividendAccount contains ID, merkle proof, leaf index in merketree
+// DividendAccountProof contains ID, merkle proof, leaf index in merketree
 type DividendAccountProof struct {
 	User  HeimdallAddress `json:"user"`
-	Proof []byte          `json:"accountProof"`
+	Proof HexBytes        `json:"accountProof"`
 	Index uint64          `json:"index"`
 }
 
-func NewDividendAccountProof(user HeimdallAddress, proof []byte, index uint64) DividendAccountProof {
+// NewDividendAccountProof generate proof for new dividend account
+func NewDividendAccountProof(user HeimdallAddress, proof HexBytes, index uint64) DividendAccountProof {
 	return DividendAccountProof{
 		User:  user,
 		Proof: proof,

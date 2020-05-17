@@ -28,12 +28,12 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 		dividendAccountRootHandlerFn(cliCtx),
 	).Methods("GET")
 	r.HandleFunc(
-		"/topup/account-proof/{address}",
-		dividendAccountProofHandlerFn(cliCtx),
+		"/topup/account-proof/{address}/verify",
+		VerifyAccountProofHandlerFn(cliCtx),
 	).Methods("GET")
 	r.HandleFunc(
-		"/topup/account-proof/verify/",
-		VerifyAccountProofHandlerFn(cliCtx),
+		"/topup/account-proof/{address}",
+		dividendAccountProofHandlerFn(cliCtx),
 	).Methods("GET")
 }
 
@@ -163,7 +163,6 @@ func dividendAccountRootHandlerFn(
 // Returns Merkle path for dividendAccountID using dividend Account Tree
 func dividendAccountProofHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		vars := mux.Vars(r)
 
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
@@ -207,12 +206,12 @@ func VerifyAccountProofHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		vars := mux.Vars(r)
 		params := r.URL.Query()
-		userAddress := hmTypes.HexToHeimdallAddress(params.Get("address"))
-
+		userAddress := hmTypes.HexToHeimdallAddress(vars["address"])
 		accountProof := params.Get("proof")
 
-		RestLogger.Info("Verify Account Proof- ", "userAddress", userAddress, "accountProof", accountProof)
+		RestLogger.Info("Verify Account Proof", "userAddress", userAddress, "accountProof", accountProof)
 
 		// get query params
 		queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQueryVerifyAccountProofParams(userAddress, accountProof))
@@ -243,6 +242,5 @@ func VerifyAccountProofHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		// return result
 		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, res)
-
 	}
 }
