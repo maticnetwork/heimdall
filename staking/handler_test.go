@@ -148,12 +148,12 @@ func (suite *HandlerTestSuite) TestHandleMsgValidatorUpdate() {
 
 	ValFrmID, ok := keeper.GetValidatorFromValID(ctx, oldSigner.ID)
 	require.True(t, ok, "new signer should be found, got %v", ok)
-	require.Equal(t, ValFrmID.Signer.Bytes(), newSigner[0].Signer.Bytes(), "New Signer should be mapped to old validator ID")
+	require.NotEqual(t, ValFrmID.Signer.Bytes(), newSigner[0].Signer.Bytes(), "Should not update state")
 	require.Equal(t, ValFrmID.VotingPower, oldSigner.VotingPower, "VotingPower of new signer %v should be equal to old signer %v", ValFrmID.VotingPower, oldSigner.VotingPower)
 
 	removedVal, err := keeper.GetValidatorInfo(ctx, oldSigner.Signer.Bytes())
 	require.Empty(t, err, "deleted validator should be found, got %v", err)
-	require.Equal(t, removedVal.VotingPower, int64(0), "removed validator VotingPower should be zero")
+	require.NotEqual(t, removedVal.VotingPower, int64(0), "should not update state")
 	t.Log("Deleted validator ===>", "Validator", removedVal.String())
 }
 
@@ -193,19 +193,13 @@ func (suite *HandlerTestSuite) TestHandleMsgValidatorExit() {
 	updatedValInfo, err := keeper.GetValidatorInfo(ctx, validators[0].Signer.Bytes())
 	// updatedValInfo.EndEpoch = 10
 	require.Empty(t, err, "Unable to get validator info from val address,ValAddr:%v Error:%v ", validators[0].Signer.String(), err)
-	require.Equal(t, updatedValInfo.EndEpoch, validators[0].EndEpoch, "deactivation epoch should be set correctly")
+	require.NotEqual(t, updatedValInfo.EndEpoch, validators[0].EndEpoch, "should not update deactivation epoch")
 
 	_, found := keeper.GetValidatorFromValID(ctx, validators[0].ID)
 	require.True(t, found, "Validator should be present even after deactivation")
 
 	got = suite.handler(ctx, msg)
-	require.True(t, !got.IsOK(), errs.CodeToDefaultMsg(got.Code))
-	currentVals := keeper.GetCurrentValidators(ctx)
-	require.Equal(t, 4, len(currentVals), "No of current validators should exist before epoch passes")
-
-	app.CheckpointKeeper.UpdateACKCountWithValue(ctx, 20)
-	currentVals = keeper.GetCurrentValidators(ctx)
-	require.Equal(t, 3, len(currentVals), "No of current validators should reduce after epoch passes")
+	require.True(t, got.IsOK(), "should not fail, as state is not updated for validatorExit")
 }
 
 func (suite *HandlerTestSuite) TestHandleMsgStakeUpdate() {
@@ -327,12 +321,11 @@ func (suite *HandlerTestSuite) TestTopupSuccessBeforeValidatorJoin() {
 
 	chainParams := app.ChainKeeper.GetParams(ctx)
 
-	msgTopup := topupTypes.NewMsgTopup(signerAddress, uint64(validatorId), signerAddress, sdk.NewInt(1000), txHash, logIndex, uint64(2))
+	msgTopup := topupTypes.NewMsgTopup(signerAddress, signerAddress, sdk.NewInt(2000000000000000000), txHash, logIndex, uint64(2))
 
 	stakinginfoTopUpFee := &stakinginfo.StakinginfoTopUpFee{
-		ValidatorId: new(big.Int).SetUint64(validatorId.Uint64()),
-		Signer:      signerAddress.EthAddress(),
-		Fee:         big.NewInt(100000000000000000),
+		User: signerAddress.EthAddress(),
+		Fee:  big.NewInt(100000000000000000),
 	}
 
 	txreceipt := &ethTypes.Receipt{
@@ -352,7 +345,7 @@ func (suite *HandlerTestSuite) TestTopupSuccessBeforeValidatorJoin() {
 		signerAddress,
 		validatorId.Uint64(),
 		uint64(1),
-		sdk.NewInt(10000),
+		sdk.NewInt(2000000000000000000),
 		pubKey,
 		txHash,
 		logIndex,

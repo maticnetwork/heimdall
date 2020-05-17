@@ -308,7 +308,7 @@ func (suite *KeeperTestSuite) TestDividendAccountTree() {
 	divAccounts := make([]hmTypes.DividendAccount, 5)
 	for i := 0; i < len(divAccounts); i++ {
 		divAccounts[i] = hmTypes.NewDividendAccount(
-			hmTypes.NewDividendAccountID(uint64(i)),
+			hmTypes.HexToHeimdallAddress("1234"),
 			big.NewInt(0).String(),
 		)
 	}
@@ -317,7 +317,7 @@ func (suite *KeeperTestSuite) TestDividendAccountTree() {
 	require.NotNil(t, accountRoot)
 	require.NoError(t, err)
 
-	accountProof, _, err := checkpointTypes.GetAccountProof(divAccounts, types.NewDividendAccountID(1))
+	accountProof, _, err := checkpointTypes.GetAccountProof(divAccounts, hmTypes.HexToHeimdallAddress("1234"))
 	require.NotNil(t, accountProof)
 	require.NoError(t, err)
 
@@ -378,14 +378,10 @@ func (suite *KeeperTestSuite) TestGetLastUpdated() {
 
 func (suite *KeeperTestSuite) TestAddFeeToDividendAccount() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
-	keeper := app.StakingKeeper
-	cmn.LoadValidatorSet(4, t, keeper, ctx, false, 10)
-	validators := keeper.GetCurrentValidators(ctx)
-
+	address := hmTypes.HexToHeimdallAddress("234452")
 	amount, _ := big.NewInt(0).SetString("0", 10)
-	app.TopupKeeper.AddFeeToDividendAccount(ctx, validators[0].ID, amount)
-	dividentAccountId := hmTypes.DividendAccountID(validators[0].ID)
-	dividentAccount, _ := app.TopupKeeper.GetDividendAccountByID(ctx, dividentAccountId)
+	app.TopupKeeper.AddFeeToDividendAccount(ctx, address, amount)
+	dividentAccount, _ := app.TopupKeeper.GetDividendAccountByAddress(ctx, address)
 	actualResult, ok := big.NewInt(0).SetString(dividentAccount.FeeAmount, 10)
 	require.Equal(t, ok, true)
 	require.Equal(t, amount, actualResult)
