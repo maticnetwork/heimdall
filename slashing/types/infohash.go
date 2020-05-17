@@ -1,6 +1,7 @@
 package types
 
 import (
+	"bytes"
 	"math/big"
 	"sort"
 
@@ -12,7 +13,7 @@ import (
 type ModifiedSlashInfo struct {
 	ID            hmTypes.ValidatorID `json:"ID"`
 	SlashedAmount *big.Int            `json:"SlashedAmount"`
-	IsJailed      uint                `json:"IsJailed"`
+	IsJailed      []byte              `json:"IsJailed"`
 }
 
 // SortModifiedSlashInfoByID - Sorts ModifiedSlashInfo By ID
@@ -49,17 +50,17 @@ func slashInfoToModified(slashInfo *hmTypes.ValidatorSlashingInfo) (modifiedSlas
 		return modifiedSlashInfo, err
 	}
 
-	// converting jailed from boolean to uint. as boolean rlp is incompatible Issue - https://github.com/hamdiallam/Solidity-RLP/issues/5
-	var jailedInt uint
+	// converting jailed from boolean to Byte. as boolean rlp is incompatible Issue - https://github.com/hamdiallam/Solidity-RLP/issues/5
+	jailedByte := []byte{0x00}
 	if slashInfo.IsJailed {
-		jailedInt = 1
+		jailedByte = []byte{0x01}
 	}
 
 	// convert slashing amount to 10^18. required for contracts.
 	modifiedSlashInfo = &ModifiedSlashInfo{
 		ID:            slashInfo.ID,
 		SlashedAmount: amount,
-		IsJailed:      jailedInt,
+		IsJailed:      jailedByte,
 	}
 
 	return modifiedSlashInfo, err
@@ -93,7 +94,7 @@ func modifiedToSlashInfo(modifiedSlashInfo *ModifiedSlashInfo) (slashInfo *hmTyp
 
 	// converting jailed from boolean to uint. as boolean rlp is incompatible Issue - https://github.com/hamdiallam/Solidity-RLP/issues/5
 	var jailedBool bool
-	if modifiedSlashInfo.IsJailed == 1 {
+	if bytes.Equal(modifiedSlashInfo.IsJailed, []byte{0x01}) {
 		jailedBool = true
 	}
 
