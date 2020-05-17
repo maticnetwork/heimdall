@@ -92,7 +92,7 @@ func modifiedToSlashInfo(modifiedSlashInfo *ModifiedSlashInfo) (slashInfo *hmTyp
 		return slashInfo, err
 	}
 
-	// converting jailed from boolean to uint. as boolean rlp is incompatible Issue - https://github.com/hamdiallam/Solidity-RLP/issues/5
+	// converting jailed from boolean to bytes. as boolean RLP is incompatible Issue - https://github.com/hamdiallam/Solidity-RLP/issues/5
 	var jailedBool bool
 	if bytes.Equal(modifiedSlashInfo.IsJailed, []byte{0x01}) {
 		jailedBool = true
