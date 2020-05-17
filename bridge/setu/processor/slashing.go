@@ -390,14 +390,11 @@ func (sp *SlashingProcessor) validateTickSlashInfo(slashInfoList []*hmTypes.Vali
 		return
 	}
 	// compare tickSlashInfoBytes with slashInfoBytes
-	if bytes.Compare(tickSlashInfoBytes, slashInfoBytes.Bytes()) == 0 {
+	if bytes.Equal(tickSlashInfoBytes, slashInfoBytes.Bytes()) {
 		return true, nil
-	} else {
-		sp.Logger.Info("SlashingInfoBytes mismatch", "tickSlashInfoBytes", hex.EncodeToString(tickSlashInfoBytes), "slashInfoBytes", slashInfoBytes)
-		return false, errors.New("Validation failed. tickSlashInfoBytes mismatch")
 	}
-
-	return
+	sp.Logger.Info("SlashingInfoBytes mismatch", "tickSlashInfoBytes", hex.EncodeToString(tickSlashInfoBytes), "slashInfoBytes", slashInfoBytes)
+	return false, errors.New("Validation failed. tickSlashInfoBytes mismatch")
 }
 
 // isOldTx  checks if tx is already processed or not
