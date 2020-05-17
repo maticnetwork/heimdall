@@ -42,7 +42,7 @@ func TestSlashingInfoRLPEncoding(t *testing.T) {
 	var slashingInfoList []*hmTypes.ValidatorSlashingInfo
 
 	// Input data
-	slashingInfo2 := hmTypes.NewValidatorSlashingInfo(2, uint64(80), false)
+	slashingInfo2 := hmTypes.NewValidatorSlashingInfo(2, uint64(120), false)
 	slashingInfoList = append(slashingInfoList, &slashingInfo2)
 
 	// Encoding
@@ -53,7 +53,7 @@ func TestSlashingInfoRLPEncoding(t *testing.T) {
 
 func TestSlashingInfoRLPDecoding(t *testing.T) {
 	// input data
-	slashInfoEncodedBytesStr := "cdcc028904563918244f40000080"
+	slashInfoEncodedBytesStr := "cdcc0289068155a43676e0000000"
 	slashInfoEncodedBytes, err := hex.DecodeString(slashInfoEncodedBytesStr)
 	require.Empty(t, err)
 

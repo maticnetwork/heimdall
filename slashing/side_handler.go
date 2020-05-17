@@ -1,6 +1,8 @@
 package slashing
 
 import (
+	"bytes"
+	"encoding/hex"
 	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -159,6 +161,25 @@ func PostHandleMsgTick(ctx sdk.Context, k Keeper, msg types.MsgTick, sideTxResul
 	if msg.ID != tickCount+1 {
 		k.Logger(ctx).Error("Tick not in countinuity. may be due to replay", "msgID", msg.ID, "expectedMsgID", tickCount+1)
 		return hmCommon.ErrTickNotInContinuity(k.Codespace()).Result()
+	}
+
+	// check if state has changed between handler and side-handler blocks
+	valSlashingInfos, err := k.GetBufferValSlashingInfos(ctx)
+	if err != nil {
+		k.Logger(ctx).Error("Error fetching slash Info list from buffer", "error", err)
+		return hmCommon.ErrSlashInfoDetails(k.Codespace()).Result()
+	}
+	slashingInfoBytes, err := types.SortAndRLPEncodeSlashInfos(valSlashingInfos)
+	if err != nil {
+		k.Logger(ctx).Info("Error generating slashing info bytes", "error", err)
+		return hmCommon.ErrSlashInfoDetails(k.Codespace()).Result()
+	}
+	k.Logger(ctx).Info("SlashInfo bytes generated", "SlashInfoBytes", hex.EncodeToString(slashingInfoBytes))
+	// compare slashingInfoHash with msg hash
+	if !bytes.Equal(slashingInfoBytes, msg.SlashingInfoBytes) {
+		k.Logger(ctx).Error("slashingInfoBytes of current buffer state", "bufferSlashingInfoBytes", hex.EncodeToString(slashingInfoBytes),
+			"doesn't match with slashingInfoBytes of msg", "msgSlashInfoBytes", msg.SlashingInfoBytes.String())
+		return hmCommon.ErrSlashInfoDetails(k.Codespace()).Result()
 	}
 
 	k.Logger(ctx).Debug("Persisting tick state", "sideTxResult", sideTxResult)
