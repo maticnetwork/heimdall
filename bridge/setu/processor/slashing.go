@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -389,13 +390,11 @@ func (sp *SlashingProcessor) validateTickSlashInfo(slashInfoList []*hmTypes.Vali
 		return
 	}
 	// compare tickSlashInfoBytes with slashInfoBytes
-	if bytes.Compare(tickSlashInfoBytes, slashInfoBytes) == 0 {
+	if bytes.Equal(tickSlashInfoBytes, slashInfoBytes.Bytes()) {
 		return true, nil
-	} else {
-		sp.Logger.Info("SlashingInfoBytes mismatch", "tickSlashInfoBytes", tickSlashInfoBytes, "slashInfoBytes", slashInfoBytes)
 	}
-
-	return
+	sp.Logger.Info("SlashingInfoBytes mismatch", "tickSlashInfoBytes", hex.EncodeToString(tickSlashInfoBytes), "slashInfoBytes", slashInfoBytes)
+	return false, errors.New("Validation failed. tickSlashInfoBytes mismatch")
 }
 
 // isOldTx  checks if tx is already processed or not
