@@ -124,8 +124,13 @@ func handleQueryAccountProof(ctx sdk.Context, req abci.RequestQuery, keeper Keep
 
 	if bytes.Equal(accountRootOnChain[:], currentStateAccountRoot) {
 		// Calculate new account root hash
-		merkleProof, index, _ := checkpointTypes.GetAccountProof(dividendAccounts, params.UserAddress)
+		merkleProof, index, err := checkpointTypes.GetAccountProof(dividendAccounts, params.UserAddress)
+		if err != nil {
+			return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could fetch account proof", err.Error()))
+		}
+
 		accountProof := hmTypes.NewDividendAccountProof(params.UserAddress, merkleProof, index)
+
 		// json record
 		bz, err := json.Marshal(accountProof)
 		if err != nil {
@@ -139,7 +144,6 @@ func handleQueryAccountProof(ctx sdk.Context, req abci.RequestQuery, keeper Keep
 }
 
 func handleQueryVerifyAccountProof(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-
 	var params types.QueryVerifyAccountProofParams
 	if err := keeper.cdc.UnmarshalJSON(req.Data, &params); err != nil {
 		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))

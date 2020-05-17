@@ -22,6 +22,7 @@ type Validator struct {
 	Signer      HeimdallAddress `json:"signer"`
 	LastUpdated string          `json:"last_updated"`
 
+	Jailed           bool  `json:"jailed"`
 	ProposerPriority int64 `json:"accum"`
 }
 
@@ -62,7 +63,7 @@ func (v *Validator) IsCurrentValidator(ackCount uint64) bool {
 	currentEpoch := ackCount + 1
 
 	// validator hasnt initialised unstake
-	if v.StartEpoch <= currentEpoch && (v.EndEpoch == 0 || v.EndEpoch > currentEpoch) && v.VotingPower > 0 {
+	if !v.Jailed && v.StartEpoch <= currentEpoch && (v.EndEpoch == 0 || v.EndEpoch > currentEpoch) && v.VotingPower > 0 {
 		return true
 	}
 

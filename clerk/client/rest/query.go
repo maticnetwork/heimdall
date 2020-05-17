@@ -3,6 +3,7 @@ package rest
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/types/rest"
@@ -18,7 +19,6 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 		"/clerk/event-record/list",
 		recordListHandlerFn(cliCtx),
 	).Methods("GET")
-
 	r.HandleFunc(
 		"/clerk/event-record/{recordId}",
 		recordHandlerFn(cliCtx),
@@ -72,32 +72,67 @@ func recordListHandlerFn(
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := r.URL.Query()
+		var queryParams []byte
+		var err error
+		var query string
 
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
 			return
 		}
 
-		// get page
-		page, ok := rest.ParseUint64OrReturnBadRequest(w, vars.Get("page"))
-		if !ok {
-			return
+		page := uint64(1) // default page
+		if vars.Get("page") != "" {
+			_page, ok := rest.ParseUint64OrReturnBadRequest(w, vars.Get("page"))
+			if !ok {
+				return
+			}
+
+			page = _page
 		}
 
-		// get limit
-		limit, ok := rest.ParseUint64OrReturnBadRequest(w, vars.Get("limit"))
-		if !ok {
-			return
+		limit := uint64(50) // default limit
+		if vars.Get("limit") != "" {
+			_limit, ok := rest.ParseUint64OrReturnBadRequest(w, vars.Get("limit"))
+			if !ok {
+				return
+			}
+
+			limit = _limit
 		}
 
-		// get query params
-		queryParams, err := cliCtx.Codec.MarshalJSON(hmTypes.NewQueryPaginationParams(page, limit))
-		if err != nil {
-			return
+		if vars.Get("from-time") != "" && vars.Get("to-time") != "" {
+			// get from time (epoch)
+			fromTime, ok := rest.ParseInt64OrReturnBadRequest(w, vars.Get("from-time"))
+			if !ok {
+				return
+			}
+
+			// get to time (epoch)
+			toTime, ok := rest.ParseInt64OrReturnBadRequest(w, vars.Get("to-time"))
+			if !ok {
+				return
+			}
+
+			// get query params
+			queryParams, err = cliCtx.Codec.MarshalJSON(types.NewQueryTimeRangePaginationParams(time.Unix(fromTime, 0), time.Unix(toTime, 0), page, limit))
+			if err != nil {
+				return
+			}
+
+			query = types.QueryRecordListWithTime
+		} else {
+			// get query params
+			queryParams, err = cliCtx.Codec.MarshalJSON(hmTypes.NewQueryPaginationParams(page, limit))
+			if err != nil {
+				return
+			}
+
+			query = types.QueryRecordList
 		}
 
 		// query records
-		res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryRecordList), queryParams)
+		res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, query), queryParams)
 		if err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
@@ -112,7 +147,7 @@ func recordListHandlerFn(
 	}
 }
 
-// Returns deposit tx status information
+// DepositTxStatusHandlerFn returns deposit tx status information
 func DepositTxStatusHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := r.URL.Query()

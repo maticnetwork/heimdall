@@ -28,7 +28,7 @@ var (
 )
 
 // StakemanagerABI is the input ABI used to generate the binding from.
-const StakemanagerABI = "[{\"constant\":true,\"inputs\":[],\"name\":\"getCurrentValidatorSet\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"\",\"type\":\"uint256[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"heimdallFee\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"acceptDelegation\",\"type\":\"bool\"},{\"internalType\":\"bytes\",\"name\":\"signerPubkey\",\"type\":\"bytes\"}],\"name\":\"stake\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"auctionPeriod\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"totalRewards\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"WITHDRAWAL_DELAY\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_registry\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_rootchain\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_NFTContract\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_stakingLogger\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_ValidatorShareFactory\",\"type\":\"address\"}],\"name\":\"updateConstructor\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_token\",\"type\":\"address\"}],\"name\":\"setToken\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"newThreshold\",\"type\":\"uint256\"}],\"name\":\"updateValidatorThreshold\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"}],\"name\":\"getValidatorId\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"accountStateRoot\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"checkPointBlockInterval\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"}],\"name\":\"isValidator\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"stakeRewards\",\"type\":\"bool\"}],\"name\":\"restake\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"}],\"name\":\"unstake\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"NFTContract\",\"outputs\":[{\"internalType\":\"contractStakingNFT\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"}],\"name\":\"perceivedStakeFactor\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"validators\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"reward\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"activationEpoch\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"deactivationEpoch\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"jailTime\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"contractAddress\",\"type\":\"address\"},{\"internalType\":\"enumStakeManagerStorage.Status\",\"name\":\"status\",\"type\":\"uint8\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"signerToValidator\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"}],\"name\":\"unJail\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"minDeposit\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"delegator\",\"type\":\"address\"}],\"name\":\"delegationTransfer\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"}],\"name\":\"totalStakedFor\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"validatorThreshold\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"heimdallFee\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"acceptDelegation\",\"type\":\"bool\"},{\"internalType\":\"bytes\",\"name\":\"signerPubkey\",\"type\":\"bytes\"}],\"name\":\"stakeFor\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"startAuction\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"validatorAuction\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"startEpoch\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"NFTCounter\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"}],\"name\":\"getValidatorContract\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"governance\",\"outputs\":[{\"internalType\":\"contractIGovernance\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"blockInterval\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"voteHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"stateRoot\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"sigs\",\"type\":\"bytes\"}],\"name\":\"checkSignatures\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"validatorState\",\"outputs\":[{\"internalType\":\"int256\",\"name\":\"amount\",\"type\":\"int256\"},{\"internalType\":\"int256\",\"name\":\"stakerCount\",\"type\":\"int256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"ownerOf\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"delegator\",\"type\":\"address\"}],\"name\":\"delegationDeposit\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"slashingRate\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"jailCheckpoints\",\"type\":\"uint256\"}],\"name\":\"slash\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"supportsHistory\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"pure\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"dynasty\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"currentEpoch\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"registry\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"CHECKPOINT_REWARD\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"checkpointTx\",\"type\":\"bytes\"}],\"name\":\"challangeStateRootUpdate\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"currentValidatorSetSize\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"totalStaked\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"isOwner\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"validatorFeeExit\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"}],\"name\":\"forceUnstake\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"}],\"name\":\"withdrawRewards\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"rootChain\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"totalHeimdallFee\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"},{\"internalType\":\"int256\",\"name\":\"amount\",\"type\":\"int256\"}],\"name\":\"updateValidatorState\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_blocks\",\"type\":\"uint256\"}],\"name\":\"updateCheckPointBlockInterval\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"currentValidatorSetTotalStake\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"unlock\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"heimdallFee\",\"type\":\"uint256\"}],\"name\":\"topUpForFee\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_minDeposit\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_minHeimdallFee\",\"type\":\"uint256\"}],\"name\":\"updateMinAmounts\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"accumSlashedAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"accumFeeAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"index\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"proof\",\"type\":\"bytes\"}],\"name\":\"claimFee\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"factory\",\"outputs\":[{\"internalType\":\"contractValidatorShareFactory\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"heimdallFee\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"acceptDelegation\",\"type\":\"bool\"},{\"internalType\":\"bytes\",\"name\":\"signerPubkey\",\"type\":\"bytes\"}],\"name\":\"confirmAuctionBid\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"newReward\",\"type\":\"uint256\"}],\"name\":\"updateCheckpointReward\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"totalRewardsLiquidated\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"locked\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"pub\",\"type\":\"bytes\"}],\"name\":\"pubToAddress\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"pure\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"jailCheckpoints\",\"type\":\"uint256\"}],\"name\":\"jail\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"}],\"name\":\"unstakeClaim\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"newDynasty\",\"type\":\"uint256\"}],\"name\":\"updateDynastyValue\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"newRootChain\",\"type\":\"address\"}],\"name\":\"changeRootChain\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"logger\",\"outputs\":[{\"internalType\":\"contractStakingInfo\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"signerPubkey\",\"type\":\"bytes\"}],\"name\":\"updateSigner\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"lock\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"minHeimdallFee\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"token\",\"outputs\":[{\"internalType\":\"contractIERC20\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousRootChain\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newRootChain\",\"type\":\"address\"}],\"name\":\"RootChainChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"}]"
+const StakemanagerABI = "[{\"constant\":true,\"inputs\":[],\"name\":\"getCurrentValidatorSet\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"\",\"type\":\"uint256[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"heimdallFee\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"acceptDelegation\",\"type\":\"bool\"},{\"internalType\":\"bytes\",\"name\":\"signerPubkey\",\"type\":\"bytes\"}],\"name\":\"stake\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"blockInterval\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"voteHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"stateRoot\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"proposer\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"sigs\",\"type\":\"bytes\"}],\"name\":\"checkSignatures\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_limit\",\"type\":\"uint256\"}],\"name\":\"updateSignerUpdateLimit\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"auctionPeriod\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"totalRewards\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"WITHDRAWAL_DELAY\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_registry\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_rootchain\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_NFTContract\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_stakingLogger\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_ValidatorShareFactory\",\"type\":\"address\"}],\"name\":\"updateConstructor\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_token\",\"type\":\"address\"}],\"name\":\"setToken\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"newThreshold\",\"type\":\"uint256\"}],\"name\":\"updateValidatorThreshold\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"}],\"name\":\"getValidatorId\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"accountStateRoot\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"checkPointBlockInterval\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"}],\"name\":\"isValidator\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"stakeRewards\",\"type\":\"bool\"}],\"name\":\"restake\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"}],\"name\":\"unstake\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"NFTContract\",\"outputs\":[{\"internalType\":\"contractStakingNFT\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"proposerBonus\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"validators\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"reward\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"activationEpoch\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"deactivationEpoch\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"jailTime\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"contractAddress\",\"type\":\"address\"},{\"internalType\":\"enumStakeManagerStorage.Status\",\"name\":\"status\",\"type\":\"uint8\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"signerToValidator\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"}],\"name\":\"unJail\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"minDeposit\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"}],\"name\":\"totalStakedFor\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"signerUpdateLimit\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"validatorThreshold\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"heimdallFee\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"acceptDelegation\",\"type\":\"bool\"},{\"internalType\":\"bytes\",\"name\":\"signerPubkey\",\"type\":\"bytes\"}],\"name\":\"stakeFor\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"startAuction\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"validatorAuction\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"startEpoch\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"delegationEnabled\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"NFTCounter\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"}],\"name\":\"getValidatorContract\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"governance\",\"outputs\":[{\"internalType\":\"contractIGovernance\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"validatorState\",\"outputs\":[{\"internalType\":\"int256\",\"name\":\"amount\",\"type\":\"int256\"},{\"internalType\":\"int256\",\"name\":\"stakerCount\",\"type\":\"int256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"_slashingInfoList\",\"type\":\"bytes\"}],\"name\":\"slash\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"ownerOf\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"heimdallFee\",\"type\":\"uint256\"}],\"name\":\"topUpForFee\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"accumFeeAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"index\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"proof\",\"type\":\"bytes\"}],\"name\":\"claimFee\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"delegator\",\"type\":\"address\"}],\"name\":\"delegationDeposit\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"supportsHistory\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"pure\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"dynasty\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"currentEpoch\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"replacementCoolDown\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"userFeeExit\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"registry\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"CHECKPOINT_REWARD\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"currentValidatorSetSize\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"totalStaked\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"isOwner\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"epoch\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"}],\"name\":\"forceUnstake\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"}],\"name\":\"withdrawRewards\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"rootChain\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"totalHeimdallFee\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"newProposerBonus\",\"type\":\"uint256\"}],\"name\":\"updateProposerBonus\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"},{\"internalType\":\"int256\",\"name\":\"amount\",\"type\":\"int256\"}],\"name\":\"updateValidatorState\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_blocks\",\"type\":\"uint256\"}],\"name\":\"updateCheckPointBlockInterval\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"currentValidatorSetTotalStake\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"unlock\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"withdrawalDelay\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_minDeposit\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_minHeimdallFee\",\"type\":\"uint256\"}],\"name\":\"updateMinAmounts\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"voteHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"sigs\",\"type\":\"bytes\"}],\"name\":\"verifyConsensus\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"delegator\",\"type\":\"address\"}],\"name\":\"transferFunds\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"factory\",\"outputs\":[{\"internalType\":\"contractValidatorShareFactory\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"heimdallFee\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"acceptDelegation\",\"type\":\"bool\"},{\"internalType\":\"bytes\",\"name\":\"signerPubkey\",\"type\":\"bytes\"}],\"name\":\"confirmAuctionBid\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"newReward\",\"type\":\"uint256\"}],\"name\":\"updateCheckpointReward\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"totalRewardsLiquidated\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"locked\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"pub\",\"type\":\"bytes\"}],\"name\":\"pubToAddress\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"pure\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"latestSignerUpdateEpoch\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"}],\"name\":\"unstakeClaim\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"newDynasty\",\"type\":\"uint256\"}],\"name\":\"updateDynastyValue\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"newRootChain\",\"type\":\"address\"}],\"name\":\"changeRootChain\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"}],\"name\":\"validatorStake\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"logger\",\"outputs\":[{\"internalType\":\"contractStakingInfo\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"bool\",\"name\":\"enabled\",\"type\":\"bool\"}],\"name\":\"setDelegationEnabled\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validatorId\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"signerPubkey\",\"type\":\"bytes\"}],\"name\":\"updateSigner\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"forNCheckpoints\",\"type\":\"uint256\"}],\"name\":\"stopAuctions\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"lock\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"minHeimdallFee\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"token\",\"outputs\":[{\"internalType\":\"contractIERC20\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousRootChain\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newRootChain\",\"type\":\"address\"}],\"name\":\"RootChainChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"}]"
 
 // Stakemanager is an auto generated Go binding around an Ethereum contract.
 type Stakemanager struct {
@@ -432,6 +432,32 @@ func (_Stakemanager *StakemanagerCallerSession) CurrentValidatorSetTotalStake() 
 	return _Stakemanager.Contract.CurrentValidatorSetTotalStake(&_Stakemanager.CallOpts)
 }
 
+// DelegationEnabled is a free data retrieval call binding the contract method 0x54b8c601.
+//
+// Solidity: function delegationEnabled() constant returns(bool)
+func (_Stakemanager *StakemanagerCaller) DelegationEnabled(opts *bind.CallOpts) (bool, error) {
+	var (
+		ret0 = new(bool)
+	)
+	out := ret0
+	err := _Stakemanager.contract.Call(opts, out, "delegationEnabled")
+	return *ret0, err
+}
+
+// DelegationEnabled is a free data retrieval call binding the contract method 0x54b8c601.
+//
+// Solidity: function delegationEnabled() constant returns(bool)
+func (_Stakemanager *StakemanagerSession) DelegationEnabled() (bool, error) {
+	return _Stakemanager.Contract.DelegationEnabled(&_Stakemanager.CallOpts)
+}
+
+// DelegationEnabled is a free data retrieval call binding the contract method 0x54b8c601.
+//
+// Solidity: function delegationEnabled() constant returns(bool)
+func (_Stakemanager *StakemanagerCallerSession) DelegationEnabled() (bool, error) {
+	return _Stakemanager.Contract.DelegationEnabled(&_Stakemanager.CallOpts)
+}
+
 // Dynasty is a free data retrieval call binding the contract method 0x7060054d.
 //
 // Solidity: function dynasty() constant returns(uint256)
@@ -456,6 +482,32 @@ func (_Stakemanager *StakemanagerSession) Dynasty() (*big.Int, error) {
 // Solidity: function dynasty() constant returns(uint256)
 func (_Stakemanager *StakemanagerCallerSession) Dynasty() (*big.Int, error) {
 	return _Stakemanager.Contract.Dynasty(&_Stakemanager.CallOpts)
+}
+
+// Epoch is a free data retrieval call binding the contract method 0x900cf0cf.
+//
+// Solidity: function epoch() constant returns(uint256)
+func (_Stakemanager *StakemanagerCaller) Epoch(opts *bind.CallOpts) (*big.Int, error) {
+	var (
+		ret0 = new(*big.Int)
+	)
+	out := ret0
+	err := _Stakemanager.contract.Call(opts, out, "epoch")
+	return *ret0, err
+}
+
+// Epoch is a free data retrieval call binding the contract method 0x900cf0cf.
+//
+// Solidity: function epoch() constant returns(uint256)
+func (_Stakemanager *StakemanagerSession) Epoch() (*big.Int, error) {
+	return _Stakemanager.Contract.Epoch(&_Stakemanager.CallOpts)
+}
+
+// Epoch is a free data retrieval call binding the contract method 0x900cf0cf.
+//
+// Solidity: function epoch() constant returns(uint256)
+func (_Stakemanager *StakemanagerCallerSession) Epoch() (*big.Int, error) {
+	return _Stakemanager.Contract.Epoch(&_Stakemanager.CallOpts)
 }
 
 // Factory is a free data retrieval call binding the contract method 0xc45a0155.
@@ -640,6 +692,32 @@ func (_Stakemanager *StakemanagerCallerSession) IsValidator(validatorId *big.Int
 	return _Stakemanager.Contract.IsValidator(&_Stakemanager.CallOpts, validatorId)
 }
 
+// LatestSignerUpdateEpoch is a free data retrieval call binding the contract method 0xd7f5549d.
+//
+// Solidity: function latestSignerUpdateEpoch(uint256 ) constant returns(uint256)
+func (_Stakemanager *StakemanagerCaller) LatestSignerUpdateEpoch(opts *bind.CallOpts, arg0 *big.Int) (*big.Int, error) {
+	var (
+		ret0 = new(*big.Int)
+	)
+	out := ret0
+	err := _Stakemanager.contract.Call(opts, out, "latestSignerUpdateEpoch", arg0)
+	return *ret0, err
+}
+
+// LatestSignerUpdateEpoch is a free data retrieval call binding the contract method 0xd7f5549d.
+//
+// Solidity: function latestSignerUpdateEpoch(uint256 ) constant returns(uint256)
+func (_Stakemanager *StakemanagerSession) LatestSignerUpdateEpoch(arg0 *big.Int) (*big.Int, error) {
+	return _Stakemanager.Contract.LatestSignerUpdateEpoch(&_Stakemanager.CallOpts, arg0)
+}
+
+// LatestSignerUpdateEpoch is a free data retrieval call binding the contract method 0xd7f5549d.
+//
+// Solidity: function latestSignerUpdateEpoch(uint256 ) constant returns(uint256)
+func (_Stakemanager *StakemanagerCallerSession) LatestSignerUpdateEpoch(arg0 *big.Int) (*big.Int, error) {
+	return _Stakemanager.Contract.LatestSignerUpdateEpoch(&_Stakemanager.CallOpts, arg0)
+}
+
 // Locked is a free data retrieval call binding the contract method 0xcf309012.
 //
 // Solidity: function locked() constant returns(bool)
@@ -796,30 +874,30 @@ func (_Stakemanager *StakemanagerCallerSession) OwnerOf(tokenId *big.Int) (commo
 	return _Stakemanager.Contract.OwnerOf(&_Stakemanager.CallOpts, tokenId)
 }
 
-// PerceivedStakeFactor is a free data retrieval call binding the contract method 0x357e6ff8.
+// ProposerBonus is a free data retrieval call binding the contract method 0x34274586.
 //
-// Solidity: function perceivedStakeFactor(uint256 validatorId) constant returns(uint256)
-func (_Stakemanager *StakemanagerCaller) PerceivedStakeFactor(opts *bind.CallOpts, validatorId *big.Int) (*big.Int, error) {
+// Solidity: function proposerBonus() constant returns(uint256)
+func (_Stakemanager *StakemanagerCaller) ProposerBonus(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
 	)
 	out := ret0
-	err := _Stakemanager.contract.Call(opts, out, "perceivedStakeFactor", validatorId)
+	err := _Stakemanager.contract.Call(opts, out, "proposerBonus")
 	return *ret0, err
 }
 
-// PerceivedStakeFactor is a free data retrieval call binding the contract method 0x357e6ff8.
+// ProposerBonus is a free data retrieval call binding the contract method 0x34274586.
 //
-// Solidity: function perceivedStakeFactor(uint256 validatorId) constant returns(uint256)
-func (_Stakemanager *StakemanagerSession) PerceivedStakeFactor(validatorId *big.Int) (*big.Int, error) {
-	return _Stakemanager.Contract.PerceivedStakeFactor(&_Stakemanager.CallOpts, validatorId)
+// Solidity: function proposerBonus() constant returns(uint256)
+func (_Stakemanager *StakemanagerSession) ProposerBonus() (*big.Int, error) {
+	return _Stakemanager.Contract.ProposerBonus(&_Stakemanager.CallOpts)
 }
 
-// PerceivedStakeFactor is a free data retrieval call binding the contract method 0x357e6ff8.
+// ProposerBonus is a free data retrieval call binding the contract method 0x34274586.
 //
-// Solidity: function perceivedStakeFactor(uint256 validatorId) constant returns(uint256)
-func (_Stakemanager *StakemanagerCallerSession) PerceivedStakeFactor(validatorId *big.Int) (*big.Int, error) {
-	return _Stakemanager.Contract.PerceivedStakeFactor(&_Stakemanager.CallOpts, validatorId)
+// Solidity: function proposerBonus() constant returns(uint256)
+func (_Stakemanager *StakemanagerCallerSession) ProposerBonus() (*big.Int, error) {
+	return _Stakemanager.Contract.ProposerBonus(&_Stakemanager.CallOpts)
 }
 
 // PubToAddress is a free data retrieval call binding the contract method 0xd0110274.
@@ -874,6 +952,32 @@ func (_Stakemanager *StakemanagerCallerSession) Registry() (common.Address, erro
 	return _Stakemanager.Contract.Registry(&_Stakemanager.CallOpts)
 }
 
+// ReplacementCoolDown is a free data retrieval call binding the contract method 0x77939d10.
+//
+// Solidity: function replacementCoolDown() constant returns(uint256)
+func (_Stakemanager *StakemanagerCaller) ReplacementCoolDown(opts *bind.CallOpts) (*big.Int, error) {
+	var (
+		ret0 = new(*big.Int)
+	)
+	out := ret0
+	err := _Stakemanager.contract.Call(opts, out, "replacementCoolDown")
+	return *ret0, err
+}
+
+// ReplacementCoolDown is a free data retrieval call binding the contract method 0x77939d10.
+//
+// Solidity: function replacementCoolDown() constant returns(uint256)
+func (_Stakemanager *StakemanagerSession) ReplacementCoolDown() (*big.Int, error) {
+	return _Stakemanager.Contract.ReplacementCoolDown(&_Stakemanager.CallOpts)
+}
+
+// ReplacementCoolDown is a free data retrieval call binding the contract method 0x77939d10.
+//
+// Solidity: function replacementCoolDown() constant returns(uint256)
+func (_Stakemanager *StakemanagerCallerSession) ReplacementCoolDown() (*big.Int, error) {
+	return _Stakemanager.Contract.ReplacementCoolDown(&_Stakemanager.CallOpts)
+}
+
 // RootChain is a free data retrieval call binding the contract method 0x987ab9db.
 //
 // Solidity: function rootChain() constant returns(address)
@@ -924,6 +1028,32 @@ func (_Stakemanager *StakemanagerSession) SignerToValidator(arg0 common.Address)
 // Solidity: function signerToValidator(address ) constant returns(uint256)
 func (_Stakemanager *StakemanagerCallerSession) SignerToValidator(arg0 common.Address) (*big.Int, error) {
 	return _Stakemanager.Contract.SignerToValidator(&_Stakemanager.CallOpts, arg0)
+}
+
+// SignerUpdateLimit is a free data retrieval call binding the contract method 0x4e3c83f1.
+//
+// Solidity: function signerUpdateLimit() constant returns(uint256)
+func (_Stakemanager *StakemanagerCaller) SignerUpdateLimit(opts *bind.CallOpts) (*big.Int, error) {
+	var (
+		ret0 = new(*big.Int)
+	)
+	out := ret0
+	err := _Stakemanager.contract.Call(opts, out, "signerUpdateLimit")
+	return *ret0, err
+}
+
+// SignerUpdateLimit is a free data retrieval call binding the contract method 0x4e3c83f1.
+//
+// Solidity: function signerUpdateLimit() constant returns(uint256)
+func (_Stakemanager *StakemanagerSession) SignerUpdateLimit() (*big.Int, error) {
+	return _Stakemanager.Contract.SignerUpdateLimit(&_Stakemanager.CallOpts)
+}
+
+// SignerUpdateLimit is a free data retrieval call binding the contract method 0x4e3c83f1.
+//
+// Solidity: function signerUpdateLimit() constant returns(uint256)
+func (_Stakemanager *StakemanagerCallerSession) SignerUpdateLimit() (*big.Int, error) {
+	return _Stakemanager.Contract.SignerUpdateLimit(&_Stakemanager.CallOpts)
 }
 
 // SupportsHistory is a free data retrieval call binding the contract method 0x7033e4a6.
@@ -1108,6 +1238,32 @@ func (_Stakemanager *StakemanagerCallerSession) TotalStakedFor(user common.Addre
 	return _Stakemanager.Contract.TotalStakedFor(&_Stakemanager.CallOpts, user)
 }
 
+// UserFeeExit is a free data retrieval call binding the contract method 0x78f84a44.
+//
+// Solidity: function userFeeExit(address ) constant returns(uint256)
+func (_Stakemanager *StakemanagerCaller) UserFeeExit(opts *bind.CallOpts, arg0 common.Address) (*big.Int, error) {
+	var (
+		ret0 = new(*big.Int)
+	)
+	out := ret0
+	err := _Stakemanager.contract.Call(opts, out, "userFeeExit", arg0)
+	return *ret0, err
+}
+
+// UserFeeExit is a free data retrieval call binding the contract method 0x78f84a44.
+//
+// Solidity: function userFeeExit(address ) constant returns(uint256)
+func (_Stakemanager *StakemanagerSession) UserFeeExit(arg0 common.Address) (*big.Int, error) {
+	return _Stakemanager.Contract.UserFeeExit(&_Stakemanager.CallOpts, arg0)
+}
+
+// UserFeeExit is a free data retrieval call binding the contract method 0x78f84a44.
+//
+// Solidity: function userFeeExit(address ) constant returns(uint256)
+func (_Stakemanager *StakemanagerCallerSession) UserFeeExit(arg0 common.Address) (*big.Int, error) {
+	return _Stakemanager.Contract.UserFeeExit(&_Stakemanager.CallOpts, arg0)
+}
+
 // ValidatorAuction is a free data retrieval call binding the contract method 0x5325e144.
 //
 // Solidity: function validatorAuction(uint256 ) constant returns(uint256 amount, uint256 startEpoch, address user)
@@ -1148,30 +1304,30 @@ func (_Stakemanager *StakemanagerCallerSession) ValidatorAuction(arg0 *big.Int) 
 	return _Stakemanager.Contract.ValidatorAuction(&_Stakemanager.CallOpts, arg0)
 }
 
-// ValidatorFeeExit is a free data retrieval call binding the contract method 0x90a42f16.
+// ValidatorStake is a free data retrieval call binding the contract method 0xeceec1d3.
 //
-// Solidity: function validatorFeeExit(uint256 ) constant returns(uint256)
-func (_Stakemanager *StakemanagerCaller) ValidatorFeeExit(opts *bind.CallOpts, arg0 *big.Int) (*big.Int, error) {
+// Solidity: function validatorStake(uint256 validatorId) constant returns(uint256)
+func (_Stakemanager *StakemanagerCaller) ValidatorStake(opts *bind.CallOpts, validatorId *big.Int) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
 	)
 	out := ret0
-	err := _Stakemanager.contract.Call(opts, out, "validatorFeeExit", arg0)
+	err := _Stakemanager.contract.Call(opts, out, "validatorStake", validatorId)
 	return *ret0, err
 }
 
-// ValidatorFeeExit is a free data retrieval call binding the contract method 0x90a42f16.
+// ValidatorStake is a free data retrieval call binding the contract method 0xeceec1d3.
 //
-// Solidity: function validatorFeeExit(uint256 ) constant returns(uint256)
-func (_Stakemanager *StakemanagerSession) ValidatorFeeExit(arg0 *big.Int) (*big.Int, error) {
-	return _Stakemanager.Contract.ValidatorFeeExit(&_Stakemanager.CallOpts, arg0)
+// Solidity: function validatorStake(uint256 validatorId) constant returns(uint256)
+func (_Stakemanager *StakemanagerSession) ValidatorStake(validatorId *big.Int) (*big.Int, error) {
+	return _Stakemanager.Contract.ValidatorStake(&_Stakemanager.CallOpts, validatorId)
 }
 
-// ValidatorFeeExit is a free data retrieval call binding the contract method 0x90a42f16.
+// ValidatorStake is a free data retrieval call binding the contract method 0xeceec1d3.
 //
-// Solidity: function validatorFeeExit(uint256 ) constant returns(uint256)
-func (_Stakemanager *StakemanagerCallerSession) ValidatorFeeExit(arg0 *big.Int) (*big.Int, error) {
-	return _Stakemanager.Contract.ValidatorFeeExit(&_Stakemanager.CallOpts, arg0)
+// Solidity: function validatorStake(uint256 validatorId) constant returns(uint256)
+func (_Stakemanager *StakemanagerCallerSession) ValidatorStake(validatorId *big.Int) (*big.Int, error) {
+	return _Stakemanager.Contract.ValidatorStake(&_Stakemanager.CallOpts, validatorId)
 }
 
 // ValidatorState is a free data retrieval call binding the contract method 0x5c248855.
@@ -1296,25 +1452,60 @@ func (_Stakemanager *StakemanagerCallerSession) Validators(arg0 *big.Int) (struc
 	return _Stakemanager.Contract.Validators(&_Stakemanager.CallOpts, arg0)
 }
 
-// ChallangeStateRootUpdate is a paid mutator transaction binding the contract method 0x7f5da718.
+// VerifyConsensus is a free data retrieval call binding the contract method 0xbbcfbbb0.
 //
-// Solidity: function challangeStateRootUpdate(bytes checkpointTx) returns()
-func (_Stakemanager *StakemanagerTransactor) ChallangeStateRootUpdate(opts *bind.TransactOpts, checkpointTx []byte) (*types.Transaction, error) {
-	return _Stakemanager.contract.Transact(opts, "challangeStateRootUpdate", checkpointTx)
+// Solidity: function verifyConsensus(bytes32 voteHash, bytes sigs) constant returns(uint256, uint256)
+func (_Stakemanager *StakemanagerCaller) VerifyConsensus(opts *bind.CallOpts, voteHash [32]byte, sigs []byte) (*big.Int, *big.Int, error) {
+	var (
+		ret0 = new(*big.Int)
+		ret1 = new(*big.Int)
+	)
+	out := &[]interface{}{
+		ret0,
+		ret1,
+	}
+	err := _Stakemanager.contract.Call(opts, out, "verifyConsensus", voteHash, sigs)
+	return *ret0, *ret1, err
 }
 
-// ChallangeStateRootUpdate is a paid mutator transaction binding the contract method 0x7f5da718.
+// VerifyConsensus is a free data retrieval call binding the contract method 0xbbcfbbb0.
 //
-// Solidity: function challangeStateRootUpdate(bytes checkpointTx) returns()
-func (_Stakemanager *StakemanagerSession) ChallangeStateRootUpdate(checkpointTx []byte) (*types.Transaction, error) {
-	return _Stakemanager.Contract.ChallangeStateRootUpdate(&_Stakemanager.TransactOpts, checkpointTx)
+// Solidity: function verifyConsensus(bytes32 voteHash, bytes sigs) constant returns(uint256, uint256)
+func (_Stakemanager *StakemanagerSession) VerifyConsensus(voteHash [32]byte, sigs []byte) (*big.Int, *big.Int, error) {
+	return _Stakemanager.Contract.VerifyConsensus(&_Stakemanager.CallOpts, voteHash, sigs)
 }
 
-// ChallangeStateRootUpdate is a paid mutator transaction binding the contract method 0x7f5da718.
+// VerifyConsensus is a free data retrieval call binding the contract method 0xbbcfbbb0.
 //
-// Solidity: function challangeStateRootUpdate(bytes checkpointTx) returns()
-func (_Stakemanager *StakemanagerTransactorSession) ChallangeStateRootUpdate(checkpointTx []byte) (*types.Transaction, error) {
-	return _Stakemanager.Contract.ChallangeStateRootUpdate(&_Stakemanager.TransactOpts, checkpointTx)
+// Solidity: function verifyConsensus(bytes32 voteHash, bytes sigs) constant returns(uint256, uint256)
+func (_Stakemanager *StakemanagerCallerSession) VerifyConsensus(voteHash [32]byte, sigs []byte) (*big.Int, *big.Int, error) {
+	return _Stakemanager.Contract.VerifyConsensus(&_Stakemanager.CallOpts, voteHash, sigs)
+}
+
+// WithdrawalDelay is a free data retrieval call binding the contract method 0xa7ab6961.
+//
+// Solidity: function withdrawalDelay() constant returns(uint256)
+func (_Stakemanager *StakemanagerCaller) WithdrawalDelay(opts *bind.CallOpts) (*big.Int, error) {
+	var (
+		ret0 = new(*big.Int)
+	)
+	out := ret0
+	err := _Stakemanager.contract.Call(opts, out, "withdrawalDelay")
+	return *ret0, err
+}
+
+// WithdrawalDelay is a free data retrieval call binding the contract method 0xa7ab6961.
+//
+// Solidity: function withdrawalDelay() constant returns(uint256)
+func (_Stakemanager *StakemanagerSession) WithdrawalDelay() (*big.Int, error) {
+	return _Stakemanager.Contract.WithdrawalDelay(&_Stakemanager.CallOpts)
+}
+
+// WithdrawalDelay is a free data retrieval call binding the contract method 0xa7ab6961.
+//
+// Solidity: function withdrawalDelay() constant returns(uint256)
+func (_Stakemanager *StakemanagerCallerSession) WithdrawalDelay() (*big.Int, error) {
+	return _Stakemanager.Contract.WithdrawalDelay(&_Stakemanager.CallOpts)
 }
 
 // ChangeRootChain is a paid mutator transaction binding the contract method 0xe8afa8e8.
@@ -1338,46 +1529,46 @@ func (_Stakemanager *StakemanagerTransactorSession) ChangeRootChain(newRootChain
 	return _Stakemanager.Contract.ChangeRootChain(&_Stakemanager.TransactOpts, newRootChain)
 }
 
-// CheckSignatures is a paid mutator transaction binding the contract method 0x5aac52f5.
+// CheckSignatures is a paid mutator transaction binding the contract method 0x066647a0.
 //
-// Solidity: function checkSignatures(uint256 blockInterval, bytes32 voteHash, bytes32 stateRoot, bytes sigs) returns(uint256)
-func (_Stakemanager *StakemanagerTransactor) CheckSignatures(opts *bind.TransactOpts, blockInterval *big.Int, voteHash [32]byte, stateRoot [32]byte, sigs []byte) (*types.Transaction, error) {
-	return _Stakemanager.contract.Transact(opts, "checkSignatures", blockInterval, voteHash, stateRoot, sigs)
+// Solidity: function checkSignatures(uint256 blockInterval, bytes32 voteHash, bytes32 stateRoot, address proposer, bytes sigs) returns(uint256)
+func (_Stakemanager *StakemanagerTransactor) CheckSignatures(opts *bind.TransactOpts, blockInterval *big.Int, voteHash [32]byte, stateRoot [32]byte, proposer common.Address, sigs []byte) (*types.Transaction, error) {
+	return _Stakemanager.contract.Transact(opts, "checkSignatures", blockInterval, voteHash, stateRoot, proposer, sigs)
 }
 
-// CheckSignatures is a paid mutator transaction binding the contract method 0x5aac52f5.
+// CheckSignatures is a paid mutator transaction binding the contract method 0x066647a0.
 //
-// Solidity: function checkSignatures(uint256 blockInterval, bytes32 voteHash, bytes32 stateRoot, bytes sigs) returns(uint256)
-func (_Stakemanager *StakemanagerSession) CheckSignatures(blockInterval *big.Int, voteHash [32]byte, stateRoot [32]byte, sigs []byte) (*types.Transaction, error) {
-	return _Stakemanager.Contract.CheckSignatures(&_Stakemanager.TransactOpts, blockInterval, voteHash, stateRoot, sigs)
+// Solidity: function checkSignatures(uint256 blockInterval, bytes32 voteHash, bytes32 stateRoot, address proposer, bytes sigs) returns(uint256)
+func (_Stakemanager *StakemanagerSession) CheckSignatures(blockInterval *big.Int, voteHash [32]byte, stateRoot [32]byte, proposer common.Address, sigs []byte) (*types.Transaction, error) {
+	return _Stakemanager.Contract.CheckSignatures(&_Stakemanager.TransactOpts, blockInterval, voteHash, stateRoot, proposer, sigs)
 }
 
-// CheckSignatures is a paid mutator transaction binding the contract method 0x5aac52f5.
+// CheckSignatures is a paid mutator transaction binding the contract method 0x066647a0.
 //
-// Solidity: function checkSignatures(uint256 blockInterval, bytes32 voteHash, bytes32 stateRoot, bytes sigs) returns(uint256)
-func (_Stakemanager *StakemanagerTransactorSession) CheckSignatures(blockInterval *big.Int, voteHash [32]byte, stateRoot [32]byte, sigs []byte) (*types.Transaction, error) {
-	return _Stakemanager.Contract.CheckSignatures(&_Stakemanager.TransactOpts, blockInterval, voteHash, stateRoot, sigs)
+// Solidity: function checkSignatures(uint256 blockInterval, bytes32 voteHash, bytes32 stateRoot, address proposer, bytes sigs) returns(uint256)
+func (_Stakemanager *StakemanagerTransactorSession) CheckSignatures(blockInterval *big.Int, voteHash [32]byte, stateRoot [32]byte, proposer common.Address, sigs []byte) (*types.Transaction, error) {
+	return _Stakemanager.Contract.CheckSignatures(&_Stakemanager.TransactOpts, blockInterval, voteHash, stateRoot, proposer, sigs)
 }
 
-// ClaimFee is a paid mutator transaction binding the contract method 0xc344e766.
+// ClaimFee is a paid mutator transaction binding the contract method 0x68cb812a.
 //
-// Solidity: function claimFee(uint256 validatorId, uint256 accumSlashedAmount, uint256 accumFeeAmount, uint256 index, bytes proof) returns()
-func (_Stakemanager *StakemanagerTransactor) ClaimFee(opts *bind.TransactOpts, validatorId *big.Int, accumSlashedAmount *big.Int, accumFeeAmount *big.Int, index *big.Int, proof []byte) (*types.Transaction, error) {
-	return _Stakemanager.contract.Transact(opts, "claimFee", validatorId, accumSlashedAmount, accumFeeAmount, index, proof)
+// Solidity: function claimFee(uint256 accumFeeAmount, uint256 index, bytes proof) returns()
+func (_Stakemanager *StakemanagerTransactor) ClaimFee(opts *bind.TransactOpts, accumFeeAmount *big.Int, index *big.Int, proof []byte) (*types.Transaction, error) {
+	return _Stakemanager.contract.Transact(opts, "claimFee", accumFeeAmount, index, proof)
 }
 
-// ClaimFee is a paid mutator transaction binding the contract method 0xc344e766.
+// ClaimFee is a paid mutator transaction binding the contract method 0x68cb812a.
 //
-// Solidity: function claimFee(uint256 validatorId, uint256 accumSlashedAmount, uint256 accumFeeAmount, uint256 index, bytes proof) returns()
-func (_Stakemanager *StakemanagerSession) ClaimFee(validatorId *big.Int, accumSlashedAmount *big.Int, accumFeeAmount *big.Int, index *big.Int, proof []byte) (*types.Transaction, error) {
-	return _Stakemanager.Contract.ClaimFee(&_Stakemanager.TransactOpts, validatorId, accumSlashedAmount, accumFeeAmount, index, proof)
+// Solidity: function claimFee(uint256 accumFeeAmount, uint256 index, bytes proof) returns()
+func (_Stakemanager *StakemanagerSession) ClaimFee(accumFeeAmount *big.Int, index *big.Int, proof []byte) (*types.Transaction, error) {
+	return _Stakemanager.Contract.ClaimFee(&_Stakemanager.TransactOpts, accumFeeAmount, index, proof)
 }
 
-// ClaimFee is a paid mutator transaction binding the contract method 0xc344e766.
+// ClaimFee is a paid mutator transaction binding the contract method 0x68cb812a.
 //
-// Solidity: function claimFee(uint256 validatorId, uint256 accumSlashedAmount, uint256 accumFeeAmount, uint256 index, bytes proof) returns()
-func (_Stakemanager *StakemanagerTransactorSession) ClaimFee(validatorId *big.Int, accumSlashedAmount *big.Int, accumFeeAmount *big.Int, index *big.Int, proof []byte) (*types.Transaction, error) {
-	return _Stakemanager.Contract.ClaimFee(&_Stakemanager.TransactOpts, validatorId, accumSlashedAmount, accumFeeAmount, index, proof)
+// Solidity: function claimFee(uint256 accumFeeAmount, uint256 index, bytes proof) returns()
+func (_Stakemanager *StakemanagerTransactorSession) ClaimFee(accumFeeAmount *big.Int, index *big.Int, proof []byte) (*types.Transaction, error) {
+	return _Stakemanager.Contract.ClaimFee(&_Stakemanager.TransactOpts, accumFeeAmount, index, proof)
 }
 
 // ConfirmAuctionBid is a paid mutator transaction binding the contract method 0xc8b194a2.
@@ -1422,27 +1613,6 @@ func (_Stakemanager *StakemanagerTransactorSession) DelegationDeposit(validatorI
 	return _Stakemanager.Contract.DelegationDeposit(&_Stakemanager.TransactOpts, validatorId, amount, delegator)
 }
 
-// DelegationTransfer is a paid mutator transaction binding the contract method 0x4777fb42.
-//
-// Solidity: function delegationTransfer(uint256 validatorId, uint256 amount, address delegator) returns(bool)
-func (_Stakemanager *StakemanagerTransactor) DelegationTransfer(opts *bind.TransactOpts, validatorId *big.Int, amount *big.Int, delegator common.Address) (*types.Transaction, error) {
-	return _Stakemanager.contract.Transact(opts, "delegationTransfer", validatorId, amount, delegator)
-}
-
-// DelegationTransfer is a paid mutator transaction binding the contract method 0x4777fb42.
-//
-// Solidity: function delegationTransfer(uint256 validatorId, uint256 amount, address delegator) returns(bool)
-func (_Stakemanager *StakemanagerSession) DelegationTransfer(validatorId *big.Int, amount *big.Int, delegator common.Address) (*types.Transaction, error) {
-	return _Stakemanager.Contract.DelegationTransfer(&_Stakemanager.TransactOpts, validatorId, amount, delegator)
-}
-
-// DelegationTransfer is a paid mutator transaction binding the contract method 0x4777fb42.
-//
-// Solidity: function delegationTransfer(uint256 validatorId, uint256 amount, address delegator) returns(bool)
-func (_Stakemanager *StakemanagerTransactorSession) DelegationTransfer(validatorId *big.Int, amount *big.Int, delegator common.Address) (*types.Transaction, error) {
-	return _Stakemanager.Contract.DelegationTransfer(&_Stakemanager.TransactOpts, validatorId, amount, delegator)
-}
-
 // ForceUnstake is a paid mutator transaction binding the contract method 0x91460149.
 //
 // Solidity: function forceUnstake(uint256 validatorId) returns()
@@ -1462,27 +1632,6 @@ func (_Stakemanager *StakemanagerSession) ForceUnstake(validatorId *big.Int) (*t
 // Solidity: function forceUnstake(uint256 validatorId) returns()
 func (_Stakemanager *StakemanagerTransactorSession) ForceUnstake(validatorId *big.Int) (*types.Transaction, error) {
 	return _Stakemanager.Contract.ForceUnstake(&_Stakemanager.TransactOpts, validatorId)
-}
-
-// Jail is a paid mutator transaction binding the contract method 0xd2203766.
-//
-// Solidity: function jail(uint256 validatorId, uint256 jailCheckpoints) returns()
-func (_Stakemanager *StakemanagerTransactor) Jail(opts *bind.TransactOpts, validatorId *big.Int, jailCheckpoints *big.Int) (*types.Transaction, error) {
-	return _Stakemanager.contract.Transact(opts, "jail", validatorId, jailCheckpoints)
-}
-
-// Jail is a paid mutator transaction binding the contract method 0xd2203766.
-//
-// Solidity: function jail(uint256 validatorId, uint256 jailCheckpoints) returns()
-func (_Stakemanager *StakemanagerSession) Jail(validatorId *big.Int, jailCheckpoints *big.Int) (*types.Transaction, error) {
-	return _Stakemanager.Contract.Jail(&_Stakemanager.TransactOpts, validatorId, jailCheckpoints)
-}
-
-// Jail is a paid mutator transaction binding the contract method 0xd2203766.
-//
-// Solidity: function jail(uint256 validatorId, uint256 jailCheckpoints) returns()
-func (_Stakemanager *StakemanagerTransactorSession) Jail(validatorId *big.Int, jailCheckpoints *big.Int) (*types.Transaction, error) {
-	return _Stakemanager.Contract.Jail(&_Stakemanager.TransactOpts, validatorId, jailCheckpoints)
 }
 
 // Lock is a paid mutator transaction binding the contract method 0xf83d08ba.
@@ -1548,6 +1697,27 @@ func (_Stakemanager *StakemanagerTransactorSession) Restake(validatorId *big.Int
 	return _Stakemanager.Contract.Restake(&_Stakemanager.TransactOpts, validatorId, amount, stakeRewards)
 }
 
+// SetDelegationEnabled is a paid mutator transaction binding the contract method 0xf28699fa.
+//
+// Solidity: function setDelegationEnabled(bool enabled) returns()
+func (_Stakemanager *StakemanagerTransactor) SetDelegationEnabled(opts *bind.TransactOpts, enabled bool) (*types.Transaction, error) {
+	return _Stakemanager.contract.Transact(opts, "setDelegationEnabled", enabled)
+}
+
+// SetDelegationEnabled is a paid mutator transaction binding the contract method 0xf28699fa.
+//
+// Solidity: function setDelegationEnabled(bool enabled) returns()
+func (_Stakemanager *StakemanagerSession) SetDelegationEnabled(enabled bool) (*types.Transaction, error) {
+	return _Stakemanager.Contract.SetDelegationEnabled(&_Stakemanager.TransactOpts, enabled)
+}
+
+// SetDelegationEnabled is a paid mutator transaction binding the contract method 0xf28699fa.
+//
+// Solidity: function setDelegationEnabled(bool enabled) returns()
+func (_Stakemanager *StakemanagerTransactorSession) SetDelegationEnabled(enabled bool) (*types.Transaction, error) {
+	return _Stakemanager.Contract.SetDelegationEnabled(&_Stakemanager.TransactOpts, enabled)
+}
+
 // SetToken is a paid mutator transaction binding the contract method 0x144fa6d7.
 //
 // Solidity: function setToken(address _token) returns()
@@ -1569,25 +1739,25 @@ func (_Stakemanager *StakemanagerTransactorSession) SetToken(_token common.Addre
 	return _Stakemanager.Contract.SetToken(&_Stakemanager.TransactOpts, _token)
 }
 
-// Slash is a paid mutator transaction binding the contract method 0x6cbb6050.
+// Slash is a paid mutator transaction binding the contract method 0x5e47655f.
 //
-// Solidity: function slash(uint256 validatorId, uint256 slashingRate, uint256 jailCheckpoints) returns()
-func (_Stakemanager *StakemanagerTransactor) Slash(opts *bind.TransactOpts, validatorId *big.Int, slashingRate *big.Int, jailCheckpoints *big.Int) (*types.Transaction, error) {
-	return _Stakemanager.contract.Transact(opts, "slash", validatorId, slashingRate, jailCheckpoints)
+// Solidity: function slash(bytes _slashingInfoList) returns(uint256)
+func (_Stakemanager *StakemanagerTransactor) Slash(opts *bind.TransactOpts, _slashingInfoList []byte) (*types.Transaction, error) {
+	return _Stakemanager.contract.Transact(opts, "slash", _slashingInfoList)
 }
 
-// Slash is a paid mutator transaction binding the contract method 0x6cbb6050.
+// Slash is a paid mutator transaction binding the contract method 0x5e47655f.
 //
-// Solidity: function slash(uint256 validatorId, uint256 slashingRate, uint256 jailCheckpoints) returns()
-func (_Stakemanager *StakemanagerSession) Slash(validatorId *big.Int, slashingRate *big.Int, jailCheckpoints *big.Int) (*types.Transaction, error) {
-	return _Stakemanager.Contract.Slash(&_Stakemanager.TransactOpts, validatorId, slashingRate, jailCheckpoints)
+// Solidity: function slash(bytes _slashingInfoList) returns(uint256)
+func (_Stakemanager *StakemanagerSession) Slash(_slashingInfoList []byte) (*types.Transaction, error) {
+	return _Stakemanager.Contract.Slash(&_Stakemanager.TransactOpts, _slashingInfoList)
 }
 
-// Slash is a paid mutator transaction binding the contract method 0x6cbb6050.
+// Slash is a paid mutator transaction binding the contract method 0x5e47655f.
 //
-// Solidity: function slash(uint256 validatorId, uint256 slashingRate, uint256 jailCheckpoints) returns()
-func (_Stakemanager *StakemanagerTransactorSession) Slash(validatorId *big.Int, slashingRate *big.Int, jailCheckpoints *big.Int) (*types.Transaction, error) {
-	return _Stakemanager.Contract.Slash(&_Stakemanager.TransactOpts, validatorId, slashingRate, jailCheckpoints)
+// Solidity: function slash(bytes _slashingInfoList) returns(uint256)
+func (_Stakemanager *StakemanagerTransactorSession) Slash(_slashingInfoList []byte) (*types.Transaction, error) {
+	return _Stakemanager.Contract.Slash(&_Stakemanager.TransactOpts, _slashingInfoList)
 }
 
 // Stake is a paid mutator transaction binding the contract method 0x028c4c67.
@@ -1653,25 +1823,67 @@ func (_Stakemanager *StakemanagerTransactorSession) StartAuction(validatorId *bi
 	return _Stakemanager.Contract.StartAuction(&_Stakemanager.TransactOpts, validatorId, amount)
 }
 
-// TopUpForFee is a paid mutator transaction binding the contract method 0xac586292.
+// StopAuctions is a paid mutator transaction binding the contract method 0xf771fc87.
 //
-// Solidity: function topUpForFee(uint256 validatorId, uint256 heimdallFee) returns()
-func (_Stakemanager *StakemanagerTransactor) TopUpForFee(opts *bind.TransactOpts, validatorId *big.Int, heimdallFee *big.Int) (*types.Transaction, error) {
-	return _Stakemanager.contract.Transact(opts, "topUpForFee", validatorId, heimdallFee)
+// Solidity: function stopAuctions(uint256 forNCheckpoints) returns()
+func (_Stakemanager *StakemanagerTransactor) StopAuctions(opts *bind.TransactOpts, forNCheckpoints *big.Int) (*types.Transaction, error) {
+	return _Stakemanager.contract.Transact(opts, "stopAuctions", forNCheckpoints)
 }
 
-// TopUpForFee is a paid mutator transaction binding the contract method 0xac586292.
+// StopAuctions is a paid mutator transaction binding the contract method 0xf771fc87.
 //
-// Solidity: function topUpForFee(uint256 validatorId, uint256 heimdallFee) returns()
-func (_Stakemanager *StakemanagerSession) TopUpForFee(validatorId *big.Int, heimdallFee *big.Int) (*types.Transaction, error) {
-	return _Stakemanager.Contract.TopUpForFee(&_Stakemanager.TransactOpts, validatorId, heimdallFee)
+// Solidity: function stopAuctions(uint256 forNCheckpoints) returns()
+func (_Stakemanager *StakemanagerSession) StopAuctions(forNCheckpoints *big.Int) (*types.Transaction, error) {
+	return _Stakemanager.Contract.StopAuctions(&_Stakemanager.TransactOpts, forNCheckpoints)
 }
 
-// TopUpForFee is a paid mutator transaction binding the contract method 0xac586292.
+// StopAuctions is a paid mutator transaction binding the contract method 0xf771fc87.
 //
-// Solidity: function topUpForFee(uint256 validatorId, uint256 heimdallFee) returns()
-func (_Stakemanager *StakemanagerTransactorSession) TopUpForFee(validatorId *big.Int, heimdallFee *big.Int) (*types.Transaction, error) {
-	return _Stakemanager.Contract.TopUpForFee(&_Stakemanager.TransactOpts, validatorId, heimdallFee)
+// Solidity: function stopAuctions(uint256 forNCheckpoints) returns()
+func (_Stakemanager *StakemanagerTransactorSession) StopAuctions(forNCheckpoints *big.Int) (*types.Transaction, error) {
+	return _Stakemanager.Contract.StopAuctions(&_Stakemanager.TransactOpts, forNCheckpoints)
+}
+
+// TopUpForFee is a paid mutator transaction binding the contract method 0x63656798.
+//
+// Solidity: function topUpForFee(address user, uint256 heimdallFee) returns()
+func (_Stakemanager *StakemanagerTransactor) TopUpForFee(opts *bind.TransactOpts, user common.Address, heimdallFee *big.Int) (*types.Transaction, error) {
+	return _Stakemanager.contract.Transact(opts, "topUpForFee", user, heimdallFee)
+}
+
+// TopUpForFee is a paid mutator transaction binding the contract method 0x63656798.
+//
+// Solidity: function topUpForFee(address user, uint256 heimdallFee) returns()
+func (_Stakemanager *StakemanagerSession) TopUpForFee(user common.Address, heimdallFee *big.Int) (*types.Transaction, error) {
+	return _Stakemanager.Contract.TopUpForFee(&_Stakemanager.TransactOpts, user, heimdallFee)
+}
+
+// TopUpForFee is a paid mutator transaction binding the contract method 0x63656798.
+//
+// Solidity: function topUpForFee(address user, uint256 heimdallFee) returns()
+func (_Stakemanager *StakemanagerTransactorSession) TopUpForFee(user common.Address, heimdallFee *big.Int) (*types.Transaction, error) {
+	return _Stakemanager.Contract.TopUpForFee(&_Stakemanager.TransactOpts, user, heimdallFee)
+}
+
+// TransferFunds is a paid mutator transaction binding the contract method 0xbc8756a9.
+//
+// Solidity: function transferFunds(uint256 validatorId, uint256 amount, address delegator) returns(bool)
+func (_Stakemanager *StakemanagerTransactor) TransferFunds(opts *bind.TransactOpts, validatorId *big.Int, amount *big.Int, delegator common.Address) (*types.Transaction, error) {
+	return _Stakemanager.contract.Transact(opts, "transferFunds", validatorId, amount, delegator)
+}
+
+// TransferFunds is a paid mutator transaction binding the contract method 0xbc8756a9.
+//
+// Solidity: function transferFunds(uint256 validatorId, uint256 amount, address delegator) returns(bool)
+func (_Stakemanager *StakemanagerSession) TransferFunds(validatorId *big.Int, amount *big.Int, delegator common.Address) (*types.Transaction, error) {
+	return _Stakemanager.Contract.TransferFunds(&_Stakemanager.TransactOpts, validatorId, amount, delegator)
+}
+
+// TransferFunds is a paid mutator transaction binding the contract method 0xbc8756a9.
+//
+// Solidity: function transferFunds(uint256 validatorId, uint256 amount, address delegator) returns(bool)
+func (_Stakemanager *StakemanagerTransactorSession) TransferFunds(validatorId *big.Int, amount *big.Int, delegator common.Address) (*types.Transaction, error) {
+	return _Stakemanager.Contract.TransferFunds(&_Stakemanager.TransactOpts, validatorId, amount, delegator)
 }
 
 // TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
@@ -1884,6 +2096,27 @@ func (_Stakemanager *StakemanagerTransactorSession) UpdateMinAmounts(_minDeposit
 	return _Stakemanager.Contract.UpdateMinAmounts(&_Stakemanager.TransactOpts, _minDeposit, _minHeimdallFee)
 }
 
+// UpdateProposerBonus is a paid mutator transaction binding the contract method 0x9b33f434.
+//
+// Solidity: function updateProposerBonus(uint256 newProposerBonus) returns()
+func (_Stakemanager *StakemanagerTransactor) UpdateProposerBonus(opts *bind.TransactOpts, newProposerBonus *big.Int) (*types.Transaction, error) {
+	return _Stakemanager.contract.Transact(opts, "updateProposerBonus", newProposerBonus)
+}
+
+// UpdateProposerBonus is a paid mutator transaction binding the contract method 0x9b33f434.
+//
+// Solidity: function updateProposerBonus(uint256 newProposerBonus) returns()
+func (_Stakemanager *StakemanagerSession) UpdateProposerBonus(newProposerBonus *big.Int) (*types.Transaction, error) {
+	return _Stakemanager.Contract.UpdateProposerBonus(&_Stakemanager.TransactOpts, newProposerBonus)
+}
+
+// UpdateProposerBonus is a paid mutator transaction binding the contract method 0x9b33f434.
+//
+// Solidity: function updateProposerBonus(uint256 newProposerBonus) returns()
+func (_Stakemanager *StakemanagerTransactorSession) UpdateProposerBonus(newProposerBonus *big.Int) (*types.Transaction, error) {
+	return _Stakemanager.Contract.UpdateProposerBonus(&_Stakemanager.TransactOpts, newProposerBonus)
+}
+
 // UpdateSigner is a paid mutator transaction binding the contract method 0xf41a9642.
 //
 // Solidity: function updateSigner(uint256 validatorId, bytes signerPubkey) returns()
@@ -1903,6 +2136,27 @@ func (_Stakemanager *StakemanagerSession) UpdateSigner(validatorId *big.Int, sig
 // Solidity: function updateSigner(uint256 validatorId, bytes signerPubkey) returns()
 func (_Stakemanager *StakemanagerTransactorSession) UpdateSigner(validatorId *big.Int, signerPubkey []byte) (*types.Transaction, error) {
 	return _Stakemanager.Contract.UpdateSigner(&_Stakemanager.TransactOpts, validatorId, signerPubkey)
+}
+
+// UpdateSignerUpdateLimit is a paid mutator transaction binding the contract method 0x06cfb104.
+//
+// Solidity: function updateSignerUpdateLimit(uint256 _limit) returns()
+func (_Stakemanager *StakemanagerTransactor) UpdateSignerUpdateLimit(opts *bind.TransactOpts, _limit *big.Int) (*types.Transaction, error) {
+	return _Stakemanager.contract.Transact(opts, "updateSignerUpdateLimit", _limit)
+}
+
+// UpdateSignerUpdateLimit is a paid mutator transaction binding the contract method 0x06cfb104.
+//
+// Solidity: function updateSignerUpdateLimit(uint256 _limit) returns()
+func (_Stakemanager *StakemanagerSession) UpdateSignerUpdateLimit(_limit *big.Int) (*types.Transaction, error) {
+	return _Stakemanager.Contract.UpdateSignerUpdateLimit(&_Stakemanager.TransactOpts, _limit)
+}
+
+// UpdateSignerUpdateLimit is a paid mutator transaction binding the contract method 0x06cfb104.
+//
+// Solidity: function updateSignerUpdateLimit(uint256 _limit) returns()
+func (_Stakemanager *StakemanagerTransactorSession) UpdateSignerUpdateLimit(_limit *big.Int) (*types.Transaction, error) {
+	return _Stakemanager.Contract.UpdateSignerUpdateLimit(&_Stakemanager.TransactOpts, _limit)
 }
 
 // UpdateValidatorState is a paid mutator transaction binding the contract method 0x9ff11500.

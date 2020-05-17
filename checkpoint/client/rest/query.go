@@ -232,7 +232,7 @@ func noackHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var lastAckTime uint64
-		if err := cliCtx.Codec.UnmarshalJSON(res, &lastAckTime); err != nil {
+		if err := json.Unmarshal(res, &lastAckTime); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}

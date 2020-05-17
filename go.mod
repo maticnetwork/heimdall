@@ -18,6 +18,7 @@ require (
 	github.com/fjl/memsize v0.0.0-20190710130421-bcb5799ab5e5 // indirect
 	github.com/gballet/go-libpcsclite v0.0.0-20191108122812-4678299bea08 // indirect
 	github.com/go-kit/kit v0.9.0
+	github.com/gogo/protobuf v1.3.0
 	github.com/gorilla/mux v1.7.3
 	github.com/graph-gophers/graphql-go v0.0.0-20200207002730-8334863f2c8b // indirect
 	github.com/hashicorp/golang-lru v0.5.3

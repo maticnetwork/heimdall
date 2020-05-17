@@ -2,10 +2,10 @@ package types
 
 import (
 	"bytes"
-	"encoding/hex"
 	"errors"
 
 	"github.com/cbergoon/merkletree"
+	"github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/bor/rpc"
 	"github.com/tendermint/crypto/sha3"
 	"golang.org/x/sync/errgroup"
@@ -91,13 +91,13 @@ func GetAccountProof(dividendAccounts []hmTypes.DividendAccount, userAddr hmType
 
 // VerifyAccountProof returns proof of dividend Account
 func VerifyAccountProof(dividendAccounts []hmTypes.DividendAccount, userAddr hmTypes.HeimdallAddress, proofToVerify string) (bool, error) {
-
 	proof, _, err := GetAccountProof(dividendAccounts, userAddr)
 	if err != nil {
 		return false, nil
 	}
 
-	if proofToVerify == hex.EncodeToString(proof) {
+	// check proof bytes
+	if bytes.Equal(common.FromHex(proofToVerify), proof) {
 		return true, nil
 	}
 
@@ -123,7 +123,6 @@ func convertTo32(input []byte) (output [32]byte, err error) {
 	copy(output[32-l:], input[:])
 	return
 }
-
 func appendBytes32(data ...[]byte) []byte {
 	var result []byte
 	for _, v := range data {
