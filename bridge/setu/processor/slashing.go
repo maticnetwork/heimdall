@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -389,10 +390,11 @@ func (sp *SlashingProcessor) validateTickSlashInfo(slashInfoList []*hmTypes.Vali
 		return
 	}
 	// compare tickSlashInfoBytes with slashInfoBytes
-	if bytes.Compare(tickSlashInfoBytes, slashInfoBytes) == 0 {
+	if bytes.Compare(tickSlashInfoBytes, slashInfoBytes.Bytes()) == 0 {
 		return true, nil
 	} else {
-		sp.Logger.Info("SlashingInfoBytes mismatch", "tickSlashInfoBytes", tickSlashInfoBytes, "slashInfoBytes", slashInfoBytes)
+		sp.Logger.Info("SlashingInfoBytes mismatch", "tickSlashInfoBytes", hex.EncodeToString(tickSlashInfoBytes), "slashInfoBytes", slashInfoBytes)
+		return false, errors.New("Validation failed. tickSlashInfoBytes mismatch")
 	}
 
 	return

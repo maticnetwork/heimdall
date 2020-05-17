@@ -10,12 +10,12 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
-func TestSlashingInfoRLPEncoding(t *testing.T) {
+func TestSlashingInfoRLP(t *testing.T) {
 	var slashingInfoList []*hmTypes.ValidatorSlashingInfo
 
 	// Input data
-	slashingInfo1 := hmTypes.NewValidatorSlashingInfo(1, uint64(1000), false)
-	slashingInfo2 := hmTypes.NewValidatorSlashingInfo(2, uint64(234), true)
+	slashingInfo1 := hmTypes.NewValidatorSlashingInfo(1, uint64(1000), false) // on contract, "false" value decoded as "0"
+	slashingInfo2 := hmTypes.NewValidatorSlashingInfo(2, uint64(234), true)   // on contract, "true" value decoded as "1"
 	slashingInfoList = append(slashingInfoList, &slashingInfo1)
 	slashingInfoList = append(slashingInfoList, &slashingInfo2)
 
@@ -38,9 +38,22 @@ func TestSlashingInfoRLPEncoding(t *testing.T) {
 	}
 }
 
+func TestSlashingInfoRLPEncoding(t *testing.T) {
+	var slashingInfoList []*hmTypes.ValidatorSlashingInfo
+
+	// Input data
+	slashingInfo2 := hmTypes.NewValidatorSlashingInfo(2, uint64(80), false)
+	slashingInfoList = append(slashingInfoList, &slashingInfo2)
+
+	// Encoding
+	encodedSlashInfos, err := slashingTypes.SortAndRLPEncodeSlashInfos(slashingInfoList)
+	t.Log("RLP encoded", "encodedSlashInfos", hex.EncodeToString(encodedSlashInfos), "error", err)
+	require.Empty(t, err)
+}
+
 func TestSlashingInfoRLPDecoding(t *testing.T) {
 	// input data
-	slashInfoEncodedBytesStr := "dacc01893635c9adc5dea0000080cc02890caf6700370168000001"
+	slashInfoEncodedBytesStr := "cdcc028904563918244f40000080"
 	slashInfoEncodedBytes, err := hex.DecodeString(slashInfoEncodedBytesStr)
 	require.Empty(t, err)
 
