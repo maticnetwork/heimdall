@@ -14,6 +14,7 @@ import (
 	"github.com/maticnetwork/heimdall/helper/mocks"
 	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/staking/types"
+	cmn "github.com/maticnetwork/heimdall/test"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/types/simulation"
 	"github.com/stretchr/testify/require"
@@ -456,12 +457,190 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorJoin() {
 }
 
 func (suite *SideHandlerTestSuite) TestSideHandleMsgSingerUpdate() {
+	t, app, ctx := suite.T(), suite.app, suite.ctx
+	keeper := suite.app.StakingKeeper
+	// pass 0 as time alive to generate non de-activated validators
+	cmn.LoadValidatorSet(4, t, keeper, ctx, false, 0)
+	oldValSet := keeper.GetValidatorSet(ctx)
+
+	oldSigner := oldValSet.Validators[0]
+	newSigner := cmn.GenRandomVal(1, 0, 10, 10, false, 1)
+	newSigner[0].ID = oldSigner.ID
+	newSigner[0].VotingPower = oldSigner.VotingPower
+	chainParams := app.ChainKeeper.GetParams(ctx)
+	blockNumber := big.NewInt(10)
+	nonce := big.NewInt(5)
+
+	// gen msg
+	msgTxHash := hmTypes.HexToHeimdallHash("123")
+
+	suite.Run("Success", func() {
+		msg := types.NewMsgSignerUpdate(newSigner[0].Signer, uint64(oldSigner.ID), newSigner[0].PubKey, msgTxHash, 0, blockNumber.Uint64(), nonce.Uint64())
+
+		txreceipt := &ethTypes.Receipt{BlockNumber: blockNumber}
+		suite.contractCaller.On("GetConfirmedTxReceipt", msgTxHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
+
+		signerUpdateEvent := &stakinginfo.StakinginfoSignerChange{
+			ValidatorId:  new(big.Int).SetUint64(oldSigner.ID.Uint64()),
+			Nonce:        nonce,
+			OldSigner:    oldSigner.Signer.EthAddress(),
+			NewSigner:    newSigner[0].Signer.EthAddress(),
+			SignerPubkey: newSigner[0].PubKey.Bytes()[1:],
+		}
+		suite.contractCaller.On("DecodeSignerUpdateEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), txreceipt, uint64(0)).Return(signerUpdateEvent, nil)
+
+		result := suite.sideHandler(ctx, msg)
+
+		require.Equal(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should be success")
+		require.Equal(t, abci.SideTxResultType_Yes, result.Result, "Result should be `yes`")
+	})
+
+	suite.Run("No Eventlog", func() {
+		suite.contractCaller = mocks.IContractCaller{}
+
+		msg := types.NewMsgSignerUpdate(newSigner[0].Signer, uint64(oldSigner.ID), newSigner[0].PubKey, msgTxHash, 0, blockNumber.Uint64(), nonce.Uint64())
+
+		txreceipt := &ethTypes.Receipt{BlockNumber: blockNumber}
+		suite.contractCaller.On("GetConfirmedTxReceipt", msgTxHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
+
+		suite.contractCaller.On("DecodeSignerUpdateEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), txreceipt, uint64(0)).Return(nil, nil)
+
+		result := suite.sideHandler(ctx, msg)
+
+		require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should Fail")
+		require.Equal(t, abci.SideTxResultType_Skip, result.Result, "Result should be `skip`")
+		require.Equal(t, uint32(common.CodeErrDecodeEvent), result.Code)
+	})
+
+	suite.Run("Invalid BlockNumber", func() {
+		suite.contractCaller = mocks.IContractCaller{}
+
+		msg := types.NewMsgSignerUpdate(
+			newSigner[0].Signer, uint64(oldSigner.ID),
+			newSigner[0].PubKey,
+			msgTxHash,
+			0,
+			uint64(9),
+			nonce.Uint64(),
+		)
+
+		txreceipt := &ethTypes.Receipt{BlockNumber: blockNumber}
+		suite.contractCaller.On("GetConfirmedTxReceipt", msgTxHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
+
+		signerUpdateEvent := &stakinginfo.StakinginfoSignerChange{
+			ValidatorId:  new(big.Int).SetUint64(oldSigner.ID.Uint64()),
+			Nonce:        nonce,
+			OldSigner:    oldSigner.Signer.EthAddress(),
+			NewSigner:    newSigner[0].Signer.EthAddress(),
+			SignerPubkey: newSigner[0].PubKey.Bytes()[1:],
+		}
+		suite.contractCaller.On("DecodeSignerUpdateEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), txreceipt, uint64(0)).Return(signerUpdateEvent, nil)
+
+		result := suite.sideHandler(ctx, msg)
+
+		require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should Fail")
+		require.Equal(t, abci.SideTxResultType_Skip, result.Result, "Result should be `skip`")
+		require.Equal(t, uint32(common.CodeInvalidMsg), result.Code)
+	})
+
+	suite.Run("Invalid validator", func() {
+		suite.contractCaller = mocks.IContractCaller{}
+
+		msg := types.NewMsgSignerUpdate(newSigner[0].Signer, uint64(6), newSigner[0].PubKey, msgTxHash, 0, blockNumber.Uint64(), nonce.Uint64())
+
+		txreceipt := &ethTypes.Receipt{BlockNumber: blockNumber}
+		suite.contractCaller.On("GetConfirmedTxReceipt", msgTxHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
+
+		signerUpdateEvent := &stakinginfo.StakinginfoSignerChange{
+			ValidatorId:  new(big.Int).SetUint64(oldSigner.ID.Uint64()),
+			Nonce:        nonce,
+			OldSigner:    oldSigner.Signer.EthAddress(),
+			NewSigner:    newSigner[0].Signer.EthAddress(),
+			SignerPubkey: newSigner[0].PubKey.Bytes()[1:],
+		}
+		suite.contractCaller.On("DecodeSignerUpdateEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), txreceipt, uint64(0)).Return(signerUpdateEvent, nil)
+
+		result := suite.sideHandler(ctx, msg)
+
+		require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should Fail")
+		require.Equal(t, abci.SideTxResultType_Skip, result.Result, "Result should be `skip`")
+		require.Equal(t, uint32(common.CodeInvalidMsg), result.Code)
+	})
+
+	suite.Run("Invalid signer pubkey", func() {
+		suite.contractCaller = mocks.IContractCaller{}
+
+		msg := types.NewMsgSignerUpdate(newSigner[0].Signer, uint64(oldSigner.ID), hmTypes.NewPubKey([]byte{123}), msgTxHash, 0, blockNumber.Uint64(), nonce.Uint64())
+
+		txreceipt := &ethTypes.Receipt{BlockNumber: blockNumber}
+		suite.contractCaller.On("GetConfirmedTxReceipt", msgTxHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
+
+		signerUpdateEvent := &stakinginfo.StakinginfoSignerChange{
+			ValidatorId:  new(big.Int).SetUint64(oldSigner.ID.Uint64()),
+			Nonce:        nonce,
+			OldSigner:    oldSigner.Signer.EthAddress(),
+			NewSigner:    newSigner[0].Signer.EthAddress(),
+			SignerPubkey: newSigner[0].PubKey.Bytes()[1:],
+		}
+		suite.contractCaller.On("DecodeSignerUpdateEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), txreceipt, uint64(0)).Return(signerUpdateEvent, nil)
+
+		result := suite.sideHandler(ctx, msg)
+
+		require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should Fail")
+		require.Equal(t, abci.SideTxResultType_Skip, result.Result, "Result should be `skip`")
+		require.Equal(t, uint32(common.CodeInvalidMsg), result.Code)
+	})
+
+	suite.Run("Invalid new signer address", func() {
+		suite.contractCaller = mocks.IContractCaller{}
+
+		msg := types.NewMsgSignerUpdate(hmTypes.ZeroHeimdallAddress, uint64(oldSigner.ID), newSigner[0].PubKey, msgTxHash, 0, blockNumber.Uint64(), nonce.Uint64())
+
+		txreceipt := &ethTypes.Receipt{BlockNumber: blockNumber}
+		suite.contractCaller.On("GetConfirmedTxReceipt", msgTxHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
+
+		signerUpdateEvent := &stakinginfo.StakinginfoSignerChange{
+			ValidatorId:  new(big.Int).SetUint64(oldSigner.ID.Uint64()),
+			Nonce:        nonce,
+			OldSigner:    oldSigner.Signer.EthAddress(),
+			NewSigner:    hmTypes.ZeroHeimdallAddress.EthAddress(),
+			SignerPubkey: newSigner[0].PubKey.Bytes()[1:],
+		}
+		suite.contractCaller.On("DecodeSignerUpdateEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), txreceipt, uint64(0)).Return(signerUpdateEvent, nil)
+
+		result := suite.sideHandler(ctx, msg)
+
+		require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should Fail")
+		require.Equal(t, abci.SideTxResultType_Skip, result.Result, "Result should be `skip`")
+		require.Equal(t, uint32(common.CodeInvalidMsg), result.Code)
+	})
+
+	suite.Run("Invalid nonce", func() {
+		suite.contractCaller = mocks.IContractCaller{}
+
+		msg := types.NewMsgSignerUpdate(newSigner[0].Signer, uint64(oldSigner.ID), newSigner[0].PubKey, msgTxHash, 0, blockNumber.Uint64(), uint64(12))
+
+		txreceipt := &ethTypes.Receipt{BlockNumber: blockNumber}
+		suite.contractCaller.On("GetConfirmedTxReceipt", msgTxHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
+
+		signerUpdateEvent := &stakinginfo.StakinginfoSignerChange{
+			ValidatorId:  new(big.Int).SetUint64(oldSigner.ID.Uint64()),
+			Nonce:        nonce,
+			OldSigner:    oldSigner.Signer.EthAddress(),
+			NewSigner:    newSigner[0].Signer.EthAddress(),
+			SignerPubkey: newSigner[0].PubKey.Bytes()[1:],
+		}
+		suite.contractCaller.On("DecodeSignerUpdateEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), txreceipt, uint64(0)).Return(signerUpdateEvent, nil)
+
+		result := suite.sideHandler(ctx, msg)
+
+		require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should Fail")
+		require.Equal(t, abci.SideTxResultType_Skip, result.Result, "Result should be `skip`")
+		require.Equal(t, uint32(common.CodeInvalidMsg), result.Code)
+	})
 }
 
 func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorExit() {
-}
-
-func (suite *SideHandlerTestSuite) TestHandleMsgStakeUpdate() {
 }
 
 func (suite *SideHandlerTestSuite) TestPostHandler() {
@@ -480,7 +659,4 @@ func (suite *SideHandlerTestSuite) TestpostHandleMsgSingerUpdate() {
 }
 
 func (suite *SideHandlerTestSuite) TestpostHandleMsgValidatorExit() {
-}
-
-func (suite *SideHandlerTestSuite) TestPostHandleMsgStakeUpdate() {
 }
