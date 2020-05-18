@@ -50,9 +50,10 @@ func handlerMsgTick(ctx sdk.Context, msg types.MsgTick, k Keeper, contractCaller
 	)
 
 	// check if slash limit is exceeded or not
-	if !k.IsSlashedLimitExceeded(ctx) {
-		k.Logger(ctx).Error("TotalSlashedAmount is less than SlashLimit")
-		return hmCommon.ErrInvalidMsg(k.Codespace(), fmt.Sprintf("TotalSlashedAmount %v is less than SlashLimit", k.GetTotalSlashedAmount(ctx))).Result()
+	totalSlashedAmount := k.GetTotalSlashedAmount(ctx)
+	if totalSlashedAmount <= 0 {
+		k.Logger(ctx).Error("TotalSlashedAmount is less than or equal to zero")
+		return hmCommon.ErrInvalidMsg(k.Codespace(), fmt.Sprintf("TotalSlashedAmount is less than or equal to zero", totalSlashedAmount)).Result()
 	}
 
 	// check if tick msgs are in continuity
