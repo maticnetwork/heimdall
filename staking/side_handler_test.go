@@ -641,6 +641,449 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgSingerUpdate() {
 }
 
 func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorExit() {
+	t, app, ctx := suite.T(), suite.app, suite.ctx
+	keeper := app.StakingKeeper
+	// pass 0 as time alive to generate non de-activated validators
+	cmn.LoadValidatorSet(4, t, keeper, ctx, false, 0)
+	validators := keeper.GetCurrentValidators(ctx)
+	msgTxHash := hmTypes.HexToHeimdallHash("123")
+	chainParams := app.ChainKeeper.GetParams(ctx)
+	logIndex := uint64(0)
+	blockNumber := big.NewInt(10)
+	nonce := big.NewInt(9)
+
+	suite.Run("Success", func() {
+		suite.contractCaller = mocks.IContractCaller{}
+		txreceipt := &ethTypes.Receipt{
+			BlockNumber: blockNumber,
+		}
+
+		suite.contractCaller.On("GetConfirmedTxReceipt", msgTxHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
+
+		amount, _ := big.NewInt(0).SetString("10000000000000000000", 10)
+		stakinginfoUnstakeInit := &stakinginfo.StakinginfoUnstakeInit{
+			User:              validators[0].Signer.EthAddress(),
+			ValidatorId:       big.NewInt(0).SetUint64(validators[0].ID.Uint64()),
+			Nonce:             nonce,
+			DeactivationEpoch: big.NewInt(10),
+			Amount:            amount,
+		}
+		validators[0].EndEpoch = 10
+
+		suite.contractCaller.On("DecodeValidatorExitEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), txreceipt, logIndex).Return(stakinginfoUnstakeInit, nil)
+
+		msg := types.NewMsgValidatorExit(
+			validators[0].Signer,
+			uint64(validators[0].ID),
+			validators[0].EndEpoch,
+			msgTxHash,
+			0,
+			blockNumber.Uint64(),
+			nonce.Uint64(),
+		)
+
+		result := suite.sideHandler(ctx, msg)
+		require.Equal(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should be success")
+		require.Equal(t, abci.SideTxResultType_Yes, result.Result, "Result should be `yes`")
+	})
+
+	suite.Run("No Receipt", func() {
+		suite.contractCaller = mocks.IContractCaller{}
+		txreceipt := &ethTypes.Receipt{
+			BlockNumber: blockNumber,
+		}
+
+		suite.contractCaller.On("GetConfirmedTxReceipt", msgTxHash.EthHash(), chainParams.MainchainTxConfirmations).Return(nil, nil)
+
+		amount, _ := big.NewInt(0).SetString("10000000000000000000", 10)
+		stakinginfoUnstakeInit := &stakinginfo.StakinginfoUnstakeInit{
+			User:              validators[0].Signer.EthAddress(),
+			ValidatorId:       big.NewInt(0).SetUint64(validators[0].ID.Uint64()),
+			Nonce:             nonce,
+			DeactivationEpoch: big.NewInt(10),
+			Amount:            amount,
+		}
+		validators[0].EndEpoch = 10
+
+		suite.contractCaller.On("DecodeValidatorExitEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), txreceipt, logIndex).Return(stakinginfoUnstakeInit, nil)
+
+		msg := types.NewMsgValidatorExit(
+			validators[0].Signer,
+			uint64(validators[0].ID),
+			validators[0].EndEpoch,
+			msgTxHash,
+			0,
+			blockNumber.Uint64(),
+			nonce.Uint64(),
+		)
+
+		result := suite.sideHandler(ctx, msg)
+		require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should fail")
+		require.Equal(t, abci.SideTxResultType_Skip, result.Result, "Result should skip")
+	})
+
+	suite.Run("No Eventlog", func() {
+		suite.contractCaller = mocks.IContractCaller{}
+		txreceipt := &ethTypes.Receipt{
+			BlockNumber: blockNumber,
+		}
+
+		suite.contractCaller.On("GetConfirmedTxReceipt", msgTxHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
+
+		validators[0].EndEpoch = 10
+
+		suite.contractCaller.On("DecodeValidatorExitEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), txreceipt, logIndex).Return(nil, nil)
+
+		msg := types.NewMsgValidatorExit(
+			validators[0].Signer,
+			uint64(validators[0].ID),
+			validators[0].EndEpoch,
+			msgTxHash,
+			0,
+			blockNumber.Uint64(),
+			nonce.Uint64(),
+		)
+
+		result := suite.sideHandler(ctx, msg)
+		require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should fail")
+		require.Equal(t, abci.SideTxResultType_Skip, result.Result, "Result should skip")
+	})
+
+	suite.Run("Invalid BlockNumber", func() {
+		suite.contractCaller = mocks.IContractCaller{}
+		txreceipt := &ethTypes.Receipt{
+			BlockNumber: blockNumber,
+		}
+
+		suite.contractCaller.On("GetConfirmedTxReceipt", msgTxHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
+
+		amount, _ := big.NewInt(0).SetString("10000000000000000000", 10)
+		stakinginfoUnstakeInit := &stakinginfo.StakinginfoUnstakeInit{
+			User:              validators[0].Signer.EthAddress(),
+			ValidatorId:       big.NewInt(0).SetUint64(validators[0].ID.Uint64()),
+			Nonce:             nonce,
+			DeactivationEpoch: big.NewInt(10),
+			Amount:            amount,
+		}
+		validators[0].EndEpoch = 10
+
+		suite.contractCaller.On("DecodeValidatorExitEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), txreceipt, logIndex).Return(stakinginfoUnstakeInit, nil)
+
+		msg := types.NewMsgValidatorExit(
+			validators[0].Signer,
+			uint64(validators[0].ID),
+			validators[0].EndEpoch,
+			msgTxHash,
+			0,
+			uint64(5),
+			nonce.Uint64(),
+		)
+
+		result := suite.sideHandler(ctx, msg)
+		require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should fail")
+		require.Equal(t, abci.SideTxResultType_Skip, result.Result, "Result should skip")
+	})
+	suite.Run("Invalid validatorId", func() {
+		suite.contractCaller = mocks.IContractCaller{}
+		txreceipt := &ethTypes.Receipt{
+			BlockNumber: blockNumber,
+		}
+
+		suite.contractCaller.On("GetConfirmedTxReceipt", msgTxHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
+
+		amount, _ := big.NewInt(0).SetString("10000000000000000000", 10)
+		stakinginfoUnstakeInit := &stakinginfo.StakinginfoUnstakeInit{
+			User:              validators[0].Signer.EthAddress(),
+			ValidatorId:       big.NewInt(0).SetUint64(validators[0].ID.Uint64()),
+			Nonce:             nonce,
+			DeactivationEpoch: big.NewInt(10),
+			Amount:            amount,
+		}
+		validators[0].EndEpoch = 10
+
+		suite.contractCaller.On("DecodeValidatorExitEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), txreceipt, logIndex).Return(stakinginfoUnstakeInit, nil)
+
+		msg := types.NewMsgValidatorExit(
+			validators[0].Signer,
+			uint64(66),
+			validators[0].EndEpoch,
+			msgTxHash,
+			0,
+			blockNumber.Uint64(),
+			nonce.Uint64(),
+		)
+
+		result := suite.sideHandler(ctx, msg)
+		require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should fail")
+		require.Equal(t, abci.SideTxResultType_Skip, result.Result, "Result should skip")
+	})
+
+	suite.Run("Invalid DeactivationEpoch", func() {
+		suite.contractCaller = mocks.IContractCaller{}
+		txreceipt := &ethTypes.Receipt{
+			BlockNumber: blockNumber,
+		}
+
+		suite.contractCaller.On("GetConfirmedTxReceipt", msgTxHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
+
+		amount, _ := big.NewInt(0).SetString("10000000000000000000", 10)
+		stakinginfoUnstakeInit := &stakinginfo.StakinginfoUnstakeInit{
+			User:              validators[0].Signer.EthAddress(),
+			ValidatorId:       big.NewInt(0).SetUint64(validators[0].ID.Uint64()),
+			Nonce:             nonce,
+			DeactivationEpoch: big.NewInt(10),
+			Amount:            amount,
+		}
+
+		suite.contractCaller.On("DecodeValidatorExitEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), txreceipt, logIndex).Return(stakinginfoUnstakeInit, nil)
+
+		msg := types.NewMsgValidatorExit(
+			validators[0].Signer,
+			uint64(validators[0].ID),
+			uint64(1000),
+			msgTxHash,
+			0,
+			blockNumber.Uint64(),
+			nonce.Uint64(),
+		)
+
+		result := suite.sideHandler(ctx, msg)
+		require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should fail")
+		require.Equal(t, abci.SideTxResultType_Skip, result.Result, "Result should skip")
+	})
+
+	suite.Run("Invalid Nonce", func() {
+		suite.contractCaller = mocks.IContractCaller{}
+		txreceipt := &ethTypes.Receipt{
+			BlockNumber: blockNumber,
+		}
+
+		suite.contractCaller.On("GetConfirmedTxReceipt", msgTxHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
+
+		amount, _ := big.NewInt(0).SetString("10000000000000000000", 10)
+		stakinginfoUnstakeInit := &stakinginfo.StakinginfoUnstakeInit{
+			User:              validators[0].Signer.EthAddress(),
+			ValidatorId:       big.NewInt(0).SetUint64(validators[0].ID.Uint64()),
+			Nonce:             nonce,
+			DeactivationEpoch: big.NewInt(10),
+			Amount:            amount,
+		}
+		validators[0].EndEpoch = 10
+
+		suite.contractCaller.On("DecodeValidatorExitEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), txreceipt, logIndex).Return(stakinginfoUnstakeInit, nil)
+
+		msg := types.NewMsgValidatorExit(
+			validators[0].Signer,
+			uint64(validators[0].ID),
+			validators[0].EndEpoch,
+			msgTxHash,
+			0,
+			blockNumber.Uint64(),
+			uint64(6),
+		)
+
+		result := suite.sideHandler(ctx, msg)
+		require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should fail")
+		require.Equal(t, abci.SideTxResultType_Skip, result.Result, "Result should skip")
+	})
+}
+
+func (suite *SideHandlerTestSuite) TestSideHandleMsgStakeUpdate() {
+	t, app, ctx := suite.T(), suite.app, suite.ctx
+	keeper := app.StakingKeeper
+
+	// pass 0 as time alive to generate non de-activated validators
+	cmn.LoadValidatorSet(4, t, keeper, ctx, false, 0)
+	oldValSet := keeper.GetValidatorSet(ctx)
+	oldVal := oldValSet.Validators[0]
+
+	chainParams := app.ChainKeeper.GetParams(ctx)
+
+	msgTxHash := hmTypes.HexToHeimdallHash("123")
+	blockNumber := big.NewInt(10)
+	nonce := big.NewInt(1)
+
+	suite.Run("Success", func() {
+		msg := types.NewMsgStakeUpdate(
+			oldVal.Signer,
+			oldVal.ID.Uint64(),
+			sdk.NewInt(2000000000000000000),
+			msgTxHash,
+			0,
+			blockNumber.Uint64(),
+			nonce.Uint64())
+
+		txreceipt := &ethTypes.Receipt{BlockNumber: big.NewInt(10)}
+		suite.contractCaller.On("GetConfirmedTxReceipt", msgTxHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
+
+		stakinginfoStakeUpdate := &stakinginfo.StakinginfoStakeUpdate{
+			ValidatorId: new(big.Int).SetUint64(oldVal.ID.Uint64()),
+			NewAmount:   new(big.Int).SetInt64(2000000000000000000),
+			Nonce:       nonce,
+		}
+
+		suite.contractCaller.On("DecodeValidatorStakeUpdateEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), txreceipt, uint64(0)).Return(stakinginfoStakeUpdate, nil)
+
+		result := suite.sideHandler(ctx, msg)
+		require.Equal(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should be success")
+		require.Equal(t, abci.SideTxResultType_Yes, result.Result, "Result should be `yes`")
+	})
+
+	suite.Run("No Receipt", func() {
+		suite.contractCaller = mocks.IContractCaller{}
+		msg := types.NewMsgStakeUpdate(
+			oldVal.Signer,
+			oldVal.ID.Uint64(),
+			sdk.NewInt(2000000000000000000),
+			msgTxHash,
+			0,
+			blockNumber.Uint64(),
+			nonce.Uint64())
+
+		txreceipt := &ethTypes.Receipt{BlockNumber: big.NewInt(10)}
+		suite.contractCaller.On("GetConfirmedTxReceipt", msgTxHash.EthHash(), chainParams.MainchainTxConfirmations).Return(nil, nil)
+
+		stakinginfoStakeUpdate := &stakinginfo.StakinginfoStakeUpdate{
+			ValidatorId: new(big.Int).SetUint64(oldVal.ID.Uint64()),
+			NewAmount:   new(big.Int).SetInt64(2000000000000000000),
+			Nonce:       nonce,
+		}
+
+		suite.contractCaller.On("DecodeValidatorStakeUpdateEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), txreceipt, uint64(0)).Return(stakinginfoStakeUpdate, nil)
+
+		result := suite.sideHandler(ctx, msg)
+		require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should fail")
+		require.Equal(t, abci.SideTxResultType_Skip, result.Result, "Result should skip")
+	})
+
+	suite.Run("No Eventlog", func() {
+		suite.contractCaller = mocks.IContractCaller{}
+		msg := types.NewMsgStakeUpdate(
+			oldVal.Signer,
+			oldVal.ID.Uint64(),
+			sdk.NewInt(2000000000000000000),
+			msgTxHash,
+			0,
+			blockNumber.Uint64(),
+			nonce.Uint64())
+
+		txreceipt := &ethTypes.Receipt{BlockNumber: big.NewInt(10)}
+		suite.contractCaller.On("GetConfirmedTxReceipt", msgTxHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
+
+		suite.contractCaller.On("DecodeValidatorStakeUpdateEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), txreceipt, uint64(0)).Return(nil, nil)
+
+		result := suite.sideHandler(ctx, msg)
+		require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should fail")
+		require.Equal(t, abci.SideTxResultType_Skip, result.Result, "Result should skip")
+	})
+
+	suite.Run("Invalid BlockNumber", func() {
+		suite.contractCaller = mocks.IContractCaller{}
+		msg := types.NewMsgStakeUpdate(
+			oldVal.Signer,
+			oldVal.ID.Uint64(),
+			sdk.NewInt(2000000000000000000),
+			msgTxHash,
+			0,
+			uint64(15),
+			nonce.Uint64())
+
+		txreceipt := &ethTypes.Receipt{BlockNumber: big.NewInt(10)}
+		suite.contractCaller.On("GetConfirmedTxReceipt", msgTxHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
+
+		stakinginfoStakeUpdate := &stakinginfo.StakinginfoStakeUpdate{
+			ValidatorId: new(big.Int).SetUint64(oldVal.ID.Uint64()),
+			NewAmount:   new(big.Int).SetInt64(2000000000000000000),
+			Nonce:       nonce,
+		}
+
+		suite.contractCaller.On("DecodeValidatorStakeUpdateEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), txreceipt, uint64(0)).Return(stakinginfoStakeUpdate, nil)
+
+		result := suite.sideHandler(ctx, msg)
+		require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should fail")
+		require.Equal(t, abci.SideTxResultType_Skip, result.Result, "Result should skip")
+	})
+
+	suite.Run("Invalid ValidatorID", func() {
+		suite.contractCaller = mocks.IContractCaller{}
+		msg := types.NewMsgStakeUpdate(
+			oldVal.Signer,
+			uint64(13),
+			sdk.NewInt(2000000000000000000),
+			msgTxHash,
+			0,
+			blockNumber.Uint64(),
+			nonce.Uint64())
+
+		txreceipt := &ethTypes.Receipt{BlockNumber: big.NewInt(10)}
+		suite.contractCaller.On("GetConfirmedTxReceipt", msgTxHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
+
+		stakinginfoStakeUpdate := &stakinginfo.StakinginfoStakeUpdate{
+			ValidatorId: new(big.Int).SetUint64(oldVal.ID.Uint64()),
+			NewAmount:   new(big.Int).SetInt64(2000000000000000000),
+			Nonce:       nonce,
+		}
+
+		suite.contractCaller.On("DecodeValidatorStakeUpdateEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), txreceipt, uint64(0)).Return(stakinginfoStakeUpdate, nil)
+
+		result := suite.sideHandler(ctx, msg)
+		require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should fail")
+		require.Equal(t, abci.SideTxResultType_Skip, result.Result, "Result should skip")
+	})
+
+	suite.Run("Invalid Amount", func() {
+		suite.contractCaller = mocks.IContractCaller{}
+		msg := types.NewMsgStakeUpdate(
+			oldVal.Signer,
+			oldVal.ID.Uint64(),
+			sdk.NewInt(200000000000000000),
+			msgTxHash,
+			0,
+			blockNumber.Uint64(),
+			nonce.Uint64())
+
+		txreceipt := &ethTypes.Receipt{BlockNumber: big.NewInt(10)}
+		suite.contractCaller.On("GetConfirmedTxReceipt", msgTxHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
+
+		stakinginfoStakeUpdate := &stakinginfo.StakinginfoStakeUpdate{
+			ValidatorId: new(big.Int).SetUint64(oldVal.ID.Uint64()),
+			NewAmount:   new(big.Int).SetInt64(2000000000000000000),
+			Nonce:       nonce,
+		}
+
+		suite.contractCaller.On("DecodeValidatorStakeUpdateEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), txreceipt, uint64(0)).Return(stakinginfoStakeUpdate, nil)
+
+		result := suite.sideHandler(ctx, msg)
+		require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should fail")
+		require.Equal(t, abci.SideTxResultType_Skip, result.Result, "Result should skip")
+	})
+
+	suite.Run("Invalid Nonce", func() {
+		suite.contractCaller = mocks.IContractCaller{}
+		msg := types.NewMsgStakeUpdate(
+			oldVal.Signer,
+			oldVal.ID.Uint64(),
+			sdk.NewInt(2000000000000000000),
+			msgTxHash,
+			0,
+			blockNumber.Uint64(),
+			uint64(9))
+
+		txreceipt := &ethTypes.Receipt{BlockNumber: big.NewInt(10)}
+		suite.contractCaller.On("GetConfirmedTxReceipt", msgTxHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
+
+		stakinginfoStakeUpdate := &stakinginfo.StakinginfoStakeUpdate{
+			ValidatorId: new(big.Int).SetUint64(oldVal.ID.Uint64()),
+			NewAmount:   new(big.Int).SetInt64(2000000000000000000),
+			Nonce:       nonce,
+		}
+
+		suite.contractCaller.On("DecodeValidatorStakeUpdateEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), txreceipt, uint64(0)).Return(stakinginfoStakeUpdate, nil)
+
+		result := suite.sideHandler(ctx, msg)
+		require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should fail")
+		require.Equal(t, abci.SideTxResultType_Skip, result.Result, "Result should skip")
+	})
 }
 
 func (suite *SideHandlerTestSuite) TestPostHandler() {

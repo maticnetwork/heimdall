@@ -55,8 +55,7 @@ func NewPostTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.P
 		case types.MsgStakeUpdate:
 			return PostHandleMsgStakeUpdate(ctx, k, msg, sideTxResult)
 		default:
-			errMsg := "Unrecognized Staking Msg type: %s" + msg.Type()
-			return sdk.ErrUnknownRequest(errMsg).Result()
+			return sdk.ErrUnknownRequest("Unrecognized Staking Msg type").Result()
 		}
 	}
 }
