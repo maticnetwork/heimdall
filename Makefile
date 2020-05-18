@@ -29,6 +29,7 @@ build: clean
 	go build -o build/heimdalld ./cmd/heimdalld
 	go build -o build/heimdallcli ./cmd/heimdallcli
 	go build -o build/bridge bridge/bridge.go
+	echo "====================================================\n==================Build Successful==================\n===================================================="
 
 install:
 	go install $(BUILD_FLAGS) ./cmd/heimdalld
