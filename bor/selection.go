@@ -48,7 +48,7 @@ func randomRangeInclusive(min uint64, max uint64) uint64 {
 
 // SelectNextProducers selects producers for next span by converting power to tickets
 func SelectNextProducers(blkHash common.Hash, spanEligibleValidators []hmTypes.Validator, producerCount uint64) ([]uint64, error) {
-	selectedProducers []uint64
+	var selectedProducers []uint64
 
 	if len(spanEligibleValidators) <= int(producerCount) {
 		for _, validator := range spanEligibleValidators {
@@ -74,7 +74,7 @@ func SelectNextProducers(blkHash common.Hash, spanEligibleValidators []hmTypes.V
 	for i := uint64(0); i < producerCount; i++ {
 		/*
 			random must be in [1, totalVotingPower] to avoid situation such as
-			2 validators with 1 staking power each. 
+			2 validators with 1 staking power each.
 			Weighted range will look like (1, 2)
 			Rolling inclusive will have a range of 0 - 2, making validator with staking power 1 chance of selection = 66%
 		*/

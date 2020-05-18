@@ -132,7 +132,7 @@ func findValidatorByID(validators []hmTypes.Validator, id uint64) (val hmTypes.V
 	return
 }
 
-func Test_createWeightedRange(t *testing.T) {
+func Test_createWeightedRanges(t *testing.T) {
 	type args struct {
 		vals []uint64
 	}
@@ -166,7 +166,7 @@ func Test_createWeightedRange(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ranges, totalWeight := createWeightedRange(tt.args.vals)
+			ranges, totalWeight := createWeightedRanges(tt.args.vals)
 			if !reflect.DeepEqual(ranges, tt.ranges) {
 				t.Errorf("createWeightedRange() got ranges = %v, want %v", ranges, tt.ranges)
 			}
