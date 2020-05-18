@@ -29,10 +29,10 @@ func RandomizedGenState(simState *module.SimulationState) {
 		timestamp,
 	)
 
-	checkpointBlockHeaders := make([]hmTypes.CheckpointBlockHeader, ackCount)
+	Checkpoints := make([]hmTypes.Checkpoint, ackCount)
 
-	for i := range checkpointBlockHeaders {
-		checkpointBlockHeaders[i] = bufferedCheckpoint
+	for i := range Checkpoints {
+		Checkpoints[i] = bufferedCheckpoint
 	}
 
 	params := types.DefaultParams()
@@ -41,7 +41,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 		&bufferedCheckpoint,
 		uint64(lastNoACK),
 		uint64(ackCount),
-		checkpointBlockHeaders,
+		Checkpoints,
 	)
 	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(genesisState)
 

@@ -152,7 +152,7 @@ func PostHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint,
 	timeStamp := uint64(ctx.BlockTime().Unix())
 
 	// Add checkpoint to buffer with root hash and account hash
-	k.SetCheckpointBuffer(ctx, hmTypes.CheckpointBlockHeader{
+	k.SetCheckpointBuffer(ctx, hmTypes.Checkpoint{
 		StartBlock: msg.StartBlock,
 		EndBlock:   msg.EndBlock,
 		RootHash:   msg.RootHash,

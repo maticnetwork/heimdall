@@ -364,7 +364,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointNoAckBeforeBufferTimeout()
 	require.True(t, !result.IsOK(), errs.CodeToDefaultMsg(result.Code))
 }
 
-func (suite *HandlerTestSuite) SendCheckpoint(header hmTypes.CheckpointBlockHeader) (res sdk.Result) {
+func (suite *HandlerTestSuite) SendCheckpoint(header hmTypes.Checkpoint) (res sdk.Result) {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	// keeper := app.CheckpointKeeper
 	topupKeeper := app.TopupKeeper

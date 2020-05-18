@@ -63,7 +63,7 @@ func LoadValidatorSet(count int, t *testing.T, keeper staking.Keeper, ctx sdk.Co
 }
 
 // GenRandCheckpointHeader return headers
-func GenRandCheckpointHeader(start uint64, headerSize uint64, maxCheckpointLenght uint64) (headerBlock types.CheckpointBlockHeader, err error) {
+func GenRandCheckpointHeader(start uint64, headerSize uint64, maxCheckpointLenght uint64) (headerBlock types.Checkpoint, err error) {
 	end := start + headerSize
 	borChainID := "1234"
 	rootHash := types.HexToHeimdallHash("123")

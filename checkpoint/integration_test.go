@@ -26,10 +26,10 @@ func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, context.CLICo
 
 	params := types.NewParams(5*time.Second, 256, 1024)
 
-	checkpointBlockHeaders := make([]hmTypes.CheckpointBlockHeader, 0)
+	Checkpoints := make([]hmTypes.Checkpoint, 0)
 
-	for i := range checkpointBlockHeaders {
-		checkpointBlockHeaders[i] = hmTypes.CheckpointBlockHeader{}
+	for i := range Checkpoints {
+		Checkpoints[i] = hmTypes.Checkpoint{}
 	}
 
 	checkpointGenesis := types.NewGenesisState(

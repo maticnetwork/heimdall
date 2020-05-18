@@ -250,11 +250,11 @@ func noackHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 type stateDump struct {
-	ACKCount         uint64                         `json:"ack_count"`
-	CheckpointBuffer *hmTypes.CheckpointBlockHeader `json:"checkpoint_buffer"`
-	ValidatorCount   int                            `json:"validator_count"`
-	ValidatorSet     hmTypes.ValidatorSet           `json:"validator_set"`
-	LastNoACK        time.Time                      `json:"last_noack_time"`
+	ACKCount         uint64               `json:"ack_count"`
+	CheckpointBuffer *hmTypes.Checkpoint  `json:"checkpoint_buffer"`
+	ValidatorCount   int                  `json:"validator_count"`
+	ValidatorSet     hmTypes.ValidatorSet `json:"validator_set"`
+	LastNoACK        time.Time            `json:"last_noack_time"`
 }
 
 // get all state-dump of heimdall
@@ -286,11 +286,11 @@ func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		// Checkpoint buffer
 		//
 
-		var _checkpoint *hmTypes.CheckpointBlockHeader
+		var _checkpoint *hmTypes.Checkpoint
 		checkpointBufferBytes, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCheckpointBuffer), nil)
 		if err == nil {
 			if len(checkpointBufferBytes) != 0 {
-				_checkpoint = new(hmTypes.CheckpointBlockHeader)
+				_checkpoint = new(hmTypes.Checkpoint)
 				if err = json.Unmarshal(checkpointBufferBytes, _checkpoint); err != nil {
 					// log and ignore
 					RestLogger.Error("Error while unmarshing checkpoint header", "error", err)

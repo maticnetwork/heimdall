@@ -40,7 +40,7 @@ func (suite *KeeperTestSuite) TestAddCheckpoint() {
 	timestamp := uint64(time.Now().Unix())
 	borChainId := "1234"
 
-	checkpointBlockHeader := hmTypes.CreateBlock(
+	Checkpoint := hmTypes.CreateBlock(
 		startBlock,
 		endBlock,
 		rootHash,
@@ -48,7 +48,7 @@ func (suite *KeeperTestSuite) TestAddCheckpoint() {
 		borChainId,
 		timestamp,
 	)
-	err := keeper.AddCheckpoint(ctx, headerBlockNumber, checkpointBlockHeader)
+	err := keeper.AddCheckpoint(ctx, headerBlockNumber, Checkpoint)
 	require.NoError(t, err)
 
 	result, err := keeper.GetCheckpointByIndex(ctx, headerBlockNumber)
@@ -81,7 +81,7 @@ func (suite *KeeperTestSuite) TestGetCheckpointList() {
 		timestamp := uint64(time.Now().Unix()) + uint64(i)
 		borChainId := "1234"
 
-		checkpointBlockHeader := hmTypes.CreateBlock(
+		Checkpoint := hmTypes.CreateBlock(
 			startBlock,
 			endBlock,
 			rootHash,
@@ -90,7 +90,7 @@ func (suite *KeeperTestSuite) TestGetCheckpointList() {
 			timestamp,
 		)
 
-		keeper.AddCheckpoint(ctx, headerBlockNumber, checkpointBlockHeader)
+		keeper.AddCheckpoint(ctx, headerBlockNumber, Checkpoint)
 		keeper.UpdateACKCount(ctx)
 	}
 
