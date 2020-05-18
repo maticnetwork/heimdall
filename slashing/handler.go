@@ -3,7 +3,6 @@ package slashing
 import (
 	"bytes"
 	"encoding/hex"
-	"fmt"
 	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -51,9 +50,9 @@ func handlerMsgTick(ctx sdk.Context, msg types.MsgTick, k Keeper, contractCaller
 
 	// check if slash limit is exceeded or not
 	totalSlashedAmount := k.GetTotalSlashedAmount(ctx)
-	if totalSlashedAmount <= 0 {
-		k.Logger(ctx).Error("TotalSlashedAmount is less than or equal to zero")
-		return hmCommon.ErrInvalidMsg(k.Codespace(), fmt.Sprintf("TotalSlashedAmount is less than or equal to zero", totalSlashedAmount)).Result()
+	if totalSlashedAmount == 0 {
+		k.Logger(ctx).Error("Slashed amount is zero")
+		return hmCommon.ErrInvalidMsg(k.Codespace(), "Slashed amount is zero", totalSlashedAmount).Result()
 	}
 
 	// check if tick msgs are in continuity
