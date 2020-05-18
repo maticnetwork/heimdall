@@ -376,17 +376,6 @@ func (suite *KeeperTestSuite) TestGetLastUpdated() {
 	require.Equal(t, validators[0].LastUpdated, lastUpdated)
 }
 
-func (suite *KeeperTestSuite) TestAddFeeToDividendAccount() {
-	t, app, ctx := suite.T(), suite.app, suite.ctx
-	address := hmTypes.HexToHeimdallAddress("234452")
-	amount, _ := big.NewInt(0).SetString("0", 10)
-	app.TopupKeeper.AddFeeToDividendAccount(ctx, address, amount)
-	dividentAccount, _ := app.TopupKeeper.GetDividendAccountByAddress(ctx, address)
-	actualResult, ok := big.NewInt(0).SetString(dividentAccount.FeeAmount, 10)
-	require.Equal(t, ok, true)
-	require.Equal(t, amount, actualResult)
-}
-
 func (suite *KeeperTestSuite) TestGetSpanEligibleValidators() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	keeper := app.StakingKeeper
