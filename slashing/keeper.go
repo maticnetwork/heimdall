@@ -101,14 +101,16 @@ func (k *Keeper) IterateValidatorSigningInfos(ctx sdk.Context,
 func (k *Keeper) GetValidatorMissedBlockBitArray(ctx sdk.Context, valID hmTypes.ValidatorID, index int64) bool {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.GetValidatorMissedBlockBitArrayKey(valID.Bytes(), index))
-	var missed gogotypes.BoolValue
+	// var missed gogotypes.BoolValue
+	var missed bool
 	if bz == nil {
 		// lazy: treat empty key as not missed
 		return false
 	}
 	k.cdc.MustUnmarshalBinaryBare(bz, &missed)
 
-	return missed.Value
+	// return missed.Value
+	return missed
 }
 
 // IterateValidatorMissedBlockBitArray iterates over the signed blocks window
@@ -138,7 +140,8 @@ func (k *Keeper) IterateValidatorMissedBlockBitArray(ctx sdk.Context,
 // missed a block in the current window
 func (k *Keeper) SetValidatorMissedBlockBitArray(ctx sdk.Context, valID hmTypes.ValidatorID, index int64, missed bool) {
 	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshalBinaryBare(&gogotypes.BoolValue{Value: missed})
+	// bz := k.cdc.MustMarshalBinaryBare(&gogotypes.BoolValue{Value: missed})
+	bz := k.cdc.MustMarshalBinaryBare(missed)
 	store.Set(types.GetValidatorMissedBlockBitArrayKey(valID.Bytes(), index), bz)
 }
 
