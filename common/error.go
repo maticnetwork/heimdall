@@ -71,6 +71,8 @@ const (
 	CodeSlashInfoDetails       CodeType = 6503
 	CodeTickNotInContinuity    CodeType = 6504
 	CodeTickAckNotInContinuity CodeType = 6505
+
+	CodeDepositNotInContinuity CodeType = 7501
 )
 
 // -------- Invalid msg
@@ -354,4 +356,9 @@ func ErrTickNotInContinuity(codespace sdk.CodespaceType) sdk.Error {
 
 func ErrTickAckNotInContinuity(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeTickAckNotInContinuity, "Tick-ack not in countinuity")
+}
+
+// Deposit
+func ErrDepositNotInContinuity(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeDepositNotInContinuity, "Deposit not in countinuity")
 }
