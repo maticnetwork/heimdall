@@ -24,7 +24,7 @@ func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, context.CLICo
 	ctx := app.BaseApp.NewContext(isCheckTx, abci.Header{})
 	cliCtx := context.NewCLIContext().WithCodec(app.Codec())
 
-	params := types.NewParams(5*time.Second, 256, 1024)
+	params := types.NewParams(5*time.Second, 256, 1024, 10000)
 
 	Checkpoints := make([]hmTypes.Checkpoint, 0)
 
