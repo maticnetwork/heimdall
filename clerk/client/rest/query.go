@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -27,10 +26,6 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc(
 		"/clerk/isoldtx",
 		DepositTxStatusHandlerFn(cliCtx),
-	).Methods("GET")
-	r.HandleFunc(
-		"/clerk/deposit-count",
-		depositCountHandlerFn(cliCtx),
 	).Methods("GET")
 }
 
@@ -195,42 +190,5 @@ func DepositTxStatusHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		// return result
 		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, res)
-	}
-}
-
-func depositCountHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
-		if !ok {
-			return
-		}
-
-		RestLogger.Debug("Fetching number of deposits from state")
-		depositCountBytes, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryDepositCount), nil)
-		if err != nil {
-			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-
-		// check content
-		if ok := hmRest.ReturnNotFoundIfNoContent(w, depositCountBytes, "No deposit count found"); !ok {
-			return
-		}
-
-		var depositCount uint64
-		if err := json.Unmarshal(depositCountBytes, &depositCount); err != nil {
-			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		result, err := json.Marshal(&depositCount)
-		if err != nil {
-			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
-			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		cliCtx = cliCtx.WithHeight(height)
-		rest.PostProcessResponse(w, cliCtx, result)
 	}
 }
