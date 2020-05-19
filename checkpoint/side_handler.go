@@ -68,7 +68,7 @@ func SideHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint,
 func SideHandleMsgCheckpointAck(ctx sdk.Context, k Keeper, msg types.MsgCheckpointAck, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
 	logger := k.Logger(ctx)
 
-	// make call to headerBlock with header number
+	params := k.GetParams(ctx)
 	chainParams := k.ck.GetParams(ctx).ChainParams
 
 	//
@@ -81,7 +81,7 @@ func SideHandleMsgCheckpointAck(ctx sdk.Context, k Keeper, msg types.MsgCheckpoi
 		return common.ErrorSideTx(k.Codespace(), common.CodeInvalidACK)
 	}
 
-	root, start, end, _, proposer, err := contractCaller.GetHeaderInfo(msg.HeaderBlock, rootChainInstance)
+	root, start, end, _, proposer, err := contractCaller.GetHeaderInfo(msg.HeaderBlock, rootChainInstance, params.ChildBlockInterval)
 	if err != nil {
 		logger.Error("Unable to fetch header from rootchain contract", "error", err, "headerBlock", msg.HeaderBlock)
 		return common.ErrorSideTx(k.Codespace(), common.CodeInvalidACK)

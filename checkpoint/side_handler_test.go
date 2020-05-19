@@ -172,7 +172,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgCheckpointAck() {
 		rootchainInstance := &rootchain.Rootchain{}
 
 		suite.contractCaller.On("GetRootChainInstance", mock.Anything).Return(rootchainInstance, nil)
-		suite.contractCaller.On("GetHeaderInfo", headerId, rootchainInstance).Return(header.RootHash.EthHash(), header.StartBlock, header.EndBlock, header.TimeStamp, header.Proposer, nil)
+		suite.contractCaller.On("GetHeaderInfo", headerId, rootchainInstance, params.ChildBlockInterval).Return(header.RootHash.EthHash(), header.StartBlock, header.EndBlock, header.TimeStamp, header.Proposer, nil)
 
 		result := suite.sideHandler(ctx, msgCheckpointAck)
 		require.Equal(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should be success")
@@ -196,7 +196,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgCheckpointAck() {
 		rootchainInstance := &rootchain.Rootchain{}
 
 		suite.contractCaller.On("GetRootChainInstance", mock.Anything).Return(rootchainInstance, nil)
-		suite.contractCaller.On("GetHeaderInfo", headerId, rootchainInstance).Return(nil, header.StartBlock, header.EndBlock, header.TimeStamp, header.Proposer, nil)
+		suite.contractCaller.On("GetHeaderInfo", headerId, rootchainInstance, params.ChildBlockInterval).Return(nil, header.StartBlock, header.EndBlock, header.TimeStamp, header.Proposer, nil)
 
 		result := suite.sideHandler(ctx, msgCheckpointAck)
 		require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should fail")
@@ -323,7 +323,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgCheckpointAck() {
 		rootchainInstance := &rootchain.Rootchain{}
 
 		suite.contractCaller.On("GetRootChainInstance", mock.Anything).Return(rootchainInstance, nil)
-		suite.contractCaller.On("GetHeaderInfo", headerId, rootchainInstance).Return(header.RootHash.EthHash(), header.StartBlock, header.EndBlock, header.TimeStamp, header.Proposer, nil)
+		suite.contractCaller.On("GetHeaderInfo", headerId, rootchainInstance, params.ChildBlockInterval).Return(header.RootHash.EthHash(), header.StartBlock, header.EndBlock, header.TimeStamp, header.Proposer, nil)
 
 		result := suite.postHandler(ctx, msgCheckpointAck, abci.SideTxResultType_No)
 		require.True(t, !result.IsOK(), errs.CodeToDefaultMsg(result.Code))
@@ -363,7 +363,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgCheckpointAck() {
 		rootchainInstance := &rootchain.Rootchain{}
 
 		suite.contractCaller.On("GetRootChainInstance", mock.Anything).Return(rootchainInstance, nil)
-		suite.contractCaller.On("GetHeaderInfo", headerId, rootchainInstance).Return(header.RootHash.EthHash(), header.StartBlock, header.EndBlock, header.TimeStamp, header.Proposer, nil)
+		suite.contractCaller.On("GetHeaderInfo", headerId, rootchainInstance, params.ChildBlockInterval).Return(header.RootHash.EthHash(), header.StartBlock, header.EndBlock, header.TimeStamp, header.Proposer, nil)
 
 		result = suite.postHandler(ctx, msgCheckpointAck, abci.SideTxResultType_Yes)
 		require.True(t, result.IsOK(), "expected send-ack to be ok, got %v", result)
@@ -403,7 +403,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgCheckpointAck() {
 		rootchainInstance := &rootchain.Rootchain{}
 
 		suite.contractCaller.On("GetRootChainInstance", mock.Anything).Return(rootchainInstance, nil)
-		suite.contractCaller.On("GetHeaderInfo", headerId, rootchainInstance).Return(header.RootHash.EthHash(), header.StartBlock, header.EndBlock, header.TimeStamp, header.Proposer, nil)
+		suite.contractCaller.On("GetHeaderInfo", headerId, rootchainInstance, params.ChildBlockInterval).Return(header.RootHash.EthHash(), header.StartBlock, header.EndBlock, header.TimeStamp, header.Proposer, nil)
 
 		result = suite.postHandler(ctx, msgCheckpointAck, abci.SideTxResultType_Yes)
 		require.True(t, result.IsOK(), "expected send-ack to be ok, got %v", result)

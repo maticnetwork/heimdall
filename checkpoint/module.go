@@ -229,10 +229,10 @@ func verifyGenesis(state types.GenesisState, chainManagerState chainmanagerTypes
 	}
 
 	// Dont multiply
-	if state.AckCount*childBlockInterval != currentHeaderIndex {
+	if state.AckCount != currentHeaderIndex {
 		fmt.Println("Header Count doesn't match",
 			"ExpectedHeader", currentHeaderIndex,
-			"HeaderIndexFound", state.AckCount*childBlockInterval)
+			"HeaderIndexFound", state.AckCount)
 		return nil
 	}
 
@@ -241,7 +241,7 @@ func verifyGenesis(state types.GenesisState, chainManagerState chainmanagerTypes
 	// check all headers
 	for i, header := range state.Headers {
 		ackCount := uint64(i + 1)
-		root, start, end, _, _, err := contractCaller.GetHeaderInfo(ackCount*childBlockInterval, rootChainInstance)
+		root, start, end, _, _, err := contractCaller.GetHeaderInfo(ackCount, rootChainInstance, childBlockInterval)
 		if err != nil {
 			return err
 		}

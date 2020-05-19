@@ -28,7 +28,7 @@ import (
 
 // IContractCaller represents contract caller
 type IContractCaller interface {
-	GetHeaderInfo(headerID uint64, rootChainInstance *rootchain.Rootchain) (root common.Hash, start, end, createdAt uint64, proposer types.HeimdallAddress, err error)
+	GetHeaderInfo(headerID uint64, rootChainInstance *rootchain.Rootchain, childBlockInterval uint64) (root common.Hash, start, end, createdAt uint64, proposer types.HeimdallAddress, err error)
 	GetRootHash(start uint64, end uint64, checkpointLength uint64) ([]byte, error)
 	GetValidatorInfo(valID types.ValidatorID, stakingInfoInstance *stakinginfo.Stakinginfo) (validator types.Validator, err error)
 	GetLastChildBlock(rootChainInstance *rootchain.Rootchain) (uint64, error)
@@ -259,7 +259,7 @@ func NewLru(size int) (*lru.Cache, error) {
 }
 
 // GetHeaderInfo get header info from header id
-func (c *ContractCaller) GetHeaderInfo(headerID uint64, rootChainInstance *rootchain.Rootchain) (
+func (c *ContractCaller) GetHeaderInfo(headerID uint64, rootChainInstance *rootchain.Rootchain, childBlockInterval uint64) (
 	root common.Hash,
 	start uint64,
 	end uint64,
@@ -268,7 +268,7 @@ func (c *ContractCaller) GetHeaderInfo(headerID uint64, rootChainInstance *rootc
 	err error,
 ) {
 	// get header from rootchain
-	headerBlock, err := rootChainInstance.HeaderBlocks(nil, big.NewInt(0).SetUint64(headerID))
+	headerBlock, err := rootChainInstance.HeaderBlocks(nil, big.NewInt(0).SetUint64(headerID*childBlockInterval))
 	if err != nil {
 		Logger.Error("Unable to fetch header block from rootchain", "headerBlockIndex", headerID)
 		return root, start, end, createdAt, proposer, errors.New("Unable to fetch header block")
