@@ -133,7 +133,7 @@ func handleQueryNextCheckpoint(ctx sdk.Context, req abci.RequestQuery, keeper Ke
 	var start uint64
 
 	if ackCount != 0 {
-		headerIndex := (ackCount) * (params.ChildBlockInterval)
+		headerIndex := ackCount
 		lastCheckpoint, err := keeper.GetCheckpointByIndex(ctx, headerIndex)
 		if err != nil {
 			return nil, sdk.ErrInternal(sdk.AppendMsgToErr(fmt.Sprintf("could not fetch checkpoint by index %v", headerIndex), err.Error()))

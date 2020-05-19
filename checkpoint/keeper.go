@@ -164,11 +164,8 @@ func (k *Keeper) GetCheckpointList(ctx sdk.Context, page uint64, limit uint64) (
 func (k *Keeper) GetLastCheckpoint(ctx sdk.Context) (hmTypes.Checkpoint, error) {
 	store := ctx.KVStore(k.storeKey)
 	acksCount := k.GetACKCount(ctx)
-	params := k.GetParams(ctx)
 
-	// fetch last checkpoint key (NumberOfACKs * ChildBlockInterval)
-	//TODO: don't multiple
-	lastCheckpointKey := params.ChildBlockInterval * acksCount
+	lastCheckpointKey := acksCount
 
 	// fetch checkpoint and unmarshall
 	var _checkpoint hmTypes.Checkpoint

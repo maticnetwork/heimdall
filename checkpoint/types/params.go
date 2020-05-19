@@ -32,7 +32,7 @@ type Params struct {
 	CheckpointBufferTime time.Duration `json:"checkpoint_buffer_time" yaml:"checkpoint_buffer_time"`
 	AvgCheckpointLength  uint64        `json:"avg_checkpoint_length" yaml:"avg_checkpoint_length"`
 	MaxCheckpointLength  uint64        `json:"max_checkpoint_length" yaml:"max_checkpoint_length"`
-	ChildBlockInterval   uint64        `json: "child_chain_block_interval" yaml:"child_chain_block_interval"`
+	ChildBlockInterval   uint64        `json:"child_chain_block_interval" yaml:"child_chain_block_interval"`
 }
 
 // NewParams creates a new Params object

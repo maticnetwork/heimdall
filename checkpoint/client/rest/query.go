@@ -387,11 +387,8 @@ func latestCheckpointHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 		//
 
 		RestLogger.Debug("ACK Count fetched", "ackCount", ackCount)
-		lastCheckpointKey := helper.GetConfig().ChildBlockInterval * ackCount
-		RestLogger.Debug("Last checkpoint key generated",
-			"lastCheckpointKey", lastCheckpointKey,
-			"min", helper.GetConfig().ChildBlockInterval,
-		)
+		lastCheckpointKey := ackCount
+		RestLogger.Debug("Last checkpoint key generated", "lastCheckpointKey", lastCheckpointKey)
 
 		// get query params
 		queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQueryCheckpointParams(lastCheckpointKey))
@@ -434,15 +431,15 @@ func checkpointByNumberHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		RestLogger.Debug("Get Checkpoint for ", "number", number)
-		checkpointKey := helper.GetConfig().ChildBlockInterval * number
-		RestLogger.Debug("checkpoint key generated",
-			"checkpointKey", checkpointKey,
-			"min", helper.GetConfig().ChildBlockInterval,
-		)
+		// RestLogger.Debug("Get Checkpoint for ", "number", number)
+		// checkpointKey := helper.GetConfig().ChildBlockInterval * number
+		// RestLogger.Debug("checkpoint key generated",
+		// 	"checkpointKey", checkpointKey,
+		// 	"min", helper.GetConfig().ChildBlockInterval,
+		// )
 
 		// get query params
-		queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQueryCheckpointParams(checkpointKey))
+		queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQueryCheckpointParams(number))
 		if err != nil {
 			return
 		}

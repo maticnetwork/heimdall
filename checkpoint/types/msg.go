@@ -168,8 +168,7 @@ func (msg MsgCheckpointAck) ValidateBasic() sdk.Error {
 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid from %v", msg.From.String())
 	}
 
-	childBlockInterval := helper.GetConfig().ChildBlockInterval
-	if msg.HeaderBlock > 0 && msg.HeaderBlock%childBlockInterval != 0 {
+	if msg.HeaderBlock > 0 && msg.HeaderBlock != 0 {
 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid header block %d", msg.HeaderBlock)
 	}
 
