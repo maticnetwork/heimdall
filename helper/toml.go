@@ -32,9 +32,6 @@ heimdall_rest_server = "{{ .HeimdallServerURL }}"
 # AMQP endpoint
 amqp_url = "{{ .AmqpURL }}"
 
-##### Intervals #####
-child_chain_block_interval = "{{ .ChildBlockInterval }}"
-
 ## Poll intervals
 checkpoint_poll_interval = "{{ .CheckpointerPollInterval }}"
 syncer_poll_interval = "{{ .SyncerPollInterval }}"

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"math/big"
 	"strings"
 
@@ -319,7 +318,6 @@ func (c *ContractCaller) CurrentHeaderBlock(rootChainInstance *rootchain.Rootcha
 		Logger.Error("Could not fetch current header block from rootchain contract", "Error", err)
 		return 0, err
 	}
-	fmt.Println("inside current header block", currentHeaderBlock.Uint64(), childBlockInterval, currentHeaderBlock.Uint64()/childBlockInterval)
 	return currentHeaderBlock.Uint64() / childBlockInterval, nil
 }
 

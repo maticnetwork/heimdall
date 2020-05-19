@@ -96,12 +96,6 @@ func (suite *KeeperTestSuite) TestGetCheckpointList() {
 	result, err := keeper.GetCheckpointList(ctx, uint64(1), uint64(20))
 	require.NoError(t, err)
 	require.LessOrEqual(t, count, len(result))
-
-	// GetLastCheckpoint
-	// lastCheckpoint, _ := keeper.GetLastCheckpoint(ctx)
-	// TODO: find a way to mock helper.GetConfig().ChildBlockInterval
-	// currently, ackCount is not getting updated as above value is not set
-	// require.Equal(t, result[0], lastCheckpoint)
 }
 
 func (suite *KeeperTestSuite) TestHasStoreValue() {
