@@ -167,6 +167,7 @@ func (k *Keeper) GetLastCheckpoint(ctx sdk.Context) (hmTypes.Checkpoint, error) 
 	params := k.GetParams(ctx)
 
 	// fetch last checkpoint key (NumberOfACKs * ChildBlockInterval)
+	//TODO: don't multiple
 	lastCheckpointKey := params.ChildBlockInterval * acksCount
 
 	// fetch checkpoint and unmarshall

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"math/big"
 	"strings"
 
@@ -31,7 +32,7 @@ type IContractCaller interface {
 	GetRootHash(start uint64, end uint64, checkpointLength uint64) ([]byte, error)
 	GetValidatorInfo(valID types.ValidatorID, stakingInfoInstance *stakinginfo.Stakinginfo) (validator types.Validator, err error)
 	GetLastChildBlock(rootChainInstance *rootchain.Rootchain) (uint64, error)
-	CurrentHeaderBlock(rootChainInstance *rootchain.Rootchain) (uint64, error)
+	CurrentHeaderBlock(rootChainInstance *rootchain.Rootchain, childBlockInterval uint64) (uint64, error)
 	GetBalance(address common.Address) (*big.Int, error)
 	SendCheckpoint(sigedData []byte, sigs []byte, rootchainAddress common.Address, rootChainInstance *rootchain.Rootchain) (err error)
 	SendTick(sigedData []byte, sigs []byte, slashManagerAddress common.Address, slashManagerInstance *slashmanager.Slashmanager) (err error)
@@ -312,13 +313,14 @@ func (c *ContractCaller) GetLastChildBlock(rootChainInstance *rootchain.Rootchai
 }
 
 // CurrentHeaderBlock fetches current header block
-func (c *ContractCaller) CurrentHeaderBlock(rootChainInstance *rootchain.Rootchain) (uint64, error) {
+func (c *ContractCaller) CurrentHeaderBlock(rootChainInstance *rootchain.Rootchain, childBlockInterval uint64) (uint64, error) {
 	currentHeaderBlock, err := rootChainInstance.CurrentHeaderBlock(nil)
 	if err != nil {
 		Logger.Error("Could not fetch current header block from rootchain contract", "Error", err)
 		return 0, err
 	}
-	return currentHeaderBlock.Uint64(), nil
+	fmt.Println("inside current header block", currentHeaderBlock.Uint64(), childBlockInterval, currentHeaderBlock.Uint64()/childBlockInterval)
+	return currentHeaderBlock.Uint64() / childBlockInterval, nil
 }
 
 // GetBalance get balance of account (returns big.Int balance wont fit in uint64)

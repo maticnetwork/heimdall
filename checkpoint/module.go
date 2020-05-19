@@ -223,11 +223,12 @@ func verifyGenesis(state types.GenesisState, chainManagerState chainmanagerTypes
 	rootChainInstance, _ := contractCaller.GetRootChainInstance(rootChainAddress)
 
 	// check header count
-	currentHeaderIndex, err := contractCaller.CurrentHeaderBlock(rootChainInstance)
+	currentHeaderIndex, err := contractCaller.CurrentHeaderBlock(rootChainInstance, childBlockInterval)
 	if err != nil {
 		return nil
 	}
 
+	// Dont multiply
 	if state.AckCount*childBlockInterval != currentHeaderIndex {
 		fmt.Println("Header Count doesn't match",
 			"ExpectedHeader", currentHeaderIndex,

@@ -85,20 +85,20 @@ func (_m *IContractCaller) CurrentAccountStateRoot(stakingInfoInstance *stakingi
 	return r0, r1
 }
 
-// CurrentHeaderBlock provides a mock function with given fields: rootChainInstance
-func (_m *IContractCaller) CurrentHeaderBlock(rootChainInstance *rootchain.Rootchain) (uint64, error) {
-	ret := _m.Called(rootChainInstance)
+// CurrentHeaderBlock provides a mock function with given fields: rootChainInstance, childBlockInterval
+func (_m *IContractCaller) CurrentHeaderBlock(rootChainInstance *rootchain.Rootchain, childBlockInterval uint64) (uint64, error) {
+	ret := _m.Called(rootChainInstance, childBlockInterval)
 
 	var r0 uint64
-	if rf, ok := ret.Get(0).(func(*rootchain.Rootchain) uint64); ok {
-		r0 = rf(rootChainInstance)
+	if rf, ok := ret.Get(0).(func(*rootchain.Rootchain, uint64) uint64); ok {
+		r0 = rf(rootChainInstance, childBlockInterval)
 	} else {
 		r0 = ret.Get(0).(uint64)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(*rootchain.Rootchain) error); ok {
-		r1 = rf(rootChainInstance)
+	if rf, ok := ret.Get(1).(func(*rootchain.Rootchain, uint64) error); ok {
+		r1 = rf(rootChainInstance, childBlockInterval)
 	} else {
 		r1 = ret.Error(1)
 	}

@@ -328,7 +328,7 @@ func (cp *CheckpointProcessor) nextExpectedCheckpoint(checkpointContext *Checkpo
 	}
 
 	// fetch current header block from mainchain contract
-	_currentHeaderBlock, err := cp.contractConnector.CurrentHeaderBlock(rootChainInstance)
+	_currentHeaderBlock, err := cp.contractConnector.CurrentHeaderBlock(rootChainInstance, checkpointParams.ChildBlockInterval)
 	if err != nil {
 		cp.Logger.Error("Error while fetching current header block number from rootchain", "error", err)
 		return nil, err
@@ -538,6 +538,7 @@ func (cp *CheckpointProcessor) fetchDividendAccountRoot() (accountroothash hmTyp
 func (cp *CheckpointProcessor) getLatestCheckpointTime(checkpointContext *CheckpointContext) (int64, error) {
 	// get chain params
 	chainParams := checkpointContext.ChainmanagerParams.ChainParams
+	checkpointParams := checkpointContext.CheckpointParams
 
 	rootChainInstance, err := cp.contractConnector.GetRootChainInstance(chainParams.RootChainAddress.EthAddress())
 	if err != nil {
@@ -545,7 +546,7 @@ func (cp *CheckpointProcessor) getLatestCheckpointTime(checkpointContext *Checkp
 	}
 
 	// fetch last header number
-	lastHeaderNumber, err := cp.contractConnector.CurrentHeaderBlock(rootChainInstance)
+	lastHeaderNumber, err := cp.contractConnector.CurrentHeaderBlock(rootChainInstance, checkpointParams.ChildBlockInterval)
 	if err != nil {
 		cp.Logger.Error("Error while fetching current header block number", "error", err)
 		return 0, err
