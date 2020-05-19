@@ -147,6 +147,9 @@ func PostHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecor
 		return types.ErrEventUpdate(k.Codespace()).Result()
 	}
 
+	// Update Deposit count
+	k.IncrementDepositCount(ctx)
+
 	// save record sequence
 	k.SetRecordSequence(ctx, sequence.String())
 
