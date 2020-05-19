@@ -139,7 +139,7 @@ func (k *Keeper) IterateValidatorMissedBlockBitArray(ctx sdk.Context,
 func (k *Keeper) SetValidatorMissedBlockBitArray(ctx sdk.Context, valID hmTypes.ValidatorID, index int64, missed bool) {
 	store := ctx.KVStore(k.storeKey)
 	if missed {
-		bz := k.cdc.MustMarshalBinaryBare(missed)
+		bz := k.cdc.MustMarshalBinaryBare(&gogotypes.BoolValue{Value: missed})
 		store.Set(types.GetValidatorMissedBlockBitArrayKey(valID.Bytes(), index), bz)
 	} else {
 		store.Delete(types.GetValidatorMissedBlockBitArrayKey(valID.Bytes(), index))
