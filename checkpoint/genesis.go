@@ -6,7 +6,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/maticnetwork/heimdall/checkpoint/types"
-	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -27,10 +26,9 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 		}
 		// sort headers before loading to state
 		data.Headers = hmTypes.SortHeaders(data.Headers)
-
 		// load checkpoints to state
 		for i, header := range data.Headers {
-			checkpointHeaderIndex := helper.GetConfig().ChildBlockInterval * (uint64(i) + 1)
+			checkpointHeaderIndex := data.Params.ChildBlockInterval * (uint64(i) + 1)
 			if err := keeper.AddCheckpoint(ctx, checkpointHeaderIndex, header); err != nil {
 				keeper.Logger(ctx).Error("InitGenesis | AddCheckpoint", "error", err)
 			}

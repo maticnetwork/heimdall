@@ -11,7 +11,6 @@ import (
 	"github.com/maticnetwork/heimdall/chainmanager"
 	"github.com/maticnetwork/heimdall/checkpoint/types"
 	cmn "github.com/maticnetwork/heimdall/common"
-	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/params/subspace"
 	"github.com/maticnetwork/heimdall/staking"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -165,9 +164,10 @@ func (k *Keeper) GetCheckpointList(ctx sdk.Context, page uint64, limit uint64) (
 func (k *Keeper) GetLastCheckpoint(ctx sdk.Context) (hmTypes.CheckpointBlockHeader, error) {
 	store := ctx.KVStore(k.storeKey)
 	acksCount := k.GetACKCount(ctx)
+	params := k.GetParams(ctx)
 
 	// fetch last checkpoint key (NumberOfACKs * ChildBlockInterval)
-	lastCheckpointKey := helper.GetConfig().ChildBlockInterval * acksCount
+	lastCheckpointKey := params.ChildBlockInterval * acksCount
 
 	// fetch checkpoint and unmarshall
 	var _checkpoint hmTypes.CheckpointBlockHeader

@@ -128,10 +128,12 @@ func handleQueryNextCheckpoint(ctx sdk.Context, req abci.RequestQuery, keeper Ke
 	validatorSet := sk.GetValidatorSet(ctx)
 	proposer := validatorSet.GetProposer()
 	ackCount := keeper.GetACKCount(ctx)
+	params := keeper.GetParams(ctx)
+
 	var start uint64
 
 	if ackCount != 0 {
-		headerIndex := (ackCount) * (helper.GetConfig().ChildBlockInterval)
+		headerIndex := (ackCount) * (params.ChildBlockInterval)
 		lastCheckpoint, err := keeper.GetCheckpointByIndex(ctx, headerIndex)
 		if err != nil {
 			return nil, sdk.ErrInternal(sdk.AppendMsgToErr(fmt.Sprintf("could not fetch checkpoint by index %v", headerIndex), err.Error()))
@@ -139,7 +141,6 @@ func handleQueryNextCheckpoint(ctx sdk.Context, req abci.RequestQuery, keeper Ke
 		start = lastCheckpoint.EndBlock + 1
 	}
 
-	params := keeper.GetParams(ctx)
 	end := start + params.AvgCheckpointLength
 
 	rootHash, err := contractCaller.GetRootHash(start, end, params.MaxCheckpointLength)
