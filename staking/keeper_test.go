@@ -1,7 +1,6 @@
 package staking_test
 
 import (
-	"math/big"
 	"math/rand"
 	"testing"
 	"time"
@@ -12,7 +11,6 @@ import (
 
 	"github.com/maticnetwork/heimdall/helper"
 
-	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/types/simulation"
@@ -300,30 +298,6 @@ func (suite *KeeperTestSuite) TestUpdateValidatorSetChange() {
 		5. When Validator Exits
 	**/
 
-}
-
-func (suite *KeeperTestSuite) TestDividendAccountTree() {
-	t := suite.T()
-
-	divAccounts := make([]hmTypes.DividendAccount, 5)
-	for i := 0; i < len(divAccounts); i++ {
-		divAccounts[i] = hmTypes.NewDividendAccount(
-			hmTypes.HexToHeimdallAddress("1234"),
-			big.NewInt(0).String(),
-		)
-	}
-
-	accountRoot, err := checkpointTypes.GetAccountRootHash(divAccounts)
-	require.NotNil(t, accountRoot)
-	require.NoError(t, err)
-
-	accountProof, _, err := checkpointTypes.GetAccountProof(divAccounts, hmTypes.HexToHeimdallAddress("1234"))
-	require.NotNil(t, accountProof)
-	require.NoError(t, err)
-
-	leafHash, err := divAccounts[0].CalculateHash()
-	require.NotNil(t, leafHash)
-	require.NoError(t, err)
 }
 
 func (suite *KeeperTestSuite) TestGetCurrentValidators() {

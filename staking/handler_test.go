@@ -147,14 +147,13 @@ func (suite *HandlerTestSuite) TestHandleMsgValidatorUpdate() {
 	_ = keeper.UpdateValidatorSetInStore(ctx, oldValSet)
 
 	ValFrmID, ok := keeper.GetValidatorFromValID(ctx, oldSigner.ID)
-	require.True(t, ok, "new signer should be found, got %v", ok)
-	require.NotEqual(t, ValFrmID.Signer.Bytes(), newSigner[0].Signer.Bytes(), "Should not update state")
+	require.True(t, ok, "signer should be found, got %v", ok)
+	require.NotEqual(t, oldSigner.Signer.Bytes(), newSigner[0].Signer.Bytes(), "Should not update state")
 	require.Equal(t, ValFrmID.VotingPower, oldSigner.VotingPower, "VotingPower of new signer %v should be equal to old signer %v", ValFrmID.VotingPower, oldSigner.VotingPower)
 
 	removedVal, err := keeper.GetValidatorInfo(ctx, oldSigner.Signer.Bytes())
-	require.Empty(t, err, "deleted validator should be found, got %v", err)
+	require.Empty(t, err)
 	require.NotEqual(t, removedVal.VotingPower, int64(0), "should not update state")
-	t.Log("Deleted validator ===>", "Validator", removedVal.String())
 }
 
 func (suite *HandlerTestSuite) TestHandleMsgValidatorExit() {
