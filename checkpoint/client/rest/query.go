@@ -431,13 +431,6 @@ func checkpointByNumberHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		// RestLogger.Debug("Get Checkpoint for ", "number", number)
-		// checkpointKey := helper.GetConfig().ChildBlockInterval * number
-		// RestLogger.Debug("checkpoint key generated",
-		// 	"checkpointKey", checkpointKey,
-		// 	"min", helper.GetConfig().ChildBlockInterval,
-		// )
-
 		// get query params
 		queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQueryCheckpointParams(number))
 		if err != nil {
