@@ -52,7 +52,7 @@ func handlerMsgTick(ctx sdk.Context, msg types.MsgTick, k Keeper, contractCaller
 	totalSlashedAmount := k.GetTotalSlashedAmount(ctx)
 	if totalSlashedAmount == 0 {
 		k.Logger(ctx).Error("Slashed amount is zero")
-		return hmCommon.ErrInvalidMsg(k.Codespace(), "Slashed amount is zero", totalSlashedAmount).Result()
+		return hmCommon.ErrInvalidMsg(k.Codespace(), "Slashed amount is zero").Result()
 	}
 
 	// check if tick msgs are in continuity
