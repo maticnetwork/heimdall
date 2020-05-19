@@ -50,7 +50,8 @@ type Keeper struct {
 func NewKeeper(
 	cdc *codec.Codec,
 	storeKey sdk.StoreKey,
-	paramSpace subspace.Subspace, codespace sdk.CodespaceType,
+	paramSpace subspace.Subspace,
+	codespace sdk.CodespaceType,
 	chainKeeper chainmanager.Keeper,
 	stakingKeeper staking.Keeper,
 	caller helper.ContractCaller,
@@ -95,7 +96,7 @@ func (k *Keeper) AddNewSpan(ctx sdk.Context, span hmTypes.Span) error {
 	spanKey := GetSpanKey(span.ID)
 	if spanKey == nil {
 		k.Logger(ctx).Error("Error invalid span key")
-		return errors.New("Invalid span key")
+		return merr.ValErr{Field: "span key", Module: types.ModuleName}
 
 	}
 	// store set span id
@@ -200,9 +201,9 @@ func (k *Keeper) GetLastSpan(ctx sdk.Context) (*hmTypes.Span, error) {
 // FreezeSet freezes validator set for next span
 func (k *Keeper) FreezeSet(ctx sdk.Context, id uint64, startBlock uint64, endBlock uint64, borChainID string, seed common.Hash) error {
 
-	if id == 0 {
-		return merr.ValErr{Field: "id", Module: types.ModuleName}
-	}
+	// 	if id == 0 {
+	// 		return merr.ValErr{Field: "id", Module: types.ModuleName}
+	// 	}
 
 	// select next producers
 	newProducers, err := k.SelectNextProducers(ctx, seed)
