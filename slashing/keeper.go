@@ -138,8 +138,12 @@ func (k *Keeper) IterateValidatorMissedBlockBitArray(ctx sdk.Context,
 // missed a block in the current window
 func (k *Keeper) SetValidatorMissedBlockBitArray(ctx sdk.Context, valID hmTypes.ValidatorID, index int64, missed bool) {
 	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshalBinaryBare(&gogotypes.BoolValue{Value: missed})
-	store.Set(types.GetValidatorMissedBlockBitArrayKey(valID.Bytes(), index), bz)
+	if missed {
+		bz := k.cdc.MustMarshalBinaryBare(missed)
+		store.Set(types.GetValidatorMissedBlockBitArrayKey(valID.Bytes(), index), bz)
+	} else {
+		store.Delete(types.GetValidatorMissedBlockBitArrayKey(valID.Bytes(), index))
+	}
 }
 
 // clearValidatorMissedBlockBitArray deletes every instance of ValidatorMissedBlockBitArray in the store
