@@ -116,6 +116,13 @@ func PostHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecor
 		return hmCommon.ErrOldTx(k.Codespace()).Result()
 	}
 
+	// sequential check
+	depositCount := k.GetDepositCount(ctx)
+	if msg.ID != (depositCount + 1) {
+		k.Logger(ctx).Error("Deposits not in countinuity", "msgID", msg.ID, "expectedMsgID", depositCount+1)
+		return hmCommon.ErrDepositNotInContinuity(k.Codespace()).Result()
+	}
+
 	k.Logger(ctx).Debug("Persisting clerk state", "sideTxResult", sideTxResult)
 
 	// sequence id
@@ -139,6 +146,9 @@ func PostHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecor
 		k.Logger(ctx).Error("Unable to update event record", "error", err, "id", msg.ID)
 		return types.ErrEventUpdate(k.Codespace()).Result()
 	}
+
+	// Update Deposit count
+	k.IncrementDepositCount(ctx)
 
 	// save record sequence
 	k.SetRecordSequence(ctx, sequence.String())

@@ -26,8 +26,10 @@ func NewQuerier(keeper Keeper, contractCaller helper.IContractCaller) sdk.Querie
 			return handleQueryRecordListWithTime(ctx, req, keeper)
 		case types.QueryRecordSequence:
 			return handleQueryRecordSequence(ctx, req, keeper, contractCaller)
+		case types.QueryDepositCount:
+			return handleQueryDepositCount(ctx, req, keeper)
 		default:
-			return nil, sdk.ErrUnknownRequest("unknown auth query endpoint")
+			return nil, sdk.ErrUnknownRequest("unknown clerk query endpoint")
 		}
 	}
 }
@@ -117,5 +119,13 @@ func handleQueryRecordSequence(ctx sdk.Context, req abci.RequestQuery, keeper Ke
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
 
+	return bz, nil
+}
+
+func handleQueryDepositCount(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	bz, err := json.Marshal(keeper.GetDepositCount(ctx))
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
 	return bz, nil
 }

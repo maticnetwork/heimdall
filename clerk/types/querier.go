@@ -10,6 +10,7 @@ const (
 	QueryRecordList         = "record-list"
 	QueryRecordListWithTime = "record-list-time"
 	QueryRecordSequence     = "record-sequence"
+	QueryDepositCount       = "deposit-count"
 )
 
 // QueryRecordParams defines the params for querying accounts.

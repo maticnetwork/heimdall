@@ -25,6 +25,8 @@ var (
 	RecordSequencePrefixKey = []byte{0x12}
 
 	StateRecordPrefixKeyWithTime = []byte{0x13} // prefix key for when storing state with time
+
+	DepositCountKey = []byte{0x14} // key to store deposit counts
 )
 
 // Keeper stores all related data
@@ -318,4 +320,50 @@ func (k *Keeper) SetRecordSequence(ctx sdk.Context, sequence string) {
 func (k *Keeper) HasRecordSequence(ctx sdk.Context, sequence string) bool {
 	store := ctx.KVStore(k.storeKey)
 	return store.Has(GetRecordSequenceKey(sequence))
+}
+
+//
+// Deposit count
+//
+
+// GetDepositCount returns current deposit count
+func (k Keeper) GetDepositCount(ctx sdk.Context) uint64 {
+	store := ctx.KVStore(k.storeKey)
+	// check if deposit count is there
+	if store.Has(DepositCountKey) {
+		// get current deposit count
+		depositCount, err := strconv.ParseUint(string(store.Get(DepositCountKey)), 10, 64)
+		if err != nil {
+			k.Logger(ctx).Error("Unable to convert key to int")
+		} else {
+			return depositCount
+		}
+	}
+
+	return 0
+}
+
+// UpdateDepositCountWithValue updates DepositCount with value
+func (k Keeper) UpdateDepositCountWithValue(ctx sdk.Context, value uint64) {
+	store := ctx.KVStore(k.storeKey)
+
+	// convert
+	depositCount := []byte(strconv.FormatUint(value, 10))
+
+	// update
+	store.Set(DepositCountKey, depositCount)
+}
+
+// IncrementDepositCount updates Deposit count by 1
+func (k Keeper) IncrementDepositCount(ctx sdk.Context) {
+	store := ctx.KVStore(k.storeKey)
+
+	// get current deposit Count
+	depositCount := k.GetDepositCount(ctx)
+
+	// increment by 1
+	depositCounts := []byte(strconv.FormatUint(depositCount+1, 10))
+
+	// update
+	store.Set(DepositCountKey, depositCounts)
 }
