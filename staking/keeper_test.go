@@ -171,7 +171,7 @@ func (suite *KeeperTestSuite) TestCurrentValidator() {
 	}
 
 	dataItems := []TestDataItem{
-		{"VotingPower zero", uint64(0), uint64(0), int64(0), uint64(1), false, "should not be current validator as VotingPower is zero."},
+		{"VotingPower zero", uint64(0), uint64(0), uint64(1), int64(0), uint64(1), false, "should not be current validator as VotingPower is zero."},
 		{"start epoch greater than ackcount", uint64(3), uint64(0), 0, int64(10), uint64(1), false, "should not be current validator as start epoch greater than ackcount."},
 	}
 	t, app, ctx := suite.T(), suite.app, suite.ctx
@@ -302,23 +302,6 @@ func (suite *KeeperTestSuite) TestUpdateValidatorSetChange() {
 
 }
 
-// tests setter/getters for Dividend account
-func (suite *KeeperTestSuite) TestDividendAccount() {
-	t, app, ctx := suite.T(), suite.app, suite.ctx
-
-	dividendAccount := types.DividendAccount{
-		ID:        types.NewDividendAccountID(1),
-		FeeAmount: big.NewInt(0).String(),
-	}
-	app.StakingKeeper.AddDividendAccount(ctx, dividendAccount)
-	ok := app.StakingKeeper.CheckIfDividendAccountExists(ctx, dividendAccount.ID)
-	require.Equal(t, ok, true)
-
-	dividendAccountInStore, _ := app.StakingKeeper.GetDividendAccountByID(ctx, dividendAccount.ID)
-
-	require.Equal(t, dividendAccount, dividendAccountInStore)
-}
-
 func (suite *KeeperTestSuite) TestDividendAccountTree() {
 	t := suite.T()
 
@@ -326,7 +309,6 @@ func (suite *KeeperTestSuite) TestDividendAccountTree() {
 	for i := 0; i < len(divAccounts); i++ {
 		divAccounts[i] = hmTypes.NewDividendAccount(
 			hmTypes.NewDividendAccountID(uint64(i)),
-			big.NewInt(0).String(),
 			big.NewInt(0).String(),
 		)
 	}
@@ -401,9 +383,9 @@ func (suite *KeeperTestSuite) TestAddFeeToDividendAccount() {
 	validators := keeper.GetCurrentValidators(ctx)
 
 	amount, _ := big.NewInt(0).SetString("0", 10)
-	keeper.AddFeeToDividendAccount(ctx, validators[0].ID, amount)
+	app.TopupKeeper.AddFeeToDividendAccount(ctx, validators[0].ID, amount)
 	dividentAccountId := hmTypes.DividendAccountID(validators[0].ID)
-	dividentAccount, _ := keeper.GetDividendAccountByID(ctx, dividentAccountId)
+	dividentAccount, _ := app.TopupKeeper.GetDividendAccountByID(ctx, dividentAccountId)
 	actualResult, ok := big.NewInt(0).SetString(dividentAccount.FeeAmount, 10)
 	require.Equal(t, ok, true)
 	require.Equal(t, amount, actualResult)

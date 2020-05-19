@@ -67,6 +67,7 @@ type IContractCaller interface {
 	CurrentSpanNumber(validatorset *validatorset.Validatorset) (Number *big.Int)
 	GetSpanDetails(id *big.Int, validatorset *validatorset.Validatorset) (*big.Int, *big.Int, *big.Int, error)
 	CurrentStateCounter(stateSenderInstance *statesender.Statesender) (Number *big.Int)
+	CheckIfBlocksExist(end uint64) bool
 
 	GetRootChainInstance(rootchainAddress common.Address) (*rootchain.Rootchain, error)
 	GetStakingInfoInstance(stakingInfoAddress common.Address) (*stakinginfo.Stakinginfo, error)
@@ -83,6 +84,7 @@ type ContractCaller struct {
 	MainChainClient  *ethclient.Client
 	MainChainRPC     *rpc.Client
 	MaticChainClient *ethclient.Client
+	MaticChainRPC    *rpc.Client
 
 	RootChainABI     abi.ABI
 	StakingInfoABI   abi.ABI
@@ -113,6 +115,7 @@ func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 	contractCallerObj.MainChainClient = GetMainClient()
 	contractCallerObj.MaticChainClient = GetMaticClient()
 	contractCallerObj.MainChainRPC = GetMainChainRPCClient()
+	contractCallerObj.MaticChainRPC = GetMaticRPCClient()
 	contractCallerObj.ReceiptCache, _ = NewLru(1000)
 
 	//
@@ -700,6 +703,23 @@ func (c *ContractCaller) CurrentStateCounter(stateSenderInstance *statesender.St
 	}
 
 	return result
+}
+
+// CheckIfBlocksExist - check if latest block number is greater than end block
+func (c *ContractCaller) CheckIfBlocksExist(end uint64) bool {
+	// Get Latest block number.
+	var latestBlock *ethTypes.Header
+
+	err := c.MaticChainRPC.Call(&latestBlock, "eth_getBlockByNumber", "latest", false)
+	if err != nil {
+		return false
+	}
+
+	if end > latestBlock.Number.Uint64() {
+		return false
+	}
+
+	return true
 }
 
 //

@@ -5,8 +5,8 @@ import (
 	"sort"
 )
 
-// CheckpointBlockHeader block header struct
-type CheckpointBlockHeader struct {
+// Checkpoint block header struct
+type Checkpoint struct {
 	Proposer   HeimdallAddress `json:"proposer"`
 	StartBlock uint64          `json:"start_block"`
 	EndBlock   uint64          `json:"end_block"`
@@ -23,8 +23,8 @@ func CreateBlock(
 	proposer HeimdallAddress,
 	borChainID string,
 	timestamp uint64,
-) CheckpointBlockHeader {
-	return CheckpointBlockHeader{
+) Checkpoint {
+	return Checkpoint{
 		StartBlock: start,
 		EndBlock:   end,
 		RootHash:   rootHash,
@@ -35,7 +35,7 @@ func CreateBlock(
 }
 
 // SortHeaders sorts array of headers on the basis for timestamps
-func SortHeaders(headers []CheckpointBlockHeader) []CheckpointBlockHeader {
+func SortHeaders(headers []Checkpoint) []Checkpoint {
 	sort.Slice(headers, func(i, j int) bool {
 		return headers[i].TimeStamp < headers[j].TimeStamp
 	})
@@ -43,9 +43,9 @@ func SortHeaders(headers []CheckpointBlockHeader) []CheckpointBlockHeader {
 }
 
 // String returns human redable string
-func (m CheckpointBlockHeader) String() string {
+func (m Checkpoint) String() string {
 	return fmt.Sprintf(
-		"CheckpointBlockHeader {%v (%d:%d) %v %v %v}",
+		"Checkpoint {%v (%d:%d) %v %v %v}",
 		m.Proposer.String(),
 		m.StartBlock,
 		m.EndBlock,

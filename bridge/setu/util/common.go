@@ -331,7 +331,7 @@ func GetCheckpointParams(cliCtx cliContext.CLIContext) (*checkpointTypes.Params,
 }
 
 // GetBufferedCheckpoint return checkpoint from bueffer
-func GetBufferedCheckpoint(cliCtx cliContext.CLIContext) (*hmtypes.CheckpointBlockHeader, error) {
+func GetBufferedCheckpoint(cliCtx cliContext.CLIContext) (*hmtypes.Checkpoint, error) {
 	response, err := helper.FetchFromAPI(
 		cliCtx,
 		helper.GetHeimdallServerEndpoint(BufferedCheckpointURL),
@@ -342,7 +342,7 @@ func GetBufferedCheckpoint(cliCtx cliContext.CLIContext) (*hmtypes.CheckpointBlo
 		return nil, err
 	}
 
-	var blockHeader hmtypes.CheckpointBlockHeader
+	var blockHeader hmtypes.Checkpoint
 	if err := json.Unmarshal(response.Result, &blockHeader); err != nil {
 		logger.Error("Error unmarshalling buffered checkpoint", "url", BufferedCheckpointURL, "err", err)
 		return nil, err

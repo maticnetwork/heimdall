@@ -3,6 +3,7 @@ package test
 import (
 	"math/rand"
 	"testing"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -57,5 +58,24 @@ func LoadValidatorSet(count int, t *testing.T, keeper staking.Keeper, ctx sdk.Co
 	err := keeper.UpdateValidatorSetInStore(ctx, valSet)
 	require.NoError(t, err, "Unable to update validator set")
 	vals := keeper.GetAllValidators(ctx)
+	require.NotNil(t, vals)
 	return valSet
+}
+
+// GenRandCheckpointHeader return headers
+func GenRandCheckpointHeader(start uint64, headerSize uint64, maxCheckpointLenght uint64) (headerBlock types.Checkpoint, err error) {
+	end := start + headerSize
+	borChainID := "1234"
+	rootHash := types.HexToHeimdallHash("123")
+	proposer := types.HeimdallAddress{}
+
+	headerBlock = types.CreateBlock(
+		start,
+		end,
+		rootHash,
+		proposer,
+		borChainID,
+		uint64(time.Now().UTC().Unix()))
+
+	return headerBlock, nil
 }

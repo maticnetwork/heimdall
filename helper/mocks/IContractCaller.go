@@ -48,6 +48,20 @@ func (_m *IContractCaller) ApproveTokens(_a0 *big.Int, _a1 common.Address, _a2 c
 	return r0
 }
 
+// CheckIfBlocksExist provides a mock function with given fields: end
+func (_m *IContractCaller) CheckIfBlocksExist(end uint64) bool {
+	ret := _m.Called(end)
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func(uint64) bool); ok {
+		r0 = rf(end)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	return r0
+}
+
 // CurrentAccountStateRoot provides a mock function with given fields: stakingInfoInstance
 func (_m *IContractCaller) CurrentAccountStateRoot(stakingInfoInstance *stakinginfo.Stakinginfo) ([32]byte, error) {
 	ret := _m.Called(stakingInfoInstance)
