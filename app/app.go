@@ -450,6 +450,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		chainmanager.NewAppModule(app.ChainKeeper, &app.caller),
 		topup.NewAppModule(app.TopupKeeper, &app.caller),
 		staking.NewAppModule(app.StakingKeeper, &app.caller),
+		bank.NewAppModule(app.BankKeeper, &app.caller),
 	)
 	app.sm.RegisterStoreDecoders()
 
