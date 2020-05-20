@@ -47,13 +47,18 @@ func (suite *HandlerTestSuite) TestHandlerMsgSend() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	amount := int64(10000000)
 	from := hmTypes.HexToHeimdallAddress("123")
-	app.BankKeeper.AddCoins(ctx, from, sdk.NewCoins(sdk.NewCoin(authTypes.FeeToken, sdk.NewInt(amount*10))))
+	to := hmTypes.HexToHeimdallAddress("456")
+	app.BankKeeper.AddCoins(ctx, from, sdk.NewCoins(sdk.NewCoin(authTypes.FeeToken, sdk.NewInt(int64(amount*10)))))
 	msgSend := types.NewMsgSend(
 		from,
-		hmTypes.HexToHeimdallAddress("456"),
+		to,
 		sdk.NewCoins(sdk.NewCoin(authTypes.FeeToken, sdk.NewInt(amount))),
 	)
 	result := suite.handler(ctx, msgSend)
 	require.True(t, result.IsOK(), "Expected New msg to be sent")
+	fromAcc := app.BankKeeper.GetCoins(ctx, to)
+	require.Less(t, fromAcc.AmountOf(authTypes.FeeToken).Int64(), sdk.NewInt(amount*10).Int64())
 
+	toAcc := app.BankKeeper.GetCoins(ctx, to)
+	require.Equal(t, sdk.NewInt(amount), toAcc.AmountOf(authTypes.FeeToken))
 }

@@ -61,15 +61,18 @@ func (suite *KeeperTestSuite) TestSendCoins() {
 	keeper := app.BankKeeper
 	amount := int64(10000000)
 	address := hmTypes.HexToHeimdallAddress("123")
-
-	coins := sdk.NewCoins(sdk.NewCoin(authTypes.FeeToken, sdk.NewInt(amount*10)))
+	to := hmTypes.HexToHeimdallAddress("456")
+	coins := sdk.NewCoins(sdk.NewCoin(authTypes.FeeToken, sdk.NewInt(amount)))
 	keeper.SetCoins(ctx, address, coins)
 
-	err := keeper.SendCoins(ctx, hmTypes.HexToHeimdallAddress("123"), hmTypes.HexToHeimdallAddress("456"), coins)
+	err := keeper.SendCoins(ctx, address, to, coins)
 	require.NoError(t, err)
 
-	res := keeper.GetCoins(ctx, address)
-	require.Equal(t, sdk.NewInt(0), res.AmountOf(authTypes.FeeToken))
+	fromAcc := keeper.GetCoins(ctx, address)
+	require.Equal(t, sdk.NewInt(0), fromAcc.AmountOf(authTypes.FeeToken))
+
+	toAcc := app.BankKeeper.GetCoins(ctx, to)
+	require.LessOrEqual(t, sdk.NewInt(amount).Int64(), toAcc.AmountOf(authTypes.FeeToken).Int64())
 }
 
 func (suite *KeeperTestSuite) TestHasCoins() {
