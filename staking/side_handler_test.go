@@ -458,7 +458,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorJoin() {
 	})
 }
 
-func (suite *SideHandlerTestSuite) TestSideHandleMsgSingerUpdate() {
+func (suite *SideHandlerTestSuite) TestSideHandleMsgSignerUpdate() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	keeper := suite.app.StakingKeeper
 	// pass 0 as time alive to generate non de-activated validators
@@ -1192,7 +1192,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgValidatorJoin() {
 	})
 }
 
-func (suite *SideHandlerTestSuite) TestPostHandleMsgSingerUpdate() {
+func (suite *SideHandlerTestSuite) TestPostHandleMsgSignerUpdate() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	keeper := app.StakingKeeper
 	// pass 0 as time alive to generate non de-activated validators
