@@ -257,7 +257,7 @@ func rangeQuery(cliCtx context.CLIContext, page uint64, limit uint64) ([]byte, e
 }
 
 func tillTimeRangeQuery(cliCtx context.CLIContext, fromID uint64, toTime int64, limit uint64) ([]byte, error) {
-	result := make([]*types.EventRecord, 0)
+	result := make([]*types.EventRecord, 0, limit)
 
 	// if from id not found, return empty result
 	fromData, err := recordQuery(cliCtx, fromID)
@@ -290,11 +290,7 @@ func tillTimeRangeQuery(cliCtx context.CLIContext, fromID uint64, toTime int64, 
 
 	nextID := fromID
 	toTimeObj := time.Unix(toTime, 0)
-	for {
-		if nextID-fromID >= limit {
-			break
-		}
-
+	for nextID-fromID < limit {
 		if found, ok := rangeMapping[nextID]; ok {
 			result = append(result, found)
 		} else {
