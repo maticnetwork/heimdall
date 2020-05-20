@@ -1096,21 +1096,15 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgValidatorJoin() {
 	index := simulation.RandIntBetween(r1, 0, 100)
 	logIndex := uint64(index)
 	validatorId := uint64(1)
-	amount, _ := big.NewInt(0).SetString("1000000000000000000", 10)
 
 	privKey1 := secp256k1.GenPrivKey()
 	pubkey := hmTypes.NewPubKey(privKey1.PubKey().Bytes())
 	address := pubkey.Address()
 
-	chainParams := app.ChainKeeper.GetParams(ctx)
 	blockNumber := big.NewInt(10)
 	nonce := big.NewInt(3)
 
 	suite.Run("No Result", func() {
-		suite.contractCaller = mocks.IContractCaller{}
-		txreceipt := &ethTypes.Receipt{
-			BlockNumber: blockNumber,
-		}
 
 		msgValJoin := types.NewMsgValidatorJoin(
 			hmTypes.BytesToHeimdallAddress(address.Bytes()),
@@ -1123,20 +1117,6 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgValidatorJoin() {
 			blockNumber.Uint64(),
 			nonce.Uint64(),
 		)
-
-		stakinginfoStaked := &stakinginfo.StakinginfoStaked{
-			Signer:          address,
-			ValidatorId:     new(big.Int).SetUint64(validatorId),
-			Nonce:           nonce,
-			ActivationEpoch: big.NewInt(1),
-			Amount:          amount,
-			Total:           big.NewInt(10),
-			SignerPubkey:    pubkey.Bytes()[1:],
-		}
-
-		suite.contractCaller.On("GetConfirmedTxReceipt", txHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
-
-		suite.contractCaller.On("DecodeValidatorJoinEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), txreceipt, msgValJoin.LogIndex).Return(stakinginfoStaked, nil)
 
 		result := suite.postHandler(ctx, msgValJoin, abci.SideTxResultType_No)
 		require.False(t, result.IsOK(), "Post handler should fail")
@@ -1148,11 +1128,6 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgValidatorJoin() {
 	})
 
 	suite.Run("Success", func() {
-		suite.contractCaller = mocks.IContractCaller{}
-		txreceipt := &ethTypes.Receipt{
-			BlockNumber: blockNumber,
-		}
-
 		msgValJoin := types.NewMsgValidatorJoin(
 			hmTypes.BytesToHeimdallAddress(address.Bytes()),
 			validatorId,
@@ -1165,20 +1140,6 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgValidatorJoin() {
 			nonce.Uint64(),
 		)
 
-		stakinginfoStaked := &stakinginfo.StakinginfoStaked{
-			Signer:          address,
-			ValidatorId:     new(big.Int).SetUint64(validatorId),
-			Nonce:           nonce,
-			ActivationEpoch: big.NewInt(1),
-			Amount:          amount,
-			Total:           big.NewInt(10),
-			SignerPubkey:    pubkey.Bytes()[1:],
-		}
-
-		suite.contractCaller.On("GetConfirmedTxReceipt", txHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
-
-		suite.contractCaller.On("DecodeValidatorJoinEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), txreceipt, msgValJoin.LogIndex).Return(stakinginfoStaked, nil)
-
 		result := suite.postHandler(ctx, msgValJoin, abci.SideTxResultType_Yes)
 		require.True(t, result.IsOK(), "expected validator join to be ok, got %v", result)
 
@@ -1188,10 +1149,6 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgValidatorJoin() {
 	})
 
 	suite.Run("Replay", func() {
-		suite.contractCaller = mocks.IContractCaller{}
-		txreceipt := &ethTypes.Receipt{
-			BlockNumber: blockNumber,
-		}
 		blockNumber := big.NewInt(11)
 
 		msgValJoin := types.NewMsgValidatorJoin(
@@ -1206,20 +1163,6 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgValidatorJoin() {
 			nonce.Uint64(),
 		)
 
-		stakinginfoStaked := &stakinginfo.StakinginfoStaked{
-			Signer:          address,
-			ValidatorId:     new(big.Int).SetUint64(validatorId),
-			Nonce:           nonce,
-			ActivationEpoch: big.NewInt(1),
-			Amount:          amount,
-			Total:           big.NewInt(10),
-			SignerPubkey:    pubkey.Bytes()[1:],
-		}
-
-		suite.contractCaller.On("GetConfirmedTxReceipt", txHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
-
-		suite.contractCaller.On("DecodeValidatorJoinEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), txreceipt, msgValJoin.LogIndex).Return(stakinginfoStaked, nil)
-
 		result := suite.postHandler(ctx, msgValJoin, abci.SideTxResultType_Yes)
 		require.True(t, result.IsOK(), "expected validator join to be ok, got %v", result)
 
@@ -1232,11 +1175,6 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgValidatorJoin() {
 	})
 
 	suite.Run("Invalid Power", func() {
-		suite.contractCaller = mocks.IContractCaller{}
-		txreceipt := &ethTypes.Receipt{
-			BlockNumber: blockNumber,
-		}
-
 		msgValJoin := types.NewMsgValidatorJoin(
 			hmTypes.BytesToHeimdallAddress(address.Bytes()),
 			validatorId,
@@ -1249,20 +1187,6 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgValidatorJoin() {
 			nonce.Uint64(),
 		)
 
-		stakinginfoStaked := &stakinginfo.StakinginfoStaked{
-			Signer:          address,
-			ValidatorId:     new(big.Int).SetUint64(validatorId),
-			Nonce:           nonce,
-			ActivationEpoch: big.NewInt(1),
-			Amount:          amount,
-			Total:           big.NewInt(10),
-			SignerPubkey:    pubkey.Bytes()[1:],
-		}
-
-		suite.contractCaller.On("GetConfirmedTxReceipt", txHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
-
-		suite.contractCaller.On("DecodeValidatorJoinEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), txreceipt, msgValJoin.LogIndex).Return(stakinginfoStaked, nil)
-
 		result := suite.postHandler(ctx, msgValJoin, abci.SideTxResultType_Yes)
 		require.True(t, !result.IsOK(), errs.CodeToDefaultMsg(result.Code))
 	})
@@ -1270,7 +1194,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgValidatorJoin() {
 
 func (suite *SideHandlerTestSuite) TestPostHandleMsgSingerUpdate() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
-	keeper := suite.app.StakingKeeper
+	keeper := app.StakingKeeper
 	// pass 0 as time alive to generate non de-activated validators
 	cmn.LoadValidatorSet(4, t, keeper, ctx, false, 0)
 	oldValSet := keeper.GetValidatorSet(ctx)
@@ -1279,7 +1203,6 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgSingerUpdate() {
 	newSigner := cmn.GenRandomVal(1, 0, 10, 10, false, 1)
 	newSigner[0].ID = oldSigner.ID
 	newSigner[0].VotingPower = oldSigner.VotingPower
-	chainParams := app.ChainKeeper.GetParams(ctx)
 	blockNumber := big.NewInt(10)
 	nonce := big.NewInt(5)
 
@@ -1288,37 +1211,12 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgSingerUpdate() {
 
 	suite.Run("No Success", func() {
 		msg := types.NewMsgSignerUpdate(newSigner[0].Signer, uint64(oldSigner.ID), newSigner[0].PubKey, msgTxHash, 0, blockNumber.Uint64(), nonce.Uint64())
-
-		txreceipt := &ethTypes.Receipt{BlockNumber: blockNumber}
-		suite.contractCaller.On("GetConfirmedTxReceipt", msgTxHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
-
-		signerUpdateEvent := &stakinginfo.StakinginfoSignerChange{
-			ValidatorId:  new(big.Int).SetUint64(oldSigner.ID.Uint64()),
-			Nonce:        nonce,
-			OldSigner:    oldSigner.Signer.EthAddress(),
-			NewSigner:    newSigner[0].Signer.EthAddress(),
-			SignerPubkey: newSigner[0].PubKey.Bytes()[1:],
-		}
-		suite.contractCaller.On("DecodeSignerUpdateEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), txreceipt, uint64(0)).Return(signerUpdateEvent, nil)
-
 		result := suite.postHandler(ctx, msg, abci.SideTxResultType_No)
 		require.True(t, !result.IsOK(), errs.CodeToDefaultMsg(result.Code))
 	})
 
 	suite.Run("Success", func() {
 		msg := types.NewMsgSignerUpdate(newSigner[0].Signer, uint64(oldSigner.ID), newSigner[0].PubKey, msgTxHash, 0, blockNumber.Uint64(), nonce.Uint64())
-
-		txreceipt := &ethTypes.Receipt{BlockNumber: blockNumber}
-		suite.contractCaller.On("GetConfirmedTxReceipt", msgTxHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
-
-		signerUpdateEvent := &stakinginfo.StakinginfoSignerChange{
-			ValidatorId:  new(big.Int).SetUint64(oldSigner.ID.Uint64()),
-			Nonce:        nonce,
-			OldSigner:    oldSigner.Signer.EthAddress(),
-			NewSigner:    newSigner[0].Signer.EthAddress(),
-			SignerPubkey: newSigner[0].PubKey.Bytes()[1:],
-		}
-		suite.contractCaller.On("DecodeSignerUpdateEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), txreceipt, uint64(0)).Return(signerUpdateEvent, nil)
 
 		result := suite.postHandler(ctx, msg, abci.SideTxResultType_Yes)
 		require.True(t, result.IsOK(), "Post handler should succeed")
@@ -1348,30 +1246,11 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgValidatorExit() {
 	cmn.LoadValidatorSet(4, t, keeper, ctx, false, 0)
 	validators := keeper.GetCurrentValidators(ctx)
 	msgTxHash := hmTypes.HexToHeimdallHash("123")
-	chainParams := app.ChainKeeper.GetParams(ctx)
-	logIndex := uint64(0)
 	blockNumber := big.NewInt(10)
 	nonce := big.NewInt(9)
 
 	suite.Run("No Success", func() {
-		suite.contractCaller = mocks.IContractCaller{}
-		txreceipt := &ethTypes.Receipt{
-			BlockNumber: blockNumber,
-		}
-
-		suite.contractCaller.On("GetConfirmedTxReceipt", msgTxHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
-
-		amount, _ := big.NewInt(0).SetString("10000000000000000000", 10)
-		stakinginfoUnstakeInit := &stakinginfo.StakinginfoUnstakeInit{
-			User:              validators[0].Signer.EthAddress(),
-			ValidatorId:       big.NewInt(0).SetUint64(validators[0].ID.Uint64()),
-			Nonce:             nonce,
-			DeactivationEpoch: big.NewInt(10),
-			Amount:            amount,
-		}
 		validators[0].EndEpoch = 10
-
-		suite.contractCaller.On("DecodeValidatorExitEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), txreceipt, logIndex).Return(stakinginfoUnstakeInit, nil)
 
 		msg := types.NewMsgValidatorExit(
 			validators[0].Signer,
@@ -1388,24 +1267,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgValidatorExit() {
 	})
 
 	suite.Run("Success", func() {
-		suite.contractCaller = mocks.IContractCaller{}
-		txreceipt := &ethTypes.Receipt{
-			BlockNumber: blockNumber,
-		}
-
-		suite.contractCaller.On("GetConfirmedTxReceipt", msgTxHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
-
-		amount, _ := big.NewInt(0).SetString("10000000000000000000", 10)
-		stakinginfoUnstakeInit := &stakinginfo.StakinginfoUnstakeInit{
-			User:              validators[0].Signer.EthAddress(),
-			ValidatorId:       big.NewInt(0).SetUint64(validators[0].ID.Uint64()),
-			Nonce:             nonce,
-			DeactivationEpoch: big.NewInt(10),
-			Amount:            amount,
-		}
 		validators[0].EndEpoch = 10
-
-		suite.contractCaller.On("DecodeValidatorExitEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), txreceipt, logIndex).Return(stakinginfoUnstakeInit, nil)
 
 		msg := types.NewMsgValidatorExit(
 			validators[0].Signer,
@@ -1438,11 +1300,10 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgStakeUpdate() {
 	oldValSet := keeper.GetValidatorSet(ctx)
 	oldVal := oldValSet.Validators[0]
 
-	chainParams := app.ChainKeeper.GetParams(ctx)
-
 	msgTxHash := hmTypes.HexToHeimdallHash("123")
 	blockNumber := big.NewInt(10)
 	nonce := big.NewInt(1)
+	newAmount := new(big.Int).SetInt64(2000000000000000000)
 
 	suite.Run("No result", func() {
 		msg := types.NewMsgStakeUpdate(
@@ -1454,26 +1315,15 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgStakeUpdate() {
 			blockNumber.Uint64(),
 			nonce.Uint64())
 
-		txreceipt := &ethTypes.Receipt{BlockNumber: big.NewInt(10)}
-		suite.contractCaller.On("GetConfirmedTxReceipt", msgTxHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
-
-		stakinginfoStakeUpdate := &stakinginfo.StakinginfoStakeUpdate{
-			ValidatorId: new(big.Int).SetUint64(oldVal.ID.Uint64()),
-			NewAmount:   new(big.Int).SetInt64(2000000000000000000),
-			Nonce:       nonce,
-		}
-
-		suite.contractCaller.On("DecodeValidatorStakeUpdateEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), txreceipt, uint64(0)).Return(stakinginfoStakeUpdate, nil)
-
 		result := suite.postHandler(ctx, msg, abci.SideTxResultType_No)
 		require.True(t, !result.IsOK(), errs.CodeToDefaultMsg(result.Code))
 
 		updatedVal, err := keeper.GetValidatorInfo(ctx, oldVal.Signer.Bytes())
 		require.Empty(t, err, "unable to fetch validator info %v-", err)
 
-		acctualPower, err := helper.GetPowerFromAmount(stakinginfoStakeUpdate.NewAmount)
+		acctualPower, err := helper.GetPowerFromAmount(newAmount)
 		require.NoError(t, err)
-		require.NotEqual(t, acctualPower.Int64(), updatedVal.VotingPower, "Validator VotingPower should be updated to %v", stakinginfoStakeUpdate.NewAmount.Uint64())
+		require.NotEqual(t, acctualPower.Int64(), updatedVal.VotingPower, "Validator VotingPower should be updated to %v", newAmount.Uint64())
 	})
 
 	suite.Run("Success", func() {
@@ -1486,25 +1336,14 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgStakeUpdate() {
 			blockNumber.Uint64(),
 			nonce.Uint64())
 
-		txreceipt := &ethTypes.Receipt{BlockNumber: big.NewInt(10)}
-		suite.contractCaller.On("GetConfirmedTxReceipt", msgTxHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
-
-		stakinginfoStakeUpdate := &stakinginfo.StakinginfoStakeUpdate{
-			ValidatorId: new(big.Int).SetUint64(oldVal.ID.Uint64()),
-			NewAmount:   new(big.Int).SetInt64(2000000000000000000),
-			Nonce:       nonce,
-		}
-
-		suite.contractCaller.On("DecodeValidatorStakeUpdateEvent", chainParams.ChainParams.StakingInfoAddress.EthAddress(), txreceipt, uint64(0)).Return(stakinginfoStakeUpdate, nil)
-
 		result := suite.postHandler(ctx, msg, abci.SideTxResultType_Yes)
 		require.True(t, result.IsOK(), "expected validator stake update to be ok, got %v", result)
 
 		updatedVal, err := keeper.GetValidatorInfo(ctx, oldVal.Signer.Bytes())
 		require.Empty(t, err, "unable to fetch validator info %v-", err)
 
-		acctualPower, err := helper.GetPowerFromAmount(stakinginfoStakeUpdate.NewAmount)
+		acctualPower, err := helper.GetPowerFromAmount(new(big.Int).SetInt64(2000000000000000000))
 		require.NoError(t, err)
-		require.Equal(t, acctualPower.Int64(), updatedVal.VotingPower, "Validator VotingPower should be updated to %v", stakinginfoStakeUpdate.NewAmount.Uint64())
+		require.Equal(t, acctualPower.Int64(), updatedVal.VotingPower, "Validator VotingPower should be updated to %v", newAmount.Uint64())
 	})
 }
