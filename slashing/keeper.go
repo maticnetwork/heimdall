@@ -1,6 +1,7 @@
 package slashing
 
 import (
+	"bytes"
 	"fmt"
 	"strconv"
 
@@ -101,16 +102,12 @@ func (k *Keeper) IterateValidatorSigningInfos(ctx sdk.Context,
 func (k *Keeper) GetValidatorMissedBlockBitArray(ctx sdk.Context, valID hmTypes.ValidatorID, index int64) bool {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.GetValidatorMissedBlockBitArrayKey(valID.Bytes(), index))
-	// var missed gogotypes.BoolValue
-	var missed bool
-	if bz == nil {
-		// lazy: treat empty key as not missed
-		return false
-	}
-	k.cdc.MustUnmarshalBinaryBare(bz, &missed)
 
-	// return missed.Value
-	return missed
+	if bytes.Compare(bz, []byte{0x01}) == 0 {
+		return true
+	}
+
+	return false
 }
 
 // IterateValidatorMissedBlockBitArray iterates over the signed blocks window
@@ -140,9 +137,11 @@ func (k *Keeper) IterateValidatorMissedBlockBitArray(ctx sdk.Context,
 // missed a block in the current window
 func (k *Keeper) SetValidatorMissedBlockBitArray(ctx sdk.Context, valID hmTypes.ValidatorID, index int64, missed bool) {
 	store := ctx.KVStore(k.storeKey)
-	// bz := k.cdc.MustMarshalBinaryBare(&gogotypes.BoolValue{Value: missed})
-	bz := k.cdc.MustMarshalBinaryBare(missed)
-	store.Set(types.GetValidatorMissedBlockBitArrayKey(valID.Bytes(), index), bz)
+	val := []byte{0x00}
+	if missed {
+		val = []byte{0x01}
+	}
+	store.Set(types.GetValidatorMissedBlockBitArrayKey(valID.Bytes(), index), val)
 }
 
 // clearValidatorMissedBlockBitArray deletes every instance of ValidatorMissedBlockBitArray in the store

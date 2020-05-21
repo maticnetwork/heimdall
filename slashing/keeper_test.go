@@ -1,10 +1,10 @@
 package slashing_test
 
 import (
-	"fmt"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/maticnetwork/heimdall/app"
@@ -36,14 +36,25 @@ func TestKeeperTestSuite(t *testing.T) {
 //
 
 func (suite *KeeperTestSuite) TestMissedBlockBitArray() {
-	_, app, ctx := suite.T(), suite.app, suite.ctx
+	t, app, ctx := suite.T(), suite.app, suite.ctx
 	slashingKeeper := app.SlashingKeeper
-	// params := slashingKeeper.GetParams(ctx)
 	valID := hmTypes.NewValidatorID(uint64(1))
 	index := int64(0)
 	missed := false
 	slashingKeeper.SetValidatorMissedBlockBitArray(ctx, valID, index, missed)
 	response := slashingKeeper.GetValidatorMissedBlockBitArray(ctx, valID, index)
+	require.Equal(t, missed, response)
 
-	fmt.Println("response -", response)
+	missed = true
+	index = int64(1)
+	slashingKeeper.SetValidatorMissedBlockBitArray(ctx, valID, index, missed)
+	response = slashingKeeper.GetValidatorMissedBlockBitArray(ctx, valID, index)
+	require.Equal(t, missed, response)
+}
+
+func (suite *KeeperTestSuite) TestValSigningInfo() {
+
+	t, app, ctx := suite.T(), suite.app, suite.ctx
+	slashingKeeper := app.SlashingKeeper
+
 }
