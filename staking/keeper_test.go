@@ -1,7 +1,6 @@
 package staking_test
 
 import (
-	"math/big"
 	"math/rand"
 	"testing"
 	"time"
@@ -12,7 +11,6 @@ import (
 
 	"github.com/maticnetwork/heimdall/helper"
 
-	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/types/simulation"
@@ -302,30 +300,6 @@ func (suite *KeeperTestSuite) TestUpdateValidatorSetChange() {
 
 }
 
-func (suite *KeeperTestSuite) TestDividendAccountTree() {
-	t := suite.T()
-
-	divAccounts := make([]hmTypes.DividendAccount, 5)
-	for i := 0; i < len(divAccounts); i++ {
-		divAccounts[i] = hmTypes.NewDividendAccount(
-			hmTypes.NewDividendAccountID(uint64(i)),
-			big.NewInt(0).String(),
-		)
-	}
-
-	accountRoot, err := checkpointTypes.GetAccountRootHash(divAccounts)
-	require.NotNil(t, accountRoot)
-	require.NoError(t, err)
-
-	accountProof, _, err := checkpointTypes.GetAccountProof(divAccounts, types.NewDividendAccountID(1))
-	require.NotNil(t, accountProof)
-	require.NoError(t, err)
-
-	leafHash, err := divAccounts[0].CalculateHash()
-	require.NotNil(t, leafHash)
-	require.NoError(t, err)
-}
-
 func (suite *KeeperTestSuite) TestGetCurrentValidators() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	keeper := app.StakingKeeper
@@ -374,21 +348,6 @@ func (suite *KeeperTestSuite) TestGetLastUpdated() {
 	lastUpdated, ok := keeper.GetLastUpdated(ctx, validators[0].ID)
 	require.Equal(t, ok, true)
 	require.Equal(t, validators[0].LastUpdated, lastUpdated)
-}
-
-func (suite *KeeperTestSuite) TestAddFeeToDividendAccount() {
-	t, app, ctx := suite.T(), suite.app, suite.ctx
-	keeper := app.StakingKeeper
-	cmn.LoadValidatorSet(4, t, keeper, ctx, false, 10)
-	validators := keeper.GetCurrentValidators(ctx)
-
-	amount, _ := big.NewInt(0).SetString("0", 10)
-	app.TopupKeeper.AddFeeToDividendAccount(ctx, validators[0].ID, amount)
-	dividentAccountId := hmTypes.DividendAccountID(validators[0].ID)
-	dividentAccount, _ := app.TopupKeeper.GetDividendAccountByID(ctx, dividentAccountId)
-	actualResult, ok := big.NewInt(0).SetString(dividentAccount.FeeAmount, 10)
-	require.Equal(t, ok, true)
-	require.Equal(t, amount, actualResult)
 }
 
 func (suite *KeeperTestSuite) TestGetSpanEligibleValidators() {
