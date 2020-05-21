@@ -342,13 +342,13 @@ func GetBufferedCheckpoint(cliCtx cliContext.CLIContext) (*hmtypes.Checkpoint, e
 		return nil, err
 	}
 
-	var blockHeader hmtypes.Checkpoint
-	if err := json.Unmarshal(response.Result, &blockHeader); err != nil {
+	var checkpoint hmtypes.Checkpoint
+	if err := json.Unmarshal(response.Result, &checkpoint); err != nil {
 		logger.Error("Error unmarshalling buffered checkpoint", "url", BufferedCheckpointURL, "err", err)
 		return nil, err
 	}
 
-	return &blockHeader, nil
+	return &checkpoint, nil
 }
 
 // AppendPrefix returns publickey in uncompressed format

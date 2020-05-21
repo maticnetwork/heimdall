@@ -81,19 +81,19 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 }
 
 // AddCheckpoint adds checkpoint into final blocks
-func (k *Keeper) AddCheckpoint(ctx sdk.Context, headerBlockNumber uint64, headerBlock hmTypes.Checkpoint) error {
+func (k *Keeper) AddCheckpoint(ctx sdk.Context, headerBlockNumber uint64, checkpoint hmTypes.Checkpoint) error {
 	key := GetHeaderKey(headerBlockNumber)
-	err := k.addCheckpoint(ctx, key, headerBlock)
+	err := k.addCheckpoint(ctx, key, checkpoint)
 	if err != nil {
 		return err
 	}
-	k.Logger(ctx).Info("Adding good checkpoint to state", "checkpoint", headerBlock, "headerBlockNumber", headerBlockNumber)
+	k.Logger(ctx).Info("Adding good checkpoint to state", "checkpoint", checkpoint, "headerBlockNumber", headerBlockNumber)
 	return nil
 }
 
 // SetCheckpointBuffer flushes Checkpoint Buffer
-func (k *Keeper) SetCheckpointBuffer(ctx sdk.Context, headerBlock hmTypes.Checkpoint) error {
-	err := k.addCheckpoint(ctx, BufferCheckpointKey, headerBlock)
+func (k *Keeper) SetCheckpointBuffer(ctx sdk.Context, checkpoint hmTypes.Checkpoint) error {
+	err := k.addCheckpoint(ctx, BufferCheckpointKey, checkpoint)
 	if err != nil {
 		return err
 	}
@@ -101,11 +101,11 @@ func (k *Keeper) SetCheckpointBuffer(ctx sdk.Context, headerBlock hmTypes.Checkp
 }
 
 // addCheckpoint adds checkpoint to store
-func (k *Keeper) addCheckpoint(ctx sdk.Context, key []byte, headerBlock hmTypes.Checkpoint) error {
+func (k *Keeper) addCheckpoint(ctx sdk.Context, key []byte, checkpoint hmTypes.Checkpoint) error {
 	store := ctx.KVStore(k.storeKey)
 
 	// create Checkpoint block and marshall
-	out, err := k.cdc.MarshalBinaryBare(headerBlock)
+	out, err := k.cdc.MarshalBinaryBare(checkpoint)
 	if err != nil {
 		k.Logger(ctx).Error("Error marshalling checkpoint", "error", err)
 		return err
@@ -140,7 +140,7 @@ func (k *Keeper) GetCheckpointList(ctx sdk.Context, page uint64, limit uint64) (
 	store := ctx.KVStore(k.storeKey)
 
 	// create headers
-	var headers []hmTypes.Checkpoint
+	var checkpoint []hmTypes.Checkpoint
 
 	// have max limit
 	if limit > 20 {
@@ -154,11 +154,11 @@ func (k *Keeper) GetCheckpointList(ctx sdk.Context, page uint64, limit uint64) (
 	for ; iterator.Valid(); iterator.Next() {
 		var checkpointHeader hmTypes.Checkpoint
 		if err := k.cdc.UnmarshalBinaryBare(iterator.Value(), &checkpointHeader); err == nil {
-			headers = append(headers, checkpointHeader)
+			checkpoint = append(checkpoint, checkpointHeader)
 		}
 	}
 
-	return headers, nil
+	return checkpoint, nil
 }
 
 // GetLastCheckpoint gets last checkpoint, headerIndex = TotalACKs * ChildBlockInterval

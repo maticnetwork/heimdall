@@ -58,10 +58,10 @@ func (suite *GenesisTestSuite) TestInitExportGenesis() {
 		timestamp,
 	)
 
-	Checkpoints := make([]hmTypes.Checkpoint, ackCount)
+	checkpoints := make([]hmTypes.Checkpoint, ackCount)
 
-	for i := range Checkpoints {
-		Checkpoints[i] = bufferedCheckpoint
+	for i := range checkpoints {
+		checkpoints[i] = bufferedCheckpoint
 	}
 
 	params := types.DefaultParams()
@@ -70,7 +70,7 @@ func (suite *GenesisTestSuite) TestInitExportGenesis() {
 		&bufferedCheckpoint,
 		uint64(lastNoACK),
 		uint64(ackCount),
-		Checkpoints,
+		checkpoints,
 	)
 
 	checkpoint.InitGenesis(ctx, app.CheckpointKeeper, genesisState)

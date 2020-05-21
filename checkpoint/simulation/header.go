@@ -12,8 +12,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// GenRandCheckpointHeader return headers
-func GenRandCheckpointHeader(start uint64, headerSize uint64, maxCheckpointLenght uint64) (headerBlock types.Checkpoint, err error) {
+// GenRandCheckpoint return headers
+func GenRandCheckpoint(start uint64, headerSize uint64, maxCheckpointLenght uint64) (headerBlock types.Checkpoint, err error) {
 	end := start + headerSize
 	borChainID := "1234"
 	rootHash := types.HexToHeimdallHash("123")

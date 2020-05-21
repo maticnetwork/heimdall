@@ -72,7 +72,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgCheckpoint() {
 	maxSize := uint64(256)
 	params := keeper.GetParams(ctx)
 
-	header, err := chSim.GenRandCheckpointHeader(start, maxSize, params.MaxCheckpointLength)
+	header, err := chSim.GenRandCheckpoint(start, maxSize, params.MaxCheckpointLength)
 	require.NoError(t, err)
 	borChainId := "1234"
 	suite.Run("Success", func() {
@@ -153,7 +153,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgCheckpointAck() {
 	maxSize := uint64(256)
 	params := keeper.GetParams(ctx)
 
-	header, _ := chSim.GenRandCheckpointHeader(start, maxSize, params.MaxCheckpointLength)
+	header, _ := chSim.GenRandCheckpoint(start, maxSize, params.MaxCheckpointLength)
 	headerId := uint64(1)
 	suite.Run("Success", func() {
 		suite.contractCaller = mocks.IContractCaller{}
@@ -237,7 +237,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgCheckpoint() {
 		start = start + lastCheckpoint.EndBlock + 1
 	}
 
-	header, err := chSim.GenRandCheckpointHeader(start, maxSize, params.MaxCheckpointLength)
+	header, err := chSim.GenRandCheckpoint(start, maxSize, params.MaxCheckpointLength)
 
 	// add current proposer to header
 	header.Proposer = stakingKeeper.GetValidatorSet(ctx).Proposer.Signer
@@ -293,7 +293,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgCheckpointAck() {
 	start := uint64(0)
 	maxSize := uint64(256)
 	params := keeper.GetParams(ctx)
-	header, _ := chSim.GenRandCheckpointHeader(start, maxSize, params.MaxCheckpointLength)
+	header, _ := chSim.GenRandCheckpoint(start, maxSize, params.MaxCheckpointLength)
 	// generate proposer for validator set
 	chSim.LoadValidatorSet(2, t, app.StakingKeeper, ctx, false, 10)
 	app.StakingKeeper.IncrementAccum(ctx, 1)
@@ -315,8 +315,8 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgCheckpointAck() {
 		result := suite.postHandler(ctx, msgCheckpointAck, abci.SideTxResultType_No)
 		require.True(t, !result.IsOK(), errs.CodeToDefaultMsg(result.Code))
 
-		afterAckBufferedHeader, _ := keeper.GetCheckpointFromBuffer(ctx)
-		require.Nil(t, afterAckBufferedHeader)
+		afterAckBufferedCheckpoint, _ := keeper.GetCheckpointFromBuffer(ctx)
+		require.Nil(t, afterAckBufferedCheckpoint)
 	})
 
 	suite.Run("success", func() {
@@ -347,8 +347,8 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgCheckpointAck() {
 		result = suite.postHandler(ctx, msgCheckpointAck, abci.SideTxResultType_Yes)
 		require.True(t, result.IsOK(), "expected send-ack to be ok, got %v", result)
 
-		afterAckBufferedHeader, _ := keeper.GetCheckpointFromBuffer(ctx)
-		require.Nil(t, afterAckBufferedHeader)
+		afterAckBufferedCheckpoint, _ := keeper.GetCheckpointFromBuffer(ctx)
+		require.Nil(t, afterAckBufferedCheckpoint)
 	})
 
 	suite.Run("Invalid EndBlock", func() {
@@ -381,7 +381,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgCheckpointAck() {
 		result = suite.postHandler(ctx, msgCheckpointAck, abci.SideTxResultType_Yes)
 		require.True(t, result.IsOK(), "expected send-ack to be ok, got %v", result)
 
-		afterAckBufferedHeader, _ := keeper.GetCheckpointFromBuffer(ctx)
-		require.Nil(t, afterAckBufferedHeader)
+		afterAckBufferedCheckpoint, _ := keeper.GetCheckpointFromBuffer(ctx)
+		require.Nil(t, afterAckBufferedCheckpoint)
 	})
 }
