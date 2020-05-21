@@ -60,13 +60,24 @@ func (suite *KeeperTestSuite) TestDividendAccount() {
 	require.Equal(t, ok, true)
 }
 
+func (suite *KeeperTestSuite) TestAddFeeToDividendAccount() {
+	t, app, ctx := suite.T(), suite.app, suite.ctx
+	address := hmTypes.HexToHeimdallAddress("234452")
+	amount, _ := big.NewInt(0).SetString("0", 10)
+	app.TopupKeeper.AddFeeToDividendAccount(ctx, address, amount)
+	dividentAccount, _ := app.TopupKeeper.GetDividendAccountByAddress(ctx, address)
+	actualResult, ok := big.NewInt(0).SetString(dividentAccount.FeeAmount, 10)
+	require.Equal(t, ok, true)
+	require.Equal(t, amount, actualResult)
+}
+
 func (suite *KeeperTestSuite) TestDividendAccountTree() {
 	t := suite.T()
 
 	divAccounts := make([]hmTypes.DividendAccount, 5)
 	for i := 0; i < len(divAccounts); i++ {
 		divAccounts[i] = hmTypes.NewDividendAccount(
-			hmTypes.HexToHeimdallAddress("123"),
+			hmTypes.HexToHeimdallAddress("1234"),
 			big.NewInt(0).String(),
 		)
 	}
@@ -75,22 +86,11 @@ func (suite *KeeperTestSuite) TestDividendAccountTree() {
 	require.NotNil(t, accountRoot)
 	require.NoError(t, err)
 
-	accountProof, _, err := checkpointTypes.GetAccountProof(divAccounts, hmTypes.HexToHeimdallAddress("123"))
+	accountProof, _, err := checkpointTypes.GetAccountProof(divAccounts, hmTypes.HexToHeimdallAddress("1234"))
 	require.NotNil(t, accountProof)
 	require.NoError(t, err)
 
 	leafHash, err := divAccounts[0].CalculateHash()
 	require.NotNil(t, leafHash)
 	require.NoError(t, err)
-}
-
-func (suite *KeeperTestSuite) TestAddFeeToDividendAccount() {
-	t, app, ctx := suite.T(), suite.app, suite.ctx
-	user := hmTypes.HexToHeimdallAddress("123")
-	amount, _ := big.NewInt(0).SetString("0", 10)
-	app.TopupKeeper.AddFeeToDividendAccount(ctx, user, amount)
-	dividentAccount, _ := app.TopupKeeper.GetDividendAccountByAddress(ctx, user)
-	actualResult, ok := big.NewInt(0).SetString(dividentAccount.FeeAmount, 10)
-	require.Equal(t, ok, true)
-	require.Equal(t, amount, actualResult)
 }
