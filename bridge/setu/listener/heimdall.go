@@ -13,7 +13,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
-	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
 	slashingTypes "github.com/maticnetwork/heimdall/slashing/types"
 )
 
@@ -184,8 +183,6 @@ func (hl *HeimdallListener) ProcessBlockEvent(event sdk.StringEvent, blockHeight
 	}
 
 	switch event.Type {
-	case clerkTypes.EventTypeRecord:
-		hl.sendBlockTask("sendDepositRecordToMatic", eventBytes, blockHeight)
 	case checkpointTypes.EventTypeCheckpoint:
 		hl.sendBlockTask("sendCheckpointToRootchain", eventBytes, blockHeight)
 	case slashingTypes.EventTypeSlashLimit:
