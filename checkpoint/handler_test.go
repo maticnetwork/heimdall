@@ -120,6 +120,32 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpoint() {
 		got := suite.handler(ctx, msgCheckpoint)
 		require.True(t, !got.IsOK(), errs.CodeToDefaultMsg(got.Code))
 	})
+
+	suite.Run("Checkpoint not in countinuity", func() {
+		headerId := uint64(10000)
+
+		keeper.AddCheckpoint(ctx, headerId, header)
+		keeper.GetCheckpointByIndex(ctx, headerId)
+		keeper.UpdateACKCount(ctx)
+		lastCheckpoint, err := keeper.GetLastCheckpoint(ctx)
+		if err == nil {
+			// pass wrong start
+			start = start + lastCheckpoint.EndBlock + 2
+		}
+
+		msgCheckpoint := types.NewMsgCheckpointBlock(
+			header.Proposer,
+			start,
+			start+256,
+			header.RootHash,
+			accountRoot,
+			borChainId,
+		)
+
+		// send checkpoint to handler
+		got := suite.handler(ctx, msgCheckpoint)
+		require.True(t, !got.IsOK(), errs.CodeToDefaultMsg(got.Code))
+	})
 }
 
 func (suite *HandlerTestSuite) TestHandleMsgCheckpointAfterBufferTimeOut() {
