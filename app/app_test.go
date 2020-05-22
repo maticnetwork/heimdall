@@ -129,11 +129,6 @@ func TestValidateGenesis(t *testing.T) {
 	})
 }
 
-func TestMakePulp(t *testing.T) {
-	pulp := MakePulp()
-	require.NotNil(t, pulp, "Pulp should be nil")
-}
-
 func TestGetMaccPerms(t *testing.T) {
 	dup := GetMaccPerms()
 	require.Equal(t, maccPerms, dup, "duplicated module account permissions differed from actual module account permissions")

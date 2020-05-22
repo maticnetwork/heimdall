@@ -45,6 +45,62 @@
 		"type": "function"
 	},
 	{
+		"constant": false,
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "blockInterval",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "voteHash",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "stateRoot",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "address",
+				"name": "proposer",
+				"type": "address"
+			},
+			{
+				"internalType": "bytes",
+				"name": "sigs",
+				"type": "bytes"
+			}
+		],
+		"name": "checkSignatures",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_limit",
+				"type": "uint256"
+			}
+		],
+		"name": "updateSignerUpdateLimit",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
 		"constant": true,
 		"inputs": [],
 		"name": "auctionPeriod",
@@ -283,14 +339,8 @@
 	},
 	{
 		"constant": true,
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "validatorId",
-				"type": "uint256"
-			}
-		],
-		"name": "perceivedStakeFactor",
+		"inputs": [],
+		"name": "proposerBonus",
 		"outputs": [
 			{
 				"internalType": "uint256",
@@ -410,37 +460,6 @@
 		"type": "function"
 	},
 	{
-		"constant": false,
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "validatorId",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "amount",
-				"type": "uint256"
-			},
-			{
-				"internalType": "address",
-				"name": "delegator",
-				"type": "address"
-			}
-		],
-		"name": "delegationTransfer",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
 		"constant": true,
 		"inputs": [
 			{
@@ -450,6 +469,21 @@
 			}
 		],
 		"name": "totalStakedFor",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "signerUpdateLimit",
 		"outputs": [
 			{
 				"internalType": "uint256",
@@ -565,6 +599,21 @@
 	{
 		"constant": true,
 		"inputs": [],
+		"name": "delegationEnabled",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
 		"name": "NFTCounter",
 		"outputs": [
 			{
@@ -614,42 +663,6 @@
 		"type": "function"
 	},
 	{
-		"constant": false,
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "blockInterval",
-				"type": "uint256"
-			},
-			{
-				"internalType": "bytes32",
-				"name": "voteHash",
-				"type": "bytes32"
-			},
-			{
-				"internalType": "bytes32",
-				"name": "stateRoot",
-				"type": "bytes32"
-			},
-			{
-				"internalType": "bytes",
-				"name": "sigs",
-				"type": "bytes"
-			}
-		],
-		"name": "checkSignatures",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
 		"constant": true,
 		"inputs": [
 			{
@@ -676,6 +689,27 @@
 		"type": "function"
 	},
 	{
+		"constant": false,
+		"inputs": [
+			{
+				"internalType": "bytes",
+				"name": "_slashingInfoList",
+				"type": "bytes"
+			}
+		],
+		"name": "slash",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
 		"constant": true,
 		"inputs": [
 			{
@@ -694,6 +728,51 @@
 		],
 		"payable": false,
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "user",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "heimdallFee",
+				"type": "uint256"
+			}
+		],
+		"name": "topUpForFee",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "accumFeeAmount",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "index",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bytes",
+				"name": "proof",
+				"type": "bytes"
+			}
+		],
+		"name": "claimFee",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -723,31 +802,6 @@
 				"type": "bool"
 			}
 		],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "validatorId",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "slashingRate",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "jailCheckpoints",
-				"type": "uint256"
-			}
-		],
-		"name": "slash",
-		"outputs": [],
 		"payable": false,
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -809,6 +863,42 @@
 	{
 		"constant": true,
 		"inputs": [],
+		"name": "replacementCoolDown",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "userFeeExit",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
 		"name": "registry",
 		"outputs": [
 			{
@@ -834,21 +924,6 @@
 		],
 		"payable": false,
 		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [
-			{
-				"internalType": "bytes",
-				"name": "checkpointTx",
-				"type": "bytes"
-			}
-		],
-		"name": "challangeStateRootUpdate",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -913,14 +988,8 @@
 	},
 	{
 		"constant": true,
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"name": "validatorFeeExit",
+		"inputs": [],
+		"name": "epoch",
 		"outputs": [
 			{
 				"internalType": "uint256",
@@ -997,6 +1066,21 @@
 		"inputs": [
 			{
 				"internalType": "uint256",
+				"name": "newProposerBonus",
+				"type": "uint256"
+			}
+		],
+		"name": "updateProposerBonus",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"internalType": "uint256",
 				"name": "validatorId",
 				"type": "uint256"
 			},
@@ -1052,23 +1136,18 @@
 		"type": "function"
 	},
 	{
-		"constant": false,
-		"inputs": [
+		"constant": true,
+		"inputs": [],
+		"name": "withdrawalDelay",
+		"outputs": [
 			{
 				"internalType": "uint256",
-				"name": "validatorId",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "heimdallFee",
+				"name": "",
 				"type": "uint256"
 			}
 		],
-		"name": "topUpForFee",
-		"outputs": [],
 		"payable": false,
-		"stateMutability": "nonpayable",
+		"stateMutability": "view",
 		"type": "function"
 	},
 	{
@@ -1092,6 +1171,37 @@
 		"type": "function"
 	},
 	{
+		"constant": true,
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "voteHash",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "bytes",
+				"name": "sigs",
+				"type": "bytes"
+			}
+		],
+		"name": "verifyConsensus",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
 		"constant": false,
 		"inputs": [
 			{
@@ -1101,27 +1211,23 @@
 			},
 			{
 				"internalType": "uint256",
-				"name": "accumSlashedAmount",
+				"name": "amount",
 				"type": "uint256"
 			},
 			{
-				"internalType": "uint256",
-				"name": "accumFeeAmount",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "index",
-				"type": "uint256"
-			},
-			{
-				"internalType": "bytes",
-				"name": "proof",
-				"type": "bytes"
+				"internalType": "address",
+				"name": "delegator",
+				"type": "address"
 			}
 		],
-		"name": "claimFee",
-		"outputs": [],
+		"name": "transferFunds",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
 		"payable": false,
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -1238,23 +1344,24 @@
 		"type": "function"
 	},
 	{
-		"constant": false,
+		"constant": true,
 		"inputs": [
 			{
 				"internalType": "uint256",
-				"name": "validatorId",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "jailCheckpoints",
+				"name": "",
 				"type": "uint256"
 			}
 		],
-		"name": "jail",
-		"outputs": [],
+		"name": "latestSignerUpdateEpoch",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
 		"payable": false,
-		"stateMutability": "nonpayable",
+		"stateMutability": "view",
 		"type": "function"
 	},
 	{
@@ -1304,6 +1411,27 @@
 	},
 	{
 		"constant": true,
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "validatorId",
+				"type": "uint256"
+			}
+		],
+		"name": "validatorStake",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
 		"inputs": [],
 		"name": "logger",
 		"outputs": [
@@ -1315,6 +1443,21 @@
 		],
 		"payable": false,
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"internalType": "bool",
+				"name": "enabled",
+				"type": "bool"
+			}
+		],
+		"name": "setDelegationEnabled",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -1347,6 +1490,21 @@
 			}
 		],
 		"name": "updateSigner",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "forNCheckpoints",
+				"type": "uint256"
+			}
+		],
+		"name": "stopAuctions",
 		"outputs": [],
 		"payable": false,
 		"stateMutability": "nonpayable",

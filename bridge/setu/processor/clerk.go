@@ -3,12 +3,8 @@ package processor
 import (
 	"encoding/hex"
 	"encoding/json"
-	"math/big"
-	"strconv"
 
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	ethereum "github.com/maticnetwork/bor"
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
@@ -50,9 +46,6 @@ func (cp *ClerkProcessor) RegisterTasks() {
 	if err := cp.queueConnector.Server.RegisterTask("sendStateSyncedToHeimdall", cp.sendStateSyncedToHeimdall); err != nil {
 		cp.Logger.Error("RegisterTasks | sendStateSyncedToHeimdall", "error", err)
 	}
-	if err := cp.queueConnector.Server.RegisterTask("sendDepositRecordToMatic", cp.sendDepositRecordToMatic); err != nil {
-		cp.Logger.Error("RegisterTasks | sendDepositRecordToMatic", "error", err)
-	}
 }
 
 // HandleStateSyncEvent - handle state sync event from rootchain
@@ -85,6 +78,7 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 				"borChainId", chainParams.BorChainID,
 				"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 				"logIndex", uint64(vLog.Index),
+				"blockNumber", vLog.BlockNumber,
 			)
 			return nil
 		}
@@ -98,13 +92,17 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 			"borChainId", chainParams.BorChainID,
 			"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			"logIndex", uint64(vLog.Index),
+			"blockNumber", vLog.BlockNumber,
 		)
 
 		msg := clerkTypes.NewMsgEventRecord(
 			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
 			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			uint64(vLog.Index),
+			vLog.BlockNumber,
 			event.Id.Uint64(),
+			hmTypes.BytesToHeimdallAddress(event.ContractAddress.Bytes()),
+			event.Data,
 			chainParams.BorChainID,
 		)
 
@@ -115,81 +113,6 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 		}
 	}
 	return nil
-}
-
-// HandleRecordConfirmation - handles clerk record confirmation event from heimdall.
-// 1. check if this record has to be broadcasted to maticchain
-// 2. create and broadcast  record transaction to maticchain
-func (cp *ClerkProcessor) sendDepositRecordToMatic(eventBytes string, txHeight int64, txHash string) (err error) {
-	var event = sdk.StringEvent{}
-	if err := json.Unmarshal([]byte(eventBytes), &event); err != nil {
-		cp.Logger.Error("Error unmarshalling event from heimdall", "error", err)
-		return err
-	}
-
-	cp.Logger.Info("Processing record confirmation event", "eventType", event.Type)
-	var recordID uint64
-	for _, attr := range event.Attributes {
-		if attr.Key == clerkTypes.AttributeKeyRecordID {
-			if recordID, err = strconv.ParseUint(attr.Value, 10, 64); err != nil {
-				cp.Logger.Error("Error parsing recordId", "eventType", event.Type)
-				return err
-			}
-			break
-		}
-	}
-
-	// get clerk context
-	clerkContext, err := cp.getClerkContext()
-	if err != nil {
-		return err
-	}
-
-	// TODO - query on heimdall for recordID check status.
-	if err := cp.commitRecordID(clerkContext, recordID); err != nil {
-		cp.Logger.Error("Error commit recordId to maticchain", "recordID", recordID)
-		return err
-	}
-	return nil
-}
-
-// broadcastToBor - propose state to bor
-func (cp *ClerkProcessor) commitRecordID(clerkContext *ClerkContext, stateID uint64) error {
-	// encode commit span
-	encodedData, err := cp.encodeProposeStateData(stateID)
-	if err != nil {
-		cp.Logger.Error("Error encoding state data", "recordID", stateID)
-		return err
-	}
-
-	// get chain params
-	chainParams := clerkContext.ChainmanagerParams.ChainParams
-
-	stateReceiverAddress := chainParams.StateReceiverAddress.EthAddress()
-	msg := ethereum.CallMsg{
-		To:   &stateReceiverAddress,
-		Data: encodedData,
-	}
-	// return broadcast to maticchain
-	if err := cp.txBroadcaster.BroadcastToMatic(msg); err != nil {
-		cp.Logger.Error("Error broadcasting record to maticchain", "error", err)
-		return err
-	}
-	return nil
-}
-
-// encodeProposeStateData - encodes state data to be proposed to maticchain
-func (cp *ClerkProcessor) encodeProposeStateData(stateID uint64) ([]byte, error) {
-	// state receiver ABI
-	stateReceiverABI := cp.contractConnector.StateReceiverABI
-	// commit state
-	data, err := stateReceiverABI.Pack("proposeState", big.NewInt(0).SetUint64(stateID))
-	if err != nil {
-		cp.Logger.Error("Error unpacking tx for commit state", "error", err)
-		return nil, err
-	}
-	// return data
-	return data, nil
 }
 
 // isOldTx  checks if tx is already processed or not

@@ -54,7 +54,7 @@ func StakeCmd(cliCtx cliContext.CLIContext) *cobra.Command {
 				return err
 			}
 
-			params, err := getConfigManagerParams(cliCtx)
+			params, err := GetChainmanagerParams(cliCtx)
 			if err != nil {
 				return err
 			}
@@ -112,7 +112,7 @@ func ApproveCmd(cliCtx cliContext.CLIContext) *cobra.Command {
 				return err
 			}
 
-			params, err := getConfigManagerParams(cliCtx)
+			params, err := GetChainmanagerParams(cliCtx)
 			if err != nil {
 				return err
 			}
@@ -134,8 +134,8 @@ func ApproveCmd(cliCtx cliContext.CLIContext) *cobra.Command {
 	return cmd
 }
 
-// getConfigManagerParams return configManager params
-func getConfigManagerParams(cliCtx cliContext.CLIContext) (*chainmanagerTypes.Params, error) {
+// GetChainmanagerParams return configManager params
+func GetChainmanagerParams(cliCtx cliContext.CLIContext) (*chainmanagerTypes.Params, error) {
 	response, err := helper.FetchFromAPI(
 		cliCtx,
 		helper.GetHeimdallServerEndpoint(checkpointEndpoint),

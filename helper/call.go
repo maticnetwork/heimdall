@@ -6,7 +6,6 @@ import (
 	"errors"
 	"math/big"
 	"strings"
-	"time"
 
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/maticnetwork/bor/accounts/abi"
@@ -16,6 +15,7 @@ import (
 	"github.com/maticnetwork/bor/rpc"
 	"github.com/maticnetwork/heimdall/contracts/erc20"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
+	"github.com/maticnetwork/heimdall/contracts/slashmanager"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
 	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
 	"github.com/maticnetwork/heimdall/contracts/statereceiver"
@@ -28,16 +28,18 @@ import (
 // IContractCaller represents contract caller
 type IContractCaller interface {
 	GetHeaderInfo(headerID uint64, rootChainInstance *rootchain.Rootchain) (root common.Hash, start, end, createdAt uint64, proposer types.HeimdallAddress, err error)
+	GetRootHash(start uint64, end uint64, checkpointLength uint64) ([]byte, error)
 	GetValidatorInfo(valID types.ValidatorID, stakingInfoInstance *stakinginfo.Stakinginfo) (validator types.Validator, err error)
 	GetLastChildBlock(rootChainInstance *rootchain.Rootchain) (uint64, error)
 	CurrentHeaderBlock(rootChainInstance *rootchain.Rootchain) (uint64, error)
 	GetBalance(address common.Address) (*big.Int, error)
-	SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte, rootchainAddress common.Address, rootChainInstance *rootchain.Rootchain) (err error)
+	SendCheckpoint(sigedData []byte, sigs []byte, rootchainAddress common.Address, rootChainInstance *rootchain.Rootchain) (err error)
+	SendTick(sigedData []byte, sigs []byte, slashManagerAddress common.Address, slashManagerInstance *slashmanager.Slashmanager) (err error)
 	GetCheckpointSign(txHash common.Hash) ([]byte, []byte, []byte, error)
 	GetMainChainBlock(*big.Int) (*ethTypes.Header, error)
 	GetMaticChainBlock(*big.Int) (*ethTypes.Header, error)
-	IsTxConfirmed(time.Time, common.Hash, time.Duration) bool
-	GetConfirmedTxReceipt(time.Time, common.Hash, time.Duration) (*ethTypes.Receipt, error)
+	IsTxConfirmed(common.Hash, uint64) bool
+	GetConfirmedTxReceipt(common.Hash, uint64) (*ethTypes.Receipt, error)
 	GetBlockNumberFromTxHash(common.Hash) (*big.Int, error)
 
 	// decode header event
@@ -50,6 +52,10 @@ type IContractCaller interface {
 	DecodeSignerUpdateEvent(common.Address, *ethTypes.Receipt, uint64) (*stakinginfo.StakinginfoSignerChange, error)
 	// decode state events
 	DecodeStateSyncedEvent(common.Address, *ethTypes.Receipt, uint64) (*statesender.StatesenderStateSynced, error)
+
+	// decode slashing events
+	DecodeSlashedEvent(common.Address, *ethTypes.Receipt, uint64) (*stakinginfo.StakinginfoSlashed, error)
+	DecodeUnJailedEvent(common.Address, *ethTypes.Receipt, uint64) (*stakinginfo.StakinginfoUnJailed, error)
 
 	GetMainTxReceipt(common.Hash) (*ethTypes.Receipt, error)
 	GetMaticTxReceipt(common.Hash) (*ethTypes.Receipt, error)
@@ -66,6 +72,7 @@ type IContractCaller interface {
 	GetStakingInfoInstance(stakingInfoAddress common.Address) (*stakinginfo.Stakinginfo, error)
 	GetValidatorSetInstance(validatorSetAddress common.Address) (*validatorset.Validatorset, error)
 	GetStakeManagerInstance(stakingManagerAddress common.Address) (*stakemanager.Stakemanager, error)
+	GetSlashManagerInstance(slashManagerAddress common.Address) (*slashmanager.Slashmanager, error)
 	GetStateSenderInstance(stateSenderAddress common.Address) (*statesender.Statesender, error)
 	GetStateReceiverInstance(stateReceiverAddress common.Address) (*statereceiver.Statereceiver, error)
 	GetMaticTokenInstance(maticTokenAddress common.Address) (*erc20.Erc20, error)
@@ -83,10 +90,10 @@ type ContractCaller struct {
 	StateReceiverABI abi.ABI
 	StateSenderABI   abi.ABI
 	StakeManagerABI  abi.ABI
+	SlashManagerABI  abi.ABI
 	MaticTokenABI    abi.ABI
 
-	ReceiptCache   *lru.Cache
-	BlockTimeCache *lru.Cache
+	ReceiptCache *lru.Cache
 
 	ContractInstanceCache map[common.Address]interface{}
 }
@@ -107,7 +114,6 @@ func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 	contractCallerObj.MaticChainClient = GetMaticClient()
 	contractCallerObj.MainChainRPC = GetMainChainRPCClient()
 	contractCallerObj.ReceiptCache, _ = NewLru(1000)
-	contractCallerObj.BlockTimeCache, _ = NewLru(1000)
 
 	//
 	// ABIs
@@ -134,6 +140,10 @@ func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 	}
 
 	if contractCallerObj.StakeManagerABI, err = getABI(string(stakemanager.StakemanagerABI)); err != nil {
+		return
+	}
+
+	if contractCallerObj.SlashManagerABI, err = getABI(string(slashmanager.SlashmanagerABI)); err != nil {
 		return
 	}
 
@@ -189,6 +199,17 @@ func (c *ContractCaller) GetStakeManagerInstance(stakingManagerAddress common.Ad
 		return ci, err
 	}
 	return contractInstance.(*stakemanager.Stakemanager), nil
+}
+
+// GetSlashManagerInstance returns slashManager contract instance for selected base chain
+func (c *ContractCaller) GetSlashManagerInstance(slashManagerAddress common.Address) (*slashmanager.Slashmanager, error) {
+	contractInstance, ok := c.ContractInstanceCache[slashManagerAddress]
+	if !ok {
+		ci, err := slashmanager.NewSlashmanager(slashManagerAddress, mainChainClient)
+		c.ContractInstanceCache[slashManagerAddress] = ci
+		return ci, err
+	}
+	return contractInstance.(*slashmanager.Slashmanager), nil
 }
 
 // GetStateSenderInstance returns stakinginfo contract instance for selected base chain
@@ -255,6 +276,26 @@ func (c *ContractCaller) GetHeaderInfo(headerID uint64, rootChainInstance *rootc
 		headerBlock.CreatedAt.Uint64(),
 		types.BytesToHeimdallAddress(headerBlock.Proposer.Bytes()),
 		nil
+}
+
+// GetRootHash get root hash from bor chain
+func (c *ContractCaller) GetRootHash(start uint64, end uint64, checkpointLength uint64) ([]byte, error) {
+	noOfBlock := end - start + 1
+
+	if start > end {
+		return nil, errors.New("start is greater than end")
+	}
+
+	if noOfBlock > checkpointLength {
+		return nil, errors.New("number of headers requested exceeds")
+	}
+
+	rootHash, err := c.MaticChainClient.GetRootHash(context.Background(), start, end)
+	if err != nil {
+		return nil, errors.New("Could not fetch roothash from matic chain")
+	}
+
+	return common.FromHex(rootHash), nil
 }
 
 // GetLastChildBlock fetch current child block
@@ -354,9 +395,9 @@ func (c *ContractCaller) GetBlockNumberFromTxHash(tx common.Hash) (*big.Int, err
 }
 
 // IsTxConfirmed is tx confirmed
-func (c *ContractCaller) IsTxConfirmed(currentTime time.Time, tx common.Hash, txConfirmationTime time.Duration) bool {
+func (c *ContractCaller) IsTxConfirmed(tx common.Hash, requiredConfirmations uint64) bool {
 	// get main tx receipt
-	receipt, err := c.GetConfirmedTxReceipt(currentTime, tx, txConfirmationTime)
+	receipt, err := c.GetConfirmedTxReceipt(tx, requiredConfirmations)
 	if receipt == nil || err != nil {
 		return false
 	}
@@ -365,10 +406,9 @@ func (c *ContractCaller) IsTxConfirmed(currentTime time.Time, tx common.Hash, tx
 }
 
 // GetConfirmedTxReceipt returns confirmed tx receipt
-func (c *ContractCaller) GetConfirmedTxReceipt(currentTime time.Time, tx common.Hash, txConfirmationTime time.Duration) (*ethTypes.Receipt, error) {
-	time := uint64(0)
-	var receipt *ethTypes.Receipt = nil
+func (c *ContractCaller) GetConfirmedTxReceipt(tx common.Hash, requiredConfirmations uint64) (*ethTypes.Receipt, error) {
 
+	var receipt *ethTypes.Receipt = nil
 	receiptCache, ok := c.ReceiptCache.Get(tx.String())
 
 	if !ok {
@@ -388,25 +428,16 @@ func (c *ContractCaller) GetConfirmedTxReceipt(currentTime time.Time, tx common.
 
 	Logger.Debug("Tx included in block", "block", receipt.BlockNumber.Uint64(), "tx", tx)
 
-	blockCache, ok := c.BlockTimeCache.Get(receipt.BlockNumber.Uint64())
-	if !ok {
-		// get main chain block
-		receiptBlock, err := c.GetMainChainBlock(receipt.BlockNumber)
-		if err != nil {
-			Logger.Error("error getting receipt block from main chain", "Error", err)
-			return nil, err
-		}
-		Logger.Debug("Receipt block on main chain obtained", "Block", receiptBlock.Number.Uint64())
-
-		time = receiptBlock.Time
-		c.BlockTimeCache.Add(receipt.BlockNumber.Uint64(), receiptBlock.Time)
-	} else {
-		time = blockCache.(uint64)
+	// get main chain block
+	latestBlk, err := c.GetMainChainBlock(nil)
+	if err != nil {
+		Logger.Error("error getting latest block from main chain", "Error", err)
+		return nil, err
 	}
-	// check if current time is greater than buffer time
-	bufferTime := time + uint64(txConfirmationTime.Seconds())
+	Logger.Debug("Latest block on main chain obtained", "Block", latestBlk.Number.Uint64())
 
-	if uint64(currentTime.Unix()) < bufferTime {
+	diff := latestBlk.Number.Uint64() - receipt.BlockNumber.Uint64()
+	if diff < requiredConfirmations {
 		return nil, errors.New("Not enough confirmations")
 	}
 
@@ -558,6 +589,52 @@ func (c *ContractCaller) DecodeStateSyncedEvent(contractAddress common.Address, 
 		if uint64(vLog.Index) == logIndex && bytes.Equal(vLog.Address.Bytes(), contractAddress.Bytes()) {
 			found = true
 			if err := UnpackLog(&c.StateSenderABI, event, "StateSynced", vLog); err != nil {
+				return nil, err
+			}
+			break
+		}
+	}
+
+	if !found {
+		return nil, errors.New("Event not found")
+	}
+
+	return event, nil
+}
+
+// decode slashing events
+
+// DecodeSlashedEvent represents tick ack on contract
+func (c *ContractCaller) DecodeSlashedEvent(contractAddress common.Address, receipt *ethTypes.Receipt, logIndex uint64) (*stakinginfo.StakinginfoSlashed, error) {
+	event := new(stakinginfo.StakinginfoSlashed)
+
+	found := false
+	for _, vLog := range receipt.Logs {
+		if uint64(vLog.Index) == logIndex && bytes.Equal(vLog.Address.Bytes(), contractAddress.Bytes()) {
+			found = true
+			if err := UnpackLog(&c.StakingInfoABI, event, "Slashed", vLog); err != nil {
+				return nil, err
+			}
+			break
+		}
+	}
+
+	if !found {
+		return nil, errors.New("Event not found")
+	}
+
+	return event, nil
+}
+
+// DecodeUnJailedEvent represents unjail on contract
+func (c *ContractCaller) DecodeUnJailedEvent(contractAddress common.Address, receipt *ethTypes.Receipt, logIndex uint64) (*stakinginfo.StakinginfoUnJailed, error) {
+	event := new(stakinginfo.StakinginfoUnJailed)
+
+	found := false
+	for _, vLog := range receipt.Logs {
+		if uint64(vLog.Index) == logIndex && bytes.Equal(vLog.Address.Bytes(), contractAddress.Bytes()) {
+			found = true
+			if err := UnpackLog(&c.StakingInfoABI, event, "UnJailed", vLog); err != nil {
 				return nil, err
 			}
 			break

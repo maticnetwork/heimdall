@@ -19,8 +19,10 @@ import (
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	borTypes "github.com/maticnetwork/heimdall/bor/types"
 	"github.com/maticnetwork/heimdall/helper"
+	slashingTypes "github.com/maticnetwork/heimdall/slashing/types"
 	stakingcli "github.com/maticnetwork/heimdall/staking/client/cli"
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
+	topupTypes "github.com/maticnetwork/heimdall/topup/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -70,6 +72,10 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 			privKeys := make([]crypto.PrivKey, totalValidators)
 			validators := make([]*hmTypes.Validator, numValidators)
 			dividendAccounts := make([]hmTypes.DividendAccount, numValidators)
+
+			// slashing
+			valSigningInfoMap := make(map[string]hmTypes.ValidatorSigningInfo)
+
 			genFiles := make([]string, totalValidators)
 			var err error
 
@@ -117,14 +123,15 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 						hmTypes.NewValidatorID(uint64(startID+int64(i))),
 						0,
 						0,
-						0,	
+						1,
 						10000,
 						newPubkey,
 						hmTypes.BytesToHeimdallAddress(valPubKeys[i].Address().Bytes()),
 					)
 
 					// create dividend account for validator
-					dividendAccounts[i] = hmTypes.NewDividendAccount(hmTypes.NewDividendAccountID(uint64(validators[i].ID)), ZeroIntString, ZeroIntString)
+					dividendAccounts[i] = hmTypes.NewDividendAccount(validators[i].Signer, ZeroIntString)
+					valSigningInfoMap[validators[i].ID.String()] = hmTypes.NewValidatorSigningInfo(validators[i].ID, 0, 0, 0)
 				}
 
 				signers[i] = GetSignerInfo(valPubKeys[i], privKeys[i].Bytes(), cdc)
@@ -151,13 +158,25 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 			}
 
 			// staking state change
-			appStateBytes, err = stakingTypes.SetGenesisStateToAppState(appStateBytes, validators, *validatorSet, dividendAccounts)
+			appStateBytes, err = stakingTypes.SetGenesisStateToAppState(appStateBytes, validators, *validatorSet)
 			if err != nil {
 				return err
 			}
 
 			// bor state change
 			appStateBytes, err = borTypes.SetGenesisStateToAppState(appStateBytes, *validatorSet)
+			if err != nil {
+				return err
+			}
+
+			// topup state change
+			appStateBytes, err = topupTypes.SetGenesisStateToAppState(appStateBytes, dividendAccounts)
+			if err != nil {
+				return err
+			}
+
+			// slashing state change
+			appStateBytes, err = slashingTypes.SetGenesisStateToAppState(appStateBytes, valSigningInfoMap)
 			if err != nil {
 				return err
 			}

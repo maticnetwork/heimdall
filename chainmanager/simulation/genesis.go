@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/rand"
 	"strconv"
-	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/maticnetwork/heimdall/chainmanager/types"
@@ -15,10 +14,13 @@ import (
 
 // Parameter keys
 const (
-	TxConfirmationTime    = "tx_confirmation_time"
+	MainchainTxConfirmations  = "mainchain_tx_confirmations"
+	MaticchainTxConfirmations = "maticchain_tx_confirmations"
+
 	BorChainID            = "bor_chain_id"
 	MaticTokenAddress     = "matic_token_address"
 	StakingManagerAddress = "staking_manager_address"
+	SlashManagerAddress   = "slash_manager_address"
 	RootChainAddress      = "root_chain_address"
 	StakingInfoAddress    = "staking_info_address"
 	StateSenderAddress    = "state_sender_address"
@@ -28,10 +30,12 @@ const (
 	ValidatorSetAddress  = "validator_set_address"
 )
 
-func GenTxConfirmationTime() time.Duration {
-	// create seed
-	seed := rand.New(rand.NewSource(int64(rand.Int())))
-	return time.Duration(simulation.RandTimestamp(seed).Unix())
+func GenMainchainTxConfirmations(r *rand.Rand) uint64 {
+	return uint64(simulation.RandIntBetween(r, 1, 100))
+}
+
+func GenMaticchainTxConfirmations(r *rand.Rand) uint64 {
+	return uint64(simulation.RandIntBetween(r, 1, 100))
 }
 
 func GenHeimdallAddress() hmTypes.HeimdallAddress {
@@ -44,9 +48,14 @@ func GenBorChainId(r *rand.Rand) string {
 }
 
 func RandomizedGenState(simState *module.SimulationState) {
-	var txConfirmationTime time.Duration
-	simState.AppParams.GetOrGenerate(simState.Cdc, TxConfirmationTime, &txConfirmationTime, simState.Rand,
-		func(r *rand.Rand) { txConfirmationTime = GenTxConfirmationTime() },
+	var mainchainTxConfirmations uint64
+	simState.AppParams.GetOrGenerate(simState.Cdc, MainchainTxConfirmations, &mainchainTxConfirmations, simState.Rand,
+		func(r *rand.Rand) { mainchainTxConfirmations = GenMainchainTxConfirmations(r) },
+	)
+
+	var maticchainTxConfirmations uint64
+	simState.AppParams.GetOrGenerate(simState.Cdc, MaticchainTxConfirmations, &maticchainTxConfirmations, simState.Rand,
+		func(r *rand.Rand) { maticchainTxConfirmations = GenMaticchainTxConfirmations(r) },
 	)
 
 	var borChainID string
@@ -56,6 +65,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 
 	var maticTokenAddress = GenHeimdallAddress()
 	var stakingManagerAddress = GenHeimdallAddress()
+	var slashManagerAddress = GenHeimdallAddress()
 	var rootChainAddress = GenHeimdallAddress()
 	var stakingInfoAddress = GenHeimdallAddress()
 	var stateSenderAddress = GenHeimdallAddress()
@@ -65,13 +75,14 @@ func RandomizedGenState(simState *module.SimulationState) {
 		BorChainID:            borChainID,
 		MaticTokenAddress:     maticTokenAddress,
 		StakingManagerAddress: stakingManagerAddress,
+		SlashManagerAddress:   slashManagerAddress,
 		RootChainAddress:      rootChainAddress,
 		StakingInfoAddress:    stakingInfoAddress,
 		StateSenderAddress:    stateSenderAddress,
 		StateReceiverAddress:  stateReceiverAddress,
 		ValidatorSetAddress:   validatorSetAddress,
 	}
-	params := types.NewParams(txConfirmationTime, chainParams)
+	params := types.NewParams(mainchainTxConfirmations, maticchainTxConfirmations, chainParams)
 	chainManagerGenesis := types.NewGenesisState(params)
 	fmt.Printf("Selected randomly generated chainmanager parameters:\n%s\n", codec.MustMarshalJSONIndent(simState.Cdc, chainManagerGenesis))
 	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(chainManagerGenesis)

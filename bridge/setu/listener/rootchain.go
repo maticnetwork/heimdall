@@ -2,7 +2,6 @@ package listener
 
 import (
 	"bytes"
-	"container/list"
 	"context"
 	"encoding/json"
 	"math/big"
@@ -31,8 +30,6 @@ type RootChainListener struct {
 	// ABIs
 	abis []*abi.ABI
 
-	// queue
-	headerQueue    *list.List
 	stakingInfoAbi *abi.ABI
 }
 
@@ -53,7 +50,6 @@ func NewRootChainListener() *RootChainListener {
 	}
 	rootchainListener := &RootChainListener{
 		abis:           abis,
-		headerQueue:    list.New(),
 		stakingInfoAbi: &contractCaller.StakingInfoABI,
 	}
 	return rootchainListener
@@ -95,42 +91,26 @@ func (rl *RootChainListener) Start() error {
 func (rl *RootChainListener) ProcessHeader(newHeader *types.Header) {
 	rl.Logger.Debug("New block detected", "blockNumber", newHeader.Number)
 
-	// adding into queue
-	rl.headerQueue.PushBack(newHeader)
-
-	// current time
-	currentTime := uint64(time.Now().UTC().Unix())
-
 	// fetch context
 	rootchainContext, err := rl.getRootChainContext()
 	if err != nil {
 		return
 	}
-	confirmationTime := uint64(rootchainContext.ChainmanagerParams.TxConfirmationTime.Seconds())
+	requiredConfirmations := rootchainContext.ChainmanagerParams.MainchainTxConfirmations
+	latestNumber := newHeader.Number
 
-	var start *big.Int
-	var end *big.Int
+	// confirmation
+	confirmationBlocks := big.NewInt(0).SetUint64(requiredConfirmations)
 
-	// check start and end header
-	for rl.headerQueue.Len() > 0 {
-		e := rl.headerQueue.Front() // First element
-		h := e.Value.(*types.Header)
-		if h.Time+confirmationTime > currentTime {
-			break
-		}
-		if start == nil {
-			start = h.Number
-		}
-		end = h.Number
-		rl.headerQueue.Remove(e) // Dequeue
-	}
-
-	if start == nil {
+	if latestNumber.Cmp(confirmationBlocks) <= 0 {
+		rl.Logger.Error("Block number less than Confirmations required", "blockNumber", latestNumber.Uint64, "confirmationsRequired", confirmationBlocks.Uint64)
 		return
 	}
+	latestNumber = latestNumber.Sub(latestNumber, confirmationBlocks)
 
 	// default fromBlock
-	fromBlock := start
+	fromBlock := latestNumber
+
 	// get last block from storage
 	hasLastBlock, _ := rl.storageClient.Has([]byte(lastRootBlockKey), nil)
 	if hasLastBlock {
@@ -141,15 +121,15 @@ func (rl *RootChainListener) ProcessHeader(newHeader *types.Header) {
 		}
 		rl.Logger.Debug("Got last block from bridge storage", "lastBlock", string(lastBlockBytes))
 		if result, err := strconv.ParseUint(string(lastBlockBytes), 10, 64); err == nil {
+			if result >= newHeader.Number.Uint64() {
+				return
+			}
 			fromBlock = big.NewInt(0).SetUint64(result + 1)
 		}
 	}
 
 	// to block
-	toBlock := end
-
-	// debug log
-	rl.Logger.Info("Processing header", "fromBlock", fromBlock, "toBlock", toBlock)
+	toBlock := latestNumber
 
 	if toBlock.Cmp(fromBlock) == -1 {
 		fromBlock = toBlock
@@ -160,7 +140,7 @@ func (rl *RootChainListener) ProcessHeader(newHeader *types.Header) {
 		rl.Logger.Error("rl.storageClient.Put", "Error", err)
 	}
 
-	// query log
+	// query events
 	rl.queryAndBroadcastEvents(rootchainContext, fromBlock, toBlock)
 }
 
@@ -258,10 +238,26 @@ func (rl *RootChainListener) queryAndBroadcastEvents(rootchainContext *RootChain
 					if err := helper.UnpackLog(rl.stakingInfoAbi, event, selectedEvent.Name, &vLog); err != nil {
 						rl.Logger.Error("Error while parsing event", "name", selectedEvent.Name, "error", err)
 					}
-					if bytes.Equal(event.Signer.Bytes(), helper.GetAddress()) {
+					if bytes.Equal(event.User.Bytes(), helper.GetAddress()) {
 						rl.sendTaskWithDelay("sendTopUpFeeToHeimdall", selectedEvent.Name, logBytes, 0)
 					} else if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx); isCurrentValidator {
 						rl.sendTaskWithDelay("sendTopUpFeeToHeimdall", selectedEvent.Name, logBytes, delay)
+					}
+
+				case "Slashed":
+					if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx); isCurrentValidator {
+						rl.sendTaskWithDelay("sendTickAckToHeimdall", selectedEvent.Name, logBytes, delay)
+					}
+
+				case "UnJailed":
+					event := new(stakinginfo.StakinginfoUnJailed)
+					if err := helper.UnpackLog(rl.stakingInfoAbi, event, selectedEvent.Name, &vLog); err != nil {
+						rl.Logger.Error("Error while parsing event", "name", selectedEvent.Name, "error", err)
+					}
+					if util.IsEventSender(rl.cliCtx, event.ValidatorId.Uint64()) {
+						rl.sendTaskWithDelay("sendUnjailToHeimdall", selectedEvent.Name, logBytes, 0)
+					} else if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx); isCurrentValidator {
+						rl.sendTaskWithDelay("sendUnjailToHeimdall", selectedEvent.Name, logBytes, delay)
 					}
 				}
 			}

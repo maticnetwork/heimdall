@@ -46,7 +46,6 @@ func (suite *KeeperTestSuite) TestValidator() {
 
 	validators := make([]*hmTypes.Validator, n)
 	accounts := simulation.RandomAccounts(r1, n)
-	dividendAccounts := make([]hmTypes.DividendAccount, n)
 
 	for i := range validators {
 		// validator
@@ -54,16 +53,12 @@ func (suite *KeeperTestSuite) TestValidator() {
 			hmTypes.NewValidatorID(uint64(int64(i))),
 			0,
 			0,
+			1,
 			int64(simulation.RandIntBetween(r1, 10, 100)), // power
 			hmTypes.NewPubKey(accounts[i].PubKey.Bytes()),
 			accounts[i].Address,
 		)
-		// create dividend account for validator
-		dividendAccounts[i] = hmTypes.NewDividendAccount(
-			hmTypes.NewDividendAccountID(uint64(validators[i].ID)),
-			big.NewInt(0).String(),
-			big.NewInt(0).String(),
-		)
+
 		err := app.StakingKeeper.AddValidator(ctx, *validators[i])
 		if err != nil {
 			t.Error("Error while adding validator to store", err)
@@ -100,7 +95,6 @@ func (suite *KeeperTestSuite) TestUpdateSigner() {
 
 	validators := make([]*hmTypes.Validator, n)
 	accounts := simulation.RandomAccounts(r1, n)
-	dividendAccounts := make([]hmTypes.DividendAccount, n)
 
 	for i := range validators {
 		// validator
@@ -108,15 +102,10 @@ func (suite *KeeperTestSuite) TestUpdateSigner() {
 			hmTypes.NewValidatorID(uint64(int64(i))),
 			0,
 			0,
+			1,
 			int64(simulation.RandIntBetween(r1, 10, 100)), // power
 			hmTypes.NewPubKey(accounts[i].PubKey.Bytes()),
 			accounts[i].Address,
-		)
-		// create dividend account for validator
-		dividendAccounts[i] = hmTypes.NewDividendAccount(
-			hmTypes.NewDividendAccountID(uint64(validators[i].ID)),
-			big.NewInt(0).String(),
-			big.NewInt(0).String(),
 		)
 		err := app.StakingKeeper.AddValidator(ctx, *validators[i])
 		if err != nil {
@@ -318,9 +307,8 @@ func (suite *KeeperTestSuite) TestDividendAccount() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 
 	dividendAccount := types.DividendAccount{
-		ID:            types.NewDividendAccountID(1),
-		FeeAmount:     big.NewInt(0).String(),
-		SlashedAmount: big.NewInt(0).String(),
+		ID:        types.NewDividendAccountID(1),
+		FeeAmount: big.NewInt(0).String(),
 	}
 	app.StakingKeeper.AddDividendAccount(ctx, dividendAccount)
 	ok := app.StakingKeeper.CheckIfDividendAccountExists(ctx, dividendAccount.ID)

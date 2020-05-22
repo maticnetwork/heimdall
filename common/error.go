@@ -3,9 +3,10 @@ package common
 import (
 	"fmt"
 	"strconv"
-	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	abci "github.com/tendermint/tendermint/abci/types"
+
 	"github.com/maticnetwork/heimdall/types"
 )
 
@@ -15,6 +16,7 @@ const (
 	DefaultCodespace sdk.CodespaceType = "1"
 
 	CodeInvalidMsg CodeType = 1400
+	CodeOldTx      CodeType = 1401
 
 	CodeInvalidProposerInput     CodeType = 1500
 	CodeInvalidBlockInput        CodeType = 1501
@@ -29,33 +31,46 @@ const (
 	CodeDisCountinuousCheckpoint CodeType = 1510
 	CodeNoCheckpointBuffer       CodeType = 1511
 
-	CodeOldValidator       CodeType = 2500
-	CodeNoValidator        CodeType = 2501
-	CodeValSignerMismatch  CodeType = 2502
-	CodeValidatorExitDeny  CodeType = 2503
-	CodeValAlreadyUnbonded CodeType = 2504
-	CodeSignerSynced       CodeType = 2505
-	CodeValSave            CodeType = 2506
-	CodeValAlreadyJoined   CodeType = 2507
-	CodeSignerUpdateError  CodeType = 2508
-	CodeNoConn             CodeType = 2509
-	CodeWaitFrConfirmation CodeType = 2510
-	CodeValPubkeyMismatch  CodeType = 2511
-	CodeNonce              CodeType = 2512
+	CodeOldValidator        CodeType = 2500
+	CodeNoValidator         CodeType = 2501
+	CodeValSignerMismatch   CodeType = 2502
+	CodeValidatorExitDeny   CodeType = 2503
+	CodeValAlreadyUnbonded  CodeType = 2504
+	CodeSignerSynced        CodeType = 2505
+	CodeValSave             CodeType = 2506
+	CodeValAlreadyJoined    CodeType = 2507
+	CodeSignerUpdateError   CodeType = 2508
+	CodeNoConn              CodeType = 2509
+	CodeWaitFrConfirmation  CodeType = 2510
+	CodeValPubkeyMismatch   CodeType = 2511
+	CodeErrDecodeEvent      CodeType = 2512
+	CodeNoSignerChangeError CodeType = 2513
+	CodeNonce               CodeType = 2514
 
-	CodeSpanNotCountinuous CodeType = 3501
-	CodeUnableToFreezeSet  CodeType = 3502
-	CodeSpanNotFound       CodeType = 3503
-	CodeValSetMisMatch     CodeType = 3504
-	CodeProducerMisMatch   CodeType = 3505
-	CodeInvalidBorChainID  CodeType = 3506
+	CodeSpanNotCountinuous  CodeType = 3501
+	CodeUnableToFreezeSet   CodeType = 3502
+	CodeSpanNotFound        CodeType = 3503
+	CodeValSetMisMatch      CodeType = 3504
+	CodeProducerMisMatch    CodeType = 3505
+	CodeInvalidBorChainID   CodeType = 3506
+	CodeInvalidSpanDuration CodeType = 3507
 
 	CodeFetchCheckpointSigners       CodeType = 4501
 	CodeErrComputeGenesisAccountRoot CodeType = 4503
 	CodeAccountRootMismatch          CodeType = 4504
-	CodeErrAccountRootHash           CodeType = 4505
-	CodeErrSetCheckpointBuffer       CodeType = 4506
-	CodeErrAddCheckpoint             CodeType = 4507
+
+	CodeErrAccountRootHash     CodeType = 4505
+	CodeErrSetCheckpointBuffer CodeType = 4506
+	CodeErrAddCheckpoint       CodeType = 4507
+
+	CodeInvalidReceipt         CodeType = 5501
+	CodeSideTxValidationFailed CodeType = 5502
+
+	CodeValSigningInfoSave     CodeType = 6501
+	CodeErrValUnjail           CodeType = 6502
+	CodeSlashInfoDetails       CodeType = 6503
+	CodeTickNotInContinuity    CodeType = 6504
+	CodeTickAckNotInContinuity CodeType = 6505
 )
 
 // -------- Invalid msg
@@ -104,10 +119,6 @@ func ErrNoACK(codespace sdk.CodespaceType, expiresAt uint64) sdk.Error {
 
 func ErrNoConn(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeNoConn, "Unable to connect to chain")
-}
-
-func ErrWaitForConfirmation(codespace sdk.CodespaceType, txConfirmationTime time.Duration) sdk.Error {
-	return newError(codespace, CodeWaitFrConfirmation, fmt.Sprintf("Please wait for %v confirmation time before sending transaction", txConfirmationTime))
 }
 
 func ErrNoCheckpointFound(codespace sdk.CodespaceType) sdk.Error {
@@ -164,8 +175,12 @@ func ErrSignerUpdateError(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeSignerUpdateError, "Signer update error")
 }
 
+func ErrNoSignerChange(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeNoSignerChangeError, "New signer same as old signer")
+}
+
 func ErrOldTx(codespace sdk.CodespaceType) sdk.Error {
-	return newError(codespace, CodeSignerUpdateError, "Old txhash not allowed")
+	return newError(codespace, CodeOldTx, "Old txhash not allowed")
 }
 
 func ErrValidatorAlreadySynced(codespace sdk.CodespaceType) sdk.Error {
@@ -194,6 +209,10 @@ func ErrSpanNotInCountinuity(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeSpanNotCountinuous, "Span not countinuous")
 }
 
+func ErrInvalidSpanDuration(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeInvalidSpanDuration, "wrong span duration")
+}
+
 func ErrSpanNotFound(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeSpanNotFound, "Span not found")
 }
@@ -209,6 +228,26 @@ func ErrValSetMisMatch(codespace sdk.CodespaceType) sdk.Error {
 func ErrProducerMisMatch(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeProducerMisMatch, "Producer set mismatch")
 }
+
+//
+// Side-tx errors
+//
+
+// ErrorSideTx represents side-tx error
+func ErrorSideTx(codespace sdk.CodespaceType, code CodeType) (res abci.ResponseDeliverSideTx) {
+	res.Code = uint32(code)
+	res.Codespace = string(codespace)
+	res.Result = abci.SideTxResultType_Skip // skip side-tx vote in-case of error
+	return
+}
+
+func ErrSideTxValidation(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeSideTxValidationFailed, "External call majority validation failed. ")
+}
+
+//
+// Private methods
+//
 
 func CodeToDefaultMsg(code CodeType) string {
 	switch code {
@@ -294,4 +333,25 @@ func msgOrDefaultMsg(msg string, code CodeType) string {
 func newError(codespace sdk.CodespaceType, code CodeType, msg string) sdk.Error {
 	msg = msgOrDefaultMsg(msg, code)
 	return sdk.NewError(codespace, code, msg)
+}
+
+// Slashing errors
+func ErrValidatorSigningInfoSave(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeValSigningInfoSave, "Cannot save validator signing info")
+}
+
+func ErrUnjailValidator(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeErrValUnjail, "Error while unJail validator")
+}
+
+func ErrSlashInfoDetails(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeSlashInfoDetails, "Wrong slash info details")
+}
+
+func ErrTickNotInContinuity(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeTickNotInContinuity, "Tick not in countinuity")
+}
+
+func ErrTickAckNotInContinuity(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeTickAckNotInContinuity, "Tick-ack not in countinuity")
 }

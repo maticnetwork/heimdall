@@ -28,6 +28,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return handleQueryLatestSpan(ctx, req, keeper)
 		case types.QueryNextProducers:
 			return handleQueryNextProducers(ctx, req, keeper)
+		case types.QueryNextSpanSeed:
+			return handlerQueryNextSpanSeed(ctx, req, keeper)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown auth query endpoint")
 		}
@@ -148,12 +150,32 @@ func handleQueryLatestSpan(ctx sdk.Context, req abci.RequestQuery, keeper Keeper
 }
 
 func handleQueryNextProducers(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	nextProducers, err := keeper.SelectNextProducers(ctx)
+	nextSpanSeed, err := keeper.GetNextSpanSeed(ctx)
+	if err != nil {
+		return nil, sdk.ErrInternal((sdk.AppendMsgToErr("cannot fetch next span seed from keeper", err.Error())))
+	}
+
+	nextProducers, err := keeper.SelectNextProducers(ctx, nextSpanSeed)
 	if err != nil {
 		return nil, sdk.ErrInternal((sdk.AppendMsgToErr("cannot fetch next producers from keeper", err.Error())))
 	}
 
 	bz, err := json.Marshal(nextProducers)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
+	return bz, nil
+}
+
+func handlerQueryNextSpanSeed(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	nextSpanSeed, err := keeper.GetNextSpanSeed(ctx)
+
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("Error fetching next span seed", err.Error()))
+	}
+
+	// json record
+	bz, err := json.Marshal(nextSpanSeed)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}

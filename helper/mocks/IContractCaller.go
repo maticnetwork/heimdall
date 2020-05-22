@@ -14,6 +14,8 @@ import (
 
 	rootchain "github.com/maticnetwork/heimdall/contracts/rootchain"
 
+	slashmanager "github.com/maticnetwork/heimdall/contracts/slashmanager"
+
 	stakemanager "github.com/maticnetwork/heimdall/contracts/stakemanager"
 
 	stakinginfo "github.com/maticnetwork/heimdall/contracts/stakinginfo"
@@ -21,8 +23,6 @@ import (
 	statereceiver "github.com/maticnetwork/heimdall/contracts/statereceiver"
 
 	statesender "github.com/maticnetwork/heimdall/contracts/statesender"
-
-	time "time"
 
 	types "github.com/maticnetwork/bor/core/types"
 
@@ -170,6 +170,29 @@ func (_m *IContractCaller) DecodeSignerUpdateEvent(_a0 common.Address, _a1 *type
 	return r0, r1
 }
 
+// DecodeSlashedEvent provides a mock function with given fields: _a0, _a1, _a2
+func (_m *IContractCaller) DecodeSlashedEvent(_a0 common.Address, _a1 *types.Receipt, _a2 uint64) (*stakinginfo.StakinginfoSlashed, error) {
+	ret := _m.Called(_a0, _a1, _a2)
+
+	var r0 *stakinginfo.StakinginfoSlashed
+	if rf, ok := ret.Get(0).(func(common.Address, *types.Receipt, uint64) *stakinginfo.StakinginfoSlashed); ok {
+		r0 = rf(_a0, _a1, _a2)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*stakinginfo.StakinginfoSlashed)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(common.Address, *types.Receipt, uint64) error); ok {
+		r1 = rf(_a0, _a1, _a2)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // DecodeStateSyncedEvent provides a mock function with given fields: _a0, _a1, _a2
 func (_m *IContractCaller) DecodeStateSyncedEvent(_a0 common.Address, _a1 *types.Receipt, _a2 uint64) (*statesender.StatesenderStateSynced, error) {
 	ret := _m.Called(_a0, _a1, _a2)
@@ -180,6 +203,29 @@ func (_m *IContractCaller) DecodeStateSyncedEvent(_a0 common.Address, _a1 *types
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*statesender.StatesenderStateSynced)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(common.Address, *types.Receipt, uint64) error); ok {
+		r1 = rf(_a0, _a1, _a2)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// DecodeUnJailedEvent provides a mock function with given fields: _a0, _a1, _a2
+func (_m *IContractCaller) DecodeUnJailedEvent(_a0 common.Address, _a1 *types.Receipt, _a2 uint64) (*stakinginfo.StakinginfoUnJailed, error) {
+	ret := _m.Called(_a0, _a1, _a2)
+
+	var r0 *stakinginfo.StakinginfoUnJailed
+	if rf, ok := ret.Get(0).(func(common.Address, *types.Receipt, uint64) *stakinginfo.StakinginfoUnJailed); ok {
+		r0 = rf(_a0, _a1, _a2)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*stakinginfo.StakinginfoUnJailed)
 		}
 	}
 
@@ -372,13 +418,13 @@ func (_m *IContractCaller) GetCheckpointSign(txHash common.Hash) ([]byte, []byte
 	return r0, r1, r2, r3
 }
 
-// GetConfirmedTxReceipt provides a mock function with given fields: _a0, _a1, _a2
-func (_m *IContractCaller) GetConfirmedTxReceipt(_a0 time.Time, _a1 common.Hash, _a2 time.Duration) (*types.Receipt, error) {
-	ret := _m.Called(_a0, _a1, _a2)
+// GetConfirmedTxReceipt provides a mock function with given fields: _a0, _a1
+func (_m *IContractCaller) GetConfirmedTxReceipt(_a0 common.Hash, _a1 uint64) (*types.Receipt, error) {
+	ret := _m.Called(_a0, _a1)
 
 	var r0 *types.Receipt
-	if rf, ok := ret.Get(0).(func(time.Time, common.Hash, time.Duration) *types.Receipt); ok {
-		r0 = rf(_a0, _a1, _a2)
+	if rf, ok := ret.Get(0).(func(common.Hash, uint64) *types.Receipt); ok {
+		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*types.Receipt)
@@ -386,8 +432,8 @@ func (_m *IContractCaller) GetConfirmedTxReceipt(_a0 time.Time, _a1 common.Hash,
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(time.Time, common.Hash, time.Duration) error); ok {
-		r1 = rf(_a0, _a1, _a2)
+	if rf, ok := ret.Get(1).(func(common.Hash, uint64) error); ok {
+		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -607,6 +653,52 @@ func (_m *IContractCaller) GetRootChainInstance(rootchainAddress common.Address)
 	return r0, r1
 }
 
+// GetRootHash provides a mock function with given fields: start, end, checkpointLength
+func (_m *IContractCaller) GetRootHash(start uint64, end uint64, checkpointLength uint64) ([]byte, error) {
+	ret := _m.Called(start, end, checkpointLength)
+
+	var r0 []byte
+	if rf, ok := ret.Get(0).(func(uint64, uint64, uint64) []byte); ok {
+		r0 = rf(start, end, checkpointLength)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]byte)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(uint64, uint64, uint64) error); ok {
+		r1 = rf(start, end, checkpointLength)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetSlashManagerInstance provides a mock function with given fields: slashManagerAddress
+func (_m *IContractCaller) GetSlashManagerInstance(slashManagerAddress common.Address) (*slashmanager.Slashmanager, error) {
+	ret := _m.Called(slashManagerAddress)
+
+	var r0 *slashmanager.Slashmanager
+	if rf, ok := ret.Get(0).(func(common.Address) *slashmanager.Slashmanager); ok {
+		r0 = rf(slashManagerAddress)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*slashmanager.Slashmanager)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(common.Address) error); ok {
+		r1 = rf(slashManagerAddress)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetSpanDetails provides a mock function with given fields: id, _a1
 func (_m *IContractCaller) GetSpanDetails(id *big.Int, _a1 *validatorset.Validatorset) (*big.Int, *big.Int, *big.Int, error) {
 	ret := _m.Called(id, _a1)
@@ -784,13 +876,13 @@ func (_m *IContractCaller) GetValidatorSetInstance(validatorSetAddress common.Ad
 	return r0, r1
 }
 
-// IsTxConfirmed provides a mock function with given fields: _a0, _a1, _a2
-func (_m *IContractCaller) IsTxConfirmed(_a0 time.Time, _a1 common.Hash, _a2 time.Duration) bool {
-	ret := _m.Called(_a0, _a1, _a2)
+// IsTxConfirmed provides a mock function with given fields: _a0, _a1
+func (_m *IContractCaller) IsTxConfirmed(_a0 common.Hash, _a1 uint64) bool {
+	ret := _m.Called(_a0, _a1)
 
 	var r0 bool
-	if rf, ok := ret.Get(0).(func(time.Time, common.Hash, time.Duration) bool); ok {
-		r0 = rf(_a0, _a1, _a2)
+	if rf, ok := ret.Get(0).(func(common.Hash, uint64) bool); ok {
+		r0 = rf(_a0, _a1)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
@@ -798,13 +890,27 @@ func (_m *IContractCaller) IsTxConfirmed(_a0 time.Time, _a1 common.Hash, _a2 tim
 	return r0
 }
 
-// SendCheckpoint provides a mock function with given fields: voteSignBytes, sigs, txData, rootchainAddress, rootChainInstance
-func (_m *IContractCaller) SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte, rootchainAddress common.Address, rootChainInstance *rootchain.Rootchain) error {
-	ret := _m.Called(voteSignBytes, sigs, txData, rootchainAddress, rootChainInstance)
+// SendCheckpoint provides a mock function with given fields: sigedData, sigs, rootchainAddress, rootChainInstance
+func (_m *IContractCaller) SendCheckpoint(sigedData []byte, sigs []byte, rootchainAddress common.Address, rootChainInstance *rootchain.Rootchain) error {
+	ret := _m.Called(sigedData, sigs, rootchainAddress, rootChainInstance)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func([]byte, []byte, []byte, common.Address, *rootchain.Rootchain) error); ok {
-		r0 = rf(voteSignBytes, sigs, txData, rootchainAddress, rootChainInstance)
+	if rf, ok := ret.Get(0).(func([]byte, []byte, common.Address, *rootchain.Rootchain) error); ok {
+		r0 = rf(sigedData, sigs, rootchainAddress, rootChainInstance)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// SendTick provides a mock function with given fields: sigedData, sigs, slashManagerAddress, slashManagerInstance
+func (_m *IContractCaller) SendTick(sigedData []byte, sigs []byte, slashManagerAddress common.Address, slashManagerInstance *slashmanager.Slashmanager) error {
+	ret := _m.Called(sigedData, sigs, slashManagerAddress, slashManagerInstance)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func([]byte, []byte, common.Address, *slashmanager.Slashmanager) error); ok {
+		r0 = rf(sigedData, sigs, slashManagerAddress, slashManagerInstance)
 	} else {
 		r0 = ret.Error(0)
 	}

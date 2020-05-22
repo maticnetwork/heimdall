@@ -53,9 +53,21 @@ func TopupTxCmd(cdc *codec.Codec) *cobra.Command {
 				proposer = helper.GetFromAddress(cliCtx)
 			}
 
-			validatorID := viper.GetInt64(FlagValidatorID)
+			validatorID := viper.GetUint64(FlagValidatorID)
 			if validatorID == 0 {
 				return fmt.Errorf("Validator ID cannot be zero")
+			}
+
+			// get user
+			user := types.HexToHeimdallAddress(viper.GetString(FlagUserAddress))
+			if user.Empty() {
+				return fmt.Errorf("user address cannot be zero")
+			}
+
+			// fee amount
+			fee, ok := sdk.NewIntFromString(viper.GetString(FlagFeeAmount))
+			if !ok {
+				return errors.New("Invalid fee amount")
 			}
 
 			txhash := viper.GetString(FlagTxHash)
@@ -66,9 +78,11 @@ func TopupTxCmd(cdc *codec.Codec) *cobra.Command {
 			// build and sign the transaction, then broadcast to Tendermint
 			msg := topupTypes.NewMsgTopup(
 				proposer,
-				uint64(validatorID),
+				user,
+				fee,
 				types.HexToHeimdallHash(txhash),
-				uint64(viper.GetInt64(FlagLogIndex)),
+				viper.GetUint64(FlagLogIndex),
+				viper.GetUint64(FlagBlockNumber),
 			)
 
 			// broadcast msg with cli
@@ -76,18 +90,29 @@ func TopupTxCmd(cdc *codec.Codec) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().Int(FlagValidatorID, 0, "--validator-id=<validator ID here>")
+	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
-	cmd.Flags().String(FlagLogIndex, "", "--log-index=<log-index>")
-	if err := cmd.MarkFlagRequired(FlagValidatorID); err != nil {
-		cliLogger.Error("TopupTxCmd | MarkFlagRequired | FlagValidatorID", "Error", err)
-	}
+	cmd.Flags().String(FlagUserAddress, "", "--user=<user>")
+	cmd.Flags().String(FlagFeeAmount, "", "--topup-amount=<topup-amount>")
+	cmd.Flags().Uint64(FlagLogIndex, 0, "--log-index=<log-index>")
+	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
+
 	if err := cmd.MarkFlagRequired(FlagTxHash); err != nil {
 		cliLogger.Error("TopupTxCmd | MarkFlagRequired | FlagTxHash", "Error", err)
 	}
 	if err := cmd.MarkFlagRequired(FlagLogIndex); err != nil {
 		cliLogger.Error("TopupTxCmd | MarkFlagRequired | FlagLogIndex", "Error", err)
 	}
+	if err := cmd.MarkFlagRequired(FlagUserAddress); err != nil {
+		cliLogger.Error("TopupTxCmd | MarkFlagRequired | FlagUserAddress", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagFeeAmount); err != nil {
+		cliLogger.Error("TopupTxCmd | MarkFlagRequired | FlagFeeAmount", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagBlockNumber); err != nil {
+		cliLogger.Error("TopupTxCmd | MarkFlagRequired | FlagBlockNumber", "Error", err)
+	}
+
 	return cmd
 }
 
@@ -122,6 +147,8 @@ func WithdrawFeeTxCmd(cdc *codec.Codec) *cobra.Command {
 			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
 		},
 	}
+
+	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
 	cmd.Flags().String(FlagAmount, "0", "--amount=<withdraw-amount>")
 
 	return cmd

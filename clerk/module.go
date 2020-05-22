@@ -15,6 +15,7 @@ import (
 	clerkRest "github.com/maticnetwork/heimdall/clerk/client/rest"
 	"github.com/maticnetwork/heimdall/clerk/types"
 	"github.com/maticnetwork/heimdall/helper"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmModule "github.com/maticnetwork/heimdall/types/module"
 )
 
@@ -118,7 +119,7 @@ func (AppModule) QuerierRoute() string {
 
 // NewQuerierHandler returns the auth module sdk.Querier.
 func (am AppModule) NewQuerierHandler() sdk.Querier {
-	return NewQuerier(am.keeper)
+	return NewQuerier(am.keeper, am.contractCaller)
 }
 
 // InitGenesis performs genesis initialization for the auth module. It returns
@@ -144,4 +145,13 @@ func (AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
 // updates.
 func (AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
 	return []abci.ValidatorUpdate{}
+}
+
+func (am AppModule) NewSideTxHandler() hmTypes.SideTxHandler {
+	return NewSideTxHandler(am.keeper, am.contractCaller)
+}
+
+// NewPostTxHandler side tx handler
+func (am AppModule) NewPostTxHandler() hmTypes.PostTxHandler {
+	return NewPostTxHandler(am.keeper, am.contractCaller)
 }

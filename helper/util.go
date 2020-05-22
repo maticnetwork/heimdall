@@ -28,6 +28,7 @@ import (
 	ethTypes "github.com/maticnetwork/bor/core/types"
 	"github.com/spf13/viper"
 	"github.com/tendermint/go-amino"
+	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/merkle"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -137,7 +138,6 @@ func StringToPubkey(pubkeyStr string) (secp256k1.PubKeySecp256k1, error) {
 	var pubkeyBytes secp256k1.PubKeySecp256k1
 	_pubkey, err := hex.DecodeString(pubkeyStr)
 	if err != nil {
-		Logger.Error("Decoding of pubkey(string) to pubkey failed", "Error", err, "PubkeyString", pubkeyStr)
 		return pubkeyBytes, err
 	}
 	// copy
@@ -153,8 +153,8 @@ func BytesToPubkey(pubKey []byte) secp256k1.PubKeySecp256k1 {
 	return pubkeyBytes
 }
 
-// GetSigs returns sigs bytes from vote
-func GetSigs(unFilteredVotes []*tmTypes.CommitSig) (sigs []byte) {
+// GetVoteSigs returns sigs bytes from vote
+func GetVoteSigs(unFilteredVotes []*tmTypes.CommitSig) (sigs []byte) {
 	votes := make([]*tmTypes.CommitSig, 0)
 	for _, item := range unFilteredVotes {
 		if item != nil {
@@ -170,6 +170,68 @@ func GetSigs(unFilteredVotes []*tmTypes.CommitSig) (sigs []byte) {
 	for _, vote := range votes {
 		sigs = append(sigs, vote.Signature...)
 	}
+	return
+}
+
+type sideTxSig struct {
+	Address []byte
+	Sig     []byte
+}
+
+// GetSideTxSigs returns sigs bytes from vote by tx hash
+func GetSideTxSigs(txHash []byte, sideTxData []byte, unFilteredVotes []*tmTypes.CommitSig) (sigs []byte) {
+	// side tx result with data
+	sideTxResultWithData := tmTypes.SideTxResultWithData{
+		SideTxResult: tmTypes.SideTxResult{
+			TxHash: txHash,
+			Result: int32(abci.SideTxResultType_Yes),
+		},
+		Data: sideTxData,
+	}
+
+	// draft signed data
+	signedData := sideTxResultWithData.GetBytes()
+
+	sideTxSigs := make([]*sideTxSig, 0)
+	for _, vote := range unFilteredVotes {
+		if vote != nil {
+			// iterate through all side-tx results
+			for _, sideTxResult := range vote.SideTxResults {
+				// find side-tx result by tx-hash
+				if bytes.Equal(sideTxResult.TxHash, txHash) &&
+					len(sideTxResult.Sig) == 65 &&
+					sideTxResult.Result == int32(abci.SideTxResultType_Yes) {
+					// validate sig
+					var pk secp256k1.PubKeySecp256k1
+					if p, err := authTypes.RecoverPubkey(signedData, sideTxResult.Sig); err == nil {
+						copy(pk[:], p[:])
+
+						// if it has valid sig, add it into side-tx sig array
+						if bytes.Equal(vote.ValidatorAddress.Bytes(), pk.Address().Bytes()) {
+							sideTxSigs = append(sideTxSigs, &sideTxSig{
+								Address: vote.ValidatorAddress.Bytes(),
+								Sig:     sideTxResult.Sig,
+							})
+						}
+					}
+				}
+				// break
+			}
+		}
+	}
+
+	if len(sideTxSigs) > 0 {
+		// sort sigs by address
+		sort.Slice(sideTxSigs, func(i, j int) bool {
+			return bytes.Compare(sideTxSigs[i].Address, sideTxSigs[j].Address) < 0
+		})
+
+		// loop votes and append to sig to sigs
+		for _, sideTxSig := range sideTxSigs {
+			sigs = append(sigs, sideTxSig.Sig...)
+		}
+	}
+
 	return
 }
 
@@ -195,12 +257,12 @@ func GetVoteBytes(unFilteredVotes []*tmTypes.CommitSig, chainID string) []byte {
 
 // GetTxEncoder returns tx encoder
 func GetTxEncoder(cdc *codec.Codec) sdk.TxEncoder {
-	return authTypes.RLPTxEncoder(cdc, authTypes.GetPulpInstance())
+	return authTypes.DefaultTxEncoder(cdc)
 }
 
 // GetTxDecoder returns tx decoder
 func GetTxDecoder(cdc *codec.Codec) sdk.TxDecoder {
-	return authTypes.RLPTxDecoder(cdc, authTypes.GetPulpInstance())
+	return authTypes.DefaultTxDecoder(cdc)
 }
 
 // GetStdTxBytes get tx bytes
@@ -492,7 +554,7 @@ func ReadStdTxFromFile(cdc *amino.Codec, filename string) (stdTx authTypes.StdTx
 
 // BroadcastTxBytes sends request to tendermint using CLI
 func BroadcastTxBytes(cliCtx context.CLIContext, txBytes []byte, mode string) (sdk.TxResponse, error) {
-	Logger.Debug("Broadcasting tx bytes to Tendermint", "txBytes", hex.EncodeToString(txBytes), "txHash", hex.EncodeToString(tmhash.Sum(txBytes[4:])))
+	Logger.Debug("Broadcasting tx bytes to Tendermint", "txBytes", hex.EncodeToString(txBytes), "txHash", hex.EncodeToString(tmTypes.Tx(txBytes).Hash()))
 	if mode != "" {
 		cliCtx.BroadcastMode = mode
 	}
@@ -655,6 +717,13 @@ func GetPowerFromAmount(amount *big.Int) (*big.Int, error) {
 	}
 
 	return amount.Div(amount, decimals18), nil
+}
+
+// GetAmountFromPower returns amount from power
+func GetAmountFromPower(power int64) (*big.Int, error) {
+	pow := big.NewInt(0).SetInt64(power)
+	decimals18 := big.NewInt(10).Exp(big.NewInt(10), big.NewInt(18), nil)
+	return pow.Mul(pow, decimals18), nil
 }
 
 // GetAmountFromString converts string to its big Int

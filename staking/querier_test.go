@@ -205,9 +205,8 @@ func (suite *QuerierTestSuite) TestHandleQueryDividendAccount() {
 	dividendAccount := hmTypes.NewDividendAccount(
 		hmTypes.NewDividendAccountID(uint64(1)),
 		big.NewInt(0).String(),
-		big.NewInt(0).String(),
 	)
-	app.StakingKeeper.AddDividendAccount(ctx, dividendAccount)
+	app.TopupKeeper.AddDividendAccount(ctx, dividendAccount)
 	req := abci.RequestQuery{
 		Path: route,
 		Data: app.Codec().MustMarshalJSON(types.NewQueryDividendAccountParams(dividendAccount.ID)),
@@ -330,7 +329,7 @@ func (suite *QuerierTestSuite) TestHandleQueryStakingSequence() {
 
 	app.StakingKeeper.SetStakingSequence(ctx, sequence.String())
 
-	suite.contractCaller.On("GetConfirmedTxReceipt", mock.Anything, txHash.EthHash(), chainParams.TxConfirmationTime).Return(txreceipt, nil)
+	suite.contractCaller.On("GetConfirmedTxReceipt", mock.Anything, txHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
 
 	path := []string{types.QueryStakingSequence}
 

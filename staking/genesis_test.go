@@ -65,7 +65,6 @@ func (suite *GenesisTestSuite) TestInitExportGenesis() {
 		dividendAccounts[i] = hmTypes.NewDividendAccount(
 			hmTypes.NewDividendAccountID(uint64(validators[i].ID)),
 			big.NewInt(0).String(),
-			big.NewInt(0).String(),
 		)
 	}
 

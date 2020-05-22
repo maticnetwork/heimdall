@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/params/subspace"
@@ -13,7 +12,8 @@ import (
 
 // Default parameter values
 const (
-	DefaultTxConfirmationTime time.Duration = 6 * 14 * time.Second
+	DefaultMainchainTxConfirmations  uint64 = 6
+	DefaultMaticchainTxConfirmations uint64 = 10
 )
 
 var (
@@ -23,8 +23,9 @@ var (
 
 // Parameter keys
 var (
-	KeyTxConfirmationTime = []byte("TxConfirmationTime")
-	KeyChainParams        = []byte("ChainParams")
+	KeyMainchainTxConfirmations  = []byte("MainchainTxConfirmations")
+	KeyMaticchainTxConfirmations = []byte("MaticchainTxConfirmations")
+	KeyChainParams               = []byte("ChainParams")
 )
 
 var _ subspace.ParamSet = &Params{}
@@ -34,6 +35,7 @@ type ChainParams struct {
 	BorChainID            string                  `json:"bor_chain_id" yaml:"bor_chain_id"`
 	MaticTokenAddress     hmTypes.HeimdallAddress `json:"matic_token_address" yaml:"matic_token_address"`
 	StakingManagerAddress hmTypes.HeimdallAddress `json:"staking_manager_address" yaml:"staking_manager_address"`
+	SlashManagerAddress   hmTypes.HeimdallAddress `json:"slash_manager_address" yaml:"slash_manager_address"`
 	RootChainAddress      hmTypes.HeimdallAddress `json:"root_chain_address" yaml:"root_chain_address"`
 	StakingInfoAddress    hmTypes.HeimdallAddress `json:"staking_info_address" yaml:"staking_info_address"`
 	StateSenderAddress    hmTypes.HeimdallAddress `json:"state_sender_address" yaml:"state_sender_address"`
@@ -48,25 +50,28 @@ func (cp ChainParams) String() string {
 	BorChainID: 									%s
   MaticTokenAddress:            %s
 	StakingManagerAddress:        %s
+	SlashManagerAddress:        %s
 	RootChainAddress:             %s
   StakingInfoAddress:           %s
 	StateSenderAddress:           %s
 	StateReceiverAddress: 				%s
 	ValidatorSetAddress:					%s`,
-		cp.BorChainID, cp.MaticTokenAddress, cp.StakingManagerAddress, cp.RootChainAddress, cp.StakingInfoAddress, cp.StateSenderAddress, cp.StateReceiverAddress, cp.ValidatorSetAddress)
+		cp.BorChainID, cp.MaticTokenAddress, cp.StakingManagerAddress, cp.SlashManagerAddress, cp.RootChainAddress, cp.StakingInfoAddress, cp.StateSenderAddress, cp.StateReceiverAddress, cp.ValidatorSetAddress)
 }
 
 // Params defines the parameters for the chainmanager module.
 type Params struct {
-	TxConfirmationTime time.Duration `json:"tx_confirmation_time" yaml:"tx_confirmation_time"` // tx confirmation duration
-	ChainParams        ChainParams   `json:"chain_params" yaml:"chain_params"`
+	MainchainTxConfirmations  uint64      `json:"mainchain_tx_confirmations" yaml:"mainchain_tx_confirmations"`
+	MaticchainTxConfirmations uint64      `json:"maticchain_tx_confirmations" yaml:"maticchain_tx_confirmations"`
+	ChainParams               ChainParams `json:"chain_params" yaml:"chain_params"`
 }
 
 // NewParams creates a new Params object
-func NewParams(txConfirmationTime time.Duration, chainParams ChainParams) Params {
+func NewParams(mainchainTxConfirmations uint64, maticchainTxConfirmations uint64, chainParams ChainParams) Params {
 	return Params{
-		TxConfirmationTime: txConfirmationTime,
-		ChainParams:        chainParams,
+		MainchainTxConfirmations:  mainchainTxConfirmations,
+		MaticchainTxConfirmations: maticchainTxConfirmations,
+		ChainParams:               chainParams,
 	}
 }
 
@@ -75,7 +80,8 @@ func NewParams(txConfirmationTime time.Duration, chainParams ChainParams) Params
 // nolint
 func (p *Params) ParamSetPairs() subspace.ParamSetPairs {
 	return subspace.ParamSetPairs{
-		{KeyTxConfirmationTime, &p.TxConfirmationTime},
+		{KeyMainchainTxConfirmations, &p.MainchainTxConfirmations},
+		{KeyMaticchainTxConfirmations, &p.MaticchainTxConfirmations},
 		{KeyChainParams, &p.ChainParams},
 	}
 }
@@ -91,7 +97,8 @@ func (p Params) Equal(p2 Params) bool {
 func (p Params) String() string {
 	var sb strings.Builder
 	sb.WriteString("Params: \n")
-	sb.WriteString(fmt.Sprintf("TxConfirmationTime: %d\n", p.TxConfirmationTime))
+	sb.WriteString(fmt.Sprintf("MainchainTxConfirmations: %d\n", p.MainchainTxConfirmations))
+	sb.WriteString(fmt.Sprintf("MaticchainTxConfirmations: %d\n", p.MaticchainTxConfirmations))
 	sb.WriteString(fmt.Sprintf("ChainParams: %s\n", p.ChainParams.String()))
 	return sb.String()
 }
@@ -103,6 +110,10 @@ func (p Params) Validate() error {
 	}
 
 	if err := validateHeimdallAddress("staking_manager_address", p.ChainParams.StakingManagerAddress); err != nil {
+		return err
+	}
+
+	if err := validateHeimdallAddress("slash_manager_address", p.ChainParams.SlashManagerAddress); err != nil {
 		return err
 	}
 
@@ -149,7 +160,8 @@ func ParamKeyTable() subspace.KeyTable {
 // DefaultParams returns a default set of parameters.
 func DefaultParams() Params {
 	return Params{
-		TxConfirmationTime: DefaultTxConfirmationTime,
+		MainchainTxConfirmations:  DefaultMainchainTxConfirmations,
+		MaticchainTxConfirmations: DefaultMaticchainTxConfirmations,
 		ChainParams: ChainParams{
 			BorChainID:           helper.DefaultBorChainID,
 			StateReceiverAddress: DefaultStateReceiverAddress,

@@ -6,6 +6,7 @@ const (
 	FlagEndBlock           = "end-block"
 	FlagRootHash           = "root-hash"
 	FlagAccountRootHash    = "account-root-hash"
+	FlagBorChainID         = "bor-chain-id"
 	FlagHeaderNumber       = "header"
 	FlagCheckpointTxHash   = "txhash"
 	FlagCheckpointLogIndex = "log-index"
