@@ -5,9 +5,9 @@ const (
 	EventTypeProposeSpan = "propose-span"
 
 	AttributeKeySuccess        = "success"
-	AttributeKeyBorSyncID      = "bor-sync-id"
 	AttributeKeySpanID         = "span-id"
 	AttributeKeySpanStartBlock = "start-block"
+	AttributeKeySpanEndBlock   = "end-block"
 
 	AttributeValueCategory = ModuleName
 )

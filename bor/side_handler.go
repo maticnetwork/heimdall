@@ -133,8 +133,9 @@ func PostHandleMsgEventSpan(ctx sdk.Context, k Keeper, msg types.MsgProposeSpan,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),                // module name
 			sdk.NewAttribute(hmTypes.AttributeKeyTxHash, hmTypes.BytesToHeimdallHash(hash).Hex()), // tx hash
 			sdk.NewAttribute(hmTypes.AttributeKeySideTxResult, sideTxResult.String()),             // result
-			sdk.NewAttribute(types.AttributeKeyBorSyncID, strconv.FormatUint(uint64(msg.ID), 10)),
-			sdk.NewAttribute(types.AttributeKeySpanStartBlock, strconv.FormatUint(uint64(msg.StartBlock), 10)),
+			sdk.NewAttribute(types.AttributeKeySpanID, strconv.FormatUint(msg.ID, 10)),
+			sdk.NewAttribute(types.AttributeKeySpanStartBlock, strconv.FormatUint(msg.StartBlock, 10)),
+			sdk.NewAttribute(types.AttributeKeySpanEndBlock, strconv.FormatUint(msg.EndBlock, 10)),
 		),
 	})
 
