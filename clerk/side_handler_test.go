@@ -193,7 +193,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgEventRecord() {
 
 	_, _, addr1 := sdkAuth.KeyTestPubAddr()
 
-	id := app.ClerkKeeper.GetDepositCount(ctx) + 1
+	id := r.Uint64()
 	logIndex := r.Uint64()
 	blockNumber := r.Uint64()
 	txHash := hmTypes.HexToHeimdallHash("no log hash")
@@ -242,7 +242,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgEventRecord() {
 	})
 
 	t.Run("Replay", func(t *testing.T) {
-		id := app.ClerkKeeper.GetDepositCount(ctx) + 1
+		id := r.Uint64()
 		logIndex := r.Uint64()
 		blockNumber := r.Uint64()
 		txHash := hmTypes.HexToHeimdallHash("Replay hash")
@@ -265,36 +265,5 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgEventRecord() {
 		result = suite.postHandler(ctx, msg, abci.SideTxResultType_Yes)
 		require.False(t, result.IsOK(), "Post handler should prevent replay attack")
 		require.Equal(t, common.CodeOldTx, result.Code)
-	})
-
-	t.Run("Continuity", func(t *testing.T) {
-		id := app.ClerkKeeper.GetDepositCount(ctx) + 1
-		logIndex := r.Uint64()
-		blockNumber := r.Uint64()
-		txHash := hmTypes.HexToHeimdallHash("Replay hash")
-		_, _, addr2 := sdkAuth.KeyTestPubAddr()
-
-		msg := types.NewMsgEventRecord(
-			hmTypes.BytesToHeimdallAddress(addr1.Bytes()),
-			txHash,
-			logIndex,
-			blockNumber,
-			id,
-			hmTypes.BytesToHeimdallAddress(addr2.Bytes()),
-			make([]byte, 0),
-			suite.chainID,
-		)
-
-		result := suite.postHandler(ctx, msg, abci.SideTxResultType_Yes)
-		require.True(t, result.IsOK(), "Post handler should succeed")
-
-		msg.ID = id + 2
-		result = suite.postHandler(ctx, msg, abci.SideTxResultType_Yes)
-		require.False(t, result.IsOK(), "Post handler should prevent continuity attack")
-		require.Equal(t, common.CodeDepositNotInContinuity, result.Code)
-
-		msg.ID = id + 1
-		result = suite.postHandler(ctx, msg, abci.SideTxResultType_Yes)
-		require.True(t, result.IsOK(), "Post handler should succeed")
 	})
 }

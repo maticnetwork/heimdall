@@ -8,6 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/checkpoint/types"
+	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
@@ -24,7 +25,9 @@ func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, context.CLICo
 	ctx := app.BaseApp.NewContext(isCheckTx, abci.Header{})
 	cliCtx := context.NewCLIContext().WithCodec(app.Codec())
 
-	params := types.NewParams(5*time.Second, 256, 1024, 10000)
+	helper.SetTestConfig(helper.GetDefaultHeimdallConfig())
+
+	params := types.NewParams(5*time.Second, 256, 1024)
 
 	Checkpoints := make([]hmTypes.Checkpoint, 0)
 

@@ -14,17 +14,17 @@ const (
 
 // PermCheck check the secret key and the keystore files.
 // it verifies whether they are stored with the correct permissions.
-func PermCheck(filePath string, validPerm os.FileMode) (err error) {
+func PermCheck(filePath string, validPerm os.FileMode) error {
 	// get path to keystore files
 
 	f, err := os.Stat(filePath)
 	if err != nil && !errors.Is(err, os.ErrExist) {
-		return types.ErrInvalidPermissions{Err: err}
+		return types.ErrInvalidPermissions{File: filePath, Perm: validPerm, Err: err}
 	}
 
 	filePerm := f.Mode()
 	if filePerm != os.FileMode(validPerm) {
-		return types.ErrInvalidPermissions{}
+		return types.ErrInvalidPermissions{File: filePath, Perm: validPerm}
 	}
 
 	return nil

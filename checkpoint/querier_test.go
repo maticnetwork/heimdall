@@ -12,9 +12,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/checkpoint"
+	chSim "github.com/maticnetwork/heimdall/checkpoint/simulation"
 	"github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/helper/mocks"
-	cmn "github.com/maticnetwork/heimdall/test"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -262,7 +262,7 @@ func (suite *QuerierTestSuite) TestQueryCheckpointList() {
 
 func (suite *QuerierTestSuite) TestQueryNextCheckpoint() {
 	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
-	cmn.LoadValidatorSet(2, t, app.StakingKeeper, ctx, false, 10)
+	chSim.LoadValidatorSet(2, t, app.StakingKeeper, ctx, false, 10)
 
 	dividendAccount := hmTypes.DividendAccount{
 		User:      hmTypes.HexToHeimdallAddress("123"),
