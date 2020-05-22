@@ -2,6 +2,7 @@ package simulation
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 	"strconv"
 
@@ -44,7 +45,7 @@ func GenHeimdallAddress() hmTypes.HeimdallAddress {
 
 // GenBorChainId returns randomc chainID
 func GenBorChainId(r *rand.Rand) string {
-	return strconv.Itoa(simulation.RandIntBetween(r, 0, 4294967295))
+	return strconv.Itoa(simulation.RandIntBetween(r, 0, math.MaxInt32))
 }
 
 func RandomizedGenState(simState *module.SimulationState) {
