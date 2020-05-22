@@ -56,6 +56,7 @@ func LoadValidatorSet(count int, t *testing.T, keeper staking.Keeper, ctx sdk.Co
 
 	err := keeper.UpdateValidatorSetInStore(ctx, valSet)
 	require.NoError(t, err, "Unable to update validator set")
-	vals := keeper.GetAllValidators(ctx)
+	// NOTE commented as this causes build failure
+	// vals := keeper.GetAllValidators(ctx)
 	return valSet
 }
