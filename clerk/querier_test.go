@@ -17,7 +17,6 @@ import (
 	"github.com/maticnetwork/heimdall/types/simulation"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	// "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -85,7 +84,7 @@ func (suite *QuerierTestSuite) TestHandleQueryRecord() {
 
 	hAddr := hmTypes.BytesToHeimdallAddress([]byte("some-address"))
 	hHash := hmTypes.BytesToHeimdallHash([]byte("some-address"))
-	testRecord1 := types.NewEventRecord(hHash, 1, 1, hAddr, make([]byte, 0), "1")
+	testRecord1 := types.NewEventRecord(hHash, 1, 1, hAddr, make([]byte, 0), "1", time.Now())
 
 	// SetEventRecord
 	ck := app.ClerkKeeper
@@ -115,7 +114,7 @@ func (suite *QuerierTestSuite) TestHandleQueryRecordList() {
 
 	hAddr := hmTypes.BytesToHeimdallAddress([]byte("some-address"))
 	hHash := hmTypes.BytesToHeimdallHash([]byte("some-address"))
-	testRecord1 := types.NewEventRecord(hHash, 1, 1, hAddr, make([]byte, 0), "1")
+	testRecord1 := types.NewEventRecord(hHash, 1, 1, hAddr, make([]byte, 0), "1", time.Now())
 
 	// SetEventRecord
 	ck := app.ClerkKeeper

@@ -99,6 +99,7 @@ func (suite *HandlerTestSuite) TestHandleMsgEventRecord() {
 				msg.ContractAddress,
 				msg.Data,
 				msg.ChainID,
+				time.Now(),
 			),
 		)
 

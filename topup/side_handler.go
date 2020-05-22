@@ -40,8 +40,7 @@ func NewPostTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.P
 		case types.MsgTopup:
 			return PostHandleMsgTopup(ctx, k, msg, sideTxResult)
 		default:
-			errMsg := "Unrecognized topup Msg type: %s" + msg.Type()
-			return sdk.ErrUnknownRequest(errMsg).Result()
+			return sdk.ErrUnknownRequest("Unrecognized topup msg type").Result()
 		}
 	}
 }
@@ -77,16 +76,11 @@ func SideHandleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractC
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
 
-	if eventLog.ValidatorId.Uint64() != msg.ID.Uint64() {
-		k.Logger(ctx).Error("ID in message doesn't match id in logs", "MsgID", msg.ID, "IdFromTx", eventLog.ValidatorId)
-		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
-	}
-
-	if !bytes.Equal(eventLog.Signer.Bytes(), msg.Signer.Bytes()) {
+	if !bytes.Equal(eventLog.User.Bytes(), msg.User.Bytes()) {
 		k.Logger(ctx).Error(
-			"Signer Address from event does not match with Msg signer",
-			"EventSigner", eventLog.Signer.String(),
-			"MsgSigner", msg.Signer.String(),
+			"User Address from event does not match with Msg user",
+			"EventUser", eventLog.User.String(),
+			"MsgUser", msg.User.String(),
 		)
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
@@ -121,27 +115,24 @@ func PostHandleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, sideTxRes
 
 	k.Logger(ctx).Debug("Persisting topup state", "sideTxResult", sideTxResult)
 
-	// use event log signer
-	signer := msg.Signer
-	// if validator exists use siger from local state
-	validator, found := k.sk.GetValidatorFromValID(ctx, msg.ID)
-	if found {
-		signer = validator.Signer
-	}
+	// use event log user
+	user := msg.User
 
 	// create topup amount
 	topupAmount := sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: msg.Fee}}
 
 	// increase coins in account
-	if _, err := k.bk.AddCoins(ctx, signer, topupAmount); err != nil {
-		k.Logger(ctx).Error("Error while adding coins to signer", "signer", signer, "topupAmount", topupAmount, "error", err)
+	if _, err := k.bk.AddCoins(ctx, user, topupAmount); err != nil {
+		k.Logger(ctx).Error("Error while adding coins to user", "user", user, "topupAmount", topupAmount, "error", err)
 		return err.Result()
 	}
 
 	// transfer fees to sender (proposer)
-	if err := k.bk.SendCoins(ctx, signer, msg.FromAddress, auth.DefaultFeeWantedPerTx); err != nil {
+	if err := k.bk.SendCoins(ctx, user, msg.FromAddress, auth.DefaultFeeWantedPerTx); err != nil {
 		return err.Result()
 	}
+
+	k.Logger(ctx).Debug("Persisted topup state for", "user", user, "topupAmount", topupAmount.String())
 
 	// save topup
 	k.SetTopupSequence(ctx, sequence.String())
@@ -157,8 +148,7 @@ func PostHandleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, sideTxRes
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),                // module name
 			sdk.NewAttribute(hmTypes.AttributeKeyTxHash, hmTypes.BytesToHeimdallHash(hash).Hex()), // tx hash
 			sdk.NewAttribute(hmTypes.AttributeKeySideTxResult, sideTxResult.String()),             // result
-			sdk.NewAttribute(types.AttributeKeyValidatorID, msg.ID.String()),
-			sdk.NewAttribute(types.AttributeKeyValidatorSigner, signer.String()),
+			sdk.NewAttribute(types.AttributeKeyValidatorUser, user.String()),
 			sdk.NewAttribute(types.AttributeKeyTopupAmount, msg.Fee.String()),
 		),
 	})

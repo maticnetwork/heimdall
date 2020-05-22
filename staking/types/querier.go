@@ -11,6 +11,7 @@ const (
 	QueryValidator            = "validator"
 	QueryValidatorStatus      = "validator-status"
 	QueryProposer             = "proposer"
+	QueryTotalValidatorPower  = "total-val-power"
 	QueryCurrentProposer      = "current-proposer"
 	QueryProposerBonusPercent = "proposer-bonus-percent"
 	QueryStakingSequence      = "staking-sequence"

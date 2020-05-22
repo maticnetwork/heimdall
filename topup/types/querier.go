@@ -23,31 +23,31 @@ func NewQuerySequenceParams(txHash string, logIndex uint64) QuerySequenceParams 
 
 // QueryDividendAccountParams defines the params for querying dividend account status.
 type QueryDividendAccountParams struct {
-	DividendAccountID types.DividendAccountID `json:"dividend_account_id"`
+	UserAddress types.HeimdallAddress `json:"user_addr"`
 }
 
 // NewQueryDividendAccountParams creates a new instance of QueryDividendAccountParams.
-func NewQueryDividendAccountParams(dividendAccountID types.DividendAccountID) QueryDividendAccountParams {
-	return QueryDividendAccountParams{DividendAccountID: dividendAccountID}
+func NewQueryDividendAccountParams(userAddress types.HeimdallAddress) QueryDividendAccountParams {
+	return QueryDividendAccountParams{UserAddress: userAddress}
 }
 
 // QueryAccountProofParams defines the params for querying account proof.
 type QueryAccountProofParams struct {
-	DividendAccountID types.DividendAccountID `json:"dividend_account_id"`
+	UserAddress types.HeimdallAddress `json:"user_addr"`
 }
 
 // NewQueryAccountProofParams creates a new instance of QueryAccountProofParams.
-func NewQueryAccountProofParams(dividendAccountID types.DividendAccountID) QueryAccountProofParams {
-	return QueryAccountProofParams{DividendAccountID: dividendAccountID}
+func NewQueryAccountProofParams(userAddress types.HeimdallAddress) QueryAccountProofParams {
+	return QueryAccountProofParams{UserAddress: userAddress}
 }
 
 // QueryVerifyAccountProofParams defines the params for verifying account proof.
 type QueryVerifyAccountProofParams struct {
-	DividendAccountID types.DividendAccountID `json:"dividend_account_id"`
-	AccountProof      string                  `json:"account_proof"`
+	UserAddress  types.HeimdallAddress `json:"user_addr"`
+	AccountProof string                `json:"account_proof"`
 }
 
 // NewQueryVerifyAccountProofParams creates a new instance of QueryVerifyAccountProofParams.
-func NewQueryVerifyAccountProofParams(dividendAccountID types.DividendAccountID, accountProof string) QueryVerifyAccountProofParams {
-	return QueryVerifyAccountProofParams{DividendAccountID: dividendAccountID, AccountProof: accountProof}
+func NewQueryVerifyAccountProofParams(userAddress types.HeimdallAddress, accountProof string) QueryVerifyAccountProofParams {
+	return QueryVerifyAccountProofParams{UserAddress: userAddress, AccountProof: accountProof}
 }

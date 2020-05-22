@@ -31,6 +31,7 @@ type ModuleCommunicator interface {
 	SetCoins(ctx sdk.Context, addr hmTypes.HeimdallAddress, amt sdk.Coins) sdk.Error
 	GetCoins(ctx sdk.Context, addr hmTypes.HeimdallAddress) sdk.Coins
 	SendCoins(ctx sdk.Context, from hmTypes.HeimdallAddress, to hmTypes.HeimdallAddress, amt sdk.Coins) sdk.Error
+	CreateValiatorSigningInfo(ctx sdk.Context, valID hmTypes.ValidatorID, valSigningInfo hmTypes.ValidatorSigningInfo)
 }
 
 // Keeper stores all related data
@@ -185,6 +186,14 @@ func (k *Keeper) GetCurrentValidators(ctx sdk.Context) (validators []hmTypes.Val
 		return nil
 	})
 
+	return
+}
+
+func (k *Keeper) GetTotalPower(ctx sdk.Context) (totalPower int64) {
+	k.IterateCurrentValidatorsAndApplyFn(ctx, func(validator *hmTypes.Validator) bool {
+		totalPower += validator.VotingPower
+		return true
+	})
 	return
 }
 
@@ -429,4 +438,62 @@ func (k *Keeper) IterateStakingSequencesAndApplyFn(ctx sdk.Context, f func(seque
 			return
 		}
 	}
+}
+
+// Slashing api's
+// AddValidatorSigningInfo creates a signing info for validator
+func (k *Keeper) AddValidatorSigningInfo(ctx sdk.Context, valID hmTypes.ValidatorID, valSigningInfo hmTypes.ValidatorSigningInfo) error {
+	k.moduleCommunicator.CreateValiatorSigningInfo(ctx, valID, valSigningInfo)
+	return nil
+}
+
+// UpdatePower updates validator with signer and pubkey + validator => signer map
+func (k *Keeper) Slash(ctx sdk.Context, valSlashingInfo hmTypes.ValidatorSlashingInfo) error {
+	// get validator from state
+	validator, found := k.GetValidatorFromValID(ctx, valSlashingInfo.ID)
+	k.Logger(ctx).Debug("validator fetched", "validator", validator)
+	if !found {
+		k.Logger(ctx).Error("Unable to fetch valiator from store")
+		return errors.New("validator not found")
+	}
+
+	updatedPower := int64(0)
+	// calculate power after slash
+	if validator.VotingPower >= int64(valSlashingInfo.SlashedAmount) {
+		updatedPower = validator.VotingPower - int64(valSlashingInfo.SlashedAmount)
+	}
+
+	k.Logger(ctx).Info("slashAmount", valSlashingInfo.SlashedAmount, "prevPower", validator.VotingPower, "updatedPower", updatedPower)
+
+	// update power and jail status.
+	validator.VotingPower = updatedPower
+	validator.Jailed = valSlashingInfo.IsJailed
+
+	// add updated validator to store with new key
+	k.AddValidator(ctx, validator)
+	k.Logger(ctx).Debug("updated validator with slashed voting power and jail status", "validator", validator)
+	return nil
+}
+
+// unjail a validator
+func (k *Keeper) Unjail(ctx sdk.Context, valID hmTypes.ValidatorID) {
+
+	// get validator from state and make jailed = false
+	validator, found := k.GetValidatorFromValID(ctx, valID)
+	if !found {
+		k.Logger(ctx).Error("Unable to fetch valiator from store")
+		return
+	}
+
+	if !validator.Jailed {
+		k.Logger(ctx).Info("Already unjailed.")
+		return
+	}
+	// unjail validator
+	validator.Jailed = false
+
+	// add updated validator to store with new key
+	k.AddValidator(ctx, validator)
+	return
+
 }

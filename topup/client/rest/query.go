@@ -20,20 +20,20 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 		TopupTxStatusHandlerFn(cliCtx),
 	).Methods("GET")
 	r.HandleFunc(
-		"/topup/dividend-account/{id}",
-		dividendAccountByIDHandlerFn(cliCtx),
+		"/topup/dividend-account/{address}",
+		dividendAccountByAddressHandlerFn(cliCtx),
 	).Methods("GET")
 	r.HandleFunc(
 		"/topup/dividend-account-root",
 		dividendAccountRootHandlerFn(cliCtx),
 	).Methods("GET")
 	r.HandleFunc(
-		"/topup/account-proof/{id}",
-		dividendAccountProofHandlerFn(cliCtx),
+		"/topup/account-proof/{address}/verify",
+		VerifyAccountProofHandlerFn(cliCtx),
 	).Methods("GET")
 	r.HandleFunc(
-		"/topup/account-proof/verify/",
-		VerifyAccountProofHandlerFn(cliCtx),
+		"/topup/account-proof/{address}",
+		dividendAccountProofHandlerFn(cliCtx),
 	).Methods("GET")
 }
 
@@ -83,8 +83,8 @@ func TopupTxStatusHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-// Returns Dividend Account information by ID
-func dividendAccountByIDHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+// Returns Dividend Account information by User Address
+func dividendAccountByAddressHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 
@@ -93,14 +93,11 @@ func dividendAccountByIDHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		// get id
-		id, ok := rest.ParseUint64OrReturnBadRequest(w, vars["id"])
-		if !ok {
-			return
-		}
+		// get address
+		userAddress := hmTypes.HexToHeimdallAddress(vars["address"])
 
 		// get query params
-		queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQueryDividendAccountParams(hmTypes.DividendAccountID(id)))
+		queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQueryDividendAccountParams(userAddress))
 		if err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
@@ -166,7 +163,6 @@ func dividendAccountRootHandlerFn(
 // Returns Merkle path for dividendAccountID using dividend Account Tree
 func dividendAccountProofHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		vars := mux.Vars(r)
 
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
@@ -175,13 +171,10 @@ func dividendAccountProofHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		// get id
-		id, ok := rest.ParseUint64OrReturnBadRequest(w, vars["id"])
-		if !ok {
-			return
-		}
+		userAddress := hmTypes.HexToHeimdallAddress(vars["address"])
 
 		// get query params
-		queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQueryAccountProofParams(hmTypes.DividendAccountID(id)))
+		queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQueryAccountProofParams(userAddress))
 		if err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
@@ -213,18 +206,15 @@ func VerifyAccountProofHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		vars := mux.Vars(r)
 		params := r.URL.Query()
-		id, ok := rest.ParseUint64OrReturnBadRequest(w, params.Get("id"))
-		if !ok {
-			return
-		}
-
+		userAddress := hmTypes.HexToHeimdallAddress(vars["address"])
 		accountProof := params.Get("proof")
 
-		RestLogger.Info("Verify Account Proof- ", "valID", id, "accountProof", accountProof)
+		RestLogger.Info("Verify Account Proof", "userAddress", userAddress, "accountProof", accountProof)
 
 		// get query params
-		queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQueryVerifyAccountProofParams(hmTypes.DividendAccountID(id), accountProof))
+		queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQueryVerifyAccountProofParams(userAddress, accountProof))
 		if err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
@@ -252,6 +242,5 @@ func VerifyAccountProofHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		// return result
 		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, res)
-
 	}
 }

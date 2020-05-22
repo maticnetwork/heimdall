@@ -35,6 +35,8 @@ import (
 	paramsTypes "github.com/maticnetwork/heimdall/params/types"
 	"github.com/maticnetwork/heimdall/sidechannel"
 	sidechannelTypes "github.com/maticnetwork/heimdall/sidechannel/types"
+	"github.com/maticnetwork/heimdall/slashing"
+	slashingTypes "github.com/maticnetwork/heimdall/slashing/types"
 	"github.com/maticnetwork/heimdall/staking"
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
 	"github.com/maticnetwork/heimdall/supply"
@@ -75,6 +77,7 @@ var (
 		bor.AppModuleBasic{},
 		clerk.AppModuleBasic{},
 		topup.AppModuleBasic{},
+		slashing.AppModuleBasic{},
 		gov.NewAppModuleBasic(paramsClient.ProposalHandler),
 	)
 
@@ -112,6 +115,8 @@ type HeimdallApp struct {
 	BorKeeper         bor.Keeper
 	ClerkKeeper       clerk.Keeper
 	TopupKeeper       topup.Keeper
+	SlashingKeeper    slashing.Keeper
+
 	// param keeper
 	ParamsKeeper params.Keeper
 
@@ -174,6 +179,12 @@ func (d ModuleCommunicator) SendCoins(ctx sdk.Context, fromAddr types.HeimdallAd
 	return d.App.BankKeeper.SendCoins(ctx, fromAddr, toAddr, amt)
 }
 
+// Create ValidatorSigningInfo used by slashing module
+func (d ModuleCommunicator) CreateValiatorSigningInfo(ctx sdk.Context, valID types.ValidatorID, valSigningInfo types.ValidatorSigningInfo) {
+	d.App.SlashingKeeper.SetValidatorSigningInfo(ctx, valID, valSigningInfo)
+	return
+}
+
 //
 // Heimdall app
 //
@@ -202,6 +213,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		govTypes.StoreKey,
 		chainmanagerTypes.StoreKey,
 		stakingTypes.StoreKey,
+		slashingTypes.StoreKey,
 		checkpointTypes.StoreKey,
 		borTypes.StoreKey,
 		clerkTypes.StoreKey,
@@ -228,6 +240,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.subspaces[govTypes.ModuleName] = app.ParamsKeeper.Subspace(govTypes.DefaultParamspace).WithKeyTable(govTypes.ParamKeyTable())
 	app.subspaces[chainmanagerTypes.ModuleName] = app.ParamsKeeper.Subspace(chainmanagerTypes.DefaultParamspace)
 	app.subspaces[stakingTypes.ModuleName] = app.ParamsKeeper.Subspace(stakingTypes.DefaultParamspace)
+	app.subspaces[slashingTypes.ModuleName] = app.ParamsKeeper.Subspace(slashingTypes.DefaultParamspace)
 	app.subspaces[checkpointTypes.ModuleName] = app.ParamsKeeper.Subspace(checkpointTypes.DefaultParamspace)
 	app.subspaces[borTypes.ModuleName] = app.ParamsKeeper.Subspace(borTypes.DefaultParamspace)
 	app.subspaces[clerkTypes.ModuleName] = app.ParamsKeeper.Subspace(clerkTypes.DefaultParamspace)
@@ -285,6 +298,15 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		common.DefaultCodespace,
 		app.ChainKeeper,
 		moduleCommunicator,
+	)
+
+	app.SlashingKeeper = slashing.NewKeeper(
+		app.cdc,
+		keys[slashingTypes.StoreKey], // target store
+		app.StakingKeeper,
+		app.subspaces[slashingTypes.ModuleName],
+		common.DefaultCodespace,
+		app.ChainKeeper,
 	)
 
 	// bank keeper
@@ -374,6 +396,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		gov.NewAppModule(app.GovKeeper, app.SupplyKeeper),
 		chainmanager.NewAppModule(app.ChainKeeper, &app.caller),
 		staking.NewAppModule(app.StakingKeeper, &app.caller),
+		slashing.NewAppModule(app.SlashingKeeper, app.StakingKeeper, &app.caller),
 		checkpoint.NewAppModule(app.CheckpointKeeper, app.StakingKeeper, app.TopupKeeper, &app.caller),
 		bor.NewAppModule(app.BorKeeper, &app.caller),
 		clerk.NewAppModule(app.ClerkKeeper, &app.caller),
@@ -390,6 +413,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		chainmanagerTypes.ModuleName,
 		supplyTypes.ModuleName,
 		stakingTypes.ModuleName,
+		slashingTypes.ModuleName,
 		checkpointTypes.ModuleName,
 		borTypes.ModuleName,
 		clerkTypes.ModuleName,
@@ -421,9 +445,12 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		auth.NewAppModule(app.AccountKeeper, &app.caller, []authTypes.AccountProcessor{
 			supplyTypes.AccountProcessor,
 		}),
+
+		slashing.NewAppModule(app.SlashingKeeper, app.StakingKeeper, &app.caller),
 		chainmanager.NewAppModule(app.ChainKeeper, &app.caller),
 		topup.NewAppModule(app.TopupKeeper, &app.caller),
 		staking.NewAppModule(app.StakingKeeper, &app.caller),
+		bank.NewAppModule(app.BankKeeper, &app.caller),
 	)
 	app.sm.RegisterStoreDecoders()
 
@@ -522,16 +549,6 @@ func (app *HeimdallApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) 
 	return abci.ResponseInitChain{
 		// validator updates
 		Validators: valUpdates,
-
-		// consensus params
-		ConsensusParams: &abci.ConsensusParams{
-			Block: &abci.BlockParams{
-				MaxBytes: maxBytesPerBlock,
-				MaxGas:   maxGasPerBlock,
-			},
-			Evidence:  &abci.EvidenceParams{},
-			Validator: &abci.ValidatorParams{PubKeyTypes: []string{ABCIPubKeyTypeSecp256k1}},
-		},
 	}
 }
 
@@ -562,47 +579,46 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) ab
 	}
 
 	var tmValUpdates []abci.ValidatorUpdate
-	if ctx.BlockHeader().NumTxs > 0 {
-		// --- Start update to new validators
-		currentValidatorSet := app.StakingKeeper.GetValidatorSet(ctx)
-		allValidators := app.StakingKeeper.GetAllValidators(ctx)
-		ackCount := app.CheckpointKeeper.GetACKCount(ctx)
 
-		// get validator updates
-		setUpdates := helper.GetUpdatedValidators(
-			&currentValidatorSet, // pointer to current validator set -- UpdateValidators will modify it
-			allValidators,        // All validators
-			ackCount,             // ack count
-		)
+	// --- Start update to new validators
+	currentValidatorSet := app.StakingKeeper.GetValidatorSet(ctx)
+	allValidators := app.StakingKeeper.GetAllValidators(ctx)
+	ackCount := app.CheckpointKeeper.GetACKCount(ctx)
 
-		if len(setUpdates) > 0 {
-			// create new validator set
-			if err := currentValidatorSet.UpdateWithChangeSet(setUpdates); err != nil {
-				// return with nothing
-				logger.Error("Unable to update current validator set", "Error", err)
-				return abci.ResponseEndBlock{}
-			}
+	// get validator updates
+	setUpdates := helper.GetUpdatedValidators(
+		&currentValidatorSet, // pointer to current validator set -- UpdateValidators will modify it
+		allValidators,        // All validators
+		ackCount,             // ack count
+	)
 
-			// increment proposer priority
-			currentValidatorSet.IncrementProposerPriority(1)
+	if len(setUpdates) > 0 {
+		// create new validator set
+		if err := currentValidatorSet.UpdateWithChangeSet(setUpdates); err != nil {
+			// return with nothing
+			logger.Error("Unable to update current validator set", "Error", err)
+			return abci.ResponseEndBlock{}
+		}
 
-			// validator set change
-			logger.Debug("[ENDBLOCK] Updated current validator set", "proposer", currentValidatorSet.GetProposer())
+		// increment proposer priority
+		currentValidatorSet.IncrementProposerPriority(1)
 
-			// save set in store
-			if err := app.StakingKeeper.UpdateValidatorSetInStore(ctx, currentValidatorSet); err != nil {
-				// return with nothing
-				logger.Error("Unable to update current validator set in state", "Error", err)
-				return abci.ResponseEndBlock{}
-			}
+		// validator set change
+		logger.Debug("[ENDBLOCK] Updated current validator set", "proposer", currentValidatorSet.GetProposer())
 
-			// convert updates from map to array
-			for _, v := range setUpdates {
-				tmValUpdates = append(tmValUpdates, abci.ValidatorUpdate{
-					Power:  int64(v.VotingPower),
-					PubKey: v.PubKey.ABCIPubKey(),
-				})
-			}
+		// save set in store
+		if err := app.StakingKeeper.UpdateValidatorSetInStore(ctx, currentValidatorSet); err != nil {
+			// return with nothing
+			logger.Error("Unable to update current validator set in state", "Error", err)
+			return abci.ResponseEndBlock{}
+		}
+
+		// convert updates from map to array
+		for _, v := range setUpdates {
+			tmValUpdates = append(tmValUpdates, abci.ValidatorUpdate{
+				Power:  int64(v.VotingPower),
+				PubKey: v.PubKey.ABCIPubKey(),
+			})
 		}
 	}
 

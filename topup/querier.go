@@ -76,7 +76,7 @@ func handleQueryDividendAccount(ctx sdk.Context, req abci.RequestQuery, keeper K
 	}
 
 	// get dividend account info
-	dividendAccount, err := keeper.GetDividendAccountByID(ctx, params.DividendAccountID)
+	dividendAccount, err := keeper.GetDividendAccountByAddress(ctx, params.UserAddress)
 	if err != nil {
 		return nil, sdk.ErrUnknownRequest("No dividend account found")
 	}
@@ -124,8 +124,13 @@ func handleQueryAccountProof(ctx sdk.Context, req abci.RequestQuery, keeper Keep
 
 	if bytes.Equal(accountRootOnChain[:], currentStateAccountRoot) {
 		// Calculate new account root hash
-		merkleProof, index, _ := checkpointTypes.GetAccountProof(dividendAccounts, params.DividendAccountID)
-		accountProof := hmTypes.NewDividendAccountProof(params.DividendAccountID, merkleProof, index)
+		merkleProof, index, err := checkpointTypes.GetAccountProof(dividendAccounts, params.UserAddress)
+		if err != nil {
+			return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could fetch account proof", err.Error()))
+		}
+
+		accountProof := hmTypes.NewDividendAccountProof(params.UserAddress, merkleProof, index)
+
 		// json record
 		bz, err := json.Marshal(accountProof)
 		if err != nil {
@@ -139,7 +144,6 @@ func handleQueryAccountProof(ctx sdk.Context, req abci.RequestQuery, keeper Keep
 }
 
 func handleQueryVerifyAccountProof(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-
 	var params types.QueryVerifyAccountProofParams
 	if err := keeper.cdc.UnmarshalJSON(req.Data, &params); err != nil {
 		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
@@ -148,7 +152,7 @@ func handleQueryVerifyAccountProof(ctx sdk.Context, req abci.RequestQuery, keepe
 	dividendAccounts := keeper.GetAllDividendAccounts(ctx)
 
 	// Verify account proof
-	accountProofStatus, err := checkpointTypes.VerifyAccountProof(dividendAccounts, params.DividendAccountID, params.AccountProof)
+	accountProofStatus, err := checkpointTypes.VerifyAccountProof(dividendAccounts, params.UserAddress, params.AccountProof)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not verify merkle proof ", err.Error()))
 	}

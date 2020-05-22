@@ -1,10 +1,10 @@
 package types
 
 import (
+	"bytes"
 	"fmt"
 	"math/big"
 	"sort"
-	"strconv"
 
 	"github.com/cbergoon/merkletree"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -13,38 +13,15 @@ import (
 
 // DividendAccount contains burned Fee amount
 type DividendAccount struct {
-	ID        DividendAccountID `json:"ID"`
-	FeeAmount string            `json:"feeAmount"` // string representation of big.Int
+	User      HeimdallAddress `json:"user"`
+	FeeAmount string          `json:"feeAmount"` // string representation of big.Int
 }
 
-func NewDividendAccount(id DividendAccountID, fee string) DividendAccount {
+func NewDividendAccount(user HeimdallAddress, fee string) DividendAccount {
 	return DividendAccount{
-		ID:        id,
+		User:      user,
 		FeeAmount: fee,
 	}
-}
-
-// DividendAccountID  dividend account ID and helper functions
-type DividendAccountID uint64
-
-// NewDividendAccountID generate new dividendAccount ID
-func NewDividendAccountID(id uint64) DividendAccountID {
-	return DividendAccountID(id)
-}
-
-// Bytes get bytes of dividendAccountID
-func (dividendAccountID DividendAccountID) Bytes() []byte {
-	return []byte(strconv.Itoa(dividendAccountID.Int()))
-}
-
-// Int converts dividendAccount ID to int
-func (dividendAccountID DividendAccountID) Int() int {
-	return int(dividendAccountID)
-}
-
-// Uint64 converts dividendAccount ID to int
-func (dividendAccountID DividendAccountID) Uint64() uint64 {
-	return uint64(dividendAccountID)
 }
 
 func (da *DividendAccount) String() string {
@@ -52,8 +29,8 @@ func (da *DividendAccount) String() string {
 		return "nil-DividendAccount"
 	}
 
-	return fmt.Sprintf("DividendAccount{%v %v}",
-		da.ID,
+	return fmt.Sprintf("DividendAccount{%s %v}",
+		da.User.EthAddress,
 		da.FeeAmount)
 }
 
@@ -78,9 +55,11 @@ func UnMarshallDividendAccount(cdc *codec.Codec, value []byte) (DividendAccount,
 	return dividendAccount, nil
 }
 
-// SortDividendAccountByID - Sorts DividendAccounts  By  ID
-func SortDividendAccountByID(dividendAccounts []DividendAccount) []DividendAccount {
-	sort.Slice(dividendAccounts, func(i, j int) bool { return dividendAccounts[i].ID < dividendAccounts[j].ID })
+// SortDividendAccountByAddress - Sorts DividendAccounts  By  Address
+func SortDividendAccountByAddress(dividendAccounts []DividendAccount) []DividendAccount {
+	sort.Slice(dividendAccounts, func(i, j int) bool {
+		return bytes.Compare(dividendAccounts[i].User.Bytes(), dividendAccounts[j].User.Bytes()) < 0
+	})
 	return dividendAccounts
 }
 
@@ -88,7 +67,7 @@ func SortDividendAccountByID(dividendAccounts []DividendAccount) []DividendAccou
 func (da DividendAccount) CalculateHash() ([]byte, error) {
 	fee, _ := big.NewInt(0).SetString(da.FeeAmount, 10)
 	divAccountHash := crypto.Keccak256(appendBytes32(
-		new(big.Int).SetUint64(uint64(da.ID)).Bytes(),
+		da.User.Bytes(),
 		fee.Bytes(),
 	))
 
@@ -117,5 +96,5 @@ func convertTo32(input []byte) (output [32]byte, err error) {
 
 //Equals tests for equality of two Contents
 func (da DividendAccount) Equals(other merkletree.Content) (bool, error) {
-	return da.ID == other.(DividendAccount).ID, nil
+	return da.User.Equals(other.(DividendAccount).User), nil
 }
