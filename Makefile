@@ -21,7 +21,7 @@ clean:
 
 tests:
 	# go test  -v ./...
-	go test -v ./app/ ./auth/ ./clerk/ ./sidechannel/ ./bank/ ./chainmanager/ ./topup/
+	go test -v ./app/ ./auth/ ./clerk/ ./sidechannel/ ./bank/ ./chainmanager/ ./topup/ -cover -coverprofile=cover.out
 	
 
 build: clean

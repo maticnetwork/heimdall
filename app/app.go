@@ -450,6 +450,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		chainmanager.NewAppModule(app.ChainKeeper, &app.caller),
 		topup.NewAppModule(app.TopupKeeper, &app.caller),
 		staking.NewAppModule(app.StakingKeeper, &app.caller),
+		bank.NewAppModule(app.BankKeeper, &app.caller),
 	)
 	app.sm.RegisterStoreDecoders()
 
@@ -544,16 +545,6 @@ func (app *HeimdallApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) 
 	return abci.ResponseInitChain{
 		// validator updates
 		Validators: valUpdates,
-
-		// consensus params
-		ConsensusParams: &abci.ConsensusParams{
-			Block: &abci.BlockParams{
-				MaxBytes: maxBytesPerBlock,
-				MaxGas:   maxGasPerBlock,
-			},
-			Evidence:  &abci.EvidenceParams{},
-			Validator: &abci.ValidatorParams{PubKeyTypes: []string{ABCIPubKeyTypeSecp256k1}},
-		},
 	}
 }
 
