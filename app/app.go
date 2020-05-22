@@ -545,16 +545,6 @@ func (app *HeimdallApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) 
 	return abci.ResponseInitChain{
 		// validator updates
 		Validators: valUpdates,
-
-		// consensus params
-		ConsensusParams: &abci.ConsensusParams{
-			Block: &abci.BlockParams{
-				MaxBytes: maxBytesPerBlock,
-				MaxGas:   maxGasPerBlock,
-			},
-			Evidence:  &abci.EvidenceParams{},
-			Validator: &abci.ValidatorParams{PubKeyTypes: []string{ABCIPubKeyTypeSecp256k1}},
-		},
 	}
 }
 
