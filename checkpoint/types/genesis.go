@@ -12,19 +12,19 @@ import (
 type GenesisState struct {
 	Params Params `json:"params" yaml:"params"`
 
-	BufferedCheckpoint *hmTypes.CheckpointBlockHeader  `json:"buffered_checkpoint" yaml:"buffered_checkpoint"`
-	LastNoACK          uint64                          `json:"last_no_ack" yaml:"last_no_ack"`
-	AckCount           uint64                          `json:"ack_count" yaml:"ack_count"`
-	Headers            []hmTypes.CheckpointBlockHeader `json:"headers" yaml:"headers"`
+	BufferedCheckpoint *hmTypes.Checkpoint  `json:"buffered_checkpoint" yaml:"buffered_checkpoint"`
+	LastNoACK          uint64               `json:"last_no_ack" yaml:"last_no_ack"`
+	AckCount           uint64               `json:"ack_count" yaml:"ack_count"`
+	Headers            []hmTypes.Checkpoint `json:"headers" yaml:"headers"`
 }
 
 // NewGenesisState creates a new genesis state.
 func NewGenesisState(
 	params Params,
-	bufferedCheckpoint *hmTypes.CheckpointBlockHeader,
+	bufferedCheckpoint *hmTypes.Checkpoint,
 	lastNoACK uint64,
 	ackCount uint64,
-	headers []hmTypes.CheckpointBlockHeader,
+	headers []hmTypes.Checkpoint,
 ) GenesisState {
 	return GenesisState{
 		Params:             params,

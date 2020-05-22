@@ -1,32 +1,50 @@
-package staking_test
+package checkpoint_test
 
 import (
+	"time"
+
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
-	abci "github.com/tendermint/tendermint/abci/types"
-
 	"github.com/maticnetwork/heimdall/app"
+	"github.com/maticnetwork/heimdall/checkpoint/types"
+	"github.com/maticnetwork/heimdall/helper"
+	hmTypes "github.com/maticnetwork/heimdall/types"
+	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 //
 // Create test app
 //
 
-// returns context and app with params set on staking keeper
+// createTestApp returns context and app
 func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, context.CLIContext) {
 	genesisState := app.NewDefaultGenesisState()
-	stakingGenesis := stakingTypes.NewGenesisState(
-		stakingTypes.DefaultGenesisState().Validators,
-		stakingTypes.DefaultGenesisState().CurrentValSet,
-		stakingTypes.DefaultGenesisState().StakingSequences)
 
 	app := app.Setup(isCheckTx)
 	ctx := app.BaseApp.NewContext(isCheckTx, abci.Header{})
 	cliCtx := context.NewCLIContext().WithCodec(app.Codec())
 
-	genesisState[stakingTypes.ModuleName] = app.Codec().MustMarshalJSON(stakingGenesis)
+	helper.SetTestConfig(helper.GetDefaultHeimdallConfig())
+
+	params := types.NewParams(5*time.Second, 256, 1024)
+
+	Checkpoints := make([]hmTypes.Checkpoint, 0)
+
+	for i := range Checkpoints {
+		Checkpoints[i] = hmTypes.Checkpoint{}
+	}
+
+	checkpointGenesis := types.NewGenesisState(
+		params,
+		nil,
+		uint64(0),
+		uint64(0),
+		nil,
+	)
+
+	genesisState[types.ModuleName] = app.Codec().MustMarshalJSON(checkpointGenesis)
+
 	stateBytes, err := codec.MarshalJSONIndent(app.Codec(), genesisState)
 	if err != nil {
 		panic(err)
@@ -38,9 +56,8 @@ func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, context.CLICo
 			AppStateBytes: stateBytes,
 		},
 	)
-
 	app.Commit()
 	app.BeginBlock(abci.RequestBeginBlock{Header: abci.Header{Height: app.LastBlockHeight() + 1}})
-
+	app.CheckpointKeeper.SetParams(ctx, params)
 	return app, ctx, cliCtx
 }

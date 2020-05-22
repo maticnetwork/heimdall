@@ -118,8 +118,7 @@ func NewPostTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.P
 		case types.MsgCheckpointAck:
 			return PostHandleMsgCheckpointAck(ctx, k, msg, sideTxResult)
 		default:
-			errMsg := "Unrecognized checkpoint Msg type: %s" + msg.Type()
-			return sdk.ErrUnknownRequest(errMsg).Result()
+			return sdk.ErrUnknownRequest("Unrecognized checkpoint Msg type").Result()
 		}
 	}
 }
@@ -153,7 +152,7 @@ func PostHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint,
 	timeStamp := uint64(ctx.BlockTime().Unix())
 
 	// Add checkpoint to buffer with root hash and account hash
-	k.SetCheckpointBuffer(ctx, hmTypes.CheckpointBlockHeader{
+	k.SetCheckpointBuffer(ctx, hmTypes.Checkpoint{
 		StartBlock: msg.StartBlock,
 		EndBlock:   msg.EndBlock,
 		RootHash:   msg.RootHash,

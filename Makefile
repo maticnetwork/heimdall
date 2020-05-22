@@ -21,7 +21,8 @@ clean:
 
 tests:
 	# go test  -v ./...
-	go test -v ./app/ ./auth/ ./clerk/ ./sidechannel/ ./bank/ ./chainmanager/ ./topup/ -cover -coverprofile=cover.out
+
+	go test -v ./app/ ./auth/ ./clerk/ ./sidechannel/ ./bank/ ./chainmanager/ ./topup/ ./checkpoint/ ./staking/ -cover -coverprofile=cover.out
 	
 
 build: clean
@@ -57,7 +58,7 @@ show-node-id:
 	./build/heimdalld tendermint show-node-id
 
 run-heimdall:
-	./build/heimdalld start 
+	./build/heimdalld start
 
 start-heimdall:
 	mkdir -p ./logs &
@@ -65,11 +66,11 @@ start-heimdall:
 
 reset-heimdall:
 	./build/heimdalld unsafe-reset-all
-	./build/bridge purge-queue 
+	./build/bridge purge-queue
 	rm -rf ~/.heimdalld/bridge
-	
+
 run-server:
-	./build/heimdalld rest-server 
+	./build/heimdalld rest-server
 
 start-server:
 	mkdir -p ./logs &
@@ -86,7 +87,7 @@ start-bridge:
 	mkdir -p logs &
 	./build/bridge start --all > ./logs/bridge.log &
 
-start-all: 
+start-all:
 	mkdir -p ./logs
 	bash docker/start-heimdall.sh
 

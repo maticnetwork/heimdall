@@ -1,7 +1,6 @@
 package staking_test
 
 import (
-	"encoding/json"
 	"fmt"
 	"math/big"
 	"math/rand"
@@ -12,15 +11,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethTypes "github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/heimdall/app"
-	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
-	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
+	chSim "github.com/maticnetwork/heimdall/checkpoint/simulation"
 	"github.com/maticnetwork/heimdall/helper/mocks"
 	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/staking/types"
-	cmn "github.com/maticnetwork/heimdall/test"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/types/simulation"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -70,7 +66,7 @@ func (suite *QuerierTestSuite) TestInvalidQuery() {
 func (suite *QuerierTestSuite) TestHandleQueryCurrentValidatorSet() {
 	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
 	keeper := app.StakingKeeper
-	cmn.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
 
 	path := []string{types.QueryCurrentValidatorSet}
 
@@ -91,7 +87,7 @@ func (suite *QuerierTestSuite) TestHandleQueryCurrentValidatorSet() {
 func (suite *QuerierTestSuite) TesthandleQuerySigner() {
 	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
 	keeper := app.StakingKeeper
-	cmn.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
 
 	validators := keeper.GetAllValidators(ctx)
 	path := []string{types.QuerySigner}
@@ -113,7 +109,7 @@ func (suite *QuerierTestSuite) TesthandleQuerySigner() {
 func (suite *QuerierTestSuite) TesthandleQueryValidator() {
 	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
 	keeper := app.StakingKeeper
-	cmn.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
 	validators := keeper.GetAllValidators(ctx)
 
 	path := []string{types.QueryValidator}
@@ -135,7 +131,7 @@ func (suite *QuerierTestSuite) TesthandleQueryValidator() {
 func (suite *QuerierTestSuite) TestHandleQueryValidatorStatus() {
 	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
 	keeper := app.StakingKeeper
-	cmn.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
 	validators := keeper.GetAllValidators(ctx)
 
 	path := []string{types.QueryValidatorStatus}
@@ -157,7 +153,7 @@ func (suite *QuerierTestSuite) TestHandleQueryValidatorStatus() {
 func (suite *QuerierTestSuite) TestHandleQueryProposer() {
 	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
 	keeper := app.StakingKeeper
-	cmn.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
 
 	path := []string{types.QueryProposer}
 
@@ -178,7 +174,7 @@ func (suite *QuerierTestSuite) TestHandleQueryProposer() {
 func (suite *QuerierTestSuite) TestHandleQueryCurrentProposer() {
 	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
 	keeper := app.StakingKeeper
-	cmn.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
 
 	path := []string{types.QueryCurrentProposer}
 
@@ -194,119 +190,6 @@ func (suite *QuerierTestSuite) TestHandleQueryCurrentProposer() {
 
 	// check response is not nil
 	require.NotNil(t, res)
-}
-
-func (suite *QuerierTestSuite) TestHandleQueryDividendAccount() {
-	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
-	var divAcc hmTypes.DividendAccount
-	path := []string{types.QueryDividendAccount}
-
-	route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryDividendAccount)
-	dividendAccount := hmTypes.NewDividendAccount(
-		hmTypes.NewDividendAccountID(uint64(1)),
-		big.NewInt(0).String(),
-	)
-	app.TopupKeeper.AddDividendAccount(ctx, dividendAccount)
-	req := abci.RequestQuery{
-		Path: route,
-		Data: app.Codec().MustMarshalJSON(types.NewQueryDividendAccountParams(dividendAccount.ID)),
-	}
-	res, err := querier(ctx, path, req)
-	// check no error found
-	require.NoError(t, err)
-
-	// check response is not nil
-	require.NotNil(t, res)
-	json.Unmarshal(res, &divAcc)
-	require.Equal(t, dividendAccount, divAcc)
-}
-
-func (suite *QuerierTestSuite) TestHandleDividendAccountRoot() {
-	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
-	keeper := app.StakingKeeper
-	dividendAccount := hmTypes.NewDividendAccount(
-		hmTypes.NewDividendAccountID(uint64(1)),
-		big.NewInt(0).String(),
-		big.NewInt(0).String(),
-	)
-	keeper.AddDividendAccount(ctx, dividendAccount)
-
-	path := []string{types.QueryDividendAccountRoot}
-
-	route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryDividendAccountRoot)
-
-	req := abci.RequestQuery{
-		Path: route,
-		Data: []byte{},
-	}
-	res, err := querier(ctx, path, req)
-	// check no error found
-	require.NoError(t, err)
-
-	// check response is not nil
-	require.NotNil(t, res)
-}
-
-func (suite *QuerierTestSuite) TestHandleQueryAccountProof() {
-	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
-	var accountRoot [32]byte
-
-	path := []string{types.QueryAccountProof}
-
-	route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryAccountProof)
-	stakingInfo := &stakinginfo.Stakinginfo{}
-
-	dividendAccount := hmTypes.NewDividendAccount(
-		hmTypes.NewDividendAccountID(uint64(1)),
-		big.NewInt(0).String(),
-		big.NewInt(0).String(),
-	)
-	app.StakingKeeper.AddDividendAccount(ctx, dividendAccount)
-	dividendAccounts := app.StakingKeeper.GetAllDividendAccounts(ctx)
-
-	accRoot, err := checkpointTypes.GetAccountRootHash(dividendAccounts)
-	copy(accountRoot[:], accRoot)
-	suite.contractCaller.On("GetStakingInfoInstance", mock.Anything).Return(stakingInfo, nil)
-
-	suite.contractCaller.On("CurrentAccountStateRoot", stakingInfo).Return(accountRoot, nil)
-
-	req := abci.RequestQuery{
-		Path: route,
-		Data: app.Codec().MustMarshalJSON(dividendAccount),
-	}
-	res, err := querier(ctx, path, req)
-	// check no error found
-	require.NoError(t, err)
-
-	// check response is not nil
-	require.NotNil(t, res)
-}
-
-func (suite *QuerierTestSuite) TestHandleQueryVerifyAccountProof() {
-	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
-
-	dividendAccount := hmTypes.NewDividendAccount(
-		hmTypes.NewDividendAccountID(uint64(1)),
-		big.NewInt(0).String(),
-		big.NewInt(0).String(),
-	)
-	app.StakingKeeper.AddDividendAccount(ctx, dividendAccount)
-
-	path := []string{types.QueryVerifyAccountProof}
-
-	route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryVerifyAccountProof)
-
-	req := abci.RequestQuery{
-		Path: route,
-		Data: app.Codec().MustMarshalJSON(dividendAccount),
-	}
-	res, err := querier(ctx, path, req)
-	// check no error found
-	require.NoError(t, err)
-
-	// check response is not nil
-	require.NotNil(t, res)
-	require.Equal(t, "true", string(res))
 }
 
 func (suite *QuerierTestSuite) TestHandleQueryStakingSequence() {
@@ -329,7 +212,7 @@ func (suite *QuerierTestSuite) TestHandleQueryStakingSequence() {
 
 	app.StakingKeeper.SetStakingSequence(ctx, sequence.String())
 
-	suite.contractCaller.On("GetConfirmedTxReceipt", mock.Anything, txHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
+	suite.contractCaller.On("GetConfirmedTxReceipt", txHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
 
 	path := []string{types.QueryStakingSequence}
 

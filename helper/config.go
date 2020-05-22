@@ -236,6 +236,12 @@ func GetGenesisDoc() tmTypes.GenesisDoc {
 	return GenesisDoc
 }
 
+// TEST PURPOSE ONLY
+// SetTestConfig sets test configuration
+func SetTestConfig(_conf Configuration) {
+	conf = _conf
+}
+
 //
 // Get main/matic clients
 //
