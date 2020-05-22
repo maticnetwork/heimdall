@@ -130,7 +130,15 @@ func (suite handlerSuite) TestHandleMsgProposeSpan() {
 			suite.app.BorKeeper.AddNewSpan(suite.ctx, *c.span)
 		}
 
+		// cSpan is used to check if span data remains constant post handler execution
+		cSpan := suite.app.BorKeeper.GetAllSpans(suite.ctx)
+
 		out := bor.HandleMsgProposeSpan(suite.ctx, borTypes.MsgProposeSpan{ID: c.msgID, Proposer: c.proposer, StartBlock: c.startBlock, EndBlock: c.endBlock, ChainID: c.chainID, Seed: c.seed}, suite.app.BorKeeper)
 		suite.Equal(c.out, out, c.msg)
+
+		// pSpan is used to check if span data remains constant post handler execution
+		pSpan := suite.app.BorKeeper.GetAllSpans(suite.ctx)
+		suite.Equal(cSpan, pSpan, "Invalid: handler should not update span "+c.msg)
+
 	}
 }

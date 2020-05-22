@@ -2,11 +2,9 @@ package test
 
 import (
 	"bytes"
-	"encoding/hex"
 	"math/big"
 	"math/rand"
 	"testing"
-	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -39,20 +37,20 @@ func MakeTestCodec() *codec.Codec {
 	return cdc
 }
 
-// create random header block
-func GenRandCheckpointHeader(start int, headerSize int) (headerBlock types.CheckpointBlockHeader, err error) {
-	start = start
-	end := start + headerSize
-	maxCheckpointLenght := uint64(1024)
-	roothash, err := checkpointTypes.GetHeaders(uint64(start), uint64(end), maxCheckpointLenght)
-	if err != nil {
-		return headerBlock, err
-	}
-	proposer := ethcmn.Address{}
-	headerBlock = types.CreateBlock(uint64(start), uint64(end), types.HexToHeimdallHash(hex.EncodeToString(roothash)), types.HexToHeimdallHash(hex.EncodeToString(roothash)), types.HexToHeimdallAddress(proposer.String()), uint64(time.Now().UTC().Unix()))
-
-	return headerBlock, nil
-}
+// // create random header block
+// func GenRandCheckpointHeader(start int, headerSize int) (headerBlock types.CheckpointBlockHeader, err error) {
+// 	start = start
+// 	end := start + headerSize
+// 	maxCheckpointLenght := uint64(1024)
+// 	roothash, err := checkpointTypes.GetHeaders(uint64(start), uint64(end), maxCheckpointLenght)
+// 	if err != nil {
+// 		return headerBlock, err
+// 	}
+// 	proposer := ethcmn.Address{}
+// 	headerBlock = types.CreateBlock(uint64(start), uint64(end), types.HexToHeimdallHash(hex.EncodeToString(roothash)), types.HexToHeimdallHash(hex.EncodeToString(roothash)), types.HexToHeimdallAddress(proposer.String()), uint64(time.Now().UTC().Unix()))
+//
+// 	return headerBlock, nil
+// }
 
 // Generate random validators
 func GenRandomVal(count int, startBlock uint64, power int64, timeAlive uint64, randomise bool, startID uint64) (validators []types.Validator) {
