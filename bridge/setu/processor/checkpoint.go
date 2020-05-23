@@ -235,6 +235,12 @@ func (cp *CheckpointProcessor) sendCheckpointToRootchain(eventBytes string, bloc
 // sendCheckpointAckToHeimdall - handles checkpointAck event from rootchain
 // 1. create and broadcast checkpointAck msg to heimdall.
 func (cp *CheckpointProcessor) sendCheckpointAckToHeimdall(eventName string, checkpointAckStr string) error {
+	// fetch checkpoint context
+	checkpointContext, err := cp.getCheckpointContext()
+	if err != nil {
+		return err
+	}
+
 	var log = types.Log{}
 	if err := json.Unmarshal([]byte(checkpointAckStr), &log); err != nil {
 		cp.Logger.Error("Error while unmarshalling event from rootchain", "error", err)
@@ -245,6 +251,8 @@ func (cp *CheckpointProcessor) sendCheckpointAckToHeimdall(eventName string, che
 	if err := helper.UnpackLog(cp.rootchainAbi, event, eventName, &log); err != nil {
 		cp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
 	} else {
+		checkpointNumber := big.NewInt(0).Div(event.HeaderBlockId, big.NewInt(0).SetUint64(checkpointContext.CheckpointParams.ChildBlockInterval))
+
 		cp.Logger.Info(
 			"✅ Received task to send checkpoint-ack to heimdall",
 			"event", eventName,
@@ -253,7 +261,7 @@ func (cp *CheckpointProcessor) sendCheckpointAckToHeimdall(eventName string, che
 			"reward", event.Reward,
 			"root", "0x"+hex.EncodeToString(event.Root[:]),
 			"proposer", event.Proposer.Hex(),
-			"headerNumber", event.HeaderBlockId,
+			"checkpointNumber", checkpointNumber,
 			"txHash", hmTypes.BytesToHeimdallHash(log.TxHash.Bytes()),
 			"logIndex", uint64(log.Index),
 		)
@@ -264,7 +272,7 @@ func (cp *CheckpointProcessor) sendCheckpointAckToHeimdall(eventName string, che
 		// create msg checkpoint ack message
 		msg := checkpointTypes.NewMsgCheckpointAck(
 			helper.GetFromAddress(cp.cliCtx),
-			event.HeaderBlockId.Uint64(),
+			checkpointNumber.Uint64(),
 			hmTypes.BytesToHeimdallAddress(event.Proposer.Bytes()),
 			event.Start.Uint64(),
 			event.End.Uint64(),

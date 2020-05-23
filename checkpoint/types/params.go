@@ -104,5 +104,10 @@ func (p Params) Validate() error {
 	if p.MaxCheckpointLength < p.AvgCheckpointLength {
 		return fmt.Errorf("AvgCheckpointLength should not be greater than MaxCheckpointLength")
 	}
+
+	if p.ChildBlockInterval == 0 {
+		return fmt.Errorf("ChildBlockInterval should be greater than zero")
+	}
+
 	return nil
 }

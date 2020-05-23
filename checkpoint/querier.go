@@ -60,9 +60,9 @@ func handleQueryCheckpoint(ctx sdk.Context, req abci.RequestQuery, keeper Keeper
 		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
 	}
 
-	res, err := keeper.GetCheckpointByIndex(ctx, params.HeaderIndex)
+	res, err := keeper.GetCheckpointByNumber(ctx, params.Number)
 	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr(fmt.Sprintf("could not fetch checkpoint by index %v", params.HeaderIndex), err.Error()))
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr(fmt.Sprintf("could not fetch checkpoint by index %v", params.Number), err.Error()))
 	}
 
 	bz, err := json.Marshal(res)
@@ -133,10 +133,10 @@ func handleQueryNextCheckpoint(ctx sdk.Context, req abci.RequestQuery, keeper Ke
 	var start uint64
 
 	if ackCount != 0 {
-		headerIndex := ackCount
-		lastCheckpoint, err := keeper.GetCheckpointByIndex(ctx, headerIndex)
+		checkpointNumber := ackCount
+		lastCheckpoint, err := keeper.GetCheckpointByNumber(ctx, checkpointNumber)
 		if err != nil {
-			return nil, sdk.ErrInternal(sdk.AppendMsgToErr(fmt.Sprintf("could not fetch checkpoint by index %v", headerIndex), err.Error()))
+			return nil, sdk.ErrInternal(sdk.AppendMsgToErr(fmt.Sprintf("could not fetch checkpoint by index %v", checkpointNumber), err.Error()))
 		}
 		start = lastCheckpoint.EndBlock + 1
 	}

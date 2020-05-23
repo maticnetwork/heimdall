@@ -257,8 +257,8 @@ func NewLru(size int) (*lru.Cache, error) {
 	return lruObj, nil
 }
 
-// GetHeaderInfo get header info from header id
-func (c *ContractCaller) GetHeaderInfo(headerID uint64, rootChainInstance *rootchain.Rootchain, childBlockInterval uint64) (
+// GetHeaderInfo get header info from checkpoint number
+func (c *ContractCaller) GetHeaderInfo(number uint64, rootChainInstance *rootchain.Rootchain, childBlockInterval uint64) (
 	root common.Hash,
 	start uint64,
 	end uint64,
@@ -267,10 +267,10 @@ func (c *ContractCaller) GetHeaderInfo(headerID uint64, rootChainInstance *rootc
 	err error,
 ) {
 	// get header from rootchain
-	headerBlock, err := rootChainInstance.HeaderBlocks(nil, big.NewInt(0).SetUint64(headerID*childBlockInterval))
+	checkpointBigInt := big.NewInt(0).Mul(big.NewInt(0).SetUint64(number), big.NewInt(0).SetUint64(childBlockInterval))
+	headerBlock, err := rootChainInstance.HeaderBlocks(nil, checkpointBigInt)
 	if err != nil {
-		Logger.Error("Unable to fetch header block from rootchain", "headerBlockIndex", headerID)
-		return root, start, end, createdAt, proposer, errors.New("Unable to fetch header block")
+		return root, start, end, createdAt, proposer, errors.New("Unable to fetch checkpoint block")
 	}
 
 	return headerBlock.Root,
