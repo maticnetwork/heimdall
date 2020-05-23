@@ -214,14 +214,13 @@ func (suite *QuerierTestSuite) TestQueryCheckpointList() {
 	keeper := app.CheckpointKeeper
 
 	count := 5
-	childBlockInterval := uint64(10000)
 
 	startBlock := uint64(0)
 	endBlock := uint64(0)
 	checkpoints := make([]hmTypes.Checkpoint, count)
 
 	for i := 0; i < count; i++ {
-		headerBlockNumber := childBlockInterval * (uint64(i) + 1)
+		headerBlockNumber := uint64(i) + 1
 
 		startBlock = startBlock + endBlock
 		endBlock = endBlock + uint64(255)
