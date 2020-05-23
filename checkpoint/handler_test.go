@@ -125,7 +125,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpoint() {
 		headerId := uint64(10000)
 
 		keeper.AddCheckpoint(ctx, headerId, header)
-		keeper.GetCheckpointByIndex(ctx, headerId)
+		keeper.GetCheckpointByNumber(ctx, headerId)
 		keeper.UpdateACKCount(ctx)
 		lastCheckpoint, err := keeper.GetLastCheckpoint(ctx)
 		if err == nil {

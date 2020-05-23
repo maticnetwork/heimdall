@@ -51,7 +51,7 @@ func (suite *KeeperTestSuite) TestAddCheckpoint() {
 	err := keeper.AddCheckpoint(ctx, headerBlockNumber, Checkpoint)
 	require.NoError(t, err)
 
-	result, err := keeper.GetCheckpointByIndex(ctx, headerBlockNumber)
+	result, err := keeper.GetCheckpointByNumber(ctx, headerBlockNumber)
 	require.NoError(t, err)
 	require.Equal(t, startBlock, result.StartBlock)
 	require.Equal(t, endBlock, result.EndBlock)

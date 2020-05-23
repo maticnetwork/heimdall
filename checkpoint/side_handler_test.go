@@ -243,7 +243,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgCheckpoint() {
 	header.Proposer = stakingKeeper.GetValidatorSet(ctx).Proposer.Signer
 
 	borChainId := "1234"
-	suite.Run("No result", func() {
+	suite.Run("Failure", func() {
 		// create checkpoint msg
 		msgCheckpoint := types.NewMsgCheckpointBlock(
 			header.Proposer,
@@ -255,8 +255,8 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgCheckpoint() {
 		)
 
 		result := suite.postHandler(ctx, msgCheckpoint, abci.SideTxResultType_No)
-
 		require.True(t, !result.IsOK(), errs.CodeToDefaultMsg(result.Code))
+
 		bufferedHeader, err := keeper.GetCheckpointFromBuffer(ctx)
 		require.Nil(t, bufferedHeader)
 		require.Error(t, err)
@@ -284,6 +284,22 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgCheckpoint() {
 		require.Equal(t, bufferedHeader.BorChainID, header.BorChainID)
 		require.Empty(t, err, "Unable to set checkpoint from buffer, Error: %v", err)
 	})
+
+	suite.Run("Replay", func() {
+		// create checkpoint msg
+		msgCheckpoint := types.NewMsgCheckpointBlock(
+			header.Proposer,
+			header.StartBlock,
+			header.EndBlock,
+			header.RootHash,
+			header.RootHash,
+			borChainId,
+		)
+
+		result := suite.postHandler(ctx, msgCheckpoint, abci.SideTxResultType_Yes)
+		require.False(t, result.IsOK(), "expected send-checkpoint to be ok, got %v", result)
+		require.Equal(t, common.CodeNoACK, result.Code)
+	})
 }
 
 func (suite *SideHandlerTestSuite) TestPostHandleMsgCheckpointAck() {
@@ -299,11 +315,12 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgCheckpointAck() {
 	app.StakingKeeper.IncrementAccum(ctx, 1)
 
 	// send ack
-	headerId := uint64(1)
-	suite.Run("No Success", func() {
+	checkpointNumber := uint64(1)
+
+	suite.Run("Failure", func() {
 		msgCheckpointAck := types.NewMsgCheckpointAck(
 			hmTypes.HexToHeimdallAddress("123"),
-			headerId,
+			checkpointNumber,
 			header.Proposer,
 			header.StartBlock,
 			header.EndBlock,
@@ -319,7 +336,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgCheckpointAck() {
 		require.Nil(t, afterAckBufferedCheckpoint)
 	})
 
-	suite.Run("success", func() {
+	suite.Run("Success", func() {
 		msgCheckpoint := types.NewMsgCheckpointBlock(
 			header.Proposer,
 			header.StartBlock,
@@ -330,12 +347,11 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgCheckpointAck() {
 		)
 
 		result := suite.postHandler(ctx, msgCheckpoint, abci.SideTxResultType_Yes)
-
 		require.True(t, result.IsOK(), "expected send-checkpoint to be ok, got %v", result)
 
 		msgCheckpointAck := types.NewMsgCheckpointAck(
 			hmTypes.HexToHeimdallAddress("123"),
-			headerId,
+			checkpointNumber,
 			header.Proposer,
 			header.StartBlock,
 			header.EndBlock,
@@ -351,29 +367,48 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgCheckpointAck() {
 		require.Nil(t, afterAckBufferedCheckpoint)
 	})
 
-	suite.Run("Invalid EndBlock", func() {
-		suite.contractCaller = mocks.IContractCaller{}
-
-		msgCheckpoint := types.NewMsgCheckpointBlock(
+	suite.Run("Replay", func() {
+		msgCheckpointAck := types.NewMsgCheckpointAck(
+			hmTypes.HexToHeimdallAddress("123"),
+			checkpointNumber,
 			header.Proposer,
 			header.StartBlock,
 			header.EndBlock,
 			header.RootHash,
-			header.RootHash,
+			hmTypes.HexToHeimdallHash("123123"),
+			uint64(1),
+		)
+
+		result := suite.postHandler(ctx, msgCheckpointAck, abci.SideTxResultType_Yes)
+		require.False(t, result.IsOK())
+		require.Equal(t, common.CodeInvalidACK, result.Code)
+
+		afterAckBufferedCheckpoint, _ := keeper.GetCheckpointFromBuffer(ctx)
+		require.Nil(t, afterAckBufferedCheckpoint)
+	})
+
+	suite.Run("InvalidEndBlock", func() {
+		suite.contractCaller = mocks.IContractCaller{}
+		header2, _ := chSim.GenRandCheckpoint(header.EndBlock+1, maxSize, params.MaxCheckpointLength)
+		msgCheckpoint := types.NewMsgCheckpointBlock(
+			header2.Proposer,
+			header2.StartBlock,
+			header2.EndBlock,
+			header2.RootHash,
+			header2.RootHash,
 			"1234",
 		)
 
 		result := suite.postHandler(ctx, msgCheckpoint, abci.SideTxResultType_Yes)
-
 		require.True(t, result.IsOK(), "expected send-checkpoint to be ok, got %v", result)
 
 		msgCheckpointAck := types.NewMsgCheckpointAck(
 			hmTypes.HexToHeimdallAddress("123"),
-			headerId,
-			header.Proposer,
-			header.StartBlock,
-			uint64(100),
-			header.RootHash,
+			checkpointNumber,
+			header2.Proposer,
+			header2.StartBlock,
+			header2.EndBlock,
+			header2.RootHash,
 			hmTypes.HexToHeimdallHash("123123"),
 			uint64(1),
 		)
