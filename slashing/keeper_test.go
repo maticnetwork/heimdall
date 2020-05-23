@@ -7,6 +7,7 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/helper/mocks"
 	"github.com/maticnetwork/heimdall/slashing"
 	"github.com/maticnetwork/heimdall/staking"
@@ -175,12 +176,13 @@ func (suite *KeeperTestSuite) TestHandleAbsentValidator() {
 	params := slashingKeeper.GetParams(ctx)
 	params.SignedBlocksWindow = 100
 	stakingPostHandler := staking.NewPostTxHandler(suite.app.StakingKeeper, &suite.contractCaller)
-
+	power := int64(1000)
+	bigPower, _ := helper.GetAmountFromPower(power)
 	msgValJoin := stakingTypes.NewMsgValidatorJoin(
 		hmTypes.BytesToHeimdallAddress(address.Bytes()),
 		validatorId,
 		uint64(1),
-		sdk.NewInt(1000000000000000000),
+		sdk.NewIntFromBigInt(bigPower),
 		pubkey,
 		txHash,
 		logIndex,
@@ -224,6 +226,16 @@ func (suite *KeeperTestSuite) TestHandleAbsentValidator() {
 	require.Equal(t, int64(0), info.StartHeight)
 	// counter now reset to zero
 	require.Equal(t, int64(0), info.MissedBlocksCounter)
+
+	bufferSlashInfo, found := slashingKeeper.GetBufferValSlashingInfo(ctx, val.ID)
+	require.True(t, found)
+	expectedSlashAmount := sdk.NewDec(power).Mul(params.SlashFractionDowntime).TruncateInt().Int64()
+	require.Equal(t, bufferSlashInfo.SlashedAmount, uint64(expectedSlashAmount), "slash amount mismatches")
+
+	for ; height < params.SignedBlocksWindow+(params.SignedBlocksWindow-slashingKeeper.MinSignedPerWindow(ctx)); height++ {
+		ctx = ctx.WithBlockHeight(height)
+		slashingKeeper.HandleValidatorSignature(ctx, val.Signer.Bytes(), val.VotingPower, false)
+	}
 
 	/* 	// validator should have been jailed
 	   	validator, _ = sk.GetValidatorByConsAddr(ctx, sdk.GetConsAddress(val))
