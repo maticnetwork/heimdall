@@ -11,6 +11,8 @@ var (
 	AttributeKeyEndBlock    = "end-block"
 	AttributeKeyHeaderIndex = "header-index"
 	AttributeKeyNewProposer = "new-proposer"
+	AttributeKeyRootHash    = "root-hash"
+	AttributeKeyAccountHash = "account-hash"
 
 	AttributeValueCategory = ModuleName
 )

@@ -148,7 +148,8 @@ func PostHandleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, sideTxRes
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),                // module name
 			sdk.NewAttribute(hmTypes.AttributeKeyTxHash, hmTypes.BytesToHeimdallHash(hash).Hex()), // tx hash
 			sdk.NewAttribute(hmTypes.AttributeKeySideTxResult, sideTxResult.String()),             // result
-			sdk.NewAttribute(types.AttributeKeyValidatorUser, user.String()),
+			sdk.NewAttribute(types.AttributeKeySender, msg.FromAddress.String()),
+			sdk.NewAttribute(types.AttributeKeyRecipient, msg.User.String()),
 			sdk.NewAttribute(types.AttributeKeyTopupAmount, msg.Fee.String()),
 		),
 	})

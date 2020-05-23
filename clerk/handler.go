@@ -3,6 +3,7 @@ package clerk
 import (
 	"encoding/hex"
 	"math/big"
+	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -62,6 +63,18 @@ func handleMsgEventRecord(ctx sdk.Context, msg types.MsgEventRecord, k Keeper, c
 		k.Logger(ctx).Error("Older invalid tx found")
 		return common.ErrOldTx(k.Codespace()).Result()
 	}
+
+	// add events
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeRecord,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(types.AttributeKeyRecordID, strconv.FormatUint(msg.ID, 10)),
+			sdk.NewAttribute(types.AttributeKeyRecordContract, msg.ContractAddress.String()),
+			sdk.NewAttribute(types.AttributeKeyRecordTxHash, msg.TxHash.String()),
+			sdk.NewAttribute(types.AttributeKeyRecordTxLogIndex, strconv.FormatUint(msg.LogIndex, 10)),
+		),
+	})
 
 	return sdk.Result{
 		Events: ctx.EventManager().Events(),

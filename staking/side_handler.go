@@ -375,7 +375,7 @@ func PostHandleMsgValidatorJoin(ctx sdk.Context, k Keeper, msg types.MsgValidato
 
 	// save staking sequence
 	k.SetStakingSequence(ctx, sequence.String())
-	k.Logger(ctx).Debug("✅ Successfully joined new validator ")
+	k.Logger(ctx).Debug("✅ New validator successfully joined", "validator", strconv.FormatUint(newValidator.ID.Uint64(), 10))
 
 	// TX bytes
 	txBytes := ctx.TxBytes()
@@ -391,6 +391,7 @@ func PostHandleMsgValidatorJoin(ctx sdk.Context, k Keeper, msg types.MsgValidato
 			sdk.NewAttribute(hmTypes.AttributeKeySideTxResult, sideTxResult.String()), // result
 			sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(newValidator.ID.Uint64(), 10)),
 			sdk.NewAttribute(types.AttributeKeySigner, newValidator.Signer.String()),
+			sdk.NewAttribute(types.AttributeKeyValidatorNonce, strconv.FormatUint(msg.Nonce, 10)),
 		),
 	})
 
@@ -462,7 +463,7 @@ func PostHandleMsgStakeUpdate(ctx sdk.Context, k Keeper, msg types.MsgStakeUpdat
 			sdk.NewAttribute(hmTypes.AttributeKeyTxHash, hmTypes.BytesToHeimdallHash(hash).Hex()), // tx hash
 			sdk.NewAttribute(hmTypes.AttributeKeySideTxResult, sideTxResult.String()),             // result
 			sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(validator.ID.Uint64(), 10)),
-			sdk.NewAttribute(types.AttributeKeyUpdatedAt, validator.LastUpdated),
+			sdk.NewAttribute(types.AttributeKeyValidatorNonce, strconv.FormatUint(msg.Nonce, 10)),
 		),
 	})
 
@@ -555,18 +556,6 @@ func PostHandleMsgSignerUpdate(ctx sdk.Context, k Keeper, msg types.MsgSignerUpd
 	txBytes := ctx.TxBytes()
 	hash := tmTypes.Tx(txBytes).Hash()
 
-	ctx.EventManager().EmitEvents(sdk.Events{
-		sdk.NewEvent(
-			types.EventTypeSignerUpdate,
-			sdk.NewAttribute(sdk.AttributeKeyAction, msg.Type()),                                  // action
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),                // module name
-			sdk.NewAttribute(hmTypes.AttributeKeyTxHash, hmTypes.BytesToHeimdallHash(hash).Hex()), // tx hash
-			sdk.NewAttribute(hmTypes.AttributeKeySideTxResult, sideTxResult.String()),             // result
-			sdk.NewAttribute(types.AttributeKeyValidatorID, validator.ID.String()),
-			sdk.NewAttribute(types.AttributeKeyUpdatedAt, validator.LastUpdated),
-		),
-	})
-
 	//
 	// Move heimdall fee to new signer
 	//
@@ -582,6 +571,18 @@ func PostHandleMsgSignerUpdate(ctx sdk.Context, k Keeper, msg types.MsgSignerUpd
 			return err.Result()
 		}
 	}
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeSignerUpdate,
+			sdk.NewAttribute(sdk.AttributeKeyAction, msg.Type()),                                  // action
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),                // module name
+			sdk.NewAttribute(hmTypes.AttributeKeyTxHash, hmTypes.BytesToHeimdallHash(hash).Hex()), // tx hash
+			sdk.NewAttribute(hmTypes.AttributeKeySideTxResult, sideTxResult.String()),             // result
+			sdk.NewAttribute(types.AttributeKeyValidatorID, validator.ID.String()),
+			sdk.NewAttribute(types.AttributeKeyValidatorNonce, strconv.FormatUint(msg.Nonce, 10)),
+		),
+	})
 
 	return sdk.Result{
 		Events: ctx.EventManager().Events(),
@@ -645,6 +646,7 @@ func PostHandleMsgValidatorExit(ctx sdk.Context, k Keeper, msg types.MsgValidato
 			sdk.NewAttribute(hmTypes.AttributeKeyTxHash, hmTypes.BytesToHeimdallHash(hash).Hex()), // tx hash
 			sdk.NewAttribute(hmTypes.AttributeKeySideTxResult, sideTxResult.String()),             // result
 			sdk.NewAttribute(types.AttributeKeyValidatorID, validator.ID.String()),
+			sdk.NewAttribute(types.AttributeKeyValidatorNonce, strconv.FormatUint(msg.Nonce, 10)),
 		),
 	})
 

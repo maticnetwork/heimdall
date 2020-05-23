@@ -182,6 +182,8 @@ func PostHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint,
 			sdk.NewAttribute(types.AttributeKeyProposer, msg.Proposer.String()),
 			sdk.NewAttribute(types.AttributeKeyStartBlock, strconv.FormatUint(msg.StartBlock, 10)),
 			sdk.NewAttribute(types.AttributeKeyEndBlock, strconv.FormatUint(msg.EndBlock, 10)),
+			sdk.NewAttribute(types.AttributeKeyRootHash, msg.RootHash.String()),
+			sdk.NewAttribute(types.AttributeKeyAccountHash, msg.AccountRootHash.String()),
 		),
 	})
 

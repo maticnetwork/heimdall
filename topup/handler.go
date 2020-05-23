@@ -53,6 +53,16 @@ func HandleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCalle
 		return hmCommon.ErrOldTx(k.Codespace()).Result()
 	}
 
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeTopup,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(types.AttributeKeySender, msg.FromAddress.String()),
+			sdk.NewAttribute(types.AttributeKeyRecipient, msg.User.String()),
+			sdk.NewAttribute(types.AttributeKeyTopupAmount, msg.Fee.String()),
+		),
+	})
+
 	return sdk.Result{
 		Events: ctx.EventManager().Events(),
 	}
@@ -92,7 +102,7 @@ func HandleMsgWithdrawFee(ctx sdk.Context, k Keeper, msg types.MsgWithdrawFee) s
 		sdk.NewEvent(
 			types.EventTypeFeeWithdraw,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(types.AttributeKeyValidatorUser, msg.UserAddress.String()),
+			sdk.NewAttribute(types.AttributeKeyUser, msg.UserAddress.String()),
 			sdk.NewAttribute(types.AttributeKeyFeeWithdrawAmount, feeAmount.String()),
 		),
 	})
