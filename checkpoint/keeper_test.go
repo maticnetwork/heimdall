@@ -51,7 +51,7 @@ func (suite *KeeperTestSuite) TestAddCheckpoint() {
 	err := keeper.AddCheckpoint(ctx, headerBlockNumber, Checkpoint)
 	require.NoError(t, err)
 
-	result, err := keeper.GetCheckpointByIndex(ctx, headerBlockNumber)
+	result, err := keeper.GetCheckpointByNumber(ctx, headerBlockNumber)
 	require.NoError(t, err)
 	require.Equal(t, startBlock, result.StartBlock)
 	require.Equal(t, endBlock, result.EndBlock)
@@ -66,13 +66,12 @@ func (suite *KeeperTestSuite) TestGetCheckpointList() {
 	keeper := app.CheckpointKeeper
 
 	count := 5
-	childBlockInterval := uint64(10000)
 
 	startBlock := uint64(0)
 	endBlock := uint64(0)
 
 	for i := 0; i < count; i++ {
-		headerBlockNumber := childBlockInterval * (uint64(i) + 1)
+		headerBlockNumber := uint64(i) + 1
 
 		startBlock = startBlock + endBlock
 		endBlock = endBlock + uint64(255)
@@ -97,12 +96,6 @@ func (suite *KeeperTestSuite) TestGetCheckpointList() {
 	result, err := keeper.GetCheckpointList(ctx, uint64(1), uint64(20))
 	require.NoError(t, err)
 	require.LessOrEqual(t, count, len(result))
-
-	// GetLastCheckpoint
-	// lastCheckpoint, _ := keeper.GetLastCheckpoint(ctx)
-	// TODO: find a way to mock helper.GetConfig().ChildBlockInterval
-	// currently, ackCount is not getting updated as above value is not set
-	// require.Equal(t, result[0], lastCheckpoint)
 }
 
 func (suite *KeeperTestSuite) TestHasStoreValue() {

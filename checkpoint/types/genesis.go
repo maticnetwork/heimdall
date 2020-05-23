@@ -15,7 +15,7 @@ type GenesisState struct {
 	BufferedCheckpoint *hmTypes.Checkpoint  `json:"buffered_checkpoint" yaml:"buffered_checkpoint"`
 	LastNoACK          uint64               `json:"last_no_ack" yaml:"last_no_ack"`
 	AckCount           uint64               `json:"ack_count" yaml:"ack_count"`
-	Headers            []hmTypes.Checkpoint `json:"headers" yaml:"headers"`
+	Checkpoints        []hmTypes.Checkpoint `json:"checkpoints" yaml:"checkpoints"`
 }
 
 // NewGenesisState creates a new genesis state.
@@ -24,14 +24,14 @@ func NewGenesisState(
 	bufferedCheckpoint *hmTypes.Checkpoint,
 	lastNoACK uint64,
 	ackCount uint64,
-	headers []hmTypes.Checkpoint,
+	checkpoints []hmTypes.Checkpoint,
 ) GenesisState {
 	return GenesisState{
 		Params:             params,
 		BufferedCheckpoint: bufferedCheckpoint,
 		LastNoACK:          lastNoACK,
 		AckCount:           ackCount,
-		Headers:            headers,
+		Checkpoints:        checkpoints,
 	}
 }
 
@@ -49,8 +49,8 @@ func ValidateGenesis(data GenesisState) error {
 		return err
 	}
 
-	if len(data.Headers) != 0 {
-		if int(data.AckCount) != len(data.Headers) {
+	if len(data.Checkpoints) != 0 {
+		if int(data.AckCount) != len(data.Checkpoints) {
 			return errors.New("Incorrect state in state-dump , Please Check")
 		}
 	}

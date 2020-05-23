@@ -361,7 +361,7 @@ func SetupCheckpointGenesis() *HeimdallApp {
 		checkpointTypes.DefaultGenesisState().BufferedCheckpoint,
 		checkpointTypes.DefaultGenesisState().LastNoACK,
 		checkpointTypes.DefaultGenesisState().AckCount,
-		checkpointTypes.DefaultGenesisState().Headers,
+		checkpointTypes.DefaultGenesisState().Checkpoints,
 	)
 
 	genesisState[checkpointTypes.ModuleName] = app.Codec().MustMarshalJSON(checkpointGenesis)
