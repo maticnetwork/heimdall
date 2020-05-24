@@ -278,7 +278,7 @@ func QueryCommitTxRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		result := hmRest.CommitTxProof{
 			Vote:  hex.EncodeToString(helper.GetVoteBytes(blockDetails.Block.LastCommit.Precommits, blockDetails.Block.ChainID)),
 			Sigs:  hex.EncodeToString(sigs),
-			Tx:    hex.EncodeToString(tx.Tx[authTypes.PulpHashLength:]),
+			Tx:    hex.EncodeToString(tx.Tx[:]),
 			Proof: hex.EncodeToString(proof),
 		}
 
