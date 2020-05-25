@@ -53,9 +53,6 @@ const (
 	AppName = "Heimdall"
 	// ABCIPubKeyTypeSecp256k1 denotes pub key type
 	ABCIPubKeyTypeSecp256k1 = "secp256k1"
-	// internals
-	maxGasPerBlock   int64 = 10000000 // 10 Million
-	maxBytesPerBlock int64 = 22020096 // 21 MB
 )
 
 // Assertion for Heimdall app
