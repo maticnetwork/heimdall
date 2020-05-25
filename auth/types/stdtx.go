@@ -6,7 +6,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/bor/common"
-	"github.com/maticnetwork/bor/rlp"
 )
 
 var (
@@ -18,13 +17,6 @@ type StdTx struct {
 	Msg       sdk.Msg      `json:"msg" yaml:"msg"`
 	Signature StdSignature `json:"signature" yaml:"signature"`
 	Memo      string       `json:"memo" yaml:"memo"`
-}
-
-// StdTxRaw is a standard way to wrap a RLP Msg with Fee and Signatures.
-type StdTxRaw struct {
-	Msg       rlp.RawValue
-	Signature StdSignature
-	Memo      string
 }
 
 // NewStdTx is function to get new std tx object
