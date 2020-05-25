@@ -658,7 +658,7 @@ func buildUnsignedStdTxOffline(txBldr authTypes.TxBuilder, cliCtx context.CLICon
 		return stdTx, err
 	}
 
-	return authTypes.NewStdTx(stdSignMsg.Msg, nil, stdSignMsg.Memo), nil
+	return authTypes.NewStdTx(stdSignMsg.Msg, stdSignMsg.Fee, nil, stdSignMsg.Memo), nil
 }
 
 // getSplitPoint returns the largest power of 2 less than length

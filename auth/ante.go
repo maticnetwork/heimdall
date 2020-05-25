@@ -314,5 +314,5 @@ func GetSignBytes(chainID string, stdTx authTypes.StdTx, acc authTypes.Account, 
 		accNum = acc.GetAccountNumber()
 	}
 
-	return authTypes.StdSignBytes(chainID, accNum, acc.GetSequence(), stdTx.Msg, stdTx.Memo)
+	return authTypes.StdSignBytes(chainID, accNum, acc.GetSequence(), stdTx.Fee, stdTx.Msg, stdTx.Memo)
 }

@@ -16,18 +16,20 @@ import (
 type StdSignDoc struct {
 	ChainID       string          `json:"chain_id" yaml:"chain_id"`
 	AccountNumber uint64          `json:"account_number" yaml:"account_number"`
+	Fee           json.RawMessage `json:"fee" yaml:"fee"`
 	Sequence      uint64          `json:"sequence" yaml:"sequence"`
 	Msg           json.RawMessage `json:"msg" yaml:"msg"`
 	Memo          string          `json:"memo" yaml:"memo"`
 }
 
 // StdSignBytes returns the bytes to sign for a transaction.
-func StdSignBytes(chainID string, accnum uint64, sequence uint64, msg sdk.Msg, memo string) []byte {
+func StdSignBytes(chainID string, accnum uint64, sequence uint64, fee StdFee, msg sdk.Msg, memo string) []byte {
 	msgsBytes := json.RawMessage(msg.GetSignBytes())
 	bz, err := ModuleCdc.MarshalJSON(StdSignDoc{
 		AccountNumber: accnum,
 		ChainID:       chainID,
 		Memo:          memo,
+		Fee:           json.RawMessage(fee.Bytes()),
 		Msg:           msgsBytes,
 		Sequence:      sequence,
 	})
@@ -44,11 +46,12 @@ type StdSignMsg struct {
 	ChainID       string  `json:"chain_id" yaml:"chain_id"`
 	AccountNumber uint64  `json:"account_number" yaml:"account_number"`
 	Sequence      uint64  `json:"sequence" yaml:"sequence"`
+	Fee           StdFee  `json:"fee" yaml:"fee"`
 	Msg           sdk.Msg `json:"msg" yaml:"msg"`
 	Memo          string  `json:"memo" yaml:"memo"`
 }
 
 // Bytes returns message bytes
 func (msg StdSignMsg) Bytes() []byte {
-	return StdSignBytes(msg.ChainID, msg.AccountNumber, msg.Sequence, msg.Msg, msg.Memo)
+	return StdSignBytes(msg.ChainID, msg.AccountNumber, msg.Sequence, msg.Fee, msg.Msg, msg.Memo)
 }

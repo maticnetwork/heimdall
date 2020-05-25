@@ -1,10 +1,12 @@
 package types
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	crkeys "github.com/cosmos/cosmos-sdk/crypto/keys"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -75,6 +77,9 @@ func NewTxBuilderFromCLI() TxBuilder {
 		chainID:            viper.GetString(client.FlagChainID),
 		memo:               viper.GetString(client.FlagMemo),
 	}
+
+	txbldr = txbldr.WithFees(viper.GetString(flags.FlagFees))
+	txbldr = txbldr.WithGasPrices(viper.GetString(flags.FlagGasPrices))
 
 	return txbldr
 }
@@ -185,12 +190,30 @@ func (bldr TxBuilder) BuildSignMsg(msgs []sdk.Msg) (StdSignMsg, error) {
 		return StdSignMsg{}, fmt.Errorf("chain ID required but not specified")
 	}
 
+	fees := bldr.fees
+	if !bldr.gasPrices.IsZero() {
+		if !fees.IsZero() {
+			return StdSignMsg{}, errors.New("cannot provide both fees and gas prices")
+		}
+
+		glDec := sdk.NewDec(int64(bldr.gas))
+
+		// Derive the fees based on the provided gas prices, where
+		// fee = ceil(gasPrice * gasLimit).
+		fees = make(sdk.Coins, len(bldr.gasPrices))
+		for i, gp := range bldr.gasPrices {
+			fee := gp.Amount.Mul(glDec)
+			fees[i] = sdk.NewCoin(gp.Denom, fee.Ceil().RoundInt())
+		}
+	}
+
 	return StdSignMsg{
 		ChainID:       bldr.chainID,
 		AccountNumber: bldr.accountNumber,
 		Sequence:      bldr.sequence,
 		Memo:          bldr.memo,
 		Msg:           msgs[0], // allow only one message
+		Fee:           NewStdFee(bldr.gas, fees),
 	}, nil
 }
 
@@ -201,7 +224,7 @@ func (bldr TxBuilder) Sign(privKey secp256k1.PrivKeySecp256k1, msg StdSignMsg) (
 		return nil, err
 	}
 
-	return bldr.txEncoder(NewStdTx(msg.Msg, sig, msg.Memo))
+	return bldr.txEncoder(NewStdTx(msg.Msg, msg.Fee, sig, msg.Memo))
 }
 
 // SignWithPassphrase signs a transaction given a name, passphrase, and a single message to
@@ -212,7 +235,7 @@ func (bldr TxBuilder) SignWithPassphrase(name, passphrase string, msg StdSignMsg
 		return nil, err
 	}
 
-	return bldr.txEncoder(NewStdTx(msg.Msg, sig, msg.Memo))
+	return bldr.txEncoder(NewStdTx(msg.Msg, msg.Fee, sig, msg.Memo))
 }
 
 // BuildAndSign builds a single message to be signed, and signs a transaction
@@ -247,7 +270,7 @@ func (bldr TxBuilder) BuildTxForSim(msgs []sdk.Msg) ([]byte, error) {
 
 	// the ante handler will populate with a sentinel pubkey
 	sig := StdSignature{}
-	return bldr.txEncoder(NewStdTx(signMsg.Msg, sig, signMsg.Memo))
+	return bldr.txEncoder(NewStdTx(signMsg.Msg, signMsg.Fee, sig, signMsg.Memo))
 }
 
 // SignStdTxWithPassphrase appends a signature to a StdTx and returns a copy of it. If append
@@ -263,12 +286,13 @@ func (bldr TxBuilder) SignStdTxWithPassphrase(name, passphrase string, stdTx Std
 		Sequence:      bldr.sequence,
 		Msg:           stdTx.GetMsgs()[0],
 		Memo:          stdTx.GetMemo(),
+		Fee:           stdTx.Fee,
 	})
 	if err != nil {
 		return
 	}
 
-	signedStdTx = NewStdTx(stdTx.GetMsgs()[0], stdSignature, stdTx.GetMemo())
+	signedStdTx = NewStdTx(stdTx.GetMsgs()[0], stdTx.Fee, stdSignature, stdTx.GetMemo())
 	return
 }
 
@@ -285,6 +309,7 @@ func (bldr TxBuilder) SignStdTx(privKey secp256k1.PrivKeySecp256k1, stdTx StdTx,
 		Sequence:      bldr.sequence,
 		Memo:          stdTx.Memo,
 		Msg:           stdTx.Msg, // allow only one message
+		Fee:           stdTx.Fee,
 	}
 
 	sig, err := MakeSignature(privKey, signMsg)
@@ -292,7 +317,7 @@ func (bldr TxBuilder) SignStdTx(privKey secp256k1.PrivKeySecp256k1, stdTx StdTx,
 		return
 	}
 
-	signedStdTx = NewStdTx(signMsg.Msg, sig, signMsg.Memo)
+	signedStdTx = NewStdTx(signMsg.Msg, stdTx.Fee, sig, signMsg.Memo)
 	return
 }
 
