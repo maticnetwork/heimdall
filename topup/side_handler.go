@@ -128,6 +128,7 @@ func PostHandleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, sideTxRes
 	}
 
 	// transfer fees to sender (proposer)
+	// Have to find the dynamic fee to be transfered to sender. For now hardcoding default fee
 	if err := k.bk.SendCoins(ctx, user, msg.FromAddress, auth.DefaultFeeWantedPerTx); err != nil {
 		return err.Result()
 	}

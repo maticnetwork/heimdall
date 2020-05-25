@@ -88,17 +88,29 @@ func NewAnteHandler(
 		// get account params
 		params := ak.GetParams(ctx)
 
-		// gas for tx
-		gasForTx := params.MaxTxGas // stdTx.Fee.Gas
-
-		amount, ok := sdk.NewIntFromString(params.TxFees)
-		if !ok {
-			return newCtx, sdk.ErrInternal("Invalid param tx fees").Result(), true
+		// Ensure that the provided fees meet a minimum threshold for the validator,
+		// if this is a CheckTx. This is only for local mempool purposes, and thus
+		// is only ran on check tx.
+		if ctx.IsCheckTx() && !simulate {
+			res := EnsureSufficientMempoolFees(ctx, stdTx.Fee)
+			if !res.IsOK() {
+				return newCtx, res, true
+			}
 		}
-		feeForTx := sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: amount}} // stdTx.Fee.Amount
+
+		// gas for tx
+		// gasForTx := params.MaxTxGas // stdTx.Fee.Gas
+
+		// amount, ok := sdk.NewIntFromString(params.TxFees)
+		// if !ok {
+		// 	return newCtx, sdk.ErrInternal("Invalid param tx fees").Result(), true
+		// }
+		// feeForTx := sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: amount}} // stdTx.Fee.Amount
 
 		// new gas meter
-		newCtx = SetGasMeter(simulate, ctx, gasForTx)
+		// newCtx = SetGasMeter(simulate, ctx, gasForTx)
+
+		newCtx = SetGasMeter(simulate, ctx, stdTx.Fee.Gas)
 
 		// AnteHandlers must have their own defer/recover in order for the BaseApp
 		// to know how much gas was used! This is because the GasMeter is created in
@@ -110,11 +122,11 @@ func NewAnteHandler(
 				case sdk.ErrorOutOfGas:
 					log := fmt.Sprintf(
 						"out of gas in location: %v; gasWanted: %d, gasUsed: %d",
-						rType.Descriptor, gasForTx, newCtx.GasMeter().GasConsumed(),
+						rType.Descriptor, stdTx.Fee.Gas, newCtx.GasMeter().GasConsumed(),
 					)
 					res = sdk.ErrOutOfGas(log).Result()
 
-					res.GasWanted = gasForTx
+					res.GasWanted = stdTx.Fee.Gas
 					res.GasUsed = newCtx.GasMeter().GasConsumed()
 					abort = true
 				default:
@@ -127,6 +139,8 @@ func NewAnteHandler(
 		if err := tx.ValidateBasic(); err != nil {
 			return newCtx, err.Result(), true
 		}
+
+		newCtx.GasMeter().ConsumeGas(params.TxSizeCostPerByte*sdk.Gas(len(newCtx.TxBytes())), "txSize")
 
 		if res := ValidateMemo(stdTx, params); !res.IsOK() {
 			return newCtx, res, true
@@ -153,8 +167,8 @@ func NewAnteHandler(
 		}
 
 		// deduct the fees
-		if !feeForTx.IsZero() {
-			res = DeductFees(feeCollector, newCtx, signerAcc, feeForTx)
+		if !stdTx.Fee.Amount.IsZero() {
+			res = DeductFees(feeCollector, newCtx, signerAcc, stdTx.Fee.Amount)
 			if !res.IsOK() {
 				return newCtx, res, true
 			}
@@ -177,7 +191,7 @@ func NewAnteHandler(
 		ak.SetAccount(newCtx, signerAcc)
 
 		// TODO: tx tags (?)
-		return newCtx, sdk.Result{GasWanted: gasForTx}, false // continue...
+		return newCtx, sdk.Result{GasWanted: stdTx.Fee.Gas}, false // continue...
 	}
 }
 
@@ -315,4 +329,35 @@ func GetSignBytes(chainID string, stdTx authTypes.StdTx, acc authTypes.Account, 
 	}
 
 	return authTypes.StdSignBytes(chainID, accNum, acc.GetSequence(), stdTx.Fee, stdTx.Msg, stdTx.Memo)
+}
+
+// EnsureSufficientMempoolFees verifies that the given transaction has supplied
+// enough fees to cover a proposer's minimum fees. A result object is returned
+// indicating success or failure.
+//
+// Contract: This should only be called during CheckTx as it cannot be part of
+// consensus.
+func EnsureSufficientMempoolFees(ctx sdk.Context, stdFee authTypes.StdFee) sdk.Result {
+	minGasPrices := ctx.MinGasPrices()
+	if !minGasPrices.IsZero() {
+		requiredFees := make(sdk.Coins, len(minGasPrices))
+
+		// Determine the required fees by multiplying each required minimum gas
+		// price by the gas limit, where fee = ceil(minGasPrice * gasLimit).
+		glDec := sdk.NewDec(int64(stdFee.Gas))
+		for i, gp := range minGasPrices {
+			fee := gp.Amount.Mul(glDec)
+			requiredFees[i] = sdk.NewCoin(gp.Denom, fee.Ceil().RoundInt())
+		}
+
+		if !stdFee.Amount.IsAnyGTE(requiredFees) {
+			return sdk.ErrInsufficientFee(
+				fmt.Sprintf(
+					"insufficient fees; got: %q required: %q", stdFee.Amount, requiredFees,
+				),
+			).Result()
+		}
+	}
+
+	return sdk.Result{}
 }
