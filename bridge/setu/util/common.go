@@ -118,6 +118,7 @@ func IsInProposerList(cliCtx cliContext.CLIContext, count uint64) (bool, error) 
 
 	// unmarshall data from buffer
 	var proposers []hmtypes.Validator
+
 	if err := json.Unmarshal(response.Result, &proposers); err != nil {
 		logger.Error("Error unmarshalling validator data ", "error", err)
 		return false, err
@@ -345,6 +346,27 @@ func GetBufferedCheckpoint(cliCtx cliContext.CLIContext) (*hmtypes.Checkpoint, e
 	var checkpoint hmtypes.Checkpoint
 	if err := json.Unmarshal(response.Result, &checkpoint); err != nil {
 		logger.Error("Error unmarshalling buffered checkpoint", "url", BufferedCheckpointURL, "err", err)
+		return nil, err
+	}
+
+	return &checkpoint, nil
+}
+
+// GetlastestCheckpoint return last successful checkpoint
+func GetlastestCheckpoint(cliCtx cliContext.CLIContext) (*hmtypes.Checkpoint, error) {
+	response, err := helper.FetchFromAPI(
+		cliCtx,
+		helper.GetHeimdallServerEndpoint(LatestCheckpointURL),
+	)
+
+	if err != nil {
+		logger.Debug("Error fetching latest checkpoint", "err", err)
+		return nil, err
+	}
+
+	var checkpoint hmtypes.Checkpoint
+	if err := json.Unmarshal(response.Result, &checkpoint); err != nil {
+		logger.Error("Error unmarshalling latest checkpoint", "url", LatestCheckpointURL, "err", err)
 		return nil, err
 	}
 
