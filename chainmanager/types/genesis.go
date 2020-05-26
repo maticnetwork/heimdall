@@ -28,6 +28,10 @@ func DefaultGenesisState() GenesisState {
 // ValidateGenesis performs basic validation of auth genesis data returning an
 // error for any failed validation criteria.
 func ValidateGenesis(data GenesisState) error {
+	if err := data.Params.Validate(); err != nil {
+		return err
+	}
+
 	return nil
 }
 

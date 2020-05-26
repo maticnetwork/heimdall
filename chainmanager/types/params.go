@@ -137,6 +137,14 @@ func (p Params) Validate() error {
 		return err
 	}
 
+	if err := validateTxConfirmations(p.MainchainTxConfirmations); err != nil {
+		return err
+	}
+
+	if err := validateTxConfirmations(p.MaticchainTxConfirmations); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -145,6 +153,18 @@ func validateHeimdallAddress(key string, value hmTypes.HeimdallAddress) error {
 		return fmt.Errorf("Invalid value %s in chain_params", key)
 	}
 
+	return nil
+}
+
+func validateTxConfirmations(i interface{}) error {
+	v, ok := i.(uint64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v == 0 {
+		return fmt.Errorf("invalid tx confirmations: %d", v)
+	}
 	return nil
 }
 
