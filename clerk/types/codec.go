@@ -6,12 +6,15 @@ import (
 
 // RegisterCodec registers concrete types on codec codec
 func RegisterCodec(cdc *codec.Codec) {
-	cdc.RegisterConcrete(MsgEventRecord{}, "cosmos-sdk/MsgEventRecord", nil)
+	cdc.RegisterConcrete(MsgEventRecord{}, "clerk/MsgEventRecord", nil)
 }
 
 // ModuleCdc module cdc
-var ModuleCdc = codec.New()
+var ModuleCdc *codec.Codec
 
 func init() {
-	RegisterCodec(ModuleCdc)
+	cdc := codec.New()
+	codec.RegisterCrypto(cdc)
+	RegisterCodec(cdc)
+	ModuleCdc = cdc.Seal()
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	bankTypes "github.com/maticnetwork/heimdall/bank/types"
 	restClient "github.com/maticnetwork/heimdall/client/rest"
 	"github.com/maticnetwork/heimdall/types"
@@ -45,8 +46,29 @@ func SendRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		// amount cannot be zero
+		if req.Amount.IsZero() {
+			return
+		}
+
 		// get from address
 		fromAddr := types.HexToHeimdallAddress(req.BaseReq.From)
+
+		// check if account exists
+		accGetter := authTypes.NewAccountRetriever(cliCtx)
+		if err := accGetter.EnsureExists(fromAddr); err != nil {
+			return
+		}
+
+		account, err := accGetter.GetAccount(fromAddr)
+		if err != nil {
+			return
+		}
+
+		// ensure account has enough coins
+		if !account.GetCoins().IsAllGTE(req.Amount) {
+			return
+		}
 
 		msg := bankTypes.NewMsgSend(fromAddr, toAddr, req.Amount)
 		restClient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
