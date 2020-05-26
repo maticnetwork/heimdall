@@ -2,6 +2,7 @@ package bor_test
 
 import (
 	"fmt"
+	"math/big"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -34,6 +35,7 @@ func (suite *sideChHandlerSuite) SetupTest() {
 }
 
 func (suite *sideChHandlerSuite) TestSideHandleMsgSpan() {
+
 	type callerMethod struct {
 		name string
 		args []interface{}
@@ -57,7 +59,7 @@ func (suite *sideChHandlerSuite) TestSideHandleMsgSpan() {
 			cm: []callerMethod{
 				{
 					name: "GetMainChainBlock",
-					args: []interface{}{suite.app.BorKeeper.GetLastEthBlock(suite.ctx)},
+					args: []interface{}{big.NewInt(1)},
 					ret:  []interface{}{&ethTypes.Header{}, nil},
 				},
 			},
@@ -65,11 +67,11 @@ func (suite *sideChHandlerSuite) TestSideHandleMsgSpan() {
 	}
 
 	for i, c := range tc {
-		suite.SetupTest()
+		// suite.SetupTest()
 		c.msg = fmt.Sprintf("i: %v, msg: %v", i, c.msg)
 		if c.cm != nil {
 			for _, m := range c.cm {
-				suite.mockCaller.On(m.name, m.args...).Return(m.ret)
+				suite.mockCaller.On(m.name, big.NewInt(1)).Return(&ethTypes.Header{}, nil)
 			}
 		}
 

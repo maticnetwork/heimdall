@@ -2,6 +2,7 @@ package bor
 
 import (
 	"errors"
+	"fmt"
 	"math/big"
 	"strconv"
 
@@ -301,8 +302,11 @@ func (k Keeper) GetNextSpanSeed(ctx sdk.Context) (common.Hash, error) {
 	newEthBlock := lastEthBlock.Add(lastEthBlock, big.NewInt(1))
 	k.Logger(ctx).Debug("newEthBlock to generate seed", "newEthBlock", newEthBlock)
 
+	fmt.Println("testes")
 	// fetch block header from mainchain
 	blockHeader, err := k.contractCaller.GetMainChainBlock(newEthBlock)
+	fmt.Println("testes post")
+
 	if err != nil {
 		k.Logger(ctx).Error("Error fetching block header from mainchain while calculating next span seed", "error", err)
 		return common.Hash{}, err
