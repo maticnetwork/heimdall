@@ -132,7 +132,6 @@ func (suite *QuerierTestSuite) TestHandleQueryDividendAccount() {
 
 func (suite *QuerierTestSuite) TestHandleDividendAccountRoot() {
 	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
-
 	dividendAccount := hmTypes.NewDividendAccount(
 		hmTypes.BytesToHeimdallAddress([]byte("some-address")),
 		big.NewInt(0).String(),

@@ -62,8 +62,7 @@ const (
 	DefaultClerkPollInterval        = 10 * time.Second
 	DefaultSpanPollInterval         = 1 * time.Minute
 
-	DefaultChildBlockInterval = 10000 // difference between 2 indexes of header blocks
-	DefaultMainchainGasLimit  = uint64(5000000)
+	DefaultMainchainGasLimit = uint64(5000000)
 
 	DefaultBorChainID string = "15001"
 
@@ -93,8 +92,7 @@ type Configuration struct {
 	AmqpURL           string `mapstructure:"amqp_url"`             // amqp url
 	HeimdallServerURL string `mapstructure:"heimdall_rest_server"` // heimdall server url
 
-	ChildBlockInterval uint64 `mapstructure:"child_chain_block_interval"` // Difference between header index of 2 child blocks submitted on main chain
-	MainchainGasLimit  uint64 `mapstructure:"main_chain_gas_limit"`       // gas limit to mainchain transaction. eg....submit checkpoint.
+	MainchainGasLimit uint64 `mapstructure:"main_chain_gas_limit"` // gas limit to mainchain transaction. eg....submit checkpoint.
 
 	// config related to bridge
 	CheckpointerPollInterval time.Duration `mapstructure:"checkpoint_poll_interval"` // Poll interval for checkpointer service to send new checkpoints or missing ACK
@@ -214,8 +212,7 @@ func GetDefaultHeimdallConfig() Configuration {
 		AmqpURL:           DefaultAmqpURL,
 		HeimdallServerURL: DefaultHeimdallServerURL,
 
-		ChildBlockInterval: DefaultChildBlockInterval,
-		MainchainGasLimit:  DefaultMainchainGasLimit,
+		MainchainGasLimit: DefaultMainchainGasLimit,
 
 		CheckpointerPollInterval: DefaultCheckpointerPollInterval,
 		SyncerPollInterval:       DefaultSyncerPollInterval,
@@ -234,6 +231,12 @@ func GetConfig() Configuration {
 
 func GetGenesisDoc() tmTypes.GenesisDoc {
 	return GenesisDoc
+}
+
+// TEST PURPOSE ONLY
+// SetTestConfig sets test configuration
+func SetTestConfig(_conf Configuration) {
+	conf = _conf
 }
 
 //

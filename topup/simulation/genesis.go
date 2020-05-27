@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/maticnetwork/bor/common/math"
 	"github.com/maticnetwork/heimdall/topup/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/types/module"
@@ -19,7 +20,7 @@ var SequenceNumber = "sequence_number"
 
 // GenSequenceNumber returns randomc chainID
 func GenSequenceNumber(r *rand.Rand) string {
-	return strconv.Itoa(simulation.RandIntBetween(r, 0, 1000000000000))
+	return strconv.Itoa(simulation.RandIntBetween(r, 0, math.MaxInt32))
 }
 
 // RandomizeGenState returns topup genesis

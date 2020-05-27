@@ -137,6 +137,8 @@ func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, con
 			sdk.NewAttribute(types.AttributeKeyProposer, msg.Proposer.String()),
 			sdk.NewAttribute(types.AttributeKeyStartBlock, strconv.FormatUint(msg.StartBlock, 10)),
 			sdk.NewAttribute(types.AttributeKeyEndBlock, strconv.FormatUint(msg.EndBlock, 10)),
+			sdk.NewAttribute(types.AttributeKeyRootHash, msg.RootHash.String()),
+			sdk.NewAttribute(types.AttributeKeyAccountHash, msg.AccountRootHash.String()),
 		),
 	})
 
@@ -178,7 +180,7 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg types.MsgCheckpointAck, k Keepe
 		sdk.NewEvent(
 			types.EventTypeCheckpointAck,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(types.AttributeKeyHeaderIndex, strconv.FormatUint(uint64(msg.HeaderBlock), 10)),
+			sdk.NewAttribute(types.AttributeKeyHeaderIndex, strconv.FormatUint(msg.Number, 10)),
 		),
 	})
 

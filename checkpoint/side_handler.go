@@ -68,7 +68,7 @@ func SideHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint,
 func SideHandleMsgCheckpointAck(ctx sdk.Context, k Keeper, msg types.MsgCheckpointAck, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
 	logger := k.Logger(ctx)
 
-	// make call to headerBlock with header number
+	params := k.GetParams(ctx)
 	chainParams := k.ck.GetParams(ctx).ChainParams
 
 	//
@@ -81,9 +81,9 @@ func SideHandleMsgCheckpointAck(ctx sdk.Context, k Keeper, msg types.MsgCheckpoi
 		return common.ErrorSideTx(k.Codespace(), common.CodeInvalidACK)
 	}
 
-	root, start, end, _, proposer, err := contractCaller.GetHeaderInfo(msg.HeaderBlock, rootChainInstance)
+	root, start, end, _, proposer, err := contractCaller.GetHeaderInfo(msg.Number, rootChainInstance, params.ChildBlockInterval)
 	if err != nil {
-		logger.Error("Unable to fetch header from rootchain contract", "error", err, "headerBlock", msg.HeaderBlock)
+		logger.Error("Unable to fetch checkpoint from rootchain", "error", err, "checkpointNumber", msg.Number)
 		return common.ErrorSideTx(k.Codespace(), common.CodeInvalidACK)
 	}
 
@@ -93,7 +93,7 @@ func SideHandleMsgCheckpointAck(ctx sdk.Context, k Keeper, msg types.MsgCheckpoi
 		!msg.Proposer.Equals(proposer) ||
 		!bytes.Equal(msg.RootHash.Bytes(), root.Bytes()) {
 
-		logger.Error("Invalid message. It doesn't match with contract state", "error", err, "headerBlock", msg.HeaderBlock)
+		logger.Error("Invalid message. It doesn't match with contract state", "error", err, "checkpointNumber", msg.Number)
 		return common.ErrorSideTx(k.Codespace(), common.CodeInvalidACK)
 	}
 
@@ -118,8 +118,7 @@ func NewPostTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.P
 		case types.MsgCheckpointAck:
 			return PostHandleMsgCheckpointAck(ctx, k, msg, sideTxResult)
 		default:
-			errMsg := "Unrecognized checkpoint Msg type: %s" + msg.Type()
-			return sdk.ErrUnknownRequest(errMsg).Result()
+			return sdk.ErrUnknownRequest("Unrecognized checkpoint Msg type").Result()
 		}
 	}
 }
@@ -131,6 +130,33 @@ func PostHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint,
 	// Skip handler if checkpoint is not approved
 	if sideTxResult != abci.SideTxResultType_Yes {
 		logger.Debug("Skipping new checkpoint since side-tx didn't get yes votes", "startBlock", msg.StartBlock, "endBlock", msg.EndBlock, "rootHash", msg.RootHash)
+		return common.ErrBadBlockDetails(k.Codespace()).Result()
+	}
+
+	//
+	// Validate last checkpoint
+	//
+
+	// fetch last checkpoint from store
+	if lastCheckpoint, err := k.GetLastCheckpoint(ctx); err == nil {
+		// make sure new checkpoint is after tip
+		if lastCheckpoint.EndBlock > msg.StartBlock {
+			logger.Error("Checkpoint already exists",
+				"currentTip", lastCheckpoint.EndBlock,
+				"startBlock", msg.StartBlock,
+			)
+			return common.ErrOldCheckpoint(k.Codespace()).Result()
+		}
+
+		// check if new checkpoint's start block start from current tip
+		if lastCheckpoint.EndBlock+1 != msg.StartBlock {
+			logger.Error("Checkpoint not in countinuity",
+				"currentTip", lastCheckpoint.EndBlock,
+				"startBlock", msg.StartBlock)
+			return common.ErrDisCountinuousCheckpoint(k.Codespace()).Result()
+		}
+	} else if err.Error() == common.ErrNoCheckpointFound(k.Codespace()).Error() && msg.StartBlock != 0 {
+		logger.Error("First checkpoint to start from block 0", "Error", err)
 		return common.ErrBadBlockDetails(k.Codespace()).Result()
 	}
 
@@ -153,7 +179,7 @@ func PostHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint,
 	timeStamp := uint64(ctx.BlockTime().Unix())
 
 	// Add checkpoint to buffer with root hash and account hash
-	k.SetCheckpointBuffer(ctx, hmTypes.CheckpointBlockHeader{
+	k.SetCheckpointBuffer(ctx, hmTypes.Checkpoint{
 		StartBlock: msg.StartBlock,
 		EndBlock:   msg.EndBlock,
 		RootHash:   msg.RootHash,
@@ -183,6 +209,8 @@ func PostHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint,
 			sdk.NewAttribute(types.AttributeKeyProposer, msg.Proposer.String()),
 			sdk.NewAttribute(types.AttributeKeyStartBlock, strconv.FormatUint(msg.StartBlock, 10)),
 			sdk.NewAttribute(types.AttributeKeyEndBlock, strconv.FormatUint(msg.EndBlock, 10)),
+			sdk.NewAttribute(types.AttributeKeyRootHash, msg.RootHash.String()),
+			sdk.NewAttribute(types.AttributeKeyAccountHash, msg.AccountRootHash.String()),
 		),
 	})
 
@@ -197,35 +225,54 @@ func PostHandleMsgCheckpointAck(ctx sdk.Context, k Keeper, msg types.MsgCheckpoi
 
 	// Skip handler if checkpoint-ack is not approved
 	if sideTxResult != abci.SideTxResultType_Yes {
-		logger.Debug("Skipping new checkpoint-ack since side-tx didn't get yes votes", "headerBlock", msg.HeaderBlock)
+		logger.Debug("Skipping new checkpoint-ack since side-tx didn't get yes votes", "checkpointNumber", msg.Number)
 		return common.ErrBadBlockDetails(k.Codespace()).Result()
 	}
 
 	// get last checkpoint from buffer
-	headerBlock, err := k.GetCheckpointFromBuffer(ctx)
+	checkpointObj, err := k.GetCheckpointFromBuffer(ctx)
 	if err != nil {
 		logger.Error("Unable to get checkpoint buffer", "error", err)
 		return common.ErrBadAck(k.Codespace()).Result()
 	}
 
+	// invalid start block
+	if msg.StartBlock != checkpointObj.StartBlock {
+		logger.Error("Invalid start block", "startExpected", checkpointObj.StartBlock, "startReceived", msg.StartBlock)
+		return common.ErrBadAck(k.Codespace()).Result()
+	}
+
+	// Return err if start and end matches but contract root hash doesn't match
+	if msg.StartBlock == checkpointObj.StartBlock && msg.EndBlock == checkpointObj.EndBlock && !msg.RootHash.Equals(checkpointObj.RootHash) {
+		logger.Error("Invalid ACK",
+			"startExpected", checkpointObj.StartBlock,
+			"startReceived", msg.StartBlock,
+			"endExpected", checkpointObj.EndBlock,
+			"endReceived", msg.StartBlock,
+			"rootExpected", checkpointObj.RootHash.String(),
+			"rootRecieved", msg.RootHash.String(),
+		)
+		return common.ErrBadAck(k.Codespace()).Result()
+	}
+
 	// adjust checkpoint data if latest checkpoint is already submitted
-	if headerBlock.EndBlock > msg.EndBlock {
-		logger.Info("Adjusting endBlock to one already submitted on chain", "endBlock", headerBlock.EndBlock, "adjustedEndBlock", msg.EndBlock)
-		headerBlock.EndBlock = msg.EndBlock
-		headerBlock.RootHash = msg.RootHash
-		headerBlock.Proposer = msg.Proposer
+	if checkpointObj.EndBlock > msg.EndBlock {
+		logger.Info("Adjusting endBlock to one already submitted on chain", "endBlock", checkpointObj.EndBlock, "adjustedEndBlock", msg.EndBlock)
+		checkpointObj.EndBlock = msg.EndBlock
+		checkpointObj.RootHash = msg.RootHash
+		checkpointObj.Proposer = msg.Proposer
 	}
 
 	//
 	// Update checkpoint state
 	//
 
-	// Add checkpoint to headerBlocks
-	if err := k.AddCheckpoint(ctx, msg.HeaderBlock, *headerBlock); err != nil {
-		logger.Error("Error while adding checkpoint into store", "headerBlock", msg.HeaderBlock)
+	// Add checkpoint to store
+	if err := k.AddCheckpoint(ctx, msg.Number, *checkpointObj); err != nil {
+		logger.Error("Error while adding checkpoint into store", "checkpointNumber", msg.Number)
 		return sdk.ErrInternal("Failed to add checkpoint into store").Result()
 	}
-	logger.Debug("Checkpoint added to store", "headerBlock", msg.HeaderBlock)
+	logger.Debug("Checkpoint added to store", "checkpointNumber", msg.Number)
 
 	// Flush buffer
 	k.FlushCheckpointBuffer(ctx)
@@ -250,7 +297,7 @@ func PostHandleMsgCheckpointAck(ctx sdk.Context, k Keeper, msg types.MsgCheckpoi
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),                // module name
 			sdk.NewAttribute(hmTypes.AttributeKeyTxHash, hmTypes.BytesToHeimdallHash(hash).Hex()), // tx hash
 			sdk.NewAttribute(hmTypes.AttributeKeySideTxResult, sideTxResult.String()),             // result
-			sdk.NewAttribute(types.AttributeKeyHeaderIndex, strconv.FormatUint(uint64(msg.HeaderBlock), 10)),
+			sdk.NewAttribute(types.AttributeKeyHeaderIndex, strconv.FormatUint(msg.Number, 10)),
 		),
 	})
 

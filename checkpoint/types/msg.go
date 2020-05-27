@@ -107,19 +107,19 @@ var _ sdk.Msg = &MsgCheckpointAck{}
 
 // MsgCheckpointAck Add mainchain commit transaction hash to MsgCheckpointAck
 type MsgCheckpointAck struct {
-	From        types.HeimdallAddress `json:"from"`
-	HeaderBlock uint64                `json:"headerBlock"`
-	Proposer    types.HeimdallAddress `json:"proposer"`
-	StartBlock  uint64                `json:"start_block"`
-	EndBlock    uint64                `json:"end_block"`
-	RootHash    types.HeimdallHash    `json:"root_hash"`
-	TxHash      types.HeimdallHash    `json:"tx_hash"`
-	LogIndex    uint64                `json:"log_index"`
+	From       types.HeimdallAddress `json:"from"`
+	Number     uint64                `json:"number"`
+	Proposer   types.HeimdallAddress `json:"proposer"`
+	StartBlock uint64                `json:"start_block"`
+	EndBlock   uint64                `json:"end_block"`
+	RootHash   types.HeimdallHash    `json:"root_hash"`
+	TxHash     types.HeimdallHash    `json:"tx_hash"`
+	LogIndex   uint64                `json:"log_index"`
 }
 
 func NewMsgCheckpointAck(
 	from types.HeimdallAddress,
-	headerBlock uint64,
+	number uint64,
 	proposer types.HeimdallAddress,
 	startBlock uint64,
 	endBlock uint64,
@@ -129,14 +129,14 @@ func NewMsgCheckpointAck(
 ) MsgCheckpointAck {
 
 	return MsgCheckpointAck{
-		From:        from,
-		HeaderBlock: headerBlock,
-		Proposer:    proposer,
-		StartBlock:  startBlock,
-		EndBlock:    endBlock,
-		RootHash:    rootHash,
-		TxHash:      txHash,
-		LogIndex:    logIndex,
+		From:       from,
+		Number:     number,
+		Proposer:   proposer,
+		StartBlock: startBlock,
+		EndBlock:   endBlock,
+		RootHash:   rootHash,
+		TxHash:     txHash,
+		LogIndex:   logIndex,
 	}
 }
 
@@ -166,11 +166,6 @@ func (msg MsgCheckpointAck) GetSignBytes() []byte {
 func (msg MsgCheckpointAck) ValidateBasic() sdk.Error {
 	if msg.From.Empty() {
 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid from %v", msg.From.String())
-	}
-
-	childBlockInterval := helper.GetConfig().ChildBlockInterval
-	if msg.HeaderBlock > 0 && msg.HeaderBlock%childBlockInterval != 0 {
-		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid header block %d", msg.HeaderBlock)
 	}
 
 	if msg.Proposer.Empty() {

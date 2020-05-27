@@ -28,11 +28,11 @@ import (
 
 // IContractCaller represents contract caller
 type IContractCaller interface {
-	GetHeaderInfo(headerID uint64, rootChainInstance *rootchain.Rootchain) (root common.Hash, start, end, createdAt uint64, proposer types.HeimdallAddress, err error)
+	GetHeaderInfo(headerID uint64, rootChainInstance *rootchain.Rootchain, childBlockInterval uint64) (root common.Hash, start, end, createdAt uint64, proposer types.HeimdallAddress, err error)
 	GetRootHash(start uint64, end uint64, checkpointLength uint64) ([]byte, error)
 	GetValidatorInfo(valID types.ValidatorID, stakingInfoInstance *stakinginfo.Stakinginfo) (validator types.Validator, err error)
 	GetLastChildBlock(rootChainInstance *rootchain.Rootchain) (uint64, error)
-	CurrentHeaderBlock(rootChainInstance *rootchain.Rootchain) (uint64, error)
+	CurrentHeaderBlock(rootChainInstance *rootchain.Rootchain, childBlockInterval uint64) (uint64, error)
 	GetBalance(address common.Address) (*big.Int, error)
 	SendCheckpoint(sigedData []byte, sigs []byte, rootchainAddress common.Address, rootChainInstance *rootchain.Rootchain) (err error)
 	SendTick(sigedData []byte, sigs []byte, slashManagerAddress common.Address, slashManagerInstance *slashmanager.Slashmanager) (err error)
@@ -68,6 +68,7 @@ type IContractCaller interface {
 	CurrentSpanNumber(validatorset *validatorset.Validatorset) (Number *big.Int)
 	GetSpanDetails(id *big.Int, validatorset *validatorset.Validatorset) (*big.Int, *big.Int, *big.Int, error)
 	CurrentStateCounter(stateSenderInstance *statesender.Statesender) (Number *big.Int)
+	CheckIfBlocksExist(end uint64) bool
 
 	GetRootChainInstance(rootchainAddress common.Address) (*rootchain.Rootchain, error)
 	GetStakingInfoInstance(stakingInfoAddress common.Address) (*stakinginfo.Stakinginfo, error)
@@ -84,6 +85,7 @@ type ContractCaller struct {
 	MainChainClient  *ethclient.Client
 	MainChainRPC     *rpc.Client
 	MaticChainClient *ethclient.Client
+	MaticChainRPC    *rpc.Client
 
 	RootChainABI     abi.ABI
 	StakingInfoABI   abi.ABI
@@ -114,6 +116,7 @@ func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 	contractCallerObj.MainChainClient = GetMainClient()
 	contractCallerObj.MaticChainClient = GetMaticClient()
 	contractCallerObj.MainChainRPC = GetMainChainRPCClient()
+	contractCallerObj.MaticChainRPC = GetMaticRPCClient()
 	contractCallerObj.ReceiptCache, _ = NewLru(1000)
 
 	//
@@ -255,8 +258,8 @@ func NewLru(size int) (*lru.Cache, error) {
 	return lruObj, nil
 }
 
-// GetHeaderInfo get header info from header id
-func (c *ContractCaller) GetHeaderInfo(headerID uint64, rootChainInstance *rootchain.Rootchain) (
+// GetHeaderInfo get header info from checkpoint number
+func (c *ContractCaller) GetHeaderInfo(number uint64, rootChainInstance *rootchain.Rootchain, childBlockInterval uint64) (
 	root common.Hash,
 	start uint64,
 	end uint64,
@@ -265,10 +268,10 @@ func (c *ContractCaller) GetHeaderInfo(headerID uint64, rootChainInstance *rootc
 	err error,
 ) {
 	// get header from rootchain
-	headerBlock, err := rootChainInstance.HeaderBlocks(nil, big.NewInt(0).SetUint64(headerID))
+	checkpointBigInt := big.NewInt(0).Mul(big.NewInt(0).SetUint64(number), big.NewInt(0).SetUint64(childBlockInterval))
+	headerBlock, err := rootChainInstance.HeaderBlocks(nil, checkpointBigInt)
 	if err != nil {
-		Logger.Error("Unable to fetch header block from rootchain", "headerBlockIndex", headerID)
-		return root, start, end, createdAt, proposer, errors.New("Unable to fetch header block")
+		return root, start, end, createdAt, proposer, errors.New("Unable to fetch checkpoint block")
 	}
 
 	return headerBlock.Root,
@@ -310,13 +313,13 @@ func (c *ContractCaller) GetLastChildBlock(rootChainInstance *rootchain.Rootchai
 }
 
 // CurrentHeaderBlock fetches current header block
-func (c *ContractCaller) CurrentHeaderBlock(rootChainInstance *rootchain.Rootchain) (uint64, error) {
+func (c *ContractCaller) CurrentHeaderBlock(rootChainInstance *rootchain.Rootchain, childBlockInterval uint64) (uint64, error) {
 	currentHeaderBlock, err := rootChainInstance.CurrentHeaderBlock(nil)
 	if err != nil {
 		Logger.Error("Could not fetch current header block from rootchain contract", "Error", err)
 		return 0, err
 	}
-	return currentHeaderBlock.Uint64(), nil
+	return currentHeaderBlock.Uint64() / childBlockInterval, nil
 }
 
 // GetBalance get balance of account (returns big.Int balance wont fit in uint64)
@@ -704,6 +707,23 @@ func (c *ContractCaller) CurrentStateCounter(stateSenderInstance *statesender.St
 	}
 
 	return result
+}
+
+// CheckIfBlocksExist - check if latest block number is greater than end block
+func (c *ContractCaller) CheckIfBlocksExist(end uint64) bool {
+	// Get Latest block number.
+	var latestBlock *ethTypes.Header
+
+	err := c.MaticChainRPC.Call(&latestBlock, "eth_getBlockByNumber", "latest", false)
+	if err != nil {
+		return false
+	}
+
+	if end > latestBlock.Number.Uint64() {
+		return false
+	}
+
+	return true
 }
 
 //

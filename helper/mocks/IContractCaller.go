@@ -48,6 +48,20 @@ func (_m *IContractCaller) ApproveTokens(_a0 *big.Int, _a1 common.Address, _a2 c
 	return r0
 }
 
+// CheckIfBlocksExist provides a mock function with given fields: end
+func (_m *IContractCaller) CheckIfBlocksExist(end uint64) bool {
+	ret := _m.Called(end)
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func(uint64) bool); ok {
+		r0 = rf(end)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	return r0
+}
+
 // CurrentAccountStateRoot provides a mock function with given fields: stakingInfoInstance
 func (_m *IContractCaller) CurrentAccountStateRoot(stakingInfoInstance *stakinginfo.Stakinginfo) ([32]byte, error) {
 	ret := _m.Called(stakingInfoInstance)
@@ -71,20 +85,20 @@ func (_m *IContractCaller) CurrentAccountStateRoot(stakingInfoInstance *stakingi
 	return r0, r1
 }
 
-// CurrentHeaderBlock provides a mock function with given fields: rootChainInstance
-func (_m *IContractCaller) CurrentHeaderBlock(rootChainInstance *rootchain.Rootchain) (uint64, error) {
-	ret := _m.Called(rootChainInstance)
+// CurrentHeaderBlock provides a mock function with given fields: rootChainInstance, childBlockInterval
+func (_m *IContractCaller) CurrentHeaderBlock(rootChainInstance *rootchain.Rootchain, childBlockInterval uint64) (uint64, error) {
+	ret := _m.Called(rootChainInstance, childBlockInterval)
 
 	var r0 uint64
-	if rf, ok := ret.Get(0).(func(*rootchain.Rootchain) uint64); ok {
-		r0 = rf(rootChainInstance)
+	if rf, ok := ret.Get(0).(func(*rootchain.Rootchain, uint64) uint64); ok {
+		r0 = rf(rootChainInstance, childBlockInterval)
 	} else {
 		r0 = ret.Get(0).(uint64)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(*rootchain.Rootchain) error); ok {
-		r1 = rf(rootChainInstance)
+	if rf, ok := ret.Get(1).(func(*rootchain.Rootchain, uint64) error); ok {
+		r1 = rf(rootChainInstance, childBlockInterval)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -441,13 +455,13 @@ func (_m *IContractCaller) GetConfirmedTxReceipt(_a0 common.Hash, _a1 uint64) (*
 	return r0, r1
 }
 
-// GetHeaderInfo provides a mock function with given fields: headerID, rootChainInstance
-func (_m *IContractCaller) GetHeaderInfo(headerID uint64, rootChainInstance *rootchain.Rootchain) (common.Hash, uint64, uint64, uint64, heimdalltypes.HeimdallAddress, error) {
-	ret := _m.Called(headerID, rootChainInstance)
+// GetHeaderInfo provides a mock function with given fields: headerID, rootChainInstance, childBlockInterval
+func (_m *IContractCaller) GetHeaderInfo(headerID uint64, rootChainInstance *rootchain.Rootchain, childBlockInterval uint64) (common.Hash, uint64, uint64, uint64, heimdalltypes.HeimdallAddress, error) {
+	ret := _m.Called(headerID, rootChainInstance, childBlockInterval)
 
 	var r0 common.Hash
-	if rf, ok := ret.Get(0).(func(uint64, *rootchain.Rootchain) common.Hash); ok {
-		r0 = rf(headerID, rootChainInstance)
+	if rf, ok := ret.Get(0).(func(uint64, *rootchain.Rootchain, uint64) common.Hash); ok {
+		r0 = rf(headerID, rootChainInstance, childBlockInterval)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(common.Hash)
@@ -455,29 +469,29 @@ func (_m *IContractCaller) GetHeaderInfo(headerID uint64, rootChainInstance *roo
 	}
 
 	var r1 uint64
-	if rf, ok := ret.Get(1).(func(uint64, *rootchain.Rootchain) uint64); ok {
-		r1 = rf(headerID, rootChainInstance)
+	if rf, ok := ret.Get(1).(func(uint64, *rootchain.Rootchain, uint64) uint64); ok {
+		r1 = rf(headerID, rootChainInstance, childBlockInterval)
 	} else {
 		r1 = ret.Get(1).(uint64)
 	}
 
 	var r2 uint64
-	if rf, ok := ret.Get(2).(func(uint64, *rootchain.Rootchain) uint64); ok {
-		r2 = rf(headerID, rootChainInstance)
+	if rf, ok := ret.Get(2).(func(uint64, *rootchain.Rootchain, uint64) uint64); ok {
+		r2 = rf(headerID, rootChainInstance, childBlockInterval)
 	} else {
 		r2 = ret.Get(2).(uint64)
 	}
 
 	var r3 uint64
-	if rf, ok := ret.Get(3).(func(uint64, *rootchain.Rootchain) uint64); ok {
-		r3 = rf(headerID, rootChainInstance)
+	if rf, ok := ret.Get(3).(func(uint64, *rootchain.Rootchain, uint64) uint64); ok {
+		r3 = rf(headerID, rootChainInstance, childBlockInterval)
 	} else {
 		r3 = ret.Get(3).(uint64)
 	}
 
 	var r4 heimdalltypes.HeimdallAddress
-	if rf, ok := ret.Get(4).(func(uint64, *rootchain.Rootchain) heimdalltypes.HeimdallAddress); ok {
-		r4 = rf(headerID, rootChainInstance)
+	if rf, ok := ret.Get(4).(func(uint64, *rootchain.Rootchain, uint64) heimdalltypes.HeimdallAddress); ok {
+		r4 = rf(headerID, rootChainInstance, childBlockInterval)
 	} else {
 		if ret.Get(4) != nil {
 			r4 = ret.Get(4).(heimdalltypes.HeimdallAddress)
@@ -485,8 +499,8 @@ func (_m *IContractCaller) GetHeaderInfo(headerID uint64, rootChainInstance *roo
 	}
 
 	var r5 error
-	if rf, ok := ret.Get(5).(func(uint64, *rootchain.Rootchain) error); ok {
-		r5 = rf(headerID, rootChainInstance)
+	if rf, ok := ret.Get(5).(func(uint64, *rootchain.Rootchain, uint64) error); ok {
+		r5 = rf(headerID, rootChainInstance, childBlockInterval)
 	} else {
 		r5 = ret.Error(5)
 	}
