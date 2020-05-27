@@ -10,7 +10,6 @@ import (
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/bor"
 	bortypes "github.com/maticnetwork/heimdall/bor/types"
-	"github.com/maticnetwork/heimdall/merr"
 	"github.com/maticnetwork/heimdall/test"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/stretchr/testify/suite"
@@ -51,10 +50,10 @@ func (suite *keeperTest) TestFreeze() {
 			startBlock: 3,
 			msg:        "validation error missing id",
 		},
-		{
-			expErr: merr.ValErr{Field: "id", Module: bortypes.ModuleName},
-			msg:    "validation error missing id",
-		},
+		// {
+		// 	expErr: merr.ValErr{Field: "id", Module: bortypes.ModuleName},
+		// 	msg:    "validation error missing id",
+		// },
 	}
 
 	for i, c := range tc {
