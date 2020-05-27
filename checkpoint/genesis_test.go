@@ -13,7 +13,6 @@ import (
 	"github.com/maticnetwork/heimdall/types/simulation"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 type GenesisTestSuite struct {
@@ -25,8 +24,7 @@ type GenesisTestSuite struct {
 
 // SetupTest setup necessary things for genesis test
 func (suite *GenesisTestSuite) SetupTest() {
-	suite.app = app.SetupCheckpointGenesis()
-	suite.ctx = suite.app.BaseApp.NewContext(true, abci.Header{})
+	suite.app, suite.ctx, _ = createTestApp(true)
 }
 
 // TestGenesisTestSuite
