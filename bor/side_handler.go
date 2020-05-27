@@ -106,7 +106,7 @@ func PostHandleMsgEventSpan(ctx sdk.Context, k Keeper, msg types.MsgProposeSpan,
 	}
 
 	// check for replay
-	if k.HasSpan(ctx, msg.ID) {
+	if found := k.HasSpan(ctx, msg.ID); found {
 		k.Logger(ctx).Debug("Skipping new span as it's already processed")
 		return hmCommon.ErrOldTx(k.Codespace()).Result()
 	}

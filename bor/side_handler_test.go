@@ -14,7 +14,9 @@ import (
 	"github.com/maticnetwork/heimdall/bor"
 	borTypes "github.com/maticnetwork/heimdall/bor/types"
 	"github.com/maticnetwork/heimdall/common"
+	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper/mocks"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/stretchr/testify/suite"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
@@ -39,33 +41,13 @@ func (suite *sideChHandlerSuite) SetupTest() {
 
 func (suite *sideChHandlerSuite) TestSideHandleMsgSpan() {
 	var bi *big.Int
-	bi = nil
-	ethBlockData := `{
-		"difficulty":"997888",
-		"extraData":"0xd883010503846765746887676f312e372e318664617277696e",
-		"gasLimit":16760833,
-		"gasUsed":0,
-		"hash":"0x41800b5c3f1717687d85fc9018faac0a6e90b39deaa0b99e7fe4fe796ddeb26a",
-		"logsBloom":"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-		"miner":"0xd1aeb42885a43b72b518182ef893125814811048",
-		"mixHash":"0x0f98b15f1a4901a7e9204f3c500a7bd527b3fb2c3340e12176a44b83e414a69e",
-		"nonce":"0x0ece08ea8c49dfd9",
-		"number":1,
-		"parentHash":"0x41941023680923e0fe4d74a34bdac8141f2540e3ae90623718e47d66d1ca4a2d",
-		"receiptsRoot":"0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
-		"sha3Uncles":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-		"size":536,
-		"stateRoot":"0xc7b01007a10da045eacb90385887dd0c38fcb5db7393006bdde24b93873c334b",
-		"timestamp":1479642530,
-		"totalDifficulty":"2046464",
-		"transactions":[],
-		"transactionsRoot":"0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
-		"uncles":[]
-	}`
-	ethBlockHash := `0x88e96d4537bea4d9c05d12549907b32561d3bf31f45aae734cdc119f13406cb6`
+
+	ethBlockData := `{"parentHash":"0xbf7e331f7f7c1dd2e05159666b3bf8bc7a8a3a9eb1d518969eab529dd9b88c1a","sha3Uncles":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","miner":"0x0000000000000000000000000000000000000000","stateRoot":"0x5d6cded585e73c4e322c30c2f782a336316f17dd85a4863b9d838d2d4b8b3008","transactionsRoot":"0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421","receiptsRoot":"0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421","logsBloom":"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","difficulty":"0x2","number":"0x1","gasLimit":"0x9fd801","gasUsed":"0x0","timestamp":"0x5c530ffd","extraData":"0x506172697479205465636820417574686f7269747900000000000000000000002bbf886181970654ed46e3fae0ded41ee53fec702c47431988a7ae80e6576f3552684f069af80ba11d36327aaf846d470526e4a1c461601b2fd4ebdcdc2b734a01","mixHash":"0x0000000000000000000000000000000000000000000000000000000000000000","nonce":"0x0000000000000000","hash":"0x8f5bab218b6bb34476f51ca588e9f4553a3a7ce5e13a66c660a5283e97e9a85a"}`
+	// ethBlockHash := `0x8f5bab218b6bb34476f51ca588e9f4553a3a7ce5e13a66c660a5283e97e9a85a`
+	ethBlockHash := `0xc3bd2d00745c03048a5616146a96f5ff78e54efb9e5b04af208cdaff6f3830ee`
 
 	var ethHeader ethTypes.Header
-	suite.Nil(json.Unmarshal(borCommon.Hex2Bytes(ethBlockData), &ethHeader))
+	suite.Nil(json.Unmarshal([]byte(ethBlockData), &ethHeader))
 
 	type callerMethod struct {
 		name string
@@ -77,13 +59,16 @@ func (suite *sideChHandlerSuite) TestSideHandleMsgSpan() {
 		msg       string
 		codespace string
 		code      common.CodeType
+		result    abci.SideTxResultType
 		cm        []callerMethod
 		seed      borCommon.Hash
+		span      *hmTypes.Span
 	}{
 		{
 			codespace: "1",
 			code:      common.CodeInvalidMsg,
 			msg:       "error mainchain error",
+			result:    abci.SideTxResultType_Skip,
 			cm: []callerMethod{
 				{
 					name: "GetMainChainBlock",
@@ -96,6 +81,7 @@ func (suite *sideChHandlerSuite) TestSideHandleMsgSpan() {
 			msg:       "error msg seed bytes failure",
 			codespace: "1",
 			code:      common.CodeInvalidMsg,
+			result:    abci.SideTxResultType_Skip,
 			cm: []callerMethod{
 				{
 					name: "GetMainChainBlock",
@@ -109,6 +95,7 @@ func (suite *sideChHandlerSuite) TestSideHandleMsgSpan() {
 			codespace: "1",
 			code:      common.CodeInvalidMsg,
 			seed:      borCommon.HexToHash(ethBlockHash),
+			result:    abci.SideTxResultType_Skip,
 			cm: []callerMethod{
 				{
 					name: "GetMainChainBlock",
@@ -118,7 +105,64 @@ func (suite *sideChHandlerSuite) TestSideHandleMsgSpan() {
 				{
 					name: "GetMaticChainBlock",
 					args: []interface{}{bi},
-					ret:  []interface{}{ethHeader, ethereum.NotFound},
+					ret:  []interface{}{&ethHeader, ethereum.NotFound},
+				},
+			},
+		},
+		{
+			msg:       "error failed to lastSpan",
+			codespace: "1",
+			code:      common.CodeInvalidMsg,
+			result:    abci.SideTxResultType_Skip,
+			seed:      borCommon.HexToHash(ethBlockHash),
+			cm: []callerMethod{
+				{
+					name: "GetMainChainBlock",
+					args: []interface{}{big.NewInt(1)},
+					ret:  []interface{}{&ethTypes.Header{}, nil},
+				},
+				{
+					name: "GetMaticChainBlock",
+					args: []interface{}{bi},
+					ret:  []interface{}{&ethHeader, nil},
+				},
+			},
+		},
+		{
+			msg:       "error failed to lastSpan validation",
+			codespace: "1",
+			code:      common.CodeInvalidMsg,
+			result:    abci.SideTxResultType_Skip,
+			seed:      borCommon.HexToHash(ethBlockHash),
+			span:      &hmTypes.Span{ID: 1, StartBlock: 0, EndBlock: 0, ChainID: "15001"},
+			cm: []callerMethod{
+				{
+					name: "GetMainChainBlock",
+					args: []interface{}{big.NewInt(1)},
+					ret:  []interface{}{&ethTypes.Header{}, nil},
+				},
+				{
+					name: "GetMaticChainBlock",
+					args: []interface{}{bi},
+					ret:  []interface{}{&ethHeader, nil},
+				},
+			},
+		},
+		{
+			msg:    "happy flow",
+			seed:   borCommon.HexToHash(ethBlockHash),
+			result: abci.SideTxResultType_Yes,
+			span:   &hmTypes.Span{ID: 1, StartBlock: 0, EndBlock: 1, ChainID: "15001"},
+			cm: []callerMethod{
+				{
+					name: "GetMainChainBlock",
+					args: []interface{}{big.NewInt(1)},
+					ret:  []interface{}{&ethTypes.Header{}, nil},
+				},
+				{
+					name: "GetMaticChainBlock",
+					args: []interface{}{bi},
+					ret:  []interface{}{&ethHeader, nil},
 				},
 			},
 		},
@@ -132,10 +176,59 @@ func (suite *sideChHandlerSuite) TestSideHandleMsgSpan() {
 				suite.mockCaller.On(m.name, m.args...).Return(m.ret...)
 			}
 		}
-		fmt.Println(c.seed.Hex())
+		if c.span != nil {
+			suite.app.BorKeeper.AddNewSpan(suite.ctx, *c.span)
+		}
+
+		// cSpan is used to check if span data remains constant post handler execution
+		cSpan := suite.app.BorKeeper.GetAllSpans(suite.ctx)
+
 		out := bor.SideHandleMsgSpan(suite.ctx, suite.app.BorKeeper, borTypes.MsgProposeSpan{Seed: c.seed}, &suite.mockCaller)
 		// construct output
-		c.out = abci.ResponseDeliverSideTx{Code: uint32(c.code), Codespace: c.codespace, Result: abci.SideTxResultType_Skip}
+		c.out = abci.ResponseDeliverSideTx{Code: uint32(c.code), Codespace: c.codespace, Result: c.result}
+		suite.Equal(c.out, out, c.msg)
+
+		// pSpan is used to check if span data remains constant post handler execution
+		pSpan := suite.app.BorKeeper.GetAllSpans(suite.ctx)
+		suite.Equal(cSpan, pSpan, "Invalid: handler should not update span "+c.msg)
+	}
+}
+
+func (suite *sideChHandlerSuite) TestPostHandleMsgEventSpan() {
+	tc := []struct {
+		msg     string
+		spanMsg borTypes.MsgProposeSpan
+		result  abci.SideTxResultType
+		span    *hmTypes.Span
+		out     sdk.Result
+	}{
+		{
+			msg: "error result check",
+			out: common.ErrSideTxValidation(suite.app.BorKeeper.Codespace()).Result(),
+		},
+		{
+			msg:     "error span already exists",
+			spanMsg: borTypes.MsgProposeSpan{ID: 1},
+			span:    &hmTypes.Span{ID: 1, StartBlock: 1, EndBlock: 1, ChainID: "15001"},
+			result:  abci.SideTxResultType_Yes,
+			out:     hmCommon.ErrOldTx(suite.app.BorKeeper.Codespace()).Result(),
+		},
+		{
+			msg:     "error unable to freeze val",
+			spanMsg: borTypes.MsgProposeSpan{ID: 1, StartBlock: 1, EndBlock: 0, ChainID: "15001"},
+			// span:    &hmTypes.Span{ID: 1, StartBlock: 1, EndBlock: 1, ChainID: "15001"},
+			result: abci.SideTxResultType_Yes,
+			out:    common.ErrUnableToFreezeValSet(suite.app.BorKeeper.Codespace()).Result(),
+		},
+	}
+	for i, c := range tc {
+		suite.SetupTest()
+		c.msg = fmt.Sprintf("i: %v, msg: %v", i, c.msg)
+		if c.span != nil {
+			suite.app.BorKeeper.AddNewSpan(suite.ctx, *c.span)
+		}
+
+		out := bor.PostHandleMsgEventSpan(suite.ctx, suite.app.BorKeeper, c.spanMsg, c.result)
 		suite.Equal(c.out, out, c.msg)
 	}
 }
