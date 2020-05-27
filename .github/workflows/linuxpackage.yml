@@ -41,8 +41,7 @@ jobs:
           Description=heimdall
           [Service]
           WorkingDirectory=/usr/bin/
-          ExecStartPre=/bin/mkdir -p /var/log/matic-logs/
-          ExecStart=/bin/bash -c '/usr/bin/heimdalld start --home /etc/heimdall/ > /var/log/matic-logs/heimdalld.log 2>&1'
+          ExecStart=/bin/bash -c '/usr/bin/heimdalld start --home /etc/heimdall/'
           Type=simple
           User=root
           EOF
@@ -52,8 +51,7 @@ jobs:
           Description=heimdall-bridge
           [Service]
           WorkingDirectory=/usr/bin/
-          ExecStartPre=/bin/mkdir -p /var/log/matic-logs/
-          ExecStart=/bin/bash -c "/usr/bin/bridge start --all --home /etc/heimdall/ > /var/log/matic-logs/heimdalld-bridge.log 2>&1"
+          ExecStart=/bin/bash -c "/usr/bin/bridge start --all --home /etc/heimdall/"
           Type=simple
           User=root
           EOF
@@ -63,8 +61,7 @@ jobs:
           Description=heimdalld-rest-server
           [Service]
           WorkingDirectory=/usr/bin/
-          ExecStartPre=/bin/mkdir -p /var/log/matic-logs/
-          ExecStart=/bin/bash -c "/usr/bin/heimdalld rest-server --home /etc/heimdall/ > /var/log/matic-logs/heimdalld-rest-server.log 2>&1"
+          ExecStart=/bin/bash -c "/usr/bin/heimdalld rest-server --home /etc/heimdall/"
           Type=simple
           User=root
           EOF
