@@ -10,7 +10,7 @@ import (
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/bor"
 	bortypes "github.com/maticnetwork/heimdall/bor/types"
-	"github.com/maticnetwork/heimdall/test"
+	"github.com/maticnetwork/heimdall/checkpoint/simulation"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/stretchr/testify/suite"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -50,10 +50,6 @@ func (suite *keeperTest) TestFreeze() {
 			startBlock: 3,
 			msg:        "validation error missing id",
 		},
-		// {
-		// 	expErr: merr.ValErr{Field: "id", Module: bortypes.ModuleName},
-		// 	msg:    "validation error missing id",
-		// },
 	}
 
 	for i, c := range tc {
@@ -93,7 +89,7 @@ func (suite *keeperTest) TestSelectNextProducers() {
 
 	for i, c := range tc {
 		c.msg = fmt.Sprintf("i: %v, msg: %v", i, c.msg)
-		vals := test.LoadValidatorSet(4, suite.T(), suite.app.StakingKeeper, suite.ctx, false, 0).Validators // load a random number of validators
+		vals := simulation.LoadValidatorSet(4, suite.T(), suite.app.StakingKeeper, suite.ctx, false, 0).Validators // load a random number of validators
 		for _, v := range vals {
 			c.spanEligibleVals = append(c.spanEligibleVals, *v)
 		}
@@ -127,7 +123,7 @@ func (suite *keeperTest) TestBorKeeperSelectNextProducers() {
 
 	for i, c := range tc {
 		suite.app.BorKeeper.SetParams(suite.ctx, bortypes.Params{SprintDuration: 1, SpanDuration: 1, ProducerCount: c.producerCount})
-		test.LoadValidatorSet(4, suite.T(), suite.app.StakingKeeper, suite.ctx, true, 0) // load a random number of validators
+		simulation.LoadValidatorSet(4, suite.T(), suite.app.StakingKeeper, suite.ctx, true, 0) // load a random number of validators
 		cMsg := fmt.Sprintf("i: %v, msg: %v", i, c.msg)
 		out, err := suite.app.BorKeeper.SelectNextProducers(suite.ctx, c.seed)
 		suite.NotNil(out, cMsg)

@@ -201,10 +201,6 @@ func (k *Keeper) GetLastSpan(ctx sdk.Context) (*hmTypes.Span, error) {
 // FreezeSet freezes validator set for next span
 func (k *Keeper) FreezeSet(ctx sdk.Context, id uint64, startBlock uint64, endBlock uint64, borChainID string, seed common.Hash) error {
 
-	// 	if id == 0 {
-	// 		return merr.ValErr{Field: "id", Module: types.ModuleName}
-	// 	}
-
 	// select next producers
 	newProducers, err := k.SelectNextProducers(ctx, seed)
 	if err != nil {

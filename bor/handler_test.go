@@ -13,6 +13,7 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/stretchr/testify/suite"
 	abci "github.com/tendermint/tendermint/abci/types"
+	tmCommon "github.com/tendermint/tendermint/libs/common"
 )
 
 type handlerSuite struct {
@@ -65,7 +66,7 @@ func (suite handlerSuite) TestHandleMsgProposeSpan() {
 		msg          string
 	}{
 		{
-			out:          sdk.Result{Events: sdk.EmptyEvents()},
+			out:          sdk.Result{Events: sdk.Events{sdk.Event{Type: "propose-span", Attributes: []tmCommon.KVPair{tmCommon.KVPair{Key: []uint8{0x6d, 0x6f, 0x64, 0x75, 0x6c, 0x65}, Value: []uint8{0x62, 0x6f, 0x72}, XXX_NoUnkeyedLiteral: struct{}{}, XXX_unrecognized: []uint8(nil), XXX_sizecache: 0}, tmCommon.KVPair{Key: []uint8{0x73, 0x70, 0x61, 0x6e, 0x2d, 0x69, 0x64}, Value: []uint8{0x32}, XXX_NoUnkeyedLiteral: struct{}{}, XXX_unrecognized: []uint8(nil), XXX_sizecache: 0}, tmCommon.KVPair{Key: []uint8{0x73, 0x74, 0x61, 0x72, 0x74, 0x2d, 0x62, 0x6c, 0x6f, 0x63, 0x6b}, Value: []uint8{0x32}, XXX_NoUnkeyedLiteral: struct{}{}, XXX_unrecognized: []uint8(nil), XXX_sizecache: 0}, tmCommon.KVPair{Key: []uint8{0x65, 0x6e, 0x64, 0x2d, 0x62, 0x6c, 0x6f, 0x63, 0x6b}, Value: []uint8{0x33}, XXX_NoUnkeyedLiteral: struct{}{}, XXX_unrecognized: []uint8(nil), XXX_sizecache: 0}}, XXX_NoUnkeyedLiteral: struct{}{}, XXX_unrecognized: []uint8(nil), XXX_sizecache: int32(0)}}},
 			spanDuration: 2,
 			span:         &hmTypes.Span{ID: 1, StartBlock: 1, EndBlock: 1, ChainID: "15001"},
 			chainID:      "15001", // default chain id
