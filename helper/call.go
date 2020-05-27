@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"math/big"
 	"strings"
 
@@ -359,7 +358,6 @@ func (c *ContractCaller) GetValidatorInfo(valID types.ValidatorID, stakingInfoIn
 
 // GetMainChainBlock returns main chain block header
 func (c *ContractCaller) GetMainChainBlock(blockNum *big.Int) (header *ethTypes.Header, err error) {
-	fmt.Println("testes during")
 	if c.MainChainClient == nil {
 		return nil, merr.ValErr{Field: "MainChainClient"}
 	}

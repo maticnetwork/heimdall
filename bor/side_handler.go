@@ -50,9 +50,8 @@ func SideHandleMsgSpan(ctx sdk.Context, k Keeper, msg types.MsgProposeSpan, cont
 	k.Logger(ctx).Debug("✅ Validating External call for span msg",
 		"msgSeed", msg.Seed.String(),
 	)
-
 	// calculate next span seed locally
-	nextSpanSeed, err := k.GetNextSpanSeed(ctx)
+	nextSpanSeed, err := k.GetNextSpanSeed(ctx, contractCaller)
 	if err != nil {
 		k.Logger(ctx).Error("Error fetching next span seed from mainchain")
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)

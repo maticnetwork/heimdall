@@ -2,7 +2,6 @@ package bor
 
 import (
 	"errors"
-	"fmt"
 	"math/big"
 	"strconv"
 
@@ -42,7 +41,7 @@ type Keeper struct {
 	// param space
 	paramSpace subspace.Subspace
 	// contract caller
-	contractCaller helper.ContractCaller
+	ContractCaller helper.ContractCaller
 	// chain manager keeper
 	chainKeeper chainmanager.Keeper
 }
@@ -64,7 +63,7 @@ func NewKeeper(
 		codespace:      codespace,
 		chainKeeper:    chainKeeper,
 		sk:             stakingKeeper,
-		contractCaller: caller,
+		ContractCaller: caller,
 	}
 	return keeper
 }
@@ -295,17 +294,15 @@ func (k *Keeper) GetLastEthBlock(ctx sdk.Context) *big.Int {
 	return lastEthBlock
 }
 
-func (k Keeper) GetNextSpanSeed(ctx sdk.Context) (common.Hash, error) {
+func (k Keeper) GetNextSpanSeed(ctx sdk.Context, contractCaller helper.IContractCaller) (common.Hash, error) {
 	lastEthBlock := k.GetLastEthBlock(ctx)
 
 	// increment last processed header block number
 	newEthBlock := lastEthBlock.Add(lastEthBlock, big.NewInt(1))
 	k.Logger(ctx).Debug("newEthBlock to generate seed", "newEthBlock", newEthBlock)
 
-	fmt.Println("testes")
 	// fetch block header from mainchain
-	blockHeader, err := k.contractCaller.GetMainChainBlock(newEthBlock)
-	fmt.Println("testes post")
+	blockHeader, err := contractCaller.GetMainChainBlock(newEthBlock)
 
 	if err != nil {
 		k.Logger(ctx).Error("Error fetching block header from mainchain while calculating next span seed", "error", err)
