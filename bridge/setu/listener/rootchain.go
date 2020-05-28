@@ -179,7 +179,10 @@ func (rl *RootChainListener) queryAndBroadcastEvents(rootchainContext *RootChain
 				rl.Logger.Debug("ReceivedEvent", "eventname", selectedEvent.Name)
 				switch selectedEvent.Name {
 				case "NewHeaderBlock":
-					rl.sendTaskWithDelay("sendCheckpointAckToHeimdall", selectedEvent.Name, logBytes, 0)
+					if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx); isCurrentValidator {
+						delay = delay + util.TaskDelayBetweenEachVal
+						rl.sendTaskWithDelay("sendCheckpointAckToHeimdall", selectedEvent.Name, logBytes, delay)
+					}
 				case "Staked":
 					event := new(stakinginfo.StakinginfoStaked)
 					if err := helper.UnpackLog(rl.stakingInfoAbi, event, selectedEvent.Name, &vLog); err != nil {
