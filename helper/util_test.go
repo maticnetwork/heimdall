@@ -2,9 +2,13 @@ package helper
 
 import (
 	"encoding/hex"
+	"errors"
 	"math/big"
 	"testing"
 
+	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
@@ -62,4 +66,51 @@ func TestGetPowerFromAmount(t *testing.T) {
 		require.Nil(t, err, "Error must be null for input %v, output %v", k, v)
 		require.Equal(t, p.String(), v, "Power must match")
 	}
+}
+
+func TestCalculateGas(t *testing.T) {
+	cdc := MakeCodec()
+	makeQueryFunc := func(gasUsed uint64, wantErr bool) func(string, []byte) ([]byte, int64, error) {
+		return func(string, []byte) ([]byte, int64, error) {
+			if wantErr {
+				return nil, 0, errors.New("")
+			}
+			return cdc.MustMarshalBinaryLengthPrefixed(sdk.Result{GasUsed: gasUsed}), 0, nil
+		}
+	}
+	type args struct {
+		queryFuncGasUsed uint64
+		queryFuncWantErr bool
+		adjustment       float64
+	}
+	tests := []struct {
+		name         string
+		args         args
+		wantEstimate uint64
+		wantAdjusted uint64
+		wantErr      bool
+	}{
+		{"error", args{0, true, 1.2}, 0, 0, true},
+		{"adjusted gas", args{10, false, 1.2}, 10, 12, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			queryFunc := makeQueryFunc(tt.args.queryFuncGasUsed, tt.args.queryFuncWantErr)
+			gotEstimate, gotAdjusted, err := CalculateGas(queryFunc, cdc, []byte(""), tt.args.adjustment)
+			assert.Equal(t, err != nil, tt.wantErr)
+			assert.Equal(t, gotEstimate, tt.wantEstimate)
+			assert.Equal(t, gotAdjusted, tt.wantAdjusted)
+		})
+	}
+}
+
+// MakeCodec create codec
+func MakeCodec() *codec.Codec {
+	cdc := codec.New()
+
+	codec.RegisterCrypto(cdc)
+	sdk.RegisterCodec(cdc)
+
+	cdc.Seal()
+	return cdc
 }

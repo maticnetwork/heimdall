@@ -11,7 +11,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bor "github.com/maticnetwork/bor"
 	"github.com/maticnetwork/bor/core/types"
-	"github.com/maticnetwork/heimdall/auth"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
@@ -72,7 +71,6 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg) error {
 		WithTxEncoder(txEncoder).
 		WithAccountNumber(tb.accNum).
 		WithSequence(tb.lastSeqNo).
-		WithFees(auth.DefaultFeeWantedPerTx.String()).
 		WithChainID(chainID)
 
 	txResponse, err := helper.BuildAndBroadcastMsgs(tb.cliCtx, txBldr, []sdk.Msg{msg})
