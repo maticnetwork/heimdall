@@ -22,6 +22,13 @@ import (
 	tmCommon "github.com/tendermint/tendermint/libs/common"
 )
 
+// callerMethod is to be used to mock the IContractCaller
+type callerMethod struct {
+	name string
+	args []interface{}
+	ret  []interface{}
+}
+
 type sideChHandlerSuite struct {
 	suite.Suite
 	app        *app.HeimdallApp
@@ -50,11 +57,6 @@ func (suite *sideChHandlerSuite) TestSideHandleMsgSpan() {
 	var ethHeader ethTypes.Header
 	suite.Nil(json.Unmarshal([]byte(ethBlockData), &ethHeader))
 
-	type callerMethod struct {
-		name string
-		args []interface{}
-		ret  []interface{}
-	}
 	tc := []struct {
 		out       abci.ResponseDeliverSideTx
 		msg       string

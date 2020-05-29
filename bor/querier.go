@@ -15,6 +15,9 @@ import (
 // NewQuerier creates a querier for auth REST endpoints
 func NewQuerier(keeper Keeper, contractCaller helper.IContractCaller) sdk.Querier {
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) ([]byte, sdk.Error) {
+		if len(path) == 0 {
+			return nil, sdk.ErrUnknownRequest("unknown auth query endpoint")
+		}
 		switch path[0] {
 		case types.QueryParams:
 			if len(path) == 1 {
