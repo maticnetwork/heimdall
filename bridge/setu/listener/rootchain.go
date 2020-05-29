@@ -180,7 +180,6 @@ func (rl *RootChainListener) queryAndBroadcastEvents(rootchainContext *RootChain
 				switch selectedEvent.Name {
 				case "NewHeaderBlock":
 					if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx); isCurrentValidator {
-						delay = delay + util.TaskDelayBetweenEachVal
 						rl.sendTaskWithDelay("sendCheckpointAckToHeimdall", selectedEvent.Name, logBytes, delay)
 					}
 				case "Staked":
