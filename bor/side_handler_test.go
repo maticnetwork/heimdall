@@ -13,7 +13,6 @@ import (
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/bor"
 	borTypes "github.com/maticnetwork/heimdall/bor/types"
-	bortypes "github.com/maticnetwork/heimdall/bor/types"
 	"github.com/maticnetwork/heimdall/common"
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper/mocks"
@@ -75,7 +74,7 @@ func (suite *sideChHandlerSuite) TestSideHandleMsgSpan() {
 				{
 					name: "GetMainChainBlock",
 					args: []interface{}{big.NewInt(1)},
-					ret:  []interface{}{&ethTypes.Header{}, ethereum.NotFound},
+					ret:  []interface{}{nil, ethereum.NotFound},
 				},
 			},
 		},
@@ -198,12 +197,12 @@ func (suite *sideChHandlerSuite) TestSideHandleMsgSpan() {
 
 func (suite *sideChHandlerSuite) TestPostHandleMsgEventSpan() {
 	tc := []struct {
-		msg         string
-		spanMsg     borTypes.MsgProposeSpan
-		result      abci.SideTxResultType
-		span        *hmTypes.Span
-		out         sdk.Result
-		producerErr bool
+		msg       string
+		spanMsg   borTypes.MsgProposeSpan
+		result    abci.SideTxResultType
+		span      *hmTypes.Span
+		out       sdk.Result
+		checkSpan bool
 	}{
 		{
 			msg: "error result check",
@@ -216,31 +215,39 @@ func (suite *sideChHandlerSuite) TestPostHandleMsgEventSpan() {
 			result:  abci.SideTxResultType_Yes,
 			out:     hmCommon.ErrOldTx(suite.app.BorKeeper.Codespace()).Result(),
 		},
+		// TODO unable to induce the underlying error
+		//	{
+		//		msg:         "error unable to freeze val",
+		//		spanMsg:     borTypes.MsgProposeSpan{ID: 0, StartBlock: 0, EndBlock: 0, ChainID: "15001"},
+		//		producerErr: true,
+		//		result:      abci.SideTxResultType_Yes,
+		//		out:         common.ErrUnableToFreezeValSet(suite.app.BorKeeper.Codespace()).Result(),
+		//	},
 		{
-			msg:         "error unable to freeze val",
-			spanMsg:     borTypes.MsgProposeSpan{ID: 0, StartBlock: 0, EndBlock: 0, ChainID: "15001"},
-			producerErr: true,
-			result:      abci.SideTxResultType_Yes,
-			out:         common.ErrUnableToFreezeValSet(suite.app.BorKeeper.Codespace()).Result(),
-		},
-		{
-			msg:     "happy flow",
-			spanMsg: borTypes.MsgProposeSpan{ID: 0, StartBlock: 1, EndBlock: 0, ChainID: "15001"},
-			result:  abci.SideTxResultType_Yes,
-			out:     sdk.Result{Events: sdk.Events{sdk.Event{Type: "propose-span", Attributes: []tmCommon.KVPair{tmCommon.KVPair{Key: []uint8{0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e}, Value: []uint8{0x70, 0x72, 0x6f, 0x70, 0x6f, 0x73, 0x65, 0x2d, 0x73, 0x70, 0x61, 0x6e}, XXX_NoUnkeyedLiteral: struct{}{}, XXX_unrecognized: []uint8(nil), XXX_sizecache: 0}, tmCommon.KVPair{Key: []uint8{0x6d, 0x6f, 0x64, 0x75, 0x6c, 0x65}, Value: []uint8{0x62, 0x6f, 0x72}, XXX_NoUnkeyedLiteral: struct{}{}, XXX_unrecognized: []uint8(nil), XXX_sizecache: 0}, tmCommon.KVPair{Key: []uint8{0x74, 0x78, 0x68, 0x61, 0x73, 0x68}, Value: []uint8{0x30, 0x78, 0x65, 0x33, 0x62, 0x30, 0x63, 0x34, 0x34, 0x32, 0x39, 0x38, 0x66, 0x63, 0x31, 0x63, 0x31, 0x34, 0x39, 0x61, 0x66, 0x62, 0x66, 0x34, 0x63, 0x38, 0x39, 0x39, 0x36, 0x66, 0x62, 0x39, 0x32, 0x34, 0x32, 0x37, 0x61, 0x65, 0x34, 0x31, 0x65, 0x34, 0x36, 0x34, 0x39, 0x62, 0x39, 0x33, 0x34, 0x63, 0x61, 0x34, 0x39, 0x35, 0x39, 0x39, 0x31, 0x62, 0x37, 0x38, 0x35, 0x32, 0x62, 0x38, 0x35, 0x35}, XXX_NoUnkeyedLiteral: struct{}{}, XXX_unrecognized: []uint8(nil), XXX_sizecache: 0}, tmCommon.KVPair{Key: []uint8{0x73, 0x69, 0x64, 0x65, 0x2d, 0x74, 0x78, 0x2d, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74}, Value: []uint8{0x59, 0x65, 0x73}, XXX_NoUnkeyedLiteral: struct{}{}, XXX_unrecognized: []uint8(nil), XXX_sizecache: 0}, tmCommon.KVPair{Key: []uint8{0x73, 0x70, 0x61, 0x6e, 0x2d, 0x69, 0x64}, Value: []uint8{0x30}, XXX_NoUnkeyedLiteral: struct{}{}, XXX_unrecognized: []uint8(nil), XXX_sizecache: 0}, tmCommon.KVPair{Key: []uint8{0x73, 0x74, 0x61, 0x72, 0x74, 0x2d, 0x62, 0x6c, 0x6f, 0x63, 0x6b}, Value: []uint8{0x31}, XXX_NoUnkeyedLiteral: struct{}{}, XXX_unrecognized: []uint8(nil), XXX_sizecache: 0}, tmCommon.KVPair{Key: []uint8{0x65, 0x6e, 0x64, 0x2d, 0x62, 0x6c, 0x6f, 0x63, 0x6b}, Value: []uint8{0x30}, XXX_NoUnkeyedLiteral: struct{}{}, XXX_unrecognized: []uint8(nil), XXX_sizecache: 0}}, XXX_NoUnkeyedLiteral: struct{}{}, XXX_unrecognized: []uint8(nil), XXX_sizecache: 0}}},
+			msg:       "happy flow",
+			spanMsg:   borTypes.MsgProposeSpan{ID: 0, StartBlock: 1, EndBlock: 0, ChainID: "15001"},
+			result:    abci.SideTxResultType_Yes,
+			checkSpan: true,
+			out:       sdk.Result{Events: sdk.Events{sdk.Event{Type: "propose-span", Attributes: []tmCommon.KVPair{tmCommon.KVPair{Key: []uint8{0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e}, Value: []uint8{0x70, 0x72, 0x6f, 0x70, 0x6f, 0x73, 0x65, 0x2d, 0x73, 0x70, 0x61, 0x6e}, XXX_NoUnkeyedLiteral: struct{}{}, XXX_unrecognized: []uint8(nil), XXX_sizecache: 0}, tmCommon.KVPair{Key: []uint8{0x6d, 0x6f, 0x64, 0x75, 0x6c, 0x65}, Value: []uint8{0x62, 0x6f, 0x72}, XXX_NoUnkeyedLiteral: struct{}{}, XXX_unrecognized: []uint8(nil), XXX_sizecache: 0}, tmCommon.KVPair{Key: []uint8{0x74, 0x78, 0x68, 0x61, 0x73, 0x68}, Value: []uint8{0x30, 0x78, 0x65, 0x33, 0x62, 0x30, 0x63, 0x34, 0x34, 0x32, 0x39, 0x38, 0x66, 0x63, 0x31, 0x63, 0x31, 0x34, 0x39, 0x61, 0x66, 0x62, 0x66, 0x34, 0x63, 0x38, 0x39, 0x39, 0x36, 0x66, 0x62, 0x39, 0x32, 0x34, 0x32, 0x37, 0x61, 0x65, 0x34, 0x31, 0x65, 0x34, 0x36, 0x34, 0x39, 0x62, 0x39, 0x33, 0x34, 0x63, 0x61, 0x34, 0x39, 0x35, 0x39, 0x39, 0x31, 0x62, 0x37, 0x38, 0x35, 0x32, 0x62, 0x38, 0x35, 0x35}, XXX_NoUnkeyedLiteral: struct{}{}, XXX_unrecognized: []uint8(nil), XXX_sizecache: 0}, tmCommon.KVPair{Key: []uint8{0x73, 0x69, 0x64, 0x65, 0x2d, 0x74, 0x78, 0x2d, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74}, Value: []uint8{0x59, 0x65, 0x73}, XXX_NoUnkeyedLiteral: struct{}{}, XXX_unrecognized: []uint8(nil), XXX_sizecache: 0}, tmCommon.KVPair{Key: []uint8{0x73, 0x70, 0x61, 0x6e, 0x2d, 0x69, 0x64}, Value: []uint8{0x30}, XXX_NoUnkeyedLiteral: struct{}{}, XXX_unrecognized: []uint8(nil), XXX_sizecache: 0}, tmCommon.KVPair{Key: []uint8{0x73, 0x74, 0x61, 0x72, 0x74, 0x2d, 0x62, 0x6c, 0x6f, 0x63, 0x6b}, Value: []uint8{0x31}, XXX_NoUnkeyedLiteral: struct{}{}, XXX_unrecognized: []uint8(nil), XXX_sizecache: 0}, tmCommon.KVPair{Key: []uint8{0x65, 0x6e, 0x64, 0x2d, 0x62, 0x6c, 0x6f, 0x63, 0x6b}, Value: []uint8{0x30}, XXX_NoUnkeyedLiteral: struct{}{}, XXX_unrecognized: []uint8(nil), XXX_sizecache: 0}}, XXX_NoUnkeyedLiteral: struct{}{}, XXX_unrecognized: []uint8(nil), XXX_sizecache: 0}}},
 		},
 	}
 	for i, c := range tc {
 		suite.SetupTest()
-		c.msg = fmt.Sprintf("i: %v, msg: %v", i, c.msg)
 		if c.span != nil {
 			suite.app.BorKeeper.AddNewSpan(suite.ctx, *c.span)
 		}
-		if c.producerErr {
-			suite.app.BorKeeper.SetParams(suite.ctx, bortypes.Params{SprintDuration: 1, SpanDuration: 1, ProducerCount: 0})
-		}
 
+		// cSpan is used to check if span data remains constant post handler execution
+		cSpan := suite.app.BorKeeper.GetAllSpans(suite.ctx)
+
+		c.msg = fmt.Sprintf("i: %v, msg: %v", i, c.msg)
 		out := bor.PostHandleMsgEventSpan(suite.ctx, suite.app.BorKeeper, c.spanMsg, c.result)
 		suite.Equal(c.out, out, c.msg)
+
+		if c.checkSpan {
+			// pSpan is used to check if span data remains constant post handler execution
+			pSpan := suite.app.BorKeeper.GetAllSpans(suite.ctx)
+			suite.NotEqual(cSpan, pSpan, "Invalid: handler should update span "+c.msg)
+		}
 	}
 }

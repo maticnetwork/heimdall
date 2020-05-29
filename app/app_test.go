@@ -6,12 +6,14 @@ import (
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
 	db "github.com/tendermint/tm-db"
 
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
+	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/simulation"
 	simTypes "github.com/maticnetwork/heimdall/types/simulation"
 )
@@ -132,4 +134,10 @@ func TestValidateGenesis(t *testing.T) {
 func TestGetMaccPerms(t *testing.T) {
 	dup := GetMaccPerms()
 	require.Equal(t, maccPerms, dup, "duplicated module account permissions differed from actual module account permissions")
+}
+
+func TestGetCaller(t *testing.T) {
+	happ := Setup(false)
+	out := happ.GetCaller()
+	assert.IsType(t, helper.ContractCaller{}, out, "checking type for caller")
 }

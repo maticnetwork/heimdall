@@ -245,7 +245,7 @@ func (k *Keeper) SelectNextProducers(ctx sdk.Context, seed common.Hash) (vals []
 
 	IDToPower := make(map[uint64]uint64)
 	for _, ID := range newProducersIds {
-		IDToPower[ID] = IDToPower[ID] + 1
+		IDToPower[ID] += 1
 	}
 
 	for key, value := range IDToPower {

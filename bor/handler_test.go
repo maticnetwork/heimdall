@@ -32,25 +32,35 @@ func (suite *handlerSuite) SetupTest() {
 	suite.ctx = suite.app.BaseApp.NewContext(isCheckTx, abci.Header{})
 }
 
-// func (suite *handlerSuite) TestNewHandler() {
-// 	tc := []struct {
-// 		k          bor.Keeper
-// 		outHandler sdk.Handler
-// 		msg        string
-// 	}{
-// 		{
-// 			k:          suite.app.BorKeeper,
-// 			outHandler: bor.NewHandler(suite.app.BorKeeper),
-// 			msg:        "happy flow",
-// 		},
-// 	}
-// 	for i, c := range tc {
-// 		c.msg = fmt.Sprintf("i: %v, msg: %v", i, c.msg)
-// 		out := bor.NewHandler(c.k)
-// 		suite.IsType(sdk.Handler(suite.ctx, &suite.app.GetCaller()), out, c.msg)
-// 		// suite.Equal(c.outHandler, out, c.msg)
-// 	}
-// }
+func (suite *handlerSuite) TestNewHandler() {
+	tc := []struct {
+		k          bor.Keeper
+		outHandler sdk.Handler
+		msg        string
+		keeperMsg  sdk.Msg
+		result     interface{}
+	}{
+		{
+			k:         suite.app.BorKeeper,
+			msg:       "happy flow",
+			keeperMsg: borTypes.MsgProposeSpan{},
+			result:    bor.NewHandler(suite.app.BorKeeper)(suite.ctx, borTypes.MsgProposeSpan{}),
+		},
+		{
+			k:         suite.app.BorKeeper,
+			msg:       "error invalid sdk msg",
+			keeperMsg: sdk.NewTestMsg(nil),
+			result:    sdk.ErrTxDecode("Invalid message in bor module").Result(),
+		},
+	}
+	for i, c := range tc {
+		c.msg = fmt.Sprintf("i: %v, msg: %v", i, c.msg)
+		out := bor.NewHandler(c.k)
+
+		result := out(suite.ctx, c.keeperMsg)
+		suite.Equal(c.result, result, c.msg)
+	}
+}
 
 func (suite handlerSuite) TestHandleMsgProposeSpan() {
 	tc := []struct {

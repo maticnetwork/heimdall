@@ -40,22 +40,39 @@ func (suite *keeperTest) TestFreeze() {
 		borChainID               string
 		expErr                   error
 		msg                      string
+		checkSpan                bool
 	}{
 		{
-			id:  1,
-			msg: "testing happy flow",
+			id:        1,
+			msg:       "testing happy flow",
+			checkSpan: true,
 		},
 		{
 			id:         1,
 			startBlock: 3,
 			msg:        "validation error missing id",
+			checkSpan:  true,
 		},
 	}
 
 	for i, c := range tc {
+		// cSpan is used to check if span data remains constant post handler execution
+		cSpan := suite.app.BorKeeper.GetAllSpans(suite.ctx)
+		cEthBlock := suite.app.BorKeeper.GetLastEthBlock(suite.ctx)
+
 		cMsg := fmt.Sprintf("i: %v, msg: %v", i, c.msg)
 		err := suite.app.BorKeeper.FreezeSet(suite.ctx, c.id, c.startBlock, c.endBlock, c.borChainID, c.seed)
 		suite.Equal(c.expErr, err, cMsg)
+		if c.checkSpan {
+			// pSpan is used to check if span data remains constant post handler execution
+			pSpan := suite.app.BorKeeper.GetAllSpans(suite.ctx)
+			suite.NotEqual(cSpan, pSpan, "Invalid: handler should update span "+c.msg)
+
+			pEthBlock := suite.app.BorKeeper.GetLastEthBlock(suite.ctx)
+			suite.NotEqual(cEthBlock, pEthBlock, "Invalid: handler should update span "+c.msg)
+
+		}
+
 	}
 }
 
@@ -110,24 +127,51 @@ func (suite *keeperTest) TestBorKeeperSelectNextProducers() {
 		producerCount uint64
 		seed          common.Hash
 		expErr        error
+		out           hmTypes.ValidatorSet
 	}{
 		{
-			producerCount: 4,
-			msg:           "happy flow",
+			producerCount: 10,
+			seed:          common.HexToHash("testSeed"),
+			msg:           "happy flow with very large validator set",
+			out:           simulation.LoadValidatorSet(40, suite.T(), suite.app.StakingKeeper, suite.ctx, true, 0), // load a random number of validators
 		},
 		{
-			producerCount: 40,
-			msg:           "happy flow",
+			producerCount: 1,
+			seed:          common.HexToHash("testSeed"),
+			msg:           "happy flow with greater validators then allowed",
+			out:           simulation.LoadValidatorSet(4, suite.T(), suite.app.StakingKeeper, suite.ctx, true, 0), // load a random number of validators
+		},
+		{
+			producerCount: 10,
+			seed:          common.HexToHash("testSeed"),
+			msg:           "happy flow with fewer validators than allowed",
+			out:           simulation.LoadValidatorSet(4, suite.T(), suite.app.StakingKeeper, suite.ctx, true, 0), // load a random number of validators
 		},
 	}
 
 	for i, c := range tc {
+		suite.SetupTest()
+		// cVals is used to check if validators are being modified during execution
+		cVals := suite.app.StakingKeeper.GetValidatorSet(suite.ctx)
 		suite.app.BorKeeper.SetParams(suite.ctx, bortypes.Params{SprintDuration: 1, SpanDuration: 1, ProducerCount: c.producerCount})
-		simulation.LoadValidatorSet(4, suite.T(), suite.app.StakingKeeper, suite.ctx, true, 0) // load a random number of validators
 		cMsg := fmt.Sprintf("i: %v, msg: %v", i, c.msg)
 		out, err := suite.app.BorKeeper.SelectNextProducers(suite.ctx, c.seed)
-		suite.NotNil(out, cMsg)
+
+		// pVals is used to check if validators are being modified during execution
+		pVals := suite.app.StakingKeeper.GetValidatorSet(suite.ctx)
+		suite.Equal(cVals, pVals, "Checking validators do not get modified while selecting them "+c.msg)
+
+		for _, v := range out {
+			for _, va := range c.out.Validators {
+				if va.ID == v.ID {
+					va.VotingPower, va.ProposerPriority = v.VotingPower, v.ProposerPriority // modifying values in order to compare
+					suite.Equal(*va, v, "invalid validator found: validator does not exist in validator set")
+				}
+			}
+		}
+		suite.GreaterOrEqual(int(c.producerCount), len(out), c.msg)
 		suite.Equal(c.expErr, err, cMsg)
+
 	}
 }
 
