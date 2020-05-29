@@ -265,10 +265,12 @@ func (cp *CheckpointProcessor) sendCheckpointAckToHeimdall(eventName string, che
 			"txHash", hmTypes.BytesToHeimdallHash(log.TxHash.Bytes()),
 			"logIndex", uint64(log.Index),
 		)
-		latestCheckpoint, err := util.GetlastestCheckpoint(cp.cliCtx)
 
-		if err == nil && latestCheckpoint  != nil && latestCheckpoint.StartBlock == event.Start.Uint64() && latestCheckpoint.EndBlock == event.End.Uint64() {
-			cp.Logger.Debug("checkpoint ack is already submitted", "start", event.Start, "end", event.End)
+		// fetch latest checkpoint
+		latestCheckpoint, err := util.GetlastestCheckpoint(cp.cliCtx)
+		// event checkpoint is older than or equal to latest checkpoint
+		if err == nil && latestCheckpoint != nil && latestCheckpoint.EndBlock >= event.End.Uint64() {
+			cp.Logger.Debug("Checkpoint ack is already submitted", "start", event.Start, "end", event.End)
 			return nil
 		}
 
