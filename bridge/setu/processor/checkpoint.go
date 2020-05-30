@@ -266,8 +266,13 @@ func (cp *CheckpointProcessor) sendCheckpointAckToHeimdall(eventName string, che
 			"logIndex", uint64(log.Index),
 		)
 
-		// TODO - check if this ack is already processed on heimdall or not.
-		// TODO - check if i am the proposer of this ack or not.
+		// fetch latest checkpoint
+		latestCheckpoint, err := util.GetlastestCheckpoint(cp.cliCtx)
+		// event checkpoint is older than or equal to latest checkpoint
+		if err == nil && latestCheckpoint != nil && latestCheckpoint.EndBlock >= event.End.Uint64() {
+			cp.Logger.Debug("Checkpoint ack is already submitted", "start", event.Start, "end", event.End)
+			return nil
+		}
 
 		// create msg checkpoint ack message
 		msg := checkpointTypes.NewMsgCheckpointAck(
@@ -308,19 +313,21 @@ func (cp *CheckpointProcessor) handleCheckpointNoAck() {
 	}
 
 	isNoAckRequired, count := cp.checkIfNoAckIsRequired(checkpointContext, lastCreatedAt)
+	if isNoAckRequired {
+		var isProposer bool
 
-	var isProposer bool
-	if isProposer, err = util.IsInProposerList(cp.cliCtx, count); err != nil {
-		cp.Logger.Error("Error checking IsInProposerList while proposing Checkpoint No-Ack ", "error", err)
-		return
-	}
-
-	// if i am the proposer and NoAck is required, then propose No-Ack
-	if isNoAckRequired && isProposer {
-		// send Checkpoint No-Ack to heimdall
-		if err := cp.proposeCheckpointNoAck(); err != nil {
-			cp.Logger.Error("Error proposing Checkpoint No-Ack ", "error", err)
+		if isProposer, err = util.IsInProposerList(cp.cliCtx, count); err != nil {
+			cp.Logger.Error("Error checking IsInProposerList while proposing Checkpoint No-Ack ", "error", err)
 			return
+		}
+
+		// if i am the proposer and NoAck is required, then propose No-Ack
+		if isProposer {
+			// send Checkpoint No-Ack to heimdall
+			if err := cp.proposeCheckpointNoAck(); err != nil {
+				cp.Logger.Error("Error proposing Checkpoint No-Ack ", "error", err)
+				return
+			}
 		}
 	}
 }
