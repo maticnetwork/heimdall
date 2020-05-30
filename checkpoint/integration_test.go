@@ -36,11 +36,11 @@ func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, context.CLICo
 	}
 
 	checkpointGenesis := types.NewGenesisState(
-		params,
-		nil,
-		uint64(0),
-		uint64(0),
-		nil,
+		types.DefaultGenesisState().Params,
+		types.DefaultGenesisState().BufferedCheckpoint,
+		types.DefaultGenesisState().LastNoACK,
+		types.DefaultGenesisState().AckCount,
+		types.DefaultGenesisState().Checkpoints,
 	)
 
 	genesisState[types.ModuleName] = app.Codec().MustMarshalJSON(checkpointGenesis)
