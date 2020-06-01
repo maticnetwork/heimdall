@@ -127,30 +127,32 @@ func (suite *keeperTest) TestBorKeeperSelectNextProducers() {
 		producerCount uint64
 		seed          common.Hash
 		expErr        error
+		valCount      int
 		out           hmTypes.ValidatorSet
 	}{
 		{
 			producerCount: 10,
 			seed:          common.HexToHash("testSeed"),
 			msg:           "happy flow with very large validator set",
-			out:           simulation.LoadValidatorSet(40, suite.T(), suite.app.StakingKeeper, suite.ctx, true, 0), // load a random number of validators
+			valCount:      40,
 		},
 		{
 			producerCount: 1,
 			seed:          common.HexToHash("testSeed"),
 			msg:           "happy flow with greater validators then allowed",
-			out:           simulation.LoadValidatorSet(4, suite.T(), suite.app.StakingKeeper, suite.ctx, true, 0), // load a random number of validators
+			valCount:      4,
 		},
 		{
 			producerCount: 10,
 			seed:          common.HexToHash("testSeed"),
 			msg:           "happy flow with fewer validators than allowed",
-			out:           simulation.LoadValidatorSet(4, suite.T(), suite.app.StakingKeeper, suite.ctx, true, 0), // load a random number of validators
+			valCount:      4,
 		},
 	}
 
 	for i, c := range tc {
 		suite.SetupTest()
+		c.out = simulation.LoadValidatorSet(c.valCount, suite.T(), suite.app.StakingKeeper, suite.ctx, true, 0) // load a random number of validators
 		// cVals is used to check if validators are being modified during execution
 		cVals := suite.app.StakingKeeper.GetValidatorSet(suite.ctx)
 		suite.app.BorKeeper.SetParams(suite.ctx, bortypes.Params{SprintDuration: 1, SpanDuration: 1, ProducerCount: c.producerCount})

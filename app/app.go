@@ -499,10 +499,6 @@ func MakeCodec() *codec.Codec {
 	return cdc
 }
 
-func (app *HeimdallApp) GetCaller() helper.ContractCaller {
-	return app.caller
-}
-
 // Name returns the name of the App
 func (app *HeimdallApp) Name() string { return app.BaseApp.Name() }
 
