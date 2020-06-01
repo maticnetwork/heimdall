@@ -13,7 +13,6 @@ import (
 	"github.com/maticnetwork/heimdall/types/simulation"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 // GenesisTestSuite integrate test suite context object
@@ -26,8 +25,7 @@ type GenesisTestSuite struct {
 
 // SetupTest setup necessary things for genesis test
 func (suite *GenesisTestSuite) SetupTest() {
-	suite.app = app.SetupTopupGenesis()
-	suite.ctx = suite.app.BaseApp.NewContext(true, abci.Header{})
+	suite.app, suite.ctx, _ = createTestApp(true)
 }
 
 // TestGenesisTestSuite
@@ -43,7 +41,7 @@ func (suite *GenesisTestSuite) TestInitExportGenesis() {
 
 	topupSequences := make([]string, 5)
 
-	for i, _ := range topupSequences {
+	for i := range topupSequences {
 		topupSequences[i] = strconv.Itoa(simulation.RandIntBetween(r1, 1000, 100000))
 	}
 	genesisState := types.GenesisState{
