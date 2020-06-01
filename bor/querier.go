@@ -8,12 +8,16 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/maticnetwork/heimdall/bor/types"
+	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 // NewQuerier creates a querier for auth REST endpoints
-func NewQuerier(keeper Keeper) sdk.Querier {
+func NewQuerier(keeper Keeper, contractCaller helper.IContractCaller) sdk.Querier {
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) ([]byte, sdk.Error) {
+		if len(path) == 0 {
+			return nil, sdk.ErrUnknownRequest("unknown auth query endpoint")
+		}
 		switch path[0] {
 		case types.QueryParams:
 			if len(path) == 1 {
@@ -27,9 +31,9 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 		case types.QueryLatestSpan:
 			return handleQueryLatestSpan(ctx, req, keeper)
 		case types.QueryNextProducers:
-			return handleQueryNextProducers(ctx, req, keeper)
+			return handleQueryNextProducers(ctx, req, keeper, contractCaller)
 		case types.QueryNextSpanSeed:
-			return handlerQueryNextSpanSeed(ctx, req, keeper)
+			return handlerQueryNextSpanSeed(ctx, req, keeper, contractCaller)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown auth query endpoint")
 		}
@@ -149,8 +153,8 @@ func handleQueryLatestSpan(ctx sdk.Context, req abci.RequestQuery, keeper Keeper
 	return bz, nil
 }
 
-func handleQueryNextProducers(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	nextSpanSeed, err := keeper.GetNextSpanSeed(ctx)
+func handleQueryNextProducers(ctx sdk.Context, req abci.RequestQuery, keeper Keeper, contractCaller helper.IContractCaller) ([]byte, sdk.Error) {
+	nextSpanSeed, err := keeper.GetNextSpanSeed(ctx, contractCaller)
 	if err != nil {
 		return nil, sdk.ErrInternal((sdk.AppendMsgToErr("cannot fetch next span seed from keeper", err.Error())))
 	}
@@ -167,8 +171,8 @@ func handleQueryNextProducers(ctx sdk.Context, req abci.RequestQuery, keeper Kee
 	return bz, nil
 }
 
-func handlerQueryNextSpanSeed(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	nextSpanSeed, err := keeper.GetNextSpanSeed(ctx)
+func handlerQueryNextSpanSeed(ctx sdk.Context, req abci.RequestQuery, keeper Keeper, contractCaller helper.IContractCaller) ([]byte, sdk.Error) {
+	nextSpanSeed, err := keeper.GetNextSpanSeed(ctx, contractCaller)
 
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("Error fetching next span seed", err.Error()))

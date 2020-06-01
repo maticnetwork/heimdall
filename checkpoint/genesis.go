@@ -27,9 +27,9 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 		// sort headers before loading to state
 		data.Checkpoints = hmTypes.SortHeaders(data.Checkpoints)
 		// load checkpoints to state
-		for i, header := range data.Checkpoints {
-			checkpointHeaderIndex := uint64(i) + 1
-			if err := keeper.AddCheckpoint(ctx, checkpointHeaderIndex, header); err != nil {
+		for i, checkpoint := range data.Checkpoints {
+			checkpointIndex := uint64(i) + 1
+			if err := keeper.AddCheckpoint(ctx, checkpointIndex, checkpoint); err != nil {
 				keeper.Logger(ctx).Error("InitGenesis | AddCheckpoint", "error", err)
 			}
 		}

@@ -21,7 +21,7 @@ var (
 
 	ACKCountKey         = []byte{0x11} // key to store ACK count
 	BufferCheckpointKey = []byte{0x12} // Key to store checkpoint in buffer
-	CheckpointKey       = []byte{0x13} // prefix key for when storing header after ACK
+	CheckpointKey       = []byte{0x13} // prefix key for when storing checkpoint after ACK
 	LastNoACKKey        = []byte{0x14} // key to store last no-ack
 )
 
@@ -81,7 +81,7 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 
 // AddCheckpoint adds checkpoint into final blocks
 func (k *Keeper) AddCheckpoint(ctx sdk.Context, checkpointNumber uint64, checkpoint hmTypes.Checkpoint) error {
-	key := GetHeaderKey(checkpointNumber)
+	key := GetCheckpointKey(checkpointNumber)
 	err := k.addCheckpoint(ctx, key, checkpoint)
 	if err != nil {
 		return err
@@ -119,18 +119,18 @@ func (k *Keeper) addCheckpoint(ctx sdk.Context, key []byte, checkpoint hmTypes.C
 // GetCheckpointByNumber to get checkpoint by checkpoint number
 func (k *Keeper) GetCheckpointByNumber(ctx sdk.Context, number uint64) (hmTypes.Checkpoint, error) {
 	store := ctx.KVStore(k.storeKey)
-	headerKey := GetHeaderKey(number)
+	checkpointKey := GetCheckpointKey(number)
 	var _checkpoint hmTypes.Checkpoint
 
-	if store.Has(headerKey) {
-		err := k.cdc.UnmarshalBinaryBare(store.Get(headerKey), &_checkpoint)
+	if store.Has(checkpointKey) {
+		err := k.cdc.UnmarshalBinaryBare(store.Get(checkpointKey), &_checkpoint)
 		if err != nil {
 			return _checkpoint, err
 		} else {
 			return _checkpoint, nil
 		}
 	} else {
-		return _checkpoint, errors.New("Invalid header Index")
+		return _checkpoint, errors.New("Invalid checkpoint Index")
 	}
 }
 
@@ -139,7 +139,7 @@ func (k *Keeper) GetCheckpointList(ctx sdk.Context, page uint64, limit uint64) (
 	store := ctx.KVStore(k.storeKey)
 
 	// create headers
-	var checkpoint []hmTypes.Checkpoint
+	var checkpoints []hmTypes.Checkpoint
 
 	// have max limit
 	if limit > 20 {
@@ -151,13 +151,13 @@ func (k *Keeper) GetCheckpointList(ctx sdk.Context, page uint64, limit uint64) (
 
 	// loop through validators to get valid validators
 	for ; iterator.Valid(); iterator.Next() {
-		var checkpointHeader hmTypes.Checkpoint
-		if err := k.cdc.UnmarshalBinaryBare(iterator.Value(), &checkpointHeader); err == nil {
-			checkpoint = append(checkpoint, checkpointHeader)
+		var checkpoint hmTypes.Checkpoint
+		if err := k.cdc.UnmarshalBinaryBare(iterator.Value(), &checkpoint); err == nil {
+			checkpoints = append(checkpoints, checkpoint)
 		}
 	}
 
-	return checkpoint, nil
+	return checkpoints, nil
 }
 
 // GetLastCheckpoint gets last checkpoint, checkpoint number = TotalACKs
@@ -172,7 +172,7 @@ func (k *Keeper) GetLastCheckpoint(ctx sdk.Context) (hmTypes.Checkpoint, error) 
 
 	// no checkpoint received
 	// header key
-	headerKey := GetHeaderKey(lastCheckpointKey)
+	headerKey := GetCheckpointKey(lastCheckpointKey)
 	if store.Has(headerKey) {
 		err := k.cdc.UnmarshalBinaryBare(store.Get(headerKey), &_checkpoint)
 		if err != nil {
@@ -185,8 +185,8 @@ func (k *Keeper) GetLastCheckpoint(ctx sdk.Context) (hmTypes.Checkpoint, error) 
 	return _checkpoint, cmn.ErrNoCheckpointFound(k.Codespace())
 }
 
-// GetHeaderKey appends prefix to checkpointNumber
-func GetHeaderKey(checkpointNumber uint64) []byte {
+// GetCheckpointKey appends prefix to checkpointNumber
+func GetCheckpointKey(checkpointNumber uint64) []byte {
 	checkpointNumberBytes := []byte(strconv.FormatUint(checkpointNumber, 10))
 	return append(CheckpointKey, checkpointNumberBytes...)
 }

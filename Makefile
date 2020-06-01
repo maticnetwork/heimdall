@@ -22,8 +22,8 @@ clean:
 tests:
 	# go test  -v ./...
 
-	go test -v ./app/ ./auth/ ./clerk/ ./sidechannel/ ./bank/ ./chainmanager/ ./topup/ ./checkpoint/ ./staking/ -cover -coverprofile=cover.out
-	
+	go test -v ./app/ ./auth/ ./clerk/ ./sidechannel/ ./bank/ ./chainmanager/ ./topup/ ./checkpoint/ ./staking/ ./bor/ -cover -coverprofile=cover.out
+
 
 build: clean
 	mkdir -p build
