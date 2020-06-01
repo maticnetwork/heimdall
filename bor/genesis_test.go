@@ -38,9 +38,8 @@ func (suite *GenesisTestSuite) TestInitExportGenesis() {
 	chainID := "15001"
 	start := uint64(0)
 	end := uint64(0)
-	chSim.LoadValidatorSet(4, t, app.StakingKeeper, ctx, false, 10)
-	app.BorKeeper.SetParams(ctx, types.DefaultParams())
-	valSet := app.StakingKeeper.GetValidatorSet(ctx)
+	valSet := chSim.LoadValidatorSet(4, t, app.StakingKeeper, ctx, false, 10)
+	app.BorKeeper.SetParams(ctx, params)
 	app.CheckpointKeeper.UpdateACKCountWithValue(ctx, 1)
 	producers, _ := app.BorKeeper.SelectNextProducers(ctx, hmTypes.ZeroHeimdallHash.EthHash())
 	for i := 0; i < spancount; i++ {
