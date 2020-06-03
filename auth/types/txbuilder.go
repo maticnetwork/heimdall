@@ -67,12 +67,14 @@ func NewTxBuilderFromCLI() TxBuilder {
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println("Set gasAdjustment in txbldr", "gasAdjustment", viper.GetFloat64(client.FlagGasAdjustment))
 	txbldr := TxBuilder{
-		keybase:            kb,
-		accountNumber:      uint64(viper.GetInt64(client.FlagAccountNumber)),
-		sequence:           uint64(viper.GetInt64(client.FlagSequence)),
-		gas:                client.GasFlagVar.Gas,
-		gasAdjustment:      viper.GetFloat64(client.FlagGasAdjustment),
+		keybase:       kb,
+		accountNumber: uint64(viper.GetInt64(client.FlagAccountNumber)),
+		sequence:      uint64(viper.GetInt64(client.FlagSequence)),
+		gas:           client.GasFlagVar.Gas,
+		// gasAdjustment:      viper.GetFloat64(client.FlagGasAdjustment),
+		gasAdjustment:      flags.DefaultGasAdjustment,
 		simulateAndExecute: client.GasFlagVar.Simulate,
 		chainID:            viper.GetString(client.FlagChainID),
 		memo:               viper.GetString(client.FlagMemo),
@@ -269,9 +271,30 @@ func (bldr TxBuilder) BuildTxForSim(msgs []sdk.Msg) ([]byte, error) {
 	}
 
 	// the ante handler will populate with a sentinel pubkey
+	// sig := StdSignature{}
 	sig := StdSignature{}
 	return bldr.txEncoder(NewStdTx(signMsg.Msg, signMsg.Fee, sig, signMsg.Memo))
 }
+
+// BuildSimTx creates an unsigned tx with an empty single signature and returns
+// the encoded transaction or an error if the unsigned transaction cannot be
+// built.
+// func BuildSimTx(txf Factory, msgs ...sdk.Msg) ([]byte, error) {
+// 	tx, err := BuildUnsignedTx(txf, msgs...)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	// Create an empty signature literal as the ante handler will populate with a
+// 	// sentinel pubkey.
+// 	sig := txf.txGenerator.NewSignature()
+
+// 	if err := tx.SetSignatures(sig); err != nil {
+// 		return nil, err
+// 	}
+
+// 	return txf.txGenerator.MarshalTx(tx.GetTx())
+// }
 
 // SignStdTxWithPassphrase appends a signature to a StdTx and returns a copy of it. If append
 // is false, it replaces the signatures already attached with the new signature.

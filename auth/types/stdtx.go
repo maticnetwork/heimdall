@@ -57,8 +57,9 @@ func (tx StdTx) ValidateBasic() sdk.Error {
 	if tx.Fee.Amount.IsAnyNegative() {
 		return sdk.ErrInsufficientFee(fmt.Sprintf("invalid fee %s amount provided", tx.Fee.Amount))
 	}
-	if tx.Signature.Empty() {
-		return sdk.ErrNoSignatures("No signers")
+
+	if len(stdSigs) == 0 {
+		return sdk.ErrNoSignatures("no signers")
 	}
 
 	if len(stdSigs) != 1 || len(stdSigs) != len(tx.GetSigners()) {
@@ -162,7 +163,7 @@ func (ss StdSignature) String() string {
 // Std fee
 //
 
-// StdFee includes the amount of coins paid in fees and the maximum
+// 	 includes the amount of coins paid in fees and the maximum
 // gas to be used by the transaction. The ratio yields an effective "gasprice",
 // which must be above some miminum to be accepted into the mempool.
 type StdFee struct {

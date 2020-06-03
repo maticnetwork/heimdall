@@ -1,6 +1,7 @@
 package auth_test
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"testing"
@@ -9,6 +10,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	abci "github.com/tendermint/tendermint/abci/types"
 
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkAuth "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/maticnetwork/heimdall/app"
@@ -164,4 +166,58 @@ func (suite *QuerierTestSuite) TestQueryParams() {
 			querier(ctx, path, req)
 		})
 	}
+}
+
+func (suite *QuerierTestSuite) TestSimulation() {
+	t, app, _, _ := suite.T(), suite.app, suite.ctx, suite.querier
+
+	txBytesStr := "57f0625dee0a4b8ac198bc080112144293d4f71cf3f6908a5002562ccd77f4a953354d18800220ff332a0531353030313220f34a0e6b1df0c95720b84b7f540b0259e083e1667f3538dc02ded5e4042be1d9120410c09a0c"
+
+	// simulate by calling Query with encoded tx
+
+	txBytes, err := hex.DecodeString(txBytesStr)
+	if err != nil {
+		t.Log("Error tx str", err)
+		return
+	}
+
+	// decoder := authTypes.DefaultTxDecoder(app.Codec())
+	// tx, err := decoder(txBytes)
+	// if err != nil {
+	// 	t.Log("Error Decoding tx", err)
+	// 	return
+	// }
+
+	// t.Log("Decoded tx", tx)
+
+	query := abci.RequestQuery{
+		Path: "/app/simulate",
+		Data: txBytes,
+	}
+
+	queryResult := app.Query(query)
+	require.True(t, queryResult.IsOK(), queryResult.Log)
+	// t.Log("queryResult", queryResult)
+	// t.Log("queryResult", queryResult.GetValue())
+
+	var result sdk.Result
+	err = codec.Cdc.UnmarshalBinaryLengthPrefixed(queryResult.Value, &result)
+
+	estimate, err := parseQueryResponse(codec.Cdc, queryResult.Value)
+	t.Log("parsedResponse", "Estimate", estimate, "error", err)
+	if err != nil {
+		return
+	}
+	// t.Log("parsedResponse", "Value", queryResult.Value, "error", err, "GasUsed", result.GasUsed)
+}
+
+func parseQueryResponse(cdc *codec.Codec, rawRes []byte) (uint64, error) {
+	fmt.Println("Venky - parseQueryResponse - rawRes", rawRes)
+	var simulationResult sdk.Result
+	if err := cdc.UnmarshalBinaryLengthPrefixed(rawRes, &simulationResult); err != nil {
+		fmt.Println("Venky - parseQueryResponse - error", err)
+		return 0, err
+	}
+
+	return simulationResult.GasUsed, nil
 }

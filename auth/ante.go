@@ -88,6 +88,10 @@ func NewAnteHandler(
 		// get account params
 		params := ak.GetParams(ctx)
 
+		fmt.Println("Fee Amount user sent in stdTx", stdTx.Fee.Amount)
+		fmt.Println("Fee Gas user sent in stdTx", stdTx.Fee.Gas)
+		fmt.Println("is simulation", simulate, "ischeckTx", ctx.IsCheckTx())
+
 		// Ensure that the provided fees meet a minimum threshold for the validator,
 		// if this is a CheckTx. This is only for local mempool purposes, and thus
 		// is only ran on check tx.
@@ -111,7 +115,7 @@ func NewAnteHandler(
 		// newCtx = SetGasMeter(simulate, ctx, gasForTx)
 
 		newCtx = SetGasMeter(simulate, ctx, stdTx.Fee.Gas)
-
+		fmt.Println("Venky - ante - Gas consumed (0)", newCtx.GasMeter().GasConsumed())
 		// AnteHandlers must have their own defer/recover in order for the BaseApp
 		// to know how much gas was used! This is because the GasMeter is created in
 		// the AnteHandler, but if it panics the context won't be set properly in
@@ -140,12 +144,17 @@ func NewAnteHandler(
 			return newCtx, err.Result(), true
 		}
 
+		fmt.Println("Venky - ante - Gas consumed (1)", newCtx.GasMeter().GasConsumed())
+		fmt.Println("tx validation success")
+
 		newCtx.GasMeter().ConsumeGas(params.TxSizeCostPerByte*sdk.Gas(len(newCtx.TxBytes())), "txSize")
+		fmt.Println("Venky - ante - Gas consumed (2)", newCtx.GasMeter().GasConsumed())
 
 		if res := ValidateMemo(stdTx, params); !res.IsOK() {
 			return newCtx, res, true
 		}
 
+		fmt.Println("Venky - ante - Gas consumed (3)", newCtx.GasMeter().GasConsumed())
 		// stdSigs contains the sequence number, account number, and signatures.
 		// When simulating, this would just be a 0-length slice.
 		signerAddrs := stdTx.GetSigners()
@@ -153,6 +162,8 @@ func NewAnteHandler(
 		if len(signerAddrs) == 0 {
 			return newCtx, sdk.ErrNoSignatures("no signers").Result(), true
 		}
+
+		fmt.Println("Venky - ante - Gas consumed (4)", newCtx.GasMeter().GasConsumed())
 
 		if len(signerAddrs) > 1 {
 			return newCtx, sdk.ErrUnauthorized("wrong number of signers").Result(), true
@@ -166,8 +177,13 @@ func NewAnteHandler(
 			return newCtx, res, true
 		}
 
+		fmt.Println("Venky - ante - Gas consumed (5)", newCtx.GasMeter().GasConsumed())
+
 		// deduct the fees
 		if !stdTx.Fee.Amount.IsZero() {
+			fmt.Println("Fee deducted", stdTx.Fee.Amount)
+			fmt.Println("Gas consumed", newCtx.GasMeter().GasConsumed())
+			fmt.Println("Gas Wanted or Max Gas sent in tx", stdTx.Fee.Gas)
 			res = DeductFees(feeCollector, newCtx, signerAcc, stdTx.Fee.Amount)
 			if !res.IsOK() {
 				return newCtx, res, true
@@ -176,20 +192,23 @@ func NewAnteHandler(
 			// reload the account as fees have been deducted
 			signerAcc = ak.GetAccount(newCtx, signerAcc.GetAddress())
 		}
-
+		fmt.Println("Venky - ante - Gas consumed (6)", newCtx.GasMeter().GasConsumed())
 		// stdSigs contains the sequence number, account number, and signatures.
 		// When simulating, this would just be a 0-length slice.
 		stdSigs := stdTx.GetSignatures()
-
+		fmt.Println("Venky - ante - Gas consumed (7)", newCtx.GasMeter().GasConsumed())
 		// check signature, return account with incremented nonce
 		signBytes := GetSignBytes(newCtx.ChainID(), stdTx, signerAcc, isGenesis)
+		fmt.Println("Venky - ante - Gas consumed (8)", newCtx.GasMeter().GasConsumed())
 		signerAcc, res = processSig(newCtx, signerAcc, stdSigs[0], signBytes, simulate, params, sigGasConsumer)
+		fmt.Println("Venky - ante - Gas consumed (9)", newCtx.GasMeter().GasConsumed())
 		if !res.IsOK() {
 			return newCtx, res, true
 		}
-
+		fmt.Println("Venky - ante - Gas consumed (10)", newCtx.GasMeter().GasConsumed())
 		ak.SetAccount(newCtx, signerAcc)
 
+		fmt.Println("Venky - ante - Gas consumed (11)", newCtx.GasMeter().GasConsumed())
 		// TODO: tx tags (?)
 		return newCtx, sdk.Result{GasWanted: stdTx.Fee.Gas}, false // continue...
 	}
@@ -339,6 +358,8 @@ func GetSignBytes(chainID string, stdTx authTypes.StdTx, acc authTypes.Account, 
 // consensus.
 func EnsureSufficientMempoolFees(ctx sdk.Context, stdFee authTypes.StdFee) sdk.Result {
 	minGasPrices := ctx.MinGasPrices()
+	fmt.Println("MinGasPrices", minGasPrices)
+
 	if !minGasPrices.IsZero() {
 		requiredFees := make(sdk.Coins, len(minGasPrices))
 
@@ -349,6 +370,10 @@ func EnsureSufficientMempoolFees(ctx sdk.Context, stdFee authTypes.StdFee) sdk.R
 			fee := gp.Amount.Mul(glDec)
 			requiredFees[i] = sdk.NewCoin(gp.Denom, fee.Ceil().RoundInt())
 		}
+
+		fmt.Println("stdFee Amount", stdFee.Amount)
+		fmt.Println("stdFee Gas", stdFee.Gas)
+		fmt.Println("requiredFees calculated from minGasPrice", requiredFees)
 
 		if !stdFee.Amount.IsAnyGTE(requiredFees) {
 			return sdk.ErrInsufficientFee(

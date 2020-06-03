@@ -73,6 +73,13 @@ var (
 	DefaultCLIHome  = os.ExpandEnv("$HOME/.heimdallcli")
 	DefaultNodeHome = os.ExpandEnv("$HOME/.heimdalld")
 	MinBalance      = big.NewInt(100000000000000000) // aka 0.1 Ether
+
+	// DefaultFeeInMatic represents default fee in matic
+	DefaultFeeInMatic = big.NewInt(10).Exp(big.NewInt(10), big.NewInt(10), nil)
+
+	// DefaultFeeWantedPerTx fee wanted per tx
+	// DefaultFeeSentPerTx = sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: sdk.NewIntFromBigInt(DefaultFeeInMatic)}}
+	DefaultHeimdallTxFee = "300000000000000000matic"
 )
 
 var cdc = amino.NewCodec()
@@ -93,6 +100,7 @@ type Configuration struct {
 	HeimdallServerURL string `mapstructure:"heimdall_rest_server"` // heimdall server url
 
 	MainchainGasLimit uint64 `mapstructure:"main_chain_gas_limit"` // gas limit to mainchain transaction. eg....submit checkpoint.
+	HeimdallTxFee     string `mapstructure:"heimdall_tx_fee"`      // fee deducted per tx on heimdall.
 
 	// config related to bridge
 	CheckpointerPollInterval time.Duration `mapstructure:"checkpoint_poll_interval"` // Poll interval for checkpointer service to send new checkpoints or missing ACK
@@ -213,6 +221,7 @@ func GetDefaultHeimdallConfig() Configuration {
 		HeimdallServerURL: DefaultHeimdallServerURL,
 
 		MainchainGasLimit: DefaultMainchainGasLimit,
+		HeimdallTxFee:     DefaultHeimdallTxFee,
 
 		CheckpointerPollInterval: DefaultCheckpointerPollInterval,
 		SyncerPollInterval:       DefaultSyncerPollInterval,

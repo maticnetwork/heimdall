@@ -116,9 +116,6 @@ func RandomizedGenState(simState *module.SimulationState) {
 		txSizeCostPerByte,
 		sigVerifyCostED25519,
 		sigVerifyCostSECP256K1,
-
-		maxTxGas,
-		txFees,
 	)
 	genesisAccs := RandomGenesisAccounts(simState)
 
