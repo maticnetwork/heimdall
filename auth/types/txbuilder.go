@@ -69,12 +69,11 @@ func NewTxBuilderFromCLI() TxBuilder {
 	}
 	fmt.Println("Set gasAdjustment in txbldr", "gasAdjustment", viper.GetFloat64(client.FlagGasAdjustment))
 	txbldr := TxBuilder{
-		keybase:       kb,
-		accountNumber: uint64(viper.GetInt64(client.FlagAccountNumber)),
-		sequence:      uint64(viper.GetInt64(client.FlagSequence)),
-		gas:           client.GasFlagVar.Gas,
-		// gasAdjustment:      viper.GetFloat64(client.FlagGasAdjustment),
-		gasAdjustment:      flags.DefaultGasAdjustment,
+		keybase:            kb,
+		accountNumber:      uint64(viper.GetInt64(client.FlagAccountNumber)),
+		sequence:           uint64(viper.GetInt64(client.FlagSequence)),
+		gas:                client.GasFlagVar.Gas,
+		gasAdjustment:      viper.GetFloat64(client.FlagGasAdjustment),
 		simulateAndExecute: client.GasFlagVar.Simulate,
 		chainID:            viper.GetString(client.FlagChainID),
 		memo:               viper.GetString(client.FlagMemo),
@@ -136,6 +135,12 @@ func (bldr TxBuilder) WithChainID(chainID string) TxBuilder {
 func (bldr TxBuilder) WithGas(gas uint64) TxBuilder {
 	bldr.gas = gas
 	return bldr
+}
+
+// WithGasAdjustment returns a copy of txBuilder with an updated gasAdjustment
+func (txBuilder TxBuilder) WithGasAdjustment(gasAdjustment float64) TxBuilder {
+	txBuilder.gasAdjustment = gasAdjustment
+	return txBuilder
 }
 
 // WithFees returns a copy of the context with an updated fee.

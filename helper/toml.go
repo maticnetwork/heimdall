@@ -42,6 +42,7 @@ span_poll_interval = "{{ .SpanPollInterval }}"
 #### gas limits ####
 main_chain_gas_limit = "{{ .MainchainGasLimit }}"
 heimdall_tx_fee = "{{ .HeimdallTxFee }}"
+gas_adjustment = "{{ .GasAdjustment }}"
 
 ##### Timeout Config #####
 no_ack_wait_time = "{{ .NoACKWaitTime }}"

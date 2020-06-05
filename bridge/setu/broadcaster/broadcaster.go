@@ -66,13 +66,14 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg) error {
 	// chain id
 	chainID := helper.GetGenesisDoc().ChainID
 
-	fmt.Println("Venky - fee sent", "fee", helper.GetConfig().HeimdallTxFee)
+	fmt.Println("fee sent", "fee", helper.GetConfig().HeimdallTxFee)
 	// get account number and sequence
 	txBldr := authTypes.NewTxBuilderFromCLI().
 		WithTxEncoder(txEncoder).
 		WithAccountNumber(tb.accNum).
 		WithSequence(tb.lastSeqNo).
 		WithFees(helper.GetConfig().HeimdallTxFee).
+		WithGasAdjustment(helper.GetConfig().GasAdjustment).
 		WithChainID(chainID)
 
 	txResponse, err := helper.BuildAndBroadcastMsgs(tb.cliCtx, txBldr, []sdk.Msg{msg})
