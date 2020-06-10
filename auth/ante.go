@@ -20,7 +20,7 @@ var (
 	// simulation signature values used to estimate gas consumption
 	simSecp256k1Pubkey secp256k1.PubKeySecp256k1
 
-	// DefaultFeeInMatic represents default fee in matic
+	// DefaultFeeInMatic represents default fee in maticdec
 	DefaultFeeInMatic = big.NewInt(10).Exp(big.NewInt(10), big.NewInt(15), nil)
 
 	// DefaultFeeWantedPerTx fee wanted per tx
@@ -88,9 +88,7 @@ func NewAnteHandler(
 		// get account params
 		params := ak.GetParams(ctx)
 
-		fmt.Println("Fee Amount user sent in stdTx", stdTx.Fee.Amount)
-		fmt.Println("Fee Gas user sent in stdTx", stdTx.Fee.Gas)
-		fmt.Println("is simulation", simulate, "ischeckTx", ctx.IsCheckTx())
+		fmt.Println("Sender- FeeAmount, Gas, simulate, ischeckTx", stdTx.Fee.Amount, stdTx.Fee.Gas, simulate, ctx.IsCheckTx())
 
 		// Ensure that the provided fees meet a minimum threshold for the validator,
 		// if this is a CheckTx. This is only for local mempool purposes, and thus
@@ -115,7 +113,6 @@ func NewAnteHandler(
 		// newCtx = SetGasMeter(simulate, ctx, gasForTx)
 
 		newCtx = SetGasMeter(simulate, ctx, stdTx.Fee.Gas)
-		fmt.Println("Venky - ante - Gas consumed (0)", newCtx.GasMeter().GasConsumed())
 		// AnteHandlers must have their own defer/recover in order for the BaseApp
 		// to know how much gas was used! This is because the GasMeter is created in
 		// the AnteHandler, but if it panics the context won't be set properly in
@@ -143,9 +140,6 @@ func NewAnteHandler(
 		if err := tx.ValidateBasic(); err != nil {
 			return newCtx, err.Result(), true
 		}
-
-		fmt.Println("Venky - ante - Gas consumed (1)", newCtx.GasMeter().GasConsumed())
-		fmt.Println("tx validation success")
 
 		newCtx.GasMeter().ConsumeGas(params.TxSizeCostPerByte*sdk.Gas(len(newCtx.TxBytes())), "txSize")
 		fmt.Println("Venky - ante - Gas consumed (2)", newCtx.GasMeter().GasConsumed())

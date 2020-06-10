@@ -74,6 +74,7 @@ func (suite *AnteTestSuite) TestAnteValidation() {
 	require.Contains(t, result1.Log, "fee_collector module account has not been set")
 }
 
+/*
 func (suite *AnteTestSuite) TestGasLimit() {
 	t, happ, ctx, anteHandler := suite.T(), suite.app, suite.ctx, suite.anteHandler
 	ctx = ctx.WithBlockHeight(1)
@@ -107,9 +108,9 @@ func (suite *AnteTestSuite) TestGasLimit() {
 	// test good tx from one signer
 	tx = types.NewTestTx(ctx, msg, priv1, acc1.GetAccountNumber(), uint64(0), fee)
 	checkInvalidTx(t, anteHandler, ctx, tx, false, sdk.CodeOutOfGas)
-}
+} */
 
-func (suite *AnteTestSuite) TestCheckpointGasLimit() {
+func (suite *AnteTestSuite) TestGasLimit() {
 	t, happ, ctx, anteHandler := suite.T(), suite.app, suite.ctx, suite.anteHandler
 	ctx = ctx.WithBlockHeight(1)
 
@@ -117,16 +118,16 @@ func (suite *AnteTestSuite) TestCheckpointGasLimit() {
 	priv1, _, addr1 := sdkAuth.KeyTestPubAddr()
 	priv2, _, addr2 := sdkAuth.KeyTestPubAddr()
 
+	fee := authTypes.NewTestStdFee()
+
 	// set the accounts
 	acc1 := happ.AccountKeeper.NewAccountWithAddress(ctx, hmTypes.AccAddressToHeimdallAddress(addr1))
-	amt1, _ := sdk.NewIntFromString(authTypes.DefaultTxFees)
-	acc1.SetCoins(sdk.NewCoins(sdk.NewCoin(authTypes.FeeToken, amt1)))
+	acc1.SetCoins(sdk.NewCoins(fee.Amount...))
 	happ.AccountKeeper.SetAccount(ctx, acc1)
 	acc1 = happ.AccountKeeper.GetAccount(ctx, acc1.GetAddress()) // get stored account
 
 	acc2 := happ.AccountKeeper.NewAccountWithAddress(ctx, hmTypes.AccAddressToHeimdallAddress(addr2))
-	amt2, _ := sdk.NewIntFromString(authTypes.DefaultTxFees)
-	acc2.SetCoins(sdk.NewCoins(sdk.NewCoin(authTypes.FeeToken, amt2)))
+	acc2.SetCoins(sdk.NewCoins(fee.Amount...))
 	happ.AccountKeeper.SetAccount(ctx, acc2)
 	acc2 = happ.AccountKeeper.GetAccount(ctx, acc2.GetAddress()) // get stored account
 
@@ -134,14 +135,10 @@ func (suite *AnteTestSuite) TestCheckpointGasLimit() {
 	var tx sdk.Tx
 	msg := sdkAuth.NewTestMsg(addr1)
 
-	fee := authTypes.NewTestStdFee()
 	// test good tx from one signer
 	tx = types.NewTestTx(ctx, msg, priv1, acc1.GetAccountNumber(), uint64(0), fee)
 	_, result, _ := checkValidTx(t, anteHandler, ctx, tx, false)
-
-	// get params
-	params := happ.AccountKeeper.GetParams(ctx)
-	require.Equal(t, params.MaxTxGas, result.GasWanted)
+	require.Equal(t, fee.Gas, result.GasWanted)
 
 	// checkpoint msg
 
@@ -150,8 +147,6 @@ func (suite *AnteTestSuite) TestCheckpointGasLimit() {
 
 	tx = types.NewTestTx(ctx, sdk.Msg(&cmsg), priv2, acc2.GetAccountNumber(), uint64(0), fee)
 	_, result, _ = checkValidTx(t, anteHandler, ctx, tx, false)
-	// check gas wanted for checkpoint msg
-	// require.Equal(t, uint64(10000000), uint64(result.GasWanted))
 }
 
 func (suite *AnteTestSuite) TestStdTx() {
@@ -183,14 +178,6 @@ func (suite *AnteTestSuite) TestStdTx() {
 	tx2 := types.NewTestTxWithMemo(ctx, msg2, priv1, uint64(0), uint64(0), memo, authTypes.NewTestStdFee()) // use sdk's auth module for msg
 
 	checkInvalidTx(t, anteHandler, ctx, tx2, false, sdk.CodeMemoTooLarge)
-
-	// test tx fees
-	params.TxFees = "non integer" // setting non integer
-	happ.AccountKeeper.SetParams(ctx, params)
-	tx2 = types.NewTestTx(ctx, msg2, priv1, uint64(0), uint64(0), authTypes.NewTestStdFee()) // use sdk's auth module for msg
-
-	_, result2, _ := checkInvalidTx(t, anteHandler, ctx, tx2, false, sdk.CodeInternal)
-	require.Contains(t, result2.Log, "Invalid param tx fees")
 }
 
 func (suite *AnteTestSuite) TestSigErrors() {
@@ -383,12 +370,11 @@ func (suite *AnteTestSuite) TestFees() {
 	require.True(t, happ.SupplyKeeper.GetModuleAccount(ctx, authTypes.FeeCollectorName).GetCoins().Empty())
 	require.True(sdk.IntEq(t, happ.AccountKeeper.GetAccount(ctx, hmTypes.AccAddressToHeimdallAddress(addr1)).GetCoins().AmountOf(authTypes.FeeToken), sdk.NewInt(149)))
 
-	amt, _ := sdk.NewIntFromString(authTypes.DefaultTxFees)
-	acc1.SetCoins(sdk.NewCoins(sdk.NewCoin(authTypes.FeeToken, amt)))
+	acc1.SetCoins(sdk.NewCoins(fee.Amount...))
 	happ.AccountKeeper.SetAccount(ctx, acc1)
 	checkValidTx(t, anteHandler, ctx, tx, false)
 
-	require.True(sdk.IntEq(t, happ.SupplyKeeper.GetModuleAccount(ctx, types.FeeCollectorName).GetCoins().AmountOf(authTypes.FeeToken), amt))
+	require.True(t, happ.SupplyKeeper.GetModuleAccount(ctx, types.FeeCollectorName).GetCoins().IsEqual(fee.Amount))
 	require.True(sdk.IntEq(t, happ.AccountKeeper.GetAccount(ctx, hmTypes.AccAddressToHeimdallAddress(addr1)).GetCoins().AmountOf(authTypes.FeeToken), sdk.NewInt(0)))
 
 	// try to send tx again

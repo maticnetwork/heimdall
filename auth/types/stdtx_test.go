@@ -24,7 +24,8 @@ func TestStdTx(t *testing.T) {
 	msg := sdk.NewTestMsg(addr)
 	sig := StdSignature{}
 
-	tx := NewStdTx(msg, sig, "")
+	fee := StdFee{}
+	tx := NewStdTx(msg, fee, sig, "")
 	require.Equal(t, msg, tx.GetMsgs()[0])
 	require.Equal(t, sig, tx.GetSignatures()[0])
 
@@ -37,10 +38,11 @@ func TestTxValidateBasic(t *testing.T) {
 
 	// keys and addresses
 	priv1, _, addr1 := sdkAuth.KeyTestPubAddr()
+	fee := StdFee{}
 
 	// msg and signatures
 	msg1 := sdk.NewTestMsg(addr1)
-	tx := NewTestTx(ctx, msg1, priv1, uint64(0), uint64(0))
+	tx := NewTestTx(ctx, msg1, priv1, uint64(0), uint64(0), fee)
 
 	require.NotNil(t, msg1)
 	err := tx.ValidateBasic()
@@ -56,8 +58,9 @@ func TestDefaultTxEncoder(t *testing.T) {
 	cdc.RegisterConcrete(sdk.TestMsg{}, "cosmos-sdk/Test", nil)
 	encoder := DefaultTxEncoder(cdc)
 
+	fee := StdFee{}
 	msg := sdk.NewTestMsg(addr)
-	tx := NewStdTx(msg, StdSignature{}, "")
+	tx := NewStdTx(msg, fee, StdSignature{}, "")
 
 	cdcBytes, err := cdc.MarshalBinaryLengthPrefixed(tx)
 

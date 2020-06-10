@@ -141,8 +141,6 @@ func (suite *QuerierTestSuite) TestQueryParams() {
 	require.Equal(t, defaultParams.TxSizeCostPerByte, params.TxSizeCostPerByte)
 	require.Equal(t, defaultParams.SigVerifyCostED25519, params.SigVerifyCostED25519)
 	require.Equal(t, defaultParams.SigVerifyCostSecp256k1, params.SigVerifyCostSecp256k1)
-	require.Equal(t, defaultParams.MaxTxGas, params.MaxTxGas)
-	require.Equal(t, defaultParams.TxFees, params.TxFees)
 
 	// set max characters
 	params.MaxMemoCharacters = 10
@@ -212,10 +210,8 @@ func (suite *QuerierTestSuite) TestSimulation() {
 }
 
 func parseQueryResponse(cdc *codec.Codec, rawRes []byte) (uint64, error) {
-	fmt.Println("Venky - parseQueryResponse - rawRes", rawRes)
 	var simulationResult sdk.Result
 	if err := cdc.UnmarshalBinaryLengthPrefixed(rawRes, &simulationResult); err != nil {
-		fmt.Println("Venky - parseQueryResponse - error", err)
 		return 0, err
 	}
 

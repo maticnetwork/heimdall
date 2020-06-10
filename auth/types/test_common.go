@@ -43,7 +43,7 @@ func NewTestTxWithSignBytes(msg sdk.Msg, priv crypto.PrivKey, accNum uint64, seq
 
 func NewTestStdFee() StdFee {
 	return NewStdFee(50000,
-		sdk.NewCoins(sdk.NewInt64Coin("atom", 150)),
+		sdk.NewCoins(sdk.NewInt64Coin("matic", 150)),
 	)
 }
 
