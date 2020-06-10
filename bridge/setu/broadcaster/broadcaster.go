@@ -66,7 +66,6 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg) error {
 	// chain id
 	chainID := helper.GetGenesisDoc().ChainID
 
-	fmt.Println("fee sent", "fee", helper.GetConfig().HeimdallTxFee)
 	// get account number and sequence
 	txBldr := authTypes.NewTxBuilderFromCLI().
 		WithTxEncoder(txEncoder).
