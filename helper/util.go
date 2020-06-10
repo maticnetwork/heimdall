@@ -313,7 +313,6 @@ func BroadcastMsgsWithCLI(cliCtx context.CLIContext, msgs []sdk.Msg) error {
 
 // BuildAndBroadcastMsgs creates transaction and broadcasts it
 func BuildAndBroadcastMsgs(cliCtx context.CLIContext, txBldr authTypes.TxBuilder, msgs []sdk.Msg) (sdk.TxResponse, error) {
-	fmt.Println("Venky - BuildAndBroadcastMsgs")
 	txBytes, err := GetSignedTxBytes(cliCtx, txBldr, msgs)
 	if err != nil {
 		return sdk.TxResponse{}, err
@@ -351,27 +350,21 @@ func BuildAndBroadcastMsgsWithCLI(cliCtx context.CLIContext, txBldr authTypes.Tx
 
 // GetSignedTxBytes returns signed tx bytes
 func GetSignedTxBytes(cliCtx context.CLIContext, txBldr authTypes.TxBuilder, msgs []sdk.Msg) ([]byte, error) {
-	fmt.Println("Venky - GetSignedTxBytessss")
 	txBldr, err := PrepareTxBuilder(cliCtx, txBldr)
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Println("Venky - txBldr simulate", txBldr.SimulateAndExecute())
 	if txBldr.SimulateAndExecute() || cliCtx.Simulate {
 		txBldr, err = EnrichWithGas(txBldr, cliCtx, msgs)
 		if err != nil {
 			return nil, err
 		}
 
-		fmt.Println("Venky - Estimated gas", txBldr.Gas())
-		fmt.Println("Venky - Estimated fees", txBldr.Fees())
-
 		gasEst := GasEstimateResponse{GasEstimate: txBldr.Gas()}
 		_, _ = fmt.Fprintf(os.Stderr, "%s\n", gasEst.String())
 	}
 
-	fmt.Println("Venky - Prepared tx builder")
 	fromName := cliCtx.GetFromName()
 	if fromName == "" {
 		return txBldr.BuildAndSign(GetPrivKey(), msgs)
@@ -422,14 +415,12 @@ func GetSignedTxBytesWithCLI(cliCtx context.CLIContext, txBldr authTypes.TxBuild
 		return nil, err
 	}
 
-	fmt.Println("txBldr simulate", txBldr.SimulateAndExecute())
 	if txBldr.SimulateAndExecute() || cliCtx.Simulate {
 		txBldr, err = EnrichWithGas(txBldr, cliCtx, msgs)
 		if err != nil {
 			return nil, err
 		}
-		fmt.Println("Estimated gas", txBldr.Gas())
-		fmt.Println("Estimated gas", txBldr.Fees())
+
 		gasEst := GasEstimateResponse{GasEstimate: txBldr.Gas()}
 
 		_, _ = fmt.Fprintf(os.Stderr, "%s\n", gasEst.String())
@@ -480,7 +471,6 @@ func GetSignedTxBytesWithCLI(cliCtx context.CLIContext, txBldr authTypes.TxBuild
 
 // PrepareTxBuilder populates a TxBuilder in preparation for the build of a Tx.
 func PrepareTxBuilder(cliCtx context.CLIContext, txBldr authTypes.TxBuilder) (authTypes.TxBuilder, error) {
-	fmt.Println("Venky - PrepareTxBuilder")
 	from := cliCtx.GetFromAddress()
 	if len(from[:]) == 0 {
 		from = GetAddress()
@@ -511,7 +501,6 @@ func PrepareTxBuilder(cliCtx context.CLIContext, txBldr authTypes.TxBuilder) (au
 		}
 	}
 
-	fmt.Println("Venky - PrepareTxBuilder returned")
 	return txBldr, nil
 }
 
@@ -866,7 +855,6 @@ func CalculateGas(
 	txBytes []byte, adjustment float64,
 ) (estimate, adjusted uint64, err error) {
 
-	fmt.Println("Venky - calculating gas", "txBytes", hex.EncodeToString(txBytes), "estimate", estimate, "adjustment", adjustment)
 	// run a simulation (via /app/simulate query) to
 	// estimate gas and update TxBuilder accordingly
 	rawRes, _, err := queryFunc("/app/simulate", txBytes)
@@ -880,7 +868,6 @@ func CalculateGas(
 	}
 
 	adjusted = adjustGasEstimate(estimate, adjustment)
-	fmt.Println("Venky - calculating gas", "txBytes", hex.EncodeToString(txBytes), "estimate", estimate, "adjusted", adjusted)
 	return estimate, adjusted, nil
 }
 

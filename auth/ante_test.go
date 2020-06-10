@@ -381,6 +381,34 @@ func (suite *AnteTestSuite) TestFees() {
 	checkInvalidTx(t, anteHandler, ctx, tx, false, sdk.CodeInsufficientFunds)
 }
 
+func (suite *AnteTestSuite) TestEnsureSufficientMempoolMaticFees() {
+	// setup
+	t, _, ctx, _ := suite.T(), suite.app, suite.ctx, suite.anteHandler
+
+	ctx = ctx.WithMinGasPrices(
+		sdk.DecCoins{
+			sdk.NewDecCoinFromDec("matic", sdk.NewDecWithPrec(1300000000000000000, sdk.Precision)), // 1.3matic
+		},
+	)
+
+	testCases := []struct {
+		input      authTypes.StdFee
+		expectedOK bool
+	}{
+		{authTypes.NewStdFee(200000, sdk.Coins{}), false},
+		{authTypes.NewStdFee(200000, sdk.NewCoins(sdk.NewInt64Coin("matic", 5))), false},
+		{authTypes.NewStdFee(200000, sdk.NewCoins(sdk.NewInt64Coin("matic", 260000))), true},
+	}
+
+	for i, tc := range testCases {
+		res := auth.EnsureSufficientMempoolFees(ctx, tc.input)
+		require.Equal(
+			t, tc.expectedOK, res.IsOK(),
+			"unexpected result; tc #%d, input: %v, log: %v", i, tc.input, res.Log,
+		)
+	}
+}
+
 //
 // utils
 //

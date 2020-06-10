@@ -74,11 +74,6 @@ var (
 	DefaultNodeHome = os.ExpandEnv("$HOME/.heimdalld")
 	MinBalance      = big.NewInt(100000000000000000) // aka 0.1 Ether
 
-	// DefaultFeeInMatic represents default fee in matic
-	DefaultFeeInMatic = big.NewInt(10).Exp(big.NewInt(10), big.NewInt(10), nil)
-
-	// DefaultFeeWantedPerTx fee wanted per tx
-	// DefaultFeeSentPerTx = sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: sdk.NewIntFromBigInt(DefaultFeeInMatic)}}
 	DefaultHeimdallTxFee = "300000000000000000matic"
 	DefaultGasAdjustment = float64(1.4)
 )
