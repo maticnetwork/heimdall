@@ -47,7 +47,7 @@ func randomRangeInclusive(min uint64, max uint64) uint64 {
 
 // SelectNextProducers selects producers for next span by converting power to tickets
 func SelectNextProducers(blkHash common.Hash, spanEligibleValidators []hmTypes.Validator, producerCount uint64) ([]uint64, error) {
-	var selectedProducers []uint64
+	selectedProducers := make([]uint64, 0)
 
 	if len(spanEligibleValidators) <= int(producerCount) {
 		for _, validator := range spanEligibleValidators {

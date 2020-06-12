@@ -108,8 +108,6 @@ func getSelectedValidatorsFromIDs(validators []hmTypes.Validator, producerIds []
 		IDToPower[ID] = IDToPower[ID] + 1
 	}
 
-	fmt.Printf("IDToPower %v", IDToPower)
-
 	var slots int64
 	for key, value := range IDToPower {
 		if val, ok := findValidatorByID(validators, key); ok {
