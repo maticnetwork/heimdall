@@ -12,6 +12,7 @@ var (
 	AttributeKeyDeactivationEpoch = "deactivation-epoch"
 	AttributeKeyActivationEpoch   = "activation-epoch"
 	AttributeKeyValidatorID       = "validator-id"
+	AttributeKeyValidatorNonce    = "validator-nonce"
 	AttributeKeyUpdatedAt         = "updated-at"
 
 	AttributeValueCategory = ModuleName

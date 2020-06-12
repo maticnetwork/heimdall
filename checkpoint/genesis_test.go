@@ -13,7 +13,6 @@ import (
 	"github.com/maticnetwork/heimdall/types/simulation"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 type GenesisTestSuite struct {
@@ -25,8 +24,7 @@ type GenesisTestSuite struct {
 
 // SetupTest setup necessary things for genesis test
 func (suite *GenesisTestSuite) SetupTest() {
-	suite.app = app.SetupCheckpointGenesis()
-	suite.ctx = suite.app.BaseApp.NewContext(true, abci.Header{})
+	suite.app, suite.ctx, _ = createTestApp(true)
 }
 
 // TestGenesisTestSuite
@@ -44,23 +42,24 @@ func (suite *GenesisTestSuite) TestInitExportGenesis() {
 	startBlock := uint64(0)
 	endBlock := uint64(256)
 	rootHash := hmTypes.HexToHeimdallHash("123")
-	accountRootHash := hmTypes.HexToHeimdallHash("456")
 
 	proposerAddress := hmTypes.HexToHeimdallAddress("123")
 	timestamp := uint64(time.Now().Unix())
+	borChainId := "1234"
+
 	bufferedCheckpoint := hmTypes.CreateBlock(
 		startBlock,
 		endBlock,
 		rootHash,
-		accountRootHash,
 		proposerAddress,
+		borChainId,
 		timestamp,
 	)
 
-	checkpointBlockHeaders := make([]hmTypes.CheckpointBlockHeader, ackCount)
+	checkpoints := make([]hmTypes.Checkpoint, ackCount)
 
-	for i := range checkpointBlockHeaders {
-		checkpointBlockHeaders[i] = bufferedCheckpoint
+	for i := range checkpoints {
+		checkpoints[i] = bufferedCheckpoint
 	}
 
 	params := types.DefaultParams()
@@ -69,11 +68,17 @@ func (suite *GenesisTestSuite) TestInitExportGenesis() {
 		&bufferedCheckpoint,
 		uint64(lastNoACK),
 		uint64(ackCount),
-		checkpointBlockHeaders,
+		checkpoints,
 	)
 
 	checkpoint.InitGenesis(ctx, app.CheckpointKeeper, genesisState)
+
 	actualParams := checkpoint.ExportGenesis(ctx, app.CheckpointKeeper)
 
-	require.Equal(t, genesisState, actualParams)
+	require.Equal(t, genesisState.AckCount, actualParams.AckCount)
+	require.Equal(t, genesisState.BufferedCheckpoint, actualParams.BufferedCheckpoint)
+	require.Equal(t, genesisState.LastNoACK, actualParams.LastNoACK)
+	require.Equal(t, genesisState.Params, actualParams.Params)
+	require.LessOrEqual(t, len(actualParams.Checkpoints), len(genesisState.Checkpoints))
+
 }

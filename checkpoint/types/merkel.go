@@ -2,17 +2,12 @@ package types
 
 import (
 	"bytes"
-	"encoding/hex"
 	"errors"
-	"math/big"
 
 	"github.com/cbergoon/merkletree"
-	"github.com/maticnetwork/bor/common/hexutil"
-	"github.com/maticnetwork/bor/core/types"
-	"github.com/maticnetwork/bor/crypto"
+	"github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/bor/rpc"
 	"github.com/tendermint/crypto/sha3"
-	"github.com/xsleonard/go-merkle"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/maticnetwork/heimdall/helper"
@@ -20,14 +15,14 @@ import (
 )
 
 // ValidateCheckpoint - Validates if checkpoint rootHash matches or not
-func ValidateCheckpoint(start uint64, end uint64, rootHash hmTypes.HeimdallHash, checkpointLength uint64) (bool, error) {
+func ValidateCheckpoint(start uint64, end uint64, rootHash hmTypes.HeimdallHash, checkpointLength uint64, contractCaller helper.IContractCaller) (bool, error) {
 	// Check if blocks exist locally
-	if !CheckIfBlocksExist(end) {
+	if !contractCaller.CheckIfBlocksExist(end) {
 		return false, errors.New("blocks not found locally")
 	}
 
 	// Compare RootHash
-	root, err := GetHeaders(start, end, checkpointLength)
+	root, err := contractCaller.GetRootHash(start, end, checkpointLength)
 	if err != nil {
 		return false, err
 	}
@@ -37,86 +32,6 @@ func ValidateCheckpoint(start uint64, end uint64, rootHash hmTypes.HeimdallHash,
 	}
 
 	return false, nil
-}
-
-// CheckIfBlocksExist - check if latest block number is greater than end block
-func CheckIfBlocksExist(end uint64) bool {
-	// Get Latest block number.
-	rpcClient := helper.GetMaticRPCClient()
-	var latestBlock *types.Header
-
-	err := rpcClient.Call(&latestBlock, "eth_getBlockByNumber", "latest", false)
-	if err != nil {
-		return false
-	}
-
-	if end > latestBlock.Number.Uint64() {
-		return false
-	}
-
-	return true
-}
-
-// GetHeaders returns header data
-func GetHeaders(start uint64, end uint64, checkpointLength uint64) ([]byte, error) {
-	rpcClient := helper.GetMaticRPCClient()
-	noOfBlock := end - start + 1
-
-	if noOfBlock > checkpointLength {
-		return nil, errors.New("number of headers requested exceeds")
-	}
-
-	if start > end {
-		return nil, errors.New("start is greater than end")
-	}
-
-	batchElements := make([]rpc.BatchElem, end-start+1)
-	for i := range batchElements {
-		param := new(big.Int)
-		param.SetUint64(uint64(i) + start)
-
-		batchElements[i] = rpc.BatchElem{
-			Method: "eth_getBlockByNumber",
-			Args:   []interface{}{hexutil.EncodeBig(param), true},
-			Result: &types.Header{},
-		}
-	}
-
-	// Batch call
-	err := fetchBatchElements(rpcClient, batchElements, checkpointLength)
-	if err != nil {
-		return nil, err
-	}
-
-	// Fetch result and draft header and add into tree
-	expectedLength := nextPowerOfTwo(end - start + 1)
-	headers := make([][32]byte, expectedLength)
-	for i, batchElement := range batchElements {
-		if batchElement.Error != nil {
-			return nil, batchElement.Error
-		}
-
-		blockHeader := batchElement.Result.(*types.Header)
-		header := crypto.Keccak256(appendBytes32(
-			blockHeader.Number.Bytes(),
-			new(big.Int).SetUint64(blockHeader.Time).Bytes(),
-			blockHeader.TxHash.Bytes(),
-			blockHeader.ReceiptHash.Bytes(),
-		))
-
-		var arr [32]byte
-		copy(arr[:], header)
-
-		// set header
-		headers[i] = arr
-	}
-
-	tree := merkle.NewTreeWithOpts(merkle.TreeOptions{EnableHashSorting: false, DisableHashLeaves: true})
-	if err := tree.Generate(convert(headers), sha3.NewLegacyKeccak256()); err != nil {
-		return nil, err
-	}
-
-	return tree.Root().Hash, nil
 }
 
 // GetAccountRootHash returns roothash of Validator Account State Tree
@@ -132,7 +47,7 @@ func GetAccountRootHash(dividendAccounts []hmTypes.DividendAccount) ([]byte, err
 // GetAccountTree returns roothash of Validator Account State Tree
 func GetAccountTree(dividendAccounts []hmTypes.DividendAccount) (*merkletree.MerkleTree, error) {
 	// Sort the dividendAccounts by ID
-	dividendAccounts = hmTypes.SortDividendAccountByID(dividendAccounts)
+	dividendAccounts = hmTypes.SortDividendAccountByAddress(dividendAccounts)
 	var list []merkletree.Content
 
 	for i := 0; i < len(dividendAccounts); i++ {
@@ -148,15 +63,15 @@ func GetAccountTree(dividendAccounts []hmTypes.DividendAccount) (*merkletree.Mer
 }
 
 // GetAccountProof returns proof of dividend Account
-func GetAccountProof(dividendAccounts []hmTypes.DividendAccount, dividendAccountID hmTypes.DividendAccountID) ([]byte, uint64, error) {
-	// Sort the dividendAccounts by ID
-	dividendAccounts = hmTypes.SortDividendAccountByID(dividendAccounts)
+func GetAccountProof(dividendAccounts []hmTypes.DividendAccount, userAddr hmTypes.HeimdallAddress) ([]byte, uint64, error) {
+	// Sort the dividendAccounts by user address
+	dividendAccounts = hmTypes.SortDividendAccountByAddress(dividendAccounts)
 	var list []merkletree.Content
 	var account hmTypes.DividendAccount
 	index := uint64(0)
 	for i := 0; i < len(dividendAccounts); i++ {
 		list = append(list, dividendAccounts[i])
-		if dividendAccounts[i].ID == dividendAccountID {
+		if dividendAccounts[i].User.Equals(userAddr) {
 			account = dividendAccounts[i]
 			index = uint64(i)
 		}
@@ -175,14 +90,14 @@ func GetAccountProof(dividendAccounts []hmTypes.DividendAccount, dividendAccount
 }
 
 // VerifyAccountProof returns proof of dividend Account
-func VerifyAccountProof(dividendAccounts []hmTypes.DividendAccount, dividendAccountID hmTypes.DividendAccountID, proofToVerify string) (bool, error) {
-
-	proof, _, err := GetAccountProof(dividendAccounts, dividendAccountID)
+func VerifyAccountProof(dividendAccounts []hmTypes.DividendAccount, userAddr hmTypes.HeimdallAddress, proofToVerify string) (bool, error) {
+	proof, _, err := GetAccountProof(dividendAccounts, userAddr)
 	if err != nil {
 		return false, nil
 	}
 
-	if proofToVerify == hex.EncodeToString(proof) {
+	// check proof bytes
+	if bytes.Equal(common.FromHex(proofToVerify), proof) {
 		return true, nil
 	}
 
@@ -208,7 +123,6 @@ func convertTo32(input []byte) (output [32]byte, err error) {
 	copy(output[32-l:], input[:])
 	return
 }
-
 func appendBytes32(data ...[]byte) []byte {
 	var result []byte
 	for _, v := range data {

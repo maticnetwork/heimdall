@@ -1,18 +1,18 @@
 package staking_test
 
 import (
-	"math/big"
 	"math/rand"
 	"testing"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/app"
-	cmn "github.com/maticnetwork/heimdall/test"
 
 	"github.com/maticnetwork/heimdall/helper"
 
-	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
+	chSim "github.com/maticnetwork/heimdall/checkpoint/simulation"
+	stakingSim "github.com/maticnetwork/heimdall/staking/simulation"
+
 	"github.com/maticnetwork/heimdall/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/types/simulation"
@@ -46,7 +46,6 @@ func (suite *KeeperTestSuite) TestValidator() {
 
 	validators := make([]*hmTypes.Validator, n)
 	accounts := simulation.RandomAccounts(r1, n)
-	dividendAccounts := make([]hmTypes.DividendAccount, n)
 
 	for i := range validators {
 		// validator
@@ -54,16 +53,12 @@ func (suite *KeeperTestSuite) TestValidator() {
 			hmTypes.NewValidatorID(uint64(int64(i))),
 			0,
 			0,
+			1,
 			int64(simulation.RandIntBetween(r1, 10, 100)), // power
 			hmTypes.NewPubKey(accounts[i].PubKey.Bytes()),
 			accounts[i].Address,
 		)
-		// create dividend account for validator
-		dividendAccounts[i] = hmTypes.NewDividendAccount(
-			hmTypes.NewDividendAccountID(uint64(validators[i].ID)),
-			big.NewInt(0).String(),
-			big.NewInt(0).String(),
-		)
+
 		err := app.StakingKeeper.AddValidator(ctx, *validators[i])
 		if err != nil {
 			t.Error("Error while adding validator to store", err)
@@ -100,7 +95,6 @@ func (suite *KeeperTestSuite) TestUpdateSigner() {
 
 	validators := make([]*hmTypes.Validator, n)
 	accounts := simulation.RandomAccounts(r1, n)
-	dividendAccounts := make([]hmTypes.DividendAccount, n)
 
 	for i := range validators {
 		// validator
@@ -108,15 +102,10 @@ func (suite *KeeperTestSuite) TestUpdateSigner() {
 			hmTypes.NewValidatorID(uint64(int64(i))),
 			0,
 			0,
+			1,
 			int64(simulation.RandIntBetween(r1, 10, 100)), // power
 			hmTypes.NewPubKey(accounts[i].PubKey.Bytes()),
 			accounts[i].Address,
-		)
-		// create dividend account for validator
-		dividendAccounts[i] = hmTypes.NewDividendAccount(
-			hmTypes.NewDividendAccountID(uint64(validators[i].ID)),
-			big.NewInt(0).String(),
-			big.NewInt(0).String(),
 		)
 		err := app.StakingKeeper.AddValidator(ctx, *validators[i])
 		if err != nil {
@@ -182,7 +171,7 @@ func (suite *KeeperTestSuite) TestCurrentValidator() {
 	}
 
 	dataItems := []TestDataItem{
-		{"VotingPower zero", uint64(0), uint64(0), int64(0), uint64(1), false, "should not be current validator as VotingPower is zero."},
+		{"VotingPower zero", uint64(0), uint64(0), uint64(1), int64(0), uint64(1), false, "should not be current validator as VotingPower is zero."},
 		{"start epoch greater than ackcount", uint64(3), uint64(0), 0, int64(10), uint64(1), false, "should not be current validator as start epoch greater than ackcount."},
 	}
 	t, app, ctx := suite.T(), suite.app, suite.ctx
@@ -219,7 +208,7 @@ func (suite *KeeperTestSuite) TestRemoveValidatorSetChange() {
 	keeper := app.StakingKeeper
 
 	// load 4 validators to state
-	cmn.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
 	initValSet := keeper.GetValidatorSet(ctx)
 
 	currentValSet := initValSet.Copy()
@@ -251,10 +240,10 @@ func (suite *KeeperTestSuite) TestAddValidatorSetChange() {
 	keeper := app.StakingKeeper
 
 	// load 4 validators to state
-	cmn.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
 	initValSet := keeper.GetValidatorSet(ctx)
 
-	validators := cmn.GenRandomVal(1, 0, 10, 10, false, 1)
+	validators := stakingSim.GenRandomVal(1, 0, 10, 10, false, 1)
 	prevValSet := initValSet.Copy()
 
 	valToBeAdded := validators[0]
@@ -277,7 +266,7 @@ func (suite *KeeperTestSuite) TestUpdateValidatorSetChange() {
 	keeper := app.StakingKeeper
 
 	// load 4 validators to state
-	cmn.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
 	initValSet := keeper.GetValidatorSet(ctx)
 
 	keeper.IncrementAccum(ctx, 2)
@@ -285,7 +274,7 @@ func (suite *KeeperTestSuite) TestUpdateValidatorSetChange() {
 	currentValSet := keeper.GetValidatorSet(ctx)
 
 	valToUpdate := currentValSet.Validators[0]
-	newSigner := cmn.GenRandomVal(1, 0, 10, 10, false, 1)
+	newSigner := stakingSim.GenRandomVal(1, 0, 10, 10, false, 1)
 
 	keeper.UpdateSigner(ctx, newSigner[0].Signer, newSigner[0].PubKey, valToUpdate.Signer)
 
@@ -313,53 +302,10 @@ func (suite *KeeperTestSuite) TestUpdateValidatorSetChange() {
 
 }
 
-// tests setter/getters for Dividend account
-func (suite *KeeperTestSuite) TestDividendAccount() {
-	t, app, ctx := suite.T(), suite.app, suite.ctx
-
-	dividendAccount := types.DividendAccount{
-		ID:            types.NewDividendAccountID(1),
-		FeeAmount:     big.NewInt(0).String(),
-		SlashedAmount: big.NewInt(0).String(),
-	}
-	app.StakingKeeper.AddDividendAccount(ctx, dividendAccount)
-	ok := app.StakingKeeper.CheckIfDividendAccountExists(ctx, dividendAccount.ID)
-	require.Equal(t, ok, true)
-
-	dividendAccountInStore, _ := app.StakingKeeper.GetDividendAccountByID(ctx, dividendAccount.ID)
-
-	require.Equal(t, dividendAccount, dividendAccountInStore)
-}
-
-func (suite *KeeperTestSuite) TestDividendAccountTree() {
-	t := suite.T()
-
-	divAccounts := make([]hmTypes.DividendAccount, 5)
-	for i := 0; i < len(divAccounts); i++ {
-		divAccounts[i] = hmTypes.NewDividendAccount(
-			hmTypes.NewDividendAccountID(uint64(i)),
-			big.NewInt(0).String(),
-			big.NewInt(0).String(),
-		)
-	}
-
-	accountRoot, err := checkpointTypes.GetAccountRootHash(divAccounts)
-	require.NotNil(t, accountRoot)
-	require.NoError(t, err)
-
-	accountProof, _, err := checkpointTypes.GetAccountProof(divAccounts, types.NewDividendAccountID(1))
-	require.NotNil(t, accountProof)
-	require.NoError(t, err)
-
-	leafHash, err := divAccounts[0].CalculateHash()
-	require.NotNil(t, leafHash)
-	require.NoError(t, err)
-}
-
 func (suite *KeeperTestSuite) TestGetCurrentValidators() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	keeper := app.StakingKeeper
-	cmn.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
 	validators := keeper.GetCurrentValidators(ctx)
 	activeValidatorInfo, err := keeper.GetActiveValidatorInfo(ctx, validators[0].Signer.Bytes())
 	require.NoError(t, err)
@@ -369,7 +315,7 @@ func (suite *KeeperTestSuite) TestGetCurrentValidators() {
 func (suite *KeeperTestSuite) TestGetCurrentProposer() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	keeper := app.StakingKeeper
-	cmn.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
 	currentValSet := keeper.GetValidatorSet(ctx)
 	currentProposer := keeper.GetCurrentProposer(ctx)
 	require.Equal(t, currentValSet.GetProposer(), currentProposer)
@@ -378,7 +324,7 @@ func (suite *KeeperTestSuite) TestGetCurrentProposer() {
 func (suite *KeeperTestSuite) TestGetNextProposer() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	keeper := app.StakingKeeper
-	cmn.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
 
 	nextProposer := keeper.GetNextProposer(ctx)
 	require.NotNil(t, nextProposer)
@@ -387,7 +333,7 @@ func (suite *KeeperTestSuite) TestGetNextProposer() {
 func (suite *KeeperTestSuite) TestGetValidatorFromValID() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	keeper := app.StakingKeeper
-	cmn.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
 	validators := keeper.GetCurrentValidators(ctx)
 
 	valInfo, ok := keeper.GetValidatorFromValID(ctx, validators[0].ID)
@@ -398,7 +344,7 @@ func (suite *KeeperTestSuite) TestGetValidatorFromValID() {
 func (suite *KeeperTestSuite) TestGetLastUpdated() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	keeper := app.StakingKeeper
-	cmn.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
 	validators := keeper.GetCurrentValidators(ctx)
 
 	lastUpdated, ok := keeper.GetLastUpdated(ctx, validators[0].ID)
@@ -406,25 +352,10 @@ func (suite *KeeperTestSuite) TestGetLastUpdated() {
 	require.Equal(t, validators[0].LastUpdated, lastUpdated)
 }
 
-func (suite *KeeperTestSuite) TestAddFeeToDividendAccount() {
-	t, app, ctx := suite.T(), suite.app, suite.ctx
-	keeper := app.StakingKeeper
-	cmn.LoadValidatorSet(4, t, keeper, ctx, false, 10)
-	validators := keeper.GetCurrentValidators(ctx)
-
-	amount, _ := big.NewInt(0).SetString("0", 10)
-	keeper.AddFeeToDividendAccount(ctx, validators[0].ID, amount)
-	dividentAccountId := hmTypes.DividendAccountID(validators[0].ID)
-	dividentAccount, _ := keeper.GetDividendAccountByID(ctx, dividentAccountId)
-	actualResult, ok := big.NewInt(0).SetString(dividentAccount.FeeAmount, 10)
-	require.Equal(t, ok, true)
-	require.Equal(t, amount, actualResult)
-}
-
 func (suite *KeeperTestSuite) TestGetSpanEligibleValidators() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	keeper := app.StakingKeeper
-	cmn.LoadValidatorSet(4, t, keeper, ctx, false, 0)
+	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 0)
 
 	// Test ActCount = 0
 	app.CheckpointKeeper.UpdateACKCountWithValue(ctx, 0)

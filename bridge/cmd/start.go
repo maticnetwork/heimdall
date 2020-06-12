@@ -40,7 +40,6 @@ func GetStartCmd() *cobra.Command {
 
 			// create codec
 			cdc := app.MakeCodec()
-			app.MakePulp()
 			// queue connector & http client
 			_queueConnector := queue.NewQueueConnector(helper.GetConfig().AmqpURL)
 			_queueConnector.StartWorker()
@@ -51,7 +50,7 @@ func GetStartCmd() *cobra.Command {
 			// selected services to start
 			services := []common.Service{}
 			services = append(services,
-				listener.NewListenerService(cdc, _queueConnector),
+				listener.NewListenerService(cdc, _queueConnector, _httpClient),
 				processor.NewProcessorService(cdc, _queueConnector, _httpClient, _txBroadcaster),
 			)
 

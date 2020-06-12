@@ -10,11 +10,10 @@ import (
 	"github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/bor/crypto"
 	"github.com/maticnetwork/bor/ethclient"
-	"github.com/maticnetwork/bor/rlp"
 	"github.com/maticnetwork/heimdall/contracts/erc20"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
+	"github.com/maticnetwork/heimdall/contracts/slashmanager"
 	"github.com/maticnetwork/heimdall/contracts/stakemanager"
-	"github.com/tendermint/tendermint/types"
 )
 
 func GenerateAuthObj(client *ethclient.Client, address common.Address, data []byte) (auth *bind.TransactOpts, err error) {
@@ -61,15 +60,8 @@ func GenerateAuthObj(client *ethclient.Client, address common.Address, data []by
 
 // SendCheckpoint sends checkpoint to rootchain contract
 // todo return err
-func (c *ContractCaller) SendCheckpoint(voteSignBytes []byte, sigs []byte, txData []byte, rootChainAddress common.Address, rootChainInstance *rootchain.Rootchain) (er error) {
-	var vote types.CanonicalRLPVote
-	err := rlp.DecodeBytes(voteSignBytes, &vote)
-	if err != nil {
-		Logger.Error("Unable to decode vote while sending checkpoint", "vote", hex.EncodeToString(voteSignBytes), "sigs", hex.EncodeToString(sigs), "txData", hex.EncodeToString(txData))
-		return err
-	}
-
-	data, err := c.RootChainABI.Pack("submitHeaderBlock", voteSignBytes, sigs, txData)
+func (c *ContractCaller) SendCheckpoint(signedData []byte, sigs []byte, rootChainAddress common.Address, rootChainInstance *rootchain.Rootchain) (er error) {
+	data, err := c.RootChainABI.Pack("submitHeaderBlock", signedData, sigs)
 	if err != nil {
 		Logger.Error("Unable to pack tx for submitHeaderBlock", "error", err)
 		return err
@@ -81,19 +73,47 @@ func (c *ContractCaller) SendCheckpoint(voteSignBytes []byte, sigs []byte, txDat
 		Logger.Info("Setting custom gaslimit", "gaslimit", GetConfig().MainchainGasLimit)
 		auth.GasLimit = GetConfig().MainchainGasLimit
 	}
-	GetPubKey().VerifyBytes(voteSignBytes, sigs)
 
 	Logger.Debug("Sending new checkpoint",
-		"vote", hex.EncodeToString(voteSignBytes),
 		"sigs", hex.EncodeToString(sigs),
-		"txData", hex.EncodeToString(txData))
+		"data", hex.EncodeToString(signedData),
+	)
 
-	tx, err := rootChainInstance.SubmitHeaderBlock(auth, voteSignBytes, sigs, txData)
+	tx, err := rootChainInstance.SubmitHeaderBlock(auth, signedData, sigs)
 	if err != nil {
 		Logger.Error("Error while submitting checkpoint", "error", err)
 		return err
 	}
 	Logger.Info("Submitted new checkpoint to rootchain successfully", "txHash", tx.Hash().String())
+	return
+}
+
+// SendTick sends slash tick to rootchain contract
+func (c *ContractCaller) SendTick(signedData []byte, sigs []byte, slashManagerAddress common.Address, slashManagerInstance *slashmanager.Slashmanager) (er error) {
+	data, err := c.SlashManagerABI.Pack("updateSlashedAmounts", signedData, sigs)
+	if err != nil {
+		Logger.Error("Unable to pack tx for updateSlashedAmounts", "error", err)
+		return err
+	}
+
+	auth, err := GenerateAuthObj(GetMainClient(), slashManagerAddress, data)
+	if err != nil {
+		Logger.Error("Unable to create auth object", "error", err)
+		Logger.Info("Setting custom gaslimit", "gaslimit", GetConfig().MainchainGasLimit)
+		auth.GasLimit = GetConfig().MainchainGasLimit
+	}
+
+	Logger.Info("Sending new tick",
+		"sigs", hex.EncodeToString(sigs),
+		"data", hex.EncodeToString(signedData),
+	)
+
+	tx, err := slashManagerInstance.UpdateSlashedAmounts(auth, signedData, sigs)
+	if err != nil {
+		Logger.Error("Error while submitting tick", "error", err)
+		return err
+	}
+	Logger.Info("Submitted new tick to slashmanager successfully", "txHash", tx.Hash().String())
 	return
 }
 

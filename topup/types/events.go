@@ -8,8 +8,7 @@ const (
 
 	AttributeKeyRecipient         = "recipient"
 	AttributeKeySender            = "sender"
-	AttributeKeyValidatorID       = "validator-id"
-	AttributeKeyValidatorSigner   = "validator-siger"
+	AttributeKeyUser              = "user"
 	AttributeKeyTopupAmount       = "topup-amount"
 	AttributeKeyFeeWithdrawAmount = "fee-withdraw-amount"
 

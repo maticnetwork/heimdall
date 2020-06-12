@@ -20,7 +20,6 @@ func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, context.CLICo
 	stakingGenesis := stakingTypes.NewGenesisState(
 		stakingTypes.DefaultGenesisState().Validators,
 		stakingTypes.DefaultGenesisState().CurrentValSet,
-		stakingTypes.DefaultGenesisState().DividentAccounts,
 		stakingTypes.DefaultGenesisState().StakingSequences)
 
 	app := app.Setup(isCheckTx)

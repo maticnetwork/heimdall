@@ -16,8 +16,7 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 		case types.MsgSend:
 			return handleMsgSend(ctx, k, msg)
 		default:
-			errMsg := "Unrecognized bank Msg type: %s" + msg.Type()
-			return sdk.ErrUnknownRequest(errMsg).Result()
+			return sdk.ErrUnknownRequest("Unrecognized bank Msg type").Result()
 		}
 	}
 }

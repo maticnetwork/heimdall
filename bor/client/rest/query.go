@@ -22,7 +22,39 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc("/bor/span/{id}", spanHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/bor/latest-span", latestSpanHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/bor/prepare-next-span", prepareNextSpanHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc("/bor/next-span-seed", fetchNextSpanSeedHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/bor/params", paramsHandlerFn(cliCtx)).Methods("GET")
+}
+
+func fetchNextSpanSeedHandlerFn(
+	cliCtx context.CLIContext,
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNextSpanSeed), nil)
+		RestLogger.Debug("nextSpanSeed querier response", "res", res)
+
+		if err != nil {
+			RestLogger.Error("Error while fetching next span seed  ", "Error", err.Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		// error if span seed found
+		if ok := hmRest.ReturnNotFoundIfNoContent(w, res, "NextSpanSeed not found"); !ok {
+			RestLogger.Error("NextSpanSeed not found ", "Error", err.Error())
+			return
+		}
+
+		// return result
+		rest.PostProcessResponse(w, cliCtx, res)
+
+	}
 }
 
 func spanListHandlerFn(

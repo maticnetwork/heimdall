@@ -6,7 +6,6 @@ import (
 	"math/rand"
 
 	"github.com/maticnetwork/bor/common"
-
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )

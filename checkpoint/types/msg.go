@@ -2,6 +2,8 @@ package types
 
 import (
 	"bytes"
+	"math/big"
+	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -19,10 +21,11 @@ var _ sdk.Msg = &MsgCheckpoint{}
 // MsgCheckpoint represents checkpoint
 type MsgCheckpoint struct {
 	Proposer        types.HeimdallAddress `json:"proposer"`
-	StartBlock      uint64                `json:"startBlock"`
-	EndBlock        uint64                `json:"endBlock"`
-	RootHash        types.HeimdallHash    `json:"rootHash"`
-	AccountRootHash types.HeimdallHash    `json:"accountRootHash"`
+	StartBlock      uint64                `json:"start_block"`
+	EndBlock        uint64                `json:"end_block"`
+	RootHash        types.HeimdallHash    `json:"root_hash"`
+	AccountRootHash types.HeimdallHash    `json:"account_root_hash"`
+	BorChainID      string                `json:"bor_chain_id"`
 }
 
 // NewMsgCheckpointBlock creates new checkpoint message using mentioned arguments
@@ -32,6 +35,7 @@ func NewMsgCheckpointBlock(
 	endBlock uint64,
 	roothash types.HeimdallHash,
 	accountRootHash types.HeimdallHash,
+	borChainID string,
 ) MsgCheckpoint {
 	return MsgCheckpoint{
 		Proposer:        proposer,
@@ -39,6 +43,7 @@ func NewMsgCheckpointBlock(
 		EndBlock:        endBlock,
 		RootHash:        roothash,
 		AccountRootHash: accountRootHash,
+		BorChainID:      borChainID,
 	}
 }
 
@@ -80,6 +85,20 @@ func (msg MsgCheckpoint) ValidateBasic() sdk.Error {
 	return nil
 }
 
+// GetSideSignBytes returns side sign bytes
+func (msg MsgCheckpoint) GetSideSignBytes() []byte {
+	// keccak256(abi.encoded(proposer, startBlock, endBlock, rootHash, accountRootHash, bor chain id))
+	borChainID, _ := strconv.ParseUint(msg.BorChainID, 10, 64)
+	return appendBytes32(
+		msg.Proposer.Bytes(),
+		new(big.Int).SetUint64(msg.StartBlock).Bytes(),
+		new(big.Int).SetUint64(msg.EndBlock).Bytes(),
+		msg.RootHash.Bytes(),
+		msg.AccountRootHash.Bytes(),
+		new(big.Int).SetUint64(borChainID).Bytes(),
+	)
+}
+
 //
 // Msg Checkpoint Ack
 //
@@ -88,18 +107,36 @@ var _ sdk.Msg = &MsgCheckpointAck{}
 
 // MsgCheckpointAck Add mainchain commit transaction hash to MsgCheckpointAck
 type MsgCheckpointAck struct {
-	From        types.HeimdallAddress `json:"from"`
-	HeaderBlock uint64                `json:"headerBlock"`
-	TxHash      types.HeimdallHash    `json:"tx_hash"`
-	LogIndex    uint64                `json:"log_index"`
+	From       types.HeimdallAddress `json:"from"`
+	Number     uint64                `json:"number"`
+	Proposer   types.HeimdallAddress `json:"proposer"`
+	StartBlock uint64                `json:"start_block"`
+	EndBlock   uint64                `json:"end_block"`
+	RootHash   types.HeimdallHash    `json:"root_hash"`
+	TxHash     types.HeimdallHash    `json:"tx_hash"`
+	LogIndex   uint64                `json:"log_index"`
 }
 
-func NewMsgCheckpointAck(from types.HeimdallAddress, headerBlock uint64, txHash types.HeimdallHash, logIndex uint64) MsgCheckpointAck {
+func NewMsgCheckpointAck(
+	from types.HeimdallAddress,
+	number uint64,
+	proposer types.HeimdallAddress,
+	startBlock uint64,
+	endBlock uint64,
+	rootHash types.HeimdallHash,
+	txHash types.HeimdallHash,
+	logIndex uint64,
+) MsgCheckpointAck {
+
 	return MsgCheckpointAck{
-		From:        from,
-		HeaderBlock: headerBlock,
-		TxHash:      txHash,
-		LogIndex:    logIndex,
+		From:       from,
+		Number:     number,
+		Proposer:   proposer,
+		StartBlock: startBlock,
+		EndBlock:   endBlock,
+		RootHash:   rootHash,
+		TxHash:     txHash,
+		LogIndex:   logIndex,
 	}
 }
 
@@ -111,10 +148,12 @@ func (msg MsgCheckpointAck) Route() string {
 	return RouterKey
 }
 
+// GetSigners returns signers
 func (msg MsgCheckpointAck) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.From)}
 }
 
+// GetSignBytes returns sign bytes
 func (msg MsgCheckpointAck) GetSignBytes() []byte {
 	b, err := ModuleCdc.MarshalJSON(msg)
 	if err != nil {
@@ -123,14 +162,18 @@ func (msg MsgCheckpointAck) GetSignBytes() []byte {
 	return sdk.MustSortJSON(b)
 }
 
+// ValidateBasic validate basic
 func (msg MsgCheckpointAck) ValidateBasic() sdk.Error {
 	if msg.From.Empty() {
 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid from %v", msg.From.String())
 	}
 
-	childBlockInterval := helper.GetConfig().ChildBlockInterval
-	if msg.HeaderBlock > 0 && msg.HeaderBlock%childBlockInterval != 0 {
-		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid header block %d", msg.HeaderBlock)
+	if msg.Proposer.Empty() {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid empty proposer")
+	}
+
+	if msg.RootHash.Empty() {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid empty root hash")
 	}
 
 	return nil
@@ -144,6 +187,11 @@ func (msg MsgCheckpointAck) GetTxHash() types.HeimdallHash {
 // GetLogIndex Returns log index
 func (msg MsgCheckpointAck) GetLogIndex() uint64 {
 	return msg.LogIndex
+}
+
+// GetSideSignBytes returns side sign bytes
+func (msg MsgCheckpointAck) GetSideSignBytes() []byte {
+	return nil
 }
 
 //

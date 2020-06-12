@@ -20,13 +20,17 @@ clean:
 	rm -rf build
 
 tests:
-	go test  -v ./...
+	# go test  -v ./...
+
+	go test -v ./app/ ./auth/ ./clerk/ ./sidechannel/ ./bank/ ./chainmanager/ ./topup/ ./checkpoint/ ./staking/ ./bor/ -cover -coverprofile=cover.out
+
 
 build: clean
 	mkdir -p build
 	go build -o build/heimdalld ./cmd/heimdalld
 	go build -o build/heimdallcli ./cmd/heimdallcli
 	go build -o build/bridge bridge/bridge.go
+	@echo "====================================================\n==================Build Successful==================\n===================================================="
 
 install:
 	go install $(BUILD_FLAGS) ./cmd/heimdalld
@@ -36,6 +40,7 @@ install:
 contracts:
 	abigen --abi=contracts/rootchain/rootchain.abi --pkg=rootchain --out=contracts/rootchain/rootchain.go
 	abigen --abi=contracts/stakemanager/stakemanager.abi --pkg=stakemanager --out=contracts/stakemanager/stakemanager.go
+	abigen --abi=contracts/slashmanager/slashmanager.abi --pkg=slashmanager --out=contracts/slashmanager/slashmanager.go
 	abigen --abi=contracts/statereceiver/statereceiver.abi --pkg=statereceiver --out=contracts/statereceiver/statereceiver.go
 	abigen --abi=contracts/statesender/statesender.abi --pkg=statesender --out=contracts/statesender/statesender.go
 	abigen --abi=contracts/stakinginfo/stakinginfo.abi --pkg=stakinginfo --out=contracts/stakinginfo/stakinginfo.go
@@ -53,7 +58,7 @@ show-node-id:
 	./build/heimdalld tendermint show-node-id
 
 run-heimdall:
-	./build/heimdalld start 
+	./build/heimdalld start
 
 start-heimdall:
 	mkdir -p ./logs &
@@ -61,11 +66,11 @@ start-heimdall:
 
 reset-heimdall:
 	./build/heimdalld unsafe-reset-all
-	./build/bridge purge-queue 
+	./build/bridge purge-queue
 	rm -rf ~/.heimdalld/bridge
-	
+
 run-server:
-	./build/heimdalld rest-server 
+	./build/heimdalld rest-server
 
 start-server:
 	mkdir -p ./logs &
@@ -82,7 +87,7 @@ start-bridge:
 	mkdir -p logs &
 	./build/bridge start --all > ./logs/bridge.log &
 
-start-all: 
+start-all:
 	mkdir -p ./logs
 	bash docker/start-heimdall.sh
 

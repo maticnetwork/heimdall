@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -11,6 +12,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/gorilla/mux"
 	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
+	"github.com/maticnetwork/heimdall/checkpoint/simulation"
+	"github.com/maticnetwork/heimdall/topup"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
 
@@ -20,6 +24,7 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/staking"
 	hmModule "github.com/maticnetwork/heimdall/types/module"
+	simTypes "github.com/maticnetwork/heimdall/types/simulation"
 )
 
 var (
@@ -98,15 +103,17 @@ type AppModule struct {
 
 	keeper         Keeper
 	stakingKeeper  staking.Keeper
+	topupKeeper    topup.Keeper
 	contractCaller helper.IContractCaller
 }
 
 // NewAppModule creates a new AppModule object
-func NewAppModule(keeper Keeper, sk staking.Keeper, contractCaller helper.IContractCaller) AppModule {
+func NewAppModule(keeper Keeper, sk staking.Keeper, tk topup.Keeper, contractCaller helper.IContractCaller) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{},
 		keeper:         keeper,
 		stakingKeeper:  sk,
+		topupKeeper:    tk,
 		contractCaller: contractCaller,
 	}
 }
@@ -136,7 +143,7 @@ func (AppModule) QuerierRoute() string {
 
 // NewQuerierHandler returns the auth module sdk.Querier.
 func (am AppModule) NewQuerierHandler() sdk.Querier {
-	return NewQuerier(am.keeper, am.stakingKeeper)
+	return NewQuerier(am.keeper, am.stakingKeeper, am.topupKeeper, am.contractCaller)
 }
 
 // InitGenesis performs genesis initialization for the auth module. It returns
@@ -165,6 +172,45 @@ func (AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.Validato
 }
 
 //
+// Side module
+//
+
+// NewSideTxHandler side tx handler
+func (am AppModule) NewSideTxHandler() hmTypes.SideTxHandler {
+	return NewSideTxHandler(am.keeper, am.contractCaller)
+}
+
+// NewPostTxHandler side tx handler
+func (am AppModule) NewPostTxHandler() hmTypes.PostTxHandler {
+	return NewPostTxHandler(am.keeper, am.contractCaller)
+}
+
+// GenerateGenesisState creates a randomized GenState of the Staking module
+func (AppModule) GenerateGenesisState(simState *hmModule.SimulationState) {
+	simulation.RandomizedGenState(simState)
+}
+
+// ProposalContents doesn't return any content functions.
+func (AppModule) ProposalContents(simState hmModule.SimulationState) []simTypes.WeightedProposalContent {
+	return nil
+}
+
+// RandomizedParams creates randomized param changes for the simulator.
+func (AppModule) RandomizedParams(r *rand.Rand) []simTypes.ParamChange {
+	return nil
+}
+
+// RegisterStoreDecoder registers a decoder for chainmanager module's types
+func (AppModule) RegisterStoreDecoder(sdr hmModule.StoreDecoderRegistry) {
+	return
+}
+
+// WeightedOperations doesn't return any chainmanager module operation.
+func (AppModule) WeightedOperations(_ hmModule.SimulationState) []simTypes.WeightedOperation {
+	return nil
+}
+
+//
 // Internal methods
 //
 func verifyGenesis(state types.GenesisState, chainManagerState chainmanagerTypes.GenesisState) error {
@@ -172,29 +218,31 @@ func verifyGenesis(state types.GenesisState, chainManagerState chainmanagerTypes
 	if err != nil {
 		return err
 	}
-
+	childBlockInterval := state.Params.ChildBlockInterval
 	rootChainAddress := chainManagerState.Params.ChainParams.RootChainAddress.EthAddress()
 	rootChainInstance, _ := contractCaller.GetRootChainInstance(rootChainAddress)
 
 	// check header count
-	currentHeaderIndex, err := contractCaller.CurrentHeaderBlock(rootChainInstance)
+	currentCheckpointNumber, err := contractCaller.CurrentHeaderBlock(rootChainInstance, childBlockInterval)
 	if err != nil {
 		return nil
 	}
 
-	if state.AckCount*helper.GetConfig().ChildBlockInterval != currentHeaderIndex {
-		fmt.Println("Header Count doesn't match",
-			"ExpectedHeader", currentHeaderIndex,
-			"HeaderIndexFound", state.AckCount*helper.GetConfig().ChildBlockInterval)
+	// Dont multiply
+	if state.AckCount != currentCheckpointNumber {
+		fmt.Println("Checkpoint count doesn't match",
+			"contractCheckpointNumber", currentCheckpointNumber,
+			"genesisCheckpointNumber", state.AckCount,
+		)
 		return nil
 	}
 
-	fmt.Println("ACK count valid:", "count", currentHeaderIndex)
+	fmt.Println("ACK count valid:", "count", currentCheckpointNumber)
 
 	// check all headers
-	for i, header := range state.Headers {
+	for i, header := range state.Checkpoints {
 		ackCount := uint64(i + 1)
-		root, start, end, _, _, err := contractCaller.GetHeaderInfo(ackCount*helper.GetConfig().ChildBlockInterval, rootChainInstance)
+		root, start, end, _, _, err := contractCaller.GetHeaderInfo(ackCount, rootChainInstance, childBlockInterval)
 		if err != nil {
 			return err
 		}

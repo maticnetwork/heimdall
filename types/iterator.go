@@ -31,6 +31,19 @@ func KVStoreReversePrefixIteratorPaginated(kvs sdk.KVStore, prefix []byte, page,
 	return pi
 }
 
+// KVStorePrefixRangeIteratorPaginated returns iterator over items in the selected page and queries within a range.
+// Items iterated and skipped in ascending order.
+func KVStorePrefixRangeIteratorPaginated(kvs sdk.KVStore, page, limit uint, from, to []byte) sdk.Iterator {
+	pi := &PaginatedIterator{
+		Iterator: kvs.Iterator(from, to),
+		page:     page,
+		limit:    limit,
+	}
+	pi.skip()
+
+	return pi
+}
+
 // PaginatedIterator is a wrapper around Iterator that iterates over values starting for given page and limit.
 type PaginatedIterator struct {
 	sdk.Iterator

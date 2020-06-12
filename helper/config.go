@@ -10,6 +10,7 @@ import (
 	"time"
 
 	ethCrypto "github.com/maticnetwork/bor/crypto"
+	"github.com/maticnetwork/bor/eth"
 	"github.com/maticnetwork/bor/ethclient"
 	"github.com/maticnetwork/bor/rpc"
 	"github.com/maticnetwork/heimdall/file"
@@ -43,8 +44,8 @@ const (
 	BroadcastAsync = "async"
 	// --
 
-	DefaultMainRPCUrl = "https://ropsten.infura.io"
-	DefaultBorRPCUrl  = "https://testnet2.matic.network"
+	DefaultMainRPCUrl = "http://localhost:9545"
+	DefaultBorRPCUrl  = "http://localhost:8545"
 
 	// Services
 
@@ -58,12 +59,10 @@ const (
 	DefaultCheckpointerPollInterval = 5 * time.Minute
 	DefaultSyncerPollInterval       = 1 * time.Minute
 	DefaultNoACKPollInterval        = 1010 * time.Second
-	DefaultClerkPollingInterval     = 10 * time.Second
-	DefaultSpanPollingInterval      = 1 * time.Minute
+	DefaultClerkPollInterval        = 10 * time.Second
+	DefaultSpanPollInterval         = 1 * time.Minute
 
-	DefaultChildBlockInterval = 10000 // difference between 2 indexes of header blocks
-	DefaultTxConfirmationTime = 6 * 14 * time.Second
-	DefaultMainchainGasLimit  = uint64(5000000)
+	DefaultMainchainGasLimit = uint64(5000000)
 
 	DefaultBorChainID string = "15001"
 
@@ -86,22 +85,21 @@ func init() {
 
 // Configuration represents heimdall config
 type Configuration struct {
-	EthRPCUrl        string `mapstructure:"eth_RPC_URL"`        // RPC endpoint for main chain
-	BorRPCUrl        string `mapstructure:"bor_RPC_URL"`        // RPC endpoint for bor chain
-	TendermintRPCUrl string `mapstructure:"tendermint_RPC_URL"` // tendemint node url
+	EthRPCUrl        string `mapstructure:"eth_rpc_url"`        // RPC endpoint for main chain
+	BorRPCUrl        string `mapstructure:"bor_rpc_url"`        // RPC endpoint for bor chain
+	TendermintRPCUrl string `mapstructure:"tendermint_rpc_url"` // tendemint node url
 
 	AmqpURL           string `mapstructure:"amqp_url"`             // amqp url
 	HeimdallServerURL string `mapstructure:"heimdall_rest_server"` // heimdall server url
 
-	ChildBlockInterval uint64 `mapstructure:"child_chain_block_interval"` // Difference between header index of 2 child blocks submitted on main chain
-	MainchainGasLimit  uint64 `mapstructure:"main_chain_gas_limit"`       // gas limit to mainchain transaction. eg....submit checkpoint.
+	MainchainGasLimit uint64 `mapstructure:"main_chain_gas_limit"` // gas limit to mainchain transaction. eg....submit checkpoint.
 
 	// config related to bridge
 	CheckpointerPollInterval time.Duration `mapstructure:"checkpoint_poll_interval"` // Poll interval for checkpointer service to send new checkpoints or missing ACK
 	SyncerPollInterval       time.Duration `mapstructure:"syncer_poll_interval"`     // Poll interval for syncher service to sync for changes on main chain
 	NoACKPollInterval        time.Duration `mapstructure:"noack_poll_interval"`      // Poll interval for ack service to send no-ack in case of no checkpoints
-	ClerkPollingInterval     time.Duration `mapstructure:"clerk_polling_interval"`
-	SpanPollingInterval      time.Duration `mapstructure:"span_polling_interval"`
+	ClerkPollInterval        time.Duration `mapstructure:"clerk_poll_interval"`
+	SpanPollInterval         time.Duration `mapstructure:"span_poll_interval"`
 
 	// wait time related options
 	NoACKWaitTime time.Duration `mapstructure:"no_ack_wait_time"` // Time ack service waits to clear buffer and elect new proposer
@@ -116,6 +114,8 @@ var mainRPCClient *rpc.Client
 // MaticClient stores eth/rpc client for Matic Network
 var maticClient *ethclient.Client
 var maticRPCClient *rpc.Client
+
+var maticEthClient *eth.EthAPIBackend
 
 // private key object
 var privObject secp256k1.PrivKeySecp256k1
@@ -212,14 +212,13 @@ func GetDefaultHeimdallConfig() Configuration {
 		AmqpURL:           DefaultAmqpURL,
 		HeimdallServerURL: DefaultHeimdallServerURL,
 
-		ChildBlockInterval: DefaultChildBlockInterval,
-		MainchainGasLimit:  DefaultMainchainGasLimit,
+		MainchainGasLimit: DefaultMainchainGasLimit,
 
 		CheckpointerPollInterval: DefaultCheckpointerPollInterval,
 		SyncerPollInterval:       DefaultSyncerPollInterval,
 		NoACKPollInterval:        DefaultNoACKPollInterval,
-		ClerkPollingInterval:     DefaultClerkPollingInterval,
-		SpanPollingInterval:      DefaultSpanPollingInterval,
+		ClerkPollInterval:        DefaultClerkPollInterval,
+		SpanPollInterval:         DefaultSpanPollInterval,
 
 		NoACKWaitTime: NoACKWaitTime,
 	}
@@ -232,6 +231,12 @@ func GetConfig() Configuration {
 
 func GetGenesisDoc() tmTypes.GenesisDoc {
 	return GenesisDoc
+}
+
+// TEST PURPOSE ONLY
+// SetTestConfig sets test configuration
+func SetTestConfig(_conf Configuration) {
+	conf = _conf
 }
 
 //
@@ -256,6 +261,11 @@ func GetMaticClient() *ethclient.Client {
 // GetMaticRPCClient returns matic's RPC client
 func GetMaticRPCClient() *rpc.Client {
 	return maticRPCClient
+}
+
+// GetMaticEthClient returns matic's Eth client
+func GetMaticEthClient() *eth.EthAPIBackend {
+	return maticEthClient
 }
 
 // GetPrivKey returns priv key object

@@ -6,7 +6,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/maticnetwork/heimdall/checkpoint/types"
-	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -20,18 +19,17 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 	}
 
 	// Add finalised checkpoints to state
-	if len(data.Headers) != 0 {
+	if len(data.Checkpoints) != 0 {
 		// check if we are provided all the headers
-		if int(data.AckCount) != len(data.Headers) {
+		if int(data.AckCount) != len(data.Checkpoints) {
 			panic(errors.New("Incorrect state in state-dump , Please Check "))
 		}
 		// sort headers before loading to state
-		data.Headers = hmTypes.SortHeaders(data.Headers)
-
+		data.Checkpoints = hmTypes.SortHeaders(data.Checkpoints)
 		// load checkpoints to state
-		for i, header := range data.Headers {
-			checkpointHeaderIndex := helper.GetConfig().ChildBlockInterval * (uint64(i) + 1)
-			if err := keeper.AddCheckpoint(ctx, checkpointHeaderIndex, header); err != nil {
+		for i, checkpoint := range data.Checkpoints {
+			checkpointIndex := uint64(i) + 1
+			if err := keeper.AddCheckpoint(ctx, checkpointIndex, checkpoint); err != nil {
 				keeper.Logger(ctx).Error("InitGenesis | AddCheckpoint", "error", err)
 			}
 		}
@@ -58,6 +56,6 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
 		bufferedCheckpoint,
 		keeper.GetLastNoAck(ctx),
 		keeper.GetACKCount(ctx),
-		hmTypes.SortHeaders(keeper.GetCheckpointHeaders(ctx)),
+		hmTypes.SortHeaders(keeper.GetCheckpoints(ctx)),
 	)
 }
