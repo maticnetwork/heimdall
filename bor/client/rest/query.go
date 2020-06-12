@@ -22,6 +22,7 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc("/bor/span/{id}", spanHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/bor/latest-span", latestSpanHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/bor/prepare-next-span", prepareNextSpanHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc("/bor/prepare-next-producers", prepareNextProducersHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/bor/next-span-seed", fetchNextSpanSeedHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/bor/params", paramsHandlerFn(cliCtx)).Methods("GET")
 }
@@ -255,6 +256,56 @@ func prepareNextSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		// Fetching SelectedProducers
 		//
 
+		// nextProducerBytes, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNextProducers), nil)
+		// if err != nil {
+		// 	hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+		// 	return
+		// }
+
+		// // check content
+		// if ok := hmRest.ReturnNotFoundIfNoContent(w, nextProducerBytes, "Next Producers not found"); !ok {
+		// 	return
+		// }
+
+		var selectedProducers []hmTypes.Validator
+		// if err := json.Unmarshal(nextProducerBytes, &selectedProducers); err != nil {
+		// 	hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+		// 	return
+		// }
+		// selectedProducers = hmTypes.SortValidatorByAddress(selectedProducers)
+
+		// draft a propose span message
+		msg := hmTypes.NewSpan(
+			spanID,
+			startBlock,
+			startBlock+spanDuration-1,
+			_validatorSet,
+			selectedProducers,
+			chainID,
+		)
+
+		result, err := json.Marshal(&msg)
+		if err != nil {
+			RestLogger.Error("Error while marshalling response to Json", "error", err)
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		hmRest.PostProcessResponse(w, cliCtx, result)
+	}
+}
+
+func prepareNextProducersHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		//
+		// Fetching SelectedProducers
+		//
+
 		nextProducerBytes, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNextProducers), nil)
 		if err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -273,17 +324,7 @@ func prepareNextSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 		selectedProducers = hmTypes.SortValidatorByAddress(selectedProducers)
 
-		// draft a propose span message
-		msg := hmTypes.NewSpan(
-			spanID,
-			startBlock,
-			startBlock+spanDuration-1,
-			_validatorSet,
-			selectedProducers,
-			chainID,
-		)
-
-		result, err := json.Marshal(&msg)
+		result, err := json.Marshal(&selectedProducers)
 		if err != nil {
 			RestLogger.Error("Error while marshalling response to Json", "error", err)
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())

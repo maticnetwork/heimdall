@@ -39,6 +39,7 @@ const (
 	CurrentProposerURL      = "/staking/current-proposer"
 	LatestSpanURL           = "/bor/latest-span"
 	NextSpanInfoURL         = "/bor/prepare-next-span"
+	NextSpanProducersURL    = "/bor/prepare-next-producers"
 	NextSpanSeedURL         = "/bor/next-span-seed"
 	DividendAccountRootURL  = "/topup/dividend-account-root"
 	ValidatorURL            = "/staking/validator/%v"

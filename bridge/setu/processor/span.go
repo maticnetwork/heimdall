@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 	"time"
@@ -186,6 +187,26 @@ func (sp *SpanProcessor) fetchNextSpanDetails(id uint64, start uint64) (*types.S
 	if err = json.Unmarshal(result.Result, &msg); err != nil {
 		sp.Logger.Error("Error unmarshalling propose tx msg ", "error", err)
 		return nil, err
+	}
+
+	req, err = http.NewRequest("GET", helper.GetHeimdallServerEndpoint(util.NextSpanProducersURL), nil)
+	if err != nil {
+		sp.Logger.Error("Error creating a new request", "error", err)
+		return nil, err
+	}
+
+	// fetch next span details
+	result, err = helper.FetchFromAPI(sp.cliCtx, req.URL.String())
+	var producers []types.Validator
+	if err = json.Unmarshal(result.Result, &producers); err != nil {
+		sp.Logger.Error("Error unmarshalling producers msg ", "error", err)
+		return nil, err
+	}
+
+	// set selected producers
+	msg.SelectedProducers = producers
+	if len(msg.SelectedProducers) == 0 {
+		return nil, errors.New("No producers")
 	}
 
 	sp.Logger.Debug("◽ Generated proposer span msg", "msg", msg.String())
