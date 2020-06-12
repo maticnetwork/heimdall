@@ -73,6 +73,7 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg) error {
 		WithSequence(tb.lastSeqNo).
 		WithFees(helper.GetConfig().HeimdallTxFee).
 		WithGasAdjustment(helper.GetConfig().GasAdjustment).
+		WithSimulateAndExecute(true).
 		WithChainID(chainID)
 
 	txResponse, err := helper.BuildAndBroadcastMsgs(tb.cliCtx, txBldr, []sdk.Msg{msg})

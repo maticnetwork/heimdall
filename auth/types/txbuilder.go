@@ -66,6 +66,7 @@ func NewTxBuilderFromCLI() TxBuilder {
 	if err != nil {
 		panic(err)
 	}
+
 	txbldr := TxBuilder{
 		keybase:            kb,
 		accountNumber:      uint64(viper.GetInt64(flags.FlagAccountNumber)),
@@ -172,6 +173,12 @@ func (bldr TxBuilder) WithKeybase(keybase crkeys.Keybase) TxBuilder {
 // WithSequence returns a copy of the context with an updated sequence number.
 func (bldr TxBuilder) WithSequence(sequence uint64) TxBuilder {
 	bldr.sequence = sequence
+	return bldr
+}
+
+// WithSimulateAndExecute returns a copy of the context with an updated simulate
+func (bldr TxBuilder) WithSimulateAndExecute(simulateAndExecute bool) TxBuilder {
+	bldr.simulateAndExecute = simulateAndExecute
 	return bldr
 }
 

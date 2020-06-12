@@ -75,7 +75,7 @@ var (
 	MinBalance      = big.NewInt(100000000000000000) // aka 0.1 Ether
 
 	DefaultHeimdallTxFee = "300000000000000000matic"
-	DefaultGasAdjustment = float64(1.4)
+	DefaultGasAdjustment = float64(1.2)
 )
 
 var cdc = amino.NewCodec()
