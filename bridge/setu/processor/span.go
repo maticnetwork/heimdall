@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/maticnetwork/bor/common"
@@ -13,6 +11,7 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 
 	borTypes "github.com/maticnetwork/heimdall/bor/types"
+	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 
 	"github.com/maticnetwork/heimdall/types"
 )
@@ -23,6 +22,12 @@ type SpanProcessor struct {
 
 	// header listener subscription
 	cancelSpanService context.CancelFunc
+}
+
+// SpanContext represents span context
+type SpanContext struct {
+	ChainmanagerParams *chainmanagerTypes.Params
+	BorParams          *borTypes.Params
 }
 
 // Start starts new block subscription
@@ -69,14 +74,21 @@ func (sp *SpanProcessor) checkAndPropose() {
 	if err == nil && lastSpan != nil {
 		sp.Logger.Debug("Found last span", "lastSpan", lastSpan.ID, "startBlock", lastSpan.StartBlock, "endBlock", lastSpan.EndBlock)
 		nextSpanMsg, err := sp.fetchNextSpanDetails(lastSpan.ID+1, lastSpan.EndBlock+1)
-
-		// check if current user is among next span producers
-		if err == nil && sp.isSpanProposer(nextSpanMsg.SelectedProducers) {
-			go sp.propose(lastSpan, nextSpanMsg)
-		} else {
-			sp.Logger.Error("Unable to fetch next span details", "lastSpanId", lastSpan.ID)
+		if err != nil {
+			sp.Logger.Error("Unable to fetch next span details", "error", err)
 			return
 		}
+
+		// propose span
+		go sp.propose(lastSpan, nextSpanMsg)
+
+		// // check if current user is among next span producers
+		// if err == nil && sp.isSpanProposer(nextSpanMsg.SelectedProducers) {
+		// 	go sp.propose(lastSpan, nextSpanMsg)
+		// } else {
+		// 	sp.Logger.Error("Unable to fetch next span details", "lastSpanId", lastSpan.ID)
+		// 	return
+		// }
 	}
 }
 
@@ -157,39 +169,55 @@ func (sp *SpanProcessor) isSpanProposer(nextSpanProducers []types.Validator) boo
 
 // fetch next span details from heimdall.
 func (sp *SpanProcessor) fetchNextSpanDetails(id uint64, start uint64) (*types.Span, error) {
-	req, err := http.NewRequest("GET", helper.GetHeimdallServerEndpoint(util.NextSpanInfoURL), nil)
+	configContext, err := sp.getSpanContext()
 	if err != nil {
-		sp.Logger.Error("Error creating a new request", "error", err)
-		return nil, err
-	}
-	configParams, err := util.GetChainmanagerParams(sp.cliCtx)
-	if err != nil {
-		sp.Logger.Error("Error while fetching chainmanager params", "error", err)
 		return nil, err
 	}
 
-	q := req.URL.Query()
-	q.Add("span_id", strconv.FormatUint(id, 10))
-	q.Add("start_block", strconv.FormatUint(start, 10))
-	q.Add("chain_id", configParams.ChainParams.BorChainID)
-	q.Add("proposer", helper.GetFromAddress(sp.cliCtx).String())
-	req.URL.RawQuery = q.Encode()
+	chainID := configContext.ChainmanagerParams.ChainParams.BorChainID
+	spanLength := configContext.BorParams.SpanDuration
 
-	// fetch next span details
-	result, err := helper.FetchFromAPI(sp.cliCtx, req.URL.String())
-	if err != nil {
-		sp.Logger.Error("Error fetching proposers", "error", err)
-		return nil, err
-	}
+	// span
+	return &types.Span{
+		ID:         id,
+		StartBlock: start,
+		EndBlock:   start + spanLength - 1,
+		ChainID:    chainID,
+	}, nil
 
-	var msg types.Span
-	if err = json.Unmarshal(result.Result, &msg); err != nil {
-		sp.Logger.Error("Error unmarshalling propose tx msg ", "error", err)
-		return nil, err
-	}
+	// req, err := http.NewRequest("GET", helper.GetHeimdallServerEndpoint(util.NextSpanInfoURL), nil)
+	// if err != nil {
+	// 	sp.Logger.Error("Error creating a new request", "error", err)
+	// 	return nil, err
+	// }
+	// configParams, err := util.GetChainmanagerParams(sp.cliCtx)
+	// if err != nil {
+	// 	sp.Logger.Error("Error while fetching chainmanager params", "error", err)
+	// 	return nil, err
+	// }
 
-	sp.Logger.Debug("◽ Generated proposer span msg", "msg", msg.String())
-	return &msg, nil
+	// q := req.URL.Query()
+	// q.Add("span_id", strconv.FormatUint(id, 10))
+	// q.Add("start_block", strconv.FormatUint(start, 10))
+	// q.Add("chain_id", configParams.ChainParams.BorChainID)
+	// q.Add("proposer", helper.GetFromAddress(sp.cliCtx).String())
+	// req.URL.RawQuery = q.Encode()
+
+	// // fetch next span details
+	// result, err := helper.FetchFromAPI(sp.cliCtx, req.URL.String())
+	// if err != nil {
+	// 	sp.Logger.Error("Error fetching proposers", "error", err)
+	// 	return nil, err
+	// }
+
+	// var msg types.Span
+	// if err = json.Unmarshal(result.Result, &msg); err != nil {
+	// 	sp.Logger.Error("Error unmarshalling propose tx msg ", "error", err)
+	// 	return nil, err
+	// }
+
+	// sp.Logger.Debug("◽ Generated proposer span msg", "msg", msg.String())
+	// return &msg, nil
 }
 
 // fetchNextSpanSeed - fetches seed for next span
@@ -214,4 +242,27 @@ func (sp *SpanProcessor) Stop() {
 	// cancel span polling
 	sp.cancelSpanService()
 
+}
+
+//
+// utils
+//
+
+func (cp *SpanProcessor) getSpanContext() (*SpanContext, error) {
+	chainmanagerParams, err := util.GetChainmanagerParams(cp.cliCtx)
+	if err != nil {
+		cp.Logger.Error("Error while fetching chain manager params", "error", err)
+		return nil, err
+	}
+
+	borParams, err := util.GetBorParams(cp.cliCtx)
+	if err != nil {
+		cp.Logger.Error("Error while fetching bor params", "error", err)
+		return nil, err
+	}
+
+	return &SpanContext{
+		ChainmanagerParams: chainmanagerParams,
+		BorParams:          borParams,
+	}, nil
 }

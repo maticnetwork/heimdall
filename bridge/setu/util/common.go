@@ -21,6 +21,7 @@ import (
 	tmTypes "github.com/tendermint/tendermint/types"
 
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
+	borTypes "github.com/maticnetwork/heimdall/bor/types"
 	chainManagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/helper"
@@ -32,6 +33,7 @@ const (
 	AccountDetailsURL       = "/auth/accounts/%v"
 	LastNoAckURL            = "/checkpoints/last-no-ack"
 	CheckpointParamsURL     = "/checkpoints/params"
+	BorParamsURL            = "/bor/params"
 	ChainManagerParamsURL   = "/chainmanager/params"
 	ProposersURL            = "/staking/proposer/%v"
 	BufferedCheckpointURL   = "/checkpoints/buffer"
@@ -324,6 +326,27 @@ func GetCheckpointParams(cliCtx cliContext.CLIContext) (*checkpointTypes.Params,
 	var params checkpointTypes.Params
 	if err := json.Unmarshal(response.Result, &params); err != nil {
 		logger.Error("Error unmarshalling Checkpoint params", "url", CheckpointParamsURL)
+		return nil, err
+	}
+
+	return &params, nil
+}
+
+// GetBorParams return params
+func GetBorParams(cliCtx cliContext.CLIContext) (*borTypes.Params, error) {
+	response, err := helper.FetchFromAPI(
+		cliCtx,
+		helper.GetHeimdallServerEndpoint(BorParamsURL),
+	)
+
+	if err != nil {
+		logger.Error("Error fetching bor params", "err", err)
+		return nil, err
+	}
+
+	var params borTypes.Params
+	if err := json.Unmarshal(response.Result, &params); err != nil {
+		logger.Error("Error unmarshalling bor params", "url", BorParamsURL)
 		return nil, err
 	}
 
