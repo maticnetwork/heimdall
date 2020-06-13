@@ -18,12 +18,6 @@ import (
 var (
 	// simulation signature values used to estimate gas consumption
 	simSecp256k1Pubkey secp256k1.PubKeySecp256k1
-
-	// DefaultFeeInMatic represents default fee in matic
-	// DefaultFeeInMatic = big.NewInt(10).Exp(big.NewInt(10), big.NewInt(15), nil)
-
-	// DefaultFeeWantedPerTx fee wanted per tx
-	// DefaultFeeWantedPerTx = sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: sdk.NewIntFromBigInt(DefaultFeeInMatic)}}
 )
 
 func init() {
