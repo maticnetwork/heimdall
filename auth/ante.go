@@ -77,7 +77,7 @@ func NewAnteHandler(
 			newCtx = SetGasMeter(simulate, ctx, 0)
 			return newCtx, sdk.ErrInternal("tx must be StdTx").Result(), true
 		}
-		ctx.Logger().Debug("Sender - feeAmount, gasWanted, simulate, ischeckTx", stdTx.Fee.Amount, stdTx.Fee.Gas, simulate, ctx.IsCheckTx())
+		ctx.Logger().Debug("fee and gas set in tx", "feeAmount", stdTx.Fee.Amount, "gasWanted", stdTx.Fee.Gas, "simulate", simulate, "ischeckTx", ctx.IsCheckTx())
 
 		// Ensure that the provided fees meet a minimum threshold for the validator,
 		// if this is a CheckTx. This is only for local mempool purposes, and thus
