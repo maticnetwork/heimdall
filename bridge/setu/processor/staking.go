@@ -2,6 +2,7 @@ package processor
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/RichardKnop/machinery/v1/tasks"
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
@@ -126,7 +127,12 @@ func (sp *StakingProcessor) sendValidatorJoinToHeimdall(eventName string, logByt
 			return err
 		}
 	}
-	return nil
+	// After broadcasting transaction from bridge, add back the msg to queue with retry delay.
+	// This is to retry side-tx msg incase if it was failed earlier during side-tx processing on heimdall.
+	// estimatedNextBlockTime is in milliseconds
+	estimatedNextBlockTime := helper.GetGenesisDoc().ConsensusParams.Block.TimeIotaMs
+	sp.Logger.Debug("Retrying validatorjoin to check if side-tx is successful or not", "after", 6*time.Duration(estimatedNextBlockTime)*time.Millisecond)
+	return tasks.NewErrRetryTaskLater("retry to check if side-tx is successful or not", 6*time.Duration(estimatedNextBlockTime)*time.Millisecond)
 }
 
 func (sp *StakingProcessor) sendUnstakeInitToHeimdall(eventName string, logBytes string) error {
@@ -185,7 +191,13 @@ func (sp *StakingProcessor) sendUnstakeInitToHeimdall(eventName string, logBytes
 			return err
 		}
 	}
-	return nil
+
+	// After broadcasting transaction from bridge, add back the msg to queue with retry delay.
+	// This is to retry side-tx msg incase if it was failed earlier during side-tx processing on heimdall.
+	// estimatedNextBlockTime is in milliseconds
+	estimatedNextBlockTime := helper.GetGenesisDoc().ConsensusParams.Block.TimeIotaMs
+	sp.Logger.Debug("Retrying unstake-init to check if side-tx is successful or not", "after", 6*time.Duration(estimatedNextBlockTime)*time.Millisecond)
+	return tasks.NewErrRetryTaskLater("retry to check if side-tx is successful or not", 6*time.Duration(estimatedNextBlockTime)*time.Millisecond)
 }
 
 func (sp *StakingProcessor) sendStakeUpdateToHeimdall(eventName string, logBytes string) error {
@@ -200,7 +212,7 @@ func (sp *StakingProcessor) sendStakeUpdateToHeimdall(eventName string, logBytes
 		sp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
 	} else {
 		if isOld, _ := sp.isOldTx(sp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index)); isOld {
-			sp.Logger.Info("Ignoring task to send unstakeinit to heimdall as already processed",
+			sp.Logger.Info("Ignoring task to send stake-update to heimdall as already processed",
 				"event", eventName,
 				"validatorID", event.ValidatorId,
 				"nonce", event.Nonce,
@@ -239,7 +251,12 @@ func (sp *StakingProcessor) sendStakeUpdateToHeimdall(eventName string, logBytes
 			return err
 		}
 	}
-	return nil
+	// After broadcasting transaction from bridge, add back the msg to queue with retry delay.
+	// This is to retry side-tx msg incase if it was failed earlier during side-tx processing on heimdall.
+	// estimatedNextBlockTime is in milliseconds
+	estimatedNextBlockTime := helper.GetGenesisDoc().ConsensusParams.Block.TimeIotaMs
+	sp.Logger.Debug("Retrying stake-update to check if side-tx is successful or not", "after", 6*time.Duration(estimatedNextBlockTime)*time.Millisecond)
+	return tasks.NewErrRetryTaskLater("retry to check if side-tx is successful or not", 6*time.Duration(estimatedNextBlockTime)*time.Millisecond)
 }
 
 func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logBytes string) error {
@@ -302,7 +319,13 @@ func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logByte
 			return err
 		}
 	}
-	return nil
+
+	// After broadcasting transaction from bridge, add back the msg to queue with retry delay.
+	// This is to retry side-tx msg incase if it was failed earlier during side-tx processing on heimdall.
+	// estimatedNextBlockTime is in milliseconds
+	estimatedNextBlockTime := helper.GetGenesisDoc().ConsensusParams.Block.TimeIotaMs
+	sp.Logger.Debug("Retrying signer-change to check if side-tx is successful or not", "after", 6*time.Duration(estimatedNextBlockTime)*time.Millisecond)
+	return tasks.NewErrRetryTaskLater("retry to check if side-tx is successful or not", 6*time.Duration(estimatedNextBlockTime)*time.Millisecond)
 }
 
 // isOldTx  checks if tx is already processed or not

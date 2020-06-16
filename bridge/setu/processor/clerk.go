@@ -3,7 +3,9 @@ package processor
 import (
 	"encoding/hex"
 	"encoding/json"
+	"time"
 
+	"github.com/RichardKnop/machinery/v1/tasks"
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/core/types"
@@ -112,7 +114,13 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 			return err
 		}
 	}
-	return nil
+
+	// After broadcasting transaction from bridge, add back the msg to queue with retry delay.
+	// This is to retry side-tx msg incase if it was failed earlier during side-tx processing on heimdall.
+	// estimatedNextBlockTime is in milliseconds
+	estimatedNextBlockTime := helper.GetGenesisDoc().ConsensusParams.Block.TimeIotaMs
+	cp.Logger.Debug("Retrying deposit to check if side-tx is successful or not", "after", 6*time.Duration(estimatedNextBlockTime)*time.Millisecond)
+	return tasks.NewErrRetryTaskLater("retry to check if side-tx is successful or not", 6*time.Duration(estimatedNextBlockTime)*time.Millisecond)
 }
 
 // isOldTx  checks if tx is already processed or not
