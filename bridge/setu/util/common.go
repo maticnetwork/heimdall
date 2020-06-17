@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"net/url"
 	"os"
 	"strconv"
@@ -164,6 +165,32 @@ func CalculateTaskDelay(cliCtx cliContext.CLIContext) (bool, time.Duration) {
 	// calculate delay
 	taskDelay := time.Duration(valPosition) * TaskDelayBetweenEachVal
 	return isCurrentValidator, taskDelay
+}
+
+func CalculateSpanTaskDelay(cliContext cliContext.CLIContext, id uint64, start uint64) (bool, time.Duration) {
+	// calculate validator position
+	valPosition := 0
+	isNextSpanProducer := false
+	nextSpan, err := FetchNextSpanDetails(cliContext, id, start)
+
+	if err != nil {
+		logger.Error("Error while sending request for next span details", "error", err)
+		return isNextSpanProducer, 0
+	}
+
+	// check if current user is among next span producers
+	// find the index of current validator in nextSpanProducers list
+	for i, validator := range nextSpan.SelectedProducers {
+		if bytes.Equal(validator.Signer.Bytes(), helper.GetAddress()) {
+			valPosition = i + 1
+			isNextSpanProducer = true
+			break
+		}
+	}
+
+	// calculate delay
+	taskDelay := time.Duration(valPosition) * TaskDelayBetweenEachVal
+	return isNextSpanProducer, taskDelay
 }
 
 // IsCurrentProposer checks if we are current proposer
@@ -381,4 +408,58 @@ func AppendPrefix(signerPubKey []byte) []byte {
 	prefix[0] = byte(0x04)
 	signerPubKey = append(prefix[:], signerPubKey[:]...)
 	return signerPubKey
+}
+
+// fetch next span details from heimdall.
+func FetchNextSpanDetails(cliCtx cliContext.CLIContext, id uint64, start uint64) (*types.Span, error) {
+	req, err := http.NewRequest("GET", helper.GetHeimdallServerEndpoint(NextSpanInfoURL), nil)
+	if err != nil {
+		logger.Error("Error creating a new request", "error", err)
+		return nil, err
+	}
+	configParams, err := GetChainmanagerParams(cliCtx)
+	if err != nil {
+		logger.Error("Error while fetching chainmanager params", "error", err)
+		return nil, err
+	}
+
+	q := req.URL.Query()
+	q.Add("span_id", strconv.FormatUint(id, 10))
+	q.Add("start_block", strconv.FormatUint(start, 10))
+	q.Add("chain_id", configParams.ChainParams.BorChainID)
+	q.Add("proposer", helper.GetFromAddress(cliCtx).String())
+	req.URL.RawQuery = q.Encode()
+
+	// fetch next span details
+	result, err := helper.FetchFromAPI(cliCtx, req.URL.String())
+	if err != nil {
+		logger.Error("Error fetching proposers", "error", err)
+		return nil, err
+	}
+
+	var msg types.Span
+	if err = json.Unmarshal(result.Result, &msg); err != nil {
+		logger.Error("Error unmarshalling propose tx msg ", "error", err)
+		return nil, err
+	}
+
+	logger.Debug("◽ Generated proposer span msg", "msg", msg.String())
+	return &msg, nil
+}
+
+// get Last span
+func GetLastSpan(cliCtx cliContext.CLIContext) (*types.Span, error) {
+	// fetch last span
+	result, err := helper.FetchFromAPI(cliCtx, helper.GetHeimdallServerEndpoint(LatestSpanURL))
+	if err != nil {
+		logger.Error("Error while fetching latest span")
+		return nil, err
+	}
+	var lastSpan types.Span
+	err = json.Unmarshal(result.Result, &lastSpan)
+	if err != nil {
+		logger.Error("Error unmarshalling span", "error", err)
+		return nil, err
+	}
+	return &lastSpan, nil
 }
