@@ -8,11 +8,13 @@ import (
 	"github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 // MaticChainListener - Listens to and process headerblocks from maticchain
 type MaticChainListener struct {
 	BaseListener
+	cacheLastSpan *hmTypes.Span
 }
 
 // NewMaticChainListener - constructor func
@@ -49,6 +51,12 @@ func (ml *MaticChainListener) Start() error {
 	// subscribed to new head
 	ml.Logger.Info("Subscribed to new head")
 
+	// cache last span
+	lastSpan, err := util.GetLastSpan(ml.cliCtx)
+	if err == nil && lastSpan != nil {
+		ml.cacheLastSpan = lastSpan
+	}
+
 	return nil
 }
 
@@ -70,10 +78,19 @@ func (ml *MaticChainListener) ProcessHeader(newHeader *types.Header) {
 }
 
 func (ml *MaticChainListener) checkAndSendSpanTask(newHeader *types.Header) {
+
+	// ignore header
+	if ml.cacheLastSpan != nil && newHeader.Number.Uint64() < ml.cacheLastSpan.StartBlock {
+		ml.Logger.Debug("Span already sent. ignore header", "blockNumber", newHeader.Number, "cacheSpanStartBlock", ml.cacheLastSpan.StartBlock)
+		return
+	}
+
 	// Fetch last span
 	lastSpan, err := util.GetLastSpan(ml.cliCtx)
 	if err == nil && lastSpan != nil {
 		ml.Logger.Debug("Found last span", "lastSpan", lastSpan.ID, "startBlock", lastSpan.StartBlock, "endBlock", lastSpan.EndBlock)
+		// update cache
+		ml.cacheLastSpan = lastSpan
 
 		// check if span task has to be sent
 		if lastSpan.StartBlock <= newHeader.Number.Uint64() && newHeader.Number.Uint64() <= lastSpan.EndBlock {
