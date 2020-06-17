@@ -2,7 +2,6 @@ package processor
 
 import (
 	"encoding/json"
-	"time"
 
 	"github.com/RichardKnop/machinery/v1/tasks"
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
@@ -91,7 +90,7 @@ func (sp *StakingProcessor) sendValidatorJoinToHeimdall(eventName string, logByt
 				"event", eventName,
 				"signer", event.Signer,
 			)
-			return tasks.NewErrRetryTaskLater("account doesn't exist", util.RetryTaskDelay)
+			return tasks.NewErrRetryTaskLater("account doesn't exist", util.ValidatorJoinRetryDelay)
 		}
 
 		sp.Logger.Info(
@@ -129,10 +128,8 @@ func (sp *StakingProcessor) sendValidatorJoinToHeimdall(eventName string, logByt
 	}
 	// After broadcasting transaction from bridge, add back the msg to queue with retry delay.
 	// This is to retry side-tx msg incase if it was failed earlier during side-tx processing on heimdall.
-	// estimatedNextBlockTime is in milliseconds
-	estimatedNextBlockTime := helper.GetGenesisDoc().ConsensusParams.Block.TimeIotaMs
-	sp.Logger.Debug("Retrying validatorjoin to check if side-tx is successful or not", "after", 6*time.Duration(estimatedNextBlockTime)*time.Millisecond)
-	return tasks.NewErrRetryTaskLater("retry to check if side-tx is successful or not", 6*time.Duration(estimatedNextBlockTime)*time.Millisecond)
+	sp.Logger.Debug("Retrying validatorjoin to check if side-tx is successful or not", "after", util.BlocksToDelayBeforeRetry*util.TimeBetweenTwoBlocks)
+	return tasks.NewErrRetryTaskLater("retry to check if side-tx is successful or not", util.BlocksToDelayBeforeRetry*util.TimeBetweenTwoBlocks)
 }
 
 func (sp *StakingProcessor) sendUnstakeInitToHeimdall(eventName string, logBytes string) error {
@@ -194,10 +191,8 @@ func (sp *StakingProcessor) sendUnstakeInitToHeimdall(eventName string, logBytes
 
 	// After broadcasting transaction from bridge, add back the msg to queue with retry delay.
 	// This is to retry side-tx msg incase if it was failed earlier during side-tx processing on heimdall.
-	// estimatedNextBlockTime is in milliseconds
-	estimatedNextBlockTime := helper.GetGenesisDoc().ConsensusParams.Block.TimeIotaMs
-	sp.Logger.Debug("Retrying unstake-init to check if side-tx is successful or not", "after", 6*time.Duration(estimatedNextBlockTime)*time.Millisecond)
-	return tasks.NewErrRetryTaskLater("retry to check if side-tx is successful or not", 6*time.Duration(estimatedNextBlockTime)*time.Millisecond)
+	sp.Logger.Debug("Retrying unstake-init to check if side-tx is successful or not", "after", util.BlocksToDelayBeforeRetry*util.TimeBetweenTwoBlocks)
+	return tasks.NewErrRetryTaskLater("retry to check if side-tx is successful or not", util.BlocksToDelayBeforeRetry*util.TimeBetweenTwoBlocks)
 }
 
 func (sp *StakingProcessor) sendStakeUpdateToHeimdall(eventName string, logBytes string) error {
@@ -251,12 +246,11 @@ func (sp *StakingProcessor) sendStakeUpdateToHeimdall(eventName string, logBytes
 			return err
 		}
 	}
+
 	// After broadcasting transaction from bridge, add back the msg to queue with retry delay.
 	// This is to retry side-tx msg incase if it was failed earlier during side-tx processing on heimdall.
-	// estimatedNextBlockTime is in milliseconds
-	estimatedNextBlockTime := helper.GetGenesisDoc().ConsensusParams.Block.TimeIotaMs
-	sp.Logger.Debug("Retrying stake-update to check if side-tx is successful or not", "after", 6*time.Duration(estimatedNextBlockTime)*time.Millisecond)
-	return tasks.NewErrRetryTaskLater("retry to check if side-tx is successful or not", 6*time.Duration(estimatedNextBlockTime)*time.Millisecond)
+	sp.Logger.Debug("Retrying stake-update to check if side-tx is successful or not", "after", util.BlocksToDelayBeforeRetry*util.TimeBetweenTwoBlocks)
+	return tasks.NewErrRetryTaskLater("retry to check if side-tx is successful or not", util.BlocksToDelayBeforeRetry*util.TimeBetweenTwoBlocks)
 }
 
 func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logBytes string) error {
@@ -322,10 +316,8 @@ func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logByte
 
 	// After broadcasting transaction from bridge, add back the msg to queue with retry delay.
 	// This is to retry side-tx msg incase if it was failed earlier during side-tx processing on heimdall.
-	// estimatedNextBlockTime is in milliseconds
-	estimatedNextBlockTime := helper.GetGenesisDoc().ConsensusParams.Block.TimeIotaMs
-	sp.Logger.Debug("Retrying signer-change to check if side-tx is successful or not", "after", 6*time.Duration(estimatedNextBlockTime)*time.Millisecond)
-	return tasks.NewErrRetryTaskLater("retry to check if side-tx is successful or not", 6*time.Duration(estimatedNextBlockTime)*time.Millisecond)
+	sp.Logger.Debug("Retrying signer-change to check if side-tx is successful or not", "after", util.BlocksToDelayBeforeRetry*util.TimeBetweenTwoBlocks)
+	return tasks.NewErrRetryTaskLater("retry to check if side-tx is successful or not", util.BlocksToDelayBeforeRetry*util.TimeBetweenTwoBlocks)
 }
 
 // isOldTx  checks if tx is already processed or not
