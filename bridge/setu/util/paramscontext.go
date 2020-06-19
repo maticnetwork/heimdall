@@ -42,7 +42,7 @@ func (paramsContext *ParamsContext) GetParams() (params Params, err error) {
 		params = data.(Params)
 	} else {
 		// Fetch params and add to cache
-		params, err := paramsContext.fetchLatestParams(paramsContext.cliCtx)
+		params, err := fetchLatestParams(paramsContext.cliCtx)
 		if err != nil {
 			paramsContext.paramsCache.Set(paramsContext.key, params, 1*time.Hour)
 		}
@@ -50,7 +50,7 @@ func (paramsContext *ParamsContext) GetParams() (params Params, err error) {
 	return
 }
 
-func (paramsContext *ParamsContext) fetchLatestParams(cliContext cliContext.CLIContext) (params Params, err error) {
+func fetchLatestParams(cliContext cliContext.CLIContext) (params Params, err error) {
 	chainmanagerParams, err := GetChainmanagerParams(cliContext)
 	if err != nil {
 		return
