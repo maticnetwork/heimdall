@@ -43,7 +43,7 @@ func (paramsContext *ParamsContext) GetParams() (params Params, err error) {
 	} else {
 		// Fetch params and add to cache
 		params, err := fetchLatestParams(paramsContext.cliCtx)
-		if err != nil {
+		if err == nil {
 			paramsContext.paramsCache.Set(paramsContext.key, params, 1*time.Hour)
 		}
 	}
