@@ -33,16 +33,15 @@ func NewParamsContext(cliCtx cliContext.CLIContext) *ParamsContext {
 	return &paramsContext
 }
 
-// GetParamsContext gets ParamsContext
+// GetParams updates cache if required and returns params
 func (paramsContext *ParamsContext) GetParams() (params Params, err error) {
 	var found bool
-
 	data, found := paramsContext.paramsCache.Get(paramsContext.key)
 	if found {
 		params = data.(Params)
 	} else {
 		// Fetch params and add to cache
-		params, err := fetchLatestParams(paramsContext.cliCtx)
+		params, err = fetchLatestParams(paramsContext.cliCtx)
 		if err == nil {
 			paramsContext.paramsCache.Set(paramsContext.key, params, 1*time.Hour)
 		}
