@@ -90,7 +90,7 @@ func (sp *StakingProcessor) sendValidatorJoinToHeimdall(eventName string, logByt
 				"event", eventName,
 				"signer", event.Signer,
 			)
-			return tasks.NewErrRetryTaskLater("account doesn't exist", util.RetryTaskDelay)
+			return tasks.NewErrRetryTaskLater("account doesn't exist", util.ValidatorJoinRetryDelay)
 		}
 
 		sp.Logger.Info(
@@ -126,7 +126,10 @@ func (sp *StakingProcessor) sendValidatorJoinToHeimdall(eventName string, logByt
 			return err
 		}
 	}
-	return nil
+	// After broadcasting transaction from bridge, add back the msg to queue with retry delay.
+	// This is to retry side-tx msg incase if it was failed earlier during side-tx processing on heimdall.
+	sp.Logger.Debug("Retrying validatorjoin to check if side-tx is successful or not", "after", util.BlocksToDelayBeforeRetry*util.TimeBetweenTwoBlocks)
+	return tasks.NewErrRetryTaskLater("retry to check if side-tx is successful or not", util.BlocksToDelayBeforeRetry*util.TimeBetweenTwoBlocks)
 }
 
 func (sp *StakingProcessor) sendUnstakeInitToHeimdall(eventName string, logBytes string) error {
@@ -185,7 +188,11 @@ func (sp *StakingProcessor) sendUnstakeInitToHeimdall(eventName string, logBytes
 			return err
 		}
 	}
-	return nil
+
+	// After broadcasting transaction from bridge, add back the msg to queue with retry delay.
+	// This is to retry side-tx msg incase if it was failed earlier during side-tx processing on heimdall.
+	sp.Logger.Debug("Retrying unstake-init to check if side-tx is successful or not", "after", util.BlocksToDelayBeforeRetry*util.TimeBetweenTwoBlocks)
+	return tasks.NewErrRetryTaskLater("retry to check if side-tx is successful or not", util.BlocksToDelayBeforeRetry*util.TimeBetweenTwoBlocks)
 }
 
 func (sp *StakingProcessor) sendStakeUpdateToHeimdall(eventName string, logBytes string) error {
@@ -200,7 +207,7 @@ func (sp *StakingProcessor) sendStakeUpdateToHeimdall(eventName string, logBytes
 		sp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
 	} else {
 		if isOld, _ := sp.isOldTx(sp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index)); isOld {
-			sp.Logger.Info("Ignoring task to send unstakeinit to heimdall as already processed",
+			sp.Logger.Info("Ignoring task to send stake-update to heimdall as already processed",
 				"event", eventName,
 				"validatorID", event.ValidatorId,
 				"nonce", event.Nonce,
@@ -239,7 +246,11 @@ func (sp *StakingProcessor) sendStakeUpdateToHeimdall(eventName string, logBytes
 			return err
 		}
 	}
-	return nil
+
+	// After broadcasting transaction from bridge, add back the msg to queue with retry delay.
+	// This is to retry side-tx msg incase if it was failed earlier during side-tx processing on heimdall.
+	sp.Logger.Debug("Retrying stake-update to check if side-tx is successful or not", "after", util.BlocksToDelayBeforeRetry*util.TimeBetweenTwoBlocks)
+	return tasks.NewErrRetryTaskLater("retry to check if side-tx is successful or not", util.BlocksToDelayBeforeRetry*util.TimeBetweenTwoBlocks)
 }
 
 func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logBytes string) error {
@@ -302,7 +313,11 @@ func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logByte
 			return err
 		}
 	}
-	return nil
+
+	// After broadcasting transaction from bridge, add back the msg to queue with retry delay.
+	// This is to retry side-tx msg incase if it was failed earlier during side-tx processing on heimdall.
+	sp.Logger.Debug("Retrying signer-change to check if side-tx is successful or not", "after", util.BlocksToDelayBeforeRetry*util.TimeBetweenTwoBlocks)
+	return tasks.NewErrRetryTaskLater("retry to check if side-tx is successful or not", util.BlocksToDelayBeforeRetry*util.TimeBetweenTwoBlocks)
 }
 
 // isOldTx  checks if tx is already processed or not

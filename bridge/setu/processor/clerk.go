@@ -4,21 +4,16 @@ import (
 	"encoding/hex"
 	"encoding/json"
 
+	"github.com/RichardKnop/machinery/v1/tasks"
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
-	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
 	"github.com/maticnetwork/heimdall/contracts/statesender"
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
-
-// ClerkContext for bridge
-type ClerkContext struct {
-	ChainmanagerParams *chainmanagerTypes.Params
-}
 
 // ClerkProcessor - sync state/deposit events
 type ClerkProcessor struct {
@@ -58,12 +53,12 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 		return err
 	}
 
-	clerkContext, err := cp.getClerkContext()
+	params, err := cp.paramsContext.GetParams()
 	if err != nil {
 		return err
 	}
 
-	chainParams := clerkContext.ChainmanagerParams.ChainParams
+	chainParams := params.ChainmanagerParams.ChainParams
 
 	event := new(statesender.StatesenderStateSynced)
 	if err := helper.UnpackLog(cp.stateSenderAbi, event, eventName, &vLog); err != nil {
@@ -112,7 +107,11 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 			return err
 		}
 	}
-	return nil
+
+	// After broadcasting transaction from bridge, add back the msg to queue with retry delay.
+	// This is to retry side-tx msg incase if it was failed earlier during side-tx processing on heimdall.
+	cp.Logger.Debug("Retrying deposit to check if side-tx is successful or not", "after", util.BlocksToDelayBeforeRetry*util.TimeBetweenTwoBlocks)
+	return tasks.NewErrRetryTaskLater("retry to check if side-tx is successful or not", util.BlocksToDelayBeforeRetry*util.TimeBetweenTwoBlocks)
 }
 
 // isOldTx  checks if tx is already processed or not
@@ -142,20 +141,4 @@ func (cp *ClerkProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, l
 	}
 
 	return status, nil
-}
-
-//
-// utils
-//
-
-func (cp *ClerkProcessor) getClerkContext() (*ClerkContext, error) {
-	chainmanagerParams, err := util.GetChainmanagerParams(cp.cliCtx)
-	if err != nil {
-		cp.Logger.Error("Error while fetching chain manager params", "error", err)
-		return nil, err
-	}
-
-	return &ClerkContext{
-		ChainmanagerParams: chainmanagerParams,
-	}, nil
 }
