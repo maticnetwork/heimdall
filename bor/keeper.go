@@ -229,8 +229,14 @@ func (k *Keeper) SelectNextProducers(ctx sdk.Context, seed common.Hash) (vals []
 		return spanEligibleVals, nil
 	}
 
+	// TODO remove old selection algorigthm
 	// select next producers using seed as blockheader hash
-	newProducersIds, err := SelectNextProducers(seed, spanEligibleVals, producerCount)
+	fn := SelectNextProducers
+	if ctx.BlockHeight() < 282500 {
+		fn = XXXSelectNextProducers
+	}
+
+	newProducersIds, err := fn(seed, spanEligibleVals, producerCount)
 	if err != nil {
 		return vals, err
 	}
