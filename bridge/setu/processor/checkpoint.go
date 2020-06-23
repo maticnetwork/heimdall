@@ -288,8 +288,8 @@ func (cp *CheckpointProcessor) sendCheckpointAckToHeimdall(eventName string, che
 	}
 	// After broadcasting transaction from bridge, add back the msg to queue with retry delay.
 	// This is to retry side-tx msg incase if it was failed earlier during side-tx processing on heimdall.
-	cp.Logger.Debug("Retrying checkpoint-ack to check if side-tx is successful or not", "after", util.BlocksToDelayBeforeRetry*util.TimeBetweenTwoBlocks)
-	return tasks.NewErrRetryTaskLater("retry to check if side-tx is successful or not", util.BlocksToDelayBeforeRetry*util.TimeBetweenTwoBlocks)
+	cp.Logger.Debug("Retrying checkpoint-ack to check if side-tx is successful or not", "after", util.BlocksToDelayBeforeRetry*util.BlockInterval)
+	return tasks.NewErrRetryTaskLater("retry to check if side-tx is successful or not", util.BlocksToDelayBeforeRetry*util.BlockInterval)
 }
 
 // handleCheckpointNoAck - Checkpoint No-Ack handler

@@ -54,10 +54,10 @@ const (
 
 	TransactionTimeout      = 1 * time.Minute
 	CommitTimeout           = 2 * time.Minute
-	TaskDelayBetweenEachVal = 6 * time.Second
-	ValidatorJoinRetryDelay = 12 * time.Second
+	BlockInterval           = 6 * time.Second
+	TaskDelayBetweenEachVal = 3 * BlockInterval
+	ValidatorJoinRetryDelay = 3 * BlockInterval
 
-	TimeBetweenTwoBlocks     = 6 * time.Second
 	BlocksToDelayBeforeRetry = 6
 
 	BridgeDBFlag = "bridge-db"

@@ -27,6 +27,7 @@ require (
 	github.com/karalabe/usb v0.0.0-20191104083709-911d15fe12a9 // indirect
 	github.com/maticnetwork/bor v0.1.7-0.20200507151553-e03cd94ed12b
 	github.com/olekukonko/tablewriter v0.0.4 // indirect
+	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pborman/uuid v1.2.0
 	github.com/peterh/liner v1.2.0 // indirect
 	github.com/pkg/errors v0.9.1
