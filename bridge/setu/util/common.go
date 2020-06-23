@@ -54,8 +54,8 @@ const (
 
 	TransactionTimeout      = 1 * time.Minute
 	CommitTimeout           = 2 * time.Minute
-	TaskDelayBetweenEachVal = 6 * time.Second
-	ValidatorJoinRetryDelay = 12 * time.Second
+	TaskDelayBetweenEachVal = 18 * time.Second
+	ValidatorJoinRetryDelay = 18 * time.Second
 
 	TimeBetweenTwoBlocks     = 6 * time.Second
 	BlocksToDelayBeforeRetry = 6

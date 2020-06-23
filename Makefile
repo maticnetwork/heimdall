@@ -85,7 +85,7 @@ run-bridge:
 
 start-bridge:
 	mkdir -p logs &
-	./build/bridge start --all > ./logs/bridge.log &
+	./build/bridge start --all --log_level debug > ./logs/bridge.log &
 
 start-all:
 	mkdir -p ./logs

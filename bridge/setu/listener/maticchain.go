@@ -68,23 +68,21 @@ func (ml *MaticChainListener) ProcessHeader(newHeader *types.Header) {
 	go ml.checkAndSendSpanTask(newHeader)
 
 	// Marshall header block and publish to queue
-	headerBytes, err := newHeader.MarshalJSON()
-	if err != nil {
-		ml.Logger.Error("Error marshalling header block", "error", err)
-		return
-	}
-	ml.sendTaskWithDelay("sendCheckpointToHeimdall", headerBytes, 0)
+	/* 	headerBytes, err := newHeader.MarshalJSON()
+	   	if err != nil {
+	   		ml.Logger.Error("Error marshalling header block", "error", err)
+	   		return
+	   	}
+	   	ml.sendTaskWithDelay("sendCheckpointToHeimdall", headerBytes, 0) */
 
 }
 
 func (ml *MaticChainListener) checkAndSendSpanTask(newHeader *types.Header) {
-
 	// ignore header
 	if ml.cacheLastSpan != nil && newHeader.Number.Uint64() < ml.cacheLastSpan.StartBlock {
 		ml.Logger.Debug("Span already sent. ignore header", "blockNumber", newHeader.Number, "cacheSpanStartBlock", ml.cacheLastSpan.StartBlock)
 		return
 	}
-
 	// Fetch last span
 	lastSpan, err := util.GetLastSpan(ml.cliCtx)
 	if err == nil && lastSpan != nil {
@@ -106,7 +104,6 @@ func (ml *MaticChainListener) checkAndSendSpanTask(newHeader *types.Header) {
 				ml.sendTaskWithDelay("sendSpanToHeimdall", headerBytes, delay)
 			}
 		}
-
 	}
 }
 

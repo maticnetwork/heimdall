@@ -55,6 +55,7 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 
 	params, err := cp.paramsContext.GetParams()
 	if err != nil {
+		cp.Logger.Error("Error fetching params", "error", err)
 		return err
 	}
 
