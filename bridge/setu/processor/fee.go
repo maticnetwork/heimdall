@@ -3,7 +3,6 @@ package processor
 import (
 	"encoding/json"
 
-	"github.com/RichardKnop/machinery/v1/tasks"
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/core/types"
@@ -86,11 +85,7 @@ func (fp *FeeProcessor) sendTopUpFeeToHeimdall(eventName string, logBytes string
 			return err
 		}
 	}
-
-	// After broadcasting transaction from bridge, add back the msg to queue with retry delay.
-	// This is to retry side-tx msg incase if it was failed earlier during side-tx processing on heimdall.
-	fp.Logger.Debug("Retrying topup to check if side-tx is successful or not", "after", util.BlocksToDelayBeforeRetry*util.BlockInterval)
-	return tasks.NewErrRetryTaskLater("retry to check if side-tx is successful or not", util.BlocksToDelayBeforeRetry*util.BlockInterval)
+	return nil
 }
 
 // isOldTx  checks if tx is already processed or not

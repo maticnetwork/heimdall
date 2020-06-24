@@ -10,7 +10,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/RichardKnop/machinery/v1/tasks"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/maticnetwork/bor/accounts/abi"
@@ -286,10 +285,7 @@ func (cp *CheckpointProcessor) sendCheckpointAckToHeimdall(eventName string, che
 			return err
 		}
 	}
-	// After broadcasting transaction from bridge, add back the msg to queue with retry delay.
-	// This is to retry side-tx msg incase if it was failed earlier during side-tx processing on heimdall.
-	cp.Logger.Debug("Retrying checkpoint-ack to check if side-tx is successful or not", "after", util.BlocksToDelayBeforeRetry*util.BlockInterval)
-	return tasks.NewErrRetryTaskLater("retry to check if side-tx is successful or not", util.BlocksToDelayBeforeRetry*util.BlockInterval)
+	return nil
 }
 
 // handleCheckpointNoAck - Checkpoint No-Ack handler
