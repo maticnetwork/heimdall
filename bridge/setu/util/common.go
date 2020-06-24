@@ -58,8 +58,6 @@ const (
 	TaskDelayBetweenEachVal = 3 * BlockInterval
 	ValidatorJoinRetryDelay = 3 * BlockInterval
 
-	BlocksToDelayBeforeRetry = 6
-
 	BridgeDBFlag = "bridge-db"
 )
 
