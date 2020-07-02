@@ -273,6 +273,11 @@ func GetPrivKey() secp256k1.PrivKeySecp256k1 {
 	return privObject
 }
 
+// SetPrivKey sets privkey object
+func SetPrivKey(privKeyObject secp256k1.PrivKeySecp256k1) {
+	privObject = privKeyObject
+}
+
 // GetECDSAPrivKey return ecdsa private key
 func GetECDSAPrivKey() *ecdsa.PrivateKey {
 	// get priv key
@@ -286,6 +291,11 @@ func GetECDSAPrivKey() *ecdsa.PrivateKey {
 // GetPubKey returns pub key object
 func GetPubKey() secp256k1.PubKeySecp256k1 {
 	return pubObject
+}
+
+// SetPubKey - Sets pubkey object
+func SetPubKey(pubKeyObj secp256k1.PubKeySecp256k1) {
+	pubObject = pubKeyObj
 }
 
 // GetAddress returns address object
