@@ -25,7 +25,6 @@ $ heimdalld start
 $ heimdalld rest-server 
 ```
 
-
 ### Documentation 
 
 Latest docs are [here](https://docs.matic.network/)
