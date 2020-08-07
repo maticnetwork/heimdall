@@ -20,7 +20,6 @@ var (
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
-	_ = abi.U256
 	_ = bind.Bind
 	_ = common.Big1
 	_ = types.BloomLookup
@@ -174,7 +173,7 @@ func (_Slashmanager *SlashmanagerTransactorRaw) Transact(opts *bind.TransactOpts
 
 // VOTETYPE is a free data retrieval call binding the contract method 0xd5b844eb.
 //
-// Solidity: function VOTE_TYPE() constant returns(uint8)
+// Solidity: function VOTE_TYPE() view returns(uint8)
 func (_Slashmanager *SlashmanagerCaller) VOTETYPE(opts *bind.CallOpts) (uint8, error) {
 	var (
 		ret0 = new(uint8)
@@ -186,21 +185,21 @@ func (_Slashmanager *SlashmanagerCaller) VOTETYPE(opts *bind.CallOpts) (uint8, e
 
 // VOTETYPE is a free data retrieval call binding the contract method 0xd5b844eb.
 //
-// Solidity: function VOTE_TYPE() constant returns(uint8)
+// Solidity: function VOTE_TYPE() view returns(uint8)
 func (_Slashmanager *SlashmanagerSession) VOTETYPE() (uint8, error) {
 	return _Slashmanager.Contract.VOTETYPE(&_Slashmanager.CallOpts)
 }
 
 // VOTETYPE is a free data retrieval call binding the contract method 0xd5b844eb.
 //
-// Solidity: function VOTE_TYPE() constant returns(uint8)
+// Solidity: function VOTE_TYPE() view returns(uint8)
 func (_Slashmanager *SlashmanagerCallerSession) VOTETYPE() (uint8, error) {
 	return _Slashmanager.Contract.VOTETYPE(&_Slashmanager.CallOpts)
 }
 
 // HeimdallId is a free data retrieval call binding the contract method 0xfbc3dd36.
 //
-// Solidity: function heimdallId() constant returns(bytes32)
+// Solidity: function heimdallId() view returns(bytes32)
 func (_Slashmanager *SlashmanagerCaller) HeimdallId(opts *bind.CallOpts) ([32]byte, error) {
 	var (
 		ret0 = new([32]byte)
@@ -212,21 +211,21 @@ func (_Slashmanager *SlashmanagerCaller) HeimdallId(opts *bind.CallOpts) ([32]by
 
 // HeimdallId is a free data retrieval call binding the contract method 0xfbc3dd36.
 //
-// Solidity: function heimdallId() constant returns(bytes32)
+// Solidity: function heimdallId() view returns(bytes32)
 func (_Slashmanager *SlashmanagerSession) HeimdallId() ([32]byte, error) {
 	return _Slashmanager.Contract.HeimdallId(&_Slashmanager.CallOpts)
 }
 
 // HeimdallId is a free data retrieval call binding the contract method 0xfbc3dd36.
 //
-// Solidity: function heimdallId() constant returns(bytes32)
+// Solidity: function heimdallId() view returns(bytes32)
 func (_Slashmanager *SlashmanagerCallerSession) HeimdallId() ([32]byte, error) {
 	return _Slashmanager.Contract.HeimdallId(&_Slashmanager.CallOpts)
 }
 
 // IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
 //
-// Solidity: function isOwner() constant returns(bool)
+// Solidity: function isOwner() view returns(bool)
 func (_Slashmanager *SlashmanagerCaller) IsOwner(opts *bind.CallOpts) (bool, error) {
 	var (
 		ret0 = new(bool)
@@ -238,21 +237,21 @@ func (_Slashmanager *SlashmanagerCaller) IsOwner(opts *bind.CallOpts) (bool, err
 
 // IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
 //
-// Solidity: function isOwner() constant returns(bool)
+// Solidity: function isOwner() view returns(bool)
 func (_Slashmanager *SlashmanagerSession) IsOwner() (bool, error) {
 	return _Slashmanager.Contract.IsOwner(&_Slashmanager.CallOpts)
 }
 
 // IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
 //
-// Solidity: function isOwner() constant returns(bool)
+// Solidity: function isOwner() view returns(bool)
 func (_Slashmanager *SlashmanagerCallerSession) IsOwner() (bool, error) {
 	return _Slashmanager.Contract.IsOwner(&_Slashmanager.CallOpts)
 }
 
 // JailCheckpoints is a free data retrieval call binding the contract method 0x556b2ce9.
 //
-// Solidity: function jailCheckpoints() constant returns(uint256)
+// Solidity: function jailCheckpoints() view returns(uint256)
 func (_Slashmanager *SlashmanagerCaller) JailCheckpoints(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -264,21 +263,21 @@ func (_Slashmanager *SlashmanagerCaller) JailCheckpoints(opts *bind.CallOpts) (*
 
 // JailCheckpoints is a free data retrieval call binding the contract method 0x556b2ce9.
 //
-// Solidity: function jailCheckpoints() constant returns(uint256)
+// Solidity: function jailCheckpoints() view returns(uint256)
 func (_Slashmanager *SlashmanagerSession) JailCheckpoints() (*big.Int, error) {
 	return _Slashmanager.Contract.JailCheckpoints(&_Slashmanager.CallOpts)
 }
 
 // JailCheckpoints is a free data retrieval call binding the contract method 0x556b2ce9.
 //
-// Solidity: function jailCheckpoints() constant returns(uint256)
+// Solidity: function jailCheckpoints() view returns(uint256)
 func (_Slashmanager *SlashmanagerCallerSession) JailCheckpoints() (*big.Int, error) {
 	return _Slashmanager.Contract.JailCheckpoints(&_Slashmanager.CallOpts)
 }
 
 // Logger is a free data retrieval call binding the contract method 0xf24ccbfe.
 //
-// Solidity: function logger() constant returns(address)
+// Solidity: function logger() view returns(address)
 func (_Slashmanager *SlashmanagerCaller) Logger(opts *bind.CallOpts) (common.Address, error) {
 	var (
 		ret0 = new(common.Address)
@@ -290,21 +289,21 @@ func (_Slashmanager *SlashmanagerCaller) Logger(opts *bind.CallOpts) (common.Add
 
 // Logger is a free data retrieval call binding the contract method 0xf24ccbfe.
 //
-// Solidity: function logger() constant returns(address)
+// Solidity: function logger() view returns(address)
 func (_Slashmanager *SlashmanagerSession) Logger() (common.Address, error) {
 	return _Slashmanager.Contract.Logger(&_Slashmanager.CallOpts)
 }
 
 // Logger is a free data retrieval call binding the contract method 0xf24ccbfe.
 //
-// Solidity: function logger() constant returns(address)
+// Solidity: function logger() view returns(address)
 func (_Slashmanager *SlashmanagerCallerSession) Logger() (common.Address, error) {
 	return _Slashmanager.Contract.Logger(&_Slashmanager.CallOpts)
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function owner() constant returns(address)
+// Solidity: function owner() view returns(address)
 func (_Slashmanager *SlashmanagerCaller) Owner(opts *bind.CallOpts) (common.Address, error) {
 	var (
 		ret0 = new(common.Address)
@@ -316,21 +315,21 @@ func (_Slashmanager *SlashmanagerCaller) Owner(opts *bind.CallOpts) (common.Addr
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function owner() constant returns(address)
+// Solidity: function owner() view returns(address)
 func (_Slashmanager *SlashmanagerSession) Owner() (common.Address, error) {
 	return _Slashmanager.Contract.Owner(&_Slashmanager.CallOpts)
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function owner() constant returns(address)
+// Solidity: function owner() view returns(address)
 func (_Slashmanager *SlashmanagerCallerSession) Owner() (common.Address, error) {
 	return _Slashmanager.Contract.Owner(&_Slashmanager.CallOpts)
 }
 
 // ProposerRate is a free data retrieval call binding the contract method 0x3199e305.
 //
-// Solidity: function proposerRate() constant returns(uint256)
+// Solidity: function proposerRate() view returns(uint256)
 func (_Slashmanager *SlashmanagerCaller) ProposerRate(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -342,21 +341,21 @@ func (_Slashmanager *SlashmanagerCaller) ProposerRate(opts *bind.CallOpts) (*big
 
 // ProposerRate is a free data retrieval call binding the contract method 0x3199e305.
 //
-// Solidity: function proposerRate() constant returns(uint256)
+// Solidity: function proposerRate() view returns(uint256)
 func (_Slashmanager *SlashmanagerSession) ProposerRate() (*big.Int, error) {
 	return _Slashmanager.Contract.ProposerRate(&_Slashmanager.CallOpts)
 }
 
 // ProposerRate is a free data retrieval call binding the contract method 0x3199e305.
 //
-// Solidity: function proposerRate() constant returns(uint256)
+// Solidity: function proposerRate() view returns(uint256)
 func (_Slashmanager *SlashmanagerCallerSession) ProposerRate() (*big.Int, error) {
 	return _Slashmanager.Contract.ProposerRate(&_Slashmanager.CallOpts)
 }
 
 // Registry is a free data retrieval call binding the contract method 0x7b103999.
 //
-// Solidity: function registry() constant returns(address)
+// Solidity: function registry() view returns(address)
 func (_Slashmanager *SlashmanagerCaller) Registry(opts *bind.CallOpts) (common.Address, error) {
 	var (
 		ret0 = new(common.Address)
@@ -368,21 +367,21 @@ func (_Slashmanager *SlashmanagerCaller) Registry(opts *bind.CallOpts) (common.A
 
 // Registry is a free data retrieval call binding the contract method 0x7b103999.
 //
-// Solidity: function registry() constant returns(address)
+// Solidity: function registry() view returns(address)
 func (_Slashmanager *SlashmanagerSession) Registry() (common.Address, error) {
 	return _Slashmanager.Contract.Registry(&_Slashmanager.CallOpts)
 }
 
 // Registry is a free data retrieval call binding the contract method 0x7b103999.
 //
-// Solidity: function registry() constant returns(address)
+// Solidity: function registry() view returns(address)
 func (_Slashmanager *SlashmanagerCallerSession) Registry() (common.Address, error) {
 	return _Slashmanager.Contract.Registry(&_Slashmanager.CallOpts)
 }
 
 // ReportRate is a free data retrieval call binding the contract method 0xc25593be.
 //
-// Solidity: function reportRate() constant returns(uint256)
+// Solidity: function reportRate() view returns(uint256)
 func (_Slashmanager *SlashmanagerCaller) ReportRate(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -394,21 +393,21 @@ func (_Slashmanager *SlashmanagerCaller) ReportRate(opts *bind.CallOpts) (*big.I
 
 // ReportRate is a free data retrieval call binding the contract method 0xc25593be.
 //
-// Solidity: function reportRate() constant returns(uint256)
+// Solidity: function reportRate() view returns(uint256)
 func (_Slashmanager *SlashmanagerSession) ReportRate() (*big.Int, error) {
 	return _Slashmanager.Contract.ReportRate(&_Slashmanager.CallOpts)
 }
 
 // ReportRate is a free data retrieval call binding the contract method 0xc25593be.
 //
-// Solidity: function reportRate() constant returns(uint256)
+// Solidity: function reportRate() view returns(uint256)
 func (_Slashmanager *SlashmanagerCallerSession) ReportRate() (*big.Int, error) {
 	return _Slashmanager.Contract.ReportRate(&_Slashmanager.CallOpts)
 }
 
 // SlashingNonce is a free data retrieval call binding the contract method 0xa2d32176.
 //
-// Solidity: function slashingNonce() constant returns(uint256)
+// Solidity: function slashingNonce() view returns(uint256)
 func (_Slashmanager *SlashmanagerCaller) SlashingNonce(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -420,14 +419,14 @@ func (_Slashmanager *SlashmanagerCaller) SlashingNonce(opts *bind.CallOpts) (*bi
 
 // SlashingNonce is a free data retrieval call binding the contract method 0xa2d32176.
 //
-// Solidity: function slashingNonce() constant returns(uint256)
+// Solidity: function slashingNonce() view returns(uint256)
 func (_Slashmanager *SlashmanagerSession) SlashingNonce() (*big.Int, error) {
 	return _Slashmanager.Contract.SlashingNonce(&_Slashmanager.CallOpts)
 }
 
 // SlashingNonce is a free data retrieval call binding the contract method 0xa2d32176.
 //
-// Solidity: function slashingNonce() constant returns(uint256)
+// Solidity: function slashingNonce() view returns(uint256)
 func (_Slashmanager *SlashmanagerCallerSession) SlashingNonce() (*big.Int, error) {
 	return _Slashmanager.Contract.SlashingNonce(&_Slashmanager.CallOpts)
 }

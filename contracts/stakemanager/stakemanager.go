@@ -20,7 +20,6 @@ var (
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
-	_ = abi.U256
 	_ = bind.Bind
 	_ = common.Big1
 	_ = types.BloomLookup
@@ -174,7 +173,7 @@ func (_Stakemanager *StakemanagerTransactorRaw) Transact(opts *bind.TransactOpts
 
 // CHECKPOINTREWARD is a free data retrieval call binding the contract method 0x7d669752.
 //
-// Solidity: function CHECKPOINT_REWARD() constant returns(uint256)
+// Solidity: function CHECKPOINT_REWARD() view returns(uint256)
 func (_Stakemanager *StakemanagerCaller) CHECKPOINTREWARD(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -186,21 +185,21 @@ func (_Stakemanager *StakemanagerCaller) CHECKPOINTREWARD(opts *bind.CallOpts) (
 
 // CHECKPOINTREWARD is a free data retrieval call binding the contract method 0x7d669752.
 //
-// Solidity: function CHECKPOINT_REWARD() constant returns(uint256)
+// Solidity: function CHECKPOINT_REWARD() view returns(uint256)
 func (_Stakemanager *StakemanagerSession) CHECKPOINTREWARD() (*big.Int, error) {
 	return _Stakemanager.Contract.CHECKPOINTREWARD(&_Stakemanager.CallOpts)
 }
 
 // CHECKPOINTREWARD is a free data retrieval call binding the contract method 0x7d669752.
 //
-// Solidity: function CHECKPOINT_REWARD() constant returns(uint256)
+// Solidity: function CHECKPOINT_REWARD() view returns(uint256)
 func (_Stakemanager *StakemanagerCallerSession) CHECKPOINTREWARD() (*big.Int, error) {
 	return _Stakemanager.Contract.CHECKPOINTREWARD(&_Stakemanager.CallOpts)
 }
 
 // NFTContract is a free data retrieval call binding the contract method 0x31c2273b.
 //
-// Solidity: function NFTContract() constant returns(address)
+// Solidity: function NFTContract() view returns(address)
 func (_Stakemanager *StakemanagerCaller) NFTContract(opts *bind.CallOpts) (common.Address, error) {
 	var (
 		ret0 = new(common.Address)
@@ -212,21 +211,21 @@ func (_Stakemanager *StakemanagerCaller) NFTContract(opts *bind.CallOpts) (commo
 
 // NFTContract is a free data retrieval call binding the contract method 0x31c2273b.
 //
-// Solidity: function NFTContract() constant returns(address)
+// Solidity: function NFTContract() view returns(address)
 func (_Stakemanager *StakemanagerSession) NFTContract() (common.Address, error) {
 	return _Stakemanager.Contract.NFTContract(&_Stakemanager.CallOpts)
 }
 
 // NFTContract is a free data retrieval call binding the contract method 0x31c2273b.
 //
-// Solidity: function NFTContract() constant returns(address)
+// Solidity: function NFTContract() view returns(address)
 func (_Stakemanager *StakemanagerCallerSession) NFTContract() (common.Address, error) {
 	return _Stakemanager.Contract.NFTContract(&_Stakemanager.CallOpts)
 }
 
 // NFTCounter is a free data retrieval call binding the contract method 0x5508d8e1.
 //
-// Solidity: function NFTCounter() constant returns(uint256)
+// Solidity: function NFTCounter() view returns(uint256)
 func (_Stakemanager *StakemanagerCaller) NFTCounter(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -238,21 +237,21 @@ func (_Stakemanager *StakemanagerCaller) NFTCounter(opts *bind.CallOpts) (*big.I
 
 // NFTCounter is a free data retrieval call binding the contract method 0x5508d8e1.
 //
-// Solidity: function NFTCounter() constant returns(uint256)
+// Solidity: function NFTCounter() view returns(uint256)
 func (_Stakemanager *StakemanagerSession) NFTCounter() (*big.Int, error) {
 	return _Stakemanager.Contract.NFTCounter(&_Stakemanager.CallOpts)
 }
 
 // NFTCounter is a free data retrieval call binding the contract method 0x5508d8e1.
 //
-// Solidity: function NFTCounter() constant returns(uint256)
+// Solidity: function NFTCounter() view returns(uint256)
 func (_Stakemanager *StakemanagerCallerSession) NFTCounter() (*big.Int, error) {
 	return _Stakemanager.Contract.NFTCounter(&_Stakemanager.CallOpts)
 }
 
 // WITHDRAWALDELAY is a free data retrieval call binding the contract method 0x0ebb172a.
 //
-// Solidity: function WITHDRAWAL_DELAY() constant returns(uint256)
+// Solidity: function WITHDRAWAL_DELAY() view returns(uint256)
 func (_Stakemanager *StakemanagerCaller) WITHDRAWALDELAY(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -264,21 +263,21 @@ func (_Stakemanager *StakemanagerCaller) WITHDRAWALDELAY(opts *bind.CallOpts) (*
 
 // WITHDRAWALDELAY is a free data retrieval call binding the contract method 0x0ebb172a.
 //
-// Solidity: function WITHDRAWAL_DELAY() constant returns(uint256)
+// Solidity: function WITHDRAWAL_DELAY() view returns(uint256)
 func (_Stakemanager *StakemanagerSession) WITHDRAWALDELAY() (*big.Int, error) {
 	return _Stakemanager.Contract.WITHDRAWALDELAY(&_Stakemanager.CallOpts)
 }
 
 // WITHDRAWALDELAY is a free data retrieval call binding the contract method 0x0ebb172a.
 //
-// Solidity: function WITHDRAWAL_DELAY() constant returns(uint256)
+// Solidity: function WITHDRAWAL_DELAY() view returns(uint256)
 func (_Stakemanager *StakemanagerCallerSession) WITHDRAWALDELAY() (*big.Int, error) {
 	return _Stakemanager.Contract.WITHDRAWALDELAY(&_Stakemanager.CallOpts)
 }
 
 // AccountStateRoot is a free data retrieval call binding the contract method 0x17c2b910.
 //
-// Solidity: function accountStateRoot() constant returns(bytes32)
+// Solidity: function accountStateRoot() view returns(bytes32)
 func (_Stakemanager *StakemanagerCaller) AccountStateRoot(opts *bind.CallOpts) ([32]byte, error) {
 	var (
 		ret0 = new([32]byte)
@@ -290,21 +289,21 @@ func (_Stakemanager *StakemanagerCaller) AccountStateRoot(opts *bind.CallOpts) (
 
 // AccountStateRoot is a free data retrieval call binding the contract method 0x17c2b910.
 //
-// Solidity: function accountStateRoot() constant returns(bytes32)
+// Solidity: function accountStateRoot() view returns(bytes32)
 func (_Stakemanager *StakemanagerSession) AccountStateRoot() ([32]byte, error) {
 	return _Stakemanager.Contract.AccountStateRoot(&_Stakemanager.CallOpts)
 }
 
 // AccountStateRoot is a free data retrieval call binding the contract method 0x17c2b910.
 //
-// Solidity: function accountStateRoot() constant returns(bytes32)
+// Solidity: function accountStateRoot() view returns(bytes32)
 func (_Stakemanager *StakemanagerCallerSession) AccountStateRoot() ([32]byte, error) {
 	return _Stakemanager.Contract.AccountStateRoot(&_Stakemanager.CallOpts)
 }
 
 // AuctionPeriod is a free data retrieval call binding the contract method 0x0cccfc58.
 //
-// Solidity: function auctionPeriod() constant returns(uint256)
+// Solidity: function auctionPeriod() view returns(uint256)
 func (_Stakemanager *StakemanagerCaller) AuctionPeriod(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -316,21 +315,21 @@ func (_Stakemanager *StakemanagerCaller) AuctionPeriod(opts *bind.CallOpts) (*bi
 
 // AuctionPeriod is a free data retrieval call binding the contract method 0x0cccfc58.
 //
-// Solidity: function auctionPeriod() constant returns(uint256)
+// Solidity: function auctionPeriod() view returns(uint256)
 func (_Stakemanager *StakemanagerSession) AuctionPeriod() (*big.Int, error) {
 	return _Stakemanager.Contract.AuctionPeriod(&_Stakemanager.CallOpts)
 }
 
 // AuctionPeriod is a free data retrieval call binding the contract method 0x0cccfc58.
 //
-// Solidity: function auctionPeriod() constant returns(uint256)
+// Solidity: function auctionPeriod() view returns(uint256)
 func (_Stakemanager *StakemanagerCallerSession) AuctionPeriod() (*big.Int, error) {
 	return _Stakemanager.Contract.AuctionPeriod(&_Stakemanager.CallOpts)
 }
 
 // CheckPointBlockInterval is a free data retrieval call binding the contract method 0x25316411.
 //
-// Solidity: function checkPointBlockInterval() constant returns(uint256)
+// Solidity: function checkPointBlockInterval() view returns(uint256)
 func (_Stakemanager *StakemanagerCaller) CheckPointBlockInterval(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -342,21 +341,21 @@ func (_Stakemanager *StakemanagerCaller) CheckPointBlockInterval(opts *bind.Call
 
 // CheckPointBlockInterval is a free data retrieval call binding the contract method 0x25316411.
 //
-// Solidity: function checkPointBlockInterval() constant returns(uint256)
+// Solidity: function checkPointBlockInterval() view returns(uint256)
 func (_Stakemanager *StakemanagerSession) CheckPointBlockInterval() (*big.Int, error) {
 	return _Stakemanager.Contract.CheckPointBlockInterval(&_Stakemanager.CallOpts)
 }
 
 // CheckPointBlockInterval is a free data retrieval call binding the contract method 0x25316411.
 //
-// Solidity: function checkPointBlockInterval() constant returns(uint256)
+// Solidity: function checkPointBlockInterval() view returns(uint256)
 func (_Stakemanager *StakemanagerCallerSession) CheckPointBlockInterval() (*big.Int, error) {
 	return _Stakemanager.Contract.CheckPointBlockInterval(&_Stakemanager.CallOpts)
 }
 
 // CurrentEpoch is a free data retrieval call binding the contract method 0x76671808.
 //
-// Solidity: function currentEpoch() constant returns(uint256)
+// Solidity: function currentEpoch() view returns(uint256)
 func (_Stakemanager *StakemanagerCaller) CurrentEpoch(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -368,21 +367,21 @@ func (_Stakemanager *StakemanagerCaller) CurrentEpoch(opts *bind.CallOpts) (*big
 
 // CurrentEpoch is a free data retrieval call binding the contract method 0x76671808.
 //
-// Solidity: function currentEpoch() constant returns(uint256)
+// Solidity: function currentEpoch() view returns(uint256)
 func (_Stakemanager *StakemanagerSession) CurrentEpoch() (*big.Int, error) {
 	return _Stakemanager.Contract.CurrentEpoch(&_Stakemanager.CallOpts)
 }
 
 // CurrentEpoch is a free data retrieval call binding the contract method 0x76671808.
 //
-// Solidity: function currentEpoch() constant returns(uint256)
+// Solidity: function currentEpoch() view returns(uint256)
 func (_Stakemanager *StakemanagerCallerSession) CurrentEpoch() (*big.Int, error) {
 	return _Stakemanager.Contract.CurrentEpoch(&_Stakemanager.CallOpts)
 }
 
 // CurrentValidatorSetSize is a free data retrieval call binding the contract method 0x7f952d95.
 //
-// Solidity: function currentValidatorSetSize() constant returns(uint256)
+// Solidity: function currentValidatorSetSize() view returns(uint256)
 func (_Stakemanager *StakemanagerCaller) CurrentValidatorSetSize(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -394,21 +393,21 @@ func (_Stakemanager *StakemanagerCaller) CurrentValidatorSetSize(opts *bind.Call
 
 // CurrentValidatorSetSize is a free data retrieval call binding the contract method 0x7f952d95.
 //
-// Solidity: function currentValidatorSetSize() constant returns(uint256)
+// Solidity: function currentValidatorSetSize() view returns(uint256)
 func (_Stakemanager *StakemanagerSession) CurrentValidatorSetSize() (*big.Int, error) {
 	return _Stakemanager.Contract.CurrentValidatorSetSize(&_Stakemanager.CallOpts)
 }
 
 // CurrentValidatorSetSize is a free data retrieval call binding the contract method 0x7f952d95.
 //
-// Solidity: function currentValidatorSetSize() constant returns(uint256)
+// Solidity: function currentValidatorSetSize() view returns(uint256)
 func (_Stakemanager *StakemanagerCallerSession) CurrentValidatorSetSize() (*big.Int, error) {
 	return _Stakemanager.Contract.CurrentValidatorSetSize(&_Stakemanager.CallOpts)
 }
 
 // CurrentValidatorSetTotalStake is a free data retrieval call binding the contract method 0xa4769071.
 //
-// Solidity: function currentValidatorSetTotalStake() constant returns(uint256)
+// Solidity: function currentValidatorSetTotalStake() view returns(uint256)
 func (_Stakemanager *StakemanagerCaller) CurrentValidatorSetTotalStake(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -420,21 +419,21 @@ func (_Stakemanager *StakemanagerCaller) CurrentValidatorSetTotalStake(opts *bin
 
 // CurrentValidatorSetTotalStake is a free data retrieval call binding the contract method 0xa4769071.
 //
-// Solidity: function currentValidatorSetTotalStake() constant returns(uint256)
+// Solidity: function currentValidatorSetTotalStake() view returns(uint256)
 func (_Stakemanager *StakemanagerSession) CurrentValidatorSetTotalStake() (*big.Int, error) {
 	return _Stakemanager.Contract.CurrentValidatorSetTotalStake(&_Stakemanager.CallOpts)
 }
 
 // CurrentValidatorSetTotalStake is a free data retrieval call binding the contract method 0xa4769071.
 //
-// Solidity: function currentValidatorSetTotalStake() constant returns(uint256)
+// Solidity: function currentValidatorSetTotalStake() view returns(uint256)
 func (_Stakemanager *StakemanagerCallerSession) CurrentValidatorSetTotalStake() (*big.Int, error) {
 	return _Stakemanager.Contract.CurrentValidatorSetTotalStake(&_Stakemanager.CallOpts)
 }
 
 // DelegationEnabled is a free data retrieval call binding the contract method 0x54b8c601.
 //
-// Solidity: function delegationEnabled() constant returns(bool)
+// Solidity: function delegationEnabled() view returns(bool)
 func (_Stakemanager *StakemanagerCaller) DelegationEnabled(opts *bind.CallOpts) (bool, error) {
 	var (
 		ret0 = new(bool)
@@ -446,21 +445,21 @@ func (_Stakemanager *StakemanagerCaller) DelegationEnabled(opts *bind.CallOpts) 
 
 // DelegationEnabled is a free data retrieval call binding the contract method 0x54b8c601.
 //
-// Solidity: function delegationEnabled() constant returns(bool)
+// Solidity: function delegationEnabled() view returns(bool)
 func (_Stakemanager *StakemanagerSession) DelegationEnabled() (bool, error) {
 	return _Stakemanager.Contract.DelegationEnabled(&_Stakemanager.CallOpts)
 }
 
 // DelegationEnabled is a free data retrieval call binding the contract method 0x54b8c601.
 //
-// Solidity: function delegationEnabled() constant returns(bool)
+// Solidity: function delegationEnabled() view returns(bool)
 func (_Stakemanager *StakemanagerCallerSession) DelegationEnabled() (bool, error) {
 	return _Stakemanager.Contract.DelegationEnabled(&_Stakemanager.CallOpts)
 }
 
 // Dynasty is a free data retrieval call binding the contract method 0x7060054d.
 //
-// Solidity: function dynasty() constant returns(uint256)
+// Solidity: function dynasty() view returns(uint256)
 func (_Stakemanager *StakemanagerCaller) Dynasty(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -472,21 +471,21 @@ func (_Stakemanager *StakemanagerCaller) Dynasty(opts *bind.CallOpts) (*big.Int,
 
 // Dynasty is a free data retrieval call binding the contract method 0x7060054d.
 //
-// Solidity: function dynasty() constant returns(uint256)
+// Solidity: function dynasty() view returns(uint256)
 func (_Stakemanager *StakemanagerSession) Dynasty() (*big.Int, error) {
 	return _Stakemanager.Contract.Dynasty(&_Stakemanager.CallOpts)
 }
 
 // Dynasty is a free data retrieval call binding the contract method 0x7060054d.
 //
-// Solidity: function dynasty() constant returns(uint256)
+// Solidity: function dynasty() view returns(uint256)
 func (_Stakemanager *StakemanagerCallerSession) Dynasty() (*big.Int, error) {
 	return _Stakemanager.Contract.Dynasty(&_Stakemanager.CallOpts)
 }
 
 // Epoch is a free data retrieval call binding the contract method 0x900cf0cf.
 //
-// Solidity: function epoch() constant returns(uint256)
+// Solidity: function epoch() view returns(uint256)
 func (_Stakemanager *StakemanagerCaller) Epoch(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -498,21 +497,21 @@ func (_Stakemanager *StakemanagerCaller) Epoch(opts *bind.CallOpts) (*big.Int, e
 
 // Epoch is a free data retrieval call binding the contract method 0x900cf0cf.
 //
-// Solidity: function epoch() constant returns(uint256)
+// Solidity: function epoch() view returns(uint256)
 func (_Stakemanager *StakemanagerSession) Epoch() (*big.Int, error) {
 	return _Stakemanager.Contract.Epoch(&_Stakemanager.CallOpts)
 }
 
 // Epoch is a free data retrieval call binding the contract method 0x900cf0cf.
 //
-// Solidity: function epoch() constant returns(uint256)
+// Solidity: function epoch() view returns(uint256)
 func (_Stakemanager *StakemanagerCallerSession) Epoch() (*big.Int, error) {
 	return _Stakemanager.Contract.Epoch(&_Stakemanager.CallOpts)
 }
 
 // Factory is a free data retrieval call binding the contract method 0xc45a0155.
 //
-// Solidity: function factory() constant returns(address)
+// Solidity: function factory() view returns(address)
 func (_Stakemanager *StakemanagerCaller) Factory(opts *bind.CallOpts) (common.Address, error) {
 	var (
 		ret0 = new(common.Address)
@@ -524,21 +523,21 @@ func (_Stakemanager *StakemanagerCaller) Factory(opts *bind.CallOpts) (common.Ad
 
 // Factory is a free data retrieval call binding the contract method 0xc45a0155.
 //
-// Solidity: function factory() constant returns(address)
+// Solidity: function factory() view returns(address)
 func (_Stakemanager *StakemanagerSession) Factory() (common.Address, error) {
 	return _Stakemanager.Contract.Factory(&_Stakemanager.CallOpts)
 }
 
 // Factory is a free data retrieval call binding the contract method 0xc45a0155.
 //
-// Solidity: function factory() constant returns(address)
+// Solidity: function factory() view returns(address)
 func (_Stakemanager *StakemanagerCallerSession) Factory() (common.Address, error) {
 	return _Stakemanager.Contract.Factory(&_Stakemanager.CallOpts)
 }
 
 // GetCurrentValidatorSet is a free data retrieval call binding the contract method 0x0209fdd0.
 //
-// Solidity: function getCurrentValidatorSet() constant returns(uint256[])
+// Solidity: function getCurrentValidatorSet() view returns(uint256[])
 func (_Stakemanager *StakemanagerCaller) GetCurrentValidatorSet(opts *bind.CallOpts) ([]*big.Int, error) {
 	var (
 		ret0 = new([]*big.Int)
@@ -550,21 +549,21 @@ func (_Stakemanager *StakemanagerCaller) GetCurrentValidatorSet(opts *bind.CallO
 
 // GetCurrentValidatorSet is a free data retrieval call binding the contract method 0x0209fdd0.
 //
-// Solidity: function getCurrentValidatorSet() constant returns(uint256[])
+// Solidity: function getCurrentValidatorSet() view returns(uint256[])
 func (_Stakemanager *StakemanagerSession) GetCurrentValidatorSet() ([]*big.Int, error) {
 	return _Stakemanager.Contract.GetCurrentValidatorSet(&_Stakemanager.CallOpts)
 }
 
 // GetCurrentValidatorSet is a free data retrieval call binding the contract method 0x0209fdd0.
 //
-// Solidity: function getCurrentValidatorSet() constant returns(uint256[])
+// Solidity: function getCurrentValidatorSet() view returns(uint256[])
 func (_Stakemanager *StakemanagerCallerSession) GetCurrentValidatorSet() ([]*big.Int, error) {
 	return _Stakemanager.Contract.GetCurrentValidatorSet(&_Stakemanager.CallOpts)
 }
 
 // GetValidatorContract is a free data retrieval call binding the contract method 0x56342d8c.
 //
-// Solidity: function getValidatorContract(uint256 validatorId) constant returns(address)
+// Solidity: function getValidatorContract(uint256 validatorId) view returns(address)
 func (_Stakemanager *StakemanagerCaller) GetValidatorContract(opts *bind.CallOpts, validatorId *big.Int) (common.Address, error) {
 	var (
 		ret0 = new(common.Address)
@@ -576,21 +575,21 @@ func (_Stakemanager *StakemanagerCaller) GetValidatorContract(opts *bind.CallOpt
 
 // GetValidatorContract is a free data retrieval call binding the contract method 0x56342d8c.
 //
-// Solidity: function getValidatorContract(uint256 validatorId) constant returns(address)
+// Solidity: function getValidatorContract(uint256 validatorId) view returns(address)
 func (_Stakemanager *StakemanagerSession) GetValidatorContract(validatorId *big.Int) (common.Address, error) {
 	return _Stakemanager.Contract.GetValidatorContract(&_Stakemanager.CallOpts, validatorId)
 }
 
 // GetValidatorContract is a free data retrieval call binding the contract method 0x56342d8c.
 //
-// Solidity: function getValidatorContract(uint256 validatorId) constant returns(address)
+// Solidity: function getValidatorContract(uint256 validatorId) view returns(address)
 func (_Stakemanager *StakemanagerCallerSession) GetValidatorContract(validatorId *big.Int) (common.Address, error) {
 	return _Stakemanager.Contract.GetValidatorContract(&_Stakemanager.CallOpts, validatorId)
 }
 
 // GetValidatorId is a free data retrieval call binding the contract method 0x174e6832.
 //
-// Solidity: function getValidatorId(address user) constant returns(uint256)
+// Solidity: function getValidatorId(address user) view returns(uint256)
 func (_Stakemanager *StakemanagerCaller) GetValidatorId(opts *bind.CallOpts, user common.Address) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -602,21 +601,21 @@ func (_Stakemanager *StakemanagerCaller) GetValidatorId(opts *bind.CallOpts, use
 
 // GetValidatorId is a free data retrieval call binding the contract method 0x174e6832.
 //
-// Solidity: function getValidatorId(address user) constant returns(uint256)
+// Solidity: function getValidatorId(address user) view returns(uint256)
 func (_Stakemanager *StakemanagerSession) GetValidatorId(user common.Address) (*big.Int, error) {
 	return _Stakemanager.Contract.GetValidatorId(&_Stakemanager.CallOpts, user)
 }
 
 // GetValidatorId is a free data retrieval call binding the contract method 0x174e6832.
 //
-// Solidity: function getValidatorId(address user) constant returns(uint256)
+// Solidity: function getValidatorId(address user) view returns(uint256)
 func (_Stakemanager *StakemanagerCallerSession) GetValidatorId(user common.Address) (*big.Int, error) {
 	return _Stakemanager.Contract.GetValidatorId(&_Stakemanager.CallOpts, user)
 }
 
 // Governance is a free data retrieval call binding the contract method 0x5aa6e675.
 //
-// Solidity: function governance() constant returns(address)
+// Solidity: function governance() view returns(address)
 func (_Stakemanager *StakemanagerCaller) Governance(opts *bind.CallOpts) (common.Address, error) {
 	var (
 		ret0 = new(common.Address)
@@ -628,21 +627,21 @@ func (_Stakemanager *StakemanagerCaller) Governance(opts *bind.CallOpts) (common
 
 // Governance is a free data retrieval call binding the contract method 0x5aa6e675.
 //
-// Solidity: function governance() constant returns(address)
+// Solidity: function governance() view returns(address)
 func (_Stakemanager *StakemanagerSession) Governance() (common.Address, error) {
 	return _Stakemanager.Contract.Governance(&_Stakemanager.CallOpts)
 }
 
 // Governance is a free data retrieval call binding the contract method 0x5aa6e675.
 //
-// Solidity: function governance() constant returns(address)
+// Solidity: function governance() view returns(address)
 func (_Stakemanager *StakemanagerCallerSession) Governance() (common.Address, error) {
 	return _Stakemanager.Contract.Governance(&_Stakemanager.CallOpts)
 }
 
 // IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
 //
-// Solidity: function isOwner() constant returns(bool)
+// Solidity: function isOwner() view returns(bool)
 func (_Stakemanager *StakemanagerCaller) IsOwner(opts *bind.CallOpts) (bool, error) {
 	var (
 		ret0 = new(bool)
@@ -654,21 +653,21 @@ func (_Stakemanager *StakemanagerCaller) IsOwner(opts *bind.CallOpts) (bool, err
 
 // IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
 //
-// Solidity: function isOwner() constant returns(bool)
+// Solidity: function isOwner() view returns(bool)
 func (_Stakemanager *StakemanagerSession) IsOwner() (bool, error) {
 	return _Stakemanager.Contract.IsOwner(&_Stakemanager.CallOpts)
 }
 
 // IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
 //
-// Solidity: function isOwner() constant returns(bool)
+// Solidity: function isOwner() view returns(bool)
 func (_Stakemanager *StakemanagerCallerSession) IsOwner() (bool, error) {
 	return _Stakemanager.Contract.IsOwner(&_Stakemanager.CallOpts)
 }
 
 // IsValidator is a free data retrieval call binding the contract method 0x2649263a.
 //
-// Solidity: function isValidator(uint256 validatorId) constant returns(bool)
+// Solidity: function isValidator(uint256 validatorId) view returns(bool)
 func (_Stakemanager *StakemanagerCaller) IsValidator(opts *bind.CallOpts, validatorId *big.Int) (bool, error) {
 	var (
 		ret0 = new(bool)
@@ -680,21 +679,21 @@ func (_Stakemanager *StakemanagerCaller) IsValidator(opts *bind.CallOpts, valida
 
 // IsValidator is a free data retrieval call binding the contract method 0x2649263a.
 //
-// Solidity: function isValidator(uint256 validatorId) constant returns(bool)
+// Solidity: function isValidator(uint256 validatorId) view returns(bool)
 func (_Stakemanager *StakemanagerSession) IsValidator(validatorId *big.Int) (bool, error) {
 	return _Stakemanager.Contract.IsValidator(&_Stakemanager.CallOpts, validatorId)
 }
 
 // IsValidator is a free data retrieval call binding the contract method 0x2649263a.
 //
-// Solidity: function isValidator(uint256 validatorId) constant returns(bool)
+// Solidity: function isValidator(uint256 validatorId) view returns(bool)
 func (_Stakemanager *StakemanagerCallerSession) IsValidator(validatorId *big.Int) (bool, error) {
 	return _Stakemanager.Contract.IsValidator(&_Stakemanager.CallOpts, validatorId)
 }
 
 // LatestSignerUpdateEpoch is a free data retrieval call binding the contract method 0xd7f5549d.
 //
-// Solidity: function latestSignerUpdateEpoch(uint256 ) constant returns(uint256)
+// Solidity: function latestSignerUpdateEpoch(uint256 ) view returns(uint256)
 func (_Stakemanager *StakemanagerCaller) LatestSignerUpdateEpoch(opts *bind.CallOpts, arg0 *big.Int) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -706,21 +705,21 @@ func (_Stakemanager *StakemanagerCaller) LatestSignerUpdateEpoch(opts *bind.Call
 
 // LatestSignerUpdateEpoch is a free data retrieval call binding the contract method 0xd7f5549d.
 //
-// Solidity: function latestSignerUpdateEpoch(uint256 ) constant returns(uint256)
+// Solidity: function latestSignerUpdateEpoch(uint256 ) view returns(uint256)
 func (_Stakemanager *StakemanagerSession) LatestSignerUpdateEpoch(arg0 *big.Int) (*big.Int, error) {
 	return _Stakemanager.Contract.LatestSignerUpdateEpoch(&_Stakemanager.CallOpts, arg0)
 }
 
 // LatestSignerUpdateEpoch is a free data retrieval call binding the contract method 0xd7f5549d.
 //
-// Solidity: function latestSignerUpdateEpoch(uint256 ) constant returns(uint256)
+// Solidity: function latestSignerUpdateEpoch(uint256 ) view returns(uint256)
 func (_Stakemanager *StakemanagerCallerSession) LatestSignerUpdateEpoch(arg0 *big.Int) (*big.Int, error) {
 	return _Stakemanager.Contract.LatestSignerUpdateEpoch(&_Stakemanager.CallOpts, arg0)
 }
 
 // Locked is a free data retrieval call binding the contract method 0xcf309012.
 //
-// Solidity: function locked() constant returns(bool)
+// Solidity: function locked() view returns(bool)
 func (_Stakemanager *StakemanagerCaller) Locked(opts *bind.CallOpts) (bool, error) {
 	var (
 		ret0 = new(bool)
@@ -732,21 +731,21 @@ func (_Stakemanager *StakemanagerCaller) Locked(opts *bind.CallOpts) (bool, erro
 
 // Locked is a free data retrieval call binding the contract method 0xcf309012.
 //
-// Solidity: function locked() constant returns(bool)
+// Solidity: function locked() view returns(bool)
 func (_Stakemanager *StakemanagerSession) Locked() (bool, error) {
 	return _Stakemanager.Contract.Locked(&_Stakemanager.CallOpts)
 }
 
 // Locked is a free data retrieval call binding the contract method 0xcf309012.
 //
-// Solidity: function locked() constant returns(bool)
+// Solidity: function locked() view returns(bool)
 func (_Stakemanager *StakemanagerCallerSession) Locked() (bool, error) {
 	return _Stakemanager.Contract.Locked(&_Stakemanager.CallOpts)
 }
 
 // Logger is a free data retrieval call binding the contract method 0xf24ccbfe.
 //
-// Solidity: function logger() constant returns(address)
+// Solidity: function logger() view returns(address)
 func (_Stakemanager *StakemanagerCaller) Logger(opts *bind.CallOpts) (common.Address, error) {
 	var (
 		ret0 = new(common.Address)
@@ -758,21 +757,21 @@ func (_Stakemanager *StakemanagerCaller) Logger(opts *bind.CallOpts) (common.Add
 
 // Logger is a free data retrieval call binding the contract method 0xf24ccbfe.
 //
-// Solidity: function logger() constant returns(address)
+// Solidity: function logger() view returns(address)
 func (_Stakemanager *StakemanagerSession) Logger() (common.Address, error) {
 	return _Stakemanager.Contract.Logger(&_Stakemanager.CallOpts)
 }
 
 // Logger is a free data retrieval call binding the contract method 0xf24ccbfe.
 //
-// Solidity: function logger() constant returns(address)
+// Solidity: function logger() view returns(address)
 func (_Stakemanager *StakemanagerCallerSession) Logger() (common.Address, error) {
 	return _Stakemanager.Contract.Logger(&_Stakemanager.CallOpts)
 }
 
 // MinDeposit is a free data retrieval call binding the contract method 0x41b3d185.
 //
-// Solidity: function minDeposit() constant returns(uint256)
+// Solidity: function minDeposit() view returns(uint256)
 func (_Stakemanager *StakemanagerCaller) MinDeposit(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -784,21 +783,21 @@ func (_Stakemanager *StakemanagerCaller) MinDeposit(opts *bind.CallOpts) (*big.I
 
 // MinDeposit is a free data retrieval call binding the contract method 0x41b3d185.
 //
-// Solidity: function minDeposit() constant returns(uint256)
+// Solidity: function minDeposit() view returns(uint256)
 func (_Stakemanager *StakemanagerSession) MinDeposit() (*big.Int, error) {
 	return _Stakemanager.Contract.MinDeposit(&_Stakemanager.CallOpts)
 }
 
 // MinDeposit is a free data retrieval call binding the contract method 0x41b3d185.
 //
-// Solidity: function minDeposit() constant returns(uint256)
+// Solidity: function minDeposit() view returns(uint256)
 func (_Stakemanager *StakemanagerCallerSession) MinDeposit() (*big.Int, error) {
 	return _Stakemanager.Contract.MinDeposit(&_Stakemanager.CallOpts)
 }
 
 // MinHeimdallFee is a free data retrieval call binding the contract method 0xfba58f34.
 //
-// Solidity: function minHeimdallFee() constant returns(uint256)
+// Solidity: function minHeimdallFee() view returns(uint256)
 func (_Stakemanager *StakemanagerCaller) MinHeimdallFee(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -810,21 +809,21 @@ func (_Stakemanager *StakemanagerCaller) MinHeimdallFee(opts *bind.CallOpts) (*b
 
 // MinHeimdallFee is a free data retrieval call binding the contract method 0xfba58f34.
 //
-// Solidity: function minHeimdallFee() constant returns(uint256)
+// Solidity: function minHeimdallFee() view returns(uint256)
 func (_Stakemanager *StakemanagerSession) MinHeimdallFee() (*big.Int, error) {
 	return _Stakemanager.Contract.MinHeimdallFee(&_Stakemanager.CallOpts)
 }
 
 // MinHeimdallFee is a free data retrieval call binding the contract method 0xfba58f34.
 //
-// Solidity: function minHeimdallFee() constant returns(uint256)
+// Solidity: function minHeimdallFee() view returns(uint256)
 func (_Stakemanager *StakemanagerCallerSession) MinHeimdallFee() (*big.Int, error) {
 	return _Stakemanager.Contract.MinHeimdallFee(&_Stakemanager.CallOpts)
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function owner() constant returns(address)
+// Solidity: function owner() view returns(address)
 func (_Stakemanager *StakemanagerCaller) Owner(opts *bind.CallOpts) (common.Address, error) {
 	var (
 		ret0 = new(common.Address)
@@ -836,21 +835,21 @@ func (_Stakemanager *StakemanagerCaller) Owner(opts *bind.CallOpts) (common.Addr
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function owner() constant returns(address)
+// Solidity: function owner() view returns(address)
 func (_Stakemanager *StakemanagerSession) Owner() (common.Address, error) {
 	return _Stakemanager.Contract.Owner(&_Stakemanager.CallOpts)
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function owner() constant returns(address)
+// Solidity: function owner() view returns(address)
 func (_Stakemanager *StakemanagerCallerSession) Owner() (common.Address, error) {
 	return _Stakemanager.Contract.Owner(&_Stakemanager.CallOpts)
 }
 
 // OwnerOf is a free data retrieval call binding the contract method 0x6352211e.
 //
-// Solidity: function ownerOf(uint256 tokenId) constant returns(address)
+// Solidity: function ownerOf(uint256 tokenId) view returns(address)
 func (_Stakemanager *StakemanagerCaller) OwnerOf(opts *bind.CallOpts, tokenId *big.Int) (common.Address, error) {
 	var (
 		ret0 = new(common.Address)
@@ -862,21 +861,21 @@ func (_Stakemanager *StakemanagerCaller) OwnerOf(opts *bind.CallOpts, tokenId *b
 
 // OwnerOf is a free data retrieval call binding the contract method 0x6352211e.
 //
-// Solidity: function ownerOf(uint256 tokenId) constant returns(address)
+// Solidity: function ownerOf(uint256 tokenId) view returns(address)
 func (_Stakemanager *StakemanagerSession) OwnerOf(tokenId *big.Int) (common.Address, error) {
 	return _Stakemanager.Contract.OwnerOf(&_Stakemanager.CallOpts, tokenId)
 }
 
 // OwnerOf is a free data retrieval call binding the contract method 0x6352211e.
 //
-// Solidity: function ownerOf(uint256 tokenId) constant returns(address)
+// Solidity: function ownerOf(uint256 tokenId) view returns(address)
 func (_Stakemanager *StakemanagerCallerSession) OwnerOf(tokenId *big.Int) (common.Address, error) {
 	return _Stakemanager.Contract.OwnerOf(&_Stakemanager.CallOpts, tokenId)
 }
 
 // ProposerBonus is a free data retrieval call binding the contract method 0x34274586.
 //
-// Solidity: function proposerBonus() constant returns(uint256)
+// Solidity: function proposerBonus() view returns(uint256)
 func (_Stakemanager *StakemanagerCaller) ProposerBonus(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -888,21 +887,21 @@ func (_Stakemanager *StakemanagerCaller) ProposerBonus(opts *bind.CallOpts) (*bi
 
 // ProposerBonus is a free data retrieval call binding the contract method 0x34274586.
 //
-// Solidity: function proposerBonus() constant returns(uint256)
+// Solidity: function proposerBonus() view returns(uint256)
 func (_Stakemanager *StakemanagerSession) ProposerBonus() (*big.Int, error) {
 	return _Stakemanager.Contract.ProposerBonus(&_Stakemanager.CallOpts)
 }
 
 // ProposerBonus is a free data retrieval call binding the contract method 0x34274586.
 //
-// Solidity: function proposerBonus() constant returns(uint256)
+// Solidity: function proposerBonus() view returns(uint256)
 func (_Stakemanager *StakemanagerCallerSession) ProposerBonus() (*big.Int, error) {
 	return _Stakemanager.Contract.ProposerBonus(&_Stakemanager.CallOpts)
 }
 
 // PubToAddress is a free data retrieval call binding the contract method 0xd0110274.
 //
-// Solidity: function pubToAddress(bytes pub) constant returns(address)
+// Solidity: function pubToAddress(bytes pub) pure returns(address)
 func (_Stakemanager *StakemanagerCaller) PubToAddress(opts *bind.CallOpts, pub []byte) (common.Address, error) {
 	var (
 		ret0 = new(common.Address)
@@ -914,21 +913,21 @@ func (_Stakemanager *StakemanagerCaller) PubToAddress(opts *bind.CallOpts, pub [
 
 // PubToAddress is a free data retrieval call binding the contract method 0xd0110274.
 //
-// Solidity: function pubToAddress(bytes pub) constant returns(address)
+// Solidity: function pubToAddress(bytes pub) pure returns(address)
 func (_Stakemanager *StakemanagerSession) PubToAddress(pub []byte) (common.Address, error) {
 	return _Stakemanager.Contract.PubToAddress(&_Stakemanager.CallOpts, pub)
 }
 
 // PubToAddress is a free data retrieval call binding the contract method 0xd0110274.
 //
-// Solidity: function pubToAddress(bytes pub) constant returns(address)
+// Solidity: function pubToAddress(bytes pub) pure returns(address)
 func (_Stakemanager *StakemanagerCallerSession) PubToAddress(pub []byte) (common.Address, error) {
 	return _Stakemanager.Contract.PubToAddress(&_Stakemanager.CallOpts, pub)
 }
 
 // Registry is a free data retrieval call binding the contract method 0x7b103999.
 //
-// Solidity: function registry() constant returns(address)
+// Solidity: function registry() view returns(address)
 func (_Stakemanager *StakemanagerCaller) Registry(opts *bind.CallOpts) (common.Address, error) {
 	var (
 		ret0 = new(common.Address)
@@ -940,21 +939,21 @@ func (_Stakemanager *StakemanagerCaller) Registry(opts *bind.CallOpts) (common.A
 
 // Registry is a free data retrieval call binding the contract method 0x7b103999.
 //
-// Solidity: function registry() constant returns(address)
+// Solidity: function registry() view returns(address)
 func (_Stakemanager *StakemanagerSession) Registry() (common.Address, error) {
 	return _Stakemanager.Contract.Registry(&_Stakemanager.CallOpts)
 }
 
 // Registry is a free data retrieval call binding the contract method 0x7b103999.
 //
-// Solidity: function registry() constant returns(address)
+// Solidity: function registry() view returns(address)
 func (_Stakemanager *StakemanagerCallerSession) Registry() (common.Address, error) {
 	return _Stakemanager.Contract.Registry(&_Stakemanager.CallOpts)
 }
 
 // ReplacementCoolDown is a free data retrieval call binding the contract method 0x77939d10.
 //
-// Solidity: function replacementCoolDown() constant returns(uint256)
+// Solidity: function replacementCoolDown() view returns(uint256)
 func (_Stakemanager *StakemanagerCaller) ReplacementCoolDown(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -966,21 +965,21 @@ func (_Stakemanager *StakemanagerCaller) ReplacementCoolDown(opts *bind.CallOpts
 
 // ReplacementCoolDown is a free data retrieval call binding the contract method 0x77939d10.
 //
-// Solidity: function replacementCoolDown() constant returns(uint256)
+// Solidity: function replacementCoolDown() view returns(uint256)
 func (_Stakemanager *StakemanagerSession) ReplacementCoolDown() (*big.Int, error) {
 	return _Stakemanager.Contract.ReplacementCoolDown(&_Stakemanager.CallOpts)
 }
 
 // ReplacementCoolDown is a free data retrieval call binding the contract method 0x77939d10.
 //
-// Solidity: function replacementCoolDown() constant returns(uint256)
+// Solidity: function replacementCoolDown() view returns(uint256)
 func (_Stakemanager *StakemanagerCallerSession) ReplacementCoolDown() (*big.Int, error) {
 	return _Stakemanager.Contract.ReplacementCoolDown(&_Stakemanager.CallOpts)
 }
 
 // RootChain is a free data retrieval call binding the contract method 0x987ab9db.
 //
-// Solidity: function rootChain() constant returns(address)
+// Solidity: function rootChain() view returns(address)
 func (_Stakemanager *StakemanagerCaller) RootChain(opts *bind.CallOpts) (common.Address, error) {
 	var (
 		ret0 = new(common.Address)
@@ -992,21 +991,21 @@ func (_Stakemanager *StakemanagerCaller) RootChain(opts *bind.CallOpts) (common.
 
 // RootChain is a free data retrieval call binding the contract method 0x987ab9db.
 //
-// Solidity: function rootChain() constant returns(address)
+// Solidity: function rootChain() view returns(address)
 func (_Stakemanager *StakemanagerSession) RootChain() (common.Address, error) {
 	return _Stakemanager.Contract.RootChain(&_Stakemanager.CallOpts)
 }
 
 // RootChain is a free data retrieval call binding the contract method 0x987ab9db.
 //
-// Solidity: function rootChain() constant returns(address)
+// Solidity: function rootChain() view returns(address)
 func (_Stakemanager *StakemanagerCallerSession) RootChain() (common.Address, error) {
 	return _Stakemanager.Contract.RootChain(&_Stakemanager.CallOpts)
 }
 
 // SignerToValidator is a free data retrieval call binding the contract method 0x3862da0b.
 //
-// Solidity: function signerToValidator(address ) constant returns(uint256)
+// Solidity: function signerToValidator(address ) view returns(uint256)
 func (_Stakemanager *StakemanagerCaller) SignerToValidator(opts *bind.CallOpts, arg0 common.Address) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -1018,21 +1017,21 @@ func (_Stakemanager *StakemanagerCaller) SignerToValidator(opts *bind.CallOpts, 
 
 // SignerToValidator is a free data retrieval call binding the contract method 0x3862da0b.
 //
-// Solidity: function signerToValidator(address ) constant returns(uint256)
+// Solidity: function signerToValidator(address ) view returns(uint256)
 func (_Stakemanager *StakemanagerSession) SignerToValidator(arg0 common.Address) (*big.Int, error) {
 	return _Stakemanager.Contract.SignerToValidator(&_Stakemanager.CallOpts, arg0)
 }
 
 // SignerToValidator is a free data retrieval call binding the contract method 0x3862da0b.
 //
-// Solidity: function signerToValidator(address ) constant returns(uint256)
+// Solidity: function signerToValidator(address ) view returns(uint256)
 func (_Stakemanager *StakemanagerCallerSession) SignerToValidator(arg0 common.Address) (*big.Int, error) {
 	return _Stakemanager.Contract.SignerToValidator(&_Stakemanager.CallOpts, arg0)
 }
 
 // SignerUpdateLimit is a free data retrieval call binding the contract method 0x4e3c83f1.
 //
-// Solidity: function signerUpdateLimit() constant returns(uint256)
+// Solidity: function signerUpdateLimit() view returns(uint256)
 func (_Stakemanager *StakemanagerCaller) SignerUpdateLimit(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -1044,21 +1043,21 @@ func (_Stakemanager *StakemanagerCaller) SignerUpdateLimit(opts *bind.CallOpts) 
 
 // SignerUpdateLimit is a free data retrieval call binding the contract method 0x4e3c83f1.
 //
-// Solidity: function signerUpdateLimit() constant returns(uint256)
+// Solidity: function signerUpdateLimit() view returns(uint256)
 func (_Stakemanager *StakemanagerSession) SignerUpdateLimit() (*big.Int, error) {
 	return _Stakemanager.Contract.SignerUpdateLimit(&_Stakemanager.CallOpts)
 }
 
 // SignerUpdateLimit is a free data retrieval call binding the contract method 0x4e3c83f1.
 //
-// Solidity: function signerUpdateLimit() constant returns(uint256)
+// Solidity: function signerUpdateLimit() view returns(uint256)
 func (_Stakemanager *StakemanagerCallerSession) SignerUpdateLimit() (*big.Int, error) {
 	return _Stakemanager.Contract.SignerUpdateLimit(&_Stakemanager.CallOpts)
 }
 
 // SupportsHistory is a free data retrieval call binding the contract method 0x7033e4a6.
 //
-// Solidity: function supportsHistory() constant returns(bool)
+// Solidity: function supportsHistory() pure returns(bool)
 func (_Stakemanager *StakemanagerCaller) SupportsHistory(opts *bind.CallOpts) (bool, error) {
 	var (
 		ret0 = new(bool)
@@ -1070,21 +1069,21 @@ func (_Stakemanager *StakemanagerCaller) SupportsHistory(opts *bind.CallOpts) (b
 
 // SupportsHistory is a free data retrieval call binding the contract method 0x7033e4a6.
 //
-// Solidity: function supportsHistory() constant returns(bool)
+// Solidity: function supportsHistory() pure returns(bool)
 func (_Stakemanager *StakemanagerSession) SupportsHistory() (bool, error) {
 	return _Stakemanager.Contract.SupportsHistory(&_Stakemanager.CallOpts)
 }
 
 // SupportsHistory is a free data retrieval call binding the contract method 0x7033e4a6.
 //
-// Solidity: function supportsHistory() constant returns(bool)
+// Solidity: function supportsHistory() pure returns(bool)
 func (_Stakemanager *StakemanagerCallerSession) SupportsHistory() (bool, error) {
 	return _Stakemanager.Contract.SupportsHistory(&_Stakemanager.CallOpts)
 }
 
 // Token is a free data retrieval call binding the contract method 0xfc0c546a.
 //
-// Solidity: function token() constant returns(address)
+// Solidity: function token() view returns(address)
 func (_Stakemanager *StakemanagerCaller) Token(opts *bind.CallOpts) (common.Address, error) {
 	var (
 		ret0 = new(common.Address)
@@ -1096,21 +1095,21 @@ func (_Stakemanager *StakemanagerCaller) Token(opts *bind.CallOpts) (common.Addr
 
 // Token is a free data retrieval call binding the contract method 0xfc0c546a.
 //
-// Solidity: function token() constant returns(address)
+// Solidity: function token() view returns(address)
 func (_Stakemanager *StakemanagerSession) Token() (common.Address, error) {
 	return _Stakemanager.Contract.Token(&_Stakemanager.CallOpts)
 }
 
 // Token is a free data retrieval call binding the contract method 0xfc0c546a.
 //
-// Solidity: function token() constant returns(address)
+// Solidity: function token() view returns(address)
 func (_Stakemanager *StakemanagerCallerSession) Token() (common.Address, error) {
 	return _Stakemanager.Contract.Token(&_Stakemanager.CallOpts)
 }
 
 // TotalHeimdallFee is a free data retrieval call binding the contract method 0x9a8a6243.
 //
-// Solidity: function totalHeimdallFee() constant returns(uint256)
+// Solidity: function totalHeimdallFee() view returns(uint256)
 func (_Stakemanager *StakemanagerCaller) TotalHeimdallFee(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -1122,21 +1121,21 @@ func (_Stakemanager *StakemanagerCaller) TotalHeimdallFee(opts *bind.CallOpts) (
 
 // TotalHeimdallFee is a free data retrieval call binding the contract method 0x9a8a6243.
 //
-// Solidity: function totalHeimdallFee() constant returns(uint256)
+// Solidity: function totalHeimdallFee() view returns(uint256)
 func (_Stakemanager *StakemanagerSession) TotalHeimdallFee() (*big.Int, error) {
 	return _Stakemanager.Contract.TotalHeimdallFee(&_Stakemanager.CallOpts)
 }
 
 // TotalHeimdallFee is a free data retrieval call binding the contract method 0x9a8a6243.
 //
-// Solidity: function totalHeimdallFee() constant returns(uint256)
+// Solidity: function totalHeimdallFee() view returns(uint256)
 func (_Stakemanager *StakemanagerCallerSession) TotalHeimdallFee() (*big.Int, error) {
 	return _Stakemanager.Contract.TotalHeimdallFee(&_Stakemanager.CallOpts)
 }
 
 // TotalRewards is a free data retrieval call binding the contract method 0x0e15561a.
 //
-// Solidity: function totalRewards() constant returns(uint256)
+// Solidity: function totalRewards() view returns(uint256)
 func (_Stakemanager *StakemanagerCaller) TotalRewards(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -1148,21 +1147,21 @@ func (_Stakemanager *StakemanagerCaller) TotalRewards(opts *bind.CallOpts) (*big
 
 // TotalRewards is a free data retrieval call binding the contract method 0x0e15561a.
 //
-// Solidity: function totalRewards() constant returns(uint256)
+// Solidity: function totalRewards() view returns(uint256)
 func (_Stakemanager *StakemanagerSession) TotalRewards() (*big.Int, error) {
 	return _Stakemanager.Contract.TotalRewards(&_Stakemanager.CallOpts)
 }
 
 // TotalRewards is a free data retrieval call binding the contract method 0x0e15561a.
 //
-// Solidity: function totalRewards() constant returns(uint256)
+// Solidity: function totalRewards() view returns(uint256)
 func (_Stakemanager *StakemanagerCallerSession) TotalRewards() (*big.Int, error) {
 	return _Stakemanager.Contract.TotalRewards(&_Stakemanager.CallOpts)
 }
 
 // TotalRewardsLiquidated is a free data retrieval call binding the contract method 0xcd6b8388.
 //
-// Solidity: function totalRewardsLiquidated() constant returns(uint256)
+// Solidity: function totalRewardsLiquidated() view returns(uint256)
 func (_Stakemanager *StakemanagerCaller) TotalRewardsLiquidated(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -1174,21 +1173,21 @@ func (_Stakemanager *StakemanagerCaller) TotalRewardsLiquidated(opts *bind.CallO
 
 // TotalRewardsLiquidated is a free data retrieval call binding the contract method 0xcd6b8388.
 //
-// Solidity: function totalRewardsLiquidated() constant returns(uint256)
+// Solidity: function totalRewardsLiquidated() view returns(uint256)
 func (_Stakemanager *StakemanagerSession) TotalRewardsLiquidated() (*big.Int, error) {
 	return _Stakemanager.Contract.TotalRewardsLiquidated(&_Stakemanager.CallOpts)
 }
 
 // TotalRewardsLiquidated is a free data retrieval call binding the contract method 0xcd6b8388.
 //
-// Solidity: function totalRewardsLiquidated() constant returns(uint256)
+// Solidity: function totalRewardsLiquidated() view returns(uint256)
 func (_Stakemanager *StakemanagerCallerSession) TotalRewardsLiquidated() (*big.Int, error) {
 	return _Stakemanager.Contract.TotalRewardsLiquidated(&_Stakemanager.CallOpts)
 }
 
 // TotalStaked is a free data retrieval call binding the contract method 0x817b1cd2.
 //
-// Solidity: function totalStaked() constant returns(uint256)
+// Solidity: function totalStaked() view returns(uint256)
 func (_Stakemanager *StakemanagerCaller) TotalStaked(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -1200,21 +1199,21 @@ func (_Stakemanager *StakemanagerCaller) TotalStaked(opts *bind.CallOpts) (*big.
 
 // TotalStaked is a free data retrieval call binding the contract method 0x817b1cd2.
 //
-// Solidity: function totalStaked() constant returns(uint256)
+// Solidity: function totalStaked() view returns(uint256)
 func (_Stakemanager *StakemanagerSession) TotalStaked() (*big.Int, error) {
 	return _Stakemanager.Contract.TotalStaked(&_Stakemanager.CallOpts)
 }
 
 // TotalStaked is a free data retrieval call binding the contract method 0x817b1cd2.
 //
-// Solidity: function totalStaked() constant returns(uint256)
+// Solidity: function totalStaked() view returns(uint256)
 func (_Stakemanager *StakemanagerCallerSession) TotalStaked() (*big.Int, error) {
 	return _Stakemanager.Contract.TotalStaked(&_Stakemanager.CallOpts)
 }
 
 // TotalStakedFor is a free data retrieval call binding the contract method 0x4b341aed.
 //
-// Solidity: function totalStakedFor(address user) constant returns(uint256)
+// Solidity: function totalStakedFor(address user) view returns(uint256)
 func (_Stakemanager *StakemanagerCaller) TotalStakedFor(opts *bind.CallOpts, user common.Address) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -1226,21 +1225,21 @@ func (_Stakemanager *StakemanagerCaller) TotalStakedFor(opts *bind.CallOpts, use
 
 // TotalStakedFor is a free data retrieval call binding the contract method 0x4b341aed.
 //
-// Solidity: function totalStakedFor(address user) constant returns(uint256)
+// Solidity: function totalStakedFor(address user) view returns(uint256)
 func (_Stakemanager *StakemanagerSession) TotalStakedFor(user common.Address) (*big.Int, error) {
 	return _Stakemanager.Contract.TotalStakedFor(&_Stakemanager.CallOpts, user)
 }
 
 // TotalStakedFor is a free data retrieval call binding the contract method 0x4b341aed.
 //
-// Solidity: function totalStakedFor(address user) constant returns(uint256)
+// Solidity: function totalStakedFor(address user) view returns(uint256)
 func (_Stakemanager *StakemanagerCallerSession) TotalStakedFor(user common.Address) (*big.Int, error) {
 	return _Stakemanager.Contract.TotalStakedFor(&_Stakemanager.CallOpts, user)
 }
 
 // UserFeeExit is a free data retrieval call binding the contract method 0x78f84a44.
 //
-// Solidity: function userFeeExit(address ) constant returns(uint256)
+// Solidity: function userFeeExit(address ) view returns(uint256)
 func (_Stakemanager *StakemanagerCaller) UserFeeExit(opts *bind.CallOpts, arg0 common.Address) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -1252,21 +1251,21 @@ func (_Stakemanager *StakemanagerCaller) UserFeeExit(opts *bind.CallOpts, arg0 c
 
 // UserFeeExit is a free data retrieval call binding the contract method 0x78f84a44.
 //
-// Solidity: function userFeeExit(address ) constant returns(uint256)
+// Solidity: function userFeeExit(address ) view returns(uint256)
 func (_Stakemanager *StakemanagerSession) UserFeeExit(arg0 common.Address) (*big.Int, error) {
 	return _Stakemanager.Contract.UserFeeExit(&_Stakemanager.CallOpts, arg0)
 }
 
 // UserFeeExit is a free data retrieval call binding the contract method 0x78f84a44.
 //
-// Solidity: function userFeeExit(address ) constant returns(uint256)
+// Solidity: function userFeeExit(address ) view returns(uint256)
 func (_Stakemanager *StakemanagerCallerSession) UserFeeExit(arg0 common.Address) (*big.Int, error) {
 	return _Stakemanager.Contract.UserFeeExit(&_Stakemanager.CallOpts, arg0)
 }
 
 // ValidatorAuction is a free data retrieval call binding the contract method 0x5325e144.
 //
-// Solidity: function validatorAuction(uint256 ) constant returns(uint256 amount, uint256 startEpoch, address user)
+// Solidity: function validatorAuction(uint256 ) view returns(uint256 amount, uint256 startEpoch, address user)
 func (_Stakemanager *StakemanagerCaller) ValidatorAuction(opts *bind.CallOpts, arg0 *big.Int) (struct {
 	Amount     *big.Int
 	StartEpoch *big.Int
@@ -1284,7 +1283,7 @@ func (_Stakemanager *StakemanagerCaller) ValidatorAuction(opts *bind.CallOpts, a
 
 // ValidatorAuction is a free data retrieval call binding the contract method 0x5325e144.
 //
-// Solidity: function validatorAuction(uint256 ) constant returns(uint256 amount, uint256 startEpoch, address user)
+// Solidity: function validatorAuction(uint256 ) view returns(uint256 amount, uint256 startEpoch, address user)
 func (_Stakemanager *StakemanagerSession) ValidatorAuction(arg0 *big.Int) (struct {
 	Amount     *big.Int
 	StartEpoch *big.Int
@@ -1295,7 +1294,7 @@ func (_Stakemanager *StakemanagerSession) ValidatorAuction(arg0 *big.Int) (struc
 
 // ValidatorAuction is a free data retrieval call binding the contract method 0x5325e144.
 //
-// Solidity: function validatorAuction(uint256 ) constant returns(uint256 amount, uint256 startEpoch, address user)
+// Solidity: function validatorAuction(uint256 ) view returns(uint256 amount, uint256 startEpoch, address user)
 func (_Stakemanager *StakemanagerCallerSession) ValidatorAuction(arg0 *big.Int) (struct {
 	Amount     *big.Int
 	StartEpoch *big.Int
@@ -1306,7 +1305,7 @@ func (_Stakemanager *StakemanagerCallerSession) ValidatorAuction(arg0 *big.Int) 
 
 // ValidatorStake is a free data retrieval call binding the contract method 0xeceec1d3.
 //
-// Solidity: function validatorStake(uint256 validatorId) constant returns(uint256)
+// Solidity: function validatorStake(uint256 validatorId) view returns(uint256)
 func (_Stakemanager *StakemanagerCaller) ValidatorStake(opts *bind.CallOpts, validatorId *big.Int) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -1318,21 +1317,21 @@ func (_Stakemanager *StakemanagerCaller) ValidatorStake(opts *bind.CallOpts, val
 
 // ValidatorStake is a free data retrieval call binding the contract method 0xeceec1d3.
 //
-// Solidity: function validatorStake(uint256 validatorId) constant returns(uint256)
+// Solidity: function validatorStake(uint256 validatorId) view returns(uint256)
 func (_Stakemanager *StakemanagerSession) ValidatorStake(validatorId *big.Int) (*big.Int, error) {
 	return _Stakemanager.Contract.ValidatorStake(&_Stakemanager.CallOpts, validatorId)
 }
 
 // ValidatorStake is a free data retrieval call binding the contract method 0xeceec1d3.
 //
-// Solidity: function validatorStake(uint256 validatorId) constant returns(uint256)
+// Solidity: function validatorStake(uint256 validatorId) view returns(uint256)
 func (_Stakemanager *StakemanagerCallerSession) ValidatorStake(validatorId *big.Int) (*big.Int, error) {
 	return _Stakemanager.Contract.ValidatorStake(&_Stakemanager.CallOpts, validatorId)
 }
 
 // ValidatorState is a free data retrieval call binding the contract method 0x5c248855.
 //
-// Solidity: function validatorState(uint256 ) constant returns(int256 amount, int256 stakerCount)
+// Solidity: function validatorState(uint256 ) view returns(int256 amount, int256 stakerCount)
 func (_Stakemanager *StakemanagerCaller) ValidatorState(opts *bind.CallOpts, arg0 *big.Int) (struct {
 	Amount      *big.Int
 	StakerCount *big.Int
@@ -1348,7 +1347,7 @@ func (_Stakemanager *StakemanagerCaller) ValidatorState(opts *bind.CallOpts, arg
 
 // ValidatorState is a free data retrieval call binding the contract method 0x5c248855.
 //
-// Solidity: function validatorState(uint256 ) constant returns(int256 amount, int256 stakerCount)
+// Solidity: function validatorState(uint256 ) view returns(int256 amount, int256 stakerCount)
 func (_Stakemanager *StakemanagerSession) ValidatorState(arg0 *big.Int) (struct {
 	Amount      *big.Int
 	StakerCount *big.Int
@@ -1358,7 +1357,7 @@ func (_Stakemanager *StakemanagerSession) ValidatorState(arg0 *big.Int) (struct 
 
 // ValidatorState is a free data retrieval call binding the contract method 0x5c248855.
 //
-// Solidity: function validatorState(uint256 ) constant returns(int256 amount, int256 stakerCount)
+// Solidity: function validatorState(uint256 ) view returns(int256 amount, int256 stakerCount)
 func (_Stakemanager *StakemanagerCallerSession) ValidatorState(arg0 *big.Int) (struct {
 	Amount      *big.Int
 	StakerCount *big.Int
@@ -1368,7 +1367,7 @@ func (_Stakemanager *StakemanagerCallerSession) ValidatorState(arg0 *big.Int) (s
 
 // ValidatorThreshold is a free data retrieval call binding the contract method 0x4fd101d7.
 //
-// Solidity: function validatorThreshold() constant returns(uint256)
+// Solidity: function validatorThreshold() view returns(uint256)
 func (_Stakemanager *StakemanagerCaller) ValidatorThreshold(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -1380,21 +1379,21 @@ func (_Stakemanager *StakemanagerCaller) ValidatorThreshold(opts *bind.CallOpts)
 
 // ValidatorThreshold is a free data retrieval call binding the contract method 0x4fd101d7.
 //
-// Solidity: function validatorThreshold() constant returns(uint256)
+// Solidity: function validatorThreshold() view returns(uint256)
 func (_Stakemanager *StakemanagerSession) ValidatorThreshold() (*big.Int, error) {
 	return _Stakemanager.Contract.ValidatorThreshold(&_Stakemanager.CallOpts)
 }
 
 // ValidatorThreshold is a free data retrieval call binding the contract method 0x4fd101d7.
 //
-// Solidity: function validatorThreshold() constant returns(uint256)
+// Solidity: function validatorThreshold() view returns(uint256)
 func (_Stakemanager *StakemanagerCallerSession) ValidatorThreshold() (*big.Int, error) {
 	return _Stakemanager.Contract.ValidatorThreshold(&_Stakemanager.CallOpts)
 }
 
 // Validators is a free data retrieval call binding the contract method 0x35aa2e44.
 //
-// Solidity: function validators(uint256 ) constant returns(uint256 amount, uint256 reward, uint256 activationEpoch, uint256 deactivationEpoch, uint256 jailTime, address signer, address contractAddress, uint8 status)
+// Solidity: function validators(uint256 ) view returns(uint256 amount, uint256 reward, uint256 activationEpoch, uint256 deactivationEpoch, uint256 jailTime, address signer, address contractAddress, uint8 status)
 func (_Stakemanager *StakemanagerCaller) Validators(opts *bind.CallOpts, arg0 *big.Int) (struct {
 	Amount            *big.Int
 	Reward            *big.Int
@@ -1422,7 +1421,7 @@ func (_Stakemanager *StakemanagerCaller) Validators(opts *bind.CallOpts, arg0 *b
 
 // Validators is a free data retrieval call binding the contract method 0x35aa2e44.
 //
-// Solidity: function validators(uint256 ) constant returns(uint256 amount, uint256 reward, uint256 activationEpoch, uint256 deactivationEpoch, uint256 jailTime, address signer, address contractAddress, uint8 status)
+// Solidity: function validators(uint256 ) view returns(uint256 amount, uint256 reward, uint256 activationEpoch, uint256 deactivationEpoch, uint256 jailTime, address signer, address contractAddress, uint8 status)
 func (_Stakemanager *StakemanagerSession) Validators(arg0 *big.Int) (struct {
 	Amount            *big.Int
 	Reward            *big.Int
@@ -1438,7 +1437,7 @@ func (_Stakemanager *StakemanagerSession) Validators(arg0 *big.Int) (struct {
 
 // Validators is a free data retrieval call binding the contract method 0x35aa2e44.
 //
-// Solidity: function validators(uint256 ) constant returns(uint256 amount, uint256 reward, uint256 activationEpoch, uint256 deactivationEpoch, uint256 jailTime, address signer, address contractAddress, uint8 status)
+// Solidity: function validators(uint256 ) view returns(uint256 amount, uint256 reward, uint256 activationEpoch, uint256 deactivationEpoch, uint256 jailTime, address signer, address contractAddress, uint8 status)
 func (_Stakemanager *StakemanagerCallerSession) Validators(arg0 *big.Int) (struct {
 	Amount            *big.Int
 	Reward            *big.Int
@@ -1454,7 +1453,7 @@ func (_Stakemanager *StakemanagerCallerSession) Validators(arg0 *big.Int) (struc
 
 // VerifyConsensus is a free data retrieval call binding the contract method 0xbbcfbbb0.
 //
-// Solidity: function verifyConsensus(bytes32 voteHash, bytes sigs) constant returns(uint256, uint256)
+// Solidity: function verifyConsensus(bytes32 voteHash, bytes sigs) view returns(uint256, uint256)
 func (_Stakemanager *StakemanagerCaller) VerifyConsensus(opts *bind.CallOpts, voteHash [32]byte, sigs []byte) (*big.Int, *big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -1470,21 +1469,21 @@ func (_Stakemanager *StakemanagerCaller) VerifyConsensus(opts *bind.CallOpts, vo
 
 // VerifyConsensus is a free data retrieval call binding the contract method 0xbbcfbbb0.
 //
-// Solidity: function verifyConsensus(bytes32 voteHash, bytes sigs) constant returns(uint256, uint256)
+// Solidity: function verifyConsensus(bytes32 voteHash, bytes sigs) view returns(uint256, uint256)
 func (_Stakemanager *StakemanagerSession) VerifyConsensus(voteHash [32]byte, sigs []byte) (*big.Int, *big.Int, error) {
 	return _Stakemanager.Contract.VerifyConsensus(&_Stakemanager.CallOpts, voteHash, sigs)
 }
 
 // VerifyConsensus is a free data retrieval call binding the contract method 0xbbcfbbb0.
 //
-// Solidity: function verifyConsensus(bytes32 voteHash, bytes sigs) constant returns(uint256, uint256)
+// Solidity: function verifyConsensus(bytes32 voteHash, bytes sigs) view returns(uint256, uint256)
 func (_Stakemanager *StakemanagerCallerSession) VerifyConsensus(voteHash [32]byte, sigs []byte) (*big.Int, *big.Int, error) {
 	return _Stakemanager.Contract.VerifyConsensus(&_Stakemanager.CallOpts, voteHash, sigs)
 }
 
 // WithdrawalDelay is a free data retrieval call binding the contract method 0xa7ab6961.
 //
-// Solidity: function withdrawalDelay() constant returns(uint256)
+// Solidity: function withdrawalDelay() view returns(uint256)
 func (_Stakemanager *StakemanagerCaller) WithdrawalDelay(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -1496,14 +1495,14 @@ func (_Stakemanager *StakemanagerCaller) WithdrawalDelay(opts *bind.CallOpts) (*
 
 // WithdrawalDelay is a free data retrieval call binding the contract method 0xa7ab6961.
 //
-// Solidity: function withdrawalDelay() constant returns(uint256)
+// Solidity: function withdrawalDelay() view returns(uint256)
 func (_Stakemanager *StakemanagerSession) WithdrawalDelay() (*big.Int, error) {
 	return _Stakemanager.Contract.WithdrawalDelay(&_Stakemanager.CallOpts)
 }
 
 // WithdrawalDelay is a free data retrieval call binding the contract method 0xa7ab6961.
 //
-// Solidity: function withdrawalDelay() constant returns(uint256)
+// Solidity: function withdrawalDelay() view returns(uint256)
 func (_Stakemanager *StakemanagerCallerSession) WithdrawalDelay() (*big.Int, error) {
 	return _Stakemanager.Contract.WithdrawalDelay(&_Stakemanager.CallOpts)
 }

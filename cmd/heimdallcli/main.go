@@ -20,7 +20,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/bor/accounts/keystore"
 	ethCommon "github.com/maticnetwork/bor/common"
-	"github.com/maticnetwork/bor/console"
+	"github.com/maticnetwork/bor/console/prompt"
 	"github.com/maticnetwork/bor/crypto"
 	"github.com/maticnetwork/heimdall/file"
 	"github.com/maticnetwork/heimdall/version"
@@ -362,13 +362,13 @@ func toISO8601(t time.Time) string {
 // promptPassphrase prompts the user for a passphrase.  Set confirmation to true
 // to require the user to confirm the passphrase.
 func promptPassphrase(confirmation bool) (string, error) {
-	passphrase, err := console.Stdin.PromptPassword("Passphrase: ")
+	passphrase, err := prompt.Stdin.PromptPassword("Passphrase: ")
 	if err != nil {
 		return "", err
 	}
 
 	if confirmation {
-		confirm, err := console.Stdin.PromptPassword("Repeat passphrase: ")
+		confirm, err := prompt.Stdin.PromptPassword("Repeat passphrase: ")
 		if err != nil {
 			return "", err
 		}

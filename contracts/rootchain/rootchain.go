@@ -20,7 +20,6 @@ var (
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
-	_ = abi.U256
 	_ = bind.Bind
 	_ = common.Big1
 	_ = types.BloomLookup
@@ -174,7 +173,7 @@ func (_Rootchain *RootchainTransactorRaw) Transact(opts *bind.TransactOpts, meth
 
 // NextHeaderBlock is a free data retrieval call binding the contract method 0x8d978d88.
 //
-// Solidity: function _nextHeaderBlock() constant returns(uint256)
+// Solidity: function _nextHeaderBlock() view returns(uint256)
 func (_Rootchain *RootchainCaller) NextHeaderBlock(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -186,21 +185,21 @@ func (_Rootchain *RootchainCaller) NextHeaderBlock(opts *bind.CallOpts) (*big.In
 
 // NextHeaderBlock is a free data retrieval call binding the contract method 0x8d978d88.
 //
-// Solidity: function _nextHeaderBlock() constant returns(uint256)
+// Solidity: function _nextHeaderBlock() view returns(uint256)
 func (_Rootchain *RootchainSession) NextHeaderBlock() (*big.Int, error) {
 	return _Rootchain.Contract.NextHeaderBlock(&_Rootchain.CallOpts)
 }
 
 // NextHeaderBlock is a free data retrieval call binding the contract method 0x8d978d88.
 //
-// Solidity: function _nextHeaderBlock() constant returns(uint256)
+// Solidity: function _nextHeaderBlock() view returns(uint256)
 func (_Rootchain *RootchainCallerSession) NextHeaderBlock() (*big.Int, error) {
 	return _Rootchain.Contract.NextHeaderBlock(&_Rootchain.CallOpts)
 }
 
 // CurrentHeaderBlock is a free data retrieval call binding the contract method 0xec7e4855.
 //
-// Solidity: function currentHeaderBlock() constant returns(uint256)
+// Solidity: function currentHeaderBlock() view returns(uint256)
 func (_Rootchain *RootchainCaller) CurrentHeaderBlock(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -212,21 +211,21 @@ func (_Rootchain *RootchainCaller) CurrentHeaderBlock(opts *bind.CallOpts) (*big
 
 // CurrentHeaderBlock is a free data retrieval call binding the contract method 0xec7e4855.
 //
-// Solidity: function currentHeaderBlock() constant returns(uint256)
+// Solidity: function currentHeaderBlock() view returns(uint256)
 func (_Rootchain *RootchainSession) CurrentHeaderBlock() (*big.Int, error) {
 	return _Rootchain.Contract.CurrentHeaderBlock(&_Rootchain.CallOpts)
 }
 
 // CurrentHeaderBlock is a free data retrieval call binding the contract method 0xec7e4855.
 //
-// Solidity: function currentHeaderBlock() constant returns(uint256)
+// Solidity: function currentHeaderBlock() view returns(uint256)
 func (_Rootchain *RootchainCallerSession) CurrentHeaderBlock() (*big.Int, error) {
 	return _Rootchain.Contract.CurrentHeaderBlock(&_Rootchain.CallOpts)
 }
 
 // GetLastChildBlock is a free data retrieval call binding the contract method 0xb87e1b66.
 //
-// Solidity: function getLastChildBlock() constant returns(uint256)
+// Solidity: function getLastChildBlock() view returns(uint256)
 func (_Rootchain *RootchainCaller) GetLastChildBlock(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -238,21 +237,21 @@ func (_Rootchain *RootchainCaller) GetLastChildBlock(opts *bind.CallOpts) (*big.
 
 // GetLastChildBlock is a free data retrieval call binding the contract method 0xb87e1b66.
 //
-// Solidity: function getLastChildBlock() constant returns(uint256)
+// Solidity: function getLastChildBlock() view returns(uint256)
 func (_Rootchain *RootchainSession) GetLastChildBlock() (*big.Int, error) {
 	return _Rootchain.Contract.GetLastChildBlock(&_Rootchain.CallOpts)
 }
 
 // GetLastChildBlock is a free data retrieval call binding the contract method 0xb87e1b66.
 //
-// Solidity: function getLastChildBlock() constant returns(uint256)
+// Solidity: function getLastChildBlock() view returns(uint256)
 func (_Rootchain *RootchainCallerSession) GetLastChildBlock() (*big.Int, error) {
 	return _Rootchain.Contract.GetLastChildBlock(&_Rootchain.CallOpts)
 }
 
 // HeaderBlocks is a free data retrieval call binding the contract method 0x41539d4a.
 //
-// Solidity: function headerBlocks(uint256 ) constant returns(bytes32 root, uint256 start, uint256 end, uint256 createdAt, address proposer)
+// Solidity: function headerBlocks(uint256 ) view returns(bytes32 root, uint256 start, uint256 end, uint256 createdAt, address proposer)
 func (_Rootchain *RootchainCaller) HeaderBlocks(opts *bind.CallOpts, arg0 *big.Int) (struct {
 	Root      [32]byte
 	Start     *big.Int
@@ -274,7 +273,7 @@ func (_Rootchain *RootchainCaller) HeaderBlocks(opts *bind.CallOpts, arg0 *big.I
 
 // HeaderBlocks is a free data retrieval call binding the contract method 0x41539d4a.
 //
-// Solidity: function headerBlocks(uint256 ) constant returns(bytes32 root, uint256 start, uint256 end, uint256 createdAt, address proposer)
+// Solidity: function headerBlocks(uint256 ) view returns(bytes32 root, uint256 start, uint256 end, uint256 createdAt, address proposer)
 func (_Rootchain *RootchainSession) HeaderBlocks(arg0 *big.Int) (struct {
 	Root      [32]byte
 	Start     *big.Int
@@ -287,7 +286,7 @@ func (_Rootchain *RootchainSession) HeaderBlocks(arg0 *big.Int) (struct {
 
 // HeaderBlocks is a free data retrieval call binding the contract method 0x41539d4a.
 //
-// Solidity: function headerBlocks(uint256 ) constant returns(bytes32 root, uint256 start, uint256 end, uint256 createdAt, address proposer)
+// Solidity: function headerBlocks(uint256 ) view returns(bytes32 root, uint256 start, uint256 end, uint256 createdAt, address proposer)
 func (_Rootchain *RootchainCallerSession) HeaderBlocks(arg0 *big.Int) (struct {
 	Root      [32]byte
 	Start     *big.Int

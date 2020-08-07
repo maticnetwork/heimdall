@@ -20,7 +20,6 @@ var (
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
-	_ = abi.U256
 	_ = bind.Bind
 	_ = common.Big1
 	_ = types.BloomLookup
@@ -174,7 +173,7 @@ func (_Stakinginfo *StakinginfoTransactorRaw) Transact(opts *bind.TransactOpts, 
 
 // GetAccountStateRoot is a free data retrieval call binding the contract method 0x4b6b87ce.
 //
-// Solidity: function getAccountStateRoot() constant returns(bytes32 accountStateRoot)
+// Solidity: function getAccountStateRoot() view returns(bytes32 accountStateRoot)
 func (_Stakinginfo *StakinginfoCaller) GetAccountStateRoot(opts *bind.CallOpts) ([32]byte, error) {
 	var (
 		ret0 = new([32]byte)
@@ -186,21 +185,21 @@ func (_Stakinginfo *StakinginfoCaller) GetAccountStateRoot(opts *bind.CallOpts) 
 
 // GetAccountStateRoot is a free data retrieval call binding the contract method 0x4b6b87ce.
 //
-// Solidity: function getAccountStateRoot() constant returns(bytes32 accountStateRoot)
+// Solidity: function getAccountStateRoot() view returns(bytes32 accountStateRoot)
 func (_Stakinginfo *StakinginfoSession) GetAccountStateRoot() ([32]byte, error) {
 	return _Stakinginfo.Contract.GetAccountStateRoot(&_Stakinginfo.CallOpts)
 }
 
 // GetAccountStateRoot is a free data retrieval call binding the contract method 0x4b6b87ce.
 //
-// Solidity: function getAccountStateRoot() constant returns(bytes32 accountStateRoot)
+// Solidity: function getAccountStateRoot() view returns(bytes32 accountStateRoot)
 func (_Stakinginfo *StakinginfoCallerSession) GetAccountStateRoot() ([32]byte, error) {
 	return _Stakinginfo.Contract.GetAccountStateRoot(&_Stakinginfo.CallOpts)
 }
 
 // GetStakerDetails is a free data retrieval call binding the contract method 0x78daaf69.
 //
-// Solidity: function getStakerDetails(uint256 validatorId) constant returns(uint256 amount, uint256 reward, uint256 activationEpoch, uint256 deactivationEpoch, address signer, uint256 _status)
+// Solidity: function getStakerDetails(uint256 validatorId) view returns(uint256 amount, uint256 reward, uint256 activationEpoch, uint256 deactivationEpoch, address signer, uint256 _status)
 func (_Stakinginfo *StakinginfoCaller) GetStakerDetails(opts *bind.CallOpts, validatorId *big.Int) (struct {
 	Amount            *big.Int
 	Reward            *big.Int
@@ -224,7 +223,7 @@ func (_Stakinginfo *StakinginfoCaller) GetStakerDetails(opts *bind.CallOpts, val
 
 // GetStakerDetails is a free data retrieval call binding the contract method 0x78daaf69.
 //
-// Solidity: function getStakerDetails(uint256 validatorId) constant returns(uint256 amount, uint256 reward, uint256 activationEpoch, uint256 deactivationEpoch, address signer, uint256 _status)
+// Solidity: function getStakerDetails(uint256 validatorId) view returns(uint256 amount, uint256 reward, uint256 activationEpoch, uint256 deactivationEpoch, address signer, uint256 _status)
 func (_Stakinginfo *StakinginfoSession) GetStakerDetails(validatorId *big.Int) (struct {
 	Amount            *big.Int
 	Reward            *big.Int
@@ -238,7 +237,7 @@ func (_Stakinginfo *StakinginfoSession) GetStakerDetails(validatorId *big.Int) (
 
 // GetStakerDetails is a free data retrieval call binding the contract method 0x78daaf69.
 //
-// Solidity: function getStakerDetails(uint256 validatorId) constant returns(uint256 amount, uint256 reward, uint256 activationEpoch, uint256 deactivationEpoch, address signer, uint256 _status)
+// Solidity: function getStakerDetails(uint256 validatorId) view returns(uint256 amount, uint256 reward, uint256 activationEpoch, uint256 deactivationEpoch, address signer, uint256 _status)
 func (_Stakinginfo *StakinginfoCallerSession) GetStakerDetails(validatorId *big.Int) (struct {
 	Amount            *big.Int
 	Reward            *big.Int
@@ -252,7 +251,7 @@ func (_Stakinginfo *StakinginfoCallerSession) GetStakerDetails(validatorId *big.
 
 // GetValidatorContractAddress is a free data retrieval call binding the contract method 0x178d46aa.
 //
-// Solidity: function getValidatorContractAddress(uint256 validatorId) constant returns(address ValidatorContract)
+// Solidity: function getValidatorContractAddress(uint256 validatorId) view returns(address ValidatorContract)
 func (_Stakinginfo *StakinginfoCaller) GetValidatorContractAddress(opts *bind.CallOpts, validatorId *big.Int) (common.Address, error) {
 	var (
 		ret0 = new(common.Address)
@@ -264,21 +263,21 @@ func (_Stakinginfo *StakinginfoCaller) GetValidatorContractAddress(opts *bind.Ca
 
 // GetValidatorContractAddress is a free data retrieval call binding the contract method 0x178d46aa.
 //
-// Solidity: function getValidatorContractAddress(uint256 validatorId) constant returns(address ValidatorContract)
+// Solidity: function getValidatorContractAddress(uint256 validatorId) view returns(address ValidatorContract)
 func (_Stakinginfo *StakinginfoSession) GetValidatorContractAddress(validatorId *big.Int) (common.Address, error) {
 	return _Stakinginfo.Contract.GetValidatorContractAddress(&_Stakinginfo.CallOpts, validatorId)
 }
 
 // GetValidatorContractAddress is a free data retrieval call binding the contract method 0x178d46aa.
 //
-// Solidity: function getValidatorContractAddress(uint256 validatorId) constant returns(address ValidatorContract)
+// Solidity: function getValidatorContractAddress(uint256 validatorId) view returns(address ValidatorContract)
 func (_Stakinginfo *StakinginfoCallerSession) GetValidatorContractAddress(validatorId *big.Int) (common.Address, error) {
 	return _Stakinginfo.Contract.GetValidatorContractAddress(&_Stakinginfo.CallOpts, validatorId)
 }
 
 // Registry is a free data retrieval call binding the contract method 0x7b103999.
 //
-// Solidity: function registry() constant returns(address)
+// Solidity: function registry() view returns(address)
 func (_Stakinginfo *StakinginfoCaller) Registry(opts *bind.CallOpts) (common.Address, error) {
 	var (
 		ret0 = new(common.Address)
@@ -290,21 +289,21 @@ func (_Stakinginfo *StakinginfoCaller) Registry(opts *bind.CallOpts) (common.Add
 
 // Registry is a free data retrieval call binding the contract method 0x7b103999.
 //
-// Solidity: function registry() constant returns(address)
+// Solidity: function registry() view returns(address)
 func (_Stakinginfo *StakinginfoSession) Registry() (common.Address, error) {
 	return _Stakinginfo.Contract.Registry(&_Stakinginfo.CallOpts)
 }
 
 // Registry is a free data retrieval call binding the contract method 0x7b103999.
 //
-// Solidity: function registry() constant returns(address)
+// Solidity: function registry() view returns(address)
 func (_Stakinginfo *StakinginfoCallerSession) Registry() (common.Address, error) {
 	return _Stakinginfo.Contract.Registry(&_Stakinginfo.CallOpts)
 }
 
 // TotalValidatorStake is a free data retrieval call binding the contract method 0xca7d34b6.
 //
-// Solidity: function totalValidatorStake(uint256 validatorId) constant returns(uint256 validatorStake)
+// Solidity: function totalValidatorStake(uint256 validatorId) view returns(uint256 validatorStake)
 func (_Stakinginfo *StakinginfoCaller) TotalValidatorStake(opts *bind.CallOpts, validatorId *big.Int) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -316,21 +315,21 @@ func (_Stakinginfo *StakinginfoCaller) TotalValidatorStake(opts *bind.CallOpts, 
 
 // TotalValidatorStake is a free data retrieval call binding the contract method 0xca7d34b6.
 //
-// Solidity: function totalValidatorStake(uint256 validatorId) constant returns(uint256 validatorStake)
+// Solidity: function totalValidatorStake(uint256 validatorId) view returns(uint256 validatorStake)
 func (_Stakinginfo *StakinginfoSession) TotalValidatorStake(validatorId *big.Int) (*big.Int, error) {
 	return _Stakinginfo.Contract.TotalValidatorStake(&_Stakinginfo.CallOpts, validatorId)
 }
 
 // TotalValidatorStake is a free data retrieval call binding the contract method 0xca7d34b6.
 //
-// Solidity: function totalValidatorStake(uint256 validatorId) constant returns(uint256 validatorStake)
+// Solidity: function totalValidatorStake(uint256 validatorId) view returns(uint256 validatorStake)
 func (_Stakinginfo *StakinginfoCallerSession) TotalValidatorStake(validatorId *big.Int) (*big.Int, error) {
 	return _Stakinginfo.Contract.TotalValidatorStake(&_Stakinginfo.CallOpts, validatorId)
 }
 
 // ValidatorNonce is a free data retrieval call binding the contract method 0xebde9f93.
 //
-// Solidity: function validatorNonce(uint256 ) constant returns(uint256)
+// Solidity: function validatorNonce(uint256 ) view returns(uint256)
 func (_Stakinginfo *StakinginfoCaller) ValidatorNonce(opts *bind.CallOpts, arg0 *big.Int) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -342,14 +341,14 @@ func (_Stakinginfo *StakinginfoCaller) ValidatorNonce(opts *bind.CallOpts, arg0 
 
 // ValidatorNonce is a free data retrieval call binding the contract method 0xebde9f93.
 //
-// Solidity: function validatorNonce(uint256 ) constant returns(uint256)
+// Solidity: function validatorNonce(uint256 ) view returns(uint256)
 func (_Stakinginfo *StakinginfoSession) ValidatorNonce(arg0 *big.Int) (*big.Int, error) {
 	return _Stakinginfo.Contract.ValidatorNonce(&_Stakinginfo.CallOpts, arg0)
 }
 
 // ValidatorNonce is a free data retrieval call binding the contract method 0xebde9f93.
 //
-// Solidity: function validatorNonce(uint256 ) constant returns(uint256)
+// Solidity: function validatorNonce(uint256 ) view returns(uint256)
 func (_Stakinginfo *StakinginfoCallerSession) ValidatorNonce(arg0 *big.Int) (*big.Int, error) {
 	return _Stakinginfo.Contract.ValidatorNonce(&_Stakinginfo.CallOpts, arg0)
 }
