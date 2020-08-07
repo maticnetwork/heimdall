@@ -20,7 +20,6 @@ var (
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
-	_ = abi.U256
 	_ = bind.Bind
 	_ = common.Big1
 	_ = types.BloomLookup
@@ -174,7 +173,7 @@ func (_Validatorset *ValidatorsetTransactorRaw) Transact(opts *bind.TransactOpts
 
 // CurrentSpanNumber is a free data retrieval call binding the contract method 0x4dbc959f.
 //
-// Solidity: function currentSpanNumber() constant returns(uint256)
+// Solidity: function currentSpanNumber() view returns(uint256)
 func (_Validatorset *ValidatorsetCaller) CurrentSpanNumber(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -186,21 +185,21 @@ func (_Validatorset *ValidatorsetCaller) CurrentSpanNumber(opts *bind.CallOpts) 
 
 // CurrentSpanNumber is a free data retrieval call binding the contract method 0x4dbc959f.
 //
-// Solidity: function currentSpanNumber() constant returns(uint256)
+// Solidity: function currentSpanNumber() view returns(uint256)
 func (_Validatorset *ValidatorsetSession) CurrentSpanNumber() (*big.Int, error) {
 	return _Validatorset.Contract.CurrentSpanNumber(&_Validatorset.CallOpts)
 }
 
 // CurrentSpanNumber is a free data retrieval call binding the contract method 0x4dbc959f.
 //
-// Solidity: function currentSpanNumber() constant returns(uint256)
+// Solidity: function currentSpanNumber() view returns(uint256)
 func (_Validatorset *ValidatorsetCallerSession) CurrentSpanNumber() (*big.Int, error) {
 	return _Validatorset.Contract.CurrentSpanNumber(&_Validatorset.CallOpts)
 }
 
 // GetCurrentSpan is a free data retrieval call binding the contract method 0xaf26aa96.
 //
-// Solidity: function getCurrentSpan() constant returns(uint256 number, uint256 startBlock, uint256 endBlock)
+// Solidity: function getCurrentSpan() view returns(uint256 number, uint256 startBlock, uint256 endBlock)
 func (_Validatorset *ValidatorsetCaller) GetCurrentSpan(opts *bind.CallOpts) (struct {
 	Number     *big.Int
 	StartBlock *big.Int
@@ -218,7 +217,7 @@ func (_Validatorset *ValidatorsetCaller) GetCurrentSpan(opts *bind.CallOpts) (st
 
 // GetCurrentSpan is a free data retrieval call binding the contract method 0xaf26aa96.
 //
-// Solidity: function getCurrentSpan() constant returns(uint256 number, uint256 startBlock, uint256 endBlock)
+// Solidity: function getCurrentSpan() view returns(uint256 number, uint256 startBlock, uint256 endBlock)
 func (_Validatorset *ValidatorsetSession) GetCurrentSpan() (struct {
 	Number     *big.Int
 	StartBlock *big.Int
@@ -229,7 +228,7 @@ func (_Validatorset *ValidatorsetSession) GetCurrentSpan() (struct {
 
 // GetCurrentSpan is a free data retrieval call binding the contract method 0xaf26aa96.
 //
-// Solidity: function getCurrentSpan() constant returns(uint256 number, uint256 startBlock, uint256 endBlock)
+// Solidity: function getCurrentSpan() view returns(uint256 number, uint256 startBlock, uint256 endBlock)
 func (_Validatorset *ValidatorsetCallerSession) GetCurrentSpan() (struct {
 	Number     *big.Int
 	StartBlock *big.Int
@@ -240,7 +239,7 @@ func (_Validatorset *ValidatorsetCallerSession) GetCurrentSpan() (struct {
 
 // GetInitialValidators is a free data retrieval call binding the contract method 0x65b3a1e2.
 //
-// Solidity: function getInitialValidators() constant returns(address[], uint256[])
+// Solidity: function getInitialValidators() view returns(address[], uint256[])
 func (_Validatorset *ValidatorsetCaller) GetInitialValidators(opts *bind.CallOpts) ([]common.Address, []*big.Int, error) {
 	var (
 		ret0 = new([]common.Address)
@@ -256,21 +255,21 @@ func (_Validatorset *ValidatorsetCaller) GetInitialValidators(opts *bind.CallOpt
 
 // GetInitialValidators is a free data retrieval call binding the contract method 0x65b3a1e2.
 //
-// Solidity: function getInitialValidators() constant returns(address[], uint256[])
+// Solidity: function getInitialValidators() view returns(address[], uint256[])
 func (_Validatorset *ValidatorsetSession) GetInitialValidators() ([]common.Address, []*big.Int, error) {
 	return _Validatorset.Contract.GetInitialValidators(&_Validatorset.CallOpts)
 }
 
 // GetInitialValidators is a free data retrieval call binding the contract method 0x65b3a1e2.
 //
-// Solidity: function getInitialValidators() constant returns(address[], uint256[])
+// Solidity: function getInitialValidators() view returns(address[], uint256[])
 func (_Validatorset *ValidatorsetCallerSession) GetInitialValidators() ([]common.Address, []*big.Int, error) {
 	return _Validatorset.Contract.GetInitialValidators(&_Validatorset.CallOpts)
 }
 
 // GetNextSpan is a free data retrieval call binding the contract method 0x60c8614d.
 //
-// Solidity: function getNextSpan() constant returns(uint256 number, uint256 startBlock, uint256 endBlock)
+// Solidity: function getNextSpan() view returns(uint256 number, uint256 startBlock, uint256 endBlock)
 func (_Validatorset *ValidatorsetCaller) GetNextSpan(opts *bind.CallOpts) (struct {
 	Number     *big.Int
 	StartBlock *big.Int
@@ -288,7 +287,7 @@ func (_Validatorset *ValidatorsetCaller) GetNextSpan(opts *bind.CallOpts) (struc
 
 // GetNextSpan is a free data retrieval call binding the contract method 0x60c8614d.
 //
-// Solidity: function getNextSpan() constant returns(uint256 number, uint256 startBlock, uint256 endBlock)
+// Solidity: function getNextSpan() view returns(uint256 number, uint256 startBlock, uint256 endBlock)
 func (_Validatorset *ValidatorsetSession) GetNextSpan() (struct {
 	Number     *big.Int
 	StartBlock *big.Int
@@ -299,7 +298,7 @@ func (_Validatorset *ValidatorsetSession) GetNextSpan() (struct {
 
 // GetNextSpan is a free data retrieval call binding the contract method 0x60c8614d.
 //
-// Solidity: function getNextSpan() constant returns(uint256 number, uint256 startBlock, uint256 endBlock)
+// Solidity: function getNextSpan() view returns(uint256 number, uint256 startBlock, uint256 endBlock)
 func (_Validatorset *ValidatorsetCallerSession) GetNextSpan() (struct {
 	Number     *big.Int
 	StartBlock *big.Int
@@ -310,7 +309,7 @@ func (_Validatorset *ValidatorsetCallerSession) GetNextSpan() (struct {
 
 // GetSpan is a free data retrieval call binding the contract method 0x047a6c5b.
 //
-// Solidity: function getSpan(uint256 span) constant returns(uint256 number, uint256 startBlock, uint256 endBlock)
+// Solidity: function getSpan(uint256 span) view returns(uint256 number, uint256 startBlock, uint256 endBlock)
 func (_Validatorset *ValidatorsetCaller) GetSpan(opts *bind.CallOpts, span *big.Int) (struct {
 	Number     *big.Int
 	StartBlock *big.Int
@@ -328,7 +327,7 @@ func (_Validatorset *ValidatorsetCaller) GetSpan(opts *bind.CallOpts, span *big.
 
 // GetSpan is a free data retrieval call binding the contract method 0x047a6c5b.
 //
-// Solidity: function getSpan(uint256 span) constant returns(uint256 number, uint256 startBlock, uint256 endBlock)
+// Solidity: function getSpan(uint256 span) view returns(uint256 number, uint256 startBlock, uint256 endBlock)
 func (_Validatorset *ValidatorsetSession) GetSpan(span *big.Int) (struct {
 	Number     *big.Int
 	StartBlock *big.Int
@@ -339,7 +338,7 @@ func (_Validatorset *ValidatorsetSession) GetSpan(span *big.Int) (struct {
 
 // GetSpan is a free data retrieval call binding the contract method 0x047a6c5b.
 //
-// Solidity: function getSpan(uint256 span) constant returns(uint256 number, uint256 startBlock, uint256 endBlock)
+// Solidity: function getSpan(uint256 span) view returns(uint256 number, uint256 startBlock, uint256 endBlock)
 func (_Validatorset *ValidatorsetCallerSession) GetSpan(span *big.Int) (struct {
 	Number     *big.Int
 	StartBlock *big.Int
@@ -350,7 +349,7 @@ func (_Validatorset *ValidatorsetCallerSession) GetSpan(span *big.Int) (struct {
 
 // GetValidators is a free data retrieval call binding the contract method 0xb7ab4db5.
 //
-// Solidity: function getValidators() constant returns(address[], uint256[])
+// Solidity: function getValidators() view returns(address[], uint256[])
 func (_Validatorset *ValidatorsetCaller) GetValidators(opts *bind.CallOpts) ([]common.Address, []*big.Int, error) {
 	var (
 		ret0 = new([]common.Address)
@@ -366,14 +365,14 @@ func (_Validatorset *ValidatorsetCaller) GetValidators(opts *bind.CallOpts) ([]c
 
 // GetValidators is a free data retrieval call binding the contract method 0xb7ab4db5.
 //
-// Solidity: function getValidators() constant returns(address[], uint256[])
+// Solidity: function getValidators() view returns(address[], uint256[])
 func (_Validatorset *ValidatorsetSession) GetValidators() ([]common.Address, []*big.Int, error) {
 	return _Validatorset.Contract.GetValidators(&_Validatorset.CallOpts)
 }
 
 // GetValidators is a free data retrieval call binding the contract method 0xb7ab4db5.
 //
-// Solidity: function getValidators() constant returns(address[], uint256[])
+// Solidity: function getValidators() view returns(address[], uint256[])
 func (_Validatorset *ValidatorsetCallerSession) GetValidators() ([]common.Address, []*big.Int, error) {
 	return _Validatorset.Contract.GetValidators(&_Validatorset.CallOpts)
 }
