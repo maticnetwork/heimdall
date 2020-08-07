@@ -1,6 +1,6 @@
 module github.com/maticnetwork/heimdall
 
-go 1.12
+go 1.14
 
 require (
 	github.com/RichardKnop/machinery v1.7.4
