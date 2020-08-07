@@ -28,7 +28,7 @@ require (
 	github.com/howeyc/fsnotify v0.9.0 // indirect
 	github.com/jackpal/go-nat-pmp v1.0.2 // indirect
 	github.com/karalabe/usb v0.0.0-20191104083709-911d15fe12a9 // indirect
-	github.com/maticnetwork/bor v0.2.2-0.20200807090549-ff13b7a64795
+	github.com/maticnetwork/bor v0.2.2-0.20200807103547-4d42b15906aa
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
 	github.com/olekukonko/tablewriter v0.0.4 // indirect
 	github.com/onsi/ginkgo v1.10.3 // indirect
