@@ -1,6 +1,7 @@
 package gov
 
 import (
+	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/maticnetwork/heimdall/gov/types"
@@ -24,6 +25,10 @@ func newValidatorGovInfo(
 		VotingPower: votingPower,
 		Vote:        vote,
 	}
+}
+
+func Tally(ctx sdk.Context, keeper Keeper, proposal types.Proposal) (passes bool, burnDeposits bool, tallyResults types.TallyResult) {
+	return tally(ctx, keeper, proposal)
 }
 
 // TODO: Break into several smaller functions for clarity
@@ -85,6 +90,7 @@ func tally(ctx sdk.Context, keeper Keeper, proposal types.Proposal) (passes bool
 	// If there is not enough quorum of votes, the proposal fails
 	percentVoting := totalVotingPower.Quo(totalBondedTokens)
 	if percentVoting.LT(tallyParams.Quorum) {
+		fmt.Println("here")
 		return false, true, tallyResults
 	}
 
