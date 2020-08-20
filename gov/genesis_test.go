@@ -41,6 +41,16 @@ func (suite *GenesisTestSuite) TestIsEmptyGenesis() {
 	require.False(t, defaultGenesisState.IsEmpty())
 }
 
+//TestNewGenesis test new genesis state
+func (suite *GenesisTestSuite) TestNewGenesis() {
+	t, _, _ := suite.T(), suite.app, suite.ctx
+
+	defaultGenesisState := gov.DefaultGenesisState()
+	newGenesisState := gov.NewGenesisState(defaultGenesisState.StartingProposalID, defaultGenesisState.DepositParams, defaultGenesisState.VotingParams, defaultGenesisState.TallyParams)
+
+	require.True(t, defaultGenesisState.Equal(newGenesisState))
+}
+
 //TestEqualGenesis test equal genesis state
 func (suite *GenesisTestSuite) TestEqualGenesis() {
 	t, _, _ := suite.T(), suite.app, suite.ctx
@@ -63,6 +73,7 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 	defaultGenesisState.TallyParams.Threshold = sdk.NewDecWithPrec(-1, 0)
 	require.NotNil(t, gov.ValidateGenesis(defaultGenesisState))
 
+	defaultGenesisState = gov.DefaultGenesisState()
 	defaultGenesisState.TallyParams.Veto = sdk.NewDecWithPrec(-1, 0)
 	require.NotNil(t, gov.ValidateGenesis(defaultGenesisState))
 

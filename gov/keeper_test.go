@@ -1,84 +1,50 @@
 package gov_test
 
 // import (
-// 	"strings"
+	// "strings"
+	// "fmt"
 // 	"testing"
-// 	"time"
+// 	// "time"
 
 // 	"github.com/stretchr/testify/require"
+// 	"github.com/stretchr/testify/suite"
+// 	"github.com/maticnetwork/heimdall/app"
+// 	// "github.com/maticnetwork/heimdall/params"
+// 	paramTypes "github.com/maticnetwork/heimdall/params/types"
+// 	// "github.com/maticnetwork/heimdall/helper/mocks"
 
-// 	abci "github.com/tendermint/tendermint/abci/types"
+// 	// abci "github.com/tendermint/tendermint/abci/types"
 
-// 	"github.com/cosmos/cosmos-sdk/codec"
+// 	// "github.com/cosmos/cosmos-sdk/codec"
 // 	sdk "github.com/cosmos/cosmos-sdk/types"
 // )
 
-// func TestGetSetProposal(t *testing.T) {
-// 	input := getMockApp(t, 0, GenesisState{}, nil)
+// //
+// // Test suite
+// //
 
-// 	header := abci.Header{Height: input.mApp.LastBlockHeight() + 1}
-// 	input.mApp.BeginBlock(abci.RequestBeginBlock{Header: header})
+// // KeeperTestSuite integrate test suite context object
+// type KeeperTestSuite struct {
+// 	suite.Suite
 
-// 	ctx := input.mApp.BaseApp.NewContext(false, abci.Header{})
-
-// 	tp := testProposal()
-// 	proposal, err := input.keeper.SubmitProposal(ctx, tp)
-// 	require.NoError(t, err)
-// 	proposalID := proposal.ProposalID
-// 	input.keeper.SetProposal(ctx, proposal)
-
-// 	gotProposal, ok := input.keeper.GetProposal(ctx, proposalID)
-// 	require.True(t, ok)
-// 	require.True(t, ProposalEqual(proposal, gotProposal))
+// 	app *app.HeimdallApp
+// 	ctx sdk.Context
 // }
 
-// func TestIncrementProposalNumber(t *testing.T) {
-// 	input := getMockApp(t, 0, GenesisState{}, nil)
-
-// 	header := abci.Header{Height: input.mApp.LastBlockHeight() + 1}
-// 	input.mApp.BeginBlock(abci.RequestBeginBlock{Header: header})
-
-// 	ctx := input.mApp.BaseApp.NewContext(false, abci.Header{})
-
-// 	tp := testProposal()
-// 	input.keeper.SubmitProposal(ctx, tp)
-// 	input.keeper.SubmitProposal(ctx, tp)
-// 	input.keeper.SubmitProposal(ctx, tp)
-// 	input.keeper.SubmitProposal(ctx, tp)
-// 	input.keeper.SubmitProposal(ctx, tp)
-// 	proposal6, err := input.keeper.SubmitProposal(ctx, tp)
-// 	require.NoError(t, err)
-
-// 	require.Equal(t, uint64(6), proposal6.ProposalID)
+// func (suite *KeeperTestSuite) SetupTest() {
+// 	suite.app, suite.ctx = createTestApp(false)
 // }
 
-// func TestActivateVotingPeriod(t *testing.T) {
-// 	input := getMockApp(t, 0, GenesisState{}, nil)
+// func TestKeeperTestSuite(t *testing.T) {
+// 	suite.Run(t, new(KeeperTestSuite))
+// }
 
-// 	header := abci.Header{Height: input.mApp.LastBlockHeight() + 1}
-// 	input.mApp.BeginBlock(abci.RequestBeginBlock{Header: header})
-
-// 	ctx := input.mApp.BaseApp.NewContext(false, abci.Header{})
-
-// 	tp := testProposal()
-// 	proposal, err := input.keeper.SubmitProposal(ctx, tp)
-// 	require.NoError(t, err)
-
-// 	require.True(t, proposal.VotingStartTime.Equal(time.Time{}))
-
-// 	input.keeper.activateVotingPeriod(ctx, proposal)
-
-// 	require.True(t, proposal.VotingStartTime.Equal(ctx.BlockHeader().Time))
-
-// 	proposal, ok := input.keeper.GetProposal(ctx, proposal.ProposalID)
-// 	require.True(t, ok)
-
-// 	activeIterator := input.keeper.ActiveProposalQueueIterator(ctx, proposal.VotingEndTime)
-// 	require.True(t, activeIterator.Valid())
-// 	var proposalID uint64
-// 	input.keeper.cdc.UnmarshalBinaryLengthPrefixed(activeIterator.Value(), &proposalID)
-// 	require.Equal(t, proposalID, proposal.ProposalID)
-// 	activeIterator.Close()
+// func testProposal(changes ...paramTypes.ParamChange) paramTypes.ParameterChangeProposal {
+// 	return paramTypes.NewParameterChangeProposal(
+// 		"Test",
+// 		"description",
+// 		changes,
+// 	)
 // }
 
 // func TestDeposits(t *testing.T) {

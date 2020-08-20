@@ -33,21 +33,25 @@ func (keeper Keeper) setDeposit(ctx sdk.Context, proposalID uint64, validator hm
 func (keeper Keeper) AddDeposit(ctx sdk.Context, proposalID uint64, depositorAddr hmTypes.HeimdallAddress, depositAmount sdk.Coins, validator hmTypes.ValidatorID) (sdk.Error, bool) {
 	// Checks to see if proposal exists
 	proposal, ok := keeper.GetProposal(ctx, proposalID)
+	fmt.Println("1")
 	if !ok {
 		return types.ErrUnknownProposal(keeper.codespace, proposalID), false
 	}
 
+	fmt.Println("2")
 	// Check if proposal is still depositable
 	if (proposal.Status != types.StatusDepositPeriod) && (proposal.Status != types.StatusVotingPeriod) {
 		return types.ErrAlreadyFinishedProposal(keeper.codespace, proposalID), false
 	}
 
+	fmt.Println("3")
 	// update the governance module's account coins pool
 	err := keeper.supplyKeeper.SendCoinsFromAccountToModule(ctx, depositorAddr, types.ModuleName, depositAmount)
 	if err != nil {
 		return err, false
 	}
 
+	fmt.Println("4")
 	// Update proposal
 	proposal.TotalDeposit = proposal.TotalDeposit.Add(depositAmount)
 	keeper.SetProposal(ctx, proposal)
@@ -55,7 +59,7 @@ func (keeper Keeper) AddDeposit(ctx sdk.Context, proposalID uint64, depositorAdd
 	// Check if deposit has provided sufficient total funds to transition the proposal into the voting period
 	activatedVotingPeriod := false
 	if proposal.Status == types.StatusDepositPeriod && proposal.TotalDeposit.IsAllGTE(keeper.GetDepositParams(ctx).MinDeposit) {
-		keeper.activateVotingPeriod(ctx, proposal)
+		keeper.ActivateVotingPeriod(ctx, proposal)
 		activatedVotingPeriod = true
 	}
 

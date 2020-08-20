@@ -1,83 +1,139 @@
 package gov_test
 
-// import (
-// 	"testing"
+import (
+	"math/rand"
+	"testing"
+	"time"
+	// "log"
+	"fmt"
 
-// 	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 
-// 	abci "github.com/tendermint/tendermint/abci/types"
-// 	"github.com/tendermint/tendermint/crypto/ed25519"
+	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/maticnetwork/heimdall/app"
+	"github.com/maticnetwork/heimdall/gov"
+	hmTypes "github.com/maticnetwork/heimdall/types"
+	"github.com/maticnetwork/heimdall/types/simulation"
+	"github.com/maticnetwork/heimdall/gov/types"
+	"github.com/maticnetwork/heimdall/helper/mocks"
 
-// 	sdk "github.com/cosmos/cosmos-sdk/types"
-// 	"github.com/cosmos/cosmos-sdk/x/staking"
-// )
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
 
-// func TestTallyNoOneVotes(t *testing.T) {
-// 	input := getMockApp(t, 10, GenesisState{}, nil)
+// TallyTestSuite integrate test suite context object
+type TallyTestSuite struct {
+	suite.Suite
 
-// 	header := abci.Header{Height: input.mApp.LastBlockHeight() + 1}
-// 	input.mApp.BeginBlock(abci.RequestBeginBlock{Header: header})
+	app *app.HeimdallApp
+	ctx sdk.Context
+	contractCaller mocks.IContractCaller
+}
 
-// 	ctx := input.mApp.BaseApp.NewContext(false, abci.Header{})
-// 	stakingHandler := staking.NewHandler(input.sk)
+// SetupTest setup necessary things for genesis test
+func (suite *TallyTestSuite) SetupTest() {
+	suite.app = setupGovGenesis()
+	suite.ctx = suite.app.BaseApp.NewContext(true, abci.Header{})
+	suite.contractCaller = mocks.IContractCaller{}
+}
 
-// 	valAddrs := make([]sdk.ValAddress, len(input.addrs[:2]))
-// 	for i, addr := range input.addrs[:2] {
-// 		valAddrs[i] = sdk.ValAddress(addr)
-// 	}
+// TestTallyTestSuite
+func TestTallyTestSuite(t *testing.T) {
+	suite.Run(t, new(TallyTestSuite))
+}
 
-// 	createValidators(t, stakingHandler, ctx, valAddrs, []int64{5, 5})
-// 	staking.EndBlocker(ctx, input.sk)
+func (suite *TallyTestSuite) TestTallyNoOneVotes() {
 
-// 	tp := testProposal()
-// 	proposal, err := input.keeper.SubmitProposal(ctx, tp)
-// 	require.NoError(t, err)
-// 	proposalID := proposal.ProposalID
-// 	proposal.Status = StatusVotingPeriod
-// 	input.keeper.SetProposal(ctx, proposal)
+	t, app, ctx := suite.T(), suite.app, suite.ctx
 
-// 	proposal, ok := input.keeper.GetProposal(ctx, proposalID)
-// 	require.True(t, ok)
-// 	passes, burnDeposits, tallyResults := tally(ctx, input.keeper, proposal)
+	s1 := rand.NewSource(time.Now().UnixNano())
+	r1 := rand.New(s1)
+	n := 5
 
-// 	require.False(t, passes)
-// 	require.True(t, burnDeposits)
-// 	require.True(t, tallyResults.Equals(EmptyTallyResult()))
-// }
+	validators := make([]*hmTypes.Validator, n)
+	accounts := simulation.RandomAccounts(r1, n)
 
-// func TestTallyNoQuorum(t *testing.T) {
-// 	input := getMockApp(t, 10, GenesisState{}, nil)
+	for i := range validators {
+		// validator
+		validators[i] = hmTypes.NewValidator(
+			hmTypes.NewValidatorID(uint64(int64(i))),
+			0,
+			0,
+			1,
+			int64(simulation.RandIntBetween(r1, 10, 100)), // power
+			hmTypes.NewPubKey(accounts[i].PubKey.Bytes()),
+			accounts[i].Address,
+		)
 
-// 	header := abci.Header{Height: input.mApp.LastBlockHeight() + 1}
-// 	input.mApp.BeginBlock(abci.RequestBeginBlock{Header: header})
+		err := app.StakingKeeper.AddValidator(ctx, *validators[i])
+		if err != nil {
+			t.Error("Error while adding validator to store", err)
+		}
+	}
 
-// 	ctx := input.mApp.BaseApp.NewContext(false, abci.Header{})
-// 	stakingHandler := staking.NewHandler(input.sk)
+	tp := testProposal()
+	proposal, err := app.GovKeeper.SubmitProposal(ctx, tp)
+	require.NoError(t, err)
+	proposalID := proposal.ProposalID
+	proposal.Status = types.StatusVotingPeriod
+	app.GovKeeper.SetProposal(ctx, proposal)
 
-// 	valAddrs := make([]sdk.ValAddress, len(input.addrs[:2]))
-// 	for i, addr := range input.addrs[:2] {
-// 		valAddrs[i] = sdk.ValAddress(addr)
-// 	}
+	proposal, ok := app.GovKeeper.GetProposal(ctx, proposalID)
+	require.True(t, ok)
+	passes, burnDeposits, _ := gov.Tally(ctx, app.GovKeeper, proposal)
 
-// 	createValidators(t, stakingHandler, ctx, valAddrs, []int64{2, 5})
-// 	staking.EndBlocker(ctx, input.sk)
+	require.False(t, passes)
+	require.False(t, burnDeposits)
+}
 
-// 	tp := testProposal()
-// 	proposal, err := input.keeper.SubmitProposal(ctx, tp)
-// 	require.NoError(t, err)
-// 	proposalID := proposal.ProposalID
-// 	proposal.Status = StatusVotingPeriod
-// 	input.keeper.SetProposal(ctx, proposal)
+func (suite *TallyTestSuite) TestTallyNoQuorum() {
 
-// 	err = input.keeper.AddVote(ctx, proposalID, input.addrs[0], OptionYes)
-// 	require.Nil(t, err)
+	fmt.Println("TestTallyNoQuorum")
 
-// 	proposal, ok := input.keeper.GetProposal(ctx, proposalID)
-// 	require.True(t, ok)
-// 	passes, burnDeposits, _ := tally(ctx, input.keeper, proposal)
-// 	require.False(t, passes)
-// 	require.True(t, burnDeposits)
-// }
+	t, app, ctx := suite.T(), suite.app, suite.ctx
+
+	s1 := rand.NewSource(time.Now().UnixNano())
+	r1 := rand.New(s1)
+	n := 5
+
+	validators := make([]*hmTypes.Validator, n)
+	accounts := simulation.RandomAccounts(r1, n)
+
+	for i := range validators {
+		// validator
+		validators[i] = hmTypes.NewValidator(
+			hmTypes.NewValidatorID(uint64(int64(i))),
+			0,
+			0,
+			1,
+			int64(simulation.RandIntBetween(r1, 10, 100)), // power
+			hmTypes.NewPubKey(accounts[i].PubKey.Bytes()),
+			accounts[i].Address,
+		)
+
+		err := app.StakingKeeper.AddValidator(ctx, *validators[i])
+		if err != nil {
+			t.Error("Error while adding validator to store", err)
+		}
+	}
+
+	tp := testProposal()
+	proposal, err := app.GovKeeper.SubmitProposal(ctx, tp)
+	require.NoError(t, err)
+	proposalID := proposal.ProposalID
+	proposal.Status = types.StatusVotingPeriod
+	app.GovKeeper.SetProposal(ctx, proposal)
+
+	err = app.GovKeeper.AddVote(ctx, proposalID, accounts[0].Address, types.OptionYes, validators[0].ID)
+	require.Nil(t, err)
+
+	proposal, ok := app.GovKeeper.GetProposal(ctx, proposalID)
+	require.True(t, ok)
+	passes, burnDeposits, _ := gov.Tally(ctx, app.GovKeeper, proposal)
+
+	require.False(t, passes)
+	require.False(t, burnDeposits)
+}
 
 // func TestTallyOnlyValidatorsAllYes(t *testing.T) {
 // 	input := getMockApp(t, 10, GenesisState{}, nil)
