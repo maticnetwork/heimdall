@@ -121,6 +121,9 @@ func handleQueryAccountProof(ctx sdk.Context, req abci.RequestQuery, keeper Keep
 
 	dividendAccounts := keeper.GetAllDividendAccounts(ctx)
 	currentStateAccountRoot, err := checkpointTypes.GetAccountRootHash(dividendAccounts)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not fetch account root hash", err.Error()))
+	}
 
 	if bytes.Equal(accountRootOnChain[:], currentStateAccountRoot) {
 		// Calculate new account root hash
@@ -139,7 +142,7 @@ func handleQueryAccountProof(ctx sdk.Context, req abci.RequestQuery, keeper Keep
 		return bz, nil
 
 	} else {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not fetch merkle proof ", err.Error()))
+		return nil, sdk.ErrInternal("checkpoint mismatch between current accounts hash and root account hash, please wait for checkpoint sync")
 	}
 }
 
