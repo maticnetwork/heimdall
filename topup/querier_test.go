@@ -181,6 +181,33 @@ func (suite *QuerierTestSuite) TestHandleQueryAccountProof() {
 	require.NotNil(t, res)
 }
 
+func (suite *QuerierTestSuite) TestHandleQueryAccountProofFailure() {
+	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
+	var accountRoot [32]byte
+
+	path := []string{types.QueryAccountProof}
+	route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryAccountProof)
+	stakingInfo := &stakinginfo.Stakinginfo{}
+
+	dividendAccount := hmTypes.NewDividendAccount(
+		hmTypes.BytesToHeimdallAddress([]byte("some-address")),
+		big.NewInt(0).String(),
+	)
+	app.TopupKeeper.AddDividendAccount(ctx, dividendAccount)
+
+	// mock contracts
+	suite.contractCaller.On("GetStakingInfoInstance", mock.Anything).Return(stakingInfo, nil)
+	suite.contractCaller.On("CurrentAccountStateRoot", stakingInfo).Return(accountRoot, nil)
+
+	req := abci.RequestQuery{
+		Path: route,
+		Data: app.Codec().MustMarshalJSON(dividendAccount),
+	}
+	res, err := querier(ctx, path, req)
+	require.Error(t, err)
+	require.Nil(t, res)
+}
+
 func (suite *QuerierTestSuite) TestHandleQueryVerifyAccountProof() {
 	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
 
