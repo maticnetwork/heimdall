@@ -1,7 +1,6 @@
 package gov_test
 
 import (
-	// "fmt"
 	"math/rand"
 	"time"
 	"testing"

@@ -1,15 +1,12 @@
 package gov_test
 
 import (
-	// "math/big"
 	"math/rand"
 	"testing"
 	"time"
-	// "fmt"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	// sdkAuth "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
@@ -17,8 +14,6 @@ import (
 	"github.com/maticnetwork/heimdall/gov"
 	"github.com/maticnetwork/heimdall/gov/types"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
-	// "github.com/maticnetwork/heimdall/common"
-	// "github.com/maticnetwork/heimdall/helper/mocks"
 	"github.com/maticnetwork/heimdall/types/simulation"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
