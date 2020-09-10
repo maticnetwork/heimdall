@@ -90,7 +90,6 @@ func tally(ctx sdk.Context, keeper Keeper, proposal types.Proposal) (passes bool
 	// If there is not enough quorum of votes, the proposal fails
 	percentVoting := totalVotingPower.Quo(totalBondedTokens)
 	if percentVoting.LT(tallyParams.Quorum) {
-		fmt.Println("here")
 		return false, true, tallyResults
 	}
 
