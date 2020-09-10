@@ -83,7 +83,7 @@ func (suite *TallyTestSuite) TestAddVote() {
 
 }
 
-func (suite *TallyTestSuite) TestGetVotesAllFunctions() {
+func (suite *TallyTestSuite) TestGetAllVotesAll() {
 
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 
