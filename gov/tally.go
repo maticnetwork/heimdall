@@ -1,7 +1,6 @@
 package gov
 
 import (
-	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/maticnetwork/heimdall/gov/types"
