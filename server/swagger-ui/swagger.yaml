@@ -18,6 +18,66 @@ securityDefinitions:
   kms:
     type: basic
 paths:
+  /auth/accounts/{address}:
+    parameters:
+      - in: path
+        name: address
+        description: Account Address
+        required: true
+        type: string
+        x-example: "0x6c468cf8c9879006e22ec4029696e005c2319c9d"
+    get:
+      summary: query account
+      tags:
+        - Auth
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/Account"
+        400:
+          description: Invalid address
+        500:
+          description: Internal Server Error
+    /auth/accounts/{address}/sequence:
+      parameters:
+        - in: path
+          name: address
+          description: Account Address
+          required: true
+          type: string
+          x-example: "0x6c468cf8c9879006e22ec4029696e005c2319c9d"
+      get:
+        summary: query account sequence
+        tags:
+          - Auth
+        produces:
+          - application/json
+        responses:
+          200:
+            description: OK
+            schema:
+              $ref: "#/definitions/LightBaseAccount"
+          400:
+            description: Invalid address
+          500:
+            description: Internal Server Error
+    /auth/params:
+      get:
+        summary: query the auth params values
+        tags:
+          - Auth
+        produces:
+          - application/json
+        responses:
+          200:
+            description: OK
+            schema:
+              $ref: "#/definitions/AuthParams"
+          500:
+            description: Internal Server Error
   /staking/signer/{address}:
     parameters:
       - in: path
@@ -41,7 +101,6 @@ paths:
           description: Invalid signer address
         500:
           description: Internal Server Error
-          
   /staking/validator-status/{address}:
     parameters:
       - in: path
@@ -68,7 +127,6 @@ paths:
           description: Invalid signer address
         500:
           description: Internal Server Error
-          
   /staking/validator/{id}:
     parameters:
       - in: path
@@ -120,7 +178,6 @@ paths:
             $ref: "#/definitions/ValidatorSet"
         500:
           description: Internal Server Error  
-  
   /staking/checkpoint-reward:
     get:
       summary: Query the checkpoint reward
@@ -138,7 +195,6 @@ paths:
                 type: integer
         500:
           description: Internal Server Error  
-          
   /staking/proposer-bonus-percent:
     get:
       summary: Query the proposer bonus percent
@@ -156,7 +212,6 @@ paths:
                 type: integer
         500:
           description: Internal Server Error  
-
   /checkpoint/count:
     get:
       summary: Query number of checkpoints
@@ -174,7 +229,6 @@ paths:
                 type: integer
         500:
           description: Internal Server Error  
-  
   /checkpoint/latest-checkpoint:
     get:
       summary: Query the Latest checkpoint
@@ -203,7 +257,6 @@ paths:
             $ref: "#/definitions/Checkpoint"
         500:
           description: Internal Server Error  
-          
   /checkpoint/headers/{headerBlockIndex}:
     parameters:
       - in: path
@@ -225,7 +278,6 @@ paths:
             $ref: "#/definitions/Checkpoint"
         500:
           description: Internal Server Error    
-          
   /checkpoint/{checkpointNumber}:
     parameters:
       - in: path
@@ -247,7 +299,6 @@ paths:
             $ref: "#/definitions/Checkpoint"
         500:
           description: Internal Server Error   
-          
   /bor/span/{id}:
     parameters:
       - in: path
@@ -296,12 +347,10 @@ definitions:
     type: string
     description: hex address
     example: "0x6c468cf8c9879006e22ec4029696e005c2319c9d"
-  
   HeimdallHash:
     type: string
     description: common.Hash
     example: "0x6c468cf8c9879006e22ec4029696e005c2319c9d"
-  
   Validator:
     type: object
     properties:
@@ -332,7 +381,7 @@ definitions:
     type: object
     properties:
       value:
-        type: string 
+        type: string
   ValidatorSet:
     type: object
     properties:
@@ -381,4 +430,3 @@ definitions:
       ChainID:
         type: string
         example: "heimdall-P5rXwg"
-        
