@@ -78,6 +78,55 @@ paths:
               $ref: "#/definitions/AuthParams"
           500:
             description: Internal Server Error
+  /bank/accounts/{address}/transfers:
+      parameters:
+        - in: path
+          name: address
+          description: Account Address
+          required: true
+          type: string
+          x-example: "0x6c468cf8c9879006e22ec4029696e005c2319c9d"
+      post:
+        summary: send coins to a address
+        tags:
+          - Bank
+        produces:
+          - application/json
+        requestBody:
+          content:
+            application/json:
+              schema:
+                $ref: '#/definitions/SendCoinsRequest'
+        responses:
+          200:
+            description: OK
+          400:
+            description: Invalid address
+          500:
+            description: Internal Server Error
+  /bank/balances/{address}:
+      parameters:
+        - in: path
+          name: address
+          description: Account Address
+          required: true
+          type: string
+          x-example: "0x6c468cf8c9879006e22ec4029696e005c2319c9d"
+      get:
+        summary: queryBalance fetch an account's balance
+        tags:
+          - Bank
+        produces:
+          - application/json
+        responses:
+          200:
+            description: OK
+            schema:
+              $ref: "#/definitions/Coins"
+          400:
+            description: Invalid address
+          500:
+            description: Internal Server Error
   /staking/signer/{address}:
     parameters:
       - in: path
