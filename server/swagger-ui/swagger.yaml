@@ -127,6 +127,142 @@ paths:
             description: Invalid address
           500:
             description: Internal Server Error
+  /bor/span/list:
+      parameters:
+        - in: query
+          name: page
+          description: Page No
+          required: false
+          type: integer
+          x-example: 1
+        - in: query
+          name: limit
+          description: No of items
+          required: false
+          type: integer
+          x-example: 1
+      get:
+        summary: get span list
+        tags:
+          - Bor
+        produces:
+          - application/json
+        responses:
+          200:
+            description: OK
+            schema:
+              $ref: "#/definitions/SpanList"
+          400:
+            description: Invalid params
+          500:
+            description: Internal Server Error
+  /bor/span/{id}:
+      parameters:
+        - in: path
+          name: id
+          description: span id
+          required: true
+          type: integer
+          x-example: 1
+      get:
+        summary: get span by id
+        tags:
+          - Bor
+        produces:
+          - application/json
+        responses:
+          200:
+            description: OK
+            schema:
+              $ref: "#/definitions/Span"
+          400:
+            description: Invalid id
+          500:
+            description: Internal Server Error
+  /bor/latest-span:
+      get:
+        summary: get latest span
+        tags:
+          - Bor
+        produces:
+          - application/json
+        responses:
+          200:
+            description: OK
+            schema:
+              $ref: "#/definitions/Span"
+          500:
+            description: Internal Server Error
+  /bor/prepare-next-span:
+      get:
+        parameters:
+        - in: query
+          name: span id
+          description: last span id
+          required: true
+          type: integer
+          x-example: 1
+        - in: query
+          name: start_block
+          description: start block number
+          required: true
+          type: integer
+          x-example: 1
+        - in: query
+          name: chain_id
+          description: chain id
+          required: true
+          type: string
+          x-example: "1"
+        summary: prepares next span 
+        tags:
+          - Bor
+        produces:
+          - application/json
+        responses:
+          200:
+            description: OK
+            schema:
+              $ref: "#/definitions/Span"
+          400:
+            description: Invalid params
+          500:
+            description: Internal Server Error
+  /bor/next-span-seed:
+      get:
+        summary: get next span seed
+        tags:
+          - Bor
+        produces:
+          - application/json
+        responses:
+          200:
+            description: OK
+            schema:
+              $ref: "#/definitions/Hash"
+          500:
+            description: Internal Server Error
+  /bor/propose-span:
+      post:
+        summary: propose span
+        tags:
+          - Bor
+        produces:
+          - application/json
+        requestBody:
+          content:
+            application/json:
+              schema:
+                $ref: '#/definitions/ProposeSpanReq'
+        responses:
+          200:
+            description: OK
+            schema:
+              $ref: "#/definitions/MsgProposeSpan"
+          400:
+            description: Invalid address
+          500:
+            description: Internal Server Error
   /staking/signer/{address}:
     parameters:
       - in: path
