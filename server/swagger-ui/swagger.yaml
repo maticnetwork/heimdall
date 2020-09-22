@@ -15,6 +15,8 @@ tags:
     description: Chainmanager module APIs
   - name: Checkpoint
     description: Checkpoint module APIs
+  - name: Clerk
+    description: Clerk module APIs
   - name: Staking
     description: Staking module APIs
   - name: Topup
@@ -445,6 +447,77 @@ paths:
           description: OK
           schema:
             $ref: "#/definitions/Checkpoint"
+        400:
+          description: Invalid params
+        500:
+          description: Internal Server Error
+
+  /clerk/event-record/list:
+    get:
+      parameters:
+      - in: query
+        name: page
+        description: Page No
+        required: false
+        type: integer
+        x-example: 1
+      - in: query
+        name: limit
+        description: No of items
+        required: false
+        type: integer
+        x-example: 1
+      - in: query
+        name: from-time
+        description: time in epoch
+        required: false
+        type: integer
+        x-example: 1
+      - in: query
+        name: to-time
+        description: time in epoch
+        required: false
+        type: integer
+        x-example: 1
+      - in: query
+        name: from-id
+        description: from id
+        required: false
+        type: integer
+        x-example: 1
+      summary: get record list
+      tags:
+        - Clerk
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/RecordList"
+        400:
+          description: Invalid params
+        500:
+          description: Internal Server Error
+  /clerk/event-record/{recordId}:
+    get:
+      parameters:
+      - in: path
+        name: recordId
+        description: record id
+        required: true
+        type: integer
+        x-example: 1
+      summary: get event record by id
+      tags:
+        - Clerk
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/Record"
         400:
           description: Invalid params
         500:
