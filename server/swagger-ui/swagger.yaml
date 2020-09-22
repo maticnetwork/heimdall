@@ -41,228 +41,407 @@ paths:
           description: Invalid address
         500:
           description: Internal Server Error
-    /auth/accounts/{address}/sequence:
-      parameters:
-        - in: path
-          name: address
-          description: Account Address
-          required: true
-          type: string
-          x-example: "0x6c468cf8c9879006e22ec4029696e005c2319c9d"
-      get:
-        summary: query account sequence
-        tags:
-          - Auth
-        produces:
-          - application/json
-        responses:
-          200:
-            description: OK
-            schema:
-              $ref: "#/definitions/LightBaseAccount"
-          400:
-            description: Invalid address
-          500:
-            description: Internal Server Error
-    /auth/params:
-      get:
-        summary: query the auth params values
-        tags:
-          - Auth
-        produces:
-          - application/json
-        responses:
-          200:
-            description: OK
-            schema:
-              $ref: "#/definitions/AuthParams"
-          500:
-            description: Internal Server Error
+  /auth/accounts/{address}/sequence:
+    parameters:
+      - in: path
+        name: address
+        description: Account Address
+        required: true
+        type: string
+        x-example: "0x6c468cf8c9879006e22ec4029696e005c2319c9d"
+    get:
+      summary: query account sequence
+      tags:
+        - Auth
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/LightBaseAccount"
+        400:
+          description: Invalid address
+        500:
+          description: Internal Server Error
+  /auth/params:
+    get:
+      summary: query the auth params values
+      tags:
+        - Auth
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/AuthParams"
+        500:
+          description: Internal Server Error
   /bank/accounts/{address}/transfers:
-      parameters:
-        - in: path
-          name: address
-          description: Account Address
-          required: true
-          type: string
-          x-example: "0x6c468cf8c9879006e22ec4029696e005c2319c9d"
-      post:
-        summary: send coins to a address
-        tags:
-          - Bank
-        produces:
-          - application/json
-        requestBody:
-          content:
-            application/json:
-              schema:
-                $ref: '#/definitions/SendCoinsRequest'
-        responses:
-          200:
-            description: OK
-          400:
-            description: Invalid address
-          500:
-            description: Internal Server Error
+    parameters:
+      - in: path
+        name: address
+        description: Account Address
+        required: true
+        type: string
+        x-example: "0x6c468cf8c9879006e22ec4029696e005c2319c9d"
+    post:
+      summary: send coins to a address
+      tags:
+        - Bank
+      produces:
+        - application/json
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/definitions/SendCoinsRequest'
+      responses:
+        200:
+          description: OK
+        400:
+          description: Invalid address
+        500:
+          description: Internal Server Error
   /bank/balances/{address}:
-      parameters:
-        - in: path
-          name: address
-          description: Account Address
-          required: true
-          type: string
-          x-example: "0x6c468cf8c9879006e22ec4029696e005c2319c9d"
-      get:
-        summary: queryBalance fetch an account's balance
-        tags:
-          - Bank
-        produces:
-          - application/json
-        responses:
-          200:
-            description: OK
-            schema:
-              $ref: "#/definitions/Coins"
-          400:
-            description: Invalid address
-          500:
-            description: Internal Server Error
+    parameters:
+      - in: path
+        name: address
+        description: Account Address
+        required: true
+        type: string
+        x-example: "0x6c468cf8c9879006e22ec4029696e005c2319c9d"
+    get:
+      summary: queryBalance fetch an account's balance
+      tags:
+        - Bank
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/Coins"
+        400:
+          description: Invalid address
+        500:
+          description: Internal Server Error
   /bor/span/list:
-      parameters:
-        - in: query
-          name: page
-          description: Page No
-          required: false
-          type: integer
-          x-example: 1
-        - in: query
-          name: limit
-          description: No of items
-          required: false
-          type: integer
-          x-example: 1
-      get:
-        summary: get span list
-        tags:
-          - Bor
-        produces:
-          - application/json
-        responses:
-          200:
-            description: OK
-            schema:
-              $ref: "#/definitions/SpanList"
-          400:
-            description: Invalid params
-          500:
-            description: Internal Server Error
+    parameters:
+      - in: query
+        name: page
+        description: Page No
+        required: false
+        type: integer
+        x-example: 1
+      - in: query
+        name: limit
+        description: No of items
+        required: false
+        type: integer
+        x-example: 1
+    get:
+      summary: get span list
+      tags:
+        - Bor
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/SpanList"
+        400:
+          description: Invalid params
+        500:
+          description: Internal Server Error
   /bor/span/{id}:
-      parameters:
-        - in: path
-          name: id
-          description: span id
-          required: true
-          type: integer
-          x-example: 1
-      get:
-        summary: get span by id
-        tags:
-          - Bor
-        produces:
-          - application/json
-        responses:
-          200:
-            description: OK
-            schema:
-              $ref: "#/definitions/Span"
-          400:
-            description: Invalid id
-          500:
-            description: Internal Server Error
+    parameters:
+      - in: path
+        name: id
+        description: span id
+        required: true
+        type: integer
+        x-example: 1
+    get:
+      summary: get span by id
+      tags:
+        - Bor
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/Span"
+        400:
+          description: Invalid id
+        500:
+          description: Internal Server Error
   /bor/latest-span:
-      get:
-        summary: get latest span
-        tags:
-          - Bor
-        produces:
-          - application/json
-        responses:
-          200:
-            description: OK
-            schema:
-              $ref: "#/definitions/Span"
-          500:
-            description: Internal Server Error
+    get:
+      summary: get latest span
+      tags:
+        - Bor
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/Span"
+        500:
+          description: Internal Server Error
   /bor/prepare-next-span:
-      get:
-        parameters:
-        - in: query
-          name: span id
-          description: last span id
-          required: true
-          type: integer
-          x-example: 1
-        - in: query
-          name: start_block
-          description: start block number
-          required: true
-          type: integer
-          x-example: 1
-        - in: query
-          name: chain_id
-          description: chain id
-          required: true
-          type: string
-          x-example: "1"
-        summary: prepares next span 
-        tags:
-          - Bor
-        produces:
-          - application/json
-        responses:
-          200:
-            description: OK
-            schema:
-              $ref: "#/definitions/Span"
-          400:
-            description: Invalid params
-          500:
-            description: Internal Server Error
+    get:
+      parameters:
+      - in: query
+        name: span id
+        description: last span id
+        required: true
+        type: integer
+        x-example: 1
+      - in: query
+        name: start_block
+        description: start block number
+        required: true
+        type: integer
+        x-example: 1
+      - in: query
+        name: chain_id
+        description: chain id
+        required: true
+        type: string
+        x-example: "1"
+      summary: prepares next span 
+      tags:
+        - Bor
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/Span"
+        400:
+          description: Invalid params
+        500:
+          description: Internal Server Error
   /bor/next-span-seed:
-      get:
-        summary: get next span seed
-        tags:
-          - Bor
-        produces:
-          - application/json
-        responses:
-          200:
-            description: OK
-            schema:
-              $ref: "#/definitions/Hash"
-          500:
-            description: Internal Server Error
+    get:
+      summary: get next span seed
+      tags:
+        - Bor
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/Hash"
+        500:
+          description: Internal Server Error
   /bor/propose-span:
-      post:
-        summary: propose span
-        tags:
-          - Bor
-        produces:
-          - application/json
-        requestBody:
-          content:
-            application/json:
-              schema:
-                $ref: '#/definitions/ProposeSpanReq'
-        responses:
-          200:
-            description: OK
+    post:
+      summary: propose span
+      tags:
+        - Bor
+      produces:
+        - application/json
+      requestBody:
+        content:
+          application/json:
             schema:
-              $ref: "#/definitions/MsgProposeSpan"
-          400:
-            description: Invalid address
-          500:
-            description: Internal Server Error
+              $ref: '#/definitions/ProposeSpanReq'
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/MsgProposeSpan"
+        400:
+          description: Invalid address
+        500:
+          description: Internal Server Error
+  /chainmanager/params:
+    get:
+      summary: get chain manager params
+      tags:
+        - Chainmanager
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/ChainManagerParams"
+        500:
+          description: Internal Server Error
+  /checkpoints/params:
+    get:
+      summary: Query checkpoint params
+      tags:
+        - Checkpoint
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/CheckpointParams"
+        500:
+          description: Internal Server Error
+  /overview:
+    get:
+      summary: get all state-dump of heimdall
+      tags:
+        - Checkpoint
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/StateDump"
+        500:
+          description: Internal Server Error
+  /checkpoints/buffer:
+    get:
+      summary: query checkpoint buffer
+      tags:
+        - Checkpoint
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/Checkpoint"
+        500:
+          description: Internal Server Error
+  /checkpoints/count:
+    get:
+      summary: query checkpoint count
+      tags:
+        - Checkpoint
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/CheckpointCountResponse"
+        500:
+          description: Internal Server Error
+  /checkpoints/prepare:
+    get:
+      parameters:
+      - in: query
+        name: start
+        description: start block id
+        required: true
+        type: integer
+        x-example: 1
+      - in: query
+        name: end
+        description: end block id
+        required: true
+        type: integer
+        x-example: 1
+      summary: prepare header block from start and end block
+      tags:
+        - Checkpoint
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/HeaderBlockResult"
+        400:
+          description: Incorrect params
+        500:
+          description: Internal Server Error
+  /checkpoints/latest:
+    get:
+      summary: get last checkpoint
+      tags:
+        - Checkpoint
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/Checkpoint"
+        500:
+          description: Internal Server Error
+  /checkpoints/last-no-ack:
+    get:
+      summary: get last no ack checkpoint
+      tags:
+        - Checkpoint
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/LastNoAckResult"
+        500:
+          description: Internal Server Error
+  /checkpoints/list:
+    get:
+      parameters:
+      - in: query
+        name: page
+        description: Page No
+        required: true
+        type: integer
+        x-example: 1
+      - in: query
+        name: limit
+        description: No of items
+        required: true
+        type: integer
+        x-example: 1
+      summary: get checkpoint list
+      tags:
+        - Checkpoint
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/CheckpointList"
+        400:
+          description: Invalid params
+        500:
+          description: Internal Server Error
+  /checkpoints/{number}:
+    get:
+      parameters:
+      - in: path
+        name: number
+        description: Checkpoint number
+        required: true
+        type: integer
+        x-example: 1
+      summary: get checkpoint by number
+      tags:
+        - Checkpoint
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/Checkpoint"
+        400:
+          description: Invalid params
+        500:
+          description: Internal Server Error
   /staking/signer/{address}:
     parameters:
       - in: path
@@ -334,7 +513,7 @@ paths:
         400:
           description: Invalid Validator ID
         500:
-          description: Internal Server Error  
+          description: Internal Server Error
   /staking/current-proposer:
     get:
       summary: Query the Current Block Proposer
@@ -348,7 +527,7 @@ paths:
           schema:
             $ref: "#/definitions/Validator"
         500:
-          description: Internal Server Error  
+          description: Internal Server Error
   /staking/validator-set:
     get:
       summary: Query the Current Validator Set
@@ -362,7 +541,7 @@ paths:
           schema:
             $ref: "#/definitions/ValidatorSet"
         500:
-          description: Internal Server Error  
+          description: Internal Server Error
   /staking/checkpoint-reward:
     get:
       summary: Query the checkpoint reward
@@ -379,7 +558,7 @@ paths:
               result:
                 type: integer
         500:
-          description: Internal Server Error  
+          description: Internal Server Error
   /staking/proposer-bonus-percent:
     get:
       summary: Query the proposer bonus percent
@@ -396,7 +575,7 @@ paths:
               result:
                 type: integer
         500:
-          description: Internal Server Error  
+          description: Internal Server Error
   /checkpoint/count:
     get:
       summary: Query number of checkpoints
@@ -413,7 +592,7 @@ paths:
               result:
                 type: integer
         500:
-          description: Internal Server Error  
+          description: Internal Server Error
   /checkpoint/latest-checkpoint:
     get:
       summary: Query the Latest checkpoint
@@ -427,7 +606,7 @@ paths:
           schema:
             $ref: "#/definitions/Checkpoint"
         500:
-          description: Internal Server Error    
+          description: Internal Server Error
   /checkpoint/buffer:
     get:
       summary: Query the checkpoint in the buffer
@@ -441,7 +620,7 @@ paths:
           schema:
             $ref: "#/definitions/Checkpoint"
         500:
-          description: Internal Server Error  
+          description: Internal Server Error
   /checkpoint/headers/{headerBlockIndex}:
     parameters:
       - in: path
@@ -462,7 +641,7 @@ paths:
           schema:
             $ref: "#/definitions/Checkpoint"
         500:
-          description: Internal Server Error    
+          description: Internal Server Error
   /checkpoint/{checkpointNumber}:
     parameters:
       - in: path
@@ -483,7 +662,7 @@ paths:
           schema:
             $ref: "#/definitions/Checkpoint"
         500:
-          description: Internal Server Error   
+          description: Internal Server Error
   /bor/span/{id}:
     parameters:
       - in: path
@@ -504,7 +683,7 @@ paths:
           schema:
             $ref: "#/definitions/Span"
         500:
-          description: Internal Server Error             
+          description: Internal Server Error
   /bor/latest-span:
     get:
       summary: Query the latest span
@@ -518,7 +697,7 @@ paths:
           schema:
             $ref: "#/definitions/Span"
         500:
-          description: Internal Server Error    
+          description: Internal Server Error
 definitions:
   Address:
     type: string

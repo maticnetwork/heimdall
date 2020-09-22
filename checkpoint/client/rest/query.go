@@ -23,26 +23,18 @@ import (
 
 func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc("/checkpoints/params", paramsHandlerFn(cliCtx)).Methods("GET")
-
 	r.HandleFunc("/overview", overviewHandlerFn(cliCtx)).Methods("GET")
-
 	r.HandleFunc("/checkpoints/buffer", checkpointBufferHandlerFn(cliCtx)).Methods("GET")
-
 	r.HandleFunc("/checkpoints/count", checkpointCountHandlerFn(cliCtx)).Methods("GET")
-
 	r.HandleFunc("/checkpoints/prepare", prepareCheckpointHandlerFn(cliCtx)).Methods("GET")
-
 	r.HandleFunc("/checkpoints/latest", latestCheckpointHandlerFunc(cliCtx)).Methods("GET")
-
 	r.HandleFunc("/checkpoints/last-no-ack", noackHandlerFn(cliCtx)).Methods("GET")
-
 	r.HandleFunc("/checkpoints/list", checkpointListhandlerFn(cliCtx)).Methods("GET")
-
 	r.HandleFunc("/checkpoints/{number}", checkpointByNumberHandlerFunc(cliCtx)).Methods("GET")
 
 }
 
-// HTTP request handler to query the auth params values
+// HTTP request handler to query the checkpoint params values
 func paramsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
