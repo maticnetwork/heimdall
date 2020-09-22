@@ -86,17 +86,16 @@ paths:
         required: true
         type: string
         x-example: "0x6c468cf8c9879006e22ec4029696e005c2319c9d"
+      - in: body
+        name: send_coins_request
+        schema:
+          $ref: '#/definitions/SendCoinsRequest'
     post:
       summary: send coins to a address
       tags:
         - Bank
       produces:
         - application/json
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/definitions/SendCoinsRequest'
       responses:
         200:
           description: OK
@@ -243,17 +242,17 @@ paths:
         500:
           description: Internal Server Error
   /bor/propose-span:
+    parameters:
+    - in: body
+      name: propose_span_request
+      schema:
+        $ref: '#/definitions/ProposeSpanReq'
     post:
       summary: propose span
       tags:
         - Bor
       produces:
         - application/json
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/definitions/ProposeSpanReq'
       responses:
         200:
           description: OK
@@ -574,128 +573,6 @@ paths:
             properties:
               result:
                 type: integer
-        500:
-          description: Internal Server Error
-  /checkpoint/count:
-    get:
-      summary: Query number of checkpoints
-      tags:
-        - Checkpoint
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            type: object
-            properties:
-              result:
-                type: integer
-        500:
-          description: Internal Server Error
-  /checkpoint/latest-checkpoint:
-    get:
-      summary: Query the Latest checkpoint
-      tags:
-        - Checkpoint
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/Checkpoint"
-        500:
-          description: Internal Server Error
-  /checkpoint/buffer:
-    get:
-      summary: Query the checkpoint in the buffer
-      tags:
-        - Checkpoint
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/Checkpoint"
-        500:
-          description: Internal Server Error
-  /checkpoint/headers/{headerBlockIndex}:
-    parameters:
-      - in: path
-        name: headerBlockIndex
-        description: header Block Index
-        required: true
-        type: integer
-        x-example: 123    
-    get:
-      summary: Query the checkpoint by header block index
-      tags:
-        - Checkpoint
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/Checkpoint"
-        500:
-          description: Internal Server Error
-  /checkpoint/{checkpointNumber}:
-    parameters:
-      - in: path
-        name: checkpointNumber
-        description: checkpoint Number
-        required: true
-        type: integer
-        x-example: 10 
-    get:
-      summary: Query the checkpoint by checkpoint Number
-      tags:
-        - Checkpoint
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/Checkpoint"
-        500:
-          description: Internal Server Error
-  /bor/span/{id}:
-    parameters:
-      - in: path
-        name: id
-        description: span number
-        required: true
-        type: integer
-        x-example: 10 
-    get:
-      summary: Query the span by id
-      tags:
-        - Span
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/Span"
-        500:
-          description: Internal Server Error
-  /bor/latest-span:
-    get:
-      summary: Query the latest span
-      tags:
-        - Span
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/Span"
         500:
           description: Internal Server Error
 definitions:
