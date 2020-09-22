@@ -575,6 +575,85 @@ paths:
                 type: integer
         500:
           description: Internal Server Error
+  /topup/dividend-account/{address}:
+    parameters:
+      - in: path
+        name: address
+        description: Account Address
+        required: true
+        type: string
+        x-example: "0x6c468cf8c9879006e22ec4029696e005c2319c9d"
+    get:
+      summary: Get Dividend Account of Address
+      tags:
+        - Topup
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/DividendAccount"
+        400:
+          description: Invalid signer address
+        500:
+          description: Internal Server Error
+  /topup/dividend-account-root:
+    get:
+      summary: Returns genesis accountroothash
+      tags:
+        - Topup
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/MerkleTree"
+        500:
+          description: Internal Server Error
+  /topup/account-proof/{address}/verify:
+    parameters:
+      - in: path
+        name: address
+        description: Account Address
+        required: true
+        type: string
+        x-example: "0x6c468cf8c9879006e22ec4029696e005c2319c9d"
+    get:
+      summary: Returns true if given Merkle path for dividendAccountID is valid
+      tags:
+        - Topup
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/VerifyAccountProofResult"
+        500:
+          description: Internal Server Error
+  /topup/account-proof/{address}:
+    parameters:
+      - in: path
+        name: address
+        description: Account Address
+        required: true
+        type: string
+        x-example: "0x6c468cf8c9879006e22ec4029696e005c2319c9d"
+    get:
+      summary: Returns Merkle path for dividendAccountID using dividend Account Tree
+      tags:
+        - Topup
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/DividendAccountProof"
+        500:
+          description: Internal Server Error
 definitions:
   Address:
     type: string
