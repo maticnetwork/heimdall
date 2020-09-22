@@ -5,12 +5,20 @@ info:
   title: Heimdall
   description: A REST interface for state queries, transaction generation and broadcasting.
 tags:
-  - name: Staking
-    description: Stake module APIs
+  - name: Auth
+    description: Auth module APIs
+  - name: Bank
+    description: Bank module APIs
+  - name: Bor
+    description: Bor module APIs
+  - name: Chainmanager
+    description: Chainmanager module APIs
   - name: Checkpoint
     description: Checkpoint module APIs
-  - name: Span
-    description: Span module APIs
+  - name: Staking
+    description: Staking module APIs
+  - name: Topup
+    description: Topup module APIs
 schemes:
   - http
 host: localhost:1317
