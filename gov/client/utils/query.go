@@ -5,8 +5,9 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 
+	"github.com/cosmos/cosmos-sdk/client"
+	authclient "github.com/cosmos/cosmos-sdk/x/auth/client"
 	"github.com/maticnetwork/heimdall/gov/types"
 	"github.com/maticnetwork/heimdall/helper"
 )
@@ -38,7 +39,7 @@ func (p Proposer) String() string {
 //
 // NOTE: SearchTxs is used to facilitate the txs query which does not currently
 // support configurable pagination.
-func QueryDepositsByTxQuery(cliCtx context.CLIContext, params types.QueryProposalParams) ([]byte, error) {
+func QueryDepositsByTxQuery(clientCtx client.Context, params types.QueryProposalParams) ([]byte, error) {
 	events := []string{
 		fmt.Sprintf("%s.%s='%s'", sdk.EventTypeMessage, sdk.AttributeKeyAction, types.TypeMsgDeposit),
 		fmt.Sprintf("%s.%s='%s'", types.EventTypeProposalDeposit, types.AttributeKeyProposalID, []byte(fmt.Sprintf("%d", params.ProposalID))),
@@ -46,7 +47,7 @@ func QueryDepositsByTxQuery(cliCtx context.CLIContext, params types.QueryProposa
 
 	// NOTE: SearchTxs is used to facilitate the txs query which does not currently
 	// support configurable pagination.
-	searchResult, err := utils.QueryTxsByEvents(cliCtx, events, defaultPage, defaultLimit)
+	searchResult, err := authclient.QueryTxsByEvents(clientCtx, events, defaultPage, defaultLimit, "")
 	if err != nil {
 		return nil, err
 	}
@@ -54,24 +55,25 @@ func QueryDepositsByTxQuery(cliCtx context.CLIContext, params types.QueryProposa
 	var deposits []types.Deposit
 
 	for _, info := range searchResult.Txs {
-		for _, msg := range info.Tx.GetMsgs() {
+		for _, msg := range info.GetTx().GetMsgs() {
 			if msg.Type() == types.TypeMsgDeposit {
-				depMsg := msg.(types.MsgDeposit)
+				depMsg := msg.(*types.MsgDeposit)
 
 				deposits = append(deposits, types.Deposit{
-					Depositor:  depMsg.Validator,
-					ProposalID: params.ProposalID,
+					Depositor:  depMsg.Depositor,
+					ProposalId: params.ProposalID,
 					Amount:     depMsg.Amount,
 				})
 			}
 		}
 	}
 
-	if cliCtx.Indent {
-		return cliCtx.Codec.MarshalJSONIndent(deposits, "", "  ")
+	bz, err := clientCtx.LegacyAmino.MarshalJSON(deposits)
+	if err != nil {
+		return nil, err
 	}
 
-	return cliCtx.Codec.MarshalJSON(deposits)
+	return bz, nil
 }
 
 // QueryVotesByTxQuery will query for votes via a direct txs tags query. It
