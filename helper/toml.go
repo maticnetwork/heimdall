@@ -5,7 +5,6 @@ import (
 	"text/template"
 
 	"github.com/spf13/viper"
-	cmn "github.com/tendermint/tendermint/libs/common"
 )
 
 // Note: any changes to the comments/variables/mapstructure
@@ -74,5 +73,5 @@ func WriteConfigFile(configFilePath string, config *Configuration) {
 		panic(err)
 	}
 
-	cmn.MustWriteFile(configFilePath, buffer.Bytes(), 0644)
+	tmos.MustWriteFile(configFilePath, buffer.Bytes(), 0644)
 }

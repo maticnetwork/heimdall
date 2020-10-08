@@ -9,12 +9,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	"github.com/tendermint/tendermint/libs/cli"
-	"github.com/tendermint/tendermint/libs/common"
-	tmtime "github.com/tendermint/tendermint/types/time"
-
 	"github.com/maticnetwork/heimdall/app"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	borTypes "github.com/maticnetwork/heimdall/bor/types"
@@ -24,6 +18,11 @@ import (
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
 	topupTypes "github.com/maticnetwork/heimdall/topup/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"github.com/tendermint/tendermint/libs/cli"
+	tmrand "github.com/tendermint/tendermint/libs/rand"
+	tmtime "github.com/tendermint/tendermint/types/time"
 )
 
 // InitCmd initialises files required to start heimdall
@@ -39,7 +38,7 @@ func initCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			// create chain id
 			chainID := viper.GetString(client.FlagChainID)
 			if chainID == "" {
-				chainID = fmt.Sprintf("heimdall-%v", common.RandStr(6))
+				chainID = fmt.Sprintf("heimdall-%v", tmrand.RandStr(6))
 			}
 
 			validatorID := viper.GetInt64(stakingcli.FlagValidatorID)

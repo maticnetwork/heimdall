@@ -9,12 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	"github.com/tendermint/tendermint/crypto"
-	"github.com/tendermint/tendermint/libs/common"
-	tmtime "github.com/tendermint/tendermint/types/time"
-
+	"github.com/cosmos/iavl/common"
 	"github.com/maticnetwork/heimdall/app"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	borTypes "github.com/maticnetwork/heimdall/bor/types"
@@ -24,6 +19,11 @@ import (
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
 	topupTypes "github.com/maticnetwork/heimdall/topup/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"github.com/tendermint/tendermint/crypto"
+	tmos "github.com/tendermint/tendermint/libs/os"
+	tmtime "github.com/tendermint/tendermint/types/time"
 )
 
 // TestnetCmd initialises files required to start heimdall testnet
@@ -201,7 +201,7 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 					return err
 				}
 
-				if err := common.WriteFileAtomic(filepath.Join(outDir, "signer-dump.json"), signerJSON, 0600); err != nil {
+				if err := tmos.WriteFileAtomic(filepath.Join(outDir, "signer-dump.json"), signerJSON, 0600); err != nil {
 					fmt.Println("Error writing signer-dump", err)
 					return err
 				}
