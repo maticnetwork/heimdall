@@ -1,5 +1,7 @@
 package server
 
+// api server is started by cosmos-sdk. check server/start.go
+/*
 import (
 	"net/http"
 	"os"
@@ -96,3 +98,4 @@ func registerSwaggerUI(rs *lcd.RestServer) {
 	staticServer := http.FileServer(statikFS)
 	rs.Mux.PathPrefix("/swagger-ui/").Handler(http.StripPrefix("/swagger-ui/", staticServer))
 }
+*/
