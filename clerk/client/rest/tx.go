@@ -3,7 +3,7 @@ package rest
 import (
 	"net/http"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gorilla/mux"
 
@@ -13,7 +13,7 @@ import (
 	"github.com/maticnetwork/heimdall/types/rest"
 )
 
-func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
+func registerTxRoutes(cliCtx client.Context, r *mux.Router) {
 	r.HandleFunc(
 		"/clerk/records",
 		newEventRecordHandler(cliCtx),
@@ -33,7 +33,7 @@ type AddRecordReq struct {
 	Data            string             `json:"data"`
 }
 
-func newEventRecordHandler(cliCtx context.CLIContext) http.HandlerFunc {
+func newEventRecordHandler(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// read req from request
 		var req AddRecordReq

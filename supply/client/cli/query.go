@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
@@ -14,7 +13,7 @@ import (
 )
 
 // GetQueryCmd returns the cli query commands for this module
-func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
+func GetQueryCmd() *cobra.Command {
 	// Group supply queries under a subcommand
 	supplyQueryCmd := &cobra.Command{
 		Use:                        supplyTypes.ModuleName,
@@ -41,7 +40,11 @@ func GetCmdQueryTotalSupply(cdc *codec.Codec) *cobra.Command {
 		Args:  cobra.MaximumNArgs(1),
 		Short: "Query the total supply of coins of the chain",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
 			if len(args) == 0 {
 				return queryTotalSupply(cliCtx, cdc)
@@ -51,7 +54,7 @@ func GetCmdQueryTotalSupply(cdc *codec.Codec) *cobra.Command {
 	}
 }
 
-func queryTotalSupply(cliCtx context.CLIContext, cdc *codec.Codec) error {
+func queryTotalSupply(cliCtx client.Context, cdc *codec.Codec) error {
 	params := supplyTypes.NewQueryTotalSupplyParams(1, 0) // no pagination
 	bz, err := cdc.MarshalJSON(params)
 	if err != nil {
@@ -72,7 +75,7 @@ func queryTotalSupply(cliCtx context.CLIContext, cdc *codec.Codec) error {
 	return cliCtx.PrintOutput(totalSupply)
 }
 
-func querySupplyOf(cliCtx context.CLIContext, cdc *codec.Codec, denom string) error {
+func querySupplyOf(cliCtx client.Context, cdc *codec.Codec, denom string) error {
 	params := supplyTypes.NewQuerySupplyOfParams(denom)
 	bz, err := cdc.MarshalJSON(params)
 	if err != nil {

@@ -8,7 +8,6 @@ import (
 
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -72,7 +71,7 @@ func (AppModuleBasic) VerifyGenesis(bz map[string]json.RawMessage) error {
 }
 
 // register rest routes
-func (a AppModuleBasic) RegisterRESTRoutes(ctx context.CLIContext, rtr *mux.Router) {
+func (a AppModuleBasic) RegisterRESTRoutes(ctx client.Context, rtr *mux.Router) {
 	var proposalRESTHandlers []rest.ProposalRESTHandler
 	for _, proposalHandler := range a.proposalHandlers {
 		proposalRESTHandlers = append(proposalRESTHandlers, proposalHandler.RESTHandler(ctx))
@@ -82,7 +81,7 @@ func (a AppModuleBasic) RegisterRESTRoutes(ctx context.CLIContext, rtr *mux.Rout
 }
 
 // get the root tx command of this module
-func (a AppModuleBasic) GetTxCmd(cdc *codec.Codec) *cobra.Command {
+func (a AppModuleBasic) GetTxCmd() *cobra.Command {
 
 	var proposalCLIHandlers []*cobra.Command
 	for _, proposalHandler := range a.proposalHandlers {
@@ -93,7 +92,7 @@ func (a AppModuleBasic) GetTxCmd(cdc *codec.Codec) *cobra.Command {
 }
 
 // get the root query command of this module
-func (AppModuleBasic) GetQueryCmd(cdc *codec.Codec) *cobra.Command {
+func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 	return cli.GetQueryCmd(types.StoreKey, cdc)
 }
 

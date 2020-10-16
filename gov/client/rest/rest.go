@@ -7,7 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	restClient "github.com/maticnetwork/heimdall/client/rest"
@@ -36,7 +36,7 @@ type ProposalRESTHandler struct {
 }
 
 // RegisterRoutes - Central function to define routes that get registered by the main application
-func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router, phs []ProposalRESTHandler) {
+func RegisterRoutes(cliCtx client.Context, r *mux.Router, phs []ProposalRESTHandler) {
 	propSubRtr := r.PathPrefix("/gov/proposals").Subrouter()
 	for _, ph := range phs {
 		propSubRtr.HandleFunc(fmt.Sprintf("/%s", ph.SubRoute), ph.Handler).Methods("POST")
@@ -94,7 +94,7 @@ type VoteReq struct {
 	Validator hmTypes.ValidatorID     `json:"validator" yaml:"validator"` // id of the validator
 }
 
-func postProposalHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func postProposalHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req PostProposalReq
 		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
@@ -119,7 +119,7 @@ func postProposalHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func depositHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func depositHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		strProposalID := vars[RestProposalID]
@@ -156,7 +156,7 @@ func depositHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func voteHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func voteHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		strProposalID := vars[RestProposalID]
@@ -199,7 +199,7 @@ func voteHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func queryParamsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func queryParamsHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
@@ -220,7 +220,7 @@ func queryParamsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func queryProposalHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func queryProposalHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
@@ -260,7 +260,7 @@ func queryProposalHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func queryDepositsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func queryDepositsHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
@@ -313,7 +313,7 @@ func queryDepositsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func queryProposerHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func queryProposerHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
@@ -338,7 +338,7 @@ func queryProposerHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func queryDepositHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func queryDepositHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
@@ -419,7 +419,7 @@ func queryDepositHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func queryVoteHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func queryVoteHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
@@ -501,7 +501,7 @@ func queryVoteHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 // todo: Split this functionality into helper functions to remove the above
-func queryVotesOnProposalHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func queryVotesOnProposalHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
@@ -561,7 +561,7 @@ func queryVotesOnProposalHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 // todo: Split this functionality into helper functions to remove the above
-func queryProposalsWithParameterFn(cliCtx context.CLIContext) http.HandlerFunc {
+func queryProposalsWithParameterFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
@@ -624,7 +624,7 @@ func queryProposalsWithParameterFn(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 // todo: Split this functionality into helper functions to remove the above
-func queryTallyOnProposalHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func queryTallyOnProposalHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {

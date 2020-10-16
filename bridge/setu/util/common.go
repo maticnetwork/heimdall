@@ -14,7 +14,7 @@ import (
 	"time"
 
 	mLog "github.com/RichardKnop/machinery/v1/log"
-	cliContext "github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/log"
@@ -81,7 +81,7 @@ func Logger() log.Logger {
 }
 
 // IsProposer  checks if we are proposer
-func IsProposer(cliCtx cliContext.CLIContext) (bool, error) {
+func IsProposer(cliCtx client.Context) (bool, error) {
 	var proposers []hmtypes.Validator
 	count := uint64(1)
 	result, err := helper.FetchFromAPI(cliCtx,
@@ -107,7 +107,7 @@ func IsProposer(cliCtx cliContext.CLIContext) (bool, error) {
 }
 
 // IsInProposerList checks if we are in current proposer
-func IsInProposerList(cliCtx cliContext.CLIContext, count uint64) (bool, error) {
+func IsInProposerList(cliCtx client.Context, count uint64) (bool, error) {
 	logger.Debug("Skipping proposers", "count", strconv.FormatUint(count, 10))
 	response, err := helper.FetchFromAPI(
 		cliCtx,
@@ -137,7 +137,7 @@ func IsInProposerList(cliCtx cliContext.CLIContext, count uint64) (bool, error) 
 
 // CalculateTaskDelay calculates delay required for current validator to propose the tx
 // It solves for multiple validators sending same transaction.
-func CalculateTaskDelay(cliCtx cliContext.CLIContext) (bool, time.Duration) {
+func CalculateTaskDelay(cliCtx client.Context) (bool, time.Duration) {
 	// calculate validator position
 	valPosition := 0
 	isCurrentValidator := false
@@ -168,7 +168,7 @@ func CalculateTaskDelay(cliCtx cliContext.CLIContext) (bool, time.Duration) {
 	return isCurrentValidator, taskDelay
 }
 
-func CalculateSpanTaskDelay(cliContext cliContext.CLIContext, id uint64, start uint64) (bool, time.Duration) {
+func CalculateSpanTaskDelay(cliContext client.Context, id uint64, start uint64) (bool, time.Duration) {
 	// calculate validator position
 	valPosition := 0
 	isNextSpanProducer := false
@@ -195,7 +195,7 @@ func CalculateSpanTaskDelay(cliContext cliContext.CLIContext, id uint64, start u
 }
 
 // IsCurrentProposer checks if we are current proposer
-func IsCurrentProposer(cliCtx cliContext.CLIContext) (bool, error) {
+func IsCurrentProposer(cliCtx client.Context) (bool, error) {
 	var proposer hmtypes.Validator
 	result, err := helper.FetchFromAPI(cliCtx, helper.GetHeimdallServerEndpoint(CurrentProposerURL))
 	if err != nil {
@@ -218,7 +218,7 @@ func IsCurrentProposer(cliCtx cliContext.CLIContext) (bool, error) {
 }
 
 // IsEventSender check if we are the EventSender
-func IsEventSender(cliCtx cliContext.CLIContext, validatorID uint64) bool {
+func IsEventSender(cliCtx client.Context, validatorID uint64) bool {
 	var validator hmtypes.Validator
 
 	result, err := helper.FetchFromAPI(cliCtx,
@@ -294,7 +294,7 @@ func WaitForOneEvent(tx tmTypes.Tx, client *httpClient.HTTP) (tmTypes.TMEventDat
 
 // IsCatchingUp checks if the heimdall node you are connected to is fully synced or not
 // returns true when synced
-func IsCatchingUp(cliCtx cliContext.CLIContext) bool {
+func IsCatchingUp(cliCtx client.Context) bool {
 	resp, err := helper.GetNodeStatus(cliCtx)
 	if err != nil {
 		return true
@@ -303,7 +303,7 @@ func IsCatchingUp(cliCtx cliContext.CLIContext) bool {
 }
 
 // GetAccount returns heimdall auth account
-func GetAccount(cliCtx cliContext.CLIContext, address types.HeimdallAddress) (account authTypes.Account, err error) {
+func GetAccount(cliCtx client.Context, address types.HeimdallAddress) (account authTypes.Account, err error) {
 	url := helper.GetHeimdallServerEndpoint(fmt.Sprintf(AccountDetailsURL, address))
 	// call account rest api
 	response, err := helper.FetchFromAPI(cliCtx, url)
@@ -318,7 +318,7 @@ func GetAccount(cliCtx cliContext.CLIContext, address types.HeimdallAddress) (ac
 }
 
 // GetChainmanagerParams return chain manager params
-func GetChainmanagerParams(cliCtx cliContext.CLIContext) (*chainManagerTypes.Params, error) {
+func GetChainmanagerParams(cliCtx client.Context) (*chainManagerTypes.Params, error) {
 	response, err := helper.FetchFromAPI(
 		cliCtx,
 		helper.GetHeimdallServerEndpoint(ChainManagerParamsURL),
@@ -339,7 +339,7 @@ func GetChainmanagerParams(cliCtx cliContext.CLIContext) (*chainManagerTypes.Par
 }
 
 // GetCheckpointParams return params
-func GetCheckpointParams(cliCtx cliContext.CLIContext) (*checkpointTypes.Params, error) {
+func GetCheckpointParams(cliCtx client.Context) (*checkpointTypes.Params, error) {
 	response, err := helper.FetchFromAPI(
 		cliCtx,
 		helper.GetHeimdallServerEndpoint(CheckpointParamsURL),
@@ -360,7 +360,7 @@ func GetCheckpointParams(cliCtx cliContext.CLIContext) (*checkpointTypes.Params,
 }
 
 // GetBufferedCheckpoint return checkpoint from bueffer
-func GetBufferedCheckpoint(cliCtx cliContext.CLIContext) (*hmtypes.Checkpoint, error) {
+func GetBufferedCheckpoint(cliCtx client.Context) (*hmtypes.Checkpoint, error) {
 	response, err := helper.FetchFromAPI(
 		cliCtx,
 		helper.GetHeimdallServerEndpoint(BufferedCheckpointURL),
@@ -381,7 +381,7 @@ func GetBufferedCheckpoint(cliCtx cliContext.CLIContext) (*hmtypes.Checkpoint, e
 }
 
 // GetlastestCheckpoint return last successful checkpoint
-func GetlastestCheckpoint(cliCtx cliContext.CLIContext) (*hmtypes.Checkpoint, error) {
+func GetlastestCheckpoint(cliCtx client.Context) (*hmtypes.Checkpoint, error) {
 	response, err := helper.FetchFromAPI(
 		cliCtx,
 		helper.GetHeimdallServerEndpoint(LatestCheckpointURL),
@@ -412,7 +412,7 @@ func AppendPrefix(signerPubKey []byte) []byte {
 }
 
 // fetch next span details from heimdall.
-func FetchNextSpanDetails(cliCtx cliContext.CLIContext, id uint64, start uint64) (*types.Span, error) {
+func FetchNextSpanDetails(cliCtx client.Context, id uint64, start uint64) (*types.Span, error) {
 	req, err := http.NewRequest("GET", helper.GetHeimdallServerEndpoint(NextSpanInfoURL), nil)
 	if err != nil {
 		logger.Error("Error creating a new request", "error", err)
@@ -449,7 +449,7 @@ func FetchNextSpanDetails(cliCtx cliContext.CLIContext, id uint64, start uint64)
 }
 
 // get Last span
-func GetLastSpan(cliCtx cliContext.CLIContext) (*types.Span, error) {
+func GetLastSpan(cliCtx client.Context) (*types.Span, error) {
 	// fetch last span
 	result, err := helper.FetchFromAPI(cliCtx, helper.GetHeimdallServerEndpoint(LatestSpanURL))
 	if err != nil {

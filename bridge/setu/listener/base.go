@@ -61,7 +61,7 @@ type BaseListener struct {
 	cancelHeaderProcess context.CancelFunc
 
 	// cli context
-	cliCtx cliContext.CLIContext
+	cliCtx cliclient.Context
 
 	// queue connector
 	queueConnector *queue.QueueConnector

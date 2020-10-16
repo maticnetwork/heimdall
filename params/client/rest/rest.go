@@ -3,7 +3,7 @@ package rest
 import (
 	"net/http"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	restClient "github.com/maticnetwork/heimdall/client/rest"
@@ -16,14 +16,14 @@ import (
 
 // ProposalRESTHandler returns a ProposalRESTHandler that exposes the param
 // change REST handler with a given sub-route.
-func ProposalRESTHandler(cliCtx context.CLIContext) govRest.ProposalRESTHandler {
+func ProposalRESTHandler(cliCtx client.Context) govRest.ProposalRESTHandler {
 	return govRest.ProposalRESTHandler{
 		SubRoute: "param_change",
 		Handler:  postProposalHandlerFn(cliCtx),
 	}
 }
 
-func postProposalHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func postProposalHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req paramsUtils.ParamChangeProposalReq
 		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {

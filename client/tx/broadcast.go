@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/spf13/cobra"
 	amino "github.com/tendermint/go-amino"
 
@@ -27,7 +26,7 @@ type BroadcastReq struct {
 // BroadcastTxRequest implements a tx broadcasting handler that is responsible
 // for broadcasting a valid and signed tx to a full node. The tx can be
 // broadcasted via a sync|async|block mechanism.
-func BroadcastTxRequest(cliCtx context.CLIContext) http.HandlerFunc {
+func BroadcastTxRequest(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req BroadcastReq
 
@@ -74,7 +73,11 @@ $ gaiacli tx broadcast ./mytxn.json
 `),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 			stdTx, err := helper.ReadStdTxFromFile(cliCtx.Codec, args[0])
 			if err != nil {
 				return err

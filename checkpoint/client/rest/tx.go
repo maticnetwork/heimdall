@@ -3,7 +3,7 @@ package rest
 import (
 	"net/http"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gorilla/mux"
 
@@ -13,7 +13,7 @@ import (
 	"github.com/maticnetwork/heimdall/types/rest"
 )
 
-func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
+func registerTxRoutes(cliCtx client.Context, r *mux.Router) {
 	r.HandleFunc(
 		"/checkpoint/new",
 		newCheckpointHandler(cliCtx),
@@ -58,7 +58,7 @@ type (
 	}
 )
 
-func newCheckpointHandler(cliCtx context.CLIContext) http.HandlerFunc {
+func newCheckpointHandler(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req HeaderBlockReq
 		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
@@ -85,7 +85,7 @@ func newCheckpointHandler(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func newCheckpointACKHandler(cliCtx context.CLIContext) http.HandlerFunc {
+func newCheckpointACKHandler(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req HeaderACKReq
 		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
@@ -114,7 +114,7 @@ func newCheckpointACKHandler(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func newCheckpointNoACKHandler(cliCtx context.CLIContext) http.HandlerFunc {
+func newCheckpointNoACKHandler(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req HeaderNoACKReq
 		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {

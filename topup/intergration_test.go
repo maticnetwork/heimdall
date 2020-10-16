@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -18,7 +19,7 @@ import (
 //
 
 // returns context and app with params set on chainmanager keeper
-func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, context.CLIContext) {
+func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, client.Context) {
 	app := app.Setup(isCheckTx)
 	ctx := app.BaseApp.NewContext(isCheckTx, abci.Header{})
 	cliCtx := context.NewCLIContext().WithCodec(app.Codec())

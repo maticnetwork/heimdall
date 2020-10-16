@@ -6,7 +6,7 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	restClient "github.com/maticnetwork/heimdall/client/rest"
@@ -16,7 +16,7 @@ import (
 )
 
 // RegisterRoutes - Central function to define routes that get registered by the main application
-func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
+func registerTxRoutes(cliCtx client.Context, r *mux.Router) {
 	r.HandleFunc("/topup/fee", TopupHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/topup/withdraw", WithdrawFeeHandlerFn(cliCtx)).Methods("POST")
 }
@@ -37,7 +37,7 @@ type TopupReq struct {
 }
 
 // TopupHandlerFn - http request handler to topup coins to a address.
-func TopupHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func TopupHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req TopupReq
 		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
@@ -85,7 +85,7 @@ type WithdrawFeeReq struct {
 }
 
 // WithdrawFeeHandlerFn - http request handler to withdraw fee coins from a address.
-func WithdrawFeeHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func WithdrawFeeHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req WithdrawFeeReq
 		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {

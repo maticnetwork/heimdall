@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gorilla/mux"
 
@@ -17,7 +17,7 @@ import (
 	"github.com/maticnetwork/heimdall/types/rest"
 )
 
-func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
+func registerTxRoutes(cliCtx client.Context, r *mux.Router) {
 	r.HandleFunc(
 		"/bor/propose-span",
 		postProposeSpanHandlerFn(cliCtx),
@@ -33,7 +33,7 @@ type ProposeSpanReq struct {
 	BorChainID string `json:"bor_chain_id"`
 }
 
-func postProposeSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func postProposeSpanHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		// read req from request

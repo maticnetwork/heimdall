@@ -3,7 +3,6 @@ package processor
 import (
 	"encoding/json"
 
-	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
@@ -89,7 +88,7 @@ func (fp *FeeProcessor) sendTopUpFeeToHeimdall(eventName string, logBytes string
 }
 
 // isOldTx  checks if tx is already processed or not
-func (fp *FeeProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, logIndex uint64) (bool, error) {
+func (fp *FeeProcessor) isOldTx(cliCtx cliclient.Context, txHash string, logIndex uint64) (bool, error) {
 	queryParam := map[string]interface{}{
 		"txhash":   txHash,
 		"logindex": logIndex,

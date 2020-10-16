@@ -6,8 +6,6 @@ import (
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/spf13/cobra"
 
 	"github.com/maticnetwork/heimdall/chainmanager/types"
@@ -15,7 +13,7 @@ import (
 )
 
 // GetQueryCmd returns the transaction commands for this module
-func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
+func GetQueryCmd() *cobra.Command {
 	txCmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      "Querying commands for the chainmanager module",
@@ -24,15 +22,13 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 	txCmd.AddCommand(
-		client.GetCommands(
-			GetQueryParams(cdc),
-		)...,
+		GetQueryParams(),
 	)
 	return txCmd
 }
 
 // GetQueryParams implements the params query command.
-func GetQueryParams(cdc *codec.Codec) *cobra.Command {
+func GetQueryParams() *cobra.Command {
 	return &cobra.Command{
 		Use:   "params",
 		Args:  cobra.NoArgs,
@@ -47,7 +43,11 @@ $ %s query chainmanager params
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadQueryCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
 			route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryParams)
 			bz, _, err := cliCtx.QueryWithData(route, nil)

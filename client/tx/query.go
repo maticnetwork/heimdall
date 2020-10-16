@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
@@ -75,7 +74,11 @@ $ gaiacli query txs --tags '<tag1>:<value1>&<tag2>:<value2>' --page 1 --limit 30
 			page := viper.GetInt(flagPage)
 			limit := viper.GetInt(flagLimit)
 
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 			txs, err := helper.QueryTxsByEvents(cliCtx, tmTags, page, limit)
 			if err != nil {
 				return err
@@ -122,7 +125,11 @@ func QueryTxCmd(cdc *codec.Codec) *cobra.Command {
 		Short: "Find a transaction by hash in a committed block.",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
 			output, err := helper.QueryTx(cliCtx, args[0])
 			if err != nil {
@@ -155,7 +162,7 @@ func QueryTxCmd(cdc *codec.Codec) *cobra.Command {
 // QueryTxsRequestHandlerFn implements a REST handler that searches for transactions.
 // Genesis transactions are returned if the height parameter is set to zero,
 // otherwise the transactions are searched for by events.
-func QueryTxsRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func QueryTxsRequestHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		err := r.ParseForm()
 		if err != nil {
@@ -206,7 +213,7 @@ func QueryTxsRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 // QueryTxRequestHandlerFn implements a REST handler that queries a transaction
 // by hash in a committed block.
-func QueryTxRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func QueryTxRequestHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		hashHexStr := vars["hash"]
@@ -235,7 +242,7 @@ func QueryTxRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 // QueryCommitTxRequestHandlerFn implements a REST handler that queries vote, sigs and tx bytes committed block.
-func QueryCommitTxRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func QueryCommitTxRequestHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 
@@ -287,7 +294,7 @@ func QueryCommitTxRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 // QuerySideTxRequestHandlerFn implements a REST handler that queries sigs, side-tx bytes committed block
-func QuerySideTxRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func QuerySideTxRequestHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 

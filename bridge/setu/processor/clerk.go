@@ -4,7 +4,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 
-	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
@@ -111,7 +110,7 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 }
 
 // isOldTx  checks if tx is already processed or not
-func (cp *ClerkProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, logIndex uint64) (bool, error) {
+func (cp *ClerkProcessor) isOldTx(cliCtx cliclient.Context, txHash string, logIndex uint64) (bool, error) {
 	queryParam := map[string]interface{}{
 		"txhash":   txHash,
 		"logindex": logIndex,

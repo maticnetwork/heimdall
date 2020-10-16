@@ -3,7 +3,7 @@ package rest
 import (
 	"net/http"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gorilla/mux"
 
@@ -14,7 +14,7 @@ import (
 	restClient "github.com/maticnetwork/heimdall/client/rest"
 )
 
-func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
+func registerTxRoutes(cliCtx client.Context, r *mux.Router) {
 	r.HandleFunc(
 		"/slashing/validators/{validatorAddr}/unjail",
 		newUnjailRequestHandlerFn(cliCtx),
@@ -57,7 +57,7 @@ type TickAckReq struct {
 	BlockNumber uint64       `json:"block_number" yaml:"block_number"`
 }
 
-func newUnjailRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func newUnjailRequestHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// read req from Request
 		var req UnjailReq
@@ -88,7 +88,7 @@ func newUnjailRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func newTickRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func newTickRequestHandlerFn(cliCtx client.Context) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		// read req from Request
@@ -113,7 +113,7 @@ func newTickRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func newTickAckHandler(cliCtx context.CLIContext) http.HandlerFunc {
+func newTickAckHandler(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		var req TickAckReq

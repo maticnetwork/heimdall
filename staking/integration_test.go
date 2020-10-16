@@ -1,6 +1,7 @@
 package staking_test
 
 import (
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -15,7 +16,7 @@ import (
 //
 
 // returns context and app with params set on staking keeper
-func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, context.CLIContext) {
+func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, client.Context) {
 	genesisState := app.NewDefaultGenesisState()
 	stakingGenesis := stakingTypes.NewGenesisState(
 		stakingTypes.DefaultGenesisState().Validators,

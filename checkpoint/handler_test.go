@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/checkpoint/types"
@@ -25,7 +25,7 @@ type HandlerTestSuite struct {
 
 	app    *app.HeimdallApp
 	ctx    sdk.Context
-	cliCtx context.CLIContext
+	cliCtx client.Context
 
 	handler        sdk.Handler
 	sideHandler    hmTypes.SideTxHandler

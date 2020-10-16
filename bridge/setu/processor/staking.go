@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 
 	"github.com/RichardKnop/machinery/v1/tasks"
-	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/core/types"
@@ -306,7 +305,7 @@ func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logByte
 }
 
 // isOldTx  checks if tx is already processed or not
-func (sp *StakingProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, logIndex uint64) (bool, error) {
+func (sp *StakingProcessor) isOldTx(cliCtx cliclient.Context, txHash string, logIndex uint64) (bool, error) {
 	queryParam := map[string]interface{}{
 		"txhash":   txHash,
 		"logindex": logIndex,

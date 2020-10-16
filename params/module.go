@@ -6,7 +6,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
@@ -38,7 +38,7 @@ func (AppModuleBasic) ValidateGenesis(_ json.RawMessage) error { return nil }
 func (AppModuleBasic) VerifyGenesis(bz map[string]json.RawMessage) error { return nil }
 
 // RegisterRESTRoutes register rest routes
-func (AppModuleBasic) RegisterRESTRoutes(_ context.CLIContext, _ *mux.Router) {}
+func (AppModuleBasic) RegisterRESTRoutes(_ client.Context, _ *mux.Router) {}
 
 // GetTxCmd get the root tx command of this module
 func (AppModuleBasic) GetTxCmd(_ *codec.Codec) *cobra.Command { return nil }

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"math/big"
 
-	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -18,7 +17,7 @@ import (
 var checkpointEndpoint = "/chainmanager/params"
 
 // StakeCmd stakes for a validator
-func StakeCmd(cliCtx cliContext.CLIContext) *cobra.Command {
+func StakeCmd(cliCtx cliclient.Context) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "stake",
 		Short: "Stake matic tokens for your account",
@@ -84,7 +83,7 @@ func StakeCmd(cliCtx cliContext.CLIContext) *cobra.Command {
 }
 
 // ApproveCmd approves tokens for a validator
-func ApproveCmd(cliCtx cliContext.CLIContext) *cobra.Command {
+func ApproveCmd(cliCtx cliclient.Context) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "approve",
 		Short: "Approve the tokens to stake",
@@ -135,7 +134,7 @@ func ApproveCmd(cliCtx cliContext.CLIContext) *cobra.Command {
 }
 
 // GetChainmanagerParams return configManager params
-func GetChainmanagerParams(cliCtx cliContext.CLIContext) (*chainmanagerTypes.Params, error) {
+func GetChainmanagerParams(cliCtx cliclient.Context) (*chainmanagerTypes.Params, error) {
 	response, err := helper.FetchFromAPI(
 		cliCtx,
 		helper.GetHeimdallServerEndpoint(checkpointEndpoint),

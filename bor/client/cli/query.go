@@ -8,8 +8,6 @@ import (
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -19,7 +17,7 @@ import (
 )
 
 // GetQueryCmd returns the cli query commands for this module
-func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
+func GetQueryCmd() *cobra.Command {
 	// Group supply queries under a subcommand
 	queryCmds := &cobra.Command{
 		Use:                        types.ModuleName,
@@ -31,23 +29,22 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 
 	// clerk query command
 	queryCmds.AddCommand(
-		client.GetCommands(
-			GetSpan(cdc),
-			GetLatestSpan(cdc),
-			GetQueryParams(cdc),
-		)...,
+		GetSpan(),
+		GetLatestSpan(),
+		GetQueryParams(),
 	)
 
 	return queryCmds
 }
 
 // GetSpan get state record
-func GetSpan(cdc *codec.Codec) *cobra.Command {
+func GetSpan() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "span",
 		Short: "show span",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
 
 			spanIDStr := viper.GetString(FlagSpanId)
 			if spanIDStr == "" {
@@ -60,13 +57,13 @@ func GetSpan(cdc *codec.Codec) *cobra.Command {
 			}
 
 			// get query params
-			queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQuerySpanParams(spanID))
+			queryParams, err := clientCtx.Codec.MarshalJSON(types.NewQuerySpanParams(spanID))
 			if err != nil {
 				return err
 			}
 
 			// fetch span
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QuerySpan), queryParams)
+			res, _, err := clientCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QuerySpan), queryParams)
 			if err != nil {
 				return err
 			}
@@ -89,15 +86,16 @@ func GetSpan(cdc *codec.Codec) *cobra.Command {
 }
 
 // GetLatestSpan get state record
-func GetLatestSpan(cdc *codec.Codec) *cobra.Command {
+func GetLatestSpan() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "latest-span",
 		Short: "show latest span",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
 
 			// fetch latest span
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryLatestSpan), nil)
+			res, _, err := clientCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryLatestSpan), nil)
 
 			// fetch span
 			if err != nil {
@@ -117,7 +115,7 @@ func GetLatestSpan(cdc *codec.Codec) *cobra.Command {
 }
 
 // GetQueryParams implements the params query command.
-func GetQueryParams(cdc *codec.Codec) *cobra.Command {
+func GetQueryParams() *cobra.Command {
 	return &cobra.Command{
 		Use:   "params",
 		Args:  cobra.NoArgs,
@@ -132,10 +130,11 @@ $ %s query bor params
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
 
 			route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryParams)
-			bz, _, err := cliCtx.QueryWithData(route, nil)
+			bz, _, err := clientCtx.QueryWithData(route, nil)
 			if err != nil {
 				return err
 			}
@@ -145,7 +144,7 @@ $ %s query bor params
 			if err != nil {
 				return err
 			}
-			return cliCtx.PrintOutput(params)
+			return clientCtx.PrintOutput(params)
 		},
 	}
 }

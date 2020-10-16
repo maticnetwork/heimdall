@@ -3,18 +3,16 @@ package cli
 import (
 	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/maticnetwork/heimdall/client"
 	hmClient "github.com/maticnetwork/heimdall/client"
 	"github.com/maticnetwork/heimdall/topup/types"
 )
 
 // GetQueryCmd returns the cli query commands for this module
-func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
+func GetQueryCmd() *cobra.Command {
 	// Group topup queries under a subcommand
 	topupQueryCmd := &cobra.Command{
 		Use:                        types.ModuleName,
@@ -26,21 +24,23 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 
 	// topup query command
 	topupQueryCmd.AddCommand(
-		client.GetCommands(
-			GetSequence(cdc),
-		)...,
+		GetSequence(),
 	)
 
 	return topupQueryCmd
 }
 
 // GetSequence validator information via id or address
-func GetSequence(cdc *codec.Codec) *cobra.Command {
+func GetSequence() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "status",
 		Short: "get sequence from txhash and logindex",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 			logIndex := viper.GetUint64(FlagLogIndex)
 			txHashStr := viper.GetString(FlagTxHash)
 			if txHashStr == "" {
@@ -51,14 +51,14 @@ func GetSequence(cdc *codec.Codec) *cobra.Command {
 			var err error
 			var t string = ""
 			if txHashStr != "" {
-				queryParams, err = cliCtx.Codec.MarshalJSON(types.NewQuerySequenceParams(txHashStr, logIndex))
+				queryParams, err = clientCtx.Codec.MarshalJSON(types.NewQuerySequenceParams(txHashStr, logIndex))
 				if err != nil {
 					return err
 				}
 				t = types.QuerySequence
 			}
 
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, t), queryParams)
+			res, _, err := clientCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, t), queryParams)
 			if err != nil {
 				fmt.Println("No topup exists")
 				return nil

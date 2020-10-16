@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -18,7 +17,7 @@ import (
 
 var logger = helper.Logger.With("module", "staking/client/cli")
 
-func GetTxCmd(cdc *codec.Codec) *cobra.Command {
+func GetTxCmd() *cobra.Command {
 	slashingTxCmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      "Slashing transactions subcommands",
@@ -46,7 +45,11 @@ func GetCmdUnjail(cdc *codec.Codec) *cobra.Command {
 $ <appcli> tx slashing unjail --from mykey
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
 			// get proposer
 			proposer := hmTypes.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
@@ -94,7 +97,11 @@ func GetCmdTick(cdc *codec.Codec) *cobra.Command {
 		Long:  "<appcli>",
 
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
 			// get proposer
 			proposer := hmTypes.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
@@ -134,7 +141,11 @@ func GetCmdTickAck(cdc *codec.Codec) *cobra.Command {
 		Use:   "tick-ack",
 		Short: "send tick ack",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
 			// get proposer
 			proposer := hmTypes.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))

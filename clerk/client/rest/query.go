@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/gorilla/mux"
 
@@ -15,7 +15,7 @@ import (
 	hmRest "github.com/maticnetwork/heimdall/types/rest"
 )
 
-func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
+func registerQueryRoutes(cliCtx client.Context, r *mux.Router) {
 	r.HandleFunc(
 		"/clerk/event-record/list",
 		recordListHandlerFn(cliCtx),
@@ -31,7 +31,7 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 }
 
 // recordHandlerFn returns record by record id
-func recordHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func recordHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 
@@ -63,7 +63,7 @@ func recordHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 func recordListHandlerFn(
-	cliCtx context.CLIContext,
+	cliCtx client.Context,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := r.URL.Query()
@@ -151,7 +151,7 @@ func recordListHandlerFn(
 }
 
 // DepositTxStatusHandlerFn returns deposit tx status information
-func DepositTxStatusHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func DepositTxStatusHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := r.URL.Query()
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
@@ -200,7 +200,7 @@ func DepositTxStatusHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 // Internal helpers
 //
 
-func recordQuery(cliCtx context.CLIContext, recordID uint64) ([]byte, error) {
+func recordQuery(cliCtx client.Context, recordID uint64) ([]byte, error) {
 	// get query params
 	queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQueryRecordParams(recordID))
 	if err != nil {
@@ -216,7 +216,7 @@ func recordQuery(cliCtx context.CLIContext, recordID uint64) ([]byte, error) {
 	return res, nil
 }
 
-func timeRangeQuery(cliCtx context.CLIContext, fromTime int64, toTime int64, page uint64, limit uint64) ([]byte, error) {
+func timeRangeQuery(cliCtx client.Context, fromTime int64, toTime int64, page uint64, limit uint64) ([]byte, error) {
 	// get query params
 	queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQueryTimeRangePaginationParams(time.Unix(fromTime, 0), time.Unix(toTime, 0), page, limit))
 	if err != nil {
@@ -236,7 +236,7 @@ func timeRangeQuery(cliCtx context.CLIContext, fromTime int64, toTime int64, pag
 	return res, nil
 }
 
-func rangeQuery(cliCtx context.CLIContext, page uint64, limit uint64) ([]byte, error) {
+func rangeQuery(cliCtx client.Context, page uint64, limit uint64) ([]byte, error) {
 	// get query params
 	queryParams, err := cliCtx.Codec.MarshalJSON(hmTypes.NewQueryPaginationParams(page, limit))
 	if err != nil {
@@ -256,7 +256,7 @@ func rangeQuery(cliCtx context.CLIContext, page uint64, limit uint64) ([]byte, e
 	return res, nil
 }
 
-func tillTimeRangeQuery(cliCtx context.CLIContext, fromID uint64, toTime int64, limit uint64) ([]byte, error) {
+func tillTimeRangeQuery(cliCtx client.Context, fromID uint64, toTime int64, limit uint64) ([]byte, error) {
 	result := make([]*types.EventRecord, 0, limit)
 
 	// if from id not found, return empty result

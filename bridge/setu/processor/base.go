@@ -44,7 +44,7 @@ type BaseProcessor struct {
 	impl Processor
 
 	// cli context
-	cliCtx cliContext.CLIContext
+	cliCtx cliclient.Context
 
 	// contract caller
 	contractConnector helper.ContractCaller

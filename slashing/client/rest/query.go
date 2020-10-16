@@ -7,7 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 
 	"github.com/maticnetwork/heimdall/slashing/types"
@@ -16,7 +16,7 @@ import (
 	hmRest "github.com/maticnetwork/heimdall/types/rest"
 )
 
-func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
+func registerQueryRoutes(cliCtx client.Context, r *mux.Router) {
 	r.HandleFunc(
 		"/slashing/validators/{id}/signing_info",
 		signingInfoHandlerFn(cliCtx),
@@ -64,7 +64,7 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 }
 
 // http request handler to query signing info
-func signingInfoHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func signingInfoHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 
@@ -100,7 +100,7 @@ func signingInfoHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 // http request handler to query signing info
-func signingInfoHandlerListFn(cliCtx context.CLIContext) http.HandlerFunc {
+func signingInfoHandlerListFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		_, page, limit, err := rest.ParseHTTPArgsWithLimit(r, 0)
 		if err != nil {
@@ -133,7 +133,7 @@ func signingInfoHandlerListFn(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 // http request handler to query slashing info
-func latestSlashInfoHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func latestSlashInfoHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 
@@ -169,7 +169,7 @@ func latestSlashInfoHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 // http request handler to query signing info
-func latestSlashInfoHandlerListFn(cliCtx context.CLIContext) http.HandlerFunc {
+func latestSlashInfoHandlerListFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		_, page, limit, err := rest.ParseHTTPArgsWithLimit(r, 0)
 		if err != nil {
@@ -202,7 +202,7 @@ func latestSlashInfoHandlerListFn(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 // http request handler to query signing info
-func latestSlashInfoBytesHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func latestSlashInfoBytesHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
@@ -240,7 +240,7 @@ func latestSlashInfoBytesHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func queryParamsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func queryParamsHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
@@ -261,7 +261,7 @@ func queryParamsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 // http request handler to query tick slashing info
-func tickSlashInfoHandlerListFn(cliCtx context.CLIContext) http.HandlerFunc {
+func tickSlashInfoHandlerListFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		_, page, limit, err := rest.ParseHTTPArgsWithLimit(r, 0)
 		if err != nil {
@@ -294,7 +294,7 @@ func tickSlashInfoHandlerListFn(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 // Returns slashing tx status information
-func SlashingTxStatusHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func SlashingTxStatusHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := r.URL.Query()
 
@@ -342,7 +342,7 @@ func SlashingTxStatusHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func tickCountHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func tickCountHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {

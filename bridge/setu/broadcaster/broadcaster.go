@@ -23,7 +23,7 @@ import (
 type TxBroadcaster struct {
 	logger log.Logger
 
-	cliCtx cliContext.CLIContext
+	cliCtx cliclient.Context
 
 	heimdallMutex sync.Mutex
 	maticMutex    sync.Mutex

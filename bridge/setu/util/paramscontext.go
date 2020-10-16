@@ -5,13 +5,13 @@ import (
 
 	"github.com/patrickmn/go-cache"
 
-	cliContext "github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
 	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 )
 
 type ParamsContext struct {
-	cliCtx      cliContext.CLIContext
+	cliCtx      client.Context
 	paramsCache *cache.Cache
 	key         string
 }
@@ -22,7 +22,7 @@ type Params struct {
 }
 
 // NewParamsContext creates new params context
-func NewParamsContext(cliCtx cliContext.CLIContext) *ParamsContext {
+func NewParamsContext(cliCtx client.Context) *ParamsContext {
 
 	paramsContext := ParamsContext{
 		key:         "params",
@@ -49,7 +49,7 @@ func (paramsContext *ParamsContext) GetParams() (params Params, err error) {
 	return
 }
 
-func fetchLatestParams(cliContext cliContext.CLIContext) (params Params, err error) {
+func fetchLatestParams(cliContext client.Context) (params Params, err error) {
 	chainmanagerParams, err := GetChainmanagerParams(cliContext)
 	if err != nil {
 		return
