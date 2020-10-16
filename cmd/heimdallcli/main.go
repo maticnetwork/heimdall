@@ -204,7 +204,11 @@ func exportCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 		Args:  cobra.NoArgs,
 		RunE: func(_ *cobra.Command, _ []string) error {
 
-			// cliCtx := context.NewCLIContext().WithCodec(cdc)
+			// clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 			config := ctx.Config
 			config.SetRoot(viper.GetString(cli.HomeFlag))
 

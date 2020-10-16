@@ -6,8 +6,6 @@ import (
 	"math/big"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -21,7 +19,7 @@ import (
 var cliLogger = helper.Logger.With("module", "topup/client/cli")
 
 // GetTxCmd returns the transaction commands for this module
-func GetTxCmd(cdc *codec.Codec) *cobra.Command {
+func GetTxCmd() *cobra.Command {
 	txCmd := &cobra.Command{
 		Use:                        topupTypes.ModuleName,
 		Short:                      "Topup transaction subcommands",
@@ -31,26 +29,28 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 	}
 
 	txCmd.AddCommand(
-		client.PostCommands(
-			TopupTxCmd(cdc),
-			WithdrawFeeTxCmd(cdc),
-		)...,
+		TopupTxCmd(),
+		WithdrawFeeTxCmd(),
 	)
 	return txCmd
 }
 
 // TopupTxCmd will create a topup tx
-func TopupTxCmd(cdc *codec.Codec) *cobra.Command {
+func TopupTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "fee",
 		Short: "Topup tokens for validators",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
 			// get proposer
 			proposer := types.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
 			if proposer.Empty() {
-				proposer = helper.GetFromAddress(cliCtx)
+				proposer = helper.GetFromAddress(clientCtx)
 			}
 
 			validatorID := viper.GetUint64(FlagValidatorID)
@@ -86,7 +86,7 @@ func TopupTxCmd(cdc *codec.Codec) *cobra.Command {
 			)
 
 			// broadcast msg with cli
-			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
+			return helper.BroadcastMsgsWithCLI(clientCtx, []sdk.Msg{msg})
 		},
 	}
 
@@ -117,17 +117,21 @@ func TopupTxCmd(cdc *codec.Codec) *cobra.Command {
 }
 
 // WithdrawFeeTxCmd will create a fee withdraw tx
-func WithdrawFeeTxCmd(cdc *codec.Codec) *cobra.Command {
+func WithdrawFeeTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "withdraw",
 		Short: "Fee token withdrawal for validators",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
 			// get proposer
 			proposer := types.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
 			if proposer.Empty() {
-				proposer = helper.GetFromAddress(cliCtx)
+				proposer = helper.GetFromAddress(clientCtx)
 			}
 
 			// withdraw amount
@@ -144,7 +148,7 @@ func WithdrawFeeTxCmd(cdc *codec.Codec) *cobra.Command {
 				sdk.NewIntFromBigInt(amount),
 			)
 			// broadcast msg with cli
-			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
+			return helper.BroadcastMsgsWithCLI(clientCtx, []sdk.Msg{msg})
 		},
 	}
 

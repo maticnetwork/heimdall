@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/gorilla/mux"
 
@@ -17,7 +17,7 @@ import (
 	hmRest "github.com/maticnetwork/heimdall/types/rest"
 )
 
-func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
+func registerQueryRoutes(cliCtx client.Context, r *mux.Router) {
 	r.HandleFunc("/bor/span/list", spanListHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/bor/span/{id}", spanHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/bor/latest-span", latestSpanHandlerFn(cliCtx)).Methods("GET")
@@ -27,7 +27,7 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 }
 
 func fetchNextSpanSeedHandlerFn(
-	cliCtx context.CLIContext,
+	cliCtx client.Context,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -58,7 +58,7 @@ func fetchNextSpanSeedHandlerFn(
 }
 
 func spanListHandlerFn(
-	cliCtx context.CLIContext,
+	cliCtx client.Context,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := r.URL.Query()
@@ -102,7 +102,7 @@ func spanListHandlerFn(
 	}
 }
 
-func spanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func spanHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
@@ -140,7 +140,7 @@ func spanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func latestSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func latestSpanHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
@@ -165,7 +165,7 @@ func latestSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func prepareNextSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func prepareNextSpanHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
@@ -295,7 +295,7 @@ func prepareNextSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 // HTTP request handler to query the bor params values
-func paramsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func paramsHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {

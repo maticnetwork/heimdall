@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 
-	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/common"
@@ -398,7 +397,7 @@ func (sp *SlashingProcessor) validateTickSlashInfo(slashInfoList []*hmTypes.Vali
 }
 
 // isOldTx  checks if tx is already processed or not
-func (sp *SlashingProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, logIndex uint64) (bool, error) {
+func (sp *SlashingProcessor) isOldTx(cliCtx cliclient.Context, txHash string, logIndex uint64) (bool, error) {
 	queryParam := map[string]interface{}{
 		"txhash":   txHash,
 		"logindex": logIndex,

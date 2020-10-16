@@ -3,7 +3,7 @@ package rest
 import (
 	"net/http"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gorilla/mux"
 
@@ -13,7 +13,7 @@ import (
 	"github.com/maticnetwork/heimdall/types/rest"
 )
 
-func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
+func registerTxRoutes(cliCtx client.Context, r *mux.Router) {
 	r.HandleFunc(
 		"/staking/validators",
 		newValidatorJoinHandler(cliCtx),
@@ -75,7 +75,7 @@ type (
 	}
 )
 
-func newValidatorJoinHandler(cliCtx context.CLIContext) http.HandlerFunc {
+func newValidatorJoinHandler(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// read req from request
 		var req AddValidatorReq
@@ -111,7 +111,7 @@ func newValidatorJoinHandler(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func newValidatorExitHandler(cliCtx context.CLIContext) http.HandlerFunc {
+func newValidatorExitHandler(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// read req from request
 		var req RemoveValidatorReq
@@ -140,7 +140,7 @@ func newValidatorExitHandler(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func newValidatorUpdateHandler(cliCtx context.CLIContext) http.HandlerFunc {
+func newValidatorUpdateHandler(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// read req from request
 		var req UpdateSignerReq
@@ -169,7 +169,7 @@ func newValidatorUpdateHandler(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func newValidatorStakeUpdateHandler(cliCtx context.CLIContext) http.HandlerFunc {
+func newValidatorStakeUpdateHandler(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// read req from request
 		var req UpdateValidatorStakeReq

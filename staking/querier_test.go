@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethTypes "github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/heimdall/app"
@@ -28,7 +28,7 @@ type QuerierTestSuite struct {
 
 	app            *app.HeimdallApp
 	ctx            sdk.Context
-	cliCtx         context.CLIContext
+	cliCtx         client.Context
 	querier        sdk.Querier
 	contractCaller mocks.IContractCaller
 }

@@ -1,13 +1,12 @@
 package tx
 
 import (
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/gorilla/mux"
-
-	"github.com/cosmos/cosmos-sdk/client/context"
 )
 
 // RegisterRoutes registers REST routes
-func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router) {
+func RegisterRoutes(cliCtx client.Context, r *mux.Router) {
 	r.HandleFunc("/txs/{hash}", QueryTxRequestHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/txs/{hash}/commit-proof", QueryCommitTxRequestHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/txs/{hash}/side-tx", QuerySideTxRequestHandlerFn(cliCtx)).Methods("GET")

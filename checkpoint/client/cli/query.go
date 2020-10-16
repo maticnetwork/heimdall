@@ -7,19 +7,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	"github.com/maticnetwork/heimdall/checkpoint/types"
+	"github.com/maticnetwork/heimdall/client"
 	hmClient "github.com/maticnetwork/heimdall/client"
 	"github.com/maticnetwork/heimdall/version"
 )
 
 // GetQueryCmd returns the cli query commands for this module
-func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
+func GetQueryCmd() *cobra.Command {
 	// Group supply queries under a subcommand
 	supplyQueryCmd := &cobra.Command{
 		Use:                        types.ModuleName,
@@ -31,20 +29,18 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 
 	// supply query command
 	supplyQueryCmd.AddCommand(
-		client.GetCommands(
-			GetQueryParams(cdc),
-			GetCheckpointBuffer(cdc),
-			GetLastNoACK(cdc),
-			GetHeaderFromIndex(cdc),
-			GetCheckpointCount(cdc),
-		)...,
+		GetQueryParams(),
+		GetCheckpointBuffer(),
+		GetLastNoACK(),
+		GetHeaderFromIndex(),
+		GetCheckpointCount(),
 	)
 
 	return supplyQueryCmd
 }
 
 // GetQueryParams implements the params query command.
-func GetQueryParams(cdc *codec.Codec) *cobra.Command {
+func GetQueryParams() *cobra.Command {
 	return &cobra.Command{
 		Use:   "params",
 		Args:  cobra.NoArgs,
@@ -59,10 +55,14 @@ $ %s query checkpoint params
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err = client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
 			route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryParams)
-			bz, _, err := cliCtx.QueryWithData(route, nil)
+			bz, _, err := clientCtx.QueryWithData(route, nil)
 			if err != nil {
 				return err
 			}
@@ -71,20 +71,24 @@ $ %s query checkpoint params
 			if err := json.Unmarshal(bz, &params); err != nil {
 				return nil
 			}
-			return cliCtx.PrintOutput(params)
+			return clientCtx.PrintOutput(params)
 		},
 	}
 }
 
 // GetCheckpointBuffer get checkpoint present in buffer
-func GetCheckpointBuffer(cdc *codec.Codec) *cobra.Command {
+func GetCheckpointBuffer() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "checkpoint-buffer",
 		Short: "show checkpoint present in buffer",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err = client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCheckpointBuffer), nil)
+			res, _, err := clientCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCheckpointBuffer), nil)
 			if err != nil {
 				return err
 			}
@@ -102,14 +106,18 @@ func GetCheckpointBuffer(cdc *codec.Codec) *cobra.Command {
 }
 
 // GetLastNoACK get last no ack time
-func GetLastNoACK(cdc *codec.Codec) *cobra.Command {
+func GetLastNoACK() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "last-noack",
 		Short: "get last no ack received time",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err = client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryLastNoAck), nil)
+			res, _, err := clientCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryLastNoAck), nil)
 			if err != nil {
 				return err
 			}
@@ -132,22 +140,26 @@ func GetLastNoACK(cdc *codec.Codec) *cobra.Command {
 }
 
 // GetHeaderFromIndex get checkpoint given header index
-func GetHeaderFromIndex(cdc *codec.Codec) *cobra.Command {
+func GetHeaderFromIndex() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "header",
 		Short: "get checkpoint (header) from index",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err = client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 			headerNumber := viper.GetUint64(FlagHeaderNumber)
 
 			// get query params
-			queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQueryCheckpointParams(headerNumber))
+			queryParams, err := clientCtx.Codec.MarshalJSON(types.NewQueryCheckpointParams(headerNumber))
 			if err != nil {
 				return err
 			}
 
 			// fetch checkpoint
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCheckpoint), queryParams)
+			res, _, err := clientCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCheckpoint), queryParams)
 			if err != nil {
 				return err
 			}
@@ -166,14 +178,18 @@ func GetHeaderFromIndex(cdc *codec.Codec) *cobra.Command {
 }
 
 // GetCheckpointCount get number of checkpoint received count
-func GetCheckpointCount(cdc *codec.Codec) *cobra.Command {
+func GetCheckpointCount() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "checkpoint-count",
 		Short: "get checkpoint counts",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err = client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryAckCount), nil)
+			res, _, err := clientCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryAckCount), nil)
 			if err != nil {
 				return err
 			}
@@ -183,7 +199,7 @@ func GetCheckpointCount(cdc *codec.Codec) *cobra.Command {
 			}
 
 			var ackCount uint64
-			if err := cliCtx.Codec.UnmarshalJSON(res, &ackCount); err != nil {
+			if err := clientCtx.Codec.UnmarshalJSON(res, &ackCount); err != nil {
 				return err
 			}
 

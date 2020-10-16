@@ -1,6 +1,7 @@
 package bor_test
 
 import (
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/app"
@@ -12,7 +13,7 @@ import (
 //
 
 // createTestApp returns context and app
-func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, context.CLIContext) {
+func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, client.Context) {
 	app := app.Setup(isCheckTx)
 	ctx := app.BaseApp.NewContext(isCheckTx, abci.Header{})
 	cliCtx := context.NewCLIContext().WithCodec(app.Codec())

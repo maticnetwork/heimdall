@@ -16,9 +16,7 @@ import (
 	"path"
 	"sort"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/context"
-	cliContext "github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client/"
 	"github.com/cosmos/cosmos-sdk/client/input"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -51,7 +49,7 @@ var ZeroAddress = common.Address{}
 var ZeroPubKey = hmTypes.PubKey{}
 
 // GetFromAddress get from address
-func GetFromAddress(cliCtx context.CLIContext) types.HeimdallAddress {
+func GetFromAddress(cliCtx client.Context) types.HeimdallAddress {
 	fromAddress := cliCtx.GetFromAddress()
 	if !fromAddress.Empty() {
 		return types.AccAddressToHeimdallAddress(fromAddress)
@@ -266,19 +264,19 @@ func GetTxDecoder(cdc *codec.Codec) sdk.TxDecoder {
 }
 
 // GetStdTxBytes get tx bytes
-func GetStdTxBytes(cliCtx context.CLIContext, tx authTypes.StdTx) ([]byte, error) {
+func GetStdTxBytes(cliCtx client.Context, tx authTypes.StdTx) ([]byte, error) {
 	txBldr := authTypes.NewTxBuilderFromCLI().WithTxEncoder(GetTxEncoder(cliCtx.Codec))
 	return txBldr.GetStdTxBytes(tx)
 }
 
 // BroadcastMsgs creates transaction and broadcasts it
-func BroadcastMsgs(cliCtx context.CLIContext, msgs []sdk.Msg) (sdk.TxResponse, error) {
+func BroadcastMsgs(cliCtx client.Context, msgs []sdk.Msg) (sdk.TxResponse, error) {
 	txBldr := authTypes.NewTxBuilderFromCLI().WithTxEncoder(GetTxEncoder(cliCtx.Codec))
 	return BuildAndBroadcastMsgs(cliCtx, txBldr, msgs)
 }
 
 // BroadcastTx broadcasts transaction
-func BroadcastTx(cliCtx context.CLIContext, tx authTypes.StdTx, mode string) (res sdk.TxResponse, err error) {
+func BroadcastTx(cliCtx client.Context, tx authTypes.StdTx, mode string) (res sdk.TxResponse, err error) {
 	txBldr := authTypes.NewTxBuilderFromCLI().WithTxEncoder(GetTxEncoder(cliCtx.Codec))
 
 	var txBytes []byte
@@ -292,7 +290,7 @@ func BroadcastTx(cliCtx context.CLIContext, tx authTypes.StdTx, mode string) (re
 
 // BroadcastMsgsWithCLI creates message and sends tx
 // Used from cli- waits till transaction is included in block
-func BroadcastMsgsWithCLI(cliCtx context.CLIContext, msgs []sdk.Msg) error {
+func BroadcastMsgsWithCLI(cliCtx client.Context, msgs []sdk.Msg) error {
 	txBldr := authTypes.NewTxBuilderFromCLI().WithTxEncoder(GetTxEncoder(cliCtx.Codec))
 
 	if cliCtx.GenerateOnly {
@@ -303,7 +301,7 @@ func BroadcastMsgsWithCLI(cliCtx context.CLIContext, msgs []sdk.Msg) error {
 }
 
 // BuildAndBroadcastMsgs creates transaction and broadcasts it
-func BuildAndBroadcastMsgs(cliCtx context.CLIContext, txBldr authTypes.TxBuilder, msgs []sdk.Msg) (sdk.TxResponse, error) {
+func BuildAndBroadcastMsgs(cliCtx client.Context, txBldr authTypes.TxBuilder, msgs []sdk.Msg) (sdk.TxResponse, error) {
 	txBytes, err := GetSignedTxBytes(cliCtx, txBldr, msgs)
 	if err != nil {
 		return sdk.TxResponse{}, err
@@ -318,7 +316,7 @@ func BuildAndBroadcastMsgs(cliCtx context.CLIContext, txBldr authTypes.TxBuilder
 // QueryContext. It ensures that the account exists, has a proper number and
 // sequence set. In addition, it builds and signs a transaction with the
 // supplied messages. Finally, it broadcasts the signed transaction to a node.
-func BuildAndBroadcastMsgsWithCLI(cliCtx context.CLIContext, txBldr authTypes.TxBuilder, msgs []sdk.Msg) error {
+func BuildAndBroadcastMsgsWithCLI(cliCtx client.Context, txBldr authTypes.TxBuilder, msgs []sdk.Msg) error {
 	txBytes, err := GetSignedTxBytesWithCLI(cliCtx, txBldr, msgs)
 	if err != nil {
 		return err
@@ -340,7 +338,7 @@ func BuildAndBroadcastMsgsWithCLI(cliCtx context.CLIContext, txBldr authTypes.Tx
 }
 
 // GetSignedTxBytes returns signed tx bytes
-func GetSignedTxBytes(cliCtx context.CLIContext, txBldr authTypes.TxBuilder, msgs []sdk.Msg) ([]byte, error) {
+func GetSignedTxBytes(cliCtx client.Context, txBldr authTypes.TxBuilder, msgs []sdk.Msg) ([]byte, error) {
 	txBldr, err := PrepareTxBuilder(cliCtx, txBldr)
 	if err != nil {
 		return nil, err
@@ -390,7 +388,7 @@ func GetSignedTxBytes(cliCtx context.CLIContext, txBldr authTypes.TxBuilder, msg
 }
 
 // GetSignedTxBytesWithCLI returns signed tx bytes
-func GetSignedTxBytesWithCLI(cliCtx context.CLIContext, txBldr authTypes.TxBuilder, msgs []sdk.Msg) ([]byte, error) {
+func GetSignedTxBytesWithCLI(cliCtx client.Context, txBldr authTypes.TxBuilder, msgs []sdk.Msg) ([]byte, error) {
 	txBldr, err := PrepareTxBuilder(cliCtx, txBldr)
 	if err != nil {
 		return nil, err
@@ -440,7 +438,7 @@ func GetSignedTxBytesWithCLI(cliCtx context.CLIContext, txBldr authTypes.TxBuild
 }
 
 // PrepareTxBuilder populates a TxBuilder in preparation for the build of a Tx.
-func PrepareTxBuilder(cliCtx context.CLIContext, txBldr authTypes.TxBuilder) (authTypes.TxBuilder, error) {
+func PrepareTxBuilder(cliCtx client.Context, txBldr authTypes.TxBuilder) (authTypes.TxBuilder, error) {
 	from := cliCtx.GetFromAddress()
 	if len(from[:]) == 0 {
 		from = GetAddress()
@@ -475,7 +473,7 @@ func PrepareTxBuilder(cliCtx context.CLIContext, txBldr authTypes.TxBuilder) (au
 }
 
 // PrintUnsignedStdTx builds an unsigned StdTx and prints it to os.Stdout.
-func PrintUnsignedStdTx(cliCtx context.CLIContext, txBldr authTypes.TxBuilder, msgs []sdk.Msg) error {
+func PrintUnsignedStdTx(cliCtx client.Context, txBldr authTypes.TxBuilder, msgs []sdk.Msg) error {
 	stdTx, err := buildUnsignedStdTxOffline(txBldr, cliCtx, msgs)
 	if err != nil {
 		return err
@@ -494,7 +492,7 @@ func PrintUnsignedStdTx(cliCtx context.CLIContext, txBldr authTypes.TxBuilder, m
 // is false, it replaces the signatures already attached with the new signature.
 // Don't perform online validation or lookups if offline is true.
 func SignStdTx(
-	cliCtx context.CLIContext, stdTx authTypes.StdTx, appendSig bool, offline bool,
+	cliCtx client.Context, stdTx authTypes.StdTx, appendSig bool, offline bool,
 ) (authTypes.StdTx, error) {
 	txBldr := authTypes.NewTxBuilderFromCLI().WithTxEncoder(GetTxEncoder(cliCtx.Codec))
 
@@ -553,7 +551,7 @@ func ReadStdTxFromFile(cdc *amino.Codec, filename string) (stdTx authTypes.StdTx
 }
 
 // BroadcastTxBytes sends request to tendermint using CLI
-func BroadcastTxBytes(cliCtx context.CLIContext, txBytes []byte, mode string) (sdk.TxResponse, error) {
+func BroadcastTxBytes(cliCtx client.Context, txBytes []byte, mode string) (sdk.TxResponse, error) {
 	Logger.Debug("Broadcasting tx bytes to Tendermint", "txBytes", hex.EncodeToString(txBytes), "txHash", hex.EncodeToString(tmTypes.Tx(txBytes).Hash()))
 	if mode != "" {
 		cliCtx.BroadcastMode = mode
@@ -629,7 +627,7 @@ func computeHashFromAunts(index int, total int, leafHash []byte, innerHashes [][
 // Inner funcitons
 //
 
-func populateAccountFromState(txBldr authTypes.TxBuilder, cliCtx context.CLIContext, addr []byte) (authTypes.TxBuilder, error) {
+func populateAccountFromState(txBldr authTypes.TxBuilder, cliCtx client.Context, addr []byte) (authTypes.TxBuilder, error) {
 	// get account getter
 	accGetter := authTypes.NewAccountRetriever(cliCtx)
 
@@ -652,7 +650,7 @@ func populateAccountFromState(txBldr authTypes.TxBuilder, cliCtx context.CLICont
 	return txBldr.WithAccountNumber(accNum).WithSequence(accSeq), nil
 }
 
-func buildUnsignedStdTxOffline(txBldr authTypes.TxBuilder, cliCtx context.CLIContext, msgs []sdk.Msg) (stdTx authTypes.StdTx, err error) {
+func buildUnsignedStdTxOffline(txBldr authTypes.TxBuilder, cliCtx client.Context, msgs []sdk.Msg) (stdTx authTypes.StdTx, err error) {
 	stdSignMsg, err := txBldr.BuildSignMsg(msgs)
 	if err != nil {
 		return stdTx, err
@@ -770,7 +768,7 @@ func GetHeimdallServerEndpoint(endpoint string) string {
 }
 
 // FetchFromAPI fetches data from any URL
-func FetchFromAPI(cliCtx cliContext.CLIContext, URL string) (result rest.ResponseWithHeight, err error) {
+func FetchFromAPI(cliCtx client.Context, URL string) (result rest.ResponseWithHeight, err error) {
 	resp, err := http.Get(URL)
 	if err != nil {
 		return result, err

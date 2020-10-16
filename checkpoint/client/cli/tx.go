@@ -7,9 +7,6 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -17,6 +14,7 @@ import (
 	"github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	types "github.com/maticnetwork/heimdall/checkpoint/types"
+	"github.com/maticnetwork/heimdall/client"
 	hmClient "github.com/maticnetwork/heimdall/client"
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -25,7 +23,7 @@ import (
 var logger = helper.Logger.With("module", "checkpoint/client/cli")
 
 // GetTxCmd returns the transaction commands for this module
-func GetTxCmd(cdc *codec.Codec) *cobra.Command {
+func GetTxCmd() *cobra.Command {
 	txCmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      "Checkpoint transaction subcommands",
@@ -35,23 +33,24 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 	}
 
 	txCmd.AddCommand(
-		client.PostCommands(
-			SendCheckpointTx(cdc),
-			SendCheckpointACKTx(cdc),
-			SendCheckpointNoACKTx(cdc),
-		)...,
+		SendCheckpointTx(),
+		SendCheckpointACKTx(),
+		SendCheckpointNoACKTx(),
 	)
 	return txCmd
 }
 
 // SendCheckpointTx send checkpoint transaction
-func SendCheckpointTx(cdc *codec.Codec) *cobra.Command {
+func SendCheckpointTx() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "send-checkpoint",
 		Short: "send checkpoint to tendermint and ethereum chain ",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err = client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 			// bor chain id
 			borChainID := viper.GetString(FlagBorChainID)
 			if borChainID == "" {
@@ -60,7 +59,7 @@ func SendCheckpointTx(cdc *codec.Codec) *cobra.Command {
 
 			if viper.GetBool(FlagAutoConfigure) {
 				var checkpointProposer hmTypes.Validator
-				proposerBytes, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/%s", types.StakingQuerierRoute, types.QueryCurrentProposer))
+				proposerBytes, _, err := clientCtx.Query(fmt.Sprintf("custom/%s/%s", types.StakingQuerierRoute, types.QueryCurrentProposer))
 				if err != nil {
 					return err
 				}
@@ -75,13 +74,13 @@ func SendCheckpointTx(cdc *codec.Codec) *cobra.Command {
 
 				// create bor chain id params
 				borChainIDParams := types.NewQueryBorChainID(borChainID)
-				bz, err := cliCtx.Codec.MarshalJSON(borChainIDParams)
+				bz, err := clientCtx.Codec.MarshalJSON(borChainIDParams)
 				if err != nil {
 					return err
 				}
 
 				// fetch msg checkpoint
-				result, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNextCheckpoint), bz)
+				result, _, err := clientCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNextCheckpoint), bz)
 				if err != nil {
 					return err
 				}
@@ -93,13 +92,13 @@ func SendCheckpointTx(cdc *codec.Codec) *cobra.Command {
 				}
 
 				// broadcast this checkpoint
-				return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{newCheckpointMsg})
+				return helper.BroadcastMsgsWithCLI(clientCtx, []sdk.Msg{newCheckpointMsg})
 			}
 
 			// get proposer
 			proposer := hmTypes.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
 			if proposer.Empty() {
-				proposer = helper.GetFromAddress(cliCtx)
+				proposer = helper.GetFromAddress(clientCtx)
 			}
 
 			//	start block
@@ -148,7 +147,7 @@ func SendCheckpointTx(cdc *codec.Codec) *cobra.Command {
 				borChainID,
 			)
 
-			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
+			return helper.BroadcastMsgsWithCLI(clientCtx, []sdk.Msg{msg})
 		},
 	}
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
@@ -167,17 +166,20 @@ func SendCheckpointTx(cdc *codec.Codec) *cobra.Command {
 }
 
 // SendCheckpointACKTx send checkpoint ack transaction
-func SendCheckpointACKTx(cdc *codec.Codec) *cobra.Command {
+func SendCheckpointACKTx() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "send-ack",
 		Short: "send acknowledgement for checkpoint in buffer",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err = client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 			// get proposer
 			proposer := hmTypes.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
 			if proposer.Empty() {
-				proposer = helper.GetFromAddress(cliCtx)
+				proposer = helper.GetFromAddress(clientCtx)
 			}
 
 			headerBlockStr := viper.GetString(FlagHeaderNumber)
@@ -206,7 +208,7 @@ func SendCheckpointACKTx(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			chainmanagerParams, err := util.GetChainmanagerParams(cliCtx)
+			chainmanagerParams, err := util.GetChainmanagerParams(clientCtx)
 			if err != nil {
 				return err
 			}
@@ -240,7 +242,7 @@ func SendCheckpointACKTx(cdc *codec.Codec) *cobra.Command {
 			)
 
 			// msg
-			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
+			return helper.BroadcastMsgsWithCLI(clientCtx, []sdk.Msg{msg})
 		},
 	}
 
@@ -263,17 +265,20 @@ func SendCheckpointACKTx(cdc *codec.Codec) *cobra.Command {
 }
 
 // SendCheckpointNoACKTx send no-ack transaction
-func SendCheckpointNoACKTx(cdc *codec.Codec) *cobra.Command {
+func SendCheckpointNoACKTx() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "send-noack",
 		Short: "send no-acknowledgement for last proposer",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err = client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 			// get proposer
 			proposer := hmTypes.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
 			if proposer.Empty() {
-				proposer = helper.GetFromAddress(cliCtx)
+				proposer = helper.GetFromAddress(clientCtx)
 			}
 
 			// create new checkpoint no-ack
@@ -282,7 +287,7 @@ func SendCheckpointNoACKTx(cdc *codec.Codec) *cobra.Command {
 			)
 
 			// broadcast messages
-			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
+			return helper.BroadcastMsgsWithCLI(clientCtx, []sdk.Msg{msg})
 		},
 	}
 

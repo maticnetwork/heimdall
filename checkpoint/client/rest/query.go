@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/gorilla/mux"
 
@@ -21,7 +21,7 @@ import (
 	hmRest "github.com/maticnetwork/heimdall/types/rest"
 )
 
-func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
+func registerQueryRoutes(cliCtx client.Context, r *mux.Router) {
 	r.HandleFunc("/checkpoints/params", paramsHandlerFn(cliCtx)).Methods("GET")
 
 	r.HandleFunc("/overview", overviewHandlerFn(cliCtx)).Methods("GET")
@@ -43,7 +43,7 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 }
 
 // HTTP request handler to query the auth params values
-func paramsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func paramsHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
@@ -62,7 +62,7 @@ func paramsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func checkpointBufferHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func checkpointBufferHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
@@ -81,7 +81,7 @@ func checkpointBufferHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func checkpointCountHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func checkpointCountHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
@@ -118,7 +118,7 @@ func checkpointCountHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func prepareCheckpointHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func prepareCheckpointHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
@@ -213,7 +213,7 @@ type HeaderBlockResult struct {
 	EndBlock   uint64                  `json:"endBlock"`
 }
 
-func noackHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func noackHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
@@ -258,7 +258,7 @@ type stateDump struct {
 }
 
 // get all state-dump of heimdall
-func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func overviewHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
@@ -354,7 +354,7 @@ func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 // get last checkpoint from store
-func latestCheckpointHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
+func latestCheckpointHandlerFunc(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
@@ -416,7 +416,7 @@ func latestCheckpointHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 // get checkpoint by checkppint number from store
-func checkpointByNumberHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
+func checkpointByNumberHandlerFunc(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 
@@ -454,7 +454,7 @@ func checkpointByNumberHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 func checkpointListhandlerFn(
-	cliCtx context.CLIContext,
+	cliCtx client.Context,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := r.URL.Query()

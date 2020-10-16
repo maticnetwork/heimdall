@@ -32,7 +32,7 @@ type (
 // EncodeTxRequestHandlerFn returns the encode tx REST handler. In particular,
 // it takes a json-formatted transaction, encodes it to the Amino wire protocol,
 // and responds with base64-encoded bytes.
-func EncodeTxRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func EncodeTxRequestHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req EncodeReq
 
@@ -74,7 +74,7 @@ func GetEncodeCommand(codec *amino.Codec) *cobra.Command {
 		Use:   "encode [file]",
 		Short: "Encode transactions generated offline",
 		Long: `Encode transactions created with the --generate-only flag and signed with the sign command.
-Read a transaction from <file>, serialize it to hex. 
+Read a transaction from <file>, serialize it to hex.
 If you supply a dash (-) argument in place of an input filename, the command reads from standard input.`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {

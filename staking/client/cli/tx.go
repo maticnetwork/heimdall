@@ -6,15 +6,13 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	"github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
+	"github.com/maticnetwork/heimdall/client"
 	hmClient "github.com/maticnetwork/heimdall/client"
 	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
 	"github.com/maticnetwork/heimdall/helper"
@@ -25,7 +23,7 @@ import (
 var logger = helper.Logger.With("module", "staking/client/cli")
 
 // GetTxCmd returns the transaction commands for this module
-func GetTxCmd(cdc *codec.Codec) *cobra.Command {
+func GetTxCmd() *cobra.Command {
 	txCmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      "Staking transaction subcommands",
@@ -35,28 +33,27 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 	}
 
 	txCmd.AddCommand(
-		client.PostCommands(
-			SendValidatorJoinTx(cdc),
-			SendValidatorUpdateTx(cdc),
-			SendValidatorExitTx(cdc),
-			SendValidatorStakeUpdateTx(cdc),
-		)...,
+		SendValidatorJoinTx(),
+		SendValidatorUpdateTx(),
+		SendValidatorExitTx(),
+		SendValidatorStakeUpdateTx(),
 	)
 	return txCmd
 }
 
 // SendValidatorJoinTx send validator join transaction
-func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
+func SendValidatorJoinTx() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "validator-join",
 		Short: "Join Heimdall as a validator",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
 
 			// get proposer
 			proposer := hmTypes.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
 			if proposer.Empty() {
-				proposer = helper.GetFromAddress(cliCtx)
+				proposer = helper.GetFromAddress(clientCtx)
 			}
 
 			txhash := viper.GetString(FlagTxHash)
@@ -86,7 +83,7 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			chainmanagerParams, err := util.GetChainmanagerParams(cliCtx)
+			chainmanagerParams, err := util.GetChainmanagerParams(clientCtx)
 			if err != nil {
 				return err
 			}
@@ -138,7 +135,7 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 			)
 
 			// broadcast messages
-			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
+			return helper.BroadcastMsgsWithCLI(clientCtx, []sdk.Msg{msg})
 		},
 	}
 
@@ -168,17 +165,18 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 }
 
 // SendValidatorExitTx sends validator exit transaction
-func SendValidatorExitTx(cdc *codec.Codec) *cobra.Command {
+func SendValidatorExitTx() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "validator-exit",
 		Short: "Exit heimdall as a validator ",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
 
 			// get proposer
 			proposer := hmTypes.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
 			if proposer.Empty() {
-				proposer = helper.GetFromAddress(cliCtx)
+				proposer = helper.GetFromAddress(clientCtx)
 			}
 
 			validator := viper.GetUint64(FlagValidatorID)
@@ -205,7 +203,7 @@ func SendValidatorExitTx(cdc *codec.Codec) *cobra.Command {
 			)
 
 			// broadcast messages
-			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
+			return helper.BroadcastMsgsWithCLI(clientCtx, []sdk.Msg{msg})
 		},
 	}
 
@@ -237,17 +235,18 @@ func SendValidatorExitTx(cdc *codec.Codec) *cobra.Command {
 }
 
 // SendValidatorUpdateTx send validator update transaction
-func SendValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
+func SendValidatorUpdateTx() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "signer-update",
 		Short: "Update signer for a validator",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
 
 			// get proposer
 			proposer := hmTypes.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
 			if proposer.Empty() {
-				proposer = helper.GetFromAddress(cliCtx)
+				proposer = helper.GetFromAddress(clientCtx)
 			}
 
 			validator := viper.GetUint64(FlagValidatorID)
@@ -282,7 +281,7 @@ func SendValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 			)
 
 			// broadcast messages
-			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
+			return helper.BroadcastMsgsWithCLI(clientCtx, []sdk.Msg{msg})
 		},
 	}
 
@@ -317,17 +316,18 @@ func SendValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 }
 
 // SendValidatorStakeUpdateTx send validator stake update transaction
-func SendValidatorStakeUpdateTx(cdc *codec.Codec) *cobra.Command {
+func SendValidatorStakeUpdateTx() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "stake-update",
 		Short: "Update stake for a validator",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
 
 			// get proposer
 			proposer := hmTypes.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
 			if proposer.Empty() {
-				proposer = helper.GetFromAddress(cliCtx)
+				proposer = helper.GetFromAddress(clientCtx)
 			}
 
 			validator := viper.GetUint64(FlagValidatorID)
@@ -357,7 +357,7 @@ func SendValidatorStakeUpdateTx(cdc *codec.Codec) *cobra.Command {
 			)
 
 			// broadcast messages
-			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
+			return helper.BroadcastMsgsWithCLI(clientCtx, []sdk.Msg{msg})
 		},
 	}
 

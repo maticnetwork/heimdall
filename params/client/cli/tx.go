@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/maticnetwork/heimdall/client"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
@@ -59,7 +59,7 @@ Where proposal.json contains:
   "deposit": [
     {
       "denom": "matic",
-      "amount": "1000000000000000000" 
+      "amount": "1000000000000000000"
     }
   ]
 }
@@ -68,7 +68,11 @@ Where proposal.json contains:
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
 			proposal, err := paramscutils.ParseParamChangeProposalJSON(cdc, args[0])
 			if err != nil {

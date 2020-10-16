@@ -8,7 +8,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -83,18 +83,18 @@ func (AppModuleBasic) VerifyGenesis(bz map[string]json.RawMessage) error {
 }
 
 // RegisterRESTRoutes registers the REST routes for the slashing module.
-func (AppModuleBasic) RegisterRESTRoutes(ctx context.CLIContext, rtr *mux.Router) {
+func (AppModuleBasic) RegisterRESTRoutes(ctx client.Context, rtr *mux.Router) {
 	rest.RegisterRoutes(ctx, rtr)
 }
 
 // GetTxCmd returns the root tx command for the slashing module.
-func (AppModuleBasic) GetTxCmd(cdc *codec.Codec) *cobra.Command {
+func (AppModuleBasic) GetTxCmd() *cobra.Command {
 	return slashingCli.GetTxCmd(cdc)
 }
 
 // GetQueryCmd returns no root query command for the slashing module.
-func (AppModuleBasic) GetQueryCmd(cdc *codec.Codec) *cobra.Command {
-	return slashingCli.GetQueryCmd(cdc)
+func (AppModuleBasic) GetQueryCmd() *cobra.Command {
+	return slashingCli.GetQueryCmd()
 
 }
 

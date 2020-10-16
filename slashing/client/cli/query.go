@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/spf13/cobra"
 
@@ -13,7 +12,7 @@ import (
 )
 
 // GetQueryCmd returns the cli query commands for this module
-func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
+func GetQueryCmd() *cobra.Command {
 	// Group slashing queries under a subcommand
 	slashingQueryCmd := &cobra.Command{
 		Use:                        types.ModuleName,
@@ -45,7 +44,11 @@ $ <appcli> query slashing signing-info {valID}
 `),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+		clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+		if err != nil {
+			return err
+		}
 			validatorID := viper.GetUint64(FlagValidatorID)
 
 			if validatorID == 0 {
@@ -85,7 +88,11 @@ func GetCmdQueryParams(cdc *codec.Codec) *cobra.Command {
 $ <appcli> query slashing params
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
 			route := fmt.Sprintf("custom/%s/parameters", types.QuerierRoute)
 			res, _, err := cliCtx.QueryWithData(route, nil)

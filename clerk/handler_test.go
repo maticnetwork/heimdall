@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkAuth "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/stretchr/testify/require"
@@ -29,7 +29,7 @@ type HandlerTestSuite struct {
 
 	app            *app.HeimdallApp
 	ctx            sdk.Context
-	cliCtx         context.CLIContext
+	cliCtx         client.Context
 	chainID        string
 	handler        sdk.Handler
 	contractCaller mocks.IContractCaller

@@ -3,6 +3,7 @@ package checkpoint_test
 import (
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -18,7 +19,7 @@ import (
 //
 
 // createTestApp returns context and app
-func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, context.CLIContext) {
+func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, client.Context) {
 	genesisState := app.NewDefaultGenesisState()
 
 	app := app.Setup(isCheckTx)

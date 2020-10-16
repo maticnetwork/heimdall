@@ -4,8 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/gorilla/mux"
 
@@ -14,45 +16,8 @@ import (
 	hmRest "github.com/maticnetwork/heimdall/types/rest"
 )
 
-// QueryAccountRequestHandlerFn query account REST Handler
-func QueryAccountRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		vars := mux.Vars(r)
-
-		// key
-		key := types.HexToHeimdallAddress(vars["address"])
-		if key.Empty() {
-			hmRest.WriteErrorResponse(w, http.StatusNotFound, errors.New("Invalid address").Error())
-			return
-		}
-
-		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
-		if !ok {
-			return
-		}
-
-		// account getter
-		accGetter := authTypes.NewAccountRetriever(cliCtx)
-
-		account, height, err := accGetter.GetAccountWithHeight(key)
-		if err != nil {
-			if err := accGetter.EnsureExists(key); err != nil {
-				cliCtx = cliCtx.WithHeight(height)
-				hmRest.PostProcessResponse(w, cliCtx, authTypes.BaseAccount{})
-				return
-			}
-			hmRest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
-			return
-		}
-
-		cliCtx = cliCtx.WithHeight(height)
-		hmRest.PostProcessResponse(w, cliCtx, account)
-	}
-}
-
 // QueryAccountSequenceRequestHandlerFn query account sequence REST Handler
-func QueryAccountSequenceRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func QueryAccountSequenceRequestHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		vars := mux.Vars(r)
@@ -95,22 +60,148 @@ func QueryAccountSequenceRequestHandlerFn(cliCtx context.CLIContext) http.Handle
 	}
 }
 
-// HTTP request handler to query the auth params values
-func paramsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+// query accountREST Handler
+func QueryAccountRequestHandlerFn(storeName string, clientCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		vars := mux.Vars(r)
+		bech32addr := vars["address"]
+
+		addr, err := sdk.AccAddressFromBech32(bech32addr)
+		if rest.CheckInternalServerError(w, err) {
+			return
+		}
+
+		clientCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, clientCtx, r)
 		if !ok {
 			return
 		}
 
-		route := fmt.Sprintf("custom/%s/%s", authTypes.QuerierRoute, authTypes.QueryParams)
-		res, height, err := cliCtx.QueryWithData(route, nil)
+		accGetter := types.AccountRetriever{}
+
+		account, height, err := accGetter.GetAccountWithHeight(clientCtx, addr)
 		if err != nil {
+			// TODO: Handle more appropriately based on the error type.
+			// Ref: https://github.com/cosmos/cosmos-sdk/issues/4923
+			if err := accGetter.EnsureExists(clientCtx, addr); err != nil {
+				clientCtx = clientCtx.WithHeight(height)
+				rest.PostProcessResponse(w, clientCtx, types.BaseAccount{})
+				return
+			}
+
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
-		cliCtx = cliCtx.WithHeight(height)
-		rest.PostProcessResponse(w, cliCtx, res)
+		clientCtx = clientCtx.WithHeight(height)
+		rest.PostProcessResponse(w, clientCtx, account)
+	}
+}
+
+// QueryTxsRequestHandlerFn implements a REST handler that searches for transactions.
+// Genesis transactions are returned if the height parameter is set to zero,
+// otherwise the transactions are searched for by events.
+func QueryTxsRequestHandlerFn(clientCtx client.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		err := r.ParseForm()
+		if err != nil {
+			rest.WriteErrorResponse(
+				w, http.StatusBadRequest,
+				fmt.Sprintf("failed to parse query parameters: %s", err),
+			)
+			return
+		}
+
+		// if the height query param is set to zero, query for genesis transactions
+		heightStr := r.FormValue("height")
+		if heightStr != "" {
+			if height, err := strconv.ParseInt(heightStr, 10, 64); err == nil && height == 0 {
+				genutilrest.QueryGenesisTxs(clientCtx, w)
+				return
+			}
+		}
+
+		var (
+			events      []string
+			txs         []sdk.TxResponse
+			page, limit int
+		)
+
+		clientCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, clientCtx, r)
+		if !ok {
+			return
+		}
+
+		if len(r.Form) == 0 {
+			rest.PostProcessResponseBare(w, clientCtx, txs)
+			return
+		}
+
+		events, page, limit, err = rest.ParseHTTPArgs(r)
+		if rest.CheckBadRequestError(w, err) {
+			return
+		}
+
+		searchResult, err := authclient.QueryTxsByEvents(clientCtx, events, page, limit, "")
+		if rest.CheckInternalServerError(w, err) {
+			return
+		}
+
+		rest.PostProcessResponseBare(w, clientCtx, searchResult)
+	}
+}
+
+// QueryTxRequestHandlerFn implements a REST handler that queries a transaction
+// by hash in a committed block.
+func QueryTxRequestHandlerFn(clientCtx client.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		hashHexStr := vars["hash"]
+
+		clientCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, clientCtx, r)
+		if !ok {
+			return
+		}
+
+		output, err := authclient.QueryTx(clientCtx, hashHexStr)
+		if err != nil {
+			if strings.Contains(err.Error(), hashHexStr) {
+				rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
+				return
+			}
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		// We just unmarshalled from Tendermint, we take the proto Tx's raw
+		// bytes, and convert them into a StdTx to be displayed.
+		txBytes := output.Tx.Value
+		stdTx, ok := convertToStdTx(w, clientCtx, txBytes)
+		if !ok {
+			return
+		}
+
+		if output.Empty() {
+			rest.WriteErrorResponse(w, http.StatusNotFound, fmt.Sprintf("no transaction found with hash %s", hashHexStr))
+		}
+
+		rest.PostProcessResponseBare(w, clientCtx, stdTx)
+	}
+}
+
+func queryParamsHandler(clientCtx client.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		clientCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, clientCtx, r)
+		if !ok {
+			return
+		}
+
+		route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryParams)
+		res, height, err := clientCtx.QueryWithData(route, nil)
+		if rest.CheckInternalServerError(w, err) {
+			return
+		}
+
+		clientCtx = clientCtx.WithHeight(height)
+		rest.PostProcessResponse(w, clientCtx, res)
 	}
 }

@@ -7,7 +7,6 @@ import (
 	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
@@ -23,7 +22,7 @@ import (
 var cliLogger = helper.Logger.With("module", "bor/client/cli")
 
 // GetTxCmd returns the transaction commands for this module
-func GetTxCmd(cdc *codec.Codec) *cobra.Command {
+func GetTxCmd() *cobra.Command {
 	txCmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      "Bor transaction subcommands",
@@ -46,7 +45,8 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 		Use:   "propose-span",
 		Short: "send propose span tx",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
 			borChainID := viper.GetString(FlagBorChainId)
 			if borChainID == "" {
 				return fmt.Errorf("BorChainID cannot be empty")
@@ -55,7 +55,7 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 			// get proposer
 			proposer := hmTypes.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
 			if proposer.Empty() {
-				proposer = helper.GetFromAddress(cliCtx)
+				proposer = helper.GetFromAddress(clientCtx)
 			}
 
 			// start block
@@ -87,7 +87,7 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 			//
 
 			// fetch duration
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", types.QuerierRoute, types.QueryParams, types.ParamSpan), nil)
+			res, _, err := clientCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", types.QuerierRoute, types.QueryParams, types.ParamSpan), nil)
 			if err != nil {
 				return err
 			}
@@ -100,7 +100,7 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			res, _, err = cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNextSpanSeed), nil)
+			res, _, err = clientCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNextSpanSeed), nil)
 			if err != nil {
 				return err
 			}
@@ -123,7 +123,7 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 				seed,
 			)
 
-			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
+			return helper.BroadcastMsgsWithCLI(clientCtx, []sdk.Msg{msg})
 		},
 	}
 

@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	amino "github.com/tendermint/go-amino"
@@ -68,8 +67,12 @@ func preSignCmd(cmd *cobra.Command, _ []string) {
 
 func makeSignCmd(cdc *amino.Codec) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) (err error) {
-		cliCtx := context.NewCLIContext().WithCodec(cdc)
-		stdTx, err := helper.ReadStdTxFromFile(cliCtx.Codec, args[0])
+		clientCtx := client.GetClientContextFromCmd(cmd)
+		clientCtx, err = client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+		if err != nil {
+			return err
+		}
+		stdTx, err := helper.ReadStdTxFromFile(clientCtx.Codec, args[0])
 		if err != nil {
 			return err
 		}
@@ -81,7 +84,7 @@ func makeSignCmd(cdc *amino.Codec) func(cmd *cobra.Command, args []string) error
 		generateSignatureOnly := viper.GetBool(flagSigOnly)
 
 		appendSig := viper.GetBool(flagAppend) && !generateSignatureOnly
-		newTx, err = helper.SignStdTx(cliCtx, stdTx, appendSig, offline)
+		newTx, err = helper.SignStdTx(clientCtx, stdTx, appendSig, offline)
 
 		if err != nil {
 			return err
@@ -91,7 +94,7 @@ func makeSignCmd(cdc *amino.Codec) func(cmd *cobra.Command, args []string) error
 
 		switch generateSignatureOnly {
 		case true:
-			switch cliCtx.Indent {
+			switch clientCtx.Indent {
 			case true:
 				json, err = cdc.MarshalJSONIndent(newTx.Signature, "", "  ")
 
@@ -100,7 +103,7 @@ func makeSignCmd(cdc *amino.Codec) func(cmd *cobra.Command, args []string) error
 			}
 
 		default:
-			switch cliCtx.Indent {
+			switch clientCtx.Indent {
 			case true:
 				json, err = cdc.MarshalJSONIndent(newTx, "", "  ")
 

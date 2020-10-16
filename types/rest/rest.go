@@ -3,6 +3,7 @@
 package rest
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -12,7 +13,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
+	cosmosContext "github.com/cosmos/cosmos-sdk/client"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
@@ -22,8 +24,10 @@ import (
 )
 
 const (
-	DefaultPage  = 1
-	DefaultLimit = 30 // should be consistent with tendermint/tendermint/rpc/core/pipe.go:19
+	DefaultPage    = 1
+	DefaultLimit   = 30             // should be consistent with tendermint/tendermint/rpc/core/pipe.go:19
+	TxMinHeightKey = "tx.minheight" // Inclusive minimum height filter
+	TxMaxHeightKey = "tx.maxheight" // Inclusive maximum height filter
 )
 
 var (
@@ -46,6 +50,17 @@ func NewResponseWithHeight(height int64, result json.RawMessage) ResponseWithHei
 		Height: height,
 		Result: result,
 	}
+}
+
+// ParseResponseWithHeight returns the raw result from a JSON-encoded
+// ResponseWithHeight object.
+func ParseResponseWithHeight(cdc *codec.LegacyAmino, bz []byte) ([]byte, error) {
+	r := ResponseWithHeight{}
+	if err := cdc.UnmarshalJSON(bz, &r); err != nil {
+		return nil, err
+	}
+
+	return r.Result, nil
 }
 
 // GasEstimateResponse defines a response definition for tx gas estimation.
@@ -155,6 +170,35 @@ func NewErrorResponse(code int, err string) ErrorResponse {
 	return ErrorResponse{Code: code, Error: err}
 }
 
+// CheckError takes care of writing an error response if err is not nil.
+// Returns false when err is nil; it returns true otherwise.
+func CheckError(w http.ResponseWriter, status int, err error) bool {
+	if err != nil {
+		WriteErrorResponse(w, status, err.Error())
+		return true
+	}
+
+	return false
+}
+
+// CheckBadRequestError attaches an error message to an HTTP 400 BAD REQUEST response.
+// Returns false when err is nil; it returns true otherwise.
+func CheckBadRequestError(w http.ResponseWriter, err error) bool {
+	return CheckError(w, http.StatusBadRequest, err)
+}
+
+// CheckInternalServerError attaches an error message to an HTTP 500 INTERNAL SERVER ERROR response.
+// Returns false when err is nil; it returns true otherwise.
+func CheckInternalServerError(w http.ResponseWriter, err error) bool {
+	return CheckError(w, http.StatusInternalServerError, err)
+}
+
+// CheckNotFoundError attaches an error message to an HTTP 404 NOT FOUND response.
+// Returns false when err is nil; it returns true otherwise.
+func CheckNotFoundError(w http.ResponseWriter, err error) bool {
+	return CheckError(w, http.StatusNotFound, err)
+}
+
 // WriteErrorResponse prepares and writes a HTTP error
 // given a status code and an error message.
 func WriteErrorResponse(w http.ResponseWriter, status int, err string) {
@@ -188,10 +232,33 @@ func ReturnNotFoundIfNoContent(w http.ResponseWriter, data []byte, message strin
 	return true
 }
 
+// PostProcessResponseBare post processes a body similar to PostProcessResponse
+// except it does not wrap the body and inject the height.
+func PostProcessResponseBare(w http.ResponseWriter, ctx cosmosContext.Context, body interface{}) {
+	var (
+		resp []byte
+		err  error
+	)
+
+	switch b := body.(type) {
+	case []byte:
+		resp = b
+
+	default:
+		resp, err = ctx.LegacyAmino.MarshalJSON(body)
+		if CheckInternalServerError(w, err) {
+			return
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_, _ = w.Write(resp)
+}
+
 // PostProcessResponse performs post processing for a REST response. The result
 // returned to clients will contain two fields, the height at which the resource
 // was queried at and the original result.
-func PostProcessResponse(w http.ResponseWriter, cliCtx context.CLIContext, resp interface{}) {
+func PostProcessResponse(w http.ResponseWriter, cliCtx cosmosContext.Context, resp interface{}) {
 	var result []byte
 
 	if cliCtx.Height < 0 {
@@ -294,4 +361,54 @@ func ParseHTTPArgsWithLimit(r *http.Request, defaultLimit int) (tags []string, p
 // arguments pairs. It separates page and limit used for pagination.
 func ParseHTTPArgs(r *http.Request) (tags []string, page, limit int, err error) {
 	return ParseHTTPArgsWithLimit(r, DefaultLimit)
+}
+
+// ParseQueryParamBool parses the given param to a boolean. It returns false by
+// default if the string is not parseable to bool.
+func ParseQueryParamBool(r *http.Request, param string) bool {
+	if value, err := strconv.ParseBool(r.FormValue(param)); err == nil {
+		return value
+	}
+
+	return false
+}
+
+// GetRequest defines a wrapper around an HTTP GET request with a provided URL.
+// An error is returned if the request or reading the body fails.
+func GetRequest(url string) ([]byte, error) {
+	res, err := http.Get(url) // nolint:gosec
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = res.Body.Close(); err != nil {
+		return nil, err
+	}
+
+	return body, nil
+}
+
+// PostRequest defines a wrapper around an HTTP POST request with a provided URL and data.
+// An error is returned if the request or reading the body fails.
+func PostRequest(url string, contentType string, data []byte) ([]byte, error) {
+	res, err := http.Post(url, contentType, bytes.NewBuffer(data)) // nolint:gosec
+	if err != nil {
+		return nil, fmt.Errorf("error while sending post request: %w", err)
+	}
+
+	bz, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, fmt.Errorf("error reading response body: %w", err)
+	}
+
+	if err = res.Body.Close(); err != nil {
+		return nil, err
+	}
+
+	return bz, nil
 }

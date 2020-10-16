@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 
@@ -21,7 +20,7 @@ import (
 // WriteGenerateStdTxResponse writes response for the generate only mode.
 func WriteGenerateStdTxResponse(
 	w http.ResponseWriter,
-	cliCtx context.CLIContext,
+	cliCtx client.Context,
 	br hmRest.BaseReq,
 	msgs []sdk.Msg,
 ) {

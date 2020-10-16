@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/gorilla/mux"
 	"github.com/maticnetwork/bor/common"
@@ -15,7 +15,7 @@ import (
 	hmRest "github.com/maticnetwork/heimdall/types/rest"
 )
 
-func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
+func registerQueryRoutes(cliCtx client.Context, r *mux.Router) {
 	r.HandleFunc(
 		"/staking/totalpower",
 		getTotalValidatorPower(cliCtx),
@@ -55,7 +55,7 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 }
 
 // Returns total power of current validator set
-func getTotalValidatorPower(cliCtx context.CLIContext) http.HandlerFunc {
+func getTotalValidatorPower(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
@@ -95,7 +95,7 @@ func getTotalValidatorPower(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 // Returns validator information by signer address
-func validatorByAddressHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func validatorByAddressHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		signerAddress := common.HexToAddress(vars["address"])
@@ -131,7 +131,7 @@ func validatorByAddressHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 // Returns validator status information by signer address
-func validatorStatusByAddreesHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func validatorStatusByAddreesHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		signerAddress := common.HexToAddress(vars["address"])
@@ -179,7 +179,7 @@ func validatorStatusByAddreesHandlerFn(cliCtx context.CLIContext) http.HandlerFu
 }
 
 // Returns validator information by val ID
-func validatorByIDHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func validatorByIDHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 
@@ -220,7 +220,7 @@ func validatorByIDHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 // get current validator set
-func validatorSetHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func validatorSetHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
@@ -246,7 +246,7 @@ func validatorSetHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 // get proposer for current validator set
-func proposerHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func proposerHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 
@@ -287,7 +287,7 @@ func proposerHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 // currentProposerHandlerFn get proposer for current validator set
-func currentProposerHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func currentProposerHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
@@ -313,7 +313,7 @@ func currentProposerHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 // Returns proposer Bonus Percent information
-func proposerBonusPercentHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func proposerBonusPercentHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
@@ -351,7 +351,7 @@ func proposerBonusPercentHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 // Returns staking tx status information
-func StakingTxStatusHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func StakingTxStatusHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := r.URL.Query()
 

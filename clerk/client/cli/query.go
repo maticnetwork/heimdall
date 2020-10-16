@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/spf13/cobra"
@@ -19,7 +18,7 @@ import (
 var logger = helper.Logger.With("module", "clerk/client/cli")
 
 // GetQueryCmd returns the cli query commands for this module
-func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
+func GetQueryCmd() *cobra.Command {
 	// Group supply queries under a subcommand
 	queryCmds := &cobra.Command{
 		Use:                        clerkTypes.ModuleName,
@@ -45,7 +44,11 @@ func GetStateRecord(cdc *codec.Codec) *cobra.Command {
 		Use:   "record",
 		Short: "show state record",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
 			recordIDStr := viper.GetString(FlagRecordID)
 			if recordIDStr == "" {

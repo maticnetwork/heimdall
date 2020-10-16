@@ -3,7 +3,7 @@ package supply
 import (
 	"encoding/json"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -59,16 +59,16 @@ func (AppModuleBasic) VerifyGenesis(bz map[string]json.RawMessage) error {
 }
 
 // RegisterRESTRoutes registers the REST routes for the auth module.
-func (AppModuleBasic) RegisterRESTRoutes(ctx context.CLIContext, rtr *mux.Router) {}
+func (AppModuleBasic) RegisterRESTRoutes(ctx client.Context, rtr *mux.Router) {}
 
 // GetTxCmd returns the root tx command for the auth module.
-func (AppModuleBasic) GetTxCmd(cdc *codec.Codec) *cobra.Command {
+func (AppModuleBasic) GetTxCmd() *cobra.Command {
 	return nil
 }
 
 // GetQueryCmd returns the root query command for the auth module.
-func (AppModuleBasic) GetQueryCmd(cdc *codec.Codec) *cobra.Command {
-	return supplyCli.GetQueryCmd(cdc)
+func (AppModuleBasic) GetQueryCmd() *cobra.Command {
+	return supplyCli.GetQueryCmd()
 }
 
 //____________________________________________________________________________

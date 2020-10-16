@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/gorilla/mux"
 
@@ -14,7 +14,7 @@ import (
 	hmRest "github.com/maticnetwork/heimdall/types/rest"
 )
 
-func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
+func registerQueryRoutes(cliCtx client.Context, r *mux.Router) {
 	r.HandleFunc(
 		"/topup/isoldtx",
 		TopupTxStatusHandlerFn(cliCtx),
@@ -38,7 +38,7 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 }
 
 // Returns topup tx status information
-func TopupTxStatusHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func TopupTxStatusHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := r.URL.Query()
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
@@ -84,7 +84,7 @@ func TopupTxStatusHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 // Returns Dividend Account information by User Address
-func dividendAccountByAddressHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func dividendAccountByAddressHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 
@@ -123,7 +123,7 @@ func dividendAccountByAddressHandlerFn(cliCtx context.CLIContext) http.HandlerFu
 
 // dividendAccountRootHandlerFn returns genesis accountroothash
 func dividendAccountRootHandlerFn(
-	cliCtx context.CLIContext,
+	cliCtx client.Context,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
@@ -161,7 +161,7 @@ func dividendAccountRootHandlerFn(
 }
 
 // Returns Merkle path for dividendAccountID using dividend Account Tree
-func dividendAccountProofHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func dividendAccountProofHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 
@@ -199,7 +199,7 @@ func dividendAccountProofHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 // VerifyAccountProofHandlerFn - Returns true if given Merkle path for dividendAccountID is valid
-func VerifyAccountProofHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func VerifyAccountProofHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"math/rand"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
+	cosmosContext "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -63,18 +63,18 @@ func (AppModuleBasic) VerifyGenesis(map[string]json.RawMessage) error {
 }
 
 // RegisterRESTRoutes registers the REST routes for the auth module.
-func (AppModuleBasic) RegisterRESTRoutes(ctx context.CLIContext, rtr *mux.Router) {
-	authRest.RegisterRoutes(ctx, rtr)
+func (AppModuleBasic) RegisterRESTRoutes(ctx cosmosContext.Context, rtr *mux.Router) {
+	authRest.RegisterRoutes(ctx, rtr, types.StoreKey)
 }
 
 // GetTxCmd returns the root tx command for the auth module.
-func (AppModuleBasic) GetTxCmd(cdc *codec.Codec) *cobra.Command {
+func (AppModuleBasic) GetTxCmd() *cobra.Command {
 	return authCli.GetTxCmd(cdc)
 }
 
 // GetQueryCmd returns the root query command for the auth module.
-func (AppModuleBasic) GetQueryCmd(cdc *codec.Codec) *cobra.Command {
-	return authCli.GetQueryCmd(cdc)
+func (AppModuleBasic) GetQueryCmd() *cobra.Command {
+	return authCli.GetQueryCmd()
 }
 
 //____________________________________________________________________________

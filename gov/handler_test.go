@@ -5,17 +5,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/maticnetwork/heimdall/app"
+	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/gov"
 	"github.com/maticnetwork/heimdall/gov/types"
-	authTypes "github.com/maticnetwork/heimdall/auth/types"
-	"github.com/maticnetwork/heimdall/types/simulation"
 	hmTypes "github.com/maticnetwork/heimdall/types"
+	"github.com/maticnetwork/heimdall/types/simulation"
 )
 
 //
@@ -25,12 +25,12 @@ import (
 type HandlerTestSuite struct {
 	suite.Suite
 
-	app            *app.HeimdallApp
-	ctx            sdk.Context
-	cliCtx         context.CLIContext
-	chainID        string
-	handler        sdk.Handler
-	r              *rand.Rand
+	app     *app.HeimdallApp
+	ctx     sdk.Context
+	cliCtx  client.Context
+	chainID string
+	handler sdk.Handler
+	r       *rand.Rand
 }
 
 func (suite *HandlerTestSuite) SetupTest() {
@@ -58,7 +58,7 @@ type validProposal struct{}
 func (validProposal) GetTitle() string         { return "title" }
 func (validProposal) GetDescription() string   { return "description" }
 func (validProposal) ProposalRoute() string    { return types.RouterKey }
-func (validProposal) ProposalType() string     { return types.ProposalTypeText}
+func (validProposal) ProposalType() string     { return types.ProposalTypeText }
 func (validProposal) String() string           { return "" }
 func (validProposal) ValidateBasic() sdk.Error { return nil }
 
