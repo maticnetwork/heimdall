@@ -1,707 +1,513 @@
 package app
 
 import (
-	"encoding/json"
-	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"path/filepath"
 
-	bam "github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
+	"github.com/gorilla/mux"
+	"github.com/rakyll/statik/fs"
 	abci "github.com/tendermint/tendermint/abci/types"
-	cmn "github.com/tendermint/tendermint/libs/common"
+	tmjson "github.com/tendermint/tendermint/libs/json"
 	"github.com/tendermint/tendermint/libs/log"
+	tmos "github.com/tendermint/tendermint/libs/os"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
-	"github.com/maticnetwork/heimdall/auth"
-	authTypes "github.com/maticnetwork/heimdall/auth/types"
-	"github.com/maticnetwork/heimdall/bank"
-	bankTypes "github.com/maticnetwork/heimdall/bank/types"
-	"github.com/maticnetwork/heimdall/bor"
-	borTypes "github.com/maticnetwork/heimdall/bor/types"
-	"github.com/maticnetwork/heimdall/chainmanager"
-	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
-	"github.com/maticnetwork/heimdall/checkpoint"
-	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
-	"github.com/maticnetwork/heimdall/clerk"
-	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
-	"github.com/maticnetwork/heimdall/common"
-	gov "github.com/maticnetwork/heimdall/gov"
-	govTypes "github.com/maticnetwork/heimdall/gov/types"
-	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/params"
-	paramsClient "github.com/maticnetwork/heimdall/params/client"
-	"github.com/maticnetwork/heimdall/params/subspace"
-	paramsTypes "github.com/maticnetwork/heimdall/params/types"
-	"github.com/maticnetwork/heimdall/sidechannel"
-	sidechannelTypes "github.com/maticnetwork/heimdall/sidechannel/types"
-	"github.com/maticnetwork/heimdall/slashing"
-	slashingTypes "github.com/maticnetwork/heimdall/slashing/types"
-	"github.com/maticnetwork/heimdall/staking"
-	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
-	"github.com/maticnetwork/heimdall/supply"
-	supplyTypes "github.com/maticnetwork/heimdall/supply/types"
-	"github.com/maticnetwork/heimdall/topup"
-	topupTypes "github.com/maticnetwork/heimdall/topup/types"
-	"github.com/maticnetwork/heimdall/types"
-	hmModule "github.com/maticnetwork/heimdall/types/module"
-	"github.com/maticnetwork/heimdall/version"
+	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/rpc"
+	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/server/api"
+	"github.com/cosmos/cosmos-sdk/server/config"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/module"
+	"github.com/cosmos/cosmos-sdk/version"
+	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/cosmos/cosmos-sdk/x/auth/ante"
+	authrest "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
+	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/cosmos/cosmos-sdk/x/bank"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/cosmos/cosmos-sdk/x/capability"
+	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
+	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
+	"github.com/cosmos/cosmos-sdk/x/crisis"
+	crisiskeeper "github.com/cosmos/cosmos-sdk/x/crisis/keeper"
+	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
+	distr "github.com/cosmos/cosmos-sdk/x/distribution"
+	distrclient "github.com/cosmos/cosmos-sdk/x/distribution/client"
+	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
+	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	"github.com/cosmos/cosmos-sdk/x/evidence"
+	evidencekeeper "github.com/cosmos/cosmos-sdk/x/evidence/keeper"
+	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
+	"github.com/cosmos/cosmos-sdk/x/genutil"
+	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+	"github.com/cosmos/cosmos-sdk/x/gov"
+	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	"github.com/cosmos/cosmos-sdk/x/mint"
+	mintkeeper "github.com/cosmos/cosmos-sdk/x/mint/keeper"
+	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+	"github.com/cosmos/cosmos-sdk/x/params"
+	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
+	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
+	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
+	"github.com/cosmos/cosmos-sdk/x/slashing"
+	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
+	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
+	"github.com/cosmos/cosmos-sdk/x/staking"
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/cosmos/cosmos-sdk/x/upgrade"
+	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
+	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+
+	blogparams "github.com/maticnetwork/heimdall/app/params"
+	"github.com/maticnetwork/heimdall/x/blog"
+	blogkeeper "github.com/maticnetwork/heimdall/x/blog/keeper"
+	blogtypes "github.com/maticnetwork/heimdall/x/blog/types"
+
+	// unnamed import of statik for swagger UI support
+	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
 )
 
-const (
-	// AppName denotes app name
-	AppName = "Heimdall"
-	// ABCIPubKeyTypeSecp256k1 denotes pub key type
-	ABCIPubKeyTypeSecp256k1 = "secp256k1"
-	// internals
-	maxGasPerBlock   int64 = 10000000 // 10 Million
-	maxBytesPerBlock int64 = 22020096 // 21 MB
-)
-
-// Assertion for Heimdall app
-var _ App = &HeimdallApp{}
+const appName = "BlogApp"
 
 var (
+	// DefaultNodeHome default home directories for the application daemon
+	DefaultNodeHome string
+
 	// ModuleBasics defines the module BasicManager is in charge of setting up basic,
 	// non-dependant module elements, such as codec registration
 	// and genesis verification.
 	ModuleBasics = module.NewBasicManager(
-		params.AppModuleBasic{},
-		sidechannel.AppModuleBasic{},
 		auth.AppModuleBasic{},
+		genutil.AppModuleBasic{},
 		bank.AppModuleBasic{},
-		supply.AppModuleBasic{},
-		chainmanager.AppModuleBasic{},
+		capability.AppModuleBasic{},
 		staking.AppModuleBasic{},
-		checkpoint.AppModuleBasic{},
-		bor.AppModuleBasic{},
-		clerk.AppModuleBasic{},
-		topup.AppModuleBasic{},
+		mint.AppModuleBasic{},
+		distr.AppModuleBasic{},
+		gov.NewAppModuleBasic(
+			paramsclient.ProposalHandler, distrclient.ProposalHandler, upgradeclient.ProposalHandler, upgradeclient.CancelProposalHandler,
+		),
+		params.AppModuleBasic{},
+		crisis.AppModuleBasic{},
 		slashing.AppModuleBasic{},
-		gov.NewAppModuleBasic(paramsClient.ProposalHandler),
+		upgrade.AppModuleBasic{},
+		evidence.AppModuleBasic{},
+
+		blog.AppModuleBasic{},
 	)
 
 	// module account permissions
 	maccPerms = map[string][]string{
-		authTypes.FeeCollectorName: nil,
-		govTypes.ModuleName:        {},
+		authtypes.FeeCollectorName:     nil,
+		distrtypes.ModuleName:          nil,
+		minttypes.ModuleName:           {authtypes.Minter},
+		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
+		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
+		govtypes.ModuleName:            {authtypes.Burner},
+	}
+
+	// module accounts that are allowed to receive tokens
+	allowedReceivingModAcc = map[string]bool{
+		distrtypes.ModuleName: true,
 	}
 )
 
-// HeimdallApp main heimdall app
-type HeimdallApp struct {
-	*bam.BaseApp
-	cdc *codec.Codec
+var _ App = (*BlogApp)(nil)
+
+// BlogApp extends an ABCI application, but with most of its parameters exported.
+// They are exported for convenience in creating helper functions, as object
+// capabilities aren't needed for testing.
+type BlogApp struct {
+	*baseapp.BaseApp
+	legacyAmino       *codec.LegacyAmino
+	appCodec          codec.Marshaler
+	interfaceRegistry types.InterfaceRegistry
+
+	invCheckPeriod uint
 
 	// keys to access the substores
-	keys  map[string]*sdk.KVStoreKey
-	tkeys map[string]*sdk.TransientStoreKey
-
-	// subspaces
-	subspaces map[string]subspace.Subspace
-
-	// side router
-	sideRouter types.SideRouter
+	keys    map[string]*sdk.KVStoreKey
+	tkeys   map[string]*sdk.TransientStoreKey
+	memKeys map[string]*sdk.MemoryStoreKey
 
 	// keepers
-	SidechannelKeeper sidechannel.Keeper
-	AccountKeeper     auth.AccountKeeper
-	BankKeeper        bank.Keeper
-	SupplyKeeper      supply.Keeper
-	GovKeeper         gov.Keeper
-	ChainKeeper       chainmanager.Keeper
-	CheckpointKeeper  checkpoint.Keeper
-	StakingKeeper     staking.Keeper
-	BorKeeper         bor.Keeper
-	ClerkKeeper       clerk.Keeper
-	TopupKeeper       topup.Keeper
-	SlashingKeeper    slashing.Keeper
+	AccountKeeper    authkeeper.AccountKeeper
+	BankKeeper       bankkeeper.Keeper
+	CapabilityKeeper *capabilitykeeper.Keeper
+	StakingKeeper    stakingkeeper.Keeper
+	SlashingKeeper   slashingkeeper.Keeper
+	MintKeeper       mintkeeper.Keeper
+	DistrKeeper      distrkeeper.Keeper
+	GovKeeper        govkeeper.Keeper
+	CrisisKeeper     crisiskeeper.Keeper
+	UpgradeKeeper    upgradekeeper.Keeper
+	ParamsKeeper     paramskeeper.Keeper
+	EvidenceKeeper   evidencekeeper.Keeper
 
-	// param keeper
-	ParamsKeeper params.Keeper
-
-	// contract keeper
-	caller helper.ContractCaller
-
-	//  total coins supply
-	TotalCoinsSupply sdk.Coins
+	BlogKeeper blogkeeper.Keeper
 
 	// the module manager
 	mm *module.Manager
 
-	// simulation module manager
-	sm *hmModule.SimulationManager
+	// simulation manager
+	sm *module.SimulationManager
 }
 
-var logger = helper.Logger.With("module", "app")
-
-//
-// Module communicator
-//
-
-// ModuleCommunicator retriever
-type ModuleCommunicator struct {
-	App *HeimdallApp
-}
-
-// GetACKCount returns ack count
-func (d ModuleCommunicator) GetACKCount(ctx sdk.Context) uint64 {
-	return d.App.CheckpointKeeper.GetACKCount(ctx)
-}
-
-// IsCurrentValidatorByAddress check if validator is current validator
-func (d ModuleCommunicator) IsCurrentValidatorByAddress(ctx sdk.Context, address []byte) bool {
-	return d.App.StakingKeeper.IsCurrentValidatorByAddress(ctx, address)
-}
-
-// GetAllDividendAccounts fetches all dividend accounts from topup module
-func (d ModuleCommunicator) GetAllDividendAccounts(ctx sdk.Context) []types.DividendAccount {
-	return d.App.TopupKeeper.GetAllDividendAccounts(ctx)
-}
-
-// GetValidatorFromValID get validator from validator id
-func (d ModuleCommunicator) GetValidatorFromValID(ctx sdk.Context, valID types.ValidatorID) (validator types.Validator, ok bool) {
-	return d.App.StakingKeeper.GetValidatorFromValID(ctx, valID)
-}
-
-// SetCoins sets coins
-func (d ModuleCommunicator) SetCoins(ctx sdk.Context, addr types.HeimdallAddress, amt sdk.Coins) sdk.Error {
-	return d.App.BankKeeper.SetCoins(ctx, addr, amt)
-}
-
-// GetCoins gets coins
-func (d ModuleCommunicator) GetCoins(ctx sdk.Context, addr types.HeimdallAddress) sdk.Coins {
-	return d.App.BankKeeper.GetCoins(ctx, addr)
-}
-
-// SendCoins transfers coins
-func (d ModuleCommunicator) SendCoins(ctx sdk.Context, fromAddr types.HeimdallAddress, toAddr types.HeimdallAddress, amt sdk.Coins) sdk.Error {
-	return d.App.BankKeeper.SendCoins(ctx, fromAddr, toAddr, amt)
-}
-
-// Create ValidatorSigningInfo used by slashing module
-func (d ModuleCommunicator) CreateValiatorSigningInfo(ctx sdk.Context, valID types.ValidatorID, valSigningInfo types.ValidatorSigningInfo) {
-	d.App.SlashingKeeper.SetValidatorSigningInfo(ctx, valID, valSigningInfo)
-	return
-}
-
-//
-// Heimdall app
-//
-
-// NewHeimdallApp creates heimdall app
-func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseApp)) *HeimdallApp {
-	// create and register app-level codec for TXs and accounts
-	cdc := MakeCodec()
-
-	// set prefix
-	config := sdk.GetConfig()
-	config.Seal()
-
-	// base app
-	bApp := bam.NewBaseApp(AppName, logger, db, authTypes.DefaultTxDecoder(cdc), baseAppOptions...)
-	bApp.SetCommitMultiStoreTracer(nil)
-	bApp.SetAppVersion(version.Version)
-
-	// keys
-	keys := sdk.NewKVStoreKeys(
-		bam.MainStoreKey,
-		sidechannelTypes.StoreKey,
-		authTypes.StoreKey,
-		bankTypes.StoreKey,
-		supplyTypes.StoreKey,
-		govTypes.StoreKey,
-		chainmanagerTypes.StoreKey,
-		stakingTypes.StoreKey,
-		slashingTypes.StoreKey,
-		checkpointTypes.StoreKey,
-		borTypes.StoreKey,
-		clerkTypes.StoreKey,
-		topupTypes.StoreKey,
-		paramsTypes.StoreKey,
-	)
-	tkeys := sdk.NewTransientStoreKeys(paramsTypes.TStoreKey)
-
-	// create heimdall app
-	var app = &HeimdallApp{
-		cdc:       cdc,
-		BaseApp:   bApp,
-		keys:      keys,
-		tkeys:     tkeys,
-		subspaces: make(map[string]subspace.Subspace),
-	}
-
-	// init params keeper and subspaces
-	app.ParamsKeeper = params.NewKeeper(app.cdc, keys[paramsTypes.StoreKey], tkeys[paramsTypes.TStoreKey], paramsTypes.DefaultCodespace)
-	app.subspaces[sidechannelTypes.ModuleName] = app.ParamsKeeper.Subspace(sidechannelTypes.DefaultParamspace)
-	app.subspaces[authTypes.ModuleName] = app.ParamsKeeper.Subspace(authTypes.DefaultParamspace)
-	app.subspaces[bankTypes.ModuleName] = app.ParamsKeeper.Subspace(bankTypes.DefaultParamspace)
-	app.subspaces[supplyTypes.ModuleName] = app.ParamsKeeper.Subspace(supplyTypes.DefaultParamspace)
-	app.subspaces[govTypes.ModuleName] = app.ParamsKeeper.Subspace(govTypes.DefaultParamspace).WithKeyTable(govTypes.ParamKeyTable())
-	app.subspaces[chainmanagerTypes.ModuleName] = app.ParamsKeeper.Subspace(chainmanagerTypes.DefaultParamspace)
-	app.subspaces[stakingTypes.ModuleName] = app.ParamsKeeper.Subspace(stakingTypes.DefaultParamspace)
-	app.subspaces[slashingTypes.ModuleName] = app.ParamsKeeper.Subspace(slashingTypes.DefaultParamspace)
-	app.subspaces[checkpointTypes.ModuleName] = app.ParamsKeeper.Subspace(checkpointTypes.DefaultParamspace)
-	app.subspaces[borTypes.ModuleName] = app.ParamsKeeper.Subspace(borTypes.DefaultParamspace)
-	app.subspaces[clerkTypes.ModuleName] = app.ParamsKeeper.Subspace(clerkTypes.DefaultParamspace)
-	app.subspaces[topupTypes.ModuleName] = app.ParamsKeeper.Subspace(topupTypes.DefaultParamspace)
-	//
-	// Contract caller
-	//
-
-	contractCallerObj, err := helper.NewContractCaller()
+func init() {
+	userHomeDir, err := os.UserHomeDir()
 	if err != nil {
-		cmn.Exit(err.Error())
+		panic(err)
 	}
 
-	app.caller = contractCallerObj
+	DefaultNodeHome = filepath.Join(userHomeDir, ".blogapp")
+}
 
-	//
-	// module communicator
-	//
+// NewBlogApp returns a reference to an initialized BlogApp.
+func NewBlogApp(
+	logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, skipUpgradeHeights map[int64]bool,
+	homePath string, invCheckPeriod uint, encodingConfig blogparams.EncodingConfig, baseAppOptions ...func(*baseapp.BaseApp),
+) *BlogApp {
+	// TODO: Remove cdc in favor of appCodec once all modules are migrated.
+	appCodec := encodingConfig.Marshaler
+	legacyAmino := encodingConfig.Amino
+	interfaceRegistry := encodingConfig.InterfaceRegistry
 
-	moduleCommunicator := ModuleCommunicator{App: app}
+	bApp := baseapp.NewBaseApp(appName, logger, db, encodingConfig.TxConfig.TxDecoder(), baseAppOptions...)
+	bApp.SetCommitMultiStoreTracer(traceStore)
+	bApp.SetAppVersion(version.Version)
+	bApp.GRPCQueryRouter().SetInterfaceRegistry(interfaceRegistry)
+	bApp.GRPCQueryRouter().RegisterSimulateService(bApp.Simulate, interfaceRegistry)
 
-	//
-	// keepers
-	//
-
-	// create side channel keeper
-	app.SidechannelKeeper = sidechannel.NewKeeper(
-		app.cdc,
-		keys[sidechannelTypes.StoreKey], // target store
-		app.subspaces[sidechannelTypes.ModuleName],
-		common.DefaultCodespace,
+	keys := sdk.NewKVStoreKeys(
+		authtypes.StoreKey, banktypes.StoreKey, stakingtypes.StoreKey,
+		minttypes.StoreKey, distrtypes.StoreKey, slashingtypes.StoreKey,
+		govtypes.StoreKey, paramstypes.StoreKey, upgradetypes.StoreKey,
+		evidencetypes.StoreKey, capabilitytypes.StoreKey, blogtypes.StoreKey,
 	)
+	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
+	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey, blogtypes.MemStoreKey)
 
-	// create chain keeper
-	app.ChainKeeper = chainmanager.NewKeeper(
-		app.cdc,
-		keys[chainmanagerTypes.StoreKey], // target store
-		app.subspaces[chainmanagerTypes.ModuleName],
-		common.DefaultCodespace,
-		app.caller,
+	app := &BlogApp{
+		BaseApp:           bApp,
+		legacyAmino:       legacyAmino,
+		appCodec:          appCodec,
+		interfaceRegistry: interfaceRegistry,
+		invCheckPeriod:    invCheckPeriod,
+		keys:              keys,
+		tkeys:             tkeys,
+		memKeys:           memKeys,
+	}
+
+	app.ParamsKeeper = initParamsKeeper(appCodec, legacyAmino, keys[paramstypes.StoreKey], tkeys[paramstypes.TStoreKey])
+
+	// set the BaseApp's parameter store
+	bApp.SetParamStore(app.ParamsKeeper.Subspace(baseapp.Paramspace).WithKeyTable(paramskeeper.ConsensusParamsKeyTable()))
+
+	// add capability keeper and ScopeToModule for ibc module
+	app.CapabilityKeeper = capabilitykeeper.NewKeeper(appCodec, keys[capabilitytypes.StoreKey], memKeys[capabilitytypes.MemStoreKey])
+
+	// add keepers
+	app.AccountKeeper = authkeeper.NewAccountKeeper(
+		appCodec, keys[authtypes.StoreKey], app.GetSubspace(authtypes.ModuleName), authtypes.ProtoBaseAccount, maccPerms,
 	)
-
-	// account keeper
-	app.AccountKeeper = auth.NewAccountKeeper(
-		app.cdc,
-		keys[authTypes.StoreKey], // target store
-		app.subspaces[authTypes.ModuleName],
-		authTypes.ProtoBaseAccount, // prototype
+	app.BankKeeper = bankkeeper.NewBaseKeeper(
+		appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.GetSubspace(banktypes.ModuleName), app.BlockedAddrs(),
 	)
-
-	app.StakingKeeper = staking.NewKeeper(
-		app.cdc,
-		keys[stakingTypes.StoreKey], // target store
-		app.subspaces[stakingTypes.ModuleName],
-		common.DefaultCodespace,
-		app.ChainKeeper,
-		moduleCommunicator,
+	stakingKeeper := stakingkeeper.NewKeeper(
+		appCodec, keys[stakingtypes.StoreKey], app.AccountKeeper, app.BankKeeper, app.GetSubspace(stakingtypes.ModuleName),
 	)
-
-	app.SlashingKeeper = slashing.NewKeeper(
-		app.cdc,
-		keys[slashingTypes.StoreKey], // target store
-		app.StakingKeeper,
-		app.subspaces[slashingTypes.ModuleName],
-		common.DefaultCodespace,
-		app.ChainKeeper,
+	app.MintKeeper = mintkeeper.NewKeeper(
+		appCodec, keys[minttypes.StoreKey], app.GetSubspace(minttypes.ModuleName), &stakingKeeper,
+		app.AccountKeeper, app.BankKeeper, authtypes.FeeCollectorName,
 	)
-
-	// bank keeper
-	app.BankKeeper = bank.NewKeeper(
-		app.cdc,
-		keys[bankTypes.StoreKey], // target store
-		app.subspaces[bankTypes.ModuleName],
-		bankTypes.DefaultCodespace,
-		app.AccountKeeper,
-		moduleCommunicator,
+	app.DistrKeeper = distrkeeper.NewKeeper(
+		appCodec, keys[distrtypes.StoreKey], app.GetSubspace(distrtypes.ModuleName), app.AccountKeeper, app.BankKeeper,
+		&stakingKeeper, authtypes.FeeCollectorName, app.ModuleAccountAddrs(),
 	)
+	app.SlashingKeeper = slashingkeeper.NewKeeper(
+		appCodec, keys[slashingtypes.StoreKey], &stakingKeeper, app.GetSubspace(slashingtypes.ModuleName),
+	)
+	app.CrisisKeeper = crisiskeeper.NewKeeper(
+		app.GetSubspace(crisistypes.ModuleName), invCheckPeriod, app.BankKeeper, authtypes.FeeCollectorName,
+	)
+	app.UpgradeKeeper = upgradekeeper.NewKeeper(skipUpgradeHeights, keys[upgradetypes.StoreKey], appCodec, homePath)
 
-	// bank keeper
-	app.SupplyKeeper = supply.NewKeeper(
-		app.cdc,
-		keys[supplyTypes.StoreKey], // target store
-		app.subspaces[supplyTypes.ModuleName],
-		maccPerms,
-		app.AccountKeeper,
-		app.BankKeeper,
+	// register the staking hooks
+	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
+	app.StakingKeeper = *stakingKeeper.SetHooks(
+		stakingtypes.NewMultiStakingHooks(app.DistrKeeper.Hooks(), app.SlashingKeeper.Hooks()),
 	)
 
 	// register the proposal types
-	govRouter := gov.NewRouter()
-	govRouter.
-		AddRoute(govTypes.RouterKey, govTypes.ProposalHandler).
-		AddRoute(paramsTypes.RouterKey, params.NewParamChangeProposalHandler(app.ParamsKeeper))
-
-	app.GovKeeper = gov.NewKeeper(
-		app.cdc,
-		keys[govTypes.StoreKey],
-		app.subspaces[govTypes.ModuleName],
-		app.SupplyKeeper,
-		app.StakingKeeper,
-		govTypes.DefaultCodespace,
-		govRouter,
+	govRouter := govtypes.NewRouter()
+	govRouter.AddRoute(govtypes.RouterKey, govtypes.ProposalHandler).
+		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.ParamsKeeper)).
+		AddRoute(distrtypes.RouterKey, distr.NewCommunityPoolSpendProposalHandler(app.DistrKeeper)).
+		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.UpgradeKeeper))
+	app.GovKeeper = govkeeper.NewKeeper(
+		appCodec, keys[govtypes.StoreKey], app.GetSubspace(govtypes.ModuleName), app.AccountKeeper, app.BankKeeper,
+		&stakingKeeper, govRouter,
 	)
 
-	app.CheckpointKeeper = checkpoint.NewKeeper(
-		app.cdc,
-		keys[checkpointTypes.StoreKey], // target store
-		app.subspaces[checkpointTypes.ModuleName],
-		common.DefaultCodespace,
-		app.StakingKeeper,
-		app.ChainKeeper,
-		moduleCommunicator,
+	// create evidence keeper with router
+	evidenceKeeper := evidencekeeper.NewKeeper(
+		appCodec, keys[evidencetypes.StoreKey], &app.StakingKeeper, app.SlashingKeeper,
 	)
+	// If evidence needs to be handled for the app, set routes in router here and seal
+	app.EvidenceKeeper = *evidenceKeeper
 
-	app.BorKeeper = bor.NewKeeper(
-		app.cdc,
-		keys[borTypes.StoreKey], // target store
-		app.subspaces[borTypes.ModuleName],
-		common.DefaultCodespace,
-		app.ChainKeeper,
-		app.StakingKeeper,
-		app.caller,
-	)
-
-	app.ClerkKeeper = clerk.NewKeeper(
-		app.cdc,
-		keys[clerkTypes.StoreKey], // target store
-		app.subspaces[clerkTypes.ModuleName],
-		common.DefaultCodespace,
-		app.ChainKeeper,
-	)
-
-	// may be need signer
-	app.TopupKeeper = topup.NewKeeper(
-		app.cdc,
-		keys[topupTypes.StoreKey],
-		app.subspaces[topupTypes.ModuleName],
-		topupTypes.DefaultCodespace,
-		app.ChainKeeper,
-		app.BankKeeper,
-		app.StakingKeeper,
-	)
+	app.BlogKeeper = *blogkeeper.NewKeeper(app.appCodec, keys[blogtypes.StoreKey], memKeys[blogtypes.MemStoreKey])
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
 	app.mm = module.NewManager(
-		sidechannel.NewAppModule(app.SidechannelKeeper),
-		auth.NewAppModule(app.AccountKeeper, &app.caller, []authTypes.AccountProcessor{
-			supplyTypes.AccountProcessor,
-		}),
-		bank.NewAppModule(app.BankKeeper, &app.caller),
-		supply.NewAppModule(app.SupplyKeeper, &app.caller),
-		gov.NewAppModule(app.GovKeeper, app.SupplyKeeper),
-		chainmanager.NewAppModule(app.ChainKeeper, &app.caller),
-		staking.NewAppModule(app.StakingKeeper, &app.caller),
-		slashing.NewAppModule(app.SlashingKeeper, app.StakingKeeper, &app.caller),
-		checkpoint.NewAppModule(app.CheckpointKeeper, app.StakingKeeper, app.TopupKeeper, &app.caller),
-		bor.NewAppModule(app.BorKeeper, &app.caller),
-		clerk.NewAppModule(app.ClerkKeeper, &app.caller),
-		topup.NewAppModule(app.TopupKeeper, &app.caller),
+		genutil.NewAppModule(
+			app.AccountKeeper, app.StakingKeeper, app.BaseApp.DeliverTx,
+			encodingConfig.TxConfig,
+		),
+		auth.NewAppModule(appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts),
+		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
+		capability.NewAppModule(appCodec, *app.CapabilityKeeper),
+		crisis.NewAppModule(&app.CrisisKeeper),
+		gov.NewAppModule(appCodec, app.GovKeeper, app.AccountKeeper, app.BankKeeper),
+		mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper),
+		slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
+		distr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
+		staking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
+		upgrade.NewAppModule(app.UpgradeKeeper),
+		evidence.NewAppModule(app.EvidenceKeeper),
+		params.NewAppModule(app.ParamsKeeper),
+		blog.NewAppModule(appCodec, app.BlogKeeper),
 	)
+
+	// During begin block slashing happens after distr.BeginBlocker so that
+	// there is nothing left over in the validator fee pool, so as to keep the
+	// CanWithdrawInvariant invariant.
+	// NOTE: staking module is required if HistoricalEntries param > 0
+	app.mm.SetOrderBeginBlockers(
+		upgradetypes.ModuleName, minttypes.ModuleName, distrtypes.ModuleName, slashingtypes.ModuleName,
+		evidencetypes.ModuleName, stakingtypes.ModuleName,
+	)
+	app.mm.SetOrderEndBlockers(crisistypes.ModuleName, govtypes.ModuleName, stakingtypes.ModuleName)
 
 	// NOTE: The genutils module must occur after staking so that pools are
 	// properly initialized with tokens from genesis accounts.
+	// NOTE: Capability module must occur first so that it can initialize any capabilities
+	// so that other modules that want to create or claim capabilities afterwards in InitChain
+	// can do so safely.
 	app.mm.SetOrderInitGenesis(
-		sidechannelTypes.ModuleName,
-		authTypes.ModuleName,
-		bankTypes.ModuleName,
-		govTypes.ModuleName,
-		chainmanagerTypes.ModuleName,
-		supplyTypes.ModuleName,
-		stakingTypes.ModuleName,
-		slashingTypes.ModuleName,
-		checkpointTypes.ModuleName,
-		borTypes.ModuleName,
-		clerkTypes.ModuleName,
-		topupTypes.ModuleName,
+		capabilitytypes.ModuleName, authtypes.ModuleName, banktypes.ModuleName, distrtypes.ModuleName, stakingtypes.ModuleName,
+		slashingtypes.ModuleName, govtypes.ModuleName, minttypes.ModuleName, crisistypes.ModuleName,
+		genutiltypes.ModuleName, evidencetypes.ModuleName,
 	)
 
-	// register message routes and query routes
-	app.mm.RegisterRoutes(app.Router(), app.QueryRouter())
-
-	// side router
-	app.sideRouter = types.NewSideRouter()
-	for _, m := range app.mm.Modules {
-		if m.Route() != "" {
-			if sm, ok := m.(hmModule.SideModule); ok {
-				app.sideRouter.AddRoute(m.Route(), &types.SideHandlers{
-					SideTxHandler: sm.NewSideTxHandler(),
-					PostTxHandler: sm.NewPostTxHandler(),
-				})
-			}
-		}
-	}
-	app.sideRouter.Seal()
+	app.mm.RegisterInvariants(&app.CrisisKeeper)
+	app.mm.RegisterRoutes(app.Router(), app.QueryRouter(), encodingConfig.Amino)
+	app.mm.RegisterQueryServices(app.GRPCQueryRouter())
 
 	// create the simulation manager and define the order of the modules for deterministic simulations
 	//
 	// NOTE: this is not required apps that don't use the simulator for fuzz testing
 	// transactions
-	app.sm = hmModule.NewSimulationManager(
-		auth.NewAppModule(app.AccountKeeper, &app.caller, []authTypes.AccountProcessor{
-			supplyTypes.AccountProcessor,
-		}),
-
-		slashing.NewAppModule(app.SlashingKeeper, app.StakingKeeper, &app.caller),
-		chainmanager.NewAppModule(app.ChainKeeper, &app.caller),
-		topup.NewAppModule(app.TopupKeeper, &app.caller),
-		staking.NewAppModule(app.StakingKeeper, &app.caller),
-		checkpoint.NewAppModule(app.CheckpointKeeper, app.StakingKeeper, app.TopupKeeper, &app.caller),
-		bank.NewAppModule(app.BankKeeper, &app.caller),
-		bor.NewAppModule(app.BorKeeper, &app.caller),
+	app.sm = module.NewSimulationManager(
+		auth.NewAppModule(appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts),
+		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
+		capability.NewAppModule(appCodec, *app.CapabilityKeeper),
+		gov.NewAppModule(appCodec, app.GovKeeper, app.AccountKeeper, app.BankKeeper),
+		mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper),
+		staking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
+		distr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
+		slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
+		params.NewAppModule(app.ParamsKeeper),
+		evidence.NewAppModule(app.EvidenceKeeper),
 	)
+
 	app.sm.RegisterStoreDecoders()
 
-	// mount the multistore and load the latest state
+	// initialize stores
 	app.MountKVStores(keys)
 	app.MountTransientStores(tkeys)
+	app.MountMemoryStores(memKeys)
 
-	// perform initialization logic
+	// initialize BaseApp
 	app.SetInitChainer(app.InitChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
-	app.SetEndBlocker(app.EndBlocker)
 	app.SetAnteHandler(
-		auth.NewAnteHandler(
-			app.AccountKeeper,
-			app.ChainKeeper,
-			app.SupplyKeeper,
-			&app.caller,
-			auth.DefaultSigVerificationGasConsumer,
+		ante.NewAnteHandler(
+			app.AccountKeeper, app.BankKeeper, ante.DefaultSigVerificationGasConsumer,
+			encodingConfig.TxConfig.SignModeHandler(),
 		),
 	)
-	// side-tx processor
-	app.SetPostDeliverTxHandler(app.PostDeliverTxHandler)
-	app.SetBeginSideBlocker(app.BeginSideBlocker)
-	app.SetDeliverSideTxHandler(app.DeliverSideTxHandler)
+	app.SetEndBlocker(app.EndBlocker)
 
-	// load latest version
-	err = app.LoadLatestVersion(app.keys[bam.MainStoreKey])
-	if err != nil {
-		cmn.Exit(err.Error())
+	if loadLatest {
+		if err := app.LoadLatestVersion(); err != nil {
+			tmos.Exit(err.Error())
+		}
+
+		// Initialize and seal the capability keeper so all persistent capabilities
+		// are loaded in-memory and prevent any further modules from creating scoped
+		// sub-keepers.
+		// This must be done during creation of baseapp rather than in InitChain so
+		// that in-memory capabilities get regenerated on app restart.
+		// Note that since this reads from the store, we can only perform it when
+		// `loadLatest` is set to true.
+		ctx := app.BaseApp.NewUncachedContext(true, tmproto.Header{})
+		app.CapabilityKeeper.InitializeAndSeal(ctx)
 	}
 
-	app.Seal()
 	return app
 }
 
-// MakeCodec create codec
-func MakeCodec() *codec.Codec {
-	cdc := codec.New()
-
-	codec.RegisterCrypto(cdc)
-	sdk.RegisterCodec(cdc)
-	ModuleBasics.RegisterCodec(cdc)
-
-	cdc.Seal()
-	return cdc
+// MakeCodecs constructs the *std.Codec and *codec.LegacyAmino instances used by
+// BlogApp. It is useful for tests and clients who do not want to construct the
+// full BlogApp
+func MakeCodecs() (codec.Marshaler, *codec.LegacyAmino) {
+	config := MakeEncodingConfig()
+	return config.Marshaler, config.Amino
 }
 
 // Name returns the name of the App
-func (app *HeimdallApp) Name() string { return app.BaseApp.Name() }
-
-// InitChainer initializes chain
-func (app *HeimdallApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
-	var genesisState GenesisState
-	err := json.Unmarshal(req.AppStateBytes, &genesisState)
-	if err != nil {
-		panic(err)
-	}
-
-	// get validator updates
-	if err := ModuleBasics.ValidateGenesis(genesisState); err != nil {
-		panic(err)
-	}
-
-	// check fee collector module account
-	if moduleAcc := app.SupplyKeeper.GetModuleAccount(ctx, authTypes.FeeCollectorName); moduleAcc == nil {
-		panic(fmt.Sprintf("%s module account has not been set", authTypes.FeeCollectorName))
-	}
-
-	// init genesis
-	app.mm.InitGenesis(ctx, genesisState)
-
-	stakingState := stakingTypes.GetGenesisStateFromAppState(genesisState)
-	checkpointState := checkpointTypes.GetGenesisStateFromAppState(genesisState)
-
-	// check if validator is current validator
-	// add to val updates else skip
-	var valUpdates []abci.ValidatorUpdate
-	for _, validator := range stakingState.Validators {
-		if validator.IsCurrentValidator(checkpointState.AckCount) {
-			// convert to Validator Update
-			updateVal := abci.ValidatorUpdate{
-				Power:  int64(validator.VotingPower),
-				PubKey: validator.PubKey.ABCIPubKey(),
-			}
-			// Add validator to validator updated to be processed below
-			valUpdates = append(valUpdates, updateVal)
-		}
-	}
-
-	// TODO make sure old validtors dont go in validator updates ie deactivated validators have to be removed
-	// udpate validators
-	return abci.ResponseInitChain{
-		// validator updates
-		Validators: valUpdates,
-	}
-}
+func (app *BlogApp) Name() string { return app.BaseApp.Name() }
 
 // BeginBlocker application updates every begin block
-func (app *HeimdallApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
-	app.AccountKeeper.SetBlockProposer(
-		ctx,
-		types.BytesToHeimdallAddress(req.Header.GetProposerAddress()),
-	)
+func (app *BlogApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
 	return app.mm.BeginBlock(ctx, req)
 }
 
-// EndBlocker executes on each end block
-func (app *HeimdallApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
-	// transfer fees to current proposer
-	if proposer, ok := app.AccountKeeper.GetBlockProposer(ctx); ok {
-		moduleAccount := app.SupplyKeeper.GetModuleAccount(ctx, authTypes.FeeCollectorName)
-		amount := moduleAccount.GetCoins().AmountOf(authTypes.FeeToken)
-		if !amount.IsZero() {
-			coins := sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: amount}}
-			if err := app.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, authTypes.FeeCollectorName, proposer, coins); err != nil {
-				logger.Error("EndBlocker | SendCoinsFromModuleToAccount", "Error", err)
-			}
-		}
+// EndBlocker application updates every end block
+func (app *BlogApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
+	return app.mm.EndBlock(ctx, req)
+}
 
-		// remove block proposer
-		app.AccountKeeper.RemoveBlockProposer(ctx)
+// InitChainer application update at chain initialization
+func (app *BlogApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
+	var genesisState GenesisState
+	if err := tmjson.Unmarshal(req.AppStateBytes, &genesisState); err != nil {
+		panic(err)
 	}
-
-	var tmValUpdates []abci.ValidatorUpdate
-
-	// --- Start update to new validators
-	currentValidatorSet := app.StakingKeeper.GetValidatorSet(ctx)
-	allValidators := app.StakingKeeper.GetAllValidators(ctx)
-	ackCount := app.CheckpointKeeper.GetACKCount(ctx)
-
-	// get validator updates
-	setUpdates := helper.GetUpdatedValidators(
-		&currentValidatorSet, // pointer to current validator set -- UpdateValidators will modify it
-		allValidators,        // All validators
-		ackCount,             // ack count
-	)
-
-	if len(setUpdates) > 0 {
-		// create new validator set
-		if err := currentValidatorSet.UpdateWithChangeSet(setUpdates); err != nil {
-			// return with nothing
-			logger.Error("Unable to update current validator set", "Error", err)
-			return abci.ResponseEndBlock{}
-		}
-
-		// increment proposer priority
-		currentValidatorSet.IncrementProposerPriority(1)
-
-		// validator set change
-		logger.Debug("[ENDBLOCK] Updated current validator set", "proposer", currentValidatorSet.GetProposer())
-
-		// save set in store
-		if err := app.StakingKeeper.UpdateValidatorSetInStore(ctx, currentValidatorSet); err != nil {
-			// return with nothing
-			logger.Error("Unable to update current validator set in state", "Error", err)
-			return abci.ResponseEndBlock{}
-		}
-
-		// convert updates from map to array
-		for _, v := range setUpdates {
-			tmValUpdates = append(tmValUpdates, abci.ValidatorUpdate{
-				Power:  int64(v.VotingPower),
-				PubKey: v.PubKey.ABCIPubKey(),
-			})
-		}
-	}
-
-	// end block
-	app.mm.EndBlock(ctx, req)
-
-	// send validator updates to peppermint
-	return abci.ResponseEndBlock{
-		ValidatorUpdates: tmValUpdates,
-	}
+	return app.mm.InitGenesis(ctx, app.appCodec, genesisState)
 }
 
 // LoadHeight loads a particular height
-func (app *HeimdallApp) LoadHeight(height int64) error {
-	return app.LoadVersion(height, app.keys[bam.MainStoreKey])
+func (app *BlogApp) LoadHeight(height int64) error {
+	return app.LoadVersion(height)
 }
 
 // ModuleAccountAddrs returns all the app's module account addresses.
-func (app *HeimdallApp) ModuleAccountAddrs() map[string]bool {
+func (app *BlogApp) ModuleAccountAddrs() map[string]bool {
 	modAccAddrs := make(map[string]bool)
 	for acc := range maccPerms {
-		modAccAddrs[supplyTypes.NewModuleAddress(acc).String()] = true
+		modAccAddrs[authtypes.NewModuleAddress(acc).String()] = true
 	}
 
 	return modAccAddrs
 }
 
-// Codec returns HeimdallApp's codec.
-//
-// NOTE: This is solely to be used for testing purposes as it may be desirable
-// for modules to register their own custom testing types.
-func (app *HeimdallApp) Codec() *codec.Codec {
-	return app.cdc
+// BlockedAddrs returns all the app's module account addresses that are not
+// allowed to receive external tokens.
+func (app *BlogApp) BlockedAddrs() map[string]bool {
+	blockedAddrs := make(map[string]bool)
+	for acc := range maccPerms {
+		blockedAddrs[authtypes.NewModuleAddress(acc).String()] = !allowedReceivingModAcc[acc]
+	}
+
+	return blockedAddrs
 }
 
-// SetCodec set codec to app
+// LegacyAmino returns BlogApp's amino codec.
 //
 // NOTE: This is solely to be used for testing purposes as it may be desirable
 // for modules to register their own custom testing types.
-func (app *HeimdallApp) SetCodec(cdc *codec.Codec) {
-	app.cdc = cdc
+func (app *BlogApp) LegacyAmino() *codec.LegacyAmino {
+	return app.legacyAmino
+}
+
+// AppCodec returns BlogApp's app codec.
+//
+// NOTE: This is solely to be used for testing purposes as it may be desirable
+// for modules to register their own custom testing types.
+func (app *BlogApp) AppCodec() codec.Marshaler {
+	return app.appCodec
+}
+
+// InterfaceRegistry returns BlogApp's InterfaceRegistry
+func (app *BlogApp) InterfaceRegistry() types.InterfaceRegistry {
+	return app.interfaceRegistry
 }
 
 // GetKey returns the KVStoreKey for the provided store key.
 //
 // NOTE: This is solely to be used for testing purposes.
-func (app *HeimdallApp) GetKey(storeKey string) *sdk.KVStoreKey {
+func (app *BlogApp) GetKey(storeKey string) *sdk.KVStoreKey {
 	return app.keys[storeKey]
 }
 
 // GetTKey returns the TransientStoreKey for the provided store key.
 //
 // NOTE: This is solely to be used for testing purposes.
-func (app *HeimdallApp) GetTKey(storeKey string) *sdk.TransientStoreKey {
+func (app *BlogApp) GetTKey(storeKey string) *sdk.TransientStoreKey {
 	return app.tkeys[storeKey]
+}
+
+// GetMemKey returns the MemStoreKey for the provided mem key.
+//
+// NOTE: This is solely used for testing purposes.
+func (app *BlogApp) GetMemKey(storeKey string) *sdk.MemoryStoreKey {
+	return app.memKeys[storeKey]
 }
 
 // GetSubspace returns a param subspace for a given module name.
 //
 // NOTE: This is solely to be used for testing purposes.
-func (app *HeimdallApp) GetSubspace(moduleName string) subspace.Subspace {
-	return app.subspaces[moduleName]
-}
-
-// GetSideRouter returns side-tx router
-func (app *HeimdallApp) GetSideRouter() types.SideRouter {
-	return app.sideRouter
-}
-
-// SetSideRouter sets side-tx router
-// Testing ONLY
-func (app *HeimdallApp) SetSideRouter(r types.SideRouter) {
-	app.sideRouter = r
-}
-
-// GetModuleManager returns module manager
-//
-// NOTE: This is solely to be used for testing purposes.
-func (app *HeimdallApp) GetModuleManager() *module.Manager {
-	return app.mm
+func (app *BlogApp) GetSubspace(moduleName string) paramstypes.Subspace {
+	subspace, _ := app.ParamsKeeper.GetSubspace(moduleName)
+	return subspace
 }
 
 // SimulationManager implements the SimulationApp interface
-func (app *HeimdallApp) SimulationManager() *hmModule.SimulationManager {
+func (app *BlogApp) SimulationManager() *module.SimulationManager {
 	return app.sm
+}
+
+// RegisterAPIRoutes registers all application module routes with the provided
+// API server.
+func (app *BlogApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.APIConfig) {
+	clientCtx := apiSvr.ClientCtx
+	rpc.RegisterRoutes(clientCtx, apiSvr.Router)
+	authrest.RegisterTxRoutes(clientCtx, apiSvr.Router)
+
+	ModuleBasics.RegisterRESTRoutes(clientCtx, apiSvr.Router)
+	ModuleBasics.RegisterGRPCRoutes(apiSvr.ClientCtx, apiSvr.GRPCRouter)
+
+	// register swagger API from root so that other applications can override easily
+	if apiConfig.Swagger {
+		RegisterSwaggerAPI(clientCtx, apiSvr.Router)
+	}
+}
+
+// RegisterSwaggerAPI registers swagger route with API Server
+func RegisterSwaggerAPI(ctx client.Context, rtr *mux.Router) {
+	statikFS, err := fs.New()
+	if err != nil {
+		panic(err)
+	}
+
+	staticServer := http.FileServer(statikFS)
+	rtr.PathPrefix("/swagger/").Handler(http.StripPrefix("/swagger/", staticServer))
 }
 
 // GetMaccPerms returns a copy of the module account permissions
@@ -711,4 +517,20 @@ func GetMaccPerms() map[string][]string {
 		dupMaccPerms[k] = v
 	}
 	return dupMaccPerms
+}
+
+// initParamsKeeper init params keeper and its subspaces
+func initParamsKeeper(appCodec codec.BinaryMarshaler, legacyAmino *codec.LegacyAmino, key, tkey sdk.StoreKey) paramskeeper.Keeper {
+	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, key, tkey)
+
+	paramsKeeper.Subspace(authtypes.ModuleName)
+	paramsKeeper.Subspace(banktypes.ModuleName)
+	paramsKeeper.Subspace(stakingtypes.ModuleName)
+	paramsKeeper.Subspace(minttypes.ModuleName)
+	paramsKeeper.Subspace(distrtypes.ModuleName)
+	paramsKeeper.Subspace(slashingtypes.ModuleName)
+	paramsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govtypes.ParamKeyTable())
+	paramsKeeper.Subspace(crisistypes.ModuleName)
+
+	return paramsKeeper
 }
