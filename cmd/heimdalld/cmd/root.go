@@ -184,7 +184,7 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts serverty
 		panic(err)
 	}
 
-	return app.NewBlogApp(
+	return app.NewHeimdallApp(
 		logger, db, traceStore, true, skipUpgradeHeights,
 		cast.ToString(appOpts.Get(flags.FlagHome)),
 		cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)),
@@ -211,13 +211,13 @@ func createSimappAndExport(
 	encCfg.Marshaler = codec.NewProtoCodec(encCfg.InterfaceRegistry)
 	var a app.App
 	if height != -1 {
-		a = app.NewBlogApp(logger, db, traceStore, false, map[int64]bool{}, "", uint(1), encCfg)
+		a = app.NewHeimdallApp(logger, db, traceStore, false, map[int64]bool{}, "", uint(1), encCfg)
 
 		if err := a.LoadHeight(height); err != nil {
 			return servertypes.ExportedApp{}, err
 		}
 	} else {
-		a = app.NewBlogApp(logger, db, traceStore, true, map[int64]bool{}, "", uint(1), encCfg)
+		a = app.NewHeimdallApp(logger, db, traceStore, true, map[int64]bool{}, "", uint(1), encCfg)
 	}
 
 	return a.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)

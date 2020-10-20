@@ -1,10 +1,10 @@
 module github.com/maticnetwork/heimdall
-
 go 1.15
 
 require (
 	github.com/cosmos/cosmos-sdk v0.40.0-rc0
 	github.com/gogo/protobuf v1.3.1
+	github.com/google/uuid v1.0.0
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/grpc-gateway v1.15.0
 	github.com/rakyll/statik v0.1.7

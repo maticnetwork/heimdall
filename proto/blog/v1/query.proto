@@ -1,0 +1,34 @@
+syntax = "proto3";
+package blog.v1;
+
+import "cosmos/base/query/v1beta1/pagination.proto";
+// this line is used by starport scaffolding # 1
+import "blog/v1/tx.proto";
+
+
+option go_package = "github.com/maticnetwork/heimdall/x/blog/types";
+
+// Query defines the gRPC querier service.
+service Query {
+    // this line is used by starport scaffolding # 2
+	rpc AllComment(QueryAllCommentRequest) returns (QueryAllCommentResponse);
+	rpc AllPost(QueryAllPostRequest) returns (QueryAllPostResponse);
+}
+
+// this line is used by starport scaffolding # 3
+message QueryAllCommentRequest {
+	cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+message QueryAllCommentResponse {
+	repeated MsgComment comment = 1;
+	cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+message QueryAllPostRequest {
+	cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+message QueryAllPostResponse {
+	repeated MsgPost post = 1;
+	cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}

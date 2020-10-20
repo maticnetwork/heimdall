@@ -80,7 +80,7 @@ import (
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
 )
 
-const appName = "BlogApp"
+const appName = "Heimdall"
 
 var (
 	// DefaultNodeHome default home directories for the application daemon
@@ -125,12 +125,12 @@ var (
 	}
 )
 
-var _ App = (*BlogApp)(nil)
+var _ App = (*HeimdallApp)(nil)
 
-// BlogApp extends an ABCI application, but with most of its parameters exported.
+// HeimdallApp extends an ABCI application, but with most of its parameters exported.
 // They are exported for convenience in creating helper functions, as object
 // capabilities aren't needed for testing.
-type BlogApp struct {
+type HeimdallApp struct {
 	*baseapp.BaseApp
 	legacyAmino       *codec.LegacyAmino
 	appCodec          codec.Marshaler
@@ -172,14 +172,14 @@ func init() {
 		panic(err)
 	}
 
-	DefaultNodeHome = filepath.Join(userHomeDir, ".blogapp")
+	DefaultNodeHome = filepath.Join(userHomeDir, ".heimdalld")
 }
 
-// NewBlogApp returns a reference to an initialized BlogApp.
-func NewBlogApp(
+// NewHeimdallApp returns a reference to an initialized HeimdallApp.
+func NewHeimdallApp(
 	logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, skipUpgradeHeights map[int64]bool,
 	homePath string, invCheckPeriod uint, encodingConfig blogparams.EncodingConfig, baseAppOptions ...func(*baseapp.BaseApp),
-) *BlogApp {
+) *HeimdallApp {
 	// TODO: Remove cdc in favor of appCodec once all modules are migrated.
 	appCodec := encodingConfig.Marshaler
 	legacyAmino := encodingConfig.Amino
@@ -200,7 +200,7 @@ func NewBlogApp(
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey, blogtypes.MemStoreKey)
 
-	app := &BlogApp{
+	app := &HeimdallApp{
 		BaseApp:           bApp,
 		legacyAmino:       legacyAmino,
 		appCodec:          appCodec,
@@ -373,28 +373,28 @@ func NewBlogApp(
 }
 
 // MakeCodecs constructs the *std.Codec and *codec.LegacyAmino instances used by
-// BlogApp. It is useful for tests and clients who do not want to construct the
-// full BlogApp
+// HeimdallApp. It is useful for tests and clients who do not want to construct the
+// full HeimdallApp
 func MakeCodecs() (codec.Marshaler, *codec.LegacyAmino) {
 	config := MakeEncodingConfig()
 	return config.Marshaler, config.Amino
 }
 
 // Name returns the name of the App
-func (app *BlogApp) Name() string { return app.BaseApp.Name() }
+func (app *HeimdallApp) Name() string { return app.BaseApp.Name() }
 
 // BeginBlocker application updates every begin block
-func (app *BlogApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
+func (app *HeimdallApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
 	return app.mm.BeginBlock(ctx, req)
 }
 
 // EndBlocker application updates every end block
-func (app *BlogApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
+func (app *HeimdallApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
 	return app.mm.EndBlock(ctx, req)
 }
 
 // InitChainer application update at chain initialization
-func (app *BlogApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
+func (app *HeimdallApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	var genesisState GenesisState
 	if err := tmjson.Unmarshal(req.AppStateBytes, &genesisState); err != nil {
 		panic(err)
@@ -403,12 +403,12 @@ func (app *BlogApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci
 }
 
 // LoadHeight loads a particular height
-func (app *BlogApp) LoadHeight(height int64) error {
+func (app *HeimdallApp) LoadHeight(height int64) error {
 	return app.LoadVersion(height)
 }
 
 // ModuleAccountAddrs returns all the app's module account addresses.
-func (app *BlogApp) ModuleAccountAddrs() map[string]bool {
+func (app *HeimdallApp) ModuleAccountAddrs() map[string]bool {
 	modAccAddrs := make(map[string]bool)
 	for acc := range maccPerms {
 		modAccAddrs[authtypes.NewModuleAddress(acc).String()] = true
@@ -419,7 +419,7 @@ func (app *BlogApp) ModuleAccountAddrs() map[string]bool {
 
 // BlockedAddrs returns all the app's module account addresses that are not
 // allowed to receive external tokens.
-func (app *BlogApp) BlockedAddrs() map[string]bool {
+func (app *HeimdallApp) BlockedAddrs() map[string]bool {
 	blockedAddrs := make(map[string]bool)
 	for acc := range maccPerms {
 		blockedAddrs[authtypes.NewModuleAddress(acc).String()] = !allowedReceivingModAcc[acc]
@@ -428,64 +428,64 @@ func (app *BlogApp) BlockedAddrs() map[string]bool {
 	return blockedAddrs
 }
 
-// LegacyAmino returns BlogApp's amino codec.
+// LegacyAmino returns HeimdallApp's amino codec.
 //
 // NOTE: This is solely to be used for testing purposes as it may be desirable
 // for modules to register their own custom testing types.
-func (app *BlogApp) LegacyAmino() *codec.LegacyAmino {
+func (app *HeimdallApp) LegacyAmino() *codec.LegacyAmino {
 	return app.legacyAmino
 }
 
-// AppCodec returns BlogApp's app codec.
+// AppCodec returns HeimdallApp's app codec.
 //
 // NOTE: This is solely to be used for testing purposes as it may be desirable
 // for modules to register their own custom testing types.
-func (app *BlogApp) AppCodec() codec.Marshaler {
+func (app *HeimdallApp) AppCodec() codec.Marshaler {
 	return app.appCodec
 }
 
-// InterfaceRegistry returns BlogApp's InterfaceRegistry
-func (app *BlogApp) InterfaceRegistry() types.InterfaceRegistry {
+// InterfaceRegistry returns HeimdallApp's InterfaceRegistry
+func (app *HeimdallApp) InterfaceRegistry() types.InterfaceRegistry {
 	return app.interfaceRegistry
 }
 
 // GetKey returns the KVStoreKey for the provided store key.
 //
 // NOTE: This is solely to be used for testing purposes.
-func (app *BlogApp) GetKey(storeKey string) *sdk.KVStoreKey {
+func (app *HeimdallApp) GetKey(storeKey string) *sdk.KVStoreKey {
 	return app.keys[storeKey]
 }
 
 // GetTKey returns the TransientStoreKey for the provided store key.
 //
 // NOTE: This is solely to be used for testing purposes.
-func (app *BlogApp) GetTKey(storeKey string) *sdk.TransientStoreKey {
+func (app *HeimdallApp) GetTKey(storeKey string) *sdk.TransientStoreKey {
 	return app.tkeys[storeKey]
 }
 
 // GetMemKey returns the MemStoreKey for the provided mem key.
 //
 // NOTE: This is solely used for testing purposes.
-func (app *BlogApp) GetMemKey(storeKey string) *sdk.MemoryStoreKey {
+func (app *HeimdallApp) GetMemKey(storeKey string) *sdk.MemoryStoreKey {
 	return app.memKeys[storeKey]
 }
 
 // GetSubspace returns a param subspace for a given module name.
 //
 // NOTE: This is solely to be used for testing purposes.
-func (app *BlogApp) GetSubspace(moduleName string) paramstypes.Subspace {
+func (app *HeimdallApp) GetSubspace(moduleName string) paramstypes.Subspace {
 	subspace, _ := app.ParamsKeeper.GetSubspace(moduleName)
 	return subspace
 }
 
 // SimulationManager implements the SimulationApp interface
-func (app *BlogApp) SimulationManager() *module.SimulationManager {
+func (app *HeimdallApp) SimulationManager() *module.SimulationManager {
 	return app.sm
 }
 
 // RegisterAPIRoutes registers all application module routes with the provided
 // API server.
-func (app *BlogApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.APIConfig) {
+func (app *HeimdallApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.APIConfig) {
 	clientCtx := apiSvr.ClientCtx
 	rpc.RegisterRoutes(clientCtx, apiSvr.Router)
 	authrest.RegisterTxRoutes(clientCtx, apiSvr.Router)

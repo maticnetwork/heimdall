@@ -1,3 +1,3 @@
 package cmd
 
-const appName = "blogapp"
+const appName = "heimdall"

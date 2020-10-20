@@ -20,3 +20,11 @@ const (
 func KeyPrefix(p string) []byte {
 	return []byte(p)
 }
+
+const (
+	PostKey = "Post"
+)
+
+const (
+	CommentKey = "Comment"
+)

@@ -2,11 +2,11 @@ package keeper
 
 import (
 	// this line is used by starport scaffolding # 1
+	"github.com/maticnetwork/heimdall/x/blog/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/maticnetwork/heimdall/x/blog/types"
 
 	abci "github.com/tendermint/tendermint/abci/types"
 )
@@ -20,6 +20,10 @@ func NewQuerier(k Keeper, legacyQuerierCdc *codec.LegacyAmino) sdk.Querier {
 
 		switch path[0] {
 		// this line is used by starport scaffolding # 2
+		case types.QueryListComment:
+			return listComment(ctx, k, legacyQuerierCdc)
+		case types.QueryListPost:
+			return listPost(ctx, k, legacyQuerierCdc)
 		default:
 			err = sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unknown %s query endpoint: %s", types.ModuleName, path[0])
 		}
