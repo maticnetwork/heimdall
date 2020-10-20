@@ -50,7 +50,7 @@ func TestTxValidateBasic(t *testing.T) {
 }
 
 func TestDefaultTxEncoder(t *testing.T) {
-	cdc := codec.New()
+	cdc := codec.NewLegacyAmino()
 	sdk.RegisterCodec(cdc)
 	RegisterCodec(cdc)
 	cdc.RegisterConcrete(sdk.TestMsg{}, "cosmos-sdk/Test", nil)

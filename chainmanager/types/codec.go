@@ -8,7 +8,7 @@ import (
 var ModuleCdc *codec.Codec
 
 func init() {
-	ModuleCdc = codec.New()
+	ModuleCdc = codec.NewLegacyAmino()
 	RegisterCodec(ModuleCdc)
 	ModuleCdc.Seal()
 }

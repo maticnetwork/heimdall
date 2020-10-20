@@ -66,7 +66,7 @@ func testProposal(changes ...paramTypes.ParamChange) paramTypes.ParameterChangeP
 }
 
 func newTestInput(t *testing.T) testInput {
-	cdc := codec.New()
+	cdc := codec.NewLegacyAmino()
 	types.RegisterCodec(cdc)
 
 	db := dbm.NewMemDB()

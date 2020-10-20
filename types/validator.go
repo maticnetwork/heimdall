@@ -82,7 +82,7 @@ func (v *Validator) ValidateBasic() bool {
 }
 
 // amino marshall validator
-func MarshallValidator(cdc *codec.Codec, validator Validator) (bz []byte, err error) {
+func MarshallValidator(cdc *codec.AminoCodec, validator Validator) (bz []byte, err error) {
 	bz, err = cdc.MarshalBinaryBare(validator)
 	if err != nil {
 		return bz, err
@@ -91,7 +91,7 @@ func MarshallValidator(cdc *codec.Codec, validator Validator) (bz []byte, err er
 }
 
 // amono unmarshall validator
-func UnmarshallValidator(cdc *codec.Codec, value []byte) (Validator, error) {
+func UnmarshallValidator(cdc *codec.AminoCodec, value []byte) (Validator, error) {
 	var validator Validator
 	// unmarshall validator and return
 	err := cdc.UnmarshalBinaryBare(value, &validator)

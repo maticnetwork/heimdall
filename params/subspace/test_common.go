@@ -22,7 +22,7 @@ const (
 
 // Returns components for testing
 func DefaultTestComponents(t *testing.T) (sdk.Context, Subspace, func() sdk.CommitID) {
-	cdc := codec.New()
+	cdc := codec.NewLegacyAmino()
 	key := sdk.NewKVStoreKey(StoreKey)
 	tkey := sdk.NewTransientStoreKey(TStoreKey)
 	db := dbm.NewMemDB()

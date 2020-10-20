@@ -9,7 +9,9 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/tendermint/tendermint/libs/cli"
 
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -19,7 +21,7 @@ const ClientContextKey = sdk.ContextKey("client.context")
 
 // SetCmdClientContextHandler is to be used in a command pre-hook execution to
 // read flags that populate a Context and sets that to the command's Context.
-func SetCmdClientContextHandler(clientCtx Context, cmd *cobra.Command) (err error) {
+func SetCmdClientContextHandler(clientCtx client.Context, cmd *cobra.Command) (err error) {
 	clientCtx, err = ReadPersistentCommandFlags(clientCtx, cmd.Flags())
 	if err != nil {
 		return err
@@ -86,7 +88,7 @@ func ValidateCmd(cmd *cobra.Command, args []string) error {
 // - client.Context field not pre-populated & flag set: uses set flag value
 // - client.Context field pre-populated & flag not set: uses pre-populated value
 // - client.Context field pre-populated & flag set: uses set flag value
-func ReadPersistentCommandFlags(clientCtx Context, flagSet *pflag.FlagSet) (Context, error) {
+func ReadPersistentCommandFlags(clientCtx client.Context, flagSet *pflag.FlagSet) (client.Context, error) {
 	if clientCtx.OutputFormat == "" || flagSet.Changed(cli.OutputFlag) {
 		output, _ := flagSet.GetString(cli.OutputFlag)
 		clientCtx = clientCtx.WithOutputFormat(output)
@@ -106,7 +108,8 @@ func ReadPersistentCommandFlags(clientCtx Context, flagSet *pflag.FlagSet) (Cont
 		keyringBackend, _ := flagSet.GetString(flags.FlagKeyringBackend)
 
 		if keyringBackend != "" {
-			kr, err := newKeyringFromFlags(clientCtx, keyringBackend)
+			//TODO: this is not public function
+			kr, err := client.newKeyringFromFlags(clientCtx, keyringBackend)
 			if err != nil {
 				return clientCtx, err
 			}
@@ -135,7 +138,7 @@ func ReadPersistentCommandFlags(clientCtx Context, flagSet *pflag.FlagSet) (Cont
 // - client.Context field not pre-populated & flag set: uses set flag value
 // - client.Context field pre-populated & flag not set: uses pre-populated value
 // - client.Context field pre-populated & flag set: uses set flag value
-func ReadQueryCommandFlags(clientCtx Context, flagSet *pflag.FlagSet) (Context, error) {
+func ReadQueryCommandFlags(clientCtx client.Context, flagSet *pflag.FlagSet) (client.Context, error) {
 	if clientCtx.Height == 0 || flagSet.Changed(flags.FlagHeight) {
 		height, _ := flagSet.GetInt64(flags.FlagHeight)
 		clientCtx = clientCtx.WithHeight(height)
@@ -159,7 +162,7 @@ func ReadQueryCommandFlags(clientCtx Context, flagSet *pflag.FlagSet) (Context, 
 // - client.Context field not pre-populated & flag set: uses set flag value
 // - client.Context field pre-populated & flag not set: uses pre-populated value
 // - client.Context field pre-populated & flag set: uses set flag value
-func ReadTxCommandFlags(clientCtx Context, flagSet *pflag.FlagSet) (Context, error) {
+func ReadTxCommandFlags(clientCtx client.Context, flagSet *pflag.FlagSet) (client.Context, error) {
 	clientCtx, err := ReadPersistentCommandFlags(clientCtx, flagSet)
 	if err != nil {
 		return clientCtx, err
@@ -197,7 +200,7 @@ func ReadTxCommandFlags(clientCtx Context, flagSet *pflag.FlagSet) (Context, err
 
 	if clientCtx.From == "" || flagSet.Changed(flags.FlagFrom) {
 		from, _ := flagSet.GetString(flags.FlagFrom)
-		fromAddr, fromName, err := GetFromFields(clientCtx.Keyring, from, clientCtx.GenerateOnly)
+		fromAddr, fromName, err := client.GetFromFields(clientCtx.Keyring, from, clientCtx.GenerateOnly)
 		if err != nil {
 			return clientCtx, err
 		}
@@ -210,23 +213,23 @@ func ReadTxCommandFlags(clientCtx Context, flagSet *pflag.FlagSet) (Context, err
 
 // GetClientContextFromCmd returns a Context from a command or an empty Context
 // if it has not been set.
-func GetClientContextFromCmd(cmd *cobra.Command) Context {
+func GetClientContextFromCmd(cmd *cobra.Command) client.Context {
 	if v := cmd.Context().Value(ClientContextKey); v != nil {
-		clientCtxPtr := v.(*Context)
+		clientCtxPtr := v.(*client.Context)
 		return *clientCtxPtr
 	}
 
-	return Context{}
+	return client.Context{}
 }
 
 // SetCmdClientContext sets a command's Context value to the provided argument.
-func SetCmdClientContext(cmd *cobra.Command, clientCtx Context) error {
+func SetCmdClientContext(cmd *cobra.Command, clientCtx client.Context) error {
 	v := cmd.Context().Value(ClientContextKey)
 	if v == nil {
 		return errors.New("client context not set")
 	}
 
-	clientCtxPtr := v.(*Context)
+	clientCtxPtr := v.(*client.Context)
 	*clientCtxPtr = clientCtx
 
 	return nil

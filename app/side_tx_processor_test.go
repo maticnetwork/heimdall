@@ -37,7 +37,7 @@ func (suite *SideTxProcessorTestSuite) SetupTest() {
 
 	happ := app.Setup(isCheckTx)
 	ctx := happ.NewContext(isCheckTx, abci.Header{})
-	cdc := codec.New()
+	cdc := codec.NewLegacyAmino()
 	registerTestCodec(cdc)
 	happ.SetCodec(cdc) // set to app
 	encoder := authTypes.DefaultTxEncoder(cdc)

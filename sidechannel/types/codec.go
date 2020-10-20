@@ -5,4 +5,4 @@ import (
 )
 
 // ModuleCdc module codec
-var ModuleCdc = codec.New()
+var ModuleCdc = codec.NewLegacyAmino()

@@ -38,7 +38,7 @@ func SortValidatorSlashingInfoByID(slashingInfos []*ValidatorSlashingInfo) []*Va
 }
 
 // amino marshall validator slashing info
-func MarshallValSlashingInfo(cdc *codec.Codec, valSlashingInfo ValidatorSlashingInfo) (bz []byte, err error) {
+func MarshallValSlashingInfo(cdc *codec.AminoCodec, valSlashingInfo ValidatorSlashingInfo) (bz []byte, err error) {
 	bz, err = cdc.MarshalBinaryBare(valSlashingInfo)
 	if err != nil {
 		return bz, err
@@ -47,7 +47,7 @@ func MarshallValSlashingInfo(cdc *codec.Codec, valSlashingInfo ValidatorSlashing
 }
 
 // amono unmarshall validator slashing info
-func UnmarshallValSlashingInfo(cdc *codec.Codec, value []byte) (ValidatorSlashingInfo, error) {
+func UnmarshallValSlashingInfo(cdc *codec.AminoCodec, value []byte) (ValidatorSlashingInfo, error) {
 	var valSlashingInfo ValidatorSlashingInfo
 	// unmarshall validator and return
 	err := cdc.UnmarshalBinaryBare(value, &valSlashingInfo)

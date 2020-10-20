@@ -19,7 +19,7 @@ type s struct {
 }
 
 func createTestCodec() *codec.Codec {
-	cdc := codec.New()
+	cdc := codec.NewLegacyAmino()
 	sdk.RegisterCodec(cdc)
 	cdc.RegisterConcrete(s{}, "test/s", nil)
 	cdc.RegisterConcrete(invalid{}, "test/invalid", nil)

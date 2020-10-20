@@ -35,7 +35,7 @@ func (da *DividendAccount) String() string {
 }
 
 // MarshallDividendAccount - amino Marshall DividendAccount
-func MarshallDividendAccount(cdc *codec.Codec, dividendAccount DividendAccount) (bz []byte, err error) {
+func MarshallDividendAccount(cdc *codec.AminoCodec, dividendAccount DividendAccount) (bz []byte, err error) {
 	bz, err = cdc.MarshalBinaryBare(dividendAccount)
 	if err != nil {
 		return bz, err
@@ -45,7 +45,7 @@ func MarshallDividendAccount(cdc *codec.Codec, dividendAccount DividendAccount) 
 }
 
 // UnMarshallDividendAccount - amino Unmarshall DividendAccount
-func UnMarshallDividendAccount(cdc *codec.Codec, value []byte) (DividendAccount, error) {
+func UnMarshallDividendAccount(cdc *codec.AminoCodec, value []byte) (DividendAccount, error) {
 
 	var dividendAccount DividendAccount
 	err := cdc.UnmarshalBinaryBare(value, &dividendAccount)

@@ -12,7 +12,7 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
-var cdc = codec.New()
+var cdc = codec.NewLegacyAmino()
 
 //
 // Validator Join

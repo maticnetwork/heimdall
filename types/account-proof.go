@@ -34,7 +34,7 @@ func (ap *DividendAccountProof) String() string {
 }
 
 // MarshallDividendAccountProof - amino Marshall DividendAccountProof
-func MarshallDividendAccountProof(cdc *codec.Codec, dividendAccountProof DividendAccountProof) (bz []byte, err error) {
+func MarshallDividendAccountProof(cdc *codec.AminoCodec, dividendAccountProof DividendAccountProof) (bz []byte, err error) {
 	bz, err = cdc.MarshalBinaryBare(dividendAccountProof)
 	if err != nil {
 		return bz, err
@@ -44,7 +44,7 @@ func MarshallDividendAccountProof(cdc *codec.Codec, dividendAccountProof Dividen
 }
 
 // UnMarshallDividendAccountProof - amino Unmarshall DividendAccountProof
-func UnMarshallDividendAccountProof(cdc *codec.Codec, value []byte) (DividendAccountProof, error) {
+func UnMarshallDividendAccountProof(cdc *codec.AminoCodec, value []byte) (DividendAccountProof, error) {
 
 	var dividendAccountProof DividendAccountProof
 	err := cdc.UnmarshalBinaryBare(value, &dividendAccountProof)

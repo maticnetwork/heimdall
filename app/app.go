@@ -490,7 +490,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 
 // MakeCodec create codec
 func MakeCodec() *codec.Codec {
-	cdc := codec.New()
+	cdc := codec.NewLegacyAmino()
 
 	codec.RegisterCrypto(cdc)
 	sdk.RegisterCodec(cdc)

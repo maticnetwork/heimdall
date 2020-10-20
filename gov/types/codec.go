@@ -5,7 +5,7 @@ import (
 )
 
 // ModuleCdc module codec
-var ModuleCdc = codec.New()
+var ModuleCdc = codec.NewLegacyAmino()
 
 // RegisterCodec registers all the necessary types and interfaces for
 // governance.

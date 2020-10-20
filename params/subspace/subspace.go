@@ -1,6 +1,7 @@
 package subspace
 
 import (
+	"fmt"
 	"reflect"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -21,28 +22,29 @@ const (
 // Transient store persists for a block, so we use it for
 // recording whether the parameter has been changed or not
 type Subspace struct {
-	cdc  *codec.Codec
-	key  sdk.StoreKey // []byte -> []byte, stores parameter
-	tkey sdk.StoreKey // []byte -> bool, stores parameter change
-
-	name []byte
-
-	table KeyTable
+	cdc         codec.BinaryMarshaler
+	legacyAmino *codec.LegacyAmino
+	key         sdk.StoreKey // []byte -> []byte, stores parameter
+	tkey        sdk.StoreKey // []byte -> bool, stores parameter change
+	name        []byte
+	table       KeyTable
 }
 
 // NewSubspace constructs a store with namestore
-func NewSubspace(cdc *codec.Codec, key sdk.StoreKey, tkey sdk.StoreKey, name string) (res Subspace) {
-	res = Subspace{
-		cdc:  cdc,
-		key:  key,
-		tkey: tkey,
-		name: []byte(name),
-		table: KeyTable{
-			m: make(map[string]attribute),
-		},
+func NewSubspace(cdc codec.BinaryMarshaler, legacyAmino *codec.LegacyAmino, key sdk.StoreKey, tkey sdk.StoreKey, name string) Subspace {
+	return Subspace{
+		cdc:         cdc,
+		legacyAmino: legacyAmino,
+		key:         key,
+		tkey:        tkey,
+		name:        []byte(name),
+		table:       NewKeyTable(),
 	}
+}
 
-	return
+// HasKeyTable returns if the Subspace has a KeyTable registered.
+func (s Subspace) HasKeyTable() bool {
+	return len(s.table.m) > 0
 }
 
 // WithKeyTable initializes KeyTable and returns modified Subspace
@@ -81,25 +83,47 @@ func (s Subspace) transientStore(ctx sdk.Context) sdk.KVStore {
 	return prefix.NewStore(ctx.TransientStore(s.tkey), append(s.name, '/'))
 }
 
-// Get parameter from store
+// Validate attempts to validate a parameter value by its key. If the key is not
+// registered or if the validation of the value fails, an error is returned.
+func (s Subspace) Validate(ctx sdk.Context, key []byte, value interface{}) error {
+	attr, ok := s.table.m[string(key)]
+	if !ok {
+		return fmt.Errorf("parameter %s not registered", string(key))
+	}
+
+	if err := attr.vfn(value); err != nil {
+		return fmt.Errorf("invalid parameter value: %s", err)
+	}
+
+	return nil
+}
+
+// Get queries for a parameter by key from the Subspace's KVStore and sets the
+// value to the provided pointer. If the value does not exist, it will panic.
 func (s Subspace) Get(ctx sdk.Context, key []byte, ptr interface{}) {
+	s.checkType(key, ptr)
+
 	store := s.kvStore(ctx)
 	bz := store.Get(key)
-	err := s.cdc.UnmarshalJSON(bz, ptr)
-	if err != nil {
+
+	if err := s.legacyAmino.UnmarshalJSON(bz, ptr); err != nil {
 		panic(err)
 	}
 }
 
-// GetIfExists do not modify ptr if the stored parameter is nil
+// GetIfExists queries for a parameter by key from the Subspace's KVStore and
+// sets the value to the provided pointer. If the value does not exist, it will
+// perform a no-op.
 func (s Subspace) GetIfExists(ctx sdk.Context, key []byte, ptr interface{}) {
 	store := s.kvStore(ctx)
 	bz := store.Get(key)
 	if bz == nil {
 		return
 	}
-	err := s.cdc.UnmarshalJSON(bz, ptr)
-	if err != nil {
+
+	s.checkType(key, ptr)
+
+	if err := s.legacyAmino.UnmarshalJSON(bz, ptr); err != nil {
 		panic(err)
 	}
 }
@@ -122,62 +146,71 @@ func (s Subspace) Modified(ctx sdk.Context, key []byte) bool {
 	return tstore.Has(key)
 }
 
-func (s Subspace) checkType(store sdk.KVStore, key []byte, param interface{}) {
+// checkType verifies that the provided key and value are comptable and registered.
+func (s Subspace) checkType(key []byte, value interface{}) {
 	attr, ok := s.table.m[string(key)]
 	if !ok {
-		panic("Parameter not registered")
+		panic(fmt.Sprintf("parameter %s not registered", string(key)))
 	}
 
 	ty := attr.ty
-	pty := reflect.TypeOf(param)
+	pty := reflect.TypeOf(value)
 	if pty.Kind() == reflect.Ptr {
 		pty = pty.Elem()
 	}
 
 	if pty != ty {
-		panic("Type mismatch with registered table")
+		panic("type mismatch with registered table")
 	}
 }
 
-// Set stores the parameter. It returns error if stored parameter has different type from input.
-// It also set to the transient store to record change.
-func (s Subspace) Set(ctx sdk.Context, key []byte, param interface{}) {
+// Set stores a value for given a parameter key assuming the parameter type has
+// been registered. It will panic if the parameter type has not been registered
+// or if the value cannot be encoded. A change record is also set in the Subspace's
+// transient KVStore to mark the parameter as modified.
+func (s Subspace) Set(ctx sdk.Context, key []byte, value interface{}) {
+	s.checkType(key, value)
 	store := s.kvStore(ctx)
 
-	s.checkType(store, key, param)
-
-	bz, err := s.cdc.MarshalJSON(param)
+	bz, err := s.legacyAmino.MarshalJSON(value)
 	if err != nil {
 		panic(err)
 	}
+
 	store.Set(key, bz)
 
 	tstore := s.transientStore(ctx)
 	tstore.Set(key, []byte{})
-
 }
 
-// Update stores raw parameter bytes. It returns error if the stored parameter
-// has a different type from the input. It also sets to the transient store to
-// record change.
-func (s Subspace) Update(ctx sdk.Context, key []byte, param []byte) error {
+// Update stores an updated raw value for a given parameter key assuming the
+// parameter type has been registered. It will panic if the parameter type has
+// not been registered or if the value cannot be encoded. An error is returned
+// if the raw value is not compatible with the registered type for the parameter
+// key or if the new value is invalid as determined by the registered type's
+// validation function.
+func (s Subspace) Update(ctx sdk.Context, key, value []byte) error {
 	attr, ok := s.table.m[string(key)]
 	if !ok {
-		panic("Parameter not registered")
+		panic(fmt.Sprintf("parameter %s not registered", string(key)))
 	}
 
 	ty := attr.ty
 	dest := reflect.New(ty).Interface()
 	s.GetIfExists(ctx, key, dest)
-	err := s.cdc.UnmarshalJSON(param, dest)
-	if err != nil {
+
+	if err := s.legacyAmino.UnmarshalJSON(value, dest); err != nil {
+		return err
+	}
+
+	// destValue contains the dereferenced value of dest so validation function do
+	// not have to operate on pointers.
+	destValue := reflect.Indirect(reflect.ValueOf(dest)).Interface()
+	if err := s.Validate(ctx, key, destValue); err != nil {
 		return err
 	}
 
 	s.Set(ctx, key, dest)
-	tStore := s.transientStore(ctx)
-	tStore.Set(key, []byte{})
-
 	return nil
 }
 
