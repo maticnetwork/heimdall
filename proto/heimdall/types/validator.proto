@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package heimdall.types;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/maticnetwork/heimdall/types";
+
+message Validator {
+  bytes                       address           = 1;
+  tendermint.crypto.PublicKey pub_key           = 2 [(gogoproto.nullable) = false];
+  int64                       voting_power      = 3;
+  int64                       proposer_priority = 4;
+
+  uint64                      id                = 5;
+  uint64                      start_epoch       = 6;
+  uint64                      end_epoch         = 7;
+  uint64                      nonce             = 8;
+  int64                       voting_power      = 10;
+  string                      last-updated      = 11;
+}
