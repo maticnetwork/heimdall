@@ -5,6 +5,6 @@ option go_package = "github.com/maticnetwork/heimdall/x/checkpoint/types";
 
 // GenesisState defines the checkpoint module's genesis state.
 message GenesisState {
-  Params params = 1 [(gogoproto.nullable) = false];
+  // Params params = 1 [(gogoproto.nullable) = false];
 
 }
