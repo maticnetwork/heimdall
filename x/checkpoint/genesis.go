@@ -10,7 +10,7 @@ import (
 
 // InitGenesis initializes the capability module's state from a provided genesis
 // state.
-func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
+func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, genState types.GenesisState) {
 	keeper.SetParams(ctx, genState.Params)
 
 	// Set last no-ack

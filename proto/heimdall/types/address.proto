@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package heimdall.types;
+
+option go_package = "github.com/maticnetwork/heimdall/types";
+
+/*
+ enum HeimdallAddress {
+  DEFAULT = 0;
+}
+*/
+
