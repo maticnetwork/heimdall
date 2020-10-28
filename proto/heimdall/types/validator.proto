@@ -19,7 +19,6 @@ message ValidatorSet {
   int64                      total_voting_power = 3;
 }
 
-
 message Validator {
   option (gogoproto.goproto_getters)  = false;
   option (gogoproto.goproto_stringer)        = false;
@@ -29,12 +28,10 @@ message Validator {
   uint64                      nonce             = 4;
   int64                       voting_power      = 5;
   bytes                       pub_key = 6 [
-    (gogoproto.casttype)   = "github.com/maticnetwork/heimdall/types/common.PubKey",
-    (gogoproto.jsontag)    = "PubKey"
+    (gogoproto.casttype)   = "github.com/maticnetwork/heimdall/types/common.PubKey"
   ];
   bytes                       signer = 7 [
-    (gogoproto.casttype)   = "github.com/maticnetwork/heimdall/types/common.HeimdallAddress",
-    (gogoproto.jsontag)    = "PubKey"
+    (gogoproto.casttype)   = "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"
   ];
   string                      last_updated      = 8;
   bool                        Jailed            = 9;
@@ -50,7 +47,11 @@ enum ValidatorID {
 
 
 message MinimalVal {
-  ValidatorID                 id                = 1;
-  int64                       voting_power      = 2;
-  // HeimdallAddress             Signer            = 3;
+  option (gogoproto.goproto_getters)  = false;
+  // option (gogoproto.goproto_stringer)        = false;
+  ValidatorID                 ID                = 1;
+  uint64                      voting_power       = 2;
+  bytes                       signer = 3 [
+    (gogoproto.casttype)   = "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"
+  ];
 }

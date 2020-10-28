@@ -9,15 +9,16 @@ import (
 	"github.com/cbergoon/merkletree"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/maticnetwork/bor/crypto"
+	"github.com/maticnetwork/heimdall/types/common"
 )
 
 // DividendAccount contains burned Fee amount
-type DividendAccount struct {
-	User      HeimdallAddress `json:"user"`
-	FeeAmount string          `json:"feeAmount"` // string representation of big.Int
-}
+// type DividendAccount struct {
+// 	User      HeimdallAddress `json:"user"`
+// 	FeeAmount string          `json:"feeAmount"` // string representation of big.Int
+// }
 
-func NewDividendAccount(user HeimdallAddress, fee string) DividendAccount {
+func NewDividendAccount(user common.HeimdallAddress, fee string) DividendAccount {
 	return DividendAccount{
 		User:      user,
 		FeeAmount: fee,
