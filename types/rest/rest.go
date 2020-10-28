@@ -17,9 +17,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec/legacy"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
+	"github.com/maticnetwork/heimdall/types/common"
 	tmTypes "github.com/tendermint/tendermint/types"
-
-	"github.com/maticnetwork/heimdall/types"
 )
 
 const (
@@ -119,7 +118,7 @@ func (br BaseReq) ValidateBasic(w http.ResponseWriter) bool {
 		}
 	}
 
-	if types.HexToHeimdallAddress(br.From).Empty() || len(br.From) == 0 {
+	if common.HexToHeimdallAddress(br.From).Empty() || len(br.From) == 0 {
 		WriteErrorResponse(w, http.StatusUnauthorized, fmt.Sprintf("invalid from address: %s", br.From))
 		return false
 	}
@@ -206,11 +205,7 @@ func PostProcessResponse(w http.ResponseWriter, cliCtx client.Context, resp inte
 
 	default:
 		var err error
-		if cliCtx.Indent {
-			result, err = cliCtx.LegacyAmino.MarshalJSONIndent(resp, "", "  ")
-		} else {
-			result, err = cliCtx.LegacyAmino.MarshalJSON(resp)
-		}
+		result, err = cliCtx.LegacyAmino.MarshalJSON(resp)
 
 		if err != nil {
 			WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
