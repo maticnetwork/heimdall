@@ -1,4 +1,4 @@
-package types
+package common
 
 import (
 	"encoding/hex"
@@ -15,7 +15,7 @@ import (
 // PubKey pubkey
 type PubKey [65]byte
 
-// ZeroPubKey represents empty pub key
+// common.ZeroPubKey represents empty pub key
 var ZeroPubKey = PubKey{}
 
 // NewPubKey from byte array

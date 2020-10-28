@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/maticnetwork/heimdall/types/common"
 )
 
 // Validator heimdall validator
@@ -34,8 +35,8 @@ func NewValidator(
 	endEpoch uint64,
 	nonce uint64,
 	power int64,
-	pubKey PubKey,
-	signer HeimdallAddress,
+	pubKey common.PubKey,
+	signer common.HeimdallAddress,
 ) *Validator {
 	return &Validator{
 		ID:          id,
@@ -72,7 +73,7 @@ func (v *Validator) IsCurrentValidator(ackCount uint64) bool {
 
 // Validates validator
 func (v *Validator) ValidateBasic() bool {
-	if bytes.Equal(v.PubKey.Bytes(), ZeroPubKey.Bytes()) {
+	if bytes.Equal(v.PubKey.Bytes(), common.ZeroPubKey.Bytes()) {
 		return false
 	}
 	if bytes.Equal(v.Signer.Bytes(), []byte("")) {

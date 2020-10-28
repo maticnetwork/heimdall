@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/maticnetwork/heimdall/types/common"
 	"github.com/pkg/errors"
 	"github.com/tendermint/tendermint/crypto/merkle"
 )
@@ -26,26 +27,6 @@ const (
 	MaxTotalVotingPower      = int64(math.MaxInt64) / 8
 	PriorityWindowSizeFactor = 2
 )
-
-// ValidatorSet represent a set of *Validator at a given height.
-// The validators can be fetched by address or index.
-// The index is in order of .Address, so the indices are fixed
-// for all rounds of a given blockchain height - ie. the validators
-// are sorted by their address.
-// On the other hand, the .ProposerPriority of each validator and
-// the designated .GetProposer() of a set changes every round,
-// upon calling .IncrementProposerPriority().
-// NOTE: Not goroutine-safe.
-// NOTE: All get/set to validators should copy the value for safety.
-
-// type ValidatorSet struct {
-// 	// NOTE: persisted via reflect, must be exported.
-// 	Validators []*Validator `json:"validators"`
-// 	Proposer   *Validator   `json:"proposer"`
-
-// 	// cached (unexported)
-// 	TotalVotingPower int64
-// }
 
 // NewValidatorSet initializes a ValidatorSet by copying over the
 // values from `valz`, a list of Validators. If valz is nil or empty,
@@ -314,7 +295,7 @@ func (vals *ValidatorSet) Hash() []byte {
 	for i, val := range vals.Validators {
 		bzs[i] = val.Bytes()
 	}
-	return merkle.SimpleHashFromByteSlices(bzs)
+	return merkle.HashFromByteSlices(bzs)
 }
 
 // Iterate will run the given function over the set.
@@ -341,7 +322,7 @@ func processChanges(origChanges []*Validator) (updates, removals []*Validator, e
 
 	removals = make([]*Validator, 0, len(changes))
 	updates = make([]*Validator, 0, len(changes))
-	var prevAddr HeimdallAddress
+	var prevAddr common.HeimdallAddress
 
 	// Scan changes by address and append valid validators to updates or removals lists.
 	for _, valUpdate := range changes {
