@@ -13,7 +13,7 @@ import (
 
 // StoreDecoderRegistry defines each of the modules store decoders. Used for ImportExport
 // simulation.
-type StoreDecoderRegistry map[string]func(cdc *codec.Codec, kvA, kvB sdk.KVPair) string
+type StoreDecoderRegistry map[string]func(cdc *codec.LegacyAmino, kvA, kvB sdk.KVPair) string
 
 // AppModuleSimulation defines the standard functions that every module should expose
 // for the SDK blockchain simulator
@@ -103,7 +103,7 @@ func (sm *SimulationManager) WeightedOperations(simState SimulationState) []simu
 // GenesisState generator function
 type SimulationState struct {
 	AppParams    simulation.AppParams
-	Cdc          *codec.Codec                         // application codec
+	Cdc          *codec.LegacyAmino                   // application codec
 	Rand         *rand.Rand                           // random number
 	GenState     map[string]json.RawMessage           // genesis state
 	Accounts     []simulation.Account                 // simulation accounts

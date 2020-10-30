@@ -220,11 +220,11 @@ func PostProcessResponse(w http.ResponseWriter, cliCtx client.Context, resp inte
 		err    error
 	)
 
-	if cliCtx.Indent {
-		output, err = cliCtx.LegacyAmino.MarshalJSONIndent(wrappedResp, "", "  ")
-	} else {
-		output, err = cliCtx.LegacyAmino.MarshalJSON(wrappedResp)
-	}
+	// if cliCtx.Indent {
+	// 	output, err = cliCtx.LegacyAmino.MarshalJSONIndent(wrappedResp, "", "  ")
+	// } else {
+	output, err = cliCtx.LegacyAmino.MarshalJSON(wrappedResp)
+	// }
 
 	if err != nil {
 		WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
