@@ -1,7 +1,7 @@
 package keeper
 
-import (
-	"github.com/maticnetwork/heimdall/x/topup/types"
-)
+// import (
+// 	"github.com/maticnetwork/heimdall/x/topup/types"
+// )
 
-var _ types.QueryServer = Keeper{}
+// var _ types.QueryServer = Keeper{}

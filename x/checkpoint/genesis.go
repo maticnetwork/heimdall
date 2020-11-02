@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/x/checkpoint/keeper"
 	"github.com/maticnetwork/heimdall/x/checkpoint/types"
 )
@@ -37,7 +38,7 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, genState types.GenesisSt
 
 	// Add checkpoint in buffer
 	if genState.BufferedCheckpoint != nil {
-		if err := keeper.SetCheckpointBuffer(ctx, *genState.BufferedCheckpoint); err != nil {
+		if err := keeper.SetCheckpointBuffer(ctx, genState.BufferedCheckpoint); err != nil {
 			keeper.Logger(ctx).Error("InitGenesis | SetCheckpointBuffer", "error", err)
 		}
 	}
