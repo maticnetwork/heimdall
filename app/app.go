@@ -225,7 +225,8 @@ func NewHeimdallApp(
 	// app.mm.RegisterInvariants(&app.CrisisKeeper)
 	app.mm.RegisterRoutes(app.Router(), app.QueryRouter(), encodingConfig.Amino)
 
-	app.mm.RegisterServices(module.NewConfigurator(app.MsgServiceRouter(), app.GRPCQueryRouter()))
+	// TODO : uncomment below
+	//  app.mm.RegisterServices(module.NewConfigurator(app.MsgServiceRouter(), app.GRPCQueryRouter()))
 
 	// add test gRPC service for testing gRPC queries in isolation
 	// testdata.RegisterQueryServer(app.GRPCQueryRouter(), testdata.QueryImpl{})
@@ -243,7 +244,8 @@ func NewHeimdallApp(
 		params.NewAppModule(app.ParamsKeeper),
 	)
 
-	app.sm.RegisterStoreDecoders()
+	// TODO : uncomment later
+	// app.sm.RegisterStoreDecoders()
 
 	// initialize stores
 	app.MountKVStores(keys)
