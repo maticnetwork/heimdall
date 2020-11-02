@@ -7,10 +7,13 @@ import "google/protobuf/duration.proto";
 
 option go_package = "github.com/maticnetwork/heimdall/x/staking/types";
 
+option (gogoproto.sizer_all)        = false;
+option (gogoproto.marshaler_all)    = false;
+option (gogoproto.unmarshaler_all)  = false;
 
 message MsgValidatorJoin {
   option (gogoproto.goproto_getters)  = false;
-  bytes                       from = 1 [
+  string                       from = 1 [
     (gogoproto.casttype)   = "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"
   ];
   uint64                       id = 2 [
@@ -18,13 +21,13 @@ message MsgValidatorJoin {
     (gogoproto.customname) = "ID"
   ];
   uint64                   activation_epoch = 3;
-  uint64                     amount = 4 [
+  string                     amount = 4 [
     (gogoproto.casttype)   = "github.com/cosmos/cosmos-sdk/types.Int"
   ];
-  bytes                       signer_pub_key = 5 [
+  string                       signer_pub_key = 5 [
     (gogoproto.casttype)   = "github.com/maticnetwork/heimdall/types/common.PubKey"
   ];
-  bytes                       tx_hash = 6 [
+  string                       tx_hash = 6 [
     (gogoproto.casttype)   = "github.com/maticnetwork/heimdall/types/common.HeimdallHash"
   ];
   uint64                   log_index = 7;

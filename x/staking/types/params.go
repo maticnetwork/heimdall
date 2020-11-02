@@ -16,11 +16,10 @@ var ParamStoreKeyProposerBonusPercent = []byte("proposerbonuspercent")
 // ParamKeyTable type declaration for parameters
 func ParamKeyTable() paramtypes.KeyTable {
 	return paramtypes.NewKeyTable(
-		paramtypes.NewParamSetPair(ParamStoreKeyProposerBonusPercent, DefaultProposerBonusPercent, validateProposerBonusPercent)
+		paramtypes.NewParamSetPair(ParamStoreKeyProposerBonusPercent, DefaultProposerBonusPercent, validateProposerBonusPercent),
 	// ParamStoreKeyProposerBonusPercent, DefaultProposerBonusPercent,
 	)
 }
-
 
 func validateProposerBonusPercent(i interface{}) error {
 	// v, ok := i.(sdk.Coin)
