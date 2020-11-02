@@ -1,6 +1,7 @@
 package blog
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -20,6 +21,8 @@ import (
 	"github.com/maticnetwork/heimdall/x/blog/client/rest"
 	"github.com/maticnetwork/heimdall/x/blog/keeper"
 	"github.com/maticnetwork/heimdall/x/blog/types"
+
+	authTypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 var (
@@ -81,6 +84,11 @@ func (AppModuleBasic) RegisterRESTRoutes(clientCtx client.Context, rtr *mux.Rout
 func (a AppModuleBasic) RegisterGRPCRoutes(_ client.Context, _ *runtime.ServeMux) {
 }
 
+// RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the gov module.
+func (a AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {
+	authTypes.RegisterQueryHandlerClient(context.Background(), mux, authTypes.NewQueryClient(clientCtx))
+}
+
 // GetTxCmd returns the capability module's root tx command.
 func (a AppModuleBasic) GetTxCmd() *cobra.Command {
 	return cli.GetTxCmd()
@@ -125,6 +133,12 @@ func (AppModule) QuerierRoute() string { return "" }
 // LegacyQuerierHandler returns the capability module's Querier.
 func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sdk.Querier {
 	return keeper.NewQuerier(am.keeper, legacyQuerierCdc)
+}
+
+// RegisterServices registers a GRPC query service to respond to the
+// module-specific GRPC queries.
+func (am AppModule) RegisterServices(cfg module.Configurator) {
+	types.RegisterQueryServer(cfg.QueryServer(), am.keeper)
 }
 
 // RegisterQueryService registers a GRPC query service to respond to the
