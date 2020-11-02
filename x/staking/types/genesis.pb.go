@@ -5,10 +5,11 @@ package types
 
 import (
 	fmt "fmt"
+	_ "github.com/gogo/protobuf/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
-	io "io"
+	types "github.com/maticnetwork/heimdall/types"
+	github_com_maticnetwork_heimdall_types_common "github.com/maticnetwork/heimdall/types/common"
 	math "math"
-	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -24,6 +25,9 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // GenesisState defines the staking module's genesis state.
 type GenesisState struct {
+	Validators       []*types.Validator  `protobuf:"bytes,1,rep,name=validators,proto3" json:"validators,omitempty"`
+	CurrentValSet    *types.ValidatorSet `protobuf:"bytes,2,opt,name=current_val_set,json=currentValSet,proto3" json:"current_val_set,omitempty"`
+	StakingSequences []string            `protobuf:"bytes,3,rep,name=staking_sequences,json=stakingSequences,proto3" json:"staking_sequences,omitempty"`
 }
 
 func (m *GenesisState) Reset()         { *m = GenesisState{} }
@@ -33,25 +37,16 @@ func (*GenesisState) Descriptor() ([]byte, []int) {
 	return fileDescriptor_5668a8fd9722a3ab, []int{0}
 }
 func (m *GenesisState) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
+	return xxx_messageInfo_GenesisState.Unmarshal(m, b)
 }
 func (m *GenesisState) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_GenesisState.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
+	return xxx_messageInfo_GenesisState.Marshal(b, m, deterministic)
 }
 func (m *GenesisState) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_GenesisState.Merge(m, src)
 }
 func (m *GenesisState) XXX_Size() int {
-	return m.Size()
+	return xxx_messageInfo_GenesisState.Size(m)
 }
 func (m *GenesisState) XXX_DiscardUnknown() {
 	xxx_messageInfo_GenesisState.DiscardUnknown(m)
@@ -59,209 +54,98 @@ func (m *GenesisState) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_GenesisState proto.InternalMessageInfo
 
+func (m *GenesisState) GetValidators() []*types.Validator {
+	if m != nil {
+		return m.Validators
+	}
+	return nil
+}
+
+func (m *GenesisState) GetCurrentValSet() *types.ValidatorSet {
+	if m != nil {
+		return m.CurrentValSet
+	}
+	return nil
+}
+
+func (m *GenesisState) GetStakingSequences() []string {
+	if m != nil {
+		return m.StakingSequences
+	}
+	return nil
+}
+
+// GenesisValidator genesis validator
+type GenesisValidator struct {
+	ID         types.ValidatorID                                             `protobuf:"varint,1,opt,name=ID,proto3,enum=heimdall.types.ValidatorID" json:"ID,omitempty"`
+	StartEpoch uint64                                                        `protobuf:"varint,2,opt,name=start_epoch,json=startEpoch,proto3" json:"start_epoch,omitempty"`
+	EndEpoch   uint64                                                        `protobuf:"varint,3,opt,name=end_epoch,json=endEpoch,proto3" json:"end_epoch,omitempty"`
+	Nonce      uint64                                                        `protobuf:"varint,4,opt,name=nonce,proto3" json:"nonce,omitempty"`
+	Power      uint64                                                        `protobuf:"varint,5,opt,name=power,proto3" json:"power,omitempty"`
+	PubKey     github_com_maticnetwork_heimdall_types_common.PubKey          `protobuf:"bytes,6,opt,name=pub_key,json=pubKey,proto3,casttype=github.com/maticnetwork/heimdall/types/common.PubKey" json:"pub_key,omitempty"`
+	Signer     github_com_maticnetwork_heimdall_types_common.HeimdallAddress `protobuf:"bytes,7,opt,name=signer,proto3,casttype=github.com/maticnetwork/heimdall/types/common.HeimdallAddress" json:"signer,omitempty"`
+}
+
+func (m *GenesisValidator) Reset()         { *m = GenesisValidator{} }
+func (m *GenesisValidator) String() string { return proto.CompactTextString(m) }
+func (*GenesisValidator) ProtoMessage()    {}
+func (*GenesisValidator) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5668a8fd9722a3ab, []int{1}
+}
+func (m *GenesisValidator) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GenesisValidator.Unmarshal(m, b)
+}
+func (m *GenesisValidator) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GenesisValidator.Marshal(b, m, deterministic)
+}
+func (m *GenesisValidator) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GenesisValidator.Merge(m, src)
+}
+func (m *GenesisValidator) XXX_Size() int {
+	return xxx_messageInfo_GenesisValidator.Size(m)
+}
+func (m *GenesisValidator) XXX_DiscardUnknown() {
+	xxx_messageInfo_GenesisValidator.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GenesisValidator proto.InternalMessageInfo
+
 func init() {
 	proto.RegisterType((*GenesisState)(nil), "heimdall.staking.v1beta1.GenesisState")
+	proto.RegisterType((*GenesisValidator)(nil), "heimdall.staking.v1beta1.GenesisValidator")
 }
 
 func init() { proto.RegisterFile("staking/v1beta/genesis.proto", fileDescriptor_5668a8fd9722a3ab) }
 
 var fileDescriptor_5668a8fd9722a3ab = []byte{
-	// 154 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x92, 0x29, 0x2e, 0x49, 0xcc,
-	0xce, 0xcc, 0x4b, 0xd7, 0x2f, 0x33, 0x4c, 0x4a, 0x2d, 0x49, 0xd4, 0x4f, 0x4f, 0xcd, 0x4b, 0x2d,
-	0xce, 0x2c, 0xd6, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x92, 0xc8, 0x48, 0xcd, 0xcc, 0x4d, 0x49,
-	0xcc, 0xc9, 0xd1, 0x83, 0x2a, 0xd3, 0x83, 0x28, 0x33, 0x54, 0xe2, 0xe3, 0xe2, 0x71, 0x87, 0x28,
-	0x0d, 0x2e, 0x49, 0x2c, 0x49, 0x75, 0xf2, 0x3a, 0xf1, 0x48, 0x8e, 0xf1, 0xc2, 0x23, 0x39, 0xc6,
-	0x07, 0x8f, 0xe4, 0x18, 0x27, 0x3c, 0x96, 0x63, 0xb8, 0xf0, 0x58, 0x8e, 0xe1, 0xc6, 0x63, 0x39,
-	0x86, 0x28, 0x83, 0xf4, 0xcc, 0x92, 0x8c, 0xd2, 0x24, 0xbd, 0xe4, 0xfc, 0x5c, 0xfd, 0xdc, 0xc4,
-	0x92, 0xcc, 0xe4, 0xbc, 0xd4, 0x92, 0xf2, 0xfc, 0xa2, 0x6c, 0x7d, 0x98, 0xd9, 0xfa, 0x15, 0xfa,
-	0x30, 0x47, 0x94, 0x54, 0x16, 0xa4, 0x16, 0x27, 0xb1, 0x81, 0x2d, 0x37, 0x06, 0x04, 0x00, 0x00,
-	0xff, 0xff, 0x23, 0xc5, 0x6f, 0xb4, 0x9c, 0x00, 0x00, 0x00,
+	// 453 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x52, 0xcf, 0x6e, 0xd3, 0x30,
+	0x18, 0x4f, 0xda, 0xae, 0x63, 0xee, 0x80, 0x61, 0xed, 0x60, 0xb6, 0x29, 0x8d, 0x76, 0x8a, 0x34,
+	0x29, 0x61, 0x85, 0x03, 0x20, 0x71, 0xd8, 0x54, 0x04, 0x85, 0x0b, 0xa4, 0xd2, 0x24, 0xb8, 0x44,
+	0x4e, 0xf2, 0x29, 0x8d, 0x9a, 0xd8, 0xc1, 0x76, 0x3a, 0xfa, 0x06, 0x1c, 0x79, 0x04, 0x1e, 0x84,
+	0x07, 0xe0, 0xb8, 0x23, 0x17, 0x26, 0xd4, 0xbe, 0xc5, 0x4e, 0xa8, 0x4e, 0x52, 0x21, 0xa4, 0x0a,
+	0xed, 0x14, 0xfb, 0xf7, 0xf7, 0x8b, 0xfc, 0xa1, 0x23, 0xa9, 0xe8, 0x34, 0x65, 0x89, 0x37, 0x3b,
+	0x0d, 0x41, 0x51, 0x2f, 0x01, 0x06, 0x32, 0x95, 0x6e, 0x21, 0xb8, 0xe2, 0x98, 0x4c, 0x20, 0xcd,
+	0x63, 0x9a, 0x65, 0x6e, 0x2d, 0x73, 0x2b, 0xd9, 0xe9, 0x81, 0xd5, 0x30, 0x9e, 0x9a, 0x17, 0x20,
+	0xbd, 0x19, 0xcd, 0xd2, 0x98, 0x2a, 0x2e, 0x2a, 0xe7, 0xc1, 0x7e, 0xc2, 0x13, 0xae, 0x8f, 0xde,
+	0xea, 0x54, 0xa1, 0xc7, 0xdf, 0x4d, 0xb4, 0xfb, 0xaa, 0x6a, 0x18, 0x2b, 0xaa, 0x00, 0x3f, 0x43,
+	0x68, 0xed, 0x94, 0xc4, 0xb4, 0xdb, 0x4e, 0x6f, 0xf0, 0xd0, 0x5d, 0xb7, 0xea, 0x6c, 0xf7, 0xa2,
+	0x51, 0xf8, 0x7f, 0x89, 0xf1, 0x10, 0xdd, 0x8f, 0x4a, 0x21, 0x80, 0xa9, 0x60, 0x46, 0xb3, 0x40,
+	0x82, 0x22, 0x2d, 0xdb, 0x74, 0x7a, 0x83, 0xa3, 0x8d, 0xfe, 0x31, 0x28, 0xff, 0x6e, 0x6d, 0xba,
+	0xa0, 0xd9, 0x18, 0x14, 0x3e, 0x41, 0x0f, 0xea, 0x5f, 0x0b, 0x24, 0x7c, 0x2a, 0x81, 0x45, 0x20,
+	0x49, 0xdb, 0x6e, 0x3b, 0x3b, 0xfe, 0x5e, 0x4d, 0x8c, 0x1b, 0xfc, 0xf8, 0x57, 0x0b, 0xed, 0xd5,
+	0xe3, 0xaf, 0x33, 0xf1, 0x09, 0x6a, 0x8d, 0x86, 0xc4, 0xb4, 0x4d, 0xe7, 0xde, 0xe0, 0x70, 0x63,
+	0xf5, 0x68, 0xe8, 0xb7, 0x46, 0x43, 0xdc, 0x47, 0x3d, 0xa9, 0xa8, 0x50, 0x01, 0x14, 0x3c, 0x9a,
+	0xe8, 0x81, 0x3b, 0x3e, 0xd2, 0xd0, 0xcb, 0x15, 0x82, 0x0f, 0xd1, 0x0e, 0xb0, 0xb8, 0xa6, 0xdb,
+	0x9a, 0xbe, 0x03, 0x2c, 0xae, 0xc8, 0x7d, 0xb4, 0xc5, 0x38, 0x8b, 0x80, 0x74, 0x34, 0x51, 0x5d,
+	0x56, 0x68, 0xc1, 0x2f, 0x41, 0x90, 0xad, 0x0a, 0xd5, 0x17, 0xfc, 0x1e, 0x6d, 0x17, 0x65, 0x18,
+	0x4c, 0x61, 0x4e, 0xba, 0xb6, 0xe9, 0xec, 0x9e, 0x3f, 0xbd, 0xb9, 0xee, 0x3f, 0x49, 0x52, 0x35,
+	0x29, 0x43, 0x37, 0xe2, 0xb9, 0x97, 0x53, 0x95, 0x46, 0x0c, 0xd4, 0x25, 0x17, 0x53, 0xef, 0x9f,
+	0xd7, 0x8c, 0x78, 0x9e, 0x73, 0xe6, 0xbe, 0x2b, 0xc3, 0xb7, 0x30, 0xf7, 0xbb, 0x85, 0xfe, 0xe2,
+	0x0f, 0xa8, 0x2b, 0xd3, 0x84, 0x81, 0x20, 0xdb, 0x3a, 0xf1, 0xec, 0xe6, 0xba, 0xff, 0xe2, 0x76,
+	0x89, 0xaf, 0x6b, 0xf4, 0x2c, 0x8e, 0x05, 0x48, 0xe9, 0xd7, 0x81, 0xcf, 0x3b, 0x5f, 0xbe, 0xf5,
+	0x8d, 0xf3, 0x37, 0x3f, 0x16, 0x96, 0x71, 0xb5, 0xb0, 0x8c, 0xdf, 0x0b, 0xcb, 0xf8, 0xba, 0xb4,
+	0x8c, 0xab, 0xa5, 0x65, 0xfc, 0x5c, 0x5a, 0xc6, 0xc7, 0x47, 0xff, 0xad, 0xf9, 0xec, 0x35, 0x9b,
+	0xac, 0x0b, 0xc3, 0xae, 0xde, 0xb8, 0xc7, 0x7f, 0x02, 0x00, 0x00, 0xff, 0xff, 0x00, 0xba, 0x17,
+	0x05, 0xe1, 0x02, 0x00, 0x00,
 }
-
-func (m *GenesisState) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *GenesisState) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	return len(dAtA) - i, nil
-}
-
-func encodeVarintGenesis(dAtA []byte, offset int, v uint64) int {
-	offset -= sovGenesis(v)
-	base := offset
-	for v >= 1<<7 {
-		dAtA[offset] = uint8(v&0x7f | 0x80)
-		v >>= 7
-		offset++
-	}
-	dAtA[offset] = uint8(v)
-	return base
-}
-func (m *GenesisState) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	return n
-}
-
-func sovGenesis(x uint64) (n int) {
-	return (math_bits.Len64(x|1) + 6) / 7
-}
-func sozGenesis(x uint64) (n int) {
-	return sovGenesis(uint64((x << 1) ^ uint64((int64(x) >> 63))))
-}
-func (m *GenesisState) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowGenesis
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: GenesisState: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: GenesisState: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		default:
-			iNdEx = preIndex
-			skippy, err := skipGenesis(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthGenesis
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthGenesis
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func skipGenesis(dAtA []byte) (n int, err error) {
-	l := len(dAtA)
-	iNdEx := 0
-	depth := 0
-	for iNdEx < l {
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return 0, ErrIntOverflowGenesis
-			}
-			if iNdEx >= l {
-				return 0, io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		wireType := int(wire & 0x7)
-		switch wireType {
-		case 0:
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return 0, ErrIntOverflowGenesis
-				}
-				if iNdEx >= l {
-					return 0, io.ErrUnexpectedEOF
-				}
-				iNdEx++
-				if dAtA[iNdEx-1] < 0x80 {
-					break
-				}
-			}
-		case 1:
-			iNdEx += 8
-		case 2:
-			var length int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return 0, ErrIntOverflowGenesis
-				}
-				if iNdEx >= l {
-					return 0, io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				length |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if length < 0 {
-				return 0, ErrInvalidLengthGenesis
-			}
-			iNdEx += length
-		case 3:
-			depth++
-		case 4:
-			if depth == 0 {
-				return 0, ErrUnexpectedEndOfGroupGenesis
-			}
-			depth--
-		case 5:
-			iNdEx += 4
-		default:
-			return 0, fmt.Errorf("proto: illegal wireType %d", wireType)
-		}
-		if iNdEx < 0 {
-			return 0, ErrInvalidLengthGenesis
-		}
-		if depth == 0 {
-			return iNdEx, nil
-		}
-	}
-	return 0, io.ErrUnexpectedEOF
-}
-
-var (
-	ErrInvalidLengthGenesis        = fmt.Errorf("proto: negative length found during unmarshaling")
-	ErrIntOverflowGenesis          = fmt.Errorf("proto: integer overflow")
-	ErrUnexpectedEndOfGroupGenesis = fmt.Errorf("proto: unexpected end of group")
-)

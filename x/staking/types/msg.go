@@ -102,257 +102,220 @@ func (msg MsgValidatorJoin) GetNonce() uint64 {
 // Stake update
 //
 
+var _ sdk.Msg = &MsgStakeUpdate{}
+
+// NewMsgStakeUpdate represents stake update
+func NewMsgStakeUpdate(from hmCommon.HeimdallAddress, id uint64, newAmount sdk.Int, txhash hmCommon.HeimdallHash, logIndex uint64, blockNumber uint64, nonce uint64) MsgStakeUpdate {
+	return MsgStakeUpdate{
+		From:        from,
+		ID:          hmTypes.NewValidatorID(id),
+		NewAmount:   newAmount,
+		TxHash:      txhash,
+		LogIndex:    logIndex,
+		BlockNumber: blockNumber,
+		Nonce:       nonce,
+	}
+}
+
+func (msg MsgStakeUpdate) Type() string {
+	return "validator-stake-update"
+}
+
+func (msg MsgStakeUpdate) Route() string {
+	return RouterKey
+}
+
+func (msg MsgStakeUpdate) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{hmCommon.HeimdallAddressToAccAddress(msg.From)}
+}
+
+func (msg MsgStakeUpdate) GetSignBytes() []byte {
+	b, err := cdc.MarshalJSON(msg)
+	if err != nil {
+		panic(err)
+	}
+	return sdk.MustSortJSON(b)
+}
+
+func (msg MsgStakeUpdate) ValidateBasic() error {
+	// if msg.ID == 0 {
+	// 	return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator ID %v", msg.ID)
+	// }
+
+	// if msg.From.Empty() {
+	// 	return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.From.String())
+	// }
+
+	return nil
+}
+
+// GetTxHash Returns tx hash
+func (msg MsgStakeUpdate) GetTxHash() hmCommon.HeimdallHash {
+	return msg.TxHash
+}
+
+// GetLogIndex Returns log index
+func (msg MsgStakeUpdate) GetLogIndex() uint64 {
+	return msg.LogIndex
+}
+
+// GetSideSignBytes returns side sign bytes
+func (msg MsgStakeUpdate) GetSideSignBytes() []byte {
+	return nil
+}
+
+// GetNonce Returns nonce
+func (msg MsgStakeUpdate) GetNonce() uint64 {
+	return msg.Nonce
+}
+
+//
+// validator update
+//
+var _ sdk.Msg = &MsgSignerUpdate{}
+
+func NewMsgSignerUpdate(
+	from hmCommon.HeimdallAddress,
+	id uint64,
+	pubKey hmCommon.PubKey,
+	txhash hmCommon.HeimdallHash,
+	logIndex uint64,
+	blockNumber uint64,
+	nonce uint64,
+) MsgSignerUpdate {
+	return MsgSignerUpdate{
+		From:            from,
+		ID:              hmTypes.NewValidatorID(id),
+		NewSignerPubKey: pubKey,
+		TxHash:          txhash,
+		LogIndex:        logIndex,
+		BlockNumber:     blockNumber,
+		Nonce:           nonce,
+	}
+}
+
+func (msg MsgSignerUpdate) Type() string {
+	return "signer-update"
+}
+
+func (msg MsgSignerUpdate) Route() string {
+	return RouterKey
+}
+
+func (msg MsgSignerUpdate) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{hmCommon.HeimdallAddressToAccAddress(msg.From)}
+}
+
+func (msg MsgSignerUpdate) GetSignBytes() []byte {
+	b, err := cdc.MarshalJSON(msg)
+	if err != nil {
+		panic(err)
+	}
+	return sdk.MustSortJSON(b)
+}
+
+func (msg MsgSignerUpdate) ValidateBasic() error {
+	// if msg.ID == 0 {
+	// 	return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator ID %v", msg.ID)
+	// }
+
+	// if msg.From.Empty() {
+	// 	return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.From.String())
+	// }
+
+	// if bytes.Equal(msg.NewSignerPubKey.Bytes(), helper.ZeroPubKey.Bytes()) {
+	// 	return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid pub key %v", msg.NewSignerPubKey.String())
+	// }
+
+	return nil
+}
+
+// GetTxHash Returns tx hash
+func (msg MsgSignerUpdate) GetTxHash() hmCommon.HeimdallHash {
+	return msg.TxHash
+}
+
+// GetLogIndex Returns log index
+func (msg MsgSignerUpdate) GetLogIndex() uint64 {
+	return msg.LogIndex
+}
+
+// GetSideSignBytes returns side sign bytes
+func (msg MsgSignerUpdate) GetSideSignBytes() []byte {
+	return nil
+}
+
+// GetNonce Returns nonce
+func (msg MsgSignerUpdate) GetNonce() uint64 {
+	return msg.Nonce
+}
+
 //
 // validator exit
 //
 
-// var _ sdk.Msg = &MsgStakeUpdate{}
+var _ sdk.Msg = &MsgValidatorExit{}
 
-// // MsgStakeUpdate represents stake update
-// type MsgStakeUpdate struct {
-// 	From        hmCommon.HeimdallAddress `json:"from"`
-// 	ID          hmCommon.ValidatorID     `json:"id"`
-// 	NewAmount   sdk.Int                  `json:"amount"`
-// 	TxHash      hmCommon.HeimdallHash    `json:"tx_hash"`
-// 	LogIndex    uint64                   `json:"log_index"`
-// 	BlockNumber uint64                   `json:"block_number"`
-// 	Nonce       uint64                   `json:"nonce"`
-// }
+func NewMsgValidatorExit(from hmCommon.HeimdallAddress, id uint64, deactivationEpoch uint64, txhash hmCommon.HeimdallHash, logIndex uint64, blockNumber uint64, nonce uint64) MsgValidatorExit {
+	return MsgValidatorExit{
+		From:              from,
+		ID:                hmTypes.NewValidatorID(id),
+		DeactivationEpoch: deactivationEpoch,
+		TxHash:            txhash,
+		LogIndex:          logIndex,
+		BlockNumber:       blockNumber,
+		Nonce:             nonce,
+	}
+}
 
-// // NewMsgStakeUpdate represents stake update
-// func NewMsgStakeUpdate(from hmCommon.HeimdallAddress, id uint64, newAmount sdk.Int, txhash hmCommon.HeimdallHash, logIndex uint64, blockNumber uint64, nonce uint64) MsgStakeUpdate {
-// 	return MsgStakeUpdate{
-// 		From:        from,
-// 		ID:          hmTypes.NewValidatorID(id),
-// 		NewAmount:   newAmount,
-// 		TxHash:      txhash,
-// 		LogIndex:    logIndex,
-// 		BlockNumber: blockNumber,
-// 		Nonce:       nonce,
-// 	}
-// }
+func (msg MsgValidatorExit) Type() string {
+	return "validator-exit"
+}
 
-// func (msg MsgStakeUpdate) Type() string {
-// 	return "validator-stake-update"
-// }
+func (msg MsgValidatorExit) Route() string {
+	return RouterKey
+}
 
-// func (msg MsgStakeUpdate) Route() string {
-// 	return RouterKey
-// }
+func (msg MsgValidatorExit) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{hmCommon.HeimdallAddressToAccAddress(msg.From)}
+}
 
-// func (msg MsgStakeUpdate) GetSigners() []sdk.AccAddress {
-// 	return []sdk.AccAddress{hmCommon.HeimdallAddressToAccAddress(msg.From)}
-// }
+func (msg MsgValidatorExit) GetSignBytes() []byte {
+	b, err := cdc.MarshalJSON(msg)
+	if err != nil {
+		panic(err)
+	}
+	return sdk.MustSortJSON(b)
+}
 
-// func (msg MsgStakeUpdate) GetSignBytes() []byte {
-// 	b, err := cdc.MarshalJSON(msg)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	return sdk.MustSortJSON(b)
-// }
+func (msg MsgValidatorExit) ValidateBasic() error {
+	// if msg.ID == 0 {
+	// 	return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator ID %v", msg.ID)
+	// }
 
-// func (msg MsgStakeUpdate) ValidateBasic() sdk.Error {
-// 	if msg.ID == 0 {
-// 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator ID %v", msg.ID)
-// 	}
+	// if msg.From.Empty() {
+	// 	return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.From.String())
+	// }
 
-// 	if msg.From.Empty() {
-// 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.From.String())
-// 	}
+	return nil
+}
 
-// 	return nil
-// }
+// GetTxHash Returns tx hash
+func (msg MsgValidatorExit) GetTxHash() hmCommon.HeimdallHash {
+	return msg.TxHash
+}
 
-// // GetTxHash Returns tx hash
-// func (msg MsgStakeUpdate) GetTxHash() hmCommon.HeimdallHash {
-// 	return msg.TxHash
-// }
+// GetLogIndex Returns log index
+func (msg MsgValidatorExit) GetLogIndex() uint64 {
+	return msg.LogIndex
+}
 
-// // GetLogIndex Returns log index
-// func (msg MsgStakeUpdate) GetLogIndex() uint64 {
-// 	return msg.LogIndex
-// }
+// GetSideSignBytes returns side sign bytes
+func (msg MsgValidatorExit) GetSideSignBytes() []byte {
+	return nil
+}
 
-// // GetSideSignBytes returns side sign bytes
-// func (msg MsgStakeUpdate) GetSideSignBytes() []byte {
-// 	return nil
-// }
-
-// // GetNonce Returns nonce
-// func (msg MsgStakeUpdate) GetNonce() uint64 {
-// 	return msg.Nonce
-// }
-
-// //
-// // validator update
-// //
-// var _ sdk.Msg = &MsgSignerUpdate{}
-
-// // MsgSignerUpdate signer update struct
-// // TODO add old signer sig check
-// type MsgSignerUpdate struct {
-// 	From            hmTypes.HeimdallAddress `json:"from"`
-// 	ID              hmTypes.ValidatorID     `json:"id"`
-// 	NewSignerPubKey hmTypes.PubKey          `json:"pubKey"`
-// 	TxHash          hmTypes.HeimdallHash    `json:"tx_hash"`
-// 	LogIndex        uint64                  `json:"log_index"`
-// 	BlockNumber     uint64                  `json:"block_number"`
-// 	Nonce           uint64                  `json:"nonce"`
-// }
-
-// func NewMsgSignerUpdate(
-// 	from hmCommon.HeimdallAddress,
-// 	id uint64,
-// 	pubKey hmCommon.PubKey,
-// 	txhash hmCommon.HeimdallHash,
-// 	logIndex uint64,
-// 	blockNumber uint64,
-// 	nonce uint64,
-// ) MsgSignerUpdate {
-// 	return MsgSignerUpdate{
-// 		From:            from,
-// 		ID:              hmTypes.NewValidatorID(id),
-// 		NewSignerPubKey: pubKey,
-// 		TxHash:          txhash,
-// 		LogIndex:        logIndex,
-// 		BlockNumber:     blockNumber,
-// 		Nonce:           nonce,
-// 	}
-// }
-
-// func (msg MsgSignerUpdate) Type() string {
-// 	return "signer-update"
-// }
-
-// func (msg MsgSignerUpdate) Route() string {
-// 	return RouterKey
-// }
-
-// func (msg MsgSignerUpdate) GetSigners() []sdk.AccAddress {
-// 	return []sdk.AccAddress{hmTypes.HeimdallAddressToAccAddress(msg.From)}
-// }
-
-// func (msg MsgSignerUpdate) GetSignBytes() []byte {
-// 	b, err := cdc.MarshalJSON(msg)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	return sdk.MustSortJSON(b)
-// }
-
-// func (msg MsgSignerUpdate) ValidateBasic() sdk.Error {
-// 	if msg.ID == 0 {
-// 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator ID %v", msg.ID)
-// 	}
-
-// 	if msg.From.Empty() {
-// 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.From.String())
-// 	}
-
-// 	if bytes.Equal(msg.NewSignerPubKey.Bytes(), helper.ZeroPubKey.Bytes()) {
-// 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid pub key %v", msg.NewSignerPubKey.String())
-// 	}
-
-// 	return nil
-// }
-
-// // GetTxHash Returns tx hash
-// func (msg MsgSignerUpdate) GetTxHash() hmCommon.HeimdallHash {
-// 	return msg.TxHash
-// }
-
-// // GetLogIndex Returns log index
-// func (msg MsgSignerUpdate) GetLogIndex() uint64 {
-// 	return msg.LogIndex
-// }
-
-// // GetSideSignBytes returns side sign bytes
-// func (msg MsgSignerUpdate) GetSideSignBytes() []byte {
-// 	return nil
-// }
-
-// // GetNonce Returns nonce
-// func (msg MsgSignerUpdate) GetNonce() uint64 {
-// 	return msg.Nonce
-// }
-
-// //
-// // validator exit
-// //
-
-// var _ sdk.Msg = &MsgValidatorExit{}
-
-// type MsgValidatorExit struct {
-// 	From              hmCommon.HeimdallAddress `json:"from"`
-// 	ID                hmTypes.ValidatorID      `json:"id"`
-// 	DeactivationEpoch uint64                   `json:"deactivationEpoch"`
-// 	TxHash            hmCommon.HeimdallHash    `json:"tx_hash"`
-// 	LogIndex          uint64                   `json:"log_index"`
-// 	BlockNumber       uint64                   `json:"block_number"`
-// 	Nonce             uint64                   `json:"nonce"`
-// }
-
-// func NewMsgValidatorExit(from hmCommon.HeimdallAddress, id uint64, deactivationEpoch uint64, txhash hmCommon.HeimdallHash, logIndex uint64, blockNumber uint64, nonce uint64) MsgValidatorExit {
-// 	return MsgValidatorExit{
-// 		From:              from,
-// 		ID:                hmTypes.NewValidatorID(id),
-// 		DeactivationEpoch: deactivationEpoch,
-// 		TxHash:            txhash,
-// 		LogIndex:          logIndex,
-// 		BlockNumber:       blockNumber,
-// 		Nonce:             nonce,
-// 	}
-// }
-
-// func (msg MsgValidatorExit) Type() string {
-// 	return "validator-exit"
-// }
-
-// func (msg MsgValidatorExit) Route() string {
-// 	return RouterKey
-// }
-
-// func (msg MsgValidatorExit) GetSigners() []sdk.AccAddress {
-// 	return []sdk.AccAddress{hmCommon.HeimdallAddressToAccAddress(msg.From)}
-// }
-
-// func (msg MsgValidatorExit) GetSignBytes() []byte {
-// 	b, err := cdc.MarshalJSON(msg)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	return sdk.MustSortJSON(b)
-// }
-
-// func (msg MsgValidatorExit) ValidateBasic() sdk.Error {
-// 	if msg.ID == 0 {
-// 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator ID %v", msg.ID)
-// 	}
-
-// 	if msg.From.Empty() {
-// 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.From.String())
-// 	}
-
-// 	return nil
-// }
-
-// // GetTxHash Returns tx hash
-// func (msg MsgValidatorExit) GetTxHash() hmCommon.HeimdallHash {
-// 	return msg.TxHash
-// }
-
-// // GetLogIndex Returns log index
-// func (msg MsgValidatorExit) GetLogIndex() uint64 {
-// 	return msg.LogIndex
-// }
-
-// // GetSideSignBytes returns side sign bytes
-// func (msg MsgValidatorExit) GetSideSignBytes() []byte {
-// 	return nil
-// }
-
-// // GetNonce Returns nonce
-// func (msg MsgValidatorExit) GetNonce() uint64 {
-// 	return msg.Nonce
-// }
+// GetNonce Returns nonce
+func (msg MsgValidatorExit) GetNonce() uint64 {
+	return msg.Nonce
+}
