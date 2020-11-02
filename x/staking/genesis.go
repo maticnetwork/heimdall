@@ -29,7 +29,7 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, genState types.GenesisSt
 			}
 
 			// update validator set in store
-			if err := keeper.UpdateValidatorSetInStore(ctx, *resultValSet); err != nil {
+			if err := keeper.UpdateValidatorSetInStore(ctx, resultValSet); err != nil {
 				panic(err)
 			}
 
