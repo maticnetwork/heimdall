@@ -1,0 +1,8 @@
+syntax = "proto3";
+package heimdall.staking.v1beta1;
+
+option go_package = "github.com/maticnetwork/heimdall/x/staking/types";
+
+// GenesisState defines the staking module's genesis state.
+message GenesisState {
+}
