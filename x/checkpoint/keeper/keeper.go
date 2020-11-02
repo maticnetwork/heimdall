@@ -64,6 +64,7 @@ func NewKeeper(
 		memKey:   memKey,
 		// sk:                 stakingKeeper,
 		// ck:                 chainKeeper,
+		paramSubspace:      paramstore,
 		moduleCommunicator: moduleCommunicator,
 	}
 }
