@@ -269,7 +269,7 @@ func (k *Keeper) UpdateSigner(ctx sdk.Context, newSigner hmCommon.HeimdallAddres
 }
 
 // UpdateValidatorSetInStore adds validator set to store
-func (k *Keeper) UpdateValidatorSetInStore(ctx sdk.Context, newValidatorSet hmTypes.ValidatorSet) error {
+func (k *Keeper) UpdateValidatorSetInStore(ctx sdk.Context, newValidatorSet *hmTypes.ValidatorSet) error {
 	// TODO check if we may have to delay this by 1 height to sync with tendermint validator updates
 	store := ctx.KVStore(k.storeKey)
 
@@ -285,7 +285,7 @@ func (k *Keeper) UpdateValidatorSetInStore(ctx sdk.Context, newValidatorSet hmTy
 }
 
 // GetValidatorSet returns current Validator Set from store
-func (k *Keeper) GetValidatorSet(ctx sdk.Context) (validatorSet hmTypes.ValidatorSet) {
+func (k *Keeper) GetValidatorSet(ctx sdk.Context) (validatorSet *hmTypes.ValidatorSet) {
 	store := ctx.KVStore(k.storeKey)
 	// get current validator set from store
 	bz := store.Get(CurrentValidatorSetKey)
