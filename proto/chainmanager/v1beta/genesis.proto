@@ -1,0 +1,8 @@
+syntax = "proto3";
+package heimdall.chainmanager.v1beta1;
+
+option go_package = "github.com/maticnetwork/heimdall/x/chainmanager/types";
+
+// GenesisState defines the chainmanager module's genesis state.
+message GenesisState {
+}
