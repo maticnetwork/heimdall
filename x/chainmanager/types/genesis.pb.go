@@ -5,7 +5,9 @@ package types
 
 import (
 	fmt "fmt"
+	_ "github.com/gogo/protobuf/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
+	github_com_maticnetwork_heimdall_types_common "github.com/maticnetwork/heimdall/types/common"
 	io "io"
 	math "math"
 	math_bits "math/bits"
@@ -24,6 +26,8 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // GenesisState defines the chainmanager module's genesis state.
 type GenesisState struct {
+	// heimdall.types.chainmanager.x.params
+	Params *Params `protobuf:"bytes,1,opt,name=params,proto3" json:"params,omitempty"`
 }
 
 func (m *GenesisState) Reset()         { *m = GenesisState{} }
@@ -59,24 +63,162 @@ func (m *GenesisState) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_GenesisState proto.InternalMessageInfo
 
+func (m *GenesisState) GetParams() *Params {
+	if m != nil {
+		return m.Params
+	}
+	return nil
+}
+
+type ChainParams struct {
+	BorChainID            string                                                        `protobuf:"bytes,1,opt,name=bor_chain_id,json=borChainId,proto3" json:"bor_chain_id,omitempty"`
+	MaticTokenAddress     github_com_maticnetwork_heimdall_types_common.HeimdallAddress `protobuf:"bytes,2,opt,name=matic_token_address,json=maticTokenAddress,proto3,casttype=github.com/maticnetwork/heimdall/types/common.HeimdallAddress" json:"matic_token_address,omitempty"`
+	StakingManagerAddress github_com_maticnetwork_heimdall_types_common.HeimdallAddress `protobuf:"bytes,3,opt,name=staking_manager_address,json=stakingManagerAddress,proto3,casttype=github.com/maticnetwork/heimdall/types/common.HeimdallAddress" json:"staking_manager_address,omitempty"`
+	SlashManagerAddress   github_com_maticnetwork_heimdall_types_common.HeimdallAddress `protobuf:"bytes,4,opt,name=slash_manager_address,json=slashManagerAddress,proto3,casttype=github.com/maticnetwork/heimdall/types/common.HeimdallAddress" json:"slash_manager_address,omitempty"`
+	RootChainAddress      github_com_maticnetwork_heimdall_types_common.HeimdallAddress `protobuf:"bytes,5,opt,name=root_chain_address,json=rootChainAddress,proto3,casttype=github.com/maticnetwork/heimdall/types/common.HeimdallAddress" json:"root_chain_address,omitempty"`
+	StakingInfoAddress    github_com_maticnetwork_heimdall_types_common.HeimdallAddress `protobuf:"bytes,6,opt,name=staking_info_address,json=stakingInfoAddress,proto3,casttype=github.com/maticnetwork/heimdall/types/common.HeimdallAddress" json:"staking_info_address,omitempty"`
+	StateSenderAddress    github_com_maticnetwork_heimdall_types_common.HeimdallAddress `protobuf:"bytes,7,opt,name=state_sender_address,json=stateSenderAddress,proto3,casttype=github.com/maticnetwork/heimdall/types/common.HeimdallAddress" json:"state_sender_address,omitempty"`
+	StateReceiverAddress  github_com_maticnetwork_heimdall_types_common.HeimdallAddress `protobuf:"bytes,8,opt,name=state_receiver_address,json=stateReceiverAddress,proto3,casttype=github.com/maticnetwork/heimdall/types/common.HeimdallAddress" json:"state_receiver_address,omitempty"`
+	ValidatorSetAddress   github_com_maticnetwork_heimdall_types_common.HeimdallAddress `protobuf:"bytes,9,opt,name=validator_set_address,json=validatorSetAddress,proto3,casttype=github.com/maticnetwork/heimdall/types/common.HeimdallAddress" json:"validator_set_address,omitempty"`
+}
+
+func (m *ChainParams) Reset()         { *m = ChainParams{} }
+func (m *ChainParams) String() string { return proto.CompactTextString(m) }
+func (*ChainParams) ProtoMessage()    {}
+func (*ChainParams) Descriptor() ([]byte, []int) {
+	return fileDescriptor_f2f2fccb4e0c3c0d, []int{1}
+}
+func (m *ChainParams) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *ChainParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_ChainParams.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *ChainParams) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ChainParams.Merge(m, src)
+}
+func (m *ChainParams) XXX_Size() int {
+	return m.Size()
+}
+func (m *ChainParams) XXX_DiscardUnknown() {
+	xxx_messageInfo_ChainParams.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ChainParams proto.InternalMessageInfo
+
+type Params struct {
+	MainChainTxConfirmations  uint64       `protobuf:"varint,1,opt,name=main_chain_tx_confirmations,json=mainChainTxConfirmations,proto3" json:"main_chain_tx_confirmations,omitempty"`
+	MaticchainTxConfirmations uint64       `protobuf:"varint,2,opt,name=maticchain_tx_confirmations,json=maticchainTxConfirmations,proto3" json:"maticchain_tx_confirmations,omitempty"`
+	ChainParams               *ChainParams `protobuf:"bytes,3,opt,name=chain_params,json=chainParams,proto3" json:"chain_params,omitempty"`
+}
+
+func (m *Params) Reset()         { *m = Params{} }
+func (m *Params) String() string { return proto.CompactTextString(m) }
+func (*Params) ProtoMessage()    {}
+func (*Params) Descriptor() ([]byte, []int) {
+	return fileDescriptor_f2f2fccb4e0c3c0d, []int{2}
+}
+func (m *Params) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *Params) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_Params.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *Params) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Params.Merge(m, src)
+}
+func (m *Params) XXX_Size() int {
+	return m.Size()
+}
+func (m *Params) XXX_DiscardUnknown() {
+	xxx_messageInfo_Params.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Params proto.InternalMessageInfo
+
+func (m *Params) GetMainChainTxConfirmations() uint64 {
+	if m != nil {
+		return m.MainChainTxConfirmations
+	}
+	return 0
+}
+
+func (m *Params) GetMaticchainTxConfirmations() uint64 {
+	if m != nil {
+		return m.MaticchainTxConfirmations
+	}
+	return 0
+}
+
+func (m *Params) GetChainParams() *ChainParams {
+	if m != nil {
+		return m.ChainParams
+	}
+	return nil
+}
+
 func init() {
 	proto.RegisterType((*GenesisState)(nil), "heimdall.chainmanager.v1beta1.GenesisState")
+	proto.RegisterType((*ChainParams)(nil), "heimdall.chainmanager.v1beta1.ChainParams")
+	proto.RegisterType((*Params)(nil), "heimdall.chainmanager.v1beta1.Params")
 }
 
 func init() { proto.RegisterFile("chainmanager/v1beta/genesis.proto", fileDescriptor_f2f2fccb4e0c3c0d) }
 
 var fileDescriptor_f2f2fccb4e0c3c0d = []byte{
-	// 159 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x52, 0x4c, 0xce, 0x48, 0xcc,
-	0xcc, 0xcb, 0x4d, 0xcc, 0x4b, 0x4c, 0x4f, 0x2d, 0xd2, 0x2f, 0x33, 0x4c, 0x4a, 0x2d, 0x49, 0xd4,
-	0x4f, 0x4f, 0xcd, 0x4b, 0x2d, 0xce, 0x2c, 0xd6, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x92, 0xcd,
-	0x48, 0xcd, 0xcc, 0x4d, 0x49, 0xcc, 0xc9, 0xd1, 0x43, 0x56, 0xab, 0x07, 0x51, 0x6b, 0xa8, 0xc4,
-	0xc7, 0xc5, 0xe3, 0x0e, 0x51, 0x1f, 0x5c, 0x92, 0x58, 0x92, 0xea, 0xe4, 0x7f, 0xe2, 0x91, 0x1c,
-	0xe3, 0x85, 0x47, 0x72, 0x8c, 0x0f, 0x1e, 0xc9, 0x31, 0x4e, 0x78, 0x2c, 0xc7, 0x70, 0xe1, 0xb1,
-	0x1c, 0xc3, 0x8d, 0xc7, 0x72, 0x0c, 0x51, 0xa6, 0xe9, 0x99, 0x25, 0x19, 0xa5, 0x49, 0x7a, 0xc9,
-	0xf9, 0xb9, 0xfa, 0xb9, 0x89, 0x25, 0x99, 0xc9, 0x79, 0xa9, 0x25, 0xe5, 0xf9, 0x45, 0xd9, 0xfa,
-	0x30, 0x0b, 0xf4, 0x2b, 0xf4, 0x51, 0x9c, 0x53, 0x52, 0x59, 0x90, 0x5a, 0x9c, 0xc4, 0x06, 0x76,
-	0x86, 0x31, 0x20, 0x00, 0x00, 0xff, 0xff, 0x65, 0x37, 0x22, 0x4e, 0xab, 0x00, 0x00, 0x00,
+	// 535 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x94, 0x41, 0x6f, 0xd3, 0x30,
+	0x14, 0xc7, 0x9b, 0xad, 0x74, 0xcc, 0xad, 0x10, 0x64, 0x1b, 0x14, 0x10, 0x29, 0x54, 0x42, 0x42,
+	0x1c, 0x12, 0x06, 0xe2, 0x82, 0x54, 0xa4, 0x75, 0x48, 0xb0, 0x43, 0x05, 0x4a, 0x77, 0xe2, 0x12,
+	0x39, 0x89, 0x9b, 0x5a, 0x6d, 0xfc, 0x8a, 0xed, 0x75, 0xdd, 0x37, 0xe0, 0xc8, 0x47, 0xe0, 0xe3,
+	0x70, 0xdc, 0x09, 0x71, 0x9a, 0x50, 0xfb, 0x19, 0xb8, 0x70, 0x42, 0xb1, 0x9d, 0x2c, 0x1b, 0x82,
+	0x5d, 0x72, 0x73, 0x5f, 0xff, 0xff, 0xff, 0xaf, 0x7e, 0x7e, 0x7d, 0xe8, 0x51, 0x34, 0xc6, 0x94,
+	0xa5, 0x98, 0xe1, 0x84, 0x70, 0x6f, 0xbe, 0x1b, 0x12, 0x89, 0xbd, 0x84, 0x30, 0x22, 0xa8, 0x70,
+	0x67, 0x1c, 0x24, 0xd8, 0x0f, 0xc6, 0x84, 0xa6, 0x31, 0x9e, 0x4e, 0xdd, 0xb2, 0xd6, 0xd5, 0xda,
+	0xdd, 0x7b, 0xdb, 0x09, 0x24, 0xa0, 0x94, 0x5e, 0x76, 0xd2, 0xa6, 0xee, 0x00, 0xb5, 0xde, 0xea,
+	0x94, 0xa1, 0xc4, 0x92, 0xd8, 0x3d, 0xd4, 0x98, 0x61, 0x8e, 0x53, 0xd1, 0xb6, 0x1e, 0x5a, 0x4f,
+	0x9a, 0xcf, 0x1f, 0xbb, 0xff, 0x4d, 0x75, 0x3f, 0x28, 0xb1, 0x6f, 0x4c, 0xdd, 0x5f, 0x1b, 0xa8,
+	0xb9, 0x9f, 0xe9, 0x74, 0xdd, 0x7e, 0x86, 0x5a, 0x21, 0xf0, 0x40, 0x59, 0x03, 0x1a, 0xab, 0xd0,
+	0xcd, 0xfe, 0x8d, 0xe5, 0x59, 0x07, 0xf5, 0x81, 0x2b, 0xe5, 0xc1, 0x1b, 0x1f, 0x85, 0xf9, 0x39,
+	0xb6, 0x3f, 0xa1, 0xad, 0x14, 0x4b, 0x1a, 0x05, 0x12, 0x26, 0x84, 0x05, 0x38, 0x8e, 0x39, 0x11,
+	0xa2, 0xbd, 0xa6, 0x8c, 0x7b, 0xbf, 0xcf, 0x3a, 0xbd, 0x84, 0xca, 0xf1, 0x51, 0xe8, 0x46, 0x90,
+	0x7a, 0x4a, 0xc9, 0x88, 0x3c, 0x06, 0x3e, 0xf1, 0xf2, 0x1f, 0xea, 0xc9, 0x93, 0x19, 0x11, 0x5e,
+	0x04, 0x69, 0x0a, 0xcc, 0x7d, 0x67, 0xaa, 0x7b, 0x3a, 0xc8, 0xbf, 0xa5, 0x3c, 0x87, 0x59, 0xb8,
+	0x29, 0xd9, 0x27, 0xe8, 0x8e, 0x90, 0x78, 0x42, 0x59, 0x12, 0x98, 0xeb, 0x15, 0xd8, 0xf5, 0xaa,
+	0xb0, 0x3b, 0x86, 0x30, 0xd0, 0x80, 0x1c, 0x7d, 0x84, 0x76, 0xc4, 0x14, 0x8b, 0xf1, 0x5f, 0xe0,
+	0x7a, 0x55, 0xe0, 0x2d, 0x95, 0x7f, 0x09, 0x0b, 0xc8, 0xe6, 0x00, 0xd2, 0xbc, 0x4b, 0xce, 0xbc,
+	0x56, 0x15, 0xf3, 0x66, 0x16, 0xae, 0x1e, 0x34, 0x07, 0x0a, 0xb4, 0x9d, 0xb7, 0x98, 0xb2, 0x11,
+	0x14, 0xc8, 0x46, 0x55, 0x48, 0xdb, 0xc4, 0x1f, 0xb0, 0x11, 0x5c, 0x84, 0x4a, 0x12, 0x08, 0xc2,
+	0xe2, 0x52, 0x6f, 0x37, 0xaa, 0x84, 0x4a, 0x32, 0x54, 0xe9, 0x39, 0xf4, 0x18, 0xdd, 0xd6, 0x50,
+	0x4e, 0x22, 0x42, 0xe7, 0x25, 0xec, 0xf5, 0xaa, 0xb0, 0xfa, 0x56, 0xbe, 0xc9, 0x2f, 0x8d, 0xd2,
+	0x1c, 0x4f, 0x69, 0x8c, 0x25, 0xf0, 0x40, 0x10, 0x59, 0x70, 0x37, 0x2b, 0x1b, 0xa5, 0x22, 0x7f,
+	0x48, 0xa4, 0x29, 0xbe, 0xaa, 0x7f, 0xfe, 0xda, 0xa9, 0x75, 0xbf, 0x5b, 0xa8, 0x61, 0xfe, 0xf2,
+	0x3d, 0x74, 0x3f, 0xcd, 0xa6, 0x4a, 0xcf, 0x96, 0x5c, 0x04, 0x11, 0xb0, 0x11, 0xe5, 0x19, 0x0f,
+	0x98, 0x5e, 0x2b, 0x75, 0xbf, 0x9d, 0x49, 0xd4, 0x84, 0x1c, 0x2e, 0xf6, 0xcb, 0xdf, 0xdb, 0xaf,
+	0x33, 0xbb, 0xa4, 0xd1, 0x3f, 0xec, 0x6b, 0xca, 0x7e, 0xf7, 0x5c, 0x72, 0xd9, 0x3f, 0x40, 0x2d,
+	0x6d, 0x35, 0x6b, 0x6c, 0x5d, 0xad, 0xb1, 0xa7, 0x57, 0xac, 0xb1, 0xd2, 0xce, 0xf2, 0x9b, 0xd1,
+	0xf9, 0x87, 0xfe, 0xfb, 0x6f, 0x4b, 0xc7, 0x3a, 0x5d, 0x3a, 0xd6, 0xcf, 0xa5, 0x63, 0x7d, 0x59,
+	0x39, 0xb5, 0xd3, 0x95, 0x53, 0xfb, 0xb1, 0x72, 0x6a, 0x1f, 0x5f, 0x5e, 0xd9, 0xcc, 0x85, 0x77,
+	0x61, 0x69, 0xab, 0xde, 0x86, 0x0d, 0xb5, 0x77, 0x5f, 0xfc, 0x09, 0x00, 0x00, 0xff, 0xff, 0x41,
+	0x35, 0xaa, 0x3c, 0xd1, 0x05, 0x00, 0x00,
 }
 
 func (m *GenesisState) Marshal() (dAtA []byte, err error) {
@@ -99,6 +241,149 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if m.Params != nil {
+		{
+			size, err := m.Params.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintGenesis(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *ChainParams) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ChainParams) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *ChainParams) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.ValidatorSetAddress) > 0 {
+		i -= len(m.ValidatorSetAddress)
+		copy(dAtA[i:], m.ValidatorSetAddress)
+		i = encodeVarintGenesis(dAtA, i, uint64(len(m.ValidatorSetAddress)))
+		i--
+		dAtA[i] = 0x4a
+	}
+	if len(m.StateReceiverAddress) > 0 {
+		i -= len(m.StateReceiverAddress)
+		copy(dAtA[i:], m.StateReceiverAddress)
+		i = encodeVarintGenesis(dAtA, i, uint64(len(m.StateReceiverAddress)))
+		i--
+		dAtA[i] = 0x42
+	}
+	if len(m.StateSenderAddress) > 0 {
+		i -= len(m.StateSenderAddress)
+		copy(dAtA[i:], m.StateSenderAddress)
+		i = encodeVarintGenesis(dAtA, i, uint64(len(m.StateSenderAddress)))
+		i--
+		dAtA[i] = 0x3a
+	}
+	if len(m.StakingInfoAddress) > 0 {
+		i -= len(m.StakingInfoAddress)
+		copy(dAtA[i:], m.StakingInfoAddress)
+		i = encodeVarintGenesis(dAtA, i, uint64(len(m.StakingInfoAddress)))
+		i--
+		dAtA[i] = 0x32
+	}
+	if len(m.RootChainAddress) > 0 {
+		i -= len(m.RootChainAddress)
+		copy(dAtA[i:], m.RootChainAddress)
+		i = encodeVarintGenesis(dAtA, i, uint64(len(m.RootChainAddress)))
+		i--
+		dAtA[i] = 0x2a
+	}
+	if len(m.SlashManagerAddress) > 0 {
+		i -= len(m.SlashManagerAddress)
+		copy(dAtA[i:], m.SlashManagerAddress)
+		i = encodeVarintGenesis(dAtA, i, uint64(len(m.SlashManagerAddress)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if len(m.StakingManagerAddress) > 0 {
+		i -= len(m.StakingManagerAddress)
+		copy(dAtA[i:], m.StakingManagerAddress)
+		i = encodeVarintGenesis(dAtA, i, uint64(len(m.StakingManagerAddress)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.MaticTokenAddress) > 0 {
+		i -= len(m.MaticTokenAddress)
+		copy(dAtA[i:], m.MaticTokenAddress)
+		i = encodeVarintGenesis(dAtA, i, uint64(len(m.MaticTokenAddress)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.BorChainID) > 0 {
+		i -= len(m.BorChainID)
+		copy(dAtA[i:], m.BorChainID)
+		i = encodeVarintGenesis(dAtA, i, uint64(len(m.BorChainID)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *Params) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Params) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Params) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.ChainParams != nil {
+		{
+			size, err := m.ChainParams.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintGenesis(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x1a
+	}
+	if m.MaticchainTxConfirmations != 0 {
+		i = encodeVarintGenesis(dAtA, i, uint64(m.MaticchainTxConfirmations))
+		i--
+		dAtA[i] = 0x10
+	}
+	if m.MainChainTxConfirmations != 0 {
+		i = encodeVarintGenesis(dAtA, i, uint64(m.MainChainTxConfirmations))
+		i--
+		dAtA[i] = 0x8
+	}
 	return len(dAtA) - i, nil
 }
 
@@ -119,6 +404,74 @@ func (m *GenesisState) Size() (n int) {
 	}
 	var l int
 	_ = l
+	if m.Params != nil {
+		l = m.Params.Size()
+		n += 1 + l + sovGenesis(uint64(l))
+	}
+	return n
+}
+
+func (m *ChainParams) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.BorChainID)
+	if l > 0 {
+		n += 1 + l + sovGenesis(uint64(l))
+	}
+	l = len(m.MaticTokenAddress)
+	if l > 0 {
+		n += 1 + l + sovGenesis(uint64(l))
+	}
+	l = len(m.StakingManagerAddress)
+	if l > 0 {
+		n += 1 + l + sovGenesis(uint64(l))
+	}
+	l = len(m.SlashManagerAddress)
+	if l > 0 {
+		n += 1 + l + sovGenesis(uint64(l))
+	}
+	l = len(m.RootChainAddress)
+	if l > 0 {
+		n += 1 + l + sovGenesis(uint64(l))
+	}
+	l = len(m.StakingInfoAddress)
+	if l > 0 {
+		n += 1 + l + sovGenesis(uint64(l))
+	}
+	l = len(m.StateSenderAddress)
+	if l > 0 {
+		n += 1 + l + sovGenesis(uint64(l))
+	}
+	l = len(m.StateReceiverAddress)
+	if l > 0 {
+		n += 1 + l + sovGenesis(uint64(l))
+	}
+	l = len(m.ValidatorSetAddress)
+	if l > 0 {
+		n += 1 + l + sovGenesis(uint64(l))
+	}
+	return n
+}
+
+func (m *Params) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.MainChainTxConfirmations != 0 {
+		n += 1 + sovGenesis(uint64(m.MainChainTxConfirmations))
+	}
+	if m.MaticchainTxConfirmations != 0 {
+		n += 1 + sovGenesis(uint64(m.MaticchainTxConfirmations))
+	}
+	if m.ChainParams != nil {
+		l = m.ChainParams.Size()
+		n += 1 + l + sovGenesis(uint64(l))
+	}
 	return n
 }
 
@@ -157,6 +510,510 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: GenesisState: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Params", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Params == nil {
+				m.Params = &Params{}
+			}
+			if err := m.Params.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipGenesis(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *ChainParams) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowGenesis
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ChainParams: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ChainParams: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BorChainID", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.BorChainID = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MaticTokenAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.MaticTokenAddress = github_com_maticnetwork_heimdall_types_common.HeimdallAddress(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StakingManagerAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.StakingManagerAddress = github_com_maticnetwork_heimdall_types_common.HeimdallAddress(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SlashManagerAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.SlashManagerAddress = github_com_maticnetwork_heimdall_types_common.HeimdallAddress(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RootChainAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.RootChainAddress = github_com_maticnetwork_heimdall_types_common.HeimdallAddress(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StakingInfoAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.StakingInfoAddress = github_com_maticnetwork_heimdall_types_common.HeimdallAddress(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 7:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StateSenderAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.StateSenderAddress = github_com_maticnetwork_heimdall_types_common.HeimdallAddress(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 8:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StateReceiverAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.StateReceiverAddress = github_com_maticnetwork_heimdall_types_common.HeimdallAddress(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 9:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ValidatorSetAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ValidatorSetAddress = github_com_maticnetwork_heimdall_types_common.HeimdallAddress(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipGenesis(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Params) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowGenesis
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Params: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Params: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MainChainTxConfirmations", wireType)
+			}
+			m.MainChainTxConfirmations = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.MainChainTxConfirmations |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MaticchainTxConfirmations", wireType)
+			}
+			m.MaticchainTxConfirmations = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.MaticchainTxConfirmations |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ChainParams", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.ChainParams == nil {
+				m.ChainParams = &ChainParams{}
+			}
+			if err := m.ChainParams.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipGenesis(dAtA[iNdEx:])
