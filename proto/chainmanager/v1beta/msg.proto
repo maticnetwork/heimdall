@@ -1,0 +1,94 @@
+syntax = "proto3";
+package heimdall.staking.x.staking.types;
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/any.proto";
+import "google/protobuf/duration.proto";
+
+option go_package = "github.com/maticnetwork/heimdall/x/staking/types";
+
+option (gogoproto.sizer_all)        = false;
+option (gogoproto.marshaler_all)    = false;
+option (gogoproto.unmarshaler_all)  = false;
+
+message MsgValidatorJoin {
+  option (gogoproto.goproto_getters)  = false;
+  string                       from = 1 [
+    (gogoproto.casttype)   = "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"
+  ];
+  uint64                       id = 2 [
+    (gogoproto.casttype)   = "github.com/maticnetwork/heimdall/types.ValidatorID",
+    (gogoproto.customname) = "ID"
+  ];
+  uint64                   activation_epoch = 3;
+  string                     amount = 4 [
+    (gogoproto.casttype)   = "github.com/cosmos/cosmos-sdk/types.Int"
+  ];
+  string                       signer_pub_key = 5 [
+    (gogoproto.casttype)   = "github.com/maticnetwork/heimdall/types/common.PubKey"
+  ];
+  string                       tx_hash = 6 [
+    (gogoproto.casttype)   = "github.com/maticnetwork/heimdall/types/common.HeimdallHash"
+  ];
+  uint64                   log_index = 7;
+  uint64                   block_number = 8;
+  uint64                   nonce = 9;
+}
+
+message MsgStakeUpdate {
+  option (gogoproto.goproto_getters)  = false;
+  string                       from = 1 [
+    (gogoproto.casttype)   = "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"
+  ];
+  uint64                       id = 2 [
+    (gogoproto.casttype)   = "github.com/maticnetwork/heimdall/types.ValidatorID",
+    (gogoproto.customname) = "ID"
+  ];
+  string                     new_amount = 3 [
+    (gogoproto.casttype)   = "github.com/cosmos/cosmos-sdk/types.Int"
+  ];
+  string                       tx_hash = 4 [
+    (gogoproto.casttype)   = "github.com/maticnetwork/heimdall/types/common.HeimdallHash"
+  ];
+  uint64                   log_index = 7;
+  uint64                   block_number = 8;
+  uint64                   nonce = 9;
+}
+
+message MsgSignerUpdate {
+  option (gogoproto.goproto_getters)  = false;
+  string                       from = 1 [
+    (gogoproto.casttype)   = "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"
+  ];
+  uint64                       id = 2 [
+    (gogoproto.casttype)   = "github.com/maticnetwork/heimdall/types.ValidatorID",
+    (gogoproto.customname) = "ID"
+  ];
+  string                       new_signer_pub_key = 3 [
+    (gogoproto.casttype)   = "github.com/maticnetwork/heimdall/types/common.PubKey"
+  ];
+  string                       tx_hash = 4 [
+    (gogoproto.casttype)   = "github.com/maticnetwork/heimdall/types/common.HeimdallHash"
+  ];
+  uint64                   log_index = 5;
+  uint64                   block_number = 6;
+  uint64                   nonce = 7;
+}
+
+message MsgValidatorExit {
+  option (gogoproto.goproto_getters)  = false;
+  string                       from = 1 [
+    (gogoproto.casttype)   = "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"
+  ];
+  uint64                       id = 2 [
+    (gogoproto.casttype)   = "github.com/maticnetwork/heimdall/types.ValidatorID",
+    (gogoproto.customname) = "ID"
+  ];
+  uint64                   deactivation_epoch = 3;
+  string                       tx_hash = 4 [
+    (gogoproto.casttype)   = "github.com/maticnetwork/heimdall/types/common.HeimdallHash"
+  ];
+  uint64                   log_index = 5;
+  uint64                   block_number = 6;
+  uint64                   nonce = 7;
+}
