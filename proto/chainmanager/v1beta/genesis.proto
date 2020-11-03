@@ -1,8 +1,50 @@
 syntax = "proto3";
 package heimdall.chainmanager.v1beta1;
 
+import "gogoproto/gogo.proto";
+
 option go_package = "github.com/maticnetwork/heimdall/x/chainmanager/types";
 
 // GenesisState defines the chainmanager module's genesis state.
 message GenesisState {
+  // heimdall.types.chainmanager.x.params
+  Params params = 1;
+}
+
+message ChainParams {
+  option (gogoproto.goproto_getters)  = false;
+  string bor_chain_id = 1 [
+    (gogoproto.customname) = "BorChainID"
+  ]
+  ;
+  string matic_token_address = 2 [
+    (gogoproto.casttype)   = "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"
+  ];
+  string staking_manager_address = 3 [
+    (gogoproto.casttype)   = "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"
+  ];
+  string slash_manager_address = 4 [
+    (gogoproto.casttype)   = "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"
+  ];
+  string root_chain_address = 5 [
+    (gogoproto.casttype)   = "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"
+  ];
+  string staking_info_address = 6 [
+    (gogoproto.casttype)   = "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"
+  ];
+  string state_sender_address = 7 [
+    (gogoproto.casttype)   = "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"
+  ];
+  string state_receiver_address = 8 [
+    (gogoproto.casttype)   = "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"
+  ];
+  string validator_set_address = 9 [
+    (gogoproto.casttype)   = "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"
+  ];
+}
+
+message Params {
+  uint64 main_chain_tx_confirmations = 1;
+  uint64 maticchain_tx_confirmations = 2;
+  ChainParams chain_params = 3;
 }
