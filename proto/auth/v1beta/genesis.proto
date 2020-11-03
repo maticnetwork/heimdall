@@ -20,7 +20,9 @@ message GenesisState {
 
 // Params defines the parameters for the auth module.
 message Params {
-  option (gogoproto.equal)            = true;
+  option (gogoproto.equal)            = false;
+  option (gogoproto.goproto_stringer) = false;
+
 
   uint64 max_memo_characters     = 1 [(gogoproto.moretags) = "yaml:\"max_memo_characters\""];
   uint64 tx_sig_limit            = 2 [(gogoproto.moretags) = "yaml:\"tx_sig_limit\""];
@@ -30,7 +32,7 @@ message Params {
   uint64 sig_verify_cost_secp256k1 = 5
       [(gogoproto.customname) = "SigVerifyCostSecp256k1", (gogoproto.moretags) = "yaml:\"sig_verify_cost_secp256k1\""];
   uint64 max_tx_gas     = 6 [(gogoproto.moretags) = "yaml:\"max_tx_gas\""];
-  uint64 tx_fees     = 7 [(gogoproto.moretags) = "yaml:\"tx_fees\""];
+  string tx_fees     = 7 [(gogoproto.moretags) = "yaml:\"tx_fees\""];
 }
 
 
@@ -45,5 +47,5 @@ message GenesisAccount {
   uint64                   sequence = 3;
   uint64                   account_number = 4;
   string                    module_name = 5;
-  string                    module_permissions = 6;
+  repeated string                    module_permissions = 6;
 }
