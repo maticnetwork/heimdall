@@ -2,18 +2,33 @@ package cmd
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"io"
+	"math/big"
 	"os"
 	"path/filepath"
+	"strings"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/cosmos/cosmos-sdk/snapshots"
 	"github.com/maticnetwork/heimdall/app/params"
+	hmTypes "github.com/maticnetwork/heimdall/types"
+	"github.com/maticnetwork/heimdall/types/common"
 
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	cfg "github.com/tendermint/tendermint/config"
+	"github.com/tendermint/tendermint/crypto"
 	tmcli "github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/log"
+	tmos "github.com/tendermint/tendermint/libs/os"
+	"github.com/tendermint/tendermint/p2p"
+	"github.com/tendermint/tendermint/privval"
+	tmtime "github.com/tendermint/tendermint/types/time"
 	dbm "github.com/tendermint/tm-db"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -32,7 +47,25 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	"github.com/maticnetwork/heimdall/app"
+	"github.com/maticnetwork/heimdall/helper"
+	authTypes "github.com/maticnetwork/heimdall/x/auth/types"
 )
+
+var (
+	flagNodeDirPrefix    = "node-dir-prefix"
+	flagNumValidators    = "v"
+	flagNumNonValidators = "n"
+	flagOutputDir        = "output-dir"
+	flagNodeDaemonHome   = "node-daemon-home"
+	flagNodeCliHome      = "node-cli-home"
+	flagNodeHostPrefix   = "node-host-prefix"
+)
+
+const (
+	nodeDirPerm = 0755
+)
+
+var ZeroIntString = big.NewInt(0).String()
 
 // NewRootCmd creates a new root command for simd. It is called once in the
 // main function.
@@ -84,8 +117,12 @@ func Execute(rootCmd *cobra.Command) error {
 func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 	authclient.Codec = encodingConfig.Marshaler
 
+	_, legacyCodec := app.MakeCodecs()
+	ctx := server.NewDefaultContext()
+
 	rootCmd.AddCommand(
-		genutilcli.InitCmd(app.ModuleBasics, app.DefaultNodeHome),
+		// initCmd(app.ModuleBasics, app.DefaultNodeHome),
+		initCmd(ctx, legacyCodec),
 		genutilcli.CollectGenTxsCmd(banktypes.GenesisBalancesIterator{}, app.DefaultNodeHome),
 		genutilcli.MigrateGenesisCmd(),
 		genutilcli.GenTxCmd(app.ModuleBasics, encodingConfig.TxConfig, banktypes.GenesisBalancesIterator{}, app.DefaultNodeHome),
@@ -221,4 +258,128 @@ func createSimappAndExport(
 	}
 
 	return a.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
+}
+
+// Total Validators to be included in the testnet
+func totalValidators() int {
+	numValidators := viper.GetInt(flagNumValidators)
+	numNonValidators := viper.GetInt(flagNumNonValidators)
+	return numNonValidators + numValidators
+}
+
+// get node directory path
+func nodeDir(i int) string {
+	outDir := viper.GetString(flagOutputDir)
+	nodeDirName := fmt.Sprintf("%s%d", viper.GetString(flagNodeDirPrefix), i)
+	nodeDaemonHomeName := viper.GetString(flagNodeDaemonHome)
+	return filepath.Join(outDir, nodeDirName, nodeDaemonHomeName)
+}
+
+// hostname of ip of nodes
+func hostnameOrIP(i int) string {
+	return fmt.Sprintf("%s%d", viper.GetString(flagNodeHostPrefix), i)
+}
+
+// populate persistent peers in config
+func populatePersistentPeersInConfigAndWriteIt(config *cfg.Config) {
+	persistentPeers := make([]string, totalValidators())
+	for i := 0; i < totalValidators(); i++ {
+		config.SetRoot(nodeDir(i))
+		nodeKey, err := p2p.LoadNodeKey(config.NodeKeyFile())
+		if err != nil {
+			return
+		}
+		persistentPeers[i] = p2p.IDAddressString(nodeKey.ID(), fmt.Sprintf("%s:%d", hostnameOrIP(i), 26656))
+	}
+
+	persistentPeersList := strings.Join(persistentPeers, ",")
+	for i := 0; i < totalValidators(); i++ {
+		config.SetRoot(nodeDir(i))
+		config.P2P.PersistentPeers = persistentPeersList
+		config.P2P.AddrBookStrict = false
+
+		// overwrite default config
+		cfg.WriteConfigFile(filepath.Join(nodeDir(i), "config", "config.toml"), config)
+	}
+}
+
+func getGenesisAccount(address []byte) authTypes.GenesisAccount {
+	acc := authTypes.NewBaseAccountWithAddress(hmTypes.BytesToHeimdallAddress(address))
+	genesisBalance, _ := big.NewInt(0).SetString("1000000000000000000000", 10)
+	if err := acc.SetCoins(sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: sdk.NewIntFromBigInt(genesisBalance)}}); err != nil {
+		logger.Error("getGenesisAccount | SetCoins", "Error", err)
+	}
+	result, _ := authTypes.NewGenesisAccountI(&acc)
+	return result
+}
+
+// WriteGenesisFile creates and writes the genesis configuration to disk. An
+// error is returned if building or writing the configuration to file fails.
+// nolint: unparam
+func writeGenesisFile(genesisTime time.Time, genesisFile, chainID string, appState json.RawMessage) error {
+	genDoc := tmTypes.GenesisDoc{
+		GenesisTime: genesisTime,
+		ChainID:     chainID,
+		AppState:    appState,
+	}
+
+	if genDoc.GenesisTime.IsZero() {
+		genDoc.GenesisTime = tmtime.Now()
+	}
+
+	if err := genDoc.ValidateAndComplete(); err != nil {
+		return err
+	}
+
+	return genDoc.SaveAs(genesisFile)
+}
+
+// InitializeNodeValidatorFiles initializes node and priv validator files
+func InitializeNodeValidatorFiles(
+	config *cfg.Config) (nodeID string, valPubKey crypto.PubKey, priv crypto.PrivKey, err error,
+) {
+
+	nodeKey, err := p2p.LoadOrGenNodeKey(config.NodeKeyFile())
+	if err != nil {
+		return "", nil, nil, err
+	}
+
+	nodeID = string(nodeKey.ID())
+
+	pvKeyFile := config.PrivValidatorKeyFile()
+	if err := tmos.EnsureDir(filepath.Dir(pvKeyFile), 0777); err != nil {
+		return "", nil, nil, err
+	}
+
+	pvStateFile := config.PrivValidatorStateFile()
+	if err := tmos.EnsureDir(filepath.Dir(pvStateFile), 0777); err != nil {
+		return "", nil, nil, err
+	}
+
+	filePV := privval.LoadOrGenFilePV(pvKeyFile, pvStateFile)
+
+	valPrivKey := filePV.Key.PrivKey
+
+	tmValPubKey, err := filePV.GetPubKey()
+	if err != nil {
+		return "", nil, nil, err
+	}
+
+	valPubKey, err = secp256k1.FromTmSecp256k1(tmValPubKey)
+	if err != nil {
+		return "", nil, nil, err
+	}
+
+	return nodeID, valPubKey, valPrivKey, nil
+}
+
+// WriteDefaultHeimdallConfig writes default heimdall config to the given path
+func WriteDefaultHeimdallConfig(path string, conf helper.Configuration) {
+	heimdallConf := helper.GetDefaultHeimdallConfig()
+	helper.WriteConfigFile(path, &heimdallConf)
+}
+
+func CryptoKeyToPubkey(key crypto.PubKey) common.PubKey {
+	validatorPublicKey := helper.GetPubObjects(key)
+	return common.NewPubKey(validatorPublicKey[:])
 }
