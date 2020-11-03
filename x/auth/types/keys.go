@@ -19,6 +19,18 @@ const (
 
 	// MemStoreKey defines the in-memory store key
 	MemStoreKey = "mem_capability"
+
+	// DefaultParamspace default name for parameter store
+	DefaultParamspace = ModuleName
+
+	// FeeStoreKey is a string representation of the store key for fees
+	FeeStoreKey = "fee"
+
+	// FeeCollectorName the root string for the fee collector account address
+	FeeCollectorName = "fee_collector"
+
+	// FeeToken fee token name
+	FeeToken = "matic"
 )
 
 func KeyPrefix(p string) []byte {

@@ -76,10 +76,12 @@ func initCmd(ctx *server.Context, cdc *codec.LegacyAmino) *cobra.Command {
 			// create genesis state
 			appStateBytes := app.NewDefaultGenesisState()
 
+			genesisAccount := getGenesisAccount(validator.Signer.Bytes())
+
 			// auth state change
 			appStateBytes, err = authTypes.SetGenesisStateToAppState(
 				appStateBytes,
-				[]authTypes.GenesisAccount{getGenesisAccount(validator.Signer.Bytes())},
+				[]*authTypes.GenesisAccount{&genesisAccount},
 			)
 			if err != nil {
 				return err

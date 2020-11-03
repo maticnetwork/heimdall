@@ -15,7 +15,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/cosmos/cosmos-sdk/snapshots"
 	"github.com/maticnetwork/heimdall/app/params"
-	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/types/common"
 
 	"github.com/spf13/cast"
@@ -307,7 +306,7 @@ func populatePersistentPeersInConfigAndWriteIt(config *cfg.Config) {
 }
 
 func getGenesisAccount(address []byte) authTypes.GenesisAccount {
-	acc := authTypes.NewBaseAccountWithAddress(hmTypes.BytesToHeimdallAddress(address))
+	acc := authTypes.NewBaseAccountWithAddress(common.BytesToHeimdallAddress(address))
 	genesisBalance, _ := big.NewInt(0).SetString("1000000000000000000000", 10)
 	if err := acc.SetCoins(sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: sdk.NewIntFromBigInt(genesisBalance)}}); err != nil {
 		logger.Error("getGenesisAccount | SetCoins", "Error", err)
