@@ -1,36 +1,18 @@
 syntax = "proto3";
-package heimdall.staking.v1beta1;
+package heimdall.chainmanager.v1beta1;
 
-import "heimdall/types/validator.proto";
+// import "heimdall/types/validator.proto";
 import "gogoproto/gogo.proto";
+import "heimdall.chainmanager.params";
 
-option go_package = "github.com/maticnetwork/heimdall/x/staking/types";
+option go_package = "github.com/maticnetwork/heimdall/x/chainmanager/types";
 
 
 option (gogoproto.sizer_all)        = false;
 option (gogoproto.marshaler_all)        = false;
 option (gogoproto.unmarshaler_all)        = false;
 
-// GenesisState defines the staking module's genesis state.
+// GenesisState - all chainmanager state that must be provided at genesis
 message GenesisState {
-  repeated heimdall.types.Validator validators = 1 ;
-  heimdall.types.ValidatorSet current_val_set = 2 ;
-  repeated string staking_sequences = 3;
-}
-
-// GenesisValidator genesis validator
-message GenesisValidator {
-  option (gogoproto.goproto_getters)  = false;
-
-  heimdall.types.ValidatorID ID  = 1;
-  uint64  start_epoch = 2;
-  uint64  end_epoch = 3;
-  uint64  nonce = 4;
-  uint64  power = 5;
-  bytes   pub_key = 6 [
-    (gogoproto.casttype)   = "github.com/maticnetwork/heimdall/types/common.PubKey"
-  ];
-  bytes                       signer = 7 [
-    (gogoproto.casttype)   = "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"
-  ];
+  Params params = 1;
 }
