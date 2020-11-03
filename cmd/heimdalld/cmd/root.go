@@ -28,6 +28,7 @@ import (
 	tmos "github.com/tendermint/tendermint/libs/os"
 	"github.com/tendermint/tendermint/p2p"
 	"github.com/tendermint/tendermint/privval"
+	tmTypes "github.com/tendermint/tendermint/types"
 	tmtime "github.com/tendermint/tendermint/types/time"
 	dbm "github.com/tendermint/tm-db"
 
@@ -50,6 +51,8 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 	authTypes "github.com/maticnetwork/heimdall/x/auth/types"
 )
+
+var logger = helper.Logger.With("module", "cmd/heimdalld")
 
 var (
 	flagNodeDirPrefix    = "node-dir-prefix"
