@@ -1,14 +1,12 @@
 package types
 
 import (
-	"bytes"
 	"fmt"
 	"strings"
 
 	"github.com/maticnetwork/heimdall/helper"
-	// "github.com/maticnetwork/heimdall/params/subspace"
-
-	hmTypes "github.com/maticnetwork/heimdall/types"
+	// "github.com/maticnetwork/heimdall/params/paramtypes"
+	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	hmCommon "github.com/maticnetwork/heimdall/types/common"
 )
 
@@ -30,7 +28,7 @@ var (
 	KeyChainParams               = []byte("ChainParams")
 )
 
-var _ subspace.ParamSet = &Params{}
+var _ paramtypes.ParamSet = &Params{}
 
 func (cp ChainParams) String() string {
 	return fmt.Sprintf(`
@@ -47,7 +45,7 @@ func (cp ChainParams) String() string {
 }
 
 // NewParams creates a new Params object
-func NewParams(mainchainTxConfirmations uint64, maticchainTxConfirmations uint64, chainParams ChainParams) Params {
+func NewParams(mainchainTxConfirmations uint64, maticchainTxConfirmations uint64, chainParams *ChainParams) Params {
 	return Params{
 		MainchainTxConfirmations:  mainchainTxConfirmations,
 		MaticchainTxConfirmations: maticchainTxConfirmations,
@@ -58,19 +56,20 @@ func NewParams(mainchainTxConfirmations uint64, maticchainTxConfirmations uint64
 // ParamSetPairs implements the ParamSet interface and returns all the key/value pairs
 // pairs of auth module's parameters.
 // nolint
-func (p *Params) ParamSetPairs() subspace.ParamSetPairs {
-	return subspace.ParamSetPairs{
-		{KeyMainchainTxConfirmations, &p.MainchainTxConfirmations},
-		{KeyMaticchainTxConfirmations, &p.MaticchainTxConfirmations},
-		{KeyChainParams, &p.ChainParams},
+func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
+	return paramtypes.ParamSetPairs{
+		// {KeyMainchainTxConfirmations, &p.MainchainTxConfirmations},
+		// {KeyMaticchainTxConfirmations, &p.MaticchainTxConfirmations},
+		// {KeyChainParams, &p.ChainParams},
 	}
 }
 
 // Equal returns a boolean determining if two Params types are identical.
 func (p Params) Equal(p2 Params) bool {
-	bz1 := ModuleCdc.MustMarshalBinaryLengthPrefixed(&p)
-	bz2 := ModuleCdc.MustMarshalBinaryLengthPrefixed(&p2)
-	return bytes.Equal(bz1, bz2)
+	// bz1 := ModuleCdc.MustMarshalBinaryLengthPrefixed(&p)
+	// bz2 := ModuleCdc.MustMarshalBinaryLengthPrefixed(&p2)
+	// return bytes.Equal(bz1, bz2)
+	return true
 }
 
 // String implements the stringer interface.
@@ -120,7 +119,7 @@ func (p Params) Validate() error {
 	return nil
 }
 
-func validateHeimdallAddress(key string, value hmTypes.HeimdallAddress) error {
+func validateHeimdallAddress(key string, value hmCommon.HeimdallAddress) error {
 	if value.String() == "" {
 		return fmt.Errorf("Invalid value %s in chain_params", key)
 	}
@@ -133,16 +132,16 @@ func validateHeimdallAddress(key string, value hmTypes.HeimdallAddress) error {
 //
 
 // ParamKeyTable for auth module
-func ParamKeyTable() subspace.KeyTable {
-	return subspace.NewKeyTable().RegisterParamSet(&Params{})
+func ParamKeyTable() paramtypes.KeyTable {
+	return paramtypes.NewKeyTable().RegisterParamSet(&Params{})
 }
 
 // DefaultParams returns a default set of parameters.
-func DefaultParams() Params {
-	return Params{
+func DefaultParams() *Params {
+	return &Params{
 		MainchainTxConfirmations:  DefaultMainchainTxConfirmations,
 		MaticchainTxConfirmations: DefaultMaticchainTxConfirmations,
-		ChainParams: ChainParams{
+		ChainParams: &ChainParams{
 			BorChainID:           helper.DefaultBorChainID,
 			StateReceiverAddress: DefaultStateReceiverAddress,
 			ValidatorSetAddress:  DefaultValidatorSetAddress,
