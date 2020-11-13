@@ -34,8 +34,8 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 }
 
 // SetParams sets the chainmanager module's parameters.
-func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
-	k.paramSubspace.SetParamSet(ctx, &params)
+func (k Keeper) SetParams(ctx sdk.Context, params *types.Params) {
+	k.paramSubspace.SetParamSet(ctx, params)
 }
 
 // GetParams gets the chainmanager module's parameters.
