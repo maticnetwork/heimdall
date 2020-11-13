@@ -17,6 +17,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
+	authTypes "github.com/maticnetwork/heimdall/auth/types"
+	"github.com/maticnetwork/heimdall/types"
+	"github.com/maticnetwork/heimdall/chainmanager"
+
 )
 
 var (
@@ -38,7 +42,7 @@ func init() {
 // SignatureVerificationGasConsumer is the type of function that is used to both
 // consume gas when verifying signatures and also to accept or reject different types of pubkeys
 // This is where apps can define their own PubKey
-type SignatureVerificationGasConsumer = func(meter sdk.GasMeter, sig signing.SignatureV2, params types.Params) error
+type SignatureVerificationGasConsumer = func(meter sdk.GasMeter, sig authTypes.StdSignature, params authTypes.Params) error
 
 // SetPubKeyDecorator sets PubKeys in context for any signer which does not already have pubkey set
 // PubKeys must be set in context for all signers before any other sigverify decorators run
@@ -357,32 +361,10 @@ func (vscd ValidateSigCountDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, sim
 // for signature verification based upon the public key type. The cost is fetched from the given params and is matched
 // by the concrete type.
 func DefaultSigVerificationGasConsumer(
-	meter sdk.GasMeter, sig signing.SignatureV2, params types.Params,
-) error {
-	pubkey := sig.PubKey
-	switch pubkey := pubkey.(type) {
-	case *ed25519.PubKey:
-		meter.ConsumeGas(params.SigVerifyCostED25519, "ante verify: ed25519")
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidPubKey, "ED25519 public keys are unsupported")
-
-	case *secp256k1.PubKey:
-		meter.ConsumeGas(params.SigVerifyCostSecp256k1, "ante verify: secp256k1")
-		return nil
-
-	case multisig.PubKey:
-		multisignature, ok := sig.Data.(*signing.MultiSignatureData)
-		if !ok {
-			return fmt.Errorf("expected %T, got, %T", &signing.MultiSignatureData{}, sig.Data)
-		}
-		err := ConsumeMultisignatureVerificationGas(meter, multisignature, pubkey, params, sig.Sequence)
-		if err != nil {
-			return err
-		}
-		return nil
-
-	default:
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidPubKey, "unrecognized public key type: %T", pubkey)
-	}
+	meter sdk.GasMeter, authTypes.StdSignature, params types.Params,
+) sdk.Result {
+	meter.ConsumeGas(params.SigVerifyCostSecp256k1, "ante verify: secp256k1")
+	return sdk.Result{}
 }
 
 // ConsumeMultisignatureVerificationGas consumes gas from a GasMeter for verifying a multisig pubkey signature
@@ -415,7 +397,7 @@ func ConsumeMultisignatureVerificationGas(
 
 // GetSignerAcc returns an account for a given address that is expected to sign
 // a transaction.
-func GetSignerAcc(ctx sdk.Context, ak AccountKeeper, addr sdk.AccAddress) (types.AccountI, error) {
+func GetSignerAcc(ctx sdk.Context, ak AccountKeeper, addr types.HeimdallAddress) (authTypes.Account, sdk.Result) {
 	if acc := ak.GetAccount(ctx, addr); acc != nil {
 		return acc, nil
 	}
