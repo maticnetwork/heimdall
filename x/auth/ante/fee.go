@@ -6,7 +6,19 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
+	authTypes "github.com/maticnetwork/heimdall/auth/types"
+	"github.com/maticnetwork/heimdall/types"
 )
+
+type FeeCollector interface {
+	GetModuleAddress(string) types.HeimdallAddress
+	SendCoinsFromAccountToModule(
+		sdk.Context,
+		types.HeimdallAddress,
+		string,
+		sdk.Coins,
+	) sdk.Error
+}
 
 // MempoolFeeDecorator will check if the transaction's fee is at least as large
 // as the local validator's minimum gasFee (defined in validator config).
@@ -99,12 +111,12 @@ func (dfd DeductFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bo
 }
 
 // DeductFees deducts fees from the given account.
-func DeductFees(bankKeeper types.BankKeeper, ctx sdk.Context, acc types.AccountI, fees sdk.Coins) error {
+func DeductFees(feeCollector FeeCollector, ctx sdk.Context, acc authTypes.Account, fees sdk.Coins) error {
 	if !fees.IsValid() {
 		return sdkerrors.Wrapf(sdkerrors.ErrInsufficientFee, "invalid fee amount: %s", fees)
 	}
 
-	err := bankKeeper.SendCoinsFromAccountToModule(ctx, acc.GetAddress(), types.FeeCollectorName, fees)
+	err := feeCollector.SendCoinsFromAccountToModule(ctx, acc.GetAddress(), authTypes.FeeCollectorName, fees)
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInsufficientFunds, err.Error())
 	}
