@@ -1,3 +1,4 @@
+// Mostly copied from https://github.com/cosmos/gaia/tree/master/app
 package app
 
 import (
@@ -13,7 +14,7 @@ import (
 // object provided to it during init.
 type GenesisState map[string]json.RawMessage
 
-// NewDefaultGenesisState generates the default state for the application.
+// NewDefaultGenesisState generates the default state for heimdall.
 func NewDefaultGenesisState() GenesisState {
 	encCfg := MakeEncodingConfig()
 	return ModuleBasics.DefaultGenesis(encCfg.Marshaler)

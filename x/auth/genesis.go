@@ -2,22 +2,21 @@ package auth
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/maticnetwork/heimdall/x/auth/keeper"
-	"github.com/maticnetwork/heimdall/x/auth/types"
-	authTypes "github.com/maticnetwork/heimdall/x/auth/types"
+	"github.com/matiknetwork/heimdall/x/auth/keeper"
+	"github.com/matiknetwork/heimdall/x/auth/types"
 )
 
 // InitGenesis initializes the capability module's state from a provided genesis
 // state.
-func InitGenesis(ctx sdk.Context, ak keeper.Keeper, processors []authTypes.AccountProcessor, genState types.GenesisState) {
+func InitGenesis(ctx sdk.Context, ak keeper.Keeper, processors []types.AccountProcessor, genState types.GenesisState) {
 	ak.SetParams(ctx, genState.Params)
-	genState.Accounts = authTypes.SanitizeGenesisAccounts(genState.Accounts)
+	genState.Accounts = types.SanitizeGenesisAccounts(genState.Accounts)
 
 	for _, gacc := range genState.Accounts {
 		acc := gacc.ToAccount()
 
 		// convert to base account
-		d := acc.(*authTypes.BaseAccount)
+		d := acc.(*types.BaseAccount)
 
 		// execute account processors
 		for _, p := range processors {

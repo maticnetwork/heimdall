@@ -1,0 +1,10 @@
+version: '3'
+services:
+  postgres:
+    image: mdillon/postgis:11
+    environment:
+      - POSTGRES_DB=heimdalld
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./.postgres:/var/lib/postgresql/data

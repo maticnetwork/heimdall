@@ -1,7 +1,7 @@
 package types
 
 import (
-	"github.com/maticnetwork/heimdall/types/common"
+	"github.com/matiknetwork/heimdall/types/common"
 )
 
 const (

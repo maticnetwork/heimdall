@@ -3,8 +3,6 @@ package types
 import (
 	"encoding/json"
 	"sort"
-
-	"github.com/maticnetwork/heimdall/x/blog/types"
 )
 
 // NewGenesisState - Create a new genesis state
@@ -24,7 +22,7 @@ func DefaultGenesisState() GenesisState {
 func GetGenesisStateFromAppState(appState map[string]json.RawMessage) GenesisState {
 	var genesisState GenesisState
 	if appState[ModuleName] != nil {
-		types.ModuleCdc.MustUnmarshalJSON(appState[ModuleName], &genesisState)
+		ModuleCdc.MustUnmarshalJSON(appState[ModuleName], &genesisState)
 	}
 	return genesisState
 }
@@ -34,7 +32,7 @@ func SetGenesisStateToAppState(appState map[string]json.RawMessage, accounts []*
 	authState := GetGenesisStateFromAppState(appState)
 	authState.Accounts = accounts
 
-	appState[ModuleName] = types.ModuleCdc.MustMarshalJSON(&authState)
+	appState[ModuleName] = ModuleCdc.MustMarshalJSON(&authState)
 	return appState, nil
 }
 

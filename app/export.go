@@ -1,3 +1,4 @@
+// Mostly copied from https://github.com/cosmos/gaia/tree/master/app
 package app
 
 import (
@@ -18,6 +19,7 @@ import (
 func (app *HeimdallApp) ExportAppStateAndValidators(
 	forZeroHeight bool, jailAllowedAddrs []string,
 ) (servertypes.ExportedApp, error) {
+
 	// as if they could withdraw from the start of the next block
 	ctx := app.NewContext(true, tmproto.Header{Height: app.LastBlockHeight()})
 
@@ -36,12 +38,16 @@ func (app *HeimdallApp) ExportAppStateAndValidators(
 	}
 
 	validators, err := staking.WriteValidators(ctx, app.StakingKeeper)
+	if err != nil {
+		return servertypes.ExportedApp{}, err
+	}
+
 	return servertypes.ExportedApp{
 		AppState:        appState,
 		Validators:      validators,
 		Height:          height,
 		ConsensusParams: app.BaseApp.GetConsensusParams(ctx),
-	}, err
+	}, nil
 }
 
 // prepare for fresh start at zero height
@@ -65,13 +71,16 @@ func (app *HeimdallApp) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAdd
 		allowedAddrsMap[addr] = true
 	}
 
+	/* Just to be safe, assert the invariants on current state. */
+	app.CrisisKeeper.AssertInvariants(ctx)
+
 	/* Handle fee distribution state. */
 
 	// withdraw all validator commission
-	// app.StakingKeeper.IterateValidators(ctx, func(_ int64, val stakingexported.ValidatorI) (stop bool) {
-	// 	_, _ = app.DistrKeeper.WithdrawValidatorCommission(ctx, val.GetOperator())
-	// 	return false
-	// })
+	app.StakingKeeper.IterateValidators(ctx, func(_ int64, val stakingtypes.ValidatorI) (stop bool) {
+		_, _ = app.DistrKeeper.WithdrawValidatorCommission(ctx, val.GetOperator())
+		return false
+	})
 
 	// withdraw all delegator rewards
 	dels := app.StakingKeeper.GetAllDelegations(ctx)
@@ -99,16 +108,16 @@ func (app *HeimdallApp) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAdd
 	ctx = ctx.WithBlockHeight(0)
 
 	// reinitialize all validators
-	// app.StakingKeeper.IterateValidators(ctx, func(_ int64, val stakingexported.ValidatorI) (stop bool) {
-	// 	// donate any unwithdrawn outstanding reward fraction tokens to the community pool
-	// 	scraps := app.DistrKeeper.GetValidatorOutstandingRewardsCoins(ctx, val.GetOperator())
-	// 	feePool := app.DistrKeeper.GetFeePool(ctx)
-	// 	feePool.CommunityPool = feePool.CommunityPool.Add(scraps...)
-	// 	app.DistrKeeper.SetFeePool(ctx, feePool)
+	app.StakingKeeper.IterateValidators(ctx, func(_ int64, val stakingtypes.ValidatorI) (stop bool) {
+		// donate any unwithdrawn outstanding reward fraction tokens to the community pool
+		scraps := app.DistrKeeper.GetValidatorOutstandingRewardsCoins(ctx, val.GetOperator())
+		feePool := app.DistrKeeper.GetFeePool(ctx)
+		feePool.CommunityPool = feePool.CommunityPool.Add(scraps...)
+		app.DistrKeeper.SetFeePool(ctx, feePool)
 
-	// 	app.DistrKeeper.Hooks().AfterValidatorCreated(ctx, val.GetOperator())
-	// 	return false
-	// })
+		app.DistrKeeper.Hooks().AfterValidatorCreated(ctx, val.GetOperator())
+		return false
+	})
 
 	// reinitialize all delegations
 	for _, del := range dels {
@@ -171,7 +180,10 @@ func (app *HeimdallApp) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAdd
 
 	iter.Close()
 
-	_, _ = app.StakingKeeper.ApplyAndReturnValidatorSetUpdates(ctx)
+	_, err := app.StakingKeeper.ApplyAndReturnValidatorSetUpdates(ctx)
+	if err != nil {
+		panic(err)
+	}
 
 	/* Handle slashing state. */
 
