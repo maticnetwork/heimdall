@@ -4,7 +4,7 @@ package gov.v1beta;
 import "cosmos/base/query/v1beta1/pagination.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
-import "gov/v1beta/gov.proto";
+import "gov/v1beta/msg.proto";
 
 option go_package = "github.com/maticnetwork/heimdall/x/gov/types";
 

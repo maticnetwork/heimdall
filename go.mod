@@ -24,11 +24,13 @@ require (
 	github.com/tendermint/go-amino v0.16.0
 	github.com/tendermint/tendermint v0.34.0-rc5
 	github.com/tendermint/tm-db v0.6.2
-	google.golang.org/genproto v0.0.0-20200825200019-8632dd797987
+	google.golang.org/genproto v0.0.0-20201014134559-03b6142f0dc9
 	google.golang.org/grpc v1.33.1
 	gopkg.in/yaml.v2 v2.3.0
 )
 
 replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.2-alpha.regen.4
-replace github.com/tendermint/tendermint => /Users/sandeep/go/src/github.com/maticnetwork/tendermint
-replace github.com/cosmos/cosmos-sdk => /Users/sandeep/go/src/github.com/maticnetwork/cosmos-sdk
+
+replace github.com/tendermint/tendermint => /Users/arpittemani/matic/tendermint
+
+replace github.com/cosmos/cosmos-sdk => /Users/arpittemani/matic/cosmos-sdk
