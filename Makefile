@@ -109,32 +109,7 @@ $(BUILD_TARGETS): go.sum $(BUILDDIR)/
 $(BUILDDIR)/:
 	mkdir -p $(BUILDDIR)/
 
-build-heimdall-all: go.sum
-	$(if $(shell docker inspect -f '{{ .Id }}' tendermint/xrnnode 2>/dev/null),$(info found image tendermint/xrnnode),docker pull tendermint/xrnnode:latest)
-	docker rm latest-build || true
-	docker run --volume=$(CURDIR):/sources:ro \
-        --env TARGET_OS='darwin linux windows' \
-        --env APP=heimdalld \
-        --env VERSION=$(VERSION) \
-        --env COMMIT=$(COMMIT) \
-        --env LEDGER_ENABLED=$(LEDGER_ENABLED) \
-        --name latest-build tendermint/xrnnode:latest
-	docker cp -a latest-build:/home/builder/artifacts/ $(CURDIR)/
-
-build-heimdall-linux: go.sum $(BUILDDIR)/
-	$(if $(shell docker inspect -f '{{ .Id }}' tendermint/xrnnode 2>/dev/null),$(info found image tendermint/xrnnode),docker pull tendermint/xrnnode:latest)
-	docker rm latest-build || true
-	docker run --volume=$(CURDIR):/sources:ro \
-        --env TARGET_OS='linux' \
-        --env APP=heimdalld \
-        --env VERSION=$(VERSION) \
-        --env COMMIT=$(COMMIT) \
-        --env LEDGER_ENABLED=false \
-        --name latest-build tendermint/xrnnode:latest
-	docker cp -a latest-build:/home/builder/artifacts/ $(CURDIR)/
-	cp artifacts/heimdalld-*-linux-amd64 $(BUILDDIR)/heimdalld
-
-.PHONY: build build-linux build-heimdall-all build-heimdall-linux
+.PHONY: build build-linux
 
 mocks: $(MOCKS_DIR)
 	mockgen -source=client/account_retriever.go -package mocks -destination tests/mocks/account_retriever.go
@@ -301,28 +276,5 @@ GOGO_PROTO_TYPES    = third_party/proto/gogoproto
 proto-update-deps:
 	@mkdir -p $(GOGO_PROTO_TYPES)
 	@curl -sSL $(GOGO_PROTO_URL)/gogoproto/gogo.proto > $(GOGO_PROTO_TYPES)/gogo.proto
-
-
-###############################################################################
-###                                Localnet                                 ###
-###############################################################################
-
-# Run a 4-node testnet locally
-localnet-start: build-linux localnet-stop
-	$(if $(shell docker inspect -f '{{ .Id }}' tendermint/xrnnode 2>/dev/null),$(info found image tendermint/xrnnode),$(MAKE) -C contrib/images xrnnode)
-	if ! [ -f build/node0/simd/config/genesis.json ]; then docker run --rm \
-		--user $(shell id -u):$(shell id -g) \
-		-v $(BUILDDIR):/simd:Z \
-		-v /etc/group:/etc/group:ro \
-		-v /etc/passwd:/etc/passwd:ro \
-		-v /etc/shadow:/etc/shadow:ro \
-		tendermint/xrnnode testnet --v 4 -o . --starting-ip-address 192.168.10.2 --keyring-backend=test ; fi
-	docker-compose up -d
-
-localnet-stop:
-	docker-compose down
-
-.PHONY: localnet-start localnet-stop
-
 
 include sims.mk
