@@ -22,7 +22,7 @@ func NewProposal(content Content, id uint64, submitTime, depositEndTime time.Tim
 		ProposalId:       id,
 		Status:           StatusDepositPeriod,
 		FinalTallyResult: EmptyTallyResult(),
-		TotalDeposit:     sdk.NewCoins(),
+		TotalDeposit:     NewCoins(),
 		SubmitTime:       submitTime,
 		DepositEndTime:   depositEndTime,
 	}

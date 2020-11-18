@@ -1,7 +1,6 @@
 syntax = "proto3";
 package gov.v1beta;
 
-import "heimdall/types/coin.proto";
 import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
 import "google/protobuf/timestamp.proto";
@@ -47,8 +46,8 @@ message Deposit {
 
   uint64   proposal_id                     = 1 [(gogoproto.moretags) = "yaml:\"proposal_id\""];
   string   depositor                       = 2;
-  repeated heimdall.types.Coin amount = 3
-      [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/maticnetwork/heimdall/types.Coins"];
+  repeated Coin amount = 3
+      [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/maticnetwork/heimdall/x/gov/types.Coins"];
 }
 
 // Proposal defines the core field members of a governance proposal.
@@ -64,7 +63,7 @@ message Proposal {
       [(gogoproto.stdtime) = true, (gogoproto.nullable) = false, (gogoproto.moretags) = "yaml:\"submit_time\""];
   google.protobuf.Timestamp deposit_end_time = 6
       [(gogoproto.stdtime) = true, (gogoproto.nullable) = false, (gogoproto.moretags) = "yaml:\"deposit_end_time\""];
-  repeated heimdall.types.Coin total_deposit = 7 [
+  repeated Coin total_deposit = 7 [
       (gogoproto.nullable)     = false,
       (gogoproto.castrepeated) = "github.com/maticnetwork/heimdall/x/gov/types.Coins",
       (gogoproto.moretags)     = "yaml:\"total_deposit\""
@@ -126,7 +125,7 @@ message Vote {
 // DepositParams defines the params for deposits on governance proposals.
 message DepositParams {
   //  Minimum deposit for a proposal to enter voting period.
-  repeated heimdall.types.Coin min_deposit = 1 [
+  repeated Coin min_deposit = 1 [
     (gogoproto.nullable)     = false,
     (gogoproto.castrepeated) = "github.com/maticnetwork/heimdall/x/gov/types.Coins",
     (gogoproto.moretags)     = "yaml:\"min_deposit\"",
@@ -179,4 +178,36 @@ message TallyParams {
     (gogoproto.jsontag)    = "veto_threshold,omitempty",
     (gogoproto.moretags)   = "yaml:\"veto_threshold\""
   ];
+}
+
+// Coin defines a token with a denomination and an amount.
+//
+// NOTE: The amount field is an Int which implements the custom method
+// signatures required by gogoproto.
+message Coin {
+  option (gogoproto.equal) = true;
+
+  string denom  = 1;
+  string amount = 2 [(gogoproto.customtype) = "Int", (gogoproto.nullable) = false];
+}
+
+// DecCoin defines a token with a denomination and a decimal amount.
+//
+// NOTE: The amount field is an Dec which implements the custom method
+// signatures required by gogoproto.
+message DecCoin {
+  option (gogoproto.equal) = true;
+
+  string denom  = 1;
+  string amount = 2 [(gogoproto.customtype) = "Dec", (gogoproto.nullable) = false];
+}
+
+// IntProto defines a Protobuf wrapper around an Int object.
+message IntProto {
+  string int = 1 [(gogoproto.customtype) = "Int", (gogoproto.nullable) = false];
+}
+
+// DecProto defines a Protobuf wrapper around a Dec object.
+message DecProto {
+  string dec = 1 [(gogoproto.customtype) = "Dec", (gogoproto.nullable) = false];
 }
