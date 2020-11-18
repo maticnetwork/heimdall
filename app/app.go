@@ -24,13 +24,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/auth/ante"
+
 	authrest "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
-	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
-	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
+
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -43,6 +41,10 @@ import (
 	// "github.com/cosmos/cosmos-sdk/x/slashing"
 	// slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	// slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
+
+	"github.com/maticnetwork/heimdall/x/auth"
+	authkeeper "github.com/maticnetwork/heimdall/x/auth/keeper"
+	authtypes "github.com/maticnetwork/heimdall/x/auth/types"
 
 	"github.com/maticnetwork/heimdall/x/staking"
 	stakingkeeper "github.com/maticnetwork/heimdall/x/staking/keeper"
@@ -100,7 +102,7 @@ type HeimdallApp struct {
 	memKeys map[string]*sdk.MemoryStoreKey
 
 	// keepers
-	AccountKeeper authkeeper.AccountKeeper
+	AccountKeeper authkeeper.Keeper
 	BankKeeper    bankkeeper.Keeper
 	StakingKeeper stakingkeeper.Keeper
 	ParamsKeeper  paramskeeper.Keeper
@@ -163,12 +165,22 @@ func NewHeimdallApp(
 	bApp.SetParamStore(app.ParamsKeeper.Subspace(baseapp.Paramspace).WithKeyTable(paramskeeper.ConsensusParamsKeyTable()))
 
 	// add keepers
-	app.AccountKeeper = authkeeper.NewAccountKeeper(
-		appCodec, keys[authtypes.StoreKey], app.GetSubspace(authtypes.ModuleName), authtypes.ProtoBaseAccount, maccPerms,
+	// app.AccountKeeper = authkeeper.NewKeeper(
+	// 	appCodec, keys[authtypes.StoreKey], app.GetSubspace(authtypes.ModuleName), authtypes.ProtoBaseAccount, maccPerms,
+	// )
+
+	// account keeper
+	app.AccountKeeper = *authkeeper.NewKeeper(
+		*app.legacyAmino,
+		keys[authtypes.StoreKey], // target store
+		memKeys[authtypes.MemStoreKey],
+		app.GetSubspace(authtypes.ModuleName),
+		authtypes.ProtoBaseAccount, // prototype
 	)
-	app.BankKeeper = bankkeeper.NewBaseKeeper(
-		appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.GetSubspace(banktypes.ModuleName), app.BlockedAddrs(),
-	)
+
+	// app.BankKeeper = bankkeeper.NewBaseKeeper(
+	// 	appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.GetSubspace(banktypes.ModuleName), app.BlockedAddrs(),
+	// )
 
 	app.StakingKeeper = *stakingkeeper.NewKeeper(
 		*app.legacyAmino,
@@ -190,12 +202,12 @@ func NewHeimdallApp(
 	// must be passed by reference here.
 	// TODO : replace nil with staking keeper
 	app.mm = module.NewManager(
-		genutil.NewAppModule(
-			app.AccountKeeper, nil, app.BaseApp.DeliverTx,
-			encodingConfig.TxConfig,
-		),
-		auth.NewAppModule(appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts),
-		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
+		// genutil.NewAppModule(
+		// 	app.AccountKeeper, nil, app.BaseApp.DeliverTx,
+		// 	encodingConfig.TxConfig,
+		// ),
+		auth.NewAppModule(appCodec, app.AccountKeeper),
+		// bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
 
 		staking.NewAppModule(appCodec, app.StakingKeeper),
 
@@ -238,8 +250,8 @@ func NewHeimdallApp(
 
 	// TODO : replace nil with staking.NewAppModule
 	app.sm = module.NewSimulationManager(
-		auth.NewAppModule(appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts),
-		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
+		// auth.NewAppModule(appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts),
+		// bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
 		nil,
 		params.NewAppModule(app.ParamsKeeper),
 	)
@@ -255,12 +267,12 @@ func NewHeimdallApp(
 	// initialize BaseApp
 	app.SetInitChainer(app.InitChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
-	app.SetAnteHandler(
-		ante.NewAnteHandler(
-			app.AccountKeeper, app.BankKeeper, ante.DefaultSigVerificationGasConsumer,
-			encodingConfig.TxConfig.SignModeHandler(),
-		),
-	)
+	// app.SetAnteHandler(
+	// 	ante.NewAnteHandler(
+	// 		app.AccountKeeper, app.BankKeeper, ante.DefaultSigVerificationGasConsumer,
+	// 		encodingConfig.TxConfig.SignModeHandler(),
+	// 	),
+	// )
 	app.SetEndBlocker(app.EndBlocker)
 
 	if loadLatest {
@@ -320,9 +332,9 @@ func (app *HeimdallApp) LoadHeight(height int64) error {
 // ModuleAccountAddrs returns all the app's module account addresses.
 func (app *HeimdallApp) ModuleAccountAddrs() map[string]bool {
 	modAccAddrs := make(map[string]bool)
-	for acc := range maccPerms {
-		modAccAddrs[authtypes.NewModuleAddress(acc).String()] = true
-	}
+	// for acc := range maccPerms {
+	// 	modAccAddrs[authtypes.NewModuleAddress(acc).String()] = true
+	// }
 
 	return modAccAddrs
 }

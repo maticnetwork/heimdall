@@ -36,8 +36,9 @@ func initCmd(ctx *server.Context, cdc *codec.LegacyAmino) *cobra.Command {
 		Args:  cobra.NoArgs,
 		RunE: func(_ *cobra.Command, _ []string) error {
 			config := ctx.Config
-			config.SetRoot(viper.GetString(cli.HomeFlag))
-			fmt.Println("custom init")
+			// config.SetRoot(viper.GetString(cli.HomeFlag))
+			// TODO : change default node home to flag
+			config.SetRoot(app.DefaultNodeHome)
 			// create chain id
 			chainID := viper.GetString(flags.FlagChainID)
 			if chainID == "" {
@@ -53,12 +54,15 @@ func initCmd(ctx *server.Context, cdc *codec.LegacyAmino) *cobra.Command {
 			WriteDefaultHeimdallConfig(filepath.Join(config.RootDir, "config/heimdall-config.toml"), helper.GetDefaultHeimdallConfig())
 
 			// get pubkey
-			newPubkey := CryptoKeyToPubkey(valPubKey)
+			// newPubkey := CryptoKeyToPubkey(valPubKey)
+			newPubkey := commonTypes.NewPubKey(valPubKey.Bytes())
 
 			// create validator account
 			validator := hmTypes.NewValidator(hmTypes.NewValidatorID(uint64(validatorID)),
 				0, 0, 1, 1, newPubkey,
 				commonTypes.BytesToHeimdallAddress(valPubKey.Address().Bytes()))
+
+			fmt.Println("validator", validator)
 
 			// create dividend account for validator
 			dividendAccount := hmTypes.NewDividendAccount(validator.Signer, ZeroIntString)
@@ -135,7 +139,7 @@ func initCmd(ctx *server.Context, cdc *codec.LegacyAmino) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String(cli.HomeFlag, helper.DefaultNodeHome, "node's home directory")
+	cmd.Flags().String(cli.HomeFlag, app.DefaultNodeHome, "node's home directory")
 	cmd.Flags().String(helper.FlagClientHome, helper.DefaultCLIHome, "client's home directory")
 	cmd.Flags().String(flags.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
 	cmd.Flags().Int(stakingcli.FlagValidatorID, 1, "--id=<validator ID here>, if left blank will be assigned 1")

@@ -17,7 +17,7 @@ import (
 
 type (
 	Keeper struct {
-		cdc           codec.Marshaler
+		cdc           codec.LegacyAmino
 		storeKey      sdk.StoreKey
 		memKey        sdk.StoreKey
 		paramSubspace paramtypes.Subspace
@@ -28,7 +28,7 @@ type (
 )
 
 func NewKeeper(
-	cdc codec.Marshaler,
+	cdc codec.LegacyAmino,
 	storeKey, memKey sdk.StoreKey,
 	paramstore paramtypes.Subspace,
 	proto func() types.Account) *Keeper {
@@ -95,7 +95,7 @@ func (k Keeper) GetAllAccounts(ctx sdk.Context) []types.Account {
 func (k Keeper) SetAccount(ctx sdk.Context, acc types.Account) {
 	addr := acc.GetAddress()
 	store := ctx.KVStore(k.storeKey)
-	bz, err := codec.MarshalAny(k.cdc, addr)
+	bz, err := k.cdc.MarshalBinaryBare(acc)
 	if err != nil {
 		panic(err)
 	}
@@ -218,7 +218,7 @@ func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
 
 func (k Keeper) decodeAccount(bz []byte) (types.Account, error) {
 	var acc types.Account
-	if err := codec.UnmarshalAny(k.cdc, &acc, bz); err != nil {
+	if err := k.cdc.UnmarshalBinaryBare(bz, &acc); err != nil {
 		return nil, err
 	}
 

@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/cosmos/cosmos-sdk/snapshots"
 	"github.com/maticnetwork/heimdall/app/params"
 	"github.com/maticnetwork/heimdall/types/common"
@@ -121,6 +120,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 
 	_, legacyCodec := app.MakeCodecs()
 	ctx := server.NewDefaultContext()
+	// serverCtx := server.GetServerContextFromCmd(rootCmd)
 
 	rootCmd.AddCommand(
 		// initCmd(app.ModuleBasics, app.DefaultNodeHome),
@@ -341,6 +341,7 @@ func InitializeNodeValidatorFiles(
 	config *cfg.Config) (nodeID string, valPubKey crypto.PubKey, priv crypto.PrivKey, err error,
 ) {
 
+	fmt.Println("config file", config.NodeKeyFile())
 	nodeKey, err := p2p.LoadOrGenNodeKey(config.NodeKeyFile())
 	if err != nil {
 		return "", nil, nil, err
@@ -362,16 +363,17 @@ func InitializeNodeValidatorFiles(
 
 	valPrivKey := filePV.Key.PrivKey
 
-	tmValPubKey, err := filePV.GetPubKey()
-	if err != nil {
-		return "", nil, nil, err
-	}
+	// tmValPubKey, err := filePV.GetPubKey()
+	// if err != nil {
+	// 	return "", nil, nil, err
+	// }
 
-	valPubKey, err = secp256k1.FromTmSecp256k1(tmValPubKey)
-	if err != nil {
-		return "", nil, nil, err
-	}
-
+	// valPubKey, err = secp256k1.FromTmSecp256k1(tmValPubKey)
+	// if err != nil {
+	// 	return "", nil, nil, err
+	// }
+	valPubKey, _ = filePV.GetPubKey()
+	fmt.Println("valPubKey size", len(valPubKey.Bytes()))
 	return nodeID, valPubKey, valPrivKey, nil
 }
 

@@ -61,7 +61,8 @@ func (a AppModuleBasic) RegisterInterfaces(reg cdctypes.InterfaceRegistry) {
 
 // DefaultGenesis returns the capability module's default genesis state.
 func (AppModuleBasic) DefaultGenesis(cdc codec.JSONMarshaler) json.RawMessage {
-	return cdc.MustMarshalJSON(types.DefaultGenesis())
+	// return cdc.MustMarshalJSON(types.DefaultGenesis())
+	return nil
 }
 
 // ValidateGenesis performs genesis state validation for the capability module.
@@ -156,7 +157,8 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONMarshaler, gs json.RawMessage) []abci.ValidatorUpdate {
 	var genState types.GenesisState
 	// Initialize global index to index in genesis state
-	cdc.MustUnmarshalJSON(gs, &genState)
+	// cdc.MustUnmarshalJSON(gs, &genState)
+	types.ModuleCdc.MustUnmarshalJSON(gs, &genState)
 
 	InitGenesis(ctx, am.keeper, am.processors, genState)
 
