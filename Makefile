@@ -273,7 +273,7 @@ proto-all: proto-gen proto-lint proto-check-breaking proto-format
 .PHONY: proto-all proto-gen proto-gen-docker proto-lint proto-check-breaking proto-format
 
 proto-gen:
-	@./scripts/protocgen.sh
+	@./scripts/protocgen
 
 proto-gen-docker:
 	@echo "Generating Protobuf files"
