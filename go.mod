@@ -29,5 +29,7 @@ require (
 )
 
 replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.2-alpha.regen.4
-replace github.com/tendermint/tendermint => /Users/sandeep/go/src/github.com/maticnetwork/tendermint
-replace github.com/cosmos/cosmos-sdk => /Users/sandeep/go/src/github.com/maticnetwork/cosmos-sdk
+
+replace github.com/tendermint/tendermint => /home/sys-597/go/src/github.com/maticnetwork/tendermint
+
+replace github.com/cosmos/cosmos-sdk => /home/sys-597/go/src/github.com/maticnetwork/cosmos-sdk

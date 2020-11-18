@@ -73,9 +73,6 @@ import (
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	blogparams "github.com/maticnetwork/heimdall/app/params"
-	"github.com/maticnetwork/heimdall/x/blog"
-	blogkeeper "github.com/maticnetwork/heimdall/x/blog/keeper"
-	blogtypes "github.com/maticnetwork/heimdall/x/blog/types"
 
 	// unnamed import of statik for swagger UI support
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
@@ -106,8 +103,6 @@ var (
 		slashing.AppModuleBasic{},
 		upgrade.AppModuleBasic{},
 		evidence.AppModuleBasic{},
-
-		blog.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -158,8 +153,6 @@ type HeimdallApp struct {
 	ParamsKeeper     paramskeeper.Keeper
 	EvidenceKeeper   evidencekeeper.Keeper
 
-	BlogKeeper blogkeeper.Keeper
-
 	// the module manager
 	mm *module.Manager
 
@@ -196,10 +189,10 @@ func NewHeimdallApp(
 		authtypes.StoreKey, banktypes.StoreKey, stakingtypes.StoreKey,
 		minttypes.StoreKey, distrtypes.StoreKey, slashingtypes.StoreKey,
 		govtypes.StoreKey, paramstypes.StoreKey, upgradetypes.StoreKey,
-		evidencetypes.StoreKey, capabilitytypes.StoreKey, blogtypes.StoreKey,
+		evidencetypes.StoreKey, capabilitytypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
-	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey, blogtypes.MemStoreKey)
+	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
 
 	app := &HeimdallApp{
 		BaseApp:           bApp,
@@ -270,8 +263,6 @@ func NewHeimdallApp(
 	// If evidence needs to be handled for the app, set routes in router here and seal
 	app.EvidenceKeeper = *evidenceKeeper
 
-	app.BlogKeeper = *blogkeeper.NewKeeper(app.appCodec, keys[blogtypes.StoreKey], memKeys[blogtypes.MemStoreKey])
-
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
 	app.mm = module.NewManager(
@@ -291,7 +282,6 @@ func NewHeimdallApp(
 		upgrade.NewAppModule(app.UpgradeKeeper),
 		evidence.NewAppModule(app.EvidenceKeeper),
 		params.NewAppModule(app.ParamsKeeper),
-		blog.NewAppModule(appCodec, app.BlogKeeper),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
