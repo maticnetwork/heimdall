@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/gogo/protobuf/proto"
-	yaml "gopkg.in/yaml.v2"
+	// yaml "gopkg.in/yaml.v2"
 
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -43,10 +43,10 @@ func NewProposal(content Content, id uint64, submitTime, depositEndTime time.Tim
 }
 
 // String implements stringer interface
-func (p Proposal) String() string {
-	out, _ := yaml.Marshal(p)
-	return string(out)
-}
+// func (p Proposal) String() string {
+// 	out, _ := yaml.Marshal(p)
+// 	return string(out)
+// }
 
 // GetContent returns the proposal Content
 func (p Proposal) GetContent() Content {
@@ -208,10 +208,10 @@ func (tp *TextProposal) ProposalType() string { return ProposalTypeText }
 func (tp *TextProposal) ValidateBasic() error { return ValidateAbstract(tp) }
 
 // String implements Stringer interface
-func (tp TextProposal) String() string {
-	out, _ := yaml.Marshal(tp)
-	return string(out)
-}
+// func (tp *TextProposal) String() string {
+// 	out, _ := yaml.Marshal(tp)
+// 	return string(out)
+// }
 
 var validProposalTypes = map[string]struct{}{
 	ProposalTypeText: {},
@@ -259,5 +259,15 @@ func ProposalHandler(_ sdk.Context, c Content) error {
 
 	default:
 		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized gov proposal type: %s", c.ProposalType())
+	}
+}
+
+// EmptyTallyResult returns an empty TallyResult.
+func EmptyTallyResult() TallyResult {
+	return TallyResult{
+		Yes:        sdk.ZeroInt(),
+		Abstain:    sdk.ZeroInt(),
+		No:         sdk.ZeroInt(),
+		NoWithVeto: sdk.ZeroInt(),
 	}
 }
