@@ -265,9 +265,9 @@ func ProposalHandler(_ sdk.Context, c Content) error {
 // EmptyTallyResult returns an empty TallyResult.
 func EmptyTallyResult() TallyResult {
 	return TallyResult{
-		Yes:        sdk.ZeroInt(),
-		Abstain:    sdk.ZeroInt(),
-		No:         sdk.ZeroInt(),
-		NoWithVeto: sdk.ZeroInt(),
+		Yes:        ZeroInt(),
+		Abstain:    ZeroInt(),
+		No:         ZeroInt(),
+		NoWithVeto: ZeroInt(),
 	}
 }

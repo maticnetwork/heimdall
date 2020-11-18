@@ -5,13 +5,12 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 // NewVote creates a new Vote instance
-//nolint:interfacer
-func NewVote(proposalID uint64, voter sdk.AccAddress, option VoteOption) Vote {
-	return Vote{proposalID, voter.String(), option}
+func NewVote(proposalID uint64, voter hmTypes.ValidatorID, option VoteOption) Vote {
+	return Vote{proposalID, voter, option}
 }
 
 func (v Vote) String() string {

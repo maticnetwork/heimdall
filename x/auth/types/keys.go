@@ -19,6 +19,8 @@ const (
 
 	// MemStoreKey defines the in-memory store key
 	MemStoreKey = "mem_capability"
+
+	FeeToken = "matic"
 )
 
 func KeyPrefix(p string) []byte {

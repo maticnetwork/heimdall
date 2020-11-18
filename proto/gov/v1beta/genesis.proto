@@ -9,6 +9,7 @@ option go_package = "github.com/maticnetwork/heimdall/x/gov/types";
 
 // GenesisState defines the gov module's genesis state.
 message GenesisState {
+  option (gogoproto.goproto_getters)  = false;
   // starting_proposal_id is the ID of the starting proposal.
   uint64 starting_proposal_id = 1 [(gogoproto.moretags) = "yaml:\"starting_proposal_id\""];
   // deposits defines all the deposits present at genesis.

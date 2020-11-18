@@ -5,13 +5,12 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 // NewDeposit creates a new Deposit instance
-//nolint:interfacer
-func NewDeposit(proposalID uint64, depositor sdk.AccAddress, amount Coins) Deposit {
-	return Deposit{proposalID, depositor.String(), amount}
+func NewDeposit(proposalID uint64, amount Coins, validator hmTypes.ValidatorID) Deposit {
+	return Deposit{proposalID, validator, amount}
 }
 
 func (d Deposit) String() string {
