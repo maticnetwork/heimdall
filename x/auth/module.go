@@ -156,7 +156,8 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONMarshaler, gs json.RawMessage) []abci.ValidatorUpdate {
 	var genState types.GenesisState
 	// Initialize global index to index in genesis state
-	cdc.MustUnmarshalJSON(gs, &genState)
+	// cdc.MustUnmarshalJSON(gs, &genState)
+	types.ModuleCdc.MustUnmarshalJSON(gs, &genState)
 
 	InitGenesis(ctx, am.keeper, am.processors, genState)
 
