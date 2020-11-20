@@ -17,9 +17,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
-	authTypes "github.com/maticnetwork/heimdall/auth/types"
+	authTypes "github.com/maticnetwork/heimdall/x/auth/types"
 	"github.com/maticnetwork/heimdall/types"
-	"github.com/maticnetwork/heimdall/chainmanager"
+	
 
 )
 
