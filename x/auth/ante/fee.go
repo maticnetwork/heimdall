@@ -6,8 +6,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
-	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/types"
+	authTypes "github.com/maticnetwork/heimdall/x/auth/types"
 )
 
 type FeeCollector interface {
@@ -101,7 +101,7 @@ func (dfd DeductFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bo
 
 	// deduct the fees
 	if !feeTx.GetFee().IsZero() {
-		err = DeductFees(dfd.bankKeeper, ctx, feePayerAcc, feeTx.GetFee())
+		err = DeductFees(feeCollector, ctx, feePayerAcc, feeTx.GetFee())
 		if err != nil {
 			return ctx, err
 		}

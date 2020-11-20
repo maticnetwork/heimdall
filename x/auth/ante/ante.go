@@ -4,7 +4,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/signing"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/maticnetwork/heimdall/chainmanager"
+	"github.com/maticnetwork/heimdall/x/chainmanager"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
 )
@@ -30,7 +30,7 @@ func NewAnteHandler(
 		NewRejectFeeGranterDecorator(),
 		NewSetPubKeyDecorator(ak), // SetPubKeyDecorator must be called before all signature verification decorators
 		NewValidateSigCountDecorator(ak),
-		NewDeductFeeDecorator(ak, bankKeeper),
+		NewDeductFeeDecorator(ak, chainmanager),
 		NewSigGasConsumeDecorator(ak, sigGasConsumer),
 		NewSigVerificationDecorator(ak, signModeHandler),
 		NewIncrementSequenceDecorator(ak),
