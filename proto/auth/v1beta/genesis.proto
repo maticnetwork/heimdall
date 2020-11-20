@@ -39,9 +39,7 @@ message Params {
 
 message GenesisAccount {
   option (gogoproto.goproto_getters)  = false;
-  bytes                       address = 1 [
-    (gogoproto.casttype)   = "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"
-  ];
+  string                       address = 1;
   repeated cosmos.base.v1beta1.Coin coins = 2
       [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"];
   uint64                   sequence = 3;

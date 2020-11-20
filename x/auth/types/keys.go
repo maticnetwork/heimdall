@@ -1,9 +1,5 @@
 package types
 
-import (
-	"github.com/maticnetwork/heimdall/types/common"
-)
-
 const (
 	// ModuleName defines the module name
 	ModuleName = "auth"
@@ -39,8 +35,8 @@ var (
 )
 
 // AddressStoreKey turn an address to key used to get it from the account store
-func AddressStoreKey(addr common.HeimdallAddress) []byte {
-	return append(AddressStoreKeyPrefix, addr.Bytes()...)
+func AddressStoreKey(addr string) []byte {
+	return append(AddressStoreKeyPrefix, addr...)
 }
 
 // ProposerKey returns proposer key
