@@ -5,8 +5,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/crypto"
-
-	"github.com/maticnetwork/heimdall/types/common"
 )
 
 // Account is an interface used to store coins at a given address within state.
@@ -16,8 +14,8 @@ import (
 //
 // Many complex conditions can be used in the concrete struct which implements Account.
 type Account interface {
-	GetAddress() common.HeimdallAddress
-	SetAddress(common.HeimdallAddress) error // errors if already set.
+	GetAddress() string
+	SetAddress(string) error // errors if already set.
 
 	GetPubKey() crypto.PubKey // can return nil.
 	SetPubKey(crypto.PubKey) error

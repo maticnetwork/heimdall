@@ -45,7 +45,7 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 }
 
 // NewAccountWithAddress implements sdk.Keeper.
-func (k Keeper) NewAccountWithAddress(ctx sdk.Context, addr hmCommonTypes.HeimdallAddress) types.Account {
+func (k Keeper) NewAccountWithAddress(ctx sdk.Context, addr string) types.Account {
 	acc := k.proto()
 	err := acc.SetAddress(addr)
 	if err != nil {
@@ -69,7 +69,7 @@ func (k Keeper) NewAccount(ctx sdk.Context, acc types.Account) types.Account {
 }
 
 // GetAccount implements sdk.Keeper.
-func (k Keeper) GetAccount(ctx sdk.Context, addr hmCommonTypes.HeimdallAddress) types.Account {
+func (k Keeper) GetAccount(ctx sdk.Context, addr string) types.Account {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.AddressStoreKey(addr))
 	if bz == nil {
@@ -129,7 +129,7 @@ func (k Keeper) IterateAccounts(ctx sdk.Context, process func(types.Account) (st
 }
 
 // GetPubKey Returns the PubKey of the account at address
-func (k Keeper) GetPubKey(ctx sdk.Context, addr hmCommonTypes.HeimdallAddress) (crypto.PubKey, error) {
+func (k Keeper) GetPubKey(ctx sdk.Context, addr string) (crypto.PubKey, error) {
 	acc := k.GetAccount(ctx, addr)
 	if acc == nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownAddress, "account %s does not exist", addr)
@@ -138,7 +138,7 @@ func (k Keeper) GetPubKey(ctx sdk.Context, addr hmCommonTypes.HeimdallAddress) (
 }
 
 // GetSequence Returns the Sequence of the account at address
-func (k Keeper) GetSequence(ctx sdk.Context, addr hmCommonTypes.HeimdallAddress) (uint64, error) {
+func (k Keeper) GetSequence(ctx sdk.Context, addr string) (uint64, error) {
 	acc := k.GetAccount(ctx, addr)
 	if acc == nil {
 		return 0, sdkerrors.Wrapf(sdkerrors.ErrUnknownAddress, "account %s does not exist", addr)

@@ -14,10 +14,10 @@ message BaseAccount {
   option (gogoproto.marshaler)        = false;
   option (gogoproto.sizer)        = false;
 
-
-  string                        address = 1 [
-    (gogoproto.casttype)   = "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"
-  ];
+string                        address = 1;
+  // string                        address = 1 [
+  //   (gogoproto.casttype)   = "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"
+  // ];
   string                     coins = 2 [
     (gogoproto.casttype)   = "github.com/cosmos/cosmos-sdk/types.Coins"
   ];

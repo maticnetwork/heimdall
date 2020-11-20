@@ -406,6 +406,8 @@ github.com/magiconair/properties v1.8.4 h1:8KGKTcQQGm0Kv7vEbKFErAoAOFyyacLStRtQS
 github.com/magiconair/properties v1.8.4/go.mod h1:y3VJvCyxH9uVvJTWEGAELF3aiYNyPKd5NZ3oSwXrF60=
 github.com/maticnetwork/bor v0.2.1 h1:iWVexnhYmL2Y4jFADNfDuaxdh6ufmsXEzyQhHXWgOq0=
 github.com/maticnetwork/bor v0.2.1/go.mod h1:NJu+4Fk6z7ejVArbea5a/ytlDscDAQ1cmfwgDEix4dM=
+github.com/maticnetwork/tendermint v0.25.0 h1:Y0j1dfFF1RVnh/RW68BGGumUZt2Kb9O/9xTABp7hUtQ=
+github.com/maticnetwork/tendermint v0.25.0/go.mod h1:l4RmeTRg9hAvjtC4OKYajAlN7RaBSkMlJH+3NyGglCo=
 github.com/mattn/go-colorable v0.0.9/go.mod h1:9vuHe8Xs5qXnSaW/c/ABM9alt+Vo+STaOChaDxuIBZU=
 github.com/mattn/go-colorable v0.1.0 h1:v2XXALHHh6zHfYTJ+cSkwtyffnaOyR1MXaA91mTrb8o=
 github.com/mattn/go-colorable v0.1.0/go.mod h1:9vuHe8Xs5qXnSaW/c/ABM9alt+Vo+STaOChaDxuIBZU=

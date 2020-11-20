@@ -1,7 +1,6 @@
 package types
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"time"
@@ -13,7 +12,6 @@ import (
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
-	"github.com/maticnetwork/heimdall/types/common"
 	"github.com/maticnetwork/heimdall/x/auth/exported"
 )
 
@@ -35,11 +33,11 @@ type (
 //-----------------------------------------------------------------------------
 // BaseAccount
 
-var _ Account = (*BaseAccount)(nil)
+// var _ Account = (*BaseAccount)(nil)
 
 // NewBaseAccount creates a new BaseAccount object
 func NewBaseAccount(
-	address common.HeimdallAddress,
+	address string,
 	coins sdk.Coins,
 	pubKey crypto.PubKey,
 	accountNumber uint64,
@@ -77,25 +75,25 @@ func (acc BaseAccount) String() string {
 }
 
 // ProtoBaseAccount - a prototype function for BaseAccount
-func ProtoBaseAccount() Account {
-	return &BaseAccount{}
-}
+// func ProtoBaseAccount() Account {
+// 	return BaseAccount{}
+// }
 
 // NewBaseAccountWithAddress - returns a new base account with a given address
-func NewBaseAccountWithAddress(addr common.HeimdallAddress) BaseAccount {
+func NewBaseAccountWithAddress(addr string) BaseAccount {
 	return BaseAccount{
 		Address: addr,
 	}
 }
 
 // GetAddress - Implements sdk.Account.
-func (acc BaseAccount) GetAddress() common.HeimdallAddress {
+func (acc BaseAccount) GetAddress() string {
 	return acc.Address
 }
 
 // SetAddress - Implements sdk.Account.
-func (acc *BaseAccount) SetAddress(addr common.HeimdallAddress) error {
-	if len(acc.Address) != 0 && !acc.Address.Empty() {
+func (acc *BaseAccount) SetAddress(addr string) error {
+	if len(acc.Address) != 0 && acc.Address != "" {
 		return errors.New("cannot override BaseAccount address")
 	}
 	acc.Address = addr
@@ -154,8 +152,8 @@ func (acc *BaseAccount) SpendableCoins(_ time.Time) sdk.Coins {
 
 // Validate checks for errors on the account fields
 func (acc BaseAccount) Validate() error {
-	if acc.PubKey != nil && !acc.Address.Empty() &&
-		!bytes.Equal(acc.PubKey.Address().Bytes(), acc.Address.Bytes()) {
+	if acc.PubKey != nil && acc.Address != "" &&
+		acc.PubKey.Address().String() != acc.Address {
 		return errors.New("pubkey and address pair is invalid")
 	}
 
@@ -177,7 +175,7 @@ func (acc BaseAccount) MarshalYAML() (interface{}, error) {
 
 // LightBaseAccount - a base account structure.
 type LightBaseAccount struct {
-	Address       common.HeimdallAddress `json:"address" yaml:"address"`
-	AccountNumber uint64                 `json:"account_number" yaml:"account_number"`
-	Sequence      uint64                 `json:"sequence" yaml:"sequence"`
+	Address       string `json:"address" yaml:"address"`
+	AccountNumber uint64 `json:"account_number" yaml:"account_number"`
+	Sequence      uint64 `json:"sequence" yaml:"sequence"`
 }

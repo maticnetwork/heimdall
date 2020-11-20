@@ -2,11 +2,12 @@ syntax = "proto3";
 package heimdall.auth.v1beta1;
 
 import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
 
 option go_package = "github.com/maticnetwork/heimdall/x/auth/types";
-option (gogoproto.sizer_all)        = false;
-option (gogoproto.marshaler_all)    = false;
-option (gogoproto.unmarshaler_all)  = false;
+// option (gogoproto.sizer_all)        = false;
+// option (gogoproto.marshaler_all)    = false;
+// option (gogoproto.unmarshaler_all)  = false;
 
 // GenesisState defines the auth module's genesis state.
 message GenesisState {
@@ -38,12 +39,9 @@ message Params {
 
 message GenesisAccount {
   option (gogoproto.goproto_getters)  = false;
-  string                       address = 1 [
-    (gogoproto.casttype)   = "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"
-  ];
-  string                     coins = 2 [
-    (gogoproto.casttype)   = "github.com/cosmos/cosmos-sdk/types.Coins"
-  ];
+  string                       address = 1;
+  repeated cosmos.base.v1beta1.Coin coins = 2
+      [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"];
   uint64                   sequence = 3;
   uint64                   account_number = 4;
   string                    module_name = 5;

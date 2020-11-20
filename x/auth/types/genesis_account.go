@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	hmCommonTypes "github.com/maticnetwork/heimdall/types/common"
 )
 
 // Validate checks for errors on the vesting and module account parameters
@@ -20,7 +19,7 @@ func (ga GenesisAccount) Validate() error {
 
 // NewGenesisAccountRaw creates a new GenesisAccount object
 func NewGenesisAccountRaw(
-	address hmCommonTypes.HeimdallAddress,
+	address string,
 	coins sdk.Coins,
 	module string,
 	permissions ...string,
@@ -82,9 +81,9 @@ func (ga *GenesisAccount) ToAccount() Account {
 type GenesisAccounts []GenesisAccount
 
 // Contains checks if genesis accounts contain an address
-func (gaccs GenesisAccounts) Contains(acc hmCommonTypes.HeimdallAddress) bool {
+func (gaccs GenesisAccounts) Contains(acc string) bool {
 	for _, gacc := range gaccs {
-		if gacc.Address.Equals(acc) {
+		if gacc.Address == acc {
 			return true
 		}
 	}
