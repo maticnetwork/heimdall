@@ -1,46 +1,41 @@
 package gov_test
 
 import (
-	"math/rand"
 	"testing"
+	"math/rand"
 	"time"
 
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
-
-	abci "github.com/tendermint/tendermint/abci/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/app"
-	"github.com/maticnetwork/heimdall/gov"
+	// "github.com/maticnetwork/heimdall/gov"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/types/simulation"
 	"github.com/maticnetwork/heimdall/gov/types"
-	"github.com/maticnetwork/heimdall/helper/mocks"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+	abci "github.com/tendermint/tendermint/abci/types"
 )
 
-// TallyTestSuite integrate test suite context object
-type TallyTestSuite struct {
+// VoteTestSuite integrate test suite context object
+type VoteTestSuite struct {
 	suite.Suite
 
 	app *app.HeimdallApp
 	ctx sdk.Context
-	contractCaller mocks.IContractCaller
 }
 
 // SetupTest setup necessary things for genesis test
-func (suite *TallyTestSuite) SetupTest() {
+func (suite *VoteTestSuite) SetupTest() {
 	suite.app = setupGovGenesis()
 	suite.ctx = suite.app.BaseApp.NewContext(true, abci.Header{})
-	suite.contractCaller = mocks.IContractCaller{}
 }
 
-// TestTallyTestSuite
-func TestTallyTestSuite(t *testing.T) {
-	suite.Run(t, new(TallyTestSuite))
+// TestVoteTestSuite
+func TestVoteTestSuite(t *testing.T) {
+	suite.Run(t, new(VoteTestSuite))
 }
 
-func (suite *TallyTestSuite) TestTallyNoOneVotes() {
+func (suite *TallyTestSuite) TestAddVote() {
 
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 
@@ -76,15 +71,19 @@ func (suite *TallyTestSuite) TestTallyNoOneVotes() {
 	proposal.Status = types.StatusVotingPeriod
 	app.GovKeeper.SetProposal(ctx, proposal)
 
-	proposal, ok := app.GovKeeper.GetProposal(ctx, proposalID)
-	require.True(t, ok)
-	passes, burnDeposits, _ := gov.Tally(ctx, app.GovKeeper, proposal)
+	tp = testProposal()
+	proposal, err = app.GovKeeper.SubmitProposal(ctx, tp)
+	require.NoError(t, err)
+	proposalID = proposal.ProposalID
+	proposal.Status = types.StatusNil
+	app.GovKeeper.SetProposal(ctx, proposal)
 
-	require.False(t, passes)
-	require.False(t, burnDeposits)
+	err = app.GovKeeper.AddVote(ctx, proposalID, accounts[0].Address, types.OptionYes, validators[0].ID)
+	require.Error(t, err)
+
 }
 
-func (suite *TallyTestSuite) TestTallyNoQuorum() {
+func (suite *TallyTestSuite) TestGetAllVotesAll() {
 
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 
@@ -123,10 +122,19 @@ func (suite *TallyTestSuite) TestTallyNoQuorum() {
 	err = app.GovKeeper.AddVote(ctx, proposalID, accounts[0].Address, types.OptionYes, validators[0].ID)
 	require.Nil(t, err)
 
-	proposal, ok := app.GovKeeper.GetProposal(ctx, proposalID)
-	require.True(t, ok)
-	passes, burnDeposits, _ := gov.Tally(ctx, app.GovKeeper, proposal)
+	err = app.GovKeeper.AddVote(ctx, proposalID, accounts[1].Address, types.OptionYes, validators[1].ID)
+	require.Nil(t, err)
 
-	require.False(t, passes)
-	require.False(t, burnDeposits)
+	votes := app.GovKeeper.GetAllVotes(ctx)
+	require.Len(t, votes, 2)
+
+	votes = app.GovKeeper.GetVotes(ctx, proposalID)
+	require.Len(t, votes, 2)
+
+	_, found := app.GovKeeper.GetVote(ctx, proposalID, validators[0].ID)
+	require.True(t, found)
+
+	_, found = app.GovKeeper.GetVote(ctx, proposalID, validators[2].ID)
+	require.False(t, found)
+
 }

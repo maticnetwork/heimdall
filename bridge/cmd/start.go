@@ -47,11 +47,19 @@ func GetStartCmd() *cobra.Command {
 			_txBroadcaster := broadcaster.NewTxBroadcaster(cdc)
 			_httpClient := httpClient.NewHTTP(helper.GetConfig().TendermintRPCUrl, "/websocket")
 
+			// cli context
+			cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
+			cliCtx.BroadcastMode = client.BroadcastAsync
+			cliCtx.TrustNode = true
+
+			// params context
+			_paramsContext := util.NewParamsContext(cliCtx)
+
 			// selected services to start
 			services := []common.Service{}
 			services = append(services,
 				listener.NewListenerService(cdc, _queueConnector, _httpClient),
-				processor.NewProcessorService(cdc, _queueConnector, _httpClient, _txBroadcaster),
+				processor.NewProcessorService(cdc, _queueConnector, _httpClient, _txBroadcaster, _paramsContext),
 			)
 
 			// sync group
@@ -89,11 +97,6 @@ func GetStartCmd() *cobra.Command {
 			if err != nil {
 				panic(fmt.Sprintf("Error connecting to server %v", err))
 			}
-
-			// cli context
-			cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
-			cliCtx.BroadcastMode = client.BroadcastAsync
-			cliCtx.TrustNode = true
 
 			// start bridge services only when node fully synced
 			for {

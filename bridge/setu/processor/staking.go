@@ -90,7 +90,7 @@ func (sp *StakingProcessor) sendValidatorJoinToHeimdall(eventName string, logByt
 				"event", eventName,
 				"signer", event.Signer,
 			)
-			return tasks.NewErrRetryTaskLater("account doesn't exist", util.RetryTaskDelay)
+			return tasks.NewErrRetryTaskLater("account doesn't exist", util.ValidatorJoinRetryDelay)
 		}
 
 		sp.Logger.Info(
@@ -200,7 +200,7 @@ func (sp *StakingProcessor) sendStakeUpdateToHeimdall(eventName string, logBytes
 		sp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
 	} else {
 		if isOld, _ := sp.isOldTx(sp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index)); isOld {
-			sp.Logger.Info("Ignoring task to send unstakeinit to heimdall as already processed",
+			sp.Logger.Info("Ignoring task to send stake-update to heimdall as already processed",
 				"event", eventName,
 				"validatorID", event.ValidatorId,
 				"nonce", event.Nonce,

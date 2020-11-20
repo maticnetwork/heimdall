@@ -20,7 +20,6 @@ var (
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
-	_ = abi.U256
 	_ = bind.Bind
 	_ = common.Big1
 	_ = types.BloomLookup
@@ -174,7 +173,7 @@ func (_Statesender *StatesenderTransactorRaw) Transact(opts *bind.TransactOpts, 
 
 // Counter is a free data retrieval call binding the contract method 0x61bc221a.
 //
-// Solidity: function counter() constant returns(uint256)
+// Solidity: function counter() view returns(uint256)
 func (_Statesender *StatesenderCaller) Counter(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -186,21 +185,21 @@ func (_Statesender *StatesenderCaller) Counter(opts *bind.CallOpts) (*big.Int, e
 
 // Counter is a free data retrieval call binding the contract method 0x61bc221a.
 //
-// Solidity: function counter() constant returns(uint256)
+// Solidity: function counter() view returns(uint256)
 func (_Statesender *StatesenderSession) Counter() (*big.Int, error) {
 	return _Statesender.Contract.Counter(&_Statesender.CallOpts)
 }
 
 // Counter is a free data retrieval call binding the contract method 0x61bc221a.
 //
-// Solidity: function counter() constant returns(uint256)
+// Solidity: function counter() view returns(uint256)
 func (_Statesender *StatesenderCallerSession) Counter() (*big.Int, error) {
 	return _Statesender.Contract.Counter(&_Statesender.CallOpts)
 }
 
 // IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
 //
-// Solidity: function isOwner() constant returns(bool)
+// Solidity: function isOwner() view returns(bool)
 func (_Statesender *StatesenderCaller) IsOwner(opts *bind.CallOpts) (bool, error) {
 	var (
 		ret0 = new(bool)
@@ -212,21 +211,21 @@ func (_Statesender *StatesenderCaller) IsOwner(opts *bind.CallOpts) (bool, error
 
 // IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
 //
-// Solidity: function isOwner() constant returns(bool)
+// Solidity: function isOwner() view returns(bool)
 func (_Statesender *StatesenderSession) IsOwner() (bool, error) {
 	return _Statesender.Contract.IsOwner(&_Statesender.CallOpts)
 }
 
 // IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
 //
-// Solidity: function isOwner() constant returns(bool)
+// Solidity: function isOwner() view returns(bool)
 func (_Statesender *StatesenderCallerSession) IsOwner() (bool, error) {
 	return _Statesender.Contract.IsOwner(&_Statesender.CallOpts)
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function owner() constant returns(address)
+// Solidity: function owner() view returns(address)
 func (_Statesender *StatesenderCaller) Owner(opts *bind.CallOpts) (common.Address, error) {
 	var (
 		ret0 = new(common.Address)
@@ -238,21 +237,21 @@ func (_Statesender *StatesenderCaller) Owner(opts *bind.CallOpts) (common.Addres
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function owner() constant returns(address)
+// Solidity: function owner() view returns(address)
 func (_Statesender *StatesenderSession) Owner() (common.Address, error) {
 	return _Statesender.Contract.Owner(&_Statesender.CallOpts)
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function owner() constant returns(address)
+// Solidity: function owner() view returns(address)
 func (_Statesender *StatesenderCallerSession) Owner() (common.Address, error) {
 	return _Statesender.Contract.Owner(&_Statesender.CallOpts)
 }
 
 // Registrations is a free data retrieval call binding the contract method 0x942e6bcf.
 //
-// Solidity: function registrations(address ) constant returns(address)
+// Solidity: function registrations(address ) view returns(address)
 func (_Statesender *StatesenderCaller) Registrations(opts *bind.CallOpts, arg0 common.Address) (common.Address, error) {
 	var (
 		ret0 = new(common.Address)
@@ -264,14 +263,14 @@ func (_Statesender *StatesenderCaller) Registrations(opts *bind.CallOpts, arg0 c
 
 // Registrations is a free data retrieval call binding the contract method 0x942e6bcf.
 //
-// Solidity: function registrations(address ) constant returns(address)
+// Solidity: function registrations(address ) view returns(address)
 func (_Statesender *StatesenderSession) Registrations(arg0 common.Address) (common.Address, error) {
 	return _Statesender.Contract.Registrations(&_Statesender.CallOpts, arg0)
 }
 
 // Registrations is a free data retrieval call binding the contract method 0x942e6bcf.
 //
-// Solidity: function registrations(address ) constant returns(address)
+// Solidity: function registrations(address ) view returns(address)
 func (_Statesender *StatesenderCallerSession) Registrations(arg0 common.Address) (common.Address, error) {
 	return _Statesender.Contract.Registrations(&_Statesender.CallOpts, arg0)
 }

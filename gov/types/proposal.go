@@ -247,11 +247,11 @@ func (tr TallyResult) String() string {
   NoWithVeto: %s`, tr.Yes, tr.Abstain, tr.No, tr.NoWithVeto)
 }
 
-// // Proposal types
-// const (
-// 	ProposalTypeText            string = "Text"
-// 	ProposalTypeSoftwareUpgrade string = "SoftwareUpgrade"
-// )
+// Proposal types
+const (
+	ProposalTypeText            string = "Text"
+	ProposalTypeSoftwareUpgrade string = "SoftwareUpgrade"
+)
 
 // // Text Proposal
 // type TextProposal struct {

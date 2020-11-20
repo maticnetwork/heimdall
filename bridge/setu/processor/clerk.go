@@ -8,17 +8,11 @@ import (
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
-	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
 	"github.com/maticnetwork/heimdall/contracts/statesender"
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
-
-// ClerkContext for bridge
-type ClerkContext struct {
-	ChainmanagerParams *chainmanagerTypes.Params
-}
 
 // ClerkProcessor - sync state/deposit events
 type ClerkProcessor struct {
@@ -58,12 +52,12 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 		return err
 	}
 
-	clerkContext, err := cp.getClerkContext()
+	params, err := cp.paramsContext.GetParams()
 	if err != nil {
 		return err
 	}
 
-	chainParams := clerkContext.ChainmanagerParams.ChainParams
+	chainParams := params.ChainmanagerParams.ChainParams
 
 	event := new(statesender.StatesenderStateSynced)
 	if err := helper.UnpackLog(cp.stateSenderAbi, event, eventName, &vLog); err != nil {
@@ -112,6 +106,7 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -142,20 +137,4 @@ func (cp *ClerkProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, l
 	}
 
 	return status, nil
-}
-
-//
-// utils
-//
-
-func (cp *ClerkProcessor) getClerkContext() (*ClerkContext, error) {
-	chainmanagerParams, err := util.GetChainmanagerParams(cp.cliCtx)
-	if err != nil {
-		cp.Logger.Error("Error while fetching chain manager params", "error", err)
-		return nil, err
-	}
-
-	return &ClerkContext{
-		ChainmanagerParams: chainmanagerParams,
-	}, nil
 }

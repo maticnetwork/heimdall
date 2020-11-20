@@ -37,6 +37,9 @@ type BaseProcessor struct {
 	// tx broadcaster
 	txBroadcaster *broadcaster.TxBroadcaster
 
+	// params context
+	paramsContext *util.ParamsContext
+
 	// The "subclass" of BaseProcessor
 	impl Processor
 
@@ -54,7 +57,7 @@ type BaseProcessor struct {
 }
 
 // NewBaseProcessor creates a new BaseProcessor.
-func NewBaseProcessor(cdc *codec.Codec, queueConnector *queue.QueueConnector, httpClient *httpClient.HTTP, txBroadcaster *broadcaster.TxBroadcaster, name string, impl Processor) *BaseProcessor {
+func NewBaseProcessor(cdc *codec.Codec, queueConnector *queue.QueueConnector, httpClient *httpClient.HTTP, txBroadcaster *broadcaster.TxBroadcaster, paramsContext *util.ParamsContext, name string, impl Processor) *BaseProcessor {
 	logger := util.Logger().With("service", "processor", "module", name)
 
 	cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
@@ -82,6 +85,7 @@ func NewBaseProcessor(cdc *codec.Codec, queueConnector *queue.QueueConnector, ht
 		queueConnector:    queueConnector,
 		contractConnector: contractCaller,
 		txBroadcaster:     txBroadcaster,
+		paramsContext:     paramsContext,
 		httpClient:        httpClient,
 		storageClient:     util.GetBridgeDBInstance(viper.GetString(util.BridgeDBFlag)),
 	}

@@ -26,6 +26,10 @@ func newValidatorGovInfo(
 	}
 }
 
+func Tally(ctx sdk.Context, keeper Keeper, proposal types.Proposal) (passes bool, burnDeposits bool, tallyResults types.TallyResult) {
+	return tally(ctx, keeper, proposal)
+}
+
 // TODO: Break into several smaller functions for clarity
 func tally(ctx sdk.Context, keeper Keeper, proposal types.Proposal) (passes bool, burnDeposits bool, tallyResults types.TallyResult) {
 	results := make(map[types.VoteOption]sdk.Dec)

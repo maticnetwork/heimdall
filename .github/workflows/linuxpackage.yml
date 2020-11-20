@@ -13,7 +13,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v1
         with:
-          go-version: 1.13
+          go-version: 1.14.7
 
       - name: Set up Ruby 2.6
         uses: actions/setup-ruby@v1
@@ -36,49 +36,7 @@ jobs:
           mkdir -p build
           cp -rf $GOBIN/* build/
 
-          cat > heimdalld.service <<- "EOF"
-          [Unit]
-          Description=heimdall
-          [Service]
-          WorkingDirectory=/usr/bin/
-          ExecStart=/bin/bash -c '/usr/bin/heimdalld start --home /etc/heimdall/'
-          Type=simple
-          User=root
-          EOF
-
-          cat > heimdalld-bridge.service <<- "EOF"
-          [Unit]
-          Description=heimdall-bridge
-          [Service]
-          WorkingDirectory=/usr/bin/
-          ExecStart=/bin/bash -c "/usr/bin/bridge start --all --home /etc/heimdall/"
-          Type=simple
-          User=root
-          EOF
-
-          cat > heimdalld-rest-server.service <<- "EOF"
-          [Unit]
-          Description=heimdalld-rest-server
-          [Service]
-          WorkingDirectory=/usr/bin/
-          ExecStart=/bin/bash -c "/usr/bin/heimdalld rest-server --home /etc/heimdall/"
-          Type=simple
-          User=root
-          EOF
-
-          cat > after_install.sh <<- "EOF"
-          #!/bin/bash
-          mkdir -p /etc/heimdall/
-          echo alias heimdalld='"sudo heimdalld --home /etc/heimdall"' >> ~/.bashrc
-          echo alias heimdallcli='"sudo heimdallcli --home /etc/heimdall"' >> ~/.bashrc
-          source ~/.bashrc
-          EOF
-
-          fpm -s dir -t deb --deb-user root --deb-group root -n matic-heimdall -v ${{ env.RELEASE_VERSION }} --config-files heimdalld.service \
-            --after-install after_install.sh \
-            heimdalld.service=/etc/systemd/system/ \
-            heimdalld-rest-server.service heimdalld-rest-server.service=/etc/systemd/system/ \
-            heimdalld-bridge.service heimdalld-bridge.service=/etc/systemd/system/ \
+          fpm -s dir -t deb --deb-user root --deb-group root -n matic-heimdall -v ${{ env.RELEASE_VERSION }} \
             build/bridge=/usr/bin/ \
             build/heimdallcli=/usr/bin/ \
             build/heimdalld=/usr/bin/ 
