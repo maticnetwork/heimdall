@@ -2,8 +2,8 @@ package keeper
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/maticnetwork/heimdall/x/gov/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
+	"github.com/maticnetwork/heimdall/x/gov/types"
 )
 
 // // AddVote Adds a vote on a specific proposal
@@ -80,4 +80,3 @@ func (keeper Keeper) GetVotesIterator(ctx sdk.Context, proposalID uint64) sdk.It
 // 	store := ctx.KVStore(keeper.storeKey)
 // 	store.Delete(types.VoteKey(proposalID, voter))
 // }
-

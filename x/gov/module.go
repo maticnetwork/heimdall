@@ -16,10 +16,10 @@ import (
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/maticnetwork/heimdall/x/gov/keeper"
-	"github.com/maticnetwork/heimdall/x/gov/types"
 	"github.com/maticnetwork/heimdall/x/gov/client/cli"
 	"github.com/maticnetwork/heimdall/x/gov/client/rest"
+	"github.com/maticnetwork/heimdall/x/gov/keeper"
+	"github.com/maticnetwork/heimdall/x/gov/types"
 )
 
 var (
@@ -83,12 +83,12 @@ func (a AppModuleBasic) RegisterGRPCRoutes(_ client.Context, _ *runtime.ServeMux
 
 // GetTxCmd returns the capability module's root tx command.
 func (a AppModuleBasic) GetTxCmd() *cobra.Command {
-    return cli.GetTxCmd()
+	return cli.GetTxCmd()
 }
 
 // GetQueryCmd returns the capability module's root query command.
 func (AppModuleBasic) GetQueryCmd() *cobra.Command {
-    return cli.GetQueryCmd(types.StoreKey)
+	return cli.GetQueryCmd(types.StoreKey)
 }
 
 // ----------------------------------------------------------------------------
