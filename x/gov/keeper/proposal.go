@@ -5,8 +5,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/maticnetwork/heimdall/x/gov/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
+	"github.com/maticnetwork/heimdall/x/gov/types"
 )
 
 // // SubmitProposal create new proposal given a content

@@ -8,7 +8,7 @@ import (
 
 	types "github.com/maticnetwork/heimdall/types/error"
 	"github.com/stretchr/testify/assert"
-	"github.com/tendermint/tendermint/libs/common"
+	tmos "github.com/tendermint/tendermint/libs/os"
 )
 
 func TestPermCheck(t *testing.T) {
@@ -40,7 +40,7 @@ func TestPermCheck(t *testing.T) {
 		caseMsg := fmt.Sprintf("for i: %v, case: %v", i, c.msg)
 		// set files for perm
 
-		err := common.EnsureDir(filepath.Dir(c.filePath), 0777)
+		err := tmos.EnsureDir(filepath.Dir(c.filePath), 0777)
 		assert.Nil(t, err, caseMsg)
 		_, err = os.OpenFile(c.filePath, os.O_CREATE, c.perm) // os.OpenFile creates the file if it is missing
 		assert.Nil(t, err, caseMsg)
