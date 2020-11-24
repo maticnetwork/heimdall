@@ -44,6 +44,7 @@ import (
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/cosmos/cosmos-sdk/x/crisis"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/helper"
@@ -134,7 +135,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 		debug.Cmd(),
 	)
 
-	server.AddCommands(rootCmd, app.DefaultNodeHome, newApp, createSimappAndExport)
+	server.AddCommands(rootCmd, app.DefaultNodeHome, newApp, createSimappAndExport, addModuleInitFlags)
 
 	// add keybase, auxiliary RPC, query, and tx child commands
 	rootCmd.AddCommand(
@@ -143,6 +144,10 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 		txCommand(),
 		keys.Commands(app.DefaultNodeHome),
 	)
+}
+
+func addModuleInitFlags(startCmd *cobra.Command) {
+	crisis.AddModuleInitFlags(startCmd)
 }
 
 func queryCommand() *cobra.Command {
@@ -244,7 +249,7 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts serverty
 
 func createSimappAndExport(
 	logger log.Logger, db dbm.DB, traceStore io.Writer, height int64, forZeroHeight bool, jailWhiteList []string,
-) (servertypes.ExportedApp, error) {
+	appOpts servertypes.AppOptions) (servertypes.ExportedApp, error) {
 
 	encCfg := app.MakeEncodingConfig() // Ideally, we would reuse the one created by NewRootCmd.
 	encCfg.Marshaler = codec.NewProtoCodec(encCfg.InterfaceRegistry)
@@ -306,7 +311,7 @@ func populatePersistentPeersInConfigAndWriteIt(config *cfg.Config) {
 }
 
 func getGenesisAccount(address []byte) authTypes.GenesisAccount {
-	acc := authTypes.NewBaseAccountWithAddress(common.BytesToHeimdallAddress(address))
+	acc := authTypes.NewBaseAccountWithAddress(string(address))
 	genesisBalance, _ := big.NewInt(0).SetString("1000000000000000000000", 10)
 	if err := acc.SetCoins(sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: sdk.NewIntFromBigInt(genesisBalance)}}); err != nil {
 		logger.Error("getGenesisAccount | SetCoins", "Error", err)
