@@ -3,13 +3,13 @@ package gov
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/maticnetwork/heimdall/x/gov/types"
 	"github.com/maticnetwork/heimdall/x/gov/keeper"
+	"github.com/maticnetwork/heimdall/x/gov/types"
 )
 
 // InitGenesis - store genesis parameters
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
-// func InitGenesis(ctx sdk.Context, k keeper.Keeper, supplyKeeper SupplyKeeper, data GenesisState) {
+	// func InitGenesis(ctx sdk.Context, k keeper.Keeper, supplyKeeper SupplyKeeper, data GenesisState) {
 
 	k.SetProposalID(ctx, data.StartingProposalId)
 	k.SetDepositParams(ctx, data.DepositParams)

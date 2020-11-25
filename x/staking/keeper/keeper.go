@@ -11,7 +11,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/maticnetwork/bor/common"
-	"github.com/maticnetwork/heimdall/helper"
+
+	// "github.com/maticnetwork/heimdall/helper"
+
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmCommon "github.com/maticnetwork/heimdall/types/common"
 	"github.com/maticnetwork/heimdall/x/staking/types"
@@ -344,9 +346,9 @@ func (k *Keeper) GetSignerFromValidatorID(ctx sdk.Context, valID hmTypes.Validat
 	store := ctx.KVStore(k.storeKey)
 	key := GetValidatorMapKey(valID.Bytes())
 	// check if validator address has been mapped
-	if !store.Has(key) {
-		return helper.ZeroAddress, false
-	}
+	// if !store.Has(key) {
+	// 	return helper.ZeroAddress, false
+	// }
 	// return address from bytes
 	return common.BytesToAddress(store.Get(key)), true
 }

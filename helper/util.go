@@ -6,6 +6,8 @@ import (
 
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/common"
+	"github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 
 	hmCommonTypes "github.com/maticnetwork/heimdall/types/common"
 )
@@ -27,6 +29,13 @@ func GetPowerFromAmount(amount *big.Int) (*big.Int, error) {
 	}
 
 	return amount.Div(amount, decimals18), nil
+}
+
+// GetPubObjects returns PubKeySecp256k1 public key
+func GetPubObjects(pubkey crypto.PubKey) secp256k1.PubKey {
+	var pubObject secp256k1.PubKey
+	cdc.MustUnmarshalBinaryBare(pubkey.Bytes(), &pubObject)
+	return pubObject
 }
 
 // UnpackSigAndVotes Unpacks Sig and Votes from Tx Payload

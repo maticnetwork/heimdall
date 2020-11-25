@@ -74,10 +74,10 @@ func (acc BaseAccount) String() string {
 	)
 }
 
-// ProtoBaseAccount - a prototype function for BaseAccount
-// func ProtoBaseAccount() Account {
-// 	return BaseAccount{}
-// }
+// // ProtoBaseAccount - a prototype function for BaseAccount
+func ProtoBaseAccount() Account {
+	return &BaseAccount{}
+}
 
 // NewBaseAccountWithAddress - returns a new base account with a given address
 func NewBaseAccountWithAddress(addr string) BaseAccount {

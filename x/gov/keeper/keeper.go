@@ -8,16 +8,16 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/maticnetwork/heimdall/x/gov/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	"github.com/maticnetwork/heimdall/x/gov/types"
 )
 
 type (
 	Keeper struct {
-		cdc      codec.LegacyAmino
-		storeKey sdk.StoreKey
-		memKey   sdk.StoreKey
-		paramSubspace      paramtypes.Subspace
+		cdc           codec.LegacyAmino
+		storeKey      sdk.StoreKey
+		memKey        sdk.StoreKey
+		paramSubspace paramtypes.Subspace
 	}
 )
 

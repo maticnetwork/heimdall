@@ -5,8 +5,8 @@ import (
 	"math/big"
 	"time"
 
-	authTypes "github.com/maticnetwork/heimdall/x/auth/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
+	authTypes "github.com/maticnetwork/heimdall/x/auth/types"
 )
 
 const (

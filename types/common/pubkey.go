@@ -4,8 +4,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/tendermint/tendermint/crypto"
+	tmsecp256k1 "github.com/tendermint/tendermint/crypto/secp256k1"
 	"gopkg.in/yaml.v2"
 
 	"github.com/maticnetwork/bor/common"
@@ -15,7 +15,7 @@ import (
 // PubKey pubkey
 type PubKey [65]byte
 
-// common.ZeroPubKey represents empty pub key
+// ZeroPubKey represents empty pub key
 var ZeroPubKey = PubKey{}
 
 // NewPubKey from byte array
@@ -52,9 +52,8 @@ func (a PubKey) Address() common.Address {
 
 // CryptoPubKey returns crypto pub key for tendermint
 func (a PubKey) CryptoPubKey() crypto.PubKey {
-	var pubkeyBytes secp256k1.PubKey
-	copy(pubkeyBytes.Key[:], a[:])
-	return &secp256k1.PubKey{Key: a.Bytes()}
+	return tmsecp256k1.PubKey(a[:])
+	// return &secp256k1.PubKey{Key: a.Bytes()}
 }
 
 // TODO: check if any interface is implementing
