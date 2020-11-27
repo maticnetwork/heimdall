@@ -29,9 +29,6 @@ import (
 
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 
-	"github.com/cosmos/cosmos-sdk/x/bank"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
@@ -71,7 +68,6 @@ var (
 	ModuleBasics = module.NewBasicManager(
 		auth.AppModuleBasic{},
 		genutil.AppModuleBasic{},
-		bank.AppModuleBasic{},
 		staking.AppModuleBasic{},
 		params.AppModuleBasic{},
 		blog.AppModuleBasic{},
@@ -103,7 +99,6 @@ type HeimdallApp struct {
 
 	// keepers
 	AccountKeeper authkeeper.Keeper
-	BankKeeper    bankkeeper.Keeper
 	StakingKeeper stakingkeeper.Keeper
 	ParamsKeeper  paramskeeper.Keeper
 
@@ -142,7 +137,7 @@ func NewHeimdallApp(
 	// bApp.GRPCQueryRouter().RegisterSimulateService(bApp.Simulate, interfaceRegistry)
 
 	keys := sdk.NewKVStoreKeys(
-		authtypes.StoreKey, banktypes.StoreKey, stakingtypes.StoreKey,
+		authtypes.StoreKey, stakingtypes.StoreKey,
 		paramstypes.StoreKey, blogtypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -230,7 +225,7 @@ func NewHeimdallApp(
 	// so that other modules that want to create or claim capabilities afterwards in InitChain
 	// can do so safely.
 	app.mm.SetOrderInitGenesis(
-		authtypes.ModuleName, banktypes.ModuleName, stakingtypes.ModuleName,
+		authtypes.ModuleName, stakingtypes.ModuleName,
 		genutiltypes.ModuleName,
 	)
 
@@ -453,7 +448,6 @@ func initParamsKeeper(appCodec codec.BinaryMarshaler, legacyAmino *codec.LegacyA
 	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, key, tkey)
 
 	paramsKeeper.Subspace(authtypes.ModuleName)
-	paramsKeeper.Subspace(banktypes.ModuleName)
 	paramsKeeper.Subspace(stakingtypes.ModuleName)
 	return paramsKeeper
 }
