@@ -344,7 +344,7 @@ func processChanges(origChanges []*Validator) (updates, removals []*Validator, e
 		} else {
 			updates = append(updates, valUpdate)
 		}
-		prevAddr = valUpdate.Signer
+		prevAddr = *valUpdate.Signer
 	}
 	return updates, removals, err
 }

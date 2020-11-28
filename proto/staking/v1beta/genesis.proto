@@ -7,9 +7,9 @@ import "gogoproto/gogo.proto";
 option go_package = "github.com/maticnetwork/heimdall/x/staking/types";
 
 
-option (gogoproto.sizer_all)        = false;
-option (gogoproto.marshaler_all)        = false;
-option (gogoproto.unmarshaler_all)        = false;
+//option (gogoproto.sizer_all)        = false;
+//option (gogoproto.marshaler_all)        = false;
+//option (gogoproto.unmarshaler_all)        = false;
 
 // GenesisState defines the staking module's genesis state.
 message GenesisState {

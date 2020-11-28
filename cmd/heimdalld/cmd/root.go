@@ -119,13 +119,12 @@ func Execute(rootCmd *cobra.Command) error {
 func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 	authclient.Codec = encodingConfig.Marshaler
 
-	_, legacyCodec := app.MakeCodecs()
 	ctx := server.NewDefaultContext()
 	// serverCtx := server.GetServerContextFromCmd(rootCmd)
 
 	rootCmd.AddCommand(
 		// initCmd(app.ModuleBasics, app.DefaultNodeHome),
-		initCmd(ctx, legacyCodec),
+		initCmd(ctx, encodingConfig.Marshaler),
 		genutilcli.CollectGenTxsCmd(banktypes.GenesisBalancesIterator{}, app.DefaultNodeHome),
 		genutilcli.MigrateGenesisCmd(),
 		genutilcli.GenTxCmd(app.ModuleBasics, encodingConfig.TxConfig, banktypes.GenesisBalancesIterator{}, app.DefaultNodeHome),

@@ -19,7 +19,7 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 	// this line is used by starport scaffolding # 3
 	// registry.RegisterInterface("tendermint.crypto.Pubkey", (*tmcrypto.PubKey)(nil))
-	// registry.RegisterInterface("cosmos.crypto.Pubkey", (*cryptotypes.PubKey)(nil))
+	registry.RegisterInterface("crypto.Pubkey", (*crypto.PubKey)(nil))
 }
 
 var (

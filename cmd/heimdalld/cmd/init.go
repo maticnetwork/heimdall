@@ -29,7 +29,7 @@ import (
 )
 
 // InitCmd initialises files required to start heimdall
-func initCmd(ctx *server.Context, cdc *codec.LegacyAmino) *cobra.Command {
+func initCmd(ctx *server.Context, cdc codec.JSONMarshaler) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init",
 		Short: "Initialize genesis config, priv-validator file, and p2p-node file",
@@ -92,7 +92,7 @@ func initCmd(ctx *server.Context, cdc *codec.LegacyAmino) *cobra.Command {
 			}
 
 			// staking state change
-			appStateBytes, err = stakingTypes.SetGenesisStateToAppState(appStateBytes, vals, validatorSet)
+			appStateBytes, err = stakingTypes.SetGenesisStateToAppState(cdc, appStateBytes, vals, validatorSet)
 			if err != nil {
 				return err
 			}
@@ -129,7 +129,7 @@ func initCmd(ctx *server.Context, cdc *codec.LegacyAmino) *cobra.Command {
 				nodeID,
 			}
 
-			out, err := codec.MarshalJSONIndent(cdc, toPrint)
+			out, err := json.Marshal(toPrint)
 			if err != nil {
 				return err
 			}

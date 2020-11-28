@@ -6,9 +6,9 @@ import "gogoproto/gogo.proto";
 
 option go_package = "github.com/maticnetwork/heimdall/types";
 
-option (gogoproto.sizer_all)        = false;
-option (gogoproto.marshaler_all)        = false;
-option (gogoproto.unmarshaler_all)        = false;
+//option (gogoproto.sizer_all)        = false;
+//option (gogoproto.marshaler_all)        = false;
+//option (gogoproto.unmarshaler_all)        = false;
 
 message ValidatorSet {
   option (gogoproto.goproto_getters)  = false;
@@ -28,10 +28,10 @@ message Validator {
   uint64                      nonce             = 4;
   int64                       voting_power      = 5;
   bytes                       pub_key = 6 [
-    (gogoproto.casttype)   = "github.com/maticnetwork/heimdall/types/common.PubKey"
+    (gogoproto.customtype)   = "github.com/maticnetwork/heimdall/types/common.PubKey"
   ];
   bytes                       signer = 7 [
-    (gogoproto.casttype)   = "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"
+    (gogoproto.customtype)   = "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"
   ];
   string                      last_updated      = 8;
   bool                        Jailed            = 9;

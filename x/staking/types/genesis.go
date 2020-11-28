@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 
+	"github.com/cosmos/cosmos-sdk/codec"
+
 	hmTypes "github.com/maticnetwork/heimdall/types"
-	"github.com/maticnetwork/heimdall/x/auth/types"
 )
 
 // DefaultIndex is the default capability global index
@@ -15,6 +16,14 @@ const DefaultIndex uint64 = 1
 // failure.
 func (gs GenesisState) Validate() error {
 	return nil
+}
+
+func (gs *GenesisState) MarshalJSON() ([]byte, error) {
+	return json.Marshal(gs.String())
+}
+
+func (gs *GenesisState) UnMarshalJSON(data []byte) error {
+	return json.Unmarshal(data, &gs)
 }
 
 // HeimdallValidator converts genesis validator validator to Heimdall validator
@@ -65,22 +74,26 @@ func ValidateGenesis(data GenesisState) error {
 	return nil
 }
 
-// GetGenesisStateFromAppState returns staking GenesisState given raw application genesis state
-func GetGenesisStateFromAppState(appState map[string]json.RawMessage) GenesisState {
+
+// GetGenesisStateFromAppState returns x/staking GenesisState given raw application
+// genesis state.
+func GetGenesisStateFromAppState(cdc codec.JSONMarshaler, appState map[string]json.RawMessage) *GenesisState {
 	var genesisState GenesisState
+
 	if appState[ModuleName] != nil {
-		types.ModuleCdc.MustUnmarshalJSON(appState[ModuleName], &genesisState)
+		cdc.MustUnmarshalJSON(appState[ModuleName], &genesisState)
 	}
-	return genesisState
+
+	return &genesisState
 }
 
 // SetGenesisStateToAppState sets state into app state
-func SetGenesisStateToAppState(appState map[string]json.RawMessage, validators []*hmTypes.Validator, currentValSet *hmTypes.ValidatorSet) (map[string]json.RawMessage, error) {
+func SetGenesisStateToAppState(cdc codec.JSONMarshaler, appState map[string]json.RawMessage, validators []*hmTypes.Validator, currentValSet *hmTypes.ValidatorSet) (map[string]json.RawMessage, error) {
 	// set state to staking state
-	stakingState := GetGenesisStateFromAppState(appState)
+	stakingState := GetGenesisStateFromAppState(cdc, appState)
 	stakingState.Validators = validators
 	stakingState.CurrentValSet = currentValSet
 
-	appState[ModuleName] = types.ModuleCdc.MustMarshalJSON(&stakingState)
+	appState[ModuleName] = cdc.MustMarshalJSON(stakingState)
 	return appState, nil
 }
