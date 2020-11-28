@@ -27,12 +27,8 @@ message Validator {
   uint64                      end_epoch         = 3;
   uint64                      nonce             = 4;
   int64                       voting_power      = 5;
-  bytes                       pub_key = 6 [
-    (gogoproto.customtype)   = "github.com/maticnetwork/heimdall/types/common.PubKey"
-  ];
-  bytes                       signer = 7 [
-    (gogoproto.customtype)   = "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"
-  ];
+  string                      pub_key = 6;
+  string signer = 7;
   string                      last_updated      = 8;
   bool                        Jailed            = 9;
   int64                       proposer_priority = 10;
@@ -51,7 +47,5 @@ message MinimalVal {
   // option (gogoproto.goproto_stringer)        = false;
   ValidatorID                 ID                = 1;
   uint64                      voting_power       = 2;
-  bytes                       signer = 3 [
-    (gogoproto.casttype)   = "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"
-  ];
+  string signer = 3;
 }

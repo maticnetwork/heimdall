@@ -36,7 +36,7 @@ func NewValidator(
 	nonce uint64,
 	power int64,
 	pubKey common.PubKey,
-	signer common.HeimdallAddress,
+	signer string,
 ) *Validator {
 	return &Validator{
 		ID:          id,
@@ -44,7 +44,7 @@ func NewValidator(
 		EndEpoch:    endEpoch,
 		Nonce:       nonce,
 		VotingPower: power,
-		PubKey:      pubKey,
+		PubKey:      pubKey.String(),
 		Signer:      signer,
 	}
 }
@@ -53,7 +53,7 @@ func NewValidator(
 // to sort it we compare the values of the Signer(HeimdallAddress i.e. [20]byte)
 func SortValidatorByAddress(a []Validator) []Validator {
 	sort.Slice(a, func(i, j int) bool {
-		return bytes.Compare(a[i].Signer.Bytes(), a[j].Signer.Bytes()) < 0
+		return bytes.Compare([]byte(a[i].Signer), []byte(a[j].Signer)) < 0
 	})
 	return a
 }
@@ -73,10 +73,10 @@ func (v *Validator) IsCurrentValidator(ackCount uint64) bool {
 
 // Validates validator
 func (v *Validator) ValidateBasic() bool {
-	if bytes.Equal(v.PubKey.Bytes(), common.ZeroPubKey.Bytes()) {
+	if bytes.Equal([]byte(v.PubKey), common.ZeroPubKey.Bytes()) {
 		return false
 	}
-	if bytes.Equal(v.Signer.Bytes(), []byte("")) {
+	if bytes.Equal([]byte(v.Signer), []byte("")) {
 		return false
 	}
 	return true
@@ -120,7 +120,7 @@ func (v *Validator) CompareProposerPriority(other *Validator) *Validator {
 	case v.ProposerPriority < other.ProposerPriority:
 		return other
 	default:
-		result := bytes.Compare(v.Signer.Bytes(), other.Signer.Bytes())
+		result := bytes.Compare([]byte(v.Signer), []byte(other.Signer))
 		switch {
 		case result < 0:
 			return v
@@ -160,7 +160,7 @@ func ValidatorListString(vals []*Validator) string {
 // which changes every round.
 func (v *Validator) Bytes() []byte {
 	result := make([]byte, 64)
-	copy(result[12:], v.Signer.Bytes())
+	copy(result[12:], []byte(v.Signer))
 	copy(result[32:], new(big.Int).SetInt64(v.VotingPower).Bytes())
 	return result
 }
@@ -222,7 +222,7 @@ func (valID ValidatorID) String() string {
 // SortMinimalValByAddress sorts validators
 func SortMinimalValByAddress(a []MinimalVal) []MinimalVal {
 	sort.Slice(a, func(i, j int) bool {
-		return bytes.Compare(a[i].Signer.Bytes(), a[j].Signer.Bytes()) < 0
+		return bytes.Compare([]byte(a[i].Signer), []byte(a[j].Signer)) < 0
 	})
 	return a
 }

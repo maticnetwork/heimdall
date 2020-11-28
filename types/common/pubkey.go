@@ -1,6 +1,7 @@
 package common
 
 import (
+	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 
@@ -35,6 +36,16 @@ func (a *PubKey) UnmarshalText(input []byte) error {
 	return hexutil.UnmarshalFixedText("PubKey", input, a[:])
 }
 
+// MarshalTo
+func (m *PubKey) MarshalTo(dAtA []byte) (int, error) {
+	return 0, nil
+}
+
+// MarshalTo
+func (m *PubKey) Size() int {
+	return binary.Size(m)
+}
+
 // String returns string representatin of key
 func (a PubKey) String() string {
 	return "0x" + hex.EncodeToString(a[:])
@@ -65,6 +76,10 @@ func (a PubKey) CryptoPubKey() crypto.PubKey {
 // Marshal returns the raw address bytes. It is needed for protobuf compatibility.
 func (a PubKey) Marshal() ([]byte, error) {
 	return a.Bytes(), nil
+}
+
+func (a PubKey) StringToPubKey(input string) PubKey {
+	return NewPubKey([]byte(input))
 }
 
 // Unmarshal sets the address to the given data. It is needed for protobuf

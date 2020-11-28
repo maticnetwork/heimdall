@@ -203,18 +203,18 @@ func (vals *ValidatorSet) Copy() *ValidatorSet {
 // otherwise.
 func (vals *ValidatorSet) HasAddress(address []byte) bool {
 	idx := sort.Search(len(vals.Validators), func(i int) bool {
-		return bytes.Compare(address, vals.Validators[i].Signer.Bytes()) <= 0
+		return bytes.Compare(address, []byte(vals.Validators[i].Signer)) <= 0
 	})
-	return idx < len(vals.Validators) && bytes.Equal(vals.Validators[idx].Signer.Bytes(), address)
+	return idx < len(vals.Validators) && bytes.Equal([]byte(vals.Validators[idx].Signer), address)
 }
 
 // GetByAddress returns an index of the validator with address and validator
 // itself if found. Otherwise, -1 and nil are returned.
 func (vals *ValidatorSet) GetByAddress(address []byte) (index int, val *Validator) {
 	idx := sort.Search(len(vals.Validators), func(i int) bool {
-		return bytes.Compare(address, vals.Validators[i].Signer.Bytes()) <= 0
+		return bytes.Compare(address, []byte(vals.Validators[i].Signer)) <= 0
 	})
-	if idx < len(vals.Validators) && bytes.Equal(vals.Validators[idx].Signer.Bytes(), address) {
+	if idx < len(vals.Validators) && bytes.Equal([]byte(vals.Validators[idx].Signer), address) {
 		return idx, vals.Validators[idx].Copy()
 	}
 	return -1, nil
@@ -228,12 +228,7 @@ func (vals *ValidatorSet) GetByIndex(index int) (address []byte, val *Validator)
 		return nil, nil
 	}
 	val = vals.Validators[index]
-	return val.Signer.Bytes(), val.Copy()
-}
-
-// Size returns the length of the validator set.
-func (vals *ValidatorSet) Size() int {
-	return len(vals.Validators)
+	return []byte(val.Signer), val.Copy()
 }
 
 // Force recalculation of the set's total voting power.
@@ -278,7 +273,7 @@ func (vals *ValidatorSet) GetProposer() (proposer *Validator) {
 func (vals *ValidatorSet) findProposer() *Validator {
 	var proposer *Validator
 	for _, val := range vals.Validators {
-		if proposer == nil || !bytes.Equal(val.Signer.Bytes(), proposer.Signer.Bytes()) {
+		if proposer == nil || !bytes.Equal([]byte(val.Signer), []byte(proposer.Signer)) {
 			proposer = proposer.CompareProposerPriority(val)
 		}
 	}
@@ -326,7 +321,7 @@ func processChanges(origChanges []*Validator) (updates, removals []*Validator, e
 
 	// Scan changes by address and append valid validators to updates or removals lists.
 	for _, valUpdate := range changes {
-		if bytes.Equal(valUpdate.Signer.Bytes(), prevAddr.Bytes()) {
+		if bytes.Equal([]byte(valUpdate.Signer), prevAddr.Bytes()) {
 			err = fmt.Errorf("duplicate entry %v in %v", valUpdate, changes)
 			return nil, nil, err
 		}
@@ -344,7 +339,7 @@ func processChanges(origChanges []*Validator) (updates, removals []*Validator, e
 		} else {
 			updates = append(updates, valUpdate)
 		}
-		prevAddr = *valUpdate.Signer
+		prevAddr = common.SampleHeimdallAddress(valUpdate.Signer)
 	}
 	return updates, removals, err
 }
@@ -365,8 +360,8 @@ func verifyUpdates(updates []*Validator, vals *ValidatorSet) (updatedTotalVoting
 	updatedTotalVotingPower = vals.SumVotingPower()
 
 	for _, valUpdate := range updates {
-		address := valUpdate.Signer.Bytes()
-		_, val := vals.GetByAddress(address)
+		address := valUpdate.Signer
+		_, val := vals.GetByAddress([]byte(address))
 		if val == nil {
 			// New validator, add its voting power the the total.
 			updatedTotalVotingPower += valUpdate.VotingPower
@@ -395,7 +390,7 @@ func verifyUpdates(updates []*Validator, vals *ValidatorSet) (updatedTotalVoting
 func computeNewPriorities(updates []*Validator, vals *ValidatorSet, updatedTotalVotingPower int64) {
 
 	for _, valUpdate := range updates {
-		address := valUpdate.Signer.Bytes()
+		address := []byte(valUpdate.Signer)
 		_, val := vals.GetByAddress(address)
 		if val == nil {
 			// add val
@@ -425,13 +420,13 @@ func (vals *ValidatorSet) applyUpdates(updates []*Validator) {
 	i := 0
 
 	for len(existing) > 0 && len(updates) > 0 {
-		if bytes.Compare(existing[0].Signer.Bytes(), updates[0].Signer.Bytes()) < 0 { // unchanged validator
+		if bytes.Compare([]byte(existing[0].Signer), []byte(updates[0].Signer)) < 0 { // unchanged validator
 			merged[i] = existing[0]
 			existing = existing[1:]
 		} else {
 			// Apply add or update.
 			merged[i] = updates[0]
-			if bytes.Equal(existing[0].Signer.Bytes(), updates[0].Signer.Bytes()) {
+			if bytes.Equal([]byte(existing[0].Signer), []byte(updates[0].Signer)) {
 				// Validator is present in both, advance existing.
 				existing = existing[1:]
 			}
@@ -458,8 +453,8 @@ func (vals *ValidatorSet) applyUpdates(updates []*Validator) {
 // No changes are made to the validator set 'vals'.
 func verifyRemovals(deletes []*Validator, vals *ValidatorSet) error {
 	for _, valUpdate := range deletes {
-		address := valUpdate.Signer
-		_, val := vals.GetByAddress(address.Bytes())
+		address := []byte(valUpdate.Signer)
+		_, val := vals.GetByAddress(address)
 		if val == nil {
 			return fmt.Errorf("failed to find validator %X to remove", address)
 		}
@@ -481,7 +476,7 @@ func (vals *ValidatorSet) applyRemovals(deletes []*Validator) {
 
 	// Loop over deletes until we removed all of them.
 	for len(deletes) > 0 {
-		if bytes.Equal(existing[0].Signer.Bytes(), deletes[0].Signer.Bytes()) {
+		if bytes.Equal([]byte(existing[0].Signer), []byte(deletes[0].Signer)) {
 			deletes = deletes[1:]
 		} else { // Leave it in the resulting slice.
 			merged[i] = existing[0]
@@ -606,7 +601,7 @@ func (valz ValidatorsByAddress) Len() int {
 }
 
 func (valz ValidatorsByAddress) Less(i, j int) bool {
-	return bytes.Compare(valz[i].Signer.Bytes(), valz[j].Signer.Bytes()) == -1
+	return bytes.Compare([]byte(valz[i].Signer), []byte(valz[j].Signer)) == -1
 }
 
 func (valz ValidatorsByAddress) Swap(i, j int) {

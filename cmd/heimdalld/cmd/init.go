@@ -60,12 +60,12 @@ func initCmd(ctx *server.Context, cdc codec.JSONMarshaler) *cobra.Command {
 			// create validator account
 			validator := hmTypes.NewValidator(hmTypes.NewValidatorID(uint64(validatorID)),
 				0, 0, 1, 1, newPubkey,
-				commonTypes.BytesToHeimdallAddress(valPubKey.Address().Bytes()))
+				commonTypes.BytesToHeimdallAddress(valPubKey.Address().Bytes()).String())
 
 			fmt.Println("validator", validator)
 
 			// create dividend account for validator
-			dividendAccount := hmTypes.NewDividendAccount(validator.Signer, ZeroIntString)
+			dividendAccount := hmTypes.NewDividendAccount(commonTypes.ToHeimdallAddress(validator.Signer), ZeroIntString)
 
 			vals := []*hmTypes.Validator{validator}
 			validatorSet := hmTypes.NewValidatorSet(vals)
@@ -80,7 +80,7 @@ func initCmd(ctx *server.Context, cdc codec.JSONMarshaler) *cobra.Command {
 			// create genesis state
 			appStateBytes := app.NewDefaultGenesisState()
 
-			genesisAccount := getGenesisAccount(validator.Signer.Bytes())
+			genesisAccount := getGenesisAccount([]byte(validator.Signer))
 
 			// auth state change
 			appStateBytes, err = authTypes.SetGenesisStateToAppState(

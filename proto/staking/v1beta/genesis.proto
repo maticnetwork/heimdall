@@ -27,10 +27,6 @@ message GenesisValidator {
   uint64  end_epoch = 3;
   uint64  nonce = 4;
   uint64  power = 5;
-  bytes   pub_key = 6 [
-    (gogoproto.casttype)   = "github.com/maticnetwork/heimdall/types/common.PubKey"
-  ];
-  bytes                       signer = 7 [
-    (gogoproto.casttype)   = "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"
-  ];
+  string   pub_key = 6;
+  string signer = 7;
 }

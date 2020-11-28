@@ -2,9 +2,11 @@ package common
 
 import (
 	"bytes"
+	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/bor/common"
@@ -30,6 +32,17 @@ var ZeroHeimdallAddress = HeimdallAddress{}
 func (aa HeimdallAddress) EthAddress() common.Address {
 	return common.Address(aa)
 }
+
+// MarshalTo
+func (aa *HeimdallAddress) MarshalTo(dAtA []byte) (int, error) {
+	return 0, nil
+}
+
+// Size
+func (aa *HeimdallAddress) Size() int {
+	return binary.Size(aa)
+}
+
 
 // Equals returns boolean for whether two AccAddresses are Equal
 func (aa HeimdallAddress) Equals(aa2 sdk.Address) bool {
@@ -100,6 +113,16 @@ func (aa HeimdallAddress) Bytes() []byte {
 // String implements the Stringer interface.
 func (aa HeimdallAddress) String() string {
 	return "0x" + hex.EncodeToString(aa.Bytes())
+}
+
+// ToHeimdallAddress implements the Stringer interface.
+func ToHeimdallAddress(input string) HeimdallAddress {
+	address, err := hex.DecodeString(strings.TrimPrefix(input, "0x"))
+	if err != nil {
+		panic(fmt.Sprintf("invalid heimdal address string %s", input))
+	}
+
+	return AccAddressToHeimdallAddress(sdk.AccAddress(address))
 }
 
 // Format implements the fmt.Formatter interface.

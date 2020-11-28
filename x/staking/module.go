@@ -16,6 +16,7 @@ import (
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+
 	"github.com/maticnetwork/heimdall/x/staking/client/cli"
 	"github.com/maticnetwork/heimdall/x/staking/client/rest"
 	"github.com/maticnetwork/heimdall/x/staking/keeper"
@@ -152,8 +153,11 @@ func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 // no validator updates.
 func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONMarshaler, gs json.RawMessage) []abci.ValidatorUpdate {
 	var genState types.GenesisState
+
 	// Initialize global index to index in genesis state
 	cdc.MustUnmarshalJSON(gs, &genState)
+
+	fmt.Println("inside staking module.log", genState.CurrentValSet, genState.Validators)
 
 	InitGenesis(ctx, am.keeper, genState)
 

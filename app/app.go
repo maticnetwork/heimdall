@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -316,6 +317,9 @@ func (app *HeimdallApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) 
 	if err := tmjson.Unmarshal(req.AppStateBytes, &genesisState); err != nil {
 		panic(err)
 	}
+
+	fmt.Println("init....", app.mm, "0000", ctx, "11111", app.appCodec, "2222", genesisState)
+
 	return app.mm.InitGenesis(ctx, app.appCodec, genesisState)
 }
 

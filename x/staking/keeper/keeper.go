@@ -101,11 +101,11 @@ func (k *Keeper) AddValidator(ctx sdk.Context, validator hmTypes.Validator) erro
 	}
 
 	// store validator with address prefixed with validator key as index
-	store.Set(GetValidatorKey(validator.Signer.Bytes()), bz)
-	k.Logger(ctx).Debug("Validator stored", "key", hex.EncodeToString(GetValidatorKey(validator.Signer.Bytes())), "validator", validator.String())
+	store.Set(GetValidatorKey([]byte(validator.Signer)), bz)
+	k.Logger(ctx).Debug("Validator stored", "key", hex.EncodeToString(GetValidatorKey([]byte(validator.Signer))), "validator", validator.String())
 
 	// add validator to validator ID => SignerAddress map
-	k.SetValidatorIDToSignerAddr(ctx, validator.ID, validator.Signer)
+	k.SetValidatorIDToSignerAddr(ctx, validator.ID, hmCommon.ToHeimdallAddress(validator.Signer))
 
 	return nil
 }
@@ -257,8 +257,8 @@ func (k *Keeper) UpdateSigner(ctx sdk.Context, newSigner hmCommon.HeimdallAddres
 	}
 
 	//update signer in prev Validator
-	validator.Signer = newSigner
-	validator.PubKey = newPubkey
+	validator.Signer = newSigner.String()
+	validator.PubKey = newPubkey.String()
 	validator.VotingPower = validatorPower
 
 	// add updated validator to store with new key
