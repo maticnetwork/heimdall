@@ -176,7 +176,7 @@ func NewHeimdallApp(
 	// )
 
 	app.StakingKeeper = *stakingkeeper.NewKeeper(
-		*app.legacyAmino,
+		encodingConfig.Marshaler,
 		keys[stakingtypes.StoreKey], // target store
 		memKeys[stakingtypes.MemStoreKey],
 		app.GetSubspace(stakingtypes.ModuleName),

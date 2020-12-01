@@ -39,7 +39,7 @@ type ModuleCommunicator interface {
 
 type (
 	Keeper struct {
-		cdc                codec.LegacyAmino
+		cdc                codec.BinaryMarshaler
 		storeKey           sdk.StoreKey
 		memKey             sdk.StoreKey
 		paramSubspace      paramtypes.Subspace
@@ -50,7 +50,7 @@ type (
 )
 
 func NewKeeper(
-	cdc codec.LegacyAmino,
+	cdc codec.BinaryMarshaler,
 	storeKey, memKey sdk.StoreKey,
 	paramstore paramtypes.Subspace,
 	moduleCommunicator ModuleCommunicator,
@@ -95,7 +95,7 @@ func (k *Keeper) AddValidator(ctx sdk.Context, validator hmTypes.Validator) erro
 
 	store := ctx.KVStore(k.storeKey)
 
-	bz, err := hmTypes.MarshallValidator(&k.cdc, validator)
+	bz, err := hmTypes.MarshallValidator(k.cdc, validator)
 	if err != nil {
 		return err
 	}
@@ -136,7 +136,7 @@ func (k *Keeper) GetValidatorInfo(ctx sdk.Context, address []byte) (validator hm
 	}
 
 	// unmarshall validator and return
-	validator, err = hmTypes.UnmarshallValidator(&k.cdc, store.Get(key))
+	validator, err = hmTypes.UnmarshallValidator(k.cdc, store.Get(key))
 	if err != nil {
 		return validator, err
 	}
@@ -230,7 +230,7 @@ func (k *Keeper) IterateValidatorsAndApplyFn(ctx sdk.Context, f func(validator h
 	// loop through validators to get valid validators
 	for ; iterator.Valid(); iterator.Next() {
 		// unmarshall validator
-		validator, _ := hmTypes.UnmarshallValidator(&k.cdc, iterator.Value())
+		validator, _ := hmTypes.UnmarshallValidator(k.cdc, iterator.Value())
 		// call function and return if required
 		if err := f(validator); err != nil {
 			return
@@ -291,7 +291,7 @@ func (k *Keeper) GetValidatorSet(ctx sdk.Context) (validatorSet *hmTypes.Validat
 	bz := store.Get(CurrentValidatorSetKey)
 	// unmarhsall
 
-	if err := k.cdc.UnmarshalBinaryBare(bz, &validatorSet); err != nil {
+	if err := k.cdc.UnmarshalBinaryBare(bz, validatorSet); err != nil {
 		k.Logger(ctx).Error("GetValidatorSet | UnmarshalBinaryBare", "error", err)
 	}
 
