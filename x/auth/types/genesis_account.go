@@ -46,7 +46,7 @@ func NewGenesisAccount(acc *BaseAccount) GenesisAccount {
 }
 
 // NewGenesisAccountI creates a GenesisAccount instance from an Account interface.
-func NewGenesisAccountI(acc Account) (GenesisAccount, error) {
+func NewGenesisAccountI(acc AccountI) (GenesisAccount, error) {
 	gacc := GenesisAccount{
 		Address:       acc.GetAddress(),
 		Coins:         acc.GetCoins(),
@@ -69,8 +69,8 @@ func NewGenesisAccountI(acc Account) (GenesisAccount, error) {
 }
 
 // ToAccount converts a GenesisAccount to an Account interface
-func (ga *GenesisAccount) ToAccount() Account {
-	bacc := NewBaseAccount(ga.Address, ga.Coins.Sort(), nil, ga.AccountNumber, ga.Sequence)
+func (ga *GenesisAccount) ToAccount() AccountI {
+	bacc := NewBaseAccount(ga.Address, nil, ga.AccountNumber, ga.Sequence)
 	return bacc
 }
 

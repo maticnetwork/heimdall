@@ -1,8 +1,6 @@
 package auth
 
 import (
-	"fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/x/auth/keeper"
 	"github.com/maticnetwork/heimdall/x/auth/types"
@@ -12,8 +10,6 @@ import (
 // InitGenesis initializes the capability module's state from a provided genesis
 // state.
 func InitGenesis(ctx sdk.Context, ak keeper.Keeper, processors []authTypes.AccountProcessor, genState types.GenesisState) {
-
-	fmt.Println("inside auth module.log", genState.Params, genState.Accounts)
 
 	ak.SetParams(ctx, genState.Params)
 	genState.Accounts = authTypes.SanitizeGenesisAccounts(genState.Accounts)

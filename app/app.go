@@ -1,7 +1,6 @@
 package app
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -30,8 +29,6 @@ import (
 
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 
-	"github.com/cosmos/cosmos-sdk/x/genutil"
-	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
@@ -48,10 +45,10 @@ import (
 	stakingkeeper "github.com/maticnetwork/heimdall/x/staking/keeper"
 	stakingtypes "github.com/maticnetwork/heimdall/x/staking/types"
 
-	blogparams "github.com/maticnetwork/heimdall/app/params"
-	"github.com/maticnetwork/heimdall/x/blog"
-	blogkeeper "github.com/maticnetwork/heimdall/x/blog/keeper"
-	blogtypes "github.com/maticnetwork/heimdall/x/blog/types"
+	hmparams "github.com/maticnetwork/heimdall/app/params"
+	// "github.com/maticnetwork/heimdall/x/blog"
+	// blogkeeper "github.com/maticnetwork/heimdall/x/blog/keeper"
+	// blogtypes "github.com/maticnetwork/heimdall/x/blog/types"
 
 	// unnamed import of statik for swagger UI support
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
@@ -68,10 +65,10 @@ var (
 	// and genesis verification.
 	ModuleBasics = module.NewBasicManager(
 		auth.AppModuleBasic{},
-		genutil.AppModuleBasic{},
+		// genutil.AppModuleBasic{},
 		staking.AppModuleBasic{},
 		params.AppModuleBasic{},
-		blog.AppModuleBasic{},
+		// blog.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -103,7 +100,7 @@ type HeimdallApp struct {
 	StakingKeeper stakingkeeper.Keeper
 	ParamsKeeper  paramskeeper.Keeper
 
-	BlogKeeper blogkeeper.Keeper
+	// BlogKeeper blogkeeper.Keeper
 
 	// the module manager
 	mm *module.Manager
@@ -124,7 +121,7 @@ func init() {
 // NewHeimdallApp returns a reference to an initialized HeimdallApp.
 func NewHeimdallApp(
 	logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, skipUpgradeHeights map[int64]bool,
-	homePath string, invCheckPeriod uint, encodingConfig blogparams.EncodingConfig, baseAppOptions ...func(*baseapp.BaseApp),
+	homePath string, invCheckPeriod uint, encodingConfig hmparams.EncodingConfig, baseAppOptions ...func(*baseapp.BaseApp),
 ) *HeimdallApp {
 	// TODO: Remove cdc in favor of appCodec once all modules are migrated.
 	appCodec := encodingConfig.Marshaler
@@ -139,10 +136,10 @@ func NewHeimdallApp(
 
 	keys := sdk.NewKVStoreKeys(
 		authtypes.StoreKey, stakingtypes.StoreKey,
-		paramstypes.StoreKey, blogtypes.StoreKey,
+		paramstypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
-	memKeys := sdk.NewMemoryStoreKeys(blogtypes.MemStoreKey)
+	memKeys := sdk.NewMemoryStoreKeys(stakingtypes.MemStoreKey)
 
 	app := &HeimdallApp{
 		BaseApp:           bApp,
@@ -186,13 +183,28 @@ func NewHeimdallApp(
 		nil,
 	)
 
+	// app.AccountKeeper = authkeeper.NewAccountKeeper(
+	// 	appCodec,
+	// 	keys[authtypes.StoreKey],
+	// 	app.GetSubspace(authtypes.ModuleName),
+	// 	authtypes.ProtoBaseAccount,
+	// 	maccPerms,
+	// )
+
+	// app.stakingKeeper := stakingkeeper.NewKeeper(
+	// 	appCodec, keys[stakingtypes.StoreKey],
+	// 	app.AccountKeeper,
+	// 	app.BankKeeper,
+	// 	app.GetSubspace(stakingtypes.ModuleName),
+	// )
+
 	// register the staking hooks
 	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
 	// app.StakingKeeper = *stakingKeeper.SetHooks(
 	// 	stakingtypes.NewMultiStakingHooks(app.DistrKeeper.Hooks()),
 	// )
 
-	app.BlogKeeper = *blogkeeper.NewKeeper(app.appCodec, keys[blogtypes.StoreKey], memKeys[blogtypes.MemStoreKey])
+	// app.BlogKeeper = *blogkeeper.NewKeeper(app.appCodec, keys[blogtypes.StoreKey], memKeys[blogtypes.MemStoreKey])
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
@@ -204,11 +216,11 @@ func NewHeimdallApp(
 		// ),
 		auth.NewAppModule(appCodec, app.AccountKeeper),
 		// bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
+		// blog.NewAppModule(appCodec, app.BlogKeeper),
 
 		staking.NewAppModule(appCodec, app.StakingKeeper),
 
 		params.NewAppModule(app.ParamsKeeper),
-		blog.NewAppModule(appCodec, app.BlogKeeper),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -227,7 +239,6 @@ func NewHeimdallApp(
 	// can do so safely.
 	app.mm.SetOrderInitGenesis(
 		authtypes.ModuleName, stakingtypes.ModuleName,
-		genutiltypes.ModuleName,
 	)
 
 	// app.mm.RegisterInvariants(&app.CrisisKeeper)
@@ -318,7 +329,7 @@ func (app *HeimdallApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) 
 		panic(err)
 	}
 
-	fmt.Println("init....", app.mm, "0000", ctx, "11111", app.appCodec, "2222", genesisState)
+	// fmt.Println("init....", app.mm, "0000")
 
 	return app.mm.InitGenesis(ctx, app.appCodec, genesisState)
 }

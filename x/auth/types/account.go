@@ -1,18 +1,16 @@
 package types
 
 import (
+	"bytes"
 	"errors"
-	"fmt"
-	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	proto "github.com/gogo/protobuf/proto"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
-
-	"github.com/maticnetwork/heimdall/x/auth/exported"
 )
 
 func init() {
@@ -26,138 +24,125 @@ func init() {
 // and a pubkey for authentication purposes.
 //
 // Many complex conditions can be used in the concrete struct which implements Account.
-type (
-	Account = exported.Account
-)
+// type (
+// 	AccountI = exported.AccountI
+// )
 
 //-----------------------------------------------------------------------------
-// BaseAccount
-
-// var _ Account = (*BaseAccount)(nil)
+// // BaseAccount
+// var (
+// 	_ AccountI = (*BaseAccount)(nil)
+// )
 
 // NewBaseAccount creates a new BaseAccount object
-func NewBaseAccount(
-	address string,
-	coins sdk.Coins,
-	pubKey crypto.PubKey,
-	accountNumber uint64,
-	sequence uint64,
-) *BaseAccount {
-
-	return &BaseAccount{
+//nolint:interfacer
+func NewBaseAccount(address string, pubKey crypto.PubKey, accountNumber, sequence uint64) *BaseAccount {
+	acc := &BaseAccount{
 		Address:       address,
-		Coins:         coins,
-		PubKey:        pubKey,
 		AccountNumber: accountNumber,
 		Sequence:      sequence,
 	}
+
+	err := acc.SetPubKey(pubKey)
+	if err != nil {
+		panic(err)
+	}
+
+	return acc
 }
 
-// String implements fmt.Stringer
-func (acc BaseAccount) String() string {
-	var pubkey string
-
-	// if acc.PubKey != nil {
-	// 	// pubkey = sdk.MustBech32ifyAccPub(acc.PubKey)
-	// 	var pubObject secp256k1.PubKey
-	// 	ModuleCdc.MustUnmarshalBinaryBare(acc.PubKey.Bytes(), pubObject)
-	// 	pubkey = "0x" + hex.EncodeToString(pubObject[:])
-	// }
-
-	return fmt.Sprintf(`Account:
-  Address:       %s
-  Pubkey:        %s
-  Coins:         %s
-  AccountNumber: %d
-  Sequence:      %d`,
-		acc.Address, pubkey, acc.Coins, acc.AccountNumber, acc.Sequence,
-	)
-}
-
-// // ProtoBaseAccount - a prototype function for BaseAccount
-func ProtoBaseAccount() Account {
+// ProtoBaseAccount - a prototype function for BaseAccount
+func ProtoBaseAccount() AccountI {
 	return &BaseAccount{}
 }
 
 // NewBaseAccountWithAddress - returns a new base account with a given address
-func NewBaseAccountWithAddress(addr string) BaseAccount {
-	return BaseAccount{
+func NewBaseAccountWithAddress(addr string) *BaseAccount {
+	return &BaseAccount{
 		Address: addr,
 	}
 }
 
-// GetAddress - Implements sdk.Account.
+// GetAddress - Implements sdk.AccountI.
 func (acc BaseAccount) GetAddress() string {
 	return acc.Address
 }
 
-// SetAddress - Implements sdk.Account.
+// SetAddress - Implements sdk.AccountI.
 func (acc *BaseAccount) SetAddress(addr string) error {
-	if len(acc.Address) != 0 && acc.Address != "" {
+	if len(acc.Address) != 0 {
 		return errors.New("cannot override BaseAccount address")
 	}
+
 	acc.Address = addr
 	return nil
 }
 
-// GetPubKey - Implements sdk.Account.
-func (acc BaseAccount) GetPubKey() crypto.PubKey {
+// GetPubKey - Implements sdk.AccountI.
+func (acc BaseAccount) GetPubKey() (pk crypto.PubKey) {
 	return acc.PubKey
 }
 
-// SetPubKey - Implements sdk.Account.
+// SetPubKey - Implements sdk.AccountI.
 func (acc *BaseAccount) SetPubKey(pubKey crypto.PubKey) error {
 	acc.PubKey = pubKey
 	return nil
 }
 
-// GetCoins - Implements sdk.Account.
-func (acc *BaseAccount) GetCoins() sdk.Coins {
-	return acc.Coins
-}
-
-// SetCoins - Implements sdk.Account.
+// SetCoins - Implements sdk.AccountI.
 func (acc *BaseAccount) SetCoins(coins sdk.Coins) error {
 	acc.Coins = coins
 	return nil
 }
 
-// GetAccountNumber - Implements Account
-func (acc *BaseAccount) GetAccountNumber() uint64 {
+// GetCoins - Implements sdk.AccountI.
+func (acc *BaseAccount) GetCoins() (coins sdk.Coins) {
+	return acc.Coins
+}
+
+// GetAccountNumber - Implements AccountI
+func (acc BaseAccount) GetAccountNumber() uint64 {
 	return acc.AccountNumber
 }
 
-// SetAccountNumber - Implements Account
+// SetAccountNumber - Implements AccountI
 func (acc *BaseAccount) SetAccountNumber(accNumber uint64) error {
 	acc.AccountNumber = accNumber
 	return nil
 }
 
-// GetSequence - Implements sdk.Account.
-func (acc *BaseAccount) GetSequence() uint64 {
+// GetSequence - Implements sdk.AccountI.
+func (acc BaseAccount) GetSequence() uint64 {
 	return acc.Sequence
 }
 
-// SetSequence - Implements sdk.Account.
+// SetSequence - Implements sdk.AccountI.
 func (acc *BaseAccount) SetSequence(seq uint64) error {
 	acc.Sequence = seq
 	return nil
 }
 
-// SpendableCoins returns the total set of spendable coins. For a base account,
-// this is simply the base coins.
-func (acc *BaseAccount) SpendableCoins(_ time.Time) sdk.Coins {
-	return acc.GetCoins()
-}
-
 // Validate checks for errors on the account fields
 func (acc BaseAccount) Validate() error {
-	if acc.PubKey != nil && acc.Address != "" &&
-		acc.PubKey.Address().String() != acc.Address {
-		return errors.New("pubkey and address pair is invalid")
+	if acc.Address == "" || acc.PubKey == nil {
+		return nil
+	}
+
+	accAddr, err := sdk.AccAddressFromBech32(acc.Address)
+	if err != nil {
+		return err
+	}
+
+	if !bytes.Equal(acc.GetPubKey().Address().Bytes(), accAddr.Bytes()) {
+		return errors.New("account address and pubkey address do not match")
 	}
 
 	return nil
+}
+
+func (acc BaseAccount) String() string {
+	out, _ := acc.MarshalYAML()
+	return out.(string)
 }
 
 // MarshalYAML returns the YAML representation of an account.
@@ -178,4 +163,32 @@ type LightBaseAccount struct {
 	Address       string `json:"address" yaml:"address"`
 	AccountNumber uint64 `json:"account_number" yaml:"account_number"`
 	Sequence      uint64 `json:"sequence" yaml:"sequence"`
+}
+
+// AccountI is an interface used to store coins at a given address within state.
+// It presumes a notion of sequence numbers for replay protection,
+// a notion of account numbers for replay protection for previously pruned accounts,
+// and a pubkey for authentication purposes.
+//
+// Many complex conditions can be used in the concrete struct which implements AccountI.
+type AccountI interface {
+	proto.Message
+
+	GetAddress() string
+	SetAddress(string) error // errors if already set.
+
+	GetCoins() sdk.Coins
+	SetCoins(sdk.Coins) error
+
+	GetPubKey() crypto.PubKey // can return nil.
+	SetPubKey(crypto.PubKey) error
+
+	GetAccountNumber() uint64
+	SetAccountNumber(uint64) error
+
+	GetSequence() uint64
+	SetSequence(uint64) error
+
+	// Ensure that account implements stringer
+	String() string
 }

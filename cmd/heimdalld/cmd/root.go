@@ -315,7 +315,7 @@ func getGenesisAccount(address []byte) authTypes.GenesisAccount {
 	if err := acc.SetCoins(sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: sdk.NewIntFromBigInt(genesisBalance)}}); err != nil {
 		logger.Error("getGenesisAccount | SetCoins", "Error", err)
 	}
-	result, _ := authTypes.NewGenesisAccountI(&acc)
+	result, _ := authTypes.NewGenesisAccountI(acc)
 	return result
 }
 

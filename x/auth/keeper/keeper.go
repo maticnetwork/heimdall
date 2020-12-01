@@ -23,7 +23,7 @@ type (
 		paramSubspace paramtypes.Subspace
 
 		// The prototypical Account constructor.
-		proto func() types.Account
+		proto func() types.AccountI
 	}
 )
 
@@ -31,7 +31,7 @@ func NewKeeper(
 	cdc codec.LegacyAmino,
 	storeKey, memKey sdk.StoreKey,
 	paramstore paramtypes.Subspace,
-	proto func() types.Account) *Keeper {
+	proto func() types.AccountI) *Keeper {
 	return &Keeper{
 		cdc:           cdc,
 		storeKey:      storeKey,
@@ -45,7 +45,7 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 }
 
 // NewAccountWithAddress implements sdk.Keeper.
-func (k Keeper) NewAccountWithAddress(ctx sdk.Context, addr string) types.Account {
+func (k Keeper) NewAccountWithAddress(ctx sdk.Context, addr string) types.AccountI {
 	acc := k.proto()
 	err := acc.SetAddress(addr)
 	if err != nil {
@@ -61,7 +61,7 @@ func (k Keeper) NewAccountWithAddress(ctx sdk.Context, addr string) types.Accoun
 }
 
 // NewAccount creates a new account
-func (k Keeper) NewAccount(ctx sdk.Context, acc types.Account) types.Account {
+func (k Keeper) NewAccount(ctx sdk.Context, acc types.AccountI) types.AccountI {
 	if err := acc.SetAccountNumber(k.GetNextAccountNumber(ctx)); err != nil {
 		panic(err)
 	}
@@ -69,7 +69,7 @@ func (k Keeper) NewAccount(ctx sdk.Context, acc types.Account) types.Account {
 }
 
 // GetAccount implements sdk.Keeper.
-func (k Keeper) GetAccount(ctx sdk.Context, addr string) types.Account {
+func (k Keeper) GetAccount(ctx sdk.Context, addr string) types.AccountI {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.AddressStoreKey(addr))
 	if bz == nil {
@@ -80,9 +80,9 @@ func (k Keeper) GetAccount(ctx sdk.Context, addr string) types.Account {
 }
 
 // GetAllAccounts returns all accounts in the Keeper.
-func (k Keeper) GetAllAccounts(ctx sdk.Context) []types.Account {
-	accounts := []types.Account{}
-	appendAccount := func(acc types.Account) (stop bool) {
+func (k Keeper) GetAllAccounts(ctx sdk.Context) []types.AccountI {
+	accounts := []types.AccountI{}
+	appendAccount := func(acc types.AccountI) (stop bool) {
 		accounts = append(accounts, acc)
 		return false
 	}
@@ -92,7 +92,7 @@ func (k Keeper) GetAllAccounts(ctx sdk.Context) []types.Account {
 
 // SetAccount implements sdk.Keeper
 // allows addition of new accounts
-func (k Keeper) SetAccount(ctx sdk.Context, acc types.Account) {
+func (k Keeper) SetAccount(ctx sdk.Context, acc types.AccountI) {
 	addr := acc.GetAddress()
 	store := ctx.KVStore(k.storeKey)
 	bz, err := k.cdc.MarshalBinaryBare(acc)
@@ -104,14 +104,14 @@ func (k Keeper) SetAccount(ctx sdk.Context, acc types.Account) {
 
 // RemoveAccount removes an account for the account mapper store.
 // NOTE: this will cause supply invariant violation if called
-func (k Keeper) RemoveAccount(ctx sdk.Context, acc types.Account) {
+func (k Keeper) RemoveAccount(ctx sdk.Context, acc types.AccountI) {
 	addr := acc.GetAddress()
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(types.AddressStoreKey(addr))
 }
 
 // IterateAccounts implements sdk.Keeper.
-func (k Keeper) IterateAccounts(ctx sdk.Context, process func(types.Account) (stop bool)) {
+func (k Keeper) IterateAccounts(ctx sdk.Context, process func(types.AccountI) (stop bool)) {
 	store := ctx.KVStore(k.storeKey)
 	iter := sdk.KVStorePrefixIterator(store, types.AddressStoreKeyPrefix)
 	defer iter.Close()
@@ -216,8 +216,8 @@ func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
 // -----------------------------------------------------------------------------
 // Misc.
 
-func (k Keeper) decodeAccount(bz []byte) (types.Account, error) {
-	var acc types.Account
+func (k Keeper) decodeAccount(bz []byte) (types.AccountI, error) {
+	var acc types.AccountI
 	if err := k.cdc.UnmarshalBinaryBare(bz, &acc); err != nil {
 		return nil, err
 	}
