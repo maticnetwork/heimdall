@@ -1,28 +1,32 @@
 package common
 
 import (
-	"encoding/hex"
 	"encoding/json"
 
-	"github.com/tendermint/tendermint/crypto"
-	tmsecp256k1 "github.com/tendermint/tendermint/crypto/secp256k1"
 	"gopkg.in/yaml.v2"
+
+	"github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/crypto/ethsecp256k1"
+	tmprotocrypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
 
 	"github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/bor/common/hexutil"
 )
 
 // PubKey pubkey
-type PubKey [65]byte
+type PubKey []byte
 
 // ZeroPubKey represents empty pub key
 var ZeroPubKey = PubKey{}
 
 // NewPubKey from byte array
 func NewPubKey(data []byte) PubKey {
-	var key PubKey
-	copy(key[:], data[:])
-	return key
+	return data
+}
+
+// NewPubKeyFromHex from byte array
+func NewPubKeyFromHex(pk string) PubKey {
+	return NewPubKey(common.FromHex(pk))
 }
 
 // MarshalText returns the hex representation of a.
@@ -32,12 +36,12 @@ func (a PubKey) MarshalText() ([]byte, error) {
 
 // UnmarshalText parses a hash in hex syntax.
 func (a *PubKey) UnmarshalText(input []byte) error {
-	return hexutil.UnmarshalFixedText("PubKey", input, a[:])
+	return hexutil.UnmarshalFixedText("PubKey", input, a.Bytes()[:])
 }
 
 // String returns string representatin of key
 func (a PubKey) String() string {
-	return "0x" + hex.EncodeToString(a[:])
+	return common.ToHex(a)
 }
 
 // Bytes returns bytes for pubkey
@@ -50,10 +54,20 @@ func (a PubKey) Address() common.Address {
 	return common.BytesToAddress(a.CryptoPubKey().Address().Bytes())
 }
 
-// CryptoPubKey returns crypto pub key for tendermint
+// CryptoPubKey returns crypto pub key for crypto
 func (a PubKey) CryptoPubKey() crypto.PubKey {
-	return tmsecp256k1.PubKey(a[:])
-	// return &secp256k1.PubKey{Key: a.Bytes()}
+	pk := make(ethsecp256k1.PubKey, ethsecp256k1.PubKeySize)
+	copy(pk, a[:])
+	return pk
+}
+
+// TMProtoCryptoPubKey returns crypto pub key for tendermint
+func (a PubKey) TMProtoCryptoPubKey() tmprotocrypto.PublicKey {
+	return tmprotocrypto.PublicKey{
+		Sum: &tmprotocrypto.PublicKey_Ethsecp256K1{
+			Ethsecp256K1: a,
+		},
+	}
 }
 
 // TODO: check if any interface is implementing
@@ -70,7 +84,7 @@ func (a PubKey) Marshal() ([]byte, error) {
 // Unmarshal sets the address to the given data. It is needed for protobuf
 // compatibility.
 func (a *PubKey) Unmarshal(data []byte) error {
-	copy(a[:], data[:])
+	*a = data
 	return nil
 }
 
@@ -92,7 +106,7 @@ func (a *PubKey) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	copy(a[:], common.FromHex(s))
+	*a = common.FromHex(s)
 	return nil
 }
 
@@ -104,6 +118,6 @@ func (a *PubKey) UnmarshalYAML(data []byte) error {
 		return err
 	}
 
-	copy(a[:], common.FromHex(s))
+	*a = common.FromHex(s)
 	return nil
 }

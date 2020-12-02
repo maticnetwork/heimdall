@@ -354,7 +354,7 @@ func (c *ContractCaller) GetValidatorInfo(valID types.ValidatorID, stakingInfoIn
 		VotingPower: newAmount.Int64(),
 		StartEpoch:  stakerDetails.ActivationEpoch.Uint64(),
 		EndEpoch:    stakerDetails.DeactivationEpoch.Uint64(),
-		Signer:      commonTypes.BytesToHeimdallAddress(stakerDetails.Signer.Bytes()),
+		Signer:      stakerDetails.Signer.String(),
 	}
 
 	return validator, nil

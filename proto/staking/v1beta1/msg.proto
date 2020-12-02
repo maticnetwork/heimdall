@@ -1,5 +1,5 @@
 syntax = "proto3";
-package heimdall.staking.x.staking.types;
+package heimdall.staking.v1beta1;
 
 import "gogoproto/gogo.proto";
 import "google/protobuf/any.proto";
