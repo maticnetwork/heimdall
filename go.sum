@@ -387,6 +387,10 @@ github.com/magiconair/properties v1.8.4 h1:8KGKTcQQGm0Kv7vEbKFErAoAOFyyacLStRtQS
 github.com/magiconair/properties v1.8.4/go.mod h1:y3VJvCyxH9uVvJTWEGAELF3aiYNyPKd5NZ3oSwXrF60=
 github.com/maticnetwork/bor v0.2.1 h1:iWVexnhYmL2Y4jFADNfDuaxdh6ufmsXEzyQhHXWgOq0=
 github.com/maticnetwork/bor v0.2.1/go.mod h1:NJu+4Fk6z7ejVArbea5a/ytlDscDAQ1cmfwgDEix4dM=
+github.com/maticnetwork/cosmos-sdk v0.37.5-0.20201203113542-96dfb025bcb3 h1:u5n+wlvpnzGyb7czOK3CGSuA19bp1LC5SJL3gYv+iEw=
+github.com/maticnetwork/cosmos-sdk v0.37.5-0.20201203113542-96dfb025bcb3/go.mod h1:F5q5muHmyXO/DsDHtTcFkPDfxBzCt901pGYWbf7gT7A=
+github.com/maticnetwork/tendermint v0.26.0-dev0.0.20201203113225-7d8ac23501fb h1:50trsCDc4pxjqukN6aBBLwZT/661i/MiY39tIrPsr1g=
+github.com/maticnetwork/tendermint v0.26.0-dev0.0.20201203113225-7d8ac23501fb/go.mod h1:h1izCPYDTuSqEUKc2XmdIZg22UkNAcxnYKOS/x72IrU=
 github.com/mattn/go-colorable v0.0.9/go.mod h1:9vuHe8Xs5qXnSaW/c/ABM9alt+Vo+STaOChaDxuIBZU=
 github.com/mattn/go-colorable v0.1.0 h1:v2XXALHHh6zHfYTJ+cSkwtyffnaOyR1MXaA91mTrb8o=
 github.com/mattn/go-colorable v0.1.0/go.mod h1:9vuHe8Xs5qXnSaW/c/ABM9alt+Vo+STaOChaDxuIBZU=

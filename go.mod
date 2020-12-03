@@ -32,7 +32,6 @@ require (
 
 replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.2-alpha.regen.4
 
-// replace github.com/tendermint/tendermint => github.com/maticnetwork/tendermint v0.26.0-dev0.0.20201123110246-2b1f77b579ca
-replace github.com/tendermint/tendermint => /Users/jdkanani/matic/tendermint
+replace github.com/tendermint/tendermint => github.com/maticnetwork/tendermint v0.26.0-dev0.0.20201203113225-7d8ac23501fb
 
-replace github.com/cosmos/cosmos-sdk => /Users/jdkanani/matic/cosmos-sdk
+replace github.com/cosmos/cosmos-sdk => github.com/maticnetwork/cosmos-sdk v0.37.5-0.20201203113542-96dfb025bcb3
