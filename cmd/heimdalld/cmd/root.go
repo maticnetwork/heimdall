@@ -356,7 +356,6 @@ func InitializeNodeValidatorFiles(
 	config *cfg.Config) (nodeID string, valPubKey crypto.PubKey, priv crypto.PrivKey, err error,
 ) {
 
-	fmt.Println("config file", config.NodeKeyFile())
 	nodeKey, err := p2p.LoadOrGenNodeKey(config.NodeKeyFile())
 	if err != nil {
 		return "", nil, nil, err
@@ -388,7 +387,6 @@ func InitializeNodeValidatorFiles(
 	// 	return "", nil, nil, err
 	// }
 	valPubKey, _ = filePV.GetPubKey()
-	fmt.Println("valPubKey size", len(valPubKey.Bytes()))
 	return nodeID, valPubKey, valPrivKey, nil
 }
 
