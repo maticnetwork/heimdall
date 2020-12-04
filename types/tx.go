@@ -9,7 +9,7 @@ var _ sdk.Tx = BaseTx{}
 
 // BaseTx represents base tx tendermint needs
 type BaseTx struct {
-	Msg        sdk.Msg
+	Msg sdk.Msg
 }
 
 // NewBaseTx drafts BaseTx with messages
@@ -26,6 +26,6 @@ func (tx BaseTx) GetMsgs() []sdk.Msg {
 
 // ValidateBasic does a simple and lightweight validation check that doesn't
 // require access to any other information.
-func (tx BaseTx) ValidateBasic() sdk.Error {
+func (tx BaseTx) ValidateBasic() error {
 	return nil
 }

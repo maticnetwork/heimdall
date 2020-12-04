@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/maticnetwork/heimdall/types/common"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -106,7 +107,7 @@ func TestValidateBasic(t *testing.T) {
 			msg: "Invalid PubKey \"\"",
 		},
 		{
-			in:  Validator{StartEpoch: 1, EndEpoch: 5, Nonce: 0, PubKey: ZeroPubKey, Signer: BytesToHeimdallAddress([]byte("3"))},
+			in:  Validator{StartEpoch: 1, EndEpoch: 5, Nonce: 0, PubKey: common.ZeroPubKey, Signer: BytesToHeimdallAddress([]byte("3"))},
 			out: false,
 			msg: "Invalid PubKey",
 		},

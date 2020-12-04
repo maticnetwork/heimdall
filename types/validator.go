@@ -2,6 +2,7 @@ package types
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"math/big"
 	"sort"
@@ -9,22 +10,26 @@ import (
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/tendermint/tendermint/crypto"
+
+	"github.com/maticnetwork/heimdall/types/common"
 )
 
 // Validator heimdall validator
-type Validator struct {
-	ID          ValidatorID     `json:"ID"`
-	StartEpoch  uint64          `json:"startEpoch"`
-	EndEpoch    uint64          `json:"endEpoch"`
-	Nonce       uint64          `json:"nonce"`
-	VotingPower int64           `json:"power"` // TODO add 10^-18 here so that we dont overflow easily
-	PubKey      PubKey          `json:"pubKey"`
-	Signer      HeimdallAddress `json:"signer"`
-	LastUpdated string          `json:"last_updated"`
+// type Validator struct {
+// 	ID          ValidatorID     `json:"ID"`
+// 	StartEpoch  uint64          `json:"startEpoch"`
+// 	EndEpoch    uint64          `json:"endEpoch"`
+// 	Nonce       uint64          `json:"nonce"`
+// 	VotingPower int64           `json:"power"` // TODO add 10^-18 here so that we dont overflow easily
+// 	PubKey      PubKey          `json:"pubKey"`
+// 	Signer      HeimdallAddress `json:"signer"`
+// 	LastUpdated string          `json:"last_updated"`
 
-	Jailed           bool  `json:"jailed"`
-	ProposerPriority int64 `json:"accum"`
-}
+// 	Jailed           bool  `json:"jailed"`
+// 	ProposerPriority int64 `json:"accum"`
+// }
 
 // NewValidator func creates a new validator,
 // the HeimdallAddress field is generated using Address i.e. [20]byte
@@ -34,8 +39,8 @@ func NewValidator(
 	endEpoch uint64,
 	nonce uint64,
 	power int64,
-	pubKey PubKey,
-	signer HeimdallAddress,
+	pubKey common.PubKey,
+	signer sdk.AccAddress,
 ) *Validator {
 	return &Validator{
 		ID:          id,
@@ -43,8 +48,8 @@ func NewValidator(
 		EndEpoch:    endEpoch,
 		Nonce:       nonce,
 		VotingPower: power,
-		PubKey:      pubKey,
-		Signer:      signer,
+		PubKey:      pubKey.String(),
+		Signer:      signer.String(),
 	}
 }
 
@@ -52,7 +57,7 @@ func NewValidator(
 // to sort it we compare the values of the Signer(HeimdallAddress i.e. [20]byte)
 func SortValidatorByAddress(a []Validator) []Validator {
 	sort.Slice(a, func(i, j int) bool {
-		return bytes.Compare(a[i].Signer.Bytes(), a[j].Signer.Bytes()) < 0
+		return bytes.Compare(a[i].GetSigner().Bytes(), a[j].GetSigner().Bytes()) < 0
 	})
 	return a
 }
@@ -70,19 +75,25 @@ func (v *Validator) IsCurrentValidator(ackCount uint64) bool {
 	return false
 }
 
-// Validates validator
-func (v *Validator) ValidateBasic() bool {
-	if bytes.Equal(v.PubKey.Bytes(), ZeroPubKey.Bytes()) {
-		return false
+// ValidateBasic validates validator basic
+func (v *Validator) ValidateBasic() error {
+	if v == nil {
+		return errors.New("nil validator")
 	}
-	if bytes.Equal(v.Signer.Bytes(), []byte("")) {
-		return false
+
+	if len(v.GetSigner().Bytes()) != crypto.AddressSize {
+		return errors.New("Invalid signer address")
 	}
-	return true
+
+	if v.VotingPower < 0 {
+		return errors.New("validator has negative voting power")
+	}
+
+	return nil
 }
 
-// amino marshall validator
-func MarshallValidator(cdc *codec.Codec, validator Validator) (bz []byte, err error) {
+// MarshallValidator marshal validator object
+func MarshallValidator(cdc codec.BinaryMarshaler, validator *Validator) (bz []byte, err error) {
 	bz, err = cdc.MarshalBinaryBare(validator)
 	if err != nil {
 		return bz, err
@@ -90,8 +101,8 @@ func MarshallValidator(cdc *codec.Codec, validator Validator) (bz []byte, err er
 	return bz, nil
 }
 
-// amono unmarshall validator
-func UnmarshallValidator(cdc *codec.Codec, value []byte) (Validator, error) {
+// UnmarshallValidator unmarshall validator
+func UnmarshallValidator(cdc codec.BinaryMarshaler, value []byte) (Validator, error) {
 	var validator Validator
 	// unmarshall validator and return
 	err := cdc.UnmarshalBinaryBare(value, &validator)
@@ -108,7 +119,7 @@ func (v *Validator) Copy() *Validator {
 	return &vCopy
 }
 
-// Returns the one with higher ProposerPriority.
+// CompareProposerPriority returns the one with higher ProposerPriority.
 func (v *Validator) CompareProposerPriority(other *Validator) *Validator {
 	if v == nil {
 		return other
@@ -119,7 +130,7 @@ func (v *Validator) CompareProposerPriority(other *Validator) *Validator {
 	case v.ProposerPriority < other.ProposerPriority:
 		return other
 	default:
-		result := bytes.Compare(v.Signer.Bytes(), other.Signer.Bytes())
+		result := bytes.Compare(v.GetSigner().Bytes(), other.GetSigner().Bytes())
 		switch {
 		case result < 0:
 			return v
@@ -159,7 +170,7 @@ func ValidatorListString(vals []*Validator) string {
 // which changes every round.
 func (v *Validator) Bytes() []byte {
 	result := make([]byte, 64)
-	copy(result[12:], v.Signer.Bytes())
+	copy(result[12:], v.GetSigner().Bytes())
 	copy(result[32:], new(big.Int).SetInt64(v.VotingPower).Bytes())
 	return result
 }
@@ -178,10 +189,16 @@ func (v *Validator) MinimalVal() MinimalVal {
 	}
 }
 
+// GetSigner returns signer
+func (v *Validator) GetSigner() sdk.AccAddress {
+	signer, _ := sdk.AccAddressFromHex(v.Signer)
+	return signer
+}
+
 // --------
 
 // ValidatorID  validator ID and helper functions
-type ValidatorID uint64
+// type ValidatorID uint64
 
 // NewValidatorID generate new validator ID
 func NewValidatorID(id uint64) ValidatorID {
@@ -212,24 +229,24 @@ func (valID ValidatorID) String() string {
 
 // MinimalVal is the minimal validator representation
 // Used to send validator information to bor validator contract
-type MinimalVal struct {
-	ID          ValidatorID     `json:"ID"`
-	VotingPower uint64          `json:"power"` // TODO add 10^-18 here so that we dont overflow easily
-	Signer      HeimdallAddress `json:"signer"`
-}
+// type MinimalVal struct {
+// 	ID          ValidatorID     `json:"ID"`
+// 	VotingPower uint64          `json:"power"` // TODO add 10^-18 here so that we dont overflow easily
+// 	Signer      HeimdallAddress `json:"signer"`
+// }
 
 // SortMinimalValByAddress sorts validators
-func SortMinimalValByAddress(a []MinimalVal) []MinimalVal {
-	sort.Slice(a, func(i, j int) bool {
-		return bytes.Compare(a[i].Signer.Bytes(), a[j].Signer.Bytes()) < 0
-	})
-	return a
-}
+// func SortMinimalValByAddress(a []MinimalVal) []MinimalVal {
+// 	sort.Slice(a, func(i, j int) bool {
+// 		return bytes.Compare(a[i].GetSigner().Bytes(), a[j].GetSigner().Bytes()) < 0
+// 	})
+// 	return a
+// }
 
-// ValToMinVal converts array of validators to minimal validators
-func ValToMinVal(vals []Validator) (minVals []MinimalVal) {
-	for _, val := range vals {
-		minVals = append(minVals, val.MinimalVal())
-	}
-	return
-}
+// // ValToMinVal converts array of validators to minimal validators
+// func ValToMinVal(vals []Validator) (minVals []MinimalVal) {
+// 	for _, val := range vals {
+// 		minVals = append(minVals, val.MinimalVal())
+// 	}
+// 	return
+// }

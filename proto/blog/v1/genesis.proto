@@ -1,0 +1,9 @@
+syntax = "proto3";
+package blog.v1;
+
+option go_package = "github.com/maticnetwork/heimdall/x/blog/types";
+
+// GenesisState defines the blog module's genesis state.
+message GenesisState {
+}
+

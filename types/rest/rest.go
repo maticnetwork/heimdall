@@ -12,13 +12,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/codec/legacy"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
+	"github.com/maticnetwork/heimdall/types/common"
 	tmTypes "github.com/tendermint/tendermint/types"
-
-	"github.com/maticnetwork/heimdall/types"
 )
 
 const (
@@ -30,7 +30,7 @@ var (
 	ParseFloat64OrReturnBadRequest     = rest.ParseFloat64OrReturnBadRequest
 	ParseQueryHeightOrReturnBadRequest = rest.ParseQueryHeightOrReturnBadRequest
 	ParseUint64OrReturnBadRequest      = rest.ParseUint64OrReturnBadRequest
-	ParseInt64OrReturnBadRequest       = rest.ParseInt64OrReturnBadRequest
+	// ParseInt64OrReturnBadRequest       = rest.ParseInt64OrReturnBadRequest
 )
 
 // ResponseWithHeight defines a response object type that wraps an original
@@ -118,7 +118,7 @@ func (br BaseReq) ValidateBasic(w http.ResponseWriter) bool {
 		}
 	}
 
-	if types.HexToHeimdallAddress(br.From).Empty() || len(br.From) == 0 {
+	if common.HexToHeimdallAddress(br.From).Empty() || len(br.From) == 0 {
 		WriteErrorResponse(w, http.StatusUnauthorized, fmt.Sprintf("invalid from address: %s", br.From))
 		return false
 	}
@@ -128,7 +128,7 @@ func (br BaseReq) ValidateBasic(w http.ResponseWriter) bool {
 
 // ReadRESTReq reads and unmarshals a Request's body to the the BaseReq stuct.
 // Writes an error response to ResponseWriter and returns true if errors occurred.
-func ReadRESTReq(w http.ResponseWriter, r *http.Request, cdc *codec.Codec, req interface{}) bool {
+func ReadRESTReq(w http.ResponseWriter, r *http.Request, cdc *codec.LegacyAmino, req interface{}) bool {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -160,12 +160,12 @@ func NewErrorResponse(code int, err string) ErrorResponse {
 func WriteErrorResponse(w http.ResponseWriter, status int, err string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	_, _ = w.Write(codec.Cdc.MustMarshalJSON(NewErrorResponse(0, err)))
+	_, _ = w.Write(legacy.Cdc.MustMarshalJSON(NewErrorResponse(0, err)))
 }
 
 // WriteSimulationResponse prepares and writes an HTTP
 // response for transactions simulations.
-func WriteSimulationResponse(w http.ResponseWriter, cdc *codec.Codec, gas uint64) {
+func WriteSimulationResponse(w http.ResponseWriter, cdc *codec.LegacyAmino, gas uint64) {
 	gasEst := GasEstimateResponse{GasEstimate: gas}
 	resp, err := cdc.MarshalJSON(gasEst)
 	if err != nil {
@@ -191,7 +191,7 @@ func ReturnNotFoundIfNoContent(w http.ResponseWriter, data []byte, message strin
 // PostProcessResponse performs post processing for a REST response. The result
 // returned to clients will contain two fields, the height at which the resource
 // was queried at and the original result.
-func PostProcessResponse(w http.ResponseWriter, cliCtx context.CLIContext, resp interface{}) {
+func PostProcessResponse(w http.ResponseWriter, cliCtx client.Context, resp interface{}) {
 	var result []byte
 
 	if cliCtx.Height < 0 {
@@ -205,11 +205,7 @@ func PostProcessResponse(w http.ResponseWriter, cliCtx context.CLIContext, resp 
 
 	default:
 		var err error
-		if cliCtx.Indent {
-			result, err = cliCtx.Codec.MarshalJSONIndent(resp, "", "  ")
-		} else {
-			result, err = cliCtx.Codec.MarshalJSON(resp)
-		}
+		result, err = cliCtx.LegacyAmino.MarshalJSON(resp)
 
 		if err != nil {
 			WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
@@ -224,11 +220,11 @@ func PostProcessResponse(w http.ResponseWriter, cliCtx context.CLIContext, resp 
 		err    error
 	)
 
-	if cliCtx.Indent {
-		output, err = cliCtx.Codec.MarshalJSONIndent(wrappedResp, "", "  ")
-	} else {
-		output, err = cliCtx.Codec.MarshalJSON(wrappedResp)
-	}
+	// if cliCtx.Indent {
+	// 	output, err = cliCtx.LegacyAmino.MarshalJSONIndent(wrappedResp, "", "  ")
+	// } else {
+	output, err = cliCtx.LegacyAmino.MarshalJSON(wrappedResp)
+	// }
 
 	if err != nil {
 		WriteErrorResponse(w, http.StatusInternalServerError, err.Error())

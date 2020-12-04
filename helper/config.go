@@ -78,8 +78,8 @@ var (
 var cdc = amino.NewCodec()
 
 func init() {
-	cdc.RegisterConcrete(secp256k1.PubKeySecp256k1{}, secp256k1.PubKeyAminoName, nil)
-	cdc.RegisterConcrete(secp256k1.PrivKeySecp256k1{}, secp256k1.PrivKeyAminoName, nil)
+	cdc.RegisterConcrete(secp256k1.PubKey{}, secp256k1.PubKeyName, nil)
+	cdc.RegisterConcrete(secp256k1.PrivKey{}, secp256k1.PrivKeyName, nil)
 	Logger = logger.NewTMLogger(logger.NewSyncWriter(os.Stdout))
 }
 
@@ -118,9 +118,9 @@ var maticRPCClient *rpc.Client
 var maticEthClient *eth.EthAPIBackend
 
 // private key object
-var privObject secp256k1.PrivKeySecp256k1
+var privObject secp256k1.PrivKey
 
-var pubObject secp256k1.PubKeySecp256k1
+var pubObject secp256k1.PubKey
 
 // Logger stores global logger object
 var Logger logger.Logger
@@ -269,7 +269,7 @@ func GetMaticEthClient() *eth.EthAPIBackend {
 }
 
 // GetPrivKey returns priv key object
-func GetPrivKey() secp256k1.PrivKeySecp256k1 {
+func GetPrivKey() secp256k1.PrivKey {
 	return privObject
 }
 
@@ -284,7 +284,7 @@ func GetECDSAPrivKey() *ecdsa.PrivateKey {
 }
 
 // GetPubKey returns pub key object
-func GetPubKey() secp256k1.PubKeySecp256k1 {
+func GetPubKey() secp256k1.PubKey {
 	return pubObject
 }
 

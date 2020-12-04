@@ -1,121 +1,85 @@
-# Fetch git latest tag
-LATEST_GIT_TAG:=$(shell git describe --tags $(git rev-list --tags --max-count=1))
-VERSION := $(shell echo $(shell git describe --tags) | sed 's/^v//')
-COMMIT := $(shell git log -1 --format='%H')
+BINS := heimdall
+APP_DIR := ./app
 
-ldflags = -X github.com/maticnetwork/heimdall/version.Name=heimdall \
-		  -X github.com/maticnetwork/heimdall/version.ServerName=heimdalld \
-		  -X github.com/maticnetwork/heimdall/version.ClientName=heimdallcli \
-		  -X github.com/maticnetwork/heimdall/version.Version=$(VERSION) \
-		  -X github.com/maticnetwork/heimdall/version.Commit=$(COMMIT) \
-		  -X github.com/cosmos/cosmos-sdk/version.Name=heimdall \
-		  -X github.com/cosmos/cosmos-sdk/version.ServerName=heimdalld \
-		  -X github.com/cosmos/cosmos-sdk/version.ClientName=heimdallcli \
-		  -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
-		  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT)
+GO := GO111MODULE=on go
+GOBIN := $(shell go env GOPATH)/bin
 
-BUILD_FLAGS := -ldflags '$(ldflags)'
+UNAME_OS              := $(shell uname -s)
+UNAME_ARCH            := $(shell uname -m)
+CACHE_BASE            ?= $(abspath .cache)
+CACHE                 := $(CACHE_BASE)
+CACHE_BIN             := $(CACHE)/bin
+CACHE_COSMOS_SDK      := $(CACHE)/cosmos-sdk
+CACHE_INCLUDE         := $(CACHE)/include
+CACHE_VERSIONS        := $(CACHE)/versions
+CACHE_NODE_MODULES    := $(CACHE)/node_modules
+CACHE_NODE_BIN        := $(CACHE_NODE_MODULES)/.bin
 
-clean:
-	rm -rf build
+# setup .cache bins first in paths to have precedence over already installed same tools for system wide use
+PATH := "$(PATH):$(CACHE_BIN):$(CACHE_NODE_BIN)"
 
-tests:
-	# go test  -v ./...
+BUF_VERSION                ?= 0.31.1
+PROTOC_VERSION             ?= 3.13.0
+PROTOC_GEN_COSMOS_VERSION  ?= master
+GRPC_GATEWAY_VERSION       ?= 1.14.7
+GOLANGCI_LINT_VERSION      ?= v1.31.0
+GOLANG_VERSION             ?= 1.15.2
+GOLANG_CROSS_VERSION       := v$(GOLANG_VERSION)
+STATIK_VERSION             ?= v0.1.7
 
-	go test -v ./app/ ./auth/ ./clerk/ ./sidechannel/ ./bank/ ./chainmanager/ ./topup/ ./checkpoint/ ./staking/ ./bor/ ./gov/ -cover -coverprofile=cover.out
+# <TOOL>_VERSION_FILE points to the marker file for the installed version.
+# If <TOOL>_VERSION_FILE is changed, the binary will be re-downloaded.
+PROTOC_VERSION_FILE             = $(CACHE_VERSIONS)/protoc/$(PROTOC_VERSION)
+GRPC_GATEWAY_VERSION_FILE       = $(CACHE_VERSIONS)/protoc-gen-grpc-gateway/$(GRPC_GATEWAY_VERSION)
+PROTOC_GEN_COSMOS_VERSION_FILE  = $(CACHE_VERSIONS)/protoc-gen-cosmos/$(PROTOC_GEN_COSMOS_VERSION)
+STATIK_VERSION_FILE             = $(CACHE_VERSIONS)/statik/$(STATIK_VERSION)
+SWAGGER_COMBINE                 = $(CACHE_NODE_BIN)/swagger-combine
+PROTOC_SWAGGER_GEN             := $(CACHE_BIN)/protoc-swagger-gen
+PROTOC                         := $(CACHE_BIN)/protoc
+STATIK                         := $(CACHE_BIN)/statik
+PROTOC_GEN_COSMOS              := $(CACHE_BIN)/protoc-gen-cosmos
+GRPC_GATEWAY                   := $(CACHE_BIN)/protoc-gen-grpc-gateway
 
+GORELEASER_FLAGS    = -tags="$(GORELEASER_BUILD_TAGS)"
+GORELEASER_LD_FLAGS = -s -w -X github.com/cosmos/cosmos-sdk/version.Name=heimdall \
+-X github.com/cosmos/cosmos-sdk/version.AppName=heimdall \
+-X github.com/cosmos/cosmos-sdk/version.BuildTags="$(GORELEASER_BUILD_TAGS)" \
+-X github.com/cosmos/cosmos-sdk/version.Version=$(shell git describe --tags --abbrev=0) \
+-X github.com/cosmos/cosmos-sdk/version.Commit=$(shell git log -1 --format='%H')
 
-build: clean
-	mkdir -p build
-	go build -o build/heimdalld ./cmd/heimdalld
-	go build -o build/heimdallcli ./cmd/heimdallcli
-	go build -o build/bridge bridge/bridge.go
-	@echo "====================================================\n==================Build Successful==================\n===================================================="
+ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=heimdall \
+-X github.com/cosmos/cosmos-sdk/version.AppName=heimdall \
+-X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(BUILD_TAGS)" \
+-X github.com/cosmos/cosmos-sdk/version.Version=$(shell git describe --tags | sed 's/^v//') \
+-X github.com/cosmos/cosmos-sdk/version.Commit=$(shell git log -1 --format='%H')
 
-install:
-	go install $(BUILD_FLAGS) ./cmd/heimdalld
-	go install $(BUILD_FLAGS) ./cmd/heimdallcli
-	go install $(BUILD_FLAGS) bridge/bridge.go
-
-contracts:
-	abigen --abi=contracts/rootchain/rootchain.abi --pkg=rootchain --out=contracts/rootchain/rootchain.go
-	abigen --abi=contracts/stakemanager/stakemanager.abi --pkg=stakemanager --out=contracts/stakemanager/stakemanager.go
-	abigen --abi=contracts/slashmanager/slashmanager.abi --pkg=slashmanager --out=contracts/slashmanager/slashmanager.go
-	abigen --abi=contracts/statereceiver/statereceiver.abi --pkg=statereceiver --out=contracts/statereceiver/statereceiver.go
-	abigen --abi=contracts/statesender/statesender.abi --pkg=statesender --out=contracts/statesender/statesender.go
-	abigen --abi=contracts/stakinginfo/stakinginfo.abi --pkg=stakinginfo --out=contracts/stakinginfo/stakinginfo.go
-	abigen --abi=contracts/validatorset/validatorset.abi --pkg=validatorset --out=contracts/validatorset/validatorset.go
-	abigen --abi=contracts/erc20/erc20.abi --pkg=erc20 --out=contracts/erc20/erc20.go
-
-
-init-heimdall:
-	./build/heimdalld init
-
-show-account-heimdall:
-	./build/heimdalld show-account
-
-show-node-id:
-	./build/heimdalld tendermint show-node-id
-
-run-heimdall:
-	./build/heimdalld start
-
-start-heimdall:
-	mkdir -p ./logs &
-	./build/heimdalld start > ./logs/heimdalld.log &
-
-reset-heimdall:
-	./build/heimdalld unsafe-reset-all
-	./build/bridge purge-queue
-	rm -rf ~/.heimdalld/bridge
-
-run-server:
-	./build/heimdalld rest-server
-
-start-server:
-	mkdir -p ./logs &
-	./build/heimdalld rest-server > ./logs/heimdalld-rest-server.log &
-
-start:
-	mkdir -p ./logs
-	bash docker/start.sh
-
-run-bridge:
-	./build/bridge start --all
-
-start-bridge:
-	mkdir -p logs &
-	./build/bridge start --all > ./logs/bridge.log &
-
-start-all:
-	mkdir -p ./logs
-	bash docker/start-heimdall.sh
-
-#
-# Code quality
-#
-
-LINT_COMMAND := $(shell command -v golangci-lint 2> /dev/null)
-lint:
-ifndef LINT_COMMAND
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(GOPATH)/bin v1.23.8
+# check for nostrip option
+ifeq (,$(findstring nostrip,$(BUILD_OPTIONS)))
+	ldflags += -s -w
 endif
-	golangci-lint run
+ldflags += $(LDFLAGS)
+ldflags := $(strip $(ldflags))
 
-#
-# docker commands
-#
+BUILD_FLAGS := -mod=readonly -tags "$(BUILD_TAGS)" -ldflags '$(ldflags)'
+# check for nostrip option
+ifeq (,$(findstring nostrip,$(BUILD_OPTIONS)))
+	BUILD_FLAGS += -trimpath
+endif
 
-build-docker:
-	@echo Fetching latest tag: $(LATEST_GIT_TAG)
-	git checkout $(LATEST_GIT_TAG)
-	docker build -t "maticnetwork/heimdall:$(LATEST_GIT_TAG)" -f docker/Dockerfile .
+.PHONY: all
+all: build
 
-push-docker:
-	@echo Pushing docker tag image: $(LATEST_GIT_TAG)
-	docker push "maticnetwork/heimdall:$(LATEST_GIT_TAG)"
+.PHONY: clean
+clean: cache-clean
+	rm -f $(BINS)
 
-build-docker-develop:
-	docker build -t "maticnetwork/heimdall:develop" -f docker/Dockerfile.develop .
-
-.PHONY: contracts build
+include make/proto.mk
+include make/setup-cache.mk
+include make/release.mk
+include make/mod.mk
+# include make/lint.mk
+# include make/test-integration.mk
+# include make/test-simulation.mk
+include make/tools.mk
+include make/environment.mk
+include make/codegen.mk

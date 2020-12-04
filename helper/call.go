@@ -24,11 +24,12 @@ import (
 	"github.com/maticnetwork/heimdall/merr"
 
 	"github.com/maticnetwork/heimdall/types"
+	commonTypes "github.com/maticnetwork/heimdall/types/common"
 )
 
 // IContractCaller represents contract caller
 type IContractCaller interface {
-	GetHeaderInfo(headerID uint64, rootChainInstance *rootchain.Rootchain, childBlockInterval uint64) (root common.Hash, start, end, createdAt uint64, proposer types.HeimdallAddress, err error)
+	GetHeaderInfo(headerID uint64, rootChainInstance *rootchain.Rootchain, childBlockInterval uint64) (root common.Hash, start, end, createdAt uint64, proposer commonTypes.HeimdallAddress, err error)
 	GetRootHash(start uint64, end uint64, checkpointLength uint64) ([]byte, error)
 	GetValidatorInfo(valID types.ValidatorID, stakingInfoInstance *stakinginfo.Stakinginfo) (validator types.Validator, err error)
 	GetLastChildBlock(rootChainInstance *rootchain.Rootchain) (uint64, error)
@@ -264,7 +265,7 @@ func (c *ContractCaller) GetHeaderInfo(number uint64, rootChainInstance *rootcha
 	start uint64,
 	end uint64,
 	createdAt uint64,
-	proposer types.HeimdallAddress,
+	proposer commonTypes.HeimdallAddress,
 	err error,
 ) {
 	// get header from rootchain
@@ -278,7 +279,7 @@ func (c *ContractCaller) GetHeaderInfo(number uint64, rootChainInstance *rootcha
 		headerBlock.Start.Uint64(),
 		headerBlock.End.Uint64(),
 		headerBlock.CreatedAt.Uint64(),
-		types.BytesToHeimdallAddress(headerBlock.Proposer.Bytes()),
+		commonTypes.BytesToHeimdallAddress(headerBlock.Proposer.Bytes()),
 		nil
 }
 
@@ -353,7 +354,7 @@ func (c *ContractCaller) GetValidatorInfo(valID types.ValidatorID, stakingInfoIn
 		VotingPower: newAmount.Int64(),
 		StartEpoch:  stakerDetails.ActivationEpoch.Uint64(),
 		EndEpoch:    stakerDetails.DeactivationEpoch.Uint64(),
-		Signer:      types.BytesToHeimdallAddress(stakerDetails.Signer.Bytes()),
+		Signer:      stakerDetails.Signer.String(),
 	}
 
 	return validator, nil

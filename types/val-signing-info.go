@@ -43,14 +43,14 @@ func (i ValidatorSigningInfo) String() string {
 	return fmt.Sprintf(`Validator Signing Info:
   valID:               %d
   Start Height:          %d
-  Index Offset:          %d  
+  Index Offset:          %d
   Missed Blocks Counter: %d`,
 		i.ValID, i.StartHeight, i.IndexOffset,
 		i.MissedBlocksCounter)
 }
 
 // amino marshall validator
-func MarshallValSigningInfo(cdc *codec.Codec, valSigningInfo ValidatorSigningInfo) (bz []byte, err error) {
+func MarshallValSigningInfo(cdc *codec.LegacyAmino, valSigningInfo ValidatorSigningInfo) (bz []byte, err error) {
 	bz, err = cdc.MarshalBinaryBare(valSigningInfo)
 	if err != nil {
 		return bz, err
@@ -59,7 +59,7 @@ func MarshallValSigningInfo(cdc *codec.Codec, valSigningInfo ValidatorSigningInf
 }
 
 // amono unmarshall validator
-func UnmarshallValSigningInfo(cdc *codec.Codec, value []byte) (ValidatorSigningInfo, error) {
+func UnmarshallValSigningInfo(cdc *codec.LegacyAmino, value []byte) (ValidatorSigningInfo, error) {
 	var valSigningInfo ValidatorSigningInfo
 	// unmarshall validator and return
 	err := cdc.UnmarshalBinaryBare(value, &valSigningInfo)
