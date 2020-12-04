@@ -166,6 +166,7 @@ func initCmd(ctx *server.Context, amino *codec.LegacyAmino, mbm module.BasicMana
 
 	cmd.Flags().String(cli.HomeFlag, app.DefaultNodeHome, "node's home directory")
 	cmd.Flags().String(helper.FlagClientHome, helper.DefaultCLIHome, "client's home directory")
+	cmd.Flags().BoolP(genutilcli.FlagOverwrite, "o", false, "overwrite the genesis.json file")
 	cmd.Flags().String(flags.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
 	return cmd
 }
