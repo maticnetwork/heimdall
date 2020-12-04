@@ -1,18 +1,11 @@
 package app
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
-
-	"github.com/gorilla/mux"
-	"github.com/rakyll/statik/fs"
-	abci "github.com/tendermint/tendermint/abci/types"
-	tmjson "github.com/tendermint/tendermint/libs/json"
-	"github.com/tendermint/tendermint/libs/log"
-	tmos "github.com/tendermint/tendermint/libs/os"
-	dbm "github.com/tendermint/tm-db"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -24,11 +17,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
-
+	"github.com/cosmos/cosmos-sdk/x/auth"
 	authrest "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
-
+	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
-
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -37,26 +31,27 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/params"
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	"github.com/gorilla/mux"
+	"github.com/rakyll/statik/fs"
+	abci "github.com/tendermint/tendermint/abci/types"
+	tmjson "github.com/tendermint/tendermint/libs/json"
+	"github.com/tendermint/tendermint/libs/log"
+	tmos "github.com/tendermint/tendermint/libs/os"
+	dbm "github.com/tendermint/tm-db"
+
+	// unnamed import of statik for swagger UI support
+	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
 
 	// "github.com/cosmos/cosmos-sdk/x/slashing"
 	// slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	// slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 
-	"github.com/maticnetwork/heimdall/x/auth"
-	authkeeper "github.com/maticnetwork/heimdall/x/auth/keeper"
-	authtypes "github.com/maticnetwork/heimdall/x/auth/types"
-
+	blogparams "github.com/maticnetwork/heimdall/app/params"
+	"github.com/maticnetwork/heimdall/types/common"
+	blogtypes "github.com/maticnetwork/heimdall/x/blog/types"
 	"github.com/maticnetwork/heimdall/x/staking"
 	stakingkeeper "github.com/maticnetwork/heimdall/x/staking/keeper"
 	stakingtypes "github.com/maticnetwork/heimdall/x/staking/types"
-
-	blogparams "github.com/maticnetwork/heimdall/app/params"
-	"github.com/maticnetwork/heimdall/x/blog"
-	blogkeeper "github.com/maticnetwork/heimdall/x/blog/keeper"
-	blogtypes "github.com/maticnetwork/heimdall/x/blog/types"
-
-	// unnamed import of statik for swagger UI support
-	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
 )
 
 const appName = "Heimdall"
@@ -74,12 +69,16 @@ var (
 		bank.AppModuleBasic{},
 		staking.AppModuleBasic{},
 		params.AppModuleBasic{},
-		blog.AppModuleBasic{},
 	)
 
 	// module account permissions
 	maccPerms = map[string][]string{
 		authtypes.FeeCollectorName: nil,
+	}
+
+	// module accounts that are allowed to receive tokens
+	allowedReceivingModAcc = map[string]bool{
+		// distrtypes.ModuleName: true,
 	}
 )
 
@@ -102,12 +101,10 @@ type HeimdallApp struct {
 	memKeys map[string]*sdk.MemoryStoreKey
 
 	// keepers
-	AccountKeeper authkeeper.Keeper
+	AccountKeeper authkeeper.AccountKeeper
 	BankKeeper    bankkeeper.Keeper
 	StakingKeeper stakingkeeper.Keeper
 	ParamsKeeper  paramskeeper.Keeper
-
-	BlogKeeper blogkeeper.Keeper
 
 	// the module manager
 	mm *module.Manager
@@ -127,8 +124,15 @@ func init() {
 
 // NewHeimdallApp returns a reference to an initialized HeimdallApp.
 func NewHeimdallApp(
-	logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, skipUpgradeHeights map[int64]bool,
-	homePath string, invCheckPeriod uint, encodingConfig blogparams.EncodingConfig, baseAppOptions ...func(*baseapp.BaseApp),
+	logger log.Logger,
+	db dbm.DB,
+	traceStore io.Writer,
+	loadLatest bool,
+	skipUpgradeHeights map[int64]bool,
+	homePath string,
+	invCheckPeriod uint,
+	encodingConfig blogparams.EncodingConfig,
+	baseAppOptions ...func(*baseapp.BaseApp),
 ) *HeimdallApp {
 	// TODO: Remove cdc in favor of appCodec once all modules are migrated.
 	appCodec := encodingConfig.Marshaler
@@ -141,9 +145,18 @@ func NewHeimdallApp(
 	bApp.GRPCQueryRouter().SetInterfaceRegistry(interfaceRegistry)
 	// bApp.GRPCQueryRouter().RegisterSimulateService(bApp.Simulate, interfaceRegistry)
 
+	//
+	// Keys
+	//
+
 	keys := sdk.NewKVStoreKeys(
-		authtypes.StoreKey, banktypes.StoreKey, stakingtypes.StoreKey,
-		paramstypes.StoreKey, blogtypes.StoreKey,
+		authtypes.StoreKey,
+		banktypes.StoreKey,
+		stakingtypes.StoreKey,
+		// distrtypes.StoreKey,
+		// slashingtypes.StoreKey,
+		// govtypes.StoreKey,
+		paramstypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(blogtypes.MemStoreKey)
@@ -159,31 +172,34 @@ func NewHeimdallApp(
 		memKeys:           memKeys,
 	}
 
-	app.ParamsKeeper = initParamsKeeper(appCodec, legacyAmino, keys[paramstypes.StoreKey], tkeys[paramstypes.TStoreKey])
+	//
+	// Keepers
+	//
 
+	// create params keeper
+	app.ParamsKeeper = initParamsKeeper(appCodec, legacyAmino, keys[paramstypes.StoreKey], tkeys[paramstypes.TStoreKey])
 	// set the BaseApp's parameter store
 	bApp.SetParamStore(app.ParamsKeeper.Subspace(baseapp.Paramspace).WithKeyTable(paramskeeper.ConsensusParamsKeyTable()))
 
-	// add keepers
-	// app.AccountKeeper = authkeeper.NewKeeper(
-	// 	appCodec, keys[authtypes.StoreKey], app.GetSubspace(authtypes.ModuleName), authtypes.ProtoBaseAccount, maccPerms,
-	// )
-
 	// account keeper
-	app.AccountKeeper = *authkeeper.NewKeeper(
-		*app.legacyAmino,
-		keys[authtypes.StoreKey], // target store
-		memKeys[authtypes.MemStoreKey],
+	app.AccountKeeper = authkeeper.NewAccountKeeper(
+		appCodec,
+		app.keys[authtypes.StoreKey],
 		app.GetSubspace(authtypes.ModuleName),
-		authtypes.ProtoBaseAccount, // prototype
+		authtypes.ProtoBaseAccount,
+		MacPerms(),
 	)
 
-	// app.BankKeeper = bankkeeper.NewBaseKeeper(
-	// 	appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.GetSubspace(banktypes.ModuleName), app.BlockedAddrs(),
-	// )
+	app.BankKeeper = bankkeeper.NewBaseKeeper(
+		appCodec,
+		keys[banktypes.StoreKey],
+		app.AccountKeeper,
+		app.GetSubspace(banktypes.ModuleName),
+		app.BlockedAddrs(),
+	)
 
-	app.StakingKeeper = *stakingkeeper.NewKeeper(
-		*app.legacyAmino,
+	app.StakingKeeper = stakingkeeper.NewKeeper(
+		appCodec,
 		keys[stakingtypes.StoreKey], // target store
 		memKeys[stakingtypes.MemStoreKey],
 		app.GetSubspace(stakingtypes.ModuleName),
@@ -196,23 +212,19 @@ func NewHeimdallApp(
 	// 	stakingtypes.NewMultiStakingHooks(app.DistrKeeper.Hooks()),
 	// )
 
-	app.BlogKeeper = *blogkeeper.NewKeeper(app.appCodec, keys[blogtypes.StoreKey], memKeys[blogtypes.MemStoreKey])
-
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
-	// TODO : replace nil with staking keeper
 	app.mm = module.NewManager(
-		// genutil.NewAppModule(
-		// 	app.AccountKeeper, nil, app.BaseApp.DeliverTx,
-		// 	encodingConfig.TxConfig,
-		// ),
-		auth.NewAppModule(appCodec, app.AccountKeeper),
-		// bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
-
+		genutil.NewAppModule(
+			app.AccountKeeper,
+			app.StakingKeeper,
+			app.BaseApp.DeliverTx,
+			encodingConfig.TxConfig,
+		),
+		auth.NewAppModule(appCodec, app.AccountKeeper, nil),
+		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
 		staking.NewAppModule(appCodec, app.StakingKeeper),
-
 		params.NewAppModule(app.ParamsKeeper),
-		blog.NewAppModule(appCodec, app.BlogKeeper),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -230,7 +242,9 @@ func NewHeimdallApp(
 	// so that other modules that want to create or claim capabilities afterwards in InitChain
 	// can do so safely.
 	app.mm.SetOrderInitGenesis(
-		authtypes.ModuleName, banktypes.ModuleName, stakingtypes.ModuleName,
+		authtypes.ModuleName,
+		banktypes.ModuleName,
+		stakingtypes.ModuleName,
 		genutiltypes.ModuleName,
 	)
 
@@ -250,8 +264,9 @@ func NewHeimdallApp(
 
 	// TODO : replace nil with staking.NewAppModule
 	app.sm = module.NewSimulationManager(
-		// auth.NewAppModule(appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts),
-		// bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
+		auth.NewAppModule(appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts),
+		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
+		// staking.NewAppModule(appCodec),
 		nil,
 		params.NewAppModule(app.ParamsKeeper),
 	)
@@ -321,7 +336,39 @@ func (app *HeimdallApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) 
 	if err := tmjson.Unmarshal(req.AppStateBytes, &genesisState); err != nil {
 		panic(err)
 	}
-	return app.mm.InitGenesis(ctx, app.appCodec, genesisState)
+
+	// Init genesis
+	app.mm.InitGenesis(ctx, app.appCodec, genesisState)
+
+	// get staking state
+	stakingState := stakingtypes.GetGenesisStateFromAppState(genesisState)
+
+	// check if validator is current validator
+	// add to val updates else skip
+	var valUpdates []abci.ValidatorUpdate
+	for _, validator := range stakingState.Validators {
+		// TODO use checkpoint state to get current validator set once checkpoint module is ready
+
+		// if validator.IsCurrentValidator(checkpointState.AckCount) {
+		// convert to Validator Update
+
+		updateVal := abci.ValidatorUpdate{
+			Power:  int64(validator.VotingPower),
+			PubKey: common.NewPubKeyFromHex(validator.PubKey).TMProtoCryptoPubKey(),
+		}
+		// Add validator to validator updated to be processed below
+		valUpdates = append(valUpdates, updateVal)
+		// }
+	}
+
+	fmt.Println("valUpdates", valUpdates)
+
+	// TODO make sure old validtors dont go in validator updates ie deactivated validators have to be removed
+	// udpate validators
+	return abci.ResponseInitChain{
+		// validator updates
+		Validators: valUpdates,
+	}
 }
 
 // LoadHeight loads a particular height
@@ -344,10 +391,9 @@ func (app *HeimdallApp) ModuleAccountAddrs() map[string]bool {
 func (app *HeimdallApp) BlockedAddrs() map[string]bool {
 	blockedAddrs := make(map[string]bool)
 
-	// TODO : uncomment below
-	// for acc := range maccPerms {
-	// 	blockedAddrs[authtypes.NewModuleAddress(acc).String()] = !allowedReceivingModAcc[acc]
-	// }
+	for acc := range maccPerms {
+		blockedAddrs[authtypes.NewModuleAddress(acc).String()] = !allowedReceivingModAcc[acc]
+	}
 
 	return blockedAddrs
 }

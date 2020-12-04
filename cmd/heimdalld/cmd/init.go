@@ -6,142 +6,204 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/types/module"
+	authclient "github.com/cosmos/cosmos-sdk/x/auth/client"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	"github.com/cosmos/iavl/common"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	cfg "github.com/tendermint/tendermint/config"
 	"github.com/tendermint/tendermint/libs/cli"
+	tmos "github.com/tendermint/tendermint/libs/os"
 	tmtime "github.com/tendermint/tendermint/types/time"
 
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/helper"
-	stakingcli "github.com/maticnetwork/heimdall/x/staking/client/cli"
-
-	authTypes "github.com/maticnetwork/heimdall/x/auth/types"
+	hmtypes "github.com/maticnetwork/heimdall/types"
+	hmcommon "github.com/maticnetwork/heimdall/types/common"
+	stakingtypes "github.com/maticnetwork/heimdall/x/staking/types"
 	// borTypes "github.com/maticnetwork/heimdall/x/bor/types"
-	stakingTypes "github.com/maticnetwork/heimdall/x/staking/types"
-	topupTypes "github.com/maticnetwork/heimdall/x/topup/types"
-
-	hmTypes "github.com/maticnetwork/heimdall/types"
-	commonTypes "github.com/maticnetwork/heimdall/types/common"
 )
 
 // InitCmd initialises files required to start heimdall
-func initCmd(ctx *server.Context, cdc *codec.LegacyAmino) *cobra.Command {
+func initCmd(ctx *server.Context, amino *codec.LegacyAmino, mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "init",
-		Short: "Initialize genesis config, priv-validator file, and p2p-node file",
-		Args:  cobra.NoArgs,
-		RunE: func(_ *cobra.Command, _ []string) error {
-			config := ctx.Config
+		Use:   "init [moniker]",
+		Short: "Initialize private validator, p2p, genesis, and application configuration files",
+		Long:  `Initialize validators's and node's configuration files.`,
+		Args:  cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			serverCtx := server.GetServerContextFromCmd(cmd)
+			config := serverCtx.Config
+			cdc := clientCtx.JSONMarshaler
+
+			config.SetRoot(clientCtx.HomeDir)
 			// config.SetRoot(viper.GetString(cli.HomeFlag))
 			// TODO : change default node home to flag
-			config.SetRoot(app.DefaultNodeHome)
+			// config.SetRoot(app.DefaultNodeHome)
 			// create chain id
 			chainID := viper.GetString(flags.FlagChainID)
 			if chainID == "" {
 				chainID = fmt.Sprintf("heimdall-%v", common.RandStr(6))
 			}
 
-			validatorID := viper.GetInt64(stakingcli.FlagValidatorID)
 			nodeID, valPubKey, _, err := InitializeNodeValidatorFiles(config)
 			if err != nil {
 				return err
 			}
 
-			WriteDefaultHeimdallConfig(filepath.Join(config.RootDir, "config/heimdall-config.toml"), helper.GetDefaultHeimdallConfig())
+			config.Moniker = args[0]
+
+			genFile := config.GenesisFile()
+			overwrite, _ := cmd.Flags().GetBool(genutilcli.FlagOverwrite)
+
+			if !overwrite && tmos.FileExists(genFile) {
+				return fmt.Errorf("genesis.json file already exists: %v", genFile)
+			}
+
+			// write default heimdall config
+			WriteDefaultHeimdallConfig(
+				filepath.Join(config.RootDir, "config/heimdall-config.toml"),
+				helper.GetDefaultHeimdallConfig(),
+			)
 
 			// get pubkey
-			// newPubkey := CryptoKeyToPubkey(valPubKey)
-			newPubkey := commonTypes.NewPubKey(valPubKey.Bytes())
+			newPubkey := hmcommon.NewPubKey(valPubKey.Bytes())
 
 			// create validator account
-			validator := hmTypes.NewValidator(hmTypes.NewValidatorID(uint64(validatorID)),
-				0, 0, 1, 1, newPubkey,
-				commonTypes.BytesToHeimdallAddress(valPubKey.Address().Bytes()))
-
-			fmt.Println("validator", validator)
+			validator := hmtypes.NewValidator(
+				hmtypes.NewValidatorID(uint64(1)),
+				0,
+				0,
+				1,
+				1,
+				newPubkey,
+				valPubKey.Address().Bytes(),
+			)
 
 			// create dividend account for validator
-			dividendAccount := hmTypes.NewDividendAccount(validator.Signer, ZeroIntString)
+			// dividendAccount := hmtypes.NewDividendAccount(validator.Signer, ZeroIntString)
 
-			vals := []*hmTypes.Validator{validator}
-			validatorSet := hmTypes.NewValidatorSet(vals)
+			vals := []*hmtypes.Validator{validator}
+			validatorSet := hmtypes.NewValidatorSet(vals)
 
-			dividendAccounts := []hmTypes.DividendAccount{dividendAccount}
+			// dividendAccounts := []hmtypes.DividendAccount{dividendAccount}
 
 			// create validator signing info
-			valSigningInfo := hmTypes.NewValidatorSigningInfo(validator.ID, 0, 0, 0)
-			valSigningInfoMap := make(map[string]hmTypes.ValidatorSigningInfo)
+			valSigningInfo := hmtypes.NewValidatorSigningInfo(validator.ID, 0, 0, 0)
+			valSigningInfoMap := make(map[string]hmtypes.ValidatorSigningInfo)
 			valSigningInfoMap[valSigningInfo.ValID.String()] = valSigningInfo
 
 			// create genesis state
-			appStateBytes := app.NewDefaultGenesisState()
+			// appStateBytes := app.NewDefaultGenesisState()
+			appState := mbm.DefaultGenesis(cdc)
+			// authState.Accounts = accounts
+			// appState[ModuleName] = types.ModuleCdc.MustMarshalJSON(&authState)
 
-			genesisAccount := getGenesisAccount(validator.Signer.Bytes())
+			signer, _ := sdk.AccAddressFromHex(validator.Signer)
+			genesisAccount := getGenesisAccount(signer.Bytes())
 
+			//
 			// auth state change
-			appStateBytes, err = authTypes.SetGenesisStateToAppState(
-				appStateBytes,
-				[]*authTypes.GenesisAccount{&genesisAccount},
-			)
+			//
+			authGenState := authtypes.GetGenesisStateFromAppState(authclient.Codec, appState)
+			accs, err := authtypes.UnpackAccounts(authGenState.Accounts)
+			accs = append(accs, genesisAccount)
+			genAccs, err := authtypes.PackAccounts(accs)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to convert accounts into any's: %w", err)
 			}
+			authGenState.Accounts = genAccs
+			appState[authtypes.ModuleName] = authclient.Codec.MustMarshalJSON(&authGenState)
 
+			//
 			// staking state change
-			appStateBytes, err = stakingTypes.SetGenesisStateToAppState(appStateBytes, vals, validatorSet)
+			//
+			_, err = stakingtypes.SetGenesisStateToAppState(appState, vals, validatorSet)
 			if err != nil {
 				return err
 			}
 
-			// slashing state change
+			// // slashing state change
 			// appStateBytes, err = slashingTypes.SetGenesisStateToAppState(appStateBytes, valSigningInfoMap)
 			// if err != nil {
 			// 	return err
 			// }
 
-			// bor state change
+			// // bor state change
 			// appStateBytes, err = borTypes.SetGenesisStateToAppState(appStateBytes, *validatorSet)
 			// if err != nil {
 			// 	return err
 			// }
 
-			// topup state change
-			appStateBytes, err = topupTypes.SetGenesisStateToAppState(appStateBytes, dividendAccounts)
-			if err != nil {
-				return err
-			}
+			// // topup state change
+			// appStateBytes, err = topupTypes.SetGenesisStateToAppState(appStateBytes, dividendAccounts)
+			// if err != nil {
+			// 	return err
+			// }
 
 			// app state json
-			appStateJSON, err := json.Marshal(appStateBytes)
+			appStateJSON, err := json.MarshalIndent(appState, "", " ")
 			if err != nil {
-				return err
+				return errors.Wrap(err, "Failed to marshall default genesis state")
 			}
 
-			toPrint := struct {
-				ChainID string `json:"chain_id"`
-				NodeID  string `json:"node_id"`
-			}{
-				chainID,
-				nodeID,
-			}
+			cfg.WriteConfigFile(filepath.Join(config.RootDir, "config", "config.toml"), config)
+			writeGenesisFile(tmtime.Now(), config.GenesisFile(), chainID, appStateJSON)
 
-			out, err := codec.MarshalJSONIndent(cdc, toPrint)
-			if err != nil {
-				return err
-			}
-
-			fmt.Fprintf(os.Stderr, "%s\n", string(out))
-			return writeGenesisFile(tmtime.Now(), config.GenesisFile(), chainID, appStateJSON)
+			// print info
+			return displayInfo(newPrintInfo(config.Moniker, chainID, nodeID, "", appStateJSON))
 		},
 	}
 
 	cmd.Flags().String(cli.HomeFlag, app.DefaultNodeHome, "node's home directory")
 	cmd.Flags().String(helper.FlagClientHome, helper.DefaultCLIHome, "client's home directory")
 	cmd.Flags().String(flags.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
-	cmd.Flags().Int(stakingcli.FlagValidatorID, 1, "--id=<validator ID here>, if left blank will be assigned 1")
 	return cmd
+}
+
+type printInfo struct {
+	Moniker    string          `json:"moniker" yaml:"moniker"`
+	ChainID    string          `json:"chain_id" yaml:"chain_id"`
+	NodeID     string          `json:"node_id" yaml:"node_id"`
+	GenTxsDir  string          `json:"gentxs_dir" yaml:"gentxs_dir"`
+	AppMessage json.RawMessage `json:"app_message" yaml:"app_message"`
+}
+
+func newPrintInfo(moniker, chainID, nodeID, genTxsDir string, appMessage json.RawMessage) printInfo {
+	return printInfo{
+		Moniker:    moniker,
+		ChainID:    chainID,
+		NodeID:     nodeID,
+		GenTxsDir:  genTxsDir,
+		AppMessage: appMessage,
+	}
+}
+
+func displayInfo(info printInfo) error {
+	out, err := json.MarshalIndent(info, "", " ")
+	if err != nil {
+		return err
+	}
+
+	_, err = fmt.Fprintf(os.Stderr, "%s\n", string(sdk.MustSortJSON(out)))
+	return err
+}
+
+func getGenesisAccount(address []byte) authtypes.GenesisAccount {
+	acc := authtypes.NewBaseAccountWithAddress(address)
+	// genesisBalance, _ := big.NewInt(0).SetString("1000000000000000000000", 10)
+	// if err := acc.SetCoins(sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: sdk.NewIntFromBigInt(genesisBalance)}}); err != nil {
+	// 	logger.Error("getGenesisAccount | SetCoins", "Error", err)
+	// }
+	// result, _ := authtypes.NewGenesisAccountI(&acc)
+	return acc
 }

@@ -5,14 +5,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/tendermint/tendermint/libs/log"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/maticnetwork/bor/common"
-
-	// "github.com/maticnetwork/heimdall/helper"
+	"github.com/tendermint/tendermint/libs/log"
 
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmCommon "github.com/maticnetwork/heimdall/types/common"
@@ -39,7 +36,7 @@ type ModuleCommunicator interface {
 
 type (
 	Keeper struct {
-		cdc                codec.LegacyAmino
+		cdc                codec.BinaryMarshaler
 		storeKey           sdk.StoreKey
 		memKey             sdk.StoreKey
 		paramSubspace      paramtypes.Subspace
@@ -49,16 +46,17 @@ type (
 	}
 )
 
+// NewKeeper create new keeper and returns object
 func NewKeeper(
-	cdc codec.LegacyAmino,
+	cdc codec.BinaryMarshaler,
 	storeKey, memKey sdk.StoreKey,
 	paramstore paramtypes.Subspace,
 	moduleCommunicator ModuleCommunicator,
-) *Keeper {
+) Keeper {
 	if !paramstore.HasKeyTable() {
 		paramstore = paramstore.WithKeyTable(types.ParamKeyTable())
 	}
-	return &Keeper{
+	return Keeper{
 		cdc:                cdc,
 		storeKey:           storeKey,
 		memKey:             memKey,
@@ -67,6 +65,7 @@ func NewKeeper(
 	}
 }
 
+// Logger creates logger
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
@@ -88,24 +87,27 @@ func GetStakingSequenceKey(sequence string) []byte {
 
 // AddValidator adds validator indexed with address
 func (k *Keeper) AddValidator(ctx sdk.Context, validator hmTypes.Validator) error {
-	// TODO uncomment
-	//if ok:=validator.ValidateBasic(); !ok{
-	//	// return error
-	//}
+	if err := validator.ValidateBasic(); err != nil {
+		return err
+	}
 
 	store := ctx.KVStore(k.storeKey)
 
-	bz, err := hmTypes.MarshallValidator(&k.cdc, validator)
+	bz, err := hmTypes.MarshallValidator(k.cdc, &validator)
 	if err != nil {
 		return err
 	}
 
 	// store validator with address prefixed with validator key as index
-	store.Set(GetValidatorKey(validator.Signer.Bytes()), bz)
-	k.Logger(ctx).Debug("Validator stored", "key", hex.EncodeToString(GetValidatorKey(validator.Signer.Bytes())), "validator", validator.String())
+	store.Set(GetValidatorKey(validator.GetSigner().Bytes()), bz)
+	k.Logger(ctx).Debug("Validator stored", "key", hex.EncodeToString(GetValidatorKey(validator.GetSigner().Bytes())), "validator", validator.String())
 
 	// add validator to validator ID => SignerAddress map
-	k.SetValidatorIDToSignerAddr(ctx, validator.ID, validator.Signer)
+	addr, nil := sdk.AccAddressFromHex(validator.Signer)
+	if err != nil {
+		return err
+	}
+	k.SetValidatorIDToSignerAddr(ctx, validator.ID, addr)
 
 	return nil
 }
@@ -136,7 +138,7 @@ func (k *Keeper) GetValidatorInfo(ctx sdk.Context, address []byte) (validator hm
 	}
 
 	// unmarshall validator and return
-	validator, err = hmTypes.UnmarshallValidator(&k.cdc, store.Get(key))
+	validator, err = hmTypes.UnmarshallValidator(k.cdc, store.Get(key))
 	if err != nil {
 		return validator, err
 	}
@@ -230,7 +232,7 @@ func (k *Keeper) IterateValidatorsAndApplyFn(ctx sdk.Context, f func(validator h
 	// loop through validators to get valid validators
 	for ; iterator.Valid(); iterator.Next() {
 		// unmarshall validator
-		validator, _ := hmTypes.UnmarshallValidator(&k.cdc, iterator.Value())
+		validator, _ := hmTypes.UnmarshallValidator(k.cdc, iterator.Value())
 		// call function and return if required
 		if err := f(validator); err != nil {
 			return
@@ -257,8 +259,8 @@ func (k *Keeper) UpdateSigner(ctx sdk.Context, newSigner hmCommon.HeimdallAddres
 	}
 
 	//update signer in prev Validator
-	validator.Signer = newSigner
-	validator.PubKey = newPubkey
+	validator.Signer = newSigner.String()
+	validator.PubKey = newPubkey.String()
 	validator.VotingPower = validatorPower
 
 	// add updated validator to store with new key
@@ -291,7 +293,7 @@ func (k *Keeper) GetValidatorSet(ctx sdk.Context) (validatorSet *hmTypes.Validat
 	bz := store.Get(CurrentValidatorSetKey)
 	// unmarhsall
 
-	if err := k.cdc.UnmarshalBinaryBare(bz, &validatorSet); err != nil {
+	if err := k.cdc.UnmarshalBinaryBare(bz, validatorSet); err != nil {
 		k.Logger(ctx).Error("GetValidatorSet | UnmarshalBinaryBare", "error", err)
 	}
 
@@ -300,7 +302,7 @@ func (k *Keeper) GetValidatorSet(ctx sdk.Context) (validatorSet *hmTypes.Validat
 }
 
 // IncrementAccum increments accum for validator set by n times and replace validator set in store
-func (k *Keeper) IncrementAccum(ctx sdk.Context, times int) {
+func (k *Keeper) IncrementAccum(ctx sdk.Context, times int32) {
 	// get validator set
 	validatorSet := k.GetValidatorSet(ctx)
 
@@ -336,7 +338,7 @@ func (k *Keeper) GetCurrentProposer(ctx sdk.Context) *hmTypes.Validator {
 }
 
 // SetValidatorIDToSignerAddr sets mapping for validator ID to signer address
-func (k *Keeper) SetValidatorIDToSignerAddr(ctx sdk.Context, valID hmTypes.ValidatorID, signerAddr hmCommon.HeimdallAddress) {
+func (k *Keeper) SetValidatorIDToSignerAddr(ctx sdk.Context, valID hmTypes.ValidatorID, signerAddr sdk.AccAddress) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(GetValidatorMapKey(valID.Bytes()), signerAddr.Bytes())
 }
@@ -467,9 +469,8 @@ func (k *Keeper) Slash(ctx sdk.Context, valSlashingInfo hmTypes.ValidatorSlashin
 	return nil
 }
 
-// unjail a validator
+// Unjail a validator
 func (k *Keeper) Unjail(ctx sdk.Context, valID hmTypes.ValidatorID) {
-
 	// get validator from state and make jailed = false
 	validator, found := k.GetValidatorFromValID(ctx, valID)
 	if !found {
@@ -487,5 +488,4 @@ func (k *Keeper) Unjail(ctx sdk.Context, valID hmTypes.ValidatorID) {
 	// add updated validator to store with new key
 	k.AddValidator(ctx, validator)
 	return
-
 }

@@ -17,19 +17,6 @@ func (gs GenesisState) Validate() error {
 	return nil
 }
 
-// HeimdallValidator converts genesis validator validator to Heimdall validator
-func (v *GenesisValidator) HeimdallValidator() hmTypes.Validator {
-	return hmTypes.Validator{
-		ID:          v.ID,
-		PubKey:      v.PubKey,
-		VotingPower: int64(v.Power),
-		StartEpoch:  v.StartEpoch,
-		EndEpoch:    v.EndEpoch,
-		Nonce:       v.Nonce,
-		Signer:      v.Signer,
-	}
-}
-
 // NewGenesisState creates a new genesis state.
 func NewGenesisState(
 	validators []*hmTypes.Validator,
@@ -52,8 +39,8 @@ func DefaultGenesis() *GenesisState {
 // error for any failed validation criteria.
 func ValidateGenesis(data GenesisState) error {
 	for _, validator := range data.Validators {
-		if !validator.ValidateBasic() {
-			return errors.New("Invalid validator")
+		if err := validator.ValidateBasic(); err != nil {
+			return err
 		}
 	}
 	for _, sq := range data.StakingSequences {
