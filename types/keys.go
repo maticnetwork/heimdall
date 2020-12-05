@@ -12,4 +12,7 @@ const (
 var (
 	// CoinDecimals is the amount of staking tokens required for 1 unit
 	CoinDecimals = new(big.Int).Exp(big.NewInt(10), big.NewInt(18), nil)
+
+	// FeeToken fee token symbol
+	FeeToken = "matic"
 )
