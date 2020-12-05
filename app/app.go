@@ -100,9 +100,8 @@ type HeimdallApp struct {
 	invCheckPeriod uint
 
 	// keys to access the substores
-	keys    map[string]*sdk.KVStoreKey
-	tkeys   map[string]*sdk.TransientStoreKey
-	memKeys map[string]*sdk.MemoryStoreKey
+	keys  map[string]*sdk.KVStoreKey
+	tkeys map[string]*sdk.TransientStoreKey
 
 	// keepers
 	AccountKeeper authkeeper.AccountKeeper
@@ -168,7 +167,6 @@ func NewHeimdallApp(
 		paramstypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
-	memKeys := sdk.NewMemoryStoreKeys()
 
 	app := &HeimdallApp{
 		BaseApp:           bApp,
@@ -178,7 +176,6 @@ func NewHeimdallApp(
 		invCheckPeriod:    invCheckPeriod,
 		keys:              keys,
 		tkeys:             tkeys,
-		memKeys:           memKeys,
 	}
 
 	//
@@ -218,7 +215,6 @@ func NewHeimdallApp(
 	app.StakingKeeper = stakingkeeper.NewKeeper(
 		appCodec,
 		keys[stakingtypes.StoreKey], // target store
-		memKeys[stakingtypes.MemStoreKey],
 		app.GetSubspace(stakingtypes.ModuleName),
 		app.ChainKeeper,
 		nil,
@@ -302,7 +298,6 @@ func NewHeimdallApp(
 	// initialize stores
 	app.MountKVStores(keys)
 	app.MountTransientStores(tkeys)
-	app.MountMemoryStores(memKeys)
 
 	// initialize BaseApp
 	app.SetInitChainer(app.InitChainer)
@@ -456,13 +451,6 @@ func (app *HeimdallApp) GetKey(storeKey string) *sdk.KVStoreKey {
 // NOTE: This is solely to be used for testing purposes.
 func (app *HeimdallApp) GetTKey(storeKey string) *sdk.TransientStoreKey {
 	return app.tkeys[storeKey]
-}
-
-// GetMemKey returns the MemStoreKey for the provided mem key.
-//
-// NOTE: This is solely used for testing purposes.
-func (app *HeimdallApp) GetMemKey(storeKey string) *sdk.MemoryStoreKey {
-	return app.memKeys[storeKey]
 }
 
 // GetSubspace returns a param subspace for a given module name.
