@@ -18,6 +18,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authrest "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
@@ -279,12 +280,14 @@ func NewHeimdallApp(
 	// initialize BaseApp
 	app.SetInitChainer(app.InitChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
-	// app.SetAnteHandler(
-	// 	ante.NewAnteHandler(
-	// 		app.AccountKeeper, app.BankKeeper, ante.DefaultSigVerificationGasConsumer,
-	// 		encodingConfig.TxConfig.SignModeHandler(),
-	// 	),
-	// )
+	app.SetAnteHandler(
+		ante.NewAnteHandler(
+			app.AccountKeeper,
+			app.BankKeeper,
+			ante.DefaultSigVerificationGasConsumer,
+			encodingConfig.TxConfig.SignModeHandler(),
+		),
+	)
 	app.SetEndBlocker(app.EndBlocker)
 
 	if loadLatest {

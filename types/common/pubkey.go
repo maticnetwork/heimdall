@@ -5,6 +5,8 @@ import (
 
 	"gopkg.in/yaml.v2"
 
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/ethsecp256k1"
 	tmprotocrypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
@@ -70,6 +72,11 @@ func (a PubKey) TMProtoCryptoPubKey() tmprotocrypto.PublicKey {
 	}
 }
 
+// CosmosCryptoPubKey returns crypto pub key for cosmos
+func (a *PubKey) CosmosCryptoPubKey() cryptotypes.PubKey {
+	return CosmosCryptoPubKey(a.Bytes())
+}
+
 // TODO: check if any interface is implementing
 // ABCIPubKey returns abci pubkey for cosmos
 // func (a PubKey) ABCIPubKey() abci.PubKey {
@@ -120,4 +127,15 @@ func (a *PubKey) UnmarshalYAML(data []byte) error {
 
 	*a = common.FromHex(s)
 	return nil
+}
+
+//
+// Utility methods
+//
+
+// CosmosCryptoPubKey returns crypto pub key for cosmos
+func CosmosCryptoPubKey(pk []byte) cryptotypes.PubKey {
+	return &secp256k1.PubKey{
+		Key: pk,
+	}
 }
