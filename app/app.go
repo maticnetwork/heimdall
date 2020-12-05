@@ -48,7 +48,6 @@ import (
 
 	blogparams "github.com/maticnetwork/heimdall/app/params"
 	"github.com/maticnetwork/heimdall/types/common"
-	blogtypes "github.com/maticnetwork/heimdall/x/blog/types"
 	"github.com/maticnetwork/heimdall/x/staking"
 	stakingkeeper "github.com/maticnetwork/heimdall/x/staking/keeper"
 	stakingtypes "github.com/maticnetwork/heimdall/x/staking/types"
@@ -159,7 +158,7 @@ func NewHeimdallApp(
 		paramstypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
-	memKeys := sdk.NewMemoryStoreKeys(blogtypes.MemStoreKey)
+	memKeys := sdk.NewMemoryStoreKeys()
 
 	app := &HeimdallApp{
 		BaseApp:           bApp,
