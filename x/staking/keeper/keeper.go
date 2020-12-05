@@ -49,7 +49,7 @@ type (
 // NewKeeper create new keeper and returns object
 func NewKeeper(
 	cdc codec.BinaryMarshaler,
-	storeKey, memKey sdk.StoreKey,
+	storeKey sdk.StoreKey,
 	paramstore paramtypes.Subspace,
 	moduleCommunicator ModuleCommunicator,
 ) Keeper {
@@ -59,7 +59,6 @@ func NewKeeper(
 	return Keeper{
 		cdc:                cdc,
 		storeKey:           storeKey,
-		memKey:             memKey,
 		paramSubspace:      paramstore,
 		moduleCommunicator: moduleCommunicator,
 	}
