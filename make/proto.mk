@@ -28,4 +28,4 @@ proto-check-breaking:
 
 .PHONY: proto-format
 proto-format:
-	$(DOCKER_CLANG) find ./ ! -path "./vendor/*" -name *.proto -exec clang-format -i {} \;
+	$(DOCKER_CLANG) find ./ ! -path "./vendor/*" -name *.proto -exec clang-format --style "{ IndentWidth: 4, BasedOnStyle: google, AlignConsecutiveAssignments: true, AlignConsecutiveDeclarations: true }" -i {} \;
