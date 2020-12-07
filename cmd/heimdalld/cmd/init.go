@@ -9,6 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/errors"
@@ -109,7 +110,7 @@ func initCmd(ctx *server.Context, amino *codec.LegacyAmino, mbm module.BasicMana
 			// appState[ModuleName] = types.ModuleCdc.MustMarshalJSON(&authState)
 
 			signer, _ := sdk.AccAddressFromHex(validator.Signer)
-			genesisAccount := getGenesisAccount(signer.Bytes())
+			genesisAccount := getGenesisAccount(signer.Bytes(), newPubkey)
 
 			//
 			// auth state change
@@ -199,12 +200,13 @@ func displayInfo(info printInfo) error {
 	return err
 }
 
-func getGenesisAccount(address []byte) authtypes.GenesisAccount {
+func getGenesisAccount(address []byte, pk []byte) authtypes.GenesisAccount {
 	acc := authtypes.NewBaseAccountWithAddress(address)
-	// genesisBalance, _ := big.NewInt(0).SetString("1000000000000000000000", 10)
-	// if err := acc.SetCoins(sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: sdk.NewIntFromBigInt(genesisBalance)}}); err != nil {
-	// 	logger.Error("getGenesisAccount | SetCoins", "Error", err)
-	// }
-	// result, _ := authtypes.NewGenesisAccountI(&acc)
+	pkObject := hmcommon.CosmosCryptoPubKey(pk)
+	obj, err := codectypes.NewAnyWithValue(pkObject)
+	if err != nil {
+		panic(err)
+	}
+	acc.PubKey = obj
 	return acc
 }
