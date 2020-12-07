@@ -6,17 +6,16 @@ import "gogoproto/gogo.proto";
 
 option go_package = "github.com/maticnetwork/heimdall/types";
 
-option (gogoproto.sizer_all)        = false;
-option (gogoproto.marshaler_all)        = false;
-option (gogoproto.unmarshaler_all)        = false;
+option (gogoproto.sizer_all)       = false;
+option (gogoproto.marshaler_all)   = false;
+option (gogoproto.unmarshaler_all) = false;
 
 message DividendAccount {
-  option (gogoproto.goproto_getters)  = false;
-  option (gogoproto.goproto_stringer)        = false;
+    option (gogoproto.goproto_getters)  = false;
+    option (gogoproto.goproto_stringer) = false;
 
-  bytes                       user = 1 [
-    (gogoproto.casttype)   = "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"
-  ];
-  string                      fee_amount = 2;
+    bytes user = 1
+        [(gogoproto.casttype) =
+             "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"];
+    string fee_amount = 2;
 }
-
