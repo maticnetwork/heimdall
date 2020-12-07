@@ -143,7 +143,7 @@ func (k Keeper) IterateTxAndApplyFn(ctx sdk.Context, height uint64, f func(tmtyp
 }
 
 // IterateTxsAndApplyFn interate all txs and apply the given function.
-func (k Keeper) IterateTxsAndApplyFn(ctx sdk.Context, f func(int64, tmtypes.Tx) error) {
+func (k Keeper) IterateTxsAndApplyFn(ctx sdk.Context, f func(uint64, tmtypes.Tx) error) {
 	store := ctx.KVStore(k.storeKey)
 
 	// get sequence iterator
@@ -161,7 +161,7 @@ func (k Keeper) IterateTxsAndApplyFn(ctx sdk.Context, f func(int64, tmtypes.Tx) 
 		binary.Read(buf, binary.BigEndian, &height)
 
 		// call function and return if required
-		if err := f(int64(height), iterator.Value()); err != nil {
+		if err := f(height, iterator.Value()); err != nil {
 			return
 		}
 	}
@@ -170,7 +170,7 @@ func (k Keeper) IterateTxsAndApplyFn(ctx sdk.Context, f func(int64, tmtypes.Tx) 
 }
 
 // IterateValidatorsAndApplyFn interate all validators and apply the given function.
-func (k Keeper) IterateValidatorsAndApplyFn(ctx sdk.Context, f func(int64, []*abci.Validator) error) {
+func (k Keeper) IterateValidatorsAndApplyFn(ctx sdk.Context, f func(uint64, []*abci.Validator) error) {
 	store := ctx.KVStore(k.storeKey)
 
 	// get sequence iterator
@@ -197,7 +197,7 @@ func (k Keeper) IterateValidatorsAndApplyFn(ctx sdk.Context, f func(int64, []*ab
 		binary.Read(buf, binary.BigEndian, &height)
 
 		// call function and return if required
-		if err := f(int64(height), validators); err != nil {
+		if err := f(height, validators); err != nil {
 			return
 		}
 	}
