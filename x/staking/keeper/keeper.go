@@ -13,6 +13,7 @@ import (
 
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmCommon "github.com/maticnetwork/heimdall/types/common"
+	chainKeeper "github.com/maticnetwork/heimdall/x/chainmanager/keeper"
 	"github.com/maticnetwork/heimdall/x/staking/types"
 )
 
@@ -40,9 +41,8 @@ type (
 		storeKey           sdk.StoreKey
 		memKey             sdk.StoreKey
 		paramSubspace      paramtypes.Subspace
+		chainKeeper        chainKeeper.Keeper
 		moduleCommunicator ModuleCommunicator
-		//TODO: add chainmanager keeper
-		// ck chainmanager.Keeper
 	}
 )
 
@@ -51,6 +51,7 @@ func NewKeeper(
 	cdc codec.BinaryMarshaler,
 	storeKey, memKey sdk.StoreKey,
 	paramstore paramtypes.Subspace,
+	chainKeeper chainKeeper.Keeper,
 	moduleCommunicator ModuleCommunicator,
 ) Keeper {
 	if !paramstore.HasKeyTable() {
@@ -61,6 +62,7 @@ func NewKeeper(
 		storeKey:           storeKey,
 		memKey:             memKey,
 		paramSubspace:      paramstore,
+		chainKeeper:        chainKeeper,
 		moduleCommunicator: moduleCommunicator,
 	}
 }

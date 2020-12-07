@@ -1,19 +1,22 @@
 package common
 
-// import (
-// 	"fmt"
-// 	"strconv"
+import (
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+)
 
-// 	sdk "github.com/cosmos/cosmos-sdk/types"
-// 	abci "github.com/tendermint/tendermint/abci/types"
+var ModuleName = "common_errors"
 
-// 	"github.com/maticnetwork/heimdall/types"
-// )
-
-// type CodeType = sdk.CodeType
-
-// const (
-// 	DefaultCodespace sdk.CodespaceType = "1"
+var (
+	ErrEmptyValidatorAddr      = sdkerrors.Register(ModuleName, 2, "empty validator address")
+	ErrInvalidMsg              = sdkerrors.Register(ModuleName, 1400, "Invalid Message")
+	ErrOldTx                   = sdkerrors.Register(ModuleName, 1401, "Old txhash not allowed")
+	ErrBadProposerDetails      = sdkerrors.Register(ModuleName, 1500, "Proper is not valid")
+	ErrWaitForConfirmation     = sdkerrors.Register(ModuleName, 2510, "Please wait for confirmation time before sending transaction")
+	ErrValSignerPubKeyMismatch = sdkerrors.Register(ModuleName, 2511, "Signer Pubkey mismatch between event and msg")
+	ErrValSignerMismatch       = sdkerrors.Register(ModuleName, 2502, "Signer Address doesnt match pubkey address")
+	ErrValidatorAlreadyJoined  = sdkerrors.Register(ModuleName, 2507, "Validator already joined")
+	ErrValidatorSave           = sdkerrors.Register(ModuleName, 2506, "Cannot save validator")
+)
 
 // 	CodeInvalidMsg CodeType = 1400
 // 	CodeOldTx      CodeType = 1401
@@ -75,175 +78,179 @@ package common
 
 // // -------- Invalid msg
 
-// func ErrInvalidMsg(codespace sdk.CodespaceType, format string, args ...interface{}) sdk.Error {
-// 	return sdk.NewError(codespace, CodeInvalidMsg, format, args...)
+// func ErrInvalidMsg(codespace CodespaceType, format string, args ...interface{}) sdkError {
+// 	return NewError(codespace, CodeInvalidMsg, format, args...)
 // }
 
 // // -------- Checkpoint Errors
 
-// func ErrBadProposerDetails(codespace sdk.CodespaceType, proposer types.HeimdallAddress) sdk.Error {
+// func ErrBadProposerDetails(codespace CodespaceType, proposer common.HeimdallAddress) sdkError {
 // 	return newError(codespace, CodeInvalidProposerInput, fmt.Sprintf("Proposer is not valid, current proposer is %v", proposer.String()))
 // }
 
-// func ErrBadBlockDetails(codespace sdk.CodespaceType) sdk.Error {
+// func ErrBadBlockDetails(codespace CodespaceType) sdkError {
 // 	return newError(codespace, CodeInvalidBlockInput, "Wrong roothash for given start and end block numbers")
 // }
 
-// func ErrSetCheckpointBuffer(codespace sdk.CodespaceType) sdk.Error {
+// func ErrSetCheckpointBuffer(codespace CodespaceType) sdkError {
 // 	return newError(codespace, CodeErrSetCheckpointBuffer, "Account Root Hash not added to Checkpoint Buffer")
 // }
 
-// func ErrAddCheckpoint(codespace sdk.CodespaceType) sdk.Error {
+// func ErrAddCheckpoint(codespace CodespaceType) sdkError {
 // 	return newError(codespace, CodeErrAddCheckpoint, "Err in adding checkpoint to header blocks")
 // }
 
-// func ErrBadAccountRootHash(codespace sdk.CodespaceType) sdk.Error {
+// func ErrBadAccountRootHash(codespace CodespaceType) sdkError {
 // 	return newError(codespace, CodeErrAccountRootHash, "Wrong roothash for given dividend accounts")
 // }
 
-// func ErrBadAck(codespace sdk.CodespaceType) sdk.Error {
+// func ErrBadAck(codespace CodespaceType) sdkError {
 // 	return newError(codespace, CodeInvalidACK, "Ack Not Valid")
 // }
 
-// func ErrOldCheckpoint(codespace sdk.CodespaceType) sdk.Error {
+// func ErrOldCheckpoint(codespace CodespaceType) sdkError {
 // 	return newError(codespace, CodeOldCheckpoint, "Checkpoint already received for given start and end block")
 // }
 
-// func ErrDisCountinuousCheckpoint(codespace sdk.CodespaceType) sdk.Error {
+// func ErrDisCountinuousCheckpoint(codespace CodespaceType) sdkError {
 // 	return newError(codespace, CodeDisCountinuousCheckpoint, "Checkpoint not in countinuity")
 // }
 
-// func ErrNoACK(codespace sdk.CodespaceType, expiresAt uint64) sdk.Error {
+// func ErrNoACK(codespace CodespaceType, expiresAt uint64) sdkError {
 // 	return newError(codespace, CodeNoACK, fmt.Sprintf("Checkpoint Already Exists In Buffer, ACK expected, expires at %s", strconv.FormatUint(expiresAt, 10)))
 // }
 
-// func ErrNoConn(codespace sdk.CodespaceType) sdk.Error {
+// func ErrNoConn(codespace CodespaceType) sdkError {
 // 	return newError(codespace, CodeNoConn, "Unable to connect to chain")
 // }
 
-// func ErrNoCheckpointFound(codespace sdk.CodespaceType) sdk.Error {
+// func ErrWaitForConfirmation(codespace CodespaceType, txConfirmationTime time.Duration) sdkError {
+// 	return newError(codespace, CodeWaitFrConfirmation, fmt.Sprintf("Please wait for %v confirmation time before sending transaction", txConfirmationTime))
+// }
+
+// func ErrNoCheckpointFound(codespace CodespaceType) sdkError {
 // 	return newError(codespace, CodeNoCheckpoint, "Checkpoint Not Found")
 // }
 
-// func ErrNoCheckpointBufferFound(codespace sdk.CodespaceType) sdk.Error {
+// func ErrNoCheckpointBufferFound(codespace CodespaceType) sdkError {
 // 	return newError(codespace, CodeNoCheckpointBuffer, "Checkpoint buffer not found")
 // }
 
-// func ErrInvalidNoACK(codespace sdk.CodespaceType) sdk.Error {
+// func ErrInvalidNoACK(codespace CodespaceType) sdkError {
 // 	return newError(codespace, CodeInvalidNoACK, "Invalid No ACK -- Waiting for last checkpoint ACK")
 // }
 
-// func ErrTooManyNoACK(codespace sdk.CodespaceType) sdk.Error {
+// func ErrTooManyNoACK(codespace CodespaceType) sdkError {
 // 	return newError(codespace, CodeTooManyNoAck, "Too many no-acks")
 // }
 
-// func ErrBadTimeStamp(codespace sdk.CodespaceType) sdk.Error {
+// func ErrBadTimeStamp(codespace CodespaceType) sdkError {
 // 	return newError(codespace, CodeBadTimeStamp, "Invalid time stamp. It must be in near past.")
 // }
 
 // // ----------- Staking Errors
 
-// func ErrOldValidator(codespace sdk.CodespaceType) sdk.Error {
+// func ErrOldValidator(codespace CodespaceType) sdkError {
 // 	return newError(codespace, CodeOldValidator, "Start Epoch behind Current Epoch")
 // }
 
-// func ErrNoValidator(codespace sdk.CodespaceType) sdk.Error {
+// func ErrNoValidator(codespace CodespaceType) sdkError {
 // 	return newError(codespace, CodeNoValidator, "Validator information not found")
 // }
 
-// func ErrNonce(codespace sdk.CodespaceType) sdk.Error {
+// func ErrNonce(codespace CodespaceType) sdkError {
 // 	return newError(codespace, CodeNonce, "Incorrect validator nonce")
 // }
 
-// func ErrValSignerPubKeyMismatch(codespace sdk.CodespaceType) sdk.Error {
+// func ErrValSignerPubKeyMismatch(codespace CodespaceType) sdkError {
 // 	return newError(codespace, CodeValPubkeyMismatch, "Signer Pubkey mismatch between event and msg")
 // }
 
-// func ErrValSignerMismatch(codespace sdk.CodespaceType) sdk.Error {
+// func ErrValSignerMismatch(codespace CodespaceType) sdkError {
 // 	return newError(codespace, CodeValSignerMismatch, "Signer Address doesnt match pubkey address")
 // }
 
-// func ErrValIsNotCurrentVal(codespace sdk.CodespaceType) sdk.Error {
+// func ErrValIsNotCurrentVal(codespace CodespaceType) sdkError {
 // 	return newError(codespace, CodeValidatorExitDeny, "Validator is not in validator set, exit not possible")
 // }
 
-// func ErrValUnbonded(codespace sdk.CodespaceType) sdk.Error {
+// func ErrValUnbonded(codespace CodespaceType) sdkError {
 // 	return newError(codespace, CodeValAlreadyUnbonded, "Validator already unbonded , cannot exit")
 // }
 
-// func ErrSignerUpdateError(codespace sdk.CodespaceType) sdk.Error {
+// func ErrSignerUpdateError(codespace CodespaceType) sdkError {
 // 	return newError(codespace, CodeSignerUpdateError, "Signer update error")
 // }
 
-// func ErrNoSignerChange(codespace sdk.CodespaceType) sdk.Error {
+// func ErrNoSignerChange(codespace CodespaceType) sdkError {
 // 	return newError(codespace, CodeNoSignerChangeError, "New signer same as old signer")
 // }
 
-// func ErrOldTx(codespace sdk.CodespaceType) sdk.Error {
+// func ErrOldTx(codespace CodespaceType) sdkError {
 // 	return newError(codespace, CodeOldTx, "Old txhash not allowed")
 // }
 
-// func ErrValidatorAlreadySynced(codespace sdk.CodespaceType) sdk.Error {
+// func ErrValidatorAlreadySynced(codespace CodespaceType) sdkError {
 // 	return newError(codespace, CodeSignerSynced, "No signer update found, invalid message")
 // }
 
-// func ErrValidatorSave(codespace sdk.CodespaceType) sdk.Error {
+// func ErrValidatorSave(codespace CodespaceType) sdkError {
 // 	return newError(codespace, CodeValSave, "Cannot save validator")
 // }
 
-// func ErrValidatorNotDeactivated(codespace sdk.CodespaceType) sdk.Error {
+// func ErrValidatorNotDeactivated(codespace CodespaceType) sdkError {
 // 	return newError(codespace, CodeValSave, "Validator Not Deactivated")
 // }
 
-// func ErrValidatorAlreadyJoined(codespace sdk.CodespaceType) sdk.Error {
+// func ErrValidatorAlreadyJoined(codespace CodespaceType) sdkError {
 // 	return newError(codespace, CodeValAlreadyJoined, "Validator already joined")
 // }
 
-// // Bor Errors --------------------------------
+// // // Bor Errors --------------------------------
 
-// func ErrInvalidBorChainID(codespace sdk.CodespaceType) sdk.Error {
-// 	return newError(codespace, CodeInvalidBorChainID, "Invalid Bor chain id")
-// }
+// // func ErrInvalidBorChainID(codespace sdk.CodespaceType) sdk.Error {
+// // 	return newError(codespace, CodeInvalidBorChainID, "Invalid Bor chain id")
+// // }
 
-// func ErrSpanNotInCountinuity(codespace sdk.CodespaceType) sdk.Error {
-// 	return newError(codespace, CodeSpanNotCountinuous, "Span not countinuous")
-// }
+// // func ErrSpanNotInCountinuity(codespace sdk.CodespaceType) sdk.Error {
+// // 	return newError(codespace, CodeSpanNotCountinuous, "Span not countinuous")
+// // }
 
-// func ErrInvalidSpanDuration(codespace sdk.CodespaceType) sdk.Error {
-// 	return newError(codespace, CodeInvalidSpanDuration, "wrong span duration")
-// }
+// // func ErrInvalidSpanDuration(codespace sdk.CodespaceType) sdk.Error {
+// // 	return newError(codespace, CodeInvalidSpanDuration, "wrong span duration")
+// // }
 
-// func ErrSpanNotFound(codespace sdk.CodespaceType) sdk.Error {
-// 	return newError(codespace, CodeSpanNotFound, "Span not found")
-// }
+// // func ErrSpanNotFound(codespace sdk.CodespaceType) sdk.Error {
+// // 	return newError(codespace, CodeSpanNotFound, "Span not found")
+// // }
 
-// func ErrUnableToFreezeValSet(codespace sdk.CodespaceType) sdk.Error {
-// 	return newError(codespace, CodeUnableToFreezeSet, "Unable to freeze validator set for next span")
-// }
+// // func ErrUnableToFreezeValSet(codespace sdk.CodespaceType) sdk.Error {
+// // 	return newError(codespace, CodeUnableToFreezeSet, "Unable to freeze validator set for next span")
+// // }
 
-// func ErrValSetMisMatch(codespace sdk.CodespaceType) sdk.Error {
-// 	return newError(codespace, CodeValSetMisMatch, "Validator set mismatch")
-// }
+// // func ErrValSetMisMatch(codespace sdk.CodespaceType) sdk.Error {
+// // 	return newError(codespace, CodeValSetMisMatch, "Validator set mismatch")
+// // }
 
-// func ErrProducerMisMatch(codespace sdk.CodespaceType) sdk.Error {
-// 	return newError(codespace, CodeProducerMisMatch, "Producer set mismatch")
-// }
+// // func ErrProducerMisMatch(codespace sdk.CodespaceType) sdk.Error {
+// // 	return newError(codespace, CodeProducerMisMatch, "Producer set mismatch")
+// // }
 
-// //
-// // Side-tx errors
-// //
+// // //
+// // // Side-tx errors
+// // //
 
-// // ErrorSideTx represents side-tx error
-// func ErrorSideTx(codespace sdk.CodespaceType, code CodeType) (res abci.ResponseDeliverSideTx) {
-// 	res.Code = uint32(code)
-// 	res.Codespace = string(codespace)
-// 	res.Result = abci.SideTxResultType_Skip // skip side-tx vote in-case of error
-// 	return
-// }
+// // // ErrorSideTx represents side-tx error
+// // func ErrorSideTx(codespace sdk.CodespaceType, code CodeType) (res abci.ResponseDeliverSideTx) {
+// // 	res.Code = uint32(code)
+// // 	res.Codespace = string(codespace)
+// // 	res.Result = abci.SideTxResultType_Skip // skip side-tx vote in-case of error
+// // 	return
+// // }
 
-// func ErrSideTxValidation(codespace sdk.CodespaceType) sdk.Error {
-// 	return newError(codespace, CodeSideTxValidationFailed, "External call majority validation failed. ")
-// }
+// // func ErrSideTxValidation(codespace sdk.CodespaceType) sdk.Error {
+// // 	return newError(codespace, CodeSideTxValidationFailed, "External call majority validation failed. ")
+// // }
 
 // //
 // // Private methods
@@ -330,28 +337,127 @@ package common
 // 	return CodeToDefaultMsg(code)
 // }
 
-// func newError(codespace sdk.CodespaceType, code CodeType, msg string) sdk.Error {
+// func newError(codespace CodespaceType, code CodeType, msg string) sdkError {
 // 	msg = msgOrDefaultMsg(msg, code)
 // 	return sdk.NewError(codespace, code, msg)
 // }
 
-// // Slashing errors
-// func ErrValidatorSigningInfoSave(codespace sdk.CodespaceType) sdk.Error {
-// 	return newError(codespace, CodeValSigningInfoSave, "Cannot save validator signing info")
+// // // Slashing errors
+// // func ErrValidatorSigningInfoSave(codespace sdk.CodespaceType) sdk.Error {
+// // 	return newError(codespace, CodeValSigningInfoSave, "Cannot save validator signing info")
+// // }
+
+// // func ErrUnjailValidator(codespace sdk.CodespaceType) sdk.Error {
+// // 	return newError(codespace, CodeErrValUnjail, "Error while unJail validator")
+// // }
+
+// // func ErrSlashInfoDetails(codespace sdk.CodespaceType) sdk.Error {
+// // 	return newError(codespace, CodeSlashInfoDetails, "Wrong slash info details")
+// // }
+
+// // func ErrTickNotInContinuity(codespace sdk.CodespaceType) sdk.Error {
+// // 	return newError(codespace, CodeTickNotInContinuity, "Tick not in countinuity")
+// // }
+
+// // func ErrTickAckNotInContinuity(codespace sdk.CodespaceType) sdk.Error {
+// // 	return newError(codespace, CodeTickAckNotInContinuity, "Tick-ack not in countinuity")
+// // }
+
+// // NewError - create an error.
+// func NewError(codespace CodespaceType, code CodeType, format string, args ...interface{}) Error {
+// 	return newError(codespace, code, format, args...)
 // }
 
-// func ErrUnjailValidator(codespace sdk.CodespaceType) sdk.Error {
-// 	return newError(codespace, CodeErrValUnjail, "Error while unJail validator")
+// func newErrorWithRootCodespace(code CodeType, format string, args ...interface{}) *sdkError {
+// 	return newError(CodespaceRoot, code, format, args...)
 // }
 
-// func ErrSlashInfoDetails(codespace sdk.CodespaceType) sdk.Error {
-// 	return newError(codespace, CodeSlashInfoDetails, "Wrong slash info details")
+// func newError(codespace CodespaceType, code CodeType, format string, args ...interface{}) *sdkError {
+// 	if format == "" {
+// 		format = CodeToDefaultMsg(code)
+// 	}
+// 	return &sdkError{
+// 		codespace: codespace,
+// 		code:      code,
+// 		// cmnError:  cmn.NewError(format, args...),
+// 	}
 // }
 
-// func ErrTickNotInContinuity(codespace sdk.CodespaceType) sdk.Error {
-// 	return newError(codespace, CodeTickNotInContinuity, "Tick not in countinuity")
+// type sdkError struct {
+// 	codespace CodespaceType
+// 	code      CodeType
+// 	// cmnError
 // }
 
-// func ErrTickAckNotInContinuity(codespace sdk.CodespaceType) sdk.Error {
-// 	return newError(codespace, CodeTickAckNotInContinuity, "Tick-ack not in countinuity")
+// // Implements Error.
+// func (err *sdkError) WithDefaultCodespace(cs CodespaceType) Error {
+// 	codespace := err.codespace
+// 	if codespace == CodespaceUndefined {
+// 		codespace = cs
+// 	}
+// 	return &sdkError{
+// 		codespace: cs,
+// 		code:      err.code,
+// 		// cmnError:  err.cmnError,
+// 	}
+// }
+
+// // Implements ABCIError.
+// // nolint: errcheck
+// func (err *sdkError) TraceSDK(format string, args ...interface{}) Error {
+// 	err.Trace(1, format, args...)
+// 	return err
+// }
+
+// // Implements ABCIError.
+// func (err *sdkError) Error() string {
+// 	return fmt.Sprintf(`ERROR:
+// Codespace: %s
+// Code: %d
+// Message: %#v
+// `, err.codespace, err.code)
+// }
+
+// // Implements Error.
+// func (err *sdkError) Codespace() CodespaceType {
+// 	return err.codespace
+// }
+
+// // Implements Error.
+// func (err *sdkError) Code() CodeType {
+// 	return err.code
+// }
+
+// // Implements ABCIError.
+// func (err *sdkError) ABCILog() string {
+// 	cdc := codec.New()
+// 	// errMsg := err.cmnError.Error()
+// 	jsonErr := humanReadableError{
+// 		Codespace: err.codespace,
+// 		Code:      err.code,
+// 		// Message:   errMsg,
+// 	}
+// 	bz, er := cdc.MarshalJSON(jsonErr)
+// 	if er != nil {
+// 		panic(er)
+// 	}
+// 	stringifiedJSON := string(bz)
+// 	return stringifiedJSON
+// }
+
+// func (err *sdkError) Result() Result {
+// 	return Result{
+// 		Code:      err.Code(),
+// 		Codespace: err.Codespace(),
+// 		Log:       err.ABCILog(),
+// 	}
+// }
+
+// // QueryResult allows us to return sdk.Error.QueryResult() in query responses
+// func (err *sdkError) QueryResult() abci.ResponseQuery {
+// 	return abci.ResponseQuery{
+// 		Code:      uint32(err.Code()),
+// 		Codespace: string(err.Codespace()),
+// 		Log:       err.ABCILog(),
+// 	}
 // }
