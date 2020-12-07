@@ -32,6 +32,7 @@ import (
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/gorilla/mux"
+	"github.com/maticnetwork/heimdall/helper"
 	"github.com/rakyll/statik/fs"
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmjson "github.com/tendermint/tendermint/libs/json"
@@ -105,6 +106,9 @@ type HeimdallApp struct {
 	BankKeeper    bankkeeper.Keeper
 	StakingKeeper stakingkeeper.Keeper
 	ParamsKeeper  paramskeeper.Keeper
+
+	// contract keeper
+	caller helper.ContractCaller
 
 	// the module manager
 	mm *module.Manager
@@ -206,6 +210,13 @@ func NewHeimdallApp(
 		nil,
 	)
 
+	// Contract caller
+	contractCallerObj, err := helper.NewContractCaller()
+	if err != nil {
+		tmos.Exit(err.Error())
+	}
+	app.caller = contractCallerObj
+
 	// register the staking hooks
 	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
 	// app.StakingKeeper = *stakingKeeper.SetHooks(
@@ -223,7 +234,7 @@ func NewHeimdallApp(
 		),
 		auth.NewAppModule(appCodec, app.AccountKeeper, nil),
 		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
-		staking.NewAppModule(appCodec, app.StakingKeeper),
+		staking.NewAppModule(appCodec, app.StakingKeeper, &app.caller),
 		params.NewAppModule(app.ParamsKeeper),
 	)
 
