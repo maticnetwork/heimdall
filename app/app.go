@@ -33,6 +33,9 @@ import (
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/gorilla/mux"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/x/chainmanager"
+	chainKeeper "github.com/maticnetwork/heimdall/x/chainmanager/keeper"
+	chainmanagerTypes "github.com/maticnetwork/heimdall/x/chainmanager/types"
 	"github.com/rakyll/statik/fs"
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmjson "github.com/tendermint/tendermint/libs/json"
@@ -68,6 +71,7 @@ var (
 		auth.AppModuleBasic{},
 		genutil.AppModuleBasic{},
 		bank.AppModuleBasic{},
+		chainmanager.AppModuleBasic{},
 		staking.AppModuleBasic{},
 		params.AppModuleBasic{},
 	)
@@ -104,6 +108,7 @@ type HeimdallApp struct {
 	// keepers
 	AccountKeeper authkeeper.AccountKeeper
 	BankKeeper    bankkeeper.Keeper
+	ChainKeeper   chainKeeper.Keeper
 	StakingKeeper stakingkeeper.Keeper
 	ParamsKeeper  paramskeeper.Keeper
 
@@ -156,6 +161,7 @@ func NewHeimdallApp(
 	keys := sdk.NewKVStoreKeys(
 		authtypes.StoreKey,
 		banktypes.StoreKey,
+		chainmanagerTypes.StoreKey,
 		stakingtypes.StoreKey,
 		// distrtypes.StoreKey,
 		// slashingtypes.StoreKey,
@@ -185,6 +191,14 @@ func NewHeimdallApp(
 	// set the BaseApp's parameter store
 	bApp.SetParamStore(app.ParamsKeeper.Subspace(baseapp.Paramspace).WithKeyTable(paramskeeper.ConsensusParamsKeyTable()))
 
+	//chainmanager keeper
+	app.ChainKeeper = chainKeeper.NewKeeper(
+		appCodec,
+		keys[chainmanagerTypes.StoreKey], // target store
+		memKeys[stakingtypes.MemStoreKey],
+		app.GetSubspace(chainmanagerTypes.ModuleName),
+		app.caller,
+	)
 	// account keeper
 	app.AccountKeeper = authkeeper.NewAccountKeeper(
 		appCodec,
@@ -207,6 +221,7 @@ func NewHeimdallApp(
 		keys[stakingtypes.StoreKey], // target store
 		memKeys[stakingtypes.MemStoreKey],
 		app.GetSubspace(stakingtypes.ModuleName),
+		app.ChainKeeper,
 		nil,
 	)
 
