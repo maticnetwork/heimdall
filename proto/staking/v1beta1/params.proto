@@ -5,15 +5,15 @@ import "gogoproto/gogo.proto";
 
 option go_package = "github.com/maticnetwork/heimdall/x/staking/types";
 
-option (gogoproto.sizer_all)        = true;
-option (gogoproto.marshaler_all)        = true;
-option (gogoproto.unmarshaler_all)        = true;
-
+option (gogoproto.sizer_all)       = true;
+option (gogoproto.marshaler_all)   = true;
+option (gogoproto.unmarshaler_all) = true;
 
 // Params defines the parameters for the staking module.
 message Params {
-  option (gogoproto.equal)            = true;
-  option (gogoproto.goproto_stringer) = true;
+    option (gogoproto.equal)            = true;
+    option (gogoproto.goproto_stringer) = true;
 
-  uint64 proposer_bonus     = 1 [(gogoproto.moretags) = "yaml:\"proposer_bonus\""];
+    uint64 proposer_bonus = 1
+        [(gogoproto.moretags) = "yaml:\"proposer_bonus\""];
 }

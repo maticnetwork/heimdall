@@ -12,7 +12,7 @@ endif
 
 .PHONY: proto-lint
 proto-lint:
-	$(DOCKER_BUF) check lint --error-format=json
+	$(DOCKER_CLANG) find ./proto ! -path "./vendor/*" -name *.proto | xargs clang-format --style "{ IndentWidth: 4, BasedOnStyle: google, AlignConsecutiveAssignments: true, AlignConsecutiveDeclarations: true }" --dry-run --Werror;
 
 .PHONY: proto-check-breaking
 proto-check-breaking:
@@ -28,4 +28,4 @@ proto-check-breaking:
 
 .PHONY: proto-format
 proto-format:
-	$(DOCKER_CLANG) find ./ ! -path "./vendor/*" -name *.proto -exec clang-format -i {} \;
+	$(DOCKER_CLANG) find ./proto ! -path "./vendor/*" -name *.proto -exec clang-format --style "{ IndentWidth: 4, BasedOnStyle: google, AlignConsecutiveAssignments: true, AlignConsecutiveDeclarations: true }" -i {} \;
