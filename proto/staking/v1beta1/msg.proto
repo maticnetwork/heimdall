@@ -11,6 +11,23 @@ option (gogoproto.sizer_all)        = false;
 option (gogoproto.marshaler_all)    = false;
 option (gogoproto.unmarshaler_all)  = false;
 
+// Msg defines the staking Msg service.
+service Msg {
+  // CreateValidator defines a method for creating a new validator.
+  rpc ValidatorJoin(MsgValidatorJoin) returns (MsgValidatorJoinResponse);
+
+  // EditValidator defines a method for editing an existing validator.
+  rpc StakeUpdate(MsgStakeUpdate) returns (MsgStakeUpdateResponse);
+
+  // Delegate defines a method for performing a delegation of coins
+  // from a delegator to a validator.
+  rpc SignerUpdate(MsgSignerUpdate) returns (MsgSignerUpdateResponse);
+
+  // BeginRedelegate defines a method for performing a redelegation
+  // of coins from a delegator and source validator to a destination validator.
+  rpc ValidatorExit(MsgValidatorExit) returns (MsgValidatorExitResponse);
+}
+
 message MsgValidatorJoin {
   option (gogoproto.goproto_getters)  = false;
   string                       from = 1 [
@@ -35,6 +52,8 @@ message MsgValidatorJoin {
   uint64                   nonce = 9;
 }
 
+message MsgValidatorJoinResponse{}
+
 message MsgStakeUpdate {
   option (gogoproto.goproto_getters)  = false;
   string                       from = 1 [
@@ -54,6 +73,8 @@ message MsgStakeUpdate {
   uint64                   block_number = 8;
   uint64                   nonce = 9;
 }
+
+message MsgStakeUpdateResponse{}
 
 message MsgSignerUpdate {
   option (gogoproto.goproto_getters)  = false;
@@ -75,6 +96,9 @@ message MsgSignerUpdate {
   uint64                   nonce = 7;
 }
 
+message MsgSignerUpdateResponse{}
+
+
 message MsgValidatorExit {
   option (gogoproto.goproto_getters)  = false;
   string                       from = 1 [
@@ -92,3 +116,6 @@ message MsgValidatorExit {
   uint64                   block_number = 6;
   uint64                   nonce = 7;
 }
+
+message MsgValidatorExitResponse{}
+

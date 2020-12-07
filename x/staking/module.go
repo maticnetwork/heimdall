@@ -16,6 +16,7 @@ import (
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/x/staking/client/cli"
 	"github.com/maticnetwork/heimdall/x/staking/client/rest"
 	"github.com/maticnetwork/heimdall/x/staking/keeper"
@@ -101,13 +102,15 @@ func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 type AppModule struct {
 	AppModuleBasic
 
-	keeper keeper.Keeper
+	keeper         keeper.Keeper
+	contractCaller helper.IContractCaller
 }
 
-func NewAppModule(cdc codec.Marshaler, keeper keeper.Keeper) AppModule {
+func NewAppModule(cdc codec.Marshaler, keeper keeper.Keeper, contractCaller helper.IContractCaller) AppModule {
 	return AppModule{
 		AppModuleBasic: NewAppModuleBasic(cdc),
 		keeper:         keeper,
+		contractCaller: contractCaller,
 	}
 }
 
@@ -118,7 +121,7 @@ func (am AppModule) Name() string {
 
 // Route returns the capability module's message routing key.
 func (am AppModule) Route() sdk.Route {
-	return sdk.NewRoute(types.RouterKey, NewHandler(am.keeper))
+	return sdk.NewRoute(types.RouterKey, NewHandler(am.keeper, am.contractCaller))
 }
 
 // QuerierRoute returns the capability module's query routing key.
@@ -131,10 +134,8 @@ func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sd
 
 // RegisterServices registers module services.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
-	fmt.Println("In Register Services")
-	// TODO :uncomment below lines
-	// types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper))
-	// querier := keeper.Querier{Keeper: am.keeper}
+	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper, am.contractCaller))
+	// querier := am.keeper.Querier{Keeper: am.keeper}
 	// types.RegisterQueryServer(cfg.QueryServer(), querier)
 }
 
