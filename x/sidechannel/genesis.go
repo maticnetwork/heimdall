@@ -16,6 +16,9 @@ import (
 func DefaultGenesisState() types.GenesisState {
 	result := make([]*types.PastCommit, 0)
 	return types.GenesisState{
+		Params: types.Params{
+			Enabled: true,
+		},
 		PastCommits: result,
 	}
 }
@@ -52,8 +55,8 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) []ab
 // ExportGenesis returns a GenesisState for a given context and keeper.
 func ExportGenesis(ctx sdk.Context, k keeper.Keeper) types.GenesisState {
 	// get all txs
-	txMap := make(map[int64][][]byte)
-	k.IterateTxsAndApplyFn(ctx, func(height int64, tx tmtypes.Tx) error {
+	txMap := make(map[uint64][][]byte)
+	k.IterateTxsAndApplyFn(ctx, func(height uint64, tx tmtypes.Tx) error {
 		if _, ok := txMap[height]; !ok {
 			txMap[height] = make([][]byte, 0)
 		}
