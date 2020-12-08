@@ -4,7 +4,7 @@
 ###############################################################################
 
 test: test-unit
-test-all: test-unit test-ledger-mock test-race test-cover
+test-all: test-unit test-race test-cover
 
 TEST_PACKAGES=./...
 TEST_TARGETS := test-unit test-unit-proto test-ledger-mock test-race test-ledger test-race
@@ -13,8 +13,6 @@ TEST_TARGETS := test-unit test-unit-proto test-ledger-mock test-race test-ledger
 # a new rule, customise ARGS or TEST_PACKAGES ad libitum, and
 # append the new rule to the TEST_TARGETS list.
 test-unit: ARGS=-tags='cgo ledger test_ledger_mock norace'
-test-ledger: ARGS=-tags='cgo ledger norace'
-test-ledger-mock: ARGS=-tags='ledger test_ledger_mock norace'
 test-race: ARGS=-race -tags='cgo ledger test_ledger_mock'
 test-race: TEST_PACKAGES=$(PACKAGES_NOSIMULATION)
 $(TEST_TARGETS): run-tests

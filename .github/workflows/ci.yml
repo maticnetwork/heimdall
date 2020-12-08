@@ -13,7 +13,7 @@ jobs:
       - name: "Build binaries"
         run: make build
       - name: "Run tests"
-        run: make tests
+        run: make test-all
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
         with:
