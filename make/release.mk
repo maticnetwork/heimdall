@@ -11,6 +11,6 @@ $(BUILD_TARGETS): go.sum $(BUILDDIR)/
 	go $@ -mod=readonly $(BUILD_FLAGS) $(BUILD_ARGS) ./...
 
 heimdall:
-	$(GO) build $(BUILD_FLAGS) -o ./build/ ./cmd/heimdalld
+	$(GO) build $(BUILD_FLAGS) -o ./build/heimdalld ./cmd/heimdalld
 
 .PHONY: build heimdall
