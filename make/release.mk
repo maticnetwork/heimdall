@@ -1,12 +1,16 @@
-.PHONY: bins
-bins: $(BINS)
+BUILDDIR ?= $(CURDIR)/build
 
-.PHONY: build
-build:
-	$(GO) build -o ./build ./cmd/heimdalld
+BUILD_TARGETS := build install
+
+build: BUILD_ARGS=-o $(BUILDDIR)/
+
+$(BUILDDIR)/:
+	mkdir -p $(BUILDDIR)/
+
+$(BUILD_TARGETS): go.sum $(BUILDDIR)/
+	go $@ -mod=readonly $(BUILD_FLAGS) $(BUILD_ARGS) ./...
 
 heimdall:
-	$(GO) build $(BUILD_FLAGS) -o ./build ./cmd/heimdalld
+	$(GO) build $(BUILD_FLAGS) -o ./build/ ./cmd/heimdalld
 
-install:
-	$(GO) install $(BUILD_FLAGS) ./cmd/heimdalld
+.PHONY: build heimdall
