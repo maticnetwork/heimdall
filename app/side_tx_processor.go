@@ -25,7 +25,12 @@ func (app *HeimdallApp) PostDeliverTxHandler(ctx sdk.Context, tx sdk.Tx, result 
 
 	anySideMsg := false
 	for _, msg := range tx.GetMsgs() {
-		if _, ok := msg.(types.SideTxMsg); ok {
+		if svcMsg, ok := msg.(sdk.ServiceMsg); ok {
+			if _, ok := svcMsg.Request.(types.SideTxMsg); ok {
+				anySideMsg = true
+				break
+			}
+		} else if _, ok := msg.(types.SideTxMsg); ok {
 			anySideMsg = true
 			break
 		}
