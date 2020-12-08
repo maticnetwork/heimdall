@@ -473,6 +473,20 @@ func (app *HeimdallApp) GetSideRouter() hmtypes.SideRouter {
 	return app.sideRouter
 }
 
+// SetSideRouter sets side-tx router
+//
+// NOTE: This is solely to be used for testing purposes.
+func (app *HeimdallApp) SetSideRouter(router hmtypes.SideRouter) {
+	app.sideRouter = router
+}
+
+// SetTxDecoder sets tx decoder
+//
+// NOTE: This is solely to be used for testing purposes.
+func (app *HeimdallApp) SetTxDecoder(decoder sdk.TxDecoder) {
+	app.txDecoder = decoder
+}
+
 // GetSubspace returns a param subspace for a given module name.
 //
 // NOTE: This is solely to be used for testing purposes.
