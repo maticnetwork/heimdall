@@ -10,8 +10,6 @@ jobs:
         uses: actions/setup-go@v2.1.3
         with:
           go-version: 1.15.6
-      - name: Create golang symlink
-        run: sudo ln -f -s $GOROOT/bin/* /usr/bin/ 
       - name: "Build binaries"
         run: make build
       - name: "Run tests"
