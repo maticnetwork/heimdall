@@ -77,8 +77,8 @@ type ProposalStatus int32
 const (
 	// PROPOSAL_STATUS_UNSPECIFIED defines the default propopsal status.
 	StatusNil ProposalStatus = 0
-	// PROPOSAL_STATUS_DEPOSIT_PERIOD defines a proposal status during the deposit
-	// period.
+	// PROPOSAL_STATUS_DEPOSIT_PERIOD defines a proposal status during the
+	// deposit period.
 	StatusDepositPeriod ProposalStatus = 1
 	// PROPOSAL_STATUS_VOTING_PERIOD defines a proposal status during the voting
 	// period.
@@ -331,8 +331,8 @@ var xxx_messageInfo_Vote proto.InternalMessageInfo
 type DepositParams struct {
 	//  Minimum deposit for a proposal to enter voting period.
 	MinDeposit Coins `protobuf:"bytes,1,rep,name=min_deposit,json=minDeposit,proto3,castrepeated=Coins" json:"min_deposit,omitempty" yaml:"min_deposit"`
-	//  Maximum period for Atom holders to deposit on a proposal. Initial value: 2
-	//  months.
+	//  Maximum period for Atom holders to deposit on a proposal. Initial value:
+	//  2 months.
 	MaxDepositPeriod time.Duration `protobuf:"bytes,2,opt,name=max_deposit_period,json=maxDepositPeriod,proto3,stdduration" json:"max_deposit_period,omitempty" yaml:"max_deposit_period"`
 }
 
@@ -413,7 +413,8 @@ type TallyParams struct {
 	//  Minimum percentage of total stake needed to vote for a result to be
 	//  considered valid.
 	Quorum Dec `protobuf:"bytes,1,opt,name=quorum,proto3,customtype=Dec" json:"quorum,omitempty"`
-	//  Minimum proportion of Yes votes for proposal to pass. Default value: 0.5.
+	//  Minimum proportion of Yes votes for proposal to pass. Default value:
+	//  0.5.
 	Threshold Dec `protobuf:"bytes,2,opt,name=threshold,proto3,customtype=Dec" json:"threshold,omitempty"`
 	//  Minimum value of Veto votes to Total votes ratio for proposal to be
 	//  vetoed. Default value: 1/3.
