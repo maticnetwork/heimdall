@@ -2,7 +2,12 @@ package helper
 
 import (
 	"errors"
+	"fmt"
+	"io/ioutil"
 	"math/big"
+	"net/http"
+	"net/url"
+	"path"
 
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/common"
@@ -10,6 +15,7 @@ import (
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
 	hmCommonTypes "github.com/maticnetwork/heimdall/types/common"
+	"github.com/maticnetwork/heimdall/types/rest"
 )
 
 // ZeroHash represents empty hash
@@ -53,4 +59,37 @@ func UnpackSigAndVotes(payload []byte, abi abi.ABI) (votes []byte, sigs []byte, 
 	checkpointData = inputDataMap["txData"].([]byte)
 	votes = inputDataMap["vote"].([]byte)
 	return
+}
+
+// GetHeimdallServerEndpoint returns heimdall server endpoint
+func GetHeimdallServerEndpoint(endpoint string) string {
+	u, _ := url.Parse(GetConfig().HeimdallServerURL)
+	u.Path = path.Join(u.Path, endpoint)
+	return u.String()
+}
+
+// FetchFromAPI fetches data from any URL
+func FetchFromAPI(cliCtx cliContext.CLIContext, URL string) (result rest.ResponseWithHeight, err error) {
+	resp, err := http.Get(URL)
+	if err != nil {
+		return result, err
+	}
+	defer resp.Body.Close()
+
+	// response
+	if resp.StatusCode == 200 {
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return result, err
+		}
+		// unmarshall data from buffer
+		var response rest.ResponseWithHeight
+		if err := cliCtx.Codec.UnmarshalJSON(body, &response); err != nil {
+			return result, err
+		}
+		return response, nil
+	}
+
+	Logger.Debug("Error while fetching data from URL", "status", resp.StatusCode, "URL", URL)
+	return result, fmt.Errorf("Error while fetching data from url: %v, status: %v", URL, resp.StatusCode)
 }
