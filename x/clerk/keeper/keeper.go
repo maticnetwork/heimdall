@@ -27,13 +27,13 @@ var (
 
 type (
 	Keeper struct {
-		cdc      codec.Marshaler
+		cdc      codec.LegacyAmino
 		storeKey sdk.StoreKey
 		memKey   sdk.StoreKey
 	}
 )
 
-func NewKeeper(cdc codec.Marshaler, storeKey, memKey sdk.StoreKey) *Keeper {
+func NewKeeper(cdc codec.LegacyAmino, storeKey, memKey sdk.StoreKey) *Keeper {
 	return &Keeper{
 		cdc:      cdc,
 		storeKey: storeKey,
@@ -95,7 +95,7 @@ func (k *Keeper) IterateRecordsAndApplyFn(ctx sdk.Context, f func(record types.E
 	for ; iterator.Valid(); iterator.Next() {
 		// unmarshall span
 		var result types.EventRecord
-		if err := k.cdc.UnmarshalBinaryBare(iterator.Value(), &result); err != nil {
+		if err := k.cdc.UnmarshalBinaryBare(iterator.Value(), result); err != nil {
 			k.Logger(ctx).Error("IterateRecordsAndApplyFn | UnmarshalBinaryBare", "error", err)
 			return
 		}

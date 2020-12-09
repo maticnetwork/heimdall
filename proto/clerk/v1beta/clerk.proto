@@ -14,7 +14,7 @@ message EventRecord {
 
     uint64 id = 1
         [(gogoproto.jsontag) = "id", (gogoproto.moretags) = "yaml:\"id\""];
-    string contract = 2
+    bytes contract = 2
         [(gogoproto.casttype) =
             "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"];
     bytes data = 3;
@@ -24,7 +24,7 @@ message EventRecord {
         (gogoproto.moretags) = "yaml:\"record_time\""
     ];
     uint64 log_index = 5;
-    bytes tx_hash = 6
+    string tx_hash = 6
         [(gogoproto.casttype) =
             "github.com/maticnetwork/heimdall/types/common.HeimdallHash"];
     string chain_id = 7;
