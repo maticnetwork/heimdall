@@ -53,9 +53,6 @@ func (rtr *router) AddRoute(path string, h *SideHandlers) SideRouter {
 		panic("router sealed; cannot add route handler")
 	}
 
-	if !isAlphaNumeric(path) {
-		panic("route expressions can only contain alphanumeric characters")
-	}
 	if rtr.HasRoute(path) {
 		panic(fmt.Sprintf("route %s has already been initialized", path))
 	}
