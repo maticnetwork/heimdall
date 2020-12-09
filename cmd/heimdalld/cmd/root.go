@@ -129,6 +129,9 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 	ctx := server.NewDefaultContext()
 	// serverCtx := server.GetServerContextFromCmd(rootCmd)
 
+	debugCmd := debug.Cmd()
+	debugCmd.AddCommand(HeimdallPubkeyCmd())
+
 	rootCmd.AddCommand(
 		// TODO use default (cosmos-sdk) initCmd instead of custom
 		// genutilcli.InitCmd(app.ModuleBasics, app.DefaultNodeHome),
@@ -144,7 +147,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 		genutilcli.ValidateGenesisCmd(app.ModuleBasics, encodingConfig.TxConfig),
 		AddGenesisAccountCmd(app.DefaultNodeHome),
 		tmcli.NewCompletionCmd(rootCmd, true),
-		debug.Cmd(),
+		debugCmd,
 	)
 
 	server.AddCommands(rootCmd, app.DefaultNodeHome, newApp, createSimappAndExport, addModuleInitFlags)
@@ -356,7 +359,6 @@ func InitializeNodeValidatorFiles(
 	config *cfg.Config) (nodeID string, valPubKey crypto.PubKey, priv crypto.PrivKey, err error,
 ) {
 
-	fmt.Println("config file", config.NodeKeyFile())
 	nodeKey, err := p2p.LoadOrGenNodeKey(config.NodeKeyFile())
 	if err != nil {
 		return "", nil, nil, err
@@ -388,7 +390,6 @@ func InitializeNodeValidatorFiles(
 	// 	return "", nil, nil, err
 	// }
 	valPubKey, _ = filePV.GetPubKey()
-	fmt.Println("valPubKey size", len(valPubKey.Bytes()))
 	return nodeID, valPubKey, valPrivKey, nil
 }
 

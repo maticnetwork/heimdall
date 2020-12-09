@@ -6,7 +6,6 @@ import (
 	"time"
 
 	hmTypes "github.com/maticnetwork/heimdall/types"
-	authTypes "github.com/maticnetwork/heimdall/x/auth/types"
 )
 
 const (
@@ -32,7 +31,7 @@ func DefaultGenesis() *GenesisState {
 	return &GenesisState{
 		StartingProposalId: 1,
 		DepositParams: DepositParams{
-			MinDeposit:       Coins{NewCoin(authTypes.FeeToken, minDepositTokens)},
+			MinDeposit:       Coins{NewCoin(hmTypes.FeeToken, minDepositTokens)},
 			MaxDepositPeriod: DefaultPeriod,
 		},
 		VotingParams: VotingParams{

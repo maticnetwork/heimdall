@@ -5,8 +5,10 @@ import (
 
 	"gopkg.in/yaml.v2"
 
+	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/tendermint/tendermint/crypto"
-	"github.com/tendermint/tendermint/crypto/ethsecp256k1"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 	tmprotocrypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
 
 	"github.com/maticnetwork/bor/common"
@@ -56,7 +58,7 @@ func (a PubKey) Address() common.Address {
 
 // CryptoPubKey returns crypto pub key for crypto
 func (a PubKey) CryptoPubKey() crypto.PubKey {
-	pk := make(ethsecp256k1.PubKey, ethsecp256k1.PubKeySize)
+	pk := make(secp256k1.PubKey, secp256k1.PubKeySize)
 	copy(pk, a[:])
 	return pk
 }
@@ -64,10 +66,15 @@ func (a PubKey) CryptoPubKey() crypto.PubKey {
 // TMProtoCryptoPubKey returns crypto pub key for tendermint
 func (a PubKey) TMProtoCryptoPubKey() tmprotocrypto.PublicKey {
 	return tmprotocrypto.PublicKey{
-		Sum: &tmprotocrypto.PublicKey_Ethsecp256K1{
-			Ethsecp256K1: a,
+		Sum: &tmprotocrypto.PublicKey_Secp256K1{
+			Secp256K1: a,
 		},
 	}
+}
+
+// CosmosCryptoPubKey returns crypto pub key for cosmos
+func (a *PubKey) CosmosCryptoPubKey() cryptotypes.PubKey {
+	return CosmosCryptoPubKey(a.Bytes())
 }
 
 // TODO: check if any interface is implementing
@@ -120,4 +127,15 @@ func (a *PubKey) UnmarshalYAML(data []byte) error {
 
 	*a = common.FromHex(s)
 	return nil
+}
+
+//
+// Utility methods
+//
+
+// CosmosCryptoPubKey returns crypto pub key for cosmos
+func CosmosCryptoPubKey(pk []byte) cryptotypes.PubKey {
+	return &cosmossecp256k1.PubKey{
+		Key: pk,
+	}
 }

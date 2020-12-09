@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 
+	"github.com/cosmos/cosmos-sdk/x/auth/types"
+
 	hmTypes "github.com/maticnetwork/heimdall/types"
-	"github.com/maticnetwork/heimdall/x/auth/types"
 )
 
 // DefaultIndex is the default capability global index
