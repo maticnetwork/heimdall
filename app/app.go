@@ -47,8 +47,13 @@ import (
 	// slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	// slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 
-	blogparams "github.com/maticnetwork/heimdall/app/params"
+	hmparams "github.com/maticnetwork/heimdall/app/params"
+	hmtypes "github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/types/common"
+	hmmodule "github.com/maticnetwork/heimdall/types/module"
+	"github.com/maticnetwork/heimdall/x/sidechannel"
+	sidechannelkeeper "github.com/maticnetwork/heimdall/x/sidechannel/keeper"
+	sidechanneltypes "github.com/maticnetwork/heimdall/x/sidechannel/types"
 	"github.com/maticnetwork/heimdall/x/staking"
 	stakingkeeper "github.com/maticnetwork/heimdall/x/staking/keeper"
 	stakingtypes "github.com/maticnetwork/heimdall/x/staking/types"
@@ -67,6 +72,7 @@ var (
 		auth.AppModuleBasic{},
 		genutil.AppModuleBasic{},
 		bank.AppModuleBasic{},
+		sidechannel.AppModuleBasic{},
 		staking.AppModuleBasic{},
 		params.AppModuleBasic{},
 	)
@@ -92,6 +98,7 @@ type HeimdallApp struct {
 	legacyAmino       *codec.LegacyAmino
 	appCodec          codec.Marshaler
 	interfaceRegistry types.InterfaceRegistry
+	txDecoder         sdk.TxDecoder
 
 	invCheckPeriod uint
 
@@ -100,10 +107,14 @@ type HeimdallApp struct {
 	tkeys map[string]*sdk.TransientStoreKey
 
 	// keepers
-	AccountKeeper authkeeper.AccountKeeper
-	BankKeeper    bankkeeper.Keeper
-	StakingKeeper stakingkeeper.Keeper
-	ParamsKeeper  paramskeeper.Keeper
+	AccountKeeper     authkeeper.AccountKeeper
+	BankKeeper        bankkeeper.Keeper
+	SidechannelKeeper sidechannelkeeper.Keeper
+	StakingKeeper     stakingkeeper.Keeper
+	ParamsKeeper      paramskeeper.Keeper
+
+	// side router
+	sideRouter hmtypes.SideRouter
 
 	// the module manager
 	mm *module.Manager
@@ -130,15 +141,16 @@ func NewHeimdallApp(
 	skipUpgradeHeights map[int64]bool,
 	homePath string,
 	invCheckPeriod uint,
-	encodingConfig blogparams.EncodingConfig,
+	encodingConfig hmparams.EncodingConfig,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *HeimdallApp {
 	// TODO: Remove cdc in favor of appCodec once all modules are migrated.
 	appCodec := encodingConfig.Marshaler
 	legacyAmino := encodingConfig.Amino
 	interfaceRegistry := encodingConfig.InterfaceRegistry
+	txDecoder := encodingConfig.TxConfig.TxDecoder()
 
-	bApp := baseapp.NewBaseApp(appName, logger, db, encodingConfig.TxConfig.TxDecoder(), baseAppOptions...)
+	bApp := baseapp.NewBaseApp(appName, logger, db, txDecoder, baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(traceStore)
 	bApp.SetAppVersion(version.Version)
 	bApp.SetInterfaceRegistry(interfaceRegistry)
@@ -150,6 +162,7 @@ func NewHeimdallApp(
 	keys := sdk.NewKVStoreKeys(
 		authtypes.StoreKey,
 		banktypes.StoreKey,
+		sidechanneltypes.StoreKey,
 		stakingtypes.StoreKey,
 		// distrtypes.StoreKey,
 		// slashingtypes.StoreKey,
@@ -166,6 +179,7 @@ func NewHeimdallApp(
 		invCheckPeriod:    invCheckPeriod,
 		keys:              keys,
 		tkeys:             tkeys,
+		txDecoder:         txDecoder,
 	}
 
 	//
@@ -194,6 +208,11 @@ func NewHeimdallApp(
 		app.BlockedAddrs(),
 	)
 
+	app.SidechannelKeeper = sidechannelkeeper.NewKeeper(
+		appCodec,
+		keys[sidechanneltypes.StoreKey],
+	)
+
 	app.StakingKeeper = stakingkeeper.NewKeeper(
 		appCodec,
 		keys[stakingtypes.StoreKey], // target store
@@ -218,6 +237,7 @@ func NewHeimdallApp(
 		),
 		auth.NewAppModule(appCodec, app.AccountKeeper, nil),
 		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
+		sidechannel.NewAppModule(appCodec, app.SidechannelKeeper),
 		staking.NewAppModule(appCodec, app.StakingKeeper),
 		params.NewAppModule(app.ParamsKeeper),
 	)
@@ -239,6 +259,7 @@ func NewHeimdallApp(
 	app.mm.SetOrderInitGenesis(
 		authtypes.ModuleName,
 		banktypes.ModuleName,
+		sidechanneltypes.ModuleName,
 		stakingtypes.ModuleName,
 		genutiltypes.ModuleName,
 	)
@@ -246,6 +267,20 @@ func NewHeimdallApp(
 	// app.mm.RegisterInvariants(&app.CrisisKeeper)
 	app.mm.RegisterRoutes(app.Router(), app.QueryRouter(), encodingConfig.Amino)
 	app.mm.RegisterServices(module.NewConfigurator(app.MsgServiceRouter(), app.GRPCQueryRouter()))
+
+	// side router
+	app.sideRouter = hmtypes.NewSideRouter()
+	for _, m := range app.mm.Modules {
+		if m.Route().Path() != "" {
+			if sm, ok := m.(hmmodule.SideModule); ok {
+				app.sideRouter.AddRoute(m.Route().Path(), &hmtypes.SideHandlers{
+					SideTxHandler: sm.NewSideTxHandler(),
+					PostTxHandler: sm.NewPostTxHandler(),
+				})
+			}
+		}
+	}
+	app.sideRouter.Seal()
 
 	// add test gRPC service for testing gRPC queries in isolation
 	// testdata.RegisterQueryServer(app.GRPCQueryRouter(), testdata.QueryImpl{})
@@ -259,6 +294,7 @@ func NewHeimdallApp(
 	app.sm = module.NewSimulationManager(
 		auth.NewAppModule(appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts),
 		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
+		sidechannel.NewAppModule(appCodec, app.SidechannelKeeper),
 		// staking.NewAppModule(appCodec),
 		nil,
 		params.NewAppModule(app.ParamsKeeper),
@@ -283,6 +319,11 @@ func NewHeimdallApp(
 		),
 	)
 	app.SetEndBlocker(app.EndBlocker)
+
+	// side-tx processor
+	app.SetPostDeliverTxHandler(app.PostDeliverTxHandler)
+	app.SetBeginSideBlocker(app.BeginSideBlocker)
+	app.SetDeliverSideTxHandler(app.DeliverSideTxHandler)
 
 	if loadLatest {
 		if err := app.LoadLatestVersion(); err != nil {
@@ -427,6 +468,11 @@ func (app *HeimdallApp) GetTKey(storeKey string) *sdk.TransientStoreKey {
 	return app.tkeys[storeKey]
 }
 
+// GetSideRouter returns side-tx router
+func (app *HeimdallApp) GetSideRouter() hmtypes.SideRouter {
+	return app.sideRouter
+}
+
 // GetSubspace returns a param subspace for a given module name.
 //
 // NOTE: This is solely to be used for testing purposes.
@@ -488,5 +534,6 @@ func initParamsKeeper(appCodec codec.BinaryMarshaler, legacyAmino *codec.LegacyA
 	paramsKeeper.Subspace(authtypes.ModuleName)
 	paramsKeeper.Subspace(banktypes.ModuleName)
 	paramsKeeper.Subspace(stakingtypes.ModuleName)
+	paramsKeeper.Subspace(sidechanneltypes.ModuleName)
 	return paramsKeeper
 }

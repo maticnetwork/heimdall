@@ -10,4 +10,4 @@ import (
 type SideTxHandler func(ctx sdk.Context, msg sdk.Msg) abci.ResponseDeliverSideTx
 
 // PostTxHandler defines the core of the state transition function of an application after side-tx execution
-type PostTxHandler func(ctx sdk.Context, msg sdk.Msg, sideTxResult tmproto.SideTxResultType) sdk.Result
+type PostTxHandler func(ctx sdk.Context, msg sdk.Msg, sideTxResult tmproto.SideTxResultType) (*sdk.Result, error)
