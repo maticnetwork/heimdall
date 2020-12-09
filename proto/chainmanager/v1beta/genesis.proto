@@ -5,9 +5,9 @@ import "gogoproto/gogo.proto";
 
 option go_package = "github.com/maticnetwork/heimdall/x/chainmanager/types";
 
-option (gogoproto.sizer_all)       = false;
-option (gogoproto.marshaler_all)   = false;
-option (gogoproto.unmarshaler_all) = false;
+option (gogoproto.sizer_all)       = true;
+option (gogoproto.marshaler_all)   = true;
+option (gogoproto.unmarshaler_all) = true;
 
 // GenesisState defines the chainmanager module's genesis state.
 message GenesisState {

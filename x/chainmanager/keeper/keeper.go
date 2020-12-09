@@ -16,17 +16,15 @@ type (
 	Keeper struct {
 		cdc            codec.Marshaler
 		storeKey       sdk.StoreKey
-		memKey         sdk.StoreKey
 		paramSubspace  paramtypes.Subspace
 		contractCaller helper.ContractCaller
 	}
 )
 
-func NewKeeper(cdc codec.Marshaler, storeKey, memKey sdk.StoreKey, paramSubspace paramtypes.Subspace, caller helper.ContractCaller) Keeper {
+func NewKeeper(cdc codec.Marshaler, storeKey sdk.StoreKey, paramSubspace paramtypes.Subspace, caller helper.ContractCaller) Keeper {
 	return Keeper{
 		cdc:            cdc,
 		storeKey:       storeKey,
-		memKey:         memKey,
 		paramSubspace:  paramSubspace,
 		contractCaller: caller,
 	}

@@ -45,7 +45,11 @@ func (cp ChainParams) String() string {
 }
 
 // NewParams creates a new Params object
-func NewParams(mainchainTxConfirmations uint64, maticchainTxConfirmations uint64, chainParams *ChainParams) Params {
+func NewParams(
+	mainchainTxConfirmations uint64,
+	maticchainTxConfirmations uint64,
+	chainParams *ChainParams,
+) Params {
 	return Params{
 		MainchainTxConfirmations:  mainchainTxConfirmations,
 		MaticchainTxConfirmations: maticchainTxConfirmations,

@@ -191,7 +191,6 @@ func NewHeimdallApp(
 	app.ChainKeeper = chainKeeper.NewKeeper(
 		appCodec,
 		keys[chainmanagerTypes.StoreKey], // target store
-		memKeys[stakingtypes.MemStoreKey],
 		app.GetSubspace(chainmanagerTypes.ModuleName),
 		app.caller,
 	)
