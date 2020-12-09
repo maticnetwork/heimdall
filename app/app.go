@@ -125,9 +125,6 @@ type HeimdallApp struct {
 	// contract keeper
 	caller helper.ContractCaller
 
-	// contract keeper
-	caller helper.ContractCaller
-
 	// the module manager
 	mm *module.Manager
 
@@ -266,7 +263,7 @@ func NewHeimdallApp(
 		auth.NewAppModule(appCodec, app.AccountKeeper, nil),
 		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
 		sidechannel.NewAppModule(appCodec, app.SidechannelKeeper),
-		staking.NewAppModule(appCodec, app.StakingKeeper),
+		staking.NewAppModule(appCodec, app.StakingKeeper, &app.caller),
 		params.NewAppModule(app.ParamsKeeper),
 	)
 
