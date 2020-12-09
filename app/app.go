@@ -125,6 +125,9 @@ type HeimdallApp struct {
 	// contract keeper
 	caller helper.ContractCaller
 
+	// contract keeper
+	caller helper.ContractCaller
+
 	// the module manager
 	mm *module.Manager
 
