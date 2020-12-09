@@ -12,10 +12,10 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/spf13/viper"
-	"github.com/tendermint/tendermint/libs/common"
+	"github.com/tendermint/tendermint/libs/service"
 	httpClient "github.com/tendermint/tendermint/rpc/client"
 
-	cliContext "github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client/"
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/bridge/setu/broadcaster"
 	"github.com/maticnetwork/heimdall/bridge/setu/listener"
@@ -48,7 +48,7 @@ func GetStartCmd() *cobra.Command {
 			_httpClient := httpClient.NewHTTP(helper.GetConfig().TendermintRPCUrl, "/websocket")
 
 			// cli context
-			cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
+			cliCtx := client.Context{}.WithJSONMarshaler(cdc)
 			cliCtx.BroadcastMode = client.BroadcastAsync
 			cliCtx.TrustNode = true
 
@@ -56,7 +56,7 @@ func GetStartCmd() *cobra.Command {
 			_paramsContext := util.NewParamsContext(cliCtx)
 
 			// selected services to start
-			services := []common.Service{}
+			services := []service.BaseService{}
 			services = append(services,
 				listener.NewListenerService(cdc, _queueConnector, _httpClient),
 				processor.NewProcessorService(cdc, _queueConnector, _httpClient, _txBroadcaster, _paramsContext),
@@ -111,7 +111,7 @@ func GetStartCmd() *cobra.Command {
 
 			// strt all processes
 			for _, service := range services {
-				go func(serv common.Service) {
+				go func(serv service.BaseService) {
 					defer wg.Done()
 					// TODO handle error while starting service
 					if err := serv.Start(); err != nil {
