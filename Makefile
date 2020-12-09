@@ -77,7 +77,8 @@ include make/proto.mk
 include make/setup-cache.mk
 include make/release.mk
 include make/mod.mk
-# include make/lint.mk
+include make/lint.mk
+include make/test.mk
 # include make/test-integration.mk
 # include make/test-simulation.mk
 include make/tools.mk
