@@ -21,28 +21,28 @@ message ChainParams {
     string bor_chain_id        = 1 [(gogoproto.customname) = "BorChainID"];
     string matic_token_address = 2
         [(gogoproto.casttype) =
-             "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"];
+             "github.com/cosmos/cosmos-sdk/types.AccAddress"];
     string staking_manager_address = 3
         [(gogoproto.casttype) =
-             "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"];
+             "github.com/cosmos/cosmos-sdk/types.AccAddress"];
     string slash_manager_address = 4
         [(gogoproto.casttype) =
-             "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"];
+             "github.com/cosmos/cosmos-sdk/types.AccAddress"];
     string root_chain_address = 5
         [(gogoproto.casttype) =
-             "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"];
+             "github.com/cosmos/cosmos-sdk/types.AccAddress"];
     string staking_info_address = 6
         [(gogoproto.casttype) =
-             "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"];
+             "github.com/cosmos/cosmos-sdk/types.AccAddress"];
     string state_sender_address = 7
         [(gogoproto.casttype) =
-             "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"];
+             "github.com/cosmos/cosmos-sdk/types.AccAddress"];
     string state_receiver_address = 8
         [(gogoproto.casttype) =
-             "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"];
-    bytes validator_set_address = 9
+             "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    string validator_set_address = 9
         [(gogoproto.casttype) =
-             "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"];
+             "github.com/cosmos/cosmos-sdk/types.AccAddress"];
 }
 
 message Params {

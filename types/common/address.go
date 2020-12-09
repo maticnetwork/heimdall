@@ -129,6 +129,11 @@ func HexToHeimdallAddress(b string) HeimdallAddress {
 	return HeimdallAddress(common.HexToAddress(b))
 }
 
+// HexToHeimdallAddress returns Address with value b.
+func HexToAccAddress(b string) sdk.AccAddress {
+	return sdk.AccAddress(b)
+}
+
 // AccAddressToHeimdallAddress returns Address with value b.
 func AccAddressToHeimdallAddress(b sdk.AccAddress) HeimdallAddress {
 	return BytesToHeimdallAddress(b[:])

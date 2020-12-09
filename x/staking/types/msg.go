@@ -18,7 +18,7 @@ var _ sdk.Msg = &MsgValidatorJoin{}
 
 // NewMsgValidatorJoin creates new validator-join
 func NewMsgValidatorJoin(
-	from hmCommon.HeimdallAddress,
+	from sdk.AccAddress,
 	id uint64,
 	activationEpoch uint64,
 	amount sdk.Int,
@@ -51,7 +51,7 @@ func (msg MsgValidatorJoin) Route() string {
 }
 
 func (msg MsgValidatorJoin) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{hmCommon.HeimdallAddressToAccAddress(msg.From)}
+	return []sdk.AccAddress{msg.From}
 }
 
 func (msg MsgValidatorJoin) GetSignBytes() []byte {
@@ -105,7 +105,7 @@ func (msg MsgValidatorJoin) GetNonce() uint64 {
 var _ sdk.Msg = &MsgStakeUpdate{}
 
 // NewMsgStakeUpdate represents stake update
-func NewMsgStakeUpdate(from hmCommon.HeimdallAddress, id uint64, newAmount sdk.Int, txhash hmCommon.HeimdallHash, logIndex uint64, blockNumber uint64, nonce uint64) MsgStakeUpdate {
+func NewMsgStakeUpdate(from sdk.AccAddress, id uint64, newAmount sdk.Int, txhash hmCommon.HeimdallHash, logIndex uint64, blockNumber uint64, nonce uint64) MsgStakeUpdate {
 	return MsgStakeUpdate{
 		From:        from,
 		ID:          hmTypes.NewValidatorID(id),
@@ -126,7 +126,7 @@ func (msg MsgStakeUpdate) Route() string {
 }
 
 func (msg MsgStakeUpdate) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{hmCommon.HeimdallAddressToAccAddress(msg.From)}
+	return []sdk.AccAddress{msg.From}
 }
 
 func (msg MsgStakeUpdate) GetSignBytes() []byte {
@@ -175,7 +175,7 @@ func (msg MsgStakeUpdate) GetNonce() uint64 {
 var _ sdk.Msg = &MsgSignerUpdate{}
 
 func NewMsgSignerUpdate(
-	from hmCommon.HeimdallAddress,
+	from sdk.AccAddress,
 	id uint64,
 	pubKey hmCommon.PubKey,
 	txhash hmCommon.HeimdallHash,
@@ -203,7 +203,7 @@ func (msg MsgSignerUpdate) Route() string {
 }
 
 func (msg MsgSignerUpdate) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{hmCommon.HeimdallAddressToAccAddress(msg.From)}
+	return []sdk.AccAddress{msg.From}
 }
 
 func (msg MsgSignerUpdate) GetSignBytes() []byte {
@@ -256,7 +256,7 @@ func (msg MsgSignerUpdate) GetNonce() uint64 {
 
 var _ sdk.Msg = &MsgValidatorExit{}
 
-func NewMsgValidatorExit(from hmCommon.HeimdallAddress, id uint64, deactivationEpoch uint64, txhash hmCommon.HeimdallHash, logIndex uint64, blockNumber uint64, nonce uint64) MsgValidatorExit {
+func NewMsgValidatorExit(from sdk.AccAddress, id uint64, deactivationEpoch uint64, txhash hmCommon.HeimdallHash, logIndex uint64, blockNumber uint64, nonce uint64) MsgValidatorExit {
 	return MsgValidatorExit{
 		From:              from,
 		ID:                hmTypes.NewValidatorID(id),
@@ -277,7 +277,7 @@ func (msg MsgValidatorExit) Route() string {
 }
 
 func (msg MsgValidatorExit) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{hmCommon.HeimdallAddressToAccAddress(msg.From)}
+	return []sdk.AccAddress{msg.From}
 }
 
 func (msg MsgValidatorExit) GetSignBytes() []byte {

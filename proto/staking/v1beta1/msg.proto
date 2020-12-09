@@ -32,7 +32,7 @@ message MsgValidatorJoin {
     option (gogoproto.goproto_getters) = false;
     string from                        = 1
         [(gogoproto.casttype) =
-             "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"];
+             "github.com/cosmos/cosmos-sdk/types.AccAddress"];
     uint64 id = 2 [
         (gogoproto.casttype) =
             "github.com/maticnetwork/heimdall/types.ValidatorID",
@@ -58,7 +58,7 @@ message MsgStakeUpdate {
     option (gogoproto.goproto_getters) = false;
     string from                        = 1
         [(gogoproto.casttype) =
-             "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"];
+             "github.com/cosmos/cosmos-sdk/types.AccAddress"];
     uint64 id = 2 [
         (gogoproto.casttype) =
             "github.com/maticnetwork/heimdall/types.ValidatorID",
@@ -80,7 +80,7 @@ message MsgSignerUpdate {
     option (gogoproto.goproto_getters) = false;
     string from                        = 1
         [(gogoproto.casttype) =
-             "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"];
+             "github.com/cosmos/cosmos-sdk/types.AccAddress"];
     uint64 id = 2 [
         (gogoproto.casttype) =
             "github.com/maticnetwork/heimdall/types.ValidatorID",
@@ -104,7 +104,7 @@ message MsgValidatorExit {
     option (gogoproto.goproto_getters) = false;
     string from                        = 1
         [(gogoproto.casttype) =
-             "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"];
+             "github.com/cosmos/cosmos-sdk/types.AccAddress"];
     uint64 id = 2 [
         (gogoproto.casttype) =
             "github.com/maticnetwork/heimdall/types.ValidatorID",
