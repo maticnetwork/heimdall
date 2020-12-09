@@ -1,0 +1,26 @@
+syntax = "proto3";
+package heimdall.sidechannel.v1beta1;
+
+import "sidechannel/v1beta1/params.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/maticnetwork/heimdall/x/sidechannel/types";
+
+option (gogoproto.sizer_all)       = true;
+option (gogoproto.marshaler_all)   = true;
+option (gogoproto.unmarshaler_all) = true;
+
+// GenesisState defines the sidechannel module's genesis state.
+message GenesisState {
+    // params defines all the paramaters of related to sidechannel
+    heimdall.sidechannel.v1beta1.Params params = 1
+        [(gogoproto.nullable) = false];
+
+    // past commits
+    repeated PastCommit past_commits = 2;
+}
+
+message PastCommit {
+    uint64         height = 1;
+    repeated bytes txs    = 2;
+}

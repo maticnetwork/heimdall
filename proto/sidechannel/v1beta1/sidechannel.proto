@@ -1,0 +1,16 @@
+syntax = "proto3";
+package heimdall.sidechannel.v1beta1;
+
+import "tendermint/abci/types.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/maticnetwork/heimdall/x/sidechannel/types";
+
+option (gogoproto.sizer_all)       = true;
+option (gogoproto.marshaler_all)   = true;
+option (gogoproto.unmarshaler_all) = true;
+
+message PreviousValidators {
+    uint64   height                               = 1;
+    repeated tendermint.abci.Validator validators = 2;
+}
