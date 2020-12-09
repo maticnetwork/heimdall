@@ -6,6 +6,7 @@ import (
 
 	"github.com/maticnetwork/heimdall/helper"
 	// "github.com/maticnetwork/heimdall/params/paramtypes"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	hmCommon "github.com/maticnetwork/heimdall/types/common"
 )
@@ -17,8 +18,8 @@ const (
 )
 
 var (
-	DefaultStateReceiverAddress hmCommon.HeimdallAddress = hmCommon.HexToHeimdallAddress("0x0000000000000000000000000000000000001001")
-	DefaultValidatorSetAddress  hmCommon.HeimdallAddress = hmCommon.HexToHeimdallAddress("0x0000000000000000000000000000000000001000")
+	DefaultStateReceiverAddress sdk.AccAddress = hmCommon.HexToAccAddress("0x0000000000000000000000000000000000001001")
+	DefaultValidatorSetAddress  sdk.AccAddress = hmCommon.HexToAccAddress("0x0000000000000000000000000000000000001000")
 )
 
 // Parameter keys
@@ -123,7 +124,7 @@ func (p Params) Validate() error {
 	return nil
 }
 
-func validateHeimdallAddress(key string, value hmCommon.HeimdallAddress) error {
+func validateHeimdallAddress(key string, value sdk.AccAddress) error {
 	if value.String() == "" {
 		return fmt.Errorf("Invalid value %s in chain_params", key)
 	}
