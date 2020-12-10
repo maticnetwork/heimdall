@@ -16,6 +16,10 @@ var (
 	ErrValSignerMismatch       = sdkerrors.Register(ModuleName, 2502, "Signer Address doesnt match pubkey address")
 	ErrValidatorAlreadyJoined  = sdkerrors.Register(ModuleName, 2507, "Validator already joined")
 	ErrValidatorSave           = sdkerrors.Register(ModuleName, 2506, "Cannot save validator")
+	ErrNoValidator             = sdkerrors.Register(ModuleName, 2501, "Validator information not found")
+	ErrNonce                   = sdkerrors.Register(ModuleName, 2514, "Incorrect validator nonce")
+	ErrNoSignerChange          = sdkerrors.Register(ModuleName, 2513, "New signer same as old signer")
+	ErrValUnbonded             = sdkerrors.Register(ModuleName, 2504, "Validator already unbonded , cannot exit")
 )
 
 // 	CodeInvalidMsg CodeType = 1400

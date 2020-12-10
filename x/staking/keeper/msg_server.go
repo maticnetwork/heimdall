@@ -27,9 +27,17 @@ func NewMsgServerImpl(keeper Keeper, contractCaller helper.IContractCaller) type
 var _ types.MsgServer = msgServer{}
 
 func (k msgServer) ValidatorJoin(goCtx context.Context, msg *types.MsgValidatorJoin) (*types.MsgValidatorJoinResponse, error) {
-	// k.Logger(ctx).Info("Handling new validator join", "msg", msg)
-
 	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	k.Logger(ctx).Debug("✅ Validating validator join msg",
+		"validatorId", msg.ID,
+		"activationEpoch", msg.ActivationEpoch,
+		"amount", msg.Amount,
+		"SignerPubkey", msg.SignerPubKey.String(),
+		"txHash", msg.TxHash,
+		"logIndex", msg.LogIndex,
+		"blockNumber", msg.BlockNumber,
+	)
 
 	// Generate PubKey from Pubkey in message and signer
 	pubkey := msg.SignerPubKey
@@ -78,17 +86,171 @@ func (k msgServer) ValidatorJoin(goCtx context.Context, msg *types.MsgValidatorJ
 }
 
 func (k msgServer) StakeUpdate(goCtx context.Context, msg *types.MsgStakeUpdate) (*types.MsgStakeUpdateResponse, error) {
-	// ctx := sdk.UnwrapSDKContext(goCtx)
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	k.Logger(ctx).Debug("✅ Validating stake update msg",
+		"validatorID", msg.ID,
+		"newAmount", msg.NewAmount,
+		"txHash", msg.TxHash,
+		"logIndex", msg.LogIndex,
+		"blockNumber", msg.BlockNumber,
+	)
+
+	// pull validator from store
+	_, ok := k.GetValidatorFromValID(ctx, msg.ID)
+	if !ok {
+		k.Logger(ctx).Error("Fetching of validator from store failed", "validatorId", msg.ID)
+		return nil, hmCommon.ErrNoValidator
+	}
+
+	// sequence id
+	blockNumber := new(big.Int).SetUint64(msg.BlockNumber)
+	sequence := new(big.Int).Mul(blockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
+	sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))
+
+	// check if incoming tx is older
+	if k.HasStakingSequence(ctx, sequence.String()) {
+		k.Logger(ctx).Error("Older invalid tx found")
+		return nil, hmCommon.ErrOldTx
+	}
+
+	// pull validator from store
+	validator, ok := k.GetValidatorFromValID(ctx, msg.ID)
+	if !ok {
+		k.Logger(ctx).Error("Fetching of validator from store failed", "validatorId", msg.ID)
+		return nil, hmCommon.ErrNoValidator
+	}
+
+	if msg.Nonce != validator.Nonce+1 {
+		k.Logger(ctx).Error("Incorrect validator nonce")
+		return nil, hmCommon.ErrNonce
+	}
+
+	// set validator amount
+	_, err := helper.GetPowerFromAmount(msg.NewAmount.BigInt())
+	if err != nil {
+		k.Logger(ctx).Error("Invalid newamount", msg.NewAmount, "for validator %v", msg.ID)
+		return nil, hmCommon.ErrInvalidMsg
+	}
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeStakeUpdate,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(validator.ID.Uint64(), 10)),
+			sdk.NewAttribute(types.AttributeKeyValidatorNonce, strconv.FormatUint(msg.Nonce, 10)),
+		),
+	})
+
 	return &types.MsgStakeUpdateResponse{}, nil
 }
 
 func (k msgServer) SignerUpdate(goCtx context.Context, msg *types.MsgSignerUpdate) (*types.MsgSignerUpdateResponse, error) {
-	// ctx := sdk.UnwrapSDKContext(goCtx)
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	k.Logger(ctx).Debug("✅ Validating signer update msg",
+		"validatorID", msg.ID,
+		"NewSignerPubkey", msg.NewSignerPubKey.String(),
+		"txHash", msg.TxHash,
+		"logIndex", msg.LogIndex,
+		"blockNumber", msg.BlockNumber,
+	)
+
+	newPubKey := msg.NewSignerPubKey
+	newSigner := newPubKey.Address()
+
+	// pull validator from store
+	validator, ok := k.GetValidatorFromValID(ctx, msg.ID)
+	if !ok {
+		k.Logger(ctx).Error("Fetching of validator from store failed", "validatorId", msg.ID)
+		return nil, hmCommon.ErrNoValidator
+	}
+
+	// sequence id
+	blockNumber := new(big.Int).SetUint64(msg.BlockNumber)
+	sequence := new(big.Int).Mul(blockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
+	sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))
+
+	// check if incoming tx is older
+	if k.HasStakingSequence(ctx, sequence.String()) {
+		k.Logger(ctx).Error("Older invalid tx found")
+		return nil, hmCommon.ErrOldTx
+	}
+
+	// check if new signer address is same as existing signer
+	if bytes.Equal(newSigner.Bytes(), []byte(validator.Signer)) {
+		// No signer change
+		k.Logger(ctx).Error("NewSigner same as OldSigner.")
+		return nil, hmCommon.ErrNoSignerChange
+	}
+
+	// check nonce validity
+	if msg.Nonce != validator.Nonce+1 {
+		k.Logger(ctx).Error("Incorrect validator nonce")
+		return nil, hmCommon.ErrNonce
+	}
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeSignerUpdate,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(validator.ID.Uint64(), 10)),
+			sdk.NewAttribute(types.AttributeKeyValidatorNonce, strconv.FormatUint(msg.Nonce, 10)),
+		),
+	})
+
 	return &types.MsgSignerUpdateResponse{}, nil
 
 }
 
 func (k msgServer) ValidatorExit(goCtx context.Context, msg *types.MsgValidatorExit) (*types.MsgValidatorExitResponse, error) {
-	// ctx := sdk.UnwrapSDKContext(goCtx)
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	k.Logger(ctx).Debug("✅ Validating validator exit msg",
+		"validatorID", msg.ID,
+		"deactivatonEpoch", msg.DeactivationEpoch,
+		"txHash", msg.TxHash,
+		"logIndex", msg.LogIndex,
+		"blockNumber", msg.BlockNumber,
+	)
+
+	validator, ok := k.GetValidatorFromValID(ctx, msg.ID)
+	if !ok {
+		k.Logger(ctx).Error("Fetching of validator from store failed", "validatorID", msg.ID)
+		return nil, hmCommon.ErrNoValidator
+	}
+
+	k.Logger(ctx).Debug("validator in store", "validator", validator)
+	// check if validator deactivation period is set
+	if validator.EndEpoch != 0 {
+		k.Logger(ctx).Error("Validator already unbonded")
+		return nil, hmCommon.ErrValUnbonded
+	}
+
+	// sequence id
+	blockNumber := new(big.Int).SetUint64(msg.BlockNumber)
+	sequence := new(big.Int).Mul(blockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
+	sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))
+
+	// check if incoming tx is older
+	if k.HasStakingSequence(ctx, sequence.String()) {
+		k.Logger(ctx).Error("Older invalid tx found")
+		return nil, hmCommon.ErrOldTx
+	}
+
+	// check nonce validity
+	if msg.Nonce != validator.Nonce+1 {
+		k.Logger(ctx).Error("Incorrect validator nonce")
+		return nil, hmCommon.ErrNonce
+	}
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeValidatorExit,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(validator.ID.Uint64(), 10)),
+			sdk.NewAttribute(types.AttributeKeyValidatorNonce, strconv.FormatUint(msg.Nonce, 10)),
+		),
+	})
+
 	return &types.MsgValidatorExitResponse{}, nil
 }
