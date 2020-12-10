@@ -4,12 +4,14 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/cosmos/cosmos-sdk/client"
 
 	// "github.com/cosmos/cosmos-sdk/client/flags"
 	// sdk "github.com/cosmos/cosmos-sdk/types"
 
+	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/x/staking/types"
 )
 
@@ -25,53 +27,43 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 	}
 
 	stakingQueryCmd.AddCommand(
-	// GetCmdQueryValidators(),
+		GetValidatorInfo(),
 	)
 
 	return stakingQueryCmd
 }
 
-// GetCmdQueryValidators implements the query all validators command.
-// func GetCmdQueryValidators() *cobra.Command {
-// 	cmd := &cobra.Command{
-// 		Use:   "validators",
-// 		Short: "Query for all validators",
-// 		Args:  cobra.NoArgs,
-// 		Long: strings.TrimSpace(
-// 			fmt.Sprintf(`Query details about all validators on a network.
+// GetValidatorInfo validator information via id or address
+func GetValidatorInfo() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "validator-info",
+		Short: "show validator information via validator id",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
-// Example:
-// $ %s query staking validators
-// `,
-// 				version.AppName,
-// 			),
-// 		),
-// 		RunE: func(cmd *cobra.Command, args []string) error {
-// 			clientCtx := client.GetClientContextFromCmd(cmd)
-// 			clientCtx, err := client.ReadQueryCommandFlags(clientCtx, cmd.Flags())
-// 			if err != nil {
-// 				return err
-// 			}
+			validatorID := hmTypes.ValidatorID(viper.GetInt64(FlagValidatorID))
+			validatorAddressStr := viper.GetString(FlagValidatorAddress)
+			if validatorID == 0 && validatorAddressStr == "" {
+				return fmt.Errorf("validator ID or validator address required")
+			}
 
-// 			queryClient := types.NewQueryClient(clientCtx)
-// 			pageReq, err := client.ReadPageRequest(cmd.Flags())
-// 			if err != nil {
-// 				return err
-// 			}
+			queryClient := types.NewQueryClient(clientCtx)
 
-// 			result, err := queryClient.Validators(context.Background(), &types.QueryValidatorsRequest{
-// 				// Leaving status empty on purpose to query all validators.
-// 				Pagination: pageReq,
-// 			})
-// 			if err != nil {
-// 				return err
-// 			}
+			params := &types.QueryValidatorRequest{ValidatorId: validatorID}
+			res, err := queryClient.Validator(cmd.Context(), params)
+			if err != nil {
+				return err
+			}
 
-// 			return clientCtx.PrintOutput(result)
-// 		},
-// 	}
+			return clientCtx.PrintOutput(res.Validator)
+		},
+	}
 
-// 	flags.AddQueryFlagsToCmd(cmd)
-
-// 	return cmd
-// }
+	cmd.Flags().Int(FlagValidatorID, 0, "--id=<validator ID here>")
+	cmd.Flags().String(FlagValidatorAddress, "", "--validator=<validator address here>")
+	return cmd
+}
