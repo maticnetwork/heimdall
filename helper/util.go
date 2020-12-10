@@ -1,9 +1,12 @@
 package helper
 
 import (
+	"bytes"
 	"errors"
 	"math/big"
 
+	"github.com/cosmos/cosmos-sdk/client"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/common"
 	"github.com/tendermint/tendermint/crypto"
@@ -53,4 +56,24 @@ func UnpackSigAndVotes(payload []byte, abi abi.ABI) (votes []byte, sigs []byte, 
 	checkpointData = inputDataMap["txData"].([]byte)
 	votes = inputDataMap["vote"].([]byte)
 	return
+}
+
+// GetFromAddress get from address
+func GetFromAddress(cliCtx client.Context) sdk.AccAddress {
+	fromAddress := cliCtx.GetFromAddress()
+	if !fromAddress.Empty() {
+		return fromAddress
+	}
+
+	return GetAddress()
+}
+
+// EventByID looks up a event by the topic id
+func EventByID(abiObject *abi.ABI, sigdata []byte) *abi.Event {
+	for _, event := range abiObject.Events {
+		if bytes.Equal(event.ID.Bytes(), sigdata) {
+			return &event
+		}
+	}
+	return nil
 }
