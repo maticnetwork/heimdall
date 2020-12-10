@@ -2,13 +2,10 @@ package types
 
 import (
 	"fmt"
-	"regexp"
 )
 
 var (
 	_ SideRouter = (*router)(nil)
-
-	isAlphaNumeric = regexp.MustCompile(`^[a-zA-Z0-9]+$`).MatchString
 )
 
 // SideHandlers handler for side-tx processing
