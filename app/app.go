@@ -1,7 +1,6 @@
 package app
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -395,8 +394,6 @@ func (app *HeimdallApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) 
 		valUpdates = append(valUpdates, updateVal)
 		// }
 	}
-
-	fmt.Println("valUpdates", valUpdates)
 
 	// TODO make sure old validtors dont go in validator updates ie deactivated validators have to be removed
 	// udpate validators

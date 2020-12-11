@@ -5,6 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
 	"github.com/maticnetwork/heimdall/x/checkpoint/keeper"
 	"github.com/maticnetwork/heimdall/x/checkpoint/types"
 )

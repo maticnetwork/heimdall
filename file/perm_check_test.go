@@ -6,9 +6,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	types "github.com/maticnetwork/heimdall/types/error"
 	"github.com/stretchr/testify/assert"
 	tmos "github.com/tendermint/tendermint/libs/os"
+
+	types "github.com/maticnetwork/heimdall/types/error"
 )
 
 func TestPermCheck(t *testing.T) {

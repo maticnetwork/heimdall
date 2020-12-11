@@ -13,12 +13,13 @@ import (
 	"github.com/maticnetwork/bor/eth"
 	"github.com/maticnetwork/bor/ethclient"
 	"github.com/maticnetwork/bor/rpc"
-	"github.com/maticnetwork/heimdall/file"
 	"github.com/spf13/viper"
 	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	logger "github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/privval"
+
+	"github.com/maticnetwork/heimdall/file"
 
 	tmTypes "github.com/tendermint/tendermint/types"
 )
