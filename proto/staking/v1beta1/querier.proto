@@ -16,12 +16,12 @@ option (gogoproto.unmarshaler_all) = true;
 service Query {
     // Validator queries the validator that match by validator id.
   rpc Validator(QueryValidatorRequest) returns (QueryValidatorResponse) {
-    option (google.api.http).get = "heimdall/types/validator/{validator_id}";
+    option (google.api.http).get = "/heimdall/types/validator/{validator_id}";
   }
 
   // ValidatorSet queries the validatorSet that match by validator id.
   rpc ValidatorSet(QueryValidatorSetRequest) returns (QueryValidatorSetResponse) {
-    option (google.api.http).get = "heimdall/types/validatorSet";
+    option (google.api.http).get = "/heimdall/types/validatorSet";
   }
 }
 
