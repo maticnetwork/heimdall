@@ -158,7 +158,10 @@ func initCmd(ctx *server.Context, amino *codec.LegacyAmino, mbm module.BasicMana
 			}
 
 			cfg.WriteConfigFile(filepath.Join(config.RootDir, "config", "config.toml"), config)
-			writeGenesisFile(tmtime.Now(), config.GenesisFile(), chainID, appStateJSON)
+
+			if err := writeGenesisFile(tmtime.Now(), config.GenesisFile(), chainID, appStateJSON); err != nil {
+				return err
+			}
 
 			// print info
 			return displayInfo(newPrintInfo(config.Moniker, chainID, nodeID, "", appStateJSON))

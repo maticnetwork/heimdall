@@ -172,7 +172,9 @@ func (am AppModule) BeginBlock(ctx sdk.Context, req abci.RequestBeginBlock) {
 		}
 
 		// set validators for height
-		am.keeper.SetValidators(ctx, uint64(height), validators)
+		if err := am.keeper.SetValidators(ctx, uint64(height), validators); err != nil {
+			// TODO: How to handle this?
+		}
 	}
 }
 
