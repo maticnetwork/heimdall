@@ -1,7 +1,6 @@
 package app
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -422,8 +421,6 @@ func (app *HeimdallApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) 
 		// }
 	}
 
-	fmt.Println("valUpdates", valUpdates)
-
 	// TODO make sure old validtors dont go in validator updates ie deactivated validators have to be removed
 	// udpate validators
 	return abci.ResponseInitChain{
@@ -497,6 +494,20 @@ func (app *HeimdallApp) GetTKey(storeKey string) *sdk.TransientStoreKey {
 // GetSideRouter returns side-tx router
 func (app *HeimdallApp) GetSideRouter() hmtypes.SideRouter {
 	return app.sideRouter
+}
+
+// SetSideRouter sets side-tx router
+//
+// NOTE: This is solely to be used for testing purposes.
+func (app *HeimdallApp) SetSideRouter(router hmtypes.SideRouter) {
+	app.sideRouter = router
+}
+
+// SetTxDecoder sets tx decoder
+//
+// NOTE: This is solely to be used for testing purposes.
+func (app *HeimdallApp) SetTxDecoder(decoder sdk.TxDecoder) {
+	app.txDecoder = decoder
 }
 
 // GetSubspace returns a param subspace for a given module name.

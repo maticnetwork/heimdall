@@ -6,6 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/maticnetwork/heimdall/helper"
+
 	"github.com/maticnetwork/heimdall/x/staking/keeper"
 	"github.com/maticnetwork/heimdall/x/staking/types"
 )

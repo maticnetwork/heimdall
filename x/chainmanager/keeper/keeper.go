@@ -9,6 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/maticnetwork/heimdall/helper"
+
 	"github.com/maticnetwork/heimdall/x/chainmanager/types"
 )
 

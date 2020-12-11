@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	// storing constant as this recomended as a secruity feature
+	// storing constant as this recommended as a security feature
 	secretPerm os.FileMode = 0600
 )
 

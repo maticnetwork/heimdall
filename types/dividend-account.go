@@ -9,6 +9,7 @@ import (
 	"github.com/cbergoon/merkletree"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/maticnetwork/bor/crypto"
+
 	"github.com/maticnetwork/heimdall/types/common"
 )
 

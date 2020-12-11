@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/gogo/protobuf/grpc"
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
@@ -138,12 +139,11 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQueryServerImpl(am.keeper, am.contractCaller))
 }
 
-// // RegisterQueryService registers a GRPC query service to respond to the
-// // module-specific GRPC queries.
-// func (am AppModule) RegisterQueryService(server grpc.Server) {
-// 	querier := keeper.NewQueryServerImpl(am.keeper, am.contractCaller)
-// 	types.RegisterQueryServer(server, querier)
-// }
+// RegisterQueryService registers a GRPC query service to respond to the
+// module-specific GRPC queries.
+func (am AppModule) RegisterQueryService(server grpc.Server) {
+	// types.RegisterQueryServer(server, keeper.NewQueryServerImpl(am.keeper, am.contractCaller))
+}
 
 // RegisterInvariants registers the capability module's invariants.
 func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
