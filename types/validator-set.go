@@ -792,25 +792,3 @@ func safeSubClip(a, b int64) int64 {
 	}
 	return c
 }
-
-// func safeMul(a, b int64) (int64, bool) {
-// 	if a == 0 || b == 0 {
-// 		return 0, false
-// 	}
-
-// 	absOfB := b
-// 	if b < 0 {
-// 		absOfB = -b
-// 	}
-
-// 	absOfA := a
-// 	if a < 0 {
-// 		absOfA = -a
-// 	}
-
-// 	if absOfA > math.MaxInt64/absOfB {
-// 		return 0, true
-// 	}
-
-// 	return a * b, false
-// }

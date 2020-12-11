@@ -7,11 +7,6 @@ import (
 	types "github.com/maticnetwork/heimdall/types/error"
 )
 
-const (
-// storing constant as this recomended as a secruity feature
-// secretPerm os.FileMode = 0600
-)
-
 // PermCheck check the secret key and the keystore files.
 // it verifies whether they are stored with the correct permissions.
 func PermCheck(filePath string, validPerm os.FileMode) error {
