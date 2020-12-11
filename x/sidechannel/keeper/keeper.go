@@ -162,6 +162,7 @@ func (k Keeper) IterateTxsAndApplyFn(ctx sdk.Context, f func(uint64, tmtypes.Tx)
 
 		if err := binary.Read(buf, binary.BigEndian, &height); err != nil {
 			k.Logger(ctx).Error("Error in binary.Read")
+			return
 		}
 
 		// call function and return if required
@@ -199,6 +200,7 @@ func (k Keeper) IterateValidatorsAndApplyFn(ctx sdk.Context, f func(uint64, []*a
 
 		if err := binary.Read(buf, binary.BigEndian, &height); err != nil {
 			k.Logger(ctx).Error("Error in binary.Read")
+			return
 		}
 
 		// call function and return if required

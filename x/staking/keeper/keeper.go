@@ -465,6 +465,7 @@ func (k *Keeper) Slash(ctx sdk.Context, valSlashingInfo hmTypes.ValidatorSlashin
 	// add updated validator to store with new key
 	if err := k.AddValidator(ctx, validator); err != nil {
 		k.Logger(ctx).Error("Error calling AddValidator")
+		return err
 	}
 	k.Logger(ctx).Debug("updated validator with slashed voting power and jail status", "validator", validator)
 	return nil
