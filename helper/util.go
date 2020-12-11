@@ -24,7 +24,7 @@ var ZeroAddress = common.Address{}
 // ZeroPubKey represents empty pub key
 var ZeroPubKey = hmCommonTypes.PubKey{}
 
-// GetPowerFromAmount returns power from amount -- note that this will polute amount object
+// GetPowerFromAmount returns power from amount -- note that this will pollute amount object
 func GetPowerFromAmount(amount *big.Int) (*big.Int, error) {
 	decimals18 := big.NewInt(10).Exp(big.NewInt(10), big.NewInt(18), nil)
 	if amount.Cmp(decimals18) == -1 {

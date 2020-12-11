@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/maticnetwork/heimdall/types/common"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/maticnetwork/heimdall/types/common"
 )
 
 // valInput struct is used to seed data for testing
@@ -70,14 +71,14 @@ func TestSortValidatorByAddress(t *testing.T) {
 	}{
 		{
 			in: []Validator{
-				Validator{Signer: BytesToHeimdallAddress([]byte("3"))},
-				Validator{Signer: BytesToHeimdallAddress([]byte("2"))},
-				Validator{Signer: BytesToHeimdallAddress([]byte("1"))},
+				{Signer: BytesToHeimdallAddress([]byte("3"))},
+				{Signer: BytesToHeimdallAddress([]byte("2"))},
+				{Signer: BytesToHeimdallAddress([]byte("1"))},
 			},
 			out: []Validator{
-				Validator{Signer: BytesToHeimdallAddress([]byte("1"))},
-				Validator{Signer: BytesToHeimdallAddress([]byte("2"))},
-				Validator{Signer: BytesToHeimdallAddress([]byte("3"))},
+				{Signer: BytesToHeimdallAddress([]byte("1"))},
+				{Signer: BytesToHeimdallAddress([]byte("2"))},
+				{Signer: BytesToHeimdallAddress([]byte("3"))},
 			},
 			msg: "reverse sorting of validator objects",
 		},

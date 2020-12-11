@@ -41,7 +41,7 @@ func (a *PubKey) UnmarshalText(input []byte) error {
 	return hexutil.UnmarshalFixedText("PubKey", input, a.Bytes()[:])
 }
 
-// String returns string representatin of key
+// String returns string representations of key
 func (a PubKey) String() string {
 	return common.ToHex(a)
 }
