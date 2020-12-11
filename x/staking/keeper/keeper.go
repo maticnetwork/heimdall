@@ -36,9 +36,9 @@ type ModuleCommunicator interface {
 
 type (
 	Keeper struct {
-		cdc                codec.BinaryMarshaler
-		storeKey           sdk.StoreKey
-		memKey             sdk.StoreKey
+		cdc      codec.BinaryMarshaler
+		storeKey sdk.StoreKey
+		// memKey             sdk.StoreKey
 		paramSubspace      paramtypes.Subspace
 		moduleCommunicator ModuleCommunicator
 		//TODO: add chainmanager keeper
