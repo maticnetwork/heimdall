@@ -1,12 +1,15 @@
 package cli
 
 import (
+	"context"
 	"fmt"
 
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	"github.com/cosmos/cosmos-sdk/client"
+
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/x/staking/types"
 )
@@ -51,7 +54,7 @@ func GetValidatorInfoCmd() *cobra.Command {
 			queryClient := types.NewQueryClient(clientCtx)
 
 			params := &types.QueryValidatorRequest{ValidatorId: validatorID}
-			res, err := queryClient.Validator(cmd.Context(), params)
+			res, err := queryClient.Validator(context.Background(), params)
 			if err != nil {
 				return err
 			}
@@ -60,6 +63,7 @@ func GetValidatorInfoCmd() *cobra.Command {
 		},
 	}
 
+	flags.AddQueryFlagsToCmd(cmd)
 	cmd.Flags().Int(FlagValidatorID, 0, "--id=<validator ID here>")
 	cmd.Flags().String(FlagValidatorAddress, "", "--validator=<validator address here>")
 	return cmd

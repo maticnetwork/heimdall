@@ -17,6 +17,7 @@ import (
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/x/staking/client/cli"
 	"github.com/maticnetwork/heimdall/x/staking/client/rest"
