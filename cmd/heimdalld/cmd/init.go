@@ -117,6 +117,9 @@ func initCmd(ctx *server.Context, amino *codec.LegacyAmino, mbm module.BasicMana
 			//
 			authGenState := authtypes.GetGenesisStateFromAppState(authclient.Codec, appState)
 			accs, err := authtypes.UnpackAccounts(authGenState.Accounts)
+			if err != nil {
+				return fmt.Errorf("failed to unpack accounts: %w", err)
+			}
 			accs = append(accs, genesisAccount)
 			genAccs, err := authtypes.PackAccounts(accs)
 			if err != nil {
