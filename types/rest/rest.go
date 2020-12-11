@@ -17,8 +17,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec/legacy"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
-	"github.com/maticnetwork/heimdall/types/common"
 	tmTypes "github.com/tendermint/tendermint/types"
+
+	"github.com/maticnetwork/heimdall/types/common"
 )
 
 const (

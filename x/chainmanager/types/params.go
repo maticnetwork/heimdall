@@ -7,6 +7,7 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 	// "github.com/maticnetwork/heimdall/params/paramtypes"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+
 	hmCommon "github.com/maticnetwork/heimdall/types/common"
 )
 

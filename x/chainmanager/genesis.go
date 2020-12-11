@@ -2,6 +2,7 @@ package chainmanager
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/maticnetwork/heimdall/x/chainmanager/keeper"
 	"github.com/maticnetwork/heimdall/x/chainmanager/types"
 )
