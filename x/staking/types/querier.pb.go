@@ -122,36 +122,122 @@ func (m *QueryValidatorResponse) GetValidator() *types.Validator {
 	return nil
 }
 
+type QueryValidatorSetRequest struct {
+}
+
+func (m *QueryValidatorSetRequest) Reset()         { *m = QueryValidatorSetRequest{} }
+func (m *QueryValidatorSetRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryValidatorSetRequest) ProtoMessage()    {}
+func (*QueryValidatorSetRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_265d2f784305a385, []int{2}
+}
+func (m *QueryValidatorSetRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryValidatorSetRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryValidatorSetRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryValidatorSetRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryValidatorSetRequest.Merge(m, src)
+}
+func (m *QueryValidatorSetRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryValidatorSetRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryValidatorSetRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryValidatorSetRequest proto.InternalMessageInfo
+
+type QueryValidatorSetResponse struct {
+	ValidatorSet *types.ValidatorSet `protobuf:"bytes,1,opt,name=validatorSet,proto3" json:"validatorSet,omitempty"`
+}
+
+func (m *QueryValidatorSetResponse) Reset()         { *m = QueryValidatorSetResponse{} }
+func (m *QueryValidatorSetResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryValidatorSetResponse) ProtoMessage()    {}
+func (*QueryValidatorSetResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_265d2f784305a385, []int{3}
+}
+func (m *QueryValidatorSetResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryValidatorSetResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryValidatorSetResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryValidatorSetResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryValidatorSetResponse.Merge(m, src)
+}
+func (m *QueryValidatorSetResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryValidatorSetResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryValidatorSetResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryValidatorSetResponse proto.InternalMessageInfo
+
+func (m *QueryValidatorSetResponse) GetValidatorSet() *types.ValidatorSet {
+	if m != nil {
+		return m.ValidatorSet
+	}
+	return nil
+}
+
 func init() {
 	proto.RegisterType((*QueryValidatorRequest)(nil), "heimdall.staking.v1beta1.QueryValidatorRequest")
 	proto.RegisterType((*QueryValidatorResponse)(nil), "heimdall.staking.v1beta1.QueryValidatorResponse")
+	proto.RegisterType((*QueryValidatorSetRequest)(nil), "heimdall.staking.v1beta1.QueryValidatorSetRequest")
+	proto.RegisterType((*QueryValidatorSetResponse)(nil), "heimdall.staking.v1beta1.QueryValidatorSetResponse")
 }
 
 func init() { proto.RegisterFile("staking/v1beta1/querier.proto", fileDescriptor_265d2f784305a385) }
 
 var fileDescriptor_265d2f784305a385 = []byte{
-	// 327 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x92, 0x2d, 0x2e, 0x49, 0xcc,
-	0xce, 0xcc, 0x4b, 0xd7, 0x2f, 0x33, 0x4c, 0x4a, 0x2d, 0x49, 0x34, 0xd4, 0x2f, 0x2c, 0x4d, 0x2d,
-	0xca, 0x4c, 0x2d, 0xd2, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x92, 0xc8, 0x48, 0xcd, 0xcc, 0x4d,
-	0x49, 0xcc, 0xc9, 0xd1, 0x83, 0xaa, 0xd3, 0x83, 0xaa, 0x93, 0x92, 0x83, 0xc9, 0xe8, 0x97, 0x54,
-	0x16, 0xa4, 0x16, 0xeb, 0x97, 0x25, 0xe6, 0x64, 0xa6, 0x24, 0x96, 0xe4, 0x43, 0x75, 0x4a, 0xc9,
-	0xa4, 0xe7, 0xe7, 0xa7, 0xe7, 0xa4, 0xea, 0x27, 0x16, 0x64, 0xea, 0x27, 0xe6, 0xe5, 0xe5, 0x97,
-	0x24, 0x96, 0x64, 0xe6, 0xe7, 0x15, 0x43, 0x65, 0x45, 0xd2, 0xf3, 0xd3, 0xf3, 0xc1, 0x4c, 0x7d,
-	0x10, 0x0b, 0x22, 0xaa, 0x14, 0xce, 0x25, 0x1a, 0x58, 0x9a, 0x5a, 0x54, 0x19, 0x06, 0x33, 0x2b,
-	0x28, 0xb5, 0xb0, 0x34, 0xb5, 0xb8, 0x44, 0xc8, 0x8e, 0x8b, 0x07, 0x6e, 0x7e, 0x7c, 0x66, 0x8a,
-	0x04, 0xa3, 0x02, 0xa3, 0x06, 0x9f, 0x91, 0xb4, 0x1e, 0xdc, 0x75, 0x60, 0x37, 0xe8, 0xc1, 0xf5,
-	0x79, 0xba, 0x04, 0x71, 0xc3, 0x35, 0x78, 0xa6, 0x28, 0x05, 0x72, 0x89, 0xa1, 0x1b, 0x5c, 0x5c,
-	0x90, 0x9f, 0x57, 0x9c, 0x2a, 0x64, 0xce, 0xc5, 0x09, 0x57, 0x08, 0x36, 0x96, 0xdb, 0x48, 0x12,
-	0xa7, 0xb1, 0x41, 0x08, 0xb5, 0x46, 0x2b, 0x19, 0xb9, 0x58, 0xc1, 0x66, 0x0a, 0xcd, 0x67, 0xe4,
-	0xe2, 0x84, 0x2b, 0x11, 0xd2, 0xd7, 0xc3, 0x15, 0x64, 0x7a, 0x58, 0xfd, 0x26, 0x65, 0x40, 0xbc,
-	0x06, 0x88, 0x9b, 0x95, 0xf4, 0x9b, 0x2e, 0x3f, 0x99, 0xcc, 0xa4, 0x29, 0xa4, 0x8e, 0x2b, 0x0a,
-	0xf4, 0xab, 0x91, 0x43, 0xab, 0xd6, 0xc9, 0xeb, 0xc4, 0x23, 0x39, 0xc6, 0x0b, 0x8f, 0xe4, 0x18,
-	0x1f, 0x3c, 0x92, 0x63, 0x9c, 0xf0, 0x58, 0x8e, 0xe1, 0xc2, 0x63, 0x39, 0x86, 0x1b, 0x8f, 0xe5,
-	0x18, 0xa2, 0x0c, 0xd2, 0x33, 0x4b, 0x32, 0x4a, 0x93, 0xf4, 0x92, 0xf3, 0x73, 0xf5, 0x73, 0x13,
-	0x4b, 0x32, 0x93, 0xf3, 0x52, 0x4b, 0xca, 0xf3, 0x8b, 0xb2, 0xf5, 0xe1, 0x46, 0x57, 0xe8, 0xc3,
-	0x52, 0x08, 0xd8, 0x92, 0x24, 0x36, 0x70, 0x54, 0x19, 0x03, 0x02, 0x00, 0x00, 0xff, 0xff, 0x3e,
-	0x05, 0xab, 0xb2, 0x39, 0x02, 0x00, 0x00,
+	// 392 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x93, 0x41, 0x4b, 0x02, 0x41,
+	0x14, 0xc7, 0x5d, 0xa1, 0xc0, 0x51, 0x3a, 0x0c, 0x15, 0xba, 0xea, 0x12, 0xdb, 0xa1, 0xba, 0xcc,
+	0xe8, 0x7a, 0xe8, 0x16, 0x11, 0x5d, 0xec, 0xa6, 0x42, 0x41, 0x10, 0x31, 0xba, 0xc3, 0x3a, 0xb8,
+	0xee, 0xac, 0xbb, 0xb3, 0x96, 0x44, 0x97, 0x3e, 0x41, 0xd0, 0x35, 0xe8, 0xeb, 0x78, 0x14, 0xba,
+	0x74, 0x0c, 0xed, 0x83, 0x84, 0xeb, 0xb8, 0x6a, 0xb8, 0x60, 0xb7, 0x61, 0xdf, 0xff, 0xff, 0x7b,
+	0xff, 0x79, 0x6f, 0x07, 0x14, 0x7d, 0x41, 0x3a, 0xcc, 0xb1, 0x70, 0xbf, 0xdc, 0xa4, 0x82, 0x94,
+	0x71, 0x2f, 0xa0, 0x1e, 0xa3, 0x1e, 0x72, 0x3d, 0x2e, 0x38, 0xcc, 0xb6, 0x29, 0xeb, 0x9a, 0xc4,
+	0xb6, 0x91, 0xd4, 0x21, 0xa9, 0x53, 0xb5, 0x79, 0x05, 0x8b, 0x81, 0x4b, 0x7d, 0xdc, 0x27, 0x36,
+	0x33, 0x89, 0xe0, 0xd2, 0xa9, 0x16, 0x2c, 0xce, 0x2d, 0x9b, 0x62, 0xe2, 0x32, 0x4c, 0x1c, 0x87,
+	0x0b, 0x22, 0x18, 0x77, 0x7c, 0x59, 0xdd, 0xb5, 0xb8, 0xc5, 0xc3, 0x23, 0x9e, 0x9e, 0x66, 0x5f,
+	0xf5, 0x1b, 0xb0, 0x57, 0x0b, 0xa8, 0x37, 0xb8, 0x9e, 0xb3, 0xea, 0xb4, 0x17, 0x50, 0x5f, 0xc0,
+	0x33, 0x90, 0x89, 0xf8, 0xf7, 0xcc, 0xcc, 0x2a, 0x07, 0xca, 0xf1, 0x8e, 0x91, 0x47, 0x51, 0xba,
+	0x30, 0x03, 0x8a, 0x7c, 0xd5, 0xcb, 0x7a, 0x3a, 0x32, 0x54, 0x4d, 0xbd, 0x06, 0xf6, 0xff, 0x82,
+	0x7d, 0x97, 0x3b, 0x3e, 0x85, 0xa7, 0x20, 0x15, 0x09, 0x43, 0x6c, 0xda, 0xc8, 0xc5, 0x62, 0xeb,
+	0x0b, 0xad, 0xae, 0x82, 0xec, 0x2a, 0xb2, 0x41, 0x85, 0x8c, 0xab, 0xdf, 0x81, 0xdc, 0x9a, 0x9a,
+	0xec, 0x78, 0xbe, 0x74, 0x97, 0x06, 0x15, 0xb2, 0x69, 0x21, 0xb6, 0xe9, 0xd4, 0xbb, 0xe2, 0x30,
+	0x86, 0x49, 0xb0, 0x15, 0xf2, 0xe1, 0x87, 0x02, 0x52, 0x91, 0x10, 0x62, 0x14, 0xb7, 0x2d, 0xb4,
+	0x76, 0xac, 0x6a, 0x69, 0x73, 0xc3, 0x2c, 0xbc, 0x8e, 0x5f, 0x3e, 0x7f, 0xde, 0x92, 0x27, 0xf0,
+	0x28, 0x6e, 0xfb, 0xf8, 0x69, 0x79, 0x51, 0xcf, 0xf0, 0x5d, 0x01, 0x99, 0xe5, 0xab, 0x40, 0x63,
+	0xd3, 0x9e, 0x8b, 0x79, 0xaa, 0x95, 0x7f, 0x79, 0x64, 0xd4, 0xc3, 0x30, 0x6a, 0x11, 0xe6, 0xe3,
+	0xa2, 0x36, 0xa8, 0xb8, 0xb8, 0x1a, 0x8e, 0x35, 0x65, 0x34, 0xd6, 0x94, 0xef, 0xb1, 0xa6, 0xbc,
+	0x4e, 0xb4, 0xc4, 0x68, 0xa2, 0x25, 0xbe, 0x26, 0x5a, 0xe2, 0xb6, 0x64, 0x31, 0xd1, 0x0e, 0x9a,
+	0xa8, 0xc5, 0xbb, 0xb8, 0x4b, 0x04, 0x6b, 0x39, 0x54, 0x3c, 0x70, 0xaf, 0x83, 0x23, 0xdc, 0x23,
+	0x9e, 0xbf, 0x9d, 0x10, 0xdc, 0xdc, 0x0e, 0x7f, 0xe2, 0xca, 0x6f, 0x00, 0x00, 0x00, 0xff, 0xff,
+	0xa2, 0xff, 0x91, 0x54, 0x53, 0x03, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -166,8 +252,10 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type QueryClient interface {
-	// Validators queries all validators that match the given status.
+	// Validator queries the validator that match by validator id.
 	Validator(ctx context.Context, in *QueryValidatorRequest, opts ...grpc.CallOption) (*QueryValidatorResponse, error)
+	// ValidatorSet queries the validatorSet that match by validator id.
+	ValidatorSet(ctx context.Context, in *QueryValidatorSetRequest, opts ...grpc.CallOption) (*QueryValidatorSetResponse, error)
 }
 
 type queryClient struct {
@@ -187,10 +275,21 @@ func (c *queryClient) Validator(ctx context.Context, in *QueryValidatorRequest, 
 	return out, nil
 }
 
+func (c *queryClient) ValidatorSet(ctx context.Context, in *QueryValidatorSetRequest, opts ...grpc.CallOption) (*QueryValidatorSetResponse, error) {
+	out := new(QueryValidatorSetResponse)
+	err := c.cc.Invoke(ctx, "/heimdall.staking.v1beta1.Query/ValidatorSet", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // QueryServer is the server API for Query service.
 type QueryServer interface {
-	// Validators queries all validators that match the given status.
+	// Validator queries the validator that match by validator id.
 	Validator(context.Context, *QueryValidatorRequest) (*QueryValidatorResponse, error)
+	// ValidatorSet queries the validatorSet that match by validator id.
+	ValidatorSet(context.Context, *QueryValidatorSetRequest) (*QueryValidatorSetResponse, error)
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
@@ -199,6 +298,9 @@ type UnimplementedQueryServer struct {
 
 func (*UnimplementedQueryServer) Validator(ctx context.Context, req *QueryValidatorRequest) (*QueryValidatorResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Validator not implemented")
+}
+func (*UnimplementedQueryServer) ValidatorSet(ctx context.Context, req *QueryValidatorSetRequest) (*QueryValidatorSetResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ValidatorSet not implemented")
 }
 
 func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
@@ -223,6 +325,24 @@ func _Query_Validator_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_ValidatorSet_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryValidatorSetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).ValidatorSet(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/heimdall.staking.v1beta1.Query/ValidatorSet",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).ValidatorSet(ctx, req.(*QueryValidatorSetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Query_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "heimdall.staking.v1beta1.Query",
 	HandlerType: (*QueryServer)(nil),
@@ -230,6 +350,10 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Validator",
 			Handler:    _Query_Validator_Handler,
+		},
+		{
+			MethodName: "ValidatorSet",
+			Handler:    _Query_ValidatorSet_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -299,6 +423,64 @@ func (m *QueryValidatorResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) 
 	return len(dAtA) - i, nil
 }
 
+func (m *QueryValidatorSetRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryValidatorSetRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryValidatorSetRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryValidatorSetResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryValidatorSetResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryValidatorSetResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.ValidatorSet != nil {
+		{
+			size, err := m.ValidatorSet.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintQuerier(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintQuerier(dAtA []byte, offset int, v uint64) int {
 	offset -= sovQuerier(v)
 	base := offset
@@ -330,6 +512,28 @@ func (m *QueryValidatorResponse) Size() (n int) {
 	_ = l
 	if m.Validator != nil {
 		l = m.Validator.Size()
+		n += 1 + l + sovQuerier(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryValidatorSetRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *QueryValidatorSetResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.ValidatorSet != nil {
+		l = m.ValidatorSet.Size()
 		n += 1 + l + sovQuerier(uint64(l))
 	}
 	return n
@@ -475,6 +679,148 @@ func (m *QueryValidatorResponse) Unmarshal(dAtA []byte) error {
 				m.Validator = &types.Validator{}
 			}
 			if err := m.Validator.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuerier(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthQuerier
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthQuerier
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryValidatorSetRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuerier
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryValidatorSetRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryValidatorSetRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuerier(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthQuerier
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthQuerier
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryValidatorSetResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuerier
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryValidatorSetResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryValidatorSetResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ValidatorSet", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuerier
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuerier
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuerier
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.ValidatorSet == nil {
+				m.ValidatorSet = &types.ValidatorSet{}
+			}
+			if err := m.ValidatorSet.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

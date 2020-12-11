@@ -44,3 +44,15 @@ func (k Querier) Validator(c context.Context, req *types.QueryValidatorRequest) 
 
 	return &types.QueryValidatorResponse{Validator: &validator}, nil
 }
+
+// ValidatorSet queries validatorSet info
+func (k Querier) ValidatorSet(c context.Context, req *types.QueryValidatorSetRequest) (*types.QueryValidatorSetResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	ctx := sdk.UnwrapSDKContext(c)
+	validatorSet := k.GetValidatorSet(ctx)
+
+	return &types.QueryValidatorSetResponse{ValidatorSet: validatorSet}, nil
+}

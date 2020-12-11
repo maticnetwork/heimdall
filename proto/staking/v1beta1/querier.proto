@@ -14,9 +14,14 @@ option (gogoproto.marshaler_all)   = true;
 option (gogoproto.unmarshaler_all) = true;
 // Query defines the gRPC querier service.
 service Query {
-    // Validators queries all validators that match the given status.
+    // Validator queries the validator that match by validator id.
   rpc Validator(QueryValidatorRequest) returns (QueryValidatorResponse) {
     option (google.api.http).get = "heimdall/types/validator/{validator_id}";
+  }
+
+  // ValidatorSet queries the validatorSet that match by validator id.
+  rpc ValidatorSet(QueryValidatorSetRequest) returns (QueryValidatorSetResponse) {
+    option (google.api.http).get = "heimdall/types/validatorSet";
   }
 }
 
@@ -26,8 +31,16 @@ message QueryValidatorRequest {
     heimdall.types.ValidatorID validator_id = 1;
 }
   
-  // QueryValidatorResponse is response type for the Query/Validator RPC method
+// QueryValidatorResponse is response type for the Query/Validator RPC method
 message QueryValidatorResponse {
     // validator defines the the validator info.
     heimdall.types.Validator validator = 1 ;
+}
+
+message QueryValidatorSetRequest {
+
+}
+
+message QueryValidatorSetResponse {
+  heimdall.types.ValidatorSet validatorSet = 1 ;
 }
