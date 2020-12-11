@@ -50,20 +50,20 @@ import (
 	"github.com/maticnetwork/heimdall/types/common"
 )
 
-var logger = helper.Logger.With("module", "cmd/heimdalld")
+// var logger = helper.Logger.With("module", "cmd/heimdalld")
 
 var (
-	flagNodeDirPrefix    = "node-dir-prefix"
-	flagNumValidators    = "v"
-	flagNumNonValidators = "n"
-	flagOutputDir        = "output-dir"
-	flagNodeDaemonHome   = "node-daemon-home"
-	flagNodeCliHome      = "node-cli-home"
-	flagNodeHostPrefix   = "node-host-prefix"
+// flagNodeDirPrefix    = "node-dir-prefix"
+// flagNumValidators    = "v"
+// flagNumNonValidators = "n"
+// flagOutputDir        = "output-dir"
+// flagNodeDaemonHome   = "node-daemon-home"
+// flagNodeCliHome      = "node-cli-home"
+// flagNodeHostPrefix = "node-host-prefix"
 )
 
 const (
-	nodeDirPerm = 0755
+// nodeDirPerm = 0755
 )
 
 var ZeroIntString = big.NewInt(0).String()
@@ -280,48 +280,48 @@ func createSimappAndExport(
 	return a.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
 }
 
-// Total Validators to be included in the testnet
-func totalValidators() int {
-	numValidators := viper.GetInt(flagNumValidators)
-	numNonValidators := viper.GetInt(flagNumNonValidators)
-	return numNonValidators + numValidators
-}
+// // Total Validators to be included in the testnet
+// func totalValidators() int {
+// 	numValidators := viper.GetInt(flagNumValidators)
+// 	numNonValidators := viper.GetInt(flagNumNonValidators)
+// 	return numNonValidators + numValidators
+// }
 
-// get node directory path
-func nodeDir(i int) string {
-	outDir := viper.GetString(flagOutputDir)
-	nodeDirName := fmt.Sprintf("%s%d", viper.GetString(flagNodeDirPrefix), i)
-	nodeDaemonHomeName := viper.GetString(flagNodeDaemonHome)
-	return filepath.Join(outDir, nodeDirName, nodeDaemonHomeName)
-}
+// // get node directory path
+// func nodeDir(i int) string {
+// 	outDir := viper.GetString(flagOutputDir)
+// 	nodeDirName := fmt.Sprintf("%s%d", viper.GetString(flagNodeDirPrefix), i)
+// 	nodeDaemonHomeName := viper.GetString(flagNodeDaemonHome)
+// 	return filepath.Join(outDir, nodeDirName, nodeDaemonHomeName)
+// }
 
-// hostname of ip of nodes
-func hostnameOrIP(i int) string {
-	return fmt.Sprintf("%s%d", viper.GetString(flagNodeHostPrefix), i)
-}
+// // hostname of ip of nodes
+// func hostnameOrIP(i int) string {
+// 	return fmt.Sprintf("%s%d", viper.GetString(flagNodeHostPrefix), i)
+// }
 
-// populate persistent peers in config
-func populatePersistentPeersInConfigAndWriteIt(config *cfg.Config) {
-	persistentPeers := make([]string, totalValidators())
-	for i := 0; i < totalValidators(); i++ {
-		config.SetRoot(nodeDir(i))
-		nodeKey, err := p2p.LoadNodeKey(config.NodeKeyFile())
-		if err != nil {
-			return
-		}
-		persistentPeers[i] = p2p.IDAddressString(nodeKey.ID(), fmt.Sprintf("%s:%d", hostnameOrIP(i), 26656))
-	}
+// // populate persistent peers in config
+// func populatePersistentPeersInConfigAndWriteIt(config *cfg.Config) {
+// 	persistentPeers := make([]string, totalValidators())
+// 	for i := 0; i < totalValidators(); i++ {
+// 		config.SetRoot(nodeDir(i))
+// 		nodeKey, err := p2p.LoadNodeKey(config.NodeKeyFile())
+// 		if err != nil {
+// 			return
+// 		}
+// 		persistentPeers[i] = p2p.IDAddressString(nodeKey.ID(), fmt.Sprintf("%s:%d", hostnameOrIP(i), 26656))
+// 	}
 
-	persistentPeersList := strings.Join(persistentPeers, ",")
-	for i := 0; i < totalValidators(); i++ {
-		config.SetRoot(nodeDir(i))
-		config.P2P.PersistentPeers = persistentPeersList
-		config.P2P.AddrBookStrict = false
+// 	persistentPeersList := strings.Join(persistentPeers, ",")
+// 	for i := 0; i < totalValidators(); i++ {
+// 		config.SetRoot(nodeDir(i))
+// 		config.P2P.PersistentPeers = persistentPeersList
+// 		config.P2P.AddrBookStrict = false
 
-		// overwrite default config
-		cfg.WriteConfigFile(filepath.Join(nodeDir(i), "config", "config.toml"), config)
-	}
-}
+// 		// overwrite default config
+// 		cfg.WriteConfigFile(filepath.Join(nodeDir(i), "config", "config.toml"), config)
+// 	}
+// }
 
 // func getGenesisAccount(address []byte) authTypes.GenesisAccount {
 // 	acc := authTypes.NewBaseAccountWithAddress(string(address))

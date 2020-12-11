@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	// storing constant as this recomended as a secruity feature
-	secretPerm os.FileMode = 0600
+// storing constant as this recomended as a secruity feature
+// secretPerm os.FileMode = 0600
 )
 
 // PermCheck check the secret key and the keystore files.
