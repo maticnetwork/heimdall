@@ -139,7 +139,6 @@ func (k Keeper) IterateTxAndApplyFn(ctx sdk.Context, height uint64, f func(tmtyp
 			return
 		}
 	}
-	return
 }
 
 // IterateTxsAndApplyFn interate all txs and apply the given function.
@@ -165,8 +164,6 @@ func (k Keeper) IterateTxsAndApplyFn(ctx sdk.Context, f func(uint64, tmtypes.Tx)
 			return
 		}
 	}
-
-	return
 }
 
 // IterateValidatorsAndApplyFn interate all validators and apply the given function.
@@ -201,6 +198,4 @@ func (k Keeper) IterateValidatorsAndApplyFn(ctx sdk.Context, f func(uint64, []*a
 			return
 		}
 	}
-
-	return
 }

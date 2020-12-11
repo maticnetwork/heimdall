@@ -199,9 +199,9 @@ func PostProcessResponse(w http.ResponseWriter, cliCtx client.Context, resp inte
 		return
 	}
 
-	switch resp.(type) {
+	switch resp := resp.(type) {
 	case []byte:
-		result = resp.([]byte)
+		result = resp
 
 	default:
 		var err error
