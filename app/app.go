@@ -123,7 +123,7 @@ type HeimdallApp struct {
 	// side router
 	sideRouter hmtypes.SideRouter
 
-	// contract keeper
+	// contract caller
 	caller helper.ContractCaller
 
 	// the module manager

@@ -5,13 +5,12 @@ import "heimdall/types/validator.proto";
 import "google/api/annotations.proto";
 import "gogoproto/gogo.proto";
 
-
-
 option go_package = "github.com/maticnetwork/heimdall/x/staking/types";
 
 option (gogoproto.sizer_all)       = true;
 option (gogoproto.marshaler_all)   = true;
 option (gogoproto.unmarshaler_all) = true;
+
 // Query defines the gRPC querier service.
 service Query {
     // Validator queries the validator that match by validator id.
@@ -19,15 +18,15 @@ service Query {
     option (google.api.http).get = "/heimdall/types/validator/{validator_id}";
   }
 
-  // ValidatorSet queries the validatorSet that match by validator id.
+  // ValidatorSet queries the Current Validator Set 
   rpc ValidatorSet(QueryValidatorSetRequest) returns (QueryValidatorSetResponse) {
     option (google.api.http).get = "/heimdall/types/validatorSet";
   }
 }
 
-// QueryValidatorRequest is response type for the Query/Validator RPC method
+// QueryValidatorRequest is request type for the Query/Validator RPC method
 message QueryValidatorRequest {
-    // validator_addr defines the validator address to query for.
+    // validator_id defines the validator id to query for.
     heimdall.types.ValidatorID validator_id = 1;
 }
   
@@ -37,10 +36,13 @@ message QueryValidatorResponse {
     heimdall.types.Validator validator = 1 ;
 }
 
+// QueryValidatorSetRequest is request type for the Query/ValidatorSet RPC method
 message QueryValidatorSetRequest {
 
 }
 
+// QueryValidatorSetResponse is response type for the Query/ValidatorSet RPC method
 message QueryValidatorSetResponse {
+      // validatorSet defines the the current validator set.
   heimdall.types.ValidatorSet validatorSet = 1 ;
 }

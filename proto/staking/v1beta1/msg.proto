@@ -13,21 +13,21 @@ option (gogoproto.unmarshaler_all) = false;
 
 // Msg defines the staking Msg service.
 service Msg {
-  // CreateValidator defines a method for creating a new validator.
+  // ValidatorJoin defines a method to join a new validator.
   rpc ValidatorJoin(MsgValidatorJoin) returns (MsgValidatorJoinResponse);
 
-  // EditValidator defines a method for editing an existing validator.
+  // StakeUpdate defines a method to update stake for an existing validator.
   rpc StakeUpdate(MsgStakeUpdate) returns (MsgStakeUpdateResponse);
 
-  // Delegate defines a method for performing a delegation of coins
-  // from a delegator to a validator.
+  // SignerUpdate defines a method for update singer details of
+  // exisitng validator.
   rpc SignerUpdate(MsgSignerUpdate) returns (MsgSignerUpdateResponse);
 
-  // BeginRedelegate defines a method for performing a redelegation
-  // of coins from a delegator and source validator to a destination validator.
+  // ValidatorExit defines a method to handle validator exit
   rpc ValidatorExit(MsgValidatorExit) returns (MsgValidatorExitResponse);
 }
 
+// MsgValidatorJoin defines a message to join a new validator.
 message MsgValidatorJoin {
     option (gogoproto.goproto_getters) = false;
     string from                        = 1
@@ -52,8 +52,10 @@ message MsgValidatorJoin {
     uint64 nonce        = 9;
 }
 
+// MsgValidatorJoinResponse defines ValidatorJoin response type.
 message MsgValidatorJoinResponse{}
 
+// MsgStakeUpdate defines a message to update stake for a validator.
 message MsgStakeUpdate {
     option (gogoproto.goproto_getters) = false;
     string from                        = 1
@@ -74,8 +76,10 @@ message MsgStakeUpdate {
     uint64 nonce        = 9;
 }
 
+// MsgStakeUpdateResponse defines StakeUpdate response type.
 message MsgStakeUpdateResponse{}
 
+// MsgSignerUpdate defines a message to update signer of a validator.
 message MsgSignerUpdate {
     option (gogoproto.goproto_getters) = false;
     string from                        = 1
@@ -97,9 +101,10 @@ message MsgSignerUpdate {
     uint64 nonce        = 7;
 }
 
+// MsgSignerUpdateResponse defines SignerUpdate response type.
 message MsgSignerUpdateResponse{}
 
-
+// MsgValidatorExit defines a message to exit as a validator  
 message MsgValidatorExit {
     option (gogoproto.goproto_getters) = false;
     string from                        = 1
@@ -119,5 +124,5 @@ message MsgValidatorExit {
     uint64 nonce        = 7;
 }
 
+// MsgValidatorExitResponse is response type for ValidatorExit RPC method
 message MsgValidatorExitResponse{}
-

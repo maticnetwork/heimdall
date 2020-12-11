@@ -35,17 +35,17 @@ func GetTxCmd() *cobra.Command {
 	}
 
 	stakingTxCmd.AddCommand(
-		SendValidatorJoinTxCmd(),
-		SendStakeUpdateTxCmd(),
-		SendSignerUpdateTxCmd(),
-		SendValidatorExitTxCmd(),
+		ValidatorJoinTxCmd(),
+		StakeUpdateTxCmd(),
+		SignerUpdateTxCmd(),
+		ValidatorExitTxCmd(),
 	)
 
 	return stakingTxCmd
 }
 
-// SendValidatorJoinTx send validator join transaction
-func SendValidatorJoinTxCmd() *cobra.Command {
+// ValidatorJoinTxCmd send validator join message
+func ValidatorJoinTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "validator-join",
 		Short: "Join Heimdall as a validator",
@@ -62,16 +62,19 @@ func SendValidatorJoinTxCmd() *cobra.Command {
 				proposer = helper.GetFromAddress(clientCtx)
 			}
 
+			// get txHash
 			txhash := viper.GetString(FlagTxHash)
 			if txhash == "" {
 				return fmt.Errorf("transaction hash is required")
 			}
 
+			// get PubKey string
 			pubkeyStr := viper.GetString(FlagSignerPubkey)
 			if pubkeyStr == "" {
 				return fmt.Errorf("pubkey is required")
 			}
 
+			// convert PubKey to bytes
 			pubkeyBytes := common.FromHex(pubkeyStr)
 			if len(pubkeyBytes) != 65 {
 				return fmt.Errorf("Invalid public key length")
@@ -84,6 +87,7 @@ func SendValidatorJoinTxCmd() *cobra.Command {
 				return errors.New("Invalid stake amount")
 			}
 
+			// Get contractCaller ref
 			contractCallerObj, err := helper.NewContractCaller()
 			if err != nil {
 				return err
@@ -127,7 +131,7 @@ func SendValidatorJoinTxCmd() *cobra.Command {
 				return fmt.Errorf("Public key mismatch with event log")
 			}
 
-			// msg
+			// msg new ValidatorJion message
 			msg := types.NewMsgValidatorJoin(
 				proposer,
 				event.ValidatorId.Uint64(),
@@ -140,7 +144,7 @@ func SendValidatorJoinTxCmd() *cobra.Command {
 				event.Nonce.Uint64(),
 			)
 
-			// broadcast messages
+			// broadcast message
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
 		},
 	}
@@ -170,8 +174,8 @@ func SendValidatorJoinTxCmd() *cobra.Command {
 	return cmd
 }
 
-// SendValidatorUpdateTx send validator update transaction
-func SendSignerUpdateTxCmd() *cobra.Command {
+// SignerUpdateTxCmd send singer update transaction
+func SignerUpdateTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "signer-update",
 		Short: "Update signer for a validator",
@@ -188,30 +192,35 @@ func SendSignerUpdateTxCmd() *cobra.Command {
 				proposer = helper.GetFromAddress(clientCtx)
 			}
 
-			validator := viper.GetUint64(FlagValidatorID)
-			if validator == 0 {
+			// get validatorID from flags
+			ValidatorID := viper.GetUint64(FlagValidatorID)
+			if ValidatorID == 0 {
 				return fmt.Errorf("validator ID cannot be 0")
 			}
 
+			// get PubKey string from flag
 			pubkeyStr := viper.GetString(FlagNewSignerPubkey)
 			if pubkeyStr == "" {
 				return fmt.Errorf("Pubkey has to be supplied")
 			}
 
+			// convert PubKey string to bytes
 			pubkeyBytes, err := hex.DecodeString(pubkeyStr)
 			if err != nil {
 				return err
 			}
 			pubkey := hmTypes.NewPubKey(pubkeyBytes)
 
+			// get txHash from flag
 			txhash := viper.GetString(FlagTxHash)
 			if txhash == "" {
 				return fmt.Errorf("transaction hash has to be supplied")
 			}
 
+			// draft new SingerUpdate message
 			msg := types.NewMsgSignerUpdate(
 				proposer,
-				validator,
+				ValidatorID,
 				pubkey,
 				hmTypes.HexToHeimdallHash(txhash),
 				viper.GetUint64(FlagLogIndex),
@@ -254,8 +263,8 @@ func SendSignerUpdateTxCmd() *cobra.Command {
 	return cmd
 }
 
-// SendValidatorStakeUpdateTx send validator stake update transaction
-func SendStakeUpdateTxCmd() *cobra.Command {
+// StakeUpdateTxCmd send stake update transaction
+func StakeUpdateTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "stake-update",
 		Short: "Update stake for a validator",
@@ -265,17 +274,20 @@ func SendStakeUpdateTxCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+
 			// get proposer
 			proposer := hmTypes.HexToAccAddress(viper.GetString(FlagProposerAddress))
 			if proposer.Empty() {
 				proposer = helper.GetFromAddress(clientCtx)
 			}
 
-			validator := viper.GetUint64(FlagValidatorID)
-			if validator == 0 {
+			// get validatorID from flag
+			validatorID := viper.GetUint64(FlagValidatorID)
+			if validatorID == 0 {
 				return fmt.Errorf("validator ID cannot be 0")
 			}
 
+			// get txHash from flag
 			txhash := viper.GetString(FlagTxHash)
 			if txhash == "" {
 				return fmt.Errorf("transaction hash has to be supplied")
@@ -287,9 +299,10 @@ func SendStakeUpdateTxCmd() *cobra.Command {
 				return errors.New("Invalid new stake amount")
 			}
 
+			// draft new StakeUpdate message
 			msg := types.NewMsgStakeUpdate(
 				proposer,
-				validator,
+				validatorID,
 				amount,
 				hmTypes.HexToHeimdallHash(txhash),
 				viper.GetUint64(FlagLogIndex),
@@ -297,7 +310,7 @@ func SendStakeUpdateTxCmd() *cobra.Command {
 				viper.GetUint64(FlagNonce),
 			)
 
-			// broadcast messages
+			// broadcast message
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
 		},
 	}
@@ -332,8 +345,8 @@ func SendStakeUpdateTxCmd() *cobra.Command {
 	return cmd
 }
 
-// SendValidatorExitTx sends validator exit transaction
-func SendValidatorExitTxCmd() *cobra.Command {
+// ValidatorExitTxCmd sends validator exit transaction
+func ValidatorExitTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "validator-exit",
 		Short: "Exit heimdall as a validator ",
@@ -350,22 +363,25 @@ func SendValidatorExitTxCmd() *cobra.Command {
 				proposer = helper.GetFromAddress(clientCtx)
 			}
 
-			validator := viper.GetUint64(FlagValidatorID)
-			if validator == 0 {
+			// get validatorid from flag
+			validatorID := viper.GetUint64(FlagValidatorID)
+			if validatorID == 0 {
 				return fmt.Errorf("validator ID cannot be 0")
 			}
 
+			// get txHash from flag
 			txhash := viper.GetString(FlagTxHash)
 			if txhash == "" {
 				return fmt.Errorf("transaction hash has to be supplied")
 			}
 
+			// get nonce from flag
 			nonce := viper.GetUint64(FlagNonce)
 
-			// draf msg
+			// draf new ValidatorExit message
 			msg := types.NewMsgValidatorExit(
 				proposer,
-				validator,
+				validatorID,
 				viper.GetUint64(FlagDeactivationEpoch),
 				hmTypes.HexToHeimdallHash(txhash),
 				viper.GetUint64(FlagLogIndex),
@@ -373,7 +389,7 @@ func SendValidatorExitTxCmd() *cobra.Command {
 				nonce,
 			)
 
-			// broadcast messages
+			// broadcast message
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
 		},
 	}
