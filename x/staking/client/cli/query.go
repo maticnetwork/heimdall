@@ -33,7 +33,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 	return stakingQueryCmd
 }
 
-// GetValidatorInfo validator information via id or address
+// GetValidatorInfoCmd validator information via id or address
 func GetValidatorInfoCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "validator-info",
@@ -69,7 +69,7 @@ func GetValidatorInfoCmd() *cobra.Command {
 	return cmd
 }
 
-// GetCurrentValSet Queries Current ValidatorSet information
+// GetCurrentValSetCmd Queries Current ValidatorSet information
 func GetCurrentValSetCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "current-validator-set",
@@ -84,7 +84,7 @@ func GetCurrentValSetCmd() *cobra.Command {
 			queryClient := types.NewQueryClient(clientCtx)
 
 			params := &types.QueryValidatorSetRequest{}
-			res, err := queryClient.ValidatorSet(cmd.Context(), params)
+			res, err := queryClient.ValidatorSet(context.Background(), params)
 			if err != nil {
 				return err
 			}
@@ -92,6 +92,6 @@ func GetCurrentValSetCmd() *cobra.Command {
 			return clientCtx.PrintOutput(res.ValidatorSet)
 		},
 	}
-
+	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }
