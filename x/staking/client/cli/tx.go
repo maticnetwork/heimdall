@@ -98,7 +98,8 @@ func ValidatorJoinTxCmd() *cobra.Command {
 			// 	return err
 			// }
 
-			// get main tx receipt  NOTE:// Change MaxConformation, Now it is hard coded.
+			// get main tx receipt
+			// NOTE: Use 'chainmanagerParams.MainchainTxConfirmations'. Now it is hard coded.
 			receipt, err := contractCallerObj.GetConfirmedTxReceipt(hmTypes.HexToHeimdallHash(txhash).EthHash(), 6)
 			if err != nil || receipt == nil {
 				return errors.New("Transaction is not confirmed yet. Please wait for sometime and try again")
@@ -323,24 +324,12 @@ func StakeUpdateTxCmd() *cobra.Command {
 	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
 	cmd.Flags().Int(FlagNonce, 0, "--nonce=<nonce>")
 
-	if err := cmd.MarkFlagRequired(FlagTxHash); err != nil {
-		logger.Error("SendValidatorStakeUpdateTx | MarkFlagRequired | FlagTxHash", "Error", err)
-	}
-	if err := cmd.MarkFlagRequired(FlagLogIndex); err != nil {
-		logger.Error("SendValidatorStakeUpdateTx | MarkFlagRequired | FlagLogIndex", "Error", err)
-	}
-	if err := cmd.MarkFlagRequired(FlagValidatorID); err != nil {
-		logger.Error("SendValidatorStakeUpdateTx | MarkFlagRequired | FlagValidatorID", "Error", err)
-	}
-	if err := cmd.MarkFlagRequired(FlagBlockNumber); err != nil {
-		logger.Error("SendValidatorStakeUpdateTx | MarkFlagRequired | FlagBlockNumber", "Error", err)
-	}
-	if err := cmd.MarkFlagRequired(FlagAmount); err != nil {
-		logger.Error("SendValidatorStakeUpdateTx | MarkFlagRequired | FlagAmount", "Error", err)
-	}
-	if err := cmd.MarkFlagRequired(FlagNonce); err != nil {
-		logger.Error("SendValidatorStakeUpdateTx | MarkFlagRequired | FlagNonce", "Error", err)
-	}
+	cmd.MarkFlagRequired(FlagTxHash)
+	cmd.MarkFlagRequired(FlagLogIndex)
+	cmd.MarkFlagRequired(FlagValidatorID)
+	cmd.MarkFlagRequired(FlagBlockNumber)
+	cmd.MarkFlagRequired(FlagAmount)
+	cmd.MarkFlagRequired(FlagNonce)
 
 	return cmd
 }
@@ -402,21 +391,11 @@ func ValidatorExitTxCmd() *cobra.Command {
 	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
 	cmd.Flags().Int(FlagNonce, 0, "--nonce=<nonce>")
 
-	if err := cmd.MarkFlagRequired(FlagValidatorID); err != nil {
-		logger.Error("SendValidatorExitTx | MarkFlagRequired | FlagValidatorID", "Error", err)
-	}
-	if err := cmd.MarkFlagRequired(FlagTxHash); err != nil {
-		logger.Error("SendValidatorExitTx | MarkFlagRequired | FlagTxHash", "Error", err)
-	}
-	if err := cmd.MarkFlagRequired(FlagLogIndex); err != nil {
-		logger.Error("SendValidatorExitTx | MarkFlagRequired | FlagLogIndex", "Error", err)
-	}
-	if err := cmd.MarkFlagRequired(FlagBlockNumber); err != nil {
-		logger.Error("SendValidatorExitTx | MarkFlagRequired | FlagBlockNumber", "Error", err)
-	}
-	if err := cmd.MarkFlagRequired(FlagNonce); err != nil {
-		logger.Error("SendValidatorExitTx | MarkFlagRequired | FlagNonce", "Error", err)
-	}
+	cmd.MarkFlagRequired(FlagValidatorID)
+	cmd.MarkFlagRequired(FlagTxHash)
+	cmd.MarkFlagRequired(FlagLogIndex)
+	cmd.MarkFlagRequired(FlagBlockNumber)
+	cmd.MarkFlagRequired(FlagNonce)
 
 	return cmd
 }
