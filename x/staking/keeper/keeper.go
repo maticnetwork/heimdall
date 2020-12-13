@@ -339,13 +339,13 @@ func (k *Keeper) GetCurrentProposer(ctx sdk.Context) *hmTypes.Validator {
 }
 
 // SetValidatorIDToSignerAddr sets mapping for validator ID to signer address
-func (k *Keeper) SetValidatorIDToSignerAddr(ctx sdk.Context, valID hmTypes.ValidatorID, signerAddr sdk.AccAddress) {
+func (k *Keeper) SetValidatorIDToSignerAddr(ctx sdk.Context, valID uint64, signerAddr string) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(GetValidatorMapKey(valID.Bytes()), signerAddr.Bytes())
+	store.Set(GetValidatorMapKey(valID.Bytes()), []byte(signerAddr))
 }
 
 // GetSignerFromValidatorID get signer address from validator ID
-func (k *Keeper) GetSignerFromValidatorID(ctx sdk.Context, valID hmTypes.ValidatorID) (common.Address, bool) {
+func (k *Keeper) GetSignerFromValidatorID(ctx sdk.Context, valID uint64) (common.Address, bool) {
 	store := ctx.KVStore(k.storeKey)
 	key := GetValidatorMapKey(valID.Bytes())
 	// check if validator address has been mapped
@@ -357,7 +357,7 @@ func (k *Keeper) GetSignerFromValidatorID(ctx sdk.Context, valID hmTypes.Validat
 }
 
 // GetValidatorFromValID returns signer from validator ID
-func (k *Keeper) GetValidatorFromValID(ctx sdk.Context, valID hmTypes.ValidatorID) (validator hmTypes.Validator, ok bool) {
+func (k *Keeper) GetValidatorFromValID(ctx sdk.Context, valID uint64) (validator hmTypes.Validator, ok bool) {
 	signerAddr, ok := k.GetSignerFromValidatorID(ctx, valID)
 	if !ok {
 		return validator, ok
@@ -371,7 +371,7 @@ func (k *Keeper) GetValidatorFromValID(ctx sdk.Context, valID hmTypes.ValidatorI
 }
 
 // GetLastUpdated get last updated at for validator
-func (k *Keeper) GetLastUpdated(ctx sdk.Context, valID hmTypes.ValidatorID) (updatedAt string, found bool) {
+func (k *Keeper) GetLastUpdated(ctx sdk.Context, valID uint64) (updatedAt string, found bool) {
 	// get validator
 	validator, ok := k.GetValidatorFromValID(ctx, valID)
 	if !ok {

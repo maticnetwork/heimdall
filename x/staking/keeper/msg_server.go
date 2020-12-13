@@ -34,15 +34,14 @@ func (k msgServer) ValidatorJoin(goCtx context.Context, msg *types.MsgValidatorJ
 		"validatorId", msg.ID,
 		"activationEpoch", msg.ActivationEpoch,
 		"amount", msg.Amount,
-		"SignerPubkey", msg.SignerPubKey.String(),
+		"SignerPubkey", msg.SignerPubKey,
 		"txHash", msg.TxHash,
 		"logIndex", msg.LogIndex,
 		"blockNumber", msg.BlockNumber,
 	)
 
 	// Generate PubKey from Pubkey in message and signer
-	pubkey := msg.SignerPubKey
-	signer := pubkey.Address()
+	signer := msg.SignerPubKey
 
 	// Check if validator has been validator before
 	if _, ok := k.GetSignerFromValidatorID(ctx, msg.ID); ok {
@@ -51,8 +50,8 @@ func (k msgServer) ValidatorJoin(goCtx context.Context, msg *types.MsgValidatorJ
 	}
 
 	// get validator by signer
-	checkVal, err := k.GetValidatorInfo(ctx, signer.Bytes())
-	if err == nil || bytes.Equal([]byte(checkVal.Signer), signer.Bytes()) {
+	checkVal, err := k.GetValidatorInfo(ctx, []byte(signer))
+	if err == nil || bytes.Equal([]byte(checkVal.Signer), []byte(signer)) {
 		return nil, hmCommon.ErrValidatorAlreadyJoined
 	}
 

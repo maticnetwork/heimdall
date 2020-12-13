@@ -3,9 +3,6 @@ package types
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	hmTypes "github.com/maticnetwork/heimdall/types"
-	hmCommon "github.com/maticnetwork/heimdall/types/common"
 )
 
 var cdc = codec.NewLegacyAmino()
@@ -18,12 +15,12 @@ var _ sdk.Msg = &MsgValidatorJoin{}
 
 // NewMsgValidatorJoin creates new validator-join
 func NewMsgValidatorJoin(
-	from sdk.AccAddress,
+	from string,
 	id uint64,
 	activationEpoch uint64,
-	amount sdk.Int,
-	pubkey hmCommon.PubKey,
-	txhash hmCommon.HeimdallHash,
+	amount uint64,
+	pubkey string,
+	txhash string,
 	logIndex uint64,
 	blockNumber uint64,
 	nonce uint64,
@@ -31,7 +28,7 @@ func NewMsgValidatorJoin(
 
 	return MsgValidatorJoin{
 		From:            from,
-		ID:              hmTypes.NewValidatorID(id),
+		ID:              id,
 		ActivationEpoch: activationEpoch,
 		Amount:          amount,
 		SignerPubKey:    pubkey,
@@ -51,7 +48,7 @@ func (msg MsgValidatorJoin) Route() string {
 }
 
 func (msg MsgValidatorJoin) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.From}
+	return []sdk.AccAddress{[]byte(msg.From)}
 }
 
 func (msg MsgValidatorJoin) GetSignBytes() []byte {
@@ -79,7 +76,7 @@ func (msg MsgValidatorJoin) ValidateBasic() error {
 }
 
 // GetTxHash Returns tx hash
-func (msg MsgValidatorJoin) GetTxHash() hmCommon.HeimdallHash {
+func (msg MsgValidatorJoin) GetTxHash() string {
 	return msg.TxHash
 }
 
@@ -105,10 +102,18 @@ func (msg MsgValidatorJoin) GetNonce() uint64 {
 var _ sdk.Msg = &MsgStakeUpdate{}
 
 // NewMsgStakeUpdate represents stake update
-func NewMsgStakeUpdate(from sdk.AccAddress, id uint64, newAmount sdk.Int, txhash hmCommon.HeimdallHash, logIndex uint64, blockNumber uint64, nonce uint64) MsgStakeUpdate {
+func NewMsgStakeUpdate(
+	from string,
+	id uint64,
+	newAmount uint64,
+	txhash string,
+	logIndex uint64,
+	blockNumber uint64,
+	nonce uint64,
+) MsgStakeUpdate {
 	return MsgStakeUpdate{
 		From:        from,
-		ID:          hmTypes.NewValidatorID(id),
+		ID:          id,
 		NewAmount:   newAmount,
 		TxHash:      txhash,
 		LogIndex:    logIndex,
@@ -126,7 +131,7 @@ func (msg MsgStakeUpdate) Route() string {
 }
 
 func (msg MsgStakeUpdate) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.From}
+	return []sdk.AccAddress{[]byte(msg.From)}
 }
 
 func (msg MsgStakeUpdate) GetSignBytes() []byte {
@@ -150,7 +155,7 @@ func (msg MsgStakeUpdate) ValidateBasic() error {
 }
 
 // GetTxHash Returns tx hash
-func (msg MsgStakeUpdate) GetTxHash() hmCommon.HeimdallHash {
+func (msg MsgStakeUpdate) GetTxHash() string {
 	return msg.TxHash
 }
 
@@ -175,17 +180,17 @@ func (msg MsgStakeUpdate) GetNonce() uint64 {
 var _ sdk.Msg = &MsgSignerUpdate{}
 
 func NewMsgSignerUpdate(
-	from sdk.AccAddress,
+	from string,
 	id uint64,
-	pubKey hmCommon.PubKey,
-	txhash hmCommon.HeimdallHash,
+	pubKey string,
+	txhash string,
 	logIndex uint64,
 	blockNumber uint64,
 	nonce uint64,
 ) MsgSignerUpdate {
 	return MsgSignerUpdate{
 		From:            from,
-		ID:              hmTypes.NewValidatorID(id),
+		ID:              id,
 		NewSignerPubKey: pubKey,
 		TxHash:          txhash,
 		LogIndex:        logIndex,
@@ -203,7 +208,7 @@ func (msg MsgSignerUpdate) Route() string {
 }
 
 func (msg MsgSignerUpdate) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.From}
+	return []sdk.AccAddress{[]byte(msg.From)}
 }
 
 func (msg MsgSignerUpdate) GetSignBytes() []byte {
@@ -231,7 +236,7 @@ func (msg MsgSignerUpdate) ValidateBasic() error {
 }
 
 // GetTxHash Returns tx hash
-func (msg MsgSignerUpdate) GetTxHash() hmCommon.HeimdallHash {
+func (msg MsgSignerUpdate) GetTxHash() string {
 	return msg.TxHash
 }
 
@@ -256,10 +261,18 @@ func (msg MsgSignerUpdate) GetNonce() uint64 {
 
 var _ sdk.Msg = &MsgValidatorExit{}
 
-func NewMsgValidatorExit(from sdk.AccAddress, id uint64, deactivationEpoch uint64, txhash hmCommon.HeimdallHash, logIndex uint64, blockNumber uint64, nonce uint64) MsgValidatorExit {
+func NewMsgValidatorExit(
+	from string,
+	id uint64,
+	deactivationEpoch uint64,
+	txhash string,
+	logIndex uint64,
+	blockNumber uint64,
+	nonce uint64,
+) MsgValidatorExit {
 	return MsgValidatorExit{
 		From:              from,
-		ID:                hmTypes.NewValidatorID(id),
+		ID:                id,
 		DeactivationEpoch: deactivationEpoch,
 		TxHash:            txhash,
 		LogIndex:          logIndex,
@@ -277,7 +290,7 @@ func (msg MsgValidatorExit) Route() string {
 }
 
 func (msg MsgValidatorExit) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.From}
+	return []sdk.AccAddress{[]byte(msg.From)}
 }
 
 func (msg MsgValidatorExit) GetSignBytes() []byte {
@@ -301,7 +314,7 @@ func (msg MsgValidatorExit) ValidateBasic() error {
 }
 
 // GetTxHash Returns tx hash
-func (msg MsgValidatorExit) GetTxHash() hmCommon.HeimdallHash {
+func (msg MsgValidatorExit) GetTxHash() string {
 	return msg.TxHash
 }
 
