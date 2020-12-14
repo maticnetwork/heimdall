@@ -23,8 +23,8 @@ import (
 	"github.com/maticnetwork/heimdall/x/staking/types"
 )
 
-// EventName is used in ValidatorJoinTxCmd
-const EventName = "Staked"
+// ForeignEventName is used in ValidatorJoinTxCmd
+const ForeignEventName = "Staked"
 
 var logger = helper.Logger.With("module", "staking/client/cli")
 
@@ -116,8 +116,8 @@ func ValidatorJoinTxCmd() *cobra.Command {
 			for _, vLog := range receipt.Logs {
 				topic := vLog.Topics[0].Bytes()
 				selectedEvent := helper.EventByID(abiObject, topic)
-				if selectedEvent != nil && selectedEvent.Name == EventName {
-					if err := helper.UnpackLog(abiObject, event, EventName, vLog); err != nil {
+				if selectedEvent != nil && selectedEvent.Name == ForeignEventName {
+					if err := helper.UnpackLog(abiObject, event, ForeignEventName, vLog); err != nil {
 						return err
 					}
 
@@ -160,21 +160,12 @@ func ValidatorJoinTxCmd() *cobra.Command {
 	cmd.Flags().String(FlagAmount, "0", "--amount=<amount>")
 	cmd.Flags().Uint64(FlagActivationEpoch, 0, "--activation-epoch=<activation-epoch>")
 
-	if err := cmd.MarkFlagRequired(FlagBlockNumber); err != nil {
-		logger.Error("SendValidatorJoinTx | MarkFlagRequired | FlagBlockNumber", "Error", err)
-	}
-	if err := cmd.MarkFlagRequired(FlagActivationEpoch); err != nil {
-		logger.Error("SendValidatorJoinTx | MarkFlagRequired | FlagActivationEpoch", "Error", err)
-	}
-	if err := cmd.MarkFlagRequired(FlagAmount); err != nil {
-		logger.Error("SendValidatorJoinTx | MarkFlagRequired | FlagAmount", "Error", err)
-	}
-	if err := cmd.MarkFlagRequired(FlagSignerPubkey); err != nil {
-		logger.Error("SendValidatorJoinTx | MarkFlagRequired | FlagSignerPubkey", "Error", err)
-	}
-	if err := cmd.MarkFlagRequired(FlagTxHash); err != nil {
-		logger.Error("SendValidatorJoinTx | MarkFlagRequired | FlagTxHash", "Error", err)
-	}
+	cmd.MarkFlagRequired(FlagBlockNumber)
+	cmd.MarkFlagRequired(FlagActivationEpoch)
+	cmd.MarkFlagRequired(FlagAmount)
+	cmd.MarkFlagRequired(FlagSignerPubkey)
+	cmd.MarkFlagRequired(FlagTxHash)
+
 	return cmd
 }
 
@@ -245,24 +236,12 @@ func SignerUpdateTxCmd() *cobra.Command {
 	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
 	cmd.Flags().Int(FlagNonce, 0, "--nonce=<nonce>")
 
-	if err := cmd.MarkFlagRequired(FlagValidatorID); err != nil {
-		logger.Error("SendValidatorUpdateTx | MarkFlagRequired | FlagValidatorID", "Error", err)
-	}
-	if err := cmd.MarkFlagRequired(FlagTxHash); err != nil {
-		logger.Error("SendValidatorUpdateTx | MarkFlagRequired | FlagTxHash", "Error", err)
-	}
-	if err := cmd.MarkFlagRequired(FlagNewSignerPubkey); err != nil {
-		logger.Error("SendValidatorUpdateTx | MarkFlagRequired | FlagNewSignerPubkey", "Error", err)
-	}
-	if err := cmd.MarkFlagRequired(FlagLogIndex); err != nil {
-		logger.Error("SendValidatorUpdateTx | MarkFlagRequired | FlagLogIndex", "Error", err)
-	}
-	if err := cmd.MarkFlagRequired(FlagBlockNumber); err != nil {
-		logger.Error("SendValidatorUpdateTx | MarkFlagRequired | FlagBlockNumber", "Error", err)
-	}
-	if err := cmd.MarkFlagRequired(FlagNonce); err != nil {
-		logger.Error("SendValidatorUpdateTx | MarkFlagRequired | FlagNonce", "Error", err)
-	}
+	cmd.MarkFlagRequired(FlagValidatorID)
+	cmd.MarkFlagRequired(FlagTxHash)
+	cmd.MarkFlagRequired(FlagNewSignerPubkey)
+	cmd.MarkFlagRequired(FlagLogIndex)
+	cmd.MarkFlagRequired(FlagBlockNumber)
+	cmd.MarkFlagRequired(FlagNonce)
 
 	return cmd
 }
