@@ -90,42 +90,42 @@ func (p Params) String() string {
 
 // Validate checks that the parameters have valid values.
 func (p Params) Validate() error {
-	if err := validateHeimdallAddress("matic_token_address", p.ChainParams.MaticTokenAddress); err != nil {
+	if err := validateAddress("matic_token_address", p.ChainParams.MaticTokenAddress); err != nil {
 		return err
 	}
 
-	if err := validateHeimdallAddress("staking_manager_address", p.ChainParams.StakingManagerAddress); err != nil {
+	if err := validateAddress("staking_manager_address", p.ChainParams.StakingManagerAddress); err != nil {
 		return err
 	}
 
-	if err := validateHeimdallAddress("slash_manager_address", p.ChainParams.SlashManagerAddress); err != nil {
+	if err := validateAddress("slash_manager_address", p.ChainParams.SlashManagerAddress); err != nil {
 		return err
 	}
 
-	if err := validateHeimdallAddress("root_chain_address", p.ChainParams.RootChainAddress); err != nil {
+	if err := validateAddress("root_chain_address", p.ChainParams.RootChainAddress); err != nil {
 		return err
 	}
 
-	if err := validateHeimdallAddress("staking_info_address", p.ChainParams.StakingInfoAddress); err != nil {
+	if err := validateAddress("staking_info_address", p.ChainParams.StakingInfoAddress); err != nil {
 		return err
 	}
 
-	if err := validateHeimdallAddress("state_sender_address", p.ChainParams.StateSenderAddress); err != nil {
+	if err := validateAddress("state_sender_address", p.ChainParams.StateSenderAddress); err != nil {
 		return err
 	}
 
-	if err := validateHeimdallAddress("state_receiver_address", p.ChainParams.StateReceiverAddress); err != nil {
+	if err := validateAddress("state_receiver_address", p.ChainParams.StateReceiverAddress); err != nil {
 		return err
 	}
 
-	if err := validateHeimdallAddress("validator_set_address", p.ChainParams.ValidatorSetAddress); err != nil {
+	if err := validateAddress("validator_set_address", p.ChainParams.ValidatorSetAddress); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func validateHeimdallAddress(key string, value sdk.AccAddress) error {
+func validateAddress(key string, value sdk.AccAddress) error {
 	if value.String() == "" {
 		return fmt.Errorf("Invalid value %s in chain_params", key)
 	}
