@@ -61,7 +61,7 @@ func ValidatorJoinTxCmd() *cobra.Command {
 			}
 
 			// get proposer
-			proposer := hmTypes.HexToAccAddress(viper.GetString(FlagProposerAddress))
+			proposer := sdk.AccAddress(viper.GetString(FlagProposerAddress))
 			if proposer.Empty() {
 				proposer = helper.GetFromAddress(clientCtx)
 			}
@@ -191,7 +191,7 @@ func SignerUpdateTxCmd() *cobra.Command {
 			}
 
 			// get proposer
-			proposer := hmTypes.HexToAccAddress(viper.GetString(FlagProposerAddress))
+			proposer := sdk.AccAddress(viper.GetString(FlagProposerAddress))
 			if proposer.Empty() {
 				proposer = helper.GetFromAddress(clientCtx)
 			}
@@ -280,7 +280,7 @@ func StakeUpdateTxCmd() *cobra.Command {
 			}
 
 			// get proposer
-			proposer := hmTypes.HexToAccAddress(viper.GetString(FlagProposerAddress))
+			proposer := sdk.AccAddress(viper.GetString(FlagProposerAddress))
 			if proposer.Empty() {
 				proposer = helper.GetFromAddress(clientCtx)
 			}
@@ -350,7 +350,7 @@ func ValidatorExitTxCmd() *cobra.Command {
 			}
 
 			// get proposer
-			proposer := hmTypes.HexToAccAddress(viper.GetString(FlagProposerAddress))
+			proposer := sdk.AccAddress(viper.GetString(FlagProposerAddress))
 			if proposer.Empty() {
 				proposer = helper.GetFromAddress(clientCtx)
 			}
