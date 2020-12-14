@@ -66,7 +66,7 @@ $ %s query chainamanager params
 				return err
 			}
 
-			return clientCtx.PrintOutput(&res.Params)
+			return clientCtx.PrintOutput(res.Params)
 		},
 	}
 

@@ -21,5 +21,5 @@ func (k Querier) Params(c context.Context, req *types.QueryParamsRequest) (*type
 	ctx := sdk.UnwrapSDKContext(c)
 	params := k.GetParams(ctx)
 
-	return &types.QueryParamsResponse{Params: params}, nil
+	return &types.QueryParamsResponse{Params: &params}, nil
 }
