@@ -16,11 +16,15 @@ import (
 	"github.com/maticnetwork/bor/common"
 
 	// "github.com/maticnetwork/heimdall/bridge/setu/util"
+
 	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types/common"
 	"github.com/maticnetwork/heimdall/x/staking/types"
 )
+
+// EventName is used in ValidatorJoinTxCmd
+const EventName = "Staked"
 
 var logger = helper.Logger.With("module", "staking/client/cli")
 
@@ -106,15 +110,14 @@ func ValidatorJoinTxCmd() *cobra.Command {
 			}
 
 			abiObject := &contractCallerObj.StakingInfoABI
-			eventName := "Staked"
 			event := new(stakinginfo.StakinginfoStaked)
 			var logIndex uint64
 			found := false
 			for _, vLog := range receipt.Logs {
 				topic := vLog.Topics[0].Bytes()
 				selectedEvent := helper.EventByID(abiObject, topic)
-				if selectedEvent != nil && selectedEvent.Name == eventName {
-					if err := helper.UnpackLog(abiObject, event, eventName, vLog); err != nil {
+				if selectedEvent != nil && selectedEvent.Name == EventName {
+					if err := helper.UnpackLog(abiObject, event, EventName, vLog); err != nil {
 						return err
 					}
 
