@@ -1,0 +1,10 @@
+syntax = "proto3";
+package heimdall.topup.v1beta1;
+
+option go_package = "github.com/maticnetwork/heimdall/x/topup/types";
+
+// GenesisState defines the topup module's genesis state.
+message GenesisState {
+    repeated string topup_sequences = 1;
+    repeated DividendAccount dividend_accounts = 2;
+}
