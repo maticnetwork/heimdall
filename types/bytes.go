@@ -77,7 +77,7 @@ func (bz HexBytes) Bytes() []byte {
 }
 
 func (bz HexBytes) String() string {
-	return common.ToHex(bz)
+	return common.ToHex(bz) //nolint
 }
 
 // Format format bytes
