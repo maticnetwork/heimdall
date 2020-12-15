@@ -192,3 +192,23 @@ func GetEventRecordKeyWithTimePrefix(recordTime time.Time) []byte {
 	recordTimeBytes := sdk.FormatTimeBytes(recordTime)
 	return append(StateRecordPrefixKeyWithTime, recordTimeBytes...)
 }
+
+// GetEventRecord returns record from store
+func (k *Keeper) GetEventRecord(ctx sdk.Context, stateID uint64) (*types.EventRecord, error) {
+	store := ctx.KVStore(k.storeKey)
+	key := GetEventRecordKey(stateID)
+
+	// check store has data
+	if store.Has(key) {
+		var _record types.EventRecord
+		err := k.cdc.UnmarshalBinaryBare(store.Get(key), &_record)
+		if err != nil {
+			return nil, err
+		}
+
+		return &_record, nil
+	}
+
+	// return no error error
+	return nil, errors.New("No record found")
+}

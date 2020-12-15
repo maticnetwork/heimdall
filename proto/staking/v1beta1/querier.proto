@@ -13,7 +13,7 @@ option (gogoproto.unmarshaler_all) = true;
 
 // Query defines the gRPC querier service.
 service Query {
-    // Validator queries the validator that match by validator id.
+  // Validator queries the validator that match by validator id.
   rpc Validator(QueryValidatorRequest) returns (QueryValidatorResponse) {
     option (google.api.http).get = "/heimdall/types/validator/{validator_id}";
   }

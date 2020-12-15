@@ -1,6 +1,7 @@
 package clerk
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -16,6 +17,7 @@ import (
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/x/clerk/keeper"
 	"github.com/maticnetwork/heimdall/x/clerk/types"
 	"github.com/maticnetwork/heimdall/x/clerk/client/cli"
@@ -100,12 +102,14 @@ type AppModule struct {
 	AppModuleBasic
 
 	keeper keeper.Keeper
+	contractCaller helper.IContractCaller
 }
 
-func NewAppModule(cdc codec.Marshaler, keeper keeper.Keeper) AppModule {
+func NewAppModule(cdc codec.Marshaler, keeper keeper.Keeper, contractCaller helper.IContractCaller) AppModule {
 	return AppModule{
 		AppModuleBasic: NewAppModuleBasic(cdc),
 		keeper:         keeper,
+		contractCaller: contractCaller,
 	}
 }
 
@@ -161,4 +165,16 @@ func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
 // returns no validator updates.
 func (am AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
 	return []abci.ValidatorUpdate{}
+}
+
+// RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the staking module.
+func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {
+	// TODO : uncomment below line
+	types.RegisterQueryHandlerClient(context.Background(), mux, types.NewQueryClient(clientCtx))
+}
+
+// RegisterServices registers module services.
+func (am AppModule) RegisterServices(cfg module.Configurator) {
+	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper, am.contractCaller))
+	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQueryServerImpl(am.keeper, am.contractCaller))
 }
