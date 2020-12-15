@@ -117,6 +117,9 @@ func initCmd(ctx *server.Context, amino *codec.LegacyAmino, mbm module.BasicMana
 			//
 			authGenState := authtypes.GetGenesisStateFromAppState(authclient.Codec, appState)
 			accs, err := authtypes.UnpackAccounts(authGenState.Accounts)
+			if err != nil {
+				return fmt.Errorf("failed to unpack accounts: %w", err)
+			}
 			accs = append(accs, genesisAccount)
 			genAccs, err := authtypes.PackAccounts(accs)
 			if err != nil {
@@ -158,7 +161,10 @@ func initCmd(ctx *server.Context, amino *codec.LegacyAmino, mbm module.BasicMana
 			}
 
 			cfg.WriteConfigFile(filepath.Join(config.RootDir, "config", "config.toml"), config)
-			writeGenesisFile(tmtime.Now(), config.GenesisFile(), chainID, appStateJSON)
+
+			if err := writeGenesisFile(tmtime.Now(), config.GenesisFile(), chainID, appStateJSON); err != nil {
+				return err
+			}
 
 			// print info
 			return displayInfo(newPrintInfo(config.Moniker, chainID, nodeID, "", appStateJSON))

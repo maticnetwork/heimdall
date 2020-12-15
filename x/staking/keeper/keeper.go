@@ -13,6 +13,7 @@ import (
 
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmCommon "github.com/maticnetwork/heimdall/types/common"
+	chainKeeper "github.com/maticnetwork/heimdall/x/chainmanager/keeper"
 	"github.com/maticnetwork/heimdall/x/staking/types"
 )
 
@@ -36,13 +37,12 @@ type ModuleCommunicator interface {
 
 type (
 	Keeper struct {
-		cdc                codec.BinaryMarshaler
-		storeKey           sdk.StoreKey
-		memKey             sdk.StoreKey
+		cdc      codec.BinaryMarshaler
+		storeKey sdk.StoreKey
+		// memKey             sdk.StoreKey
 		paramSubspace      paramtypes.Subspace
+		chainKeeper        chainKeeper.Keeper
 		moduleCommunicator ModuleCommunicator
-		//TODO: add chainmanager keeper
-		// ck chainmanager.Keeper
 	}
 )
 
@@ -51,6 +51,7 @@ func NewKeeper(
 	cdc codec.BinaryMarshaler,
 	storeKey sdk.StoreKey,
 	paramstore paramtypes.Subspace,
+	chainKeeper chainKeeper.Keeper,
 	moduleCommunicator ModuleCommunicator,
 ) Keeper {
 	if !paramstore.HasKeyTable() {
@@ -60,6 +61,7 @@ func NewKeeper(
 		cdc:                cdc,
 		storeKey:           storeKey,
 		paramSubspace:      paramstore,
+		chainKeeper:        chainKeeper,
 		moduleCommunicator: moduleCommunicator,
 	}
 }
@@ -463,7 +465,10 @@ func (k *Keeper) Slash(ctx sdk.Context, valSlashingInfo hmTypes.ValidatorSlashin
 	validator.Jailed = valSlashingInfo.IsJailed
 
 	// add updated validator to store with new key
-	k.AddValidator(ctx, validator)
+	if err := k.AddValidator(ctx, validator); err != nil {
+		k.Logger(ctx).Error("Error calling AddValidator")
+		return err
+	}
 	k.Logger(ctx).Debug("updated validator with slashed voting power and jail status", "validator", validator)
 	return nil
 }
@@ -485,6 +490,7 @@ func (k *Keeper) Unjail(ctx sdk.Context, valID hmTypes.ValidatorID) {
 	validator.Jailed = false
 
 	// add updated validator to store with new key
-	k.AddValidator(ctx, validator)
-	return
+	if err := k.AddValidator(ctx, validator); err != nil {
+		k.Logger(ctx).Error("Error calling AddValidator")
+	}
 }

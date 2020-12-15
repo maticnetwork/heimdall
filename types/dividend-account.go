@@ -9,6 +9,7 @@ import (
 	"github.com/cbergoon/merkletree"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/maticnetwork/bor/crypto"
+
 	"github.com/maticnetwork/heimdall/types/common"
 )
 
@@ -30,7 +31,7 @@ func (da *DividendAccount) String() string {
 		return "nil-DividendAccount"
 	}
 
-	return fmt.Sprintf("DividendAccount{%s %v}",
+	return fmt.Sprintf("DividendAccount{%s %v}", //nolint
 		da.User.EthAddress,
 		da.FeeAmount)
 }
