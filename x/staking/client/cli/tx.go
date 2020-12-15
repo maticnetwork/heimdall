@@ -62,19 +62,23 @@ func ValidatorJoinTxCmd() *cobra.Command {
 			}
 
 			// get proposer
-			proposer := sdk.AccAddress(viper.GetString(FlagProposerAddress))
+			proposerAddrStr, _ := cmd.Flags().GetString(FlagProposerAddress)
+			proposer, err := sdk.AccAddressFromHex(proposerAddrStr)
+			if err != nil {
+				return fmt.Errorf("invalid proposer address", err)
+			}
 			if proposer.Empty() {
 				proposer = helper.GetFromAddress(clientCtx)
 			}
 
 			// get txHash
-			txhash := viper.GetString(FlagTxHash)
+			txhash, _ := cmd.Flags().GetString(FlagTxHash)
 			if txhash == "" {
 				return fmt.Errorf("transaction hash is required")
 			}
 
 			// get PubKey string
-			pubkeyStr := viper.GetString(FlagSignerPubkey)
+			pubkeyStr, _ := cmd.Flags().GetString(FlagSignerPubkey)
 			if pubkeyStr == "" {
 				return fmt.Errorf("pubkey is required")
 			}
@@ -86,14 +90,15 @@ func ValidatorJoinTxCmd() *cobra.Command {
 			pubkeyBytes := ethcrypto.FromECDSAPub(ecdsaPubkey)
 
 			if len(pubkeyBytes) != 65 {
-				return fmt.Errorf("Invalid public key length")
+				return fmt.Errorf("invalid public key length")
 			}
 			pubkey := hmTypes.NewPubKey(pubkeyBytes)
 
 			// total stake amount
-			amount, ok := sdk.NewIntFromString(viper.GetString(FlagAmount))
+			amountStr, _ := cmd.Flags().GetString(FlagAmount)
+			amount, ok := sdk.NewIntFromString(amountStr)
 			if !ok {
-				return errors.New("Invalid stake amount")
+				return fmt.Errorf("invalid stake amount")
 			}
 
 			// Get contractCaller ref
@@ -101,6 +106,7 @@ func ValidatorJoinTxCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+
 			//ToDO
 			// chainmanagerParams, err := util.GetChainmanagerParams(cliCtx)
 			// if err != nil {
