@@ -101,7 +101,7 @@ func ValidatorJoinTxCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			//ToDO
+			// TODO uncomment this when integrating chainmanager
 			// chainmanagerParams, err := util.GetChainmanagerParams(cliCtx)
 			// if err != nil {
 			// 	return err
