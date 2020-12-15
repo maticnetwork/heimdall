@@ -149,6 +149,16 @@ func (am AppModule) RegisterQueryService(server grpc.Server) {
 // RegisterInvariants registers the capability module's invariants.
 func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
+// TODO fix sidetxhandler
+//func (am AppModule) NewSideTxHandler() hmTypes.SideTxHandler {
+//	return NewSideTxHandler(am.keeper, am.contractCaller)
+//}
+//
+//// NewPostTxHandler side tx handler
+//func (am AppModule) NewPostTxHandler() hmTypes.PostTxHandler {
+//	return NewPostTxHandler(am.keeper, am.contractCaller)
+//}
+
 // InitGenesis performs the capability module's genesis initialization It returns
 // no validator updates.
 func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONMarshaler, gs json.RawMessage) []abci.ValidatorUpdate {

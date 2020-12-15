@@ -14,6 +14,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/bor/common"
+	ethcrypto "github.com/maticnetwork/bor/crypto"
 
 	// "github.com/maticnetwork/heimdall/bridge/setu/util"
 
@@ -79,7 +80,11 @@ func ValidatorJoinTxCmd() *cobra.Command {
 			}
 
 			// convert PubKey to bytes
-			pubkeyBytes := common.FromHex(pubkeyStr)
+			compressedPubkeyBytes := common.FromHex(pubkeyStr)
+
+			ecdsaPubkey, err := ethcrypto.DecompressPubkey(compressedPubkeyBytes)
+			pubkeyBytes := ethcrypto.FromECDSAPub(ecdsaPubkey)
+
 			if len(pubkeyBytes) != 65 {
 				return fmt.Errorf("Invalid public key length")
 			}

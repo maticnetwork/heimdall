@@ -7,9 +7,8 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 	// "github.com/maticnetwork/heimdall/params/paramtypes"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	borCommon "github.com/maticnetwork/bor/common"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-
-	hmCommon "github.com/maticnetwork/heimdall/types/common"
 )
 
 // Default parameter values
@@ -19,8 +18,8 @@ const (
 )
 
 var (
-	DefaultStateReceiverAddress sdk.AccAddress = hmCommon.HexToAccAddress("0x0000000000000000000000000000000000001001")
-	DefaultValidatorSetAddress  sdk.AccAddress = hmCommon.HexToAccAddress("0x0000000000000000000000000000000000001000")
+	DefaultStateReceiverAddress sdk.AccAddress = sdk.AccAddress(borCommon.FromHex("0x0000000000000000000000000000000000001001"))
+	DefaultValidatorSetAddress  sdk.AccAddress = sdk.AccAddress(borCommon.FromHex("0x0000000000000000000000000000000000001000"))
 )
 
 // Parameter keys
