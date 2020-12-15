@@ -22,5 +22,5 @@ var (
 	ErrNonce                   = sdkerrors.Register(ModuleName, 2514, "Incorrect validator nonce")
 	ErrNoSignerChange          = sdkerrors.Register(ModuleName, 2513, "New signer same as old signer")
 	ErrValUnbonded             = sdkerrors.Register(ModuleName, 2504, "Validator already unbonded , cannot exit")
-	ErrorSideTx                = sdkerrors.Register(ModuleName, 2510, "Wait for confirmation time before sending transaction")
+	ErrorSideTx                = sdkerrors.Register(ModuleName, 5502, "Wait for confirmation time before sending transaction")
 )
