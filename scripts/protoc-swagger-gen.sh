@@ -3,6 +3,7 @@
 set -eo pipefail
 
 mkdir -p ./.cache/tmp/swagger-gen
+
 proto_dirs=$(find ./proto -path -prune -o -name '*.proto' -print0 | xargs -0 -n1 dirname | sort | uniq)
 for dir in $proto_dirs; do
   # generate swagger files (filter query files)

@@ -4,10 +4,10 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-//ModuleName Defination
+//ModuleName Definition
 var ModuleName = "common_errors"
 
-//custom error definations
+//custom error definitions
 var (
 	ErrEmptyValidatorAddr      = sdkerrors.Register(ModuleName, 2, "empty validator address")
 	ErrInvalidMsg              = sdkerrors.Register(ModuleName, 1400, "Invalid Message")
