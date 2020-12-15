@@ -2,10 +2,17 @@ package common
 
 import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	abci "github.com/tendermint/tendermint/abci/types"
+	tmprototypes "github.com/tendermint/tendermint/proto/tendermint/types"
 )
 
 //ModuleName Defination
 var ModuleName = "common_errors"
+
+var (
+	// CodeInvalidMsg error code
+	CodeInvalidMsg uint32 = 1400
+)
 
 //custom error definations
 var (
@@ -22,5 +29,12 @@ var (
 	ErrNonce                   = sdkerrors.Register(ModuleName, 2514, "Incorrect validator nonce")
 	ErrNoSignerChange          = sdkerrors.Register(ModuleName, 2513, "New signer same as old signer")
 	ErrValUnbonded             = sdkerrors.Register(ModuleName, 2504, "Validator already unbonded , cannot exit")
-	ErrorSideTx                = sdkerrors.Register(ModuleName, 5502, "Wait for confirmation time before sending transaction")
 )
+
+// ErrorSideTx represents side-tx error
+func ErrorSideTx(code uint32) (res abci.ResponseDeliverSideTx) {
+	res.Code = uint32(code)
+	res.Codespace = string(ModuleName)
+	res.Result = tmprototypes.SideTxResultType_SKIP // skip side-tx vote in-case of error
+	return
+}

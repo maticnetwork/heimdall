@@ -41,7 +41,7 @@ type (
 		storeKey sdk.StoreKey
 		// memKey             sdk.StoreKey
 		paramSubspace      paramtypes.Subspace
-		chainKeeper        chainKeeper.Keeper
+		ChainKeeper        chainKeeper.Keeper
 		moduleCommunicator ModuleCommunicator
 	}
 )
@@ -61,7 +61,7 @@ func NewKeeper(
 		cdc:                cdc,
 		storeKey:           storeKey,
 		paramSubspace:      paramstore,
-		chainKeeper:        chainKeeper,
+		ChainKeeper:        chainKeeper,
 		moduleCommunicator: moduleCommunicator,
 	}
 }
