@@ -7,19 +7,31 @@
     },
     "apis": [
         {
-            "url": "./.cache/tmp/swagger-gen/staking/v1alpha1/query.swagger.json"
+            "url": "./.cache/tmp/swagger-gen/staking/v1beta1/query.swagger.json",
+            "operationIds": {
+                "rename": {
+                    "Params": "StakingParams"
+                }
+            }
         },
         {
-            "url": "./.cache/tmp/swagger-gen/sidechannel/v1alpha1/query.swagger.json"
+            "url": "./client/docs/cosmos/auth/v1beta1/query.swagger.json",
+            "operationIds": {
+                "rename": {
+                    "Params": "AuthParams"
+                }
+            }
         },
         {
-            "url": "./client/docs/cosmos/auth/v1alpha1/query.swagger.json"
+            "url": "./client/docs/cosmos/bank/v1beta1/query.swagger.json",
+            "operationIds": {
+                "rename": {
+                    "Params": "BankParams"
+                }
+            }
         },
         {
-            "url": "./client/docs/cosmos/bank/v1alpha1/query.swagger.json"
-        },
-        {
-            "url": "./client/docs/cosmos/params/v1alpha1/query.swagger.json"
+            "url": "./client/docs/cosmos/params/v1beta1/query.swagger.json"
         },
         {
             "url": "./client/docs/cosmos-legacy-swagger.yaml",
