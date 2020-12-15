@@ -155,10 +155,10 @@ func (am AppModule) NewSideTxHandler() hmTypes.SideTxHandler {
 	return NewSideTxHandler(am.keeper, am.contractCaller)
 }
 
-// // NewPostTxHandler post tx handler
-// func (am AppModule) NewPostTxHandler() hmTypes.PostTxHandler {
-// 	return NewPostTxHandler(am.keeper, am.contractCaller)
-// }
+// NewPostTxHandler post tx handler
+func (am AppModule) NewPostTxHandler() hmTypes.PostTxHandler {
+	return NewPostTxHandler(am.keeper, am.contractCaller)
+}
 
 // InitGenesis performs the capability module's genesis initialization It returns
 // no validator updates.
