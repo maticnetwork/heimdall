@@ -22,4 +22,10 @@ var (
 	ErrNonce                   = sdkerrors.Register(ModuleName, 2514, "Incorrect validator nonce")
 	ErrNoSignerChange          = sdkerrors.Register(ModuleName, 2513, "New signer same as old signer")
 	ErrValUnbonded             = sdkerrors.Register(ModuleName, 2504, "Validator already unbonded , cannot exit")
+
+	ErrInvalidBorChainID = sdkerrors.Register(ModuleName, 3506, "Invalid Bor chain id")
+
+	ErrEventRecordAlreadySynced = sdkerrors.Register(ModuleName, 5400, "Event record already synced")
+	ErrEventRecordInvalid = sdkerrors.Register(ModuleName, 5401, "Event record is invalid")
+	ErrEventUpdate = sdkerrors.Register(ModuleName, 5402, "Event record update error")
 )

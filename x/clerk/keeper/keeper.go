@@ -212,3 +212,16 @@ func (k *Keeper) GetEventRecord(ctx sdk.Context, stateID uint64) (*types.EventRe
 	// return no error error
 	return nil, errors.New("No record found")
 }
+
+// HasEventRecord check if state record
+func (k *Keeper) HasEventRecord(ctx sdk.Context, stateID uint64) bool {
+	store := ctx.KVStore(k.storeKey)
+	key := GetEventRecordKey(stateID)
+	return store.Has(key)
+}
+
+// HasRecordSequence checks if record already exists
+func (k *Keeper) HasRecordSequence(ctx sdk.Context, sequence string) bool {
+	store := ctx.KVStore(k.storeKey)
+	return store.Has(GetRecordSequenceKey(sequence))
+}
