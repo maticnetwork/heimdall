@@ -150,12 +150,12 @@ func (am AppModule) RegisterQueryService(server grpc.Server) {
 // RegisterInvariants registers the capability module's invariants.
 func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
-// TODO fix sidetxhandler
+// NewSideTxHandler side tx handler
 func (am AppModule) NewSideTxHandler() hmTypes.SideTxHandler {
 	return NewSideTxHandler(am.keeper, am.contractCaller)
 }
 
-// NewPostTxHandler side tx handler
+// NewPostTxHandler post tx handler
 func (am AppModule) NewPostTxHandler() hmTypes.PostTxHandler {
 	return NewPostTxHandler(am.keeper, am.contractCaller)
 }

@@ -37,9 +37,9 @@ type ModuleCommunicator interface {
 
 type (
 	Keeper struct {
-		cdc                codec.BinaryMarshaler
-		storeKey           sdk.StoreKey
-		memKey             sdk.StoreKey
+		cdc      codec.BinaryMarshaler
+		storeKey sdk.StoreKey
+		// memKey             sdk.StoreKey
 		paramSubspace      paramtypes.Subspace
 		chainKeeper        chainKeeper.Keeper
 		moduleCommunicator ModuleCommunicator
@@ -465,7 +465,10 @@ func (k *Keeper) Slash(ctx sdk.Context, valSlashingInfo hmTypes.ValidatorSlashin
 	validator.Jailed = valSlashingInfo.IsJailed
 
 	// add updated validator to store with new key
-	k.AddValidator(ctx, validator)
+	if err := k.AddValidator(ctx, validator); err != nil {
+		k.Logger(ctx).Error("Error calling AddValidator")
+		return err
+	}
 	k.Logger(ctx).Debug("updated validator with slashed voting power and jail status", "validator", validator)
 	return nil
 }
@@ -487,6 +490,7 @@ func (k *Keeper) Unjail(ctx sdk.Context, valID hmTypes.ValidatorID) {
 	validator.Jailed = false
 
 	// add updated validator to store with new key
-	k.AddValidator(ctx, validator)
-	return
+	if err := k.AddValidator(ctx, validator); err != nil {
+		k.Logger(ctx).Error("Error calling AddValidator")
+	}
 }
