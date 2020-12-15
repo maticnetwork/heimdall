@@ -1,0 +1,31 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "title": "Matic Network - REST and gRPC Gateway docs",
+        "description": "A REST interface for state queries, legacy transactions",
+        "version": "1.0.0"
+    },
+    "apis": [
+        {
+            "url": "./.cache/tmp/swagger-gen/staking/v1alpha1/query.swagger.json"
+        },
+        {
+            "url": "./.cache/tmp/swagger-gen/sidechannel/v1alpha1/query.swagger.json"
+        },
+        {
+            "url": "./client/docs/cosmos/auth/v1alpha1/query.swagger.json"
+        },
+        {
+            "url": "./client/docs/cosmos/bank/v1alpha1/query.swagger.json"
+        },
+        {
+            "url": "./client/docs/cosmos/params/v1alpha1/query.swagger.json"
+        },
+        {
+            "url": "./client/docs/cosmos-legacy-swagger.yaml",
+            "dereference": {
+                "circular": "ignore"
+            }
+        }
+    ]
+}

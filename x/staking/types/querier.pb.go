@@ -30,9 +30,9 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// QueryValidatorRequest is response type for the Query/Validator RPC method
+// QueryValidatorRequest is request type for the Query/Validator RPC method
 type QueryValidatorRequest struct {
-	// validator_addr defines the validator address to query for.
+	// validator_id defines the validator id to query for.
 	ValidatorId types.ValidatorID `protobuf:"varint,1,opt,name=validator_id,json=validatorId,proto3,enum=heimdall.types.ValidatorID" json:"validator_id,omitempty"`
 }
 
@@ -122,6 +122,7 @@ func (m *QueryValidatorResponse) GetValidator() *types.Validator {
 	return nil
 }
 
+// QueryValidatorSetRequest is request type for the Query/ValidatorSet RPC method
 type QueryValidatorSetRequest struct {
 }
 
@@ -158,7 +159,9 @@ func (m *QueryValidatorSetRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryValidatorSetRequest proto.InternalMessageInfo
 
+// QueryValidatorSetResponse is response type for the Query/ValidatorSet RPC method
 type QueryValidatorSetResponse struct {
+	// validatorSet defines the the current validator set.
 	ValidatorSet *types.ValidatorSet `protobuf:"bytes,1,opt,name=validatorSet,proto3" json:"validatorSet,omitempty"`
 }
 
@@ -254,7 +257,7 @@ const _ = grpc.SupportPackageIsVersion4
 type QueryClient interface {
 	// Validator queries the validator that match by validator id.
 	Validator(ctx context.Context, in *QueryValidatorRequest, opts ...grpc.CallOption) (*QueryValidatorResponse, error)
-	// ValidatorSet queries the validatorSet that match by validator id.
+	// ValidatorSet queries the Current Validator Set
 	ValidatorSet(ctx context.Context, in *QueryValidatorSetRequest, opts ...grpc.CallOption) (*QueryValidatorSetResponse, error)
 }
 
@@ -288,7 +291,7 @@ func (c *queryClient) ValidatorSet(ctx context.Context, in *QueryValidatorSetReq
 type QueryServer interface {
 	// Validator queries the validator that match by validator id.
 	Validator(context.Context, *QueryValidatorRequest) (*QueryValidatorResponse, error)
-	// ValidatorSet queries the validatorSet that match by validator id.
+	// ValidatorSet queries the Current Validator Set
 	ValidatorSet(context.Context, *QueryValidatorSetRequest) (*QueryValidatorSetResponse, error)
 }
 

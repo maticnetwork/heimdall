@@ -62,6 +62,9 @@ import (
 	"github.com/maticnetwork/heimdall/x/staking"
 	stakingkeeper "github.com/maticnetwork/heimdall/x/staking/keeper"
 	stakingtypes "github.com/maticnetwork/heimdall/x/staking/types"
+
+	// unnamed import of statik for swagger UI support
+	_ "github.com/maticnetwork/heimdall/client/docs/statik"
 )
 
 const appName = "Heimdall"
