@@ -1,8 +1,6 @@
 package staking
 
 import (
-	"fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -20,8 +18,6 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, genState types.GenesisSt
 	} else {
 		vals = genState.CurrentValSet.Validators
 	}
-
-	fmt.Println("genState", genState.Validators)
 
 	if len(vals) != 0 {
 		resultValSet := hmTypes.NewValidatorSet(vals)
