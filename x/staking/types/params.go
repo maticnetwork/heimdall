@@ -13,6 +13,8 @@ const (
 // ParamStoreKeyProposerBonusPercent - Store's Key for Reward amount
 var ParamStoreKeyProposerBonusPercent = []byte("proposerbonuspercent")
 
+var KeyBondDenom = []byte("BondDenom")
+
 // ParamKeyTable type declaration for parameters
 func ParamKeyTable() paramtypes.KeyTable {
 	return paramtypes.NewKeyTable(

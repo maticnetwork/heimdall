@@ -495,3 +495,9 @@ func (k *Keeper) Unjail(ctx sdk.Context, valID hmTypes.ValidatorID) {
 		k.Logger(ctx).Error("Error calling AddValidator")
 	}
 }
+
+// BondDenom - Bondable coin denomination
+func (k Keeper) BondDenom(ctx sdk.Context) (res string) {
+	k.paramSubspace.Get(ctx, types.KeyBondDenom, &res)
+	return
+}
