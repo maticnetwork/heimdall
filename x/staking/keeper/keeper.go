@@ -7,6 +7,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	bankKeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/maticnetwork/bor/common"
 	"github.com/tendermint/tendermint/libs/log"
@@ -29,20 +30,18 @@ var (
 // ModuleCommunicator manages different module interaction
 type ModuleCommunicator interface {
 	GetACKCount(ctx sdk.Context) uint64
-	SetCoins(ctx sdk.Context, addr hmCommon.HeimdallAddress, amt sdk.Coins) error
-	GetCoins(ctx sdk.Context, addr hmCommon.HeimdallAddress) sdk.Coins
-	SendCoins(ctx sdk.Context, from hmCommon.HeimdallAddress, to hmCommon.HeimdallAddress, amt sdk.Coins) error
 	CreateValiatorSigningInfo(ctx sdk.Context, valID hmTypes.ValidatorID, valSigningInfo hmTypes.ValidatorSigningInfo)
 }
 
 type (
 	Keeper struct {
-		cdc                codec.BinaryMarshaler
-		storeKey           sdk.StoreKey
-		memKey             sdk.StoreKey
+		cdc      codec.BinaryMarshaler
+		storeKey sdk.StoreKey
+		// memKey             sdk.StoreKey
 		paramSubspace      paramtypes.Subspace
-		chainKeeper        chainKeeper.Keeper
-		moduleCommunicator ModuleCommunicator
+		ChainKeeper        chainKeeper.Keeper
+		BankKeeper         bankKeeper.Keeper
+		ModuleCommunicator ModuleCommunicator
 	}
 )
 
@@ -52,6 +51,7 @@ func NewKeeper(
 	storeKey sdk.StoreKey,
 	paramstore paramtypes.Subspace,
 	chainKeeper chainKeeper.Keeper,
+	bankKeeper bankKeeper.Keeper,
 	moduleCommunicator ModuleCommunicator,
 ) Keeper {
 	if !paramstore.HasKeyTable() {
@@ -61,8 +61,9 @@ func NewKeeper(
 		cdc:                cdc,
 		storeKey:           storeKey,
 		paramSubspace:      paramstore,
-		chainKeeper:        chainKeeper,
-		moduleCommunicator: moduleCommunicator,
+		ChainKeeper:        chainKeeper,
+		BankKeeper:         bankKeeper,
+		ModuleCommunicator: moduleCommunicator,
 	}
 }
 
@@ -116,7 +117,7 @@ func (k *Keeper) AddValidator(ctx sdk.Context, validator hmTypes.Validator) erro
 // IsCurrentValidatorByAddress check if validator is in current validator set by signer address
 func (k *Keeper) IsCurrentValidatorByAddress(ctx sdk.Context, address []byte) bool {
 	// get ack count
-	ackCount := k.moduleCommunicator.GetACKCount(ctx)
+	ackCount := k.ModuleCommunicator.GetACKCount(ctx)
 
 	// get validator info
 	validator, err := k.GetValidatorInfo(ctx, address)
@@ -156,7 +157,7 @@ func (k *Keeper) GetActiveValidatorInfo(ctx sdk.Context, address []byte) (valida
 	}
 
 	// get ack count
-	ackCount := k.moduleCommunicator.GetACKCount(ctx)
+	ackCount := k.ModuleCommunicator.GetACKCount(ctx)
 	if !validator.IsCurrentValidator(ackCount) {
 		return validator, errors.New("Validator is not active")
 	}
@@ -168,7 +169,7 @@ func (k *Keeper) GetActiveValidatorInfo(ctx sdk.Context, address []byte) (valida
 // GetCurrentValidators returns all validators who are in validator set
 func (k *Keeper) GetCurrentValidators(ctx sdk.Context) (validators []hmTypes.Validator) {
 	// get ack count
-	ackCount := k.moduleCommunicator.GetACKCount(ctx)
+	ackCount := k.ModuleCommunicator.GetACKCount(ctx)
 
 	// Get validators
 	// iterate through validator list
@@ -195,7 +196,7 @@ func (k *Keeper) GetTotalPower(ctx sdk.Context) (totalPower int64) {
 // GetSpanEligibleValidators returns current validators who are not getting deactivated in between next span
 func (k *Keeper) GetSpanEligibleValidators(ctx sdk.Context) (validators []hmTypes.Validator) {
 	// get ack count
-	ackCount := k.moduleCommunicator.GetACKCount(ctx)
+	ackCount := k.ModuleCommunicator.GetACKCount(ctx)
 
 	// Get validators and iterate through validator list
 	k.IterateValidatorsAndApplyFn(ctx, func(validator hmTypes.Validator) error {
@@ -438,7 +439,7 @@ func (k *Keeper) IterateStakingSequencesAndApplyFn(ctx sdk.Context, f func(seque
 // Slashing api's
 // AddValidatorSigningInfo creates a signing info for validator
 func (k *Keeper) AddValidatorSigningInfo(ctx sdk.Context, valID hmTypes.ValidatorID, valSigningInfo hmTypes.ValidatorSigningInfo) error {
-	k.moduleCommunicator.CreateValiatorSigningInfo(ctx, valID, valSigningInfo)
+	k.ModuleCommunicator.CreateValiatorSigningInfo(ctx, valID, valSigningInfo)
 	return nil
 }
 
@@ -465,7 +466,10 @@ func (k *Keeper) Slash(ctx sdk.Context, valSlashingInfo hmTypes.ValidatorSlashin
 	validator.Jailed = valSlashingInfo.IsJailed
 
 	// add updated validator to store with new key
-	k.AddValidator(ctx, validator)
+	if err := k.AddValidator(ctx, validator); err != nil {
+		k.Logger(ctx).Error("Error calling AddValidator")
+		return err
+	}
 	k.Logger(ctx).Debug("updated validator with slashed voting power and jail status", "validator", validator)
 	return nil
 }
@@ -487,6 +491,7 @@ func (k *Keeper) Unjail(ctx sdk.Context, valID hmTypes.ValidatorID) {
 	validator.Jailed = false
 
 	// add updated validator to store with new key
-	k.AddValidator(ctx, validator)
-	return
+	if err := k.AddValidator(ctx, validator); err != nil {
+		k.Logger(ctx).Error("Error calling AddValidator")
+	}
 }

@@ -236,6 +236,7 @@ func NewHeimdallApp(
 		keys[stakingtypes.StoreKey], // target store
 		app.GetSubspace(stakingtypes.ModuleName),
 		app.ChainKeeper,
+		app.BankKeeper,
 		nil,
 	)
 
@@ -299,9 +300,9 @@ func NewHeimdallApp(
 	// side router
 	app.sideRouter = hmtypes.NewSideRouter()
 	for _, m := range app.mm.Modules {
-		if m.Route().Path() != "" {
+		if m.Route().Path() != "" { //nolint
 			if sm, ok := m.(hmmodule.SideModule); ok {
-				app.sideRouter.AddRoute(m.Route().Path(), &hmtypes.SideHandlers{
+				app.sideRouter.AddRoute(m.Route().Path(), &hmtypes.SideHandlers{ //nolint
 					SideTxHandler: sm.NewSideTxHandler(),
 					PostTxHandler: sm.NewPostTxHandler(),
 				})

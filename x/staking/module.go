@@ -17,6 +17,7 @@ import (
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/x/staking/client/cli"
@@ -148,6 +149,16 @@ func (am AppModule) RegisterQueryService(server grpc.Server) {
 
 // RegisterInvariants registers the capability module's invariants.
 func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
+
+// NewSideTxHandler side tx handler
+func (am AppModule) NewSideTxHandler() hmTypes.SideTxHandler {
+	return NewSideTxHandler(am.keeper, am.contractCaller)
+}
+
+// NewPostTxHandler post tx handler
+func (am AppModule) NewPostTxHandler() hmTypes.PostTxHandler {
+	return NewPostTxHandler(am.keeper, am.contractCaller)
+}
 
 // InitGenesis performs the capability module's genesis initialization It returns
 // no validator updates.

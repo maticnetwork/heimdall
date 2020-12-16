@@ -43,7 +43,7 @@ func (a *PubKey) UnmarshalText(input []byte) error {
 
 // String returns string representations of key
 func (a PubKey) String() string {
-	return common.ToHex(a)
+	return common.ToHex(a) //nolint
 }
 
 // Bytes returns bytes for pubkey
