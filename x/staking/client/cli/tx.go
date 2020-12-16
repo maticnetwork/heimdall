@@ -22,6 +22,9 @@ import (
 	"github.com/maticnetwork/heimdall/x/staking/types"
 )
 
+// ForeignEventName is used in ValidatorJoinTxCmd
+const ForeignEventName = "Staked"
+
 var logger = helper.Logger.With("module", "staking/client/cli")
 
 // GetTxCmd returns the transaction commands for this module

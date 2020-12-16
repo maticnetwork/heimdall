@@ -31,6 +31,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// MsgValidatorJoin defines a message to join a new validator.
 type MsgValidatorJoin struct {
 	From            github_com_cosmos_cosmos_sdk_types.AccAddress              `protobuf:"bytes,1,opt,name=from,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"from,omitempty"`
 	ID              github_com_maticnetwork_heimdall_types.ValidatorID         `protobuf:"varint,2,opt,name=id,proto3,casttype=github.com/maticnetwork/heimdall/types.ValidatorID" json:"id,omitempty"`
@@ -67,6 +68,7 @@ func (m *MsgValidatorJoin) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgValidatorJoin proto.InternalMessageInfo
 
+// MsgValidatorJoinResponse defines ValidatorJoin response type.
 type MsgValidatorJoinResponse struct {
 }
 
@@ -94,6 +96,7 @@ func (m *MsgValidatorJoinResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgValidatorJoinResponse proto.InternalMessageInfo
 
+// MsgStakeUpdate defines a message to update stake for a validator.
 type MsgStakeUpdate struct {
 	From        github_com_cosmos_cosmos_sdk_types.AccAddress              `protobuf:"bytes,1,opt,name=from,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"from,omitempty"`
 	ID          github_com_maticnetwork_heimdall_types.ValidatorID         `protobuf:"varint,2,opt,name=id,proto3,casttype=github.com/maticnetwork/heimdall/types.ValidatorID" json:"id,omitempty"`
@@ -128,6 +131,7 @@ func (m *MsgStakeUpdate) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgStakeUpdate proto.InternalMessageInfo
 
+// MsgStakeUpdateResponse defines StakeUpdate response type.
 type MsgStakeUpdateResponse struct {
 }
 
@@ -155,6 +159,7 @@ func (m *MsgStakeUpdateResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgStakeUpdateResponse proto.InternalMessageInfo
 
+// MsgSignerUpdate defines a message to update signer of a validator.
 type MsgSignerUpdate struct {
 	From            github_com_cosmos_cosmos_sdk_types.AccAddress              `protobuf:"bytes,1,opt,name=from,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"from,omitempty"`
 	ID              github_com_maticnetwork_heimdall_types.ValidatorID         `protobuf:"varint,2,opt,name=id,proto3,casttype=github.com/maticnetwork/heimdall/types.ValidatorID" json:"id,omitempty"`
@@ -189,6 +194,7 @@ func (m *MsgSignerUpdate) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgSignerUpdate proto.InternalMessageInfo
 
+// MsgSignerUpdateResponse defines SignerUpdate response type.
 type MsgSignerUpdateResponse struct {
 }
 
@@ -216,6 +222,7 @@ func (m *MsgSignerUpdateResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgSignerUpdateResponse proto.InternalMessageInfo
 
+// MsgValidatorExit defines a message to exit as a validator
 type MsgValidatorExit struct {
 	From              github_com_cosmos_cosmos_sdk_types.AccAddress              `protobuf:"bytes,1,opt,name=from,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"from,omitempty"`
 	ID                github_com_maticnetwork_heimdall_types.ValidatorID         `protobuf:"varint,2,opt,name=id,proto3,casttype=github.com/maticnetwork/heimdall/types.ValidatorID" json:"id,omitempty"`
@@ -250,6 +257,7 @@ func (m *MsgValidatorExit) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgValidatorExit proto.InternalMessageInfo
 
+// MsgValidatorExitResponse is response type for ValidatorExit RPC method
 type MsgValidatorExitResponse struct {
 }
 
@@ -351,15 +359,14 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type MsgClient interface {
-	// CreateValidator defines a method for creating a new validator.
+	// ValidatorJoin defines a method to join a new validator.
 	ValidatorJoin(ctx context.Context, in *MsgValidatorJoin, opts ...grpc.CallOption) (*MsgValidatorJoinResponse, error)
-	// EditValidator defines a method for editing an existing validator.
+	// StakeUpdate defines a method to update stake for an existing validator.
 	StakeUpdate(ctx context.Context, in *MsgStakeUpdate, opts ...grpc.CallOption) (*MsgStakeUpdateResponse, error)
-	// Delegate defines a method for performing a delegation of coins
-	// from a delegator to a validator.
+	// SignerUpdate defines a method for update singer details of
+	// exisitng validator.
 	SignerUpdate(ctx context.Context, in *MsgSignerUpdate, opts ...grpc.CallOption) (*MsgSignerUpdateResponse, error)
-	// BeginRedelegate defines a method for performing a redelegation
-	// of coins from a delegator and source validator to a destination validator.
+	// ValidatorExit defines a method to handle validator exit
 	ValidatorExit(ctx context.Context, in *MsgValidatorExit, opts ...grpc.CallOption) (*MsgValidatorExitResponse, error)
 }
 
@@ -409,15 +416,14 @@ func (c *msgClient) ValidatorExit(ctx context.Context, in *MsgValidatorExit, opt
 
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
-	// CreateValidator defines a method for creating a new validator.
+	// ValidatorJoin defines a method to join a new validator.
 	ValidatorJoin(context.Context, *MsgValidatorJoin) (*MsgValidatorJoinResponse, error)
-	// EditValidator defines a method for editing an existing validator.
+	// StakeUpdate defines a method to update stake for an existing validator.
 	StakeUpdate(context.Context, *MsgStakeUpdate) (*MsgStakeUpdateResponse, error)
-	// Delegate defines a method for performing a delegation of coins
-	// from a delegator to a validator.
+	// SignerUpdate defines a method for update singer details of
+	// exisitng validator.
 	SignerUpdate(context.Context, *MsgSignerUpdate) (*MsgSignerUpdateResponse, error)
-	// BeginRedelegate defines a method for performing a redelegation
-	// of coins from a delegator and source validator to a destination validator.
+	// ValidatorExit defines a method to handle validator exit
 	ValidatorExit(context.Context, *MsgValidatorExit) (*MsgValidatorExitResponse, error)
 }
 
