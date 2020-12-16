@@ -562,12 +562,11 @@ func PostHandleMsgSignerUpdate(ctx sdk.Context, k keeper.Keeper, msg types.MsgSi
 	//
 
 	// check if fee is already withdrawn
-	coins := k.ModuleCommunicator.GetCoins(ctx, oldValidator.Signer)
-	maticBalance := coins.AmountOf(types.FeeToken)
+	maticBalance := k.BankKeeper.GetBalance(ctx, sdk.AccAddress([]byte(oldValidator.Signer)), types.FeeToken)
 	if !maticBalance.IsZero() {
 		k.Logger(ctx).Info("Transferring fee", "from", oldValidator.Signer, "to", validator.Signer, "balance", maticBalance.String())
-		maticCoins := sdk.Coins{sdk.Coin{Denom: types.FeeToken, Amount: maticBalance}}
-		if err := k.ModuleCommunicator.SendCoins(ctx, oldValidator.Signer, validator.Signer, maticCoins); err != nil {
+		maticCoins := sdk.Coins{maticBalance}
+		if err := k.BankKeeper.SendCoins(ctx, sdk.AccAddress([]byte(oldValidator.Signer)), sdk.AccAddress([]byte(validator.Signer)), maticCoins); err != nil {
 			k.Logger(ctx).Info("Error while transferring fee", "from", oldValidator.Signer, "to", validator.Signer, "balance", maticBalance.String())
 			return nil, err
 		}

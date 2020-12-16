@@ -7,6 +7,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	bankKeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/maticnetwork/bor/common"
 	"github.com/tendermint/tendermint/libs/log"
@@ -29,9 +30,6 @@ var (
 // ModuleCommunicator manages different module interaction
 type ModuleCommunicator interface {
 	GetACKCount(ctx sdk.Context) uint64
-	SetCoins(ctx sdk.Context, addr string, amt sdk.Coins) error
-	GetCoins(ctx sdk.Context, addr string) sdk.Coins
-	SendCoins(ctx sdk.Context, from string, to string, amt sdk.Coins) error
 	CreateValiatorSigningInfo(ctx sdk.Context, valID hmTypes.ValidatorID, valSigningInfo hmTypes.ValidatorSigningInfo)
 }
 
@@ -42,6 +40,7 @@ type (
 		// memKey             sdk.StoreKey
 		paramSubspace      paramtypes.Subspace
 		ChainKeeper        chainKeeper.Keeper
+		BankKeeper         bankKeeper.Keeper
 		ModuleCommunicator ModuleCommunicator
 	}
 )
@@ -52,6 +51,7 @@ func NewKeeper(
 	storeKey sdk.StoreKey,
 	paramstore paramtypes.Subspace,
 	chainKeeper chainKeeper.Keeper,
+	bankKeeper bankKeeper.Keeper,
 	moduleCommunicator ModuleCommunicator,
 ) Keeper {
 	if !paramstore.HasKeyTable() {
@@ -62,6 +62,7 @@ func NewKeeper(
 		storeKey:           storeKey,
 		paramSubspace:      paramstore,
 		ChainKeeper:        chainKeeper,
+		BankKeeper:         bankKeeper,
 		ModuleCommunicator: moduleCommunicator,
 	}
 }
