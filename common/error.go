@@ -6,7 +6,7 @@ import (
 	tmprototypes "github.com/tendermint/tendermint/proto/tendermint/types"
 )
 
-//ModuleName Defination
+//ModuleName Definition
 var ModuleName = "common_errors"
 
 var (
