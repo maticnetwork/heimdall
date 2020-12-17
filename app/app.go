@@ -240,6 +240,7 @@ func NewHeimdallApp(
 		keys[stakingtypes.StoreKey], // target store
 		app.GetSubspace(stakingtypes.ModuleName),
 		app.ChainKeeper,
+		app.BankKeeper,
 		nil,
 	)
 
