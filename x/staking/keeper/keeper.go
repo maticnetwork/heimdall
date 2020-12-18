@@ -243,7 +243,7 @@ func (k *Keeper) IterateValidatorsAndApplyFn(ctx sdk.Context, f func(validator h
 }
 
 // UpdateSigner updates validator with signer and pubkey + validator => signer map
-func (k *Keeper) UpdateSigner(ctx sdk.Context, newSigner hmCommon.HeimdallAddress, newPubkey hmCommon.PubKey, prevSigner hmCommon.HeimdallAddress) error {
+func (k *Keeper) UpdateSigner(ctx sdk.Context, newSigner sdk.AccAddress, newPubkey hmCommon.PubKey, prevSigner sdk.AccAddress) error {
 	// get old validator from state and make power 0
 	validator, err := k.GetValidatorInfo(ctx, prevSigner.Bytes())
 	if err != nil {
