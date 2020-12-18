@@ -18,8 +18,10 @@ const (
 )
 
 var (
+	// DefaultStateReceiverAddress is used set Default State Reciever address
 	DefaultStateReceiverAddress sdk.AccAddress = sdk.AccAddress(borCommon.FromHex("0x0000000000000000000000000000000000001001"))
-	DefaultValidatorSetAddress  sdk.AccAddress = sdk.AccAddress(borCommon.FromHex("0x0000000000000000000000000000000000001000"))
+	// DefaultValidatorSetAddress is used set Default Validator Set address
+	DefaultValidatorSetAddress sdk.AccAddress = sdk.AccAddress(borCommon.FromHex("0x0000000000000000000000000000000000001000"))
 )
 
 // Parameter keys
@@ -89,44 +91,49 @@ func (p Params) String() string {
 
 // Validate checks that the parameters have valid values.
 func (p Params) Validate() error {
-	if err := validateAddress("matic_token_address", p.ChainParams.MaticTokenAddress); err != nil {
+	if err := validateAccAddress(MaticTokenAddress, p.ChainParams.MaticTokenAddress); err != nil {
 		return err
 	}
 
-	if err := validateAddress("staking_manager_address", p.ChainParams.StakingManagerAddress); err != nil {
+	if err := validateAccAddress(StakingManagerAddress, p.ChainParams.StakingManagerAddress); err != nil {
 		return err
 	}
 
-	if err := validateAddress("slash_manager_address", p.ChainParams.SlashManagerAddress); err != nil {
+	if err := validateAccAddress(SlashManagerAddress, p.ChainParams.SlashManagerAddress); err != nil {
 		return err
 	}
 
-	if err := validateAddress("root_chain_address", p.ChainParams.RootChainAddress); err != nil {
+	if err := validateAccAddress(RootChainAddress, p.ChainParams.RootChainAddress); err != nil {
 		return err
 	}
 
-	if err := validateAddress("staking_info_address", p.ChainParams.StakingInfoAddress); err != nil {
+	if err := validateAccAddress(StakingInfoAddress, p.ChainParams.StakingInfoAddress); err != nil {
 		return err
 	}
 
-	if err := validateAddress("state_sender_address", p.ChainParams.StateSenderAddress); err != nil {
+	if err := validateAccAddress(StateSenderAddress, p.ChainParams.StateSenderAddress); err != nil {
 		return err
 	}
 
-	if err := validateAddress("state_receiver_address", p.ChainParams.StateReceiverAddress); err != nil {
+	if err := validateAccAddress(StateReceiverAddress, p.ChainParams.StateReceiverAddress); err != nil {
 		return err
 	}
 
-	if err := validateAddress("validator_set_address", p.ChainParams.ValidatorSetAddress); err != nil {
+	if err := validateAccAddress(ValidatorSetAddress, p.ChainParams.ValidatorSetAddress); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func validateAddress(key string, value sdk.AccAddress) error {
+func validateAccAddress(key string, value sdk.AccAddress) error {
 	if value.String() == "" {
 		return fmt.Errorf("Invalid value %s in chain_params", key)
+	}
+	//convert string to AccAddress and compare
+	addr := sdk.AccAddress([]byte(key))
+	if !addr.Equals(value) {
+		return fmt.Errorf("Key: %s is not equal to Value: %s", key, value)
 	}
 
 	return nil
