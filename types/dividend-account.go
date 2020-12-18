@@ -8,9 +8,8 @@ import (
 
 	"github.com/cbergoon/merkletree"
 	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/bor/crypto"
-
-	"github.com/maticnetwork/heimdall/types/common"
 )
 
 // DividendAccount contains burned Fee amount
@@ -19,7 +18,7 @@ import (
 // 	FeeAmount string          `json:"feeAmount"` // string representation of big.Int
 // }
 
-func NewDividendAccount(user common.HeimdallAddress, fee string) DividendAccount {
+func NewDividendAccount(user sdk.AccAddress, fee string) DividendAccount {
 	return DividendAccount{
 		User:      user,
 		FeeAmount: fee,
@@ -32,7 +31,7 @@ func (da *DividendAccount) String() string {
 	}
 
 	return fmt.Sprintf("DividendAccount{%s %v}", //nolint
-		da.User.EthAddress,
+		da.User,
 		da.FeeAmount)
 }
 
