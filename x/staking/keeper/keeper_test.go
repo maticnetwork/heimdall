@@ -8,8 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/app"
 
-	// chSim "github.com/maticnetwork/heimdall/x/checkpoint/simulation"
-	// stakingSim "github.com/maticnetwork/heimdall/x/staking/simulation"
+	stakingSim "github.com/maticnetwork/heimdall/x/staking/simulation"
 
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmCommonTypes "github.com/maticnetwork/heimdall/types/common"
@@ -216,7 +215,7 @@ func GetBytesFromString(str string) []byte {
 // 	keeper := app.StakingKeeper
 
 // 	// load 4 validators to state
-// 	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+// 	stakingSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
 // 	initValSet := keeper.GetValidatorSet(ctx)
 
 // 	currentValSet := initValSet.Copy()
@@ -248,7 +247,7 @@ func GetBytesFromString(str string) []byte {
 // 	keeper := app.StakingKeeper
 
 // 	// load 4 validators to state
-// 	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+// 	stakingSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
 // 	initValSet := keeper.GetValidatorSet(ctx)
 
 // 	validators := stakingSim.GenRandomVal(1, 0, 10, 10, false, 1)
@@ -263,7 +262,7 @@ func GetBytesFromString(str string) []byte {
 // 	currentValSet.UpdateWithChangeSet(setUpdates)
 
 // 	require.Equal(t, len(prevValSet.Validators)+1, len(currentValSet.Validators), "Number of validators should be increased by 1")
-// 	require.Equal(t, true, currentValSet.HasAddress(valToBeAdded.Signer.Bytes()), "New Validator should be added")
+// 	require.Equal(t, true, currentValSet.HasAddress(GetBytesFromString(valToBeAdded.Signer)), "New Validator should be added")
 // 	require.Equal(t, prevValSet.TotalVotingPower()+int64(valToBeAdded.VotingPower), currentValSet.TotalVotingPower(), "Total VotingPower should be increased")
 
 // }
@@ -274,7 +273,7 @@ func GetBytesFromString(str string) []byte {
 // 	keeper := app.StakingKeeper
 
 // 	// load 4 validators to state
-// 	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+// 	stakingSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
 // 	initValSet := keeper.GetValidatorSet(ctx)
 
 // 	keeper.IncrementAccum(ctx, 2)
@@ -310,60 +309,60 @@ func GetBytesFromString(str string) []byte {
 
 // }
 
-// func (suite *KeeperTestSuite) TestGetCurrentValidators() {
-// 	t, app, ctx := suite.T(), suite.app, suite.ctx
-// 	keeper := app.StakingKeeper
-// 	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
-// 	validators := keeper.GetCurrentValidators(ctx)
-// 	activeValidatorInfo, err := keeper.GetActiveValidatorInfo(ctx, validators[0].Signer.Bytes())
-// 	require.NoError(t, err)
-// 	require.Equal(t, validators[0], activeValidatorInfo)
-// }
+func (suite *KeeperTestSuite) TestGetCurrentValidators() {
+	t, app, ctx := suite.T(), suite.app, suite.ctx
+	keeper := app.StakingKeeper
+	stakingSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	validators := keeper.GetCurrentValidators(ctx)
+	activeValidatorInfo, err := keeper.GetActiveValidatorInfo(ctx, GetBytesFromString(validators[0].Signer))
+	require.NoError(t, err)
+	require.Equal(t, validators[0], activeValidatorInfo)
+}
 
-// func (suite *KeeperTestSuite) TestGetCurrentProposer() {
-// 	t, app, ctx := suite.T(), suite.app, suite.ctx
-// 	keeper := app.StakingKeeper
-// 	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
-// 	currentValSet := keeper.GetValidatorSet(ctx)
-// 	currentProposer := keeper.GetCurrentProposer(ctx)
-// 	require.Equal(t, currentValSet.GetProposer(), currentProposer)
-// }
+func (suite *KeeperTestSuite) TestGetCurrentProposer() {
+	t, app, ctx := suite.T(), suite.app, suite.ctx
+	keeper := app.StakingKeeper
+	stakingSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	currentValSet := keeper.GetValidatorSet(ctx)
+	currentProposer := keeper.GetCurrentProposer(ctx)
+	require.Equal(t, currentValSet.GetProposer(), currentProposer)
+}
 
-// func (suite *KeeperTestSuite) TestGetNextProposer() {
-// 	t, app, ctx := suite.T(), suite.app, suite.ctx
-// 	keeper := app.StakingKeeper
-// 	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+func (suite *KeeperTestSuite) TestGetNextProposer() {
+	t, app, ctx := suite.T(), suite.app, suite.ctx
+	keeper := app.StakingKeeper
+	stakingSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
 
-// 	nextProposer := keeper.GetNextProposer(ctx)
-// 	require.NotNil(t, nextProposer)
-// }
+	nextProposer := keeper.GetNextProposer(ctx)
+	require.NotNil(t, nextProposer)
+}
 
-// func (suite *KeeperTestSuite) TestGetValidatorFromValID() {
-// 	t, app, ctx := suite.T(), suite.app, suite.ctx
-// 	keeper := app.StakingKeeper
-// 	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
-// 	validators := keeper.GetCurrentValidators(ctx)
+func (suite *KeeperTestSuite) TestGetValidatorFromValID() {
+	t, app, ctx := suite.T(), suite.app, suite.ctx
+	keeper := app.StakingKeeper
+	stakingSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	validators := keeper.GetCurrentValidators(ctx)
 
-// 	valInfo, ok := keeper.GetValidatorFromValID(ctx, validators[0].ID)
-// 	require.Equal(t, ok, true)
-// 	require.Equal(t, validators[0], valInfo)
-// }
+	valInfo, ok := keeper.GetValidatorFromValID(ctx, validators[0].ID)
+	require.Equal(t, ok, true)
+	require.Equal(t, validators[0], valInfo)
+}
 
-// func (suite *KeeperTestSuite) TestGetLastUpdated() {
-// 	t, app, ctx := suite.T(), suite.app, suite.ctx
-// 	keeper := app.StakingKeeper
-// 	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
-// 	validators := keeper.GetCurrentValidators(ctx)
+func (suite *KeeperTestSuite) TestGetLastUpdated() {
+	t, app, ctx := suite.T(), suite.app, suite.ctx
+	keeper := app.StakingKeeper
+	stakingSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	validators := keeper.GetCurrentValidators(ctx)
 
-// 	lastUpdated, ok := keeper.GetLastUpdated(ctx, validators[0].ID)
-// 	require.Equal(t, ok, true)
-// 	require.Equal(t, validators[0].LastUpdated, lastUpdated)
-// }
+	lastUpdated, ok := keeper.GetLastUpdated(ctx, validators[0].ID)
+	require.Equal(t, ok, true)
+	require.Equal(t, validators[0].LastUpdated, lastUpdated)
+}
 
 // func (suite *KeeperTestSuite) TestGetSpanEligibleValidators() {
 // 	t, app, ctx := suite.T(), suite.app, suite.ctx
 // 	keeper := app.StakingKeeper
-// 	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 0)
+// 	stakingSim.LoadValidatorSet(4, t, keeper, ctx, false, 0)
 
 // 	// Test ActCount = 0
 // 	app.CheckpointKeeper.UpdateACKCountWithValue(ctx, 0)
