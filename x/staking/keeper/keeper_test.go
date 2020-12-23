@@ -2,10 +2,12 @@ package keeper_test
 
 import (
 	"math/rand"
+	"strings"
 	"testing"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/maticnetwork/heimdall/app"
 
 	stakingSim "github.com/maticnetwork/heimdall/x/staking/simulation"
@@ -13,11 +15,12 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmCommonTypes "github.com/maticnetwork/heimdall/types/common"
 
-	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/types/simulation"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
+
+	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/types/simulation"
 )
 
 type KeeperTestSuite struct {
@@ -67,8 +70,10 @@ func (suite *KeeperTestSuite) TestValidator() {
 	// Get random validator ID
 	valId := simulation.RandIntBetween(r1, 0, n)
 
+	singerAddress, err := sdk.AccAddressFromHex(validators[valId].Signer)
+
 	// Get Validator Info from state
-	valInfo, err := app.StakingKeeper.GetValidatorInfo(ctx, []byte(validators[valId].Signer))
+	valInfo, err := app.StakingKeeper.GetValidatorInfo(ctx, singerAddress)
 	if err != nil {
 		t.Error("Error while fetching Validator", err)
 	}
@@ -81,7 +86,7 @@ func (suite *KeeperTestSuite) TestValidator() {
 
 	// Check if Validator matches in state
 	require.Equal(t, valInfo, *validators[valId], "Validators in state doesnt match")
-	require.Equal(t, mappedSignerAddress.Hex(), validators[0].Signer, "Signer address doesn't match")
+	require.Equal(t, strings.ToLower(mappedSignerAddress.Hex()), strings.ToLower(validators[0].Signer), "Signer address doesn't match")
 }
 
 // tests VotingPower change, validator creation, validator set update when signer changes

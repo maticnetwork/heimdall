@@ -130,11 +130,11 @@ func (k *Keeper) IsCurrentValidatorByAddress(ctx sdk.Context, address []byte) bo
 }
 
 // GetValidatorInfo returns validator
-func (k *Keeper) GetValidatorInfo(ctx sdk.Context, address []byte) (validator hmTypes.Validator, err error) {
+func (k *Keeper) GetValidatorInfo(ctx sdk.Context, address sdk.AccAddress) (validator hmTypes.Validator, err error) {
 	store := ctx.KVStore(k.storeKey)
 
 	// check if validator exists
-	key := GetValidatorKey(address)
+	key := GetValidatorKey(address.Bytes())
 	if !store.Has(key) {
 		return validator, errors.New("Validator not found")
 	}
