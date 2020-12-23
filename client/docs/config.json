@@ -31,7 +31,18 @@
             }
         },
         {
+            "url": "./client/docs/cosmos/base/tendermint/v1beta1/query.swagger.json",
+            "operationIds": {
+                "rename": {
+                    "Params": "BankParams"
+                }
+            }
+        },
+        {
             "url": "./client/docs/cosmos/params/v1beta1/query.swagger.json"
+        },
+        {
+            "url": "./client/docs/cosmos/tx/v1beta1/service.swagger.json"
         },
         {
             "url": "./client/docs/cosmos-legacy-swagger.yaml",

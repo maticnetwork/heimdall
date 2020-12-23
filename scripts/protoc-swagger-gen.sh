@@ -9,7 +9,7 @@ for dir in $proto_dirs; do
   # generate swagger files (filter query files)
   query_file=$(find "${dir}" -maxdepth 1 -name 'query.proto')
   if [[ -n "$query_file" ]]; then
-    .cache/bin/protoc  \
+    buf .cache/bin/protoc  \
     -I "proto" \
     -I ".cache/cosmos-sdk/proto" \
     -I ".cache/cosmos-sdk/third_party/proto" \
