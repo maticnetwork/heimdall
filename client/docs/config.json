@@ -46,12 +46,6 @@
             "dereference": {
                 "circular": "ignore"
             }
-        },
-        {
-            "url": "./client/docs/cosmos-legacy-swagger.yaml",
-            "dereference": {
-                "circular": "ignore"
-            }
         }
     ]
 }
