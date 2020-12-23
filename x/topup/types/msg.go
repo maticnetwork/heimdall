@@ -3,20 +3,20 @@ package types
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/types"
+	hmCommon "github.com/maticnetwork/heimdall/types/common"
 )
 
 //
 // Fee token
 //
 
-var _ sdk.Msg = MsgTopup{}
+// var _ sdk.Msg = MsgTopup{}
 
 // NewMsgTopup - construct arbitrary multi-in, multi-out send msg.
 func NewMsgTopup(
-	fromAddr types.HeimdallAddress,
-	user types.HeimdallAddress,
+	fromAddr sdk.AccAddress,
+	user sdk.AccAddress,
 	fee sdk.Int,
 	txhash types.HeimdallHash,
 	logIndex uint64,
@@ -87,7 +87,7 @@ var _ sdk.Msg = MsgWithdrawFee{}
 
 // NewMsgWithdrawFee - construct arbitrary fee withdraw msg
 func NewMsgWithdrawFee(
-	fromAddr types.HeimdallAddress,
+	fromAddr sdk.AccAddress,
 	amount sdk.Int,
 ) MsgWithdrawFee {
 	return MsgWithdrawFee{

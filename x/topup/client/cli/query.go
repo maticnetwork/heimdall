@@ -1,15 +1,15 @@
 package cli
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	hmClient "github.com/maticnetwork/heimdall/client"
+	// hmClient "github.com/maticnetwork/heimdall/client"
 	"github.com/maticnetwork/heimdall/x/topup/types"
 )
 
@@ -25,7 +25,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		GetSequence()
+		GetSequenceCmd()
 	)
 	// this line is used by starport scaffolding # 1
 
@@ -33,7 +33,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 }
 
 // GetSequence validator information via id or address
-func GetSequence() *cobra.Command {
+func GetSequenceCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "status",
 		Short: "get sequence from txhash and logindex",
@@ -50,35 +50,26 @@ func GetSequence() *cobra.Command {
 				return fmt.Errorf("LogIndex and transaction hash required")
 			}
 
-			var queryParams []byte
-			var err error
-			var t string = ""
-			if txHashStr != "" {
-				queryParams, err = cliCtx.Codec.MarshalJSON(types.NewQuerySequenceParams(txHashStr, logIndex))
-				if err != nil {
-					return err
-				}
-				t = types.QuerySequence
-			}
+			queryClient := types.NewQueryClient(cliCtx)
 
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, t), queryParams)
+			params := &types.QuerySequenceRequest{TxHashStr: txHashStr, LogIndex: logIndex}
+
+			res, err := queryClient.Sequence(context.Background(), params)
 			if err != nil {
-				fmt.Println("No topup exists")
-				return nil
+				return err
 			}
 
-			fmt.Println("Success. Topup exists with sequence:", string(res))
-			return nil
+			return cliCtx.PrintOutput(res.Sequence)
+			// fmt.Println("Success. Topup exists with sequence:", string(res))
 		},
 	}
 
+	flags.AddQueryFlagstoCmd(cmd)
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
 	cmd.Flags().Uint64(FlagLogIndex, 0, "--log-index=<log-index>")
-	if err := cmd.MarkFlagRequired(FlagTxHash); err != nil {
-		cliLogger.Error("GetSequence | MarkFlagRequired | FlagTxHash", "Error", err)
-	}
-	if err := cmd.MarkFlagRequired(FlagLogIndex); err != nil {
-		cliLogger.Error("GetSequence | MarkFlagRequired | FlagLogIndex", "Error", err)
-	}
+
+	flags.MarkFlagRequired(FlagTxHash)
+	flags.MarkFlagRequired(FlagLogIndex)
+
 	return cmd
 }

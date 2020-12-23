@@ -9,36 +9,44 @@ option (gogoproto.sizer_all)       = false;
 option (gogoproto.marshaler_all)   = false;
 option (gogoproto.unmarshaler_all) = false;
 
+// Msg defines the topup Msg service.
+service Msg {
+    // Topup defines a method to topup validator account with additional tokens.
+    rpc Topup(MsgTopup) returns (MsgTopupResponse);
+
+    // WithdrawFee defines a method for validators to withdraw tokens from
+    // heimdall.
+    rpc WithdrawFee(MsgWithdrawFee) returns (MsgWithdrawFeeResponse);
+}
 
 // GenesisState defines the topup module's genesis state.
 message MsgTopup {
     string from_address = 1
         [(gogoproto.casttype) =
-        "github.com/cosmos/cosmos-sdk/types.AccAddress"];
-    string user = 2
-        [(gogoproto.casttype) =
-        "github.com/cosmos/cosmos-sdk/types.AccAddress"];
-    // TODO Sandeep: check if uint64 can be casted to int or something else has to be done
+             "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    string user = 2 [(gogoproto.casttype) =
+                         "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    // TODO Sandeep: check if uint64 can be casted to int or something else has
+    // to be done
     uint64 fee = 3
-        [(gogoproto.casttype) =
-        "github.com/cosmos/cosmos-sdk/types.Int"];
+        [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.Int"];
     string tx_hash = 4
-    [(gogoproto.casttype) =
-            "github.com/maticnetwork/heimdall/types/common.HeimdallHash"];
-    uint64 log_index = 5;
+        [(gogoproto.casttype) =
+             "github.com/maticnetwork/heimdall/types/common.HeimdallHash"];
+    uint64 log_index    = 5;
     uint64 block_number = 6;
 }
 
-message MsgTopupResponse{}
+message MsgTopupResponse {}
 
 message MsgWithdrawFee {
     string user_address = 1
-        [(gogoproto.casttype) = 
-        "github.com/cosmos/cosmos-sdk/types.AccAddress"];
-    // TODO Sandeep: check if uint64 can be casted to int or something else has to be done
-    uint64 amount = 2
         [(gogoproto.casttype) =
-        "github.com/cosmos/cosmos-sdk/types.Int"];
+             "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    // TODO Sandeep: check if uint64 can be casted to int or something else has
+    // to be done
+    uint64 amount = 2
+        [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.Int"];
 }
 
-message MsgWithdrawFeeResponse{}
+message MsgWithdrawFeeResponse {}

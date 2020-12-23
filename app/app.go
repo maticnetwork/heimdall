@@ -56,6 +56,9 @@ import (
 	"github.com/maticnetwork/heimdall/x/staking"
 	stakingkeeper "github.com/maticnetwork/heimdall/x/staking/keeper"
 	stakingtypes "github.com/maticnetwork/heimdall/x/staking/types"
+	"github.com/maticnetwork/heimdall/x/topup"
+	topupkeeper "github.com/maticnetwork/heimdall/x/topup/keeper"
+	topuptypes "github.com/maticnetwork/heimdall/x/topup/types"
 )
 
 const appName = "Heimdall"
@@ -74,6 +77,7 @@ var (
 		sidechannel.AppModuleBasic{},
 		staking.AppModuleBasic{},
 		params.AppModuleBasic{},
+		topup.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -111,6 +115,7 @@ type HeimdallApp struct {
 	SidechannelKeeper sidechannelkeeper.Keeper
 	StakingKeeper     stakingkeeper.Keeper
 	ParamsKeeper      paramskeeper.Keeper
+	TopupKeeper       topupkeeper.Keeper
 
 	// side router
 	sideRouter hmtypes.SideRouter
@@ -167,6 +172,7 @@ func NewHeimdallApp(
 		// slashingtypes.StoreKey,
 		// govtypes.StoreKey,
 		paramstypes.StoreKey,
+		topuptypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 
@@ -217,6 +223,13 @@ func NewHeimdallApp(
 		keys[stakingtypes.StoreKey], // target store
 		app.GetSubspace(stakingtypes.ModuleName),
 		nil,
+	)
+
+	app.TopupKeeper = topupkeeper.NewKeeper(
+		appCodec,
+		keys[topuptypes.StoreKey],
+		// app.GetSubspace(topuptypes.ModuleName),
+		// nil,
 	)
 
 	// register the staking hooks
