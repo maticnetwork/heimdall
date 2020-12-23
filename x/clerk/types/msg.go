@@ -43,7 +43,6 @@ func (msg MsgEventRecordRequest) Type() string { return "event-record" }
 
 // ValidateBasic Implements Msg.
 func (msg MsgEventRecordRequest) ValidateBasic() error {
-	// TODO - Check this
 	// if msg.From.Empty() {
 	// 	return sdk.ErrInvalidAddress("missing sender address")
 	// }
