@@ -42,7 +42,10 @@
             "url": "./client/docs/cosmos/params/v1beta1/query.swagger.json"
         },
         {
-            "url": "./client/docs/cosmos/tx/v1beta1/service.swagger.json"
+            "url": "./client/docs/cosmos/tx/v1beta1/service.swagger.json",
+            "dereference": {
+                "circular": "ignore"
+            }
         },
         {
             "url": "./client/docs/cosmos-legacy-swagger.yaml",
