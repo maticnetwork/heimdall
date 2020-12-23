@@ -13,6 +13,7 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmCommonTypes "github.com/maticnetwork/heimdall/types/common"
 
+	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types/simulation"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -209,105 +210,105 @@ func GetBytesFromString(str string) []byte {
 	return []byte(str)
 }
 
-// func (suite *KeeperTestSuite) TestRemoveValidatorSetChange() {
-// 	// create sub test to check if validator remove
-// 	t, app, ctx := suite.T(), suite.app, suite.ctx
-// 	keeper := app.StakingKeeper
+func (suite *KeeperTestSuite) TestRemoveValidatorSetChange() {
+	// create sub test to check if validator remove
+	t, app, ctx := suite.T(), suite.app, suite.ctx
+	keeper := app.StakingKeeper
 
-// 	// load 4 validators to state
-// 	stakingSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
-// 	initValSet := keeper.GetValidatorSet(ctx)
+	// load 4 validators to state
+	stakingSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	initValSet := keeper.GetValidatorSet(ctx)
 
-// 	currentValSet := initValSet.Copy()
-// 	prevValidatorSet := initValSet.Copy()
+	currentValSet := initValSet.Copy()
+	prevValidatorSet := initValSet.Copy()
 
-// 	prevValidatorSet.Validators[0].StartEpoch = 20
+	prevValidatorSet.Validators[0].StartEpoch = 20
 
-// 	err := keeper.AddValidator(ctx, *prevValidatorSet.Validators[0])
-// 	require.Empty(t, err, "Unable to update validator set")
+	err := keeper.AddValidator(ctx, *prevValidatorSet.Validators[0])
+	require.Empty(t, err, "Unable to update validator set")
 
-// 	setUpdates := helper.GetUpdatedValidators(currentValSet, keeper.GetAllValidators(ctx), 5)
-// 	currentValSet.UpdateWithChangeSet(setUpdates)
+	setUpdates := helper.GetUpdatedValidators(currentValSet, keeper.GetAllValidators(ctx), 5)
+	currentValSet.UpdateWithChangeSet(setUpdates)
 
-// 	updatedValSet := currentValSet
+	updatedValSet := currentValSet
 
-// 	require.Equal(t, len(prevValidatorSet.Validators)-1, len(updatedValSet.Validators), "Validator set should be reduced by one ")
+	require.Equal(t, len(prevValidatorSet.Validators)-1, len(updatedValSet.Validators), "Validator set should be reduced by one ")
 
-// 	for _, val := range updatedValSet.Validators {
-// 		if val.Signer == prevValidatorSet.Validators[0].Signer {
-// 			require.Fail(t, "Validator is not removed from updatedvalidator set")
-// 		}
-// 	}
+	for _, val := range updatedValSet.Validators {
+		if val.Signer == prevValidatorSet.Validators[0].Signer {
+			require.Fail(t, "Validator is not removed from updatedvalidator set")
+		}
+	}
 
-// }
+}
 
-// func (suite *KeeperTestSuite) TestAddValidatorSetChange() {
-// 	// create sub test to check if validator remove
-// 	t, app, ctx := suite.T(), suite.app, suite.ctx
-// 	keeper := app.StakingKeeper
+func (suite *KeeperTestSuite) TestAddValidatorSetChange() {
+	// create sub test to check if validator remove
+	t, app, ctx := suite.T(), suite.app, suite.ctx
+	keeper := app.StakingKeeper
 
-// 	// load 4 validators to state
-// 	stakingSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
-// 	initValSet := keeper.GetValidatorSet(ctx)
+	// load 4 validators to state
+	stakingSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	initValSet := keeper.GetValidatorSet(ctx)
 
-// 	validators := stakingSim.GenRandomVal(1, 0, 10, 10, false, 1)
-// 	prevValSet := initValSet.Copy()
+	validators := stakingSim.GenRandomVal(1, 0, 10, 10, false, 1)
+	prevValSet := initValSet.Copy()
 
-// 	valToBeAdded := validators[0]
-// 	currentValSet := initValSet.Copy()
+	valToBeAdded := validators[0]
+	currentValSet := initValSet.Copy()
 
-// 	keeper.AddValidator(ctx, valToBeAdded)
+	keeper.AddValidator(ctx, valToBeAdded)
 
-// 	setUpdates := helper.GetUpdatedValidators(currentValSet, keeper.GetAllValidators(ctx), 5)
-// 	currentValSet.UpdateWithChangeSet(setUpdates)
+	setUpdates := helper.GetUpdatedValidators(currentValSet, keeper.GetAllValidators(ctx), 5)
+	currentValSet.UpdateWithChangeSet(setUpdates)
 
-// 	require.Equal(t, len(prevValSet.Validators)+1, len(currentValSet.Validators), "Number of validators should be increased by 1")
-// 	require.Equal(t, true, currentValSet.HasAddress(GetBytesFromString(valToBeAdded.Signer)), "New Validator should be added")
-// 	require.Equal(t, prevValSet.TotalVotingPower()+int64(valToBeAdded.VotingPower), currentValSet.TotalVotingPower(), "Total VotingPower should be increased")
+	require.Equal(t, len(prevValSet.Validators)+1, len(currentValSet.Validators), "Number of validators should be increased by 1")
+	require.Equal(t, true, currentValSet.HasAddress(GetBytesFromString(valToBeAdded.Signer)), "New Validator should be added")
+	require.Equal(t, prevValSet.GetTotalVotingPower()+int64(valToBeAdded.VotingPower), currentValSet.GetTotalVotingPower(), "Total VotingPower should be increased")
 
-// }
+}
 
-// func (suite *KeeperTestSuite) TestUpdateValidatorSetChange() {
-// 	// create sub test to check if validator remove
-// 	t, app, ctx := suite.T(), suite.app, suite.ctx
-// 	keeper := app.StakingKeeper
+func (suite *KeeperTestSuite) TestUpdateValidatorSetChange() {
+	// create sub test to check if validator remove
+	t, app, ctx := suite.T(), suite.app, suite.ctx
+	keeper := app.StakingKeeper
 
-// 	// load 4 validators to state
-// 	stakingSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
-// 	initValSet := keeper.GetValidatorSet(ctx)
+	// load 4 validators to state
+	stakingSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	initValSet := keeper.GetValidatorSet(ctx)
 
-// 	keeper.IncrementAccum(ctx, 2)
-// 	prevValSet := initValSet.Copy()
-// 	currentValSet := keeper.GetValidatorSet(ctx)
+	keeper.IncrementAccum(ctx, 2)
+	prevValSet := initValSet.Copy()
+	currentValSet := keeper.GetValidatorSet(ctx)
 
-// 	valToUpdate := currentValSet.Validators[0]
-// 	newSigner := stakingSim.GenRandomVal(1, 0, 10, 10, false, 1)
+	valToUpdate := currentValSet.Validators[0]
+	newSigner := stakingSim.GenRandomVal(1, 0, 10, 10, false, 1)
 
-// 	keeper.UpdateSigner(ctx, newSigner[0].Signer, newSigner[0].PubKey, valToUpdate.Signer)
+	keeper.UpdateSigner(ctx, GetAccAddressFromString(newSigner[0].Signer), hmCommonTypes.PubKey(newSigner[0].PubKey), GetAccAddressFromString(valToUpdate.Signer))
 
-// 	setUpdates := helper.GetUpdatedValidators(&currentValSet, keeper.GetAllValidators(ctx), 5)
-// 	currentValSet.UpdateWithChangeSet(setUpdates)
+	setUpdates := helper.GetUpdatedValidators(currentValSet, keeper.GetAllValidators(ctx), 5)
+	currentValSet.UpdateWithChangeSet(setUpdates)
 
-// 	require.Equal(t, len(prevValSet.Validators), len(currentValSet.Validators), "Number of validators should remain same")
+	require.Equal(t, len(prevValSet.Validators), len(currentValSet.Validators), "Number of validators should remain same")
 
-// 	index, _ := currentValSet.GetByAddress(valToUpdate.Signer.Bytes())
-// 	require.Equal(t, -1, index, "Prev Validator should not be present in CurrentValSet")
-// 	index, val := currentValSet.GetByAddress(newSigner[0].Signer.Bytes())
+	index, _ := currentValSet.GetByAddress(GetBytesFromString(valToUpdate.Signer))
+	require.Equal(t, -1, index, "Prev Validator should not be present in CurrentValSet")
+	index, val := currentValSet.GetByAddress(GetBytesFromString(newSigner[0].Signer))
 
-// 	require.Equal(t, newSigner[0].Signer, val.Signer, "Signer address should change")
-// 	require.Equal(t, newSigner[0].PubKey, val.PubKey, "Signer pubkey should change")
+	require.Equal(t, newSigner[0].Signer, val.Signer, "Signer address should change")
+	require.Equal(t, newSigner[0].PubKey, val.PubKey, "Signer pubkey should change")
 
-// 	require.Equal(t, prevValSet.TotalVotingPower(), currentValSet.TotalVotingPower(), "Total VotingPower should not change")
+	require.Equal(t, prevValSet.GetTotalVotingPower(), currentValSet.GetTotalVotingPower(), "Total VotingPower should not change")
 
-// 	/* Validator Set changes When
-// 		1. When ackCount changes
-// 		2. When new validator joins
-// 		3. When validator updates stake
-// 		4. When signer is updatedctx
-// 		5. When Validator Exits
-// 	**/
+	/* Validator Set changes When
+		1. When ackCount changes
+		2. When new validator joins
+		3. When validator updates stake
+		4. When signer is updatedctx
+		5. When Validator Exits
+	**/
 
-// }
+}
 
 func (suite *KeeperTestSuite) TestGetCurrentValidators() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
