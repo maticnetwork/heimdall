@@ -6,9 +6,9 @@ import (
 
 	"github.com/maticnetwork/heimdall/helper"
 	// "github.com/maticnetwork/heimdall/params/paramtypes"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-
-	hmCommon "github.com/maticnetwork/heimdall/types/common"
+	borCommon "github.com/maticnetwork/bor/common"
 )
 
 // Default parameter values
@@ -18,8 +18,8 @@ const (
 )
 
 var (
-	DefaultStateReceiverAddress hmCommon.HeimdallAddress = hmCommon.HexToHeimdallAddress("0x0000000000000000000000000000000000001001")
-	DefaultValidatorSetAddress  hmCommon.HeimdallAddress = hmCommon.HexToHeimdallAddress("0x0000000000000000000000000000000000001000")
+	DefaultStateReceiverAddress sdk.AccAddress = sdk.AccAddress(borCommon.FromHex("0x0000000000000000000000000000000000001001"))
+	DefaultValidatorSetAddress  sdk.AccAddress = sdk.AccAddress(borCommon.FromHex("0x0000000000000000000000000000000000001000"))
 )
 
 // Parameter keys
@@ -46,7 +46,11 @@ func (cp ChainParams) String() string {
 }
 
 // NewParams creates a new Params object
-func NewParams(mainchainTxConfirmations uint64, maticchainTxConfirmations uint64, chainParams *ChainParams) Params {
+func NewParams(
+	mainchainTxConfirmations uint64,
+	maticchainTxConfirmations uint64,
+	chainParams *ChainParams,
+) Params {
 	return Params{
 		MainchainTxConfirmations:  mainchainTxConfirmations,
 		MaticchainTxConfirmations: maticchainTxConfirmations,
@@ -120,7 +124,7 @@ func (p Params) Validate() error {
 	return nil
 }
 
-func validateHeimdallAddress(key string, value hmCommon.HeimdallAddress) error {
+func validateHeimdallAddress(key string, value sdk.AccAddress) error {
 	if value.String() == "" {
 		return fmt.Errorf("Invalid value %s in chain_params", key)
 	}

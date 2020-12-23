@@ -4,14 +4,19 @@
 package types
 
 import (
+	context "context"
 	fmt "fmt"
 	_ "github.com/cosmos/cosmos-sdk/codec/types"
 	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/gogo/protobuf/gogoproto"
+	grpc1 "github.com/gogo/protobuf/grpc"
 	proto "github.com/gogo/protobuf/proto"
 	_ "github.com/golang/protobuf/ptypes/duration"
 	github_com_maticnetwork_heimdall_types "github.com/maticnetwork/heimdall/types"
 	github_com_maticnetwork_heimdall_types_common "github.com/maticnetwork/heimdall/types/common"
+	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
 	math "math"
 )
 
@@ -26,16 +31,17 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// MsgValidatorJoin defines a message to join a new validator.
 type MsgValidatorJoin struct {
-	From            github_com_maticnetwork_heimdall_types_common.HeimdallAddress `protobuf:"bytes,1,opt,name=from,proto3,casttype=github.com/maticnetwork/heimdall/types/common.HeimdallAddress" json:"from,omitempty"`
-	ID              github_com_maticnetwork_heimdall_types.ValidatorID            `protobuf:"varint,2,opt,name=id,proto3,casttype=github.com/maticnetwork/heimdall/types.ValidatorID" json:"id,omitempty"`
-	ActivationEpoch uint64                                                        `protobuf:"varint,3,opt,name=activation_epoch,json=activationEpoch,proto3" json:"activation_epoch,omitempty"`
-	Amount          github_com_cosmos_cosmos_sdk_types.Int                        `protobuf:"bytes,4,opt,name=amount,proto3,casttype=github.com/cosmos/cosmos-sdk/types.Int" json:"amount,omitempty"`
-	SignerPubKey    github_com_maticnetwork_heimdall_types_common.PubKey          `protobuf:"bytes,5,opt,name=signer_pub_key,json=signerPubKey,proto3,casttype=github.com/maticnetwork/heimdall/types/common.PubKey" json:"signer_pub_key,omitempty"`
-	TxHash          github_com_maticnetwork_heimdall_types_common.HeimdallHash    `protobuf:"bytes,6,opt,name=tx_hash,json=txHash,proto3,casttype=github.com/maticnetwork/heimdall/types/common.HeimdallHash" json:"tx_hash,omitempty"`
-	LogIndex        uint64                                                        `protobuf:"varint,7,opt,name=log_index,json=logIndex,proto3" json:"log_index,omitempty"`
-	BlockNumber     uint64                                                        `protobuf:"varint,8,opt,name=block_number,json=blockNumber,proto3" json:"block_number,omitempty"`
-	Nonce           uint64                                                        `protobuf:"varint,9,opt,name=nonce,proto3" json:"nonce,omitempty"`
+	From            github_com_cosmos_cosmos_sdk_types.AccAddress              `protobuf:"bytes,1,opt,name=from,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"from,omitempty"`
+	ID              github_com_maticnetwork_heimdall_types.ValidatorID         `protobuf:"varint,2,opt,name=id,proto3,casttype=github.com/maticnetwork/heimdall/types.ValidatorID" json:"id,omitempty"`
+	ActivationEpoch uint64                                                     `protobuf:"varint,3,opt,name=activation_epoch,json=activationEpoch,proto3" json:"activation_epoch,omitempty"`
+	Amount          github_com_cosmos_cosmos_sdk_types.Int                     `protobuf:"bytes,4,opt,name=amount,proto3,casttype=github.com/cosmos/cosmos-sdk/types.Int" json:"amount,omitempty"`
+	SignerPubKey    github_com_maticnetwork_heimdall_types_common.PubKey       `protobuf:"bytes,5,opt,name=signer_pub_key,json=signerPubKey,proto3,casttype=github.com/maticnetwork/heimdall/types/common.PubKey" json:"signer_pub_key,omitempty"`
+	TxHash          github_com_maticnetwork_heimdall_types_common.HeimdallHash `protobuf:"bytes,6,opt,name=tx_hash,json=txHash,proto3,casttype=github.com/maticnetwork/heimdall/types/common.HeimdallHash" json:"tx_hash,omitempty"`
+	LogIndex        uint64                                                     `protobuf:"varint,7,opt,name=log_index,json=logIndex,proto3" json:"log_index,omitempty"`
+	BlockNumber     uint64                                                     `protobuf:"varint,8,opt,name=block_number,json=blockNumber,proto3" json:"block_number,omitempty"`
+	Nonce           uint64                                                     `protobuf:"varint,9,opt,name=nonce,proto3" json:"nonce,omitempty"`
 }
 
 func (m *MsgValidatorJoin) Reset()         { *m = MsgValidatorJoin{} }
@@ -62,21 +68,50 @@ func (m *MsgValidatorJoin) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgValidatorJoin proto.InternalMessageInfo
 
+// MsgValidatorJoinResponse defines ValidatorJoin response type.
+type MsgValidatorJoinResponse struct {
+}
+
+func (m *MsgValidatorJoinResponse) Reset()         { *m = MsgValidatorJoinResponse{} }
+func (m *MsgValidatorJoinResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgValidatorJoinResponse) ProtoMessage()    {}
+func (*MsgValidatorJoinResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_2118b48eedb93a64, []int{1}
+}
+func (m *MsgValidatorJoinResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_MsgValidatorJoinResponse.Unmarshal(m, b)
+}
+func (m *MsgValidatorJoinResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_MsgValidatorJoinResponse.Marshal(b, m, deterministic)
+}
+func (m *MsgValidatorJoinResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgValidatorJoinResponse.Merge(m, src)
+}
+func (m *MsgValidatorJoinResponse) XXX_Size() int {
+	return xxx_messageInfo_MsgValidatorJoinResponse.Size(m)
+}
+func (m *MsgValidatorJoinResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgValidatorJoinResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgValidatorJoinResponse proto.InternalMessageInfo
+
+// MsgStakeUpdate defines a message to update stake for a validator.
 type MsgStakeUpdate struct {
-	From        github_com_maticnetwork_heimdall_types_common.HeimdallAddress `protobuf:"bytes,1,opt,name=from,proto3,casttype=github.com/maticnetwork/heimdall/types/common.HeimdallAddress" json:"from,omitempty"`
-	ID          github_com_maticnetwork_heimdall_types.ValidatorID            `protobuf:"varint,2,opt,name=id,proto3,casttype=github.com/maticnetwork/heimdall/types.ValidatorID" json:"id,omitempty"`
-	NewAmount   github_com_cosmos_cosmos_sdk_types.Int                        `protobuf:"bytes,3,opt,name=new_amount,json=newAmount,proto3,casttype=github.com/cosmos/cosmos-sdk/types.Int" json:"new_amount,omitempty"`
-	TxHash      github_com_maticnetwork_heimdall_types_common.HeimdallHash    `protobuf:"bytes,4,opt,name=tx_hash,json=txHash,proto3,casttype=github.com/maticnetwork/heimdall/types/common.HeimdallHash" json:"tx_hash,omitempty"`
-	LogIndex    uint64                                                        `protobuf:"varint,7,opt,name=log_index,json=logIndex,proto3" json:"log_index,omitempty"`
-	BlockNumber uint64                                                        `protobuf:"varint,8,opt,name=block_number,json=blockNumber,proto3" json:"block_number,omitempty"`
-	Nonce       uint64                                                        `protobuf:"varint,9,opt,name=nonce,proto3" json:"nonce,omitempty"`
+	From        github_com_cosmos_cosmos_sdk_types.AccAddress              `protobuf:"bytes,1,opt,name=from,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"from,omitempty"`
+	ID          github_com_maticnetwork_heimdall_types.ValidatorID         `protobuf:"varint,2,opt,name=id,proto3,casttype=github.com/maticnetwork/heimdall/types.ValidatorID" json:"id,omitempty"`
+	NewAmount   github_com_cosmos_cosmos_sdk_types.Int                     `protobuf:"bytes,3,opt,name=new_amount,json=newAmount,proto3,casttype=github.com/cosmos/cosmos-sdk/types.Int" json:"new_amount,omitempty"`
+	TxHash      github_com_maticnetwork_heimdall_types_common.HeimdallHash `protobuf:"bytes,4,opt,name=tx_hash,json=txHash,proto3,casttype=github.com/maticnetwork/heimdall/types/common.HeimdallHash" json:"tx_hash,omitempty"`
+	LogIndex    uint64                                                     `protobuf:"varint,7,opt,name=log_index,json=logIndex,proto3" json:"log_index,omitempty"`
+	BlockNumber uint64                                                     `protobuf:"varint,8,opt,name=block_number,json=blockNumber,proto3" json:"block_number,omitempty"`
+	Nonce       uint64                                                     `protobuf:"varint,9,opt,name=nonce,proto3" json:"nonce,omitempty"`
 }
 
 func (m *MsgStakeUpdate) Reset()         { *m = MsgStakeUpdate{} }
 func (m *MsgStakeUpdate) String() string { return proto.CompactTextString(m) }
 func (*MsgStakeUpdate) ProtoMessage()    {}
 func (*MsgStakeUpdate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2118b48eedb93a64, []int{1}
+	return fileDescriptor_2118b48eedb93a64, []int{2}
 }
 func (m *MsgStakeUpdate) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_MsgStakeUpdate.Unmarshal(m, b)
@@ -96,21 +131,50 @@ func (m *MsgStakeUpdate) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgStakeUpdate proto.InternalMessageInfo
 
+// MsgStakeUpdateResponse defines StakeUpdate response type.
+type MsgStakeUpdateResponse struct {
+}
+
+func (m *MsgStakeUpdateResponse) Reset()         { *m = MsgStakeUpdateResponse{} }
+func (m *MsgStakeUpdateResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgStakeUpdateResponse) ProtoMessage()    {}
+func (*MsgStakeUpdateResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_2118b48eedb93a64, []int{3}
+}
+func (m *MsgStakeUpdateResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_MsgStakeUpdateResponse.Unmarshal(m, b)
+}
+func (m *MsgStakeUpdateResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_MsgStakeUpdateResponse.Marshal(b, m, deterministic)
+}
+func (m *MsgStakeUpdateResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgStakeUpdateResponse.Merge(m, src)
+}
+func (m *MsgStakeUpdateResponse) XXX_Size() int {
+	return xxx_messageInfo_MsgStakeUpdateResponse.Size(m)
+}
+func (m *MsgStakeUpdateResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgStakeUpdateResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgStakeUpdateResponse proto.InternalMessageInfo
+
+// MsgSignerUpdate defines a message to update signer of a validator.
 type MsgSignerUpdate struct {
-	From            github_com_maticnetwork_heimdall_types_common.HeimdallAddress `protobuf:"bytes,1,opt,name=from,proto3,casttype=github.com/maticnetwork/heimdall/types/common.HeimdallAddress" json:"from,omitempty"`
-	ID              github_com_maticnetwork_heimdall_types.ValidatorID            `protobuf:"varint,2,opt,name=id,proto3,casttype=github.com/maticnetwork/heimdall/types.ValidatorID" json:"id,omitempty"`
-	NewSignerPubKey github_com_maticnetwork_heimdall_types_common.PubKey          `protobuf:"bytes,3,opt,name=new_signer_pub_key,json=newSignerPubKey,proto3,casttype=github.com/maticnetwork/heimdall/types/common.PubKey" json:"new_signer_pub_key,omitempty"`
-	TxHash          github_com_maticnetwork_heimdall_types_common.HeimdallHash    `protobuf:"bytes,4,opt,name=tx_hash,json=txHash,proto3,casttype=github.com/maticnetwork/heimdall/types/common.HeimdallHash" json:"tx_hash,omitempty"`
-	LogIndex        uint64                                                        `protobuf:"varint,5,opt,name=log_index,json=logIndex,proto3" json:"log_index,omitempty"`
-	BlockNumber     uint64                                                        `protobuf:"varint,6,opt,name=block_number,json=blockNumber,proto3" json:"block_number,omitempty"`
-	Nonce           uint64                                                        `protobuf:"varint,7,opt,name=nonce,proto3" json:"nonce,omitempty"`
+	From            github_com_cosmos_cosmos_sdk_types.AccAddress              `protobuf:"bytes,1,opt,name=from,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"from,omitempty"`
+	ID              github_com_maticnetwork_heimdall_types.ValidatorID         `protobuf:"varint,2,opt,name=id,proto3,casttype=github.com/maticnetwork/heimdall/types.ValidatorID" json:"id,omitempty"`
+	NewSignerPubKey github_com_maticnetwork_heimdall_types_common.PubKey       `protobuf:"bytes,3,opt,name=new_signer_pub_key,json=newSignerPubKey,proto3,casttype=github.com/maticnetwork/heimdall/types/common.PubKey" json:"new_signer_pub_key,omitempty"`
+	TxHash          github_com_maticnetwork_heimdall_types_common.HeimdallHash `protobuf:"bytes,4,opt,name=tx_hash,json=txHash,proto3,casttype=github.com/maticnetwork/heimdall/types/common.HeimdallHash" json:"tx_hash,omitempty"`
+	LogIndex        uint64                                                     `protobuf:"varint,5,opt,name=log_index,json=logIndex,proto3" json:"log_index,omitempty"`
+	BlockNumber     uint64                                                     `protobuf:"varint,6,opt,name=block_number,json=blockNumber,proto3" json:"block_number,omitempty"`
+	Nonce           uint64                                                     `protobuf:"varint,7,opt,name=nonce,proto3" json:"nonce,omitempty"`
 }
 
 func (m *MsgSignerUpdate) Reset()         { *m = MsgSignerUpdate{} }
 func (m *MsgSignerUpdate) String() string { return proto.CompactTextString(m) }
 func (*MsgSignerUpdate) ProtoMessage()    {}
 func (*MsgSignerUpdate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2118b48eedb93a64, []int{2}
+	return fileDescriptor_2118b48eedb93a64, []int{4}
 }
 func (m *MsgSignerUpdate) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_MsgSignerUpdate.Unmarshal(m, b)
@@ -130,21 +194,50 @@ func (m *MsgSignerUpdate) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgSignerUpdate proto.InternalMessageInfo
 
+// MsgSignerUpdateResponse defines SignerUpdate response type.
+type MsgSignerUpdateResponse struct {
+}
+
+func (m *MsgSignerUpdateResponse) Reset()         { *m = MsgSignerUpdateResponse{} }
+func (m *MsgSignerUpdateResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgSignerUpdateResponse) ProtoMessage()    {}
+func (*MsgSignerUpdateResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_2118b48eedb93a64, []int{5}
+}
+func (m *MsgSignerUpdateResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_MsgSignerUpdateResponse.Unmarshal(m, b)
+}
+func (m *MsgSignerUpdateResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_MsgSignerUpdateResponse.Marshal(b, m, deterministic)
+}
+func (m *MsgSignerUpdateResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgSignerUpdateResponse.Merge(m, src)
+}
+func (m *MsgSignerUpdateResponse) XXX_Size() int {
+	return xxx_messageInfo_MsgSignerUpdateResponse.Size(m)
+}
+func (m *MsgSignerUpdateResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgSignerUpdateResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgSignerUpdateResponse proto.InternalMessageInfo
+
+// MsgValidatorExit defines a message to exit as a validator
 type MsgValidatorExit struct {
-	From              github_com_maticnetwork_heimdall_types_common.HeimdallAddress `protobuf:"bytes,1,opt,name=from,proto3,casttype=github.com/maticnetwork/heimdall/types/common.HeimdallAddress" json:"from,omitempty"`
-	ID                github_com_maticnetwork_heimdall_types.ValidatorID            `protobuf:"varint,2,opt,name=id,proto3,casttype=github.com/maticnetwork/heimdall/types.ValidatorID" json:"id,omitempty"`
-	DeactivationEpoch uint64                                                        `protobuf:"varint,3,opt,name=deactivation_epoch,json=deactivationEpoch,proto3" json:"deactivation_epoch,omitempty"`
-	TxHash            github_com_maticnetwork_heimdall_types_common.HeimdallHash    `protobuf:"bytes,4,opt,name=tx_hash,json=txHash,proto3,casttype=github.com/maticnetwork/heimdall/types/common.HeimdallHash" json:"tx_hash,omitempty"`
-	LogIndex          uint64                                                        `protobuf:"varint,5,opt,name=log_index,json=logIndex,proto3" json:"log_index,omitempty"`
-	BlockNumber       uint64                                                        `protobuf:"varint,6,opt,name=block_number,json=blockNumber,proto3" json:"block_number,omitempty"`
-	Nonce             uint64                                                        `protobuf:"varint,7,opt,name=nonce,proto3" json:"nonce,omitempty"`
+	From              github_com_cosmos_cosmos_sdk_types.AccAddress              `protobuf:"bytes,1,opt,name=from,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"from,omitempty"`
+	ID                github_com_maticnetwork_heimdall_types.ValidatorID         `protobuf:"varint,2,opt,name=id,proto3,casttype=github.com/maticnetwork/heimdall/types.ValidatorID" json:"id,omitempty"`
+	DeactivationEpoch uint64                                                     `protobuf:"varint,3,opt,name=deactivation_epoch,json=deactivationEpoch,proto3" json:"deactivation_epoch,omitempty"`
+	TxHash            github_com_maticnetwork_heimdall_types_common.HeimdallHash `protobuf:"bytes,4,opt,name=tx_hash,json=txHash,proto3,casttype=github.com/maticnetwork/heimdall/types/common.HeimdallHash" json:"tx_hash,omitempty"`
+	LogIndex          uint64                                                     `protobuf:"varint,5,opt,name=log_index,json=logIndex,proto3" json:"log_index,omitempty"`
+	BlockNumber       uint64                                                     `protobuf:"varint,6,opt,name=block_number,json=blockNumber,proto3" json:"block_number,omitempty"`
+	Nonce             uint64                                                     `protobuf:"varint,7,opt,name=nonce,proto3" json:"nonce,omitempty"`
 }
 
 func (m *MsgValidatorExit) Reset()         { *m = MsgValidatorExit{} }
 func (m *MsgValidatorExit) String() string { return proto.CompactTextString(m) }
 func (*MsgValidatorExit) ProtoMessage()    {}
 func (*MsgValidatorExit) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2118b48eedb93a64, []int{3}
+	return fileDescriptor_2118b48eedb93a64, []int{6}
 }
 func (m *MsgValidatorExit) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_MsgValidatorExit.Unmarshal(m, b)
@@ -164,53 +257,290 @@ func (m *MsgValidatorExit) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgValidatorExit proto.InternalMessageInfo
 
+// MsgValidatorExitResponse is response type for ValidatorExit RPC method
+type MsgValidatorExitResponse struct {
+}
+
+func (m *MsgValidatorExitResponse) Reset()         { *m = MsgValidatorExitResponse{} }
+func (m *MsgValidatorExitResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgValidatorExitResponse) ProtoMessage()    {}
+func (*MsgValidatorExitResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_2118b48eedb93a64, []int{7}
+}
+func (m *MsgValidatorExitResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_MsgValidatorExitResponse.Unmarshal(m, b)
+}
+func (m *MsgValidatorExitResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_MsgValidatorExitResponse.Marshal(b, m, deterministic)
+}
+func (m *MsgValidatorExitResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgValidatorExitResponse.Merge(m, src)
+}
+func (m *MsgValidatorExitResponse) XXX_Size() int {
+	return xxx_messageInfo_MsgValidatorExitResponse.Size(m)
+}
+func (m *MsgValidatorExitResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgValidatorExitResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgValidatorExitResponse proto.InternalMessageInfo
+
 func init() {
 	proto.RegisterType((*MsgValidatorJoin)(nil), "heimdall.staking.v1beta1.MsgValidatorJoin")
+	proto.RegisterType((*MsgValidatorJoinResponse)(nil), "heimdall.staking.v1beta1.MsgValidatorJoinResponse")
 	proto.RegisterType((*MsgStakeUpdate)(nil), "heimdall.staking.v1beta1.MsgStakeUpdate")
+	proto.RegisterType((*MsgStakeUpdateResponse)(nil), "heimdall.staking.v1beta1.MsgStakeUpdateResponse")
 	proto.RegisterType((*MsgSignerUpdate)(nil), "heimdall.staking.v1beta1.MsgSignerUpdate")
+	proto.RegisterType((*MsgSignerUpdateResponse)(nil), "heimdall.staking.v1beta1.MsgSignerUpdateResponse")
 	proto.RegisterType((*MsgValidatorExit)(nil), "heimdall.staking.v1beta1.MsgValidatorExit")
+	proto.RegisterType((*MsgValidatorExitResponse)(nil), "heimdall.staking.v1beta1.MsgValidatorExitResponse")
 }
 
 func init() { proto.RegisterFile("staking/v1beta1/msg.proto", fileDescriptor_2118b48eedb93a64) }
 
 var fileDescriptor_2118b48eedb93a64 = []byte{
-	// 603 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xd4, 0x56, 0x41, 0x4f, 0xd4, 0x4e,
-	0x14, 0x2f, 0xbb, 0xcb, 0xc2, 0xce, 0x9f, 0x00, 0xff, 0x09, 0x87, 0x82, 0x49, 0x8b, 0x1c, 0x0c,
-	0x9a, 0xd0, 0x8a, 0x7a, 0x30, 0x44, 0x4d, 0xd8, 0x40, 0xc2, 0xa2, 0x18, 0x53, 0x82, 0x26, 0x1e,
-	0x6c, 0xa6, 0xed, 0x30, 0x9d, 0xb4, 0x9d, 0xd9, 0x74, 0xa6, 0xec, 0xee, 0x37, 0xf0, 0xe8, 0xdd,
-	0x8b, 0x5f, 0xc2, 0x93, 0x5f, 0xc0, 0x23, 0xf1, 0xe4, 0xa9, 0x31, 0xcb, 0xb7, 0xd8, 0x93, 0xe9,
-	0xb4, 0x28, 0x62, 0x10, 0xd1, 0x78, 0xd8, 0xd3, 0xf4, 0xbd, 0xdf, 0xeb, 0x6f, 0x66, 0xde, 0xef,
-	0xbd, 0xd7, 0x82, 0x45, 0x21, 0x51, 0x44, 0x19, 0xb1, 0x8f, 0xd6, 0x3d, 0x2c, 0xd1, 0xba, 0x9d,
-	0x08, 0x62, 0x75, 0x53, 0x2e, 0x39, 0xd4, 0x43, 0x4c, 0x93, 0x00, 0xc5, 0xb1, 0x55, 0xc5, 0x58,
-	0x55, 0xcc, 0xd2, 0x02, 0xe1, 0x84, 0xab, 0x20, 0xbb, 0x78, 0x2a, 0xe3, 0x97, 0x16, 0x09, 0xe7,
-	0x24, 0xc6, 0xb6, 0xb2, 0xbc, 0xec, 0xd0, 0x46, 0x6c, 0x50, 0x41, 0xc6, 0x79, 0x28, 0xc8, 0x52,
-	0x24, 0x29, 0x67, 0x25, 0xbe, 0xf2, 0xa1, 0x01, 0xe6, 0xf7, 0x04, 0x79, 0x8e, 0x62, 0x1a, 0x20,
-	0xc9, 0xd3, 0x5d, 0x4e, 0x19, 0x3c, 0x00, 0x8d, 0xc3, 0x94, 0x27, 0xfa, 0xc4, 0xf2, 0xc4, 0x6a,
-	0xab, 0xbd, 0x39, 0xca, 0xcd, 0x87, 0x84, 0xca, 0x30, 0xf3, 0x2c, 0x9f, 0x27, 0x76, 0x82, 0x24,
-	0xf5, 0x19, 0x96, 0x3d, 0x9e, 0x46, 0xf6, 0xe9, 0x49, 0x6d, 0x39, 0xe8, 0x62, 0x61, 0xfb, 0x3c,
-	0x49, 0x38, 0xb3, 0x76, 0x2a, 0xef, 0x66, 0x10, 0xa4, 0x58, 0x08, 0x47, 0xd1, 0xc1, 0x27, 0xa0,
-	0x46, 0x03, 0xbd, 0xb6, 0x3c, 0xb1, 0xda, 0x68, 0x3f, 0x18, 0xe6, 0x66, 0xad, 0xb3, 0x35, 0xca,
-	0xcd, 0x3b, 0xbf, 0x47, 0x6d, 0x7d, 0x3b, 0x62, 0x67, 0xcb, 0xa9, 0xd1, 0x00, 0xde, 0x04, 0xf3,
-	0xc8, 0x97, 0xf4, 0x48, 0xdd, 0xc6, 0xc5, 0x5d, 0xee, 0x87, 0x7a, 0xbd, 0xe0, 0x76, 0xe6, 0xbe,
-	0xfb, 0xb7, 0x0b, 0x37, 0x6c, 0x83, 0x26, 0x4a, 0x78, 0xc6, 0xa4, 0xde, 0x50, 0x37, 0xba, 0x35,
-	0xca, 0xcd, 0x1b, 0x67, 0xb6, 0xf5, 0xb9, 0x48, 0xb8, 0xa8, 0x96, 0x35, 0x11, 0x44, 0xd5, 0x96,
-	0x1d, 0x26, 0x9d, 0xea, 0x4d, 0xf8, 0x0a, 0xcc, 0x0a, 0x4a, 0x18, 0x4e, 0xdd, 0x6e, 0xe6, 0xb9,
-	0x11, 0x1e, 0xe8, 0x93, 0x8a, 0xeb, 0xfe, 0x28, 0x37, 0xef, 0x5d, 0x2d, 0x3b, 0xcf, 0x32, 0xef,
-	0x31, 0x1e, 0x38, 0x33, 0x25, 0x5f, 0x69, 0xc1, 0x17, 0x60, 0x4a, 0xf6, 0xdd, 0x10, 0x89, 0x50,
-	0x6f, 0x2a, 0xe2, 0x47, 0xa3, 0xdc, 0xdc, 0xf8, 0xb3, 0xb4, 0xef, 0x20, 0x11, 0x3a, 0x4d, 0xd9,
-	0x2f, 0x56, 0x78, 0x0d, 0xb4, 0x62, 0x4e, 0x5c, 0xca, 0x02, 0xdc, 0xd7, 0xa7, 0x54, 0x82, 0xa6,
-	0x63, 0x4e, 0x3a, 0x85, 0x0d, 0xaf, 0x83, 0x19, 0x2f, 0xe6, 0x7e, 0xe4, 0xb2, 0x2c, 0xf1, 0x70,
-	0xaa, 0x4f, 0x2b, 0xfc, 0x3f, 0xe5, 0x7b, 0xaa, 0x5c, 0x70, 0x01, 0x4c, 0x32, 0xce, 0x7c, 0xac,
-	0xb7, 0x14, 0x56, 0x1a, 0x1b, 0x8d, 0xd7, 0xef, 0x4c, 0x6d, 0xe5, 0x7d, 0x1d, 0xcc, 0xee, 0x09,
-	0xb2, 0x2f, 0x51, 0x84, 0x0f, 0xba, 0x01, 0x92, 0x78, 0x3c, 0x6a, 0xa7, 0x03, 0x00, 0xc3, 0x3d,
-	0xb7, 0x2a, 0x8a, 0xfa, 0x95, 0x8b, 0xa2, 0xc5, 0x70, 0x6f, 0xb3, 0xac, 0x8b, 0x33, 0xba, 0x35,
-	0xc6, 0x46, 0xb7, 0x4f, 0x75, 0x30, 0x57, 0xe8, 0xa6, 0x0a, 0x70, 0x9c, 0x84, 0xc3, 0x00, 0x16,
-	0xc2, 0x9d, 0xeb, 0xc4, 0xfa, 0x5f, 0x76, 0xe2, 0x1c, 0xc3, 0xbd, 0xfd, 0x0b, 0x9a, 0xf1, 0x1f,
-	0x8a, 0x3a, 0x79, 0x89, 0xa8, 0xcd, 0x5f, 0x88, 0x3a, 0xf5, 0xb3, 0xa8, 0x6f, 0xeb, 0x3f, 0x8e,
-	0xf2, 0xed, 0x3e, 0x95, 0xe3, 0xa1, 0xea, 0x1a, 0x80, 0x01, 0xbe, 0x60, 0x98, 0xff, 0x7f, 0x16,
-	0x29, 0xc7, 0xf9, 0x38, 0xaa, 0xd3, 0xde, 0xfd, 0x38, 0x34, 0xb4, 0xe3, 0xa1, 0xa1, 0x7d, 0x19,
-	0x1a, 0xda, 0x9b, 0x13, 0x43, 0x3b, 0x3e, 0x31, 0xb4, 0xcf, 0x27, 0x86, 0xf6, 0xf2, 0xf6, 0xa5,
-	0x27, 0xef, 0xdb, 0xa7, 0xff, 0x0a, 0xea, 0x0e, 0x5e, 0x53, 0x7d, 0xbb, 0xef, 0x7e, 0x0d, 0x00,
-	0x00, 0xff, 0xff, 0x3c, 0x11, 0x54, 0x9b, 0x43, 0x08, 0x00, 0x00,
+	// 718 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xd4, 0x96, 0xc1, 0x4e, 0xdb, 0x4a,
+	0x14, 0x86, 0x43, 0x1c, 0x02, 0x19, 0xb8, 0xc0, 0x1d, 0xa1, 0x7b, 0x4d, 0xae, 0x94, 0x70, 0x59,
+	0x54, 0x80, 0x84, 0x4d, 0x68, 0x17, 0x15, 0xaa, 0x2a, 0x11, 0x81, 0x44, 0x68, 0xa9, 0xaa, 0xa0,
+	0xb6, 0x52, 0x17, 0xb5, 0xc6, 0xf6, 0xe0, 0x8c, 0x62, 0xcf, 0x44, 0x9e, 0x31, 0x49, 0xde, 0xa0,
+	0x52, 0x37, 0x7d, 0x84, 0x6e, 0xba, 0xea, 0x4b, 0x54, 0x5d, 0x75, 0xc9, 0xb2, 0xab, 0xa8, 0x0a,
+	0x6f, 0x91, 0x55, 0xe5, 0xb1, 0x93, 0x3a, 0xa9, 0x00, 0xa3, 0xaa, 0x12, 0xac, 0x9c, 0x39, 0xe7,
+	0xf7, 0x19, 0xcf, 0x7c, 0xff, 0x9c, 0x0c, 0x58, 0xe1, 0x02, 0x35, 0x09, 0x75, 0xf4, 0xb3, 0x8a,
+	0x89, 0x05, 0xaa, 0xe8, 0x1e, 0x77, 0xb4, 0x96, 0xcf, 0x04, 0x83, 0x6a, 0x03, 0x13, 0xcf, 0x46,
+	0xae, 0xab, 0xc5, 0x1a, 0x2d, 0xd6, 0x14, 0x97, 0x1d, 0xe6, 0x30, 0x29, 0xd2, 0xc3, 0x5f, 0x91,
+	0xbe, 0xb8, 0xe2, 0x30, 0xe6, 0xb8, 0x58, 0x97, 0x23, 0x33, 0x38, 0xd5, 0x11, 0xed, 0xc6, 0xa9,
+	0xd2, 0x64, 0xca, 0x0e, 0x7c, 0x24, 0x08, 0xa3, 0x51, 0x7e, 0xed, 0x53, 0x0e, 0x2c, 0x1d, 0x73,
+	0xe7, 0x25, 0x72, 0x89, 0x8d, 0x04, 0xf3, 0x8f, 0x18, 0xa1, 0xf0, 0x00, 0xe4, 0x4e, 0x7d, 0xe6,
+	0xa9, 0x53, 0xab, 0x53, 0xeb, 0x85, 0x6a, 0x65, 0xd0, 0x2b, 0x6f, 0x39, 0x44, 0x34, 0x02, 0x53,
+	0xb3, 0x98, 0xa7, 0x5b, 0x8c, 0x7b, 0x8c, 0xc7, 0x8f, 0x2d, 0x6e, 0x37, 0x75, 0xd1, 0x6d, 0x61,
+	0xae, 0xed, 0x59, 0xd6, 0x9e, 0x6d, 0xfb, 0x98, 0xf3, 0xba, 0x7c, 0x1d, 0x3e, 0x05, 0x59, 0x62,
+	0xab, 0xd9, 0xd5, 0xa9, 0xf5, 0x5c, 0xf5, 0x51, 0xbf, 0x57, 0xce, 0xd6, 0xf6, 0x07, 0xbd, 0xf2,
+	0x4e, 0xa2, 0x94, 0x87, 0x04, 0xb1, 0x28, 0x16, 0x6d, 0xe6, 0x37, 0xf5, 0xe1, 0xa2, 0xe3, 0x72,
+	0xa3, 0x4f, 0xaa, 0xed, 0xd7, 0xb3, 0xc4, 0x86, 0x1b, 0x60, 0x09, 0x59, 0x82, 0x9c, 0xc9, 0xaf,
+	0x37, 0x70, 0x8b, 0x59, 0x0d, 0x55, 0x09, 0x6b, 0xd7, 0x17, 0x7f, 0xc6, 0x0f, 0xc2, 0x30, 0xac,
+	0x82, 0x3c, 0xf2, 0x58, 0x40, 0x85, 0x9a, 0x93, 0x2b, 0xd8, 0x1c, 0xf4, 0xca, 0xf7, 0x52, 0xac,
+	0xa0, 0x46, 0x45, 0x3d, 0x7e, 0x13, 0xbe, 0x01, 0x0b, 0x9c, 0x38, 0x14, 0xfb, 0x46, 0x2b, 0x30,
+	0x8d, 0x26, 0xee, 0xaa, 0xd3, 0xb2, 0xd6, 0xc3, 0x41, 0xaf, 0xfc, 0x20, 0xdd, 0x12, 0x74, 0x8b,
+	0x79, 0x1e, 0xa3, 0xda, 0xf3, 0xc0, 0x7c, 0x82, 0xbb, 0xf5, 0xf9, 0xa8, 0x5e, 0x34, 0x82, 0xaf,
+	0xc0, 0x8c, 0xe8, 0x18, 0x0d, 0xc4, 0x1b, 0x6a, 0x5e, 0x16, 0x7e, 0x3c, 0xe8, 0x95, 0x77, 0x6f,
+	0x56, 0xf8, 0x30, 0x8e, 0x1e, 0x22, 0xde, 0xa8, 0xe7, 0x45, 0x27, 0x7c, 0xc2, 0xff, 0x40, 0xc1,
+	0x65, 0x8e, 0x41, 0xa8, 0x8d, 0x3b, 0xea, 0x8c, 0xdc, 0xa0, 0x59, 0x97, 0x39, 0xb5, 0x70, 0x0c,
+	0xff, 0x07, 0xf3, 0xa6, 0xcb, 0xac, 0xa6, 0x41, 0x03, 0xcf, 0xc4, 0xbe, 0x3a, 0x2b, 0xf3, 0x73,
+	0x32, 0xf6, 0x4c, 0x86, 0xe0, 0x32, 0x98, 0xa6, 0x8c, 0x5a, 0x58, 0x2d, 0xc8, 0x5c, 0x34, 0xd8,
+	0xcd, 0xbd, 0xfd, 0x50, 0xce, 0xac, 0x15, 0x81, 0x3a, 0x69, 0x96, 0x3a, 0xe6, 0x2d, 0x46, 0x39,
+	0x5e, 0xfb, 0xa8, 0x80, 0x85, 0x63, 0xee, 0x9c, 0x08, 0xd4, 0xc4, 0x2f, 0x5a, 0x36, 0x12, 0xf8,
+	0x76, 0xfa, 0xa8, 0x06, 0x00, 0xc5, 0x6d, 0x23, 0x36, 0x88, 0x72, 0x63, 0x83, 0x14, 0x28, 0x6e,
+	0xef, 0x45, 0x1e, 0x49, 0x30, 0xcc, 0xdd, 0x19, 0x86, 0x2a, 0xf8, 0x67, 0x1c, 0xd3, 0x88, 0xe0,
+	0x17, 0x05, 0x2c, 0x86, 0x29, 0x69, 0xd3, 0xdb, 0x8c, 0x10, 0x03, 0x18, 0x22, 0x9c, 0x38, 0x9f,
+	0xca, 0x6f, 0x9e, 0xcf, 0x45, 0x8a, 0xdb, 0x27, 0x97, 0x1c, 0xd1, 0x3f, 0x88, 0x77, 0xfa, 0x1a,
+	0xbc, 0xf9, 0x2b, 0xf0, 0xce, 0xfc, 0x8a, 0x77, 0x05, 0xfc, 0x3b, 0xc1, 0x70, 0xc4, 0xf7, 0x9d,
+	0x32, 0xde, 0xeb, 0x0f, 0x3a, 0x44, 0xdc, 0x4e, 0xc0, 0x5b, 0x00, 0xda, 0xf8, 0x92, 0x6e, 0xff,
+	0x77, 0x32, 0x13, 0xf5, 0xfb, 0x3b, 0x09, 0x6a, 0xa2, 0x97, 0x86, 0x30, 0x86, 0xa4, 0x76, 0x3e,
+	0x2b, 0x40, 0x39, 0xe6, 0x0e, 0x64, 0xe0, 0xaf, 0xf1, 0x7f, 0xe6, 0x4d, 0xed, 0xb2, 0xab, 0x81,
+	0x36, 0xd9, 0x98, 0x8b, 0x3b, 0xe9, 0xb5, 0xc3, 0x89, 0x21, 0x01, 0x73, 0xc9, 0x06, 0xbe, 0x7e,
+	0x65, 0x89, 0x84, 0xb2, 0xb8, 0x9d, 0x56, 0x39, 0x9a, 0xca, 0x05, 0xf3, 0x63, 0x9d, 0x66, 0xe3,
+	0xea, 0x0a, 0x09, 0x69, 0xb1, 0x92, 0x5a, 0x3a, 0x9a, 0x2d, 0xb9, 0x93, 0xd2, 0xf7, 0x29, 0x77,
+	0x32, 0xd4, 0xa6, 0xdd, 0xc9, 0x24, 0xc2, 0xea, 0xd1, 0xd7, 0x7e, 0x29, 0x73, 0xde, 0x2f, 0x65,
+	0xbe, 0xf7, 0x4b, 0x99, 0xf7, 0x17, 0xa5, 0xcc, 0xf9, 0x45, 0x29, 0xf3, 0xed, 0xa2, 0x94, 0x79,
+	0xbd, 0x7d, 0xad, 0x31, 0x3b, 0xfa, 0xf0, 0x6e, 0x28, 0x2d, 0x6a, 0xe6, 0xe5, 0x5d, 0xed, 0xfe,
+	0x8f, 0x00, 0x00, 0x00, 0xff, 0xff, 0x62, 0x57, 0x59, 0x58, 0x33, 0x0a, 0x00, 0x00,
+}
+
+// Reference imports to suppress errors if they are not otherwise used.
+var _ context.Context
+var _ grpc.ClientConn
+
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the grpc package it is being compiled against.
+const _ = grpc.SupportPackageIsVersion4
+
+// MsgClient is the client API for Msg service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
+type MsgClient interface {
+	// ValidatorJoin defines a method to join a new validator.
+	ValidatorJoin(ctx context.Context, in *MsgValidatorJoin, opts ...grpc.CallOption) (*MsgValidatorJoinResponse, error)
+	// StakeUpdate defines a method to update stake for an existing validator.
+	StakeUpdate(ctx context.Context, in *MsgStakeUpdate, opts ...grpc.CallOption) (*MsgStakeUpdateResponse, error)
+	// SignerUpdate defines a method for update singer details of
+	// exisitng validator.
+	SignerUpdate(ctx context.Context, in *MsgSignerUpdate, opts ...grpc.CallOption) (*MsgSignerUpdateResponse, error)
+	// ValidatorExit defines a method to handle validator exit
+	ValidatorExit(ctx context.Context, in *MsgValidatorExit, opts ...grpc.CallOption) (*MsgValidatorExitResponse, error)
+}
+
+type msgClient struct {
+	cc grpc1.ClientConn
+}
+
+func NewMsgClient(cc grpc1.ClientConn) MsgClient {
+	return &msgClient{cc}
+}
+
+func (c *msgClient) ValidatorJoin(ctx context.Context, in *MsgValidatorJoin, opts ...grpc.CallOption) (*MsgValidatorJoinResponse, error) {
+	out := new(MsgValidatorJoinResponse)
+	err := c.cc.Invoke(ctx, "/heimdall.staking.v1beta1.Msg/ValidatorJoin", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) StakeUpdate(ctx context.Context, in *MsgStakeUpdate, opts ...grpc.CallOption) (*MsgStakeUpdateResponse, error) {
+	out := new(MsgStakeUpdateResponse)
+	err := c.cc.Invoke(ctx, "/heimdall.staking.v1beta1.Msg/StakeUpdate", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) SignerUpdate(ctx context.Context, in *MsgSignerUpdate, opts ...grpc.CallOption) (*MsgSignerUpdateResponse, error) {
+	out := new(MsgSignerUpdateResponse)
+	err := c.cc.Invoke(ctx, "/heimdall.staking.v1beta1.Msg/SignerUpdate", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) ValidatorExit(ctx context.Context, in *MsgValidatorExit, opts ...grpc.CallOption) (*MsgValidatorExitResponse, error) {
+	out := new(MsgValidatorExitResponse)
+	err := c.cc.Invoke(ctx, "/heimdall.staking.v1beta1.Msg/ValidatorExit", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// MsgServer is the server API for Msg service.
+type MsgServer interface {
+	// ValidatorJoin defines a method to join a new validator.
+	ValidatorJoin(context.Context, *MsgValidatorJoin) (*MsgValidatorJoinResponse, error)
+	// StakeUpdate defines a method to update stake for an existing validator.
+	StakeUpdate(context.Context, *MsgStakeUpdate) (*MsgStakeUpdateResponse, error)
+	// SignerUpdate defines a method for update singer details of
+	// exisitng validator.
+	SignerUpdate(context.Context, *MsgSignerUpdate) (*MsgSignerUpdateResponse, error)
+	// ValidatorExit defines a method to handle validator exit
+	ValidatorExit(context.Context, *MsgValidatorExit) (*MsgValidatorExitResponse, error)
+}
+
+// UnimplementedMsgServer can be embedded to have forward compatible implementations.
+type UnimplementedMsgServer struct {
+}
+
+func (*UnimplementedMsgServer) ValidatorJoin(ctx context.Context, req *MsgValidatorJoin) (*MsgValidatorJoinResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ValidatorJoin not implemented")
+}
+func (*UnimplementedMsgServer) StakeUpdate(ctx context.Context, req *MsgStakeUpdate) (*MsgStakeUpdateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StakeUpdate not implemented")
+}
+func (*UnimplementedMsgServer) SignerUpdate(ctx context.Context, req *MsgSignerUpdate) (*MsgSignerUpdateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SignerUpdate not implemented")
+}
+func (*UnimplementedMsgServer) ValidatorExit(ctx context.Context, req *MsgValidatorExit) (*MsgValidatorExitResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ValidatorExit not implemented")
+}
+
+func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
+	s.RegisterService(&_Msg_serviceDesc, srv)
+}
+
+func _Msg_ValidatorJoin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgValidatorJoin)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).ValidatorJoin(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/heimdall.staking.v1beta1.Msg/ValidatorJoin",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).ValidatorJoin(ctx, req.(*MsgValidatorJoin))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_StakeUpdate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgStakeUpdate)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).StakeUpdate(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/heimdall.staking.v1beta1.Msg/StakeUpdate",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).StakeUpdate(ctx, req.(*MsgStakeUpdate))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_SignerUpdate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgSignerUpdate)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).SignerUpdate(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/heimdall.staking.v1beta1.Msg/SignerUpdate",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).SignerUpdate(ctx, req.(*MsgSignerUpdate))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_ValidatorExit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgValidatorExit)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).ValidatorExit(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/heimdall.staking.v1beta1.Msg/ValidatorExit",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).ValidatorExit(ctx, req.(*MsgValidatorExit))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+var _Msg_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "heimdall.staking.v1beta1.Msg",
+	HandlerType: (*MsgServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ValidatorJoin",
+			Handler:    _Msg_ValidatorJoin_Handler,
+		},
+		{
+			MethodName: "StakeUpdate",
+			Handler:    _Msg_StakeUpdate_Handler,
+		},
+		{
+			MethodName: "SignerUpdate",
+			Handler:    _Msg_SignerUpdate_Handler,
+		},
+		{
+			MethodName: "ValidatorExit",
+			Handler:    _Msg_ValidatorExit_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "staking/v1beta1/msg.proto",
 }
