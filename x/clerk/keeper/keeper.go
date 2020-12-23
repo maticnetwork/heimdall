@@ -33,11 +33,11 @@ type (
 	}
 )
 
-func NewKeeper(cdc codec.LegacyAmino, storeKey, memKey sdk.StoreKey) *Keeper {
-	return &Keeper{
+func NewKeeper(cdc codec.LegacyAmino, storeKey, memKey sdk.StoreKey) Keeper {
+	return Keeper{
 		cdc:      cdc,
 		storeKey: storeKey,
-		memKey:   memKey,
+		// memKey:   memKey,
 	}
 }
 

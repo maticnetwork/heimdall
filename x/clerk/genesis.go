@@ -25,5 +25,6 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 
 // ExportGenesis returns the capability module's exported genesis.
 func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
-	return &types.NewGenesisState(k.GetAllEventRecords(ctx), k.GetRecordSequences(ctx))
+	genesisState := types.NewGenesisState(k.GetAllEventRecords(ctx), k.GetRecordSequences(ctx))
+	return &genesisState
 }

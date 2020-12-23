@@ -14,9 +14,8 @@ message EventRecord {
 
     uint64 id = 1
         [(gogoproto.jsontag) = "id", (gogoproto.moretags) = "yaml:\"id\""];
-    bytes contract = 2
-        [(gogoproto.casttype) =
-             "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"];
+    string                    contract    = 2 [(gogoproto.casttype) =
+                             "github.com/cosmos/cosmos-sdk/types.AccAddress"];
     bytes                     data        = 3;
     google.protobuf.Timestamp record_time = 4 [
         (gogoproto.stdtime)  = true,

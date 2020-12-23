@@ -43,7 +43,7 @@ func GetStateRecord() *cobra.Command {
 				return err
 			}
 
-			recordIDStr := cmd.Flags().GetString(FlagRecordID)
+			recordIDStr, err := cmd.Flags().GetString(FlagRecordID)
 			if recordIDStr == "" {
 				return fmt.Errorf("record id cannot be empty")
 			}
