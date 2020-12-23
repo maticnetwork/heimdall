@@ -6,7 +6,6 @@ import (
 	"context"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -39,12 +38,12 @@ func GetStateRecord() *cobra.Command {
 		Short: "show state record",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
-			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			clientCtx, err := client.ReadQueryCommandFlags(clientCtx, cmd.Flags())
 			if err != nil {
 				return err
 			}
 
-			recordIDStr := viper.GetString(FlagRecordID)
+			recordIDStr := cmd.Flags().GetString(FlagRecordID)
 			if recordIDStr == "" {
 				return fmt.Errorf("record id cannot be empty")
 			}

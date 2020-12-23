@@ -13,11 +13,11 @@ option (gogoproto.unmarshaler_all) = false;
 
 // Query defines the gRPC querier service.
 service Query {
-  // Record queries the record that match by record id.
-  rpc Record(QueryRecordParams) returns (QueryRecordResponse) {
-    // TODO - Verify route
-    option (google.api.http).get = "/heimdall/clerk/{record_id}";
-  }
+    // Record queries the record that match by record id.
+    rpc Record(QueryRecordParams) returns (QueryRecordResponse) {
+        // TODO - Verify route
+        option (google.api.http).get = "/heimdall/clerk/{record_id}";
+    }
 }
 
 // QueryRecordParams is request type for the Query/Record RPC method
@@ -27,5 +27,5 @@ message QueryRecordParams {
 
 // QueryRecordResponse is response type for the Query/Record RPC method
 message QueryRecordResponse {
-    EventRecord event_record = 1 ;
+    EventRecord event_record = 1;
 }

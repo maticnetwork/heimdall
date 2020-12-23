@@ -13,15 +13,17 @@ option (gogoproto.unmarshaler_all) = true;
 
 // Query defines the gRPC querier service.
 service Query {
-  // Validator queries the validator that match by validator id.
-  rpc Validator(QueryValidatorRequest) returns (QueryValidatorResponse) {
-    option (google.api.http).get = "/heimdall/types/validator/{validator_id}";
-  }
+    // Validator queries the validator that match by validator id.
+    rpc Validator(QueryValidatorRequest) returns (QueryValidatorResponse) {
+        option (google.api.http).get =
+            "/heimdall/types/validator/{validator_id}";
+    }
 
-  // ValidatorSet queries the Current Validator Set
-  rpc ValidatorSet(QueryValidatorSetRequest) returns (QueryValidatorSetResponse) {
-    option (google.api.http).get = "/heimdall/types/validatorSet";
-  }
+    // ValidatorSet queries the Current Validator Set
+    rpc ValidatorSet(QueryValidatorSetRequest)
+        returns (QueryValidatorSetResponse) {
+        option (google.api.http).get = "/heimdall/types/validatorSet";
+    }
 }
 
 // QueryValidatorRequest is request type for the Query/Validator RPC method
@@ -33,16 +35,16 @@ message QueryValidatorRequest {
 // QueryValidatorResponse is response type for the Query/Validator RPC method
 message QueryValidatorResponse {
     // validator defines the the validator info.
-    heimdall.types.Validator validator = 1 ;
+    heimdall.types.Validator validator = 1;
 }
 
-// QueryValidatorSetRequest is request type for the Query/ValidatorSet RPC method
-message QueryValidatorSetRequest {
+// QueryValidatorSetRequest is request type for the Query/ValidatorSet RPC
+// method
+message QueryValidatorSetRequest {}
 
-}
-
-// QueryValidatorSetResponse is response type for the Query/ValidatorSet RPC method
+// QueryValidatorSetResponse is response type for the Query/ValidatorSet RPC
+// method
 message QueryValidatorSetResponse {
-      // validatorSet defines the the current validator set.
-  heimdall.types.ValidatorSet validatorSet = 1 ;
+    // validatorSet defines the the current validator set.
+    heimdall.types.ValidatorSet validatorSet = 1;
 }

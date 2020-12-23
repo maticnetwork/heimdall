@@ -10,22 +10,22 @@ option (gogoproto.marshaler_all)   = false;
 option (gogoproto.unmarshaler_all) = false;
 
 message EventRecord {
-    option (gogoproto.goproto_getters)  = false;
+    option (gogoproto.goproto_getters) = false;
 
     uint64 id = 1
         [(gogoproto.jsontag) = "id", (gogoproto.moretags) = "yaml:\"id\""];
     bytes contract = 2
         [(gogoproto.casttype) =
-            "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"];
-    bytes data = 3;
+             "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"];
+    bytes                     data        = 3;
     google.protobuf.Timestamp record_time = 4 [
         (gogoproto.stdtime)  = true,
         (gogoproto.nullable) = false,
         (gogoproto.moretags) = "yaml:\"record_time\""
     ];
     uint64 log_index = 5;
-    string tx_hash = 6
+    string tx_hash   = 6
         [(gogoproto.casttype) =
-            "github.com/maticnetwork/heimdall/types/common.HeimdallHash"];
+             "github.com/maticnetwork/heimdall/types/common.HeimdallHash"];
     string chain_id = 7;
 }

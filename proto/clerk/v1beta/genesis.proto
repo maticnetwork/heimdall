@@ -11,6 +11,6 @@ option (gogoproto.unmarshaler_all) = false;
 
 // GenesisState defines the clerk module's genesis state.
 message GenesisState {
-    repeated EventRecord event_records = 1;
-    repeated string record_sequences = 2;
+    repeated EventRecord event_records    = 1;
+    repeated string      record_sequences = 2;
 }
