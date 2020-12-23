@@ -2,10 +2,17 @@ package common
 
 import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	abci "github.com/tendermint/tendermint/abci/types"
+	tmprototypes "github.com/tendermint/tendermint/proto/tendermint/types"
 )
 
-//ModuleName Defination
+//ModuleName Definition
 var ModuleName = "common_errors"
+
+var (
+	// CodeInvalidMsg error code
+	CodeInvalidMsg uint32 = 1400
+)
 
 //custom error definations
 var (
@@ -28,4 +35,16 @@ var (
 	ErrEventRecordAlreadySynced = sdkerrors.Register(ModuleName, 5400, "Event record already synced")
 	ErrEventRecordInvalid = sdkerrors.Register(ModuleName, 5401, "Event record is invalid")
 	ErrEventUpdate = sdkerrors.Register(ModuleName, 5402, "Event record update error")
+	ErrSideTxValidation         = sdkerrors.Register(ModuleName, 5502, "External call majority validation failed")
+	ErrValidatorSigningInfoSave = sdkerrors.Register(ModuleName, 6501, "Cannot save validator signing info")
+	ErrSignerUpdateError        = sdkerrors.Register(ModuleName, 2508, "Signer update error")
+	ErrValidatorNotDeactivated  = sdkerrors.Register(ModuleName, 6502, "Validator Not Deactivated")
 )
+
+// ErrorSideTx represents side-tx error
+func ErrorSideTx(code uint32) (res abci.ResponseDeliverSideTx) {
+	res.Code = uint32(code)
+	res.Codespace = string(ModuleName)
+	res.Result = tmprototypes.SideTxResultType_SKIP // skip side-tx vote in-case of error
+	return
+}

@@ -13,3 +13,6 @@ logs
 .idea
 .vscode
 .cache
+
+# swagger-gen
+/tmp-swagger-gen
