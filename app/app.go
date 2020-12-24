@@ -14,6 +14,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/server/api"
 	"github.com/cosmos/cosmos-sdk/server/config"
+	"github.com/cosmos/cosmos-sdk/std"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
@@ -159,6 +160,12 @@ func NewHeimdallApp(
 	legacyAmino := encodingConfig.Amino
 	interfaceRegistry := encodingConfig.InterfaceRegistry
 	txDecoder := encodingConfig.TxConfig.TxDecoder()
+
+	// TODO move this to a better place, may be params/encoding.go
+	std.RegisterLegacyAminoCodec(legacyAmino)
+	std.RegisterInterfaces(interfaceRegistry)
+	ModuleBasics.RegisterInterfaces(encodingConfig.InterfaceRegistry)
+	ModuleBasics.RegisterLegacyAminoCodec(legacyAmino)
 
 	bApp := baseapp.NewBaseApp(appName, logger, db, txDecoder, baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(traceStore)
