@@ -289,18 +289,20 @@ func (k *Keeper) UpdateValidatorSetInStore(ctx sdk.Context, newValidatorSet *hmT
 }
 
 // GetValidatorSet returns current Validator Set from store
-func (k *Keeper) GetValidatorSet(ctx sdk.Context) (validatorSet *hmTypes.ValidatorSet) {
+func (k *Keeper) GetValidatorSet(ctx sdk.Context) *hmTypes.ValidatorSet {
+	var validatorSet hmTypes.ValidatorSet
+
 	store := ctx.KVStore(k.storeKey)
 	// get current validator set from store
 	bz := store.Get(CurrentValidatorSetKey)
-	// unmarhsall
 
-	if err := k.cdc.UnmarshalBinaryBare(bz, validatorSet); err != nil {
+	// unmarhsall
+	if err := k.cdc.UnmarshalBinaryBare(bz, &validatorSet); err != nil {
 		k.Logger(ctx).Error("GetValidatorSet | UnmarshalBinaryBare", "error", err)
 	}
 
 	// return validator set
-	return validatorSet
+	return &validatorSet
 }
 
 // IncrementAccum increments accum for validator set by n times and replace validator set in store
