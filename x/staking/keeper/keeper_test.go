@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"fmt"
 	"math/rand"
 	"strings"
 	"testing"
@@ -18,7 +19,9 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/maticnetwork/heimdall/types/simulation"
+	"github.com/maticnetwork/heimdall/x/staking/keeper"
 	stakingSim "github.com/maticnetwork/heimdall/x/staking/simulation"
+	"github.com/maticnetwork/heimdall/x/staking/types"
 )
 
 type KeeperTestSuite struct {
@@ -272,7 +275,7 @@ func (suite *KeeperTestSuite) TestUpdateSigner() {
 // 	currentValSet.UpdateWithChangeSet(setUpdates)
 
 // 	require.Equal(t, len(prevValSet.Validators)+1, len(currentValSet.Validators), "Number of validators should be increased by 1")
-// 	require.Equal(t, true, currentValSet.HasAddress(GetBytesFromString(valToBeAdded.Signer)), "New Validator should be added")
+// 	require.Equal(t, true, currentValSet.HasAddress(valToBeAdded.GetSigner().Bytes()), "New Validator should be added")
 // 	require.Equal(t, prevValSet.GetTotalVotingPower()+int64(valToBeAdded.VotingPower), currentValSet.GetTotalVotingPower(), "Total VotingPower should be increased")
 
 // }
@@ -340,10 +343,21 @@ func (suite *KeeperTestSuite) TestUpdateSigner() {
 
 func (suite *KeeperTestSuite) TestGetNextProposer() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
-	keeper := app.StakingKeeper
-	stakingSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
 
-	nextProposer := keeper.GetNextProposer(ctx)
+	appCodec := app.AppCodec()
+	app.StakingKeeper = keeper.NewKeeper(
+		appCodec,
+		app.GetKey(types.StoreKey),
+		app.GetSubspace(types.ModuleName),
+		app.ChainKeeper,
+		app.BankKeeper,
+		nil,
+	)
+
+	fmt.Println("cdc", app.StakingKeeper.cdc)
+	stakingSim.LoadValidatorSet(4, t, app.StakingKeeper, ctx, false, 10)
+
+	nextProposer := app.StakingKeeper.GetNextProposer(ctx)
 	require.NotNil(t, nextProposer)
 }
 
