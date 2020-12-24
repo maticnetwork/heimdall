@@ -154,7 +154,7 @@ func NewHeimdallApp(
 	encodingConfig hmparams.EncodingConfig,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *HeimdallApp {
-	// TODO: Remove cdc in favor of appCodec once all modules are migrated.
+	// TODO: Remove legacyAmino in favor of appCodec once all modules are migrated.
 	appCodec := encodingConfig.Marshaler
 	legacyAmino := encodingConfig.Amino
 	interfaceRegistry := encodingConfig.InterfaceRegistry

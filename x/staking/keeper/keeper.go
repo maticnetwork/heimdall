@@ -295,6 +295,8 @@ func (k *Keeper) GetValidatorSet(ctx sdk.Context) (validatorSet *hmTypes.Validat
 	bz := store.Get(CurrentValidatorSetKey)
 	// unmarhsall
 
+	fmt.Println("cdc;:::", k.cdc)
+
 	if err := k.cdc.UnmarshalBinaryBare(bz, validatorSet); err != nil {
 		k.Logger(ctx).Error("GetValidatorSet | UnmarshalBinaryBare", "error", err)
 	}
