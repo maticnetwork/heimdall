@@ -18,6 +18,8 @@ func GenRandomVal(count int, startBlock uint64, power int64, timeAlive uint64, r
 	for i := 0; i < count; i++ {
 		privKey1 := secp256k1.GenPrivKey()
 		pubkey := hmCommonTypes.NewPubKey(privKey1.PubKey().Bytes())
+		signer := sdk.AccAddress(privKey1.PubKey().Address().Bytes())
+
 		if randomise {
 			startBlock := uint64(rand.Intn(10))
 			// todo find a way to genrate non zero random number
@@ -35,7 +37,7 @@ func GenRandomVal(count int, startBlock uint64, power int64, timeAlive uint64, r
 			StartEpoch:       startBlock,
 			EndEpoch:         startBlock + timeAlive,
 			VotingPower:      power,
-			Signer:           pubkey.Address().String(),
+			Signer:           signer.String(),
 			PubKey:           pubkey.String(),
 			ProposerPriority: 0,
 		}

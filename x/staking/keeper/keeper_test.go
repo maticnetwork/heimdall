@@ -7,6 +7,7 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 
 	"github.com/maticnetwork/heimdall/app"
 
@@ -17,6 +18,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/maticnetwork/heimdall/types/simulation"
+	stakingSim "github.com/maticnetwork/heimdall/x/staking/simulation"
 )
 
 type KeeperTestSuite struct {
@@ -85,78 +87,84 @@ func (suite *KeeperTestSuite) TestValidator() {
 	require.Equal(t, strings.ToLower(mappedSignerAddress.Hex()), strings.ToLower(validators[0].Signer), "Signer address doesn't match")
 }
 
-// // tests VotingPower change, validator creation, validator set update when signer changes
-// func (suite *KeeperTestSuite) TestUpdateSigner() {
-// 	t, app, ctx := suite.T(), suite.app, suite.ctx
+// tests VotingPower change, validator creation, validator set update when signer changes
+func (suite *KeeperTestSuite) TestUpdateSigner() {
+	t, app, ctx := suite.T(), suite.app, suite.ctx
 
-// 	s1 := rand.NewSource(time.Now().UnixNano())
-// 	r1 := rand.New(s1)
-// 	n := 5
+	s1 := rand.NewSource(time.Now().UnixNano())
+	r1 := rand.New(s1)
+	n := 5
 
-// 	validators := make([]*hmTypes.Validator, n)
-// 	accounts := simulation.RandomAccounts(r1, n)
+	validators := make([]*hmTypes.Validator, n)
+	accounts := simulation.RandomAccounts(r1, n)
 
-// 	for i := range validators {
-// 		// validator
-// 		validators[i] = hmTypes.NewValidator(
-// 			hmTypes.NewValidatorID(uint64(int64(i))),
-// 			0,
-// 			0,
-// 			1,
-// 			int64(simulation.RandIntBetween(r1, 10, 100)), // power
-// 			hmCommonTypes.NewPubKey(accounts[i].PubKey.Bytes()),
-// 			accounts[i].Address,
-// 		)
-// 		err := app.StakingKeeper.AddValidator(ctx, *validators[i])
-// 		if err != nil {
-// 			t.Error("Error while adding validator to store", err)
-// 		}
-// 	}
+	for i := range validators {
+		// validator
+		validators[i] = hmTypes.NewValidator(
+			hmTypes.NewValidatorID(uint64(int64(i))),
+			0,
+			0,
+			1,
+			int64(simulation.RandIntBetween(r1, 10, 100)), // power
+			hmCommonTypes.NewPubKey(accounts[i].PubKey.Bytes()),
+			accounts[i].Address,
+		)
+		err := app.StakingKeeper.AddValidator(ctx, *validators[i])
+		if err != nil {
+			t.Error("Error while adding validator to store", err)
+		}
+	}
 
-// 	// Fetch Validator Info from Store
-// 	valInfo, err := app.StakingKeeper.GetValidatorInfo(ctx, []byte(validators[0].Signer))
-// 	if err != nil {
-// 		t.Error("Error while fetching Validator Info from store", err)
-// 	}
+	singerAddress, err := sdk.AccAddressFromHex(validators[0].Signer)
 
-// 	// Update Signer
-// 	newPrivKey := secp256k1.GenPrivKey()
-// 	newPubKey := hmCommonTypes.NewPubKey(newPrivKey.PubKey().Bytes())
-// 	newSigner := newPubKey.Address().String()
-// 	err = app.StakingKeeper.UpdateSigner(ctx, GetAccAddressFromString(newSigner), newPubKey, GetAccAddressFromString(valInfo.Signer))
-// 	if err != nil {
-// 		t.Error("Error while updating Signer Address -", err)
-// 	}
+	// Fetch Validator Info from Store
+	valInfo, err := app.StakingKeeper.GetValidatorInfo(ctx, singerAddress)
+	if err != nil {
+		t.Error("Error while fetching Validator Info from store", err)
+	}
+	valInfoSigner, err := sdk.AccAddressFromHex(valInfo.Signer)
 
-// 	// Check Validator Info of Prev Signer
-// 	prevSginerValInfo, err := app.StakingKeeper.GetValidatorInfo(ctx, GetBytesFromString(validators[0].Signer))
-// 	if err != nil {
-// 		t.Error("Error while fetching Validator Info for Prev Signer - ", err)
-// 	}
-// 	require.Equal(t, int64(0), prevSginerValInfo.VotingPower, "VotingPower of Prev Signer should be zero")
+	// Update Signer
+	newPrivKey := secp256k1.GenPrivKey()
+	newPubKey := hmCommonTypes.NewPubKey(newPrivKey.PubKey().Bytes())
+	newSigner := sdk.AccAddress(newPrivKey.PubKey().Address().Bytes())
+	newSignerAddress, err := sdk.AccAddressFromHex(newSigner.String())
 
-// 	// Check Validator Info of Updated Signer
-// 	updatedSignerValInfo, err := app.StakingKeeper.GetValidatorInfo(ctx, GetBytesFromString(newSigner))
-// 	if err != nil {
-// 		t.Error("Error while fetching Validator Info for Updater Signer", err)
-// 	}
-// 	require.Equal(t, validators[0].VotingPower, updatedSignerValInfo.VotingPower, "VotingPower of updated signer should match with prev signer VotingPower")
+	err = app.StakingKeeper.UpdateSigner(ctx, newSignerAddress, newPubKey, valInfoSigner)
+	if err != nil {
+		t.Error("Error while updating Signer Address -", err)
+	}
 
-// 	// Check If ValidatorId is mapped To Updated Signer
-// 	signerAddress, isMapped := app.StakingKeeper.GetSignerFromValidatorID(ctx, validators[0].ID)
-// 	if !isMapped {
-// 		t.Error("Validator Id is not mapped to Signer Address", err)
-// 	}
-// 	require.Equal(t, newSigner, signerAddress.Hex(), "Validator ID should be mapped to Updated Signer Address")
+	// Check Validator Info of Prev Signer
+	prevSginerValInfo, err := app.StakingKeeper.GetValidatorInfo(ctx, singerAddress)
+	if err != nil {
+		t.Error("Error while fetching Validator Info for Prev Signer - ", err)
+	}
+	require.Equal(t, int64(0), prevSginerValInfo.VotingPower, "VotingPower of Prev Signer should be zero")
 
-// 	// Check total Validators
-// 	totalValidators := app.StakingKeeper.GetAllValidators(ctx)
-// 	require.LessOrEqual(t, 6, len(totalValidators), "Total Validators should be six.")
+	// Check Validator Info of Updated Signer
+	updatedSignerValInfo, err := app.StakingKeeper.GetValidatorInfo(ctx, newSignerAddress)
+	if err != nil {
+		t.Error("Error while fetching Validator Info for Updater Signer", err)
+	}
+	require.Equal(t, validators[0].VotingPower, updatedSignerValInfo.VotingPower, "VotingPower of updated signer should match with prev signer VotingPower")
 
-// 	// Check current Validators
-// 	currentValidators := app.StakingKeeper.GetCurrentValidators(ctx)
-// 	require.LessOrEqual(t, 5, len(currentValidators), "Current Validators should be five.")
-// }
+	// Check If ValidatorId is mapped To Updated Signer
+	mappedSignerAddress, isMapped := app.StakingKeeper.GetSignerFromValidatorID(ctx, validators[0].ID)
+	if !isMapped {
+		t.Error("Validator Id is not mapped to Signer Address", err)
+	}
+	require.Equal(t, strings.ToLower(newSignerAddress.String()), strings.ToLower(mappedSignerAddress.Hex()), "Validator ID should be mapped to Updated Signer Address")
+
+	// Check total Validators
+	totalValidators := app.StakingKeeper.GetAllValidators(ctx)
+	require.LessOrEqual(t, 6, len(totalValidators), "Total Validators should be six.")
+
+	// TODO need to enable this once checkpoint module is migrated
+	// // Check current Validators
+	// currentValidators := app.StakingKeeper.GetCurrentValidators(ctx)
+	// require.LessOrEqual(t, 5, len(currentValidators), "Current Validators should be five.")
+}
 
 // // func (suite *KeeperTestSuite) TestCurrentValidator() {
 // // 	type TestDataItem struct {
@@ -330,14 +338,14 @@ func (suite *KeeperTestSuite) TestValidator() {
 // 	require.Equal(t, currentValSet.GetProposer(), currentProposer)
 // }
 
-// func (suite *KeeperTestSuite) TestGetNextProposer() {
-// 	t, app, ctx := suite.T(), suite.app, suite.ctx
-// 	keeper := app.StakingKeeper
-// 	stakingSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+func (suite *KeeperTestSuite) TestGetNextProposer() {
+	t, app, ctx := suite.T(), suite.app, suite.ctx
+	keeper := app.StakingKeeper
+	stakingSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
 
-// 	nextProposer := keeper.GetNextProposer(ctx)
-// 	require.NotNil(t, nextProposer)
-// }
+	nextProposer := keeper.GetNextProposer(ctx)
+	require.NotNil(t, nextProposer)
+}
 
 // func (suite *KeeperTestSuite) TestGetValidatorFromValID() {
 // 	t, app, ctx := suite.T(), suite.app, suite.ctx
