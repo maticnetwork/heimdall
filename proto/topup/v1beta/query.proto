@@ -17,7 +17,7 @@ option (gogoproto.unmarshaler_all) = true;
 service Query {
     // this line is used by starport scaffolding # 2
     rpc Sequence(QuerySequenceRequest) returns (QuerySequenceResponse) {
-        option (google.api.http).get = "/heimdall/types/sequence/{sequence_id}";
+        option (google.api.http).get = "/x/topup/types/msg_topup/{tx_hash}";
     }
 }
 
@@ -29,5 +29,5 @@ message QuerySequenceRequest {
 }
 
 message QuerySequenceResponse {
-    string sequence = 1;
+    uint64 sequence = 1;
 }
