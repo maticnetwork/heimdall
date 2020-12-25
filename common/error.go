@@ -6,7 +6,7 @@ import (
 	tmprototypes "github.com/tendermint/tendermint/proto/tendermint/types"
 )
 
-//ModuleName Defination
+//ModuleName Definition
 var ModuleName = "common_errors"
 
 var (
@@ -14,7 +14,7 @@ var (
 	CodeInvalidMsg uint32 = 1400
 )
 
-//custom error definations
+//custom error definitions
 var (
 	ErrEmptyValidatorAddr       = sdkerrors.Register(ModuleName, 2, "empty validator address")
 	ErrInvalidMsg               = sdkerrors.Register(ModuleName, 1400, "Invalid Message")

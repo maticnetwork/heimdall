@@ -11,6 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 
 	"github.com/cosmos/cosmos-sdk/version"
+
 	"github.com/maticnetwork/heimdall/x/chainmanager/types"
 )
 
