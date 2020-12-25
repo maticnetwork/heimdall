@@ -1,7 +1,6 @@
 package types
 
 import (
-	"bytes"
 	"fmt"
 	"strings"
 
@@ -19,7 +18,7 @@ const (
 )
 
 var (
-	// DefaultStateReceiverAddress is used set Default State Receiver address
+	// DefaultStateReceiverAddress is used set Default State Reciever address
 	DefaultStateReceiverAddress sdk.AccAddress = sdk.AccAddress(borCommon.FromHex("0x0000000000000000000000000000000000001001"))
 	// DefaultValidatorSetAddress is used set Default Validator Set address
 	DefaultValidatorSetAddress sdk.AccAddress = sdk.AccAddress(borCommon.FromHex("0x0000000000000000000000000000000000001000"))
@@ -65,19 +64,19 @@ func NewParams(
 // pairs of auth module's parameters.
 // nolint
 func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
-	// TODO fix this
 	return paramtypes.ParamSetPairs{
-		// {KeyMainchainTxConfirmations, &p.MainchainTxConfirmations},
-		// {KeyMaticchainTxConfirmations, &p.MaticchainTxConfirmations},
-		// {KeyChainParams, &p.ChainParams},
+		paramtypes.NewParamSetPair(KeyMainchainTxConfirmations, &p.MainchainTxConfirmations, validateMainchainTxConfirmations),
+		paramtypes.NewParamSetPair(KeyMaticchainTxConfirmations, &p.MaticchainTxConfirmations, validateMaticchainTxConfirmations),
+		paramtypes.NewParamSetPair(KeyChainParams, &p.ChainParams, validateChainParams),
 	}
 }
 
 // Equal returns a boolean determining if two Params types are identical.
 func (p Params) Equal(p2 Params) bool {
-	bz1 := ModuleCdc.MustMarshalBinaryLengthPrefixed(&p)
-	bz2 := ModuleCdc.MustMarshalBinaryLengthPrefixed(&p2)
-	return bytes.Equal(bz1, bz2)
+	// bz1 := ModuleCdc.MustMarshalBinaryLengthPrefixed(&p)
+	// bz2 := ModuleCdc.MustMarshalBinaryLengthPrefixed(&p2)
+	// return bytes.Equal(bz1, bz2)
+	return true
 }
 
 // String implements the stringer interface.
@@ -133,6 +132,41 @@ func validateAccAddress(key string, value sdk.AccAddress) error {
 	}
 
 	// TODO add validation based on Key and Address
+
+	return nil
+}
+
+func validateMainchainTxConfirmations(i interface{}) error {
+	v, ok := i.(uint64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v <= 0 {
+		return fmt.Errorf("Mainchain Tx Confirmations must be positive: %d", v)
+	}
+
+	return nil
+}
+
+func validateMaticchainTxConfirmations(i interface{}) error {
+	v, ok := i.(uint64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v <= 0 {
+		return fmt.Errorf("Maticchain Tx Confirmations must be positive: %d", v)
+	}
+
+	return nil
+}
+
+func validateChainParams(i interface{}) error {
+	_, ok := i.(*ChainParams)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
 
 	return nil
 }
