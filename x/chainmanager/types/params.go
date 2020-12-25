@@ -1,6 +1,7 @@
 package types
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 
@@ -73,9 +74,10 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 
 // Equal returns a boolean determining if two Params types are identical.
 func (p Params) Equal(p2 Params) bool {
-	// bz1 := ModuleCdc.MustMarshalBinaryLengthPrefixed(&p)
-	// bz2 := ModuleCdc.MustMarshalBinaryLengthPrefixed(&p2)
-	// return bytes.Equal(bz1, bz2)
+	// TODO add ProtoCodec instead of AminoCodec
+	bz1 := ModuleCdc.MustMarshalBinaryLengthPrefixed(&p)
+	bz2 := ModuleCdc.MustMarshalBinaryLengthPrefixed(&p2)
+	return bytes.Equal(bz1, bz2)
 	return true
 }
 
