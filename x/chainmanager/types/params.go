@@ -1,6 +1,7 @@
 package types
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 
@@ -64,6 +65,7 @@ func NewParams(
 // pairs of auth module's parameters.
 // nolint
 func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
+	// TODO fix this
 	return paramtypes.ParamSetPairs{
 		// {KeyMainchainTxConfirmations, &p.MainchainTxConfirmations},
 		// {KeyMaticchainTxConfirmations, &p.MaticchainTxConfirmations},
@@ -73,10 +75,9 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 
 // Equal returns a boolean determining if two Params types are identical.
 func (p Params) Equal(p2 Params) bool {
-	// bz1 := ModuleCdc.MustMarshalBinaryLengthPrefixed(&p)
-	// bz2 := ModuleCdc.MustMarshalBinaryLengthPrefixed(&p2)
-	// return bytes.Equal(bz1, bz2)
-	return true
+	bz1 := ModuleCdc.MustMarshalBinaryLengthPrefixed(&p)
+	bz2 := ModuleCdc.MustMarshalBinaryLengthPrefixed(&p2)
+	return bytes.Equal(bz1, bz2)
 }
 
 // String implements the stringer interface.
