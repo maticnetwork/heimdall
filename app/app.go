@@ -15,6 +15,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/server/api"
 	"github.com/cosmos/cosmos-sdk/server/config"
 	"github.com/cosmos/cosmos-sdk/std"
+	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
@@ -63,6 +64,9 @@ import (
 	"github.com/maticnetwork/heimdall/x/staking"
 	stakingkeeper "github.com/maticnetwork/heimdall/x/staking/keeper"
 	stakingtypes "github.com/maticnetwork/heimdall/x/staking/types"
+
+	// unnamed import of statik for swagger UI support
+	_ "github.com/maticnetwork/heimdall/client/docs/statik"
 )
 
 const appName = "Heimdall"
@@ -272,6 +276,7 @@ func NewHeimdallApp(
 		auth.NewAppModule(appCodec, app.AccountKeeper, nil),
 		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
 		sidechannel.NewAppModule(appCodec, app.SidechannelKeeper),
+		chainmanager.NewAppModule(appCodec, app.ChainKeeper),
 		staking.NewAppModule(appCodec, app.StakingKeeper, &app.caller),
 		params.NewAppModule(app.ParamsKeeper),
 	)
@@ -294,6 +299,7 @@ func NewHeimdallApp(
 		authtypes.ModuleName,
 		banktypes.ModuleName,
 		sidechanneltypes.ModuleName,
+		chainmanagerTypes.ModuleName,
 		stakingtypes.ModuleName,
 		genutiltypes.ModuleName,
 	)
@@ -317,7 +323,7 @@ func NewHeimdallApp(
 	app.sideRouter.Seal()
 
 	// add test gRPC service for testing gRPC queries in isolation
-	// testdata.RegisterQueryServer(app.GRPCQueryRouter(), testdata.QueryImpl{})
+	testdata.RegisterQueryServer(app.GRPCQueryRouter(), testdata.QueryImpl{})
 
 	// create the simulation manager and define the order of the modules for deterministic simulations
 	//
@@ -537,7 +543,13 @@ func (app *HeimdallApp) SimulationManager() *module.SimulationManager {
 func (app *HeimdallApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.APIConfig) {
 	clientCtx := apiSvr.ClientCtx
 	rpc.RegisterRoutes(clientCtx, apiSvr.Router)
+	// Register legacy tx routes.
 	authrest.RegisterTxRoutes(clientCtx, apiSvr.Router)
+
+	// Register new tx routes from grpc-gateway.
+	authtx.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCRouter)
+	// Register new tendermint queries routes from grpc-gateway.
+	tmservice.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCRouter)
 
 	ModuleBasics.RegisterRESTRoutes(clientCtx, apiSvr.Router)
 	ModuleBasics.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCRouter)
