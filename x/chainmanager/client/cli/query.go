@@ -5,15 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	// "strings"
-
 	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-
-	// "github.com/cosmos/cosmos-sdk/client/flags"
-	// sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/maticnetwork/heimdall/x/chainmanager/types"
@@ -62,7 +57,6 @@ $ %s query chainamanager params
 			queryClient := types.NewQueryClient(clientCtx)
 			res, err := queryClient.Params(context.Background(), &types.QueryParamsRequest{})
 			if err != nil {
-				fmt.Println("Err vastundin...", err)
 				return err
 			}
 

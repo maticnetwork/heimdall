@@ -130,11 +130,8 @@ func validateAccAddress(key string, value sdk.AccAddress) error {
 	if value.String() == "" {
 		return fmt.Errorf("Invalid value %s in chain_params", key)
 	}
-	//convert string to AccAddress and compare
-	addr := sdk.AccAddress([]byte(key))
-	if !addr.Equals(value) {
-		return fmt.Errorf("Key: %s is not equal to Value: %s", key, value)
-	}
+
+	// TODO add validation based on Key and Address
 
 	return nil
 }

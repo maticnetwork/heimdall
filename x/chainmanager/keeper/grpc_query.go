@@ -18,8 +18,7 @@ var _ types.QueryServer = Querier{}
 
 // Params queries params info
 func (k Querier) Params(c context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
-	ctx := sdk.UnwrapSDKContext(c)
-	params := k.GetParams(ctx)
+	params := k.GetParams(sdk.UnwrapSDKContext(c))
 
 	return &types.QueryParamsResponse{Params: &params}, nil
 }
