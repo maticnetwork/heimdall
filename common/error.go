@@ -14,7 +14,7 @@ var (
 	CodeInvalidMsg uint32 = 1400
 )
 
-//custom error definations
+//custom error definitions
 var (
 	ErrEmptyValidatorAddr       = sdkerrors.Register(ModuleName, 2, "empty validator address")
 	ErrInvalidMsg               = sdkerrors.Register(ModuleName, 1400, "Invalid Message")

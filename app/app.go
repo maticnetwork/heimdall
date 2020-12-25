@@ -269,6 +269,7 @@ func NewHeimdallApp(
 		auth.NewAppModule(appCodec, app.AccountKeeper, nil),
 		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
 		sidechannel.NewAppModule(appCodec, app.SidechannelKeeper),
+		chainmanager.NewAppModule(appCodec, app.ChainKeeper),
 		staking.NewAppModule(appCodec, app.StakingKeeper, &app.caller),
 		params.NewAppModule(app.ParamsKeeper),
 	)
@@ -291,6 +292,7 @@ func NewHeimdallApp(
 		authtypes.ModuleName,
 		banktypes.ModuleName,
 		sidechanneltypes.ModuleName,
+		chainmanagerTypes.ModuleName,
 		stakingtypes.ModuleName,
 		genutiltypes.ModuleName,
 	)
