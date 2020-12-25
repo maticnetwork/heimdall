@@ -3,18 +3,19 @@
 set -eo pipefail
 
 mkdir -p ./.cache/tmp/swagger-gen
+
 proto_dirs=$(find ./proto -path -prune -o -name '*.proto' -print0 | xargs -0 -n1 dirname | sort | uniq)
 for dir in $proto_dirs; do
   # generate swagger files (filter query files)
   query_file=$(find "${dir}" -maxdepth 1 -name 'query.proto')
   if [[ -n "$query_file" ]]; then
-    .cache/bin/protoc  \
+    buf protoc  \
     -I "proto" \
     -I ".cache/cosmos-sdk/proto" \
     -I ".cache/cosmos-sdk/third_party/proto" \
     "$query_file" \
-    --swagger_out ./.cache/tmp/swagger-gen \
-    --swagger_opt logtostderr=true --swagger_opt fqn_for_swagger_name=true --swagger_opt simple_operation_ids=true
+    --swagger_out=./.cache/tmp/swagger-gen \
+    --swagger_opt=logtostderr=true --swagger_opt=fqn_for_swagger_name=true --swagger_opt=simple_operation_ids=true
   fi
 done
 
