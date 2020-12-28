@@ -17,11 +17,12 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/grpc-ecosystem/grpc-gateway/utilities"
-	types_0 "github.com/maticnetwork/heimdall/types"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/status"
+
+	types_0 "github.com/maticnetwork/heimdall/types"
 )
 
 // Suppress "imported and not used" errors
