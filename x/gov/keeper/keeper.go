@@ -59,27 +59,6 @@ func (keeper Keeper) InsertActiveProposalQueue(ctx sdk.Context, proposalID uint6
 	store.Set(types.ActiveProposalQueueKey(proposalID, endTime), bz)
 }
 
-// Returns the current DepositParams from the global param store
-func (keeper Keeper) GetDepositParams(ctx sdk.Context) types.DepositParams {
-	var depositParams types.DepositParams
-	keeper.paramSubspace.Get(ctx, types.ParamStoreKeyDepositParams, &depositParams)
-	return depositParams
-}
-
-// Returns the current VotingParams from the global param store
-func (keeper Keeper) GetVotingParams(ctx sdk.Context) types.VotingParams {
-	var votingParams types.VotingParams
-	keeper.paramSubspace.Get(ctx, types.ParamStoreKeyVotingParams, &votingParams)
-	return votingParams
-}
-
-// Returns the current TallyParam from the global param store
-func (keeper Keeper) GetTallyParams(ctx sdk.Context) types.TallyParams {
-	var tallyParams types.TallyParams
-	keeper.paramSubspace.Get(ctx, types.ParamStoreKeyTallyParams, &tallyParams)
-	return tallyParams
-}
-
 // InsertInactiveProposalQueue Inserts a ProposalID into the inactive proposal queue at endTime
 func (keeper Keeper) InsertInactiveProposalQueue(ctx sdk.Context, proposalID uint64, endTime time.Time) {
 	store := ctx.KVStore(keeper.storeKey)
@@ -121,4 +100,25 @@ func (keeper Keeper) IterateDeposits(ctx sdk.Context, proposalID uint64, cb func
 func (keeper Keeper) RemoveFromInactiveProposalQueue(ctx sdk.Context, proposalID uint64, endTime time.Time) {
 	store := ctx.KVStore(keeper.storeKey)
 	store.Delete(types.InactiveProposalQueueKey(proposalID, endTime))
+}
+
+// GetDepositParams returns the current DepositParams from the global param store
+func (keeper Keeper) GetDepositParams(ctx sdk.Context) types.DepositParams {
+	var depositParams types.DepositParams
+	keeper.paramSubspace.Get(ctx, types.ParamStoreKeyDepositParams, &depositParams)
+	return depositParams
+}
+
+// GetVotingParams returns the current VotingParams from the global param store
+func (keeper Keeper) GetVotingParams(ctx sdk.Context) types.VotingParams {
+	var votingParams types.VotingParams
+	keeper.paramSubspace.Get(ctx, types.ParamStoreKeyVotingParams, &votingParams)
+	return votingParams
+}
+
+// GetTallyParams returns the current TallyParam from the global param store
+func (keeper Keeper) GetTallyParams(ctx sdk.Context) types.TallyParams {
+	var tallyParams types.TallyParams
+	keeper.paramSubspace.Get(ctx, types.ParamStoreKeyTallyParams, &tallyParams)
+	return tallyParams
 }

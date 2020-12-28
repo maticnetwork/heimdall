@@ -594,19 +594,17 @@ $ %s query gov param deposit
 				return err
 			}
 
-			var out fmt.Stringer
+			// var out fmt.Stringer
 			switch args[0] {
 			case "voting":
-				out = res.GetVotingParams()
+				return clientCtx.PrintOutput(&res.VotingParams)
 			case "tallying":
-				out = res.GetTallyParams()
+				return clientCtx.PrintOutput(&res.TallyParams)
 			case "deposit":
-				out = res.DepositParams()
+				return clientCtx.PrintOutput(&res.DepositParams)
 			default:
 				return fmt.Errorf("argument must be one of (voting|tallying|deposit), was %s", args[0])
 			}
-
-			return clientCtx.PrintOutput(out)
 		},
 	}
 
@@ -707,7 +705,7 @@ func QueryDepositsByTxQuery(clientCtx client.Context, params types.QueryProposal
 				depMsg := msg.(*types.MsgDeposit)
 
 				deposits = append(deposits, types.Deposit{
-					Depositor:  depMsg.Depositor,
+					Depositor:  depMsg.Validator,
 					ProposalId: params.ProposalId,
 					Amount:     depMsg.Amount,
 				})
@@ -742,9 +740,9 @@ func QueryVotesByTxQuery(clientCtx client.Context, params types.QueryProposalReq
 	var votes []types.Vote
 
 	for _, info := range searchResult.Txs {
-		for _, msg := range info.Tx.GetMsgs() {
+		for _, msg := range info.GetTx().GetMsgs() {
 			if msg.Type() == types.TypeMsgVote {
-				voteMsg := msg.(types.MsgVote)
+				voteMsg := msg.(*types.MsgVote)
 
 				votes = append(votes, types.Vote{
 					Voter:      voteMsg.Validator,
@@ -784,7 +782,7 @@ func QueryVoteByTxQuery(clientCtx client.Context, params types.QueryVoteRequest)
 				voteMsg := msg.(*types.MsgVote)
 
 				vote := types.Vote{
-					Voter:      voteMsg.Voter,
+					Voter:      voteMsg.Validator,
 					ProposalId: params.ProposalId,
 					Option:     voteMsg.Option,
 				}
@@ -808,7 +806,7 @@ func QueryDepositByTxQuery(clientCtx client.Context, params types.QueryDepositRe
 	events := []string{
 		fmt.Sprintf("%s.%s='%s'", sdk.EventTypeMessage, sdk.AttributeKeyAction, types.TypeMsgDeposit),
 		fmt.Sprintf("%s.%s='%s'", types.EventTypeProposalDeposit, types.AttributeKeyProposalID, []byte(fmt.Sprintf("%d", params.ProposalId))),
-		fmt.Sprintf("%s.%s='%s'", sdk.EventTypeMessage, sdk.AttributeKeySender, []byte(params.Depositor)),
+		fmt.Sprintf("%s.%s='%s'", sdk.EventTypeMessage, sdk.AttributeKeySender, params.Depositor),
 	}
 
 	// NOTE: SearchTxs is used to facilitate the txs query which does not currently
@@ -825,7 +823,7 @@ func QueryDepositByTxQuery(clientCtx client.Context, params types.QueryDepositRe
 				depMsg := msg.(*types.MsgDeposit)
 
 				deposit := types.Deposit{
-					Depositor:  depMsg.Depositor,
+					Depositor:  depMsg.Validator,
 					ProposalId: params.ProposalId,
 					Amount:     depMsg.Amount,
 				}
@@ -863,7 +861,7 @@ func QueryProposerByTxQuery(clientCtx client.Context, proposalID uint64) (Propos
 			// there should only be a single proposal under the given conditions
 			if msg.Type() == types.TypeMsgSubmitProposal {
 				subMsg := msg.(*types.MsgSubmitProposal)
-				return NewProposer(proposalID, subMsg.Proposer), nil
+				return NewProposer(proposalID, subMsg.Proposer.String()), nil
 			}
 		}
 	}
@@ -873,7 +871,7 @@ func QueryProposerByTxQuery(clientCtx client.Context, proposalID uint64) (Propos
 
 // QueryProposalByID takes a proposalID and returns a proposal
 func QueryProposalByID(proposalID uint64, clientCtx client.Context, queryRoute string) ([]byte, error) {
-	params := types.NewQueryProposalParams(proposalID)
+	params := types.QueryProposalRequest{proposalID}
 	bz, err := clientCtx.LegacyAmino.MarshalJSON(params)
 	if err != nil {
 		return nil, err

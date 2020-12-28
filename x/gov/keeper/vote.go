@@ -37,14 +37,14 @@ func (keeper Keeper) AddVote(ctx sdk.Context, proposalID uint64, voter sdk.AccAd
 	return nil
 }
 
-// // GetAllVotes returns all the votes from the store
-// func (keeper Keeper) GetAllVotes(ctx sdk.Context) (votes types.Votes) {
-// 	keeper.IterateAllVotes(ctx, func(vote types.Vote) bool {
-// 		votes = append(votes, vote)
-// 		return false
-// 	})
-// 	return
-// }
+// GetAllVotes returns all the votes from the store
+func (keeper Keeper) GetAllVotes(ctx sdk.Context) (votes types.Votes) {
+	keeper.IterateAllVotes(ctx, func(vote types.Vote) bool {
+		votes = append(votes, vote)
+		return false
+	})
+	return
+}
 
 // GetVotes returns all the votes from a proposal
 func (keeper Keeper) GetVotes(ctx sdk.Context, proposalID uint64) (votes types.Votes) {
@@ -79,7 +79,23 @@ func (keeper Keeper) GetVotesIterator(ctx sdk.Context, proposalID uint64) sdk.It
 	return sdk.KVStorePrefixIterator(store, types.VotesKey(proposalID))
 }
 
-// func (keeper Keeper) deleteVote(ctx sdk.Context, proposalID uint64, voter hmTypes.ValidatorID) {
-// 	store := ctx.KVStore(keeper.storeKey)
-// 	store.Delete(types.VoteKey(proposalID, voter))
-// }
+func (keeper Keeper) deleteVote(ctx sdk.Context, proposalID uint64, voter hmTypes.ValidatorID) {
+	store := ctx.KVStore(keeper.storeKey)
+	store.Delete(types.VoteKey(proposalID, voter))
+}
+
+// IterateAllVotes iterates over the all the stored votes and performs a callback function
+func (keeper Keeper) IterateAllVotes(ctx sdk.Context, cb func(vote types.Vote) (stop bool)) {
+	store := ctx.KVStore(keeper.storeKey)
+	iterator := sdk.KVStorePrefixIterator(store, types.VotesKeyPrefix)
+
+	defer iterator.Close()
+	for ; iterator.Valid(); iterator.Next() {
+		var vote types.Vote
+		keeper.cdc.MustUnmarshalBinaryBare(iterator.Value(), &vote)
+
+		if cb(vote) {
+			break
+		}
+	}
+}

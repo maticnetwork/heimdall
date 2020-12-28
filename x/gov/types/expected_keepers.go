@@ -4,6 +4,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 // ParamSubspace defines the expected Subspace interface for parameters (noalias)
@@ -24,7 +25,14 @@ type StakingKeeper interface {
 		ctx sdk.Context, delegator sdk.AccAddress,
 		fn func(index int64, delegation stakingtypes.DelegationI) (stop bool),
 	)
-	// GetActiveValidatorInfo(sdk.Context, address []byte) ()
+	IterateCurrentValidatorsAndApplyFn(
+		ctx sdk.Context,
+		fn func(validator *hmTypes.Validator) bool,
+	)
+	GetActiveValidatorInfo(
+		ctx sdk.Context,
+		address []byte,
+	) (validator hmTypes.Validator, err error)
 }
 
 // AccountKeeper defines the expected account keeper (noalias)

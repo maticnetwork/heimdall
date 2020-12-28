@@ -65,5 +65,5 @@ func NewParams(vp VotingParams, tp TallyParams, dp DepositParams) Params {
 	}
 }
 
-func (v *Params) Reset()      { *v = Params{} }
+func (v *Params) Reset()       { *v = Params{} }
 func (v Params) ProtoMessage() {}

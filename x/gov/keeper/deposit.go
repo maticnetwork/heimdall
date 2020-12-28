@@ -48,7 +48,8 @@ func (keeper Keeper) AddDeposit(ctx sdk.Context, proposalID uint64, depositorAdd
 	}
 
 	// Update proposal
-	proposal.TotalDeposit = proposal.TotalDeposit.Add(depositAmount)
+	// TODO - Check this
+	// proposal.TotalDeposit = proposal.TotalDeposit.Add(depositAmount)
 	keeper.SetProposal(ctx, proposal)
 
 	// Check if deposit has provided sufficient total funds to transition the proposal into the voting period
@@ -61,7 +62,8 @@ func (keeper Keeper) AddDeposit(ctx sdk.Context, proposalID uint64, depositorAdd
 	// Add or update deposit object
 	deposit, found := keeper.GetDeposit(ctx, proposalID, validator)
 	if found {
-		deposit.Amount = deposit.Amount.Add(depositAmount)
+		// TODO - Check this
+		// deposit.Amount = deposit.Amount.Add(depositAmount)
 	} else {
 		deposit = types.NewDeposit(proposalID, depositAmount, validator)
 	}

@@ -271,3 +271,12 @@ func EmptyTallyResult() TallyResult {
 		NoWithVeto: ZeroInt(),
 	}
 }
+
+func NewTallyResultFromMap(results map[VoteOption]Dec) TallyResult {
+	return TallyResult{
+		Yes:        results[OptionYes].TruncateInt(),
+		Abstain:    results[OptionAbstain].TruncateInt(),
+		No:         results[OptionNo].TruncateInt(),
+		NoWithVeto: results[OptionNoWithVeto].TruncateInt(),
+	}
+}

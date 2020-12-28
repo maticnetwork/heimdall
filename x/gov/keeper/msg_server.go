@@ -30,10 +30,12 @@ func (k msgServer) SubmitProposal(goCtx context.Context, msg *types.MsgSubmitPro
 	// 	return hmCommon.ErrInvalidMsg(k.Codespace(), "No active validator by proposer").Result()
 	// }
 
-	proposal, err := k.Keeper.SubmitProposal(ctx, msg.Content)
-	if err != nil {
-		return nil, err
-	}
+	// TODO - Check this
+	proposal := types.Proposal{}
+	// proposal, err := k.Keeper.SubmitProposal(ctx, msg.Content)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	err, votingStarted := k.Keeper.AddDeposit(ctx, proposal.ProposalId, msg.GetProposer(), msg.GetInitialDeposit(), msg.Validator)
 	if err != nil {
