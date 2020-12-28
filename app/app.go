@@ -45,6 +45,9 @@ import (
 	"github.com/maticnetwork/heimdall/x/chainmanager"
 	chainKeeper "github.com/maticnetwork/heimdall/x/chainmanager/keeper"
 	chainmanagerTypes "github.com/maticnetwork/heimdall/x/chainmanager/types"
+	"github.com/maticnetwork/heimdall/x/clerk"
+	clerkkeeper "github.com/maticnetwork/heimdall/x/clerk/keeper"
+	clerktypes "github.com/maticnetwork/heimdall/x/clerk/types"
 
 	// unnamed import of statik for swagger UI support
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
@@ -89,6 +92,7 @@ var (
 		staking.AppModuleBasic{},
 		params.AppModuleBasic{},
 		topup.AppModuleBasic{},
+		clerk.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -124,6 +128,7 @@ type HeimdallApp struct {
 	AccountKeeper     authkeeper.AccountKeeper
 	BankKeeper        bankkeeper.Keeper
 	ChainKeeper       chainKeeper.Keeper
+	ClerkKeeper       clerkkeeper.Keeper
 	SidechannelKeeper sidechannelkeeper.Keeper
 	StakingKeeper     stakingkeeper.Keeper
 	ParamsKeeper      paramskeeper.Keeper
@@ -182,6 +187,7 @@ func NewHeimdallApp(
 		authtypes.StoreKey,
 		banktypes.StoreKey,
 		chainmanagerTypes.StoreKey,
+		clerktypes.StoreKey,
 		sidechanneltypes.StoreKey,
 		stakingtypes.StoreKey,
 		// distrtypes.StoreKey,
@@ -281,6 +287,7 @@ func NewHeimdallApp(
 		auth.NewAppModule(appCodec, app.AccountKeeper, nil),
 		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
 		sidechannel.NewAppModule(appCodec, app.SidechannelKeeper),
+		chainmanager.NewAppModule(appCodec, app.ChainKeeper),
 		staking.NewAppModule(appCodec, app.StakingKeeper, &app.caller),
 		params.NewAppModule(app.ParamsKeeper),
 	)
@@ -303,7 +310,9 @@ func NewHeimdallApp(
 		authtypes.ModuleName,
 		banktypes.ModuleName,
 		sidechanneltypes.ModuleName,
+		chainmanagerTypes.ModuleName,
 		stakingtypes.ModuleName,
+		clerktypes.ModuleName,
 		genutiltypes.ModuleName,
 	)
 

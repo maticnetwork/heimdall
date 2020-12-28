@@ -1,31 +1,31 @@
-# heimdall
+# Heimdall
 
-**blog** is a blockchain application built using Cosmos SDK and Tendermint and generated with [Starport](https://github.com/tendermint/starport).
+[![Go Report Card](https://goreportcard.com/badge/github.com/maticnetwork/heimdall)](https://goreportcard.com/report/github.com/maticnetwork/heimdall) [![CircleCI](https://circleci.com/gh/maticnetwork/heimdall/tree/master.svg?style=shield)](https://circleci.com/gh/maticnetwork/heimdall/tree/master) [![GolangCI](https://golangci.com/badges/github.com/maticnetwork/heimdall.svg)](https://golangci.com/r/github.com/maticnetwork/heimdall)
 
-## Get started
 
+Validator node for Matic Network. It uses peppermint, customized [Tendermint](https://github.com/tendermint/tendermint).
+
+### Install from source
+
+Make sure your have go1.15+ already installed
+
+### Install
+```bash
+$ make install
 ```
-starport serve
+
+### Run-heimdall
+```bash
+$ heimdalld init --chain-id <chain-id> <moniker>
+$ heimdalld start
 ```
 
-`serve` command installs dependencies, initializes and runs the application.
+### Run rest server
+REST server runs in-process with heimdall node.
+To enable REST server edit `app.toml` and enable `api.enable`.
+For serving `swagger`, enable `api.swagger`.
 
-## Configure
+### Documentation
 
-Initialization parameters of your app are stored in `config.yml`.
-
-### `accounts`
-
-A list of user accounts created during genesis of your application.
-
-| Key   | Required | Type            | Description                                       |
-| ----- | -------- | --------------- | ------------------------------------------------- |
-| name  | Y        | String          | Local name of the key pair                        |
-| coins | Y        | List of Strings | Initial coins with denominations (e.g. "100coin") |
-
-## Learn more
-
-- [Starport](https://github.com/tendermint/starport)
-- [Cosmos SDK documentation](https://docs.cosmos.network)
-- [Cosmos Tutorials](https://tutorials.cosmos.network)
-- [Channel on Discord](https://discord.gg/W8trcGV)
+Latest docs are [here](https://docs.matic.network/)
+Test webhook trigger

@@ -6,8 +6,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	// "github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/maticnetwork/heimdall/x/chainmanager/types"
+	"github.com/maticnetwork/heimdall/x/clerk/types"
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -19,8 +18,6 @@ func GetTxCmd() *cobra.Command {
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
-
-	// this line is used by starport scaffolding # 1
 
 	return cmd
 }

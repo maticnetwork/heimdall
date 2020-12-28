@@ -1,5 +1,5 @@
 syntax = "proto3";
-package heimdall.chainmanager.v1beta1;
+package chainmanager.v1beta1;
 
 import "gogoproto/gogo.proto";
 
