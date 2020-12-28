@@ -435,7 +435,6 @@ func (d Dec) String() string {
 
 	var bzStr []byte
 
-	// TODO: Remove trailing zeros
 	// case 1, purely decimal
 	if inputSize <= Precision {
 		bzStr = make([]byte, Precision+2)
@@ -672,7 +671,6 @@ func (d *Dec) UnmarshalJSON(bz []byte) error {
 		return err
 	}
 
-	// TODO: Reuse dec allocation
 	newDec, err := NewDecFromStr(text)
 	if err != nil {
 		return err

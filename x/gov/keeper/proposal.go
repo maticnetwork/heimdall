@@ -137,14 +137,13 @@ func (keeper Keeper) GetProposalsFiltered(ctx sdk.Context, voterID hmTypes.Valid
 	return matchingProposals
 }
 
-// TODO - Modify this for sdk error
 // GetProposalID gets the highest proposal ID
 func (keeper Keeper) GetProposalID(ctx sdk.Context) (proposalID uint64, err error) {
 	store := ctx.KVStore(keeper.storeKey)
 	bz := store.Get(types.ProposalIDKey)
-	// if bz == nil {
-	// 	return 0, types.ErrInvalidGenesis(hmCommon.DefaultCodespace, "initial proposal ID hasn't been set")
-	// }
+	if bz == nil {
+		return 0, types.ErrInvalidGenesis
+	}
 	keeper.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &proposalID)
 	return proposalID, nil
 }

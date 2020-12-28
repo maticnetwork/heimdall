@@ -3,6 +3,8 @@ package types
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	// hmCommon "github.com/maticnetwork/heimdall/common"
 )
 
 // Governance message types and routes
@@ -48,39 +50,39 @@ func (msg MsgSubmitProposal) Route() string { return RouterKey }
 func (msg MsgSubmitProposal) Type() string  { return TypeMsgSubmitProposal }
 
 // Implements Msg.
-func (msg MsgSubmitProposal) ValidateBasic() error {
-	// TODO - Check this
-	// if msg.Depositor.Empty() {
-	// 	return sdk.ErrInvalidAddress(msg.Depositor.String())
-	// }
-	// if !msg.Amount.IsValid() {
-	// 	return sdk.ErrInvalidCoins(msg.Amount.String())
-	// }
-	// if msg.Amount.IsAnyNegative() {
-	// 	return sdk.ErrInvalidCoins(msg.Amount.String())
-	// }
-	// if msg.Validator == 0 {
-	// 	return hmCommon.ErrInvalidMsg(DefaultCodespace, "Invalid validator id")
-	// }
+func (m MsgSubmitProposal) ValidateBasic() error {
+	if m.Proposer.Empty() {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, m.Proposer.String())
+	}
+	if !m.InitialDeposit.IsValid() {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, m.InitialDeposit.String())
+	}
+	if m.InitialDeposit.IsAnyNegative() {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, m.InitialDeposit.String())
+	}
+
+	content := m.GetContent()
+	if content == nil {
+		return sdkerrors.Wrap(ErrInvalidProposalContent, "missing content")
+	}
+	if !IsValidProposalType(content.ProposalType()) {
+		return sdkerrors.Wrap(ErrInvalidProposalType, content.ProposalType())
+	}
+	if err := content.ValidateBasic(); err != nil {
+		return err
+	}
 
 	return nil
 }
 
 // Implements Msg.
 func (msg MsgVote) ValidateBasic() error {
-	// TODO - Check this
-	// if msg.Depositor.Empty() {
-	// 	return sdk.ErrInvalidAddress(msg.Depositor.String())
-	// }
-	// if !msg.Amount.IsValid() {
-	// 	return sdk.ErrInvalidCoins(msg.Amount.String())
-	// }
-	// if msg.Amount.IsAnyNegative() {
-	// 	return sdk.ErrInvalidCoins(msg.Amount.String())
-	// }
-	// if msg.Validator == 0 {
-	// 	return hmCommon.ErrInvalidMsg(DefaultCodespace, "Invalid validator id")
-	// }
+	if msg.Voter.Empty() {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Voter.String())
+	}
+	if !ValidVoteOption(msg.Option) {
+		return sdkerrors.Wrap(ErrInvalidVote, msg.Option.String())
+	}
 
 	return nil
 }
@@ -104,19 +106,15 @@ func (msg MsgDeposit) Type() string  { return TypeMsgDeposit }
 
 // Implements Msg.
 func (msg MsgDeposit) ValidateBasic() error {
-	// TODO - Check this
-	// if msg.Depositor.Empty() {
-	// 	return sdk.ErrInvalidAddress(msg.Depositor.String())
-	// }
-	// if !msg.Amount.IsValid() {
-	// 	return sdk.ErrInvalidCoins(msg.Amount.String())
-	// }
-	// if msg.Amount.IsAnyNegative() {
-	// 	return sdk.ErrInvalidCoins(msg.Amount.String())
-	// }
-	// if msg.Validator == 0 {
-	// 	return hmCommon.ErrInvalidMsg(DefaultCodespace, "Invalid validator id")
-	// }
+	if msg.Depositor.Empty() {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Depositor.String())
+	}
+	if !msg.Amount.IsValid() {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, msg.Amount.String())
+	}
+	if msg.Amount.IsAnyNegative() {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, msg.Amount.String())
+	}
 
 	return nil
 }

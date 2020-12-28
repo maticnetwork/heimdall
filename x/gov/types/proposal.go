@@ -174,7 +174,6 @@ func (status ProposalStatus) Format(s fmt.State, verb rune) {
 	case 's':
 		s.Write([]byte(status.String()))
 	default:
-		// TODO: Do this conversion more directly
 		s.Write([]byte(fmt.Sprintf("%v", byte(status))))
 	}
 }

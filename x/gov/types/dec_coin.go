@@ -119,14 +119,12 @@ func (coin DecCoin) TruncateDecimal() (Coin, DecCoin) {
 
 // IsPositive returns true if coin amount is positive.
 //
-// TODO: Remove once unsigned integers are used.
 func (coin DecCoin) IsPositive() bool {
 	return coin.Amount.IsPositive()
 }
 
 // IsNegative returns true if the coin amount is negative and false otherwise.
 //
-// TODO: Remove once unsigned integers are used.
 func (coin DecCoin) IsNegative() bool {
 	return coin.Amount.IsNegative()
 }
@@ -337,7 +335,6 @@ func (coins DecCoins) GetDenomByIndex(i int) string {
 // is negative; returns false otherwise. It returns false if the DecCoins set
 // is empty too.
 //
-// TODO: Remove once unsigned integers are used.
 func (coins DecCoins) IsAnyNegative() bool {
 	for _, coin := range coins {
 		if coin.IsNegative() {
@@ -540,7 +537,6 @@ func (coins DecCoins) IsValid() bool {
 // IsAllPositive returns true if there is at least one coin and all currencies
 // have a positive value.
 //
-// TODO: Remove once unsigned integers are used.
 func (coins DecCoins) IsAllPositive() bool {
 	if len(coins) == 0 {
 		return false

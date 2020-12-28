@@ -6,6 +6,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	hmCommon "github.com/maticnetwork/heimdall/common"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/x/gov/types"
 )
@@ -25,17 +26,14 @@ var _ types.MsgServer = msgServer{}
 func (k msgServer) SubmitProposal(goCtx context.Context, msg *types.MsgSubmitProposal) (*types.MsgSubmitProposalResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// TODO - Check this
-	// if _, err := getValidValidator(ctx, k.Keeper, msg.Proposer, msg.Validator); err != nil {
-	// 	return hmCommon.ErrInvalidMsg(k.Codespace(), "No active validator by proposer").Result()
-	// }
+	if _, err := getValidValidator(ctx, k.Keeper, msg.Proposer, msg.Validator); err != nil {
+		return nil, hmCommon.ErrInvalidMsg
+	}
 
-	// TODO - Check this
-	proposal := types.Proposal{}
-	// proposal, err := k.Keeper.SubmitProposal(ctx, msg.Content)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	proposal, err := k.Keeper.SubmitProposal(ctx, msg.GetContent())
+	if err != nil {
+		return nil, err
+	}
 
 	err, votingStarted := k.Keeper.AddDeposit(ctx, proposal.ProposalId, msg.GetProposer(), msg.GetInitialDeposit(), msg.Validator)
 	if err != nil {
@@ -66,10 +64,9 @@ func (k msgServer) SubmitProposal(goCtx context.Context, msg *types.MsgSubmitPro
 func (k msgServer) Deposit(goCtx context.Context, msg *types.MsgDeposit) (*types.MsgDepositResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// TODO - Check this
-	// if _, err := getValidValidator(ctx, k.Keeper, msg.Depositor, msg.Validator); err != nil {
-	// 	return hmCommon.ErrInvalidMsg(keeper.Codespace(), "No active validator by depositor").Result()
-	// }
+	if _, err := getValidValidator(ctx, k.Keeper, msg.Depositor, msg.Validator); err != nil {
+		return nil, hmCommon.ErrInvalidMsg
+	}
 
 	err, votingStarted := k.Keeper.AddDeposit(ctx, msg.ProposalId, msg.Depositor, msg.Amount, msg.Validator)
 	if err != nil {
@@ -99,10 +96,9 @@ func (k msgServer) Deposit(goCtx context.Context, msg *types.MsgDeposit) (*types
 func (k msgServer) Vote(goCtx context.Context, msg *types.MsgVote) (*types.MsgVoteResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// TODO - Check this
-	// if _, err := getValidValidator(ctx, k.Keeper, msg.Voter, msg.Validator); err != nil {
-	// 	return hmCommon.ErrInvalidMsg(keeper.Codespace(), "No active validator by voter").Result()
-	// }
+	if _, err := getValidValidator(ctx, k.Keeper, msg.Voter, msg.Validator); err != nil {
+		return nil, hmCommon.ErrInvalidMsg
+	}
 
 	err := k.Keeper.AddVote(ctx, msg.ProposalId, msg.Voter, msg.Option, msg.Validator)
 	if err != nil {
