@@ -46,15 +46,15 @@ func (k msgServer) MsgEventRecord(goCtx context.Context, msg *types.MsgEventReco
 	}
 
 	// TODO - Check this
-	// // chainManager params
-	// params := k.chainKeeper.GetParams(ctx)
-	// chainParams := params.ChainParams
+	// chainManager params
+	params := k.ChainKeeper.GetParams(ctx)
+	chainParams := params.ChainParams
 
-	// // check chain id
-	// if chainParams.BorChainId != msg.ChainId {
-	// 	k.Logger(ctx).Error("Invalid Bor chain id", "msgChainID", msg.ChainId)
-	// 	return nil, hmCommon.ErrInvalidBorChainID
-	// }
+	// check chain id
+	if chainParams.BorChainID != msg.ChainId {
+		k.Logger(ctx).Error("Invalid Bor chain id", "msgChainID", msg.ChainId)
+		return nil, hmCommon.ErrInvalidBorChainID
+	}
 
 	// sequence id
 	blockNumber := new(big.Int).SetUint64(msg.BlockNumber)
