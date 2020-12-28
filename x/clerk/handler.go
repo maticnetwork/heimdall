@@ -4,10 +4,10 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/maticnetwork/heimdall/x/clerk/keeper"
-	"github.com/maticnetwork/heimdall/x/clerk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/x/clerk/keeper"
+	"github.com/maticnetwork/heimdall/x/clerk/types"
 )
 
 // NewHandler returns a handler for "clerk" type messages.

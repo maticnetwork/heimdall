@@ -43,11 +43,11 @@ import (
 
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/x/chainmanager"
-	"github.com/maticnetwork/heimdall/x/clerk"
 	chainKeeper "github.com/maticnetwork/heimdall/x/chainmanager/keeper"
+	chainmanagerTypes "github.com/maticnetwork/heimdall/x/chainmanager/types"
+	"github.com/maticnetwork/heimdall/x/clerk"
 	clerkkeeper "github.com/maticnetwork/heimdall/x/clerk/keeper"
 	clerktypes "github.com/maticnetwork/heimdall/x/clerk/types"
-	chainmanagerTypes "github.com/maticnetwork/heimdall/x/chainmanager/types"
 
 	// unnamed import of statik for swagger UI support
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"

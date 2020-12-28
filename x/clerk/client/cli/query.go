@@ -1,9 +1,9 @@
 package cli
 
 import (
+	"context"
 	"fmt"
 	"strconv"
-	"context"
 
 	"github.com/spf13/cobra"
 
@@ -28,7 +28,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 		GetStateRecord(),
 	)
 
-	return cmd 
+	return cmd
 }
 
 // GetStateRecord get state record

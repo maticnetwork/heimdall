@@ -33,8 +33,8 @@ var (
 	ErrInvalidBorChainID = sdkerrors.Register(ModuleName, 3506, "Invalid Bor chain id")
 
 	ErrEventRecordAlreadySynced = sdkerrors.Register(ModuleName, 5400, "Event record already synced")
-	ErrEventRecordInvalid = sdkerrors.Register(ModuleName, 5401, "Event record is invalid")
-	ErrEventUpdate = sdkerrors.Register(ModuleName, 5402, "Event record update error")
+	ErrEventRecordInvalid       = sdkerrors.Register(ModuleName, 5401, "Event record is invalid")
+	ErrEventUpdate              = sdkerrors.Register(ModuleName, 5402, "Event record update error")
 	ErrSideTxValidation         = sdkerrors.Register(ModuleName, 5502, "External call majority validation failed")
 	ErrValidatorSigningInfoSave = sdkerrors.Register(ModuleName, 6501, "Cannot save validator signing info")
 	ErrSignerUpdateError        = sdkerrors.Register(ModuleName, 2508, "Signer update error")

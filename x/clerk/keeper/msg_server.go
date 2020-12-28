@@ -2,9 +2,9 @@ package keeper
 
 import (
 	"context"
+	"encoding/hex"
 	"math/big"
 	"strconv"
-	"encoding/hex"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 

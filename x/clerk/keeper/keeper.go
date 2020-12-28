@@ -1,10 +1,10 @@
 package keeper
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
-	"errors"
 
 	"github.com/tendermint/tendermint/libs/log"
 
