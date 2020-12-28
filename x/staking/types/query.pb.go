@@ -122,7 +122,8 @@ func (m *QueryValidatorResponse) GetValidator() *types.Validator {
 	return nil
 }
 
-// QueryValidatorSetRequest is request type for the Query/ValidatorSet RPC method
+// QueryValidatorSetRequest is request type for the Query/ValidatorSet RPC
+// method
 type QueryValidatorSetRequest struct {
 }
 
@@ -159,7 +160,8 @@ func (m *QueryValidatorSetRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryValidatorSetRequest proto.InternalMessageInfo
 
-// QueryValidatorSetResponse is response type for the Query/ValidatorSet RPC method
+// QueryValidatorSetResponse is response type for the Query/ValidatorSet RPC
+// method
 type QueryValidatorSetResponse struct {
 	// validatorSet defines the the current validator set.
 	ValidatorSet *types.ValidatorSet `protobuf:"bytes,1,opt,name=validatorSet,proto3" json:"validatorSet,omitempty"`

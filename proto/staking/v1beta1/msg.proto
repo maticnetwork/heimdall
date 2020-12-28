@@ -13,27 +13,26 @@ option (gogoproto.unmarshaler_all) = false;
 
 // Msg defines the staking Msg service.
 service Msg {
-  // ValidatorJoin defines a method to join a new validator.
-  rpc ValidatorJoin(MsgValidatorJoin) returns (MsgValidatorJoinResponse);
+    // ValidatorJoin defines a method to join a new validator.
+    rpc ValidatorJoin(MsgValidatorJoin) returns (MsgValidatorJoinResponse);
 
-  // StakeUpdate defines a method to update stake for an existing validator.
-  rpc StakeUpdate(MsgStakeUpdate) returns (MsgStakeUpdateResponse);
+    // StakeUpdate defines a method to update stake for an existing validator.
+    rpc StakeUpdate(MsgStakeUpdate) returns (MsgStakeUpdateResponse);
 
-  // SignerUpdate defines a method for update singer details of
-  // exisitng validator.
-  rpc SignerUpdate(MsgSignerUpdate) returns (MsgSignerUpdateResponse);
+    // SignerUpdate defines a method for update singer details of
+    // exisitng validator.
+    rpc SignerUpdate(MsgSignerUpdate) returns (MsgSignerUpdateResponse);
 
-  // ValidatorExit defines a method to handle validator exit
-  rpc ValidatorExit(MsgValidatorExit) returns (MsgValidatorExitResponse);
+    // ValidatorExit defines a method to handle validator exit
+    rpc ValidatorExit(MsgValidatorExit) returns (MsgValidatorExitResponse);
 }
 
 // MsgValidatorJoin defines a message to join a new validator.
 message MsgValidatorJoin {
     option (gogoproto.goproto_getters) = false;
-    string from                        = 1
-        [(gogoproto.casttype) =
-             "github.com/cosmos/cosmos-sdk/types.AccAddress"];
-    uint64 id = 2 [
+    string from                        = 1 [(gogoproto.casttype) =
+                         "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    uint64 id                          = 2 [
         (gogoproto.casttype) =
             "github.com/maticnetwork/heimdall/types.ValidatorID",
         (gogoproto.customname) = "ID"
@@ -53,15 +52,14 @@ message MsgValidatorJoin {
 }
 
 // MsgValidatorJoinResponse defines ValidatorJoin response type.
-message MsgValidatorJoinResponse{}
+message MsgValidatorJoinResponse {}
 
 // MsgStakeUpdate defines a message to update stake for a validator.
 message MsgStakeUpdate {
     option (gogoproto.goproto_getters) = false;
-    string from                        = 1
-        [(gogoproto.casttype) =
-             "github.com/cosmos/cosmos-sdk/types.AccAddress"];
-    uint64 id = 2 [
+    string from                        = 1 [(gogoproto.casttype) =
+                         "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    uint64 id                          = 2 [
         (gogoproto.casttype) =
             "github.com/maticnetwork/heimdall/types.ValidatorID",
         (gogoproto.customname) = "ID"
@@ -77,15 +75,14 @@ message MsgStakeUpdate {
 }
 
 // MsgStakeUpdateResponse defines StakeUpdate response type.
-message MsgStakeUpdateResponse{}
+message MsgStakeUpdateResponse {}
 
 // MsgSignerUpdate defines a message to update signer of a validator.
 message MsgSignerUpdate {
     option (gogoproto.goproto_getters) = false;
-    string from                        = 1
-        [(gogoproto.casttype) =
-             "github.com/cosmos/cosmos-sdk/types.AccAddress"];
-    uint64 id = 2 [
+    string from                        = 1 [(gogoproto.casttype) =
+                         "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    uint64 id                          = 2 [
         (gogoproto.casttype) =
             "github.com/maticnetwork/heimdall/types.ValidatorID",
         (gogoproto.customname) = "ID"
@@ -102,15 +99,14 @@ message MsgSignerUpdate {
 }
 
 // MsgSignerUpdateResponse defines SignerUpdate response type.
-message MsgSignerUpdateResponse{}
+message MsgSignerUpdateResponse {}
 
-// MsgValidatorExit defines a message to exit as a validator  
+// MsgValidatorExit defines a message to exit as a validator
 message MsgValidatorExit {
     option (gogoproto.goproto_getters) = false;
-    string from                        = 1
-        [(gogoproto.casttype) =
-             "github.com/cosmos/cosmos-sdk/types.AccAddress"];
-    uint64 id = 2 [
+    string from                        = 1 [(gogoproto.casttype) =
+                         "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    uint64 id                          = 2 [
         (gogoproto.casttype) =
             "github.com/maticnetwork/heimdall/types.ValidatorID",
         (gogoproto.customname) = "ID"
@@ -125,4 +121,4 @@ message MsgValidatorExit {
 }
 
 // MsgValidatorExitResponse is response type for ValidatorExit RPC method
-message MsgValidatorExitResponse{}
+message MsgValidatorExitResponse {}

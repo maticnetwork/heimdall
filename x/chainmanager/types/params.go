@@ -19,7 +19,7 @@ const (
 )
 
 var (
-	// DefaultStateReceiverAddress is used set Default State Reciever address
+	// DefaultStateReceiverAddress is used set Default State Receiver address
 	DefaultStateReceiverAddress sdk.AccAddress = sdk.AccAddress(borCommon.FromHex("0x0000000000000000000000000000000000001001"))
 	// DefaultValidatorSetAddress is used set Default Validator Set address
 	DefaultValidatorSetAddress sdk.AccAddress = sdk.AccAddress(borCommon.FromHex("0x0000000000000000000000000000000000001000"))

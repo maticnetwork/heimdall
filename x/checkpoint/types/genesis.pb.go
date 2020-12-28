@@ -8,8 +8,8 @@ import (
 	_ "github.com/cosmos/cosmos-sdk/codec/types"
 	_ "github.com/gogo/protobuf/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
-	_ "github.com/golang/protobuf/ptypes/duration"
 	github_com_maticnetwork_heimdall_types "github.com/maticnetwork/heimdall/types"
+	_ "google.golang.org/protobuf/types/known/durationpb"
 	math "math"
 	time "time"
 )
