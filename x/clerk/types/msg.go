@@ -5,6 +5,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	hmCommon "github.com/maticnetwork/heimdall/types/common"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 var cdc = codec.NewLegacyAmino()
@@ -43,13 +44,13 @@ func (msg MsgEventRecordRequest) Type() string { return "event-record" }
 
 // ValidateBasic Implements Msg.
 func (msg MsgEventRecordRequest) ValidateBasic() error {
-	// if msg.From.Empty() {
-	// 	return sdk.ErrInvalidAddress("missing sender address")
-	// }
+	if msg.From.Empty() {
+		return sdkerrors.ErrUnknownRequest
+	}
 
-	// if msg.TxHash.Empty() {
-	// 	return sdk.ErrInvalidAddress("missing tx hash")
-	// }
+	if msg.TxHash.Empty() {
+		return sdkerrors.ErrInvalidAddress
+	}
 	return nil
 }
 

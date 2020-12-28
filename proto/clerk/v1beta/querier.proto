@@ -15,8 +15,8 @@ option (gogoproto.unmarshaler_all) = false;
 service Query {
     // Record queries the record that match by record id.
     rpc Record(QueryRecordParams) returns (QueryRecordResponse) {
-        // TODO - Verify route
-        option (google.api.http).get = "/heimdall/clerk/{record_id}";
+        option (google.api.http).get =
+            "/heimdall/clerk/v1beta1/records/{record_id}";
     }
 }
 
