@@ -6,7 +6,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	// "github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/maticnetwork/heimdall/x/gov/types"
 )
 
@@ -20,7 +19,19 @@ func GetTxCmd() *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	// this line is used by starport scaffolding # 1
-
 	return cmd
 }
+
+// Proposal flags
+const (
+	FlagTitle        = "title"
+	FlagDescription  = "description"
+	flagProposalType = "type"
+	FlagDeposit      = "deposit"
+	flagVoter        = "voter"
+	flagDepositor    = "depositor"
+	flagStatus       = "status"
+	flagNumLimit     = "limit"
+	FlagProposal     = "proposal"
+	FlagValidatorID  = "validator-id"
+)

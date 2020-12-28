@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	// "fmt"
+	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -9,44 +9,47 @@ import (
 	"github.com/maticnetwork/heimdall/x/gov/types"
 )
 
-// // SubmitProposal create new proposal given a content
-// func (keeper Keeper) SubmitProposal(ctx sdk.Context, content types.Content) (types.Proposal, sdk.Error) {
-// 	if !keeper.router.HasRoute(content.ProposalRoute()) {
-// 		return types.Proposal{}, types.ErrNoProposalHandlerExists(hmCommon.DefaultCodespace, content)
-// 	}
+// SubmitProposal create new proposal given a content
+func (keeper Keeper) SubmitProposal(ctx sdk.Context, content types.Content) (types.Proposal, error) {
+	if !keeper.router.HasRoute(content.ProposalRoute()) {
+		return types.Proposal{}, types.ErrNoProposalHandlerExists
+	}
 
-// 	// Execute the proposal content in a cache-wrapped context to validate the
-// 	// actual parameter changes before the proposal proceeds through the
-// 	// governance process. State is not persisted.
-// 	cacheCtx, _ := ctx.CacheContext()
-// 	handler := keeper.router.GetRoute(content.ProposalRoute())
-// 	if err := handler(cacheCtx, content); err != nil {
-// 		return types.Proposal{}, types.ErrInvalidProposalContent(hmCommon.DefaultCodespace, err.Result().Log)
-// 	}
+	// Execute the proposal content in a cache-wrapped context to validate the
+	// actual parameter changes before the proposal proceeds through the
+	// governance process. State is not persisted.
+	cacheCtx, _ := ctx.CacheContext()
+	handler := keeper.router.GetRoute(content.ProposalRoute())
+	if err := handler(cacheCtx, content); err != nil {
+		return types.Proposal{}, types.ErrInvalidProposalContent
+	}
 
-// 	proposalID, err := keeper.GetProposalID(ctx)
-// 	if err != nil {
-// 		return types.Proposal{}, err
-// 	}
+	proposalID, err := keeper.GetProposalID(ctx)
+	if err != nil {
+		return types.Proposal{}, err
+	}
 
-// 	submitTime := ctx.BlockHeader().Time
-// 	depositPeriod := keeper.GetDepositParams(ctx).MaxDepositPeriod
+	submitTime := ctx.BlockHeader().Time
+	depositPeriod := keeper.GetDepositParams(ctx).MaxDepositPeriod
 
-// 	proposal := types.NewProposal(content, proposalID, submitTime, submitTime.Add(depositPeriod))
+	proposal, err := types.NewProposal(content, proposalID, submitTime, submitTime.Add(depositPeriod))
+	if err != nil {
+		return types.Proposal{}, err
+	}
 
-// 	keeper.SetProposal(ctx, proposal)
-// 	keeper.InsertInactiveProposalQueue(ctx, proposalID, proposal.DepositEndTime)
-// 	keeper.setProposalID(ctx, proposalID+1)
+	keeper.SetProposal(ctx, proposal)
+	keeper.InsertInactiveProposalQueue(ctx, proposalID, proposal.DepositEndTime)
+	keeper.SetProposalID(ctx, proposalID+1)
 
-// 	ctx.EventManager().EmitEvent(
-// 		sdk.NewEvent(
-// 			types.EventTypeSubmitProposal,
-// 			sdk.NewAttribute(types.AttributeKeyProposalID, fmt.Sprintf("%d", proposalID)),
-// 		),
-// 	)
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeSubmitProposal,
+			sdk.NewAttribute(types.AttributeKeyProposalID, fmt.Sprintf("%d", proposalID)),
+		),
+	)
 
-// 	return proposal, nil
-// }
+	return proposal, nil
+}
 
 // GetProposal get Proposal from store by ProposalID
 func (keeper Keeper) GetProposal(ctx sdk.Context, proposalID uint64) (proposal types.Proposal, ok bool) {
@@ -153,13 +156,13 @@ func (keeper Keeper) SetProposalID(ctx sdk.Context, proposalID uint64) {
 	store.Set(types.ProposalIDKey, bz)
 }
 
-// func (keeper Keeper) ActivateVotingPeriod(ctx sdk.Context, proposal types.Proposal) {
-// 	proposal.VotingStartTime = ctx.BlockHeader().Time
-// 	votingPeriod := keeper.GetVotingParams(ctx).VotingPeriod
-// 	proposal.VotingEndTime = proposal.VotingStartTime.Add(votingPeriod)
-// 	proposal.Status = types.StatusVotingPeriod
-// 	keeper.SetProposal(ctx, proposal)
+func (keeper Keeper) ActivateVotingPeriod(ctx sdk.Context, proposal types.Proposal) {
+	proposal.VotingStartTime = ctx.BlockHeader().Time
+	votingPeriod := keeper.GetVotingParams(ctx).VotingPeriod
+	proposal.VotingEndTime = proposal.VotingStartTime.Add(votingPeriod)
+	proposal.Status = types.StatusVotingPeriod
+	keeper.SetProposal(ctx, proposal)
 
-// 	keeper.RemoveFromInactiveProposalQueue(ctx, proposal.ProposalID, proposal.DepositEndTime)
-// 	keeper.InsertActiveProposalQueue(ctx, proposal.ProposalID, proposal.VotingEndTime)
-// }
+	keeper.RemoveFromInactiveProposalQueue(ctx, proposal.ProposalId, proposal.DepositEndTime)
+	keeper.InsertActiveProposalQueue(ctx, proposal.ProposalId, proposal.VotingEndTime)
+}

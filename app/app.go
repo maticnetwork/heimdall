@@ -63,6 +63,9 @@ import (
 	"github.com/maticnetwork/heimdall/x/staking"
 	stakingkeeper "github.com/maticnetwork/heimdall/x/staking/keeper"
 	stakingtypes "github.com/maticnetwork/heimdall/x/staking/types"
+	"github.com/maticnetwork/heimdall/x/gov"
+	govkeeper "github.com/maticnetwork/heimdall/x/gov/keeper"
+	govtypes "github.com/maticnetwork/heimdall/x/gov/types"
 
 	// unnamed import of statik for swagger UI support
 	_ "github.com/maticnetwork/heimdall/client/docs/statik"
@@ -85,6 +88,7 @@ var (
 		sidechannel.AppModuleBasic{},
 		staking.AppModuleBasic{},
 		params.AppModuleBasic{},
+		gov.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -123,6 +127,7 @@ type HeimdallApp struct {
 	SidechannelKeeper sidechannelkeeper.Keeper
 	StakingKeeper     stakingkeeper.Keeper
 	ParamsKeeper      paramskeeper.Keeper
+	GovKeeper       govkeeper.Keeper
 
 	// side router
 	sideRouter hmtypes.SideRouter
@@ -181,7 +186,7 @@ func NewHeimdallApp(
 		stakingtypes.StoreKey,
 		// distrtypes.StoreKey,
 		// slashingtypes.StoreKey,
-		// govtypes.StoreKey,
+		govtypes.StoreKey,
 		paramstypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -295,6 +300,7 @@ func NewHeimdallApp(
 		chainmanagerTypes.ModuleName,
 		stakingtypes.ModuleName,
 		genutiltypes.ModuleName,
+		govtypes.ModuleName,
 	)
 
 	// app.mm.RegisterInvariants(&app.CrisisKeeper)

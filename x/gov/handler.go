@@ -10,16 +10,28 @@ import (
 	"github.com/maticnetwork/heimdall/x/gov/types"
 )
 
-// NewHandler ...
+// NewHandler creates an sdk.Handler for all the gov type messages
 func NewHandler(k keeper.Keeper) sdk.Handler {
+	msgServer := keeper.NewMsgServerImpl(k)
+
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 
 		switch msg := msg.(type) {
-		// this line is used by starport scaffolding # 1
+		case *types.MsgDeposit:
+			res, err := msgServer.Deposit(sdk.WrapSDKContext(ctx), msg)
+			return sdk.WrapServiceResult(ctx, res, err)
+
+		case *types.MsgSubmitProposal:
+			res, err := msgServer.SubmitProposal(sdk.WrapSDKContext(ctx), msg)
+			return sdk.WrapServiceResult(ctx, res, err)
+
+		case *types.MsgVote:
+			res, err := msgServer.Vote(sdk.WrapSDKContext(ctx), msg)
+			return sdk.WrapServiceResult(ctx, res, err)
+
 		default:
-			errMsg := fmt.Sprintf("unrecognized %s message type: %T", types.ModuleName, msg)
-			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
+			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized %s message type: %T", types.ModuleName, msg)
 		}
 	}
 }

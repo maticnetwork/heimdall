@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package gov.v1beta;
+package heimdall.gov.v1beta;
 
 import "gogoproto/gogo.proto";
 import "gov/v1beta/gov.proto";

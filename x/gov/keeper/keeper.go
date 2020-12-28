@@ -19,14 +19,20 @@ type (
 		storeKey      sdk.StoreKey
 		memKey        sdk.StoreKey
 		paramSubspace paramtypes.Subspace
+		bankKeeper types.BankKeeper
+		router types.Router
+		sk types.StakingKeeper
 	}
 )
 
-func NewKeeper(cdc codec.LegacyAmino, storeKey, memKey sdk.StoreKey) *Keeper {
+func NewKeeper(cdc codec.LegacyAmino, storeKey, memKey sdk.StoreKey, bankKeeper types.BankKeeper, rtr types.Router, sk types.StakingKeeper) *Keeper {
 	return &Keeper{
 		cdc:      cdc,
 		storeKey: storeKey,
 		memKey:   memKey,
+		bankKeeper: bankKeeper,
+		router:     rtr,
+		sk:         sk,
 	}
 }
 
@@ -109,4 +115,10 @@ func (keeper Keeper) IterateDeposits(ctx sdk.Context, proposalID uint64, cb func
 			break
 		}
 	}
+}
+
+// RemoveFromInactiveProposalQueue removes a proposalID from the Inactive Proposal Queue
+func (keeper Keeper) RemoveFromInactiveProposalQueue(ctx sdk.Context, proposalID uint64, endTime time.Time) {
+	store := ctx.KVStore(keeper.storeKey)
+	store.Delete(types.InactiveProposalQueueKey(proposalID, endTime))
 }
