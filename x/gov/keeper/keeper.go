@@ -19,17 +19,17 @@ type (
 		storeKey      sdk.StoreKey
 		memKey        sdk.StoreKey
 		paramSubspace paramtypes.Subspace
-		bankKeeper types.BankKeeper
-		router types.Router
-		sk types.StakingKeeper
+		bankKeeper    types.BankKeeper
+		router        types.Router
+		sk            types.StakingKeeper
 	}
 )
 
 func NewKeeper(cdc codec.LegacyAmino, storeKey, memKey sdk.StoreKey, bankKeeper types.BankKeeper, rtr types.Router, sk types.StakingKeeper) *Keeper {
 	return &Keeper{
-		cdc:      cdc,
-		storeKey: storeKey,
-		memKey:   memKey,
+		cdc:        cdc,
+		storeKey:   storeKey,
+		memKey:     memKey,
 		bankKeeper: bankKeeper,
 		router:     rtr,
 		sk:         sk,

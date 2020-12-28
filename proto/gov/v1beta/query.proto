@@ -148,7 +148,7 @@ message QueryDepositRequest {
     uint64 proposal_id = 1;
 
     // depositor defines the deposit addresses from the proposals.
-    string depositor = 2;
+    heimdall.types.ValidatorID depositor = 2;
 }
 
 // QueryDepositResponse is the response type for the Query/Deposit RPC method.

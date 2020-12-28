@@ -3,15 +3,15 @@ package cli
 import (
 	"context"
 	"fmt"
-	"strings"
 	"strconv"
+	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/version"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/version"
 	authclient "github.com/cosmos/cosmos-sdk/x/auth/client"
 
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -137,7 +137,7 @@ $ %s query gov proposals --status (DepositPeriod|VotingPeriod|Passed|Rejected)
 					ProposalStatus: proposalStatus,
 					Voter:          hmTypes.NewValidatorID(voterID),
 					Depositor:      hmTypes.NewValidatorID(depositorID),
-					NumLimit:     numLimit,
+					NumLimit:       numLimit,
 				},
 			)
 			if err != nil {
@@ -316,7 +316,7 @@ func GetCmdQueryDeposit() *cobra.Command {
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Query details for a single proposal deposit on a proposal by its identifier.
 Example:
-$ %s query gov deposit 1 cosmos1skjwj5whet0lpe65qaq4rpq03hjxlwd9nf39lk
+$ %s query gov deposit 1 1
 `,
 				version.AppName,
 			),
@@ -344,14 +344,11 @@ $ %s query gov deposit 1 cosmos1skjwj5whet0lpe65qaq4rpq03hjxlwd9nf39lk
 				return fmt.Errorf("failed to fetch proposal-id %d: %s", proposalID, err)
 			}
 
-			depositorAddr, err := sdk.AccAddressFromBech32(args[1])
-			if err != nil {
-				return err
-			}
+			depositorID, _ := cmd.Flags().GetUint64(flagDepositor)
 
 			res, err := queryClient.Deposit(
 				context.Background(),
-				&types.QueryDepositRequest{ProposalId: proposalID, Depositor: args[1]},
+				&types.QueryDepositRequest{ProposalId: proposalID, Depositor: hmTypes.NewValidatorID(depositorID)},
 			)
 			if err != nil {
 				return err
@@ -359,7 +356,7 @@ $ %s query gov deposit 1 cosmos1skjwj5whet0lpe65qaq4rpq03hjxlwd9nf39lk
 
 			deposit := res.GetDeposit()
 			if deposit.Empty() {
-				resByTxQuery, err := QueryDepositByTxQuery(clientCtx, types.QueryDepositRequest{ProposalId: proposalID, Depositor: args[1]})
+				resByTxQuery, err := QueryDepositByTxQuery(clientCtx, types.QueryDepositRequest{ProposalId: proposalID, Depositor: hmTypes.NewValidatorID(depositorID)})
 				if err != nil {
 					return err
 				}
@@ -425,7 +422,7 @@ $ %s query gov deposits 1
 				// or wrap lists of proto.Message in some other message)
 				clientCtx.LegacyAmino.MustUnmarshalJSON(resByTxQuery, &dep)
 
-				return clientCtx.PrintOutput(dep)
+				return clientCtx.PrintOutput(&dep)
 			}
 
 			res, err := queryClient.Deposits(
@@ -555,7 +552,7 @@ $ %s query gov params
 				depositRes.GetDepositParams(),
 			)
 
-			return clientCtx.PrintOutput(params)
+			return clientCtx.PrintOutput(&params)
 		},
 	}
 
@@ -650,7 +647,7 @@ $ %s query gov proposer 1
 				return err
 			}
 
-			return clientCtx.PrintOutput(prop)
+			return clientCtx.PrintOutput(&prop)
 		},
 	}
 
@@ -679,6 +676,9 @@ func NewProposer(proposalID uint64, proposer string) Proposer {
 func (p Proposer) String() string {
 	return fmt.Sprintf("Proposal with ID %d was proposed by %s", p.ProposalID, p.Proposer)
 }
+
+func (*Proposer) ProtoMessage() {}
+func (m *Proposer) Reset()      { *m = Proposer{} }
 
 // QueryDepositsByTxQuery will query for deposits via a direct txs tags query. It
 // will fetch and build deposits directly from the returned txs and return a
@@ -748,7 +748,7 @@ func QueryVotesByTxQuery(clientCtx client.Context, params types.QueryProposalReq
 
 				votes = append(votes, types.Vote{
 					Voter:      voteMsg.Validator,
-					ProposalID: params.ProposalID,
+					ProposalId: params.ProposalId,
 					Option:     voteMsg.Option,
 				})
 			}
@@ -767,7 +767,7 @@ func QueryVotesByTxQuery(clientCtx client.Context, params types.QueryProposalReq
 func QueryVoteByTxQuery(clientCtx client.Context, params types.QueryVoteRequest) ([]byte, error) {
 	events := []string{
 		fmt.Sprintf("%s.%s='%s'", sdk.EventTypeMessage, sdk.AttributeKeyAction, types.TypeMsgVote),
-		fmt.Sprintf("%s.%s='%s'", types.EventTypeProposalVote, types.AttributeKeyProposalID, []byte(fmt.Sprintf("%d", params.ProposalID))),
+		fmt.Sprintf("%s.%s='%s'", types.EventTypeProposalVote, types.AttributeKeyProposalID, []byte(fmt.Sprintf("%d", params.ProposalId))),
 		fmt.Sprintf("%s.%s='%s'", sdk.EventTypeMessage, sdk.AttributeKeySender, []byte(params.Voter.String())),
 	}
 
@@ -785,7 +785,7 @@ func QueryVoteByTxQuery(clientCtx client.Context, params types.QueryVoteRequest)
 
 				vote := types.Vote{
 					Voter:      voteMsg.Voter,
-					ProposalId: params.ProposalID,
+					ProposalId: params.ProposalId,
 					Option:     voteMsg.Option,
 				}
 
@@ -799,7 +799,7 @@ func QueryVoteByTxQuery(clientCtx client.Context, params types.QueryVoteRequest)
 		}
 	}
 
-	return nil, fmt.Errorf("address '%s' did not vote on proposalID %d", params.Voter, params.ProposalID)
+	return nil, fmt.Errorf("address '%s' did not vote on proposalID %d", params.Voter, params.ProposalId)
 }
 
 // QueryDepositByTxQuery will query for a single deposit via a direct txs tags
@@ -807,8 +807,8 @@ func QueryVoteByTxQuery(clientCtx client.Context, params types.QueryVoteRequest)
 func QueryDepositByTxQuery(clientCtx client.Context, params types.QueryDepositRequest) ([]byte, error) {
 	events := []string{
 		fmt.Sprintf("%s.%s='%s'", sdk.EventTypeMessage, sdk.AttributeKeyAction, types.TypeMsgDeposit),
-		fmt.Sprintf("%s.%s='%s'", types.EventTypeProposalDeposit, types.AttributeKeyProposalID, []byte(fmt.Sprintf("%d", params.ProposalID))),
-		fmt.Sprintf("%s.%s='%s'", sdk.EventTypeMessage, sdk.AttributeKeySender, []byte(params.Depositor.String())),
+		fmt.Sprintf("%s.%s='%s'", types.EventTypeProposalDeposit, types.AttributeKeyProposalID, []byte(fmt.Sprintf("%d", params.ProposalId))),
+		fmt.Sprintf("%s.%s='%s'", sdk.EventTypeMessage, sdk.AttributeKeySender, []byte(params.Depositor)),
 	}
 
 	// NOTE: SearchTxs is used to facilitate the txs query which does not currently
@@ -826,7 +826,7 @@ func QueryDepositByTxQuery(clientCtx client.Context, params types.QueryDepositRe
 
 				deposit := types.Deposit{
 					Depositor:  depMsg.Depositor,
-					ProposalId: params.ProposalID,
+					ProposalId: params.ProposalId,
 					Amount:     depMsg.Amount,
 				}
 
@@ -840,7 +840,7 @@ func QueryDepositByTxQuery(clientCtx client.Context, params types.QueryDepositRe
 		}
 	}
 
-	return nil, fmt.Errorf("address '%s' did not deposit to proposalID %d", params.Depositor, params.ProposalID)
+	return nil, fmt.Errorf("address '%s' did not deposit to proposalID %d", params.Depositor, params.ProposalId)
 }
 
 // QueryProposerByTxQuery will query for a proposer of a governance proposal by

@@ -57,15 +57,15 @@ import (
 	hmtypes "github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/types/common"
 	hmmodule "github.com/maticnetwork/heimdall/types/module"
+	"github.com/maticnetwork/heimdall/x/gov"
+	govkeeper "github.com/maticnetwork/heimdall/x/gov/keeper"
+	govtypes "github.com/maticnetwork/heimdall/x/gov/types"
 	"github.com/maticnetwork/heimdall/x/sidechannel"
 	sidechannelkeeper "github.com/maticnetwork/heimdall/x/sidechannel/keeper"
 	sidechanneltypes "github.com/maticnetwork/heimdall/x/sidechannel/types"
 	"github.com/maticnetwork/heimdall/x/staking"
 	stakingkeeper "github.com/maticnetwork/heimdall/x/staking/keeper"
 	stakingtypes "github.com/maticnetwork/heimdall/x/staking/types"
-	"github.com/maticnetwork/heimdall/x/gov"
-	govkeeper "github.com/maticnetwork/heimdall/x/gov/keeper"
-	govtypes "github.com/maticnetwork/heimdall/x/gov/types"
 
 	// unnamed import of statik for swagger UI support
 	_ "github.com/maticnetwork/heimdall/client/docs/statik"
@@ -127,7 +127,7 @@ type HeimdallApp struct {
 	SidechannelKeeper sidechannelkeeper.Keeper
 	StakingKeeper     stakingkeeper.Keeper
 	ParamsKeeper      paramskeeper.Keeper
-	GovKeeper       govkeeper.Keeper
+	GovKeeper         govkeeper.Keeper
 
 	// side router
 	sideRouter hmtypes.SideRouter

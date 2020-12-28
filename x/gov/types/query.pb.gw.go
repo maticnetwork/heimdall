@@ -318,6 +318,7 @@ func request_Query_Deposit_0(ctx context.Context, marshaler runtime.Marshaler, c
 
 	var (
 		val string
+		e   int32
 		ok  bool
 		err error
 		_   = err
@@ -339,11 +340,13 @@ func request_Query_Deposit_0(ctx context.Context, marshaler runtime.Marshaler, c
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "depositor")
 	}
 
-	protoReq.Depositor, err = runtime.String(val)
+	e, err = runtime.Enum(val, types_0.ValidatorID_value)
 
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "depositor", err)
 	}
+
+	protoReq.Depositor = types_0.ValidatorID(e)
 
 	msg, err := client.Deposit(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -356,6 +359,7 @@ func local_request_Query_Deposit_0(ctx context.Context, marshaler runtime.Marsha
 
 	var (
 		val string
+		e   int32
 		ok  bool
 		err error
 		_   = err
@@ -377,11 +381,13 @@ func local_request_Query_Deposit_0(ctx context.Context, marshaler runtime.Marsha
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "depositor")
 	}
 
-	protoReq.Depositor, err = runtime.String(val)
+	e, err = runtime.Enum(val, types_0.ValidatorID_value)
 
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "depositor", err)
 	}
+
+	protoReq.Depositor = types_0.ValidatorID(e)
 
 	msg, err := server.Deposit(ctx, &protoReq)
 	return msg, metadata, err

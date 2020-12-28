@@ -52,10 +52,10 @@ type Params struct {
 	DepositParams DepositParams `json:"deposit_params" yaml:"deposit_parmas"`
 }
 
-// func (gp Params) String() string {
-// 	return gp.VotingParams.String() + "\n" +
-// 		gp.TallyParams.String() + "\n" + gp.DepositParams.String()
-// }
+func (gp Params) String() string {
+	return gp.VotingParams.String() + "\n" +
+		gp.TallyParams.String() + "\n" + gp.DepositParams.String()
+}
 
 func NewParams(vp VotingParams, tp TallyParams, dp DepositParams) Params {
 	return Params{
@@ -64,3 +64,6 @@ func NewParams(vp VotingParams, tp TallyParams, dp DepositParams) Params {
 		TallyParams:   tp,
 	}
 }
+
+func (v *Params) Reset()      { *v = Params{} }
+func (v Params) ProtoMessage() {}

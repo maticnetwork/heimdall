@@ -35,7 +35,7 @@ func (k msgServer) SubmitProposal(goCtx context.Context, msg *types.MsgSubmitPro
 		return nil, err
 	}
 
-	err, votingStarted := k.Keeper.AddDeposit(ctx, proposal.ProposalId, msg.GetProposer(), msg.GetInitialDeposit(), msg.GetValidator())
+	err, votingStarted := k.Keeper.AddDeposit(ctx, proposal.ProposalId, msg.GetProposer(), msg.GetInitialDeposit(), msg.Validator)
 	if err != nil {
 		return nil, err
 	}
