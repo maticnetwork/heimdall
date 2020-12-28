@@ -9,6 +9,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
+	abci "github.com/tendermint/tendermint/abci/types"
+	tmprototypes "github.com/tendermint/tendermint/proto/tendermint/types"
+	tmTypes "github.com/tendermint/tendermint/types"
+
 	"github.com/maticnetwork/heimdall/common"
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
@@ -16,9 +20,6 @@ import (
 	hmCommonTypes "github.com/maticnetwork/heimdall/types/common"
 	"github.com/maticnetwork/heimdall/x/staking/keeper"
 	"github.com/maticnetwork/heimdall/x/staking/types"
-	abci "github.com/tendermint/tendermint/abci/types"
-	tmprototypes "github.com/tendermint/tendermint/proto/tendermint/types"
-	tmTypes "github.com/tendermint/tendermint/types"
 )
 
 // NewSideTxHandler returns a side handler for "staking" type messages.
@@ -144,7 +145,7 @@ func SideHandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k k
 		return hmCommon.ErrorSideTx(hmCommon.CodeInvalidMsg)
 	}
 
-	k.Logger(ctx).Debug("✅ Succesfully validated External call for validator join msg")
+	k.Logger(ctx).Debug("✅ Successfully validated External call for validator join msg")
 	result.Result = tmprototypes.SideTxResultType_YES
 	return
 }
@@ -195,7 +196,7 @@ func SideHandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k keepe
 		return hmCommon.ErrorSideTx(hmCommon.CodeInvalidMsg)
 	}
 
-	k.Logger(ctx).Debug("✅ Succesfully validated External call for stake update msg")
+	k.Logger(ctx).Debug("✅ Successfully validated External call for stake update msg")
 	result.Result = tmprototypes.SideTxResultType_YES
 	return
 }
@@ -254,7 +255,7 @@ func SideHandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k kee
 		return hmCommon.ErrorSideTx(hmCommon.CodeInvalidMsg)
 	}
 
-	k.Logger(ctx).Debug("✅ Succesfully validated External call for signer update msg")
+	k.Logger(ctx).Debug("✅ Successfully validated External call for signer update msg")
 	result.Result = tmprototypes.SideTxResultType_YES
 	return
 }
@@ -305,7 +306,7 @@ func SideHandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k k
 		return hmCommon.ErrorSideTx(hmCommon.CodeInvalidMsg)
 	}
 
-	k.Logger(ctx).Debug("✅ Succesfully validated External call for validator exit msg")
+	k.Logger(ctx).Debug("✅ Successfully validated External call for validator exit msg")
 	result.Result = tmprototypes.SideTxResultType_YES
 	return
 }
@@ -504,7 +505,7 @@ func PostHandleMsgSignerUpdate(ctx sdk.Context, k keeper.Keeper, msg types.MsgSi
 	}
 	oldValidator := validator.Copy()
 
-	// update last udpated
+	// update last updated
 	validator.LastUpdated = sequence.String()
 
 	// update nonce
