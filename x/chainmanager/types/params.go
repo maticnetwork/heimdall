@@ -66,9 +66,9 @@ func NewParams(
 // nolint
 func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
-		paramtypes.NewParamSetPair(KeyMainchainTxConfirmations, &p.MainchainTxConfirmations, validateMainchainTxConfirmations),
-		paramtypes.NewParamSetPair(KeyMaticchainTxConfirmations, &p.MaticchainTxConfirmations, validateMaticchainTxConfirmations),
-		paramtypes.NewParamSetPair(KeyChainParams, &p.ChainParams, validateChainParams),
+		// paramtypes.NewParamSetPair(KeyMainchainTxConfirmations, &p.MainchainTxConfirmations, validateMainchainTxConfirmations),
+		// paramtypes.NewParamSetPair(KeyMaticchainTxConfirmations, &p.MaticchainTxConfirmations, validateMaticchainTxConfirmations),
+		// paramtypes.NewParamSetPair(KeyChainParams, &p.ChainParams, validateChainParams),
 	}
 }
 
