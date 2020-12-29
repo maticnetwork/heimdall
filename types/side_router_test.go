@@ -26,11 +26,6 @@ func TestSideRouter(t *testing.T) {
 		PostTxHandler: testPostTxHandler,
 	}
 
-	// require panic on invalid route
-	require.Panics(t, func() {
-		rtr.AddRoute("*", handler)
-	})
-
 	rtr.AddRoute("testRoute", handler)
 	h := rtr.GetRoute("testRoute")
 	require.NotNil(t, h)
