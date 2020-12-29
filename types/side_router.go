@@ -2,10 +2,12 @@ package types
 
 import (
 	"fmt"
+	"regexp"
 )
 
 var (
 	_ SideRouter = (*router)(nil)
+	isAlphaNumeric = regexp.MustCompile(`^[a-zA-Z0-9]+$`).MatchString
 )
 
 // SideHandlers handler for side-tx processing
@@ -48,6 +50,10 @@ func (rtr *router) Seal() {
 func (rtr *router) AddRoute(path string, h *SideHandlers) SideRouter {
 	if rtr.sealed {
 		panic("router sealed; cannot add route handler")
+	}
+
+	if !isAlphaNumeric(path) {
+		panic("route expressions can only contain alphanumeric characters")
 	}
 
 	if rtr.HasRoute(path) {
