@@ -74,7 +74,7 @@ func (k msgServer) MsgEventRecord(goCtx context.Context, msg *types.MsgEventReco
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			sdk.NewAttribute(types.AttributeKeyRecordID, strconv.FormatUint(msg.Id, 10)),
 			sdk.NewAttribute(types.AttributeKeyRecordContract, msg.ContractAddress.String()),
-			sdk.NewAttribute(types.AttributeKeyRecordTxHash, msg.TxHash.String()),
+			sdk.NewAttribute(types.AttributeKeyRecordTxHash, string(msg.TxHash)),
 			sdk.NewAttribute(types.AttributeKeyRecordTxLogIndex, strconv.FormatUint(msg.LogIndex, 10)),
 		),
 	})
