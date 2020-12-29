@@ -24,6 +24,6 @@ message EventRecord {
         (gogoproto.moretags) = "yaml:\"record_time\""
     ];
     uint64 log_index = 5;
-    string tx_hash   = 6;
+    bytes  tx_hash   = 6;
     string chain_id  = 7;
 }
