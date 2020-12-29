@@ -29,7 +29,7 @@ type (
 	Keeper struct {
 		cdc      codec.LegacyAmino
 		storeKey sdk.StoreKey
-		memKey   sdk.StoreKey
+		// memKey   sdk.StoreKey
 	}
 )
 
