@@ -6,8 +6,8 @@ import "gogoproto/gogo.proto";
 
 option go_package = "github.com/maticnetwork/heimdall/x/clerk/types";
 
-option (gogoproto.marshaler_all)   = false;
-option (gogoproto.unmarshaler_all) = false;
+option (gogoproto.marshaler_all)   = true;
+option (gogoproto.unmarshaler_all) = true;
 
 // GenesisState defines the clerk module's genesis state.
 message GenesisState {
