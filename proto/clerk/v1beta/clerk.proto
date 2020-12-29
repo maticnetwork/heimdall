@@ -6,8 +6,9 @@ import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/maticnetwork/heimdall/x/clerk/types";
 
-option (gogoproto.marshaler_all)   = false;
-option (gogoproto.unmarshaler_all) = false;
+option (gogoproto.marshaler_all)   = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.sizer_all)       = true;
 
 message EventRecord {
     option (gogoproto.goproto_getters) = false;
@@ -23,8 +24,6 @@ message EventRecord {
         (gogoproto.moretags) = "yaml:\"record_time\""
     ];
     uint64 log_index = 5;
-    string tx_hash   = 6
-        [(gogoproto.casttype) =
-             "github.com/maticnetwork/heimdall/types/common.HeimdallHash"];
-    string chain_id = 7;
+    bytes  tx_hash   = 6;
+    string chain_id  = 7;
 }

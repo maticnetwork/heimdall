@@ -7,7 +7,7 @@ const DefaultIndex uint64 = 1
 
 // DefaultGenesis returns the default Capability genesis state
 func DefaultGenesis() *GenesisState {
-	return &GenesisState{}
+	return NewGenesisState(make([]*EventRecord, 0), nil)
 }
 
 // Validate performs basic genesis state validation returning an error upon any
@@ -22,6 +22,6 @@ func (gs GenesisState) Validate() error {
 }
 
 // NewGenesisState creates a new genesis state.
-func NewGenesisState(eventRecords []*EventRecord, recordSequences []string) GenesisState {
-	return GenesisState{EventRecords: eventRecords, RecordSequences: recordSequences}
+func NewGenesisState(eventRecords []*EventRecord, recordSequences []string) *GenesisState {
+	return &GenesisState{EventRecords: eventRecords, RecordSequences: recordSequences}
 }
