@@ -13,6 +13,7 @@ var _ sdk.Msg = &MsgEventRecordRequest{}
 
 // NewMsgEventRecord - construct state msg
 func NewMsgEventRecord(
+	from sdk.AccAddress,
 	txHash []byte,
 	logIndex uint64,
 	blockNumber uint64,
@@ -23,6 +24,7 @@ func NewMsgEventRecord(
 
 ) MsgEventRecordRequest {
 	return MsgEventRecordRequest{
+		From:            from,
 		TxHash:          txHash,
 		LogIndex:        logIndex,
 		BlockNumber:     blockNumber,
