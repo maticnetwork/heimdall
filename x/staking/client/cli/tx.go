@@ -63,7 +63,7 @@ func ValidatorJoinTxCmd() *cobra.Command {
 			proposerAddrStr, _ := cmd.Flags().GetString(FlagProposerAddress)
 			proposer, err := sdk.AccAddressFromHex(proposerAddrStr)
 			if err != nil {
-				return fmt.Errorf("invalid proposer address: %s", err)
+				return fmt.Errorf("invalid proposer address: %v", err)
 			}
 			if proposer.Empty() {
 				proposer = helper.GetFromAddress(clientCtx)
