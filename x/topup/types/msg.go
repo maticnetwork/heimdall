@@ -3,7 +3,6 @@ package types
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/maticnetwork/heimdall/types"
 	hmCommon "github.com/maticnetwork/heimdall/types/common"
 )
 
@@ -18,7 +17,7 @@ func NewMsgTopup(
 	fromAddr sdk.AccAddress,
 	user sdk.AccAddress,
 	fee sdk.Int,
-	txhash types.HeimdallHash,
+	txhash hmCommon.HeimdallHash,
 	logIndex uint64,
 	blockNumber uint64,
 ) MsgTopup {
@@ -43,30 +42,30 @@ func (msg MsgTopup) Type() string {
 }
 
 // ValidateBasic Implements Msg.
-func (msg MsgTopup) ValidateBasic() sdk.Error {
-	if msg.FromAddress.Empty() {
-		return sdk.ErrInvalidAddress("missing sender address")
-	}
+func (msg MsgTopup) ValidateBasic() error {
+	// if msg.FromAddress.Empty() {
+	// 	return sdk.ErrInvalidAddress
+	// }
 
-	if msg.FromAddress.Empty() {
-		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.FromAddress.String())
-	}
+	// if msg.FromAddress.Empty() {
+	// 	return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.FromAddress.String())
+	// }
 
 	return nil
 }
 
 // GetSignBytes Implements Msg.
 func (msg MsgTopup) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
 }
 
 // GetSigners Implements Msg.
 func (msg MsgTopup) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.FromAddress)}
+	return []sdk.AccAddress{sdk.AccAddress(msg.FromAddress)}
 }
 
 // GetTxHash Returns tx hash
-func (msg MsgTopup) GetTxHash() types.HeimdallHash {
+func (msg MsgTopup) GetTxHash() hmCommon.HeimdallHash {
 	return msg.TxHash
 }
 
@@ -83,7 +82,7 @@ func (msg MsgTopup) GetSideSignBytes() []byte {
 // Fee token withdrawal
 //
 
-var _ sdk.Msg = MsgWithdrawFee{}
+var _ sdk.Msg = &MsgWithdrawFee{}
 
 // NewMsgWithdrawFee - construct arbitrary fee withdraw msg
 func NewMsgWithdrawFee(
@@ -107,24 +106,24 @@ func (msg MsgWithdrawFee) Type() string {
 }
 
 // ValidateBasic Implements Msg.
-func (msg MsgWithdrawFee) ValidateBasic() sdk.Error {
-	if msg.UserAddress.Empty() {
-		return sdk.ErrInvalidAddress("missing sender address")
-	}
+func (msg MsgWithdrawFee) ValidateBasic() error {
+	// if msg.UserAddress.Empty() {
+	// 	// return sdk.ErrInvalidAddress
+	// }
 
-	if msg.UserAddress.Empty() {
-		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.UserAddress.String())
-	}
+	// if msg.UserAddress.Empty() {
+	// 	return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.UserAddress.String())
+	// }
 
 	return nil
 }
 
 // GetSignBytes Implements Msg.
 func (msg MsgWithdrawFee) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
 }
 
 // GetSigners Implements Msg.
 func (msg MsgWithdrawFee) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.UserAddress)}
+	return []sdk.AccAddress{sdk.AccAddress(msg.UserAddress)}
 }

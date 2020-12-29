@@ -24,10 +24,12 @@ service Query {
 // this line is used by starport scaffolding # 3
 
 message QuerySequenceRequest {
+    option (gogoproto.goproto_getters) = false;
     string tx_hash = 1;
     uint64 log_index = 2;
 }
 
 message QuerySequenceResponse {
+    option (gogoproto.goproto_getters) = false;
     uint64 sequence = 1;
 }

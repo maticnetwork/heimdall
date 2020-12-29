@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -25,7 +24,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		GetSequenceCmd()
+		GetSequenceCmd(),
 	)
 	// this line is used by starport scaffolding # 1
 
@@ -43,7 +42,7 @@ func GetSequenceCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			
+
 			logIndex := viper.GetUint64(FlagLogIndex)
 			txHashStr := viper.GetString(FlagTxHash)
 			if txHashStr == "" {
@@ -52,7 +51,7 @@ func GetSequenceCmd() *cobra.Command {
 
 			queryClient := types.NewQueryClient(cliCtx)
 
-			params := &types.QuerySequenceRequest{TxHashStr: txHashStr, LogIndex: logIndex}
+			params := &types.QuerySequenceRequest{TxHash: txHashStr, LogIndex: logIndex}
 
 			res, err := queryClient.Sequence(context.Background(), params)
 			if err != nil {
