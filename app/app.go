@@ -45,6 +45,7 @@ import (
 	"github.com/maticnetwork/heimdall/x/chainmanager"
 	chainKeeper "github.com/maticnetwork/heimdall/x/chainmanager/keeper"
 	chainmanagerTypes "github.com/maticnetwork/heimdall/x/chainmanager/types"
+
 	// "github.com/maticnetwork/heimdall/x/clerk"
 	// clerkkeeper "github.com/maticnetwork/heimdall/x/clerk/keeper"
 	// clerktypes "github.com/maticnetwork/heimdall/x/clerk/types"
@@ -126,9 +127,9 @@ type HeimdallApp struct {
 	tkeys map[string]*sdk.TransientStoreKey
 
 	// keepers
-	AccountKeeper     authkeeper.AccountKeeper
-	BankKeeper        bankkeeper.Keeper
-	ChainKeeper       chainKeeper.Keeper
+	AccountKeeper authkeeper.AccountKeeper
+	BankKeeper    bankkeeper.Keeper
+	ChainKeeper   chainKeeper.Keeper
 	// ClerkKeeper       clerkkeeper.Keeper
 	SidechannelKeeper sidechannelkeeper.Keeper
 	StakingKeeper     stakingkeeper.Keeper
@@ -259,7 +260,7 @@ func NewHeimdallApp(
 	app.CheckpointKeeper = checkpointkeeper.NewKeeper(
 		appCodec,
 		keys[checkpointtypes.StoreKey], // target store
-		app.GetSubspace(checkpointtyeps.ModuleName),
+		app.GetSubspace(checkpointtypes.ModuleName),
 		app.StakingKeeper,
 		app.ChainKeeper,
 		nil,

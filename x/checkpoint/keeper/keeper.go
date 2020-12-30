@@ -37,7 +37,6 @@ type (
 	Keeper struct {
 		cdc                codec.BinaryMarshaler
 		storeKey           sdk.StoreKey
-		memKey             sdk.StoreKey
 		paramSubspace      paramtypes.Subspace
 		moduleCommunicator ModuleCommunicator
 		sk                 stakingKeeper.Keeper
@@ -47,20 +46,19 @@ type (
 
 func NewKeeper(
 	cdc codec.BinaryMarshaler,
-	storeKey, memKey sdk.StoreKey,
+	storeKey sdk.StoreKey,
 	paramstore paramtypes.Subspace,
 	stakingKeeper stakingKeeper.Keeper,
 	chainKeeper chainKeeper.Keeper,
 	moduleCommunicator ModuleCommunicator,
-) *Keeper {
+) Keeper {
 	// set KeyTable if it has not already been set
 	if !paramstore.HasKeyTable() {
 		paramstore = paramstore.WithKeyTable(types.ParamKeyTable())
 	}
-	return &Keeper{
+	return Keeper{
 		cdc:                cdc,
 		storeKey:           storeKey,
-		memKey:             memKey,
 		sk:                 stakingKeeper,
 		ck:                 chainKeeper,
 		paramSubspace:      paramstore,
