@@ -49,7 +49,12 @@ func NewPostTxHandler(k keeper.Keeper, contractCaller helper.IContractCaller) hm
 	}
 }
 
-func SideHandleMsgEventRecord(ctx sdk.Context, k keeper.Keeper, msg types.MsgEventRecordRequest, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
+func SideHandleMsgEventRecord(
+	ctx sdk.Context,
+	k keeper.Keeper,
+	msg types.MsgEventRecordRequest,
+	contractCaller helper.IContractCaller,
+) (result abci.ResponseDeliverSideTx) {
 
 	k.Logger(ctx).Debug("✅ Validating External call for clerk msg",
 		"txHash", hmCommonTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
@@ -75,7 +80,12 @@ func SideHandleMsgEventRecord(ctx sdk.Context, k keeper.Keeper, msg types.MsgEve
 	}
 
 	if receipt.BlockNumber.Uint64() != msg.BlockNumber {
-		k.Logger(ctx).Error("BlockNumber in message doesn't match blocknumber in receipt", "MsgBlockNumber", msg.BlockNumber, "ReceiptBlockNumber", receipt.BlockNumber.Uint64())
+		k.Logger(ctx).Error(
+			"BlockNumber in message doesn't match blocknumber in receipt", "MsgBlockNumber",
+			msg.BlockNumber,
+			"ReceiptBlockNumber",
+			receipt.BlockNumber.Uint64(),
+		)
 		return hmCommon.ErrorSideTx(hmCommon.CodeInvalidMsg)
 	}
 
@@ -107,7 +117,12 @@ func SideHandleMsgEventRecord(ctx sdk.Context, k keeper.Keeper, msg types.MsgEve
 	return
 }
 
-func PostHandleMsgEventRecord(ctx sdk.Context, k keeper.Keeper, msg types.MsgEventRecordRequest, sideTxResult tmprototypes.SideTxResultType) (*sdk.Result, error) {
+func PostHandleMsgEventRecord(
+	ctx sdk.Context,
+	k keeper.Keeper,
+	msg types.MsgEventRecordRequest,
+	sideTxResult tmprototypes.SideTxResultType,
+) (*sdk.Result, error) {
 
 	// Skip handler if clerk is not approved
 	if sideTxResult != tmprototypes.SideTxResultType_YES {
