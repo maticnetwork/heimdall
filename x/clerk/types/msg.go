@@ -48,7 +48,7 @@ func (msg MsgEventRecordRequest) ValidateBasic() error {
 		return sdkerrors.ErrUnknownRequest
 	}
 
-	if len(msg.TxHash) == 0 {
+	if msg.TxHash.Empty() {
 		return sdkerrors.ErrInvalidAddress
 	}
 	return nil
