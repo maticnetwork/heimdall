@@ -52,7 +52,7 @@ func NewPostTxHandler(k keeper.Keeper, contractCaller helper.IContractCaller) hm
 func SideHandleMsgEventRecord(ctx sdk.Context, k keeper.Keeper, msg types.MsgEventRecordRequest, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
 
 	k.Logger(ctx).Debug("✅ Validating External call for clerk msg",
-		"txHash", hmCommonTypes.BytesToHeimdallHash(msg.TxHash),
+		"txHash", hmCommonTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
 		"logIndex", uint64(msg.LogIndex),
 		"blockNumber", msg.BlockNumber,
 	)
@@ -62,7 +62,7 @@ func SideHandleMsgEventRecord(ctx sdk.Context, k keeper.Keeper, msg types.MsgEve
 	chainParams := params.ChainParams
 
 	// get confirmed tx receipt
-	receipt, err := contractCaller.GetConfirmedTxReceipt(hmCommonTypes.BytesToHeimdallHash(msg.TxHash).EthHash(), params.MainchainTxConfirmations)
+	receipt, err := contractCaller.GetConfirmedTxReceipt(msg.TxHash.EthHash(), params.MainchainTxConfirmations)
 	if receipt == nil || err != nil {
 		return hmCommon.ErrorSideTx(hmCommon.CodeWaitFrConfirmation)
 	}

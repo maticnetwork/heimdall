@@ -5,6 +5,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	hmCommon "github.com/maticnetwork/heimdall/types/common"
 )
 
 var cdc = codec.NewLegacyAmino()
@@ -14,7 +15,7 @@ var _ sdk.Msg = &MsgEventRecordRequest{}
 // NewMsgEventRecord - construct state msg
 func NewMsgEventRecord(
 	from sdk.AccAddress,
-	txHash []byte,
+	txHash hmCommon.HeimdallHash,
 	logIndex uint64,
 	blockNumber uint64,
 	id uint64,
@@ -68,7 +69,7 @@ func (msg MsgEventRecordRequest) GetSigners() []sdk.AccAddress {
 }
 
 // GetTxHash Returns tx hash
-func (msg MsgEventRecordRequest) GetTxHash() []byte {
+func (msg MsgEventRecordRequest) GetTxHash() hmCommon.HeimdallHash {
 	return msg.TxHash
 }
 
