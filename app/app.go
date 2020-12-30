@@ -45,9 +45,9 @@ import (
 	"github.com/maticnetwork/heimdall/x/chainmanager"
 	chainKeeper "github.com/maticnetwork/heimdall/x/chainmanager/keeper"
 	chainmanagerTypes "github.com/maticnetwork/heimdall/x/chainmanager/types"
-	"github.com/maticnetwork/heimdall/x/clerk"
-	clerkkeeper "github.com/maticnetwork/heimdall/x/clerk/keeper"
-	clerktypes "github.com/maticnetwork/heimdall/x/clerk/types"
+	// "github.com/maticnetwork/heimdall/x/clerk"
+	// clerkkeeper "github.com/maticnetwork/heimdall/x/clerk/keeper"
+	// clerktypes "github.com/maticnetwork/heimdall/x/clerk/types"
 
 	// unnamed import of statik for swagger UI support
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
@@ -66,6 +66,10 @@ import (
 	"github.com/maticnetwork/heimdall/x/staking"
 	stakingkeeper "github.com/maticnetwork/heimdall/x/staking/keeper"
 	stakingtypes "github.com/maticnetwork/heimdall/x/staking/types"
+
+	"github.com/maticnetwork/heimdall/x/checkpoint"
+	checkpointkeeper "github.com/maticnetwork/heimdall/x/checkpoint/keeper"
+	checkpointtypes "github.com/maticnetwork/heimdall/x/checkpoint/types"
 
 	// unnamed import of statik for swagger UI support
 	_ "github.com/maticnetwork/heimdall/client/docs/statik"
@@ -88,7 +92,8 @@ var (
 		sidechannel.AppModuleBasic{},
 		staking.AppModuleBasic{},
 		params.AppModuleBasic{},
-		clerk.AppModuleBasic{},
+		// clerk.AppModuleBasic{},
+		checkpoint.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -124,10 +129,11 @@ type HeimdallApp struct {
 	AccountKeeper     authkeeper.AccountKeeper
 	BankKeeper        bankkeeper.Keeper
 	ChainKeeper       chainKeeper.Keeper
-	ClerkKeeper       clerkkeeper.Keeper
+	// ClerkKeeper       clerkkeeper.Keeper
 	SidechannelKeeper sidechannelkeeper.Keeper
 	StakingKeeper     stakingkeeper.Keeper
 	ParamsKeeper      paramskeeper.Keeper
+	CheckpointKeeper  checkpointkeeper.Keeper
 
 	// side router
 	sideRouter hmtypes.SideRouter
@@ -182,9 +188,10 @@ func NewHeimdallApp(
 		authtypes.StoreKey,
 		banktypes.StoreKey,
 		chainmanagerTypes.StoreKey,
-		clerktypes.StoreKey,
+		// clerktypes.StoreKey,
 		sidechanneltypes.StoreKey,
 		stakingtypes.StoreKey,
+		checkpointtypes.StoreKey,
 		// distrtypes.StoreKey,
 		// slashingtypes.StoreKey,
 		// govtypes.StoreKey,
@@ -249,6 +256,14 @@ func NewHeimdallApp(
 		app.BankKeeper,
 		nil,
 	)
+	app.CheckpointKeeper = checkpointkeeper.NewKeeper(
+		appCodec,
+		keys[checkpointtypes.StoreKey], // target store
+		app.GetSubspace(checkpointtyeps.ModuleName),
+		app.StakingKeeper,
+		app.ChainKeeper,
+		nil,
+	)
 
 	// Contract caller
 	contractCallerObj, err := helper.NewContractCaller()
@@ -278,6 +293,7 @@ func NewHeimdallApp(
 		chainmanager.NewAppModule(appCodec, app.ChainKeeper),
 		staking.NewAppModule(appCodec, app.StakingKeeper, &app.caller),
 		params.NewAppModule(app.ParamsKeeper),
+		checkpoint.NewAppModule(appCodec, app.CheckpointKeeper),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -300,7 +316,8 @@ func NewHeimdallApp(
 		sidechanneltypes.ModuleName,
 		chainmanagerTypes.ModuleName,
 		stakingtypes.ModuleName,
-		clerktypes.ModuleName,
+		checkpointtypes.ModuleName,
+		// clerktypes.ModuleName,
 		genutiltypes.ModuleName,
 	)
 

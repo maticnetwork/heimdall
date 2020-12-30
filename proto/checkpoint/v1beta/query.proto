@@ -1,15 +1,12 @@
 syntax = "proto3";
+package heimdall.checkpoint.v1beta1;
 
 import "gogoproto/gogo.proto";
-import "google/protobuf/any.proto";
-
 option go_package = "github.com/maticnetwork/heimdall/x/checkpoint/types";
 
-/*
-import "cosmos/base/query/v1beta1/pagination.proto";
-// this line is used by starport scaffolding # 1
-
-option go_package = "x/checkpoint/types";
+option (gogoproto.sizer_all)       = true;
+option (gogoproto.marshaler_all)   = true;
+option (gogoproto.unmarshaler_all) = true;
 
 // Query defines the gRPC querier service.
 service Query {
@@ -29,4 +26,4 @@ message QueryBorChainID {
 
   string bor_chainID = 1;
 }
-*/
+
