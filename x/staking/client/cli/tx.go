@@ -85,7 +85,7 @@ func ValidatorJoinTxCmd() *cobra.Command {
 
 			ecdsaPubkey, err := ethcrypto.DecompressPubkey(compressedPubkeyBytes)
 			if err != nil {
-				panic(err)
+				return err
 			}
 			pubkeyBytes := ethcrypto.FromECDSAPub(ecdsaPubkey)
 
