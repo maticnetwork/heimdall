@@ -199,7 +199,7 @@ func SignerUpdateTxCmd() *cobra.Command {
 			proposerAddrStr, _ := cmd.Flags().GetString(FlagProposerAddress)
 			proposer, err := sdk.AccAddressFromHex(proposerAddrStr)
 			if err != nil {
-				panic(err)
+				return err
 			}
 			if proposer.Empty() {
 				proposer = helper.GetFromAddress(clientCtx)
