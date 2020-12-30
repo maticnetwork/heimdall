@@ -58,7 +58,7 @@ func GetSequenceCmd() *cobra.Command {
 				return err
 			}
 
-			return cliCtx.PrintOutput(res.Sequence)
+			return cliCtx.PrintOutput(string(res.Sequence))
 			// fmt.Println("Success. Topup exists with sequence:", string(res))
 		},
 	}

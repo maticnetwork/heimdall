@@ -6,12 +6,11 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/tendermint/tendermint/libs/log"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankKeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 	chainKeeper "github.com/maticnetwork/heimdall/x/chainmanager/keeper"
 	stakingKeeper "github.com/maticnetwork/heimdall/x/staking/keeper"
 	"github.com/maticnetwork/heimdall/x/topup/types"
@@ -54,8 +53,8 @@ func NewKeeper(
 	bankKeeper bankKeeper.Keeper,
 	stakingKeeper stakingKeeper.Keeper,
 ) Keeper {
-	if !paramstore.HasKeyTable() {
-		paramstore = paramstore.WithKeyTable(types.ParamKeyTable())
+	if !paramSpace.HasKeyTable() {
+		paramSpace = paramSpace.WithKeyTable(types.ParamKeyTable())
 	}
 	return Keeper{
 		cdc:         cdc,
@@ -74,6 +73,10 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 //
 // Topup methods
 //
+
+func (keeper *Keeper) GetTopupSequenceFromTxHashLogIndex(ctx sdk.Context, txHash string, logIndex uint64) (sequence hmTypes.Sequence, ok bool) {
+
+}
 
 // GetTopupSequenceKey drafts topup sequence for address
 func GetTopupSequenceKey(sequence string) []byte {
@@ -140,7 +143,7 @@ func (k *Keeper) AddDividendAccount(ctx sdk.Context, dividendAccount hmTypes.Div
 }
 
 // GetDividendAccountByAddress will return DividendAccount of user
-func (k *Keeper) GetDividendAccountByAddress(ctx sdk.Context, address hmTypes.HeimdallAddress) (dividendAccount hmTypes.DividendAccount, err error) {
+func (k *Keeper) GetDividendAccountByAddress(ctx sdk.Context, address sdk.AccAddress) (dividendAccount hmTypes.DividendAccount, err error) {
 
 	// check if dividend account exists
 	if !k.CheckIfDividendAccountExists(ctx, address) {
@@ -161,7 +164,7 @@ func (k *Keeper) GetDividendAccountByAddress(ctx sdk.Context, address hmTypes.He
 }
 
 // CheckIfDividendAccountExists will return true if dividend account exists
-func (k *Keeper) CheckIfDividendAccountExists(ctx sdk.Context, userAddr hmTypes.HeimdallAddress) (ok bool) {
+func (k *Keeper) CheckIfDividendAccountExists(ctx sdk.Context, userAddr sdk.AccAddress) (ok bool) {
 	store := ctx.KVStore(k.key)
 	key := GetDividendAccountMapKey(userAddr.Bytes())
 	return store.Has(key)
@@ -180,7 +183,7 @@ func (k *Keeper) GetAllDividendAccounts(ctx sdk.Context) (dividendAccounts []hmT
 }
 
 // AddFeeToDividendAccount adds fee to dividend account for withdrawal
-func (k *Keeper) AddFeeToDividendAccount(ctx sdk.Context, userAddress hmTypes.HeimdallAddress, fee *big.Int) sdk.Error {
+func (k *Keeper) AddFeeToDividendAccount(ctx sdk.Context, userAddress sdk.AccAddress, fee *big.Int) sdk.Error {
 	// Get or create dividend account
 	var dividendAccount hmTypes.DividendAccount
 
