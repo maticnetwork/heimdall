@@ -8,5 +8,11 @@ import (
 
 // x/checkpoint module sentinel errors
 var (
-	ErrSample = sdkerrors.Register(ModuleName, 1100, "sample error")
+	ErrSample                   = sdkerrors.Register(ModuleName, 1100, "sample error")
+	ErrNoACK                    = sdkerrors.Register(ModuleName, 1503, "Checkpoint Already Exists In Buffer, ACK expected")
+	ErrOldCheckpoint            = sdkerrors.Register(ModuleName, 1509, "Checkpoint already received for given start and end block")
+	ErrDisCountinuousCheckpoint = sdkerrors.Register(ModuleName, 1510, "Checkpoint not in countinuity")
+	ErrNoCheckpointFound        = sdkerrors.Register(ModuleName, 1508, "Checkpoint Not Found")
+	ErrBadBlockDetails          = sdkerrors.Register(ModuleName, 1501, "Wrong roothash for given start and end block numbers")
+	ErrInvalidMsg               = sdkerrors.Register(ModuleName, 1400, "Invalid Message")
 )

@@ -294,7 +294,7 @@ func NewHeimdallApp(
 		chainmanager.NewAppModule(appCodec, app.ChainKeeper),
 		staking.NewAppModule(appCodec, app.StakingKeeper, &app.caller),
 		params.NewAppModule(app.ParamsKeeper),
-		checkpoint.NewAppModule(appCodec, app.CheckpointKeeper),
+		checkpoint.NewAppModule(appCodec, app.CheckpointKeeper, &app.caller),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
