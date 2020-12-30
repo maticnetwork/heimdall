@@ -14,7 +14,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/bor/common"
 
-	// "github.com/maticnetwork/heimdall/bridge/setu/util"
+	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
 	hmCommonTypes "github.com/maticnetwork/heimdall/types/common"
 	"github.com/maticnetwork/heimdall/x/checkpoint/types"
@@ -207,7 +207,7 @@ func CheckpointACKTxCmd() *cobra.Command {
 				return err
 			}
 
-			// chainmanagerParams, err := util.GetChainmanagerParams(cliCtx)
+			chainmanagerParams, err := util.GetChainmanagerParams(cliCtx)
 			if err != nil {
 				return err
 			}
