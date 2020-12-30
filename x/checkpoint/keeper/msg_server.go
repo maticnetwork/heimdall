@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/hex"
 	"strconv"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -142,11 +143,104 @@ func (k msgServer) Checkpoint(goCtx context.Context, msg *types.MsgCheckpoint) (
 }
 
 func (k msgServer) CheckpointAck(goCtx context.Context, msg *types.MsgCheckpointAck) (*types.MsgCheckpointAckResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	logger := k.Logger(ctx)
 
+	// Get last checkpoint from buffer
+	headerBlock, err := k.GetCheckpointFromBuffer(ctx)
+	if err != nil {
+		logger.Error("Unable to get checkpoint", "error", err)
+		return nil, types.ErrBadAck
+	}
+
+	if msg.StartBlock != headerBlock.StartBlock {
+		logger.Error("Invalid start block", "startExpected", headerBlock.StartBlock, "startReceived", msg.StartBlock)
+		return nil, types.ErrBadAck
+	}
+
+	// Return err if start and end matches but contract root hash doesn't match
+	if msg.StartBlock == headerBlock.StartBlock && msg.EndBlock == headerBlock.EndBlock && !bytes.Equal(msg.RootHash, headerBlock.RootHash) {
+		logger.Error("Invalid ACK",
+			"startExpected", headerBlock.StartBlock,
+			"startReceived", msg.StartBlock,
+			"endExpected", headerBlock.EndBlock,
+			"endReceived", msg.StartBlock,
+			"rootExpected", hex.EncodeToString(headerBlock.RootHash),
+			"rootRecieved", hex.EncodeToString(msg.RootHash),
+		)
+		return nil, types.ErrBadAck
+	}
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeCheckpointAck,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(types.AttributeKeyHeaderIndex, strconv.FormatUint(msg.Number, 10)),
+		),
+	})
 	return &types.MsgCheckpointAckResponse{}, nil
 }
 
 func (k msgServer) CheckpointNoAck(goCtx context.Context, msg *types.MsgCheckpointNoAck) (*types.MsgCheckpointNoAckResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	logger := k.Logger(ctx)
+
+	// Get current block time
+	currentTime := ctx.BlockTime()
+
+	// Get buffer time from params
+	bufferTime := k.GetParams(ctx).CheckpointBufferTime
+
+	// Fetch last checkpoint from store
+	// TODO figure out how to handle this error
+	lastCheckpoint, _ := k.GetLastCheckpoint(ctx)
+	lastCheckpointTime := time.Unix(int64(lastCheckpoint.TimeStamp), 0)
+
+	// If last checkpoint is not present or last checkpoint happens before checkpoint buffer time -- thrown an error
+	if lastCheckpointTime.After(currentTime) || (currentTime.Sub(lastCheckpointTime) < bufferTime) {
+		logger.Debug("Invalid No ACK -- Waiting for last checkpoint ACK")
+		return nil, types.ErrInvalidNoACK
+	}
+
+	// Check last no ack - prevents repetitive no-ack
+	lastNoAck := k.GetLastNoAck(ctx)
+	lastNoAckTime := time.Unix(int64(lastNoAck), 0)
+
+	if lastNoAckTime.After(currentTime) || (currentTime.Sub(lastNoAckTime) < bufferTime) {
+		logger.Debug("Too many no-ack")
+		return nil, types.ErrTooManyNoACK
+	}
+
+	// Set new last no-ack
+	newLastNoAck := uint64(currentTime.Unix())
+	k.SetLastNoAck(ctx, newLastNoAck)
+	logger.Debug("Last No-ACK time set", "lastNoAck", newLastNoAck)
+
+	//
+	// Update to new proposer
+	//
+
+	// Increment accum (selects new proposer)
+	k.sk.IncrementAccum(ctx, 1)
+
+	// Get new proposer
+	vs := k.sk.GetValidatorSet(ctx)
+	newProposer := vs.GetProposer()
+	logger.Debug(
+		"New proposer selected",
+		"validator", newProposer.Signer,
+		"signer", newProposer.Signer,
+		"power", newProposer.VotingPower,
+	)
+
+	// add events
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeCheckpointNoAck,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(types.AttributeKeyNewProposer, newProposer.Signer),
+		),
+	})
 
 	return &types.MsgCheckpointNoAckResponse{}, nil
 }

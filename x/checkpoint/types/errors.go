@@ -15,4 +15,7 @@ var (
 	ErrNoCheckpointFound        = sdkerrors.Register(ModuleName, 1508, "Checkpoint Not Found")
 	ErrBadBlockDetails          = sdkerrors.Register(ModuleName, 1501, "Wrong roothash for given start and end block numbers")
 	ErrInvalidMsg               = sdkerrors.Register(ModuleName, 1400, "Invalid Message")
+	ErrBadAck                   = sdkerrors.Register(ModuleName, 1502, "Ack Not Valid")
+	ErrInvalidNoACK             = sdkerrors.Register(ModuleName, 1505, "Invalid No ACK -- Waiting for last checkpoint ACK")
+	ErrTooManyNoACK             = sdkerrors.Register(ModuleName, 1506, "Too many no-acks")
 )
