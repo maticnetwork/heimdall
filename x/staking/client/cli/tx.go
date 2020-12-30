@@ -174,11 +174,11 @@ func ValidatorJoinTxCmd() *cobra.Command {
 	cmd.Flags().String(FlagAmount, "0", "--amount=<amount>")
 	cmd.Flags().Uint64(FlagActivationEpoch, 0, "--activation-epoch=<activation-epoch>")
 
-	cmd.MarkFlagRequired(FlagBlockNumber)     //nolint
-	cmd.MarkFlagRequired(FlagActivationEpoch) //nolint
-	cmd.MarkFlagRequired(FlagAmount)          //nolint
-	cmd.MarkFlagRequired(FlagSignerPubkey)    //nolint
-	cmd.MarkFlagRequired(FlagTxHash)          //nolint
+	_ = cmd.MarkFlagRequired(FlagBlockNumber)
+	_ = cmd.MarkFlagRequired(FlagActivationEpoch)
+	_ = cmd.MarkFlagRequired(FlagAmount)
+	_ = cmd.MarkFlagRequired(FlagSignerPubkey)
+	_ = cmd.MarkFlagRequired(FlagTxHash)
 
 	return cmd
 }
