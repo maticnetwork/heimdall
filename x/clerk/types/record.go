@@ -4,11 +4,12 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	hmCommon "github.com/maticnetwork/heimdall/types/common"
 )
 
 // NewEventRecord creates new record
 func NewEventRecord(
-	txHash []byte,
+	txHash hmCommon.HeimdallHash,
 	logIndex uint64,
 	id uint64,
 	contract sdk.AccAddress,
@@ -20,7 +21,7 @@ func NewEventRecord(
 		Id:         id,
 		Contract:   contract,
 		Data:       data,
-		TxHash:     txHash,
+		TxHash:     txHash.Bytes(),
 		LogIndex:   logIndex,
 		ChainId:    chainID,
 		RecordTime: recordTime,
