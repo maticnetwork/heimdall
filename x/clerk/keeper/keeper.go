@@ -10,6 +10,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	chainKeeper "github.com/maticnetwork/heimdall/x/chainmanager/keeper"
 	"github.com/maticnetwork/heimdall/x/clerk/types"
 )
 
@@ -27,16 +28,18 @@ var (
 
 type (
 	Keeper struct {
-		cdc      codec.LegacyAmino
-		storeKey sdk.StoreKey
+		cdc         codec.LegacyAmino
+		storeKey    sdk.StoreKey
+		ChainKeeper chainKeeper.Keeper
 	}
 )
 
-func NewKeeper(cdc codec.LegacyAmino, storeKey, memKey sdk.StoreKey) Keeper {
+func NewKeeper(cdc codec.LegacyAmino, storeKey, memKey sdk.StoreKey, chainKeeper chainKeeper.Keeper) Keeper {
 	return Keeper{
-		cdc:      cdc,
-		storeKey: storeKey,
-		// memKey:   memKey,
+		cdc:         cdc,
+		storeKey:    storeKey,
+		memKey:      memKey,
+		ChainKeeper: chainKeeper,
 	}
 }
 
