@@ -69,7 +69,7 @@ func GetStateRecord() *cobra.Command {
 
 	flags.AddQueryFlagsToCmd(cmd)
 	cmd.Flags().Uint64(FlagRecordID, 0, "--id=<record ID here>")
-	cmd.MarkFlagRequired(FlagRecordID) //nolint
+	_ = cmd.MarkFlagRequired(FlagRecordID)
 
 	return cmd
 }

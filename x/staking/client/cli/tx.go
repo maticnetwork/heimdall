@@ -25,7 +25,6 @@ import (
 // ForeignEventName is used in ValidatorJoinTxCmd
 const ForeignEventName = "Staked"
 
-
 // GetTxCmd returns the transaction commands for this module
 func GetTxCmd() *cobra.Command {
 	stakingTxCmd := &cobra.Command{
@@ -265,12 +264,12 @@ func SignerUpdateTxCmd() *cobra.Command {
 	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
 	cmd.Flags().Int(FlagNonce, 0, "--nonce=<nonce>")
 
-	cmd.MarkFlagRequired(FlagValidatorID)     //nolint
-	cmd.MarkFlagRequired(FlagTxHash)          //nolint
-	cmd.MarkFlagRequired(FlagNewSignerPubkey) //nolint
-	cmd.MarkFlagRequired(FlagLogIndex)        //nolint
-	cmd.MarkFlagRequired(FlagBlockNumber)     //nolint
-	cmd.MarkFlagRequired(FlagNonce)           //nolint
+	_ = cmd.MarkFlagRequired(FlagValidatorID)
+	_ = cmd.MarkFlagRequired(FlagTxHash)
+	_ = cmd.MarkFlagRequired(FlagNewSignerPubkey)
+	_ = cmd.MarkFlagRequired(FlagLogIndex)
+	_ = cmd.MarkFlagRequired(FlagBlockNumber)
+	_ = cmd.MarkFlagRequired(FlagNonce)
 
 	return cmd
 }
@@ -292,7 +291,7 @@ func StakeUpdateTxCmd() *cobra.Command {
 			proposer, err := sdk.AccAddressFromHex(proposerAddrStr)
 
 			if err != nil {
-				panic(err)
+				return err
 			}
 
 			if proposer.Empty() {
@@ -346,12 +345,12 @@ func StakeUpdateTxCmd() *cobra.Command {
 	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
 	cmd.Flags().Int(FlagNonce, 0, "--nonce=<nonce>")
 
-	cmd.MarkFlagRequired(FlagTxHash)      //nolint
-	cmd.MarkFlagRequired(FlagLogIndex)    //nolint
-	cmd.MarkFlagRequired(FlagValidatorID) //nolint
-	cmd.MarkFlagRequired(FlagBlockNumber) //nolint
-	cmd.MarkFlagRequired(FlagAmount)      //nolint
-	cmd.MarkFlagRequired(FlagNonce)       //nolint
+	_ = cmd.MarkFlagRequired(FlagTxHash)
+	_ = cmd.MarkFlagRequired(FlagLogIndex)
+	_ = cmd.MarkFlagRequired(FlagValidatorID)
+	_ = cmd.MarkFlagRequired(FlagBlockNumber)
+	_ = cmd.MarkFlagRequired(FlagAmount)
+	_ = cmd.MarkFlagRequired(FlagNonce)
 
 	return cmd
 }
@@ -373,7 +372,7 @@ func ValidatorExitTxCmd() *cobra.Command {
 			proposer, err := sdk.AccAddressFromHex(proposerAddrStr)
 
 			if err != nil {
-				panic(err)
+				return err
 			}
 			//proposer := sdk.AccAddress(viper.GetString(FlagProposerAddress))
 			if proposer.Empty() {
@@ -421,11 +420,11 @@ func ValidatorExitTxCmd() *cobra.Command {
 	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
 	cmd.Flags().Int(FlagNonce, 0, "--nonce=<nonce>")
 
-	cmd.MarkFlagRequired(FlagValidatorID) //nolint
-	cmd.MarkFlagRequired(FlagTxHash)      //nolint
-	cmd.MarkFlagRequired(FlagLogIndex)    //nolint
-	cmd.MarkFlagRequired(FlagBlockNumber) //nolint
-	cmd.MarkFlagRequired(FlagNonce)       //nolint
+	_ = cmd.MarkFlagRequired(FlagValidatorID)
+	_ = cmd.MarkFlagRequired(FlagTxHash)
+	_ = cmd.MarkFlagRequired(FlagLogIndex)
+	_ = cmd.MarkFlagRequired(FlagBlockNumber)
+	_ = cmd.MarkFlagRequired(FlagNonce)
 
 	return cmd
 }
