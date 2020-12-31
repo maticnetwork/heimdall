@@ -126,11 +126,11 @@ func (k *Keeper) GetCheckpointByNumber(ctx sdk.Context, number uint64) (hmTypes.
 }
 
 // GetCheckpointList returns all checkpoints with params like page and limit
-func (k *Keeper) GetCheckpointList(ctx sdk.Context, page uint64, limit uint64) ([]hmTypes.Checkpoint, error) {
+func (k *Keeper) GetCheckpointList(ctx sdk.Context, page uint64, limit uint64) ([]*hmTypes.Checkpoint, error) {
 	store := ctx.KVStore(k.storeKey)
 
 	// create headers
-	var checkpoints []hmTypes.Checkpoint
+	var checkpoints []*hmTypes.Checkpoint
 
 	// have max limit
 	if limit > 20 {
@@ -144,7 +144,7 @@ func (k *Keeper) GetCheckpointList(ctx sdk.Context, page uint64, limit uint64) (
 	for ; iterator.Valid(); iterator.Next() {
 		var checkpoint hmTypes.Checkpoint
 		if err := k.cdc.UnmarshalBinaryBare(iterator.Value(), &checkpoint); err == nil {
-			checkpoints = append(checkpoints, checkpoint)
+			checkpoints = append(checkpoints, &checkpoint)
 		}
 	}
 

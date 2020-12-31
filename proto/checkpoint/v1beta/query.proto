@@ -2,6 +2,7 @@ syntax = "proto3";
 package heimdall.checkpoint.v1beta1;
 
 import "checkpoint/v1beta/genesis.proto";
+import "checkpoint/v1beta/msg.proto";
 import "google/api/annotations.proto";
 import "heimdall/types/headers.proto";
 import "gogoproto/gogo.proto";
@@ -86,10 +87,14 @@ message QueryLastNoAckResponse {
 }
 
 message QueryCheckpointListRequest {}
-message QueryCheckpointListResponse {}
+message QueryCheckpointListResponse {
+  repeated heimdall.types.Checkpoint checkpoint_list = 1;
+}
 
 message QueryNextCheckpointRequest {}
-message QueryNextCheckpointResponse {}
+message QueryNextCheckpointResponse {
+  heimdall.checkpoint.v1beta1.MsgCheckpoint next_checkpoint = 1;
+}
 
 // QueryBorChainID to queryBorChainID
 message QueryBorChainID {
