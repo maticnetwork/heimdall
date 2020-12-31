@@ -61,6 +61,7 @@ func (msg MsgCheckpoint) GetSignBytes() []byte {
 }
 
 func (msg MsgCheckpoint) ValidateBasic() error {
+	// TODO implement validation logic
 	// if bytes.Equal(msg.RootHash.Bytes(), helper.ZeroHash.Bytes()) {
 	// 	return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid rootHash %v", msg.RootHash.String())
 	// }
@@ -144,6 +145,8 @@ func (msg MsgCheckpointAck) GetSignBytes() []byte {
 
 // ValidateBasic validate basic
 func (msg MsgCheckpointAck) ValidateBasic() error {
+
+	// TODO implement validation logic
 	// if msg.From.Empty() {
 	// 	return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid from %v", msg.From.String())
 	// }
