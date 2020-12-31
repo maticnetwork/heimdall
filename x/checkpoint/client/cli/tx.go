@@ -1,7 +1,8 @@
 package cli
 
 import (
-	"errors"
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -12,10 +13,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/maticnetwork/bor/common"
 
-	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmCommonTypes "github.com/maticnetwork/heimdall/types/common"
 	"github.com/maticnetwork/heimdall/x/checkpoint/types"
 )
@@ -32,7 +32,7 @@ func GetTxCmd() *cobra.Command {
 
 	checkpointTxCmd.AddCommand(
 		CheckpointTxCmd(),
-		CheckpointACKTxCmd(),
+		// CheckpointACKTxCmd(),
 		CheckpointNoACKTxCmd(),
 	)
 
@@ -47,6 +47,9 @@ func CheckpointTxCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
 			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
 			// bor chain id
 			borChainID := viper.GetString(FlagBorChainID)
@@ -54,43 +57,43 @@ func CheckpointTxCmd() *cobra.Command {
 				return fmt.Errorf("bor chain id cannot be empty")
 			}
 
-			// if viper.GetBool(FlagAutoConfigure) {
-			// var checkpointProposer hmTypes.Validator
-			// proposerBytes, _, err := clientCtx.Query(fmt.Sprintf("custom/%s/%s", types.StakingQuerierRoute, types.QueryCurrentProposer))
-			// if err != nil {
-			// 	return err
-			// }
+			if viper.GetBool(FlagAutoConfigure) {
+				var checkpointProposer hmTypes.Validator
+				proposerBytes, _, err := clientCtx.Query(fmt.Sprintf("custom/%s/%s", types.StakingQuerierRoute, types.QueryCurrentProposer))
+				if err != nil {
+					return err
+				}
 
-			// if err := json.Unmarshal(proposerBytes, &checkpointProposer); err != nil {
-			// 	return err
-			// }
+				if err := json.Unmarshal(proposerBytes, &checkpointProposer); err != nil {
+					return err
+				}
 
-			// if !bytes.Equal([]byte(checkpointProposer.Signer), helper.GetAddress()) {
-			// 	return fmt.Errorf("Please wait for your turn to propose checkpoint. Checkpoint proposer:%v", checkpointProposer.String())
-			// }
+				if !bytes.Equal([]byte(checkpointProposer.Signer), helper.GetAddress()) {
+					return fmt.Errorf("Please wait for your turn to propose checkpoint. Checkpoint proposer:%v", checkpointProposer.String())
+				}
 
-			// // create bor chain id params
-			// borChainIDParams := types.NewQueryBorChainID(borChainID)
-			// bz, err := clientCtx.JSONMarshaler.MarshalJSON(borChainIDParams)
-			// if err != nil {
-			// 	return err
-			// }
+				// create bor chain id params
+				borChainIDParams := types.NewQueryBorChainID(borChainID)
+				bz, err := clientCtx.JSONMarshaler.MarshalJSON(&borChainIDParams)
+				if err != nil {
+					return err
+				}
 
-			// // fetch msg checkpoint
-			// result, _, err := clientCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNextCheckpoint), bz)
-			// if err != nil {
-			// 	return err
-			// }
+				// fetch msg checkpoint
+				result, _, err := clientCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNextCheckpoint), bz)
+				if err != nil {
+					return err
+				}
 
-			// // unmarsall the checkpoint msg
-			// var newCheckpointMsg types.MsgCheckpoint
-			// if err := json.Unmarshal(result, &newCheckpointMsg); err != nil {
-			// 	return err
-			// }
+				// unmarsall the checkpoint msg
+				var newCheckpointMsg types.MsgCheckpoint
+				if err := json.Unmarshal(result, &newCheckpointMsg); err != nil {
+					return err
+				}
 
-			// // broadcast this checkpoint
-			// return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &newCheckpointMsg)
-			// }
+				// broadcast this checkpoint
+				return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &newCheckpointMsg)
+			}
 
 			// get proposer
 			proposer := sdk.AccAddress([]byte(viper.GetString(FlagProposerAddress)))
@@ -166,99 +169,102 @@ func CheckpointTxCmd() *cobra.Command {
 	return cmd
 }
 
-// CheckpointACKTxCmd send checkpoint ack transaction
-func CheckpointACKTxCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "send-ack",
-		Short: "send acknowledgement for checkpoint in buffer",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := client.GetClientContextFromCmd(cmd)
-			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+// // CheckpointACKTxCmd send checkpoint ack transaction
+// func CheckpointACKTxCmd() *cobra.Command {
+// 	cmd := &cobra.Command{
+// 		Use:   "send-ack",
+// 		Short: "send acknowledgement for checkpoint in buffer",
+// 		RunE: func(cmd *cobra.Command, args []string) error {
+// 			clientCtx := client.GetClientContextFromCmd(cmd)
+// 			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+// 			if err != nil {
+// 				return err
+// 			}
 
-			// get proposer
-			proposer := sdk.AccAddress([]byte(viper.GetString(FlagProposerAddress)))
-			if proposer.Empty() {
-				proposer = helper.GetFromAddress(clientCtx)
-			}
+// 			// get proposer
+// 			proposer := sdk.AccAddress([]byte(viper.GetString(FlagProposerAddress)))
+// 			if proposer.Empty() {
+// 				proposer = helper.GetFromAddress(clientCtx)
+// 			}
 
-			headerBlockStr := viper.GetString(FlagHeaderNumber)
-			if headerBlockStr == "" {
-				return fmt.Errorf("header number cannot be empty")
-			}
+// 			headerBlockStr := viper.GetString(FlagHeaderNumber)
+// 			if headerBlockStr == "" {
+// 				return fmt.Errorf("header number cannot be empty")
+// 			}
 
-			headerBlock, err := strconv.ParseUint(headerBlockStr, 10, 64)
-			if err != nil {
-				return err
-			}
+// 			headerBlock, err := strconv.ParseUint(headerBlockStr, 10, 64)
+// 			if err != nil {
+// 				return err
+// 			}
 
-			txHashStr := viper.GetString(FlagCheckpointTxHash)
-			if txHashStr == "" {
-				return fmt.Errorf("checkpoint tx hash cannot be empty")
-			}
+// 			txHashStr := viper.GetString(FlagCheckpointTxHash)
+// 			if txHashStr == "" {
+// 				return fmt.Errorf("checkpoint tx hash cannot be empty")
+// 			}
 
-			txHash := hmCommonTypes.BytesToHeimdallHash(common.FromHex(txHashStr))
+// 			txHash := hmCommonTypes.BytesToHeimdallHash(common.FromHex(txHashStr))
 
-			//
-			// Get header details
-			//
+// 			//
+// 			// Get header details
+// 			//
 
-			contractCallerObj, err := helper.NewContractCaller()
-			if err != nil {
-				return err
-			}
+// 			contractCallerObj, err := helper.NewContractCaller()
+// 			if err != nil {
+// 				return err
+// 			}
 
-			chainmanagerParams, err := util.GetChainmanagerParams(cliCtx)
-			if err != nil {
-				return err
-			}
+// 			chainmanagerParams, err := util.GetChainmanagerParams(cliCtx)
+// 			if err != nil {
+// 				return err
+// 			}
 
-			// get main tx receipt
-			receipt, err := contractCallerObj.GetConfirmedTxReceipt(txHash.EthHash(), chainmanagerParams.MainchainTxConfirmations)
-			if err != nil || receipt == nil {
-				return errors.New("Transaction is not confirmed yet. Please wait for sometime and try again")
-			}
+// 			// get main tx receipt
+// 			receipt, err := contractCallerObj.GetConfirmedTxReceipt(txHash.EthHash(), chainmanagerParams.MainchainTxConfirmations)
+// 			if err != nil || receipt == nil {
+// 				return errors.New("Transaction is not confirmed yet. Please wait for sometime and try again")
+// 			}
 
-			// decode new header block event
-			res, err := contractCallerObj.DecodeNewHeaderBlockEvent(
-				chainmanagerParams.ChainParams.RootChainAddress.EthAddress(),
-				receipt,
-				uint64(viper.GetInt64(FlagCheckpointLogIndex)),
-			)
-			if err != nil {
-				return errors.New("Invalid transaction for header block")
-			}
+// 			// decode new header block event
+// 			res, err := contractCallerObj.DecodeNewHeaderBlockEvent(
+// 				chainmanagerParams.ChainParams.RootChainAddress.EthAddress(),
+// 				receipt,
+// 				uint64(viper.GetInt64(FlagCheckpointLogIndex)),
+// 			)
+// 			if err != nil {
+// 				return errors.New("Invalid transaction for header block")
+// 			}
 
-			// draft new checkpoint no-ack msg
-			msg := types.NewMsgCheckpointAck(
-				proposer, // ack tx sender
-				headerBlock,
-				sdk.AccAddress(res.Proposer.Bytes()),
-				res.Start.Uint64(),
-				res.End.Uint64(),
-				res.Root,
-				txHash,
-				uint64(viper.GetInt64(FlagCheckpointLogIndex)),
-			)
+// 			// draft new checkpoint no-ack msg
+// 			msg := types.NewMsgCheckpointAck(
+// 				proposer, // ack tx sender
+// 				headerBlock,
+// 				sdk.AccAddress(res.Proposer.Bytes()),
+// 				res.Start.Uint64(),
+// 				res.End.Uint64(),
+// 				res.Root,
+// 				txHash,
+// 				uint64(viper.GetInt64(FlagCheckpointLogIndex)),
+// 			)
 
-			// broadcast messages
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
+// 			// broadcast messages
+// 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
 
-		},
-	}
+// 		},
+// 	}
 
-	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
-	cmd.Flags().String(FlagHeaderNumber, "", "--header=<header-index>")
-	cmd.Flags().StringP(FlagCheckpointTxHash, "t", "", "--txhash=<checkpoint-txhash>")
-	cmd.Flags().String(FlagCheckpointLogIndex, "", "--log-index=<log-index>")
+// 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
+// 	cmd.Flags().String(FlagHeaderNumber, "", "--header=<header-index>")
+// 	cmd.Flags().StringP(FlagCheckpointTxHash, "t", "", "--txhash=<checkpoint-txhash>")
+// 	cmd.Flags().String(FlagCheckpointLogIndex, "", "--log-index=<log-index>")
 
-	_ = cmd.MarkFlagRequired(FlagHeaderNumber)
-	_ = cmd.MarkFlagRequired(FlagCheckpointTxHash)
-	_ = cmd.MarkFlagRequired(FlagCheckpointLogIndex)
+// 	_ = cmd.MarkFlagRequired(FlagHeaderNumber)
+// 	_ = cmd.MarkFlagRequired(FlagCheckpointTxHash)
+// 	_ = cmd.MarkFlagRequired(FlagCheckpointLogIndex)
 
-	flags.AddTxFlagsToCmd(cmd)
+// 	flags.AddTxFlagsToCmd(cmd)
 
-	return cmd
-}
+// 	return cmd
+// }
 
 // CheckpointNoACKTxCmd send no-ack transaction
 func CheckpointNoACKTxCmd() *cobra.Command {
@@ -268,6 +274,9 @@ func CheckpointNoACKTxCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
 			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
 			// get proposer
 			proposer := sdk.AccAddress([]byte(viper.GetString(FlagProposerAddress)))
