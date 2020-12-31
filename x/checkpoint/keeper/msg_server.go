@@ -111,7 +111,7 @@ func (k msgServer) Checkpoint(goCtx context.Context, msg *types.MsgCheckpoint) (
 	//
 
 	// Check proposer in message
-	validatorSet := k.sk.GetValidatorSet(ctx)
+	validatorSet := k.Sk.GetValidatorSet(ctx)
 	if validatorSet.Proposer == nil {
 		logger.Error("No proposer in validator set", "msgProposer", msg.Proposer)
 		return nil, types.ErrInvalidMsg
@@ -221,10 +221,10 @@ func (k msgServer) CheckpointNoAck(goCtx context.Context, msg *types.MsgCheckpoi
 	//
 
 	// Increment accum (selects new proposer)
-	k.sk.IncrementAccum(ctx, 1)
+	k.Sk.IncrementAccum(ctx, 1)
 
 	// Get new proposer
-	vs := k.sk.GetValidatorSet(ctx)
+	vs := k.Sk.GetValidatorSet(ctx)
 	newProposer := vs.GetProposer()
 	logger.Debug(
 		"New proposer selected",

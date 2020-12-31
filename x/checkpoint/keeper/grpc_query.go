@@ -139,7 +139,7 @@ func (k Querier) NextCheckpoint(c context.Context, req *types.QueryNextCheckpoin
 	// }
 
 	// get validator set
-	validatorSet := k.sk.GetValidatorSet(ctx)
+	validatorSet := k.Sk.GetValidatorSet(ctx)
 	proposer := validatorSet.GetProposer()
 	ackCount := k.GetACKCount(ctx)
 	params := k.GetParams(ctx)

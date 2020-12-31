@@ -17,6 +17,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 
 	"github.com/maticnetwork/heimdall/helper"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/x/checkpoint/client/cli"
 	"github.com/maticnetwork/heimdall/x/checkpoint/client/rest"
 	"github.com/maticnetwork/heimdall/x/checkpoint/keeper"
@@ -144,6 +145,16 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 
 // RegisterInvariants registers the capability module's invariants.
 func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
+
+// NewSideTxHandler side tx handler
+func (am AppModule) NewSideTxHandler() hmTypes.SideTxHandler {
+	return NewSideTxHandler(am.keeper, am.contractCaller)
+}
+
+// NewPostTxHandler post tx handler
+func (am AppModule) NewPostTxHandler() hmTypes.PostTxHandler {
+	return NewPostTxHandler(am.keeper, am.contractCaller)
+}
 
 // InitGenesis performs the capability module's genesis initialization It returns
 // no validator updates.

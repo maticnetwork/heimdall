@@ -39,8 +39,8 @@ type (
 		storeKey           sdk.StoreKey
 		paramSubspace      paramtypes.Subspace
 		moduleCommunicator ModuleCommunicator
-		sk                 stakingKeeper.Keeper
-		ck                 chainKeeper.Keeper
+		Sk                 stakingKeeper.Keeper
+		Ck                 chainKeeper.Keeper
 	}
 )
 
@@ -59,8 +59,8 @@ func NewKeeper(
 	return Keeper{
 		cdc:                cdc,
 		storeKey:           storeKey,
-		sk:                 stakingKeeper,
-		ck:                 chainKeeper,
+		Sk:                 stakingKeeper,
+		Ck:                 chainKeeper,
 		paramSubspace:      paramstore,
 		moduleCommunicator: moduleCommunicator,
 	}
