@@ -293,6 +293,7 @@ func NewHeimdallApp(
 		sidechannel.NewAppModule(appCodec, app.SidechannelKeeper),
 		chainmanager.NewAppModule(appCodec, app.ChainKeeper),
 		staking.NewAppModule(appCodec, app.StakingKeeper, &app.caller),
+		clerk.NewAppModule(appCodec, app.ClerkKeeper, &app.caller),
 		params.NewAppModule(app.ParamsKeeper),
 		checkpoint.NewAppModule(appCodec, app.CheckpointKeeper, &app.caller),
 	)

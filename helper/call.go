@@ -55,7 +55,7 @@ type IContractCaller interface {
 	DecodeValidatorExitEvent(sdk.AccAddress, *ethTypes.Receipt, uint64) (*stakinginfo.StakinginfoUnstakeInit, error)
 	DecodeSignerUpdateEvent(sdk.AccAddress, *ethTypes.Receipt, uint64) (*stakinginfo.StakinginfoSignerChange, error)
 	// decode state events
-	DecodeStateSyncedEvent(common.Address, *ethTypes.Receipt, uint64) (*statesender.StatesenderStateSynced, error)
+	DecodeStateSyncedEvent(sdk.AccAddress, *ethTypes.Receipt, uint64) (*statesender.StatesenderStateSynced, error)
 
 	// decode slashing events
 	DecodeSlashedEvent(common.Address, *ethTypes.Receipt, uint64) (*stakinginfo.StakinginfoSlashed, error)
@@ -591,7 +591,7 @@ func (c *ContractCaller) DecodeSignerUpdateEvent(contractAddress sdk.AccAddress,
 }
 
 // DecodeStateSyncedEvent decode state sync data
-func (c *ContractCaller) DecodeStateSyncedEvent(contractAddress common.Address, receipt *ethTypes.Receipt, logIndex uint64) (*statesender.StatesenderStateSynced, error) {
+func (c *ContractCaller) DecodeStateSyncedEvent(contractAddress sdk.AccAddress, receipt *ethTypes.Receipt, logIndex uint64) (*statesender.StatesenderStateSynced, error) {
 	event := new(statesender.StatesenderStateSynced)
 
 	found := false
