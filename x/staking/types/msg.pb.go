@@ -11,12 +11,12 @@ import (
 	_ "github.com/gogo/protobuf/gogoproto"
 	grpc1 "github.com/gogo/protobuf/grpc"
 	proto "github.com/gogo/protobuf/proto"
+	_ "github.com/golang/protobuf/ptypes/duration"
 	github_com_maticnetwork_heimdall_types "github.com/maticnetwork/heimdall/types"
 	github_com_maticnetwork_heimdall_types_common "github.com/maticnetwork/heimdall/types/common"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
-	_ "google.golang.org/protobuf/types/known/durationpb"
 	math "math"
 )
 
