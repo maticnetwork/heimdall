@@ -25,8 +25,6 @@ import (
 // ForeignEventName is used in ValidatorJoinTxCmd
 const ForeignEventName = "Staked"
 
-var logger = helper.Logger.With("module", "staking/client/cli")
-
 // GetTxCmd returns the transaction commands for this module
 func GetTxCmd() *cobra.Command {
 	stakingTxCmd := &cobra.Command{
@@ -85,6 +83,9 @@ func ValidatorJoinTxCmd() *cobra.Command {
 			compressedPubkeyBytes := common.FromHex(pubkeyStr)
 
 			ecdsaPubkey, err := ethcrypto.DecompressPubkey(compressedPubkeyBytes)
+			if err != nil {
+				return err
+			}
 			pubkeyBytes := ethcrypto.FromECDSAPub(ecdsaPubkey)
 
 			if len(pubkeyBytes) != 65 {
@@ -172,11 +173,11 @@ func ValidatorJoinTxCmd() *cobra.Command {
 	cmd.Flags().String(FlagAmount, "0", "--amount=<amount>")
 	cmd.Flags().Uint64(FlagActivationEpoch, 0, "--activation-epoch=<activation-epoch>")
 
-	cmd.MarkFlagRequired(FlagBlockNumber)
-	cmd.MarkFlagRequired(FlagActivationEpoch)
-	cmd.MarkFlagRequired(FlagAmount)
-	cmd.MarkFlagRequired(FlagSignerPubkey)
-	cmd.MarkFlagRequired(FlagTxHash)
+	_ = cmd.MarkFlagRequired(FlagBlockNumber)
+	_ = cmd.MarkFlagRequired(FlagActivationEpoch)
+	_ = cmd.MarkFlagRequired(FlagAmount)
+	_ = cmd.MarkFlagRequired(FlagSignerPubkey)
+	_ = cmd.MarkFlagRequired(FlagTxHash)
 
 	return cmd
 }
@@ -196,6 +197,9 @@ func SignerUpdateTxCmd() *cobra.Command {
 			// get proposer
 			proposerAddrStr, _ := cmd.Flags().GetString(FlagProposerAddress)
 			proposer, err := sdk.AccAddressFromHex(proposerAddrStr)
+			if err != nil {
+				return err
+			}
 			if proposer.Empty() {
 				proposer = helper.GetFromAddress(clientCtx)
 			}
@@ -216,6 +220,9 @@ func SignerUpdateTxCmd() *cobra.Command {
 			compressedPubkeyBytes := common.FromHex(pubkeyStr)
 
 			ecdsaPubkey, err := ethcrypto.DecompressPubkey(compressedPubkeyBytes)
+			if err != nil {
+				return err
+			}
 			pubkeyBytes := ethcrypto.FromECDSAPub(ecdsaPubkey)
 
 			if len(pubkeyBytes) != 65 {
@@ -257,12 +264,12 @@ func SignerUpdateTxCmd() *cobra.Command {
 	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
 	cmd.Flags().Int(FlagNonce, 0, "--nonce=<nonce>")
 
-	cmd.MarkFlagRequired(FlagValidatorID)
-	cmd.MarkFlagRequired(FlagTxHash)
-	cmd.MarkFlagRequired(FlagNewSignerPubkey)
-	cmd.MarkFlagRequired(FlagLogIndex)
-	cmd.MarkFlagRequired(FlagBlockNumber)
-	cmd.MarkFlagRequired(FlagNonce)
+	_ = cmd.MarkFlagRequired(FlagValidatorID)
+	_ = cmd.MarkFlagRequired(FlagTxHash)
+	_ = cmd.MarkFlagRequired(FlagNewSignerPubkey)
+	_ = cmd.MarkFlagRequired(FlagLogIndex)
+	_ = cmd.MarkFlagRequired(FlagBlockNumber)
+	_ = cmd.MarkFlagRequired(FlagNonce)
 
 	return cmd
 }
@@ -282,6 +289,11 @@ func StakeUpdateTxCmd() *cobra.Command {
 			// get proposer
 			proposerAddrStr, _ := cmd.Flags().GetString(FlagProposerAddress)
 			proposer, err := sdk.AccAddressFromHex(proposerAddrStr)
+
+			if err != nil {
+				return err
+			}
+
 			if proposer.Empty() {
 				proposer = helper.GetFromAddress(clientCtx)
 			}
@@ -333,12 +345,12 @@ func StakeUpdateTxCmd() *cobra.Command {
 	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
 	cmd.Flags().Int(FlagNonce, 0, "--nonce=<nonce>")
 
-	cmd.MarkFlagRequired(FlagTxHash)
-	cmd.MarkFlagRequired(FlagLogIndex)
-	cmd.MarkFlagRequired(FlagValidatorID)
-	cmd.MarkFlagRequired(FlagBlockNumber)
-	cmd.MarkFlagRequired(FlagAmount)
-	cmd.MarkFlagRequired(FlagNonce)
+	_ = cmd.MarkFlagRequired(FlagTxHash)
+	_ = cmd.MarkFlagRequired(FlagLogIndex)
+	_ = cmd.MarkFlagRequired(FlagValidatorID)
+	_ = cmd.MarkFlagRequired(FlagBlockNumber)
+	_ = cmd.MarkFlagRequired(FlagAmount)
+	_ = cmd.MarkFlagRequired(FlagNonce)
 
 	return cmd
 }
@@ -358,6 +370,10 @@ func ValidatorExitTxCmd() *cobra.Command {
 			// get proposer
 			proposerAddrStr, _ := cmd.Flags().GetString(FlagProposerAddress)
 			proposer, err := sdk.AccAddressFromHex(proposerAddrStr)
+
+			if err != nil {
+				return err
+			}
 			//proposer := sdk.AccAddress(viper.GetString(FlagProposerAddress))
 			if proposer.Empty() {
 				proposer = helper.GetFromAddress(clientCtx)
@@ -404,11 +420,11 @@ func ValidatorExitTxCmd() *cobra.Command {
 	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
 	cmd.Flags().Int(FlagNonce, 0, "--nonce=<nonce>")
 
-	cmd.MarkFlagRequired(FlagValidatorID)
-	cmd.MarkFlagRequired(FlagTxHash)
-	cmd.MarkFlagRequired(FlagLogIndex)
-	cmd.MarkFlagRequired(FlagBlockNumber)
-	cmd.MarkFlagRequired(FlagNonce)
+	_ = cmd.MarkFlagRequired(FlagValidatorID)
+	_ = cmd.MarkFlagRequired(FlagTxHash)
+	_ = cmd.MarkFlagRequired(FlagLogIndex)
+	_ = cmd.MarkFlagRequired(FlagBlockNumber)
+	_ = cmd.MarkFlagRequired(FlagNonce)
 
 	return cmd
 }
