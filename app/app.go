@@ -284,6 +284,7 @@ func NewHeimdallApp(
 		staking.NewAppModule(appCodec, app.StakingKeeper, &app.caller),
 		clerk.NewAppModule(appCodec, app.ClerkKeeper, &app.caller),
 		params.NewAppModule(app.ParamsKeeper),
+		gov.NewAppModule(appCodec, app.GovKeeper, app.AccountKeeper, app.BankKeeper),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that

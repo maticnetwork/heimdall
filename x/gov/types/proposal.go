@@ -22,7 +22,7 @@ func NewProposal(content Content, id uint64, submitTime, depositEndTime time.Tim
 		ProposalId:       id,
 		Status:           StatusDepositPeriod,
 		FinalTallyResult: EmptyTallyResult(),
-		TotalDeposit:     NewCoins(),
+		TotalDeposit:     sdk.NewCoins(),
 		SubmitTime:       submitTime,
 		DepositEndTime:   depositEndTime,
 	}
@@ -264,14 +264,14 @@ func ProposalHandler(_ sdk.Context, c Content) error {
 // EmptyTallyResult returns an empty TallyResult.
 func EmptyTallyResult() TallyResult {
 	return TallyResult{
-		Yes:        ZeroInt(),
-		Abstain:    ZeroInt(),
-		No:         ZeroInt(),
-		NoWithVeto: ZeroInt(),
+		Yes:        sdk.ZeroInt(),
+		Abstain:    sdk.ZeroInt(),
+		No:         sdk.ZeroInt(),
+		NoWithVeto: sdk.ZeroInt(),
 	}
 }
 
-func NewTallyResultFromMap(results map[VoteOption]Dec) TallyResult {
+func NewTallyResultFromMap(results map[VoteOption]sdk.Dec) TallyResult {
 	return TallyResult{
 		Yes:        results[OptionYes].TruncateInt(),
 		Abstain:    results[OptionAbstain].TruncateInt(),

@@ -7,6 +7,7 @@ import "google/protobuf/timestamp.proto";
 import "google/protobuf/any.proto";
 import "google/protobuf/duration.proto";
 import "heimdall/types/validator.proto";
+import "cosmos/base/v1beta1/coin.proto";
 
 option go_package = "github.com/maticnetwork/heimdall/x/gov/types";
 option (gogoproto.stringer_all)        = false;
@@ -50,9 +51,11 @@ message Deposit {
     option (gogoproto.goproto_stringer) = false;
 
     uint64 proposal_id = 1 [(gogoproto.moretags) = "yaml:\"proposal_id\""];
-    heimdall.types.ValidatorID depositor = 2;
-    repeated Coin              amount    = 3
-        [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "Coins"];
+    heimdall.types.ValidatorID depositor     = 2;
+    repeated cosmos.base.v1beta1.Coin amount = 3 [
+        (gogoproto.nullable)     = false,
+        (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+    ];
 }
 
 // Proposal defines the core field members of a governance proposal.
@@ -79,9 +82,9 @@ message Proposal {
         (gogoproto.nullable) = false,
         (gogoproto.moretags) = "yaml:\"deposit_end_time\""
     ];
-    repeated Coin total_deposit = 7 [
+    repeated cosmos.base.v1beta1.Coin total_deposit = 7 [
         (gogoproto.nullable)     = false,
-        (gogoproto.castrepeated) = "Coins",
+        (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
         (gogoproto.moretags)     = "yaml:\"total_deposit\""
     ];
     google.protobuf.Timestamp voting_start_time = 8 [
@@ -129,14 +132,20 @@ enum ProposalStatus {
 message TallyResult {
     option (gogoproto.equal) = true;
 
-    string yes = 1
-        [(gogoproto.customtype) = "Int", (gogoproto.nullable) = false];
-    string abstain = 2
-        [(gogoproto.customtype) = "Int", (gogoproto.nullable) = false];
-    string no = 3
-        [(gogoproto.customtype) = "Int", (gogoproto.nullable) = false];
+    string yes = 1 [
+        (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+        (gogoproto.nullable)   = false
+    ];
+    string abstain = 2 [
+        (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+        (gogoproto.nullable)   = false
+    ];
+    string no = 3 [
+        (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+        (gogoproto.nullable)   = false
+    ];
     string no_with_veto = 4 [
-        (gogoproto.customtype) = "Int",
+        (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
         (gogoproto.nullable)   = false,
         (gogoproto.moretags)   = "yaml:\"no_with_veto\""
     ];
@@ -156,9 +165,9 @@ message Vote {
 // DepositParams defines the params for deposits on governance proposals.
 message DepositParams {
     //  Minimum deposit for a proposal to enter voting period.
-    repeated Coin min_deposit = 1 [
+    repeated cosmos.base.v1beta1.Coin min_deposit = 1 [
         (gogoproto.nullable)     = false,
-        (gogoproto.castrepeated) = "Coins",
+        (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
         (gogoproto.moretags)     = "yaml:\"min_deposit\"",
         (gogoproto.jsontag)      = "min_deposit,omitempty"
     ];
@@ -189,7 +198,7 @@ message TallyParams {
     //  Minimum percentage of total stake needed to vote for a result to be
     //  considered valid.
     bytes quorum = 1 [
-        (gogoproto.customtype) = "Dec",
+        (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
         (gogoproto.nullable)   = false,
         (gogoproto.jsontag)    = "quorum,omitempty"
     ];
@@ -197,7 +206,7 @@ message TallyParams {
     //  Minimum proportion of Yes votes for proposal to pass. Default value:
     //  0.5.
     bytes threshold = 2 [
-        (gogoproto.customtype) = "Dec",
+        (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
         (gogoproto.nullable)   = false,
         (gogoproto.jsontag)    = "threshold,omitempty"
     ];
@@ -205,47 +214,9 @@ message TallyParams {
     //  Minimum value of Veto votes to Total votes ratio for proposal to be
     //  vetoed. Default value: 1/3.
     bytes veto = 3 [
-        (gogoproto.customtype) = "Dec",
+        (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
         (gogoproto.nullable)   = false,
         (gogoproto.jsontag)    = "veto,omitempty",
         (gogoproto.moretags)   = "yaml:\"veto\""
     ];
-}
-
-// Coin defines a token with a denomination and an amount.
-//
-// NOTE: The amount field is an Int which implements the custom method
-// signatures required by gogoproto.
-message Coin {
-    option (gogoproto.goproto_stringer) = false;
-    option (gogoproto.equal)            = true;
-
-    string denom  = 1;
-    string amount = 2
-        [(gogoproto.customtype) = "Int", (gogoproto.nullable) = false];
-}
-
-// DecCoin defines a token with a denomination and a decimal amount.
-//
-// NOTE: The amount field is an Dec which implements the custom method
-// signatures required by gogoproto.
-message DecCoin {
-    option (gogoproto.equal)            = true;
-    option (gogoproto.goproto_stringer) = false;
-    string denom                        = 1;
-    string amount                       = 2
-        [(gogoproto.customtype) = "Dec", (gogoproto.nullable) = false];
-}
-
-// IntProto defines a Protobuf wrapper around an Int object.
-message IntProto {
-    string int = 1
-        [(gogoproto.customtype) = "Int", (gogoproto.nullable) = false];
-}
-
-// DecProto defines a Protobuf wrapper around a Dec object.
-message DecProto {
-    option (gogoproto.goproto_stringer) = false;
-    string dec                          = 1
-        [(gogoproto.customtype) = "Dec", (gogoproto.nullable) = false];
 }

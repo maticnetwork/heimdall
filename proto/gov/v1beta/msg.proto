@@ -1,6 +1,7 @@
 syntax = "proto3";
 package heimdall.gov.v1beta;
 
+import "cosmos/base/v1beta1/coin.proto";
 import "gov/v1beta/gov.proto";
 import "heimdall/types/validator.proto";
 import "cosmos_proto/cosmos.proto";
@@ -34,9 +35,9 @@ message MsgSubmitProposal {
 
     google.protobuf.Any content = 1
         [(cosmos_proto.accepts_interface) = "Content"];
-    repeated Coin initial_deposit = 2 [
+    repeated cosmos.base.v1beta1.Coin initial_deposit = 2 [
         (gogoproto.nullable)     = false,
-        (gogoproto.castrepeated) = "Coins",
+        (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
         (gogoproto.moretags)     = "yaml:\"initial_deposit\""
     ];
     string                     proposer  = 3 [(gogoproto.casttype) =
@@ -77,10 +78,12 @@ message MsgDeposit {
         (gogoproto.jsontag)  = "proposal_id",
         (gogoproto.moretags) = "yaml:\"proposal_id\""
     ];
-    string        depositor = 2 [(gogoproto.casttype) =
+    string   depositor                       = 2 [(gogoproto.casttype) =
                               "github.com/cosmos/cosmos-sdk/types.AccAddress"];
-    repeated Coin amount    = 3
-        [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "Coins"];
+    repeated cosmos.base.v1beta1.Coin amount = 3 [
+        (gogoproto.nullable)     = false,
+        (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+    ];
     heimdall.types.ValidatorID validator = 4;
 }
 

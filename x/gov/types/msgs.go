@@ -131,4 +131,4 @@ func (m *MsgSubmitProposal) GetContent() Content {
 	return content
 }
 
-func (m *MsgSubmitProposal) GetInitialDeposit() Coins { return m.InitialDeposit }
+func (m *MsgSubmitProposal) GetInitialDeposit() sdk.Coins { return m.InitialDeposit }

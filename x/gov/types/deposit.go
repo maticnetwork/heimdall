@@ -6,10 +6,11 @@ import (
 	yaml "gopkg.in/yaml.v2"
 
 	hmTypes "github.com/maticnetwork/heimdall/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // NewDeposit creates a new Deposit instance
-func NewDeposit(proposalID uint64, amount Coins, validator hmTypes.ValidatorID) Deposit {
+func NewDeposit(proposalID uint64, amount sdk.Coins, validator hmTypes.ValidatorID) Deposit {
 	return Deposit{proposalID, validator, amount}
 }
 

@@ -6,13 +6,13 @@ import (
 
 // x/gov module sentinel errors
 var (
-	ErrUnknownProposal         = sdkerrors.Register(ModuleName, 2, "unknown proposal")
-	ErrInactiveProposal        = sdkerrors.Register(ModuleName, 3, "inactive proposal")
-	ErrAlreadyActiveProposal   = sdkerrors.Register(ModuleName, 4, "proposal already active")
-	ErrInvalidProposalContent  = sdkerrors.Register(ModuleName, 5, "invalid proposal content")
-	ErrInvalidProposalType     = sdkerrors.Register(ModuleName, 6, "invalid proposal type")
-	ErrInvalidVote             = sdkerrors.Register(ModuleName, 7, "invalid vote option")
-	ErrInvalidGenesis          = sdkerrors.Register(ModuleName, 8, "invalid genesis state")
-	ErrNoProposalHandlerExists = sdkerrors.Register(ModuleName, 9, "no handler exists for proposal type")
-	ErrAlreadyFinishedProposal = sdkerrors.Register(ModuleName, 10, "proposal has already passed its voting period")
+	ErrUnknownProposal         = sdkerrors.Register(ModuleName, 10002, "unknown proposal")
+	ErrInactiveProposal        = sdkerrors.Register(ModuleName, 10003, "inactive proposal")
+	ErrAlreadyActiveProposal   = sdkerrors.Register(ModuleName, 10004, "proposal already active")
+	ErrInvalidProposalContent  = sdkerrors.Register(ModuleName, 10005, "invalid proposal content")
+	ErrInvalidProposalType     = sdkerrors.Register(ModuleName, 10006, "invalid proposal type")
+	ErrInvalidVote             = sdkerrors.Register(ModuleName, 10007, "invalid vote option")
+	ErrInvalidGenesis          = sdkerrors.Register(ModuleName, 10008, "invalid genesis state")
+	ErrNoProposalHandlerExists = sdkerrors.Register(ModuleName, 10009, "no handler exists for proposal type")
+	ErrAlreadyFinishedProposal = sdkerrors.Register(ModuleName, 10010, "proposal has already passed its voting period")
 )
