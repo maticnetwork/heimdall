@@ -79,6 +79,11 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 			// bind flags for environment variables
 			bindFlags(cmd, ctx.Viper)
 
+			// load heimdall config
+			if err := helper.InitHeimdallConfig(ctx.Viper); err != nil {
+				return err
+			}
+
 			return client.SetCmdClientContextHandler(initClientCtx, cmd)
 		},
 	}

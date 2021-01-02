@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"crypto/ecdsa"
-	"crypto/elliptic"
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
@@ -52,7 +51,7 @@ $ %s debug pubkey AxgWnTKXilBxQFfhKYuzdePur084I7BSkU+gIXVerusZ
 			}
 
 			// marshal uncompressed
-			uncompressedBytes := elliptic.Marshal(uncompressed.Curve, uncompressed.X, uncompressed.Y)
+			uncompressedBytes := ethcrypto.FromECDSAPub(uncompressed)
 
 			// secp256k1Obj
 			secp256k1Obj := secp256k1.PubKey(compressed)

@@ -9,6 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/common"
+	ethcrypto "github.com/maticnetwork/bor/crypto"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
@@ -76,4 +77,35 @@ func EventByID(abiObject *abi.ABI, sigdata []byte) *abi.Event {
 		}
 	}
 	return nil
+}
+
+// AppendPubkeyPrefix returns publickey in uncompressed format
+func AppendPubkeyPrefix(signerPubKey []byte) []byte {
+	// append prefix - "0x04" as heimdall uses publickey in uncompressed format. Refer below link
+	// https://superuser.com/questions/1465455/what-is-the-size-of-public-key-for-ecdsa-spec256r1
+	prefix := make([]byte, 1)
+	prefix[0] = byte(0x04)
+	signerPubKey = append(prefix[:], signerPubKey[:]...)
+	return signerPubKey
+}
+
+// DecompressPubKey decompress pub key
+func DecompressPubKey(compressed []byte) ([]byte, error) {
+	ecdsaPubkey, err := ethcrypto.DecompressPubkey(compressed)
+	if err != nil {
+		return nil, err
+	}
+	return ethcrypto.FromECDSAPub(ecdsaPubkey), nil
+}
+
+// CompressPubKey decompress pub key
+func CompressPubKey(uncompressedBytes []byte) ([]byte, error) {
+	if len(uncompressedBytes) == 64 {
+		uncompressedBytes = AppendPubkeyPrefix(uncompressedBytes)
+	}
+	uncompressed, err := ethcrypto.UnmarshalPubkey(uncompressedBytes)
+	if err != nil {
+		return nil, err
+	}
+	return ethcrypto.CompressPubkey(uncompressed), nil
 }

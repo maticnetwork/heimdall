@@ -5,16 +5,13 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/spf13/cobra"
-
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/bor/common"
 	ethcrypto "github.com/maticnetwork/bor/crypto"
-
-	// "github.com/maticnetwork/heimdall/bridge/setu/util"
+	"github.com/spf13/cobra"
 
 	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
 	"github.com/maticnetwork/heimdall/helper"
@@ -44,6 +41,32 @@ func GetTxCmd() *cobra.Command {
 
 	return stakingTxCmd
 }
+
+func validateAndCompressPubKey(pubkeyBytes []byte) ([]byte, error) {
+	// convert PubKey to bytes
+	if len(pubkeyBytes) == 64 {
+		pubkeyBytes = helper.AppendPubkeyPrefix(pubkeyBytes)
+	}
+
+	// check if key is uncompressed
+	if len(pubkeyBytes) == 65 {
+		var err error
+		pubkeyBytes, err = helper.CompressPubKey(pubkeyBytes)
+		if err != nil {
+			return nil, fmt.Errorf("Invalid uncompressed pubkey %s", err)
+		}
+	}
+
+	if len(pubkeyBytes) != 33 {
+		return nil, fmt.Errorf("Invalid compressed pubkey")
+	}
+
+	return pubkeyBytes, nil
+}
+
+//
+//
+//
 
 // ValidatorJoinTxCmd send validator join message
 func ValidatorJoinTxCmd() *cobra.Command {
@@ -80,17 +103,12 @@ func ValidatorJoinTxCmd() *cobra.Command {
 			}
 
 			// convert PubKey to bytes
-			compressedPubkeyBytes := common.FromHex(pubkeyStr)
-
-			ecdsaPubkey, err := ethcrypto.DecompressPubkey(compressedPubkeyBytes)
+			pubkeyBytes, err := validateAndCompressPubKey(common.FromHex(pubkeyStr))
 			if err != nil {
-				return err
+				return fmt.Errorf("Invalid uncompressed pubkey %s", err)
 			}
-			pubkeyBytes := ethcrypto.FromECDSAPub(ecdsaPubkey)
 
-			if len(pubkeyBytes) != 65 {
-				return fmt.Errorf("invalid public key length")
-			}
+			// create new pub key
 			pubkey := hmTypes.NewPubKey(pubkeyBytes)
 
 			// total stake amount
@@ -141,7 +159,11 @@ func ValidatorJoinTxCmd() *cobra.Command {
 				return fmt.Errorf("Invalid tx for validator join")
 			}
 
-			if !bytes.Equal(event.SignerPubkey, pubkey.Bytes()[1:]) {
+			expectedPubKey, err := helper.CompressPubKey(event.SignerPubkey)
+			if err != nil {
+				return err
+			}
+			if !bytes.Equal(expectedPubKey, pubkey.Bytes()) {
 				return fmt.Errorf("Public key mismatch with event log")
 			}
 
@@ -178,6 +200,9 @@ func ValidatorJoinTxCmd() *cobra.Command {
 	_ = cmd.MarkFlagRequired(FlagAmount)
 	_ = cmd.MarkFlagRequired(FlagSignerPubkey)
 	_ = cmd.MarkFlagRequired(FlagTxHash)
+
+	// add common tx flags to cmd
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }
@@ -217,9 +242,9 @@ func SignerUpdateTxCmd() *cobra.Command {
 			}
 
 			// convert PubKey to bytes
-			compressedPubkeyBytes := common.FromHex(pubkeyStr)
+			uncompressedPubkeyBytes := common.FromHex(pubkeyStr)
 
-			ecdsaPubkey, err := ethcrypto.DecompressPubkey(compressedPubkeyBytes)
+			ecdsaPubkey, err := ethcrypto.DecompressPubkey(uncompressedPubkeyBytes)
 			if err != nil {
 				return err
 			}
