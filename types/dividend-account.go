@@ -31,7 +31,7 @@ func (da *DividendAccount) String() string {
 	}
 
 	return fmt.Sprintf("DividendAccount{%s %v}", //nolint
-		da.User,
+		da.User.EthAddress(),
 		da.FeeAmount)
 }
 

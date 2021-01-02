@@ -11,7 +11,9 @@ var ModuleName = "common_errors"
 
 var (
 	// CodeInvalidMsg error code
-	CodeInvalidMsg uint32 = 1400
+	CodeInvalidMsg         uint32 = 1400
+	CodeErrDecodeEvent     uint32 = 2512
+	CodeWaitFrConfirmation uint32 = 2510
 )
 
 //custom error definitions

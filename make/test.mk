@@ -6,6 +6,10 @@
 test: test-unit
 test-all: test-unit test-race test-cover
 
+test-cover:
+	@export VERSION=$(VERSION); bash -x contrib/test_cover.sh
+.PHONY: test-cover
+
 TEST_PACKAGES=./...
 TEST_TARGETS := test-unit test-unit-proto test-race
 

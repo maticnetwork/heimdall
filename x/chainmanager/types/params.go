@@ -66,9 +66,9 @@ func NewParams(
 // nolint
 func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
-		paramtypes.NewParamSetPair(KeyMainchainTxConfirmations, &p.MainchainTxConfirmations, validateMainchainTxConfirmations),
-		paramtypes.NewParamSetPair(KeyMaticchainTxConfirmations, &p.MaticchainTxConfirmations, validateMaticchainTxConfirmations),
-		paramtypes.NewParamSetPair(KeyChainParams, &p.ChainParams, validateChainParams),
+		// paramtypes.NewParamSetPair(KeyMainchainTxConfirmations, &p.MainchainTxConfirmations, validateMainchainTxConfirmations),
+		// paramtypes.NewParamSetPair(KeyMaticchainTxConfirmations, &p.MaticchainTxConfirmations, validateMaticchainTxConfirmations),
+		// paramtypes.NewParamSetPair(KeyChainParams, &p.ChainParams, validateChainParams),
 	}
 }
 
@@ -78,7 +78,6 @@ func (p Params) Equal(p2 Params) bool {
 	bz1 := ModuleCdc.MustMarshalBinaryLengthPrefixed(&p)
 	bz2 := ModuleCdc.MustMarshalBinaryLengthPrefixed(&p2)
 	return bytes.Equal(bz1, bz2)
-	return true
 }
 
 // String implements the stringer interface.
