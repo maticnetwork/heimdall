@@ -17,7 +17,6 @@ import (
 	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	logger "github.com/tendermint/tendermint/libs/log"
-
 	tmTypes "github.com/tendermint/tendermint/types"
 )
 
@@ -64,7 +63,7 @@ const (
 
 	DefaultBorChainID string = "15001"
 
-	secretFilePerm = 0600
+	// secretFilePerm = 0600
 )
 
 var (

@@ -34,7 +34,7 @@ $ %s debug pubkey AxgWnTKXilBxQFfhKYuzdePur084I7BSkU+gIXVerusZ
 			}
 
 			var compressed []byte = pk
-			var uncompressed *ecdsa.PublicKey = nil
+			var uncompressed *ecdsa.PublicKey
 
 			// if uncompressed, get compressed
 			if len(pk) == 65 {
