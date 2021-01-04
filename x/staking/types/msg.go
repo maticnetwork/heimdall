@@ -30,11 +30,11 @@ func NewMsgValidatorJoin(
 ) MsgValidatorJoin {
 
 	return MsgValidatorJoin{
-		From:            from,
+		From:            from.String(),
 		ID:              hmTypes.NewValidatorID(id),
 		ActivationEpoch: activationEpoch,
 		Amount:          amount,
-		SignerPubKey:    pubkey,
+		SignerPubKey:    &pubkey,
 		TxHash:          txhash,
 		LogIndex:        logIndex,
 		BlockNumber:     blockNumber,
@@ -51,7 +51,7 @@ func (msg MsgValidatorJoin) Route() string {
 }
 
 func (msg MsgValidatorJoin) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.From}
+	return []sdk.AccAddress{sdk.AccAddress([]byte(msg.From))}
 }
 
 func (msg MsgValidatorJoin) GetSignBytes() []byte {
@@ -107,7 +107,7 @@ var _ sdk.Msg = &MsgStakeUpdate{}
 // NewMsgStakeUpdate represents stake update
 func NewMsgStakeUpdate(from sdk.AccAddress, id uint64, newAmount sdk.Int, txhash hmCommon.HeimdallHash, logIndex uint64, blockNumber uint64, nonce uint64) MsgStakeUpdate {
 	return MsgStakeUpdate{
-		From:        from,
+		From:        from.String(),
 		ID:          hmTypes.NewValidatorID(id),
 		NewAmount:   newAmount,
 		TxHash:      txhash,
@@ -126,7 +126,7 @@ func (msg MsgStakeUpdate) Route() string {
 }
 
 func (msg MsgStakeUpdate) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.From}
+	return []sdk.AccAddress{sdk.AccAddress([]byte(msg.From))}
 }
 
 func (msg MsgStakeUpdate) GetSignBytes() []byte {
@@ -184,9 +184,9 @@ func NewMsgSignerUpdate(
 	nonce uint64,
 ) MsgSignerUpdate {
 	return MsgSignerUpdate{
-		From:            from,
+		From:            from.String(),
 		ID:              hmTypes.NewValidatorID(id),
-		NewSignerPubKey: pubKey,
+		NewSignerPubKey: &pubKey,
 		TxHash:          txhash,
 		LogIndex:        logIndex,
 		BlockNumber:     blockNumber,
@@ -203,7 +203,7 @@ func (msg MsgSignerUpdate) Route() string {
 }
 
 func (msg MsgSignerUpdate) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.From}
+	return []sdk.AccAddress{sdk.AccAddress([]byte(msg.From))}
 }
 
 func (msg MsgSignerUpdate) GetSignBytes() []byte {
@@ -258,7 +258,7 @@ var _ sdk.Msg = &MsgValidatorExit{}
 
 func NewMsgValidatorExit(from sdk.AccAddress, id uint64, deactivationEpoch uint64, txhash hmCommon.HeimdallHash, logIndex uint64, blockNumber uint64, nonce uint64) MsgValidatorExit {
 	return MsgValidatorExit{
-		From:              from,
+		From:              from.String(),
 		ID:                hmTypes.NewValidatorID(id),
 		DeactivationEpoch: deactivationEpoch,
 		TxHash:            txhash,
@@ -277,7 +277,7 @@ func (msg MsgValidatorExit) Route() string {
 }
 
 func (msg MsgValidatorExit) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.From}
+	return []sdk.AccAddress{sdk.AccAddress([]byte(msg.From))}
 }
 
 func (msg MsgValidatorExit) GetSignBytes() []byte {
