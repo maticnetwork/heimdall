@@ -255,6 +255,22 @@ func NewHeimdallApp(
 		nil,
 	)
 
+	govRouter := govtypes.NewRouter()
+	app.GovKeeper = govkeeper.NewKeeper(
+		*legacyAmino,
+		keys[govtypes.StoreKey], // target store
+		app.GetSubspace(govtypes.ModuleName),
+		app.BankKeeper,
+		govRouter,
+		&app.StakingKeeper,
+	)
+
+	app.ClerkKeeper = clerkkeeper.NewKeeper(
+		*legacyAmino,
+		keys[govtypes.StoreKey], // target store
+		app.ChainKeeper,
+	)
+
 	// Contract caller
 	contractCallerObj, err := helper.NewContractCaller()
 	if err != nil {

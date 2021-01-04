@@ -5,8 +5,8 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 
-	hmTypes "github.com/maticnetwork/heimdall/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 // NewDeposit creates a new Deposit instance

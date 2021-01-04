@@ -28,18 +28,18 @@ var (
 
 type (
 	Keeper struct {
-		cdc         codec.LegacyAmino
-		storeKey    sdk.StoreKey
-		memKey      sdk.StoreKey
+		cdc      codec.LegacyAmino
+		storeKey sdk.StoreKey
+		// memKey      sdk.StoreKey
 		ChainKeeper chainKeeper.Keeper
 	}
 )
 
-func NewKeeper(cdc codec.LegacyAmino, storeKey, memKey sdk.StoreKey, chainKeeper chainKeeper.Keeper) Keeper {
+func NewKeeper(cdc codec.LegacyAmino, storeKey sdk.StoreKey, chainKeeper chainKeeper.Keeper) Keeper {
 	return Keeper{
-		cdc:         cdc,
-		storeKey:    storeKey,
-		memKey:      memKey,
+		cdc:      cdc,
+		storeKey: storeKey,
+		// memKey:      memKey,
 		ChainKeeper: chainKeeper,
 	}
 }

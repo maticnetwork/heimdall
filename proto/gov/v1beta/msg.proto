@@ -10,9 +10,9 @@ import "google/protobuf/any.proto";
 
 option go_package = "github.com/maticnetwork/heimdall/x/gov/types";
 
-option (gogoproto.sizer_all)       = false;
-option (gogoproto.marshaler_all)   = false;
-option (gogoproto.unmarshaler_all) = false;
+option (gogoproto.sizer_all)       = true;
+option (gogoproto.marshaler_all)   = true;
+option (gogoproto.unmarshaler_all) = true;
 
 // Msg defines the bank Msg service.
 service Msg {

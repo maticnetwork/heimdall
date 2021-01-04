@@ -5,8 +5,8 @@ import (
 	"math/big"
 	"time"
 
-	hmTypes "github.com/maticnetwork/heimdall/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 const (

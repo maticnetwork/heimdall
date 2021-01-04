@@ -15,9 +15,9 @@ import (
 
 type (
 	Keeper struct {
-		cdc           codec.LegacyAmino
-		storeKey      sdk.StoreKey
-		memKey        sdk.StoreKey
+		cdc      codec.LegacyAmino
+		storeKey sdk.StoreKey
+		// memKey        sdk.StoreKey
 		paramSubspace paramtypes.Subspace
 		bankKeeper    types.BankKeeper
 		router        types.Router
@@ -25,14 +25,14 @@ type (
 	}
 )
 
-func NewKeeper(cdc codec.LegacyAmino, storeKey, memKey sdk.StoreKey, bankKeeper types.BankKeeper, rtr types.Router, sk types.StakingKeeper) *Keeper {
-	return &Keeper{
-		cdc:        cdc,
-		storeKey:   storeKey,
-		memKey:     memKey,
-		bankKeeper: bankKeeper,
-		router:     rtr,
-		sk:         sk,
+func NewKeeper(cdc codec.LegacyAmino, storeKey sdk.StoreKey, paramSubspace paramtypes.Subspace, bankKeeper types.BankKeeper, rtr types.Router, sk types.StakingKeeper) Keeper {
+	return Keeper{
+		cdc:           cdc,
+		storeKey:      storeKey,
+		paramSubspace: paramSubspace,
+		bankKeeper:    bankKeeper,
+		router:        rtr,
+		sk:            sk,
 	}
 }
 
@@ -40,17 +40,17 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-func (keeper Keeper) SetDepositParams(ctx sdk.Context, depositParams types.DepositParams) {
-	keeper.paramSubspace.Set(ctx, types.ParamStoreKeyDepositParams, &depositParams)
-}
+// func (keeper Keeper) SetDepositParams(ctx sdk.Context, depositParams types.DepositParams) {
+// 	keeper.paramSubspace.Set(ctx, types.ParamStoreKeyDepositParams, &depositParams)
+// }
 
-func (keeper Keeper) SetVotingParams(ctx sdk.Context, votingParams types.VotingParams) {
-	keeper.paramSubspace.Set(ctx, types.ParamStoreKeyVotingParams, &votingParams)
-}
+// func (keeper Keeper) SetVotingParams(ctx sdk.Context, votingParams types.VotingParams) {
+// 	keeper.paramSubspace.Set(ctx, types.ParamStoreKeyVotingParams, &votingParams)
+// }
 
-func (keeper Keeper) SetTallyParams(ctx sdk.Context, tallyParams types.TallyParams) {
-	keeper.paramSubspace.Set(ctx, types.ParamStoreKeyTallyParams, &tallyParams)
-}
+// func (keeper Keeper) SetTallyParams(ctx sdk.Context, tallyParams types.TallyParams) {
+// 	keeper.paramSubspace.Set(ctx, types.ParamStoreKeyTallyParams, &tallyParams)
+// }
 
 // InsertActiveProposalQueue inserts a ProposalID into the active proposal queue at endTime
 func (keeper Keeper) InsertActiveProposalQueue(ctx sdk.Context, proposalID uint64, endTime time.Time) {
@@ -102,23 +102,23 @@ func (keeper Keeper) RemoveFromInactiveProposalQueue(ctx sdk.Context, proposalID
 	store.Delete(types.InactiveProposalQueueKey(proposalID, endTime))
 }
 
-// GetDepositParams returns the current DepositParams from the global param store
-func (keeper Keeper) GetDepositParams(ctx sdk.Context) types.DepositParams {
-	var depositParams types.DepositParams
-	keeper.paramSubspace.Get(ctx, types.ParamStoreKeyDepositParams, &depositParams)
-	return depositParams
-}
+// // GetDepositParams returns the current DepositParams from the global param store
+// func (keeper Keeper) GetDepositParams(ctx sdk.Context) types.DepositParams {
+// 	var depositParams types.DepositParams
+// 	keeper.paramSubspace.Get(ctx, types.ParamStoreKeyDepositParams, &depositParams)
+// 	return depositParams
+// }
 
-// GetVotingParams returns the current VotingParams from the global param store
-func (keeper Keeper) GetVotingParams(ctx sdk.Context) types.VotingParams {
-	var votingParams types.VotingParams
-	keeper.paramSubspace.Get(ctx, types.ParamStoreKeyVotingParams, &votingParams)
-	return votingParams
-}
+// // GetVotingParams returns the current VotingParams from the global param store
+// func (keeper Keeper) GetVotingParams(ctx sdk.Context) types.VotingParams {
+// 	var votingParams types.VotingParams
+// 	keeper.paramSubspace.Get(ctx, types.ParamStoreKeyVotingParams, &votingParams)
+// 	return votingParams
+// }
 
-// GetTallyParams returns the current TallyParam from the global param store
-func (keeper Keeper) GetTallyParams(ctx sdk.Context) types.TallyParams {
-	var tallyParams types.TallyParams
-	keeper.paramSubspace.Get(ctx, types.ParamStoreKeyTallyParams, &tallyParams)
-	return tallyParams
-}
+// // GetTallyParams returns the current TallyParam from the global param store
+// func (keeper Keeper) GetTallyParams(ctx sdk.Context) types.TallyParams {
+// 	var tallyParams types.TallyParams
+// 	keeper.paramSubspace.Get(ctx, types.ParamStoreKeyTallyParams, &tallyParams)
+// 	return tallyParams
+// }
