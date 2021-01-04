@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -58,7 +59,7 @@ func GetSequenceCmd() *cobra.Command {
 				return err
 			}
 
-			return cliCtx.PrintOutput(string(res.Sequence))
+			return cliCtx.PrintOutput(res.Sequence)
 			// fmt.Println("Success. Topup exists with sequence:", string(res))
 		},
 	}
@@ -67,8 +68,8 @@ func GetSequenceCmd() *cobra.Command {
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
 	cmd.Flags().Uint64(FlagLogIndex, 0, "--log-index=<log-index>")
 
-	flags.MarkFlagRequired(FlagTxHash)
-	flags.MarkFlagRequired(FlagLogIndex)
+	_ = cmd.MarkFlagRequired(FlagTxHash)
+	_ = cmd.MarkFlagRequired(FlagLogIndex)
 
 	return cmd
 }

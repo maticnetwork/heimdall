@@ -45,21 +45,22 @@ var _ types.MsgServer = msgServer{}
 // }
 
 // HandleMsgTopup handles topup event
-func Topup(goCtx context.Context, msg *types.MsgTopup) (*types.MsgTopupResponse, error) {
+func (k msgServer) Topup(goCtx context.Context, msg *types.MsgTopup) (*types.MsgTopupResponse, error) {
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	k.Logger(ctx).Debug("✅ Validating topup msg",
 		"User", msg.User,
 		"Fee", msg.Fee,
-		"txHash", hmTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
+		"txHash", msg.TxHash,
 		"logIndex", uint64(msg.LogIndex),
 		"blockNumber", msg.BlockNumber,
 	)
 
-	if !k.bk.GetSendEnabled(ctx) {
-		return types.ErrSendDisabled(k.Codespace()).Result()
-	}
+	// TODO: Is this still relevant now that we are using bank module of cosmos?
+	// if !k.bk.GetSendEnabled(ctx) {
+	// 	return types.ErrSendDisabled(k.Codespace()).Result()
+	// }
 
 	// sequence id
 	blockNumber := new(big.Int).SetUint64(msg.BlockNumber)
@@ -69,7 +70,7 @@ func Topup(goCtx context.Context, msg *types.MsgTopup) (*types.MsgTopupResponse,
 	// check if incoming tx already exists
 	if k.HasTopupSequence(ctx, sequence.String()) {
 		k.Logger(ctx).Error("Older invalid tx found")
-		return hmCommon.ErrOldTx(k.Codespace()).Result()
+		return nil, hmCommon.ErrOldTx
 	}
 
 	ctx.EventManager().EmitEvents(sdk.Events{
@@ -89,7 +90,7 @@ func Topup(goCtx context.Context, msg *types.MsgTopup) (*types.MsgTopupResponse,
 }
 
 // HandleMsgWithdrawFee handle withdraw fee event
-func WithdrawFee(goCtx context.Context, msg *types.MsgWithdrawFee) (*types.MsgWithdrawFeeResponse, error) {
+func (k msgServer) WithdrawFee(goCtx context.Context, msg *types.MsgWithdrawFee) (*types.MsgWithdrawFeeResponse, error) {
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	// partial withdraw

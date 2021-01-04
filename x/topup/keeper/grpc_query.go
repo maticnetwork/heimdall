@@ -3,12 +3,14 @@ package keeper
 import (
 	"context"
 
+	"math/big"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/maticnetwork/heimdall/helper"
+	hmTypes "github.com/maticnetwork/heimdall/types/common"
+	"github.com/maticnetwork/heimdall/x/topup/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/x/topup/types"
 )
 
 // Querier is used as Keeper will have duplicate methods if used directly, and gRPC names take precedence over keeper
@@ -35,21 +37,20 @@ func (k Querier) Sequence(c context.Context, req *types.QuerySequenceRequest) (*
 	logIndex := req.LogIndex
 	ctx := sdk.UnwrapSDKContext(c)
 
-	seq, found := k.GetTopupSequenceFromTxHashLogIndex(ctx, txHash, logIndex)
-	if !found {
-		return nil, status.Errorf(codes.NotFound, "Sequence with tx hash: %s and log index: %d not found", txHash, logIndex)
+	chainParams := k.chainKeeper.GetParams(ctx)
+	receipt, err := k.contractCaller.GetConfirmedTxReceipt(hmTypes.HexToHeimdallHash(txHash).EthHash(), chainParams.MainchainTxConfirmations)
+
+	if err != nil || receipt == nil {
+		return nil, status.Errorf(codes.NotFound, "Transaction is not confirmed yet. Please wait for sometime and try again")
 	}
-	return &types.QuerySequenceResponse{Sequence: &seq}, nil
+
+	sequence := new(big.Int).Mul(receipt.BlockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
+	sequence.Add(sequence, new(big.Int).SetUint64(logIndex))
+
+	if !k.HasTopupSequence(ctx, sequence.String()) {
+		k.Logger(ctx).Error("No sequence exists: %s %s", txHash, logIndex)
+		return nil, nil
+	}
+
+	return &types.QuerySequenceResponse{Sequence: sequence}, nil
 }
-
-// // ValidatorSet queries validatorSet info
-// func (k Querier) ValidatorSet(c context.Context, req *types.QueryValidatorSetRequest) (*types.QueryValidatorSetResponse, error) {
-// 	if req == nil {
-// 		return nil, status.Error(codes.InvalidArgument, "empty request")
-// 	}
-
-// 	ctx := sdk.UnwrapSDKContext(c)
-// 	validatorSet := k.GetValidatorSet(ctx)
-
-// 	return &types.QueryValidatorSetResponse{ValidatorSet: validatorSet}, nil
-// }

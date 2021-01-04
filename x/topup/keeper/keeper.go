@@ -53,9 +53,6 @@ func NewKeeper(
 	bankKeeper bankKeeper.Keeper,
 	stakingKeeper stakingKeeper.Keeper,
 ) Keeper {
-	if !paramSpace.HasKeyTable() {
-		paramSpace = paramSpace.WithKeyTable(types.ParamKeyTable())
-	}
 	return Keeper{
 		cdc:         cdc,
 		key:         storeKey,
@@ -73,10 +70,6 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 //
 // Topup methods
 //
-
-func (keeper *Keeper) GetTopupSequenceFromTxHashLogIndex(ctx sdk.Context, txHash string, logIndex uint64) (sequence hmTypes.Sequence, ok bool) {
-
-}
 
 // GetTopupSequenceKey drafts topup sequence for address
 func GetTopupSequenceKey(sequence string) []byte {
@@ -132,7 +125,7 @@ func GetDividendAccountMapKey(address []byte) []byte {
 func (k *Keeper) AddDividendAccount(ctx sdk.Context, dividendAccount hmTypes.DividendAccount) error {
 	store := ctx.KVStore(k.key)
 	// marshall dividend account
-	bz, err := hmTypes.MarshallDividendAccount(k.cdc, dividendAccount)
+	bz, err := hmTypes.MarshallDividendAccount(k.cdc, &dividendAccount)
 	if err != nil {
 		return err
 	}
@@ -183,7 +176,7 @@ func (k *Keeper) GetAllDividendAccounts(ctx sdk.Context) (dividendAccounts []hmT
 }
 
 // AddFeeToDividendAccount adds fee to dividend account for withdrawal
-func (k *Keeper) AddFeeToDividendAccount(ctx sdk.Context, userAddress sdk.AccAddress, fee *big.Int) sdk.Error {
+func (k *Keeper) AddFeeToDividendAccount(ctx sdk.Context, userAddress sdk.AccAddress, fee *big.Int) error {
 	// Get or create dividend account
 	var dividendAccount hmTypes.DividendAccount
 
