@@ -1,7 +1,7 @@
 package gov
 
 import (
-	"fmt"
+	// "fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/maticnetwork/heimdall/x/gov/keeper"
@@ -9,7 +9,7 @@ import (
 )
 
 // InitGenesis - store genesis parameters
-func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
+func InitGenesis(ctx sdk.Context, ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keeper, data types.GenesisState) {
 
 	k.SetProposalID(ctx, data.StartingProposalId)
 	// TODO - check this
@@ -19,10 +19,10 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
 
 	// TODO - check this
 	// check if the deposits pool account exists
-	moduleAcc := k.GetGovernanceAccount(ctx)
-	if moduleAcc == nil {
-		panic(fmt.Sprintf("%s module account has not been set", types.ModuleName))
-	}
+	// moduleAcc := k.GetGovernanceAccount(ctx)
+	// if moduleAcc == nil {
+	// 	panic(fmt.Sprintf("%s module account has not been set", types.ModuleName))
+	// }
 
 	var totalDeposits sdk.Coins
 	for _, deposit := range data.Deposits {
@@ -46,11 +46,12 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
 
 	// TODO - check this
 	// add coins if not provided on genesis
-	// if moduleAcc.GetCoins().IsZero() {
-	// 	if err := moduleAcc.SetCoins(totalDeposits); err != nil {
+	// if bk.GetAllBalances(ctx, moduleAcc.GetAddress()).IsZero() {
+	// 	if err := bk.SetBalances(ctx, moduleAcc.GetAddress(), totalDeposits); err != nil {
 	// 		panic(err)
 	// 	}
-	// 	k.authKeeper.SetModuleAccount(ctx, moduleAcc)
+
+	// 	ak.SetModuleAccount(ctx, moduleAcc)
 	// }
 }
 
