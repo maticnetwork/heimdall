@@ -267,7 +267,7 @@ func NewHeimdallApp(
 	)
 
 	app.ClerkKeeper = clerkkeeper.NewKeeper(
-		*legacyAmino,
+		appCodec,
 		keys[govtypes.StoreKey], // target store
 		app.ChainKeeper,
 	)

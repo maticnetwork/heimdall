@@ -28,14 +28,14 @@ var (
 
 type (
 	Keeper struct {
-		cdc      codec.LegacyAmino
+		cdc      codec.BinaryMarshaler
 		storeKey sdk.StoreKey
 		// memKey      sdk.StoreKey
 		ChainKeeper chainKeeper.Keeper
 	}
 )
 
-func NewKeeper(cdc codec.LegacyAmino, storeKey sdk.StoreKey, chainKeeper chainKeeper.Keeper) Keeper {
+func NewKeeper(cdc codec.BinaryMarshaler, storeKey sdk.StoreKey, chainKeeper chainKeeper.Keeper) Keeper {
 	return Keeper{
 		cdc:      cdc,
 		storeKey: storeKey,
@@ -98,7 +98,7 @@ func (k *Keeper) IterateRecordsAndApplyFn(ctx sdk.Context, f func(record types.E
 	for ; iterator.Valid(); iterator.Next() {
 		// unmarshall span
 		var result types.EventRecord
-		if err := k.cdc.UnmarshalBinaryBare(iterator.Value(), result); err != nil {
+		if err := k.cdc.UnmarshalBinaryBare(iterator.Value(), &result); err != nil {
 			k.Logger(ctx).Error("IterateRecordsAndApplyFn | UnmarshalBinaryBare", "error", err)
 			return
 		}
@@ -112,7 +112,7 @@ func (k *Keeper) IterateRecordsAndApplyFn(ctx sdk.Context, f func(record types.E
 // SetEventRecordWithID adds record to store with ID
 func (k *Keeper) SetEventRecordWithID(ctx sdk.Context, record types.EventRecord) error {
 	key := GetEventRecordKey(record.Id)
-	value, err := k.cdc.MarshalBinaryBare(record)
+	value, err := k.cdc.MarshalBinaryBare(&record)
 	if err != nil {
 		k.Logger(ctx).Error("Error marshalling record", "error", err)
 		return err
