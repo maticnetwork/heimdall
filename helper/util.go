@@ -72,7 +72,7 @@ func GetHeimdallServerEndpoint(endpoint string) string {
 }
 
 // FetchFromAPI fetches data from any URL
-func FetchFromAPI(cliCtx cliContext.CLIContext, URL string) (result rest.ResponseWithHeight, err error) {
+func FetchFromAPI(cliCtx client.Context, URL string) (result rest.ResponseWithHeight, err error) {
 	resp, err := http.Get(URL)
 	if err != nil {
 		return result, err
@@ -87,7 +87,7 @@ func FetchFromAPI(cliCtx cliContext.CLIContext, URL string) (result rest.Respons
 		}
 		// unmarshall data from buffer
 		var response rest.ResponseWithHeight
-		if err := cliCtx.Codec.UnmarshalJSON(body, &response); err != nil {
+		if err := cliCtx.JSONMarshaler.UnmarshalJSON(body, response); err != nil {
 			return result, err
 		}
 		return response, nil
@@ -95,6 +95,8 @@ func FetchFromAPI(cliCtx cliContext.CLIContext, URL string) (result rest.Respons
 
 	Logger.Debug("Error while fetching data from URL", "status", resp.StatusCode, "URL", URL)
 	return result, fmt.Errorf("Error while fetching data from url: %v, status: %v", URL, resp.StatusCode)
+}
+
 // GetFromAddress get from address
 func GetFromAddress(cliCtx client.Context) sdk.AccAddress {
 	fromAddress := cliCtx.GetFromAddress()
