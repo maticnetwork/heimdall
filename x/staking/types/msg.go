@@ -55,7 +55,8 @@ func (msg MsgValidatorJoin) Route() string {
 }
 
 func (msg MsgValidatorJoin) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{sdk.AccAddress([]byte(msg.From))}
+	addr, _ := sdk.AccAddressFromHex(msg.From)
+	return []sdk.AccAddress{addr}
 }
 
 func (msg MsgValidatorJoin) GetSignBytes() []byte {
@@ -131,7 +132,8 @@ func (msg MsgStakeUpdate) Route() string {
 }
 
 func (msg MsgStakeUpdate) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{sdk.AccAddress([]byte(msg.From))}
+	addr, _ := sdk.AccAddressFromHex(msg.From)
+	return []sdk.AccAddress{addr}
 }
 
 func (msg MsgStakeUpdate) GetSignBytes() []byte {
@@ -209,7 +211,8 @@ func (msg MsgSignerUpdate) Route() string {
 }
 
 func (msg MsgSignerUpdate) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{sdk.AccAddress([]byte(msg.From))}
+	addr, _ := sdk.AccAddressFromHex(msg.From)
+	return []sdk.AccAddress{addr}
 }
 
 func (msg MsgSignerUpdate) GetSignBytes() []byte {
@@ -284,7 +287,8 @@ func (msg MsgValidatorExit) Route() string {
 }
 
 func (msg MsgValidatorExit) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{sdk.AccAddress([]byte(msg.From))}
+	addr, _ := sdk.AccAddressFromHex(msg.From)
+	return []sdk.AccAddress{addr}
 }
 
 func (msg MsgValidatorExit) GetSignBytes() []byte {
