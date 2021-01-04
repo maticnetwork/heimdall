@@ -1,9 +1,13 @@
 package types
 
 import (
+	"bytes"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	common "github.com/maticnetwork/heimdall/common"
+	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmCommon "github.com/maticnetwork/heimdall/types/common"
 )
@@ -63,17 +67,18 @@ func (msg MsgValidatorJoin) GetSignBytes() []byte {
 }
 
 func (msg MsgValidatorJoin) ValidateBasic() error {
-	// if msg.ID == 0 {
-	// 	return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator ID %v", msg.ID)
-	// }
 
-	// if bytes.Equal(msg.SignerPubKey.Bytes(), helper.ZeroPubKey.Bytes()) {
-	// 	return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid pub key %v", msg.SignerPubKey.String())
-	// }
+	if msg.ID == 0 {
+		return common.ErrInvalidMsg
+	}
 
-	// if msg.From.Empty() {
-	// 	return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.From.String())
-	// }
+	if msg.From == "" {
+		return common.ErrInvalidMsg
+	}
+
+	if bytes.Equal(msg.SignerPubKey.Bytes(), helper.ZeroPubKey.Bytes()) {
+		return common.ErrInvalidMsg
+	}
 
 	return nil
 }
@@ -138,13 +143,14 @@ func (msg MsgStakeUpdate) GetSignBytes() []byte {
 }
 
 func (msg MsgStakeUpdate) ValidateBasic() error {
-	// if msg.ID == 0 {
-	// 	return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator ID %v", msg.ID)
-	// }
 
-	// if msg.From.Empty() {
-	// 	return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.From.String())
-	// }
+	if msg.ID == 0 {
+		return common.ErrInvalidMsg
+	}
+
+	if msg.From == "" {
+		return common.ErrInvalidMsg
+	}
 
 	return nil
 }
@@ -215,17 +221,18 @@ func (msg MsgSignerUpdate) GetSignBytes() []byte {
 }
 
 func (msg MsgSignerUpdate) ValidateBasic() error {
-	// if msg.ID == 0 {
-	// 	return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator ID %v", msg.ID)
-	// }
 
-	// if msg.From.Empty() {
-	// 	return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.From.String())
-	// }
+	if msg.ID == 0 {
+		return common.ErrInvalidMsg
+	}
 
-	// if bytes.Equal(msg.NewSignerPubKey.Bytes(), helper.ZeroPubKey.Bytes()) {
-	// 	return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid pub key %v", msg.NewSignerPubKey.String())
-	// }
+	if msg.From == "" {
+		return common.ErrInvalidMsg
+	}
+
+	if bytes.Equal(msg.NewSignerPubKey.Bytes(), helper.ZeroPubKey.Bytes()) {
+		return common.ErrInvalidMsg
+	}
 
 	return nil
 }
@@ -289,13 +296,13 @@ func (msg MsgValidatorExit) GetSignBytes() []byte {
 }
 
 func (msg MsgValidatorExit) ValidateBasic() error {
-	// if msg.ID == 0 {
-	// 	return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator ID %v", msg.ID)
-	// }
+	if msg.ID == 0 {
+		return common.ErrInvalidMsg
+	}
 
-	// if msg.From.Empty() {
-	// 	return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.From.String())
-	// }
+	if msg.From == "" {
+		return common.ErrInvalidMsg
+	}
 
 	return nil
 }
