@@ -69,27 +69,6 @@ func (keeper Keeper) SetProposal(ctx sdk.Context, proposal types.Proposal) {
 	store.Set(types.ProposalKey(proposal.ProposalId), bz)
 }
 
-// // DeleteProposal deletes a proposal from store
-// func (keeper Keeper) DeleteProposal(ctx sdk.Context, proposalID uint64) {
-// 	store := ctx.KVStore(keeper.storeKey)
-// 	proposal, ok := keeper.GetProposal(ctx, proposalID)
-// 	if !ok {
-// 		panic(fmt.Sprintf("couldn't find proposal with id#%d", proposalID))
-// 	}
-// 	keeper.RemoveFromInactiveProposalQueue(ctx, proposalID, proposal.DepositEndTime)
-// 	keeper.RemoveFromActiveProposalQueue(ctx, proposalID, proposal.VotingEndTime)
-// 	store.Delete(types.ProposalKey(proposalID))
-// }
-
-// // GetProposals returns all the proposals from store
-// func (keeper Keeper) GetProposals(ctx sdk.Context) (proposals types.Proposals) {
-// 	keeper.IterateProposals(ctx, func(proposal types.Proposal) bool {
-// 		proposals = append(proposals, proposal)
-// 		return false
-// 	})
-// 	return
-// }
-
 // GetProposalsFiltered get Proposals from store by ProposalID
 // voterAddr will filter proposals by whether or not that address has voted on them
 // depositorAddr will filter proposals by whether or not that address has deposited to them

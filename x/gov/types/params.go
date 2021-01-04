@@ -24,8 +24,8 @@ func ParamKeyTable() paramtypes.KeyTable {
 func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
 		paramtypes.NewParamSetPair(ParamStoreKeyDepositParams, &p.DepositParams, validateDepositParams),
-		paramtypes.NewParamSetPair(ParamStoreKeyVotingParams, &p.VotingParams, validateDepositParams),
-		paramtypes.NewParamSetPair(ParamStoreKeyTallyParams, &p.TallyParams, validateDepositParams),
+		paramtypes.NewParamSetPair(ParamStoreKeyVotingParams, &p.VotingParams, validateTallyParams),
+		paramtypes.NewParamSetPair(ParamStoreKeyTallyParams, &p.TallyParams, validateVotingParams),
 	}
 }
 

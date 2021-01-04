@@ -42,12 +42,6 @@ func NewProposal(content Content, id uint64, submitTime, depositEndTime time.Tim
 	return p, nil
 }
 
-// String implements stringer interface
-// func (p Proposal) String() string {
-// 	out, _ := yaml.Marshal(p)
-// 	return string(out)
-// }
-
 // GetContent returns the proposal Content
 func (p Proposal) GetContent() Content {
 	content, ok := p.Content.GetCachedValue().(Content)

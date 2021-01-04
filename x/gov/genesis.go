@@ -16,6 +16,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
 	k.SetVotingParams(ctx, data.VotingParams)
 	k.SetTallyParams(ctx, data.TallyParams)
 
+	// TODO - check this
 	// check if the deposits pool account exists
 	// moduleAcc := k.GetGovernanceAccount(ctx)
 	// if moduleAcc == nil {
@@ -42,6 +43,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
 		k.SetProposal(ctx, proposal)
 	}
 
+	// TODO - check this
 	// add coins if not provided on genesis
 	// if moduleAcc.GetCoins().IsZero() {
 	// 	if err := moduleAcc.SetCoins(totalDeposits); err != nil {

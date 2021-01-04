@@ -78,15 +78,6 @@ func (keeper Keeper) AddDeposit(ctx sdk.Context, proposalID uint64, depositorAdd
 	return nil, activatedVotingPeriod
 }
 
-// // GetAllDeposits returns all the deposits from the store
-// func (keeper Keeper) GetAllDeposits(ctx sdk.Context) (deposits types.Deposits) {
-// 	keeper.IterateAllDeposits(ctx, func(deposit types.Deposit) bool {
-// 		deposits = append(deposits, deposit)
-// 		return false
-// 	})
-// 	return
-// }
-
 // GetDeposits returns all the deposits from a proposal
 func (keeper Keeper) GetDeposits(ctx sdk.Context, proposalID uint64) (deposits types.Deposits) {
 	keeper.IterateDeposits(ctx, proposalID, func(deposit types.Deposit) bool {
@@ -101,23 +92,3 @@ func (keeper Keeper) GetDepositsIterator(ctx sdk.Context, proposalID uint64) sdk
 	store := ctx.KVStore(keeper.storeKey)
 	return sdk.KVStorePrefixIterator(store, types.DepositsKey(proposalID))
 }
-
-// // RefundDeposits refunds and deletes all the deposits on a specific proposal
-// func (keeper Keeper) RefundDeposits(ctx sdk.Context, proposalID uint64) {
-// 	store := ctx.KVStore(keeper.storeKey)
-
-// 	keeper.IterateDeposits(ctx, proposalID, func(deposit types.Deposit) bool {
-// 		v, ok := keeper.sk.GetValidatorFromValID(ctx, deposit.Depositor)
-// 		if !ok {
-// 			panic(errors.New("Not able to find validator by validator id"))
-// 		}
-
-// 		err := keeper.supplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, v.Signer, deposit.Amount)
-// 		if err != nil {
-// 			panic(err)
-// 		}
-
-// 		store.Delete(types.DepositKey(proposalID, deposit.Depositor))
-// 		return false
-// 	})
-// }
