@@ -65,7 +65,7 @@ func (keeper Keeper) GetProposal(ctx sdk.Context, proposalID uint64) (proposal t
 // SetProposal set a proposal to store
 func (keeper Keeper) SetProposal(ctx sdk.Context, proposal types.Proposal) {
 	store := ctx.KVStore(keeper.storeKey)
-	bz := keeper.cdc.MustMarshalBinaryLengthPrefixed(proposal)
+	bz := keeper.cdc.MustMarshalBinaryLengthPrefixed(&proposal)
 	store.Set(types.ProposalKey(proposal.ProposalId), bz)
 }
 
@@ -123,15 +123,15 @@ func (keeper Keeper) GetProposalID(ctx sdk.Context) (proposalID uint64, err erro
 	if bz == nil {
 		return 0, types.ErrInvalidGenesis
 	}
-	keeper.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &proposalID)
+
+	proposalID = types.GetProposalIDFromBytes(bz)
 	return proposalID, nil
 }
 
-// Set the proposal ID
+// SetProposalID sets the new proposal ID to the store
 func (keeper Keeper) SetProposalID(ctx sdk.Context, proposalID uint64) {
 	store := ctx.KVStore(keeper.storeKey)
-	bz := keeper.cdc.MustMarshalBinaryLengthPrefixed(proposalID)
-	store.Set(types.ProposalIDKey, bz)
+	store.Set(types.ProposalIDKey, types.GetProposalIDBytes(proposalID))
 }
 
 func (keeper Keeper) ActivateVotingPeriod(ctx sdk.Context, proposal types.Proposal) {

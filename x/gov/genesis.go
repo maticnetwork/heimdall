@@ -2,6 +2,8 @@ package gov
 
 import (
 	// "fmt"
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/maticnetwork/heimdall/x/gov/keeper"
@@ -12,17 +14,15 @@ import (
 func InitGenesis(ctx sdk.Context, ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keeper, data types.GenesisState) {
 
 	k.SetProposalID(ctx, data.StartingProposalId)
-	// TODO - check this
-	// k.SetDepositParams(ctx, data.DepositParams)
-	// k.SetVotingParams(ctx, data.VotingParams)
-	// k.SetTallyParams(ctx, data.TallyParams)
+	fmt.Println(data.DepositParams)
+	k.SetDepositParams(ctx, data.DepositParams)
+	k.SetVotingParams(ctx, data.VotingParams)
+	k.SetTallyParams(ctx, data.TallyParams)
 
-	// TODO - check this
-	// check if the deposits pool account exists
-	// moduleAcc := k.GetGovernanceAccount(ctx)
-	// if moduleAcc == nil {
-	// 	panic(fmt.Sprintf("%s module account has not been set", types.ModuleName))
-	// }
+	moduleAcc := k.GetGovernanceAccount(ctx)
+	if moduleAcc == nil {
+		panic(fmt.Sprintf("%s module account has not been set", types.ModuleName))
+	}
 
 	var totalDeposits sdk.Coins
 	for _, deposit := range data.Deposits {

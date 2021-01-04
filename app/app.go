@@ -98,6 +98,7 @@ var (
 	// module account permissions
 	maccPerms = map[string][]string{
 		authtypes.FeeCollectorName: nil,
+		govtypes.ModuleName:        {},
 	}
 
 	// module accounts that are allowed to receive tokens
@@ -255,13 +256,12 @@ func NewHeimdallApp(
 		nil,
 	)
 
-	govRouter := govtypes.NewRouter()
 	app.GovKeeper = govkeeper.NewKeeper(
-		*legacyAmino,
+		appCodec,
 		keys[govtypes.StoreKey], // target store
 		app.GetSubspace(govtypes.ModuleName),
 		app.BankKeeper,
-		govRouter,
+		govtypes.NewRouter(),
 		&app.StakingKeeper,
 		app.AccountKeeper,
 	)
@@ -300,8 +300,8 @@ func NewHeimdallApp(
 		chainmanager.NewAppModule(appCodec, app.ChainKeeper),
 		staking.NewAppModule(appCodec, app.StakingKeeper, &app.caller),
 		clerk.NewAppModule(appCodec, app.ClerkKeeper, &app.caller),
-		params.NewAppModule(app.ParamsKeeper),
 		gov.NewAppModule(appCodec, app.GovKeeper, app.AccountKeeper, app.BankKeeper),
+		params.NewAppModule(app.ParamsKeeper),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -481,9 +481,9 @@ func (app *HeimdallApp) LoadHeight(height int64) error {
 // ModuleAccountAddrs returns all the app's module account addresses.
 func (app *HeimdallApp) ModuleAccountAddrs() map[string]bool {
 	modAccAddrs := make(map[string]bool)
-	// for acc := range maccPerms {
-	// 	modAccAddrs[authtypes.NewModuleAddress(acc).String()] = true
-	// }
+	for acc := range maccPerms {
+		modAccAddrs[authtypes.NewModuleAddress(acc).String()] = true
+	}
 
 	return modAccAddrs
 }

@@ -16,7 +16,7 @@ import (
 
 type (
 	Keeper struct {
-		cdc           codec.LegacyAmino
+		cdc           codec.BinaryMarshaler
 		storeKey      sdk.StoreKey
 		paramSubspace paramtypes.Subspace
 		bankKeeper    types.BankKeeper
@@ -26,16 +26,24 @@ type (
 	}
 )
 
-func NewKeeper(cdc codec.LegacyAmino, storeKey sdk.StoreKey, paramSubspace paramtypes.Subspace, bankKeeper types.BankKeeper, rtr types.Router, sk types.StakingKeeper, authKeeper types.AccountKeeper) Keeper {
+func NewKeeper(
+	cdc codec.BinaryMarshaler, storeKey sdk.StoreKey, paramSubspace paramtypes.Subspace,
+	bankKeeper types.BankKeeper, rtr types.Router, sk types.StakingKeeper,
+	authKeeper types.AccountKeeper,
+) Keeper {
 	// ensure governance module account is set
-	// if addr := authKeeper.GetModuleAddress(types.ModuleName); addr == nil {
-	// 	panic(fmt.Sprintf("%s module account has not been set", types.ModuleName))
-	// }
+	if addr := authKeeper.GetModuleAddress(types.ModuleName); addr == nil {
+		panic(fmt.Sprintf("%s module account has not been set", types.ModuleName))
+	}
 
 	// It is vital to seal the governance proposal router here as to not allow
 	// further handlers to be registered after the keeper is created since this
 	// could create invalid or non-deterministic behavior.
 	rtr.Seal()
+	if !paramSubspace.HasKeyTable() {
+		paramSubspace = paramSubspace.WithKeyTable(types.ParamKeyTable())
+	}
+
 	return Keeper{
 		cdc:           cdc,
 		storeKey:      storeKey,
@@ -54,14 +62,15 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 // InsertActiveProposalQueue inserts a ProposalID into the active proposal queue at endTime
 func (keeper Keeper) InsertActiveProposalQueue(ctx sdk.Context, proposalID uint64, endTime time.Time) {
 	store := ctx.KVStore(keeper.storeKey)
-	bz := keeper.cdc.MustMarshalBinaryLengthPrefixed(proposalID)
+	bz := types.GetProposalIDBytes(proposalID)
 	store.Set(types.ActiveProposalQueueKey(proposalID, endTime), bz)
 }
 
 // InsertInactiveProposalQueue Inserts a ProposalID into the inactive proposal queue at endTime
 func (keeper Keeper) InsertInactiveProposalQueue(ctx sdk.Context, proposalID uint64, endTime time.Time) {
+
 	store := ctx.KVStore(keeper.storeKey)
-	bz := keeper.cdc.MustMarshalBinaryLengthPrefixed(proposalID)
+	bz := types.GetProposalIDBytes(proposalID)
 	store.Set(types.InactiveProposalQueueKey(proposalID, endTime), bz)
 }
 

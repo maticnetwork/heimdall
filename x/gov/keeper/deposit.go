@@ -23,7 +23,7 @@ func (keeper Keeper) GetDeposit(ctx sdk.Context, proposalID uint64, validator hm
 
 func (keeper Keeper) SetDeposit(ctx sdk.Context, proposalID uint64, validator hmTypes.ValidatorID, deposit types.Deposit) {
 	store := ctx.KVStore(keeper.storeKey)
-	bz := keeper.cdc.MustMarshalBinaryLengthPrefixed(deposit)
+	bz := keeper.cdc.MustMarshalBinaryLengthPrefixed(&deposit)
 	store.Set(types.DepositKey(proposalID, validator), bz)
 }
 
