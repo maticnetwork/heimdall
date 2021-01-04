@@ -263,6 +263,7 @@ func NewHeimdallApp(
 		app.BankKeeper,
 		govRouter,
 		&app.StakingKeeper,
+		app.AccountKeeper,
 	)
 
 	app.ClerkKeeper = clerkkeeper.NewKeeper(

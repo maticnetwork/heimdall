@@ -8,6 +8,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
 	"github.com/maticnetwork/heimdall/x/gov/types"
@@ -15,17 +16,26 @@ import (
 
 type (
 	Keeper struct {
-		cdc      codec.LegacyAmino
-		storeKey sdk.StoreKey
-		// memKey        sdk.StoreKey
+		cdc           codec.LegacyAmino
+		storeKey      sdk.StoreKey
 		paramSubspace paramtypes.Subspace
 		bankKeeper    types.BankKeeper
 		router        types.Router
 		sk            types.StakingKeeper
+		authKeeper    types.AccountKeeper
 	}
 )
 
-func NewKeeper(cdc codec.LegacyAmino, storeKey sdk.StoreKey, paramSubspace paramtypes.Subspace, bankKeeper types.BankKeeper, rtr types.Router, sk types.StakingKeeper) Keeper {
+func NewKeeper(cdc codec.LegacyAmino, storeKey sdk.StoreKey, paramSubspace paramtypes.Subspace, bankKeeper types.BankKeeper, rtr types.Router, sk types.StakingKeeper, authKeeper types.AccountKeeper) Keeper {
+	// ensure governance module account is set
+	// if addr := authKeeper.GetModuleAddress(types.ModuleName); addr == nil {
+	// 	panic(fmt.Sprintf("%s module account has not been set", types.ModuleName))
+	// }
+
+	// It is vital to seal the governance proposal router here as to not allow
+	// further handlers to be registered after the keeper is created since this
+	// could create invalid or non-deterministic behavior.
+	rtr.Seal()
 	return Keeper{
 		cdc:           cdc,
 		storeKey:      storeKey,
@@ -33,6 +43,7 @@ func NewKeeper(cdc codec.LegacyAmino, storeKey sdk.StoreKey, paramSubspace param
 		bankKeeper:    bankKeeper,
 		router:        rtr,
 		sk:            sk,
+		authKeeper:    authKeeper,
 	}
 }
 
@@ -88,4 +99,9 @@ func (keeper Keeper) IterateDeposits(ctx sdk.Context, proposalID uint64, cb func
 func (keeper Keeper) RemoveFromInactiveProposalQueue(ctx sdk.Context, proposalID uint64, endTime time.Time) {
 	store := ctx.KVStore(keeper.storeKey)
 	store.Delete(types.InactiveProposalQueueKey(proposalID, endTime))
+}
+
+// GetGovernanceAccount returns the governance ModuleAccount
+func (keeper Keeper) GetGovernanceAccount(ctx sdk.Context) authtypes.ModuleAccountI {
+	return keeper.authKeeper.GetModuleAccount(ctx, types.ModuleName)
 }
