@@ -6,6 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
+	tmprototypes "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	"github.com/maticnetwork/heimdall/types"
 )
@@ -14,8 +15,8 @@ var testSideTxHandler = func(_ sdk.Context, _ sdk.Msg) abci.ResponseDeliverSideT
 	return abci.ResponseDeliverSideTx{}
 }
 
-var testPostTxHandler = func(_ sdk.Context, _ sdk.Msg, _ abci.SideTxResultType) sdk.Result {
-	return sdk.Result{}
+var testPostTxHandler = func(_ sdk.Context, _ sdk.Msg, _ tmprototypes.SideTxResultType) (*sdk.Result, error) {
+	return &sdk.Result{}, nil
 }
 
 func TestSideRouter(t *testing.T) {
@@ -24,11 +25,6 @@ func TestSideRouter(t *testing.T) {
 		SideTxHandler: testSideTxHandler,
 		PostTxHandler: testPostTxHandler,
 	}
-
-	// require panic on invalid route
-	require.Panics(t, func() {
-		rtr.AddRoute("*", handler)
-	})
 
 	rtr.AddRoute("testRoute", handler)
 	h := rtr.GetRoute("testRoute")

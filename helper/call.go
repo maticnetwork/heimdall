@@ -7,12 +7,14 @@ import (
 	"math/big"
 	"strings"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/common"
 	ethTypes "github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/bor/ethclient"
 	"github.com/maticnetwork/bor/rpc"
+
 	"github.com/maticnetwork/heimdall/contracts/erc20"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/slashmanager"
@@ -35,8 +37,8 @@ type IContractCaller interface {
 	GetLastChildBlock(rootChainInstance *rootchain.Rootchain) (uint64, error)
 	CurrentHeaderBlock(rootChainInstance *rootchain.Rootchain, childBlockInterval uint64) (uint64, error)
 	GetBalance(address common.Address) (*big.Int, error)
-	SendCheckpoint(sigedData []byte, sigs []byte, rootchainAddress common.Address, rootChainInstance *rootchain.Rootchain) (err error)
-	SendTick(sigedData []byte, sigs []byte, slashManagerAddress common.Address, slashManagerInstance *slashmanager.Slashmanager) (err error)
+	// SendCheckpoint(sigedData []byte, sigs []byte, rootchainAddress common.Address, rootChainInstance *rootchain.Rootchain) (err error)
+	// SendTick(sigedData []byte, sigs []byte, slashManagerAddress common.Address, slashManagerInstance *slashmanager.Slashmanager) (err error)
 	GetCheckpointSign(txHash common.Hash) ([]byte, []byte, []byte, error)
 	GetMainChainBlock(*big.Int) (*ethTypes.Header, error)
 	GetMaticChainBlock(*big.Int) (*ethTypes.Header, error)
@@ -48,12 +50,12 @@ type IContractCaller interface {
 	DecodeNewHeaderBlockEvent(common.Address, *ethTypes.Receipt, uint64) (*rootchain.RootchainNewHeaderBlock, error)
 	// decode validator events
 	DecodeValidatorTopupFeesEvent(common.Address, *ethTypes.Receipt, uint64) (*stakinginfo.StakinginfoTopUpFee, error)
-	DecodeValidatorJoinEvent(common.Address, *ethTypes.Receipt, uint64) (*stakinginfo.StakinginfoStaked, error)
-	DecodeValidatorStakeUpdateEvent(common.Address, *ethTypes.Receipt, uint64) (*stakinginfo.StakinginfoStakeUpdate, error)
-	DecodeValidatorExitEvent(common.Address, *ethTypes.Receipt, uint64) (*stakinginfo.StakinginfoUnstakeInit, error)
-	DecodeSignerUpdateEvent(common.Address, *ethTypes.Receipt, uint64) (*stakinginfo.StakinginfoSignerChange, error)
+	DecodeValidatorJoinEvent(sdk.AccAddress, *ethTypes.Receipt, uint64) (*stakinginfo.StakinginfoStaked, error)
+	DecodeValidatorStakeUpdateEvent(sdk.AccAddress, *ethTypes.Receipt, uint64) (*stakinginfo.StakinginfoStakeUpdate, error)
+	DecodeValidatorExitEvent(sdk.AccAddress, *ethTypes.Receipt, uint64) (*stakinginfo.StakinginfoUnstakeInit, error)
+	DecodeSignerUpdateEvent(sdk.AccAddress, *ethTypes.Receipt, uint64) (*stakinginfo.StakinginfoSignerChange, error)
 	// decode state events
-	DecodeStateSyncedEvent(common.Address, *ethTypes.Receipt, uint64) (*statesender.StatesenderStateSynced, error)
+	DecodeStateSyncedEvent(sdk.AccAddress, *ethTypes.Receipt, uint64) (*statesender.StatesenderStateSynced, error)
 
 	// decode slashing events
 	DecodeSlashedEvent(common.Address, *ethTypes.Receipt, uint64) (*stakinginfo.StakinginfoSlashed, error)
@@ -61,8 +63,8 @@ type IContractCaller interface {
 
 	GetMainTxReceipt(common.Hash) (*ethTypes.Receipt, error)
 	GetMaticTxReceipt(common.Hash) (*ethTypes.Receipt, error)
-	ApproveTokens(*big.Int, common.Address, common.Address, *erc20.Erc20) error
-	StakeFor(common.Address, *big.Int, *big.Int, bool, common.Address, *stakemanager.Stakemanager) error
+	// ApproveTokens(*big.Int, common.Address, common.Address, *erc20.Erc20) error
+	// StakeFor(common.Address, *big.Int, *big.Int, bool, common.Address, *stakemanager.Stakemanager) error
 	CurrentAccountStateRoot(stakingInfoInstance *stakinginfo.Stakinginfo) ([32]byte, error)
 
 	// bor related contracts
@@ -501,7 +503,7 @@ func (c *ContractCaller) DecodeValidatorTopupFeesEvent(contractAddress common.Ad
 }
 
 // DecodeValidatorJoinEvent represents validator staked event
-func (c *ContractCaller) DecodeValidatorJoinEvent(contractAddress common.Address, receipt *ethTypes.Receipt, logIndex uint64) (*stakinginfo.StakinginfoStaked, error) {
+func (c *ContractCaller) DecodeValidatorJoinEvent(contractAddress sdk.AccAddress, receipt *ethTypes.Receipt, logIndex uint64) (*stakinginfo.StakinginfoStaked, error) {
 	event := new(stakinginfo.StakinginfoStaked)
 
 	found := false
@@ -523,7 +525,7 @@ func (c *ContractCaller) DecodeValidatorJoinEvent(contractAddress common.Address
 }
 
 // DecodeValidatorStakeUpdateEvent represents validator stake update event
-func (c *ContractCaller) DecodeValidatorStakeUpdateEvent(contractAddress common.Address, receipt *ethTypes.Receipt, logIndex uint64) (*stakinginfo.StakinginfoStakeUpdate, error) {
+func (c *ContractCaller) DecodeValidatorStakeUpdateEvent(contractAddress sdk.AccAddress, receipt *ethTypes.Receipt, logIndex uint64) (*stakinginfo.StakinginfoStakeUpdate, error) {
 	event := new(stakinginfo.StakinginfoStakeUpdate)
 
 	found := false
@@ -545,7 +547,7 @@ func (c *ContractCaller) DecodeValidatorStakeUpdateEvent(contractAddress common.
 }
 
 // DecodeValidatorExitEvent represents validator stake unstake event
-func (c *ContractCaller) DecodeValidatorExitEvent(contractAddress common.Address, receipt *ethTypes.Receipt, logIndex uint64) (*stakinginfo.StakinginfoUnstakeInit, error) {
+func (c *ContractCaller) DecodeValidatorExitEvent(contractAddress sdk.AccAddress, receipt *ethTypes.Receipt, logIndex uint64) (*stakinginfo.StakinginfoUnstakeInit, error) {
 	event := new(stakinginfo.StakinginfoUnstakeInit)
 
 	found := false
@@ -567,7 +569,7 @@ func (c *ContractCaller) DecodeValidatorExitEvent(contractAddress common.Address
 }
 
 // DecodeSignerUpdateEvent represents sig update event
-func (c *ContractCaller) DecodeSignerUpdateEvent(contractAddress common.Address, receipt *ethTypes.Receipt, logIndex uint64) (*stakinginfo.StakinginfoSignerChange, error) {
+func (c *ContractCaller) DecodeSignerUpdateEvent(contractAddress sdk.AccAddress, receipt *ethTypes.Receipt, logIndex uint64) (*stakinginfo.StakinginfoSignerChange, error) {
 	event := new(stakinginfo.StakinginfoSignerChange)
 
 	found := false
@@ -589,7 +591,7 @@ func (c *ContractCaller) DecodeSignerUpdateEvent(contractAddress common.Address,
 }
 
 // DecodeStateSyncedEvent decode state sync data
-func (c *ContractCaller) DecodeStateSyncedEvent(contractAddress common.Address, receipt *ethTypes.Receipt, logIndex uint64) (*statesender.StatesenderStateSynced, error) {
+func (c *ContractCaller) DecodeStateSyncedEvent(contractAddress sdk.AccAddress, receipt *ethTypes.Receipt, logIndex uint64) (*statesender.StatesenderStateSynced, error) {
 	event := new(statesender.StatesenderStateSynced)
 
 	found := false

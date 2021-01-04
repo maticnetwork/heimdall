@@ -25,12 +25,7 @@ func (app *HeimdallApp) PostDeliverTxHandler(ctx sdk.Context, tx sdk.Tx, result 
 
 	anySideMsg := false
 	for _, msg := range tx.GetMsgs() {
-		if svcMsg, ok := msg.(sdk.ServiceMsg); ok {
-			if _, ok := svcMsg.Request.(types.SideTxMsg); ok {
-				anySideMsg = true
-				break
-			}
-		} else if _, ok := msg.(types.SideTxMsg); ok {
+		if _, ok := IsSideMsg(msg); ok {
 			anySideMsg = true
 			break
 		}
@@ -171,7 +166,7 @@ func (app *HeimdallApp) DeliverSideTxHandler(ctx sdk.Context, tx sdk.Tx, req abc
 	data := make([]byte, 0)
 
 	for _, msg := range tx.GetMsgs() {
-		sideMsg, isSideTxMsg := msg.(types.SideTxMsg)
+		sideMsg, isSideTxMsg := IsSideMsg(msg)
 
 		// match message route
 		msgRoute := msg.Route()
@@ -260,7 +255,7 @@ func (app *HeimdallApp) runMsgs(ctx sdk.Context, msgs []sdk.Msg, sideTxResult tm
 	}
 
 	for i, msg := range msgs {
-		_, isSideTxMsg := msg.(types.SideTxMsg)
+		_, isSideTxMsg := IsSideMsg(msg)
 
 		// match message route
 		msgRoute := msg.Route()
@@ -310,6 +305,19 @@ func (app *HeimdallApp) cacheTxContext(ctx sdk.Context, txBytes []byte) (sdk.Con
 //
 // utils
 //
+
+// IsSideMsg is side msg
+func IsSideMsg(msg sdk.Msg) (types.SideTxMsg, bool) {
+	if svcMsg, ok := msg.(sdk.ServiceMsg); ok {
+		if m, ok := svcMsg.Request.(types.SideTxMsg); ok {
+			return m, true
+		}
+	} else if m, ok := msg.(types.SideTxMsg); ok {
+		return m, true
+	}
+
+	return nil, false
+}
 
 func getValidatorIndexByAddress(address []byte, validators []*abci.Validator) int {
 	for i, v := range validators {

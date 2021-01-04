@@ -1,13 +1,15 @@
 package types
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 
 	"github.com/maticnetwork/heimdall/helper"
 	// "github.com/maticnetwork/heimdall/params/paramtypes"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	hmCommon "github.com/maticnetwork/heimdall/types/common"
+	borCommon "github.com/maticnetwork/bor/common"
 )
 
 // Default parameter values
@@ -17,8 +19,10 @@ const (
 )
 
 var (
-	DefaultStateReceiverAddress hmCommon.HeimdallAddress = hmCommon.HexToHeimdallAddress("0x0000000000000000000000000000000000001001")
-	DefaultValidatorSetAddress  hmCommon.HeimdallAddress = hmCommon.HexToHeimdallAddress("0x0000000000000000000000000000000000001000")
+	// DefaultStateReceiverAddress is used set Default State Receiver address
+	DefaultStateReceiverAddress sdk.AccAddress = sdk.AccAddress(borCommon.FromHex("0x0000000000000000000000000000000000001001"))
+	// DefaultValidatorSetAddress is used set Default Validator Set address
+	DefaultValidatorSetAddress sdk.AccAddress = sdk.AccAddress(borCommon.FromHex("0x0000000000000000000000000000000000001000"))
 )
 
 // Parameter keys
@@ -45,7 +49,11 @@ func (cp ChainParams) String() string {
 }
 
 // NewParams creates a new Params object
-func NewParams(mainchainTxConfirmations uint64, maticchainTxConfirmations uint64, chainParams *ChainParams) Params {
+func NewParams(
+	mainchainTxConfirmations uint64,
+	maticchainTxConfirmations uint64,
+	chainParams *ChainParams,
+) Params {
 	return Params{
 		MainchainTxConfirmations:  mainchainTxConfirmations,
 		MaticchainTxConfirmations: maticchainTxConfirmations,
@@ -58,18 +66,18 @@ func NewParams(mainchainTxConfirmations uint64, maticchainTxConfirmations uint64
 // nolint
 func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
-		// {KeyMainchainTxConfirmations, &p.MainchainTxConfirmations},
-		// {KeyMaticchainTxConfirmations, &p.MaticchainTxConfirmations},
-		// {KeyChainParams, &p.ChainParams},
+		// paramtypes.NewParamSetPair(KeyMainchainTxConfirmations, &p.MainchainTxConfirmations, validateMainchainTxConfirmations),
+		// paramtypes.NewParamSetPair(KeyMaticchainTxConfirmations, &p.MaticchainTxConfirmations, validateMaticchainTxConfirmations),
+		// paramtypes.NewParamSetPair(KeyChainParams, &p.ChainParams, validateChainParams),
 	}
 }
 
 // Equal returns a boolean determining if two Params types are identical.
 func (p Params) Equal(p2 Params) bool {
-	// bz1 := ModuleCdc.MustMarshalBinaryLengthPrefixed(&p)
-	// bz2 := ModuleCdc.MustMarshalBinaryLengthPrefixed(&p2)
-	// return bytes.Equal(bz1, bz2)
-	return true
+	// TODO add ProtoCodec instead of AminoCodec
+	bz1 := ModuleCdc.MustMarshalBinaryLengthPrefixed(&p)
+	bz2 := ModuleCdc.MustMarshalBinaryLengthPrefixed(&p2)
+	return bytes.Equal(bz1, bz2)
 }
 
 // String implements the stringer interface.
@@ -84,44 +92,81 @@ func (p Params) String() string {
 
 // Validate checks that the parameters have valid values.
 func (p Params) Validate() error {
-	if err := validateHeimdallAddress("matic_token_address", p.ChainParams.MaticTokenAddress); err != nil {
+	if err := validateAccAddress(MaticTokenAddress, p.ChainParams.MaticTokenAddress); err != nil {
 		return err
 	}
 
-	if err := validateHeimdallAddress("staking_manager_address", p.ChainParams.StakingManagerAddress); err != nil {
+	if err := validateAccAddress(StakingManagerAddress, p.ChainParams.StakingManagerAddress); err != nil {
 		return err
 	}
 
-	if err := validateHeimdallAddress("slash_manager_address", p.ChainParams.SlashManagerAddress); err != nil {
+	if err := validateAccAddress(SlashManagerAddress, p.ChainParams.SlashManagerAddress); err != nil {
 		return err
 	}
 
-	if err := validateHeimdallAddress("root_chain_address", p.ChainParams.RootChainAddress); err != nil {
+	if err := validateAccAddress(RootChainAddress, p.ChainParams.RootChainAddress); err != nil {
 		return err
 	}
 
-	if err := validateHeimdallAddress("staking_info_address", p.ChainParams.StakingInfoAddress); err != nil {
+	if err := validateAccAddress(StakingInfoAddress, p.ChainParams.StakingInfoAddress); err != nil {
 		return err
 	}
 
-	if err := validateHeimdallAddress("state_sender_address", p.ChainParams.StateSenderAddress); err != nil {
+	if err := validateAccAddress(StateSenderAddress, p.ChainParams.StateSenderAddress); err != nil {
 		return err
 	}
 
-	if err := validateHeimdallAddress("state_receiver_address", p.ChainParams.StateReceiverAddress); err != nil {
+	if err := validateAccAddress(StateReceiverAddress, p.ChainParams.StateReceiverAddress); err != nil {
 		return err
 	}
 
-	if err := validateHeimdallAddress("validator_set_address", p.ChainParams.ValidatorSetAddress); err != nil {
+	if err := validateAccAddress(ValidatorSetAddress, p.ChainParams.ValidatorSetAddress); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func validateHeimdallAddress(key string, value hmCommon.HeimdallAddress) error {
+func validateAccAddress(key string, value sdk.AccAddress) error {
 	if value.String() == "" {
 		return fmt.Errorf("Invalid value %s in chain_params", key)
+	}
+
+	// TODO add validation based on Key and Address
+
+	return nil
+}
+
+func validateMainchainTxConfirmations(i interface{}) error {
+	v, ok := i.(uint64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v <= 0 {
+		return fmt.Errorf("Mainchain Tx Confirmations must be positive: %d", v)
+	}
+
+	return nil
+}
+
+func validateMaticchainTxConfirmations(i interface{}) error {
+	v, ok := i.(uint64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v <= 0 {
+		return fmt.Errorf("Maticchain Tx Confirmations must be positive: %d", v)
+	}
+
+	return nil
+}
+
+func validateChainParams(i interface{}) error {
+	_, ok := i.(*ChainParams)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
 	return nil

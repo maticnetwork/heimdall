@@ -1,13 +1,15 @@
 package types
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 // DefaultIndex is the default capability global index
 const DefaultIndex uint64 = 1
 
 // DefaultGenesis returns the default Capability genesis state
 func DefaultGenesis() *GenesisState {
-	return &GenesisState{}
+	return NewGenesisState(DefaultParams())
 }
 
 // Validate performs basic genesis state validation returning an error upon any
@@ -19,16 +21,16 @@ func (gs GenesisState) Validate() error {
 // Ported from develop branch:
 
 // NewGenesisState - Create a new genesis state
-func NewGenesisState(params *Params) GenesisState {
-	return GenesisState{
+func NewGenesisState(params *Params) *GenesisState {
+	return &GenesisState{
 		Params: params,
 	}
 }
 
-// DefaultGenesisState - Return a default genesis state
-func DefaultGenesisState() GenesisState {
-	return NewGenesisState(DefaultParams())
-}
+// // DefaultGenesisState - Return a default genesis state
+// func DefaultGenesisState() GenesisState {
+// 	return NewGenesisState(DefaultParams())
+// }
 
 // ValidateGenesis performs basic validation of auth genesis data returning an
 // error for any failed validation criteria.

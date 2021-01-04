@@ -1,22 +1,23 @@
 package cli
 
 import (
+	"context"
 	"fmt"
-	// "strings"
 
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	// "github.com/cosmos/cosmos-sdk/client/flags"
-	// sdk "github.com/cosmos/cosmos-sdk/types"
 
+	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/x/staking/types"
 )
 
 // GetQueryCmd returns the cli query commands for this module
 func GetQueryCmd(queryRoute string) *cobra.Command {
 	// Group staking queries under a subcommand
-	cmd := &cobra.Command{
+	stakingQueryCmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      fmt.Sprintf("Querying commands for the %s module", types.ModuleName),
 		DisableFlagParsing:         true,
@@ -24,7 +25,73 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	// this line is used by starport scaffolding # 1
+	stakingQueryCmd.AddCommand(
+		GetValidatorInfoCmd(),
+		GetCurrentValSetCmd(),
+	)
 
+	return stakingQueryCmd
+}
+
+// GetValidatorInfoCmd validator information via id or address
+func GetValidatorInfoCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "validator-info",
+		Short: "show validator information via validator id",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
+
+			validatorID := hmTypes.ValidatorID(viper.GetInt64(FlagValidatorID))
+			validatorAddressStr := viper.GetString(FlagValidatorAddress)
+			if validatorID == 0 && validatorAddressStr == "" {
+				return fmt.Errorf("validator ID or validator address required")
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			params := &types.QueryValidatorRequest{ValidatorId: validatorID}
+			res, err := queryClient.Validator(context.Background(), params)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintOutput(res.Validator)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	cmd.Flags().Int(FlagValidatorID, 0, "--id=<validator ID here>")
+	cmd.Flags().String(FlagValidatorAddress, "", "--validator=<validator address here>")
+	return cmd
+}
+
+// GetCurrentValSetCmd Queries Current ValidatorSet information
+func GetCurrentValSetCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "current-validator-set",
+		Short: "show current validator set",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			params := &types.QueryValidatorSetRequest{}
+			res, err := queryClient.ValidatorSet(context.Background(), params)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintOutput(res.ValidatorSet)
+		},
+	}
+	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }

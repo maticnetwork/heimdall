@@ -1,6 +1,7 @@
 package helper
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -9,6 +10,8 @@ import (
 	"net/url"
 	"path"
 
+	"github.com/cosmos/cosmos-sdk/client"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/common"
 	"github.com/tendermint/tendermint/crypto"
@@ -27,7 +30,7 @@ var ZeroAddress = common.Address{}
 // ZeroPubKey represents empty pub key
 var ZeroPubKey = hmCommonTypes.PubKey{}
 
-// GetPowerFromAmount returns power from amount -- note that this will polute amount object
+// GetPowerFromAmount returns power from amount -- note that this will pollute amount object
 func GetPowerFromAmount(amount *big.Int) (*big.Int, error) {
 	decimals18 := big.NewInt(10).Exp(big.NewInt(10), big.NewInt(18), nil)
 	if amount.Cmp(decimals18) == -1 {
@@ -92,4 +95,22 @@ func FetchFromAPI(cliCtx cliContext.CLIContext, URL string) (result rest.Respons
 
 	Logger.Debug("Error while fetching data from URL", "status", resp.StatusCode, "URL", URL)
 	return result, fmt.Errorf("Error while fetching data from url: %v, status: %v", URL, resp.StatusCode)
+// GetFromAddress get from address
+func GetFromAddress(cliCtx client.Context) sdk.AccAddress {
+	fromAddress := cliCtx.GetFromAddress()
+	if !fromAddress.Empty() {
+		return fromAddress
+	}
+
+	return GetAddress()
+}
+
+// EventByID looks up a event by the topic id
+func EventByID(abiObject *abi.ABI, sigdata []byte) *abi.Event {
+	for _, event := range abiObject.Events {
+		if bytes.Equal(event.ID.Bytes(), sigdata) {
+			return &event
+		}
+	}
+	return nil
 }

@@ -1,7 +1,6 @@
 package app
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -9,11 +8,13 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/server/api"
 	"github.com/cosmos/cosmos-sdk/server/config"
+	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
@@ -40,6 +41,14 @@ import (
 	tmos "github.com/tendermint/tendermint/libs/os"
 	dbm "github.com/tendermint/tm-db"
 
+	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/x/chainmanager"
+	chainKeeper "github.com/maticnetwork/heimdall/x/chainmanager/keeper"
+	chainmanagerTypes "github.com/maticnetwork/heimdall/x/chainmanager/types"
+	"github.com/maticnetwork/heimdall/x/clerk"
+	clerkkeeper "github.com/maticnetwork/heimdall/x/clerk/keeper"
+	clerktypes "github.com/maticnetwork/heimdall/x/clerk/types"
+
 	// unnamed import of statik for swagger UI support
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
 
@@ -57,6 +66,9 @@ import (
 	"github.com/maticnetwork/heimdall/x/staking"
 	stakingkeeper "github.com/maticnetwork/heimdall/x/staking/keeper"
 	stakingtypes "github.com/maticnetwork/heimdall/x/staking/types"
+
+	// unnamed import of statik for swagger UI support
+	_ "github.com/maticnetwork/heimdall/client/docs/statik"
 )
 
 const appName = "Heimdall"
@@ -72,9 +84,11 @@ var (
 		auth.AppModuleBasic{},
 		genutil.AppModuleBasic{},
 		bank.AppModuleBasic{},
+		chainmanager.AppModuleBasic{},
 		sidechannel.AppModuleBasic{},
 		staking.AppModuleBasic{},
 		params.AppModuleBasic{},
+		clerk.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -109,12 +123,17 @@ type HeimdallApp struct {
 	// keepers
 	AccountKeeper     authkeeper.AccountKeeper
 	BankKeeper        bankkeeper.Keeper
+	ChainKeeper       chainKeeper.Keeper
+	ClerkKeeper       clerkkeeper.Keeper
 	SidechannelKeeper sidechannelkeeper.Keeper
 	StakingKeeper     stakingkeeper.Keeper
 	ParamsKeeper      paramskeeper.Keeper
 
 	// side router
 	sideRouter hmtypes.SideRouter
+
+	// contract caller
+	caller helper.ContractCaller
 
 	// the module manager
 	mm *module.Manager
@@ -162,6 +181,8 @@ func NewHeimdallApp(
 	keys := sdk.NewKVStoreKeys(
 		authtypes.StoreKey,
 		banktypes.StoreKey,
+		chainmanagerTypes.StoreKey,
+		clerktypes.StoreKey,
 		sidechanneltypes.StoreKey,
 		stakingtypes.StoreKey,
 		// distrtypes.StoreKey,
@@ -191,6 +212,13 @@ func NewHeimdallApp(
 	// set the BaseApp's parameter store
 	bApp.SetParamStore(app.ParamsKeeper.Subspace(baseapp.Paramspace).WithKeyTable(paramskeeper.ConsensusParamsKeyTable()))
 
+	//chainmanager keeper
+	app.ChainKeeper = chainKeeper.NewKeeper(
+		appCodec,
+		keys[chainmanagerTypes.StoreKey], // target store
+		app.GetSubspace(chainmanagerTypes.ModuleName),
+		app.caller,
+	)
 	// account keeper
 	app.AccountKeeper = authkeeper.NewAccountKeeper(
 		appCodec,
@@ -217,8 +245,17 @@ func NewHeimdallApp(
 		appCodec,
 		keys[stakingtypes.StoreKey], // target store
 		app.GetSubspace(stakingtypes.ModuleName),
+		app.ChainKeeper,
+		app.BankKeeper,
 		nil,
 	)
+
+	// Contract caller
+	contractCallerObj, err := helper.NewContractCaller()
+	if err != nil {
+		tmos.Exit(err.Error())
+	}
+	app.caller = contractCallerObj
 
 	// register the staking hooks
 	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
@@ -238,7 +275,9 @@ func NewHeimdallApp(
 		auth.NewAppModule(appCodec, app.AccountKeeper, nil),
 		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
 		sidechannel.NewAppModule(appCodec, app.SidechannelKeeper),
-		staking.NewAppModule(appCodec, app.StakingKeeper),
+		chainmanager.NewAppModule(appCodec, app.ChainKeeper),
+		staking.NewAppModule(appCodec, app.StakingKeeper, &app.caller),
+		clerk.NewAppModule(appCodec, app.ClerkKeeper, &app.caller),
 		params.NewAppModule(app.ParamsKeeper),
 	)
 
@@ -260,7 +299,9 @@ func NewHeimdallApp(
 		authtypes.ModuleName,
 		banktypes.ModuleName,
 		sidechanneltypes.ModuleName,
+		chainmanagerTypes.ModuleName,
 		stakingtypes.ModuleName,
+		clerktypes.ModuleName,
 		genutiltypes.ModuleName,
 	)
 
@@ -271,9 +312,9 @@ func NewHeimdallApp(
 	// side router
 	app.sideRouter = hmtypes.NewSideRouter()
 	for _, m := range app.mm.Modules {
-		if m.Route().Path() != "" {
+		if m.Route().Path() != "" { //nolint
 			if sm, ok := m.(hmmodule.SideModule); ok {
-				app.sideRouter.AddRoute(m.Route().Path(), &hmtypes.SideHandlers{
+				app.sideRouter.AddRoute(m.Route().Path(), &hmtypes.SideHandlers{ //nolint
 					SideTxHandler: sm.NewSideTxHandler(),
 					PostTxHandler: sm.NewPostTxHandler(),
 				})
@@ -283,7 +324,7 @@ func NewHeimdallApp(
 	app.sideRouter.Seal()
 
 	// add test gRPC service for testing gRPC queries in isolation
-	// testdata.RegisterQueryServer(app.GRPCQueryRouter(), testdata.QueryImpl{})
+	testdata.RegisterQueryServer(app.GRPCQueryRouter(), testdata.QueryImpl{})
 
 	// create the simulation manager and define the order of the modules for deterministic simulations
 	//
@@ -396,8 +437,6 @@ func (app *HeimdallApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) 
 		// }
 	}
 
-	fmt.Println("valUpdates", valUpdates)
-
 	// TODO make sure old validtors dont go in validator updates ie deactivated validators have to be removed
 	// udpate validators
 	return abci.ResponseInitChain{
@@ -473,6 +512,20 @@ func (app *HeimdallApp) GetSideRouter() hmtypes.SideRouter {
 	return app.sideRouter
 }
 
+// SetSideRouter sets side-tx router
+//
+// NOTE: This is solely to be used for testing purposes.
+func (app *HeimdallApp) SetSideRouter(router hmtypes.SideRouter) {
+	app.sideRouter = router
+}
+
+// SetTxDecoder sets tx decoder
+//
+// NOTE: This is solely to be used for testing purposes.
+func (app *HeimdallApp) SetTxDecoder(decoder sdk.TxDecoder) {
+	app.txDecoder = decoder
+}
+
 // GetSubspace returns a param subspace for a given module name.
 //
 // NOTE: This is solely to be used for testing purposes.
@@ -491,7 +544,13 @@ func (app *HeimdallApp) SimulationManager() *module.SimulationManager {
 func (app *HeimdallApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.APIConfig) {
 	clientCtx := apiSvr.ClientCtx
 	rpc.RegisterRoutes(clientCtx, apiSvr.Router)
+	// Register legacy tx routes.
 	authrest.RegisterTxRoutes(clientCtx, apiSvr.Router)
+
+	// Register new tx routes from grpc-gateway.
+	authtx.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCRouter)
+	// Register new tendermint queries routes from grpc-gateway.
+	tmservice.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCRouter)
 
 	ModuleBasics.RegisterRESTRoutes(clientCtx, apiSvr.Router)
 	ModuleBasics.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCRouter)
@@ -505,6 +564,11 @@ func (app *HeimdallApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.A
 // RegisterTxService implements the Application.RegisterTxService method.
 func (app *HeimdallApp) RegisterTxService(clientCtx client.Context) {
 	authtx.RegisterTxService(app.BaseApp.GRPCQueryRouter(), clientCtx, app.BaseApp.Simulate, app.interfaceRegistry)
+}
+
+// RegisterTendermintService implements the Application.RegisterTendermintService method.
+func (app *HeimdallApp) RegisterTendermintService(clientCtx client.Context) {
+	tmservice.RegisterTendermintService(app.BaseApp.GRPCQueryRouter(), clientCtx, app.interfaceRegistry)
 }
 
 // RegisterSwaggerAPI registers swagger route with API Server

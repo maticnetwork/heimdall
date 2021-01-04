@@ -1,0 +1,16 @@
+syntax = "proto3";
+package heimdall.clerk.v1beta1;
+
+import "clerk/v1beta/clerk.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/maticnetwork/heimdall/x/clerk/types";
+
+option (gogoproto.marshaler_all)   = true;
+option (gogoproto.unmarshaler_all) = true;
+
+// GenesisState defines the clerk module's genesis state.
+message GenesisState {
+    repeated EventRecord event_records    = 1;
+    repeated string      record_sequences = 2;
+}

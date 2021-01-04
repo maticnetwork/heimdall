@@ -17,8 +17,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec/legacy"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
-	"github.com/maticnetwork/heimdall/types/common"
 	tmTypes "github.com/tendermint/tendermint/types"
+
+	"github.com/maticnetwork/heimdall/types/common"
 )
 
 const (
@@ -199,9 +200,9 @@ func PostProcessResponse(w http.ResponseWriter, cliCtx client.Context, resp inte
 		return
 	}
 
-	switch resp.(type) {
+	switch resp := resp.(type) {
 	case []byte:
-		result = resp.([]byte)
+		result = resp
 
 	default:
 		var err error
