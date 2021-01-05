@@ -22,16 +22,11 @@ service Msg {
 // GenesisState defines the topup module's genesis state.
 message MsgTopup {
     option (gogoproto.goproto_getters) = false;
-    string from_address = 1
-        [(gogoproto.casttype) =
-             "github.com/cosmos/cosmos-sdk/types.AccAddress"];
-    string user = 2 [(gogoproto.casttype) =
-                         "github.com/cosmos/cosmos-sdk/types.AccAddress"];
-    // TODO Sandeep: check if uint64 can be casted to int or something else has
-    // to be done
+    string from_address = 1;
+    string user = 2;
     uint64 fee = 3
         [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.Int"];
-    string tx_hash = 4
+    bytes tx_hash = 4
         [(gogoproto.casttype) =
              "github.com/maticnetwork/heimdall/types/common.HeimdallHash"];
     uint64 log_index    = 5;
@@ -42,11 +37,7 @@ message MsgTopupResponse {}
 
 message MsgWithdrawFee {
     option (gogoproto.goproto_getters) = false;
-    string user_address = 1
-        [(gogoproto.casttype) =
-             "github.com/cosmos/cosmos-sdk/types.AccAddress"];
-    // TODO Sandeep: check if uint64 can be casted to int or something else has
-    // to be done
+    string user_address = 1;
     uint64 amount = 2
         [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.Int"];
 }

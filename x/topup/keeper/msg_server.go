@@ -77,8 +77,8 @@ func (k msgServer) Topup(goCtx context.Context, msg *types.MsgTopup) (*types.Msg
 		sdk.NewEvent(
 			types.EventTypeTopup,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(types.AttributeKeySender, msg.FromAddress.String()),
-			sdk.NewAttribute(types.AttributeKeyRecipient, msg.User.String()),
+			sdk.NewAttribute(types.AttributeKeySender, msg.FromAddress),
+			sdk.NewAttribute(types.AttributeKeyRecipient, msg.User),
 			sdk.NewAttribute(types.AttributeKeyTopupAmount, msg.Fee.String()),
 		),
 	})
@@ -96,9 +96,14 @@ func (k msgServer) WithdrawFee(goCtx context.Context, msg *types.MsgWithdrawFee)
 	// partial withdraw
 	amount := msg.Amount
 
+	userAddress, err := sdk.AccAddressFromHex(msg.UserAddress)
+	if err != nil {
+		return nil, err
+	}
+
 	// full withdraw
 	if msg.Amount.String() == big.NewInt(0).String() {
-		coins := k.bk.GetAllBalances(ctx, msg.UserAddress)
+		coins := k.bk.GetAllBalances(ctx, userAddress)
 		amount = coins.AmountOf(hmTypes.FeeToken)
 	}
 
@@ -109,14 +114,15 @@ func (k msgServer) WithdrawFee(goCtx context.Context, msg *types.MsgWithdrawFee)
 
 	// withdraw coins of validator
 	maticCoins := sdk.Coins{sdk.Coin{Denom: hmTypes.FeeToken, Amount: amount}}
-	if err := k.bk.SubtractCoins(ctx, msg.UserAddress, maticCoins); err != nil {
+
+	if err := k.bk.SubtractCoins(ctx, userAddress, maticCoins); err != nil {
 		k.Logger(ctx).Error("Error while setting Fee balance to zero ", "fromAddress", msg.UserAddress, "err", err)
 		return nil, types.ErrSetFeeBalanceZero
 	}
 
 	// Add Fee to Dividend Account
 	feeAmount := amount.BigInt()
-	if err := k.AddFeeToDividendAccount(ctx, msg.UserAddress, feeAmount); err != nil {
+	if err := k.AddFeeToDividendAccount(ctx, userAddress, feeAmount); err != nil {
 		k.Logger(ctx).Error("WithdrawFee | AddFeeToDividendAccount", "fromAddress", msg.UserAddress, "err", err)
 		return nil, types.ErrAddFeeToDividendAccount
 	}
@@ -125,7 +131,7 @@ func (k msgServer) WithdrawFee(goCtx context.Context, msg *types.MsgWithdrawFee)
 		sdk.NewEvent(
 			types.EventTypeFeeWithdraw,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(types.AttributeKeyUser, msg.UserAddress.String()),
+			sdk.NewAttribute(types.AttributeKeyUser, msg.UserAddress),
 			sdk.NewAttribute(types.AttributeKeyFeeWithdrawAmount, feeAmount.String()),
 		),
 	})

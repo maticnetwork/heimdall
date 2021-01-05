@@ -259,8 +259,10 @@ func NewHeimdallApp(
 	app.TopupKeeper = topupkeeper.NewKeeper(
 		appCodec,
 		keys[topuptypes.StoreKey],
-		// app.GetSubspace(topuptypes.ModuleName),
-		// nil,
+		app.GetSubspace(topuptypes.ModuleName),
+		app.ChainKeeper,
+		app.BankKeeper,
+		app.StakingKeeper,
 	)
 	// Contract caller
 	contractCallerObj, err := helper.NewContractCaller()

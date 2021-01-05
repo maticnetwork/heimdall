@@ -52,5 +52,5 @@ func (k Querier) Sequence(c context.Context, req *types.QuerySequenceRequest) (*
 		return nil, nil
 	}
 
-	return &types.QuerySequenceResponse{Sequence: sequence}, nil
+	return &types.QuerySequenceResponse{Sequence: sequence.Uint64()}, nil
 }

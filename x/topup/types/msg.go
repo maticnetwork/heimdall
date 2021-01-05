@@ -22,8 +22,8 @@ func NewMsgTopup(
 	blockNumber uint64,
 ) MsgTopup {
 	return MsgTopup{
-		FromAddress: fromAddr,
-		User:        user,
+		FromAddress: fromAddr.String(),
+		User:        user.String(),
 		Fee:         fee,
 		TxHash:      txhash,
 		LogIndex:    logIndex,
@@ -90,7 +90,7 @@ func NewMsgWithdrawFee(
 	amount sdk.Int,
 ) MsgWithdrawFee {
 	return MsgWithdrawFee{
-		UserAddress: fromAddr,
+		UserAddress: fromAddr.String(),
 		Amount:      amount,
 	}
 }
