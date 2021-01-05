@@ -31,18 +31,19 @@ func NewKeeper(
 	bankKeeper types.BankKeeper, rtr types.Router, sk types.StakingKeeper,
 	authKeeper types.AccountKeeper,
 ) Keeper {
+	// TODO - Check this
 	// ensure governance module account is set
-	if addr := authKeeper.GetModuleAddress(types.ModuleName); addr == nil {
-		panic(fmt.Sprintf("%s module account has not been set", types.ModuleName))
-	}
+	// if addr := authKeeper.GetModuleAddress(types.ModuleName); addr == nil {
+	// 	panic(fmt.Sprintf("%s module account has not been set", types.ModuleName))
+	// }
 
 	// It is vital to seal the governance proposal router here as to not allow
 	// further handlers to be registered after the keeper is created since this
 	// could create invalid or non-deterministic behavior.
 	rtr.Seal()
-	if !paramSubspace.HasKeyTable() {
-		paramSubspace = paramSubspace.WithKeyTable(types.ParamKeyTable())
-	}
+	// if !paramSubspace.HasKeyTable() {
+	// 	paramSubspace = paramSubspace.WithKeyTable(types.ParamKeyTable())
+	// }
 
 	return Keeper{
 		cdc:           cdc,
