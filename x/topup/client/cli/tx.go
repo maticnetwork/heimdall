@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var cliLogger = helper.Logger.With("module", "topup/client/cli")
+// var cliLogger = helper.Logger.With("module", "topup/client/cli")
 
 // GetTxCmd returns the transaction commands for this module
 func GetTxCmd() *cobra.Command {
@@ -53,7 +53,7 @@ func TopupTxCmd() *cobra.Command {
 			proposerAddrStr, _ := cmd.Flags().GetString(FlagProposerAddress)
 			proposer, err := sdk.AccAddressFromHex(proposerAddrStr)
 			if err != nil {
-				return fmt.Errorf("Invalid proposer address", err)
+				return fmt.Errorf("Invalid proposer address: %s", err)
 			}
 			if proposer.Empty() {
 				proposer = helper.GetFromAddress(cliCtx)
@@ -68,7 +68,7 @@ func TopupTxCmd() *cobra.Command {
 			userAddrStr, _ := cmd.Flags().GetString(FlagUserAddress)
 			user, err := sdk.AccAddressFromHex(userAddrStr)
 			if err != nil {
-				return fmt.Errorf("Invalid user address", err)
+				return fmt.Errorf("Invalid user address: %s", err)
 			}
 			if user.Empty() {
 				return fmt.Errorf("user address cannot be zero")
@@ -110,11 +110,11 @@ func TopupTxCmd() *cobra.Command {
 	cmd.Flags().Uint64(FlagLogIndex, 0, "--log-index=<log-index>")
 	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
 
-	cmd.MarkFlagRequired(FlagTxHash)
-	cmd.MarkFlagRequired(FlagLogIndex)
-	cmd.MarkFlagRequired(FlagUserAddress)
-	cmd.MarkFlagRequired(FlagFeeAmount)
-	cmd.MarkFlagRequired(FlagBlockNumber)
+	_ = cmd.MarkFlagRequired(FlagTxHash)
+	_ = cmd.MarkFlagRequired(FlagLogIndex)
+	_ = cmd.MarkFlagRequired(FlagUserAddress)
+	_ = cmd.MarkFlagRequired(FlagFeeAmount)
+	_ = cmd.MarkFlagRequired(FlagBlockNumber)
 
 	return cmd
 }
@@ -134,6 +134,9 @@ func WithdrawFeeTxCmd() *cobra.Command {
 			// get proposer
 			proposerAddrStr, _ := cmd.Flags().GetString(FlagProposerAddress)
 			proposer, err := sdk.AccAddressFromHex(proposerAddrStr)
+			if err != nil {
+				return err
+			}
 			if proposer.Empty() {
 				proposer = helper.GetFromAddress(cliCtx)
 			}

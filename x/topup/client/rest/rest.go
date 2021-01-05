@@ -8,7 +8,7 @@ import (
 )
 
 const (
-    MethodGet = "GET"
+	MethodGet = "GET"
 )
 
 // RegisterRoutes registers topup-related REST handlers to a router
@@ -16,11 +16,10 @@ func RegisterRoutes(clientCtx client.Context, r *mux.Router) {
 	// this line is used by starport scaffolding # 2
 }
 
-func registerQueryRoutes(clientCtx client.Context, r *mux.Router) {
-	// this line is used by starport scaffolding # 3
-}
+// func registerQueryRoutes(clientCtx client.Context, r *mux.Router) {
+// 	// this line is used by starport scaffolding # 3
+// }
 
-func registerTxHandlers(clientCtx client.Context, r *mux.Router) {
-	// this line is used by starport scaffolding # 4
-}
-
+// func registerTxHandlers(clientCtx client.Context, r *mux.Router) {
+// 	// this line is used by starport scaffolding # 4
+// }

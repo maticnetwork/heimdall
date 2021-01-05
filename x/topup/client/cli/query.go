@@ -63,7 +63,7 @@ func GetSequenceCmd() *cobra.Command {
 		},
 	}
 
-	//TODO: uncomment below line
+	//TODO: uncomment below line - currently gives an error that flags.AddQueryFlagstoCmd is undefined but can't seem to understand why.
 	// flags.AddQueryFlagstoCmd(cmd)
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
 	cmd.Flags().Uint64(FlagLogIndex, 0, "--log-index=<log-index>")
