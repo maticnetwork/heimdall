@@ -9,7 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/types"
+	hmTypes "github.com/maticnetwork/heimdall/types/common"
 	"github.com/maticnetwork/heimdall/x/topup/types"
 	topupTypes "github.com/maticnetwork/heimdall/x/topup/types"
 	"github.com/spf13/cobra"
@@ -28,10 +28,8 @@ func GetTxCmd() *cobra.Command {
 	}
 
 	txCmd.AddCommand(
-		client.PostCommands(
-			TopupTxCmd(cdc),
-			WithdrawFeeTxCmd(cdc),
-		)...,
+		TopupTxCmd(),
+		WithdrawFeeTxCmd(),
 	)
 
 	// this line is used by starport scaffolding # 1
@@ -77,8 +75,8 @@ func TopupTxCmd() *cobra.Command {
 			}
 
 			// fee amount
-			amountStr, _ := cmd.Flags().GetString(FlagFeeAmount)
-			amount, ok := sdk.NewIntFromString(amountStr)
+			feeStr, _ := cmd.Flags().GetString(FlagFeeAmount)
+			fee, ok := sdk.NewIntFromString(feeStr)
 			if !ok {
 				return errors.New("Invalid fee amount")
 			}
@@ -95,7 +93,7 @@ func TopupTxCmd() *cobra.Command {
 				proposer,
 				user,
 				fee,
-				types.HexToHeimdallHash(txhash),
+				hmTypes.HexToHeimdallHash(txhash),
 				logIndex,
 				blockNumber,
 			)

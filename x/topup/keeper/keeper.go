@@ -180,7 +180,7 @@ func (k *Keeper) AddFeeToDividendAccount(ctx sdk.Context, userAddress sdk.AccAdd
 	// Get or create dividend account
 	var dividendAccount hmTypes.DividendAccount
 
-	if k.CheckIfDividendAccountExists(ctx, hmTypes.HeimdallAddress(userAddress)) {
+	if k.CheckIfDividendAccountExists(ctx, sdk.AccAddress(userAddress)) {
 		dividendAccount, _ = k.GetDividendAccountByAddress(ctx, userAddress)
 	} else {
 		dividendAccount = hmTypes.DividendAccount{

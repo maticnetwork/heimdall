@@ -98,27 +98,27 @@ func (k msgServer) WithdrawFee(goCtx context.Context, msg *types.MsgWithdrawFee)
 
 	// full withdraw
 	if msg.Amount.String() == big.NewInt(0).String() {
-		coins := k.bk.GetCoins(ctx, msg.UserAddress)
-		amount = coins.AmountOf(authTypes.FeeToken)
+		coins := k.bk.GetAllBalances(ctx, msg.UserAddress)
+		amount = coins.AmountOf(hmTypes.FeeToken)
 	}
 
 	k.Logger(ctx).Debug("Fee amount", "fromAddress", msg.UserAddress, "balance", amount.BigInt().String())
 	if amount.IsZero() {
-		return types.ErrNoBalanceToWithdraw(k.Codespace()).Result()
+		return nil, types.ErrNoBalanceToWithdraw
 	}
 
 	// withdraw coins of validator
-	maticCoins := sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: amount}}
-	if _, err := k.bk.SubtractCoins(ctx, msg.UserAddress, maticCoins); err != nil {
+	maticCoins := sdk.Coins{sdk.Coin{Denom: hmTypes.FeeToken, Amount: amount}}
+	if err := k.bk.SubtractCoins(ctx, msg.UserAddress, maticCoins); err != nil {
 		k.Logger(ctx).Error("Error while setting Fee balance to zero ", "fromAddress", msg.UserAddress, "err", err)
-		return err.Result()
+		return nil, types.ErrSetFeeBalanceZero
 	}
 
 	// Add Fee to Dividend Account
 	feeAmount := amount.BigInt()
 	if err := k.AddFeeToDividendAccount(ctx, msg.UserAddress, feeAmount); err != nil {
-		k.Logger(ctx).Error("handleMsgWithdrawFee | AddFeeToDividendAccount", "fromAddress", msg.UserAddress, "err", err)
-		return err.Result()
+		k.Logger(ctx).Error("WithdrawFee | AddFeeToDividendAccount", "fromAddress", msg.UserAddress, "err", err)
+		return nil, types.ErrAddFeeToDividendAccount
 	}
 
 	ctx.EventManager().EmitEvents(sdk.Events{
