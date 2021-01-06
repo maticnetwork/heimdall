@@ -37,7 +37,7 @@ func (k Querier) Sequence(c context.Context, req *types.QuerySequenceRequest) (*
 	logIndex := req.LogIndex
 	ctx := sdk.UnwrapSDKContext(c)
 
-	chainParams := k.chainKeeper.GetParams(ctx)
+	chainParams := k.ChainKeeper.GetParams(ctx)
 	receipt, err := k.contractCaller.GetConfirmedTxReceipt(hmTypes.HexToHeimdallHash(txHash).EthHash(), chainParams.MainchainTxConfirmations)
 
 	if err != nil || receipt == nil {

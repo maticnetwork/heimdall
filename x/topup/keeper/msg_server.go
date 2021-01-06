@@ -103,7 +103,7 @@ func (k msgServer) WithdrawFee(goCtx context.Context, msg *types.MsgWithdrawFee)
 
 	// full withdraw
 	if msg.Amount.String() == big.NewInt(0).String() {
-		coins := k.bk.GetAllBalances(ctx, userAddress)
+		coins := k.Bk.GetAllBalances(ctx, userAddress)
 		amount = coins.AmountOf(hmTypes.FeeToken)
 	}
 
@@ -115,7 +115,7 @@ func (k msgServer) WithdrawFee(goCtx context.Context, msg *types.MsgWithdrawFee)
 	// withdraw coins of validator
 	maticCoins := sdk.Coins{sdk.Coin{Denom: hmTypes.FeeToken, Amount: amount}}
 
-	if err := k.bk.SubtractCoins(ctx, userAddress, maticCoins); err != nil {
+	if err := k.Bk.SubtractCoins(ctx, userAddress, maticCoins); err != nil {
 		k.Logger(ctx).Error("Error while setting Fee balance to zero ", "fromAddress", msg.UserAddress, "err", err)
 		return nil, types.ErrSetFeeBalanceZero
 	}

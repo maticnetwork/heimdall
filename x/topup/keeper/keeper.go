@@ -37,9 +37,9 @@ type Keeper struct {
 	// param subspace
 	paramSpace paramtypes.Subspace
 	// chain keeper
-	chainKeeper chainKeeper.Keeper
+	ChainKeeper chainKeeper.Keeper
 	// bank keeper
-	bk bankKeeper.Keeper
+	Bk bankKeeper.Keeper
 	// staking keeper
 	sk stakingKeeper.Keeper
 }
@@ -57,8 +57,8 @@ func NewKeeper(
 		cdc:         cdc,
 		key:         storeKey,
 		paramSpace:  paramSpace,
-		chainKeeper: chainKeeper,
-		bk:          bankKeeper,
+		ChainKeeper: chainKeeper,
+		Bk:          bankKeeper,
 		sk:          stakingKeeper,
 	}
 }
