@@ -126,17 +126,16 @@ func (k *Keeper) SetEventRecordWithID(ctx sdk.Context, record types.EventRecord)
 
 // SetEventRecordWithTime sets event record id with time
 func (k *Keeper) SetEventRecordWithTime(ctx sdk.Context, record types.EventRecord) error {
-	// TODO - Check this
-	// key := GetEventRecordKeyWithTime(record.Id, record.RecordTime)
-	// value, err := k.cdc.MarshalBinaryBare(record.Id)
-	// if err != nil {
-	// 	k.Logger(ctx).Error("Error marshalling record", "error", err)
-	// 	return err
-	// }
+	key := GetEventRecordKeyWithTime(record.Id, record.RecordTime)
+	value, err := k.cdc.MarshalBinaryBare(&record)
+	if err != nil {
+		k.Logger(ctx).Error("Error marshalling record", "error", err)
+		return err
+	}
 
-	// if err := k.setEventRecordStore(ctx, key, value); err != nil {
-	// 	return err
-	// }
+	if err := k.setEventRecordStore(ctx, key, value); err != nil {
+		return err
+	}
 	return nil
 }
 
