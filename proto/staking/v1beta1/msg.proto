@@ -42,7 +42,7 @@ message MsgValidatorJoin {
     google.protobuf.Any signer_pub_key = 5
         [(gogoproto.casttype) =
              "github.com/maticnetwork/heimdall/types/common.PubKey"];
-    string tx_hash = 6
+    bytes tx_hash = 6
         [(gogoproto.casttype) =
              "github.com/maticnetwork/heimdall/types/common.HeimdallHash"];
     uint64 log_index    = 7;

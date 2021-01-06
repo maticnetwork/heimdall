@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 
@@ -13,7 +12,6 @@ import (
 	ethcrypto "github.com/maticnetwork/bor/crypto"
 	"github.com/spf13/cobra"
 
-	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types/common"
 	"github.com/maticnetwork/heimdall/x/staking/types"
@@ -118,11 +116,11 @@ func ValidatorJoinTxCmd() *cobra.Command {
 				return fmt.Errorf("invalid stake amount")
 			}
 
-			// Get contractCaller ref
-			contractCallerObj, err := helper.NewContractCaller()
-			if err != nil {
-				return err
-			}
+			// // Get contractCaller ref
+			// contractCallerObj, err := helper.NewContractCaller()
+			// if err != nil {
+			// 	return err
+			// }
 
 			// TODO uncomment this when integrating chainmanager
 			// chainmanagerParams, err := util.GetChainmanagerParams(cliCtx)
@@ -132,40 +130,40 @@ func ValidatorJoinTxCmd() *cobra.Command {
 
 			// get main tx receipt
 			// NOTE: Use 'chainmanagerParams.MainchainTxConfirmations'. Now it is hard coded.
-			receipt, err := contractCallerObj.GetConfirmedTxReceipt(hmTypes.HexToHeimdallHash(txhash).EthHash(), 6)
-			if err != nil || receipt == nil {
-				return errors.New("Transaction is not confirmed yet. Please wait for sometime and try again")
-			}
+			// receipt, err := contractCallerObj.GetConfirmedTxReceipt(hmTypes.HexToHeimdallHash(txhash).EthHash(), 6)
+			// if err != nil || receipt == nil {
+			// 	return errors.New("Transaction is not confirmed yet. Please wait for sometime and try again")
+			// }
 
-			abiObject := &contractCallerObj.StakingInfoABI
-			event := new(stakinginfo.StakinginfoStaked)
-			var logIndex uint64
-			found := false
-			for _, vLog := range receipt.Logs {
-				topic := vLog.Topics[0].Bytes()
-				selectedEvent := helper.EventByID(abiObject, topic)
-				if selectedEvent != nil && selectedEvent.Name == ForeignEventName {
-					if err := helper.UnpackLog(abiObject, event, ForeignEventName, vLog); err != nil {
-						return err
-					}
+			// abiObject := &contractCallerObj.StakingInfoABI
+			// event := new(stakinginfo.StakinginfoStaked)
+			// var logIndex uint64
+			// found := false
+			// for _, vLog := range receipt.Logs {
+			// 	topic := vLog.Topics[0].Bytes()
+			// 	selectedEvent := helper.EventByID(abiObject, topic)
+			// 	if selectedEvent != nil && selectedEvent.Name == ForeignEventName {
+			// 		if err := helper.UnpackLog(abiObject, event, ForeignEventName, vLog); err != nil {
+			// 			return err
+			// 		}
 
-					logIndex = uint64(vLog.Index)
-					found = true
-					break
-				}
-			}
+			// 		logIndex = uint64(vLog.Index)
+			// 		found = true
+			// 		break
+			// 	}
+			// }
 
-			if !found {
-				return fmt.Errorf("Invalid tx for validator join")
-			}
+			// if !found {
+			// 	return fmt.Errorf("Invalid tx for validator join")
+			// }
 
-			expectedPubKey, err := helper.CompressPubKey(event.SignerPubkey)
-			if err != nil {
-				return err
-			}
-			if !bytes.Equal(expectedPubKey, pubkey.Bytes()) {
-				return fmt.Errorf("Public key mismatch with event log")
-			}
+			// expectedPubKey, err := helper.CompressPubKey(event.SignerPubkey)
+			// if err != nil {
+			// 	return err
+			// }
+			// if !bytes.Equal(expectedPubKey, pubkey.Bytes()) {
+			// 	return fmt.Errorf("Public key mismatch with event log")
+			// }
 
 			activationEpoch, _ := cmd.Flags().GetUint64(FlagActivationEpoch)
 			blockNumber, _ := cmd.Flags().GetUint64(FlagBlockNumber)
@@ -173,14 +171,14 @@ func ValidatorJoinTxCmd() *cobra.Command {
 			// msg new ValidatorJion message
 			msg := types.NewMsgValidatorJoin(
 				proposer,
-				event.ValidatorId.Uint64(),
+				1, //event.ValidatorId.Uint64(),
 				activationEpoch,
 				amount,
 				pubkey,
 				hmTypes.HexToHeimdallHash(txhash),
-				logIndex,
+				0, //logIndex,
 				blockNumber,
-				event.Nonce.Uint64(),
+				1, //event.Nonce.Uint64(),
 			)
 
 			// broadcast message
