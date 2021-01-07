@@ -1,9 +1,13 @@
 package types
 
 import (
+	"bytes"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	common "github.com/maticnetwork/heimdall/common"
+	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmCommon "github.com/maticnetwork/heimdall/types/common"
 )
@@ -30,11 +34,11 @@ func NewMsgValidatorJoin(
 ) MsgValidatorJoin {
 
 	return MsgValidatorJoin{
-		From:            from,
+		From:            from.String(),
 		ID:              hmTypes.NewValidatorID(id),
 		ActivationEpoch: activationEpoch,
 		Amount:          amount,
-		SignerPubKey:    pubkey,
+		SignerPubKey:    &pubkey,
 		TxHash:          txhash,
 		LogIndex:        logIndex,
 		BlockNumber:     blockNumber,
@@ -51,7 +55,8 @@ func (msg MsgValidatorJoin) Route() string {
 }
 
 func (msg MsgValidatorJoin) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.From}
+	addr, _ := sdk.AccAddressFromHex(msg.From)
+	return []sdk.AccAddress{addr}
 }
 
 func (msg MsgValidatorJoin) GetSignBytes() []byte {
@@ -63,17 +68,18 @@ func (msg MsgValidatorJoin) GetSignBytes() []byte {
 }
 
 func (msg MsgValidatorJoin) ValidateBasic() error {
-	// if msg.ID == 0 {
-	// 	return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator ID %v", msg.ID)
-	// }
 
-	// if bytes.Equal(msg.SignerPubKey.Bytes(), helper.ZeroPubKey.Bytes()) {
-	// 	return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid pub key %v", msg.SignerPubKey.String())
-	// }
+	if msg.ID == 0 {
+		return common.ErrInvalidMsg
+	}
 
-	// if msg.From.Empty() {
-	// 	return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.From.String())
-	// }
+	if msg.From == "" {
+		return common.ErrInvalidMsg
+	}
+
+	if bytes.Equal(msg.SignerPubKey.Bytes(), helper.ZeroPubKey.Bytes()) {
+		return common.ErrInvalidMsg
+	}
 
 	return nil
 }
@@ -107,7 +113,7 @@ var _ sdk.Msg = &MsgStakeUpdate{}
 // NewMsgStakeUpdate represents stake update
 func NewMsgStakeUpdate(from sdk.AccAddress, id uint64, newAmount sdk.Int, txhash hmCommon.HeimdallHash, logIndex uint64, blockNumber uint64, nonce uint64) MsgStakeUpdate {
 	return MsgStakeUpdate{
-		From:        from,
+		From:        from.String(),
 		ID:          hmTypes.NewValidatorID(id),
 		NewAmount:   newAmount,
 		TxHash:      txhash,
@@ -126,7 +132,8 @@ func (msg MsgStakeUpdate) Route() string {
 }
 
 func (msg MsgStakeUpdate) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.From}
+	addr, _ := sdk.AccAddressFromHex(msg.From)
+	return []sdk.AccAddress{addr}
 }
 
 func (msg MsgStakeUpdate) GetSignBytes() []byte {
@@ -138,13 +145,14 @@ func (msg MsgStakeUpdate) GetSignBytes() []byte {
 }
 
 func (msg MsgStakeUpdate) ValidateBasic() error {
-	// if msg.ID == 0 {
-	// 	return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator ID %v", msg.ID)
-	// }
 
-	// if msg.From.Empty() {
-	// 	return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.From.String())
-	// }
+	if msg.ID == 0 {
+		return common.ErrInvalidMsg
+	}
+
+	if msg.From == "" {
+		return common.ErrInvalidMsg
+	}
 
 	return nil
 }
@@ -184,9 +192,9 @@ func NewMsgSignerUpdate(
 	nonce uint64,
 ) MsgSignerUpdate {
 	return MsgSignerUpdate{
-		From:            from,
+		From:            from.String(),
 		ID:              hmTypes.NewValidatorID(id),
-		NewSignerPubKey: pubKey,
+		NewSignerPubKey: &pubKey,
 		TxHash:          txhash,
 		LogIndex:        logIndex,
 		BlockNumber:     blockNumber,
@@ -203,7 +211,8 @@ func (msg MsgSignerUpdate) Route() string {
 }
 
 func (msg MsgSignerUpdate) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.From}
+	addr, _ := sdk.AccAddressFromHex(msg.From)
+	return []sdk.AccAddress{addr}
 }
 
 func (msg MsgSignerUpdate) GetSignBytes() []byte {
@@ -215,17 +224,18 @@ func (msg MsgSignerUpdate) GetSignBytes() []byte {
 }
 
 func (msg MsgSignerUpdate) ValidateBasic() error {
-	// if msg.ID == 0 {
-	// 	return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator ID %v", msg.ID)
-	// }
 
-	// if msg.From.Empty() {
-	// 	return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.From.String())
-	// }
+	if msg.ID == 0 {
+		return common.ErrInvalidMsg
+	}
 
-	// if bytes.Equal(msg.NewSignerPubKey.Bytes(), helper.ZeroPubKey.Bytes()) {
-	// 	return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid pub key %v", msg.NewSignerPubKey.String())
-	// }
+	if msg.From == "" {
+		return common.ErrInvalidMsg
+	}
+
+	if bytes.Equal(msg.NewSignerPubKey.Bytes(), helper.ZeroPubKey.Bytes()) {
+		return common.ErrInvalidMsg
+	}
 
 	return nil
 }
@@ -258,7 +268,7 @@ var _ sdk.Msg = &MsgValidatorExit{}
 
 func NewMsgValidatorExit(from sdk.AccAddress, id uint64, deactivationEpoch uint64, txhash hmCommon.HeimdallHash, logIndex uint64, blockNumber uint64, nonce uint64) MsgValidatorExit {
 	return MsgValidatorExit{
-		From:              from,
+		From:              from.String(),
 		ID:                hmTypes.NewValidatorID(id),
 		DeactivationEpoch: deactivationEpoch,
 		TxHash:            txhash,
@@ -277,7 +287,8 @@ func (msg MsgValidatorExit) Route() string {
 }
 
 func (msg MsgValidatorExit) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.From}
+	addr, _ := sdk.AccAddressFromHex(msg.From)
+	return []sdk.AccAddress{addr}
 }
 
 func (msg MsgValidatorExit) GetSignBytes() []byte {
@@ -289,13 +300,13 @@ func (msg MsgValidatorExit) GetSignBytes() []byte {
 }
 
 func (msg MsgValidatorExit) ValidateBasic() error {
-	// if msg.ID == 0 {
-	// 	return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator ID %v", msg.ID)
-	// }
+	if msg.ID == 0 {
+		return common.ErrInvalidMsg
+	}
 
-	// if msg.From.Empty() {
-	// 	return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.From.String())
-	// }
+	if msg.From == "" {
+		return common.ErrInvalidMsg
+	}
 
 	return nil
 }
