@@ -10,9 +10,9 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 	chainKeeper "github.com/maticnetwork/heimdall/x/chainmanager/keeper"
 	"github.com/maticnetwork/heimdall/x/clerk/types"
-	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 var (
