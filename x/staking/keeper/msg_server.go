@@ -3,9 +3,11 @@ package keeper
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"math/big"
 	"strconv"
 
+	"github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	hmCommon "github.com/maticnetwork/heimdall/common"
@@ -41,7 +43,11 @@ func (k msgServer) ValidatorJoin(goCtx context.Context, msg *types.MsgValidatorJ
 	)
 
 	// Generate PubKey from Pubkey in message and signer
-	pubkey := msg.SignerPubKey
+	pubkey, err := codec.PubKeyFromBytes(msg.SignerPubKey.Value)
+	if err != nil {
+		return nil, fmt.Errorf("invalid pubkey: %v", err)
+	}
+
 	signer := pubkey.Address()
 
 	// Check if validator has been validator before
@@ -156,8 +162,11 @@ func (k msgServer) SignerUpdate(goCtx context.Context, msg *types.MsgSignerUpdat
 		"blockNumber", msg.BlockNumber,
 	)
 
-	newPubKey := msg.NewSignerPubKey
-	newSigner := newPubKey.Address()
+	pubkey, err := codec.PubKeyFromBytes(msg.NewSignerPubKey.Value)
+	if err != nil {
+		return nil, fmt.Errorf("invalid pubkey: %v", err)
+	}
+	newSigner := pubkey.Address()
 
 	// pull validator from store
 	validator, ok := k.GetValidatorFromValID(ctx, msg.ID)
