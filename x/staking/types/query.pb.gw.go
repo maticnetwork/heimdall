@@ -17,7 +17,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/grpc-ecosystem/grpc-gateway/utilities"
-	types_0 "github.com/maticnetwork/heimdall/types"
+	types_1 "github.com/maticnetwork/heimdall/types"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
@@ -49,13 +49,13 @@ func request_Query_Validator_0(ctx context.Context, marshaler runtime.Marshaler,
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "validator_id")
 	}
 
-	e, err = runtime.Enum(val, types_0.ValidatorID_value)
+	e, err = runtime.Enum(val, types_1.ValidatorID_value)
 
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "validator_id", err)
 	}
 
-	protoReq.ValidatorId = types_0.ValidatorID(e)
+	protoReq.ValidatorId = types_1.ValidatorID(e)
 
 	msg, err := client.Validator(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -79,13 +79,13 @@ func local_request_Query_Validator_0(ctx context.Context, marshaler runtime.Mars
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "validator_id")
 	}
 
-	e, err = runtime.Enum(val, types_0.ValidatorID_value)
+	e, err = runtime.Enum(val, types_1.ValidatorID_value)
 
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "validator_id", err)
 	}
 
-	protoReq.ValidatorId = types_0.ValidatorID(e)
+	protoReq.ValidatorId = types_1.ValidatorID(e)
 
 	msg, err := server.Validator(ctx, &protoReq)
 	return msg, metadata, err
