@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/maticnetwork/heimdall/app"
-	// "github.com/maticnetwork/heimdall/x/clerk"
 	"github.com/maticnetwork/heimdall/x/clerk/types"
+	// "github.com/maticnetwork/heimdall/x/clerk"
 	hmCommon "github.com/maticnetwork/heimdall/types/common"
 )
 
