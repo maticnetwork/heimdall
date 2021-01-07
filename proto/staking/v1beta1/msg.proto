@@ -4,7 +4,6 @@ package heimdall.staking.v1beta1;
 import "gogoproto/gogo.proto";
 import "google/protobuf/any.proto";
 
-
 option go_package = "github.com/maticnetwork/heimdall/x/staking/types";
 
 option (gogoproto.sizer_all)       = false;
@@ -108,7 +107,7 @@ message MsgValidatorExit {
         (gogoproto.customname) = "ID"
     ];
     uint64 deactivation_epoch = 3;
-    bytes tx_hash = 4
+    bytes  tx_hash            = 4
         [(gogoproto.casttype) =
              "github.com/maticnetwork/heimdall/types/common.HeimdallHash"];
     uint64 log_index    = 5;

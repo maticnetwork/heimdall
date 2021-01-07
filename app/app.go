@@ -257,6 +257,12 @@ func NewHeimdallApp(
 		nil,
 	)
 
+	app.ClerkKeeper = clerkkeeper.NewKeeper(
+		appCodec,
+		keys[clerktypes.StoreKey], // target store
+		app.ChainKeeper,
+	)
+
 	// Contract caller
 	contractCallerObj, err := helper.NewContractCaller()
 	if err != nil {
