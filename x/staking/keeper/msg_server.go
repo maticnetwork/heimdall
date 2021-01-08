@@ -13,6 +13,7 @@ import (
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
+	hmCommonTypes "github.com/maticnetwork/heimdall/types/common"
 	"github.com/maticnetwork/heimdall/x/staking/types"
 )
 
@@ -43,10 +44,7 @@ func (k msgServer) ValidatorJoin(goCtx context.Context, msg *types.MsgValidatorJ
 	)
 
 	// Generate PubKey from Pubkey in message and signer
-	pubkey, err := codec.PubKeyFromBytes(msg.SignerPubKey.Value)
-	if err != nil {
-		return nil, fmt.Errorf("invalid pubkey: %v", err)
-	}
+	pubkey := hmCommonTypes.NewPubKey(msg.SignerPubKey.Value)
 
 	signer := pubkey.Address()
 

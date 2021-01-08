@@ -7,7 +7,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	"github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/bor/common"
 	"github.com/spf13/cobra"
@@ -107,10 +106,7 @@ func ValidatorJoinTxCmd() *cobra.Command {
 			}
 
 			// create new pub key
-			pubkey, err := codec.PubKeyFromBytes(pubkeyBytes)
-			if err != nil {
-				return fmt.Errorf("error while converting bytes to pubkey %s", err)
-			}
+			pubkey := hmTypes.NewPubKey(pubkeyBytes)
 
 			// total stake amount
 			amountStr, _ := cmd.Flags().GetString(FlagAmount)

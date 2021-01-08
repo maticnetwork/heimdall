@@ -5,7 +5,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	common "github.com/maticnetwork/heimdall/common"
@@ -28,7 +27,7 @@ func NewMsgValidatorJoin(
 	id uint64,
 	activationEpoch uint64,
 	amount sdk.Int,
-	pubkey cryptotypes.PubKey,
+	pubkey hmCommon.PubKey,
 	txhash hmCommon.HeimdallHash,
 	logIndex uint64,
 	blockNumber uint64,
