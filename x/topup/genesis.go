@@ -1,17 +1,17 @@
 package topup
 
-// import (
-// 	sdk "github.com/cosmos/cosmos-sdk/types"
-// 	"github.com/maticnetwork/heimdall/x/topup/keeper"
-// 	"github.com/maticnetwork/heimdall/x/topup/types"
-// )
+import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/maticnetwork/heimdall/x/topup/keeper"
+	"github.com/maticnetwork/heimdall/x/topup/types"
+)
 
-// // InitGenesis initializes the capability module's state from a provided genesis
-// // state.
-// func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
-// }
+// InitGenesis initializes the capability module's state from a provided genesis
+// state.
+func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
+}
 
-// // ExportGenesis returns the capability module's exported genesis.
-// func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
-// 	return types.DefaultGenesis()
-// }
+// ExportGenesis returns the capability module's exported genesis.
+func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
+	return types.DefaultGenesis()
+}
