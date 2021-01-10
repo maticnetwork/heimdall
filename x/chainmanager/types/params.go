@@ -65,6 +65,7 @@ func NewParams(
 // pairs of auth module's parameters.
 // nolint
 func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
+	// TODO fix ParamSetPair issue, enabling this throwing `assignment to entry in nil map`
 	return paramtypes.ParamSetPairs{
 		// paramtypes.NewParamSetPair(KeyMainchainTxConfirmations, &p.MainchainTxConfirmations, validateMainchainTxConfirmations),
 		// paramtypes.NewParamSetPair(KeyMaticchainTxConfirmations, &p.MaticchainTxConfirmations, validateMaticchainTxConfirmations),
