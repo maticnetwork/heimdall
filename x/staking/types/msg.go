@@ -193,25 +193,30 @@ func (msg MsgStakeUpdate) GetNonce() uint64 {
 //
 var _ sdk.Msg = &MsgSignerUpdate{}
 
-//func NewMsgSignerUpdate(
-//	from sdk.AccAddress,
-//	id uint64,
-//	pubKey hmCommon.PubKey,
-//	txhash hmCommon.HeimdallHash,
-//	logIndex uint64,
-//	blockNumber uint64,
-//	nonce uint64,
-//) MsgSignerUpdate {
-//	return MsgSignerUpdate{
-//		From:            from.String(),
-//		ID:              hmTypes.NewValidatorID(id),
-//		NewSignerPubKey: &pubKey,
-//		TxHash:          txhash,
-//		LogIndex:        logIndex,
-//		BlockNumber:     blockNumber,
-//		Nonce:           nonce,
-//	}
-//}
+func NewMsgSignerUpdate(
+	from sdk.AccAddress,
+	id uint64,
+	pubKey hmCommon.PubKey,
+	txhash hmCommon.HeimdallHash,
+	logIndex uint64,
+	blockNumber uint64,
+	nonce uint64,
+) (MsgSignerUpdate, error) {
+	pkAny, err := codectypes.PackAny(pubKey)
+	if err != nil {
+		return MsgSignerUpdate{}, err
+	}
+
+	return MsgSignerUpdate{
+		From:            from.String(),
+		ID:              hmTypes.NewValidatorID(id),
+		NewSignerPubKey: pkAny,
+		TxHash:          txhash.String(),
+		LogIndex:        logIndex,
+		BlockNumber:     blockNumber,
+		Nonce:           nonce,
+	}, nil
+}
 
 func (msg MsgSignerUpdate) Type() string {
 	return "signer-update"
@@ -244,9 +249,9 @@ func (msg MsgSignerUpdate) ValidateBasic() error {
 		return common.ErrInvalidMsg
 	}
 
-	//if bytes.Equal(msg.NewSignerPubKey.Bytes(), helper.ZeroPubKey.Bytes()) {
-	//	return common.ErrInvalidMsg
-	//}
+	if bytes.Equal(msg.NewSignerPubKey.Value, helper.ZeroPubKey.Bytes()) {
+		return common.ErrInvalidMsg
+	}
 
 	return nil
 }

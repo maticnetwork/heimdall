@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 
@@ -11,6 +12,10 @@ import (
 	"github.com/maticnetwork/bor/common"
 	"github.com/spf13/cobra"
 
+	ethcrypto "github.com/maticnetwork/bor/crypto"
+	// "github.com/maticnetwork/heimdall/bridge/setu/util"
+
+	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types/common"
 	"github.com/maticnetwork/heimdall/x/staking/types"
@@ -115,13 +120,13 @@ func ValidatorJoinTxCmd() *cobra.Command {
 				return fmt.Errorf("invalid stake amount")
 			}
 
-			// // Get contractCaller ref
-			// contractCallerObj, err := helper.NewContractCaller()
-			// if err != nil {
-			// 	return err
-			// }
+			// Get contractCaller ref
+			contractCallerObj, err := helper.NewContractCaller()
+			if err != nil {
+				return err
+			}
 
-			// TODO uncomment this when integrating chainmanager
+			// // TODO uncomment this when integrating chainmanager
 			// chainmanagerParams, err := util.GetChainmanagerParams(cliCtx)
 			// if err != nil {
 			// 	return err
@@ -129,40 +134,40 @@ func ValidatorJoinTxCmd() *cobra.Command {
 
 			// get main tx receipt
 			// NOTE: Use 'chainmanagerParams.MainchainTxConfirmations'. Now it is hard coded.
-			// receipt, err := contractCallerObj.GetConfirmedTxReceipt(hmTypes.HexToHeimdallHash(txhash).EthHash(), 6)
-			// if err != nil || receipt == nil {
-			// 	return errors.New("Transaction is not confirmed yet. Please wait for sometime and try again")
-			// }
+			receipt, err := contractCallerObj.GetConfirmedTxReceipt(hmTypes.HexToHeimdallHash(txhash).EthHash(), 6)
+			if err != nil || receipt == nil {
+				return errors.New("Transaction is not confirmed yet. Please wait for sometime and try again")
+			}
 
-			// abiObject := &contractCallerObj.StakingInfoABI
-			// event := new(stakinginfo.StakinginfoStaked)
-			// var logIndex uint64
-			// found := false
-			// for _, vLog := range receipt.Logs {
-			// 	topic := vLog.Topics[0].Bytes()
-			// 	selectedEvent := helper.EventByID(abiObject, topic)
-			// 	if selectedEvent != nil && selectedEvent.Name == ForeignEventName {
-			// 		if err := helper.UnpackLog(abiObject, event, ForeignEventName, vLog); err != nil {
-			// 			return err
-			// 		}
+			abiObject := &contractCallerObj.StakingInfoABI
+			event := new(stakinginfo.StakinginfoStaked)
+			var logIndex uint64
+			found := false
+			for _, vLog := range receipt.Logs {
+				topic := vLog.Topics[0].Bytes()
+				selectedEvent := helper.EventByID(abiObject, topic)
+				if selectedEvent != nil && selectedEvent.Name == ForeignEventName {
+					if err := helper.UnpackLog(abiObject, event, ForeignEventName, vLog); err != nil {
+						return err
+					}
 
-			// 		logIndex = uint64(vLog.Index)
-			// 		found = true
-			// 		break
-			// 	}
-			// }
+					logIndex = uint64(vLog.Index)
+					found = true
+					break
+				}
+			}
 
-			// if !found {
-			// 	return fmt.Errorf("Invalid tx for validator join")
-			// }
+			if !found {
+				return fmt.Errorf("Invalid tx for validator join")
+			}
 
-			// expectedPubKey, err := helper.CompressPubKey(event.SignerPubkey)
-			// if err != nil {
-			// 	return err
-			// }
-			// if !bytes.Equal(expectedPubKey, pubkey.Bytes()) {
-			// 	return fmt.Errorf("Public key mismatch with event log")
-			// }
+			expectedPubKey, err := helper.CompressPubKey(event.SignerPubkey)
+			if err != nil {
+				return err
+			}
+			if !bytes.Equal(expectedPubKey, pubkey.Bytes()) {
+				return fmt.Errorf("Public key mismatch with event log")
+			}
 
 			activationEpoch, _ := cmd.Flags().GetUint64(FlagActivationEpoch)
 			blockNumber, _ := cmd.Flags().GetUint64(FlagBlockNumber)
@@ -170,15 +175,19 @@ func ValidatorJoinTxCmd() *cobra.Command {
 			// msg new ValidatorJion message
 			msg, err := types.NewMsgValidatorJoin(
 				proposer,
-				1, //event.ValidatorId.Uint64(),
+				event.ValidatorId.Uint64(),
 				activationEpoch,
 				amount,
 				pubkey,
 				hmTypes.HexToHeimdallHash(txhash),
-				0, //logIndex,
+				logIndex,
 				blockNumber,
-				1, //event.Nonce.Uint64(),
+				event.Nonce.Uint64(),
 			)
+
+			if err != nil {
+				return fmt.Errorf("pubkey is required", err)
+			}
 
 			// broadcast message
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
@@ -210,72 +219,74 @@ func SignerUpdateTxCmd() *cobra.Command {
 		Use:   "signer-update",
 		Short: "Update signer for a validator",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			//clientCtx := client.GetClientContextFromCmd(cmd)
-			//clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
-			//if err != nil {
-			//	return err
-			//}
-			//
-			//// get proposer
-			//proposerAddrStr, _ := cmd.Flags().GetString(FlagProposerAddress)
-			//proposer, err := sdk.AccAddressFromHex(proposerAddrStr)
-			//if err != nil {
-			//	return err
-			//}
-			//if proposer.Empty() {
-			//	proposer = helper.GetFromAddress(clientCtx)
-			//}
-			//
-			//// get validatorID from flags
-			//ValidatorID, _ := cmd.Flags().GetUint64(FlagValidatorID)
-			//if ValidatorID == 0 {
-			//	return fmt.Errorf("validator ID cannot be 0")
-			//}
-			//
-			//// get PubKey string
-			//pubkeyStr, _ := cmd.Flags().GetString(FlagSignerPubkey)
-			//if pubkeyStr == "" {
-			//	return fmt.Errorf("pubkey is required")
-			//}
-			//
-			//// convert PubKey to bytes
-			//uncompressedPubkeyBytes := common.FromHex(pubkeyStr)
-			//
-			//ecdsaPubkey, err := ethcrypto.DecompressPubkey(uncompressedPubkeyBytes)
-			//if err != nil {
-			//	return err
-			//}
-			//pubkeyBytes := ethcrypto.FromECDSAPub(ecdsaPubkey)
-			//
-			//if len(pubkeyBytes) != 65 {
-			//	return fmt.Errorf("invalid public key length")
-			//}
-			//pubkey := hmTypes.NewPubKey(pubkeyBytes)
-			//
-			//// get txHash from flag
-			//txhash, _ := cmd.Flags().GetString(FlagTxHash)
-			//if txhash == "" {
-			//	return fmt.Errorf("transaction hash has to be supplied")
-			//}
-			//
-			//logIndex, _ := cmd.Flags().GetUint64(FlagLogIndex)
-			//blockNumber, _ := cmd.Flags().GetUint64(FlagBlockNumber)
-			//nonce, _ := cmd.Flags().GetUint64(FlagNonce)
-			//
-			//// draft new SingerUpdate message
-			//msg, err := types.NewMsgSignerUpdate(
-			//	proposer,
-			//	ValidatorID,
-			//	pubkey,
-			//	hmTypes.HexToHeimdallHash(txhash),
-			//	logIndex,
-			//	blockNumber,
-			//	nonce,
-			//)
-			//
-			//// broadcast messages
-			//return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
-			return nil
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
+
+			// get proposer
+			proposerAddrStr, _ := cmd.Flags().GetString(FlagProposerAddress)
+			proposer, err := sdk.AccAddressFromHex(proposerAddrStr)
+			if err != nil {
+				return err
+			}
+			if proposer.Empty() {
+				proposer = helper.GetFromAddress(clientCtx)
+			}
+
+			// get validatorID from flags
+			ValidatorID, _ := cmd.Flags().GetUint64(FlagValidatorID)
+			if ValidatorID == 0 {
+				return fmt.Errorf("validator ID cannot be 0")
+			}
+
+			// get PubKey string
+			pubkeyStr, _ := cmd.Flags().GetString(FlagSignerPubkey)
+			if pubkeyStr == "" {
+				return fmt.Errorf("pubkey is required")
+			}
+
+			// convert PubKey to bytes
+			uncompressedPubkeyBytes := common.FromHex(pubkeyStr)
+
+			ecdsaPubkey, err := ethcrypto.DecompressPubkey(uncompressedPubkeyBytes)
+			if err != nil {
+				return err
+			}
+			pubkeyBytes := ethcrypto.FromECDSAPub(ecdsaPubkey)
+
+			if len(pubkeyBytes) != 65 {
+				return fmt.Errorf("invalid public key length")
+			}
+			pubkey := hmTypes.NewPubKey(pubkeyBytes)
+
+			// get txHash from flag
+			txhash, _ := cmd.Flags().GetString(FlagTxHash)
+			if txhash == "" {
+				return fmt.Errorf("transaction hash has to be supplied")
+			}
+
+			logIndex, _ := cmd.Flags().GetUint64(FlagLogIndex)
+			blockNumber, _ := cmd.Flags().GetUint64(FlagBlockNumber)
+			nonce, _ := cmd.Flags().GetUint64(FlagNonce)
+
+			// draft new SingerUpdate message
+			msg, err := types.NewMsgSignerUpdate(
+				proposer,
+				ValidatorID,
+				pubkey,
+				hmTypes.HexToHeimdallHash(txhash),
+				logIndex,
+				blockNumber,
+				nonce,
+			)
+			if err != nil {
+				return fmt.Errorf("Error while sending create SignerUpdate msg", err)
+			}
+
+			// broadcast messages
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
 		},
 	}
 
