@@ -184,6 +184,9 @@ func ValidatorJoinTxCmd() *cobra.Command {
 				blockNumber,
 				event.Nonce.Uint64(),
 			)
+			if err != nil {
+				return err
+			}
 
 			// broadcast message
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
