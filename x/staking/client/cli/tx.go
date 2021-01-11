@@ -185,10 +185,6 @@ func ValidatorJoinTxCmd() *cobra.Command {
 				event.Nonce.Uint64(),
 			)
 
-			if err != nil {
-				return fmt.Errorf("pubkey is required", err)
-			}
-
 			// broadcast message
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
 		},
@@ -281,9 +277,6 @@ func SignerUpdateTxCmd() *cobra.Command {
 				blockNumber,
 				nonce,
 			)
-			if err != nil {
-				return fmt.Errorf("Error while sending create SignerUpdate msg", err)
-			}
 
 			// broadcast messages
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
