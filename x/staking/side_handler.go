@@ -69,7 +69,7 @@ func NewPostTxHandler(k keeper.Keeper, contractCaller helper.IContractCaller) hm
 func SideHandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k keeper.Keeper, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
 
 	k.Logger(ctx).Debug("✅ Validating External call for validator join msg",
-		"txHash", hmCommonTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
+		"txHash", hmCommonTypes.HexToHeimdallHash(msg.TxHash),
 		"logIndex", uint64(msg.LogIndex),
 		"blockNumber", msg.BlockNumber,
 	)
@@ -80,7 +80,10 @@ func SideHandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k k
 	chainParams := params.ChainParams
 
 	// get main tx receipt
-	receipt, err := contractCaller.GetConfirmedTxReceipt(msg.TxHash.EthHash(), params.MainchainTxConfirmations)
+	receipt, err := contractCaller.GetConfirmedTxReceipt(
+		hmCommonTypes.HexToHeimdallHash(msg.TxHash).EthHash(),
+		params.MainchainTxConfirmations,
+	)
 	if err != nil || receipt == nil {
 		return hmCommon.ErrorSideTx(hmCommon.CodeInvalidMsg)
 	}
@@ -92,11 +95,14 @@ func SideHandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k k
 	}
 
 	// Generate PubKey from Pubkey in message and signer
-	pubkey := msg.SignerPubKey
+	pubkeyBytes := msg.SignerPubKey.Value
+	pubkey := hmCommonTypes.NewPubKey(pubkeyBytes)
 	signer := pubkey.Address()
 
+	// create new pub key
+
 	// check signer pubkey in message corresponds
-	if !bytes.Equal(pubkey.Bytes()[1:], eventLog.SignerPubkey) {
+	if !bytes.Equal(pubkey[1:], eventLog.SignerPubkey) {
 		k.Logger(ctx).Error(
 			"Signer Pubkey does not match",
 			"msgValidator", pubkey.String(),
@@ -153,7 +159,7 @@ func SideHandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k k
 // SideHandleMsgStakeUpdate handles stake update message
 func SideHandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k keeper.Keeper, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
 	k.Logger(ctx).Debug("✅ Validating External call for stake update msg",
-		"txHash", hmCommonTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
+		"txHash", hmCommonTypes.HexToHeimdallHash(msg.TxHash),
 		"logIndex", uint64(msg.LogIndex),
 		"blockNumber", msg.BlockNumber,
 	)
@@ -163,7 +169,10 @@ func SideHandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k keepe
 	chainParams := params.ChainParams
 
 	// get main tx receipt
-	receipt, err := contractCaller.GetConfirmedTxReceipt(msg.TxHash.EthHash(), params.MainchainTxConfirmations)
+	receipt, err := contractCaller.GetConfirmedTxReceipt(
+		hmCommonTypes.HexToHeimdallHash(msg.TxHash).EthHash(),
+		params.MainchainTxConfirmations,
+	)
 	if err != nil || receipt == nil {
 		return hmCommon.ErrorSideTx(hmCommon.CodeInvalidMsg)
 	}
@@ -204,7 +213,7 @@ func SideHandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k keepe
 // SideHandleMsgSignerUpdate handles signer update message
 func SideHandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k keeper.Keeper, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
 	k.Logger(ctx).Debug("✅ Validating External call for signer update msg",
-		"txHash", hmCommonTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
+		"txHash", hmCommonTypes.HexToHeimdallHash(msg.TxHash),
 		"logIndex", uint64(msg.LogIndex),
 		"blockNumber", msg.BlockNumber,
 	)
@@ -214,12 +223,16 @@ func SideHandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k kee
 	chainParams := params.ChainParams
 
 	// get main tx receipt
-	receipt, err := contractCaller.GetConfirmedTxReceipt(msg.TxHash.EthHash(), params.MainchainTxConfirmations)
+	receipt, err := contractCaller.GetConfirmedTxReceipt(
+		hmCommonTypes.HexToHeimdallHash(msg.TxHash).EthHash(),
+		params.MainchainTxConfirmations,
+	)
 	if err != nil || receipt == nil {
 		return hmCommon.ErrorSideTx(hmCommon.CodeInvalidMsg)
 	}
-
-	newPubKey := msg.NewSignerPubKey
+	// new pubkey and signer
+	newPubkeyBytes := msg.NewSignerPubKey.Value
+	newPubKey := hmCommonTypes.NewPubKey(newPubkeyBytes)
 	newSigner := newPubKey.Address()
 
 	eventLog, err := contractCaller.DecodeSignerUpdateEvent(chainParams.StakingInfoAddress, receipt, msg.LogIndex)
@@ -263,7 +276,7 @@ func SideHandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k kee
 // SideHandleMsgValidatorExit  handle  side msg validator exit
 func SideHandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k keeper.Keeper, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
 	k.Logger(ctx).Debug("✅ Validating External call for validator exit msg",
-		"txHash", hmCommonTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
+		"txHash", hmCommonTypes.HexToHeimdallHash(msg.TxHash),
 		"logIndex", uint64(msg.LogIndex),
 		"blockNumber", msg.BlockNumber,
 	)
@@ -273,7 +286,10 @@ func SideHandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k k
 	chainParams := params.ChainParams
 
 	// get main tx receipt
-	receipt, err := contractCaller.GetConfirmedTxReceipt(msg.TxHash.EthHash(), params.MainchainTxConfirmations)
+	receipt, err := contractCaller.GetConfirmedTxReceipt(
+		hmCommonTypes.HexToHeimdallHash(msg.TxHash).EthHash(),
+		params.MainchainTxConfirmations,
+	)
 	if err != nil || receipt == nil {
 		return hmCommon.ErrorSideTx(hmCommon.CodeInvalidMsg)
 	}
@@ -338,8 +354,9 @@ func PostHandleMsgValidatorJoin(ctx sdk.Context, k keeper.Keeper, msg types.MsgV
 	k.Logger(ctx).Debug("Adding validator to state", "sideTxResult", sideTxResult)
 
 	// Generate PubKey from Pubkey in message and signer
-	pubkey := msg.SignerPubKey
-	signer := pubkey.Address().String()
+	pubkeyBytes := msg.SignerPubKey.Value
+	pubkey := hmCommonTypes.NewPubKey(pubkeyBytes)
+	signer := pubkey.Address()
 
 	// get voting power from amount
 	votingPower, err := helper.GetPowerFromAmount(msg.Amount.BigInt())
@@ -355,7 +372,7 @@ func PostHandleMsgValidatorJoin(ctx sdk.Context, k keeper.Keeper, msg types.MsgV
 		Nonce:       msg.Nonce,
 		VotingPower: votingPower.Int64(),
 		PubKey:      pubkey.String(),
-		Signer:      signer,
+		Signer:      signer.String(),
 		LastUpdated: "",
 	}
 
@@ -494,7 +511,9 @@ func PostHandleMsgSignerUpdate(ctx sdk.Context, k keeper.Keeper, msg types.MsgSi
 
 	k.Logger(ctx).Debug("Persisting signer update", "sideTxResult", sideTxResult)
 
-	newPubKey := msg.NewSignerPubKey
+	// new pubkey and signer
+	newPubkeyBytes := msg.NewSignerPubKey.Value
+	newPubKey := hmCommonTypes.NewPubKey(newPubkeyBytes)
 	newSigner := newPubKey.Address()
 
 	// pull validator from store

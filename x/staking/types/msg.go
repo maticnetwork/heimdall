@@ -4,6 +4,7 @@ import (
 	"bytes"
 
 	"github.com/cosmos/cosmos-sdk/codec"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	common "github.com/maticnetwork/heimdall/common"
@@ -31,19 +32,23 @@ func NewMsgValidatorJoin(
 	logIndex uint64,
 	blockNumber uint64,
 	nonce uint64,
-) MsgValidatorJoin {
+) (MsgValidatorJoin, error) {
+	pkAny, err := codectypes.PackAny(pubkey)
+	if err != nil {
+		return MsgValidatorJoin{}, err
+	}
 
 	return MsgValidatorJoin{
 		From:            from.String(),
 		ID:              hmTypes.NewValidatorID(id),
 		ActivationEpoch: activationEpoch,
-		Amount:          amount,
-		SignerPubKey:    &pubkey,
-		TxHash:          txhash,
+		Amount:          &amount,
+		SignerPubKey:    pkAny,
+		TxHash:          txhash.String(),
 		LogIndex:        logIndex,
 		BlockNumber:     blockNumber,
 		Nonce:           nonce,
-	}
+	}, nil
 }
 
 func (msg MsgValidatorJoin) Type() string {
@@ -77,7 +82,13 @@ func (msg MsgValidatorJoin) ValidateBasic() error {
 		return common.ErrInvalidMsg
 	}
 
-	if bytes.Equal(msg.SignerPubKey.Bytes(), helper.ZeroPubKey.Bytes()) {
+	pubbytes, err := msg.SignerPubKey.Marshal()
+
+	if err != nil {
+		return err
+	}
+
+	if bytes.Equal(pubbytes, helper.ZeroPubKey.Bytes()) {
 		return common.ErrInvalidMsg
 	}
 
@@ -86,7 +97,7 @@ func (msg MsgValidatorJoin) ValidateBasic() error {
 
 // GetTxHash Returns tx hash
 func (msg MsgValidatorJoin) GetTxHash() hmCommon.HeimdallHash {
-	return msg.TxHash
+	return hmCommon.HexToHeimdallHash(msg.TxHash)
 }
 
 // GetLogIndex Returns log index
@@ -115,8 +126,8 @@ func NewMsgStakeUpdate(from sdk.AccAddress, id uint64, newAmount sdk.Int, txhash
 	return MsgStakeUpdate{
 		From:        from.String(),
 		ID:          hmTypes.NewValidatorID(id),
-		NewAmount:   newAmount,
-		TxHash:      txhash,
+		NewAmount:   &newAmount,
+		TxHash:      txhash.String(),
 		LogIndex:    logIndex,
 		BlockNumber: blockNumber,
 		Nonce:       nonce,
@@ -159,7 +170,7 @@ func (msg MsgStakeUpdate) ValidateBasic() error {
 
 // GetTxHash Returns tx hash
 func (msg MsgStakeUpdate) GetTxHash() hmCommon.HeimdallHash {
-	return msg.TxHash
+	return hmCommon.HexToHeimdallHash(msg.TxHash)
 }
 
 // GetLogIndex Returns log index
@@ -190,16 +201,21 @@ func NewMsgSignerUpdate(
 	logIndex uint64,
 	blockNumber uint64,
 	nonce uint64,
-) MsgSignerUpdate {
+) (MsgSignerUpdate, error) {
+	pkAny, err := codectypes.PackAny(pubKey)
+	if err != nil {
+		return MsgSignerUpdate{}, err
+	}
+
 	return MsgSignerUpdate{
 		From:            from.String(),
 		ID:              hmTypes.NewValidatorID(id),
-		NewSignerPubKey: &pubKey,
-		TxHash:          txhash,
+		NewSignerPubKey: pkAny,
+		TxHash:          txhash.String(),
 		LogIndex:        logIndex,
 		BlockNumber:     blockNumber,
 		Nonce:           nonce,
-	}
+	}, nil
 }
 
 func (msg MsgSignerUpdate) Type() string {
@@ -233,7 +249,7 @@ func (msg MsgSignerUpdate) ValidateBasic() error {
 		return common.ErrInvalidMsg
 	}
 
-	if bytes.Equal(msg.NewSignerPubKey.Bytes(), helper.ZeroPubKey.Bytes()) {
+	if bytes.Equal(msg.NewSignerPubKey.Value, helper.ZeroPubKey.Bytes()) {
 		return common.ErrInvalidMsg
 	}
 
@@ -242,7 +258,7 @@ func (msg MsgSignerUpdate) ValidateBasic() error {
 
 // GetTxHash Returns tx hash
 func (msg MsgSignerUpdate) GetTxHash() hmCommon.HeimdallHash {
-	return msg.TxHash
+	return hmCommon.HexToHeimdallHash(msg.TxHash)
 }
 
 // GetLogIndex Returns log index
@@ -271,7 +287,7 @@ func NewMsgValidatorExit(from sdk.AccAddress, id uint64, deactivationEpoch uint6
 		From:              from.String(),
 		ID:                hmTypes.NewValidatorID(id),
 		DeactivationEpoch: deactivationEpoch,
-		TxHash:            txhash,
+		TxHash:            txhash.String(),
 		LogIndex:          logIndex,
 		BlockNumber:       blockNumber,
 		Nonce:             nonce,
@@ -313,7 +329,7 @@ func (msg MsgValidatorExit) ValidateBasic() error {
 
 // GetTxHash Returns tx hash
 func (msg MsgValidatorExit) GetTxHash() hmCommon.HeimdallHash {
-	return msg.TxHash
+	return hmCommon.HexToHeimdallHash(msg.TxHash)
 }
 
 // GetLogIndex Returns log index
