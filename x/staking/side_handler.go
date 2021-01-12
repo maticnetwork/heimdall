@@ -95,8 +95,7 @@ func SideHandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k k
 	}
 
 	// Generate PubKey from Pubkey in message and signer
-	pubkeyBytes := msg.SignerPubKey.Value
-	pubkey := hmCommonTypes.NewPubKey(pubkeyBytes)
+	pubkey := msg.GetSignerPubKey()
 	signer := pubkey.Address()
 
 	// create new pub key
@@ -354,8 +353,7 @@ func PostHandleMsgValidatorJoin(ctx sdk.Context, k keeper.Keeper, msg types.MsgV
 	k.Logger(ctx).Debug("Adding validator to state", "sideTxResult", sideTxResult)
 
 	// Generate PubKey from Pubkey in message and signer
-	pubkeyBytes := msg.SignerPubKey.Value
-	pubkey := hmCommonTypes.NewPubKey(pubkeyBytes)
+	pubkey := msg.GetSignerPubKey()
 	signer := pubkey.Address()
 
 	// get voting power from amount

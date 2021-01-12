@@ -35,14 +35,14 @@ func (k msgServer) ValidatorJoin(goCtx context.Context, msg *types.MsgValidatorJ
 		"validatorId", msg.ID,
 		"activationEpoch", msg.ActivationEpoch,
 		"amount", msg.Amount,
-		"SignerPubkey", msg.SignerPubKey.String(),
+		"SignerPubkey", msg.SignerPubKey,
 		"txHash", msg.TxHash,
 		"logIndex", msg.LogIndex,
 		"blockNumber", msg.BlockNumber,
 	)
 
 	// Generate PubKey from Pubkey in message and signer
-	pubkey := hmCommonTypes.NewPubKey(msg.SignerPubKey.Value)
+	pubkey := msg.GetSignerPubKey()
 
 	signer := pubkey.Address()
 
@@ -61,7 +61,8 @@ func (k msgServer) ValidatorJoin(goCtx context.Context, msg *types.MsgValidatorJ
 	// get voting power from amount
 	_, err = helper.GetPowerFromAmount(msg.Amount.BigInt())
 	if err != nil {
-		return nil, hmCommon.ErrInvalidMsg
+		k.Logger(ctx).Error("Error occurred while converting amount to power", "error", err)
+		return nil, hmCommon.ErrInvalidPower
 	}
 
 	// sequence id

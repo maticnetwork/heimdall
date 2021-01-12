@@ -33,17 +33,12 @@ func NewMsgValidatorJoin(
 	blockNumber uint64,
 	nonce uint64,
 ) (MsgValidatorJoin, error) {
-	pkAny, err := codectypes.PackAny(pubkey)
-	if err != nil {
-		return MsgValidatorJoin{}, err
-	}
-
 	return MsgValidatorJoin{
 		From:            from.String(),
 		ID:              hmTypes.NewValidatorID(id),
 		ActivationEpoch: activationEpoch,
 		Amount:          &amount,
-		SignerPubKey:    pkAny,
+		SignerPubKey:    pubkey.String(),
 		TxHash:          txhash.String(),
 		LogIndex:        logIndex,
 		BlockNumber:     blockNumber,
@@ -73,7 +68,6 @@ func (msg MsgValidatorJoin) GetSignBytes() []byte {
 }
 
 func (msg MsgValidatorJoin) ValidateBasic() error {
-
 	if msg.ID == 0 {
 		return common.ErrInvalidMsg
 	}
@@ -82,13 +76,7 @@ func (msg MsgValidatorJoin) ValidateBasic() error {
 		return common.ErrInvalidMsg
 	}
 
-	pubbytes, err := msg.SignerPubKey.Marshal()
-
-	if err != nil {
-		return err
-	}
-
-	if bytes.Equal(pubbytes, helper.ZeroPubKey.Bytes()) {
+	if bytes.Equal(msg.GetSignerPubKey(), helper.ZeroPubKey.Bytes()) {
 		return common.ErrInvalidMsg
 	}
 
@@ -98,6 +86,11 @@ func (msg MsgValidatorJoin) ValidateBasic() error {
 // GetTxHash Returns tx hash
 func (msg MsgValidatorJoin) GetTxHash() hmCommon.HeimdallHash {
 	return hmCommon.HexToHeimdallHash(msg.TxHash)
+}
+
+// GetSignerPubKey returns signer pub key
+func (msg MsgValidatorJoin) GetSignerPubKey() hmCommon.PubKey {
+	return hmCommon.NewPubKeyFromHex(msg.SignerPubKey)
 }
 
 // GetLogIndex Returns log index

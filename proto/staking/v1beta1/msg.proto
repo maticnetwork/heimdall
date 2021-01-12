@@ -35,12 +35,11 @@ message MsgValidatorJoin {
     uint64 activation_epoch = 3;
     string amount           = 4
         [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int"];
-    google.protobuf.Any signer_pub_key = 5
-        [(cosmos_proto.accepts_interface) = "cosmos.crypto.PubKey", (gogoproto.moretags) = "yaml:\"signer_pub_key\""];
-    string tx_hash = 6;
-    uint64 log_index    = 7;
-    uint64 block_number = 8;
-    uint64 nonce        = 9;
+    string signer_pub_key = 5;
+    string tx_hash        = 6;
+    uint64 log_index      = 7;
+    uint64 block_number   = 8;
+    uint64 nonce          = 9;
 }
 
 // MsgValidatorJoinResponse defines ValidatorJoin response type.
@@ -57,7 +56,7 @@ message MsgStakeUpdate {
     ];
     string new_amount = 3
         [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int"];
-    string tx_hash = 4;
+    string tx_hash      = 4;
     uint64 log_index    = 7;
     uint64 block_number = 8;
     uint64 nonce        = 9;
@@ -75,9 +74,11 @@ message MsgSignerUpdate {
             "github.com/maticnetwork/heimdall/types.ValidatorID",
         (gogoproto.customname) = "ID"
     ];
-    google.protobuf.Any new_signer_pub_key = 3
-        [(cosmos_proto.accepts_interface) = "cosmos.crypto.PubKey", (gogoproto.moretags) = "yaml:\"new_signer_pub_key\""];
-    string tx_hash = 4;
+    google.protobuf.Any new_signer_pub_key = 3 [
+        (cosmos_proto.accepts_interface) = "cosmos.crypto.PubKey",
+        (gogoproto.moretags)             = "yaml:\"new_signer_pub_key\""
+    ];
+    string tx_hash      = 4;
     uint64 log_index    = 5;
     uint64 block_number = 6;
     uint64 nonce        = 7;
@@ -96,10 +97,10 @@ message MsgValidatorExit {
         (gogoproto.customname) = "ID"
     ];
     uint64 deactivation_epoch = 3;
-    string tx_hash = 4;
-    uint64 log_index    = 5;
-    uint64 block_number = 6;
-    uint64 nonce        = 7;
+    string tx_hash            = 4;
+    uint64 log_index          = 5;
+    uint64 block_number       = 6;
+    uint64 nonce              = 7;
 }
 
 // MsgValidatorExitResponse is response type for ValidatorExit RPC method

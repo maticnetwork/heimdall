@@ -113,13 +113,6 @@ func ValidatorJoinTxCmd() *cobra.Command {
 			// create new pub key
 			pubkey := hmTypes.NewPubKey(pubkeyBytes)
 
-			// total stake amount
-			amountStr, _ := cmd.Flags().GetString(FlagAmount)
-			amount, ok := sdk.NewIntFromString(amountStr)
-			if !ok {
-				return fmt.Errorf("invalid stake amount")
-			}
-
 			// Get contractCaller ref
 			contractCallerObj, err := helper.NewContractCaller()
 			if err != nil {
@@ -177,7 +170,7 @@ func ValidatorJoinTxCmd() *cobra.Command {
 				proposer,
 				event.ValidatorId.Uint64(),
 				activationEpoch,
-				amount,
+				sdk.NewIntFromBigInt(event.Total),
 				pubkey,
 				hmTypes.HexToHeimdallHash(txhash),
 				logIndex,
@@ -197,12 +190,10 @@ func ValidatorJoinTxCmd() *cobra.Command {
 	cmd.Flags().String(FlagSignerPubkey, "", "--signer-pubkey=<signer pubkey here>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
 	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
-	cmd.Flags().String(FlagAmount, "0", "--amount=<amount>")
 	cmd.Flags().Uint64(FlagActivationEpoch, 0, "--activation-epoch=<activation-epoch>")
 
 	_ = cmd.MarkFlagRequired(FlagBlockNumber)
 	_ = cmd.MarkFlagRequired(FlagActivationEpoch)
-	_ = cmd.MarkFlagRequired(FlagAmount)
 	_ = cmd.MarkFlagRequired(FlagSignerPubkey)
 	_ = cmd.MarkFlagRequired(FlagTxHash)
 
