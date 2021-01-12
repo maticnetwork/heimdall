@@ -395,7 +395,6 @@ github.com/maticnetwork/bor v0.2.2-0.20200807103547-4d42b15906aa h1:T5Fx3HKWQdho
 github.com/maticnetwork/bor v0.2.2-0.20200807103547-4d42b15906aa/go.mod h1:uqsK1HCAHuCmEMGgOr6qLnzV1No/obnuu5Nz3nkMKNQ=
 github.com/maticnetwork/cosmos-sdk v0.37.5-0.20201211110634-320b75b282ae h1:KKCS3phDH3ZRDiFmyjKWpEIJbqEAqAJyfZkoW/F2ATw=
 github.com/maticnetwork/cosmos-sdk v0.37.5-0.20201211110634-320b75b282ae/go.mod h1:rdaxNAhIvydwHxOIUIB7+ntEZjQDpfwtotJTBXRFn+E=
-github.com/maticnetwork/cosmos-sdk v0.38.3 h1:e4nxtsXXY9mNqz8JWu0MYeepot72+9/FKC81JOei96Y=
 github.com/maticnetwork/tendermint v0.26.0-dev0.0.20201206065638-7f88f460383c h1:D551kWhgn4KRDxKiBsgbx7hZAOSLwU3lYXvA2RXKZdQ=
 github.com/maticnetwork/tendermint v0.26.0-dev0.0.20201206065638-7f88f460383c/go.mod h1:eE3UfvrRJy1n/jKkqaCKHnU3D72/D0/KYvb9xPv6ym4=
 github.com/mattn/go-colorable v0.0.9/go.mod h1:9vuHe8Xs5qXnSaW/c/ABM9alt+Vo+STaOChaDxuIBZU=
@@ -879,8 +878,8 @@ google.golang.org/grpc v1.28.0/go.mod h1:rpkK4SK4GF4Ach/+MFLZUBavHOvF2JJB5uozKKa
 google.golang.org/grpc v1.29.1/go.mod h1:itym6AZVZYACWQqET3MqgPpjcuV5QH3BxFS3IjizoKk=
 google.golang.org/grpc v1.33.1/go.mod h1:fr5YgcSWrqhRRxogOsw7RzIpsmvOZ6IcH4kBYTpR3n0=
 google.golang.org/grpc v1.33.2/go.mod h1:JMHMWHQWaTccqQQlmk3MJZS+GWXOdAesneDmEnv2fbc=
-google.golang.org/grpc v1.34.0 h1:raiipEjMOIC/TO2AvyTxP25XFdLxNIBwzDh3FM3XztI=
-google.golang.org/grpc v1.34.0/go.mod h1:WotjhfgOW/POjDeRt8vscBtXq+2VjORFy659qA51WJ8=
+google.golang.org/grpc v1.34.1 h1:ugq+9++ZQPFzM2pKUMCIK8gj9M0pFyuUWO9Q8kwEDQw=
+google.golang.org/grpc v1.34.1/go.mod h1:WotjhfgOW/POjDeRt8vscBtXq+2VjORFy659qA51WJ8=
 google.golang.org/protobuf v0.0.0-20200109180630-ec00e32a8dfd/go.mod h1:DFci5gLYBciE7Vtevhsrf46CRTquxDuWsQurQQe4oz8=
 google.golang.org/protobuf v0.0.0-20200221191635-4d8936d0db64/go.mod h1:kwYJMbMJ01Woi6D6+Kah6886xMZcty6N08ah7+eCXa0=
 google.golang.org/protobuf v0.0.0-20200228230310-ab0ca4ff8a60/go.mod h1:cfTl7dwQJ+fmap5saPgwCLgHXTUD7jkjRqWcaiX5VyM=
