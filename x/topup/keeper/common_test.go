@@ -7,10 +7,9 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	abci "github.com/tendermint/tendermint/abci/types"
-
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/types/simulation"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 )
 
 //
@@ -20,7 +19,7 @@ import (
 // returns context and app with params set on chainmanager keeper
 func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, client.Context) {
 	app := app.Setup(isCheckTx)
-	ctx := app.BaseApp.NewContext(isCheckTx, abci.Header{})
+	ctx := app.BaseApp.NewContext(isCheckTx, tmproto.Header{})
 	cliCtx := client.Context{}.WithJSONMarshaler(app.AppCodec())
 
 	s1 := rand.NewSource(time.Now().UnixNano())
