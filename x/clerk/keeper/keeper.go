@@ -28,18 +28,16 @@ var (
 
 type (
 	Keeper struct {
-		cdc      codec.BinaryMarshaler
-		storeKey sdk.StoreKey
-		// memKey      sdk.StoreKey
+		cdc         codec.BinaryMarshaler
+		storeKey    sdk.StoreKey
 		ChainKeeper chainKeeper.Keeper
 	}
 )
 
 func NewKeeper(cdc codec.BinaryMarshaler, storeKey sdk.StoreKey, chainKeeper chainKeeper.Keeper) Keeper {
 	return Keeper{
-		cdc:      cdc,
-		storeKey: storeKey,
-		// memKey:      memKey,
+		cdc:         cdc,
+		storeKey:    storeKey,
 		ChainKeeper: chainKeeper,
 	}
 }

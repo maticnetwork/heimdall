@@ -184,3 +184,8 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 func (am AppModule) NewPostTxHandler() hmTypes.PostTxHandler {
 	return NewPostTxHandler(am.keeper, am.contractCaller)
 }
+
+// NewSideTxHandler side tx handler
+func (am AppModule) NewSideTxHandler() hmTypes.SideTxHandler {
+	return NewSideTxHandler(am.keeper, am.contractCaller)
+}

@@ -115,17 +115,17 @@ $ %s query gov proposals --status (DepositPeriod|VotingPeriod|Passed|Rejected)
 			numLimit, _ := cmd.Flags().GetUint64(flagNumLimit)
 
 			var proposalStatus types.ProposalStatus
+			var err error
 
 			if len(strProposalStatus) != 0 {
-				proposalStatus1, err := types.ProposalStatusFromString(NormalizeProposalStatus(strProposalStatus))
-				proposalStatus = proposalStatus1
+				proposalStatus, err = types.ProposalStatusFromString(NormalizeProposalStatus(strProposalStatus))
 				if err != nil {
 					return err
 				}
 			}
 
 			clientCtx := client.GetClientContextFromCmd(cmd)
-			clientCtx, err := client.ReadQueryCommandFlags(clientCtx, cmd.Flags())
+			clientCtx, err = client.ReadQueryCommandFlags(clientCtx, cmd.Flags())
 			if err != nil {
 				return err
 			}
@@ -215,7 +215,10 @@ $ %s query gov vote 1 3
 
 			vote := res.GetVote()
 			if vote.Empty() {
-				resByTxQuery, err := QueryVoteByTxQuery(clientCtx, types.QueryVoteRequest{ProposalId: proposalID, Voter: hmTypes.NewValidatorID(voterID)})
+				resByTxQuery, err := QueryVoteByTxQuery(
+					clientCtx,
+					types.QueryVoteRequest{ProposalId: proposalID, Voter: hmTypes.NewValidatorID(voterID)},
+				)
 
 				if err != nil {
 					return err
@@ -272,8 +275,8 @@ $ %[1]s query gov votes 1
 				return fmt.Errorf("failed to fetch proposal-id %d: %s", proposalID, err)
 			}
 
-			propStatus := proposalRes.GetProposal().Status
-			if !(propStatus == types.StatusVotingPeriod || propStatus == types.StatusDepositPeriod) {
+			proposalStatus := proposalRes.GetProposal().Status
+			if !(proposalStatus == types.StatusVotingPeriod || proposalStatus == types.StatusDepositPeriod) {
 				resByTxQuery, err := QueryVotesByTxQuery(clientCtx, types.QueryProposalRequest{ProposalId: proposalID})
 				if err != nil {
 					return err
@@ -344,7 +347,7 @@ $ %s query gov deposit 1 1
 				return fmt.Errorf("failed to fetch proposal-id %d: %s", proposalID, err)
 			}
 
-			depositorID, _ := cmd.Flags().GetUint64(flagDepositor)
+			depositorID, _ := cmd.Flags().GetUint64(args[1])
 
 			res, err := queryClient.Deposit(
 				context.Background(),
@@ -356,7 +359,10 @@ $ %s query gov deposit 1 1
 
 			deposit := res.GetDeposit()
 			if deposit.Empty() {
-				resByTxQuery, err := QueryDepositByTxQuery(clientCtx, types.QueryDepositRequest{ProposalId: proposalID, Depositor: hmTypes.NewValidatorID(depositorID)})
+				resByTxQuery, err := QueryDepositByTxQuery(
+					clientCtx,
+					types.QueryDepositRequest{ProposalId: proposalID, Depositor: hmTypes.NewValidatorID(depositorID)},
+				)
 				if err != nil {
 					return err
 				}
@@ -410,8 +416,8 @@ $ %s query gov deposits 1
 				return fmt.Errorf("failed to fetch proposal-id %d: %s", proposalID, err)
 			}
 
-			propStatus := proposalRes.GetProposal().Status
-			if !(propStatus == types.StatusVotingPeriod || propStatus == types.StatusDepositPeriod) {
+			proposalStatus := proposalRes.GetProposal().Status
+			if !(proposalStatus == types.StatusVotingPeriod || proposalStatus == types.StatusDepositPeriod) {
 				resByTxQuery, err := QueryDepositsByTxQuery(clientCtx, types.QueryProposalRequest{ProposalId: proposalID})
 				if err != nil {
 					return err
