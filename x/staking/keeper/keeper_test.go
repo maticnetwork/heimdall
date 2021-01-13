@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"github.com/maticnetwork/heimdall/helper"
 	"math/rand"
 	"strings"
 	"testing"
@@ -251,31 +252,31 @@ func (suite *KeeperTestSuite) TestUpdateSigner() {
 
 // }
 
-// func (suite *KeeperTestSuite) TestAddValidatorSetChange() {
-// 	// create sub test to check if validator remove
-// 	t, app, ctx := suite.T(), suite.app, suite.ctx
-// 	keeper := app.StakingKeeper
+func (suite *KeeperTestSuite) TestAddValidatorSetChange() {
+	// create sub test to check if validator remove
+	t, app, ctx := suite.T(), suite.app, suite.ctx
+	keeper := app.StakingKeeper
 
-// 	// load 4 validators to state
-// 	stakingSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
-// 	initValSet := keeper.GetValidatorSet(ctx)
+	// load 4 validators to state
+	stakingSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	initValSet := keeper.GetValidatorSet(ctx)
 
-// 	validators := stakingSim.GenRandomVal(1, 0, 10, 10, false, 1)
-// 	prevValSet := initValSet.Copy()
+	validators := stakingSim.GenRandomVal(1, 0, 10, 10, false, 1)
+	prevValSet := initValSet.Copy()
 
-// 	valToBeAdded := validators[0]
-// 	currentValSet := initValSet.Copy()
+	valToBeAdded := validators[0]
+	currentValSet := initValSet.Copy()
 
-// 	keeper.AddValidator(ctx, valToBeAdded)
+	keeper.AddValidator(ctx, valToBeAdded)
 
-// 	setUpdates := helper.GetUpdatedValidators(currentValSet, keeper.GetAllValidators(ctx), 5)
-// 	currentValSet.UpdateWithChangeSet(setUpdates)
+	setUpdates := helper.GetUpdatedValidators(currentValSet, keeper.GetAllValidators(ctx), 5)
+	currentValSet.UpdateWithChangeSet(setUpdates)
 
-// 	require.Equal(t, len(prevValSet.Validators)+1, len(currentValSet.Validators), "Number of validators should be increased by 1")
-// 	require.Equal(t, true, currentValSet.HasAddress(valToBeAdded.GetSigner().Bytes()), "New Validator should be added")
-// 	require.Equal(t, prevValSet.GetTotalVotingPower()+int64(valToBeAdded.VotingPower), currentValSet.GetTotalVotingPower(), "Total VotingPower should be increased")
+	require.Equal(t, len(prevValSet.Validators)+1, len(currentValSet.Validators), "Number of validators should be increased by 1")
+	require.Equal(t, true, currentValSet.HasAddress(valToBeAdded.GetSigner().Bytes()), "New Validator should be added")
+	require.Equal(t, prevValSet.GetTotalVotingPower()+int64(valToBeAdded.VotingPower), currentValSet.GetTotalVotingPower(), "Total VotingPower should be increased")
 
-// }
+}
 
 // TODO uncomment fix test case
 
