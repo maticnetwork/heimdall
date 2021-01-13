@@ -1,9 +1,6 @@
 syntax = "proto3";
 package heimdall.topup.v1beta1;
 
-// import "cosmos/base/query/v1beta1/pagination.proto";
-// this line is used by starport scaffolding # 1
-
 import "google/api/annotations.proto";
 import "gogoproto/gogo.proto";
 

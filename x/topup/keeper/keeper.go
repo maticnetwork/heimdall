@@ -164,11 +164,11 @@ func (k *Keeper) CheckIfDividendAccountExists(ctx sdk.Context, userAddr sdk.AccA
 }
 
 // GetAllDividendAccounts returns all DividendAccountss
-func (k *Keeper) GetAllDividendAccounts(ctx sdk.Context) (dividendAccounts []hmTypes.DividendAccount) {
+func (k *Keeper) GetAllDividendAccounts(ctx sdk.Context) (dividendAccounts []*hmTypes.DividendAccount) {
 	// iterate through dividendAccounts and create dividendAccounts update array
 	k.IterateDividendAccountsByPrefixAndApplyFn(ctx, DividendAccountMapKey, func(dividendAccount hmTypes.DividendAccount) error {
 		// append to list of dividendUpdates
-		dividendAccounts = append(dividendAccounts, dividendAccount)
+		dividendAccounts = append(dividendAccounts, &dividendAccount)
 		return nil
 	})
 

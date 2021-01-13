@@ -5,10 +5,9 @@ import (
 	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
-	// hmClient "github.com/maticnetwork/heimdall/client"
 	"github.com/maticnetwork/heimdall/x/topup/types"
 )
 
@@ -26,7 +25,6 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 	cmd.AddCommand(
 		GetSequenceCmd(),
 	)
-	// this line is used by starport scaffolding # 1
 
 	return cmd
 }
@@ -43,8 +41,16 @@ func GetSequenceCmd() *cobra.Command {
 				return err
 			}
 
-			logIndex := viper.GetUint64(FlagLogIndex)
-			txHashStr := viper.GetString(FlagTxHash)
+			logIndex, err := cmd.Flags().GetUint64(FlagLogIndex)
+			if err != nil {
+				return err
+			}
+
+			txHashStr, err := cmd.Flags().GetString(FlagTxHash)
+			if err != nil {
+				return err
+			}
+
 			if txHashStr == "" {
 				return fmt.Errorf("LogIndex and transaction hash required")
 			}
@@ -63,8 +69,7 @@ func GetSequenceCmd() *cobra.Command {
 		},
 	}
 
-	//TODO: uncomment below line - currently gives an error that flags.AddQueryFlagstoCmd is undefined but can't seem to understand why.
-	// flags.AddQueryFlagstoCmd(cmd)
+	flags.AddQueryFlagsToCmd(cmd)
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
 	cmd.Flags().Uint64(FlagLogIndex, 0, "--log-index=<log-index>")
 
