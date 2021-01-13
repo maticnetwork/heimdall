@@ -273,3 +273,9 @@ func NewTallyResultFromMap(results map[VoteOption]sdk.Dec) TallyResult {
 		NoWithVeto: results[OptionNoWithVeto].TruncateInt(),
 	}
 }
+
+
+// NewProposer returns a new Proposer given id and proposer
+func NewProposer(proposalID uint64, proposer string) Proposer {
+	return Proposer{proposalID, proposer}
+}

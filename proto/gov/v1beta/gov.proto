@@ -43,6 +43,11 @@ message TextProposal {
     string description = 2;
 }
 
+message Proposer {
+    uint64 proposal_id = 1 [(gogoproto.moretags) = "yaml:\"proposal_id\""];
+    string proposer    = 2;
+}
+
 // Deposit defines an amount deposited by an account address to an active
 // proposal.
 message Deposit {

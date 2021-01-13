@@ -283,9 +283,7 @@ $ %[1]s query gov votes 1
 				}
 
 				var votes types.Votes
-				// TODO migrate to use JSONMarshaler (implement MarshalJSONArray
-				// or wrap lists of proto.Message in some other message)
-				clientCtx.LegacyAmino.MustUnmarshalJSON(resByTxQuery, &votes)
+				clientCtx.JSONMarshaler.MustUnmarshalJSON(resByTxQuery, &votes)
 				return clientCtx.PrintOutput(votes)
 
 			}
@@ -424,10 +422,7 @@ $ %s query gov deposits 1
 				}
 
 				var dep types.Deposits
-				// TODO migrate to use JSONMarshaler (implement MarshalJSONArray
-				// or wrap lists of proto.Message in some other message)
-				clientCtx.LegacyAmino.MustUnmarshalJSON(resByTxQuery, &dep)
-
+				clientCtx.JSONMarshaler.MustUnmarshalJSON(resByTxQuery, &dep)
 				return clientCtx.PrintOutput(&dep)
 			}
 
@@ -665,24 +660,24 @@ const (
 	defaultLimit = 30 // should be consistent with tendermint/tendermint/rpc/core/pipe.go:19
 )
 
-// Proposer contains metadata of a governance proposal used for querying a
-// proposer.
-type Proposer struct {
-	ProposalID uint64 `json:"proposal_id" yaml:"proposal_id"`
-	Proposer   string `json:"proposer" yaml:"proposer"`
-}
+// // Proposer contains metadata of a governance proposal used for querying a
+// // proposer.
+// type Proposer struct {
+// 	ProposalID uint64 `json:"proposal_id" yaml:"proposal_id"`
+// 	Proposer   string `json:"proposer" yaml:"proposer"`
+// }
 
-// NewProposer returns a new Proposer given id and proposer
-func NewProposer(proposalID uint64, proposer string) Proposer {
-	return Proposer{proposalID, proposer}
-}
+// // NewProposer returns a new Proposer given id and proposer
+// func NewProposer(proposalID uint64, proposer string) Proposer {
+// 	return Proposer{proposalID, proposer}
+// }
 
-func (p Proposer) String() string {
-	return fmt.Sprintf("Proposal with ID %d was proposed by %s", p.ProposalID, p.Proposer)
-}
+// func (p Proposer) String() string {
+// 	return fmt.Sprintf("Proposal with ID %d was proposed by %s", p.ProposalID, p.Proposer)
+// }
 
-func (*Proposer) ProtoMessage() {}
-func (m *Proposer) Reset()      { *m = Proposer{} }
+// func (*Proposer) ProtoMessage() {}
+// func (m *Proposer) Reset()      { *m = Proposer{} }
 
 // QueryDepositsByTxQuery will query for deposits via a direct txs tags query. It
 // will fetch and build deposits directly from the returned txs and return a
@@ -719,7 +714,7 @@ func QueryDepositsByTxQuery(clientCtx client.Context, params types.QueryProposal
 		}
 	}
 
-	bz, err := clientCtx.LegacyAmino.MarshalJSON(deposits)
+	bz, err := clientCtx.JSONMarshaler.MarshalJSON(deposits)
 	if err != nil {
 		return nil, err
 	}
@@ -759,7 +754,7 @@ func QueryVotesByTxQuery(clientCtx client.Context, params types.QueryProposalReq
 		}
 	}
 
-	bz, err := clientCtx.LegacyAmino.MarshalJSON(votes)
+	bz, err := clientCtx.JSONMarshaler.MarshalJSON(votes)
 	if err != nil {
 		return nil, err
 	}
@@ -849,7 +844,7 @@ func QueryDepositByTxQuery(clientCtx client.Context, params types.QueryDepositRe
 
 // QueryProposerByTxQuery will query for a proposer of a governance proposal by
 // ID.
-func QueryProposerByTxQuery(clientCtx client.Context, proposalID uint64) (Proposer, error) {
+func QueryProposerByTxQuery(clientCtx client.Context, proposalID uint64) (types.Proposer, error) {
 	events := []string{
 		fmt.Sprintf("%s.%s='%s'", sdk.EventTypeMessage, sdk.AttributeKeyAction, types.TypeMsgSubmitProposal),
 		fmt.Sprintf("%s.%s='%s'", types.EventTypeSubmitProposal, types.AttributeKeyProposalID, []byte(fmt.Sprintf("%d", proposalID))),
@@ -859,7 +854,7 @@ func QueryProposerByTxQuery(clientCtx client.Context, proposalID uint64) (Propos
 	// support configurable pagination.
 	searchResult, err := authclient.QueryTxsByEvents(clientCtx, events, defaultPage, defaultLimit, "")
 	if err != nil {
-		return Proposer{}, err
+		return types.Proposer{}, err
 	}
 
 	for _, info := range searchResult.Txs {
@@ -867,18 +862,18 @@ func QueryProposerByTxQuery(clientCtx client.Context, proposalID uint64) (Propos
 			// there should only be a single proposal under the given conditions
 			if msg.Type() == types.TypeMsgSubmitProposal {
 				subMsg := msg.(*types.MsgSubmitProposal)
-				return NewProposer(proposalID, subMsg.Proposer.String()), nil
+				return types.NewProposer(proposalID, subMsg.Proposer.String()), nil
 			}
 		}
 	}
 
-	return Proposer{}, fmt.Errorf("failed to find the proposer for proposalID %d", proposalID)
+	return types.Proposer{}, fmt.Errorf("failed to find the proposer for proposalID %d", proposalID)
 }
 
 // QueryProposalByID takes a proposalID and returns a proposal
 func QueryProposalByID(proposalID uint64, clientCtx client.Context, queryRoute string) ([]byte, error) {
 	params := types.QueryProposalRequest{proposalID}
-	bz, err := clientCtx.LegacyAmino.MarshalJSON(params)
+	bz, err := clientCtx.JSONMarshaler.MarshalJSON(&params)
 	if err != nil {
 		return nil, err
 	}
