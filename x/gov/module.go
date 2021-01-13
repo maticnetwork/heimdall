@@ -17,6 +17,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
+	govclient "github.com/maticnetwork/heimdall/x/gov/client"
 	"github.com/maticnetwork/heimdall/x/gov/client/cli"
 	"github.com/maticnetwork/heimdall/x/gov/client/rest"
 	"github.com/maticnetwork/heimdall/x/gov/keeper"
@@ -34,11 +35,19 @@ var (
 
 // AppModuleBasic implements the AppModuleBasic interface for the capability module.
 type AppModuleBasic struct {
-	cdc codec.Marshaler
+	cdc              codec.Marshaler
+	proposalHandlers []govclient.ProposalHandler // proposal handlers which live in governance cli and rest
 }
 
-func NewAppModuleBasic(cdc codec.Marshaler) AppModuleBasic {
-	return AppModuleBasic{cdc: cdc}
+// func NewAppModuleBasic(cdc codec.Marshaler) AppModuleBasic {
+// 	return AppModuleBasic{cdc: cdc}
+// }
+
+// NewAppModuleBasic creates a new AppModuleBasic object
+func NewAppModuleBasic(proposalHandlers ...govclient.ProposalHandler) AppModuleBasic {
+	return AppModuleBasic{
+		proposalHandlers: proposalHandlers,
+	}
 }
 
 // Name returns the capability module's name.
@@ -92,7 +101,12 @@ func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *r
 
 // GetTxCmd returns the capability module's root tx command.
 func (a AppModuleBasic) GetTxCmd() *cobra.Command {
-	return cli.GetTxCmd()
+	proposalCLIHandlers := make([]*cobra.Command, 0, len(a.proposalHandlers))
+	for _, proposalHandler := range a.proposalHandlers {
+		proposalCLIHandlers = append(proposalCLIHandlers, proposalHandler.CLIHandler())
+	}
+
+	return cli.NewTxCmd(proposalCLIHandlers)
 }
 
 // GetQueryCmd returns the capability module's root query command.

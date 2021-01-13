@@ -1,9 +1,15 @@
 package types
 
 import (
+	"fmt"
+	"github.com/gogo/protobuf/proto"
+
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 // Governance message types and routes
@@ -131,3 +137,39 @@ func (m *MsgSubmitProposal) GetContent() Content {
 }
 
 func (m *MsgSubmitProposal) GetInitialDeposit() sdk.Coins { return m.InitialDeposit }
+
+// NewMsgSubmitProposal creates new submit proposal
+func NewMsgSubmitProposal(content Content, initialDeposit sdk.Coins, proposer sdk.AccAddress, validator hmTypes.ValidatorID) (*MsgSubmitProposal, error) {
+	m := &MsgSubmitProposal{
+		InitialDeposit: initialDeposit,
+		Proposer:       proposer,
+		Validator:      validator,
+	}
+	err := m.SetContent(content)
+	if err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func NewMsgDeposit(depositor sdk.AccAddress, proposalID uint64, amount sdk.Coins, validator hmTypes.ValidatorID) MsgDeposit {
+	return MsgDeposit{proposalID, depositor, amount, validator}
+}
+
+// NewMsgVote new msg vote
+func NewMsgVote(voter sdk.AccAddress, proposalID uint64, option VoteOption, validator hmTypes.ValidatorID) MsgVote {
+	return MsgVote{proposalID, voter, option, validator}
+}
+
+func (m *MsgSubmitProposal) SetContent(content Content) error {
+	msg, ok := content.(proto.Message)
+	if !ok {
+		return fmt.Errorf("can't proto marshal %T", msg)
+	}
+	any, err := types.NewAnyWithValue(msg)
+	if err != nil {
+		return err
+	}
+	m.Content = any
+	return nil
+}

@@ -109,10 +109,10 @@ $ %s query gov proposals --status (DepositPeriod|VotingPeriod|Passed|Rejected)
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			depositorID, _ := cmd.Flags().GetUint64(flagDepositor)
-			voterID, _ := cmd.Flags().GetUint64(flagVoter)
-			strProposalStatus, _ := cmd.Flags().GetString(flagStatus)
-			numLimit, _ := cmd.Flags().GetUint64(flagNumLimit)
+			depositorID, _ := cmd.Flags().GetUint64(FlagDepositor)
+			voterID, _ := cmd.Flags().GetUint64(FlagVoter)
+			strProposalStatus, _ := cmd.Flags().GetString(FlagStatus)
+			numLimit, _ := cmd.Flags().GetUint64(FlagNumLimit)
 
 			var proposalStatus types.ProposalStatus
 			var err error
@@ -152,10 +152,10 @@ $ %s query gov proposals --status (DepositPeriod|VotingPeriod|Passed|Rejected)
 		},
 	}
 
-	cmd.Flags().Uint64(flagDepositor, 0, "(optional) filter by proposals deposited on by depositor")
-	cmd.Flags().Uint64(flagVoter, 0, "(optional) filter by proposals voted on by voted")
-	cmd.Flags().String(flagStatus, "", "(optional) filter proposals by proposal status, status: deposit_period/voting_period/passed/rejected")
-	cmd.Flags().Uint64(flagNumLimit, 0, "(optional) limit to latest [number] proposals. Defaults to all proposals")
+	cmd.Flags().Uint64(FlagDepositor, 0, "(optional) filter by proposals deposited on by depositor")
+	cmd.Flags().Uint64(FlagVoter, 0, "(optional) filter by proposals voted on by voted")
+	cmd.Flags().String(FlagStatus, "", "(optional) filter proposals by proposal status, status: deposit_period/voting_period/passed/rejected")
+	cmd.Flags().Uint64(FlagNumLimit, 0, "(optional) limit to latest [number] proposals. Defaults to all proposals")
 	flags.AddQueryFlagsToCmd(cmd)
 
 	return cmd

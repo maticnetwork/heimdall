@@ -43,6 +43,13 @@ message TextProposal {
     string description = 2;
 }
 
+message TxProposal {
+    string title       = 1;
+    string description = 2;
+    string type        = 3;
+    string deposit     = 4;
+}
+
 message Proposer {
     uint64 proposal_id = 1 [(gogoproto.moretags) = "yaml:\"proposal_id\""];
     string proposer    = 2;
