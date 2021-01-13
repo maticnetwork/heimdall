@@ -698,7 +698,7 @@ func QueryDepositsByTxQuery(clientCtx client.Context, params types.QueryProposal
 		return nil, err
 	}
 
-	var deposits []types.Deposit
+	var deposits types.Deposits
 
 	for _, info := range searchResult.Txs {
 		for _, msg := range info.GetTx().GetMsgs() {
@@ -738,7 +738,7 @@ func QueryVotesByTxQuery(clientCtx client.Context, params types.QueryProposalReq
 		return nil, err
 	}
 
-	var votes []types.Vote
+	var votes types.Votes
 
 	for _, info := range searchResult.Txs {
 		for _, msg := range info.GetTx().GetMsgs() {
