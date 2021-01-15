@@ -53,7 +53,7 @@ import (
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
 
 	// "github.com/cosmos/cosmos-sdk/x/slashing"
-	//slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
+	// slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	// slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 
 	hmparams "github.com/maticnetwork/heimdall/app/params"
@@ -67,6 +67,9 @@ import (
 	"github.com/maticnetwork/heimdall/x/staking"
 	stakingkeeper "github.com/maticnetwork/heimdall/x/staking/keeper"
 	stakingtypes "github.com/maticnetwork/heimdall/x/staking/types"
+	"github.com/maticnetwork/heimdall/x/topup"
+	topupkeeper "github.com/maticnetwork/heimdall/x/topup/keeper"
+	topuptypes "github.com/maticnetwork/heimdall/x/topup/types"
 
 	// unnamed import of statik for swagger UI support
 	_ "github.com/maticnetwork/heimdall/client/docs/statik"
@@ -89,6 +92,7 @@ var (
 		sidechannel.AppModuleBasic{},
 		staking.AppModuleBasic{},
 		params.AppModuleBasic{},
+		topup.AppModuleBasic{},
 		clerk.AppModuleBasic{},
 	)
 
@@ -129,6 +133,7 @@ type HeimdallApp struct {
 	SidechannelKeeper sidechannelkeeper.Keeper
 	StakingKeeper     stakingkeeper.Keeper
 	ParamsKeeper      paramskeeper.Keeper
+	TopupKeeper       topupkeeper.Keeper
 	CheckpointKeeper  checkoutkeeper.Keeper
 
 	// side router
@@ -201,6 +206,7 @@ func NewHeimdallApp(
 		// slashingtypes.StoreKey,
 		// govtypes.StoreKey,
 		paramstypes.StoreKey,
+		topuptypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 
@@ -268,6 +274,14 @@ func NewHeimdallApp(
 		moduleCommunicator,
 	)
 
+	app.TopupKeeper = topupkeeper.NewKeeper(
+		appCodec,
+		keys[topuptypes.StoreKey],
+		app.GetSubspace(topuptypes.ModuleName),
+		app.ChainKeeper,
+		app.BankKeeper,
+		app.StakingKeeper,
+	)
 	// Contract caller
 	contractCallerObj, err := helper.NewContractCaller()
 	if err != nil {
