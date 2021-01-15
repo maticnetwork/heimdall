@@ -2,7 +2,7 @@ package types
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
+	common "github.com/maticnetwork/heimdall/common"
 	hmCommon "github.com/maticnetwork/heimdall/types/common"
 )
 
@@ -43,14 +43,9 @@ func (msg MsgTopup) Type() string {
 
 // ValidateBasic Implements Msg.
 func (msg MsgTopup) ValidateBasic() error {
-	// if msg.FromAddress.Empty() {
-	// 	return sdk.ErrInvalidAddress
-	// }
-
-	// if msg.FromAddress.Empty() {
-	// 	return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.FromAddress.String())
-	// }
-
+	if msg.FromAddress == "" {
+		return common.ErrEmptyAddr
+	}
 	return nil
 }
 
@@ -107,14 +102,9 @@ func (msg MsgWithdrawFee) Type() string {
 
 // ValidateBasic Implements Msg.
 func (msg MsgWithdrawFee) ValidateBasic() error {
-	// if msg.UserAddress.Empty() {
-	// 	// return sdk.ErrInvalidAddress
-	// }
-
-	// if msg.UserAddress.Empty() {
-	// 	return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.UserAddress.String())
-	// }
-
+	if msg.UserAddress == "" {
+		return common.ErrEmptyAddr
+	}
 	return nil
 }
 
