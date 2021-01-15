@@ -53,13 +53,14 @@ import (
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
 
 	// "github.com/cosmos/cosmos-sdk/x/slashing"
-	// slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
+	//slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	// slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 
 	hmparams "github.com/maticnetwork/heimdall/app/params"
 	hmtypes "github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/types/common"
 	hmmodule "github.com/maticnetwork/heimdall/types/module"
+	checkoutkeeper "github.com/maticnetwork/heimdall/x/checkpoint/keeper"
 	"github.com/maticnetwork/heimdall/x/sidechannel"
 	sidechannelkeeper "github.com/maticnetwork/heimdall/x/sidechannel/keeper"
 	sidechanneltypes "github.com/maticnetwork/heimdall/x/sidechannel/types"
@@ -128,6 +129,7 @@ type HeimdallApp struct {
 	SidechannelKeeper sidechannelkeeper.Keeper
 	StakingKeeper     stakingkeeper.Keeper
 	ParamsKeeper      paramskeeper.Keeper
+	CheckpointKeeper  checkoutkeeper.Keeper
 
 	// side router
 	sideRouter hmtypes.SideRouter
@@ -140,6 +142,16 @@ type HeimdallApp struct {
 
 	// simulation manager
 	sm *module.SimulationManager
+}
+
+// ModuleCommunicator retriever
+type ModuleCommunicator struct {
+	App *HeimdallApp
+}
+
+// GetACKCount returns ack count
+func (d ModuleCommunicator) GetACKCount(ctx sdk.Context) uint64 {
+	return d.App.CheckpointKeeper.GetACKCount(ctx)
 }
 
 func init() {
@@ -204,6 +216,12 @@ func NewHeimdallApp(
 	}
 
 	//
+	// module communicator
+	//
+
+	moduleCommunicator := ModuleCommunicator{App: app}
+
+	//
 	// Keepers
 	//
 
@@ -247,7 +265,7 @@ func NewHeimdallApp(
 		app.GetSubspace(stakingtypes.ModuleName),
 		app.ChainKeeper,
 		app.BankKeeper,
-		nil,
+		moduleCommunicator,
 	)
 
 	// Contract caller

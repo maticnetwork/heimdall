@@ -30,7 +30,7 @@ var (
 // ModuleCommunicator manages different module interaction
 type ModuleCommunicator interface {
 	GetACKCount(ctx sdk.Context) uint64
-	CreateValiatorSigningInfo(ctx sdk.Context, valID hmTypes.ValidatorID, valSigningInfo hmTypes.ValidatorSigningInfo)
+	//CreateValiatorSigningInfo(ctx sdk.Context, valID hmTypes.ValidatorID, valSigningInfo hmTypes.ValidatorSigningInfo)
 }
 
 type (
@@ -169,6 +169,7 @@ func (k *Keeper) GetActiveValidatorInfo(ctx sdk.Context, address []byte) (valida
 // GetCurrentValidators returns all validators who are in validator set
 func (k *Keeper) GetCurrentValidators(ctx sdk.Context) (validators []hmTypes.Validator) {
 	// get ack count
+	fmt.Printf("ModuleCommunicator %+v\n", k.ModuleCommunicator)
 	ackCount := k.ModuleCommunicator.GetACKCount(ctx)
 
 	// Get validators
@@ -441,7 +442,7 @@ func (k *Keeper) IterateStakingSequencesAndApplyFn(ctx sdk.Context, f func(seque
 // Slashing api's
 // AddValidatorSigningInfo creates a signing info for validator
 func (k *Keeper) AddValidatorSigningInfo(ctx sdk.Context, valID hmTypes.ValidatorID, valSigningInfo hmTypes.ValidatorSigningInfo) error {
-	k.ModuleCommunicator.CreateValiatorSigningInfo(ctx, valID, valSigningInfo)
+	//k.ModuleCommunicator.CreateValiatorSigningInfo(ctx, valID, valSigningInfo)
 	return nil
 }
 
