@@ -16,6 +16,7 @@ import (
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
 	"github.com/maticnetwork/heimdall/helper"
+	hmCommonTypes "github.com/maticnetwork/heimdall/types/common"
 	chainmanagerTypes "github.com/maticnetwork/heimdall/x/chainmanager/types"
 )
 
@@ -156,9 +157,9 @@ func (rl *RootChainListener) queryAndBroadcastEvents(rootchainContext *RootChain
 
 	// draft a query
 	query := ethereum.FilterQuery{FromBlock: fromBlock, ToBlock: toBlock, Addresses: []ethCommon.Address{
-		chainParams.RootChainAddress.EthAddress(),
-		chainParams.StakingInfoAddress.EthAddress(),
-		chainParams.StateSenderAddress.EthAddress(),
+		hmCommonTypes.HexToHeimdallAddress(chainParams.RootChainAddress.String()).EthAddress(),
+		hmCommonTypes.HexToHeimdallAddress(chainParams.StakingInfoAddress.String()).EthAddress(),
+		hmCommonTypes.HexToHeimdallAddress(chainParams.StateSenderAddress.String()).EthAddress(),
 	}}
 	// get logs from rootchain by filter
 	logs, err := rl.contractConnector.MainChainClient.FilterLogs(context.Background(), query)

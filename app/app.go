@@ -389,8 +389,8 @@ func NewHeimdallApp(
 // HeimdallApp. It is useful for tests and clients who do not want to construct the
 // full HeimdallApp
 func MakeCodecs() (codec.Marshaler, *codec.LegacyAmino) {
-	config := MakeEncodingConfig()
-	return config.Marshaler, config.Amino
+	encodingConfig := MakeEncodingConfig()
+	return encodingConfig.Marshaler, encodingConfig.Amino
 }
 
 // Name returns the name of the App

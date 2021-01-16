@@ -19,7 +19,7 @@ const (
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "heimdall-bridge",
-	Short: "Heimdall bridge deamon",
+	Short: "Heimdall bridge daemon",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		// initialize tendermint viper config
 		InitTendermintViperConfig(cmd)

@@ -6,12 +6,13 @@ import (
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb"
 
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/maticnetwork/heimdall/bridge/setu/broadcaster"
 	"github.com/maticnetwork/heimdall/bridge/setu/queue"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/tendermint/tendermint/libs/log"
-	httpClient "github.com/tendermint/tendermint/rpc/client"
+	httpClient "github.com/tendermint/tendermint/rpc/client/http"
 )
 
 // Processor defines a block header listerner for Rootchain, Maticchain, Heimdall
@@ -56,12 +57,11 @@ type BaseProcessor struct {
 }
 
 // NewBaseProcessor creates a new BaseProcessor.
-func NewBaseProcessor(cdc *codec.Codec, queueConnector *queue.QueueConnector, httpClient *httpClient.HTTP, txBroadcaster *broadcaster.TxBroadcaster, paramsContext *util.ParamsContext, name string, impl Processor) *BaseProcessor {
+func NewBaseProcessor(cdc codec.Marshaler, queueConnector *queue.QueueConnector, httpClient *httpClient.HTTP, txBroadcaster *broadcaster.TxBroadcaster, paramsContext *util.ParamsContext, name string, impl Processor) *BaseProcessor {
 	logger := util.Logger().With("service", "processor", "module", name)
 
 	cliCtx := client.Context{}.WithJSONMarshaler(cdc)
-	cliCtx.BroadcastMode = client.BroadcastAsync
-	cliCtx.TrustNode = true
+	cliCtx.BroadcastMode = flags.BroadcastAsync
 
 	contractCaller, err := helper.NewContractCaller()
 	if err != nil {

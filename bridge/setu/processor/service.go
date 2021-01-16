@@ -4,7 +4,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/service"
-	httpClient "github.com/tendermint/tendermint/rpc/client"
+	httpClient "github.com/tendermint/tendermint/rpc/client/http"
 
 	"github.com/maticnetwork/heimdall/bridge/setu/broadcaster"
 	"github.com/maticnetwork/heimdall/bridge/setu/queue"
@@ -29,7 +29,7 @@ type ProcessorService struct {
 
 // NewProcessorService returns new service object for processing queue msg
 func NewProcessorService(
-	cdc *codec.Codec,
+	cdc codec.Marshaler,
 	queueConnector *queue.QueueConnector,
 	httpClient *httpClient.HTTP,
 	txBroadcaster *broadcaster.TxBroadcaster,
@@ -53,8 +53,8 @@ func NewProcessorService(
 	//
 
 	// initialize checkpoint processor
-	checkpointProcessor := NewCheckpointProcessor(&contractCaller.RootChainABI)
-	checkpointProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, httpClient, txBroadcaster, paramsContext, "checkpoint", checkpointProcessor)
+	//checkpointProcessor := NewCheckpointProcessor(&contractCaller.RootChainABI)
+	//checkpointProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, httpClient, txBroadcaster, paramsContext, "checkpoint", checkpointProcessor)
 
 	// initialize fee processor
 	feeProcessor := NewFeeProcessor(&contractCaller.StakingInfoABI)
@@ -73,8 +73,8 @@ func NewProcessorService(
 	spanProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, httpClient, txBroadcaster, paramsContext, "span", spanProcessor)
 
 	// initialize slashing processor
-	slashingProcessor := NewSlashingProcessor(&contractCaller.StakingInfoABI)
-	slashingProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, httpClient, txBroadcaster, paramsContext, "slashing", slashingProcessor)
+	//slashingProcessor := NewSlashingProcessor(&contractCaller.StakingInfoABI)
+	//slashingProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, httpClient, txBroadcaster, paramsContext, "slashing", slashingProcessor)
 
 	//
 	// Select processors
@@ -86,18 +86,18 @@ func NewProcessorService(
 
 	if startAll {
 		processorService.processors = append(processorService.processors,
-			checkpointProcessor,
+			nil,
 			stakingProcessor,
 			clerkProcessor,
 			feeProcessor,
 			spanProcessor,
-			slashingProcessor,
+			nil,
 		)
 	} else {
 		for _, service := range onlyServices {
 			switch service {
 			case "checkpoint":
-				processorService.processors = append(processorService.processors, checkpointProcessor)
+				processorService.processors = append(processorService.processors, nil)
 			case "staking":
 				processorService.processors = append(processorService.processors, stakingProcessor)
 			case "clerk":
@@ -107,7 +107,7 @@ func NewProcessorService(
 			case "span":
 				processorService.processors = append(processorService.processors, spanProcessor)
 			case "slashing":
-				processorService.processors = append(processorService.processors, slashingProcessor)
+				processorService.processors = append(processorService.processors, nil)
 			}
 		}
 	}

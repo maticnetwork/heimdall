@@ -19,7 +19,7 @@ var resetCmd = &cobra.Command{
 			// fmt.Println(err)
 		} else {
 			for _, d := range dir {
-				os.RemoveAll(path.Join([]string{dbLocation, d.Name()}...))
+				_ = os.RemoveAll(path.Join([]string{dbLocation, d.Name()}...))
 			}
 		}
 	},

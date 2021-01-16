@@ -516,7 +516,6 @@ github.com/maticnetwork/bor v0.2.1 h1:iWVexnhYmL2Y4jFADNfDuaxdh6ufmsXEzyQhHXWgOq
 github.com/maticnetwork/bor v0.2.1/go.mod h1:NJu+4Fk6z7ejVArbea5a/ytlDscDAQ1cmfwgDEix4dM=
 github.com/maticnetwork/cosmos-sdk v0.37.5-0.20201211110634-320b75b282ae h1:KKCS3phDH3ZRDiFmyjKWpEIJbqEAqAJyfZkoW/F2ATw=
 github.com/maticnetwork/cosmos-sdk v0.37.5-0.20201211110634-320b75b282ae/go.mod h1:rdaxNAhIvydwHxOIUIB7+ntEZjQDpfwtotJTBXRFn+E=
-github.com/maticnetwork/cosmos-sdk v0.38.3 h1:e4nxtsXXY9mNqz8JWu0MYeepot72+9/FKC81JOei96Y=
 github.com/maticnetwork/tendermint v0.26.0-dev0.0.20201206065638-7f88f460383c h1:D551kWhgn4KRDxKiBsgbx7hZAOSLwU3lYXvA2RXKZdQ=
 github.com/maticnetwork/tendermint v0.26.0-dev0.0.20201206065638-7f88f460383c/go.mod h1:eE3UfvrRJy1n/jKkqaCKHnU3D72/D0/KYvb9xPv6ym4=
 github.com/mattn/go-colorable v0.0.9/go.mod h1:9vuHe8Xs5qXnSaW/c/ABM9alt+Vo+STaOChaDxuIBZU=

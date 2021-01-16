@@ -2,10 +2,10 @@ package listener
 
 import (
 	"context"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb"
@@ -18,7 +18,7 @@ import (
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
 
-	httpClient "github.com/tendermint/tendermint/rpc/client"
+	httpClient "github.com/tendermint/tendermint/rpc/client/http"
 )
 
 // Listener defines a block header listerner for Rootchain, Maticchain, Heimdall
@@ -74,7 +74,7 @@ type BaseListener struct {
 }
 
 // NewBaseListener creates a new BaseListener.
-func NewBaseListener(cdc *codec.Codec, queueConnector *queue.QueueConnector, httpClient *httpClient.HTTP, chainClient *ethclient.Client, name string, impl Listener) *BaseListener {
+func NewBaseListener(cdc codec.Marshaler, queueConnector *queue.QueueConnector, httpClient *httpClient.HTTP, chainClient *ethclient.Client, name string, impl Listener) *BaseListener {
 
 	logger := util.Logger().With("service", "listener", "module", name)
 	contractCaller, err := helper.NewContractCaller()
@@ -84,8 +84,7 @@ func NewBaseListener(cdc *codec.Codec, queueConnector *queue.QueueConnector, htt
 	}
 
 	cliCtx := client.Context{}.WithJSONMarshaler(cdc)
-	cliCtx.BroadcastMode = client.BroadcastAsync
-	cliCtx.TrustNode = true
+	cliCtx.BroadcastMode = flags.BroadcastAsync
 
 	// creating syncer object
 	return &BaseListener{

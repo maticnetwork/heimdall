@@ -18,13 +18,14 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/log"
-	httpClient "github.com/tendermint/tendermint/rpc/client"
+	httpClient "github.com/tendermint/tendermint/rpc/client/http"
 	tmTypes "github.com/tendermint/tendermint/types"
 
 	authTypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
-	hmtypes "github.com/maticnetwork/heimdall/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
+	hmCommonTypes "github.com/maticnetwork/heimdall/types/common"
 	chainManagerTypes "github.com/maticnetwork/heimdall/x/chainmanager/types"
 	checkpointTypes "github.com/maticnetwork/heimdall/x/checkpoint/types"
 )
@@ -82,7 +83,7 @@ func Logger() log.Logger {
 
 // IsProposer  checks if we are proposer
 func IsProposer(cliCtx client.Context) (bool, error) {
-	var proposers []hmtypes.Validator
+	var proposers []hmTypes.Validator
 	count := uint64(1)
 	result, err := helper.FetchFromAPI(cliCtx,
 		helper.GetHeimdallServerEndpoint(fmt.Sprintf(ProposersURL, strconv.FormatUint(count, 10))),
@@ -99,7 +100,7 @@ func IsProposer(cliCtx client.Context) (bool, error) {
 		return false, err
 	}
 
-	if bytes.Equal(proposers[0].Signer.Bytes(), helper.GetAddress()) {
+	if bytes.Equal(proposers[0].GetSigner(), helper.GetAddress()) {
 		return true, nil
 	}
 
@@ -119,7 +120,7 @@ func IsInProposerList(cliCtx client.Context, count uint64) (bool, error) {
 	}
 
 	// unmarshall data from buffer
-	var proposers []hmtypes.Validator
+	var proposers []hmTypes.Validator
 
 	if err := json.Unmarshal(response.Result, &proposers); err != nil {
 		logger.Error("Error unmarshalling validator data ", "error", err)
@@ -128,7 +129,7 @@ func IsInProposerList(cliCtx client.Context, count uint64) (bool, error) {
 
 	logger.Debug("Fetched proposers list", "numberOfProposers", count)
 	for _, proposer := range proposers {
-		if bytes.Equal(proposer.Signer.Bytes(), helper.GetAddress()) {
+		if bytes.Equal(proposer.GetSigner(), helper.GetAddress()) {
 			return true, nil
 		}
 	}
@@ -147,7 +148,7 @@ func CalculateTaskDelay(cliCtx client.Context) (bool, time.Duration) {
 		return isCurrentValidator, 0
 	}
 	// unmarshall data from buffer
-	var validatorSet hmtypes.ValidatorSet
+	var validatorSet hmTypes.ValidatorSet
 	err = json.Unmarshal(response.Result, &validatorSet)
 	if err != nil {
 		logger.Error("Error unmarshalling current validatorset data ", "error", err)
@@ -156,7 +157,7 @@ func CalculateTaskDelay(cliCtx client.Context) (bool, time.Duration) {
 
 	logger.Info("Fetched current validatorset list", "currentValidatorcount", len(validatorSet.Validators))
 	for i, validator := range validatorSet.Validators {
-		if bytes.Equal(validator.Signer.Bytes(), helper.GetAddress()) {
+		if bytes.Equal(validator.GetSigner(), helper.GetAddress()) {
 			valPosition = i + 1
 			isCurrentValidator = true
 			break
@@ -182,7 +183,7 @@ func CalculateSpanTaskDelay(cliContext client.Context, id uint64, start uint64) 
 	// check if current user is among next span producers
 	// find the index of current validator in nextSpanProducers list
 	for i, validator := range nextSpan.SelectedProducers {
-		if bytes.Equal(validator.Signer.Bytes(), helper.GetAddress()) {
+		if bytes.Equal(validator.GetSigner(), helper.GetAddress()) {
 			valPosition = i + 1
 			isNextSpanProducer = true
 			break
@@ -196,7 +197,7 @@ func CalculateSpanTaskDelay(cliContext client.Context, id uint64, start uint64) 
 
 // IsCurrentProposer checks if we are current proposer
 func IsCurrentProposer(cliCtx client.Context) (bool, error) {
-	var proposer hmtypes.Validator
+	var proposer hmTypes.Validator
 	result, err := helper.FetchFromAPI(cliCtx, helper.GetHeimdallServerEndpoint(CurrentProposerURL))
 	if err != nil {
 		logger.Error("Error fetching proposers", "error", err)
@@ -210,7 +211,7 @@ func IsCurrentProposer(cliCtx client.Context) (bool, error) {
 	}
 	logger.Debug("Current proposer fetched", "validator", proposer.String())
 
-	if bytes.Equal(proposer.Signer.Bytes(), helper.GetAddress()) {
+	if bytes.Equal(proposer.GetSigner(), helper.GetAddress()) {
 		return true, nil
 	}
 
@@ -219,7 +220,7 @@ func IsCurrentProposer(cliCtx client.Context) (bool, error) {
 
 // IsEventSender check if we are the EventSender
 func IsEventSender(cliCtx client.Context, validatorID uint64) bool {
-	var validator hmtypes.Validator
+	var validator hmTypes.Validator
 
 	result, err := helper.FetchFromAPI(cliCtx,
 		helper.GetHeimdallServerEndpoint(fmt.Sprintf(ValidatorURL, strconv.FormatUint(validatorID, 10))),
@@ -236,7 +237,7 @@ func IsEventSender(cliCtx client.Context, validatorID uint64) bool {
 	}
 	logger.Debug("Current event sender received", "validator", validator.String())
 
-	return bytes.Equal(validator.Signer.Bytes(), helper.GetAddress())
+	return bytes.Equal(validator.GetSigner(), helper.GetAddress())
 }
 
 //CreateURLWithQuery receives the uri and parameters in key value form
@@ -303,14 +304,15 @@ func IsCatchingUp(cliCtx client.Context) bool {
 }
 
 // GetAccount returns heimdall auth account
-func GetAccount(cliCtx client.Context, address types.HeimdallAddress) (account authTypes.Account, err error) {
+func GetAccount(cliCtx client.Context, address hmCommonTypes.HeimdallAddress) (account authTypes.AccountI, err error) {
 	url := helper.GetHeimdallServerEndpoint(fmt.Sprintf(AccountDetailsURL, address))
 	// call account rest api
 	response, err := helper.FetchFromAPI(cliCtx, url)
 	if err != nil {
 		return
 	}
-	if err = cliCtx.Codec.UnmarshalJSON(response.Result, &account); err != nil {
+
+	if err = cliCtx.LegacyAmino.UnmarshalJSON(response.Result, &account); err != nil {
 		logger.Error("Error unmarshalling account details", "url", url)
 		return
 	}
@@ -360,7 +362,7 @@ func GetCheckpointParams(cliCtx client.Context) (*checkpointTypes.Params, error)
 }
 
 // GetBufferedCheckpoint return checkpoint from bueffer
-func GetBufferedCheckpoint(cliCtx client.Context) (*hmtypes.Checkpoint, error) {
+func GetBufferedCheckpoint(cliCtx client.Context) (*hmTypes.Checkpoint, error) {
 	response, err := helper.FetchFromAPI(
 		cliCtx,
 		helper.GetHeimdallServerEndpoint(BufferedCheckpointURL),
@@ -371,7 +373,7 @@ func GetBufferedCheckpoint(cliCtx client.Context) (*hmtypes.Checkpoint, error) {
 		return nil, err
 	}
 
-	var checkpoint hmtypes.Checkpoint
+	var checkpoint hmTypes.Checkpoint
 	if err := json.Unmarshal(response.Result, &checkpoint); err != nil {
 		logger.Error("Error unmarshalling buffered checkpoint", "url", BufferedCheckpointURL, "err", err)
 		return nil, err
@@ -381,7 +383,7 @@ func GetBufferedCheckpoint(cliCtx client.Context) (*hmtypes.Checkpoint, error) {
 }
 
 // GetlastestCheckpoint return last successful checkpoint
-func GetlastestCheckpoint(cliCtx client.Context) (*hmtypes.Checkpoint, error) {
+func GetlastestCheckpoint(cliCtx client.Context) (*hmTypes.Checkpoint, error) {
 	response, err := helper.FetchFromAPI(
 		cliCtx,
 		helper.GetHeimdallServerEndpoint(LatestCheckpointURL),
@@ -392,7 +394,7 @@ func GetlastestCheckpoint(cliCtx client.Context) (*hmtypes.Checkpoint, error) {
 		return nil, err
 	}
 
-	var checkpoint hmtypes.Checkpoint
+	var checkpoint hmTypes.Checkpoint
 	if err := json.Unmarshal(response.Result, &checkpoint); err != nil {
 		logger.Error("Error unmarshalling latest checkpoint", "url", LatestCheckpointURL, "err", err)
 		return nil, err

@@ -6,7 +6,7 @@ import (
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/tendermint/tendermint/libs/service"
-	httpClient "github.com/tendermint/tendermint/rpc/client"
+	httpClient "github.com/tendermint/tendermint/rpc/client/http"
 )
 
 const (
@@ -27,7 +27,7 @@ type ListenerService struct {
 }
 
 // NewListenerService returns new service object for listneing to events
-func NewListenerService(cdc *codec.Codec, queueConnector *queue.QueueConnector, httpClient *httpClient.HTTP) *ListenerService {
+func NewListenerService(cdc codec.Marshaler, queueConnector *queue.QueueConnector, httpClient *httpClient.HTTP) *ListenerService {
 
 	var logger = util.Logger().With("service", ListenerServiceStr)
 

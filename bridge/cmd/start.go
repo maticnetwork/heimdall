@@ -2,20 +2,8 @@ package cmd
 
 import (
 	"fmt"
-	"os"
-	"os/signal"
-	"sync"
-	"syscall"
-	"time"
-
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/spf13/cobra"
-
-	"github.com/spf13/viper"
-	"github.com/tendermint/tendermint/libs/service"
-	httpClient "github.com/tendermint/tendermint/rpc/client"
-
-	"github.com/cosmos/cosmos-sdk/client/"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/bridge/setu/broadcaster"
 	"github.com/maticnetwork/heimdall/bridge/setu/listener"
@@ -23,6 +11,15 @@ import (
 	"github.com/maticnetwork/heimdall/bridge/setu/queue"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"github.com/tendermint/tendermint/libs/service"
+	httpClient "github.com/tendermint/tendermint/rpc/client/http"
+	"os"
+	"os/signal"
+	"sync"
+	"syscall"
+	"time"
 )
 
 const (
@@ -39,24 +36,23 @@ func GetStartCmd() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 
 			// create codec
-			cdc := app.MakeCodec()
+			cdc, _ := app.MakeCodecs()
 			// queue connector & http client
 			_queueConnector := queue.NewQueueConnector(helper.GetConfig().AmqpURL)
 			_queueConnector.StartWorker()
 
 			_txBroadcaster := broadcaster.NewTxBroadcaster(cdc)
-			_httpClient := httpClient.NewHTTP(helper.GetConfig().TendermintRPCUrl, "/websocket")
+			_httpClient, _ := httpClient.New(helper.GetConfig().TendermintRPCUrl, "/websocket")
 
 			// cli context
 			cliCtx := client.Context{}.WithJSONMarshaler(cdc)
-			cliCtx.BroadcastMode = client.BroadcastAsync
-			cliCtx.TrustNode = true
+			cliCtx.BroadcastMode = flags.BroadcastAsync
 
 			// params context
 			_paramsContext := util.NewParamsContext(cliCtx)
 
 			// selected services to start
-			services := []service.BaseService{}
+			var services []service.Service
 			services = append(services,
 				listener.NewListenerService(cdc, _queueConnector, _httpClient),
 				processor.NewProcessorService(cdc, _queueConnector, _httpClient, _txBroadcaster, _paramsContext),
@@ -73,8 +69,8 @@ func GetStartCmd() *cobra.Command {
 				for range catchSignal {
 					// stop processes
 					logger.Info("Received stop signal - Stopping all services")
-					for _, service := range services {
-						if err := service.Stop(); err != nil {
+					for _, nService := range services {
+						if err := nService.Stop(); err != nil {
 							logger.Error("GetStartCmd | service.Stop", "Error", err)
 						}
 					}
@@ -109,16 +105,16 @@ func GetStartCmd() *cobra.Command {
 				time.Sleep(waitDuration)
 			}
 
-			// strt all processes
-			for _, service := range services {
-				go func(serv service.BaseService) {
+			// start all processes
+			for _, nService := range services {
+				go func(serv service.Service) {
 					defer wg.Done()
 					// TODO handle error while starting service
 					if err := serv.Start(); err != nil {
 						logger.Error("GetStartCmd | serv.Start", "Error", err)
 					}
 					<-serv.Quit()
-				}(service)
+				}(nService)
 			}
 			// wait for all processes
 			wg.Add(len(services))
