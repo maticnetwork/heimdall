@@ -5,10 +5,12 @@ package types
 
 import (
 	fmt "fmt"
+	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/gogo/protobuf/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
-	github_com_maticnetwork_heimdall_types_common "github.com/maticnetwork/heimdall/types/common"
+	io "io"
 	math "math"
+	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -23,8 +25,8 @@ var _ = math.Inf
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 type DividendAccount struct {
-	User      github_com_maticnetwork_heimdall_types_common.HeimdallAddress `protobuf:"bytes,1,opt,name=user,proto3,casttype=github.com/maticnetwork/heimdall/types/common.HeimdallAddress" json:"user,omitempty"`
-	FeeAmount string                                                        `protobuf:"bytes,2,opt,name=fee_amount,json=feeAmount,proto3" json:"fee_amount,omitempty"`
+	User      github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,1,opt,name=user,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"user,omitempty"`
+	FeeAmount string                                        `protobuf:"bytes,2,opt,name=fee_amount,json=feeAmount,proto3" json:"fee_amount,omitempty"`
 }
 
 func (m *DividendAccount) Reset()      { *m = DividendAccount{} }
@@ -33,16 +35,25 @@ func (*DividendAccount) Descriptor() ([]byte, []int) {
 	return fileDescriptor_eddd557d9cf41348, []int{0}
 }
 func (m *DividendAccount) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_DividendAccount.Unmarshal(m, b)
+	return m.Unmarshal(b)
 }
 func (m *DividendAccount) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_DividendAccount.Marshal(b, m, deterministic)
+	if deterministic {
+		return xxx_messageInfo_DividendAccount.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
 }
 func (m *DividendAccount) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_DividendAccount.Merge(m, src)
 }
 func (m *DividendAccount) XXX_Size() int {
-	return xxx_messageInfo_DividendAccount.Size(m)
+	return m.Size()
 }
 func (m *DividendAccount) XXX_DiscardUnknown() {
 	xxx_messageInfo_DividendAccount.DiscardUnknown(m)
@@ -57,20 +68,293 @@ func init() {
 func init() { proto.RegisterFile("heimdall/types/divident.proto", fileDescriptor_eddd557d9cf41348) }
 
 var fileDescriptor_eddd557d9cf41348 = []byte{
-	// 231 bytes of a gzipped FileDescriptorProto
+	// 236 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x92, 0xcd, 0x48, 0xcd, 0xcc,
 	0x4d, 0x49, 0xcc, 0xc9, 0xd1, 0x2f, 0xa9, 0x2c, 0x48, 0x2d, 0xd6, 0x4f, 0xc9, 0x2c, 0xcb, 0x4c,
 	0x49, 0xcd, 0x2b, 0xd1, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x83, 0x49, 0xeb, 0x81, 0xa5,
-	0xa5, 0x44, 0xd2, 0xf3, 0xd3, 0xf3, 0xc1, 0x52, 0xfa, 0x20, 0x16, 0x44, 0x95, 0xd2, 0x44, 0x46,
-	0x2e, 0x7e, 0x17, 0x88, 0xc6, 0x14, 0xc7, 0xe4, 0xe4, 0xfc, 0xd2, 0xbc, 0x12, 0xa1, 0x50, 0x2e,
-	0x96, 0xd2, 0xe2, 0xd4, 0x22, 0x09, 0x46, 0x05, 0x46, 0x0d, 0x1e, 0x27, 0xc7, 0x5f, 0xf7, 0xe4,
-	0x6d, 0xd3, 0x33, 0x4b, 0x32, 0x4a, 0x93, 0xf4, 0x92, 0xf3, 0x73, 0xf5, 0x73, 0x13, 0x4b, 0x32,
-	0x93, 0xf3, 0x52, 0x4b, 0xca, 0xf3, 0x8b, 0xb2, 0xf5, 0xd1, 0x9c, 0x90, 0x9c, 0x9f, 0x9b, 0x9b,
-	0x9f, 0xa7, 0xe7, 0x01, 0x15, 0x75, 0x4c, 0x49, 0x29, 0x4a, 0x2d, 0x2e, 0x0e, 0x02, 0x1b, 0x27,
-	0x24, 0xcb, 0xc5, 0x95, 0x96, 0x9a, 0x1a, 0x9f, 0x98, 0x0b, 0xb2, 0x44, 0x82, 0x49, 0x81, 0x51,
-	0x83, 0x33, 0x88, 0x33, 0x2d, 0x35, 0xd5, 0x11, 0x2c, 0x60, 0xc5, 0xd1, 0xb1, 0x40, 0x9e, 0x61,
-	0xc6, 0x02, 0x79, 0x06, 0x27, 0x87, 0x13, 0x8f, 0xe4, 0x18, 0x2e, 0x3c, 0x92, 0x63, 0x78, 0xf0,
-	0x48, 0x8e, 0x61, 0xc2, 0x63, 0x39, 0x86, 0x0b, 0x8f, 0xe5, 0x18, 0x6e, 0x3c, 0x96, 0x63, 0x88,
-	0x52, 0x23, 0xce, 0x1d, 0x49, 0x6c, 0x60, 0xcf, 0x19, 0x03, 0x02, 0x00, 0x00, 0xff, 0xff, 0xba,
-	0x89, 0x21, 0x8c, 0x23, 0x01, 0x00, 0x00,
+	0xa5, 0x44, 0xd2, 0xf3, 0xd3, 0xf3, 0xc1, 0x52, 0xfa, 0x20, 0x16, 0x44, 0x95, 0x52, 0x23, 0x23,
+	0x17, 0xbf, 0x0b, 0x44, 0x63, 0x8a, 0x63, 0x72, 0x72, 0x7e, 0x69, 0x5e, 0x89, 0x90, 0x2b, 0x17,
+	0x4b, 0x69, 0x71, 0x6a, 0x91, 0x04, 0xa3, 0x02, 0xa3, 0x06, 0xa7, 0x93, 0xe1, 0xaf, 0x7b, 0xf2,
+	0xba, 0xe9, 0x99, 0x25, 0x19, 0xa5, 0x49, 0x7a, 0xc9, 0xf9, 0xb9, 0xfa, 0xc9, 0xf9, 0xc5, 0xb9,
+	0xf9, 0xc5, 0x50, 0x4a, 0xb7, 0x38, 0x25, 0x1b, 0x62, 0xbd, 0x9e, 0x63, 0x72, 0xb2, 0x63, 0x4a,
+	0x4a, 0x51, 0x6a, 0x71, 0x71, 0x10, 0x58, 0xbb, 0x90, 0x2c, 0x17, 0x57, 0x5a, 0x6a, 0x6a, 0x7c,
+	0x62, 0x2e, 0xc8, 0x50, 0x09, 0x26, 0x90, 0x61, 0x41, 0x9c, 0x69, 0xa9, 0xa9, 0x8e, 0x60, 0x01,
+	0x2b, 0x8e, 0x8e, 0x05, 0xf2, 0x0c, 0x33, 0x16, 0xc8, 0x33, 0x38, 0x39, 0x9c, 0x78, 0x24, 0xc7,
+	0x78, 0xe1, 0x91, 0x1c, 0xe3, 0x83, 0x47, 0x72, 0x8c, 0x13, 0x1e, 0xcb, 0x31, 0x5c, 0x78, 0x2c,
+	0xc7, 0x70, 0xe3, 0xb1, 0x1c, 0x43, 0x94, 0x1a, 0x92, 0xbd, 0xb9, 0x89, 0x25, 0x99, 0xc9, 0x79,
+	0xa9, 0x25, 0xe5, 0xf9, 0x45, 0xd9, 0xfa, 0xa8, 0x5e, 0x4f, 0x62, 0x03, 0x7b, 0xc6, 0x18, 0x10,
+	0x00, 0x00, 0xff, 0xff, 0x06, 0xd2, 0x09, 0xe2, 0x13, 0x01, 0x00, 0x00,
 }
+
+func (m *DividendAccount) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *DividendAccount) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *DividendAccount) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.FeeAmount) > 0 {
+		i -= len(m.FeeAmount)
+		copy(dAtA[i:], m.FeeAmount)
+		i = encodeVarintDivident(dAtA, i, uint64(len(m.FeeAmount)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.User) > 0 {
+		i -= len(m.User)
+		copy(dAtA[i:], m.User)
+		i = encodeVarintDivident(dAtA, i, uint64(len(m.User)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func encodeVarintDivident(dAtA []byte, offset int, v uint64) int {
+	offset -= sovDivident(v)
+	base := offset
+	for v >= 1<<7 {
+		dAtA[offset] = uint8(v&0x7f | 0x80)
+		v >>= 7
+		offset++
+	}
+	dAtA[offset] = uint8(v)
+	return base
+}
+func (m *DividendAccount) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.User)
+	if l > 0 {
+		n += 1 + l + sovDivident(uint64(l))
+	}
+	l = len(m.FeeAmount)
+	if l > 0 {
+		n += 1 + l + sovDivident(uint64(l))
+	}
+	return n
+}
+
+func sovDivident(x uint64) (n int) {
+	return (math_bits.Len64(x|1) + 6) / 7
+}
+func sozDivident(x uint64) (n int) {
+	return sovDivident(uint64((x << 1) ^ uint64((int64(x) >> 63))))
+}
+func (m *DividendAccount) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowDivident
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: DividendAccount: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: DividendAccount: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field User", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowDivident
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthDivident
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthDivident
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.User = github_com_cosmos_cosmos_sdk_types.AccAddress(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FeeAmount", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowDivident
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthDivident
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthDivident
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.FeeAmount = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipDivident(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthDivident
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthDivident
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func skipDivident(dAtA []byte) (n int, err error) {
+	l := len(dAtA)
+	iNdEx := 0
+	depth := 0
+	for iNdEx < l {
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return 0, ErrIntOverflowDivident
+			}
+			if iNdEx >= l {
+				return 0, io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		wireType := int(wire & 0x7)
+		switch wireType {
+		case 0:
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return 0, ErrIntOverflowDivident
+				}
+				if iNdEx >= l {
+					return 0, io.ErrUnexpectedEOF
+				}
+				iNdEx++
+				if dAtA[iNdEx-1] < 0x80 {
+					break
+				}
+			}
+		case 1:
+			iNdEx += 8
+		case 2:
+			var length int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return 0, ErrIntOverflowDivident
+				}
+				if iNdEx >= l {
+					return 0, io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				length |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if length < 0 {
+				return 0, ErrInvalidLengthDivident
+			}
+			iNdEx += length
+		case 3:
+			depth++
+		case 4:
+			if depth == 0 {
+				return 0, ErrUnexpectedEndOfGroupDivident
+			}
+			depth--
+		case 5:
+			iNdEx += 4
+		default:
+			return 0, fmt.Errorf("proto: illegal wireType %d", wireType)
+		}
+		if iNdEx < 0 {
+			return 0, ErrInvalidLengthDivident
+		}
+		if depth == 0 {
+			return iNdEx, nil
+		}
+	}
+	return 0, io.ErrUnexpectedEOF
+}
+
+var (
+	ErrInvalidLengthDivident        = fmt.Errorf("proto: negative length found during unmarshaling")
+	ErrIntOverflowDivident          = fmt.Errorf("proto: integer overflow")
+	ErrUnexpectedEndOfGroupDivident = fmt.Errorf("proto: unexpected end of group")
+)

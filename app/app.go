@@ -14,7 +14,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/server/api"
 	"github.com/cosmos/cosmos-sdk/server/config"
-	"github.com/cosmos/cosmos-sdk/std"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -70,6 +69,9 @@ import (
 	"github.com/maticnetwork/heimdall/x/staking"
 	stakingkeeper "github.com/maticnetwork/heimdall/x/staking/keeper"
 	stakingtypes "github.com/maticnetwork/heimdall/x/staking/types"
+	"github.com/maticnetwork/heimdall/x/topup"
+	topupkeeper "github.com/maticnetwork/heimdall/x/topup/keeper"
+	topuptypes "github.com/maticnetwork/heimdall/x/topup/types"
 
 	// unnamed import of statik for swagger UI support
 	_ "github.com/maticnetwork/heimdall/client/docs/statik"
@@ -93,6 +95,7 @@ var (
 		staking.AppModuleBasic{},
 		params.AppModuleBasic{},
 		gov.AppModuleBasic{},
+		topup.AppModuleBasic{},
 		clerk.AppModuleBasic{},
 	)
 
@@ -135,6 +138,7 @@ type HeimdallApp struct {
 	StakingKeeper     stakingkeeper.Keeper
 	ParamsKeeper      paramskeeper.Keeper
 	GovKeeper         govkeeper.Keeper
+	TopupKeeper       topupkeeper.Keeper
 
 	// side router
 	sideRouter hmtypes.SideRouter
@@ -176,12 +180,6 @@ func NewHeimdallApp(
 	interfaceRegistry := encodingConfig.InterfaceRegistry
 	txDecoder := encodingConfig.TxConfig.TxDecoder()
 
-	// TODO move this to a better place, may be params/encoding.go
-	std.RegisterLegacyAminoCodec(legacyAmino)
-	std.RegisterInterfaces(interfaceRegistry)
-	ModuleBasics.RegisterInterfaces(encodingConfig.InterfaceRegistry)
-	ModuleBasics.RegisterLegacyAminoCodec(legacyAmino)
-
 	bApp := baseapp.NewBaseApp(appName, logger, db, txDecoder, baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(traceStore)
 	bApp.SetAppVersion(version.Version)
@@ -202,6 +200,7 @@ func NewHeimdallApp(
 		// slashingtypes.StoreKey,
 		govtypes.StoreKey,
 		paramstypes.StoreKey,
+		topuptypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 
@@ -279,7 +278,16 @@ func NewHeimdallApp(
 		app.ChainKeeper,
 	)
 
-	// Contract caller
+	app.TopupKeeper = topupkeeper.NewKeeper(
+		appCodec,
+		keys[topuptypes.StoreKey],
+		app.GetSubspace(topuptypes.ModuleName),
+		app.ChainKeeper,
+		app.BankKeeper,
+		app.StakingKeeper,
+	)
+
+  // Contract caller
 	contractCallerObj, err := helper.NewContractCaller()
 	if err != nil {
 		tmos.Exit(err.Error())
