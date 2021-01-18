@@ -34,5 +34,5 @@ func (suite *KeeperTestSuite) TestParamsGetterSetter() {
 	initApp.ChainKeeper.SetParams(ctx, params)
 
 	actualParams := initApp.ChainKeeper.GetParams(ctx)
-	require.Equal(t, params, actualParams)
+	require.Equal(t, params, &actualParams)
 }
