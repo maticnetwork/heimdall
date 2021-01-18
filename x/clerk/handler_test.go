@@ -84,7 +84,7 @@ func (suite *HandlerTestSuite) TestHandleMsgEventRecord() {
 
 	t.Run("Success", func(t *testing.T) {
 		_, err := suite.handler(ctx, &msg)
-		require.Error(t, err)
+		require.Nil(t, err)
 		// require.True(t, result.IsOK(), "expected msg record to be ok, got %v", result)
 
 		// there should be no stored event record

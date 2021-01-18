@@ -5,13 +5,13 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/maticnetwork/heimdall/helper/mocks"
+	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/x/clerk/keeper"
 	"github.com/maticnetwork/heimdall/x/clerk/types"
 )
 
 // NewHandler returns a handler for "clerk" type messages.
-func NewHandler(k keeper.Keeper, contractCaller *mocks.IContractCaller) sdk.Handler {
+func NewHandler(k keeper.Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 	msgServer := keeper.NewMsgServerImpl(k, contractCaller)
 
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
