@@ -32,7 +32,8 @@ func (msg MsgVote) GetSignBytes() []byte {
 
 // GetSigners implements Msg
 func (msg MsgVote) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.Voter}
+	voter, _ := sdk.AccAddressFromHex(msg.Voter)
+	return []sdk.AccAddress{voter}
 }
 
 func (msg MsgVote) Route() string { return RouterKey }
@@ -82,8 +83,8 @@ func (m MsgSubmitProposal) ValidateBasic() error {
 
 // Implements Msg.
 func (msg MsgVote) ValidateBasic() error {
-	if msg.Voter.Empty() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Voter.String())
+	if msg.Voter == "" {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Voter)
 	}
 	if !ValidVoteOption(msg.Option) {
 		return sdkerrors.Wrap(ErrInvalidVote, msg.Option.String())
@@ -158,7 +159,7 @@ func NewMsgDeposit(depositor sdk.AccAddress, proposalID uint64, amount sdk.Coins
 
 // NewMsgVote new msg vote
 func NewMsgVote(voter sdk.AccAddress, proposalID uint64, option VoteOption, validator hmTypes.ValidatorID) MsgVote {
-	return MsgVote{proposalID, voter, option, validator}
+	return MsgVote{proposalID, voter.String(), option, validator}
 }
 
 func (m *MsgSubmitProposal) SetContent(content Content) error {

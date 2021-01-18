@@ -96,11 +96,16 @@ func (k msgServer) Deposit(goCtx context.Context, msg *types.MsgDeposit) (*types
 func (k msgServer) Vote(goCtx context.Context, msg *types.MsgVote) (*types.MsgVoteResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	if _, err := getValidValidator(ctx, k.Keeper, msg.Voter, msg.Validator); err != nil {
+	voter, err := sdk.AccAddressFromHex(msg.Voter)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := getValidValidator(ctx, k.Keeper, voter, msg.Validator); err != nil {
 		return nil, hmCommon.ErrInvalidMsg
 	}
 
-	err := k.Keeper.AddVote(ctx, msg.ProposalId, msg.Voter, msg.Option, msg.Validator)
+	err = k.Keeper.AddVote(ctx, msg.ProposalId, voter, msg.Option, msg.Validator)
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +114,7 @@ func (k msgServer) Vote(goCtx context.Context, msg *types.MsgVote) (*types.MsgVo
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.Voter.String()),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.Voter),
 		),
 	)
 

@@ -287,7 +287,7 @@ func NewHeimdallApp(
 		app.StakingKeeper,
 	)
 
-  // Contract caller
+	// Contract caller
 	contractCallerObj, err := helper.NewContractCaller()
 	if err != nil {
 		tmos.Exit(err.Error())

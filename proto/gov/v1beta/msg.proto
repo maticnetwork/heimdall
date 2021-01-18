@@ -61,8 +61,7 @@ message MsgVote {
         (gogoproto.jsontag)  = "proposal_id",
         (gogoproto.moretags) = "yaml:\"proposal_id\""
     ];
-    string                     voter     = 2 [(gogoproto.casttype) =
-                          "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    string                     voter     = 2;
     VoteOption                 option    = 3;
     heimdall.types.ValidatorID validator = 4;
 }
