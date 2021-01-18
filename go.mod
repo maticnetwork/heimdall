@@ -8,7 +8,7 @@ require (
 	github.com/cosmos/cosmos-sdk v0.40.0-rc5
 	github.com/cosmos/iavl v0.15.3
 	github.com/go-ole/go-ole v1.2.4 // indirect
-	github.com/gogo/protobuf v1.3.1
+	github.com/gogo/protobuf v1.3.2
 	github.com/golang/protobuf v1.4.3
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
@@ -16,7 +16,7 @@ require (
 	github.com/maticnetwork/bor v0.2.2-0.20200807103547-4d42b15906aa
 	github.com/pkg/errors v0.9.1
 	github.com/rakyll/statik v0.1.7
-	github.com/regen-network/cosmos-proto v0.3.0
+	github.com/regen-network/cosmos-proto v0.3.1
 	github.com/spf13/cast v1.3.1
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/pflag v1.0.5
