@@ -11,7 +11,6 @@ option (gogoproto.unmarshaler_all) = true;
 
 // GenesisState defines the chainmanager module's genesis state.
 message GenesisState {
-    // heimdall.types.chainmanager.x.params
     Params params = 1;
 }
 
@@ -19,30 +18,14 @@ message ChainParams {
     option (gogoproto.goproto_getters)  = false;
     option (gogoproto.goproto_stringer) = false;
     string bor_chain_id        = 1 [(gogoproto.customname) = "BorChainID"];
-    string matic_token_address = 2
-        [(gogoproto.casttype) =
-             "github.com/cosmos/cosmos-sdk/types.AccAddress"];
-    string staking_manager_address = 3
-        [(gogoproto.casttype) =
-             "github.com/cosmos/cosmos-sdk/types.AccAddress"];
-    string slash_manager_address = 4
-        [(gogoproto.casttype) =
-             "github.com/cosmos/cosmos-sdk/types.AccAddress"];
-    string root_chain_address = 5
-        [(gogoproto.casttype) =
-             "github.com/cosmos/cosmos-sdk/types.AccAddress"];
-    string staking_info_address = 6
-        [(gogoproto.casttype) =
-             "github.com/cosmos/cosmos-sdk/types.AccAddress"];
-    string state_sender_address = 7
-        [(gogoproto.casttype) =
-             "github.com/cosmos/cosmos-sdk/types.AccAddress"];
-    string state_receiver_address = 8
-        [(gogoproto.casttype) =
-             "github.com/cosmos/cosmos-sdk/types.AccAddress"];
-    string validator_set_address = 9
-        [(gogoproto.casttype) =
-             "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    string matic_token_address = 2;
+    string staking_manager_address = 3;
+    string slash_manager_address = 4;
+    string root_chain_address = 5;
+    string staking_info_address = 6;
+    string state_sender_address = 7;
+    string state_receiver_address = 8;
+    string validator_set_address = 9;
 }
 
 message Params {
@@ -51,5 +34,5 @@ message Params {
 
     uint64      mainchain_tx_confirmations  = 1;
     uint64      maticchain_tx_confirmations = 2;
-    ChainParams chain_params                = 3;
+    ChainParams chain_params                = 3 [(gogoproto.nullable) = false];
 }
