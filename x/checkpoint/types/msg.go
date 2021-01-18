@@ -1,6 +1,7 @@
 package types
 
 import (
+	"bytes"
 	"math/big"
 	"strconv"
 
@@ -8,6 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	hmCommon "github.com/maticnetwork/heimdall/common"
+	helper "github.com/maticnetwork/heimdall/helper"
 	hmCommonTypes "github.com/maticnetwork/heimdall/types/common"
 )
 
@@ -61,14 +63,13 @@ func (msg MsgCheckpoint) GetSignBytes() []byte {
 }
 
 func (msg MsgCheckpoint) ValidateBasic() error {
-	// TODO implement validation logic
-	// if bytes.Equal(msg.RootHash.Bytes(), helper.ZeroHash.Bytes()) {
-	// 	return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid rootHash %v", msg.RootHash.String())
-	// }
+	if bytes.Equal([]byte(msg.RootHash), helper.ZeroHash.Bytes()) {
+		return hmCommon.ErrInvalidMsg
+	}
 
-	// if msg.Proposer.Empty() {
-	// 	return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.Proposer.String())
-	// }
+	if msg.Proposer == "" {
+		return hmCommon.ErrInvalidMsg
+	}
 
 	if msg.StartBlock >= msg.EndBlock || msg.EndBlock == 0 {
 		return hmCommon.ErrInvalidMsg
