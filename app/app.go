@@ -45,6 +45,7 @@ import (
 	"github.com/maticnetwork/heimdall/x/chainmanager"
 	chainKeeper "github.com/maticnetwork/heimdall/x/chainmanager/keeper"
 	chainmanagerTypes "github.com/maticnetwork/heimdall/x/chainmanager/types"
+	"github.com/maticnetwork/heimdall/x/clerk"
 
 	// "github.com/maticnetwork/heimdall/x/clerk"
 	// clerkkeeper "github.com/maticnetwork/heimdall/x/clerk/keeper"
@@ -67,6 +68,9 @@ import (
 	"github.com/maticnetwork/heimdall/x/staking"
 	stakingkeeper "github.com/maticnetwork/heimdall/x/staking/keeper"
 	stakingtypes "github.com/maticnetwork/heimdall/x/staking/types"
+	"github.com/maticnetwork/heimdall/x/topup"
+	topupkeeper "github.com/maticnetwork/heimdall/x/topup/keeper"
+	topuptypes "github.com/maticnetwork/heimdall/x/topup/types"
 
 	"github.com/maticnetwork/heimdall/x/checkpoint"
 	checkpointkeeper "github.com/maticnetwork/heimdall/x/checkpoint/keeper"
@@ -93,8 +97,9 @@ var (
 		sidechannel.AppModuleBasic{},
 		staking.AppModuleBasic{},
 		params.AppModuleBasic{},
-		// clerk.AppModuleBasic{},
 		checkpoint.AppModuleBasic{},
+		topup.AppModuleBasic{},
+		clerk.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -135,6 +140,7 @@ type HeimdallApp struct {
 	StakingKeeper     stakingkeeper.Keeper
 	ParamsKeeper      paramskeeper.Keeper
 	CheckpointKeeper  checkpointkeeper.Keeper
+	TopupKeeper       topupkeeper.Keeper
 
 	// side router
 	sideRouter hmtypes.SideRouter
@@ -170,7 +176,7 @@ func NewHeimdallApp(
 	encodingConfig hmparams.EncodingConfig,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *HeimdallApp {
-	// TODO: Remove cdc in favor of appCodec once all modules are migrated.
+	// TODO: Remove legacyAmino in favor of appCodec once all modules are migrated.
 	appCodec := encodingConfig.Marshaler
 	legacyAmino := encodingConfig.Amino
 	interfaceRegistry := encodingConfig.InterfaceRegistry
@@ -197,6 +203,7 @@ func NewHeimdallApp(
 		// slashingtypes.StoreKey,
 		// govtypes.StoreKey,
 		paramstypes.StoreKey,
+		topuptypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 
@@ -266,6 +273,14 @@ func NewHeimdallApp(
 		nil,
 	)
 
+	app.TopupKeeper = topupkeeper.NewKeeper(
+		appCodec,
+		keys[topuptypes.StoreKey],
+		app.GetSubspace(topuptypes.ModuleName),
+		app.ChainKeeper,
+		app.BankKeeper,
+		app.StakingKeeper,
+	)
 	// Contract caller
 	contractCallerObj, err := helper.NewContractCaller()
 	if err != nil {
