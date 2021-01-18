@@ -7,7 +7,6 @@ import (
 	"strconv"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -52,12 +51,21 @@ func CheckpointTxCmd() *cobra.Command {
 			}
 
 			// bor chain id
-			borChainID := viper.GetString(FlagBorChainID)
+			borChainID, err := cmd.Flags().GetString(FlagBorChainID)
+			if err != nil {
+				return err
+			}
+
 			if borChainID == "" {
 				return fmt.Errorf("bor chain id cannot be empty")
 			}
 
-			if viper.GetBool(FlagAutoConfigure) {
+			isAutoConfigure, err := cmd.Flags().GetBool(FlagAutoConfigure)
+			if err != nil {
+				return err
+			}
+
+			if isAutoConfigure {
 				var checkpointProposer hmTypes.Validator
 				proposerBytes, _, err := clientCtx.Query(fmt.Sprintf("custom/%s/%s", types.StakingQuerierRoute, types.QueryCurrentProposer))
 				if err != nil {
@@ -96,14 +104,22 @@ func CheckpointTxCmd() *cobra.Command {
 			}
 
 			// get proposer
-			proposer := sdk.AccAddress([]byte(viper.GetString(FlagProposerAddress)))
+			proposerAddressStr, err := cmd.Flags().GetString(FlagProposerAddress)
+			if err != nil {
+				return err
+			}
+
+			proposer := sdk.AccAddress([]byte(proposerAddressStr))
 			if proposer.Empty() {
 				proposer = helper.GetFromAddress(clientCtx)
 			}
 
 			//	start block
 
-			startBlockStr := viper.GetString(FlagStartBlock)
+			startBlockStr, err := cmd.Flags().GetString(FlagStartBlock)
+			if err != nil {
+				return err
+			}
 			if startBlockStr == "" {
 				return fmt.Errorf("start block cannot be empty")
 			}
@@ -115,7 +131,10 @@ func CheckpointTxCmd() *cobra.Command {
 
 			//	end block
 
-			endBlockStr := viper.GetString(FlagEndBlock)
+			endBlockStr, err := cmd.Flags().GetString(FlagEndBlock)
+			if err != nil {
+				return err
+			}
 			if endBlockStr == "" {
 				return fmt.Errorf("end block cannot be empty")
 			}
@@ -127,13 +146,19 @@ func CheckpointTxCmd() *cobra.Command {
 
 			// root hash
 
-			rootHashStr := viper.GetString(FlagRootHash)
+			rootHashStr, err := cmd.Flags().GetString(FlagRootHash)
+			if err != nil {
+				return err
+			}
 			if rootHashStr == "" {
 				return fmt.Errorf("root hash cannot be empty")
 			}
 
 			// Account Root Hash
-			accountRootHashStr := viper.GetString(FlagAccountRootHash)
+			accountRootHashStr, err := cmd.Flags().GetString(FlagAccountRootHash)
+			if err != nil {
+				return err
+			}
 			if accountRootHashStr == "" {
 				return fmt.Errorf("account root hash cannot be empty")
 			}
@@ -182,12 +207,12 @@ func CheckpointTxCmd() *cobra.Command {
 // 			}
 
 // 			// get proposer
-// 			proposer := sdk.AccAddress([]byte(viper.GetString(FlagProposerAddress)))
+// 			proposer := sdk.AccAddress([]byte(cmd.Flags().GetString(FlagProposerAddress)))
 // 			if proposer.Empty() {
 // 				proposer = helper.GetFromAddress(clientCtx)
 // 			}
 
-// 			headerBlockStr := viper.GetString(FlagHeaderNumber)
+// 			headerBlockStr := cmd.Flags().GetString(FlagHeaderNumber)
 // 			if headerBlockStr == "" {
 // 				return fmt.Errorf("header number cannot be empty")
 // 			}
@@ -197,7 +222,7 @@ func CheckpointTxCmd() *cobra.Command {
 // 				return err
 // 			}
 
-// 			txHashStr := viper.GetString(FlagCheckpointTxHash)
+// 			txHashStr := cmd.Flags().GetString(FlagCheckpointTxHash)
 // 			if txHashStr == "" {
 // 				return fmt.Errorf("checkpoint tx hash cannot be empty")
 // 			}
@@ -228,7 +253,7 @@ func CheckpointTxCmd() *cobra.Command {
 // 			res, err := contractCallerObj.DecodeNewHeaderBlockEvent(
 // 				chainmanagerParams.ChainParams.RootChainAddress.EthAddress(),
 // 				receipt,
-// 				uint64(viper.GetInt64(FlagCheckpointLogIndex)),
+// 				uint64(cmd.Flags().GetInt64(FlagCheckpointLogIndex)),
 // 			)
 // 			if err != nil {
 // 				return errors.New("Invalid transaction for header block")
@@ -243,7 +268,7 @@ func CheckpointTxCmd() *cobra.Command {
 // 				res.End.Uint64(),
 // 				res.Root,
 // 				txHash,
-// 				uint64(viper.GetInt64(FlagCheckpointLogIndex)),
+// 				uint64(cmd.Flags().GetInt64(FlagCheckpointLogIndex)),
 // 			)
 
 // 			// broadcast messages
@@ -279,11 +304,16 @@ func CheckpointNoACKTxCmd() *cobra.Command {
 			}
 
 			// get proposer
-			proposer := sdk.AccAddress([]byte(viper.GetString(FlagProposerAddress)))
+
+			proposerAddressStr, err := cmd.Flags().GetString(FlagProposerAddress)
+			if err != nil {
+				return err
+			}
+
+			proposer := sdk.AccAddress([]byte(proposerAddressStr))
 			if proposer.Empty() {
 				proposer = helper.GetFromAddress(clientCtx)
 			}
-
 			// create new checkpoint no-ack
 			msg := types.NewMsgCheckpointNoAck(
 				proposer,

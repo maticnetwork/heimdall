@@ -6,7 +6,6 @@ import (
 
 	"github.com/gogo/protobuf/codec"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -126,8 +125,10 @@ func GetCmdQueryHeaderFromIndex(cdc *codec.Codec) *cobra.Command {
 			}
 
 			queryClient := types.NewQueryClient(clientCtx)
+
+			cmd.Flags().GetString(FlagHeaderNumber)
 			// TODO headerNumber
-			_ = viper.GetUint64(FlagHeaderNumber)
+			_, _ = cmd.Flags().GetUint64(FlagHeaderNumber)
 
 			res, err := queryClient.Checkpoint(context.Background(), &types.QueryCheckpointRequest{})
 			if err != nil {
