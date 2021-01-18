@@ -131,11 +131,11 @@ func (k *Keeper) IsCurrentValidatorByAddress(ctx sdk.Context, address []byte) bo
 }
 
 // GetValidatorInfo returns validator
-func (k *Keeper) GetValidatorInfo(ctx sdk.Context, address []byte) (validator hmTypes.Validator, err error) {
+func (k *Keeper) GetValidatorInfo(ctx sdk.Context, address sdk.AccAddress) (validator hmTypes.Validator, err error) {
 	store := ctx.KVStore(k.storeKey)
 
 	// check if validator exists
-	key := GetValidatorKey(address)
+	key := GetValidatorKey(address.Bytes())
 	if !store.Has(key) {
 		return validator, errors.New("Validator not found")
 	}
@@ -244,7 +244,7 @@ func (k *Keeper) IterateValidatorsAndApplyFn(ctx sdk.Context, f func(validator h
 }
 
 // UpdateSigner updates validator with signer and pubkey + validator => signer map
-func (k *Keeper) UpdateSigner(ctx sdk.Context, newSigner hmCommon.HeimdallAddress, newPubkey hmCommon.PubKey, prevSigner hmCommon.HeimdallAddress) error {
+func (k *Keeper) UpdateSigner(ctx sdk.Context, newSigner sdk.AccAddress, newPubkey hmCommon.PubKey, prevSigner sdk.AccAddress) error {
 	// get old validator from state and make power 0
 	validator, err := k.GetValidatorInfo(ctx, prevSigner.Bytes())
 	if err != nil {
@@ -290,18 +290,20 @@ func (k *Keeper) UpdateValidatorSetInStore(ctx sdk.Context, newValidatorSet *hmT
 }
 
 // GetValidatorSet returns current Validator Set from store
-func (k *Keeper) GetValidatorSet(ctx sdk.Context) (validatorSet *hmTypes.ValidatorSet) {
+func (k *Keeper) GetValidatorSet(ctx sdk.Context) *hmTypes.ValidatorSet {
+	var validatorSet hmTypes.ValidatorSet
+
 	store := ctx.KVStore(k.storeKey)
 	// get current validator set from store
 	bz := store.Get(CurrentValidatorSetKey)
-	// unmarhsall
 
-	if err := k.cdc.UnmarshalBinaryBare(bz, validatorSet); err != nil {
+	// unmarhsall
+	if err := k.cdc.UnmarshalBinaryBare(bz, &validatorSet); err != nil {
 		k.Logger(ctx).Error("GetValidatorSet | UnmarshalBinaryBare", "error", err)
 	}
 
 	// return validator set
-	return validatorSet
+	return &validatorSet
 }
 
 // IncrementAccum increments accum for validator set by n times and replace validator set in store
@@ -495,4 +497,10 @@ func (k *Keeper) Unjail(ctx sdk.Context, valID hmTypes.ValidatorID) {
 	if err := k.AddValidator(ctx, validator); err != nil {
 		k.Logger(ctx).Error("Error calling AddValidator")
 	}
+}
+
+// BondDenom - Bondable coin denomination
+func (k Keeper) BondDenom(ctx sdk.Context) (res string) {
+	k.paramSubspace.Get(ctx, types.KeyBondDenom, &res)
+	return
 }

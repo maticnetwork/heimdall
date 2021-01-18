@@ -13,6 +13,7 @@ import (
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
+	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmCommonTypes "github.com/maticnetwork/heimdall/types/common"
 )
 
@@ -108,4 +109,32 @@ func CompressPubKey(uncompressedBytes []byte) ([]byte, error) {
 		return nil, err
 	}
 	return ethcrypto.CompressPubkey(uncompressed), nil
+}
+
+// GetUpdatedValidators updates validators in validator set
+func GetUpdatedValidators(
+	currentSet *hmTypes.ValidatorSet,
+	validators []*hmTypes.Validator,
+	ackCount uint64,
+) []*hmTypes.Validator {
+	updates := make([]*hmTypes.Validator, 0)
+	for _, v := range validators {
+		// create copy of validator
+		validator := v.Copy()
+
+		address := []byte(validator.Signer)
+		_, val := currentSet.GetByAddress(address)
+		if val != nil && !validator.IsCurrentValidator(ackCount) {
+			// remove validator
+			validator.VotingPower = 0
+			updates = append(updates, validator)
+		} else if val == nil && validator.IsCurrentValidator(ackCount) {
+			// add validator
+			updates = append(updates, validator)
+		} else if val != nil && validator.VotingPower != val.VotingPower {
+			updates = append(updates, validator)
+		}
+	}
+
+	return updates
 }
