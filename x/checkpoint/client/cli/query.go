@@ -105,7 +105,7 @@ func GetCmdQueryLastNoACK(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			return clientCtx.PrintString(string(res.LastNoAck))
+			return clientCtx.PrintString(fmt.Sprint(res.LastNoAck))
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)
