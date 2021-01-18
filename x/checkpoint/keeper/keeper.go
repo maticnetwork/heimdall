@@ -12,8 +12,8 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
-	// "github.com/maticnetwork/heimdall/chainmanager"
-	// "github.com/maticnetwork/heimdall/staking"
+	chainKeeper "github.com/maticnetwork/heimdall/x/chainmanager/keeper"
+	stakingKeeper "github.com/maticnetwork/heimdall/x/staking/keeper"
 
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/x/checkpoint/types"
@@ -35,35 +35,32 @@ type ModuleCommunicator interface {
 
 type (
 	Keeper struct {
-		cdc                codec.LegacyAmino
+		cdc                codec.BinaryMarshaler
 		storeKey           sdk.StoreKey
-		memKey             sdk.StoreKey
 		paramSubspace      paramtypes.Subspace
 		moduleCommunicator ModuleCommunicator
-		//TODO: add staking and chainmanager
-		// sk staking.Keeper
-		// ck chainmanager.Keeper
+		Sk                 stakingKeeper.Keeper
+		Ck                 chainKeeper.Keeper
 	}
 )
 
 func NewKeeper(
-	cdc codec.LegacyAmino,
-	storeKey, memKey sdk.StoreKey,
+	cdc codec.BinaryMarshaler,
+	storeKey sdk.StoreKey,
 	paramstore paramtypes.Subspace,
-	// stakingKeeper staking.Keeper,
-	// chainKeeper chainmanager.Keeper,
+	stakingKeeper stakingKeeper.Keeper,
+	chainKeeper chainKeeper.Keeper,
 	moduleCommunicator ModuleCommunicator,
-) *Keeper {
+) Keeper {
 	// set KeyTable if it has not already been set
 	if !paramstore.HasKeyTable() {
 		paramstore = paramstore.WithKeyTable(types.ParamKeyTable())
 	}
-	return &Keeper{
-		cdc:      cdc,
-		storeKey: storeKey,
-		memKey:   memKey,
-		// sk:                 stakingKeeper,
-		// ck:                 chainKeeper,
+	return Keeper{
+		cdc:                cdc,
+		storeKey:           storeKey,
+		Sk:                 stakingKeeper,
+		Ck:                 chainKeeper,
 		paramSubspace:      paramstore,
 		moduleCommunicator: moduleCommunicator,
 	}
@@ -129,11 +126,11 @@ func (k *Keeper) GetCheckpointByNumber(ctx sdk.Context, number uint64) (hmTypes.
 }
 
 // GetCheckpointList returns all checkpoints with params like page and limit
-func (k *Keeper) GetCheckpointList(ctx sdk.Context, page uint64, limit uint64) ([]hmTypes.Checkpoint, error) {
+func (k *Keeper) GetCheckpointList(ctx sdk.Context, page uint64, limit uint64) ([]*hmTypes.Checkpoint, error) {
 	store := ctx.KVStore(k.storeKey)
 
 	// create headers
-	var checkpoints []hmTypes.Checkpoint
+	var checkpoints []*hmTypes.Checkpoint
 
 	// have max limit
 	if limit > 20 {
@@ -147,7 +144,7 @@ func (k *Keeper) GetCheckpointList(ctx sdk.Context, page uint64, limit uint64) (
 	for ; iterator.Valid(); iterator.Next() {
 		var checkpoint hmTypes.Checkpoint
 		if err := k.cdc.UnmarshalBinaryBare(iterator.Value(), &checkpoint); err == nil {
-			checkpoints = append(checkpoints, checkpoint)
+			checkpoints = append(checkpoints, &checkpoint)
 		}
 	}
 
