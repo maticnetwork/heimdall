@@ -52,11 +52,10 @@ func ParamKeyTable() paramtypes.KeyTable {
 // nolint
 func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
-		// TODO uncomment these lines
-		// paramtypes.NewParamSetPair(KeyCheckpointBufferTime, &p.CheckpointBufferTime, validateCheckpointBufferTime),
-		// paramtypes.NewParamSetPair(KeyAvgCheckpointLength, &p.AvgCheckpointLength, validateAvgCheckpointLength),
-		// paramtypes.NewParamSetPair(KeyMaxCheckpointLength, &p.MaxCheckpointLength, validateMaxCheckpointLength),
-		// paramtypes.NewParamSetPair(KeyChildBlockInterval, &p.ChildBlockInterval, validateChildBlockInterval),
+		paramtypes.NewParamSetPair(KeyCheckpointBufferTime, &p.CheckpointBufferTime, validateCheckpointBufferTime),
+		paramtypes.NewParamSetPair(KeyAvgCheckpointLength, &p.AvgCheckpointLength, validateAvgCheckpointLength),
+		paramtypes.NewParamSetPair(KeyMaxCheckpointLength, &p.MaxCheckpointLength, validateMaxCheckpointLength),
+		paramtypes.NewParamSetPair(KeyChildBlockInterval, &p.ChildBlockInterval, validateChildBlockInterval),
 	}
 }
 
