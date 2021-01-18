@@ -1,0 +1,17 @@
+syntax = "proto3";
+package heimdall.topup.v1beta1;
+
+import "gogoproto/gogo.proto";
+import "heimdall/types/divident.proto";
+
+option go_package = "github.com/maticnetwork/heimdall/x/topup/types";
+
+option (gogoproto.sizer_all)       = true;
+option (gogoproto.marshaler_all)   = true;
+option (gogoproto.unmarshaler_all) = true;
+
+// GenesisState defines the topup module's genesis state.
+message GenesisState {
+    repeated string topup_sequences = 1;
+    repeated heimdall.types.DividendAccount dividend_accounts = 2;
+}
