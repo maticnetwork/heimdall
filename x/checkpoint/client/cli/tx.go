@@ -81,7 +81,7 @@ func CheckpointTxCmd() *cobra.Command {
 				}
 
 				// create bor chain id params
-				borChainIDParams := types.NewQueryBorChainID(borChainID)
+				borChainIDParams := types.QueryBorChainID{BorChainID: borChainID}
 				bz, err := clientCtx.JSONMarshaler.MarshalJSON(&borChainIDParams)
 				if err != nil {
 					return err

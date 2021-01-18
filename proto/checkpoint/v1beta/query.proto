@@ -5,6 +5,7 @@ import "checkpoint/v1beta/genesis.proto";
 import "checkpoint/v1beta/msg.proto";
 import "google/api/annotations.proto";
 import "heimdall/types/headers.proto";
+import "heimdall/types/querier.proto";
 import "gogoproto/gogo.proto";
 
 option go_package = "github.com/maticnetwork/heimdall/x/checkpoint/types";
@@ -68,8 +69,9 @@ message QueryAckCountResponse {
   uint64 ack_count = 1;
 }
 
-
-message QueryCheckpointRequest {}
+message QueryCheckpointRequest {
+  uint64 number = 1;
+}
 
 message QueryCheckpointResponse {
   uint64 ack_count = 1;
@@ -86,12 +88,20 @@ message QueryLastNoAckResponse {
   uint64   last_no_ack = 1;
 }
 
-message QueryCheckpointListRequest {}
+message QueryCheckpointListRequest {
+  heimdall.types.QueryPaginationParams pagination = 1;
+}
+
 message QueryCheckpointListResponse {
   repeated heimdall.types.Checkpoint checkpoint_list = 1;
 }
 
-message QueryNextCheckpointRequest {}
+message QueryNextCheckpointRequest {
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string bor_chainID = 1;
+}
 message QueryNextCheckpointResponse {
   heimdall.checkpoint.v1beta1.MsgCheckpoint next_checkpoint = 1;
 }

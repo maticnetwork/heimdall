@@ -127,10 +127,13 @@ func GetCmdQueryHeaderFromIndex(cdc *codec.Codec) *cobra.Command {
 			queryClient := types.NewQueryClient(clientCtx)
 
 			cmd.Flags().GetString(FlagHeaderNumber)
-			// TODO headerNumber
-			_, _ = cmd.Flags().GetUint64(FlagHeaderNumber)
 
-			res, err := queryClient.Checkpoint(context.Background(), &types.QueryCheckpointRequest{})
+			headerNumber, err := cmd.Flags().GetUint64(FlagHeaderNumber)
+			if err != nil {
+				return err
+			}
+
+			res, err := queryClient.Checkpoint(context.Background(), &types.QueryCheckpointRequest{Number: headerNumber})
 			if err != nil {
 				return err
 			}

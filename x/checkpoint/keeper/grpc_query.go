@@ -57,16 +57,13 @@ func (k Querier) Checkpoint(c context.Context, req *types.QueryCheckpointRequest
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
 
+	if req.Number == 0 {
+		return nil, status.Error(codes.InvalidArgument, "empty header param")
+	}
+
 	ctx := sdk.UnwrapSDKContext(c)
 
-	// TODO fix this
-	// var params types.QueryCheckpointParams
-	// if err := k.cdc.UnmarshalJSON(req.params, &params); err != nil {
-	// 	// TODO add correct error
-	// 	return nil, types.ErrNoCheckpointFound
-	// }
-
-	res, err := k.GetCheckpointByNumber(ctx, 2) // TODO params.Number
+	res, err := k.GetCheckpointByNumber(ctx, req.Number)
 	if err != nil {
 		return nil, types.ErrNoCheckpointFound
 	}
@@ -112,15 +109,12 @@ func (k Querier) CheckpointList(c context.Context, req *types.QueryCheckpointLis
 	}
 	ctx := sdk.UnwrapSDKContext(c)
 
-	// TODO
-	// var params hmTypes.QueryPaginationParams
-	// if err := k.cdc.UnmarshalJSON(req.Data, &params); err != nil {
-	// 	return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
-	// }
+	if req.Pagination == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty pagination limit, page params")
+	}
 
-	res, err := k.GetCheckpointList(ctx, 0, 3) // TODO  params.Page, params.Limit
+	res, err := k.GetCheckpointList(ctx, req.Pagination.Page, req.Pagination.Limit)
 	if err != nil {
-		// TODO
 		return nil, status.Error(codes.InvalidArgument, "nocheckpoint list error")
 	}
 	return &types.QueryCheckpointListResponse{CheckpointList: res}, nil
@@ -131,12 +125,12 @@ func (k Querier) NextCheckpoint(c context.Context, req *types.QueryNextCheckpoin
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
+	if req.BorChainID == "" {
+		return nil, status.Error(codes.InvalidArgument, "empty borchain id")
+	}
+
+	borChainID := req.BorChainID
 	ctx := sdk.UnwrapSDKContext(c)
-	// TODO
-	// var queryParams types.QueryBorChainID
-	// if err := k.cdc.UnmarshalJSON(req.Data, &queryParams); err != nil {
-	// 	return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse query params: %s", err))
-	// }
 
 	// get validator set
 	validatorSet := k.Sk.GetValidatorSet(ctx)
@@ -150,8 +144,7 @@ func (k Querier) NextCheckpoint(c context.Context, req *types.QueryNextCheckpoin
 		checkpointNumber := ackCount
 		lastCheckpoint, err := k.GetCheckpointByNumber(ctx, checkpointNumber)
 		if err != nil {
-			// TODO fix
-			return nil, status.Error(codes.InvalidArgument, "checkpoint error request")
+			return nil, err
 		}
 		start = lastCheckpoint.EndBlock + 1
 	}
@@ -175,7 +168,7 @@ func (k Querier) NextCheckpoint(c context.Context, req *types.QueryNextCheckpoin
 		start+params.AvgCheckpointLength,
 		hmCommonTypes.BytesToHeimdallHash(rootHash),
 		hmCommonTypes.BytesToHeimdallHash(rootHash), //hmTypes.BytesToHeimdallHash(accRootHash),
-		"testing", //queryParams.BorChainID,
+		borChainID,
 	)
 
 	return &types.QueryNextCheckpointResponse{NextCheckpoint: &checkpointMsg}, nil
