@@ -1,6 +1,8 @@
 package chainmanager
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/maticnetwork/heimdall/x/chainmanager/keeper"
@@ -10,6 +12,7 @@ import (
 // InitGenesis initializes the capability module's state from a provided genesis
 // state.
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
+	fmt.Println("init genesis", genState.Params)
 	k.SetParams(ctx, genState.Params)
 }
 

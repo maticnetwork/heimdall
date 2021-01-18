@@ -329,12 +329,6 @@ func InitializeNodeValidatorFiles(
 	return nodeID, valPubKey, valPrivKey, nil
 }
 
-// WriteDefaultHeimdallConfig writes default heimdall config to the given path
-func WriteDefaultHeimdallConfig(path string, conf helper.Configuration) {
-	heimdallConf := helper.GetDefaultHeimdallConfig()
-	helper.WriteConfigFile(path, &heimdallConf)
-}
-
 func CryptoKeyToPubkey(key crypto.PubKey) common.PubKey {
 	validatorPublicKey := helper.GetPubObjects(key)
 	return common.NewPubKey(validatorPublicKey[:])

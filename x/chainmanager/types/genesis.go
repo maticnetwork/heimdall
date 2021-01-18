@@ -27,10 +27,10 @@ func NewGenesisState(params *Params) *GenesisState {
 	}
 }
 
-// // DefaultGenesisState - Return a default genesis state
-// func DefaultGenesisState() GenesisState {
-// 	return NewGenesisState(DefaultParams())
-// }
+// DefaultGenesisState - Return a default genesis state
+func DefaultGenesisState() *GenesisState {
+	return NewGenesisState(DefaultParams())
+}
 
 // ValidateGenesis performs basic validation of auth genesis data returning an
 // error for any failed validation criteria.

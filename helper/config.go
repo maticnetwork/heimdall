@@ -134,6 +134,12 @@ func InitHeimdallConfig(rootViper *viper.Viper) error {
 	rootDir := rootViper.GetString(flags.FlagHome)
 	configDir := filepath.Join(rootDir, "config")
 
+	heimdallConfigFilePath := filepath.Join(configDir, "heimdall-config.toml")
+	if _, err := os.Stat(heimdallConfigFilePath); os.IsNotExist(err) {
+		hc := GetDefaultHeimdallConfig()
+		WriteConfigFile(heimdallConfigFilePath, &hc)
+	}
+
 	// create new viper and
 	configViper := viper.New()
 	configViper.SetConfigType("toml")

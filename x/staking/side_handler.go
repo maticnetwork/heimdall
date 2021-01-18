@@ -67,7 +67,7 @@ func NewPostTxHandler(k keeper.Keeper, contractCaller helper.IContractCaller) hm
 
 // SideHandleMsgValidatorJoin side msg validator join
 func SideHandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k keeper.Keeper, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
-
+	fmt.Println("SideHandleMsgValidatorJoin ==")
 	k.Logger(ctx).Debug("✅ Validating External call for validator join msg",
 		"txHash", hmCommonTypes.HexToHeimdallHash(msg.TxHash),
 		"logIndex", uint64(msg.LogIndex),
@@ -85,29 +85,30 @@ func SideHandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k k
 		params.MainchainTxConfirmations,
 	)
 	if err != nil || receipt == nil {
-		return hmCommon.ErrorSideTx(hmCommon.CodeInvalidMsg)
+		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
 	}
 
 	// decode validator join event
 	eventLog, err := contractCaller.DecodeValidatorJoinEvent(chainParams.StakingInfoAddress, receipt, msg.LogIndex)
 	if err != nil || eventLog == nil {
-		return hmCommon.ErrorSideTx(hmCommon.CodeInvalidMsg)
+		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
 	}
+
+	// validates pub key
 
 	// Generate PubKey from Pubkey in message and signer
 	pubkey := msg.GetSignerPubKey()
 	signer := pubkey.Address()
 
-	// create new pub key
-
 	// check signer pubkey in message corresponds
-	if !bytes.Equal(pubkey[1:], eventLog.SignerPubkey) {
+	expectedPubKey, err := helper.CompressPubKey(eventLog.SignerPubkey)
+	if err != nil || !bytes.Equal(expectedPubKey, pubkey.Bytes()) {
 		k.Logger(ctx).Error(
 			"Signer Pubkey does not match",
-			"msgValidator", pubkey.String(),
-			"mainchainValidator", hmTypes.BytesToHexBytes(eventLog.SignerPubkey),
+			"msgPubKey", pubkey.String(),
+			"compressdPubKey", hmTypes.BytesToHexBytes(expectedPubKey),
 		)
-		return hmCommon.ErrorSideTx(hmCommon.CodeInvalidMsg)
+		return hmCommon.ErrorSideTx(hmCommon.ErrValSignerPubKeyMismatch)
 	}
 
 	// check signer corresponding to pubkey matches signer from event
@@ -117,38 +118,50 @@ func SideHandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k k
 			"Validator", signer.String(),
 			"mainchainValidator", eventLog.Signer.Hex(),
 		)
-		return hmCommon.ErrorSideTx(hmCommon.CodeInvalidMsg)
+		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
 	}
+
+	fmt.Println("chainParams == signer", signer.Hex())
 
 	// check msg id
 	if eventLog.ValidatorId.Uint64() != msg.ID.Uint64() {
 		k.Logger(ctx).Error("ID in message doesn't match with id in log", "msgId", msg.ID, "validatorIdFromTx", eventLog.ValidatorId)
-		return hmCommon.ErrorSideTx(hmCommon.CodeInvalidMsg)
+		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
 	}
+
+	fmt.Println("chainParams == ValidatorId", msg.ID)
 
 	// check ActivationEpoch
 	if eventLog.ActivationEpoch.Uint64() != msg.ActivationEpoch {
 		k.Logger(ctx).Error("ActivationEpoch in message doesn't match with ActivationEpoch in log", "msgActivationEpoch", msg.ActivationEpoch, "activationEpochFromTx", eventLog.ActivationEpoch.Uint64)
-		return hmCommon.ErrorSideTx(hmCommon.CodeInvalidMsg)
+		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
 	}
+
+	fmt.Println("chainParams == ActivationEpoch", msg.ActivationEpoch)
 
 	// check Amount
 	if eventLog.Amount.Cmp(msg.Amount.BigInt()) != 0 {
 		k.Logger(ctx).Error("Amount in message doesn't match Amount in event logs", "MsgAmount", msg.Amount, "AmountFromEvent", eventLog.Amount)
-		return hmCommon.ErrorSideTx(hmCommon.CodeInvalidMsg)
+		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
 	}
+
+	fmt.Println("chainParams == Amount", msg.Amount)
 
 	// check Blocknumber
 	if receipt.BlockNumber.Uint64() != msg.BlockNumber {
 		k.Logger(ctx).Error("BlockNumber in message doesn't match blocknumber in receipt", "MsgBlockNumber", msg.BlockNumber, "ReceiptBlockNumber", receipt.BlockNumber.Uint64)
-		return hmCommon.ErrorSideTx(hmCommon.CodeInvalidMsg)
+		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
 	}
+
+	fmt.Println("chainParams ==BlockNumber", msg.BlockNumber)
 
 	// check nonce
 	if eventLog.Nonce.Uint64() != msg.Nonce {
 		k.Logger(ctx).Error("Nonce in message doesn't match with nonce in log", "msgNonce", msg.Nonce, "nonceFromTx", eventLog.Nonce)
-		return hmCommon.ErrorSideTx(hmCommon.CodeInvalidMsg)
+		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
 	}
+
+	fmt.Println("chainParams == Nonce", msg.Nonce)
 
 	k.Logger(ctx).Debug("✅ Successfully validated External call for validator join msg")
 	result.Result = tmprototypes.SideTxResultType_YES
@@ -173,35 +186,35 @@ func SideHandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k keepe
 		params.MainchainTxConfirmations,
 	)
 	if err != nil || receipt == nil {
-		return hmCommon.ErrorSideTx(hmCommon.CodeInvalidMsg)
+		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
 	}
 
 	eventLog, err := contractCaller.DecodeValidatorStakeUpdateEvent(chainParams.StakingInfoAddress, receipt, msg.LogIndex)
 	if err != nil || eventLog == nil {
 		k.Logger(ctx).Error("Error fetching log from txhash")
-		return hmCommon.ErrorSideTx(hmCommon.CodeInvalidMsg)
+		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
 	}
 
 	if receipt.BlockNumber.Uint64() != msg.BlockNumber {
 		k.Logger(ctx).Error("BlockNumber in message doesn't match blocknumber in receipt", "MsgBlockNumber", msg.BlockNumber, "ReceiptBlockNumber", receipt.BlockNumber.Uint64)
-		return hmCommon.ErrorSideTx(hmCommon.CodeInvalidMsg)
+		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
 	}
 
 	if eventLog.ValidatorId.Uint64() != msg.ID.Uint64() {
 		k.Logger(ctx).Error("ID in message doesn't match with id in log", "msgId", msg.ID, "validatorIdFromTx", eventLog.ValidatorId)
-		return hmCommon.ErrorSideTx(hmCommon.CodeInvalidMsg)
+		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
 	}
 
 	// check Amount
 	if eventLog.NewAmount.Cmp(msg.NewAmount.BigInt()) != 0 {
 		k.Logger(ctx).Error("NewAmount in message doesn't match NewAmount in event logs", "MsgNewAmount", msg.NewAmount, "NewAmountFromEvent", eventLog.NewAmount)
-		return hmCommon.ErrorSideTx(hmCommon.CodeInvalidMsg)
+		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
 	}
 
 	// check nonce
 	if eventLog.Nonce.Uint64() != msg.Nonce {
 		k.Logger(ctx).Error("Nonce in message doesn't match with nonce in log", "msgNonce", msg.Nonce, "nonceFromTx", eventLog.Nonce)
-		return hmCommon.ErrorSideTx(hmCommon.CodeInvalidMsg)
+		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
 	}
 
 	k.Logger(ctx).Debug("✅ Successfully validated External call for stake update msg")
@@ -227,7 +240,7 @@ func SideHandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k kee
 		params.MainchainTxConfirmations,
 	)
 	if err != nil || receipt == nil {
-		return hmCommon.ErrorSideTx(hmCommon.CodeInvalidMsg)
+		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
 	}
 	// new pubkey and signer
 	newPubkeyBytes := msg.NewSignerPubKey.Value
@@ -237,34 +250,34 @@ func SideHandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k kee
 	eventLog, err := contractCaller.DecodeSignerUpdateEvent(chainParams.StakingInfoAddress, receipt, msg.LogIndex)
 	if err != nil || eventLog == nil {
 		k.Logger(ctx).Error("Error fetching log from txhash")
-		return hmCommon.ErrorSideTx(hmCommon.CodeInvalidMsg)
+		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
 	}
 
 	if receipt.BlockNumber.Uint64() != msg.BlockNumber {
 		k.Logger(ctx).Error("BlockNumber in message doesn't match blocknumber in receipt", "MsgBlockNumber", msg.BlockNumber, "ReceiptBlockNumber", receipt.BlockNumber.Uint64)
-		return hmCommon.ErrorSideTx(hmCommon.CodeInvalidMsg)
+		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
 	}
 
 	if eventLog.ValidatorId.Uint64() != msg.ID.Uint64() {
 		k.Logger(ctx).Error("ID in message doesn't match with id in log", "msgId", msg.ID, "validatorIdFromTx", eventLog.ValidatorId)
-		return hmCommon.ErrorSideTx(hmCommon.CodeInvalidMsg)
+		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
 	}
 
 	if !bytes.Equal(eventLog.SignerPubkey, newPubKey.Bytes()[1:]) {
 		k.Logger(ctx).Error("Newsigner pubkey in txhash and msg dont match", "msgPubKey", newPubKey.String(), "pubkeyTx", hmCommonTypes.NewPubKey(eventLog.SignerPubkey[:]).String())
-		return hmCommon.ErrorSideTx(hmCommon.CodeInvalidMsg)
+		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
 	}
 
 	// check signer corresponding to pubkey matches signer from event
 	if !bytes.Equal(newSigner.Bytes(), eventLog.NewSigner.Bytes()) {
 		k.Logger(ctx).Error("Signer Address from Pubkey does not match", "Validator", newSigner.String(), "mainchainValidator", eventLog.NewSigner.Hex())
-		return hmCommon.ErrorSideTx(hmCommon.CodeInvalidMsg)
+		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
 	}
 
 	// check nonce
 	if eventLog.Nonce.Uint64() != msg.Nonce {
 		k.Logger(ctx).Error("Nonce in message doesn't match with nonce in log", "msgNonce", msg.Nonce, "nonceFromTx", eventLog.Nonce)
-		return hmCommon.ErrorSideTx(hmCommon.CodeInvalidMsg)
+		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
 	}
 
 	k.Logger(ctx).Debug("✅ Successfully validated External call for signer update msg")
@@ -290,35 +303,35 @@ func SideHandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k k
 		params.MainchainTxConfirmations,
 	)
 	if err != nil || receipt == nil {
-		return hmCommon.ErrorSideTx(hmCommon.CodeInvalidMsg)
+		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
 	}
 
 	// decode validator exit
 	eventLog, err := contractCaller.DecodeValidatorExitEvent(chainParams.StakingInfoAddress, receipt, msg.LogIndex)
 	if err != nil || eventLog == nil {
 		k.Logger(ctx).Error("Error fetching log from txhash")
-		return hmCommon.ErrorSideTx(hmCommon.CodeInvalidMsg)
+		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
 	}
 
 	if receipt.BlockNumber.Uint64() != msg.BlockNumber {
 		k.Logger(ctx).Error("BlockNumber in message doesn't match blocknumber in receipt", "MsgBlockNumber", msg.BlockNumber, "ReceiptBlockNumber", receipt.BlockNumber.Uint64)
-		return hmCommon.ErrorSideTx(hmCommon.CodeInvalidMsg)
+		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
 	}
 
 	if eventLog.ValidatorId.Uint64() != msg.ID.Uint64() {
 		k.Logger(ctx).Error("ID in message doesn't match with id in log", "msgId", msg.ID, "validatorIdFromTx", eventLog.ValidatorId)
-		return hmCommon.ErrorSideTx(hmCommon.CodeInvalidMsg)
+		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
 	}
 
 	if eventLog.DeactivationEpoch.Uint64() != msg.DeactivationEpoch {
 		k.Logger(ctx).Error("DeactivationEpoch in message doesn't match with deactivationEpoch in log", "msgDeactivationEpoch", msg.DeactivationEpoch, "deactivationEpochFromTx", eventLog.DeactivationEpoch.Uint64)
-		return hmCommon.ErrorSideTx(hmCommon.CodeInvalidMsg)
+		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
 	}
 
 	// check nonce
 	if eventLog.Nonce.Uint64() != msg.Nonce {
 		k.Logger(ctx).Error("Nonce in message doesn't match with nonce in log", "msgNonce", msg.Nonce, "nonceFromTx", eventLog.Nonce)
-		return hmCommon.ErrorSideTx(hmCommon.CodeInvalidMsg)
+		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
 	}
 
 	k.Logger(ctx).Debug("✅ Successfully validated External call for validator exit msg")

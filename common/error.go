@@ -9,13 +9,6 @@ import (
 //ModuleName Definition
 var ModuleName = "common_errors"
 
-var (
-	// CodeInvalidMsg error code
-	CodeInvalidMsg         uint32 = 1400
-	CodeErrDecodeEvent     uint32 = 2512
-	CodeWaitFrConfirmation uint32 = 2510
-)
-
 //custom error definitions
 var (
 	ErrEmptyValidatorAddr = sdkerrors.Register(ModuleName, 2, "empty validator address")
@@ -46,9 +39,9 @@ var (
 )
 
 // ErrorSideTx represents side-tx error
-func ErrorSideTx(code uint32) (res abci.ResponseDeliverSideTx) {
-	res.Code = uint32(code)
-	res.Codespace = string(ModuleName)
+func ErrorSideTx(err *sdkerrors.Error) (res abci.ResponseDeliverSideTx) {
+	res.Code = uint32(err.ABCICode())
+	res.Codespace = string(err.Codespace())
 	res.Result = tmprototypes.SideTxResultType_SKIP // skip side-tx vote in-case of error
 	return
 }
