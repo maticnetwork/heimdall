@@ -114,8 +114,8 @@ func NewMsgCheckpointAck(
 		Proposer:   proposer.String(),
 		StartBlock: startBlock,
 		EndBlock:   endBlock,
-		RootHash:   rootHash.Bytes(),
-		TxHash:     txHash.Bytes(),
+		RootHash:   rootHash.String(),
+		TxHash:     txHash.String(),
 		LogIndex:   logIndex,
 	}
 }
@@ -146,25 +146,24 @@ func (msg MsgCheckpointAck) GetSignBytes() []byte {
 // ValidateBasic validate basic
 func (msg MsgCheckpointAck) ValidateBasic() error {
 
-	// TODO implement validation logic
-	// if msg.From.Empty() {
-	// 	return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid from %v", msg.From.String())
-	// }
+	if msg.From == "" {
+		return hmCommon.ErrInvalidMsg
+	}
 
-	// if msg.Proposer.Empty() {
-	// 	return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid empty proposer")
-	// }
+	if msg.Proposer == "" {
+		return hmCommon.ErrInvalidMsg
+	}
 
-	// if msg.RootHash.Empty() {
-	// 	return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid empty root hash")
-	// }
+	if msg.RootHash == "" {
+		return hmCommon.ErrInvalidMsg
+	}
 
 	return nil
 }
 
 // GetTxHash Returns tx hash
 func (msg MsgCheckpointAck) GetTxHash() hmCommonTypes.HeimdallHash {
-	return hmCommonTypes.BytesToHeimdallHash(msg.TxHash)
+	return hmCommonTypes.HexToHeimdallHash(msg.TxHash)
 }
 
 // GetLogIndex Returns log index

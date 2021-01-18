@@ -101,7 +101,7 @@ func SideHandleMsgCheckpointAck(ctx sdk.Context, k keeper.Keeper, msg types.MsgC
 	if msg.StartBlock != start ||
 		msg.EndBlock != end ||
 		msg.Proposer != proposer.String() ||
-		!bytes.Equal(msg.RootHash, root.Bytes()) {
+		!bytes.Equal([]byte(msg.RootHash), root.Bytes()) {
 
 		logger.Error("Invalid message. It doesn't match with contract state", "error", err, "checkpointNumber", msg.Number)
 		// TODO fix this
@@ -255,14 +255,14 @@ func PostHandleMsgCheckpointAck(ctx sdk.Context, k keeper.Keeper, msg types.MsgC
 	}
 
 	// Return err if start and end matches but contract root hash doesn't match
-	if msg.StartBlock == checkpointObj.StartBlock && msg.EndBlock == checkpointObj.EndBlock && !bytes.Equal(msg.RootHash, checkpointObj.RootHash) {
+	if msg.StartBlock == checkpointObj.StartBlock && msg.EndBlock == checkpointObj.EndBlock && !bytes.Equal([]byte(msg.RootHash), checkpointObj.RootHash) {
 		logger.Error("Invalid ACK",
 			"startExpected", checkpointObj.StartBlock,
 			"startReceived", msg.StartBlock,
 			"endExpected", checkpointObj.EndBlock,
 			"endReceived", msg.StartBlock,
 			"rootExpected", hex.EncodeToString(checkpointObj.RootHash),
-			"rootRecieved", hex.EncodeToString(msg.RootHash),
+			"rootRecieved", msg.RootHash,
 		)
 		return nil, types.ErrBadAck
 	}
@@ -271,7 +271,7 @@ func PostHandleMsgCheckpointAck(ctx sdk.Context, k keeper.Keeper, msg types.MsgC
 	if checkpointObj.EndBlock > msg.EndBlock {
 		logger.Info("Adjusting endBlock to one already submitted on chain", "endBlock", checkpointObj.EndBlock, "adjustedEndBlock", msg.EndBlock)
 		checkpointObj.EndBlock = msg.EndBlock
-		checkpointObj.RootHash = msg.RootHash
+		checkpointObj.RootHash = []byte(msg.RootHash)
 		checkpointObj.Proposer = msg.Proposer
 	}
 

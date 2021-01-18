@@ -159,14 +159,14 @@ func (k msgServer) CheckpointAck(goCtx context.Context, msg *types.MsgCheckpoint
 	}
 
 	// Return err if start and end matches but contract root hash doesn't match
-	if msg.StartBlock == headerBlock.StartBlock && msg.EndBlock == headerBlock.EndBlock && !bytes.Equal(msg.RootHash, headerBlock.RootHash) {
+	if msg.StartBlock == headerBlock.StartBlock && msg.EndBlock == headerBlock.EndBlock && !bytes.Equal([]byte(msg.RootHash), headerBlock.RootHash) {
 		logger.Error("Invalid ACK",
 			"startExpected", headerBlock.StartBlock,
 			"startReceived", msg.StartBlock,
 			"endExpected", headerBlock.EndBlock,
 			"endReceived", msg.StartBlock,
 			"rootExpected", hex.EncodeToString(headerBlock.RootHash),
-			"rootRecieved", hex.EncodeToString(msg.RootHash),
+			"rootRecieved", msg.RootHash,
 		)
 		return nil, types.ErrBadAck
 	}

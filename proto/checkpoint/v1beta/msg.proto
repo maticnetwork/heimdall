@@ -48,8 +48,8 @@ message MsgCheckpointAck {
   string proposer = 3;
   uint64 start_block = 4;
   uint64 end_block = 5;
-  bytes root_hash = 6;
-  bytes tx_hash = 7;
+  string root_hash = 6;
+  string tx_hash = 7;
   uint64 log_index = 8;
 }
 
