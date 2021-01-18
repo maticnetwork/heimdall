@@ -5,7 +5,6 @@ import (
 	"math/rand"
 	"testing"
 	"time"
-	// "fmt"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"

@@ -1,6 +1,5 @@
 package staking_test
 
-
 //TODO uncomment and fix test case
 // func TestItCreatesModuleAccountOnInitBlock(t *testing.T) {
 // 	app := app.Setup(false)
