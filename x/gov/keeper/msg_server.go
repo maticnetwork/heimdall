@@ -25,8 +25,11 @@ var _ types.MsgServer = msgServer{}
 
 func (k msgServer) SubmitProposal(goCtx context.Context, msg *types.MsgSubmitProposal) (*types.MsgSubmitProposalResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	if _, err := getValidValidator(ctx, k.Keeper, msg.Proposer, msg.Validator); err != nil {
+	proposer, err := sdk.AccAddressFromHex(msg.Proposer)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := getValidValidator(ctx, k.Keeper, proposer, msg.Validator); err != nil {
 		return nil, hmCommon.ErrInvalidMsg
 	}
 
@@ -64,11 +67,16 @@ func (k msgServer) SubmitProposal(goCtx context.Context, msg *types.MsgSubmitPro
 func (k msgServer) Deposit(goCtx context.Context, msg *types.MsgDeposit) (*types.MsgDepositResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	if _, err := getValidValidator(ctx, k.Keeper, msg.Depositor, msg.Validator); err != nil {
+	depositor, err := sdk.AccAddressFromHex(msg.Depositor)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := getValidValidator(ctx, k.Keeper, depositor, msg.Validator); err != nil {
 		return nil, hmCommon.ErrInvalidMsg
 	}
 
-	err, votingStarted := k.Keeper.AddDeposit(ctx, msg.ProposalId, msg.Depositor, msg.Amount, msg.Validator)
+	err, votingStarted := k.Keeper.AddDeposit(ctx, msg.ProposalId, depositor, msg.Amount, msg.Validator)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +85,7 @@ func (k msgServer) Deposit(goCtx context.Context, msg *types.MsgDeposit) (*types
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.Depositor.String()),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.Depositor),
 		),
 	)
 

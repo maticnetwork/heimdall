@@ -1,8 +1,6 @@
 package types
 
 import (
-	"bytes"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -38,8 +36,8 @@ func NewMsgValidatorJoin(
 		ID:              hmTypes.NewValidatorID(id),
 		ActivationEpoch: activationEpoch,
 		Amount:          amount,
-		SignerPubKey:    &pubkey,
-		TxHash:          txhash,
+		SignerPubKey:    pubkey.String(),
+		TxHash:          txhash.String(),
 		LogIndex:        logIndex,
 		BlockNumber:     blockNumber,
 		Nonce:           nonce,
@@ -77,7 +75,7 @@ func (msg MsgValidatorJoin) ValidateBasic() error {
 		return common.ErrInvalidMsg
 	}
 
-	if bytes.Equal(msg.SignerPubKey.Bytes(), helper.ZeroPubKey.Bytes()) {
+	if msg.SignerPubKey == helper.ZeroPubKey.String() {
 		return common.ErrInvalidMsg
 	}
 
@@ -86,7 +84,7 @@ func (msg MsgValidatorJoin) ValidateBasic() error {
 
 // GetTxHash Returns tx hash
 func (msg MsgValidatorJoin) GetTxHash() hmCommon.HeimdallHash {
-	return msg.TxHash
+	return hmCommon.HexToHeimdallHash(msg.TxHash)
 }
 
 // GetLogIndex Returns log index
@@ -116,7 +114,7 @@ func NewMsgStakeUpdate(from sdk.AccAddress, id uint64, newAmount sdk.Int, txhash
 		From:        from.String(),
 		ID:          hmTypes.NewValidatorID(id),
 		NewAmount:   newAmount,
-		TxHash:      txhash,
+		TxHash:      txhash.String(),
 		LogIndex:    logIndex,
 		BlockNumber: blockNumber,
 		Nonce:       nonce,
@@ -159,7 +157,7 @@ func (msg MsgStakeUpdate) ValidateBasic() error {
 
 // GetTxHash Returns tx hash
 func (msg MsgStakeUpdate) GetTxHash() hmCommon.HeimdallHash {
-	return msg.TxHash
+	return hmCommon.HexToHeimdallHash(msg.TxHash)
 }
 
 // GetLogIndex Returns log index
@@ -194,8 +192,8 @@ func NewMsgSignerUpdate(
 	return MsgSignerUpdate{
 		From:            from.String(),
 		ID:              hmTypes.NewValidatorID(id),
-		NewSignerPubKey: &pubKey,
-		TxHash:          txhash,
+		NewSignerPubKey: pubKey.String(),
+		TxHash:          txhash.String(),
 		LogIndex:        logIndex,
 		BlockNumber:     blockNumber,
 		Nonce:           nonce,
@@ -233,7 +231,7 @@ func (msg MsgSignerUpdate) ValidateBasic() error {
 		return common.ErrInvalidMsg
 	}
 
-	if bytes.Equal(msg.NewSignerPubKey.Bytes(), helper.ZeroPubKey.Bytes()) {
+	if msg.NewSignerPubKey == helper.ZeroPubKey.String() {
 		return common.ErrInvalidMsg
 	}
 
@@ -242,7 +240,7 @@ func (msg MsgSignerUpdate) ValidateBasic() error {
 
 // GetTxHash Returns tx hash
 func (msg MsgSignerUpdate) GetTxHash() hmCommon.HeimdallHash {
-	return msg.TxHash
+	return hmCommon.HexToHeimdallHash(msg.TxHash)
 }
 
 // GetLogIndex Returns log index
@@ -271,7 +269,7 @@ func NewMsgValidatorExit(from sdk.AccAddress, id uint64, deactivationEpoch uint6
 		From:              from.String(),
 		ID:                hmTypes.NewValidatorID(id),
 		DeactivationEpoch: deactivationEpoch,
-		TxHash:            txhash,
+		TxHash:            txhash.String(),
 		LogIndex:          logIndex,
 		BlockNumber:       blockNumber,
 		Nonce:             nonce,
@@ -313,7 +311,7 @@ func (msg MsgValidatorExit) ValidateBasic() error {
 
 // GetTxHash Returns tx hash
 func (msg MsgValidatorExit) GetTxHash() hmCommon.HeimdallHash {
-	return msg.TxHash
+	return hmCommon.HexToHeimdallHash(msg.TxHash)
 }
 
 // GetLogIndex Returns log index

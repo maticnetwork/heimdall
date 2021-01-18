@@ -26,9 +26,7 @@ message MsgTopup {
     string user                        = 2;
     uint64 fee                         = 3
         [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.Int"];
-    bytes tx_hash = 4
-        [(gogoproto.casttype) =
-             "github.com/maticnetwork/heimdall/types/common.HeimdallHash"];
+    string tx_hash      = 4;
     uint64 log_index    = 5;
     uint64 block_number = 6;
 }

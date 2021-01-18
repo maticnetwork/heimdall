@@ -11,6 +11,7 @@ import (
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
+	hmTypesCommon "github.com/maticnetwork/heimdall/types/common"
 	"github.com/maticnetwork/heimdall/x/staking/types"
 )
 
@@ -34,14 +35,14 @@ func (k msgServer) ValidatorJoin(goCtx context.Context, msg *types.MsgValidatorJ
 		"validatorId", msg.ID,
 		"activationEpoch", msg.ActivationEpoch,
 		"amount", msg.Amount,
-		"SignerPubkey", msg.SignerPubKey.String(),
+		"SignerPubkey", msg.SignerPubKey,
 		"txHash", msg.TxHash,
 		"logIndex", msg.LogIndex,
 		"blockNumber", msg.BlockNumber,
 	)
 
 	// Generate PubKey from Pubkey in message and signer
-	pubkey := msg.SignerPubKey
+	pubkey := hmTypesCommon.NewPubKeyFromHex(msg.SignerPubKey)
 	signer := pubkey.Address()
 
 	// Check if validator has been validator before
@@ -150,13 +151,13 @@ func (k msgServer) SignerUpdate(goCtx context.Context, msg *types.MsgSignerUpdat
 
 	k.Logger(ctx).Debug("✅ Validating signer update msg",
 		"validatorID", msg.ID,
-		"NewSignerPubkey", msg.NewSignerPubKey.String(),
+		"NewSignerPubkey", msg.NewSignerPubKey,
 		"txHash", msg.TxHash,
 		"logIndex", msg.LogIndex,
 		"blockNumber", msg.BlockNumber,
 	)
 
-	newPubKey := msg.NewSignerPubKey
+	newPubKey := hmTypesCommon.NewPubKeyFromHex(msg.NewSignerPubKey)
 	newSigner := newPubKey.Address()
 
 	// pull validator from store

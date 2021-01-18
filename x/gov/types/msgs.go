@@ -49,7 +49,8 @@ func (msg MsgSubmitProposal) GetSignBytes() []byte {
 
 // GetSigners implements Msg
 func (msg MsgSubmitProposal) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.Proposer}
+	proposer, _ := sdk.AccAddressFromHex(msg.Proposer)
+	return []sdk.AccAddress{proposer}
 }
 
 func (msg MsgSubmitProposal) Route() string { return RouterKey }
@@ -57,8 +58,8 @@ func (msg MsgSubmitProposal) Type() string  { return TypeMsgSubmitProposal }
 
 // Implements Msg.
 func (m MsgSubmitProposal) ValidateBasic() error {
-	if m.Proposer.Empty() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, m.Proposer.String())
+	if m.Proposer == "" {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, m.Proposer)
 	}
 	if !m.InitialDeposit.IsValid() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, m.InitialDeposit.String())
@@ -104,7 +105,8 @@ func (msg MsgDeposit) GetSignBytes() []byte {
 
 // GetSigners implements Msg
 func (msg MsgDeposit) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.Depositor}
+	depositor, _ := sdk.AccAddressFromHex(msg.Depositor)
+	return []sdk.AccAddress{depositor}
 }
 
 func (msg MsgDeposit) Route() string { return RouterKey }
@@ -112,8 +114,8 @@ func (msg MsgDeposit) Type() string  { return TypeMsgDeposit }
 
 // Implements Msg.
 func (msg MsgDeposit) ValidateBasic() error {
-	if msg.Depositor.Empty() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Depositor.String())
+	if msg.Depositor == "" {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Depositor)
 	}
 	if !msg.Amount.IsValid() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, msg.Amount.String())
@@ -126,7 +128,8 @@ func (msg MsgDeposit) ValidateBasic() error {
 }
 
 func (m *MsgSubmitProposal) GetProposer() sdk.AccAddress {
-	return m.Proposer
+	proposer, _ := sdk.AccAddressFromHex(m.Proposer)
+	return proposer
 }
 
 func (m *MsgSubmitProposal) GetContent() Content {
@@ -143,7 +146,7 @@ func (m *MsgSubmitProposal) GetInitialDeposit() sdk.Coins { return m.InitialDepo
 func NewMsgSubmitProposal(content Content, initialDeposit sdk.Coins, proposer sdk.AccAddress, validator hmTypes.ValidatorID) (*MsgSubmitProposal, error) {
 	m := &MsgSubmitProposal{
 		InitialDeposit: initialDeposit,
-		Proposer:       proposer,
+		Proposer:       proposer.String(),
 		Validator:      validator,
 	}
 	err := m.SetContent(content)
@@ -154,7 +157,7 @@ func NewMsgSubmitProposal(content Content, initialDeposit sdk.Coins, proposer sd
 }
 
 func NewMsgDeposit(depositor sdk.AccAddress, proposalID uint64, amount sdk.Coins, validator hmTypes.ValidatorID) MsgDeposit {
-	return MsgDeposit{proposalID, depositor, amount, validator}
+	return MsgDeposit{proposalID, depositor.String(), amount, validator}
 }
 
 // NewMsgVote new msg vote

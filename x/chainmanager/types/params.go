@@ -93,35 +93,67 @@ func (p Params) String() string {
 
 // Validate checks that the parameters have valid values.
 func (p Params) Validate() error {
-	if err := validateAccAddress(MaticTokenAddress, p.ChainParams.MaticTokenAddress); err != nil {
+	addr, err := sdk.AccAddressFromHex(p.ChainParams.MaticTokenAddress)
+	if err != nil {
+		return err
+	}
+	if err := validateAccAddress(MaticTokenAddress, addr); err != nil {
 		return err
 	}
 
-	if err := validateAccAddress(StakingManagerAddress, p.ChainParams.StakingManagerAddress); err != nil {
+	addr, err = sdk.AccAddressFromHex(p.ChainParams.StakingManagerAddress)
+	if err != nil {
+		return err
+	}
+	if err := validateAccAddress(StakingManagerAddress, addr); err != nil {
 		return err
 	}
 
-	if err := validateAccAddress(SlashManagerAddress, p.ChainParams.SlashManagerAddress); err != nil {
+	addr, err = sdk.AccAddressFromHex(p.ChainParams.SlashManagerAddress)
+	if err != nil {
+		return err
+	}
+	if err := validateAccAddress(SlashManagerAddress, addr); err != nil {
 		return err
 	}
 
-	if err := validateAccAddress(RootChainAddress, p.ChainParams.RootChainAddress); err != nil {
+	addr, err = sdk.AccAddressFromHex(p.ChainParams.RootChainAddress)
+	if err != nil {
+		return err
+	}
+	if err := validateAccAddress(RootChainAddress, addr); err != nil {
 		return err
 	}
 
-	if err := validateAccAddress(StakingInfoAddress, p.ChainParams.StakingInfoAddress); err != nil {
+	addr, err = sdk.AccAddressFromHex(p.ChainParams.StakingInfoAddress)
+	if err != nil {
+		return err
+	}
+	if err := validateAccAddress(StakingInfoAddress, addr); err != nil {
 		return err
 	}
 
-	if err := validateAccAddress(StateSenderAddress, p.ChainParams.StateSenderAddress); err != nil {
+	addr, err = sdk.AccAddressFromHex(p.ChainParams.StateSenderAddress)
+	if err != nil {
+		return err
+	}
+	if err := validateAccAddress(StateSenderAddress, addr); err != nil {
 		return err
 	}
 
-	if err := validateAccAddress(StateReceiverAddress, p.ChainParams.StateReceiverAddress); err != nil {
+	addr, err = sdk.AccAddressFromHex(p.ChainParams.StateReceiverAddress)
+	if err != nil {
+		return err
+	}
+	if err := validateAccAddress(StateReceiverAddress, addr); err != nil {
 		return err
 	}
 
-	if err := validateAccAddress(ValidatorSetAddress, p.ChainParams.ValidatorSetAddress); err != nil {
+	addr, err = sdk.AccAddressFromHex(p.ChainParams.ValidatorSetAddress)
+	if err != nil {
+		return err
+	}
+	if err := validateAccAddress(ValidatorSetAddress, addr); err != nil {
 		return err
 	}
 
@@ -189,8 +221,8 @@ func DefaultParams() *Params {
 		MaticchainTxConfirmations: DefaultMaticchainTxConfirmations,
 		ChainParams: &ChainParams{
 			BorChainID:           helper.DefaultBorChainID,
-			StateReceiverAddress: DefaultStateReceiverAddress,
-			ValidatorSetAddress:  DefaultValidatorSetAddress,
+			StateReceiverAddress: DefaultStateReceiverAddress.String(),
+			ValidatorSetAddress:  DefaultValidatorSetAddress.String(),
 		},
 	}
 }

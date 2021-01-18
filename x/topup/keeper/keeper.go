@@ -130,8 +130,8 @@ func (k *Keeper) AddDividendAccount(ctx sdk.Context, dividendAccount hmTypes.Div
 		return err
 	}
 
-	store.Set(GetDividendAccountMapKey(dividendAccount.User.Bytes()), bz)
-	k.Logger(ctx).Debug("DividendAccount Stored", "key", hex.EncodeToString(GetDividendAccountMapKey(dividendAccount.User.Bytes())), "dividendAccount", dividendAccount.String())
+	store.Set(GetDividendAccountMapKey([]byte(dividendAccount.User)), bz)
+	k.Logger(ctx).Debug("DividendAccount Stored", "key", hex.EncodeToString(GetDividendAccountMapKey([]byte(dividendAccount.User))), "dividendAccount", dividendAccount.String())
 	return nil
 }
 
@@ -184,7 +184,7 @@ func (k *Keeper) AddFeeToDividendAccount(ctx sdk.Context, userAddress sdk.AccAdd
 		dividendAccount, _ = k.GetDividendAccountByAddress(ctx, userAddress)
 	} else {
 		dividendAccount = hmTypes.DividendAccount{
-			User:      userAddress,
+			User:      userAddress.String(),
 			FeeAmount: big.NewInt(0).String(),
 		}
 	}

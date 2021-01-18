@@ -57,7 +57,7 @@ func SideHandleMsgEventRecord(
 ) (result abci.ResponseDeliverSideTx) {
 
 	k.Logger(ctx).Debug("✅ Validating External call for clerk msg",
-		"txHash", hmCommonTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
+		"txHash", msg.TxHash,
 		"logIndex", uint64(msg.LogIndex),
 		"blockNumber", msg.BlockNumber,
 	)
@@ -67,13 +67,14 @@ func SideHandleMsgEventRecord(
 	chainParams := params.ChainParams
 
 	// get confirmed tx receipt
-	receipt, err := contractCaller.GetConfirmedTxReceipt(msg.TxHash.EthHash(), params.MainchainTxConfirmations)
+	receipt, err := contractCaller.GetConfirmedTxReceipt(hmCommonTypes.HexToHeimdallHash(msg.TxHash).EthHash(), params.MainchainTxConfirmations)
 	if receipt == nil || err != nil {
 		return hmCommon.ErrorSideTx(hmCommon.CodeWaitFrConfirmation)
 	}
 
 	// get event log for topup
-	eventLog, err := contractCaller.DecodeStateSyncedEvent(chainParams.StateSenderAddress, receipt, msg.LogIndex)
+	addr, _ := sdk.AccAddressFromBech32(chainParams.StateSenderAddress)
+	eventLog, err := contractCaller.DecodeStateSyncedEvent(addr, receipt, msg.LogIndex)
 	if err != nil || eventLog == nil {
 		k.Logger(ctx).Error("Error fetching log from txhash")
 		return hmCommon.ErrorSideTx(hmCommon.CodeErrDecodeEvent)
@@ -95,11 +96,11 @@ func SideHandleMsgEventRecord(
 		return hmCommon.ErrorSideTx(hmCommon.CodeInvalidMsg)
 	}
 
-	if !bytes.Equal(eventLog.ContractAddress.Bytes(), msg.ContractAddress.Bytes()) {
+	if !bytes.Equal(eventLog.ContractAddress.Bytes(), []byte(msg.ContractAddress)) {
 		k.Logger(ctx).Error(
 			"ContractAddress from event does not match with Msg ContractAddress",
 			"EventContractAddress", eventLog.ContractAddress.String(),
-			"MsgContractAddress", msg.ContractAddress.String(),
+			"MsgContractAddress", msg.ContractAddress,
 		)
 		return hmCommon.ErrorSideTx(hmCommon.CodeInvalidMsg)
 	}
@@ -144,11 +145,16 @@ func PostHandleMsgEventRecord(
 	sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))
 
 	// create event record
+	txHash := hmCommonTypes.HexToHeimdallHash(msg.TxHash)
+	contractAddress, err := sdk.AccAddressFromBech32(msg.ContractAddress)
+	if err != nil {
+		return nil, err
+	}
 	record := types.NewEventRecord(
-		msg.TxHash,
+		txHash,
 		msg.LogIndex,
 		msg.Id,
-		msg.ContractAddress,
+		contractAddress,
 		msg.Data,
 		msg.ChainId,
 		ctx.BlockTime(),
@@ -177,7 +183,7 @@ func PostHandleMsgEventRecord(
 			sdk.NewAttribute(types.AttributeKeyRecordTxLogIndex, strconv.FormatUint(msg.LogIndex, 10)),
 			sdk.NewAttribute(hmTypes.AttributeKeySideTxResult, sideTxResult.String()), // result
 			sdk.NewAttribute(types.AttributeKeyRecordID, strconv.FormatUint(msg.Id, 10)),
-			sdk.NewAttribute(types.AttributeKeyRecordContract, msg.ContractAddress.String()),
+			sdk.NewAttribute(types.AttributeKeyRecordContract, msg.ContractAddress),
 		),
 	})
 
