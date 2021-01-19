@@ -6,22 +6,18 @@ import "gogoproto/gogo.proto";
 
 option go_package = "github.com/maticnetwork/heimdall/types";
 
-option (gogoproto.sizer_all)       = false;
-option (gogoproto.marshaler_all)   = false;
-option (gogoproto.unmarshaler_all) = false;
+option (gogoproto.sizer_all)       = true;
+option (gogoproto.marshaler_all)   = true;
+option (gogoproto.unmarshaler_all) = true;
 
 message Checkpoint {
     option (gogoproto.goproto_getters)  = false;
     option (gogoproto.goproto_stringer) = false;
 
-    bytes proposer = 1
-        [(gogoproto.casttype) =
-             "github.com/maticnetwork/heimdall/types/common.HeimdallAddress"];
+    string proposer = 1;
     uint64 start_block = 2;
     uint64 end_block   = 3;
-    bytes  root_hash   = 4
-        [(gogoproto.casttype) =
-             "github.com/maticnetwork/heimdall/types/common.HeimdallHash"];
+    bytes  root_hash   = 4;
     string borChainID = 5;
     uint64 time_stamp = 6;
 }

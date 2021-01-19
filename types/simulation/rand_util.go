@@ -1,45 +1,52 @@
 package simulation
 
-// "github.com/maticnetwork/heimdall/helper"
+import (
+	"errors"
+	"math/big"
+	"math/rand"
 
-// const (
-// 	letterBytes   = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-// 	letterIdxBits = 6                    // 6 bits to represent a letter index
-// 	letterIdxMask = 1<<letterIdxBits - 1 // All 1-bits, as many as letterIdxBits
-// 	letterIdxMax  = 63 / letterIdxBits   // # of letter indices fitting in 63 bits
-// )
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/maticnetwork/heimdall/helper"
+)
 
-// var logger = helper.Logger.With("module", "types/simulation")
+const (
+	letterBytes   = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	letterIdxBits = 6                    // 6 bits to represent a letter index
+	letterIdxMask = 1<<letterIdxBits - 1 // All 1-bits, as many as letterIdxBits
+	letterIdxMax  = 63 / letterIdxBits   // # of letter indices fitting in 63 bits
+)
 
-// // shamelessly copied from
-// // https://stackoverflow.com/questions/22892120/how-to-generate-a-random-string-of-a-fixed-length-in-golang#31832326
+var logger = helper.Logger.With("module", "types/simulation")
 
-// // RandStringOfLength generates a random string of a particular length
-// func RandStringOfLength(r *rand.Rand, n int) string {
-// 	b := make([]byte, n)
-// 	// A src.Int63() generates 63 random bits, enough for letterIdxMax characters!
-// 	for i, cache, remain := n-1, r.Int63(), letterIdxMax; i >= 0; {
-// 		if remain == 0 {
-// 			cache, remain = r.Int63(), letterIdxMax
-// 		}
-// 		if idx := int(cache & letterIdxMask); idx < len(letterBytes) {
-// 			b[i] = letterBytes[idx]
-// 			i--
-// 		}
-// 		cache >>= letterIdxBits
-// 		remain--
-// 	}
-// 	return string(b)
-// }
+// shamelessly copied from
+// https://stackoverflow.com/questions/22892120/how-to-generate-a-random-string-of-a-fixed-length-in-golang#31832326
 
-// // RandPositiveInt get a rand positive sdk.Int
-// func RandPositiveInt(r *rand.Rand, max sdk.Int) (sdk.Int, error) {
-// 	if !max.GTE(sdk.OneInt()) {
-// 		return sdk.Int{}, errors.New("max too small")
-// 	}
-// 	max = max.Sub(sdk.OneInt())
-// 	return sdk.NewIntFromBigInt(new(big.Int).Rand(r, max.BigInt())).Add(sdk.OneInt()), nil
-// }
+// RandStringOfLength generates a random string of a particular length
+func RandStringOfLength(r *rand.Rand, n int) string {
+	b := make([]byte, n)
+	// A src.Int63() generates 63 random bits, enough for letterIdxMax characters!
+	for i, cache, remain := n-1, r.Int63(), letterIdxMax; i >= 0; {
+		if remain == 0 {
+			cache, remain = r.Int63(), letterIdxMax
+		}
+		if idx := int(cache & letterIdxMask); idx < len(letterBytes) {
+			b[i] = letterBytes[idx]
+			i--
+		}
+		cache >>= letterIdxBits
+		remain--
+	}
+	return string(b)
+}
+
+// RandPositiveInt get a rand positive sdk.Int
+func RandPositiveInt(r *rand.Rand, max sdk.Int) (sdk.Int, error) {
+	if !max.GTE(sdk.OneInt()) {
+		return sdk.Int{}, errors.New("max too small")
+	}
+	max = max.Sub(sdk.OneInt())
+	return sdk.NewIntFromBigInt(new(big.Int).Rand(r, max.BigInt())).Add(sdk.OneInt()), nil
+}
 
 // // RandomAmount generates a random amount
 // // Note: The range of RandomAmount includes max, and is, in fact, biased to return max as well as 0.
@@ -78,10 +85,10 @@ package simulation
 // 	return time.Unix(unixTime, 0)
 // }
 
-// // RandIntBetween returns a random int between two numbers inclusively.
-// func RandIntBetween(r *rand.Rand, min, max int) int {
-// 	return r.Intn(max-min) + min
-// }
+// RandIntBetween returns a random int between two numbers inclusively.
+func RandIntBetween(r *rand.Rand, min, max int) int {
+	return r.Intn(max-min) + min
+}
 
 // // RandSubsetCoins returns random subset of the provided coins
 // // will return at least one coin unless coins argument is empty or malformed
