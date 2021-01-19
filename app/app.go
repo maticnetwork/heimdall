@@ -164,6 +164,56 @@ func init() {
 	DefaultNodeHome = filepath.Join(userHomeDir, ".heimdalld")
 }
 
+//
+// Module communicator
+//
+
+// ModuleCommunicator retriever
+type ModuleCommunicator struct {
+	App *HeimdallApp
+}
+
+// GetACKCount returns ack count
+func (d ModuleCommunicator) GetACKCount(ctx sdk.Context) uint64 {
+	return d.App.CheckpointKeeper.GetACKCount(ctx)
+}
+
+// IsCurrentValidatorByAddress check if validator is current validator
+func (d ModuleCommunicator) IsCurrentValidatorByAddress(ctx sdk.Context, address []byte) bool {
+	return d.App.StakingKeeper.IsCurrentValidatorByAddress(ctx, address)
+}
+
+// GetAllDividendAccounts fetches all dividend accounts from topup module
+func (d ModuleCommunicator) GetAllDividendAccounts(ctx sdk.Context) []*hmtypes.DividendAccount {
+	return d.App.TopupKeeper.GetAllDividendAccounts(ctx)
+}
+
+// GetValidatorFromValID get validator from validator id
+func (d ModuleCommunicator) GetValidatorFromValID(ctx sdk.Context, valID hmtypes.ValidatorID) (validator hmtypes.Validator, ok bool) {
+	return d.App.StakingKeeper.GetValidatorFromValID(ctx, valID)
+}
+
+//// SetCoins sets coins
+//func (d ModuleCommunicator) SetCoins(ctx sdk.Context, addr hmcommontypes.HeimdallAddress, amt sdk.Coins) sdk.Error {
+//	return d.App.BankKeeper.SetCoins(ctx, addr, amt)
+//}
+//
+//// GetCoins gets coins
+//func (d ModuleCommunicator) GetCoins(ctx sdk.Context, addr hmcommontypes.HeimdallAddress) sdk.Coins {
+//	return d.App.BankKeeper.GetCoins(ctx, addr)
+//}
+//
+//// SendCoins transfers coins
+//func (d ModuleCommunicator) SendCoins(ctx sdk.Context, fromAddr hmcommontypes.HeimdallAddress, toAddr hmcommontypes.HeimdallAddress, amt sdk.Coins) sdk.Error {
+//	return d.App.BankKeeper.SendCoins(ctx, fromAddr, toAddr, amt)
+//}
+//
+//// Create ValidatorSigningInfo used by slashing module
+//func (d ModuleCommunicator) CreateValiatorSigningInfo(ctx sdk.Context, valID types.ValidatorID, valSigningInfo types.ValidatorSigningInfo) {
+//	d.App.SlashingKeeper.SetValidatorSigningInfo(ctx, valID, valSigningInfo)
+//	return
+//}
+
 // NewHeimdallApp returns a reference to an initialized HeimdallApp.
 func NewHeimdallApp(
 	logger log.Logger,
@@ -219,6 +269,12 @@ func NewHeimdallApp(
 	}
 
 	//
+	// module communicator
+	//
+
+	moduleCommunicator := ModuleCommunicator{App: app}
+
+	//
 	// Keepers
 	//
 
@@ -270,7 +326,7 @@ func NewHeimdallApp(
 		app.GetSubspace(checkpointtypes.ModuleName),
 		app.StakingKeeper,
 		app.ChainKeeper,
-		nil,
+		moduleCommunicator,
 	)
 
 	app.TopupKeeper = topupkeeper.NewKeeper(
