@@ -46,8 +46,10 @@ import (
 	chainKeeper "github.com/maticnetwork/heimdall/x/chainmanager/keeper"
 	chainmanagerTypes "github.com/maticnetwork/heimdall/x/chainmanager/types"
 	"github.com/maticnetwork/heimdall/x/clerk"
-	clerkkeeper "github.com/maticnetwork/heimdall/x/clerk/keeper"
-	clerktypes "github.com/maticnetwork/heimdall/x/clerk/types"
+
+	// "github.com/maticnetwork/heimdall/x/clerk"
+	// clerkkeeper "github.com/maticnetwork/heimdall/x/clerk/keeper"
+	// clerktypes "github.com/maticnetwork/heimdall/x/clerk/types"
 
 	// unnamed import of statik for swagger UI support
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
@@ -70,6 +72,10 @@ import (
 	topupkeeper "github.com/maticnetwork/heimdall/x/topup/keeper"
 	topuptypes "github.com/maticnetwork/heimdall/x/topup/types"
 
+	"github.com/maticnetwork/heimdall/x/checkpoint"
+	checkpointkeeper "github.com/maticnetwork/heimdall/x/checkpoint/keeper"
+	checkpointtypes "github.com/maticnetwork/heimdall/x/checkpoint/types"
+
 	// unnamed import of statik for swagger UI support
 	_ "github.com/maticnetwork/heimdall/client/docs/statik"
 )
@@ -91,6 +97,7 @@ var (
 		sidechannel.AppModuleBasic{},
 		staking.AppModuleBasic{},
 		params.AppModuleBasic{},
+		checkpoint.AppModuleBasic{},
 		topup.AppModuleBasic{},
 		clerk.AppModuleBasic{},
 	)
@@ -125,13 +132,14 @@ type HeimdallApp struct {
 	tkeys map[string]*sdk.TransientStoreKey
 
 	// keepers
-	AccountKeeper     authkeeper.AccountKeeper
-	BankKeeper        bankkeeper.Keeper
-	ChainKeeper       chainKeeper.Keeper
-	ClerkKeeper       clerkkeeper.Keeper
+	AccountKeeper authkeeper.AccountKeeper
+	BankKeeper    bankkeeper.Keeper
+	ChainKeeper   chainKeeper.Keeper
+	// ClerkKeeper       clerkkeeper.Keeper
 	SidechannelKeeper sidechannelkeeper.Keeper
 	StakingKeeper     stakingkeeper.Keeper
 	ParamsKeeper      paramskeeper.Keeper
+	CheckpointKeeper  checkpointkeeper.Keeper
 	TopupKeeper       topupkeeper.Keeper
 
 	// side router
@@ -187,9 +195,10 @@ func NewHeimdallApp(
 		authtypes.StoreKey,
 		banktypes.StoreKey,
 		chainmanagerTypes.StoreKey,
-		clerktypes.StoreKey,
+		// clerktypes.StoreKey,
 		sidechanneltypes.StoreKey,
 		stakingtypes.StoreKey,
+		checkpointtypes.StoreKey,
 		// distrtypes.StoreKey,
 		// slashingtypes.StoreKey,
 		// govtypes.StoreKey,
@@ -255,6 +264,14 @@ func NewHeimdallApp(
 		app.BankKeeper,
 		nil,
 	)
+	app.CheckpointKeeper = checkpointkeeper.NewKeeper(
+		appCodec,
+		keys[checkpointtypes.StoreKey], // target store
+		app.GetSubspace(checkpointtypes.ModuleName),
+		app.StakingKeeper,
+		app.ChainKeeper,
+		nil,
+	)
 
 	app.TopupKeeper = topupkeeper.NewKeeper(
 		appCodec,
@@ -291,8 +308,9 @@ func NewHeimdallApp(
 		sidechannel.NewAppModule(appCodec, app.SidechannelKeeper),
 		chainmanager.NewAppModule(appCodec, app.ChainKeeper),
 		staking.NewAppModule(appCodec, app.StakingKeeper, &app.caller),
-		clerk.NewAppModule(appCodec, app.ClerkKeeper, &app.caller),
+		// clerk.NewAppModule(appCodec, app.ClerkKeeper, &app.caller),
 		params.NewAppModule(app.ParamsKeeper),
+		checkpoint.NewAppModule(appCodec, app.CheckpointKeeper, &app.caller),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -315,7 +333,8 @@ func NewHeimdallApp(
 		sidechanneltypes.ModuleName,
 		chainmanagerTypes.ModuleName,
 		stakingtypes.ModuleName,
-		clerktypes.ModuleName,
+		checkpointtypes.ModuleName,
+		// clerktypes.ModuleName,
 		genutiltypes.ModuleName,
 	)
 
@@ -614,5 +633,7 @@ func initParamsKeeper(appCodec codec.BinaryMarshaler, legacyAmino *codec.LegacyA
 	paramsKeeper.Subspace(stakingtypes.ModuleName)
 	paramsKeeper.Subspace(chainmanagerTypes.ModuleName)
 	paramsKeeper.Subspace(sidechanneltypes.ModuleName)
+	paramsKeeper.Subspace(checkpointtypes.ModuleName)
+
 	return paramsKeeper
 }
