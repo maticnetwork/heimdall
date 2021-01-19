@@ -89,7 +89,8 @@ func SideHandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k k
 	}
 
 	// decode validator join event
-	eventLog, err := contractCaller.DecodeValidatorJoinEvent(chainParams.StakingInfoAddress, receipt, msg.LogIndex)
+	stakingInfoAddress, _ := sdk.AccAddressFromHex(chainParams.StakingInfoAddress)
+	eventLog, err := contractCaller.DecodeValidatorJoinEvent(stakingInfoAddress, receipt, msg.LogIndex)
 	if err != nil || eventLog == nil {
 		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
 	}
@@ -189,7 +190,8 @@ func SideHandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k keepe
 		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
 	}
 
-	eventLog, err := contractCaller.DecodeValidatorStakeUpdateEvent(chainParams.StakingInfoAddress, receipt, msg.LogIndex)
+	stakingInfoAddress, _ := sdk.AccAddressFromHex(chainParams.StakingInfoAddress)
+	eventLog, err := contractCaller.DecodeValidatorStakeUpdateEvent(stakingInfoAddress, receipt, msg.LogIndex)
 	if err != nil || eventLog == nil {
 		k.Logger(ctx).Error("Error fetching log from txhash")
 		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
@@ -247,7 +249,8 @@ func SideHandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k kee
 	newPubKey := hmCommonTypes.NewPubKey(newPubkeyBytes)
 	newSigner := newPubKey.Address()
 
-	eventLog, err := contractCaller.DecodeSignerUpdateEvent(chainParams.StakingInfoAddress, receipt, msg.LogIndex)
+	stakingInfoAddress, _ := sdk.AccAddressFromHex(chainParams.StakingInfoAddress)
+	eventLog, err := contractCaller.DecodeSignerUpdateEvent(stakingInfoAddress, receipt, msg.LogIndex)
 	if err != nil || eventLog == nil {
 		k.Logger(ctx).Error("Error fetching log from txhash")
 		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
@@ -307,7 +310,8 @@ func SideHandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k k
 	}
 
 	// decode validator exit
-	eventLog, err := contractCaller.DecodeValidatorExitEvent(chainParams.StakingInfoAddress, receipt, msg.LogIndex)
+	stakingInfoAddress, _ := sdk.AccAddressFromHex(chainParams.StakingInfoAddress)
+	eventLog, err := contractCaller.DecodeValidatorExitEvent(stakingInfoAddress, receipt, msg.LogIndex)
 	if err != nil || eventLog == nil {
 		k.Logger(ctx).Error("Error fetching log from txhash")
 		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
