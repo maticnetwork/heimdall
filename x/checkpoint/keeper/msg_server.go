@@ -112,6 +112,7 @@ func (k msgServer) Checkpoint(goCtx context.Context, msg *types.MsgCheckpoint) (
 
 	// Check proposer in message
 	validatorSet := k.Sk.GetValidatorSet(ctx)
+
 	if validatorSet.Proposer == nil {
 		logger.Error("No proposer in validator set", "msgProposer", msg.Proposer)
 		return nil, types.ErrInvalidMsg
