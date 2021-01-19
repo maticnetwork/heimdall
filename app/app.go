@@ -62,7 +62,6 @@ import (
 	hmtypes "github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/types/common"
 	hmmodule "github.com/maticnetwork/heimdall/types/module"
-	checkoutkeeper "github.com/maticnetwork/heimdall/x/checkpoint/keeper"
 	"github.com/maticnetwork/heimdall/x/sidechannel"
 	sidechannelkeeper "github.com/maticnetwork/heimdall/x/sidechannel/keeper"
 	sidechanneltypes "github.com/maticnetwork/heimdall/x/sidechannel/types"
@@ -142,7 +141,6 @@ type HeimdallApp struct {
 	ParamsKeeper      paramskeeper.Keeper
 	CheckpointKeeper  checkpointkeeper.Keeper
 	TopupKeeper       topupkeeper.Keeper
-	CheckpointKeeper  checkoutkeeper.Keeper
 
 	// side router
 	sideRouter hmtypes.SideRouter
@@ -166,6 +164,12 @@ type ModuleCommunicator struct {
 func (d ModuleCommunicator) GetACKCount(ctx sdk.Context) uint64 {
 	return d.App.CheckpointKeeper.GetACKCount(ctx)
 }
+
+//// Create ValidatorSigningInfo used by slashing module
+//func (d ModuleCommunicator) CreateValiatorSigningInfo(ctx sdk.Context, valID types.ValidatorID, valSigningInfo types.ValidatorSigningInfo) {
+//	d.App.SlashingKeeper.SetValidatorSigningInfo(ctx, valID, valSigningInfo)
+//	return
+//}
 
 func init() {
 	userHomeDir, err := os.UserHomeDir()
