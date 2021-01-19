@@ -1,6 +1,7 @@
 package types
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 	"time"
@@ -24,13 +25,7 @@ var (
 	KeyChildBlockInterval   = []byte("ChildBlockInterval")
 )
 
-// Params defines the parameters for the auth module.
-// type Params struct {
-// 	CheckpointBufferTime time.Duration `json:"checkpoint_buffer_time" yaml:"checkpoint_buffer_time"`
-// 	AvgCheckpointLength  uint64        `json:"avg_checkpoint_length" yaml:"avg_checkpoint_length"`
-// 	MaxCheckpointLength  uint64        `json:"max_checkpoint_length" yaml:"max_checkpoint_length"`
-// 	ChildBlockInterval   uint64        `json:"child_chain_block_interval" yaml:"child_chain_block_interval"`
-// }
+var _ paramtypes.ParamSet = (*Params)(nil)
 
 // NewParams creates a new Params object
 func NewParams(
@@ -57,19 +52,18 @@ func ParamKeyTable() paramtypes.KeyTable {
 // nolint
 func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
-		// {KeyCheckpointBufferTime, &p.CheckpointBufferTime},
-		// {KeyAvgCheckpointLength, &p.AvgCheckpointLength},
-		// {KeyMaxCheckpointLength, &p.MaxCheckpointLength},
-		// {KeyChildBlockInterval, &p.ChildBlockInterval},
+		paramtypes.NewParamSetPair(KeyCheckpointBufferTime, &p.CheckpointBufferTime, validateCheckpointBufferTime),
+		paramtypes.NewParamSetPair(KeyAvgCheckpointLength, &p.AvgCheckpointLength, validateAvgCheckpointLength),
+		paramtypes.NewParamSetPair(KeyMaxCheckpointLength, &p.MaxCheckpointLength, validateMaxCheckpointLength),
+		paramtypes.NewParamSetPair(KeyChildBlockInterval, &p.ChildBlockInterval, validateChildBlockInterval),
 	}
 }
 
 // Equal returns a boolean determining if two Params types are identical.
 func (p Params) Equal(p2 Params) bool {
-	// bz1 := ModuleCdc.MustMarshalBinaryLengthPrefixed(&p)
-	// bz2 := ModuleCdc.MustMarshalBinaryLengthPrefixed(&p2)
-	// return bytes.Equal(bz1, bz2)
-	return true
+	bz1 := ModuleCdc.MustMarshalBinaryLengthPrefixed(&p)
+	bz2 := ModuleCdc.MustMarshalBinaryLengthPrefixed(&p2)
+	return bytes.Equal(bz1, bz2)
 }
 
 // DefaultParams returns a default set of parameters.
@@ -105,6 +99,46 @@ func (p Params) Validate() error {
 
 	if p.ChildBlockInterval == 0 {
 		return fmt.Errorf("ChildBlockInterval should be greater than zero")
+	}
+
+	return nil
+}
+
+// TODO add validations
+func validateCheckpointBufferTime(i interface{}) error {
+	_, ok := i.(time.Duration)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	return nil
+}
+
+// TODO add validations
+func validateAvgCheckpointLength(i interface{}) error {
+	_, ok := i.(uint64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	return nil
+}
+
+// TODO add validations
+func validateMaxCheckpointLength(i interface{}) error {
+	_, ok := i.(uint64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	return nil
+}
+
+// TODO add validations
+func validateChildBlockInterval(i interface{}) error {
+	_, ok := i.(uint64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
 	return nil

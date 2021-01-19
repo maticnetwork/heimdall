@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/gogo/protobuf/grpc"
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
@@ -17,6 +16,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
+	"github.com/maticnetwork/heimdall/helper"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/x/checkpoint/client/cli"
 	"github.com/maticnetwork/heimdall/x/checkpoint/client/rest"
 	"github.com/maticnetwork/heimdall/x/checkpoint/keeper"
@@ -57,12 +58,6 @@ func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 // RegisterInterfaces registers the module's interface types
 func (a AppModuleBasic) RegisterInterfaces(reg cdctypes.InterfaceRegistry) {
 	types.RegisterInterfaces(reg)
-}
-
-// RegisterQueryService registers a GRPC query service to respond to the
-// module-specific GRPC queries.
-func (am AppModule) RegisterServices(cfg module.Configurator) {
-	//types.RegisterQueryServer(cfg.QueryServer(), am.keeper)
 }
 
 // DefaultGenesis returns the capability module's default genesis state.
@@ -106,13 +101,19 @@ func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 type AppModule struct {
 	AppModuleBasic
 
-	keeper keeper.Keeper
+	keeper         keeper.Keeper
+	contractCaller helper.IContractCaller
 }
 
-func NewAppModule(cdc codec.Marshaler, keeper keeper.Keeper) AppModule {
+func NewAppModule(
+	cdc codec.Marshaler,
+	keeper keeper.Keeper,
+	contractCaller helper.IContractCaller,
+) AppModule {
 	return AppModule{
 		AppModuleBasic: NewAppModuleBasic(cdc),
 		keeper:         keeper,
+		contractCaller: contractCaller,
 	}
 }
 
@@ -123,7 +124,8 @@ func (am AppModule) Name() string {
 
 // Route returns the capability module's message routing key.
 func (am AppModule) Route() sdk.Route {
-	return sdk.NewRoute(types.RouterKey, NewHandler(am.keeper))
+	return sdk.NewRoute(types.RouterKey, NewHandler(am.keeper, am.contractCaller))
+
 }
 
 // QuerierRoute returns the capability module's query routing key.
@@ -134,14 +136,25 @@ func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sd
 	return keeper.NewQuerier(am.keeper, legacyQuerierCdc)
 }
 
-// RegisterQueryService registers a GRPC query service to respond to the
+// RegisterServices registers a GRPC query service to respond to the
 // module-specific GRPC queries.
-func (am AppModule) RegisterQueryService(server grpc.Server) {
-	// types.RegisterQueryServer(server, am.keeper)
+func (am AppModule) RegisterServices(cfg module.Configurator) {
+	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper, am.contractCaller))
+	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQueryServerImpl(am.keeper, am.contractCaller))
 }
 
 // RegisterInvariants registers the capability module's invariants.
 func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
+
+// NewSideTxHandler side tx handler
+func (am AppModule) NewSideTxHandler() hmTypes.SideTxHandler {
+	return NewSideTxHandler(am.keeper, am.contractCaller)
+}
+
+// NewPostTxHandler post tx handler
+func (am AppModule) NewPostTxHandler() hmTypes.PostTxHandler {
+	return NewPostTxHandler(am.keeper, am.contractCaller)
+}
 
 // InitGenesis performs the capability module's genesis initialization It returns
 // no validator updates.
