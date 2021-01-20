@@ -14,7 +14,7 @@ import (
 )
 
 // GenRandCheckpoint return headers
-func GenRandCheckpoint(start uint64, headerSize uint64, maxCheckpointLength uint64) (headerBlock types.Checkpoint, err error) {
+func GenRandCheckpoint(start uint64, headerSize uint64, maxCheckpointLength uint64) (headerBlock *types.Checkpoint, err error) {
 	end := start + headerSize
 	borChainID := "1234"
 	rootHash := common.HexToHeimdallHash("123")
@@ -39,7 +39,8 @@ func LoadValidatorSet(count int, t *testing.T, keeper stakingKeeper.Keeper, ctx 
 	for _, validator := range validators {
 		err := keeper.AddValidator(ctx, validator)
 		require.NoError(t, err, "Unable to set validator, Error: %v", err)
-		valSet.UpdateWithChangeSet([]*types.Validator{&validator})
+		err = valSet.UpdateWithChangeSet([]*types.Validator{&validator})
+		require.NoError(t, err, "Unable to update the validator , Error :%v", err)
 	}
 
 	err := keeper.UpdateValidatorSetInStore(ctx, &valSet)

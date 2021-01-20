@@ -49,7 +49,7 @@ func (suite *KeeperTestSuite) TestAddCheckpoint() {
 		borChainId,
 		timestamp,
 	)
-	err := keeper.AddCheckpoint(ctx, headerBlockNumber, &Checkpoint)
+	err := keeper.AddCheckpoint(ctx, headerBlockNumber, Checkpoint)
 	require.NoError(t, err)
 
 	result, err := keeper.GetCheckpointByNumber(ctx, headerBlockNumber)
@@ -90,7 +90,8 @@ func (suite *KeeperTestSuite) TestGetCheckpointList() {
 			timestamp,
 		)
 
-		keeper.AddCheckpoint(ctx, headerBlockNumber, &Checkpoint)
+		err := keeper.AddCheckpoint(ctx, headerBlockNumber, Checkpoint)
+		require.NoError(t, err)
 		keeper.UpdateACKCount(ctx)
 	}
 
