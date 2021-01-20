@@ -73,7 +73,8 @@ func SideHandleMsgEventRecord(
 	}
 
 	// get event log for topup
-	eventLog, err := contractCaller.DecodeStateSyncedEvent(chainParams.StateSenderAddress, receipt, msg.LogIndex)
+	stakingSenderAddress, _ := sdk.AccAddressFromHex(chainParams.StateSenderAddress)
+	eventLog, err := contractCaller.DecodeStateSyncedEvent(stakingSenderAddress, receipt, msg.LogIndex)
 	if err != nil || eventLog == nil {
 		k.Logger(ctx).Error("Error fetching log from txhash")
 		return hmCommon.ErrorSideTx(hmCommon.CodeErrDecodeEvent)

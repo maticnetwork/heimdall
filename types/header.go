@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/hex"
 	"fmt"
 	"sort"
 
@@ -19,8 +20,8 @@ func CreateBlock(
 	return Checkpoint{
 		StartBlock: start,
 		EndBlock:   end,
-		RootHash:   rootHash,
-		Proposer:   proposer,
+		RootHash:   rootHash.Bytes(),
+		Proposer:   proposer.String(),
 		BorChainID: borChainID,
 		TimeStamp:  timestamp,
 	}
@@ -38,10 +39,10 @@ func SortHeaders(headers []*Checkpoint) []*Checkpoint {
 func (m Checkpoint) String() string {
 	return fmt.Sprintf(
 		"Checkpoint {%v (%d:%d) %v %v %v}",
-		m.Proposer.String(),
+		m.Proposer,
 		m.StartBlock,
 		m.EndBlock,
-		m.RootHash.Hex(),
+		hex.EncodeToString(m.RootHash),
 		m.BorChainID,
 		m.TimeStamp,
 	)

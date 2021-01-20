@@ -107,7 +107,7 @@ func createIncrementalAccounts(accNum int) []sdk.AccAddress {
 		buffer.WriteString("A58856F0FD53BF058B4909A21AEC019107BA6") //base address string
 
 		buffer.WriteString(numString) //adding on final two digits to make addresses unique
-		addresses = append(addresses, sdk.AccAddress([]byte(buffer.String())))
+		addresses = append(addresses, sdk.AccAddress(buffer.Bytes()))
 		buffer.Reset()
 	}
 
