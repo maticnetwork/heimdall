@@ -116,6 +116,7 @@ func (suite *HandlerTestSuite) TestHandleMsgTopup() {
 	})
 }
 
+// TODO: use bankKeeper for set and get coins (coins -> balances)
 // func (suite *HandlerTestSuite) TestHandleMsgWithdrawFee() {
 // 	t, app, ctx := suite.T(), suite.app, suite.ctx
 
