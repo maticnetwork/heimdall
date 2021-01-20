@@ -12,6 +12,6 @@ option (gogoproto.unmarshaler_all) = true;
 
 // GenesisState defines the topup module's genesis state.
 message GenesisState {
-    repeated string topup_sequences = 1;
+    repeated string topup_sequences                           = 1;
     repeated heimdall.types.DividendAccount dividend_accounts = 2;
 }
