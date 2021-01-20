@@ -2,6 +2,11 @@ package staking_test
 
 import (
 	"fmt"
+	"math/big"
+	"math/rand"
+	"testing"
+	"time"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethTypes "github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/heimdall/app"
@@ -18,10 +23,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	tmprototypes "github.com/tendermint/tendermint/proto/tendermint/types"
-	"math/big"
-	"math/rand"
-	"testing"
-	"time"
 )
 
 type SideHandlerTestSuite struct {
@@ -110,7 +111,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorJoin() {
 
 		//suite.contractCaller.On("GetConfirmedTxReceipt", txHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
 
-		//suite.contractCaller.On("DecodeValidatorJoinEvent", hmTypes.HexToHeimdallAddress(chainParams.ChainParams.StakingInfoAddress.String()).EthAddress(), txreceipt, msgValJoin.LogIndex).Return(stakinginfoStaked, nil)
+		//suite.contractCaller.On("DecodeValidatorJoinEvent", hmTypes.HexToHeimdallAddress(chainParams.ChainParams.StakingInfoAddress).EthAddress(), txreceipt, msgValJoin.LogIndex).Return(stakinginfoStaked, nil)
 
 		result := suite.sideHandler(ctx, &msgValJoin)
 		fmt.Printf("result %+v\n", result)
@@ -155,7 +156,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorJoin() {
 
 		//require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should Fail")
 		//require.Equal(t, abci.SideTxResultType_Skip, result.Result, "Result should be `skip`")
-		require.Equal(t, uint32(common.CodeWaitFrConfirmation), result.Code)
+		require.Equal(t, common.ErrWaitForConfirmation.ABCICode(), result.Code)
 	})
 
 	suite.Run("No EventLog", func() {
@@ -184,7 +185,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorJoin() {
 		fmt.Printf("result %+v\n", result)
 		//require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should Fail")
 		//require.Equal(t, abci.SideTxResultType_Skip, result.Result, "Result should be `skip`")
-		require.Equal(t, uint32(common.CodeErrDecodeEvent), result.Code)
+		require.Equal(t, common.ErrDecodeEvent.ABCICode(), result.Code)
 	})
 
 	suite.Run("Invalid Signer pubkey", func() {
@@ -224,7 +225,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorJoin() {
 
 		//require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should Fail")
 		//require.Equal(t, abci.SideTxResultType_Skip, result.Result, "Result should be `skip`")
-		require.Equal(t, uint32(common.CodeInvalidMsg), result.Code)
+		require.Equal(t, common.ErrInvalidMsg.ABCICode(), result.Code)
 	})
 
 	suite.Run("Invalid Signer address", func() {
@@ -264,7 +265,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorJoin() {
 
 		//require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should Fail")
 		//require.Equal(t, abci.SideTxResultType_Skip, result.Result, "Result should be `skip`")
-		require.Equal(t, uint32(common.CodeInvalidMsg), result.Code)
+		require.Equal(t, common.ErrInvalidMsg.ABCICode(), result.Code)
 	})
 
 	suite.Run("Invalid Validator Id", func() {
@@ -304,7 +305,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorJoin() {
 
 		//require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should Fail")
 		//require.Equal(t, abci.SideTxResultType_Skip, result.Result, "Result should be `skip`")
-		require.Equal(t, uint32(common.CodeInvalidMsg), result.Code)
+		require.Equal(t, common.ErrInvalidMsg.ABCICode(), result.Code)
 	})
 
 	suite.Run("Invalid Activation Epoch", func() {
@@ -344,7 +345,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorJoin() {
 
 		//require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should Fail")
 		//require.Equal(t, abci.SideTxResultType_Skip, result.Result, "Result should be `skip`")
-		require.Equal(t, uint32(common.CodeInvalidMsg), result.Code)
+		require.Equal(t, common.ErrInvalidMsg.ABCICode(), result.Code)
 	})
 
 	suite.Run("Invalid Amount", func() {
@@ -383,7 +384,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorJoin() {
 
 		//require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should Fail")
 		//require.Equal(t, abci.SideTxResultType_Skip, result.Result, "Result should be `skip`")
-		require.Equal(t, uint32(common.CodeInvalidMsg), result.Code)
+		require.Equal(t, common.ErrInvalidMsg.ABCICode(), result.Code)
 	})
 
 	suite.Run("Invalid Block Number", func() {
@@ -423,7 +424,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorJoin() {
 
 		//require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should Fail")
 		//require.Equal(t, abci.SideTxResultType_Skip, result.Result, "Result should be `skip`")
-		require.Equal(t, uint32(common.CodeInvalidMsg), result.Code)
+		require.Equal(t, common.ErrInvalidMsg.ABCICode(), result.Code)
 	})
 
 	suite.Run("Invalid nonce", func() {
@@ -463,7 +464,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorJoin() {
 
 		//require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should Fail")
 		//require.Equal(t, abci.SideTxResultType_Skip, result.Result, "Result should be `skip`")
-		require.Equal(t, uint32(common.CodeInvalidMsg), result.Code)
+		require.Equal(t, common.ErrInvalidMsg.ABCICode(), result.Code)
 	})
 }
 
@@ -497,7 +498,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorExit() {
 		}
 		validators[0].EndEpoch = 10
 
-		suite.contractCaller.On("DecodeValidatorExitEvent", hmTypes.HexToHeimdallAddress(chainParams.ChainParams.StakingInfoAddress.String()).EthAddress(), txreceipt, logIndex).Return(stakinginfoUnstakeInit, nil)
+		suite.contractCaller.On("DecodeValidatorExitEvent", hmTypes.HexToHeimdallAddress(chainParams.ChainParams.StakingInfoAddress).EthAddress(), txreceipt, logIndex).Return(stakinginfoUnstakeInit, nil)
 
 		msg := types.NewMsgValidatorExit(
 			sdk.AccAddress(validators[0].Signer),
@@ -533,7 +534,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorExit() {
 		}
 		validators[0].EndEpoch = 10
 
-		suite.contractCaller.On("DecodeValidatorExitEvent", hmTypes.HexToHeimdallAddress(chainParams.ChainParams.StakingInfoAddress.String()).EthAddress(), txreceipt, logIndex).Return(stakinginfoUnstakeInit, nil)
+		suite.contractCaller.On("DecodeValidatorExitEvent", hmTypes.HexToHeimdallAddress(chainParams.ChainParams.StakingInfoAddress).EthAddress(), txreceipt, logIndex).Return(stakinginfoUnstakeInit, nil)
 
 		msg := types.NewMsgValidatorExit(
 			sdk.AccAddress(validators[0].Signer),
@@ -561,7 +562,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorExit() {
 
 		validators[0].EndEpoch = 10
 
-		suite.contractCaller.On("DecodeValidatorExitEvent", hmTypes.HexToHeimdallAddress(chainParams.ChainParams.StakingInfoAddress.String()).EthAddress(), txreceipt, logIndex).Return(nil, nil)
+		suite.contractCaller.On("DecodeValidatorExitEvent", hmTypes.HexToHeimdallAddress(chainParams.ChainParams.StakingInfoAddress).EthAddress(), txreceipt, logIndex).Return(nil, nil)
 
 		msg := types.NewMsgValidatorExit(
 			sdk.AccAddress(validators[0].Signer),
@@ -599,7 +600,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorExit() {
 		}
 		validators[0].EndEpoch = 10
 
-		suite.contractCaller.On("DecodeValidatorExitEvent", hmTypes.HexToHeimdallAddress(chainParams.ChainParams.StakingInfoAddress.String()).EthAddress(), txreceipt, logIndex).Return(stakinginfoUnstakeInit, nil)
+		suite.contractCaller.On("DecodeValidatorExitEvent", hmTypes.HexToHeimdallAddress(chainParams.ChainParams.StakingInfoAddress).EthAddress(), txreceipt, logIndex).Return(stakinginfoUnstakeInit, nil)
 
 		msg := types.NewMsgValidatorExit(
 			sdk.AccAddress(validators[0].Signer),
@@ -636,7 +637,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorExit() {
 		}
 		validators[0].EndEpoch = 10
 
-		suite.contractCaller.On("DecodeValidatorExitEvent", hmTypes.HexToHeimdallAddress(chainParams.ChainParams.StakingInfoAddress.String()).EthAddress(), txreceipt, logIndex).Return(stakinginfoUnstakeInit, nil)
+		suite.contractCaller.On("DecodeValidatorExitEvent", hmTypes.HexToHeimdallAddress(chainParams.ChainParams.StakingInfoAddress).EthAddress(), txreceipt, logIndex).Return(stakinginfoUnstakeInit, nil)
 
 		msg := types.NewMsgValidatorExit(
 			sdk.AccAddress(validators[0].Signer),
@@ -672,7 +673,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorExit() {
 			Amount:            amount,
 		}
 
-		suite.contractCaller.On("DecodeValidatorExitEvent", hmTypes.HexToHeimdallAddress(chainParams.ChainParams.StakingInfoAddress.String()).EthAddress(), txreceipt, logIndex).Return(stakinginfoUnstakeInit, nil)
+		suite.contractCaller.On("DecodeValidatorExitEvent", hmTypes.HexToHeimdallAddress(chainParams.ChainParams.StakingInfoAddress).EthAddress(), txreceipt, logIndex).Return(stakinginfoUnstakeInit, nil)
 
 		msg := types.NewMsgValidatorExit(
 			sdk.AccAddress(validators[0].Signer),
@@ -709,7 +710,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorExit() {
 		}
 		validators[0].EndEpoch = 10
 
-		suite.contractCaller.On("DecodeValidatorExitEvent", hmTypes.HexToHeimdallAddress(chainParams.ChainParams.StakingInfoAddress.String()).EthAddress(), txreceipt, logIndex).Return(stakinginfoUnstakeInit, nil)
+		suite.contractCaller.On("DecodeValidatorExitEvent", hmTypes.HexToHeimdallAddress(chainParams.ChainParams.StakingInfoAddress).EthAddress(), txreceipt, logIndex).Return(stakinginfoUnstakeInit, nil)
 
 		msg := types.NewMsgValidatorExit(
 			sdk.AccAddress(validators[0].Signer),
@@ -762,7 +763,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgSignerUpdate() {
 			SignerPubkey: hmTypes.PubKey(newSigner[0].PubKey).Bytes()[1:],
 		}
 
-		suite.contractCaller.On("DecodeSignerUpdateEvent", hmTypes.HexToHeimdallAddress(chainParams.ChainParams.StakingInfoAddress.String()).EthAddress(), txreceipt, uint64(0)).Return(signerUpdateEvent, nil)
+		suite.contractCaller.On("DecodeSignerUpdateEvent", hmTypes.HexToHeimdallAddress(chainParams.ChainParams.StakingInfoAddress).EthAddress(), txreceipt, uint64(0)).Return(signerUpdateEvent, nil)
 
 		result := suite.sideHandler(ctx, &msg)
 		fmt.Printf("result %+v\n", result)
@@ -779,14 +780,14 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgSignerUpdate() {
 
 		suite.contractCaller.On("GetConfirmedTxReceipt", msgTxHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
 
-		suite.contractCaller.On("DecodeSignerUpdateEvent", hmTypes.HexToHeimdallAddress(chainParams.ChainParams.StakingInfoAddress.String()).EthAddress(), txreceipt, uint64(0)).Return(nil, nil)
+		suite.contractCaller.On("DecodeSignerUpdateEvent", hmTypes.HexToHeimdallAddress(chainParams.ChainParams.StakingInfoAddress).EthAddress(), txreceipt, uint64(0)).Return(nil, nil)
 
 		result := suite.sideHandler(ctx, &msg)
 		fmt.Printf("result %+v\n", result)
 
 		//require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should Fail")
 		//require.Equal(t, abci.SideTxResultType_Skip, result.Result, "Result should be `skip`")
-		require.Equal(t, uint32(common.CodeErrDecodeEvent), result.Code)
+		require.Equal(t, common.ErrDecodeEvent.ABCICode(), result.Code)
 	})
 
 	suite.Run("Invalid BlockNumber", func() {
@@ -811,12 +812,12 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgSignerUpdate() {
 			NewSigner:    hmTypes.HexToHeimdallAddress(newSigner[0].Signer).EthAddress(),
 			SignerPubkey: hmTypes.PubKey(newSigner[0].PubKey).Bytes()[1:],
 		}
-		suite.contractCaller.On("DecodeSignerUpdateEvent", hmTypes.HexToHeimdallAddress(chainParams.ChainParams.StakingInfoAddress.String()).EthAddress(), txreceipt, uint64(0)).Return(signerUpdateEvent, nil)
+		suite.contractCaller.On("DecodeSignerUpdateEvent", hmTypes.HexToHeimdallAddress(chainParams.ChainParams.StakingInfoAddress).EthAddress(), txreceipt, uint64(0)).Return(signerUpdateEvent, nil)
 
 		result := suite.sideHandler(ctx, &msg)
 		fmt.Printf("result %+v\n", result) //require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should Fail")
 		//require.Equal(t, abci.SideTxResultType_Skip, result.Result, "Result should be `skip`")
-		require.Equal(t, uint32(common.CodeInvalidMsg), result.Code)
+		require.Equal(t, common.ErrInvalidMsg.ABCICode(), result.Code)
 	})
 
 	suite.Run("Invalid validator", func() {
@@ -834,13 +835,13 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgSignerUpdate() {
 			NewSigner:    hmTypes.HexToHeimdallAddress(newSigner[0].Signer).EthAddress(),
 			SignerPubkey: hmTypes.PubKey(newSigner[0].PubKey).Bytes()[1:],
 		}
-		suite.contractCaller.On("DecodeSignerUpdateEvent", hmTypes.HexToHeimdallAddress(chainParams.ChainParams.StakingInfoAddress.String()).EthAddress(), txreceipt, uint64(0)).Return(signerUpdateEvent, nil)
+		suite.contractCaller.On("DecodeSignerUpdateEvent", hmTypes.HexToHeimdallAddress(chainParams.ChainParams.StakingInfoAddress).EthAddress(), txreceipt, uint64(0)).Return(signerUpdateEvent, nil)
 
 		result := suite.sideHandler(ctx, &msg)
 		fmt.Printf("result %+v\n", result)
 		//require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should Fail")
 		//require.Equal(t, abci.SideTxResultType_Skip, result.Result, "Result should be `skip`")
-		require.Equal(t, uint32(common.CodeInvalidMsg), result.Code)
+		require.Equal(t, common.ErrInvalidMsg.ABCICode(), result.Code)
 	})
 
 	suite.Run("Invalid signer pubkey", func() {
@@ -858,13 +859,13 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgSignerUpdate() {
 			NewSigner:    hmTypes.HexToHeimdallAddress(newSigner[0].Signer).EthAddress(),
 			SignerPubkey: hmTypes.PubKey(newSigner[0].PubKey).Bytes()[1:],
 		}
-		suite.contractCaller.On("DecodeSignerUpdateEvent", hmTypes.HexToHeimdallAddress(chainParams.ChainParams.StakingInfoAddress.String()).EthAddress(), txreceipt, uint64(0)).Return(signerUpdateEvent, nil)
+		suite.contractCaller.On("DecodeSignerUpdateEvent", hmTypes.HexToHeimdallAddress(chainParams.ChainParams.StakingInfoAddress).EthAddress(), txreceipt, uint64(0)).Return(signerUpdateEvent, nil)
 
 		result := suite.sideHandler(ctx, &msg)
 		fmt.Printf("result %+v\n", result)
 		//require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should Fail")
 		//require.Equal(t, abci.SideTxResultType_Skip, result.Result, "Result should be `skip`")
-		require.Equal(t, uint32(common.CodeInvalidMsg), result.Code)
+		require.Equal(t, common.ErrInvalidMsg.ABCICode(), result.Code)
 	})
 
 	suite.Run("Invalid new signer address", func() {
@@ -883,14 +884,14 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgSignerUpdate() {
 			SignerPubkey: hmTypes.PubKey(newSigner[0].PubKey).Bytes()[1:],
 		}
 		suite.contractCaller.On("DecodeSignerUpdateEvent",
-			hmTypes.HexToHeimdallAddress(chainParams.ChainParams.StakingInfoAddress.String()).EthAddress(),
+			hmTypes.HexToHeimdallAddress(chainParams.ChainParams.StakingInfoAddress).EthAddress(),
 			txreceipt, uint64(0)).Return(signerUpdateEvent, nil)
 
 		result := suite.sideHandler(ctx, &msg)
 		fmt.Printf("result %+v\n", result)
 		//require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should Fail")
 		//require.Equal(t, abci.SideTxResultType_Skip, result.Result, "Result should be `skip`")
-		require.Equal(t, uint32(common.CodeInvalidMsg), result.Code)
+		require.Equal(t, common.ErrInvalidMsg.ABCICode(), result.Code)
 	})
 
 	suite.Run("Invalid nonce", func() {
@@ -909,13 +910,13 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgSignerUpdate() {
 			SignerPubkey: hmTypes.PubKey(newSigner[0].PubKey).Bytes()[1:],
 		}
 		suite.contractCaller.On("DecodeSignerUpdateEvent",
-			hmTypes.HexToHeimdallAddress(chainParams.ChainParams.StakingInfoAddress.String()).EthAddress(), txreceipt, uint64(0)).Return(signerUpdateEvent, nil)
+			hmTypes.HexToHeimdallAddress(chainParams.ChainParams.StakingInfoAddress).EthAddress(), txreceipt, uint64(0)).Return(signerUpdateEvent, nil)
 
 		result := suite.sideHandler(ctx, &msg)
 		fmt.Printf("result %+v\n", result)
 		//require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should Fail")
 		//require.Equal(t, abci.SideTxResultType_Skip, result.Result, "Result should be `skip`")
-		require.Equal(t, uint32(common.CodeInvalidMsg), result.Code)
+		require.Equal(t, common.ErrInvalidMsg.ABCICode(), result.Code)
 	})
 }
 
@@ -954,7 +955,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgStakeUpdate() {
 			Nonce:       nonce,
 		}
 		suite.contractCaller.On("DecodeValidatorStakeUpdateEvent",
-			hmTypes.HexToHeimdallAddress(chainParams.ChainParams.StakingInfoAddress.String()).EthAddress(),
+			hmTypes.HexToHeimdallAddress(chainParams.ChainParams.StakingInfoAddress).EthAddress(),
 			txreceipt, uint64(0)).Return(stakinginfoStakeUpdate, nil)
 
 		result := suite.sideHandler(ctx, &msg)
@@ -984,7 +985,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgStakeUpdate() {
 			Nonce:       nonce,
 		}
 		suite.contractCaller.On("DecodeValidatorStakeUpdateEvent",
-			hmTypes.HexToHeimdallAddress(chainParams.ChainParams.StakingInfoAddress.String()).EthAddress(),
+			hmTypes.HexToHeimdallAddress(chainParams.ChainParams.StakingInfoAddress).EthAddress(),
 			txreceipt, uint64(0)).Return(stakinginfoStakeUpdate, nil)
 
 		result := suite.sideHandler(ctx, &msg)
@@ -1008,7 +1009,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgStakeUpdate() {
 
 		suite.contractCaller.On("GetConfirmedTxReceipt", msgTxHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
 		suite.contractCaller.On("DecodeValidatorStakeUpdateEvent",
-			hmTypes.HexToHeimdallAddress(chainParams.ChainParams.StakingInfoAddress.String()).EthAddress(),
+			hmTypes.HexToHeimdallAddress(chainParams.ChainParams.StakingInfoAddress).EthAddress(),
 			txreceipt, uint64(0)).Return(nil, nil)
 
 		result := suite.sideHandler(ctx, &msg)
@@ -1037,7 +1038,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgStakeUpdate() {
 			Nonce:       nonce,
 		}
 		suite.contractCaller.On("DecodeValidatorStakeUpdateEvent",
-			hmTypes.HexToHeimdallAddress(chainParams.ChainParams.StakingInfoAddress.String()).EthAddress(),
+			hmTypes.HexToHeimdallAddress(chainParams.ChainParams.StakingInfoAddress).EthAddress(),
 			txreceipt, uint64(0)).Return(stakinginfoStakeUpdate, nil)
 
 		result := suite.sideHandler(ctx, &msg)
@@ -1066,7 +1067,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgStakeUpdate() {
 			Nonce:       nonce,
 		}
 		suite.contractCaller.On("DecodeValidatorStakeUpdateEvent", hmTypes.HexToHeimdallAddress(
-			chainParams.ChainParams.StakingInfoAddress.String()).EthAddress(), txreceipt, uint64(0),
+			chainParams.ChainParams.StakingInfoAddress).EthAddress(), txreceipt, uint64(0),
 		).Return(stakinginfoStakeUpdate, nil)
 
 		result := suite.sideHandler(ctx, &msg)
@@ -1095,7 +1096,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgStakeUpdate() {
 			Nonce:       nonce,
 		}
 		suite.contractCaller.On("DecodeValidatorStakeUpdateEvent", hmTypes.HexToHeimdallAddress(
-			chainParams.ChainParams.StakingInfoAddress.String()).EthAddress(), txreceipt, uint64(0),
+			chainParams.ChainParams.StakingInfoAddress).EthAddress(), txreceipt, uint64(0),
 		).Return(stakinginfoStakeUpdate, nil)
 
 		result := suite.sideHandler(ctx, &msg)
@@ -1123,7 +1124,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgStakeUpdate() {
 			NewAmount:   new(big.Int).SetInt64(2000000000000000000),
 			Nonce:       nonce,
 		}
-		suite.contractCaller.On("DecodeValidatorStakeUpdateEvent", hmTypes.HexToHeimdallAddress(chainParams.ChainParams.StakingInfoAddress.String()).EthAddress(), txreceipt, uint64(0)).Return(stakinginfoStakeUpdate, nil)
+		suite.contractCaller.On("DecodeValidatorStakeUpdateEvent", hmTypes.HexToHeimdallAddress(chainParams.ChainParams.StakingInfoAddress).EthAddress(), txreceipt, uint64(0)).Return(stakinginfoStakeUpdate, nil)
 
 		result := suite.sideHandler(ctx, &msg)
 		fmt.Printf("Result %+v\n", result)
