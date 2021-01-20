@@ -85,8 +85,8 @@ func SideHandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k k
 		return hmCommon.ErrorSideTx(hmCommon.CodeInvalidMsg)
 	}
 
-	stakingInfoAddress, _ := sdk.AccAddressFromHex(chainParams.StakingInfoAddress)
 	// decode validator join event
+	stakingInfoAddress, _ := sdk.AccAddressFromHex(chainParams.StakingInfoAddress)
 	eventLog, err := contractCaller.DecodeValidatorJoinEvent(stakingInfoAddress, receipt, msg.LogIndex)
 	if err != nil || eventLog == nil {
 		return hmCommon.ErrorSideTx(hmCommon.CodeInvalidMsg)
@@ -168,6 +168,7 @@ func SideHandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k keepe
 	if err != nil || receipt == nil {
 		return hmCommon.ErrorSideTx(hmCommon.CodeInvalidMsg)
 	}
+
 	stakingInfoAddress, _ := sdk.AccAddressFromHex(chainParams.StakingInfoAddress)
 	eventLog, err := contractCaller.DecodeValidatorStakeUpdateEvent(stakingInfoAddress, receipt, msg.LogIndex)
 	if err != nil || eventLog == nil {
@@ -280,8 +281,8 @@ func SideHandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k k
 		return hmCommon.ErrorSideTx(hmCommon.CodeInvalidMsg)
 	}
 
-	stakingInfoAddress, _ := sdk.AccAddressFromHex(chainParams.StakingInfoAddress)
 	// decode validator exit
+	stakingInfoAddress, _ := sdk.AccAddressFromHex(chainParams.StakingInfoAddress)
 	eventLog, err := contractCaller.DecodeValidatorExitEvent(stakingInfoAddress, receipt, msg.LogIndex)
 	if err != nil || eventLog == nil {
 		k.Logger(ctx).Error("Error fetching log from txhash")

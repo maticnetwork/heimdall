@@ -19,6 +19,8 @@ const (
 )
 
 var (
+	// DefaultEmptyAddress empty address
+	DefaultEmptyAddress sdk.AccAddress = sdk.AccAddress(borCommon.FromHex("0x0000000000000000000000000000000000000000"))
 	// DefaultStateReceiverAddress is used set Default State Receiver address
 	DefaultStateReceiverAddress sdk.AccAddress = sdk.AccAddress(borCommon.FromHex("0x0000000000000000000000000000000000001001"))
 	// DefaultValidatorSetAddress is used set Default Validator Set address
@@ -188,9 +190,15 @@ func DefaultParams() *Params {
 		MainchainTxConfirmations:  DefaultMainchainTxConfirmations,
 		MaticchainTxConfirmations: DefaultMaticchainTxConfirmations,
 		ChainParams: ChainParams{
-			BorChainID:           helper.DefaultBorChainID,
-			StateReceiverAddress: DefaultStateReceiverAddress.String(),
-			ValidatorSetAddress:  DefaultValidatorSetAddress.String(),
+			BorChainID:            helper.DefaultBorChainID,
+			MaticTokenAddress:     DefaultEmptyAddress.String(),
+			StakingManagerAddress: DefaultEmptyAddress.String(),
+			SlashManagerAddress:   DefaultEmptyAddress.String(),
+			RootChainAddress:      DefaultEmptyAddress.String(),
+			StakingInfoAddress:    DefaultEmptyAddress.String(),
+			StateSenderAddress:    DefaultEmptyAddress.String(),
+			StateReceiverAddress:  DefaultStateReceiverAddress.String(),
+			ValidatorSetAddress:   DefaultValidatorSetAddress.String(),
 		},
 	}
 }
