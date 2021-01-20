@@ -22,9 +22,9 @@ import (
 func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, client.Context) {
 	genesisState := app.NewDefaultGenesisState()
 
-	app := app.Setup(isCheckTx)
-	ctx := app.BaseApp.NewContext(isCheckTx, tmproto.Header{})
-	cliCtx := client.Context{}.WithJSONMarshaler(app.AppCodec())
+	initApp := app.Setup(isCheckTx)
+	ctx := initApp.BaseApp.NewContext(isCheckTx, tmproto.Header{})
+	cliCtx := client.Context{}.WithJSONMarshaler(initApp.AppCodec())
 
 	helper.SetTestConfig(helper.GetDefaultHeimdallConfig())
 
@@ -44,21 +44,21 @@ func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, client.Contex
 		types.DefaultGenesis().Checkpoints,
 	)
 
-	genesisState[types.ModuleName] = app.AppCodec().MustMarshalJSON(&checkpointGenesis)
+	genesisState[types.ModuleName] = initApp.AppCodec().MustMarshalJSON(checkpointGenesis)
 
 	stateBytes, err := json.MarshalIndent(genesisState, "", " ")
 	if err != nil {
 		panic(err)
 	}
 
-	app.InitChain(
+	initApp.InitChain(
 		abci.RequestInitChain{
 			Validators:    []abci.ValidatorUpdate{},
 			AppStateBytes: stateBytes,
 		},
 	)
-	app.Commit()
-	app.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: app.LastBlockHeight() + 1}})
-	app.CheckpointKeeper.SetParams(ctx, params)
-	return app, ctx, cliCtx
+	initApp.Commit()
+	initApp.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: initApp.LastBlockHeight() + 1}})
+	initApp.CheckpointKeeper.SetParams(ctx, params)
+	return initApp, ctx, cliCtx
 }
