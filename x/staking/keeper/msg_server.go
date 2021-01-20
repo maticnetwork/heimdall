@@ -34,14 +34,15 @@ func (k msgServer) ValidatorJoin(goCtx context.Context, msg *types.MsgValidatorJ
 		"validatorId", msg.ID,
 		"activationEpoch", msg.ActivationEpoch,
 		"amount", msg.Amount,
-		"SignerPubkey", msg.SignerPubKey.String(),
+		"SignerPubkey", msg.SignerPubKey,
 		"txHash", msg.TxHash,
 		"logIndex", msg.LogIndex,
 		"blockNumber", msg.BlockNumber,
 	)
 
 	// Generate PubKey from Pubkey in message and signer
-	pubkey := msg.SignerPubKey
+	pubkey := msg.GetSignerPubKey()
+
 	signer := pubkey.Address()
 
 	// Check if validator has been validator before
@@ -59,7 +60,8 @@ func (k msgServer) ValidatorJoin(goCtx context.Context, msg *types.MsgValidatorJ
 	// get voting power from amount
 	_, err = helper.GetPowerFromAmount(msg.Amount.BigInt())
 	if err != nil {
-		return nil, hmCommon.ErrInvalidMsg
+		k.Logger(ctx).Error("Error occurred while converting amount to power", "error", err)
+		return nil, hmCommon.ErrInvalidPower
 	}
 
 	// sequence id
@@ -150,14 +152,14 @@ func (k msgServer) SignerUpdate(goCtx context.Context, msg *types.MsgSignerUpdat
 
 	k.Logger(ctx).Debug("✅ Validating signer update msg",
 		"validatorID", msg.ID,
-		"NewSignerPubkey", msg.NewSignerPubKey.String(),
+		"NewSignerPubkey", msg.NewSignerPubKey,
 		"txHash", msg.TxHash,
 		"logIndex", msg.LogIndex,
 		"blockNumber", msg.BlockNumber,
 	)
 
-	newPubKey := msg.NewSignerPubKey
-	newSigner := newPubKey.Address()
+	pubkey := msg.GetNewSignerPubKey()
+	newSigner := pubkey.Address()
 
 	// pull validator from store
 	validator, ok := k.GetValidatorFromValID(ctx, msg.ID)
