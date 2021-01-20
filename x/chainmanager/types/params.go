@@ -19,6 +19,8 @@ const (
 )
 
 var (
+	// DefaultEmptyAddress empty address
+	DefaultEmptyAddress sdk.AccAddress = sdk.AccAddress(borCommon.FromHex("0x0000000000000000000000000000000000000000"))
 	// DefaultStateReceiverAddress is used set Default State Receiver address
 	DefaultStateReceiverAddress sdk.AccAddress = sdk.AccAddress(borCommon.FromHex("0x0000000000000000000000000000000000001001"))
 	// DefaultValidatorSetAddress is used set Default Validator Set address
@@ -52,7 +54,7 @@ func (cp ChainParams) String() string {
 func NewParams(
 	mainchainTxConfirmations uint64,
 	maticchainTxConfirmations uint64,
-	chainParams *ChainParams,
+	chainParams ChainParams,
 ) Params {
 	return Params{
 		MainchainTxConfirmations:  mainchainTxConfirmations,
@@ -128,8 +130,8 @@ func (p Params) Validate() error {
 	return nil
 }
 
-func validateAccAddress(key string, value sdk.AccAddress) error {
-	if value.String() == "" {
+func validateAccAddress(key string, value string) error {
+	if value == "" {
 		return fmt.Errorf("Invalid value %s in chain_params", key)
 	}
 
@@ -165,7 +167,7 @@ func validateMaticchainTxConfirmations(i interface{}) error {
 }
 
 func validateChainParams(i interface{}) error {
-	_, ok := i.(*ChainParams)
+	_, ok := i.(ChainParams)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
@@ -187,10 +189,16 @@ func DefaultParams() *Params {
 	return &Params{
 		MainchainTxConfirmations:  DefaultMainchainTxConfirmations,
 		MaticchainTxConfirmations: DefaultMaticchainTxConfirmations,
-		ChainParams: &ChainParams{
-			BorChainID:           helper.DefaultBorChainID,
-			StateReceiverAddress: DefaultStateReceiverAddress,
-			ValidatorSetAddress:  DefaultValidatorSetAddress,
+		ChainParams: ChainParams{
+			BorChainID:            helper.DefaultBorChainID,
+			MaticTokenAddress:     DefaultEmptyAddress.String(),
+			StakingManagerAddress: DefaultEmptyAddress.String(),
+			SlashManagerAddress:   DefaultEmptyAddress.String(),
+			RootChainAddress:      DefaultEmptyAddress.String(),
+			StakingInfoAddress:    DefaultEmptyAddress.String(),
+			StateSenderAddress:    DefaultEmptyAddress.String(),
+			StateReceiverAddress:  DefaultStateReceiverAddress.String(),
+			ValidatorSetAddress:   DefaultValidatorSetAddress.String(),
 		},
 	}
 }

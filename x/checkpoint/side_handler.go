@@ -81,7 +81,7 @@ func SideHandleMsgCheckpointAck(ctx sdk.Context, k keeper.Keeper, msg types.MsgC
 	// Validate data from root chain
 	//
 
-	rootChainInstance, err := contractCaller.GetRootChainInstance(borCommon.BytesToAddress(chainParams.RootChainAddress.Bytes()))
+	rootChainInstance, err := contractCaller.GetRootChainInstance(borCommon.BytesToAddress([]byte(chainParams.RootChainAddress)))
 	if err != nil {
 		logger.Error("Unable to fetch rootchain contract instance", "error", err)
 		// TODO fix this
