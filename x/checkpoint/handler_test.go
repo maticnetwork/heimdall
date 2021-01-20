@@ -128,7 +128,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpoint() {
 	suite.Run("Checkpoint not in countinuity", func() {
 		headerId := uint64(10000)
 
-		keeper.AddCheckpoint(ctx, headerId, &header)
+		keeper.AddCheckpoint(ctx, headerId, header)
 		keeper.GetCheckpointByNumber(ctx, headerId)
 		keeper.UpdateACKCount(ctx)
 		lastCheckpoint, err := keeper.GetLastCheckpoint(ctx)
@@ -349,7 +349,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointNoAckBeforeBufferTimeout()
 	//require.NotNil(t, err)
 }
 
-func (suite *HandlerTestSuite) SendCheckpoint(header hmTypes.Checkpoint) (res *sdk.Result, err error) {
+func (suite *HandlerTestSuite) SendCheckpoint(header *hmTypes.Checkpoint) (res *sdk.Result, err error) {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	// keeper := app.CheckpointKeeper
 	topupKeeper := app.TopupKeeper

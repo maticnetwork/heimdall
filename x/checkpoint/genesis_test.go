@@ -34,7 +34,7 @@ func TestGenesisTestSuite(t *testing.T) {
 }
 
 func (suite *GenesisTestSuite) TestInitExportGenesis() {
-	t, app, ctx := suite.T(), suite.app, suite.ctx
+	t, initApp, ctx := suite.T(), suite.app, suite.ctx
 	s1 := rand.NewSource(time.Now().UnixNano())
 	r1 := rand.New(s1)
 
@@ -60,23 +60,23 @@ func (suite *GenesisTestSuite) TestInitExportGenesis() {
 	checkpoints := make([]*hmTypes.Checkpoint, ackCount)
 
 	for i := range checkpoints {
-		checkpoints[i] = &bufferedCheckpoint
+		checkpoints[i] = bufferedCheckpoint
 	}
 
 	params := types.DefaultParams()
 	genesisState := types.NewGenesisState(
 		params,
-		&bufferedCheckpoint,
+		bufferedCheckpoint,
 		uint64(lastNoACK),
 		uint64(ackCount),
 		checkpoints,
 	)
 
-	checkpoint.InitGenesis(ctx, app.CheckpointKeeper, genesisState)
+	checkpoint.InitGenesis(ctx, initApp.CheckpointKeeper, genesisState)
 
-	actualParams := checkpoint.ExportGenesis(ctx, app.CheckpointKeeper)
+	actualParams := checkpoint.ExportGenesis(ctx, initApp.CheckpointKeeper)
 
-	//require.Equal(t, genesisState.AckCount, actualParams.AckCount)
+	require.Equal(t, genesisState.AckCount, actualParams.AckCount)
 	require.Equal(t, genesisState.BufferedCheckpoint, actualParams.BufferedCheckpoint)
 	require.Equal(t, genesisState.LastNoACK, actualParams.LastNoACK)
 	require.Equal(t, genesisState.Params, actualParams.Params)
