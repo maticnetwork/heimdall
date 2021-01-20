@@ -374,9 +374,13 @@ func NewHeimdallApp(
 	// CanWithdrawInvariant invariant.
 	// NOTE: staking module is required if HistoricalEntries param > 0
 	app.mm.SetOrderBeginBlockers(
+		sidechanneltypes.ModuleName,
 		stakingtypes.ModuleName,
 	)
-	app.mm.SetOrderEndBlockers(stakingtypes.ModuleName)
+	app.mm.SetOrderEndBlockers(
+		sidechanneltypes.ModuleName,
+		stakingtypes.ModuleName,
+	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
 	// properly initialized with tokens from genesis accounts.

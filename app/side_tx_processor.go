@@ -119,7 +119,7 @@ func (app *HeimdallApp) BeginSideBlocker(ctx sdk.Context, req abci.RequestBeginS
 			}
 
 			if rerr != nil {
-				logger.Error("[sidechannel] Error while processing side-tx in beginside block",
+				logger.Error("[sidechannel] Error while processing side-tx in begin side block",
 					"txHash", hex.EncodeToString(tx.Hash()),
 					"totalPower", totalPower,
 					"yesVotes", signedPower[tmprototypes.SideTxResultType_YES],
