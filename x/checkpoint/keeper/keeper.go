@@ -235,20 +235,20 @@ func (k *Keeper) GetLastNoAck(ctx sdk.Context) uint64 {
 }
 
 // GetCheckpoints get checkpoint all checkpoints
-func (k *Keeper) GetCheckpoints(ctx sdk.Context) []hmTypes.Checkpoint {
+func (k *Keeper) GetCheckpoints(ctx sdk.Context) []*hmTypes.Checkpoint {
 	store := ctx.KVStore(k.storeKey)
 	// get checkpoint header iterator
 	iterator := sdk.KVStorePrefixIterator(store, CheckpointKey)
 	defer iterator.Close()
 
 	// create headers
-	var headers []hmTypes.Checkpoint
+	var headers []*hmTypes.Checkpoint
 
 	// loop through validators to get valid validators
 	for ; iterator.Valid(); iterator.Next() {
 		var checkpoint hmTypes.Checkpoint
 		if err := k.cdc.UnmarshalBinaryBare(iterator.Value(), &checkpoint); err == nil {
-			headers = append(headers, checkpoint)
+			headers = append(headers, &checkpoint)
 		}
 	}
 	return headers

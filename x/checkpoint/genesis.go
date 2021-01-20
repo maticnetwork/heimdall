@@ -12,7 +12,7 @@ import (
 
 // InitGenesis initializes the capability module's state from a provided genesis
 // state.
-func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, genState types.GenesisState) {
+func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, genState *types.GenesisState) {
 	keeper.SetParams(ctx, genState.Params)
 
 	// Set last no-ack
@@ -49,6 +49,18 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, genState types.GenesisSt
 }
 
 // ExportGenesis returns the capability module's exported genesis.
-func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
-	return types.DefaultGenesis()
+func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) *types.GenesisState {
+	params := keeper.GetParams(ctx)
+
+	bufferedCheckpoint, _ := keeper.GetCheckpointFromBuffer(ctx)
+	return types.NewGenesisState(
+		params,
+		bufferedCheckpoint,
+		keeper.GetLastNoAck(ctx),
+		keeper.GetACKCount(ctx),
+		hmTypes.SortHeaders(keeper.GetCheckpoints(ctx)),
+	)
+
+	//return types.DefaultGenesis()
+
 }

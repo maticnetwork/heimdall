@@ -44,7 +44,7 @@ func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, client.Contex
 		types.DefaultGenesis().Checkpoints,
 	)
 
-	genesisState[types.ModuleName] = app.AppCodec().MustMarshalJSON(&checkpointGenesis)
+	genesisState[types.ModuleName] = app.AppCodec().MustMarshalJSON(checkpointGenesis)
 
 	stateBytes, err := json.MarshalIndent(genesisState, "", " ")
 	if err != nil {
