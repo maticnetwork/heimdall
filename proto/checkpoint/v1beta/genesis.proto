@@ -1,16 +1,15 @@
 syntax = "proto3";
-package heimdall.checkpoint.x.checkpoint.types;
+package heimdall.checkpoint.v1beta1;
 
 import "gogoproto/gogo.proto";
-import "google/protobuf/any.proto";
 import "google/protobuf/duration.proto";
+import "heimdall/types/headers.proto";
 
 option go_package = "github.com/maticnetwork/heimdall/x/checkpoint/types";
 
-option (gogoproto.sizer_all)       = false;
-option (gogoproto.marshaler_all)   = false;
-option (gogoproto.unmarshaler_all) = false;
-// option (gogoproto.goproto_sizecache_all) = false;
+option (gogoproto.sizer_all)       = true;
+option (gogoproto.marshaler_all)   = true;
+option (gogoproto.unmarshaler_all) = true;
 
 message Params {
     option (gogoproto.goproto_getters)  = false;
@@ -25,16 +24,12 @@ message Params {
 
 // GenesisState defines the checkpoint module's genesis state.
 message GenesisState {
-    option (gogoproto.goproto_getters) = false;
-    // option (gogoproto.goproto_stringer) = false;
+    option (gogoproto.goproto_getters)  = false;
+    option (gogoproto.goproto_stringer) = true;
 
-    Params              params              = 1 [(gogoproto.nullable) = false];
-    google.protobuf.Any buffered_checkpoint = 2
-        [(gogoproto.casttype) =
-             "github.com/maticnetwork/heimdall/types.Checkpoint"];
+    Params                    params = 1 [(gogoproto.nullable) = false];
+    heimdall.types.Checkpoint buffered_checkpoint = 2;
     uint64   last_no_ack = 3 [(gogoproto.customname) = "LastNoACK"];
     uint64   ack_count   = 4;
-    repeated google.protobuf.Any checkpoints = 5
-        [(gogoproto.casttype) =
-             "github.com/maticnetwork/heimdall/types.Checkpoint"];
+    repeated heimdall.types.Checkpoint checkpoints = 5;
 }

@@ -19,6 +19,8 @@ const (
 )
 
 var (
+	// DefaultEmptyAddress empty address
+	DefaultEmptyAddress sdk.AccAddress = sdk.AccAddress(borCommon.FromHex("0x0000000000000000000000000000000000000000"))
 	// DefaultStateReceiverAddress is used set Default State Receiver address
 	DefaultStateReceiverAddress sdk.AccAddress = sdk.AccAddress(borCommon.FromHex("0x0000000000000000000000000000000000001001"))
 	// DefaultValidatorSetAddress is used set Default Validator Set address
@@ -52,7 +54,7 @@ func (cp ChainParams) String() string {
 func NewParams(
 	mainchainTxConfirmations uint64,
 	maticchainTxConfirmations uint64,
-	chainParams *ChainParams,
+	chainParams ChainParams,
 ) Params {
 	return Params{
 		MainchainTxConfirmations:  mainchainTxConfirmations,
@@ -93,75 +95,43 @@ func (p Params) String() string {
 
 // Validate checks that the parameters have valid values.
 func (p Params) Validate() error {
-	addr, err := sdk.AccAddressFromHex(p.ChainParams.MaticTokenAddress)
-	if err != nil {
-		return err
-	}
-	if err := validateAccAddress(MaticTokenAddress, addr); err != nil {
+	if err := validateAccAddress(MaticTokenAddress, p.ChainParams.MaticTokenAddress); err != nil {
 		return err
 	}
 
-	addr, err = sdk.AccAddressFromHex(p.ChainParams.StakingManagerAddress)
-	if err != nil {
-		return err
-	}
-	if err := validateAccAddress(StakingManagerAddress, addr); err != nil {
+	if err := validateAccAddress(StakingManagerAddress, p.ChainParams.StakingManagerAddress); err != nil {
 		return err
 	}
 
-	addr, err = sdk.AccAddressFromHex(p.ChainParams.SlashManagerAddress)
-	if err != nil {
-		return err
-	}
-	if err := validateAccAddress(SlashManagerAddress, addr); err != nil {
+	if err := validateAccAddress(SlashManagerAddress, p.ChainParams.SlashManagerAddress); err != nil {
 		return err
 	}
 
-	addr, err = sdk.AccAddressFromHex(p.ChainParams.RootChainAddress)
-	if err != nil {
-		return err
-	}
-	if err := validateAccAddress(RootChainAddress, addr); err != nil {
+	if err := validateAccAddress(RootChainAddress, p.ChainParams.RootChainAddress); err != nil {
 		return err
 	}
 
-	addr, err = sdk.AccAddressFromHex(p.ChainParams.StakingInfoAddress)
-	if err != nil {
-		return err
-	}
-	if err := validateAccAddress(StakingInfoAddress, addr); err != nil {
+	if err := validateAccAddress(StakingInfoAddress, p.ChainParams.StakingInfoAddress); err != nil {
 		return err
 	}
 
-	addr, err = sdk.AccAddressFromHex(p.ChainParams.StateSenderAddress)
-	if err != nil {
-		return err
-	}
-	if err := validateAccAddress(StateSenderAddress, addr); err != nil {
+	if err := validateAccAddress(StateSenderAddress, p.ChainParams.StateSenderAddress); err != nil {
 		return err
 	}
 
-	addr, err = sdk.AccAddressFromHex(p.ChainParams.StateReceiverAddress)
-	if err != nil {
-		return err
-	}
-	if err := validateAccAddress(StateReceiverAddress, addr); err != nil {
+	if err := validateAccAddress(StateReceiverAddress, p.ChainParams.StateReceiverAddress); err != nil {
 		return err
 	}
 
-	addr, err = sdk.AccAddressFromHex(p.ChainParams.ValidatorSetAddress)
-	if err != nil {
-		return err
-	}
-	if err := validateAccAddress(ValidatorSetAddress, addr); err != nil {
+	if err := validateAccAddress(ValidatorSetAddress, p.ChainParams.ValidatorSetAddress); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func validateAccAddress(key string, value sdk.AccAddress) error {
-	if value.String() == "" {
+func validateAccAddress(key string, value string) error {
+	if value == "" {
 		return fmt.Errorf("Invalid value %s in chain_params", key)
 	}
 
@@ -197,7 +167,7 @@ func validateMaticchainTxConfirmations(i interface{}) error {
 }
 
 func validateChainParams(i interface{}) error {
-	_, ok := i.(*ChainParams)
+	_, ok := i.(ChainParams)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
@@ -219,10 +189,16 @@ func DefaultParams() *Params {
 	return &Params{
 		MainchainTxConfirmations:  DefaultMainchainTxConfirmations,
 		MaticchainTxConfirmations: DefaultMaticchainTxConfirmations,
-		ChainParams: &ChainParams{
-			BorChainID:           helper.DefaultBorChainID,
-			StateReceiverAddress: DefaultStateReceiverAddress.String(),
-			ValidatorSetAddress:  DefaultValidatorSetAddress.String(),
+		ChainParams: ChainParams{
+			BorChainID:            helper.DefaultBorChainID,
+			MaticTokenAddress:     DefaultEmptyAddress.String(),
+			StakingManagerAddress: DefaultEmptyAddress.String(),
+			SlashManagerAddress:   DefaultEmptyAddress.String(),
+			RootChainAddress:      DefaultEmptyAddress.String(),
+			StakingInfoAddress:    DefaultEmptyAddress.String(),
+			StateSenderAddress:    DefaultEmptyAddress.String(),
+			StateReceiverAddress:  DefaultStateReceiverAddress.String(),
+			ValidatorSetAddress:   DefaultValidatorSetAddress.String(),
 		},
 	}
 }

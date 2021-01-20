@@ -1,32 +1,123 @@
 syntax = "proto3";
+package heimdall.checkpoint.v1beta1;
 
+import "checkpoint/v1beta/genesis.proto";
+import "checkpoint/v1beta/msg.proto";
+import "google/api/annotations.proto";
+import "heimdall/types/headers.proto";
+import "heimdall/types/querier.proto";
 import "gogoproto/gogo.proto";
-import "google/protobuf/any.proto";
 
 option go_package = "github.com/maticnetwork/heimdall/x/checkpoint/types";
 
-/*
-import "cosmos/base/query/v1beta1/pagination.proto";
-// this line is used by starport scaffolding # 1
-
-option go_package = "x/checkpoint/types";
+option (gogoproto.sizer_all)       = true;
+option (gogoproto.marshaler_all)   = true;
+option (gogoproto.unmarshaler_all) = true;
 
 // Query defines the gRPC querier service.
 service Query {
-    // this line is used by starport scaffolding # 2
+    // Parameters queries the staking parameters.
+    rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+        option (google.api.http).get = "/heimdall/checkpoint/v1beta1/params";
+    }
+
+    // AckCount queries the AckCount.
+    rpc AckCount(QueryAckCountRequest) returns (QueryAckCountResponse) {
+        option (google.api.http).get =
+            "/heimdall/checkpoint/v1beta1/genesisstate/ackcount";
+    }
+
+    // Checkpoint queries the checkpoint.
+    rpc Checkpoint(QueryCheckpointRequest) returns (QueryCheckpointResponse) {
+        option (google.api.http).get =
+            "/heimdall/checkpoint/v1beta1/genesisstate/checkpoints";
+    }
+
+    // CheckpointBuffe queries the Checkpoint Buffer.
+    rpc CheckpointBuffer(QueryCheckpointBufferRequest)
+        returns (QueryCheckpointBufferResponse) {
+        option (google.api.http).get =
+            "/heimdall/checkpoint/v1beta1/genesisstate/bufferedcheckpoint";
+    }
+
+    // LastNoAck queries the last no-ack.
+    rpc LastNoAck(QueryLastNoAckRequest) returns (QueryLastNoAckResponse) {
+        option (google.api.http).get =
+            "/heimdall/checkpoint/v1beta1/genesisstate/lastnoack";
+    }
+
+    // CheckpointList queries chepoing list .
+    rpc CheckpointList(QueryCheckpointListRequest)
+        returns (QueryCheckpointListResponse) {
+        option (google.api.http).get =
+            "/heimdall/checkpoint/v1beta1/genesisstate/checkpoints";
+    }
+
+    // NextCheckpoint queries the next checkpoint.
+    rpc NextCheckpoint(QueryNextCheckpointRequest)
+        returns (QueryNextCheckpointResponse) {
+        option (google.api.http).get =
+            "/heimdall/checkpoint/v1beta1/genesisstate/checkpoints";
+    }
 }
 
-message QueryCheckpointParams {
-  option (gogoproto.equal)           = false;
-  option (gogoproto.goproto_getters) = false;
+// QueryParamsRequest is request type for the Query/Params RPC method.
+message QueryParamsRequest {}
 
-  uint64 number = 1;
+// QueryParamsResponse is response type for the Query/Params RPC method.
+message QueryParamsResponse {
+    // params holds all the parameters of this module.
+    heimdall.checkpoint.v1beta1.Params params = 1
+        [(gogoproto.nullable) = false];
 }
 
+message QueryAckCountRequest {}
+
+message QueryAckCountResponse {
+    uint64 ack_count = 1;
+}
+
+message QueryCheckpointRequest {
+    uint64 number = 1;
+}
+
+message QueryCheckpointResponse {
+    uint64                    ack_count  = 1;
+    heimdall.types.Checkpoint checkpoint = 2;
+}
+
+message QueryCheckpointBufferRequest {}
+message QueryCheckpointBufferResponse {
+    heimdall.types.Checkpoint checkpoint_buffer = 1;
+}
+
+message QueryLastNoAckRequest {}
+message QueryLastNoAckResponse {
+    uint64 last_no_ack = 1;
+}
+
+message QueryCheckpointListRequest {
+    heimdall.types.QueryPaginationParams pagination = 1;
+}
+
+message QueryCheckpointListResponse {
+    repeated heimdall.types.Checkpoint checkpoint_list = 1;
+}
+
+message QueryNextCheckpointRequest {
+    option (gogoproto.equal)           = false;
+    option (gogoproto.goproto_getters) = false;
+
+    string bor_chainID = 1;
+}
+message QueryNextCheckpointResponse {
+    heimdall.checkpoint.v1beta1.MsgCheckpoint next_checkpoint = 1;
+}
+
+// QueryBorChainID to queryBorChainID
 message QueryBorChainID {
-  option (gogoproto.equal)           = false;
-  option (gogoproto.goproto_getters) = false;
+    option (gogoproto.equal)           = false;
+    option (gogoproto.goproto_getters) = false;
 
-  string bor_chainID = 1;
+    string bor_chainID = 1;
 }
-*/
