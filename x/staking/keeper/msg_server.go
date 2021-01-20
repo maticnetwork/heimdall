@@ -11,7 +11,6 @@ import (
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
-	hmCommonTypes "github.com/maticnetwork/heimdall/types/common"
 	"github.com/maticnetwork/heimdall/x/staking/types"
 )
 
@@ -153,13 +152,13 @@ func (k msgServer) SignerUpdate(goCtx context.Context, msg *types.MsgSignerUpdat
 
 	k.Logger(ctx).Debug("✅ Validating signer update msg",
 		"validatorID", msg.ID,
-		"NewSignerPubkey", msg.NewSignerPubKey.String(),
+		"NewSignerPubkey", msg.NewSignerPubKey,
 		"txHash", msg.TxHash,
 		"logIndex", msg.LogIndex,
 		"blockNumber", msg.BlockNumber,
 	)
 
-	pubkey := hmCommonTypes.NewPubKey(msg.NewSignerPubKey.Value)
+	pubkey := msg.GetNewSignerPubKey()
 	newSigner := pubkey.Address()
 
 	// pull validator from store

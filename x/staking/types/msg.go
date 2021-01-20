@@ -4,7 +4,6 @@ import (
 	"bytes"
 
 	"github.com/cosmos/cosmos-sdk/codec"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	common "github.com/maticnetwork/heimdall/common"
@@ -32,7 +31,7 @@ func NewMsgValidatorJoin(
 	logIndex uint64,
 	blockNumber uint64,
 	nonce uint64,
-) (MsgValidatorJoin, error) {
+) MsgValidatorJoin {
 	return MsgValidatorJoin{
 		From:            from.String(),
 		ID:              hmTypes.NewValidatorID(id),
@@ -43,7 +42,7 @@ func NewMsgValidatorJoin(
 		LogIndex:        logIndex,
 		BlockNumber:     blockNumber,
 		Nonce:           nonce,
-	}, nil
+	}
 }
 
 func (msg MsgValidatorJoin) Type() string {
@@ -194,21 +193,16 @@ func NewMsgSignerUpdate(
 	logIndex uint64,
 	blockNumber uint64,
 	nonce uint64,
-) (MsgSignerUpdate, error) {
-	pkAny, err := codectypes.PackAny(pubKey)
-	if err != nil {
-		return MsgSignerUpdate{}, err
-	}
-
+) MsgSignerUpdate {
 	return MsgSignerUpdate{
 		From:            from.String(),
 		ID:              hmTypes.NewValidatorID(id),
-		NewSignerPubKey: pkAny,
+		NewSignerPubKey: pubKey.String(),
 		TxHash:          txhash.String(),
 		LogIndex:        logIndex,
 		BlockNumber:     blockNumber,
 		Nonce:           nonce,
-	}, nil
+	}
 }
 
 func (msg MsgSignerUpdate) Type() string {
@@ -242,11 +236,16 @@ func (msg MsgSignerUpdate) ValidateBasic() error {
 		return common.ErrInvalidMsg
 	}
 
-	if bytes.Equal(msg.NewSignerPubKey.Value, helper.ZeroPubKey.Bytes()) {
+	if bytes.Equal(msg.GetNewSignerPubKey(), helper.ZeroPubKey.Bytes()) {
 		return common.ErrInvalidMsg
 	}
 
 	return nil
+}
+
+// GetNewSignerPubKey returns signer pub key
+func (msg MsgSignerUpdate) GetNewSignerPubKey() hmCommon.PubKey {
+	return hmCommon.NewPubKeyFromHex(msg.NewSignerPubKey)
 }
 
 // GetTxHash Returns tx hash

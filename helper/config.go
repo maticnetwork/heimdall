@@ -173,14 +173,6 @@ func InitHeimdallConfig(rootViper *viper.Viper) error {
 	}
 	GenesisDoc = *genDoc
 
-	// // load pv file, unmarshall and set to privObject
-	// err = file.PermCheck(file.Rootify("priv_validator_key.json", configDir), secretFilePerm)
-	// if err != nil {
-	// 	Logger.Error(err.Error())
-	// }
-	// privVal := privval.LoadFilePV(filepath.Join(configDir, "priv_validator_key.json"), filepath.Join(configDir, "priv_validator_key.json"))
-	// cdc.MustUnmarshalBinaryBare(privVal.Key.PrivKey.Bytes(), &privObject)
-	// cdc.MustUnmarshalBinaryBare(privObject.PubKey().Bytes(), &pubObject)
 	return nil
 }
 

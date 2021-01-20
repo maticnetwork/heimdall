@@ -233,8 +233,7 @@ func SideHandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k kee
 		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
 	}
 	// new pubkey and signer
-	newPubkeyBytes := msg.NewSignerPubKey.Value
-	newPubKey := hmCommonTypes.NewPubKey(newPubkeyBytes)
+	newPubKey := msg.GetNewSignerPubKey()
 	newSigner := newPubKey.Address()
 
 	stakingInfoAddress, _ := sdk.AccAddressFromHex(chainParams.StakingInfoAddress)
@@ -516,8 +515,7 @@ func PostHandleMsgSignerUpdate(ctx sdk.Context, k keeper.Keeper, msg types.MsgSi
 	k.Logger(ctx).Debug("Persisting signer update", "sideTxResult", sideTxResult)
 
 	// new pubkey and signer
-	newPubkeyBytes := msg.NewSignerPubKey.Value
-	newPubKey := hmCommonTypes.NewPubKey(newPubkeyBytes)
+	newPubKey := msg.GetNewSignerPubKey()
 	newSigner := newPubKey.Address()
 
 	// pull validator from store

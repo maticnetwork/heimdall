@@ -12,7 +12,6 @@ import (
 	"github.com/maticnetwork/bor/common"
 	"github.com/spf13/cobra"
 
-	ethcrypto "github.com/maticnetwork/bor/crypto"
 	// "github.com/maticnetwork/heimdall/bridge/setu/util"
 
 	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
@@ -166,7 +165,7 @@ func ValidatorJoinTxCmd() *cobra.Command {
 			blockNumber, _ := cmd.Flags().GetUint64(FlagBlockNumber)
 
 			// msg new ValidatorJion message
-			msg, err := types.NewMsgValidatorJoin(
+			msg := types.NewMsgValidatorJoin(
 				proposer,
 				event.ValidatorId.Uint64(),
 				activationEpoch,
@@ -177,9 +176,6 @@ func ValidatorJoinTxCmd() *cobra.Command {
 				blockNumber,
 				event.Nonce.Uint64(),
 			)
-			if err != nil {
-				return err
-			}
 
 			// broadcast message
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
@@ -237,19 +233,10 @@ func SignerUpdateTxCmd() *cobra.Command {
 				return fmt.Errorf("pubkey is required")
 			}
 
-			// convert PubKey to bytes
-			uncompressedPubkeyBytes := common.FromHex(pubkeyStr)
-
-			ecdsaPubkey, err := ethcrypto.DecompressPubkey(uncompressedPubkeyBytes)
+			expectedPubKey, err := helper.CompressPubKey(common.FromHex(pubkeyStr))
 			if err != nil {
 				return err
 			}
-			pubkeyBytes := ethcrypto.FromECDSAPub(ecdsaPubkey)
-
-			if len(pubkeyBytes) != 65 {
-				return fmt.Errorf("invalid public key length")
-			}
-			pubkey := hmTypes.NewPubKey(pubkeyBytes)
 
 			// get txHash from flag
 			txhash, _ := cmd.Flags().GetString(FlagTxHash)
@@ -262,10 +249,10 @@ func SignerUpdateTxCmd() *cobra.Command {
 			nonce, _ := cmd.Flags().GetUint64(FlagNonce)
 
 			// draft new SingerUpdate message
-			msg, err := types.NewMsgSignerUpdate(
+			msg := types.NewMsgSignerUpdate(
 				proposer,
 				ValidatorID,
-				pubkey,
+				expectedPubKey,
 				hmTypes.HexToHeimdallHash(txhash),
 				logIndex,
 				blockNumber,
@@ -352,6 +339,9 @@ func StakeUpdateTxCmd() *cobra.Command {
 				blockNumber,
 				nonce,
 			)
+			if err != nil {
+				return err
+			}
 
 			// broadcast message
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)

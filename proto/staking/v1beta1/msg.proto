@@ -2,8 +2,6 @@ syntax = "proto3";
 package heimdall.staking.v1beta1;
 
 import "gogoproto/gogo.proto";
-import "google/protobuf/any.proto";
-import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/maticnetwork/heimdall/x/staking/types";
 
@@ -74,14 +72,11 @@ message MsgSignerUpdate {
             "github.com/maticnetwork/heimdall/types.ValidatorID",
         (gogoproto.customname) = "ID"
     ];
-    google.protobuf.Any new_signer_pub_key = 3 [
-        (cosmos_proto.accepts_interface) = "cosmos.crypto.PubKey",
-        (gogoproto.moretags)             = "yaml:\"new_signer_pub_key\""
-    ];
-    string tx_hash      = 4;
-    uint64 log_index    = 5;
-    uint64 block_number = 6;
-    uint64 nonce        = 7;
+    string new_signer_pub_key = 3;
+    string tx_hash            = 4;
+    uint64 log_index          = 5;
+    uint64 block_number       = 6;
+    uint64 nonce              = 7;
 }
 
 // MsgSignerUpdateResponse defines SignerUpdate response type.
