@@ -26,10 +26,10 @@ import (
 type HandlerTestSuite struct {
 	suite.Suite
 
-	app            *app.HeimdallApp
-	ctx            sdk.Context
-	cliCtx         client.Context
-	querier        sdk.Querier
+	app    *app.HeimdallApp
+	ctx    sdk.Context
+	cliCtx client.Context
+	// querier        sdk.Querier
 	handler        sdk.Handler
 	contractCaller mocks.IContractCaller
 	chainParams    chainTypes.Params
@@ -55,7 +55,6 @@ func (suite *HandlerTestSuite) TestHandleMsgUnknown() {
 	result, err := suite.handler(ctx, nil)
 	require.NotNil(t, err)
 	require.Nil(t, result)
-	// require.False(t, result.IsOK())
 }
 
 func (suite *HandlerTestSuite) TestHandleMsgTopup() {
@@ -85,7 +84,6 @@ func (suite *HandlerTestSuite) TestHandleMsgTopup() {
 		result, err := suite.handler(ctx, &msg)
 		require.Nil(t, err)
 		require.NotNil(t, result)
-		// require.True(t, result.IsOK(), "Expected topup to be done, but failed")
 	})
 
 	t.Run("OlderTx", func(t *testing.T) {
@@ -108,22 +106,20 @@ func (suite *HandlerTestSuite) TestHandleMsgTopup() {
 
 		// handler
 		result, err := suite.handler(ctx, &msg)
-		//TODO: check if the error code is the same as CodeOldTx
+		//check if the error code is the same as CodeOldTx
 		require.Error(t, err)
 		require.Equal(t, hmCommon.ErrOldTx, err)
 		require.Nil(t, result)
-		// require.False(t, result.IsOK(), "Expected topup to be failed, but succeeded")
-		// require.Equal(t, common.CodeOldTx, result.Code)
 	})
 }
 
-// TODO: use bankKeeper for set and get coins (coins -> balances)
 func (suite *HandlerTestSuite) TestHandleMsgWithdrawFee() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 
 	t.Run("FullAmount", func(t *testing.T) {
 		_, _, addr := testdata.KeyTestPubAddr()
 		tAddr, err := sdk.AccAddressFromHex(addr.String())
+		require.Nil(t, err)
 		msg := types.NewMsgWithdrawFee(
 			tAddr,
 			sdk.NewInt(0),
@@ -131,42 +127,45 @@ func (suite *HandlerTestSuite) TestHandleMsgWithdrawFee() {
 
 		// execute handler
 		result, err := suite.handler(ctx, &msg)
-		// require.False(t, result.IsOK(), "Expected topup to be failed without fee tokens, but succeeded")
-		// require.Equal(t, types.CodeNoBalanceToWithdraw, result.Code)
+		require.Nil(t, result)
 		require.Error(t, err)
 		require.Equal(t, types.ErrNoBalanceToWithdraw, err)
 
 		// set coins
 		coins := simulation.RandomFeeCoins()
 		acc1 := app.AccountKeeper.NewAccountWithAddress(ctx, tAddr)
-		acc1.BankKeeper.SetBalance(coins)
-		// acc1.SetCoins(coins)
 		app.AccountKeeper.SetAccount(ctx, acc1)
+		err = app.BankKeeper.SetBalances(ctx, tAddr, coins)
+		require.Nil(t, err)
 
 		// check if coins > 0
-		require.True(t, acc1.GetCoins().AmountOf(hmTypes.FeeToken).GT(sdk.NewInt(0)))
+		require.True(t, app.BankKeeper.GetAllBalances(ctx, tAddr).AmountOf(hmTypes.FeeToken).GT(sdk.NewInt(0)))
 
 		// execute handler
 		result, err = suite.handler(ctx, &msg)
-		// require.True(t, result.IsOK(), "Expected topup to be succeed with fee tokens, but failed")
+		require.Nil(t, err)
+		require.NotNil(t, result)
 		require.Greater(t, len(result.Events), 0)
 
 		// check if account has zero
-		acc1 = app.AccountKeeper.GetAccount(ctx, tAddr)
-		require.True(t, acc1.GetCoins().AmountOf(hmTypes.FeeToken).IsZero())
+		// acc1 = app.AccountKeeper.GetAccount(ctx, tAddr)
+		require.True(t, app.BankKeeper.GetAllBalances(ctx, tAddr).AmountOf(hmTypes.FeeToken).IsZero())
+		// require.True(t, acc1.GetCoins().AmountOf(hmTypes.FeeToken).IsZero())
 	})
 
 	t.Run("PartialAmount", func(t *testing.T) {
 		_, _, addr := testdata.KeyTestPubAddr()
 		tAddr, err := sdk.AccAddressFromHex(addr.String())
+		require.Nil(t, err)
 		// set coins
 		coins := simulation.RandomFeeCoins()
 		acc1 := app.AccountKeeper.NewAccountWithAddress(ctx, tAddr)
-		acc1.SetCoins(coins)
 		app.AccountKeeper.SetAccount(ctx, acc1)
+		err = app.BankKeeper.SetBalances(ctx, tAddr, coins)
+		require.Nil(t, err)
 
 		// check if coins > 0
-		require.True(t, acc1.GetCoins().AmountOf(hmTypes.FeeToken).GT(sdk.NewInt(0)))
+		require.True(t, app.BankKeeper.GetAllBalances(ctx, tAddr).AmountOf(hmTypes.FeeToken).GT(sdk.NewInt(0)))
 
 		m, _ := sdk.NewIntFromString("2")
 		coins = coins.Sub(sdk.Coins{sdk.Coin{Denom: hmTypes.FeeToken, Amount: m}})
@@ -177,27 +176,29 @@ func (suite *HandlerTestSuite) TestHandleMsgWithdrawFee() {
 
 		// execute handler
 		result, err := suite.handler(ctx, &msg)
-		// require.True(t, result.IsOK(), "Expected topup to be succeed with fee tokens (partial amount), but failed")
 		require.Nil(t, err)
 		require.NotNil(t, result)
 		require.Greater(t, len(result.Events), 0)
 
 		// check if account has 1 tok
-		acc1 = app.AccountKeeper.GetAccount(ctx, tAddr)
-		require.True(t, acc1.GetCoins().AmountOf(hmTypes.FeeToken).Equal(m))
+		// acc1 = app.AccountKeeper.GetAccount(ctx, tAddr)
+		require.True(t, app.BankKeeper.GetAllBalances(ctx, tAddr).AmountOf(hmTypes.FeeToken).Equal(m))
+
 	})
 
 	t.Run("NotEnoughAmount", func(t *testing.T) {
 		_, _, addr := testdata.KeyTestPubAddr()
 		tAddr, err := sdk.AccAddressFromHex(addr.String())
+		require.Nil(t, err)
 		// set coins
 		coins := simulation.RandomFeeCoins()
 		acc1 := app.AccountKeeper.NewAccountWithAddress(ctx, tAddr)
-		acc1.SetCoins(coins)
 		app.AccountKeeper.SetAccount(ctx, acc1)
+		err = app.BankKeeper.SetBalances(ctx, tAddr, coins)
+		require.Nil(t, err)
 
 		m, _ := sdk.NewIntFromString("1")
-		coins = coins.Add(sdk.Coins{sdk.Coin{Denom: hmTypes.FeeToken, Amount: m}})
+		coins = coins.Add(sdk.Coin{Denom: hmTypes.FeeToken, Amount: m})
 		msg := types.NewMsgWithdrawFee(
 			tAddr,
 			coins.AmountOf(hmTypes.FeeToken),
@@ -205,7 +206,6 @@ func (suite *HandlerTestSuite) TestHandleMsgWithdrawFee() {
 
 		result, err := suite.handler(ctx, &msg)
 		require.Error(t, err)
-
-		// require.False(t, result.IsOK(), "Expected withdraw to be failed while withdrawing more than account's coins")
+		require.Nil(t, result)
 	})
 }
