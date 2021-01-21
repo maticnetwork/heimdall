@@ -48,6 +48,8 @@ func SideHandleMsgCheckpoint(ctx sdk.Context, k keeper.Keeper, msg types.MsgChec
 
 	// validate checkpoint
 	validCheckpoint, err := types.ValidateCheckpoint(msg.StartBlock, msg.EndBlock, hmCommonTypes.BytesToHeimdallHash(msg.RootHash), params.MaxCheckpointLength, contractCaller)
+	fmt.Printf("validCheckpoint %+v\n", validCheckpoint)
+
 	if err != nil {
 		logger.Error("Error validating checkpoint",
 			"error", err,

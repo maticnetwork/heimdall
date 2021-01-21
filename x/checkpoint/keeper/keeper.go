@@ -208,7 +208,7 @@ func (k *Keeper) GetCheckpointFromBuffer(ctx sdk.Context) (*hmTypes.Checkpoint, 
 		return &checkpoint, err
 	}
 
-	return nil, errors.New("No checkpoint found in buffer")
+	return nil, errors.New("no checkpoint found in buffer")
 }
 
 // SetLastNoAck set last no-ack object
