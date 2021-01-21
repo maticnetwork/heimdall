@@ -2,7 +2,6 @@ package checkpoint
 
 import (
 	"bytes"
-	"encoding/hex"
 	"fmt"
 	"strconv"
 
@@ -47,7 +46,7 @@ func SideHandleMsgCheckpoint(ctx sdk.Context, k keeper.Keeper, msg types.MsgChec
 	logger := k.Logger(ctx)
 
 	// validate checkpoint
-	validCheckpoint, err := types.ValidateCheckpoint(msg.StartBlock, msg.EndBlock, hmCommonTypes.BytesToHeimdallHash(msg.RootHash), params.MaxCheckpointLength, contractCaller)
+	validCheckpoint, err := types.ValidateCheckpoint(msg.StartBlock, msg.EndBlock, hmCommonTypes.HexToHeimdallHash(msg.RootHash), params.MaxCheckpointLength, contractCaller)
 	if err != nil {
 		logger.Error("Error validating checkpoint",
 			"error", err,
@@ -225,8 +224,8 @@ func PostHandleMsgCheckpoint(ctx sdk.Context, k keeper.Keeper, msg types.MsgChec
 			sdk.NewAttribute(types.AttributeKeyProposer, msg.Proposer),
 			sdk.NewAttribute(types.AttributeKeyStartBlock, strconv.FormatUint(msg.StartBlock, 10)),
 			sdk.NewAttribute(types.AttributeKeyEndBlock, strconv.FormatUint(msg.EndBlock, 10)),
-			sdk.NewAttribute(types.AttributeKeyRootHash, hex.EncodeToString(msg.RootHash)),
-			sdk.NewAttribute(types.AttributeKeyAccountHash, hex.EncodeToString(msg.AccountRootHash)),
+			sdk.NewAttribute(types.AttributeKeyRootHash, msg.RootHash),
+			sdk.NewAttribute(types.AttributeKeyAccountHash, msg.AccountRootHash),
 		),
 	})
 

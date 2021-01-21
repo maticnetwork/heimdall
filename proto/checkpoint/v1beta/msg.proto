@@ -30,8 +30,8 @@ message MsgCheckpoint {
     string proposer          = 1;
     uint64 start_block       = 2;
     uint64 end_block         = 3;
-    bytes  root_hash         = 4;
-    bytes  account_root_hash = 5;
+    string  root_hash         = 4;
+    string  account_root_hash = 5;
     string bor_chainID       = 6;
 }
 
