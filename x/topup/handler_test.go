@@ -14,6 +14,7 @@ import (
 	"github.com/maticnetwork/heimdall/helper/mocks"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmCommonTypes "github.com/maticnetwork/heimdall/types/common"
+	"github.com/maticnetwork/heimdall/types/simulation"
 	chainTypes "github.com/maticnetwork/heimdall/x/chainmanager/types"
 	"github.com/maticnetwork/heimdall/x/topup"
 	"github.com/maticnetwork/heimdall/x/topup/types"
@@ -117,93 +118,94 @@ func (suite *HandlerTestSuite) TestHandleMsgTopup() {
 }
 
 // TODO: use bankKeeper for set and get coins (coins -> balances)
-// func (suite *HandlerTestSuite) TestHandleMsgWithdrawFee() {
-// 	t, app, ctx := suite.T(), suite.app, suite.ctx
+func (suite *HandlerTestSuite) TestHandleMsgWithdrawFee() {
+	t, app, ctx := suite.T(), suite.app, suite.ctx
 
-// 	t.Run("FullAmount", func(t *testing.T) {
-// 		_, _, addr := testdata.KeyTestPubAddr()
-// 		tAddr, err := sdk.AccAddressFromHex(addr.String())
-// 		msg := types.NewMsgWithdrawFee(
-// 			tAddr,
-// 			sdk.NewInt(0),
-// 		)
+	t.Run("FullAmount", func(t *testing.T) {
+		_, _, addr := testdata.KeyTestPubAddr()
+		tAddr, err := sdk.AccAddressFromHex(addr.String())
+		msg := types.NewMsgWithdrawFee(
+			tAddr,
+			sdk.NewInt(0),
+		)
 
-// 		// execute handler
-// 		result, err := suite.handler(ctx, &msg)
-// 		// require.False(t, result.IsOK(), "Expected topup to be failed without fee tokens, but succeeded")
-// 		// require.Equal(t, types.CodeNoBalanceToWithdraw, result.Code)
-// 		require.Error(t, err)
-// 		require.Equal(t, types.ErrNoBalanceToWithdraw, err)
+		// execute handler
+		result, err := suite.handler(ctx, &msg)
+		// require.False(t, result.IsOK(), "Expected topup to be failed without fee tokens, but succeeded")
+		// require.Equal(t, types.CodeNoBalanceToWithdraw, result.Code)
+		require.Error(t, err)
+		require.Equal(t, types.ErrNoBalanceToWithdraw, err)
 
-// 		// set coins
-// 		coins := simulation.RandomFeeCoins()
-// 		acc1 := app.AccountKeeper.NewAccountWithAddress(ctx, tAddr)
-// 		acc1.SetCoins(coins)
-// 		app.AccountKeeper.SetAccount(ctx, acc1)
+		// set coins
+		coins := simulation.RandomFeeCoins()
+		acc1 := app.AccountKeeper.NewAccountWithAddress(ctx, tAddr)
+		acc1.BankKeeper.SetBalance(coins)
+		// acc1.SetCoins(coins)
+		app.AccountKeeper.SetAccount(ctx, acc1)
 
-// 		// check if coins > 0
-// 		require.True(t, acc1.GetCoins().AmountOf(hmTypes.FeeToken).GT(sdk.NewInt(0)))
+		// check if coins > 0
+		require.True(t, acc1.GetCoins().AmountOf(hmTypes.FeeToken).GT(sdk.NewInt(0)))
 
-// 		// execute handler
-// 		result, err = suite.handler(ctx, &msg)
-// 		// require.True(t, result.IsOK(), "Expected topup to be succeed with fee tokens, but failed")
-// 		require.Greater(t, len(result.Events), 0)
+		// execute handler
+		result, err = suite.handler(ctx, &msg)
+		// require.True(t, result.IsOK(), "Expected topup to be succeed with fee tokens, but failed")
+		require.Greater(t, len(result.Events), 0)
 
-// 		// check if account has zero
-// 		acc1 = app.AccountKeeper.GetAccount(ctx, tAddr)
-// 		require.True(t, acc1.GetCoins().AmountOf(hmTypes.FeeToken).IsZero())
-// 	})
+		// check if account has zero
+		acc1 = app.AccountKeeper.GetAccount(ctx, tAddr)
+		require.True(t, acc1.GetCoins().AmountOf(hmTypes.FeeToken).IsZero())
+	})
 
-// 	t.Run("PartialAmount", func(t *testing.T) {
-// 		_, _, addr := testdata.KeyTestPubAddr()
-// 		tAddr, err := sdk.AccAddressFromHex(addr.String())
-// 		// set coins
-// 		coins := simulation.RandomFeeCoins()
-// 		acc1 := app.AccountKeeper.NewAccountWithAddress(ctx, tAddr)
-// 		acc1.SetCoins(coins)
-// 		app.AccountKeeper.SetAccount(ctx, acc1)
+	t.Run("PartialAmount", func(t *testing.T) {
+		_, _, addr := testdata.KeyTestPubAddr()
+		tAddr, err := sdk.AccAddressFromHex(addr.String())
+		// set coins
+		coins := simulation.RandomFeeCoins()
+		acc1 := app.AccountKeeper.NewAccountWithAddress(ctx, tAddr)
+		acc1.SetCoins(coins)
+		app.AccountKeeper.SetAccount(ctx, acc1)
 
-// 		// check if coins > 0
-// 		require.True(t, acc1.GetCoins().AmountOf(hmTypes.FeeToken).GT(sdk.NewInt(0)))
+		// check if coins > 0
+		require.True(t, acc1.GetCoins().AmountOf(hmTypes.FeeToken).GT(sdk.NewInt(0)))
 
-// 		m, _ := sdk.NewIntFromString("2")
-// 		coins = coins.Sub(sdk.Coins{sdk.Coin{Denom: hmTypes.FeeToken, Amount: m}})
-// 		msg := types.NewMsgWithdrawFee(
-// 			tAddr,
-// 			coins.AmountOf(hmTypes.FeeToken),
-// 		)
+		m, _ := sdk.NewIntFromString("2")
+		coins = coins.Sub(sdk.Coins{sdk.Coin{Denom: hmTypes.FeeToken, Amount: m}})
+		msg := types.NewMsgWithdrawFee(
+			tAddr,
+			coins.AmountOf(hmTypes.FeeToken),
+		)
 
-// 		// execute handler
-// 		result, err := suite.handler(ctx, &msg)
-// 		// require.True(t, result.IsOK(), "Expected topup to be succeed with fee tokens (partial amount), but failed")
-// 		require.Nil(t, err)
-// 		require.NotNil(t, result)
-// 		require.Greater(t, len(result.Events), 0)
+		// execute handler
+		result, err := suite.handler(ctx, &msg)
+		// require.True(t, result.IsOK(), "Expected topup to be succeed with fee tokens (partial amount), but failed")
+		require.Nil(t, err)
+		require.NotNil(t, result)
+		require.Greater(t, len(result.Events), 0)
 
-// 		// check if account has 1 tok
-// 		acc1 = app.AccountKeeper.GetAccount(ctx, tAddr)
-// 		require.True(t, acc1.GetCoins().AmountOf(hmTypes.FeeToken).Equal(m))
-// 	})
+		// check if account has 1 tok
+		acc1 = app.AccountKeeper.GetAccount(ctx, tAddr)
+		require.True(t, acc1.GetCoins().AmountOf(hmTypes.FeeToken).Equal(m))
+	})
 
-// 	t.Run("NotEnoughAmount", func(t *testing.T) {
-// 		_, _, addr := testdata.KeyTestPubAddr()
-// 		tAddr, err := sdk.AccAddressFromHex(addr.String())
-// 		// set coins
-// 		coins := simulation.RandomFeeCoins()
-// 		acc1 := app.AccountKeeper.NewAccountWithAddress(ctx, tAddr)
-// 		acc1.SetCoins(coins)
-// 		app.AccountKeeper.SetAccount(ctx, acc1)
+	t.Run("NotEnoughAmount", func(t *testing.T) {
+		_, _, addr := testdata.KeyTestPubAddr()
+		tAddr, err := sdk.AccAddressFromHex(addr.String())
+		// set coins
+		coins := simulation.RandomFeeCoins()
+		acc1 := app.AccountKeeper.NewAccountWithAddress(ctx, tAddr)
+		acc1.SetCoins(coins)
+		app.AccountKeeper.SetAccount(ctx, acc1)
 
-// 		m, _ := sdk.NewIntFromString("1")
-// 		coins = coins.Add(sdk.Coins{sdk.Coin{Denom: hmTypes.FeeToken, Amount: m}})
-// 		msg := types.NewMsgWithdrawFee(
-// 			tAddr,
-// 			coins.AmountOf(hmTypes.FeeToken),
-// 		)
+		m, _ := sdk.NewIntFromString("1")
+		coins = coins.Add(sdk.Coins{sdk.Coin{Denom: hmTypes.FeeToken, Amount: m}})
+		msg := types.NewMsgWithdrawFee(
+			tAddr,
+			coins.AmountOf(hmTypes.FeeToken),
+		)
 
-// 		result, err := suite.handler(ctx, &msg)
-// 		require.Error(t, err)
+		result, err := suite.handler(ctx, &msg)
+		require.Error(t, err)
 
-// 		// require.False(t, result.IsOK(), "Expected withdraw to be failed while withdrawing more than account's coins")
-// 	})
-// }
+		// require.False(t, result.IsOK(), "Expected withdraw to be failed while withdrawing more than account's coins")
+	})
+}
