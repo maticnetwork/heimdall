@@ -155,114 +155,104 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpoint() {
 	})
 }
 
-// todo: we need to fix this with root hash conversion
-//
-//func (suite *HandlerTestSuite) TestHandleMsgCheckpointAck() {
-//	t, initApp, ctx := suite.T(), suite.app, suite.ctx
-//	keeper := initApp.CheckpointKeeper
-//	stakingKeeper := initApp.StakingKeeper
-//	topupKeeper := initApp.TopupKeeper
-//	start := uint64(0)
-//	maxSize := uint64(256)
-//	params := keeper.GetParams(ctx)
-//	dividendAccount := hmTypes.DividendAccount{
-//		User:      hmCommonTypes.HexToHeimdallAddress("123").String(),
-//		FeeAmount: big.NewInt(0).String(),
-//	}
-//	err := topupKeeper.AddDividendAccount(ctx, dividendAccount)
-//	require.NoError(t, err)
-//
-//	// check valid checkpoint
-//	// generate proposer for validator set
-//	chSim.LoadValidatorSet(2, t, stakingKeeper, ctx, false, 10)
-//	stakingKeeper.IncrementAccum(ctx, 1)
-//
-//	lastCheckpoint, err := keeper.GetLastCheckpoint(ctx)
-//	if err == nil {
-//		start = start + lastCheckpoint.EndBlock + 1
-//	}
-//
-//	header, err := chSim.GenRandCheckpoint(start, maxSize, params.MaxCheckpointLength)
-//
-//	// add current proposer to header
-//	header.Proposer = stakingKeeper.GetValidatorSet(ctx).Proposer.Signer
-//
-//	got, err := suite.SendCheckpoint(header)
-//	require.NotNil(t, got)
-//	require.Nil(t, err)
-//
-//	bufferedHeader, err := keeper.GetCheckpointFromBuffer(ctx)
-//	require.NotNil(t, bufferedHeader)
-//	require.Nil(t, err)
-//
-//	// send ack
-//	headerId := uint64(1)
-//	suite.Run("success", func() {
-//		fromAccAddr, err := sdk.AccAddressFromHex("123")
-//		require.NoError(t, err)
-//		proposer, err := sdk.AccAddressFromHex(header.Proposer)
-//		require.NoError(t, err)
-//		msgCheckpointAck := types.NewMsgCheckpointAck(
-//			fromAccAddr,
-//			headerId,
-//			proposer,
-//			header.StartBlock,
-//			header.EndBlock,
-//			hmCommonTypes.BytesToHeimdallHash(header.RootHash),
-//			hmCommonTypes.HexToHeimdallHash("123123"),
-//			uint64(1),
-//		)
-//		result, err := suite.handler(ctx, &msgCheckpointAck)
-//		fmt.Printf("error %+v\n", err)
-//		fmt.Printf("resukt %+v\n", result)
-//		//require.NotNil(t, result)
-//		//require.Nil(t, err)
-//
-//		afterAckBufferedCheckpoint, _ := keeper.GetCheckpointFromBuffer(ctx)
-//		require.NotNil(t, afterAckBufferedCheckpoint, "should not remove from buffer")
-//	})
+func (suite *HandlerTestSuite) TestHandleMsgCheckpointAck() {
+	t, initApp, ctx := suite.T(), suite.app, suite.ctx
+	keeper := initApp.CheckpointKeeper
+	stakingKeeper := initApp.StakingKeeper
+	topupKeeper := initApp.TopupKeeper
+	start := uint64(0)
+	maxSize := uint64(256)
+	params := keeper.GetParams(ctx)
+	dividendAccount := hmTypes.DividendAccount{
+		User:      hmCommonTypes.HexToHeimdallAddress("123").String(),
+		FeeAmount: big.NewInt(0).String(),
+	}
+	err := topupKeeper.AddDividendAccount(ctx, dividendAccount)
+	require.NoError(t, err)
 
-//suite.Run("Invalid start", func() {
-//	msgCheckpointAck := types.NewMsgCheckpointAck(
-//		hmCommonTypes.HexToHeimdallAddress("123").Bytes(),
-//		headerId,
-//		sdk.AccAddress(header.Proposer),
-//		uint64(123),
-//		header.EndBlock,
-//		hmCommonTypes.BytesToHeimdallHash(header.RootHash),
-//		hmCommonTypes.HexToHeimdallHash("123123"),
-//		uint64(1),
-//	)
-//
-//	result, err := suite.handler(ctx, &msgCheckpointAck)
-//	fmt.Printf("error %+v\n", err)
-//	fmt.Printf("resukt %+v\n", result)
-//	//require.NotNil(t, result)
-//	//require.Nil(t, err)
-//
-//})
-//
-//suite.Run("Invalid Roothash", func() {
-//	msgCheckpointAck := types.NewMsgCheckpointAck(
-//		hmCommonTypes.HexToHeimdallAddress("123").Bytes(),
-//		headerId,
-//		sdk.AccAddress(header.Proposer),
-//		header.StartBlock,
-//		header.EndBlock,
-//		hmCommonTypes.HexToHeimdallHash("9887"),
-//		hmCommonTypes.HexToHeimdallHash("123123"),
-//		uint64(1),
-//	)
-//
-//	result, err := suite.handler(ctx, &msgCheckpointAck)
-//	fmt.Printf("error %+v\n", err)
-//	fmt.Printf("resukt %+v\n", result)
-//	//require.NotNil(t, result)
-//	//require.Nil(t, err)
-//
-//	//require.True(t, !got.IsOK(), errs.CodeToDefaultMsg(got.Code))
-//})
-//}
+	// check valid checkpoint
+	// generate proposer for validator set
+	chSim.LoadValidatorSet(2, t, stakingKeeper, ctx, false, 10)
+	stakingKeeper.IncrementAccum(ctx, 1)
+
+	lastCheckpoint, err := keeper.GetLastCheckpoint(ctx)
+	if err == nil {
+		start = start + lastCheckpoint.EndBlock + 1
+	}
+
+	header, err := chSim.GenRandCheckpoint(start, maxSize, params.MaxCheckpointLength)
+
+	// add current proposer to header
+	header.Proposer = stakingKeeper.GetValidatorSet(ctx).Proposer.Signer
+
+	got, err := suite.SendCheckpoint(header)
+	require.NotNil(t, got)
+	require.Nil(t, err)
+
+	bufferedHeader, err := keeper.GetCheckpointFromBuffer(ctx)
+	require.NotNil(t, bufferedHeader)
+	require.Nil(t, err)
+
+	// send ack
+	headerId := uint64(1)
+	suite.Run("success", func() {
+		fromAccAddr, err := sdk.AccAddressFromHex("123")
+		require.NoError(t, err)
+		proposer, err := sdk.AccAddressFromHex(header.Proposer)
+		require.NoError(t, err)
+		msgCheckpointAck := types.NewMsgCheckpointAck(
+			fromAccAddr,
+			headerId,
+			proposer,
+			header.StartBlock,
+			header.EndBlock,
+			hmCommonTypes.BytesToHeimdallHash(header.RootHash),
+			hmCommonTypes.HexToHeimdallHash("123123"),
+			uint64(1),
+		)
+		result, err := suite.handler(ctx, &msgCheckpointAck)
+		require.NotNil(t, result)
+		require.NoError(t, err)
+
+		afterAckBufferedCheckpoint, _ := keeper.GetCheckpointFromBuffer(ctx)
+		require.NotNil(t, afterAckBufferedCheckpoint, "should not remove from buffer")
+	})
+
+	suite.Run("Invalid start", func() {
+		msgCheckpointAck := types.NewMsgCheckpointAck(
+			hmCommonTypes.HexToHeimdallAddress("123").Bytes(),
+			headerId,
+			sdk.AccAddress(header.Proposer),
+			uint64(123),
+			header.EndBlock,
+			hmCommonTypes.BytesToHeimdallHash(header.RootHash),
+			hmCommonTypes.HexToHeimdallHash("123123"),
+			uint64(1),
+		)
+
+		result, err := suite.handler(ctx, &msgCheckpointAck)
+		require.Error(t, err)
+		require.Nil(t, result)
+	})
+
+	suite.Run("Invalid Roothash", func() {
+		msgCheckpointAck := types.NewMsgCheckpointAck(
+			hmCommonTypes.HexToHeimdallAddress("123").Bytes(),
+			headerId,
+			sdk.AccAddress(header.Proposer),
+			header.StartBlock,
+			header.EndBlock,
+			hmCommonTypes.HexToHeimdallHash("9887"),
+			hmCommonTypes.HexToHeimdallHash("123123"),
+			uint64(1),
+		)
+
+		result, err := suite.handler(ctx, &msgCheckpointAck)
+		require.NotNil(t, err)
+		require.Nil(t, result)
+		require.Error(t, err)
+	})
+}
 
 func (suite *HandlerTestSuite) TestHandleMsgCheckpointNoAck() {
 	t, initApp, ctx := suite.T(), suite.app, suite.ctx

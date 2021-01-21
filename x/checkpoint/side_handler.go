@@ -48,8 +48,6 @@ func SideHandleMsgCheckpoint(ctx sdk.Context, k keeper.Keeper, msg types.MsgChec
 
 	// validate checkpoint
 	validCheckpoint, err := types.ValidateCheckpoint(msg.StartBlock, msg.EndBlock, hmCommonTypes.BytesToHeimdallHash(msg.RootHash), params.MaxCheckpointLength, contractCaller)
-	fmt.Printf("validCheckpoint %+v\n", validCheckpoint)
-
 	if err != nil {
 		logger.Error("Error validating checkpoint",
 			"error", err,
@@ -260,7 +258,7 @@ func PostHandleMsgCheckpointAck(ctx sdk.Context, k keeper.Keeper, msg types.MsgC
 	}
 
 	// Return err if start and end matches but contract root hash doesn't match
-	if msg.StartBlock == checkpointObj.StartBlock && msg.EndBlock == checkpointObj.EndBlock && !bytes.Equal([]byte(msg.RootHash), checkpointObj.RootHash) {
+	if msg.StartBlock == checkpointObj.StartBlock && msg.EndBlock == checkpointObj.EndBlock && !bytes.Equal(hmCommonTypes.HexToHeimdallHash(msg.RootHash).Bytes(), checkpointObj.RootHash) {
 		logger.Error("Invalid ACK",
 			"startExpected", checkpointObj.StartBlock,
 			"startReceived", msg.StartBlock,

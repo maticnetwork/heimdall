@@ -10,7 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/maticnetwork/heimdall/helper"
-	hmTypes "github.com/maticnetwork/heimdall/types/common"
+	hmCommonTypes "github.com/maticnetwork/heimdall/types/common"
 	"github.com/maticnetwork/heimdall/x/checkpoint/types"
 )
 
@@ -94,13 +94,13 @@ func (k msgServer) Checkpoint(goCtx context.Context, msg *types.MsgCheckpoint) (
 		logger.Error("Error while fetching account root hash", "error", err)
 		return nil, types.ErrBadBlockDetails
 	}
-	logger.Debug("Validator account root hash generated", "accountRootHash", hmTypes.BytesToHeimdallHash(accountRoot).String())
+	logger.Debug("Validator account root hash generated", "accountRootHash", hmCommonTypes.BytesToHeimdallHash(accountRoot).String())
 
 	// Compare stored root hash to msg root hash
 	if !bytes.Equal(accountRoot, msg.AccountRootHash) {
 		logger.Error(
 			"AccountRootHash of current state doesn't match from msg",
-			"hash", hmTypes.BytesToHeimdallHash(accountRoot).String(),
+			"hash", hmCommonTypes.BytesToHeimdallHash(accountRoot).String(),
 			"msgHash", msg.AccountRootHash,
 		)
 		return nil, types.ErrBadBlockDetails
@@ -160,14 +160,14 @@ func (k msgServer) CheckpointAck(goCtx context.Context, msg *types.MsgCheckpoint
 	}
 
 	// Return err if start and end matches but contract root hash doesn't match
-	if msg.StartBlock == headerBlock.StartBlock && msg.EndBlock == headerBlock.EndBlock && !bytes.Equal([]byte(msg.RootHash), headerBlock.RootHash) {
+	if msg.StartBlock == headerBlock.StartBlock && msg.EndBlock == headerBlock.EndBlock && !bytes.Equal(hmCommonTypes.HexToHeimdallHash(msg.RootHash).Bytes(), headerBlock.RootHash) {
 		logger.Error("Invalid ACK",
 			"startExpected", headerBlock.StartBlock,
 			"startReceived", msg.StartBlock,
 			"endExpected", headerBlock.EndBlock,
 			"endReceived", msg.StartBlock,
 			"rootExpected", hex.EncodeToString(headerBlock.RootHash),
-			"rootRecieved", msg.RootHash,
+			"rootReceived", msg.RootHash,
 		)
 		return nil, types.ErrBadAck
 	}
