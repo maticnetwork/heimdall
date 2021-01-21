@@ -27,10 +27,10 @@ var ZeroAddress = common.Address{}
 var ZeroPubKey = hmCommonTypes.PubKey{}
 
 const (
-	COMPRESSED_PUBKEY               = 32
-	COMPRESSED_PUBKEY_WITH_PREFIX   = 33
-	UNCOMPRESSED_PUBKEY             = 64
-	UNCOMPRESSED_PUBKEY_WITH_PREFIX = 65
+	COMPRESSED_PUBKEY_SIZE               = 32
+	COMPRESSED_PUBKEY_SIZE_WITH_PREFIX   = 33
+	UNCOMPRESSED_PUBKEY_SIZE             = 64
+	UNCOMPRESSED_PUBKEY_SIZE_WITH_PREFIX = 65
 )
 
 // GetPowerFromAmount returns power from amount -- note that this will pollute amount object
@@ -108,7 +108,7 @@ func DecompressPubKey(compressed []byte) ([]byte, error) {
 
 // CompressPubKey decompress pub key
 func CompressPubKey(uncompressedBytes []byte) ([]byte, error) {
-	if len(uncompressedBytes) == UNCOMPRESSED_PUBKEY {
+	if len(uncompressedBytes) == UNCOMPRESSED_PUBKEY_SIZE {
 		uncompressedBytes = AppendPubkeyPrefix(uncompressedBytes)
 	}
 	uncompressed, err := ethcrypto.UnmarshalPubkey(uncompressedBytes)
