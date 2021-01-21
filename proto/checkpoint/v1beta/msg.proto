@@ -9,7 +9,7 @@ option (gogoproto.sizer_all)       = true;
 option (gogoproto.marshaler_all)   = true;
 option (gogoproto.unmarshaler_all) = true;
 
-// Msg defines the checkpoing Msg service.
+// Msg defines the checkpoint Msg service.
 service Msg {
     // Checkpoint defines Checkpoint.
     rpc Checkpoint(MsgCheckpoint) returns (MsgCheckpointResponse);
@@ -28,11 +28,11 @@ message MsgCheckpoint {
     option (gogoproto.goproto_getters) = false;
 
     string proposer          = 1;
-    uint64 start_block       = 2;
-    uint64 end_block         = 3;
-    string  root_hash         = 4;
-    string  account_root_hash = 5;
-    string bor_chainID       = 6;
+    uint64 start_block       = 2 [(gogoproto.moretags) = "yaml:\"start_block\""];
+    uint64 end_block         = 3 [(gogoproto.moretags) = "yaml:\"end_block\""];
+    string  root_hash         = 4 [(gogoproto.moretags) = "yaml:\"root_hash\""];
+    string  account_root_hash = 5 [(gogoproto.moretags) = "yaml:\"account_root_hash\""];
+    string bor_chainID       = 6 [(gogoproto.moretags) = "yaml:\"bor_chainID\""];
 }
 
 // MsgValidatorJoinResponse defines ValidatorJoin response type.
@@ -46,11 +46,11 @@ message MsgCheckpointAck {
     string from        = 1;
     uint64 number      = 2;
     string proposer    = 3;
-    uint64 start_block = 4;
-    uint64 end_block   = 5;
-    string root_hash   = 6;
-    string tx_hash     = 7;
-    uint64 log_index   = 8;
+    uint64 start_block = 4 [(gogoproto.moretags) = "yaml:\"start_block\""];
+    uint64 end_block   = 5 [(gogoproto.moretags) = "yaml:\"end_block\""];
+    string root_hash   = 6 [(gogoproto.moretags) = "yaml:\"root_hash\""];
+    string tx_hash     = 7 [(gogoproto.moretags) = "yaml:\"tx_hash\""];
+    uint64 log_index   = 8 [(gogoproto.moretags) = "yaml:\"log_index\""];
 }
 
 // MsgCheckpointAckResponse defines CheckpointAck response type.

@@ -1,5 +1,5 @@
 syntax = "proto3";
-package chainmanager.v1beta1;
+package heimdall.chainmanager.v1beta1;
 
 import "chainmanager/v1beta1/genesis.proto";
 import "google/api/annotations.proto";
@@ -15,7 +15,7 @@ option (gogoproto.unmarshaler_all) = true;
 service Query {
     // Params queries all parameters.
     rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
-        option (google.api.http).get = "/chainmanager/v1beta1/params";
+        option (google.api.http).get = "/heimdall/chainmanager/v1beta1/params";
     }
 }
 

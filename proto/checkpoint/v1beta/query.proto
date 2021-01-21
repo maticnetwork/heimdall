@@ -5,7 +5,7 @@ import "checkpoint/v1beta/genesis.proto";
 import "checkpoint/v1beta/msg.proto";
 import "google/api/annotations.proto";
 import "heimdall/types/headers.proto";
-import "heimdall/types/querier.proto";
+import "heimdall/types/query.proto";
 import "gogoproto/gogo.proto";
 
 option go_package = "github.com/maticnetwork/heimdall/x/checkpoint/types";

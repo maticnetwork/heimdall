@@ -22,7 +22,7 @@ service Query {
 
 // QueryRecordParams is request type for the Query/Record RPC method
 message QueryRecordParams {
-    uint64 record_id = 1;
+    uint64 record_id = 1 ;
 }
 
 // QueryRecordResponse is response type for the Query/Record RPC method

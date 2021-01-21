@@ -43,6 +43,7 @@ func GetTxCmd() *cobra.Command {
 	return stakingTxCmd
 }
 
+// validateAndCompressPubKey validate and compress the pubkey
 func validateAndCompressPubKey(pubkeyBytes []byte) ([]byte, error) {
 	if len(pubkeyBytes) == helper.UNCOMPRESSED_PUBKEY_SIZE {
 		pubkeyBytes = helper.AppendPubkeyPrefix(pubkeyBytes)
