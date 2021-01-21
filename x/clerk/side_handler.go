@@ -146,7 +146,7 @@ func PostHandleMsgEventRecord(
 
 	// create event record
 	txHash := hmCommonTypes.HexToHeimdallHash(msg.TxHash)
-	contractAddress, err := sdk.AccAddressFromBech32(msg.ContractAddress)
+	contractAddress, err := sdk.AccAddressFromHex(msg.ContractAddress)
 	if err != nil {
 		return nil, err
 	}
