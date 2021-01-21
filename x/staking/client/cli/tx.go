@@ -44,13 +44,12 @@ func GetTxCmd() *cobra.Command {
 }
 
 func validateAndCompressPubKey(pubkeyBytes []byte) ([]byte, error) {
-	// convert PubKey to bytes
-	if len(pubkeyBytes) == 64 {
+	if len(pubkeyBytes) == helper.UNCOMPRESSED_PUBKEY {
 		pubkeyBytes = helper.AppendPubkeyPrefix(pubkeyBytes)
 	}
 
 	// check if key is uncompressed
-	if len(pubkeyBytes) == 65 {
+	if len(pubkeyBytes) == helper.UNCOMPRESSED_PUBKEY_WITH_PREFIX {
 		var err error
 		pubkeyBytes, err = helper.CompressPubKey(pubkeyBytes)
 		if err != nil {
@@ -58,7 +57,7 @@ func validateAndCompressPubKey(pubkeyBytes []byte) ([]byte, error) {
 		}
 	}
 
-	if len(pubkeyBytes) != 33 {
+	if len(pubkeyBytes) != helper.COMPRESSED_PUBKEY_WITH_PREFIX {
 		return nil, fmt.Errorf("Invalid compressed pubkey")
 	}
 
