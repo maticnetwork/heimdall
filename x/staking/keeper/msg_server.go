@@ -11,7 +11,6 @@ import (
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
-	hmTypesCommon "github.com/maticnetwork/heimdall/types/common"
 	"github.com/maticnetwork/heimdall/x/staking/types"
 )
 
@@ -42,7 +41,7 @@ func (k msgServer) ValidatorJoin(goCtx context.Context, msg *types.MsgValidatorJ
 	)
 
 	// Generate PubKey from Pubkey in message and signer
-	pubkey := hmTypesCommon.NewPubKeyFromHex(msg.SignerPubKey)
+	pubkey := msg.GetSignerPubKey()
 	signer := pubkey.Address()
 
 	// Check if validator has been validator before
@@ -60,7 +59,8 @@ func (k msgServer) ValidatorJoin(goCtx context.Context, msg *types.MsgValidatorJ
 	// get voting power from amount
 	_, err = helper.GetPowerFromAmount(msg.Amount.BigInt())
 	if err != nil {
-		return nil, hmCommon.ErrInvalidMsg
+		k.Logger(ctx).Error("Error occurred while converting amount to power", "error", err)
+		return nil, hmCommon.ErrInvalidPower
 	}
 
 	// sequence id
@@ -157,8 +157,8 @@ func (k msgServer) SignerUpdate(goCtx context.Context, msg *types.MsgSignerUpdat
 		"blockNumber", msg.BlockNumber,
 	)
 
-	newPubKey := hmTypesCommon.NewPubKeyFromHex(msg.NewSignerPubKey)
-	newSigner := newPubKey.Address()
+	pubkey := msg.GetNewSignerPubKey()
+	newSigner := pubkey.Address()
 
 	// pull validator from store
 	validator, ok := k.GetValidatorFromValID(ctx, msg.ID)

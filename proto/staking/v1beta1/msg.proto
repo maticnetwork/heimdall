@@ -6,10 +6,6 @@ import "google/protobuf/any.proto";
 
 option go_package = "github.com/maticnetwork/heimdall/x/staking/types";
 
-option (gogoproto.sizer_all)       = false;
-option (gogoproto.marshaler_all)   = false;
-option (gogoproto.unmarshaler_all) = false;
-
 // Msg defines the staking Msg service.
 service Msg {
     // ValidatorJoin defines a method to join a new validator.
@@ -37,7 +33,7 @@ message MsgValidatorJoin {
     ];
     uint64 activation_epoch = 3;
     string amount           = 4
-        [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.Int"];
+        [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int"];
     string signer_pub_key = 5;
     string tx_hash        = 6;
     uint64 log_index      = 7;
@@ -58,7 +54,7 @@ message MsgStakeUpdate {
         (gogoproto.customname) = "ID"
     ];
     string new_amount = 3
-        [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.Int"];
+        [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int"];
     string tx_hash      = 4;
     uint64 log_index    = 7;
     uint64 block_number = 8;

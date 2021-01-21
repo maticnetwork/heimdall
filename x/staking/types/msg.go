@@ -1,6 +1,8 @@
 package types
 
 import (
+	"bytes"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -30,12 +32,11 @@ func NewMsgValidatorJoin(
 	blockNumber uint64,
 	nonce uint64,
 ) MsgValidatorJoin {
-
 	return MsgValidatorJoin{
 		From:            from.String(),
 		ID:              hmTypes.NewValidatorID(id),
 		ActivationEpoch: activationEpoch,
-		Amount:          amount,
+		Amount:          &amount,
 		SignerPubKey:    pubkey.String(),
 		TxHash:          txhash.String(),
 		LogIndex:        logIndex,
@@ -66,7 +67,6 @@ func (msg MsgValidatorJoin) GetSignBytes() []byte {
 }
 
 func (msg MsgValidatorJoin) ValidateBasic() error {
-
 	if msg.ID == 0 {
 		return common.ErrInvalidMsg
 	}
@@ -75,7 +75,7 @@ func (msg MsgValidatorJoin) ValidateBasic() error {
 		return common.ErrInvalidMsg
 	}
 
-	if msg.SignerPubKey == helper.ZeroPubKey.String() {
+	if bytes.Equal(msg.GetSignerPubKey(), helper.ZeroPubKey.Bytes()) {
 		return common.ErrInvalidMsg
 	}
 
@@ -85,6 +85,11 @@ func (msg MsgValidatorJoin) ValidateBasic() error {
 // GetTxHash Returns tx hash
 func (msg MsgValidatorJoin) GetTxHash() hmCommon.HeimdallHash {
 	return hmCommon.HexToHeimdallHash(msg.TxHash)
+}
+
+// GetSignerPubKey returns signer pub key
+func (msg MsgValidatorJoin) GetSignerPubKey() hmCommon.PubKey {
+	return hmCommon.NewPubKeyFromHex(msg.SignerPubKey)
 }
 
 // GetLogIndex Returns log index
@@ -113,7 +118,7 @@ func NewMsgStakeUpdate(from sdk.AccAddress, id uint64, newAmount sdk.Int, txhash
 	return MsgStakeUpdate{
 		From:        from.String(),
 		ID:          hmTypes.NewValidatorID(id),
-		NewAmount:   newAmount,
+		NewAmount:   &newAmount,
 		TxHash:      txhash.String(),
 		LogIndex:    logIndex,
 		BlockNumber: blockNumber,
@@ -231,11 +236,17 @@ func (msg MsgSignerUpdate) ValidateBasic() error {
 		return common.ErrInvalidMsg
 	}
 
-	if msg.NewSignerPubKey == helper.ZeroPubKey.String() {
+	// if msg.NewSignerPubKey == helper.ZeroPubKey.String() {
+	if bytes.Equal(msg.GetNewSignerPubKey(), helper.ZeroPubKey.Bytes()) {
 		return common.ErrInvalidMsg
 	}
 
 	return nil
+}
+
+// GetNewSignerPubKey returns signer pub key
+func (msg MsgSignerUpdate) GetNewSignerPubKey() hmCommon.PubKey {
+	return hmCommon.NewPubKeyFromHex(msg.NewSignerPubKey)
 }
 
 // GetTxHash Returns tx hash

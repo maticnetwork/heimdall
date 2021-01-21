@@ -79,6 +79,11 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 			// bind flags for environment variables
 			bindFlags(cmd, ctx.Viper)
 
+			// load heimdall config
+			if err := helper.InitHeimdallConfig(ctx.Viper); err != nil {
+				return err
+			}
+
 			return client.SetCmdClientContextHandler(initClientCtx, cmd)
 		},
 	}
@@ -322,12 +327,6 @@ func InitializeNodeValidatorFiles(
 	// }
 	valPubKey, _ = filePV.GetPubKey()
 	return nodeID, valPubKey, valPrivKey, nil
-}
-
-// WriteDefaultHeimdallConfig writes default heimdall config to the given path
-func WriteDefaultHeimdallConfig(path string, conf helper.Configuration) {
-	heimdallConf := helper.GetDefaultHeimdallConfig()
-	helper.WriteConfigFile(path, &heimdallConf)
 }
 
 func CryptoKeyToPubkey(key crypto.PubKey) common.PubKey {

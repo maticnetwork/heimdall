@@ -341,6 +341,11 @@ func NewHeimdallApp(
 	// CanWithdrawInvariant invariant.
 	// NOTE: staking module is required if HistoricalEntries param > 0
 	app.mm.SetOrderBeginBlockers(
+		sidechanneltypes.ModuleName,
+		stakingtypes.ModuleName,
+	)
+	app.mm.SetOrderEndBlockers(
+		sidechanneltypes.ModuleName,
 		stakingtypes.ModuleName,
 		govtypes.ModuleName,
 	)
