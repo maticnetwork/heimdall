@@ -46,5 +46,5 @@ message QueryValidatorSetRequest {}
 // method
 message QueryValidatorSetResponse {
     // validatorSet defines the the current validator set.
-    heimdall.types.ValidatorSet validatorSet = 1;
+    heimdall.types.ValidatorSet validator_set = 1;
 }

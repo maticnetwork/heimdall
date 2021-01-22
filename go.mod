@@ -29,6 +29,7 @@ require (
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 	google.golang.org/genproto v0.0.0-20201119123407-9b1e624d6bc4
 	google.golang.org/grpc v1.35.0
+	google.golang.org/protobuf v1.25.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 

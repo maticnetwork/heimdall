@@ -66,6 +66,18 @@ func ProposalKey(proposalID uint64) []byte {
 	return append(ProposalsKeyPrefix, bz...)
 }
 
+// GetProposalIDBytes returns the byte representation of the proposalID
+func GetProposalIDBytes(proposalID uint64) (proposalIDBz []byte) {
+	proposalIDBz = make([]byte, 8)
+	binary.BigEndian.PutUint64(proposalIDBz, proposalID)
+	return
+}
+
+// GetProposalIDFromBytes returns proposalID in uint64 format from a byte array
+func GetProposalIDFromBytes(bz []byte) (proposalID uint64) {
+	return binary.BigEndian.Uint64(bz)
+}
+
 // ActiveProposalByTimeKey gets the active proposal queue key by endTime
 func ActiveProposalByTimeKey(endTime time.Time) []byte {
 	return append(ActiveProposalQueuePrefix, sdk.FormatTimeBytes(endTime)...)

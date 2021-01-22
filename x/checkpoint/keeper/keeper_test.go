@@ -1,9 +1,10 @@
 package keeper_test
 
 import (
-	checkpointKeeper "github.com/maticnetwork/heimdall/x/checkpoint/keeper"
 	"testing"
 	"time"
+
+	checkpointKeeper "github.com/maticnetwork/heimdall/x/checkpoint/keeper"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/app"
@@ -56,7 +57,7 @@ func (suite *KeeperTestSuite) TestAddCheckpoint() {
 	require.NoError(t, err)
 	require.Equal(t, startBlock, result.StartBlock)
 	require.Equal(t, endBlock, result.EndBlock)
-	require.Equal(t, rootHash, hmCommonTypes.HexToHeimdallHash(hmCommonTypes.BytesToHeimdallAddress(result.RootHash).String()))
+	require.Equal(t, rootHash.String(), result.RootHash)
 	require.Equal(t, borChainId, result.BorChainID)
 	require.Equal(t, proposerAddress, hmCommonTypes.HexToHeimdallAddress(result.Proposer))
 	require.Equal(t, timestamp, result.TimeStamp)

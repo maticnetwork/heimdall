@@ -56,7 +56,7 @@ func NewPostTxHandler(k keeper.Keeper, contractCaller helper.IContractCaller) hm
 func SideHandleMsgTopup(ctx sdk.Context, k keeper.Keeper, msg types.MsgTopup, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
 
 	k.Logger(ctx).Debug("✅ Validating External call for topup msg",
-		"txHash", hmCommonTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
+		"txHash", hmCommonTypes.BytesToHeimdallHash([]byte(msg.TxHash)),
 		"logIndex", uint64(msg.LogIndex),
 		"blockNumber", msg.BlockNumber,
 	)
@@ -66,7 +66,7 @@ func SideHandleMsgTopup(ctx sdk.Context, k keeper.Keeper, msg types.MsgTopup, co
 	chainParams := params.ChainParams
 
 	// get main tx receipt
-	receipt, err := contractCaller.GetConfirmedTxReceipt(msg.TxHash.EthHash(), params.MainchainTxConfirmations)
+	receipt, err := contractCaller.GetConfirmedTxReceipt(hmCommonTypes.HexToHeimdallHash(msg.TxHash).EthHash(), params.MainchainTxConfirmations)
 	if err != nil || receipt == nil {
 		return hmCommon.ErrorSideTx(common.ErrWaitForConfirmation)
 	}

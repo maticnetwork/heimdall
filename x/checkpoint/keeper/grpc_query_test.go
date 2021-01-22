@@ -1,6 +1,10 @@
 package keeper_test
 
 import (
+	"math/big"
+	"testing"
+	"time"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/app"
@@ -12,9 +16,6 @@ import (
 	"github.com/maticnetwork/heimdall/x/checkpoint/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"math/big"
-	"testing"
-	"time"
 )
 
 // GrpcQueryTestSuite integrate test suite context object
@@ -217,7 +218,7 @@ func (suite *GrpcQueryTestSuite) TestQueryNextCheckpoint() {
 		timestamp,
 	)
 
-	suite.contractCaller.On("GetRootHash", checkpointBlock.StartBlock, checkpointBlock.EndBlock, uint64(1024)).Return(checkpointBlock.RootHash, nil)
+	suite.contractCaller.On("GetRootHash", checkpointBlock.StartBlock, checkpointBlock.EndBlock, uint64(1024)).Return(hmCommonTypes.HexToHeimdallHash(checkpointBlock.RootHash).Bytes(), nil)
 	err = initApp.CheckpointKeeper.AddCheckpoint(ctx, headerNumber, checkpointBlock)
 	require.NoError(t, err)
 

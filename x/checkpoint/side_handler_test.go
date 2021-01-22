@@ -1,6 +1,11 @@
 package checkpoint_test
 
 import (
+	"math/big"
+	"math/rand"
+	"testing"
+	"time"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/maticnetwork/bor/common"
@@ -16,10 +21,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	abci "github.com/tendermint/tendermint/proto/tendermint/types"
-	"math/big"
-	"math/rand"
-	"testing"
-	"time"
 )
 
 // SideHandlerTestSuite integrate test suite context object
@@ -85,16 +86,16 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgCheckpoint() {
 			proposer,
 			header.StartBlock,
 			header.EndBlock,
-			hmCommonTypes.BytesToHeimdallHash(header.RootHash),
-			hmCommonTypes.BytesToHeimdallHash(header.RootHash),
+			hmCommonTypes.HexToHeimdallHash(header.RootHash),
+			hmCommonTypes.HexToHeimdallHash(header.RootHash),
 			borChainId,
 		)
 
 		suite.contractCaller.On("CheckIfBlocksExist", header.EndBlock).Return(true)
-		suite.contractCaller.On("GetRootHash", header.StartBlock, header.EndBlock, uint64(1024)).Return(header.RootHash, nil)
+		suite.contractCaller.On("GetRootHash", header.StartBlock, header.EndBlock, uint64(1024)).Return(hmCommonTypes.HexToHeimdallHash(header.RootHash).Bytes(), nil)
 
 		result := suite.sideHandler(ctx, &msgCheckpoint)
-		// 0 needs convert sdk.CodeOK
+		// todo:   uint32(0) needs convert sdk.CodeOK
 		require.Equal(t, uint32(0), result.Code, "Side tx handler should be success")
 		require.Equal(t, abci.SideTxResultType_YES, result.Result, "Result should be `yes`")
 
@@ -111,8 +112,8 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgCheckpoint() {
 			proposer,
 			header.StartBlock,
 			header.EndBlock,
-			hmCommonTypes.BytesToHeimdallHash(header.RootHash),
-			hmCommonTypes.BytesToHeimdallHash(header.RootHash),
+			hmCommonTypes.HexToHeimdallHash(header.RootHash),
+			hmCommonTypes.HexToHeimdallHash(header.RootHash),
 			borChainId,
 		)
 
@@ -139,8 +140,8 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgCheckpoint() {
 			proposer,
 			header.StartBlock,
 			header.EndBlock,
-			hmCommonTypes.BytesToHeimdallHash(header.RootHash),
-			hmCommonTypes.BytesToHeimdallHash(header.RootHash),
+			hmCommonTypes.HexToHeimdallHash(header.RootHash),
+			hmCommonTypes.HexToHeimdallHash(header.RootHash),
 			borChainId,
 		)
 
@@ -177,14 +178,14 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgCheckpointAck() {
 			proposer,
 			header.StartBlock,
 			header.EndBlock,
-			hmCommonTypes.BytesToHeimdallHash(header.RootHash),
+			hmCommonTypes.HexToHeimdallHash(header.RootHash),
 			hmCommonTypes.HexToHeimdallHash("123123"),
 			uint64(1),
 		)
 		rootChainInstance := &rootchain.Rootchain{}
 
 		suite.contractCaller.On("GetRootChainInstance", mock.Anything).Return(rootChainInstance, nil)
-		suite.contractCaller.On("GetHeaderInfo", headerId, rootChainInstance, params.ChildBlockInterval).Return(common.BytesToHash(header.RootHash), header.StartBlock, header.EndBlock, header.TimeStamp, accAddr, nil)
+		suite.contractCaller.On("GetHeaderInfo", headerId, rootChainInstance, params.ChildBlockInterval).Return(common.HexToHash(header.RootHash), header.StartBlock, header.EndBlock, header.TimeStamp, accAddr, nil)
 
 		result := suite.sideHandler(ctx, &msgCheckpointAck)
 		require.Equal(t, uint32(0), result.Code, "Side tx handler should be success")
@@ -265,8 +266,8 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgCheckpoint() {
 			proposer,
 			header.StartBlock,
 			header.EndBlock,
-			hmCommonTypes.BytesToHeimdallHash(header.RootHash),
-			hmCommonTypes.BytesToHeimdallHash(header.RootHash),
+			hmCommonTypes.HexToHeimdallHash(header.RootHash),
+			hmCommonTypes.HexToHeimdallHash(header.RootHash),
 			borChainId,
 		)
 
@@ -286,8 +287,8 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgCheckpoint() {
 			proposer,
 			header.StartBlock,
 			header.EndBlock,
-			hmCommonTypes.BytesToHeimdallHash(header.RootHash),
-			hmCommonTypes.BytesToHeimdallHash(header.RootHash),
+			hmCommonTypes.HexToHeimdallHash(header.RootHash),
+			hmCommonTypes.HexToHeimdallHash(header.RootHash),
 			borChainId,
 		)
 
@@ -311,8 +312,8 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgCheckpoint() {
 			proposer,
 			header.StartBlock,
 			header.EndBlock,
-			hmCommonTypes.BytesToHeimdallHash(header.RootHash),
-			hmCommonTypes.BytesToHeimdallHash(header.RootHash),
+			hmCommonTypes.HexToHeimdallHash(header.RootHash),
+			hmCommonTypes.HexToHeimdallHash(header.RootHash),
 			borChainId,
 		)
 
@@ -349,7 +350,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgCheckpointAck() {
 			proposer,
 			header.StartBlock,
 			header.EndBlock,
-			hmCommonTypes.BytesToHeimdallHash(header.RootHash),
+			hmCommonTypes.HexToHeimdallHash(header.RootHash),
 			hmCommonTypes.HexToHeimdallHash("123123"),
 			uint64(1),
 		)
@@ -372,8 +373,8 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgCheckpointAck() {
 			proposer,
 			header.StartBlock,
 			header.EndBlock,
-			hmCommonTypes.BytesToHeimdallHash(header.RootHash),
-			hmCommonTypes.BytesToHeimdallHash(header.RootHash),
+			hmCommonTypes.HexToHeimdallHash(header.RootHash),
+			hmCommonTypes.HexToHeimdallHash(header.RootHash),
 			"1234",
 		)
 
@@ -386,7 +387,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgCheckpointAck() {
 			proposer,
 			header.StartBlock,
 			header.EndBlock,
-			hmCommonTypes.BytesToHeimdallHash(header.RootHash),
+			hmCommonTypes.HexToHeimdallHash(header.RootHash),
 			hmCommonTypes.HexToHeimdallHash("123123"),
 			uint64(1),
 		)
@@ -409,7 +410,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgCheckpointAck() {
 			proposer,
 			header.StartBlock,
 			header.EndBlock,
-			hmCommonTypes.BytesToHeimdallHash(header.RootHash),
+			hmCommonTypes.HexToHeimdallHash(header.RootHash),
 			hmCommonTypes.HexToHeimdallHash("123123"),
 			uint64(1),
 		)
@@ -430,8 +431,8 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgCheckpointAck() {
 			proposer2,
 			header2.StartBlock,
 			header2.EndBlock,
-			hmCommonTypes.BytesToHeimdallHash(header2.RootHash),
-			hmCommonTypes.BytesToHeimdallHash(header2.RootHash),
+			hmCommonTypes.HexToHeimdallHash(header2.RootHash),
+			hmCommonTypes.HexToHeimdallHash(header2.RootHash),
 			"1234",
 		)
 
@@ -446,7 +447,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgCheckpointAck() {
 			proposer2,
 			header2.StartBlock,
 			header2.EndBlock,
-			hmCommonTypes.BytesToHeimdallHash(header2.RootHash),
+			hmCommonTypes.HexToHeimdallHash(header2.RootHash),
 			hmCommonTypes.HexToHeimdallHash("123123"),
 			uint64(1),
 		)

@@ -1,6 +1,10 @@
 package checkpoint_test
 
 import (
+	"math/big"
+	"testing"
+	"time"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/app"
@@ -12,9 +16,6 @@ import (
 	"github.com/maticnetwork/heimdall/x/checkpoint/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"math/big"
-	"testing"
-	"time"
 )
 
 type HandlerTestSuite struct {
@@ -91,11 +92,10 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpoint() {
 	require.NoError(t, err)
 	suite.Run("Success", func() {
 		msgCheckpoint := types.NewMsgCheckpointBlock(
-			//sdk.AccAddress(header.Proposer),
 			proposer,
 			header.StartBlock,
 			header.EndBlock,
-			hmCommonTypes.BytesToHeimdallHash(header.RootHash),
+			hmCommonTypes.HexToHeimdallHash(header.RootHash),
 			accountRoot,
 			borChainId,
 		)
@@ -115,7 +115,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpoint() {
 			invalidProposer,
 			header.StartBlock,
 			header.EndBlock,
-			hmCommonTypes.BytesToHeimdallHash(header.RootHash),
+			hmCommonTypes.HexToHeimdallHash(header.RootHash),
 			accountRoot,
 			borChainId,
 		)
@@ -144,7 +144,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpoint() {
 			proposer,
 			start,
 			start+256,
-			hmCommonTypes.BytesToHeimdallHash(header.RootHash),
+			hmCommonTypes.HexToHeimdallHash(header.RootHash),
 			accountRoot,
 			borChainId,
 		)
@@ -200,13 +200,14 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointAck() {
 		require.NoError(t, err)
 		proposer, err := sdk.AccAddressFromHex(header.Proposer)
 		require.NoError(t, err)
+
 		msgCheckpointAck := types.NewMsgCheckpointAck(
 			fromAccAddr,
 			headerId,
 			proposer,
 			header.StartBlock,
 			header.EndBlock,
-			hmCommonTypes.BytesToHeimdallHash(header.RootHash),
+			hmCommonTypes.HexToHeimdallHash(header.RootHash),
 			hmCommonTypes.HexToHeimdallHash("123123"),
 			uint64(1),
 		)
@@ -225,7 +226,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointAck() {
 			sdk.AccAddress(header.Proposer),
 			uint64(123),
 			header.EndBlock,
-			hmCommonTypes.BytesToHeimdallHash(header.RootHash),
+			hmCommonTypes.HexToHeimdallHash(header.RootHash),
 			hmCommonTypes.HexToHeimdallHash("123123"),
 			uint64(1),
 		)
@@ -357,13 +358,13 @@ func (suite *HandlerTestSuite) SendCheckpoint(header *hmTypes.Checkpoint) (res *
 		proposer,
 		header.StartBlock,
 		header.EndBlock,
-		hmCommonTypes.BytesToHeimdallHash(header.RootHash),
+		hmCommonTypes.HexToHeimdallHash(header.RootHash),
 		accountRoot,
 		borChainId,
 	)
 
 	suite.contractCaller.On("CheckIfBlocksExist", header.EndBlock).Return(true)
-	suite.contractCaller.On("GetRootHash", header.StartBlock, header.EndBlock, uint64(1024)).Return(header.RootHash, nil)
+	suite.contractCaller.On("GetRootHash", header.StartBlock, header.EndBlock, uint64(1024)).Return(hmCommonTypes.HexToHeimdallHash(header.RootHash).Bytes(), nil)
 
 	// send checkpoint to handler
 	result, err := suite.handler(ctx, &msgCheckpoint)
