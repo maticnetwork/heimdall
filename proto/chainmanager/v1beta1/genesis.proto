@@ -17,15 +17,15 @@ message GenesisState {
 message ChainParams {
     option (gogoproto.goproto_getters)  = false;
     option (gogoproto.goproto_stringer) = false;
-    string bor_chain_id        = 1 [(gogoproto.customname) = "BorChainID"];
-    string matic_token_address = 2;
+    string bor_chain_id            = 1 [(gogoproto.customname) = "BorChainID"];
+    string matic_token_address     = 2;
     string staking_manager_address = 3;
-    string slash_manager_address = 4;
-    string root_chain_address = 5;
-    string staking_info_address = 6;
-    string state_sender_address = 7;
-    string state_receiver_address = 8;
-    string validator_set_address = 9;
+    string slash_manager_address   = 4;
+    string root_chain_address      = 5;
+    string staking_info_address    = 6;
+    string state_sender_address    = 7;
+    string state_receiver_address  = 8;
+    string validator_set_address   = 9;
 }
 
 message Params {

@@ -22,9 +22,9 @@ service Msg {
 // GenesisState defines the topup module's genesis state.
 message MsgTopup {
     option (gogoproto.goproto_getters) = false;
-    string from_address = 1;
-    string user = 2;
-    uint64 fee = 3
+    string from_address                = 1;
+    string user                        = 2;
+    uint64 fee                         = 3
         [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.Int"];
     bytes tx_hash = 4
         [(gogoproto.casttype) =
@@ -37,8 +37,8 @@ message MsgTopupResponse {}
 
 message MsgWithdrawFee {
     option (gogoproto.goproto_getters) = false;
-    string user_address = 1;
-    uint64 amount = 2
+    string user_address                = 1;
+    uint64 amount                      = 2
         [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.Int"];
 }
 

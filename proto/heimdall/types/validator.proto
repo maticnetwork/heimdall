@@ -3,7 +3,6 @@ syntax = "proto3";
 package heimdall.types;
 
 import "gogoproto/gogo.proto";
-import "google/protobuf/any.proto";
 
 option go_package = "github.com/maticnetwork/heimdall/types";
 

@@ -16,7 +16,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	tmprototypes "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
@@ -148,10 +147,10 @@ func (suite *SideTxProcessorTestSuite) TestDeliverSideTxHandler() {
 	router.AddRoute(msg.Route(), &hmtypes.SideHandlers{
 		SideTxHandler: func(ctx sdk.Context, msg sdk.Msg) abci.ResponseDeliverSideTx {
 			return abci.ResponseDeliverSideTx{
-				Result: tmprototypes.SideTxResultType_YES,
+				Result: tmproto.SideTxResultType_YES,
 			}
 		},
-		PostTxHandler: func(ctx sdk.Context, msg sdk.Msg, sideTxResult tmprototypes.SideTxResultType) (*sdk.Result, error) {
+		PostTxHandler: func(ctx sdk.Context, msg sdk.Msg, sideTxResult tmproto.SideTxResultType) (*sdk.Result, error) {
 			return &sdk.Result{}, nil
 		},
 	})
@@ -166,7 +165,7 @@ func (suite *SideTxProcessorTestSuite) TestDeliverSideTxHandler() {
 			})
 		})
 
-		require.Equal(t, tmprototypes.SideTxResultType_YES, res.GetResult(), "Result from deliver side-tx should be vote `Yes`")
+		require.Equal(t, tmproto.SideTxResultType_YES, res.GetResult(), "Result from deliver side-tx should be vote `Yes`")
 		if m, ok := app.IsSideMsg(msg); ok {
 			require.Equal(t, len(m.GetSideSignBytes()), len(res.Data), "Result from deliver side-tx data should be same as expected")
 		}
@@ -178,11 +177,11 @@ func (suite *SideTxProcessorTestSuite) TestDeliverSideTxHandler() {
 		router.AddRoute(msg.Route(), &hmtypes.SideHandlers{
 			SideTxHandler: func(ctx sdk.Context, msg sdk.Msg) abci.ResponseDeliverSideTx {
 				return abci.ResponseDeliverSideTx{
-					Result: tmprototypes.SideTxResultType_NO,
+					Result: tmproto.SideTxResultType_NO,
 					Data:   resultData,
 				}
 			},
-			PostTxHandler: func(ctx sdk.Context, msg sdk.Msg, sideTxResult tmprototypes.SideTxResultType) (*sdk.Result, error) {
+			PostTxHandler: func(ctx sdk.Context, msg sdk.Msg, sideTxResult tmproto.SideTxResultType) (*sdk.Result, error) {
 				return &sdk.Result{}, nil
 			},
 		})
@@ -192,7 +191,7 @@ func (suite *SideTxProcessorTestSuite) TestDeliverSideTxHandler() {
 			Tx: txBytes,
 		})
 
-		require.Equal(t, tmprototypes.SideTxResultType_NO, res.GetResult(), "Result from deliver side-tx should be vote `No`")
+		require.Equal(t, tmproto.SideTxResultType_NO, res.GetResult(), "Result from deliver side-tx should be vote `No`")
 		require.Equal(t, resultData, res.Data, "Result from deliver side-tx data should be same as expected")
 	})
 
@@ -204,7 +203,7 @@ func (suite *SideTxProcessorTestSuite) TestDeliverSideTxHandler() {
 					Code: uint32(1),
 				}
 			},
-			PostTxHandler: func(ctx sdk.Context, msg sdk.Msg, sideTxResult tmprototypes.SideTxResultType) (*sdk.Result, error) {
+			PostTxHandler: func(ctx sdk.Context, msg sdk.Msg, sideTxResult tmproto.SideTxResultType) (*sdk.Result, error) {
 				return &sdk.Result{}, nil
 			},
 		})
@@ -213,7 +212,7 @@ func (suite *SideTxProcessorTestSuite) TestDeliverSideTxHandler() {
 			Tx: tmtypes.Tx(txBytes),
 		})
 
-		require.Equal(t, tmprototypes.SideTxResultType_SKIP, res.GetResult(), "Result from deliver side-tx should be vote `Skip` if result is not OK")
+		require.Equal(t, tmproto.SideTxResultType_SKIP, res.GetResult(), "Result from deliver side-tx should be vote `Skip` if result is not OK")
 	})
 
 	t.Run("State", func(t *testing.T) {
@@ -230,10 +229,10 @@ func (suite *SideTxProcessorTestSuite) TestDeliverSideTxHandler() {
 				require.Equal(t, 2, len(keeper.GetTxs(ctx, 800)), "It should set state in storage temperory in side-tx handler")
 
 				return abci.ResponseDeliverSideTx{
-					Result: tmprototypes.SideTxResultType_YES,
+					Result: tmproto.SideTxResultType_YES,
 				}
 			},
-			PostTxHandler: func(ctx sdk.Context, msg sdk.Msg, sideTxResult tmprototypes.SideTxResultType) (*sdk.Result, error) {
+			PostTxHandler: func(ctx sdk.Context, msg sdk.Msg, sideTxResult tmproto.SideTxResultType) (*sdk.Result, error) {
 				return &sdk.Result{}, nil
 			},
 		})
@@ -242,7 +241,7 @@ func (suite *SideTxProcessorTestSuite) TestDeliverSideTxHandler() {
 			Tx: tmtypes.Tx(txBytes),
 		})
 
-		require.Equal(t, tmprototypes.SideTxResultType_YES, res.GetResult(), "It should return `yes` vote from deliver side-tx")
+		require.Equal(t, tmproto.SideTxResultType_YES, res.GetResult(), "It should return `yes` vote from deliver side-tx")
 		// testing by fetching txs from store
 		require.Equal(t, 1, len(keeper.GetTxs(ctx, 800)), "It shouldn't change state in deliver side-tx")
 	})
@@ -253,7 +252,7 @@ func (suite *SideTxProcessorTestSuite) TestDeliverSideTxHandler() {
 			SideTxHandler: func(ctx sdk.Context, msg sdk.Msg) abci.ResponseDeliverSideTx {
 				panic("TestSideTxPanic")
 			},
-			PostTxHandler: func(ctx sdk.Context, msg sdk.Msg, sideTxResult tmprototypes.SideTxResultType) (*sdk.Result, error) {
+			PostTxHandler: func(ctx sdk.Context, msg sdk.Msg, sideTxResult tmproto.SideTxResultType) (*sdk.Result, error) {
 				return &sdk.Result{}, nil
 			},
 		})
@@ -271,7 +270,7 @@ func (suite *SideTxProcessorTestSuite) TestDeliverSideTxHandler() {
 			})
 		}, "It shouldn't panic due to recover in app.DeliverSideTx")
 
-		require.Equal(t, tmprototypes.SideTxResultType_SKIP, res.GetResult(), "It should return `skip` vote due to panic")
+		require.Equal(t, tmproto.SideTxResultType_SKIP, res.GetResult(), "It should return `skip` vote due to panic")
 	})
 }
 
@@ -315,7 +314,7 @@ func (suite *SideTxProcessorTestSuite) TestBeginSideBlocker() {
 		require.Equal(t, 0, len(res.Events), "Events from begin side blocker result should be empty with validators but no sigs")
 
 		// test all types of result
-		for key, value := range tmprototypes.SideTxResultType_value {
+		for key, value := range tmproto.SideTxResultType_value {
 			t.Run(key, func(t *testing.T) {
 				// setup router and handler
 				router := hmtypes.NewSideRouter()
@@ -323,7 +322,7 @@ func (suite *SideTxProcessorTestSuite) TestBeginSideBlocker() {
 					SideTxHandler: func(ctx sdk.Context, msg sdk.Msg) abci.ResponseDeliverSideTx {
 						return abci.ResponseDeliverSideTx{}
 					},
-					PostTxHandler: func(ctx sdk.Context, msg sdk.Msg, sideTxResult tmprototypes.SideTxResultType) (*sdk.Result, error) {
+					PostTxHandler: func(ctx sdk.Context, msg sdk.Msg, sideTxResult tmproto.SideTxResultType) (*sdk.Result, error) {
 						return &sdk.Result{}, nil
 					},
 				}
@@ -332,24 +331,24 @@ func (suite *SideTxProcessorTestSuite) TestBeginSideBlocker() {
 
 				keeper.SetTx(ctx, height-2, txBytes) // set tx in the store for process
 				res = happ.BeginSideBlocker(ctx, abci.RequestBeginSideBlock{
-					SideTxResults: []tmprototypes.SideTxResult{
+					SideTxResults: []tmproto.SideTxResponses{
 						{
 							TxHash: txHash,
-							Sigs: []tmprototypes.SideTxSig{
+							Sigs: []tmproto.SideTxResponse{
 								{
-									Result:  tmprototypes.SideTxResultType(value),
+									Result:  tmproto.SideTxResultType(value),
 									Address: addr1,
 								},
 								{
-									Result:  tmprototypes.SideTxResultType(value),
+									Result:  tmproto.SideTxResultType(value),
 									Address: addr2,
 								},
 								{
-									Result:  tmprototypes.SideTxResultType(value),
+									Result:  tmproto.SideTxResultType(value),
 									Address: addr3,
 								},
 								{
-									Result:  tmprototypes.SideTxResultType(value),
+									Result:  tmproto.SideTxResultType(value),
 									Address: addr4,
 								},
 							},
@@ -388,24 +387,24 @@ func (suite *SideTxProcessorTestSuite) TestBeginSideBlocker() {
 		require.Nil(t, err, "It should throw no error while setting validators")
 
 		req := abci.RequestBeginSideBlock{
-			SideTxResults: []tmprototypes.SideTxResult{
+			SideTxResults: []tmproto.SideTxResponses{
 				{
 					TxHash: txHash,
-					Sigs: []tmprototypes.SideTxSig{
+					Sigs: []tmproto.SideTxResponse{
 						{
-							Result:  tmprototypes.SideTxResultType_NO,
+							Result:  tmproto.SideTxResultType_NO,
 							Address: addr1,
 						},
 						{
-							Result:  tmprototypes.SideTxResultType_NO,
+							Result:  tmproto.SideTxResultType_NO,
 							Address: addr2,
 						},
 						{
-							Result:  tmprototypes.SideTxResultType_YES,
+							Result:  tmproto.SideTxResultType_YES,
 							Address: addr3,
 						},
 						{
-							Result:  tmprototypes.SideTxResultType_YES,
+							Result:  tmproto.SideTxResultType_YES,
 							Address: addr4,
 						},
 					},
@@ -424,8 +423,8 @@ func (suite *SideTxProcessorTestSuite) TestBeginSideBlocker() {
 				SideTxHandler: func(ctx sdk.Context, msg sdk.Msg) abci.ResponseDeliverSideTx {
 					return abci.ResponseDeliverSideTx{}
 				},
-				PostTxHandler: func(ctx sdk.Context, msg sdk.Msg, sideTxResult tmprototypes.SideTxResultType) (*sdk.Result, error) {
-					require.Equal(t, tmprototypes.SideTxResultType_YES, sideTxResult, "Result `sideTxResult` should be `yes`")
+				PostTxHandler: func(ctx sdk.Context, msg sdk.Msg, sideTxResult tmproto.SideTxResultType) (*sdk.Result, error) {
+					require.Equal(t, tmproto.SideTxResultType_YES, sideTxResult, "Result `sideTxResult` should be `yes`")
 
 					// try to set random state data to store
 					keeper.SetTx(ctx, 700, testTxStateData1)
@@ -470,8 +469,8 @@ func (suite *SideTxProcessorTestSuite) TestBeginSideBlocker() {
 				SideTxHandler: func(ctx sdk.Context, msg sdk.Msg) abci.ResponseDeliverSideTx {
 					return abci.ResponseDeliverSideTx{}
 				},
-				PostTxHandler: func(ctx sdk.Context, msg sdk.Msg, sideTxResult tmprototypes.SideTxResultType) (*sdk.Result, error) {
-					require.Equal(t, tmprototypes.SideTxResultType_YES, sideTxResult, "Result `sideTxResult` should be `yes`")
+				PostTxHandler: func(ctx sdk.Context, msg sdk.Msg, sideTxResult tmproto.SideTxResultType) (*sdk.Result, error) {
+					require.Equal(t, tmproto.SideTxResultType_YES, sideTxResult, "Result `sideTxResult` should be `yes`")
 
 					// try to set random state data to store
 					keeper.SetTx(ctx, 900, testTxStateData1)
@@ -503,8 +502,8 @@ func (suite *SideTxProcessorTestSuite) TestBeginSideBlocker() {
 				SideTxHandler: func(ctx sdk.Context, msg sdk.Msg) abci.ResponseDeliverSideTx {
 					return abci.ResponseDeliverSideTx{}
 				},
-				PostTxHandler: func(ctx sdk.Context, msg sdk.Msg, sideTxResult tmprototypes.SideTxResultType) (*sdk.Result, error) {
-					require.Equal(t, tmprototypes.SideTxResultType_YES, sideTxResult, "Result `sideTxResult` should be `yes`")
+				PostTxHandler: func(ctx sdk.Context, msg sdk.Msg, sideTxResult tmproto.SideTxResultType) (*sdk.Result, error) {
+					require.Equal(t, tmproto.SideTxResultType_YES, sideTxResult, "Result `sideTxResult` should be `yes`")
 
 					// try to set random state data to store
 					keeper.SetTx(ctx, 900, testTxStateData1)

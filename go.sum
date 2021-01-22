@@ -395,9 +395,13 @@ github.com/maticnetwork/bor v0.2.2-0.20200807103547-4d42b15906aa h1:T5Fx3HKWQdho
 github.com/maticnetwork/bor v0.2.2-0.20200807103547-4d42b15906aa/go.mod h1:uqsK1HCAHuCmEMGgOr6qLnzV1No/obnuu5Nz3nkMKNQ=
 github.com/maticnetwork/cosmos-sdk v0.37.5-0.20201211110634-320b75b282ae h1:KKCS3phDH3ZRDiFmyjKWpEIJbqEAqAJyfZkoW/F2ATw=
 github.com/maticnetwork/cosmos-sdk v0.37.5-0.20201211110634-320b75b282ae/go.mod h1:rdaxNAhIvydwHxOIUIB7+ntEZjQDpfwtotJTBXRFn+E=
+github.com/maticnetwork/cosmos-sdk v0.37.5-0.20210120102128-8ce53e585ef6 h1:6DG56GUXU1QnQ9CSRTss7tJpQqSRhsguB46EX8wIGiI=
+github.com/maticnetwork/cosmos-sdk v0.37.5-0.20210120102128-8ce53e585ef6/go.mod h1:dP8jLBm3qZCM12U0v1rtCobwoejFUo+HpuS5u15og0M=
 github.com/maticnetwork/cosmos-sdk v0.38.3 h1:e4nxtsXXY9mNqz8JWu0MYeepot72+9/FKC81JOei96Y=
 github.com/maticnetwork/tendermint v0.26.0-dev0.0.20201206065638-7f88f460383c h1:D551kWhgn4KRDxKiBsgbx7hZAOSLwU3lYXvA2RXKZdQ=
 github.com/maticnetwork/tendermint v0.26.0-dev0.0.20201206065638-7f88f460383c/go.mod h1:eE3UfvrRJy1n/jKkqaCKHnU3D72/D0/KYvb9xPv6ym4=
+github.com/maticnetwork/tendermint v0.26.0-dev0.0.20210120100900-c8adb2516be0 h1:9N7a1qsqoyaSQkGQZSU1NWmVcQARfofIPIV2QfFPT2g=
+github.com/maticnetwork/tendermint v0.26.0-dev0.0.20210120100900-c8adb2516be0/go.mod h1:eE3UfvrRJy1n/jKkqaCKHnU3D72/D0/KYvb9xPv6ym4=
 github.com/mattn/go-colorable v0.0.9/go.mod h1:9vuHe8Xs5qXnSaW/c/ABM9alt+Vo+STaOChaDxuIBZU=
 github.com/mattn/go-colorable v0.1.0 h1:v2XXALHHh6zHfYTJ+cSkwtyffnaOyR1MXaA91mTrb8o=
 github.com/mattn/go-colorable v0.1.0/go.mod h1:9vuHe8Xs5qXnSaW/c/ABM9alt+Vo+STaOChaDxuIBZU=

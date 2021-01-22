@@ -5,14 +5,12 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/spf13/cobra"
-
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/bor/common"
-	ethcrypto "github.com/maticnetwork/bor/crypto"
+	"github.com/spf13/cobra"
 
 	// "github.com/maticnetwork/heimdall/bridge/setu/util"
 
@@ -44,6 +42,31 @@ func GetTxCmd() *cobra.Command {
 
 	return stakingTxCmd
 }
+
+func validateAndCompressPubKey(pubkeyBytes []byte) ([]byte, error) {
+	if len(pubkeyBytes) == helper.UNCOMPRESSED_PUBKEY_SIZE {
+		pubkeyBytes = helper.AppendPubkeyPrefix(pubkeyBytes)
+	}
+
+	// check if key is uncompressed
+	if len(pubkeyBytes) == helper.UNCOMPRESSED_PUBKEY_SIZE_WITH_PREFIX {
+		var err error
+		pubkeyBytes, err = helper.CompressPubKey(pubkeyBytes)
+		if err != nil {
+			return nil, fmt.Errorf("Invalid uncompressed pubkey %s", err)
+		}
+	}
+
+	if len(pubkeyBytes) != helper.COMPRESSED_PUBKEY_SIZE_WITH_PREFIX {
+		return nil, fmt.Errorf("Invalid compressed pubkey")
+	}
+
+	return pubkeyBytes, nil
+}
+
+//
+//
+//
 
 // ValidatorJoinTxCmd send validator join message
 func ValidatorJoinTxCmd() *cobra.Command {
@@ -80,25 +103,13 @@ func ValidatorJoinTxCmd() *cobra.Command {
 			}
 
 			// convert PubKey to bytes
-			compressedPubkeyBytes := common.FromHex(pubkeyStr)
-
-			ecdsaPubkey, err := ethcrypto.DecompressPubkey(compressedPubkeyBytes)
+			pubkeyBytes, err := validateAndCompressPubKey(common.FromHex(pubkeyStr))
 			if err != nil {
-				return err
+				return fmt.Errorf("Invalid uncompressed pubkey %s", err)
 			}
-			pubkeyBytes := ethcrypto.FromECDSAPub(ecdsaPubkey)
 
-			if len(pubkeyBytes) != 65 {
-				return fmt.Errorf("invalid public key length")
-			}
+			// create new pub key
 			pubkey := hmTypes.NewPubKey(pubkeyBytes)
-
-			// total stake amount
-			amountStr, _ := cmd.Flags().GetString(FlagAmount)
-			amount, ok := sdk.NewIntFromString(amountStr)
-			if !ok {
-				return fmt.Errorf("invalid stake amount")
-			}
 
 			// Get contractCaller ref
 			contractCallerObj, err := helper.NewContractCaller()
@@ -106,7 +117,7 @@ func ValidatorJoinTxCmd() *cobra.Command {
 				return err
 			}
 
-			// TODO uncomment this when integrating chainmanager
+			// // TODO uncomment this when integrating chainmanager
 			// chainmanagerParams, err := util.GetChainmanagerParams(cliCtx)
 			// if err != nil {
 			// 	return err
@@ -141,7 +152,11 @@ func ValidatorJoinTxCmd() *cobra.Command {
 				return fmt.Errorf("Invalid tx for validator join")
 			}
 
-			if !bytes.Equal(event.SignerPubkey, pubkey.Bytes()[1:]) {
+			expectedPubKey, err := helper.CompressPubKey(event.SignerPubkey)
+			if err != nil {
+				return err
+			}
+			if !bytes.Equal(expectedPubKey, pubkey.Bytes()) {
 				return fmt.Errorf("Public key mismatch with event log")
 			}
 
@@ -153,7 +168,7 @@ func ValidatorJoinTxCmd() *cobra.Command {
 				proposer,
 				event.ValidatorId.Uint64(),
 				activationEpoch,
-				amount,
+				sdk.NewIntFromBigInt(event.Total),
 				pubkey,
 				hmTypes.HexToHeimdallHash(txhash),
 				logIndex,
@@ -170,14 +185,15 @@ func ValidatorJoinTxCmd() *cobra.Command {
 	cmd.Flags().String(FlagSignerPubkey, "", "--signer-pubkey=<signer pubkey here>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
 	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
-	cmd.Flags().String(FlagAmount, "0", "--amount=<amount>")
 	cmd.Flags().Uint64(FlagActivationEpoch, 0, "--activation-epoch=<activation-epoch>")
 
 	_ = cmd.MarkFlagRequired(FlagBlockNumber)
 	_ = cmd.MarkFlagRequired(FlagActivationEpoch)
-	_ = cmd.MarkFlagRequired(FlagAmount)
 	_ = cmd.MarkFlagRequired(FlagSignerPubkey)
 	_ = cmd.MarkFlagRequired(FlagTxHash)
+
+	// add common tx flags to cmd
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }
@@ -216,19 +232,10 @@ func SignerUpdateTxCmd() *cobra.Command {
 				return fmt.Errorf("pubkey is required")
 			}
 
-			// convert PubKey to bytes
-			compressedPubkeyBytes := common.FromHex(pubkeyStr)
-
-			ecdsaPubkey, err := ethcrypto.DecompressPubkey(compressedPubkeyBytes)
+			expectedPubKey, err := helper.CompressPubKey(common.FromHex(pubkeyStr))
 			if err != nil {
 				return err
 			}
-			pubkeyBytes := ethcrypto.FromECDSAPub(ecdsaPubkey)
-
-			if len(pubkeyBytes) != 65 {
-				return fmt.Errorf("invalid public key length")
-			}
-			pubkey := hmTypes.NewPubKey(pubkeyBytes)
 
 			// get txHash from flag
 			txhash, _ := cmd.Flags().GetString(FlagTxHash)
@@ -244,7 +251,7 @@ func SignerUpdateTxCmd() *cobra.Command {
 			msg := types.NewMsgSignerUpdate(
 				proposer,
 				ValidatorID,
-				pubkey,
+				expectedPubKey,
 				hmTypes.HexToHeimdallHash(txhash),
 				logIndex,
 				blockNumber,
@@ -331,6 +338,9 @@ func StakeUpdateTxCmd() *cobra.Command {
 				blockNumber,
 				nonce,
 			)
+			if err != nil {
+				return err
+			}
 
 			// broadcast message
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)

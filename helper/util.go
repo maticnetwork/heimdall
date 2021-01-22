@@ -9,6 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/common"
+	ethcrypto "github.com/maticnetwork/bor/crypto"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
@@ -24,6 +25,13 @@ var ZeroAddress = common.Address{}
 
 // ZeroPubKey represents empty pub key
 var ZeroPubKey = hmCommonTypes.PubKey{}
+
+const (
+	COMPRESSED_PUBKEY_SIZE               = 32
+	COMPRESSED_PUBKEY_SIZE_WITH_PREFIX   = 33
+	UNCOMPRESSED_PUBKEY_SIZE             = 64
+	UNCOMPRESSED_PUBKEY_SIZE_WITH_PREFIX = 65
+)
 
 // GetPowerFromAmount returns power from amount -- note that this will pollute amount object
 func GetPowerFromAmount(amount *big.Int) (*big.Int, error) {
@@ -77,6 +85,37 @@ func EventByID(abiObject *abi.ABI, sigdata []byte) *abi.Event {
 		}
 	}
 	return nil
+}
+
+// AppendPubkeyPrefix returns publickey in uncompressed format
+func AppendPubkeyPrefix(signerPubKey []byte) []byte {
+	// append prefix - "0x04" as heimdall uses publickey in uncompressed format. Refer below link
+	// https://superuser.com/questions/1465455/what-is-the-size-of-public-key-for-ecdsa-spec256r1
+	prefix := make([]byte, 1)
+	prefix[0] = byte(0x04)
+	signerPubKey = append(prefix[:], signerPubKey[:]...)
+	return signerPubKey
+}
+
+// DecompressPubKey decompress pub key
+func DecompressPubKey(compressed []byte) ([]byte, error) {
+	ecdsaPubkey, err := ethcrypto.DecompressPubkey(compressed)
+	if err != nil {
+		return nil, err
+	}
+	return ethcrypto.FromECDSAPub(ecdsaPubkey), nil
+}
+
+// CompressPubKey decompress pub key
+func CompressPubKey(uncompressedBytes []byte) ([]byte, error) {
+	if len(uncompressedBytes) == UNCOMPRESSED_PUBKEY_SIZE {
+		uncompressedBytes = AppendPubkeyPrefix(uncompressedBytes)
+	}
+	uncompressed, err := ethcrypto.UnmarshalPubkey(uncompressedBytes)
+	if err != nil {
+		return nil, err
+	}
+	return ethcrypto.CompressPubkey(uncompressed), nil
 }
 
 // GetUpdatedValidators updates validators in validator set
