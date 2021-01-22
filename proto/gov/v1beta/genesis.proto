@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package gov.v1beta;
+package heimdall.gov.v1beta;
 
 import "gogoproto/gogo.proto";
 import "gov/v1beta/gov.proto";
@@ -22,6 +22,27 @@ message GenesisState {
     // proposals defines all the proposals present at genesis.
     repeated Proposal proposals = 4
         [(gogoproto.castrepeated) = "Proposals", (gogoproto.nullable) = false];
+    // params defines all the paramaters of related to deposit.
+    DepositParams deposit_params = 5 [
+        (gogoproto.nullable) = false,
+        (gogoproto.moretags) = "yaml:\"deposit_params\""
+    ];
+    // params defines all the paramaters of related to voting.
+    VotingParams voting_params = 6 [
+        (gogoproto.nullable) = false,
+        (gogoproto.moretags) = "yaml:\"voting_params\""
+    ];
+    // params defines all the paramaters of related to tally.
+    TallyParams tally_params = 7 [
+        (gogoproto.nullable) = false,
+        (gogoproto.moretags) = "yaml:\"tally_params\""
+    ];
+}
+
+message Params {
+    option (gogoproto.goproto_getters)  = false;
+    option (gogoproto.goproto_stringer) = true;
+
     // params defines all the paramaters of related to deposit.
     DepositParams deposit_params = 5 [
         (gogoproto.nullable) = false,

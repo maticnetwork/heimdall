@@ -6,14 +6,15 @@ import "gogoproto/gogo.proto";
 
 option go_package = "github.com/maticnetwork/heimdall/x/topup/types";
 
-option (gogoproto.sizer_all) = true;
-option (gogoproto.marshaler_all) = true;
+option (gogoproto.sizer_all)       = true;
+option (gogoproto.marshaler_all)   = true;
 option (gogoproto.unmarshaler_all) = true;
 
 // Query defines the gRPC querier service.
 service Query {
     // this line is used by starport scaffolding # 2
     rpc Sequence(QuerySequenceRequest) returns (QuerySequenceResponse) {
+        //TODO confirm path
         option (google.api.http).get = "/x/topup/types/msg_topup/{tx_hash}";
     }
 }
@@ -22,11 +23,11 @@ service Query {
 
 message QuerySequenceRequest {
     option (gogoproto.goproto_getters) = false;
-    string tx_hash = 1;
-    uint64 log_index = 2;
+    string tx_hash                     = 1;
+    uint64 log_index                   = 2;
 }
 
 message QuerySequenceResponse {
     option (gogoproto.goproto_getters) = false;
-    uint64 sequence = 1;
+    uint64 sequence                    = 1;
 }

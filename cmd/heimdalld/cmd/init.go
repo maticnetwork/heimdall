@@ -70,12 +70,6 @@ func initCmd(ctx *server.Context, amino *codec.LegacyAmino, mbm module.BasicMana
 				return fmt.Errorf("genesis.json file already exists: %v", genFile)
 			}
 
-			// write default heimdall config
-			WriteDefaultHeimdallConfig(
-				filepath.Join(config.RootDir, "config/heimdall-config.toml"),
-				helper.GetDefaultHeimdallConfig(),
-			)
-
 			// get pubkey
 			newPubkey := hmcommon.NewPubKey(valPubKey.Bytes())
 
@@ -126,7 +120,8 @@ func initCmd(ctx *server.Context, amino *codec.LegacyAmino, mbm module.BasicMana
 				return fmt.Errorf("failed to convert accounts into any's: %w", err)
 			}
 			authGenState.Accounts = genAccs
-			appState[authtypes.ModuleName] = authclient.Codec.MustMarshalJSON(&authGenState)
+			// TODO - check this
+			// appState[authtypes.ModuleName] = authclient.Codec.MustMarshalJSON(&authGenState)
 
 			//
 			// staking state change

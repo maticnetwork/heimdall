@@ -34,8 +34,8 @@ func NewMsgCheckpointBlock(
 		Proposer:        proposer.String(),
 		StartBlock:      startBlock,
 		EndBlock:        endBlock,
-		RootHash:        roothash.Bytes(),
-		AccountRootHash: accountRootHash.Bytes(),
+		RootHash:        roothash.String(),
+		AccountRootHash: accountRootHash.String(),
 		BorChainID:      borChainID,
 	}
 }
@@ -86,8 +86,8 @@ func (msg MsgCheckpoint) GetSideSignBytes() []byte {
 		[]byte(msg.Proposer),
 		new(big.Int).SetUint64(msg.StartBlock).Bytes(),
 		new(big.Int).SetUint64(msg.EndBlock).Bytes(),
-		msg.RootHash,
-		msg.AccountRootHash,
+		[]byte(msg.RootHash),
+		[]byte(msg.AccountRootHash),
 		new(big.Int).SetUint64(borChainID).Bytes(),
 	)
 }
