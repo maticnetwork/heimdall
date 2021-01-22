@@ -11,6 +11,7 @@ import (
 	"github.com/maticnetwork/heimdall/app"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/types/simulation"
+	checkpointTypes "github.com/maticnetwork/heimdall/x/checkpoint/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -72,27 +73,26 @@ func (suite *KeeperTestSuite) TestAddFeeToDividendAccount() {
 	require.Equal(t, amount, actualResult)
 }
 
-// TODO: Uncomment this code after checkpoint module code is merged
-// func (suite *KeeperTestSuite) TestDividendAccountTree() {
-// 	t := suite.T()
+func (suite *KeeperTestSuite) TestDividendAccountTree() {
+	t := suite.T()
 
-// 	divAccounts := make([]hmTypes.DividendAccount, 5)
-// 	for i := 0; i < len(divAccounts); i++ {
-// 		divAccounts[i] = hmTypes.NewDividendAccount(
-// 			sdk.AccAddress("1234"),
-// 			big.NewInt(0).String(),
-// 		)
-// 	}
+	divAccounts := make([]hmTypes.DividendAccount, 5)
+	for i := 0; i < len(divAccounts); i++ {
+		divAccounts[i] = hmTypes.NewDividendAccount(
+			sdk.AccAddress("1234"),
+			big.NewInt(0).String(),
+		)
+	}
 
-// 	accountRoot, err := checkpointTypes.GetAccountRootHash(divAccounts)
-// 	require.NotNil(t, accountRoot)
-// 	require.NoError(t, err)
+	accountRoot, err := checkpointTypes.GetAccountRootHash(divAccounts)
+	require.NotNil(t, accountRoot)
+	require.NoError(t, err)
 
-// 	accountProof, _, err := checkpointTypes.GetAccountProof(divAccounts, hmTypes.HexToHeimdallAddress("1234"))
-// 	require.NotNil(t, accountProof)
-// 	require.NoError(t, err)
+	accountProof, _, err := checkpointTypes.GetAccountProof(divAccounts, sdk.AccAddress("1234"))
+	require.NotNil(t, accountProof)
+	require.NoError(t, err)
 
-// 	leafHash, err := divAccounts[0].CalculateHash()
-// 	require.NotNil(t, leafHash)
-// 	require.NoError(t, err)
-// }
+	leafHash, err := divAccounts[0].CalculateHash()
+	require.NotNil(t, leafHash)
+	require.NoError(t, err)
+}
