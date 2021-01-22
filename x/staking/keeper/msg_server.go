@@ -42,7 +42,6 @@ func (k msgServer) ValidatorJoin(goCtx context.Context, msg *types.MsgValidatorJ
 
 	// Generate PubKey from Pubkey in message and signer
 	pubkey := msg.GetSignerPubKey()
-
 	signer := pubkey.Address()
 
 	// Check if validator has been validator before

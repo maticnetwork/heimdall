@@ -232,6 +232,7 @@ func SideHandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k kee
 	if err != nil || receipt == nil {
 		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
 	}
+
 	// new pubkey and signer
 	newPubKey := msg.GetNewSignerPubKey()
 	newSigner := newPubKey.Address()
@@ -292,6 +293,7 @@ func SideHandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k k
 		hmCommonTypes.HexToHeimdallHash(msg.TxHash).EthHash(),
 		params.MainchainTxConfirmations,
 	)
+
 	if err != nil || receipt == nil {
 		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
 	}

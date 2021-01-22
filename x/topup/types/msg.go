@@ -25,7 +25,7 @@ func NewMsgTopup(
 		FromAddress: fromAddr.String(),
 		User:        user.String(),
 		Fee:         fee,
-		TxHash:      txhash,
+		TxHash:      txhash.String(),
 		LogIndex:    logIndex,
 		BlockNumber: blockNumber,
 	}
@@ -61,7 +61,7 @@ func (msg MsgTopup) GetSigners() []sdk.AccAddress {
 
 // GetTxHash Returns tx hash
 func (msg MsgTopup) GetTxHash() hmCommon.HeimdallHash {
-	return msg.TxHash
+	return hmCommon.HexToHeimdallHash(msg.TxHash)
 }
 
 // GetLogIndex Returns log index

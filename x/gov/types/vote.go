@@ -73,6 +73,9 @@ func ValidVoteOption(option VoteOption) bool {
 	return false
 }
 
+func (v Votes) Reset()        { v = []Vote{} }
+func (v Votes) ProtoMessage() {}
+
 // Marshal needed for protobuf compatibility.
 func (vo VoteOption) Marshal() ([]byte, error) {
 	return []byte{byte(vo)}, nil

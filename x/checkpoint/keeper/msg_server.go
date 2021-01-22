@@ -3,7 +3,6 @@ package keeper
 import (
 	"bytes"
 	"context"
-	"encoding/hex"
 	"strconv"
 	"time"
 
@@ -97,7 +96,7 @@ func (k msgServer) Checkpoint(goCtx context.Context, msg *types.MsgCheckpoint) (
 	logger.Debug("Validator account root hash generated", "accountRootHash", hmTypes.BytesToHeimdallHash(accountRoot).String())
 
 	// Compare stored root hash to msg root hash
-	if !bytes.Equal(accountRoot, msg.AccountRootHash) {
+	if !bytes.Equal(accountRoot, []byte(msg.AccountRootHash)) {
 		logger.Error(
 			"AccountRootHash of current state doesn't match from msg",
 			"hash", hmTypes.BytesToHeimdallHash(accountRoot).String(),
@@ -134,8 +133,8 @@ func (k msgServer) Checkpoint(goCtx context.Context, msg *types.MsgCheckpoint) (
 			sdk.NewAttribute(types.AttributeKeyProposer, msg.Proposer),
 			sdk.NewAttribute(types.AttributeKeyStartBlock, strconv.FormatUint(msg.StartBlock, 10)),
 			sdk.NewAttribute(types.AttributeKeyEndBlock, strconv.FormatUint(msg.EndBlock, 10)),
-			sdk.NewAttribute(types.AttributeKeyRootHash, hex.EncodeToString(msg.RootHash)),
-			sdk.NewAttribute(types.AttributeKeyAccountHash, hex.EncodeToString(msg.AccountRootHash)),
+			sdk.NewAttribute(types.AttributeKeyRootHash, msg.RootHash),
+			sdk.NewAttribute(types.AttributeKeyAccountHash, msg.AccountRootHash),
 		),
 	})
 
@@ -159,13 +158,13 @@ func (k msgServer) CheckpointAck(goCtx context.Context, msg *types.MsgCheckpoint
 	}
 
 	// Return err if start and end matches but contract root hash doesn't match
-	if msg.StartBlock == headerBlock.StartBlock && msg.EndBlock == headerBlock.EndBlock && !bytes.Equal([]byte(msg.RootHash), headerBlock.RootHash) {
+	if msg.StartBlock == headerBlock.StartBlock && msg.EndBlock == headerBlock.EndBlock && msg.RootHash == headerBlock.RootHash {
 		logger.Error("Invalid ACK",
 			"startExpected", headerBlock.StartBlock,
 			"startReceived", msg.StartBlock,
 			"endExpected", headerBlock.EndBlock,
 			"endReceived", msg.StartBlock,
-			"rootExpected", hex.EncodeToString(headerBlock.RootHash),
+			"rootExpected", headerBlock.RootHash,
 			"rootRecieved", msg.RootHash,
 		)
 		return nil, types.ErrBadAck

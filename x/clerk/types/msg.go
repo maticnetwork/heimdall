@@ -25,12 +25,12 @@ func NewMsgEventRecord(
 
 ) MsgEventRecordRequest {
 	return MsgEventRecordRequest{
-		From:            from,
-		TxHash:          txHash,
+		From:            from.String(),
+		TxHash:          txHash.String(),
 		LogIndex:        logIndex,
 		BlockNumber:     blockNumber,
 		Id:              id,
-		ContractAddress: contractAddress,
+		ContractAddress: contractAddress.String(),
 		Data:            data,
 		ChainId:         chainID,
 	}
@@ -44,11 +44,11 @@ func (msg MsgEventRecordRequest) Type() string { return "event-record" }
 
 // ValidateBasic Implements Msg.
 func (msg MsgEventRecordRequest) ValidateBasic() error {
-	if msg.From.Empty() {
+	if msg.From == "" {
 		return sdkerrors.ErrUnknownRequest
 	}
 
-	if msg.TxHash.Empty() {
+	if msg.TxHash == "" {
 		return sdkerrors.ErrInvalidAddress
 	}
 	return nil
@@ -65,12 +65,13 @@ func (msg MsgEventRecordRequest) GetSignBytes() []byte {
 
 // GetSigners Implements Msg.
 func (msg MsgEventRecordRequest) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.From}
+	from, _ := sdk.AccAddressFromHex(msg.From)
+	return []sdk.AccAddress{from}
 }
 
 // GetTxHash Returns tx hash
 func (msg MsgEventRecordRequest) GetTxHash() hmCommon.HeimdallHash {
-	return msg.TxHash
+	return hmCommon.HexToHeimdallHash(msg.TxHash)
 }
 
 // GetLogIndex Returns log index
