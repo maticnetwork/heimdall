@@ -17,6 +17,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
+	govclient "github.com/maticnetwork/heimdall/x/gov/client"
 	"github.com/maticnetwork/heimdall/x/gov/client/cli"
 	"github.com/maticnetwork/heimdall/x/gov/client/rest"
 	"github.com/maticnetwork/heimdall/x/gov/keeper"
@@ -34,11 +35,19 @@ var (
 
 // AppModuleBasic implements the AppModuleBasic interface for the capability module.
 type AppModuleBasic struct {
-	cdc codec.Marshaler
+	cdc              codec.Marshaler
+	proposalHandlers []govclient.ProposalHandler // proposal handlers which live in governance cli and rest
 }
 
-func NewAppModuleBasic(cdc codec.Marshaler) AppModuleBasic {
-	return AppModuleBasic{cdc: cdc}
+// func NewAppModuleBasic(cdc codec.Marshaler) AppModuleBasic {
+// 	return AppModuleBasic{cdc: cdc}
+// }
+
+// NewAppModuleBasic creates a new AppModuleBasic object
+func NewAppModuleBasic(proposalHandlers ...govclient.ProposalHandler) AppModuleBasic {
+	return AppModuleBasic{
+		proposalHandlers: proposalHandlers,
+	}
 }
 
 // Name returns the capability module's name.
@@ -92,7 +101,12 @@ func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *r
 
 // GetTxCmd returns the capability module's root tx command.
 func (a AppModuleBasic) GetTxCmd() *cobra.Command {
-	return cli.GetTxCmd()
+	proposalCLIHandlers := make([]*cobra.Command, 0, len(a.proposalHandlers))
+	for _, proposalHandler := range a.proposalHandlers {
+		proposalCLIHandlers = append(proposalCLIHandlers, proposalHandler.CLIHandler())
+	}
+
+	return cli.NewTxCmd(proposalCLIHandlers)
 }
 
 // GetQueryCmd returns the capability module's root query command.
@@ -104,17 +118,22 @@ func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 // AppModule
 // ----------------------------------------------------------------------------
 
-// AppModule implements the AppModule interface for the capability module.
+// AppModule implements an application module for the gov module.
 type AppModule struct {
 	AppModuleBasic
 
-	keeper keeper.Keeper
+	keeper        keeper.Keeper
+	accountKeeper types.AccountKeeper
+	bankKeeper    types.BankKeeper
 }
 
-func NewAppModule(cdc codec.Marshaler, keeper keeper.Keeper) AppModule {
+// NewAppModule creates a new AppModule object
+func NewAppModule(cdc codec.Marshaler, keeper keeper.Keeper, ak types.AccountKeeper, bk types.BankKeeper) AppModule {
 	return AppModule{
-		AppModuleBasic: NewAppModuleBasic(cdc),
+		AppModuleBasic: AppModuleBasic{cdc: cdc},
 		keeper:         keeper,
+		accountKeeper:  ak,
+		bankKeeper:     bk,
 	}
 }
 
@@ -152,7 +171,7 @@ func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONMarshaler, gs jso
 	// Initialize global index to index in genesis state
 	cdc.MustUnmarshalJSON(gs, &genState)
 
-	InitGenesis(ctx, am.keeper, genState)
+	InitGenesis(ctx, am.accountKeeper, am.bankKeeper, am.keeper, genState)
 
 	return []abci.ValidatorUpdate{}
 }

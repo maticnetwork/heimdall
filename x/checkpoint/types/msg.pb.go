@@ -4,11 +4,17 @@
 package types
 
 import (
+	context "context"
 	fmt "fmt"
-	_ "github.com/cosmos/cosmos-sdk/codec/types"
 	_ "github.com/gogo/protobuf/gogoproto"
+	grpc1 "github.com/gogo/protobuf/grpc"
 	proto "github.com/gogo/protobuf/proto"
+	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
+	io "io"
 	math "math"
+	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -22,19 +28,1608 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// MsgCheckpoint defines a message to crete checkpoint.
+type MsgCheckpoint struct {
+	Proposer        string `protobuf:"bytes,1,opt,name=proposer,proto3" json:"proposer,omitempty"`
+	StartBlock      uint64 `protobuf:"varint,2,opt,name=start_block,json=startBlock,proto3" json:"start_block,omitempty" yaml:"start_block"`
+	EndBlock        uint64 `protobuf:"varint,3,opt,name=end_block,json=endBlock,proto3" json:"end_block,omitempty" yaml:"end_block"`
+	RootHash        string `protobuf:"bytes,4,opt,name=root_hash,json=rootHash,proto3" json:"root_hash,omitempty" yaml:"root_hash"`
+	AccountRootHash string `protobuf:"bytes,5,opt,name=account_root_hash,json=accountRootHash,proto3" json:"account_root_hash,omitempty" yaml:"account_root_hash"`
+	BorChainID      string `protobuf:"bytes,6,opt,name=bor_chainID,json=borChainID,proto3" json:"bor_chainID,omitempty" yaml:"bor_chainID"`
+}
+
+func (m *MsgCheckpoint) Reset()         { *m = MsgCheckpoint{} }
+func (m *MsgCheckpoint) String() string { return proto.CompactTextString(m) }
+func (*MsgCheckpoint) ProtoMessage()    {}
+func (*MsgCheckpoint) Descriptor() ([]byte, []int) {
+	return fileDescriptor_54f8314581ee9560, []int{0}
+}
+func (m *MsgCheckpoint) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgCheckpoint) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgCheckpoint.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgCheckpoint) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgCheckpoint.Merge(m, src)
+}
+func (m *MsgCheckpoint) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgCheckpoint) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgCheckpoint.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgCheckpoint proto.InternalMessageInfo
+
+// MsgValidatorJoinResponse defines ValidatorJoin response type.
+type MsgCheckpointResponse struct {
+}
+
+func (m *MsgCheckpointResponse) Reset()         { *m = MsgCheckpointResponse{} }
+func (m *MsgCheckpointResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgCheckpointResponse) ProtoMessage()    {}
+func (*MsgCheckpointResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_54f8314581ee9560, []int{1}
+}
+func (m *MsgCheckpointResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgCheckpointResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgCheckpointResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgCheckpointResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgCheckpointResponse.Merge(m, src)
+}
+func (m *MsgCheckpointResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgCheckpointResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgCheckpointResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgCheckpointResponse proto.InternalMessageInfo
+
+// MsgCheckpoint defines a message to checkpoint ack.
+type MsgCheckpointAck struct {
+	From       string `protobuf:"bytes,1,opt,name=from,proto3" json:"from,omitempty"`
+	Number     uint64 `protobuf:"varint,2,opt,name=number,proto3" json:"number,omitempty"`
+	Proposer   string `protobuf:"bytes,3,opt,name=proposer,proto3" json:"proposer,omitempty"`
+	StartBlock uint64 `protobuf:"varint,4,opt,name=start_block,json=startBlock,proto3" json:"start_block,omitempty" yaml:"start_block"`
+	EndBlock   uint64 `protobuf:"varint,5,opt,name=end_block,json=endBlock,proto3" json:"end_block,omitempty" yaml:"end_block"`
+	RootHash   string `protobuf:"bytes,6,opt,name=root_hash,json=rootHash,proto3" json:"root_hash,omitempty" yaml:"root_hash"`
+	TxHash     string `protobuf:"bytes,7,opt,name=tx_hash,json=txHash,proto3" json:"tx_hash,omitempty" yaml:"tx_hash"`
+	LogIndex   uint64 `protobuf:"varint,8,opt,name=log_index,json=logIndex,proto3" json:"log_index,omitempty" yaml:"log_index"`
+}
+
+func (m *MsgCheckpointAck) Reset()         { *m = MsgCheckpointAck{} }
+func (m *MsgCheckpointAck) String() string { return proto.CompactTextString(m) }
+func (*MsgCheckpointAck) ProtoMessage()    {}
+func (*MsgCheckpointAck) Descriptor() ([]byte, []int) {
+	return fileDescriptor_54f8314581ee9560, []int{2}
+}
+func (m *MsgCheckpointAck) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgCheckpointAck) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgCheckpointAck.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgCheckpointAck) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgCheckpointAck.Merge(m, src)
+}
+func (m *MsgCheckpointAck) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgCheckpointAck) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgCheckpointAck.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgCheckpointAck proto.InternalMessageInfo
+
+// MsgCheckpointAckResponse defines CheckpointAck response type.
+type MsgCheckpointAckResponse struct {
+}
+
+func (m *MsgCheckpointAckResponse) Reset()         { *m = MsgCheckpointAckResponse{} }
+func (m *MsgCheckpointAckResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgCheckpointAckResponse) ProtoMessage()    {}
+func (*MsgCheckpointAckResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_54f8314581ee9560, []int{3}
+}
+func (m *MsgCheckpointAckResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgCheckpointAckResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgCheckpointAckResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgCheckpointAckResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgCheckpointAckResponse.Merge(m, src)
+}
+func (m *MsgCheckpointAckResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgCheckpointAckResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgCheckpointAckResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgCheckpointAckResponse proto.InternalMessageInfo
+
+// MsgCheckpoint defines a message to checkpoint no ack.
+type MsgCheckpointNoAck struct {
+	From string `protobuf:"bytes,1,opt,name=from,proto3" json:"from,omitempty"`
+}
+
+func (m *MsgCheckpointNoAck) Reset()         { *m = MsgCheckpointNoAck{} }
+func (m *MsgCheckpointNoAck) String() string { return proto.CompactTextString(m) }
+func (*MsgCheckpointNoAck) ProtoMessage()    {}
+func (*MsgCheckpointNoAck) Descriptor() ([]byte, []int) {
+	return fileDescriptor_54f8314581ee9560, []int{4}
+}
+func (m *MsgCheckpointNoAck) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgCheckpointNoAck) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgCheckpointNoAck.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgCheckpointNoAck) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgCheckpointNoAck.Merge(m, src)
+}
+func (m *MsgCheckpointNoAck) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgCheckpointNoAck) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgCheckpointNoAck.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgCheckpointNoAck proto.InternalMessageInfo
+
+// MsgCheckpointNoAckResponse defines CheckpointNoAck response type.
+type MsgCheckpointNoAckResponse struct {
+}
+
+func (m *MsgCheckpointNoAckResponse) Reset()         { *m = MsgCheckpointNoAckResponse{} }
+func (m *MsgCheckpointNoAckResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgCheckpointNoAckResponse) ProtoMessage()    {}
+func (*MsgCheckpointNoAckResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_54f8314581ee9560, []int{5}
+}
+func (m *MsgCheckpointNoAckResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgCheckpointNoAckResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgCheckpointNoAckResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgCheckpointNoAckResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgCheckpointNoAckResponse.Merge(m, src)
+}
+func (m *MsgCheckpointNoAckResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgCheckpointNoAckResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgCheckpointNoAckResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgCheckpointNoAckResponse proto.InternalMessageInfo
+
+func init() {
+	proto.RegisterType((*MsgCheckpoint)(nil), "heimdall.checkpoint.v1beta1.MsgCheckpoint")
+	proto.RegisterType((*MsgCheckpointResponse)(nil), "heimdall.checkpoint.v1beta1.MsgCheckpointResponse")
+	proto.RegisterType((*MsgCheckpointAck)(nil), "heimdall.checkpoint.v1beta1.MsgCheckpointAck")
+	proto.RegisterType((*MsgCheckpointAckResponse)(nil), "heimdall.checkpoint.v1beta1.MsgCheckpointAckResponse")
+	proto.RegisterType((*MsgCheckpointNoAck)(nil), "heimdall.checkpoint.v1beta1.MsgCheckpointNoAck")
+	proto.RegisterType((*MsgCheckpointNoAckResponse)(nil), "heimdall.checkpoint.v1beta1.MsgCheckpointNoAckResponse")
+}
+
 func init() { proto.RegisterFile("checkpoint/v1beta/msg.proto", fileDescriptor_54f8314581ee9560) }
 
 var fileDescriptor_54f8314581ee9560 = []byte{
-	// 161 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x92, 0x4e, 0xce, 0x48, 0x4d,
-	0xce, 0x2e, 0xc8, 0xcf, 0xcc, 0x2b, 0xd1, 0x2f, 0x33, 0x4c, 0x4a, 0x2d, 0x49, 0xd4, 0xcf, 0x2d,
-	0x4e, 0xd7, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x97, 0x12, 0x49, 0xcf, 0x4f, 0xcf, 0x07, 0x33, 0xf5,
-	0x41, 0x2c, 0xa8, 0xa8, 0x64, 0x7a, 0x7e, 0x7e, 0x7a, 0x4e, 0xaa, 0x3e, 0x98, 0x97, 0x54, 0x9a,
-	0xa6, 0x9f, 0x98, 0x57, 0x09, 0x91, 0x72, 0xf2, 0x3d, 0xf1, 0x48, 0x8e, 0xf1, 0xc2, 0x23, 0x39,
-	0xc6, 0x07, 0x8f, 0xe4, 0x18, 0x27, 0x3c, 0x96, 0x63, 0xb8, 0xf0, 0x58, 0x8e, 0xe1, 0xc6, 0x63,
-	0x39, 0x86, 0x28, 0xe3, 0xf4, 0xcc, 0x92, 0x8c, 0xd2, 0x24, 0xbd, 0xe4, 0xfc, 0x5c, 0xfd, 0xdc,
-	0xc4, 0x92, 0xcc, 0xe4, 0xbc, 0xd4, 0x92, 0xf2, 0xfc, 0xa2, 0x6c, 0xfd, 0x8c, 0xd4, 0xcc, 0xdc,
-	0x94, 0xc4, 0x9c, 0x1c, 0xfd, 0x0a, 0x7d, 0x24, 0xa7, 0x94, 0x54, 0x16, 0xa4, 0x16, 0x27, 0xb1,
-	0x81, 0x4d, 0x35, 0x06, 0x04, 0x00, 0x00, 0xff, 0xff, 0xc3, 0xad, 0x05, 0x73, 0xa5, 0x00, 0x00,
-	0x00,
+	// 553 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x94, 0x31, 0x6f, 0xda, 0x40,
+	0x14, 0xc7, 0x31, 0x21, 0xc4, 0xbc, 0x28, 0x4d, 0x7a, 0x4a, 0x53, 0xcb, 0x89, 0xec, 0xe8, 0xa6,
+	0xa8, 0x55, 0x6d, 0x41, 0x54, 0x21, 0x65, 0x0b, 0xe9, 0x90, 0x0c, 0x74, 0xb8, 0xb1, 0x0b, 0xb2,
+	0xcd, 0xd5, 0xb6, 0xb0, 0x7d, 0x96, 0x7d, 0xb4, 0x44, 0xfd, 0x02, 0x1d, 0xfb, 0x11, 0xf2, 0x71,
+	0x3a, 0x66, 0x6b, 0x27, 0x54, 0xc1, 0xd0, 0xce, 0x7c, 0x82, 0x8a, 0x33, 0x38, 0x36, 0x51, 0x23,
+	0xe8, 0xf6, 0x1e, 0xff, 0xff, 0xef, 0xbd, 0xe3, 0x3d, 0xdf, 0xc1, 0xb1, 0xe3, 0x51, 0x67, 0x10,
+	0x33, 0x3f, 0xe2, 0xe6, 0xa7, 0xa6, 0x4d, 0xb9, 0x65, 0x86, 0xa9, 0x6b, 0xc4, 0x09, 0xe3, 0x0c,
+	0x1d, 0x7b, 0xd4, 0x0f, 0xfb, 0x56, 0x10, 0x18, 0x0f, 0x2e, 0x23, 0x73, 0x35, 0xd5, 0x43, 0x97,
+	0xb9, 0x4c, 0xf8, 0xcc, 0x79, 0x94, 0x21, 0xf8, 0x47, 0x15, 0xf6, 0xba, 0xa9, 0x7b, 0x95, 0xfb,
+	0x91, 0x0a, 0x72, 0x9c, 0xb0, 0x98, 0xa5, 0x34, 0x51, 0xa4, 0x53, 0xe9, 0xac, 0x41, 0xf2, 0x1c,
+	0xb5, 0x61, 0x37, 0xe5, 0x56, 0xc2, 0x7b, 0x76, 0xc0, 0x9c, 0x81, 0x52, 0x3d, 0x95, 0xce, 0x6a,
+	0x9d, 0xa3, 0xd9, 0x58, 0x47, 0xb7, 0x56, 0x18, 0x5c, 0xe0, 0x82, 0x88, 0x09, 0x88, 0xac, 0x33,
+	0x4f, 0x50, 0x13, 0x1a, 0x34, 0xea, 0x2f, 0xb0, 0x2d, 0x81, 0x1d, 0xce, 0xc6, 0xfa, 0x41, 0x86,
+	0xe5, 0x12, 0x26, 0x32, 0x8d, 0xfa, 0x39, 0x92, 0x30, 0xc6, 0x7b, 0x9e, 0x95, 0x7a, 0x4a, 0x6d,
+	0x7e, 0x90, 0x22, 0x92, 0x4b, 0x98, 0xc8, 0xf3, 0xf8, 0xda, 0x4a, 0x3d, 0x74, 0x0d, 0xcf, 0x2d,
+	0xc7, 0x61, 0xc3, 0x88, 0xf7, 0x1e, 0xd0, 0x6d, 0x81, 0x9e, 0xcc, 0xc6, 0xba, 0x92, 0xa1, 0x8f,
+	0x2c, 0x98, 0xec, 0x2f, 0x7e, 0x23, 0xcb, 0x4a, 0x6d, 0xd8, 0xb5, 0x59, 0xd2, 0x73, 0x3c, 0xcb,
+	0x8f, 0x6e, 0xde, 0x29, 0x75, 0x51, 0xa3, 0xf0, 0x47, 0x0b, 0x22, 0x26, 0x60, 0xb3, 0xe4, 0x2a,
+	0x4b, 0x2e, 0xe4, 0xaf, 0x77, 0x7a, 0xe5, 0xcf, 0x9d, 0x5e, 0xc1, 0x2f, 0xe1, 0x45, 0x69, 0xb0,
+	0x84, 0xa6, 0x31, 0x8b, 0x52, 0x8a, 0xa7, 0x55, 0x38, 0x28, 0x29, 0x97, 0xce, 0x00, 0x21, 0xa8,
+	0x7d, 0x4c, 0x58, 0xb8, 0x98, 0xb8, 0x88, 0xd1, 0x11, 0xd4, 0xa3, 0x61, 0x68, 0xd3, 0x24, 0x1b,
+	0x34, 0x59, 0x64, 0xa5, 0x0d, 0x6d, 0x3d, 0xbd, 0xa1, 0xda, 0xff, 0x6d, 0x68, 0x7b, 0xf3, 0x0d,
+	0xd5, 0xd7, 0xda, 0xd0, 0x6b, 0xd8, 0xe1, 0xa3, 0x0c, 0xd8, 0x11, 0x00, 0x9a, 0x8d, 0xf5, 0x67,
+	0x19, 0xb0, 0x10, 0x30, 0xa9, 0xf3, 0x91, 0x30, 0x37, 0xa1, 0x11, 0x30, 0xb7, 0xe7, 0x47, 0x7d,
+	0x3a, 0x52, 0xe4, 0xd5, 0x23, 0xe5, 0x12, 0x26, 0x72, 0xc0, 0xdc, 0x9b, 0x79, 0x58, 0x18, 0xbf,
+	0x0a, 0xca, 0xea, 0x90, 0xf3, 0x0d, 0xb4, 0x00, 0x95, 0xb4, 0xf7, 0xec, 0x1f, 0x2b, 0x28, 0xd4,
+	0x3b, 0x01, 0xf5, 0x31, 0xb3, 0xac, 0xd8, 0xfa, 0x5d, 0x85, 0xad, 0x6e, 0xea, 0xa2, 0x00, 0xa0,
+	0x70, 0x95, 0x5e, 0x19, 0x4f, 0x5c, 0x48, 0xa3, 0x54, 0x4e, 0x6d, 0xad, 0xef, 0x5d, 0x76, 0x45,
+	0x43, 0xd8, 0x2b, 0x7f, 0x45, 0x6f, 0xd6, 0x2f, 0x72, 0xe9, 0x0c, 0xd4, 0xb7, 0x1b, 0xd9, 0xf3,
+	0xb6, 0x5f, 0x60, 0x7f, 0x75, 0x76, 0xe6, 0xfa, 0x95, 0x04, 0xa0, 0xb6, 0x37, 0x04, 0x96, 0xcd,
+	0x3b, 0xdd, 0xef, 0x13, 0x4d, 0xba, 0x9f, 0x68, 0xd2, 0xaf, 0x89, 0x26, 0x7d, 0x9b, 0x6a, 0x95,
+	0xfb, 0xa9, 0x56, 0xf9, 0x39, 0xd5, 0x2a, 0x1f, 0xce, 0x5d, 0x9f, 0x7b, 0x43, 0xdb, 0x70, 0x58,
+	0x68, 0x86, 0x16, 0xf7, 0x9d, 0x88, 0xf2, 0xcf, 0x2c, 0x19, 0x98, 0xcb, 0x4e, 0xe6, 0xc8, 0x2c,
+	0xbc, 0x9e, 0xfc, 0x36, 0xa6, 0xa9, 0x5d, 0x17, 0xcf, 0xe0, 0xf9, 0xdf, 0x00, 0x00, 0x00, 0xff,
+	0xff, 0xb8, 0xa6, 0x4f, 0x05, 0x58, 0x05, 0x00, 0x00,
 }
+
+// Reference imports to suppress errors if they are not otherwise used.
+var _ context.Context
+var _ grpc.ClientConn
+
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the grpc package it is being compiled against.
+const _ = grpc.SupportPackageIsVersion4
+
+// MsgClient is the client API for Msg service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
+type MsgClient interface {
+	// Checkpoint defines Checkpoint.
+	Checkpoint(ctx context.Context, in *MsgCheckpoint, opts ...grpc.CallOption) (*MsgCheckpointResponse, error)
+	// CheckpointAck defines ack to checkpoint
+	CheckpointAck(ctx context.Context, in *MsgCheckpointAck, opts ...grpc.CallOption) (*MsgCheckpointAckResponse, error)
+	// CheckpointNoAck defines no ack to checkpoint
+	CheckpointNoAck(ctx context.Context, in *MsgCheckpointNoAck, opts ...grpc.CallOption) (*MsgCheckpointNoAckResponse, error)
+}
+
+type msgClient struct {
+	cc grpc1.ClientConn
+}
+
+func NewMsgClient(cc grpc1.ClientConn) MsgClient {
+	return &msgClient{cc}
+}
+
+func (c *msgClient) Checkpoint(ctx context.Context, in *MsgCheckpoint, opts ...grpc.CallOption) (*MsgCheckpointResponse, error) {
+	out := new(MsgCheckpointResponse)
+	err := c.cc.Invoke(ctx, "/heimdall.checkpoint.v1beta1.Msg/Checkpoint", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) CheckpointAck(ctx context.Context, in *MsgCheckpointAck, opts ...grpc.CallOption) (*MsgCheckpointAckResponse, error) {
+	out := new(MsgCheckpointAckResponse)
+	err := c.cc.Invoke(ctx, "/heimdall.checkpoint.v1beta1.Msg/CheckpointAck", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) CheckpointNoAck(ctx context.Context, in *MsgCheckpointNoAck, opts ...grpc.CallOption) (*MsgCheckpointNoAckResponse, error) {
+	out := new(MsgCheckpointNoAckResponse)
+	err := c.cc.Invoke(ctx, "/heimdall.checkpoint.v1beta1.Msg/CheckpointNoAck", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// MsgServer is the server API for Msg service.
+type MsgServer interface {
+	// Checkpoint defines Checkpoint.
+	Checkpoint(context.Context, *MsgCheckpoint) (*MsgCheckpointResponse, error)
+	// CheckpointAck defines ack to checkpoint
+	CheckpointAck(context.Context, *MsgCheckpointAck) (*MsgCheckpointAckResponse, error)
+	// CheckpointNoAck defines no ack to checkpoint
+	CheckpointNoAck(context.Context, *MsgCheckpointNoAck) (*MsgCheckpointNoAckResponse, error)
+}
+
+// UnimplementedMsgServer can be embedded to have forward compatible implementations.
+type UnimplementedMsgServer struct {
+}
+
+func (*UnimplementedMsgServer) Checkpoint(ctx context.Context, req *MsgCheckpoint) (*MsgCheckpointResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Checkpoint not implemented")
+}
+func (*UnimplementedMsgServer) CheckpointAck(ctx context.Context, req *MsgCheckpointAck) (*MsgCheckpointAckResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CheckpointAck not implemented")
+}
+func (*UnimplementedMsgServer) CheckpointNoAck(ctx context.Context, req *MsgCheckpointNoAck) (*MsgCheckpointNoAckResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CheckpointNoAck not implemented")
+}
+
+func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
+	s.RegisterService(&_Msg_serviceDesc, srv)
+}
+
+func _Msg_Checkpoint_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgCheckpoint)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).Checkpoint(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/heimdall.checkpoint.v1beta1.Msg/Checkpoint",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).Checkpoint(ctx, req.(*MsgCheckpoint))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_CheckpointAck_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgCheckpointAck)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).CheckpointAck(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/heimdall.checkpoint.v1beta1.Msg/CheckpointAck",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).CheckpointAck(ctx, req.(*MsgCheckpointAck))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_CheckpointNoAck_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgCheckpointNoAck)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).CheckpointNoAck(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/heimdall.checkpoint.v1beta1.Msg/CheckpointNoAck",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).CheckpointNoAck(ctx, req.(*MsgCheckpointNoAck))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+var _Msg_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "heimdall.checkpoint.v1beta1.Msg",
+	HandlerType: (*MsgServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Checkpoint",
+			Handler:    _Msg_Checkpoint_Handler,
+		},
+		{
+			MethodName: "CheckpointAck",
+			Handler:    _Msg_CheckpointAck_Handler,
+		},
+		{
+			MethodName: "CheckpointNoAck",
+			Handler:    _Msg_CheckpointNoAck_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "checkpoint/v1beta/msg.proto",
+}
+
+func (m *MsgCheckpoint) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgCheckpoint) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgCheckpoint) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.BorChainID) > 0 {
+		i -= len(m.BorChainID)
+		copy(dAtA[i:], m.BorChainID)
+		i = encodeVarintMsg(dAtA, i, uint64(len(m.BorChainID)))
+		i--
+		dAtA[i] = 0x32
+	}
+	if len(m.AccountRootHash) > 0 {
+		i -= len(m.AccountRootHash)
+		copy(dAtA[i:], m.AccountRootHash)
+		i = encodeVarintMsg(dAtA, i, uint64(len(m.AccountRootHash)))
+		i--
+		dAtA[i] = 0x2a
+	}
+	if len(m.RootHash) > 0 {
+		i -= len(m.RootHash)
+		copy(dAtA[i:], m.RootHash)
+		i = encodeVarintMsg(dAtA, i, uint64(len(m.RootHash)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if m.EndBlock != 0 {
+		i = encodeVarintMsg(dAtA, i, uint64(m.EndBlock))
+		i--
+		dAtA[i] = 0x18
+	}
+	if m.StartBlock != 0 {
+		i = encodeVarintMsg(dAtA, i, uint64(m.StartBlock))
+		i--
+		dAtA[i] = 0x10
+	}
+	if len(m.Proposer) > 0 {
+		i -= len(m.Proposer)
+		copy(dAtA[i:], m.Proposer)
+		i = encodeVarintMsg(dAtA, i, uint64(len(m.Proposer)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgCheckpointResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgCheckpointResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgCheckpointResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgCheckpointAck) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgCheckpointAck) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgCheckpointAck) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.LogIndex != 0 {
+		i = encodeVarintMsg(dAtA, i, uint64(m.LogIndex))
+		i--
+		dAtA[i] = 0x40
+	}
+	if len(m.TxHash) > 0 {
+		i -= len(m.TxHash)
+		copy(dAtA[i:], m.TxHash)
+		i = encodeVarintMsg(dAtA, i, uint64(len(m.TxHash)))
+		i--
+		dAtA[i] = 0x3a
+	}
+	if len(m.RootHash) > 0 {
+		i -= len(m.RootHash)
+		copy(dAtA[i:], m.RootHash)
+		i = encodeVarintMsg(dAtA, i, uint64(len(m.RootHash)))
+		i--
+		dAtA[i] = 0x32
+	}
+	if m.EndBlock != 0 {
+		i = encodeVarintMsg(dAtA, i, uint64(m.EndBlock))
+		i--
+		dAtA[i] = 0x28
+	}
+	if m.StartBlock != 0 {
+		i = encodeVarintMsg(dAtA, i, uint64(m.StartBlock))
+		i--
+		dAtA[i] = 0x20
+	}
+	if len(m.Proposer) > 0 {
+		i -= len(m.Proposer)
+		copy(dAtA[i:], m.Proposer)
+		i = encodeVarintMsg(dAtA, i, uint64(len(m.Proposer)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if m.Number != 0 {
+		i = encodeVarintMsg(dAtA, i, uint64(m.Number))
+		i--
+		dAtA[i] = 0x10
+	}
+	if len(m.From) > 0 {
+		i -= len(m.From)
+		copy(dAtA[i:], m.From)
+		i = encodeVarintMsg(dAtA, i, uint64(len(m.From)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgCheckpointAckResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgCheckpointAckResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgCheckpointAckResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgCheckpointNoAck) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgCheckpointNoAck) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgCheckpointNoAck) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.From) > 0 {
+		i -= len(m.From)
+		copy(dAtA[i:], m.From)
+		i = encodeVarintMsg(dAtA, i, uint64(len(m.From)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgCheckpointNoAckResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgCheckpointNoAckResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgCheckpointNoAckResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func encodeVarintMsg(dAtA []byte, offset int, v uint64) int {
+	offset -= sovMsg(v)
+	base := offset
+	for v >= 1<<7 {
+		dAtA[offset] = uint8(v&0x7f | 0x80)
+		v >>= 7
+		offset++
+	}
+	dAtA[offset] = uint8(v)
+	return base
+}
+func (m *MsgCheckpoint) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Proposer)
+	if l > 0 {
+		n += 1 + l + sovMsg(uint64(l))
+	}
+	if m.StartBlock != 0 {
+		n += 1 + sovMsg(uint64(m.StartBlock))
+	}
+	if m.EndBlock != 0 {
+		n += 1 + sovMsg(uint64(m.EndBlock))
+	}
+	l = len(m.RootHash)
+	if l > 0 {
+		n += 1 + l + sovMsg(uint64(l))
+	}
+	l = len(m.AccountRootHash)
+	if l > 0 {
+		n += 1 + l + sovMsg(uint64(l))
+	}
+	l = len(m.BorChainID)
+	if l > 0 {
+		n += 1 + l + sovMsg(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgCheckpointResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgCheckpointAck) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.From)
+	if l > 0 {
+		n += 1 + l + sovMsg(uint64(l))
+	}
+	if m.Number != 0 {
+		n += 1 + sovMsg(uint64(m.Number))
+	}
+	l = len(m.Proposer)
+	if l > 0 {
+		n += 1 + l + sovMsg(uint64(l))
+	}
+	if m.StartBlock != 0 {
+		n += 1 + sovMsg(uint64(m.StartBlock))
+	}
+	if m.EndBlock != 0 {
+		n += 1 + sovMsg(uint64(m.EndBlock))
+	}
+	l = len(m.RootHash)
+	if l > 0 {
+		n += 1 + l + sovMsg(uint64(l))
+	}
+	l = len(m.TxHash)
+	if l > 0 {
+		n += 1 + l + sovMsg(uint64(l))
+	}
+	if m.LogIndex != 0 {
+		n += 1 + sovMsg(uint64(m.LogIndex))
+	}
+	return n
+}
+
+func (m *MsgCheckpointAckResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgCheckpointNoAck) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.From)
+	if l > 0 {
+		n += 1 + l + sovMsg(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgCheckpointNoAckResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func sovMsg(x uint64) (n int) {
+	return (math_bits.Len64(x|1) + 6) / 7
+}
+func sozMsg(x uint64) (n int) {
+	return sovMsg(uint64((x << 1) ^ uint64((int64(x) >> 63))))
+}
+func (m *MsgCheckpoint) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMsg
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgCheckpoint: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgCheckpoint: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Proposer", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMsg
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMsg
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthMsg
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Proposer = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StartBlock", wireType)
+			}
+			m.StartBlock = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMsg
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.StartBlock |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EndBlock", wireType)
+			}
+			m.EndBlock = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMsg
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.EndBlock |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RootHash", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMsg
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMsg
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthMsg
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.RootHash = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AccountRootHash", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMsg
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMsg
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthMsg
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.AccountRootHash = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BorChainID", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMsg
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMsg
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthMsg
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.BorChainID = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMsg(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthMsg
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthMsg
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgCheckpointResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMsg
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgCheckpointResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgCheckpointResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMsg(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthMsg
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthMsg
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgCheckpointAck) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMsg
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgCheckpointAck: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgCheckpointAck: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field From", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMsg
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMsg
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthMsg
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.From = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Number", wireType)
+			}
+			m.Number = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMsg
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Number |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Proposer", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMsg
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMsg
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthMsg
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Proposer = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StartBlock", wireType)
+			}
+			m.StartBlock = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMsg
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.StartBlock |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 5:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EndBlock", wireType)
+			}
+			m.EndBlock = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMsg
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.EndBlock |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RootHash", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMsg
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMsg
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthMsg
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.RootHash = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 7:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TxHash", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMsg
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMsg
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthMsg
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.TxHash = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 8:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field LogIndex", wireType)
+			}
+			m.LogIndex = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMsg
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.LogIndex |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMsg(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthMsg
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthMsg
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgCheckpointAckResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMsg
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgCheckpointAckResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgCheckpointAckResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMsg(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthMsg
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthMsg
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgCheckpointNoAck) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMsg
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgCheckpointNoAck: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgCheckpointNoAck: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field From", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMsg
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMsg
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthMsg
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.From = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMsg(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthMsg
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthMsg
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgCheckpointNoAckResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMsg
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgCheckpointNoAckResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgCheckpointNoAckResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMsg(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthMsg
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthMsg
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func skipMsg(dAtA []byte) (n int, err error) {
+	l := len(dAtA)
+	iNdEx := 0
+	depth := 0
+	for iNdEx < l {
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return 0, ErrIntOverflowMsg
+			}
+			if iNdEx >= l {
+				return 0, io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		wireType := int(wire & 0x7)
+		switch wireType {
+		case 0:
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return 0, ErrIntOverflowMsg
+				}
+				if iNdEx >= l {
+					return 0, io.ErrUnexpectedEOF
+				}
+				iNdEx++
+				if dAtA[iNdEx-1] < 0x80 {
+					break
+				}
+			}
+		case 1:
+			iNdEx += 8
+		case 2:
+			var length int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return 0, ErrIntOverflowMsg
+				}
+				if iNdEx >= l {
+					return 0, io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				length |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if length < 0 {
+				return 0, ErrInvalidLengthMsg
+			}
+			iNdEx += length
+		case 3:
+			depth++
+		case 4:
+			if depth == 0 {
+				return 0, ErrUnexpectedEndOfGroupMsg
+			}
+			depth--
+		case 5:
+			iNdEx += 4
+		default:
+			return 0, fmt.Errorf("proto: illegal wireType %d", wireType)
+		}
+		if iNdEx < 0 {
+			return 0, ErrInvalidLengthMsg
+		}
+		if depth == 0 {
+			return iNdEx, nil
+		}
+	}
+	return 0, io.ErrUnexpectedEOF
+}
+
+var (
+	ErrInvalidLengthMsg        = fmt.Errorf("proto: negative length found during unmarshaling")
+	ErrIntOverflowMsg          = fmt.Errorf("proto: integer overflow")
+	ErrUnexpectedEndOfGroupMsg = fmt.Errorf("proto: unexpected end of group")
+)

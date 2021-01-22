@@ -1,5 +1,5 @@
 syntax = "proto3";
-package chainmanager.v1beta1;
+package heimdall.chainmanager.v1beta1;
 
 import "gogoproto/gogo.proto";
 
@@ -11,45 +11,44 @@ option (gogoproto.unmarshaler_all) = true;
 
 // GenesisState defines the chainmanager module's genesis state.
 message GenesisState {
-    // heimdall.types.chainmanager.x.params
     Params params = 1;
 }
 
 message ChainParams {
     option (gogoproto.goproto_getters)  = false;
     option (gogoproto.goproto_stringer) = false;
-    string bor_chain_id        = 1 [(gogoproto.customname) = "BorChainID"];
+    string bor_chain_id                 = 1 [
+        (gogoproto.customname) = "BorChainID",
+        (gogoproto.moretags)   = "yaml:\"bor_chain_id\""
+    ];
     string matic_token_address = 2
-        [(gogoproto.casttype) =
-             "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+        [(gogoproto.moretags) = "yaml:\"matic_token_address\""];
     string staking_manager_address = 3
-        [(gogoproto.casttype) =
-             "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+        [(gogoproto.moretags) = "yaml:\"staking_manager_address\""];
     string slash_manager_address = 4
-        [(gogoproto.casttype) =
-             "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+        [(gogoproto.moretags) = "yaml:\"slash_manager_address\""];
     string root_chain_address = 5
-        [(gogoproto.casttype) =
-             "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+        [(gogoproto.moretags) = "yaml:\"root_chain_address\""];
     string staking_info_address = 6
-        [(gogoproto.casttype) =
-             "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+        [(gogoproto.moretags) = "yaml:\"staking_info_address\""];
     string state_sender_address = 7
-        [(gogoproto.casttype) =
-             "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+        [(gogoproto.moretags) = "yaml:\"state_sender_address\""];
     string state_receiver_address = 8
-        [(gogoproto.casttype) =
-             "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+        [(gogoproto.moretags) = "yaml:\"state_receiver_address\""];
     string validator_set_address = 9
-        [(gogoproto.casttype) =
-             "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+        [(gogoproto.moretags) = "yaml:\"validator_set_address\""];
 }
 
 message Params {
     option (gogoproto.goproto_getters)  = false;
     option (gogoproto.goproto_stringer) = false;
 
-    uint64      mainchain_tx_confirmations  = 1;
-    uint64      maticchain_tx_confirmations = 2;
-    ChainParams chain_params                = 3;
+    uint64 mainchain_tx_confirmations = 1
+        [(gogoproto.moretags) = "yaml:\"mainchain_tx_confirmations\""];
+    uint64 maticchain_tx_confirmations = 2
+        [(gogoproto.moretags) = "yaml:\"maticchain_tx_confirmations\""];
+    ChainParams chain_params = 3 [
+        (gogoproto.nullable) = false,
+        (gogoproto.moretags) = "yaml:\"chain_params\""
+    ];
 }

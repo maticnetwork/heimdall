@@ -2,13 +2,8 @@ syntax = "proto3";
 package heimdall.staking.v1beta1;
 
 import "gogoproto/gogo.proto";
-import "google/protobuf/any.proto";
 
 option go_package = "github.com/maticnetwork/heimdall/x/staking/types";
-
-option (gogoproto.sizer_all)       = false;
-option (gogoproto.marshaler_all)   = false;
-option (gogoproto.unmarshaler_all) = false;
 
 // Msg defines the staking Msg service.
 service Msg {
@@ -19,7 +14,7 @@ service Msg {
     rpc StakeUpdate(MsgStakeUpdate) returns (MsgStakeUpdateResponse);
 
     // SignerUpdate defines a method for update singer details of
-    // exisitng validator.
+    // existing validator.
     rpc SignerUpdate(MsgSignerUpdate) returns (MsgSignerUpdateResponse);
 
     // ValidatorExit defines a method to handle validator exit
@@ -29,23 +24,22 @@ service Msg {
 // MsgValidatorJoin defines a message to join a new validator.
 message MsgValidatorJoin {
     option (gogoproto.goproto_getters) = false;
-    string from                        = 1;
-    uint64 id                          = 2 [
+
+    string from = 1;
+    uint64 id   = 2 [
         (gogoproto.casttype) =
             "github.com/maticnetwork/heimdall/types.ValidatorID",
         (gogoproto.customname) = "ID"
     ];
-    uint64 activation_epoch = 3;
-    string amount           = 4
-        [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.Int"];
-    google.protobuf.Any signer_pub_key = 5
-        [(gogoproto.casttype) =
-             "github.com/maticnetwork/heimdall/types/common.PubKey"];
-    string tx_hash = 6
-        [(gogoproto.casttype) =
-             "github.com/maticnetwork/heimdall/types/common.HeimdallHash"];
-    uint64 log_index    = 7;
-    uint64 block_number = 8;
+    uint64 activation_epoch = 3
+        [(gogoproto.moretags) = "yaml:\"activation_epoch\""];
+    string amount = 4
+        [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int"];
+    string signer_pub_key = 5
+        [(gogoproto.moretags) = "yaml:\"signer_pub_key\""];
+    string tx_hash      = 6 [(gogoproto.moretags) = "yaml:\"tx_hash\""];
+    uint64 log_index    = 7 [(gogoproto.moretags) = "yaml:\"log_index\""];
+    uint64 block_number = 8 [(gogoproto.moretags) = "yaml:\"block_number\""];
     uint64 nonce        = 9;
 }
 
@@ -55,19 +49,20 @@ message MsgValidatorJoinResponse {}
 // MsgStakeUpdate defines a message to update stake for a validator.
 message MsgStakeUpdate {
     option (gogoproto.goproto_getters) = false;
-    string from                        = 1;
-    uint64 id                          = 2 [
+
+    string from = 1;
+    uint64 id   = 2 [
         (gogoproto.casttype) =
             "github.com/maticnetwork/heimdall/types.ValidatorID",
         (gogoproto.customname) = "ID"
     ];
-    string new_amount = 3
-        [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.Int"];
-    bytes tx_hash = 4
-        [(gogoproto.casttype) =
-             "github.com/maticnetwork/heimdall/types/common.HeimdallHash"];
-    uint64 log_index    = 7;
-    uint64 block_number = 8;
+    string new_amount = 3 [
+        (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+        (gogoproto.moretags)   = "yaml:\"new_amount\""
+    ];
+    string tx_hash      = 4 [(gogoproto.moretags) = "yaml:\"tx_hash\""];
+    uint64 log_index    = 7 [(gogoproto.moretags) = "yaml:\"log_index\""];
+    uint64 block_number = 8 [(gogoproto.moretags) = "yaml:\"block_number\""];
     uint64 nonce        = 9;
 }
 
@@ -77,20 +72,18 @@ message MsgStakeUpdateResponse {}
 // MsgSignerUpdate defines a message to update signer of a validator.
 message MsgSignerUpdate {
     option (gogoproto.goproto_getters) = false;
-    string from                        = 1;
-    uint64 id                          = 2 [
+
+    string from = 1;
+    uint64 id   = 2 [
         (gogoproto.casttype) =
             "github.com/maticnetwork/heimdall/types.ValidatorID",
         (gogoproto.customname) = "ID"
     ];
-    google.protobuf.Any new_signer_pub_key = 3
-        [(gogoproto.casttype) =
-             "github.com/maticnetwork/heimdall/types/common.PubKey"];
-    bytes tx_hash = 4
-        [(gogoproto.casttype) =
-             "github.com/maticnetwork/heimdall/types/common.HeimdallHash"];
-    uint64 log_index    = 5;
-    uint64 block_number = 6;
+    string new_signer_pub_key = 3
+        [(gogoproto.moretags) = "yaml:\"new_signer_pub_key\""];
+    string tx_hash      = 4 [(gogoproto.moretags) = "yaml:\"tx_hash\""];
+    uint64 log_index    = 5 [(gogoproto.moretags) = "yaml:\"log_index\""];
+    uint64 block_number = 6 [(gogoproto.moretags) = "yaml:\"block_number\""];
     uint64 nonce        = 7;
 }
 
@@ -106,12 +99,11 @@ message MsgValidatorExit {
             "github.com/maticnetwork/heimdall/types.ValidatorID",
         (gogoproto.customname) = "ID"
     ];
-    uint64 deactivation_epoch = 3;
-    bytes  tx_hash            = 4
-        [(gogoproto.casttype) =
-             "github.com/maticnetwork/heimdall/types/common.HeimdallHash"];
-    uint64 log_index    = 5;
-    uint64 block_number = 6;
+    uint64 deactivation_epoch = 3
+        [(gogoproto.moretags) = "yaml:\"deactivation_epoch\""];
+    string tx_hash      = 4 [(gogoproto.moretags) = "yaml:\"tx_hash\""];
+    uint64 log_index    = 5 [(gogoproto.moretags) = "yaml:\"log_index\""];
+    uint64 block_number = 6 [(gogoproto.moretags) = "yaml:\"block_number\""];
     uint64 nonce        = 7;
 }
 

@@ -5,12 +5,14 @@ package types
 
 import (
 	fmt "fmt"
-	_ "github.com/cosmos/cosmos-sdk/codec/types"
 	_ "github.com/gogo/protobuf/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
-	github_com_maticnetwork_heimdall_types "github.com/maticnetwork/heimdall/types"
+	github_com_gogo_protobuf_types "github.com/gogo/protobuf/types"
+	types "github.com/maticnetwork/heimdall/types"
 	_ "google.golang.org/protobuf/types/known/durationpb"
+	io "io"
 	math "math"
+	math_bits "math/bits"
 	time "time"
 )
 
@@ -27,10 +29,10 @@ var _ = time.Kitchen
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 type Params struct {
-	CheckpointBufferTime time.Duration `protobuf:"bytes,1,opt,name=checkpoint_buffer_time,json=checkpointBufferTime,proto3,stdduration" json:"checkpoint_buffer_time"`
-	AvgCheckpointLength  uint64        `protobuf:"varint,2,opt,name=avg_checkpoint_length,json=avgCheckpointLength,proto3" json:"avg_checkpoint_length,omitempty"`
-	MaxCheckpointLength  uint64        `protobuf:"varint,3,opt,name=max_checkpoint_length,json=maxCheckpointLength,proto3" json:"max_checkpoint_length,omitempty"`
-	ChildBlockInterval   uint64        `protobuf:"varint,4,opt,name=child_block_interval,json=childBlockInterval,proto3" json:"child_block_interval,omitempty"`
+	CheckpointBufferTime time.Duration `protobuf:"bytes,1,opt,name=checkpoint_buffer_time,json=checkpointBufferTime,proto3,stdduration" json:"checkpoint_buffer_time" yaml:"checkpoint_buffer_time"`
+	AvgCheckpointLength  uint64        `protobuf:"varint,2,opt,name=avg_checkpoint_length,json=avgCheckpointLength,proto3" json:"avg_checkpoint_length,omitempty" yaml:"avg_checkpoint_length"`
+	MaxCheckpointLength  uint64        `protobuf:"varint,3,opt,name=max_checkpoint_length,json=maxCheckpointLength,proto3" json:"max_checkpoint_length,omitempty" yaml:"max_checkpoint_length"`
+	ChildBlockInterval   uint64        `protobuf:"varint,4,opt,name=child_block_interval,json=childBlockInterval,proto3" json:"child_block_interval,omitempty" yaml:"child_block_interval"`
 }
 
 func (m *Params) Reset()      { *m = Params{} }
@@ -39,16 +41,25 @@ func (*Params) Descriptor() ([]byte, []int) {
 	return fileDescriptor_99a783d62b74a2d0, []int{0}
 }
 func (m *Params) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Params.Unmarshal(m, b)
+	return m.Unmarshal(b)
 }
 func (m *Params) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Params.Marshal(b, m, deterministic)
+	if deterministic {
+		return xxx_messageInfo_Params.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
 }
 func (m *Params) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_Params.Merge(m, src)
 }
 func (m *Params) XXX_Size() int {
-	return xxx_messageInfo_Params.Size(m)
+	return m.Size()
 }
 func (m *Params) XXX_DiscardUnknown() {
 	xxx_messageInfo_Params.DiscardUnknown(m)
@@ -58,11 +69,11 @@ var xxx_messageInfo_Params proto.InternalMessageInfo
 
 // GenesisState defines the checkpoint module's genesis state.
 type GenesisState struct {
-	Params             Params                                               `protobuf:"bytes,1,opt,name=params,proto3" json:"params"`
-	BufferedCheckpoint *github_com_maticnetwork_heimdall_types.Checkpoint   `protobuf:"bytes,2,opt,name=buffered_checkpoint,json=bufferedCheckpoint,proto3,casttype=github.com/maticnetwork/heimdall/types.Checkpoint" json:"buffered_checkpoint,omitempty"`
-	LastNoACK          uint64                                               `protobuf:"varint,3,opt,name=last_no_ack,json=lastNoAck,proto3" json:"last_no_ack,omitempty"`
-	AckCount           uint64                                               `protobuf:"varint,4,opt,name=ack_count,json=ackCount,proto3" json:"ack_count,omitempty"`
-	Checkpoints        []*github_com_maticnetwork_heimdall_types.Checkpoint `protobuf:"bytes,5,rep,name=checkpoints,proto3,casttype=github.com/maticnetwork/heimdall/types.Checkpoint" json:"checkpoints,omitempty"`
+	Params             Params              `protobuf:"bytes,1,opt,name=params,proto3" json:"params"`
+	BufferedCheckpoint *types.Checkpoint   `protobuf:"bytes,2,opt,name=buffered_checkpoint,json=bufferedCheckpoint,proto3" json:"buffered_checkpoint,omitempty" yaml:"buffered_checkpoint"`
+	LastNoACK          uint64              `protobuf:"varint,3,opt,name=last_no_ack,json=lastNoAck,proto3" json:"last_no_ack,omitempty" yaml:"last_no_ack"`
+	AckCount           uint64              `protobuf:"varint,4,opt,name=ack_count,json=ackCount,proto3" json:"ack_count,omitempty" yaml:"ack_count"`
+	Checkpoints        []*types.Checkpoint `protobuf:"bytes,5,rep,name=checkpoints,proto3" json:"checkpoints,omitempty"`
 }
 
 func (m *GenesisState) Reset()         { *m = GenesisState{} }
@@ -72,16 +83,25 @@ func (*GenesisState) Descriptor() ([]byte, []int) {
 	return fileDescriptor_99a783d62b74a2d0, []int{1}
 }
 func (m *GenesisState) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_GenesisState.Unmarshal(m, b)
+	return m.Unmarshal(b)
 }
 func (m *GenesisState) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_GenesisState.Marshal(b, m, deterministic)
+	if deterministic {
+		return xxx_messageInfo_GenesisState.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
 }
 func (m *GenesisState) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_GenesisState.Merge(m, src)
 }
 func (m *GenesisState) XXX_Size() int {
-	return xxx_messageInfo_GenesisState.Size(m)
+	return m.Size()
 }
 func (m *GenesisState) XXX_DiscardUnknown() {
 	xxx_messageInfo_GenesisState.DiscardUnknown(m)
@@ -90,43 +110,648 @@ func (m *GenesisState) XXX_DiscardUnknown() {
 var xxx_messageInfo_GenesisState proto.InternalMessageInfo
 
 func init() {
-	proto.RegisterType((*Params)(nil), "heimdall.checkpoint.x.checkpoint.types.Params")
-	proto.RegisterType((*GenesisState)(nil), "heimdall.checkpoint.x.checkpoint.types.GenesisState")
+	proto.RegisterType((*Params)(nil), "heimdall.checkpoint.v1beta1.Params")
+	proto.RegisterType((*GenesisState)(nil), "heimdall.checkpoint.v1beta1.GenesisState")
 }
 
 func init() { proto.RegisterFile("checkpoint/v1beta/genesis.proto", fileDescriptor_99a783d62b74a2d0) }
 
 var fileDescriptor_99a783d62b74a2d0 = []byte{
-	// 496 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x93, 0xb1, 0x6f, 0xd3, 0x40,
-	0x14, 0xc6, 0x9d, 0x26, 0x44, 0xc9, 0x05, 0x96, 0x6b, 0x40, 0x69, 0x91, 0xec, 0xa8, 0x03, 0xea,
-	0xc2, 0x99, 0xa6, 0x62, 0xe9, 0x56, 0x07, 0x09, 0x21, 0x02, 0x42, 0x86, 0x05, 0x16, 0xeb, 0x7c,
-	0xb9, 0xd8, 0x27, 0xdb, 0x77, 0x91, 0x7d, 0x0e, 0x89, 0xc4, 0x0e, 0x23, 0x63, 0x25, 0x96, 0xfe,
-	0x39, 0x1d, 0x3b, 0x32, 0x05, 0x94, 0xfc, 0x17, 0x4c, 0xc8, 0x77, 0x0e, 0xb6, 0x28, 0x12, 0x0c,
-	0x6c, 0xf7, 0xfc, 0xf9, 0xfb, 0xde, 0xbd, 0xdf, 0xd3, 0x01, 0x8b, 0x84, 0x94, 0x44, 0x73, 0xc1,
-	0xb8, 0xb4, 0x17, 0x27, 0x3e, 0x95, 0xd8, 0x0e, 0x28, 0xa7, 0x19, 0xcb, 0xd0, 0x3c, 0x15, 0x52,
-	0xc0, 0x07, 0x21, 0x65, 0xc9, 0x14, 0xc7, 0x31, 0xaa, 0xfe, 0x44, 0xcb, 0x7a, 0x21, 0x57, 0x73,
-	0x9a, 0x1d, 0xf6, 0x03, 0x11, 0x08, 0x65, 0xb1, 0x8b, 0x93, 0x76, 0x1f, 0x1e, 0x04, 0x42, 0x04,
-	0x31, 0xb5, 0x55, 0xe5, 0xe7, 0x33, 0x1b, 0xf3, 0x55, 0x29, 0x99, 0xbf, 0x4b, 0xd3, 0x3c, 0xc5,
-	0x92, 0x09, 0xae, 0xf5, 0xa3, 0x8f, 0x7b, 0xa0, 0xfd, 0x0a, 0xa7, 0x38, 0xc9, 0xe0, 0x5b, 0x70,
-	0xaf, 0xea, 0xe7, 0xf9, 0xf9, 0x6c, 0x46, 0x53, 0x4f, 0xb2, 0x84, 0x0e, 0x1a, 0xc3, 0xc6, 0x71,
-	0x6f, 0x74, 0x80, 0x74, 0x16, 0xda, 0x65, 0xa1, 0x27, 0x65, 0x96, 0xd3, 0xb9, 0x5a, 0x5b, 0xc6,
-	0xc5, 0x37, 0xab, 0xe1, 0xf6, 0xab, 0x08, 0x47, 0x25, 0xbc, 0x61, 0x09, 0x85, 0x23, 0x70, 0x17,
-	0x2f, 0x02, 0xaf, 0x16, 0x1f, 0x53, 0x1e, 0xc8, 0x70, 0xb0, 0x37, 0x6c, 0x1c, 0xb7, 0xdc, 0x7d,
-	0xbc, 0x08, 0xc6, 0xbf, 0xb4, 0x89, 0x92, 0x0a, 0x4f, 0x82, 0x97, 0x7f, 0xf0, 0x34, 0xb5, 0x27,
-	0xc1, 0xcb, 0x1b, 0x9e, 0x47, 0xa0, 0x4f, 0x42, 0x16, 0x4f, 0x3d, 0x3f, 0x16, 0x24, 0xf2, 0x18,
-	0x97, 0x34, 0x5d, 0xe0, 0x78, 0xd0, 0x52, 0x16, 0xa8, 0x34, 0xa7, 0x90, 0x9e, 0x95, 0xca, 0x59,
-	0xe7, 0xd3, 0xa5, 0x65, 0x5c, 0x5c, 0x5a, 0xc6, 0xd1, 0x97, 0x26, 0xb8, 0xfd, 0x54, 0x2f, 0xe5,
-	0xb5, 0xc4, 0x92, 0xc2, 0x09, 0x68, 0xcf, 0x15, 0x99, 0x72, 0x7e, 0x84, 0xfe, 0x6d, 0x49, 0x48,
-	0xf3, 0x74, 0x5a, 0x05, 0x14, 0xb7, 0xcc, 0x80, 0x1f, 0xc0, 0xbe, 0x46, 0x4a, 0xa7, 0xb5, 0x99,
-	0x14, 0x80, 0xde, 0xa8, 0x7f, 0x03, 0xed, 0x39, 0x5f, 0x39, 0x8f, 0x7f, 0xac, 0xad, 0x93, 0x80,
-	0xc9, 0x30, 0xf7, 0x11, 0x11, 0x89, 0x9d, 0x60, 0xc9, 0x08, 0xa7, 0xf2, 0xbd, 0x48, 0x23, 0x7b,
-	0x77, 0x17, 0x5b, 0xf7, 0xac, 0x50, 0xb8, 0x70, 0xd7, 0xa7, 0xfa, 0x06, 0x1f, 0x82, 0x5e, 0x8c,
-	0x33, 0xe9, 0x71, 0xe1, 0x61, 0x12, 0x69, 0x84, 0xce, 0x9d, 0xcd, 0xda, 0xea, 0x4e, 0x70, 0x26,
-	0x5f, 0x8a, 0xf3, 0xf1, 0x73, 0xb7, 0x1b, 0xeb, 0x23, 0x89, 0xe0, 0x7d, 0xd0, 0xc5, 0x24, 0xf2,
-	0x88, 0xc8, 0xb9, 0x2c, 0xe1, 0x75, 0x30, 0x89, 0xc6, 0x45, 0x0d, 0x13, 0xd0, 0xab, 0x06, 0xc8,
-	0x06, 0xb7, 0x86, 0xcd, 0xff, 0x3d, 0x41, 0x3d, 0xff, 0xac, 0x55, 0x6c, 0xc8, 0x79, 0x71, 0xb5,
-	0x31, 0x8d, 0xeb, 0x8d, 0x69, 0x7c, 0xdf, 0x98, 0xc6, 0xe7, 0xad, 0x69, 0x5c, 0x6f, 0x4d, 0xe3,
-	0xeb, 0xd6, 0x34, 0xde, 0x9d, 0xfe, 0x35, 0x7f, 0x69, 0xd7, 0x9e, 0x9f, 0x6a, 0xe6, 0xb7, 0xd5,
-	0x35, 0x4f, 0x7f, 0x06, 0x00, 0x00, 0xff, 0xff, 0xfc, 0x04, 0x7a, 0xdd, 0x99, 0x03, 0x00, 0x00,
+	// 553 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x53, 0xcd, 0x6e, 0xd3, 0x40,
+	0x10, 0xb6, 0x9b, 0x10, 0x35, 0x1b, 0x0e, 0x68, 0x13, 0x50, 0x48, 0x8b, 0x37, 0x72, 0x2f, 0xe5,
+	0x62, 0x2b, 0xed, 0xad, 0xe2, 0x52, 0x07, 0x09, 0x21, 0x0a, 0x02, 0xd3, 0x13, 0x17, 0x6b, 0xbd,
+	0xd9, 0xd8, 0x96, 0x7f, 0x36, 0xb2, 0x37, 0x21, 0xe5, 0x09, 0xb8, 0x20, 0x71, 0xec, 0xb1, 0x8f,
+	0xd3, 0x63, 0x8f, 0x9c, 0x0c, 0x4a, 0xde, 0xc0, 0x0f, 0x80, 0x50, 0x76, 0x9d, 0x38, 0xa2, 0x51,
+	0x6f, 0xeb, 0x99, 0x6f, 0xbe, 0xcf, 0x33, 0xdf, 0x0c, 0x40, 0xc4, 0xa7, 0x24, 0x9c, 0xb0, 0x20,
+	0xe1, 0xe6, 0x6c, 0xe0, 0x52, 0x8e, 0x4d, 0x8f, 0x26, 0x34, 0x0b, 0x32, 0x63, 0x92, 0x32, 0xce,
+	0xe0, 0x81, 0x4f, 0x83, 0x78, 0x84, 0xa3, 0xc8, 0xa8, 0x90, 0x86, 0x44, 0x0e, 0x7a, 0x1d, 0x8f,
+	0x79, 0x4c, 0xe0, 0xcc, 0xd5, 0x4b, 0x96, 0xf4, 0x34, 0x8f, 0x31, 0x2f, 0xa2, 0xa6, 0xf8, 0x72,
+	0xa7, 0x63, 0x73, 0x34, 0x4d, 0x31, 0x0f, 0x58, 0x52, 0xe6, 0x0f, 0xd7, 0x94, 0x26, 0xbf, 0x9a,
+	0xd0, 0xcc, 0xf4, 0x29, 0x1e, 0xd1, 0xb4, 0x14, 0xd4, 0x7f, 0xd4, 0x40, 0xe3, 0x23, 0x4e, 0x71,
+	0x9c, 0xc1, 0x6f, 0xe0, 0x59, 0x25, 0xea, 0xb8, 0xd3, 0xf1, 0x98, 0xa6, 0x0e, 0x0f, 0x62, 0xda,
+	0x55, 0xfb, 0xea, 0x71, 0xeb, 0xe4, 0xb9, 0x21, 0x95, 0x8c, 0xb5, 0x92, 0xf1, 0xba, 0x54, 0xb2,
+	0x5e, 0xde, 0xe6, 0x48, 0x29, 0x72, 0xf4, 0xe2, 0x0a, 0xc7, 0xd1, 0x99, 0xbe, 0x9b, 0x46, 0xbf,
+	0xfe, 0x8d, 0x54, 0xbb, 0x53, 0x25, 0x2d, 0x91, 0xbb, 0x0c, 0x62, 0x0a, 0x2f, 0xc1, 0x53, 0x3c,
+	0xf3, 0x9c, 0xad, 0xc2, 0x88, 0x26, 0x1e, 0xf7, 0xbb, 0x7b, 0x7d, 0xf5, 0xb8, 0x6e, 0xf5, 0x8b,
+	0x1c, 0x1d, 0x4a, 0xee, 0x9d, 0x30, 0xdd, 0x6e, 0xe3, 0x99, 0x37, 0xdc, 0x84, 0x2f, 0x44, 0x74,
+	0xc5, 0x1a, 0xe3, 0xf9, 0x0e, 0xd6, 0xda, 0xff, 0xac, 0x3b, 0x61, 0xba, 0xdd, 0x8e, 0xf1, 0xfc,
+	0x1e, 0xeb, 0x27, 0xd0, 0x21, 0x7e, 0x10, 0x8d, 0x1c, 0x37, 0x62, 0x24, 0x74, 0x82, 0x84, 0xd3,
+	0x74, 0x86, 0xa3, 0x6e, 0x5d, 0x90, 0xa2, 0x22, 0x47, 0x07, 0xeb, 0x31, 0xdc, 0x47, 0xe9, 0x36,
+	0x14, 0x61, 0x6b, 0x15, 0x7d, 0x5b, 0x06, 0xcf, 0xf6, 0xbf, 0xdf, 0x20, 0xe5, 0xfa, 0x06, 0x29,
+	0xfa, 0xdf, 0x3d, 0xf0, 0xf8, 0x8d, 0x5c, 0x89, 0xcf, 0x1c, 0x73, 0x0a, 0xcf, 0x41, 0x63, 0x22,
+	0xfc, 0x29, 0x5d, 0x38, 0x32, 0x1e, 0x58, 0x11, 0x43, 0x5a, 0x69, 0xd5, 0x57, 0x7e, 0xd8, 0x65,
+	0x21, 0x0c, 0x41, 0x5b, 0xda, 0x40, 0x47, 0x5b, 0x4d, 0x8a, 0xd1, 0xb6, 0x4e, 0x7a, 0x15, 0x9f,
+	0xd8, 0x0f, 0xa3, 0xea, 0xd7, 0xd2, 0x8a, 0x1c, 0xf5, 0x64, 0x2f, 0x3b, 0x08, 0x74, 0x1b, 0xae,
+	0xa3, 0x55, 0x0d, 0x1c, 0x82, 0x56, 0x84, 0x33, 0xee, 0x24, 0xcc, 0xc1, 0x24, 0x2c, 0x27, 0x7d,
+	0xb4, 0xc8, 0x51, 0xf3, 0x02, 0x67, 0xfc, 0x03, 0x3b, 0x1f, 0xbe, 0x2b, 0x72, 0x04, 0x25, 0xeb,
+	0x16, 0x52, 0xb7, 0x9b, 0x91, 0x04, 0x90, 0x10, 0x0e, 0x40, 0x13, 0x93, 0xd0, 0x21, 0x6c, 0x9a,
+	0xf0, 0x72, 0xae, 0x9d, 0x22, 0x47, 0x4f, 0xca, 0x15, 0x58, 0xa7, 0x74, 0x7b, 0x1f, 0x93, 0x70,
+	0xb8, 0x7a, 0xc2, 0x57, 0xa0, 0x55, 0xfd, 0x5a, 0xd6, 0x7d, 0xd4, 0xaf, 0x3d, 0xdc, 0x9c, 0xbd,
+	0x0d, 0xdf, 0x18, 0xa0, 0x5a, 0xef, 0x6f, 0x17, 0x9a, 0x7a, 0xb7, 0xd0, 0xd4, 0x3f, 0x0b, 0x4d,
+	0xfd, 0xb9, 0xd4, 0x94, 0xbb, 0xa5, 0xa6, 0xfc, 0x5a, 0x6a, 0xca, 0x97, 0x53, 0x2f, 0xe0, 0xfe,
+	0xd4, 0x35, 0x08, 0x8b, 0xcd, 0x18, 0xf3, 0x80, 0x24, 0x94, 0x7f, 0x65, 0x69, 0x68, 0x6e, 0x0e,
+	0x6c, 0x6e, 0x6e, 0xdd, 0xb7, 0x10, 0x74, 0x1b, 0xe2, 0x58, 0x4e, 0xff, 0x05, 0x00, 0x00, 0xff,
+	0xff, 0x76, 0x3e, 0x06, 0x8d, 0xfa, 0x03, 0x00, 0x00,
 }
+
+func (m *Params) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Params) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Params) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.ChildBlockInterval != 0 {
+		i = encodeVarintGenesis(dAtA, i, uint64(m.ChildBlockInterval))
+		i--
+		dAtA[i] = 0x20
+	}
+	if m.MaxCheckpointLength != 0 {
+		i = encodeVarintGenesis(dAtA, i, uint64(m.MaxCheckpointLength))
+		i--
+		dAtA[i] = 0x18
+	}
+	if m.AvgCheckpointLength != 0 {
+		i = encodeVarintGenesis(dAtA, i, uint64(m.AvgCheckpointLength))
+		i--
+		dAtA[i] = 0x10
+	}
+	n1, err1 := github_com_gogo_protobuf_types.StdDurationMarshalTo(m.CheckpointBufferTime, dAtA[i-github_com_gogo_protobuf_types.SizeOfStdDuration(m.CheckpointBufferTime):])
+	if err1 != nil {
+		return 0, err1
+	}
+	i -= n1
+	i = encodeVarintGenesis(dAtA, i, uint64(n1))
+	i--
+	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
+}
+
+func (m *GenesisState) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *GenesisState) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Checkpoints) > 0 {
+		for iNdEx := len(m.Checkpoints) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Checkpoints[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintGenesis(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x2a
+		}
+	}
+	if m.AckCount != 0 {
+		i = encodeVarintGenesis(dAtA, i, uint64(m.AckCount))
+		i--
+		dAtA[i] = 0x20
+	}
+	if m.LastNoACK != 0 {
+		i = encodeVarintGenesis(dAtA, i, uint64(m.LastNoACK))
+		i--
+		dAtA[i] = 0x18
+	}
+	if m.BufferedCheckpoint != nil {
+		{
+			size, err := m.BufferedCheckpoint.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintGenesis(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	{
+		size, err := m.Params.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintGenesis(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
+}
+
+func encodeVarintGenesis(dAtA []byte, offset int, v uint64) int {
+	offset -= sovGenesis(v)
+	base := offset
+	for v >= 1<<7 {
+		dAtA[offset] = uint8(v&0x7f | 0x80)
+		v >>= 7
+		offset++
+	}
+	dAtA[offset] = uint8(v)
+	return base
+}
+func (m *Params) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = github_com_gogo_protobuf_types.SizeOfStdDuration(m.CheckpointBufferTime)
+	n += 1 + l + sovGenesis(uint64(l))
+	if m.AvgCheckpointLength != 0 {
+		n += 1 + sovGenesis(uint64(m.AvgCheckpointLength))
+	}
+	if m.MaxCheckpointLength != 0 {
+		n += 1 + sovGenesis(uint64(m.MaxCheckpointLength))
+	}
+	if m.ChildBlockInterval != 0 {
+		n += 1 + sovGenesis(uint64(m.ChildBlockInterval))
+	}
+	return n
+}
+
+func (m *GenesisState) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = m.Params.Size()
+	n += 1 + l + sovGenesis(uint64(l))
+	if m.BufferedCheckpoint != nil {
+		l = m.BufferedCheckpoint.Size()
+		n += 1 + l + sovGenesis(uint64(l))
+	}
+	if m.LastNoACK != 0 {
+		n += 1 + sovGenesis(uint64(m.LastNoACK))
+	}
+	if m.AckCount != 0 {
+		n += 1 + sovGenesis(uint64(m.AckCount))
+	}
+	if len(m.Checkpoints) > 0 {
+		for _, e := range m.Checkpoints {
+			l = e.Size()
+			n += 1 + l + sovGenesis(uint64(l))
+		}
+	}
+	return n
+}
+
+func sovGenesis(x uint64) (n int) {
+	return (math_bits.Len64(x|1) + 6) / 7
+}
+func sozGenesis(x uint64) (n int) {
+	return sovGenesis(uint64((x << 1) ^ uint64((int64(x) >> 63))))
+}
+func (m *Params) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowGenesis
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Params: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Params: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CheckpointBufferTime", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := github_com_gogo_protobuf_types.StdDurationUnmarshal(&m.CheckpointBufferTime, dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AvgCheckpointLength", wireType)
+			}
+			m.AvgCheckpointLength = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.AvgCheckpointLength |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MaxCheckpointLength", wireType)
+			}
+			m.MaxCheckpointLength = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.MaxCheckpointLength |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ChildBlockInterval", wireType)
+			}
+			m.ChildBlockInterval = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.ChildBlockInterval |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipGenesis(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *GenesisState) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowGenesis
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: GenesisState: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: GenesisState: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Params", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Params.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BufferedCheckpoint", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.BufferedCheckpoint == nil {
+				m.BufferedCheckpoint = &types.Checkpoint{}
+			}
+			if err := m.BufferedCheckpoint.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field LastNoACK", wireType)
+			}
+			m.LastNoACK = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.LastNoACK |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AckCount", wireType)
+			}
+			m.AckCount = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.AckCount |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Checkpoints", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Checkpoints = append(m.Checkpoints, &types.Checkpoint{})
+			if err := m.Checkpoints[len(m.Checkpoints)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipGenesis(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func skipGenesis(dAtA []byte) (n int, err error) {
+	l := len(dAtA)
+	iNdEx := 0
+	depth := 0
+	for iNdEx < l {
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return 0, ErrIntOverflowGenesis
+			}
+			if iNdEx >= l {
+				return 0, io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		wireType := int(wire & 0x7)
+		switch wireType {
+		case 0:
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return 0, ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return 0, io.ErrUnexpectedEOF
+				}
+				iNdEx++
+				if dAtA[iNdEx-1] < 0x80 {
+					break
+				}
+			}
+		case 1:
+			iNdEx += 8
+		case 2:
+			var length int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return 0, ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return 0, io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				length |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if length < 0 {
+				return 0, ErrInvalidLengthGenesis
+			}
+			iNdEx += length
+		case 3:
+			depth++
+		case 4:
+			if depth == 0 {
+				return 0, ErrUnexpectedEndOfGroupGenesis
+			}
+			depth--
+		case 5:
+			iNdEx += 4
+		default:
+			return 0, fmt.Errorf("proto: illegal wireType %d", wireType)
+		}
+		if iNdEx < 0 {
+			return 0, ErrInvalidLengthGenesis
+		}
+		if depth == 0 {
+			return iNdEx, nil
+		}
+	}
+	return 0, io.ErrUnexpectedEOF
+}
+
+var (
+	ErrInvalidLengthGenesis        = fmt.Errorf("proto: negative length found during unmarshaling")
+	ErrIntOverflowGenesis          = fmt.Errorf("proto: integer overflow")
+	ErrUnexpectedEndOfGroupGenesis = fmt.Errorf("proto: unexpected end of group")
+)

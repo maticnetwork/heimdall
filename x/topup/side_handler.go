@@ -56,7 +56,7 @@ func NewPostTxHandler(k keeper.Keeper, contractCaller helper.IContractCaller) hm
 func SideHandleMsgTopup(ctx sdk.Context, k keeper.Keeper, msg types.MsgTopup, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
 
 	k.Logger(ctx).Debug("✅ Validating External call for topup msg",
-		"txHash", hmCommonTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
+		"txHash", hmCommonTypes.BytesToHeimdallHash([]byte(msg.TxHash)),
 		"logIndex", uint64(msg.LogIndex),
 		"blockNumber", msg.BlockNumber,
 	)
@@ -66,9 +66,9 @@ func SideHandleMsgTopup(ctx sdk.Context, k keeper.Keeper, msg types.MsgTopup, co
 	chainParams := params.ChainParams
 
 	// get main tx receipt
-	receipt, err := contractCaller.GetConfirmedTxReceipt(msg.TxHash.EthHash(), params.MainchainTxConfirmations)
+	receipt, err := contractCaller.GetConfirmedTxReceipt(hmCommonTypes.HexToHeimdallHash(msg.TxHash).EthHash(), params.MainchainTxConfirmations)
 	if err != nil || receipt == nil {
-		return hmCommon.ErrorSideTx(common.CodeWaitFrConfirmation)
+		return hmCommon.ErrorSideTx(common.ErrWaitForConfirmation)
 	}
 
 	// get event log for topup
@@ -78,12 +78,12 @@ func SideHandleMsgTopup(ctx sdk.Context, k keeper.Keeper, msg types.MsgTopup, co
 	eventLog, err := contractCaller.DecodeValidatorTopupFeesEvent(stakingAddress, receipt, msg.LogIndex)
 	if err != nil || eventLog == nil {
 		k.Logger(ctx).Error("Error fetching log from txhash")
-		return hmCommon.ErrorSideTx(common.CodeErrDecodeEvent)
+		return hmCommon.ErrorSideTx(common.ErrDecodeEvent)
 	}
 
 	if receipt.BlockNumber.Uint64() != msg.BlockNumber {
 		k.Logger(ctx).Error("BlockNumber in message doesn't match blocknumber in receipt", "MsgBlockNumber", msg.BlockNumber, "ReceiptBlockNumber", receipt.BlockNumber.Uint64)
-		return hmCommon.ErrorSideTx(common.CodeInvalidMsg)
+		return hmCommon.ErrorSideTx(common.ErrInvalidMsg)
 	}
 
 	if !bytes.Equal(eventLog.User.Bytes(), []byte(msg.User)) {
@@ -92,12 +92,12 @@ func SideHandleMsgTopup(ctx sdk.Context, k keeper.Keeper, msg types.MsgTopup, co
 			"EventUser", eventLog.User,
 			"MsgUser", msg.User,
 		)
-		return hmCommon.ErrorSideTx(common.CodeInvalidMsg)
+		return hmCommon.ErrorSideTx(common.ErrInvalidMsg)
 	}
 
 	if eventLog.Fee.Cmp(msg.Fee.BigInt()) != 0 {
 		k.Logger(ctx).Error("Fee in message doesn't match Fee in event logs", "MsgFee", msg.Fee, "FeeFromEvent", eventLog.Fee)
-		return hmCommon.ErrorSideTx(common.CodeInvalidMsg)
+		return hmCommon.ErrorSideTx(common.ErrInvalidMsg)
 	}
 
 	k.Logger(ctx).Debug("✅ Succesfully validated External call for topup msg")

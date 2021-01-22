@@ -69,6 +69,9 @@ func (suite *KeeperTestSuite) TestValidator() {
 	valId := simulation.RandIntBetween(r1, 0, n)
 
 	singerAddress, err := sdk.AccAddressFromHex(validators[valId].Signer)
+	if err != nil {
+		t.Error("Error getting signer address", err)
+	}
 
 	// Get Validator Info from state
 	valInfo, err := app.StakingKeeper.GetValidatorInfo(ctx, singerAddress)
@@ -116,6 +119,9 @@ func (suite *KeeperTestSuite) TestUpdateSigner() {
 	}
 
 	singerAddress, err := sdk.AccAddressFromHex(validators[0].Signer)
+	if err != nil {
+		t.Error("Error getting signer address", err)
+	}
 
 	// Fetch Validator Info from Store
 	valInfo, err := app.StakingKeeper.GetValidatorInfo(ctx, singerAddress)
@@ -123,12 +129,18 @@ func (suite *KeeperTestSuite) TestUpdateSigner() {
 		t.Error("Error while fetching Validator Info from store", err)
 	}
 	valInfoSigner, err := sdk.AccAddressFromHex(valInfo.Signer)
+	if err != nil {
+		t.Error("Error getting validator info", err)
+	}
 
 	// Update Signer
 	newPrivKey := secp256k1.GenPrivKey()
 	newPubKey := hmCommonTypes.NewPubKey(newPrivKey.PubKey().Bytes())
 	newSigner := sdk.AccAddress(newPrivKey.PubKey().Address().Bytes())
 	newSignerAddress, err := sdk.AccAddressFromHex(newSigner.String())
+	if err != nil {
+		t.Error("Error getting new signer address", err)
+	}
 
 	err = app.StakingKeeper.UpdateSigner(ctx, newSignerAddress, newPubKey, valInfoSigner)
 	if err != nil {

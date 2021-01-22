@@ -19,9 +19,9 @@ func NewEventRecord(
 ) EventRecord {
 	return EventRecord{
 		Id:         id,
-		Contract:   contract,
+		Contract:   contract.String(),
 		Data:       data,
-		TxHash:     txHash.Bytes(),
+		TxHash:     txHash.String(),
 		LogIndex:   logIndex,
 		ChainId:    chainID,
 		RecordTime: recordTime,

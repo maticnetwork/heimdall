@@ -1,39 +1,69 @@
 syntax = "proto3";
+package heimdall.checkpoint.v1beta1;
 
 import "gogoproto/gogo.proto";
-import "google/protobuf/any.proto";
 
 option go_package = "github.com/maticnetwork/heimdall/x/checkpoint/types";
 
-/*
+option (gogoproto.sizer_all)       = true;
+option (gogoproto.marshaler_all)   = true;
+option (gogoproto.unmarshaler_all) = true;
+
+// Msg defines the checkpoint Msg service.
+service Msg {
+    // Checkpoint defines Checkpoint.
+    rpc Checkpoint(MsgCheckpoint) returns (MsgCheckpointResponse);
+
+    // CheckpointAck defines ack to checkpoint
+    rpc CheckpointAck(MsgCheckpointAck) returns (MsgCheckpointAckResponse);
+
+    // CheckpointNoAck defines no ack to checkpoint
+    rpc CheckpointNoAck(MsgCheckpointNoAck)
+        returns (MsgCheckpointNoAckResponse);
+}
+
+// MsgCheckpoint defines a message to crete checkpoint.
 message MsgCheckpoint {
-  option (gogoproto.equal)           = false;
-  option (gogoproto.goproto_getters) = false;
+    option (gogoproto.equal)           = false;
+    option (gogoproto.goproto_getters) = false;
 
-  HeimdallAddress proposer = 1;
-  uint64 start_block = 2;
-  uint64 end_block = 3;
-  HeimdallHash roothash = 4;
-  HeimdallHash account_root_hash = 5;
-  string bor_chainID = 6;
+    string proposer    = 1;
+    uint64 start_block = 2 [(gogoproto.moretags) = "yaml:\"start_block\""];
+    uint64 end_block   = 3 [(gogoproto.moretags) = "yaml:\"end_block\""];
+    string root_hash   = 4 [(gogoproto.moretags) = "yaml:\"root_hash\""];
+    string account_root_hash = 5
+        [(gogoproto.moretags) = "yaml:\"account_root_hash\""];
+    string bor_chainID = 6 [(gogoproto.moretags) = "yaml:\"bor_chainID\""];
 }
 
+// MsgValidatorJoinResponse defines ValidatorJoin response type.
+message MsgCheckpointResponse {}
+
+// MsgCheckpoint defines a message to checkpoint ack.
 message MsgCheckpointAck {
-  option (gogoproto.equal)           = false;
-  option (gogoproto.goproto_getters) = false;
-  HeimdallAddress from = 1
-  uint64 number = 2
-  HeimdallAddress proposer = 3;
-  uint64 start_block = 4;
-  uint64 end_block = 5;
-  HeimdallHash roothash = 6;
-  HeimdallHash account_root_hash = 7;
-  uint64 bor_chainID = 8;
+    option (gogoproto.equal)           = false;
+    option (gogoproto.goproto_getters) = false;
+
+    string from        = 1;
+    uint64 number      = 2;
+    string proposer    = 3;
+    uint64 start_block = 4 [(gogoproto.moretags) = "yaml:\"start_block\""];
+    uint64 end_block   = 5 [(gogoproto.moretags) = "yaml:\"end_block\""];
+    string root_hash   = 6 [(gogoproto.moretags) = "yaml:\"root_hash\""];
+    string tx_hash     = 7 [(gogoproto.moretags) = "yaml:\"tx_hash\""];
+    uint64 log_index   = 8 [(gogoproto.moretags) = "yaml:\"log_index\""];
 }
 
+// MsgCheckpointAckResponse defines CheckpointAck response type.
+message MsgCheckpointAckResponse {}
+
+// MsgCheckpoint defines a message to checkpoint no ack.
 message MsgCheckpointNoAck {
-  option (gogoproto.equal)           = false;
-  option (gogoproto.goproto_getters) = false;
-  HeimdallAddress from = 1
+    option (gogoproto.equal)           = false;
+    option (gogoproto.goproto_getters) = false;
+
+    string from = 1;
 }
-*/
+
+// MsgCheckpointNoAckResponse defines CheckpointNoAck response type.
+message MsgCheckpointNoAckResponse {}

@@ -2,13 +2,13 @@ package helper
 
 import (
 	"crypto/ecdsa"
-	"log"
+	"fmt"
 	"math/big"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	ethCrypto "github.com/maticnetwork/bor/crypto"
 	"github.com/maticnetwork/bor/eth"
 	"github.com/maticnetwork/bor/ethclient"
@@ -17,10 +17,6 @@ import (
 	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	logger "github.com/tendermint/tendermint/libs/log"
-	"github.com/tendermint/tendermint/privval"
-
-	"github.com/maticnetwork/heimdall/file"
-
 	tmTypes "github.com/tendermint/tendermint/types"
 )
 
@@ -67,7 +63,7 @@ const (
 
 	DefaultBorChainID string = "15001"
 
-	secretFilePerm = 0600
+	// secretFilePerm = 0600
 )
 
 var (
@@ -133,74 +129,51 @@ var GenesisDoc tmTypes.GenesisDoc
 // var RootChain types.Contract
 // var DepositManager types.Contract
 
-// InitHeimdallConfig initializes with viper config (from heimdall configuration)
-func InitHeimdallConfig(homeDir string) {
-	if strings.Compare(homeDir, "") == 0 {
-		// get home dir from viper
-		homeDir = viper.GetString(HomeFlag)
+// InitHeimdallConfig initializes passed heimdall/tendermint config files
+func InitHeimdallConfig(rootViper *viper.Viper) error {
+	rootDir := rootViper.GetString(flags.FlagHome)
+	configDir := filepath.Join(rootDir, "config")
+
+	heimdallConfigFilePath := filepath.Join(configDir, "heimdall-config.toml")
+	if _, err := os.Stat(heimdallConfigFilePath); os.IsNotExist(err) {
+		hc := GetDefaultHeimdallConfig()
+		WriteConfigFile(heimdallConfigFilePath, &hc)
 	}
 
-	// get heimdall config filepath from viper/cobra flag
-	heimdallConfigFilePath := viper.GetString(WithHeimdallConfigFlag)
+	// create new viper and
+	configViper := viper.New()
+	configViper.SetConfigType("toml")
+	configViper.SetConfigName("heimdall-config")
+	configViper.AddConfigPath(configDir) // set config file explicitly
 
-	// init heimdall with changed config files
-	InitHeimdallConfigWith(homeDir, heimdallConfigFilePath)
-}
-
-// InitHeimdallConfigWith initializes passed heimdall/tendermint config files
-func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
-	if strings.Compare(homeDir, "") == 0 {
-		return
-	}
-
-	if strings.Compare(conf.BorRPCUrl, "") != 0 {
-		return
-	}
-
-	configDir := filepath.Join(homeDir, "config")
-
-	heimdallViper := viper.New()
-	if heimdallConfigFilePath == "" {
-		heimdallViper.SetConfigName("heimdall-config") // name of config file (without extension)
-		heimdallViper.AddConfigPath(configDir)         // call multiple times to add many search paths
-	} else {
-		heimdallViper.SetConfigFile(heimdallConfigFilePath) // set config file explicitly
-	}
-
-	err := heimdallViper.ReadInConfig()
+	err := configViper.ReadInConfig()
 	if err != nil { // Handle errors reading the config file
-		log.Fatal(err)
+		return err
 	}
 
-	if err = heimdallViper.UnmarshalExact(&conf); err != nil {
-		log.Fatalln("Unable to unmarshall config", "Error", err)
+	if err = configViper.UnmarshalExact(&conf); err != nil {
+		return fmt.Errorf("Unable to unmarshall config %v", err)
 	}
 
 	if mainRPCClient, err = rpc.Dial(conf.EthRPCUrl); err != nil {
-		log.Fatalln("Unable to dial via ethClient", "URL=", conf.EthRPCUrl, "chain=eth", "Error", err)
+		return fmt.Errorf("Unable to dial via ethClient. URL=%s, chain=eth, error=%v", conf.EthRPCUrl, err)
 	}
 
 	mainChainClient = ethclient.NewClient(mainRPCClient)
 	if maticRPCClient, err = rpc.Dial(conf.BorRPCUrl); err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	maticClient = ethclient.NewClient(maticRPCClient)
+
 	// Loading genesis doc
 	genDoc, err := tmTypes.GenesisDocFromFile(filepath.Join(configDir, "genesis.json"))
 	if err != nil {
-		log.Fatal(err)
+		return nil
 	}
 	GenesisDoc = *genDoc
 
-	// load pv file, unmarshall and set to privObject
-	err = file.PermCheck(file.Rootify("priv_validator_key.json", configDir), secretFilePerm)
-	if err != nil {
-		Logger.Error(err.Error())
-	}
-	privVal := privval.LoadFilePV(filepath.Join(configDir, "priv_validator_key.json"), filepath.Join(configDir, "priv_validator_key.json"))
-	cdc.MustUnmarshalBinaryBare(privVal.Key.PrivKey.Bytes(), &privObject)
-	cdc.MustUnmarshalBinaryBare(privObject.PubKey().Bytes(), &pubObject)
+	return nil
 }
 
 // GetDefaultHeimdallConfig returns configration with default params

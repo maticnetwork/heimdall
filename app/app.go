@@ -45,6 +45,7 @@ import (
 	"github.com/maticnetwork/heimdall/x/chainmanager"
 	chainKeeper "github.com/maticnetwork/heimdall/x/chainmanager/keeper"
 	chainmanagerTypes "github.com/maticnetwork/heimdall/x/chainmanager/types"
+
 	"github.com/maticnetwork/heimdall/x/clerk"
 	clerkkeeper "github.com/maticnetwork/heimdall/x/clerk/keeper"
 	clerktypes "github.com/maticnetwork/heimdall/x/clerk/types"
@@ -60,6 +61,9 @@ import (
 	hmtypes "github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/types/common"
 	hmmodule "github.com/maticnetwork/heimdall/types/module"
+	"github.com/maticnetwork/heimdall/x/gov"
+	govkeeper "github.com/maticnetwork/heimdall/x/gov/keeper"
+	govtypes "github.com/maticnetwork/heimdall/x/gov/types"
 	"github.com/maticnetwork/heimdall/x/sidechannel"
 	sidechannelkeeper "github.com/maticnetwork/heimdall/x/sidechannel/keeper"
 	sidechanneltypes "github.com/maticnetwork/heimdall/x/sidechannel/types"
@@ -69,6 +73,10 @@ import (
 	"github.com/maticnetwork/heimdall/x/topup"
 	topupkeeper "github.com/maticnetwork/heimdall/x/topup/keeper"
 	topuptypes "github.com/maticnetwork/heimdall/x/topup/types"
+
+	"github.com/maticnetwork/heimdall/x/checkpoint"
+	checkpointkeeper "github.com/maticnetwork/heimdall/x/checkpoint/keeper"
+	checkpointtypes "github.com/maticnetwork/heimdall/x/checkpoint/types"
 
 	// unnamed import of statik for swagger UI support
 	_ "github.com/maticnetwork/heimdall/client/docs/statik"
@@ -91,6 +99,8 @@ var (
 		sidechannel.AppModuleBasic{},
 		staking.AppModuleBasic{},
 		params.AppModuleBasic{},
+		gov.AppModuleBasic{},
+		checkpoint.AppModuleBasic{},
 		topup.AppModuleBasic{},
 		clerk.AppModuleBasic{},
 	)
@@ -98,6 +108,7 @@ var (
 	// module account permissions
 	maccPerms = map[string][]string{
 		authtypes.FeeCollectorName: nil,
+		govtypes.ModuleName:        {},
 	}
 
 	// module accounts that are allowed to receive tokens
@@ -132,6 +143,8 @@ type HeimdallApp struct {
 	SidechannelKeeper sidechannelkeeper.Keeper
 	StakingKeeper     stakingkeeper.Keeper
 	ParamsKeeper      paramskeeper.Keeper
+	GovKeeper         govkeeper.Keeper
+	CheckpointKeeper  checkpointkeeper.Keeper
 	TopupKeeper       topupkeeper.Keeper
 
 	// side router
@@ -187,12 +200,13 @@ func NewHeimdallApp(
 		authtypes.StoreKey,
 		banktypes.StoreKey,
 		chainmanagerTypes.StoreKey,
-		clerktypes.StoreKey,
+		// clerktypes.StoreKey,
 		sidechanneltypes.StoreKey,
 		stakingtypes.StoreKey,
+		checkpointtypes.StoreKey,
 		// distrtypes.StoreKey,
 		// slashingtypes.StoreKey,
-		// govtypes.StoreKey,
+		govtypes.StoreKey,
 		paramstypes.StoreKey,
 		topuptypes.StoreKey,
 	)
@@ -255,6 +269,30 @@ func NewHeimdallApp(
 		app.BankKeeper,
 		nil,
 	)
+	app.CheckpointKeeper = checkpointkeeper.NewKeeper(
+		appCodec,
+		keys[checkpointtypes.StoreKey], // target store
+		app.GetSubspace(checkpointtypes.ModuleName),
+		app.StakingKeeper,
+		app.ChainKeeper,
+		nil,
+	)
+
+	app.GovKeeper = govkeeper.NewKeeper(
+		appCodec,
+		keys[govtypes.StoreKey], // target store
+		app.GetSubspace(govtypes.ModuleName),
+		app.BankKeeper,
+		govtypes.NewRouter(),
+		&app.StakingKeeper,
+		app.AccountKeeper,
+	)
+
+	app.ClerkKeeper = clerkkeeper.NewKeeper(
+		appCodec,
+		keys[clerktypes.StoreKey], // target store
+		app.ChainKeeper,
+	)
 
 	app.ClerkKeeper = clerkkeeper.NewKeeper(
 		appCodec,
@@ -299,7 +337,9 @@ func NewHeimdallApp(
 		chainmanager.NewAppModule(appCodec, app.ChainKeeper),
 		staking.NewAppModule(appCodec, app.StakingKeeper, &app.caller),
 		clerk.NewAppModule(appCodec, app.ClerkKeeper, &app.caller),
+		gov.NewAppModule(appCodec, app.GovKeeper, app.AccountKeeper, app.BankKeeper),
 		params.NewAppModule(app.ParamsKeeper),
+		checkpoint.NewAppModule(appCodec, app.CheckpointKeeper, &app.caller),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -307,9 +347,18 @@ func NewHeimdallApp(
 	// CanWithdrawInvariant invariant.
 	// NOTE: staking module is required if HistoricalEntries param > 0
 	app.mm.SetOrderBeginBlockers(
+		sidechanneltypes.ModuleName,
 		stakingtypes.ModuleName,
 	)
-	app.mm.SetOrderEndBlockers(stakingtypes.ModuleName)
+	app.mm.SetOrderEndBlockers(
+		sidechanneltypes.ModuleName,
+		stakingtypes.ModuleName,
+		govtypes.ModuleName,
+	)
+	app.mm.SetOrderEndBlockers(
+		stakingtypes.ModuleName,
+		govtypes.ModuleName,
+	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
 	// properly initialized with tokens from genesis accounts.
@@ -322,8 +371,10 @@ func NewHeimdallApp(
 		sidechanneltypes.ModuleName,
 		chainmanagerTypes.ModuleName,
 		stakingtypes.ModuleName,
-		clerktypes.ModuleName,
+		checkpointtypes.ModuleName,
+		// clerktypes.ModuleName,
 		genutiltypes.ModuleName,
+		govtypes.ModuleName,
 	)
 
 	// app.mm.RegisterInvariants(&app.CrisisKeeper)
@@ -474,9 +525,9 @@ func (app *HeimdallApp) LoadHeight(height int64) error {
 // ModuleAccountAddrs returns all the app's module account addresses.
 func (app *HeimdallApp) ModuleAccountAddrs() map[string]bool {
 	modAccAddrs := make(map[string]bool)
-	// for acc := range maccPerms {
-	// 	modAccAddrs[authtypes.NewModuleAddress(acc).String()] = true
-	// }
+	for acc := range maccPerms {
+		modAccAddrs[authtypes.NewModuleAddress(acc).String()] = true
+	}
 
 	return modAccAddrs
 }
@@ -621,5 +672,7 @@ func initParamsKeeper(appCodec codec.BinaryMarshaler, legacyAmino *codec.LegacyA
 	paramsKeeper.Subspace(stakingtypes.ModuleName)
 	paramsKeeper.Subspace(chainmanagerTypes.ModuleName)
 	paramsKeeper.Subspace(sidechanneltypes.ModuleName)
+	paramsKeeper.Subspace(checkpointtypes.ModuleName)
+
 	return paramsKeeper
 }
