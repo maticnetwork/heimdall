@@ -30,7 +30,7 @@ var (
 
 // ModuleCommunicator manages different module interaction
 type ModuleCommunicator interface {
-	GetAllDividendAccounts(ctx sdk.Context) []hmTypes.DividendAccount
+	GetAllDividendAccounts(ctx sdk.Context) []*hmTypes.DividendAccount
 }
 
 type (
