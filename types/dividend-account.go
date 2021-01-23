@@ -56,7 +56,7 @@ func UnMarshallDividendAccount(cdc codec.BinaryMarshaler, value []byte) (Dividen
 }
 
 // SortDividendAccountByAddress - Sorts DividendAccounts  By  Address
-func SortDividendAccountByAddress(dividendAccounts []DividendAccount) []DividendAccount {
+func SortDividendAccountByAddress(dividendAccounts []*DividendAccount) []*DividendAccount {
 	sort.Slice(dividendAccounts, func(i, j int) bool {
 		return dividendAccounts[i].User == dividendAccounts[j].User
 	})

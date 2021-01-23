@@ -1,7 +1,7 @@
 package cli
 
 import (
-	"bytes"
+	"context"
 	"errors"
 	"fmt"
 
@@ -9,19 +9,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/maticnetwork/bor/common"
 	"github.com/spf13/cobra"
 
-	// "github.com/maticnetwork/heimdall/bridge/setu/util"
-
-	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
+	"github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types/common"
+	chainmanagerTypes "github.com/maticnetwork/heimdall/x/chainmanager/types"
 	"github.com/maticnetwork/heimdall/x/staking/types"
 )
-
-// ForeignEventName is used in ValidatorJoinTxCmd
-const ForeignEventName = "Staked"
 
 // GetTxCmd returns the transaction commands for this module
 func GetTxCmd() *cobra.Command {
@@ -65,6 +60,18 @@ func validateAndCompressPubKey(pubkeyBytes []byte) ([]byte, error) {
 	return pubkeyBytes, nil
 }
 
+// Fetch chain manager params
+func getChainmanagerParams(clientCtx client.Context) (*chainmanagerTypes.Params, error) {
+	// create query client
+	queryClient := chainmanagerTypes.NewQueryClient(clientCtx)
+	req := &chainmanagerTypes.QueryParamsRequest{}
+	res, err := queryClient.Params(context.Background(), req)
+	if err != nil {
+		return nil, err
+	}
+	return res.GetParams(), nil
+}
+
 //
 //
 //
@@ -77,6 +84,17 @@ func ValidatorJoinTxCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
 			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
+
+			chainmanagerParams, err := getChainmanagerParams(clientCtx)
+			if err != nil {
+				return err
+			}
+
+			// Get contractCaller ref
+			contractCallerObj, err := helper.NewContractCaller()
 			if err != nil {
 				return err
 			}
@@ -97,83 +115,45 @@ func ValidatorJoinTxCmd() *cobra.Command {
 				return fmt.Errorf("transaction hash is required")
 			}
 
-			// get PubKey string
-			pubkeyStr, _ := cmd.Flags().GetString(FlagSignerPubkey)
-			if pubkeyStr == "" {
-				return fmt.Errorf("pubkey is required")
-			}
-
-			// convert PubKey to bytes
-			pubkeyBytes, err := validateAndCompressPubKey(common.FromHex(pubkeyStr))
-			if err != nil {
-				return fmt.Errorf("Invalid uncompressed pubkey %s", err)
-			}
-
-			// create new pub key
-			pubkey := hmTypes.NewPubKey(pubkeyBytes)
-
-			// Get contractCaller ref
-			contractCallerObj, err := helper.NewContractCaller()
-			if err != nil {
-				return err
-			}
-
-			// // TODO uncomment this when integrating chainmanager
-			// chainmanagerParams, err := util.GetChainmanagerParams(cliCtx)
-			// if err != nil {
-			// 	return err
-			// }
+			// parse log index
+			logIndex, _ := cmd.Flags().GetUint64(FlagLogIndex)
 
 			// get main tx receipt
-			// NOTE: Use 'chainmanagerParams.MainchainTxConfirmations'. Now it is hard coded.
-			receipt, err := contractCallerObj.GetConfirmedTxReceipt(hmTypes.HexToHeimdallHash(txhash).EthHash(), 6)
+			receipt, err := contractCallerObj.GetConfirmedTxReceipt(
+				hmTypes.HexToHeimdallHash(txhash).EthHash(),
+				chainmanagerParams.MainchainTxConfirmations,
+			)
 			if err != nil || receipt == nil {
 				return errors.New("Transaction is not confirmed yet. Please wait for sometime and try again")
 			}
 
-			abiObject := &contractCallerObj.StakingInfoABI
-			event := new(stakinginfo.StakinginfoStaked)
-			var logIndex uint64
-			found := false
-			for _, vLog := range receipt.Logs {
-				topic := vLog.Topics[0].Bytes()
-				selectedEvent := helper.EventByID(abiObject, topic)
-				if selectedEvent != nil && selectedEvent.Name == ForeignEventName {
-					if err := helper.UnpackLog(abiObject, event, ForeignEventName, vLog); err != nil {
-						return err
-					}
-
-					logIndex = uint64(vLog.Index)
-					found = true
-					break
-				}
-			}
-
-			if !found {
-				return fmt.Errorf("Invalid tx for validator join")
-			}
-
-			expectedPubKey, err := helper.CompressPubKey(event.SignerPubkey)
+			event, err := contractCallerObj.DecodeValidatorJoinEvent(
+				common.FromHex(chainmanagerParams.ChainParams.StakingManagerAddress),
+				receipt,
+				logIndex,
+			)
 			if err != nil {
 				return err
 			}
-			if !bytes.Equal(expectedPubKey, pubkey.Bytes()) {
-				return fmt.Errorf("Public key mismatch with event log")
-			}
 
-			activationEpoch, _ := cmd.Flags().GetUint64(FlagActivationEpoch)
-			blockNumber, _ := cmd.Flags().GetUint64(FlagBlockNumber)
+			// convert PubKey to bytes
+			pubkeyBytes, err := validateAndCompressPubKey(event.SignerPubkey)
+			if err != nil {
+				return fmt.Errorf("Invalid uncompressed pubkey %s", err)
+			}
+			// create new pub key
+			pubkey := hmTypes.NewPubKey(pubkeyBytes)
 
 			// msg new ValidatorJion message
 			msg := types.NewMsgValidatorJoin(
 				proposer,
 				event.ValidatorId.Uint64(),
-				activationEpoch,
-				sdk.NewIntFromBigInt(event.Total),
+				event.ActivationEpoch.Uint64(),
+				sdk.NewIntFromBigInt(event.Amount),
 				pubkey,
 				hmTypes.HexToHeimdallHash(txhash),
 				logIndex,
-				blockNumber,
+				receipt.BlockNumber.Uint64(),
 				event.Nonce.Uint64(),
 			)
 
@@ -183,15 +163,12 @@ func ValidatorJoinTxCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
-	cmd.Flags().String(FlagSignerPubkey, "", "--signer-pubkey=<signer pubkey here>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
-	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
-	cmd.Flags().Uint64(FlagActivationEpoch, 0, "--activation-epoch=<activation-epoch>")
+	cmd.Flags().Uint64(FlagLogIndex, 0, "--log-index=<log-index>")
 
-	_ = cmd.MarkFlagRequired(FlagBlockNumber)
 	_ = cmd.MarkFlagRequired(FlagActivationEpoch)
-	_ = cmd.MarkFlagRequired(FlagSignerPubkey)
 	_ = cmd.MarkFlagRequired(FlagTxHash)
+	_ = cmd.MarkFlagRequired(FlagLogIndex)
 
 	// add common tx flags to cmd
 	flags.AddTxFlagsToCmd(cmd)
@@ -211,52 +188,71 @@ func SignerUpdateTxCmd() *cobra.Command {
 				return err
 			}
 
+			chainmanagerParams, err := getChainmanagerParams(clientCtx)
+			if err != nil {
+				return err
+			}
+
+			// Get contractCaller ref
+			contractCallerObj, err := helper.NewContractCaller()
+			if err != nil {
+				return err
+			}
+
 			// get proposer
 			proposerAddrStr, _ := cmd.Flags().GetString(FlagProposerAddress)
 			proposer, err := sdk.AccAddressFromHex(proposerAddrStr)
 			if err != nil {
-				return err
+				return fmt.Errorf("invalid proposer address: %v", err)
 			}
 			if proposer.Empty() {
 				proposer = helper.GetFromAddress(clientCtx)
 			}
 
-			// get validatorID from flags
-			ValidatorID, _ := cmd.Flags().GetUint64(FlagValidatorID)
-			if ValidatorID == 0 {
-				return fmt.Errorf("validator ID cannot be 0")
+			// get txHash
+			txhash, _ := cmd.Flags().GetString(FlagTxHash)
+			if txhash == "" {
+				return fmt.Errorf("transaction hash is required")
 			}
 
-			// get PubKey string
-			pubkeyStr, _ := cmd.Flags().GetString(FlagSignerPubkey)
-			if pubkeyStr == "" {
-				return fmt.Errorf("pubkey is required")
+			// parse log index
+			logIndex, _ := cmd.Flags().GetUint64(FlagLogIndex)
+
+			// get main tx receipt
+			receipt, err := contractCallerObj.GetConfirmedTxReceipt(
+				hmTypes.HexToHeimdallHash(txhash).EthHash(),
+				chainmanagerParams.MainchainTxConfirmations,
+			)
+			if err != nil || receipt == nil {
+				return errors.New("Transaction is not confirmed yet. Please wait for sometime and try again")
 			}
 
-			expectedPubKey, err := helper.CompressPubKey(common.FromHex(pubkeyStr))
+			event, err := contractCallerObj.DecodeSignerUpdateEvent(
+				common.FromHex(chainmanagerParams.ChainParams.StakingManagerAddress),
+				receipt,
+				logIndex,
+			)
 			if err != nil {
 				return err
 			}
 
-			// get txHash from flag
-			txhash, _ := cmd.Flags().GetString(FlagTxHash)
-			if txhash == "" {
-				return fmt.Errorf("transaction hash has to be supplied")
+			// convert PubKey to bytes
+			pubkeyBytes, err := validateAndCompressPubKey(event.SignerPubkey)
+			if err != nil {
+				return fmt.Errorf("Invalid uncompressed pubkey %s", err)
 			}
-
-			logIndex, _ := cmd.Flags().GetUint64(FlagLogIndex)
-			blockNumber, _ := cmd.Flags().GetUint64(FlagBlockNumber)
-			nonce, _ := cmd.Flags().GetUint64(FlagNonce)
+			// create new pub key
+			pubkey := hmTypes.NewPubKey(pubkeyBytes)
 
 			// draft new SingerUpdate message
 			msg := types.NewMsgSignerUpdate(
 				proposer,
-				ValidatorID,
-				expectedPubKey,
+				event.ValidatorId.Uint64(),
+				pubkey,
 				hmTypes.HexToHeimdallHash(txhash),
 				logIndex,
-				blockNumber,
-				nonce,
+				receipt.BlockNumber.Uint64(),
+				event.Nonce.Uint64(),
 			)
 
 			// broadcast messages
@@ -265,19 +261,15 @@ func SignerUpdateTxCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
-	cmd.Flags().Uint64(FlagValidatorID, 0, "--id=<validator-id>")
-	cmd.Flags().String(FlagNewSignerPubkey, "", "--new-pubkey=<new-signer-pubkey>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
 	cmd.Flags().Uint64(FlagLogIndex, 0, "--log-index=<log-index>")
-	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
-	cmd.Flags().Int(FlagNonce, 0, "--nonce=<nonce>")
 
-	_ = cmd.MarkFlagRequired(FlagValidatorID)
+	_ = cmd.MarkFlagRequired(FlagActivationEpoch)
 	_ = cmd.MarkFlagRequired(FlagTxHash)
-	_ = cmd.MarkFlagRequired(FlagNewSignerPubkey)
 	_ = cmd.MarkFlagRequired(FlagLogIndex)
-	_ = cmd.MarkFlagRequired(FlagBlockNumber)
-	_ = cmd.MarkFlagRequired(FlagNonce)
+
+	// add common tx flags to cmd
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }
@@ -294,50 +286,63 @@ func StakeUpdateTxCmd() *cobra.Command {
 				return err
 			}
 
-			// get proposer
-			proposerAddrStr, _ := cmd.Flags().GetString(FlagProposerAddress)
-			proposer, err := sdk.AccAddressFromHex(proposerAddrStr)
-
+			chainmanagerParams, err := getChainmanagerParams(clientCtx)
 			if err != nil {
 				return err
 			}
 
+			// Get contractCaller ref
+			contractCallerObj, err := helper.NewContractCaller()
+			if err != nil {
+				return err
+			}
+
+			// get proposer
+			proposerAddrStr, _ := cmd.Flags().GetString(FlagProposerAddress)
+			proposer, err := sdk.AccAddressFromHex(proposerAddrStr)
+			if err != nil {
+				return fmt.Errorf("invalid proposer address: %v", err)
+			}
 			if proposer.Empty() {
 				proposer = helper.GetFromAddress(clientCtx)
 			}
 
-			// get validatorID from flag
-			validatorID, _ := cmd.Flags().GetUint64(FlagValidatorID)
-			if validatorID == 0 {
-				return fmt.Errorf("validator ID cannot be 0")
-			}
-
-			// get txHash from flag
+			// get txHash
 			txhash, _ := cmd.Flags().GetString(FlagTxHash)
 			if txhash == "" {
-				return fmt.Errorf("transaction hash has to be supplied")
+				return fmt.Errorf("transaction hash is required")
 			}
 
-			// total stake amount
-			amountStr, _ := cmd.Flags().GetString(FlagAmount)
-			amount, ok := sdk.NewIntFromString(amountStr)
-			if !ok {
-				return errors.New("Invalid new stake amount")
-			}
-
+			// parse log index
 			logIndex, _ := cmd.Flags().GetUint64(FlagLogIndex)
-			blockNumber, _ := cmd.Flags().GetUint64(FlagBlockNumber)
-			nonce, _ := cmd.Flags().GetUint64(FlagNonce)
+
+			// get main tx receipt
+			receipt, err := contractCallerObj.GetConfirmedTxReceipt(
+				hmTypes.HexToHeimdallHash(txhash).EthHash(),
+				chainmanagerParams.MainchainTxConfirmations,
+			)
+			if err != nil || receipt == nil {
+				return errors.New("Transaction is not confirmed yet. Please wait for sometime and try again")
+			}
+
+			event, err := contractCallerObj.DecodeValidatorStakeUpdateEvent(
+				common.FromHex(chainmanagerParams.ChainParams.StakingManagerAddress),
+				receipt,
+				logIndex,
+			)
+			if err != nil {
+				return err
+			}
 
 			// draft new StakeUpdate message
 			msg := types.NewMsgStakeUpdate(
 				proposer,
-				validatorID,
-				amount,
+				event.ValidatorId.Uint64(),
+				sdk.NewIntFromBigInt(event.NewAmount),
 				hmTypes.HexToHeimdallHash(txhash),
 				logIndex,
-				blockNumber,
-				nonce,
+				receipt.BlockNumber.Uint64(),
+				event.Nonce.Uint64(),
 			)
 			if err != nil {
 				return err
@@ -349,19 +354,15 @@ func StakeUpdateTxCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
-	cmd.Flags().Uint64(FlagValidatorID, 0, "--id=<validator-id>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
-	cmd.Flags().String(FlagAmount, "", "--amount=<amount>")
 	cmd.Flags().Uint64(FlagLogIndex, 0, "--log-index=<log-index>")
-	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
-	cmd.Flags().Int(FlagNonce, 0, "--nonce=<nonce>")
 
+	_ = cmd.MarkFlagRequired(FlagActivationEpoch)
 	_ = cmd.MarkFlagRequired(FlagTxHash)
 	_ = cmd.MarkFlagRequired(FlagLogIndex)
-	_ = cmd.MarkFlagRequired(FlagValidatorID)
-	_ = cmd.MarkFlagRequired(FlagBlockNumber)
-	_ = cmd.MarkFlagRequired(FlagAmount)
-	_ = cmd.MarkFlagRequired(FlagNonce)
+
+	// add common tx flags to cmd
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }
@@ -378,44 +379,63 @@ func ValidatorExitTxCmd() *cobra.Command {
 				return err
 			}
 
-			// get proposer
-			proposerAddrStr, _ := cmd.Flags().GetString(FlagProposerAddress)
-			proposer, err := sdk.AccAddressFromHex(proposerAddrStr)
-
+			chainmanagerParams, err := getChainmanagerParams(clientCtx)
 			if err != nil {
 				return err
 			}
-			//proposer := sdk.AccAddress(viper.GetString(FlagProposerAddress))
+
+			// Get contractCaller ref
+			contractCallerObj, err := helper.NewContractCaller()
+			if err != nil {
+				return err
+			}
+
+			// get proposer
+			proposerAddrStr, _ := cmd.Flags().GetString(FlagProposerAddress)
+			proposer, err := sdk.AccAddressFromHex(proposerAddrStr)
+			if err != nil {
+				return fmt.Errorf("invalid proposer address: %v", err)
+			}
 			if proposer.Empty() {
 				proposer = helper.GetFromAddress(clientCtx)
 			}
 
-			// get validatorid from flag
-			validatorID, _ := cmd.Flags().GetUint64(FlagValidatorID)
-			if validatorID == 0 {
-				return fmt.Errorf("validator ID cannot be 0")
-			}
-
-			// get txHash from flag
+			// get txHash
 			txhash, _ := cmd.Flags().GetString(FlagTxHash)
 			if txhash == "" {
-				return fmt.Errorf("transaction hash has to be supplied")
+				return fmt.Errorf("transaction hash is required")
 			}
 
+			// parse log index
 			logIndex, _ := cmd.Flags().GetUint64(FlagLogIndex)
-			blockNumber, _ := cmd.Flags().GetUint64(FlagBlockNumber)
-			nonce, _ := cmd.Flags().GetUint64(FlagNonce)
-			deactivationEpoch, _ := cmd.Flags().GetUint64(FlagDeactivationEpoch)
 
-			// draf new ValidatorExit message
+			// get main tx receipt
+			receipt, err := contractCallerObj.GetConfirmedTxReceipt(
+				hmTypes.HexToHeimdallHash(txhash).EthHash(),
+				chainmanagerParams.MainchainTxConfirmations,
+			)
+			if err != nil || receipt == nil {
+				return errors.New("Transaction is not confirmed yet. Please wait for sometime and try again")
+			}
+
+			event, err := contractCallerObj.DecodeValidatorExitEvent(
+				common.FromHex(chainmanagerParams.ChainParams.StakingManagerAddress),
+				receipt,
+				logIndex,
+			)
+			if err != nil {
+				return err
+			}
+
+			// draft new ValidatorExit message
 			msg := types.NewMsgValidatorExit(
 				proposer,
-				validatorID,
-				deactivationEpoch,
+				event.ValidatorId.Uint64(),
+				event.DeactivationEpoch.Uint64(),
 				hmTypes.HexToHeimdallHash(txhash),
 				logIndex,
-				blockNumber,
-				nonce,
+				receipt.BlockNumber.Uint64(),
+				event.Nonce.Uint64(),
 			)
 
 			// broadcast message
@@ -424,18 +444,15 @@ func ValidatorExitTxCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
-	cmd.Flags().Uint64(FlagValidatorID, 0, "--id=<validator ID here>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
 	cmd.Flags().Uint64(FlagLogIndex, 0, "--log-index=<log-index>")
-	cmd.Flags().Uint64(FlagDeactivationEpoch, 0, "--deactivation-epoch=<deactivation-epoch>")
-	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
-	cmd.Flags().Int(FlagNonce, 0, "--nonce=<nonce>")
 
-	_ = cmd.MarkFlagRequired(FlagValidatorID)
+	_ = cmd.MarkFlagRequired(FlagActivationEpoch)
 	_ = cmd.MarkFlagRequired(FlagTxHash)
 	_ = cmd.MarkFlagRequired(FlagLogIndex)
-	_ = cmd.MarkFlagRequired(FlagBlockNumber)
-	_ = cmd.MarkFlagRequired(FlagNonce)
+
+	// add common tx flags to cmd
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }
