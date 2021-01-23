@@ -200,7 +200,7 @@ func NewHeimdallApp(
 		authtypes.StoreKey,
 		banktypes.StoreKey,
 		chainmanagerTypes.StoreKey,
-		// clerktypes.StoreKey,
+		clerktypes.StoreKey,
 		sidechanneltypes.StoreKey,
 		stakingtypes.StoreKey,
 		checkpointtypes.StoreKey,
@@ -286,12 +286,6 @@ func NewHeimdallApp(
 		govtypes.NewRouter(),
 		&app.StakingKeeper,
 		app.AccountKeeper,
-	)
-
-	app.ClerkKeeper = clerkkeeper.NewKeeper(
-		appCodec,
-		keys[clerktypes.StoreKey], // target store
-		app.ChainKeeper,
 	)
 
 	app.ClerkKeeper = clerkkeeper.NewKeeper(
