@@ -28,8 +28,6 @@ import (
 
 	types "github.com/maticnetwork/bor/core/types"
 
-	typescommon "github.com/maticnetwork/heimdall/types/common"
-
 	validatorset "github.com/maticnetwork/heimdall/contracts/validatorset"
 )
 
@@ -446,7 +444,7 @@ func (_m *IContractCaller) GetConfirmedTxReceipt(_a0 common.Hash, _a1 uint64) (*
 }
 
 // GetHeaderInfo provides a mock function with given fields: headerID, rootChainInstance, childBlockInterval
-func (_m *IContractCaller) GetHeaderInfo(headerID uint64, rootChainInstance *rootchain.Rootchain, childBlockInterval uint64) (common.Hash, uint64, uint64, uint64, typescommon.HeimdallAddress, error) {
+func (_m *IContractCaller) GetHeaderInfo(headerID uint64, rootChainInstance *rootchain.Rootchain, childBlockInterval uint64) (common.Hash, uint64, uint64, uint64, cosmos_sdktypes.AccAddress, error) {
 	ret := _m.Called(headerID, rootChainInstance, childBlockInterval)
 
 	var r0 common.Hash
@@ -479,12 +477,12 @@ func (_m *IContractCaller) GetHeaderInfo(headerID uint64, rootChainInstance *roo
 		r3 = ret.Get(3).(uint64)
 	}
 
-	var r4 typescommon.HeimdallAddress
-	if rf, ok := ret.Get(4).(func(uint64, *rootchain.Rootchain, uint64) typescommon.HeimdallAddress); ok {
+	var r4 cosmos_sdktypes.AccAddress
+	if rf, ok := ret.Get(4).(func(uint64, *rootchain.Rootchain, uint64) cosmos_sdktypes.AccAddress); ok {
 		r4 = rf(headerID, rootChainInstance, childBlockInterval)
 	} else {
 		if ret.Get(4) != nil {
-			r4 = ret.Get(4).(typescommon.HeimdallAddress)
+			r4 = ret.Get(4).(cosmos_sdktypes.AccAddress)
 		}
 	}
 

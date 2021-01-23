@@ -93,13 +93,14 @@ func (suite *HandlerTestSuite) TestHandleMsgEventRecord() {
 	})
 
 	t.Run("ExistingRecord", func(t *testing.T) {
+		addr, _ := sdk.AccAddressFromHex(msg.ContractAddress)
 		// store event record in keeper
 		app.ClerkKeeper.SetEventRecord(ctx,
 			types.NewEventRecord(
-				msg.TxHash,
+				hmCommon.HexToHeimdallHash(msg.TxHash),
 				msg.LogIndex,
 				msg.Id,
-				msg.ContractAddress,
+				addr,
 				msg.Data,
 				msg.ChainId,
 				time.Now(),
