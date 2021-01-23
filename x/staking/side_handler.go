@@ -2,13 +2,13 @@ package staking
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmprototypes "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmTypes "github.com/tendermint/tendermint/types"
@@ -73,7 +73,6 @@ func SideHandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k k
 		"blockNumber", msg.BlockNumber,
 	)
 
-	// TODO uncomment and fix the issue
 	// chainManager params
 	params := k.ChainKeeper.GetParams(ctx)
 	chainParams := params.ChainParams
@@ -254,8 +253,11 @@ func SideHandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k kee
 		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
 	}
 
-	if !bytes.Equal(eventLog.SignerPubkey, newPubKey.Bytes()[1:]) {
-		k.Logger(ctx).Error("Newsigner pubkey in txhash and msg dont match", "msgPubKey", newPubKey.String(), "pubkeyTx", hmCommonTypes.NewPubKey(eventLog.SignerPubkey[:]).String())
+	// check signer pubkey in message corresponds
+	expectedPubKey, err := helper.CompressPubKey(eventLog.SignerPubkey)
+
+	if !bytes.Equal(newPubKey.Bytes(), expectedPubKey) {
+		k.Logger(ctx).Error("Newsigner pubkey in txhash and msg dont match", "msgPubKey", newPubKey.String(), "pubkeyFromTx", hex.EncodeToString(eventLog.SignerPubkey[:]))
 		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
 	}
 
@@ -391,15 +393,12 @@ func PostHandleMsgValidatorJoin(ctx sdk.Context, k keeper.Keeper, msg types.MsgV
 	}
 
 	// Add Validator signing info. It is required for slashing module
-	// TODO fix validator signing info storage
-
-	// valSigningInfo := hmTypes.NewValidatorSigningInfo(newValidator.ID, ctx.BlockHeight(), int64(0), int64(0))
-	// fmt.Println("valSigningInfo", valSigningInfo)
-	// err = k.AddValidatorSigningInfo(ctx, newValidator.ID, valSigningInfo)
-	// if err != nil {
-	// 	k.Logger(ctx).Error("Unable to add validator signing info to state", "error", err, "valSigningInfo", valSigningInfo.String())
-	// 	return nil, hmCommon.ErrValidatorSigningInfoSave
-	// }
+	valSigningInfo := hmTypes.NewValidatorSigningInfo(newValidator.ID, ctx.BlockHeight(), int64(0), int64(0))
+	err = k.AddValidatorSigningInfo(ctx, newValidator.ID, valSigningInfo)
+	if err != nil {
+		k.Logger(ctx).Error("Unable to add validator signing info to state", "error", err, "valSigningInfo", valSigningInfo.String())
+		return nil, hmCommon.ErrValidatorSigningInfoSave
+	}
 
 	// save staking sequence
 	k.SetStakingSequence(ctx, sequence.String())
