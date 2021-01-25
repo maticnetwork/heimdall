@@ -236,6 +236,7 @@ func (msg MsgSignerUpdate) ValidateBasic() error {
 		return common.ErrInvalidMsg
 	}
 
+	// if msg.NewSignerPubKey == helper.ZeroPubKey.String() {
 	if bytes.Equal(msg.GetNewSignerPubKey(), helper.ZeroPubKey.Bytes()) {
 		return common.ErrInvalidMsg
 	}

@@ -8,6 +8,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
 	"github.com/maticnetwork/heimdall/x/gov/types"
@@ -15,18 +16,43 @@ import (
 
 type (
 	Keeper struct {
-		cdc           codec.LegacyAmino
+		cdc           codec.BinaryMarshaler
 		storeKey      sdk.StoreKey
-		memKey        sdk.StoreKey
 		paramSubspace paramtypes.Subspace
+		bankKeeper    types.BankKeeper
+		router        types.Router
+		sk            types.StakingKeeper
+		authKeeper    types.AccountKeeper
 	}
 )
 
-func NewKeeper(cdc codec.LegacyAmino, storeKey, memKey sdk.StoreKey) *Keeper {
-	return &Keeper{
-		cdc:      cdc,
-		storeKey: storeKey,
-		memKey:   memKey,
+func NewKeeper(
+	cdc codec.BinaryMarshaler, storeKey sdk.StoreKey, paramSubspace paramtypes.Subspace,
+	bankKeeper types.BankKeeper, rtr types.Router, sk types.StakingKeeper,
+	authKeeper types.AccountKeeper,
+) Keeper {
+	// TODO - Check this
+	// ensure governance module account is set
+	// if addr := authKeeper.GetModuleAddress(types.ModuleName); addr == nil {
+	// 	panic(fmt.Sprintf("%s module account has not been set", types.ModuleName))
+	// }
+
+	// It is vital to seal the governance proposal router here as to not allow
+	// further handlers to be registered after the keeper is created since this
+	// could create invalid or non-deterministic behavior.
+	rtr.Seal()
+	// if !paramSubspace.HasKeyTable() {
+	// 	paramSubspace = paramSubspace.WithKeyTable(types.ParamKeyTable())
+	// }
+
+	return Keeper{
+		cdc:           cdc,
+		storeKey:      storeKey,
+		paramSubspace: paramSubspace,
+		bankKeeper:    bankKeeper,
+		router:        rtr,
+		sk:            sk,
+		authKeeper:    authKeeper,
 	}
 }
 
@@ -34,50 +60,18 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-func (keeper Keeper) SetDepositParams(ctx sdk.Context, depositParams types.DepositParams) {
-	keeper.paramSubspace.Set(ctx, types.ParamStoreKeyDepositParams, &depositParams)
-}
-
-func (keeper Keeper) SetVotingParams(ctx sdk.Context, votingParams types.VotingParams) {
-	keeper.paramSubspace.Set(ctx, types.ParamStoreKeyVotingParams, &votingParams)
-}
-
-func (keeper Keeper) SetTallyParams(ctx sdk.Context, tallyParams types.TallyParams) {
-	keeper.paramSubspace.Set(ctx, types.ParamStoreKeyTallyParams, &tallyParams)
-}
-
 // InsertActiveProposalQueue inserts a ProposalID into the active proposal queue at endTime
 func (keeper Keeper) InsertActiveProposalQueue(ctx sdk.Context, proposalID uint64, endTime time.Time) {
 	store := ctx.KVStore(keeper.storeKey)
-	bz := keeper.cdc.MustMarshalBinaryLengthPrefixed(proposalID)
+	bz := types.GetProposalIDBytes(proposalID)
 	store.Set(types.ActiveProposalQueueKey(proposalID, endTime), bz)
-}
-
-// Returns the current DepositParams from the global param store
-func (keeper Keeper) GetDepositParams(ctx sdk.Context) types.DepositParams {
-	var depositParams types.DepositParams
-	keeper.paramSubspace.Get(ctx, types.ParamStoreKeyDepositParams, &depositParams)
-	return depositParams
-}
-
-// Returns the current VotingParams from the global param store
-func (keeper Keeper) GetVotingParams(ctx sdk.Context) types.VotingParams {
-	var votingParams types.VotingParams
-	keeper.paramSubspace.Get(ctx, types.ParamStoreKeyVotingParams, &votingParams)
-	return votingParams
-}
-
-// Returns the current TallyParam from the global param store
-func (keeper Keeper) GetTallyParams(ctx sdk.Context) types.TallyParams {
-	var tallyParams types.TallyParams
-	keeper.paramSubspace.Get(ctx, types.ParamStoreKeyTallyParams, &tallyParams)
-	return tallyParams
 }
 
 // InsertInactiveProposalQueue Inserts a ProposalID into the inactive proposal queue at endTime
 func (keeper Keeper) InsertInactiveProposalQueue(ctx sdk.Context, proposalID uint64, endTime time.Time) {
+
 	store := ctx.KVStore(keeper.storeKey)
-	bz := keeper.cdc.MustMarshalBinaryLengthPrefixed(proposalID)
+	bz := types.GetProposalIDBytes(proposalID)
 	store.Set(types.InactiveProposalQueueKey(proposalID, endTime), bz)
 }
 
@@ -109,4 +103,15 @@ func (keeper Keeper) IterateDeposits(ctx sdk.Context, proposalID uint64, cb func
 			break
 		}
 	}
+}
+
+// RemoveFromInactiveProposalQueue removes a proposalID from the Inactive Proposal Queue
+func (keeper Keeper) RemoveFromInactiveProposalQueue(ctx sdk.Context, proposalID uint64, endTime time.Time) {
+	store := ctx.KVStore(keeper.storeKey)
+	store.Delete(types.InactiveProposalQueueKey(proposalID, endTime))
+}
+
+// GetGovernanceAccount returns the governance ModuleAccount
+func (keeper Keeper) GetGovernanceAccount(ctx sdk.Context) authtypes.ModuleAccountI {
+	return keeper.authKeeper.GetModuleAccount(ctx, types.ModuleName)
 }
