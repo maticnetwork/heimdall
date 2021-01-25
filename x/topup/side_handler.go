@@ -31,7 +31,7 @@ func NewSideTxHandler(k keeper.Keeper, contractCaller helper.IContractCaller) hm
 			return SideHandleMsgTopup(ctx, k, *msg, contractCaller)
 		default:
 			return abci.ResponseDeliverSideTx{
-				Code: uint32(6), // TODO should be changed like `sdk.CodeUnknownRequest`
+				Code: sdkerrors.ErrUnknownRequest.ABCICode(),
 			}
 		}
 	}
