@@ -157,22 +157,6 @@ type HeimdallApp struct {
 	sm *module.SimulationManager
 }
 
-// ModuleCommunicator retriever
-type ModuleCommunicator struct {
-	App *HeimdallApp
-}
-
-// GetACKCount returns ack count
-func (d ModuleCommunicator) GetACKCount(ctx sdk.Context) uint64 {
-	return d.App.CheckpointKeeper.GetACKCount(ctx)
-}
-
-//// Create ValidatorSigningInfo used by slashing module
-//func (d ModuleCommunicator) CreateValiatorSigningInfo(ctx sdk.Context, valID types.ValidatorID, valSigningInfo types.ValidatorSigningInfo) {
-//	d.App.SlashingKeeper.SetValidatorSigningInfo(ctx, valID, valSigningInfo)
-//	return
-//}
-
 func init() {
 	userHomeDir, err := os.UserHomeDir()
 	if err != nil {

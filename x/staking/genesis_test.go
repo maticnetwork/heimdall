@@ -37,7 +37,7 @@ func TestGenesisTestSuite(t *testing.T) {
 
 // TestInitExportGenesis test import and export genesis state
 func (suite *GenesisTestSuite) TestInitExportGenesis() {
-	t, app, ctx := suite.T(), suite.app, suite.ctx
+	t, initApp, ctx := suite.T(), suite.app, suite.ctx
 	s1 := rand.NewSource(time.Now().UnixNano())
 	r1 := rand.New(s1)
 	n := 5
@@ -67,9 +67,9 @@ func (suite *GenesisTestSuite) TestInitExportGenesis() {
 	validatorSet := hmTypes.NewValidatorSet(validators)
 
 	genesisState := types.NewGenesisState(validators, validatorSet, stakingSequence)
-	staking.InitGenesis(ctx, app.StakingKeeper, *genesisState)
+	staking.InitGenesis(ctx, initApp.StakingKeeper, *genesisState)
 
-	actualParams := staking.ExportGenesis(ctx, app.StakingKeeper)
+	actualParams := staking.ExportGenesis(ctx, initApp.StakingKeeper)
 	require.NotNil(t, actualParams)
 	require.LessOrEqual(t, 5, len(actualParams.Validators))
 }

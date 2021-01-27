@@ -121,7 +121,7 @@ func initCmd(ctx *server.Context, amino *codec.LegacyAmino, mbm module.BasicMana
 			}
 			authGenState.Accounts = genAccs
 			// TODO - check this
-			// appState[authtypes.ModuleName] = authclient.Codec.MustMarshalJSON(&authGenState)
+			appState[authtypes.ModuleName] = authclient.Codec.MustMarshalJSON(&authGenState)
 
 			//
 			// staking state change
