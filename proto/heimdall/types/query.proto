@@ -11,8 +11,8 @@ option (gogoproto.marshaler_all)   = true;
 option (gogoproto.unmarshaler_all) = true;
 
 message QueryPaginationParams {
-    option (gogoproto.goproto_getters)  = false;
+    option (gogoproto.goproto_getters) = false;
 
-    uint64 page = 1;
+    uint64 page  = 1;
     uint64 limit = 2;
 }

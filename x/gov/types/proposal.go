@@ -22,7 +22,7 @@ func NewProposal(content Content, id uint64, submitTime, depositEndTime time.Tim
 		ProposalId:       id,
 		Status:           StatusDepositPeriod,
 		FinalTallyResult: EmptyTallyResult(),
-		TotalDeposit:     NewCoins(),
+		TotalDeposit:     sdk.NewCoins(),
 		SubmitTime:       submitTime,
 		DepositEndTime:   depositEndTime,
 	}
@@ -41,12 +41,6 @@ func NewProposal(content Content, id uint64, submitTime, depositEndTime time.Tim
 
 	return p, nil
 }
-
-// String implements stringer interface
-// func (p Proposal) String() string {
-// 	out, _ := yaml.Marshal(p)
-// 	return string(out)
-// }
 
 // GetContent returns the proposal Content
 func (p Proposal) GetContent() Content {
@@ -174,7 +168,6 @@ func (status ProposalStatus) Format(s fmt.State, verb rune) {
 	case 's':
 		s.Write([]byte(status.String()))
 	default:
-		// TODO: Do this conversion more directly
 		s.Write([]byte(fmt.Sprintf("%v", byte(status))))
 	}
 }
@@ -265,9 +258,23 @@ func ProposalHandler(_ sdk.Context, c Content) error {
 // EmptyTallyResult returns an empty TallyResult.
 func EmptyTallyResult() TallyResult {
 	return TallyResult{
-		Yes:        ZeroInt(),
-		Abstain:    ZeroInt(),
-		No:         ZeroInt(),
-		NoWithVeto: ZeroInt(),
+		Yes:        sdk.ZeroInt(),
+		Abstain:    sdk.ZeroInt(),
+		No:         sdk.ZeroInt(),
+		NoWithVeto: sdk.ZeroInt(),
 	}
+}
+
+func NewTallyResultFromMap(results map[VoteOption]sdk.Dec) TallyResult {
+	return TallyResult{
+		Yes:        results[OptionYes].TruncateInt(),
+		Abstain:    results[OptionAbstain].TruncateInt(),
+		No:         results[OptionNo].TruncateInt(),
+		NoWithVeto: results[OptionNoWithVeto].TruncateInt(),
+	}
+}
+
+// NewProposer returns a new Proposer given id and proposer
+func NewProposer(proposalID uint64, proposer string) Proposer {
+	return Proposer{proposalID, proposer}
 }
