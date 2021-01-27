@@ -1,8 +1,8 @@
 package keeper_test
 
 import (
-	"testing"
 	"math/rand"
+	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
@@ -13,9 +13,9 @@ import (
 	// "github.com/maticnetwork/heimdall/x/staking"
 	// stakingtypes "github.com/maticnetwork/heimdall/x/staking/types"
 	"github.com/maticnetwork/heimdall/app"
-	"github.com/maticnetwork/heimdall/types/simulation"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmTypesCommon "github.com/maticnetwork/heimdall/types/common"
+	"github.com/maticnetwork/heimdall/types/simulation"
 )
 
 // TallyTestSuite integrate test suite context object
@@ -34,7 +34,7 @@ func TestTallyTestSuite(t *testing.T) {
 	suite.Run(t, new(TallyTestSuite))
 }
 
-func (suite *TallyTestSuite)TestTallyNoOneVotes() {
+func (suite *TallyTestSuite) TestTallyNoOneVotes() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 
 	s1 := rand.NewSource(time.Now().UnixNano())
@@ -78,7 +78,7 @@ func (suite *TallyTestSuite)TestTallyNoOneVotes() {
 	require.True(t, tallyResults.Equals(types.EmptyTallyResult()))
 }
 
-func (suite *TallyTestSuite)TestTallyNoQuorum() {
+func (suite *TallyTestSuite) TestTallyNoQuorum() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 
 	s1 := rand.NewSource(time.Now().UnixNano())
@@ -123,7 +123,7 @@ func (suite *TallyTestSuite)TestTallyNoQuorum() {
 	require.True(t, burnDeposits)
 }
 
-func (suite *TallyTestSuite)TestTallyOnlyValidatorsAllYes() {
+func (suite *TallyTestSuite) TestTallyOnlyValidatorsAllYes() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 
 	s1 := rand.NewSource(time.Now().UnixNano())
@@ -171,7 +171,7 @@ func (suite *TallyTestSuite)TestTallyOnlyValidatorsAllYes() {
 	require.False(t, tallyResults.Equals(types.EmptyTallyResult()))
 }
 
-func (suite *TallyTestSuite)TestTallyOnlyValidators51No() {
+func (suite *TallyTestSuite) TestTallyOnlyValidators51No() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 
 	s1 := rand.NewSource(time.Now().UnixNano())
@@ -217,7 +217,7 @@ func (suite *TallyTestSuite)TestTallyOnlyValidators51No() {
 	require.False(t, burnDeposits)
 }
 
-func (suite *TallyTestSuite)TestTallyOnlyValidators51Yes() {
+func (suite *TallyTestSuite) TestTallyOnlyValidators51Yes() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 
 	s1 := rand.NewSource(time.Now().UnixNano())
@@ -264,7 +264,7 @@ func (suite *TallyTestSuite)TestTallyOnlyValidators51Yes() {
 	require.False(t, tallyResults.Equals(types.EmptyTallyResult()))
 }
 
-func (suite *TallyTestSuite)TestTallyOnlyValidatorsVetoed() {
+func (suite *TallyTestSuite) TestTallyOnlyValidatorsVetoed() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 
 	s1 := rand.NewSource(time.Now().UnixNano())
@@ -312,7 +312,7 @@ func (suite *TallyTestSuite)TestTallyOnlyValidatorsVetoed() {
 	require.False(t, tallyResults.Equals(types.EmptyTallyResult()))
 }
 
-func (suite *TallyTestSuite)TestTallyOnlyValidatorsAbstainPasses() {
+func (suite *TallyTestSuite) TestTallyOnlyValidatorsAbstainPasses() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 
 	s1 := rand.NewSource(time.Now().UnixNano())
@@ -360,7 +360,7 @@ func (suite *TallyTestSuite)TestTallyOnlyValidatorsAbstainPasses() {
 	require.False(t, tallyResults.Equals(types.EmptyTallyResult()))
 }
 
-func (suite *TallyTestSuite)TestTallyOnlyValidatorsAbstainFails() {
+func (suite *TallyTestSuite) TestTallyOnlyValidatorsAbstainFails() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 
 	s1 := rand.NewSource(time.Now().UnixNano())
@@ -408,7 +408,7 @@ func (suite *TallyTestSuite)TestTallyOnlyValidatorsAbstainFails() {
 	require.False(t, tallyResults.Equals(types.EmptyTallyResult()))
 }
 
-func (suite *TallyTestSuite)TestTallyOnlyValidatorsNonVoter() {
+func (suite *TallyTestSuite) TestTallyOnlyValidatorsNonVoter() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 
 	s1 := rand.NewSource(time.Now().UnixNano())

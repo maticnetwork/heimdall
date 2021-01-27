@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/maticnetwork/heimdall/x/gov/types"
 	"github.com/maticnetwork/heimdall/app"
+	"github.com/maticnetwork/heimdall/x/gov/types"
 )
 
 // KeeperTestSuite integrate test suite context object
@@ -27,7 +27,7 @@ func TestKeeperTestSuite(t *testing.T) {
 	suite.Run(t, new(KeeperTestSuite))
 }
 
-func (suite *KeeperTestSuite)TestIncrementProposalNumber() {
+func (suite *KeeperTestSuite) TestIncrementProposalNumber() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 
 	tp := TestProposal
@@ -47,7 +47,7 @@ func (suite *KeeperTestSuite)TestIncrementProposalNumber() {
 	require.Equal(t, uint64(6), proposal6.ProposalId)
 }
 
-func (suite *KeeperTestSuite)TestProposalQueues() {
+func (suite *KeeperTestSuite) TestProposalQueues() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 
 	// create test proposals

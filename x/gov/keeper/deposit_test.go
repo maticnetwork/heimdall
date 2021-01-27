@@ -2,8 +2,8 @@ package keeper_test
 
 import (
 	"math/rand"
-	"time"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -36,7 +36,7 @@ func TestDepositTestSuite(t *testing.T) {
 	suite.Run(t, new(DepositTestSuite))
 }
 
-func (suite *DepositTestSuite)TestDeposits(){
+func (suite *DepositTestSuite) TestDeposits() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 
 	s1 := rand.NewSource(time.Now().UnixNano())

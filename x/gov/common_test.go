@@ -2,9 +2,9 @@ package gov_test
 
 import (
 	"bytes"
+	"encoding/json"
 	"log"
 	"sort"
-	"encoding/json"
 
 	// "github.com/tendermint/tendermint/crypto"
 	// "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
@@ -52,8 +52,8 @@ func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, client.Contex
 }
 
 var (
-	valTokens           = sdk.TokensFromConsensusPower(42)
-	TestProposal        = types.NewTextProposal("Test", "description")
+	valTokens    = sdk.TokensFromConsensusPower(42)
+	TestProposal = types.NewTextProposal("Test", "description")
 	// TestDescription     = stakingtypes.NewDescription("T", "E", "S", "T", "Z")
 	// TestCommissionRates = stakingtypes.NewCommissionRates(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec())
 )
@@ -133,4 +133,3 @@ const contextKeyBadProposal = "contextKeyBadProposal"
 // 	require.NoError(t, err)
 // 	require.NotNil(t, res)
 // }
-

@@ -9,15 +9,15 @@ import (
 	// "github.com/tendermint/tendermint/libs/log"
 	// tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	// dbm "github.com/tendermint/tm-db"
-	"github.com/stretchr/testify/suite"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/suite"
 
 	// "github.com/cosmos/cosmos-sdk/x/auth"
 	// authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	// banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/x/gov"
 	"github.com/maticnetwork/heimdall/x/gov/types"
-	"github.com/maticnetwork/heimdall/app"
 )
 
 // GenesisTestSuite integrate test suite context object
@@ -224,7 +224,7 @@ func (suite *GenesisTestSuite) TestInitExportGenesis() {
 
 	defaultGenesisState := types.DefaultGenesis()
 
-	gov.InitGenesis(ctx,app.AccountKeeper,  app.BankKeeper, app.GovKeeper, *defaultGenesisState)
+	gov.InitGenesis(ctx, app.AccountKeeper, app.BankKeeper, app.GovKeeper, *defaultGenesisState)
 	returnedGenesisState := gov.ExportGenesis(ctx, app.GovKeeper)
 
 	require.True(t, defaultGenesisState.Equal(*returnedGenesisState))

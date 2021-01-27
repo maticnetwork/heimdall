@@ -3,20 +3,20 @@ package keeper_test
 import (
 	"errors"
 	// "fmt"
+	"math/rand"
 	"strings"
 	"testing"
 	"time"
-	"math/rand"
 
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/maticnetwork/heimdall/x/gov/types"
 	"github.com/maticnetwork/heimdall/app"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmTypesCommon "github.com/maticnetwork/heimdall/types/common"
 	"github.com/maticnetwork/heimdall/types/simulation"
+	"github.com/maticnetwork/heimdall/x/gov/types"
 )
 
 // ProposalTestSuite integrate test suite context object
@@ -35,7 +35,7 @@ func TestProposalTestSuite(t *testing.T) {
 	suite.Run(t, new(ProposalTestSuite))
 }
 
-func (suite *ProposalTestSuite)TestGetSetProposal() {
+func (suite *ProposalTestSuite) TestGetSetProposal() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 
 	tp := TestProposal
@@ -49,7 +49,7 @@ func (suite *ProposalTestSuite)TestGetSetProposal() {
 	require.True(t, proposal.Equal(gotProposal))
 }
 
-func (suite *ProposalTestSuite)TestActivateVotingPeriod() {
+func (suite *ProposalTestSuite) TestActivateVotingPeriod() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 
 	tp := TestProposal
@@ -77,7 +77,7 @@ type invalidProposalRoute struct{ types.TextProposal }
 
 func (invalidProposalRoute) ProposalRoute() string { return "nonexistingroute" }
 
-func (suite *ProposalTestSuite)TestSubmitProposal() {
+func (suite *ProposalTestSuite) TestSubmitProposal() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 
 	testCases := []struct {
@@ -100,7 +100,7 @@ func (suite *ProposalTestSuite)TestSubmitProposal() {
 	}
 }
 
-func (suite *ProposalTestSuite)TestGetProposalsFiltered() {
+func (suite *ProposalTestSuite) TestGetProposalsFiltered() {
 	proposalID := uint64(1)
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 

@@ -46,5 +46,5 @@ func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, client.Contex
 }
 
 var (
-	TestProposal        = types.NewTextProposal("Test", "description")
+	TestProposal = types.NewTextProposal("Test", "description")
 )

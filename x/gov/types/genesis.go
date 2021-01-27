@@ -1,10 +1,10 @@
 package types
 
 import (
+	"bytes"
 	"fmt"
 	"math/big"
 	"time"
-	"bytes"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
