@@ -52,12 +52,12 @@ func (suite *KeeperTestSuite) TestDividendAccount() {
 
 	generated_address, _ := sdk.AccAddressFromHex("some-address")
 	dividendAccount := hmTypes.DividendAccount{
-		User:      generated_address,
+		User:      generated_address.String(),
 		FeeAmount: big.NewInt(0).String(),
 	}
 	err := app.TopupKeeper.AddDividendAccount(ctx, dividendAccount)
 	require.Nil(t, err)
-	ok := app.TopupKeeper.CheckIfDividendAccountExists(ctx, dividendAccount.User)
+	ok := app.TopupKeeper.CheckIfDividendAccountExists(ctx, []byte(dividendAccount.User))
 	require.Equal(t, ok, true)
 }
 
@@ -76,12 +76,17 @@ func (suite *KeeperTestSuite) TestAddFeeToDividendAccount() {
 func (suite *KeeperTestSuite) TestDividendAccountTree() {
 	t := suite.T()
 
-	divAccounts := make([]hmTypes.DividendAccount, 5)
+	divAccounts := make([]*hmTypes.DividendAccount, 5)
 	for i := 0; i < len(divAccounts); i++ {
-		divAccounts[i] = hmTypes.NewDividendAccount(
+		newDivAcc := hmTypes.NewDividendAccount(
 			sdk.AccAddress("1234"),
 			big.NewInt(0).String(),
 		)
+		divAccounts[i] = &newDivAcc
+		// divAccounts[i] = &(hmTypes.NewDividendAccount(
+		// 	sdk.AccAddress("1234"),
+		// 	big.NewInt(0).String(),
+		// ))
 	}
 
 	accountRoot, err := checkpointTypes.GetAccountRootHash(divAccounts)
