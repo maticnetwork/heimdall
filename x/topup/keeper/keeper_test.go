@@ -69,7 +69,7 @@ func (suite *KeeperTestSuite) TestAddFeeToDividendAccount() {
 	require.Nil(t, err)
 	dividentAccount, _ := app.TopupKeeper.GetDividendAccountByAddress(ctx, address)
 	actualResult, ok := big.NewInt(0).SetString(dividentAccount.FeeAmount, 10)
-	require.Equal(t, ok, true)
+	require.Equal(t, true, ok)
 	require.Equal(t, amount, actualResult)
 }
 
