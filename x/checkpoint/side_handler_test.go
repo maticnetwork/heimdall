@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/maticnetwork/heimdall/x/checkpoint/test_helper"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/maticnetwork/bor/common"
@@ -36,7 +38,7 @@ type SideHandlerTestSuite struct {
 }
 
 func (suite *SideHandlerTestSuite) SetupTest() {
-	suite.app, suite.ctx, _ = createTestApp(false)
+	suite.app, suite.ctx, _ = test_helper.CreateTestApp(false)
 	suite.contractCaller = mocks.IContractCaller{}
 	suite.sideHandler = checkpoint.NewSideTxHandler(suite.app.CheckpointKeeper, &suite.contractCaller)
 	suite.postHandler = checkpoint.NewPostTxHandler(suite.app.CheckpointKeeper, &suite.contractCaller)
@@ -253,7 +255,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgCheckpoint() {
 	}
 
 	header, err := chSim.GenRandCheckpoint(start, maxSize, params.MaxCheckpointLength)
-
+	require.NoError(t, err, "failed to generate random checkpoint")
 	// add current proposer to header
 	header.Proposer = stakingKeeper.GetValidatorSet(ctx).Proposer.Signer
 

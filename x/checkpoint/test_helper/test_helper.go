@@ -1,10 +1,11 @@
-package keeper_test
+package test_helper
 
 import (
 	"encoding/json"
+	"time"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	abci "github.com/tendermint/tendermint/abci/types"
-	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/app"
@@ -18,8 +19,8 @@ import (
 // Create test app
 //
 
-// createTestApp returns context and app
-func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, client.Context) {
+// CreateTestApp returns context and app
+func CreateTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, client.Context) {
 	genesisState := app.NewDefaultGenesisState()
 
 	initApp := app.Setup(isCheckTx)

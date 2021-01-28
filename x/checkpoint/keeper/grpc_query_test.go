@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/maticnetwork/heimdall/x/checkpoint/test_helper"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/app"
@@ -31,7 +33,7 @@ type GrpcQueryTestSuite struct {
 
 // SetupTest setup all necessary things for grpc query testing
 func (suite *GrpcQueryTestSuite) SetupTest() {
-	suite.app, suite.ctx, suite.cliCtx = createTestApp(false)
+	suite.app, suite.ctx, suite.cliCtx = test_helper.CreateTestApp(false)
 	suite.contractCaller = mocks.IContractCaller{}
 	suite.grpcQuery = keeper.NewQueryServerImpl(suite.app.CheckpointKeeper, &suite.contractCaller)
 }

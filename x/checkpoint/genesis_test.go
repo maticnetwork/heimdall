@@ -11,6 +11,7 @@ import (
 	hmCommonTypes "github.com/maticnetwork/heimdall/types/common"
 	"github.com/maticnetwork/heimdall/types/simulation"
 	"github.com/maticnetwork/heimdall/x/checkpoint"
+	"github.com/maticnetwork/heimdall/x/checkpoint/test_helper"
 	"github.com/maticnetwork/heimdall/x/checkpoint/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -25,7 +26,7 @@ type GenesisTestSuite struct {
 
 // SetupTest setup necessary things for genesis test
 func (suite *GenesisTestSuite) SetupTest() {
-	suite.app, suite.ctx, _ = createTestApp(true)
+	suite.app, suite.ctx, _ = test_helper.CreateTestApp(true)
 }
 
 // TestGenesisTestSuite

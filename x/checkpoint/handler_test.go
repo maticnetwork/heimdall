@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/maticnetwork/heimdall/x/checkpoint/test_helper"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/app"
@@ -32,7 +34,7 @@ type HandlerTestSuite struct {
 }
 
 func (suite *HandlerTestSuite) SetupTest() {
-	suite.app, suite.ctx, suite.cliCtx = createTestApp(false)
+	suite.app, suite.ctx, suite.cliCtx = test_helper.CreateTestApp(false)
 	suite.contractCaller = mocks.IContractCaller{}
 	suite.handler = checkpoint.NewHandler(suite.app.CheckpointKeeper, &suite.contractCaller)
 	suite.sideHandler = checkpoint.NewSideTxHandler(suite.app.CheckpointKeeper, &suite.contractCaller)
@@ -80,7 +82,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpoint() {
 	}
 
 	header, err := chSim.GenRandCheckpoint(start, maxSize, params.MaxCheckpointLength)
-
+	require.NoError(t, err, "failed to generate random checkpoint")
 	// add current proposer to header
 	header.Proposer = stakingKeeper.GetValidatorSet(ctx).Proposer.Signer
 
@@ -181,6 +183,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointAck() {
 	}
 
 	header, err := chSim.GenRandCheckpoint(start, maxSize, params.MaxCheckpointLength)
+	require.NoError(t, err, "failed to generate random checkpoint")
 
 	// add current proposer to header
 	header.Proposer = stakingKeeper.GetValidatorSet(ctx).Proposer.Signer
@@ -283,7 +286,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointNoAck() {
 	}
 
 	header, err := chSim.GenRandCheckpoint(start, maxSize, params.MaxCheckpointLength)
-
+	require.NoError(t, err, "failed to generate random checkpoint")
 	// add current proposer to header
 	header.Proposer = stakingKeeper.GetValidatorSet(ctx).Proposer.Signer
 
@@ -327,6 +330,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointNoAckBeforeBufferTimeout()
 	}
 
 	header, err := chSim.GenRandCheckpoint(start, maxSize, params.MaxCheckpointLength)
+	require.NoError(t, err, "failed to generate random checkpoint")
 
 	// add current proposer to header
 	header.Proposer = stakingKeeper.GetValidatorSet(ctx).Proposer.Signer

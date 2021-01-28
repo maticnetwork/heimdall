@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/maticnetwork/heimdall/x/checkpoint/test_helper"
+
 	checkpointKeeper "github.com/maticnetwork/heimdall/x/checkpoint/keeper"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -23,7 +25,7 @@ type KeeperTestSuite struct {
 }
 
 func (suite *KeeperTestSuite) SetupTest() {
-	suite.app, suite.ctx, _ = createTestApp(false)
+	suite.app, suite.ctx, _ = test_helper.CreateTestApp(false)
 }
 
 func TestKeeperTestSuite(t *testing.T) {
