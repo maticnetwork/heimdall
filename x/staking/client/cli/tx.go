@@ -126,9 +126,9 @@ func ValidatorJoinTxCmd() *cobra.Command {
 			if err != nil || receipt == nil {
 				return errors.New("Transaction is not confirmed yet. Please wait for sometime and try again")
 			}
-
+			stakingManagerAddress, _ := sdk.AccAddressFromHex(chainmanagerParams.ChainParams.StakingManagerAddress)
 			event, err := contractCallerObj.DecodeValidatorJoinEvent(
-				common.FromHex(chainmanagerParams.ChainParams.StakingManagerAddress),
+				stakingManagerAddress,
 				receipt,
 				logIndex,
 			)
