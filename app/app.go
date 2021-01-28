@@ -41,16 +41,6 @@ import (
 	tmos "github.com/tendermint/tendermint/libs/os"
 	dbm "github.com/tendermint/tm-db"
 
-	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/x/chainmanager"
-	chainKeeper "github.com/maticnetwork/heimdall/x/chainmanager/keeper"
-	chainmanagerTypes "github.com/maticnetwork/heimdall/x/chainmanager/types"
-	"github.com/maticnetwork/heimdall/x/clerk"
-
-	// "github.com/maticnetwork/heimdall/x/clerk"
-	// clerkkeeper "github.com/maticnetwork/heimdall/x/clerk/keeper"
-	// clerktypes "github.com/maticnetwork/heimdall/x/clerk/types"
-
 	// unnamed import of statik for swagger UI support
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
 
@@ -59,9 +49,22 @@ import (
 	// slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 
 	hmparams "github.com/maticnetwork/heimdall/app/params"
+	"github.com/maticnetwork/heimdall/helper"
 	hmtypes "github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/types/common"
 	hmmodule "github.com/maticnetwork/heimdall/types/module"
+	"github.com/maticnetwork/heimdall/x/chainmanager"
+	chainKeeper "github.com/maticnetwork/heimdall/x/chainmanager/keeper"
+	chainmanagerTypes "github.com/maticnetwork/heimdall/x/chainmanager/types"
+	"github.com/maticnetwork/heimdall/x/checkpoint"
+	checkpointkeeper "github.com/maticnetwork/heimdall/x/checkpoint/keeper"
+	checkpointtypes "github.com/maticnetwork/heimdall/x/checkpoint/types"
+	"github.com/maticnetwork/heimdall/x/clerk"
+	clerkkeeper "github.com/maticnetwork/heimdall/x/clerk/keeper"
+	clerktypes "github.com/maticnetwork/heimdall/x/clerk/types"
+	"github.com/maticnetwork/heimdall/x/gov"
+	govkeeper "github.com/maticnetwork/heimdall/x/gov/keeper"
+	govtypes "github.com/maticnetwork/heimdall/x/gov/types"
 	"github.com/maticnetwork/heimdall/x/sidechannel"
 	sidechannelkeeper "github.com/maticnetwork/heimdall/x/sidechannel/keeper"
 	sidechanneltypes "github.com/maticnetwork/heimdall/x/sidechannel/types"
@@ -71,10 +74,6 @@ import (
 	"github.com/maticnetwork/heimdall/x/topup"
 	topupkeeper "github.com/maticnetwork/heimdall/x/topup/keeper"
 	topuptypes "github.com/maticnetwork/heimdall/x/topup/types"
-
-	"github.com/maticnetwork/heimdall/x/checkpoint"
-	checkpointkeeper "github.com/maticnetwork/heimdall/x/checkpoint/keeper"
-	checkpointtypes "github.com/maticnetwork/heimdall/x/checkpoint/types"
 
 	// unnamed import of statik for swagger UI support
 	_ "github.com/maticnetwork/heimdall/client/docs/statik"
@@ -97,6 +96,7 @@ var (
 		sidechannel.AppModuleBasic{},
 		staking.AppModuleBasic{},
 		params.AppModuleBasic{},
+		gov.AppModuleBasic{},
 		checkpoint.AppModuleBasic{},
 		topup.AppModuleBasic{},
 		clerk.AppModuleBasic{},
@@ -105,6 +105,7 @@ var (
 	// module account permissions
 	maccPerms = map[string][]string{
 		authtypes.FeeCollectorName: nil,
+		govtypes.ModuleName:        {},
 	}
 
 	// module accounts that are allowed to receive tokens
@@ -132,13 +133,14 @@ type HeimdallApp struct {
 	tkeys map[string]*sdk.TransientStoreKey
 
 	// keepers
-	AccountKeeper authkeeper.AccountKeeper
-	BankKeeper    bankkeeper.Keeper
-	ChainKeeper   chainKeeper.Keeper
-	// ClerkKeeper       clerkkeeper.Keeper
+	AccountKeeper     authkeeper.AccountKeeper
+	BankKeeper        bankkeeper.Keeper
+	ChainKeeper       chainKeeper.Keeper
+	ClerkKeeper       clerkkeeper.Keeper
 	SidechannelKeeper sidechannelkeeper.Keeper
 	StakingKeeper     stakingkeeper.Keeper
 	ParamsKeeper      paramskeeper.Keeper
+	GovKeeper         govkeeper.Keeper
 	CheckpointKeeper  checkpointkeeper.Keeper
 	TopupKeeper       topupkeeper.Keeper
 
@@ -163,56 +165,6 @@ func init() {
 
 	DefaultNodeHome = filepath.Join(userHomeDir, ".heimdalld")
 }
-
-//
-// Module communicator
-//
-
-// ModuleCommunicator retriever
-type ModuleCommunicator struct {
-	App *HeimdallApp
-}
-
-// GetACKCount returns ack count
-func (d ModuleCommunicator) GetACKCount(ctx sdk.Context) uint64 {
-	return d.App.CheckpointKeeper.GetACKCount(ctx)
-}
-
-// IsCurrentValidatorByAddress check if validator is current validator
-func (d ModuleCommunicator) IsCurrentValidatorByAddress(ctx sdk.Context, address []byte) bool {
-	return d.App.StakingKeeper.IsCurrentValidatorByAddress(ctx, address)
-}
-
-// GetAllDividendAccounts fetches all dividend accounts from topup module
-func (d ModuleCommunicator) GetAllDividendAccounts(ctx sdk.Context) []*hmtypes.DividendAccount {
-	return d.App.TopupKeeper.GetAllDividendAccounts(ctx)
-}
-
-// GetValidatorFromValID get validator from validator id
-func (d ModuleCommunicator) GetValidatorFromValID(ctx sdk.Context, valID hmtypes.ValidatorID) (validator hmtypes.Validator, ok bool) {
-	return d.App.StakingKeeper.GetValidatorFromValID(ctx, valID)
-}
-
-//// SetCoins sets coins
-//func (d ModuleCommunicator) SetCoins(ctx sdk.Context, addr hmcommontypes.HeimdallAddress, amt sdk.Coins) sdk.Error {
-//	return d.App.BankKeeper.SetCoins(ctx, addr, amt)
-//}
-//
-//// GetCoins gets coins
-//func (d ModuleCommunicator) GetCoins(ctx sdk.Context, addr hmcommontypes.HeimdallAddress) sdk.Coins {
-//	return d.App.BankKeeper.GetCoins(ctx, addr)
-//}
-//
-//// SendCoins transfers coins
-//func (d ModuleCommunicator) SendCoins(ctx sdk.Context, fromAddr hmcommontypes.HeimdallAddress, toAddr hmcommontypes.HeimdallAddress, amt sdk.Coins) sdk.Error {
-//	return d.App.BankKeeper.SendCoins(ctx, fromAddr, toAddr, amt)
-//}
-//
-//// Create ValidatorSigningInfo used by slashing module
-//func (d ModuleCommunicator) CreateValiatorSigningInfo(ctx sdk.Context, valID types.ValidatorID, valSigningInfo types.ValidatorSigningInfo) {
-//	d.App.SlashingKeeper.SetValidatorSigningInfo(ctx, valID, valSigningInfo)
-//	return
-//}
 
 // NewHeimdallApp returns a reference to an initialized HeimdallApp.
 func NewHeimdallApp(
@@ -251,7 +203,7 @@ func NewHeimdallApp(
 		checkpointtypes.StoreKey,
 		// distrtypes.StoreKey,
 		// slashingtypes.StoreKey,
-		// govtypes.StoreKey,
+		govtypes.StoreKey,
 		paramstypes.StoreKey,
 		topuptypes.StoreKey,
 	)
@@ -318,7 +270,7 @@ func NewHeimdallApp(
 		app.GetSubspace(stakingtypes.ModuleName),
 		app.ChainKeeper,
 		app.BankKeeper,
-		nil,
+		moduleCommunicator,
 	)
 	app.CheckpointKeeper = checkpointkeeper.NewKeeper(
 		appCodec,
@@ -327,6 +279,22 @@ func NewHeimdallApp(
 		app.StakingKeeper,
 		app.ChainKeeper,
 		moduleCommunicator,
+	)
+
+	app.GovKeeper = govkeeper.NewKeeper(
+		appCodec,
+		keys[govtypes.StoreKey], // target store
+		app.GetSubspace(govtypes.ModuleName),
+		app.BankKeeper,
+		govtypes.NewRouter(),
+		&app.StakingKeeper,
+		app.AccountKeeper,
+	)
+
+	app.ClerkKeeper = clerkkeeper.NewKeeper(
+		appCodec,
+		keys[clerktypes.StoreKey], // target store
+		app.ChainKeeper,
 	)
 
 	app.TopupKeeper = topupkeeper.NewKeeper(
@@ -364,7 +332,8 @@ func NewHeimdallApp(
 		sidechannel.NewAppModule(appCodec, app.SidechannelKeeper),
 		chainmanager.NewAppModule(appCodec, app.ChainKeeper),
 		staking.NewAppModule(appCodec, app.StakingKeeper, &app.caller),
-		// clerk.NewAppModule(appCodec, app.ClerkKeeper, &app.caller),
+		clerk.NewAppModule(appCodec, app.ClerkKeeper, &app.caller),
+		gov.NewAppModule(appCodec, app.GovKeeper, app.AccountKeeper, app.BankKeeper),
 		params.NewAppModule(app.ParamsKeeper),
 		checkpoint.NewAppModule(appCodec, app.CheckpointKeeper, &app.caller),
 	)
@@ -380,6 +349,11 @@ func NewHeimdallApp(
 	app.mm.SetOrderEndBlockers(
 		sidechanneltypes.ModuleName,
 		stakingtypes.ModuleName,
+		govtypes.ModuleName,
+	)
+	app.mm.SetOrderEndBlockers(
+		stakingtypes.ModuleName,
+		govtypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -396,6 +370,7 @@ func NewHeimdallApp(
 		checkpointtypes.ModuleName,
 		// clerktypes.ModuleName,
 		genutiltypes.ModuleName,
+		govtypes.ModuleName,
 	)
 
 	// app.mm.RegisterInvariants(&app.CrisisKeeper)
@@ -546,9 +521,9 @@ func (app *HeimdallApp) LoadHeight(height int64) error {
 // ModuleAccountAddrs returns all the app's module account addresses.
 func (app *HeimdallApp) ModuleAccountAddrs() map[string]bool {
 	modAccAddrs := make(map[string]bool)
-	// for acc := range maccPerms {
-	// 	modAccAddrs[authtypes.NewModuleAddress(acc).String()] = true
-	// }
+	for acc := range maccPerms {
+		modAccAddrs[authtypes.NewModuleAddress(acc).String()] = true
+	}
 
 	return modAccAddrs
 }

@@ -125,6 +125,7 @@ func (app *HeimdallApp) BeginSideBlocker(ctx sdk.Context, req abci.RequestBeginS
 					"yesVotes", signedPower[tmprototypes.SideTxResultType_YES],
 					"noVotes", signedPower[tmprototypes.SideTxResultType_NO],
 					"skipVotes", signedPower[tmprototypes.SideTxResultType_SKIP],
+					"err", rerr,
 				)
 			} else {
 				// add events
