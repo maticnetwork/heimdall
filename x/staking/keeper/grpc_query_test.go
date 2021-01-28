@@ -2,8 +2,8 @@ package keeper_test
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	checkPointSim "github.com/maticnetwork/heimdall/x/checkpoint/simulation"
 	"github.com/maticnetwork/heimdall/x/staking/keeper"
-	stakingSim "github.com/maticnetwork/heimdall/x/staking/simulation"
 	"github.com/maticnetwork/heimdall/x/staking/types"
 	"github.com/stretchr/testify/require"
 )
@@ -16,7 +16,7 @@ func (suite *KeeperTestSuite) TestQueryValidator() {
 	}
 
 	// loading the validators
-	stakingSim.LoadValidatorSet(4, t, k.Keeper, ctx, false, 10)
+	checkPointSim.LoadValidatorSet(4, t, k.Keeper, ctx, false, 10)
 
 	// getting the validators set
 	validators := app.StakingKeeper.GetValidatorSet(ctx)
@@ -37,7 +37,7 @@ func (suite *KeeperTestSuite) TestQueryValidatorSet() {
 	}
 
 	// loading the validators
-	stakingSim.LoadValidatorSet(4, t, k.Keeper, ctx, false, 10)
+	checkPointSim.LoadValidatorSet(4, t, k.Keeper, ctx, false, 10)
 
 	vaSet, err := k.ValidatorSet(sdk.WrapSDKContext(ctx), &types.QueryValidatorSetRequest{})
 	require.NoError(t, err)

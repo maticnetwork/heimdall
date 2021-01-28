@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	checkPointSim "github.com/maticnetwork/heimdall/x/checkpoint/simulation"
+
 	"github.com/maticnetwork/bor/common"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -479,7 +481,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorExit() {
 	t, initApp, ctx := suite.T(), suite.app, suite.ctx
 	keeper := initApp.StakingKeeper
 	// pass 0 as time alive to generate non de-activated validators
-	stakingSim.LoadValidatorSet(4, t, keeper, ctx, false, 0)
+	checkPointSim.LoadValidatorSet(4, t, keeper, ctx, false, 0)
 	validators := keeper.GetCurrentValidators(ctx)
 	msgTxHash := hmCommonTypes.HexToHeimdallHash("123")
 	chainParams := initApp.ChainKeeper.GetParams(ctx)
@@ -749,7 +751,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgSignerUpdate() {
 	t, initApp, ctx := suite.T(), suite.app, suite.ctx
 	keeper := suite.app.StakingKeeper
 	// pass 0 as time alive to generate non de-activated validators
-	stakingSim.LoadValidatorSet(4, t, keeper, ctx, false, 0)
+	checkPointSim.LoadValidatorSet(4, t, keeper, ctx, false, 0)
 	oldValSet := keeper.GetValidatorSet(ctx)
 
 	oldSigner := oldValSet.Validators[0]
@@ -775,7 +777,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgSignerUpdate() {
 			Nonce:        nonce,
 			OldSigner:    hmCommonTypes.HexToHeimdallAddress(oldSigner.Signer).EthAddress(),
 			NewSigner:    hmCommonTypes.HexToHeimdallAddress(newSigner[0].Signer).EthAddress(),
-			SignerPubkey: hmCommonTypes.PubKey(newSigner[0].PubKey).Bytes()[1:],
+			SignerPubkey: hmCommonTypes.NewPubKeyFromHex(newSigner[0].PubKey).Bytes()[1:],
 		}
 
 		stakingInfoAddress, err := sdk.AccAddressFromHex(chainParams.ChainParams.StakingInfoAddress)
@@ -821,6 +823,9 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgSignerUpdate() {
 
 		txReceipt := &ethTypes.Receipt{BlockNumber: blockNumber}
 		suite.contractCaller.On("GetConfirmedTxReceipt", msgTxHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txReceipt, nil)
+
+		//oldSignerAddr, err := (oldSigner.Signer)
+		//require.NoError(t,err)
 
 		signerUpdateEvent := &stakinginfo.StakinginfoSignerChange{
 			ValidatorId:  new(big.Int).SetUint64(oldSigner.ID.Uint64()),
@@ -953,7 +958,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgStakeUpdate() {
 	keeper := initApp.StakingKeeper
 
 	// pass 0 as time alive to generate non de-activated validators
-	stakingSim.LoadValidatorSet(4, t, keeper, ctx, false, 0)
+	checkPointSim.LoadValidatorSet(4, t, keeper, ctx, false, 0)
 	oldValSet := keeper.GetValidatorSet(ctx)
 	oldVal := oldValSet.Validators[0]
 
@@ -1284,7 +1289,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgSignerUpdate() {
 	t, initApp, ctx := suite.T(), suite.app, suite.ctx
 	keeper := initApp.StakingKeeper
 	// pass 0 as time alive to generate non de-activated validators
-	stakingSim.LoadValidatorSet(4, t, keeper, ctx, false, 0)
+	checkPointSim.LoadValidatorSet(4, t, keeper, ctx, false, 0)
 	oldValSet := keeper.GetValidatorSet(ctx)
 
 	oldSigner := oldValSet.Validators[0]
@@ -1338,7 +1343,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgValidatorExit() {
 	t, initApp, ctx := suite.T(), suite.app, suite.ctx
 	keeper := initApp.StakingKeeper
 	// pass 0 as time alive to generate non de-activated validators
-	stakingSim.LoadValidatorSet(4, t, keeper, ctx, false, 0)
+	checkPointSim.LoadValidatorSet(4, t, keeper, ctx, false, 0)
 	validators := keeper.GetCurrentValidators(ctx)
 	msgTxHash := hmCommonTypes.HexToHeimdallHash("123")
 	blockNumber := big.NewInt(10)
@@ -1393,7 +1398,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgStakeUpdate() {
 	keeper := initApp.StakingKeeper
 
 	// pass 0 as time alive to generate non de-activated validators
-	stakingSim.LoadValidatorSet(4, t, keeper, ctx, false, 0)
+	checkPointSim.LoadValidatorSet(4, t, keeper, ctx, false, 0)
 	oldValSet := keeper.GetValidatorSet(ctx)
 	oldVal := oldValSet.Validators[0]
 

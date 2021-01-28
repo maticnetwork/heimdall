@@ -68,12 +68,12 @@ func (suite *HandlerTestSuite) TestHandleMsgValidatorJoin() {
 	t, initApp, ctx, r := suite.T(), suite.app, suite.ctx, suite.r
 
 	// keys and addresses
-	privKey1 := secp256k1.GenPrivKey()
-	pubkey := hmCommon.NewPubKey(privKey1.PubKey().Bytes())
-	address := pubkey.Address()
+	privateKey := secp256k1.GenPrivKey()
+	pubKey := hmCommon.NewPubKey(privateKey.PubKey().Bytes())
+	address := pubKey.Address()
 
 	// loading the validators
-	stakingSim.LoadValidatorSet(4, t, initApp.StakingKeeper, ctx, false, 10)
+	checkPointSim.LoadValidatorSet(4, t, initApp.StakingKeeper, ctx, false, 10)
 
 	validatorId := r.Uint64()
 	logIndex := r.Uint64()
@@ -93,7 +93,7 @@ func (suite *HandlerTestSuite) TestHandleMsgValidatorJoin() {
 		validatorId,
 		activationEpoch,
 		sdk.NewInt(1000000000000000000),
-		pubkey,
+		pubKey,
 		txHash,
 		logIndex,
 		blockNumber,
@@ -106,7 +106,7 @@ func (suite *HandlerTestSuite) TestHandleMsgValidatorJoin() {
 		ActivationEpoch: big.NewInt(1),
 		Amount:          amount,
 		Total:           big.NewInt(10),
-		SignerPubkey:    pubkey.Bytes()[1:],
+		SignerPubkey:    pubKey.Bytes()[1:],
 	}
 
 	suite.contractCaller.On("GetConfirmedTxReceipt", txHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txReceipt, nil)
@@ -177,7 +177,7 @@ func (suite *HandlerTestSuite) TestHandleMsgValidatorExit() {
 	t, intiApp, ctx := suite.T(), suite.app, suite.ctx
 	keeper := intiApp.StakingKeeper
 	// pass 0 as time alive to generate non de-activated validators
-	stakingSim.LoadValidatorSet(4, t, suite.app.StakingKeeper, ctx, false, 0)
+	checkPointSim.LoadValidatorSet(4, t, suite.app.StakingKeeper, ctx, false, 0)
 	validators := keeper.GetCurrentValidators(ctx)
 	fmt.Printf("Validatros %+v\n", validators)
 
