@@ -257,14 +257,14 @@ func PostHandleMsgCheckpointAck(ctx sdk.Context, k keeper.Keeper, msg types.MsgC
 	}
 
 	// Return err if start and end matches but contract root hash doesn't match
-	if msg.StartBlock == checkpointObj.StartBlock && msg.EndBlock == checkpointObj.EndBlock && msg.RootHash == checkpointObj.RootHash {
+	if msg.StartBlock == checkpointObj.StartBlock && msg.EndBlock == checkpointObj.EndBlock && msg.RootHash != checkpointObj.RootHash {
 		logger.Error("Invalid ACK",
 			"startExpected", checkpointObj.StartBlock,
 			"startReceived", msg.StartBlock,
 			"endExpected", checkpointObj.EndBlock,
 			"endReceived", msg.StartBlock,
 			"rootExpected", checkpointObj.RootHash,
-			"rootRecieved", msg.RootHash,
+			"rootReceived", msg.RootHash,
 		)
 		return nil, types.ErrBadAck
 	}

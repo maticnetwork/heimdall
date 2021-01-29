@@ -68,7 +68,7 @@ func (k msgServer) Checkpoint(goCtx context.Context, msg *types.MsgCheckpoint) (
 
 		// check if new checkpoint's start block start from current tip
 		if lastCheckpoint.EndBlock+1 != msg.StartBlock {
-			logger.Error("Checkpoint not in countinuity",
+			logger.Error("Checkpoint not in continuity",
 				"currentTip", lastCheckpoint.EndBlock,
 				"startBlock", msg.StartBlock)
 			return nil, types.ErrDisCountinuousCheckpoint
@@ -96,7 +96,8 @@ func (k msgServer) Checkpoint(goCtx context.Context, msg *types.MsgCheckpoint) (
 	logger.Debug("Validator account root hash generated", "accountRootHash", hmTypes.BytesToHeimdallHash(accountRoot).String())
 
 	// Compare stored root hash to msg root hash
-	if !bytes.Equal(accountRoot, []byte(msg.AccountRootHash)) {
+	if hmTypes.BytesToHeimdallHash(accountRoot).String() != msg.AccountRootHash {
+		//if !bytes.Equal(accountRoot, []byte(msg.AccountRootHash)) {
 		logger.Error(
 			"AccountRootHash of current state doesn't match from msg",
 			"hash", hmTypes.BytesToHeimdallHash(accountRoot).String(),
@@ -158,14 +159,14 @@ func (k msgServer) CheckpointAck(goCtx context.Context, msg *types.MsgCheckpoint
 	}
 
 	// Return err if start and end matches but contract root hash doesn't match
-	if msg.StartBlock == headerBlock.StartBlock && msg.EndBlock == headerBlock.EndBlock && msg.RootHash == headerBlock.RootHash {
+	if msg.StartBlock == headerBlock.StartBlock && msg.EndBlock == headerBlock.EndBlock && msg.RootHash != headerBlock.RootHash {
 		logger.Error("Invalid ACK",
 			"startExpected", headerBlock.StartBlock,
 			"startReceived", msg.StartBlock,
 			"endExpected", headerBlock.EndBlock,
-			"endReceived", msg.StartBlock,
+			"endReceived", msg.EndBlock,
 			"rootExpected", headerBlock.RootHash,
-			"rootRecieved", msg.RootHash,
+			"rootReceived", msg.RootHash,
 		)
 		return nil, types.ErrBadAck
 	}
