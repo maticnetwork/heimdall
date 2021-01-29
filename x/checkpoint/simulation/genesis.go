@@ -33,13 +33,13 @@ func RandomizedGenState(simState *module.SimulationState) {
 	Checkpoints := make([]*hmTypes.Checkpoint, ackCount)
 
 	for i := range Checkpoints {
-		Checkpoints[i] = &bufferedCheckpoint
+		Checkpoints[i] = bufferedCheckpoint
 	}
 
 	params := types.DefaultParams()
 	genesisState := types.NewGenesisState(
 		params,
-		&bufferedCheckpoint,
+		bufferedCheckpoint,
 		uint64(lastNoACK),
 		uint64(ackCount),
 		Checkpoints,
