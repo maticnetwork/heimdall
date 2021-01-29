@@ -100,8 +100,6 @@ func SideHandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k k
 	signer := pubkey.Address()
 
 	// check signer pubkey in message corresponds
-	fmt.Println(eventLog.SignerPubkey)
-	fmt.Println(pubkey.Bytes()[1:])
 	if !bytes.Equal(eventLog.SignerPubkey, pubkey.Bytes()[1:]) {
 		k.Logger(ctx).Error(
 			"Signer Pubkey does not match",
