@@ -31,8 +31,9 @@ func (d ModuleCommunicator) GetValidatorFromValID(ctx sdk.Context, valID types.V
 	return d.App.StakingKeeper.GetValidatorFromValID(ctx, valID)
 }
 
-//
-//// CreateValidatorSigningInfo creates ValidatorSigningInfo used by slashing module
-//func (d ModuleCommunicator) CreateValidatorSigningInfo(ctx sdk.Context, valID types.ValidatorID, valSigningInfo types.ValidatorSigningInfo) {
-//	return
-//}
+// CreateValidatorSigningInfo creates ValidatorSigningInfo used by slashing module
+func (d ModuleCommunicator) CreateValidatorSigningInfo(ctx sdk.Context, valID types.ValidatorID, valSigningInfo types.ValidatorSigningInfo) {
+	// todo: enable after adding slashing keeper
+	//d.App.SlashingKeeper.SetValidatorSigningInfo(ctx, valID, valSigningInfo)
+	//return
+}
