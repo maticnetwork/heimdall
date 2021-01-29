@@ -3,6 +3,8 @@ package chainmanager_test
 import (
 	"testing"
 
+	"github.com/maticnetwork/heimdall/x/chainmanager/test_helper"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/x/chainmanager"
@@ -21,7 +23,7 @@ type GenesisTestSuite struct {
 
 // SetupTest setup necessary things for genesis test
 func (suite *GenesisTestSuite) SetupTest() {
-	suite.app, suite.ctx = createTestApp(true)
+	suite.app, suite.ctx = test_helper.CreateTestApp(true)
 }
 
 // TestGenesisTestSuite

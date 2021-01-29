@@ -3,6 +3,8 @@ package keeper_test
 import (
 	"testing"
 
+	"github.com/maticnetwork/heimdall/x/chainmanager/test_helper"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/x/chainmanager/types"
@@ -18,7 +20,7 @@ type KeeperTestSuite struct {
 }
 
 func (suite *KeeperTestSuite) SetupTest() {
-	suite.app, suite.ctx = createTestApp(false)
+	suite.app, suite.ctx = test_helper.CreateTestApp(false)
 }
 
 func TestKeeperTestSuite(t *testing.T) {

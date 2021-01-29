@@ -1,4 +1,4 @@
-package keeper_test
+package test_helper
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -13,7 +13,7 @@ import (
 //
 
 // returns context and app with params set on chainmanager keeper
-func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context) {
+func CreateTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context) {
 
 	initApp := app.Setup(isCheckTx)
 	ctx := initApp.BaseApp.NewContext(isCheckTx, tmproto.Header{})
