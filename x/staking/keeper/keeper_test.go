@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/maticnetwork/heimdall/x/staking/test_helper"
+
 	"github.com/maticnetwork/heimdall/helper"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -32,7 +34,7 @@ type KeeperTestSuite struct {
 }
 
 func (suite *KeeperTestSuite) SetupTest() {
-	suite.app, suite.ctx, _ = createTestApp(false)
+	suite.app, suite.ctx, _ = test_helper.CreateTestApp(false)
 }
 
 func TestKeeperTestSuite(t *testing.T) {
@@ -215,7 +217,8 @@ func (suite *KeeperTestSuite) TestCurrentValidator() {
 				ProposerPriority: 0,
 			}
 			// check current validator
-			stakingKeeper.AddValidator(ctx, newVal)
+			err := stakingKeeper.AddValidator(ctx, newVal)
+			require.NoError(t, err)
 			checkpointKeeper.UpdateACKCountWithValue(ctx, item.ackcount)
 
 			isCurrentVal := stakingKeeper.IsCurrentValidatorByAddress(ctx, GetAccAddressFromString(newVal.Signer))
@@ -264,7 +267,6 @@ func GetAccAddressFromString(address string) sdk.AccAddress {
 //			require.Fail(t, "Validator is not removed from updated validator set")
 //		}
 //	}
-//
 //}
 
 func (suite *KeeperTestSuite) TestAddValidatorSetChange() {
@@ -309,18 +311,21 @@ func (suite *KeeperTestSuite) TestAddValidatorSetChange() {
 //	currentValSet := keeper.GetValidatorSet(ctx)
 //
 //	valToUpdate := currentValSet.Validators[0]
-//	newSigner := checkPointSim.GenRandomVal(1, 0, 10, 10, false, 1)
+//	newSigner := stakingSim.GenRandomVal(2, 0, 10, 10, false, 1)
 //
-//	err := keeper.UpdateSigner(ctx, newSigner[0].GetSigner(), hmCommonTypes.PubKey(newSigner[0].PubKey), valToUpdate.GetSigner())
+//	previousSigner, err := sdk.AccAddressFromHex(valToUpdate.Signer)
+//	require.NoError(t, err)
+//	newSignerAddr, _ := sdk.AccAddressFromHex(newSigner[1].Signer)
+//	err = keeper.UpdateSigner(ctx, newSignerAddr, hmCommonTypes.NewPubKeyFromHex(newSigner[0].PubKey), previousSigner)
 //	require.NoError(t, err)
 //	setUpdates := helper.GetUpdatedValidators(currentValSet, keeper.GetAllValidators(ctx), 5)
 //	err = currentValSet.UpdateWithChangeSet(setUpdates)
 //	require.NoError(t, err)
-//	require.Equal(t, len(prevValSet.Validators)+1, len(currentValSet.Validators), "Number of validators should remain same")
+//	require.Equal(t, len(prevValSet.Validators), len(currentValSet.Validators), "Number of validators should remain same")
 //
-//	index, _ := currentValSet.GetByAddress(valToUpdate.GetSigner())
+//	index, _ := currentValSet.GetByAddress(previousSigner)
 //	require.Equal(t, -1, index, "Prev Validator should not be present in CurrentValSet")
-//	index, val := currentValSet.GetByAddress(newSigner[0].GetSigner())
+//	index, val := currentValSet.GetByAddress(newSignerAddr)
 //
 //	require.Equal(t, newSigner[0].GetSigner(), val.GetSigner(), "Signer address should change")
 //	require.Equal(t, newSigner[0].PubKey, val.PubKey, "Signer pubkey should change")

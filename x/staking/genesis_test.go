@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/maticnetwork/heimdall/x/staking/test_helper"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/app"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -28,7 +30,7 @@ type GenesisTestSuite struct {
 
 // SetupTest setup necessary things for genesis test
 func (suite *GenesisTestSuite) SetupTest() {
-	suite.app, suite.ctx, _ = createTestApp(true)
+	suite.app, suite.ctx, _ = test_helper.CreateTestApp(true)
 }
 
 func TestGenesisTestSuite(t *testing.T) {
@@ -45,7 +47,7 @@ func (suite *GenesisTestSuite) TestInitExportGenesis() {
 	stakingSequence := make([]string, n)
 	accounts := simulation.RandomAccounts(r1, n)
 
-	for i, _ := range stakingSequence {
+	for i := range stakingSequence {
 		stakingSequence[i] = strconv.Itoa(simulation.RandIntBetween(r1, 1000, 100000))
 	}
 

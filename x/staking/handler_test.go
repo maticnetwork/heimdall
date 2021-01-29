@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/maticnetwork/heimdall/x/staking/test_helper"
+
 	"github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/heimdall/types/simulation"
 
@@ -48,7 +50,7 @@ type HandlerTestSuite struct {
 }
 
 func (suite *HandlerTestSuite) SetupTest() {
-	suite.app, suite.ctx, _ = createTestApp(false)
+	suite.app, suite.ctx, _ = test_helper.CreateTestApp(false)
 
 	suite.contractCaller = mocks.IContractCaller{}
 	suite.handler = staking.NewHandler(suite.app.StakingKeeper, &suite.contractCaller)

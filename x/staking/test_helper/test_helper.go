@@ -1,4 +1,4 @@
-package staking_test
+package test_helper
 
 import (
 	"encoding/json"
@@ -17,7 +17,7 @@ import (
 //
 
 // returns context and app with params set on staking keeper
-func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, client.Context) {
+func CreateTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, client.Context) {
 	genesisState := app.NewDefaultGenesisState()
 	stakingGenesis := stakingTypes.NewGenesisState(
 		stakingTypes.DefaultGenesis().Validators,
