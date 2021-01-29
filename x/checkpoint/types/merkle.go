@@ -5,12 +5,9 @@ import (
 	"errors"
 
 	"github.com/cbergoon/merkletree"
-	"github.com/maticnetwork/bor/common"
-	"github.com/maticnetwork/bor/rpc"
-	"github.com/tendermint/crypto/sha3"
-	"golang.org/x/sync/errgroup"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/maticnetwork/bor/common"
+	"github.com/tendermint/crypto/sha3"
 
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -107,17 +104,6 @@ func VerifyAccountProof(dividendAccounts []*hmTypes.DividendAccount, userAddr sd
 	return false, nil
 }
 
-func convert(input []([32]byte)) [][]byte {
-	var output [][]byte
-	for _, in := range input {
-		newInput := make([]byte, len(in[:]))
-		copy(newInput, in[:])
-		output = append(output, newInput)
-
-	}
-	return output
-}
-
 func convertTo32(input []byte) (output [32]byte, err error) {
 	l := len(input)
 	if l > 32 || l == 0 {
@@ -137,50 +123,51 @@ func appendBytes32(data ...[]byte) []byte {
 	return result
 }
 
-func nextPowerOfTwo(n uint64) uint64 {
-	if n == 0 {
-		return 1
-	}
-	// http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
-	n--
-	n |= n >> 1
-	n |= n >> 2
-	n |= n >> 4
-	n |= n >> 8
-	n |= n >> 16
-	n |= n >> 32
-	n++
-	return n
-}
-
-// spins go-routines to fetch batch elements to allow creation of large merkle trees
-func fetchBatchElements(rpcClient *rpc.Client, elements []rpc.BatchElem, checkpointLength uint64) (err error) {
-	var batchLength = int(checkpointLength)
-	// group
-	var g errgroup.Group
-
-	for i := 0; i < len(elements); i += batchLength {
-		var newBatch []rpc.BatchElem
-		if len(elements) < i+batchLength {
-			newBatch = elements[i:]
-		} else {
-			newBatch = elements[i : i+batchLength]
-		}
-
-		// common.CheckpointLogger.Info("Batching requests", "index", i, "length", len(newBatch))
-
-		// spawn go-routine
-		g.Go(func() error {
-			// Batch call
-			err := rpcClient.BatchCall(newBatch)
-			return err
-		})
-	}
-
-	if err := g.Wait(); err != nil {
-		return err
-	}
-
-	// common.CheckpointLogger.Info("Fetched all headers", "len", len(elements))
-	return nil
-}
+//
+//func nextPowerOfTwo(n uint64) uint64 {
+//	if n == 0 {
+//		return 1
+//	}
+//	// http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
+//	n--
+//	n |= n >> 1
+//	n |= n >> 2
+//	n |= n >> 4
+//	n |= n >> 8
+//	n |= n >> 16
+//	n |= n >> 32
+//	n++
+//	return n
+//}
+//
+//// spins go-routines to fetch batch elements to allow creation of large merkle trees
+//func fetchBatchElements(rpcClient *rpc.Client, elements []rpc.BatchElem, checkpointLength uint64) (err error) {
+//	var batchLength = int(checkpointLength)
+//	// group
+//	var g errgroup.Group
+//
+//	for i := 0; i < len(elements); i += batchLength {
+//		var newBatch []rpc.BatchElem
+//		if len(elements) < i+batchLength {
+//			newBatch = elements[i:]
+//		} else {
+//			newBatch = elements[i : i+batchLength]
+//		}
+//
+//		// common.CheckpointLogger.Info("Batching requests", "index", i, "length", len(newBatch))
+//
+//		// spawn go-routine
+//		g.Go(func() error {
+//			// Batch call
+//			err := rpcClient.BatchCall(newBatch)
+//			return err
+//		})
+//	}
+//
+//	if err := g.Wait(); err != nil {
+//		return err
+//	}
+//
+//	// common.CheckpointLogger.Info("Fetched all headers", "len", len(elements))
+//	return nil
+//}
