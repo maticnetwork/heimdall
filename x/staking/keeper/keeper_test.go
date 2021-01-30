@@ -186,7 +186,6 @@ func (suite *KeeperTestSuite) TestCurrentValidator() {
 	type TestDataItem struct {
 		name        string
 		startblock  uint64
-		endblock    uint64
 		nonce       uint64
 		VotingPower int64
 		ackcount    uint64
@@ -195,8 +194,8 @@ func (suite *KeeperTestSuite) TestCurrentValidator() {
 	}
 
 	dataItems := []TestDataItem{
-		{"VotingPower zero", uint64(0), uint64(0), uint64(1), int64(0), uint64(1), false, "should not be current validator as VotingPower is zero."},
-		{"start epoch greater than ackcount", uint64(3), uint64(0), 0, int64(10), uint64(1), false, "should not be current validator as start epoch greater than ackcount."},
+		{"VotingPower zero", uint64(0), uint64(0), int64(0), uint64(1), false, "should not be current validator as VotingPower is zero."},
+		{"start epoch greater than ackcount", uint64(3), uint64(0), int64(10), uint64(1), false, "should not be current validator as start epoch greater than ackcount."},
 	}
 	t, intiApp, ctx := suite.T(), suite.app, suite.ctx
 
@@ -210,7 +209,7 @@ func (suite *KeeperTestSuite) TestCurrentValidator() {
 				ID:               hmTypes.NewValidatorID(1 + uint64(i)),
 				StartEpoch:       item.startblock,
 				EndEpoch:         item.startblock,
-				Nonce:            0,
+				Nonce:            item.nonce,
 				VotingPower:      item.VotingPower,
 				Signer:           hmCommonTypes.HexToHeimdallAddress(pubkey.Address().String()).String(),
 				PubKey:           pubkey.String(),
@@ -232,42 +231,37 @@ func GetAccAddressFromString(address string) sdk.AccAddress {
 	return sdk.AccAddress([]byte(address))
 }
 
-// func GetBytesFromString(str string) []byte {
-// 	return []byte(str)
-// }
-//
-// todo: we need to fix this ...
-//func (suite *KeeperTestSuite) TestRemoveValidatorSetChange() {
-//	// create sub test to check if validator remove
-//	t, initApp, ctx := suite.T(), suite.app, suite.ctx
-//	keeper := initApp.StakingKeeper
-//
-//	// load 4 validators to state
-//	checkPointSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
-//	initValSet := keeper.GetValidatorSet(ctx)
-//
-//	currentValSet := initValSet.Copy()
-//	prevValidatorSet := initValSet.Copy()
-//
-//	prevValidatorSet.Validators[0].StartEpoch = 20
-//
-//	validator := *prevValidatorSet.Validators[0]
-//	err := keeper.AddValidator(ctx, validator)
-//	require.Empty(t, err, "Unable to update validator set")
-//
-//	setUpdates := helper.GetUpdatedValidators(currentValSet, keeper.GetAllValidators(ctx), 5)
-//	err = currentValSet.UpdateWithChangeSet(setUpdates)
-//	require.NoError(t, err)
-//	updatedValSet := currentValSet
-//
-//	require.Equal(t, len(prevValidatorSet.Validators)-1, len(updatedValSet.Validators), "Validator set should be reduced by one ")
-//
-//	for _, val := range updatedValSet.Validators {
-//		if val.Signer == prevValidatorSet.Validators[0].Signer {
-//			require.Fail(t, "Validator is not removed from updated validator set")
-//		}
-//	}
-//}
+func (suite *KeeperTestSuite) TestRemoveValidatorSetChange() {
+	// create sub test to check if validator remove
+	t, initApp, ctx := suite.T(), suite.app, suite.ctx
+	keeper := initApp.StakingKeeper
+
+	// load 4 validators to state
+	checkPointSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	initValSet := keeper.GetValidatorSet(ctx)
+
+	currentValSet := initValSet.Copy()
+	prevValidatorSet := initValSet.Copy()
+
+	prevValidatorSet.Validators[0].StartEpoch = 20
+
+	validator := *prevValidatorSet.Validators[0]
+	err := keeper.AddValidator(ctx, validator)
+	require.Empty(t, err, "Unable to update validator set")
+
+	setUpdates := helper.GetUpdatedValidators(currentValSet, keeper.GetAllValidators(ctx), 5)
+	err = currentValSet.UpdateWithChangeSet(setUpdates)
+	require.NoError(t, err)
+	updatedValSet := currentValSet
+
+	require.Equal(t, len(prevValidatorSet.Validators)-1, len(updatedValSet.Validators), "Validator set should be reduced by one ")
+
+	for _, val := range updatedValSet.Validators {
+		if val.Signer == prevValidatorSet.Validators[0].Signer {
+			require.Fail(t, "Validator is not removed from updated validator set")
+		}
+	}
+}
 
 func (suite *KeeperTestSuite) TestAddValidatorSetChange() {
 	// create sub test to check if validator remove
@@ -296,51 +290,50 @@ func (suite *KeeperTestSuite) TestAddValidatorSetChange() {
 
 }
 
-// todo: we need to fix this
-//func (suite *KeeperTestSuite) TestUpdateValidatorSetChange() {
-//	// create sub test to check if validator remove
-//	t, intiApp, ctx := suite.T(), suite.app, suite.ctx
-//	keeper := intiApp.StakingKeeper
-//
-//	// load 4 validators to state
-//	checkPointSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
-//	initValSet := keeper.GetValidatorSet(ctx)
-//
-//	keeper.IncrementAccum(ctx, 2)
-//	prevValSet := initValSet.Copy()
-//	currentValSet := keeper.GetValidatorSet(ctx)
-//
-//	valToUpdate := currentValSet.Validators[0]
-//	newSigner := stakingSim.GenRandomVal(2, 0, 10, 10, false, 1)
-//
-//	previousSigner, err := sdk.AccAddressFromHex(valToUpdate.Signer)
-//	require.NoError(t, err)
-//	newSignerAddr, _ := sdk.AccAddressFromHex(newSigner[1].Signer)
-//	err = keeper.UpdateSigner(ctx, newSignerAddr, hmCommonTypes.NewPubKeyFromHex(newSigner[0].PubKey), previousSigner)
-//	require.NoError(t, err)
-//	setUpdates := helper.GetUpdatedValidators(currentValSet, keeper.GetAllValidators(ctx), 5)
-//	err = currentValSet.UpdateWithChangeSet(setUpdates)
-//	require.NoError(t, err)
-//	require.Equal(t, len(prevValSet.Validators), len(currentValSet.Validators), "Number of validators should remain same")
-//
-//	index, _ := currentValSet.GetByAddress(previousSigner)
-//	require.Equal(t, -1, index, "Prev Validator should not be present in CurrentValSet")
-//	index, val := currentValSet.GetByAddress(newSignerAddr)
-//
-//	require.Equal(t, newSigner[0].GetSigner(), val.GetSigner(), "Signer address should change")
-//	require.Equal(t, newSigner[0].PubKey, val.PubKey, "Signer pubkey should change")
-//
-//	require.Equal(t, prevValSet.GetTotalVotingPower(), currentValSet.GetTotalVotingPower(), "Total VotingPower should not change")
-//
-//	/* Validator Set changes When
-//		1. When ackCount changes
-//		2. When new validator joins
-//		3. When validator updates stake
-//		4. When signer is updatedctx
-//		5. When Validator Exits
-//	**/
-//
-//}
+func (suite *KeeperTestSuite) TestUpdateValidatorSetChange() {
+	// create sub test to check if validator remove
+	t, intiApp, ctx := suite.T(), suite.app, suite.ctx
+	keeper := intiApp.StakingKeeper
+
+	// load 4 validators to state
+	checkPointSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	initValSet := keeper.GetValidatorSet(ctx)
+
+	keeper.IncrementAccum(ctx, 2)
+	prevValSet := initValSet.Copy()
+	currentValSet := keeper.GetValidatorSet(ctx)
+
+	valToUpdate := currentValSet.Validators[0]
+	newSigner := stakingSim.GenRandomVal(1, 0, 10, 10, false, 1)
+
+	previousSigner, err := sdk.AccAddressFromHex(valToUpdate.Signer)
+	require.NoError(t, err)
+	newSignerAddr, _ := sdk.AccAddressFromHex(newSigner[0].Signer)
+	err = keeper.UpdateSigner(ctx, newSignerAddr, hmCommonTypes.NewPubKeyFromHex(newSigner[0].PubKey), previousSigner)
+	require.NoError(t, err)
+	setUpdates := helper.GetUpdatedValidators(currentValSet, keeper.GetAllValidators(ctx), 5)
+	err = currentValSet.UpdateWithChangeSet(setUpdates)
+	require.NoError(t, err)
+	require.Equal(t, len(prevValSet.Validators), len(currentValSet.Validators), "Number of validators should remain same")
+
+	index, _ := currentValSet.GetByAddress(previousSigner)
+	require.Equal(t, int32(-1), index, "Prev Validator should not be present in CurrentValSet")
+	index, val := currentValSet.GetByAddress(newSignerAddr)
+	require.NotNil(t, index)
+	require.Equal(t, newSigner[0].GetSigner(), val.GetSigner(), "Signer address should change")
+	require.Equal(t, newSigner[0].PubKey, val.PubKey, "Signer pubkey should change")
+
+	require.Equal(t, prevValSet.GetTotalVotingPower(), currentValSet.GetTotalVotingPower(), "Total VotingPower should not change")
+
+	/* Validator Set changes When
+		1. When ackCount changes
+		2. When new validator joins
+		3. When validator updates stake
+		4. When signer is updatedctx
+		5. When Validator Exits
+	**/
+
+}
 
 //
 func (suite *KeeperTestSuite) TestGetCurrentValidators() {
@@ -348,8 +341,7 @@ func (suite *KeeperTestSuite) TestGetCurrentValidators() {
 	keeper := initApp.StakingKeeper
 	checkPointSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
 	validators := keeper.GetCurrentValidators(ctx)
-	accAddr, err := sdk.AccAddressFromHex(validators[0].Signer)
-	activeValidatorInfo, err := keeper.GetActiveValidatorInfo(ctx, accAddr)
+	activeValidatorInfo, err := keeper.GetActiveValidatorInfo(ctx, validators[0].GetSigner())
 	require.NoError(t, err)
 	require.Equal(t, validators[0], activeValidatorInfo)
 }

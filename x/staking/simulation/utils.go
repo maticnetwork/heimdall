@@ -2,6 +2,7 @@ package simulation
 
 import (
 	"math/rand"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -17,15 +18,11 @@ func GenRandomVal(count int, startBlock uint64, power int64, timeAlive uint64, r
 		signer := sdk.AccAddress(privKey1.PubKey().Address().Bytes())
 
 		if randomise {
-			startBlock := uint64(rand.Intn(10))
-			// todo find a way to genrate non zero random number
-			if startBlock == 0 {
-				startBlock = 1
-			}
-			power := uint64(rand.Intn(100))
-			if power == 0 {
-				power = 1
-			}
+			rand.Seed(time.Now().UnixNano())
+			startBlock = uint64(rand.Intn(9))
+			startBlock += 1
+			power = int64(rand.Intn(99))
+			power += 1
 		}
 
 		newVal := hmTypes.Validator{

@@ -20,7 +20,6 @@ import (
 
 	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
 
-	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethTypes "github.com/maticnetwork/bor/core/types"
@@ -42,7 +41,6 @@ type HandlerTestSuite struct {
 
 	app            *app.HeimdallApp
 	ctx            sdk.Context
-	cliCtx         client.Context
 	handler        sdk.Handler
 	topUpHandler   sdk.Handler
 	contractCaller mocks.IContractCaller
