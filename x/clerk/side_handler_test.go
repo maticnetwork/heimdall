@@ -70,7 +70,6 @@ func (suite *SideHandlerTestSuite) TestSideHandler() {
 
 	// side handler
 	result := suite.sideHandler(ctx, nil)
-	// require.Equal(t, uint32(sdk.CodeUnknownRequest), result.Code)
 	require.Equal(t, tmprototypes.SideTxResultType_SKIP, result.Result)
 }
 
