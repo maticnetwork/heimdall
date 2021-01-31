@@ -9,9 +9,8 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/maticnetwork/heimdall/app"
-	"github.com/maticnetwork/heimdall/x/clerk/types"
-	// "github.com/maticnetwork/heimdall/x/clerk"
 	hmCommon "github.com/maticnetwork/heimdall/types/common"
+	"github.com/maticnetwork/heimdall/x/clerk/types"
 )
 
 type KeeperTestSuite struct {

@@ -12,7 +12,6 @@ import (
 	"github.com/maticnetwork/heimdall/app"
 )
 
-// TODO - Merge this with keeper/common_test.go
 //
 // Create test app
 //

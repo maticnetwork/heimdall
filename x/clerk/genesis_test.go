@@ -8,15 +8,12 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/app"
-	"github.com/maticnetwork/heimdall/x/clerk"
-	// "github.com/maticnetwork/heimdall/x/clerk/keeper"
 	hmCommon "github.com/maticnetwork/heimdall/types/common"
 	"github.com/maticnetwork/heimdall/types/simulation"
+	"github.com/maticnetwork/heimdall/x/clerk"
 	"github.com/maticnetwork/heimdall/x/clerk/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	// abci "github.com/tendermint/tendermint/abci/types"
-	// tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 )
 
 // GenesisTestSuite integrate test suite context object
@@ -52,7 +49,6 @@ func (suite *GenesisTestSuite) TestInitExportGenesis() {
 
 	for i := range eventRecords {
 		hAddr, _ := sdk.AccAddressFromHex("0x1121212121219")
-		// hAddr := hmCommon.BytesToHeimdallAddress([]byte(strconv.Itoa(simulation.RandIntBetween(r1, 1000, 100000))))
 		hHash := hmCommon.BytesToHeimdallHash([]byte(strconv.Itoa(simulation.RandIntBetween(r1, 1000, 100000))))
 		testEventRecord := types.NewEventRecord(hHash, uint64(i), uint64(i), hAddr, make([]byte, 0), strconv.Itoa(simulation.RandIntBetween(r1, 1000, 100000)), time.Now())
 		eventRecords[i] = &testEventRecord

@@ -27,8 +27,8 @@ import (
 type HandlerTestSuite struct {
 	suite.Suite
 
-	app            *app.HeimdallApp
-	ctx            sdk.Context
+	app *app.HeimdallApp
+	ctx sdk.Context
 	// cliCtx         client.Context
 	chainID        string
 	handler        sdk.Handler
@@ -139,8 +139,6 @@ func (suite *HandlerTestSuite) TestHandleMsgEventRecordSequence() {
 	result, err := suite.handler(ctx, &msg)
 	require.Error(t, err)
 	require.Nil(t, result, "should fail due to existent sequence but succeeded")
-	// require.False(t, result.IsOK(), "should fail due to existent sequence but succeeded")
-	// require.Equal(t, common.CodeOldTx, result.Code)
 }
 
 // TODO - Check this
@@ -162,10 +160,9 @@ func (suite *HandlerTestSuite) TestHandleMsgEventRecordSequence() {
 // 		make([]byte, 0),
 // 		"testchainid",
 // 	)
-// 	_, err := suite.handler(ctx, &msg)
+// 	result, err := suite.handler(ctx, &msg)
 // 	require.Error(t, err)
-// 	// require.False(t, result.IsOK(), "error invalid bor chain id %v", result.Code)
-// 	// require.Equal(t, common.CodeInvalidBorChainID, result.Code)
+// 	require.Nil(t, result, "error invalid bor chain id %v", result)
 
 // 	// there should be no stored event record
 // 	storedEventRecord, err := app.ClerkKeeper.GetEventRecord(ctx, id)
