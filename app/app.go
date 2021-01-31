@@ -278,12 +278,15 @@ func NewHeimdallApp(
 		nil,
 	)
 
+	govRouter := govtypes.NewRouter()
+	govRouter.AddRoute(govtypes.RouterKey, govtypes.ProposalHandler)
+
 	app.GovKeeper = govkeeper.NewKeeper(
 		appCodec,
 		keys[govtypes.StoreKey], // target store
 		app.GetSubspace(govtypes.ModuleName),
 		app.BankKeeper,
-		govtypes.NewRouter(),
+		govRouter,
 		&app.StakingKeeper,
 		app.AccountKeeper,
 	)
