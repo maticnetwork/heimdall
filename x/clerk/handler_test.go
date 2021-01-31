@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/client"
+	// "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -29,7 +29,7 @@ type HandlerTestSuite struct {
 
 	app            *app.HeimdallApp
 	ctx            sdk.Context
-	cliCtx         client.Context
+	// cliCtx         client.Context
 	chainID        string
 	handler        sdk.Handler
 	contractCaller mocks.IContractCaller
@@ -82,9 +82,9 @@ func (suite *HandlerTestSuite) TestHandleMsgEventRecord() {
 	)
 
 	t.Run("Success", func(t *testing.T) {
-		_, err := suite.handler(ctx, &msg)
+		result, err := suite.handler(ctx, &msg)
 		require.Nil(t, err)
-		// require.True(t, result.IsOK(), "expected msg record to be ok, got %v", result)
+		require.NotNil(t, result, "expected msg record to be ok, got %v", result)
 
 		// there should be no stored event record
 		storedEventRecord, err := app.ClerkKeeper.GetEventRecord(ctx, id)
@@ -95,7 +95,7 @@ func (suite *HandlerTestSuite) TestHandleMsgEventRecord() {
 	t.Run("ExistingRecord", func(t *testing.T) {
 		addr, _ := sdk.AccAddressFromHex(msg.ContractAddress)
 		// store event record in keeper
-		app.ClerkKeeper.SetEventRecord(ctx,
+		err := app.ClerkKeeper.SetEventRecord(ctx,
 			types.NewEventRecord(
 				hmCommon.HexToHeimdallHash(msg.TxHash),
 				msg.LogIndex,
@@ -106,11 +106,11 @@ func (suite *HandlerTestSuite) TestHandleMsgEventRecord() {
 				time.Now(),
 			),
 		)
+		require.Nil(t, err)
 
-		_, err := suite.handler(ctx, &msg)
+		result, err := suite.handler(ctx, &msg)
 		require.Error(t, err)
-		// require.False(t, result.IsOK(), "should fail due to existent event record but succeeded")
-		// require.Equal(t, types.CodeEventRecordAlreadySynced, result.Code)
+		require.Nil(t, result, "should fail due to existent event record but succeeded")
 	})
 }
 
@@ -136,8 +136,9 @@ func (suite *HandlerTestSuite) TestHandleMsgEventRecordSequence() {
 	sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))
 	app.ClerkKeeper.SetRecordSequence(ctx, sequence.String())
 
-	_, err := suite.handler(ctx, &msg)
+	result, err := suite.handler(ctx, &msg)
 	require.Error(t, err)
+	require.Nil(t, result, "should fail due to existent sequence but succeeded")
 	// require.False(t, result.IsOK(), "should fail due to existent sequence but succeeded")
 	// require.Equal(t, common.CodeOldTx, result.Code)
 }

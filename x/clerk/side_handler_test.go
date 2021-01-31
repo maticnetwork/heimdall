@@ -188,8 +188,9 @@ func (suite *SideHandlerTestSuite) TestPostHandler() {
 	t, ctx := suite.T(), suite.ctx
 
 	// post tx handler
-	_, err := suite.postHandler(ctx, nil, tmprototypes.SideTxResultType_YES)
+	result, err := suite.postHandler(ctx, nil, tmprototypes.SideTxResultType_YES)
 	require.Error(t, err)
+	require.Nil(t, result, "Post handler should fail")
 	// require.False(t, result.IsOK(), "Post handler should fail")
 	// require.Equal(t, sdk.CodeUnknownRequest, result.Code)
 }
@@ -216,10 +217,9 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgEventRecord() {
 	)
 
 	t.Run("NoResult", func(t *testing.T) {
-		_, err := suite.postHandler(ctx, &msg, tmprototypes.SideTxResultType_NO)
+		result, err := suite.postHandler(ctx, &msg, tmprototypes.SideTxResultType_NO)
 		require.Error(t, err)
-		// require.False(t, result.IsOK(), "Post handler should fail")
-		// require.Equal(t, common.CodeSideTxValidationFailed, result.Code)
+		require.Nil(t, result, "Post handler should fail")
 		// require.Equal(t, 0, len(result.Events), "No error should be emitted for failed post-tx")
 
 		// there should be no stored event record
@@ -229,8 +229,8 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgEventRecord() {
 	})
 
 	t.Run("YesResult", func(t *testing.T) {
-		_, err := suite.postHandler(ctx, &msg, tmprototypes.SideTxResultType_YES)
-		// require.True(t, result.IsOK(), "Post handler should succeed")
+		result, err := suite.postHandler(ctx, &msg, tmprototypes.SideTxResultType_YES)
+		require.NotNil(t, result, "Post handler should succeed")
 		require.Nil(t, err)
 		// require.Greater(t, len(result.Events), 0, "Events should be emitted for successful post-tx")
 
@@ -267,13 +267,12 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgEventRecord() {
 			suite.chainID,
 		)
 
-		_, err := suite.postHandler(ctx, &msg, tmprototypes.SideTxResultType_YES)
+		result, err := suite.postHandler(ctx, &msg, tmprototypes.SideTxResultType_YES)
 		require.Nil(t, err)
-		// require.True(t, result.IsOK(), "Post handler should succeed")
+		require.NotNil(t, result, "Post handler should succeed")
 
-		_, err = suite.postHandler(ctx, &msg, tmprototypes.SideTxResultType_YES)
+		result, err = suite.postHandler(ctx, &msg, tmprototypes.SideTxResultType_YES)
 		require.Error(t, err)
-		// require.False(t, result.IsOK(), "Post handler should prevent replay attack")
-		// require.Equal(t, common.CodeOldTx, result.Code)
+		require.Nil(t, result, "Post handler should prevent replay attack")
 	})
 }

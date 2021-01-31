@@ -53,7 +53,7 @@ func (suite *KeeperTestSuite) TestHasGetSetEventRecord() {
 	require.Nil(t, err)
 	require.Equal(t, (*respRecord).Id, testRecord1.Id)
 
-	respRecord, err = ck.GetEventRecord(ctx, testRecord1.Id+1)
+	_, err = ck.GetEventRecord(ctx, testRecord1.Id+1)
 	require.NotNil(t, err)
 
 	// HasEventRecord
@@ -76,7 +76,8 @@ func (suite *KeeperTestSuite) TestGetEventRecordList() {
 	ck := app.ClerkKeeper
 	for i = 0; i < 60; i++ {
 		testRecord := types.NewEventRecord(hHash, i, i, hAddr, make([]byte, 0), "1", time.Now())
-		ck.SetEventRecord(ctx, testRecord)
+		err := ck.SetEventRecord(ctx, testRecord)
+		require.Nil(t, err)
 	}
 
 	recordList, _ := ck.GetEventRecordList(ctx, 1, 20)
@@ -104,7 +105,8 @@ func (suite *KeeperTestSuite) TestGetEventRecordListTime() {
 	ck := app.ClerkKeeper
 	for i = 0; i < 30; i++ {
 		testRecord := types.NewEventRecord(hHash, i, i, hAddr, make([]byte, 0), "1", time.Unix(int64(i), 0))
-		ck.SetEventRecord(ctx, testRecord)
+		err := ck.SetEventRecord(ctx, testRecord)
+		require.Nil(t, err)
 	}
 
 	recordList, err := ck.GetEventRecordListWithTime(ctx, time.Unix(1, 0), time.Unix(6, 0), 0, 0)
