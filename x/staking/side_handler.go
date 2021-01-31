@@ -256,7 +256,7 @@ func SideHandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k kee
 	// check signer pubkey in message corresponds
 	expectedPubKey, err := helper.CompressPubKey(eventLog.SignerPubkey)
 
-	if !bytes.Equal(newPubKey.Bytes(), expectedPubKey) {
+	if err != nil || !bytes.Equal(newPubKey.Bytes(), expectedPubKey) {
 		k.Logger(ctx).Error("Newsigner pubkey in txhash and msg dont match", "msgPubKey", newPubKey.String(), "pubkeyFromTx", hex.EncodeToString(eventLog.SignerPubkey[:]))
 		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
 	}

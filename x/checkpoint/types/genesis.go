@@ -14,8 +14,8 @@ func NewGenesisState(
 	lastNoACK uint64,
 	ackCount uint64,
 	checkpoints []*hmTypes.Checkpoint,
-) GenesisState {
-	return GenesisState{
+) *GenesisState {
+	return &GenesisState{
 		Params:             params,
 		BufferedCheckpoint: bufferedCheckpoint,
 		LastNoACK:          lastNoACK,

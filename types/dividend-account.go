@@ -1,6 +1,7 @@
 package types
 
 import (
+	"bytes"
 	"fmt"
 	"math/big"
 	"sort"
@@ -58,7 +59,7 @@ func UnMarshallDividendAccount(cdc codec.BinaryMarshaler, value []byte) (Dividen
 // SortDividendAccountByAddress - Sorts DividendAccounts  By  Address
 func SortDividendAccountByAddress(dividendAccounts []*DividendAccount) []*DividendAccount {
 	sort.Slice(dividendAccounts, func(i, j int) bool {
-		return dividendAccounts[i].User == dividendAccounts[j].User
+		return bytes.Compare([]byte(dividendAccounts[i].User), []byte(dividendAccounts[j].User)) < 0
 	})
 	return dividendAccounts
 }
