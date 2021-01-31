@@ -305,7 +305,6 @@ func NewHeimdallApp(
 		app.BankKeeper,
 		app.StakingKeeper,
 	)
-
 	// Contract caller
 	contractCallerObj, err := helper.NewContractCaller()
 	if err != nil {
