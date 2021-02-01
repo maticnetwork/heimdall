@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/maticnetwork/heimdall/x/topup/test_helper"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/app"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -24,7 +26,7 @@ type KeeperTestSuite struct {
 }
 
 func (suite *KeeperTestSuite) SetupTest() {
-	suite.app, suite.ctx, _ = createTestApp(false)
+	suite.app, suite.ctx, _ = test_helper.CreateTestApp(false)
 }
 
 func TestKeeperTestSuite(t *testing.T) {

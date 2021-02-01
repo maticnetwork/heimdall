@@ -1,4 +1,4 @@
-package topup_test
+package test_helper
 
 import (
 	"math/rand"
@@ -17,7 +17,7 @@ import (
 //
 
 // returns context and app with params set on chainmanager keeper
-func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, client.Context) {
+func CreateTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, client.Context) {
 	app := app.Setup(isCheckTx)
 	ctx := app.BaseApp.NewContext(isCheckTx, tmproto.Header{})
 	cliCtx := client.Context{}.WithJSONMarshaler(app.AppCodec())

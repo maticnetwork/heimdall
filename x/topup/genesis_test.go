@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/maticnetwork/heimdall/x/topup/test_helper"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/types/simulation"
@@ -25,7 +27,7 @@ type GenesisTestSuite struct {
 
 // SetupTest setup necessary things for genesis test
 func (suite *GenesisTestSuite) SetupTest() {
-	suite.app, suite.ctx, _ = createTestApp(true)
+	suite.app, suite.ctx, _ = test_helper.CreateTestApp(true)
 }
 
 // TestGenesisTestSuite

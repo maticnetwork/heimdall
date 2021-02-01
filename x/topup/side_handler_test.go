@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/maticnetwork/heimdall/x/topup/test_helper"
+
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -44,7 +46,7 @@ type SideHandlerTestSuite struct {
 }
 
 func (suite *SideHandlerTestSuite) SetupTest() {
-	suite.app, suite.ctx, _ = createTestApp(false)
+	suite.app, suite.ctx, _ = test_helper.CreateTestApp(false)
 
 	suite.contractCaller = mocks.IContractCaller{}
 	suite.sideHandler = topup.NewSideTxHandler(suite.app.TopupKeeper, &suite.contractCaller)

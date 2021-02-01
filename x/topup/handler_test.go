@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/maticnetwork/heimdall/x/topup/test_helper"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -37,7 +39,7 @@ type HandlerTestSuite struct {
 
 // SetupTest setup all necessary things for querier tesing
 func (suite *HandlerTestSuite) SetupTest() {
-	suite.app, suite.ctx, suite.cliCtx = createTestApp(false)
+	suite.app, suite.ctx, suite.cliCtx = test_helper.CreateTestApp(false)
 
 	suite.contractCaller = mocks.IContractCaller{}
 	suite.handler = topup.NewHandler(suite.app.TopupKeeper, &suite.contractCaller)
