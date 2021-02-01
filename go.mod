@@ -5,7 +5,7 @@ go 1.15
 require (
 	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
 	github.com/cbergoon/merkletree v0.2.0
-	github.com/cosmos/cosmos-sdk v0.40.0-rc5
+	github.com/cosmos/cosmos-sdk v0.41.0
 	github.com/cosmos/iavl v0.15.3
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/gogo/protobuf v1.3.2
@@ -21,15 +21,14 @@ require (
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.1
-	github.com/stretchr/testify v1.6.1
+	github.com/stretchr/testify v1.7.0
 	github.com/tendermint/crypto v0.0.0-20191022145703-50d29ede1e15
 	github.com/tendermint/go-amino v0.16.0
-	github.com/tendermint/tendermint v0.34.0
+	github.com/tendermint/tendermint v0.34.3
 	github.com/tendermint/tm-db v0.6.3
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 	google.golang.org/genproto v0.0.0-20201119123407-9b1e624d6bc4
 	google.golang.org/grpc v1.35.0
-	google.golang.org/protobuf v1.25.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 

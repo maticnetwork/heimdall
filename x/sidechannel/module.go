@@ -64,8 +64,8 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 
 // DefaultGenesis returns the capability module's default genesis state.
 func (AppModuleBasic) DefaultGenesis(cdc codec.JSONMarshaler) json.RawMessage {
-	data := DefaultGenesisState()
-	return cdc.MustMarshalJSON(&data)
+	data := types.DefaultGenesisState()
+	return cdc.MustMarshalJSON(data)
 }
 
 // ValidateGenesis performs genesis state validation for the capability module.
@@ -76,7 +76,7 @@ func (AppModuleBasic) ValidateGenesis(cdc codec.JSONMarshaler, config client.TxE
 		return errors.Errorf("failed to unmarshal %s genesis state: %v", types.ModuleName, err)
 	}
 
-	return ValidateGenesis(data)
+	return data.Validate()
 }
 
 // RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the auth module.
@@ -152,13 +152,13 @@ func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONMarshaler, data json.RawMessage) []abci.ValidatorUpdate {
 	var genesisState types.GenesisState
 	cdc.MustUnmarshalJSON(data, &genesisState)
-	return InitGenesis(ctx, am.keeper, genesisState)
+	return InitGenesis(ctx, am.keeper, &genesisState)
 }
 
 // ExportGenesis returns the capability module's exported genesis state as raw JSON bytes.
 func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONMarshaler) json.RawMessage {
 	data := ExportGenesis(ctx, am.keeper)
-	return cdc.MustMarshalJSON(&data)
+	return cdc.MustMarshalJSON(data)
 }
 
 // BeginBlock executes all ABCI BeginBlock logic respective to the capability module.

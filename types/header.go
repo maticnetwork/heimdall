@@ -15,8 +15,8 @@ func CreateBlock(
 	proposer common.HeimdallAddress,
 	borChainID string,
 	timestamp uint64,
-) Checkpoint {
-	return Checkpoint{
+) *Checkpoint {
+	return &Checkpoint{
 		StartBlock: start,
 		EndBlock:   end,
 		RootHash:   rootHash.String(),
