@@ -13,10 +13,12 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/maticnetwork/heimdall/app"
+	hCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper/mocks"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmCommon "github.com/maticnetwork/heimdall/types/common"
 	"github.com/maticnetwork/heimdall/x/clerk"
+	"github.com/maticnetwork/heimdall/x/clerk/test_helper"
 	"github.com/maticnetwork/heimdall/x/clerk/types"
 )
 
@@ -37,7 +39,7 @@ type HandlerTestSuite struct {
 }
 
 func (suite *HandlerTestSuite) SetupTest() {
-	suite.app, suite.ctx, _ = createTestApp(false)
+	suite.app, suite.ctx, _ = test_helper.CreateTestApp(false)
 	suite.contractCaller = mocks.IContractCaller{}
 	suite.handler = clerk.NewHandler(suite.app.ClerkKeeper, &suite.contractCaller)
 
@@ -111,6 +113,7 @@ func (suite *HandlerTestSuite) TestHandleMsgEventRecord() {
 		result, err := suite.handler(ctx, &msg)
 		require.Error(t, err)
 		require.Nil(t, result, "should fail due to existent event record but succeeded")
+		require.Equal(t, hCommon.ErrEventRecordAlreadySynced, err)
 	})
 }
 
@@ -139,6 +142,7 @@ func (suite *HandlerTestSuite) TestHandleMsgEventRecordSequence() {
 	result, err := suite.handler(ctx, &msg)
 	require.Error(t, err)
 	require.Nil(t, result, "should fail due to existent sequence but succeeded")
+	require.Equal(t, hCommon.ErrOldTx, err)
 }
 
 // TODO - Check this

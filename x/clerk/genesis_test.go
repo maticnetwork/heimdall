@@ -6,14 +6,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/app"
 	hmCommon "github.com/maticnetwork/heimdall/types/common"
 	"github.com/maticnetwork/heimdall/types/simulation"
 	"github.com/maticnetwork/heimdall/x/clerk"
+	"github.com/maticnetwork/heimdall/x/clerk/test_helper"
 	"github.com/maticnetwork/heimdall/x/clerk/types"
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
 )
 
 // GenesisTestSuite integrate test suite context object
@@ -26,7 +28,7 @@ type GenesisTestSuite struct {
 
 // SetupTest setup necessary things for genesis test
 func (suite *GenesisTestSuite) SetupTest() {
-	suite.app, suite.ctx, _ = createTestApp(false)
+	suite.app, suite.ctx, _ = test_helper.CreateTestApp(false)
 }
 
 // TestGenesisTestSuite

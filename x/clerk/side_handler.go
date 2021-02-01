@@ -2,7 +2,6 @@ package clerk
 
 import (
 	"bytes"
-	"fmt"
 	"math/big"
 	"strconv"
 
@@ -43,8 +42,7 @@ func NewPostTxHandler(k keeper.Keeper, contractCaller helper.IContractCaller) hm
 		case *types.MsgEventRecordRequest:
 			return PostHandleMsgEventRecord(ctx, k, *msg, sideTxResult)
 		default:
-			errMsg := fmt.Sprintf("unrecognized %s message type: %T", types.ModuleName, msg)
-			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
+			return nil, sdkerrors.ErrUnknownRequest
 		}
 	}
 }

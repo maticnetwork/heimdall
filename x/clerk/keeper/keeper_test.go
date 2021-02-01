@@ -10,6 +10,7 @@ import (
 
 	"github.com/maticnetwork/heimdall/app"
 	hmCommon "github.com/maticnetwork/heimdall/types/common"
+	"github.com/maticnetwork/heimdall/x/clerk/test_helper"
 	"github.com/maticnetwork/heimdall/x/clerk/types"
 )
 
@@ -21,7 +22,7 @@ type KeeperTestSuite struct {
 }
 
 func (suite *KeeperTestSuite) SetupTest() {
-	suite.app, suite.ctx, _ = createTestApp(false)
+	suite.app, suite.ctx, _ = test_helper.CreateTestApp(false)
 }
 
 func TestKeeperTestSuite(t *testing.T) {

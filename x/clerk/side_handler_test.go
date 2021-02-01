@@ -9,6 +9,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	tmprototypes "github.com/tendermint/tendermint/proto/tendermint/types"
@@ -16,12 +17,14 @@ import (
 	// ethTypes "github.com/maticnetwork/bor/core/types"
 	// common "github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/heimdall/app"
+	hCommon "github.com/maticnetwork/heimdall/common"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmCommon "github.com/maticnetwork/heimdall/types/common"
 	"github.com/maticnetwork/heimdall/x/clerk"
 	"github.com/maticnetwork/heimdall/x/clerk/types"
 	// "github.com/maticnetwork/heimdall/contracts/statesender"
 	"github.com/maticnetwork/heimdall/helper/mocks"
+	"github.com/maticnetwork/heimdall/x/clerk/test_helper"
 )
 
 //
@@ -42,7 +45,7 @@ type SideHandlerTestSuite struct {
 }
 
 func (suite *SideHandlerTestSuite) SetupTest() {
-	suite.app, suite.ctx, _ = createTestApp(false)
+	suite.app, suite.ctx, _ = test_helper.CreateTestApp(false)
 
 	suite.contractCaller = mocks.IContractCaller{}
 	suite.sideHandler = clerk.NewSideTxHandler(suite.app.ClerkKeeper, &suite.contractCaller)
@@ -71,6 +74,7 @@ func (suite *SideHandlerTestSuite) TestSideHandler() {
 	// side handler
 	result := suite.sideHandler(ctx, nil)
 	require.Equal(t, tmprototypes.SideTxResultType_SKIP, result.Result)
+	require.Equal(t, sdkerrors.ErrUnknownRequest.ABCICode(), result.Code)
 }
 
 // TODO - Check this
@@ -191,6 +195,7 @@ func (suite *SideHandlerTestSuite) TestPostHandler() {
 	result, err := suite.postHandler(ctx, nil, tmprototypes.SideTxResultType_YES)
 	require.Error(t, err)
 	require.Nil(t, result, "Post handler should fail")
+	require.Equal(t, sdkerrors.ErrUnknownRequest, err)
 }
 
 func (suite *SideHandlerTestSuite) TestPostHandleMsgEventRecord() {
@@ -218,6 +223,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgEventRecord() {
 		result, err := suite.postHandler(ctx, &msg, tmprototypes.SideTxResultType_NO)
 		require.Error(t, err)
 		require.Nil(t, result, "Post handler should fail")
+		require.Equal(t, hCommon.ErrSideTxValidation, err)
 
 		// there should be no stored event record
 		storedEventRecord, err := app.ClerkKeeper.GetEventRecord(ctx, id)
@@ -268,6 +274,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgEventRecord() {
 		require.NotNil(t, result, "Post handler should succeed")
 
 		result, err = suite.postHandler(ctx, &msg, tmprototypes.SideTxResultType_YES)
+		require.Equal(t, hCommon.ErrOldTx, err)
 		require.Error(t, err)
 		require.Nil(t, result, "Post handler should prevent replay attack")
 	})
