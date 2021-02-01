@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"math/big"
 	"strings"
 
@@ -508,8 +507,6 @@ func (c *ContractCaller) DecodeValidatorJoinEvent(contractAddress sdk.AccAddress
 
 	found := false
 	for _, vLog := range receipt.Logs {
-		fmt.Println("VLog Addr ", vLog.Address.Bytes())
-		fmt.Println("VLog Contract Addr ", contractAddress.Bytes())
 		if uint64(vLog.Index) == logIndex && bytes.Equal(vLog.Address.Bytes(), contractAddress.Bytes()) {
 			found = true
 			if err := UnpackLog(&c.StakingInfoABI, event, "Staked", vLog); err != nil {

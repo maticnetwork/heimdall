@@ -1,7 +1,6 @@
 package staking_test
 
 import (
-	"fmt"
 	"math/big"
 	"math/rand"
 	"testing"
@@ -179,7 +178,6 @@ func (suite *HandlerTestSuite) TestHandleMsgValidatorExit() {
 	// pass 0 as time alive to generate non de-activated validators
 	checkPointSim.LoadValidatorSet(4, t, suite.app.StakingKeeper, ctx, false, 0)
 	validators := keeper.GetCurrentValidators(ctx)
-	fmt.Printf("Validatros %+v\n", validators)
 
 	msgTxHash := hmCommon.HexToHeimdallHash("123")
 	chainParams := intiApp.ChainKeeper.GetParams(ctx)
