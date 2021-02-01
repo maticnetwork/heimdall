@@ -13,10 +13,12 @@ option (gogoproto.unmarshaler_all) = true;
 // GenesisState defines the sidechannel module's genesis state.
 message GenesisState {
     // params defines all the parameters of related to sidechannel
-    heimdall.sidechannel.v1beta1.Params params = 1 [(gogoproto.nullable) = false];
+    heimdall.sidechannel.v1beta1.Params params = 1
+        [(gogoproto.nullable) = false];
 
     // past commits
-    repeated PastCommit past_commits = 2 [(gogoproto.moretags) = "yaml:\"past_commits\""];
+    repeated PastCommit past_commits = 2
+        [(gogoproto.moretags) = "yaml:\"past_commits\""];
 }
 
 message PastCommit {

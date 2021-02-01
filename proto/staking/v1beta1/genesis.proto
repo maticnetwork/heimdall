@@ -16,7 +16,9 @@ message GenesisState {
     // params defines all the parameters of related to staking
     heimdall.staking.v1beta1.Params params = 1 [(gogoproto.nullable) = false];
 
-    repeated heimdall.types.Validator validators        = 2;
-    heimdall.types.ValidatorSet       current_val_set   = 3 [(gogoproto.moretags) = "yaml:\"current_val_set\""];
-    repeated string                   staking_sequences = 4 [(gogoproto.moretags) = "yaml:\"staking_sequences\""];
+    repeated heimdall.types.Validator validators      = 2;
+    heimdall.types.ValidatorSet       current_val_set = 3
+        [(gogoproto.moretags) = "yaml:\"current_val_set\""];
+    repeated string staking_sequences = 4
+        [(gogoproto.moretags) = "yaml:\"staking_sequences\""];
 }
