@@ -1,4 +1,4 @@
-package keeper_test
+package test_helper
 
 import (
 	"encoding/json"
@@ -17,32 +17,32 @@ import (
 //
 
 // returns context and app with params set on staking keeper
-func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, client.Context) {
+func CreateTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, client.Context) {
 	genesisState := app.NewDefaultGenesisState()
 	stakingGenesis := stakingTypes.NewGenesisState(
 		stakingTypes.DefaultGenesis().Validators,
 		stakingTypes.DefaultGenesis().CurrentValSet,
 		stakingTypes.DefaultGenesis().StakingSequences)
 
-	app := app.Setup(isCheckTx)
-	ctx := app.BaseApp.NewContext(isCheckTx, tmproto.Header{})
-	cliCtx := client.Context{}.WithJSONMarshaler(app.AppCodec())
+	initApp := app.Setup(isCheckTx)
+	ctx := initApp.BaseApp.NewContext(isCheckTx, tmproto.Header{})
+	cliCtx := client.Context{}.WithJSONMarshaler(initApp.AppCodec())
 
-	genesisState[stakingTypes.ModuleName] = app.AppCodec().MustMarshalJSON(stakingGenesis)
+	genesisState[stakingTypes.ModuleName] = initApp.AppCodec().MustMarshalJSON(stakingGenesis)
 	stateBytes, err := json.MarshalIndent(genesisState, "", " ")
 	if err != nil {
 		panic(err)
 	}
 
-	app.InitChain(
+	initApp.InitChain(
 		abci.RequestInitChain{
 			Validators:    []abci.ValidatorUpdate{},
 			AppStateBytes: stateBytes,
 		},
 	)
 
-	app.Commit()
-	app.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: app.LastBlockHeight() + 1}})
+	initApp.Commit()
+	initApp.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: initApp.LastBlockHeight() + 1}})
 
-	return app, ctx, cliCtx
+	return initApp, ctx, cliCtx
 }

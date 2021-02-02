@@ -100,13 +100,11 @@ func SideHandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k k
 	signer := pubkey.Address()
 
 	// check signer pubkey in message corresponds
-	expectedPubKey, err := helper.CompressPubKey(eventLog.SignerPubkey)
-
-	if err != nil || !bytes.Equal(expectedPubKey, pubkey.Bytes()) {
+	if !bytes.Equal(eventLog.SignerPubkey, pubkey.Bytes()[1:]) {
 		k.Logger(ctx).Error(
 			"Signer Pubkey does not match",
 			"msgPubKey", pubkey.String(),
-			"compressdPubKey", hmTypes.BytesToHexBytes(expectedPubKey),
+			"compressdPubKey", hmTypes.BytesToHexBytes(eventLog.SignerPubkey),
 		)
 		return hmCommon.ErrorSideTx(hmCommon.ErrValSignerPubKeyMismatch)
 	}
@@ -254,9 +252,7 @@ func SideHandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k kee
 	}
 
 	// check signer pubkey in message corresponds
-	expectedPubKey, err := helper.CompressPubKey(eventLog.SignerPubkey)
-
-	if err != nil || !bytes.Equal(newPubKey.Bytes(), expectedPubKey) {
+	if !bytes.Equal(newPubKey.Bytes()[1:], eventLog.SignerPubkey) {
 		k.Logger(ctx).Error("Newsigner pubkey in txhash and msg dont match", "msgPubKey", newPubKey.String(), "pubkeyFromTx", hex.EncodeToString(eventLog.SignerPubkey[:]))
 		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
 	}
