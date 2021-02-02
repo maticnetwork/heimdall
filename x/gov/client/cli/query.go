@@ -872,7 +872,7 @@ func QueryProposerByTxQuery(clientCtx client.Context, proposalID uint64) (types.
 
 // QueryProposalByID takes a proposalID and returns a proposal
 func QueryProposalByID(proposalID uint64, clientCtx client.Context, queryRoute string) ([]byte, error) {
-	params := types.QueryProposalRequest{proposalID}
+	params := types.QueryProposalRequest{ProposalId: proposalID}
 	bz, err := clientCtx.JSONMarshaler.MarshalJSON(&params)
 	if err != nil {
 		return nil, err

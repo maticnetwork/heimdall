@@ -41,15 +41,6 @@ import (
 	tmos "github.com/tendermint/tendermint/libs/os"
 	dbm "github.com/tendermint/tm-db"
 
-	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/x/chainmanager"
-	chainKeeper "github.com/maticnetwork/heimdall/x/chainmanager/keeper"
-	chainmanagerTypes "github.com/maticnetwork/heimdall/x/chainmanager/types"
-
-	"github.com/maticnetwork/heimdall/x/clerk"
-	clerkkeeper "github.com/maticnetwork/heimdall/x/clerk/keeper"
-	clerktypes "github.com/maticnetwork/heimdall/x/clerk/types"
-
 	// unnamed import of statik for swagger UI support
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
 
@@ -58,9 +49,19 @@ import (
 	// slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 
 	hmparams "github.com/maticnetwork/heimdall/app/params"
+	"github.com/maticnetwork/heimdall/helper"
 	hmtypes "github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/types/common"
 	hmmodule "github.com/maticnetwork/heimdall/types/module"
+	"github.com/maticnetwork/heimdall/x/chainmanager"
+	chainKeeper "github.com/maticnetwork/heimdall/x/chainmanager/keeper"
+	chainmanagerTypes "github.com/maticnetwork/heimdall/x/chainmanager/types"
+	"github.com/maticnetwork/heimdall/x/checkpoint"
+	checkpointkeeper "github.com/maticnetwork/heimdall/x/checkpoint/keeper"
+	checkpointtypes "github.com/maticnetwork/heimdall/x/checkpoint/types"
+	"github.com/maticnetwork/heimdall/x/clerk"
+	clerkkeeper "github.com/maticnetwork/heimdall/x/clerk/keeper"
+	clerktypes "github.com/maticnetwork/heimdall/x/clerk/types"
 	"github.com/maticnetwork/heimdall/x/gov"
 	govkeeper "github.com/maticnetwork/heimdall/x/gov/keeper"
 	govtypes "github.com/maticnetwork/heimdall/x/gov/types"
@@ -73,10 +74,6 @@ import (
 	"github.com/maticnetwork/heimdall/x/topup"
 	topupkeeper "github.com/maticnetwork/heimdall/x/topup/keeper"
 	topuptypes "github.com/maticnetwork/heimdall/x/topup/types"
-
-	"github.com/maticnetwork/heimdall/x/checkpoint"
-	checkpointkeeper "github.com/maticnetwork/heimdall/x/checkpoint/keeper"
-	checkpointtypes "github.com/maticnetwork/heimdall/x/checkpoint/types"
 
 	// unnamed import of statik for swagger UI support
 	_ "github.com/maticnetwork/heimdall/client/docs/statik"
@@ -200,7 +197,7 @@ func NewHeimdallApp(
 		authtypes.StoreKey,
 		banktypes.StoreKey,
 		chainmanagerTypes.StoreKey,
-		// clerktypes.StoreKey,
+		clerktypes.StoreKey,
 		sidechanneltypes.StoreKey,
 		stakingtypes.StoreKey,
 		checkpointtypes.StoreKey,
@@ -222,6 +219,12 @@ func NewHeimdallApp(
 		tkeys:             tkeys,
 		txDecoder:         txDecoder,
 	}
+
+	//
+	// module communicator
+	//
+
+	moduleCommunicator := ModuleCommunicator{App: app}
 
 	//
 	// Keepers
@@ -267,7 +270,7 @@ func NewHeimdallApp(
 		app.GetSubspace(stakingtypes.ModuleName),
 		app.ChainKeeper,
 		app.BankKeeper,
-		nil,
+		moduleCommunicator,
 	)
 	app.CheckpointKeeper = checkpointkeeper.NewKeeper(
 		appCodec,
@@ -275,7 +278,7 @@ func NewHeimdallApp(
 		app.GetSubspace(checkpointtypes.ModuleName),
 		app.StakingKeeper,
 		app.ChainKeeper,
-		nil,
+		moduleCommunicator,
 	)
 
 	govRouter := govtypes.NewRouter()
@@ -305,7 +308,6 @@ func NewHeimdallApp(
 		app.BankKeeper,
 		app.StakingKeeper,
 	)
-
 	// Contract caller
 	contractCallerObj, err := helper.NewContractCaller()
 	if err != nil {
