@@ -27,12 +27,13 @@ message MsgCheckpoint {
     option (gogoproto.equal)           = false;
     option (gogoproto.goproto_getters) = false;
 
-    string proposer          = 1;
-    uint64 start_block       = 2 [(gogoproto.moretags) = "yaml:\"start_block\""];
-    uint64 end_block         = 3 [(gogoproto.moretags) = "yaml:\"end_block\""];
-    string  root_hash         = 4 [(gogoproto.moretags) = "yaml:\"root_hash\""];
-    string  account_root_hash = 5 [(gogoproto.moretags) = "yaml:\"account_root_hash\""];
-    string bor_chainID       = 6 [(gogoproto.moretags) = "yaml:\"bor_chainID\""];
+    string proposer    = 1;
+    uint64 start_block = 2 [(gogoproto.moretags) = "yaml:\"start_block\""];
+    uint64 end_block   = 3 [(gogoproto.moretags) = "yaml:\"end_block\""];
+    string root_hash   = 4 [(gogoproto.moretags) = "yaml:\"root_hash\""];
+    string account_root_hash = 5
+        [(gogoproto.moretags) = "yaml:\"account_root_hash\""];
+    string bor_chainID = 6 [(gogoproto.moretags) = "yaml:\"bor_chainID\""];
 }
 
 // MsgValidatorJoinResponse defines ValidatorJoin response type.

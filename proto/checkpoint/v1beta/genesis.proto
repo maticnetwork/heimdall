@@ -15,12 +15,17 @@ message Params {
     option (gogoproto.goproto_getters)  = false;
     option (gogoproto.goproto_stringer) = false;
 
-    google.protobuf.Duration checkpoint_buffer_time = 1
-        [(gogoproto.nullable) = false, (gogoproto.stdduration) = true,
-            (gogoproto.moretags) = "yaml:\"checkpoint_buffer_time\""];
-    uint64 avg_checkpoint_length = 2 [(gogoproto.moretags) = "yaml:\"avg_checkpoint_length\""];
-    uint64 max_checkpoint_length = 3 [(gogoproto.moretags) = "yaml:\"max_checkpoint_length\""];
-    uint64 child_block_interval  = 4 [(gogoproto.moretags) = "yaml:\"child_block_interval\""];
+    google.protobuf.Duration checkpoint_buffer_time = 1 [
+        (gogoproto.nullable)    = false,
+        (gogoproto.stdduration) = true,
+        (gogoproto.moretags)    = "yaml:\"checkpoint_buffer_time\""
+    ];
+    uint64 avg_checkpoint_length = 2
+        [(gogoproto.moretags) = "yaml:\"avg_checkpoint_length\""];
+    uint64 max_checkpoint_length = 3
+        [(gogoproto.moretags) = "yaml:\"max_checkpoint_length\""];
+    uint64 child_block_interval = 4
+        [(gogoproto.moretags) = "yaml:\"child_block_interval\""];
 }
 
 // GenesisState defines the checkpoint module's genesis state.
@@ -29,9 +34,12 @@ message GenesisState {
     option (gogoproto.goproto_stringer) = true;
 
     Params                    params = 1 [(gogoproto.nullable) = false];
-    heimdall.types.Checkpoint buffered_checkpoint = 2 [(gogoproto.moretags) = "yaml:\"buffered_checkpoint\""];
-    uint64   last_no_ack = 3 [(gogoproto.customname) = "LastNoACK",
-        (gogoproto.moretags) = "yaml:\"last_no_ack\""];
-    uint64   ack_count   = 4 [(gogoproto.moretags) = "yaml:\"ack_count\""];
+    heimdall.types.Checkpoint buffered_checkpoint = 2
+        [(gogoproto.moretags) = "yaml:\"buffered_checkpoint\""];
+    uint64 last_no_ack = 3 [
+        (gogoproto.customname) = "LastNoACK",
+        (gogoproto.moretags)   = "yaml:\"last_no_ack\""
+    ];
+    uint64   ack_count = 4 [(gogoproto.moretags) = "yaml:\"ack_count\""];
     repeated heimdall.types.Checkpoint checkpoints = 5;
 }

@@ -197,7 +197,7 @@ func NewHeimdallApp(
 		authtypes.StoreKey,
 		banktypes.StoreKey,
 		chainmanagerTypes.StoreKey,
-		// clerktypes.StoreKey,
+		clerktypes.StoreKey,
 		sidechanneltypes.StoreKey,
 		stakingtypes.StoreKey,
 		checkpointtypes.StoreKey,
