@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"fmt"
 	"math/big"
 	"math/rand"
 	"strconv"
@@ -66,12 +67,18 @@ func (suite *KeeperTestSuite) TestDividendAccount() {
 func (suite *KeeperTestSuite) TestAddFeeToDividendAccount() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	address := sdk.AccAddress("234452")
-	amount, _ := big.NewInt(0).SetString("0", 10)
+	amount, ok := big.NewInt(0).SetString("0", 10)
+	require.True(t, ok)
 	err := app.TopupKeeper.AddFeeToDividendAccount(ctx, address, amount)
-	require.Nil(t, err)
-	dividentAccount, _ := app.TopupKeeper.GetDividendAccountByAddress(ctx, address)
+	require.NoError(t, err)
+	dividentAccount, err := app.TopupKeeper.GetDividendAccountByAddress(ctx, address)
+	// require.NoError(t, err)
+	require.NotNil(t, dividentAccount)
 	actualResult, ok := big.NewInt(0).SetString(dividentAccount.FeeAmount, 10)
-	require.Equal(t, true, ok)
+	// require.True(t, ok)
+	fmt.Println("Actual Result: ", actualResult)
+	require.NoError(t, err)
+	// require.Equal(t, true, ok)
 	require.Equal(t, amount, actualResult)
 }
 
