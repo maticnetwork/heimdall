@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	hmCommon "github.com/maticnetwork/heimdall/common"
+
 	"github.com/maticnetwork/heimdall/x/staking/test_helper"
 
 	checkPointSim "github.com/maticnetwork/heimdall/x/checkpoint/simulation"
@@ -39,6 +41,10 @@ type SideHandlerTestSuite struct {
 	contractCaller mocks.IContractCaller
 	r              *rand.Rand
 }
+
+const (
+	SuccessCode = uint32(0)
+)
 
 func (suite *SideHandlerTestSuite) SetupTest() {
 	suite.app, suite.ctx, _ = test_helper.CreateTestApp(false)
@@ -119,7 +125,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorJoin() {
 		suite.contractCaller.On("DecodeValidatorJoinEvent", addr, txReceipt, msgValJoin.LogIndex).Return(stakingInfoStaked, nil)
 
 		result := suite.sideHandler(ctx, &msgValJoin)
-		require.Equal(t, uint32(0), result.Code, "Side tx handler should be success")
+		require.Equal(t, SuccessCode, result.Code, "Side tx handler should be success")
 		require.Equal(t, tmprototypes.SideTxResultType_YES, result.Result, "Result should be `yes`")
 	})
 
@@ -159,11 +165,11 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorJoin() {
 
 		result := suite.sideHandler(ctx, &msgValJoin)
 
-		require.NotEqual(t, uint32(0), result.Code, "Side tx handler should Fail")
+		require.NotEqual(t, SuccessCode, result.Code, "Side tx handler should Fail")
 		require.Equal(t, tmprototypes.SideTxResultType_SKIP, result.Result, "Result should be `skip`")
-		//require.Equal(t, uint32(common.CodeWaitFrConfirmation), result.Code)
+		require.Equal(t, hmCommon.ErrInvalidMsg.ABCICode(), result.Code)
 	})
-	//
+
 	suite.Run("No EventLog", func() {
 		suite.contractCaller = mocks.IContractCaller{}
 		txReceipt := &ethTypes.Receipt{
@@ -189,9 +195,9 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorJoin() {
 
 		result := suite.sideHandler(ctx, &msgValJoin)
 
-		require.NotEqual(t, uint32(0), result.Code, "Side tx handler should Fail")
+		require.NotEqual(t, SuccessCode, result.Code, "Side tx handler should Fail")
 		require.Equal(t, tmprototypes.SideTxResultType_SKIP, result.Result, "Result should be `skip`")
-		//require.Equal(t, uint32(common.CodeErrDecodeEvent), result.Code)
+		require.Equal(t, hmCommon.ErrDecodeEvent.ABCICode(), result.Code)
 	})
 
 	suite.Run("Invalid Signer pubkey", func() {
@@ -229,9 +235,9 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorJoin() {
 
 		result := suite.sideHandler(ctx, &msgValJoin)
 
-		require.NotEqual(t, uint32(0), result.Code, "Side tx handler should Fail")
+		require.NotEqual(t, SuccessCode, result.Code, "Side tx handler should Fail")
 		require.Equal(t, tmprototypes.SideTxResultType_SKIP, result.Result, "Result should be `skip`")
-		//require.Equal(t, uint32(common.CodeInvalidMsg), result.Code)
+		require.Equal(t, hmCommon.ErrValSignerPubKeyMismatch.ABCICode(), result.Code)
 	})
 
 	suite.Run("Invalid Signer address", func() {
@@ -270,11 +276,11 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorJoin() {
 
 		result := suite.sideHandler(ctx, &msgValJoin)
 
-		require.NotEqual(t, uint32(0), result.Code, "Side tx handler should Fail")
+		require.NotEqual(t, SuccessCode, result.Code, "Side tx handler should Fail")
 		require.Equal(t, tmprototypes.SideTxResultType_SKIP, result.Result, "Result should be `skip`")
-		//require.Equal(t, uint32(common.CodeInvalidMsg), result.Code)
+		require.Equal(t, hmCommon.ErrInvalidMsg.ABCICode(), result.Code)
 	})
-	//
+
 	suite.Run("Invalid Validator Id", func() {
 		suite.contractCaller = mocks.IContractCaller{}
 		txReceipt := &ethTypes.Receipt{
@@ -311,9 +317,9 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorJoin() {
 
 		result := suite.sideHandler(ctx, &msgValJoin)
 
-		require.NotEqual(t, uint32(0), result.Code, "Side tx handler should Fail")
+		require.NotEqual(t, SuccessCode, result.Code, "Side tx handler should Fail")
 		require.Equal(t, tmprototypes.SideTxResultType_SKIP, result.Result, "Result should be `skip`")
-		//require.Equal(t, uint32(common.CodeInvalidMsg), result.Code)
+		require.Equal(t, hmCommon.ErrInvalidMsg.ABCICode(), result.Code)
 	})
 
 	suite.Run("Invalid Activation Epoch", func() {
@@ -352,8 +358,9 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorJoin() {
 
 		result := suite.sideHandler(ctx, &msgValJoin)
 
-		require.NotEqual(t, uint32(0), result.Code, "Side tx handler should Fail")
+		require.NotEqual(t, SuccessCode, result.Code, "Side tx handler should Fail")
 		require.Equal(t, tmprototypes.SideTxResultType_SKIP, result.Result, "Result should be `skip`")
+		require.Equal(t, hmCommon.ErrInvalidMsg.ABCICode(), result.Code)
 	})
 
 	suite.Run("Invalid Amount", func() {
@@ -392,8 +399,9 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorJoin() {
 
 		result := suite.sideHandler(ctx, &msgValJoin)
 
-		require.NotEqual(t, uint32(0), result.Code, "Side tx handler should Fail")
+		require.NotEqual(t, SuccessCode, result.Code, "Side tx handler should Fail")
 		require.Equal(t, tmprototypes.SideTxResultType_SKIP, result.Result, "Result should be `skip`")
+		require.Equal(t, hmCommon.ErrInvalidMsg.ABCICode(), result.Code)
 	})
 
 	suite.Run("Invalid Block Number", func() {
@@ -431,8 +439,9 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorJoin() {
 
 		result := suite.sideHandler(ctx, &msgValJoin)
 
-		require.NotEqual(t, uint32(0), result.Code, "Side tx handler should Fail")
+		require.NotEqual(t, SuccessCode, result.Code, "Side tx handler should Fail")
 		require.Equal(t, tmprototypes.SideTxResultType_SKIP, result.Result, "Result should be `skip`")
+		require.Equal(t, hmCommon.ErrInvalidMsg.ABCICode(), result.Code)
 	})
 
 	suite.Run("Invalid nonce", func() {
@@ -470,8 +479,9 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorJoin() {
 
 		result := suite.sideHandler(ctx, &msgValJoin)
 
-		require.NotEqual(t, uint32(0), result.Code, "Side tx handler should Fail")
+		require.NotEqual(t, SuccessCode, result.Code, "Side tx handler should Fail")
 		require.Equal(t, tmprototypes.SideTxResultType_SKIP, result.Result, "Result should be `skip`")
+		require.Equal(t, hmCommon.ErrInvalidMsg.ABCICode(), result.Code)
 	})
 }
 
@@ -521,7 +531,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorExit() {
 		)
 
 		result := suite.sideHandler(ctx, &msg)
-		require.Equal(t, uint32(0), result.Code, "Side tx handler should be success")
+		require.Equal(t, SuccessCode, result.Code, "Side tx handler should be success")
 		require.Equal(t, tmprototypes.SideTxResultType_YES, result.Result, "Result should be `yes`")
 	})
 
@@ -559,8 +569,9 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorExit() {
 		)
 
 		result := suite.sideHandler(ctx, &msg)
-		require.NotEqual(t, uint32(0), result.Code, "Side tx handler should fail")
+		require.NotEqual(t, SuccessCode, result.Code, "Side tx handler should fail")
 		require.Equal(t, tmprototypes.SideTxResultType_SKIP, result.Result, "Result should skip")
+		require.Equal(t, hmCommon.ErrInvalidMsg.ABCICode(), result.Code)
 	})
 
 	suite.Run("No Eventlog", func() {
@@ -590,8 +601,9 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorExit() {
 
 		result := suite.sideHandler(ctx, &msg)
 
-		require.NotEqual(t, uint32(0), result.Code, "Side tx handler should fail")
+		require.NotEqual(t, SuccessCode, result.Code, "Side tx handler should fail")
 		require.Equal(t, tmprototypes.SideTxResultType_SKIP, result.Result, "Result should skip")
+		require.Equal(t, hmCommon.ErrInvalidMsg.ABCICode(), result.Code)
 	})
 
 	suite.Run("Invalid BlockNumber", func() {
@@ -628,8 +640,9 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorExit() {
 
 		result := suite.sideHandler(ctx, &msg)
 
-		require.NotEqual(t, uint32(0), result.Code, "Side tx handler should fail")
+		require.NotEqual(t, SuccessCode, result.Code, "Side tx handler should fail")
 		require.Equal(t, tmprototypes.SideTxResultType_SKIP, result.Result, "Result should skip")
+		require.Equal(t, hmCommon.ErrInvalidMsg.ABCICode(), result.Code)
 	})
 
 	suite.Run("Invalid validatorId", func() {
@@ -665,8 +678,9 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorExit() {
 		)
 
 		result := suite.sideHandler(ctx, &msg)
-		require.NotEqual(t, uint32(0), result.Code, "Side tx handler should fail")
+		require.NotEqual(t, SuccessCode, result.Code, "Side tx handler should fail")
 		require.Equal(t, tmprototypes.SideTxResultType_SKIP, result.Result, "Result should skip")
+		require.Equal(t, hmCommon.ErrInvalidMsg.ABCICode(), result.Code)
 	})
 
 	suite.Run("Invalid DeactivationEpoch", func() {
@@ -702,8 +716,9 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorExit() {
 		)
 
 		result := suite.sideHandler(ctx, &msg)
-		require.NotEqual(t, uint32(0), result.Code, "Side tx handler should fail")
+		require.NotEqual(t, SuccessCode, result.Code, "Side tx handler should fail")
 		require.Equal(t, tmprototypes.SideTxResultType_SKIP, result.Result, "Result should skip")
+		require.Equal(t, hmCommon.ErrInvalidMsg.ABCICode(), result.Code)
 	})
 
 	suite.Run("Invalid Nonce", func() {
@@ -739,9 +754,9 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorExit() {
 		)
 
 		result := suite.sideHandler(ctx, &msg)
-		require.NotEqual(t, uint32(0), result.Code, "Side tx handler should fail")
+		require.NotEqual(t, SuccessCode, result.Code, "Side tx handler should fail")
 		require.Equal(t, tmprototypes.SideTxResultType_SKIP, result.Result, "Result should skip")
-
+		require.Equal(t, hmCommon.ErrInvalidMsg.ABCICode(), result.Code)
 	})
 }
 
@@ -762,11 +777,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgSignerUpdate() {
 
 	// gen msg
 	msgTxHash := hmCommonTypes.HexToHeimdallHash("123")
-
-	//hmCommonTypes.NewPubKey(privateKey.PubKey().Bytes())
-
 	accAddr, _ := sdk.AccAddressFromHex(newSigner[0].Signer)
-
 	suite.Run("Success", func() {
 		msg := types.NewMsgSignerUpdate(
 			accAddr,
@@ -795,7 +806,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgSignerUpdate() {
 		suite.contractCaller.On("DecodeSignerUpdateEvent", stakingInfoAddress, txReceipt, uint64(0)).Return(signerUpdateEvent, nil)
 
 		result := suite.sideHandler(ctx, &msg)
-		require.Equal(t, uint32(0), result.Code, "Side tx handler should be success")
+		require.Equal(t, SuccessCode, result.Code, "Side tx handler should be success")
 		require.Equal(t, tmprototypes.SideTxResultType_YES, result.Result, "Result should be `yes`")
 	})
 
@@ -813,9 +824,9 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgSignerUpdate() {
 		suite.contractCaller.On("DecodeSignerUpdateEvent", stakingInfoAddress, txReceipt, uint64(0)).Return(nil, nil)
 
 		result := suite.sideHandler(ctx, &msg)
-		require.NotEqual(t, uint32(0), result.Code, "Side tx handler should fail")
+		require.NotEqual(t, SuccessCode, result.Code, "Side tx handler should fail")
 		require.Equal(t, tmprototypes.SideTxResultType_SKIP, result.Result, "Result should skip")
-
+		require.Equal(t, hmCommon.ErrInvalidMsg.ABCICode(), result.Code)
 	})
 
 	suite.Run("Invalid BlockNumber", func() {
@@ -845,9 +856,9 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgSignerUpdate() {
 		suite.contractCaller.On("DecodeSignerUpdateEvent", stakingInfoAddress, txReceipt, uint64(0)).Return(signerUpdateEvent, nil)
 
 		result := suite.sideHandler(ctx, &msg)
-		require.NotEqual(t, uint32(0), result.Code, "Side tx handler should fail")
+		require.NotEqual(t, SuccessCode, result.Code, "Side tx handler should fail")
 		require.Equal(t, tmprototypes.SideTxResultType_SKIP, result.Result, "Result should skip")
-
+		require.Equal(t, hmCommon.ErrInvalidMsg.ABCICode(), result.Code)
 	})
 
 	suite.Run("Invalid validator", func() {
@@ -872,9 +883,9 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgSignerUpdate() {
 		suite.contractCaller.On("DecodeSignerUpdateEvent", stakingInfoAddress, txReceipt, uint64(0)).Return(signerUpdateEvent, nil)
 
 		result := suite.sideHandler(ctx, &msg)
-		require.NotEqual(t, uint32(0), result.Code, "Side tx handler should fail")
+		require.NotEqual(t, SuccessCode, result.Code, "Side tx handler should fail")
 		require.Equal(t, tmprototypes.SideTxResultType_SKIP, result.Result, "Result should skip")
-
+		require.Equal(t, hmCommon.ErrInvalidMsg.ABCICode(), result.Code)
 	})
 
 	suite.Run("Invalid signer pubkey", func() {
@@ -898,9 +909,9 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgSignerUpdate() {
 		suite.contractCaller.On("DecodeSignerUpdateEvent", stakingInfoAddress, txReceipt, uint64(0)).Return(signerUpdateEvent, nil)
 
 		result := suite.sideHandler(ctx, &msg)
-		require.NotEqual(t, uint32(0), result.Code, "Side tx handler should fail")
+		require.NotEqual(t, SuccessCode, result.Code, "Side tx handler should fail")
 		require.Equal(t, tmprototypes.SideTxResultType_SKIP, result.Result, "Result should skip")
-
+		require.Equal(t, hmCommon.ErrInvalidMsg.ABCICode(), result.Code)
 	})
 
 	suite.Run("Invalid new signer address", func() {
@@ -927,9 +938,9 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgSignerUpdate() {
 			txReceipt, uint64(0)).Return(signerUpdateEvent, nil)
 
 		result := suite.sideHandler(ctx, &msg)
-		require.NotEqual(t, uint32(0), result.Code, "Side tx handler should fail")
+		require.NotEqual(t, SuccessCode, result.Code, "Side tx handler should fail")
 		require.Equal(t, tmprototypes.SideTxResultType_SKIP, result.Result, "Result should skip")
-
+		require.Equal(t, hmCommon.ErrInvalidMsg.ABCICode(), result.Code)
 	})
 
 	suite.Run("Invalid nonce", func() {
@@ -953,9 +964,9 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgSignerUpdate() {
 			stakingInfoAddress, txReceipt, uint64(0)).Return(signerUpdateEvent, nil)
 
 		result := suite.sideHandler(ctx, &msg)
-		require.NotEqual(t, uint32(0), result.Code, "Side tx handler should fail")
+		require.NotEqual(t, SuccessCode, result.Code, "Side tx handler should fail")
 		require.Equal(t, tmprototypes.SideTxResultType_SKIP, result.Result, "Result should skip")
-
+		require.Equal(t, hmCommon.ErrInvalidMsg.ABCICode(), result.Code)
 	})
 }
 
@@ -1001,7 +1012,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgStakeUpdate() {
 
 		result := suite.sideHandler(ctx, &msg)
 
-		require.Equal(t, uint32(0), result.Code, "Side tx handler should be success")
+		require.Equal(t, SuccessCode, result.Code, "Side tx handler should be success")
 		require.Equal(t, tmprototypes.SideTxResultType_YES, result.Result, "Result should be `yes`")
 	})
 
@@ -1031,8 +1042,9 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgStakeUpdate() {
 			txReceipt, uint64(0)).Return(stakingInfoStakeUpdate, nil)
 
 		result := suite.sideHandler(ctx, &msg)
-		require.NotEqual(t, uint32(0), result.Code, "Side tx handler should fail")
+		require.NotEqual(t, SuccessCode, result.Code, "Side tx handler should fail")
 		require.Equal(t, tmprototypes.SideTxResultType_SKIP, result.Result, "Result should skip")
+		require.Equal(t, hmCommon.ErrInvalidMsg.ABCICode(), result.Code)
 	})
 
 	suite.Run("No Eventlog", func() {
@@ -1058,8 +1070,9 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgStakeUpdate() {
 			txReceipt, uint64(0)).Return(nil, nil)
 
 		result := suite.sideHandler(ctx, &msg)
-		require.NotEqual(t, uint32(0), result.Code, "Side tx handler should fail")
+		require.NotEqual(t, SuccessCode, result.Code, "Side tx handler should fail")
 		require.Equal(t, tmprototypes.SideTxResultType_SKIP, result.Result, "Result should skip")
+		require.Equal(t, hmCommon.ErrInvalidMsg.ABCICode(), result.Code)
 	})
 
 	suite.Run("Invalid BlockNumber", func() {
@@ -1088,8 +1101,9 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgStakeUpdate() {
 			txReceipt, uint64(0)).Return(stakingInfoStakeUpdate, nil)
 
 		result := suite.sideHandler(ctx, &msg)
-		require.NotEqual(t, uint32(0), result.Code, "Side tx handler should fail")
+		require.NotEqual(t, SuccessCode, result.Code, "Side tx handler should fail")
 		require.Equal(t, tmprototypes.SideTxResultType_SKIP, result.Result, "Result should skip")
+		require.Equal(t, hmCommon.ErrInvalidMsg.ABCICode(), result.Code)
 	})
 
 	suite.Run("Invalid ValidatorID", func() {
@@ -1117,8 +1131,9 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgStakeUpdate() {
 		suite.contractCaller.On("DecodeValidatorStakeUpdateEvent", stakingInfoAddress, txReceipt, uint64(0)).Return(stakingInfoStakeUpdate, nil)
 
 		result := suite.sideHandler(ctx, &msg)
-		require.NotEqual(t, uint32(0), result.Code, "Side tx handler should fail")
+		require.NotEqual(t, SuccessCode, result.Code, "Side tx handler should fail")
 		require.Equal(t, tmprototypes.SideTxResultType_SKIP, result.Result, "Result should skip")
+		require.Equal(t, hmCommon.ErrInvalidMsg.ABCICode(), result.Code)
 	})
 
 	suite.Run("Invalid Amount", func() {
@@ -1145,8 +1160,9 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgStakeUpdate() {
 		suite.contractCaller.On("DecodeValidatorStakeUpdateEvent", stakingInfoAddress, txReceipt, uint64(0)).Return(stakingInfoStakeUpdate, nil)
 
 		result := suite.sideHandler(ctx, &msg)
-		require.NotEqual(t, uint32(0), result.Code, "Side tx handler should fail")
+		require.NotEqual(t, SuccessCode, result.Code, "Side tx handler should fail")
 		require.Equal(t, tmprototypes.SideTxResultType_SKIP, result.Result, "Result should skip")
+		require.Equal(t, hmCommon.ErrInvalidMsg.ABCICode(), result.Code)
 	})
 
 	suite.Run("Invalid Nonce", func() {
@@ -1175,8 +1191,9 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgStakeUpdate() {
 		suite.contractCaller.On("DecodeValidatorStakeUpdateEvent", stakingInfoAddress, txReceipt, uint64(0)).Return(stakingInfoStakeUpdate, nil)
 
 		result := suite.sideHandler(ctx, &msg)
-		require.NotEqual(t, uint32(0), result.Code, "Side tx handler should fail")
+		require.NotEqual(t, SuccessCode, result.Code, "Side tx handler should fail")
 		require.Equal(t, tmprototypes.SideTxResultType_SKIP, result.Result, "Result should skip")
+		require.Equal(t, hmCommon.ErrInvalidMsg.ABCICode(), result.Code)
 	})
 }
 

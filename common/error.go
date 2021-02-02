@@ -42,8 +42,8 @@ var (
 
 // ErrorSideTx represents side-tx error
 func ErrorSideTx(err *sdkerrors.Error) (res abci.ResponseDeliverSideTx) {
-	res.Code = uint32(err.ABCICode())
-	res.Codespace = string(err.Codespace())
+	res.Code = err.ABCICode()
+	res.Codespace = err.Codespace()
 	res.Result = tmprototypes.SideTxResultType_SKIP // skip side-tx vote in-case of error
 	return
 }

@@ -168,19 +168,19 @@ func (suite *HandlerTestSuite) TestHandleMsgValidatorUpdate() {
 	require.Equal(t, ValFrmID.VotingPower, oldSigner.VotingPower, "VotingPower of new signer %v should be equal to old signer %v", ValFrmID.VotingPower, oldSigner.VotingPower)
 
 	removedVal, err := keeper.GetValidatorInfo(ctx, oldSigner.GetSigner())
-	require.Empty(t, err)
+	require.Nil(t, err)
 	require.NotEqual(t, removedVal.VotingPower, int64(0), "should not update state")
 }
 
 func (suite *HandlerTestSuite) TestHandleMsgValidatorExit() {
-	t, intiApp, ctx := suite.T(), suite.app, suite.ctx
-	keeper := intiApp.StakingKeeper
+	t, initApp, ctx := suite.T(), suite.app, suite.ctx
+	keeper := initApp.StakingKeeper
 	// pass 0 as time alive to generate non de-activated validators
 	checkPointSim.LoadValidatorSet(4, t, suite.app.StakingKeeper, ctx, false, 0)
 	validators := keeper.GetCurrentValidators(ctx)
 
 	msgTxHash := hmCommon.HexToHeimdallHash("123")
-	chainParams := intiApp.ChainKeeper.GetParams(ctx)
+	chainParams := initApp.ChainKeeper.GetParams(ctx)
 	logIndex := uint64(0)
 
 	txReceipt := &ethTypes.Receipt{
@@ -207,7 +207,7 @@ func (suite *HandlerTestSuite) TestHandleMsgValidatorExit() {
 	require.NotNil(t, result, "expected validator exit to be ok, got %v", result)
 
 	updatedValInfo, err := keeper.GetValidatorInfo(ctx, validators[0].GetSigner())
-	require.Empty(t, err, "Unable to get validator info from val address,ValAddr:%v Error:%v ", validators[0].GetSigner(), err)
+	require.Nil(t, err, "Unable to get validator info from val address,ValAddr:%v Error:%v ", validators[0].GetSigner(), err)
 	require.NotEqual(t, updatedValInfo.EndEpoch, validators[0].EndEpoch, "should not update deactivation epoch")
 
 	_, found := keeper.GetValidatorFromValID(ctx, validators[0].ID)
@@ -247,7 +247,7 @@ func (suite *HandlerTestSuite) TestHandleMsgStakeUpdate() {
 	require.NotNil(t, result, "expected validator stake update to be ok, got %v", result)
 	require.NoError(t, err)
 	updatedVal, err := keeper.GetValidatorInfo(ctx, oldVal.GetSigner())
-	require.Empty(t, err, "unable to fetch validator info %v-", err)
+	require.Nil(t, err, "unable to fetch validator info %v-", err)
 	require.NotEqual(t, stakingInfoStakeUpdate.NewAmount.Int64(), updatedVal.VotingPower, "Validator VotingPower should not be updated to %v", stakingInfoStakeUpdate.NewAmount.Uint64())
 }
 
@@ -391,5 +391,4 @@ func (suite *HandlerTestSuite) TestTopupSuccessBeforeValidatorJoin() {
 	result, err := suite.handler(ctx, &msgValJoin)
 	require.NoError(t, err)
 	require.NotNil(t, result, "expected validator stake update to be ok, got %v", result)
-
 }
