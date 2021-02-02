@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
 	hmCommon "github.com/maticnetwork/heimdall/common"
 
 	"github.com/maticnetwork/heimdall/x/staking/test_helper"
@@ -69,7 +71,7 @@ func (suite *SideHandlerTestSuite) TestSideHandler() {
 
 	// side handler
 	result := suite.sideHandler(ctx, nil)
-	require.Equal(t, result.Code, uint32(6))
+	require.Equal(t, result.Code, sdkerrors.ErrUnknownRequest.ABCICode())
 }
 
 func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorJoin() {
