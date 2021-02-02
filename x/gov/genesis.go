@@ -14,9 +14,9 @@ func InitGenesis(ctx sdk.Context, ak types.AccountKeeper, bk types.BankKeeper, k
 
 	k.SetProposalID(ctx, data.StartingProposalId)
 	// TODO - check this
-	// k.SetDepositParams(ctx, data.DepositParams)
-	// k.SetVotingParams(ctx, data.VotingParams)
-	// k.SetTallyParams(ctx, data.TallyParams)
+	k.SetDepositParams(ctx, data.DepositParams)
+	k.SetVotingParams(ctx, data.VotingParams)
+	k.SetTallyParams(ctx, data.TallyParams)
 
 	// TODO - check this
 	// moduleAcc := k.GetGovernanceAccount(ctx)

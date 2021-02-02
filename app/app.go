@@ -670,6 +670,6 @@ func initParamsKeeper(appCodec codec.BinaryMarshaler, legacyAmino *codec.LegacyA
 	paramsKeeper.Subspace(chainmanagerTypes.ModuleName)
 	paramsKeeper.Subspace(sidechanneltypes.ModuleName)
 	paramsKeeper.Subspace(checkpointtypes.ModuleName)
-
+	paramsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govtypes.ParamKeyTable())
 	return paramsKeeper
 }

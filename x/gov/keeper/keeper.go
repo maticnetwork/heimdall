@@ -33,9 +33,9 @@ func NewKeeper(
 ) Keeper {
 	// TODO - Check this
 	// ensure governance module account is set
-	// if addr := authKeeper.GetModuleAddress(types.ModuleName); addr == nil {
-	// 	panic(fmt.Sprintf("%s module account has not been set", types.ModuleName))
-	// }
+	//if addr := authKeeper.GetModuleAddress(types.ModuleName); addr == nil {
+	//	panic(fmt.Sprintf("%s module account has not been set", types.ModuleName))
+	//}
 
 	// It is vital to seal the governance proposal router here as to not allow
 	// further handlers to be registered after the keeper is created since this
@@ -82,7 +82,7 @@ func (keeper Keeper) IterateVotes(ctx sdk.Context, proposalID uint64, cb func(vo
 	defer iterator.Close()
 	for ; iterator.Valid(); iterator.Next() {
 		var vote types.Vote
-		keeper.cdc.MustUnmarshalBinaryLengthPrefixed(iterator.Value(), &vote)
+		keeper.cdc.MustUnmarshalBinaryBare(iterator.Value(), &vote)
 
 		if cb(vote) {
 			break

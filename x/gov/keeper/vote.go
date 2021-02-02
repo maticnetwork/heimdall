@@ -63,7 +63,7 @@ func (keeper Keeper) GetVote(ctx sdk.Context, proposalID uint64, voter hmTypes.V
 		return vote, false
 	}
 
-	keeper.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &vote)
+	keeper.cdc.MustUnmarshalBinaryBare(bz, &vote)
 	return vote, true
 }
 

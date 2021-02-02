@@ -56,7 +56,7 @@ func (keeper Keeper) GetProposal(ctx sdk.Context, proposalID uint64) (proposal t
 	store := ctx.KVStore(keeper.storeKey)
 	bz := store.Get(types.ProposalKey(proposalID))
 	if bz == nil {
-		return
+		return types.Proposal{}, false
 	}
 	keeper.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &proposal)
 	return proposal, true

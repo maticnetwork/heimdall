@@ -24,6 +24,7 @@ import (
 type DepositTestSuite struct {
 	suite.Suite
 
+	sdk.Fee
 	app *app.HeimdallApp
 	ctx sdk.Context
 }
@@ -64,6 +65,9 @@ func (suite *DepositTestSuite) TestDeposits() {
 		}
 	}
 
+	app.BankKeeper.AddCoins(ctx, accounts[0].Address, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.TokensFromConsensusPower(20))))
+	app.BankKeeper.AddCoins(ctx, accounts[1].Address, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.TokensFromConsensusPower(20))))
+
 	tp := TestProposal
 	proposal, err := app.GovKeeper.SubmitProposal(ctx, tp)
 	require.NoError(t, err)
@@ -91,7 +95,7 @@ func (suite *DepositTestSuite) TestDeposits() {
 	deposit, found = app.GovKeeper.GetDeposit(ctx, proposalID, validators[0].ID)
 	require.True(t, found)
 	require.Equal(t, fourStake, deposit.Amount)
-	require.Equal(t, validators[0].ID.String(), deposit.Depositor)
+	require.Equal(t, validators[0].ID, deposit.Depositor)
 	proposal, ok = app.GovKeeper.GetProposal(ctx, proposalID)
 	require.True(t, ok)
 	require.Equal(t, fourStake, proposal.TotalDeposit)
@@ -104,7 +108,7 @@ func (suite *DepositTestSuite) TestDeposits() {
 	deposit, found = app.GovKeeper.GetDeposit(ctx, proposalID, validators[0].ID)
 	require.True(t, found)
 	require.Equal(t, fourStake.Add(fiveStake...), deposit.Amount)
-	require.Equal(t, validators[0].ID.String(), deposit.Depositor)
+	require.Equal(t, validators[0].ID, deposit.Depositor)
 	proposal, ok = app.GovKeeper.GetProposal(ctx, proposalID)
 	require.True(t, ok)
 	require.Equal(t, fourStake.Add(fiveStake...), proposal.TotalDeposit)
@@ -116,7 +120,7 @@ func (suite *DepositTestSuite) TestDeposits() {
 	require.True(t, votingStarted)
 	deposit, found = app.GovKeeper.GetDeposit(ctx, proposalID, validators[1].ID)
 	require.True(t, found)
-	require.Equal(t, validators[1].ID.String(), deposit.Depositor)
+	require.Equal(t, validators[1].ID, deposit.Depositor)
 	require.Equal(t, fourStake, deposit.Amount)
 	proposal, ok = app.GovKeeper.GetProposal(ctx, proposalID)
 	require.True(t, ok)
@@ -133,9 +137,9 @@ func (suite *DepositTestSuite) TestDeposits() {
 	deposits := app.GovKeeper.GetAllDeposits(ctx)
 	require.Len(t, deposits, 2)
 	require.Equal(t, deposits, app.GovKeeper.GetDeposits(ctx, proposalID))
-	require.Equal(t, validators[0].ID.String(), deposits[0].Depositor)
+	require.Equal(t, validators[0].ID, deposits[0].Depositor)
 	require.Equal(t, fourStake.Add(fiveStake...), deposits[0].Amount)
-	require.Equal(t, validators[1].ID.String(), deposits[1].Depositor)
+	require.Equal(t, validators[1].ID, deposits[1].Depositor)
 	require.Equal(t, fourStake, deposits[1].Amount)
 
 	// TODO - Check this

@@ -2,11 +2,13 @@ package app
 
 import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	govtypes "github.com/maticnetwork/heimdall/x/gov/types"
 )
 
 func MacPerms() map[string][]string {
 	return map[string][]string{
 		authtypes.FeeCollectorName: nil,
+		govtypes.ModuleName:        {authtypes.Burner},
 	}
 }
 

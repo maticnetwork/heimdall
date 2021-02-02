@@ -10,6 +10,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/x/gov/types"
+
 	// "github.com/maticnetwork/heimdall/x/staking"
 	// stakingtypes "github.com/maticnetwork/heimdall/x/staking/types"
 	"github.com/maticnetwork/heimdall/app"
@@ -83,7 +84,7 @@ func (suite *TallyTestSuite) TestTallyNoQuorum() {
 
 	s1 := rand.NewSource(time.Now().UnixNano())
 	r1 := rand.New(s1)
-	n := 1
+	n := 2
 
 	validators := make([]*hmTypes.Validator, n)
 	accounts := simulation.RandomAccounts(r1, n)
@@ -128,7 +129,7 @@ func (suite *TallyTestSuite) TestTallyOnlyValidatorsAllYes() {
 
 	s1 := rand.NewSource(time.Now().UnixNano())
 	r1 := rand.New(s1)
-	n := 1
+	n := 3
 
 	validators := make([]*hmTypes.Validator, n)
 	accounts := simulation.RandomAccounts(r1, n)
@@ -176,7 +177,7 @@ func (suite *TallyTestSuite) TestTallyOnlyValidators51No() {
 
 	s1 := rand.NewSource(time.Now().UnixNano())
 	r1 := rand.New(s1)
-	n := 1
+	n := 2
 
 	validators := make([]*hmTypes.Validator, n)
 	accounts := simulation.RandomAccounts(r1, n)
@@ -222,7 +223,7 @@ func (suite *TallyTestSuite) TestTallyOnlyValidators51Yes() {
 
 	s1 := rand.NewSource(time.Now().UnixNano())
 	r1 := rand.New(s1)
-	n := 1
+	n := 2
 
 	validators := make([]*hmTypes.Validator, n)
 	accounts := simulation.RandomAccounts(r1, n)
@@ -269,7 +270,7 @@ func (suite *TallyTestSuite) TestTallyOnlyValidatorsVetoed() {
 
 	s1 := rand.NewSource(time.Now().UnixNano())
 	r1 := rand.New(s1)
-	n := 1
+	n := 3
 
 	validators := make([]*hmTypes.Validator, n)
 	accounts := simulation.RandomAccounts(r1, n)
@@ -317,7 +318,7 @@ func (suite *TallyTestSuite) TestTallyOnlyValidatorsAbstainPasses() {
 
 	s1 := rand.NewSource(time.Now().UnixNano())
 	r1 := rand.New(s1)
-	n := 1
+	n := 4
 
 	validators := make([]*hmTypes.Validator, n)
 	accounts := simulation.RandomAccounts(r1, n)
@@ -365,7 +366,7 @@ func (suite *TallyTestSuite) TestTallyOnlyValidatorsAbstainFails() {
 
 	s1 := rand.NewSource(time.Now().UnixNano())
 	r1 := rand.New(s1)
-	n := 1
+	n := 3
 
 	validators := make([]*hmTypes.Validator, n)
 	accounts := simulation.RandomAccounts(r1, n)
@@ -413,7 +414,7 @@ func (suite *TallyTestSuite) TestTallyOnlyValidatorsNonVoter() {
 
 	s1 := rand.NewSource(time.Now().UnixNano())
 	r1 := rand.New(s1)
-	n := 1
+	n := 2
 
 	validators := make([]*hmTypes.Validator, n)
 	accounts := simulation.RandomAccounts(r1, n)
@@ -461,7 +462,7 @@ func (suite *TallyTestSuite) TestTallyOnlyValidatorsNonVoter() {
 
 // 	s1 := rand.NewSource(time.Now().UnixNano())
 // 	r1 := rand.New(s1)
-// 	n := 1
+// 	n := 2
 
 // 	validators := make([]*hmTypes.Validator, n)
 // 	accounts := simulation.RandomAccounts(r1, n)
@@ -519,7 +520,7 @@ func (suite *TallyTestSuite) TestTallyOnlyValidatorsNonVoter() {
 
 // 	s1 := rand.NewSource(time.Now().UnixNano())
 // 	r1 := rand.New(s1)
-// 	n := 1
+// 	n := 2
 
 // 	validators := make([]*hmTypes.Validator, n)
 // 	accounts := simulation.RandomAccounts(r1, n)
@@ -576,7 +577,7 @@ func (suite *TallyTestSuite) TestTallyOnlyValidatorsNonVoter() {
 
 // 	s1 := rand.NewSource(time.Now().UnixNano())
 // 	r1 := rand.New(s1)
-// 	n := 1
+// 	n := 2
 
 // 	validators := make([]*hmTypes.Validator, n)
 // 	accounts := simulation.RandomAccounts(r1, n)
@@ -638,7 +639,7 @@ func (suite *TallyTestSuite) TestTallyOnlyValidatorsNonVoter() {
 
 // 	s1 := rand.NewSource(time.Now().UnixNano())
 // 	r1 := rand.New(s1)
-// 	n := 1
+// 	n := 2
 
 // 	validators := make([]*hmTypes.Validator, n)
 // 	accounts := simulation.RandomAccounts(r1, n)
@@ -724,7 +725,7 @@ func (suite *TallyTestSuite) TestTallyOnlyValidatorsNonVoter() {
 
 // 	s1 := rand.NewSource(time.Now().UnixNano())
 // 	r1 := rand.New(s1)
-// 	n := 1
+// 	n := 2
 
 // 	validators := make([]*hmTypes.Validator, n)
 // 	accounts := simulation.RandomAccounts(r1, n)
@@ -789,7 +790,7 @@ func (suite *TallyTestSuite) TestTallyOnlyValidatorsNonVoter() {
 
 // 	s1 := rand.NewSource(time.Now().UnixNano())
 // 	r1 := rand.New(s1)
-// 	n := 1
+// 	n := 2
 
 // 	validators := make([]*hmTypes.Validator, n)
 // 	accounts := simulation.RandomAccounts(r1, n)
