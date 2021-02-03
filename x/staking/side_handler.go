@@ -418,7 +418,9 @@ func PostHandleMsgValidatorJoin(ctx sdk.Context, k keeper.Keeper, msg types.MsgV
 		),
 	})
 
-	return &sdk.Result{}, nil
+	return &sdk.Result{
+		Events: ctx.EventManager().ABCIEvents(),
+	}, nil
 }
 
 // PostHandleMsgStakeUpdate handles stake update message
@@ -488,7 +490,9 @@ func PostHandleMsgStakeUpdate(ctx sdk.Context, k keeper.Keeper, msg types.MsgSta
 		),
 	})
 
-	return &sdk.Result{}, nil
+	return &sdk.Result{
+		Events: ctx.EventManager().ABCIEvents(),
+	}, nil
 }
 
 // PostHandleMsgSignerUpdate handles signer update message
@@ -603,7 +607,9 @@ func PostHandleMsgSignerUpdate(ctx sdk.Context, k keeper.Keeper, msg types.MsgSi
 		),
 	})
 
-	return &sdk.Result{}, nil
+	return &sdk.Result{
+		Events: ctx.EventManager().ABCIEvents(),
+	}, nil
 }
 
 // PostHandleMsgValidatorExit handle msg validator exit
@@ -667,5 +673,7 @@ func PostHandleMsgValidatorExit(ctx sdk.Context, k keeper.Keeper, msg types.MsgV
 		),
 	})
 
-	return &sdk.Result{}, nil
+	return &sdk.Result{
+		Events: ctx.EventManager().ABCIEvents(),
+	}, nil
 }
