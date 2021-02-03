@@ -1257,6 +1257,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgValidatorJoin() {
 
 		result, err := suite.postHandler(ctx, &msgValJoin, tmprototypes.SideTxResultType_YES)
 		require.NotNil(t, result)
+		require.Greater(t, len(result.Events), 0)
 		require.NoError(t, err, "expected validator join to be ok, got %v", result)
 
 		actualResult, ok := initApp.StakingKeeper.GetValidatorFromValID(ctx, hmTypes.ValidatorID(validatorId))
@@ -1282,6 +1283,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgValidatorJoin() {
 		result, err := suite.postHandler(ctx, &msgValJoin, tmprototypes.SideTxResultType_YES)
 		require.NoError(t, err, "expected validator join to be ok, got %v", result)
 		require.NotNil(t, result)
+		require.Greater(t, len(result.Events), 0)
 
 		actualResult, ok := initApp.StakingKeeper.GetValidatorFromValID(ctx, hmTypes.ValidatorID(validatorId))
 		require.True(t, ok, "Should add validator")
@@ -1345,6 +1347,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgSignerUpdate() {
 		result, err := suite.postHandler(ctx, &msg, tmprototypes.SideTxResultType_YES)
 		require.NotNil(t, result)
 		require.NoError(t, err, "Post handler should succeed")
+		require.Greater(t, len(result.Events), 0)
 
 		newValidators := keeper.GetCurrentValidators(ctx)
 		require.Equal(t, len(oldValSet.Validators), len(newValidators), "Number of current validators should be equal")
@@ -1409,6 +1412,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgValidatorExit() {
 		result, err := suite.postHandler(ctx, &msg, tmprototypes.SideTxResultType_YES)
 		require.NoError(t, err)
 		require.NotNil(t, result)
+		require.Greater(t, len(result.Events), 0)
 
 		currentVals := keeper.GetCurrentValidators(ctx)
 		require.Equal(t, 4, len(currentVals), "No of current validators should exist before epoch passes")
@@ -1468,6 +1472,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgStakeUpdate() {
 		result, err := suite.postHandler(ctx, &msg, tmprototypes.SideTxResultType_YES)
 		require.NotNil(t, result)
 		require.NoError(t, err, "expected validator stake update to be ok, got %v", result)
+		require.Greater(t, len(result.Events), 0)
 
 		updatedVal, err := keeper.GetValidatorInfo(ctx, oldVal.GetSigner())
 		require.Empty(t, err, "unable to fetch validator info %v-", err)
