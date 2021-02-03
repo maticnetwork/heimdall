@@ -72,3 +72,7 @@ func (s *IntegrationTestSuite) TestValidatorJoinTxCmd() {
 		})
 	}
 }
+
+func TestIntegrationTestSuite(t *testing.T) {
+	suite.Run(t, new(IntegrationTestSuite))
+}
