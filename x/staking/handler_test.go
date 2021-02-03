@@ -115,7 +115,6 @@ func (suite *HandlerTestSuite) TestHandleMsgValidatorJoin() {
 	result, err := suite.handler(ctx, &msgValJoin)
 	require.NotNil(t, result, "expected validator join to be ok, got %v", result)
 	require.NoError(t, err)
-	require.Greater(t, len(result.Events), 0)
 
 	actualResult, ok := initApp.StakingKeeper.GetValidatorFromValID(ctx, hmTypes.ValidatorID(validatorId))
 	require.Equal(t, false, ok, "Should not add validator")
@@ -155,7 +154,6 @@ func (suite *HandlerTestSuite) TestHandleMsgValidatorUpdate() {
 	result, err := suite.handler(ctx, &msg)
 	require.NotNil(t, result, "expected validator update to be ok, got %v", result)
 	require.NoError(t, err)
-	require.Greater(t, len(result.Events), 0)
 	newValidators := keeper.GetCurrentValidators(ctx)
 	require.Equal(t, len(oldValSet.Validators), len(newValidators), "Number of current validators should be equal")
 
@@ -207,7 +205,6 @@ func (suite *HandlerTestSuite) TestHandleMsgValidatorExit() {
 	result, err := suite.handler(ctx, &msg)
 	require.NoError(t, err)
 	require.NotNil(t, result, "expected validator exit to be ok, got %v", result)
-	require.Greater(t, len(result.Events), 0)
 
 	updatedValInfo, err := keeper.GetValidatorInfo(ctx, validators[0].GetSigner())
 	require.Nil(t, err, "Unable to get validator info from val address,ValAddr:%v Error:%v ", validators[0].GetSigner(), err)
@@ -219,7 +216,6 @@ func (suite *HandlerTestSuite) TestHandleMsgValidatorExit() {
 	result, err = suite.handler(ctx, &msg)
 	require.NoError(t, err)
 	require.NotNil(t, result, "should not fail, as state is not updated for validatorExit")
-	require.Greater(t, len(result.Events), 0)
 }
 
 func (suite *HandlerTestSuite) TestHandleMsgStakeUpdate() {
@@ -250,8 +246,6 @@ func (suite *HandlerTestSuite) TestHandleMsgStakeUpdate() {
 	result, err := suite.handler(ctx, &msg)
 	require.NotNil(t, result, "expected validator stake update to be ok, got %v", result)
 	require.NoError(t, err)
-	require.Greater(t, len(result.Events), 0)
-
 	updatedVal, err := keeper.GetValidatorInfo(ctx, oldVal.GetSigner())
 	require.Nil(t, err, "unable to fetch validator info %v-", err)
 	require.NotEqual(t, stakingInfoStakeUpdate.NewAmount.Int64(), updatedVal.VotingPower, "Validator VotingPower should not be updated to %v", stakingInfoStakeUpdate.NewAmount.Uint64())
@@ -397,5 +391,4 @@ func (suite *HandlerTestSuite) TestTopupSuccessBeforeValidatorJoin() {
 	result, err := suite.handler(ctx, &msgValJoin)
 	require.NoError(t, err)
 	require.NotNil(t, result, "expected validator stake update to be ok, got %v", result)
-	require.Greater(t, len(result.Events), 0)
 }
