@@ -166,5 +166,7 @@ func PostHandleMsgTopup(ctx sdk.Context, k keeper.Keeper, msg types.MsgTopup, si
 		),
 	})
 
-	return &sdk.Result{}, nil
+	return &sdk.Result{
+		Events: ctx.EventManager().ABCIEvents(),
+	}, nil
 }
