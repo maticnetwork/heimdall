@@ -132,16 +132,17 @@ func PostHandleMsgTopup(ctx sdk.Context, k keeper.Keeper, msg types.MsgTopup, si
 	topupAmount := sdk.Coins{sdk.Coin{Denom: types.FeeToken, Amount: msg.Fee}}
 
 	// increase coins in account
-	if err := k.Bk.AddCoins(ctx, []byte(user), topupAmount); err != nil {
+	userAddr, _ := sdk.AccAddressFromHex(user)
+	if err := k.Bk.AddCoins(ctx, userAddr, topupAmount); err != nil {
 		k.Logger(ctx).Error("Error while adding coins to user", "user", user, "topupAmount", topupAmount, "error", err)
 		return nil, err
 	}
 
-	//TODO: Check if this call to SendCoins is required?
 	// transfer fees to sender (proposer)
-	// if err := k.Bk.SendCoins(ctx, []byte(user), []byte(msg.FromAddress), auth.DefaultFeeWantedPerTx); err != nil {
-	// 	return nil, err
-	// }
+	fromAddr, _ := sdk.AccAddressFromHex(msg.FromAddress)
+	if err := k.Bk.SendCoins(ctx, userAddr, fromAddr, topupAmount); err != nil {
+		return nil, err
+	}
 
 	k.Logger(ctx).Debug("Persisted topup state for", "user", user, "topupAmount", topupAmount.String())
 

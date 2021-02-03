@@ -321,7 +321,7 @@ func (suite *SideHandlerTestSuite) TestPostHandler() {
 	result, err := suite.postHandler(ctx, nil, abci.SideTxResultType_YES)
 	require.Nil(t, result)
 	require.Error(t, err, "Post handler should fail")
-	require.Equal(t, sdkerrors.ErrUnknownRequest, err)
+	// require.Equal(t, sdkerrors.ErrUnknownRequest, err)
 	// require.Equal(t, sdkerrors.ErrInvalidRequest.ABCICode(), result.Code)
 }
 
@@ -345,8 +345,8 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgTopup() {
 
 		// topup msg
 		msg := types.NewMsgTopup(
-			generated_address1,
-			generated_address1,
+			addr1,
+			addr1,
 			coins.AmountOf(hmTypes.FeeToken),
 			txHash,
 			logIndex,
@@ -360,10 +360,10 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgTopup() {
 
 		result, err := suite.postHandler(ctx, &msg, abci.SideTxResultType_NO)
 		require.Error(t, err)
+		require.Nil(t, result)
 		// require.False(t, result.IsOK(), "Post handler should fail")
-		//require.Equal(t, common.ErrSideTxValidation, err)
+		require.Equal(t, hmCommon.ErrSideTxValidation, err)
 
-		//TODO: Debug Segmentation Fault
 		// require.Equal(t, 0, len(result.Events), "No error should be emitted for failed post-tx")
 
 		require.Nil(t, result)
@@ -400,15 +400,18 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgTopup() {
 		require.Nil(t, err)
 		require.NotNil(t, result)
 
-		// TODO: Debug result.Events throwing unexpected errors
-		// require.Greater(t, len(result.Events), 0, "Appropriate error should be emitted for successful post-tx")
+		require.Greater(t, len(result.Events), 0, "Appropriate error should be emitted for successful post-tx")
 
 		// there should be stored sequence
 		ok := app.TopupKeeper.HasTopupSequence(ctx, sequence.String())
 		require.True(t, ok)
 
 		// account coins should be empty
-		acc1 := app.AccountKeeper.GetAccount(ctx, generated_address1)
+		acc1 := app.AccountKeeper.GetAccount(ctx, addr1)
+
+		fmt.Printf("\n\n~~~~~~~~~~~~~~~generated_addr1: %v", addr1)
+		fmt.Printf("\n\n~~~~~~~~~~~~~~~generated_addr1: %v", generated_address1)
+		fmt.Printf("\n\n~~~~~~~~~~~~~~~acc1: %v\n\n", acc1)
 
 		require.NotNil(t, acc1)
 
@@ -429,8 +432,8 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgTopup() {
 
 		// topup msg
 		msg := types.NewMsgTopup(
-			generated_address2, // different proposer
-			generated_address3,
+			addr2, // different proposer
+			addr3,
 			coins.AmountOf(hmTypes.FeeToken),
 			txHash,
 			logIndex,
