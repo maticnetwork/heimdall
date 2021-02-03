@@ -341,11 +341,15 @@ func QuerySideTxRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		preCommits := blockDetails.Block.LastCommit.Precommits
 
 		// extract side-tx signs from votes
-		sigs := helper.GetSideTxSigs(tx.Tx.Hash(), sideTxData, preCommits)
+		sigs, err := helper.GetSideTxSigs(tx.Tx.Hash(), sideTxData, preCommits)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "Error while fetching sigs")
+			return
+		}
 
 		// commit tx proof
 		result := hmRest.SideTxProof{
-			Sigs: hex.EncodeToString(sigs),
+			Sigs: sigs,
 			Tx:   hex.EncodeToString(tx.Tx),
 			Data: hex.EncodeToString(sideTxData),
 		}

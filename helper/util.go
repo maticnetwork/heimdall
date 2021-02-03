@@ -179,7 +179,7 @@ type sideTxSig struct {
 }
 
 // GetSideTxSigs returns sigs bytes from vote by tx hash
-func GetSideTxSigs(txHash []byte, sideTxData []byte, unFilteredVotes []*tmTypes.CommitSig) (sigs []byte) {
+func GetSideTxSigs(txHash []byte, sideTxData []byte, unFilteredVotes []*tmTypes.CommitSig) (sigs [][3]*big.Int, err error) {
 	// side tx result with data
 	sideTxResultWithData := tmTypes.SideTxResultWithData{
 		SideTxResult: tmTypes.SideTxResult{
@@ -228,11 +228,15 @@ func GetSideTxSigs(txHash []byte, sideTxData []byte, unFilteredVotes []*tmTypes.
 
 		// loop votes and append to sig to sigs
 		for _, sideTxSig := range sideTxSigs {
-			sigs = append(sigs, sideTxSig.Sig...)
+			R, S, V, err := ethTypes.HomesteadSigner{}.SignatureValues(nil, sideTxSig.Sig)
+			if err != nil {
+				return nil, err
+			}
+			sigs = append(sigs, [3]*big.Int{R, S, V})
 		}
 	}
 
-	return
+	return sigs, nil
 }
 
 // GetVoteBytes returns vote bytes

@@ -306,11 +306,12 @@ func (sp *SlashingProcessor) createAndSendTickToRootchain(height int64, txHash [
 	sp.Logger.Info("sideTx data", "sideTxData", hex.EncodeToString(sideTxData))
 
 	// get sigs
-	sigs, err := helper.FetchSideTxSigs(sp.httpClient, height, tx.Tx.Hash(), sideTxData)
-	if err != nil {
-		sp.Logger.Error("Error fetching votes for tick tx", "height", height)
-		return err
-	}
+	// TODO pass sigs in proper form in `SendTick` for slashing
+	// sigs, err := helper.FetchSideTxSigs(sp.httpClient, height, tx.Tx.Hash(), sideTxData)
+	// if err != nil {
+	// 	sp.Logger.Error("Error fetching votes for tick tx", "height", height)
+	// 	return err
+	// }
 
 	// send tick to rootchain
 	slashingContrext, err := sp.getSlashingContext()
@@ -327,7 +328,8 @@ func (sp *SlashingProcessor) createAndSendTickToRootchain(height int64, txHash [
 		return err
 	}
 
-	if err := sp.contractConnector.SendTick(sideTxData, sigs, slashManagerAddress, slashManagerInstance); err != nil {
+	// TODO pass sigs in proper form in `SendTick` for slashing
+	if err := sp.contractConnector.SendTick(sideTxData, nil, slashManagerAddress, slashManagerInstance); err != nil {
 		sp.Logger.Info("Error submitting tick to slashManager contract", "error", err)
 		return err
 	}
