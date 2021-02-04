@@ -28,7 +28,7 @@ import (
 // Setup initializes a new App. A Nop logger is set in App.
 func Setup(isCheckTx bool) *HeimdallApp {
 	db := dbm.NewMemDB()
-	app := NewHeimdallApp(log.TestingLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, 5, MakeEncodingConfig())
+	app := NewHeimdallApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, 5, MakeEncodingConfig())
 	if !isCheckTx {
 		// init chain must be called to stop deliverState from being nil
 		genesisState := NewDefaultGenesisState()

@@ -74,7 +74,7 @@ func SideHandleMsgTopup(ctx sdk.Context, k keeper.Keeper, msg types.MsgTopup, co
 	//var stakingAddress [20]byte
 	//copy(stakingAddress[:], chainParams.StakingInfoAddress)
 
-	accountAddr, err := sdk.AccAddressFromHex(chainParams.StakingInfoAddress)
+	accountAddr, _ := sdk.AccAddressFromHex(chainParams.StakingInfoAddress)
 	eventLog, err := contractCaller.DecodeValidatorTopupFeesEvent(accountAddr, receipt, msg.LogIndex)
 	if err != nil || eventLog == nil {
 		k.Logger(ctx).Error("Error fetching log from txhash")
