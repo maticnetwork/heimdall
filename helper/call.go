@@ -48,7 +48,7 @@ type IContractCaller interface {
 	// decode header event
 	DecodeNewHeaderBlockEvent(common.Address, *ethTypes.Receipt, uint64) (*rootchain.RootchainNewHeaderBlock, error)
 	// decode validator events
-	DecodeValidatorTopupFeesEvent(common.Address, *ethTypes.Receipt, uint64) (*stakinginfo.StakinginfoTopUpFee, error)
+	DecodeValidatorTopupFeesEvent(sdk.AccAddress, *ethTypes.Receipt, uint64) (*stakinginfo.StakinginfoTopUpFee, error)
 	DecodeValidatorJoinEvent(sdk.AccAddress, *ethTypes.Receipt, uint64) (*stakinginfo.StakinginfoStaked, error)
 	DecodeValidatorStakeUpdateEvent(sdk.AccAddress, *ethTypes.Receipt, uint64) (*stakinginfo.StakinginfoStakeUpdate, error)
 	DecodeValidatorExitEvent(sdk.AccAddress, *ethTypes.Receipt, uint64) (*stakinginfo.StakinginfoUnstakeInit, error)
@@ -480,7 +480,7 @@ func (c *ContractCaller) DecodeNewHeaderBlockEvent(contractAddress common.Addres
 }
 
 // DecodeValidatorTopupFeesEvent represents topup for fees tokens
-func (c *ContractCaller) DecodeValidatorTopupFeesEvent(contractAddress common.Address, receipt *ethTypes.Receipt, logIndex uint64) (*stakinginfo.StakinginfoTopUpFee, error) {
+func (c *ContractCaller) DecodeValidatorTopupFeesEvent(contractAddress sdk.AccAddress, receipt *ethTypes.Receipt, logIndex uint64) (*stakinginfo.StakinginfoTopUpFee, error) {
 	event := new(stakinginfo.StakinginfoTopUpFee)
 
 	found := false
