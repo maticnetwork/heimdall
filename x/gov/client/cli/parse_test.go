@@ -22,17 +22,20 @@ func TestParseSubmitProposalFlags(t *testing.T) {
 	fs := NewCmdSubmitProposal().Flags()
 
 	// nonexistent json
-	fs.Set(FlagProposal, "fileDoesNotExist")
-	_, err := parseSubmitProposalFlags(fs)
+	err := fs.Set(FlagProposal, "fileDoesNotExist")
+	require.NoError(t, err)
+	_, err = parseSubmitProposalFlags(fs)
 	require.Error(t, err)
 
 	// invalid json
-	fs.Set(FlagProposal, badJSON.Name())
+	err = fs.Set(FlagProposal, badJSON.Name())
+	require.NoError(t, err)
 	_, err = parseSubmitProposalFlags(fs)
 	require.Error(t, err)
 
 	// ok json
-	fs.Set(FlagProposal, okJSON.Name())
+	err = fs.Set(FlagProposal, okJSON.Name())
+	require.NoError(t, err)
 	proposal1, err := parseSubmitProposalFlags(fs)
 	require.Nil(t, err, "unexpected error")
 	require.Equal(t, "Test Proposal", proposal1.Title)
@@ -42,18 +45,25 @@ func TestParseSubmitProposalFlags(t *testing.T) {
 
 	// flags that can't be used with --proposal
 	for _, incompatibleFlag := range ProposalFlags {
-		fs.Set(incompatibleFlag, "some value")
+		err = fs.Set(incompatibleFlag, "some value")
+		require.NoError(t, err)
 		_, err := parseSubmitProposalFlags(fs)
 		require.Error(t, err)
-		fs.Set(incompatibleFlag, "")
+		err = fs.Set(incompatibleFlag, "")
+		require.NoError(t, err)
 	}
 
 	// no --proposal, only flags
-	fs.Set(FlagProposal, "")
-	fs.Set(FlagTitle, proposal1.Title)
-	fs.Set(FlagDescription, proposal1.Description)
-	fs.Set(FlagProposalType, proposal1.Type)
-	fs.Set(FlagDeposit, proposal1.Deposit)
+	err = fs.Set(FlagProposal, "")
+	require.NoError(t, err)
+	err = fs.Set(FlagTitle, proposal1.Title)
+	require.NoError(t, err)
+	err = fs.Set(FlagDescription, proposal1.Description)
+	require.NoError(t, err)
+	err = fs.Set(FlagProposalType, proposal1.Type)
+	require.NoError(t, err)
+	err = fs.Set(FlagDeposit, proposal1.Deposit)
+	require.NoError(t, err)
 	proposal2, err := parseSubmitProposalFlags(fs)
 
 	require.Nil(t, err, "unexpected error")

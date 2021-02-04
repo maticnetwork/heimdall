@@ -16,6 +16,7 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmTypesCommon "github.com/maticnetwork/heimdall/types/common"
 	"github.com/maticnetwork/heimdall/types/simulation"
+	"github.com/maticnetwork/heimdall/x/gov/test_helper"
 	"github.com/maticnetwork/heimdall/x/gov/types"
 )
 
@@ -28,7 +29,7 @@ type ProposalTestSuite struct {
 }
 
 func (suite *ProposalTestSuite) SetupTest() {
-	suite.app, suite.ctx, _ = createTestApp(false)
+	suite.app, suite.ctx, _ = test_helper.CreateTestApp(false)
 }
 
 func TestProposalTestSuite(t *testing.T) {
@@ -38,7 +39,7 @@ func TestProposalTestSuite(t *testing.T) {
 func (suite *ProposalTestSuite) TestGetSetProposal() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 
-	tp := TestProposal
+	tp := test_helper.TestProposal
 	proposal, err := app.GovKeeper.SubmitProposal(ctx, tp)
 	require.NoError(t, err)
 	proposalID := proposal.ProposalId
@@ -52,7 +53,7 @@ func (suite *ProposalTestSuite) TestGetSetProposal() {
 func (suite *ProposalTestSuite) TestActivateVotingPeriod() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 
-	tp := TestProposal
+	tp := test_helper.TestProposal
 	proposal, err := app.GovKeeper.SubmitProposal(ctx, tp)
 	require.NoError(t, err)
 
@@ -133,7 +134,7 @@ func (suite *ProposalTestSuite) TestGetProposalsFiltered() {
 
 	for _, s := range status {
 		for i := 0; i < 50; i++ {
-			p, err := types.NewProposal(TestProposal, proposalID, time.Now(), time.Now())
+			p, err := types.NewProposal(test_helper.TestProposal, proposalID, time.Now(), time.Now())
 			require.NoError(t, err)
 
 			p.Status = s

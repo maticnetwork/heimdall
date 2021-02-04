@@ -1,7 +1,7 @@
 package gov
 
 import (
-	// "fmt"
+	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -13,16 +13,14 @@ import (
 func InitGenesis(ctx sdk.Context, ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keeper, data types.GenesisState) {
 
 	k.SetProposalID(ctx, data.StartingProposalId)
-	// TODO - check this
 	k.SetDepositParams(ctx, data.DepositParams)
 	k.SetVotingParams(ctx, data.VotingParams)
 	k.SetTallyParams(ctx, data.TallyParams)
 
-	// TODO - check this
-	// moduleAcc := k.GetGovernanceAccount(ctx)
-	// if moduleAcc == nil {
-	// 	panic(fmt.Sprintf("%s module account has not been set", types.ModuleName))
-	// }
+	moduleAcc := k.GetGovernanceAccount(ctx)
+	if moduleAcc == nil {
+		panic(fmt.Sprintf("%s module account has not been set", types.ModuleName))
+	}
 
 	var totalDeposits sdk.Coins
 	for _, deposit := range data.Deposits {
@@ -44,15 +42,14 @@ func InitGenesis(ctx sdk.Context, ak types.AccountKeeper, bk types.BankKeeper, k
 		k.SetProposal(ctx, proposal)
 	}
 
-	// TODO - check this
 	// add coins if not provided on genesis
-	// if bk.GetAllBalances(ctx, moduleAcc.GetAddress()).IsZero() {
-	// 	if err := bk.SetBalances(ctx, moduleAcc.GetAddress(), totalDeposits); err != nil {
-	// 		panic(err)
-	// 	}
+	if bk.GetAllBalances(ctx, moduleAcc.GetAddress()).IsZero() {
+		if err := bk.SetBalances(ctx, moduleAcc.GetAddress(), totalDeposits); err != nil {
+			panic(err)
+		}
 
-	// 	ak.SetModuleAccount(ctx, moduleAcc)
-	// }
+		ak.SetModuleAccount(ctx, moduleAcc)
+	}
 }
 
 // ExportGenesis - output genesis parameters

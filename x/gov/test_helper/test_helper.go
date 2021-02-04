@@ -1,4 +1,4 @@
-package gov_test
+package test_helper
 
 import (
 	"bytes"
@@ -18,13 +18,12 @@ import (
 	"github.com/maticnetwork/heimdall/app"
 )
 
-// TODO - Merge this with keeper/common_test.go
 //
 // Create test app
 //
 
 // returns context and app with params set on gov keeper
-func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, client.Context) {
+func CreateTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, client.Context) {
 	genesisState := app.NewDefaultGenesisState()
 	govGenesis := types.NewGenesisState(types.DefaultGenesis().StartingProposalId, types.DefaultGenesis().DepositParams, types.DefaultGenesis().VotingParams, types.DefaultGenesis().TallyParams)
 
@@ -52,7 +51,7 @@ func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, client.Contex
 }
 
 var (
-	valTokens    = sdk.TokensFromConsensusPower(42)
+	// valTokens    = sdk.TokensFromConsensusPower(42)
 	TestProposal = types.NewTextProposal("Test", "description")
 	// TestDescription     = stakingtypes.NewDescription("T", "E", "S", "T", "Z")
 	// TestCommissionRates = stakingtypes.NewCommissionRates(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec())
@@ -104,7 +103,7 @@ func SortByteArrays(src [][]byte) [][]byte {
 	return sorted
 }
 
-const contextKeyBadProposal = "contextKeyBadProposal"
+// const contextKeyBadProposal = "contextKeyBadProposal"
 
 // var (
 // 	pubkeys = []crypto.PubKey{

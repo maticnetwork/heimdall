@@ -8,12 +8,13 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/maticnetwork/heimdall/app"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmTypesCommon "github.com/maticnetwork/heimdall/types/common"
 	"github.com/maticnetwork/heimdall/types/simulation"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/maticnetwork/heimdall/x/gov/test_helper"
 )
 
 //
@@ -30,7 +31,7 @@ type DepositTestSuite struct {
 }
 
 func (suite *DepositTestSuite) SetupTest() {
-	suite.app, suite.ctx, _ = createTestApp(false)
+	suite.app, suite.ctx, _ = test_helper.CreateTestApp(false)
 }
 
 func TestDepositTestSuite(t *testing.T) {
@@ -65,10 +66,12 @@ func (suite *DepositTestSuite) TestDeposits() {
 		}
 	}
 
-	app.BankKeeper.AddCoins(ctx, accounts[0].Address, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.TokensFromConsensusPower(20))))
-	app.BankKeeper.AddCoins(ctx, accounts[1].Address, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.TokensFromConsensusPower(20))))
+	err := app.BankKeeper.AddCoins(ctx, accounts[0].Address, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.TokensFromConsensusPower(20))))
+	require.NoError(t, err)
+	err = app.BankKeeper.AddCoins(ctx, accounts[1].Address, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.TokensFromConsensusPower(20))))
+	require.NoError(t, err)
 
-	tp := TestProposal
+	tp := test_helper.TestProposal
 	proposal, err := app.GovKeeper.SubmitProposal(ctx, tp)
 	require.NoError(t, err)
 	proposalID := proposal.ProposalId

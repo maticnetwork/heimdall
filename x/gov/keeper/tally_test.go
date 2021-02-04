@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/maticnetwork/heimdall/x/gov/types"
 
 	// "github.com/maticnetwork/heimdall/x/staking"
 	// stakingtypes "github.com/maticnetwork/heimdall/x/staking/types"
@@ -17,6 +16,8 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmTypesCommon "github.com/maticnetwork/heimdall/types/common"
 	"github.com/maticnetwork/heimdall/types/simulation"
+	"github.com/maticnetwork/heimdall/x/gov/test_helper"
+	"github.com/maticnetwork/heimdall/x/gov/types"
 )
 
 // TallyTestSuite integrate test suite context object
@@ -28,7 +29,7 @@ type TallyTestSuite struct {
 }
 
 func (suite *TallyTestSuite) SetupTest() {
-	suite.app, suite.ctx, _ = createTestApp(false)
+	suite.app, suite.ctx, _ = test_helper.CreateTestApp(false)
 }
 
 func TestTallyTestSuite(t *testing.T) {
@@ -63,7 +64,7 @@ func (suite *TallyTestSuite) TestTallyNoOneVotes() {
 		}
 	}
 
-	tp := TestProposal
+	tp := test_helper.TestProposal
 	proposal, err := app.GovKeeper.SubmitProposal(ctx, tp)
 	require.NoError(t, err)
 	proposalID := proposal.ProposalId
@@ -106,7 +107,7 @@ func (suite *TallyTestSuite) TestTallyNoQuorum() {
 		}
 	}
 
-	tp := TestProposal
+	tp := test_helper.TestProposal
 	proposal, err := app.GovKeeper.SubmitProposal(ctx, tp)
 	require.NoError(t, err)
 	proposalID := proposal.ProposalId
@@ -149,7 +150,7 @@ func (suite *TallyTestSuite) TestTallyOnlyValidatorsAllYes() {
 			t.Error("Error while adding validator to store", err)
 		}
 	}
-	tp := TestProposal
+	tp := test_helper.TestProposal
 
 	proposal, err := app.GovKeeper.SubmitProposal(ctx, tp)
 	require.NoError(t, err)
@@ -196,7 +197,7 @@ func (suite *TallyTestSuite) TestTallyOnlyValidators51No() {
 		}
 	}
 
-	tp := TestProposal
+	tp := test_helper.TestProposal
 	proposal, err := app.GovKeeper.SubmitProposal(ctx, tp)
 	require.NoError(t, err)
 	proposalID := proposal.ProposalId
@@ -242,7 +243,7 @@ func (suite *TallyTestSuite) TestTallyOnlyValidators51Yes() {
 		}
 	}
 
-	tp := TestProposal
+	tp := test_helper.TestProposal
 	proposal, err := app.GovKeeper.SubmitProposal(ctx, tp)
 	require.NoError(t, err)
 	proposalID := proposal.ProposalId
@@ -288,7 +289,7 @@ func (suite *TallyTestSuite) TestTallyOnlyValidatorsVetoed() {
 		}
 	}
 
-	tp := TestProposal
+	tp := test_helper.TestProposal
 	proposal, err := app.GovKeeper.SubmitProposal(ctx, tp)
 	require.NoError(t, err)
 	proposalID := proposal.ProposalId
@@ -334,7 +335,7 @@ func (suite *TallyTestSuite) TestTallyOnlyValidatorsAbstainPasses() {
 		}
 	}
 
-	tp := TestProposal
+	tp := test_helper.TestProposal
 	proposal, err := app.GovKeeper.SubmitProposal(ctx, tp)
 	require.NoError(t, err)
 	proposalID := proposal.ProposalId
@@ -380,7 +381,7 @@ func (suite *TallyTestSuite) TestTallyOnlyValidatorsAbstainFails() {
 		}
 	}
 
-	tp := TestProposal
+	tp := test_helper.TestProposal
 	proposal, err := app.GovKeeper.SubmitProposal(ctx, tp)
 	require.NoError(t, err)
 	proposalID := proposal.ProposalId
@@ -428,7 +429,7 @@ func (suite *TallyTestSuite) TestTallyOnlyValidatorsNonVoter() {
 	}
 	valAccAddr1, valAccAddr2 := accounts[0].Address, accounts[1].Address
 
-	tp := TestProposal
+	tp := test_helper.TestProposal
 	proposal, err := app.GovKeeper.SubmitProposal(ctx, tp)
 	require.NoError(t, err)
 	proposalID := proposal.ProposalId
@@ -484,7 +485,7 @@ func (suite *TallyTestSuite) TestTallyOnlyValidatorsNonVoter() {
 
 // 	_ = staking.EndBlocker(ctx, app.StakingKeeper)
 
-// 	tp := TestProposal
+// 	tp := test_helper.TestProposal
 // 	proposal, err := app.GovKeeper.SubmitProposal(ctx, tp)
 // 	require.NoError(t, err)
 // 	proposalID := proposal.ProposalId
@@ -542,7 +543,7 @@ func (suite *TallyTestSuite) TestTallyOnlyValidatorsNonVoter() {
 
 // 	_ = staking.EndBlocker(ctx, app.StakingKeeper)
 
-// 	tp := TestProposal
+// 	tp := test_helper.TestProposal
 // 	proposal, err := app.GovKeeper.SubmitProposal(ctx, tp)
 // 	require.NoError(t, err)
 // 	proposalID := proposal.ProposalId
@@ -603,7 +604,7 @@ func (suite *TallyTestSuite) TestTallyOnlyValidatorsNonVoter() {
 
 // 	_ = staking.EndBlocker(ctx, app.StakingKeeper)
 
-// 	tp := TestProposal
+// 	tp := test_helper.TestProposal
 // 	proposal, err := app.GovKeeper.SubmitProposal(ctx, tp)
 // 	require.NoError(t, err)
 // 	proposalID := proposal.ProposalId
@@ -690,7 +691,7 @@ func (suite *TallyTestSuite) TestTallyOnlyValidatorsNonVoter() {
 
 // 	_ = staking.EndBlocker(ctx, app.StakingKeeper)
 
-// 	tp := TestProposal
+// 	tp := test_helper.TestProposal
 // 	proposal, err := app.GovKeeper.SubmitProposal(ctx, tp)
 // 	require.NoError(t, err)
 // 	proposalID := proposal.ProposalId
@@ -755,7 +756,7 @@ func (suite *TallyTestSuite) TestTallyOnlyValidatorsNonVoter() {
 // 	require.NoError(t, err)
 // 	app.StakingKeeper.Jail(ctx, sdk.ConsAddress(consAddr.Bytes()))
 
-// 	tp := TestProposal
+// 	tp := test_helper.TestProposal
 // 	proposal, err := app.GovKeeper.SubmitProposal(ctx, tp)
 // 	require.NoError(t, err)
 // 	proposalID := proposal.ProposalId
@@ -810,7 +811,7 @@ func (suite *TallyTestSuite) TestTallyOnlyValidatorsNonVoter() {
 // 	_, err := app.StakingKeeper.Delegate(ctx, accounts[0].Address, delTokens, stakingtypes.Unbonded, val2, true)
 // 	require.NoError(t, err)
 
-// 	tp := TestProposal
+// 	tp := test_helper.TestProposal
 // 	proposal, err := app.GovKeeper.SubmitProposal(ctx, tp)
 // 	require.NoError(t, err)
 // 	proposalID := proposal.ProposalId

@@ -17,6 +17,7 @@ import (
 	// banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/x/gov"
+	"github.com/maticnetwork/heimdall/x/gov/test_helper"
 	"github.com/maticnetwork/heimdall/x/gov/types"
 )
 
@@ -30,7 +31,7 @@ type GenesisTestSuite struct {
 
 // SetupTest setup necessary things for genesis test
 func (suite *GenesisTestSuite) SetupTest() {
-	suite.app, suite.ctx, _ = createTestApp(false)
+	suite.app, suite.ctx, _ = test_helper.CreateTestApp(false)
 }
 
 // TestGenesisTestSuite

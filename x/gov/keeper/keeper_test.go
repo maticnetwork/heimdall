@@ -8,6 +8,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/app"
+	"github.com/maticnetwork/heimdall/x/gov/test_helper"
 	"github.com/maticnetwork/heimdall/x/gov/types"
 )
 
@@ -20,7 +21,7 @@ type KeeperTestSuite struct {
 }
 
 func (suite *KeeperTestSuite) SetupTest() {
-	suite.app, suite.ctx, _ = createTestApp(false)
+	suite.app, suite.ctx, _ = test_helper.CreateTestApp(false)
 }
 
 func TestKeeperTestSuite(t *testing.T) {
@@ -30,7 +31,7 @@ func TestKeeperTestSuite(t *testing.T) {
 func (suite *KeeperTestSuite) TestIncrementProposalNumber() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 
-	tp := TestProposal
+	tp := test_helper.TestProposal
 	_, err := app.GovKeeper.SubmitProposal(ctx, tp)
 	require.NoError(t, err)
 	_, err = app.GovKeeper.SubmitProposal(ctx, tp)
@@ -51,7 +52,7 @@ func (suite *KeeperTestSuite) TestProposalQueues() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 
 	// create test proposals
-	tp := TestProposal
+	tp := test_helper.TestProposal
 	proposal, err := app.GovKeeper.SubmitProposal(ctx, tp)
 	require.NoError(t, err)
 

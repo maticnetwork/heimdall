@@ -9,10 +9,12 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/maticnetwork/heimdall/app"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmTypesCommon "github.com/maticnetwork/heimdall/types/common"
 	"github.com/maticnetwork/heimdall/types/simulation"
+	"github.com/maticnetwork/heimdall/x/gov/test_helper"
 	"github.com/maticnetwork/heimdall/x/gov/types"
 )
 
@@ -25,7 +27,7 @@ type VoteTestSuite struct {
 }
 
 func (suite *VoteTestSuite) SetupTest() {
-	suite.app, suite.ctx, _ = createTestApp(false)
+	suite.app, suite.ctx, _ = test_helper.CreateTestApp(false)
 }
 
 func TestVoteTestSuite(t *testing.T) {
@@ -60,7 +62,7 @@ func (suite *VoteTestSuite) TestVotes() {
 		}
 	}
 
-	tp := TestProposal
+	tp := test_helper.TestProposal
 	proposal, err := app.GovKeeper.SubmitProposal(ctx, tp)
 	require.NoError(t, err)
 	proposalID := proposal.ProposalId

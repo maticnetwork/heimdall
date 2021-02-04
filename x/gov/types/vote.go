@@ -73,7 +73,7 @@ func ValidVoteOption(option VoteOption) bool {
 	return false
 }
 
-func (Votes) Reset()        { _ = []Vote{} }
+func (Votes) Reset()          { _ = []Vote{} }
 func (v Votes) ProtoMessage() {}
 
 // Marshal needed for protobuf compatibility.
