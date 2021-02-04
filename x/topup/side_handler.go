@@ -21,12 +21,6 @@ import (
 	tmTypes "github.com/tendermint/tendermint/types"
 )
 
-var (
-	// DefaultFeeInMatic represents default fee in matic
-	DefaultFeeInMatic     = big.NewInt(10).Exp(big.NewInt(10), big.NewInt(15), nil)
-	DefaultFeeWantedPerTx = sdk.Coins{sdk.Coin{Denom: types.FeeToken, Amount: sdk.NewIntFromBigInt(DefaultFeeInMatic)}}
-)
-
 // NewSideTxHandler returns a side handler for "topup" type messages.
 func NewSideTxHandler(k keeper.Keeper, contractCaller helper.IContractCaller) hmTypes.SideTxHandler {
 	return func(ctx sdk.Context, msg sdk.Msg) abci.ResponseDeliverSideTx {
@@ -147,7 +141,7 @@ func PostHandleMsgTopup(ctx sdk.Context, k keeper.Keeper, msg types.MsgTopup, si
 
 	// transfer fees to sender (proposer)
 	fromAddr, _ := sdk.AccAddressFromHex(msg.FromAddress)
-	if err := k.Bk.SendCoins(ctx, userAddr, fromAddr, DefaultFeeWantedPerTx); err != nil {
+	if err := k.Bk.SendCoins(ctx, userAddr, fromAddr, topupAmount); err != nil {
 		return nil, err
 	}
 
