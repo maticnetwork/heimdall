@@ -86,7 +86,7 @@ type Config struct {
 // DefaultConfig returns a sane default configuration suitable for nearly all
 // testing requirements.
 func DefaultConfig() Config {
-	encCfg := params.MakeEncodingConfig()
+	encCfg := app.MakeEncodingConfig()
 
 	return Config{
 		Codec:             encCfg.Marshaler,
@@ -233,7 +233,7 @@ func New(t *testing.T, cfg Config) *Network {
 		nodeDirName := fmt.Sprintf("node%d", i)
 		nodeDir := filepath.Join(network.BaseDir, nodeDirName, "heimdalld")
 		clientDir := filepath.Join(network.BaseDir, nodeDirName, "heimdalld")
-		//gentxsDir := filepath.Join(network.BaseDir, "gentxs")
+		gentxsDir := filepath.Join(network.BaseDir, "gentxs")
 
 		require.NoError(t, os.MkdirAll(filepath.Join(nodeDir, "config"), 0755))
 		require.NoError(t, os.MkdirAll(clientDir, 0755))
@@ -283,26 +283,21 @@ func New(t *testing.T, cfg Config) *Network {
 		genBalances = append(genBalances, banktypes.Balance{Address: addr.String(), Coins: balances.Sort()})
 		genAccounts = append(genAccounts, authtypes.NewBaseAccount(addr, nil, 0, 0))
 
-		//newValMsg := hmtypes.NewValidator(
-		//	hmTypes.ValidatorID(i),
-		//	0,
-		//	0,
-		//	0,
-		//	100,
-		//	common.NewPubKeyFromHex(valPubKeys[i].String()),
-		//	addr,
-		//	)
 		//createValMsg := stakingtypes.NewMsgValidatorJoin(
 		//	addr,
 		//	uint64(i),
 		//	0,
-		//	sdk.Int(uint64(0)),
+		//	sdk.NewIntFromUint64(uint64(1000)),//sdk.Int(uint64(0)),
 		//	common.NewPubKeyFromHex(valPubKeys[i].String()),
 		//	common.HexToHeimdallHash("test"),
 		//	0,
 		//	0,
 		//	0,
 		//)
+
+		//commission, err := sdk.NewDecFromStr("0.5")
+		//require.NoError(t, err)
+		//
 		//createValMsg, err := stakingtypes.NewMsgCreateValidator(
 		//	sdk.ValAddress(addr),
 		//	valPubKeys[i],
@@ -311,7 +306,7 @@ func New(t *testing.T, cfg Config) *Network {
 		//	stakingtypes.NewCommissionRates(commission, sdk.OneDec(), sdk.OneDec()),
 		//	sdk.OneInt(),
 		//)
-		require.NoError(t, err)
+		//require.NoError(t, err)
 
 		p2pURL, err := url.Parse(p2pAddr)
 		require.NoError(t, err)
@@ -334,9 +329,9 @@ func New(t *testing.T, cfg Config) *Network {
 		err = tx.Sign(txFactory, nodeDirName, txBuilder)
 		require.NoError(t, err)
 
-		//txBz, err := cfg.TxConfig.TxJSONEncoder()(txBuilder.GetTx())
-		//require.NoError(t, err)
-		//require.NoError(t, writeFile(fmt.Sprintf("%v.json", nodeDirName), gentxsDir, txBz))
+		txBz, err := cfg.TxConfig.TxJSONEncoder()(txBuilder.GetTx())
+		require.NoError(t, err)
+		require.NoError(t, writeFile(fmt.Sprintf("%v.json", nodeDirName), gentxsDir, txBz))
 
 		srvconfig.WriteConfigFile(filepath.Join(nodeDir, "config/app.toml"), appCfg)
 
