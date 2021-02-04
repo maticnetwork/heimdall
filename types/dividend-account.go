@@ -97,5 +97,5 @@ func convertTo32(input []byte) (output [32]byte, err error) {
 
 //Equals tests for equality of two Contents
 func (da DividendAccount) Equals(other merkletree.Content) (bool, error) {
-	return da.User == other.(DividendAccount).User, nil
+	return da.User == other.(*DividendAccount).User, nil
 }

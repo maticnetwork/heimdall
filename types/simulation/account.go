@@ -1,12 +1,14 @@
 package simulation
 
 import (
+	"math/big"
 	"math/rand"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 // Account contains a privkey, pubkey, address tuple
@@ -87,4 +89,11 @@ func RandomFees(r *rand.Rand, ctx sdk.Context, spendableCoins sdk.Coins) (sdk.Co
 	fees := sdk.NewCoins(sdk.NewCoin(randCoin.Denom, amt))
 
 	return fees, nil
+}
+
+// RandomFeeCoins returns random fee coins
+func RandomFeeCoins() sdk.Coins {
+	base, _ := big.NewInt(0).SetString("1000000000000000000", 10)
+	amt := big.NewInt(0).Mul(big.NewInt(0).SetInt64(int64(rand.Intn(1000000))), base)
+	return sdk.Coins{sdk.Coin{Denom: hmTypes.FeeToken, Amount: sdk.NewIntFromBigInt(amt)}}
 }
