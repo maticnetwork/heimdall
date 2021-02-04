@@ -343,7 +343,7 @@ func QuerySideTxRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		// extract side-tx signs from votes
 		sigs, err := helper.GetSideTxSigs(tx.Tx.Hash(), sideTxData, preCommits)
 		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, "Error while fetching sigs")
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, "Error while fetching sigs")
 			return
 		}
 
