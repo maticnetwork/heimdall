@@ -28,16 +28,14 @@ import (
 type HandlerTestSuite struct {
 	suite.Suite
 
-	app    *app.HeimdallApp
-	ctx    sdk.Context
-	cliCtx client.Context
-	// querier        sdk.Querier
+	app            *app.HeimdallApp
+	ctx            sdk.Context
+	cliCtx         client.Context
 	handler        sdk.Handler
 	contractCaller mocks.IContractCaller
 	chainParams    chainTypes.Params
 }
 
-// SetupTest setup all necessary things for querier tesing
 func (suite *HandlerTestSuite) SetupTest() {
 	suite.app, suite.ctx, suite.cliCtx = test_helper.CreateTestApp(false)
 
@@ -60,7 +58,7 @@ func (suite *HandlerTestSuite) TestHandleMsgUnknown() {
 }
 
 func (suite *HandlerTestSuite) TestHandleMsgTopup() {
-	t, app, ctx := suite.T(), suite.app, suite.ctx
+	t, initApp, ctx := suite.T(), suite.app, suite.ctx
 	s1 := rand.NewSource(time.Now().UnixNano())
 	r1 := rand.New(s1)
 
@@ -70,16 +68,16 @@ func (suite *HandlerTestSuite) TestHandleMsgTopup() {
 
 	_, _, addr := testdata.KeyTestPubAddr()
 	fee := sdk.NewInt(100000000000000000)
-	generated_address, _ := sdk.AccAddressFromHex(addr.String())
+	generatedAddress, _ := sdk.AccAddressFromHex(addr.String())
 
 	t.Run("Success", func(t *testing.T) {
 		msg := types.NewMsgTopup(
-			generated_address,
-			generated_address,
+			generatedAddress,
+			generatedAddress,
 			fee,
 			txHash,
-			uint64(logIndex),
-			uint64(blockNumber),
+			logIndex,
+			blockNumber,
 		)
 
 		// handler
@@ -90,12 +88,12 @@ func (suite *HandlerTestSuite) TestHandleMsgTopup() {
 
 	t.Run("OlderTx", func(t *testing.T) {
 		msg := types.NewMsgTopup(
-			generated_address,
-			generated_address,
+			generatedAddress,
+			generatedAddress,
 			fee,
 			txHash,
-			uint64(logIndex),
-			uint64(blockNumber),
+			logIndex,
+			blockNumber,
 		)
 
 		// sequence id
@@ -104,7 +102,7 @@ func (suite *HandlerTestSuite) TestHandleMsgTopup() {
 		sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))
 
 		// set sequence
-		app.TopupKeeper.SetTopupSequence(ctx, sequence.String())
+		initApp.TopupKeeper.SetTopupSequence(ctx, sequence.String())
 
 		// handler
 		result, err := suite.handler(ctx, &msg)
@@ -116,7 +114,7 @@ func (suite *HandlerTestSuite) TestHandleMsgTopup() {
 }
 
 func (suite *HandlerTestSuite) TestHandleMsgWithdrawFee() {
-	t, app, ctx := suite.T(), suite.app, suite.ctx
+	t, initApp, ctx := suite.T(), suite.app, suite.ctx
 
 	t.Run("FullAmount", func(t *testing.T) {
 		_, _, addr := testdata.KeyTestPubAddr()
@@ -135,13 +133,13 @@ func (suite *HandlerTestSuite) TestHandleMsgWithdrawFee() {
 
 		// set coins
 		coins := simulation.RandomFeeCoins()
-		acc1 := app.AccountKeeper.NewAccountWithAddress(ctx, tAddr)
-		app.AccountKeeper.SetAccount(ctx, acc1)
-		err = app.BankKeeper.SetBalances(ctx, tAddr, coins)
+		acc1 := initApp.AccountKeeper.NewAccountWithAddress(ctx, tAddr)
+		initApp.AccountKeeper.SetAccount(ctx, acc1)
+		err = initApp.BankKeeper.SetBalances(ctx, tAddr, coins)
 		require.Nil(t, err)
 
 		// check if coins > 0
-		require.True(t, app.BankKeeper.GetAllBalances(ctx, tAddr).AmountOf(hmTypes.FeeToken).GT(sdk.NewInt(0)))
+		require.True(t, initApp.BankKeeper.GetAllBalances(ctx, tAddr).AmountOf(hmTypes.FeeToken).GT(sdk.NewInt(0)))
 
 		// execute handler
 		result, err = suite.handler(ctx, &msg)
@@ -150,9 +148,7 @@ func (suite *HandlerTestSuite) TestHandleMsgWithdrawFee() {
 		require.Greater(t, len(result.Events), 0)
 
 		// check if account has zero
-		// acc1 = app.AccountKeeper.GetAccount(ctx, tAddr)
-		require.True(t, app.BankKeeper.GetAllBalances(ctx, tAddr).AmountOf(hmTypes.FeeToken).IsZero())
-		// require.True(t, acc1.GetCoins().AmountOf(hmTypes.FeeToken).IsZero())
+		require.True(t, initApp.BankKeeper.GetAllBalances(ctx, tAddr).AmountOf(hmTypes.FeeToken).IsZero())
 	})
 
 	t.Run("PartialAmount", func(t *testing.T) {
@@ -161,13 +157,13 @@ func (suite *HandlerTestSuite) TestHandleMsgWithdrawFee() {
 		require.Nil(t, err)
 		// set coins
 		coins := simulation.RandomFeeCoins()
-		acc1 := app.AccountKeeper.NewAccountWithAddress(ctx, tAddr)
-		app.AccountKeeper.SetAccount(ctx, acc1)
-		err = app.BankKeeper.SetBalances(ctx, tAddr, coins)
+		acc1 := initApp.AccountKeeper.NewAccountWithAddress(ctx, tAddr)
+		initApp.AccountKeeper.SetAccount(ctx, acc1)
+		err = initApp.BankKeeper.SetBalances(ctx, tAddr, coins)
 		require.Nil(t, err)
 
 		// check if coins > 0
-		require.True(t, app.BankKeeper.GetAllBalances(ctx, tAddr).AmountOf(hmTypes.FeeToken).GT(sdk.NewInt(0)))
+		require.True(t, initApp.BankKeeper.GetAllBalances(ctx, tAddr).AmountOf(hmTypes.FeeToken).GT(sdk.NewInt(0)))
 
 		m, _ := sdk.NewIntFromString("2")
 		coins = coins.Sub(sdk.Coins{sdk.Coin{Denom: hmTypes.FeeToken, Amount: m}})
@@ -183,9 +179,7 @@ func (suite *HandlerTestSuite) TestHandleMsgWithdrawFee() {
 		require.Greater(t, len(result.Events), 0)
 
 		// check if account has 1 tok
-		// acc1 = app.AccountKeeper.GetAccount(ctx, tAddr)
-		require.True(t, app.BankKeeper.GetAllBalances(ctx, tAddr).AmountOf(hmTypes.FeeToken).Equal(m))
-
+		require.True(t, initApp.BankKeeper.GetAllBalances(ctx, tAddr).AmountOf(hmTypes.FeeToken).Equal(m))
 	})
 
 	t.Run("NotEnoughAmount", func(t *testing.T) {
@@ -194,9 +188,9 @@ func (suite *HandlerTestSuite) TestHandleMsgWithdrawFee() {
 		require.Nil(t, err)
 		// set coins
 		coins := simulation.RandomFeeCoins()
-		acc1 := app.AccountKeeper.NewAccountWithAddress(ctx, tAddr)
-		app.AccountKeeper.SetAccount(ctx, acc1)
-		err = app.BankKeeper.SetBalances(ctx, tAddr, coins)
+		acc1 := initApp.AccountKeeper.NewAccountWithAddress(ctx, tAddr)
+		initApp.AccountKeeper.SetAccount(ctx, acc1)
+		err = initApp.BankKeeper.SetBalances(ctx, tAddr, coins)
 		require.Nil(t, err)
 
 		m, _ := sdk.NewIntFromString("1")

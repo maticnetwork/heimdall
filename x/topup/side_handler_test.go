@@ -49,6 +49,10 @@ type SideHandlerTestSuite struct {
 	r              *rand.Rand
 }
 
+var (
+	SuccessCode = uint32(0)
+)
+
 func (suite *SideHandlerTestSuite) SetupTest() {
 	suite.app, suite.ctx, _ = test_helper.CreateTestApp(false)
 
@@ -86,15 +90,14 @@ func createAccount() (cryptotypes.PrivKey, cryptotypes.PubKey, sdk.AccAddress) {
 }
 
 func (suite *SideHandlerTestSuite) TestSideHandleMsgTopup() {
-	t, app, ctx := suite.T(), suite.app, suite.ctx
-	chainParams := app.ChainKeeper.GetParams(suite.ctx)
+	t, initApp, ctx := suite.T(), suite.app, suite.ctx
+	chainParams := initApp.ChainKeeper.GetParams(suite.ctx)
 
 	_, _, generatedAddress1 := createAccount()
 	_, _, addr2 := createAccount()
 
 	t.Run("Success", func(t *testing.T) {
 		suite.contractCaller = mocks.IContractCaller{}
-
 		logIndex := uint64(10)
 		blockNumber := uint64(599)
 		txReceipt := &ethTypes.Receipt{
@@ -134,19 +137,17 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgTopup() {
 
 		// execute handler
 		result := suite.sideHandler(ctx, &msg)
-		fmt.Printf("result %+v\n", result)
 
-		require.Equal(t, uint32(0), result.Code, "Side tx handler should be success")
+		require.Equal(t, SuccessCode, result.Code, "Side tx handler should be success")
 		require.Equal(t, abci.SideTxResultType_YES, result.Result, "Result should be `yes`")
 
 		// there should be no stored event record
-		ok := app.TopupKeeper.HasTopupSequence(ctx, sequence.String())
+		ok := initApp.TopupKeeper.HasTopupSequence(ctx, sequence.String())
 		require.False(t, ok)
 	})
 
 	t.Run("NoReceipt", func(t *testing.T) {
 		suite.contractCaller = mocks.IContractCaller{}
-
 		logIndex := uint64(10)
 		blockNumber := uint64(599)
 		txHash := hmCommonTypes.HexToHeimdallHash("success hash")
@@ -169,15 +170,14 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgTopup() {
 
 		// execute handler
 		result := suite.sideHandler(ctx, &msg)
-
-		require.NotEqual(t, uint32(0), result.Code, "Side tx handler should fail")
+		fmt.Printf("fee result %+v\n", result)
+		require.NotEqual(t, SuccessCode, result.Code, "Side tx handler should fail")
 		require.Equal(t, abci.SideTxResultType_SKIP, result.Result, "Result should be `skip`")
 		require.Equal(t, hmCommon.ErrWaitForConfirmation.ABCICode(), result.Code)
 	})
 
 	t.Run("NoLog", func(t *testing.T) {
 		suite.contractCaller = mocks.IContractCaller{}
-
 		logIndex := uint64(10)
 		blockNumber := uint64(599)
 		txReceipt := &ethTypes.Receipt{
@@ -205,14 +205,13 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgTopup() {
 
 		// execute handler
 		result := suite.sideHandler(ctx, &msg)
-		require.NotEqual(t, uint32(0), result.Code, "Side tx handler should fail")
+		require.NotEqual(t, SuccessCode, result.Code, "Side tx handler should fail")
 		require.Equal(t, abci.SideTxResultType_SKIP, result.Result, "Result should be `skip`")
 		require.Equal(t, hmCommon.ErrDecodeEvent.ABCICode(), result.Code)
 	})
 
 	t.Run("BlockMismatch", func(t *testing.T) {
 		suite.contractCaller = mocks.IContractCaller{}
-
 		logIndex := uint64(10)
 		blockNumber := uint64(599)
 		txReceipt := &ethTypes.Receipt{
@@ -247,14 +246,14 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgTopup() {
 		result := suite.sideHandler(ctx, &msg)
 		fmt.Printf("Result %+v\n", result)
 
-		require.NotEqual(t, uint32(0), result.Code, "Side tx handler should fail")
+		fmt.Printf("result %+v\n", result)
+		require.NotEqual(t, SuccessCode, result.Code, "Side tx handler should fail")
 		require.Equal(t, abci.SideTxResultType_SKIP, result.Result, "Result should be `skip`")
 		require.Equal(t, hmCommon.ErrInvalidMsg.ABCICode(), result.Code)
 	})
 
 	t.Run("UserMismatch", func(t *testing.T) {
 		suite.contractCaller = mocks.IContractCaller{}
-
 		logIndex := uint64(10)
 		blockNumber := uint64(599)
 		txReceipt := &ethTypes.Receipt{
@@ -287,14 +286,13 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgTopup() {
 
 		// execute handler
 		result := suite.sideHandler(ctx, &msg)
-		require.NotEqual(t, uint32(0), result.Code, "Side tx handler should fail")
+		require.NotEqual(t, SuccessCode, result.Code, "Side tx handler should fail")
 		require.Equal(t, abci.SideTxResultType_SKIP, result.Result, "Result should be `skip`")
 		require.Equal(t, hmCommon.ErrInvalidMsg.ABCICode(), result.Code)
 	})
 
 	t.Run("FeeMismatch", func(t *testing.T) {
 		suite.contractCaller = mocks.IContractCaller{}
-
 		logIndex := uint64(10)
 		blockNumber := uint64(599)
 		txReceipt := &ethTypes.Receipt{
@@ -327,7 +325,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgTopup() {
 
 		// execute handler
 		result := suite.sideHandler(ctx, &msg)
-		require.NotEqual(t, uint32(0), result.Code, "Side tx handler should fail")
+		require.NotEqual(t, SuccessCode, result.Code, "Side tx handler should fail")
 		require.Equal(t, abci.SideTxResultType_SKIP, result.Result, "Result should be `skip`")
 		require.Equal(t, hmCommon.ErrInvalidMsg.ABCICode(), result.Code)
 	})
@@ -343,7 +341,7 @@ func (suite *SideHandlerTestSuite) TestPostHandler() {
 }
 
 func (suite *SideHandlerTestSuite) TestPostHandleMsgTopup() {
-	t, app, ctx, r := suite.T(), suite.app, suite.ctx, suite.r
+	t, initApp, ctx, r := suite.T(), suite.app, suite.ctx, suite.r
 
 	_, _, generatedAddress1 := createAccount()
 	_, _, generatedAddress2 := createAccount()
@@ -377,11 +375,11 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgTopup() {
 		require.Nil(t, result)
 		require.Equal(t, hmCommon.ErrSideTxValidation, err)
 		// there should be no stored sequence
-		ok := app.TopupKeeper.HasTopupSequence(ctx, sequence.String())
+		ok := initApp.TopupKeeper.HasTopupSequence(ctx, sequence.String())
 		require.False(t, ok)
 
 		// account coins should be empty
-		acc1 := app.AccountKeeper.GetAccount(ctx, generatedAddress1)
+		acc1 := initApp.AccountKeeper.GetAccount(ctx, generatedAddress1)
 		require.Nil(t, acc1)
 	})
 
@@ -411,14 +409,14 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgTopup() {
 		require.Greater(t, len(result.Events), 0, "Appropriate error should be emitted for successful post-tx")
 
 		// there should be stored sequence
-		ok := app.TopupKeeper.HasTopupSequence(ctx, sequence.String())
+		ok := initApp.TopupKeeper.HasTopupSequence(ctx, sequence.String())
 		require.True(t, ok)
 
 		// account coins should be empty
-		acc1 := app.AccountKeeper.GetAccount(ctx, generatedAddress1)
+		acc1 := initApp.AccountKeeper.GetAccount(ctx, generatedAddress1)
 		require.NotNil(t, acc1)
-		require.False(t, app.BankKeeper.GetAllBalances(ctx, generatedAddress1).Empty())
-		require.True(t, app.BankKeeper.GetAllBalances(ctx, generatedAddress1).IsEqual(coins))
+		require.False(t, initApp.BankKeeper.GetAllBalances(ctx, generatedAddress1).Empty())
+		require.True(t, initApp.BankKeeper.GetAllBalances(ctx, generatedAddress1).IsEqual(coins))
 	})
 
 	t.Run("WithProposer", func(t *testing.T) {
@@ -453,15 +451,15 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgTopup() {
 		require.Greater(t, len(result.Events), 0, "Appropriate error should be emitted for successful post-tx")
 
 		// there should be stored sequence
-		ok := app.TopupKeeper.HasTopupSequence(ctx, sequence.String())
+		ok := initApp.TopupKeeper.HasTopupSequence(ctx, sequence.String())
 		require.True(t, ok)
 
 		// todo: we need to check this test cases with get account
 		// account coins should be empty
-		require.True(t, app.BankKeeper.GetBalance(ctx, generatedAddress3, types.FeeToken).IsZero())
-		require.False(t, app.BankKeeper.GetBalance(ctx, generatedAddress2, types.FeeToken).IsZero())
+		require.True(t, initApp.BankKeeper.GetBalance(ctx, generatedAddress3, types.FeeToken).IsZero())
+		require.False(t, initApp.BankKeeper.GetBalance(ctx, generatedAddress2, types.FeeToken).IsZero())
 
-		require.True(t, coins.IsEqual(app.BankKeeper.GetAllBalances(ctx, generatedAddress3).Add(app.BankKeeper.GetBalance(ctx, generatedAddress2, hmTypes.FeeToken)))) // for same proposer
+		require.True(t, coins.IsEqual(initApp.BankKeeper.GetAllBalances(ctx, generatedAddress3).Add(initApp.BankKeeper.GetBalance(ctx, generatedAddress2, hmTypes.FeeToken)))) // for same proposer
 	})
 
 	t.Run("Replay", func(t *testing.T) {
@@ -494,7 +492,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgTopup() {
 		require.Greater(t, len(result.Events), 0, "Appropriate error should be emitted for successful post-tx")
 
 		// there should be stored sequence
-		ok := app.TopupKeeper.HasTopupSequence(ctx, sequence.String())
+		ok := initApp.TopupKeeper.HasTopupSequence(ctx, sequence.String())
 		require.True(t, ok)
 
 		result, err = suite.postHandler(ctx, &msg, abci.SideTxResultType_YES)

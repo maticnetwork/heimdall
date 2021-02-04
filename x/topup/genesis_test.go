@@ -37,7 +37,7 @@ func TestGenesisTestSuite(t *testing.T) {
 
 //TestInitExportGenesis test import and export genesis state
 func (suite *GenesisTestSuite) TestInitExportGenesis() {
-	t, app, ctx := suite.T(), suite.app, suite.ctx
+	t, initApp, ctx := suite.T(), suite.app, suite.ctx
 	s1 := rand.NewSource(time.Now().UnixNano())
 	r1 := rand.New(s1)
 
@@ -49,9 +49,9 @@ func (suite *GenesisTestSuite) TestInitExportGenesis() {
 	genesisState := types.GenesisState{
 		TopupSequences: topupSequences,
 	}
-	topup.InitGenesis(ctx, app.TopupKeeper, genesisState)
+	topup.InitGenesis(ctx, initApp.TopupKeeper, genesisState)
 
-	actualParams := topup.ExportGenesis(ctx, app.TopupKeeper)
+	actualParams := topup.ExportGenesis(ctx, initApp.TopupKeeper)
 
 	require.LessOrEqual(t, len(topupSequences), len(actualParams.TopupSequences))
 }
