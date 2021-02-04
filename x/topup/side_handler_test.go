@@ -346,8 +346,8 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgTopup() {
 	t, app, ctx, r := suite.T(), suite.app, suite.ctx, suite.r
 
 	_, _, generatedAddress1 := createAccount()
-	//_, _, generatedAddress2 := createAccount()
-	//_, _, generatedAddress3 := createAccount()
+	_, _, generatedAddress2 := createAccount()
+	_, _, generatedAddress3 := createAccount()
 
 	logIndex := r.Uint64()
 	blockNumber := r.Uint64()
@@ -416,74 +416,53 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgTopup() {
 
 		// account coins should be empty
 		acc1 := app.AccountKeeper.GetAccount(ctx, generatedAddress1)
-		fmt.Printf("Acc1 %+v\n", acc1)
 		require.NotNil(t, acc1)
-
-		// require.False(t, acc1.GetCoins().Empty())
 		require.False(t, app.BankKeeper.GetAllBalances(ctx, generatedAddress1).Empty())
-
-		// require.True(t, acc1.GetCoins().IsEqual(coins)) // for same proposer
 		require.True(t, app.BankKeeper.GetAllBalances(ctx, generatedAddress1).IsEqual(coins))
 	})
 
-	//t.Run("WithProposer", func(t *testing.T) {
-	//	logIndex := r.Uint64()
-	//	blockNumber := r.Uint64()
-	//	txHash := hmCommonTypes.HexToHeimdallHash("hash with proposer")
-	//
-	//	// set coins
-	//	coins := simulation.RandomFeeCoins()
-	//
-	//	// topup msg
-	//	msg := types.NewMsgTopup(
-	//		generatedAddress1, // different proposer
-	//		generatedAddress2,
-	//		coins.AmountOf(hmTypes.FeeToken),
-	//		txHash,
-	//		logIndex,
-	//		blockNumber,
-	//	)
-	//
-	//	// check if incoming tx is older
-	//	bn := new(big.Int).SetUint64(msg.BlockNumber)
-	//	sequence := new(big.Int).Mul(bn, big.NewInt(hmTypes.DefaultLogIndexUnit))
-	//	sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))
-	//
-	//	result, err := suite.postHandler(ctx, &msg, abci.SideTxResultType_YES)
-	//
-	//	// require.True(t, result.IsOK(), "Post handler should succeed")
-	//	require.NoError(t, err)
-	//	require.NotNil(t, result)
-	//
-	//	require.Greater(t, len(result.Events), 0, "Appropriate error should be emitted for successful post-tx")
-	//
-	//	// there should be stored sequence
-	//	ok := app.TopupKeeper.HasTopupSequence(ctx, sequence.String())
-	//	require.True(t, ok)
-	//
-	//	accounts := app.AccountKeeper.GetAllAccounts(ctx)
-	//	fmt.Println("total ", len(accounts))
-	//	for i := range accounts {
-	//		fmt.Printf("prev %+v\n", accounts[i])
-	//	}
-	//
-	//	// account coins should not be empty
-	//	acc2 := app.AccountKeeper.GetAccount(ctx, generatedAddress2)
-	//	fmt.Printf("acc2 %+v\n", acc2)
-	//	require.NotNil(t, acc2)
-	//	require.False(t, app.BankKeeper.GetAllBalances(ctx, generatedAddress2).Empty())
-	//
-	//	// account coins should be empty
-	//	acc3 := app.AccountKeeper.GetAccount(ctx, generatedAddress1)
-	//	fmt.Printf("acc3 addr %+v\n", generatedAddress1)
-	//	fmt.Printf("acc3 %+v\n", acc3)
-	//	require.NotNil(t, acc3)
-	//	require.False(t, app.BankKeeper.GetAllBalances(ctx, generatedAddress1).Empty())
-	//
-	//	// check coins = acc1.coins + acc2.coins
-	//	// require.True(t, coins.IsEqual(acc3.GetCoins().Add(acc2.GetCoins()))) // for same proposer
-	//	require.True(t, coins.IsEqual(app.BankKeeper.GetAllBalances(ctx, generatedAddress3).Add(app.BankKeeper.GetBalance(ctx, generatedAddress2, hmTypes.FeeToken)))) // for same proposer
-	//})
+	t.Run("WithProposer", func(t *testing.T) {
+		logIndex := r.Uint64()
+		blockNumber := r.Uint64()
+		txHash := hmCommonTypes.HexToHeimdallHash("hash with proposer")
+
+		// set coins
+		coins := simulation.RandomFeeCoins()
+
+		// topup msg
+		msg := types.NewMsgTopup(
+			generatedAddress2, // different proposer
+			generatedAddress3,
+			coins.AmountOf(hmTypes.FeeToken),
+			txHash,
+			logIndex,
+			blockNumber,
+		)
+
+		// check if incoming tx is older
+		bn := new(big.Int).SetUint64(msg.BlockNumber)
+		sequence := new(big.Int).Mul(bn, big.NewInt(hmTypes.DefaultLogIndexUnit))
+		sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))
+
+		result, err := suite.postHandler(ctx, &msg, abci.SideTxResultType_YES)
+
+		// require.True(t, result.IsOK(), "Post handler should succeed")
+		require.NoError(t, err)
+		require.NotNil(t, result)
+
+		require.Greater(t, len(result.Events), 0, "Appropriate error should be emitted for successful post-tx")
+
+		// there should be stored sequence
+		ok := app.TopupKeeper.HasTopupSequence(ctx, sequence.String())
+		require.True(t, ok)
+
+		// todo: we need to check this test cases with get account
+		// account coins should be empty
+		require.True(t, app.BankKeeper.GetBalance(ctx, generatedAddress3, types.FeeToken).IsZero())
+		require.False(t, app.BankKeeper.GetBalance(ctx, generatedAddress2, types.FeeToken).IsZero())
+
+		require.True(t, coins.IsEqual(app.BankKeeper.GetAllBalances(ctx, generatedAddress3).Add(app.BankKeeper.GetBalance(ctx, generatedAddress2, hmTypes.FeeToken)))) // for same proposer
+	})
 
 	t.Run("Replay", func(t *testing.T) {
 		logIndex := r.Uint64()
