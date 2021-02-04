@@ -145,7 +145,7 @@ func (k *Keeper) GetDividendAccountByAddress(ctx sdk.Context, address sdk.AccAdd
 
 	// Get DividendAccount key
 	store := ctx.KVStore(k.key)
-	key := GetDividendAccountMapKey(address.Bytes())
+	key := GetDividendAccountMapKey([]byte(address.String()))
 
 	// unmarshall dividend account and return
 	dividendAccount, err = hmTypes.UnMarshallDividendAccount(k.cdc, store.Get(key))
@@ -159,7 +159,7 @@ func (k *Keeper) GetDividendAccountByAddress(ctx sdk.Context, address sdk.AccAdd
 // CheckIfDividendAccountExists will return true if dividend account exists
 func (k *Keeper) CheckIfDividendAccountExists(ctx sdk.Context, userAddr sdk.AccAddress) (ok bool) {
 	store := ctx.KVStore(k.key)
-	key := GetDividendAccountMapKey(userAddr.Bytes())
+	key := GetDividendAccountMapKey([]byte(userAddr.String()))
 	return store.Has(key)
 }
 

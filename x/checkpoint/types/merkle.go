@@ -71,7 +71,8 @@ func GetAccountProof(dividendAccounts []*hmTypes.DividendAccount, userAddr sdk.A
 	index := uint64(0)
 	for i := 0; i < len(dividendAccounts); i++ {
 		list = append(list, dividendAccounts[i])
-		if sdk.AccAddress(dividendAccounts[i].User).Equals(userAddr) {
+		accAddr, _ := sdk.AccAddressFromHex(dividendAccounts[i].User)
+		if accAddr.Equals(userAddr) {
 			account = dividendAccounts[i]
 			index = uint64(i)
 		}

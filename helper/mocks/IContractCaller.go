@@ -311,11 +311,11 @@ func (_m *IContractCaller) DecodeValidatorStakeUpdateEvent(_a0 cosmos_sdktypes.A
 }
 
 // DecodeValidatorTopupFeesEvent provides a mock function with given fields: _a0, _a1, _a2
-func (_m *IContractCaller) DecodeValidatorTopupFeesEvent(_a0 common.Address, _a1 *types.Receipt, _a2 uint64) (*stakinginfo.StakinginfoTopUpFee, error) {
+func (_m *IContractCaller) DecodeValidatorTopupFeesEvent(_a0 cosmos_sdktypes.AccAddress, _a1 *types.Receipt, _a2 uint64) (*stakinginfo.StakinginfoTopUpFee, error) {
 	ret := _m.Called(_a0, _a1, _a2)
 
 	var r0 *stakinginfo.StakinginfoTopUpFee
-	if rf, ok := ret.Get(0).(func(common.Address, *types.Receipt, uint64) *stakinginfo.StakinginfoTopUpFee); ok {
+	if rf, ok := ret.Get(0).(func(cosmos_sdktypes.AccAddress, *types.Receipt, uint64) *stakinginfo.StakinginfoTopUpFee); ok {
 		r0 = rf(_a0, _a1, _a2)
 	} else {
 		if ret.Get(0) != nil {
@@ -324,7 +324,7 @@ func (_m *IContractCaller) DecodeValidatorTopupFeesEvent(_a0 common.Address, _a1
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(common.Address, *types.Receipt, uint64) error); ok {
+	if rf, ok := ret.Get(1).(func(cosmos_sdktypes.AccAddress, *types.Receipt, uint64) error); ok {
 		r1 = rf(_a0, _a1, _a2)
 	} else {
 		r1 = ret.Error(1)
