@@ -454,10 +454,16 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgTopup() {
 		ok := initApp.TopupKeeper.HasTopupSequence(ctx, sequence.String())
 		require.True(t, ok)
 
-		// todo: we need to check this test cases with get account
-		// account coins should be empty
-		require.True(t, initApp.BankKeeper.GetBalance(ctx, generatedAddress3, types.FeeToken).IsZero())
-		require.False(t, initApp.BankKeeper.GetBalance(ctx, generatedAddress2, types.FeeToken).IsZero())
+		initApp.AccountKeeper.SetAccount(ctx, initApp.AccountKeeper.NewAccountWithAddress(ctx, generatedAddress2))
+		initApp.AccountKeeper.SetAccount(ctx, initApp.AccountKeeper.NewAccountWithAddress(ctx, generatedAddress3))
+
+		acc2 := initApp.AccountKeeper.GetAccount(ctx, generatedAddress2)
+		require.NotNil(t, acc2)
+		require.False(t, initApp.BankKeeper.GetAllBalances(ctx, generatedAddress2).Empty())
+
+		acc3 := initApp.AccountKeeper.GetAccount(ctx, generatedAddress3)
+		require.NotNil(t, acc3)
+		require.True(t, initApp.BankKeeper.GetAllBalances(ctx, generatedAddress3).Empty())
 
 		require.True(t, coins.IsEqual(initApp.BankKeeper.GetAllBalances(ctx, generatedAddress3).Add(initApp.BankKeeper.GetBalance(ctx, generatedAddress2, hmTypes.FeeToken)))) // for same proposer
 	})
