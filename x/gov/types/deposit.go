@@ -53,5 +53,5 @@ func (d Deposit) Empty() bool {
 	return d.String() == Deposit{}.String()
 }
 
-func (v Deposits) Reset()        { v = []Deposit{} }
+func (Deposits) Reset()        { _ = []Deposit{} }
 func (v Deposits) ProtoMessage() {}

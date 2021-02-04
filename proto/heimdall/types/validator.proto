@@ -16,23 +16,25 @@ message ValidatorSet {
 
     repeated Validator validators         = 1;
     Validator          proposer           = 2;
-    int64              total_voting_power = 3 [(gogoproto.moretags) = "yaml:\"total_voting_power\""];
+    int64              total_voting_power = 3
+        [(gogoproto.moretags) = "yaml:\"total_voting_power\""];
 }
 
 message Validator {
     option (gogoproto.goproto_getters)  = false;
     option (gogoproto.goproto_stringer) = false;
 
-    ValidatorID ID                = 1;
-    uint64      start_epoch       = 2 [(gogoproto.moretags) = "yaml:\"start_epoch\""];
-    uint64      end_epoch         = 3 [(gogoproto.moretags) = "yaml:\"end_epoch\""];
-    uint64      nonce             = 4;
-    int64       voting_power      = 5 [(gogoproto.moretags) = "yaml:\"voting_power\""];
-    string      pub_key           = 6 [(gogoproto.moretags) = "yaml:\"pub_key\""];
-    string      signer            = 7;
-    string      last_updated      = 8 [(gogoproto.moretags) = "yaml:\"last_updated\""];
-    bool        jailed            = 9;
-    int64       proposer_priority = 10 [(gogoproto.moretags) = "yaml:\"proposer_priority\""];
+    ValidatorID ID          = 1;
+    uint64      start_epoch = 2 [(gogoproto.moretags) = "yaml:\"start_epoch\""];
+    uint64      end_epoch   = 3 [(gogoproto.moretags) = "yaml:\"end_epoch\""];
+    uint64      nonce       = 4;
+    int64  voting_power = 5 [(gogoproto.moretags) = "yaml:\"voting_power\""];
+    string pub_key      = 6 [(gogoproto.moretags) = "yaml:\"pub_key\""];
+    string signer       = 7;
+    string last_updated = 8 [(gogoproto.moretags) = "yaml:\"last_updated\""];
+    bool   jailed       = 9;
+    int64  proposer_priority = 10
+        [(gogoproto.moretags) = "yaml:\"proposer_priority\""];
 }
 
 enum ValidatorID {
@@ -44,7 +46,7 @@ enum ValidatorID {
 message MinimalVal {
     option (gogoproto.goproto_getters) = false;
 
-    ValidatorID ID           = 1;
-    uint64      voting_power = 2 [(gogoproto.moretags) = "yaml:\"voting_power\""];
-    string      signer       = 3;
+    ValidatorID ID      = 1;
+    uint64 voting_power = 2 [(gogoproto.moretags) = "yaml:\"voting_power\""];
+    string signer       = 3;
 }
