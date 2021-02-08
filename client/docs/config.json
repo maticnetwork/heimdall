@@ -7,14 +7,6 @@
     },
     "apis": [
         {
-            "url": "./.cache/tmp/swagger-gen/staking/v1beta1/query.swagger.json",
-            "operationIds": {
-                "rename": {
-                    "Params": "StakingParams"
-                }
-            }
-        },
-        {
             "url": "./client/docs/cosmos/auth/v1beta1/query.swagger.json",
             "operationIds": {
                 "rename": {
@@ -35,6 +27,54 @@
             "operationIds": {
                 "rename": {
                     "Params": "BankParams"
+                }
+            }
+        },
+        {
+            "url": "./.cache/tmp/swagger-gen/chainmanager/v1beta1/query.swagger.json",
+            "operationIds": {
+                "rename": {
+                    "Params": "ChainManagerParams"
+                }
+            }
+        },
+        {
+            "url": "./.cache/tmp/swagger-gen/checkpoint/v1beta/query.swagger.json",
+            "operationIds": {
+                "rename": {
+                    "Params": "CheckpointParams"
+                }
+            }
+        },
+        {
+            "url": "./.cache/tmp/swagger-gen/clerk/v1beta/query.swagger.json",
+            "operationIds": {
+                "rename": {
+                    "Params": "ClerkParams"
+                }
+            }
+        },
+        {
+            "url": "./.cache/tmp/swagger-gen/gov/v1beta/query.swagger.json",
+            "operationIds": {
+                "rename": {
+                    "Params": "GovParams"
+                }
+            }
+        },
+        {
+            "url": "./.cache/tmp/swagger-gen/staking/v1beta1/query.swagger.json",
+            "operationIds": {
+                "rename": {
+                    "Params": "StakingParams"
+                }
+            }
+        },
+        {
+            "url": "./.cache/tmp/swagger-gen/topup/v1beta/query.swagger.json",
+            "operationIds": {
+                "rename": {
+                    "Params": "TopupParams"
                 }
             }
         },
