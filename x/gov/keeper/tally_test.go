@@ -10,8 +10,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	// "github.com/maticnetwork/heimdall/x/staking"
-	// stakingtypes "github.com/maticnetwork/heimdall/x/staking/types"
 	"github.com/maticnetwork/heimdall/app"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmTypesCommon "github.com/maticnetwork/heimdall/types/common"
@@ -248,7 +246,6 @@ func (suite *TallyTestSuite) TestTallyOnlyValidators51Yes() {
 	_, burnDeposits, _ := app.GovKeeper.Tally(ctx, proposal)
 
 	require.False(t, burnDeposits)
-	// require.False(t, tallyResults.Equals(types.EmptyTallyResult()))
 }
 
 func (suite *TallyTestSuite) TestTallyOnlyValidatorsVetoed() {

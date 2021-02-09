@@ -88,7 +88,6 @@ func (suite *VoteTestSuite) TestVotes() {
 	require.NoError(t, app.GovKeeper.AddVote(ctx, proposalID, accounts[0].Address, types.OptionYes, validators[0].ID))
 	vote, found = app.GovKeeper.GetVote(ctx, proposalID, validators[0].ID)
 	require.True(t, found)
-	//require.Equal(t, accounts[0].Address.String(), vote.Voter)
 	require.Equal(t, proposalID, vote.ProposalId)
 	require.Equal(t, types.OptionYes, vote.Option)
 
@@ -96,7 +95,6 @@ func (suite *VoteTestSuite) TestVotes() {
 	require.NoError(t, app.GovKeeper.AddVote(ctx, proposalID, accounts[1].Address, types.OptionNoWithVeto, validators[1].ID))
 	vote, found = app.GovKeeper.GetVote(ctx, proposalID, validators[1].ID)
 	require.True(t, found)
-	//require.Equal(t, accounts[1].Address.String(), vote.Voter)
 	require.Equal(t, proposalID, vote.ProposalId)
 	require.Equal(t, types.OptionNoWithVeto, vote.Option)
 
@@ -105,10 +103,8 @@ func (suite *VoteTestSuite) TestVotes() {
 	votes := app.GovKeeper.GetAllVotes(ctx)
 	require.Len(t, votes, 2)
 	require.Equal(t, votes, app.GovKeeper.GetVotes(ctx, proposalID))
-	//require.Equal(t, accounts[0].Address.String(), votes[0].Voter)
 	require.Equal(t, proposalID, votes[0].ProposalId)
 	require.Equal(t, types.OptionYes, votes[0].Option)
-	//require.Equal(t, accounts[1].Address.String(), votes[1].Voter)
 	require.Equal(t, proposalID, votes[1].ProposalId)
 	require.Equal(t, types.OptionNoWithVeto, votes[1].Option)
 }

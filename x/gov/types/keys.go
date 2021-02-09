@@ -59,16 +59,11 @@ var (
 
 var lenTime = len(sdk.FormatTimeBytes(time.Now()))
 
-// // ProposalKey gets a specific proposal from the store
-// func ProposalKey(proposalID uint64) []byte {
-// 	bz := make([]byte, 8)
-// 	binary.LittleEndian.PutUint64(bz, proposalID)
-// 	return append(ProposalsKeyPrefix, bz...)
-// }
-
 // ProposalKey gets a specific proposal from the store
 func ProposalKey(proposalID uint64) []byte {
-	return append(ProposalsKeyPrefix, GetProposalIDBytes(proposalID)...)
+	bz := make([]byte, 8)
+	binary.LittleEndian.PutUint64(bz, proposalID)
+	return append(ProposalsKeyPrefix, bz...)
 }
 
 // GetProposalIDBytes returns the byte representation of the proposalID
