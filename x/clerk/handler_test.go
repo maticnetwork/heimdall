@@ -143,7 +143,6 @@ func (suite *HandlerTestSuite) TestHandleMsgEventRecordSequence() {
 	require.Equal(t, hCommon.ErrOldTx, err)
 }
 
-// TODO - Check this
 func (suite *HandlerTestSuite) TestHandleMsgEventRecordChainID() {
 	t, app, ctx, r := suite.T(), suite.app, suite.ctx, suite.r
 
