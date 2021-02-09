@@ -3,8 +3,8 @@ package gov_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/maticnetwork/heimdall/app"
