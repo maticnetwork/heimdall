@@ -103,7 +103,7 @@ func (keeper Keeper) GetAllDeposits(ctx sdk.Context) (deposits types.Deposits) {
 	return
 }
 
-// // RefundDeposits refunds and deletes all the deposits on a specific proposal
+// RefundDeposits refunds and deletes all the deposits on a specific proposal
 // func (keeper Keeper) RefundDeposits(ctx sdk.Context, proposalID uint64) {
 // 	store := ctx.KVStore(keeper.storeKey)
 

@@ -133,25 +133,4 @@ func (suite *DepositTestSuite) TestDeposits() {
 	proposal, ok = app.GovKeeper.GetProposal(ctx, proposalID)
 	require.True(t, ok)
 	require.True(t, proposal.VotingStartTime.Equal(ctx.BlockHeader().Time))
-
-	// TODO - Check this
-	// Test deposit iterator
-	// NOTE order of deposits is determined by the addresses
-	// deposits := app.GovKeeper.GetAllDeposits(ctx)
-	// require.Len(t, deposits, 2)
-	// require.Equal(t, deposits, app.GovKeeper.GetDeposits(ctx, proposalID))
-	// require.Equal(t, validators[0].ID, deposits[0].Depositor)
-	// require.Equal(t, fourStake.Add(fiveStake...), deposits[0].Amount)
-	// require.Equal(t, validators[1].ID, deposits[1].Depositor)
-	// require.Equal(t, fourStake, deposits[1].Amount)
-
-	// // Test Refund Deposits
-	// deposit, found = app.GovKeeper.GetDeposit(ctx, proposalID, validators[1].ID)
-	// require.True(t, found)
-	// require.Equal(t, fourStake, deposit.Amount)
-	// app.GovKeeper.RefundDeposits(ctx, proposalID)
-	// deposit, found = app.GovKeeper.GetDeposit(ctx, proposalID, validators[1].ID)
-	// require.False(t, found)
-	// require.Equal(t, addr0Initial, app.BankKeeper.GetAllBalances(ctx, accounts[0].Address))
-	// require.Equal(t, addr1Initial, app.BankKeeper.GetAllBalances(ctx, accounts[1].Address))
 }

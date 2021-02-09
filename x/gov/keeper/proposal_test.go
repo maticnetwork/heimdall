@@ -2,7 +2,7 @@ package keeper_test
 
 import (
 	"errors"
-	// "fmt"
+	"fmt"
 	"math/rand"
 	"strings"
 	"testing"
@@ -105,7 +105,7 @@ func (suite *ProposalTestSuite) TestGetProposalsFiltered() {
 	proposalID := uint64(1)
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 
-	status := []types.ProposalStatus{types.StatusDepositPeriod, types.StatusVotingPeriod}
+	status := []types.ProposalStatus{types.StatusDepositPeriod}
 
 	s1 := rand.NewSource(time.Now().UnixNano())
 	r1 := rand.New(s1)
@@ -117,7 +117,7 @@ func (suite *ProposalTestSuite) TestGetProposalsFiltered() {
 	for i := range validators {
 		// validator
 		validators[i] = hmTypes.NewValidator(
-			hmTypes.NewValidatorID(uint64(int64(i))),
+			hmTypes.NewValidatorID(uint64(int64(1))),
 			0,
 			0,
 			1,
@@ -127,9 +127,7 @@ func (suite *ProposalTestSuite) TestGetProposalsFiltered() {
 		)
 
 		err := app.StakingKeeper.AddValidator(ctx, *validators[i])
-		if err != nil {
-			t.Error("Error while adding validator to store", err)
-		}
+		require.NoError(t, err)
 	}
 
 	for _, s := range status {
@@ -148,37 +146,29 @@ func (suite *ProposalTestSuite) TestGetProposalsFiltered() {
 
 			app.GovKeeper.SetProposal(ctx, p)
 			proposalID++
+			app.GovKeeper.SetProposalID(ctx, proposalID)
 		}
 	}
 
-	// testCases := []struct {
-	// 	params             types.QueryProposalsParams
-	// 	expectedNumResults int
-	// }{
-	// 	{types.NewQueryProposalsParams(1, 50, types.StatusNil, nil, nil), 50},
-	// 	{types.NewQueryProposalsParams(1, 50, types.StatusDepositPeriod, nil, nil), 50},
-	// 	{types.NewQueryProposalsParams(1, 50, types.StatusVotingPeriod, nil, nil), 50},
-	// 	{types.NewQueryProposalsParams(1, 25, types.StatusNil, nil, nil), 25},
-	// 	{types.NewQueryProposalsParams(2, 25, types.StatusNil, nil, nil), 25},
-	// 	{types.NewQueryProposalsParams(1, 50, types.StatusRejected, nil, nil), 0},
-	// 	{types.NewQueryProposalsParams(1, 50, types.StatusNil, accounts[0].Address, nil), 50},
-	// 	{types.NewQueryProposalsParams(1, 50, types.StatusNil, nil, accounts[0].Address), 50},
-	// 	{types.NewQueryProposalsParams(1, 50, types.StatusNil, accounts[0].Address, accounts[0].Address), 50},
-	// 	{types.NewQueryProposalsParams(1, 50, types.StatusDepositPeriod, accounts[0].Address, accounts[0].Address), 25},
-	// 	{types.NewQueryProposalsParams(1, 50, types.StatusDepositPeriod, nil, nil), 50},
-	// 	{types.NewQueryProposalsParams(1, 50, types.StatusVotingPeriod, nil, nil), 50},
-	// }
+	testCases := []struct {
+		params             types.QueryProposalsParams
+		expectedNumResults int
+	}{
+		{types.NewQueryProposalsParams(50, types.StatusNil, 0, 0), 50},
+		{types.NewQueryProposalsParams(50, types.StatusDepositPeriod, 0, 0), 50},
+		{types.NewQueryProposalsParams(50, types.StatusDepositPeriod, validators[0].ID, validators[0].ID), 25},
+	}
 
-	// for i, tc := range testCases {
-	// 	t.Run(fmt.Sprintf("Test Case %d", i), func(t *testing.T) {
-	// 		proposals := app.GovKeeper.GetProposalsFiltered(ctx, tc.params)
-	// 		require.Len(t, proposals, tc.expectedNumResults)
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("Test Case %d", i), func(t *testing.T) {
+			proposals := app.GovKeeper.GetProposalsFiltered(ctx, tc.params.VoterID, tc.params.DepositorID, tc.params.ProposalStatus, tc.params.Limit)
+			require.Len(t, proposals, tc.expectedNumResults)
 
-	// 		for _, p := range proposals {
-	// 			if types.ValidProposalStatus(tc.params.ProposalStatus) {
-	// 				require.Equal(t, tc.params.ProposalStatus, p.Status)
-	// 			}
-	// 		}
-	// 	})
-	// }
+			for _, p := range proposals {
+				if types.ValidProposalStatus(tc.params.ProposalStatus) {
+					require.Equal(t, tc.params.ProposalStatus, p.Status)
+				}
+			}
+		})
+	}
 }

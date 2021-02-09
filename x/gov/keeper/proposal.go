@@ -144,3 +144,40 @@ func (keeper Keeper) ActivateVotingPeriod(ctx sdk.Context, proposal types.Propos
 	keeper.RemoveFromInactiveProposalQueue(ctx, proposal.ProposalId, proposal.DepositEndTime)
 	keeper.InsertActiveProposalQueue(ctx, proposal.ProposalId, proposal.VotingEndTime)
 }
+
+// GetProposals returns all the proposals from store
+func (keeper Keeper) GetProposals(ctx sdk.Context) (proposals types.Proposals) {
+	keeper.IterateProposals(ctx, func(proposal types.Proposal) bool {
+		proposals = append(proposals, proposal)
+		return false
+	})
+	return
+}
+
+// IterateProposals iterates over the all the proposals and performs a callback function
+func (keeper Keeper) IterateProposals(ctx sdk.Context, cb func(proposal types.Proposal) (stop bool)) {
+	store := ctx.KVStore(keeper.storeKey)
+
+	iterator := sdk.KVStorePrefixIterator(store, types.ProposalsKeyPrefix)
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		var proposal types.Proposal
+		err := keeper.UnmarshalProposal(iterator.Value(), &proposal)
+		if err != nil {
+			panic(err)
+		}
+
+		if cb(proposal) {
+			break
+		}
+	}
+}
+
+func (keeper Keeper) UnmarshalProposal(bz []byte, proposal *types.Proposal) error {
+	err := keeper.cdc.UnmarshalBinaryBare(bz, proposal)
+	if err != nil {
+		return err
+	}
+	return nil
+}

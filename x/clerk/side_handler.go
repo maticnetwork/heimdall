@@ -94,7 +94,8 @@ func SideHandleMsgEventRecord(
 		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
 	}
 
-	if !bytes.Equal(eventLog.ContractAddress.Bytes(), []byte(msg.ContractAddress)) {
+	// TODO - check this
+	if eventLog.ContractAddress.String() != msg.ContractAddress {
 		k.Logger(ctx).Error(
 			"ContractAddress from event does not match with Msg ContractAddress",
 			"EventContractAddress", eventLog.ContractAddress.String(),
