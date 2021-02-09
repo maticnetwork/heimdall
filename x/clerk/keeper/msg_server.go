@@ -45,7 +45,6 @@ func (k msgServer) MsgEventRecord(goCtx context.Context, msg *types.MsgEventReco
 		return nil, hmCommon.ErrEventRecordAlreadySynced
 	}
 
-	// TODO - Check this
 	// chainManager params
 	params := k.ChainKeeper.GetParams(ctx)
 	chainParams := params.ChainParams
