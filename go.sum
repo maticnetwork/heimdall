@@ -395,8 +395,6 @@ github.com/maticnetwork/bor v0.2.2-0.20200807103547-4d42b15906aa h1:T5Fx3HKWQdho
 github.com/maticnetwork/bor v0.2.2-0.20200807103547-4d42b15906aa/go.mod h1:uqsK1HCAHuCmEMGgOr6qLnzV1No/obnuu5Nz3nkMKNQ=
 github.com/maticnetwork/cosmos-sdk v0.37.5-0.20210120102128-8ce53e585ef6 h1:6DG56GUXU1QnQ9CSRTss7tJpQqSRhsguB46EX8wIGiI=
 github.com/maticnetwork/cosmos-sdk v0.37.5-0.20210120102128-8ce53e585ef6/go.mod h1:dP8jLBm3qZCM12U0v1rtCobwoejFUo+HpuS5u15og0M=
-github.com/maticnetwork/cosmos-sdk v0.38.3 h1:e4nxtsXXY9mNqz8JWu0MYeepot72+9/FKC81JOei96Y=
-github.com/maticnetwork/tendermint v0.25.0 h1:Y0j1dfFF1RVnh/RW68BGGumUZt2Kb9O/9xTABp7hUtQ=
 github.com/maticnetwork/tendermint v0.26.0-dev0.0.20210120100900-c8adb2516be0 h1:9N7a1qsqoyaSQkGQZSU1NWmVcQARfofIPIV2QfFPT2g=
 github.com/maticnetwork/tendermint v0.26.0-dev0.0.20210120100900-c8adb2516be0/go.mod h1:eE3UfvrRJy1n/jKkqaCKHnU3D72/D0/KYvb9xPv6ym4=
 github.com/mattn/go-colorable v0.0.9/go.mod h1:9vuHe8Xs5qXnSaW/c/ABM9alt+Vo+STaOChaDxuIBZU=
@@ -599,6 +597,8 @@ github.com/spf13/cobra v0.0.3/go.mod h1:1l0Ry5zgKvJasoi3XT1TypsSe7PqH0Sj9dhYf7v3
 github.com/spf13/cobra v0.0.5/go.mod h1:3K3wKZymM7VvHMDS9+Akkh4K60UwM26emMESw8tLCHU=
 github.com/spf13/cobra v1.1.1 h1:KfztREH0tPxJJ+geloSLaAkaPkr4ki2Er5quFV1TDo4=
 github.com/spf13/cobra v1.1.1/go.mod h1:WnodtKOvamDL/PwE2M4iKs8aMDBZ5Q5klgD3qfVJQMI=
+github.com/spf13/cobra v1.1.2 h1:frHO75w/dH7kEc+e2KYZZKY4+PLrp39OqI77oB8m0KQ=
+github.com/spf13/cobra v1.1.2/go.mod h1:ZjwqWkCg0LnXvLRIfTLdB4Y/MCO3gMHHJ2KFxQZy4xE=
 github.com/spf13/jwalterweatherman v1.0.0/go.mod h1:cQK4TGJAtQXfYWX+Ddv3mKDzgVb68N+wFjFa4jdeBTo=
 github.com/spf13/jwalterweatherman v1.1.0 h1:ue6voC5bR5F8YxI5S67j9i582FU4Qvo2bmqnqMYADFk=
 github.com/spf13/jwalterweatherman v1.1.0/go.mod h1:aNWZUN0dPAAO/Ljvb5BEdw96iTZ0EXowPYD95IqWIGo=
